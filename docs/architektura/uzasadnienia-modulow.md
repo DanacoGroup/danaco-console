@@ -3700,3 +3700,280 @@ z dwóch treści, nie z niczego.
 Próg zmiany odsiewa drgania. Strona z zegarem albo licznikiem odwiedzin różni
 się przy każdym pobraniu; próg podany w znakach mówi, od jakiej różnicy zmiana
 jest zmianą. Bez progu każdy taki monitor alarmowałby co godzinę.
+
+## budowa/server/internal/core/adapter_modul_workspace_harmonogram.go
+
+Zależność domykająca cykl nie zostaje zapisana. Powód nie jest formalny:
+cyklu nie da się ułożyć w czasie, więc zapisany cykl unieruchomiłby
+przesuwanie terminów przy każdej późniejszej zmianie zadania.
+
+Słupek wymaga początku i końca, więc zadanie bez obu granic do wykresu nie
+wchodzi. Wchodzi jednak do pola unscheduledTaskIds — bez tego pola zadanie
+znikałoby z widoku bez śladu, a Operator nie miałby skąd wiedzieć, że
+harmonogram pokazuje mniej niż projekt.
+
+Rachunek ścieżki krytycznej chroni przed zapętleniem licznikiem odwiedzin,
+gdyby cykl powstał inną drogą niż komenda ZalozZaleznosc.
+## budowa/server/internal/core/adapter_modul_library_porownanie.go
+
+Kontrakt rozstrzyga porownanie dwoch zasobow albo dwoch wersji jednego
+zasobu brakiem prawej strony - zadanie bez rightFileId porownuje wersje
+zasobu lewego. Dokument binarny porownuje sie po tekscie z niego wydobytym
+i odpowiedz mowi o tym wprost (comparedAsText). Operator ma wiedziec, ze
+nie porownano bajtow: dwa dokumenty PDF o identycznej tresci roznia sie
+bajtami w kazdej linii, wiec porownanie bajtowe oddaloby wszystko inne
+i byloby bezuzyteczne.
+
+Roznice liczy najdluzszy wspolny podciag wierszy (algorytm LCS) - ten sam
+sposob, ktorym idzie porownanie w module Studio. Rdzen nie wola programu
+diff: to byloby zaleznoscia od cudzego programu w czynnosci, ktora kod robi
+sam.
+
+Wydobycie tekstu z dokumentu PDF idzie programem pdftotext, ktory stoi na
+serwerze razem z rdzeniem i jest wolany jedyna dozwolona droga
+(zewnetrzne.Wolaj). To jest ODCZYT, nie przetwarzanie dokumentu: sam PDF
+modul rusza wylacznie biblioteka wkompilowana.
+
+Fragment obecny po obu stronach w innym brzmieniu wychodzi jako JEDNA
+roznica rodzaju changed, a nie jako para usuniecie-dodanie: para kazalaby
+czytelnikowi samodzielnie skojarzyc, ze to ten sam fragment.
+## budowa/server/internal/core/adapter_modul_workspace_tablica.go
+
+Przeciągnięcie karty między dwie sąsiednie dopisuje klucz leżący pomiędzy ich
+kluczami — jeden zapis. Numer pozycji wymagałby przepisania całej kolumny przy
+każdym przeciągnięciu, a tablica projektu bywa przeciągana kilkanaście razy
+pod rząd. Przekroczenie granicy WIP wraca polem wipExceeded, a karta i tak
+staje w kolumnie — platforma nie stawia twardych blokad w interfejsie, granica
+jest sygnałem dla Operatora, nie bramką.
+
+Klucz porządkowy karty składa się z liter a-z; wynik jest zawsze większy od
+lewego i mniejszy od prawego klucza sąsiada, a przy sąsiadujących literach
+schodzi o znak niżej zamiast oddawać klucz równy któremuś z sąsiadów.
+## budowa/server/internal/core/adapter_modul_library_reguly.go
+
+Reguła jest warunkiem wraz z tym, co ma się stać z zasobem, który go
+spełnia. Trzy rodzaje różnią się chwilą zastosowania, nie kształtem:
+kolekcja inteligentna przelicza zawartość na żądanie, reguła napływu
+stosuje się przy wejściu zasobu do repozytorium, folder obserwowany wciąga
+pliki spod ścieżki.
+
+Przeliczenie jest tutaj, a nie w warstwie danych, bo to rdzeń zna znaczenie
+członów warunku. Warunek niesie moduł źródłowy, etykiety, typ zawartości,
+zakres dat oraz frazę wyszukiwania, w postaci zbliżonej do zapisu JSON.
+Każdy człon jest opcjonalny, a człony łączą się koniunkcyjnie — tak samo
+jak filtry fasetowe Library Explorera, bo to ten sam sposób zawężania
+widziany z drugiej strony.
+
+Przeliczenie nie opróżnia kolekcji: dokłada zasoby spełniające warunek ze
+znacznikiem pochodzenia reguły. Zdjęcie tych zasobów ma własne żądanie —
+regułą wolno dodać, a zabrać wyłącznie na wyraźne polecenie.
+
+Folder obserwowany nie jest przeliczany przy żądaniu: wciąganie plików
+spod ścieżki jest napływem z zewnątrz, a nie przeglądem repozytorium.
+Reguła obserwacji zapisuje się i czeka na napływ, więc jej przeliczenie
+oddaje zero i tak jest uczciwie — zamiast udawać, że coś zrobiono.
+
+Ponowny odczyt niesie czas przeliczenia zapisany przy regule — bez niego
+odpowiedź mówiłaby o regule sprzed własnego przebiegu.
+
+Czas przeliczenia zapisuje się przy regule, żeby wykaz reguł mówił, kiedy
+reguła ostatnio pracowała — inaczej stan czynny znaczyłby tylko włączenie.
+
+Zapis daty jest porównywalny leksykograficznie, więc data podana samym
+dniem działa jako granica bez przekładu na czas. Granica górna obejmuje
+cały wskazany dzień: znacznik zasobu przycina się do długości granicy,
+więc data końcowa nie odcina zasobu powstałego tego dnia.
+
+## budowa/server/internal/core/adapter_modul_model.go
+
+Rodzina `model.*` to jedna komenda kontraktu, `model.channel.set`. Kanały
+zakłada i zmienia rodzina `channel.*`; ta komenda niczego nie zakłada,
+wyłącznie wskazuje jeden z wierszy rejestru. Metody stoją na `adapterOkien` —
+tym samym bycie, którym jedzie `window.update`. Kanał okna ma w rdzeniu
+jednego właściciela: gdyby rodzina `model.*` dostała własny adapter nad
+własnym dojściem do rejestru okien, ten sam kanał miałby dwa miejsca zmiany
+i dwie prawdy o tym, który wygrywa.
+
+Kanał okna mieszka w dwóch miejscach naraz i tylko jedno z nich ma wpływ na
+wywołanie modelu: `okno_komunikacji.kanal_modelu_id` — kolumna wiersza okna
+oraz jej odpowiednik pamięciowy `session.Okno.KanalModelu`, która jedzie do
+wywołania tury i którą odbudowuje `odtworzenie_stanu.go` po restarcie; oraz
+`ustawienie.klucz = 'kanal_modelu'` — pozycja katalogu ustawień, ustawialna
+na wszystkich ośmiu poziomach zasięgu, w tym `karta_sesji` i `okno`, której
+rozstrzygacz konfiguracji nie czyta — żaden kod nie sięga po ten klucz,
+`konfig/definicje_wykonania.go` tylko go deklaruje. Komenda zapisuje więc
+miejsce pierwsze — to, które działa. Zapis do pozycji konfiguracji byłby
+ciszą udającą skutek: Operator przestawiłby kanał, panel pokazałby zmianę,
+a tura poszłaby starym kanałem.
+
+### UstawKanalModelu
+
+Rozgłoszeniem `window.changed` zajmuje się wpięcie (handlers_model.go), tak
+samo jak przy `window.update`.
+
+### kanalRejestru
+
+Kolumna `okno_komunikacji.kanal_modelu_id` jest kluczem obcym z ON DELETE
+RESTRICT, więc zapis kodu nieistniejącego i tak by nie przeszedł, a okno
+w pamięci wskazywałoby kanał widmo. Odmowa niesie kod `not_found` i nazwę
+bytu. Wykaz idzie po wszystkie wiersze, także nieczynne: kanał wyłączony
+istnieje i Operator ma prawo go wskazać, a odpowiedź mówi o tym wprost polem
+`enabled`. Odmowa wyboru kanału wyłączonego byłaby zasadą, której kontrakt
+nie stawia.
+
+### kanalOkna
+
+Pominięcie eksperta dawałoby Operatorowi wybierającemu eksperta z menu
+„Modele" potwierdzenie bez skutku: kanał by się zmieniał, ekspert nie.
+Wskaźnik pusty zostawia wybór bez zmiany, wskaźnik na pusty napis zdejmuje
+eksperta — znaczenie jest jedno i pochodzi z `session.Zmiana`, żeby ta sama
+wartość nie znaczyła tu czegoś innego niż w `window.update`.
+
+### kanalKartySesji
+
+Dwa inne znaczenia są tu świadomie nieprzyjęte: zapis pozycji `kanal_modelu`
+na poziomie zasięgu `karta_sesji` — pozycja istnieje w katalogu ustawień,
+lecz nikt jej nie czyta, więc Operator dostałby potwierdzenie bez skutku;
+oraz „kanał domyślny dla okien zakładanych później" — okno zakładane bez
+wskazania bierze kanał z rejestru (`adapterOkien.kanalDomyslny`), a nie
+z karty; druga reguła domyślności zrobiłaby z jednego pytania dwa źródła
+prawdy. Okna zamknięte zostają nietknięte: zamknięte okno nie prowadzi
+pracy, a jego kanał jest zapisem tego, czym pracowało. Karta bez ani
+jednego otwartego okna nie ma czemu nadać kanału — odpowiedź „kanał
+ustawiony" byłaby tu ciszą udającą skutek.
+
+### kanalOdpowiedzi
+
+`channel.list` podaje czas utworzenia wypełniony (rejestr kanałów warstwy
+modeli), więc zero w odpowiedzi tej komendy przeczyłoby tej samej wartości
+na tym samym ekranie. Znacznik nieczytelny zostawia zero — dana pomocnicza
+nie wywraca odpowiedzi.
+
+### dopiszZmianeKanalu
+
+Nadanie kanału karcie znaczy „nadaj go każdemu oknu, które ta karta
+prowadzi"; wyłączenie eksperta z tej samej reguły zrobiłoby z jednego
+żądania dwa zasięgi i Operator nie miałby jak zgadnąć, który obowiązuje.
+
+### utrwalKanalOkna
+
+Brak wiersza nie jest błędem. Wiersz okna powstaje leniwie, przy pierwszej
+wiadomości (`dane/rozmowa_lancuch.go`), i bierze kanał wprost z opisu okna
+w rejestrze rdzenia — czyli z wartości ustawionej właśnie teraz. Zapis nie
+ma więc czego dogonić. Błąd zapisu jest błędem komendy: wiersz istnieje,
+a nie przyjął zmiany — wybór nie przeżyje restartu i milczenie o tym byłoby
+obietnicą bez pokrycia.
+## budowa/server/internal/core/adapter_modul_queue.go
+
+To rozszerzenie adaptera, nie drugi adapter. Metody wisza na
+adapterKolejek z adapter_kolejki.go, wiec jada tym samym repozytorium, tym
+samym silnikiem wykonania i tym samym przekladem kolejki na kontrakt, co
+queue.create i queue.action. Drugiego silnika kolejek nie ma nigdzie.
+
+Okna kolejki maja dwa zrodla: okna podane przy queue.create leza w pamieci
+powiazan rdzenia (pamiec_sesji_kolejek.go), a okna podane przy queue.link
+w tabeli powiazanie_kolejki. Kolejka kontraktu oddaje sume obu - inaczej po
+ponownym uruchomieniu rdzenia okna z queue.create znikalyby bez sladu,
+a okna z queue.link nie bylyby widoczne w ogole.
+
+Interfejs repozytoriumWiazanKolejek stoi po stronie czytelnika. Deklaracja
+mieszka w tym pliku, a nie w dane.RepozytoriumKolejek, bo wymagaja jej
+wylacznie dwie komendy tej rodziny; port kolejek tych czynnosci nie zna
+i nie musi.
+
+Wykaz: sesja kolejki bywa znana wylacznie z pamieci powiazan (kolejka
+zalozona przed pierwsza utrwalona wiadomoscia sesji nie ma czym wypelnic
+kolejka.sesja_id). Zadanie bez zadnego warunku jest zgodne z kontraktem -
+wszystkie trzy pola sa opcjonalne, zwraca sie wtedy wszystkie kolejki, nie
+odmowe. Sesja bez kolejek to prawdziwa odpowiedz zero kolejek, nie nie ma
+takiej sesji - sesja zyje w pamieci nadzorcy i bywa bez wiersza w bazie.
+
+Zwiaz: cztery pola wiazania sa opcjonalne z osobna, ale wszystkie naraz
+puste znacza zadanie bez tresci - odpowiedz kolejka po powiazaniu byloby
+wtedy kolejka po niczym. Kod odmowy to validation_failed. Kontrakt zna
+wylacznie wiazanie - komendy rozwiazujacej nie ma, wiec queue.link niczego
+nie zdejmuje. Powiazanie powtorzone nie jest drugim faktem i nie jest
+bledem; zapis je pomija. Istnienia bytu wiazanego rdzen tu nie sprawdza:
+adapter kolejek nie ma dostepu do repozytoriow ekspertow, projektow ani
+automatyk, a kolejka nie moze zalezec od tego, czy inny modul zdazyl sie
+utrwalic. Zapisany zostaje identyfikator w ksztalcie, w jakim przyszedl.
+## budowa/server/internal/core/adapter_modul_roundtable_glosowanie.go
+
+Wariant wskazuje wypowiedź, gdy Operator podał jej kod. Głosowanie nad
+stanowiskami debaty ma prowadzić od wyniku z powrotem do słów, które ten
+wynik wywołały — wariant będący samą etykietą urywa tę drogę, więc kod
+wypowiedzi rozpoznaje się i zapisuje, kiedy tylko padnie.
+
+Głosowanie zamknięte odmawia: głos oddany po rozstrzygnięciu przestawiłby
+wynik, który już ogłoszono. Wyborca spoza wykazu uprawnionych odmawia
+osobno — uprawnienie zawężone i nieegzekwowane byłoby ustawieniem bez
+skutku.
+
+Wynik zerowy przy zerowej liczbie głosów wyglądałby jak rozstrzygnięcie,
+którego nikt nie podjął.
+
+Głosowanie nad jednym wariantem ma wynik znany przed oddaniem pierwszego
+głosu.
+
+Wariant podany kodem wypowiedzi wskazuje ją wprost; etykietą zostaje
+wtedy treść tej wypowiedzi, żeby panel nie pokazywał samego kodu.
+
+Remis znakuje się w stanie głosowania, bo Voting & Evaluation Center
+pokazuje stan przy nagłówku, zanim Operator otworzy wynik.
+## budowa/server/internal/core/adapter_modul_roundtable_agregacja.go
+
+Remis jest wynikiem, nie usterka. Kazda z pieciu metod potrafi nie wylonic
+zwyciezcy. Kontrakt przewiduje to wprost: winnerOptionId jest polem
+niewymaganym, a stan glosowania ma wartosc tied. Zwyciezca dopisany bo
+trzeba - pierwszy z brzegu przy rownej liczbie glosow - bylby
+rozstrzygnieciem wymyslonym przez rdzen.
+
+## budowa/server/internal/core/adapter_modul_agents.go
+
+Model bazowy leży w `adapter_modul_agents_model.go`, umiejętności, konektory
+i uprawnienia w `adapter_modul_agents_zasoby.go`. Kanał bazowy wskazuje kod
+wiersza `kanal_modelu` — tego samego rejestru, z którego korzysta okno
+rozmowy. Adapter sprawdza wskazanie w rejestrze kanałów rdzenia i nie
+przechowuje własnych definicji dostawcy; pole `kanaly` służy tylko temu
+sprawdzeniu i podpowiedzi modelu domyślnego, adapter nie zakłada kanałów.
+
+Zmiana tożsamości jest częściowa: `agent.update` niesie same pola zmieniane,
+a pole pominięte zostaje takie, jakie było. Bez tego okno musiałoby odesłać
+komplet tożsamości przy każdej poprawce nazwy i skasowałoby instrukcje
+systemowe pierwszym niepełnym żądaniem.
+
+Pole `punkty` jest katalogiem punktów dostępu; konektor rodzaju `mcp`
+wskazuje most z tego katalogu, ten sam, z którego rdzeń składa `mcpServers`.
+
+Pole `warstwy` jest repozytorium tożsamości własnej eksperta — warstw jego
+promptu i jego wtyczek; `nil` znaczy „nie wpięto”, a wtedy cztery komendy
+warstw odmawiają, a reszta modułu pracuje bez zmiany.
+
+Pominięte pole pamięci przy założeniu eksperta znaczy komplet, nie pustkę:
+`nil` to „Operator o pamięci nie mówił”, a wtedy obowiązuje stan wyjściowy
+platformy — pełny. Lista pusta `[]` jest czym innym: świadomym żądaniem
+wyłączenia pamięci.
+
+Imię własne i favikon podane przy zakładaniu eksperta idą tą samą drogą co
+przy zmianie tożsamości. Ekspert założony bez nich nie jest ekspertem
+niepełnym: `nazwa` niesie tożsamość, a imię własne jest tym, jak Operator
+go woła.
+
+Przy zmianie tożsamości imię własne i favikon idą osobną drogą, bo zapytanie
+aktualizujące eksperta nie zna kolumn `imie_wlasne` i `favikon` —
+repozytorium warstw ma na to własną czynność. Bez tego wywołania formularz
+tożsamości przyjmowałby imię i favikon, rdzeń odpowiadałby powodzeniem,
+a wartość przepadałaby.
+
+Poziomy pamięci przy zmianie idą osobną drogą, bo siedzą w tabeli podrzędnej.
+`nil` znaczy „pole pominięte” i zostawia zastane poziomy; lista pusta wyłącza
+pamięć — dlatego wyłączenie nie potrzebuje własnej wartości wyliczenia.
+
+Wskazany projekt zawęża wykaz do ekspertów w nim widocznych. Bez tego pole
+`visibility` byłoby etykietą: dałoby się je zapisać i odczytać, ale nic by
+z niego nie wynikało.
+
+Warstwy i wtyczki dochodzą przy wykazie dwoma zapytaniami na cały wykaz, nie
+dwoma na eksperta. Bez nich edytor warstw pokazywałby puste pola przy
+ekspercie, który warstwy ma; pytanie o nie po jednym dałoby przy stu
+ekspertach dwieście zapytań na jedno otwarcie biblioteki.

@@ -1609,3 +1609,9 @@ Nazwanie odpowiedzi nieczytelnej odmową byłoby oskarżeniem rdzenia o czyn, kt
 Stan odpowiedzi udanej bez treści pełni rolę straży, a nie drogi osiągalnej w obecnym układzie. Wynik cząstkowy oddaje niepowodzenie bez pola błędu, gdy odpowiedź jest udana, lecz pusta, jednak do przeniesienia taka odpowiedź nie dochodzi, bo sprawdzanie kształtu przechwytuje ją wcześniej i okno mówi wówczas zdanie o odpowiedzi nieczytelnej. Stan zostaje w słowniku na wypadek zmiany warstwy protokołu.
 
 Zdania stoją w słowniku, a nie w oknach, z tego samego powodu, dla którego stan treści stoi w osobnym komponencie: cztery okna mówiące o tej samej ciszy czterema różnymi zdaniami rozjeżdżają się przy pierwszej poprawce.
+
+## budowa/klient-poprzedni/src/moduly/apps/panel-akcji.ts
+
+Panel akcji modułu powstaje wyłącznie z rejestru rdzenia. Nowa akcja modułu jest nowym wierszem rejestru, a nie zmianą kodu klienta, dlatego w tym pliku nie ma ani jednej pozycji katalogu zapisanej na stałe.
+
+Wiersz rejestru niesie nazwę komendy, którą akcja wywołuje, jednak generycznej drogi wywołania window.action nie woła żaden widok klienta. Naciśnięcie przycisku pozycji nazywa więc komendę wiersza i stwierdza, że droga generyczna czeka na konsumenta. Takie rozwiązanie przyjęto zamiast milczącego przycisku oraz zamiast pozorowania wykonania akcji.

@@ -1,29 +1,5 @@
-// Odpowiedzialność pliku: wyrys kompozycji Design Board do jednego pliku
-// (`design.board.export`). Metoda stoi na `*adapterDesignu`
-// (`adapter_modul_design.go`); warsztat obrazu leży w
-// `adapter_modul_design_obrazy.go`.
-//
-// Dotąd kompozycja jeździła do rdzenia i z powrotem jako układ warstw i nie
-// miała drogi wyjścia poza rdzeń: Operator widział tablicę na ekranie i nie
-// mógł jej nikomu wysłać.
-//
-// ── Wyrys składa rdzeń, nie przeglądarka bezgłowa ───────────────────────────
-// Warstwy schodzą na jedno płótno przez `image/draw` (PNG), przez `pdfcpu`
-// (PDF) i przez sklejenie XML-a (SVG). Przeglądarki bezgłowej tu nie ma i mieć
-// nie będzie — instalka Operatora jej nie niesie, a funkcja zależna od programu
-// spoza instalki jest u niego odmową, nie funkcją.
-//
-// ── Wyrys bez treści jest ODMOWĄ, nie pustym płótnem ────────────────────────
-// Kompozycja bez ani jednej warstwy z bajtami nie ma czego wyrysować. Rdzeń
-// odmawia zamiast oddać przezroczysty prostokąt: plik, który po otwarciu jest
-// pusty, wygląda identycznie jak plik uszkodzony i Operator nie ma z czego
-// poznać, że to jego tablica była pusta.
-//
-// ── Warstwa bez bajtów nie zatrzymuje wyrysu, ale jest liczona ──────────────
-// Warstwa wskazująca zasób usunięty z Assets Panel (kolumna `zasob_id` jest
-// TEXT, nie więzem obcym — patrz migracja 048) zostaje pominięta. Gdy przez to
-// nie zostaje NIC, odmowa nazywa liczbę warstw pominiętych, żeby Operator
-// wiedział, że tablica nie była pusta, tylko rozsypana.
+// Odpowiedzialność pliku: wyrys kompozycji Design Board do jednego pliku —
+// design.board.export; warsztat obrazu leży osobno.
 package core
 
 import (
@@ -40,13 +16,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// domyslnyBokWyrysuDesignu jest bokiem płótna dla kompozycji, której warstwy
-// nie niosą ani położenia, ani wymiarów. Nie jest to format wybrany — jest to
-// jedyna liczba, jaką da się podać, gdy układ nie mówi o rozmiarze niczego.
+// domyslnyBokWyrysuDesignu jest bokiem płótna dla kompozycji, której
+// warstwy nie niosą ani położenia, ani wymiarów.
 const domyslnyBokWyrysuDesignu = 1024
 
-// WyrysujKompozycje wyrysowuje całą kompozycję albo wskazany obszar do jednego
-// pliku — obsługuje `design.board.export`.
+// WyrysujKompozycje wyrysowuje całą kompozycję albo wskazany obszar do
+// jednego pliku — obsługuje design.board.export.
 func (a *adapterDesignu) WyrysujKompozycje(ctx context.Context,
 	z shared.DesignBoardExportRequest) (shared.DesignBoardExportResponse, error) {
 
@@ -117,8 +92,8 @@ func (a *adapterDesignu) WyrysujKompozycje(ctx context.Context,
 	}, nil
 }
 
-// kafelWyrysuDesignu to jedna warstwa gotowa do wyrysowania: jej obraz wraz
-// z prostokątem, jaki zajmuje w jednostkach kompozycji.
+// kafelWyrysuDesignu to jedna warstwa gotowa do wyrysowania: jej obraz
+// wraz z prostokątem, jaki zajmuje w jednostkach kompozycji.
 type kafelWyrysuDesignu struct {
 	obraz     image.Image
 	bajty     []byte
@@ -129,12 +104,7 @@ type kafelWyrysuDesignu struct {
 }
 
 // kafleWyrysuDesignu zamienia warstwy kompozycji na kafle wyrysu i oddaje
-// liczbę warstw pominiętych.
-//
-// Warstwa bez zasobu i warstwa wskazująca zasób bez bajtów są pomijane, nie
-// odmawiane — kompozycja bywa robocza i jedna zgubiona warstwa nie ma prawa
-// odebrać Operatorowi wyrysu pozostałych. Bilans wraca do wołającego i wchodzi
-// do odmowy dopiero wtedy, gdy nie zostało nic.
+// liczbę warstw pominiętych, wliczoną do bilansu odmowy.
 func (a *adapterDesignu) kafleWyrysuDesignu(ctx context.Context,
 	warstwy []dane.WarstwaKompozycji) ([]kafelWyrysuDesignu, int, error) {
 
@@ -159,8 +129,8 @@ func (a *adapterDesignu) kafleWyrysuDesignu(ctx context.Context,
 		}
 		obraz, err := obrazZasobuDesignu(*zasob.URI)
 		if err != nil {
-			// Zasób wektorowy albo dokument w warstwie: rdzeń go nie rasteryzuje,
-			// więc do wyrysu rastrowego nie wejdzie. To pominięcie, nie awaria.
+			// Zasób wektorowy albo dokument w warstwie: rdzeń go nie rasteryzuje.
+			// To pominięcie, nie awaria.
 			pominietych++
 			continue
 		}
@@ -182,8 +152,8 @@ func (a *adapterDesignu) kafleWyrysuDesignu(ctx context.Context,
 		if warstwa.Y != nil {
 			kafel.y = *warstwa.Y
 		}
-		// Wymiary warstwy biją wymiary obrazu: warstwa niesie rozmiar, jaki
-		// Operator nadał jej na kanwie, a obraz — rozmiar, w jakim powstał.
+		// Wymiary warstwy biją wymiary obrazu: rozmiar nadany na kanwie bije
+		// rozmiar powstania obrazu.
 		if warstwa.Szerokosc != nil && *warstwa.Szerokosc > 0 {
 			kafel.szerokosc = *warstwa.Szerokosc
 		}
@@ -195,12 +165,8 @@ func (a *adapterDesignu) kafleWyrysuDesignu(ctx context.Context,
 	return kafle, pominietych, nil
 }
 
-// obszarWyrysuDesignu rozstrzyga, co wchodzi w kadr: obszar wskazany żądaniem
-// albo prostokąt obejmujący wszystkie kafle.
-//
-// Obszar wskazany bierzemy dosłownie, także gdy wykracza poza kafle: Operator
-// zaznaczył ramką fragment kanwy i marginesu, którego zażądał, nie odbieramy mu
-// po cichu.
+// obszarWyrysuDesignu rozstrzyga, co wchodzi w kadr: obszar wskazany
+// żądaniem albo prostokąt obejmujący wszystkie kafle.
 func obszarWyrysuDesignu(kafle []kafelWyrysuDesignu,
 	obszar *shared.DesignBoardRegion) shared.DesignBoardRegion {
 
@@ -225,9 +191,8 @@ func obszarWyrysuDesignu(kafle []kafelWyrysuDesignu,
 	return shared.DesignBoardRegion{X: lewa, Y: gora, Width: szerokosc, Height: wysokosc}
 }
 
-// sprawdzObszarWyrysuDesignu odrzuca obszar o niedodatnim boku PRZED odczytem
-// czegokolwiek: prostokąt o zerowej szerokości nie jest kadrem, tylko pomyłką
-// w żądaniu.
+// sprawdzObszarWyrysuDesignu odrzuca obszar o niedodatnim boku PRZED
+// odczytem czegokolwiek, bo to pomyłka w żądaniu.
 func sprawdzObszarWyrysuDesignu(obszar *shared.DesignBoardRegion) error {
 	if obszar == nil {
 		return nil
@@ -241,13 +206,7 @@ func sprawdzObszarWyrysuDesignu(obszar *shared.DesignBoardRegion) error {
 }
 
 // zlozWyrysRastrowyDesignu składa warstwy na jedno płótno w kolejności
-// renderowania — kolejność wykazu jest już kolejnością warstw
-// (`ORDER BY kolejnosc, id`), więc warstwa późniejsza kładzie się na
-// wcześniejszej, tak jak na kanwie.
-//
-// Skalowanie każdej warstwy idzie filtrem `CatmullRom`, tym samym co przy
-// wydaniu zasobu: dwa wyrysy tej samej grafiki nie mają prawa różnić się
-// ostrością zależnie od tego, którą komendą powstały.
+// renderowania, wziętej wprost z kolejności wykazu.
 func zlozWyrysRastrowyDesignu(kafle []kafelWyrysuDesignu,
 	obszar shared.DesignBoardRegion, skala float64) image.Image {
 
@@ -274,13 +233,8 @@ func zlozWyrysRastrowyDesignu(kafle []kafelWyrysuDesignu,
 	return plotno
 }
 
-// zlozWyrysSvgDesignu składa wyrys wektorowy: jeden element `image` na warstwę,
-// z treścią osadzoną jako dane wprost w dokumencie.
-//
-// Treść jest osadzona, nie dowiązana. Odsyłacz do pliku w magazynie rdzenia nie
-// otworzy się nigdzie poza tą maszyną, a wyrys ma być plikiem, który Operator
-// wysyła dalej — dokument wskazujący cudze ścieżki byłby pustą ramką u każdego
-// odbiorcy.
+// zlozWyrysSvgDesignu składa wyrys wektorowy: jeden element image na
+// warstwę, z treścią osadzoną jako dane wprost w dokumencie.
 func zlozWyrysSvgDesignu(kafle []kafelWyrysuDesignu,
 	obszar shared.DesignBoardRegion, skala float64) string {
 
@@ -305,10 +259,8 @@ func zlozWyrysSvgDesignu(kafle []kafelWyrysuDesignu,
 	return dokument.String()
 }
 
-// typTresciOsadzenegoDesignu rozstrzyga typ treści osadzanej w dokumencie SVG
-// z samych bajtów. Kolumna `format` wiersza tu nie wystarcza: osadzamy BAJTY
-// i to one muszą się zgadzać z zapowiedzią, inaczej przeglądarka odbiorcy nie
-// pokaże warstwy.
+// typTresciOsadzenegoDesignu rozstrzyga typ treści osadzanej w dokumencie
+// SVG z samych bajtów; kolumna format tu nie wystarcza.
 func typTresciOsadzenegoDesignu(bajty []byte) string {
 	switch {
 	case bytes.HasPrefix(bajty, []byte("\x89PNG\r\n\x1a\n")):
@@ -324,11 +276,8 @@ func typTresciOsadzenegoDesignu(bajty []byte) string {
 	return "application/octet-stream"
 }
 
-// mniejszaDesignu i wiekszaDesignu wybierają skrajną z dwóch liczb. Własne
-// pomocniki, a nie wbudowane `min`/`max`: pakiet `core` niesie w sprawdzianach
-// własną funkcję `min` na liczbach całkowitych, która przesłania wbudowaną
-// i sprawia, że kod na liczbach rzeczywistych przestaje się kompilować
-// w budowie ze sprawdzianami. Przedrostek obszaru rozstrzyga to raz.
+// mniejszaDesignu i wiekszaDesignu wybierają skrajną z dwóch liczb; własne
+// pomocniki, bo pakiet core przesłania wbudowane min i max.
 func mniejszaDesignu(pierwsza, druga float64) float64 {
 	if druga < pierwsza {
 		return druga
@@ -343,8 +292,8 @@ func wiekszaDesignu(pierwsza, druga float64) float64 {
 	return pierwsza
 }
 
-// nazwaWyrysuKompozycjiDesignu składa proponowaną nazwę pliku wyrysu — z nazwy
-// kompozycji, gdy Operator ją nadał, albo z jej identyfikatora.
+// nazwaWyrysuKompozycjiDesignu składa proponowaną nazwę pliku wyrysu —
+// z nazwy kompozycji, gdy Operator ją nadał, albo z jej kodu.
 func nazwaWyrysuKompozycjiDesignu(kompozycja dane.KompozycjaDesignu, format string) string {
 	rdzen := kompozycja.Kod
 	if kompozycja.Nazwa != nil && strings.TrimSpace(*kompozycja.Nazwa) != "" {

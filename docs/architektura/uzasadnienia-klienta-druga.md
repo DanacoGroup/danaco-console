@@ -4059,3 +4059,6 @@ paneli i nie zna DOM, nie rozstrzyga też, ile paneli wolno otworzyć naraz —
 panel jest bytem otwieranym i zamykanym pojedynczo, bez limitu. Dla modułu
 spoza rejestru obie funkcje oddają wykaz pusty, a zdanie o braku spisu
 pokazuje gospodarz pasa pomocniczych.
+
+## budowa/klient/src/wejscie/skladniki/metody-logowania.ts
+Pusta lista dróg pobocznych nie mówi, że są jakieś, a lista z wygaszonymi pozycjami mówi, co można włączyć w ustawieniach. Składnik zwraca wykaz węzłów, nie jeden węzeł: etykieta i siatka metod są rodzeństwem w kolumnie panelu. Opakowanie ich w pudełko wprowadziłoby dodatkowy poziom, przez który odstęp kolumny liczyłby się raz zamiast dwa.

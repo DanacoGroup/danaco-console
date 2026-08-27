@@ -268,3 +268,16 @@ czytnik krojów nie wczytywał pliku, choć rdzeń oddawał go bez odmowy. Spraw
 oparty wyłącznie na fakcie udanej odpowiedzi komendy nie wykrywa takich usterek,
 ponieważ operacja oddająca pierwszy kształt zamiast sumy, krój bez glifów albo
 schemat wychodzący pustym płótnem są dla niego odpowiedziami udanymi.
+
+## budowa/server/internal/core/skutek_zakresu_eksperta_test.go
+
+Sprawdzian koperty odpowiedzi komendy potwierdza wyłącznie to, że komenda
+zwróciła status powodzenia; nie potwierdza, że zawężenie zakresu eksperta
+faktycznie działa. Permissions Center może oddawać `status: ok` przy każdym
+zawężeniu i wyglądać na działający, podczas gdy ekspert nadal wykonuje
+wszystko, co wykonywał wcześniej. Zawężenie, którego nikt nie egzekwuje, jest
+gorsze niż jego brak, ponieważ operator widzi ograniczenie w interfejsie
+i pracuje w przekonaniu, że ono obowiązuje.
+
+Z tego powodu każdy sprawdzian w tym pliku sięga do bazy własnym zapytaniem
+SQL albo mierzy odmowę wydaną przez straż eksperta, a nie sam zapis komendy.

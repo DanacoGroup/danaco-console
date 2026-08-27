@@ -402,3 +402,44 @@ Pozycja panelu akcji bez odpowiadającej jej komendy kontraktu — polityka
 znanych hostów — stoi jawnie nieczynna wraz z powodem liczonym z odczytu
 wykazu komend rdzenia, tak samo jak każda inna pozycja zależna od pokrycia
 komend.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/ekran-logowania.ts
+
+Ekran jest przesłoną nad aplikacją, nie osobną trasą: kładzie się nad
+gospodarzem dokumentu, a aplikacja pod nim składa się i łączy z rdzeniem
+w tym samym czasie, więc po wejściu przesłona znika i widoczne jest gotowe
+Centrum dowodzenia zamiast drugiego ładowania. Trasy aplikacji zostają
+nietknięte, ponieważ bramka nie jest miejscem pracy.
+
+Ekran nie zakłada budzika, nie liczy czasu sesji i nie przerywa pracy
+pytaniem o tożsamość. Rdzeń nie odcina komend po wygaśnięciu sesji — bramka
+jest progiem wejścia, nie strażnikiem każdego żądania — więc wygaśnięcie
+ujawnia się wyłącznie przy następnym uruchomieniu, zdaniem nad formularzem.
+
+Który z dwóch formularzy pokazać — wejście hasłem czy pierwsze ustawienie
+hasła — rozstrzyga rdzeń, nie domysł klienta. Pole nie jest blokowane,
+przycisk nie jest wyszarzany; jedyny sprawdzian po stronie formularza to
+zgodność hasła z powtórzeniem przy zakładaniu, ponieważ kontrakt opisuje
+powtórzenie jako sprawę formularza klienta.
+
+Wymóg logowania jest nastawą `gateway.requireLogin` — gdy jest wyłączony,
+przesłona nie staje.
+
+Stan pola „nie wyloguj mnie” bierze się z miejsca, w którym leży sesja
+zapisana poprzednio, a nie ze stałej: raz odznaczone pole ma zostać
+odznaczone. Zaznaczone pole kładzie sesję w pamięci trwałej, odznaczone
+w pamięci okna, a ta sama wartość idzie do rdzenia i rozstrzyga o trwaniu
+sesji.
+
+Odnośnik resetu hasła prowadzi do odzyskania konta, nie do zmiany hasła ze
+znanym hasłem bieżącym: naciska go ten, kto hasła nie pamięta, a wtedy
+zmiana ze znanym hasłem jest drogą donikąd. Zmiana hasła ze znanym hasłem
+jest czynnością Ustawień.
+
+Odnośnik potwierdzenia z listu wprowadza krok drugi rejestracji i pozwala
+z niego wyjść. Bez tego odnośnika krok potwierdzenia prowadziłby wyłącznie
+z udanej rejestracji w tym samym oknie; odświeżenie strony między listem
+a przepisaniem drogi zostawiałoby Operatora przed formularzem wejścia bez
+żadnej drogi dalej, ponieważ rejestracja odmawia wtedy kodem `conflict",
+a logowanie oczekiwaniem na potwierdzenie adresu. To samo dotyczy listu
+odczytanego na innej maszynie.

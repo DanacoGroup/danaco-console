@@ -904,3 +904,41 @@ policzone, nie zgadnięte, i działają także wtedy, gdy modelu nie ma wcale.
 
 Uzasadnienie towarzyszy każdej sugestii obowiązkowo: przyjęcie propozycji bez
 podanego powodu byłoby zaufaniem bez podstawy.
+
+## budowa/server/internal/core/adapter_modul_developer_api.go
+
+Cała rodzina komend stoi na bibliotekach wkompilowanych w rdzeń: `net/http`
+wykonuje zapytanie, `getkin/kin-openapi` czyta kontrakt. Nie startuje tu ani
+jeden proces potomny i nie ma tu żadnej zależności od programu spoza
+instalki — wołanie zewnętrznego narzędzia wiersza poleceń dałoby to samo,
+tyle że zależne od tego, czy to narzędzie stoi na maszynie.
+
+Adres, nagłówki i treść zapytania przechodzą przez podstawienie `{{nazwa}}`
+wartościami wskazanego środowiska. Bez tego kroku każde zapytanie kolekcji
+miałoby wpisany na stałe adres jednego serwera, a przeniesienie kolekcji
+między środowiskiem przejściowym a produkcyjnym byłoby przepisywaniem jej
+w całości.
+
+Rodzina nie wykonuje zapytań do adresów spoza sieci, do których serwer i tak
+nie ma dostępu, i nie zna poświadczeń Operatora — nagłówek uwierzytelniający
+podaje wołający albo środowisko kolekcji. Sekret wpisany w środowisko leży
+w bazie jawnie i tak też jest opisany; miejscem na sekret jest sejf,
+a odwołanie do niego wchodzi jako wartość nagłówka.
+
+Rodzaj treści zapytania uzupełnia nagłówek `Content-Type` tylko wtedy, gdy
+wołający sam go nie podał: nagłówek jawny jest zawsze mocniejszy od domysłu
+opartego na rodzaju treści.
+
+Nagłówek odpowiedzi powtórzony kilka razy zostaje sklejony przecinkiem przy
+spłaszczeniu do mapy, bo kontrakt niesie mapę nazwa-wartość, a zgubienie
+drugiej wartości byłoby gorsze od jej sklejenia z pierwszą.
+
+Kontrakt OpenAPI przychodzi z pliku repozytorium albo z adresu. Plik jest
+drogą podstawową: kontrakt leżący w repozytorium jest wersjonowany razem
+z kodem, więc kolekcja z niego wytworzona opisuje ten sam stan usługi, co
+gałąź, w której pracuje Operator.
+
+Kolejność ścieżek i metod przy imporcie z kontraktu jest ustalona sortowaniem,
+bo mapa Go oddaje wpisy w kolejności losowej — dwa importy tego samego pliku
+dałyby bez sortowania dwie różne kolekcje, a ich porównanie nie mówiłoby
+niczego o rzeczywistej zmianie kontraktu.

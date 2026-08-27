@@ -5211,3 +5211,12 @@ Wiersz wskazuje się udziałem w treści, a nie pomiarem wysokości linii: treś
 węzłem tekstowym, więc pozycji wiersza nie da się odczytać z układu bez rozbicia jej na
 elementy, a to zmieniłoby drzewo dokumentu podglądu, które ma pozostać tym samym, co widzi
 model.
+
+## budowa/klient-poprzedni/src/moduly/design/tabliczka-rozmowy.ts
+
+Postać rozmowy i okna obowiązkowe tabliczka czyta z profilu modułu prowadzonego
+w `okno-komunikacji/rejestr-profilow.ts`, więc zdanie o wiązaniu zmienia się razem
+z profilem, zamiast powtarzać jego treść z pamięci.
+
+Liczby okien tabliczka nie podaje, bo profil Designu niesie w tym miejscu wartość
+`GRANICA_NIEPODANA`. Pyta wyłącznie o prawo do rozmowy przez `liczbaOkienRozmowy`.

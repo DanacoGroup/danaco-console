@@ -49,7 +49,13 @@ ustaleń podjętych w toku prac.
 
 Nazwanie narzędzia, biblioteki, arkusza stylu, programu zewnętrznego, migracji
 albo pliku źródłowego, z którym kod współpracuje, jest treścią techniczną
-i wymagań nie narusza.
+i wymagań nie narusza. Tak samo oznaczenie normy, algorytmu albo protokołu
+zewnętrznego, ponieważ jest zakotwiczone poza budową.
+
+Zakaz odwołań osobowych obejmuje przywołanie roli prowadzącej budowę oraz roli
+rozstrzygającej zakres produktu, a wraz z nimi ustaleń zapadłych w toku prac.
+Wyraz nazywający rolę wewnątrz produktu, na przykład właściciela konta albo
+urządzenia, należy do słownika dziedziny i pozostaje dopuszczalny.
 
 ## Treść wykraczająca poza komentarz
 

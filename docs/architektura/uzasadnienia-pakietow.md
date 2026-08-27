@@ -3687,3 +3687,25 @@ Zawężenie idzie parametrem, nie sklejaniem tekstu. Jedno przygotowane
 zapytanie obsługuje pięć zawężeń naraz, bo pusty parametr znaczy „nie
 zawężaj". Wartości nigdy nie wchodzą do treści SQL, a pamięć podręczna
 zapytań ma jedną pozycję zamiast trzydziestu dwóch.
+
+## budowa/server/internal/session/petla.go
+
+Pętla koordynator-wykonawca łączy w jednym bycie cztery obowiązki: przejście końca tury w kolejny
+obieg koordynatora poprzez wybudzenie, licznik obiegów z nazwanym warunkiem zatrzymania przy braku
+postępu, strumień wykonawcy widziany przez koordynatora oraz warunek ukończenia zadania, gdy tura
+koordynatora zamyka się wynikiem przy braku okna wykonawczego w toku. Pętla nie powiela silnika
+uruchamiania tury — samą turę koordynatora rozpoczyna warstwa rozmowy przez port UruchomienieObiegu.
+
+Metoda ZakonczTure jest jedynym wejściem warstwy rozmowy do pętli i przyjmuje koniec tury każdego
+okna, nie tylko wykonawczego. Koniec tury wykonawcy zdejmuje jego turę i wybudza koordynatora, skąd
+wychodzi kolejny obieg. Koniec tury koordynatora zamyka bieg ukończeniem, gdy warunek metody
+ukonczBieg jest spełniony; okno samodzielne nie porusza niczego, co nie jest usterką. Metoda zwraca
+prawdę, gdy zgłoszenie poruszyło bieg: wybudziło koordynatora albo zamknęło go ukończeniem.
+
+Warunek metody ukonczBieg jest podwójny i oba jego człony pętla mierzy, a nie zakłada: tura
+koordynatora zamknęła się wynikiem kanału, przy czym warstwa rozmowy podaje wtedy powód wynikowy
+wychodzący z tej samej trójki warunków co stan wiadomości ukończonej, oraz żadne okno wykonawcze
+tego koordynatora nie prowadzi tury, czyli wykaz tur jego toru jest pusty. Bieg przed pierwszym
+obiegiem się nie kończy, ponieważ nie ma czego kończyć, a zatrzymanie postawione oknu, które pętli
+jeszcze nie prowadziło, wprowadziłoby fałszywy sygnał biegu nieistniejącego. Bieg już zatrzymany
+zostaje przy swoim powodzie — ukończenie nie przykrywa przerwania.

@@ -1,10 +1,7 @@
 // Odpowiedzialność pliku: przełożenie bytów modułu Terminal na kształt
-// kontraktu oraz zawężenie wykazu procesów filtrem żądania.
-//
-// Filtr działa tak samo na stanie żywym i na dzienniku. Wykaz procesów składa
-// się z dwóch źródeł, więc gdyby każde zawężało po swojemu, ten sam filtr dałby
-// niespójny wynik. Dziennik dostaje filtr wprost w zapytaniu, a stan żywy — tę
-// samą czwórkę warunków sprawdzoną na widoku kontraktu.
+// kontraktu oraz zawężenie wykazu procesów filtrem żądania. Filtr działa tak
+// samo na stanie żywym i na dzienniku, więc daje spójny wynik niezależnie od
+// źródła.
 package core
 
 import (
@@ -12,11 +9,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// kartaKontraktu przekłada kartę powłoki na byt kontraktu.
-//
-// Pola `pid` i `exitCode` zostają puste, bo karta nie jest procesem: procesem
-// jest każde wykonane w niej polecenie i to ono ma PID oraz kod wyjścia
-// (adapter_modul_terminal_powloki.go). Oba pola są w kontrakcie opcjonalne.
+// kartaKontraktu przekłada kartę powłoki na byt kontraktu. Pola `pid` i
+// `exitCode` zostają puste, bo karta nie jest procesem: procesem jest każde
+// wykonane w niej polecenie.
 func kartaKontraktu(k *kartaTerminala) shared.TerminalSession {
 	return shared.TerminalSession{
 		Id:              k.kod,
@@ -47,11 +42,9 @@ func kartaWierszaKontraktu(w dane.KartaTerminala) shared.TerminalSession {
 	}
 }
 
-// procesKontraktu przekłada proces rejestru żywego na byt kontraktu.
-//
-// Zużycia procesora i pamięci nie wypełniamy. Kontrakt ma na nie pola
-// opcjonalne, lecz nie ma tu miernika zużycia obcego procesu — wpisanie zera
-// znaczyłoby „nic nie zużywa" zamiast „brak danych".
+// procesKontraktu przekłada proces rejestru żywego na byt kontraktu. Zużycia
+// procesora i pamięci zostają puste, bo rdzeń nie ma tu miernika zużycia
+// obcego procesu.
 func procesKontraktu(p *procesTerminala) shared.TerminalProcess {
 	stan, kodWyjscia, zakonczono := p.Migawka()
 	widok := shared.TerminalProcess{
@@ -79,7 +72,8 @@ func procesKontraktu(p *procesTerminala) shared.TerminalProcess {
 	return widok
 }
 
-// procesWierszaKontraktu przekłada wiersz dziennika na byt kontraktu.
+// procesWierszaKontraktu przekłada wiersz dziennika procesów na byt kontraktu
+// widoczny oknu terminala.
 func procesWierszaKontraktu(w dane.ProcesTerminala) shared.TerminalProcess {
 	widok := shared.TerminalProcess{
 		Id:        w.Kod,
@@ -100,7 +94,8 @@ func procesWierszaKontraktu(w dane.ProcesTerminala) shared.TerminalProcess {
 	return widok
 }
 
-// filtrProcesow czyta zawężenia z żądania kontraktu.
+// filtrProcesow czyta zawężenia wykazu procesów bezpośrednio z żądania
+// kontraktu tej komendy terminala.
 func filtrProcesow(z shared.TerminalProcessListRequest) dane.FiltrProcesow {
 	filtr := dane.FiltrProcesow{
 		OknoKod:  wartoscTekstu(z.WindowId),
@@ -130,7 +125,8 @@ func filtrPrzepuszcza(f dane.FiltrProcesow, p shared.TerminalProcess) bool {
 	return f.Inicjator == "" || p.Initiator == f.Inicjator
 }
 
-// wskaznikMalej zwęża liczbę bazy do rozmiaru pola kontraktu.
+// wskaznikMalej zwęża liczbę bazy do rozmiaru pola kontraktu, przycinając
+// wartość spoza zakresu typu liczby.
 func wskaznikMalej(wartosc *int64) *int {
 	if wartosc == nil {
 		return nil
@@ -139,7 +135,8 @@ func wskaznikMalej(wartosc *int64) *int {
 	return &mniejsza
 }
 
-// wskaznikDuzej rozszerza liczbę kontraktu do rozmiaru kolumny bazy.
+// wskaznikDuzej rozszerza liczbę kontraktu do rozmiaru kolumny bazy,
+// zachowując pełną wartość liczby całkowitej.
 func wskaznikDuzej(wartosc *int) *int64 {
 	if wartosc == nil {
 		return nil

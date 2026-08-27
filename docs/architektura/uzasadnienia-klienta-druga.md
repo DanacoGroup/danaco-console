@@ -3943,3 +3943,6 @@ przycisk, który czynność wywołał, zostający klikalny także po odmowie. Po
 niesie zestaw faz i znakowanie powłoki, a tutaj zostaje to, czego wspólny byt nie przesądza: klasy
 modułu, treść komunikatu, nośnik ikony i spinnera oraz pozostawienie treści widocznej na czas
 ładowania.
+
+## budowa/klient/src/wejscie/skladniki/kolumna-tozsamosci.ts
+Kolumna nie jest planszą marki — jest strefą okna, więc powierzchnia różni się od panelu treści odcieniem, nie kontrastem. Nota wydawcy nie należy do tego składnika: stoi w wierszu pasa działań, niżej niż kolumna, i jest jedna dla całego okna. W odsłonie przygotowania zamiast zdań stoi pole animacji powłok: na tym etapie użytkownik już nie wybiera programu, tylko czeka, aż się złoży.

@@ -1376,3 +1376,58 @@ rodzaju polecenia wołającym wykonanie w terminalu. Druga rodzina komend po
 tej stronie dałaby dwie prawdy o jednym harmonogramie — i to jest jedyny
 powód, dla którego okno składa plan z komend cudzego modułu, a nie ze
 swoich.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uklad-okien.ts
+
+Rozsyłanie odczytu łączności idzie z jednego miejsca układu, a nie z każdego gniazda osobno,
+bo łącze jest jedno na całego klienta: gniazdo pierwsze i czwarte muszą po jednej zmianie
+transportu pokazać dokładnie to samo. Wejście zostaje publiczne, bo scena podglądu układu
+pracuje bez rdzenia i podaje odczyty ręcznie.
+
+Kod okna wykonania powstaje dopiero po uzgodnieniu z rdzeniem, już po zmontowaniu układu, bo
+panele pomocnicze wołają komendy żądające tego kodu. Dopóki kodu nie ma, panel nazywa wprost,
+czego mu brakuje, zamiast pokazywać pustkę.
+
+Subskrypcja strumienia przeżywa usunięcie węzła z drzewa dokumentu, więc zamknięcie panelu musi
+odpiąć subskrypcje rdzenia wprost — scena zdjęta bez tego wywołania zostawiałaby żywe nasłuchy.
+
+Pole opcji o wbudowanej rozmowie jest domyślnie wyłączone, bo scena sesji osadza właściwy widok
+z zewnątrz; stanowisko podglądu układu włącza je jawnie, bo nie ma z zewnątrz niczego do
+osadzenia. Kanał do rdzenia bywa pominięty — wtedy menu paneli jest puste i mówi to wprost,
+bo stanowisko podglądu układu pracuje bez rdzenia i właśnie tak ma wyglądać. Transport bywa
+pominięty analogicznie — wtedy plakietki łączności milczą, bo scena nie zna łącza.
+
+Moduł bez rozmowy nie zostawia sceny pustej: scena trzyma minimalną liczbę okien, a zdanie
+przełącznika mówi wprost, że rozmowy w tym module nie ma, żeby pusta scena nie czytała się jak
+awaria. Pytanie, czy dostawienie gniazda cokolwiek zmieni, idzie tą samą rachubą, którą potem
+wykona ustawienie liczby, bo sufit składa się z figury modułu i z górnej granicy, a figura
+przestawia się z rdzenia — osobne porównanie rozjechałoby się z tamtym przycięciem przy
+pierwszym module węższym niż scena. Odpowiedź przecząca znaczy krótszą listę w menu, a nie
+wiersz wygaszony.
+
+Znacznik przestawiania ról przez sam układ rozróżnia rolę z zewnątrz, która jest decyzją
+i zostaje, od roli nadanej przez zmianę liczby okien, która jest domyślna i ustępuje następnej;
+nadawanie ról jest synchroniczne, więc znacznik nie przecieka poza swoją pętlę.
+
+Pozycja otwarcia nowego okna idzie tą samą drogą co przełącznik liczby: podniesienie liczby
+wprowadza gniazdo na scenę, a wejście gniazda na scenę zamawia dla niego okno rdzenia. Okno
+założone z boku byłoby niewidoczne, więc tu stoją same wywołania — układ nie wie, że po drugiej
+stronie jest wiersz menu.
+
+Moduł sceny idzie z gniazda pierwszego, bo to ono niesie okno uzgodnione z rdzeniem i na nie
+przychodzi zmiana modułu, także po wejściu do przestrzeni, które przestawia moduł okna zamiast
+zakładać drugie. Scena z oknami w różnych modułach bierze figurę z gniazda pierwszego.
+
+Zdanie sceny o liczbie okien modułu składa do trzech zdań, każde tylko wtedy, gdy jest
+prawdziwe: czym jest figura modułu, że pozycja wyższa okna nie dokłada, oraz że scena trzyma
+okien więcej, niż moduł prowadzi. Ostatnie bierze się stąd, że układ okien nie zdejmuje ich
+sam — zdjęcie okna zamyka je również w rdzeniu i jest decyzją operatora.
+
+Żądanie liczby ponad figurę modułu nie jest odmową: pozycja przełącznika zostaje czynna, scena
+bierze tyle okien, ile moduł prowadzi, a zdanie pod grupą mówi, dlaczego wyżej się nie da. Cicha
+zgoda na okno ponad figurę modułu byłaby sukcesem udawanym.
+
+Przestawienie sceny na moduł nie zdejmuje okien, nawet gdy jest ich więcej, niż moduł prowadzi,
+bo zdjęcie okna ze sceny zamyka je również w rdzeniu, a zrobione samoczynnie przy przestawieniu
+modułu byłoby zamknięciem okna, o które nikt nie prosił. Scena mówi o nadmiarze wprost
+i zostawia zdjęcie operatorowi.

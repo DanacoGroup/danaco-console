@@ -10,10 +10,10 @@
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | prowadzący system projektowy · projektanci interfejsu · zespół wdrożeniowy (front-end) · osoba odpowiedzialna za dostępność · audyt zgodności wizualnej |
-| **Zakres** | Kompletny rejestr **177 unikalnych nazw żetonów** systemu: trzy warstwy modelu, konwencja nazewnicza, 38 prymitywów barwnych, 5 żetonów ramy kokpitu, 22 żetony typografii, 17 żetonów przestrzeni, 5 żetonów ruchu, 27 żetonów wymiarów (+ dwa nadpisania kontekstowe), 7 żetonów siatki i punktów łamania, 11 warstw `z-index`, 2 gradienty, po 43 żetony semantyczne w każdym z dwóch motywów, komplet 33 pomiarów kontrastu, procedura dodania żetonu |
+| **Zakres** | Kompletny rejestr **231 unikalnych nazw żetonów** systemu: trzy warstwy modelu, konwencja nazewnicza, 38 prymitywów barwnych, 14 żetonów ramy kokpitu, 22 żetony typografii, 17 żetonów przestrzeni, 5 żetonów ruchu, 48 żetonów wymiarów (+ dwa nadpisania kontekstowe), 7 żetonów siatki i punktów łamania, 11 warstw `z-index`, 2 gradienty, po 54 żetony semantyczne w każdym z dwóch motywów, komplet 33 pomiarów kontrastu, procedura dodania żetonu |
 | **Czego NIE zawiera** | specyfikacji komponentów `.dn-*` (opracowanie osobne), makiet okien, katalogu ikon, księgi znaku, wytycznych redakcyjnych treści, wartości warstwy funkcjonalnej v1.0 (zastąpionych niniejszym pakietem) |
 
-**Źródła wiążące:** kontrakt systemu projektowego · `zasoby/zetony/zetony.css` (448 linii) · `zasoby/zetony/zetony.json` · `zasoby/zetony/kontrasty.json` (33 pomiary) · `zasoby/css/fundament.css` (156 linii) · `zasoby/css/komponenty.css` (1207 linii) · kierunek systemu projektowego · `zasoby/ikony/manifest.json` · inwentarz komponentów · inwentarz okien platformy.
+**Źródła wiążące:** kontrakt systemu projektowego · `zasoby/zetony/zetony.css` (561 linii) · `zasoby/zetony/zetony.json` · `zasoby/zetony/kontrasty.json` (33 pomiary) · `zasoby/css/fundament.css` (162 linie) · `zasoby/css/komponenty.css` (2823 linie) · kierunek systemu projektowego · `zasoby/ikony/manifest.json` · inwentarz komponentów · inwentarz okien platformy.
 
 ---
 
@@ -24,11 +24,11 @@
 3. [Prymitywy — skala szarości (18 stopni)](#3-prymitywy--skala-szarości-18-stopni)
 4. [Prymitywy — sygnał (8 stopni)](#4-prymitywy--sygnał-8-stopni)
 5. [Prymitywy — stany (zieleń · bursztyn · czerwień, po 4 stopnie)](#5-prymitywy--stany-zieleń--bursztyn--czerwień-po-4-stopnie)
-6. [Rama kokpitu — 5 żetonów stałych w obu motywach](#6-rama-kokpitu--5-żetonów-stałych-w-obu-motywach)
+6. [Rama kokpitu — 14 żetonów stałych w obu motywach](#6-rama-kokpitu--14-żetonów-stałych-w-obu-motywach)
 7. [Typografia — 22 żetony](#7-typografia--22-żetony)
 8. [Przestrzeń — 11 odstępów i 6 promieni](#8-przestrzeń--11-odstępów-i-6-promieni)
 9. [Ruch — krzywa i cztery czasy](#9-ruch--krzywa-i-cztery-czasy)
-10. [Wymiary — 27 żetonów, warianty dotykowy i przestronny](#10-wymiary--27-żetonów-warianty-dotykowy-i-przestronny)
+10. [Wymiary — 48 żetonów, warianty dotykowy i przestronny](#10-wymiary--48-żetonów-warianty-dotykowy-i-przestronny)
 11. [Siatka i punkty łamania](#11-siatka-i-punkty-łamania)
 12. [Warstwy — jedenaście poziomów `z-index`](#12-warstwy--jedenaście-poziomów-z-index)
 13. [Gradienty — dwa, zakres i zakazy](#13-gradienty--dwa-zakres-i-zakazy)
@@ -45,7 +45,7 @@
 
 ### 1.1. Definicja robocza
 
-**Żeton** (ang. *design token*) to nazwana, pojedyncza decyzja wizualna zapisana raz i przywoływana wszędzie. W Danaco Console żeton jest **zmienną własną CSS** o prefiksie `--dn-`, zadeklarowaną w `zasoby/zetony/zetony.css` i powieloną maszynowo w `zasoby/zetony/zetony.json`.
+**Żeton** (ang. *design token*) to nazwana, pojedyncza decyzja wizualna zapisana raz i przywoływana wszędzie. W Danaco Console żeton jest **zmienną własną CSS** o prefiksie `--dn-`, zadeklarowaną w `zasoby/zetony/zetony.css`. Plik `zasoby/zetony/zetony.json` jest maszynowym odwzorowaniem tego samego zestawu, ale **nie jest równorzędnym źródłem prawdy ani gwarantowaną kopią**: rozstrzyga zawsze `zetony.css`, a JSON trzeba do niego wyrównywać przy każdej zmianie (kolejność w rozdz. 17.5) — inaczej się rozjeżdża (paleta i stopnie pisma bywały już w tyle po przebudowie 08.2026).
 
 Żeton nie jest zmienną pomocniczą programisty. Jest **jednostką umowy** między projektem a wdrożeniem: zmiana wartości żetonu jest zmianą systemu, nie zmianą pliku.
 
@@ -64,14 +64,14 @@
    ┌───────────────────────────▼───────────────────────────────────┐
    │ WARSTWA 2 — SEMANTYCZNE (rola)                                │
    │ --dn-tlo, --dn-tekst, --dn-obrys, --dn-sygnal, --dn-blad-tlo  │
-   │ 43 nazwy × 2 motywy · niosą znaczenie, nie wartość            │
+   │ 54 nazwy × 2 motywy · niosą znaczenie, nie wartość            │
    │ JEDYNE wolno wołać z poziomu komponentu                       │
    └───────────────────────────┬───────────────────────────────────┘
                                │ użycie
    ┌───────────────────────────▼───────────────────────────────────┐
    │ WARSTWA 3 — NIEZALEŻNE OD MOTYWU                              │
    │ typografia · przestrzeń · ruch · wymiary · siatka · warstwy   │
-   │ 134 nazwy · te same w obu motywach                            │
+   │ 177 nazw · te same w obu motywach                             │
    └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -81,23 +81,23 @@ Nazewnictwo warstw pochodzi z nagłówka `zetony.css`: *„1. prymitywy — suro
 
 | Warstwa / grupa | Liczba nazw | Uwaga |
 |---|---:|---|
-| Prymitywy — szarość | 18 | skala od `#FFFFFF` do `#0A0A0A` |
+| Prymitywy — szarość | 18 | skala od `#FFFFFF` do `#080A0D` |
 | Prymitywy — sygnał | 8 | jedyna rodzina akcentu |
 | Prymitywy — stany | 12 | 3 rodziny × 4 stopnie |
-| Rama kokpitu | 5 | stałe w obu motywach |
+| Rama kokpitu | 14 | stałe w obu motywach (w tym cztery stopnie tekstu) |
 | Typografia | 22 | 3 kroje + 9 stopni + 4 wagi + 3 interlinie + 3 odstępy liter |
-| Przestrzeń | 17 | 11 odstępów + 6 promieni |
-| Ruch | 5 | 1 krzywa + 4 czasy |
-| Wymiary | 27 | 25 `--dn-wym-*` + 2 `--dn-odstep-*` |
+| Przestrzeń | 21 | odstępy, aliasy kompozycyjne i promienie |
+| Wymiary | 48 | rodzina `--dn-wym-*` |
+| Bryła | 13 | rodzina `--dn-bryla-*` — efekt przestrzenny |
+| Znak | 1 | `--dn-znak-*` w warstwie niezależnej |
 | Siatka i łamanie | 7 | 4 punkty łamania + max treści + kolumny + przerwa |
 | Warstwy `z-index` | 11 | od podłogi do Centrum poleceń |
 | Gradienty | 2 | wyłącznie ilustracyjne |
-| **Razem niezależne od motywu** | **134** | deklarowane raz, w bloku `:root` |
-| Semantyczne — motyw jasny | 43 | blok `:root[data-theme='light']` |
-| Semantyczne — motyw ciemny | 43 | blok `:root[data-theme='dark']` |
-| **Razem unikalnych nazw** | **177** | 134 + 43 (nazwy semantyczne są wspólne obu motywom) |
+| **Razem niezależne od motywu** | **177** | deklarowane raz, w bloku `:root`; ruch wydzielony do `ruch.css` |
+| Semantyczne — na motyw | 54 | te same nazwy w blokach `:root[data-theme='light']` i `:root[data-theme='dark']` |
+| **Razem unikalnych nazw** | **231** | 177 + 54 (nazwy semantyczne są wspólne obu motywom) |
 
-Liczba **deklaracji** w pliku jest wyższa (298), ponieważ komplet semantyczny jest świadomie powielony w blokach `@media (prefers-color-scheme: …)` dla przypadku braku jawnego wyboru motywu. Komentarz w `zetony.css` nazywa to wprost: *„powielenie jest świadome (mechanizm kaskady, nie drugie źródło prawdy)"*.
+Liczba **deklaracji** w pliku jest wyższa niż liczba nazw, ponieważ komplet semantyczny jest świadomie powielony w blokach `@media (prefers-color-scheme: …)` dla przypadku braku jawnego wyboru motywu. Komentarz w `zetony.css` nazywa to wprost: *„powielenie jest świadome (mechanizm kaskady, nie drugie źródło prawdy)"*.
 
 ### 1.4. Reguła nieprzekraczalna
 
@@ -105,7 +105,7 @@ Liczba **deklaracji** w pliku jest wyższa (298), ponieważ komplet semantyczny 
 
 Uzasadnienie: prymityw nie wie, w jakim motywie się znajdzie. `--dn-szary-500` w motywie jasnym jest tekstem metadanych, a w ciemnym — również tekstem metadanych, ale to zbieg okoliczności, nie reguła. `--dn-szary-900` w motywie jasnym jest **tekstem**, a w ciemnym **powierzchnią**. Komponent, który sięgnie po prymityw, przestaje działać po przełączeniu motywu — i nie zgłosi tego błędem.
 
-**Wyjątki jawne — sześć wystąpień w całej bibliotece komponentów (1207 linii):**
+**Wyjątki jawne — sześć wystąpień w całej bibliotece komponentów (2823 linie):**
 
 | # | Miejsce | Żeton prymitywny | Dlaczego wyjątek jest zasadny |
 |---|---|---|---|
@@ -152,7 +152,7 @@ Nazwy są **polskie i opisowe** — spójnie z konwencją nazw ikon (`zasoby/iko
 | `zielen` | `--dn-zielen-<100…700>` | 4 | prymityw | rodzina sukcesu | `--dn-zielen-400` |
 | `bursztyn` | `--dn-bursztyn-<100…700>` | 4 | prymityw | rodzina ostrzeżenia | `--dn-bursztyn-700` |
 | `czerwien` | `--dn-czerwien-<100…700>` | 4 | prymityw | rodzina błędu | `--dn-czerwien-200` |
-| `rama` | `--dn-rama[-rola]` | 5 | stały | powierzchnia paska górnego, niezmienna | `--dn-rama-tekst-2` |
+| `rama` | `--dn-rama[-rola]` | 14 | stały | powierzchnia paska górnego, niezmienna | `--dn-rama-tekst-2` |
 | `ff` | `--dn-ff-<rola>` | 3 | niezależny | rodzina kroju (*font family*) | `--dn-ff-mono` |
 | `fs` | `--dn-fs-<stopień>` | 9 | niezależny | stopień pisma (*font size*) | `--dn-fs-base` |
 | `fw` | `--dn-fw-<waga>` | 4 | niezależny | waga kroju (*font weight*) | `--dn-fw-polgruba` |
@@ -162,7 +162,7 @@ Nazwy są **polskie i opisowe** — spójnie z konwencją nazw ikon (`zasoby/iko
 | `r` | `--dn-r-<rozmiar>` | 6 | niezależny | promień narożnika | `--dn-r-pill` |
 | `ease` | `--dn-ease` | 1 | niezależny | krzywa czasowa — jedna w systemie | `--dn-ease` |
 | `czas` | `--dn-czas-<1\|2\|3\|tetno>` | 4 | niezależny | czas trwania przejścia | `--dn-czas-3` |
-| `wym` | `--dn-wym-<element>` | 25 | niezależny | wymiar elementu interfejsu | `--dn-wym-kontrolka` |
+| `wym` | `--dn-wym-<element>` | 48 | niezależny | wymiar elementu interfejsu | `--dn-wym-kontrolka` |
 | `odstep` | `--dn-odstep-<zakres>` | 2 | niezależny | rytm kompozycyjny (alias na `od`) | `--dn-odstep-panel` |
 | `bp` | `--dn-bp-w<1…4>` | 4 | niezależny | punkt łamania (*breakpoint*) | `--dn-bp-w3` |
 | `tresc` | `--dn-tresc-max` | 1 | niezależny | maksymalna szerokość treści | `--dn-tresc-max` |
@@ -198,30 +198,30 @@ Nazwy są **polskie i opisowe** — spójnie z konwencją nazw ikon (`zasoby/iko
 
 ## 3. Prymitywy — skala szarości (18 stopni)
 
-Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. kierunek systemu projektowego: *„Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu — »odcienie bieli i czerni« dosłownie."*
+Skala jest **chłodna**: składowe RGB nie są równe — każdy stopień niesie delikatny chłodny odcień (składowa niebieska nieco wyższa od czerwonej), dzięki czemu neutralne powierzchnie spajają się z błękitem sygnału.
 
 | Żeton | Wartość | Kontrast do `#F4F4F4` (tło jasne) | Kontrast do `#0F0F0F` (tło ciemne) | Zastosowanie systemowe | Zakazy |
 |---|---|---:|---:|---|---|
 | `--dn-szary-0` | `#FFFFFF` | 1,10 | 19,17 | jasny: `--dn-powierzchnia`, `--dn-tekst-inv`, `--dn-atrament-tekst`; biel na wypełnieniu sygnałowym i na gradientach | **nigdy jako tło całej strony** (kierunek systemu projektowego) |
-| `--dn-szary-25` | `#FAFAFA` | 1,05 | 18,36 | jasny: `--dn-panel`; ciemny: `--dn-atrament-hover` | nie na tekst w motywie jasnym (1,05 wobec tła) |
-| `--dn-szary-50` | `#F4F4F4` | 1,00 | 17,43 | jasny: `--dn-tlo` — papier roboczy kokpitu | nie jako powierzchnia karty (znika na tle) |
-| `--dn-szary-100` | `#ECECEC` | 1,07 | 16,23 | jasny: `--dn-powierzchnia-2`, `--dn-obrys-subtelny`; ciemny: `--dn-tekst`, `--dn-atrament`; rama: `--dn-rama-tekst` | nie jako obrys widoczny w motywie jasnym (1,18 do bieli) |
-| `--dn-szary-150` | `#E3E3E3` | 1,17 | 14,94 | jasny: `--dn-obrys` — podstawowa linia rozdzielająca | nie jako tekst w żadnym motywie jasnym |
-| `--dn-szary-200` | `#D7D7D7` | 1,31 | 13,32 | **stopień rezerwowy** — brak mapowania semantycznego; utrzymywany dla ciągłości skali i wykresów danych | nie wolno użyć wprost w komponencie; wprowadzenie do użycia wymaga nadania roli semantycznej |
-| `--dn-szary-300` | `#C0C0C0` | 1,65 | 10,54 | jasny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako tekst (1,65 wobec tła) |
-| `--dn-szary-400` | `#9E9E9E` | 2,44 | 7,15 | ciemny: `--dn-tekst-2`; rama: `--dn-rama-tekst-2` | **nie jako tekst w motywie jasnym** (2,44 — poniżej progu) |
-| `--dn-szary-500` | `#7C7C7C` | 3,80 | 4,59 | oba motywy: `--dn-tekst-3` | **wyłącznie metadane i tekst ≥ 18,66 px półgruby** (kontrakt systemu projektowego); nigdy tekst ciągły |
-| `--dn-szary-600` | `#616161` | 5,63 | 3,10 | jasny: `--dn-tekst-2` — tekst drugorzędny | nie jako tekst w motywie ciemnym (3,10) |
-| `--dn-szary-700` | `#4A4A4A` | 8,06 | 2,16 | **stopień rezerwowy** — brak mapowania semantycznego; przewidziany dla obrysów o wysokim kontraście na powierzchni jasnej | nie wolno użyć wprost w komponencie |
-| `--dn-szary-750` | `#3A3A3A` | 10,34 | 1,69 | ciemny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako powierzchnia (za jasny na tło ciemne) |
-| `--dn-szary-800` | `#2A2A2A` | 13,05 | 1,34 | ciemny: `--dn-obrys`; punkt startowy `--dn-grad-atrament` | nie jako powierzchnia panelu (kolizja z `--dn-panel` #212121) |
-| `--dn-szary-850` | `#212121` | 14,64 | 1,19 | ciemny: `--dn-panel`, `--dn-obrys-subtelny` | nie jako tło strony |
-| `--dn-szary-900` | `#181818` | 16,14 | 1,08 | jasny: `--dn-tekst`, `--dn-atrament`; ciemny: `--dn-powierzchnia` | najlepszy przykład odwrócenia roli między motywami — nie wolno traktować jako „koloru tekstu" |
-| `--dn-szary-925` | `#131313` | 16,89 | 1,03 | **`--dn-rama` w obu motywach**; ciemny: `--dn-powierzchnia-2`; punkt końcowy `--dn-grad-atrament` | nie jako tło treści przełączalnej |
-| `--dn-szary-950` | `#0F0F0F` | 17,43 | 1,00 | ciemny: `--dn-tlo`, `--dn-tekst-inv`, `--dn-atrament-tekst` | nie jako tekst w motywie ciemnym |
-| `--dn-szary-1000` | `#0A0A0A` | 18,00 | 1,03 | jasny: `--dn-atrament-hover`; źródło alfy dla `--dn-hover`, `--dn-wcisniecie`, `--dn-nakladka` i wszystkich cieni motywu jasnego | **kraniec skali — `#000000` jest zakazane** (kierunek systemu projektowego: „czysta czerń zabija głębię i powoduje halację na OLED") |
+| `--dn-szary-25` | `#F9FAFB` | 1,05 | 18,36 | jasny: `--dn-panel`; ciemny: `--dn-atrament-hover` | nie na tekst w motywie jasnym (1,05 wobec tła) |
+| `--dn-szary-50` | `#F3F4F6` | 1,00 | 17,43 | jasny: `--dn-tlo` — papier roboczy kokpitu | nie jako powierzchnia karty (znika na tle) |
+| `--dn-szary-100` | `#EBECEF` | 1,07 | 16,23 | jasny: `--dn-powierzchnia-2`, `--dn-obrys-subtelny`; ciemny: `--dn-tekst`, `--dn-atrament`; rama: `--dn-rama-tekst` | nie jako obrys widoczny w motywie jasnym (1,18 do bieli) |
+| `--dn-szary-150` | `#E1E3E7` | 1,17 | 14,94 | jasny: `--dn-obrys` — podstawowa linia rozdzielająca | nie jako tekst w żadnym motywie jasnym |
+| `--dn-szary-200` | `#D5D7DC` | 1,31 | 13,32 | **stopień rezerwowy** — brak mapowania semantycznego; utrzymywany dla ciągłości skali i wykresów danych | nie wolno użyć wprost w komponencie; wprowadzenie do użycia wymaga nadania roli semantycznej |
+| `--dn-szary-300` | `#BDC0C6` | 1,65 | 10,54 | jasny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako tekst (1,65 wobec tła) |
+| `--dn-szary-400` | `#9A9EA6` | 2,44 | 7,15 | ciemny: `--dn-tekst-2`; rama: `--dn-rama-tekst-2` | **nie jako tekst w motywie jasnym** (2,44 — poniżej progu) |
+| `--dn-szary-500` | `#787C85` | 3,80 | 4,59 | oba motywy: `--dn-tekst-3` | **wyłącznie metadane i tekst ≥ 18,66 px półgruby** (kontrakt systemu projektowego); nigdy tekst ciągły |
+| `--dn-szary-600` | `#5D6169` | 5,63 | 3,10 | jasny: `--dn-tekst-2` — tekst drugorzędny | nie jako tekst w motywie ciemnym (3,10) |
+| `--dn-szary-700` | `#464A52` | 8,06 | 2,16 | **stopień rezerwowy** — brak mapowania semantycznego; przewidziany dla obrysów o wysokim kontraście na powierzchni jasnej | nie wolno użyć wprost w komponencie |
+| `--dn-szary-750` | `#373A41` | 10,34 | 1,69 | ciemny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako powierzchnia (za jasny na tło ciemne) |
+| `--dn-szary-800` | `#272A30` | 13,05 | 1,34 | ciemny: `--dn-obrys`; punkt startowy `--dn-grad-atrament` | nie jako powierzchnia panelu (kolizja z `--dn-panel` #212121) |
+| `--dn-szary-850` | `#1E2126` | 14,64 | 1,19 | ciemny: `--dn-panel`, `--dn-obrys-subtelny` | nie jako tło strony |
+| `--dn-szary-900` | `#16181D` | 16,14 | 1,08 | jasny: `--dn-tekst`, `--dn-atrament`; ciemny: `--dn-powierzchnia` | najlepszy przykład odwrócenia roli między motywami — nie wolno traktować jako „koloru tekstu" |
+| `--dn-szary-925` | `#111317` | 16,89 | 1,03 | **`--dn-rama` w obu motywach**; ciemny: `--dn-powierzchnia-2`; punkt końcowy `--dn-grad-atrament` | nie jako tło treści przełączalnej |
+| `--dn-szary-950` | `#0D0F13` | 17,43 | 1,00 | ciemny: `--dn-tlo`, `--dn-tekst-inv`, `--dn-atrament-tekst` | nie jako tekst w motywie ciemnym |
+| `--dn-szary-1000` | `#080A0D` | 18,00 | 1,03 | jasny: `--dn-atrament-hover`; źródło alfy dla `--dn-hover`, `--dn-wcisniecie`, `--dn-nakladka` i wszystkich cieni motywu jasnego | **kraniec skali — `#000000` jest zakazane** (kierunek systemu projektowego: „czysta czerń zabija głębię i powoduje halację na OLED") |
 
-**Zakaz nadrzędny skali:** `#000000` nie występuje w systemie w żadnej postaci barwy powierzchni ani tekstu. Skala kończy się na `#0A0A0A`.
+**Zakaz nadrzędny skali:** `#000000` nie występuje w systemie w żadnej postaci barwy powierzchni ani tekstu. Skala kończy się na `#080A0D`.
 
 **Dwa stopnie rezerwowe** (`-200`, `-700`) nie mają dziś mapowania semantycznego. Nie są błędem: utrzymują równomierność skali, dzięki czemu każdy przyszły żeton semantyczny znajdzie stopień o właściwej jasności bez dokładania nowej wartości.
 
@@ -302,23 +302,27 @@ Barwa stanu jest wzmocnieniem, nie nośnikiem. Komplet ikon towarzyszących poch
 
 ---
 
-## 6. Rama kokpitu — 5 żetonów stałych w obu motywach
+## 6. Rama kokpitu — 14 żetonów stałych w obu motywach
 
 kierunek systemu projektowego: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w obu motywach. Ciemna rama wokół przełączalnej treści daje efekt stanowiska dowodzenia i stały dom dla godła, wyszukiwarki i wskaźników."*
 
 | Żeton | Wartość | Mapuje się na | Kontrast na ramie | Rola |
 |---|---|---|---:|---|
-| `--dn-rama` | `#131313` | `var(--dn-szary-925)` | — | powierzchnia paska górnego; **jedyny element interfejsu nieprzełączający się z motywem** (poza godłem) |
-| `--dn-rama-tekst` | `#ECECEC` | `var(--dn-szary-100)` | 15,73 | logotyp, etykiety główne, ikona aktywna |
-| `--dn-rama-tekst-2` | `#9E9E9E` | `var(--dn-szary-400)` | 6,94 | ikony w spoczynku, tekst pomocniczy, podpowiedź w polu wyszukiwania |
+| `--dn-rama` | `#111317` | `var(--dn-szary-925)` | — | powierzchnia paska górnego; **jedyny element interfejsu nieprzełączający się z motywem** (poza godłem) |
+| `--dn-rama-tekst` | `#EBECEF` | `var(--dn-szary-100)` | 15,73 | logotyp, etykiety główne, ikona aktywna |
+| `--dn-rama-tekst-2` | `#9A9EA6` | `var(--dn-szary-400)` | 6,94 | ikony w spoczynku, tekst pomocniczy, podpowiedź w polu wyszukiwania |
+| `--dn-rama-tekst-3` | `#787C85` | `var(--dn-szary-500)` | — | trzeci stopień jasności ramy — metadane, pozycje nieaktywne |
+| `--dn-rama-tekst-4` | `#5D6169` | `var(--dn-szary-600)` | — | czwarty stopień — najsłabszy tekst na ramie |
 | `--dn-rama-hover` | `rgba(255,255,255,0.08)` | biel z kryciem 8% | — | tło przycisku ikonowego przy najechaniu i w stanie wciśniętym |
 | `--dn-rama-obrys` | `rgba(255,255,255,0.10)` | biel z kryciem 10% | — | obrys pola wyszukiwania i separatorów na ramie |
+| `--dn-rama-tlo` | `rgba(255,255,255,0.04)` | biel z kryciem 4% | — | subtelna powierzchnia wtopiona w ramę — grupy przełączników |
+| `--dn-rama-pole` | `rgba(255,255,255,0.06)` | biel z kryciem 6% | — | tło pola wyszukiwania na ramie |
 
 **Konsekwencje projektowe:**
 
 1. Komponent położony na ramie **nie może** używać `--dn-tekst`, `--dn-tekst-2`, `--dn-hover` ani `--dn-obrys` — te przełączają się z motywem i w motywie jasnym zniknęłyby na atramencie. Służy do tego wariant `.dn-btn-ikona--na-ramie`.
 2. Wskazanie stanu aktywnego na ramie używa `--dn-sygnal-300` (`#8FB2F5`, 8,72 na ramie), a nie `--dn-sygnal` — bo `--dn-sygnal` w motywie jasnym to `#2457C9` (2,90 na ramie, poniżej progu).
-3. Rama ma tylko dwa stopnie tekstu, nie trzy. Odpowiednika `--dn-tekst-3` na ramie **nie ma** i nie wolno go improwizować kryciem.
+3. Rama ma **cztery stopnie tekstu**: `--dn-rama-tekst`, `--dn-rama-tekst-2`, `--dn-rama-tekst-3` (`szary-500`) i `--dn-rama-tekst-4` (`szary-600`). Cała rodzina ramy liczy **14 żetonów**. Stopni pośrednich nie improwizuje się kryciem — używa się zadeklarowanych.
 
 ```
  ┌───────────────────────────────────────────────────────────┐
@@ -352,17 +356,17 @@ Znaczenie różnicy krojów: **Space Grotesk = wejście do środowiska i tożsam
 
 | Żeton | Wartość | Typowe zastosowanie (komentarz źródłowy) | Krój domyślny |
 |---|---:|---|---|
-| `--dn-fs-xs` | 11 px | etykiety wersalikowe, nagłówki kolumn tabeli, plakietki | Plex Sans / Plex Mono |
-| `--dn-fs-sm` | 12 px | metadane, tekst pomocniczy, opis pola, godzina wpisu | Plex Sans |
-| `--dn-fs-base` | **13 px** | **BAZOWY** — tekst interfejsu, etykieta przycisku, pole formularza | Plex Sans |
-| `--dn-fs-md` | 14 px | wyróżniona treść, wpisy rozmowy w Chat Window | Plex Sans |
-| `--dn-fs-lg` | 16 px | nagłówki paneli, tytuł karty | Space Grotesk |
-| `--dn-fs-xl` | 20 px | nagłówki okien i modali | Space Grotesk |
+| `--dn-fs-xs` | 12 px | etykiety wersalikowe, nagłówki kolumn tabeli, plakietki | Plex Sans / Plex Mono |
+| `--dn-fs-sm` | 13 px | metadane, tekst pomocniczy, opis pola, godzina wpisu | Plex Sans |
+| `--dn-fs-base` | **14 px** | **BAZOWY** — tekst interfejsu, etykieta przycisku, pole formularza | Plex Sans |
+| `--dn-fs-md` | 15 px | wyróżniona treść, wpisy rozmowy w Chat Window | Plex Sans |
+| `--dn-fs-lg` | 17 px | nagłówki paneli, tytuł karty | Space Grotesk |
+| `--dn-fs-xl` | 21 px | nagłówki okien i modali | Space Grotesk |
 | `--dn-fs-2xl` | 24 px | tytuły sekcji strony głównej (Centrum dowodzenia) | Space Grotesk |
 | `--dn-fs-3xl` | 30 px | tytuły kart środowisk (TalkIn, WorkSpace, CodeStudio, MultitaskingAI) | Space Grotesk |
 | `--dn-fs-display` | 40 px | największy stopień ekspozycyjny | Space Grotesk |
 
-**Kształt skali:** 11 → 12 → 13 → 14 (przyrost 1 px, strefa robocza kokpitu) → 16 → 20 → 24 → 30 → 40 (przyrost mnożnikowy ≈ 1,25, strefa ekspozycyjna). Skala jest celowo dwuczęściowa: gęstość zwarta wymaga drobnych, precyzyjnych różnic w strefie danych i wyraźnych skoków w strefie nagłówków.
+**Kształt skali:** 12 → 13 → 14 → 15 (przyrost 1 px, strefa robocza kokpitu) → 17 → 21 → 24 → 30 → 40 (przyrost mnożnikowy ≈ 1,25, strefa ekspozycyjna). Skala jest celowo dwuczęściowa: gęstość zwarta wymaga drobnych, precyzyjnych różnic w strefie danych i wyraźnych skoków w strefie nagłówków.
 
 ### 7.3. Cztery wagi
 
@@ -480,16 +484,15 @@ Konsekwencja: **komponent nigdy nie definiuje własnej obsługi ograniczonego ru
 
 ---
 
-## 10. Wymiary — 27 żetonów, warianty dotykowy i przestronny
+## 10. Wymiary — 48 żetonów, warianty dotykowy i przestronny
 
 ### 10.1. Gęstość zwarta (domyślna) — pełna lista
 
 | # | Żeton | Wartość | Element | Uwaga |
 |---:|---|---:|---|---|
 | 1 | `--dn-wym-kontrolka` | 32 px | przyciski, pola, pozycje wyboru | podstawa gęstości zwartej |
-| 2 | `--dn-wym-ikonowy` | 32 px | przycisk ikonowy (kwadrat) | równy kontrolce — rząd nie „faluje" |
-| 3 | `--dn-wym-belka` | 36 px | belka tytułowa okna (rama) | `--dn-od-9` |
-| 3 | `--dn-wym-szyna` | 56 px | szyna nawigacji środowisk i modułów (rama) | `--dn-od-14` |
+| 2 | `--dn-wym-ikonowy` | 34 px | przycisk ikonowy (kwadrat) | nieco większy od kontrolki |
+| 3 | `--dn-wym-belka` | 48 px | belka tytułowa okna (rama) | jej wysokość wyznacza szerokość szyny nawigacji |
 | 3 | `--dn-wym-stan` | 28 px | pasek stanu (rama) | `--dn-od-7` |
 | 3 | `--dn-wym-pasek` | 48 px | pasek narzędzi okna (rama) | `--dn-od-12` |
 | 4 | `--dn-wym-pas-kart` | 36 px | pas kart sesji pod paskiem | |
@@ -502,20 +505,22 @@ Konsekwencja: **komponent nigdy nie definiuje własnej obsługi ograniczonego ru
 | 11 | `--dn-wym-awatar-sm` | 24 px | awatar mały — wiersz listy | |
 | 12 | `--dn-wym-awatar` | 28 px | awatar podstawowy — medalion wpisu | |
 | 13 | `--dn-wym-awatar-lg` | 36 px | awatar duży — nagłówek, rdzeń Always On Display | |
-| 14 | `--dn-wym-ikona-sm` | 14 px | ikona w plakietce, w medalionie wpisu | |
-| 15 | `--dn-wym-ikona` | 16 px | ikona podstawowa — przycisk, nawigacja | |
-| 16 | `--dn-wym-ikona-lg` | 20 px | ikona w przycisku ikonowym paska | |
-| 17 | `--dn-wym-ikona-xl` | 24 px | ikona w pustym stanie, w kaflu | |
-| 18 | `--dn-wym-przelacznik-szer` | 36 px | tor przełącznika | |
-| 19 | `--dn-wym-przelacznik-wys` | 20 px | wysokość toru przełącznika | suwak = `wys − 6 px` |
-| 20 | `--dn-wym-check` | 16 px | pole wyboru i opcja jednokrotna | |
-| 21 | `--dn-wym-kropka` | **6 px** | kropka sygnału — element sygnaturowy | rozstrzygnięcie projektowe |
-| 22 | `--dn-wym-wstega` | 2 px | wstęga aktywności karty i pozycji nawigacji | |
-| 23 | `--dn-wym-spinner` | 14 px | wskaźnik pracy w przycisku | |
-| 24 | `--dn-wym-fokus` | 2 px | grubość pierścienia fokusu | |
-| 25 | `--dn-wym-fokus-odsuniecie` | 2 px | odsunięcie pierścienia od krawędzi | |
-| 26 | `--dn-odstep-panel` | 12 px (`--dn-od-3`) | wewnętrzny rytm paneli | alias kompozycyjny |
-| 27 | `--dn-odstep-sekcji` | 24 px (`--dn-od-6`) | rytm między sekcjami | alias kompozycyjny |
+| 14 | `--dn-wym-ikona-xs` | 12 px | znacznik kryterium, znak w wykazie warunków | |
+| 15 | `--dn-wym-ikona-sm` | 16 px | ikona w plakietce, w medalionie wpisu | |
+| 16 | `--dn-wym-ikona` | 18 px | ikona podstawowa — przycisk, nawigacja | |
+| 17 | `--dn-wym-ikona-szyna` | 20 px | ikona pozycji szyny nawigacji | |
+| 18 | `--dn-wym-ikona-lg` | 22 px | ikona w przycisku ikonowym paska | |
+| 19 | `--dn-wym-ikona-xl` | 26 px | ikona w pustym stanie, w kaflu | |
+| 20 | `--dn-wym-przelacznik-szer` | 36 px | tor przełącznika | |
+| 21 | `--dn-wym-przelacznik-wys` | 20 px | wysokość toru przełącznika | suwak = `wys − 6 px` |
+| 22 | `--dn-wym-check` | 16 px | pole wyboru i opcja jednokrotna | |
+| 23 | `--dn-wym-kropka` | **6 px** | kropka sygnału — element sygnaturowy | rozstrzygnięcie projektowe |
+| 24 | `--dn-wym-wstega` | 2 px | wstęga aktywności karty i pozycji nawigacji | |
+| 25 | `--dn-wym-spinner` | 14 px | wskaźnik pracy w przycisku | |
+| 26 | `--dn-wym-fokus` | 2 px | grubość pierścienia fokusu | |
+| 27 | `--dn-wym-fokus-odsuniecie` | 2 px | odsunięcie pierścienia od krawędzi | |
+| 28 | `--dn-odstep-panel` | 12 px (`--dn-od-3`) | wewnętrzny rytm paneli | alias kompozycyjny |
+| 29 | `--dn-odstep-sekcji` | 24 px (`--dn-od-6`) | rytm między sekcjami | alias kompozycyjny |
 
 ### 10.2. Wariant dotykowy — `@media (pointer: coarse)`
 
@@ -524,7 +529,7 @@ Cele dotykowe rosną **żetonem, nie wyjątkiem** (rozstrzygnięcie projektowe).
 | Żeton | Zwarta | Dotyk | Przyrost |
 |---|---:|---:|---:|
 | `--dn-wym-kontrolka` | 32 px | **40 px** | +8 px |
-| `--dn-wym-ikonowy` | 32 px | **40 px** | +8 px |
+| `--dn-wym-ikonowy` | 34 px | **40 px** | +6 px |
 | `--dn-wym-wiersz` | 36 px | **44 px** | +8 px |
 | `--dn-wym-check` | 16 px | **20 px** | +4 px |
 | `--dn-wym-przelacznik-szer` | 36 px | **44 px** | +8 px |
@@ -536,10 +541,10 @@ Przygotowany w żetonach, **domyślnie nieaktywny** (rozstrzygnięcie projektowe
 
 | Żeton | Zwarta | Przestronna | Grupa |
 |---|---:|---:|---|
-| `--dn-fs-base` | 13 px | **14 px** | typografia |
+| `--dn-fs-base` | 14 px | 14 px | typografia |
 | `--dn-lh-bazowy` | 1,45 | **1,5** | typografia |
 | `--dn-wym-kontrolka` | 32 px | **40 px** | wymiary |
-| `--dn-wym-ikonowy` | 32 px | **40 px** | wymiary |
+| `--dn-wym-ikonowy` | 34 px | **40 px** | wymiary |
 | `--dn-wym-wiersz` | 36 px | **44 px** | wymiary |
 | `--dn-wym-pasek` | 48 px | **56 px** | wymiary |
 | `--dn-wym-pas-kart` | 36 px | **40 px** | wymiary |
@@ -675,7 +680,7 @@ Blok `:root[data-theme='light']`, `color-scheme: light`. **43 żetony.** Motyw j
 | Żeton | Wartość | Mapuje się na | Rola | Pomiar |
 |---|---|---|---|---|
 | `--dn-atrament` | `#181818` | `--dn-szary-900` | tło przycisku głównego | biel na nim 17,76 |
-| `--dn-atrament-hover` | `#0A0A0A` | `--dn-szary-1000` | przycisk główny przy najechaniu | biel na nim 19,80 |
+| `--dn-atrament-hover` | `#080A0D` | `--dn-szary-1000` | przycisk główny przy najechaniu | biel na nim 19,80 |
 | `--dn-atrament-tekst` | `#FFFFFF` | `--dn-szary-0` | tekst na przycisku głównym | 17,76 |
 
 ### 14.5. Sygnał (7)
@@ -892,7 +897,7 @@ Cienie motywu ciemnego są **głębsze i większe** (rozmycie 24–60 px wobec 2
 
 ### 17.1. Rola pliku
 
-`zetony.json` jest **maszynowym odpowiednikiem** `zetony.css`, nie drugim źródłem prawdy. Rozstrzyga plik CSS (jest ładowany przez aplikację); JSON służy generatorom, walidatorom, eksportowi do innych warstw i narzędziom projektowym.
+`zetony.json` jest **maszynowym odwzorowaniem** `zetony.css`, nie drugim źródłem prawdy. Rozstrzyga plik CSS (jest ładowany przez aplikację); JSON służy generatorom, walidatorom, eksportowi do innych warstw i narzędziom projektowym. JSON **nie jest gwarantowaną kopią**: przy zmianie wartości potrafi zostać w tyle, dlatego przy każdej modyfikacji trzeba go wyrównać do CSS wg kolejności z rozdz. 17.5.
 
 ### 17.2. Struktura pliku
 
@@ -978,7 +983,7 @@ Trzy odpowiedzi „tak" otwierają procedurę.
 | Krok | Czynność | Plik / miejsce | Kryterium zakończenia |
 |---:|---|---|---|
 | 1 | **Ustal warstwę.** Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? | decyzja projektowa | warstwa zapisana; przy nowej rodzinie barwnej wymagana pełna czwórka stopni (reguła nazewnicza 7) |
-| 2 | **Nadaj nazwę** wg konwencji `--dn-<grupa>-<wariant>` i dziesięciu reguł nazewniczych (rozdz. 2.3). | — | nazwa nie koliduje z żadną z istniejących 177 |
+| 2 | **Nadaj nazwę** wg konwencji `--dn-<grupa>-<wariant>` i dziesięciu reguł nazewniczych (rozdz. 2.3). | — | nazwa nie koliduje z żadną z istniejących 231 |
 | 3 | **Zadeklaruj w `zetony.css`** w bloku właściwej warstwy: `:root` (niezależny) albo **obu** blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. | `zasoby/zetony/zetony.css` | wartość zapisana jako `var(--dn-<prymityw>)` albo `rgba()` wyprowadzona z prymitywu (reguła nazewnicza 10) |
 | 4 | **Powiel do bloków `@media (prefers-color-scheme: …)`** — dotyczy wyłącznie żetonów semantycznych. Wartości muszą być identyczne z blokami motywów. | `zasoby/zetony/zetony.css`, rozdz. 11 pliku | oba bloki medialne uzupełnione |
 | 5 | **Zmierz kontrast** każdej nowej pary tekst/tło oraz element/tło i dopisz pomiar do `kontrasty.json` (`para`, `fg`, `bg`, `kontrast`, `prog`, `ok`). Przy alfie mierzy się barwę **po złożeniu** na powierzchni docelowej. | `zasoby/zetony/kontrasty.json` | `ok: true` przy progu 4,5 (tekst) albo 3,0 (element nietekstowy / duży tekst) |
@@ -1020,7 +1025,7 @@ Sekcja obejmuje rozstrzygnięcia podjęte **ponad** to, co dosłownie rozstrzyga
 
 | # | Kwestia | Rozstrzygnięcie | Podstawa |
 |---:|---|---|---|
-| **1** | Rachunek żetonów systemu nie był nigdzie podany liczbowo | Ustalono i zapisano: **177 unikalnych nazw** = 134 niezależne od motywu + 43 semantyczne. Liczby wyprowadzono z `zetony.css` przez zliczenie deklaracji w blokach `:root`, `:root[data-theme='light']` i `:root[data-theme='dark']`. | pomiar na pliku źródłowym; zgodność sumy grup z sumą całkowitą potwierdzona |
+| **1** | Rachunek żetonów systemu nie był nigdzie podany liczbowo | Ustalono i zapisano: **231 unikalnych nazw** = 177 niezależnych od motywu + 54 semantyczne. Liczby wyprowadzono z `zetony.css` przez zliczenie deklaracji w blokach `:root`, `:root[data-theme='light']` i `:root[data-theme='dark']`. | pomiar na pliku źródłowym; zgodność sumy grup z sumą całkowitą potwierdzona |
 | **2** | Prymitywy `--dn-szary-200` i `--dn-szary-700` nie mają mapowania semantycznego | Nazwano je **stopniami rezerwowymi** i opisano funkcję (ciągłość skali, zapas dla przyszłych ról). Nie usuwa się ich ani nie oznacza jako błędu. | zliczenie użyć w `zetony.css`, `fundament.css`, `komponenty.css` — zero wystąpień poza deklaracją |
 | **3** | To samo dotyczy `--dn-sygnal-800` | Oznaczono jako stopień rezerwowy z przewidzianą rolą (wciśnięcie wypełnienia sygnałowego). Rola jest **propozycją**, nie stanem obowiązującym — do decyzji prowadzącego system. | analiza rodziny sygnału: `-500` bazowy, `-600` wypełnienie, `-700` wypełnienie-hover; `-800` bez roli |
 | **4** | Reguła „komponent nie sięga po prymityw" ma w bibliotece odstępstwa | Przeprowadzono inwentaryzację i ustalono **zamkniętą listę sześciu wyjątków** ze wspólnym uzasadnieniem: element leży na powierzchni nieprzełączającej się z motywem. Lista jest zamknięta — siódmy wyjątek wymaga decyzji. | `komponenty.css`, linie 90, 163, 307, 1073, 1083, 1196 |

@@ -1,8 +1,4 @@
-/* Wybór: pole wyboru, radio, przełącznik.
-   Suwak wartości ciągłej prowadzi osobny arkusz `suwak.css`.
-
-   Zaznaczone pole wyboru niesie atrament, stan przełącznika niesie sygnał —
-   przełącznik wskazuje stan, nie uruchamia działania. */
+/* Arkusz opisuje wybór: pole wyboru, radio i przełącznik, w których zaznaczenie niesie atrament, a stan przełącznika niesie sygnał. */
 
 .dn-wybor {
   display: inline-flex;
@@ -41,7 +37,7 @@
 .dn-radio { border-radius: var(--dn-r-pill); }
 .dn-radio::before { clip-path: none; border-radius: var(--dn-r-pill); width: 8px; height: 8px; }
 
-/* Przełącznik — tor + suwak; wybrany = sygnał (wskazanie stanu, nie akcja) */
+/* Przełącznik zbudowany z toru i suwaka wskazuje stan sygnałem, gdy jest wybrany, ponieważ wskazuje stan, a nie uruchamia działania. */
 .dn-przelacznik {
   appearance: none;
   width: var(--dn-wym-przelacznik-szer);

@@ -671,3 +671,33 @@ czemu odczyt niepełny nie jest brany za odczyt kompletny.
 Formularz okna konfiguracji powstaje z katalogu pozycji i z założenia nie zna żadnej kontrolki z osobna. Zna wyłącznie wspólny kształt zadeklarowany w tym pliku, co pozwala złożyć ekran z pozycji katalogu bez wiedzy o rodzaju wartości, jaki za nimi stoi.
 
 Konsekwencją takiego rozdziału jest koszt rozszerzenia. Dodanie kolejnego rodzaju wartości do kontraktu sprowadza się do jednego przypadku w module rozdzielającym wybor-kontrolki.ts oraz do jednej funkcji budującej kontrolkę. Nie powstaje przy tym nowy ekran ani zmiana w samym formularzu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/okno-memory-context-manager.ts
+
+Okno zamyka obszar pamięci modułu Assistant i realizuje zasadę jawności: pamięć
+asystenta jest w całości widoczna, edytowalna i usuwalna. Cztery pierwsze
+zakładki odpowiadają czterem obszarom opracowania modułu — fakty, pamięć
+semantyczna, konteksty i baza wiedzy.
+
+Plik odpowiada wyłącznie za skład okna. Wywołania kontraktu mieszkają
+w `zrodlo-pamieci.ts`, a każda zakładka ma własny plik obszaru: ustalenia
+w `panel-faktow.ts`, wskaźnik znaczenia w `panel-wiedzy.ts`, poziomy pamięci
+karty sesji w `panel-kontekstow.ts`.
+
+Fazy odczytu nie ma na poziomie okna, tylko w obszarach. Cztery zakładki czytają
+cztery różne byty i wołają je w różnych chwilach — jedna faza dla całego okna
+kazałaby odmowie odczytu pamięci przesłonić zakładkę wskaźnika, która o tej
+odmowie nic nie wie.
+
+Piąta zakładka „Zestawy i retencja" zamyka trzy obszary, które kontrakt niesie
+w całości: nazwane konteksty pamięci `memory.context.*`, zasady retencji
+i wygaszania `memory.retention.*` oraz miernik okna kontekstu
+`context.usage.get`. Miernik pokazuje liczbę policzoną tokenizatorem rdzenia
+wraz z nazwą słownika, którym policzono, a gdy pomiar jest niewykonalny — sam
+powód.
+
+## budowa/klient-poprzedni/src/modele/zakladki-sekcji.ts
+
+Cztery obszary sekcji odpowiadają czterem pytaniom o ten sam model: konta rozstrzygają, czym prowadzone jest połączenie, ustawienia osi rozstrzygają, jak model ma działać, tożsamość rozstrzyga, kim model ma być, a podgląd promptu pokazuje, co ostatecznie trafia do modelu. Wszystkie cztery obszary mówią względem tej samej osi, dlatego trzyma je jedna sekcja, a nie cztery osobne sekcje.
+
+Przełącznik nie porzuca obszaru, z którego Operator wychodzi. Element obszaru zostaje w drzewie dokumentu i jedynie przestaje być widoczny, dzięki czemu tekst wpisany w edytorze tożsamości przeżywa zajrzenie do obszaru kont i powraca w niezmienionej postaci.

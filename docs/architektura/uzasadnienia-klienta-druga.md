@@ -5055,3 +5055,6 @@ w nawiasie. Komunikat kanału mieści się zwykle w czterdziestu znakach, więc 
 odsiewa; odsiewa go zbiór znaków i liczba słów. Klient nie orzeka, że wartość jest błędna: oddaje
 ją operatorowi dosłownie i zostawia mu ocenę, nie wpisuje tylko cudzego komunikatu do pola języka
 i nie melduje go jako rozpoznania.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-nakladu.ts
+W pasku stoi menu, a nie suwak, ponieważ etykieta komponentu ma być bieżącą wartością, a suwak pokazuje położenie i wymaga podpisu obok siebie — suwak w kolumnie sterowania zostaje, bo to ta sama nastawa w dwóch widokach, nie dwa stany. Stopień jest napisem wyliczenia, nie liczbą, a jego wartość idzie ustawieniem poziomu okna, bo komunikat aktualizacji okna nie ma dla niej osobnego pola. Napis pusty jest pełnoprawnym stopniem, oznaczającym rozstrzygnięcie przez kanał modelu, a nie brak ustawienia, więc stoi na wykazie jak każdy inny. Klucz pusty należy w mechanizmie menu do stopki, a stopień „bez wskazania” jest napisem pustym — przedrostek klucza rozdziela jedno od drugiego.

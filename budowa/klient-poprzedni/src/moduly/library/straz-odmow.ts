@@ -10,34 +10,9 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { Kanal, Wynik } from '../../protokol/kanal';
 
 /**
- * Straż odmów — jedyna droga modułu Library do rdzenia.
- *
- * Rdzeń odpowiada na komendę bez uchwytu kopertą zdarzenia `<obszar>.unknown`
- * z identyfikatorem żądania, ale bez pola `status`
- * (`server/internal/protocol/zadanie.go`). Korelacja klienta rozstrzyga
- * wyłącznie koperty ze statusem (`protokol/koperta.ts`), więc obietnica
- * zwykłego `wywolaj()` po takiej odmowie nigdy się nie rozstrzyga, a okno
- * zostaje w stanie ładowania.
- *
- * Straż wiąże odmowę z żądaniem po `requestId` i zamienia ją w zwykły `Wynik`
- * z polem `blad`. Dzięki temu okno obsługuje odmowę tą samą drogą co każde inne
- * niepowodzenie i mówi wprost, której komendy rdzeń nie zna.
- *
- * Sześć obszarów własnych, bo tyle woła moduł: własny `library`, okno
- * komunikacji (`window.action`, `window.state.get`), przenoszenie kontekstu
- * (`context`), katalog akcji (`action`), katalog modułów (`module.list` —
- * obsadza ster modułu docelowego) oraz komplet kontekstu okna
- * (`aod.context.get` — jedyna komenda kontraktu czytająca to, co przyniosło
- * przekazanie).
- *
- * Siódma subskrypcja idzie na obszar zapasowy `connection`, bo rodzina
- * `knowledge.*` — wyszukiwanie po znaczeniu i wskaźnik znaczenia biblioteki —
- * nie ma własnego zdarzenia odmowy. Wykaz `zdarzeniaNieznanej`
- * (`shared/contract.go`) nie zna klucza `knowledge`, więc rdzeń bez wpiętego
- * portu Wiedzy odpowie `connection.unknown`. Bez tej subskrypcji obietnica
- * takiego wywołania nigdy by się nie rozstrzygnęła, a okno zostałoby
- * w ładowaniu. Wiązanie idzie po `requestId`, więc cudza odmowa obszaru
- * zapasowego niczego tu nie rozstrzyga.
+ * Straż odmów — jedyna droga modułu Library do rdzenia. Odmowa komendy wraca
+ * kopertą `<obszar>.unknown` bez pola `status`, więc korelacja jej nie
+ * rozstrzyga; straż wiąże ją po `requestId` i zwraca jako `Wynik` z błędem.
  */
 export interface StrazOdmow {
   /** Wysyła komendę kontraktu; odmowa rdzenia wraca jako `Wynik` z błędem. */
@@ -46,7 +21,10 @@ export interface StrazOdmow {
   rozlacz(): void;
 }
 
-/** Odbiorca wyniku bez wiedzy o kształcie treści — mapa oczekujących jest jedna. */
+/**
+ * Odbiorca wyniku bez wiedzy o kształcie treści, ponieważ mapa oczekujących na
+ * odmowę jest jedna dla wszystkich obserwowanych obszarów kontraktu.
+ */
 type RozstrzygnijNieznane = (wynik: Wynik<never>) => void;
 
 export function utworzStrazOdmow(kanal: Kanal): StrazOdmow {
@@ -60,9 +38,8 @@ export function utworzStrazOdmow(kanal: Kanal): StrazOdmow {
     rozstrzygnij({ udany: false, blad: bladOdmowy(tresc) });
   }
 
-  // Subskrypcje wypisane po jednej, a nie złożone pętlą: kształt treści
-  // zdarzenia bierze się z jego nazwy, więc pętla po wykazie zgubiłaby typ
-  // ładunku i kazałaby go rzutować na ślepo.
+  // Subskrypcje po jednej: pętla po wykazie zgubiłaby typ ładunku
+  // i wymusiłaby rzutowanie.
   const odsubskrybowania: Odsubskrybuj[] = [
     kanal.naZdarzenie(EventType.LibraryUnknown, (tresc) => przyjmijOdmowe(tresc)),
     kanal.naZdarzenie(EventType.WindowUnknown, (tresc) => przyjmijOdmowe(tresc)),
@@ -95,7 +72,7 @@ export function utworzStrazOdmow(kanal: Kanal): StrazOdmow {
 /**
  * Błąd opisujący odmowę rdzenia.
  *
- * Kod `not_found`: brakuje nie bytu wskazanego w żądaniu, lecz uchwytu
+ * Kod `not_found`: brakuje nie bytu z żądania, lecz uchwytu
  * komendy — stan nieponawialny, więc `retryable` jest fałszem. Nazwa żądanego
  * typu zostaje w treści, bo bez niej nie widać, której komendy rdzeń nie zna.
  */

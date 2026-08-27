@@ -309,6 +309,52 @@
 .cd-kafel-blok { display: flex; }
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
+/* ── Grot marki jako wejście ───────────────────────────────────────────────
+   Wejście do środowiska i do komponentu niesie pojedynczy grot ze znaku
+   firmowego wraz z kropką sygnału — ten sam kształt, którym otwiera się lockup.
+   Wysokość niesie zmienna, bo grot w kaflu komponentu stoi w polu o połowę
+   wyższym niż wiersz metryki kafla środowiska. */
+.cd-grot-marki {
+  width: auto;
+  height: var(--cd-grot-wys, var(--dn-od-6));
+  flex: none;
+  color: var(--dn-tekst-2);
+  transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+}
+
+/* Kafel środowiska: przycisk zwęża się do samego grota, wyściółka schodzi do
+   miary odstępu, żeby obrys obejmował znak, a nie napis, którego już nie ma.
+   Rozmiar niesie osobna reguła na `svg`, bo miara ikony przycisku z warstwy
+   wspólnej ma wyższą swoistość niż zmienna na samym grocie. */
+.cd-strona .cd-wejdz--grot {
+  /* Wyściółka pionowa zerowa: grot ma 32 px, a wiersz metryki karty stał na
+     przycisku tej samej miary — z wyściółką karta rosła o dziesięć pikseli. */
+  padding: 0 var(--dn-od-3);
+  min-width: 0;
+}
+.cd-strona .cd-wejdz--grot > .cd-grot-marki {
+  width: auto;
+  height: var(--dn-od-8);
+}
+.cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
+.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
+
+/* Kafel komponentu jest przyciskiem sam w sobie, więc grot stoi w nim jako
+   znak, nie kontrolka: dosuwa się do prawej krawędzi i odpowiada na najechanie
+   całym kaflem. */
+.cd-kafel-grot {
+  --cd-grot-wys: var(--dn-od-8);
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex: none;
+}
+.cd-strona .cd-kafel:hover .cd-grot-marki,
+.cd-strona .cd-kafel:focus-visible .cd-grot-marki {
+  color: var(--dn-tekst);
+  transform: translateX(var(--dn-od-05));
+}
+
 /* Przycisk zakładający komponent własny stoi między strefą aplikacji a strefą
    Operatora — to on jest przejściem między jedną a drugą. */
 .cd-dodaj-pas { display: flex; }

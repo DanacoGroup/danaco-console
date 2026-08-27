@@ -6349,3 +6349,21 @@ Zakres global wylicza wszystkie okna z identyfikatorem kontraktowym;
 zasadę obowiązującą każde z nich rozstrzyga potem funkcja Egzekwuj osobno,
 kolejnością window, session, global — przemiatanie tej kolejności nie zna
 i nie powiela.
+
+## budowa/server/internal/core/most_narzedzi.go
+Kontrakt deklaruje narzędzia, pakiet narzędzi je wystawia, ale bez wpisu w pliku konfiguracji MCP
+proces modelu nigdy się o nich nie dowie. Wpis powstaje osobno dla każdego okna i niesie jego
+identyfikator, więc narzędzie zawsze wie, z którego okna przyszło wywołanie. Konfigurację MCP
+zapytania składa uzupełnienie środowiska adaptera rozmowy; reszta drogi — wykaz, rozdzielnia,
+gniazdo, protokół — stoi w pakiecie narzędzi. Brak binarium serwera narzędzi jest meldowany wprost,
+raz na powód: bez tego model dostałby wpis wskazujący plik, którego nie ma, i sterowanie platformą
+milczałoby bez śladu.
+
+Okno bez nadań dostaje konfigurację z samym wpisem narzędzi — sterowanie platformą nie zależy od
+tego, czy okno ma wgląd w jakąkolwiek maszynę. Konfiguracja nieczytelna albo okno bez identyfikatora
+zostawiają tekst dotychczasowy: rozmowa toczy się dalej, tyle że bez narzędzi.
+
+Powód nie zmienia się między turami — albo binarium w produkcie jest, albo go nie ma — a tur bywa
+kilkaset dziennie; powtarzany meldunek zasłoniłby resztę dziennika i sam przestałby być czytany.
+Okno bez identyfikatora meldunku nie daje: to stan zwykły przy oknie jeszcze niezałożonym, a nie
+usterka wydania.

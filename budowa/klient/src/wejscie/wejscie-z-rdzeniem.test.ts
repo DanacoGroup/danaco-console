@@ -221,7 +221,7 @@ await bieg('droga wejścia — rozmowa z rdzeniem', {
       /* ── Etap 3: przygotowanie środowiska ───────────────────────────── */
       const poWejsciu = await azDo(
         przebieg,
-        (stan) => stan.srodowisko !== undefined || stan.przygotowanie.stany[2] === 'blad',
+        (stan) => stan.srodowisko !== undefined || stan.przygotowanie.stany[1] === 'blad',
         'wejście do środowiska',
       );
       sprawdz(

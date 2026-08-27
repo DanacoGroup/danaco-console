@@ -20,6 +20,7 @@
 
 import { ekranDostepu, pasyDostepu } from './ekrany/dostep.ts';
 import {
+  PONOWIENIE,
   ekranPrzygotowania,
   pasPrzygotowania,
   paskiPrzygotowania,
@@ -241,6 +242,10 @@ function odswiezPrzygotowanie(korzen: ParentNode, stan: StanPrzebiegu): void {
   for (const miara of korzen.querySelectorAll('.dn-postep-wartosc[data-wartosc]')) {
     (miara as HTMLElement).style.width = `${(miara as HTMLElement).dataset['wartosc'] ?? '0'}%`;
   }
+  // Ponowienie stoi wyłącznie przy etapie nieudanym: przy przebiegu udanym nie
+  // ma czego ponawiać, a kontrolka bez skutku jest gorsza od jej braku.
+  const ponowienie = korzen.querySelector(`#${PONOWIENIE}`) as HTMLElement | null;
+  if (ponowienie !== null) ponowienie.hidden = !stan.przygotowanie.stany.includes('blad');
 }
 
 function obszarKomunikatow(korzen: ParentNode, odslona: Odslona): Element | null {
@@ -535,6 +540,8 @@ async function wykonaj(
     case 'ponow-droge':
       powiadom(tekst('komunikaty.kodPonowiony.tytul'), tekst('komunikaty.kodPonowiony.tresc'));
       return przebieg.poprosOOdzyskanie(przebieg.stan().adres);
+    case 'ponow-przygotowanie':
+      return przebieg.przygotujSrodowisko();
     case 'przerwij-i-wyloguj':
       przebieg.przejdzDo('logowanie');
       return;

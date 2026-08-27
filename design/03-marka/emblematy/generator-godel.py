@@ -31,7 +31,7 @@ KAT_FAVICON = os.path.join(BAZA, "favicon")
 for k in (KAT_SVG, KAT_SVG_MARKA, KAT_PNG, KAT_IKONA, KAT_FAVICON):
     os.makedirs(k, exist_ok=True)
 
-# Barwy odpowiadają żetonom systemu; w plikach SVG podajemy je dosłownie, bo są barwami własnymi znaku, nie odczytem motywu.
+# Barwy odpowiadają żetonom systemu; w plikach SVG podawane są je dosłownie, bo są barwami własnymi znaku, nie odczytem motywu.
 INK_JASNY = "#181818"   # --dn-tekst (motyw jasny)  = szary-900
 INK_CIEMNY = "#ECECEC"  # --dn-tekst (motyw ciemny) = szary-100
 DOT_JASNY = "#3B6FE0"   # --dn-kropka (motyw jasny)  = sygnal-500

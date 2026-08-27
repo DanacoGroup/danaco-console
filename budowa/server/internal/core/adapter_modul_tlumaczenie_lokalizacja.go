@@ -24,7 +24,7 @@ const przedrostekZasobuLokalizacji = "lok-"
 
 // formyMnogieJezyka oddaje nazwy form mnogich CLDR dla języka. Język spoza
 // wykazu dostaje parę `one`/`other` — najwęższy zestaw, który ma każdy język
-// świata; wymyślanie mu form, których reguły nie znamy, byłoby zgadywaniem
+// świata; wymyślanie mu form o nieznanych regułach byłoby zgadywaniem
 // gramatyki cudzego języka.
 func formyMnogieJezyka(jezyk string) []string {
 	kod := strings.ToLower(strings.SplitN(strings.TrimSpace(jezyk), "-", 2)[0])

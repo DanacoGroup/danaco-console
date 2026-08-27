@@ -5,40 +5,16 @@ import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { tozsamoscKlienta } from '../../protokol/tozsamosc-klienta';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Powody nieczynnych kontrolek modułu Workspace — składane z wykazu komend
- * uruchomionego rdzenia i z wykazu komend kontraktu.
- *
- * Powód bierze się z powitania: `connection.hello` oddaje w polu `commands`
- * wykaz komend zarejestrowanych przez rdzeń, a nie wykaz z kontraktu. Moduł
- * pyta o niego raz przy montażu i z odpowiedzi układa zdanie każdej nieczynnej
- * kontrolki, więc rozróżnia brak po stronie rdzenia od braku w kontrakcie.
- * Gdy rdzeń komendę zarejestruje, zdanie zmienia się samo (wzór:
- * `moduly/katalog-okien.ts`).
- *
- * Stanów jest więcej niż dwa: dopóki rdzeń nie odpowiedział, kontrolka nie
- * orzeka o braku, tylko mówi, że pytanie jest w drodze; odmowa powitania też
- * nie staje się orzeczeniem o braku.
- *
- * Kontrolka bez pokrycia nie znika i nie udaje, że działa — zostaje widoczna,
- * klikalna i niesie powód wprost (`przyciskBezKomendy`).
- */
+/** Powody nieczynnych kontrolek modułu Workspace składają się z wykazu komend rdzenia i kontraktu. */
 
-/** Komendy kontraktu jako zbiór — po nim poznajemy, po czyjej stronie jest brak. */
+/** Komendy kontraktu jako zbiór pozwalają rozpoznać, po czyjej stronie jest brak, gdy rdzeń komendy nie rejestruje. */
 const W_KONTRAKCIE: ReadonlySet<string> = new Set<string>(KOMENDY);
 
-/** Wykaz komend rdzenia wraz z kontrolkami, które z niego biorą swoje zdanie. */
+/** Wykaz komend rdzenia wraz z kontrolkami, które z niego biorą swoje zdanie, tworzy jedno źródło powodów nieczynności. */
 export interface WykazBrakow {
   /** Pyta rdzeń o wykaz komend i przerysowuje powody wszystkich kontrolek. */
   odczytaj(): Promise<void>;
-  /**
-   * Kontrolka bez pokrycia; powód dopisuje się sam po odpowiedzi rdzenia.
-   *
-   * @param etykieta napis na przycisku.
-   * @param czynnosc czego kontrolka miała dokonać — wchodzi do zdania powodu.
-   * @param komendy komendy, które by tego dokonały; brak nazw znaczy, że okno
-   *   nie zna żadnej.
-   */
+  /** Kontrolka bez pokrycia, której powód dopisuje się sam po odpowiedzi rdzenia na wykaz komend. */
   przyciskBraku(
     etykieta: string,
     czynnosc: string,
@@ -54,11 +30,7 @@ export function utworzWykazBrakow(kanal: Kanal): WykazBrakow {
   /** Kontrolki, które trzeba przerysować po odpowiedzi rdzenia. */
   const zalezne: Array<() => void> = [];
 
-  /**
-   * Zdanie o pokryciu jednej komendy. Rozróżnia cztery stany: odmowę powitania,
-   * pytanie w drodze, komendę zarejestrowaną przez rdzeń oraz brak — osobno po
-   * stronie rdzenia i osobno w kontrakcie.
-   */
+  /** Zdanie o pokryciu komendy rozróżnia cztery stany: odmowę, pytanie w drodze, rejestrację i brak. */
   function zdanieOKomendzie(nazwa: string): string {
     if (odmowa !== '') {
       return `Rdzeń nie oddał wykazu komend (${odmowa}) — o pokryciu komendy ${nazwa} nic nie wiadomo.`;
@@ -107,16 +79,11 @@ export function utworzWykazBrakow(kanal: Kanal): WykazBrakow {
 
     przyciskBraku(etykieta, czynnosc, ...komendy) {
       let kontrolka = przyciskBezKomendy(etykieta, powod(czynnosc, komendy));
-      // Powód idzie trzema drogami naraz — `title`, `aria-description` i dymek
-      // po naciśnięciu — a dymek `przyciskBezKomendy` domyka powód w chwili
-      // budowy. Podmiana samych atrybutów zostawiłaby dymek ze zdaniem sprzed
-      // odpowiedzi rdzenia, więc kontrolka powstaje na nowo i wchodzi na miejsce
-      // poprzedniej; jednego źródła kontrolki (`kontrolki-formularza`) to nie rusza.
+      // Powód idzie trzema drogami naraz, więc kontrolka powstaje na nowo i wchodzi na miejsce poprzedniej.
       zalezne.push(() => {
         const nowa = przyciskBezKomendy(etykieta, powod(czynnosc, komendy));
         if (kontrolka.parentNode === null) {
-          // Kontrolka poza drzewem: trzyma ją jeszcze wywołujący, więc
-          // podmiana węzła nic by nie dała — zostają dwie drogi z trzech.
+          // Kontrolka poza drzewem: trzyma ją jeszcze wywołujący, więc podmiana węzła nic by nie dała.
           kontrolka.title = nowa.title;
           kontrolka.setAttribute('aria-description', nowa.title);
           return;

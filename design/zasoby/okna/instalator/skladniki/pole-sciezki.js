@@ -1,19 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — POLE ŚCIEŻKI Z PRZYCISKIEM ZMIANY
-   ----------------------------------------------------------------------------
-   Katalog wskazany do instalacji: etykieta, ścieżka tylko do odczytu
-   i czynność zmiany. Ścieżka jest kontrolką, nie tekstem — musi dać się
-   zaznaczyć i skopiować klawiaturą.
-
-   Właściwości:
-     etykieta   klucz katalogu — nazwa pola
-     wartosc    klucz katalogu — ścieżka
-     opis       klucz katalogu — zdanie o zawartości katalogu
-     id         identyfikator kontrolki, wiązany etykietą
-     zmien      klucz katalogu — napis przycisku zmiany
-     naZmiane   wywołanie zwrotne przycisku
-     stan       'nieczynne' | null
-   ============================================================================ */
+/* Pole ścieżki z przyciskiem zmiany pokazuje katalog wskazany do instalacji jako kontrolkę tylko do odczytu, którą można zaznaczyć i skopiować klawiaturą, wraz z czynnością zmiany. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

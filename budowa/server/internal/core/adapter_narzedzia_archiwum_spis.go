@@ -54,7 +54,7 @@ func czytajSpisArchiwum(wyjscie string) []pozycjaArchiwum {
 
 	for _, linia := range strings.Split(wyjscie, "\n") {
 		linia = strings.TrimRight(linia, "\r")
-		// Nagłówek 7z też niesie pole Path (nazwę archiwum), więc pozycje liczymy dopiero od kreski.
+		// Nagłówek 7z też niesie pole Path (nazwę archiwum), więc pozycje liczy się dopiero od kreski.
 		if !wSpisie {
 			if strings.HasPrefix(strings.TrimSpace(linia), "----------") {
 				wSpisie = true
@@ -148,7 +148,7 @@ func sprawdzSciezkePozycji(pozycja pozycjaArchiwum) error {
 			"naprawa: przysłać archiwum z samymi plikami i katalogami")
 	}
 
-	// Ukośnik odwrotny znaczy w archiwum to samo co zwykły — sprowadzamy do jednej postaci.
+	// Ukośnik odwrotny znaczy w archiwum to samo co zwykły — sprowadza się do jednej postaci.
 	znormalizowana := strings.ReplaceAll(sciezka, `\`, "/")
 	if strings.HasPrefix(znormalizowana, "/") {
 		return bladSciezkiPozaKatalogiem(sciezka, "jest ścieżką bezwzględną")

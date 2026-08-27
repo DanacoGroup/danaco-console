@@ -10,19 +10,7 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { Kanal, Wynik } from '../../protokol/kanal';
 
 /**
- * Wysyłka komendy, która rozstrzyga się także wtedy, gdy rdzeń komendy nie zna.
- *
- * Odmowa nieznanej komendy wraca kopertą `<obszar>.unknown` bez pola `status`
- * (`server/internal/protocol/zadanie.go`), a klient uznaje za odpowiedź
- * wyłącznie kopertę ze statusem (`protokol/koperta.ts`, `czyOdpowiedz`).
- * Korelacja żądania takiej koperty nie rozstrzyga, więc obietnica `wywolaj`
- * zostałaby nierozstrzygnięta na zawsze, a okno wisiałoby w stanie ładowania.
- * Odmowę trzeba więc rozpoznać po ładunku, nie po nazwie zdarzenia.
- *
- * Nasłuch wiąże identyfikator żądania (oddawany przez `kanal.wyslij`)
- * z ładunkiem `UnknownCommandPayload`. Zwycięża to, co przyjdzie pierwsze:
- * odpowiedź korelacji albo odmowa nieznanej. Połączenia nic to nie kosztuje —
- * rdzeń pracuje dalej.
+ * Interfejs odpowiedzi badania rozszerza wynik wywołania o rozpoznanie odmowy nieznanej komendy, gdy rdzeń nie zna zadanego typu żądania.
  */
 export interface OdpowiedzBadania<T> extends Wynik<T> {
   /** Typ, którego rdzeń nie zna; pusty, gdy odpowiedź nie jest odmową nieznanej. */
@@ -39,7 +27,7 @@ export interface NasluchOdmow {
   rozlacz(): void;
 }
 
-/** Zdarzenia odmowy istotne dla okien Research: własny obszar i obszar okna. */
+/** Stała wylicza zdarzenia odmowy istotne dla okien modułu Research: odmowę własnego obszaru oraz odmowę obszaru okna. */
 const ZDARZENIA_ODMOWY = [EventType.ResearchUnknown, EventType.WindowUnknown] as const;
 
 export function utworzNasluchOdmow(kanal: Kanal): NasluchOdmow {
@@ -79,11 +67,7 @@ export function utworzNasluchOdmow(kanal: Kanal): NasluchOdmow {
 }
 
 /**
- * Odmowa jako zwykłe niepowodzenie wywołania — z zachowanym żądanym typem.
- *
- * Kod `not_found` mówi prawdę: bytu o tej nazwie w rdzeniu nie ma. Nazwa typu
- * zostaje w polu osobnym, żeby okno mogło ją wypisać wprost, zamiast pokazywać
- * pusty wykaz udający brak danych.
+ * Funkcja zamienia odmowę nieznanej komendy w zwykłe niepowodzenie wywołania, zachowując żądany typ w polu osobnym odpowiedzi.
  */
 function odmowa<T>(tresc: UnknownCommandPayload, komenda: string): OdpowiedzBadania<T> {
   const zadany = tresc?.requestedType ?? komenda;

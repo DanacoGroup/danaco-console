@@ -102,7 +102,7 @@ Pozycjonowanie definiuje się także przez **odrzucone odruchy**. Katalog anty-d
    stan samym kolorem           ──►    zawsze ikona albo etykieta
    emoji jako ikony             ──►    wyłącznie SVG z zestawu
    glassmorfizm wszędzie        ──►    powierzchnie kryjące
-   #000000 jako tło             ──►    #0F0F0F / #F4F4F4
+   #000000 jako tło             ──►    #0D0F13 / #F3F4F6
    Lorem ipsum, zmyślone dane   ──►    treści operacyjne z domeny produktu
 ```
 
@@ -949,12 +949,12 @@ Wpięcie w `<head>` (plik źródłowy: `zasoby/marka/favicon/naglowek-snippet.ht
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#F4F4F4" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131313" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F4F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
 ```
 
 Manifest deklaruje: `name` **Danaco Console** · `short_name` **Danaco** ·
-`display` **standalone** · `background_color` `#0F0F0F` · `theme_color` `#131313` ·
+`display` **standalone** · `background_color` `#0F0F0F` · `theme_color` `#111317` ·
 trzy ikony, w tym jedna `maskable`.
 
 ---

@@ -2062,3 +2062,25 @@ Interfejs transportu wystawia sześć podstawowych metod, a numer próby
 i zaplanowane ponowienie trzyma prywatnie gniazdo połączenia, więc dojście do
 przebiegu ponowienia sprawdza obecność metod jawnie i jednorazowo, zamiast
 zakładać ją na sztywno w miejscu wywołania.
+
+## budowa/klient-poprzedni/src/widok-sterowania/obserwator-ustawien.ts
+
+Podsumowanie pokazuje osiem wartości obok siebie także wtedy, gdy szuflada
+z kontrolkami jest zwinięta — a kontrolki kompletu sterowania trzymają swój
+stan wewnątrz panelu sterowania i nie wystawiają go na zewnątrz. Ten plik jest
+odczytem tego samego stanu, a nie drugą jego definicją: buduje stan sterowania,
+zmianę okna i zmianę ustawienia z katalogu sterowania i nie dopisuje ani jednej
+reguły protokołu.
+
+Obserwator wyłącznie czyta — nie wywołuje czynności zastosowania ani zapisu,
+więc nie ma drogi, którą mógłby zmienić okno. Komunikaty o losie zmian pomija,
+bo pokazuje je pasek kompletu sterowania; podwójny komunikat byłby szumem. Gdy
+panel sterowania wystawi własną migawkę i subskrypcję zmian, ten plik zniknie,
+a podsumowanie odczyta stan kompletu wprost.
+
+## budowa/klient-poprzedni/src/rozmowa/lista-wpisow.ts
+Wpis rozpoznawany jest po kluczu, nie po pozycji: fragment strumienia odświeża tę samą pozycję, zamiast dokładać kolejną. Dzięki temu tura, która przyniosła prowenancję, dziesiątki fragmentów tekstu, wywołania narzędzi i podsumowanie, pozostaje w historii jednym wpisem. Przewijanie do końca następuje tylko wtedy, gdy lista już stała na końcu, więc czytanie starszej wypowiedzi nie jest przerywane przez nadchodzący strumień. Tryb widoku transkryptu jest stanem listy, nie pojedynczego wpisu: lista trzyma jeden tryb i rozsyła go do widoków, więc wpis założony po przełączeniu rodzi się już w trybie bieżącym. Pamięć wpisów jest od trybu niezależna, przełączenie niczego nie usuwa, a powrót do trybu zwykłego przywraca wątek w całości.
+
+Po zdjęciu wszystkich wpisów stan pusty wraca na wierzch, ale nie zostaje sam: wołający zaraz po wyczyszczeniu dopisuje zdanie o powodzie, żeby w miejscu zniknięcia rozmowy nie stał napis o rozmowie, która się jeszcze nie zaczęła.
+
+Dwie różne pustki dostają dwa różne zdania: to, że wątek się nie zaczął, i to, że tryb Streszczenie nie ma jeszcze czego streścić, to nie ten sam fakt. Drugi wariant tłumaczy, czym streszczenie jest i skąd się bierze.

@@ -301,3 +301,62 @@ jednej wartości szesnastkowej poza próbkami.
 Reszta wyglądu okna, poza menu kontekstowym, idzie z arkusza modułu
 developer.css. Plik nie zna barwy dosłownej ani rozmiaru dosłownego —
 wyłącznie żetony motywu.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/pomocnicze.css
+Rodzina klas pasa jest wspólna oknu Developer i oknu Diagnostics: ten sam pas
+stoi w obu, więc jego wygląd ma jedno miejsce zamiast dwóch kopii do
+rozjechania się. Klasy modułowe zostają przy stanach treści okna, bo tam
+pokrycie w arkuszach obu okien już jest. Pozycja, której jeszcze nie ma, ma
+być czytelna, bo po niej poznaje się, czego platforma nie potrafi — wiersz
+braku nie dostaje ani przezroczystości, ani przekreślenia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/lacznosc.css
+Tutaj stoi wyłącznie to, czego biblioteka komponentów nie niesie: miejsce
+plakietki w nagłówku gniazda i rozmiar przycisku ponowienia próby.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/panele.css
+Rozkład sceny opisuje osobny arkusz układu, wygląd gniazda osobny arkusz
+gniazda; ten arkusz nie sięga do żadnego z nich. Gęstość jest wymaganiem,
+nie skutkiem ciasnoty: nagłówek panelu ma wysokość jednego wiersza i mieści
+tytuł oraz rząd ikon. Nie ma tu reguły dla drugiego rzędu ani dla paska
+narzędzi, ponieważ panel z drugim rzędem jest zbudowany źle, nawet jeśli
+działa.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przeciaganie.css
+Przedrostek klas jest przedrostkiem obszaru, nie modułu — gest przenoszenia
+nie należy do żadnego pojedynczego okna.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przepelnienie.css
+Przedrostek klas jest przedrostkiem obszaru okien równoległych i pomocniczych,
+nie modułu. Docelowym domem tego wzorca jest biblioteka komponentów — biblioteka
+jest cudza i nietykalna, więc wniosek o przeniesienie idzie wpięciem, a nie
+trzecim miejscem na tę samą rzecz.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uchwyt.css
+Widać krechę, chwyta się pas: gdyby pole chwytu było równie wąskie jak
+krecha, trafienie w nie wymagałoby celowania, więc pas chwytu wychodzi poza
+obrys elementu w obie strony zamiast rozszerzać sam element i zabierać
+piksele kolumnom.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/powierzchnia-modulu.css
+Historia wątku i pole wypowiedzi mieszkają w arkuszach warstwy rozmowy, nie
+w tym arkuszu. Źródłem wartości są wyłącznie żetony motywu i klasy biblioteki
+komponentów — ani jednej wartości szesnastkowej, ani jednego odstępu spoza
+skali czterech pikseli.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/przelacznik-srodowiska.css
+Wygląd uchwytu i wykazu niesie arkusz menu drzewa, wygląd zdania odmowy —
+plakietka błędu, a kreskę, tło i odstępy rzędu — arkusz paska zlecenia. Tutaj
+zostaje wyłącznie ustawienie uchwytu i odmowy w kolumnie; wyściółka i tło
+panelu dałyby w tym miejscu pasek w pasku.
+
+## budowa/klient-poprzedni/src/powloka/wykaz-wynikow.css
+Wygląd wykazu niesie w całości arkusz menu drzewa, a wygląd pustki arkusz
+drobnych elementów. Nośnik ma wysokość zerową, bo siedzi wewnątrz pola
+poleceń paska górnego — wysokość własna rozepchnęłaby pasek w chwili
+pojawienia się wyników.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/punkty-izolacji.css
+Obudowa okna — nagłówek, opis, akcje, ciało — niesie arkusz ramy okna. Stan
+treści każdego obszaru (ładowanie, pustka, błąd, gotowe) niesie arkusz stanu
+treści przez klasy tego okna, nie duplikat.

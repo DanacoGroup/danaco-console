@@ -1431,3 +1431,9 @@ notatki warstwy w kontrakcie, więc zostaje w kompozycji na trwałe.
 Blokada dotyczy wyłącznie położenia warstwy na kanwie. Wiersz warstwy
 zablokowanej pozostaje klikalny i edytowalny, a stan blokady niesie atrybut
 danych wiersza.
+
+## budowa/klient-poprzedni/src/moduly/apps/wykaz-komponentow-warstwy.ts
+
+Okno Frontend Workspace i okno Backend Workspace korzystają z tego samego zbioru komponentów pochodzącego z Architecture Designera i różnią się wyłącznie tym, które rodzaje komponentów do nich należą. Dlatego oba okna składa jeden moduł wykazu, sparametryzowany warstwą warsztatu.
+
+Przypisanie rodzaju komponentu do warstwy jest wyborem klienta, a nie kontraktu. Ani typ AppWorkspaceLayer, ani typ AppComponentKind nie łączą tych dwóch zbiorów, więc podział został wypisany wprost w stałej RODZAJE_WARSTWY, aby stał w jednym miejscu i nie rozchodził się po oknach.

@@ -213,3 +213,10 @@ tabel 36 pikseli, pasek górny 48 pikseli. Progi punktów łamania stoją jako
 wartości nazwane, ponieważ warunek zapytania medialnego nie przyjmuje
 zmiennej — żeton daje liczbie jedno miejsce do sprawdzenia, a warstwa
 skryptów czyta ten sam próg co arkusze, nie własną kopię.
+
+## budowa/klient-poprzedni/src/motyw/prymitywy.css
+Kierunek skali jest monochromatyczną precyzją: neutralne są czysto neutralne,
+o równych składowych RGB, a jedyną barwą akcentu systemu jest błękit
+sygnałowy. Po stopniu #7C7C7C nie sięga już żadna rola tekstu: na papierze
+#F4F4F4 stopień ten daje kontrast 3,80:1, za jasny na tekst i na obrys,
+a na powierzchni #181818 — 4,25:1, za ciemny na tekst drugoplanowy.

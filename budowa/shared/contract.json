@@ -16244,6 +16244,36 @@
       ]
     },
     {
+      "nazwa": "KnowledgeImageHit",
+      "opis": "Obraz odnaleziony zdaniem opisujacym jego tresc. Osobna struktura od KnowledgeHit, bo obraz nie ma fragmentu tekstu do zacytowania — wskazaniem jest sam plik",
+      "pola": [
+        {
+          "nazwa": "source",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nazwa pliku obrazu w bibliotece"
+        },
+        {
+          "nazwa": "sourceId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Identyfikator zrodla, ktorym da sie po obraz siegnac"
+        },
+        {
+          "nazwa": "mimeType",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Rodzaj obrazu zapisany przy pliku biblioteki"
+        },
+        {
+          "nazwa": "score",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Trafnosc w setnych — 100 znaczy najblizszy mozliwy"
+        }
+      ]
+    },
+    {
       "nazwa": "SessionTool",
       "opis": "Narzedzie dolozone do sesji komenda po ukosniku. Zyje W STANIE SESJI, nie w definicji eksperta: definicja pozostaje nietknieta, dolozenie przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy",
       "pola": [
@@ -47728,6 +47758,18 @@
           "typ": "string",
           "wymagane": false,
           "opis": "Projekt, ktorego wiedze przeszukac po znaczeniu"
+        },
+        {
+          "nazwa": "rerank",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze"
+        },
+        {
+          "nazwa": "rerankCandidates",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic"
         }
       ],
       "wynik": [
@@ -47742,6 +47784,62 @@
           "typ": "int",
           "wymagane": true,
           "opis": "Liczba fragmentow spelniajacych warunki"
+        },
+        {
+          "nazwa": "reranked",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy kolejnosc ulozyl przesiew. Bez tego pola nie da sie odroznic odpowiedzi przesianej od odpowiedzi z samego pierwszego przebiegu, a `score` w obu ma ten sam ksztalt"
+        }
+      ]
+    },
+    {
+      "typ": "knowledge.image.search",
+      "opis": "Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora",
+      "zadanie": [
+        {
+          "nazwa": "query",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Zdanie opisujace szukany obraz"
+        },
+        {
+          "nazwa": "limit",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Gorna granica liczby obrazow"
+        },
+        {
+          "nazwa": "projectId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Projekt, ktorego obrazy przeszukac"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "results",
+          "typ": "KnowledgeImageHit[]",
+          "wymagane": true,
+          "opis": "Obrazy od najtrafniejszego"
+        },
+        {
+          "nazwa": "total",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba obrazow spelniajacych warunki"
+        },
+        {
+          "nazwa": "examined",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Ile obrazow biblioteki weszlo do porownania. Wynik pusty przy zerze znaczy brak obrazow, a nie brak trafienia — dwie rozne odpowiedzi, ktorych bez tej liczby nie da sie rozroznic"
+        },
+        {
+          "nazwa": "model",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Model osi obrazu, ktorym liczono podobienstwo"
         }
       ]
     },
@@ -86652,6 +86750,10 @@
       {
         "komenda": "knowledge.search",
         "zastosowanie": "Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo"
+      },
+      {
+        "komenda": "knowledge.image.search",
+        "zastosowanie": "Uzyj, gdy Operator pyta o obraz, ktorego nazwy nie pamieta — opisz zdaniem, co ma byc na obrazie, zamiast zgadywac nazwe pliku"
       },
       {
         "komenda": "session.tool.list",

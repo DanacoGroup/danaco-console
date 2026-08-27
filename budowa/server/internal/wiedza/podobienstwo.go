@@ -131,16 +131,25 @@ func Najblizsze(pozycje []Pozycja, pytanie []float32, ile int) []Trafienie {
 		}
 		trafienia = append(trafienia, Trafienie{Pozycja: pozycja, Podobienst: podobienstwo})
 	}
-	// Sortowanie stabilne, żeby dwa fragmenty o równym podobieństwie wracały
-	// zawsze w tej samej kolejności — inaczej to samo pytanie zadane dwa razy
-	// dawałoby dwie różne odpowiedzi bez żadnej zmiany w wiedzy.
-	sort.SliceStable(trafienia, func(i, j int) bool {
-		return trafienia[i].Podobienst > trafienia[j].Podobienst
-	})
+	posortujMalejaco(trafienia)
 	if ile > 0 && len(trafienia) > ile {
 		trafienia = trafienia[:ile]
 	}
 	return trafienia
+}
+
+// posortujMalejaco układa trafienia od najbliższego, zachowując kolejność
+// wejściową przy równej ocenie.
+//
+// Sortowanie stabilne, żeby dwa fragmenty o równej ocenie wracały zawsze w tej
+// samej kolejności — inaczej to samo pytanie zadane dwa razy dawałoby dwie różne
+// odpowiedzi bez żadnej zmiany w wiedzy. Wspólne dla obu przebiegów: pierwszy
+// układa po kosinusie, drugi po ocenie kodera (`przesiew.go`), a wymóg
+// powtarzalności jest ten sam.
+func posortujMalejaco(trafienia []Trafienie) {
+	sort.SliceStable(trafienia, func(i, j int) bool {
+		return trafienia[i].Podobienst > trafienia[j].Podobienst
+	})
 }
 
 // WSetnych przelicza kosinus na pole `score` kontraktu („trafnosc w setnych —

@@ -2759,3 +2759,79 @@ i rozjechałoby się z pierwszą przy najbliższej zmianie kontraktu.
 Materiał pochodzi z jednego magazynu zasobów, czytanego komendą
 `design.asset.list` — tego samego, z którego czyta Assets Panel. Drugi wykaz
 materiału byłby drugim miejscem, w którym ta sama treść żyje.
+
+## budowa/klient-poprzedni/src/konfiguracja/zrodlo-obszarow-sesji.ts
+
+Komenda `config.get` oddaje pojedyncze klucze katalogu ustawień, czyli płaskie
+wpisy `ConfigEntry` ze wszystkich poziomów naraz, więc dziedziczenie jednego
+klucza rozstrzyga klient w pliku `rozstrzygniecie.ts`. Komenda
+`config.effective.get` oddaje obszary konfiguracji sesji już rozstrzygnięte przez
+rdzeń, wraz z pochodzeniem obszaru i z rozejściem katalogu roboczego. Klient tego
+rachunku wykonać nie może: nie zna pełnej ścieżki bytów ani rejestrów spoza
+rodziny `config.*` — rejestru kont, rejestru kanałów, katalogu tożsamości
+i nadań dostępu — z których treść obszaru jest składana.
+
+Wynik obu czynności wraca opakowany, więc okno odróżnia obszar bez zapisu od
+nieudanego zapytania.
+
+Kształt odpowiedzi `config.effective.get` powstaje w rdzeniu w pliku
+`server/internal/core/sesja_konfiguracja_skladanie.go`. Pola `config`, `origins`
+i `workingDirectory` wychodzą zawsze, pole `capabilities` wyłącznie na żądanie,
+a `unsupportedFields` tą ścieżką nie wychodzi. Sprawdzian obejmuje trzy pola
+obowiązkowe i ani jednego więcej, ponieważ pole nieobowiązkowe w sprawdzianie
+zamieniłoby zdrową odpowiedź w fałszywą odmowę. Tak samo w odpowiedzi
+`config.session.set` pole `unsupportedFields` nie jest wymagane do uznania zapisu
+za udany, choć okno pokazuje je, gdy przyjdzie.
+
+Poziom i byt idą w żądaniu tym samym tłumaczeniem adresu, co komenda
+`config.set`.
+
+## budowa/klient-poprzedni/src/konfiguracja/rozstrzygniecie.ts
+
+Rachunek dziedziczenia jest w całości po stronie klienta i opiera się wyłącznie
+na tym, co przyszło z rdzenia komendą `config.get`: rdzeń oddaje wpisy wraz
+z poziomem, bytem poziomu, osią i bytem osi, więc dziedziczenie da się odtworzyć
+bez drugiej komendy.
+
+Klient nie zna pełnej ścieżki bytów od środowiska po okno, więc jej nie zgaduje:
+punkt widzenia wskazuje pasek u góry okna. Łańcuch takiego punktu składa się
+z wpisów globalnych oraz z wpisów zapisanych dokładnie na wskazanym poziomie
+i dla wskazanego bytu; zapis na tym samym poziomie, lecz dla innego bytu, dotyczy
+kogoś innego i do rachunku nie wchodzi.
+
+Brak zapisu nie jest błędem ani blokadą: obowiązuje wartość domyślna z katalogu,
+a wskaźnik mówi to wprost.
+
+## budowa/klient-poprzedni/src/dostepy/sekcja-dostepow.ts
+
+Sekcja dotyczy dwóch bytów: punktu dostępu wraz z nadaniem, czyli tego, do jakich
+maszyn i katalogów model sięga w obrębie jednego okna rozmowy, oraz katalogu
+roboczego, w którym model zostawia swoje pliki. Środowiska, czyli profilu
+widoczności modułów w bocznej nawigacji, sekcja nie dotyka i nie zapisuje do
+niego niczego.
+
+Układ jest dwuczęściowy: po lewej wykaz punktów wraz z dodawaniem katalogu
+z „Mój komputer", po prawej zbiór nadań okna. Pod nimi stoi obszar katalogu
+roboczego, oddzielony, ponieważ mówi o czym innym.
+
+Sekcja pojawia się natychmiast, przed odpowiedzią rdzenia; puste wykazy niosą
+zdanie, nie pusty prostokąt.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja-zrodlo.ts
+
+Źródło jest osobne, zamiast dołożenia metod do `zrodlo-diagnostics.ts`, ponieważ
+tamten plik należy do rodziny `diagnostics.*`, a prowenancja jest własną rodziną
+komend kontraktu. Rozstrzygnięcie odpowiedzi jest jednak to samo — funkcja
+`rozstrzygnij` z tamtego pliku — ponieważ rozróżnienie odmowy rdzenia od
+odpowiedzi nieczytelnej i od odpowiedzi bez treści ma tu tę samą wagę: zakładka
+poświęcona jawności pracy modeli nie może zamilczeć własnego potknięcia.
+
+Piąta komenda rodziny, `provenance.call.replay`, do tego źródła nie należy:
+powtórzenie wywołania wydaje pieniądze Operatora i jest czynnością sprawczą
+osobnego odcinka, nie odczytem. Zakładka mówi o niej wprost, zamiast wołać ją po
+cichu.
+
+Odcinki są w kontrakcie obowiązkowe i puste dla wywołania bez drzewa, więc ich
+brak jest odpowiedzią nieczytelną, a nie wywołaniem prostym. Treść wydania śladu
+bywa pusta legalnie, gdy zakres nie obejmuje żadnego wywołania, ale format
+i licznik muszą przyjść.

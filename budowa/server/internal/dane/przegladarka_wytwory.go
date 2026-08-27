@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: materiał wytworzony w sesji przeglądania i czynności
-// prowadzone przez rdzeń — wytwory i zrzuty (migracja 175), pobrania (176),
-// makra (177) oraz granice działania Wykonawcy (178).
-//
-// Wspólne im jest to, że każde z nich zostawia ślad poza bazą albo poza chwilą:
-// wytwór i zrzut mają bajty w magazynie, pobranie ma plik na dysku, makro ma
-// kroki do odtworzenia, granica obowiązuje kolejne przebiegi. Wiersz jest tu
-// wskazaniem na coś, co istnieje naprawdę — dlatego kolumna odwołania jest
-// NOT NULL: wytwór bez bajtów byłby meldunkiem bez skutku.
+// Plik przechowuje dane sesji przeglądania prowadzonej przez rdzeń: wytwory i
+// zrzuty ekranu trwałe w magazynie, pobrania plików, zapisane makra oraz
+// granice działania roli Wykonawcy dla kolejnych przebiegów.
 package dane
 
 import (
@@ -16,7 +10,9 @@ import (
 	"fmt"
 )
 
-// WytworPrzegladania to wiersz tabeli `wytwor_przegladania`.
+// WytworPrzegladania to wiersz tabeli wytwor_przegladania: zapisany rezultat
+// sesji przeglądania wraz z odwołaniem do treści przechowywanej w magazynie
+// plików.
 type WytworPrzegladania struct {
 	ID                  int64
 	Kod                 string
@@ -31,7 +27,9 @@ type WytworPrzegladania struct {
 	Utworzono           string
 }
 
-// ZrzutPrzegladania to wiersz tabeli `zrzut_przegladania`.
+// ZrzutPrzegladania to wiersz tabeli zrzut_przegladania: migawka ekranu
+// utrwalona w magazynie wraz z trybem, formatem oraz wymiarami obrazu w
+// pikselach.
 type ZrzutPrzegladania struct {
 	ID                  int64
 	Kod                 string
@@ -46,7 +44,9 @@ type ZrzutPrzegladania struct {
 	Utworzono           string
 }
 
-// PobraniePrzegladania to wiersz tabeli `pobranie_przegladania`.
+// PobraniePrzegladania to wiersz tabeli pobranie_przegladania: stan
+// pobierania pliku spod adresu url wraz z postępem w bajtach i ewentualnym
+// komunikatem błędu.
 type PobraniePrzegladania struct {
 	ID              int64
 	Kod             string
@@ -63,7 +63,8 @@ type PobraniePrzegladania struct {
 	Zakonczono      *string
 }
 
-// MakroPrzegladania to wiersz tabeli `makro_przegladania`.
+// MakroPrzegladania to wiersz tabeli makro_przegladania: nagrany ciąg kroków
+// możliwy do odtworzenia w kolejnej sesji przeglądania.
 type MakroPrzegladania struct {
 	ID             int64
 	Kod            string
@@ -76,7 +77,9 @@ type MakroPrzegladania struct {
 	Zaktualizowano string
 }
 
-// GranicaWykonawcy to wiersz tabeli `granica_wykonawcy_przegladania`.
+// GranicaWykonawcy to wiersz tabeli granica_wykonawcy_przegladania: limity
+// kroków i czasu działania oraz wykaz domen dozwolonych i zablokowanych dla
+// roli Wykonawcy.
 type GranicaWykonawcy struct {
 	ID                    int64
 	Zasieg                string
@@ -189,8 +192,8 @@ const (
 	                  WHERE zasieg = ? AND zasieg_id = ?`
 )
 
-// ZapiszWytwor odkłada wytwór sesji przeglądania. Wytwór jest wpisem
-// historii — powstaje nowym wierszem, nie nadpisaniem poprzedniego.
+// ZapiszWytwor odkłada wytwór sesji przeglądania jako kolejny wiersz
+// historii, nie nadpisując wcześniej zapisanych wytworów tego samego okna.
 func (r *repozytoriumPrzegladania) ZapiszWytwor(ctx context.Context,
 	wytwor WytworPrzegladania) (WytworPrzegladania, error) {
 
@@ -211,7 +214,8 @@ func (r *repozytoriumPrzegladania) ZapiszWytwor(ctx context.Context,
 	return r.Wytwor(ctx, wytwor.Kod)
 }
 
-// Wytwor oddaje wytwór o wskazanym kodzie.
+// Wytwor oddaje wytwór przeglądania o wskazanym kodzie zewnętrznym,
+// zwracając błąd ErrBrakWiersza, gdy taki wytwór nie istnieje w magazynie.
 func (r *repozytoriumPrzegladania) Wytwor(ctx context.Context, kod string) (WytworPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWytwor)
 	if err != nil {
@@ -227,7 +231,8 @@ func (r *repozytoriumPrzegladania) Wytwor(ctx context.Context, kod string) (Wytw
 	return wytwor, nil
 }
 
-// Wytwory oddaje wytwory okna, opcjonalnie zawężone do jednego rodzaju.
+// Wytwory oddaje wytwory zapisane dla wskazanego okna, opcjonalnie zawężone
+// do jednego rodzaju, uporządkowane od najświeższego według czasu utworzenia.
 func (r *repozytoriumPrzegladania) Wytwory(ctx context.Context, okno, rodzaj string, limit int) ([]WytworPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWytworow)
 	if err != nil {
@@ -253,7 +258,8 @@ func (r *repozytoriumPrzegladania) Wytwory(ctx context.Context, okno, rodzaj str
 	return lista, nil
 }
 
-// ZapiszZrzut odkłada wiersz zrzutu strony.
+// ZapiszZrzut odkłada wiersz zrzutu ekranu wraz z trybem, formatem i
+// wymiarami obrazu, wiążąc go z magazynem przez odwołanie do treści.
 func (r *repozytoriumPrzegladania) ZapiszZrzut(ctx context.Context, zrzut ZrzutPrzegladania) (ZrzutPrzegladania, error) {
 	if zrzut.Kod == "" || zrzut.Okno == "" || zrzut.TrescOdwolanie == "" {
 		return ZrzutPrzegladania{}, fmt.Errorf("dane: zrzut bez identyfikatora, okna albo odwołania do treści")
@@ -271,23 +277,27 @@ func (r *repozytoriumPrzegladania) ZapiszZrzut(ctx context.Context, zrzut ZrzutP
 	return r.Zrzut(ctx, zrzut.Kod)
 }
 
-// Zrzut oddaje zrzut o wskazanym kodzie.
+// Zrzut oddaje zrzut ekranu o wskazanym kodzie zewnętrznym, zwracając błąd
+// ErrBrakWiersza, gdy taki zrzut nie istnieje w magazynie.
 func (r *repozytoriumPrzegladania) Zrzut(ctx context.Context, kod string) (ZrzutPrzegladania, error) {
 	return r.jedenZrzut(ctx, pobierzZrzut, kod)
 }
 
-// ZrzutPoOdwolaniu oddaje zrzut leżący pod wskazanym odwołaniem magazynu —
-// tą drogą pyta `browser.snapshot.screenshot.get` z polem `screenshotRef`.
+// ZrzutPoOdwolaniu oddaje zrzut leżący pod wskazanym odwołaniem magazynu,
+// czyli ten sam zrzut, który zwraca punkt browser.snapshot.screenshot.get w
+// polu screenshotRef.
 func (r *repozytoriumPrzegladania) ZrzutPoOdwolaniu(ctx context.Context, odwolanie string) (ZrzutPrzegladania, error) {
 	return r.jedenZrzut(ctx, pobierzZrzutPoOdwolaniu, odwolanie)
 }
 
-// ZrzutMigawki oddaje najświeższy zrzut wykonany przy wskazanej migawce.
+// ZrzutMigawki oddaje najświeższy zrzut ekranu wykonany przy wskazanej
+// migawce zewnętrznej, uporządkowany malejąco według identyfikatora wiersza.
 func (r *repozytoriumPrzegladania) ZrzutMigawki(ctx context.Context, migawka string) (ZrzutPrzegladania, error) {
 	return r.jedenZrzut(ctx, pobierzZrzutMigawki, migawka)
 }
 
-// jedenZrzut wykonuje odczyt jednego zrzutu wskazanym zapytaniem.
+// jedenZrzut wykonuje odczyt jednego zrzutu wskazanym zapytaniem SQL,
+// mapując brak wiersza na błąd ErrBrakWiersza wspólny dla całego repozytorium.
 func (r *repozytoriumPrzegladania) jedenZrzut(ctx context.Context, zapytanie, wskazanie string) (ZrzutPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -303,7 +313,8 @@ func (r *repozytoriumPrzegladania) jedenZrzut(ctx context.Context, zapytanie, ws
 	return zrzut, nil
 }
 
-// ZapiszPobranie zakłada pobranie albo nadpisuje jego stan i postęp.
+// ZapiszPobranie zakłada nowe pobranie albo nadpisuje jego stan i postęp,
+// gdy pobranie o tym samym kodzie zewnętrznym już istnieje w magazynie.
 func (r *repozytoriumPrzegladania) ZapiszPobranie(ctx context.Context,
 	pobranie PobraniePrzegladania) (PobraniePrzegladania, error) {
 
@@ -328,7 +339,8 @@ func (r *repozytoriumPrzegladania) ZapiszPobranie(ctx context.Context,
 	return r.Pobranie(ctx, pobranie.Kod)
 }
 
-// Pobranie oddaje pobranie o wskazanym kodzie.
+// Pobranie oddaje pobranie o wskazanym kodzie zewnętrznym, zwracając błąd
+// ErrBrakWiersza, gdy takie pobranie nie istnieje w magazynie danych.
 func (r *repozytoriumPrzegladania) Pobranie(ctx context.Context, kod string) (PobraniePrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPobranie)
 	if err != nil {
@@ -344,7 +356,8 @@ func (r *repozytoriumPrzegladania) Pobranie(ctx context.Context, kod string) (Po
 	return pobranie, nil
 }
 
-// Pobrania oddaje pobrania, opcjonalnie zawężone do okna i do jednego stanu.
+// Pobrania oddaje pobrania zapisane w magazynie, opcjonalnie zawężone do
+// jednego okna i do jednego stanu, uporządkowane od najświeższego.
 func (r *repozytoriumPrzegladania) Pobrania(ctx context.Context, okno, stan string, limit int) ([]PobraniePrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPobran)
 	if err != nil {
@@ -370,12 +383,14 @@ func (r *repozytoriumPrzegladania) Pobrania(ctx context.Context, okno, stan stri
 	return lista, nil
 }
 
-// UsunPobranie zdejmuje pobranie z wykazu.
+// UsunPobranie zdejmuje pobranie o wskazanym kodzie zewnętrznym z wykazu,
+// oddając informację, czy wiersz istniał przed usunięciem.
 func (r *repozytoriumPrzegladania) UsunPobranie(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunPobranie, kod, "pobranie")
 }
 
-// ZapiszMakro zakłada makro albo nadpisuje zastane wraz z krokami.
+// ZapiszMakro zakłada nowe makro albo nadpisuje zastane wraz z krokami, gdy
+// makro o tym samym kodzie zewnętrznym już istnieje w magazynie.
 func (r *repozytoriumPrzegladania) ZapiszMakro(ctx context.Context, makro MakroPrzegladania) (MakroPrzegladania, error) {
 	if makro.Kod == "" || makro.Okno == "" || makro.Nazwa == "" {
 		return MakroPrzegladania{}, fmt.Errorf("dane: makro przeglądania bez identyfikatora, okna albo nazwy")
@@ -393,7 +408,8 @@ func (r *repozytoriumPrzegladania) ZapiszMakro(ctx context.Context, makro MakroP
 	return r.Makro(ctx, makro.Kod)
 }
 
-// Makro oddaje makro o wskazanym kodzie.
+// Makro oddaje makro przeglądania o wskazanym kodzie zewnętrznym, zwracając
+// błąd ErrBrakWiersza, gdy takie makro nie istnieje w magazynie.
 func (r *repozytoriumPrzegladania) Makro(ctx context.Context, kod string) (MakroPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzMakro)
 	if err != nil {
@@ -409,7 +425,8 @@ func (r *repozytoriumPrzegladania) Makro(ctx context.Context, kod string) (Makro
 	return makro, nil
 }
 
-// Makra oddaje makra okna od najnowszego.
+// Makra oddaje makra zapisane dla wskazanego okna, uporządkowane od
+// najświeższego według czasu utworzenia i identyfikatora wiersza.
 func (r *repozytoriumPrzegladania) Makra(ctx context.Context, okno string, limit int) ([]MakroPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaMakr)
 	if err != nil {
@@ -435,7 +452,8 @@ func (r *repozytoriumPrzegladania) Makra(ctx context.Context, okno string, limit
 	return lista, nil
 }
 
-// ZapiszGranice ustala granice działania Wykonawcy dla pary zasięg + wskazanie.
+// ZapiszGranice ustala granice działania Wykonawcy dla pary zasięg i
+// wskazanie, nadpisując wartości zastane dla tej samej pary kolumn.
 func (r *repozytoriumPrzegladania) ZapiszGranice(ctx context.Context, granica GranicaWykonawcy) (GranicaWykonawcy, error) {
 	if granica.Zasieg == "" {
 		return GranicaWykonawcy{}, fmt.Errorf("dane: granice Wykonawcy bez zasięgu")
@@ -453,9 +471,9 @@ func (r *repozytoriumPrzegladania) ZapiszGranice(ctx context.Context, granica Gr
 	return r.Granice(ctx, granica.Zasieg, granica.ZasiegID)
 }
 
-// Granice oddaje granice obowiązujące dla pary zasięg + wskazanie. Brak wiersza
-// wraca jako ErrBrakWiersza — wartość domyślną wstawia warstwa wyższa, bo to
-// ona wie, ile kroków znaczy „domyślnie".
+// Granice oddaje granice obowiązujące dla pary zasięg i wskazanie. Brak
+// wiersza wraca jako ErrBrakWiersza, ponieważ wartość domyślna należy do
+// warstwy wyższej, która zna liczbę kroków domyślnych.
 func (r *repozytoriumPrzegladania) Granice(ctx context.Context, zasieg, zasiegID string) (GranicaWykonawcy, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzGranice)
 	if err != nil {
@@ -471,7 +489,8 @@ func (r *repozytoriumPrzegladania) Granice(ctx context.Context, zasieg, zasiegID
 	return granica, nil
 }
 
-// odczytajWytwor składa wytwór z jednego wiersza wyniku.
+// odczytajWytwor składa wytwór przeglądania z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki opcjonalne.
 func odczytajWytwor(wiersz skaner) (WytworPrzegladania, error) {
 	var wytwor WytworPrzegladania
 	var tytul, mime, url, migawka sql.NullString
@@ -489,7 +508,8 @@ func odczytajWytwor(wiersz skaner) (WytworPrzegladania, error) {
 	return wytwor, nil
 }
 
-// odczytajZrzut składa zrzut z jednego wiersza wyniku.
+// odczytajZrzut składa zrzut ekranu z jednego wiersza wyniku zapytania,
+// zamieniając kolumny nullowalne na wskaźniki opcjonalne struktury.
 func odczytajZrzut(wiersz skaner) (ZrzutPrzegladania, error) {
 	var zrzut ZrzutPrzegladania
 	var migawka sql.NullString
@@ -504,7 +524,8 @@ func odczytajZrzut(wiersz skaner) (ZrzutPrzegladania, error) {
 	return zrzut, nil
 }
 
-// odczytajPobranie składa pobranie z jednego wiersza wyniku.
+// odczytajPobranie składa pobranie z jednego wiersza wyniku zapytania,
+// zamieniając kolumny nullowalne na wskaźniki opcjonalne struktury.
 func odczytajPobranie(wiersz skaner) (PobraniePrzegladania, error) {
 	var pobranie PobraniePrzegladania
 	var nazwa, sciezka, mime, blad, zakonczono sql.NullString
@@ -525,7 +546,8 @@ func odczytajPobranie(wiersz skaner) (PobraniePrzegladania, error) {
 	return pobranie, nil
 }
 
-// odczytajMakro składa makro z jednego wiersza wyniku.
+// odczytajMakro składa makro przeglądania z jednego wiersza wyniku
+// zapytania, zamieniając znacznik liczbowy nagrywania na wartość logiczną.
 func odczytajMakro(wiersz skaner) (MakroPrzegladania, error) {
 	var makro MakroPrzegladania
 	var kroki, automatyka sql.NullString
@@ -541,7 +563,8 @@ func odczytajMakro(wiersz skaner) (MakroPrzegladania, error) {
 	return makro, nil
 }
 
-// odczytajGranice składa granice z jednego wiersza wyniku.
+// odczytajGranice składa granice Wykonawcy z jednego wiersza wyniku
+// zapytania, zamieniając znacznik liczbowy potwierdzenia na wartość logiczną.
 func odczytajGranice(wiersz skaner) (GranicaWykonawcy, error) {
 	var granica GranicaWykonawcy
 	var dozwolone, zablokowane sql.NullString

@@ -1658,3 +1658,86 @@ Wskazanie ze startu (przełącznik wiersza poleceń, zmienna środowiska) wygryw
 zawsze. Dopiero jego brak oddaje głos nastawie poziomu `aplikacja` z tabeli
 `ustawienie`, a brak i jej — adresowi nasłuchu. To ten sam rozstrzygacz i ta
 sama tabela, którą widzi `config.get`.
+
+## budowa/server/internal/core/adapter_narzedzia_dokument_konwersja.go
+
+Do PDF-u prowadzą dwie drogi, bo żadna pojedyncza nie wystarcza. Pandoc
+zamienia struktury tekstowe (markdown, html, docx, odt, rtf, epub, csv, tekst
+czysty), ale PDF-u sam nie zapisze: wywołanie z docelowym formatem pdf woła
+silnik składu jako własne potomstwo, czyli proces poza bramą rdzenia — rdzeń
+woła więc silnik osobno. Dokument, który LibreOffice otwiera wprost (docx,
+odt, rtf, html, csv, txt), idzie LibreOffice'em bez okna; ta droga niesie
+własny układ dokumentu — style, tabele i podziały stron zapisane w pliku,
+których żadne przepisanie przez format pośredni nie odtworzy. Materiał, którego
+LibreOffice wprost nie otwiera (markdown, epub), idzie składem: Pandoc
+zamienia go na źródło typsta, a typst składa PDF. Wcześniej ta droga szła
+przez fragment HTML-a rysowany procesorem tekstu — droga, która działa, ale
+składem nie jest; gdy typst nie stoi na maszynie, ta droga zostaje jako
+zapasowa, bo odmowa byłaby regresem względem stanu, w którym PDF z markdownu
+powstawał i bez typsta. Komenda nie czyta PDF-u jako źródła: jego treść jest
+ciągiem instrukcji rysowania, z którego Pandoc nie złoży struktury dokumentu;
+żądanie zamiany z formatu pdf kończy się odmową wskazującą, że treść PDF-u
+wyciąga osobna komenda tekstowa, a jej wynik da się przekonwertować dalej.
+Wyniku zastępczego komenda nie podstawia: każda droga bez bajtów kończy się
+błędem, a pusty plik na wyjściu binarium też jest odmową, bo dokument
+o zerowej długości wygląda w panelu jak dokument.
+
+Silnik typst wchodzi w miejsce, w którym rdzeń nie miał żadnego: jest jednym
+plikiem wykonywalnym bez własnego drzewa zasobów, więc mieści się w płaskim
+układzie programów pomocniczych, którym jedzie pakowanie produktu. Silnik
+TeX-owy tego układu nie przyjmuje, ponieważ jest drzewem formatów, czcionek
+i ścieżki wyszukiwania, a nie pojedynczym plikiem.
+
+Rodzina czcionek narzucana składowi typst nie jest ozdobą, tylko warunkiem
+uruchomienia: szablon typsta, który wypuszcza Pandoc, podaje silnikowi
+rodzinę czcionek ze zmiennej szablonu, a przy jej braku podaje wykaz pusty,
+co typst odrzuca błędem pustej listy czcionek zapasowych, i PDF nie powstaje
+wcale. Rodzina nierozpoznana nie jest odmową: typst wtedy zgłasza nieznaną
+rodzinę, schodzi na własną czcionkę zastępczą i składa dokument dalej —
+sprawdzone uruchomieniem na tej maszynie. Rodzina DejaVu Serif stoi w każdej
+instalacji niosącej pakiet czcionek DejaVu i pokrywa komplet polskich znaków
+diakrytycznych.
+
+LibreOffice trzyma stan w swoim profilu, a drugie równoległe uruchomienie na
+wspólnym profilu kończy się cichym zwarciem — jeden przebieg oddaje plik,
+drugi nic. Dlatego każde wywołanie dostaje własny profil w katalogu roboczym
+czynności, który znika razem z nim.
+
+Dwa uruchomienia zamiast jednego w drodze składu typstem, choć Pandoc umie
+zawołać silnik składu sam. Powód jest ten, dla którego w całym drzewie stoi
+jedno bezpośrednie wywołanie procesu na krok: silnik zawołany przez Pandoca
+byłby jego potomstwem, więc ominąłby sprawdzenie obecności, bramę izolacji
+okna i własną granicę czasu, a jego odmowa dochodziłaby do Operatora zwinięta
+w ogólny komunikat Pandoca, bez zdania, które powiedział sam silnik. Wołany
+osobno — mówi sam za siebie.
+
+Kolejność zapisu wyniku jest zamierzona: najpierw bajty w magazynie, potem
+wiersz zasobu. Wiersz wskazujący odwołanie, za którym nic nie leży, byłby
+dokumentem nie do otwarcia, a model zacytowałby go jako gotowy. Okno puste
+w wyniku znaczy brak wiersza, a nie błąd — zgodnie z tym, jak rozstrzyga to
+wspólny mechanizm odkładania wyniku dla całego arsenału.
+
+## skutek_cyfryzacji_studia_test.go
+
+Szkoda, którą ten plik ma wykluczyć, ma w produkcie postać znaną: odpowiedź
+`ok` przy pustym wyniku. Rozpoznanie pisma jest na nią szczególnie podatne,
+bo Tesseract kończy się powodzeniem także wtedy, gdy nie odczytał ani
+jednego słowa, więc koperta udana nie mówi nic o tym, czy Operator dostał
+tekst. Dlatego żaden sprawdzian tego pliku nie kończy się na odpowiedzi
+udanej — każdy pyta o to, co zostało: czy pozycja jest w kolejce przy
+kolejnym odczycie, czy tekst niesie słowa z obrazu, czy korekta zmieniła
+treść przyjmowaną do edytora i czy dokument założony z cyfryzacji ma tę
+treść po ponownym otwarciu.
+
+Materiał obrazowy sprawdzianów powstaje na miejscu, a nie leży w drzewie
+jako plik binarny: plik w repozytorium starzeje się bez śladu, a tu chodzi
+o to, żeby tekst na obrazie i tekst oczekiwany pochodziły z jednego zapisu.
+
+TestPrzyjeciePozycjiZakladaDokumentZTrescia mierzy przyjęcie osobnym
+odczytem dokumentu, bo odpowiedź na przyjęcie mogłaby nieść treść, której
+baza nie przyjęła. Materiałem sprawdzianu jest obraz, a nie plik tekstowy:
+rozpoznanie pisma czyta piksele, więc plik tekstowy podany jako materiał
+kończyłby się odmową i sprawdzian pomijałby się zawsze — sprawdzian, który
+zawsze się pomija, niczego nie pilnuje. Autor wersji założonej z cyfryzacji
+niesie wartość modelu, nie Operatora, ponieważ historia dokumentu ma
+rozróżniać, kto wniósł którą wersję treści.

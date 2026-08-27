@@ -15,3 +15,189 @@
   background: var(--dn-sygnal-tlo);
   color: var(--dn-sygnal);
 }
+
+
+/* ==========================================================================
+   OKNO ROBOCZE — BRYŁA PRACY WEWNĄTRZ OBUDOWY
+   --------------------------------------------------------------------------
+   Rodzina powstała z arkusza okna Studia (`.st-*`), gdzie stała jako złożenie
+   jednego okna. Rola jest wspólna wszystkim piętnastu oknom modułów: obudowa
+   aplikacji jest ciemną ramą okalającą, a praca dzieje się w bryle z niej
+   wyjętej — wciętej z boków, obrysowanej, uniesionej cieniem, zaokrąglonej
+   u góry, z pasmem kart wrośniętym w górną krawędź i własną wstążką pod
+   kartą bieżącą.
+
+   Dwie wstążki okna muszą się rozejść bez czytania etykiet:
+     · wstążka APLIKACJI — pastylka na ciemnej tacy obudowy (`--dn-rama`),
+     · wstążka PRACY (`.dn-wstazka`) — pas na pełną szerokość bryły, w jednej
+       barwie z kartą bieżącą (`--dn-wstazka`), bez zaokrągleń.
+   Porządek jasności wyznacza porządek poziomów: obudowa najciemniej, pasmo
+   kart pośrodku, karta bieżąca i wstążka pracy najjaśniej.
+
+   Poziomy rozdziela różnica bryły i wcięcie — nie sama kreska i nie odstęp.
+   ========================================================================== */
+
+/* Taca obudowy bierze barwę ramy, nie barwę tła strony: bez tego belka, taca
+   i pasmo kart leżą na niemal jednym tonie i cztery pasy zlewają się w jeden.
+   Prześwit pod wstążką aplikacji czyni z tacy ramę, nie kolejny pas. */
+.dn-obudowa-pracy > .dn-narzedzia-pas {
+  background: var(--dn-rama);
+  padding-bottom: var(--dn-od-4);
+}
+
+.dn-okno-robocze {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  /* Wcięcie z obu boków — taca obudowy zostaje widoczna dookoła bryły. */
+  margin: 0 var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-mocny);
+  /* Dół bez kreski i bez promienia: okno wchodzi pod pasek stanu i tam kończy. */
+  border-bottom: 0;
+  border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0;
+  background: var(--dn-wstazka);
+  box-shadow: var(--dn-cien-3);
+  /* Rozwinięcia menu wychodzą poza obrys bryły; wysokości pilnuje `flex`. */
+  overflow: visible;
+}
+
+/* Pasmo kart osadzone w górnej krawędzi bryły — karta należy do tego, co pod
+   nią, nie do tego, co nad nią (ten sam chwyt co w pasku kart przeglądarki). */
+.dn-karty-pasmo--w-oknie {
+  border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0;
+  padding-right: var(--dn-od-1);
+}
+
+/* Znak modułu w narożniku pasma — bryła ma widoczną przynależność. */
+.dn-pasmo-znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  width: var(--dn-wym-ikonowy);
+  color: var(--dn-sygnal);
+}
+.dn-pasmo-znak > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* Wykaz kart — sama lista `role="tablist"`, bez kontrolek pasma: rola tablist
+   nie znosi dzieci innych niż karty. */
+.dn-karty-wykaz-okna {
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.dn-karty-wykaz-okna::-webkit-scrollbar { display: none; }
+
+/* Karta bieżąca pasma okna niesie wstęgę sygnału przy górnej krawędzi —
+   stan wybrany mówi bryłą i wstęgą, nie samym atrybutem ARIA. */
+.dn-karty-pasmo--w-oknie .dn-karta-widoku[aria-selected='true'] {
+  box-shadow: inset 0 var(--dn-wym-wstega) 0 var(--dn-kropka);
+}
+/* Karta robocza — jedna w oknie, odróżnia się grubością bez czytania nazwy. */
+.dn-karta-widoku--robocza { font-weight: var(--dn-fw-polgruba); }
+
+/* Kontrolki pasma stoją poza wykazem kart, za kreską rozdzielającą. */
+.dn-pasmo-sterowanie {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  padding-left: var(--dn-od-2);
+}
+.dn-pasmo-sterowanie::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: var(--dn-wym-ikona-lg);
+  margin-right: var(--dn-od-1);
+  background: var(--dn-obrys);
+}
+
+/* ── Wstążka pracy ───────────────────────────────────────────────────────── */
+
+.dn-wstazka {
+  position: relative;
+  /* Menu wstążki kładą się na treści okna, nie pod nią. */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-height: var(--dn-wym-pas-kart);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-wstazka);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Tabliczka sesji — czym jest karta robocza. */
+.dn-wstazka-sesja {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-width: 0;
+  padding: 0 var(--dn-od-2) 0 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.dn-wstazka-sesja > svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  color: var(--dn-sygnal);
+}
+
+.dn-wstazka-grupa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-05);
+  flex: none;
+}
+/* Kreska rozdziela RODZINY narzędzi, nie pojedyncze przyciski. */
+.dn-wstazka-grupa + .dn-wstazka-grupa::before,
+.dn-wstazka-sesja + .dn-wstazka-grupa::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: var(--dn-wym-ikona-lg);
+  margin: 0 var(--dn-od-2) 0 var(--dn-od-1);
+  background: var(--dn-obrys-mocny);
+}
+.dn-wstazka-odstep { flex: 1 1 auto; min-width: var(--dn-od-2); }
+
+.dn-wstazka-stan {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Ciało bryły wraca do gruntu roboczego: panele stanowiska leżą na własnym
+   tle, nie na barwie wstążki. Przycięcie zostawia dolny obrys czysty. */
+.dn-okno-robocze-cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--dn-tlo);
+  overflow: hidden;
+}
+
+/* Przy wąskim oknie bryła traci wcięcie — przestrzeń idzie na pracę. */
+@media (max-width: 1200px) {
+  .dn-okno-robocze { margin: 0; border-inline: 0; border-radius: 0; }
+  .dn-karty-pasmo--w-oknie { border-radius: 0; }
+}

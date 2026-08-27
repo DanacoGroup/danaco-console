@@ -61,6 +61,15 @@
 
 .cd-wlasny { position: relative; display: flex; }
 
+/* Wiersz składnika własnego wypełnia komórkę siatki i zostawia po prawej
+   miejsce na menu pozycji, które leży na nim bezwzględnie. Rozmieszczenie —
+   bryła i stany idą z `.dn-kafel --wiersz`. */
+.cd-wlasny-poz {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: calc(var(--dn-od-3) + var(--dn-wym-ikonowy));
+}
+
 .cd-wlasny-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 
 .cd-wlasny-menu {
@@ -84,11 +93,6 @@
 
 @container plotno (max-width: 500px) {
   .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
-}
-
-.cd-strona .cd-kafel .dn-kafel-ikona svg {
-  width: var(--dn-od-8);
-  height: var(--dn-od-8);
 }
 
 .cd-strona .cd-siatka-srodowisk > .dn-karta-srodowiska { overflow: hidden; }

@@ -2174,3 +2174,42 @@ katalogiem danych. Sciezka spoza magazynu oddaje pustke, poniewaz nie da sie
 jej wyrazic wzgledem magazynu; suma kontrolna tresci i tak jedzie w odpowiedzi
 jawnie osobnym polem, wiec odwolanie nie wynosi informacji, ktorej odbiorca
 by nie mial.
+
+## budowa/server/internal/core/adapter_modul_komponenty.go
+
+Czystej fasady nad samymi magazynami modułowymi zbudować się nie da: pole
+config nie ma kolumny w żadnej z tabel modułowych, para poziomu zasięgu
+i klucza z component.assign nie ma gdzie usiąść, a component.list nie miałby
+wspólnego porządku wyświetlania — stąd własny rejestr komponentów.
+
+Komenda component.create zakłada komponent w magazynie właściwym jego
+rodzajowi, a żądanie nie niesie targetId, więc byt docelowy powstaje przy
+tworzeniu: projekt przez ZapewnijProjekt, ekspert przez Dodaj, automatyka
+przez ZapiszAutomatyke. Komenda component.update zmienia kafel, nie byt
+magazynu — nazwa eksperta ma swoją komendę agent.update, definicja automatyki
+swoją automation.workflow.save, więc pisanie tych kolumn stąd dałoby dwóch
+pisarzy jednej kolumny. Komenda component.delete zdejmuje kafel, a byt
+modułowy zostaje pod swoim identyfikatorem; DELETE istnieje wyłącznie dla
+tabeli agent, a projekt i automatyka nie mają go w warstwie danych.
+
+Przedrostek kaflowego identyfikatora nie jest przedrostkiem właściwym
+magazynowi bytu docelowego: ekspert dostaje ag-, automatyka automat-,
+projekt prj-. Stałe modułów są używane wprost, żeby klucz założony przez
+component.create wyglądał dokładnie tak jak klucz założony komendą własną
+modułu.
+
+Rodzaj assistant odmawia założenia bytu docelowego, ponieważ warstwa danych
+oddaje profil asystenta wyłącznie do odczytu i nie ma drogi zapisu, którą
+dałoby się tu założyć byt. Kafel bez targetId byłby sukcesem bez skutku,
+więc rodzaj odmawia z powodem zamiast zakładać kafel wskazujący na nic.
+
+Przypisanie komponentu (component.assign) nie przenosi bytu modułowego, nie
+nadaje uprawnień i nie włącza komponentu do żadnej pętli wykonania — zapisuje
+wyłącznie parę poziomu zasięgu i identyfikatora bytu poziomu na wierszu
+komponentu. Odpowiedź assigned: false znaczy powtórzenie tego samego
+przypisania, przy którym nic nie doszło do skutku.
+
+Sprawdzenie wpięcia rejestru istnieje, ponieważ bez niego component.list
+oddałby pusty wykaz, a component.delete — deleted: false; jedno i drugie
+wyglądałoby jak stan platformy, a nie jak niezłożony port. Kod internal_error
+mówi, że żądanie jest poprawne, a wina leży po stronie montażu adaptera.

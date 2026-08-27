@@ -86,7 +86,7 @@
 
 .cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
 
-.cd-marka-lockup { width: min(280px, 100%); height: auto; flex: none; color: var(--dn-tekst); }
+.cd-marka-lockup { width: min(var(--dn-wym-godlo-lockup), 100%); height: auto; flex: none; color: var(--dn-tekst); }
 
 .cd-start {
   display: flex;
@@ -250,7 +250,7 @@
 
 .cd-strona .cd-wstazka-sep {
   width: 1px;
-  height: 18px;
+  height: var(--dn-wym-ikona);
   flex: none;
   margin: 0 var(--dn-od-1);
   background: var(--dn-obrys);

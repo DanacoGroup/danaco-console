@@ -3350,3 +3350,102 @@ liczbę i nic nie orzeka o jej pochodzeniu.
 
 ## budowa/klient/src/wejscie/ekrany/uruchomienie.ts
 Odsłony różni stan etapów i to, co stoi pod wykazem. Łączenie i powrót z tokenem nie mają czynności głównej: przechodzą dalej same, gdy rdzeń odpowie. Błąd ją ma, bo tam jest co rozstrzygnąć.
+
+## budowa/klient-poprzedni/src/moduly/research/wybor-nastawy.ts
+Ster nastawy niesie wartość bieżącą na uchwycie, na przykład „PDF", a nie ogólną nazwę pola typu
+„Format wyjściowy" — bo to ona jest odpowiedzią na pytanie, co jest teraz ustawione; natywna lista
+wyboru tego nie robi, pokazuje wartość dopiero po rozwinięciu. Plik nie jest drugim mechanizmem
+rozwijania: rozwijanie, znacznik wyboru, opisy pozycji, wędrówka strzałkami, pole szukania po progu
+i zdanie o pustym wykazie należą do biblioteki, a ten plik podaje mechanizmowi dane. Ta sama obsada
+stoi też w plikach `moduly/apps/wybor-z-menu.ts` (wraz z wymianą pozycji w locie) i
+`moduly/browser/ster-wyboru.ts`; miejscem docelowym jest katalog komponentów wspólnych, a do czasu
+przeniesienia moduł nie sięga po cudzą obsadę przez granicę modułu, bo import między modułami wiąże
+je mocniej niż powtórzenie kilkudziesięciu wierszy. Wykaz jest stały — to jedyna różnica wobec
+obsady modułu aplikacji: trzy nastawy Research pochodzą z wyliczeń kontraktu, a nie z odpowiedzi
+rdzenia, więc wymiany pozycji w locie tu nie ma. Uchwyt jest klikalny zawsze, także zanim Operator
+cokolwiek wybrał.
+
+Podpis wiersza formularza nie jest znacznikiem etykiety, bo uchwyt menu jest przyciskiem,
+a przycisk nie jest elementem etykietowalnym: znacznik etykiety owinięty wokół niego nie
+przeniosłby ani kliknięcia, ani ogniska, więc udawałby wiązanie, którego nie ma. Nazwę nastawy
+niesie etykieta dostępności uchwytu, stawiana przez mechanizm z pola nastawy — podpis jest tu
+dla oka, nie dla czytnika ekranu.
+
+## budowa/klient-poprzedni/src/protokol/korelacja.ts
+Kontrakt zapowiada dokładnie jedną odpowiedź na komendę, a odpowiedź powtarza identyfikator żądania.
+Rejestr nie wprowadza limitu czasu ani limitu żądań oczekujących: zerwanie połączenia nie kończy
+pracy rdzenia nad poleceniem.
+
+## budowa/klient-poprzedni/src/protokol/nawigacja-platformy.ts
+Plik niesie wyłącznie kształt zależności, nie drogę do rdzenia. Wywołania stoją w plikach
+jednokomendowych, a obiekt tego kształtu składa korzeń montażu klienta — jedyne miejsce, które ma
+kanał. Powłoka dostaje go gotowego i nie zna nazwy ani jednej komendy. Metody są dwie, bo tyle woła
+powłoka: `home.enter` woła wprost widok strony głównej, `workspace.enter` przestrzeń modułu, a
+`environment.list` czyta strona główna kanałem.
+
+## budowa/klient-poprzedni/src/protokol/ognisko-sesji.ts
+Ognisko jest właściwością klienta, nie konta: to samo konto otwarte na dwóch urządzeniach ma dwa
+ogniska, dlatego treść żądania niesie identyfikator klienta. Rozgłoszenie zmiany należy do rdzenia —
+po wykonaniu komendy rozsyła on zdarzenie zmiany ogniska, które przechwytuje obserwator ogniska
+w warstwie łączności.
+
+## budowa/klient-poprzedni/src/protokol/powiazanie-sesji.ts
+Klient albo wiąże się z sesją trwającą na rdzeniu, albo wchodzi na stronę główną. Rozłączenie klienta
+nie kończy sesji ani procesów, więc powiązanie zwykle zastaje sesję żywą: pole odtworzenia odróżnia
+odtworzenie stanu od założenia go od nowa, a wykaz okien niesie okna, których strumienie od tej chwili
+idą na bieżące połączenie. Puste wskazanie okien w żądaniu wiąże wszystkie okna sesji — zawężenie jest
+decyzją widoku, nie protokołu.
+
+## budowa/klient-poprzedni/src/protokol/sesja.ts
+Sesja pozostaje wspólna dla plików, pamięci, projektu i agentów; okno komunikacji jest wobec niej
+bytem podrzędnym. Identyfikator nadaje rdzeń w odpowiedzi na założenie sesji — do tej chwili sesja
+jest pusta, a kontrakt taką kopertę dopuszcza.
+
+## budowa/klient-poprzedni/src/protokol/wejscie-do-przestrzeni.ts
+Żądanie idzie z identyfikatorem żywego okna rozmowy: okno wskazane przestawia moduł i zachowuje
+historię, a dopiero jego brak zakłada okno nowe. Okno zakładane po stronie rdzenia nie dostaje
+kanału modelu, więc pierwsze wysłanie wiadomości skończyłoby się odmową. Odpowiedź niesie sesję,
+moduł, okno i kody okien operacyjnych modułu — sprawdzian kształtu pyta o wszystkie cztery, bo widok
+przestawia planszę na ich podstawie i pusty komplet dałby planszę bez treści.
+
+## budowa/klient-poprzedni/src/protokol/wejscie-do-srodowiska.ts
+Jedno wywołanie oddaje komplet bocznej nawigacji: środowisko, jego moduły z katalogiem okien
+operacyjnych oraz karty sesji otwarte w tym środowisku. Dlatego wykaz nawigacji nie składa się z dwóch
+odczytów — wykaz modułów jest tu wyłącznie drugim podejściem, gdy wejście oddało wykaz pusty mimo
+nawigacji modułowej. Warstwa nie buduje ani jednego elementu widoku: oddaje treść odpowiedzi
+w kształcie kontraktu i zostawia widokowi rozstrzygnięcie, co z nią zrobić. Nazwa komendy pochodzi
+wyłącznie ze stałej kontraktu.
+
+## budowa/klient-poprzedni/src/protokol/wejscie-strony-glownej.ts
+Pierwsze ogniwo łańcucha nawigacji: wejście na stronę główną, wykaz środowisk, wejście do środowiska,
+wykaz modułów, wejście do przestrzeni. Wejście mówi rdzeniowi, który klient stanął na stronie głównej;
+rdzeń wiąże ognisko z klientem, więc bez tego wywołania nie ma komu oddać identyfikatora sesji
+ogniskowanej. Ponad wykazem środowisk odpowiedź niesie środowiska wraz z kodami modułów, sesje czynne
+konta, sesję ostatnio ogniskowaną oraz stan sesji trwających w tle. Wykaz środowisk bez dołączenia
+modułów nie daje żadnej z tych rzeczy.
+
+## budowa/klient-poprzedni/src/protokol/wykaz-modulow.ts
+Komenda pełni dwie role: z identyfikatorem środowiska — drugie podejście bocznej nawigacji, gdy
+wejście do środowiska oddało wykaz pusty mimo nawigacji modułowej; bez pola — komplet modułów
+platformy, niezależny od macierzy środowisko-moduł. Tą drogą otwiera się moduł, którego macierz nie
+pokazuje w żadnym środowisku. Odpowiedź niesie licznik obok wykazu, więc sprawdzian kształtu pyta
+o oba: wykaz bez licznika znaczy, że rdzeń odpowiedział czymś innym niż wykazem modułów.
+
+## budowa/klient-poprzedni/src/protokol/wynik-czastkowy.ts
+Komenda kontraktu oddaje kopertę z polem wykazu, a widok potrzebuje samej zawartości. Pomocnik wycina
+pole, przepuszczając odmowę nietkniętą: okna mają obowiązkowy stan błędu i muszą odróżnić brak
+zawartości od nieudanego zapytania. Wycięcie pola operatorem pustej wartości w miejscu wywołania
+zgubiłoby powód odmowy, a odmowa uprawnienia i brak zasobu są przy sięganiu po cudze okna komunikacji
+zjawiskiem zwykłym, nie awarią. Odpowiedź udana, lecz bez treści, jest tu niepowodzeniem bez pola
+błędu: rdzeń nie podał powodu, więc pomocnik żadnego nie dopisuje. Pole jest wtedy nieobecne
+w obiekcie, nie ustawione na wartość pustą — stąd rozwinięcie warunkowe.
+
+## budowa/klient-poprzedni/src/protokol/wywolanie.ts
+Kanał rozdaje wynik przez wywołanie zwrotne, ponieważ tak wygodniej obsłużyć strumień i ruch ciągły.
+Widok pyta jednak punktowo — wejdź do środowiska i pokaż, co wróciło — i dla niego obietnica jest
+formą naturalną. To nie jest druga droga do rdzenia: każde wywołanie idzie tym samym wysłaniem przez
+kanał, z nazwą komendy wziętą wyłącznie ze stałych kontraktu. Obietnica nie jest odrzucana nigdy.
+Niepowodzenie wraca jako wynik z polem błędu, więc wywołujący nie musi zakładać obsługi wyjątku,
+a brak odpowiedzi nie wywraca widoku. Gdy rdzeń nie odpowie w ogóle, bo połączenie padło w trakcie,
+obietnica po prostu pozostaje nierozstrzygnięta: kontrakt nie przewiduje limitu czasu, a rozłączenie
+klienta nie kończy pracy rdzenia nad poleceniem.

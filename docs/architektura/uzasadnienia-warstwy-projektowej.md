@@ -102,3 +102,6 @@ nie jest używana. Stała kolumna istnieje wyłącznie jako tryb wybierany
 ręcznie. Odstępy, barwy i promienie pochodzą z warstwy wspólnej żetonów;
 arkusz nie wprowadza żadnej wartości surowej poza wymiarami układu, których
 warstwa wspólna nie nazywa.
+
+## design/03-marka/zastosowania/html/sygnatura-poczty-jasna.html
+Odbiorca kopiuje cały blok tabeli wzorca i wkleja go w ustawieniach klienta poczty elektronicznej. Pola ujęte w nawiasach kwadratowych wymagają uzupełnienia własnymi danymi. Szerokość wzorca wynosi sto procent szerokości dostępnej do pięciuset dwudziestu pikseli, znak zajmuje sto sześćdziesiąt osiem na siedemdziesiąt dwa piksele w podwójnej rozdzielczości pliku, linia reguły ma grubość jednego piksela, a kropka sygnału pozostaje jedynym akcentem barwnym całej sygnatury.

@@ -2611,3 +2611,17 @@ nazwę, opis i skład, i nic poza tym. Gotowy układ ról, powiązań i kolejek 
 się zatem zapisać wyłącznie jako skład, a reszta nie ma w kontrakcie gdzie
 zamieszkać. Sekcja mówi o tym Operatorowi wprost, zamiast wpychać te dane w opis
 zespołu, gdzie żaden odbiorca by ich nie odczytał.
+
+## budowa/klient-poprzedni/src/modele/stany-odczytu.ts
+
+Pas stanów stoi pod paskiem osi, a nad zakładkami, czyli tam, gdzie widać go
+niezależnie od wybranej zakładki. Zawartość zakładek zostaje na miejscu
+i pozostaje czynna także przy niepowodzeniu odczytu; podmiana panelu na komunikat
+zablokowałaby pracę w pozostałych obszarach sekcji.
+
+Komunikat błędu nie znika po naciśnięciu. Przycisk ponowienia wyzwala odczyt
+i zostawia zdanie na miejscu, dopóki sytuacja nie ustanie, dzięki czemu ponowna
+próba nie jest brana za powodzenie.
+
+Stan pusty rejestru niesie sam wykaz kont, ponieważ mówi o zawartości rejestru,
+a nie o przebiegu odczytu.

@@ -1,26 +1,4 @@
-// Odpowiedzialność pliku: jedno miejsce, w którym odcinek wejścia i wyjścia
-// modułu Studio odkłada i czyta POSTAĆ dokumentu — arkusz stylów, nastawy
-// strony, sekcje, bloki, tabele, obiekty, listy, aparat i pola.
-//
-// ── Dlaczego postać ma własny magazyn ───────────────────────────────────────
-// `studio.document.save` do dziś przyjmował `documentId`, `content` i `title`,
-// więc postać dokumentu ginęła przy każdym zapisie: model widział tekst, nie
-// widział kroju ani tabeli. Kontrakt dostał pole `form`, a to jest droga, którą
-// ta postać dojeżdża do rdzenia i wraca z niego nieuszkodzona.
-//
-// ── Gdzie postać leży — rozstrzygnięte, po wniesieniu warstwy danych ────────
-// Wcześniejsza sesja tego odcinka nie miała jeszcze `dane/studio_postac_*.go`
-// (migracje 361-362) i odkładała postać ładunkiem JSON w tabeli katalogowej
-// modułu, pod zasięgiem własnym. Ta warstwa danych STOI, więc obie metody niżej
-// zostały przełożone na nią — czyli na `postacWczytaj` i `postacZapisz` obszaru
-// postaci (`adapter_modul_studio_postac.go`).
-//
-// Powód jest ten, którego zlecenie nie odpuszcza: dwa magazyny jednej postaci to
-// dwie prawdy o tym samym dokumencie. Odcinek kontroli pracy woła
-// `wejsciePostacDokumentu` przy zakładaniu kopii zapasowej — czytając dawny
-// magazyn, dostawał postać PUSTĄ dla dokumentu, który postać ma, i kopia
-// zapasowa niosłaby dokument bez formatowania. Po przełożeniu obie drogi czytają
-// i piszą to samo miejsce.
+// Plik odkłada i czyta postać dokumentu modułu Studio: arkusz stylów, nastawy strony, sekcje, bloki, tabele, obiekty, listy, aparat i pola, jedynym miejscem, przez które postać dojeżdża do rdzenia i wraca z niego nieuszkodzona.
 package core
 
 import (
@@ -34,11 +12,11 @@ import (
 )
 
 const (
-	// wejscieZasiegPostaci trzyma wiersze postaci osobno od profili wydania.
+	// wejscieZasiegPostaci trzyma wiersze postaci osobno od profili wydania, żeby profil nie nadpisywał postaci przy zapisie.
 	wejscieZasiegPostaci = "postac-dokumentu"
-	// wejscieZasiegSzablonu trzyma postać wzorcową szablonu pisma.
+	// wejscieZasiegSzablonu trzyma postać wzorcową szablonu pisma, osobno od postaci dokumentów zakładanych z niego.
 	wejscieZasiegSzablonu = "postac-szablonu"
-	// wejscieZasiegPochodzenia trzyma zapisy pochodzenia fragmentów dokumentu.
+	// wejscieZasiegPochodzenia trzyma zapisy pochodzenia fragmentów dokumentu, osobno od samej postaci dokumentu.
 	wejscieZasiegPochodzenia = "pochodzenie-dokumentu"
 
 	// Przedrostki kluczy wiersza. Klucz jest złożony z przedrostka i kodu
@@ -47,7 +25,7 @@ const (
 	wejscieKluczSzablonu    = "studio-szpostac-"
 	wejscieKluczPochodzenia = "studio-poch-"
 
-	// Przedrostki identyfikatorów bytów nadawanych przez ten odcinek.
+	// Przedrostki identyfikatorów bytów nadawanych przez ten odcinek: pochodzenia, obiektu, bloku, sekcji, tabeli, szablonu i czynności.
 	przedrostekPochodzeniaStudia = "studio-poch-"
 	przedrostekObiektuStudia     = "studio-obj-"
 	przedrostekBlokuStudia       = "studio-blok-"
@@ -73,7 +51,7 @@ const (
 	wejscieStylPrzypis         = "przypis"
 )
 
-// wejscieTeraz oddaje chwilę w milisekundach epoki.
+// wejscieTeraz oddaje chwilę bieżącą w milisekundach epoki, jednostce, którą kontrakt niesie w polach czasu.
 func wejscieTeraz() int64 {
 	return time.Now().UnixMilli()
 }
@@ -89,25 +67,25 @@ func wejscieWskaznikTekstu(tekst string) *string {
 	return &kopia
 }
 
-// wejscieWskaznikCalkowity oddaje wskaźnik na liczbę całkowitą.
+// wejscieWskaznikCalkowity oddaje wskaźnik na liczbę całkowitą, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikCalkowity(wartosc int) *int {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikDlugi oddaje wskaźnik na liczbę 64-bitową.
+// wejscieWskaznikDlugi oddaje wskaźnik na liczbę 64-bitową, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikDlugi(wartosc int64) *int64 {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikRzeczywisty oddaje wskaźnik na liczbę rzeczywistą.
+// wejscieWskaznikRzeczywisty oddaje wskaźnik na liczbę rzeczywistą, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikRzeczywisty(wartosc float64) *float64 {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikLogiczny oddaje wskaźnik na wartość logiczną.
+// wejscieWskaznikLogiczny oddaje wskaźnik na wartość logiczną, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikLogiczny(wartosc bool) *bool {
 	kopia := wartosc
 	return &kopia
@@ -127,9 +105,7 @@ func (a *adapterStudia) wejsciePostacDokumentu(ctx context.Context,
 	}
 	stan, err := a.postacWczytaj(ctx, kodDokumentu)
 	if err != nil {
-		// Dokumentu, którego nie ma, nie udajemy postacią pustą: to zamieniłoby
-		// brak dokumentu w dokument bez formatowania, a Operator uznałby, że
-		// nigdy go nie miał.
+		// Dokumentu, którego nie ma, nie udajemy postacią pustą, żeby brak nie wyszedł jako brak formatowania
 		return pusta, err
 	}
 	return stan.forma, nil
@@ -153,9 +129,7 @@ func (a *adapterStudia) wejscieZapiszPostac(ctx context.Context, kodDokumentu st
 	}
 	postac.DocumentId = kodDokumentu
 
-	// Numer porządkowy podbija BAZA przy zapisie (migracja 361), nie ten kod:
-	// dwa zapisy z tym samym numerem byłyby możliwe, gdyby liczył go rdzeń,
-	// a okno nie miałoby po czym poznać, że trzyma stan przestarzały.
+	// Numer porządkowy podbija baza przy zapisie, nie ten kod, inaczej dwa zapisy mogłyby dzielić numer
 	stan := &stanPostaci{dokument: dokument, forma: postac}
 	stan.tekstPrzed = wartoscTekstu(dokument.Tresc)
 	if err := a.wejscieUtrwalPostac(ctx, stan); err != nil {
@@ -164,29 +138,7 @@ func (a *adapterStudia) wejscieZapiszPostac(ctx context.Context, kodDokumentu st
 	return stan.forma, nil
 }
 
-// wejsciePrzyjmijPostacZapisu utrwala postać przyjechaną polem `form` komendy
-// `studio.document.save` i oddaje wiersz dokumentu po zapisie.
-//
-// ── Dlaczego to stoi tutaj, a nie w obsłudze zapisu ─────────────────────────
-// Zapis dokumentu przyjmował do niedawna `documentId`, `content` i `title`, więc
-// postać przy każdym zapisie GINĘŁA: model widział tekst, nie widział kroju,
-// wcięcia, tabeli ani obrazu. To jest ta jedna dziura, od której zaczęło się
-// całe zlecenie. Droga utrwalenia jest tu ta sama, którą jedzie wniesienie
-// pliku (`wejscieUtrwalPostac`) — dwie drogi zapisu postaci znaczyłyby dwie
-// prawdy o postaci dokumentu.
-//
-// ── Co jest prawdą, gdy żądanie niesie i treść, i postać ────────────────────
-// Treść z pola `content` jest prawdą o LITERACH: to jest to, co Operator ma
-// w edytorze. Postać z pola `form` jest prawdą o STRUKTURZE: arkusz stylów,
-// nastawy strony, sekcje, tabele, obiekty i aparat. Utrwalenie postaci składa
-// treść z bloków (`postacTekstFormy`) i wpisuje ją do wiersza, więc wołający
-// nadpisuje ją potem treścią z żądania — inaczej zapis cofałby litery dopisane
-// w oknie do stanu, który zna drzewo postaci.
-//
-// Brak pola `form` NIE JEST tu obsługiwany: kontrakt mówi, że brak znaczy „bez
-// zmiany postaci", więc wołający sprawdza obecność pola przed wywołaniem, a nie
-// ta metoda po wywołaniu. Postać wyzerowana przy zwykłym zapisie treści byłaby
-// tą samą szkodą, którą to pole ma naprawić.
+// wejsciePrzyjmijPostacZapisu utrwala postać przyjechaną polem `form` komendy `studio.document.save`: treść z pola `content` niesie litery, postać z pola `form` niesie strukturę, a brak pola `form` znaczy „bez zmiany postaci”.
 func (a *adapterStudia) wejsciePrzyjmijPostacZapisu(ctx context.Context,
 	dokument dane.DokumentStudia, surowa []byte) (dane.DokumentStudia, error) {
 
@@ -208,11 +160,7 @@ func (a *adapterStudia) wejsciePrzyjmijPostacZapisu(ctx context.Context,
 
 // ── Postać nowa i domyślna ──────────────────────────────────────────────────
 
-// wejscieNowaPostac składa postać dokumentu pustego: arkusz stylów nazwanych,
-// nastawy strony, jedną sekcję i jeden akapit pusty gotowy do pisania.
-//
-// Nowa strona bez akapitu byłaby stroną, na której nie ma gdzie postawić
-// kursora — dlatego akapit pusty jest tu treścią, nie ozdobą.
+// wejscieNowaPostac składa postać dokumentu pustego: arkusz stylów nazwanych, nastawy strony, jedną sekcję i jeden akapit pusty, gotowy do pisania od pierwszego znaku.
 func wejscieNowaPostac(kodDokumentu, nazwaNosnika string,
 	orientacja *shared.StudioPageOrientation) shared.StudioDocumentForm {
 
@@ -255,47 +203,43 @@ const (
 	wejscieRodzajBlokuPodzial = "podzial"
 )
 
-// wejscieWskaznikPoczatkuSekcji oddaje wskaźnik na sposób rozpoczęcia sekcji.
+// wejscieWskaznikPoczatkuSekcji oddaje wskaźnik na sposób rozpoczęcia sekcji, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikPoczatkuSekcji(wartosc shared.StudioSectionStart) *shared.StudioSectionStart {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikWyrownania oddaje wskaźnik na wyrównanie tekstu.
+// wejscieWskaznikWyrownania oddaje wskaźnik na wyrównanie tekstu, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikWyrownania(wartosc shared.StudioTextAlign) *shared.StudioTextAlign {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikOrientacji oddaje wskaźnik na orientację strony.
+// wejscieWskaznikOrientacji oddaje wskaźnik na orientację strony, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikOrientacji(wartosc shared.StudioPageOrientation) *shared.StudioPageOrientation {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikRodzajuNosnika oddaje wskaźnik na rodzaj nośnika.
+// wejscieWskaznikRodzajuNosnika oddaje wskaźnik na rodzaj nośnika, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikRodzajuNosnika(wartosc shared.StudioPaperKind) *shared.StudioPaperKind {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikZrodlaObiektu oddaje wskaźnik na rodzaj obiektu.
+// wejscieWskaznikZrodlaObiektu oddaje wskaźnik na rodzaj obiektu, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikZrodlaObiektu(wartosc shared.StudioObjectSource) *shared.StudioObjectSource {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieWskaznikAutora oddaje wskaźnik na autora czynności.
+// wejscieWskaznikAutora oddaje wskaźnik na autora czynności, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikAutora(wartosc shared.StudioAuthor) *shared.StudioAuthor {
 	kopia := wartosc
 	return &kopia
 }
 
-// wejscieAutorCzynnosci rozstrzyga autora czynności. Brak wskazania znaczy
-// Operator — tak stanowi kontrakt każdej komendy tego odcinka. Wartość spoza
-// wyliczenia jest pomyłką wołającego i nie schodzi cicho na Operatora: model,
-// który podał autora przekręconego, nie ma wyjść z tego jako Operator, bo
-// wtedy jego praca zniknęłaby z podświetlenia zmian modelu.
+// wejscieAutorCzynnosci rozstrzyga autora czynności: brak wskazania znaczy Operator, a wartość spoza wyliczenia jest odmową, nie cichym zejściem na Operatora.
 func wejscieAutorCzynnosci(wskazanie *shared.StudioAuthor) (shared.StudioAuthor, error) {
 	if wskazanie == nil || strings.TrimSpace(string(*wskazanie)) == "" {
 		return shared.StudioAuthorUzytkownik, nil
@@ -309,12 +253,7 @@ func wejscieAutorCzynnosci(wskazanie *shared.StudioAuthor) (shared.StudioAuthor,
 		", ani " + string(shared.StudioAuthorModel))
 }
 
-// wejscieDomyslneNastawyStrony składa nastawy strony nowego dokumentu.
-//
-// A4 i marginesy 25/25/25/25 mm są nastawą domyślną pisma urzędowego, nie
-// upodobaniem wykonawcy. Nazwa nośnika podana przez Operatora ma pierwszeństwo
-// i nie jest sprawdzana wykazem — wykaz nośników stoi dziś w pliku modułu
-// Design, do którego temu odcinkowi wchodzić nie wolno (patrz sprawozdanie).
+// wejscieDomyslneNastawyStrony składa nastawy strony nowego dokumentu: A4 i marginesy 25 milimetrów są nastawą domyślną pisma urzędowego, a nazwa nośnika podana przez Operatora ma pierwszeństwo.
 func wejscieDomyslneNastawyStrony(nazwaNosnika string,
 	orientacja *shared.StudioPageOrientation) shared.StudioPageSetup {
 
@@ -339,12 +278,7 @@ func wejscieDomyslneNastawyStrony(nazwaNosnika string,
 	}
 }
 
-// wejscieDomyslnyArkuszStylow składa arkusz stylów nazwanych nowego dokumentu:
-// tekst zasadniczy, sześć poziomów nagłówków, cytat, podpis i przypis.
-//
-// Nagłówki dziedziczą po tekście zasadniczym, a nie powtarzają jego postaci —
-// to jest sens stylu nadrzędnego i to sprawia, że zmiana kroju w tekście
-// zasadniczym przestawia cały dokument jednym ruchem.
+// wejscieDomyslnyArkuszStylow składa arkusz stylów nazwanych nowego dokumentu: tekst zasadniczy, sześć poziomów nagłówków, cytat, podpis i przypis, gdzie nagłówki dziedziczą postać po tekście zasadniczym.
 func wejscieDomyslnyArkuszStylow() []shared.StudioNamedStyle {
 	zasadniczy := shared.StudioNamedStyle{
 		Name:        wejscieStylTekstZasadniczy,
@@ -367,9 +301,7 @@ func wejscieDomyslnyArkuszStylow() []shared.StudioNamedStyle {
 	}
 	arkusz := []shared.StudioNamedStyle{zasadniczy}
 
-	// Stopnie nagłówków maleją z poziomem — 18, 16, 14, 13, 12, 11 punktów.
-	// Poziom konspektu równa się poziomowi nagłówka, bo spis treści zbiera się
-	// po nim, a nie po nazwie stylu.
+	// Stopnie nagłówków maleją z poziomem, 18 do 11 punktów; poziom konspektu to poziom nagłówka.
 	stopnie := []float64{18, 16, 14, 13, 12, 11}
 	nazwy := []string{
 		wejscieStylNaglowek1, wejscieStylNaglowek2, wejscieStylNaglowek3,
@@ -450,7 +382,7 @@ func wejscieDomyslnyArkuszStylow() []shared.StudioNamedStyle {
 	return arkusz
 }
 
-// wejscieWskaznikZasadyInterlinii oddaje wskaźnik na zasadę liczenia interlinii.
+// wejscieWskaznikZasadyInterlinii oddaje wskaźnik na zasadę liczenia interlinii, potrzebny przy polach nieobowiązkowych kontraktu.
 func wejscieWskaznikZasadyInterlinii(
 	wartosc shared.StudioLineSpacingRule) *shared.StudioLineSpacingRule {
 
@@ -460,14 +392,7 @@ func wejscieWskaznikZasadyInterlinii(
 
 // ── Postać a treść: jedna prawda o położeniu w znakach ──────────────────────
 
-// wejscieTrescZPostaci składa treść dokumentu z bloków postaci i JEDNOCZEŚNIE
-// przelicza zakresy znakowe bloków oraz fragmentów.
-//
-// Dwie czynności w jednym przebiegu, bo są jedną czynnością: położenie bloku
-// w znakach ma sens wyłącznie wobec treści, którą ten przebieg właśnie składa.
-// Liczone osobno rozjechałyby się przy pierwszym akapicie ze znakiem spoza
-// zakresu jednobajtowego — dlatego długość mierzy się w RUNACH, a nie
-// w bajtach: „ł" zajmuje dwa bajty i jeden znak, a kontrakt mówi „w znakach".
+// wejscieTrescZPostaci składa treść dokumentu z bloków postaci i jednocześnie przelicza zakresy znakowe bloków oraz fragmentów, licząc długość w runach, nie w bajtach, bo kontrakt mówi „w znakach”.
 func wejscieTrescZPostaci(postac *shared.StudioDocumentForm) string {
 	if postac == nil {
 		return ""
@@ -484,16 +409,12 @@ func wejscieTrescZPostaci(postac *shared.StudioDocumentForm) string {
 
 		switch blok.Kind {
 		case wejscieRodzajBlokuTabela:
-			// Tabela wchodzi do treści jako wiersze rozdzielone tabulatorem.
-			// Bez tego zaznaczenie fragmentu obejmującego tabelę liczyłoby
-			// znaki, których w treści nie ma, i przesunęłoby wszystkie
-			// późniejsze zakresy.
+			// Tabela wchodzi do treści jako wiersze rozdzielone tabulatorem, dla zgodności zaznaczenia z treścią.
 			tekst := wejscieTekstTabeli(postac, blok.TableId)
 			budowa.WriteString(tekst)
 			polozenie += len([]rune(tekst))
 		case wejscieRodzajBlokuObiekt:
-			// Obiekt osadzony nie niesie znaków treści; jego zakres jest pusty
-			// i zakotwiczony w miejscu, w którym stoi.
+			// Obiekt osadzony nie niesie znaków treści; zakres jest pusty i zakotwiczony w miejscu, gdzie stoi.
 		case wejscieRodzajBlokuPodzial:
 			// Podział jest cechą składu, nie treścią — znaków nie dokłada.
 		default:
@@ -508,8 +429,7 @@ func wejscieTrescZPostaci(postac *shared.StudioDocumentForm) string {
 		blok.RangeEnd = wejscieWskaznikCalkowity(polozenie)
 	}
 
-	// Sekcje obejmują bloki, które do nich należą — granice biorą się
-	// z policzonych zakresów bloków, nie ze wskazania wołającego.
+	// Sekcje obejmują bloki, które do nich należą — granice biorą się z zakresów bloków, nie ze wskazania.
 	wejsciePrzeliczSekcje(postac)
 	return budowa.String()
 }
@@ -538,7 +458,7 @@ func wejscieTekstTabeli(postac *shared.StudioDocumentForm, kodTabeli *string) st
 	return ""
 }
 
-// wejscieTekstKomorki oddaje treść komórki tabeli albo napis pusty.
+// wejscieTekstKomorki oddaje treść komórki tabeli albo napis pusty, gdy komórka jest wchłonięta scaleniem.
 func wejscieTekstKomorki(tabela *shared.StudioDocumentTable, wiersz, kolumna int) string {
 	for i := range tabela.Cells {
 		komorka := &tabela.Cells[i]
@@ -621,12 +541,7 @@ func wejscieUzycieStylow(postac *shared.StudioDocumentForm) {
 
 // ── Postać z treści płaskiej ────────────────────────────────────────────────
 
-// wejsciePostacZTekstu składa postać dokumentu z treści płaskiej: każdy wiersz
-// oddzielony pustym wierszem staje się akapitem tekstu zasadniczego.
-//
-// To jest droga plików bez własnej postaci (tekst czysty, warstwa tekstowa
-// PDF-a) i droga awaryjna dla dokumentu, którego postaci rdzeń jeszcze nie zna.
-// Nie udaje odczytu formatowania: oddaje akapity i arkusz stylów domyślny.
+// wejsciePostacZTekstu składa postać dokumentu z treści płaskiej: każdy wiersz oddzielony pustym wierszem staje się akapitem tekstu zasadniczego, drogą awaryjną dla dokumentu bez własnej postaci.
 func wejsciePostacZTekstu(kodDokumentu, tresc string) shared.StudioDocumentForm {
 	postac := wejscieNowaPostac(kodDokumentu, "", nil)
 	akapity := wejscieAkapityZTekstu(tresc)
@@ -659,7 +574,7 @@ func wejscieAkapityZTekstu(tresc string) []string {
 	return akapity
 }
 
-// wejscieBlokAkapitu składa blok akapitu o wskazanym stylu i treści.
+// wejscieBlokAkapitu składa blok akapitu o wskazanym stylu i treści, gotowy do dołożenia do listy bloków postaci.
 func wejscieBlokAkapitu(kodSekcji, tresc, styl string,
 	postacZnaku *shared.StudioCharacterFormat) shared.StudioDocumentBlock {
 

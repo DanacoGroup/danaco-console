@@ -5763,3 +5763,5 @@ razem z kontraktem.
 
 RozstrzygnijSugestie: sugestia już rozstrzygnięta nie liczy się po raz drugi — warunek
 zapytania pilnuje tego zamiast wołającego.
+## budowa/server/internal/dane/slownik_wymiana.go
+Tabele są dwie, bo import i eksport to różne kierunki z różną kolumną wyniku; wspólna tabela byłaby dwiema prawdami o jednym bycie. Ślad eksportu nie niesie dowodu powstania pliku: rdzeń nie ma magazynu blobów, a kontrakt oddaje wyłącznie liczbę wyeksportowanych pozycji, bez identyfikatora pliku ani rozmiaru, więc pole ścieżki niesie ścieżkę żądaną przy wywołaniu, nie ścieżkę wyniku eksportu.

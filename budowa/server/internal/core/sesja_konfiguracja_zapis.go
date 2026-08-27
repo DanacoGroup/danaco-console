@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: odczyt i zapis obszarów konfiguracji sesji na jednym
-// wskazanym adresie — poziom zasięgu razem z osią rozstrzygania. Dziedziczenie
-// ośmiu poziomów tu nie zachodzi; jest od niego sesja_konfiguracja_skladanie.go.
-//
-// Bez drugiej tabeli. Obszary leżą w tabeli `ustawienie` pod adresem złożonym,
-// tak samo jak klucze proste rodziny `config.*`. Konfiguracja sesji nie jest
-// drugim rejestrem — jest innym kształtem wartości w rejestrze istniejącym.
-//
-// Obszar skasowany wraca do dziedziczenia. Obszar wskazany w `areas`,
-// dla którego żądanie nie niesie treści, zostaje usunięty z tego poziomu;
-// obowiązuje wtedy poziom szerszy. Obszar spoza `areas` nie jest ruszany.
+// Plik czyta i zapisuje obszary konfiguracji sesji na jednym adresie: poziom zasięgu i oś. Obszary leżą w tabeli ustawienie pod adresem złożonym, jak klucze proste rodziny config.*. Obszar skasowany wraca do dziedziczenia poziomu szerszego.
 package core
 
 import (
@@ -139,7 +129,7 @@ func (a *adapterUstawienOsi) utrwalObszar(ctx context.Context, adres konfig.Adre
 	return a.repozytorium.Ustaw(ctx, ustawienieObszaru(adres, obszar, tresc))
 }
 
-// ustawienieObszaru buduje wiersz tabeli ustawień niosący treść obszaru.
+// ustawienieObszaru buduje wiersz tabeli ustawień niosący treść obszaru pod adresem złożonym z poziomu, osi i klucza obszaru.
 func ustawienieObszaru(adres konfig.Adres, obszar shared.SessionConfigArea,
 	tresc json.RawMessage) dane.Ustawienie {
 
@@ -178,7 +168,7 @@ func obszaryZapisu(zadane []shared.SessionConfigArea) ([]shared.SessionConfigAre
 	return obszaryZadania(zadane)
 }
 
-// obszaryZapisane wylicza obszary obecne w treściach, w kolejności kontraktu.
+// obszaryZapisane wylicza obszary obecne w mapie treści zapisu, zachowując kolejność pól kontraktu, a nie kolejność wstawienia do mapy.
 func obszaryZapisane(tresci map[shared.SessionConfigArea]json.RawMessage) []shared.SessionConfigArea {
 	obecne := make([]shared.SessionConfigArea, 0, len(tresci))
 	for _, obszar := range obszaryKontraktu {
@@ -189,7 +179,7 @@ func obszaryZapisane(tresci map[shared.SessionConfigArea]json.RawMessage) []shar
 	return obecne
 }
 
-// zbiorObszarow składa zbiór obszarów do szybkiego sprawdzenia przynależności.
+// zbiorObszarow składa zbiór obszarów do szybkiego sprawdzenia przynależności obszaru do wykazu obszarów zapisu.
 func zbiorObszarow(obszary []shared.SessionConfigArea) map[shared.SessionConfigArea]struct{} {
 	zbior := make(map[shared.SessionConfigArea]struct{}, len(obszary))
 	for _, obszar := range obszary {

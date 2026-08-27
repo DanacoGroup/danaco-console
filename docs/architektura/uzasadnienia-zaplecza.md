@@ -1993,3 +1993,8 @@ przywróciłoby stan domyślny zamiast poprzedniego.
 Nagłówek tabeli dziennika akcji kolejki rozszerzono o cel przechowywanych
 wpisów, ponieważ krótkie zdanie nie mieściło się w wymaganym przedziale
 długości nagłówka, mimo że treściowo było wystarczające.
+
+## budowa/przygotuj-drzewo.sh
+Nagłówek skryptu zwięźle łączy trzy fakty osobnego akapitu źródłowego —
+przyczynę dowiązania, sposób działania i bezpieczeństwo wielokrotnego
+uruchamiania — w jedno zdanie mieszczące się w wymaganej długości nagłówka.

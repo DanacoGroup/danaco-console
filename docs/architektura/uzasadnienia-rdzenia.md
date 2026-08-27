@@ -4833,3 +4833,13 @@ właściciel instalacji może przestawić przełącznikiem uruchomieniowym albo
 zmienną środowiskową, i wpina go metodą ZSejfem tą samą drogą, którą dostaje
 magazyn treści biblioteki. Sejf domyślny zostaje ustanowiony w konstruktorze
 dla wywołania bez montażu, żeby konstruktor nigdy nie oddał adaptera bez sejfu.
+## budowa/server/internal/core/nosniki_druku_wspolne.go
+Wykaz nośników druku jest jeden i stoi poza modułami, ponieważ czytają go dziś dwa moduły: Design wykazem `design.print.paper.list` i wydaniem do druku, Studio nastawami strony (`studio.page.paper.list`, `studio.page.setup.set`) oraz podglądem wydania. Osobne wykazy w każdym module się rozjeżdżały: koperta DL miała w jednym miejscu 99 na 210 mm, a w drugim 220 na 110 mm, a szereg B urywał się w jednym wykazie na B3, w drugim sięgał B5. Plik nie należy więc do żadnego modułu i nie woła ich funkcji: jest wiedzą rdzenia o materiale, tak samo jak przelicznik milimetrów na cale.
+
+Wymiary są zapisane w układzie pionowym, bo nośnik ma jeden wymiar własny, a obrót jest rozstrzygnięciem materiału, nie nośnika. Koperta zapisana szerokością większą od wysokości niosłaby obrót w samej definicji i nie dałoby się określić, czy dany format stoi, czy leży. Wszystkie pozycje są więc pionowe (szerokość nie większa od wysokości), a orientację nakłada nastawa strony.
+
+Koperty serii C mają wymiary normy, a nie zaokrąglone, ponieważ norma ISO 269 wiąże je z szeregiem A: C4 bierze arkusz A4 bez zginania, C5 arkusz zgięty raz, C6 zgięty dwa razy — stąd wymiary 229 na 324, 162 na 229 oraz 114 na 162 milimetrów.
+
+Pozycje B4 i B5 stały wcześniej wyłącznie w wykazie okna Studia, poza wykazem rdzenia, co prowadziło do odmowy rozpoznania nośnika wybranego z widocznego wykazu; obecnie należą do tego samego szeregu ISO B co B1–B3.
+
+Koperta DL ma wymiar normy ISO 269 (110 na 220 mm) zapisany pionowo; wcześniej dwa wykazy niosły dla niej różne liczby — 99 na 210 oraz 220 na 110 — dla tego samego nośnika.

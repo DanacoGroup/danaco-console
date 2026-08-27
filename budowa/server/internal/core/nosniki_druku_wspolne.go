@@ -1,31 +1,4 @@
-// Odpowiedzialność pliku: JEDEN wykaz nośników druku dla całego rdzenia —
-// arkusze, koperty i nośniki wielkoformatowe wraz z wymiarami w milimetrach.
-//
-// ── Dlaczego wykaz jest jeden i stoi poza modułem ───────────────────────────
-// Nośnik czytają dziś dwa moduły: Design wykazem `design.print.paper.list`
-// i wydaniem do druku, Studio nastawami strony (`studio.page.paper.list`,
-// `studio.page.setup.set`) oraz podglądem wydania. Dopóki każdy z nich miał
-// wykaz własny, wykazy się rozjeżdżały — i rozjechały się naprawdę: koperta DL
-// miała w rdzeniu 99 na 210 mm, a w oknie Studia 220 na 110 mm, szereg B
-// urywał się w rdzeniu na B3, a w oknie sięgał B5. Rozstrzygnięcie Właściciela
-// z 17.08.2026 mówi wprost: wykaz stoi w miejscu wspólnym, bo dwa wykazy przy
-// pierwszej poprawce dadzą Operatorowi A3 o wymiarach A4.
-//
-// Plik nie należy więc do żadnego modułu i nie woła ani jednej ich funkcji:
-// jest wiedzą rdzenia o materiale, tak samo jak przelicznik milimetrów na cale.
-//
-// ── Dlaczego wymiary są w układzie pionowym ─────────────────────────────────
-// Nośnik ma jeden wymiar własny; obrót jest rozstrzygnięciem MATERIAŁU, nie
-// nośnika. Koperta zapisana szerokością większą od wysokości niosłaby obrót
-// w samej definicji i nikt nie umiałby powiedzieć, czy C4 stoi, czy leży.
-// Wszystkie pozycje są więc pionowe (szerokość nie większa od wysokości),
-// a orientację nakłada nastawa strony.
-//
-// ── Dlaczego koperty C mają wymiary normy, a nie zaokrąglone ────────────────
-// Norma ISO 269 wiąże koperty C z szeregiem A: C4 bierze arkusz A4 bez
-// zginania, C5 arkusz zgięty raz, C6 zgięty dwa razy. Właściciel wymienił C4,
-// C5 i C6 wprost wraz z wymiarami i te wymiary tu stoją — 229 na 324, 162 na
-// 229 oraz 114 na 162 mm.
+// Plik zawiera jedyny w rdzeniu wykaz nośników druku, ze wszystkimi wymiarami w milimetrach zapisanymi w układzie pionowym, współdzielony przez moduł Design i moduł Studio.
 package core
 
 import (
@@ -71,14 +44,10 @@ var wykazNosnikowDruku = []nosnikDruku{
 	{Nazwa: "B1", SzerokoscMm: 707, WysokoscMm: 1000, Rodzina: rodzinaNosnikaISOB},
 	{Nazwa: "B2", SzerokoscMm: 500, WysokoscMm: 707, Rodzina: rodzinaNosnikaISOB},
 	{Nazwa: "B3", SzerokoscMm: 353, WysokoscMm: 500, Rodzina: rodzinaNosnikaISOB},
-	// B4 i B5 stały dotąd wyłącznie w wykazie okna Studia. Wykaz rdzenia ich nie
-	// niósł, więc Operator, który wybrał B5 w oknie, dostawał od rdzenia odmowę
-	// „nośnika nie znam" — a wybrał go z wykazu, który okno mu pokazało.
+	// B4 i B5 należą do szeregu ISO B, tak samo jak pozycje B1–B3 powyżej.
 	{Nazwa: "B4", SzerokoscMm: 250, WysokoscMm: 353, Rodzina: rodzinaNosnikaISOB},
 	{Nazwa: "B5", SzerokoscMm: 176, WysokoscMm: 250, Rodzina: rodzinaNosnikaISOB},
-	// Koperty. DL jest wymiarem normy ISO 269 (110 na 220 mm) zapisanym pionowo;
-	// wykaz Designu niósł 99 na 210, a wykaz okna Studia 220 na 110 — obie
-	// liczby były inne i obie były wykazem tego samego nośnika.
+	// Koperta DL ma wymiar normy ISO 269, zapisany w układzie pionowym jako 110 na 220 milimetrów.
 	{Nazwa: "DL", SzerokoscMm: 110, WysokoscMm: 220, Rodzina: rodzinaNosnikaKoperta},
 	{Nazwa: "C4", SzerokoscMm: 229, WysokoscMm: 324, Rodzina: rodzinaNosnikaKoperta},
 	{Nazwa: "C5", SzerokoscMm: 162, WysokoscMm: 229, Rodzina: rodzinaNosnikaKoperta},
@@ -86,8 +55,7 @@ var wykazNosnikowDruku = []nosnikDruku{
 	{Nazwa: "Letter", SzerokoscMm: 215.9, WysokoscMm: 279.4, Rodzina: rodzinaNosnikaUS},
 	{Nazwa: "Legal", SzerokoscMm: 215.9, WysokoscMm: 355.6, Rodzina: rodzinaNosnikaUS},
 	{Nazwa: "Tabloid", SzerokoscMm: 279.4, WysokoscMm: 431.8, Rodzina: rodzinaNosnikaUS},
-	// Wizytówka jest pozioma w użyciu, ale wymiar własny ma pionowy — obrót
-	// nakłada materiał, tak samo jak przy kopercie.
+	// Wizytówka ma wymiar własny pionowy; orientację pozioma nakłada materiał.
 	{Nazwa: "wizytowka", SzerokoscMm: 50, WysokoscMm: 90, Rodzina: rodzinaNosnikaHandlowy},
 	{Nazwa: "rolka-1000", SzerokoscMm: 1000, WysokoscMm: 3000, Rodzina: rodzinaNosnikaWielki},
 	{Nazwa: "rolka-1370", SzerokoscMm: 1370, WysokoscMm: 5000, Rodzina: rodzinaNosnikaWielki},
@@ -108,13 +76,7 @@ func nosnikDrukuONazwie(nazwa string) (nosnikDruku, bool) {
 	return nosnikDruku{}, false
 }
 
-// nosnikiDrukuJakoFormatyStudia przekłada wykaz wspólny na formaty nośnika
-// kontraktu Studia.
-//
-// Rodzaj bierze się z rodziny: rodzina `koperta` daje kopertę, wszystko inne
-// arkusz. Rodzaj `custom` w wykazie nie stoi z zamysłu — wymiar własny podaje
-// Operator polami `widthMm` i `heightMm`, więc pozycja katalogowa o takim
-// rodzaju byłaby pozycją, której nie da się wybrać.
+// nosnikiDrukuJakoFormatyStudia przekłada wykaz wspólny na formaty nośnika kontraktu Studia, wyznaczając kopertę dla rodziny koperta i arkusz dla pozostałych rodzin.
 func nosnikiDrukuJakoFormatyStudia() []shared.StudioPaperFormat {
 	wykaz := make([]shared.StudioPaperFormat, 0, len(wykazNosnikowDruku))
 	for _, nosnik := range wykazNosnikowDruku {

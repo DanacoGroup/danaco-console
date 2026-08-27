@@ -1386,3 +1386,14 @@ Gospodarz trafia wtedy do ciała dokumentu, a aplikacja rusza normalnie.
 Tytuł dokumentu składa nazwę projektu wziętą z opisu okna z nazwą produktu,
 ponieważ nazwa projektu pochodzi z konfiguracji budowania i różni się między
 osadzeniami, natomiast nazwa produktu jest stała.
+
+## budowa/klient-poprzedni/src/moduly/agents/sklad-zespolu.ts
+
+Kolejność zaznaczania jest treścią, nie porządkiem wyświetlania. Pole `agentIds`
+niesie ekspertów w kolejności nadanej przy wyborze; składanie tablicy przejściem
+po bibliotece brałoby kolejność z wykazu ekspertów, więc zespół wracałby po zapisie
+w innym porządku niż złożony. Wybór trzyma zatem własną listę i dopisuje na jej koniec.
+
+Zespół wczytany może wskazywać eksperta spoza bieżącego wykazu: zarchiwizowanego albo
+odciętego frazą zawężającą. Taki wpis zostaje w składzie i pokazuje się wierszem
+nazywającym brak, żeby ponowny zapis nie okroił zespołu po cichu.

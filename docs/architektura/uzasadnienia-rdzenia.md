@@ -6037,3 +6037,10 @@ bajtowo ten sam prompt.
 Brak katalogu, treści albo kategorii obowiązkowej nie wstrzymuje niczego:
 kanał rusza wtedy z samą powłoką, a wykaz braków jest informacją dla
 korzystającego z interfejsu, nie bramą wstrzymującą działanie.
+
+## budowa/server/internal/core/listy_poziomy_test.go
+Szkody, które ten plik ma wykluczyć: poziom listy założony bez nastaw, gdzie okno nie wiedziałoby,
+jakim znakiem punkt narysować; wcięcie poziomu, które nie schodzi do akapitu, gdzie linijka nie
+miałaby czym pokazać znacznika wcięcia; numeracja prawnicza wielopoziomowa bez wzoru składanego
+z poziomów nadrzędnych, gdzie zapis złożony jest wtedy niewykonalny; rodzaj listy spoza kontraktu
+przyjęty w ciszy.

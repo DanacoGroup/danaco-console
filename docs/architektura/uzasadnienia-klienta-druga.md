@@ -2991,3 +2991,6 @@ Pole `data` kontraktu jest typu `unknown` — rdzeń pakuje w nie strukturę
 właściwą rodzajowi fragmentu. Odczyt jest w całości tolerancyjny: pole
 brakujące, pole innego typu ani ładunek nieznanego kształtu nie przerywają
 strumienia. Brak wartości znaczy „nie wiem", nie „błąd".
+
+## budowa/klient/src/protokol/sesja.ts
+Kontrakt dopuszcza kopertę bez identyfikatora sesji — pole jest opcjonalne, puste dla powitania połączenia.

@@ -3639,3 +3639,39 @@ sprawdzić bez dodatkowego wywołania. Ton widać w dwóch miejscach i oba bior�
 nagłówek oraz pole tonu panelu w pasku narzędzi dostają ton z tej samej odpowiedzi rdzenia,
 w tym samym przebiegu. Zdanie o pustce panelu mówi, czym ten panel jest i czym się go zapełnia,
 zamiast nazywać brak; forma stanu pustego jest w module jedna, tytuł nad opisem, różnicuje ją treść.
+
+## budowa/klient-poprzedni/src/moduly/research/wynik-odkrycia.ts
+Odpowiedź wyszukiwania wiedzy oddaje fragmenty treści, a odpowiedź wyszukiwania repozytorium
+zasoby repozytorium; panel pokazuje jedną listę wyników i wstawia z niej źródła jedną komendą, więc
+obie odpowiedzi sprowadza do jednego bytu tutaj, a nie w widoku — widok nie ma rozstrzygać, z której
+komendy pochodzi wiersz, który rysuje. Przeniesienie do badania jest komendą dodania źródła; kształt
+zlecenia powstaje z pozycji, więc reguła „fragment wiedzy wchodzi jako notatka, zasób repozytorium
+jako dokument" stoi w jednym miejscu.
+
+Adresu pozycje wyszukiwania nie niosą — ani fragment wiedzy, ani zasób repozytorium nie mają pola
+z adresem sieciowym — więc pole adresu zostaje puste zamiast być dopowiedziane ze ścieżki
+repozytorium, która adresem nie jest.
+
+Identyfikator trafienia jest identyfikatorem tego, z czego fragment pochodzi, ale pochodzić może
+z pliku biblioteki, z wiadomości albo z pliku przestrzeni roboczej — zakres wyszukiwania to
+rozstrzyga. Wiązanie z dokumentem repozytorium zakładamy wyłącznie dla zakresu biblioteki; poza nim
+identyfikator wskazuje byt, którego pole dokumentu repozytorium w komendzie dodania źródła nie
+przyjmie.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/okno-punktow-izolacji.test.ts
+Pilnowane są cztery rzeczy, które wcześniej były w tym oknie zaszyte na sztywno albo rozdzielone na
+zakładki: trzy panele w kolejności selektor, macierz, profil, jak opisuje rozdział 6.1 Modelu
+konfiguracji, a nie pasek zakładek; objaśnienie kontekstowe przy każdym przełączniku macierzy, jak
+opisuje rozdział 3.3, z treścią, nie samym znakiem; zasięg i warstwa niesione w żądaniach izolacji
+zamiast wpisanych w kod; wskazanie poziomu w selektorze przestawiające odczyt macierzy — dowód, że
+lewy panel steruje, a nie tylko wygląda na selektor. Rdzeń jest atrapą: sprawdzian pyta o zachowanie
+okna, nie o zachowanie serwera. Odpowiedź nieznana atrapie wraca odmową — tak jak wraca z rdzenia,
+który komendy nie zna.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-redakcji.test.ts
+Sprawdzian składania żądań redakcji dokumentu pilnuje trzech miejsc, w których łatwo o cichą
+pomyłkę: pole puste nie trafia do żądania, bo pusty napis jest dla rdzenia wskazaniem, a nie
+jego brakiem; pole trójstanowe „domyślnie" nie wysyła wartości fałszywej, bo w paczce redakcyjnej
+taka wartość wyłącza człon, o którego wyłączenie nikt nie prosił; czynność wymagająca dokumentu
+odmawia zdaniem, a nie wysłaniem żądania bez identyfikatora dokumentu i czekaniem na odmowę
+walidacji rdzenia.

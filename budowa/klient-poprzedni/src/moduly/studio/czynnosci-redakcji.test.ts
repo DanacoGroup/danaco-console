@@ -3,19 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Command } from '../../../../shared/contract';
 import { CZYNNOSCI_REDAKCJI, opiszSkutekRedakcji } from './czynnosci-redakcji';
 
-/**
- * Składanie żądań redakcji dokumentu.
- *
- * Sprawdzian pilnuje trzech miejsc, w których łatwo o cichą pomyłkę:
- *   - pole puste ma NIE trafiać do żądania (pusty napis jest dla rdzenia
- *     wskazaniem, a nie jego brakiem);
- *   - pole trójstanowe „domyślnie" ma nie wysyłać `false` — w paczce
- *     redakcyjnej `false` wyłącza człon, o którego wyłączenie nikt nie prosił;
- *   - czynność wymagająca dokumentu ma odmówić ZDANIEM, a nie wysłać żądanie
- *     bez `documentId` i czekać na odmowę walidacji rdzenia.
- */
-
-/** Odnajduje czynność po komendzie kontraktu. */
+/** Odnajduje czynność redakcji po komendzie kontraktu, rzucając błąd, gdy katalog czynności jej nie zawiera. */
 function czynnosc(komenda: Command) {
   const znaleziona = CZYNNOSCI_REDAKCJI.find((pozycja) => pozycja.komenda === komenda);
   if (znaleziona === undefined) throw new Error(`brak czynności ${komenda} w katalogu`);
@@ -131,8 +119,7 @@ describe('katalog czynności redakcji', () => {
   });
 
   it('skanowanie z urządzenia składa żądanie — odmowę stawia rdzeń, nie okno', () => {
-    // Okno nie udaje, że wie, czego brakuje po stronie serwera: wysyła żądanie
-    // i pokazuje odmowę nazwaną, którą rdzeń odsyła.
+    // Okno nie udaje wiedzy o braku po stronie serwera: wysyła żądanie i pokazuje odmowę rdzenia.
     const zlozenie = czynnosc(Command.StudioIngestDeviceScan).zloz({ deviceId: '' }, BEZ_DOKUMENTU);
     expect('zadanie' in zlozenie).toBe(true);
     if (!('zadanie' in zlozenie)) return;

@@ -1,16 +1,7 @@
 // Odpowiedzialność pliku: biblioteka szablonów przepływów — zapis definicji
-// jako szablonu wraz z parametrami, wykaz biblioteki i założenie automatyki
-// z szablonu.
-//
-// Zastosowanie szablonu NIE jest wstrzymywane brakiem wartości parametru.
-// Kontrakt mówi to wprost polem `missingParameters`: automatyka powstaje,
-// a brakujące parametry wracają nazwane. Tak działa reszta modułu — walidacja
-// ostrzega, zapis pozostaje możliwy, bo Operator buduje proces etapami.
-//
-// Podstawienie idzie po nazwie parametru w zapisie strukturalnym kroków.
-// Wartość wchodzi w miejsce przywołania `{{nazwa}}`, a przywołania bez wartości
-// zostają nietknięte — automatyka zakłada się wtedy z widocznym miejscem do
-// uzupełnienia, zamiast z pustką udającą uzupełnienie.
+// jako szablonu wraz z parametrami, wykaz biblioteki i założenie automatyki z
+// szablonu. Podstawienie idzie po nazwie parametru w zapisie strukturalnym
+// kroków.
 package core
 
 import (
@@ -22,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZapiszSzablon zapisuje definicję automatyki jako szablon przepływu.
+// ZapiszSzablon zapisuje definicję automatyki jako szablon przepływu wraz z
+// parametrami wykrytymi w zapisie kroków.
 func (a *adapterAutomatyk) ZapiszSzablon(ctx context.Context,
 	z shared.AutomationTemplateSaveRequest) (shared.AutomationTemplateSaveResponse, error) {
 
@@ -59,7 +51,8 @@ func (a *adapterAutomatyk) ZapiszSzablon(ctx context.Context,
 	return shared.AutomationTemplateSaveResponse{Template: szablon}, nil
 }
 
-// WykazSzablonow oddaje bibliotekę szablonów w kolejności nazw.
+// WykazSzablonow oddaje bibliotekę szablonów przepływów w kolejności nazw,
+// wraz z ich parametrami zapisu.
 func (a *adapterAutomatyk) WykazSzablonow(ctx context.Context,
 	z shared.AutomationTemplateListRequest) (shared.AutomationTemplateListResponse, error) {
 
@@ -79,7 +72,7 @@ func (a *adapterAutomatyk) WykazSzablonow(ctx context.Context,
 }
 
 // ZastosujSzablon zakłada automatykę z szablonu, podstawiając wartości jego
-// parametrów.
+// parametrów; brakujące parametry wracają nazwane, nie wstrzymują zapisu.
 func (a *adapterAutomatyk) ZastosujSzablon(ctx context.Context,
 	z shared.AutomationTemplateApplyRequest) (shared.AutomationTemplateApplyResponse, error) {
 
@@ -172,7 +165,8 @@ func wartosciParametrow(zapis json.RawMessage) map[string]string {
 	return wartosci
 }
 
-// szablonKontraktu składa szablon kontraktu wraz z jego parametrami.
+// szablonKontraktu składa szablon kontraktu wraz z jego parametrami,
+// przekładając wiersz biblioteki na byt widoczny wołającemu.
 func (a *adapterAutomatyk) szablonKontraktu(ctx context.Context,
 	wiersz dane.SzablonAutomatyki) (shared.AutomationTemplate, error) {
 
@@ -190,7 +184,8 @@ func (a *adapterAutomatyk) szablonKontraktu(ctx context.Context,
 	return szablon, nil
 }
 
-// parametryKontraktu przekłada wiersze parametrów na byty kontraktu.
+// parametryKontraktu przekłada wiersze parametrów szablonu z bazy na byty
+// kontraktu, w kolejności ich zapisu.
 func parametryKontraktu(wiersze []dane.ParametrSzablonu) []shared.AutomationTemplateParameter {
 	parametry := make([]shared.AutomationTemplateParameter, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -206,7 +201,8 @@ func parametryKontraktu(wiersze []dane.ParametrSzablonu) []shared.AutomationTemp
 	return parametry
 }
 
-// wierszeParametrow przekłada parametry kontraktu na wiersze.
+// wierszeParametrow przekłada parametry kontraktu przyjęte żądaniem na wiersze
+// zapisywane wraz z szablonem.
 func wierszeParametrow(parametry []shared.AutomationTemplateParameter) []dane.ParametrSzablonu {
 	wiersze := make([]dane.ParametrSzablonu, 0, len(parametry))
 	for _, parametr := range parametry {

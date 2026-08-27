@@ -1,22 +1,6 @@
-// Odpowiedzialność pliku: wpięcie rodziny `queue.step.*` — wstrzymania kroku,
-// decyzji o nim i wznowienia procesu z zastosowaną decyzją.
-//
-// Kontrakt nie niesie dziś ani jednej komendy dotyczącej pozycji kolejki, ani
-// struktury pozycji, ani wyliczenia jej stanów. Rejestracja niżej pyta
-// `shared.CzyKomenda` o każdą nazwę i wpina uchwyt wyłącznie wtedy, gdy nazwa
-// do kontraktu należy. Skutki są dwa i oba są zamierzone:
-//
-//   - dopóki kontrakt tych nazw nie zna, nie wpina się nic, a klient wołający
-//     `queue.step.hold` dostaje uczciwe `queue.unknown`: rdzeń nie ogłasza
-//     zdolności, której kontrakt nie opisuje;
-//   - po wniesieniu komend do kontraktu uchwyty wpinają się bez dotykania tego
-//     pliku, bo warunek jest tym samym pytaniem, które zadaje sprawdzian
-//     zgodności rejestru z kontraktem.
-//
-// Literały nazw stoją tu wyjątkowo, bo są kluczem wyszukania w kontrakcie,
-// a nie deklaracją komendy; po wniesieniu komend ustępują stałym
-// `shared.CommandQueueStep*`. Struktury niżej mają wtedy stać się aliasami
-// typów kontraktu, bez ruszania ciał uchwytów i adaptera.
+// Plik wpina rodzinę queue.step.* — wstrzymanie kroku, decyzję o nim
+// i wznowienie procesu z zastosowaną decyzją, rejestrując uchwyt tylko dla
+// nazwy znanej kontraktowi.
 package core
 
 import (
@@ -25,17 +9,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// Nazwy komend rodziny sterowania krokiem, wyszukiwane w kontrakcie.
+// Nazwy komend rodziny sterowania krokiem queue.step.*, wyszukiwane
+// w kontrakcie przy rejestracji uchwytów obsługi.
 const (
 	nazwaKomendyWstrzymaniaKroku shared.MessageType = "queue.step.hold"
 	nazwaKomendyDecyzjiOKroku    shared.MessageType = "queue.step.decide"
 	nazwaKomendyWykazuKrokow     shared.MessageType = "queue.step.list"
 )
 
-// krokZlecenia to krok widziany z zewnątrz: stan pracy i stan sterowania obok
-// siebie. Dwa stany, nie jeden, bo są to dwa różne fakty — „gdzie krok stoi
-// w pracy" i „czego oczekuje od człowieka". Sklejenie ich w jedno pole
-// zmusiłoby do wyboru, który z nich zataić.
+// krokZlecenia to krok widziany z zewnątrz: stan pracy i stan sterowania
+// obok siebie, jako dwa odrębne fakty o kroku.
 type krokZlecenia struct {
 	// Identyfikator kroku (wiersz pozycji kolejki)
 	Id string `json:"id"`
@@ -71,7 +54,8 @@ type krokZlecenia struct {
 	UpdatedAt int64 `json:"updatedAt"`
 }
 
-// zadanieWstrzymaniaKroku — ładunek `queue.step.hold`.
+// zadanieWstrzymaniaKroku niesie ładunek komendy queue.step.hold: kolejkę,
+// wstrzymywany krok i powód wstrzymania.
 type zadanieWstrzymaniaKroku struct {
 	// Kolejka, w ktorej stoi krok
 	QueueId string `json:"queueId"`
@@ -81,13 +65,15 @@ type zadanieWstrzymaniaKroku struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-// odpowiedzKroku — odpowiedź `queue.step.hold`.
+// odpowiedzKroku niesie odpowiedź komendy queue.step.hold: krok po zmianie
+// stanu oraz kolejkę, do której należy.
 type odpowiedzKroku struct {
 	Step  krokZlecenia `json:"step"`
 	Queue shared.Queue `json:"queue"`
 }
 
-// zadanieDecyzjiKroku — ładunek `queue.step.decide`.
+// zadanieDecyzjiKroku niesie ładunek komendy queue.step.decide: kolejkę,
+// rozstrzygany krok, decyzję i uzasadnienie.
 type zadanieDecyzjiKroku struct {
 	// Kolejka, w ktorej stoi krok
 	QueueId string `json:"queueId"`
@@ -99,11 +85,8 @@ type zadanieDecyzjiKroku struct {
 	Note string `json:"note,omitempty"`
 }
 
-// odpowiedzDecyzjiKroku — odpowiedź `queue.step.decide`.
-//
-// Pola `delivered` i `deliveryNote` niosą fakt, którego wynik inaczej by nie
-// pokazał: decyzja zastosowana do stanu kroku, ale niedoręczona wykonawcy.
-// Bez nich brak efektu trzeba by odgadywać.
+// odpowiedzDecyzjiKroku niesie odpowiedź komendy queue.step.decide wraz
+// z faktem doręczenia decyzji wykonawcy kroku.
 type odpowiedzDecyzjiKroku struct {
 	Step  krokZlecenia `json:"step"`
 	Queue shared.Queue `json:"queue"`
@@ -113,13 +96,15 @@ type odpowiedzDecyzjiKroku struct {
 	DeliveryNote string `json:"deliveryNote,omitempty"`
 }
 
-// zadanieWykazuKrokow — ładunek `queue.step.list`.
+// zadanieWykazuKrokow niesie ładunek komendy queue.step.list: identyfikator
+// kolejki, której kroki mają być wypisane.
 type zadanieWykazuKrokow struct {
 	// Kolejka, ktorej kroki maja byc wypisane
 	QueueId string `json:"queueId"`
 }
 
-// odpowiedzWykazuKrokow — odpowiedź `queue.step.list`.
+// odpowiedzWykazuKrokow niesie odpowiedź komendy queue.step.list: wykaz
+// kroków kolejki wskazanej w żądaniu.
 type odpowiedzWykazuKrokow struct {
 	Steps []krokZlecenia `json:"steps"`
 }
@@ -137,22 +122,17 @@ type sterowanieKrokiem interface {
 	WykazKrokow(ctx context.Context, z zadanieWykazuKrokow) (odpowiedzWykazuKrokow, error)
 }
 
-// zarejestrujSterowanieKrokiem wpina rodzinę `queue.step.*`.
-//
-// Zdarzenie `queue.changed` rozgłaszają obie komendy zmieniające, bo obie
-// zmieniają kolejkę — wstrzymanie kroku bieżącego przestawia ją w `paused`,
-// a decyzja podejmuje ją z powrotem. Wykaz kroków niczego nie zmienia i niczego
-// nie rozgłasza: wykaz ogłoszony jako zmiana byłby zdarzeniem bez faktu.
+// zarejestrujSterowanieKrokiem wpina rodzinę queue.step.*; komendy
+// wstrzymania i decyzji rozgłaszają zdarzenie zmiany kolejki, a wykaz kroków
+// nie rozgłasza niczego.
 func zarejestrujSterowanieKrokiem(r *Rejestr, kolejki Kolejki, e *emiter) {
 	if r == nil || kolejki == nil {
 		return
 	}
 	sterowanie, ok := kolejki.(sterowanieKrokiem)
 	if !ok {
-		// Port kolejek bez sterowania krokiem zostawia rodzinę nieznaną, tak
-		// samo jak każdą domenę bez portu. Montaż nie odmawia: dopóki kontrakt
-		// nazw nie niesie, odmowa dotyczyłaby komendy, której i tak nikt nie
-		// może zawołać.
+		// Port kolejek bez sterowania krokiem zostawia rodzinę queue.step.*
+		// nieznaną.
 		return
 	}
 

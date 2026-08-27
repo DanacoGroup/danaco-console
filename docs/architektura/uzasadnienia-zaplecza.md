@@ -3065,3 +3065,17 @@ i Glicko liczą się inaczej i nie wolno ich sumować.
 
 ## budowa/desktop/src-tauri/src/rdzen/stan.rs
 Stanu rdzenia nie ma czego przechowywać między wywołaniami: rdzeń stoi na serwerze wdrożenia, więc powłoka nie zna jego procesu, nie zna chwili jego startu i nie ma nad nim władzy — wie wyłącznie, pod jakim adresem go szukać i czy ten adres w tej chwili odpowiada. Opis nie jest odczytywany z kopii spod zamka, bo taka kopia rozjeżdżałaby się ze wskazaniem złożonym w oknie. Rozpoznanie pyta serwer wskazany, nigdy pętlę zwrotną: pytanie pętli zwrotnej dawałoby fałsz niezależnie od rzeczywistego stanu rdzenia, a serwer nierozwiązywalny daje odpowiedź ujemną, nie panikę.
+## budowa/server/internal/store/migracja_198_roundtable_konsensus.sql
+Migracja 198 — stanowisko końcowe redagowane, jego wersje, zdania odrębne
+i przekazanie do modułu docelowego.
+
+Kolumna `redagowane` rozstrzyga spór dwóch autorów tej samej treści. Do dziś
+treść stanowiska składał rdzeń z zapisu tur przy każdym odczycie
+(`roundtable.consensus.get`). Kontrakt ma dziś `roundtable.consensus.set`,
+czyli treść nadaną ręcznie przez Operatora — a złożenie z tur nadpisałoby ją
+przy pierwszym otwarciu okna. Znacznik mówi rdzeniowi, że tego wiersza nie
+składa się już z zapisu: od redakcji stanowisko należy do Operatora.
+
+Wersje leżą osobno, bo `roundtable.consensus.version.list` ma oddać kolejne
+redakcje do porównania. Licznik w kolumnie `wersja` mówi, ile ich było;
+porównać da się dopiero wtedy, gdy każda została.

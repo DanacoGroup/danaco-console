@@ -2642,3 +2642,137 @@ postaci znacznika (pojedynczego i podwójnego minusa).
 
 Gdyby reguła rozpoznawania podpowiedzi pytała najpierw o adres GitHuba,
 golangci-lint stałby się krokiem ręcznym zamiast wchodzić z podpowiedzi.
+
+## budowa/server/internal/core/adapter_konfiguracja_prowenancja.go
+
+Ten plik wpina dwie komendy rodziny `config.*`, które nie dotykają rejestru
+ustawień: `config.explain.get` (prowenancja wywołania modelu) i
+`config.window.open` (zakres, na którym otwiera się okno konfiguracji). Stoją
+osobno od `handlers_config.go` i `handlers_sesja_konfiguracja.go`, bo tamte
+pliki wpinają komendy czytające i piszące rejestr ustawień; te dwie nie
+zapisują niczego — wspólny mają wyłącznie przedrostek nazwy.
+
+Prowenancja idzie tą samą drogą co tura, nie drugą: `config.explain.get` nie
+ma własnego składacza wywołania, tylko bierze dokładnie te funkcje, którymi
+jedzie `message.send` — zapytanieKanalu, nakladkaOkna, uzupelnijSrodowisko,
+uzupelnijKonfiguracje, ustawieniaKanaluGlownego, nakladkaKanaluGlownego,
+injection.Argumenty. Gdyby prowenancja składała wywołanie po swojemu,
+pokazywałaby wiersz, którego tura nigdy nie wykona.
+
+Od wiersza procesu prowenancja różni się świadomie w dwóch miejscach. Po
+pierwsze, treść `--settings` i `--mcp-config` jedzie tu jako treść, a nie
+jako ścieżka pliku tymczasowego: tura materializuje te napisy na dysku tuż
+przed uruchomieniem procesu (`injection/materializacja.go`) i sprząta je po
+sobie, więc pliku o tej ścieżce jeszcze nie ma; tak samo rozstrzyga sam pakiet
+injection, którego prowenancja niesie treść pierwotną, a argv realną ścieżkę
+(`injection/przebieg.go`). Po drugie, `argv[0]` jest programem: kontrakt tej
+komendy nie ma osobnego pola `program`, więc bez tego nie byłoby widać, jaki
+plik wykonywalny rusza, a `argv` ma być wierszem wywołania, nie samą listą
+przełączników.
+
+Rejestr oddaje wyłącznie kanały czynne. Kanał wskazany oknem, a nieobecny
+w rejestrze, wywróciłby także turę (`models/wysylka.go`) — odmowa idzie tym
+samym rozpoznaniem, zamiast pokazywać wiersz wywołania, którego nikt nie
+wykona.
+
+Suma kontrolna liczona w prowenancji dotyczy samej konstytucji, nie całej
+nakładki: profil roli i ekspertyza zadaniowa zmieniają się z oknem,
+a konstytucja jest warstwą, której niezmienność się sprawdza. Pusta
+konstytucja daje pusty skrót, bo nie ma czego sumować.
+
+Zapytanie prowenancji nie niesie treści wypowiedzi ani historii: żadna z nich
+nie wchodzi do wiersza wywołania ani do promptu systemowego, a zmyślona treść
+pytania byłaby atrapą. Załączników tu nie ma i nic ich nie udaje z tego samego
+powodu — wymyślony załącznik byłby ścieżką, której Operator nie dołączył.
+Wznowienie rozmowy wchodzi do argv przełącznikiem `--resume`, więc bez niego
+wiersz byłby wierszem innej tury niż ta, która pójdzie. Ekspert okna nakłada
+model, ustawienia i mosty MCP w tej samej kolejności co w turze; pominięcie go
+tutaj pokazywałoby Operatorowi wiersz sprzed wyboru eksperta i nazywałoby go
+prowenancją bieżącej tury.
+
+Karta z wieloma oknami jest odmową, nie zgadywaniem przy ustalaniu okna
+prowenancji: sesja niesie okna w relacji 1:N, a każde okno ma własny kanał,
+własny katalog i własną konfigurację — wybranie „pierwszego z brzegu
+
+## budowa/server/internal/core/adapter_konfiguracja_prowenancja.go
+
+Ten plik wpina dwie komendy rodziny `config.*`, które nie dotykają rejestru
+ustawień: `config.explain.get` (prowenancja wywołania modelu) i
+`config.window.open` (zakres, na którym otwiera się okno konfiguracji). Stoją
+osobno od `handlers_config.go` i `handlers_sesja_konfiguracja.go`, bo tamte
+pliki wpinają komendy czytające i piszące rejestr ustawień; te dwie nie
+zapisują niczego — wspólny mają wyłącznie przedrostek nazwy.
+
+Prowenancja idzie tą samą drogą co tura, nie drugą: `config.explain.get` nie
+ma własnego składacza wywołania, tylko bierze dokładnie te funkcje, którymi
+jedzie `message.send` — zapytanieKanalu, nakladkaOkna, uzupelnijSrodowisko,
+uzupelnijKonfiguracje, ustawieniaKanaluGlownego, nakladkaKanaluGlownego,
+injection.Argumenty. Gdyby prowenancja składała wywołanie po swojemu,
+pokazywałaby wiersz, którego tura nigdy nie wykona.
+
+Od wiersza procesu prowenancja różni się świadomie w dwóch miejscach. Po
+pierwsze, treść `--settings` i `--mcp-config` jedzie tu jako treść, a nie
+jako ścieżka pliku tymczasowego: tura materializuje te napisy na dysku tuż
+przed uruchomieniem procesu (`injection/materializacja.go`) i sprząta je po
+sobie, więc pliku o tej ścieżce jeszcze nie ma; tak samo rozstrzyga sam pakiet
+injection, którego prowenancja niesie treść pierwotną, a argv realną ścieżkę
+(`injection/przebieg.go`). Po drugie, `argv[0]` jest programem: kontrakt tej
+komendy nie ma osobnego pola `program`, więc bez tego nie byłoby widać, jaki
+plik wykonywalny rusza, a `argv` ma być wierszem wywołania, nie samą listą
+przełączników.
+
+Rejestr oddaje wyłącznie kanały czynne. Kanał wskazany oknem, a nieobecny
+w rejestrze, wywróciłby także turę (`models/wysylka.go`) — odmowa idzie tym
+samym rozpoznaniem, zamiast pokazywać wiersz wywołania, którego nikt nie
+wykona.
+
+Suma kontrolna liczona w prowenancji dotyczy samej konstytucji, nie całej
+nakładki: profil roli i ekspertyza zadaniowa zmieniają się z oknem,
+a konstytucja jest warstwą, której niezmienność się sprawdza. Pusta
+konstytucja daje pusty skrót, bo nie ma czego sumować.
+
+Zapytanie prowenancji nie niesie treści wypowiedzi ani historii: żadna z nich
+nie wchodzi do wiersza wywołania ani do promptu systemowego, a zmyślona treść
+pytania byłaby atrapą. Załączników tu nie ma i nic ich nie udaje z tego samego
+powodu — wymyślony załącznik byłby ścieżką, której Operator nie dołączył.
+Wznowienie rozmowy wchodzi do argv przełącznikiem `--resume`, więc bez niego
+wiersz byłby wierszem innej tury niż ta, która pójdzie. Ekspert okna nakłada
+model, ustawienia i mosty MCP w tej samej kolejności co w turze; pominięcie go
+tutaj pokazywałoby Operatorowi wiersz sprzed wyboru eksperta i nazywałoby go
+prowenancją bieżącej tury.
+
+Karta z wieloma oknami jest odmową, nie zgadywaniem przy ustalaniu okna
+prowenancji: sesja niesie okna w relacji 1:N, a każde okno ma własny kanał,
+własny katalog i własną konfigurację — wybranie „pierwszego z brzegu"
+pokazałoby Operatorowi prowenancję cudzego okna i wyglądałoby na odpowiedź.
+Rdzeń nie zna tu ogniska klienta, więc mówi wprost, czego mu brakuje.
+
+Kanał bez procesu nie ma wiersza wywołania i nic tego nie udaje: adaptery
+`echo` i `api` nie uruchamiają programu, więc dla nich `argv` jest pustą
+tablicą, nie brakiem pola i nie zmyślonym wierszem `claude …`, dokładnie tak,
+jak rozstrzyga prowenancja tych kanałów w `models/prowenancja.go`. Pozostałe
+pola odpowiedzi — prompt systemowy, ustawienia, suma konstytucji — są dla nich
+równie prawdziwe jak dla kanału głównego.
+
+Trzy stany treści ustawień w prowenancji są nazwane wprost: treść JSON jedzie
+sobą; wartość, która jest ścieżką pliku zapisanego wcześniej przez inną
+warstwę, jedzie jako napis, bo surowa wywróciłaby kodowanie odpowiedzi; brak
+wartości jedzie jako `null`, co znaczy, że proces nie dostanie przełącznika
+`--settings`, a nie że przekazano pusty zestaw reguł.
+
+`OtworzOknoKonfiguracji` nie ma w kontrakcie nic więcej do zrobienia poza
+podaniem zakresu, więc robi dokładnie to i nic ponadto: sprawdza, że byt, na
+którym okno ma stanąć, istnieje, że wskazany obszar należy do kontraktu i że
+wskazany poziom zasięgu ma swój byt, po czym oddaje rozstrzygnięty zakres.
+Okno konfiguracji jest bytem klienta; rdzeń nie ma tabeli jego otwarć i nie
+zakłada jej pod jedno pole `opened`. To pole nie jest stałą: fałszu ta komenda
+nie zwraca, zwraca odmowę — nieistniejące okno albo karta sesji to
+`not_found`, obszar spoza kontraktu i poziom bez bytu to `validation_failed`;
+odpowiedź `opened: false` bez powodu byłaby ciszą udającą wynik.
+
+Bez wskazania poziomu zasięgu obowiązuje poziom najwęższy, jaki żądanie
+potrafi wskazać bytem: okno komunikacji, w jego braku karta sesji, w braku
+obu poziom globalny. Wskazanie wprost jest brane, ale nie na wiarę: poziom
+okna bez okna i poziom karty bez karty ani okna to zakres, którego nie da się
+pokazać. Okno zna swoją kartę, więc wskazanie okna wystarcza także poziomowi
+karty sesji, i wystarcza wtedy, gdy klient karty nie podał.

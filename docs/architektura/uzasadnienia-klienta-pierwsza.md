@@ -5625,3 +5625,11 @@ walidacja układu po stronie rdzenia. Walidacja na żądanie sprawdza
 zastrzeżenia dotyczące kroków po stronie okna; cykle i ścieżkę krytyczną
 całego układu rozstrzyga rdzeń w Orchestratorze, więc zdanie potwierdzenia
 mówi wprost, gdzie szukać drugiej połowy oceny.
+
+## budowa/klient-poprzedni/src/aod/tryb-obecnosci.ts
+
+Plik trzyma tryb obecności funkcji Always On Display, sięga po wykaz wyciszeń i rozstrzyga z obu trzy rzeczy, o które pyta warstwa widoku: czy awatar jest w polu widzenia, bo tryb ukryty go zabiera; czy plakietka liczbowa się pokazuje, bo wyciszenie czasowe ją chowa; oraz czy dana sugestia otwiera dymek w tej chwili, biorąc razem wagę, tryb, trzy rodzaje wyciszenia, limit godzinowy i odstęp między dymkami.
+
+Wyjątek wagi krytycznej jest zaszyty w regule, a nie zostawiony wołającemu, i przechodzi przez wszystkie rodzaje wyciszenia: czasowe, kontekstowe, klasy zdarzeń oraz tryb cichy. Punkt decyzyjny pętli wykonawczej wstrzymujący proces ujawnia się mimo wyciszenia plakietką, bez dymka, a tryb cichy zachowuje ten wyjątek bez syntezy mowy. Osłabienie tego wyjątku byłoby jedyną ciszą, po której Operator nie dowiaduje się, że praca stoi, więc reguła sprawdza go pierwsza, przed wszystkim innym.
+
+Stan obecności i wyciszeń stoi na stanowisku Operatora, a magazyn zapisu jest podawany parametrem: kontrakt nie ma jeszcze kategorii ustawień ani komendy zapisującej tryb obecności czy wyciszenie nakładki jako byt rdzenia. Gdy taka komenda powstanie, magazyn zmieni się w jednym miejscu, bez zmiany ani jednego wołacza.

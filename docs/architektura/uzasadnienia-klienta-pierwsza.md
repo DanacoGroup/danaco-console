@@ -6496,3 +6496,12 @@ wynik, bo dwa miejsca na jedną wiadomość dałyby wybór, w które patrzeć.
 Zdanie o czasie trwania zerowym nazywa to wprost, ponieważ sam zapis
 zerowego czasu wyglądałby na pomiar nieudany, a dotyczy też kontenera bez
 nagłówka czasu.
+
+## budowa/klient-poprzedni/src/moduly/library/metadane-pliku.ts
+Blok techniczny czyta pola pliku oraz, na żądanie, metadane osadzone
+w bajtach pliku: wymiary, liczba stron, czas trwania nagrania i podobne pola
+techniczne, które rdzeń oddaje po włączeniu odczytu technicznego. Odczyt
+osadzonych idzie osobnym przyciskiem, bo otwiera bajty zasobu, co jest
+kosztem, którego przegląd wykazu nie potrzebuje. Formularz Dublin Core
+scala domyślnie: pole zostawione puste zostaje bez zmiany, a pole
+wyczyszczone jawnie kasuje wartość, dokładnie tak, jak mówi kontrakt.

@@ -3587,3 +3587,12 @@ osobną literą, więc zapytanie bez tego znaku nie trafi w słowo, które go za
 Fraza wyszukiwania trafia do zapytania w cudzysłowie: zapytanie jest frazą dosłowną, a nie wyrażeniem składni
 wyszukiwania pełnotekstowego. Ujęcie w cudzysłów, z podwojeniem cudzysłowów wewnętrznych, zdejmuje z frazy
 operatory składni, żeby fraza z myślnikiem albo gwiazdką nie wywracała zapytania błędem składni.
+
+## budowa/server/internal/session/wstrzymanie_unix.go
+Wstrzymanie samego korzenia zostawiłoby biegnące potomstwo, czyli tę część
+pracy, która zwykle zajmuje maszynę, dlatego sygnał idzie do ujemnego
+identyfikatora grupy, tak samo jak przy ubiciu procesu. Straż pilnująca
+identyfikatora większego niż jeden pilnuje tego samego, co przy ubiciu: sygnał
+do minus jeden byłby rozgłoszeniem do wszystkich procesów systemu, a do jeden,
+sygnałem do procesu init. Brak procesu o danym identyfikatorze znaczy, że nie
+ma już czego wstrzymywać, i nie jest błędem.

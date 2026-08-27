@@ -87,8 +87,9 @@ pub fn wskaz_rdzen(
 /// Pobiera wskazane wydanie, sprawdza jego sumę, zakłada je i stawia aplikację
 /// na nowo. Strona powłoki banera „aktualizuje".
 ///
-/// `adres` i `suma_sha256` pochodzą z wykazu `wydania.json`, który interfejs
-/// czyta po HTTPS spod `danaco-console.pl`. Powłoka wykazu nie czyta i wersji
+/// `adres` i `suma_sha256` pochodzą z wykazu `budowa/witryna/wydania.json`,
+/// który interfejs czyta po HTTPS z kanału wskazanego w tym wykazie
+/// (`kanal.adres`). Powłoka wykazu nie czyta i wersji
 /// nie porównuje — do tego wystarczy przeglądarka. Powłoka robi dwie rzeczy
 /// niemożliwe ze strony: pisze po dysku pod plikiem aplikacji i stawia proces
 /// na nowo.

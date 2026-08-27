@@ -1337,3 +1337,53 @@ co wisi na miejscu w treści.
 Ustawianie postaci tabeli i komórek rozstrzyga zasięg wskazania tak samo, jak
 w pakiecie biurowym: brak wskazania wiersza i kolumny znaczy całą tabelę,
 wskazanie samego wiersza — cały wiersz, samej kolumny — całą kolumnę.
+
+## budowa/server/internal/core/adapter_modul_design_wektor_sciezki.go
+
+Czynności kontraktu rodziny wektorowej stoją w
+`adapter_modul_design_wektor.go`; ten plik niesie sam rachunek na ścieżkach,
+żeby miał jedno miejsce i jedną prawdę.
+
+Rachunek jest wkompilowany, nie wołany: operacje logiczne na ścieżkach,
+wydanie PDF i wydanie EPS idą przez bibliotekę Go wkompilowaną w binarium
+serwera, bez uruchamiania procesu zewnętrznego. Programy do obrysowywania
+konturów, rysowania wektorowego i rasteryzacji języka strony leżą poza
+instalacją operatora, więc funkcja od nich zależna byłaby u niego odmową,
+nie funkcją.
+
+Węzeł jest bytem produktu, ścieżka biblioteki jest tylko rachunkiem: kontrakt
+niesie węzły z uchwytami i to one leżą w bazie. Ścieżka biblioteki powstaje na
+czas rachunku i ginie po nim; wynik wraca znowu jako węzły, żeby operator
+mógł go dalej ciągnąć piórem. Zapisanie wyniku jako gotowego napisu SVG
+odebrałoby mu edycję — kształt przestałby mieć węzły, a zostałby obrazkiem.
+
+Uchwyt jest odsunięciem od węzła, nie punktem bezwzględnym — tak opisuje pole
+kontraktu. Punkt sterujący krzywej jest więc węzłem plus odsunięciem; odczyt
+odsunięcia jako współrzędnej bezwzględnej przesuwałby krzywe ku początkowi
+układu przy każdym przejściu przez bazę.
+
+Odcinek między dwoma węzłami ścieżki biblioteki jest krzywą sześcienną, gdy
+którykolwiek węzeł niesie uchwyt po tej stronie odcinka; brak uchwytu z
+jednej strony bierze punkt sterujący na samym węźle, tak jak działa pióro w
+programie wektorowym — węzeł narożny z jednej strony i wygładzony z drugiej
+daje krzywą wchodzącą z jednej strony prosto.
+
+Przy rozkładzie ścieżki biblioteki z powrotem na węzły łuki wchodzą jako
+krzywe, bo kontrakt nie ma węzła łukowego, a łuk zamilczany zgubiłby kawałek
+kształtu. Wielościeżkowy wynik operacji logicznej daje jeden wykaz węzłów,
+ponieważ kontrakt niesie jedną ścieżkę wynikową, więc rozdzielone kawałki
+idą po sobie, a nie giną.
+
+Ostatni węzeł zbieżny z pierwszym przy ścieżce zamkniętej jest zbędny, bo
+domknięcie samo prowadzi z ostatniego do pierwszego; uchwyt wchodzący
+zostaje jednak przeniesiony na pierwszy węzeł, ponieważ opisuje krzywiznę
+domknięcia.
+
+Czyszczenie precyzji węzłów nie usuwa węzłów: węzeł, który operator
+postawił, jest jego rozstrzygnięciem o kształcie, a ubytek bajtów bierze się
+z krótszego zapisu liczb, nie z gubienia jego pracy.
+
+Kształt podstawowy powstaje od razu jako węzły ścieżki, a nie jako osobny
+byt do późniejszej zamiany: prostokąt dorysowany na kanwie ma dać się
+natychmiast ciągnąć piórem za narożnik, bez komendy zamiany na ścieżkę,
+której kontrakt nie ma i mieć nie będzie.

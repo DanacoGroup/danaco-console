@@ -730,6 +730,10 @@
         {
           "wartosc": "failure",
           "opis": "Obiegu nie udalo sie rozpoczac; odpowiada session.ZatrzymanieUsterka"
+        },
+        {
+          "wartosc": "completed",
+          "opis": "Zadanie skonczone z wynikiem: koordynator zamknal ture wynikiem, a zadne okno wykonawcze tego koordynatora nie prowadzilo wtedy tury. Jedyna wartosc mowiaca skonczone, a nie przerwane — po niej bieg podejmuje sie sam przy kolejnym koncu tury wykonawcy, wiec ukonczenie nie jest brama akceptacji; odpowiada session.ZatrzymanieUkonczenie"
         }
       ]
     },

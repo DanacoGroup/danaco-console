@@ -2443,3 +2443,23 @@ w rdzeniu byłoby udawaniem wykonania czynności, która się nie odbyła.
 Wykaz źródeł, formularz dodania oraz przekazanie do modułu Research mieszkają
 w oknie modułu, a nie w wierszu. Wiersz odpowiada wyłącznie za własną treść
 i za wywołanie czynności podanych w `AkcjeZrodla`.
+
+## budowa/klient-poprzedni/src/dostepy/usuniecie-punktu.ts
+
+Usunięcie punktu dostępu unieważnia wszystkie nadania, które się na ten punkt
+powoływały, także w oknach, których Operator w danej chwili nie widzi. Zasięg
+skutku jest więc szerszy od tego, co widać na ekranie, i to on rozstrzyga
+o dwustopniowym przebiegu czynności: pierwsze naciśnięcie nazywa skutek, drugie
+go wywołuje.
+
+Potwierdzenie nie korzysta z okna `confirm` przeglądarki, ponieważ okno takie
+blokuje wątek dokumentu i nie da się go ubrać w warstwę wizualną platformy.
+Potwierdzenie mieszka więc w samym przycisku.
+
+Zamiar wygasa samoczynnie po upływie czasu trwania. Przycisk zostawiony w stanie
+potwierdzenia byłby pułapką dla kolejnego naciśnięcia w to samo miejsce,
+a wygaśnięciu towarzyszy komunikat mówiący, że punkt pozostał nietknięty.
+
+W drzewie obecne są definicje typów zarówno przeglądarki, jak i środowiska Node,
+dlatego typ zegara bierze się z wyniku samej funkcji `setTimeout`, a nie z typu
+liczbowego.

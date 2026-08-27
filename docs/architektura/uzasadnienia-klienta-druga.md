@@ -4191,3 +4191,6 @@ pokazuje liczbę zawężenia obok wykazu.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/profile-tresc.ts
 Powierzchnia tekstowa modułu Studio jest jedna: okno pracy z dokumentem niesie treść, podgląd wydania i różnicę jako tryby jednego widoku, zamiast osobnego edytora, kanwy tekstowej, okna podglądu i panelu różnic — pozostałe trzy okna operacyjne modułu powierzchni tekstowej nie mają.
+
+## budowa/klient/src/wejscie/skladniki/pole-hasla.ts
+Dwa znaki leżą w przycisku, a widoczność rozstrzyga arkusz stylu po stanie wciśnięcia — przełączanie znaków skryptem rozjeżdżałoby się ze stanem kontrolki. Etykieta po odsłonięciu hasła ma odpowiednik nakładany przez mechanikę okna.

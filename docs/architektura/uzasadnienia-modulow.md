@@ -1482,3 +1482,56 @@ Relacja tezaurusa zapisuje się w jednym kierunku, tym wskazanym przez
 Operatora. Odwrotność wyprowadza odczyt — pojęcie nadrzędne czytane od drugiej
 strony jest podrzędnym — a zapis obu kierunków dałby dwa wiersze mówiące
 to samo i rozjazd przy zdjęciu jednego z nich.
+## budowa/server/internal/core/adapter_modul_auth.go
+
+Bramka jest jedna, a Operator bezimienny: żądania rodziny `auth` nie niosą ani
+nazwy, ani adresu e-mail, a `auth.register` nie zakłada konta w sensie
+katalogowym — ustawia sekret bramki przy pierwszym uruchomieniu i od razu
+wpuszcza. Konto z `migracja_014_katalog_kont.sql` jest poświadczeniem do
+kanału modelu i z bramką nie ma nic wspólnego.
+
+Dwanaście godzin trwania sesji bramki to jedna doba robocza: Operator, który
+rano wszedł, nie loguje się w połowie dnia, a maszyna zostawiona na noc bramkę
+zamyka. Rok dla sesji z zaznaczonym „nie wyloguj mnie” to długość, po której
+zapomniane urządzenie przestaje wchodzić samo, a Operator pracujący codziennie
+nie zobaczy okna logowania ani razu, bo wygasanie jest przesuwne i każde
+wejście je odnawia.
+
+`ZalozBramke` poczty nie wymaga: na świeżej instalacji konta nadawczego
+platformy nie ma jeszcze czym wskazać, a ustawia się je w oknie Konfiguracji —
+za bramką. Rejestracja idzie więc dwiema drogami: z pocztą nadaje list z drogą
+potwierdzenia i zostawia konto niepotwierdzone, bez poczty zakłada konto
+i zapamiętuje w sejfie, że adresu nikt nie potwierdził. W obu razach hasło
+otwiera bramkę od razu; sesji rejestracja nie zakłada — konto powstaje
+niepotwierdzone i pozostaje w tym stanie do `auth.verify`, bo wpuszczanie od
+razu czyniłoby weryfikację adresu ozdobą. Czynność jest wykonalna tylko raz:
+istniejąca kotwica daje `conflict`, nie ciche `registered: false`, a powtórzone
+żądanie jest próbą podmiany hasła bez znajomości starego, do czego służy
+odzyskanie konta. List wysyła się przed oddaniem odpowiedzi i jego
+niepowodzenie schodzi na drogę bez poczty, zamiast cofać rejestrację — cofanie
+było tu wcześniej ratunkiem przed platformą nie do otwarcia, a stało się
+zbędne i ryzykowne, odkąd konto bez potwierdzonego adresu wchodzi hasłem:
+literówka w nastawach nadajnika zamykałaby pierwsze uruchomienie równie
+szczelnie jak brak poczty w ogóle. `cofnijRejestracje` nie kasuje drogi
+potwierdzenia: leży jako sam skrót, wygasa po godzinie, a bez konta nie ma
+czego otworzyć.
+
+`WejdzPrzezBramke` odmawia kontu niepotwierdzonemu, bo adres jest jedyną drogą
+odzyskania dostępu i musi być sprawdzony, zanim się nią stanie — inaczej
+literówka w adresie wyszłaby na jaw dopiero w dniu, w którym trzeba nim
+odzyskać konto. Sekret niezgodny daje `not_authenticated`, nie
+`validation_failed`: ten drugi kod zostaje przy brakach kształtu żądania, żeby
+sonda stanu bramki po stronie klienta, wysyłająca żądanie bez sekretu, dalej
+czytała go jako „bramka ustawiona”. Urządzenie sesji bierze się z żądania,
+a wiersz metody uzupełnia je tylko wtedy, gdy żądanie milczy: kotwica hasła nie
+jest materiałem jednej maszyny, więc branie urządzenia wyłącznie z wiersza
+metody porzucało `deviceId` przy każdym wejściu hasłem, maszyna nie pojawiała
+się w wykazie `device.list`, a `device.revoke` z jej identyfikatorem wracał
+`revoked: false`, zostawiając token czynny.
+
+`zamekZmiany` szereguje czynności, które sprawdzają stan bramki i zaraz potem
+go zmieniają. Bez niego sprawdzenie i zapis są dwiema czynnościami, a między
+nie wchodzi drugie żądanie z tego samego gniazda — dwie równoległe zmiany
+hasła odpowiadają wtedy obie `changed: true`, a bramkę otwiera tylko jedno
+z dwóch nowych haseł, bo drugi zapis do sejfu nadpisuje pierwszy. Sejf jest
+plikiem z wpisami i transakcji nie zna, więc niepodzielność musi stanąć tutaj.

@@ -24,32 +24,8 @@ import { utworzStanTresci, type StanTresci } from './stany-okna';
 import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
 /**
- * Logs Viewer — okno monitora modułu Diagnostics: przeszukiwanie dziennika
- * rdzenia po wzorcu, poziomie i źródle.
- *
- * Port `Diagnostyka` jest w rdzeniu odbiorcą odmów wykonania komend
- * (`core/adapter_modul_diagnostics_bledy.go`, `ZapiszNiepowodzenie`). Każda
- * odmowa dostaje wpis dziennika, gdzie `source` to nazwa komendy odrzuconej —
- * także wtedy, gdy zapis wiersza błędu się nie powiedzie i to okno jest
- * jedynym śladem odmowy. Dlatego filtr źródła (`source`) i wzorzec (`pattern`)
- * stoją na pierwszym miejscu paska narzędzi.
- *
- * Przy włączonym przełączniku regex okno próbuje zbudować `RegExp` z pola
- * wzorca, zanim żądanie pójdzie do rdzenia: błąd składni zatrzymuje żądanie
- * i mówi to wprost, zamiast wysyłać wzorzec, który rdzeń odrzuci ciszej.
- *
- * Zakres czasu jest wspólny modułowi. Okno nie prowadzi własnych pól „od/do":
- * czyta `stan.zakres()` i nasłuchuje `stan.naZmiane(...)`, żeby przestawienie
- * zakresu w Diagnostics Center przeliczyło wykaz bez osobnej czynności.
- *
- * Pola `truncated` i `total` trafiają do zdania potwierdzenia: wykaz ucięty
- * granicą bufora bez wiedzy czytelnika jest kłamstwem tej samej rodziny co
- * pusty wykaz przy odmowie.
- *
- * „Na żywo" znaczy tu „na żądanie", nie strumień. Kontrakt nie niesie
- * zdarzenia wpisu dziennika (`diagnostics.analysis.changed` dotyczy analizy,
- * nie wpisów), więc okno nie odpytuje rdzenia w pętli — odczyt biegnie na
- * żądanie i na zmianę zakresu wspólnego.
+ * Logs Viewer to okno monitora modułu Diagnostics: przeszukuje dziennik rdzenia po wzorcu,
+ * poziomie i źródle, w tym wpisy będące jedynym śladem odmowy wykonania komendy.
  */
 export interface OknoLogsViewera {
   element: HTMLElement;
@@ -79,11 +55,7 @@ export function utworzOknoLogsViewera(
   function odczytaj(): void {
     const zadanie = zbudujZadanie(powierzchnia, stan.zakres());
     if (zadanie === null) {
-      // Odmowa własna okna sprząta po sobie tak samo jak odmowa rdzenia:
-      // wpisy poprzedniego odczytu przestają być bieżące, a potwierdzenie
-      // gaśnie. Inaczej po zepsuciu wzorca w oknie stałoby jednocześnie
-      // czerwone zdanie o błędnym wyrażeniu i zielone potwierdzenie odczytu
-      // sprzed zmiany, a „Eksportuj zakres" oddałby tamte wpisy jako bieżące.
+      // Odmowa okna sprząta jak odmowa rdzenia: wpisy przestają być bieżące, potwierdzenie gaśnie.
       ostatnieWpisy = [];
       tresc.potwierdzenie('', true);
       tresc.blad('Wzorzec nie jest poprawnym wyrażeniem regularnym — okno zatrzymało wyszukanie i nie pytało rdzenia.');
@@ -92,18 +64,14 @@ export function utworzOknoLogsViewera(
     tresc.ladowanie('Przeszukiwanie dziennika…');
     void zrodlo.przeszukajDziennik(zadanie).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Odmowa nie zostawia wpisów poprzedniego odczytu jako aktualnych —
-        // inaczej eksport po odmowie oddałby zakres, którego rdzeń właśnie
-        // odmówił, jako gdyby był bieżący (ta sama rodzina kłamstwa co pusty
-        // wykaz przy odmowie, tylko przeniesiona z ekranu do pliku).
+        // Odmowa nie zostawia wpisów poprzedniego odczytu jako aktualnych — eksport oddałby zakres odrzucony.
         ostatnieWpisy = [];
         tresc.blad(zdanieNiepowodzenia('przeszukania dziennika', wynik.powod), wynik.blad);
         return;
       }
       ostatnieWpisy = wynik.wynik.entries;
       rysuj();
-      // Wynik przycięty granicą bufora NIE jest sukcesem — Operator ma to
-      // widzieć w tonie potwierdzenia, nie tylko w treści zdania.
+      // Wynik przycięty granicą bufora nie jest sukcesem — widoczne to w tonie potwierdzenia, nie w zdaniu.
       tresc.potwierdzenie(zdaniePodsumowania(wynik.wynik), wynik.wynik.truncated !== true);
       if (powierzchnia.autoPrzewijanie.dataset['wlaczony'] === 'true') przewinDoKonca(tresc);
     });
@@ -123,11 +91,7 @@ export function utworzOknoLogsViewera(
     tresc.tresc().append(listaWpisow(widoczne, przypiete, przelaczPrzypiecie));
   }
 
-  /**
-   * Przerysowanie wywołane czynnością czysto kliencką (przypięcie, podział
-   * widoku) — nie jest nowym odczytem, więc potwierdzenie odczytu poprzedniego
-   * (np. „WYNIK PRZYCIĘTY") nie może zostać przyklejone do zmienionego widoku.
-   */
+  /** Przerysowanie klienckie nie jest nowym odczytem, więc potwierdzenie poprzedniego odczytu gaśnie. */
   function rysujKlienckie(): void {
     tresc.potwierdzenie('', true);
     rysuj();
@@ -154,7 +118,7 @@ export function utworzOknoLogsViewera(
   return { element: rama.element, odswiez: odczytaj, zamknij: odsubskrybujZakres };
 }
 
-/** Zdanie podsumowania odczytu — liczba wpisów, `total` i `truncated` wprost. */
+/** Zdanie podsumowania odczytu dziennika: podaje liczbę oddanych wpisów oraz pola total i truncated wprost, bez przemilczenia. */
 function zdaniePodsumowania(wynik: { entries: LogEntry[]; total?: number; truncated?: boolean }): string {
   const oddane = `Odczytano ${wynik.entries.length} wpis(y/ów)`;
   const calosc = wynik.total === undefined ? '' : ` z ${wynik.total} spełniających warunki`;
@@ -165,7 +129,7 @@ function zdaniePodsumowania(wynik: { entries: LogEntry[]; total?: number; trunca
   return `${oddane}${calosc}${przyciecie}`;
 }
 
-/** Kontrolki paska akcji Logs Viewera. */
+/** Kontrolki paska akcji Logs Viewera: przycisk szukania, przycisk eksportu oraz dwa przełączniki widoku. */
 interface AkcjeLogow {
   szukajPrzycisk: HTMLButtonElement;
   eksportujPrzycisk: HTMLButtonElement;
@@ -174,10 +138,9 @@ interface AkcjeLogow {
 }
 
 /**
- * Składa pasek akcji: wyszukanie, eksport zakresu i dwa przełączniki czysto
- * klienckie (auto-przewijanie, podział widoku). Dwie pozycje bez pokrycia
- * w kontrakcie stoją tu wprost jako `przyciskBezKomendy`: kontrakt
- * nie ma komendy przekazania fragmentu do innego okna.
+ * Składa pasek akcji: wyszukanie, eksport zakresu i dwa przełączniki czysto klienckie —
+ * auto-przewijanie oraz podział widoku. Dwie pozycje bez pokrycia w kontrakcie stoją jako
+ * przycisk bez komendy.
  */
 function zlozAkcjeLogow(gospodarz: HTMLElement): AkcjeLogow {
   const szukajPrzycisk = przycisk('Szukaj w dzienniku', 'dn-btn dn-btn--atrament');
@@ -202,7 +165,7 @@ function zlozAkcjeLogow(gospodarz: HTMLElement): AkcjeLogow {
   return { szukajPrzycisk, eksportujPrzycisk, autoPrzewijanie, podzielWidok };
 }
 
-/** Kontrolki filtra: wzorzec, regex, poziom, źródło, deduplikacja, granica. */
+/** Kontrolki filtra dziennika: wzorzec wyszukiwania, przełącznik wyrażenia regularnego, poziom, źródło, deduplikacja i górna granica liczby wpisów. */
 interface FiltrLogow {
   wzorzec: HTMLInputElement;
   regex: HTMLInputElement;
@@ -212,10 +175,10 @@ interface FiltrLogow {
   granica: HTMLInputElement;
 }
 
-/** Kontrolki okna: pasek akcji wraz z filtrem dziennika. */
+/** Kontrolki okna Logs Viewer: pasek akcji połączony z paskiem filtra dziennika w jedną powierzchnię sterowania. */
 interface PowierzchniaLogow extends AkcjeLogow, FiltrLogow {}
 
-/** Pozycje wyliczenia poziomu — pusta wartość znaczy „wszystkie poziomy". */
+/** Pozycje wyliczenia poziomu wpisu dziennika w polu wyboru; pusta wartość oznacza brak zawężenia do jednego poziomu. */
 const POZIOMY = [
   { wartosc: '', etykieta: 'Wszystkie poziomy' },
   { wartosc: LogLevel.Error, etykieta: 'Błąd' },
@@ -236,8 +199,7 @@ function zlozPowierzchnieLogow(
   const akcje = zlozAkcjeLogow(rama.akcje);
   const wzorzec = pole('Wzorzec wyszukiwania', 'tekst albo wyrażenie regularne');
   const regex = przelacznik('Wzorzec jest wyrażeniem regularnym');
-  // Rozwijanie z biblioteki, nie natywny `<select>`: `komponenty/menu-drzewo.ts`
-  // przez obsadę `moduly/apps/wybor-z-menu.ts`.
+  // Rozwijanie z biblioteki menu-drzewo, nie natywny element select, przez obsadę modułu apps.
   const poziom = utworzWyborZMenu('Poziom wpisu', POZIOMY);
   const zrodloPole = pole('Źródło wpisu', 'np. library.collection.create');
   const deduplikuj = przelacznik('Scal wpisy identyczne licznikiem');
@@ -259,7 +221,7 @@ function zlozPowierzchnieLogow(
   return { ...akcje, wzorzec, regex, poziom, zrodlo: zrodloPole, deduplikuj, granica };
 }
 
-/** Podpina pasek akcji do czynności okna. */
+/** Podpina pasek akcji do czynności okna: wyszukania, eksportu oraz obu przełączników widoku klienckiego. */
 function podepnijAkcje(
   powierzchnia: PowierzchniaLogow,
   obsluga: { odczytaj: () => void; eksportuj: () => void; rysuj: () => void },
@@ -308,7 +270,7 @@ function zbudujZadanie(
   return zadanie;
 }
 
-/** Przewija miejsce treści do ostatniego wpisu — auto-przewijanie kliencie. */
+/** Przewija miejsce treści okna do ostatniego wpisu dziennika; obsługuje włączone auto-przewijanie klienckie. */
 function przewinDoKonca(tresc: StanTresci): void {
   const miejsce = tresc.element.querySelector('.dg-tresc');
   if (miejsce !== null) miejsce.scrollTop = miejsce.scrollHeight;
@@ -335,7 +297,7 @@ function listaWpisow(
   return lista;
 }
 
-/** Buduje jeden wiersz wpisu dziennika wraz z licznikiem deduplikacji. */
+/** Buduje jeden wiersz wpisu dziennika wraz z jego licznikiem deduplikacji oraz przyciskiem przypięcia. */
 function wierszWpisu(wpis: LogEntry, przypiety: boolean, przelacz: (id: string) => void): HTMLElement {
   const element = document.createElement('li');
   element.className = 'dg-wpis';
@@ -370,7 +332,7 @@ function wierszWpisu(wpis: LogEntry, przypiety: boolean, przelacz: (id: string) 
   return element;
 }
 
-/** Raport dziennika w Markdown — treść pliku eksportu zakresu. */
+/** Raport dziennika w formacie Markdown — treść pliku pobieranego przy wywołaniu eksportu zakresu wpisów. */
 function raportWpisow(wpisy: readonly LogEntry[]): string {
   const wiersze = ['# Raport dziennika Diagnostics', ''];
   for (const wpis of wpisy) {

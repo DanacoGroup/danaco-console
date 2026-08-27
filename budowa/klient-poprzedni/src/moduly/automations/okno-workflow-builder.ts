@@ -23,19 +23,9 @@ import { wczytajPlik } from './wymiana-definicji';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Workflow Builder — okno kreatora modułu Automations. Kroki, warunek
- * i kolejność prowadzi edytor (`edytor-krokow.ts`); to okno odpowiada za
- * tożsamość automatyki, zapis do rdzenia i panel akcji.
- *
- * Cofnij i ponów działają miejscowo, na pracy sprzed zapisu. Po zapisie śladem
- * jest numer wersji definicji, a powrót do wersji wcześniejszej należy do
- * pozycji „Historia wersji" — ta nazywa swoją komendę i mówi, czy rdzeń ma dla
- * niej uchwyt.
- *
- * Zdanie potwierdzenia powstaje z odpowiedzi rdzenia — z identyfikatora, numeru
- * wersji i liczby kroków. Przy duplikowaniu okno porównuje identyfikator sprzed
- * czynności z tym, który wrócił, bo dopiero różnica dowodzi, że powstała nowa
- * definicja.
+ * Workflow Builder — okno kreatora modułu Automations: kroki i kolejność prowadzi
+ * edytor `edytor-krokow.ts`, to okno odpowiada za tożsamość automatyki, zapis do
+ * rdzenia i panel akcji.
  */
 export interface OknoWorkflowBuilder {
   element: HTMLElement;
@@ -43,7 +33,7 @@ export interface OknoWorkflowBuilder {
   odswiez(): void;
 }
 
-/** Skok do innego okna modułu — nawigacja układu. */
+/** Skok do innego okna modułu — nawigacja układu, wypełniana dopiero w miejscu montażu tego okna kreatora. */
 export interface SkokiOkien {
   pokaz(kodOkna: string): void;
 }
@@ -70,18 +60,7 @@ export function utworzOknoWorkflowBuilder(
   const powierzchnia = zlozPowierzchnieBudowniczego(rama, edytor.element, tresc.element, pokrycie);
   const { wskazanie, nazwa, opis, czynna } = powierzchnia;
 
-  /**
-   * Walidacja definicji po stronie okna.
-   *
-   * Idzie przy każdej zmianie kroków, nie dopiero przy zapisie: zastrzeżenie
-   * postawione w chwili wpisywania jest poprawką, a to samo zastrzeżenie
-   * postawione po zapisie jest już tylko wiadomością o definicji wadliwej,
-   * która zdążyła trafić do magazynu automatyk.
-   *
-   * Sygnalizacja jest podwójna, bo służy dwóm czynnościom: znacznik przy kroku
-   * pokazuje, który krok poprawić, a wykaz w treści okna mówi, co dokładnie.
-   * Oddaje zastrzeżenia, żeby zapis mógł dopowiedzieć o nich w potwierdzeniu.
-   */
+  /** Walidacja definicji po stronie okna — idzie przy każdej zmianie kroków, nie dopiero przy zapisie. */
   function sprawdzDefinicje(): ZastrzezenieDefinicji[] {
     const zastrzezenia = zastrzezeniaDefinicji(edytor.kroki());
     edytor.oznaczZastrzezenia(zastrzezenia);
@@ -116,15 +95,10 @@ export function utworzOknoWorkflowBuilder(
     return zadanie;
   }
 
-  /**
-   * Zapis definicji. `zId` mówi, czy w żądaniu idzie identyfikator zastany —
-   * bez niego rdzeń zakłada definicję nową, i to jest duplikowanie.
-   */
+  /** Zapis definicji — zId mówi, czy w żądaniu idzie identyfikator zastany, bez niego powstaje duplikat. */
   function zapiszDefinicje(zId: boolean): void {
     const przedZapisem = wskazanie.value.trim();
-    // Zastrzeżenia liczymy przed wysłaniem, bo po zapisie okno pokazuje już
-    // definicję oddaną przez rdzeń. Zapis idzie mimo nich — walidacja nie jest
-    // bramą, tak samo jak walidacja układu po stronie rdzenia.
+    // Zastrzeżenia liczymy przed wysłaniem — po zapisie okno pokazuje już definicję rdzenia.
     const zastrzezenia = sprawdzDefinicje();
     tresc.ladowanie('Zapis definicji automatyki…');
     void zrodlo.zapiszAutomatyke(zadanieZapisu(zId)).then((wynik) => {
@@ -171,12 +145,7 @@ export function utworzOknoWorkflowBuilder(
     );
   }
 
-  /**
-   * Walidacja na żądanie: to samo sprawdzenie, które idzie przy każdej zmianie,
-   * lecz wypisane wykazem w treści okna. Zastrzeżenia dotyczące kroków rozstrzyga
-   * okno; cykle i ścieżkę krytyczną całego układu rozstrzyga rdzeń w Orchestratorze,
-   * więc zdanie mówi wprost, gdzie szukać drugiej połowy oceny.
-   */
+  /** Walidacja na żądanie — to samo sprawdzenie, co przy zmianie, wypisane wykazem w treści okna. */
   function walidujDefinicje(): void {
     const zastrzezenia = sprawdzDefinicje();
     const miejsce = tresc.tresc();
@@ -231,7 +200,7 @@ function listaZastrzezen(zastrzezenia: readonly ZastrzezenieDefinicji[]): HTMLEl
   return lista;
 }
 
-/** Kontrolki okna Workflow Buildera: tożsamość automatyki i pasek akcji. */
+/** Kontrolki okna Workflow Buildera: tożsamość automatyki, pasek akcji oraz ciało z edytorem jej kroków. */
 interface PowierzchniaBudowniczego {
   wskazanie: HTMLInputElement;
   nazwa: HTMLInputElement;
@@ -252,10 +221,8 @@ interface PowierzchniaBudowniczego {
 }
 
 /**
- * Składa kontrolki tożsamości, pasek akcji i ciało okna. Fragment nie domyka się
- * ani na stosie zmian, ani na źródle — dostaje gotowy element edytora i miejsce
- * stanu treści. Kolejność dokładania przycisków jest znacząca, bo po niej idą
- * sprawdziany widoku.
+ * Składa kontrolki tożsamości, pasek akcji i ciało okna: dostaje gotowy element
+ * edytora i miejsce stanu treści, kolejność dokładania przycisków jest znacząca.
  */
 function zlozPowierzchnieBudowniczego(
   rama: { akcje: HTMLElement; cialo: HTMLElement },
@@ -328,8 +295,7 @@ function zlozPowierzchnieBudowniczego(
   tozsamosc.append(
     wiersz('Automatyka', wskazanie, {
       klasa: 'da-wiersz',
-      // `automation.workflow.save` z kodem, którego rdzeń nie zna, nie jest
-      // odmową — zakłada definicję pod tym kodem w wersji 1.
+      // automation.workflow.save z kodem, którego rdzeń nie zna, nie jest odmową, zakłada definicję.
       objasnienie:
         'Puste pole zakłada nową automatykę. Kod zastany zmienia jego definicję; ' +
         'kod nieznany rdzeniowi również zakłada nową — pod tym właśnie kodem.',
@@ -341,8 +307,7 @@ function zlozPowierzchnieBudowniczego(
       objasnienie: 'Automatyka wyłączona zostaje w wykazie, lecz nie pracuje.',
     }),
   );
-  // Ocena definicji stoi pod edytorem, a nie w pasie akcji: mówi o treści
-  // kroków, więc ma być tam, gdzie te kroki się wpisuje.
+  // Ocena definicji stoi pod edytorem, nie w pasie akcji — mówi o treści kroków, które się tam wpisuje.
   const ocenaDefinicji = document.createElement('p');
   ocenaDefinicji.className = 'dn-pole-opis da-ocena-definicji';
   ocenaDefinicji.setAttribute('aria-live', 'polite');
@@ -380,11 +345,9 @@ function podepnijAkcjeBudowniczego(
 }
 
 /**
- * Zdanie potwierdzenia zapisu — składane z odpowiedzi rdzenia, nie z żądania.
- *
- * Przy duplikowaniu okno wysyła żądanie bez identyfikatora i o nowej definicji
- * mówi dopiero wtedy, gdy identyfikator w odpowiedzi różni się od tego, który
- * stał w oknie przed czynnością.
+ * Zdanie potwierdzenia zapisu — składane z odpowiedzi rdzenia, nie z żądania: o nowej
+ * definicji mówi dopiero, gdy identyfikator w odpowiedzi różni się od tego sprzed
+ * czynności.
  */
 function zdanieZapisu(
   definicja: AutomationWorkflow,
@@ -403,7 +366,7 @@ function zdanieZapisu(
   return `Rdzeń założył nową automatykę ${opis}.`;
 }
 
-/** Podsumowanie definicji — czysta konstrukcja z bytu `AutomationWorkflow`. */
+/** Podsumowanie definicji — czysta konstrukcja z bytu AutomationWorkflow, bez odczytu ani zapisu do rdzenia. */
 function podsumowanieAutomatyki(definicja: AutomationWorkflow): HTMLElement {
   const podsumowanie = document.createElement('p');
   podsumowanie.className = 'dn-pole-opis';
@@ -412,7 +375,7 @@ function podsumowanieAutomatyki(definicja: AutomationWorkflow): HTMLElement {
   return podsumowanie;
 }
 
-/** Stos zmian kroków — cofnij i ponów miejscowe, sprzed zapisu do rdzenia. */
+/** Stos zmian kroków — cofnij i ponów działają miejscowo, na pracy sprzed zapisu do rdzenia, nie po nim. */
 interface StosZmianKrokow {
   /** Odnotowuje zmianę kroków, jeżeli różni się od stanu ostatnio zapamiętanego. */
   odnotuj(): void;

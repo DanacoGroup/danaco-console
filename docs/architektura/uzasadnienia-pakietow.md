@@ -3201,3 +3201,19 @@ sygnał — sygnał dochodzi do procesu rodzica, który ten strumień zamyka.
 Wiersz nieczytelny dostaje błąd protokołu, metoda nieznana błąd metody,
 a odmowa narzędzia wynik oznaczony jako błędny; żaden z tych przypadków
 osobno nie kończy pracy serwera.
+
+## budowa/server/internal/dane/tozsamosc_tresc.go
+Oś mówi, dla czego treść obowiązuje — dla platformy, dla wskazanego modelu albo dla wskazanego konta. Która oś wygrywa, rozstrzyga warstwa wyższa; repozytorium wyłącznie oddaje wiersze i zapisuje zmianę operatora. Kategoria spoza katalogu jest błędem wskazania, nie awarią, bo katalog jest zamkniętym zbiorem wierszy migracji.
+## budowa/server/internal/dane/przegladarka_okno.go
+Sprawdzenie znajomości okna operacyjnego jest osobnym pytaniem od odczytu migawki strony, ponieważ wykazy źródeł
+i notatek muszą rozróżniać dwie sytuacje wyglądające identycznie przy pustym wyniku: okno przeglądania istnieje,
+ale nic w nim jeszcze nie zebrano, oraz okno, którego moduł nigdy nie widział. Bez osobnego sprawdzenia obie
+sytuacje kończyłyby się tą samą pustą tablicą i odmową nie do odróżnienia od wyniku pustego.
+
+Śladem obecności okna jest każda z trzech tabel modułu, nie tylko migawka strony. Okno staje się znane pierwszą
+nawigacją, ale równie dobrze pierwszym zapisanym źródłem albo notatką — żadna z tych czynności nie wymaga
+poprzedniczki. Pytanie ograniczone wyłącznie do tabeli migawek odrzuciłoby jako nieznane okno zasilone samym
+źródłem, co byłoby błędem.
+
+Pytanie nie sięga katalogu okien operacyjnych, ponieważ adapter modułu ma jedną zależność — własne repozytorium.
+Znajomość okna oznacza więc znajomość modułu przeglądania, a nie istnienie wiersza w tabeli okien.

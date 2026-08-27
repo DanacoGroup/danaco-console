@@ -449,6 +449,15 @@ cd budowa/server && flock /tmp/danaco-bieg-pelny.lock \
 Sprawdzian, który padł w pełnym biegu, a przechodzi uruchomiony pojedynczo, jest
 chwiejnością pod obciążeniem, nie usterką — i tak się go nazywa.
 
+**Pełny bieg regresji jest bramką scalenia u Prowadzącego, nie bramką wyjścia
+u wykonawcy.** Wykonawca dowodzi swojego przedmiotu biegiem **celowanym** pakietu,
+który dotyka — jest szybki i odporny na obciążenie. Pełny bieg `./...` w drzewie
+terenu mierzy drzewo **bez** pozostałych terenów biegnących równolegle, więc
+rozstrzyga wyłącznie bieg na scalonym `main` po scaleniu, a ten wykonuje
+Prowadzący raz, pod zamkiem, jako warunek bramki scalenia. Zaprzęganie czterech
+terenów do czterech pełnych biegów naraz zapycha zamek na godziny i nic nie
+rozstrzyga — każdy z nich mierzy inny, niepełny stan.
+
 Czas dostępu do pliku nie dowodzi, że pliku nie czytano. Drzewo stoi na `ext4`
 zamontowanym z `relatime`, gdzie jądro odświeża czas dostępu wyłącznie wtedy,
 gdy poprzedni jest starszy od czasu zmiany albo starszy niż doba. Odczyt pliku,

@@ -164,3 +164,7 @@ Animacja wejścia stref korzysta z trybu `backwards`, nie `both`, ponieważ elem
 Arkusz wciąga plik punkty-dostepu.css, ponieważ dodanie katalogu kończy wykaz
 punktów dostępu i stoi pod nim w tej samej sekcji. Barw własnych tu nie ma —
 wyłącznie żetony warstwy motyw/ — ani żadnej reguły wygaszającej kontrolkę.
+
+## budowa/klient-poprzedni/src/dostepy/katalog-roboczy.css
+Ramę sekcji prowadzi plik dostepy.css; barwy pochodzą wyłącznie z żetonów
+warstwy motyw/.

@@ -3417,3 +3417,14 @@ Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość
 
 ## budowa/server/internal/dane/developer_odczyt.go
 Limit wykazu wchodzi zapytaniem jako parametr przygotowanego polecenia, nie sklejaniem tekstu SQL. Wartość niedodatnia oznacza wykaz pełny dzięki wyrażeniu warunkowemu w zapytaniu, więc jedno przygotowane polecenie obsługuje oba przypadki bez rozgałęzienia w kodzie, a liczba z zewnątrz nigdy nie trafia do treści zapytania.
+
+## budowa/server/internal/session/wstrzymanie_windows.go
+Windows nie ma dla obcego procesu odpowiednika sygnałów uniksowych wstrzymania
+i wznowienia. Wstrzymanie idzie tam per wątek, a uchwyt, którym rdzeń obejmuje
+całe drzewo procesów, takiej czynności nie zna. Przejście po wątkach wszystkich
+procesów drzewa nie jest odpowiednikiem, bo wątek utworzony w trakcie czynności
+zostałby biegnący, więc wstrzymanie znaczyłoby coś innego niż na systemach
+uniksowych. Dlatego czynność zgłasza się jako niewspierana, zamiast robić coś
+podobnego: kontrakt komendy zgłoszenia wstrzymania ma na to osobne pole,
+a proces zostaje nietknięty, więc operator dostaje prawdę o możliwościach
+maszyny zamiast odpowiedzi udanej, po której proces dalej zajmuje procesor.

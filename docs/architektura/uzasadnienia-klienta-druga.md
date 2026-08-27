@@ -2273,3 +2273,11 @@ Na pasku stoi wyłącznie przycisk ikonowy o wymiarze kontrolki paska; komplet
 kontrolek mieszka w kolumnie obok sceny, bo w prawym rogu paska nie miałby
 się gdzie zmieścić. Naciśnięty przy zwiniętej szufladzie rozwija ją, przy
 rozwiniętej — zwija.
+
+## budowa/klient-poprzedni/src/moduly/workspace/agenci-pozycja.ts
+Pozycja wykazu ekspertów stoi w osobnym pliku od okna, bo to inna odpowiedzialność: okno prowadzi
+odczyt i przypisanie, pozycja rysuje jednego eksperta. Pozycja nie trzyma własnego stanu — rysuje
+komplet uprawnień z pola odpowiedzi, tak jak podał go rdzeń. Uprawnienie ma trzy stany, nie dwa:
+grupa, o której rdzeń nie powiedział nic, nie jest ani przyznana, ani odebrana, i tak też jest
+wypisana. Grupa bez odpowiedzi rdzenia daje przy naciśnięciu żądanie przyznania; wykaz odrysowuje
+okno dopiero z odpowiedzi rdzenia na zmianę uprawnienia.

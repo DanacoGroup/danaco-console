@@ -1872,3 +1872,14 @@ potwierdzonego przez rdzeń, tworząc rejestr kanałów, odświeżając go i wo�
 montaż widoku sterowania z kanałem, oknem, rejestrem kanałów, panelem oraz
 akcjami paska. Widok powstaje raz na okno; rejestr kanałów raz na klienta,
 bo jest katalogiem wyboru, nie ustawieniem okna.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/wiez-koordynacji.ts
+Ustalanie więzi wiąże pierwszy widoczny koordynator z pierwszym widocznym
+wykonawcą; trzecie okno w roli wykonawcy pozostaje poza tą więzią, ponieważ
+pas relacji pokazuje jedno powiązanie naraz, żeby obraz dał się ogarnąć
+wzrokiem. Koordynator niesie napis informujący o zleceniu do wykonawcy,
+a wykonawca napis o zleceniach otrzymanych od koordynatora; groty obu napisów
+wskazują tę samą stronę sceny — kierunek biegu zlecenia — i stoją po stronie
+okna partnera. U koordynatora grot wychodzi z napisu ku wykonawcy, u wykonawcy
+wchodzi w napis od strony koordynatora, dzięki czemu kierunek pętli czyta się
+bez czytania słów; gniazdo spoza więzi nie dostaje napisu.

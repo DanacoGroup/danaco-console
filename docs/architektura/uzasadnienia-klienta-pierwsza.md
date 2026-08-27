@@ -4545,3 +4545,13 @@ przyszły, ale wdrożeń w nich nie było. Ramki z wdrożeniem przy pustym wykaz
 sprzecznością wewnątrz okna, bo wykaz niczego nie zdejmuje, i zdanie nazywa ją
 wprost, zamiast zaokrąglać do jednej z pozostałych. Żadna gałąź nie orzeka
 o tym, czego rdzeń nie robi.
+
+## budowa/klient-poprzedni/src/moduly/automations/widok-przekazan.ts
+
+Pozycja wykazu mówi, skąd przyszedł scenariusz i ile ma kroków, ponieważ to
+jedyne, czym operator może się kierować przed zapisem. Treść samych kroków nie
+jest tu pokazywana wcale — należy do okna Workflow Builder i staje się dostępna
+po zapisie scenariusza jako automatyki.
+
+Wykaz pusty oddaje wartość `null`, ponieważ sekcja bez ani jednej pozycji nie ma
+po co stać na ekranie, a zdanie o pustce niesie stan treści okna.

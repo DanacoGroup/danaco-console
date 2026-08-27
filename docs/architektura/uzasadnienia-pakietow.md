@@ -4739,3 +4739,41 @@ każe się odwrócić w straż. Naprawa należy do warstwy modułów, do macierz
 nie do tego pliku — sprawdzian pomiar utrwala, nie rozstrzyga.
 ## budowa/server/internal/dane/roundtable_glosowanie.go
 Wyniku agregacji tu nie ma i być nie może: liczy go rdzeń z głosów przy każdym odczycie, bo głos może dojść po pierwszym wyliczeniu. Repozytorium oddaje materiał, czyli głosowanie, warianty i głosy, a nie wnioski wyciągnięte z niego. Powtórne oddanie głosu zastępuje poprzedni: zmiana zdania w otwartym głosowaniu jest czynnością dozwoloną, a dwa głosy tej samej osoby nie są. Otwarcie głosowania zakłada je wraz z wariantami w jednej transakcji, bo głosowanie bez wariantów byłoby pytaniem bez odpowiedzi do wyboru.
+
+## budowa/server/internal/dane/library_kolekcje.go
+Plik biblioteki leży w osobnym pliku, wersje w kolejnym osobnym pliku.
+Kolekcja nieznana to co innego niż plik nieznany: nie ma dokąd przypisywać,
+więc wywołanie wraca jako błąd braku wiersza i adapter odmawia wprost. Pusta
+lista dawałaby przypisaniu kolekcji powodzenie z zerem przypisań, czyli
+potwierdzenie czynności, która się nie odbyła.
+
+Ustawianie etykiet nadsyła komplet etykiet pliku, nie różnicę — tak samo jak
+zapis kroków automatyzacji podmienia komplet kroków. Ustawienie etykiet
+usuwa więc zastane etykiety i wstawia nadesłane w jednej transakcji.
+
+## budowa/server/internal/dane/library_wersje.go
+Wersja jest własnym bytem, nie polem licznika: każdy wiersz niesie własną
+treść, sumę kontrolną i autora, dlatego zapis wersji nie nadpisuje niczego,
+tylko dokłada wiersz historii.
+
+Plik po zmianie zwraca osobna metoda odczytu pliku, żeby nie duplikować tu
+kształtu struktury pliku biblioteki, którego ten plik nie deklaruje.
+
+## budowa/server/internal/dane/library_wersje_zapis.go
+Osobny plik od pliku odczytu wersji: tamten plik odpowiada za odczyt
+historii i za przywrócenie wersji zastanej; ten za jej dołożenie. Rozdział
+idzie wzdłuż odpowiedzialności, a nie wzdłuż tabeli — polecenie SQL obu
+stron jest to samo i mieszka nadal w pliku odczytu, żeby nie było dwóch
+prawd o jednym poleceniu.
+
+Dołożenie jest nierozdzielne. Wstawienie wiersza historii i przestawienie
+pliku macierzystego na tę wersję to jedna zmiana stanu: plik, którego
+wskaźnik wersji bieżącej wskazuje wiersz nieistniejący, albo historia
+z wersją, której plik nigdy nie przyjął, to schemat rozjechany w połowie.
+Stąd transakcja, tak samo jak przy przywracaniu wersji.
+
+Liczba wersji poprzednich jest oddana wołającemu. Tabela nie ma kolumny
+numeru wersji — porządek historii daje sortowanie malejące po dacie
+utworzenia i identyfikatorze. Rdzeń, który chce nazwać wersję jej
+kolejnością, bierze ją z odczytu wersji; ten zapis niczego nie numeruje, bo
+numer nie jest tu bytem trwałym.

@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Katalog treści przepływu wejścia zawiera wyłącznie tekst widoczny dla użytkownika, uporządkowany kluczami hierarchicznymi obszar-element. ================
    PRZEPŁYW WEJŚCIA — katalog treści
 
    Jedyne miejsce z tekstem widocznym dla użytkownika. Klucze idą hierarchicznie:

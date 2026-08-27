@@ -375,3 +375,49 @@ Uprawnienie zadeklarowane w manifeście bez wskazania bytu jest uprawnieniem
 na wszystko: uprawnienie sieciowe bez domeny albo zapis plików bez korzenia
 katalogu. Walidator manifestu ma o tym ostrzec jako sygnał, nie jako bramę
 wstrzymującą publikację.
+
+## budowa/server/internal/core/adapter_modul_library_archiwum.go
+
+Trzy postacie utrwalenia archiwalnego są trzema odrębnymi standardami
+branżowymi, nie wariantami jednego zapisu, więc każda ma własną drogę
+przez rdzeń. PDF/A przechodzi przez bibliotekę `pdfcpu`: struktura dokumentu
+zostaje uporządkowana, a wynik zwalidowany tą samą biblioteką; zapis
+walidacji mówi wprost, co sprawdzono — rdzeń nie niesie walidatora profilu
+PDF/A-2b i zgodności z profilem nie orzeka, bo orzeczenie bez sprawdzenia
+byłoby pieczątką, nie utrwaleniem. BagIt składa pakiet w postaci Biblioteki
+Kongresu (`bagit.txt`, `bag-info.txt`, manifest sum kontrolnych i katalog
+`data/`), a walidacja polega na przeliczeniu manifestu z bajtów spakowanych —
+pakiet, którego manifest się nie zgadza, jest wynikiem niepoprawnym i tak
+wchodzi do odpowiedzi. PREMIS/METS składa dokument XML opisujący obiekt,
+jego sumę kontrolną i zdarzenie utrwalenia; wynikiem jest opis, nie kopia
+zasobu, więc pole zasobu wytworzonego wskazuje osobny plik opisu.
+
+Pakowanie archiwum powstaje w całości kodem wkompilowanym w binarium —
+pakiety standardowe archiwizacji, kompresji i sum kontrolnych biblioteki Go
+wraz z biblioteką `pdfcpu`. Format 7z jest jedynym wyjątkiem: sięga po
+arsenał serwerowy programem `7z`, ponieważ biblioteka standardowa tego
+formatu nie zapisuje, i tylko wtedy, gdy żądanie wprost o ten format poprosi;
+brak arsenału jest wtedy odmową nazwaną wprost, z podaniem formatów, które
+rdzeń składa bez programu zewnętrznego.
+
+Utrwalenie w miejsce oryginału jest dołożeniem nowej wersji zasobu, nie
+nadpisaniem: poprzednia treść zostaje w historii wersji, więc jest dokąd
+wrócić, gdy normalizacja PDF/A coś w dokumencie przestawi.
+
+Walidacja pakietu BagIt idzie po bajtach już spakowanych, nie po tych,
+z których pakiet powstał — pakiet, którego nie da się odczytać, jest
+pakietem nieważnym, choćby materiał źródłowy był w porządku.
+
+Liczba zasobów objętych zapisaną polityką retencji jest liczbą rzeczywistą,
+przeliczoną z repozytorium, nie zapowiedzią: polityka zasięgu projektowego
+obejmuje zasoby tego projektu, polityka zasięgu globalnego — wszystkie
+zasoby czynne. Termin retencji każdego zasobu liczy się w chwili pytania,
+bo wynika z jego ostatniej zmiany i okresu polityki, a obie wartości
+zmieniają się w czasie.
+
+Migawka wywozu paczki jest zapisem stanu całego repozytorium — zawężenia
+żądania do zbioru plików albo kolekcji przestają wtedy obowiązywać, bo
+migawka części repozytorium nie byłaby migawką. Zasób bez odczytanej treści
+nie wywraca wywozu paczki: wchodzi do indeksu jako pozycja bez bajtów, żeby
+paczka mówiła prawdę o stanie repozytorium, zamiast pomijać milczeniem to,
+czego nie udało się odczytać.

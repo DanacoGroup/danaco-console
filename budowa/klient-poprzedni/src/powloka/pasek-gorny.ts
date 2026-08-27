@@ -8,26 +8,8 @@ import type { ZrodloWyszukiwania } from './wyszukiwanie-globalne';
 import type { ZaczepyPaska } from './zaczepy-paska';
 
 /**
- * Pas 1 powłoki — pasek górny o wysokości 48 px (`--dn-wym-pasek`) na ramie
- * kokpitu, atramentowej w obu motywach.
- *
- * Jedna odpowiedzialność: tożsamość produktu, kontekst pracy, pole poleceń
- * i grupa akcji. Akcje mieszkają w `akcje-paska.ts`, wyszukiwanie w
- * `wyszukiwanie-globalne.ts` (materiał) i `wykaz-wynikow.ts` (obsada menu).
- *
- * Pole poleceń szuka w otwartym środowisku, jego modułach, kodach okien
- * operacyjnych, kartach sesji i ustawieniach platformy. Czego nie obejmuje,
- * wylicza nagłówek `wyszukiwanie-globalne.ts` — przede wszystkim nie przeszukuje
- * treści, bo kontrakt nie ma komendy wyszukiwania globalnego.
- *
- * Wykonania polecenia pole nie udaje: Enter bez trafienia mówi wprost, że
- * centrum poleceń nie jest zbudowane.
- *
- * Podpowiedź „Ctrl K" nie jest ozdobą — skrót naprawdę prowadzi ognisko do pola.
- *
- * Powłoka ma drugi pasek o innym składzie: `aplikacja/pasek-aplikacji.ts`
- * (Centrum dowodzenia i Mission Control) niesie menu aplikacji i menu Operatora,
- * a nie ma pola wyszukiwania ani dzwonka.
+ * Pas 1 powłoki — pasek górny wysokości 48 px na ramie kokpitu: tożsamość produktu, kontekst pracy,
+ * pole poleceń i grupa akcji.
  */
 export interface PasekGorny {
   /** Pasek montowany jako pierwszy wiersz powłoki. */
@@ -44,24 +26,17 @@ export interface PasekGorny {
   zamknij(): void;
 }
 
-/** Ustawienia paska: nazwa produktu, podpis Operatora, czynności i materiał. */
+/** Ustawienia paska: nazwa produktu, podpis Operatora, czynności obsługiwane przez pasek oraz materiał wyszukiwania globalnego. */
 export interface OpcjePaska {
   produkt?: string;
   operator?: string;
-  /** Czynności, których pasek nie zna — patrz `zaczepy-paska.ts`. */
+  /** Czynności paska nieznane temu plikowi — dostarczane z zewnątrz jako zaczepy przy montażu powłoki. */
   zaczepy?: ZaczepyPaska;
-  /**
-   * Skąd wyszukiwanie bierze materiał.
-   *
-   * Pominięte znaczy „ten pasek nie ma czego przeszukać" i pole mówi to wprost
-   * przy zatwierdzeniu, zamiast pokazywać pusty wykaz udający wyniki. Powłoka
-   * podaje źródło sama (`powloka.ts`), więc w produkcie ta gałąź nie zachodzi —
-   * zostaje dla podglądu `podglad.html` i dla sprawdzianów.
-   */
+  /** Skąd wyszukiwanie bierze materiał; pominięcie oznacza brak materiału do przeszukania. */
   zrodloWyszukiwania?: ZrodloWyszukiwania;
 }
 
-/** Wartości przyjmowane, gdy wywołanie ich nie podaje. */
+/** Wartości nazwy produktu i podpisu Operatora przyjmowane, gdy wywołanie budujące pasek ich nie podaje. */
 const PRODUKT = 'Danaco Console';
 const OPERATOR = 'Operator';
 
@@ -154,15 +129,8 @@ function utworzPolePolecen(): { pole: HTMLInputElement; odepnij: () => void } {
 }
 
 /**
- * Wiąże pole paska z wykazem wyników — pięć zachowań klawiatury.
- *
- * Ognisko zostaje w polu przy każdym z nich. Strzałki przesuwają wyróżnienie
- * wirtualne (`aria-activedescendant` mechanizmu), a nie ognisko; przeniesienie
- * go na pozycję wyrwałoby Operatorowi klawiaturę spod palców w połowie pisania.
- *
- * Bez źródła materiału pole zostaje czynne, a Enter mówi, że centrum poleceń
- * nie jest zbudowane — to brak materiału powiedziany wprost, nie blokada
- * kontrolki.
+ * Wiąże pole paska z wykazem wyników — pięć zachowań klawiatury, przy których ognisko stale
+ * zostaje w polu.
  */
 function zwiazWyszukiwanie(
   pole: HTMLInputElement,
@@ -181,9 +149,7 @@ function zwiazWyszukiwanie(
 
   const wykaz = utworzWykazWynikow({
     zrodlo,
-    // Wybór kończy szukanie: pole wraca puste, bo fraza opisywała drogę, którą
-    // Operator już przeszedł. Zostawienie jej otwierałoby wykaz przy każdym
-    // powrocie ogniska do pola.
+    // Wybór kończy szukanie: pole wraca puste, bo fraza opisywała drogę, którą Operator już przeszedł.
     naWybor: () => {
       pole.value = '';
     },
@@ -200,8 +166,7 @@ function zwiazWyszukiwanie(
       return;
     }
     if (zdarzenie.key === 'Escape') {
-      // Escape zwija wykaz i zostawia ognisko w polu — Operator pisze dalej,
-      // zamiast szukać, gdzie mu ognisko uciekło.
+      // Escape zwija wykaz i zostawia ognisko w polu — Operator pisze dalej zamiast szukać ogniska.
       if (!wykaz.otwarty()) return;
       zdarzenie.stopPropagation();
       wykaz.zamknij();
@@ -210,9 +175,7 @@ function zwiazWyszukiwanie(
     if (zdarzenie.key !== 'Enter') return;
     zdarzenie.preventDefault();
     if (wykaz.zatwierdz()) return;
-    // Nie było czego zatwierdzić — i to jest jedyne miejsce, w którym pole
-    // mówi jeszcze o niezbudowanym centrum poleceń, bo tu naprawdę zabrakło
-    // wykonawcy dla wpisanej treści.
+    // Nie było czego zatwierdzić — jedyne miejsce, gdzie pole mówi o niezbudowanym centrum poleceń.
     wyjasnijNieczynnosc('polecenie');
   });
 

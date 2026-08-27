@@ -2373,3 +2373,21 @@ kończy się meldunkiem, żeby wiersz nie został z zablokowanymi przyciskami.
 
 ## budowa/klient/src/gniazdo-zastepcze.ts
 Gniazdo zastępcze nie udaje rdzenia, lecz sprawdza zachowanie klienta wobec gniazda: kolejkowanie, ponawianie, kolejność stanów oraz przeżycie subskrypcji przy wymianie gniazda. Sama biblioteka gniazda nie podlega tu sprawdzeniu. Rozmowę z rdzeniem rzeczywistym mierzy osobny sprawdzian, który tego rdzenia wymaga.
+
+## budowa/klient-poprzedni/src/moduly/research/panel-postepu.ts
+Każdy licznik powstaje z pamięci modułu, a pamięć niesie wyłącznie odpowiedzi rdzenia z tego
+połączenia — żadna z liczb nie jest oszacowaniem, „źródeł 14" znaczy czternaście źródeł, które
+rdzeń skatalogował i oddał. Panel celowo nie liczy pokrycia pytań badawczych źródłami ani podziału
+źródeł na przeczytane i nieprzeczytane, z dwóch różnych powodów: pokrycie pytań czeka na uchwyt
+w rdzeniu, kształt odpowiedzi jest już rozstrzygnięty i licznik dojdzie razem z uchwytem; stan
+lektury ma pole w żądaniu zapisu źródła, ale odpowiedź, którą rdzeń oddaje, tego pola nie niesie —
+wartość da się wysłać, a nie da się jej odczytać z powrotem, i tego uchwyt sam nie naprawi, dopóki
+byt źródła nie dostanie pola. Procent policzony z danych, których nie ma, byłby metryką zmyśloną,
+więc panel go nie pokazuje i mówi, czego brakuje. Pokrycie ustaleń jest natomiast policzalne
+i policzone: sekcje raportu niosą pole `findingIds`, więc liczba zebranych ustaleń, które weszły
+do dokumentu, wychodzi z porównania dwóch zbiorów, które rdzeń oddał.
+
+## budowa/klient/src/main.ts
+Plik pozostaje wyłącznie kompozycją: gniazdo, kanał, sesja, tożsamość, przebieg i montaż. Etap i odsłonę rozstrzyga przebieg, węzły stawia montaż — plik wejścia nie rozgałęzia drogi ani nie dotyka dokumentu poza wskazaniem korzenia montażowi.
+Magazyn tokenu bramki zostaje domyślny, czyli w pamięci procesu. Magazyn trwały należy do powłoki i żadne źródło go dziś nie wskazuje; magazyn udający trwałość obiecywałby rozpoznanie urządzenia, którego nie ma.
+Rdzeń wystawia pakiet interfejsu obok gniazda, więc dokument wczytany po HTTP przyszedł z rdzenia i to jego adres jest adresem gniazda. Dokument wczytany inaczej — z pliku albo z protokołu powłoki — pochodzenia nie niesie.

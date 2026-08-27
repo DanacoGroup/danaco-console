@@ -2094,3 +2094,14 @@ Przy wniesieniu zapisanego zespołu do okna rola, waga i opis uczestnika idą
 osobnym zapisem po samym dopisaniu uczestnika, ponieważ dopisanie opisuje go
 wyłącznie parą kanał modelu i nazwa tożsamości, a reszta profilu uczestnika
 należy już do osobnej zmiany.
+
+## budowa/server/internal/core/adapter_modul_automations_dziennik.go
+
+Telemetria WebSocket niesie wyłącznie zdarzenia, które padły przy otwartym
+oknie; kontrakt żąda pełnego zapisu zdarzeń pojedynczego uruchomienia, także
+sprzed otwarcia okna, a tego nie da się oddać z bufora, który znika razem
+z procesem — stąd wszystkie czynności tego pliku czytają bazę.
+
+Redakcja sekretów idzie przy odczycie, nie przy zapisie. Reguła redakcji bywa
+zmieniana, a zapis raz zredagowany nie da się odredagować — zapis surowy
+z redakcją dopiero przy wydaniu zachowuje obie możliwości.

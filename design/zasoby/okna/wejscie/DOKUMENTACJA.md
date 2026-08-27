@@ -31,7 +31,7 @@ ani jednego łańcucha widocznego dla użytkownika.
 | treść | `zasoby/okna/wejscie/tresci.js` | **wszystkie** łańcuchy widoczne dla użytkownika |
 | znaki | `zasoby/okna/wejscie/ikony.js` | 22 rysunki używane w oknach |
 | składniki | `zasoby/okna/wejscie/skladniki/` | 15 plików, jeden składnik na plik |
-| ekrany | `zasoby/okna/wejscie/ekrany/` | `uruchomienie.js` (3 odsłony), `dostep.js` (7 odsłon) |
+| ekrany | `zasoby/okna/wejscie/ekrany/` | `uruchomienie.js` (3 odsłony), `dostep.js` (7 odsłon), `przygotowanie.js` (1 odsłona) |
 | montaż | `zasoby/okna/wejscie/montaz.js` | złożenie okien i wstawienie w miejsce montażu |
 | mechanika okna | `zasoby/okna/przeplyw-wejscia.js` | animacja startowa, przebieg łączenia, sprawdzanie danych |
 | oprawa podglądu | `zasoby/okna/przeplyw-wejscia-podglad.js` | rusztowanie — **nie należy do produktu** |
@@ -155,6 +155,11 @@ Zakładki niosą wyłącznie dwie drogi równorzędne — logowanie i rejestracj
 Odzyskiwanie dostępu nie jest trzecią drogą, tylko wyjściem z logowania, więc
 w zakładkach zostaje zaznaczone logowanie.
 
+**Okno przygotowania** — jedna odsłona, bez zakładek i bez belki systemowej.
+Stoi już wewnątrz ramy aplikacji (ta niesie własną belkę), więc panel i pas nie
+noszą `data-widok`. Montaż (`montaz.js`) buduje je z `ekrany/przygotowanie.js`
+i wstawia w `<div data-wejscie-okno="przygotowanie"></div>`.
+
 Odsłony osiągalne adresem, do których przepływ sam nie doprowadzi:
 
 ```
@@ -192,11 +197,16 @@ zgłaszane przez montaż — wcześniej nie ma czego obsługiwać.
 2. Skopiuj `zasoby/narzedzia-okien.js` i `zasoby/okna/wejscie/` w całości.
 3. Skopiuj `zasoby/okna/przeplyw-wejscia.js` oraz animacje:
    `zasoby/ekran-startowy.js`, `zasoby/powloki.js`.
-4. **Nie kopiuj** `zasoby/okna/przeplyw-wejscia-podglad.js` — to rusztowanie
+4. Skopiuj `zasoby/prototyp.css` i `zasoby/prototyp.js` — niosą **jedyną** regułę
+   widoczności odsłon (`[data-widok]:not([data-widok-aktywny='tak']) { display: none }`
+   w arkuszu i przełącznik, który ten atrybut ustawia w skrypcie). Bez nich okno
+   pokaże wszystkie odsłony naraz.
+5. **Nie kopiuj** `zasoby/okna/przeplyw-wejscia-podglad.js` — to rusztowanie
    podglądu, nie produkt.
-5. W swoim dokumencie umieść `<div data-wejscie-okno="uruchomienie"></div>`
-   albo `<div data-wejscie-okno="dostep"></div>`; montaż sam wykryje ten węzeł.
-6. Wepnij pliki treści **przed** składnikami — kolejność wpięć podaje plik
+6. W swoim dokumencie umieść `<div data-wejscie-okno="uruchomienie"></div>`,
+   `<div data-wejscie-okno="dostep"></div>` albo
+   `<div data-wejscie-okno="przygotowanie"></div>`; montaż sam wykryje ten węzeł.
+7. Wepnij pliki treści **przed** składnikami — kolejność wpięć podaje plik
    podglądu, który jest wzorem montażu.
 
 Nic się nie dociąga w czasie działania: okna działają tak samo z serwera i wprost

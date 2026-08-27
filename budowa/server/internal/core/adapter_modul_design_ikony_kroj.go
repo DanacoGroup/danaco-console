@@ -605,7 +605,7 @@ func zapiszTabeleHeadDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	_ = binary.Write(bufor, binary.BigEndian, uint32(0x5F0F3CF5)) // magicNumber
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0x000B))     // flagi: bazowa w zerze, lsb, skala całkowita
 	_ = binary.Write(bufor, binary.BigEndian, uint16(jednostekNaFiretDesignu))
-	// Znacznik czasu liczy się od 1904 roku; wpisujemy zero, żeby pakiety nie różniły się bajtami.
+	// Znacznik czasu liczy się od 1904 roku; wpisuje się zero, żeby pakiety nie różniły się bajtami.
 	_ = binary.Write(bufor, binary.BigEndian, int64(0))
 	_ = binary.Write(bufor, binary.BigEndian, int64(0))
 	_ = binary.Write(bufor, binary.BigEndian, int16(xMin))

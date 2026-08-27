@@ -239,3 +239,34 @@ każdego żądania. Każda sekcja kończy się zdaniem o mierzonym skutku, nie
 słowem „gotowe" — liczbą par wniesionych do pamięci, ścieżką pliku, który
 powstał, liczbą pozycji przebiegu — bo komunikat „udało się" bez liczby jest
 meldunkiem zamiast skutku.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-znakowania.ts
+
+Znaczenie fragmentu jest czynnością powtarzaną kilkadziesiąt razy na
+dokument, a droga przez menu kosztuje przy każdym razie dwa ruchy więcej,
+dlatego wszystko, czym się dokument znaczy, stoi w bocznym przyborniku przy
+krawędzi treści, nie w menu ani osobnym oknie. Przybornik jest narzędziem do
+pracy na fragmentach, nie na dokumencie w całości: gdy zaznaczenia nie ma,
+pozycje nie milkną, tylko mówią, że znakowanie obejmie cały dokument, i to
+jest odpowiedź, nie odmowa.
+
+Wszystko, czym Operator znaczy dokument, model musi umieć założyć i
+przeczytać: komentarz i adnotacja idą komendami rdzenia niosącymi pole
+autora, więc znakowanie modelu jest podpisane jako `model`, a Operatora jako
+`uzytkownik`. Znacznik własny pola autora w kontrakcie nie ma, więc
+przybornik trzyma go u siebie wraz z autorem — to brak nazwany, nie
+zatajony. Czynności bez zaplecza w rdzeniu stoją w osobnej części, z
+nazwaniem, co dokładnie brakuje — przypis, odsyłacz, odwołanie wzajemne,
+wstawienie tabeli i pola należą do aparatu i postaci dokumentu, których
+kontrakt jeszcze nie niesie — bo przycisk wychodzący do rdzenia po komendę,
+której nie ma, byłby uprzejmą odmową udającą funkcję.
+
+Zaplecze rdzenia znakowania jest nieobowiązkowe, bo przybornik stoi w oknie
+pracy z dokumentem, którego montaż powstaje etapami: zaplecze podane znaczy,
+że droga do rdzenia jest wpięta i znakowanie jest wtedy trwałe oraz widoczne
+modelowi, a zaplecze `null` znaczy, że tej drogi jeszcze nie wpięto, i
+przybornik pisze to Operatorowi wprost, zamiast pokazywać przyciski, które
+nic nie robią. Przycisk dyktafonu, wzorem pakietu biurowego, jest przyciskiem
+dyktowania do treści dokumentu; przybornik go tylko osadza, a nagrywanie
+i przepisanie liczy zaplecze mowy, jednym rachunkiem wspólnym z mikrofonem
+wiersza polecenia.

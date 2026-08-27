@@ -1,14 +1,7 @@
 /*
- * Warstwa wizualna modułu Agents.
- *
- * Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
- * z żetonów motywu. Klasy `dn-*` (pole, przycisk, plakietka, zakładki,
- * pusty stan) wnosi biblioteka komponentów; tutaj leży wyłącznie rozkład okien
- * modułu i to, czego biblioteka nie ma: pasy układu, wykazy okien operacyjnych
- * i znakowanie faz stanu.
- *
- * Kontrolki formularza modułu pochodzą z `modele/kontrolki-formularza`, więc
- * moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
+ * Warstwa wizualna modułu Agents nie zna barwy zapisanej wprost — wartości
+ * pochodzą z żetonów motywu, a rozkład okien operacyjnych uzupełnia bibliotekę
+ * komponentów. Kontrolki formularza wymagają dodatkowo arkusza `modele.css`.
  */
 
 @import '../../modele/modele.css';
@@ -248,6 +241,7 @@
 }
 
 /* Znacznik w wierszu biblioteki — ten sam bursztyn, rozmiar plakietki. */
+
 .da-odstepstwo-znacznik {
   padding: 0 var(--dn-od-1);
   border: 1px solid var(--dn-ostrzezenie-obrys);
@@ -410,6 +404,7 @@
 }
 
 /* Zespół otwarty w formularzu — Operator ma widzieć, co zmieni zapis. */
+
 .da-zespoly__wiersz[data-otwarty='tak'] {
   border-color: var(--dn-sygnal-wypelnienie);
 }
@@ -470,6 +465,7 @@
 }
 
 /* Wykaz niezawężony — model dostaje wszystko; to stan faktyczny, nie próg. */
+
 .da-licznik[data-stan='pelny'] {
   border-color: var(--dn-ostrzezenie-obrys);
   background: var(--dn-ostrzezenie-tlo);
@@ -482,6 +478,7 @@
 }
 
 /* Brak eksperta nie jest stanem złym — nie ma wtedy czego liczyć. */
+
 .da-licznik[data-stan='bez-eksperta'] .da-licznik__liczba {
   color: var(--dn-tekst-3);
 }

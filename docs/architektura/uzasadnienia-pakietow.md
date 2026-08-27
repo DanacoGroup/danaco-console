@@ -5012,3 +5012,44 @@ zatrzymana i wyczerpana. Okno komunikacji zna dwa stany, więc liczą się
 wiersze w stanie otwartym.
 ## budowa/server/internal/dane/roundtable_stanowisko.go
 Stanowisko powstaje ze złożenia wypowiedzi tury, więc odczyt bez nowej wypowiedzi daje treść tę samą, a podbijanie wersji przy każdym otwarciu okna zamieniłoby licznik wersji w licznik odczytów. Bez warunku broniącego redakcji Operatora pierwsze otwarcie panelu stanowiska po redakcji wracałoby do zapisu tur i kasowało pracę Operatora. Redakcja Operatora podnosi wersję zawsze, także wtedy, gdy treść wyszła ta sama, bo zapisanie tej samej treści jest czynnością zamierzoną, nie powtórzeniem bez skutku.
+
+## budowa/server/internal/podagenci/domkniecie.go
+Praca podagenta biegnie w tle, a jej odwołanie leży w wykazie prac pod kodem
+podagenta. Kiedy praca się kończy, także gdy kończy błędem, wykaz zwalnia się
+automatycznie. Zapis stanu końcowego idzie po tym i sam też potrafi paść,
+choćby na chwilowe zajęcie bazy. Zostaje wtedy wiersz w stanie niekońcowym
+bez uchwytu do pracy, a zatrzymanie podagenta odwołuje wyłącznie po uchwycie:
+uchwytu nie ma, więc melduje brak działania i wiersza nie rusza. Podagent
+stoi w stanie oczekującym albo biegnącym do końca życia bazy.
+
+Odpowiedzią jest domknięcie, a nie zapisywanie stanu zatrzymanego zawsze, bo
+meldunek o braku działania niesie potrzebną wiedzę: Operator zatrzymujący
+wielu podagentów ma wiedzieć, których zdążył zatrzymać, a którzy skończyli
+sami. Domknięcie robi rzecz węższą — bierze wyłącznie wiersze niekońcowe,
+których pracy nikt nie prowadzi, i przestawia je na stan końcowy. Wiersz
+zakończony zostaje nietknięty.
+
+Zapis stanu jest uparty, nie jednokrotny: nieudany wraca jeszcze kilka razy
+z rosnącym odstępem, bo rywalizacja o zapis w bazie jest chwilowa, a jedna
+nieudana próba zamieniłaby ją w stan trwale nieprawdziwy.
+
+Praca oddana przed urwaniem jest ważniejsza niż wyjaśnienie, dlaczego się
+urwała — dlatego wyjaśnienie domknięcia wchodzi wyłącznie do pola wyniku
+pustego, warunek stawia funkcja pomocnicza, nie samo zapytanie.
+
+Kontekst zerwany w ZapiszStan kończy ponawianie od razu: zatrzymany rdzeń nie
+ma po co czekać na bazę, a zapis pod kontekstem odwołanym i tak nie ma prawa
+się udać, dlatego wołający podaje kontekst życia rdzenia, nie kontekst
+odwołanej pracy. Trwałość pusta kończy się błędem nazywającym jej brak, a nie
+meldunkiem udanego zapisu.
+
+DomknijNieczynnych woła się po stwierdzeniu bezczynności, nie zamiast niego:
+wykaz podaje wołający i to on odpowiada za to, że praca tych podagentów
+naprawdę nie biegnie — sam przegląd żywotności tego nie mierzy. Błąd jednego
+wiersza nie przerywa pozostałych, bo domknięcie części wykazu jest lepsze niż
+odmowa domknięcia całości; pierwszy napotkany błąd wraca po przejściu całego
+wykazu.
+
+Zapis stanu wynikowego używa reguły pierwszej wartości niepustej, a wartość
+niepusta nadpisałaby więc pracę, którą podagent zdążył oddać; skoro zapytanie
+warunku nie stawia, stawia go wołający.

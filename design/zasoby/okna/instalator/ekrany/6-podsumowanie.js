@@ -1,10 +1,8 @@
-/* ============================================================================
-   EKRAN 6 — PODSUMOWANIE
-   ----------------------------------------------------------------------------
+/* Ekran szósty kreatora instalacji przedstawia wynik zakończonej instalacji programu oraz czynności dostępne po pierwszym uruchomieniu.
+
    Znak wyniku stoi przy tytule, bo to tytuł orzeka o wyniku instalacji; blok
    „przy pierwszym uruchomieniu" zapowiada przyszłe czynności i żadnego znaku
-   nie bierze. Dwa wyniki — gotowe i z ostrzeżeniami — niesie `data-wynik`.
-   ============================================================================ */
+   nie bierze. Dwa wyniki — gotowe i z ostrzeżeniami — niesie `data-wynik`. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

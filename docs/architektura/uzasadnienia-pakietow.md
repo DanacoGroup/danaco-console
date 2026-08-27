@@ -5290,3 +5290,5 @@ Repozytorium nie ocenia układu: łuk do kroku nieistniejącego i łuk
 domykający cykl zapisują się tak samo jak każdy inny — ocena należy do
 walidacji w rdzeniu. Więzy pilnowane przez sam schemat, czyli pętla własna
 i rodzaj spoza wartości kontraktu, wracają stąd jako błąd zapisu.
+## budowa/server/internal/dane/rozmowa_lancuch.go
+Reguła całego pliku: brakujące ogniwo łańcucha zakładamy albo zastępujemy najbliższym sensownym, zamiast odmawiać zapisu z powodu braku konfiguracji; odmowa zostaje wyłącznie tam, gdzie nie ma z czego zbudować wiersza. Moduł zastępczy jest jedynym modułem widocznym we wszystkich środowiskach udostępniających moduły, więc zastępstwo nie wprowadza okna do środowiska, w którym nie może się pojawić. Sesja istniejąca wraca bez zmian, bo czynność zapewnienia sesji jest idempotentna: karta sesji i środowisko powstają tą samą drogą co przy utrwalaniu rozmowy, osobnego łańcucha tu nie ma.

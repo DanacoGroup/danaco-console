@@ -5666,3 +5666,11 @@ TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu. Brak tej drogi nie jest
 przedmiotem tego pomiaru — mierzone jest to, co rdzeń robi, gdy adres
 zostaje potwierdzony. Sprawdzian trzyma sam materiał drogi, bo z bazy
 odczytać się go nie da — leży tam wyłącznie jego skrót.
+
+## budowa/server/internal/core/harmonogram_budzik.go
+Okno Scheduler zapisuje cykliczność, a wyliczenie następnego uruchomienia liczy najbliższy termin.
+Budzik cyklicznie pyta repozytorium o harmonogramy należne — czynne, z terminem minionym — i każdy
+odpala tą samą drogą, którą automatykę rusza Operator. Przesunięcie terminu idzie przed odpaleniem:
+najpierw wyliczamy i zapisujemy następny termin, dopiero potem ruszamy automatykę. Dzięki temu ten
+sam harmonogram nie odpali się w kółko, gdyby odpalenie trwało dłużej niż takt zegara albo gdyby
+uruchomienie zawiodło — awaria jednego przebiegu nie zawiesza budzika.

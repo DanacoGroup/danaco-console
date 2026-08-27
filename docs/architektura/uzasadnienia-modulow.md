@@ -3977,3 +3977,100 @@ Warstwy i wtyczki dochodzą przy wykazie dwoma zapytaniami na cały wykaz, nie
 dwoma na eksperta. Bez nich edytor warstw pokazywałby puste pola przy
 ekspercie, który warstwy ma; pytanie o nie po jednym dałoby przy stu
 ekspertach dwieście zapytań na jedno otwarcie biblioteki.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_polecenia.go
+
+Własnego silnika tłumaczeń tu nie ma; przekład idzie kanałem modelu, więc
+cała wiedza modułu o tym, jak ma wyglądać dobry przekład, mieści się w
+treści polecenia. Plik adapter_modul_tlumaczenie_model.go odpowiada za
+drogę do modelu, ten plik za treść polecenia.
+
+Słownik Operatora wiąże przekład dwiema drogami. Przed wywołaniem terminy
+wchodzą do polecenia jako wykaz obowiązkowych odpowiedników i wykaz nazw
+nietykalnych: model, który zna słownik, użyje właściwego słowa w
+odmienionej formie i we właściwym miejscu zdania, czego podmiana napisu
+nie potrafi. Po wywołaniu wynik przechodzi tę samą mechaniczną podmianę,
+co zastosowanie terminów słownika: wyłapuje termin zostawiony w brzmieniu
+źródłowym, lecz nie zastępuje pierwszej drogi — trafia wyłącznie w formę
+podstawową.
+
+Zasady jakości także wchodzą do polecenia. Kontrakt zna sześć rodzajów
+niezgodności: liczbę, datę, walutę, symbol zastępczy, długość i
+pominięcie. Moduł szuka ich potem w wyniku. Rodzaj pominięcia jest tu
+obecny, choć kontrola jakości go nie sprawdza, bo wymagałby rozumienia
+treści — polecenie może żądać rzeczy, której kontrola potem nie
+zweryfikuje.
+
+Rozdział słownika na dwa wykazy jest istotny, nie kosmetyczny. Odpowiednik
+dotyczy jednego języka docelowego. Nietykalność dotyczy terminu, nie
+języka: nazwa własna produktu ma zostać nietknięta w każdym przekładzie,
+więc wykaz nietykalnych zbiera terminy wszystkich języków słownika.
+Zawężenie ich do języka panelu byłoby cichym rozluźnieniem zakazu
+Operatora.
+
+Kolejność treści polecenia nie jest przypadkowa — polecenia idą przed
+tekstem, żeby model czytał je jako instrukcję, a nie jako część materiału
+do przełożenia; sam tekst źródłowy zamyka polecenie pod wyraźnym
+nagłówkiem z tego samego powodu. Żądanie oddania wyłącznie przekładu
+zostaje, bo treść panelu ma być tłumaczeniem, nie rozmową o tłumaczeniu.
+
+Gdyby słownik wszedł do tłumaczenia zwrotnego, przekład zwrotny
+naprawiałby terminologię z powrotem na brzmienie źródłowe i Operator
+zobaczyłby zgodność tam, gdzie jej nie ma — kontrola przestałaby
+cokolwiek kontrolować. Z tego samego powodu polecenie żąda przekładu
+dosłownego, nie gładkiego.
+
+Termin bez odpowiednika nie niesie żadnego polecenia dla modelu: Operator
+zaznaczył słowo, ale nie powiedział, czym je zastąpić.
+## budowa/server/internal/core/adapter_modul_orkiestracja_zlozenie.go
+
+Podzial wobec adapter_modul_orkiestracja.go idzie wzdluz odpowiedzialnosci:
+tam mieszka powolanie podagentow (subagent.spawn) wraz z praca w tle, tutaj
+wylacznie budowanie portu i jego wiazania. Wszystkie dokladki znosza sie
+same przy pustej zaleznosci.
+
+drogaNarzedzia: powolan bywa kilkanascie na ture. prace: bez tego wykazu
+subagent.stop nie mialby czego zatrzymac i przepisywalby wylacznie wiersz
+(adapter_modul_orkiestracja_zatrzymanie.go). rozgloszenie: tresc rozgloszen
+niesie adapter_modul_orkiestracja_rozgloszenie.go.
+
+zlozPodagentow stoi w tym pliku, a nie w montaz_porty.go, z dwoch powodow:
+montaz przeklada byty na porty jednym wierszem na port, a wiazan podagentow
+jest piec; dzieki temu montaz nie musi tez znac pakietu podagenci - wiedze
+o ocenie zywotnosci trzyma adapter, ktory jako jedyny jej uzywa. Bez
+silnika kolejek podagent zostaje pending, bez biegow powstaje poza biegiem,
+bez nadzoru idzie bez zdania o procesie orkiestratora.
+
+zWykonaniem: bez wpiecia podagent zostaje w stanie pending i to jest stan
+prawdziwy, nie udawane wykonanie. subagent.result.collect oddaje tresc,
+a nie puste pole, dzieki wpieciu adaptera jako ujscia wyniku silnika.
+Wpiecie idzie stad, bo tylko ten adapter wie, ze pozycja miewa podagenta -
+silnik zna wylacznie pozycje.
+
+zZywotnoscia: wywolanie pozniejsze zamknieloby prace powolana przez ten
+sam rdzen. Sierota to wiersz w stanie pending/running prowadzony przez
+uruchomienie inne niz biezace - jego proces zginal razem z rdzeniem, wiec
+stan running po restarcie klamie.
+
+przyjmijWynikPozycji: brak trafienia to pozycja spoza podagentow (jeden
+silnik); blad zapisu idzie do dziennika, bo cichej utraty wyniku nikt by
+nie zobaczyl.
+
+## budowa/server/internal/core/adapter_modul_terminal_plik.go
+
+Bez osobnej komendy klient czytał manifest projektu POLECENIEM POWŁOKI, więc
+wykrycie zadań zależało od tego, czy na maszynie stoi program wypisujący
+plik, i od składni każdej z powłok osobno (`cat`, `Get-Content`, `type`).
+
+Karta lokalna czyta plik przez `os` biblioteki standardowej. Programu powłoki
+nie ma tu wcale: `cat` na karcie lokalnej byłby uruchomieniem procesu po to,
+żeby zrobić to, co pakiet `os` robi jednym wywołaniem, i wprowadzałby
+zależność od zawartości maszyny w czynność, która jej nie potrzebuje.
+
+Karta ZDALNA czyta plik na swojej maszynie — tak mówi kontrakt — więc tam
+program jest nieunikniony: plik leży po drugiej stronie łącza. Idzie tą samą
+drogą co każdy proces rdzenia (`zewnetrzne.Wolaj` → `session.Uruchamiacz`),
+z granicą czasu i objęciem drzewa potomstwa.
+
+Ścieżka bezwzględna jest w kontrakcie dopuszczona, ale punkt izolacji „pliki”
+obowiązuje ją tak samo jak względną: przy włączonym punkcie odczyt spoza
+obszaru okna kończy się odmową `permission_denied`, a nie treścią.

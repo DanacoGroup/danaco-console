@@ -2481,3 +2481,31 @@ z powodu braku odpowiedzi od pulpitu pustego z powodu braku danych.
 Nazwa kolumny matrycy środowisk pochodzi z odczytu `environment.list`, a nie
 z kopii katalogu utrzymywanej w pulpicie. Dzięki temu kolumna znika i pojawia
 się wraz ze środowiskiem po stronie rdzenia, bez osobnej pielęgnacji kopii.
+
+## budowa/klient-poprzedni/src/aod/kolumna-aod.ts
+
+Funkcja Always On Display nie ma własnego okna. Całą jej powierzchnią jest
+awatar oraz kolumna otwierana jako rozszerzenie boczne po prawej stronie
+obszaru roboczego — na pełną wysokość, o regulowanej szerokości. Otwarcie
+zwęża kolumny obszaru roboczego, nie przesłania ich i nie zamyka żadnego
+z okien komunikacji operacyjnej.
+
+Stąd trzy różnice wobec modala: brak przyciemnienia tła, brak pułapki
+ogniska i brak zabranej pracy pod spodem. Kolumna leży na własnej warstwie
+graficznej, wyższej niż warstwa modala.
+
+Ten plik wyłącznie składa powierzchnię: rama z biblioteki, stan treści
+z biblioteki, sekcje z osobnych plików, sterowanie obecnością z osobnego
+modułu i dwa źródła komend — jedno rodziny funkcji, drugie komend cudzych
+rodzin potrzebnych kolejce decyzji.
+
+Kolumna subskrybuje dwa zdarzenia rdzenia i zdejmuje subskrypcje przy
+rozłączeniu: zmianę postępu, rozgłaszaną do każdego połączenia i niosącą
+proces, etap, procent, stan oraz okno; oraz zmianę stanu okna, jedyny żywy
+nośnik stanu pętli, ponieważ zmiana postępu nie wypełnia tego pola. Stan
+sprzed otwarcia kolumny nadrabia osobny odczyt stanu nakładki.
+
+Subskrypcje żyją między zbudowaniem warstwy a rozłączeniem, nie między
+otwarciem a zamknięciem kolumny: proces zmienia stan niezależnie od tego,
+czy Operator patrzy. Dzięki temu plakietka awatara jest prawdziwa także
+wtedy, gdy kolumna stoi zamknięta.

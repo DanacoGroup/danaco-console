@@ -3252,3 +3252,16 @@ nieść. Dziennik zawierający same powodzenia sugerowałby błędnie, że wszys
 
 Treść listu trafia do śladu w całości, ale bajty załączników nie: leżą w osobnym magazynie pod sumą kontrolną,
 a ślad wskazuje je wyłącznie nazwami umieszczonymi w treści.
+
+## budowa/server/cmd/danaco-narzedzia/stdio/protokol.go
+Kształt uruchomienia serwera odpowiada wpisowi mcpServers składanemu przez
+most MCP rdzenia — typ stdio z poleceniem i argumentami — więc proces modelu
+uruchamia ten serwer dokładnie tak, jak uruchamia most konsoli.
+
+Wersja serwera odpowiada wersji produktu. Pakiet nie sięga po stałą wersji
+rdzenia, ponieważ import rdzenia wciągnąłby do binarium serwera narzędzi
+całą trwałość wraz z bazą.
+
+Kontekst wchodzi parametrem metody Narzedzia, ponieważ w zasięgu eksperta
+złożenie wykazu narzędzi pyta rdzeń o jego definicję. Wykaz nie jest więc
+czynnością czysto obliczeniową i nie ma prawa przeżyć zatrzymania procesu.

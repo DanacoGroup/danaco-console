@@ -3276,3 +3276,6 @@ Metoda identyfikatorKontraktu musi zwracać kod kanału, nie numer wiersza. Reje
 obydwoma kluczami, więc odczyt działa tak czy inaczej — ale warstwa danych zna wyłącznie kod, więc
 numer wiersza dałby klientowi identyfikator, którym nie da się nic zrobić. Numer wiersza jest wartością
 zapasową wyłącznie dla wiersza bez kodu.
+
+## budowa/server/internal/dane/design_zasoby.go
+Zasoby oddają liczbę wszystkich wyników oddzielnie od stronicowanej listy: zapytanie liczące i zapytanie stronicujące stosują ten sam zestaw warunków WHERE, żeby panel pokazał licznik bez rozjazdu wobec przyciętej listy. Filtr po etykietach jest koniunkcją — zasób musi nieść wszystkie wskazane etykiety naraz, nie choć jedną, dlatego zapytanie wymaga pełnego zestawu przez HAVING COUNT(DISTINCT etykieta) równe liczbie etykiet filtra. Etykiety zasobu są wymianą całego zestawu, nie dokładaniem różnicy: usunięcie zastanych i wstawienie nadesłanych zachodzi w jednej transakcji, żeby zasób nie pozostał przejściowo bez etykiet przy błędzie w trakcie operacji. Usunięcie zasobu idzie po identyfikatorze zewnętrznym; powiązane etykiety znikają kaskadowo przez klucz obcy z ON DELETE CASCADE, a warstwy kompozycji wskazujące ten zasób pozostają nietknięte, ponieważ ich kolumna wskazująca zasób nie niesie klucza obcego.

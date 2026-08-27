@@ -17,40 +17,9 @@ import { cialoNarzedzia, objasnienieNarzedzia, pasekNarzedzia } from './zakladki
 import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
 /**
- * Provenance Explorer — zakładka prowenancji kontenera Observability Tools.
- *
- * Jawność pracy modeli jest tutaj albo nie ma jej nigdzie: kontrakt niesie
- * rodzinę `provenance.*`, a Operator nie ma drugiego miejsca, w którym mógłby
- * zobaczyć, co model dostał, co oddał, ile to trwało i ile kosztowało.
- *
- * Zakładka robi cztery rzeczy i każda ma własny, widoczny chwyt:
- *
- *   wykaz wywołań        — `provenance.call.list`, zawężony filtrami paska
- *                          i zakresem czasu wspólnym modułowi,
- *   odczyt jednego śladu — `provenance.call.get` przy wierszu, wraz z drzewem
- *                          odcinków oraz treścią promptu i odpowiedzi,
- *   ocena odpowiedzi     — `provenance.call.rate`, czynność Operatora, nie
- *                          odczyt: własny formularz przy wierszu,
- *   wydanie śladu        — `provenance.trace.export`, plik na urządzenie
- *                          Operatora wraz ze zdaniem o tym, co ten plik niesie.
- *
- * Czego zakładka nie robi i mówi to wprost:
- *
- *   powtórzenie wywołania (`provenance.call.replay`) — komenda jest
- *   w kontrakcie, a chwytu w tym oknie nie ma. To brak PO STRONIE KLIENTA,
- *   nie brak kontraktu: powtórzenie wysyła prompt do modelu jeszcze raz, więc
- *   wydaje pieniądze Operatora i należy do czynności sprawczych, których nie
- *   dokłada się w zakładce odczytu bez rozstrzygnięcia, kto płaci za pomyłkę
- *   w celowaniu.
- *
- * Korelacja z dziennikiem została polem, a nie widokiem: `processId` jest tym
- * samym polem w `LogEntry`, `MonitorStatus` i `ModelCallTrace`, więc wpis
- * dziennika z Logs Viewera prowadzi tutaj przez filtr procesu. Drugie
- * przeszukanie dziennika w tej zakładce byłoby powtórzeniem pracy Logs Viewera
- * nad materiałem, który teraz przychodzi wprost z rejestru wywołań.
- *
- * Odczyt jest leniwy: zakładka pyta rdzeń dopiero wtedy, gdy Operator ją
- * otworzy — i tylko ona wie, że jeszcze nie pytała (`czytano`).
+ * Zakładka prowenancji Provenance Explorer jest jedynym miejscem jawności pracy
+ * modeli: pokazuje wykaz wywołań, odczyt jednego śladu, ocenę odpowiedzi
+ * i wydanie śladu do pliku.
  */
 export interface ZakladkaProwenancji {
   /** Ciało zakładki. */
@@ -62,12 +31,9 @@ export interface ZakladkaProwenancji {
 }
 
 /**
- * Zdanie o niewpiętym źródle prowenancji.
- *
- * Zakładka dostaje źródło rodziny `provenance.*` z montażu modułu. Dopóki
- * montaż go nie przekaże, zakładka nie ma czym wołać rdzenia — i mówi to
- * dokładnie tak, wskazując stronę braku. Milczenie albo pusty wykaz w tym
- * miejscu mówiłyby „nie było wywołań", czyli rzecz nieprawdziwą.
+ * Zdanie o niewpiętym źródle prowenancji: zakładka nie dostała źródła rodziny
+ * wywołań z montażu modułu, więc nie ma czym zapytać rdzeń, i mówi to wprost
+ * zamiast milczeć.
  */
 const BEZ_ZRODLA =
   'Rejestr wywołań kanału modelu ma w kontrakcie rodzinę provenance.* i rdzeń ma dla niej ' +
@@ -157,9 +123,7 @@ export function utworzZakladkeProwenancji(
       }
       const oddane = wynik.wynik;
       if (oddane.calls.length === 0) {
-        // Pustka jest stanem poprawnym i musi mieć zdanie: instalacja, w której
-        // model nie był jeszcze wołany, nie jest instalacją zepsutą — a wykaz
-        // migający puste miejsce mówiłby o niepowodzeniu odczytu.
+        // Pustka jest stanem poprawnym instalacji bez dotychczasowych wywołań, nie niepowodzeniem odczytu.
         tresc.pusto(zdaniePustki(zadanie));
         return;
       }
@@ -178,15 +142,13 @@ export function utworzZakladkeProwenancji(
 
   odczytPrzycisk.addEventListener('click', odswiez);
 
-  // Zakładka otwiera się jako pierwsza w kontenerze, więc bez tego zdania
-  // miejsce treści byłoby puste, a puste miejsce czyta się jak brak wyniku,
-  // nie jak brak pytania.
+  // Zakładka otwiera się pierwsza: puste miejsce treści musi mieć zdanie, nie wyglądać na brak wyniku.
   tresc.pusto('Rejestr wywołań nie został jeszcze odczytany — naciśnij „Odczytaj rejestr wywołań”.');
 
   return { element, odswiez, czytano: () => czytano };
 }
 
-/** Pasek zakładki: zawężenia rejestru i przycisk odczytu. */
+/** Pasek zakładki: pola zawężające rejestr wywołań granicą, procesem, wzorcem treści i progiem opóźnienia, wraz z przyciskiem odczytu. */
 function pasekProwenancji(
   granica: HTMLInputElement,
   proces: HTMLInputElement,
@@ -223,18 +185,16 @@ function pasekProwenancji(
   );
 }
 
-/** Granica z pola; wartość niepoprawna albo niedodatnia znaczy „bez granicy z okna”. */
+/** Granica odczytu odczytana z pola formularza; wartość niepoprawna albo niedodatnia znaczy brak granicy narzuconej przez okno. */
 function granicaZKontrolki(granica: HTMLInputElement): number | undefined {
   const wartosc = Number.parseInt(granica.value, 10);
   return Number.isInteger(wartosc) && wartosc > 0 ? wartosc : undefined;
 }
 
 /**
- * Zdanie pustki — nazywa pustkę i mówi, czym była zawężona.
- *
- * „Nie było jeszcze wywołań" jest prawdą tylko wtedy, gdy nic nie zawężało
- * pytania. Przy założonym filtrze prawdą jest zdanie węższe i okno mówi
- * właśnie je, bo inaczej filtr wyglądałby na brak wywołań w instalacji.
+ * Zdanie pustki nazywa brak wywołań i mówi, czym rejestr był zawężony, bo przy
+ * założonym filtrze prawdziwe jest zdanie węższe niż ogólne stwierdzenie braku
+ * wywołań.
  */
 function zdaniePustki(zadanie: ProvenanceCallListRequest): string {
   const zawezenia: string[] = [];
@@ -257,7 +217,7 @@ function zdaniePustki(zadanie: ProvenanceCallListRequest): string {
   );
 }
 
-/** Zdanie podsumowania odczytu — liczność, całość i przycięcie wprost. */
+/** Zdanie podsumowania odczytu podaje liczność zwróconych wywołań, całkowitą liczbę spełniających warunki i informację o przycięciu wyniku wprost. */
 function zdaniePodsumowania(oddane: {
   calls: readonly unknown[];
   total?: number;

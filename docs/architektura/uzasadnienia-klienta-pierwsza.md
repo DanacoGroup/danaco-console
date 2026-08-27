@@ -6210,3 +6210,20 @@ treść wydania przychodzi w odpowiedzi i nie ma po co wracać do rdzenia po
 drugie zapisanie tego samego. Rdzeń ma prawo wydać w innym formacie niż
 poproszono i ma prawo zredagować treść; jedno i drugie musi być widoczne
 w zdaniu o pliku, bo od tego zależy, czym plik wolno się posłużyć.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zakladka-prowenancji.ts
+Zakładka wykonuje cztery czynności z własnym, widocznym chwytem każda: wykaz
+wywołań zawężony filtrami paska i zakresem czasu wspólnym modułowi, odczyt
+jednego śladu przy wierszu wraz z drzewem odcinków oraz treścią promptu
+i odpowiedzi, ocenę odpowiedzi jako osobny formularz przy wierszu oraz
+wydanie śladu do pliku na urządzenie wraz ze zdaniem o tym, co ten plik
+niesie. Powtórzenia wywołania zakładka nie ma: komenda jest w kontrakcie, ale
+brak chwytu jest rozstrzygnięciem po stronie klienta, ponieważ powtórzenie
+wysyła prompt do modelu ponownie, więc wydaje pieniądze instalacji i nie
+stoi obok przycisków odczytu. Korelacja z dziennikiem została polem, a nie
+widokiem: pole identyfikujące proces jest wspólne wpisowi dziennika,
+telemetrii procesu i wywołaniu modelu, więc wpis z przeglądarki dzienników
+prowadzi tutaj przez filtr procesu, a drugie przeszukanie dziennika w tej
+zakładce byłoby powtórzeniem tamtej pracy nad materiałem, który przychodzi
+wprost z rejestru wywołań. Odczyt jest leniwy: zakładka pyta rdzeń dopiero
+przy otwarciu i sama pamięta, że jeszcze nie pytała.

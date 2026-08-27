@@ -3105,3 +3105,6 @@ nakładki, pas stanu z arkusza pustego stanu, a znak zapytania z komponentu dymk
 ## budowa/klient-poprzedni/src/moduly/research/wiersz-ustalenia.ts
 Wiersz niesie dwie drogi działania: zaznaczenie do raportu oraz wciągnięcie do formularza, czyli
 funkcję operatora „edycja", która w kontrakcie jest polem findingId tej samej komendy zapisu.
+
+## budowa/klient/src/sprawdzian.ts
+Jego deklaracje typów mieszkają w pakiecie zewnętrznym, którego nowy klient nie zaciąga, więc sprawdzenie typów odmówiłoby każdemu plikowi sprawdzianu. Zbiór pusty jest tu niepowodzeniem, nie wynikiem: sprawdzian, który niczego nie zmierzył, milczałby dokładnie tak samo jak sprawdzian zdany.

@@ -54,7 +54,8 @@ func (r *repozytoriumSesji) ZmienProjekt(ctx context.Context, id int64, projekt 
 	return sprawdzTrafienie(wynik, "sesja", id)
 }
 
-// wskaznikTekstuLubNil zamienia napis pusty na brak wartości.
+// wskaznikTekstuLubNil zamienia napis pusty na brak wartości, ponieważ
+// kolumna dopuszcza NULL zamiast pustego łańcucha znaków.
 func wskaznikTekstuLubNil(wartosc string) *string {
 	if wartosc == "" {
 		return nil

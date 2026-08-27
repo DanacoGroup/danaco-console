@@ -2555,3 +2555,10 @@ kres czekania, żeby rdzeń milczący nie zamienił jej w zasłonę nad produkte
 Pas aktualizacji pojawia się dopiero wtedy, gdy kanał wydań ma wersję nowszą niż
 zainstalowana, a przy pierwszym uruchomieniu pyta o to z opóźnieniem, żeby nie konkurować
 z uruchomieniem o łącze.
+
+## budowa/klient-poprzedni/src/moduly/agents/archiwum-kontrolki.ts
+
+Plik trzyma wyłącznie budulec panelu archiwum: wiersz wykazu wraz z kontrolką
+pozycji oraz przekład odmowy rdzenia na zdanie czytelne dla Operatora. Składanie
+panelu i jego czynności należą do `archiwum-ekspertow.ts`, dzięki czemu kontrolki
+pozostają wolne od wiedzy o przebiegu pracy panelu.

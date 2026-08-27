@@ -3745,3 +3745,16 @@ kontrolka zapisu szablonu nazywa stan, zamiast wykonywać zapis.
 Porównanie wymienia pola kontraktu, którymi dwa prompty się różnią. Prompt jest
 zbiorem pól, więc różnica liczona na samym tekście nie niosłaby informacji
 o tym, co się zmieniło.
+
+## budowa/klient-poprzedni/src/mission-control/przyciski-transportu.ts
+
+Żaden przycisk paska nie dostaje `disabled`, `aria-disabled` ani klasy wygaszającej:
+blokada nie jest dozwolonym sposobem informowania o stanie. Stan kolejki jest wypisany
+słowem przy jej nazwie, a przycisk zatrzymania pozostaje czynny w każdym stanie.
+
+Osiem działań wyliczenia `QueueAction` leżących poniżej sterowania biegiem — wstawienie
+i zdjęcie z kolejki, odłożenie w czasie, rozdzielenie, scalenie, skierowanie,
+rozgałęzienie i warunek — należy do układania przebiegu, a nie do jego prowadzenia.
+Pasek transportu pulpitu ich nie pokazuje, ale mapa ikon musi je znać, ponieważ
+wyliczenie kontraktu je niesie, a mapa niepełna nie skompilowałaby się przy pierwszym
+ich użyciu.

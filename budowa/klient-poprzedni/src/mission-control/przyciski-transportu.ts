@@ -1,3 +1,9 @@
+/**
+ * Pasek transportu jednej kolejki: sześć przycisków sterowania i przełożenie
+ * naciśnięcia na zamiar. Nazwy czterech pierwszych pochodzą z wyliczenia
+ * `QueueAction` kontraktu, a przekazanie — z komendy `context.transfer`.
+ */
+
 import { Command, QueueAction } from '../../../shared/contract';
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 import { ETYKIETA_DZIALANIA_KOLEJKI } from './etykiety-pulpitu';
@@ -5,26 +11,8 @@ import type { KolejkaPulpitu } from './model-danych';
 import { DZIALANIA_TRANSPORTU, type ZamiarKolejki } from './zdarzenia-pulpitu';
 
 /**
- * Pasek transportu jednej kolejki.
- *
- * Jedna odpowiedzialność: sześć przycisków sterowania i przełożenie naciśnięcia
- * na zamiar. Nazwy czterech pierwszych pochodzą z `QueueAction` kontraktu,
- * przekazanie — z komendy `context.transfer`.
- *
- * Żaden przycisk nie dostaje `disabled`, `aria-disabled` ani klasy wygaszającej:
- * blokada nie jest dozwolonym sposobem informowania o stanie. Stan kolejki jest
- * wypisany słowem przy jej nazwie, a przycisk zatrzymania pozostaje czynny
- * w każdym stanie.
- */
-
-/**
- * Ikona przypisana działaniu transportu.
- *
- * Osiem działań poniżej sterowania biegiem — wstawienie i zdjęcie z kolejki,
- * odłożenie w czasie, rozdzielenie, scalenie, skierowanie, rozgałęzienie
- * i warunek — należy do układania przebiegu, nie do jego prowadzenia. Pasek
- * transportu pulpitu ich nie pokazuje (rozdz. „Buduje pasek sześciu przycisków"
- * niżej), ale mapa musi je znać, bo wyliczenie kontraktu je niesie, a mapa
+ * Ikona przypisana działaniu transportu. Mapa obejmuje wszystkie pozycje
+ * wyliczenia `QueueAction`, także te, których pasek pulpitu nie pokazuje, bo mapa
  * niepełna nie skompilowałaby się przy pierwszym ich użyciu.
  */
 const IKONA_DZIALANIA: Readonly<Record<QueueAction, NazwaIkony>> = {
@@ -44,7 +32,11 @@ const IKONA_DZIALANIA: Readonly<Record<QueueAction, NazwaIkony>> = {
   [QueueAction.Condition]: 'filtr',
 };
 
-/** Buduje pasek sześciu przycisków transportu dla jednej kolejki. */
+/**
+ * Buduje pasek sześciu przycisków transportu dla jednej kolejki. Naciśnięcie
+ * oddaje zamiar warstwie nadrzędnej — pasek sam nie wysyła komendy, więc pulpit
+ * pozostaje jedynym miejscem, które zna kanał.
+ */
 export function utworzPasekTransportu(
   kolejka: KolejkaPulpitu,
   nadaj: (zamiar: ZamiarKolejki) => void,

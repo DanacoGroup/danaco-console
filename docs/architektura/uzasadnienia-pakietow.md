@@ -3313,3 +3313,11 @@ fragment powtarza to, co przyszło, i niczego nie dosypuje.
 
 ## budowa/server/internal/dane/design_zasoby_zmiany.go
 Obie metody wykonują jedno polecenie SQL bez transakcji, w odróżnieniu od zmiany etykiet, która składa się z dwóch poleceń i wymaga transakcji, żeby stan pośredni nie był widoczny. Usunięcie zasobu nie rusza bajtów w magazynie: blob leży pod sumą swojej zawartości, więc dwa zasoby o tej samej treści mogą dzielić jeden plik, a skasowanie pliku przy usunięciu jednego z nich odebrałoby treść drugiemu; o bajtach rozstrzyga warstwa rdzenia, tu znika sam wiersz. Ustawienie ulubionego traktuje brak wiersza do zmiany jako wynik neutralny, nie błąd, bo wołający ma klucz wiersza już po odróżnieniu zasobu nieznanego. Usunięcie zasobu opiera zwracany wynik na liczbie zmienionych wierszy, nie na powodzeniu polecenia, ponieważ usunięcie zera wierszy jest dla bazy sukcesem — powtórne usunięcie tego samego identyfikatora zwraca wynik ujemny, nie błąd.
+
+## budowa/server/internal/dane/automations_kolejka.go
+Plik nie jest drugim silnikiem kolejek: cykl życia zlecenia — stany, werdykt,
+bieg naprawczy — prowadzi wyłącznie silnik automatyk nad repozytorium kolejek.
+Tutaj leżą dwie operacje ułożenia pozycji, która jest wcześniej i w której
+kolejce stoi; żadna z nich nie zmienia stanu pozycji ani nie posuwa jej
+naprzód. Zapis idzie przez ten sam dziennik akcji kolejki co reszta ruchu
+pozycji, więc ślad zostaje w jednym miejscu.

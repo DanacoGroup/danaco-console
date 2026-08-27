@@ -4,22 +4,8 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Zakładka „Skróty i schowek" Command & Tools Hub — dziewięć komend trzech
- * rodzin: historia schowka, słownik skrótów tekstowych i skrót globalny
- * wywoływacza poleceń.
- *
- * ── Czego ta zakładka NIE robi ──────────────────────────────────────────────
- * Nie czyta schowka maszyny Operatora i nie udaje, że umie. Schowek należy do
- * tamtej maszyny, a rdzeń stoi na serwerze. Podział jest jawny i widoczny na
- * ekranie: Operator wkleja skopiowaną treść w pole „Treść do zapamiętania",
- * okno oddaje ją rdzeniowi (`clipboard.push`), a rdzeń daje jej trwałość.
- * Powrót idzie tą samą drogą: kliknięcie wpisu kopiuje go do schowka karty
- * przeglądarką, a nie rdzeniem.
- *
- * ── Skrót globalny ──────────────────────────────────────────────────────────
- * Nastawę trzyma rdzeń, klawisze przechwytuje powłoka programu okiennego.
- * Odpowiedź mówi wprost, czy rejestracji ma kto dokonać, a okno powtarza to
- * zdanie — zamiast obiecywać skrót, który nikogo nie obudzi.
+ * Zakładka „Skróty i schowek” w Command & Tools Hub obsługuje dziewięć komend trzech rodzin:
+ * historię schowka, słownik skrótów tekstowych i skrót globalny wywoływacza.
  */
 export interface PanelSchowka {
   element: HTMLElement;
@@ -30,7 +16,7 @@ export interface PanelSchowka {
 export function utworzPanelSchowka(stan: StanAssistant): PanelSchowka {
   const okno: StanOkna = utworzStanOkna();
 
-  // ── Historia schowka ──────────────────────────────────────────────────────
+  // Historia schowka
   const trescSchowka = pole('Treść do zapamiętania', 'wklej skopiowaną treść');
   const dopisz = przyciskAkcji('Zapamiętaj w rdzeniu', 'dn-btn dn-btn--sm dn-btn--zarys');
   dopisz.addEventListener('click', () => void dopiszTresc());
@@ -45,7 +31,7 @@ export function utworzPanelSchowka(stan: StanAssistant): PanelSchowka {
   historia.className = 'ma-wykaz';
   historia.dataset['wykaz'] = 'schowek';
 
-  // ── Słownik skrótów tekstowych ────────────────────────────────────────────
+  // Słownik skrótów tekstowych
   const skrot = pole('Skrót', 'np. ;odmowa');
   const rozwiniecie = pole('Rozwinięcie skrótu', 'treść, w którą skrót się rozwija');
   const zapiszSkrot = przyciskAkcji('Zapisz skrót', 'dn-btn dn-btn--sm dn-btn--zarys');
@@ -55,7 +41,7 @@ export function utworzPanelSchowka(stan: StanAssistant): PanelSchowka {
   skroty.className = 'ma-wykaz';
   skroty.dataset['wykaz'] = 'skroty';
 
-  // ── Skrót globalny wywoływacza ────────────────────────────────────────────
+  // Skrót globalny wywoływacza
   const hotkey = pole('Skrót globalny wywoływacza', 'np. Ctrl+Shift+Space');
   const zapiszHotkey = przyciskAkcji('Zapisz skrót globalny', 'dn-btn dn-btn--sm dn-btn--zarys');
   zapiszHotkey.addEventListener('click', () => void zapiszWywolywacz());
@@ -93,8 +79,7 @@ export function utworzPanelSchowka(stan: StanAssistant): PanelSchowka {
       const tresc = document.createElement('span');
       tresc.textContent = wpis.preview ?? wpis.content;
 
-      // Wklejenie należy do karty, nie do rdzenia: to schowek maszyny
-      // Operatora, a rdzeń go nie widzi.
+      // Wklejenie należy do karty, nie do rdzenia: to schowek maszyny Operatora.
       const skopiuj = przyciskAkcji('Kopiuj', 'dn-btn dn-btn--xs dn-btn--duch');
       skopiuj.addEventListener('click', () => {
         void navigator.clipboard?.writeText(wpis.content);
@@ -233,15 +218,14 @@ export function utworzPanelSchowka(stan: StanAssistant): PanelSchowka {
       okno.blad(opisOdmowy('Zapis skrótu globalnego', wynik.blad?.code, wynik.blad?.message));
       return;
     }
-    // Zapis udaje się także wtedy, gdy rejestracji nie ma kto wykonać — tak
-    // stanowi kontrakt. Okno powtarza więc oba rozstrzygnięcia osobno.
+    // Zapis udaje się także wtedy, gdy rejestracji nie ma kto wykonać — tak stanowi kontrakt.
     stanHotkey.textContent = zdanieOSkrocie(true, wynik.wynik.registered, wynik.wynik.reason);
   }
 
   return { element, wczytaj };
 }
 
-/** Zdanie o skrócie globalnym: co zapisano i czy ktokolwiek to przechwyci. */
+/** Zdanie o skrócie globalnym nazywa, co zapisano i czy powłoka programu okiennego gotowa jest to przechwycić. */
 function zdanieOSkrocie(
   wspierany: boolean,
   zarejestrowany: boolean,
@@ -253,7 +237,7 @@ function zdanieOSkrocie(
   return `Skrót jest zapisany; rejestracja nie doszła do skutku.${koncowka}`;
 }
 
-/** Sekcja panelu: tytuł wraz z kontrolkami jednego obszaru. */
+/** Sekcja panelu niesie tytuł wraz z kontrolkami jednego obszaru, oddzielając wizualnie trzy rodziny komend. */
 function sekcja(tytul: string, dzieci: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ma-panel__tytul';

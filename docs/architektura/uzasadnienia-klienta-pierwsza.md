@@ -6748,4 +6748,7 @@ w żadnej postaci, a pozycja usunięta z przełącznika wyglądałaby na widok,
 którego nigdy nie było.
 
 ## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — pustka a odmowa
-Rdzeń nie ma jeszcze migawki tego okna" jest stanem pustym; nieudany odczyt treści strony jest odmową i ma się nią przedstawić.
+„Rdzeń nie ma jeszcze migawki tego okna" jest stanem pustym; nieudany odczyt treści strony jest odmową i ma się nią przedstawić.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-schowka.ts
+Zakładka nie czyta schowka maszyny Operatora i nie udaje, że umie: schowek należy do tamtej maszyny, a rdzeń stoi na serwerze. Podział jest jawny i widoczny na ekranie — Operator wkleja skopiowaną treść w pole treści do zapamiętania, okno oddaje ją rdzeniowi, a rdzeń daje jej trwałość; powrót idzie tą samą drogą, kliknięcie wpisu kopiuje go do schowka karty przeglądarką, a nie rdzeniem. Nastawę skrótu globalnego trzyma rdzeń, klawisze przechwytuje powłoka programu okiennego; odpowiedź mówi wprost, czy rejestracji ma kto dokonać, a okno powtarza to zdanie, zamiast obiecywać skrót, który nikogo nie obudzi.

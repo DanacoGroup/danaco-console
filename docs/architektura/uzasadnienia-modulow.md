@@ -5039,3 +5039,167 @@ Różnica `objeciZatrzymaniem` od zbierania wyników jest jedna i celowa:
 zatrzymanie bez okna i bez wskazania podagentów odmawia. Zbieranie wyników
 bez zawężenia jest pytaniem, zatrzymanie bez zawężenia przerwałoby całą
 pracę platformy jednym wywołaniem.
+## budowa/server/internal/core/adapter_modul_automations_kroki.go
+
+Zaleznosc ma jedno zrodlo. Kontrakt niesie ten sam luk grafu dwa razy:
+polem AutomationStep.dependsOn i struktura AutomationDependency komendy
+orkiestratora. Prawda jest tabela zaleznosc_kroku_automatyki, a dependsOn
+powstaje z niej przy odczycie - drugiego zapisu tej samej rzeczy nie ma.
+
+Zapis definicji nie kasuje pracy orkiestratora. Workflow Builder oddaje
+kroki, nie uklad. Gdyby zapis podmienial zaleznosci na same dependsOn,
+recznie ustawione luki rownolegle i warunkowe znikalyby przy kazdym
+zapisie nazwy kroku. Zapis scala wiec dwa zbiory: zastane luki, ktorych
+oba konce nadal istnieja, oraz luki wynikajace z dependsOn.
+
+## budowa/server/internal/core/adapter_modul_wiedza_zrodla.go
+
+Treść czyta się przez istniejące repozytoria i istniejące czytniki, nie
+własnym SQL-em: druga droga do wierszy pliku biblioteki byłaby drugą prawdą
+o tym, co Operator w niej ma. Biblioteka idzie przez dane.RepozytoriumBiblioteki,
+historia przez dane.RepozytoriumHistorii, a treść pliku czyta ten sam
+trescPodgladuBiblioteki, którym czyta ją podgląd modułu Library.
+
+Zakresy mają różne wymagania wobec windowId. library jest zbiorem całej
+maszyny — repozytorium wiedzy Operatora nie należy do żadnego okna, więc
+wskazanie okna jest pomijane. history i workspace są przeciwnie: dla nich
+brak windowId jest odmową nazywającą brak, a nie cichym zaindeksowaniem
+zera pozycji — "zbudowano wskaźnik, 0 pozycji" wygląda jak pusta historia
+i nie da się tego odróżnić od pomyłki wołającego.
+
+Sufit liczby dokumentów nie jest ostrożnością na zapas: osadzenie liczy się
+na procesorze i katalog z pięćdziesięcioma tysiącami plików zająłby maszynę
+Operatora na godziny bez śladu postępu. Przekroczenie sufitu nie jest odmową
+— wskaźnik obejmuje tyle, ile obejmuje, a powtórzony przebieg po sprzątnięciu
+katalogu obejmie resztę.
+
+Plik bez odwołania w dokumentyBiblioteki jest pomijany, nie odmawiany: wiersz
+bez bajtów w magazynie treści niesie same metadane. Tak samo pomijany jest
+plik nieczytelny jako tekst — obraz osadzony jako ciąg bajtów dałby wektor,
+który do niczego nie pasuje, czyli koszt bez pożytku.
+
+Jedna wypowiedź to jeden dokument w dokumentyHistorii, a nie cała rozmowa
+sklejona w jeden tekst — Operator pyta o rzecz, którą kiedyś powiedział,
+i ma dostać tę wypowiedź wraz z jej identyfikatorem wchodzącym do sourceId.
+
+Katalog dokumentyPrzestrzeni ustala ten sam KatalogRoboczy, którym jadą
+Terminal i Developer, po poziomach zasięgu z oknem jako poziomem najwęższym.
+Wpisanie tu własnej ścieżki byłoby drugą prawdą o tym, gdzie pracuje okno.
+
+Kodem źródła pliku przestrzeni roboczej jest ścieżka względna, nie
+bezwzględna: bezwzględna wynosiłaby modelowi układ dysku Operatora,
+a względna wystarcza, żeby po plik sięgnąć modułem Developer.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_xliff.go
+
+Obie wersje standardu wchodzą tą samą drogą, bo różnią się w tym miejscu
+wyłącznie nazwami węzłów: XLIFF 1.2 trzyma jednostki w `trans-unit`
+z węzłami `source` i `target`, XLIFF 2.1 — w `unit`/`segment` z tymi samymi
+dwoma. Rozbiór idzie strumieniem `encoding/xml`, więc plik nieznanej wersji
+nie wywraca odczytu: jednostki, których nie ma, po prostu nie ma.
+
+Import zakłada panel dla każdego języka docelowego pliku i wpisuje w niego
+treść jednostek. To jest skutek, dla którego Operator import uruchamia —
+bez zapisu paneli komenda meldowałaby liczbę jednostek i nie zostawiała nic.
+
+### panelJezyka
+
+Wynik pusty (bez błędu) znaczy „panel zastany zostawiono nietknięty".
+
+### zlozXliff
+
+Wersja 1.2, bo tę przyjmują wszystkie narzędzia wykonawców, do których ten
+pakiet jedzie.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_wymiana.go
+
+Import glosariusza odmawia wprost. Kontrakt niesie wyłącznie ścieżkę
+pliku, żadnego pola z terminami do zapisania. Rdzeń nie czyta plików z
+dysku Operatora, nie ma do niego dostępu, więc jedynym uczciwym
+zachowaniem jest odmowa wprost, wzorem rozpoznania języka — ten sam brak,
+ta sama reakcja — bez udawania wczytania pliku, którego nie umie otworzyć.
+
+Eksport glosariusza zapisuje ślad zlecenia, nie plik. Rdzeń nie ma
+magazynu blobów, ten sam brak co w Library i Research. Odpowiedź niesie
+wyłącznie liczbę wyeksportowanych terminów — inaczej niż eksport raportu
+badawczego, kontrakt nie daje ani identyfikatora pliku, ani rozmiaru,
+więc pola, których nikt uczciwie nie wypełni, nie zostają dorobione.
+Liczba terminów liczy zastane w słowniku w chwili zlecenia — to jedyna
+liczba, jaką rdzeń naprawdę zna, skoro pliku nie zapisuje.
+
+Podpowiedzi z pamięci oddają dopasowanie podciągu, nie podobieństwa.
+Warstwa danych: SQLite bez rozszerzenia nie ma miary podobieństwa
+napisów, więc podpowiedzi repozytorium dopasowują przez wzorzec
+zawierania frazy — dopasowanie podciągu segmentu źródłowego, nie
+dopasowanie znaczeniowe ani odległość edycyjną. Adapter oddaje dokładnie
+to, co repozytorium naprawdę znalazło, bez sortowania i filtrowania,
+które udawałoby dopasowanie przybliżone, którego nie ma.
+## budowa/server/internal/core/adapter_modul_przegladarka_zrzuty.go
+
+Odpowiedzialność pliku obejmuje komendy `browser.screenshot.capture`,
+`browser.snapshot.screenshot.get`, `browser.artifact.add`. Odpowiedź udana
+z pustym `ref` — albo z odwołaniem wskazującym nic — jest dokładnie tą szkodą,
+którą ten produkt już raz popełnił w module Design, i której pilnują
+sprawdziany skutku.
+
+Migawka dostaje odsyłacz do zrzutu. Po `browser.screenshot.capture` wiersz
+migawki okna niesie `zrzut_odwolanie`, więc `browser.snapshot.get`
+z `includeScreenshot` przestaje oddawać pustkę: to jest ta sama treść widziana
+dwiema drogami, a nie dwa niezależne byty.
+
+Odwołanie wskazane w żądaniu jest sprawdzane, a nie przyjmowane na słowo:
+wiersz wskazujący plik, którego nie ma, przeszedłby każdy sprawdzian
+istnienia wiersza i nie miałby czego pokazać.
+
+Kontrakt zna dziewięć kodów błędu i nie ma wśród nich takiego, który
+mówiłby wprost o braku realizacji. Kod niedostępności kanału jest tym z
+nich, który mówi prawdę: brakuje wykonawcy po stronie rdzenia, a nie
+żądanie jest złe. Tego samego kodu używa moduł Studio przy operacji
+kontekstowej bez kanału modelu.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_panele.go
+
+Typ adapterTlumaczenia, konstruktor, przedrostki identyfikatorów i wspólne
+pomocniki błędów (bladTlumaczenia, bladWskazaniaTlumaczenia,
+bladNieznanegoPanelu) deklaruje adapter_modul_tlumaczenie.go — ten plik
+dokłada wyłącznie własne metody na tym samym typie. Przekład wykonuje model:
+gdy okno ma tekst źródłowy, target.add przekłada go na język panelu, a wynik
+ląduje w kolumnie tresc; korekta Operatora (translation.set) jest drugą drogą
+treści, poprawką przekładu modelu. Przekład jest związany słownikiem
+i zasadami jakości: do polecenia dla modelu wchodzą terminy Operatora, jego
+zakazy tłumaczenia, ton panelu i zasady jakości wywiedzione z rodzajów
+niezgodności kontraktu (adapter_modul_tlumaczenie_polecenia.go), a wynik
+przechodzi jeszcze mechaniczną podmianę terminów i migawkę kontroli jakości.
+
+DodajPanel: przekład idzie przed założeniem panelu — nieudane wywołanie
+modelu (brak czynnego kanału, pusta odpowiedź) kończy się odmową i nie
+zostawia w bazie pustego panelu. Okno bez tekstu źródłowego daje panel bez
+treści; treść dołoży korekta Operatora przez translation.set. Kanał wskazuje
+pole channelId; jego brak bierze kanał domyślny czynny.
+
+UstawTlumaczenie: treść trafia wprost do kolumny tresc; kontrakt oddaje
+jeden napis, nie odwołanie do pliku, więc ta warstwa nie rozstrzyga o pliku
+dla treści obszernej. Korekta Operatora także idzie do pamięci tłumaczeń —
+tekst źródłowy bierze się z okna panelu, a okno nieosiągalne albo bez tekstu
+źródłowego znaczy, że nie ma z czym parować, i pamięć zostaje bez wiersza,
+co nie unieważnia zapisanej już korekty.
+
+TlumaczZwrotnie: język źródłowy bierze się z okna wskazanego przez wiersz
+panelu (PanelTlumaczenia.OknoKod). Języka źródłowego nie ustala się z panelu
+— od tego jest source.detect wołany osobno. Kanał wskazany polem channelId,
+którego nie ma albo który jest nieczynny, daje odmowę nazwaną z
+kanalZadania, nie ciche zejście na kanał domyślny: kontrola wierności
+wykonana innym modelem sprawdzałaby co innego, niż wskazano.
+
+Para (segment źródłowy, segment przekładu) wchodzi do pamiec_tlumaczen,
+z której czyta memory.suggest; sparowanie i jego granice opisuje
+adapter_modul_tlumaczenie_pamiec.go.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_terminologia.go
+
+Powód wyjmowania kandydatów miarą częstości jest praktyczny: kandydat ma być
+sprawdzalny. Operator widzi, ile razy słowo albo zbitka wystąpiła w jego
+własnym tekście, i sam rozstrzyga, czy to termin. Lista wymyślona przez
+model byłaby listą, której nikt nie umie odtworzyć ani zakwestionować.
+
+Wykaz `slowaFunkcyjne` obejmuje polski i angielski, bo takie materiały
+wchodzą do tego modułu najczęściej; słowo spoza wykazu nie jest przez to
+terminem — jest kandydatem, o którym rozstrzyga Operator.

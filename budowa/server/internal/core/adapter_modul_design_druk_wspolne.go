@@ -1,30 +1,6 @@
 // Odpowiedzialność pliku: wspólny warsztat części drukarskiej i marketingowej
-// modułu Design — wykaz nośników znanych rdzeniowi (`design.print.paper.list`),
-// odczyt profili ICC obecnych na serwerze, przekład profilu wydania między
-// wierszem a kontraktem, rachunek milimetrów na piksele oraz zakładanie zasobu
-// magazynu z bajtów wytworzonych przez rdzeń.
-//
-// ── Nośnik jest wiedzą rdzenia, nie zgadywanką okna ─────────────────────────
-// Wykaz rozmiarów stoi w miejscu wspólnym całego rdzenia
-// (`nosniki_druku_wspolne.go`), a ten plik go PRZEKŁADA na pola kontraktu
-// Designu. Czytają go trzy czynności: wykaz nośników, wykaz profili (pole
-// `paperSizes`) i wydanie do druku, gdy profil wskazuje nośnik nazwą. Drugi
-// wykaz — czy to w tym pliku, czy w kliencie — rozjechałby się przy pierwszej
-// poprawce i Operator dostałby A3 o wymiarach A4.
-//
-// ── Profil ICC: mówimy, co serwer MA, a nie co chcielibyśmy mieć ────────────
-// `design.print.profile.list` niesie `iccProfiles` — wykaz profili leżących na
-// tej maszynie. Gdy nie ma ani jednego, wykaz jest pusty i to jest odpowiedź:
-// wydanie w CMYK powie wtedy wprost, że idzie bez osadzonego profilu, zamiast
-// zamilczeć brak. Rdzeń nie rozkłada profili ICC i nie przelicza barw przez
-// nie — do tego trzeba biblioteki, której instalka nie niesie; niesie natomiast
-// PRAWDĘ o tym, czy profil w ogóle jest.
-//
-// ── Zasób z bajtów wytworzonych przez rdzeń ─────────────────────────────────
-// Kafle, wykresy, schematy, makiety produktowe i wydania do druku wracają jako
-// zasoby magazynu, nie jako base64 w odpowiedzi. Droga jest ta sama, co przy
-// wniesieniu: najpierw bajty w magazynie pod sumą kontrolną, potem wiersz.
-// Wiersz bez bajtów byłby kafelkiem, za którym nie ma nic.
+// modułu Design — wykaz nośników, odczyt profili ICC, przekład profilu
+// wydania, rachunek milimetrów oraz zakładanie zasobu magazynu.
 package core
 
 import (
@@ -68,23 +44,8 @@ const (
 	katalogProfiliICCLokalny   = "/usr/local/share/color/icc"
 )
 
-// nosnikiDruku oddaje nośniki w postaci kontraktu Designu, CZYTAJĄC wykaz
-// wspólny rdzenia (`nosniki_druku_wspolne.go`).
-//
-// Wykazu własnego ten moduł już nie ma i mieć nie będzie. Dwa wykazy stały tu
-// obok siebie do 17.08.2026 i rozjechały się naprawdę — koperta DL miała
-// w Designie 99 na 210 mm (to wymiar WKŁADKI, nie koperty), a wizytówka stała
-// położona wbrew zdaniu nad wykazem. Rozstrzygnięcie Właściciela z tego dnia
-// mówi wprost: wykaz stoi w miejscu wspólnym, bo dwa wykazy przy pierwszej
-// poprawce dadzą Operatorowi A3 o wymiarach A4.
-//
-// Przestawienie wnosi Designowi pięć pozycji, których jego wykaz nie miał: B4,
-// B5 oraz koperty C4, C5 i C6 wskazane przez Właściciela. Poprawka wymiaru
-// wchodzi od teraz w jedno miejsce i obowiązuje oba moduły naraz.
-//
-// Funkcja, nie zmienna: wykaz wspólny jest źródłem, a to jest jego przekład na
-// pola kontraktu. Zmienna pakietowa składana raz przy starcie byłaby trzecią
-// kopią tych samych liczb — dokładnie tym, co ta zmiana usuwa.
+// nosnikiDruku oddaje nośniki w postaci kontraktu Designu, czytając wykaz
+// wspólny rdzenia. Wykazu własnego ten moduł nie ma.
 func nosnikiDruku() []shared.DesignPaperSize {
 	wykaz := make([]shared.DesignPaperSize, 0, len(wykazNosnikowDruku))
 	for _, nosnik := range wykazNosnikowDruku {
@@ -105,7 +66,7 @@ func wskazTekstDesignu(wartosc string) *string {
 }
 
 // NosnikiDruku oddaje nośniki spełniające zawężenie rodziną — obsługuje
-// `design.print.paper.list`.
+// `design.print.paper.list`, licząc wymiary z wykazu wspólnego rdzenia.
 func (a *adapterDesignu) NosnikiDruku(_ context.Context,
 	z shared.DesignPrintPaperListRequest) (shared.DesignPrintPaperListResponse, error) {
 
@@ -146,7 +107,8 @@ func rodzinyNosnikow() []string {
 	return nazwy
 }
 
-// nosnikPoNazwie odnajduje nośnik po nazwie bez względu na wielkość liter.
+// nosnikPoNazwie odnajduje nośnik po nazwie bez względu na wielkość liter,
+// przeszukując wykaz wspólny rdzenia.
 func nosnikPoNazwie(nazwa string) (shared.DesignPaperSize, bool) {
 	szukana := strings.ToLower(strings.TrimSpace(nazwa))
 	for _, nosnik := range nosnikiDruku() {
@@ -157,12 +119,9 @@ func nosnikPoNazwie(nazwa string) (shared.DesignPaperSize, bool) {
 	return shared.DesignPaperSize{}, false
 }
 
-// profileICCSerwera oddaje nazwy profili ICC leżących na tej maszynie.
-//
-// Wykaz jest pomiarem, nie zapowiedzią: pusty znaczy, że serwer nie ma ani
-// jednego profilu i że wydanie w CMYK pójdzie bez osadzonego profilu. Katalog
-// nieistniejący nie jest awarią — na maszynie bez pakietu profili go po prostu
-// nie ma.
+// profileICCSerwera oddaje nazwy profili ICC leżących na tej maszynie. Wykaz
+// jest pomiarem, nie zapowiedzią: pusty znaczy, że serwer nie ma ani jednego
+// profilu.
 func profileICCSerwera() []string {
 	nazwy := []string{}
 	for _, katalog := range []string{katalogProfiliICCSystemowy, katalogProfiliICCLokalny} {
@@ -185,7 +144,8 @@ func profileICCSerwera() []string {
 	return nazwy
 }
 
-// profilDrukuKontraktu składa `DesignPrintProfile` kontraktu z wiersza.
+// profilDrukuKontraktu składa `DesignPrintProfile` kontraktu z wiersza
+// zapisanego w bazie danych rdzenia.
 func profilDrukuKontraktu(p dane.ProfilDrukuDesignu) shared.DesignPrintProfile {
 	profil := shared.DesignPrintProfile{
 		Id:                &p.Kod,
@@ -246,18 +206,16 @@ func pikseleZMilimetrow(milimetry float64, dpi int) int {
 	return liczba
 }
 
-// punktyZMilimetrow przelicza milimetry na punkty strony PDF.
+// punktyZMilimetrow przelicza milimetry na punkty strony PDF, przez cale,
+// jednostkę pośrednią obu miar.
 func punktyZMilimetrow(milimetry float64) float64 {
 	return milimetry / milimetryNaCal * punktyNaCal
 }
 
 // zalozZasobZBajtowDesignu odkłada bajty wytworzone przez rdzeń w magazynie
 // i zakłada wiersz zasobu — droga wspólna dla kafli, wykresów, schematów,
-// makiet i wydań do druku.
-//
-// Kolejność jest ta sama, co przy wniesieniu: najpierw bajty, potem wiersz.
-// Wiersz przed bajtami byłby kafelkiem, za którym nie ma nic — a to jest
-// dokładnie ta szkoda, którą ten moduł ma w swojej historii.
+// makiet i wydań do druku. Kolejność jest ta sama, co przy wniesieniu:
+// najpierw bajty, potem wiersz.
 func (a *adapterDesignu) zalozZasobZBajtowDesignu(ctx context.Context, okno, nazwa string,
 	rodzaj shared.DesignAssetKind, format string, bajty []byte) (dane.ZasobDesignu, error) {
 
@@ -276,8 +234,7 @@ func (a *adapterDesignu) zalozZasobZBajtowDesignu(ctx context.Context, okno, naz
 			"nie można utrwalić treści wytworzonego materiału: " + err.Error())
 	}
 
-	// Format i wymiary bierzemy z bajtów utrwalonych, nie z zapowiedzi — jedna
-	// miara dla wszystkich dróg zasobu do modułu.
+	// Format i wymiary pochodzą z bajtów utrwalonych, nie z zapowiedzi.
 	zmierzonyFormat, szerokosc, wysokosc := rozpoznajObrazZasobu(odwolanie)
 	wybranyFormat := pierwszyTekst(zmierzonyFormat, &format)
 

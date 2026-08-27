@@ -4125,3 +4125,34 @@ wywołanie z innymi parametrami wykonania, czyli nieporównywalne.
 
 `modelPowtorzenia` rozstrzyga model zapisywany w śladzie powtórzenia:
 wskazany w żądaniu, a w jego braku model pierwowzoru.
+
+## budowa/server/internal/core/adapter_kontekst_zajetosc.go
+
+Tokenizator jest podsystemem rdzenia, nie oszacowaniem: kontrakt tej komendy
+stawia sprawę wprost, bez tokenizatora liczba żetonów byłaby wartością
+wziętą znikąd. Rdzeń ma więc tokenizator wkompilowany
+(`server/internal/tokenizator`) i liczy nim naprawdę — słownikiem BPE, tym
+samym podziałem, którym liczy model. Odpowiedź niesie nazwę słownika
+(`ContextUsage.tokenizer`), więc czytelnik wie, czym zmierzono. Przybliżenie
+„znaki podzielone przez cztery" byłoby tu gorsze niż brak odpowiedzi: myli
+się na polszczyźnie o kilkadziesiąt procent, a Operator czytający „w
+normie" traci turę na przepełnieniu okna.
+
+Granica okna jest odczytana, nie zmyślona: bierze się z parametru kanału
+(`contextWindow` w konfiguracji wiersza rejestru kanałów). Kanał, który jej
+nie podaje, daje odpowiedź `available: false` wraz z powodem i wskazaniem
+naprawy — bo pasek zajętości wobec granicy wziętej z głowy pokazywałby
+„w normie" albo „prawie pełne" zależnie od tego, co rdzeń akurat zgadł.
+
+Prompt systemowy, historia rozmowy i pamięć są liczone osobno, każda swoim
+tekstem. Suma jest sumą tych trzech, a nie osobnym pomiarem — inaczej części
+nie sumowałyby się do całości i okno pokazywałoby dwie prawdy naraz.
+
+`parametrGranicyOkna` to nazwa parametru konfiguracji kanału niosącego
+wielkość okna kontekstu modelu w żetonach. Kontrakt `channel.add` nie ma
+osobnego pola na tę liczbę, więc jedzie ona parametrem — tą samą drogą co
+`credentialRef`.
+
+Drugi składacz promptu systemowego dałby drugą liczbę żetonów warstwy
+systemowej i rozjechał się z pierwszym przy pierwszej zmianie warstw —
+dlatego `tozsamosc` oddaje ten sam prompt, który pojedzie do modelu.

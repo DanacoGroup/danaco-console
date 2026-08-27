@@ -2187,3 +2187,15 @@ pola, parsując treść — i pomyliłoby się przy pierwszym znaczniku w cytaci
 
 Treści są układami pustymi, nie przykładami: żadnych zmyślonych stron umowy,
 kwot ani nazwisk. Miejsce na dane wskazuje znacznik pola.
+## budowa/server/internal/store/migracja_140_okno_warsztatu_dokumentu.sql
+Migracja 140 — Warsztat dokumentu wchodzi do katalogu okien.
+
+Moduł Studio dostał okno rodzin `studio.pdf.*` i `studio.security.*`. Bez
+wiersza w katalogu klient postawiłby okno, o którym rdzeń nie wie: `module.list`
+zaniżałby zakres modułu, a pas uczciwości okna meldowałby kod „poza katalogiem".
+Ten sam rozjazd domykała migracja 126 dla siedmiu innych modułów.
+
+Rola `pomocnicze`, bo okno wspiera pracę Studio Editora, a nie prowadzi jej
+samo: pracuje na materiale wniesionym do okna, nie na treści redagowanej.
+Kategoria `narzedzia` wzorem Tools Panelu, z którym dzieli rolę w module.
+Kolejność w kategorii jest pierwszą wolną po pozycjach migracji 126.

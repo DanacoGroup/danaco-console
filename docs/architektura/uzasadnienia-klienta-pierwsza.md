@@ -2886,3 +2886,29 @@ tego samego stanu.
 
 Wartość spoza wyliczenia nie jest błędem i niczego nie wygasza: wraca jako własny napis,
 żeby widoczne było to, co przysłał rdzeń, zamiast pustego miejsca.
+
+## budowa/klient-poprzedni/src/dostepy/klucze-katalogu.ts
+
+Dostęp to nie katalog roboczy. Model może mieć wgląd w katalog wskazany nadaniem
+dostępu, a swoje pliki zostawiać w katalogu sesyjnym wewnątrz miejsca
+instalacji. Są to dwa niezależne ustawienia i dwa osobne obszary tej sekcji,
+mylenie ich prowadziłoby do nadania dostępu tam, gdzie potrzebny jest katalog
+roboczy.
+
+Katalog roboczy jest zwykłym ustawieniem: idzie komendami odczytu, zapisu
+i przywrócenia wartości domyślnej konfiguracji, przez ten sam rezolwer zasięgów
+co reszta ustawień. Osobnej komendy dla niego nie ma.
+
+Katalog roboczy powstaje domyślnie w miejscu instalacji aplikacji głównej.
+Klient tej ścieżki nie zna i jej nie zgaduje: mówi Operatorowi, skąd się ona
+bierze, zamiast pokazywać zmyśloną ścieżkę jako fakt.
+
+Brak wiersza w katalogu ustawień nie może zabrać możliwości ustawienia katalogu
+roboczego, dlatego obszar niesie własne definicje zastępcze. Definicja
+z katalogu ma pierwszeństwo, a zastępcza wchodzi wyłącznie wtedy, gdy katalog
+milczy, i jest zbudowana z tych samych wartości co odpowiadające jej definicje
+rdzenia.
+
+Zasięgi katalogu roboczego są węższe niż komplet zasięgów konfiguracji: katalog
+roboczy jest własnością instalacji, środowiska, projektu, sesji oraz okna, a nie
+pary modułów.

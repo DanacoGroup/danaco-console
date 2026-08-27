@@ -5,26 +5,26 @@ import {
   type SettingDefinition,
 } from '../../../shared/contract';
 
-/**
- * Klucze katalogu roboczego modelu.
- *
- * Dostęp to nie katalog roboczy. Model może mieć wgląd w `C:\Projekty\Lex`
- * przez nadanie dostępu, a swoje pliki zostawiać w
- * `<instalacja>/sesje/<identyfikator>`. To dwa niezależne ustawienia i dwa
- * osobne obszary tej sekcji.
- *
- * Katalog roboczy jest zwykłym ustawieniem: idzie komendami `config.get`,
- * `config.set` i `config.reset`, przez ten sam rezolwer zasięgów co reszta
- * konfiguracji. Osobnej komendy dla niego nie ma.
- */
+/** Klucze katalogu roboczego modelu wraz z definicjami zastępczymi. */
 
-/** Katalog, w którym powstają katalogi sesyjne modelu. */
+/**
+ * Klucz ustawienia wskazującego katalog, w którym powstają katalogi sesyjne
+ * modelu. Wartość jest ścieżką w systemie plików maszyny, na której stoi rdzeń.
+ */
 export const KLUCZ_PODSTAWA = 'katalog.roboczy.podstawa';
 
-/** Wzorzec nazwy katalogu jednej sesji wewnątrz podstawy. */
+/**
+ * Klucz ustawienia niosącego wzorzec nazwy katalogu jednej sesji wewnątrz
+ * podstawy. Wzorzec jest nazwą względną, więc katalog sesji nie wychodzi poza
+ * podstawę.
+ */
 export const KLUCZ_WZORZEC = 'katalog.roboczy.wzorzec_sesji';
 
-/** Wzorzec domyślny; odpowiednik `core.WzorzecSesjiDomyslny`. */
+/**
+ * Wzorzec domyślny nazwy katalogu sesji, równy wartości domyślnej rdzenia.
+ * Klient trzyma go u siebie, żeby pole miało podpowiedź także wtedy, gdy katalog
+ * ustawień tego klucza nie zna.
+ */
 export const WZORZEC_DOMYSLNY = 'sesje/<identyfikator>';
 
 /**
@@ -37,16 +37,18 @@ export const WZORZEC_DOMYSLNY = 'sesje/<identyfikator>';
 export const OPIS_PODSTAWY_DOMYSLNEJ =
   'Katalog tworzony automatycznie w miejscu instalacji aplikacji głównej. Rdzeń ustala go sam przy pierwszym uruchomieniu; wpisz ścieżkę tylko wtedy, gdy chcesz to nadpisać.';
 
-/** Klucze obsługiwane przez obszar katalogu roboczego, w kolejności pól. */
+/**
+ * Klucze obsługiwane przez obszar katalogu roboczego, w kolejności pól
+ * formularza. Obszar czyta i zapisuje wyłącznie te dwa klucze, więc wykaz jest
+ * zarazem jego zakresem.
+ */
 export const KLUCZE_KATALOGU: readonly string[] = [KLUCZ_PODSTAWA, KLUCZ_WZORZEC];
 
 /**
- * Definicje zastępcze na wypadek katalogu, który nie zna tych kluczy.
- *
- * Brak wiersza w katalogu ustawień nie może zabrać możliwości ustawienia
- * katalogu roboczego. Definicja z katalogu ma pierwszeństwo; ta poniżej wchodzi
- * wyłącznie wtedy, gdy katalog milczy, i jest zbudowana z tych samych wartości,
- * co odpowiadające jej definicje rdzenia (`core.DefinicjeKataloguRoboczego`).
+ * Definicja zastępcza na wypadek katalogu ustawień, który tych kluczy nie zna.
+ * Definicja z katalogu ma pierwszeństwo, a ta wchodzi wyłącznie wtedy, gdy
+ * katalog milczy, i niesie te same wartości co odpowiadające jej definicje
+ * rdzenia.
  */
 export function definicjaZastepcza(klucz: string): SettingDefinition | null {
   if (klucz === KLUCZ_PODSTAWA) {
@@ -72,7 +74,11 @@ export function definicjaZastepcza(klucz: string): SettingDefinition | null {
   return null;
 }
 
-/** Człony wspólne definicji zastępczych. */
+/**
+ * Człony wspólne definicji zastępczych: klucz, kategoria, dopuszczone zasięgi
+ * i osie oraz kolejność pola. Wywołanie uzupełnia je nazwą, opisem i rodzajem
+ * wartości.
+ */
 function szkielet(klucz: string, kolejnosc: number): SettingDefinition {
   return {
     key: klucz,

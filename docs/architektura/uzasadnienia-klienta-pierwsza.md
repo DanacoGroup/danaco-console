@@ -4126,3 +4126,21 @@ orzeka i w drugą stronę tak samo. Świadkiem jest odpowiedź rdzenia.
 
 Fragment, na którym oparło się dopasowanie po znaczeniu, stoi przy wierszu, ponieważ bez
 niego trafność jest liczbą bez podstawy do sprawdzenia.
+
+## budowa/klient-poprzedni/src/moduly/library/kafel-pliku.ts
+
+Kafel niesie to samo, co wiersz wykazu: zaznaczenie do czynności zbiorczych oraz
+wskazanie pliku czynnego dla trzech pozostałych okien modułu. Różni się układem,
+przeznaczonym dla materiału oglądanego, a nie czytanego.
+
+Kafel nie pokazuje miniatury i pokazać jej nie może. Komenda podglądu pliku
+oddaje dla obrazu wyłącznie odwołanie do niego, a klient nie ma komendy, którą
+pobrałby bajty spod tego odwołania. Miejsce miniatury zajmuje więc znak rodziny
+treści złożony z typu MIME: podaje, co to za plik, i nie udaje, że okno widziało
+jego zawartość.
+
+Zdanie o dopasowaniu po znaczeniu podaje fragment tekstu przysłany przez rdzeń
+jako podstawa trafienia. Pokazany fragment pozwala Operatorowi sprawdzić
+dopasowanie zamiast przyjmować je na wiarę, a długi fragment zostaje skrócony.
+Trafność wchodzi do zdania tylko wtedy, gdy rdzeń ją podał, ponieważ wartość
+dopisana przez okno wyglądałaby na pomiar.

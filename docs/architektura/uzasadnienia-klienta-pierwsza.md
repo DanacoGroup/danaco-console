@@ -2966,3 +2966,14 @@ Wtyczki stoją osobno od konektorów: wykaz wtyczek ma własny panel i własne
 komendy podłączenia oraz usunięcia. Konektor jest drogą do usługi zewnętrznej,
 wtyczka katalogiem rozszerzeń powłoki — to dwa różne mechanizmy rozszerzania
 eksperta.
+
+## budowa/klient-poprzedni/src/moduly/assistant/wiersz-dziennika.ts
+
+Wszystkie trzy czynności wiersza mają drogę w kontrakcie i wszystkie trzy naprawdę
+coś robią. „Odtwórz przebieg" oddaje zamiar oknu, „Odsłuchaj nagranie" pobiera bajty
+spod odnośnika wpisu komendą `speech.audio.fetch` i odtwarza je w karcie, a „Oznacz
+jako ważne" zapisuje wyróżnienie w rdzeniu komendą `assistant.activity.flag`. Znacznik
+przeżywa odświeżenie wykazu, ponieważ ma gdzie zamieszkać po stronie rdzenia.
+
+Wpis bez odnośnika nagrania nie jest brakiem produktu, tylko wpisem tekstowym. Przycisk
+odsłuchu mówi to wprost, zamiast milczeć albo znikać z wiersza.

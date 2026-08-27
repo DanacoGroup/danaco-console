@@ -4881,3 +4881,13 @@ zmianie wymagania nie trzeba było szukać liczby magicznej w kodzie. Kropka roz
 kończy zdanie tylko wtedy, gdy po niej idzie odstęp i wielka litera albo koniec treści — rachunek
 jest przybliżony i takim ma pozostać, bo pełna segmentacja zdań wymaga słownika skrótów, którego
 moduł nie ma i którego dla licznika w pasku statusu nie warto zakładać.
+
+## budowa/klient-poprzedni/src/strona-glowna/okno-strona-glowna.ts
+Strefy stoją w kolejności malejącej masy wizualnej: karty środowisk jako środek ciężkości z krojem
+nagłówkowym, kafle komponentów tą samą kartą krojem bazowym półgrubym, kafle modułów spoza nawigacji tą
+samą formą — strefa ukryta, dopóki rdzeń nie poda modułu stojącego poza nawigacją — listwa ustawień
+o masie najniższej, i sesje w tle jako wykaz z danych rdzenia zasilany z zewnątrz przez warstwę wpięcia,
+bo sama strona danych nie pobiera. Strona zgłasza wybór środowiska, a skutek należy do warstwy, która
+stronę zamontowała — przejście przez stronę główną ma być świadome i widoczne. Wykaz środowisk aktualizuje
+się, którąkolwiek drogą wykaz przyszedł, tak by zasilenie kart bez zasilenia wykazu nie dało się tu
+napisać.

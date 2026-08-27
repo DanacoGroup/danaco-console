@@ -5778,3 +5778,24 @@ i ścieżkę krytyczną — odczytuje się po niej ponownym
 same zależności. Nazwa pliku eksportu bierze identyfikator automatyki;
 automatyka niewskazana daje nazwę rodzajową, bo plik ma się zapisać mimo
 wszystko.
+
+## budowa/klient-poprzedni/src/aod/wyciszenie-menu.ts
+
+Dwie kopie tego samego menu (powierzchnia interakcji awatara — wyciszenie od
+ręki bez otwierania kolumny — i nagłówek powierzchni interakcji) czytają
+ten sam stan i rysują się jego powiadomieniem, więc nigdy nie mówią dwóch
+różnych rzeczy. Żadna pozycja nie pyta o potwierdzenie i żadna nie jest
+wyszarzana — reguła przyjęta w `cztery-stery.ts`. Pozycja, której nakładka
+dziś nie ma czym wykonać (na przykład wyciszenie modułu, którego rdzeń nie
+wskazał), zostaje klikalna i mówi, czego brakuje oraz po czyjej stronie.
+
+Menu jest osobnym wyzwalaczem wobec awatara: kliknięcie pojedyncze i podwójne
+awatara zostają nietknięte, a znak „⋮” jest zwykłym przyciskiem — osiągalnym
+klawiszem tabulacji, otwieranym Enter i Spacją, zamykanym Esc, z ruchem
+strzałkami po pozycjach. Menu jest dostępne z klawiatury bez skrótu
+własnego — znak stoi w kolejności tabulacji obok awatara, więc żaden własny
+skrót nie jest potrzebny.
+
+Kontekst nakładki (bieżący moduł i bieżąca karta sesji) bywa pominięty —
+wtedy pozycje kontekstowe zostają widoczne i mówią wprost, że menu nie zna
+bieżącego bytu, zamiast zniknąć.

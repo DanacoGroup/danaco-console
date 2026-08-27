@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: konto właściciela (tabela `konto_wlasciciela`) oraz
-// jednorazowe drogi potwierdzenia tożsamości (tabela `potwierdzenie_tozsamosci`)
-// — trwałość rejestracji, weryfikacji adresu i odzyskiwania konta.
-//
-// Konto jest jedno i pilnuje tego schemat warunkiem `id = 1`. Repozytorium nie
-// powtarza tej reguły w kodzie: drugi zapis odbija się o bazę, a nie o sprawdzenie,
-// które ktoś kiedyś usunie.
-//
-// Hasła tu nie ma. Tożsamością konta są login i adres e-mail; skrót hasła leży
-// w sejfie poświadczeń, a wiersz metody uwierzytelnienia niesie do niego odwołanie.
-//
-// W tabeli dróg potwierdzenia leży SKRÓT drogi, nigdy sama droga. Kopia bazy nie
-// daje więc możliwości potwierdzenia cudzej tożsamości — ze skrótu nie odtworzy
-// się materiału, który poszedł listem.
+// Odpowiedzialność pliku: konto właściciela (tabela `konto_wlasciciela`) oraz jednorazowe drogi potwierdzenia
+// tożsamości (tabela `potwierdzenie_tozsamosci`) — trwałość rejestracji, weryfikacji adresu i odzyskiwania konta.
 package dane
 
 import (
@@ -28,7 +16,7 @@ const (
 	CelOdzyskanie  = "odzyskanie"
 )
 
-// KontoWlasciciela to wiersz tabeli `konto_wlasciciela` — jedyne konto platformy.
+// KontoWlasciciela to wiersz tabeli `konto_wlasciciela` — jedyne konto platformy, ograniczone warunkiem schematu.
 type KontoWlasciciela struct {
 	Login        string
 	Email        string
@@ -51,32 +39,21 @@ type PotwierdzenieTozsamosci struct {
 // Byt jest odrębny od katalogu metod wejścia, bo odpowiada na inne pytanie:
 // katalog metod mówi, CZYM otworzyć bramkę, konto mówi, CZYJA ona jest.
 type RepozytoriumKontaWlasciciela interface {
-	// Konto zwraca konto właściciela. Brak wiersza daje ErrBrakWiersza i znaczy
-	// platformę przed rejestracją — dokładnie ten stan otwiera `auth.register`.
+	// Konto zwraca konto właściciela; brak wiersza znaczy platformę przed rejestracją.
 	Konto(ctx context.Context) (KontoWlasciciela, error)
-	// ZalozKonto zapisuje jedyne konto. Drugie założenie odbija się o warunek
-	// schematu i wraca jako ErrKolizjaWiersza.
+	// ZalozKonto zapisuje jedyne konto platformy; drugie założenie odbija się o warunek schematu.
 	ZalozKonto(ctx context.Context, konto KontoWlasciciela) error
 	// PotwierdzKonto przenosi konto ze stanu niepotwierdzonego do potwierdzonego.
 	PotwierdzKonto(ctx context.Context) error
-	// UsunKonto kasuje konto właściciela.
-	//
-	// Istnieje wyłącznie po to, by cofnąć rejestrację, której listu nie udało się
-	// nadać. Rejestracja jest wykonalna raz, więc konto zostawione po nieudanym
-	// nadaniu byłoby platformą nie do otwarcia: wejść nie ma czym, bo adresu nikt
-	// nie potwierdził, a założyć drugi raz nie wolno.
+	// UsunKonto kasuje konto właściciela — istnieje wyłącznie po to, by cofnąć nieudaną rejestrację.
 	UsunKonto(ctx context.Context) error
 
 	// ZalozPotwierdzenie zapisuje skrót drogi potwierdzenia wraz z celem
 	// i czasem wygaśnięcia.
 	ZalozPotwierdzenie(ctx context.Context, p PotwierdzenieTozsamosci) error
-	// PotwierdzeniePoSkrocie zwraca drogę rozpoznaną skrótem. Brak wiersza daje
-	// ErrBrakWiersza — droga nieznana i droga wygasła to dwa różne stany
-	// i rozstrzyga je warstwa wyżej.
+	// PotwierdzeniePoSkrocie zwraca drogę rozpoznaną skrótem; brak wiersza znaczy drogę nieznaną.
 	PotwierdzeniePoSkrocie(ctx context.Context, skrot string) (PotwierdzenieTozsamosci, error)
-	// ZuzyjPotwierdzenie zamyka drogę po użyciu. Drugi wynik mówi, czy wiersz
-	// dało się zamknąć — bez tego dwa równoległe żądania z tą samą drogą oba
-	// uznałyby ją za ważną.
+	// ZuzyjPotwierdzenie zamyka drogę po użyciu; drugi wynik mówi, czy wiersz dało się zamknąć.
 	ZuzyjPotwierdzenie(ctx context.Context, skrot string, teraz int64) (bool, error)
 }
 
@@ -113,14 +90,14 @@ type repozytoriumKontaWlasciciela struct {
 	zapytania *zapytania
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji.
+// Zgodność implementacji repozytorium konta właściciela z kontraktem jest sprawdzana przy kompilacji pakietu.
 var _ RepozytoriumKontaWlasciciela = (*repozytoriumKontaWlasciciela)(nil)
 
 func noweRepozytoriumKontaWlasciciela(z *zapytania) *repozytoriumKontaWlasciciela {
 	return &repozytoriumKontaWlasciciela{zapytania: z}
 }
 
-// Konto zwraca jedyne konto platformy.
+// Konto zwraca jedyne konto platformy, zapisane w tabeli konta właściciela w bazie danych rdzenia systemu.
 func (r *repozytoriumKontaWlasciciela) Konto(ctx context.Context) (KontoWlasciciela, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, kontoWlascicielaWiersz)
 	if err != nil {
@@ -141,7 +118,7 @@ func (r *repozytoriumKontaWlasciciela) Konto(ctx context.Context) (KontoWlascici
 	return konto, nil
 }
 
-// ZalozKonto zapisuje jedyne konto platformy.
+// ZalozKonto zapisuje jedyne konto platformy w tabeli konta właściciela w bazie danych systemu rdzenia.
 func (r *repozytoriumKontaWlasciciela) ZalozKonto(ctx context.Context, konto KontoWlasciciela) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, wstawKontoWlasciciela)
 	if err != nil {
@@ -158,7 +135,7 @@ func (r *repozytoriumKontaWlasciciela) ZalozKonto(ctx context.Context, konto Kon
 	return nil
 }
 
-// PotwierdzKonto przenosi konto do stanu potwierdzonego.
+// PotwierdzKonto przenosi konto właściciela do stanu potwierdzonego po weryfikacji adresu rejestracji.
 func (r *repozytoriumKontaWlasciciela) PotwierdzKonto(ctx context.Context) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, potwierdzKontoWlasciciela)
 	if err != nil {
@@ -170,7 +147,7 @@ func (r *repozytoriumKontaWlasciciela) PotwierdzKonto(ctx context.Context) error
 	return nil
 }
 
-// UsunKonto kasuje konto właściciela — droga cofnięcia nieudanej rejestracji.
+// UsunKonto kasuje konto właściciela — droga cofnięcia nieudanej rejestracji platformy bez potwierdzenia.
 func (r *repozytoriumKontaWlasciciela) UsunKonto(ctx context.Context) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunKontoWlasciciela)
 	if err != nil {
@@ -182,7 +159,7 @@ func (r *repozytoriumKontaWlasciciela) UsunKonto(ctx context.Context) error {
 	return nil
 }
 
-// ZalozPotwierdzenie zapisuje skrót drogi potwierdzenia.
+// ZalozPotwierdzenie zapisuje skrót drogi potwierdzenia tożsamości wraz z terminem jego ważności czasowej.
 func (r *repozytoriumKontaWlasciciela) ZalozPotwierdzenie(ctx context.Context,
 	p PotwierdzenieTozsamosci) error {
 
@@ -196,7 +173,7 @@ func (r *repozytoriumKontaWlasciciela) ZalozPotwierdzenie(ctx context.Context,
 	return nil
 }
 
-// PotwierdzeniePoSkrocie zwraca drogę rozpoznaną skrótem.
+// PotwierdzeniePoSkrocie zwraca drogę potwierdzenia tożsamości rozpoznaną jej skrótem zapisanym w bazie.
 func (r *repozytoriumKontaWlasciciela) PotwierdzeniePoSkrocie(ctx context.Context,
 	skrot string) (PotwierdzenieTozsamosci, error) {
 
@@ -220,7 +197,7 @@ func (r *repozytoriumKontaWlasciciela) PotwierdzeniePoSkrocie(ctx context.Contex
 	return p, nil
 }
 
-// ZuzyjPotwierdzenie zamyka drogę po pierwszym użyciu.
+// ZuzyjPotwierdzenie zamyka drogę potwierdzenia tożsamości natychmiast po jej pierwszym wykorzystaniu.
 func (r *repozytoriumKontaWlasciciela) ZuzyjPotwierdzenie(ctx context.Context,
 	skrot string, teraz int64) (bool, error) {
 

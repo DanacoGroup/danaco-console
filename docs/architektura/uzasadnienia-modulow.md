@@ -4923,3 +4923,119 @@ i rozglasza queue.changed, bo bytem zmienianym jest tam kolejka, nie
 automatyka. Automatyka powiazanie ma zawsze, chocby puste (harmonogram
 nieczynny, zero wyzwalaczy) - created i deleted opisywalyby byt o wlasnym
 cyklu zycia, ktorego tu nie ma.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_jakosc.go
+
+Kontrakt zna sześć rodzajów niezgodności: liczbę, datę, walutę, symbol
+zastępczy, długość i pominięcie. Kontrole wymagające porównania treści
+panelu z tekstem źródłowym okna — liczba, waluta i pełne sprawdzenie
+symbolu zastępczego — leżą w pliku badania panelu, razem z powodem, dla
+którego data i pominięcie sprawdzane nie są.
+
+Ten plik liczy dwa rodzaje, widoczne wewnątrz samej treści panelu: symbol
+zastępczy niedomknięty albo domknięty bez otwarcia jest usterką
+składniową, nie znaczeniową; długość zero przy panelu oznaczonym jako
+gotowy jest usterką stanu.
+
+Kontrola jest migawką: zapis niezgodności podmienia komplet wierszy
+panelu w jednej transakcji, więc wykaz pusty znaczy panel czysty, a nie
+brak zapisu.
+
+Porównanie znaczników panelu ze znacznikami źródła liczy osobne badanie
+panelu wobec źródła — ten plik liczy wyłącznie niezgodność stwierdzalną
+bez tekstu źródłowego.
+
+Te same fakty niezgodności wychodzą z rdzenia w dwóch kształtach:
+rozłożonym na pola przy panelu i zwięzłym w postaci wykazu zdań przy
+samej kontroli jakości.
+
+## budowa/server/internal/core/adapter_modul_diagnostics_dziennik.go
+
+Adapter jest odbiorcą dziennika rdzenia, a nie drugim dziennikiem: rdzeń
+pisze o sobie jednym `*log.Logger`, a moduł wpina się w jego wyjście. Drugi,
+równoległy dziennik rozjechałby się z pierwszym co do treści i chwili.
+
+Nagłówek linii zostaje obcięty, bo `log.Logger` wkłada na jej początek
+przedrostek i znacznik czasu. Gdyby wchodziły do treści wpisu, każda linia
+byłaby niepowtarzalna i deduplikacja z licznikiem nie zgrupowałaby ani
+jednej pary. Obcięcie liczy się z flag i przedrostka tego samego dziennika,
+więc jest dokładne, a nie zgadywane.
+
+### odstepZapisu
+
+Bez niego pojedynczy wpis czekałby na dopełnienie całej partii, a Logs
+Viewer pokazywałby dziennik z opóźnieniem.
+
+### PodepnijDziennik
+
+Dziennik pusty zostawia moduł bez tego źródła; źródło drugie, czyli odmowy
+wykonania komend, działa bez zmian.
+
+### rozgalezienie
+
+Niepowodzenie zapisu do dziennika modułu nie ma prawa zabrać linii
+odbiorcy pierwotnemu — diagnostyka nie może zepsuć tego, co diagnozuje.
+
+### Write
+
+Nie zapisuje linii do bazy sam: `log.Logger` trzyma przy zapisie własną
+blokadę, więc czekanie na dysk w tym miejscu wstrzymywałoby każdy wątek
+rdzenia, który chce coś odnotować.
+
+### zakolejkuj
+
+Kolejka pełna oznacza stratę wpisu, a nie wstrzymanie rdzenia; strata jest
+liczona i wychodzi do podsumowania analizy.
+
+### zapiszPartie
+
+Niepowodzenie nie idzie do dziennika rdzenia, bo zapis dziennika wywołany
+niepowodzeniem zapisu dziennika kręciłby się w kółko; zamiast tego rośnie
+licznik widoczny w podsumowaniu analizy.
+
+### PrzeszukajDziennik
+
+Wzorzec regularny przechodzi przez okno wpisów odczytane pozostałymi
+zawężeniami, a wynik przycięty tą drogą wraca oznaczony polem `truncated`.
+
+### obetnijNaglowekDziennika
+
+Kolejność jest kolejnością pakietu `log`, a długości są stałe wyznaczone
+jego formatem — obcięcie jest więc dokładne, nie odgadywane.
+
+### wyrazenieWzorca
+
+Wzorzec niepoprawny jest błędem wywołującego: wraca nazwa usterki wzorca,
+a nie wynik pusty, nieodróżnialny od pustego dziennika.
+
+## budowa/server/internal/core/adapter_modul_orkiestracja_zatrzymanie.go
+
+`message.stop` zatrzymuje całe okno: odwołuje turę orkiestratora i wstrzymuje
+pętlę naprawczą. Podagentów pod jednym oknem bywa kilkunastu i pracują
+równolegle, więc zatrzymanie pojedynczego wymaga osobnej komendy.
+
+`injection/rozruch.go` startuje program przez `exec.CommandContext`, więc
+odwołanie kontekstu kończy proces modelu, a nie tylko przestaje go
+obserwować. Wiersz przechodzi na `stopped` po odwołaniu, jako zapis tego,
+co zaszło.
+
+Podagent już zakończony nie jest błędem — wraca w wykazie `notRunning`, nie
+w odmowie. Rozdział na dwa wykazy mówi, których zatrzymało to wywołanie,
+a którzy skończyli wcześniej sami.
+
+Wskazanie, któremu nie odpowiada żaden wiersz, jest pomyłką co do bytu —
+wzorem `objeciZbieraniem` (`adapter_modul_orkiestracja_wykaz.go`). Pusty
+wynik czytałoby się jako „nikt nie pracował”, a to co innego niż „takich
+podagentów nie ma”.
+
+Kluczem `zapamietajPrace` jest kod podagenta, nie okno — inaczej niż
+w `session.RejestrProcesow`, który kluczuje oknem i trzyma jeden wpis na
+okno (`podagenci/zywotnosc.go`). Kilkunastu podagentów pod jednym oknem
+potrzebuje tyluż uchwytów; wpis pod oknem ubijałby je nawzajem razem z turą
+orkiestratora. Nie jest to drugi rejestr procesów: rejestr sesji mówi
+o procesach systemu, a ten wykaz trzyma odwołania kontekstów pracy — byt,
+którego tamten rejestr nie zna.
+
+Różnica `objeciZatrzymaniem` od zbierania wyników jest jedna i celowa:
+zatrzymanie bez okna i bez wskazania podagentów odmawia. Zbieranie wyników
+bez zawężenia jest pytaniem, zatrzymanie bez zawężenia przerwałoby całą
+pracę platformy jednym wywołaniem.

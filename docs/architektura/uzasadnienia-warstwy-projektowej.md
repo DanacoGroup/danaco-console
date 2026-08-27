@@ -364,3 +364,7 @@ treści przez klasy tego okna, nie duplikat.
 ## budowa/klient-poprzedni/src/komponenty/boczna.css
 Znacznik aktywności nie jest pełną wstęgą ani tłem sekcji, zgodnie z zasadą
 jednego akcentu: sygnał zajmuje nie więcej niż pięć procent ekranu.
+
+## budowa/klient-poprzedni/src/motyw/fonty.css
+Pliki licencji krojów stoją w katalogu fonty. Podzbiory latin i latin-ext
+niosą pełne polskie znaki diakrytyczne.

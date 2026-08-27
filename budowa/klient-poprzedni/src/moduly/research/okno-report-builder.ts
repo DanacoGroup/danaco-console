@@ -14,14 +14,7 @@ import type { StanBadania } from './stan-badania';
 import { utworzStanOknaBadania } from './stan-okna-badania';
 
 /**
- * Report Builder — okno **kreator**: kompozycja raportu z ustaleń i redakcja
- * jego treści.
- *
- * Widok ma dwie warstwy, bo niesie dwie rzeczy. Sekcja osadzona w przestrzeni
- * modułu pokazuje raport złożony i pozostaje widoczna zawsze. Modal niesie samą
- * kompozycję — zamknięcie kreatora nie może zdejmować okna z ekranu.
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-raportu`.
+ * Report Builder jest oknem kreatorem, składającym raport z ustaleń oraz redagującym jego treść, z sekcją podglądu osadzoną trwale i modalem kompozycji.
  */
 export interface OknoReportBuilder {
   element: HTMLElement;
@@ -48,9 +41,7 @@ export function utworzOknoReportBuilder(
   const podglad = document.createElement('ol');
   podglad.className = 'mr-raport';
 
-  // Konspekt stoi obok treści, nie zamiast niej — opracowanie (rozdz. 3.8) chce
-  // widoku podzielonego: struktura po lewej, treść sekcji po prawej. Kliknięcie
-  // pozycji konspektu prowadzi ognisko do sekcji w podglądzie.
+  // Konspekt stoi obok treści: struktura po lewej, treść po prawej; kliknięcie prowadzi ognisko.
   const konspekt = document.createElement('ol');
   konspekt.className = 'mr-konspekt';
   konspekt.setAttribute('aria-label', 'Konspekt raportu');
@@ -102,12 +93,7 @@ export function utworzOknoReportBuilder(
 }
 
 /**
- * Jedna pozycja konspektu — nazwa sekcji wraz z jej numerem porządkowym.
- *
- * Opracowanie przewiduje przy pozycji znacznik ukończenia sekcji („✓ · ● · ○").
- * `ResearchReportSection` niesie identyfikator, tytuł, treść, ustalenia
- * i kolejność — pola stanu nie ma, więc konspekt zamiast wymyślonego znacznika
- * mówi rzecz sprawdzalną: czy sekcja ma już treść.
+ * Funkcja tworzy pozycję konspektu z nazwą sekcji oraz znacznikiem informującym, czy sekcja ma już wpisaną treść.
  */
 function pozycjaKonspektu(
   sekcja: ResearchReportSection,
@@ -156,7 +142,7 @@ function opisPokrycia(stan: StanBadania): string {
   );
 }
 
-/** Jedna sekcja raportu w podglądzie okna. */
+/** Funkcja tworzy jedną sekcję raportu widoczną w podglądzie treści okna, złożoną z tytułu oraz treści sekcji. */
 function wierszSekcji(sekcja: ResearchReportSection): HTMLElement {
   const element = document.createElement('li');
   element.className = 'mr-raport__sekcja';

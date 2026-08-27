@@ -5536,3 +5536,23 @@ zakres klas i kanał dostarczenia są ustawieniami konfiguracyjnymi, więc droga
 innej nastawy platformy, a samego doręczania nie ma jeszcze czym wykonać i sekcja mówi to wprost; konta
 modeli są pozycją odsyłającą do warstwy modeli. Kolumnę nawigacji osadza rama okna ustawień, gdy rejestr
 niesie więcej niż jedną pozycję.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/profile-formularz.ts
+Profil jest zestawem, nie skrótem. Zapis profilu przyjmuje nazwę, opis oraz oba zestawy
+przełączników, a formularz podaje zawsze komplet jedenastu, nawet gdy Operator ruszył jeden: profil
+ma być pełnym zestawem, a nie różnicą wobec czegoś, czego rdzeń w tym żądaniu nie widzi. Zapis nowego
+i zmiana istniejącego idą jedną komendą. Puste wskazanie identyfikatora zakłada nowy profil, podane
+zmienia istniejący. Formularz mówi wprost, którą z dwóch rzeczy zrobi zapis, i pozwala wrócić do
+zakładania nowego jednym naciśnięciem. Formularz nie zastępuje walidacji rdzenia: pole nazwy nie
+blokuje zapisu i nie wygasza przycisku, pusta nazwa jedzie do rdzenia i to rdzeń rozstrzyga, czy ją
+przyjmie. Ten plik nie zna ani jednej barwy i ani jednego odstępu.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/kolumna-paneli.ts
+Panel należy do rozmowy, nie do ekranu: kolumna obsługuje jedno gniazdo,
+każde okno sceny ma własny stos, a kolumna nie zna ani identyfikatora
+sceny, ani pozostałych kolumn. Pusty stos nie dostaje komunikatu ani
+ramki, tylko atrybut ukrycia — miejsce wraca do rozmowy, z którą dzieli
+szerokość gniazda. Cykl życia panelu wraz z subskrypcją rdzenia należy do
+tego, kto panel powołał — zamykanie paneli przy każdym ustawieniu stosu
+ubiłoby panel przeniesiony na pełny ekran. Podział szerokości między
+rozmowę a kolumnę należy do sceny i jej arkusza stylów.

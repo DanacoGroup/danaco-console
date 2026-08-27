@@ -1,25 +1,16 @@
+/**
+ * Dziennik działań asystenta jako log tekstowy. Plik powstaje w oknie z wpisów
+ * po zawężeniu, bez komendy kontraktu, więc odpowiada temu, co widać na
+ * ekranie. Nagrania log nie niesie, bo wpis ma wyłącznie odnośnik do niego.
+ */
 import type { AssistantActivityEntry } from '../../../../shared/contract';
 import { chwila, dzien, NAZWY_RODZAJOW } from './etykiety-assistant';
 
 /**
- * Dziennik działań asystenta jako log tekstowy.
- *
- * Eksport nie potrzebuje komendy kontraktu i mieć jej nie musi: wpisy są już
- * w oknie, a plik powstaje z tego, co Operator na ekranie widzi. Tę samą drogę
- * ma eksport pamięci projektu (`moduly/workspace/pamiec-pozycja.ts`)
- * i pomocnik `pobierzPlik` z `modele/kontrolki-formularza-braki.ts`.
- *
- * Log obejmuje wpisy po zawężeniu, nie cały zapis rdzenia. Plik ma odpowiadać
- * temu, co widać: eksport szerszy niż widok kazałby zgadywać, skąd wzięły się
- * wiersze, których na ekranie nie było. Nagłówek pliku nazywa więc zarówno
- * chwilę pobrania, jak i liczbę wpisów, które do niego weszły.
- *
- * Nagrania log nie niesie. Wpis ma wyłącznie odnośnik (`audioRef`), a kontrakt
- * nie ma komendy pobrania dźwięku — odnośnik idzie do pliku wprost, bo jest
- * tym, co rdzeń naprawdę oddał.
+ * Nazwa pliku dziennika złożona z daty i godziny pobrania; chwila w nazwie
+ * rozróżnia kolejne pobrania, więc plik pobrany ponownie nie zastępuje
+ * poprzedniego.
  */
-
-/** Nazwa pliku dziennika; chwila w nazwie rozróżnia kolejne pobrania. */
 export function nazwaPlikuDziennika(znacznik: number): string {
   const data = new Date(znacznik);
   const dwa = (liczba: number): string => String(liczba).padStart(2, '0');
@@ -35,7 +26,11 @@ export function nazwaPlikuDziennika(znacznik: number): string {
   ].join('');
 }
 
-/** Treść logu: nagłówek pochodzenia, a pod nim wpisy grupowane dniami. */
+/**
+ * Treść logu: nagłówek pochodzenia z chwilą pobrania, zakresem widoku i liczbą
+ * wpisów, a pod nim wpisy grupowane dniami wraz z odnośnikiem zlecenia
+ * i nagrania, gdy wpis je niesie.
+ */
 export function logDziennika(
   wpisy: readonly AssistantActivityEntry[],
   zakres: string,

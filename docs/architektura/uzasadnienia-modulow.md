@@ -5715,3 +5715,65 @@ wypowiedzi. Wynik leży w zakresie od zera do jedności, tak jak żąda kontrakt
 Dwie wypowiedzi bez ani jednego słowa znaczącego oddają zero, a nie
 jedność: „nic wspólnego” jest tu prawdą, a „identyczne, bo obie puste”
 byłoby wnioskiem z braku danych.
+## budowa/server/internal/core/adapter_modul_terminal_wyjscie_odczyt.go
+
+Dołożenie pól `stdout`/`stderr`/`exitCode` do wyniku `terminal.command.exec`
+znaczyłoby jedno z dwojga: odpowiedź czeka na koniec procesu — wtedy
+`go build ./...` trzyma żądanie gniazda kilka minut, a zerwane gniazdo
+zabiera wynik wykonanej pracy; albo odpowiedź wraca od razu z polami pustymi
+— czyli rdzeń zgłasza brak wyjścia dla polecenia, które dopiero zaczęło
+pisać. Rozdzielenie czynności rozdziela też ich czasy: uruchomienie jest
+natychmiastowe, odczyt następuje wtedy, kiedy jest co czytać.
+
+Źródłem jest ten sam dziennik zbiorczego wyjścia, na którym stoi
+`terminal.output.stream`; ta komenda zawęża go do jednego procesu i składa
+wiersze z powrotem w tekst. Dziennik jest pierścieniem w pamięci, bo schemat
+bazy nie ma tabeli wyjścia — po ponownym uruchomieniu rdzenia proces nie
+występuje już w rejestrze i odczyt kończy się odmową `not_found`.
+
+granicaWyjsciaKomendy: 65 536 bajtów to około 16 000 znaczników — ułamek okna
+kontekstu modelu, a zarazem wielokrotność wyników, dla których ta komenda
+powstała: pełny przebieg `go build ./...` z błędami mieści się w kilku
+kilobajtach, `go test ./...` całego drzewa w kilkudziesięciu.
+
+Kod wyjścia wchodzi do odpowiedzi wyłącznie wtedy, gdy proces go ma. Zero
+wpisane przy procesie biegnącym albo ubitym sygnałem oznaczałoby udane
+zakończenie polecenia, które się jeszcze nie skończyło.
+
+ogonOdczytu działa inaczej niż w `terminal.output.stream`, bo odczyt dotyczy
+wyniku polecenia, a nie podglądu na żywo.
+
+Liczba `ile` w WyjscieProcesu dotyczy każdego strumienia z osobna. Wspólny
+licznik pozwoliłby wyjściu zwykłemu wypchnąć z wyniku komunikaty błędów.
+## budowa/server/internal/core/adapter_modul_aplikacje_odczyt.go
+
+Zapis leży w osobnych plikach modułu, wedle odpowiedzialności, na tym
+samym typie adaptera aplikacji. Te trzy komendy są drogą powrotną do
+wierszy w bazie: po odświeżeniu okna klient nie ma innego sposobu, żeby
+odzyskać dziennik wdrożeń, architekturę i warsztat.
+
+Odczyt niczego nie wylicza ani nie naprawia. Wdrożenie wraca w stanie
+zapisanym przez silnik wykonania, plik warsztatu w treści zapisanej przy
+aktualizacji, architektura w kształcie złożonym tą samą funkcją, którą
+oddaje ją definiowanie architektury.
+
+Brak architektury to puste pole, nie błąd: świeże okno jeszcze niczego
+nie zdefiniowało, więc pobranie architektury oddaje wynik z pustym polem,
+a nie odmowę braku znalezienia.
+
+Kontrakt mówi wprost, że brak granicy strony bierze granicę rdzenia — bez
+niej okno z dziennikiem liczonym w tysiącach ciągnęłoby całą historię
+przy każdym otwarciu panelu Deployment, choć pokazuje w nim ostatnie
+przebiegi.
+
+Bez odmowy przy wartości środowiska spoza kontraktu okno dostałoby pustą
+listę i wzięłoby ją za brak wdrożeń, zamiast dowiedzieć się o literówce.
+
+## budowa/server/internal/core/adapter_modul_auth_stan.go
+
+Wejście przez bramkę (`adapter_modul_auth.go`) stan zmienia; czynności
+z tego pliku wyłącznie go odczytują i przekładają. Podział idzie tą granicą.
+
+Rozróżnianie tokenu nieznanego, sesji unieważnionej i sesji wygasłej
+w odpowiedzi `RozpoznajSesjeBramki` mówiłoby pytającemu, czy trafił
+w istniejący token.

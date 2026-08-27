@@ -65,7 +65,7 @@ wprost: `adapter_narzedzia_dokument_formaty.go:62` — „brak silnika składu".
 | | |
 |---|---|
 | **Gałąź** | `teren/dokumenty-i-tekst` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/adapter_modul_tlumaczenie_*.go`, `adapter_narzedzia_dokument_*.go`, `adapter_modul_studio_*ingest*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Wykaz plików** | `budowa/server/internal/core/adapter_modul_tlumaczenie_*.go`, `adapter_narzedzia_dokument_*.go`, `adapter_modul_studio_cyfryzacja.go` (obsługa `studio.ingest.*` po przebudowie nazw), `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
 | **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery obrazu i przeglądarki |
 
 | Narzędzie | Komenda | Uwaga |
@@ -144,39 +144,41 @@ Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdze
 `zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
 rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
 
-### aktualizacja-powloki-i-skrypty
+### sprawdziany-drogi-wejscia
 
-Usterki zastane powłoki, zmierzone przy przejęciu. `droga.rs:293` importuje
-`KatalogProbny` z nieistniejącego `aktualizacja/probne.rs` w siedmiu
-sprawdzianach — `cargo test` powłoki nie kompiluje się od chwili przejęcia.
-`pobranie.rs` przy `wykonaj_aktualizacje` sprawdza wyłącznie sumę SHA-256
-podaną przez tę samą stronę, bez przywiązania do kanału z `wydania.json`.
-Część skryptów w `budowa/scripts/` wskazuje usunięte profile nastaw,
-nieistniejący `budowa/client/` i wariant natywny zniesiony pozycją 8;
-pozycja 8 pkt 4 stanowi, że materiał instalek natywnych leży poza
-repozytorium, w `~/robocze/material/repo-2.0/budowa/scripts/`.
+Trzy sprawdziany w `skutek_wydania_studia_test.go` rozjechały się z rdzeniem
+od chwili przejęcia — pomiar wcześniejszy wykazał, że opisują zamiar porzucony,
+którego nikt za zmianą nie poprawił. Osobno: droga bez poczty nie ma ani
+jednego sprawdzianu własnego — zachowanie rozstrzygnięte pozycją 11 stoi
+wyłącznie na komentarzu i pomiarze jednorazowym; pierwsza zmiana w bramce
+zniesie je bez niczyjej wiedzy.
+
+| Sprawdzian | Czego żąda | Co rdzeń robi |
+|---|---|---|
+| `TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta` | odmowy i zera wierszy przy braku nadajnika | zakłada konto, stawia znacznik, wpuszcza hasłem — pozycja 11 rozstrzyga na rzecz rdzenia |
+| `TestNieudaneNadanieListuCofaRejestracje` | cofnięcia rejestracji przy nadajniku nieosiągalnym | do zmierzenia w terenie |
+| `TestSkanowanieZUrzadzeniaOdmawiaNazwanie` | odmowy nazywającej brak | do zmierzenia w terenie |
 
 | | |
 |---|---|
-| **Gałąź** | `teren/aktualizacja-powloki-i-skrypty` z `main` |
-| **Wykaz plików** | `budowa/desktop/src-tauri/src/aktualizacja/` (w tym nowy `probne.rs`), `budowa/scripts/` |
-| **Poza terenem** | reszta powłoki (uprawnienia, capabilities, polityka CSP — czeka na klienta), polecenia IPC bez odbiorców (odbiorcy przyjdą z falami 3–5), `budowa/server/`, `budowa/shared/`, `budowa/klient/`, `design/`, `prowadzenie/` |
+| **Gałąź** | `teren/sprawdziany-drogi-wejscia` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/skutek_wydania_studia_test.go`; nowy plik sprawdzianów drogi bez poczty w `internal/core/`; wyłącznie przy wykazanej pomiarem usterce rdzenia — plik bramy albo uwierzytelnienia niosący zachowanie |
+| **Poza terenem** | kontrakt, `zaleznosci_zewnetrzne.go`, `urzadzenia_skaner.go`, adaptery dokumentów, obrazu, przeglądarki, aplikacji, developer-api, mowy i `wiedza/` (pliki terenów biegnących), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
 | **Wykonawca** | sesja wysłana przez Prowadzącego 27.08.2026 |
 
 **Kryteria odbioru.**
 
-1. `cargo test` w `budowa/desktop/src-tauri` kompiluje się i biegnie — zero
-   niepowodzeń, z przytoczonym wynikiem uruchomienia.
-2. `probne.rs` odtworzony wyłącznie z użyć w `droga.rs` — żadnego zachowania
-   bez pokrycia w miejscach użycia; niejasność jest zgłoszeniem.
-3. Pobranie aktualizacji przywiązane do kanału z `wydania.json` — adres spoza
-   kanału odrzucany, wykazane sprawdzianem. Gdzie kanał stoi w źródłach,
-   ustala wykonawca; brak w źródłach jest zgłoszeniem z przyjętym
-   rozstrzygnięciem.
-4. Skrypty wskazujące usunięte profile, nieistniejący `budowa/client/` albo
-   wariant natywny — usunięte z repozytorium po potwierdzeniu, że kopia
-   w materiale zamkniętym istnieje i jest tożsama (albo po jej złożeniu).
-   Skrypty żywe nietknięte; ich usterki idą zgłoszeniem, nie poprawką.
+1. Dla każdego z trzech sprawdzianów rozstrzygnięte pomiarem, czy zawodzi
+   sprawdzian, czy rdzeń — z przytoczonym pomiarem — i poprawiona ta strona,
+   która się myli, a nie ta, którą łatwiej. Dla pierwszego rozstrzyga
+   pozycja 11: rdzeń ma rację.
+2. Droga bez poczty ma sprawdziany własne: rejestracja, wejście hasłem,
+   potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika — zgodne
+   z pozycją 11 rejestru decyzji.
+3. `gotestsum -- -count=1 ./...` — zero niepowodzeń; liczba pominiętych nie
+   rośnie, a jeśli któryś z trzech sprawdzianów stoi dziś wśród pominiętych,
+   po terenie pominięć ubywa.
+4. Kontrakt nietknięty.
 5. Rewizje obejmują wyłącznie pliki terenu.
 
 ### odmowy-skanera
@@ -212,6 +214,24 @@ Windows przekłada odmowę, gałąź Linux oddaje ją surową.
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
+
+### Komunikat rdzenia radzi budowę usuniętymi skryptami
+
+`budowa/server/internal/narzedzia/wpiecie.go:52` i `:111` — komentarz i treść
+komunikatu błędu wskazują `scripts/wydanie.sh` i `scripts/pakowanie.sh`,
+usunięte z repozytorium jako materiał instalek natywnych (pozycja 8 pkt 4).
+Odmowa radzi Operatorowi drogę naprawy, której nie ma. Drobny teren rdzenia.
+
+### Skrypty hybrydowe wskazują usunięte profile i nieistniejący katalog
+
+Wszystkie trzy `budowa/scripts/instalka-hybryda-*.sh` wskazują profile
+`tauri.hybryda-*.conf.json`, których nie ma (w `budowa/desktop/src-tauri/`
+stoi wyłącznie `tauri.conf.json`), oraz `budowa/client/` zamiast
+`budowa/klient/`; to samo `pakiet-serwera.sh` i `pokaz.sh`. Hybryda jest
+jedyną postacią produktu, więc skrypty są żywe, a odmawiają na starcie.
+Naturalny moment terenu: powstanie prawdziwej budowy `budowa/klient/dist`.
+Osobno do rozstrzygnięcia: `instalka-hybryda-linux.sh` wobec pozycji 8
+(jedyna platforma Windows 11), gdy `droga.rs` wciąż niesie tor AppImage.
 
 ### Kontrast metadanych w przedsionkach — naprawione
 
@@ -352,26 +372,6 @@ Metryki wymagają rozstrzygnięcia Właściciela: albo są normatywne i dostają
 definicję sposobu liczenia, albo znikają. Metody liczenia „interakcji" nie da
 się odtworzyć z treści plików, więc dziś nikt nie jest w stanie ich utrzymać.
 
-### Sprawdziany drogi wejścia rozjechane z rdzeniem — gotowe do otwarcia
-
-Trzy sprawdziany zawodzą od chwili przejęcia rdzenia. Pomiar wykazał, że nie są
-usterką rdzenia — opisują zamiar porzucony i nikt ich za zmianą nie poprawił.
-
-| Sprawdzian | Czego żąda | Co rdzeń robi |
-|---|---|---|
-| `TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta` | odmowy i zera wierszy przy braku nadajnika | zakłada konto, stawia znacznik, wpuszcza hasłem — pozycja 11 rejestru decyzji |
-| `TestNieudaneNadanieListuCofaRejestracje` | cofnięcia rejestracji przy nadajniku nieosiągalnym | do zmierzenia w terenie |
-| `TestSkanowanieZUrzadzeniaOdmawiaNazwanie` | odmowy nazywającej brak | do zmierzenia w terenie |
-
-Osobno: **droga bez poczty nie ma ani jednego sprawdzianu własnego**. Zachowanie
-rozstrzygnięte pozycją 11 stoi dziś wyłącznie na komentarzu i na pomiarze
-jednorazowym — pierwsza zmiana w bramce zniesie je bez niczyjej wiedzy.
-
-Teren ma dla każdego z trzech sprawdzianów rozstrzygnąć pomiarem, czy zawodzi
-sprawdzian, czy rdzeń, i poprawić tę stronę, która się myli — a nie tę, którą
-łatwiej. Do tego założyć sprawdziany drogi bez poczty: rejestracja, wejście
-hasłem, potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika.
-
 ### Droga SANE bez odpowiednika `bladWarstwyWia` — gotowe do otwarcia
 
 Brak urządzenia jest już nazwany. Brak samego programu `scanimage` dalej wychodzi
@@ -408,6 +408,7 @@ po raz drugi.
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
+| `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna
 `createVersion` — wróciła jako zgłoszenie, bo kontrakt jej nie ustala. Brama

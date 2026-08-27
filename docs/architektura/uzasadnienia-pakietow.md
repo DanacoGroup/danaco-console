@@ -4117,3 +4117,44 @@ bo taka czynność pozwalałaby historię ominąć.
 Różnicę względem poprzedniej wersji wyliczamy przy odczycie zamiast trzymać ją w bazie: pola
 zmienione wychodzą z porównania migawki z jej poprzedniczką, więc odpowiedź nie rozjedzie się
 z treścią, którą przywraca operacja przywrócenia.
+
+## budowa/server/internal/narzedzia/ekspert_wykaz.go
+Umiejętności i konektory eksperta są w kontrakcie listami napisów bez
+narzuconego słownika, wpisywanych ręcznie. Kod rozpoznaje się dwiema drogami
+sprawdzalnymi wprost wobec kontraktu: nazwa narzędzia wskazuje jedną pozycję
+wykazu, nazwa grupy wskazuje wszystkie pozycje tego obszaru. Grupa jest
+jednostką doboru właśnie po to, żeby dobór dawał się wykonać jednym
+wskazaniem zamiast wieloma osobnymi.
+
+Kod, którego nie da się rozpoznać żadną z dwóch dróg, nie jest połykany po
+cichu: wraca osobną listą kodów nierozpoznanych i idzie stamtąd do dziennika
+oraz do licznika.
+
+Zawężenie wchodzi wtedy i tylko wtedy, gdy jest czym zawęzić, czyli gdy
+rozpoznano co najmniej jeden kod. Każdy inny przypadek — rdzeń milczy, kodu
+nie ma, żadnego kodu nie rozpoznano — zostawia wykaz okna w całości i melduje
+powód.
+
+Wykaz okna w całości wybrano zamiast wykazu pustego, bo usterka jednej drogi
+nie zabiera modelowi wszystkich narzędzi na całą turę: okno z ekspertem,
+którego rdzeń chwilowo nie potwierdził, pracuje dalej. Pełny wykaz kosztuje
+jednak istotnie więcej żetonów niż wykaz zawężony, dlatego koszt jest mierzony
+i meldowany przy każdym takim przypadku. Wykaz pusty odpada, bo model bez ani
+jednego narzędzia nie mówi „nie znam eksperta", tylko po prostu nie działa.
+
+Nazwa przełącznika dołożeń i jego rozdzielnik pochodzą ze wspólnego pakietu
+wstrzykiwania, nie z literałów zapisanych lokalnie: wiersz uruchomienia składa
+strona rdzenia, a czyta go serwer narzędzi z przetwarzaniem kończącym proces
+na błędzie, więc rozjazd nazwy o jeden znak ubiłby cały proces zamiast
+zawężyć jedynie turę o kilka pozycji.
+
+Dołożenie w ZDolozeniami dokłada i nigdy nie zawęża: dorzuca narzędzie do
+pracy poza definicją eksperta i bez jej ruszania. Pozycje dołożone idą na
+koniec listy, żeby kolejność wykazu została kolejnością kontraktu, a dołożenie
+było widoczne jako dołożenie. Nazwa nierozpoznana dopisuje się do listy
+nierozpoznanych także wtedy, gdy wykaz nie był zawężony i dokładać nie było
+czego, bo nazwa nienazywająca ani narzędzia, ani grupy nie zadziała nigdy.
+
+WykazBezEksperta jest osobną funkcją, a nie wynikiem składanym w miejscu
+wywołania, bo to jest przypadek, o którym najłatwiej zapomnieć powiedzieć —
+powód wchodzi tu zawsze, więc nie da się złożyć niewiedzy bez jej opisania.

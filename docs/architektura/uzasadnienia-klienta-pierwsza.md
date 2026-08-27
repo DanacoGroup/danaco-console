@@ -3421,3 +3421,80 @@ dałoby uchwyt pokazujący nastawę, której nie da się wybrać, więc rozstrzy
 o powiadomieniu Operatora należy do wołającego. Z tego samego powodu wymiana
 wykazu utrzymuje wybór tylko wtedy, gdy jego pozycja nadal w wykazie stoi,
 a w przeciwnym razie nastawą staje się pierwsza pozycja nowego wykazu.
+
+## budowa/klient-poprzedni/src/aplikacja/aplikacja.ts
+
+Gotowość Centrum dowodzenia jest domknięciem pierwszego odczytu strony. Punkt
+wejścia podaje ją scenie wejścia w katalogu `ladowanie/`, żeby ekran między
+bramką a produktem schodził w chwili, gdy strona ma czym stanąć. Nieodwiedzona
+trasa strony głównej znaczy gotowość natychmiastową: nie ma na co czekać, skoro
+widoku nikt nie zbudował.
+
+Motyw rusza przed montażem czegokolwiek, żeby dokument dostał żetony motywu,
+zanim pojawi się pierwszy element. Router buduje widok leniwie, przy pierwszym
+wejściu na trasę, i już go nie porzuca — karty opuszczonego środowiska trwają
+w tle i wracają z pełnym stanem. Środowisko przygotowuje się od razu, ponieważ to
+ono podpina przepływ komunikatów.
+
+Uzgodnienia z rdzeniem złożenie aplikacji nie rozpoczyna: robi to przepływ
+komunikatów, gdy transport zgłosi stan połączenia, a wywołanie stąd dałoby drugie
+powitanie. Tożsamość klienta pochodzi z powitania, ponieważ komendy `session.bind`
+i `session.focus` żądają identyfikatora klienta przedstawionego rdzeniowi raz.
+
+Pas kart sesji powstaje w głębi powłoki, która o rdzeniu nie wie, bo buduje ją
+także stanowisko podglądu; drogę do rdzenia podaje jej złożenie aplikacji.
+
+## budowa/klient-poprzedni/src/aod/progi-aod.ts
+
+Wszystkie progi funkcji globalnej Always On Display są ustawieniami zasięgu tej
+funkcji i podlegają zmianie z okna konfiguracji, z okna Ustawień oraz poleceniem
+języka naturalnego. Kontrakt nie niesie ani kategorii ustawień tej funkcji, ani
+komendy zapisującej te wartości — dlatego wartości domyślne stoją w pliku jako
+stałe, a nie jako odczyt komendy `config.get`. Rozjazd jest zgłoszony, nie
+zasypany atrapą.
+
+Chwilę końca wyciszenia do końca dnia liczy zegar maszyny Operatora, ponieważ
+funkcja stoi na jego stanowisku, a nie w strefie czasowej rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/design/stan-okna.ts
+
+Komunikat stanu przesłania treść okna, a nie zastępuje jej: nieudane odświeżenie
+nie kasuje tego, co Operator już widział, i treść wraca nietknięta, gdy okno
+wróci do fazy gotowej. Odmowa rdzenia jest widoczna w oknie, w którym Operator ją
+wywołał, a nie wyłącznie w konsoli.
+
+Wygląd bierze się w całości z biblioteki `komponenty/`, ze stanu pustego oraz ze
+wskaźnika obrotowego, więc plik nie zna ani jednej barwy. Nazwy faz i znakowanie
+powłoki są wspólne dla wszystkich modułów w pliku `komponenty/faza-okna.ts`;
+tutaj zostaje wyłącznie to, czym moduł Design różni się świadomie: wskaźnik
+odczytu i chowanie treści na czas ładowania.
+
+Kreator Prompt Buildera stoi na natywnym elemencie `dialog` otwartym wywołaniem
+`showModal`, a modal otwarty czyni resztę dokumentu bezwładną. Schowanie treści
+okna na czas ładowania schowałoby też ten modal — bezwładność by została, a strona
+nie miałaby ani jednej drogi wyjścia. Dlatego treści schować nie wolno, gdy w niej
+stoi otwarty modal.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zrodlo-obserwowalnosci.ts
+
+Rodzina `monitor.*` jest jedynym źródłem obserwowalności, jakie kontrakt niesie
+poza obszarem `diagnostics.*`. Metryki wydajności i kontrola stanu samej platformy
+wywodzą się z encji `proces_sesji`, a struktura `MonitorStatus` jest dokładnie jej
+odwzorowaniem w kontrakcie. Zakładki Metrics & Performance oraz Health & Uptime
+jadą więc jednym odczytem: są to dwie perspektywy na ten sam materiał, a nie dwa
+niezależne pomiary, które rozejdą się po pierwszej zmianie.
+
+Odmowa komendy `monitor.status` bywa tu zjawiskiem zwykłym: rdzeń bez wpiętego
+rejestru telemetrii odmawia głośno w pliku `core/handlers_monitor.go`, a wykaz
+pusty ukryłby ten fakt pod zdaniem o braku procesów.
+
+Podział na dwie komendy jest podziałem ról, nie wygodą: `monitor.status` czyta
+stan bieżący i niczego nie zapisuje, a `monitor.subscribe` dodatkowo zapisuje okno
+na telemetrię. Pole `subscribed` odpowiedzi mówi, czy zapis doszedł do skutku —
+żądanie bez identyfikatora okna jest zwykłym odczytem, obsłużonym w pliku
+`core/adapter_modul_monitor.go`, a moduł Diagnostics montuje się bez okna.
+
+Zdarzenie `progress.changed` dochodzi do wszystkich połączeń konta niezależnie od
+tego, czy komenda `monitor.subscribe` zapisała okno; zapis mówi rdzeniowi
+wyłącznie, które okno których procesów pilnuje. Dlatego wykaz zmienia się na żywo
+także wtedy, gdy pole zapisu niesie wartość fałszywą.

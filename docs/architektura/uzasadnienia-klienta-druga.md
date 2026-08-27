@@ -1650,3 +1650,15 @@ poczty, które ma w rejestrze jeden wpis. Dlatego ten plik nie wystawia stałej 
 Jeden wiersz przypada na plik, tak samo jak wiersz biblioteki ekspertów w module agentów. Ten sam
 wiersz nadaje się zarówno do wykazu terminów, jak i do zestawienia wystąpień, ponieważ nie wywołuje
 działań samodzielnie, tylko oddaje naciśnięcia oknu, które wie, co z nimi zrobić.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zestawienie-udzialu.ts
+Moduł mierzy wyłącznie udział: liczbę wypowiedzi i znaków na uczestnika w turze bieżącej. Okno opisuje głosowanie, ocenę rubrykową, ocenę modelami-sędziami i ranking akumulowany między sesjami; odpowiadające im komendy kontraktu (roundtable.vote.start, roundtable.vote.cast, roundtable.vote.get, roundtable.rubric.set, roundtable.judge.run, roundtable.leaderboard.get) istnieją, ale moduł żadnej z nich jeszcze nie wywołuje. Wynik liczony jako udział nie jest oceną jakości wypowiedzi ani progiem quorum — próg zgody niesie pole quorum żądania roundtable.vote.start, którego okno nie wywołuje.
+Wypowiedź otwartą ostatnio liczy się z tekstu widocznego w oknie (strumień), nie z pola content: rdzeń rozgłasza wypowiedź najpierw pustą i dopisuje treść strumieniem, więc sam zapis dawałby zero znaków przez cały czas mówienia modelu. Wypowiedzi wcześniejsze są już utrwalone i liczą się z zapisu.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/indeks.ts
+Plik był punktem zbiorczym eksportów całego obszaru okien pomocniczych, więc pierwotny
+nagłówek opisywał po kolei skład obszaru, powód wydzielenia go poza katalog modułów
+oraz ryzyko rozejścia się kopii przy duplikacji w dwóch modułach. Redakcja scaliła te
+trzy wątki w jedno zdanie nazywające zawartość i wspólność dla modułów Developer
+i Diagnostics, zachowując wymienione elementy obszaru bez warstwy uzasadniającej wybór
+lokalizacji pliku w drzewie źródeł.

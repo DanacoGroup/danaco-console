@@ -2977,3 +2977,17 @@ przeżywa odświeżenie wykazu, ponieważ ma gdzie zamieszkać po stronie rdzeni
 
 Wpis bez odnośnika nagrania nie jest brakiem produktu, tylko wpisem tekstowym. Przycisk
 odsłuchu mówi to wprost, zamiast milczeć albo znikać z wiersza.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/widok-strumienia.ts
+
+Okno koordynatora pokazuje cztery rodzaje treści, a nie samą odpowiedź modelu:
+tok rozumowania, wywołania narzędzi, wyniki oraz pliki. Pliki są wyróżnione
+znacznikiem osobnym, ponieważ stoją obok pozostałych trzech rodzajów jako
+czwarta rzecz widoczna dla koordynatora, a nie jako odmiana wyniku narzędzia.
+
+Rodzaje fragmentów pochodzą z kontraktu przez katalog warstwy rozmowy, więc
+moduł nie wprowadza własnego nazewnictwa rodzajów ani własnych wartości.
+
+Wiersz licznika niesie powód zatrzymania biegu wprost z pola `LoopState.stopReason`.
+Bez tego wiersza bieg zatrzymany byłby nieodróżnialny od biegu bezczynnego,
+a koordynator nie miałby przesłanki do rozstrzygnięcia o wznowieniu.

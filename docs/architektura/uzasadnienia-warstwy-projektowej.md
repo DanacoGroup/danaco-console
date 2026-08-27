@@ -33,3 +33,9 @@ i ustaleń oraz znakowanie faz stanu.
 
 Kontrolki formularza pochodzą z `modele/kontrolki-formularza`, więc moduł
 wciąga arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/formularz-powolania.css
+Barwy i odstępy formularza pochodzą wyłącznie z żetonów motywu, więc plik działa poprawnie w obu motywach bez odrębnego kodu. Wygląd pól i przycisku pochodzi z biblioteki komponentów wspólnych; ten plik niesie wyłącznie rozkład, którego biblioteka nie dostarcza.
+
+## budowa/klient-poprzedni/src/aktualizacja/aktualizacja.css
+Barwy pasa pochodzą wyłącznie z żetonów motywu, bez żadnej wartości barwnej wpisanej wprost, dzięki czemu podmiana żetonu wystarcza i pas nie wypada z pomiaru kontrastu. Arkusz nie powtarza biblioteki: tor postępu korzysta z klasy `.dn-postep` z pliku `komponenty/postep.css`, chronologia z klasy `.dn-tabela` z pliku `komponenty/tabela.css`, a przycisk przywołania z klasy `.dn-btn` z pliku `komponenty/przycisk.css`. W tym pliku pozostaje wyłącznie układ pasa i miejsca styku.

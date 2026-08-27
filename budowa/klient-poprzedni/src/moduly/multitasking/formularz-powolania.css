@@ -1,11 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MULTITASKINGAI · FORMULARZ POWOŁANIA PODAGENTA
-   ----------------------------------------------------------------------------
-   Rozkład formularza `subagent.spawn` w panelu Subagent Network. Barwy
-   i odstępy biorą się wyłącznie z żetonów motywu `--dn-*`, więc oba motywy
-   obsługują się same. Wygląd pól i przycisku pochodzi z biblioteki `dn-*`;
-   tutaj leży wyłącznie rozkład, którego biblioteka nie ma.
-   ============================================================================ */
+/* Plik zawiera rozkład formularza powołania podagenta w panelu sieci podagentów modułu wielozadaniowości, korzystający wyłącznie z żetonów motywu i biblioteki komponentów wspólnych. */
 
 @import '../../modele/modele.css';
 

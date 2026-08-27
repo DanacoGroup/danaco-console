@@ -5131,3 +5131,16 @@ jego opisu i widnieje w jego własnym nagłówku. Sposób dokładania fragmentu
 odpowiada zachowaniu historii okna: fragment dołącza się do ostatniego
 wpisu tej samej persony, a przy zmianie persony zaczyna wpis nowy — rozjazd
 tych dwóch reguł dałby po przebudowie inną historię niż przed nią.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-kanalow-translate.ts
+Pole kanału żądania dodania celu oraz pole kanału żądania tłumaczenia zwrotnego wskazują kanał
+modelu wykonujący przekład; brak pola bierze kanał czynny okna. Rdzeń czyta wskazany kanał, a
+kanał, którego nie odnajduje w wykazie, odrzuca odmową nazwaną, nie cichym zejściem na domyślny.
+Zawężenie do kanałów włączonych obowiązuje, bo ster ma pokazywać to, czym da się przełożyć: kanał
+wyłączony rdzeń i tak odrzuci, więc stawianie go na liście wyboru byłoby zaproszeniem do odmowy.
+Rejestr, który nie dotarł, daje wykaz pusty i nie odbiera ani dodania języka, ani tłumaczenia
+zwrotnego: żądanie idzie wtedy bez pola kanału, a rdzeń bierze kanał domyślny; powód nieudanego
+odczytu nie jest połykany, mówi go ster przy pozycji domyślnej. Faz są cztery, bo trzy pustki są
+różne: faza spoczynku znaczy brak zapytania, faza odczytu znaczy zapytanie w toku, faza gotowa
+z pustym wykazem znaczy, że rdzeń nie zna ani jednego kanału czynnego, a faza błędu znaczy, że
+zapytanie się nie udało — zlanie ich kazałoby zgadywać, czy czekać, czy zakładać kanał.

@@ -2753,3 +2753,23 @@ mogą się zlać.
 zostaje jako wartość początkowa: odpowiedź rdzenia przychodzi po pierwszym rysowaniu i wtedy przerysowuje
 strefę. Odmowa i wykaz pusty nie gaszą ekranu — na miejscu zostaje wykaz zastany, po którym da się wejść
 do pracy.
+
+## budowa/klient-poprzedni/src/moduly/research/sekcje-raportu.ts
+Sekcje jadą w polu `sections` komendy `research.report.build`, więc redakcja nie potrzebuje osobnej
+komendy; kolejność bierze się z porządku wierszy i wchodzi w pole `order`. Sekcja bez tytułu nie
+blokuje zapisu — kreator wysyła to, co ma, a brak nazywa komunikatem przy polu. Wiersz pusty w obu
+polach nie jest sekcją i tu wypada. Podanie `sections` przestawia rdzeń na gałąź zapisu wprost: nie
+woła modelu i nie zamienia zaznaczonych ustaleń na sekcje. Pusta tablica też jest podanymi sekcjami,
+więc warstwa żądania pomija pole `sections` w całości, gdy nie zostało nic — inaczej kreator, który
+dokłada pusty wiersz przy otwarciu, składałby raport z jednej sekcji bez tytułu i bez treści zamiast
+streszczenia ustaleń. Wiersz wczytany z raportu niesie dalej swoje `findingIds`, więc powtórne
+złożenie nie zrywa wiązania ustalenie-sekcja.
+
+Identyfikator sekcji musi być niepowtarzalny poza sesją okna, nie tylko w niej: kolumna
+`sekcja_raportu_badania.identyfikator_zewnetrzny` jest unikalna globalnie, a nie w obrębie raportu,
+więc kod powtórzony przy nowym raporcie kończy się odmową rdzenia. Ten sam kod przy tym samym
+raporcie jest w porządku — rdzeń poprawia sekcję zastaną. Człon losowy pochodzi ze wspólnego
+generatora identyfikatorów, żeby nie hodować drugiej reguły nadawania identyfikatorów w kliencie.
+
+## budowa/klient/src/protokol/koperta.ts
+Plik nie definiuje własnego typu komunikatu i nie powiela ani jednego literału nazwy — kształt koperty pochodzi wyłącznie ze współdzielonego kontraktu.

@@ -1,32 +1,6 @@
-// Odpowiedzialność pliku: czynność `document.convert` — zamiana dokumentu
-// między formatami i odłożenie wyniku w magazynie rdzenia.
-//
-// Drogi są dwie, bo żadna pojedyncza nie wystarcza. Pandoc zamienia struktury
-// tekstowe (markdown, html, docx, odt, rtf, epub, csv, tekst czysty), ale PDF-u
-// sam nie zapisze: `pandoc -t pdf` woła silnik składu jako własne potomstwo,
-// czyli proces poza bramą rdzenia. Rdzeń woła więc silnik osobno.
-//
-// ── Skąd bierze się PDF ─────────────────────────────────────────────────────
-// Dokument, który LibreOffice otwiera wprost (docx, odt, rtf, html, csv, txt),
-// idzie LibreOffice'em bez okna. Ta droga niesie WŁASNY układ dokumentu:
-// style, tabele i podziały stron zapisane w pliku, których żadne przepisanie
-// przez format pośredni nie odtworzy.
-//
-// Materiał, którego LibreOffice wprost nie otwiera (markdown, epub), idzie
-// składem: Pandoc zamienia go na źródło typsta, a typst składa PDF. Wcześniej
-// jechał drogą `markdown → html (Pandoc) → pdf (LibreOffice)`, czyli fragment
-// HTML-a rysowany procesorem tekstu — droga, która działa, ale składem nie
-// jest. Gdy typst nie stoi na maszynie, ta właśnie droga zostaje jako zapasowa;
-// odmowa byłaby tu regresem, bo PDF z markdownu powstawał i bez typsta.
-//
-// Komenda nie czyta PDF-u: jego treść jest ciągiem instrukcji rysowania, z
-// którego Pandoc nie złoży struktury dokumentu. Żądanie `pdf → cokolwiek`
-// kończy się odmową wskazującą drogę — treść PDF-u wyciąga
-// `document.text.extract`, a jej wynik da się przekonwertować dalej.
-//
-// Wyniku zastępczego komenda nie podstawia: każda droga bez bajtów kończy się
-// błędem, a pusty plik na wyjściu binarium też jest odmową, bo dokument
-// o zerowej długości wygląda w panelu jak dokument.
+// Adapter obsługuje `document.convert`: zamienia dokument między formatami i odkłada wynik
+// w magazynie rdzenia, dobierając LibreOffice albo skład Pandoc+typst zależnie od formatu
+// źródłowego i docelowego.
 package core
 
 import (
@@ -41,32 +15,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// narzedzieTypst opisuje silnik składu. Typst wchodzi w miejsce, w którym rdzeń
-// nie miał żadnego: jest jednym plikiem wykonywalnym bez własnego drzewa
-// zasobów, więc mieści się w płaskim układzie `pomocniki/<program>`, którym
-// jedzie pakowanie produktu (`zewnetrzne/odnajdywanie.go`). Silnik TeX-owy
-// (`xelatex`) tego układu nie przyjmuje — jest drzewem formatów, czcionek
-// i ścieżki wyszukiwania kpathsea, a nie plikiem.
+// narzedzieTypst opisuje silnik składu typst: jeden plik wykonywalny bez własnego drzewa
+// zasobów, mieszczący się w płaskim układzie pomocniczych programów pakowania produktu.
 var narzedzieTypst = zewnetrzne.Narzedzie{
 	Nazwa: "typst", Program: "typst", Pakiet: "typst (jeden plik wykonywalny z wydania projektu)",
 }
 
-// czcionkaSkladuTypst jest rodziną czcionek narzucaną składowi.
-//
-// Argument nie jest ozdobą, tylko warunkiem uruchomienia: szablon typsta,
-// który wypuszcza Pandoc, podaje silnikowi rodzinę czcionek ze zmiennej
-// `mainfont`, a przy jej braku podaje wykaz pusty — co typst odrzuca błędem
-// „font fallback list must not be empty" i PDF nie powstaje wcale.
-//
-// Rodzina nierozpoznana nie jest odmową: typst mówi wtedy „unknown font
-// family", schodzi na własną czcionkę zastępczą i składa dokument dalej —
-// sprawdzone uruchomieniem na tej maszynie. Nazwa jest więc wskazaniem
-// pierwszeństwa, nie wymogiem wobec maszyny Operatora. Rodzina DejaVu Serif
-// stoi w każdej instalacji niosącej `fonts-dejavu-core` i pokrywa komplet
-// polskich znaków diakrytycznych.
+// czcionkaSkladuTypst jest rodziną czcionek narzucaną składowi typst przez zmienną szablonu
+// `mainfont`; bez niej wykaz czcionek jest pusty i typst odmawia złożenia dokumentu.
 const czcionkaSkladuTypst = "DejaVu Serif"
 
-// Przeksztalc obsługuje `document.convert`.
+// Przeksztalc obsługuje komendę `document.convert`: rozpoznaje format źródłowy i docelowy,
+// przeprowadza konwersję i odkłada gotowy dokument w magazynie rdzenia.
 func (a *adapterNarzedziDokumentu) Przeksztalc(ctx context.Context,
 	z shared.DocumentConvertRequest) (shared.DocumentConvertResponse, error) {
 
@@ -120,11 +80,8 @@ func (a *adapterNarzedziDokumentu) Przeksztalc(ctx context.Context,
 	return shared.DocumentConvertResponse{Asset: asset, SizeBytes: rozmiar}, nil
 }
 
-// przeprowadzKonwersje dobiera drogę i oddaje ścieżkę gotowego pliku wyniku.
-//
-// Format docelowy równy źródłowemu nie jest ani błędem, ani pracą: wraca plik
-// źródłowy bez zmiany. Przepuszczenie go przez Pandoca przepisałoby dokument
-// i po cichu zgubiło to, czego Pandoc nie odwzorowuje.
+// przeprowadzKonwersje dobiera drogę zamiany formatu i oddaje ścieżkę gotowego pliku wyniku;
+// format docelowy równy źródłowemu zwraca plik źródłowy bez zmiany, z pominięciem Pandoca.
 func (a *adapterNarzedziDokumentu) przeprowadzKonwersje(ctx context.Context, katalogPracy string,
 	zrodlo zrodloDokumentu, docelowy string) (string, error) {
 
@@ -148,13 +105,9 @@ func (a *adapterNarzedziDokumentu) przeprowadzKonwersje(ctx context.Context, kat
 		"wynik."+opisCelu.rozszerzenie)
 }
 
-// doPdf rozstrzyga, którą z dwóch dróg powstaje PDF, i prowadzi ją do końca.
-// Uzasadnienie podziału stoi w nagłówku pliku.
-//
-// Materiał niestrawny dla LibreOffice'a idzie najpierw przez Pandoca — do
-// źródła typsta, gdy silnik składu stoi, a bez niego do samodzielnego HTML-a
-// (`--standalone`, bo dopiero wtedy plik niesie nagłówek kodowania i polskie
-// znaki nie rozsypują się w składzie).
+// doPdf rozstrzyga drogę powstania PDF-u: materiał, który LibreOffice otwiera wprost, idzie
+// LibreOffice'em; materiał niestrawny dla niego idzie przez Pandoca do składu typst albo do
+// pośredniego HTML-a.
 func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy string,
 	zrodlo zrodloDokumentu) (string, error) {
 
@@ -176,10 +129,7 @@ func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy strin
 		material = posredni
 	}
 
-	// Własny profil użytkownika na jedno wywołanie: LibreOffice trzyma stan
-	// w profilu, a drugie równoległe uruchomienie na wspólnym profilu kończy się
-	// cichym zwarciem — jeden przebieg oddaje plik, drugi nic. Profil
-	// w katalogu roboczym czynności znika razem z nim.
+	// Profil własny na wywołanie unika zwarcia dwóch równoległych uruchomień na wspólnym profilu.
 	profil := "-env:UserInstallation=file://" + filepath.Join(katalogPracy, "profil-libre")
 	wyjscie := filepath.Join(katalogPracy, "pdf")
 	if err := os.MkdirAll(wyjscie, 0o700); err != nil {
@@ -193,10 +143,7 @@ func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy strin
 		return "", err
 	}
 
-	// LibreOffice nie pyta o nazwę wyniku, tylko składa ją z nazwy materiału,
-	// więc szukamy jej po fakcie. Nazwa zgadnięta z góry byłaby pudłem przy
-	// pliku z kropkami, a odmowa mówiłaby o braku wyniku, którego nie ma tylko
-	// dlatego, że patrzymy w złe miejsce.
+	// LibreOffice nazywa wynik po materiale, więc szukamy pliku po fakcie zamiast zgadywać nazwę.
 	nazwa := strings.TrimSuffix(filepath.Base(material), filepath.Ext(material)) + ".pdf"
 	plik := filepath.Join(wyjscie, nazwa)
 	if _, err := os.Stat(plik); err != nil {
@@ -207,15 +154,9 @@ func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy strin
 	return plik, nil
 }
 
-// skladTypstem prowadzi drogę składu: Pandoc zamienia dokument na źródło
-// typsta, typst składa z niego PDF.
-//
-// Dwa uruchomienia zamiast jednego, choć Pandoc umie zawołać silnik sam
-// (`--pdf-engine`). Powód jest ten sam, dla którego w całym drzewie stoi jedno
-// `exec.Command`: silnik zawołany przez Pandoca jest jego potomstwem, więc
-// omija sprawdzenie obecności, bramę izolacji okna i własną granicę czasu, a
-// jego odmowa dochodzi do Operatora zwinięta w pandokowe „Error producing PDF"
-// bez zdania, które powiedział silnik. Wołany osobno — mówi sam za siebie.
+// skladTypstem prowadzi drogę składu: Pandoc zamienia dokument na źródło typsta, a typst
+// składa z niego PDF osobnym wywołaniem, aby odmowa silnika składu docierała bez zawinięcia
+// w komunikat Pandoca.
 func (a *adapterNarzedziDokumentu) skladTypstem(ctx context.Context, katalogPracy string,
 	zrodlo zrodloDokumentu) (string, error) {
 
@@ -269,19 +210,9 @@ func (a *adapterNarzedziDokumentu) pandokiem(ctx context.Context, katalogPracy, 
 	return wynik, nil
 }
 
-// odlozWynik utrwala bajty dokumentu w magazynie rdzenia i zakłada wiersz
-// zasobu — tą samą drogą i tym samym magazynem, co `design.asset.upload`.
-//
-// Kolejność jest zamierzona: najpierw bajty, potem wiersz. Wiersz wskazujący
-// odwołanie, za którym nic nie leży, byłby dokumentem nie do otwarcia, a model
-// zacytowałby go jako gotowy.
-//
-// Plik pusty jest odmową: binarium potrafi skończyć się kodem zero i zostawić
-// zero bajtów (uszkodzone wejście, wyczerpany nośnik), a zero bajtów nie jest
-// dokumentem.
-//
-// Okno puste znaczy „bez wiersza", a nie „błąd" — wspólnie dla wszystkich
-// rodzin arsenału, jak opisano przy `oknoWynikuArsenalu`.
+// odlozWynik utrwala bajty dokumentu w magazynie rdzenia i zakłada wiersz zasobu tą samą
+// drogą, co przesłanie zasobu; dokument o zerowej długości kończy się odmową zamiast wpisu
+// w panelu.
 func (a *adapterNarzedziDokumentu) odlozWynik(ctx context.Context,
 	sciezka, oknoWyniku, format string) (shared.DesignAsset, int, error) {
 

@@ -35,26 +35,9 @@ import type { ZrodloTerminala } from './zrodlo-terminala';
 import { programPowloki, zdanieProgramuPowloki } from './zaleznosci-zewnetrzne';
 
 /**
- * Script Library — okno kreatora modułu Terminal: skrypty i snippety, ich
- * parametry, kontrola wstępna treści i uruchomienie w karcie bieżącej.
- *
- * Do rdzenia idą dwie komendy: `terminal.command.exec` uruchamia treść skryptu,
- * a `terminal.output.read` oddaje wynik sprawdzenia składni. Rdzeń podaje treść
- * programowi powłoki jako pojedynczy argument, więc skrypt wieloliniowy
- * wykonuje się bez zapisywania go do pliku — i dlatego biblioteka nie potrzebuje
- * ani komendy zapisu pliku, ani ścieżki na dysku serwera.
- *
- * Biblioteka jest bytem RDZENIA, a okno jej widokiem: zapis idzie komendą
- * `terminal.script.save` — każdy zapis zakłada kolejną WERSJĘ, więc poprzednie
- * brzmienie treści zostaje — wykaz czyta `terminal.script.list`, a usunięcie
- * `terminal.script.remove` zabiera pozycję wraz ze wszystkimi jej wersjami.
- *
- * Analizę treści prowadzi `terminal.script.lint` programami leżącymi na maszynie
- * rdzenia. Odpowiedź niesie pole mówiące, CZY program analizy był dostępny —
- * i okno je pokazuje, bo pusty wykaz uwag przy braku programu znaczyłby
- * fałszywie „treść bez zastrzeżeń”. Kontrola wstępna okna zostaje obok analizy,
- * nie zamiast niej: sprawdza to, co da się rozstrzygnąć bez żadnego programu,
- * i robi to w chwili pisania.
+ * Script Library — okno kreatora modułu Terminal: skrypty i snippety
+ * z parametrami, kontrolą wstępną treści i uruchomieniem w karcie bieżącej;
+ * biblioteka jest bytem rdzenia, okno jej widokiem.
  */
 export interface OknoBibliotekiSkryptow {
   element: HTMLElement;
@@ -62,7 +45,11 @@ export interface OknoBibliotekiSkryptow {
   czynnosci: readonly CzynnoscOkna[];
 }
 
-/** Rodzaje pozycji biblioteki w kolejności wykazu. */
+/**
+ * Rodzaje pozycji biblioteki w kolejności wykazu — skrypt jako treść
+ * wieloliniowa uruchamiana w całości, snippet jako krótkie polecenie do
+ * powtarzania tą samą drogą.
+ */
 const RODZAJE: readonly PozycjaWyboru[] = [
   ['skrypt', 'Skrypt', 'Treść wieloliniowa uruchamiana w całości jako jeden proces powłoki.'],
   ['snippet', 'Snippet', 'Krótkie polecenie do powtarzania; uruchamia się tą samą drogą co skrypt.'],
@@ -87,11 +74,7 @@ export function utworzOknoBibliotekiSkryptow(
   const kontrolki = zlozPowierzchnieBiblioteki(rama, tresc.element, pokrycie);
   /** Wartości parametrów wpisane w formularzu, po nazwie parametru. */
   const wartosciParametrow = new Map<string, string>();
-  /**
-   * Treść po formatowaniu, przywieziona z ostatniej analizy. Nie wchodzi do
-   * edytora sama: zamiana treści pisanej przez Operatora bez jego wskazania
-   * byłaby zabraniem mu wersji, którą właśnie pisał.
-   */
+  /** Treść po formatowaniu z ostatniej analizy; nie wchodzi do edytora bez wskazania Operatora. */
   let sformatowana = '';
 
   function pokaz(): void {
@@ -183,8 +166,7 @@ export function utworzOknoBibliotekiSkryptow(
         }),
       );
       if (!odpowiedz.analyzerAvailable) {
-        // Brak programu NIE jest tym samym co brak zastrzeżeń i okno tego nie
-        // skleja: pusty wykaz uwag pokazany jako „treść czysta” byłby nieprawdą.
+        // Brak programu analizy nie jest brakiem zastrzeżeń — pusty wykaz uwag by to zafałszował.
         tresc.potwierdzenie(
           `Treści nie sprawdzono: na maszynie rdzenia nie ma programu analizy (${odpowiedz.analyzer}).`,
           false,
@@ -318,9 +300,7 @@ export function utworzOknoBibliotekiSkryptow(
       tresc.potwierdzenie('Pozycja bez nazwy albo bez treści nie ma czego zapisać.', false);
       return;
     }
-    // Numeru wersji NIE wysyłamy: nadaje go rdzeń w jednej transakcji z zapisem
-    // wersji, więc numer policzony w oknie rozjeżdżałby się przy dwóch zapisach
-    // naraz.
+    // Numeru wersji nie wysyła się: nadaje go rdzeń przy zapisie, żeby zapisy naraz się nie rozjechały.
     void zrodlo
       .zapiszSkrypt({
         script: {
@@ -407,10 +387,7 @@ export function utworzOknoBibliotekiSkryptow(
     tresc.potwierdzenie(`Zapisano ${nazwa} — ${pozycje.length} pozycji biblioteki widoku.`, true);
   });
 
-  // Przerysowanie idzie dopiero wtedy, gdy zmienia się to, co z treści wynika:
-  // deklaracja parametrów albo uwagi kontroli wstępnej. Przerysowywanie przy
-  // każdym naciśnięciu klawisza budowałoby formularz parametrów od nowa
-  // dziesiątki razy w trakcie pisania jednego wiersza.
+  // Przerysowanie idzie dopiero przy zmianie parametrów albo uwag, nie przy każdym naciśnięciu klawisza.
   let podpisTresci = '';
   kontrolki.edytor.addEventListener('input', () => {
     const podpis = JSON.stringify([
@@ -484,14 +461,20 @@ export function utworzOknoBibliotekiSkryptow(
   return { element: rama.element, odswiez: odczytaj, czynnosci };
 }
 
-/** Czynności wiersza biblioteki — wykaz nie zna ani rdzenia, ani stanu okna. */
+/**
+ * Czynności wiersza biblioteki — wykaz nie zna ani rdzenia, ani stanu okna,
+ * tylko zgłasza wybraną pozycję wywołującemu.
+ */
 interface CzynnosciPozycji {
   wczytaj(pozycja: PozycjaBiblioteki): void;
   uruchom(pozycja: PozycjaBiblioteki): void;
   usun(pozycja: PozycjaBiblioteki): void;
 }
 
-/** Wykaz pozycji biblioteki; pustka ma własne zdanie, bo jest stanem poprawnym. */
+/**
+ * Wykaz pozycji biblioteki; pustka ma własne zdanie, bo jest stanem
+ * poprawnym, nie brakiem danych do pokazania.
+ */
 function wykazPozycji(biblioteka: Biblioteka, czynnosci: CzynnosciPozycji): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-biblioteka';
@@ -603,12 +586,9 @@ function formularzParametrow(
 }
 
 /**
- * Wykaz uwag ANALIZY z maszyny rdzenia.
- *
- * Osobny od wykazu kontroli wstępnej, bo mówi o czym innym: kontrola wstępna
- * jest sprawdzeniem, które okno robi samo i natychmiast, a to jest wynik
- * programu analizy. Nagłówek niesie nazwę tego programu — bez niej Operator nie
- * wie, czyje to zastrzeżenia i czego doinstalować, gdy programu zabrakło.
+ * Wykaz uwag analizy z maszyny rdzenia, osobny od kontroli wstępnej: kontrola
+ * wstępna sprawdza to, co okno rozstrzyga samo i natychmiast, a to jest wynik
+ * zewnętrznego programu. Nagłówek niesie nazwę tego programu.
  */
 function wykazUwagAnalizy(odpowiedz: TerminalScriptLintResponse): HTMLElement {
   const blok = document.createElement('section');
@@ -651,7 +631,10 @@ function wykazUwagAnalizy(odpowiedz: TerminalScriptLintResponse): HTMLElement {
   return blok;
 }
 
-/** Uwagi kontroli wstępnej; brak uwag też jest zdaniem, bo cisza znaczyłaby „nie sprawdzono”. */
+/**
+ * Uwagi kontroli wstępnej; brak uwag też jest zdaniem, bo cisza znaczyłaby
+ * „nie sprawdzono”, nie brak zastrzeżeń.
+ */
 function wykazUwag(uwagi: readonly string[]): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-uwagi';
@@ -683,7 +666,10 @@ function wykazUwag(uwagi: readonly string[]): HTMLElement {
   return blok;
 }
 
-/** Przepisuje pozycję do formularza wraz z wyczyszczeniem wartości parametrów poprzedniej pozycji. */
+/**
+ * Przepisuje pozycję do formularza wraz z wyczyszczeniem wartości parametrów
+ * poprzedniej pozycji, żeby nie mieszały się z nową.
+ */
 function wczytajDoEdytora(
   kontrolki: PowierzchniaBiblioteki,
   wartosci: Map<string, string>,
@@ -698,7 +684,10 @@ function wczytajDoEdytora(
   kontrolki.edytor.focus();
 }
 
-/** Kontrolki okna Script Library. */
+/**
+ * Kontrolki okna Script Library: pola formularza pozycji, przyciski akcji
+ * i edytor treści skryptu lub snippetu.
+ */
 interface PowierzchniaBiblioteki {
   nazwa: HTMLInputElement;
   tagi: HTMLInputElement;
@@ -715,11 +704,10 @@ interface PowierzchniaBiblioteki {
 }
 
 /**
- * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna.
- *
- * Edytor powstaje raz i wchodzi do ciała przy każdym przerysowaniu — treść
- * pisana przez Operatora nie ma prawa zniknąć przy odświeżeniu wykazu.
- * Pozycje bez pokrycia w kontrakcie stoją jawnie nieczynne wraz z powodem.
+ * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna. Edytor powstaje
+ * raz i wchodzi do ciała przy każdym przerysowaniu, żeby treść pisana przez
+ * Operatora nie zniknęła. Pozycje bez pokrycia w kontrakcie stoją nieczynne
+ * wraz z powodem.
  */
 function zlozPowierzchnieBiblioteki(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -758,9 +746,7 @@ function zlozPowierzchnieBiblioteki(
     Command.MessageSend,
     'Ułożenie treści skryptu z opisu w języku naturalnym; robi to model w oknie rozmowy modułu, którego to złożenie nie osadza',
   );
-  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu: przenoszenia
-  // plików konfiguracyjnych powłoki świadomie nie zgłoszono do scalenia, bo
-  // wersjonowanie repozytorium prowadzi moduł Developer.
+  // Nazwa spoza kontraktu jest wskazaniem — wersjonowanie plików prowadzi moduł Developer.
   const dotfiles = pokrycie.przycisk(
     'Pliki konfiguracyjne powłoki',
     'terminal.dotfiles.sync',
@@ -791,9 +777,7 @@ function zlozPowierzchnieBiblioteki(
     dotfiles,
   );
   rama.narzedzia.append(nazwa, tagi, rodzaj.element, powloka.element);
-  // Edytor stoi w ciele okna na stałe, a nie w miejscu treści przerysowywanym
-  // przy każdej zmianie: element wyjęty z dokumentu traci ognisko, a Operator
-  // traciłby je wtedy w połowie pisanego wiersza.
+  // Edytor stoi w ciele okna na stałe: element wyjęty z dokumentu traciłby ognisko pisania.
   rama.cialo.append(edytor, stanTresci);
 
   return {

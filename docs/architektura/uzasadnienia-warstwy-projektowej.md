@@ -93,3 +93,12 @@ wskaźnikiem kropkowym oraz znacznik kolumny bez pokrycia w kontrakcie danych.
 Atrybut data-bez-pokrycia wycisza kolumnę do koloru tekstu trzeciorzędnego
 i ustawia kursor pomocy: kolumna pozostaje widoczna, a powód nieobecności
 danych pokazuje atrybut title elementu.
+
+## budowa/klient-poprzedni/src/moduly/studio/petla-okno.css
+Arkusz nie nadaje oknu pętli stałej kolumny w powierzchni dokumentu: postacią
+domyślną jest nakładka nad treścią, która wchodzi znacznikiem przebiegu
+i schodzi po zwinięciu, nie zabierając dokumentowi ani jednego piksela, gdy
+nie jest używana. Stała kolumna istnieje wyłącznie jako tryb wybierany
+ręcznie. Odstępy, barwy i promienie pochodzą z warstwy wspólnej żetonów;
+arkusz nie wprowadza żadnej wartości surowej poza wymiarami układu, których
+warstwa wspólna nie nazywa.

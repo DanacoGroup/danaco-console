@@ -1,26 +1,11 @@
-/* Okno pętli wykonawczej — kolejka zadań, obsada wykonawców, warsztat łańcucha
-   i tryb wsadowy.
-
-   ── Powierzchnia należy do dokumentu ──────────────────────────────────────
-   Arkusz nie nadaje temu oknu stałej kolumny. Postacią domyślną jest NAKŁADKA
-   nad treścią (`[data-tryb='nakladka']`): okno wchodzi znacznikiem przebiegu
-   i schodzi po zwinięciu, nie zabierając dokumentowi ani jednego piksela, gdy
-   nie jest używane. Stała kolumna (`[data-tryb='kolumna']`) istnieje wyłącznie
-   jako tryb do wyboru Operatora.
-
-   Żetony — odstępy, barwy, promienie — pochodzą z warstwy wspólnej. Ten arkusz
-   nie wprowadza ani jednej wartości surowej poza wymiarami układu, których
-   warstwa wspólna nie nazywa. */
+/* Okno pętli wykonawczej łączy kolejkę zadań, obsadę wykonawców, warsztat łańcucha i tryb wsadowy, domyślnie jako nakładka nad dokumentem, bez własnej stałej kolumny. */
 
 .petla-znacznik {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* ── Nakładka: postać domyślna ─────────────────────────────────────────────
-   Okno stoi nad treścią, przy prawej krawędzi obszaru roboczego, i ma własne
-   przewijanie. Treść dokumentu zostaje pod nim widoczna — Operator nie traci
-   z oczu tego, o czym pętla mówi. */
+/* Okno w postaci nakładki stoi nad treścią przy prawej krawędzi obszaru roboczego, ma własne przewijanie, a dokument pod nim pozostaje widoczny dla operatora. */
 .ms-okno[data-tryb='nakladka'] {
   position: absolute;
   inset-block: var(--dn-od-2);
@@ -32,7 +17,7 @@
   box-shadow: var(--dn-cien-lg);
 }
 
-/* ── Stała kolumna: wyłącznie tryb do wyboru ─────────────────────────────── */
+/* Stała kolumna zajmuje miejsce w układzie dokumentu na stałe i pozostaje wyłącznie trybem wybieranym ręcznie, nie postacią domyślną okna pętli. */
 .ms-okno[data-tryb='kolumna'] {
   position: static;
   width: auto;
@@ -40,9 +25,7 @@
   box-shadow: none;
 }
 
-/* ── Nastawy i wskaźniki przebiegu ─────────────────────────────────────────
-   Odmowa uruchomienia jest wyróżniona barwą błędu, bo jest odmową — a nie
-   zwykłym wierszem liczb. Powód stoi w treści, nie w tytule dymka. */
+/* Odmowa uruchomienia pętli jest wyróżniona barwą błędu, ponieważ jest odmową, a nie zwykłym wierszem liczb, a jej powód stoi w treści dymka, nie w tytule. */
 .petla-nastawa,
 .petla-wskazniki {
   margin-block: var(--dn-od-1);
@@ -69,7 +52,7 @@
   margin-block-end: var(--dn-od-3);
 }
 
-/* ── Zakładki widoków ─────────────────────────────────────────────────────── */
+/* Zakładki widoków przełączają sposób prezentacji kolejki zadań w oknie pętli wykonawczej, zawijając się do kolejnego wiersza przy wąskiej szerokości. */
 .petla-widoki {
   display: flex;
   flex-direction: column;
@@ -79,7 +62,7 @@
   flex-wrap: wrap;
 }
 
-/* ── Kolejka zadań ────────────────────────────────────────────────────────── */
+/* Kolejka zadań wymienia każde zadanie pętli wykonawczej jednym wierszem, z kolorem stanu na lewej krawędzi i szczegółami rozwijanymi po kliknięciu. */
 .petla-kolejka {
   display: flex;
   flex-direction: column;
@@ -111,9 +94,7 @@
   margin-block-start: var(--dn-od-1);
 }
 
-/* Stan zadania barwi lewą krawędź wiersza. Kolor jest DODATKIEM do napisu
-   stanu, nigdy jego zamiennikiem: wiersz odczytany bez barw — przez czytnik
-   ekranu albo przez oko nierozróżniające odcieni — nadal mówi, co się stało. */
+/* Stan zadania barwi lewą krawędź wiersza kolorem, który jest dodatkiem do napisu stanu, nigdy jego zamiennikiem, więc wiersz odczytany bez barw nadal mówi, co się stało. */
 .petla-zadanie[data-stan='running'] {
   border-inline-start: 3px solid var(--dn-sygnal-obrys);
 }
@@ -130,7 +111,7 @@
   color: var(--dn-blad-tekst);
 }
 
-/* ── Obsada wykonawców i spięcia ──────────────────────────────────────────── */
+/* Obsada wykonawców i spięcia wymieniają uczestników pętli oraz zgłoszone rozbieżności, każdy wiersz z podtytułem, opisem i oznaczeniem zakresu odpowiedzialności. */
 .petla-podtytul {
   margin-block: var(--dn-od-3) var(--dn-od-1);
   font-family: var(--dn-ff-naglowek);
@@ -168,8 +149,7 @@
   border-inline-start: 3px solid var(--dn-ostrzezenie-obrys);
 }
 
-/* Odłożone brzmienie jest treścią do przeczytania, nie notatką techniczną —
-   dostaje więc pełną szerokość i zawijanie, a nie jednowierszowy pasek. */
+/* Odłożone brzmienie jest treścią przeznaczoną do przeczytania, nie notatką techniczną, dostaje więc pełną szerokość i zawijanie zamiast jednowierszowego paska. */
 .petla-spiecie__brzmienie {
   max-height: 12rem;
   overflow: auto;
@@ -183,7 +163,7 @@
   opacity: 0.72;
 }
 
-/* ── Warsztat łańcucha ────────────────────────────────────────────────────── */
+/* Warsztat łańcucha pokazuje kolejne ogniwa wykonania w jednym pasie, ze wskazaniem ogniwa bieżącego i możliwością rozwinięcia szczegółów każdego kroku. */
 .petla-warsztat__pas,
 .petla-wsad__pas {
   display: flex;
@@ -225,7 +205,7 @@
   gap: var(--dn-od-1);
 }
 
-/* ── Tryb wsadowy ─────────────────────────────────────────────────────────── */
+/* Tryb wsadowy zestawia wiele zadań pętli wykonawczej uruchamianych razem, z osobnym wierszem stanu dla każdego zadania wsadu i wspólnym paskiem sterowania. */
 .petla-wsad__dokumenty {
   width: 100%;
   font-family: var(--dn-ff-mono);
@@ -261,11 +241,7 @@
   border-inline-start: 3px solid var(--dn-ostrzezenie-obrys);
 }
 
-/* ── Pas pętli: kotwica układu i miejsce znacznika ─────────────────────────
-   Pas jest przodkiem ustawionym, bez którego nakładka nie ma względem czego
-   się umieścić, i miejscem, w którym znacznik przebiegu zostaje widoczny przy
-   oknie zwiniętym. Sam pas zajmuje wysokość jednego przycisku — tyle, ile
-   kosztuje dostęp do pętli, gdy się z niej nie korzysta. */
+/* Pas pętli jest przodkiem ustawionym, względem którego umieszcza się nakładka, i miejscem znacznika przebiegu widocznym przy oknie zwiniętym, o wysokości jednego przycisku. */
 .petla-pas {
   position: relative;
   display: flex;

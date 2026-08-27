@@ -4490,3 +4490,26 @@ opis kafla: to katalog komend rdzenia, a nie biblioteka gotowych poleceń.
 
 Wysyłanie komendy wprost z kafla byłoby zgadywaniem ładunku, więc akcja wstawia swoją
 nazwę do pola, a polecenie wychodzi dopiero z paska.
+
+## budowa/klient-poprzedni/src/moduly/library/okno-tags-collections.ts
+
+Trzy czynności Operatora z wiersza wykazu mają drogę do rdzenia: nadanie
+etykiety, utworzenie kolekcji i przypisanie zasobu do kolekcji. Słownik
+etykiet i wykaz kolekcji przychodzą z rdzenia, więc okno pokazuje słownik
+całego repozytorium, a nie próbkę zebraną z odczytanej strony wykazu — widać
+w nim także etykiety nieużywane, których nie nosi żaden zasób, a które
+istnieją i dają się usunąć.
+
+Słownikiem można zarządzać: zmiana nazwy przechodzi po wszystkich zasobach,
+łączenie wchłania etykiety duplikujące się, a usunięcie zdejmuje etykietę
+z repozytorium i przy etykiecie używanej żąda potwierdzenia. Tezaurus
+wychodzi z rdzenia w zapisie z relacjami; relacje ustanawia osobna komenda
+i klient nie ma ich skąd wziąć sam. Mapa kolekcji zostaje wywozem okna, bo
+składa się z tego, co okno już pokazuje.
+
+Okno nie ma własnego odczytu i mieć go nie może: kontrakt nie zna komendy
+katalogu etykiet ani kolekcji, więc jedno i drugie składa się z pól plików
+przyniesionych przez Library Explorer. Stan tego okna jest więc stanem
+tamtego odczytu. Trzy pustki są tu rozłączne: nikt jeszcze nie pytał,
+odczyt trwa i rdzeń odpowiedział bez ani jednej etykiety. Wspólne zdanie
+dla wszystkich trzech orzekałoby o odpowiedzi rdzenia, zanim ta przyjdzie.

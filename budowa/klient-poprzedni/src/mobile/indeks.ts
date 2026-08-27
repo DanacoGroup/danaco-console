@@ -1,7 +1,12 @@
+/**
+ * Punkt zbiorczy katalogu mobilnego centrum dowodzenia. Składa okno mobilne na
+ * podanym kanale, trzyma je między otwarciami wraz z kanałem osadzenia,
+ * przebudowuje je po zmianie kanału i wydaje na zewnątrz otwarcie okna oraz
+ * jego typ.
+ */
 import type { Kanal } from '../protokol/kanal';
 import { utworzOknoMobile, type OknoMobile } from './okno-mobile';
 
-/** Punkt zbiorczy katalogu mobilnego centrum dowodzenia. */
 
 /**
  * Okno zbudowane przy pierwszym otwarciu; `null` przed nim. Okno jest jedno na

@@ -2652,3 +2652,13 @@ Przepływów zakończonych bywa kilkadziesiąt i wypisane w całości spychałyb
 krawędź panelu pracę trwającą. Zwinięcie nie jest ukryciem: licznik podaje ich
 liczbę, a rozwinięcie oddaje każdy przepływ po nazwie i stanie wraz
 z podsumowaniem czasu odcinka oraz liczby podagentów.
+
+## budowa/klient-poprzedni/src/mobile/indeks.ts
+
+Katalog wystawia reszcie aplikacji jedną czynność — `otworzOknoMobile(kanal)` —
+oraz typ okna. Okno jest jedno na klienta i żyje między otwarciami, więc
+powtórne otwarcie ponawia odczyt zamiast budować okno od nowa.
+
+Kanał podaje się przy pierwszym otwarciu. Wywołanie z innym kanałem, czyli po
+ponownym połączeniu z rdzeniem, rozłącza okno dotychczasowe i buduje je na nowo,
+żeby przyszłe komendy `mobile.*` nie szły przez transport, którego już nie ma.

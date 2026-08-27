@@ -1833,3 +1833,37 @@ nie rozgłaszają.
 
 Zdarzenie zmiany strony nie niesie wskazania sesji, ponieważ okno przeglądarki
 nie jest bytem karty sesji — migawka jest przypisana do okna, nie do sesji.
+
+## budowa/server/internal/core/adapter_modul_developer_api_obciazenie.go
+
+Pojedyncze żądanie developer.api.request oddaje status, czas i rozmiar jednej
+odpowiedzi — to wystarcza, by sprawdzić, czy punkt końcowy odpowiada, ale nie
+mówi nic o usłudze pod obciążeniem: jeden pomiar nie ma percentyla ani
+przepustowości, a to ogon rozkładu, nie średnia, rozstrzyga, czy usługa jest do
+użycia. Rzetelny przebieg obciążeniowy wymaga utrzymania zadanej liczby
+połączeń równolegle, zbierania histogramu czasów bez wpływu na pomiar
+i liczenia percentyli z pełnego rozkładu, nie z próbki — pętla wywołań po
+net/http pisana od nowa mierzyłaby w dużej mierze samo siebie.
+
+Wybór padł na autocannon, nie na k6, mimo że oba programy stoją na maszynie
+i oba liczą percentyle. K6 opisuje przebieg skryptem w JavaScripcie, a nie
+parametrami: wpięcie go tutaj znaczyłoby albo kontrakt niosący program do
+wykonania, czyli powierzchnię znacznie szerszą niż adres z parametrami, albo
+skrypt składany przez rdzeń, czyli generowanie cudzego języka. Jedyna droga
+rdzenia do procesu zewnętrznego zbiera wyłącznie jego wyjście: autocannon
+oddaje cały wynik na wyjście we własnym trybie maszynowym, k6 pisze
+podsumowanie do pliku, więc wymagałby pisania i odczytu plików pośrednich,
+których ta droga nie obsługuje. Kształt, o który pyta kontrakt — percentyle
+czasu, żądania na sekundę, bajty na sekundę, rozbicie po kodach stanu —
+autocannon oddaje wprost. Siłą k6 są przebiegi narastające, progi
+i scenariusze, nieosiągalne bez skryptu, a skryptu nikt tu nie zamawiał.
+
+Program kończy się powodzeniem także wtedy, gdy ani jedno żądanie nie doszło
+do skutku: punkt końcowy milczy, a wynik niesie same zera obok licznika
+błędów. Podanie takiego wyniku jako pomiaru byłoby brakiem pomiaru
+w przebraniu — zero żądań na sekundę czyta się jak usługa skrajnie wolna, a nie
+jak usługa, której nie ma — dlatego przebieg bez ani jednej odpowiedzi wraca
+odmową nazywającą liczbę błędów. Odpowiedzi spoza klasy 2xx to co innego: punkt
+końcowy odpowiedział, pomiar się odbył, więc wynik wychodzi wraz z licznikiem
+non2xx i rozbiciem po kodach, żeby wołający zobaczył, że mierzył ścieżkę
+błędu, a nie zgadywał.

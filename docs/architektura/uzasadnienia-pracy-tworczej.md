@@ -391,3 +391,30 @@ akapitu dłużej niż półtorej minuty.
 
 Brak zapisu nastawy liczbowej zostaje brakiem, nie zerem: zero znaczyłoby
 „ani jeden wykonawca", a brak znaczy „bez granicy ustawionej przez Operatora".
+
+## adapter_modul_studio_tabele_pomocniki.go
+
+Tabela siedzi w drzewie postaci dokumentu, a jej miejsce w kolejności czytania
+niesie blok rodzaju tabela ze wskazaniem tabeli. Osobnego wiersza w bazie tabela
+nie ma i mieć nie powinna: nie pyta się, które tabele są nieświeże, tak jak pyta
+się o przypisy — tabelę czyta się razem z dokumentem, więc jedzie jego drzewem.
+
+Siatka komórek jest pełna, czyli obejmuje wiersze razy kolumny, zamiast trzymać
+rzadko tylko komórki wypełnione. Komórki trzymane rzadko wymagałyby przy każdym
+odczycie zgadywania, czy komórki nie ma, bo jest pusta, czy bo została wchłonięta
+scaleniem. Komórka wchłonięta scaleniem niesie oznaczenie i zostaje na swoim
+miejscu, więc wstawienie wiersza w środek scalenia ma co przesunąć, a nie zgaduje.
+
+Szerokości kolumn nigdy nie schodzą do zera: tabela po scaleniu komórek ma mieć
+szerokości policzone. Dlatego każda czynność zmieniająca budowę tabeli przelicza
+szerokości od nowa, zamiast zostawiać tablicę krótszą niż liczba kolumn.
+
+Sortowanie tabeli używa kolacji pisma polskiego z biblioteki `golang.org/x/text`
+zamiast własnej tablicy znaków. Porównanie napisów bajt po bajcie stawia „ł" za
+„z", bo tak leżą one w Unikodzie — wykaz nazwisk wychodziłby wtedy z
+Łukasiewiczem na końcu, za Zawadzkim. Własna tablica znaków polskich
+rozwiązałaby to prowizorycznie i rozjechałaby się na pierwszym wyrazie z
+ligaturą, z apostrofem albo z cyfrą. Siła porównania sortowania jest
+drugorzędna: różnica wielkości liter nie decyduje o kolejności, a różnica znaku
+diakrytycznego decyduje, bo „laska" i „łaska" są dwoma różnymi wyrazami i mają
+stanąć osobno.

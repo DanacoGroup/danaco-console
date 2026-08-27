@@ -5559,3 +5559,12 @@ rozmowę a kolumnę należy do sceny i jej arkusza stylów.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/wpis.ts
 Przekład roli kontraktu na klasę biblioteki obejmuje cztery wartości — rolę użytkownika na klasę człowieka, rolę modelu na klasę inteligencji, a role systemu i narzędzia na wspólną klasę systemową — i jest wystawiany wraz z medalionem, którego wymaga dwukolumnowa siatka wiersza wpisu.
+
+## budowa/klient-poprzedni/src/moduly/studio/nastawy-wizualne.ts
+Dokument w kontrakcie niesie treść, tytuł, format i wersję, ale nie pole stylów i nie ma komendy,
+którą styl dojechałby do rdzenia, więc nastawy z tego pliku żyją przez sesję okna i giną z jej
+zamknięciem — okno mówi to operatorowi wprost, zamiast udawać zapis, którego nie ma. Trwałe jest
+wyłącznie to, co jest składnią treści, takie jak styl nazwany bloku, pogrubienie, kursywa,
+podkreślenie, przekreślenie, lista, tabela i podział strony, oraz nastawy strony, bo te mają
+w kontrakcie osobne pole i profil wydania. Plik nie zna elementów strony: oddaje wartości
+i zdania, a przypięcie ich do elementu należy do powierzchni dokumentu.

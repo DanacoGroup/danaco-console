@@ -4263,3 +4263,29 @@ wyszarzony. Kafel bez skutku byłby atrapą, a krótsza lista atrapą nie jest.
 ## budowa/klient/src/wejscie/skladniki/pole-kodu.ts
 Każdy zestaw rządzi się sam — mechanika wiąże pola grupami, więc kursor nie przeskakuje między odsłonami. Składnik zwraca wykaz węzłów: zestaw pól i stopka z odliczaniem są rodzeństwem w kolumnie panelu. Liczba pól jest właściwością, nie stałą tego pliku: rozstrzyga ją długość drogi potwierdzenia wydawanej przez rdzeń, a tę odczytuje się z rdzenia, nie z okna.
 Rdzeń wydaje drogę dłuższą niż zestaw pól, więc wklejenie musi unieść ją w całości — inaczej przycięłaby się do liczby pól i rdzeń odmówiłby drogi, która przyszła listem poprawna.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/czytelnosc-glosow.ts
+Dwa głosy tego samego modelu to dwa głosy, nie jeden: schemat debaty nie ma więzu jedności między
+oknem a kanałem, a kontrakt powtarza to w opisie komendy dodania modelu. Kluczem wypowiedzi jest
+więc identyfikator uczestnika, nigdy identyfikator kanału — dwie tożsamości jednego kanału muszą
+różnić się na ekranie, bo inaczej dwa głosy czyta się jako jeden. Stąd znacznik mówcy przy każdej
+wypowiedzi i zdanie o powtórzonym kanale. Rozróżnienie idzie układem i gęstością, nie samą barwą.
+Wstęga barwna zostaje, ale sama nic nie niesie temu, kto barw nie rozróżnia — nośnikiem jest
+znacznik mówcy w osobnej kolumnie (te same znaki co w składzie), nagłówek z pełną tożsamością przy
+każdej wypowiedzi oraz odstęp: nowy mówca dostaje przerwę, ciąg tego samego mówcy zostaje ciasny.
+Moderator nie jest uczestnikiem: rdzeń zapisuje jego interwencję kodem stałym, poza wykazem
+uczestników, bo więz obcy do tabeli uczestnika debaty odciąłby ją od zapisu.
+
+Moderator nie ma kanału ani persony, więc rdzeń podpisuje go stałą kodu moderatora; tę samą
+wartość niesie interwencja moderatora. Uczestnicy dostają kod z przedrostkiem właściwym
+uczestnikom, więc kolizja nie zachodzi.
+
+Odczytu wykazu modeli żadne okno modułu dziś nie wywołuje, więc okno otwarte w trakcie debaty nie
+zna jeszcze całego składu.
+
+Miejsce w składzie nie ma skąd wziąć dla uczestnika składowi nieznanego, a zmyślenie go
+rozjechałoby obie listy.
+
+Tok rozumowania stoi osobno, bo rdzeń nie liczy go do treści wypowiedzi — sumuje wyłącznie
+fragmenty tekstu. Doklejony do zdania dałby na żywo wypowiedź inną niż ta, którą za chwilę utrwali
+rdzeń.

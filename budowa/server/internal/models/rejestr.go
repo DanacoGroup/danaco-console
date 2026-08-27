@@ -58,9 +58,8 @@ func (r *Rejestr) UstawFabryke(klucz string, fabryka Fabryka) {
 }
 
 // Odswiez czyta wiersze na nowo i przebudowuje kanały. Wywoływany przy starcie
-// oraz po każdej zmianie rejestru kanałów (komendy channel.*). Kanał, którego
-// wiersz nie zmienił się, zachowuje swoją instancję — odświeżenie konfiguracji
-// nie przerywa biegnącego strumienia innego kanału.
+// oraz po zmianie rejestru kanałów. Kanał, którego wiersz się nie zmienił,
+// zachowuje swoją instancję.
 func (r *Rejestr) Odswiez(ctx context.Context) error {
 	definicje, err := r.zrodlo.Definicje(ctx)
 	if err != nil {
@@ -70,8 +69,8 @@ func (r *Rejestr) Odswiez(ctx context.Context) error {
 	r.mu.Lock()
 	poprzednie := r.kanaly
 	poprzednieDef := r.definicje
-	// Kopia zestawu fabryk: budowa kanałów biegnie bez zamka, a UstawFabryke
-	// może w tym czasie dopisać fabrykę do mapy rejestru.
+	// Kopia fabryk: budowa kanałów biegnie bez zamka, UstawFabryke może
+	// równolegle dopisać wpis do mapy.
 	fabryki := make(Fabryki, len(r.fabryki))
 	for klucz, fabryka := range r.fabryki {
 		fabryki[klucz] = fabryka
@@ -111,7 +110,8 @@ func (r *Rejestr) Odswiez(ctx context.Context) error {
 	return nil
 }
 
-// Kanal zwraca kanał po identyfikatorze wiersza albo po kodzie kanału.
+// Kanal zwraca zbudowany kanał modelu odnaleziony po identyfikatorze wiersza
+// rejestru albo po kodzie kanału, jeśli taki kanał w rejestrze istnieje.
 func (r *Rejestr) Kanal(klucz string) (Kanal, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -119,7 +119,8 @@ func (r *Rejestr) Kanal(klucz string) (Kanal, bool) {
 	return kanal, jest
 }
 
-// Definicja zwraca wiersz rejestru czynnego kanału.
+// Definicja zwraca wiersz źródłowy rejestru odpowiadający kanałowi, który jest
+// obecnie zbudowany i czynny w danej chwili działania.
 func (r *Rejestr) Definicja(klucz string) (Definicja, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -127,7 +128,8 @@ func (r *Rejestr) Definicja(klucz string) (Definicja, bool) {
 	return d, jest
 }
 
-// Wykaz zwraca wszystkie wiersze rejestru w kolejności odczytu, także nieczynne.
+// Wykaz zwraca wszystkie wiersze rejestru w kolejności ich odczytu z tabeli,
+// łącznie z wierszami kanałów obecnie nieczynnych.
 func (r *Rejestr) Wykaz() []Definicja {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -135,13 +137,8 @@ func (r *Rejestr) Wykaz() []Definicja {
 }
 
 // Kontrakt zwraca wykaz kanałów w kształcie kontraktu, gotowy dla odpowiedzi
-// channel.list. Ograniczenie do czynnych rozstrzyga wywołujący.
-//
-// „Czynny" to nie to samo co „włączony w wierszu". Wiersz może mieć aktywny = 1,
-// a mimo to nie mieć zbudowanego adaptera — bo jego rodzaj nie ma fabryki albo
-// fabryka odmówiła budowy (taki wiersz trafia do Pominiete). Kanał bez adaptera
-// nie jest gotowy do pracy i przy tylkoCzynne nie pokazuje się jako czynny:
-// inaczej okno wskazałoby kanał, który przy pierwszej turze odmówi.
+// channel.list. Ograniczenie do kanałów czynnych rozstrzyga wywołujący, na
+// podstawie zbudowanego adaptera.
 func (r *Rejestr) Kontrakt(tylkoCzynne bool) []shared.Channel {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -160,14 +157,16 @@ func (r *Rejestr) Kontrakt(tylkoCzynne bool) []shared.Channel {
 	return kanaly
 }
 
-// Pominiete zwraca wiersze, dla których adapter nie powstał.
+// Pominiete zwraca wiersze rejestru, dla których żadna fabryka nie zbudowała
+// odpowiadającego im adaptera kanału.
 func (r *Rejestr) Pominiete() []Pominiety {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return append([]Pominiety(nil), r.pominiete...)
 }
 
-// Zamknij zwalnia zasoby wszystkich kanałów rejestru.
+// Zamknij zwalnia zasoby wszystkich kanałów zbudowanych w rejestrze i kończy
+// ich działanie w uporządkowany sposób.
 func (r *Rejestr) Zamknij() error {
 	r.mu.Lock()
 	kanaly := r.kanaly

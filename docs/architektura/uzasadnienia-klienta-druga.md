@@ -2637,3 +2637,6 @@ wykonawcy odłożona bez pokazania jej operatorowi byłaby pracą wyrzuconą po 
 więc wprost do przeczytania, wraz z czynnością „Przyjmij brzmienie", która wnosi je do dokumentu
 decyzją operatora. Gdzie rdzeń odłożył brzmienie jako propozycję albo zmianę śledzoną, widok
 odsyła do niej po identyfikatorze, bo dwóch kopii tego samego brzmienia nie zakłada.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/urzadzenia-dzwieku.ts
+Pusty wykaz nie tłumaczy się sam: lista bez pozycji oznacza brak mikrofonu albo odmowę przeglądarki, a to dwie różne sytuacje z dwoma różnymi wyjściami dla użytkownika, dlatego pole `powod` towarzyszy wykazowi i bywa niepuste również wtedy, gdy urządzenia istnieją, lecz noszą nazwy zastępcze — pusty `powod` oznacza wykaz kompletny, niewymagający dopowiedzenia. Nazw urządzeń nie zgaduje się: przed pierwszą zgodą etykieta każdego urządzenia jest pusta, a numer porządkowy w miejsce nazwy jest przyznaniem się do niewiedzy, nie nazwą sprzętu.

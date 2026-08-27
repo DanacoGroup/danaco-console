@@ -2726,3 +2726,26 @@ się od jedynki i nie są przestawiane.
 
 ## budowa/desktop/src-tauri/src/main.rs
 Plik pełni wyłącznie kompozycję: brak w nim logiki, typów i obsługi zdarzeń, bo każda odpowiedzialność mieszka w osobnym module. Powłoka niesie okno wraz z wkompilowanym interfejsem i nie niesie rdzenia — rdzeń stoi na serwerze wdrożenia, więc przy starcie nie ma czego stawiać ani na co czekać, a powłoka jedynie czyta wskazanie, gdzie tego rdzenia szukać, i otwiera okno. Lista poleceń wywoływalnych z interfejsu wchodzi na listę zamkniętą: natywne okno wyboru katalogu roboczego, wskazanie serwera rdzenia oraz podmiana pliku aplikacji przy aktualizacji.
+## budowa/server/internal/store/migracja_160_pamiec_tlumaczen_pelna.sql
+Migracja 160 — pamięć tłumaczeń modułu Translate w kształcie, którego żąda
+kontrakt rodziny `translate.memory.*`, oraz polityka pamięci okna.
+
+Tabela `pamiec_tlumaczen` (migracja 054) powstała pod jedną komendę
+(`memory.suggest`) i pod jedną drogę zapisu: parę segmentów zdjętą
+z zatwierdzonego panelu. Stąd `panel_id NOT NULL`. Rodzina `memory.*` żąda
+czego innego: `memory.set` zakłada parę BEZ panelu (Operator wpisuje ją
+wprost), `memory.import` wnosi parę z pliku wymiany, a kontrakt
+(`TranslationMemoryEntry`) niesie projekt, klienta, autora i kontekst sąsiedni.
+Kolumny da się dołożyć poleceniem ALTER; zdjęcia warunku NOT NULL z kolumny
+`panel_id` już nie — SQLite tego nie umie. Dlatego tabela powstaje od nowa,
+a wiersze zastane przechodzą do niej przepisaniem: pary zebrane dotąd
+z paneli zostają parami z panelem, reszta pól zostaje pusta, bo nikt jej
+nigdy nie podał.
+
+Zasięg pary (`zasieg`) niesie wartości `TranslationMemoryScope` kontraktu
+wprost. Domyślną jest `card` — pamięć własna karcie sesji; pary szersze
+(projekt, zespół) powstają, gdy Operator wskaże zasięg sam.
+
+Polityka pamięci jest osobną tabelą, nie kolumnami okna: `memory.policy.get`
+odpowiada wtedy „polityki nie ustawiono” brakiem wiersza, zamiast czterema
+kolumnami NULL, których nie da się odróżnić od polityki wyzerowanej.

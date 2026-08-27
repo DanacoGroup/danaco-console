@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: cztery czynności marketingowe modułu Design —
-// komplet rozmiarów kampanii (`design.campaign.set.build`), bazy zdjęciowe
-// (`design.stock.search`, `design.stock.import`) i makieta produktowa
-// (`design.product.mockup.render`). Dostawcy baz leżą
-// w `adapter_modul_design_bazy_zdjeciowe.go`.
-//
-// ── Komplet kampanii jest WYDANIEM, nie zapowiedzią ─────────────────────────
-// `design.campaign.set.build` wyrysowuje kompozycję w każdym zamówionym
-// rozmiarze i zakłada z każdego zasób w magazynie. Rozmiar, którego nie udało
-// się wydać, wraca w `failedSizes` — komplet kampanii z połową rozmiarów
-// wygląda bez tego pola jak komplet gotowy, a brak wyjdzie na jaw dopiero
-// u zamawiającego reklamę.
-//
-// ── Makieta produktowa idzie HOMOGRAFIĄ, nie prostym nałożeniem ─────────────
-// Projekt nakłada się na zdjęcie produktu z obrotem i kryciem. Przekształcenie
-// liczy `golang.org/x/image/draw` macierzą afiniczną — obrót o kąt inny niż
-// wielokrotność dziewięćdziesięciu stopni bez niej wymagałby własnego
-// próbkowania i dawał krawędzie w schodkach.
+// komplet rozmiarów kampanii, bazy zdjęciowe i makieta produktowa. Dostawcy
+// baz leżą w `adapter_modul_design_bazy_zdjeciowe.go`.
 package core
 
 import (
@@ -94,18 +79,14 @@ func (a *adapterDesignu) ZbudujKompletKampanii(ctx context.Context,
 	wydane := make([]shared.DesignCampaignSize, 0, len(z.Sizes))
 	nieudane := []string{}
 	for _, rozmiar := range z.Sizes {
-		// Skala bierze mniejszy ze współczynników, więc materiał wchodzi w kadr
-		// CAŁY. Rozciągnięcie do proporcji rozmiaru zniekształciłoby projekt, a
-		// przycięcie ucięłoby jego część bez słowa o tym.
+		// Skala bierze mniejszy ze współczynników, więc materiał wchodzi cały.
 		skala := mniejszaDesignu(rozmiar.Width/zrodlowy.Width, rozmiar.Height/zrodlowy.Height)
 		if skala <= 0 {
 			nieudane = append(nieudane, rozmiar.Name)
 			continue
 		}
 		plotno := zlozWyrysRastrowyDesignu(kafle, zrodlowy, skala)
-		// Płótno docelowe ma dokładny rozmiar zamówiony, a wyrys ląduje w jego
-		// środku: materiał 1200×628 musi mieć 1200×628 pikseli, bo taki rozmiar
-		// przyjmuje system reklamowy.
+		// Płótno docelowe ma dokładny rozmiar zamówiony, wyrys ląduje w środku.
 		docelowe := image.NewRGBA(image.Rect(0, 0,
 			int(rozmiar.Width+0.5), int(rozmiar.Height+0.5)))
 		granice := plotno.Bounds()
@@ -185,8 +166,7 @@ func (a *adapterDesignu) SzukajWBazachZdjeciowych(ctx context.Context,
 		if dostawca.WymagaKlucza {
 			klucz = a.kluczDostawcyZdjecDesignu(ctx, dostawca.Nazwa)
 			if klucz == "" {
-				// Brak klucza NIE jest odmową całej komendy — dostawca wraca
-				// w bilansie razem z powodem, a pozostali oddają swoje wyniki.
+				// Brak klucza nie jest odmową całej komendy, tylko tego dostawcy.
 				nieudani = append(nieudani, fmt.Sprintf(
 					"%s (brak klucza w sejfie pod bytem %s%s)",
 					dostawca.Nazwa, przedrostekBytuSejfuZdjecDesignu, dostawca.Nazwa))
@@ -206,8 +186,7 @@ func (a *adapterDesignu) SzukajWBazachZdjeciowych(ctx context.Context,
 		}
 	}
 
-	// Odmowa należy się wyłącznie sytuacji, w której NIKT nie odpowiedział:
-	// wtedy odpowiedź „zero zasobów" byłaby nieprawdą o frazie, a prawdą o sieci.
+	// Odmowa należy się wyłącznie sytuacji, w której nikt nie odpowiedział.
 	if len(zasoby) == 0 && len(nieudani) == len(zapytani) {
 		return shared.DesignStockSearchResponse{}, bladDesignu(fmt.Errorf(
 			"żaden z zapytanych dostawców nie odpowiedział: %s", strings.Join(nieudani, "; ")))
@@ -219,7 +198,7 @@ func (a *adapterDesignu) SzukajWBazachZdjeciowych(ctx context.Context,
 }
 
 // zasobBazyKontraktuDesignu składa `DesignStockAsset` kontraktu z zasobu
-// dostawcy.
+// dostawcy bazy zdjęciowej, przenosząc tytuł, podgląd i licencję, gdy istnieją.
 func zasobBazyKontraktuDesignu(dostawca string,
 	wynik zasobDostawcyZdjecDesignu) shared.DesignStockAsset {
 
@@ -243,12 +222,8 @@ func zasobBazyKontraktuDesignu(dostawca string,
 }
 
 // WciagnijZBazyZdjeciowej wciąga zasób dostawcy do magazynu rdzenia wraz
-// z licencją — obsługuje `design.stock.import`.
-//
-// Licencja zapisuje się RAZEM z zasobem i jej brak jest odmową: materiał
-// z katalogu zewnętrznego, o którym nikt później nie powie, czy wolno go było
-// użyć, jest gorszy niż brak materiału (nagłówek
-// `adapter_modul_design_bazy_zdjeciowe.go`).
+// z licencją — obsługuje `design.stock.import`. Licencja zapisuje się razem
+// z zasobem i jej brak jest odmową.
 func (a *adapterDesignu) WciagnijZBazyZdjeciowej(ctx context.Context,
 	z shared.DesignStockImportRequest) (shared.DesignStockImportResponse, error) {
 
@@ -329,9 +304,7 @@ func (a *adapterDesignu) WciagnijZBazyZdjeciowej(ctx context.Context,
 		wiersz.Odsylacz = &odsylacz
 	}
 	if err := a.repozytorium.ZapiszLicencjeZasobuDesignu(ctx, wiersz); err != nil {
-		// Zasób bez zapisanej licencji jest USTERKĄ, nie zasobem — komenda odmawia
-		// w całości. Bajty zostają w magazynie (są prawdziwe), ale wiersz zasobu
-		// znika, żeby Assets Panel nie pokazał materiału bez prowenancji.
+		// Zasób bez zapisanej licencji jest usterką: wiersz zasobu znika.
 		if _, bladUsuniecia := a.repozytorium.UsunZasob(ctx, zapisany.Kod); bladUsuniecia != nil {
 			return shared.DesignStockImportResponse{}, bladDesignu(fmt.Errorf(
 				"licencji zasobu %s nie udało się zapisać (%w), a wiersza zasobu nie udało się "+
@@ -390,11 +363,8 @@ func (a *adapterDesignu) WyrysujMakieteProduktowa(ctx context.Context,
 }
 
 // nalozProjektNaProduktDesignu nakłada projekt na zdjęcie produktu z obrotem
-// i kryciem.
-//
-// Zdjęcie produktu wchodzi w całości i bez skalowania: to ono jest tłem
-// i Operator wskazuje położenie nałożenia w JEGO pikselach. Przeskalowanie tła
-// unieważniłoby wszystkie cztery liczby żądania.
+// i kryciem. Zdjęcie produktu wchodzi w całości i bez skalowania: to ono jest
+// tłem, a Operator wskazuje położenie nałożenia w jego pikselach.
 func nalozProjektNaProduktDesignu(produkt, projekt image.Image,
 	z shared.DesignProductMockupRenderRequest) image.Image {
 
@@ -407,9 +377,7 @@ func nalozProjektNaProduktDesignu(produkt, projekt image.Image,
 		return plotno
 	}
 
-	// Macierz przekształcenia: skalowanie projektu do zamówionego obszaru, obrót
-	// wokół jego środka, przesunięcie na wskazane miejsce. Kolejność ma znaczenie
-	// — obrót po skalowaniu obraca prostokąt docelowy, a nie źródłowy.
+	// Macierz przekształcenia: skalowanie, potem obrót, potem przesunięcie.
 	skalaX := z.Width / float64(graniceProjektu.Dx())
 	skalaY := z.Height / float64(graniceProjektu.Dy())
 	kat := 0.0
@@ -420,8 +388,7 @@ func nalozProjektNaProduktDesignu(produkt, projekt image.Image,
 	srodekX, srodekY := z.X+z.Width/2, z.Y+z.Height/2
 	polowaSzerokosci, polowaWysokosci := z.Width/2, z.Height/2
 
-	// `draw.Transformer` przyjmuje macierz przejścia z układu ŹRÓDŁA do układu
-	// płótna, zapisaną wierszami (a b c / d e f).
+	// Macierz przejścia z układu źródła do płótna, zapisana wierszami.
 	macierz := f64.Aff3{
 		skalaX * cos, -skalaY * sin,
 		srodekX - (cos*polowaSzerokosci - sin*polowaWysokosci),
@@ -429,9 +396,7 @@ func nalozProjektNaProduktDesignu(produkt, projekt image.Image,
 		srodekY - (sin*polowaSzerokosci + cos*polowaWysokosci),
 	}
 
-	// Krycie częściowe idzie przez maskę jednolitą: `draw.Transformer` przyjmuje
-	// maskę w nastawach, a mnożenie składowych obrazu źródłowego zmieniłoby jego
-	// barwy zamiast jego przezroczystości.
+	// Krycie częściowe idzie przez maskę jednolitą w nastawach transformatora.
 	nastawy := &draw.Options{}
 	if z.Opacity != nil && *z.Opacity < 1 {
 		nastawy.SrcMask = image.NewUniform(przezroczystoscDesignu(*z.Opacity))

@@ -2168,3 +2168,57 @@ oddaje wykaz pusty, nie błąd — szukanie bez treści jest pytaniem poprawnym,
 tylko bez odpowiedzi.
 
 Zmiana śledzona ma swoje wiersze w `dane/studio_adnotacje.go`.
+
+## budowa/server/internal/core/adapter_modul_design_marketing.go
+
+Komplet kampanii jest wydaniem, nie zapowiedzią: `design.campaign.set.build`
+wyrysowuje kompozycję w każdym zamówionym rozmiarze i zakłada z każdego zasób
+w magazynie. Rozmiar, którego nie udało się wydać, wraca w `failedSizes` —
+komplet kampanii z połową rozmiarów wygląda bez tego pola jak komplet
+gotowy, a brak wyjdzie na jaw dopiero u zamawiającego reklamę.
+
+Makieta produktowa idzie homografią, nie prostym nałożeniem. Projekt nakłada
+się na zdjęcie produktu z obrotem i kryciem. Przekształcenie liczy
+`golang.org/x/image/draw` macierzą afiniczną — obrót o kąt inny niż
+wielokrotność dziewięćdziesięciu stopni bez niej wymagałby własnego
+próbkowania i dawał krawędzie w schodkach.
+
+Skala kompletu kampanii bierze mniejszy ze współczynników, więc materiał
+wchodzi w kadr cały. Rozciągnięcie do proporcji rozmiaru zniekształciłoby
+projekt, a przycięcie ucięłoby jego część bez słowa o tym.
+
+Płótno docelowe kompletu kampanii ma dokładny rozmiar zamówiony, a wyrys
+ląduje w jego środku: materiał 1200×628 musi mieć 1200×628 pikseli, bo taki
+rozmiar przyjmuje system reklamowy.
+
+Brak klucza dostawcy w wyszukiwaniu baz zdjęciowych nie jest odmową całej
+komendy — dostawca wraca w bilansie razem z powodem, a pozostali oddają
+swoje wyniki.
+
+Odmowa wyszukiwania baz zdjęciowych należy się wyłącznie sytuacji, w której
+nikt nie odpowiedział: wtedy odpowiedź "zero zasobów" byłaby nieprawdą
+o frazie, a prawdą o sieci.
+
+Licencja przy wciąganiu zasobu z bazy zdjęciowej zapisuje się razem
+z zasobem i jej brak jest odmową: materiał z katalogu zewnętrznego,
+o którym nikt później nie powie, czy wolno go było użyć, jest gorszy niż
+brak materiału.
+
+Zasób bez zapisanej licencji jest usterką, nie zasobem — komenda importu
+odmawia w całości. Bajty zostają w magazynie, są prawdziwe, ale wiersz
+zasobu znika, żeby panel zasobów nie pokazał materiału bez prowenancji.
+
+Przeskalowanie tła w makiecie produktowej unieważniłoby wszystkie cztery
+liczby żądania.
+
+Macierz przekształcenia makiety produktowej: skalowanie projektu do
+zamówionego obszaru, obrót wokół jego środka, przesunięcie na wskazane
+miejsce. Kolejność ma znaczenie — obrót po skalowaniu obraca prostokąt
+docelowy, a nie źródłowy.
+
+`draw.Transformer` przyjmuje macierz przejścia z układu źródła do układu
+płótna, zapisaną wierszami (a b c / d e f).
+
+Krycie częściowe w makiecie produktowej idzie przez maskę jednolitą, bo
+`draw.Transformer` przyjmuje maskę w nastawach, a mnożenie składowych
+obrazu źródłowego zmieniłoby jego barwy zamiast jego przezroczystości.

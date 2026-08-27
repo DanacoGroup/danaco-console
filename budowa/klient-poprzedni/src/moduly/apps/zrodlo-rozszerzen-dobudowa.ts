@@ -613,7 +613,7 @@ export function utworzZrodloDobudowyRozszerzen(kanal: Kanal): ZrodloDobudowyRozs
       return sprawdzKsztalt(
         await wywolaj(Command.ExtensionManifestScan, { extensionId: idRozszerzenia }),
         Command.ExtensionManifestScan,
-        // Brak spostrzeżeń jest wynikiem najlepszym z możliwych — sprawdzamy
+        // Brak spostrzeżeń jest wynikiem najlepszym z możliwych — sprawdzany jest
         // tablicę, nie jej długość.
         (tresc) => czyTablica(tresc.findings),
       );

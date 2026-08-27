@@ -14,14 +14,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// nazwaSterownika — sterownik zarejestrowany przez modernc.org/sqlite.
+// nazwaSterownika wskazuje sterownik bazy danych zarejestrowany przez bibliotekę modernc.org/sqlite dla języka Go.
 const nazwaSterownika = "sqlite"
 
-// maksPolaczen ogranicza pulę połączeń. SQLite w trybie WAL dopuszcza wielu
-// czytelników, ale wyłącznie jednego pisarza naraz; nadmiar równoległych
-// połączeń zamienia rywalizację o zapis w błędy „database is locked” zamiast
-// czekać na busy_timeout. Skromny limit trzyma pulę w ryzach, a bezczynne
-// połączenia utrzymuje ciepłe, żeby WAL nie był otwierany i zamykany bez końca.
+// maksPolaczen ogranicza pulę połączeń, ponieważ SQLite w trybie WAL dopuszcza wielu czytelników, ale wyłącznie jednego pisarza naraz.
 const maksPolaczen = 4
 
 // pragmyPolaczenia obowiązują każde połączenie z puli, dlatego trafiają do DSN,
@@ -33,7 +29,7 @@ var pragmyPolaczenia = []string{
 	"synchronous(NORMAL)",
 }
 
-// Baza to otwarty plik bazy wraz z pulą połączeń.
+// Baza to otwarty plik bazy danych SQLite wraz z pulą jego aktywnych połączeń gotowych do wykonywania zapytań.
 type Baza struct {
 	DB      *sql.DB
 	Sciezka string
@@ -68,7 +64,7 @@ func Otworz(sciezka string) (*Baza, error) {
 	return baza, nil
 }
 
-// Zamknij zamyka pulę połączeń. Wywołanie na pustej bazie jest bezpieczne.
+// Metoda Zamknij zamyka pulę połączeń bazy; wywołanie na pustej, niezainicjowanej bazie jest bezpieczne.
 func (b *Baza) Zamknij() error {
 	if b == nil || b.DB == nil {
 		return nil

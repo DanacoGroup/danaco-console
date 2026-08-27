@@ -4541,3 +4541,9 @@ dostaje odmowę rdzenia przy wartości spoza wykazu i poprawia. Nie rozwija też
 struktury zagnieżdżonej: pole rodzaju obiektu idzie jako obiekt bez
 właściwości, bo rozwijanie w głąb urosłoby do schematu większego niż całe
 okno kontekstu, a granicy głębokości kontrakt nie stanowi.
+
+## budowa/server/internal/store/baza.go
+
+Nadmiar równoległych połączeń zamienia rywalizację o zapis w błąd zablokowanej bazy zamiast czekać na
+limit czasu zajętości. Skromny limit połączeń trzyma pulę w ryzach, a bezczynne połączenia utrzymuje
+ciepłe, żeby dziennik zapisu wyprzedzającego nie był otwierany i zamykany bez końca.

@@ -3721,3 +3721,10 @@ retencji zostaje czynna, bo zakres globalny okna nie potrzebuje.
 Modal czyszczenia woła rdzeń sam, bo to on ma pokazać odpowiedź w chwili
 czynności — odmowa i liczba usuniętych padają tam, gdzie Operator patrzy, a
 panel powtarza je u siebie i przeładowuje wykaz.
+
+## budowa/klient/src/wejscie/katalog-tresci.test.ts
+Łańcuch dopisany poza plikiem treści jest usterką i ma tu upaść. Reguła obejmuje pliki okna — składniki, ekrany, montaż, przebieg, narzędzia i zestaw znaków. Nie obejmuje sprawdzianów: opis sprawdzianu jest zdaniem dla tego, kto czyta wynik uruchomienia, i do okna nie trafia nigdy. Wykaz plików pominiętych jest wypisywany, więc pominięcie nie da się rozrosnąć po cichu.
+Reguła jest dwuczłonowa i cała maszynowa: poza katalogiem żaden łańcuch nie niesie polskiego znaku diakrytycznego, a każdy łańcuch ma kształt techniczny — jest nazwą bez odstępu, wykazem klas albo selektorem, wzorem z podstawieniem, samym odstępem rozdzielającym węzły tekstowe, rysunkiem w zestawie znaków albo wpisem diagnostycznym. Zdanie żadnego z tych kształtów nie ma i tu upada.
+Odstępstwo jest jedno i wąskie: wpis diagnostyczny — łańcuch oddany do dziennika wywołaniem konsoli albo niesiony wyjątkiem. To zdanie dla wykonawcy sprawdzianu, okno go nie pokazuje. Wpisy są liczone i wypisywane, więc odstępstwo nie rozrośnie się po cichu.
+Czego sprawdzian nie wychwyci: pojedynczego słowa bez odstępu i bez polskiego znaku, na przykład nazwy własnej wpisanej wprost w składnik. Granica jest nazwana wprost, bo instrument, który udaje szczelność, jest gorszy od instrumentu o znanym zasięgu.
+Bez pomijania komentarzy pomiar mierzyłby polszczyznę komentarzy zamiast łańcuchów, a bez pomijania wyrażeń regularnych ukośnik klasy znaków wyglądałby jak początek komentarza i zjadał resztę pliku.

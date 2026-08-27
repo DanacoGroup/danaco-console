@@ -2332,3 +2332,18 @@ brak jest brakiem po stronie kontraktu i tylko o kontrakcie zdanie mówi.
 Bliźniaczy mechanizm stoi w module Diagnostics. Biblioteka `komponenty/` nie ma
 dziś wspólnego bytu dla obu, a modułowi nie wolno sięgać do wnętrza sąsiada,
 więc każdy z nich składa zdanie powodu u siebie.
+
+## budowa/klient-poprzedni/src/aplikacja/ulotnosc-okna.ts
+
+Informację o pamięci sesyjnej modułu bierze `politykaModulu` wyłącznie z profilu
+modułu. Powłoka dokłada do niej jedną rzecz, której warstwa rozmowy znać nie
+może: co w danym module jest kontekstem roboczym, którego zmiana kończy rozmowę.
+
+Taki kontekst ma jeden moduł — Agents, gdzie kontekstem jest testowany ekspert.
+Powłoka jest jedynym miejscem, w którym obie strony są widoczne naraz: widok
+modułu powstaje w `przestrzen-modulu`, rozmowa okna w `wiazanie-gniazda`, a żadna
+z tych warstw nie zna drugiej.
+
+Moduł nieobjęty tą funkcją również przechodzi przez `politykaModulu` i dostaje
+politykę wprost z własnego profilu, bez kontekstu roboczego. Odjęcie pamięci
+sesyjnej kolejnemu modułowi czyni jego okno ulotnym bez zmiany w tym pliku.

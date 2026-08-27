@@ -5240,3 +5240,39 @@ nieskończona bierze wartość jeden zamiast dzielić przez zero, bo chwyt linij
 w którym wolno oddać nieskończoność. Wcięcie pierwszego wiersza akapitu jest liczone względem
 wcięcia lewego, nie od krawędzi pola, dzięki czemu przeciągnięcie wcięcia lewego zabiera pierwszy
 wiersz ze sobą, co jest zachowaniem, którego operator się spodziewa.
+
+## budowa/klient-poprzedni/src/rozmowa/widok-rozmowy.ts
+Wykaz po ukośniku czyta rdzeń i dokłada narzędzia do sesji, więc bez kanału
+komend nie ma go z czego złożyć; stanowisko podglądu rozmowy kanału komend
+nie prowadzi i ma dalej działać bez wykazu. Stery paska zlecenia potrzebują
+kompletu sterowania okna, który powstaje dopiero w powłoce produktu, więc pasek
+też jest opcjonalny z tego samego powodu. Widok przepuszcza element paska
+nietknięty: nie zna ani nastaw, ani kontraktu.
+
+Widok rozmowy jednego okna wyłącznie składa: powierzchnia modułowa na górze,
+lista wpisów pośrodku, pole wysyłki na dole. Nie zna kontraktu, nie buduje
+koperty i nie wie, czym jest fragment strumienia. Historia nie znika przy
+zmianie modułu: lista wpisów powstaje raz, a przestawienie modułu sięga
+wyłącznie do powierzchni modułowej — wygląd, możliwości, narzędzia i kontekst
+się zmieniają, a wątek zostaje zachowany.
+
+Wykaz po ukośniku powstaje w tym pliku, bo tu spotykają się jego trzy
+potrzeby: źródło pozycji i droga dołożenia z powłoki oraz wątek rozmowy,
+w którym ma stanąć zdanie o dołożeniu. Pole wypowiedzi dostaje go gotowego
+i steruje nim ruchami klawiatury, nie znając kontraktu.
+
+Pasek zlecenia nie wchodzi do powierzchni modułowej z trzech powodów: jego
+miejsce jest przy polu wypowiedzi, nie nad zapisem; powierzchnia ma
+ograniczoną wysokość i własne przewijanie, w którym ster mógłby odjechać poza
+widok; a powierzchnia jest tym, co okno przestawia przy zmianie modułu,
+podczas gdy koperta zlecenia należy do okna, nie do modułu.
+
+Wyczyszczenie rozmowy ulotnej ogłasza zdjęcie pozycji osobno od wpisów, bo
+„nie ma już tych wpisów" jest zdarzeniem innego rodzaju niż „jest nowy wpis";
+zaraz po nim przychodzą zdania o powodzie, więc lista nie zostaje pusta dłużej,
+niż trzeba.
+
+Prompt wpisany spoza tego połączenia idzie przez pole wypowiedzi, żeby było
+widać, skąd się wziął, zamiast wejść do wątku jako zastany fakt. Wpis modelu
+wchodzi do wątku równocześnie i bez zwłoki, bo odwrócenie kolejności
+postawiłoby odpowiedź przed pytaniem, na które odpowiada.

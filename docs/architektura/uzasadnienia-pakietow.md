@@ -3504,3 +3504,17 @@ obejmują je drzewem.
 
 ## budowa/server/internal/dane/developer_warsztat_odczyt.go
 Zawężenia wykazów wchodzą do zapytań jako parametr przygotowanego polecenia, nie sklejaniem tekstu SQL. Wartość pusta oznacza brak zawężenia, więc jedno przygotowane zapytanie obsługuje zarówno wykaz pełny, jak i zawężony, a wartość z zewnątrz nigdy nie trafia bezpośrednio do treści polecenia — ten sam wzorzec obsługuje limit wykazu w odczycie warsztatu.
+
+## budowa/server/internal/session/wstrzymanie.go
+Rdzeń umiał proces wyłącznie zakończyć, więc zadanie długie, na przykład
+budowanie, wielka migracja albo transkodowanie, dało się tylko ubić, czyli
+wyrzucić wykonaną pracę. Wstrzymanie oddaje maszynę bez utraty postępu: proces
+przestaje dostawać czas procesora, jego pamięć i otwarte pliki zostają,
+a wznowienie podejmuje pracę w miejscu, w którym stanęła. Czynność ta nie jest
+dostępna na wszystkich systemach jednakowo: na systemach uniksowych są do niej
+sygnały wysyłane całej grupie procesów, dokładnie tej samej, którą obejmuje
+ubicie, a Windows nie ma dla obcego procesu odpowiednika, bo wstrzymanie idzie
+tam per wątek, czego uchwyt obejmujący całe drzewo nie zna. Kontrakt komendy
+wstrzymania ma dlatego osobne pole wsparcia platformy, a nie tylko odpowiedź
+udaną albo nieudaną, bo brak wsparcia systemu to co innego niż niepowodzenie.
+Rozstrzygnięcie stoi w plikach zależnych od platformy, tak samo jak ubicie.

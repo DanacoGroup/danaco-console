@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/injection"
 	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/konfiguracja"
 	"danacoconsole/server/internal/models"
@@ -160,7 +161,8 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	// serwer podglądu żyje poza żądaniem, tak samo jak przebieg budowania
 	// Developera.
 	aplikacje := nowyAdapterAplikacji(repozytoria.Aplikacje).ZOknami(nadzorca.Rejestr()).
-		ZMagazynem(m.Konfiguracja.KatalogDanych).ZKatalogiemRozszerzen(repozytoria.Rozszerzenia())
+		ZMagazynem(m.Konfiguracja.KatalogDanych).ZKatalogiemRozszerzen(repozytoria.Rozszerzenia()).
+		ZUruchamiaczem(injection.UruchamiaczOkien(), rozstrzygacz, katalogRoboczy)
 
 	// Zakresy narzędzi mają dwóch czytelników: port `ZakresyNarzedzi` rdzenia
 	// (rodzina `tools.scope.*`) oraz straż, którą rdzeń pyta przed skierowaniem

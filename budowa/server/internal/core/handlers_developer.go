@@ -83,6 +83,7 @@ type Developer interface {
 	// Zakładka API Client — `net/http` i `getkin/kin-openapi`, bez ani jednego
 	// procesu potomnego.
 	WykonajZapytanieApi(ctx context.Context, z shared.DeveloperApiRequestRequest) (shared.DeveloperApiRequestResponse, error)
+	WykonajPrzebiegObciazeniowy(ctx context.Context, z shared.DeveloperApiLoadRunRequest) (shared.DeveloperApiLoadRunResponse, error)
 	ZapiszKolekcjeApi(ctx context.Context, z shared.DeveloperApiCollectionSaveRequest) (shared.DeveloperApiCollectionSaveResponse, error)
 	WykazKolekcjiApi(ctx context.Context, z shared.DeveloperApiCollectionListRequest) (shared.DeveloperApiCollectionListResponse, error)
 	ImportujOpenapi(ctx context.Context, z shared.DeveloperApiOpenapiImportRequest) (shared.DeveloperApiOpenapiImportResponse, error)
@@ -160,6 +161,10 @@ func zarejestrujDevelopera(r *Rejestr, d Developer, e *emiter) {
 	r.Zarejestruj(shared.CommandDeveloperDebugEvaluate, obsluz(d.ObliczWyrazenie))
 
 	r.Zarejestruj(shared.CommandDeveloperApiRequest, obsluz(d.WykonajZapytanieApi))
+	// Przebieg obciążeniowy stoi przy zapytaniu pojedynczym, bo jest tym samym
+	// zapytaniem powtórzonym pod obciążeniem — z tym samym podstawianiem zmiennych
+	// środowiska kolekcji.
+	r.Zarejestruj(shared.CommandDeveloperApiLoadRun, obsluz(d.WykonajPrzebiegObciazeniowy))
 	r.Zarejestruj(shared.CommandDeveloperApiCollectionSave, obsluz(d.ZapiszKolekcjeApi))
 	r.Zarejestruj(shared.CommandDeveloperApiCollectionList, obsluz(d.WykazKolekcjiApi))
 	r.Zarejestruj(shared.CommandDeveloperApiOpenapiImport, obsluz(d.ImportujOpenapi))

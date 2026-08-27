@@ -1,28 +1,7 @@
-// Odpowiedzialność pliku: aparat dokumentu — spis treści, spis ilustracji
-// i spis tabel, przypisy dolne i końcowe, podpisy pod ilustracjami i tabelami,
-// bibliografia wraz z powołaniami, odwołania wzajemne i odsyłacze, indeks wraz
-// z hasłami oraz zakładki. Cztery czynności kontraktu: założenie, wykaz,
-// odświeżenie i usunięcie.
-//
-// ── Gdzie stoi prawda o aparacie ────────────────────────────────────────────
-// Element aparatu ma swój WIERSZ (`element_aparatu_studio`), bo się o niego
-// pyta: „które spisy są nieświeże", „ile jest przypisów", „czy indeks zgadza się
-// z treścią". Drzewo postaci niesie go tylko jako odczyt złożony przez
-// `postacZlozAparat`; zapis idzie zawsze wierszem. Dlatego `postacZapisz`
-// wycina aparat z drzewa — dwa zapisy jednego bytu rozjechałyby się przy
-// pierwszej poprawce.
-//
-// ── Odświeżalność i znacznik nieświeżości ───────────────────────────────────
-// Zlecenie wymaga wprost: spis treści, spisy ilustracji i tabel oraz indeks
-// muszą być ODŚWIEŻALNE i mieć znacznik nieświeżości. Znacznik jest kolumną
-// (`nieswiezy`), a nie domysłem okna: zmiana nagłówka ma zapalić znacznik
-// natychmiast, żeby Operator wiedział, że spis pokazuje stan sprzed zmiany.
-//
-// ── Numeracja liczy się od miejsca w treści, nie od kolejności zapisu ───────
-// Przypis wstawiony PRZED innym ma przenumerować oba. Dlatego numer nie jest
-// nadawany przy zapisie, a przy odświeżeniu — z porządku zakotwiczeń. Numer
-// nadany przy zapisie byłby numerem, który po pierwszym wstawieniu w środek
-// dokumentu kłamie.
+// Aparat dokumentu Studio: spis treści, spisy ilustracji i tabel, przypisy,
+// podpisy, bibliografia z powołaniami, odwołania wzajemne, odsyłacze, indeks
+// i zakładki, przez cztery czynności kontraktu — założenie, wykaz, odświeżenie
+// i usunięcie.
 package core
 
 import (
@@ -37,7 +16,8 @@ import (
 )
 
 // WstawElementAparatu zakłada element aparatu dokumentu
-// (`studio.apparatus.insert`).
+// (`studio.apparatus.insert`); numer i zebrane pozycje dostaje dopiero po
+// odświeżeniu.
 func (a *adapterStudia) WstawElementAparatu(ctx context.Context,
 	z shared.StudioApparatusInsertRequest) (shared.StudioApparatusInsertResponse, error) {
 
@@ -62,9 +42,7 @@ func (a *adapterStudia) WstawElementAparatu(ctx context.Context,
 				" zatrzymane przez blokadę fragmentu: " + postacNazwaBlokad(pominiete))
 	}
 
-	// Cel odwołania wzajemnego i odsyłacza sprawdza się PRZED zapisem: odwołanie
-	// do elementu, którego nie ma, byłoby odsyłaczem w nikąd, a Operator
-	// dowiedziałby się o tym dopiero z wydanego pisma.
+	// Cel odwołania wzajemnego i odsyłacza sprawdza się przed zapisem, inaczej byłby odsyłaczem w nikąd.
 	if z.TargetId != nil && strings.TrimSpace(*z.TargetId) != "" {
 		if !aparatCelIstnieje(&stan.forma, *z.TargetId) {
 			return shared.StudioApparatusInsertResponse{}, bladWskazaniaStudio(
@@ -101,9 +79,7 @@ func (a *adapterStudia) WstawElementAparatu(ctx context.Context,
 		return shared.StudioApparatusInsertResponse{}, bladStudio(err)
 	}
 
-	// Wstawienie przypisu czyni nieświeżymi wszystkie przypisy tego rodzaju
-	// (numeracja) oraz spisy, które go obejmują — inaczej numer sąsiada
-	// pokazywałby stan sprzed wstawienia.
+	// Wstawienie przypisu znaczy jako nieświeże przypisy tego rodzaju i spisy, które go obejmują.
 	if err := a.aparatZnaczNieswiezoscPokrewnych(ctx, stan, z.Kind); err != nil {
 		return shared.StudioApparatusInsertResponse{}, err
 	}
@@ -135,7 +111,8 @@ func (a *adapterStudia) WstawElementAparatu(ctx context.Context,
 	}, nil
 }
 
-// WykazAparatu oddaje aparat dokumentu (`studio.apparatus.list`).
+// WykazAparatu oddaje aparat dokumentu (`studio.apparatus.list`), z możliwością
+// zawężenia do rodzaju albo do elementów nieświeżych.
 func (a *adapterStudia) WykazAparatu(ctx context.Context,
 	z shared.StudioApparatusListRequest) (shared.StudioApparatusListResponse, error) {
 
@@ -192,9 +169,7 @@ func (a *adapterStudia) UsunElementAparatuDokumentu(ctx context.Context,
 	}
 
 	bilans := shared.StudioActionBalance{Skipped: []shared.StudioSkippedItem{}}
-	// Element, do którego prowadzą odwołania, nie schodzi cicho: odwołanie
-	// zostaje w treści i po usunięciu celu wskazywałoby w nikąd, więc rdzeń
-	// nazywa je w bilansie i znaczy jako nieświeże.
+	// Element, do którego prowadzą odwołania, nie schodzi cicho — rdzeń nazywa je w bilansie.
 	zalezne := aparatOdwolaniaDoCelu(&stan.forma, kod)
 	skladnica, err := a.postacSkladnica()
 	if err != nil {
@@ -220,9 +195,7 @@ func (a *adapterStudia) UsunElementAparatuDokumentu(ctx context.Context,
 		return shared.StudioApparatusRemoveResponse{}, bladWskazaniaStudio(
 			"elementu aparatu „" + kod + "” nie udało się usunąć — wiersza już nie ma")
 	}
-	// Wiersze wczytują się PRZED znaczeniem nieświeżości: wykaz sprzed usunięcia
-	// niesie jeszcze element usunięty, a zapis jego znacznika wywróciłby się na
-	// braku wiersza — i to w miejscu, w którym czynność jest już wykonana.
+	// Wiersze wczytują się przed znaczeniem nieświeżości — inaczej zapis znacznika nie znajdzie wiersza.
 	if err := a.postacWczytajWiersze(ctx, stan); err != nil {
 		return shared.StudioApparatusRemoveResponse{}, err
 	}
@@ -246,13 +219,9 @@ func (a *adapterStudia) UsunElementAparatuDokumentu(ctx context.Context,
 	}, nil
 }
 
-// OdswiezAparat przelicza aparat dokumentu (`studio.apparatus.refresh`).
-//
-// Spis treści zgadza się z nagłówkami dokumentu, przypisy są przenumerowane,
-// spisy ilustracji i tabel policzone od nowa, indeks zebrany z haseł,
-// bibliografia złożona z powołań. Wszystko z jednego przebiegu, bo te rzeczy
-// zależą od siebie: numer podpisu wchodzi do spisu ilustracji, a klucz
-// powołania — do bibliografii.
+// OdswiezAparat przelicza aparat dokumentu (`studio.apparatus.refresh`)
+// jednym przebiegiem: spis treści, przypisy, spisy ilustracji i tabel, indeks
+// i bibliografię, bo te rzeczy zależą od siebie.
 func (a *adapterStudia) OdswiezAparat(ctx context.Context,
 	z shared.StudioApparatusRefreshRequest) (shared.StudioApparatusRefreshResponse, error) {
 
@@ -367,9 +336,7 @@ func aparatPrzeliczCalosc(forma *shared.StudioDocumentForm, strony []int,
 		elementy[i].Stale = postacWskaznikPrawdy(false)
 	}
 
-	// Krok drugi: bibliografia i powołania. Powołanie dostaje numer z porządku
-	// wykazu bibliografii, żeby „[3]" w treści i pozycja trzecia wykazu były tym
-	// samym źródłem.
+	// Krok drugi: powołanie dostaje numer z bibliografii, by cytat i pozycja wykazu były tym źródłem.
 	numeryZrodel := aparatNumeryZrodel(elementy)
 	for i := range elementy {
 		if elementy[i].Kind != shared.StudioApparatusKindCitation {
@@ -408,12 +375,8 @@ func aparatPrzeliczCalosc(forma *shared.StudioDocumentForm, strony []int,
 	return elementy
 }
 
-// aparatZbierzSpisTresci zbiera spis treści z nagłówków dokumentu.
-//
-// Poziom nagłówka bierze się z postaci SKUTECZNEJ akapitu, nie z jego postaci
-// własnej: nagłówek postawiony stylem nazwanym nie ma poziomu wpisanego u siebie
-// i spis zbierany po postaci własnej byłby pusty przy dokumencie zrobionym
-// poprawnie.
+// aparatZbierzSpisTresci zbiera spis treści z nagłówków dokumentu, biorąc
+// poziom nagłówka z postaci skutecznej akapitu, nie z postaci własnej.
 func aparatZbierzSpisTresci(forma *shared.StudioDocumentForm, strony []int,
 	odPoziomu, doPoziomu int) []shared.StudioApparatusEntry {
 
@@ -454,23 +417,22 @@ func aparatZbierzSpisTresci(forma *shared.StudioDocumentForm, strony []int,
 	return pozycje
 }
 
-// aparatPoziomNaglowka oddaje poziom nagłówka bloku; zero znaczy „nie nagłówek".
+// aparatPoziomNaglowka oddaje poziom nagłówka bloku z jego postaci skutecznej;
+// zero znaczy „nie nagłówek".
 func aparatPoziomNaglowka(forma *shared.StudioDocumentForm, blok shared.StudioDocumentBlock) int {
 	skuteczna := postacAkapitSkuteczny(forma, blok)
 	if skuteczna.OutlineLevel != nil && *skuteczna.OutlineLevel > 0 {
 		return *skuteczna.OutlineLevel
 	}
 	if blok.Kind == blokPostaciNaglowek {
-		// Blok oznaczony jako nagłówek bez poziomu jest nagłówkiem poziomu
-		// pierwszego — inaczej wypadłby ze spisu treści bez powodu widocznego
-		// dla Operatora.
+		// Blok oznaczony jako nagłówek bez poziomu jest nagłówkiem poziomu pierwszego.
 		return 1
 	}
 	return 0
 }
 
 // aparatZbierzSpisIlustracji zbiera spis ilustracji z obiektów dokumentu wraz
-// z ich podpisami.
+// z ich podpisami oraz z podpisów aparatu przypiętych do obiektu.
 func aparatZbierzSpisIlustracji(forma *shared.StudioDocumentForm,
 	elementy []shared.StudioApparatusItem, strony []int) []shared.StudioApparatusEntry {
 
@@ -478,8 +440,7 @@ func aparatZbierzSpisIlustracji(forma *shared.StudioDocumentForm,
 	numer := 0
 	for _, obiekt := range forma.Objects {
 		if obiekt.Kind == shared.StudioObjectKindTextbox {
-			// Pole tekstowe nie jest ilustracją i w spisie ilustracji nie ma
-			// czego robić.
+			// Pole tekstowe nie jest ilustracją i w spisie ilustracji nie ma czego robić.
 			continue
 		}
 		podpis := wartoscTekstu(obiekt.Caption)
@@ -499,9 +460,7 @@ func aparatZbierzSpisIlustracji(forma *shared.StudioDocumentForm,
 		}
 		pozycje = append(pozycje, pozycja)
 	}
-	// Podpisy założone jako element aparatu i przypięte do obiektu wchodzą do
-	// spisu na równi — Operator, który podpisał ilustrację podpisem aparatu,
-	// ma ją w spisie widzieć.
+	// Podpisy założone jako element aparatu i przypięte do obiektu wchodzą do spisu ilustracji na równi.
 	for _, element := range elementy {
 		if element.Kind != shared.StudioApparatusKindCaption {
 			continue
@@ -520,7 +479,8 @@ func aparatZbierzSpisIlustracji(forma *shared.StudioDocumentForm,
 	return pozycje
 }
 
-// aparatZbierzSpisTabel zbiera spis tabel z tabel dokumentu.
+// aparatZbierzSpisTabel zbiera spis tabel z tabel dokumentu oraz z podpisów
+// aparatu przypiętych do tabeli.
 func aparatZbierzSpisTabel(forma *shared.StudioDocumentForm,
 	elementy []shared.StudioApparatusItem, strony []int) []shared.StudioApparatusEntry {
 
@@ -560,7 +520,7 @@ func aparatZbierzSpisTabel(forma *shared.StudioDocumentForm,
 }
 
 // aparatZbierzIndeks składa indeks z haseł, zbierając strony jednego hasła
-// w jedną pozycję.
+// w jedną pozycję uporządkowaną alfabetycznie.
 func aparatZbierzIndeks(forma *shared.StudioDocumentForm,
 	elementy []shared.StudioApparatusItem, strony []int) []shared.StudioApparatusEntry {
 
@@ -613,7 +573,8 @@ func aparatZbierzIndeks(forma *shared.StudioDocumentForm,
 	return pozycje
 }
 
-// aparatZbierzBibliografie składa wykaz źródeł z powołań dokumentu.
+// aparatZbierzBibliografie składa wykaz źródeł z powołań dokumentu, w porządku
+// numeracji nadanej wcześniej.
 func aparatZbierzBibliografie(elementy []shared.StudioApparatusItem,
 	numery map[string]int) []shared.StudioApparatusEntry {
 
@@ -671,7 +632,8 @@ func aparatNumeryZrodel(elementy []shared.StudioApparatusItem) map[string]int {
 	return numery
 }
 
-// aparatKluczZrodla rozstrzyga, co jest tym samym źródłem.
+// aparatKluczZrodla rozstrzyga, co jest tym samym źródłem: klucz podany
+// wprost albo złożenie autora, tytułu i roku.
 func aparatKluczZrodla(element shared.StudioApparatusItem) string {
 	if element.CitationKey != nil && strings.TrimSpace(*element.CitationKey) != "" {
 		return strings.TrimSpace(*element.CitationKey)
@@ -688,7 +650,8 @@ func aparatKluczZrodla(element shared.StudioApparatusItem) string {
 	return klucz
 }
 
-// aparatZapisZrodla składa pozycję bibliografii ze pól źródła.
+// aparatZapisZrodla składa pozycję bibliografii z pól źródła: autora, tytułu,
+// roku i adresu; brak wszystkich oddaje zdanie o braku opisu.
 func aparatZapisZrodla(element shared.StudioApparatusItem) string {
 	czesci := make([]string, 0, 4)
 	for _, pole := range []*string{element.SourceAuthor, element.SourceTitle,
@@ -745,23 +708,7 @@ func aparatEtykietaOdwolania(elementy []shared.StudioApparatusItem,
 // ── Strony ──────────────────────────────────────────────────────────────────
 
 // aparatStronyAkapitow liczy, na której stronie stoi każdy akapit dokumentu,
-// i ile stron dokument ma.
-//
-// Rachunek idzie tym samym silnikiem, którym jedzie podgląd wydruku
-// (`krojWyrysuStudia`, `zlamWierszStudia`) — bez wyrysu obrazów, bo do numeru
-// strony obraz nie jest potrzebny. Drugi rachunek łamania dałby spis treści
-// wskazujący inne strony niż podgląd, a to jest gorsze niż brak numerów.
-//
-// ── Geometria jedzie z NASTAW SEKCJI, nie ze stałej A4 ──────────────────────
-// Do 17.08.2026 kartka była tu zaszyta na stałe: 794 na 1123 piksele
-// i marginesy po 64. Spis treści dokumentu ustawionego na A5, na marginesach
-// szerokich albo poziomo wskazywał wtedy strony PODGLĄDU, a nie strony
-// dokumentu — a Operator porównywał je z własnym wydrukiem. Rachunek bierze
-// więc nastawy każdej SEKCJI z osobna: akapit należy do sekcji, której zakres
-// go obejmuje, a sekcja rozpoczynająca się od nowej strony przerywa rachunek
-// wierszy i zaczyna kartkę od nowa. Sekcja `continuous` łamania nie przerywa,
-// bo jej sensem jest ciągłość — nowe nastawy obowiązują wtedy od miejsca cięcia,
-// a nie od nowej kartki.
+// i ile stron dokument ma, tym samym silnikiem, którym jedzie podgląd wydruku.
 func aparatStronyAkapitow(tresc string, forma *shared.StudioDocumentForm) ([]int, int, error) {
 	oblicze, err := krojWyrysuStudia(rozmiarPismaStudia)
 	if err != nil {
@@ -773,9 +720,7 @@ func aparatStronyAkapitow(tresc string, forma *shared.StudioDocumentForm) ([]int
 	akapity := strings.Split(tresc, "\n")
 	strony := make([]int, 0, len(akapity))
 
-	// wiersz liczy wiersze wypełnione na stronie bieżącej, strona — numer tej
-	// strony. Rachunek nie jest już dzieleniem sumy wierszy przez pojemność,
-	// bo pojemność zmienia się razem z sekcją.
+	// wiersz liczy wiersze wypełnione na stronie bieżącej; pojemność strony zmienia się razem z sekcją.
 	kartka := domyslna
 	naStrone := kartka.wierszyNaStrone()
 	strona, wiersz := 1, 0
@@ -807,15 +752,13 @@ func aparatStronyAkapitow(tresc string, forma *shared.StudioDocumentForm) ([]int
 			wiersz -= naStrone
 			strona++
 		}
-		// Granica akapitu jest jednym znakiem treści — bez niej zakresy sekcji
-		// rozjechałyby się z zakresami, którymi liczy je reszta modułu.
+		// Granica akapitu jest jednym znakiem treści, zgodnie z zakresami, którymi liczy je reszta modułu.
 		poczatek += dlugosc + 1
 	}
 
 	stron := strona
 	if wiersz == 0 && stron > 1 {
-		// Kartka pusta na końcu nie jest stroną dokumentu: ostatni akapit domknął
-		// stronę poprzednią i na tę nie weszła ani jedna litera.
+		// Kartka pusta na końcu nie jest stroną dokumentu — ostatni akapit domknął stronę poprzednią.
 		stron--
 	}
 	if stron < 1 {
@@ -824,7 +767,8 @@ func aparatStronyAkapitow(tresc string, forma *shared.StudioDocumentForm) ([]int
 	return strony, stron, nil
 }
 
-// aparatNastawyDokumentu oddaje nastawy strony dokumentu albo brak.
+// aparatNastawyDokumentu oddaje nastawy strony dokumentu albo brak; aparatNastawySekcji
+// sięga po nie, gdy sekcja własnych nie ma.
 func aparatNastawyDokumentu(forma *shared.StudioDocumentForm) *shared.StudioPageSetup {
 	if forma == nil {
 		return nil
@@ -861,12 +805,8 @@ func aparatSekcjaMiejsca(forma *shared.StudioDocumentForm,
 	return shared.StudioSection{}, false
 }
 
-// aparatSekcjaLamieStrone mówi, czy początek sekcji przerywa stronę.
-//
-// `newPage`, `evenPage` i `oddPage` przerywają — parzystości i nieparzystości
-// rachunek na razie nie dopełnia pustą kartką, bo wyrys jej nie rysuje i numer
-// wskazywałby stronę, której w podglądzie nie ma. `continuous` i `newColumn` nie
-// przerywają: pierwsze z zamysłu, drugie dlatego, że wyrys składa jedną kolumnę.
+// aparatSekcjaLamieStrone mówi, czy początek sekcji przerywa stronę: `newPage`,
+// `evenPage` i `oddPage` przerywają, `continuous` i `newColumn` nie.
 func aparatSekcjaLamieStrone(sekcja shared.StudioSection) bool {
 	if sekcja.Start == nil {
 		return false
@@ -881,7 +821,8 @@ func aparatSekcjaLamieStrone(sekcja shared.StudioSection) bool {
 	}
 }
 
-// aparatStronaMiejsca oddaje numer strony miejsca w treści liczonego w znakach.
+// aparatStronaMiejsca oddaje numer strony miejsca w treści liczonego w znakach,
+// z rachunku stron akapitów.
 func aparatStronaMiejsca(forma *shared.StudioDocumentForm, strony []int, miejsce int) int {
 	akapit := 0
 	for _, blok := range forma.Blocks {
@@ -918,11 +859,7 @@ func (a *adapterStudia) aparatZnaczNieswiezoscPokrewnych(ctx context.Context,
 }
 
 // aparatZnaczNieswiezoscRodzaju zapala znacznik nieświeżości na wszystkich
-// elementach wskazanego rodzaju.
-//
-// Woła to także obszar tabel i obszar wstawień: zmiana podpisu tabeli albo
-// wstawienie obrazu unieważnia spis, w którym ta rzecz stoi, i spis ma to
-// pokazać od razu — nie przy następnym odświeżeniu.
+// elementach wskazanego rodzaju, także w obszarze tabel i wstawień.
 func (a *adapterStudia) aparatZnaczNieswiezoscRodzaju(ctx context.Context,
 	stan *stanPostaci, rodzaj shared.StudioApparatusKind) error {
 
@@ -937,11 +874,8 @@ func (a *adapterStudia) aparatZnaczNieswiezoscRodzaju(ctx context.Context,
 	return nil
 }
 
-// aparatZapiszNieswiezosc zapisuje znacznik nieświeżości elementu.
-//
-// Znacznik idzie KOLUMNĄ, nie polem w drzewie: drzewo postaci zapisuje się bez
-// aparatu, więc znacznik odłożony w drzewie zginąłby przy pierwszym zapisie
-// i spis wyglądałby na świeży zaraz po zmianie, która go unieważniła.
+// aparatZapiszNieswiezosc zapisuje znacznik nieświeżości elementu kolumną,
+// nie polem drzewa — drzewo postaci zapisuje się bez aparatu.
 func (a *adapterStudia) aparatZapiszNieswiezosc(ctx context.Context, stan *stanPostaci,
 	kod string, nieswiezy bool) error {
 
@@ -970,7 +904,8 @@ func (a *adapterStudia) aparatZapiszNieswiezosc(ctx context.Context, stan *stanP
 
 // ── Drobne rachunki ─────────────────────────────────────────────────────────
 
-// aparatZakotwiczenie ustala zakotwiczenie elementu w treści.
+// aparatZakotwiczenie ustala zakotwiczenie elementu w treści: zakres wskazany
+// wprost albo punkt wstawienia.
 func aparatZakotwiczenie(z shared.StudioApparatusInsertRequest, dlugosc int) (int, int) {
 	if z.RangeStart != nil || z.RangeEnd != nil {
 		return postacZakres(z.RangeStart, z.RangeEnd, dlugosc)
@@ -988,7 +923,8 @@ func aparatZakotwiczenie(z shared.StudioApparatusInsertRequest, dlugosc int) (in
 	return miejsce, miejsce
 }
 
-// aparatZnajdz odnajduje element aparatu w postaci.
+// aparatZnajdz odnajduje element aparatu w postaci po jego kodzie, zwracając
+// też, czy element istnieje.
 func aparatZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioApparatusItem, bool) {
 	for _, element := range forma.Apparatus {
 		if element.Id == kod {
@@ -998,7 +934,8 @@ func aparatZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioAp
 	return shared.StudioApparatusItem{}, false
 }
 
-// aparatOdwolaniaDoCelu wymienia elementy prowadzące do wskazanego celu.
+// aparatOdwolaniaDoCelu wymienia elementy prowadzące do wskazanego celu — te,
+// które usunięcie celu unieważnia.
 func aparatOdwolaniaDoCelu(forma *shared.StudioDocumentForm,
 	kod string) []shared.StudioApparatusItem {
 
@@ -1014,7 +951,8 @@ func aparatOdwolaniaDoCelu(forma *shared.StudioDocumentForm,
 	return zalezne
 }
 
-// aparatCelIstnieje mówi, czy dokument ma byt o wskazaniu podanym jako cel.
+// aparatCelIstnieje mówi, czy dokument ma byt o wskazaniu podanym jako cel:
+// element aparatu, blok, obiekt albo tabelę.
 func aparatCelIstnieje(forma *shared.StudioDocumentForm, kod string) bool {
 	szukany := strings.TrimSpace(kod)
 	if szukany == "" {
@@ -1033,7 +971,8 @@ func aparatCelIstnieje(forma *shared.StudioDocumentForm, kod string) bool {
 	return aparatCelObiektu(forma, szukany) || aparatCelTabeli(forma, szukany)
 }
 
-// aparatCelObiektu mówi, czy wskazanie należy do obiektu dokumentu.
+// aparatCelObiektu mówi, czy wskazanie należy do obiektu dokumentu, jednego
+// ze źródeł spisu ilustracji.
 func aparatCelObiektu(forma *shared.StudioDocumentForm, kod string) bool {
 	for _, obiekt := range forma.Objects {
 		if obiekt.Id == strings.TrimSpace(kod) {
@@ -1043,7 +982,8 @@ func aparatCelObiektu(forma *shared.StudioDocumentForm, kod string) bool {
 	return false
 }
 
-// aparatCelTabeli mówi, czy wskazanie należy do tabeli dokumentu.
+// aparatCelTabeli mówi, czy wskazanie należy do tabeli dokumentu, jednego ze
+// źródeł spisu tabel obok podpisów aparatu.
 func aparatCelTabeli(forma *shared.StudioDocumentForm, kod string) bool {
 	for _, tabela := range forma.Tables {
 		if tabela.Id == strings.TrimSpace(kod) {
@@ -1053,7 +993,8 @@ func aparatCelTabeli(forma *shared.StudioDocumentForm, kod string) bool {
 	return false
 }
 
-// aparatWartoscLiczby odczytuje wskaźnik na liczbę, znosząc brak.
+// aparatWartoscLiczby odczytuje wskaźnik na liczbę, znosząc brak przez
+// oddanie zera zamiast wskaźnika pustego.
 func aparatWartoscLiczby(wskazanie *int) int {
 	if wskazanie == nil {
 		return 0
@@ -1061,7 +1002,8 @@ func aparatWartoscLiczby(wskazanie *int) int {
 	return *wskazanie
 }
 
-// aparatSprawdzRodzaj odrzuca rodzaj, którego kontrakt nie zna.
+// aparatSprawdzRodzaj odrzuca rodzaj elementu aparatu, którego kontrakt nie
+// zna, nazywając wykaz rodzajów znanych.
 func aparatSprawdzRodzaj(rodzaj shared.StudioApparatusKind) error {
 	for _, znany := range shared.WartosciStudioApparatusKind() {
 		if rodzaj == znany {
@@ -1124,7 +1066,8 @@ func aparatSprawdzWymagania(z shared.StudioApparatusInsertRequest) error {
 	return nil
 }
 
-// aparatRodzajZbierany mówi, czy element zbiera pozycje z dokumentu.
+// aparatRodzajZbierany mówi, czy element zbiera pozycje z dokumentu, jak spis
+// treści, indeks albo bibliografia.
 func aparatRodzajZbierany(rodzaj shared.StudioApparatusKind) bool {
 	switch rodzaj {
 	case shared.StudioApparatusKindToc, shared.StudioApparatusKindFigureIndex,
@@ -1136,7 +1079,8 @@ func aparatRodzajZbierany(rodzaj shared.StudioApparatusKind) bool {
 	}
 }
 
-// aparatRodzajNumerowany mówi, czy element dostaje numer z porządku treści.
+// aparatRodzajNumerowany mówi, czy element dostaje numer z porządku treści,
+// jak przypis, podpis albo powołanie.
 func aparatRodzajNumerowany(rodzaj shared.StudioApparatusKind) bool {
 	switch rodzaj {
 	case shared.StudioApparatusKindFootnote, shared.StudioApparatusKindEndnote,
@@ -1161,7 +1105,7 @@ func aparatRodzajOdswiezalny(rodzaj shared.StudioApparatusKind) bool {
 }
 
 // aparatRodzajeZalezne wymienia rodzaje, które zmiana wskazanego rodzaju
-// unieważnia.
+// unieważnia i każe znaczyć jako nieświeże.
 func aparatRodzajeZalezne(rodzaj shared.StudioApparatusKind) []shared.StudioApparatusKind {
 	switch rodzaj {
 	case shared.StudioApparatusKindFootnote:
@@ -1216,7 +1160,8 @@ func aparatNazwaRodzaju(rodzaj shared.StudioApparatusKind) string {
 	}
 }
 
-// aparatNazwaRodzajuObiektu nazywa rodzaj obiektu na potrzeby spisu ilustracji.
+// aparatNazwaRodzajuObiektu nazywa rodzaj obiektu na potrzeby spisu ilustracji,
+// gdy obiekt jest bez podpisu.
 func aparatNazwaRodzajuObiektu(rodzaj shared.StudioObjectKind) string {
 	switch rodzaj {
 	case shared.StudioObjectKindImage:
@@ -1234,11 +1179,8 @@ func aparatNazwaRodzajuObiektu(rodzaj shared.StudioObjectKind) string {
 	}
 }
 
-// aparatDoWiersza przekłada element aparatu na wiersz warstwy danych.
-//
-// Pola, na które warstwa danych ma kolumny, idą kolumnami; reszta — poziomy
-// spisu, pozycje zebrane, opis źródła — idzie polem JSON. Zapisywanie tego, co
-// ma kolumnę, także w JSON-ie dałoby dwie prawdy o jednym wierszu.
+// aparatDoWiersza przekłada element aparatu na wiersz warstwy danych: pola
+// z kolumną idą kolumnami, reszta polem JSON.
 func aparatDoWiersza(dokumentID int64, kod string, element shared.StudioApparatusItem,
 	od, do int, nieswiezy bool) (dane.ElementAparatuStudia, error) {
 

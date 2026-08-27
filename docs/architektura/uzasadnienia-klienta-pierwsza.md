@@ -2588,3 +2588,13 @@ aplikację, obiecując Operatorowi skutek, którego nie osiąga.
 Obie pozostałe pozycje pochodzą z tego samego wykazu ustawień, co listwa strony
 głównej, i idą tą samą drogą skutku. Dwa wykazy rozjechałyby się przy pierwszej
 zmianie nazwy albo trasy pozycji.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/wcielenia-analizy.ts
+
+Wybrane wcielenie utrwala komenda `config.set` na poziomie okna analityka. Rdzeń
+nie rejestruje komendy `role.update`, więc profilu wcielenia nie zna; pokrycie
+kontraktu mierzy `braki-kontraktu.ts`.
+
+Kontrakt nie ma komendy utrwalającej werdykt oceny jako stan: `monitor.status`
+czyta stan procesów i niczego nie zapisuje. Ocena analityka jest poleceniem dla
+koordynatora, dlatego zgłoszenie niezgodności idzie zwykłym `message.send`.

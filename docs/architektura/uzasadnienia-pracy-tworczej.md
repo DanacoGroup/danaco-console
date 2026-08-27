@@ -884,3 +884,34 @@ Wcięcie i odstęp poziomu idą za poziomem listy: przestawienie wcięcia
 w pakiecie biurowym zmienia poziom punktu, a nie samo wcięcie akapitu.
 Zmniejszenie poniżej pierwszego poziomu nie zdejmuje listy samo z siebie —
 zdjęcie listy jest osobną czynnością zastosowania listy z rodzajem none.
+
+## budowa/server/internal/core/adapter_modul_studio_roznica_wersji.go
+
+Różnica postaci działa jako komenda osobna od różnicy treści, ponieważ rachunek
+treści liczy zmianę wierszami i nie dostrzega zmiany kroju ani wcięcia — taka
+zmiana nie rusza żadnej litery, więc pozostaje niewidoczna, mimo że w
+dokumencie jest zmianą widoczną. Dlatego postać porównuje się cechą po cesze,
+obszar po obszarze, a wykaz niesie brzmienie stanu przed zmianą i po niej.
+
+Przeniesienie fragmentu numeruje fragmenty tym samym rachunkiem, którego
+używa okno różnicy, aby numer fragmentu w żądaniu wskazywał dokładnie ten
+fragment, który widać w oknie. Osobny rachunek numeracji ponumerowałby
+fragmenty inaczej, więc wskazanie fragmentu określonym numerem znaczyłoby co
+innego dla okna i dla rdzenia.
+
+Blokada fragmentu działa przed dotknięciem treści: fragment objęty blokadą
+zostaje w brzmieniu zastanym, a odpowiedź niesie bilans pominięć, tak samo
+jak przy zaporze rejestru.
+
+Postać przenoszonego fragmentu jedzie razem z jego treścią, gdy żądanie tego
+nie wyłączy, ponieważ samo brzmienie zostawiłoby akapit w kroju bieżącym, a
+przeniesienie ograniczone do treści byłoby wtedy niepełne.
+
+Postać runów przenosi się wyłącznie wtedy, gdy brzmienie bloku jest to samo:
+run niesie zarówno tekst, jak i postać, a przy różnym brzmieniu podstawienie
+runów źródłowych podmieniłoby treść pod pozorem postaci.
+
+Tożsamością bloku przy przenoszeniu postaci jest jego identyfikator: blok,
+którego wersja źródłowa nie zna, zostaje w postaci bieżącej. Zgadywanie
+odpowiedniości bloków po innej cesze byłoby gorsze niż nieprzeniesienie
+postaci, ponieważ nałożyłoby krój obcego akapitu na istniejącą treść.

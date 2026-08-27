@@ -1,21 +1,7 @@
-// Odpowiedzialność pliku: RÓŻNICA DWÓCH DOWOLNYCH WERSJI liczona na POSTACI
-// (`studio.diff.form.compare`) oraz PRZENIESIENIE POJEDYNCZEGO FRAGMENTU ze
-// wskazanej wersji do stanu bieżącego (`studio.diff.hunk.apply`).
-//
-// ── Dlaczego różnica postaci jest osobną komendą ─────────────────────────────
-// `studio.diff.compare` liczy różnicę TREŚCI wierszami i to jest właściwe dla
-// czerwonego i zielonego. Zmiana kroju albo wcięcia nie rusza ani jednej litery,
-// więc tamten rachunek o niej MILCZY — a Właściciel żąda wprost, żeby była
-// widoczna jako zmiana. Dlatego postać porównuje się cechą po cesze, obszar po
-// obszarze, i oddaje wykaz z brzmieniem „przed" i „po".
-//
-// ── Dlaczego przeniesienie fragmentu, a nie samo patrzenie ──────────────────
-// „Praktyczny sens tego widoku, nie samo patrzenie" — słowa Właściciela.
-// Fragmenty numeruje `policzFragmentyRoznicy` — TEN SAM rachunek, który Operator
-// widzi w oknie różnicy, więc numer fragmentu w żądaniu znaczy dokładnie ten
-// fragment, na który Operator patrzył. Drugi rachunek fragmentów ponumerowałby
-// je inaczej i „przenieś fragment trzeci" znaczyłoby co innego dla okna i dla
-// rdzenia.
+// Odpowiedzialność pliku: różnica dwóch dowolnych wersji liczona na postaci
+// (`studio.diff.form.compare`), osobno od różnicy treści wierszami, oraz
+// przeniesienie fragmentu ze wskazanej wersji do stanu bieżącego
+// (`studio.diff.hunk.apply`).
 package core
 
 import (
@@ -48,7 +34,9 @@ const (
 	roznicaObszarAkapitu      = "postać akapitu"
 )
 
-// PorownajPostac obsługuje `studio.diff.form.compare`.
+// PorownajPostac obsługuje `studio.diff.form.compare`: liczy różnicę postaci
+// między dwiema wersjami dokumentu cechą po cesze i oddaje wykaz wpisów
+// podzielonych na dodane, usunięte i zmienione.
 func (a *adapterStudia) PorownajPostac(ctx context.Context,
 	z shared.StudioDiffFormCompareRequest) (shared.StudioDiffFormCompareResponse, error) {
 
@@ -86,7 +74,9 @@ func (a *adapterStudia) PorownajPostac(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// PrzeniesFragmentRoznicy obsługuje `studio.diff.hunk.apply`.
+// PrzeniesFragmentRoznicy obsługuje `studio.diff.hunk.apply`: przenosi wskazany
+// fragment treści z wybranej wersji źródłowej do stanu bieżącego dokumentu,
+// wraz z postacią znaku i akapitu, gdy żądanie tego nie wyłączy.
 func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 	z shared.StudioDiffHunkApplyRequest) (shared.StudioDiffHunkApplyResponse, error) {
 
@@ -132,8 +122,7 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 	var nowaTresc string
 	var od, do int
 	if z.HunkIndex != nil {
-		// Fragment wskazany numerem: bierze się go z rachunku, który Operator
-		// widział, a nie z drugiego.
+		// Fragment wskazany numerem bierze się z rachunku, który widział operator.
 		zlozona, err := zlozTrescZFragmentow(biezaca, zrodlowa, []int{*z.HunkIndex})
 		if err != nil {
 			return shared.StudioDiffHunkApplyResponse{}, err
@@ -141,8 +130,8 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 		nowaTresc = zlozona
 		od, do = roznicaZakresRozbieznosci(biezaca, nowaTresc)
 	} else {
-		// Fragment wskazany zakresem W WERSJI ŹRÓDŁOWEJ. Zakres liczy się
-		// w ZNAKACH, tak jak nazywa go kontrakt.
+		// Fragment wskazany zakresem w wersji źródłowej; zakres liczy się w znakach,
+		// jak nazywa go kontrakt.
 		znakiZrodla := []rune(zrodlowa)
 		odZrodla, doZrodla, poprawny := kontrolaZakresWTresci(znakiZrodla, *z.RangeStart, *z.RangeEnd)
 		if !poprawny {
@@ -167,9 +156,7 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 				"jednej litery, więc nie jest przeniesieniem"))
 	}
 
-	// Blokada PRZED dotknięciem treści. Rachunek uzgodnienia jest ten sam, którym
-	// jedzie zapora rejestru — fragment pod blokadą zostaje w brzmieniu zastanym,
-	// a odpowiedź niesie bilans pominięć.
+	// Blokada działa przed dotknięciem treści; zablokowany fragment zostaje zastany.
 	blokady, err := skladnica.BlokadyFragmentow(ctx, stan.dokument.ID)
 	if err != nil {
 		return shared.StudioDiffHunkApplyResponse{}, bladStudio(err)
@@ -182,9 +169,7 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 	przed := biezaca
 	postacUzgodnijZTrescia(&stan.forma, uzgodnienie.Tresc)
 
-	// Postać fragmentu jedzie razem z treścią, gdy Operator o to poprosi (brak
-	// znaczy tak): przeniesienie samego brzmienia zostawiłoby akapit w kroju
-	// bieżącym, a wtedy „przeniosłem fragment ze starej wersji" byłoby półprawdą.
+	// Postać fragmentu jedzie razem z treścią, gdy żądanie tego nie wyłączy.
 	if (z.IncludeForm == nil || *z.IncludeForm) && wersja.PostacJSON != nil &&
 		strings.TrimSpace(*wersja.PostacJSON) != "" {
 
@@ -246,11 +231,9 @@ func (a *adapterStudia) PrzeniesFragmentRoznicy(ctx context.Context,
 
 // ── Strony porównania ───────────────────────────────────────────────────────
 
-// roznicaPostacStrony bierze postać jednej strony porównania.
-//
-// Brak wskazania wersji znaczy dla ODNIESIENIA wersję założycielską, a dla
-// strony PORÓWNYWANEJ stan bieżący — tak stanowi kontrakt i tak czyta to widok
-// różnicy: „co się zmieniło od stanu pierwotnego do teraz".
+// roznicaPostacStrony bierze postać jednej strony porównania: brak wskazania
+// wersji znaczy dla odniesienia wersję założycielską, a dla strony porównywanej
+// stan bieżący, zgodnie z kontraktem komendy.
 func (a *adapterStudia) roznicaPostacStrony(ctx context.Context, skladnica KontrolaPracyStudia,
 	stan *stanPostaci, wskazanie *string, odniesienie bool) (*shared.StudioDocumentForm, error) {
 
@@ -302,7 +285,9 @@ func roznicaPostacWersji(wersja dane.WersjaSzereguStudia) (*shared.StudioDocumen
 
 // ── Rachunek różnicy postaci ────────────────────────────────────────────────
 
-// roznicaZlozWpisy porównuje dwa drzewa postaci cechą po cesze.
+// roznicaZlozWpisy porównuje dwa drzewa postaci cechą po cesze, obszar po
+// obszarze, i składa z różnic wykaz wpisów zwracany w odpowiedzi komendy
+// porównania.
 func roznicaZlozWpisy(odniesienie, porownywana *shared.StudioDocumentForm,
 	obszar string) []shared.StudioFormDiffEntry {
 
@@ -442,8 +427,8 @@ func roznicaZlozWpisy(odniesienie, porownywana *shared.StudioDocumentForm,
 			roznicaZapis(odniesienie.Apparatus), roznicaZapis(porownywana.Apparatus)))
 	}
 
-	// Postać znaku i akapitu — po blokach. To jest właśnie ta różnica, o której
-	// rachunek treści milczy: zmiana kroju nie rusza ani jednej litery.
+	// Postać znaku i akapitu porównuje się po blokach — to różnica, o której
+	// rachunek treści milczy.
 	if dotyczy(roznicaObszarPostaciZnaku) || dotyczy(roznicaObszarAkapitu) {
 		wStarej := dziennikBlokiPoKodzie(odniesienie.Blocks)
 		wNowej := dziennikBlokiPoKodzie(porownywana.Blocks)
@@ -451,9 +436,8 @@ func roznicaZlozWpisy(odniesienie, porownywana *shared.StudioDocumentForm,
 			stary, byl := wStarej[kod]
 			nowy, jest := wNowej[kod]
 			if !byl || !jest {
-				// Blok, który doszedł albo odpadł, jest zmianą TREŚCI i widać go
-				// w `studio.diff.compare`. Powtarzanie go tutaj mnożyłoby jedną
-				// zmianę na dwa wykazy.
+				// Blok, który doszedł albo odpadł, jest zmianą treści widoczną w
+				// `studio.diff.compare`.
 				continue
 			}
 			if dotyczy(roznicaObszarAkapitu) && dziennikRoznePola(stary.Paragraph, nowy.Paragraph) {
@@ -477,11 +461,9 @@ func roznicaZlozWpisy(odniesienie, porownywana *shared.StudioDocumentForm,
 	return wpisy
 }
 
-// roznicaNazwyScalone oddaje klucze obu map w jednym, ustalonym porządku.
-//
-// Porządek jest ustalony (posortowany), bo wykaz różnicy oglądany dwa razy ma
-// wyglądać tak samo: kolejność wzięta z przebiegu mapy zmieniałaby się przy
-// każdym wywołaniu i Operator nie odnalazłby pozycji, na którą patrzył.
+// roznicaNazwyScalone oddaje klucze obu map w jednym, posortowanym porządku,
+// ponieważ kolejność wzięta z przebiegu mapy zmieniałaby się przy każdym
+// wywołaniu.
 func roznicaNazwyScalone[T any](pierwsza, druga map[string]T) []string {
 	zbior := make(map[string]bool, len(pierwsza)+len(druga))
 	for klucz := range pierwsza {
@@ -498,7 +480,8 @@ func roznicaNazwyScalone[T any](pierwsza, druga map[string]T) []string {
 	return nazwy
 }
 
-// roznicaPostacieRunow zbiera postacie znaku wszystkich runów bloku.
+// roznicaPostacieRunow zbiera postacie znaku wszystkich runów bloku do jednego
+// wykazu, porównywanego w różnicy postaci jako całość.
 func roznicaPostacieRunow(blok shared.StudioDocumentBlock) []*shared.StudioCharacterFormat {
 	postacie := make([]*shared.StudioCharacterFormat, 0, len(blok.Runs))
 	for _, run := range blok.Runs {
@@ -507,7 +490,8 @@ func roznicaPostacieRunow(blok shared.StudioDocumentBlock) []*shared.StudioChara
 	return postacie
 }
 
-// roznicaZapis składa czytelny zapis stanu cechy do wykazu różnicy.
+// roznicaZapis składa czytelny zapis stanu cechy do wykazu różnicy, kodując
+// wartość jako tekst JSON i oddając pustą wartość zamiast literału null.
 func roznicaZapis(wartosc any) *string {
 	if wartosc == nil {
 		return nil
@@ -523,14 +507,16 @@ func roznicaZapis(wartosc any) *string {
 	return &tekst
 }
 
-// roznicaWpis składa pozycję wykazu różnicy postaci.
+// roznicaWpis składa pozycję wykazu różnicy postaci z rodzaju, obszaru, opisu
+// oraz brzmienia stanu przed zmianą i po niej.
 func roznicaWpis(rodzaj, obszar, opis string, przed, po *string) shared.StudioFormDiffEntry {
 	return shared.StudioFormDiffEntry{
 		Kind: rodzaj, Area: obszar, Detail: opis, Before: przed, After: po,
 	}
 }
 
-// roznicaWpisZakresu składa pozycję wykazu wraz z zakresem w treści.
+// roznicaWpisZakresu składa pozycję wykazu różnicy postaci tak samo jak
+// roznicaWpis, dodając zakres znaków w treści, którego wpis dotyczy.
 func roznicaWpisZakresu(rodzaj, obszar, opis string, przed, po *string,
 	od, do int) shared.StudioFormDiffEntry {
 
@@ -560,11 +546,8 @@ func roznicaZakresRozbieznosci(przed, po string) (int, int) {
 }
 
 // roznicaPrzeniesPostacZakresu przenosi postać znaku i akapitu bloków objętych
-// zakresem ze wersji źródłowej do stanu bieżącego.
-//
-// Tożsamością bloku jest jego identyfikator — blok, którego wersja źródłowa nie
-// zna, zostaje w postaci bieżącej. Zgadywanie odpowiedniości bloków byłoby tu
-// gorsze niż nieprzeniesienie postaci, bo nałożyłoby krój obcego akapitu.
+// zakresem ze wersji źródłowej do stanu bieżącego, dopasowując bloki po
+// identyfikatorze.
 func roznicaPrzeniesPostacZakresu(biezaca, zrodlowa *shared.StudioDocumentForm, od, do int) {
 	wZrodle := dziennikBlokiPoKodzie(zrodlowa.Blocks)
 	postacPrzeliczZakresy(biezaca)
@@ -574,9 +557,7 @@ func roznicaPrzeniesPostacZakresu(biezaca, zrodlowa *shared.StudioDocumentForm, 
 			continue
 		}
 		biezaca.Blocks[numer].Paragraph = zrodlowy.Paragraph
-		// Postać runów przenosi się WYŁĄCZNIE wtedy, gdy brzmienie bloku jest to
-		// samo: run niesie zarówno tekst, jak i postać, a przy różnym brzmieniu
-		// podstawienie runów źródłowych podmieniłoby treść pod pozorem postaci.
+		// Postać runów przenosi się wyłącznie, gdy brzmienie bloku jest to samo.
 		if postacTekstBloku(biezaca.Blocks[numer]) == postacTekstBloku(zrodlowy) {
 			biezaca.Blocks[numer].Runs = zrodlowy.Runs
 		}

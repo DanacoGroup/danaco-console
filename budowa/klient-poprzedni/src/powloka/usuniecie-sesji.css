@@ -1,25 +1,11 @@
-/* ============================================================================
-   POWŁOKA · TRWAŁE USUNIĘCIE SESJI
-   ----------------------------------------------------------------------------
-   Potwierdzenie usunięcia sesji i przycisk, który je otwiera. Ramę modalu,
-   nagłówek, ciało i stopkę niesie `komponenty/nakladka.css`, pas stanu —
-   `.dn-pusty-stan` z `komponenty/drobne.css`; ten arkusz dokłada wyłącznie to,
-   czego biblioteka nie ma.
+/* Trwałe usunięcie sesji potwierdza modal z wykazem tytułów, a otwiera je przycisk na karcie sesji; czynność jest nieodwracalna, więc idzie barwą ostrzeżenia i błędu. */
 
-   Czynność jest nieodwracalna, więc jej powierzchnia idzie barwą ostrzeżenia
-   i barwą błędu. Barwy pochodzą z żetonów motywu, więc oba motywy są obsłużone
-   bez osobnych reguł.
-   ============================================================================ */
-
-/* Modal usunięcia jest węższy od modalu bibliotecznego: niesie wykaz tytułów
-   i dwa zdania, nic więcej. Szerokość liczona tym samym wzorem, więc na wąskim
-   oknie zachowuje się jak każdy modal produktu. */
+/* Modal usunięcia jest węższy od modalu bibliotecznego, niesie wykaz tytułów i dwa zdania, nic więcej. */
 .dn-usuwanie {
   width: min(440px, calc(100vw - var(--dn-od-8)));
 }
 
-/* Wykaz tego, co zginie. Bez znaków wypunktowania: pozycją jest tytuł sesji,
-   a nie element listy do przeczytania po kolei. */
+/* Wykaz tego, co zginie, jest bez znaków wypunktowania: pozycją jest tytuł sesji, a nie element listy do przeczytania po kolei. */
 .dn-usuwanie__wykaz {
   display: flex;
   flex-direction: column;
@@ -38,7 +24,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Zdanie o nieodwracalności stoi przed przyciskiem, nie po nim. */
+/* Zdanie o nieodwracalności stoi przed przyciskiem usunięcia, nie po nim, żeby ostrzeżenie poprzedzało działanie. */
 .dn-usuwanie__ostrzezenie {
   margin: 0;
   color: var(--dn-ostrzezenie-tekst);
@@ -49,8 +35,7 @@
   display: none;
 }
 
-/* Pas trzech stanów obowiązkowych: ładowanie, pustka, odmowa. Odmowa dostaje
-   barwę błędu, bo odmowa usunięcia nie ma wyglądać jak usunięcie. */
+/* Pas trzech stanów obowiązkowych — ładowanie, pustka, odmowa — daje odmowie barwę błędu, bo odmowa usunięcia nie ma wyglądać jak usunięcie. */
 .dn-usuwanie__stan {
   margin: var(--dn-od-3) 0 0;
   text-align: left;
@@ -64,7 +49,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* Skutek powodzenia — zostaje na widoku do zamknięcia okna. */
+/* Skutek powodzenia zostaje na widoku do chwili zamknięcia okna przez operatora, nie znika samoczynnie. */
 .dn-usuwanie__skutek {
   margin: var(--dn-od-3) 0 0;
   color: var(--dn-tekst);
@@ -75,8 +60,7 @@
   display: none;
 }
 
-/* Usunięcie na karcie sesji stoi obok zamknięcia i odróżnia się od niego barwą
-   błędu oraz ikoną kosza. */
+/* Usunięcie na karcie sesji stoi obok przycisku zamknięcia i odróżnia się od niego barwą błędu oraz ikoną kosza. */
 .dn-sesja__usun {
   width: var(--dn-od-6);
   height: var(--dn-od-6);

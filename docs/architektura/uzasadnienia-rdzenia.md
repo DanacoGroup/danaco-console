@@ -6223,3 +6223,26 @@ więc nie kasuje ustawień sesji.
 
 Droga --mcp-config jest wieloelementowa z założenia: okno wnosi swoje
 mosty, sesja swoje, a każdy jedzie osobnym przełącznikiem.
+
+## budowa/server/internal/core/tozsamosc_agenta_okno.go
+
+Wybór eksperta żyje w rejestrze pamięciowym nadzorcy (pole session.Okno.Agent)
+i w kolumnie agent_kod wiersza okna. Wiersz zakładany jest leniwie i
+wypełnia kolumnę tylko przy założeniu, więc bez tego zapisu wskazanie
+eksperta oknu mającemu już wiersz nie przeżyłoby restartu — pamięć odtwarza
+się wtedy z wierszy, zgodnie z plikiem odtworzenie_stanu.go.
+
+Zapis idzie tym samym wzorem, co utrwalenie kanału (funkcja utrwalKanalOkna
+w pliku adapter_modul_model.go): odczyt wiersza po identyfikatorze,
+porównanie, zapis wyłącznie przy różnicy. Ekspert stoi obok kanału i jest
+utrwalany obok niego, nie zamiast niego.
+
+Zapis nie sprawdza, czy ekspert o wskazanym kodzie istnieje: kolumna
+agent_kod nie ma więzu obcego z rozmysłem, a kod nierozpoznany jest faktem
+czytelnym — składacz nakładki nie znajduje eksperta i rusza z samą osią.
+Zapis nie zakłada wiersza okna i nie dotyka ani nakładki, ani trybu
+silnika — to robi funkcja nakladkaZAgentem.
+
+Zawężenie zapisane w Permissions Center, którego nikt by w tym miejscu nie
+sprawdził, byłoby napisem w oknie konfiguracji i niczym więcej — zasada
+opisana w pliku straz_eksperta.go.

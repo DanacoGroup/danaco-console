@@ -1,3 +1,8 @@
+/**
+ * Uruchomienie gotowej pętli jednym kliknięciem, złożone z dwóch przebiegów do
+ * rdzenia. Plik składa dwie komendy kontraktu i oddaje to, co rdzeń powiedział;
+ * kolejki dalej nie posuwa i jej stanów nie zna.
+ */
 import {
   QueueAction,
   type AutomationWorkflow,
@@ -7,34 +12,17 @@ import {
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Uruchomienie gotowej pętli jednym kliknięciem — dwa przebiegi do rdzenia
- * złożone w jedną czynność.
- *
- * Dwa, ponieważ `automation.queue.action` wymaga `queueId`, a wykaz automatyk go
- * nie niesie: `AutomationWorkflow` nie ma pola kolejki. Kolejka powstaje więc tą
- * samą drogą, którą zakłada ją Queue Manager — komendą `queue.create` z sesją
- * `automations` — a zaraz po niej idzie działanie `start` ze wskazaniem
- * automatyki. Rdzeń zasila kolejkę krokami wyłącznie wtedy, gdy nie ma ona ani
- * jednej pozycji; kolejka świeżo założona jest pusta, więc uruchomienie startuje
- * z pełnym wykazem kroków.
- *
- * Plik nie posuwa kolejki dalej i nie zna jej stanów — składa dwie komendy
- * kontraktu i oddaje to, co rdzeń powiedział. Odmowa mówi, co się nie udało
- * i czym to naprawić; powód z rdzenia wraca osobnym polem, bo zdanie okna dokłada
- * do niego kod i komunikat kontraktu.
+ * Skutek uruchomienia pętli: kolejka oddana przez rdzeń po działaniu albo
+ * zdanie odmowy wraz z powodem podanym przez rdzeń, gdy rdzeń powód podał.
  */
-
-/** Skutek uruchomienia: kolejka po działaniu albo zdanie odmowy wraz z powodem. */
 export type SkutekUruchomienia =
   | { udane: true; kolejka: Queue }
   | { udane: false; zdanie: string; powod?: ErrorInfo };
 
 /**
- * Zakłada kolejkę pętli i posuwa ją działaniem `start`.
- *
- * Sesja kolejki jest ta sama co w Queue Managerze (`automations`), bo pętla
- * uruchamiana z wykazu nie ma karty sesji: moduł jest komponentem własnym strefy
- * 2 strony głównej, a nie przestrzeni roboczej sesji.
+ * Zakłada kolejkę pętli i posuwa ją działaniem rozpoczęcia. Sesja kolejki jest
+ * ta sama, co w oknie Queue Manager, ponieważ pętla uruchamiana z wykazu nie ma
+ * własnej karty sesji.
  */
 export async function uruchomPetle(
   zrodlo: ZrodloAutomations,
@@ -74,12 +62,9 @@ export async function uruchomPetle(
 }
 
 /**
- * Zdanie potwierdzenia powstaje z oddanej kolejki, nie z żądania.
- *
- * Okno nie orzeka, że pętla „ruszyła”: odpowiedź niesie stan kolejki po
- * działaniu, licznik obiegów i liczbę zleceń oczekujących, lecz nie mówi, które
- * kroki się wykonały. Twierdzenie o wykonanych krokach byłoby potwierdzeniem
- * czynności, której okno nie zmierzyło.
+ * Zdanie potwierdzenia powstaje z oddanej kolejki, a nie z żądania. Okno nie
+ * orzeka, że pętla ruszyła, ponieważ odpowiedź niesie stan kolejki po działaniu,
+ * lecz nie mówi, które kroki się wykonały.
  */
 export function zdanieUruchomienia(petla: AutomationWorkflow, kolejka: Queue): string {
   const kroki = petla.steps?.length ?? 0;
@@ -95,7 +80,11 @@ export function zdanieUruchomienia(petla: AutomationWorkflow, kolejka: Queue): s
   );
 }
 
-/** Składa odmowę z powodem rdzenia, gdy rdzeń go podał. */
+/**
+ * Składa odmowę uruchomienia wraz z powodem rdzenia, gdy rdzeń go podał. Powód
+ * wraca osobnym polem, ponieważ zdanie okna dokłada do niego kod i komunikat
+ * kontraktu.
+ */
 function odmowa(zdanie: string, powod?: ErrorInfo): SkutekUruchomienia {
   return powod === undefined ? { udane: false, zdanie } : { udane: false, zdanie, powod };
 }

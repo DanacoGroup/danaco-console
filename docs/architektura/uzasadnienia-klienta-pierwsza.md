@@ -4419,3 +4419,20 @@ do widoku osobnym powiadomieniem.
 
 Zapisy oddają pełny wynik wywołania, ponieważ ich niepowodzenie musi stanąć przy
 formularzu, a nie zniknąć w konsoli.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja-ocena.ts
+
+Rodzina prowenancji ma cztery komendy odczytu i jedną zapisującą sąd człowieka
+o pracy modelu. Ocena dostaje wobec tego własny, jawny chwyt w oknie, a nie skrót
+klawiszowy ani kliknięcie w wiersz: czynność, która zapisuje ocenę po naciśnięciu
+czegoś wyglądającego jak odczyt, jest czynnością ukrytą.
+
+Skala trafności pochodzi z wyliczenia `ModelCallQuality` w kontrakcie i jest to
+jedyne miejsce, z którego wolno ją wziąć — skala wymyślona w oknie nie miałaby
+gdzie się zapisać. Wartość „bez oceny” zostaje w wyborze celowo, ponieważ ocena
+nadana omyłkowo musi mieć drogę zdjęcia, a kontrakt tę wartość niesie.
+
+Uzasadnienie jest w kontrakcie nieobowiązkowe (pole `note`) i takie zostaje
+w oknie: wymuszenie go byłoby zaporą, której rdzeń nie stawia, a ocena bez słowa
+nadal jest oceną. Zdanie po zapisie nazywa stan oddany przez rdzeń, ponieważ samo
+potwierdzenie zapisu nie mówiłoby, co w rdzeniu ostatecznie stoi.

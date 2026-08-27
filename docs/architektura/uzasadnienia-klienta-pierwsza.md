@@ -3282,3 +3282,38 @@ Przyrost budowania przychodzi także z pracy innego okna tego konta, dlatego sta
 przyjmuje wyłącznie przyrost dotyczący własnego okna modułu. Budowanie tworzy
 pliki, więc po nim drzewo i plik w edytorze bywają nieaktualne i wymagają
 ponownego odczytu.
+
+## budowa/klient-poprzedni/src/moduly/browser/material-sesji.ts
+
+Zbiór materiału nie jest odbiciem stanu rdzenia, ponieważ odbijać nie ma czego:
+zapis pozycji jako wytworu sesji ma komendę `browser.artifact.add`, natomiast
+komendy odczytu wykazu wytworów okna kontrakt nie niesie. Pozycją jest migawka,
+którą rdzeń oddał na żądanie, a po przeładowaniu karty wykaz zaczyna się od nowa;
+same migawki zostają w rdzeniu pod swoimi identyfikatorami. Okno mówi o tym
+wprost, zamiast obiecywać trwałość, której nie ma.
+
+Rodzaj pozycji rozstrzyga zawartość odpowiedzi, a nie zamówienie okna. Rdzeń
+pobiera stronę bez uruchamiania przeglądarki (`przegladarka_pobieranie.go`), więc
+migawka zamówiona ze zrzutem potrafi przyjść bez niego — pozycja nazywa się
+wtedy archiwum albo treścią. Rozpoznanie po odpowiedzi nazwie ją zrzutem samo,
+gdy obraz zacznie przychodzić.
+
+Monitor zmian stoi na adresie, a nie na migawce: sprawdzenie polega na ponownym
+pobraniu tej samej strony i zestawieniu jej treści z zapamiętaną. Adres jest więc
+jedynym rozsądnym kluczem monitora, bo dwa monitory tej samej strony pilnowałyby
+dokładnie tego samego. Założenie monitora na adresie już pilnowanym oddaje
+wartość fałszywą, żeby okno powiedziało o tym wprost zamiast meldować czynność,
+która się nie odbyła.
+
+## budowa/klient-poprzedni/src/aod/zrodlo-decyzji.ts
+
+Źródło stoi osobno od `zrodlo-komend.ts`, ponieważ tamto niesie wyłącznie rodzinę
+komend nakładki. Sklejenie obu zatarłoby granicę między komendami własnymi nakładki
+a komendami cudzych obszarów, po które nakładka sięga.
+
+Odczyt procesów idzie bez argumentów świadomie: nakładka pyta o wszystkie procesy,
+które rdzeń zna, bo proces czekający na decyzję nie musi należeć do sesji tego klienta.
+
+Konfiguracja okna otwierana jest na zasięgu `window`, czyli poziomie najwęższym,
+który wygrywa z każdym szerszym. Konfiguracja koordynatora dotyczy tego jednego okna
+i nie ma sięgać ustawień sesji ani konta.

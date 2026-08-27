@@ -1795,3 +1795,45 @@ Układ wynika z roli okna i z porządku pracy badawczej: wyszukaj, skataloguj, p
 
 ## budowa/klient-poprzedni/src/strona-glowna/indeks.ts
 Powłoka aplikacji sięga po budowę strony głównej wyłącznie przez ten plik i nie zna podziału widoku na strefy, karty ani kafle, dzięki czemu zmiana wewnętrzna katalogu strony głównej nie dotyka niczego poza nim.
+
+## budowa/klient-poprzedni/src/moduly/research/nasluch-odmow.ts
+Odmowa nieznanej komendy wraca kopertą bez pola statusu, a klient uznaje za odpowiedź wyłącznie kopertę ze statusem. Korelacja żądania takiej koperty nie rozstrzyga, więc obietnica wywołania zostałaby nierozstrzygnięta na zawsze, a okno wisiałoby w stanie ładowania — odmowę trzeba więc rozpoznać po ładunku, nie po nazwie zdarzenia. Nasłuch wiąże identyfikator żądania z ładunkiem odmowy nieznanej komendy: zwycięża to, co przyjdzie pierwsze — odpowiedź korelacji albo odmowa nieznanej; połączenia nic to nie kosztuje, rdzeń pracuje dalej.
+Kod niepowodzenia not_found mówi prawdę: bytu o tej nazwie w rdzeniu nie ma. Nazwa typu zostaje w polu osobnym, żeby okno mogło ją wypisać wprost, zamiast pokazywać pusty wykaz udający brak danych.
+
+## budowa/klient-poprzedni/src/moduly/research/odczyt-badania.ts
+Odczyt ma jedną odpowiedzialność: dwa kroki odczytu i przełożenie ich niepowodzeń na fazę pamięci. Wydzielony jest z pamięci, bo pamięć nie zna kontraktu, a odczyt zna wyłącznie kontrakt — rozdzielenie trzyma obie rzeczy w rozmiarze, w którym dają się przeczytać naraz. Kroki są dwa, bo mówią o dwóch różnych rzeczach: wykaz okien mówi, które okno sesji należy do modułu Research, a stan okna mówi, co w nim jest. Klient nie zgaduje identyfikatora okna — bez wskazania rdzenia zostaje uczciwy stan pusty nazywający brak, nie zaszyta wartość.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/tozsamosc-urzadzenia.ts
+
+PIN jest właściwy maszynie, nie osobie wchodzącej: rdzeń odnajduje metodę po
+parze rodzaj i urządzenie, więc PIN założony pod jednym identyfikatorem nie
+otworzy bramki podanym pod innym. Ekran logowania musi znać tę wartość, żeby
+wiedzieć, czy segment „PIN" ma w ogóle stanąć, i żeby móc PIN wysłać.
+
+Bramka wyłącznie czyta identyfikator; nadaje go zakładanie PIN-u w Ustawieniach,
+czyli czynność wykonana na urządzeniu. Ekran logowania staje przy każdym
+uruchomieniu, także pierwszym na świeżej przeglądarce — gdyby nadawał
+tożsamość, zapisywałby maszynę, która żadnego PIN-u nie ma. Pusty wynik jest
+prawdą: ta przeglądarka jeszcze się nie przedstawiła.
+
+Ten sam klucz niesie plik tożsamości urządzenia w module ustawień i tak samo
+rozdziela odczyt od nadania. Bramka nie importuje pliku ustawień, bo warstwa
+logowania leży niżej niż okno ustawień i zależność szłaby pod prąd warstw;
+scalenie obu plików wymaga warstwy wspólnej poniżej nich.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/wiersz-czynnosci.ts
+Wiersz czynności stoi osobno od wiersza panelu, bo wiersz panelu jest
+przełącznikiem — niesie stan zaznaczenia i stałe miejsce na ptaszek, ponieważ
+panel bywa otwarty albo zamknięty, natomiast czynność sesji nie ma stanu
+włączenia, więc ptaszek kłamałby o tym, czym pozycja jest. Układ pozostaje ten
+sam co w sekcji paneli: ikona, nazwa i przeznaczenie, skrót wyrównany do
+prawej, żeby dwie sekcje jednego menu nie miały dwóch rytmów. Skrót
+klawiszowy jest tu prawdziwy, bo nasłuch stoi na sekcji i łapie literę, dopóki
+menu jest rozwinięte; skrótu globalnego celowo nie rejestruje się, żeby litery
+wciśnięte w polu wypowiedzi pisały tekst, a nie wykonywały czynność. Naciśnięcie
+wiersza nie zwija menu — tak samo jak przy przełączaniu paneli — a modal
+pytania o nazwę oraz modal potwierdzenia usunięcia są natywnymi oknami
+z własną nakładką, stającymi nad menu, więc nie ma czego chować. Wyróżnienie
+ostrzegawcze jest wyłącznie barwą wiersza, nie blokadą: czynność usuwająca
+zapis bez odwrotu idzie czerwienią, ale wiersz pozostaje tak samo klikalny jak
+każdy inny.

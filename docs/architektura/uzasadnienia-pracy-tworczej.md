@@ -4005,3 +4005,86 @@ caloscia: styka sie z blokada — nie wchodzi w ogole i wraca pominieciem;
 nie styka — wchodzi w calosci. Zgadywanie parowania byloby tu gorsze niz
 odmowa, bo wstawiloby tresc w srodek zablokowanego cytatu i nazwalo to
 bilansem.
+
+## budowa/server/internal/zewnetrzne/kod_odmowy.go
+
+Zdanie dla człowieka (`uwierzytelnienie.go`, `brak_poswiadczenia.go`) to
+dopiero połowa tego, co Operator czyta. Drugą połowę — kod kontraktu i
+wynikającą z niego ponawialność — klient dokleja do wpisu rozmowy sam. Rdzeń
+domyka turę jednym kodem zapasowym dla każdej odmowy kanału
+(`channel_unavailable`), a katalog kontraktu (`shared.KodyPonawialne`) uznaje
+ten kod za ponawialny. Bez kodu własnego odwołany albo wygasły klucz
+przychodziłby więc podpisany „ponowienie ma sens", choć zdanie obok mówi
+„wymień klucz".
+
+`protocol.BladZeZrodla` najpierw pyta `errors.As`, czy błąd niesie już swój
+kod, i dopiero gdy nie niesie — nakłada kod zapasowy wołającego. Obie odmowy
+tego pakietu niosą kod przez `Unwrap`, więc kod zapasowy nie wygrywa i żaden
+plik poza tym pakietem nie musi się zmieniać.
+
+Wykaz kodów w `KodOdmowy`, każdy opisany zdaniem z `shared/contract.go`:
+401 → `not_authenticated`, dostawca nie uznał klucza, nieponawialny — ten sam
+klucz odbije się tak samo; 403 → `permission_denied`, klucz zna, czynności
+nie da; 402 → `permission_denied`, konto jest uwierzytelnione, a mimo to nie
+ma prawa do czynności, bo powodem jest rozliczenie, nie zasięg klucza; 429 →
+`rate_limited`, ponawialny, i słusznie — to jedyna z tych odmów, która mija
+sama; 5xx → `channel_unavailable`, awaria po stronie dostawcy jest właśnie
+chwilowa.
+
+Odrzucone żądanie (400, zły model, złe ciało) nie jest wprawdzie chwilowe,
+ale jego naprawa leży w parametrach wiersza kanału, a `validation_failed`
+mówiłby wołającym, że to ich żądanie było niezgodne z kontraktem rdzenia —
+dlatego zostaje przy `channel_unavailable`.
+
+`KodBraku`: gdyby brak poświadczenia szedł jako `not_authenticated`, Operator
+dostałby maszynowe potwierdzenie, że zawinił jego klucz — a klucza nikt tam
+jeszcze nie czytał, bo nie było czym. Pozostałe powody to rzeczywiście brak
+uwierzytelnienia i żadne ponowienie ich nie usunie.
+
+`Unwrap`: na tym opiera się przeniesienie kodu do Operatora. Bez tego ogniwa
+kod musiałby wybierać `core/strumien_odpowiedzi.go` i każde inne miejsce,
+które odmowę kanału przenosi do protokołu. `Error()` pozostaje zdaniem dla
+człowieka, a `errors.As(err, &OdmowaKanaluZewnetrznego{})` działa dalej —
+ogniwo dokłada się za typem, nie zamiast niego.
+
+## budowa/server/internal/zewnetrzne/odnajdywanie_test.go
+
+Instalka wnosi programy towarzyszące do katalogu `pomocniki` obok binarium
+rdzenia. Dopóki szukanie szło wyłącznie ścieżką wyszukiwania systemu, taki
+program był niewidoczny: Operator dostawał odmowę „nie ma na tej maszynie",
+stojąc nad plikiem, który przyszedł razem z produktem.
+
+Sprawdziany mierzą rozstrzygnięcie, nie stan maszyny: czy pakiet idzie przed
+ścieżką i czy katalog o nazwie programu nie udaje programu.
+
+`TestPakietMaPierwszenstwoPrzedSciezkaSystemu`: wersja dołożona do pakietu
+jest tą, którą sprawdzono przed wydaniem; wersja zastana na maszynie bywa
+starsza albo okrojona i nie jest niczyją obietnicą. `sh` jest właściwym
+materiałem na spór o pierwszeństwo, bo stoi na ścieżce systemu każdej
+maszyny, na której się uruchomi.
+
+## budowa/server/internal/core/adapter_modul_design_kanal.go
+
+Metoda wyboru kanału stoi na *adapterDesignu (adapter_modul_design.go).
+
+Kanał obrazowy to nie dowolny kanał modelu. Rejestr rdzenia prowadzi
+w większości do modeli tekstowych oddających fragmenty text; kanał
+obrazowy poznaje się po kluczu adaptera "obrazy" (models.AdapterObrazy,
+wiersz rodzaju api z parametrem adapter). Rozróżnienie pada przed
+wywołaniem — inaczej moduł wysłałby prompt kanałowi tekstowemu i mówił
+Operatorowi, że kanał nie oddał obrazu, zamiast wprost, że wskazał zły
+kanał.
+
+Odmowy wyboru kanału są rozdzielone, bo Operator naprawia je różnymi
+ruchami: dopisać kanał obrazowy, poprawić identyfikator, włączyć kanał,
+wskazać kanał obrazowy zamiast tekstowego, naprawić parametry wiersza.
+Żadna z nich nie schodzi po cichu na kanał inny niż wskazany — obraz
+wygenerowany innym silnikiem byłby obrazem cudzym, a Operator nie miałby
+jak się o tym dowiedzieć.
+
+Braku poświadczenia plik wyboru kanału nie rozstrzyga. Wiersz bez
+credentialRef buduje się celowo (models/adapter_obrazy.go), a odmowa pada
+w chwili wywołania, zdaniem samego kanału: rozróżnia ono brak odwołania od
+odwołania bez wartości w sejfie, czego ten moduł nie widzi. Powielenie
+tego sprawdzenia tutaj dałoby dwie prawdy o poświadczeniach i uboższą
+treść odmowy.

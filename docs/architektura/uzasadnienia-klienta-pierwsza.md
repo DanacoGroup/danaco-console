@@ -2303,3 +2303,32 @@ ustawiająca pozycje utrzymuje poprzedni wybór, o ile pozycja nadal istnieje, a
 prawdą o nastawie jest stan, także wtedy, gdy zmieniło ją drugie okno. Nastawa
 wskazująca moduł, którego katalog już nie zna, zniknęłaby po cichu na pozycję
 pustą, czyli przeniesienie poszłoby gdzie indziej, niż mówił ster przed chwilą.
+
+## budowa/klient-poprzedni/src/ikony/zrodla-ikon.ts
+
+Wykaz nazw jest w tym pliku jedynym źródłem prawdy — typ `NazwaIkony` wywodzi się
+z rejestru, a nie z osobnej listy. Same wiązania nazw z plikami mieszkają w katalogu
+`zrodla/`, w podziale na grupy zastosowań zgodnym z porządkiem `ikony/manifest.json`;
+ten plik wyłącznie je scala.
+
+Godło marki stoi poza zestawem 82 ikon, bo jest jedynym znakiem o barwach własnych.
+Pozostałe odmiany znaku niesie `ikony/marka.ts`.
+
+Nazwy wycofane pakietem design v2.0 wskazują na następców z zestawu — nie wnoszą
+żadnego nowego rysunku ani pliku spoza pakietu. Znikają wraz z ostatnim wywołaniem.
+
+## budowa/klient-poprzedni/src/moduly/developer/braki-kontraktu.ts
+
+Wykaz `KOMENDY` z `shared/contract.ts` jest wykazem komend kontraktu dostępnym
+w czasie działania, wytwarzanym z `contract.json`. Zdanie powodu powstaje
+z odczytu tego wykazu przy składaniu okna, więc dopisanie komendy do kontraktu
+przepisuje je samo. Zdanie wpisane na stałe przestałoby być prawdziwe w dniu
+takiej zmiany i nikt nie miałby po czym tego rozpoznać.
+
+Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje. Na to pytanie
+odpowiada `katalog-komend.ts`, który pyta rdzeń o jego własny rejestr. Tutaj
+brak jest brakiem po stronie kontraktu i tylko o kontrakcie zdanie mówi.
+
+Bliźniaczy mechanizm stoi w module Diagnostics. Biblioteka `komponenty/` nie ma
+dziś wspólnego bytu dla obu, a modułowi nie wolno sięgać do wnętrza sąsiada,
+więc każdy z nich składa zdanie powodu u siebie.

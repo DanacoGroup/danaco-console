@@ -4158,3 +4158,26 @@ czego, bo nazwa nienazywająca ani narzędzia, ani grupy nie zadziała nigdy.
 WykazBezEksperta jest osobną funkcją, a nie wynikiem składanym w miejscu
 wywołania, bo to jest przypadek, o którym najłatwiej zapomnieć powiedzieć —
 powód wchodzi tu zawsze, więc nie da się złożyć niewiedzy bez jej opisania.
+
+## budowa/server/internal/narzedzia/grupa.go
+Kontrakt stanowi notację obszar-nazwa i sam się nią posługuje przy rozpoznaniu
+zdarzeń nieznanych, więc grupa jest tu wyprowadzana z nazwy komendy, a nie
+zapisana osobnym wykazem; wykaz własny narzędzie-grupa byłby drugą prawdą,
+która rozjedzie się przy pierwszym narzędziu dopisanym do kontraktu.
+
+Nazwa grupy jest kodem obszaru, nie zdaniem opisującym, do czego dany obszar
+służy: takie zdania mieszkają w sekcji obszarów kontraktu, ale generator nie
+emituje ich do wygenerowanego kodu Go. Opis zmyślony byłby zdaniem o
+kontrakcie, którego kontrakt nie mówi, więc do czasu udostępnienia opisów
+grupa niesie sam kod obszaru.
+
+Rozstrzygnięcie grupy dla komendy bez separatora — grupa równa całej nazwie —
+jest zgodne z rozpoznaniem zdarzeń nieznanych w pakiecie współdzielonym, żeby
+dwa różne rozstrzygnięcia tej samej notacji nie rozjechały się.
+
+Kolejność alfabetyczna nazw grup, a nie kolejność kontraktu, wynika z tego, że
+grupy są gałęziami drzewa wyboru w interfejsie i gałąź szuka się okiem po
+nazwie; kolejność kontraktu zostaje tam, gdzie ma znaczenie — wewnątrz wykazu
+pozycji.
+## budowa/server/internal/dane/przegladarka_zestawy.go
+Skład zestawu i wątku nie jest osobną kolumną: źródło wskazuje swój zestaw kolumną grupującą, notatka swój wątek kolumną wątku, więc skład jest zapytaniem po tej kolumnie. Druga lista, czyli osobny wykaz identyfikatorów zapisany przy zestawie, rozjechałaby się z pierwszą przy pierwszym usunięciu źródła, a rozjazd nie byłby widoczny, bo obie listy wyglądałyby wiarygodnie.

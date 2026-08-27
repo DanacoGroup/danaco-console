@@ -1,12 +1,4 @@
-// Odpowiedzialność pliku: zestawy tematyczne źródeł i wątki tematyczne notatek
-// (tabele `zestaw_zrodel_przegladania`, `watek_notatek_przegladania`,
-// migracja 179) oraz usunięcie źródła z wykazu okna.
-//
-// Skład zestawu i wątku nie jest kolumną. Źródło wskazuje swój zestaw kolumną
-// `grupa`, notatka swój wątek kolumną `watek`, więc skład jest zapytaniem po tej
-// kolumnie. Druga lista — wykaz identyfikatorów zapisany przy zestawie —
-// rozjechałaby się z pierwszą przy pierwszym usunięciu źródła i nikt by się
-// o tym nie dowiedział, bo obie wyglądałyby wiarygodnie.
+// Odpowiedzialność pliku: zestawy tematyczne źródeł i wątki tematyczne notatek, wraz z usunięciem źródła z wykazu okna przeglądania.
 package dane
 
 import (
@@ -16,7 +8,7 @@ import (
 	"fmt"
 )
 
-// ZestawZrodel to wiersz tabeli `zestaw_zrodel_przegladania`.
+// ZestawZrodel to wiersz tabeli zestaw_zrodel_przegladania, niosący nazwę i kod zestawu tematycznego źródeł okna.
 type ZestawZrodel struct {
 	ID             int64
 	Kod            string
@@ -26,7 +18,7 @@ type ZestawZrodel struct {
 	Zaktualizowano string
 }
 
-// WatekNotatek to wiersz tabeli `watek_notatek_przegladania`.
+// WatekNotatek to wiersz tabeli watek_notatek_przegladania, niosący nazwę i kod wątku tematycznego notatek okna.
 type WatekNotatek struct {
 	ID             int64
 	Kod            string
@@ -92,7 +84,7 @@ const (
 	                    WHERE watek = ? ORDER BY utworzono DESC, id DESC`
 )
 
-// ZapiszZestawZrodel zakłada zestaw tematyczny albo zmienia jego nazwę.
+// ZapiszZestawZrodel zakłada zestaw tematyczny źródeł albo zmienia nazwę zestawu zapisanego wcześniej.
 func (r *repozytoriumPrzegladania) ZapiszZestawZrodel(ctx context.Context, zestaw ZestawZrodel) (ZestawZrodel, error) {
 	if zestaw.Kod == "" || zestaw.Okno == "" || zestaw.Nazwa == "" {
 		return ZestawZrodel{}, fmt.Errorf("dane: zestaw źródeł bez identyfikatora, okna albo nazwy")
@@ -107,7 +99,7 @@ func (r *repozytoriumPrzegladania) ZapiszZestawZrodel(ctx context.Context, zesta
 	return r.ZestawZrodel(ctx, zestaw.Kod)
 }
 
-// ZestawZrodel oddaje zestaw o wskazanym kodzie.
+// ZestawZrodel oddaje zestaw tematyczny źródeł o wskazanym kodzie zewnętrznym wraz z jego pełną nazwą.
 func (r *repozytoriumPrzegladania) ZestawZrodel(ctx context.Context, kod string) (ZestawZrodel, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZestawZrodel)
 	if err != nil {
@@ -125,7 +117,7 @@ func (r *repozytoriumPrzegladania) ZestawZrodel(ctx context.Context, kod string)
 	return zestaw, nil
 }
 
-// ZestawyZrodel oddaje zestawy okna od najnowszego.
+// ZestawyZrodel oddaje wszystkie zestawy tematyczne źródeł danego okna, od najnowszego do najstarszego.
 func (r *repozytoriumPrzegladania) ZestawyZrodel(ctx context.Context, okno string, limit int) ([]ZestawZrodel, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZestawowZrodel)
 	if err != nil {
@@ -165,7 +157,7 @@ func (r *repozytoriumPrzegladania) UsunZestawZrodel(ctx context.Context, kod str
 	return r.usunWiersz(ctx, usunZestawZrodel, kod, "zestaw źródeł")
 }
 
-// PrzypiszZrodloDoZestawu wiąże źródło z zestawem albo zdejmuje wiązanie.
+// PrzypiszZrodloDoZestawu wiąże wskazane źródło z zestawem tematycznym albo zdejmuje istniejące wiązanie.
 func (r *repozytoriumPrzegladania) PrzypiszZrodloDoZestawu(ctx context.Context, okno, zrodlo, zestaw string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszZrodloDoZestawu)
 	if err != nil {
@@ -187,12 +179,12 @@ func (r *repozytoriumPrzegladania) KodyZrodelZestawu(ctx context.Context, zestaw
 	return r.kody(ctx, kodyZrodelZestawu, zestaw, "zestawu źródeł")
 }
 
-// UsunZrodlo zdejmuje źródło z wykazu okna (`browser.source.remove`).
+// UsunZrodlo zdejmuje wskazane źródło z wykazu okna, obsługując komendę browser.source.remove w całości.
 func (r *repozytoriumPrzegladania) UsunZrodlo(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunZrodloPrzegladania, kod, "źródło przeglądania")
 }
 
-// ZapiszWatekNotatek zakłada wątek tematyczny albo zmienia jego nazwę.
+// ZapiszWatekNotatek zakłada nowy wątek tematyczny notatek albo zmienia nazwę wątku już zapisanego wcześniej.
 func (r *repozytoriumPrzegladania) ZapiszWatekNotatek(ctx context.Context, watek WatekNotatek) (WatekNotatek, error) {
 	if watek.Kod == "" || watek.Okno == "" || watek.Nazwa == "" {
 		return WatekNotatek{}, fmt.Errorf("dane: wątek notatek bez identyfikatora, okna albo nazwy")
@@ -207,7 +199,7 @@ func (r *repozytoriumPrzegladania) ZapiszWatekNotatek(ctx context.Context, watek
 	return r.WatekNotatek(ctx, watek.Kod)
 }
 
-// WatekNotatek oddaje wątek o wskazanym kodzie.
+// WatekNotatek oddaje wątek tematyczny notatek o wskazanym kodzie zewnętrznym, razem z jego pełną nazwą.
 func (r *repozytoriumPrzegladania) WatekNotatek(ctx context.Context, kod string) (WatekNotatek, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWatekNotatek)
 	if err != nil {
@@ -225,7 +217,7 @@ func (r *repozytoriumPrzegladania) WatekNotatek(ctx context.Context, kod string)
 	return watek, nil
 }
 
-// WatkiNotatek oddaje wątki okna od najnowszego.
+// WatkiNotatek oddaje wszystkie wątki tematyczne notatek okna operacyjnego, od najnowszego do najstarszego.
 func (r *repozytoriumPrzegladania) WatkiNotatek(ctx context.Context, okno string, limit int) ([]WatekNotatek, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWatkowNotatek)
 	if err != nil {
@@ -252,7 +244,7 @@ func (r *repozytoriumPrzegladania) WatkiNotatek(ctx context.Context, okno string
 	return lista, nil
 }
 
-// UsunWatekNotatek zdejmuje wątek i odpina od niego notatki.
+// UsunWatekNotatek zdejmuje wskazany wątek tematyczny notatek i odpina od niego wszystkie powiązane notatki.
 func (r *repozytoriumPrzegladania) UsunWatekNotatek(ctx context.Context, kod string) (bool, error) {
 	odpiecie, err := r.zapytania.przygotuj(ctx, odepnijNotatkiWatku)
 	if err != nil {
@@ -264,7 +256,7 @@ func (r *repozytoriumPrzegladania) UsunWatekNotatek(ctx context.Context, kod str
 	return r.usunWiersz(ctx, usunWatekNotatek, kod, "wątek notatek")
 }
 
-// PrzypiszNotatkeDoWatku wiąże notatkę z wątkiem albo zdejmuje wiązanie.
+// PrzypiszNotatkeDoWatku wiąże wskazaną notatkę z wątkiem tematycznym albo zdejmuje istniejące wiązanie.
 func (r *repozytoriumPrzegladania) PrzypiszNotatkeDoWatku(ctx context.Context, okno, notatka, watek string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszNotatkeDoWatku)
 	if err != nil {
@@ -280,8 +272,7 @@ func (r *repozytoriumPrzegladania) PrzypiszNotatkeDoWatku(ctx context.Context, o
 	return nil
 }
 
-// KodyNotatekWatku oddaje skład wątku — identyfikatory notatek do niego
-// należących.
+// KodyNotatekWatku oddaje skład wątku, czyli identyfikatory notatek do niego należących, liczone z kolumny.
 func (r *repozytoriumPrzegladania) KodyNotatekWatku(ctx context.Context, watek string) ([]string, error) {
 	return r.kody(ctx, kodyNotatekWatku, watek, "wątku notatek")
 }

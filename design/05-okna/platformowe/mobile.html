@@ -274,14 +274,6 @@
   .mo-komunikat--luka { border-left-color: var(--dn-ostrzezenie-tekst); background: var(--dn-ostrzezenie-tlo); }
   .mo-komunikat--luka svg { color: var(--dn-ostrzezenie-tekst); }
 
-  .mo-schemat {
-    margin: 0; padding: var(--dn-od-3) var(--dn-od-4);
-    border: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-sm);
-    background: var(--dn-powierzchnia-2);
-    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-    line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2);
-    overflow-x: auto; white-space: pre;
-  }
 
   .mo-lamanie {
     display: inline-flex; align-items: center; gap: var(--dn-od-2);
@@ -1004,7 +996,7 @@
                   <span class="mo-meta" id="mo-sekwencja-stan">krok 0/5 — sekwencja nierozpoczęta</span>
                 </div>
 
-                <pre class="mo-schemat" aria-label="Diagram — przepływ interwencji zdalnej">Proces działa w tle (praca ciągła)
+                <pre class="dn-kod dn-kod--schemat" aria-label="Diagram — przepływ interwencji zdalnej">Proces działa w tle (praca ciągła)
         ▼
 Always On Display wykrywa zdarzenie wymagające decyzji
         ▼
@@ -1035,7 +1027,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
                     </tbody>
                   </table>
                 </div>
-                <pre class="mo-schemat" aria-label="Schemat współdziałania AOD i Mobile"> Always On Display (operator)  ──inicjuje──►  decyzja interwencyjna
+                <pre class="dn-kod dn-kod--schemat" aria-label="Schemat współdziałania AOD i Mobile"> Always On Display (operator)  ──inicjuje──►  decyzja interwencyjna
          │
          │  kanał wykonania
          ▼

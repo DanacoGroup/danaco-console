@@ -3151,3 +3151,33 @@ częściowo, czy wcale, i podaje powód. Okno pokazuje tę deklarację wprost, w
 
 Wykaz zbudowany z deklaracji, a nie z listy wpisanej w kodzie, nadąża za dostawcą:
 nowa wersja jego programu zmienia zestaw pól bez wydania nowego klienta.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/indeks.ts
+
+Scena modułu obsadza cztery okna trzech typów. Okno koordynatora planuje bieg
+i steruje nim, lecz nie tworzy produktu końcowego. Dwa okna wykonawców pracują
+równolegle i nie zarządzają procesem. Okno analityka zestawia wyniki obu
+wykonawców. Wszystkie cztery okna stoją na jednym stanie i jednym źródle biegu,
+ponieważ przy osobnych źródłach koordynator widziałby inny przebieg niż
+wykonawca, którym steruje.
+
+Wykaz komend rdzenia powstaje raz na scenę i jest wspólny czterem oknom. Cztery
+osobne zapytania o ten sam wykaz dałyby cztery odpowiedzi, które mogłyby się
+rozejść. Zapytanie wychodzi przed pierwszym odświeżeniem okien, dzięki czemu
+kontrolki bez pokrycia w wykazie oznaczają odpowiedź w drodze, a nie brak
+komendy w rdzeniu.
+
+Panel obsady stoi przed oknami ról, ponieważ role są przypisaniem okien sesji,
+a nie osobnymi bytami, i bez przydziału nie ma czego otworzyć. Panel jest
+jedynym miejscem nadania tych ról, a jego meldunki idą do jego własnego stanu
+treści, więc odmowa rdzenia nie ginie po drodze. Układ sekcji paneli pochodzi
+z powłoki, ponieważ dotyczy okna, a nie dziedziny modułu.
+
+Panel zadań w tle stoi pod oknami ról, ponieważ opisuje pracę już przez nie
+zleconą, a podagenci należą do okien wykonawców. Panel jest jeden na kartę
+sesji, ponieważ komenda wykazu podagentów przyjmuje identyfikator sesji i dwa
+panele pytałyby dwukrotnie o to samo. Oba okna wykonawców korzystają z tego
+samego źródła podagentów co panel, więc drugie źródło byłoby kopią.
+
+Nasłuchy odpina się przed zdjęciem sceny, ponieważ zdarzenie przyjęte po
+usunięciu elementu odświeżałoby widok już nieistniejący.

@@ -3217,3 +3217,24 @@ poprzedniczki. Pytanie ograniczone wyłącznie do tabeli migawek odrzuciłoby ja
 
 Pytanie nie sięga katalogu okien operacyjnych, ponieważ adapter modułu ma jedną zależność — własne repozytorium.
 Znajomość okna oznacza więc znajomość modułu przeglądania, a nie istnienie wiersza w tabeli okien.
+
+## budowa/server/internal/dane/biblioteka_indeks_tresci.go
+Wiersz pliku, jego filtr i odczyt leżą w library.go — ten plik dokłada tam
+jedną klauzulę i jedno polecenie zapisu. Indeks powstaje z treści leżącej
+w magazynie na dysku, a nie z kolumny tabeli, i rządzi się własnymi regułami:
+co się indeksuje i jak fraza staje się zapytaniem FTS5. Bajty pliku leżą
+wyłącznie w magazynie treści rdzenia, w kolumnie tresc_odwolanie; w indeksie
+leży wyciąg tekstowy treści bieżącej, obcięty granicą po stronie rdzenia
+i służący wyłącznie odnajdywaniu. Brak wiersza indeksu obniża trafność
+wyszukiwania i nic poza tym, dlatego zapis indeksu nie wywraca wgrania pliku.
+
+Fraza wyszukiwania jest daną, nie składnią: w przeglądarce biblioteki wpisuje
+się słowa, nie wyrażenie FTS5, a znaki cudzysłowu, gwiazdki, minusa, nawiasu
+i dwukropka mają w tej składni znaczenie — surowa fraza z nawiasem wywracałaby
+wyszukiwanie błędem składni zamiast oddać zero trafień. Cytowanie całej frazy
+z podwojeniem cudzysłowu wewnętrznego daje wyszukiwanie sekwencji słów, nie
+wyrażenia logicznego. Gwiazdka na końcu trafia przedrostkiem ostatniego słowa
+w słowo dokończone, więc trafienia widać przed dokończeniem wpisywanej frazy.
+
+## budowa/server/internal/models/adapter_obrazy_test.go
+Sprawdziany mierzą to, czego nie da się zobaczyć po stronie wołającego: kształt żądania, które naprawdę wyszło na sieć. Kanał, który przyjmie materiał operatora i wyśle samo polecenie, oddaje obraz wygenerowany od zera — wygląda to na powodzenie, a jest podmianą materiału bez ani jednego słowa. Dlatego sprawdziany stawiają zaślepkę punktu końcowego i czytają ciało żądania.

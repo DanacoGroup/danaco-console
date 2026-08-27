@@ -1,3 +1,8 @@
+/**
+ * Przekład wartości kontraktu na polskie nazwy stanów i działań pulpitu. Plik
+ * trzyma zupełne rekordy etykiet stanu sesji, roli okna, stanu kolejki, stanu
+ * procesu, działania kolejki oraz rodzaju relacji i jej utworzenia.
+ */
 import {
   ProgressStatus,
   QueueAction,
@@ -6,8 +11,6 @@ import {
   WindowRole,
 } from '../../../shared/contract';
 import { RodzajRelacji, RodzajUtworzenia } from './model-danych';
-
-/** Przekład wartości kontraktu na polskie nazwy stanów i działań pulpitu. */
 
 /**
  * Etykieta miary, której kontrakt dziś nie niesie. Widok wypisuje

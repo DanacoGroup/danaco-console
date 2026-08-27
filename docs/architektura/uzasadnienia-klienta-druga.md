@@ -1742,3 +1742,25 @@ rozpoznaje.
 
 ## budowa/klient-poprzedni/src/strona-glowna/etykiety-sesji.ts
 Żadna funkcja tego pliku nie wymyśla danych: każda przekłada wartość oddaną przez rdzeń, a wartość nieobecną oddaje jako `undefined`, dzięki czemu karta pomija cały fragment zamiast pokazać wartość zmyśloną. Nazw środowisk plik nie niesie — daje je osobne źródło zasilane wykazem z rdzenia, żeby na jednym ekranie nie stały dwa źródła tej samej nazwy.
+
+## budowa/klient-poprzedni/src/moduly/research/kreator-raportu.ts
+Kreator raportu ma stany zamknięty, otwierający się, otwarty, próbę z brakami, ładowanie i błąd. Wzorzec czterech dróg zamknięcia (kontrolka w nagłówku, klawisz Escape, kliknięcie w nakładkę, akcja w stopce) powtarza wzorzec okna konfiguracji. Przycisk główny jest czynny od otwarcia; próba z brakami nie gasi kontrolki — kreator zostaje otwarty, a brak wraca komunikatem nad stopką, a ponowne naciśnięcie w trakcie wywołania jest bezpieczne po stronie logiki kreatora, nie przez odebranie klikalności.
+Reguła wyboru drogi budowy raportu: żądanie z polem sekcji składa raport z samych sekcji podanych i pomija identyfikatory ustaleń; bez tego pola woła kanał modelu po sekcję nadrzędną. Reguła stoi w kreatorze, bo tu Operator rozstrzyga ją każdym wpisanym znakiem. Droga modelu nie gwarantuje odpowiedzi modelu — bez logowania budowa kończy się powodzeniem, raport zostaje zapisany, a treścią sekcji nadrzędnej jest komunikat procesu kanału; kreator uprzedza o tym przed naciśnięciem, bo po nim klient nie ma już czym rozpoznać pochodzenia treści.
+
+## budowa/klient-poprzedni/src/rozmowa/historia-tur.ts
+Komenda message.send zwraca wiadomość użytkownika, a identyfikator odpowiedzi znany jest dopiero z pierwszego fragmentu strumienia. Dlatego wpis odpowiedzi powstaje od razu po wysłaniu, jako wpis oczekujący, a pierwszy fragment go przejmuje zamiast zakładać drugi. Bez tego okno stałoby puste do nadejścia pierwszego znaku, a potem pokazało dwa wpisy zamiast jednego.
+
+Wiązanie wypowiedzi z wiadomością rdzenia dotyczy sytuacji, w której wypowiedź trafia do historii natychmiast, przed komendą, więc nie ma jeszcze identyfikatora wiadomości: message.send oddaje go dopiero w odpowiedzi. Rdzeń rozgłasza tę samą wiadomość zdarzeniem message.changed do wszystkich połączeń konta, także do tego, które ją wysłało. Ponieważ okno pokazuje wypowiedzi roli user, to samo zdanie weszłoby do wątku dwa razy: raz jako echo miejscowe, raz ze zdarzenia. Wiązanie idzie po treści, nie po identyfikatorze, bo identyfikatora w tej chwili nie ma po żadnej stronie: dopasowuje pierwszą niezwiązaną wypowiedź o tej samej treści i nadaje jej identyfikator z rdzenia. Metoda zwraca wpis związany albo wartość pustą, gdy wypowiedzi o tej treści w historii nie ma, czyli gdy wiadomość naprawdę przyszła skądinąd.
+
+Czyszczenie historii nie zeruje licznika kluczy. Klucz jest tożsamością pozycji w widoku; gdyby po wyczyszczeniu zaczął się od nowa, pierwszy wpis nowej rozmowy trafiłby w węzeł pozostały po wpisie rozmowy poprzedniej i zamiast nowej pozycji stanęłaby podmieniona stara.
+
+## budowa/klient-poprzedni/src/moduly/translate/odmowa-translate.ts
+Dwie komendy modułu wykonuje rdzeń modelem: przekład tekstu źródłowego na język panelu i rozpoznanie
+języka tekstu. Gdy rejestr nie ma czynnego kanału, rdzeń odmawia obu z jednym kodem niedostępności
+kanału. Sama wiadomość rdzenia jest powodem, ale nie mówi Operatorowi, co ma zrobić, a jej brzmienie
+sugeruje usterkę wewnętrzną tam, gdzie stoi zwykły brak włączonego kanału — zdanie o brakującej rzeczy
+dokłada klient, idąc za powodem rdzenia, nie zastępując go. Zdania nie dokłada wspólny tłumacz kodów,
+bo ten sam kod niesie w module dwie różne odmowy: powyższą oraz odmowę importu glosariusza, gdzie
+rdzeń nie czyta plików z dysku Operatora i zdanie o kanale modelu byłoby nieprawdziwe. Zdanie mówi też,
+dlaczego Operator nie ma tu pola wyboru: żądania modelowe nie niosą identyfikatora kanału, więc rdzeń
+bierze kanał domyślny czynny, a klient nie wymyśla pól kontraktu.

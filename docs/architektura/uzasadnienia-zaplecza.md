@@ -1756,3 +1756,17 @@ standardowym wyjściu psuje odczyt po stronie rdzenia.
 nietypowych układów katalogów, gdy pliku modelu nie widać wprost na dysku;
 wyjątek z tej próby trafia do pola powodu odpowiedzi, nie na wyjście jako
 ślad stosu.
+
+## budowa/server/internal/store/migracja_030_rejestr_okien_operacyjnych.sql
+
+Okno jest bytem katalogu, a obecność okna w module jest relacją między
+dwoma bytami. Dzięki rozdzieleniu definicji od przypisania okno wspólne dla
+wielu modułów ma jeden wiersz definicji i wiele przypięć, a jego pozycja
+może być inna w każdym module — czego jedna kolumna kolejności na definicji
+nie potrafi wyrazić.
+
+Poprzednia kolumna wskazująca moduł odchodzi, więc tabela powstaje na nowo
+i przejmuje nazwę starej. Katalog jest słownikiem wnoszonym migracją — nie
+ma w nim danych operatora, dlatego wiersze zastępuje się kompletem
+inwentarza. Kolumna kolejności na definicji porządkuje okno w obrębie jego
+kategorii; kolejność w module należy do osobnej macierzy.

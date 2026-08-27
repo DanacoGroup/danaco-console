@@ -2573,3 +2573,24 @@ wykazem zasobów, za którymi nie ma ani jednego bajtu.
 `wdrozenie_kod` jest kodem zewnętrznym, nie więzem obcym — artefakt przeżywa
 przebieg, z którego powstał, bo to on idzie potem do pakowania
 (`apps.package.build` bierze „artefakt ostatniego wdrożenia udanego").
+## budowa/server/internal/store/migracja_206_apps_pakiety.sql
+Migracja 206 — moduł Apps, Publisher Panel: pakiety rozszerzenia zbudowane
+z produktu.
+
+Pakiet jest archiwum na dysku i wierszem obok niego. `apps.package.build`
+składa archiwum z artefaktu budowania i manifestu, kładzie je w magazynie
+treści rdzenia i zapisuje tu odwołanie, rozmiar i format. Kolejne komendy
+rodziny pracują na tym samym wierszu: `apps.package.manifest.save` wymienia
+manifest, `apps.package.validate` czyta go do raportu zastrzeżeń,
+`apps.package.sign` dopisuje podpis, `apps.package.publish` — kod pozycji
+katalogu, która z pakietu powstała.
+
+Manifest i podpis leżą jako surowy JSON kontraktu (`AppPackageManifest`,
+`ExtensionSignature`). Rozłożenie manifestu na kolumny znaczyłoby drugą
+definicję kształtu, którego jedynym źródłem jest kontrakt, a narzędzia
+i uprawnienia pakietu wychodzą zawsze w komplecie razem z pakietem — nie ma
+po czym filtrować.
+
+`rozszerzenie_kod` wskazuje pozycję katalogu kodem, nie więzem obcym: pozycja
+żyje w tabeli `rozszerzenie` (migracja 070) własnym cyklem życia i jej
+odinstalowanie nie ma prawa skasować pakietu, z którego powstała.

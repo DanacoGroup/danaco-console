@@ -287,3 +287,20 @@ Sprawdzian kształtu odpowiedzi pyta przy każdej komendzie o pole, którego okn
 naprawdę używa. Pustka nie jest tu uszkodzonym kształtem: wykaz pusty i pole
 opcjonalne bez wartości są odpowiedziami prawdziwymi i znaczą, że tego jeszcze
 nie ma.
+
+## budowa/klient-poprzedni/src/moduly/automations/zrodlo-dobudowy.ts
+
+Rozdział między tym plikiem a `zrodlo-automations.ts` idzie po roli, nie po
+objętości. Tamten plik niesie rdzeń modułu — definicję, harmonogram, kolejkę,
+zależności i przebiegi, czyli to, czym okna pracują bez otwierania
+jakiegokolwiek panelu. Ten plik niesie czynności paneli i szuflad.
+
+Każda czynność oddaje `Wynik` z całą odpowiedzią, nie z wyciętym polem, bo
+większość tych odpowiedzi niesie więcej niż jedną rzecz naraz — wykaz i
+znacznik przycięcia, automatykę i numer wersji, zlecenie i znacznik
+duplikatu, zmienne i zastrzeżenia. Wycięcie jednego pola gubiłoby drugie,
+a okno musi pokazać oba.
+
+Sprawdzian kształtu pilnuje pola obowiązkowego odpowiedzi: rdzeń, który oddał
+kopertę powodzenia bez treści, jest dla okna odmową, inaczej widok rysowałby
+pustkę i twierdził, że to wynik.

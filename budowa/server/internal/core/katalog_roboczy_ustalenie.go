@@ -20,9 +20,7 @@ type DegradacjaKatalogu struct {
 	Zastepcza string
 	// Powod niesie przyczynę zejścia — treść błędu systemu plików.
 	Powod string
-	// Skuteczna mówi, czy lokalizacja zastępcza sama dała się przygotować.
-	// Wartość fałszywa znaczy, że nie ma gdzie pisać; sesja i tak startuje,
-	// a zapis pliku roboczego zawiedzie dopiero w chwili próby.
+	// Skuteczna mówi, czy lokalizacja zastępcza sama dała się przygotować; sesja startuje mimo to.
 	Skuteczna bool
 }
 
@@ -35,13 +33,11 @@ type UstalenieKatalogu struct {
 	Wzorzec string
 	// Sciezka to katalog tej sesji.
 	Sciezka string
-	// PochodzeniePodstawy mówi, czy podstawa pochodzi z zapisu Operatora,
-	// z wartości domyślnej, czy z klucza bez definicji.
+	// PochodzeniePodstawy mówi, czy podstawa pochodzi z zapisu Operatora, z wartości domyślnej.
 	PochodzeniePodstawy konfig.Pochodzenie
 	// PoziomPodstawy wskazuje poziom zasięgu, z którego wzięła się podstawa.
 	PoziomPodstawy konfig.Poziom
-	// Degradacja jest niepusta wyłącznie wtedy, gdy katalog żądany okazał się
-	// niezdatny do zapisu.
+	// Degradacja jest niepusta wyłącznie wtedy, gdy katalog żądany okazał się niezdatny do zapisu.
 	Degradacja *DegradacjaKatalogu
 }
 
@@ -52,10 +48,10 @@ type obserwatorKatalogu interface {
 	KatalogZdegradowany(DegradacjaKatalogu)
 }
 
-// ObserwatorKataloguFunkcja podpina funkcję jako obserwatora.
+// ObserwatorKataloguFunkcja podpina funkcję jako obserwatora degradacji tego katalogu roboczego sesji.
 type ObserwatorKataloguFunkcja func(DegradacjaKatalogu)
 
-// KatalogZdegradowany wykonuje funkcję obserwatora.
+// KatalogZdegradowany wykonuje funkcję obserwatora zarejestrowaną dla tego katalogu roboczego tej sesji.
 func (f ObserwatorKataloguFunkcja) KatalogZdegradowany(d DegradacjaKatalogu) { f(d) }
 
 // KatalogRoboczy ustala katalog roboczy sesji z ustawień Operatora, a przy ich
@@ -68,10 +64,10 @@ type KatalogRoboczy struct {
 	obserwator   obserwatorKatalogu
 }
 
-// opcjaKatalogu zmienia jedną nastawę katalogu roboczego przy jego składaniu.
+// opcjaKatalogu zmienia jedną nastawę katalogu roboczego przy jego składaniu w tym module rdzenia platformy.
 type opcjaKatalogu func(*KatalogRoboczy)
 
-// ZObserwatoremKatalogu podpina odbiorcę wiadomości o degradacji.
+// ZObserwatoremKatalogu podpina odbiorcę wiadomości o degradacji katalogu roboczego tej sesji rdzenia.
 func ZObserwatoremKatalogu(obserwator obserwatorKatalogu) opcjaKatalogu {
 	return func(k *KatalogRoboczy) { k.obserwator = obserwator }
 }
@@ -128,7 +124,7 @@ func (k *KatalogRoboczy) Ustal(kontekst konfig.Kontekst, identyfikatorSesji stri
 	return k.zdegraduj(ustalenie, identyfikatorSesji, blad)
 }
 
-// zdegraduj schodzi na lokalizację zastępczą i zgłasza to obserwatorowi.
+// zdegraduj schodzi na lokalizację zastępczą i zgłasza to zdarzenie zarejestrowanemu obserwatorowi katalogu.
 func (k *KatalogRoboczy) zdegraduj(ustalenie UstalenieKatalogu, identyfikatorSesji string, przyczyna error) UstalenieKatalogu {
 	zadana := ustalenie.Sciezka
 	podstawa := PodstawaLubInstalacja(k.zastepcza, lokalizacjaZastepczaDomyslna())

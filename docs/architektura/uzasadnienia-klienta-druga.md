@@ -1888,3 +1888,19 @@ bez czytania słów; gniazdo spoza więzi nie dostaje napisu.
 Zestawienie jest czynnością czysto miejscową: niczego nie liczy i o nic nie pyta rdzenia. Panele
 są dokładnie dwa; przy innej liczbie wskazań zestawienie mówi wprost, czego oczekuje, zamiast
 pokazać cokolwiek.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-discovery-panel.ts
+Okno jest zbudowane, choć katalog okien rdzenia jeszcze go nie zna, bo trzon jego pracy ma dziś pokrycie w kontrakcie: dwa z czterech trybów zapytania idą własną komendą, a przeniesienie pozycji do katalogu idzie tą samą drogą co formularz Sources Manager. Ster trybu niesie wszystkie cztery pozycje, także te dwie, których rdzeń jeszcze nie obsługuje — wybór takiego trybu niczego nie gasi, zapytanie wychodzi pod nazwą swojej komendy, a rdzeń odmawia własnymi słowami; ukrycie tych pozycji zataiłoby zakres modułu, a ich wygaszenie łamałoby zasadę zero blokad. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności odkrywania.
+Tryb semantyczny szuka po znaczeniu w bibliotece wiedzy, historii rozmów i przestrzeni roboczej okna badania komendą wyszukiwania wiedzy. Tryb pełnotekstowy szuka po treści w zasobach repozytorium komendą wyszukiwania pliku. Tryb webowy i tryb naukowy dzielą jedną komendę różniącą się wartością pola trybu; rdzeń nie ma dla nich jeszcze uchwytu, więc zapytanie wraca odmową.
+
+## budowa/klient-poprzedni/src/widok-sterowania/montaz-widoku.ts
+
+Kontrolki nie powstają w tym pliku — pochodzą w całości z katalogu sterowania:
+środowisko wykonania, host, moduł, model, model zapasowy, nakład rozumowania,
+tryb uprawnień, rola okna, katalogi robocze. Ten plik dokłada im miejsce,
+nagłówek, podsumowanie wartości i dwa uchwyty rozwijania. Kolumna montuje się
+obok sceny okna, a nie w prawym rogu paska górnego — dziewięć kontrolek nie ma
+jak się tam zmieścić. Widok powstaje osobno dla każdego okna i domyka się na
+jego identyfikatorze, więc dwa okna obok siebie dostają dwie niezależne kolumny
+bez ani jednej wspólnej zmiennej. Szuflada startuje rozwinięta, żeby komplet
+ustawień był widoczny bez szukania, co nacisnąć.

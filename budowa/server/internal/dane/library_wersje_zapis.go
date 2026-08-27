@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: dołożenie kolejnej wersji pliku repozytorium wiedzy
-// (`library.version.add`) — jedyna droga, którą historia pliku rośnie
-// ponad wiersz założony przy wgraniu.
-//
-// Dlaczego osobny plik od `library_wersje.go`. Tamten plik odpowiada za odczyt
-// historii i za przywrócenie wersji zastanej; ten za jej dołożenie. Rozdział
-// idzie wzdłuż odpowiedzialności, a nie wzdłuż tabeli — SQL obu
-// stron jest ten sam i mieszka nadal w `library_wersje.go`, żeby nie było
-// dwóch prawd o jednym poleceniu.
-//
-// Dołożenie jest nierozdzielne. Wstawienie wiersza historii i przestawienie
-// pliku macierzystego na tę wersję to jedna zmiana stanu: plik, którego
-// `wersja_biezaca_id` wskazuje wiersz nieistniejący, albo historia z wersją,
-// której plik nigdy nie przyjął, to schemat rozjechany w połowie.
-// Stąd transakcja, tak samo jak przy `PrzywrocWersje`.
+// Odpowiedzialność pliku: dołożenie kolejnej wersji pliku repozytorium wiedzy — jedyna droga, którą historia
+// pliku rośnie ponad wiersz założony przy wgraniu.
 package dane
 
 import (
@@ -21,15 +8,8 @@ import (
 	"fmt"
 )
 
-// DolozWersje wstawia kolejny wiersz historii pliku i przestawia na niego plik
-// macierzysty: wskaźnik wersji bieżącej, sumę kontrolną, odwołanie do treści
-// i rozmiar. Zwraca wersję po zapisie oraz plik po zmianie, bo `library.version.add`
-// obiecuje kontraktem oba byty naraz.
-//
-// Liczba wersji poprzednich jest oddana wołającemu. Tabela nie ma kolumny
-// numeru wersji — porządek historii daje `utworzono DESC, id DESC`.
-// Rdzeń, który chce nazwać wersję jej kolejnością, bierze ją z `Wersje`; ten
-// zapis niczego nie numeruje, bo numer nie jest tu bytem trwałym.
+// DolozWersje wstawia kolejny wiersz historii pliku i przestawia na niego plik macierzysty: wskaźnik wersji
+// bieżącej, sumę kontrolną, odwołanie do treści i rozmiar.
 func (r *repozytoriumBiblioteki) DolozWersje(ctx context.Context, plikID int64,
 	wersja WersjaPlikuBiblioteki) (WersjaPlikuBiblioteki, PlikBiblioteki, error) {
 
@@ -93,10 +73,8 @@ func (r *repozytoriumBiblioteki) wstawWersje(ctx context.Context, transakcja *sq
 	return wersjaID, nil
 }
 
-// przestawPlikNaWersje aktualizuje plik macierzysty tym samym poleceniem, co
-// przywrócenie wersji zastanej (`przywrocBiezacaWersje`) — bo to jest ta sama
-// zmiana: „plik od teraz niesie treść tej wersji". Osobne polecenie o tym
-// samym skutku byłoby drugą prawdą o jednym zapisie.
+// przestawPlikNaWersje aktualizuje plik macierzysty tym samym poleceniem, co przywrócenie wersji zastanej —
+// to ta sama zmiana stanu pliku.
 func (r *repozytoriumBiblioteki) przestawPlikNaWersje(ctx context.Context, transakcja *sql.Tx,
 	plikID, wersjaID int64, wersja WersjaPlikuBiblioteki) error {
 

@@ -502,3 +502,30 @@ mówiące, czy serwer języka i program analizy statycznej były osiągalne. Okn
 rozróżnia stan, w którym wystąpień nie ma, od stanu, w którym nie było czym
 ich szukać — pierwszy naprawia się w kodzie, drugi instalacją programu po
 stronie serwera.
+
+## budowa/klient-poprzedni/src/mobile/wywolania-interwencji.ts
+
+Moduł składa cztery drogi interwencji warstwy mobilnej w wywołania komend kontraktu rdzenia i jest jedynym miejscem tej warstwy, które zna nazwy komend zmieniających stan sesji.
+
+Każda droga stoi na określonych komendach kontraktu. Zatwierdzenie kroku wywołuje komendę akcji kolejki z rozstrzygnięciem wznowienia albo powtórzenia. Wstrzymanie stosuje akcję kolejki pauzy, zatrzymanie wiadomości albo zatrzymanie sesji, przy czym wstrzymanie sesji oddaje wykaz okien, w których turę zatrzymano. Nastawienie koordynatora zapisuje konfigurację sesji na zasięgu okna i potwierdza wynik odczytem zwrotnym konfiguracji obowiązującej, który wskazuje źródło nadpisania. Przejęcie sterowania składa trzy wywołania: zatrzymanie wiadomości, zapis konfiguracji sesji z trybem uprawnień ręcznym oraz wysłanie wiadomości z poleceniem Operatora.
+
+Droga przejęcia sterowania zatrzymuje turę, przestawia okno na pytanie o każdy krok i wpuszcza polecenie Operatora. Dedykowanej komendy przejęcia kontrakt nie niesie, dlatego złożenie trzech wywołań zastępuje jedno wywołanie, a ekran pozostaje bez zmian.
+
+Droga zatwierdzenia kroku ma widoczną granicę: zatwierdzenie prowadzi wyłącznie przez kolejkę, więc pozycja bez kolejki nie ma czym zatwierdzić kroku, ponieważ komendy zatwierdzenia pojedynczego kroku kontrakt nie niesie. Funkcja rozstrzygająca dostępność dróg wyraża ten stan zdaniem, a ekran nie rysuje wtedy przycisku zatwierdzenia.
+
+Każde wywołanie oddaje kwit zamiast wartości logicznej czy pustego wyniku: nazwę komendy, rozstrzygnięcie, stan po zmianie wyjęty z odpowiedzi rdzenia albo treść odmowy. Kwit jest jedynym dowodem interwencji, jaki pozostaje po zamknięciu aplikacji mobilnej.
+
+## budowa/klient-poprzedni/src/moduly/apps/odmowa-rdzenia.ts
+
+Powód osobnej ścieżki wywołania jest mechaniczny. Komenda bez uchwytu w rdzeniu wraca kopertą typu
+`<obszar>.unknown` z polem `requestedType`. Ta koperta nie niesie pola `status`, a korelacja żądań
+rozstrzyga wyłącznie koperty ze statusem, co opisuje `protokol/koperta.ts`. Obietnica zwykłego
+wywołania pozostałaby więc nierozstrzygnięta na zawsze, a okno stałoby w stanie ładowania bez końca.
+
+Rozwiązanie nie buduje drugiej drogi do rdzenia. Żądanie idzie tym samym `kanal.wyslij`, a odmowę
+odczytuje się z dziennika komunikatów nierozpoznanych, który kanał prowadzi dla wszystkich obszarów
+kontraktu w `polaczenie/dziennik-nieznanych.ts`. Moduł nie zna literału `apps.unknown` i nie zakłada
+własnej subskrypcji zdarzenia odmowy.
+
+Wynik odmowy jest zwykłym `Wynik` z polem `blad`, dzięki czemu okno pokazuje go tak samo jak każdą
+inną odmowę rdzenia i nie potrzebuje osobnej gałęzi widoku.

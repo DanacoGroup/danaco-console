@@ -15,16 +15,9 @@ import type { ZrodloBiegu } from './zrodlo-biegu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
 /**
- * Coordinator Chat — okno zarządcy pętli koordynator–wykonawca.
- *
- * Okno nie tworzy produktu końcowego, więc nie ma ani pola redakcyjnego, ani
- * zapisu wyniku: ma plan etapów, kreator promptu dla wykonawców, przyciski
- * sterowania i pełny podgląd strumienia wykonawcy.
- *
- * Pętla żyje w rdzeniu. Koniec tury wykonawcy wybudza koordynatora po stronie
- * `session.Petla`; tu widać wyłącznie licznik obiegów, próg braku postępu
- * i powód zatrzymania odczytane przez `window.state.get`. Klient nie rozpoczyna
- * obiegu i nikogo nie wybudza.
+ * Coordinator Chat jest oknem zarządcy pętli koordynator–wykonawca: ma plan
+ * etapów, kreator promptu, przyciski sterowania i podgląd strumienia, a pętla
+ * żyje w rdzeniu, więc klient tylko odczytuje jej stan.
  */
 export interface OknoKoordynatora {
   element: HTMLElement;
@@ -55,8 +48,7 @@ export function utworzOknoKoordynatora(opcje: OpcjeKoordynatora): OknoKoordynato
   const tresci = utworzStanTresci();
   const { kreator, trybPracy } = kontrolkiKoordynatora();
 
-  // Miejsce na pełne zdanie o stanie relacji. Plakietka nagłówka mieści dwa
-  // słowa; powód — „czym to odwrócić i skąd rdzeń to wie" — potrzebuje wiersza.
+  // Miejsce na pełne zdanie o stanie relacji; plakietka nagłówka mieści tylko dwa słowa.
   const stanRelacji = document.createElement('p');
   stanRelacji.className = 'dm-wiez';
   stanRelacji.dataset['rola'] = 'powod-stanu-relacji';
@@ -86,8 +78,7 @@ export function utworzOknoKoordynatora(opcje: OpcjeKoordynatora): OknoKoordynato
 
   const podglad = utworzWidokStrumienia(stan);
 
-  // `monitor.subscribe` zapisuje okno koordynatora na telemetrię postępu
-  // procesów jego sceny. Meldunek mówi to, co oddał rdzeń.
+  // Subskrypcja monitora zapisuje okno koordynatora na telemetrię postępu procesów jego sceny.
   const subskrybuj = przyciskAkcji('Subskrybuj monitor', 'dn-btn dn-btn--zarys');
   subskrybuj.addEventListener('click', () => {
     void subskrybujMonitor();
@@ -104,12 +95,7 @@ export function utworzOknoKoordynatora(opcje: OpcjeKoordynatora): OknoKoordynato
     stanTresci: tresci.element,
   });
 
-  /**
-   * Subskrypcja telemetrii procesów sceny na oknie koordynatora.
-   *
-   * Bez wskazanego koordynatora nie ma czego zapisać — okno mówi to wprost,
-   * zamiast udawać założoną obserwację. Sitem jest sesja obsady.
-   */
+  // Bez wskazanego koordynatora nie ma czego zapisać — okno mówi to wprost, zamiast udawać obserwację.
   async function subskrybujMonitor(): Promise<void> {
     const koordynator = stan.obsada().koordynator;
     if (koordynator === null) {
@@ -156,9 +142,7 @@ export function utworzOknoKoordynatora(opcje: OpcjeKoordynatora): OknoKoordynato
     sterowanie.odswiez();
     plan.odswiez();
     podglad.odswiez();
-    // Rachunek znacznika stoi w `stany-relacji.ts`, bo jest czystą funkcją
-    // danych: bierze bieg, stan kolejki etapu bieżącego i to, czy któryś
-    // wykonawca jest w turze.
+    // Rachunek znacznika stoi w osobnym pliku, bo jest czystą funkcją danych o biegu i kolejce etapu.
     powiesStanRelacji(
       rama,
       znacznikKoordynatora({
@@ -183,7 +167,7 @@ export function utworzOknoKoordynatora(opcje: OpcjeKoordynatora): OknoKoordynato
   };
 }
 
-/** Kontrolki własne okna koordynatora; panele ról stoją obok nich. */
+/** Kontrolki własne okna koordynatora; panele ról stoją obok nich, poza tą powierzchnią samych kontrolek. */
 interface PowierzchniaKoordynatora {
   kreator: HTMLTextAreaElement;
   trybPracy: HTMLSelectElement;
@@ -229,8 +213,7 @@ function zmontujOknoKoordynatora(
 ): void {
   rama.akcje.append(czesci.sterowanie);
   rama.narzedzia.append(czesci.trybPracy, czesci.subskrybuj);
-  // Podgląd strumienia stoi w ciele okna na stałe, a nie w miejscu treści stanu:
-  // raport walidacji ma go uzupełniać, nie wypychać.
+  // Podgląd strumienia stoi w ciele okna na stałe; raport walidacji ma go uzupełniać, nie wypychać.
   rama.cialo.append(
     // Stan relacji idzie pierwszy — mówi, czyja jest teraz kolej.
     czesci.stanRelacji,
@@ -238,22 +221,15 @@ function zmontujOknoKoordynatora(
     czesci.plan,
     czesci.podglad,
     czesci.stanTresci,
-    // Dwie komendy, których rdzeń dla tego okna nie udostępnia: `role.assign`
-    // (brak rejestracji) i `orchestration.dependency.set` (rejestrowana, ale na
-    // układach automatyk, nie na kolejkach etapów).
+    // Dwie komendy, których rdzeń dla tego okna nie udostępnia: przypisanie roli i zależność etapów planu.
     komendy.wykazBrakow(['orchestration.dependency.set', 'role.assign']),
   );
 }
 
 /**
- * Raport walidacji przebiegu — jedyna walidacja, którą kontrakt pokrywa.
- *
- * Odczyt `window.state.get` koordynatora i obu wykonawców mówi, czy tura trwa,
- * ile wiadomości okno zapisało i czy bieg stoi. Ocena treści wyniku należy do
- * Results Analyzer, który czyta stan procesów przez `monitor.status`.
- *
- * Odczyt wchodzi wywołaniem zwrotnym: sam raport jest złożeniem wierszy,
- * a sięgnięcie po rdzeń zostaje po stronie wywołującego.
+ * Raport walidacji przebiegu jest jedyną walidacją, którą kontrakt pokrywa:
+ * odczyt stanu koordynatora i wykonawców mówi, czy tura trwa, ile wiadomości
+ * zapisano i czy bieg stoi.
  */
 async function raportPrzebieguKoordynatora(
   okna: readonly Window[],
@@ -291,7 +267,7 @@ async function odczytajBiegKoordynatora(
   stan.ustawBieg(wynik.wynik.loop ?? null);
 }
 
-/** Jeden wiersz raportu walidacji przebiegu. */
+/** Jeden wiersz raportu walidacji przebiegu, złożony z pól odczytanego stanu okna koordynatora albo wykonawcy. */
 function opisStanu(idOkna: string, stan: WindowStateGetResponse): string {
   const bieg =
     stan.loop === undefined

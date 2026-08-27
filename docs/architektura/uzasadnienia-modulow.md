@@ -2990,3 +2990,41 @@ powtarzałby je bez końca. To jest pomyłka wołającego i ma wracać jako pomy
 wołającego; rdzeń stosuje to samo rozróżnienie w module Library. Odmowa
 wymienia dopuszczalne rodzaje, zamiast cytować warunek schematu bazy wraz
 z nazwą kolumny.
+
+## budowa/server/internal/core/adapter_modul_library_uchwyty.go
+
+Plik wpina dziesięć komend modułu Library na porcie `Biblioteka`, przez
+który rejestr komend rdzenia dociera do adaptera złożonego z dwóch plików
+tego samego typu `adapterBiblioteki`: `adapter_modul_library.go` niesie
+plik i wersje, `adapter_modul_library_kolekcje.go` niesie kolekcje i
+etykiety. Port wymienia wszystkie dziesięć komend niezależnie od tego, który
+plik adaptera je implementuje: rejestr rdzenia potrzebuje jednego miejsca
+wiążącego nazwę komendy z metodą portu — tak samo jak
+`adapter_modul_automations_uchwyty.go` rejestruje w jednej funkcji komendy
+swojego modułu.
+
+Pole `LibraryTagSetRequest.collectionIds` ustawia komplet kolekcji pliku, ze
+zdejmowaniem włącznie, metodą `UstawKolekcjePliku` z
+`dane/biblioteka_kolekcje_pliku.go`. Pola `LibraryFile.collectionIds` i
+`LibraryFile.versionId` wychodzą wypełnione metodą `a.zloz`, a
+`library.file.search` sięga treści przez indeks pełnotekstowy FTS5.
+Nieosiągalne pozostaje dopasowanie semantyczne, o którym mówi kontrakt
+wyszukiwania: rdzeń dopasowuje słowa, nie znaczenia.
+
+Cztery komendy rozgłaszają `library.file.changed`. Kontrakt niesie to
+zdarzenie jako `shared.EventLibraryFileChanged`, a klient je subskrybuje,
+więc każda komenda zmieniająca stan pliku repozytorium — wgranie jako
+`created`, dołożenie i przywrócenie wersji oraz ustawienie etykiet jako
+`updated` — rozgłasza plik po zmianie zaraz po udanym wykonaniu.
+Rozgłoszenie jedzie tym samym emiterem rdzenia, co pozostałe zmiany
+obszarów. Nieudana komenda nic nie rozgłasza.
+
+Cztery komendy cyklu życia zasobu, niosące zasób po zmianie, rozgłaszają
+`library.file.changed` dla każdego zasobu osobno, ponieważ Library Explorer
+odświeża pozycje, a nie cały wykaz.
+
+Metoda `plikBiblioteki` rozgłasza `library.file.changed`, czyli plik
+repozytorium po zmianie. Jest to metoda emitera per moduł, wzorowana na
+`przebiegAutomatyki`, zadeklarowana w tym pliku, ponieważ to obszar Library
+nazywa własne zdarzenie. Plik nie jest bytem karty sesji, więc zdarzenie
+idzie bez jej wskazania, a Library Explorer odświeża się ze strony głównej.

@@ -270,3 +270,20 @@ metadanych, których nikt nie sprawdził.
 Skala i jakość zlecenia wydania są w kontrakcie opcjonalne: zero wysłane do
 rdzenia byłoby żądaniem obrazu o zerowym boku albo zerowym stopniu kompresji
 i wróciłoby odmową, dlatego pole zerowe nie wchodzi do żądania.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-rozszerzen-dobudowa.ts
+
+Podział na dwa źródła (`zrodlo-rozszerzen-apps.ts` i to źródło) jest podziałem
+obowiązków, nie rozmiaru. Pierwsze prowadzi cykl życia pozycji: wykaz,
+instalację, konfigurację, przełącznik i odinstalowanie. To źródło niesie
+wszystko, co robi się na pozycji już stojącej — wyszukiwanie, kolekcje,
+wersjonowanie, rozmowę protokołem, webhooki, uprawnienia, podpis i sekrety.
+
+Żadna z tych komend nie niesie identyfikatora okna: katalog rozszerzeń jest
+bytem rdzenia stojącym poziom wyżej niż moduł, Apps jest jego operacyjnym
+frontem, nie drugim źródłem prawdy, więc pozycji nie posiada żadne okno.
+
+Sprawdzian kształtu odpowiedzi pyta przy każdej komendzie o pole, którego okno
+naprawdę używa. Pustka nie jest tu uszkodzonym kształtem: wykaz pusty i pole
+opcjonalne bez wartości są odpowiedziami prawdziwymi i znaczą, że tego jeszcze
+nie ma.

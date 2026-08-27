@@ -5766,3 +5766,13 @@ w którym Operator wskazywałby maszyny, w produkcie nie ma. Granica egzekucji: 
 adresy, po które sięga rdzeń, oraz wykaz mostów podawany procesowi modelu w konfiguracji.
 Gniazda otwierane przez sam proces modelu pozostają poza jej zasięgiem — na to potrzeba zapory
 albo przestrzeni nazw sieci, czyli środka systemu, nie rdzenia.
+
+## budowa/server/internal/core/stan_sesji.go
+
+Start zawsze prowadzi na stronę główną, a komenda session.bind nie jest
+ruchem otwierającym, tylko powrotem do sesji trwającej w tle. Powrót ma
+sens wyłącznie wtedy, gdy strona główna wie, dokąd wracać i co tam się
+dzieje: w którym środowisku sesja stoi, ile okien ma otwartych, w ilu trwa
+strumień odpowiedzi, co widzą przez nadania dostępu i czy pracuje w nich
+bieg naprawczy koordynatora. Sesje i okna zna nadzorca, bieg zna pętla,
+nadania zna warstwa danych, a punkt pracy zna telemetria.

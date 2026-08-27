@@ -2580,3 +2580,19 @@ Ogłoszenie zmiany ma jeden wspólny nasłuch, bo rejestr kanałów modelu leży
 danych nie dotyka, ale jego powrót ma przerysować stery, a wszystkie widoki modułu przerysowuje
 jedno ogłoszenie stanu — drugi, równoległy nasłuch w oknach trzeba by odpinać w każdej instancji
 panelu, a pierwszy przeoczony byłby wyciekiem.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zrodlo-strumienia-debaty.ts
+Rdzeń nadaje wypowiedź uczestnika na żywo, fragment po fragmencie, zanim utrwali ją i rozgłosi
+po raz drugi jako zdarzenie zmiany debaty rodzaju „updated" — ten moduł odbiera tylko tamtą
+nadawaną treść. Filtr działa po oknie, bo tylko okno jest w zdarzeniu strumienia pewne, więc
+oddziela głosy tej debaty od strumieni okna rozmowy, podglądu w tle i każdego innego nadawcy
+wspólnej drogi. Pole identyfikatora koperty zostaje surowe, bo jeden strumień niesie pod nim
+dwie różne wartości — fragmenty treści dostają identyfikator uczestnika, a fragment domykający
+i fragment błędu identyfikator wypowiedzi — a przypisanie do uczestnika należy do modułu
+źródła wypowiedzi, który pyta o ten identyfikator stan debaty. Moduł nie woła żadnej komendy
+obszaru roundtable i nie gromadzi treści, bo gromadzenie wymaga wiedzy o składzie uczestników,
+której subskrypcja strumienia nie niesie. Parametr okna funkcji tworzącej źródło jest funkcją
+odczytywaną w chwili nadejścia fragmentu, nie w chwili subskrypcji, żeby przełączenie modułu na
+inną debatę nie skutkowało przepuszczaniem fragmentów debaty poprzedniej przez zapamiętany
+filtr. Okno puste odrzuca cały ruch fragmentów, bo gospodarz bez okna nadanego przez rdzeń
+inaczej otrzymywałby fragmenty okna rozmowy i podglądu w tle podpisane uczestnikami tej debaty.

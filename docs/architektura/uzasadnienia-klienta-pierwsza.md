@@ -1801,3 +1801,15 @@ w kopercie zdarzenia daje rozstrzygnięcie „nieznany", a nie domysł.
 Plik jest osobny od `aplikacja/rozstrzyganie-sprawcy.ts`, który rozwiązuje inne
 zadanie: odpowiada na pytanie, czy czynność wykonało bieżące połączenie, i robi
 to dla zdarzeń, które pola `actor` w ogóle nie niosą.
+
+## budowa/klient-poprzedni/src/mission-control/pas-decyzji.ts
+
+Pas jest jedynym miejscem pulpitu, w którym praca stoi, dlatego jako jedyny nosi
+akcent: wstęgę trzech pikseli u góry, tło żetonu `--dn-akcent-tlo` oraz wezwanie
+z cieniem akcentu. Akcent obejmuje wstęgę i przycisk, nie całą powierzchnię.
+
+Kontrakt nie niesie odczytu przepływów wstrzymanych do decyzji: komplet danych
+podaje wtedy wartość pustą, pas mówi o braku źródła i chowa wezwanie, ponieważ
+przycisk wzywający do rozstrzygnięcia nieodczytanego wykazu byłby atrapą. Gdy
+źródło jest, a nic nie czeka, pas zmienia treść na zdanie o braku oczekujących
+przepływów, a wezwanie pozostaje czynne.

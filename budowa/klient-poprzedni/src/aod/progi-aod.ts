@@ -34,13 +34,13 @@ export const PROGI_AOD = {
   /** Próg liczby ponowień zadania: 2; trzecie tworzy sugestię wagi wysokiej. */
   liczbaPonowien: 2,
 
-  /** Próg wypełnienia kolejki: 80 procent pojemności. */
+  /** Próg wypełnienia kolejki: 80 procent; przekroczenie daje sugestię stanu kolejki zadań. */
   wypelnienieKolejki: 0.8,
 
-  /** Próg powtarzalności czynności ręcznej: 3 wystąpienia w karcie sesji. */
+  /** Próg powtarzalności czynności: 3 wystąpienia; przekroczenie daje sugestię konfiguracji. */
   powtarzalnoscCzynnosci: 3,
 
-  /** Czas życia sugestii nieprzyjętej: 24 godziny, po których zostaje odrzucona. */
+  /** Czas życia sugestii: 24 godziny; potem zostaje odrzucona i znika z listy oczekujących. */
   czasZyciaSugestiiMs: 24 * GODZINA_MS,
 } as const;
 
@@ -73,8 +73,8 @@ export const NAZWY_WYCISZEN: Readonly<Record<WyciszenieCzasowe, string>> = {
 /**
  * Chwila, do której trwa wyciszenie czasowe.
  *
- * „Do końca dnia" liczymy zegarem maszyny Operatora — funkcja stoi na jego
- * stanowisku, a nie w strefie czasowej rdzenia.
+ * Chwilę końca dnia liczy zegar maszyny Operatora, ponieważ funkcja stoi na
+ * jego stanowisku, a nie w strefie czasowej rdzenia.
  *
  * @param teraz chwila wydania polecenia w milisekundach epoki.
  */

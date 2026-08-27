@@ -3456,6 +3456,12 @@ zasypany atrapą.
 Chwilę końca wyciszenia do końca dnia liczy zegar maszyny Operatora, ponieważ
 funkcja stoi na jego stanowisku, a nie w strefie czasowej rdzenia.
 
+Przekroczenie progu czasu oczekiwania zadania w kolejce oraz przekroczenie progu
+wypełnienia kolejki tworzy sugestię klasy „stan kolejki zadań". Przekroczenie
+progu powtarzalności czynności ręcznej tworzy sugestię konfiguracji. Sugestia
+nieprzyjęta po upływie czasu życia otrzymuje status odrzuconej i znika z listy
+oczekujących.
+
 ## budowa/klient-poprzedni/src/moduly/design/stan-okna.ts
 
 Komunikat stanu przesłania treść okna, a nie zastępuje jej: nieudane odświeżenie

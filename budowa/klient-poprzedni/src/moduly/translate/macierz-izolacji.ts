@@ -12,26 +12,8 @@ import { wywolaj } from '../../protokol/wywolanie';
 import { utworzRozwiniecie } from './warstwy-translate';
 
 /**
- * Macierz izolacji technicznej widziana z modułu Translate — warstwa czwarta.
- *
- * Osiem zakresów technicznych procesu sesji rozstrzyga, czy tłumaczenie
- * materiału poufnego biegnie z odrębnym kontem, bez dostępu sieciowego i bez
- * dostępu do plików. Opracowanie modułu przypisuje ten panel Translate, a samo
- * ustawienie — oknu konfiguracji punktów izolacji. Ten element trzyma się tego
- * podziału: pokazuje stan, nie zmienia go.
- *
- * Odczyt, a nie zapis, jest tu rozstrzygnięciem, nie ograniczeniem. Platforma
- * ma własne okno punktów izolacji z pełną obsługą zapisu; druga kontrolka nad
- * tym samym kluczem dawałaby dwa miejsca zmiany jednej wartości, a przy odmowie
- * jednego z nich — dwa różne obrazy stanu.
- *
- * Zakres odczytu to karta sesji i jej warstwa: moduł pyta o politykę
- * obowiązującą tę pracę, nie o domyślną platformy. Sesji nieustalonej moduł nie
- * podmienia na globalną — mówi wtedy, że nie ma o co pytać.
- *
- * Stan wyjściowy platformy to zero blokad: żaden zakres nie jest domyślnie
- * odcięty. Macierz nazywa ten skutek przy każdym kluczu, a nie raz na górze,
- * bo wykaz się przewija.
+ * Macierz izolacji technicznej pokazuje stan ośmiu zakresów procesu sesji tłumaczenia,
+ * wyłącznie do odczytu — zmianę ustawień prowadzi osobne okno konfiguracji punktów izolacji platformy.
  */
 export interface MacierzIzolacji {
   element: HTMLElement;
@@ -39,7 +21,7 @@ export interface MacierzIzolacji {
   odczytaj(): Promise<void>;
 }
 
-/** Nazwy ośmiu zakresów technicznych widoczne dla Operatora. */
+/** Nazwy ośmiu zakresów technicznych izolacji procesu sesji, wyświetlane przy odczycie stanu macierzy w oknie modułu tłumaczeń, w brzmieniu zrozumiałym dla operatora. */
 const NAZWY_ZAKRESOW: Record<string, string> = {
   workingDirectory: 'Katalog roboczy',
   processEnvironment: 'Środowisko procesu',

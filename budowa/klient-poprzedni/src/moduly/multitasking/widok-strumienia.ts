@@ -4,23 +4,20 @@ import { wierszOpisu } from './kontrolki';
 import type { StanMultitaskingu } from './stan-multitaskingu';
 
 /**
- * Pełny strumień wykonawcy widziany przez koordynatora wraz
- * z licznikiem obiegów biegu naprawczego.
- *
- * Coordinator Chat widzi cztery rzeczy, nie samą odpowiedź: tok rozumowania,
- * wywołania narzędzi, wyniki i pliki. Rodzaje fragmentów pochodzą z kontraktu
- * przez katalog warstwy rozmowy (`RodzajFragmentu`), więc moduł nie przepisuje
- * ich po swojemu.
- *
- * Gdy bieg stoi, wiersz licznika niesie powód zatrzymania wprost
- * z `LoopState.stopReason` — zatrzymanie nie wygląda wtedy jak cisza.
+ * Pełny strumień wykonawców widziany przez okno koordynatora: tok rozumowania,
+ * wywołania narzędzi, wyniki i pliki wraz z licznikiem obiegów biegu naprawczego.
+ * Rodzaje fragmentów pochodzą z kontraktu przez katalog warstwy rozmowy.
  */
 export interface WidokStrumienia {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Nazwy rodzajów fragmentu widoczne w nagłówku wpisu. */
+/**
+ * Nazwy rodzajów fragmentu widoczne w nagłówku wpisu. Odwzorowanie sprowadza
+ * wartości kontraktu na określenia polszczyzny zawodowej, a rodzaj nieujęty
+ * w odwzorowaniu trafia do nagłówka w postaci surowej.
+ */
 const NAZWY_RODZAJOW: Readonly<Record<string, string>> = {
   [RodzajFragmentu.Tekst]: 'wynik',
   [RodzajFragmentu.Rozumowanie]: 'tok rozumowania',
@@ -33,7 +30,11 @@ const NAZWY_RODZAJOW: Readonly<Record<string, string>> = {
   [RodzajFragmentu.Konto]: 'konto kanału',
 };
 
-/** Ile ostatnich wpisów strumienia rysuje widok koordynatora. */
+/**
+ * Ile ostatnich wpisów strumienia rysuje widok koordynatora. Ograniczenie
+ * powstrzymuje rozrost drzewa dokumentu przy długim biegu, a wpisy starsze
+ * pozostają zachowane w stanie modułu.
+ */
 const WIDOCZNYCH = 40;
 
 export function utworzWidokStrumienia(stan: StanMultitaskingu): WidokStrumienia {
@@ -58,7 +59,11 @@ export function utworzWidokStrumienia(stan: StanMultitaskingu): WidokStrumienia 
   return { element, odswiez };
 }
 
-/** Licznik obiegów z `window.state.get`; brak biegu nie jest usterką. */
+/**
+ * Rysuje licznik obiegów biegu naprawczego odczytany komendą `window.state.get`.
+ * Brak biegu nie jest usterką i oddaje wiersz o biegu nierozpoczętym, a bieg
+ * zatrzymany niesie powód zatrzymania z pola `LoopState.stopReason`.
+ */
 function rysujLicznik(gospodarz: HTMLElement, bieg: LoopState | null): void {
   gospodarz.replaceChildren();
   if (bieg === null) {
@@ -83,7 +88,11 @@ function rysujLicznik(gospodarz: HTMLElement, bieg: LoopState | null): void {
   }
 }
 
-/** Wpisy strumienia obu wykonawców złożone w jeden ciąg czasu. */
+/**
+ * Składa wpisy strumienia obu wykonawców w jeden ciąg uporządkowany chwilą
+ * powstania i rysuje ostatnie z nich. Każdy wpis niesie znacznik okna
+ * źródłowego, więc pochodzenie fragmentu pozostaje czytelne po złączeniu.
+ */
 function rysujStrumien(gospodarz: HTMLElement, stan: StanMultitaskingu): void {
   const wykonawcy = stan.obsada().wykonawcy;
   const wpisy = wykonawcy
@@ -109,8 +118,7 @@ function rysujStrumien(gospodarz: HTMLElement, stan: StanMultitaskingu): void {
     element.className = 'dm-fragment';
     element.dataset['rodzaj'] = wpis.rodzaj;
     element.dataset['okno'] = wpis.okno;
-    // Pliki wyróżnione osobno — stoją obok toku rozumowania, wywołań i wyników
-    // jako czwarta rzecz widoczna dla koordynatora.
+    // Pliki wyróżnione osobno, obok toku rozumowania, wywołań i wyników.
     element.dataset['plik'] = String(czyPlik(wpis.rodzaj));
 
     const naglowek = document.createElement('span');
@@ -126,7 +134,11 @@ function rysujStrumien(gospodarz: HTMLElement, stan: StanMultitaskingu): void {
   }
 }
 
-/** Czy rodzaj fragmentu niesie plik — obraz albo dźwięk zwrócony przez narzędzie. */
+/**
+ * Rozstrzyga, czy rodzaj fragmentu niesie plik. Plikiem jest obraz albo dźwięk
+ * zwrócony przez narzędzie, a rozpoznanie opiera się wyłącznie na wartościach
+ * wyliczenia `ChunkKind` pochodzącego z kontraktu.
+ */
 function czyPlik(rodzaj: ChunkKind): boolean {
   return rodzaj === ChunkKind.Image || rodzaj === ChunkKind.Audio;
 }

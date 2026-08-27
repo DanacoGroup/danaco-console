@@ -1069,3 +1069,12 @@ w procesie", a nie „plik jest zepsuty": pod tą samą odmową kryje się AVIF,
 którego dekodera w Go nie ma. Rozstrzyga to wołający, przechodząc na program
 pakietu serwera — gdyby plik był naprawdę uszkodzony, tamta droga powie to
 wprost.
+
+## skutek_przestrzeni_roboczej_test.go
+
+Wzorzec szkody, którego pilnują sprawdziany tego pliku, ma w produkcie
+precedens: odpowiedź udana z pustym wynikiem przechodzi każdy sprawdzian
+zgodności z kontraktem i nie mówi nic o tym, czy cokolwiek zostało. Dlatego
+żaden sprawdzian tutaj nie kończy się na odczytaniu odpowiedzi komendy: każdy
+schodzi własnym zapytaniem SQL do pliku bazy albo do pliku na dysku i mierzy
+niezależnie od tego, co rdzeń zameldował.

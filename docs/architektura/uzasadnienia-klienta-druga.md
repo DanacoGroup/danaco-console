@@ -1706,3 +1706,17 @@ modułu prowadzi jeden dokument czynny. Migawka jest jedyną drogą do tego —
 druga kopia stanu modułu rozjechałaby się z nim przy pierwszym zdarzeniu
 rdzenia. Nadejście wyniku operacji unieważnia odmowę poprzednią, ponieważ
 komunikat o odmowie i komunikat o wyniku nie mogą stać obok siebie prawdziwe.
+
+## budowa/klient-poprzedni/src/rozmowa/etykiety-rozmowy.ts
+Napis nigdy nie stoi obok samej barwy: każdy stan niesie słowo, bo stan sygnalizowany wyłącznie kolorem jest niedopuszczalny.
+
+Podpowiedź pod polem wpisywania mówi wprost, że pole jest zarazem filtrem wykazu, i wymienia klawisze, które przy otwartym wykazie znaczą co innego niż zwykle.
+
+Napis wykazu wytworów mówi „narzędzia", a nie „pliki": rdzeń nie nadaje spisu wytworzonych plików, więc wykaz wymienia nazwy wywołanych narzędzi.
+
+Opis stanu pustego trybu Streszczenie tłumaczy, czym streszczenie jest i skąd się bierze, zamiast meldować brak danych.
+
+Odpowiedź na Zatrzymaj bez tury dotyczy przypadku, w którym rdzeń oddaje pole stopped równe fałsz, a kliknięcie i tak musi zostawić ślad na ekranie.
+
+## budowa/klient-poprzedni/src/strona-glowna/czynnosci-sesji.ts
+Plik nie zna kanału ani kontraktu — wykonanie czynności podaje wpięcie. Warunki dostępności czynności stoją w tym pliku, a nie w karcie czy w menu, ponieważ karta buduje wiersz, menu buduje przyciski, i żadne z nich nie rozstrzyga, czy na przykład wznowienie sesji czynnej ma sens; jedno miejsce daje jedną odpowiedź i jedno miejsce do poprawienia, gdy rdzeń zmieni stany sesji. Brak czynności zdejmuje przycisk z menu, zamiast go wyszarzać, ponieważ przycisk widoczny, którego naciśnięcie nic nie robi, jest atrapą — wiersz bez czynności pozostaje czysto informacyjny. Zatrzymanie tur ma sens wyłącznie przy turze w biegu, bo zero okien strumieniujących znaczy, że komenda nie miałaby czego zatrzymać. Wznowienie dotyczy sesji, która nie biegnie — wstrzymanej albo zakończonej — ponieważ sesja czynna nie ma czego wznawiać.

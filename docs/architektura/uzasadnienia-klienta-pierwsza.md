@@ -570,3 +570,28 @@ zdanie pozostaje prawdziwe, tyle że szersze.
 Warstwy żądanie nie podaje. Warstwa pominięta znaczy warstwę obowiązującą,
 a wskazanie którejkolwiek innej byłoby cudzym rozstrzygnięciem przebranym
 za odczyt stanu.
+
+## budowa/klient-poprzedni/src/moduly/browser/zapisy-przekazania.ts
+
+Moduł skupia ścieżki zapisu wychodzące poza obszar komend `browser.*` i jest
+trzymany osobno od odczytu w `zrodlo-browser.ts`, ponieważ dotyczy innych
+obszarów kontraktu i ma innego adresata.
+
+Przekazanie międzymodułowe, uruchamiane poleceniami wysłania do innego modułu
+oraz tłumaczenia, idzie komendą `context.transfer`. Jest to jedyna droga
+przeniesienia kompletu kontekstu między modułami, jaką niesie kontrakt i jaką
+obsługuje rdzeń.
+
+Pytanie o zaznaczenie, uruchamiane poleceniem wyjaśnienia na pasku pływającym,
+idzie komendą `message.send`. Oknem, do którego pytanie trafia, jest okno modułu
+Browser, to samo, którego identyfikator niosą komendy `browser.*`.
+
+Adnotacja spłaszczona do obrazu rastrowego idzie tą samą drogą co pytanie:
+`message.send` kładzie treść w rozmowie wskazanego okna i niesie pole
+`attachments`, natomiast `context.transfer` wymaga pola `targetModuleId`
+i wysłałby rysunek poza moduł, w którym powstał, nie stawiając go w rozmowie
+wcale.
+
+Pole `attachments` żądania `message.send` jest polem kontraktu: rdzeń przepisuje
+je do zakładanej wiadomości w adapterze rozmowy i oddaje w odpowiedzi, dzięki
+czemu okno ocenia dołączenie po wierszu, który wrócił, a nie po tym, że wysłało.

@@ -3222,3 +3222,26 @@ Pole wyboru niesie zaznaczenie wielokrotne, bo źródła wybiera się grupami do
 „Czytaj" jest akcją podstawową pozycji i otwiera materiał w Reading View — jest czynny przy każdym
 źródle, także przy takim, które nie wskazuje dokumentu repozytorium: wtedy odpowiedzią jest zdanie
 czytnika o braku drogi do treści, a nie wygaszona kontrolka.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-srodowisk.ts
+Nazwa strefy jest nazwą ustaloną w warstwie projektowej, nie parafrazą; stoi tak samo w schemacie strony
+i w makiecie Centrum dowodzenia, więc nazw sekcji nie tłumaczymy i nie skracamy.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-translation-memory.ts
+Kontrakt nie ma odczytu par, ich edycji, progu dopasowania, zasięgu, wymiany TMX ani operacji
+konserwacyjnych — okno robi więc to jedno, co da się zrobić, i przy każdej pozostałej funkcji
+mówi, czego brakuje, zamiast stawiać kontrolkę, która nie ma czego wysłać. Konkordancja i
+podpowiedź to w tym oknie jedna czynność, bo w kontrakcie są jedną komendą: pole szukania
+wypełnia się segmentem wybranym z tekstu źródłowego albo frazą wpisaną ręcznie, a wynikiem jest
+wykaz podpowiedzi rdzenia — dwa osobne przyciski nad jedną komendą sugerowałyby dwie różne
+zdolności. Wskazanie panelu jest wymagane przez kontrakt, a nie przez okno: pamięć odpowiada
+w języku panelu, więc bez panelu nie ma języka, w którym miałaby podpowiadać.
+Pozostałe czynności rodziny pamięci — wykaz par, zapis pary, usunięcie, wymiana z plikiem TMX,
+utrzymanie, tłumaczenie wstępne, wyrównanie i polityka okna — mają swoje pola w oknie Warsztat
+tłumaczenia i nie są tu powtórzone ani nazwane brakiem: jedna czynność w dwóch oknach to dwie
+drogi, które rozjadą się przy pierwszej zmianie kontraktu, a napis „brak" przy czynności, która
+działa, jest zwykłą nieprawdą.
+Wykaz trafień w wyszukiwaniu zostaje na widoku, bo jest wynikiem szukania, a nie odbiciem stanu
+modułu, więc zmiana panelu w innym oknie nie ma go kasować; wykaz pusty jest wynikiem, nie pustką
+okna — rdzeń odpowiedział i dopasowania nie znalazł, a odmowa czyści wykaz, bo trafienia sprzed
+odmowy dotyczyłyby innego zapytania niż to, które właśnie zawiodło.

@@ -2803,3 +2803,24 @@ Stan kroku przebiegu wraz z ładunkami wejściowymi i wyjściowymi jest zapisem 
 
 ## budowa/desktop/src-tauri/src/menu_zasobnika.rs
 Menu zasobnika celowo nie ma pozycji zatrzymania rdzenia: rdzeń stoi na serwerze wdrożenia, powłoka go nie postawiła i nie ma czym go wygasić, więc taka pozycja obiecywałaby władzę, której powłoka nie ma.
+## budowa/server/internal/store/migracja_163_korekta_tlumaczenia.sql
+Migracja 163 — ustalenia korekty językowej modułu Translate
+(`translate.proofread.run`, `translate.proofread.apply`).
+
+Ustalenie korekty musi być trwałe, inaczej `proofread.apply` nie ma czego
+zastosować: kontrakt każe wskazać ustalenia identyfikatorami
+(`findingIds`) w osobnym wywołaniu, a identyfikator wydany w odpowiedzi
+i zapomniany po niej byłby identyfikatorem donikąd. To odróżnia korektę od
+kontroli jakości (`quality.check`), której zastrzeżenia są migawką
+wymienianą w całości i nikt ich nie adresuje pojedynczo.
+
+Ustalenie ma trzy stany życia i wszystkie trzy są tu widoczne: nowe
+(`zastosowano` i `odrzucono` puste), zastosowane (Operator przyjął
+poprawkę) i odrzucone (Operator ustalenie oddalił). Kasowanie odrzuconych
+byłoby zgubieniem odpowiedzi „nie, tak ma być" — kolejny przebieg korekty
+zgłosiłby to samo po raz drugi.
+
+Wynik czytelności (`ReadabilityScore`) nie ma tu tabeli. Jest funkcją treści
+panelu w chwili pomiaru: liczba zdań, długość słowa, długość zdania. Wiersz
+trzeba by unieważniać przy każdej korekcie panelu, a `proofread.run` i tak
+liczy go od nowa; nikt też nie adresuje wyniku czytelności identyfikatorem.

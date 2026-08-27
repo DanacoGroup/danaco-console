@@ -944,3 +944,48 @@ Most do dokumentu jest wiązaniem dwustronnym: okno Translate wie, z
 którego dokumentu wzięło materiał, a wysyłka wyniku wie, dokąd go
 odesłać. Bez takiego wiersza wysyłka wyniku musiałaby dostać wskazanie
 dokumentu drugi raz, czego kontrakt nie przewiduje.
+
+## budowa/server/internal/store/migracja_121_pamiec_widocznosc_zrodlo.sql
+
+Wszystkie trzy dodatki tej migracji są brakiem bytu, nie brakiem komendy:
+komendy `agent.create`, `agent.update` i `extension.install` istnieją
+i działają, ale nie miały gdzie zapisać trzech faktów, których wymaga od nich
+specyfikacja. Idą w jednej migracji, bo dotyczą jednego zestawu komend;
+rozbicie na trzy numery nie dołożyłoby ani jednej informacji.
+
+Definicja eksperta wskazuje, z których poziomów pamięci korzysta domyślnie
+(`globalna | projekt | sesja | środowisko`), albo pamięć jest wyłączona
+w całości. „Wyłączona" nie jest piątym poziomem i nie wolno jej tak zapisać:
+piąta wartość obok czterech pozwala ułożyć wiersz sprzeczny — `sesja`
+i `wyłączona` naraz — który rdzeń musiałby rozstrzygać zgadywaniem. Wyłączenie
+jest pustym zbiorem poziomów, a jedynym kształtem, który zbiór pusty niesie bez
+udawania, jest tabela podrzędna: brak wierszy znaczy brak poziomów i nic
+więcej. Kolumna napisowa z listą po przecinku dawałaby to samo, ale bez więzu
+CHECK na każdej wartości i bez klucza pilnującego, że poziom się nie powtórzy.
+
+Wartość wyjściowa to komplet czterech poziomów, nie zbiór pusty: stanem
+wyjściowym platformy jest pełny dostęp operacyjny, więc ekspert świeżo założony
+ma pracować, nie prosić o włączenie pamięci. Wyłączenie jest świadomą decyzją
+operatora, więc to ono wymaga czynności. Wartość ta jest wyjściowa, nie
+ostateczna: przypisanie eksperta do projektu i do roli nadpisują ją, bo
+pierwszeństwo ma zasięg najbardziej szczegółowy. Ta tabela trzyma wyłącznie
+wartość z definicji eksperta; nadpisania mają własne poziomy zasięgu.
+
+Widoczność ma dwie wartości (`globalny | projektowy`). Dołożenie obok nich
+kolumny `projekt_id` byłoby drugą prawdą o przynależności eksperta do projektu
+obok tabeli `przypisanie_agenta_projektu` (migracja 035), którą wypełnia
+`workspace.agent.assign`; dwie prawdy rozjechałyby się przy pierwszym
+przypisaniu zrobionym drugą drogą. Widoczność mówi więc tylko to, czego tamta
+tabela nie mówi.
+
+Rdzeń serwera nie rozróżnia źródła rozszerzenia — obowiązuje wspólny kontrakt
+integracji. Ładowanie, wywołanie i użycie operacyjne są dla `danaco`
+i `personal` te same, i ta migracja nie zakłada bytu, który by je rozdzielał.
+Jedyny wyjątek to stan wyjściowy przy rejestracji: rozszerzenie danaco staje
+włączone, bo zestaw wbudowany jest częścią funkcjonalności bazowej; rozszerzenie
+personal staje wyłączone, bo operator włącza je świadomie, po przejrzeniu
+konfiguracji i zakresu. Rozstrzyga to warstwa instalacji, nie ta tabela —
+kolumna niesie sam fakt pochodzenia. Wiersze zastane dostają `personal`, bo
+wszystkie powstały wywołaniem `extension.install` przez operatora; wpisanie im
+`danaco` byłoby ogłoszeniem, że coś jest częścią pakietu serwera, choć nikt
+tego nie dostarczył.

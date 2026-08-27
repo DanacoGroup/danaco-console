@@ -6012,3 +6012,11 @@ które silnik pokaże jako stan błędny.
 Owinięcie portu rozmowy telemetrią, a nie druga implementacja rozmowy, jest
 też jedynym sposobem, żeby producent telemetrii nie musiał być wpleciony
 w każdy obsługiwacz rozmowy z osobna.
+
+## budowa/server/internal/core/kolejka_zlecenia.go
+Kontrakt niesie pole żądania jako surowy JSON i nie opisuje pozycji kolejki strukturą. Dopóki tak
+jest, rdzeń przyjmuje trzy zapisy tej samej rzeczy — odmowa z powodu nawiasu byłaby odmową z
+powodu braku kontraktu, nie z powodu błędu Operatora: zlecenie z tytułem i treścią w tablicy
+obiektów, sama treść zlecenia w tablicy napisów, albo wykaz w opakowaniu z polem elementów. Brak
+pola, pole puste i wartość null dają kolejkę bez zleceń — kolejka pusta jest stanem poprawnym.
+Ładunek nieczytelny jako JSON jest błędem żądania: to nie brak danych, tylko dane uszkodzone.

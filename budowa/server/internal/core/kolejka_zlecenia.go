@@ -1,3 +1,5 @@
+// Plik odczytuje zlecenia początkowe kolejki z ładunku komendy queue.create, przyjmując trzy
+// zapisy tej samej rzeczy dopóki kontrakt nie opisuje pozycji kolejki strukturą.
 package core
 
 import (
@@ -10,28 +12,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// Odczyt zleceń początkowych kolejki z ładunku komendy queue.create.
-//
-// Kontrakt niesie pole `items` jako surowy JSON
-// (QueueCreateRequest.Items = json.RawMessage) i nie opisuje pozycji kolejki
-// strukturą. Dopóki tak jest, rdzeń przyjmuje trzy zapisy tej samej rzeczy —
-// odmowa z powodu nawiasu byłaby odmową z powodu braku kontraktu, nie z powodu
-// błędu Operatora:
-//
-//	[{"title":"…","content":"…"}, …]  — zlecenie z tytułem i treścią
-//	["…", …]                          — sama treść zlecenia
-//	{"items":[…]}                     — wykaz w opakowaniu
-//
-// Brak pola, pole puste i `null` dają kolejkę bez zleceń — kolejka pusta jest
-// stanem poprawnym. Ładunek nieczytelny jako JSON jest błędem
-// żądania: to nie brak danych, tylko dane uszkodzone.
-
 // dlugoscTytuluZTresci ogranicza tytuł wyprowadzony z treści zlecenia. Kolumna
 // `pozycja_kolejki.tytul` jest etykietą pozycji w Mission Control, nie kopią
 // polecenia.
 const dlugoscTytuluZTresci = 80
 
-// zlecenieKolejki to jedno zlecenie w postaci przyjmowanej z ładunku komendy.
+// zlecenieKolejki to jedno zlecenie w postaci przyjmowanej z ładunku komendy zapisu tej samej kolejki.
 type zlecenieKolejki struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
@@ -124,7 +110,7 @@ func pozycjaZeZlecenia(zlecenie zlecenieKolejki) (dane.Pozycja, bool) {
 	return pozycja, true
 }
 
-// tytulZTresci wyprowadza etykietę pozycji z pierwszego wiersza polecenia.
+// tytulZTresci wyprowadza etykietę pozycji z pierwszego wiersza polecenia zlecenia tej samej kolejki roboczej.
 func tytulZTresci(tresc string) string {
 	wiersz, _, _ := strings.Cut(tresc, "\n")
 	wiersz = strings.TrimSpace(wiersz)
@@ -135,7 +121,7 @@ func tytulZTresci(tresc string) string {
 	return wiersz
 }
 
-// bladZlecen nazywa odmowę odczytu wykazu zleceń.
+// bladZlecen nazywa odmowę odczytu wykazu zleceń nadesłanego z ładunkiem komendy zapisu tej samej kolejki.
 func bladZlecen(err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nieczytelny wykaz zleceń kolejki: "+err.Error()))

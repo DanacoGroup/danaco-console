@@ -595,3 +595,11 @@ wcale.
 Pole `attachments` żądania `message.send` jest polem kontraktu: rdzeń przepisuje
 je do zakładanej wiadomości w adapterze rozmowy i oddaje w odpowiedzi, dzięki
 czemu okno ocenia dołączenie po wierszu, który wrócił, a nie po tym, że wysłało.
+
+## budowa/klient-poprzedni/src/komponenty/naglowek-okna.ts
+
+Jeden kształt górnego pasa obowiązuje we wszystkich modułach, ponieważ Operator ma otrzymywać tę samą odpowiedź na pytanie o tożsamość oglądanego okna niezależnie od tego, który moduł je otworzył. Granica wobec ramy okna przebiega tak, że rama obejmuje cały kontener okna wraz z ciałem i stanami, natomiast nagłówek odpowiada wyłącznie za górny pas i nie zna treści umieszczonej pod sobą. Nagłówek nie osadza się samodzielnie w drzewie dokumentu, lecz dostaje go rama okna albo plik okna.
+
+Plakietka roli stoi bezpośrednio przy nazwie, ponieważ nazwy okien powtarzają się między modułami: Process Monitor w module Terminal i Execution Monitor w module Automations to dwa odrębne okna. Podpis roli jest tym elementem, który je na ekranie rozróżnia, dlatego napis w plakietce bywa zarówno samym określeniem roli, jak i zdaniem doprecyzowującym przeznaczenie okna.
+
+Wygląd pasa pochodzi w całości z biblioteki: pas stoi na klasie dn-karta-naglowek, nazwa na klasie dn-karta-tytul, a plakietka roli na klasie dn-plakietka--rola, bez klas własnych i bez barw zapisanych w kodzie. Moduł, który potrzebuje odstępstwa, podaje własną klasę polem klasa i styluje nazwę selektorem potomka, zamiast powielać komponent. Wyrównanie kontrolek do prawej krawędzi należy do modułu wołającego, który opakowuje je klasą dn-pasek-prawa.

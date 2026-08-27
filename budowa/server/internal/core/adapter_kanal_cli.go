@@ -9,24 +9,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// kanalGlowny wnosi kanał główny (Claude Code CLI) do rejestru kanałów.
-//
-// Rejestr modeli zna wyłącznie interfejs models.Kanal i klucz adaptera będący
-// wartością danych; pakiet injection zna wyłącznie swój proces, pulę kont
-// i strumień. Żaden nie importuje drugiego — łączy je ten adapter,
-// mieszkający w warstwie składania.
+// kanalGlowny wnosi kanał główny Claude Code CLI do rejestru kanałów, łącząc pakiet injection oraz rejestr modeli w warstwie składania.
 type kanalGlowny struct {
 	definicja models.Definicja
 	kanal     *injection.Kanal
-	// przejmowanie oddaje proces tury pod uchwyt sesji, dzięki czemu zamknięcie
-	// okna kończy także to, co model uruchomił. Puste nie blokuje tury.
+	// przejmowanie oddaje proces tury pod uchwyt sesji, by zamknięcie okna kończyło też pracę modelu.
 	przejmowanie *przejmowanieProcesow
-	// zdarzenia odbiera zdarzenia zaczepów ze strumienia: dziennik
-	// zdarzeń i diagnostyka. Puste nie blokuje tury — znika ślad.
+	// zdarzenia odbiera zdarzenia zaczepów ze strumienia do dziennika zdarzeń i diagnostyki.
 	zdarzenia *zdarzeniaWykonawcze
-	// nazwaKonta tłumaczy wskazanie konta (identyfikator kontraktu albo
-	// nazwa) na kod konta puli. Puste nie blokuje tury — wskazanie
-	// jedzie wtedy dosłownie.
+	// nazwaKonta tłumaczy wskazanie konta, identyfikator kontraktu albo nazwę, na kod konta puli.
 	nazwaKonta func(string) string
 }
 
@@ -39,10 +30,7 @@ const parametrProgramu = "program"
 // domyślną, nie odmową pracy.
 const programDomyslny = "claude"
 
-// fabrykaKanaluGlownego zwraca fabrykę adaptera kanału głównego dla rejestru
-// modeli. Pula kont żyje dłużej niż jedno wywołanie, więc jest wspólna dla
-// wszystkich wierszy tego rodzaju — rotacja konta po wyczerpaniu limitu ma sens
-// tylko wtedy, gdy pamięć wyczerpania jest jedna.
+// fabrykaKanaluGlownego zwraca fabrykę adaptera kanału głównego dla rejestru modeli, dzieloną przez wszystkie wiersze tego rodzaju.
 func fabrykaKanaluGlownego(pula *injection.PulaKont, przejmowanie *przejmowanieProcesow,
 	zdarzenia *zdarzeniaWykonawcze, nazwaKonta func(string) string) models.Fabryka {
 	return func(d models.Definicja) (models.Kanal, error) {
@@ -51,30 +39,22 @@ func fabrykaKanaluGlownego(pula *injection.PulaKont, przejmowanie *przejmowanieP
 	}
 }
 
-// Kod zwraca kod wiersza rejestru, z którego kanał powstał.
+// Kod zwraca kod wiersza rejestru modeli, z którego adapter kanału głównego powstał podczas budowy fabryki.
 func (k *kanalGlowny) Kod() string {
 	return k.definicja.Kod
 }
 
-// Definicja zwraca wiersz rejestru.
+// Definicja zwraca pełny wiersz rejestru modeli, na podstawie którego adapter kanału głównego został utworzony.
 func (k *kanalGlowny) Definicja() models.Definicja {
 	return k.definicja
 }
 
-// Wyslij przeprowadza jedną turę kanału głównego i przekazuje jej strumień do
-// ujścia. Fragmenty idą w kolejności nadania — pierwszy jest fragment
-// prowenancji, który składa kanał.
-//
-// Błąd tury wraca wynikiem, a nie drugim fragmentem: fragment błędu nadał już
-// kanał, a rejestr modeli nie ma powielać tej samej przyczyny.
+// Wyslij przeprowadza jedną turę kanału głównego i przekazuje jej strumień do ujścia, w kolejności nadania fragmentów.
 func (k *kanalGlowny) Wyslij(ctx context.Context, z models.Zapytanie, u models.Ujscie) error {
-	// Na progu tury pula bierze bieżący wykaz kont z katalogu, więc konto dodane
-	// albo usunięte komendą account.* wchodzi do rotacji bez restartu.
-	// Pusta pula i pula bez wpiętego źródła zostają nietknięte.
+	// Pula bierze na progu tury bieżący wykaz kont z katalogu, więc zmiana konta wchodzi bez restartu.
 	k.kanal.Pula().OdswiezZeZrodla()
 	zapytanie := injection.Zapytanie{
-		// Proces tury trafia pod uchwyt sesji zaraz po starcie, żeby zamknięcie
-		// okna kończyło także to, co model uruchomił.
+		// Proces trafia pod uchwyt sesji zaraz po starcie, żeby zamknięcie okna kończyło też pracę modelu.
 		NaStartProcesu: k.przejmowanie.Haczyk(z.Okno()),
 		// Zdarzenia zaczepów jadą do dziennika zdarzeń i diagnostyki.
 		NaZdarzenieZaczepu: k.zdarzenia.HaczykZaczepow(z.Okno(), z.Wiadomosc),
@@ -84,10 +64,7 @@ func (k *kanalGlowny) Wyslij(ctx context.Context, z models.Zapytanie, u models.U
 		Ustawienia:         ustawieniaKanaluGlownego(k.definicja, z),
 		Nakladka:           nakladkaKanaluGlownego(z),
 	}
-	// Konto wskazane w obszarze account konfiguracji sesji albo w wierszu
-	// rejestru dojeżdża do procesu; bez tego tor CLI jechałby zawsze rotacją
-	// puli. Wskazanie kontraktowe (identyfikator liczbowy) tłumaczy na kod konta
-	// puli resolver montażu.
+	// Konto wskazane w konfiguracji sesji albo w wierszu rejestru dojeżdża do procesu zamiast rotacji.
 	zapytanie.Ustawienia.Konto = k.przelozoneKonto(z)
 	var przyczyna error
 	for fragment := range k.kanal.Rozmowa(ctx, zapytanie) {
@@ -124,24 +101,18 @@ func ustawieniaKanaluGlownego(d models.Definicja, z models.Zapytanie) injection.
 		TrybUprawnien: z.TrybUprawnien,
 		Katalogi:      z.KatalogiRobocze,
 		Wznowienie:    z.Wznowienie,
-		// Pułap kosztu jedzie do --max-budget-usd. Zero znaczy brak przełącznika,
-		// więc wiersz argv okna bez nastawy nie zmienia się o bajt.
+		// Pułap kosztu jedzie do przełącznika budżetu; zero znaczy brak przełącznika w wierszu argv.
 		PulapKosztuUSD: z.PulapKosztuUSD,
-		// Plik ustawień i środowisko z obszarów konfiguracji sesji (tools,
-		// permissions, environment, provider). Puste znaczy brak przełącznika
-		// i brak zmiennych.
+		// Plik ustawień i środowisko pochodzą z obszarów konfiguracji sesji; puste znaczy brak przełącznika.
 		PlikUstawien: z.PlikUstawien,
 		Srodowisko:   z.Srodowisko,
 	}
-	// Katalog startowy procesu bierze się z ustawienia katalogu sesji. Brak
-	// ustalenia schodzi na pierwszy katalog roboczy okna.
+	// Katalog startowy procesu bierze się z katalogu sesji, a w braku ustalenia z pierwszego katalogu.
 	u.KatalogRoboczy = z.KatalogSesji
 	if u.KatalogRoboczy == "" && len(z.KatalogiRobocze) > 0 {
 		u.KatalogRoboczy = z.KatalogiRobocze[0]
 	}
-	// Konfiguracja MCP jedzie dwiema drogami, każda osobnym --mcp-config: nadania
-	// okna (KonfiguracjaMCP) i wiązania obszaru mcp konfiguracji sesji
-	// (DodatkoweMCP). Nie przykrywają się — proces dostaje sumę obu.
+	// Konfiguracja MCP jedzie dwiema drogami, nadaniem okna i wiązaniem sesji; proces dostaje sumę obu.
 	if z.KonfiguracjaMCP != "" {
 		u.KonfiguracjaMCP = append(u.KonfiguracjaMCP, z.KonfiguracjaMCP)
 	}

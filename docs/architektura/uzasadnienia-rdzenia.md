@@ -4778,3 +4778,14 @@ osi platformy schodzi do adaptera podstawowego bez zmiany, a osobną drogę ma
 wyłącznie oś modelu i oś konta. Przekład wiersza repozytorium na wpis kontraktu
 należy w całości do pakietu konfiguracji — rdzeń nie prowadzi tu własnego
 kodowania wartości.
+
+## budowa/server/internal/core/adapter_kanal_cli.go
+Rejestr modeli zna wyłącznie interfejs kanału i klucz adaptera będący wartością danych; pakiet injection zna wyłącznie swój proces, pulę kont i strumień. Żaden z nich nie importuje drugiego, łączy je ten adapter, mieszkający w warstwie składania.
+
+Pula kont żyje dłużej niż jedno wywołanie, więc jest wspólna dla wszystkich wierszy tego rodzaju: rotacja konta po wyczerpaniu limitu ma sens tylko wtedy, gdy pamięć wyczerpania jest jedna.
+
+Fragmenty tury idą w kolejności nadania, pierwszy jest fragment prowenancji, który składa kanał. Błąd tury wraca wynikiem, a nie drugim fragmentem: fragment błędu nadał już kanał, a rejestr modeli nie ma powielać tej samej przyczyny.
+
+Pusta pula i pula bez wpiętego źródła zostają nietknięte przy odświeżeniu z katalogu na progu tury.
+
+Wskazanie kontraktowe konta, identyfikator liczbowy, tłumaczy na kod konta puli resolver montażu; bez tego tor kanału głównego jechałby zawsze rotacją puli.

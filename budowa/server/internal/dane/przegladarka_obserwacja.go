@@ -1,16 +1,7 @@
 // Odpowiedzialność pliku: to, co moduł Browser obserwuje między jedną sesją
 // a drugą — monitory zmian stron (migracja 172), kanały RSS/Atom wraz z ich
-// wpisami (173), kolejka czytania (174) i zakładki (171).
-//
-// Cztery tabele w jednym pliku, bo jedna odpowiedzialność: wszystkie niosą
-// wykaz rzeczy odłożonych na później i wszystkie są zasilane z Capture &
-// Monitor Panel. Rozbicie ich na cztery pliki dałoby cztery nagłówki mówiące
-// to samo zdanie.
-//
-// Odniesienie monitora nie leży w kolumnie. Treść pilnowanej strony bywa setkami
-// kilobajtów, więc kolumna niesie odwołanie do magazynu — wzorem
-// `migawka_strony.tekst_odwolanie`. Obok stoi długość odniesienia, żeby wykaz
-// monitorów mówił o rozmiarze bez sięgania po plik.
+// wpisami (173), kolejka czytania (174) i zakładki (171), zasilane z Capture
+// & Monitor Panel.
 package dane
 
 import (
@@ -20,7 +11,8 @@ import (
 	"fmt"
 )
 
-// MonitorPrzegladania to wiersz tabeli `monitor_przegladania`.
+// MonitorPrzegladania to wiersz tabeli `monitor_przegladania`, niosący adres,
+// próg zmiany, kanał powiadomienia i odwołanie do treści pilnowanej strony.
 type MonitorPrzegladania struct {
 	ID                   int64
 	Kod                  string
@@ -39,7 +31,8 @@ type MonitorPrzegladania struct {
 	Utworzono            string
 }
 
-// KanalPrzegladania to wiersz tabeli `kanal_przegladania` — jedna subskrypcja.
+// KanalPrzegladania to wiersz tabeli `kanal_przegladania` — jedna subskrypcja
+// kanału RSS albo Atom, niosąca adres, tytuł, postać i chwilę ostatniego pobrania.
 type KanalPrzegladania struct {
 	ID             int64
 	Kod            string
@@ -52,7 +45,8 @@ type KanalPrzegladania struct {
 	Utworzono      string
 }
 
-// WpisKanalu to wiersz tabeli `wpis_kanalu_przegladania`.
+// WpisKanalu to wiersz tabeli `wpis_kanalu_przegladania`, niosący adres,
+// tytuł, streszczenie i znamię przeczytania jednej pozycji kanału.
 type WpisKanalu struct {
 	ID           int64
 	Kod          string
@@ -65,7 +59,8 @@ type WpisKanalu struct {
 	Utworzono    string
 }
 
-// PozycjaCzytania to wiersz tabeli `pozycja_czytania_przegladania`.
+// PozycjaCzytania to wiersz tabeli `pozycja_czytania_przegladania`, niosący
+// adres, notatkę, znamię przeczytania i chwilę przypomnienia.
 type PozycjaCzytania struct {
 	ID            int64
 	Kod           string
@@ -78,7 +73,8 @@ type PozycjaCzytania struct {
 	Utworzono     string
 }
 
-// ZakladkaPrzegladania to wiersz tabeli `zakladka_przegladania`.
+// ZakladkaPrzegladania to wiersz tabeli `zakladka_przegladania`, niosący
+// adres, tytuł, folder, etykiety tekstem JSON i notatkę.
 type ZakladkaPrzegladania struct {
 	ID           int64
 	Kod          string
@@ -226,7 +222,8 @@ const (
 	usunZakladke = `DELETE FROM zakladka_przegladania WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszMonitor zakłada monitor albo nadpisuje zastany.
+// ZapiszMonitor zakłada monitor albo nadpisuje zastany, przyjmując stan
+// „pending", gdy wołający go nie poda.
 func (r *repozytoriumPrzegladania) ZapiszMonitor(ctx context.Context,
 	monitor MonitorPrzegladania) (MonitorPrzegladania, error) {
 
@@ -251,7 +248,8 @@ func (r *repozytoriumPrzegladania) ZapiszMonitor(ctx context.Context,
 	return r.Monitor(ctx, monitor.Kod)
 }
 
-// Monitor oddaje monitor o wskazanym kodzie.
+// Monitor oddaje monitor o wskazanym kodzie zewnętrznym albo błąd
+// ErrBrakWiersza, gdy monitor o tym kodzie nie istnieje.
 func (r *repozytoriumPrzegladania) Monitor(ctx context.Context, kod string) (MonitorPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzMonitor)
 	if err != nil {
@@ -267,7 +265,8 @@ func (r *repozytoriumPrzegladania) Monitor(ctx context.Context, kod string) (Mon
 	return monitor, nil
 }
 
-// Monitory oddaje monitory, opcjonalnie zawężone do okna i do włączonych.
+// Monitory oddaje monitory, opcjonalnie zawężone do okna i do włączonych,
+// od najświeższego, do granicy podanego limitu.
 func (r *repozytoriumPrzegladania) Monitory(ctx context.Context, okno string,
 	tylkoWlaczone bool, limit int) ([]MonitorPrzegladania, error) {
 
@@ -296,12 +295,14 @@ func (r *repozytoriumPrzegladania) Monitory(ctx context.Context, okno string,
 	return lista, nil
 }
 
-// UsunMonitor zdejmuje monitor wraz z jego odniesieniem.
+// UsunMonitor zdejmuje monitor wraz z jego odniesieniem do treści pilnowanej
+// strony i mówi, czy monitor o wskazanym kodzie istniał.
 func (r *repozytoriumPrzegladania) UsunMonitor(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunMonitor, kod, "monitor")
 }
 
-// ZapiszKanal zakłada subskrypcję albo odświeża zastaną (para okno + adres).
+// ZapiszKanal zakłada subskrypcję albo odświeża zastaną, wskazaną parą
+// okno i adres, i oddaje zapisany wiersz.
 func (r *repozytoriumPrzegladania) ZapiszKanal(ctx context.Context,
 	kanal KanalPrzegladania) (KanalPrzegladania, error) {
 
@@ -318,13 +319,13 @@ func (r *repozytoriumPrzegladania) ZapiszKanal(ctx context.Context,
 	if err != nil {
 		return KanalPrzegladania{}, fmt.Errorf("dane: nie można zapisać kanału %q: %w", kanal.Kod, err)
 	}
-	// Odczyt idzie po parze okno + adres, a nie po kodzie: ponowna subskrypcja
-	// tego samego adresu odświeża wiersz zastany, więc jego kod zewnętrzny jest
-	// tym nadanym za pierwszym razem, nie tym z tego żądania.
+	// Odczyt idzie po parze okno + adres, bo subskrypcja odświeża wiersz
+	// zastany pod jego dawnym kodem.
 	return r.KanalPoAdresie(ctx, kanal.Okno, kanal.Url)
 }
 
-// Kanal oddaje kanał o wskazanym kodzie.
+// Kanal oddaje kanał o wskazanym kodzie zewnętrznym albo błąd ErrBrakWiersza,
+// gdy kanał o tym kodzie nie istnieje.
 func (r *repozytoriumPrzegladania) Kanal(ctx context.Context, kod string) (KanalPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKanalObserwacji)
 	if err != nil {
@@ -340,7 +341,8 @@ func (r *repozytoriumPrzegladania) Kanal(ctx context.Context, kod string) (Kanal
 	return kanal, nil
 }
 
-// KanalPoAdresie oddaje kanał subskrybowany w oknie pod wskazanym adresem.
+// KanalPoAdresie oddaje kanał subskrybowany w oknie pod wskazanym adresem
+// albo błąd ErrBrakWiersza, gdy taka subskrypcja nie istnieje.
 func (r *repozytoriumPrzegladania) KanalPoAdresie(ctx context.Context, okno, url string) (KanalPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKanalObserwacjiPoAdresie)
 	if err != nil {
@@ -356,7 +358,8 @@ func (r *repozytoriumPrzegladania) KanalPoAdresie(ctx context.Context, okno, url
 	return kanal, nil
 }
 
-// Kanaly oddaje kanały, opcjonalnie zawężone do okna albo do jednego kanału.
+// Kanaly oddaje kanały, opcjonalnie zawężone do okna albo do jednego kanału,
+// od najświeższego, do granicy podanego limitu.
 func (r *repozytoriumPrzegladania) Kanaly(ctx context.Context, okno, kod string, limit int) ([]KanalPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKanalowObserwacji)
 	if err != nil {
@@ -382,7 +385,8 @@ func (r *repozytoriumPrzegladania) Kanaly(ctx context.Context, okno, kod string,
 	return lista, nil
 }
 
-// UsunKanal zdejmuje subskrypcję; wpisy znikają kaskadą schematu.
+// UsunKanal zdejmuje subskrypcję o wskazanym kodzie i mówi, czy istniała;
+// wpisy kanału znikają kaskadą schematu bazy.
 func (r *repozytoriumPrzegladania) UsunKanal(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunKanalObserwacji, kod, "kanał")
 }
@@ -407,7 +411,8 @@ func (r *repozytoriumPrzegladania) ZapiszWpisKanalu(ctx context.Context, wpis Wp
 	return nil
 }
 
-// WpisyKanalu oddaje wpisy kanału od najświeższego.
+// WpisyKanalu oddaje wpisy kanału od najświeższego, opcjonalnie zawężone do
+// nieprzeczytanych, do granicy podanego limitu.
 func (r *repozytoriumPrzegladania) WpisyKanalu(ctx context.Context, kanal string,
 	tylkoNieprzeczytane bool, limit int) ([]WpisKanalu, error) {
 
@@ -442,7 +447,8 @@ func (r *repozytoriumPrzegladania) WpisyKanalu(ctx context.Context, kanal string
 	return lista, nil
 }
 
-// NieprzeczytaneKanalu liczy wpisy kanału bez oznaczenia przeczytania.
+// NieprzeczytaneKanalu liczy wpisy wskazanego kanału bez oznaczenia
+// przeczytania, do wyświetlenia jako odznaka liczby nowości kanału.
 func (r *repozytoriumPrzegladania) NieprzeczytaneKanalu(ctx context.Context, kanal string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, liczbaNieprzeczytanych)
 	if err != nil {
@@ -455,7 +461,8 @@ func (r *repozytoriumPrzegladania) NieprzeczytaneKanalu(ctx context.Context, kan
 	return liczba, nil
 }
 
-// ZapiszPozycjeCzytania zakłada pozycję kolejki czytania albo nadpisuje zastaną.
+// ZapiszPozycjeCzytania zakłada pozycję kolejki czytania albo nadpisuje
+// zastaną o tym samym kodzie i oddaje zapisany wiersz.
 func (r *repozytoriumPrzegladania) ZapiszPozycjeCzytania(ctx context.Context,
 	pozycja PozycjaCzytania) (PozycjaCzytania, error) {
 
@@ -475,7 +482,8 @@ func (r *repozytoriumPrzegladania) ZapiszPozycjeCzytania(ctx context.Context,
 	return r.PozycjaCzytania(ctx, pozycja.Kod)
 }
 
-// PozycjaCzytania oddaje pozycję kolejki o wskazanym kodzie.
+// PozycjaCzytania oddaje pozycję kolejki o wskazanym kodzie zewnętrznym albo
+// błąd ErrBrakWiersza, gdy pozycja o tym kodzie nie istnieje.
 func (r *repozytoriumPrzegladania) PozycjaCzytania(ctx context.Context, kod string) (PozycjaCzytania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPozycjeCzytania)
 	if err != nil {
@@ -492,7 +500,7 @@ func (r *repozytoriumPrzegladania) PozycjaCzytania(ctx context.Context, kod stri
 }
 
 // KolejkaCzytania oddaje pozycje kolejki, opcjonalnie zawężone do okna
-// i do nieprzeczytanych.
+// i do nieprzeczytanych, od najświeższej, do granicy podanego limitu.
 func (r *repozytoriumPrzegladania) KolejkaCzytania(ctx context.Context, okno string,
 	tylkoNieprzeczytane bool, limit int) ([]PozycjaCzytania, error) {
 
@@ -521,12 +529,14 @@ func (r *repozytoriumPrzegladania) KolejkaCzytania(ctx context.Context, okno str
 	return lista, nil
 }
 
-// UsunPozycjeCzytania zdejmuje pozycję z kolejki.
+// UsunPozycjeCzytania zdejmuje pozycję o wskazanym kodzie z kolejki czytania
+// i mówi, czy pozycja istniała.
 func (r *repozytoriumPrzegladania) UsunPozycjeCzytania(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunPozycjeCzytania, kod, "pozycja czytania")
 }
 
-// ZapiszZakladke zakłada zakładkę albo nadpisuje zastaną.
+// ZapiszZakladke zakłada zakładkę albo nadpisuje zastaną o tym samym kodzie
+// zewnętrznym i oddaje zapisany wiersz z aktualną treścią.
 func (r *repozytoriumPrzegladania) ZapiszZakladke(ctx context.Context,
 	zakladka ZakladkaPrzegladania) (ZakladkaPrzegladania, error) {
 
@@ -546,7 +556,8 @@ func (r *repozytoriumPrzegladania) ZapiszZakladke(ctx context.Context,
 	return r.Zakladka(ctx, zakladka.Kod)
 }
 
-// Zakladka oddaje zakładkę o wskazanym kodzie.
+// Zakladka oddaje zakładkę o wskazanym kodzie zewnętrznym albo błąd
+// ErrBrakWiersza, gdy zakładka o tym kodzie nie istnieje.
 func (r *repozytoriumPrzegladania) Zakladka(ctx context.Context, kod string) (ZakladkaPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZakladke)
 	if err != nil {
@@ -562,7 +573,8 @@ func (r *repozytoriumPrzegladania) Zakladka(ctx context.Context, kod string) (Za
 	return zakladka, nil
 }
 
-// Zakladki oddaje zakładki zawężone filtrem żądania.
+// Zakladki oddaje zakładki zawężone filtrem żądania: oknem, folderem i szukaną
+// frazą łączną dla tytułu, adresu i notatki.
 func (r *repozytoriumPrzegladania) Zakladki(ctx context.Context, filtr FiltrZakladek) ([]ZakladkaPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZakladek)
 	if err != nil {
@@ -593,7 +605,8 @@ func (r *repozytoriumPrzegladania) Zakladki(ctx context.Context, filtr FiltrZakl
 	return lista, nil
 }
 
-// UsunZakladke zdejmuje zakładkę z wykazu okna.
+// UsunZakladke zdejmuje zakładkę o wskazanym kodzie zewnętrznym z wykazu okna
+// i mówi, czy zakładka istniała.
 func (r *repozytoriumPrzegladania) UsunZakladke(ctx context.Context, kod string) (bool, error) {
 	return r.usunWiersz(ctx, usunZakladke, kod, "zakładka")
 }
@@ -620,7 +633,8 @@ func (r *repozytoriumPrzegladania) usunWiersz(ctx context.Context, zapytanie, ko
 	return zmienione > 0, nil
 }
 
-// odczytajMonitorPrzegladania składa monitor z jednego wiersza wyniku.
+// odczytajMonitorPrzegladania składa strukturę monitora z jednego wiersza
+// wyniku zapytania opartego na `kolumnyMonitora`.
 func odczytajMonitorPrzegladania(wiersz skaner) (MonitorPrzegladania, error) {
 	var monitor MonitorPrzegladania
 	var selektor, kanal, odwolanie, sprawdzono, zmieniono sql.NullString
@@ -643,7 +657,8 @@ func odczytajMonitorPrzegladania(wiersz skaner) (MonitorPrzegladania, error) {
 	return monitor, nil
 }
 
-// odczytajKanalObserwacji składa kanał z jednego wiersza wyniku.
+// odczytajKanalObserwacji składa strukturę kanału z jednego wiersza wyniku
+// zapytania opartego na `kolumnyKanaluObserwacji`.
 func odczytajKanalObserwacji(wiersz skaner) (KanalPrzegladania, error) {
 	var kanal KanalPrzegladania
 	var tytul, postac, pobrano sql.NullString
@@ -659,7 +674,8 @@ func odczytajKanalObserwacji(wiersz skaner) (KanalPrzegladania, error) {
 	return kanal, nil
 }
 
-// odczytajPozycjeCzytania składa pozycję kolejki z jednego wiersza wyniku.
+// odczytajPozycjeCzytania składa strukturę pozycji kolejki z jednego wiersza
+// wyniku zapytania opartego na `kolumnyPozycjiCzytania`.
 func odczytajPozycjeCzytania(wiersz skaner) (PozycjaCzytania, error) {
 	var pozycja PozycjaCzytania
 	var tytul, notatka, przypomnienie sql.NullString
@@ -675,7 +691,8 @@ func odczytajPozycjeCzytania(wiersz skaner) (PozycjaCzytania, error) {
 	return pozycja, nil
 }
 
-// odczytajZakladke składa zakładkę z jednego wiersza wyniku.
+// odczytajZakladke składa strukturę zakładki z jednego wiersza wyniku
+// zapytania opartego na `kolumnyZakladki`.
 func odczytajZakladke(wiersz skaner) (ZakladkaPrzegladania, error) {
 	var zakladka ZakladkaPrzegladania
 	var tytul, folder, etykiety, notatka sql.NullString

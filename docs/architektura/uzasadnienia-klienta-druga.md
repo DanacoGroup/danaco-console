@@ -4691,3 +4691,40 @@ Katalogi robocze są listą, nie pojedynczą wartością, więc pozycje wykazu s
 Nic w tym pliku nie wie o żadnym oknie — to warstwa niżej niż składniki.
 Treści nie wstawia się znacznikiem: węzeł powstaje przez tworzenie elementu, a tekst przez tworzenie węzła tekstowego, więc dana z zewnątrz nie ma jak stać się znacznikiem.
 Pusty znacznik znaku jest usterką zestawu, a nie sytuacją, którą ma czytać wykonawca sprawdzianu.
+
+## budowa/klient-poprzedni/src/rozmowa/zegar-ciszy.ts
+Domknięcie tury przychodzi wyłącznie zdarzeniem z rdzenia, a zerwany strumień
+nie ma w kontrakcie własnego zdarzenia. Rdzeń ubity w połowie tury zostawiłby
+więc wpis na stanie „wysyłanie" bez końca, dlatego warstwa rozmowy rozpoznaje
+zerwanie po jedynym śladzie, jaki zostaje: po tym, że nic nie przychodzi.
+Zegar niczego nie przerywa i nie zamyka tury — tura wraca do życia, gdy
+nadejdzie fragment. Zegar wyłącznie nazywa to, co widać; różnicę między
+długim rozumowaniem a martwym połączeniem rozstrzyga Operator, mając przed
+sobą liczbę sekund.
+
+## budowa/klient-poprzedni/src/rozmowa/zlozenie-tury.ts
+Rozdzielenie rodzajów fragmentu jest sednem złożenia tury: jedna droga niesie
+tekst, prowenancję, metadane konta, tok rozumowania, wywołania narzędzi
+i błąd, a odbiorca rozstrzyga po rodzaju, gdzie fragment trafi. Fragment
+rodzaju nieznanego nie jest odrzucany — ląduje w treści wpisu z oznaczeniem
+rodzaju, żeby żadna treść strumienia nie znikła bez śladu. Wpis jest
+zmieniany w miejscu: historia trzyma jedną tożsamość tury, a widok odświeża tę
+samą pozycję zamiast dokładać kolejną.
+
+Podsumowanie czyta się z każdego fragmentu, nie tylko z domykającego: ładunek
+podsumowania niesie fragment kanału, a strumień domyka osobne zdarzenie
+z wersją ostateczną, więc odczyt tylko z domykającego gubiłby podsumowanie
+całkiem. Parser odrzuca ładunek bez własnych pól podsumowania.
+
+Odtwarzanie bloku zapisanego w bazie idzie przez ten sam rozdzielacz
+rodzajów, co fragment żywego strumienia: historia po restarcie ma składać
+wpis tą samą logiką, którą składała go tura na żywo, a drugi czytnik ładunków
+byłby drugą prawdą o rozdziale. Blok rodzaju tekstowego przechodzi bez śladu,
+bo rdzeń tekstu w blokach nie zapisuje — taki blok mógłby być wyłącznie
+powtórką, a doliczenie go zdublowałoby treść wpisu.
+
+Zastąpienie wersją ostateczną, a nie doklejenie, jest całym powodem istnienia
+tego rodzaju fragmentu: treść złożona z fragmentów jest przybliżeniem, kanał
+może fragment powtórzyć po rotacji konta, a tura zapasowa nadaje własne.
+Wersja ostateczna jest tą samą treścią, którą rdzeń zapisuje jako wiadomość —
+po podmianie wpis na ekranie i wiersz w bazie mówią to samo.

@@ -3681,3 +3681,9 @@ kolumnę bazy wykonuje pakiet dane.
 Odczyt wartości ścieżką z dokumentu JSON pozwala adapterowi sieciowemu nie znać
 kształtu odpowiedzi żadnego dostawcy: kształt jest parametrem wiersza rejestru,
 nie warunkiem zapisanym w kodzie.
+
+## budowa/server/internal/dane/diagnostics_dziennik.go
+Zawężenie idzie parametrem, nie sklejaniem tekstu. Jedno przygotowane
+zapytanie obsługuje pięć zawężeń naraz, bo pusty parametr znaczy „nie
+zawężaj". Wartości nigdy nie wchodzą do treści SQL, a pamięć podręczna
+zapytań ma jedną pozycję zamiast trzydziestu dwóch.

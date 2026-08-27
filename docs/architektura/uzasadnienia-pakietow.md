@@ -5330,3 +5330,8 @@ się w chwili, w której przesunie ją kontrakt.
 Zdania zastosowania w PozycjeWpiecia mówią modelowi, kiedy sięgnąć po
 narzędzie, wzorem pozycji istniejących: powołanie oznacza, że podagent jest
 zadaniem w tle pod oknem wykonawcy, powoływanym w trakcie tury.
+
+## budowa/server/internal/dane/automations_okna_wykonania.go
+
+Zero w miejscu automatyki albo harmonogramu w wykazie wyzwoleń znaczy brak zawężenia po tym
+polu.

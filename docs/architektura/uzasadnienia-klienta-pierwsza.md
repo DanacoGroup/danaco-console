@@ -6331,3 +6331,23 @@ Plik ma jedną odpowiedzialność: rozmowa z rdzeniem w imieniu panelu źródeł
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-app-catalog.ts
 Katalog rozszerzeń stoi poziom wyżej niż okno modułu, bo żadna komenda obszaru extension nie niesie identyfikatora okna — działa więc także wtedy, gdy rdzeń nie wskazał jeszcze okna modułu, i nie powtarza zdania o brakującym oknie, które go nie dotyczy. Instalacja niesie pochodzenie, bo pochodzenie rozstrzyga stan wyjściowy pozycji: pozycja danaco staje włączona, pozycja personal wyłączona; to jedyne miejsce, w którym źródło zmienia zachowanie rdzenia, poza nim jest faktem do pokazania operatorowi. Okno mówi o tym skutku przed instalacją, zamiast zostawiać operatora ze zdziwieniem, że pozycja nie działa po zainstalowaniu. Zawężenie idzie po stronie klienta nad tym, co rdzeń oddał, bo odczyt wykazu rozszerzeń zawęża wyłącznie rodzajem i stanem zainstalowania; pusty wykaz przy czynnym filtrze niesie zdanie o zawężeniu, inaczej czytałby się jak pusty rejestr. Przełącznik widoku siatka i lista jest czynnością wyłącznie okienną: nic nie jedzie do rdzenia, więc nośnikiem stanu jest atrybut dostępności kontrolki, nie komenda.
+
+## budowa/klient-poprzedni/src/moduly/library/dostepnosc-tresci.ts
+Wgranie pliku odpowiada powodzeniem także wtedy, gdy bajtów nie ma gdzie
+zapisać, więc samo powodzenie zapisu nie jest świadkiem wgrania treści.
+Kontrakt nie ma pola osiągalności treści, a metryka pliku o niej nie mówi:
+plik może mieć sumę kontrolną i identyfikator wersji, a nie mieć treści,
+więc jedynym świadkiem jest odpowiedź rdzenia na podgląd, nigdy własny
+domysł modułu. Stan nieznany jest osobny od stanu braku: nikt jeszcze nie
+pytał to co innego niż rdzeń odmówił treści. Stan odmowy jest osobny, bo
+rdzeń odmawia podglądu trzema kodami i tylko jeden z nich orzeka o treści;
+pozostałe dwa mówią o pliku albo o nośniku, nie o samej treści, a sprawdzian
+kształtu odpowiedzi po stronie klienta sam wytwarza ten sam kod, gdy
+odpowiedź nie ma zapowiedzianego pola, więc i taka odpowiedź trafia na stan
+braku. Stan odwołania oddziela wskazanie miejsca treści od samej treści:
+podgląd pliku, którego odwołanie wskazuje ścieżkę nieistniejącą, wraca
+powodzeniem tak samo jak podgląd pliku leżącego w magazynie rdzenia, więc
+świadkiem treści jest sama treść odpowiedzi. Werdykt jest wydzielony do
+osobnej funkcji, ponieważ powstaje w dwóch miejscach: przy pytaniu zadanym
+wprost o treść i przy zwykłym podglądzie okna podglądu pliku, a oba mają
+nazywać ten stan tak samo.

@@ -8,18 +8,6 @@ import type { StanPrzegladania } from './stan-przegladania';
 /**
  * Panel akcji Sources Panel po stronie rdzenia: dodanie źródła, otwarcie,
  * podgląd migawki, oznaczenie kluczowym, usunięcie i przekazanie do Research.
- *
- * Jedna odpowiedzialność: rozmowa z rdzeniem w imieniu panelu źródeł. Panel
- * składa kontrolki i wykaz; tutaj mieszka to, co dzieje się po naciśnięciu.
- *
- * Usunięcie nie usuwa: `browser.source.remove` kontrakt niesie, ale ta czynność
- * jeszcze jej nie wywołuje. Powód bierze się z odczytu wykazu komend rdzenia,
- * a pozycja zostaje w wykazie — zniknięcie wiersza bez zapisu w rdzeniu byłoby
- * udawaniem wykonania.
- *
- * Adres w zdaniu potwierdzenia bierze się z odpowiedzi, nie z pola formularza
- * (`skutek-zapisu.ts`). Do rdzenia idzie adres przycięty, więc zdanie o skutku
- * musi mówić o tym, co wróciło, a nie o surowej treści pola.
  */
 export interface CzynnosciZrodel {
   /** `browser.source.add`; zwraca `true`, gdy rdzeń przyjął źródło. */
@@ -45,8 +33,7 @@ export function utworzCzynnosciZrodel(
         powiedz(stan.powod(), false);
         return false;
       }
-      // Przycięcie robi się raz i dalej idzie już tylko wartość przycięta —
-      // do rdzenia i do zdania o skutku trafia dokładnie ten sam adres.
+      // Przycięcie robi się raz — do rdzenia i do zdania o skutku trafia dokładnie ten sam adres.
       const adres = url.trim();
       const nazwa = tytul.trim();
       if (adres === '') {
@@ -69,8 +56,7 @@ export function utworzCzynnosciZrodel(
       stan.zebrane.dopiszZrodlo(wynik.wynik.source);
       const skutek = skutekZapisuZrodla(wynik.wynik.source, adres);
       powiedz(skutek.zdanie, skutek.udany);
-      // Wykaz odświeża się także przy rozbieżności: wiersz w rdzeniu istnieje,
-      // więc obok zdania o rozjeździe ma stanąć jego prawdziwa postać.
+      // Wykaz odświeża się także przy rozjeździe: wiersz w rdzeniu istnieje, więc obok stanie jego postać.
       return true;
     },
 
@@ -105,8 +91,7 @@ export function utworzCzynnosciZrodel(
         powiedz(opisOdmowy('Przekazanie do Research', wynik.blad?.code, wynik.blad?.message), false);
         return;
       }
-      // Liczba mówi o tym, co wysłano — `ContextTransferResponse` zawartości
-      // kompletu nie oddaje, więc zdanie nie udaje, że rdzeń ją potwierdził.
+      // Liczba mówi o tym, co wysłano — zdanie nie udaje, że rdzeń potwierdził komplet.
       const skutek = skutekPrzekazania(
         wynik.wynik,
         'research',

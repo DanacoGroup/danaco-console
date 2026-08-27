@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: obszar Apps — Deployment Panel. Środowiska
-// wdrożeniowe (`srodowisko_apps`), ich zmienne (`zmienna_srodowiska_apps`),
-// nastawy skalowania (`skalowanie_apps`) i wyniki sprawdzeń kondycji
-// (`kondycja_wdrozenia_apps`) — `store/migracja_202_apps_srodowiska.sql`.
-//
-// Zmienna niesie wartość jawną ALBO odwołanie do sekretu; warunek CHECK
-// schematu pilnuje tego po raz drugi, a warstwa `dane` nie przepuszcza obu
-// naraz, żeby literówka wołającego wracała powodem, a nie treścią SQL-a.
+// Plik obsługuje obszar Apps: środowiska wdrożeniowe, ich zmienne, nastawy skalowania oraz
+// wyniki sprawdzeń kondycji. Uzasadnienie wyłączności wartości i sekretu zmiennej niesie
+// rozdział aplikacje_srodowiska.go dokumentacji architektury.
 package dane
 
 import (
@@ -14,7 +9,8 @@ import (
 	"fmt"
 )
 
-// SrodowiskoApp to wiersz tabeli `srodowisko_apps`.
+// SrodowiskoApp odwzorowuje wiersz tabeli srodowisko_apps: jedno środowisko wdrożeniowe
+// okna wraz z domeną i wpisami DNS.
 type SrodowiskoApp struct {
 	ID             int64
 	Kod            string
@@ -28,7 +24,8 @@ type SrodowiskoApp struct {
 	Zaktualizowano string
 }
 
-// ZmiennaSrodowiskaApp to wiersz tabeli `zmienna_srodowiska_apps`.
+// ZmiennaSrodowiskaApp odwzorowuje wiersz tabeli zmienna_srodowiska_apps: jedną zmienną
+// środowiskową z wartością jawną albo odwołaniem do sekretu.
 type ZmiennaSrodowiskaApp struct {
 	ID               int64
 	Okno             string
@@ -39,7 +36,8 @@ type ZmiennaSrodowiskaApp struct {
 	Zaktualizowano   string
 }
 
-// SkalowanieApp to wiersz tabeli `skalowanie_apps`.
+// SkalowanieApp odwzorowuje wiersz tabeli skalowanie_apps: nastawę liczby instancji
+// i reguł skalowania jednego środowiska.
 type SkalowanieApp struct {
 	Okno           string
 	Srodowisko     string
@@ -124,10 +122,9 @@ const (
 	                    ORDER BY sprawdzono DESC, id DESC LIMIT ?`
 )
 
-// ZapiszSrodowiskoApp zakłada albo zmienia środowisko okna. Domena i wpisy DNS
-// podane jako brak NIE kasują wartości zastanej — środowisko zakłada się przy
-// pierwszym wykazie, a domenę nadaje osobna komenda i nie ma prawa jej stracić
-// przy kolejnym wykazie.
+// ZapiszSrodowiskoApp zakłada albo zmienia środowisko okna. Domena i wpisy DNS podane
+// jako brak nie kasują wartości zastanej, ponieważ domenę nadaje osobna komenda i nie
+// traci jej kolejny wykaz środowisk.
 func (r *repozytoriumAplikacji) ZapiszSrodowiskoApp(ctx context.Context,
 	srodowisko SrodowiskoApp) (SrodowiskoApp, error) {
 
@@ -148,7 +145,8 @@ func (r *repozytoriumAplikacji) ZapiszSrodowiskoApp(ctx context.Context,
 	return r.SrodowiskoApp(ctx, srodowisko.Okno, srodowisko.KodSrodowiska)
 }
 
-// SrodowiskoApp zwraca jedno środowisko okna.
+// SrodowiskoApp zwraca jedno środowisko okna wskazane kodem albo błąd ErrBrakWiersza,
+// gdy nie istnieje.
 func (r *repozytoriumAplikacji) SrodowiskoApp(ctx context.Context, okno, kod string) (SrodowiskoApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSrodowiskoApp)
 	if err != nil {
@@ -164,7 +162,8 @@ func (r *repozytoriumAplikacji) SrodowiskoApp(ctx context.Context, okno, kod str
 	return srodowisko, nil
 }
 
-// SrodowiskaApp zwraca środowiska okna w kolejności wdrażania.
+// SrodowiskaApp zwraca wszystkie środowiska okna uporządkowane w kolejności wdrażania,
+// zgodnie z polem kolejnosc.
 func (r *repozytoriumAplikacji) SrodowiskaApp(ctx context.Context, okno string) ([]SrodowiskoApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSrodowiskApp)
 	if err != nil {
@@ -190,7 +189,8 @@ func (r *repozytoriumAplikacji) SrodowiskaApp(ctx context.Context, okno string) 
 	return lista, nil
 }
 
-// ZapiszZmiennaSrodowiskaApp zapisuje zmienną środowiskową produktu.
+// ZapiszZmiennaSrodowiskaApp zapisuje zmienną środowiskową produktu, odrzucając zapis
+// niosący naraz wartość i odwołanie do sekretu.
 func (r *repozytoriumAplikacji) ZapiszZmiennaSrodowiskaApp(ctx context.Context,
 	zmienna ZmiennaSrodowiskaApp) (ZmiennaSrodowiskaApp, error) {
 
@@ -225,7 +225,8 @@ func (r *repozytoriumAplikacji) ZapiszZmiennaSrodowiskaApp(ctx context.Context,
 	return zapisana, nil
 }
 
-// ZmienneSrodowiskaApp zwraca zmienne jednego środowiska, po nazwie.
+// ZmienneSrodowiskaApp zwraca wszystkie zmienne jednego środowiska okna, uporządkowane
+// według nazwy zmiennej.
 func (r *repozytoriumAplikacji) ZmienneSrodowiskaApp(ctx context.Context,
 	okno, srodowisko string) ([]ZmiennaSrodowiskaApp, error) {
 
@@ -255,7 +256,8 @@ func (r *repozytoriumAplikacji) ZmienneSrodowiskaApp(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszSkalowanieApp zapisuje nastawę skalowania jednego środowiska.
+// ZapiszSkalowanieApp zapisuje nastawę skalowania jednego środowiska: liczbę instancji,
+// granice i reguły.
 func (r *repozytoriumAplikacji) ZapiszSkalowanieApp(ctx context.Context,
 	skalowanie SkalowanieApp) (SkalowanieApp, error) {
 
@@ -276,7 +278,8 @@ func (r *repozytoriumAplikacji) ZapiszSkalowanieApp(ctx context.Context,
 	return r.SkalowanieApp(ctx, skalowanie.Okno, skalowanie.Srodowisko)
 }
 
-// SkalowanieApp zwraca nastawę skalowania jednego środowiska.
+// SkalowanieApp zwraca nastawę skalowania jednego środowiska albo błąd ErrBrakWiersza,
+// gdy nastawa nie istnieje.
 func (r *repozytoriumAplikacji) SkalowanieApp(ctx context.Context,
 	okno, srodowisko string) (SkalowanieApp, error) {
 
@@ -303,7 +306,8 @@ func (r *repozytoriumAplikacji) SkalowanieApp(ctx context.Context,
 	return nastawa, nil
 }
 
-// ZapiszKondycjeApp dopisuje wynik jednego sprawdzenia kondycji.
+// ZapiszKondycjeApp dopisuje wynik jednego sprawdzenia kondycji wdrożenia, nie
+// nadpisując wyników wcześniejszych.
 func (r *repozytoriumAplikacji) ZapiszKondycjeApp(ctx context.Context, kondycja KondycjaWdrozeniaApp) error {
 	if kondycja.Okno == "" || kondycja.Srodowisko == "" {
 		return fmt.Errorf("dane: wynik kondycji bez okna albo bez środowiska")
@@ -358,7 +362,8 @@ func (r *repozytoriumAplikacji) KondycjeApp(ctx context.Context, okno, srodowisk
 	return lista, nil
 }
 
-// odczytajSrodowiskoApp składa środowisko z jednego wiersza wyniku.
+// odczytajSrodowiskoApp składa strukturę SrodowiskoApp z jednego wiersza wyniku
+// zapytania, niezależnie od jego źródła.
 func odczytajSrodowiskoApp(wiersz skaner) (SrodowiskoApp, error) {
 	var srodowisko SrodowiskoApp
 	var domena, wpisy sql.NullString
@@ -373,7 +378,8 @@ func odczytajSrodowiskoApp(wiersz skaner) (SrodowiskoApp, error) {
 	return srodowisko, nil
 }
 
-// odczytajZmiennaSrodowiskaApp składa zmienną z jednego wiersza wyniku.
+// odczytajZmiennaSrodowiskaApp składa strukturę ZmiennaSrodowiskaApp z jednego wiersza
+// wyniku zapytania.
 func odczytajZmiennaSrodowiskaApp(wiersz skaner) (ZmiennaSrodowiskaApp, error) {
 	var zmienna ZmiennaSrodowiskaApp
 	var wartosc, sekret sql.NullString

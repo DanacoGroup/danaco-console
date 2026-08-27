@@ -4645,3 +4645,9 @@ na który mogłoby wskazywać, a wskazanie na okno oryginału byłoby więzią
 między dwiema niezależnymi sesjami. Funkcja zwraca liczbę skopiowanych
 wiadomości — jedyną miarę, po którą sięga wywołujący; struktura wyniku
 byłaby typem bez odbiorcy.
+
+## budowa/server/internal/dane/asystent_dziennik.go
+
+Notatka pusta przy nadawaniu wyróżnienia zostawia powód zastany: wyróżnienie ponowione bez
+własnego słowa nie ma prawa skasować zdania zapisanego wcześniej, w odróżnieniu od zdjęcia
+wyróżnienia, które kasuje powód razem ze znacznikiem.

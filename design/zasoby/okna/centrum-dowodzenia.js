@@ -1,8 +1,5 @@
-/* Złożenie okna Centrum dowodzenia: kafle, strefy, nawigacja startowa. */
-/* ══════════════════════════════════════════════════════════════════════════
-   SKRYPT LOKALNY — Centrum dowodzenia v2. Rozszerza zachowania powłoki
-   (menu, motyw, TRYBY) obsługiwane przez wspolne.js / prototyp.js / stanowisko.js.
-   ══════════════════════════════════════════════════════════════════════════ */
+/* Mechanizm okna. Powody: 01-dokumentacja-md/centrum-dowodzenia-uzasadnienia.md */
+
 (function () {
   'use strict';
   function q(s, k) { return (k || document).querySelector(s); }
@@ -12,8 +9,7 @@
     if (window.dnToast) { window.dnToast(tyt, tre, rodz || 'informacja', ms || 3200); }
   }
 
-  /* ── WIERSZ PIERWSZEGO WEJŚCIA ─────────────────────────────────────── */
-  var wiersz = q('#cd-start');
+    var wiersz = q('#cd-start');
   var zamknijStart = q('#cd-start-zamknij');
   function ustawWskazowke(widoczna) {
     if (wiersz) { wiersz.hidden = !widoczna; }
@@ -34,10 +30,7 @@
     });
   });
 
-  /* Stan samouczka niosą dwie kontrolki: przycisk pasa narzędzi (`aria-pressed`)
-     i pozycja menu widoku (`aria-checked`). Przełącznik panelu ustawia tylko
-     pierwszą z nich, więc drugą dostrajamy tu — inaczej ptaszek w menu kłamie. */
-  qq('[data-przelacz-samouczek]').forEach(function (b) {
+    qq('[data-przelacz-samouczek]').forEach(function (b) {
     b.addEventListener('click', function () {
       window.setTimeout(function () {
         var panel = q('#panel-samouczek');
@@ -49,37 +42,27 @@
     });
   });
 
-  /* ── MENU WIDOKU · prawy róg paska okna ────────────────────────────────── */
-  qq('[data-cd-odswiez]').forEach(function (b) {
+    qq('[data-cd-odswiez]').forEach(function (b) {
     b.addEventListener('click', function () {
       toast('Widok odświeżony', 'Wykaz środowisk, komponentów i ustawień wczytany na nowo.', 'informacja');
       oglos('Widok odświeżony.');
     });
   });
 
-  /* ── SAMOUCZEK · panel po prawej ─────────────────────────────────────────
-     Przełączanie panelu obsługuje `zasoby/okna/zakladki-paneli.js` — wspólnie
-     dla wyzwalacza w pasie narzędzi i dla przycisku „Otwórz samouczek" w wierszu
-     pierwszego wejścia (oba noszą `data-przelacz-samouczek`). Tu nie dublujemy
-     nasłuchu: dwa nasłuchy na tym samym kliknięciu zamykały panel w tej samej
-     chwili, w której go otwierały. */
-
-  /* ── PANEL SESJI · nowa sesja ──────────────────────────────────────────── */
-  qq('.dn-obszar-panel--boczny [aria-label="Nowa sesja"]').forEach(function (b) {
+  
+    qq('.dn-obszar-panel--boczny [aria-label="Nowa sesja"]').forEach(function (b) {
     b.addEventListener('click', function () {
       toast('Nowa sesja', 'Nowe okno robocze na karcie Centrum dowodzenia. Sesja powstaje przy pierwszym poleceniu.', 'informacja', 3600);
     });
   });
 
-  /* ── PASMO KART · nowa karta ───────────────────────────────────────────── */
-  qq('.dn-obszar-panel--glowny .dn-karty-dodaj').forEach(function (b) {
+    qq('.dn-obszar-panel--glowny .dn-karty-dodaj').forEach(function (b) {
     b.addEventListener('click', function () {
       toast('Nowa karta', 'Karta otwiera moduł wybrany w Centrum dowodzenia i zakłada grupę zadania.', 'informacja', 3600);
     });
   });
 
-  /* ── STREFA 1 · wejście do środowiska ────────────────────────────────── */
-  qq('.cd-wejdz').forEach(function (b) {
+    qq('.cd-wejdz').forEach(function (b) {
     b.addEventListener('click', function (e) {
       e.stopPropagation();
       var srod = b.getAttribute('data-wejdz');
@@ -89,16 +72,13 @@
   });
   qq('.dn-karta-srodowiska').forEach(function (k) {
     k.addEventListener('click', function (e) {
-      /* Menu operacji leży na karcie, ale nie jest wejściem do środowiska —
-         bez tego warunku każde otwarcie menu otwierało też środowisko. */
-      if (e.target.closest('.cd-karta-menu')) { return; }
+            if (e.target.closest('.cd-karta-menu')) { return; }
       var przy = q('.cd-wejdz', k);
       if (przy) { przy.click(); }
     });
   });
 
-  /* ── STREFA 1 · menu operacji środowiska (opracowanie rozdz. 3.2) ─────── */
-  var opisyKarty = {
+    var opisyKarty = {
     'nowa-karta': 'Otwarcie środowiska %s w nowej karcie sesji — dotychczasowe karty zostają nietknięte.',
     'przypnij': 'Środowisko %s przypięte: jego karta stoi pierwsza w strefie środowisk i w szynie nawigacji.',
     'wyczysc': 'Karty sesji środowiska %s zamknięte. Zadania serwerowe biegną dalej jako sesje w tle.'
@@ -113,8 +93,7 @@
     });
   });
 
-  /* ── STREFA 1 · nawigacja klawiaturą po kartach ──────────────────────── */
-  var karty = qq('.dn-karta-srodowiska');
+    var karty = qq('.dn-karta-srodowiska');
   karty.forEach(function (k, i) {
     k.setAttribute('tabindex', i === 0 ? '0' : '-1');
     k.addEventListener('keydown', function (e) {
@@ -133,8 +112,7 @@
     });
   });
 
-  /* ── STREFA 2 · komponenty aplikacji ─────────────────────────────────── */
-  var opisyKafli = {
+    var opisyKafli = {
     Automations: 'Okno konfiguracji Automations: warunek uruchomienia, kroki i wykonawca automatyki.',
     Agents: 'Okno konfiguracji Agents: rola agenta, zakres samodzielności i granice działania.',
     Workspace: 'Okno konfiguracji projektu: nazwa, katalog roboczy, materiały wejściowe i zespół.',
@@ -156,8 +134,7 @@
     });
   }
 
-  /* ── STREFA 3 · komponenty własne Operatora ──────────────────────────── */
-  qq('[data-otworz-komponent]').forEach(function (b) {
+    qq('[data-otworz-komponent]').forEach(function (b) {
     b.addEventListener('click', function () {
       var nazwa = b.getAttribute('data-otworz-komponent');
       toast(nazwa, 'Otwarcie zapisanego komponentu w jego oknie konfiguracji — bez zakładania nowego.', 'informacja');
@@ -177,8 +154,7 @@
     });
   });
 
-  /* ── STREFA 3 · listwa ustawień ──────────────────────────────────────── */
-  var konf = q('#cd-konfiguracja');
+    var konf = q('#cd-konfiguracja');
   if (konf) {
     konf.addEventListener('click', function () {
       toast('Okno konfiguracji', 'Pełny zakres ustawień platformy, środowisk, sesji i modeli — trzynaście zakresów.', 'informacja');
@@ -207,10 +183,7 @@
     });
   }
 
-  /* Stan włączenia niesie sam przycisk (`aria-pressed`) — napis obok niego
-     powtarzał tę samą informację słowem i był jedyną treścią w listwie, która
-     nie była nazwą czynności. */
-  var aod = q('#cd-aod-przelacz');
+    var aod = q('#cd-aod-przelacz');
   if (aod) {
     aod.addEventListener('click', function () {
       var wl = aod.getAttribute('aria-pressed') === 'true';
@@ -223,9 +196,6 @@
   }
 })();
 
-/* ══════════════════════════════════════════════════════════════════════════
-   OKNA BOCZNE — regulowana szerokość, zwijanie, podgląd po najechaniu
-   ══════════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
   var D = document;
@@ -234,10 +204,7 @@
   var lewy = D.querySelector('.dn-obszar-panel--boczny');
   var prawy = D.querySelector('.dn-obszar-panel--samouczek');
 
-  /* ── Uchwyty zmiany szerokości ─────────────────────────────────────────
-     Uchwyt jest elementem układu, nie nakładką — dzięki temu nie zasłania
-     treści i sam trzyma się między oknami przy każdej szerokości okna. */
-  function zbudujUchwyt(panel, strona, zmienna, minSzer, maxSzer) {
+    function zbudujUchwyt(panel, strona, zmienna, minSzer, maxSzer) {
     if (!panel) { return; }
     var u = D.createElement('span');
     u.className = 'cd-uchwyt';
@@ -246,18 +213,14 @@
     u.setAttribute('tabindex', '0');
     u.setAttribute('aria-label', strona === 'lewa'
       ? 'Szerokość okna sesji i projektów' : 'Szerokość okna samouczka');
-    /* Ogniskowalny separator jest kontrolką o wartości — bez zakresu i wartości
-       bieżącej czytnik ekranu nie ma czego odczytać. */
-    u.setAttribute('aria-valuemin', String(minSzer));
+        u.setAttribute('aria-valuemin', String(minSzer));
     u.setAttribute('aria-valuemax', String(maxSzer));
     u.setAttribute('aria-valuenow', String(Math.round(panel.getBoundingClientRect().width)));
     if (strona === 'lewa') { panel.after(u); } else { panel.before(u); }
 
     function ustaw(px) {
       var w = Math.max(minSzer, Math.min(maxSzer, Math.round(px)));
-      /* Szerokość idzie żetonem, nie stylem w linii: styl w linii bije regułę
-         zwinięcia i okno nie dawało się zwinąć po zmianie szerokości. */
-      D.documentElement.style.setProperty(zmienna, w + 'px');
+            D.documentElement.style.setProperty(zmienna, w + 'px');
       u.setAttribute('aria-valuenow', String(w));
       return w;
     }
@@ -279,7 +242,7 @@
     function koniec(e) {
       if (!ciagnie) { return; }
       ciagnie = false;
-      try { u.releasePointerCapture(e.pointerId); } catch (err) { /* wskaźnik już zwolniony */ }
+      try { u.releasePointerCapture(e.pointerId); } catch (err) {  }
       u.removeAttribute('data-ciagniety');
       D.body.style.cursor = '';
       D.body.style.userSelect = '';
@@ -287,8 +250,7 @@
     u.addEventListener('pointerup', koniec);
     u.addEventListener('pointercancel', koniec);
 
-    /* Klawiatura — ta sama regulacja bez myszy. */
-    u.addEventListener('keydown', function (e) {
+        u.addEventListener('keydown', function (e) {
       var krok = e.shiftKey ? 40 : 10;
       var teraz = panel.getBoundingClientRect().width;
       if (e.key === 'ArrowLeft') { ustaw(strona === 'lewa' ? teraz - krok : teraz + krok); e.preventDefault(); }
@@ -299,12 +261,7 @@
   zbudujUchwyt(lewy, 'lewa', '--cd-szer-boczny', 220, 560);
   zbudujUchwyt(prawy, 'prawa', '--cd-szer-samouczek', 260, 620);
 
-  /* ── Zwijanie lewego okna ──────────────────────────────────────────────
-     Warstwa wspólna zwija panel atrybutem `hidden`, czyli usuwa go z układu —
-     wtedy nie ma po czym najechać, żeby go podejrzeć. Tutaj zwinięcie odbiera
-     szerokość, a okno zostaje w układzie. Przechwytujemy zdarzenie w fazie
-     przechwytywania, zanim dojdzie do obsługi wspólnej. */
-  if (lewy) {
+    if (lewy) {
     D.addEventListener('click', function (e) {
       var b = e.target.closest('[data-zwin-szyne]');
       if (!b) { return; }
@@ -321,11 +278,7 @@
       b.setAttribute('aria-label', zwinieta ? 'Zwiń panel' : 'Rozwiń panel');
     }, true);
 
-    /* ── Podgląd po najechaniu na lewą krawędź ───────────────────────────
-       Strefa czuła stoi przy krawędzi ekranu i działa wyłącznie wtedy, gdy
-       okno jest zwinięte. Rozwinięcie na podgląd znika, gdy kursor opuści
-       zarówno okno, jak i strefę. */
-    var krawedz = D.createElement('div');
+        var krawedz = D.createElement('div');
     krawedz.className = 'cd-krawedz-podgladu';
     krawedz.setAttribute('aria-hidden', 'true');
     var szyna = D.querySelector('.dn-szyna, .dn-szyna-tresc');
@@ -342,12 +295,6 @@
   }
 })();
 
-/* ══════════════════════════════════════════════════════════════════════════
-   WEJŚCIE DO PRZEDSIONKA ŚRODOWISKA
-   Obsługa wspólna pokazywała komunikat, ale nie przechodziła do przedsionka —
-   kafel środowiska nie prowadził donikąd. Nazwy plików są pisane małymi
-   literami, a nazwa środowiska w znaczniku wielkimi, stąd `toLowerCase()`.
-   ══════════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
   document.addEventListener('click', function (e) {
@@ -361,28 +308,13 @@
   }, true);
 })();
 
-/* Kotwica dymka. Dymek jest umocowany do okna widoku, żeby wyjść poza pole
-   przycinania paneli; współrzędne muszą więc pochodzić z prostokąta wyzwalacza,
-   bo miejsce spoczynkowe pseudoelementu wypada w każdym pojemniku inaczej.
-   Dymek staje pod wyzwalaczem, wyśrodkowany; przy krawędzi okna jest do niej
-   przyciskany, a przy dolnej krawędzi przeskakuje nad wyzwalacz.
-
-   Zmienne własne dziedziczą się w dół drzewa, więc same nie wystarczą: dymek
-   dziecka brałby współrzędne przodka, który był pod wskaźnikiem wcześniej.
-   Nośnikiem jest dlatego znacznik `data-dymek` na wyzwalaczu bieżącym — poza
-   nim obowiązuje umocowanie biblioteczne. */
 (function () {
   var ODSTEP = 4;
   var MARGINES = 8;
   var ostatni = null;
   var plotno = null;
 
-  /* Szerokości pseudoelementu nie da się odczytać wprost, ale da się złożyć:
-     napis mierzony krojem dymka plus jego wyściółka i ramka. Krój bierze się
-     z `::after`, nie z wyzwalacza — przycisk niesie własny, większy stopień
-     pisma, przez który dymek wychodził szerszy, niż jest, i docisk do krawędzi
-     odsuwał go od ikony nawet tam, gdzie mieścił się bez przesunięcia. */
-  function miara(el) {
+    function miara(el) {
     var s = window.getComputedStyle(el, '::after');
     var wyscielka = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight)
                   + parseFloat(s.borderLeftWidth) + parseFloat(s.borderRightWidth);
@@ -400,9 +332,7 @@
     return plotno.measureText(tekst).width + m.wyscielka;
   }
 
-  /* Szyna stoi nieruchomo, a jej miara jest potrzebna przy każdym najechaniu —
-     wystarczy zmierzyć ją raz i odświeżyć, gdy okno zmieni rozmiar. */
-  var lewaZapamietana = null;
+    var lewaZapamietana = null;
   function strefaLewa() {
     if (lewaZapamietana !== null) { return lewaZapamietana; }
     var szyna = document.querySelector('.dn-szyna-nawigacji');
@@ -430,10 +360,7 @@
     var m = miara(el);
     var polowa = szerokosc(m, tekst) / 2;
     var x = r.left + r.width / 2;
-    /* Lewa strefa bezpieczna omija pionową szynę nawigacji: dymek pierwszego
-       przycisku wstążki dosuwał się do krawędzi okna i wchodził na szynę,
-       która stoi wyżej w układzie. Granicę odsuwamy za prawą krawędź szyny. */
-    var lewaStrefa = strefaLewa();
+        var lewaStrefa = strefaLewa();
     var lewaGranica = lewaStrefa + polowa;
     var prawaGranica = window.innerWidth - MARGINES - polowa;
     if (prawaGranica > lewaGranica) {
@@ -442,10 +369,7 @@
       x = window.innerWidth / 2;
     }
 
-    /* Przy dolnej krawędzi okna dymek nie ma dokąd opaść — staje nad
-       wyzwalaczem. Wysokość bierze się z `::after`, bo stopień pisma dymka
-       zmienia się razem z żetonem. */
-    var wysokosc = m.wysokosc;
+        var wysokosc = m.wysokosc;
     var y = r.bottom + ODSTEP;
     if (y + wysokosc > window.innerHeight - MARGINES) {
       y = r.top - ODSTEP - wysokosc;
@@ -473,12 +397,7 @@
     }, true);
   });
 
-  /* Domknięcie szczeliny między najechaniem a zdarzeniem wskaźnika. Wyzwalacz,
-     który pojawia się pod nieruchomym wskaźnikiem albo wjeżdża pod niego
-     przewijaniem, dostaje stan najechania bez `pointerover`. Ruch wskaźnika
-     nadrabia współrzędne, a warunek na znaczniku sprawia, że pełny rachunek
-     wykonuje się raz na wyzwalacz, nie przy każdym ruchu. */
-  document.addEventListener('pointermove', function (e) {
+    document.addEventListener('pointermove', function (e) {
     var el = zWezla(e.target);
     if (el && el.getAttribute('data-dymek') !== 'tak') { ustaw(el); }
   }, true);

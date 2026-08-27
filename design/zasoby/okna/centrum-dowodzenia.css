@@ -1,31 +1,8 @@
-/* ============================================================================
-   DANACO CONSOLE — CENTRUM DOWODZENIA: ZŁOŻENIE OKNA
-   ----------------------------------------------------------------------------
-   Kompetencja: układ karty Centrum dowodzenia — nagłówek, wiersz pierwszego
-   wejścia oraz cztery strefy wyboru (środowiska, komponenty aplikacji,
-   komponenty własne Operatora, listwa ustawień) i panel samouczka. Wygląd
-   komponentów pochodzi z arkuszy kompetencyjnych; tutaj stoi wyłącznie ich
-   złożenie w tym oknie.
-
-   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `css/komponenty.css`,
-   `stany.css`, `rama.css`, `karty-okna.css`, `panel-sesji.css`,
-   `pasek-okna.css`, `izolacja.css`, `okno-robocze.css`.
-   Mechanizm: `okna/centrum-dowodzenia.js`.
-
-   Punkty łamania mierzą szerokość płótna (`@container plotno`), nie szerokość
-   ekranu: panel samouczka zwęża okno główne o 320 px.
-   ============================================================================ */
+/* Centrum dowodzenia — złożenie okna. Uzasadnienia reguł:
+   01-dokumentacja-md/centrum-dowodzenia-uzasadnienia.md */
 
 :root { --cd-maks-tresc: 100%; }
 
-/* ── Włos marki ────────────────────────────────────────────────────────────
-   Obrys wstążek i okien niesie barwę znaku zmieszaną z obrysem podstawowym.
-   Udział barwy znaku jest dwustopniowy: wyższy dla krawędzi, niższy dla tła
-   karty bieżącej, gdzie barwa leży pod tekstem i musi zostawić mu kontrast.
-   Mieszanie w przestrzeni oklab daje w obu motywach równy stopień odejścia od
-   szarości, czego mieszanie kanałowe nie zapewnia.
-   Wartości udziału stoją tu, a nie w `zasoby/zetony/`, bo rozstrzygnięcie
-   obejmuje jedno okno; przy rozszerzeniu na pozostałe przenieść do palety. */
 .cd-strona {
   --cd-udzial-krawedzi: 46%;
   --cd-udzial-tla: 13%;
@@ -37,40 +14,22 @@
     --cd-obrys-marki: var(--dn-sygnal-800);
     --cd-tlo-karty-biezacej: var(--dn-wstazka);
   }
-  /* Bez mieszania barw tło karty bieżącej równa się tłu wstążki, więc nośnikiem
-     wyróżnienia jest kreska sygnałowa u dołu karty. Miarę niesie żeton wstęgi
-     aktywności karty, nie żeton siły hasła. */
-  .cd-strona .dn-karta-widoku[aria-selected='true'],
+    .cd-strona .dn-karta-widoku[aria-selected='true'],
   .cd-strona .dn-karta-sesji[aria-selected='true'] {
     box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-sygnal-500);
   }
 }
 
-/* Wstążka główna nie miała obrysu — dostaje włos marki, wewnątrz obecnej bryły,
-   więc jej wysokość nie drgnie. */
 .cd-strona .dn-narzedzia { border: 1px solid var(--cd-obrys-marki); }
-/* Trzy okna obszaru roboczego: boczne, robocze i samouczek. Sama barwa —
-   skrót `border` przywracałby krawędzie, które warstwa wspólna zeruje celowo:
-   dół każdego panelu (wchodzi pod pasek stanu), lewą okna bocznego i prawą
-   samouczka (stykają się z ramą aplikacji). */
 .cd-strona .dn-obszar-panel { border-color: var(--cd-obrys-marki); }
 
 .cd-strona .dn-karta-widoku[aria-selected='true'],
 .cd-strona .dn-karta-sesji[aria-selected='true'] { background: var(--cd-tlo-karty-biezacej); }
 
-/* ── Położenie panelu bocznego ────────────────────────────────────────────
-   Panel sesji stoi domyślnie po lewej. Menu panelu przenosi go na prawą stronę
-   okna — obszar roboczy jest zginany w rzędzie, więc kolejność wystarczy
-   zmienić porządkiem, bez przenoszenia znacznika. */
 .dn-obszar-panel--boczny[data-strona='prawo'] { order: 9; }
-
-/* ── Płótno i rytm treści ─────────────────────────────────────────────────── */
 
 .cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
 
-/* Płótno karty. Warunek `:not([hidden])` jest konieczny: `display`
-   zadeklarowany przez autora wygrywa z `[hidden]` z arkusza przeglądarki,
-   a wtedy karta odłożona zostawałaby na ekranie razem z kartą bieżącą. */
 .cd-tresc:not([hidden]) {
   container-type: inline-size;
   container-name: plotno;
@@ -83,9 +42,6 @@
   padding: var(--dn-od-2) var(--dn-od-6) var(--dn-od-16);
 }
 
-/* Wejście stref w kolejności ważności. `backwards`, nie `both`: animacja
-   wypełniająca w przód pozostaje czynna i czyni ze strefy kontekst nakładania,
-   co przycina panele rozwijane w jej wnętrzu. */
 .cd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
 .cd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
 .cd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
@@ -93,8 +49,6 @@
 .cd-tresc > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
 .cd-tresc > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
 .cd-tresc > *:nth-child(n + 6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
-
-/* ── Nagłówek okna ────────────────────────────────────────────────────────── */
 
 .cd-naglowek {
   display: flex;
@@ -127,12 +81,8 @@
   line-height: var(--dn-lh-luzny);
 }
 .cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
-/* Lockup poziomy 280 px wobec minimum 120 px z księgi znaku; poniżej tej
-   szerokości pola schodzi razem z płótnem, zamiast wypychać treść poza okno. */
 .cd-marka-lockup { width: min(280px, 100%); height: auto; flex: none; color: var(--dn-tekst); }
 
-/* Kropka sygnału tętni nieprzerwanie — wspólnym pulsem platformy, 2,4 s. Oba
-   znaki okna, lockup płótna i godło belki, biją tym samym rytmem. */
 .cd-marka-lockup .kropka:not(.kropka--konsola),
 .dn-belka-marka .kropka {
   animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
@@ -142,11 +92,6 @@
   .dn-belka-marka .kropka { animation: none; }
 }
 
-/* ── Wiersz pierwszego wejścia ────────────────────────────────────────────── */
-
-/* Belka pierwszego wejścia nie jest osobną powierzchnią — to zdanie na stronie,
-   nie blok do oddzielenia. Bez obrysu i tła wyściółka pozioma stawiałaby ją
-   z wcięciem wobec znaczników sekcji poniżej, więc schodzi do zera. */
 .cd-start {
   display: flex;
   align-items: center;
@@ -161,34 +106,14 @@
 }
 .cd-start[hidden] { display: none; }
 
-/* Belka samouczka i listwa ustawień domykają się na siatce środowisk, nie na
-   krawędzi płótna: kończą się równo z drugą kartą przy czterech kolumnach
-   i z pierwszą przy dwóch. Obie miary daje jedno wyrażenie — dwie kolumny wraz
-   z przerwą między nimi mierzą dokładnie tyle, co jedna kolumna z układu
-   dwukolumnowego, czyli połowę siatki pomniejszoną o pół odstępu.
-   `min-width` chroni listwę: jej pięć pozycji potrzebuje więcej miejsca, niż
-   zostaje przy dwóch kolumnach, a treść nie ma prawa wyjść poza obrys. */
 .cd-start,
 .cd-listwa {
   width: calc(50% - var(--dn-od-3) / 2);
   max-width: 100%;
 }
-/* Zdanie belki łamie się, gdy pole zwęża się poniżej jego długości. */
 .cd-start { flex-wrap: wrap; }
-/* Rząd kontrolek czyta się jako jeden zestaw, więc pole listwy nie zwęża się
-   poniżej połowy siatki z własnej woli. Gdy jednak okno zejdzie tak nisko, że
-   pięć kontrolek nie mieści się w tej połowie, rząd łamie się na dwa wiersze.
-   Podłoga na szerokości treści byłaby tu błędem: `min-width` bije `max-width`,
-   więc poniżej 480 px listwa wychodziła poza pole treści o ponad 140 px. */
 .cd-listwa { min-width: 0; flex-wrap: wrap; }
-/* Pozycja i przegroda zachowują swoją miarę — bez tego rząd nie łamie się,
-   tylko ściska kontrolki do nieczytelnych kikutów. */
 .cd-listwa-poz, .cd-listwa-sep, .cd-listwa-menu { flex: none; }
-/* Jedna kolumna — karta zajmuje całą szerokość, więc belka też.
-   Próg 860 px nie należy do skali `--dn-bp-*`; belka musi łamać się dokładnie
-   tam, gdzie łamie się siatka środowisk, a ta stoi na progach 1180 i 860 px
-   sprzed tej pracy. Przeniesienie siatki na skalę systemową rozstrzyga się
-   osobno — do tego czasu belka idzie za siatką, nie za skalą. */
 @media (max-width: 860px) {
   .cd-start,
   .cd-listwa { width: 100%; }
@@ -198,16 +123,10 @@
   body:has(#panel-samouczek:not([hidden])) .cd-listwa { width: 100%; }
 }
 .cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
-/* Zdanie zajmuje tyle, ile mierzy; przycisk staje bezpośrednio za nim, w
-   odstępie spacji, a zamknięcie odsuwa się do prawej krawędzi wiersza. Odstęp
-   wiersza schodzi do miary spacji, a znak odzyskuje swój przez własny margines. */
 .cd-start { gap: var(--dn-od-1); }
 .cd-start-znak { margin-right: var(--dn-od-2); }
 .cd-start-tresc { flex: 0 1 auto; margin: 0; }
-.cd-strona .cd-start > .dn-btn-ikona { margin-left: auto; }
 .cd-start-tresc b { color: var(--dn-tekst); }
-
-/* ── Strefy wyboru ────────────────────────────────────────────────────────── */
 
 .cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
 .cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
@@ -220,8 +139,6 @@
 }
 .cd-sekcja-opis { max-width: 74ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
 
-/* Waga strefy zapisana atrybutem `data-waga`; nośnikiem jest kreska sygnałowa
-   przed tytułem, w trzech stopniach krycia. */
 .cd-sekcja-tytul::before {
   content: '';
   display: inline-block;
@@ -235,40 +152,11 @@
 .cd-strefa[data-waga='2'] .cd-sekcja-tytul::before { opacity: 0.62; }
 .cd-strefa[data-waga='3'] .cd-sekcja-tytul::before { opacity: 0.38; }
 
-/* ── Strefa 1 · karty środowisk ───────────────────────────────────────────── */
-
-/* Cztery środowiska stoją w jednej linii — komplet wyboru czyta się jako jeden
-   rząd, a nie jako trzy plus sierota. Karta zwęża się razem z płótnem; nie
-   ubywa kolumn, ubywa szerokości karty. */
 .cd-siatka-srodowisk { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
-/* Karta jest kolumną: wiersz meta z przyciskiem wejścia stoi przy dolnej
-   krawędzi, więc cztery przyciski w rzędzie leżą na jednej wysokości. */
-/* Karta w rzędzie czterech ma węższe pole niż karta w rzędzie trzech: wyściółka
-   i stopień tytułu schodzą o krok, żeby najdłuższa nazwa środowiska
-   (MultitaskingAI) mieściła się w jednym wierszu przy 1366 px. */
 .cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; padding: var(--dn-od-4); }
 .cd-karta-akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-2xl); }
 .cd-karta-akcent .dn-karta-srodowiska-godlo { width: var(--dn-od-8); height: var(--dn-od-8); }
-/* Wiersz metryki łamał się sam z siebie i tylko na dwóch kartach z czterech:
-   przy 1366 i 1440 px pole tekstu ma 200 px, a „9 modułów · rozmowa i wiedza"
-   potrzebuje 224 px i „panel orkiestracji · 6 sekcji" 232 px. Zdanie opisowe
-   startowało przez to na dwóch różnych wysokościach i rząd czterech kart czytał
-   się jako niewyrównany.
-   Jednowierszowa metryka jest nieosiągalna: najmniejszy żeton stopnia
-   (--dn-fs-xs, 12 px) daje 203 px w Chromium i 208,8 px w Firefoksie — nadal
-   ponad pole, a zejście z wyściółki karty do 8 px zostawiałoby margines poniżej
-   piksela i pękało przy innych metrykach kroju. Dlatego metryka jest łamana
-   celowo i jednakowo na wszystkich czterech kartach: człon ilościowy w wierszu
-   pierwszym, człon opisowy w drugim. Podział niesie markup, nie zawijanie, więc
-   wypada identycznie w obu silnikach i przy każdej z trzech szerokości okna —
-   a zdanie opisowe zaczyna się wszędzie na tej samej wysokości.
-   Treść metryki bez zmian: separator „·" zostaje i otwiera wiersz drugi. */
 .cd-karta-akcent .cd-metryka-czlon { display: block; }
-/* Wstęga sygnałowa na górnej krawędzi kończyła się przed łukiem narożnika:
-   pseudoelement kotwiczy się do pola wyściółki, a przycięcie liczy promień
-   pomniejszony o obrys, więc jej koniec wystawał poza łuk i czytał się jak
-   kreska urwana w rogu. Stan karty niesie sam obrys — na czterech krawędziach
-   o jednej geometrii. */
 .cd-karta-akcent::before { content: none; }
 .cd-karta-akcent > .cd-karta-meta { margin-top: auto; }
 .cd-karta-godlo svg { width: 100%; height: 100%; }
@@ -284,55 +172,30 @@
   color: var(--dn-tekst-3);
 }
 .cd-karta-meta .cd-wejdz { margin-left: auto; }
-/* Menu operacji środowiska; wyzwalacz `wiecej` (⋯) — zestaw ikon nie ma kebaba
-   pionowego. */
 .cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
 .cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
 .dn-karta-srodowiska:hover .cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst); }
 
-/* ── Strefa 2 · komponenty aplikacji ──────────────────────────────────────── */
-
-/* Kafel niesie treść, nie pustkę: znak po lewej, nazwa i zdanie o przeznaczeniu
-   po prawej, w jednym wierszu. Układ kolumnowy z osobnym wierszem czynności
-   rozciągał kafel na dwukrotność potrzebnej wysokości i zostawiał w nim puste
-   pole. Licznik zapisanych zniknął z narożnika — zapisane komponenty stoją
-   w strefie własnej Operatora, niżej. */
 .cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .cd-kafel {
   display: flex;
   align-items: center;
   gap: var(--dn-od-3);
   width: 100%;
-  /* Kafel komponentu stoi o połowę wyżej niż stopień biblioteczny; nośnikiem
-     wzrostu jest wyściółka, bo treść ma zostać wyśrodkowana w polu. */
-  padding: var(--dn-od-6);
+    padding: var(--dn-od-6);
 }
-/* Znak komponentu ma wielkość emblematu środowiska — 32 px, rozstrzygnięcie
-   Właściciela z 2026-08-27. Obie strefy strony głównej niosą znaki tej samej
-   miary; różnicę stref oddaje karta, nie rozmiar znaku. */
 .cd-kafel .dn-kafel-ikona {
   width: var(--dn-od-8);
   height: var(--dn-od-8);
 }
 .cd-kafel .dn-kafel-ikona svg { width: var(--dn-od-8); height: var(--dn-od-8); }
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
-/* Nazwa komponentu stoi w stopniu tytułu karty środowiska — obie strefy czyta
-   się jednym stopniem. Opis zostaje na 13 px. */
-.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-2xl); }
+.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-lg); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
-/* Znak modułu niesie barwę znaku środowiska — obie strefy strony głównej mają
-   ten sam stopień kontrastu. Nazwa modułu schodzi z półgrubej na zwykłą: krój
-   treści (IBM Plex Sans) czyta się przy tej samej wadze ciężej niż krój
-   nagłówkowy karty środowiska (Space Grotesk). */
 .cd-strona .cd-kafel-tresc .dn-kafel-etykieta { font-weight: var(--dn-fw-normalna); }
 .cd-kafel-blok { display: flex; }
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
-/* ── Grot marki jako wejście ───────────────────────────────────────────────
-   Wejście do środowiska i do modułu niesie pojedynczy grot ze znaku firmowego
-   wraz z kropką sygnału — ten sam kształt, którym otwiera się lockup.
-   Miara grota modułu jest zapisana jako ułamek miary grota środowiska, żeby
-   zależność między strefami trzymała się przy każdej zmianie tej pierwszej. */
 .cd-strona {
   --cd-grot-srodowisko: var(--dn-od-12);
   --cd-grot-modul: calc(var(--cd-grot-srodowisko) * 0.65);
@@ -344,7 +207,6 @@
   transition: color var(--dn-czas-2) var(--dn-ease),
               transform var(--dn-czas-2) var(--dn-ease);
 }
-/* Grot wskazuje w prawo, więc pod wskaźnikiem robi krok w tę stronę. */
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
 .cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki,
 .cd-strona .cd-kafel:hover .cd-grot-marki,
@@ -352,15 +214,10 @@
   transform: translateX(var(--dn-od-1));
 }
 
-/* Karta środowiska: wejście niesie sam grot, bez obrysu i tła. Kontrolką
-   zostaje, bo karta nie jest przyciskiem — bez tego nie dałoby się wejść
-   z klawiatury — ale nie nosi już chromu przycisku bibliotecznego. */
 .cd-strona .cd-wejdz--grot {
   display: flex;
   align-items: center;
-  /* Lewy margines samoczynny dosuwa grot do prawej krawędzi wiersza metryki;
-     skrót `margin` go zerował i grot wracał pod tekst. */
-  margin: 0 var(--dn-od-2) var(--dn-od-2) auto;
+    margin: 0 var(--dn-od-2) var(--dn-od-2) auto;
   padding: 0;
   border: 0;
   background: none;
@@ -371,19 +228,12 @@
 .cd-strona .cd-wejdz--grot > .cd-grot-marki { height: var(--cd-grot-srodowisko); }
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
 .cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
-/* Grot nie ma obrysu przycisku, na którym obwódka fokusu mogłaby usiąść —
-   siada na samym znaku, parą żetonów fokusu z biblioteki. */
 .cd-strona .cd-wejdz--grot:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
   border-radius: var(--dn-r-sm);
 }
 
-/* Kafel modułu jest przyciskiem sam w sobie, więc grot stoi w nim jako znak,
-   nie kontrolka. W spoczynku znak i kropka są bezbarwne — barwę marki bierze
-   dopiero pod wskaźnikiem; to odróżnia moduł od środowiska, gdzie kropka pali
-   się zawsze. Reguła na `.kropka` bije wpisany w znacznik atrybut `fill`,
-   bo dowolna reguła arkusza ma pierwszeństwo przed atrybutem prezentacji. */
 .cd-kafel-grot {
   display: flex;
   align-items: center;
@@ -400,16 +250,10 @@
 .cd-strona .cd-kafel:hover .cd-kafel-grot .kropka,
 .cd-strona .cd-kafel:focus-visible .cd-kafel-grot .kropka { fill: var(--dn-sygnal-500); }
 
-/* Przycisk zakładający komponent własny stoi między strefą aplikacji a strefą
-   Operatora — to on jest przejściem między jedną a drugą. */
 .cd-dodaj-pas { display: flex; }
 .cd-dodaj-pas > .dn-btn { gap: var(--dn-od-1); }
 .cd-dodaj-pas > .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
 
-/* ── Strefa 3 · komponenty własne Operatora ───────────────────────────────── */
-
-/* Menu sekcji stoi w linii jej tytułu, wyrównane do środka wiersza —
-   `align-items: baseline` nagłówka sekcji podciągało ikonę ponad tekst. */
 .cd-sekcja-menu { align-self: center; }
 .cd-sekcja-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
 
@@ -443,9 +287,6 @@
 .cd-wlasny-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 .cd-wlasny-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-wlasny-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-/* Menu pozycji stoi obok przycisku, nie w nim, i ujawnia się przy wskazaniu. */
-/* Wyśrodkowanie rozciągnięciem, nie przesunięciem — `transform` zabierał
-   etykiecie przycisku kotwicę w oknie widoku. Tak samo w wierszu wykazu. */
 .cd-wlasny-menu {
   position: absolute;
   top: 0;
@@ -460,15 +301,11 @@
 .cd-wlasny:focus-within > .cd-wlasny-menu { opacity: 1; }
 .cd-wlasny-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
 
-/* Stan pusty strefy własnej: pokazuje się dopiero wtedy, gdy Operator nie ma
-   ani jednego komponentu. Warunek liczy sam arkusz — bez skryptu. */
 .cd-wlasne-pusto { display: none; }
 .cd-siatka-wlasnych:empty { display: none; }
 .cd-siatka-wlasnych:empty + .cd-wlasne-pusto { display: flex; }
 .cd-wlasne-pusto > svg { width: var(--dn-wym-ikona-xl); height: var(--dn-wym-ikona-xl); color: var(--dn-tekst-3); }
 .cd-wlasne-pusto .dn-pusty-stan-opis { color: var(--dn-tekst-2); }
-
-/* ── Strefa 3 · listwa ustawień ───────────────────────────────────────────── */
 
 .cd-listwa {
   display: flex;
@@ -480,7 +317,6 @@
   border-radius: var(--dn-r-lg);
   background: var(--dn-powierzchnia);
 }
-/* Znak pozycji listwy i kafla — jeden wymiar dla obu miejsc. */
 .cd-ik { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 
 .cd-listwa-poz {
@@ -503,10 +339,6 @@
 }
 .cd-listwa-poz:hover { background: var(--dn-panel); border-color: var(--dn-obrys); transform: translateY(var(--dn-podniesienie-sm)); }
 .cd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
-/* Pierścień fokusu rysuje się do wewnątrz, na czterech krawędziach. Poprzednio
-   stan fokusu niósł sam `--dn-cien-sygnal` (krycie 0,18–0,22) — obrys o
-   kontraście 1,2 : 1 wobec listwy, praktycznie niewidoczny, a przy krawędzi
-   listwy jeszcze przycinany. */
 .cd-listwa-poz:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: calc(-1 * var(--dn-wym-fokus));
@@ -518,8 +350,6 @@
 .cd-listwa-menu { position: relative; margin-left: var(--dn-od-1); }
 .cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
 .cd-listwa:hover .cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst); }
-
-/* ── Archiwum środowisk ───────────────────────────────────────────────────── */
 
 .cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
 .cd-archiwum > summary {
@@ -543,8 +373,6 @@
   line-height: var(--dn-lh-luzny);
   animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards;
 }
-
-/* ── Panel samouczka ──────────────────────────────────────────────────────── */
 
 .cd-nauka {
   display: flex;
@@ -589,8 +417,6 @@
 }
 .cd-nauka-nota > svg { flex: none; color: var(--dn-tekst-3); }
 
-/* ── Zasłona treści modułu ────────────────────────────────────────────────── */
-
 .cd-zaslona { display: grid; place-content: center; padding: var(--dn-od-16) var(--dn-od-6); }
 .cd-zaslona[hidden] { display: none; }
 .cd-zaslona-tresc {
@@ -604,15 +430,6 @@
   line-height: var(--dn-lh-luzny);
 }
 
-/* Liczba kolumn stref 1 i 2 wynika z miejsca na płótnie; przy otwartym panelu
-   samouczka płótno jest o 320 px węższe, więc progi przesuwają się o tę samą
-   wartość. Karta środowiska nie schodzi poniżej ~260 px — niżej tytuł
-   środowiska łamie się w połowie wyrazu.
-   Liczba powtórzeń w `repeat()` musi być literałem: `var()` w tym miejscu jest
-   nieprawidłowe i deklaracja przepada. */
-/* Cztery kolumny to komplet wyboru, więc trzymają się do progu, poniżej
-   którego karta przestaje mieścić nazwę środowiska. Panel samouczka zwęża
-   płótno o 320 px, więc jego otwarcie przesuwa progi o tę samą wartość. */
 @media (max-width: 1180px) {
   .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -638,16 +455,8 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   .cd-archiwum-tresc { animation: none; }
 }
 
-/* ── Menu tego okna ───────────────────────────────────────────────────────
-   Pozycja z zaznaczeniem ma ikonę po lewej, a znacznik stanu przy prawej
-   krawędzi. Kolejność w dokumencie jest teraz zgodna z kolejnością widzianą,
-   więc czytnik ekranu podaje nazwę przed znacznikiem, nie odwrotnie. */
 .sta-menu-poz > .ptaszek { order: 9; margin-left: auto; }
 
-/* ── PŁÓTNO KARTY MODUŁOWEJ ────────────────────────────────────────────────
-   Karta modułu wskazuje własne płótno: wybranie karty zdejmuje pulpit Centrum.
-   Prototyp niesie tu nagłówek warsztatu i odnośnik do prototypu modułu —
-   układ warsztatu należy do tamtego okna, nie do Centrum dowodzenia. */
 .cd-tresc--modul { gap: var(--dn-od-3); }
 
 .cd-modul-glowa {
@@ -669,85 +478,38 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 }
 .cd-modul-odnosnik { display: flex; align-items: center; gap: var(--dn-od-2); }
 
-/* ==========================================================================
-   KARTY PEŁNE — kwadratowe rogi (zakres: centrum, klasa `cd-strona`)
-   --------------------------------------------------------------------------
-   Zaokrąglenie przy grubym akcencie `border-left` (wstęga sygnałowa) i cienkim
-   obrysie reszty dawało skośny szew na rogu — widoczny artefakt. Pełna karta
-   zdejmuje go u źródła, nie ruszając warstwy wspólnej w pozostałych oknach.
-   ========================================================================== */
 .cd-strona .dn-karta-widoku { border-radius: 0; }
 
-/* Karty pełne zdejmują „klapki" łączące zaokrągloną zakładkę z panelem —
-   pseudo-elementy ::before/::after zostawały jako ciemne prostokąty (widmo
-   na karcie). Przy kwadratowej zakładce są zbędne. Zakres: centrum. */
-/* (reguła zdjęta — ::after niesie prawą krawędź karty bieżącej) */
-
-/* Sesje w drzewie Projektów wyrównane do nazwy projektu (lewa linia) —
-   wiersz niósł 12 px wcięcia, przez co bullet stał w prawo od nagłówka grupy. */
 .cd-strona .dn-panel-drzewo .dn-obszar-pozycja { padding-left: 0; }
 
-/* Jeden rozmiar ikon w pasie kart. Kontrolki (zamknij, „+", powłoki, narzędzia)
-   szły na 20 px (--kart-ikona-sterowania), a zakładki i grot na 16 px — stąd
-   rozjazd. Nadpisanie zmiennej sprowadza wszystkie do 16 px. Zakres: centrum. */
 .cd-strona .dn-karty-pasmo { --kart-ikona-sterowania: var(--dn-wym-ikona); }
 
-/* Jeden rozmiar ikony w całym oknie — 18 px, jak na wstążce głównej.
-   Kontrolki pasa kart i wstążek okien szły na 16 px, przez co ikony
-   zamknięcia, grotu i plakietki były drobniejsze od pozostałych. */
 .cd-strona .dn-karty-pasmo svg,
 .cd-strona .dn-obszar-pasek svg {
   width: var(--dn-wym-ikona);
   height: var(--dn-wym-ikona);
 }
 
-/* Podwójne podświetlenie w pasie kart: tło hover dostawał i przycisk, i jego
-   opakowanie (span .dn-nrz-menu / .dn-karty-wykaz / .dn-karty-powloki /
-   .dn-karty-dodaj). Dwie warstwy rgba(255,255,255,.06) sumowały się do ~.12.
-   Podświetla się wyłącznie przycisk. Zakres: centrum. */
 .cd-strona .dn-karty-pasmo .dn-nrz-menu:hover,
 .cd-strona .dn-karty-wykaz:hover,
 .cd-strona .dn-karty-powloki:hover,
 .cd-strona .dn-karty-dodaj:hover,
 .cd-strona .dn-karty-narzedzia:hover { background: transparent; }
 
-/* ==========================================================================
-   WSTĄŻKA OKNA — pasek narzędzi każdego okna (lewego i roboczego)
-   --------------------------------------------------------------------------
-   Lewe okno (sesje i projekty) oraz okno robocze są osobnymi oknami, więc
-   każde ma własną wstążkę — tak jak wstążka główna aplikacji: zaokrąglona,
-   w barwie panelu, z ikonami właściwymi dla tego okna.
-   ========================================================================== */
 .cd-strona .dn-obszar-pasek {
-  /* Odsunięcie ze wszystkich stron — bez marginesu górnego wstążka stykała się
-     z pasem kart i oba zlewały się w jeden ciemny blok bez kształtu. */
-  margin: var(--dn-od-2);
+    margin: var(--dn-od-2);
   padding: 0 var(--dn-od-2);
   border-radius: var(--dn-r-lg);
-  /* Wstążka nie jest osobną powierzchnią — ma tło okna, a wyodrębnia ją
-     wyłącznie cienka ramka. Barwa `--dn-obrys` w motywie ciemnym równa się
-     barwie wnętrza okna (#272A30), więc ramka na niej byłaby niewidoczna. */
-  border: 1px solid var(--cd-obrys-marki);
+    border: 1px solid var(--cd-obrys-marki);
   background: transparent;
   gap: var(--dn-od-1);
   height: 40px;
-  /* Wstążka nie jest polem przewijania: pole przewijania zamyka dymki
-     przycisków w pasie własnej wysokości i daje wstążce pionowy pasek
-     przesuwania. Komplet przycisków lewego okna zajmuje 238 px i mieści się
-     w domyślnej szerokości okna (280 px). */
- 
-.cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; } /* Komplet przycisków wstążki jest szerszy niż wstążka przy najmniejszej
-     szerokości panelu (238 px zawartości wobec 201 px pola), więc pas przewija
-     się w poziomie zamiast ucinać ostatni przycisk. Sam pasek przesuwania jest
-     schowany — przewijanie idzie kółkiem i gestem. Dymki tego nie dotyczy:
-     stoją w oknie widoku, poza polem przycinania wstążki. */
-  overflow-x: auto;
+   
+.cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; }   overflow-x: auto;
   scrollbar-width: none;
 }
 .cd-strona .dn-obszar-pasek .dn-obszar-sterowanie { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 .cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
-/* Przycisk wstążki okna jest węższy niż na wstążce głównej — okno boczne ma
-   280 px szerokości i przy 40 px na przycisk ikony nie mieściły się w rzędzie. */
 .cd-strona .dn-obszar-pasek .dn-btn-ikona {
   width: 32px;
   height: 32px;
@@ -762,17 +524,8 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   background: var(--dn-obrys);
 }
 
-/* Pozycje sesji i projektów zaczynają się na wysokości liter znaku DANACO.
-   Pudełko `.cd-marka-lockup` stoi na 217 px, ale rysunek liter zaczyna się
-   dopiero 33 px niżej — równanie do pudełka stawiało wykazy nad znakiem. */
 .cd-strona .dn-obszar-panel--boczny .dn-obszar-tresc { padding-top: var(--dn-od-10); }
 
-/* ==========================================================================
-   UCHWYT ZMIANY SZEROKOŚCI OKIEN BOCZNYCH
-   --------------------------------------------------------------------------
-   Lewe okno i okno samouczka mają regulowaną szerokość. Uchwyt jest wąski
-   wizualnie, ale ma szerszą strefę chwytu, żeby dało się go złapać myszą.
-   ========================================================================== */
 .cd-uchwyt {
   flex: none;
   width: 6px;
@@ -792,13 +545,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 }
 @media (prefers-reduced-motion: reduce) { .cd-uchwyt { transition: none; } }
 
-/* ==========================================================================
-   ZWINIĘCIE LEWEGO OKNA I PODGLĄD PO NAJECHANIU NA KRAWĘDŹ
-   --------------------------------------------------------------------------
-   Zwinięte okno nie znika z układu (jak przy `hidden`), tylko traci szerokość —
-   dzięki temu zostaje krawędź, po której najechaniu okno rozwija się samo na
-   czas podglądu i zwija z powrotem po zejściu kursorem.
-   ========================================================================== */
 .cd-strona .dn-obszar-panel--boczny {
   width: var(--cd-szer-boczny, 280px);
   transition: width 140ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -828,11 +574,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   .cd-strona .dn-obszar-panel--boczny { transition: none; }
 }
 
-/* Znak komponentu stoi bez płytki i bez ramki — samo godło.
-   `.dn-kafel-ikona` z warstwy wspólnej niesie tło `--dn-powierzchnia` i obrys
-   `--dn-obrys`; oba są tu zdejmowane. Pojemnik zachowuje 32 px z `.cd-kafel
-   .dn-kafel-ikona` wyżej, żeby odstęp od brzegu kafla i od tekstu pozostał
-   nietknięty, a znak wypełnia go w całości. */
 .cd-strona .cd-kafel .dn-kafel-ikona {
   border: 0;
   background: none;
@@ -843,29 +584,10 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   height: var(--dn-od-8);
 }
 
-/* Kreska przy „+” równo z krawędzią ostatniej karty.
-   Kontrolka „+” odsuwa się od zbioru kart o `--kart-odstep-sterowania`, a jej
-   kreska cofa się o tę samą wartość — czyli zatrzymuje się w połowie odstępu,
-   nie na krawędzi karty. Cofnięcie o pełny odstęp stawia ją dokładnie tam,
-   gdzie kończy się ostatnia karta. */
 .cd-strona .dn-karty-lista ~ .dn-karty-dodaj::after {
   left: calc(-2 * var(--kart-odstep-sterowania));
 }
 
-/* === agent-1: separatory pasów kart === */
-/* Przegrody pasa kart mają w tym oknie jedną formę i jedną barwę — w każdym
-   pasie: w oknie roboczym, w oknie bocznym i w panelu samouczka.
-
-   Barwa: `--dn-obrys` w motywie ciemnym ma wartość #272A30, czyli dokładnie tę
-   samą co tło karty bieżącej i wnętrze okna. Kreska na niej ma kontrast
-   1,00 : 1 i jest niewidoczna z definicji, nie z powodu ustawień; przegrody
-   idą więc na `--dn-obrys-mocny`.
-
-   Forma: włos kreski wysokości `--kart-przegroda-wys`, pośrodku wysokości
-   pasa. Krawędzie karty bieżącej szły z warstwy wspólnej na pełną wysokość
-   karty i były jedynymi kreskami pasa innego rodzaju niż pozostałe — dwie
-   formy przegrody w jednym rzędzie czytają się jako usterka, nie jako
-   wyróżnienie. */
 .cd-strona .dn-karta-widoku[aria-selected='true']::before,
 .cd-strona .dn-karta-widoku[aria-selected='true']::after,
 .cd-strona .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
@@ -880,9 +602,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   transform: translateY(-50%);
 }
 
-/* Menu otwartych kart i menu okien roboczych to dwie osobne kontrolki, stykające
-   się bokami na początku pasa. Każda inna szczelina pasa niesie przegrodę; ta
-   jedna jej nie miała i obie kontrolki zlewały się w jeden blok. */
 .cd-strona .dn-karty-pasmo > .dn-karty-powloki::before {
   content: '';
   position: absolute;
@@ -895,10 +614,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   pointer-events: none;
 }
 
-/* Kontrolka zwinięcia w pasie samouczka jest przyciskiem z etykietą najechania,
-   a etykieta i przegroda idą na tym samym `::after`. Wygrywa przegroda, ale
-   zostają po etykiecie `opacity: 0`, ramka, wyściółka i cień — kreska wychodzi
-   niewidoczna i osiemnastokrotnie za szeroka. Reguła zdejmuje te pozostałości. */
 .cd-strona .dn-karty-pasmo > .dn-karty-dodaj::after {
   width: 1px;
   padding: 0;
@@ -906,23 +621,12 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   box-shadow: none;
   opacity: 1;
 }
-/* === koniec agent-1 === */
 
-/* Krawędzie okien stoją w pionie krawędzi wstążki głównej: okna nie noszą
-   marginesów ujemnych, a uchwyt szerokości okna ukrytego nie zajmuje miejsca. */
 .cd-strona .dn-obszar-panel--boczny { margin-left: 0; }
 .cd-strona .dn-obszar-panel--samouczek { margin-right: 0; }
 .cd-strona .dn-obszar-panel--samouczek[hidden] + .cd-uchwyt,
 .cd-strona .cd-uchwyt:has(+ .dn-obszar-panel--samouczek[hidden]) { display: none; }
 
-/* === agent-3: ikona zamknięcia w menu grupy === */
-/* Wykaz kart grupy jest jedynym miejscem, z którego kartę zgrupowaną można
-   zamknąć bez wchodzenia w nią, więc jego wiersz niesie dwie czynności obok
-   siebie: wybór karty i jej zamknięcie (`.sta-menu-wiersz`, biblioteka).
-   Biblioteka ujawnia czynność dodatkową dopiero najechaniem — tutaj zamknięcie
-   stoi w wierszu na stałe, bo ukryte byłoby tą samą nieobecnością, którą wiersz
-   ma usunąć. Barwa metadanych oddaje pierwszeństwo nazwie karty; przy najechaniu
-   i przy fokusie znak przechodzi w pełną barwę tekstu. */
 .cd-strona .sta-menu-wiersz > .dn-btn-ikona {
   opacity: 1;
   color: var(--dn-tekst-3);
@@ -932,49 +636,17 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   background: var(--dn-hover);
   color: var(--dn-tekst);
 }
-/* Jeden rozmiar ikony w całym oknie — 18 px, jak zamknięcie karty w pasie kart.
-   Panel menu przenosi się na czas otwarcia do warstwy okna, więc wychodzi spod
-   reguły pasa kart wyżej i bierze ten rozmiar tutaj. */
 .cd-strona .sta-menu-wiersz > .dn-btn-ikona > svg {
   width: var(--dn-wym-ikona);
   height: var(--dn-wym-ikona);
 }
-/* === koniec agent-3 === */
 
-/* === agent-2: dymki i przewijanie === */
-
-/* ==========================================================================
-   DYMEK — kotwiczony do prostokąta wyzwalacza
-   --------------------------------------------------------------------------
-   Dymek warstwy wspólnej stoi bezwzględnie względem wyzwalacza, więc należy do
-   pola przycinania panelu, a panele okien przycinają zawartość. Przy skrajnym
-   przycisku połowa napisu zostawała za krawędzią okna, a sam dymek podnosił
-   zasięg przewijania wstążki z 38 do 61 px i dawał jej poziomy pasek.
-
-   Umocowanie do okna widoku wyjmuje dymek z obu tych pól. Położenia nie da się
-   przy tym wziąć z układu — `position: fixed` z `inset: auto` czyta miejsce
-   spoczynkowe, które w każdym pojemniku wypada inaczej, przez co dymek odjeżdżał
-   od ikony. Współrzędne podaje więc mechanizm okna w `--cd-dymek-x` i
-   `--cd-dymek-y`, liczone z prostokąta wyzwalacza i przyciśnięte do widoku.
-   ========================================================================== */
-/* Umocowanie do okna widoku obowiązuje na KAŻDYM dymku, także spoczywającym:
-   dymek pozycjonowany względem wyzwalacza wchodzi do pola przewijania swojego
-   pojemnika i sam z siebie daje mu poziomy pasek, choć jest niewidoczny.
-   Spoczywający stoi poza widokiem, bo i tak ma zerowe krycie.
-
-   Współrzędne dostaje wyłącznie wyzwalacz bieżący. Zmienne własne dziedziczą
-   się w dół drzewa, więc bez tego zawężenia dymek dziecka brałby współrzędne
-   przodka i lądował po drugiej stronie okna. */
 .cd-strona [data-etykietka]::after {
   position: fixed;
   inset: auto;
   left: -9999px;
   top: -9999px;
 }
-/* `right` musi zostać zdjęte razem z `left`. Warstwa wspólna przypina dymki
-   pasa sterowania i ostatniej grupy narzędzi prawą krawędzią; przy umocowaniu
-   do widoku taki dymek dostawał obie krawędzie naraz i rozciągał się od ikony
-   po brzeg okna — 1726 px zamiast własnej szerokości. */
 .cd-strona [data-etykietka][data-dymek='tak']::after {
   left: var(--cd-dymek-x);
   right: auto;
@@ -987,11 +659,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   transform: translate(-50%, 0);
 }
 
-/* Skrajne grupy narzędzi przypinają dymek krawędzią grupy — `left: 0` w grupie
-   pierwszej, `right: 0` w ostatniej — selektorem o swoistości wyższej niż
-   kotwica, bo z `:first-child` i `:last-child`. Dymek dostawał przez to
-   współrzędną z mechanizmu i krawędź z biblioteki naraz: pierwszy przycisk
-   wstążki stawiał etykietę przy brzegu ekranu, pod szyną nawigacji. */
 .cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']::after,
 .cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']::after {
   left: var(--cd-dymek-x);
@@ -1005,30 +672,11 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   transform: translate(-50%, 0);
 }
 
-/* Dymek bez współrzędnych nie ma prawa się pokazać. Warstwa wspólna ujawnia go
-   samym najechaniem, a współrzędne nadaje mechanizm okna — między jednym
-   a drugim jest szczelina: gdy wyzwalacz pojawia się pod nieruchomym
-   wskaźnikiem albo wjeżdża pod niego przewijaniem, najechanie zachodzi bez
-   zdarzenia wskaźnika. Dymek stawał wtedy w miejscu spoczynkowym, które
-   w pasie sterowania wypada przy prawej krawędzi okna, a gdzie indziej poza
-   ekranem — stąd etykiety raz odległe od ikony, raz nieobecne. */
 .cd-strona [data-etykietka]:not([data-dymek='tak']):hover::after,
 .cd-strona [data-etykietka]:not([data-dymek='tak']):focus-visible::after {
   opacity: 0;
 }
 
-/* === koniec agent-2 === */
-
-/* === agent-5: animacje kafli środowisk i pas narzędzi === */
-
-/* ── Warstwa animacji karty środowiska ────────────────────────────────────
-   Godło zostaje na swoim miejscu; animacja jest tłem karty, nie elementem
-   układu. Pole animacji zajmuje prawe 40 % szerokości karty na pełnej jej
-   wysokości, a sama animacja stoi w tym polu pośrodku — w pionie i w poziomie.
-   Rozmiar animacji liczy się od szerokości pola (`cqw`), więc karta zwęża się
-   razem z płótnem, a animacja nadal mieści się w polu.
-   Karta przycina zawartość do własnego łuku narożnika: przy `overflow: visible`
-   animacja wylewałaby się poza narożniki i poza obrys karty. */
 .cd-strona .cd-siatka-srodowisk > .dn-karta-srodowiska { overflow: hidden; }
 
 .cd-karta-anim {
@@ -1038,31 +686,16 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   display: grid;
   place-items: center;
   z-index: 0;
-  /* Animacja jest tłem pod tekstem: przygaszenie trzyma kontrast tytułu, opisu
-     i etykiety „Wejdź" ponad progiem WCAG AA także w najjaśniejszej klatce
-     pętli. Wartość wynika z pomiaru najjaśniejszego piksela pod tekstem. */
-  opacity: 0.11;
+    opacity: 0.11;
   pointer-events: none;
   container-type: inline-size;
 }
 .cd-karta-anim .d3-anim { --d3-size: 82cqw; }
 
-/* Treść karty leży o stopień wyżej niż warstwa animacji. */
 .cd-karta-akcent > :not(.cd-karta-anim) { position: relative; z-index: 1; }
 
-/* ── Narzędzia karty bieżącej na wstążce okna ─────────────────────────────
-   Pod pasmem kart stoi jeden rząd narzędzi. Osobnego pasa modułu nad wstążką
-   nie ma: narzędzia karty bieżącej weszły do wstążki okna roboczego i noszą
-   jej miarę — przycisk 32 px, znak 18 px, kreska rozdzielająca 18 px.
-   Klasa `dn-pasek-okna` została na grupie wyłącznie jako zaczep mechanizmu
-   (`pasek-okna.js`): to on gasi narzędzia na karcie Centrum dowodzenia, która
-   jest pulpitem okna, a nie modułem, i zwija nadmiar pod „…" przy zwężeniu.
-   Deklaracje pasa — własne tło, kreska domykająca, wysokość i wyściółka —
-   są tu wygaszone, bo grupa nie jest już pasem. */
 .cd-strona .dn-obszar-pasek .dn-pasek-okna {
-  /* Grupa bierze wolne miejsce wstążki: mechanizm zwijania mierzy zapas
-     względem jej prawej krawędzi, więc bez rozciągnięcia zwinąłby wszystko. */
-  flex: 1 1 auto;
+    flex: 1 1 auto;
   min-width: 0;
   width: auto;
   min-height: 0;
@@ -1071,16 +704,9 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   background: transparent;
   gap: var(--dn-od-1);
 }
-/* Przycisk „…" stoi zaraz za ostatnim narzędziem, nie przy prawej krawędzi
-   wstążki — inaczej rozdzielałby narzędzia od menu widoku. */
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-odstep { display: none; }
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-nadmiar { margin-left: 0; }
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-rozdzielacz { height: var(--dn-wym-ikona); }
-/* Kafel pod wskaźnikiem ujawnia animację. Metryka i zdanie opisowe biegną po
-   niej, więc samo rozjaśnienie tła zabrałoby im czytelność — razem z animacją
-   wzmacnia się dlatego barwa pisma, z tekstu drugorzędnego na pierwszorzędny.
-   Obie wartości dobrane pomiarem kontrastu na najjaśniejszych klatkach pętli:
-   przy 0.5 i piśmie pierwszorzędnym najsłabszy kontrast opisu to 4,74 : 1. */
 .cd-strona .dn-karta-srodowiska:hover .cd-karta-anim,
 .cd-strona .dn-karta-srodowiska:focus-within .cd-karta-anim {
   opacity: 0.5;
@@ -1095,19 +721,12 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .dn-karta-srodowiska-opis,
 .cd-strona .dn-karta-srodowiska-motto { transition: opacity var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
 
-/* === koniec agent-5 === */
-
-/* ── Stopka lewego okna ────────────────────────────────────────────────────
-   Dwie pozycje poza wykazem sesji i projektów: sprawdzenie wydania na serwerze
-   oraz odsyłacz do strony wydań, otwierany w przeglądarce. Stopka stoi przy
-   dolnej krawędzi okna, poza polem przewijania obu zakładek. */
 .cd-panel-stopka {
   display: flex;
   flex-direction: column;
   gap: var(--dn-od-05);
   margin-top: auto;
   padding: var(--dn-od-2);
-  border-top: 1px solid var(--cd-obrys-marki);
 }
 .cd-panel-stopka-poz {
   display: flex;

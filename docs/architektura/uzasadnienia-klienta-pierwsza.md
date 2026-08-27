@@ -5161,3 +5161,34 @@ decyzję jako usterkę.
 Wykaz otwiera się bez zawężenia, ponieważ zlecenie zakończone chwilę wcześniej
 jest dla Operatora wchodzącego do modułu tak samo istotne jak zlecenie w toku,
 a wykaz zawężony od razu wyglądałby na pusty rdzeń.
+
+## budowa/klient-poprzedni/src/moduly/design/zestawy-zetonow.ts
+
+Motyw jest własnością powłoki. Zestaw żetonów jest bytem obok niego: panel
+odczytuje żetony motywu obowiązującego, a Operator może je odłożyć jako
+zestaw, wczytać cudzy system i wydać go do kodu. Zapis zestawu nie zmienia
+wyglądu produktu ani o jeden piksel i panel mówi to wprost, zamiast
+zostawiać Operatora z domysłem.
+
+Import wnosi role nieznane systemowi projektowemu klienta i je wymienia:
+odrzucenie ich byłoby zgubieniem pracy, przemilczenie — obietnicą, że
+wszystko pasuje. Rola nieznana wchodzi do zestawu, a jej nazwa wraca
+w odpowiedzi rdzenia i panel wypisuje ją w całości.
+
+Postacie wydania — CSS, SCSS, Tailwind, moduł JavaScript, zasoby iOS
+i Android — powstają w rdzeniu przez sklejenie napisów, bez jednego
+programu spoza instalki. Panel pokazuje treść wydania, a nie samo
+potwierdzenie gotowości: plik bez treści jest kopertą udaną i pustą.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/wskaznik-etapu.ts
+
+Struktura `Subagent` nie niesie ani nazwy etapu, ani skali postępu. Niosą je pola
+struktury `MonitorStatus`: `stage` z nazwą etapu bieżącego, `stageIndex` z jego numerem,
+`stageCount` z liczbą etapów i `completion` ze stopniem ukończenia w procentach. Panel
+wiąże telemetrię z przepływem po polu `windowId` — po tym samym, którym `Subagent`
+wskazuje okno wykonawcy.
+
+Telemetria milcząca nie jest telemetrią zerową. Gdy monitor nie ma procesu dla okna albo
+odmówił odpowiedzi, wiersz nie rysuje pustego wskaźnika, ponieważ pusty wskaźnik znaczyłby
+„zero etapów za sobą" — stan, którego nikt nie odczytał. Wiersz mówi wtedy wprost, że etapu
+nie oddano, i skąd ta cisza pochodzi.

@@ -4560,3 +4560,6 @@ przejmie sterowania. Wykaz wszystkich operacji w jednym ciągu jest jeden dla cz
 pływaka, menu pełnego, wiersza polecenia i narzędzi modelu — bo druga kopia rozjechałaby się
 z pierwszą przy pierwszym dołożeniu operacji. Fraza pusta w wyszukiwaniu operacji oddaje wykaz
 w całości, a nie pustkę, bo pole szukania niewypełnione nie jest zawężeniem do zera.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/przeplyw-komunikatow.ts
+Prawdę o stanie okna zna rdzeń, nie znacznik lokalny: znacznik nieaktualny kosztuje jedno zbędne zatrzymanie, które zawsze odpowiada, nie utratę wiadomości. Klient wysyła zatrzymanie i wysyłkę jako parę sekwencyjną, nie równoległą — komendy nadane naraz dotarłyby w kolejności niegwarantowanej i wysłanie mogłoby wyprzedzić zatrzymanie, trafiając na okno nadal zajęte i kończąc się odmową. Nieudane zatrzymanie nie wstrzymuje wysłania: jeżeli tura zdążyła tymczasem dobiec końca sama, wysłanie przechodzi, a jeżeli nie, odmowa przychodzi z rdzenia.

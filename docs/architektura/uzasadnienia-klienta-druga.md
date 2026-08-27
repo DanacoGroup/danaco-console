@@ -3794,3 +3794,13 @@ bez znacznika włączania wyłączonych, więc komponent wyłączony skraca list
 odmowa rdzenia zostawia same kafle rodzajów, bo te wynikają z kontraktu, nie z tej odpowiedzi. Powłoka
 otwiera moduł bez pozycji na liście drogą bezpośrednią, z pominięciem wykazu; zgubienie wskazania odbierałoby
 kaflowi jedyne wejście do tych okien.
+
+## budowa/klient-poprzedni/src/moduly/research/zrodlo-lektury.ts
+Kontrakt ma własną komendę modułu — odczyt treści źródła niezależnie od tego, czy jest ono plikiem
+repozytorium — a rdzeń nie ma dla niej jeszcze uchwytu; droga dziś przejezdna jest podgląd zasobu
+repozytorium wraz z podziałem na strony i znacznikiem skrócenia. Ta droga wystarcza dla źródeł
+związanych z dokumentem repozytorium i tylko dla nich — źródło typu strona internetowa, notatka
+albo zbiór danych, którego rdzeń nie trzyma jako pliku, treści nie ma dziś skąd wziąć. Okno nazywa
+to Operatorowi zamiast pokazywać pusty czytnik; dobudowa uchwytu własnej komendy tę granicę
+zdejmuje. Mechanizm podglądu jest wspólny z podglądem plików modułu biblioteki — Research nie
+buduje drugiego czytnika obok tamtego.

@@ -181,3 +181,16 @@ z komend przyjmuje identyfikator dokumentu jako pole obowiązkowe, bo żądanie
 bez dokumentu nie ma czego dotyczyć, a wysłanie go z polem pustym wróciłoby
 błędem walidacji, którego Operator by nie zrozumiał — warstwa mówi więc
 wprost, czego brakuje i po czyjej stronie leży brak.
+
+## budowa/klient-poprzedni/src/moduly/research/wywolania-komend.ts
+
+Zdanie odpowiedzi komendy mówi o mierzonym skutku czynności — ile pozycji,
+jaki plik, ile luk — a nie o tym, że wywołanie się powiodło: „rdzeń oddał
+wynik" jest zdaniem, po którym Operator nadal nie wie, czy coś się stało.
+Akcje panelu niosą w polu kodu dokładnie nazwę komendy rdzenia, więc
+rozdzielnik komend tego pliku jest odwzorowaniem jeden do jednego i nie ma
+w nim ani jednej nazwy pisanej z ręki. Nie ma w nim natomiast żądań, których
+nie da się złożyć bez tekstu od Operatora — zapytania wyszukiwania, treści
+notatki, uzasadnienia odrzucenia — bo takie pozycje mają mówić wprost, czego
+brakuje, zamiast wysyłać żądanie z polem pustym i wracać odmową walidacji,
+z której nic nie wynika.

@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Research Danaco Console: okna, makiety, elementy, warstwy widoczności oraz scenariusze pracy.*
+
 # Moduł Research — dokumentacja projektowa
 
 | | |
@@ -176,6 +178,7 @@ i ustawień modułu nie wpływa na postrzeganą prostotę jego interfejsu.
 | 4 — funkcje eksperckie | Tryb przeglądu systematycznego z diagramem PRISMA, macierz kod × źródło i eksport macierzy kodowania, reguły kolekcji inteligentnych, progi deduplikacji i punktacji wiarygodności, import wsadowy adresów i ponowne przetworzenie kolekcji, edycja stylu CSL własnego, konfiguracja dostawców wyszukiwania i kluczy, monitorowany folder importu, diagnostyka pętli wykonawczej i śladu prowenancji | Polecenie języka naturalnego w Chat Window, skrót klawiszowy, wyszukiwarka funkcji, tryb administracyjny, okno konfiguracji (rozdz. 8). Użytkownik podstawowy nie widzi tych elementów |
 
 **Zasada jednego kliknięcia.** Każda ukryta funkcja modułu jest osiągalna jednym
+
 kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego
 w Chat Window. Ukrycie zmniejsza chaos wizualny i nie wydłuża drogi dostępu —
 zagnieżdżanie funkcji głęboko w hierarchii menu jest w module wykluczone.
@@ -951,24 +954,31 @@ Etapy nie są sekwencją wymuszoną — Research Workspace pozwala wracać do wc
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — analiza konkurencyjna od podstaw.**
+
 Analityk otwiera moduł Research, definiuje zakres w Research Workspace („analiza konkurencyjna segmentu X”), zleca w Chat Window rozpoznanie tematu. Koordynator rozpisuje zlecenie w Execution Loop Window na zadania wyszukiwania i pozyskania źródeł, Discovery Panel zwraca wyniki webowe i naukowe, a wybrane pozycje trafiają do Sources Manager z pełnymi metadanymi. Analityk czyta kluczowe pozycje w Reading View, zamienia podświetlenia w ustalenia, a po zgromadzeniu 14 źródeł i 22 ustaleń wybiera szablon „Analiza konkurencyjna” w Report Builder, przeciąga kluczowe ustalenia do sekcji i generuje streszczenie zarządcze.
 
 **Scenariusz 2 — badanie zasilane wspólnym przeglądaniem.**
+
 Zespół prowadzi wspólną analizę stron konkurencji w module Browser. Zebrane tam źródła, dzięki wcześniej skonfigurowanemu powiązaniu, trafiają do Sources Manager modułu Research, gdzie są katalogowane, deduplikowane i oceniane pod kątem wiarygodności, a następnie czytane i adnotowane w Reading View.
 
 **Scenariusz 3 — wykrycie i rozstrzygnięcie sprzeczności danych.**
+
 Findings Panel sygnalizuje sprzeczność między dwoma źródłami podającymi różne wartości udziału rynkowego. Użytkownik poleca w Chat Window porównanie metodologii obu źródeł; Execution Loop Window pokazuje przebieg zadania weryfikacji i wynik kontroli jakości. Użytkownik zapisuje rozstrzygające ustalenie i oznacza sprzeczność jako rozstrzygniętą — z pełnym śladem prowenancji.
 
 **Scenariusz 4 — przegląd literatury według protokołu.**
+
 Badaczka prowadzi przegląd systematyczny: w Discovery Panel wykonuje zapytania w Crossref, OpenAlex i PubMed, w Sources Manager deduplikuje i przesiewa pozycje z uzasadnieniem odrzuceń, w Reading View wydobywa dane do tabeli dowodów, w Findings Panel koduje fragmenty, a w Report Builder składa przegląd z diagramem PRISMA i bibliografią w stylu czasopisma docelowego.
 
 **Scenariusz 5 — eksport raportu w wielu formatach dla różnych odbiorców.**
+
 Po skompletowaniu raportu w Report Builder użytkownik generuje w Export Panel wersję PDF ze stroną tytułową i bibliografią dla zarządu, wersję DOCX bez strony tytułowej do dalszej redakcji w module Studio oraz arkusz XLSX z macierzą porównawczą dla zespołu analitycznego.
 
 **Scenariusz 6 — konfrontacja wniosków w Roundtable przed finalizacją.**
+
 Przed napisaniem ostatecznych wniosków analityk przekazuje wstępną syntezę ustaleń z Findings Panel do modułu Roundtable, gdzie kilka modeli ocenia mocne i słabe strony wnioskowania z różnych perspektyw, zanim wersja końcowa trafi z powrotem do Report Builder.
 
 **Scenariusz 7 — badanie prowadzone cyklicznie.**
+
 Zespół konfiguruje monitory tematów i kanały RSS w Discovery Panel oraz powiązanie Research ───► Automations. Nowe publikacje trafiają do skrzynki „nowe źródła”, a cotygodniowy przegląd jest składany przez pętlę wykonawczą i publikowany jako kolejna wersja raportu w Library.
 
 ---
@@ -1161,4 +1171,5 @@ Wszystkie poniższe punkty Operator personalizuje z okna konfiguracji; wartości
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

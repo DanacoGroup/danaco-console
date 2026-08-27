@@ -568,8 +568,10 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   background: var(--dn-obrys);
 }
 
-/* Pozycje sesji i projektów zaczynają się na wysokości logo okna roboczego. */
-.cd-strona .dn-obszar-panel--boczny .dn-obszar-tresc { padding-top: var(--dn-od-2); }
+/* Pozycje sesji i projektów zaczynają się na wysokości liter znaku DANACO.
+   Pudełko `.cd-marka-lockup` stoi na 217 px, ale rysunek liter zaczyna się
+   dopiero 33 px niżej — równanie do pudełka stawiało wykazy nad znakiem. */
+.cd-strona .dn-obszar-panel--boczny .dn-obszar-tresc { padding-top: var(--dn-od-10); }
 
 /* ==========================================================================
    UCHWYT ZMIANY SZEROKOŚCI OKIEN BOCZNYCH
@@ -632,26 +634,18 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   .cd-strona .dn-obszar-panel--boczny { transition: none; }
 }
 
-/* Ikona komponentu: bez czarnej płytki, w rozmiarze czytelnym.
-   `.dn-kafel-ikona` z warstwy wspólnej niesie `background: var(--dn-powierzchnia)`,
-   które w motywie ciemnym jest ciemniejsze od kafla — na kaflu komponentu
-   wychodziła z tego czarna łatka. Obrys szedł na `--dn-obrys`, równy tłu okna,
-   więc i on nic nie wnosił. Zostaje sam znak, większy o stopień. */
+/* Płytka pod znakiem komponentu stoi o stopień NAD kaflem, nie pod nim.
+   Kafel leży na `--dn-panel`, a `.dn-kafel-ikona` z warstwy wspólnej idzie na
+   `--dn-powierzchnia` — w motywie ciemnym to stopień niżej w skali szarości
+   (#16181D pod #1E2126), więc płytka wychodziła czarną łatką. Obrys szedł na
+   `--dn-obrys`, w tym motywie równy barwie wstążki obok, i też nic nie wnosił.
+   `--dn-wstazka` to najbliższy stopień nad `--dn-panel` w obu motywach
+   (ciemny #272A30, jasny #FFFFFF), `--dn-obrys-mocny` daje płytce krawędź.
+   Wymiar niesie `.cd-kafel .dn-kafel-ikona` wyżej: płytka 24 px, znak 18 px. */
 .cd-strona .cd-kafel .dn-kafel-ikona {
-  width: auto;
-  height: auto;
-  border: 0;
-  background: transparent;
+  border-color: var(--dn-obrys-mocny);
+  background: var(--dn-wstazka);
   color: var(--dn-tekst-2);
-}
-.cd-strona .cd-kafel .dn-kafel-ikona svg {
-  width: var(--dn-wym-ikona-lg);
-  height: var(--dn-wym-ikona-lg);
-}
-.cd-strona .cd-kafel:hover .dn-kafel-ikona {
-  background: transparent;
-  color: var(--dn-sygnal);
-  transform: none;
 }
 
 /* Kreska przy „+” równo z krawędzią ostatniej karty.
@@ -663,17 +657,61 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   left: calc(-2 * var(--kart-odstep-sterowania));
 }
 
-/* Widoczność przegród pasa kart — zmiana wyłącznie barwy, forma bez zmian.
-   `--dn-obrys` w motywie ciemnym ma wartość #272A30, czyli dokładnie tę samą
-   co tło karty bieżącej. Krawędź karty miała więc kontrast 1,00 : 1 i była
-   niewidoczna z definicji, nie z powodu ustawień. Forma zostaje biblioteczna:
-   krótka kreska między kartami odłożonymi, pełna wysokość po bokach karty
-   bieżącej. */
-.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::before,
-.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::after,
-.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
-.cd-strona .dn-obszar-panel--glowny .dn-karty-dodaj::after,
-.cd-strona .dn-obszar-panel--glowny .dn-karty-narzedzia::after { background: var(--dn-obrys-mocny); }
+/* === agent-1: separatory pasów kart === */
+/* Przegrody pasa kart mają w tym oknie jedną formę i jedną barwę — w każdym
+   pasie: w oknie roboczym, w oknie bocznym i w panelu samouczka.
+
+   Barwa: `--dn-obrys` w motywie ciemnym ma wartość #272A30, czyli dokładnie tę
+   samą co tło karty bieżącej i wnętrze okna. Kreska na niej ma kontrast
+   1,00 : 1 i jest niewidoczna z definicji, nie z powodu ustawień; przegrody
+   idą więc na `--dn-obrys-mocny`.
+
+   Forma: włos kreski wysokości `--kart-przegroda-wys`, pośrodku wysokości
+   pasa. Krawędzie karty bieżącej szły z warstwy wspólnej na pełną wysokość
+   karty i były jedynymi kreskami pasa innego rodzaju niż pozostałe — dwie
+   formy przegrody w jednym rzędzie czytają się jako usterka, nie jako
+   wyróżnienie. */
+.cd-strona .dn-karta-widoku[aria-selected='true']::before,
+.cd-strona .dn-karta-widoku[aria-selected='true']::after,
+.cd-strona .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
+.cd-strona .dn-karty-dodaj::after,
+.cd-strona .dn-karty-narzedzia::after { background: var(--dn-obrys-mocny); }
+
+.cd-strona .dn-karta-widoku[aria-selected='true']::before,
+.cd-strona .dn-karta-widoku[aria-selected='true']::after {
+  top: 50%;
+  bottom: auto;
+  height: var(--kart-przegroda-wys);
+  transform: translateY(-50%);
+}
+
+/* Menu otwartych kart i menu okien roboczych to dwie osobne kontrolki, stykające
+   się bokami na początku pasa. Każda inna szczelina pasa niesie przegrodę; ta
+   jedna jej nie miała i obie kontrolki zlewały się w jeden blok. */
+.cd-strona .dn-karty-pasmo > .dn-karty-powloki::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: var(--kart-przegroda-wys);
+  background: var(--dn-obrys-mocny);
+  pointer-events: none;
+}
+
+/* Kontrolka zwinięcia w pasie samouczka jest przyciskiem z etykietą najechania,
+   a etykieta i przegroda idą na tym samym `::after`. Wygrywa przegroda, ale
+   zostają po etykiecie `opacity: 0`, ramka, wyściółka i cień — kreska wychodzi
+   niewidoczna i osiemnastokrotnie za szeroka. Reguła zdejmuje te pozostałości. */
+.cd-strona .dn-karty-pasmo > .dn-karty-dodaj::after {
+  width: 1px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  opacity: 1;
+}
+/* === koniec agent-1 === */
 
 /* Okna licują z ramą wstążki głównej.
    Lewe okno miało `margin-left` ujemny (dosuwało je do szyny), a okno
@@ -684,3 +722,29 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .dn-obszar-panel--samouczek { margin-right: 0; }
 .cd-strona .dn-obszar-panel--samouczek[hidden] + .cd-uchwyt,
 .cd-strona .cd-uchwyt:has(+ .dn-obszar-panel--samouczek[hidden]) { display: none; }
+
+/* === agent-3: ikona zamknięcia w menu grupy === */
+/* Wykaz kart grupy jest jedynym miejscem, z którego kartę zgrupowaną można
+   zamknąć bez wchodzenia w nią, więc jego wiersz niesie dwie czynności obok
+   siebie: wybór karty i jej zamknięcie (`.sta-menu-wiersz`, biblioteka).
+   Biblioteka ujawnia czynność dodatkową dopiero najechaniem — tutaj zamknięcie
+   stoi w wierszu na stałe, bo ukryte byłoby tą samą nieobecnością, którą wiersz
+   ma usunąć. Barwa metadanych oddaje pierwszeństwo nazwie karty; przy najechaniu
+   i przy fokusie znak przechodzi w pełną barwę tekstu. */
+.cd-strona .sta-menu-wiersz > .dn-btn-ikona {
+  opacity: 1;
+  color: var(--dn-tekst-3);
+}
+.cd-strona .sta-menu-wiersz > .dn-btn-ikona:hover,
+.cd-strona .sta-menu-wiersz > .dn-btn-ikona:focus-visible {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+}
+/* Jeden rozmiar ikony w całym oknie — 18 px, jak zamknięcie karty w pasie kart.
+   Panel menu przenosi się na czas otwarcia do warstwy okna, więc wychodzi spod
+   reguły pasa kart wyżej i bierze ten rozmiar tutaj. */
+.cd-strona .sta-menu-wiersz > .dn-btn-ikona > svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+}
+/* === koniec agent-3 === */

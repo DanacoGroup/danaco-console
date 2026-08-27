@@ -594,10 +594,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
      większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
      Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
   width: 48px; height: 48px;
-  /* Emblemat odsuwa się od nazwy podwójnym stopniem siatki (48 px). Znak
-     i nazwa są dwoma głosami karty, nie jednym blokiem — oględziny
-     Właściciela z 27.08.2026: 16 px, potem 24 px były za ciasne. */
-  margin-bottom: var(--dn-od-12);
+  margin-bottom: var(--dn-od-4);
   color: var(--dn-tekst);
 }
 .dn-karta-srodowiska-tytul {
@@ -610,12 +607,13 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska-motto {
   margin-top: var(--dn-od-1);
   font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-sm);
+  /* Miara i opis o stopień wyżej — razem z miarą sesji w stopce. */
+  font-size: var(--dn-fs-md);
   color: var(--dn-tekst-3);
 }
 .dn-karta-srodowiska-opis {
   margin-top: var(--dn-od-3);
-  font-size: var(--dn-fs-base);
+  font-size: var(--dn-fs-md);
   color: var(--dn-tekst-2);
   max-width: 44ch;
 }
@@ -663,17 +661,20 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-motto { color: var(--dn-tekst); }
 
 /* Stopka karty — nota maszynowa nad dolną krawędzią. Rozdziela ją ODSTĘP,
-   nie kreska: rozstrzygnięcie Właściciela z 27.08.2026. Kreska nad stopką
-   przecinała kartę w poprzek i czytała się jak koniec treści, a nie jak
-   zmiana rejestru z opisu na miarę. */
+   nie kreska: kreska przecinała kartę w poprzek i czytała się jak koniec
+   treści, a nie jak zmiana rejestru z opisu na miarę. */
 .dn-karta-stopka {
   display: flex;
   align-items: center;
   gap: var(--dn-od-2);
-  margin-top: var(--dn-od-4);
-  padding-top: var(--dn-od-3);
+  /* Stopka podciągnięta do treści: odstęp 16 + 12 px zostawiał w karcie pas
+     pustego pola nad miarą. Wyściółki karty nie ruszamy, więc odstęp grotu
+     od dolnej i od prawej krawędzi zostaje równy. */
+  margin-top: var(--dn-od-2);
+  padding-top: 0;
   font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
+  /* Miara sesji o dwa stopnie wyżej: na 12 px ginęła pod nazwą na 36 px. */
+  font-size: var(--dn-fs-base);
   /* Stopień 12 px na panelu nie przechodzi 4,5 : 1 na `--dn-tekst-3`. */
   color: var(--dn-tekst-2);
 }
@@ -740,13 +741,15 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    (oględziny Właściciela z 27.08.2026) odebrało nazwie te 23 px. */
 .dn-kafel--modul .dn-kafel-etykieta {
   font-family: var(--dn-ff-naglowek);
-  font-size: var(--dn-fs-lg);
+  font-size: var(--dn-fs-2xl);
   font-weight: var(--dn-fw-polgruba);
   letter-spacing: var(--dn-ls-naglowek);
   line-height: var(--dn-lh-ciasny);
   color: var(--dn-tekst);
 }
-.dn-kafel--modul .dn-kafel-opis { color: var(--dn-tekst-2); }
+/* Opis w kaflu modułu o stopień wyżej niż w kaflu bazowym: nazwa stoi tu
+   na 24 px, więc opis na 13 px czytał się jak przypis. */
+.dn-kafel--modul .dn-kafel-opis { font-size: var(--dn-fs-base); color: var(--dn-tekst-2); }
 /* Wysokość najmniejsza żetonem, nie z sumy treści: opisy czterech kafli mają
    różną liczbę wierszy, a rząd ma stać równo niezależnie od redakcji.
    Kompozycja zostaje pozioma — znak, treść, czynność w jednym rzędzie
@@ -807,11 +810,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   color: var(--dn-tekst-2);
   cursor: pointer;
 }
-/* Cel kliknięcia rośnie NA ZEWNĄTRZ znaku, nie razem z nim. Gdy przycisk sam
-   miał wymiar celu (72 px), znak 59 × 36 px siedział w nim wyśrodkowany, więc
-   do krawędzi karty zostawało 31,6 px z prawej i 43 px z dołu — odstępy
-   nierówne, choć margines przycisku był równy. Pole przycisku równa się teraz
-   znakowi, a cel powiększa nakładka: odstęp znaku JEST odstępem, który widać. */
+/* Cel kliknięcia rośnie NA ZEWNĄTRZ znaku. Gdy przycisk sam miał wymiar celu,
+   znak siedział w nim wyśrodkowany i do krawędzi karty zostawało 31,6 px
+   z prawej, a 43 px z dołu — bo znak jest szerszy niż wyższy. Pole przycisku
+   równa się znakowi, więc odstęp od dołu RÓWNA SIĘ odstępowi od prawej. */
 .dn-wejdz-grot::before {
   content: '';
   position: absolute;
@@ -845,17 +847,27 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
     transform var(--dn-czas-2) var(--dn-ease); }
 .dn-grot-marki--sm .kropka { fill: currentColor; transition: fill var(--dn-czas-2) var(--dn-ease); }
 
-/* Zapalenie grotu — z niego samego, z karty środowiska i z kafla. */
-.dn-wejdz-grot:hover .dn-grot-marki,
-.dn-wejdz-grot:focus-visible .dn-grot-marki,
+/* Zapalenie grotu — z najechania na całą kartę albo cały kafel. Znak wychodzi
+   w stronę, w którą prowadzi: trzy stopnie siatki. */
 .dn-karta-srodowiska:hover .dn-grot-marki,
 .dn-karta-srodowiska:focus-within .dn-grot-marki,
 .dn-kafel:hover .dn-grot-marki,
 .dn-kafel:focus-visible .dn-grot-marki {
   color: var(--dn-tekst);
-  /* Grot wychodzi w stronę, w którą prowadzi — o trzy stopnie siatki.
-     Jeden stopień (4 px) był ruchem niewidocznym. */
   transform: translateX(var(--dn-od-3));
+}
+
+/* Ruch WŁASNY grotu — gdy wskaźnik stoi na nim samym, a nie tylko na karcie
+   pod nim. Wychodzi wtedy dalej, o pięć stopni siatki: wskazanie karty mówi
+   „ta karta", wskazanie grotu mówi „ta czynność". Reguła stoi PO regule wyżej,
+   więc przy równej swoistości wygrywa. Dotyczy obu skal — podwójnego grotu
+   na karcie środowiska i pojedynczego w kaflu modułu. */
+.dn-wejdz-grot:hover .dn-grot-marki,
+.dn-wejdz-grot:focus-visible .dn-grot-marki,
+.dn-karta-srodowiska .dn-grot-marki:hover,
+.dn-kafel .dn-grot-marki:hover {
+  color: var(--dn-tekst);
+  transform: translateX(var(--dn-od-5));
 }
 .dn-kafel:hover .dn-grot-marki--sm .kropka,
 .dn-kafel:focus-visible .dn-grot-marki--sm .kropka { fill: var(--dn-sygnal); }
@@ -1212,12 +1224,14 @@ label.dn-pasek-szukaj:focus-within {
    Wariant stał wcześniej w arkuszu okna jako osobny składnik `.cd-listwa-poz`
    i powielał całą listwę, żeby dodać jej podniesienie. */
 .dn-listwa-pozycja--pulpit {
-  padding: var(--dn-od-2) var(--dn-od-3);
-  /* Ramka jest widoczna w SPOCZYNKU: pozycja stoi teraz na płótnie, nie
-     w zagłębionej tacy, więc bez własnej krawędzi nie czyta się jako
-     kontrolka. `--dn-obrys` zrównałby się z tłem w motywie ciemnym
-     (17,0 na 17,0 L*), dlatego krawędź bierze obrys mocny. */
-  border: 1px solid var(--dn-obrys-mocny);
+  /* Większa kontrolka: pozycja stoi samotnie na płótnie, bez tacy pod sobą,
+     więc musi mieć własną masę. Wyściółka o stopień wyżej w obu osiach. */
+  padding: var(--dn-od-3) var(--dn-od-4);
+  font-size: var(--dn-fs-md);
+  /* Ramka widoczna w SPOCZYNKU. Obrys mocny dawał na powierzchni panelu
+     tylko 7,4 stopnia L* i kreska ginęła; kreska wyrazna daje 14,4 w ciemnym
+     i 37 w jasnym. */
+  border: 1px solid var(--dn-obrys-wyrazny);
   border-radius: var(--dn-r-md);
   color: var(--dn-tekst);
   transition:
@@ -1724,9 +1738,20 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-lid b,
 .dn-lid strong { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
-/* Zdanie wprowadzające pod tytułem okna odsuwa się od niego: tytuł ma
-   `margin: 0`, więc bez tej reguły zdanie przylegało do linii pisma. */
-.dn-tytul-okna + .dn-lid { margin-top: var(--dn-od-4); }
+/* Zdanie wprowadzające pod tytułem okna: odsuwa się od niego, bo tytuł ma
+   `margin: 0`, i stoi o dwa stopnie wyżej niż zdanie w panelu — to pierwszy
+   tekst okna, czytany przed wszystkim innym. Stopień 15 px poszerza pole
+   do 665 px przy tej samej mierze 72 znaków, bo `ch` rośnie z krojem. */
+.dn-tytul-okna + .dn-lid {
+  margin-top: var(--dn-od-4);
+  /* Bez zera dolny margines zdania dokładał się do luki płótna i odstęp pod
+     opisem wynosił 40 px, przy 24 px w pozostałych przejściach sekcji. */
+  margin-bottom: 0;
+  font-size: var(--dn-fs-md);
+  /* Miara wiersza o trzy znaki dłuższa od zdania w panelu — pole sięga wtedy
+     675 px, czyli linii wskazanej przez Właściciela. */
+  max-width: 75ch;
+}
 .dn-lid--bez-odstepu { margin-bottom: 0; }
 .dn-lid--na-ramie { color: var(--dn-rama-tekst-2); }
 

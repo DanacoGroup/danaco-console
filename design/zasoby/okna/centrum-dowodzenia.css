@@ -9,7 +9,7 @@
   container-name: plotno;
   display: flex;
   flex-direction: column;
-  gap: var(--dn-od-10);
+  gap: var(--dn-od-6);
   width: 100%;
   max-width: min(var(--cd-maks-tresc), 100%);
   margin: 0 auto;
@@ -68,6 +68,11 @@
 .cd-start-tresc { flex: 0 1 auto; margin: 0; }
 
 .cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
+
+/* Strefa ustawień odcina się od stref pracy podwójnym odstępem: luka płótna
+   24 px plus tyle samo marginesu. Ustawienia nie są kolejną ścieżką pracy,
+   tylko zapleczem — przerwa mówi to, zanim ktokolwiek przeczyta nagłówek. */
+.cd-strefa[data-waga='3'] { margin-top: var(--dn-od-6); }
 
 .cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
 

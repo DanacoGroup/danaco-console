@@ -17,20 +17,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek zarządu repozytorium: czy za odpowiedzią rodziny `library.*` stoi
-// zmieniony stan, a nie sam meldunek.
-//
-// Wzorzec szkody jest w tym produkcie udokumentowany: moduł Design meldował
-// `status: ok` wraz z wykazem zasobów, za którymi nie było ani jednego bajtu.
-// Dlatego ani jeden sprawdzian w tym pliku nie kończy się na odpowiedzi komendy.
-// Każdy schodzi NIŻEJ niż rdzeń: otwiera plik bazy osobnym połączeniem SQL albo
-// czyta bajty z magazynu treści na dysku — i pyta o to samo, co komenda
-// zameldowała.
-//
-// Miara niezależna, nie druga komenda. Gdyby stan czytała inna komenda tego
-// samego modułu, obie mogłyby mylić się zgodnie: adapter oddający wykaz z tego
-// samego miejsca, w którym zapisał, potwierdziłby sam siebie.
-
 // bazaSprawdzianuBiblioteki otwiera bazę rdzenia osobnym połączeniem — do pomiaru
 // niezależnego od modułu.
 func bazaSprawdzianuBiblioteki(t *testing.T, katalog string) *sql.DB {
@@ -56,7 +42,8 @@ func liczbaWierszyBiblioteki(t *testing.T, baza *sql.DB, zapytanie string, argum
 	return liczba
 }
 
-// wartoscTekstowaBiblioteki odczytuje jedną kolumnę tekstową — pomiar wprost z bazy.
+// wartoscTekstowaBiblioteki odczytuje z bazy jedną kolumnę tekstową dla podanego
+// zapytania — pomiar wprost z bazy, nie z odpowiedzi komendy.
 func wartoscTekstowaBiblioteki(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -69,9 +56,6 @@ func wartoscTekstowaBiblioteki(t *testing.T, baza *sql.DB, zapytanie string, arg
 
 // TestOpisZasobuLezyWBaziePoZapisie mierzy `library.metadata.set`: czy opis
 // Dublin Core naprawdę wszedł do tabeli opisu, wraz z polem niestandardowym.
-//
-// Odpowiedź komendy niesie opis po zapisie, więc sama z siebie zawsze wygląda
-// pomyślnie. Pomiar idzie po wiersz w `opis_zasobu_biblioteki`.
 func TestOpisZasobuLezyWBaziePoZapisie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuBiblioteki(t, katalog)
@@ -103,8 +87,8 @@ func TestOpisZasobuLezyWBaziePoZapisie(t *testing.T) {
 		t.Errorf("pole niestandardowe nie doszło do bazy: %q", pola)
 	}
 
-	// Scalanie: drugi zapis bez tytułu ma tytułu nie zdejmować, a prawa wyczyścić
-	// wartością pustą. To jest różnica, którą kontrakt opisuje wprost.
+	// Scalanie: drugi zapis bez tytułu go nie zdejmuje, a prawa czyści pustą
+	// wartością.
 	var drugi shared.LibraryMetadataSetResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryMetadataSet,
 		shared.LibraryMetadataSetRequest{
@@ -221,9 +205,6 @@ func TestUsuniecieTrwaleZdejmujeWierszWersjeIWpisIndeksu(t *testing.T) {
 // TestWeryfikacjaIntegralnosciWykrywaUszkodzonaTresc mierzy `library.fixity.check`
 // tam, gdzie jest miarodajna: przy treści zmienionej na dysku pod plecami
 // repozytorium.
-//
-// To jest sprawdzian, którego okno nigdy nie zrobi — bajtów zasobu nie oddaje
-// żadna komenda kontraktu.
 func TestWeryfikacjaIntegralnosciWykrywaUszkodzonaTresc(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuBiblioteki(t, katalog)
@@ -309,8 +290,7 @@ func TestPaczkaMigracyjnaNiesieBajtyZasobow(t *testing.T) {
 		t.Errorf("paczka na dysku ma %d bajtów, odpowiedź mówiła o %d",
 			len(bajty), paczka.SizeBytes)
 	}
-	// Treść obu zasobów ma być w archiwum — pozycja bez bajtów byłaby dokładnie
-	// tą szkodą, przed którą stoi ten plik.
+	// Treść obu zasobów ma być w archiwum, nie samym meldunkiem bez bajtów.
 	if !strings.Contains(string(bajty), "raport") || len(bajty) < 200 {
 		t.Errorf("archiwum nie niesie nazw zasobów albo jest puste (%d bajtów)", len(bajty))
 	}
@@ -510,11 +490,6 @@ func TestPulpitStanuLiczyCalyZbiorNieProbke(t *testing.T) {
 // TestPulpitStanuNaPustymRepozytoriumOddajeZera mierzy pulpit na rdzeniu świeżo
 // założonym — czyli w stanie, w którym zastaje go Operator otwierający moduł
 // Library po raz pierwszy.
-//
-// Zbiór pusty jest tu przypadkiem granicznym agregatów: sumowanie po zbiorze
-// pustym daje w SQL wartość pustą, a pulpit ma pola liczbowe bez stanu pustego.
-// Zbiór pusty ma dać ZERA, nie odmowę — zero zasobów jest wynikiem, a nie
-// niepowodzeniem odczytu.
 func TestPulpitStanuNaPustymRepozytoriumOddajeZera(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -831,7 +806,7 @@ func TestDziennikAudytuNieKlamieOCzynnosciach(t *testing.T) {
 	}
 }
 
-// TestSchematMetadanychZaklada I ZdejmujePolaNiestandardowe mierzy
+// TestSchematMetadanychZakladaIZdejmujePolaNiestandardowe mierzy
 // `library.schema.set`: definicja ma powstać i zniknąć, a wartości przy
 // zasobach mają zostać.
 func TestSchematMetadanychZakladaIZdejmujePolaNiestandardowe(t *testing.T) {
@@ -919,7 +894,8 @@ func TestTezaurusWywoziPojeciaWrazZRelacjami(t *testing.T) {
 	}
 }
 
-// TestNasluchZewnetrznyZapisujeSieWrazZeZdarzeniami mierzy rodzinę nasłuchów.
+// TestNasluchZewnetrznyZapisujeSieWrazZeZdarzeniami mierzy rodzinę nasłuchów
+// zewnętrznych: zapis, odmowę adresu spoza HTTP i usunięcie.
 func TestNasluchZewnetrznyZapisujeSieWrazZeZdarzeniami(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuBiblioteki(t, katalog)
@@ -1085,12 +1061,8 @@ func TestOdczytMetadanychTechnicznychIdzieDoBajtow(t *testing.T) {
 }
 
 // jpegZeZnacznikiemXmp składa najmniejszy poprawny JPEG niosący pakiet XMP
-// w segmencie APP1.
-//
-// Plik powstaje tutaj, a nie jest wnoszony jako materiał sprawdzianu, bo XMP
-// musi być OSADZONY w bajtach — sprawdzian mierzy odczyt z pliku, więc materiał
-// spoza pliku niczego by nie dowiódł. Zapis jest ręczny, bo koder `image/jpeg`
-// nie umie wstawić własnego segmentu.
+// w segmencie APP1, zapisany ręcznie, bo koder `image/jpeg` nie umie wstawić
+// własnego segmentu.
 func jpegZeZnacznikiemXmp(t *testing.T, tytul string) []byte {
 	t.Helper()
 
@@ -1106,8 +1078,8 @@ func jpegZeZnacznikiemXmp(t *testing.T, tytul string) []byte {
 	}
 	bajty := obraz.Bytes()
 
-	// Nagłówek przestrzeni nazw jest tym, po którym czytnik rozpoznaje pakiet
-	// XMP wśród innych segmentów APP1 (EXIF używa tego samego znacznika).
+	// Nagłówek przestrzeni nazw pozwala czytnikowi rozpoznać pakiet XMP wśród
+	// segmentów APP1.
 	pakiet := append([]byte("http://ns.adobe.com/xap/1.0/\x00"),
 		[]byte(`<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>`+
 			`<x:xmpmeta xmlns:x="adobe:ns:meta/">`+
@@ -1133,10 +1105,6 @@ func jpegZeZnacznikiemXmp(t *testing.T, tytul string) []byte {
 // TestOdczytMetadanychOsadzonychCzytaXmpProgramem mierzy pole `xmp` kontraktu:
 // przed tą pracą nie wypełniała go żadna droga, więc opis zasobu milczał o XMP,
 // IPTC i ID3 niezależnie od tego, co plik naprawdę niósł.
-//
-// Sprawdzian pomija się z nazwanym powodem na maszynie bez programu: odczyt tych
-// trzech rodzin jest POSZERZENIEM opisu, a nie jego warunkiem — reszty pól
-// pilnuje `TestOdczytMetadanychTechnicznychIdzieDoBajtow`, który idzie zawsze.
 func TestOdczytMetadanychOsadzonychCzytaXmpProgramem(t *testing.T) {
 	if !zewnetrzne.Stoi(narzedzieMetadanychBiblioteki) {
 		t.Skipf("na tej maszynie nie stoi %s (%s) — IPTC, XMP i ID3 są poszerzeniem opisu, "+
@@ -1188,15 +1156,15 @@ func mp3ZeZnacznikiemId3(t *testing.T, tytul string) []byte {
 		byte(len(tresc)>>8), byte(len(tresc)), 0x00, 0x00)
 	ramka = append(ramka, tresc...)
 
-	// Nagłówek ID3v2.3. Rozmiar znacznika idzie w zapisie synchsafe — siedem
-	// bitów na bajt — bo tak każe sam zapis ID3v2, nie wybór tego sprawdzianu.
+	// Nagłówek ID3v2.3: rozmiar znacznika idzie w zapisie synchsafe, siedem
+	// bitów na bajt.
 	rozmiar := len(ramka)
 	zapis := append([]byte{'I', 'D', '3', 0x03, 0x00, 0x00,
 		byte(rozmiar >> 21 & 0x7F), byte(rozmiar >> 14 & 0x7F),
 		byte(rozmiar >> 7 & 0x7F), byte(rozmiar & 0x7F)}, ramka...)
 
-	// Trzy ramki MPEG-1 Layer III ciszy (128 kb/s, 44,1 kHz) — bez nich plik
-	// byłby samym znacznikiem bez nagrania i nie uchodziłby za materiał.
+	// Trzy ramki ciszy w formacie MP3 (128 kb/s, 44,1 kHz) — bez nich plik
+	// nie uchodziłby za nagranie.
 	cisza := append([]byte{0xFF, 0xFB, 0x90, 0x00}, make([]byte, 413)...)
 	for i := 0; i < 3; i++ {
 		zapis = append(zapis, cisza...)
@@ -1247,9 +1215,6 @@ func TestOdczytMetadanychOsadzonychCzytaId3Programem(t *testing.T) {
 // TestOdczytBezProgramuZostawiaPolaOsadzonePuste mierzy drugą połowę reguły
 // z nagłówka `dopiszMetadaneOsadzone`: brak programu zostawia pola IPTC, XMP
 // i ID3 puste, a odczyt opisu NIE odmawia i reszta pól przychodzi w komplecie.
-//
-// Pustą ścieżką wyszukiwania sprawdzian czyni z tej maszyny maszynę bez
-// programu, więc mierzy to zdanie wszędzie — nie tylko na cienkiej instalce.
 func TestOdczytBezProgramuZostawiaPolaOsadzonePuste(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 
@@ -1277,8 +1242,8 @@ func TestOdczytBezProgramuZostawiaPolaOsadzonePuste(t *testing.T) {
 		t.Fatalf("pole xmp niesie %s, choć maszyna nie ma czym go przeczytać — "+
 			"wynik bez pomiaru podany jako wynik", techniczne.Xmp)
 	}
-	// Wymiary liczy czytnik wkompilowany, więc mają przyjść także bez programu —
-	// to one dowodzą, że opis zwęził się o trzy pola, a nie wywrócił.
+	// Wymiary liczy czytnik wkompilowany i przychodzą też bez programu
+	// zewnętrznego.
 	if techniczne.Width == nil || *techniczne.Width != 8 ||
 		techniczne.Height == nil || *techniczne.Height != 8 {
 		t.Fatalf("wymiary %v×%v nie przyszły z czytnika wkompilowanego, a od programu nie zależą",
@@ -1288,10 +1253,6 @@ func TestOdczytBezProgramuZostawiaPolaOsadzonePuste(t *testing.T) {
 
 // TestKazdaKomendaBibliotekiMaUchwyt jest zaporą pokrycia rodziny: kontrakt
 // niesie 48 komend `library.*` i każda ma mieć uchwyt w rejestrze rdzenia.
-//
-// Sprawdzian pokrycia całego kontraktu stoi osobno
-// (`TestRejestrPokrywaKomendyKontraktu`), ale zapora rodziny jest tu, bo to ten
-// moduł ma nie zostawić komendy bez drogi.
 func TestKazdaKomendaBibliotekiMaUchwyt(t *testing.T) {
 	zmontowany, _, _ := zmontujDoPomiaruSkutku(t)
 

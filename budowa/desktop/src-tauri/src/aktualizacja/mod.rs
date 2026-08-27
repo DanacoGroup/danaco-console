@@ -19,6 +19,8 @@
 
 pub mod droga;
 pub mod pobranie;
+#[cfg(test)]
+pub mod probne;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;

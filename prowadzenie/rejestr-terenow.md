@@ -413,6 +413,29 @@ Przechodzi w biegu odniesienia 2041 zdanych, zero niezdanych.
 `@import` względem adresu dokumentu, a nie arkusza. Konsola przed wstrzyknięciem
 axe jest pusta. Tych dwóch wpisów nie liczy się jako brudnej konsoli.
 
+**Pełny bieg wymaga podniesionego limitu czasu.** Pakiet `internal/core`
+przekroczył domyślną granicę `go test` (10 minut) po dołożeniu przez cztery
+tereny około czterdziestu sprawdzianów wołających prawdziwe programy zewnętrzne.
+Bieg pada wtedy paniką „test timed out after 10m0s" wskazującą **przypadkowy**
+sprawdzian, który akurat biegł — wygląda to na usterkę tego sprawdzianu i nią
+nie jest. Objaw uboczny myli podwójnie: `gotestsum` naliczy wtedy około 947
+sprawdzianów zamiast ponad dwóch tysięcy, bo pakiet, który spanikował, nie
+policzy swoich. Pełny bieg uruchamia się z `-timeout 30m`.
+
+**Pełne biegi szereguje się zamkiem.** Maszyna ma 16 rdzeni; przy czterech
+terenach naraz biegło na niej dziewięć procesów sprawdzianów i sprawdziany
+z twardymi granicami czasu zaczęły się chwiać — każdy pełny bieg gubił **inny**,
+a pojedynczo wszystkie przechodziły. Granice tego rodzaju stoją m.in.
+w `zgodnosc_kontraktu_test.go`. Bieg pełny wykonuje się pod zamkiem:
+
+```bash
+cd budowa/server && flock /tmp/danaco-bieg-pelny.lock \
+  gotestsum -- -count=1 -timeout 30m ./...
+```
+
+Sprawdzian, który padł w pełnym biegu, a przechodzi uruchomiony pojedynczo, jest
+chwiejnością pod obciążeniem, nie usterką — i tak się go nazywa.
+
 Czas dostępu do pliku nie dowodzi, że pliku nie czytano. Drzewo stoi na `ext4`
 zamontowanym z `relatime`, gdzie jądro odświeża czas dostępu wyłącznie wtedy,
 gdy poprzedni jest starszy od czasu zmiany albo starszy niż doba. Odczyt pliku,

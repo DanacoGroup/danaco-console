@@ -281,11 +281,15 @@
 .cd-wlasny-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-wlasny-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 /* Menu pozycji stoi obok przycisku, nie w nim, i ujawnia się przy wskazaniu. */
+/* Wyśrodkowanie rozciągnięciem, nie przesunięciem — `transform` zabierał
+   etykiecie przycisku kotwicę w oknie widoku. Tak samo w wierszu wykazu. */
 .cd-wlasny-menu {
   position: absolute;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   right: var(--dn-od-2);
-  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
   opacity: 0;
   transition: opacity var(--dn-czas-1) var(--dn-ease);
 }
@@ -821,6 +825,18 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona [data-etykietka][data-dymek='tak']:hover::after,
 .cd-strona [data-etykietka][data-dymek='tak']:focus-visible::after {
   transform: translate(-50%, 0);
+}
+
+/* Dymek bez współrzędnych nie ma prawa się pokazać. Warstwa wspólna ujawnia go
+   samym najechaniem, a współrzędne nadaje mechanizm okna — między jednym
+   a drugim jest szczelina: gdy wyzwalacz pojawia się pod nieruchomym
+   wskaźnikiem albo wjeżdża pod niego przewijaniem, najechanie zachodzi bez
+   zdarzenia wskaźnika. Dymek stawał wtedy w miejscu spoczynkowym, które
+   w pasie sterowania wypada przy prawej krawędzi okna, a gdzie indziej poza
+   ekranem — stąd etykiety raz odległe od ikony, raz nieobecne. */
+.cd-strona [data-etykietka]:not([data-dymek='tak']):hover::after,
+.cd-strona [data-etykietka]:not([data-dymek='tak']):focus-visible::after {
+  opacity: 0;
 }
 
 /* === koniec agent-2 === */

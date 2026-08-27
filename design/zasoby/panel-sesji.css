@@ -52,11 +52,17 @@
    dla niego miejsce w wyściółce. */
 .dn-panel-wiersz { position: relative; }
 .dn-panel-wiersz > .dn-obszar-pozycja { padding-right: calc(var(--dn-od-2) + var(--dn-wym-ikona-lg)); }
+/* Wyśrodkowanie idzie rozciągnięciem i wyrównaniem, nie przesunięciem: każdy
+   `transform` czyni z pojemnika blok odniesienia dla potomków umocowanych do
+   okna widoku, przez co etykieta przycisku wiersza traciła kotwicę i lądowała
+   o wysokość wiersza niżej, niż wskazywał pomiar. */
 .dn-panel-wiersz > .dn-obszar-pozycja-menu {
   position: absolute;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   right: var(--dn-od-2);
-  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
 .dn-panel-wiersz:hover > .dn-obszar-pozycja-menu,
 .dn-panel-wiersz:focus-within > .dn-obszar-pozycja-menu { opacity: 1; }

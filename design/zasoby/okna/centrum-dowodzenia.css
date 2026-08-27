@@ -99,7 +99,7 @@
   padding: var(--dn-od-3) var(--dn-od-4);
   border: 1px solid var(--dn-obrys);
   border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-500);
-  border-radius: var(--dn-r-lg);
+  border-radius: 0;
   background: var(--dn-panel);
   color: var(--dn-tekst-2);
   font-size: var(--dn-fs-sm);
@@ -483,3 +483,204 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   color: var(--dn-tekst-3);
 }
 .cd-modul-odnosnik { display: flex; align-items: center; gap: var(--dn-od-2); }
+
+/* ==========================================================================
+   KARTY PEŁNE — kwadratowe rogi (zakres: centrum, klasa `cd-strona`)
+   --------------------------------------------------------------------------
+   Zaokrąglenie przy grubym akcencie `border-left` (wstęga sygnałowa) i cienkim
+   obrysie reszty dawało skośny szew na rogu — widoczny artefakt. Pełna karta
+   zdejmuje go u źródła, nie ruszając warstwy wspólnej w pozostałych oknach.
+   ========================================================================== */
+.cd-strona .dn-karta-widoku { border-radius: 0; }
+
+/* Karty pełne zdejmują „klapki" łączące zaokrągloną zakładkę z panelem —
+   pseudo-elementy ::before/::after zostawały jako ciemne prostokąty (widmo
+   na karcie). Przy kwadratowej zakładce są zbędne. Zakres: centrum. */
+/* (reguła zdjęta — ::after niesie prawą krawędź karty bieżącej) */
+
+/* Sesje w drzewie Projektów wyrównane do nazwy projektu (lewa linia) —
+   wiersz niósł 12 px wcięcia, przez co bullet stał w prawo od nagłówka grupy. */
+.cd-strona .dn-panel-drzewo .dn-obszar-pozycja { padding-left: 0; }
+
+/* Jeden rozmiar ikon w pasie kart. Kontrolki (zamknij, „+", powłoki, narzędzia)
+   szły na 20 px (--kart-ikona-sterowania), a zakładki i grot na 16 px — stąd
+   rozjazd. Nadpisanie zmiennej sprowadza wszystkie do 16 px. Zakres: centrum. */
+.cd-strona .dn-karty-pasmo { --kart-ikona-sterowania: var(--dn-wym-ikona); }
+
+/* Jeden rozmiar ikony w całym oknie — 18 px, jak na wstążce głównej.
+   Kontrolki pasa kart i wstążek okien szły na 16 px, przez co ikony
+   zamknięcia, grotu i plakietki były drobniejsze od pozostałych. */
+.cd-strona .dn-karty-pasmo svg,
+.cd-strona .dn-obszar-pasek svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+}
+
+/* Podwójne podświetlenie w pasie kart: tło hover dostawał i przycisk, i jego
+   opakowanie (span .dn-nrz-menu / .dn-karty-wykaz / .dn-karty-powloki /
+   .dn-karty-dodaj). Dwie warstwy rgba(255,255,255,.06) sumowały się do ~.12.
+   Podświetla się wyłącznie przycisk. Zakres: centrum. */
+.cd-strona .dn-karty-pasmo .dn-nrz-menu:hover,
+.cd-strona .dn-karty-wykaz:hover,
+.cd-strona .dn-karty-powloki:hover,
+.cd-strona .dn-karty-dodaj:hover,
+.cd-strona .dn-karty-narzedzia:hover { background: transparent; }
+
+/* ==========================================================================
+   WSTĄŻKA OKNA — pasek narzędzi każdego okna (lewego i roboczego)
+   --------------------------------------------------------------------------
+   Lewe okno (sesje i projekty) oraz okno robocze są osobnymi oknami, więc
+   każde ma własną wstążkę — tak jak wstążka główna aplikacji: zaokrąglona,
+   w barwie panelu, z ikonami właściwymi dla tego okna.
+   ========================================================================== */
+.cd-strona .dn-obszar-pasek {
+  /* Odsunięcie ze wszystkich stron — bez marginesu górnego wstążka stykała się
+     z pasem kart i oba zlewały się w jeden ciemny blok bez kształtu. */
+  margin: var(--dn-od-2);
+  padding: 0 var(--dn-od-2);
+  border-radius: var(--dn-r-lg);
+  /* Wstążka nie jest osobną powierzchnią — ma tło okna, a wyodrębnia ją
+     wyłącznie cienka ramka. Barwa `--dn-obrys` w motywie ciemnym równa się
+     barwie wnętrza okna (#272A30), więc ramka na niej byłaby niewidoczna. */
+  border: 1px solid var(--dn-obrys-mocny);
+  background: transparent;
+  gap: var(--dn-od-1);
+  height: 40px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; }
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
+.cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
+/* Przycisk wstążki okna jest węższy niż na wstążce głównej — okno boczne ma
+   280 px szerokości i przy 40 px na przycisk ikony nie mieściły się w rzędzie. */
+.cd-strona .dn-obszar-pasek .dn-btn-ikona {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  flex: none;
+}
+.cd-strona .cd-wstazka-sep {
+  width: 1px;
+  height: 18px;
+  flex: none;
+  margin: 0 var(--dn-od-1);
+  background: var(--dn-obrys);
+}
+
+/* Pozycje sesji i projektów zaczynają się na wysokości logo okna roboczego. */
+.cd-strona .dn-obszar-panel--boczny .dn-obszar-tresc { padding-top: var(--dn-od-2); }
+
+/* ==========================================================================
+   UCHWYT ZMIANY SZEROKOŚCI OKIEN BOCZNYCH
+   --------------------------------------------------------------------------
+   Lewe okno i okno samouczka mają regulowaną szerokość. Uchwyt jest wąski
+   wizualnie, ale ma szerszą strefę chwytu, żeby dało się go złapać myszą.
+   ========================================================================== */
+.cd-uchwyt {
+  flex: none;
+  width: 6px;
+  margin: 0 calc(var(--dn-od-1) * -1);
+  cursor: col-resize;
+  position: relative;
+  z-index: 3;
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  transition: background 120ms ease-out;
+}
+.cd-uchwyt:hover,
+.cd-uchwyt[data-ciagniety='tak'] { background: var(--dn-sygnal-500); }
+.cd-uchwyt:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: 1px;
+}
+@media (prefers-reduced-motion: reduce) { .cd-uchwyt { transition: none; } }
+
+/* ==========================================================================
+   ZWINIĘCIE LEWEGO OKNA I PODGLĄD PO NAJECHANIU NA KRAWĘDŹ
+   --------------------------------------------------------------------------
+   Zwinięte okno nie znika z układu (jak przy `hidden`), tylko traci szerokość —
+   dzięki temu zostaje krawędź, po której najechaniu okno rozwija się samo na
+   czas podglądu i zwija z powrotem po zejściu kursorem.
+   ========================================================================== */
+.cd-strona .dn-obszar-panel--boczny {
+  width: var(--cd-szer-boczny, 280px);
+  transition: width 140ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.cd-strona .dn-obszar-panel--samouczek { width: var(--cd-szer-samouczek, 320px); }
+.cd-strona .dn-obszar-panel--boczny[data-zwiniety='tak'] {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-right-width: 0;
+}
+.cd-strona .dn-obszar-panel--boczny[data-zwiniety='tak'][data-podglad='tak'] {
+  width: var(--cd-szer-boczny, 280px);
+  min-width: 220px;
+  overflow: visible;
+}
+.cd-krawedz-podgladu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  z-index: 40;
+  display: none;
+}
+.cd-strona:has(.dn-obszar-panel--boczny[data-zwiniety='tak']) .cd-krawedz-podgladu { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  .cd-strona .dn-obszar-panel--boczny { transition: none; }
+}
+
+/* Ikona komponentu: bez czarnej płytki, w rozmiarze czytelnym.
+   `.dn-kafel-ikona` z warstwy wspólnej niesie `background: var(--dn-powierzchnia)`,
+   które w motywie ciemnym jest ciemniejsze od kafla — na kaflu komponentu
+   wychodziła z tego czarna łatka. Obrys szedł na `--dn-obrys`, równy tłu okna,
+   więc i on nic nie wnosił. Zostaje sam znak, większy o stopień. */
+.cd-strona .cd-kafel .dn-kafel-ikona {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  color: var(--dn-tekst-2);
+}
+.cd-strona .cd-kafel .dn-kafel-ikona svg {
+  width: var(--dn-wym-ikona-lg);
+  height: var(--dn-wym-ikona-lg);
+}
+.cd-strona .cd-kafel:hover .dn-kafel-ikona {
+  background: transparent;
+  color: var(--dn-sygnal);
+  transform: none;
+}
+
+/* Kreska przy „+” równo z krawędzią ostatniej karty.
+   Kontrolka „+” odsuwa się od zbioru kart o `--kart-odstep-sterowania`, a jej
+   kreska cofa się o tę samą wartość — czyli zatrzymuje się w połowie odstępu,
+   nie na krawędzi karty. Cofnięcie o pełny odstęp stawia ją dokładnie tam,
+   gdzie kończy się ostatnia karta. */
+.cd-strona .dn-karty-lista ~ .dn-karty-dodaj::after {
+  left: calc(-2 * var(--kart-odstep-sterowania));
+}
+
+/* Widoczność przegród pasa kart — zmiana wyłącznie barwy, forma bez zmian.
+   `--dn-obrys` w motywie ciemnym ma wartość #272A30, czyli dokładnie tę samą
+   co tło karty bieżącej. Krawędź karty miała więc kontrast 1,00 : 1 i była
+   niewidoczna z definicji, nie z powodu ustawień. Forma zostaje biblioteczna:
+   krótka kreska między kartami odłożonymi, pełna wysokość po bokach karty
+   bieżącej. */
+.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::before,
+.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku[aria-selected='true']::after,
+.cd-strona .dn-obszar-panel--glowny .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
+.cd-strona .dn-obszar-panel--glowny .dn-karty-dodaj::after,
+.cd-strona .dn-obszar-panel--glowny .dn-karty-narzedzia::after { background: var(--dn-obrys-mocny); }
+
+/* Okna licują z ramą wstążki głównej.
+   Lewe okno miało `margin-left` ujemny (dosuwało je do szyny), a okno
+   samouczka `margin-right` ujemny — przez to krawędzie okien nie trafiały
+   w pion krawędzi wstążki nad nimi. Uchwyt szerokości okna ukrytego również
+   zajmował miejsce i przesuwał prawą krawędź okna roboczego. */
+.cd-strona .dn-obszar-panel--boczny { margin-left: 0; }
+.cd-strona .dn-obszar-panel--samouczek { margin-right: 0; }
+.cd-strona .dn-obszar-panel--samouczek[hidden] + .cd-uchwyt,
+.cd-strona .cd-uchwyt:has(+ .dn-obszar-panel--samouczek[hidden]) { display: none; }

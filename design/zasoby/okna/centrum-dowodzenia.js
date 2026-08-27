@@ -222,3 +222,141 @@
     });
   }
 })();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OKNA BOCZNE — regulowana szerokość, zwijanie, podgląd po najechaniu
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var D = document;
+  var obszar = D.querySelector('.dn-obszar');
+  if (!obszar) { return; }
+  var lewy = D.querySelector('.dn-obszar-panel--boczny');
+  var prawy = D.querySelector('.dn-obszar-panel--samouczek');
+
+  /* ── Uchwyty zmiany szerokości ─────────────────────────────────────────
+     Uchwyt jest elementem układu, nie nakładką — dzięki temu nie zasłania
+     treści i sam trzyma się między oknami przy każdej szerokości okna. */
+  function zbudujUchwyt(panel, strona, zmienna, minSzer, maxSzer) {
+    if (!panel) { return; }
+    var u = D.createElement('span');
+    u.className = 'cd-uchwyt';
+    u.setAttribute('role', 'separator');
+    u.setAttribute('aria-orientation', 'vertical');
+    u.setAttribute('tabindex', '0');
+    u.setAttribute('aria-label', strona === 'lewa'
+      ? 'Szerokość okna sesji i projektów' : 'Szerokość okna samouczka');
+    /* Ogniskowalny separator jest kontrolką o wartości — bez zakresu i wartości
+       bieżącej czytnik ekranu nie ma czego odczytać. */
+    u.setAttribute('aria-valuemin', String(minSzer));
+    u.setAttribute('aria-valuemax', String(maxSzer));
+    u.setAttribute('aria-valuenow', String(Math.round(panel.getBoundingClientRect().width)));
+    if (strona === 'lewa') { panel.after(u); } else { panel.before(u); }
+
+    function ustaw(px) {
+      var w = Math.max(minSzer, Math.min(maxSzer, Math.round(px)));
+      /* Szerokość idzie żetonem, nie stylem w linii: styl w linii bije regułę
+         zwinięcia i okno nie dawało się zwinąć po zmianie szerokości. */
+      D.documentElement.style.setProperty(zmienna, w + 'px');
+      u.setAttribute('aria-valuenow', String(w));
+      return w;
+    }
+
+    var ciagnie = false;
+    u.addEventListener('pointerdown', function (e) {
+      ciagnie = true;
+      u.setPointerCapture(e.pointerId);
+      u.setAttribute('data-ciagniety', 'tak');
+      D.body.style.cursor = 'col-resize';
+      D.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    u.addEventListener('pointermove', function (e) {
+      if (!ciagnie) { return; }
+      var b = panel.getBoundingClientRect();
+      ustaw(strona === 'lewa' ? e.clientX - b.left : b.right - e.clientX);
+    });
+    function koniec(e) {
+      if (!ciagnie) { return; }
+      ciagnie = false;
+      try { u.releasePointerCapture(e.pointerId); } catch (err) { /* wskaźnik już zwolniony */ }
+      u.removeAttribute('data-ciagniety');
+      D.body.style.cursor = '';
+      D.body.style.userSelect = '';
+    }
+    u.addEventListener('pointerup', koniec);
+    u.addEventListener('pointercancel', koniec);
+
+    /* Klawiatura — ta sama regulacja bez myszy. */
+    u.addEventListener('keydown', function (e) {
+      var krok = e.shiftKey ? 40 : 10;
+      var teraz = panel.getBoundingClientRect().width;
+      if (e.key === 'ArrowLeft') { ustaw(strona === 'lewa' ? teraz - krok : teraz + krok); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { ustaw(strona === 'lewa' ? teraz + krok : teraz - krok); e.preventDefault(); }
+    });
+  }
+
+  zbudujUchwyt(lewy, 'lewa', '--cd-szer-boczny', 220, 560);
+  zbudujUchwyt(prawy, 'prawa', '--cd-szer-samouczek', 260, 620);
+
+  /* ── Zwijanie lewego okna ──────────────────────────────────────────────
+     Warstwa wspólna zwija panel atrybutem `hidden`, czyli usuwa go z układu —
+     wtedy nie ma po czym najechać, żeby go podejrzeć. Tutaj zwinięcie odbiera
+     szerokość, a okno zostaje w układzie. Przechwytujemy zdarzenie w fazie
+     przechwytywania, zanim dojdzie do obsługi wspólnej. */
+  if (lewy) {
+    D.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-zwin-szyne]');
+      if (!b) { return; }
+      e.stopPropagation();
+      var zwinieta = lewy.getAttribute('data-zwiniety') === 'tak';
+      if (zwinieta) {
+        lewy.removeAttribute('data-zwiniety');
+        lewy.removeAttribute('data-podglad');
+      } else {
+        lewy.setAttribute('data-zwiniety', 'tak');
+      }
+      b.setAttribute('aria-pressed', zwinieta ? 'false' : 'true');
+      b.setAttribute('data-etykietka', zwinieta ? 'Zwiń panel' : 'Rozwiń panel');
+      b.setAttribute('aria-label', zwinieta ? 'Zwiń panel' : 'Rozwiń panel');
+    }, true);
+
+    /* ── Podgląd po najechaniu na lewą krawędź ───────────────────────────
+       Strefa czuła stoi przy krawędzi ekranu i działa wyłącznie wtedy, gdy
+       okno jest zwinięte. Rozwinięcie na podgląd znika, gdy kursor opuści
+       zarówno okno, jak i strefę. */
+    var krawedz = D.createElement('div');
+    krawedz.className = 'cd-krawedz-podgladu';
+    krawedz.setAttribute('aria-hidden', 'true');
+    var szyna = D.querySelector('.dn-szyna, .dn-szyna-tresc');
+    krawedz.style.left = szyna ? Math.round(szyna.getBoundingClientRect().right) + 'px' : '0';
+    D.body.appendChild(krawedz);
+
+    krawedz.addEventListener('pointerenter', function () {
+      if (lewy.getAttribute('data-zwiniety') === 'tak') { lewy.setAttribute('data-podglad', 'tak'); }
+    });
+    lewy.addEventListener('pointerleave', function () { lewy.removeAttribute('data-podglad'); });
+    krawedz.addEventListener('pointerleave', function (e) {
+      if (!lewy.contains(e.relatedTarget)) { lewy.removeAttribute('data-podglad'); }
+    });
+  }
+})();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WEJŚCIE DO PRZEDSIONKA ŚRODOWISKA
+   Obsługa wspólna pokazywała komunikat, ale nie przechodziła do przedsionka —
+   kafel środowiska nie prowadził donikąd. Nazwy plików są pisane małymi
+   literami, a nazwa środowiska w znaczniku wielkimi, stąd `toLowerCase()`.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.cd-wejdz');
+    if (!b) { return; }
+    var srod = (b.getAttribute('data-wejdz') || '').toLowerCase();
+    if (!srod) { return; }
+    window.setTimeout(function () {
+      window.location.href = '../srodowiska/' + srod + '-przedsionek.html';
+    }, 220);
+  }, true);
+})();

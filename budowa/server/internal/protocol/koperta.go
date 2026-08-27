@@ -1,11 +1,6 @@
 // Pakiet protocol dokłada zachowanie do kontraktu komunikatów Danaco Console:
 // kodowanie i dekodowanie koperty, rozpoznanie komendy, budowę odpowiedzi
 // oraz fragmenty strumienia.
-//
-// Pakiet nie definiuje ani jednej nazwy, kodu, wartości wyliczenia ani kształtu
-// komunikatu. Wszystkie pochodzą z pakietu shared wytworzonego z pliku
-// shared/contract.json — jedynego źródła prawdy. Zmiana kontraktu
-// przerywa kompilację tego pakietu, zamiast rozjeżdżać się z nim po cichu.
 package protocol
 
 import (
@@ -48,7 +43,8 @@ func NowaKoperta(typ shared.MessageType, id, idSesji string, ladunek any) (Koper
 	return k, nil
 }
 
-// Zakoduj zamienia kopertę na bajty JSON gotowe do wysłania.
+// Zakoduj zamienia daną kopertę na bajty zapisu JSON, gotowe do wysłania
+// przez gniazdo WebSocket rdzenia produktu.
 func Zakoduj(k Koperta) ([]byte, error) {
 	dane, err := json.Marshal(k)
 	if err != nil {
@@ -70,12 +66,9 @@ func Odkoduj(dane []byte) (Koperta, error) {
 	return k, nil
 }
 
-// LadunekDo rozpakowuje ładunek koperty do wskazanej struktury — zwykle do
-// typu żądania albo zdarzenia wytworzonego z kontraktu. Pusty ładunek nie jest
-// błędem: cel pozostaje nietknięty.
-//
-// Funkcja, nie metoda: Koperta jest typem kontraktu, więc zachowanie dokłada
-// się obok niego, a nie w jego definicji.
+// LadunekDo rozpakowuje ładunek koperty do wskazanej struktury, zwykle do
+// typu żądania albo zdarzenia wytworzonego z kontraktu; pusty ładunek nie jest
+// błędem.
 func LadunekDo(k Koperta, cel any) error {
 	if len(k.Payload) == 0 {
 		return nil
@@ -101,7 +94,8 @@ func Numer(k Koperta) int {
 	return *k.Seq
 }
 
-// Ostatni informuje, czy koperta zamyka strumień fragmentów.
+// Ostatni informuje, czy koperta zamyka strumień fragmentów, na podstawie
+// znacznika końca pola koperty.
 func Ostatni(k Koperta) bool {
 	return k.Done != nil && *k.Done
 }
@@ -121,7 +115,8 @@ func wskaznikTekstu(v string) *string {
 	return &v
 }
 
-// wartoscTekstu odczytuje pole opcjonalne, zwracając pusty napis dla braku.
+// wartoscTekstu odczytuje pole opcjonalne danej koperty kontraktu, zwracając
+// pusty napis dla braku wartości pola.
 func wartoscTekstu(p *string) string {
 	if p == nil {
 		return ""
@@ -129,7 +124,8 @@ func wartoscTekstu(p *string) string {
 	return *p
 }
 
-// wskaznik przenosi wartość do pola opcjonalnego koperty.
+// wskaznik przenosi daną wartość dowolnego typu do pola opcjonalnego koperty,
+// jako wskaźnik na jej własną kopię danych.
 func wskaznik[T any](v T) *T {
 	return &v
 }

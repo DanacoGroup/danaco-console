@@ -5638,3 +5638,12 @@ z żądania, więc zdejmuje plik z kolekcji pominiętych w wykazie. Kolekcja nie
 jest odmową całości: wykaz z kodem, którego nie ma, wskazuje przynależność nieosiągalną,
 a wykonanie reszty zdjęłoby plik z kolekcji zastanych na podstawie żądania zrozumianego
 tylko częściowo.
+
+## budowa/server/internal/protocol/koperta.go
+Pakiet nie definiuje ani jednej nazwy, kodu, wartości wyliczenia ani kształtu
+komunikatu; wszystkie pochodzą z pakietu współdzielonego wytworzonego z pliku
+kontraktu, jedynego źródła prawdy. Zmiana kontraktu przerywa kompilację tego
+pakietu, zamiast rozjeżdżać się z nim po cichu.
+
+LadunekDo jest funkcją, nie metodą: Koperta jest typem kontraktu, więc
+zachowanie dokłada się obok niego, a nie w jego definicji.

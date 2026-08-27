@@ -822,3 +822,34 @@ składanym w tym module, png rysuje obraz rastrowy biblioteką standardową
 wraz z czcionką rastrową wkompilowaną w binarium. Żaden format nie woła
 programu zewnętrznego, więc eksport działa na instalacji, która niesie sam
 rdzeń.
+
+## budowa/server/internal/core/adapter_modul_aod.go
+
+Proces przypinany komendą `aod.observe.attach` jest procesem telemetrii
+postępu, tym samym, którego identyfikator oddaje `monitor.status` i który
+jedzie w `progress.changed`. Nakładka przypina więc proces, nie okno ani
+kartę sesji: okno i karta wchodzą do stanu nakładki osobnymi polami.
+
+Przypięcia procesów nie mają wiersza w bazie, w przeciwieństwie do wyciszeń.
+Rejestr procesów telemetrii żyje w pamięci rdzenia i proces ginie razem
+z rdzeniem, więc wiersz przypięcia, który przeżyłby restart, wskazywałby
+proces nieistniejący. Przypięcia mieszkają zatem w pamięci, tak samo jak
+rejestr procesów telemetrii, którego dotyczą.
+
+Ognisko karty sesji i okna jest własnością klienta, a żądania rodziny aod.*
+niosą wyłącznie urządzenie: wiązania urządzenie-klient nie ma ani w
+schemacie, ani w kontrakcie. Rdzeń wskazuje więc fakt, który sam zna: ostatni
+punkt pracy odnotowany przez telemetrię — to samo źródło, którym strona
+główna rozstrzyga, dokąd prowadzi powrót do sesji.
+
+Niewpięty rejestr telemetrii odmawia kodem błędu wewnętrznego w komendzie
+`aod.status.get`, bo zero procesów w biegu byłoby wtedy ciszą udającą pomiar,
+nie faktem.
+
+Odpięcie procesu nie wymaga jego istnienia w rejestrze telemetrii: po
+opróżnieniu rejestru przypięcie ma dać się zdjąć, choć wtedy jest to
+najbardziej potrzebne. Bytem, którego brak rozstrzyga odmowę, jest samo
+przypięcie, nie proces.
+
+Identyfikatorem urządzenia w kontrakcie jest numer wiersza katalogu maszyn;
+tak samo czyta go rodzina komend accessPoint.

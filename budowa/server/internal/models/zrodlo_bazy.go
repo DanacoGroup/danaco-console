@@ -23,12 +23,14 @@ type odpytujacy interface {
 	QueryContext(ctx context.Context, zapytanie string, argumenty ...any) (*sql.Rows, error)
 }
 
-// zrodloBazy czyta wiersze rejestru kanałów z bazy produktu.
+// zrodloBazy czyta wiersze rejestru kanałów z tabeli kanal_modelu bazy produktu
+// i przenosi je na definicje kanałów.
 type zrodloBazy struct {
 	db odpytujacy
 }
 
-// NoweZrodloBazy składa źródło nad otwartą bazą.
+// NoweZrodloBazy składa źródło wierszy rejestru nad już otwartą bazą, gotowe do
+// odczytu przez Definicje.
 func NoweZrodloBazy(db odpytujacy) *zrodloBazy {
 	return &zrodloBazy{db: db}
 }
@@ -59,7 +61,8 @@ func (z *zrodloBazy) Definicje(ctx context.Context) ([]Definicja, error) {
 	return definicje, nil
 }
 
-// odczytajWiersz przenosi jeden rekord tabeli na definicję kanału.
+// odczytajWiersz przenosi jeden rekord tabeli kanal_modelu na wartość typu
+// Definicja gotową do wpisania do rejestru.
 func odczytajWiersz(wiersze *sql.Rows) (Definicja, error) {
 	var (
 		d             Definicja

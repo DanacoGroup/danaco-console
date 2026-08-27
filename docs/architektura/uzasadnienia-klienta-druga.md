@@ -3728,3 +3728,21 @@ Reguła jest dwuczłonowa i cała maszynowa: poza katalogiem żaden łańcuch ni
 Odstępstwo jest jedno i wąskie: wpis diagnostyczny — łańcuch oddany do dziennika wywołaniem konsoli albo niesiony wyjątkiem. To zdanie dla wykonawcy sprawdzianu, okno go nie pokazuje. Wpisy są liczone i wypisywane, więc odstępstwo nie rozrośnie się po cichu.
 Czego sprawdzian nie wychwyci: pojedynczego słowa bez odstępu i bez polskiego znaku, na przykład nazwy własnej wpisanej wprost w składnik. Granica jest nazwana wprost, bo instrument, który udaje szczelność, jest gorszy od instrumentu o znanym zasięgu.
 Bez pomijania komentarzy pomiar mierzyłby polszczyznę komentarzy zamiast łańcuchów, a bez pomijania wyrażeń regularnych ukośnik klasy znaków wyglądałby jak początek komentarza i zjadał resztę pliku.
+
+## budowa/klient-poprzedni/src/moduly/research/zlecenia-badania.ts
+Zlecenia nazywają to, co okno zebrało z formularza, zanim warstwa kontraktu przełoży to na treść
+żądania. Rozdzielenie jest celowe: okno mówi po polsku o zakresie badania i wiarygodności źródła,
+a plik źródła komend mówi nazwami kontraktu — dzięki temu zmiana nazwy pola w kontrakcie dotyka
+jednego pliku, nie pięciu okien.
+
+## budowa/klient-poprzedni/src/moduly/translate/pseudolokalizacja.ts
+Trzy rzeczy szuka się w interfejsie przed tłumaczeniem, i trzy zabiegi je pokazują: czy pole
+zniesie znaki diakrytyczne, więc litery zamieniane są na warianty z diakrytykami, a sylwetka słowa
+zostaje czytelna; czy pole zniesie dłuższy tekst, więc treść jest dopełniana do zadanego
+wydłużenia, bo przekład bywa dłuższy od źródła; czy tekst nie jest sklejany z kawałków, więc treść
+dostaje ramkę, żeby ucięcie i sklejenie było widać na pierwszy rzut oka. Symbole zastępcze
+i znaczniki formatu przechodzą nietknięte, bo przekształcenie ich zapisu zamieniłoby test wyglądu
+w usterkę podstawienia, a to jest dokładnie ta klasa błędu, której pseudolokalizacja ma nie
+wprowadzać. Rdzeń o niczym tu nie wie: kontrakt nie ma komendy pseudolokalizacji, więc wynik jest
+wyłącznie do odczytania i przeniesienia ręcznego, a okno mówi to wprost przy wyniku, zamiast
+pozwolić sądzić, że coś zapisano.

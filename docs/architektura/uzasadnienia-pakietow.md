@@ -5692,3 +5692,8 @@ zdejmowałoby z formularza pola ogólne przy pierwszym zawężeniu.
 Wartość pola niestandardowego leży w zapisie JSON, więc zliczenie zasobów z danym polem
 idzie funkcją odczytu JSON silnika bazy, nie po tekście, żeby kod pola będący fragmentem
 innego kodu nie dawał fałszywego trafienia.
+
+## budowa/server/internal/protocol/odpowiedz.go
+Typ, identyfikator i sesja koperty odpowiedzi pochodzą z żądania, dzięki
+czemu klient wiąże odpowiedź z wywołaniem, które ją wywołało. Ścieżka nie
+może zawieść, bo wynik jest już zserializowany przy budowie odpowiedzi.

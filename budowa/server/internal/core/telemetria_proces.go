@@ -2,12 +2,9 @@ package core
 
 import "danacoconsole/shared"
 
-// Stan pojedynczego procesu telemetrii postępu i jego przekład na ładunek
-// kontraktu. Rejestr procesów i zgłoszenia punktów pracy mieszkają
-// w telemetria.go — tutaj jest wyłącznie to, czym proces jest i jak wychodzi
-// zdarzeniem.
+// Stan pojedynczego procesu telemetrii postępu i jego przekład na ładunek kontraktu.
 
-// procesPostepu jest stanem jednego procesu prowadzonym między zgłoszeniami.
+// procesPostepu jest stanem jednego procesu prowadzonym między zgłoszeniami punktów pracy, aż do jego zamknięcia.
 type procesPostepu struct {
 	Id        string
 	IdOkna    string
@@ -37,7 +34,7 @@ func nanies(proces *procesPostepu, o opisProcesu) {
 	}
 }
 
-// czyStanKoncowy mówi, czy stan zamyka proces.
+// czyStanKoncowy mówi, czy stan zamyka proces, czyli czy dalsze zgłoszenia tego procesu nie są już oczekiwane.
 func czyStanKoncowy(stan shared.ProgressStatus) bool {
 	switch stan {
 	case shared.ProgressStatusDone, shared.ProgressStatusFailed, shared.ProgressStatusStopped:
@@ -69,7 +66,7 @@ func stopienUkonczenia(p procesPostepu) float64 {
 	return float64(zakonczone) * 100 / float64(p.Etapow)
 }
 
-// ladunek składa treść zdarzenia progress.changed ze stanu procesu.
+// ladunek składa treść zdarzenia progress.changed ze stanu procesu, obliczając przy tym stopień ukończenia.
 func (p procesPostepu) ladunek() shared.ProgressChangedEvent {
 	zdarzenie := shared.ProgressChangedEvent{
 		ProcessId:   p.Id,

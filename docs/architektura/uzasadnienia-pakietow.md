@@ -5910,3 +5910,16 @@ usunęła.
 
 Czynności plikowe działają dzięki KorzenRoboczy także tam, gdzie Operator
 jeszcze nie założył repozytorium.
+
+## budowa/server/internal/dane/design_adnotacje.go
+
+Adnotacja przeżywa zapis układu warstw celowo: pole adnotacji przy warstwie w kompozycji
+wraca przepisane od nowa przy każdej aktualizacji układu, więc uwaga zostawiona przez jedną
+osobę znikałaby przy pierwszym przesunięciu warstwy przez drugą, gdyby nie leżała osobno.
+
+WarstwaID i NadrzednaID są identyfikatorami zewnętrznymi, nie kluczami wierszy, bo warstwa
+bywa już usunięta z kompozycji, a odpowiedź w wątku zakłada się w jednym przebiegu okna
+razem z adnotacją nadrzędną.
+
+Autor adnotacji nie wchodzi w nadpisanie: adnotację zakłada jedna osoba, a zmiana treści
+przez drugą nie czyni jej autorką cudzej uwagi.

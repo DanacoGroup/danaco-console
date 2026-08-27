@@ -3,29 +3,7 @@ import { przyciskAkcji, poleLiczbowe, wybor } from '../modele/kontrolki-formular
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 
 /**
- * Nastawa zasady przechowywania historii — progi, zakres i zapowiedź skutku.
- *
- * Rdzeń zasadę egzekwuje, nie tylko zapisuje: przemiata przy swoim starcie
- * (`server/internal/core/trwalosc_kosza.go`, wpięte w `core/montaz.go`), przy
- * każdym `history.load` oraz zaraz po samym `retention.set`
- * (`handlers_historia.go`). Po zapisie pozycje przestają istnieć, więc formularz
- * pokazuje skutek zasady, zanim Operator ją zapisze.
- *
- * Zapowiedź nie jest bramką: nie ma tu pytania „czy na pewno", a przycisk
- * zapisu jest czynny zawsze. Zapowiedź daje wiedzę, nie zgodę — Operator widzi
- * liczbę pozycji, które wypadną, i naciska albo nie.
- *
- * Oba progi puste znaczą „bez ograniczenia" i tak zdejmuje się zasadę
- * z zakresu; kontrakt nie ma osobnej komendy kasującej, bo dwie drogi do
- * jednego skutku byłyby dwiema prawdami o retencji. Formularz mówi to wprost,
- * bo bez tego zdania puste pola czytają się jak „nie ruszaj".
- *
- * Rdzeń przyjmuje zakresy `window`, `session` i `global`, przy czym dwa
- * pierwsze wymagają wskazania bytu (`sprawdzZakresZasady`). Okno panel zna od
- * gospodarza; sesji nie zna — `OpcjePanelu` jej nie niesie. Sesja pada wyłącznie
- * we wczytanych pozycjach (`HistoryEntry.sessionId`), więc zakres sesji wchodzi
- * do wyboru dopiero wtedy, gdy panel tę sesję zobaczył. Pozycja obiecująca
- * zakres, którego nie ma czym wypełnić, byłaby atrapą.
+ * Nastawa zasady przechowywania historii pokazuje progi, zakres i zapowiedź skutku przed zapisem, bo rdzeń zasadę egzekwuje natychmiast po zapisie, a nie tylko ją przechowuje.
  */
 export interface NastawaRetencji {
   /** Formularz osadzany w panelu. */
@@ -47,7 +25,7 @@ export interface OpcjeNastawy {
   naZapis(zadanie: RetentionSetRequest): void;
 }
 
-/** Doba w milisekundach — jednostka progu `keepDays` kontraktu. */
+/** Doba w milisekundach — jednostka progu liczby dni przechowywania używanego przez kontrakt zasady retencji. */
 const DOBA_MS = 24 * 60 * 60 * 1000;
 
 export function utworzNastawaRetencji(opcje: OpcjeNastawy): NastawaRetencji {
@@ -89,9 +67,7 @@ export function utworzNastawaRetencji(opcje: OpcjeNastawy): NastawaRetencji {
     ustawSesje(kod) {
       if (kod === sesja) return;
       sesja = kod;
-      // Wybór przebudowujemy w miejscu, zachowując zaznaczenie: zakres wybrany
-      // przez Operatora nie ma się przestawiać dlatego, że doszła pozycja
-      // z sesją. Zakres nieobecny w nowym wykazie po prostu nie wróci.
+      // Wybór przebudowujemy w miejscu, zachowując zaznaczenie niezależnie od nowej pozycji z sesją.
       const wybrany = zakres.value;
       zakres.replaceChildren();
       for (const [wartosc, opis] of zakresyDostepne(opcje.okno, sesja)) {
@@ -101,11 +77,7 @@ export function utworzNastawaRetencji(opcje: OpcjeNastawy): NastawaRetencji {
         zakres.append(opcja);
       }
       zakres.value = wybrany;
-      // Zakres, który wypadł z wykazu, nie może zostać w polu jako pustka:
-      // `select.value` przy wartości nieobecnej daje `selectedIndex === -1`,
-      // pole wygląda na niewypełnione, a zapis idzie do rdzenia z `scope: ''`.
-      // Zakres `global` jest w wykazie zawsze i bytu nie wymaga, więc to on
-      // jest stanem, do którego wybór wraca.
+      // Zakres, który wypadł z wykazu, wraca do zakresu globalnego — ten jest w wykazie zawsze.
       if (zakres.selectedIndex < 0) zakres.value = 'global';
     },
 
@@ -130,7 +102,7 @@ function zakresyDostepne(okno: string, sesja: string): Array<readonly [string, s
   return lista;
 }
 
-/** Żądanie `retention.set`; progu pustego nie wysyła — brak znaczy brak ograniczenia. */
+/** Żądanie zapisu zasady retencji; progu pustego nie wysyła, bo brak wartości znaczy brak ograniczenia. */
 function zlozZadanie(
   zakres: string,
   dni: string,
@@ -153,15 +125,7 @@ function zlozZadanie(
 }
 
 /**
- * Pozycje, których zasada nie utrzyma — liczone na tym, co panel wczytał.
- *
- * Panel widzi stronę wykazu, nie całą historię okna, a rdzeń liczy próg
- * `keepEntries` na całości. Zapowiedź jest więc dolnym oszacowaniem: pozycji
- * poza zasadą będzie co najmniej tyle, ile tu widać, i tak też brzmi zdanie
- * panelu.
- *
- * Kolejność jest kolejnością `history.load` — od najnowszej — więc numer
- * pozycji w tablicy jest jej numerem od najnowszej i to on wchodzi w próg.
+ * Pozycje, których zasada nie utrzyma, liczone są na stronie wykazu wczytanej przez panel, więc zapowiedź jest dolnym oszacowaniem rzeczywistej liczby pozycji poza zasadą.
  */
 function policzPozaZasada(
   lista: readonly HistoryEntry[],
@@ -181,13 +145,13 @@ function policzPozaZasada(
   return poza;
 }
 
-/** Zdanie o zasadzie pustej — stan wyjściowy formularza i wynik zdjęcia zasady. */
+/** Zdanie o zasadzie pustej — stan wyjściowy formularza retencji oraz wynik pokazywany po zdjęciu zasady. */
 const ZDANIE_PUSTEJ =
   'Oba progi puste znaczą BRAK OGRANICZENIA — zapisanie takiej zasady zdejmuje ją z zakresu. ' +
   'Zasada nie jest notatką: rdzeń egzekwuje ją od razu po zapisie, przy każdym odczycie ' +
   'historii i przy swoim starcie.';
 
-/** Zasada oddana przez rdzeń, przepisana na zdanie Operatora. */
+/** Zasada retencji oddana przez rdzeń, przepisana na czytelne zdanie kierowane wprost do Operatora panelu. */
 function opisZasady(zasada: RetentionPolicy): string {
   const progi: string[] = [];
   if (zasada.keepDays !== undefined) progi.push(`${zasada.keepDays} dni`);

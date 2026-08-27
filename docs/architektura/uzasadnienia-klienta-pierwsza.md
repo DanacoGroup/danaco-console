@@ -6820,3 +6820,6 @@ trzy, nie dwa: dopóki rdzeń nie odpowiedział, kontrolka nie orzeka o braku,
 a odmowa powitania też nie jest orzeczeniem braku. Kontrolka bez pokrycia
 nie znika i nie udaje, że działa — zostaje widoczna, nieczynna i niesie
 powód wprost, żeby brak pozostał widoczny w oknie.
+
+## budowa/klient-poprzedni/src/moduly/assistant/wysylka-polecenia.ts
+Plik stoi poza oknem, bo okno składa kontrolki, a to jest rozmowa z rdzeniem. Polecenie idzie jednym wywołaniem z polem transkrypcji, tą samą drogą co polecenie wpisane ręcznie — nie ma tu drugiej drogi do rdzenia ani własnego modelu. Przerwanie dotyczy zlecenia, nie nagrania: kontrakt nie niesie strumienia dźwięku, ale niesie sterowanie anulowania; bez zlecenia w toku przycisk mówi wprost, czego po stronie audio brakuje, zamiast milczeć. Fazę nazywa wysyłka, nie okno: niesie wartość ze wspólnego słownika fazy okna, tego samego, którym mówią Actions Monitor i Activity Feed — nie jest to drugi mechanizm stanu, tylko ta sama faza, wpuszczana wprost w ten sam stan okna, nazwana w miejscu, które jako jedyne wie, co się właśnie stało; przełącznik trwa/nie trwa nie wystarcza, bo nie umie powiedzieć o odmowie rdzenia.

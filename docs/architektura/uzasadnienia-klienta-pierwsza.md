@@ -4572,3 +4572,55 @@ a nie z treści żądania: zapis notatki opisuje jej postać po zapisie, a komen
 
 Wykaz dopisuje notatkę także wtedy, gdy postać zapisana rozjeżdża się z wysłaną. Notatka
 w rdzeniu wtedy jest, a widok ma pokazać jej prawdziwą postać obok zdania o rozjeździe.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-code-editor.ts
+
+Dziewięć operacji kontekstowych panelu akcji jedzie komendą
+`developer.contextual.op`: rdzeń składa polecenie z treści pliku, zaznaczenia
+i wskazania Operatora, a wynik wraca propozycją — okno pokazuje ją w miejscu
+treści i niczego nie zapisuje. Nazwy kanoniczne i rodzaje operacji stoją
+w `akcje-kanoniczne.ts`, jednym wykazem dla całego modułu.
+
+Wskazanie pliku przychodzi ze stanu: Project Tree woła `stan.wskazPlik(...)`,
+to okno nasłuchuje `stan.naZmiane(...)` i na nową ścieżkę otwiera plik przez
+`zrodlo.otworzPlik`. Po udanym odczycie i po zapisie woła `stan.ustawPlik`,
+żeby Project Tree i Git Panel widziały to samo. Jedyny punkt wejścia do
+odczytu to `odswiez()` — wytwórnia okna nie czyta sama, złożenie modułu woła
+`odswiez()` raz po montażu, a odczyt w wytwórni dałby podwójne żądanie.
+`odswiez()` nie zdejmuje subskrypcji `stan.naZmiane`: ta żyje od konstrukcji
+do `zamknij()`, inaczej wskazanie pliku w Project Tree przestałoby cokolwiek
+robić po pierwszym odświeżeniu.
+
+Okno nie gubi pracy Operatora cicho. Gdy treść w polu edycji różni się od
+treści ostatnio wczytanego pliku, a stan wskazuje inną ścieżkę, okno woła
+`tresc.potwierdzenie(...)`, nie `tresc.blad(...)` — ten drugi czyściłby
+miejsce treści razem z polem edycji. Pole `.mdev-kod` zostaje widoczne
+i edytowalne, a Operator ma dwa jawne wyjścia: „Zapisz plik” albo „Porzuć
+zmianę i otwórz wskazany plik”. Potwierdzenie zapisu mówi, co zrobił rdzeń:
+zdanie składa `zdania-odpowiedzi.ts` z pól odpowiedzi, nie z przełącznika
+wersji — rdzeń robi wersję z treści sprzed zapisu, więc gdy takiej nie było,
+`versionId` nie wraca wcale, a potwierdzenie nie ma prawa obiecywać punktu
+powrotu.
+
+Znacznik czystości pola nie jest treścią z rdzenia: po zapisie, którego
+rdzeń nie potwierdził treścią, znacznikiem czystości zostaje treść pola —
+inaczej edytor uznawałby pracę za niezapisaną na zawsze — a zdanie
+potwierdzenia mówi wprost, że okno nie ma czym potwierdzić zgodności
+z dyskiem. Znacznik ustawia się przed `ustawPlik`, bo ten rozgłasza zmianę
+i budzi ponowne wywołanie `otworz`. Reentrantne wywołanie `otworz` kończy się
+natychmiast na porównaniu `stan.plik()?.path === stan.sciezka()` — obie
+wartości ustawia `ustawPlik` przed powiadomieniem — więc drugie żądanie
+odczytu nie leci.
+
+Pasek statusu edytora pokazuje wyłącznie pola, które kontrakt niesie
+(język, rozmiar, wersję i czas ostatniej zmiany); pole nieobecne w
+odpowiedzi jest nazwane jako niezmierzone, zamiast pokazane wartością
+domyślną — „UTF-8” wypisane bez odczytu byłoby zgadywaniem, a „0 błędów”
+bez lintera mówiłoby o pliku sprawdzonym, choć nikt go nie sprawdzał.
+
+„Porzuć zmianę” jest jawnym drugim wyjściem z ostrzeżenia o niezapisanej
+pracy, obok „Zapisz plik” — bez niego Operator widziałby ostrzeżenie bez
+żadnej drogi naprzód poza ręczną edycją treści z powrotem do stanu
+wyjściowego. Nazwy operacji nie stoją przy pasku akcji — mają jedno źródło
+w `akcje-kanoniczne.ts`, żeby przycisk i komenda dołożona później mówiły
+o operacji tym samym słowem.

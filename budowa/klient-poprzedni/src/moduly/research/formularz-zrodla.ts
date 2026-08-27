@@ -5,20 +5,7 @@ import { utworzWyborNastawy, wierszNastawy } from './wybor-nastawy';
 import type { ZlecenieZrodla } from './zlecenia-badania';
 
 /**
- * Formularz katalogowania źródła — sześć pól żądania `research.source.add`.
- *
- * Jedna odpowiedzialność: zebranie metadanych źródła. Wydzielony z okna, bo
- * „katalogowanie" i „ocena wiarygodności" to dwie z trzech funkcji operatora
- * Sources Manager i mają swoje pola w kontrakcie (`kind`, `origin`, `url`,
- * `libraryFileId`, `credibility`).
- *
- * Każde pole niesie dymek [?], bo każde jest elementem konfiguracji zlecenia.
- *
- * Rodzaj źródła i ocena wiarygodności idą przez `wybor-nastawy` — obsadę
- * bibliotecznego `menu-drzewo`, gdzie uchwyt niesie wartość bieżącą („strona
- * internetowa", „wysoka"), a kliknięcie ją zmienia. Natywny `<select>`
- * pokazywałby ją dopiero po rozwinięciu. Pola tekstowe zostają polami
- * tekstowymi: nie ma w nich czego rozwijać.
+ * Formularz katalogowania źródła zbiera pola opisujące tytuł, rodzaj, adres, pochodzenie, ocenę wiarygodności oraz dokument repozytorium źródła.
  */
 export interface FormularzZrodla {
   element: HTMLElement;
@@ -94,12 +81,7 @@ export function utworzFormularzZrodla(): FormularzZrodla {
 }
 
 /**
- * Wartość steru zawężona do wyliczenia kontraktu.
- *
- * Rzutowanie jest tutaj i tylko tutaj: ster oddaje napis, a jego pozycje
- * pochodzą wyłącznie z wyliczeń `shared/contract`, więc innej wartości wydać
- * nie może. Wariant pusty (wykaz bez pozycji) wraca wartością zastępczą, nie
- * napisem pustym.
+ * Funkcja zawęża wartość sterowania listą wyboru do wyliczenia kontraktu, zwracając wartość zastępczą, gdy lista nie ma zaznaczonej pozycji.
  */
 function wartosc<T extends string>(wybrana: string, zastepcza: T): T {
   return wybrana === '' ? zastepcza : (wybrana as T);

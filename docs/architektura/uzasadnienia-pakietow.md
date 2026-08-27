@@ -4800,3 +4800,20 @@ Kod pusty w ArgumentyEksperta nie daje żadnych argumentów, ani nazwy zasięgu:
 zasięg eksperta bez eksperta nie jest zasięgiem węższym, tylko zasięgiem bez
 treści; wpis z samą nazwą roli kazałby serwerowi meldować brak przy każdym
 odczycie wykazu zamiast po prostu pracować w zasięgu okna.
+
+## budowa/server/internal/narzedzia/zasieg_okna.go
+Wpis danaco w konfiguracji MCP powstaje osobno dla każdego okna i niesie jego
+identyfikator, więc narzędzie zawsze wie, z którego okna przyszło wywołanie.
+
+Wskazanie jawne okna zostaje: kiedy model podaje pole okna sam, wartość idzie
+do rdzenia bez zmiany, bo pętla koordynator-wykonawca polega na tym, że okno
+koordynatora wysyła wiadomość do okna wykonawcy, a opisy narzędzi w kontrakcie
+mówią to wprost. Podmienianie wskazania jawnego na własne okno zamknęłoby tę
+pętlę i rozminęło serwer z kontraktem, który go opisuje. Pole rozpoznaje się
+po nazwie z deklaracji kontraktu, nie po własnym wykazie komend okna, więc
+narzędzie bez tego pola przechodzi nietknięte.
+
+Wartość wskazania okna innego rodzaju niż napis w brakWskazaniaOkna zostaje
+nietknięta, bo jest wskazaniem wadliwym, a orzekanie o kształcie treści
+żądania należy do rdzenia, nie do rozdzielni; podmiana takiej wartości na
+własne okno ukryłaby pomyłkę modelu.

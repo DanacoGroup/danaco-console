@@ -1661,3 +1661,13 @@ Stan błędu jest rozłączny ze stanem pustki. Okno roli, które po odmowie odc
 pokazałoby wyzerowany licznik zamiast błędu, sugerowałoby zatrzymany bieg tam,
 gdzie bieg trwa, a odmowa odczytu i brak pozycji w wykazie są dla Operatora
 dwiema różnymi wiadomościami.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-frontend-workspace.ts
+
+Plik jest wiązaniem, nie drugim widokiem: formularz warsztatu stoi raz,
+w `okno-warsztatu.ts`, a stąd dostaje wyłącznie stan produktu i opis warsztatu
+frontendu.
+
+Kod okna nie pada tu wprost napisem. Ramę modułu Apps woła wspólne okno
+warsztatu, biorąc kod ze zmiennej opisu, dzięki czemu wykaz `KODY_OKIEN`
+pozostaje jedynym miejscem, w którym kody okien tego modułu są wypisane.

@@ -6351,3 +6351,6 @@ powodzeniem tak samo jak podgląd pliku leżącego w magazynie rdzenia, więc
 osobnej funkcji, ponieważ powstaje w dwóch miejscach: przy pytaniu zadanym
 wprost o treść i przy zwykłym podglądzie okna podglądu pliku, a oba mają
 nazywać ten stan tak samo.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-faktow.ts
+Zakładka realizuje zasadę jawności modułu pamięci: cztery czynności kontraktu wystarczają, odczyt zakłada, zmienia i kasuje wpis, w tym przypięcie i pochodzenie. Zasięgiem odczytu jest karta sesji, nie projekt, bo moduł asystenta pracuje w karcie sesji środowiska rozmów i nie ma pojęcia projektu; zapis idzie tą samą drogą, z zasięgiem wskazanym jawnie przez operatora. Potwierdzenie mówi to, co zapisał rdzeń, a nie to, co wysłało okno: wpis zapisany na poziomie szerszym niż karta sesji bywa niewidoczny w wykazie poniżej, więc samo odświeżenie listy niczego by nie potwierdzało. Reguł retencji, wygaszania i znaczników wrażliwości okno nie udaje — wpis pamięci nie niesie czasu życia ani wrażliwości, więc brak nazywa przycisk, zamiast stawiać formularz, którego rdzeń nie zapisze.

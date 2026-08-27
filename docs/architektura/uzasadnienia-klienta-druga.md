@@ -2156,3 +2156,47 @@ Wybór narzędzia z tego okna melduje się sam z odpowiedzi komendy; poszerzenie
 
 ## budowa/klient-poprzedni/src/strona-glowna/macierz-modulow.ts
 Dane macierzy niesie odczyt środowisk z rdzenia z dołączonymi modułami: każde środowisko ma pole kodów modułów widocznych w jego bocznej nawigacji, w kolejności wyświetlania, a osobnego zapytania o macierz nie ma. Macierz niczego nie blokuje — zanim rdzeń odpowie, i gdy moduł nie stoi w żadnym środowisku, odczyt środowiska modułu zwraca brak wartości, co znaczy „nie wiem, dokąd", a nie „nie wolno"; co z tym zrobić, rozstrzyga miejsce wyboru. Środowisko początkowe to pierwsza karta według kolejności z rdzenia, a przed pierwszą odpowiedzią rdzenia — pierwszy kod z kontraktu, bez nazwy wpisanej ręcznie, ponieważ to ten sam wykaz źródłowy, z którego żyje strefa pierwsza. Kafel prowadzący gdziekolwiek jest lepszy niż kafel, który nagle przestał wiedzieć, dlatego odmowa rdzenia i cisza nie kasują macierzy już poznanej. Remis w przypisaniu modułu do środowiska bierze się stąd, że moduł bywa widoczny w kilku środowiskach naraz, a kontrakt nie niesie środowiska macierzystego — reguła liczy się z danych, bez kodu wpisanego na sztywno.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-report-builder.ts
+Widok ma dwie warstwy, bo niesie dwie rzeczy. Sekcja osadzona w przestrzeni modułu pokazuje raport złożony i pozostaje widoczna zawsze. Modal niesie samą kompozycję — zamknięcie kreatora nie może zdejmować okna z ekranu. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności raportu. Konspekt stoi obok treści, nie zamiast niej: widok podzielony pokazuje strukturę po lewej i treść sekcji po prawej, a kliknięcie pozycji konspektu prowadzi ognisko do sekcji w podglądzie.
+Pozycja konspektu przewiduje przy sekcji znacznik ukończenia. Sekcja raportu niesie identyfikator, tytuł, treść, ustalenia i kolejność — pola stanu nie ma, więc konspekt zamiast wymyślonego znacznika mówi rzecz sprawdzalną: czy sekcja ma już treść.
+
+## budowa/klient-poprzedni/src/widok-sterowania/podsumowanie-ustawien.ts
+
+Podsumowanie ośmiu ustawień okna jest odczytem, nie kontrolką. Widoczne wtedy,
+gdy szuflada z kontrolkami jest zwinięta — sterowanie zamyka się, a mimo to
+widać, na czym okno pracuje. Wartość każdego ustawienia stoi obok jego nazwy,
+więc osiem odpowiedzi widać jednym spojrzeniem, bez rozwijania czegokolwiek.
+Podsumowanie nie jest bramą: kliknięcie wiersza otwiera szufladę i prowadzi do
+kontrolki, a nie odmawia dostępu. Ikona przy każdym wierszu sprawia, że
+rozróżnienie nie opiera się na samej barwie.
+
+Powłoka dymka niesie własny odstęp z prawej strony, bez którego dymek kurczy
+się w rzędzie nazwy; znak zastępuje styl biblioteczny, bo jest pierścieniem
+ze wskaźnikiem pomocy, a nie kwadratowym przyciskiem ikonowym. Reguły stoją
+w arkuszu stylu podsumowania ustawień.
+
+Para znaczników nazwy i wartości mieszka we własnym bloku — dopuszcza to
+budowa listy opisowej, a układ zyskuje jedną komórkę siatki na ustawienie
+zamiast dwóch niezależnych, które przy zmianie liczby kolumn rozjechałyby się
+względem siebie. Nazwa jest przyciskiem prowadzącym do kontrolki — nie
+oznakowaniem, którego nie da się nacisnąć. Wartość zostaje tekstem, bo jest
+odczytem stanu.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-pola-postaci.ts
+Pole liczbowe jest własne, ponieważ moduł kontrolek formularza niesie pole
+tekstowe, listę wyboru i przełącznik, a nastawy postaci są w większości
+liczbami z granicami: margines w milimetrach, stopień pisma w punktach, punkt
+startu numeracji, krycie znaku wodnego. Pole tekstowe przyjęłoby zapis słowny
+i wysłało go wprost do rdzenia.
+
+Pole puste znaczy brak zmiany cechy w całym tym module: rodzina komend strony
+i formatu ma pola opcjonalne w tym samym znaczeniu. Margines zerowy jest
+nastawą, którą operator może wybrać świadomie, więc podanie zera i brak
+podania nie mogą znaczyć tego samego — inaczej każde naciśnięcie przycisku
+zerowałoby każdą cechę, której operator nie wpisał.
+
+Bilans czynności masowej jest sednem uczciwości tego odcinka: zamiana
+w całym dokumencie, która trafiła w blokadę, wykonuje się poza blokadą i musi
+nazwać, którą. Przemilczenie pominięcia jest zakazane, ponieważ liczba
+zmienionych miejsc równa zero bez słowa wyglądałaby jak wykonana czynność.

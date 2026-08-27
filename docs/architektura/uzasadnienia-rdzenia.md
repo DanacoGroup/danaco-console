@@ -1014,3 +1014,58 @@ kolejnym powtórzeniem.
 Zlecenie zdjęte, scalone i podzielone nie znika z bazy — dostaje stan
 końcowy. Historia kolejki ma pokazywać, co się z ładunkiem stało, a wiersz
 skasowany nie pokazuje niczego.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_wkompilowany.go
+
+Te cztery czynności liczył wcześniej program zewnętrzny, choć każdą z nich
+wykonuje w całości biblioteka Go wkompilowana w binarium. Program zewnętrzny
+wołany tam, gdzie biblioteka wystarcza, jest regresem: kosztuje uruchomienie
+procesu, wiąże funkcję z wersją cudzego wydania i przy niekompletnym serwerze
+zamienia retusz w odmowę. Rachunek stoi więc w tym pliku i idzie w procesie:
+`disintegration/imaging` (skalowanie Lanczosem, kadr, obrót, odbicia, korekcje
+barwne, rozmycie, wyostrzenie), `golang.org/x/image` (dekodery WEBP, TIFF, BMP
+oraz kodery TIFF i BMP), `HugoSmits86/nativewebp` (zapis WEBP bezstratnego),
+`rwcarlsen/goexif` (odczyt metadanych EXIF) i rachunek własny na odszumianie
+medianą oraz rozciągnięcie poziomów.
+
+Dwa wyjścia nie mają w Go kodera i nie da się ich tu policzyć: AVIF, którego
+kodera czysto-Go nie ma wcale, oraz WEBP stratny, bo `nativewebp` zapisuje
+wyłącznie bezstratny VP8L. Tak samo AVIF nie ma dekodera, więc obraz w tym
+formacie nie wchodzi. Te przypadki oddają `errBrakRachunkuGoObrazu`, a
+czynność sięga wtedy po program pakietu serwera — jedyna droga, jaka zostaje.
+Zapora `zapora_narzedzi_obrazu_test.go` pilnuje, żeby ta droga została
+wyjątkiem nazwanym, a nie wróciła jako droga podstawowa.
+
+Nazwy przestrzeni barw w `przestrzenBarwArsenalu` zostają te, które produkt
+wypisywał do tej pory, bo czyta je model w treści odpowiedzi — zmiana
+słownika byłaby zmianą kontraktu przy okazji zmiany rachunku.
+
+`przeskalujObrazArsenalu` traktuje obie miary podane przy zachowanych
+proporcjach jako „zmieść się w tej ramce" (`Fit`), a nie „rozciągnij do niej",
+zgodnie z tym, co mówi kontrakt: model prosi zwykle o „szerokość 800", a nie
+o rozciągnięcie zdjęcia.
+
+Brak pola `amount` w `poprawObrazArsenalu` bierze wartość domyślną operacji,
+nie zero: zero byłoby poprawką bez skutku, a model proszący o rozjaśnienie
+bez liczby dostałby obraz nieodróżnialny od źródła.
+
+`sigmaZSilyArsenalu` dla zera i wartości ujemnych daje najmniejszą sigmę
+o skutku widocznym, bo sigma zerowa nie zrobiłaby nic, a czynność ma robić to,
+o co poproszono.
+
+`odszumMedianaArsenalu` liczy medianą, nie rozmyciem, bo szum pojedynczych
+punktów (sól i pieprz z matrycy przy wysokiej czułości) jest wartością
+odstającą, a mediana odstających nie bierze. Krawędzie zostają ostre, bo po
+obu ich stronach mediana wskazuje wartość strony liczniejszej — czego rozmycie
+Gaussa nie robi. Kanał alfa liczy się tą samą medianą co barwy, osobno, żeby
+mieszanie z barwami nie zmieniło przezroczystości na krawędziach wycięcia.
+
+`rozciagnijPoziomyArsenalu` rozciąga tylko wtedy, gdy zakres jest węższy niż
+pełny: obraz już rozciągnięty przeszedłby przez mnożenie bez zmiany,
+a dzielenie przez zero przy obrazie jednobarwnym wywróciłoby rachunek.
+
+Odmowa dekodera w `odczytajObrazArsenalu` znaczy „nie ma czym tego przeczytać
+w procesie", a nie „plik jest zepsuty": pod tą samą odmową kryje się AVIF,
+którego dekodera w Go nie ma. Rozstrzyga to wołający, przechodząc na program
+pakietu serwera — gdyby plik był naprawdę uszkodzony, tamta droga powie to
+wprost.

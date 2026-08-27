@@ -4578,3 +4578,54 @@ Pozycja z komendami wymienia je co do nazwy, pozycja bez komend mówi, czego bra
 ## budowa/klient/src/wejscie/skladniki/baner.ts
 Barwa stanu obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan kształtem — barwa jako jedyna różnica nie wystarcza wymaganiu kontrastu. Głowa z licznikiem rozpada się na trzy części: to, co przed liczbą, sam licznik i to, co po niej — inaczej mechanika musiałaby przepisywać całe zdanie co sekundę, a wtedy czytnik ekranu ogłaszałby je od nowa.
 Odsłona zwłoki dostaje wartość licznika z pomiaru dopiero po odmowie rdzenia, a węzeł musi już wtedy stać.
+
+## budowa/klient-poprzedni/src/strona-glowna/panel-komponentu.ts
+Kolejność jest kolejnością pracy — najpierw komponent powstaje, potem się go zmienia i wiąże. Panel
+wysuwany z kafla wymagałby warstwy nakładek, której strefa druga dziś nie ma, więc czynności stoją
+w przyborniku jako rozjazd wobec warstwy projektowej, nie ukryty. Wiązanie mówi, z czym wiąże, zanim
+zwiąże: zdanie nad przyciskiem nazywa komponent i byt poziomu po nazwach, nie po identyfikatorach,
+i przepisuje się przy każdej zmianie wyboru — przycisk, po którym operator dowiaduje się z odpowiedzi,
+co właśnie związał, byłby przyciskiem wiążącym w ciemno. Zmiana wysyła wyłącznie pola dotknięte: pole
+zostawione puste nie jedzie wcale, bo kontrakt mówi, że pola pominięte zostają bez zmian — puste pole
+nazwy nie jest życzeniem pustej nazwy.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/indeks.ts
+Jedno okno rozmawia tu z wieloma kanałami naraz, po tym samym rejestrze kanałów, którym jedzie
+okno rozmowy. Moduł nie prowadzi więc własnej listy modeli: uczestnika zakłada się na kanale
+wziętym z rejestru, a nazwę kanału składa biblioteka wspólna. Moduł pracuje w oknie, nie w sesji:
+każda komenda obszaru, którą moduł wywołuje, wymaga identyfikatora okna, więc złożenie jedzie przez
+mechanizm widoku z okna sesji wraz z kodem modułu — przejście pyta rdzeń o okna sesji i odracza
+montaż do chwili, gdy okno tego modułu jest znane. Bez kodu przejście wzięłoby okno pierwsze
+w wykazie i komendy debaty jechałyby z identyfikatorem okna cudzego modułu. Rejestr kanałów
+zakładany jest tutaj: wspólny egzemplarz powstaje w warstwie sceny sesji i schodzi do okna rozmowy
+przez wiązanie gniazda, ale umowa rejestru modułów daje modułowi wyłącznie kanał, więc egzemplarza
+rejestru nie da się tą drogą podać. Drugi egzemplarz jest dopuszczalny, bo rejestr to czytająca
+pamięć podręczna nad wykazem kanałów — katalog wyboru wspólny dla całego klienta, w którym żadne
+okno nie zapisuje swojego stanu; od egzemplarza wspólnego różni się jedynie chwilą odświeżenia.
+Układ idzie za warstwami widoczności zamierzenia modułu. Warstwa pierwsza stoi w pasie górnym:
+Model Panels (skład debaty, osobny panel na każdy model) obok monitora przebiegu (Debate Panel) —
+pytanie idzie jednocześnie do wszystkich uczestników i odpowiedzi narastają obok składu. Warstwa
+druga to cztery rozszerzenia boczne — Argument Map & Analysis, Voting & Evaluation Center,
+Moderator Panel i Consensus Panel — zwinięte do chwili otwarcia przyciskiem z Debate Panelu.
+Zwinięcie nie jest blokadą: okno jest zbudowane, zasubskrybowane i o jedno naciśnięcie dalej. Okno
+rozmowy modułu nie należy do złożenia: jest bytem sesji i składa je warstwa rozmowy. Strumień
+głosów jest jeden na złożenie, nie jeden na okno. Rdzeń nadaje wypowiedź uczestnika fragment po
+fragmencie i rozgłasza zdarzenie zmiany debaty rodzaju stworzonej z treścią pustą, a
+zaktualizowanej z pełną dopiero po domknięciu strumienia; okno słuchające samego zdarzenia pokazuje
+pustą wypowiedź przez cały czas mówienia modelu. Gdyby każde z sześciu okien założyło własną
+subskrypcję i własne gromadzenie, ten sam fragment byłby przyjęty sześciokrotnie, a sześć okien
+miałoby sześć osobnych obrazów jednego głosu. Subskrypcja stoi zatem tutaj, obok stanu debaty,
+i schodzi do okien gotowym gromadzeniem.
+
+Rejestr kanałów przyjmowany z zewnątrz istnieje po to, żeby poszerzenie umowy opisu modułu nie
+wymagało przepisywania złożenia.
+
+Nasłuch zmiany tury stoi przed oknami, bo słuchacze stanu są wołani w kolejności zapisania: gdyby
+stał po nich, okna zdążyłyby raz narysować głosy tury poprzedniej pod nagłówkiem tury nowej.
+
+Panel debaty nie należy do złożenia okien powyżej i nie jest przez nie stawiany: gospodarzem jest
+pas okien pomocniczych modułu albo kolumna paneli sceny okien równoległych, a wpina go wytwórnia
+paneli. Reeksport jest dla czytającego, nie dla wytwórni: wytwórnia sięga wprost po plik panelu
+debaty, bo import tego pliku wciągnąłby do gospodarza całe złożenie okien operacyjnych
+i rejestrację modułu, których gospodarz nie stawia. Wpis tutaj mówi tyle, że panel należy do tego
+modułu.

@@ -227,3 +227,15 @@ jej żądania, nie polecenie powłoki wprost, dzięki czemu plan przechodzi tę
 samą bramę uprawnień i ten sam egzekutor izolacji, co polecenie wydane ręcznie
 z karty; krok omijający komendę byłby drugą drogą do powłoki, bez żadnego
 z tych sprawdzeń.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-warsztat-translate.ts
+
+Rodziny komend spoza czterech okien pierwotnych dzielą trzy wskazania — okno
+tłumaczenia, panel języka i ścieżkę pliku — więc stoją w jednym warsztacie,
+a nie w dwunastu osobnych oknach: rozbicie kazałoby Operatorowi wpisywać te
+same trzy wskazania po kilkanaście razy, a każda rodzina prowadziłaby własną
+kopię wykazu paneli. Tutaj wskazania stoją raz, na górze, i wchodzą do
+każdego żądania. Każda sekcja kończy się zdaniem o mierzonym skutku, nie
+słowem „gotowe" — liczbą par wniesionych do pamięci, ścieżką pliku, który
+powstał, liczbą pozycji przebiegu — bo komunikat „udało się" bez liczby jest
+meldunkiem zamiast skutku.

@@ -5995,3 +5995,28 @@ chwila na pokazanie tego zdania. Chronologia wydań rozwija się dopiero na
 Poza powłoką natywną baner nie ma czynności do wykonania po kliknięciu, bo
 podmiana pliku i restart są własnością powłoki — pytanie kanału wydań byłoby
 wtedy ruchem w sieć po nic.
+
+## budowa/klient-poprzedni/src/moduly/agents/modul-agents.ts
+Układ wynika z roli okna. Agent Builder jest kreatorem i punktem wejścia modułu, więc
+stoi w pasie pierwszym na całą szerokość. Model Configuration jest oknem pomocniczym,
+a cztery pozostałe są zarządcami, więc stoją w pasie drugim obok siebie. Trzy z nich
+odnoszą się do eksperta wybranego w kreatorze; Katalog rozszerzeń stoi na końcu pasa,
+bo jako jedyny mówi o platformie, nie o ekspercie, i dlatego nie gaśnie, gdy żaden
+ekspert nie jest wybrany. Jeden ekspert jest czynny na cały moduł: stan agentów jest
+jeden, więc wybór w bibliotece przestawia okna eksperta naraz. Dlatego zakładka paska
+edytora nie otwiera drugiego formularza — przenosi ognisko do okna, które daną rzeczą
+zarządza.
+
+Kod zakładki nie jest kodem okna: zakładka „Tożsamość" prowadzi do okna agent-builder.
+Pętla czyszcząca porównuje się z kodem okna, nie z kodem zakładki — inaczej skasowałaby
+znacznik postawiony dla okna docelowego.
+
+Wykaz braków ma na końcu modułu, poza pasami okien, jeszcze jedno uzasadnienie: pozycje
+mają też własne kontrolki tam, gdzie operator ich szuka, a tutaj stoi ich liczba.
+
+Odczyty przy wczytaniu modułu idą równolegle, ponieważ odmowa jednego zostaje w jego
+oknie i nie gasi pozostałych.
+
+Drzewo wyboru narzędzi zakłada nasłuchy zamknięcia kliknięciem obok i klawiszem Escape
+na dokumencie, więc bez jawnego zamknięcia przeżyłoby własne okno i reagowało na
+klawiaturę w module, którego już nie ma.

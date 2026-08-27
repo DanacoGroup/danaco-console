@@ -2398,3 +2398,48 @@ nowyIdentyfikator: licznik wymagalby wspolnego stanu, ktorego ten pakiet
 nie ma. Blad zrodla losowosci nie przerywa transkrypcji — identyfikator
 opada wtedy na znacznik czasu, bo wpis bez tozsamosci nie zapisze sie
 wcale, a to gorsza strata niz tozsamosc mniej odporna na zbieg.
+
+## budowa/server/internal/core/adapter_modul_design_szablony_materialu.go
+
+Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`).
+
+Szablon jest układem, nie poleceniem: szablon materiału niesie rozmiar (baner
+1200×628, wizytówka 90×50) i komplet warstw. Zastosowanie zakłada z niego
+kompozycję gotową do pracy — po to istnieje. Wykaz szablonów, z którego nie da
+się szablonu użyć, byłby spisem cudzej pracy.
+
+Podstawienie treści idzie po nazwie warstwy: warstwa niesie adnotację (`note`)
+i to ona jest jej nazwą w szablonie — „logo", „nagłówek", „zdjęcie produktu".
+Podstawienie wskazuje zasób, który ma w tej warstwie stanąć. Nazwa, której
+szablon nie ma, wraca w `unmatchedNames` — bilans zamiast ciszy. Cicha zgoda
+oznaczałaby komplet kampanii złożony z szablonu, w którym połowa podstawień
+nie weszła, a Operator dowiedziałby się o tym dopiero z wydruku.
+
+Szablon wskazany a nieznany w `ZapiszSzablonMaterialu` jest odmową, nie cichym
+założeniem nowego — wzorem szablonu promptu: Operator, który nadpisuje,
+oczekuje, że nadpisał ten jeden, a nie że dostał drugi obok.
+
+Numery stron w `stronySzablonuDoZapisuDesignu` są sprawdzane przed zapisem:
+numer niedodatni nie jest numerem strony, a numer powtórzony odbiłby się od
+unikatu schematu i wrócił jako awaria rdzenia oznaczona jako ponawialna —
+a to jest pomyłka wołającego.
+
+Wartość podstawienia w `podstawieniaSzablonu` musi być napisem: podstawienie
+wskazuje zasób, który ma stanąć w warstwie. Liczba ani obiekt nie jest
+identyfikatorem zasobu, a przepuszczone po cichu dałyby warstwę pustą przy
+powodzeniu komendy.
+
+Strony czynią z szablonu publikację. Zapis idzie po zapisie samego szablonu,
+bo strona wskazuje jego klucz. Szablon bez stron zostaje jednostronicowy
+i jego warstwy leżą tam, gdzie leżały — baner nie ma stron.
+
+Wszystkie strony naraz na jednym płótnie leżałyby jedna na drugiej, bo
+kompozycja jest arkuszem, nie plikiem.
+
+Warstwy szablonu dostają własne identyfikatory w kompozycji: kompozycja jest
+odtąd bytem osobnym i jej zmiana nie ma prawa ruszyć szablonu, z którego
+powstała.
+
+Strony wracają w odpowiedzi, żeby okno publikacji wiedziało, ile stron
+zostało — bez tego Operator dostawałby jedną kompozycję i nie miałby po czym
+poznać, że publikacja ma jeszcze dwadzieścia trzy.

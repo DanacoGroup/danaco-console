@@ -72,7 +72,7 @@ export function utworzOknoZarzadcySesji(
   });
   const tresc = utworzStanTresci();
   const ksiazka = utworzKsiazkeHostow();
-  // Klucze, tunele i karty rdzenia trzymamy w polach okna, a nie w książce, bo to trzy różne byty.
+  // Klucze, tunele i karty rdzenia trzymane są w polach okna, a nie w książce, bo to trzy różne byty.
   let klucze: readonly TerminalSshKey[] = [];
   let tunele: readonly TerminalTunnel[] = [];
   let kartyRdzeniaWykaz: readonly TerminalSession[] = [];

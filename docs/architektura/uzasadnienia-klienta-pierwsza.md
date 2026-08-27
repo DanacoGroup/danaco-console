@@ -6834,3 +6834,16 @@ kontrakt zna.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/zrodla-przekrojowe.test.ts
 Sprawdzian pyta o jedno: czy każda komenda rodzin mowy, pamięci kontekstowej, retencji, zużycia kontekstu, schowka, skrótów, wywoływacza i asystenta ma drogę z okna do rdzenia. Wykaz oczekiwany nie jest tu przepisany — bierze się ze stałych kontraktu, a wykaz rzeczywisty z komend, które źródła naprawdę wysłały; komenda dołożona do kontraktu i pominięta w oknie wypadnie tu jako brak, bez dopisywania czegokolwiek w tym pliku. Sprawdzian mierzy warstwę kliencką, nie rdzeń: kanał jest próbny i tylko zapamiętuje nazwy — to wystarcza, bo pytanie brzmi, czy okno ma czym zawołać, a nie czy rdzeń odpowie, na to drugie odpowiadają sprawdziany skutku po stronie rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-sources-panel.ts
+Panel ma jedną odpowiedzialność: formularz źródła i wykaz źródeł. Rozmowa z rdzeniem jest w pliku `czynnosci-zrodel.ts`, jeden wiersz w pliku `wiersz-zrodla.ts`. Wykaz pochodzi z rdzenia: polecenie odczytu źródeł oddaje źródła okna od najnowszego, więc panel pokazuje komplet zebrany w oknie, nie tylko pozycje dodane w tej karcie. Gdy rdzeń odmówi albo nie zna jeszcze okna, panel wypowiada powód zamiast pokazywać pusty wykaz bez wyjaśnienia.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-sources-panel.ts — samoczynne dopisanie źródła
+Bez progu identyfikatora migawki każde ogłoszenie stanu, także zmiana zaznaczenia, próbowałoby dopisać to samo źródło jeszcze raz. Ponownie odwiedzona strona nie zakłada drugiego wpisu, bo jej adres stoi już w wykazie okna — to jest reguła scalania duplikatów panelu.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/karta-przeplywu.ts
+Kolumny żetonów i wywołań narzędzi stoją puste, ponieważ struktura podagenta
+w kontrakcie nie niesie ani licznika żetonów, ani licznika wywołań
+narzędzi. Komórki dostają znak braku wraz z powodem zamiast zera, które
+czytałoby się jako wykonany pomiar, i z tego samego powodu wiersz
+podsumowania nie sumuje żetonów.

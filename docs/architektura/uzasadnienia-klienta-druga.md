@@ -2465,3 +2465,20 @@ warstwa — moduł pyta o politykę obowiązującą tę pracę, nie o domyślną
 nieustalonej nie podmienia na globalną, tylko zgłasza brak przedmiotu zapytania. Stan wyjściowy
 platformy to zero blokad: żaden zakres nie jest domyślnie odcięty, a macierz nazywa ten skutek przy
 każdym kluczu z osobna, ponieważ wykaz zakresów się przewija.
+
+## budowa/klient-poprzedni/src/moduly/research/pustka-okien.ts
+Wybór zdania pustki nie obejmuje faz `odczyt` i `blad`: rozstrzygają je czynności okien wcześniej,
+odpowiednio wskaźnikiem odczytu i komunikatem odmowy, więc funkcja wybiera między trzema
+pozostałymi stanami — brak jeszcze zapytania, zapytanie bez okna w rdzeniu, i zapytanie z miejscem,
+w którym treści jeszcze nie ma.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zrodlo-roundtable.ts
+Obszar roundtable niesie czterdzieści sześć komend, z których interfejs klienta wywołuje dziś
+tylko cztery — obsługi pozostałych jeszcze nie zbudowano, a wykaz brakujących komend prowadzi
+katalog-funkcji.ts. Pole windowId jest wymagane w każdej czynności, bo debata jest bytem okna,
+nie sesji: uczestnicy, tury i stanowisko należą do jednego okna debaty, a rdzeń bez tego
+identyfikatora nie wie, o którą debatę pytamy — wymóg stoi w kontrakcie wymiany, więc żadne
+pole żądania nie ma tu wartości domyślnej. Debata z wieloma modelami odmawia z powodów
+zwyczajnych, takich jak nieczynny kanał uczestnika albo już zamknięta tura, dlatego każda
+czynność oddaje Wynik zamiast samej treści, żeby okno odróżniło brak wypowiedzi od nieudanego
+zapytania.

@@ -4195,3 +4195,5 @@ ponieważ struktura konektora wchodzi w całości od wołającego, a wejście wt
 wyłącznie nazwę, źródło i wersję. Kod składa się dokładnie tak samo jak dla konektora:
 przedrostek, licznik w podstawie trzydziestej szóstej i ośmiobajtowa część losowa ze źródła
 kryptograficznego.
+## budowa/server/internal/dane/przegladarka_zrodla.go
+Tabela zrodlo_przegladania nie jest tabelą zrodlo_badania modułu badawczego: źródło przeglądania jest odciskiem strony zebranym w toku przeglądania i zawsze powiązanym z oknem operacyjnym, a źródło badawcze ocenia wiarygodność zasobu i niesie inny kształt danych. Różne kształty i różne cykle życia uzasadniają osobną tabelę zamiast współdzielenia jednej struktury.

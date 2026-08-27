@@ -89,6 +89,20 @@ Każda pozycja sprawdzona uruchomieniem.
 tego dokumentu. W modelu hybrydowym zaplecze stoi na serwerze wdrożenia, nie
 u Operatora — instalacja na maszynie budowlanej jest instalacją tego serwera.
 
+**Stos modeli PyTorch — postawiony przez teren `zdolnosc-wyszukiwania`**, na tym
+samym wyjatku co `fastembed`. Instalacja `pip --user --break-system-packages`,
+bo system jest `externally-managed`:
+
+| Pakiet | Waga |
+|---|---|
+| torch 2.13.0+cpu | 757 MB |
+| transformers 5.16.1 | 119 MB |
+| sympy, networkx, mpmath, regex, safetensors, typer i drobne | ok. 105 MB |
+
+Razem okolo **980 MB**; caly katalog `~/.local/lib/python3*/site-packages` wazy
+1,4 GB. Zadnych wag modeli nie pobrano — przesiew i os obrazu licza na wagach
+stojacych w `/opt/danaco-modele`. Wolne miejsce po pracy: 276 GB.
+
 **Brak jedyny:** `typescript-language-server`. Rdzeń nazywa go w sondzie startowej
 wraz z drogą naprawy; warstwa językowa TypeScriptu przez to nie działa.
 

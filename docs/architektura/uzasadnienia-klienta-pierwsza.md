@@ -3723,3 +3723,15 @@ dwa osobne przyciski. Jeden przycisk o zmiennym napisie kazałby zgadywać, któ
 czynność zaraz zleca. Przycisk uprawnień otwiera Permissions & Trust Center na
 pozycji karty i pozostaje czynny również dla pozycji niezainstalowanej, ponieważ
 zakres dostępu ogląda się przed włączeniem.
+
+## budowa/klient-poprzedni/src/aplikacja/przelacznik-tras.ts
+
+Żaden przycisk trasy nie jest bramą i żaden nie zostaje wyszarzony. Do
+środowiska można wejść także wprost, ponieważ środowisko domyślne istnieje od
+pierwszej chwili. Trasa bieżąca jest oznaczona atrybutem `aria-current`, a nie
+odebraniem klikalności.
+
+Przyciski niosą sam znak, bez napisu, ponieważ trasy stoją w grupie akcji paska
+obok ustawień, motywu i menu konta, które również są ikonami, a nazwa widoku
+stoi tuż pod paskiem jako tytuł strony. Nazwę niesie atrybut `title` oraz
+etykieta dostępności przycisku.

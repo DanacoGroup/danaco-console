@@ -8,29 +8,8 @@ import type { StanTranslate } from './stan-translate';
 import { rozbieznoscOdpowiedzi } from './zgodnosc-odpowiedzi';
 
 /**
- * Trzy ścieżki zapisu Source Panel — oddzielone od widoku, który je wyzwala.
- *
- * Odczyt i zapis mieszkają osobno, tak jak w sekcji dostępów: widok składa
- * pola i przyciski, a to, co się dzieje po naciśnięciu, jest tutaj. Dzięki temu
- * sprawdzian może wywołać zapis bez klikania w element, a plik widoku nie
- * puchnie o obsługę odmów.
- *
- * Każda ścieżka odpowiada. Brak okna, pusty tekst, odmowa rdzenia — wszystkie
- * trzy kończą się zdaniem w wierszu odpowiedzi, żadna ciszą.
- *
- * Zdanie o wyniku mówi tylko to, co niesie odpowiedź rdzenia:
- *
- *  — `translate.source.set` żadnego przekładu nie uruchamia; oddaje panele
- *    z ich dotychczasową treścią, a przelicza je dopiero `translate.target.add`
- *    albo korekta Operatora;
- *  — przy zapisie bez wskazanego języka źródłowego rdzeń oddaje
- *    `sourceLanguage: ""`; pusty język jest nazwany, nie przemilczany.
- *
- * Rozpoznanie języka nie wpisuje się do pola w ciemno. `translate.source.detect`
- * przepuszcza odpowiedź modelu wprost do pola `language` kontraktu, więc
- * w polu potrafi wrócić komunikat kanału zamiast oznaczenia języka. Wartość
- * niebędąca oznaczeniem języka wraca Operatorowi dosłownie, jako odmowa,
- * i nie nadpisuje tego, co sam wpisał.
+ * Trzy ścieżki zapisu Source Panel są oddzielone od widoku, który je wyzwala; każda ścieżka
+ * kończy się zdaniem w wierszu odpowiedzi, żadna ciszą.
  */
 export interface PolaZrodla {
   tekst: HTMLTextAreaElement;
@@ -39,7 +18,7 @@ export interface PolaZrodla {
 }
 
 export interface ZapisyZrodla {
-  /** `translate.source.set` — zapis tekstu; wyzwala aktualizację wszystkich paneli. */
+  /** Zapis tekstu źródłowego wyzwala aktualizację wszystkich paneli tłumaczenia. */
   zapisz(): Promise<void>;
   /** `translate.source.segment` — ponowny podział na segmenty. */
   segmentuj(): Promise<void>;
@@ -75,7 +54,7 @@ export function utworzZapisyZrodla(
   };
 }
 
-/** `translate.source.set` — zapis tekstu źródłowego wraz z jego językiem. */
+/** Komenda zapisu tekstu źródłowego niesie tekst wraz z jego językiem, wyzwalając aktualizację wszystkich paneli tłumaczenia. */
 async function zapiszZrodlo(
   stan: StanTranslate,
   pola: PolaZrodla,
@@ -84,11 +63,7 @@ async function zapiszZrodlo(
 ): Promise<void> {
   const tekst = pola.tekst.value;
   if (tekst.trim() === '') {
-    // Zdanie mówi o oknie, bo to okno odmawia, nie rdzeń. Rdzeń sprawdza
-    // `Text == ""` dokładnie: pustego tekstu odmawia, ale samą spację czy sam
-    // znacznik kolejności bajtów przyjmuje i zapisuje. Okno takiego źródła nie
-    // wysyła — zapis samych białych znaków nie jest zapisem tekstu — i nie
-    // przypisuje rdzeniowi odmowy, której by nie było.
+    // Zdanie mówi o oknie, bo to okno odmawia, nie rdzeń: białe znaki same nie są zapisem tekstu.
     odpowiedz.pokaz(
       'Wpisz albo wklej tekst — pole ma same białe znaki, więc okno nie ma czego zapisać.',
       false,
@@ -100,10 +75,7 @@ async function zapiszZrodlo(
   if (jezyk !== '') zadanie.sourceLanguage = jezyk;
   if (pola.ponownaSegmentacja.checked) zadanie.resegment = true;
 
-  // Stan ładowania idzie na okno, nie tylko w wiersz odpowiedzi: wiersz mówi
-  // o czynności, pas stanu o oknie. Wskaźnik stoi przy tytule pasa, a treść okna
-  // zostaje widoczna i edytowalna — przesłonięcie pola skasowałoby Operatorowi
-  // z oczu to, co właśnie pisze.
+  // Stan ładowania idzie na okno, nie tylko w wiersz odpowiedzi, treść okna zostaje widoczna.
   okno.ladowanie('Rdzeń przyjmuje tekst źródłowy i dzieli go na segmenty.');
   odpowiedz.pokaz('Zapisywanie tekstu źródłowego…', true);
   const wynik = await stan.zrodlo.ustaw(zadanie);
@@ -113,18 +85,11 @@ async function zapiszZrodlo(
     okno.blad(zdanie);
     return;
   }
-  // Tekst wchodzi do stanu z żądania, bo `TranslateSourceSetResponse` go nie
-  // odsyła (niesie sourceLanguage, segmentCount i panels). Nie ma więc czym
-  // potwierdzić treści źródła i zdanie niżej jej nie potwierdza: mówi o języku
-  // i o podziale, które rdzeń oddał.
+  // Tekst wchodzi do stanu z żądania, bo odpowiedź zapisu go nie odsyła; zdanie mówi o języku.
   stan.wchlonZrodlo(tekst, wynik.wynik.sourceLanguage, []);
   stan.wchlonPanele(wynik.wynik.panels);
 
-  // Język zamówiony porównuje się z oddanym wyłącznie wtedy, gdy Operator język
-  // wskazał: przy polu pustym żądanie go nie niesie, więc nie ma zamówienia,
-  // z którym można by zestawić odpowiedź. Rdzeń oddaje wskazany język wprost,
-  // a przy żądaniu bez języka oddaje pole puste, kasując język zapisany
-  // wcześniej — obie drogi mają w oknie własne zdanie.
+  // Język zamówiony porównuje się z oddanym tylko wtedy, gdy operator język wskazał w żądaniu.
   if (jezyk !== '') {
     const rozbiezne = rozbieznoscOdpowiedzi('Zapis tekstu źródłowego', [
       { nazwa: 'język źródłowy', zamowione: jezyk, oddane: wynik.wynik.sourceLanguage },
@@ -151,7 +116,7 @@ async function zapiszZrodlo(
   okno.gotowe();
 }
 
-/** `translate.source.segment` — liczba segmentów bierze się z odpowiedzi. */
+/** Komenda ponownego podziału tekstu źródłowego na segmenty zwraca liczbę segmentów, która bierze się z odpowiedzi rdzenia. */
 async function segmentujPonownie(
   stan: StanTranslate,
   tekst: string,
@@ -167,16 +132,13 @@ async function segmentujPonownie(
     okno.blad(zdanie);
     return;
   }
-  // Faza schodzi przed ogłoszeniem stanu, nie po nim. Przerysowanie okna nie
-  // zdejmuje fazy trwającej (patrz `odswiez` w `okno-source-panel.ts`), więc
-  // ogłoszenie wykonane przy zapalonym ładowaniu przeszłoby bez skutku i okno
-  // zostałoby z zapowiedzią wywołania, które się już skończyło.
+  // Faza schodzi przed ogłoszeniem stanu, bo przerysowanie okna nie zdejmuje fazy trwającej.
   okno.gotowe();
   stan.wchlonSegmenty(wynik.wynik.segments);
   odpowiedz.pokaz(`Rdzeń podzielił tekst na ${wynik.wynik.segments.length} segmentów.`, true);
 }
 
-/** `translate.source.detect` — rozpoznanie języka modelem, z odsiewem kształtu. */
+/** Komenda rozpoznania języka źródłowego działa modelem, a wynik przechodzi przez odsiew kształtu przed wpisaniem do pola. */
 async function rozpoznajJezyk(
   stan: StanTranslate,
   poleJezyka: HTMLInputElement,
@@ -188,8 +150,7 @@ async function rozpoznajJezyk(
   odpowiedz.pokaz('Rozpoznawanie języka źródłowego…', true);
   const wynik = await stan.zrodlo.rozpoznajJezyk(tekst);
   if (!wynik.udany || wynik.wynik === undefined) {
-    // Rozpoznanie języka rdzeń wykonuje modelem, więc odmowa z braku kanału ma
-    // tu nieść zdanie o tym, czego brakuje (`odmowa-translate`).
+    // Rozpoznanie języka rdzeń wykonuje modelem, więc odmowa z braku kanału niesie zdanie o braku.
     const zdanie = zdanieOdmowyModelu('Rozpoznanie języka', wynik.blad);
     odpowiedz.pokaz(zdanie, false);
     okno.blad(zdanie);
@@ -197,9 +158,7 @@ async function rozpoznajJezyk(
   }
   const oddany = wynik.wynik.language.trim();
   if (!wygladaNaJezyk(oddany)) {
-    // Odpowiedź nieużyteczna jest odmową, nie pustką. Rdzeń odpowiedział, ale
-    // tym, czego okno nie ma prawa wpisać do pola języka — pas stanu mówi to
-    // samo, co wiersz odpowiedzi, zamiast wracać do „gotowe".
+    // Odpowiedź nieużyteczna jest odmową, nie pustką: pas stanu nie wraca wtedy do stanu gotowe.
     const zdanie =
       'Rozpoznanie języka: rdzeń oddał w polu języka treść, która nie jest oznaczeniem ' +
       `języka — „${oddany}". Pola nie nadpisano; wpisz kod języka sam albo sprawdź ` +
@@ -220,18 +179,8 @@ async function rozpoznajJezyk(
 }
 
 /**
- * Czy oddana wartość jest oznaczeniem języka, a nie zdaniem.
- *
- * Sprawdzian mówi wyłącznie o kształcie i jest celowo wąski. Kontrakt opisuje
- * pole `language` jako rozpoznany język, a rdzeń prosi model o samą nazwę albo
- * kod ISO 639-1 — oznaczenie języka to najwyżej kilka słów złożonych z liter,
- * ewentualnie z kodem w nawiasie („polski", „pl", „Polish (pl)"). Komunikat
- * kanału mieści się zwykle w czterdziestu znakach, więc sama długość go nie
- * odsiewa; odsiewa go zbiór znaków (ukośnik, kropka wypunktowania) i liczba słów.
- *
- * Klient nie orzeka, że wartość jest błędna: oddaje ją Operatorowi dosłownie
- * i zostawia mu ocenę — nie wpisuje tylko cudzego komunikatu do pola języka
- * i nie melduje go jako rozpoznania.
+ * Sprawdzian oznaczenia języka mówi wyłącznie o kształcie wartości i jest celowo wąski, bo
+ * oznaczenie języka to najwyżej kilka słów złożonych z liter.
  */
 const KSZTALT_JEZYKA = /^[\p{L}][\p{L}\p{M} ()\-,]*$/u;
 

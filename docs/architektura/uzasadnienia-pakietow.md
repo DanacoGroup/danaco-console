@@ -3714,3 +3714,20 @@ zostaje przy swoim powodzie — ukończenie nie przykrywa przerwania.
 Kanał nierozpoznany kończy wyłącznie wywołanie Wyslij, którego dotyczy: użytkownik
 dostaje fragment błędu, wywołujący błąd w wyniku, a sesja, okno i kolejne próby
 pozostają czynne.
+
+## budowa/server/internal/dane/dostep_korzenie.go
+Korzeń jest listą, nie pojedynczym polem, tak samo jak katalog roboczy okna;
+odpowiada zmiennej DANACO_MOST_KORZENIE mostu MCP, poza którą most nie wyjdzie.
+Nadanie może korzenie punktu wyłącznie zawęzić. Korzeń nadania spoza obszaru
+punktu byłby obietnicą dostępu, którego most i tak nie da — sprawdzenie leży
+tu, żeby nie powstał wiersz wprowadzający w błąd.
+
+Lista pusta w sprawdzeniu zawężenia znaczy „komplet korzeni punktu" i jest
+poprawna zawsze. Punkt bez własnych korzeni nie ogranicza niczego — tak samo
+jak most z pustą zmienną DANACO_MOST_KORZENIE.
+
+## budowa/server/internal/dane/dostep_nadania.go
+Nadanie wiąże okno komunikacji z punktem dostępu. Żyje per okno rozmowy, nie
+per sesja i nie per platforma. Okno ma zbiór nadań — kolejność i oznaczenie
+głównego niosą znaczenie. Okno bez nadań pracuje dalej, tylko niczego nie
+widzi.

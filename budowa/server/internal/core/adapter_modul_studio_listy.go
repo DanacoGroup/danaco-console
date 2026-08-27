@@ -1,32 +1,5 @@
-// Odpowiedzialność pliku: listy dokumentu — wypunktowanie, numeracja, listy
-// wielopoziomowe, wznowienie numeracji, własny znak wypunktowania oraz wcięcia
-// i odstępy poziomów.
-//
-// ── Gdzie stoi prawda o liście ───────────────────────────────────────────────
-// Definicja listy — jej rodzaj, poziomy, znaki wypunktowania, formaty numeracji
-// i wcięcia — stoi w drzewie postaci (`forma.Lists`). Akapit należący do listy
-// trzyma sam KOD listy i numer poziomu, a nie kopię jej nastaw. Jest to ta sama
-// zasada, na której stoi styl nazwany: zmiana znaku wypunktowania poziomu ma
-// przestawić wszystkie punkty tego poziomu jednym ruchem, a nie wymagać
-// przejścia po akapitach. Gdyby akapit trzymał kopię, lista o czterdziestu
-// punktach wymagałaby czterdziestu poprawek.
-//
-// ── Dlaczego wcięcie idzie do akapitu, choć poziom je już niesie ─────────────
-// Poziom listy niesie wcięcie wzorcowe, ale wcięcie skuteczne akapitu musi być
-// widoczne w jego postaci — inaczej linijka nie miałaby czym pokazać znacznika
-// wcięcia, a Właściciel wymaga wcięć przestawianych chwytem na linijce. Dlatego
-// zastosowanie listy USTAWIA wcięcie akapitu wedle poziomu, a późniejsza zmiana
-// wcięcia chwytem jest zmianą akapitu i poziomu nie rusza. Tak samo działa
-// pakiet biurowy.
-//
-// ── Dlaczego wznowienie numeracji zakłada listę nową ─────────────────────────
-// Kontrakt niesie punkt startu na liście i na poziomie, ale nie w akapicie —
-// i słusznie, bo akapit nie jest miejscem na nastawę listy. Wznowienie numeracji
-// od wskazanego miejsca jest więc ROZDZIELENIEM listy: punkty od tego miejsca
-// w dół przechodzą do listy nowej o tych samych poziomach i własnym punkcie
-// startu. Skutek jest dokładnie ten, którego Operator oczekuje („tu zacznij od
-// jedynki"), i jest sprawdzalny w bazie — a nie udawany polem, którego kontrakt
-// nie ma.
+// Plik obsługuje listy dokumentu: wypunktowanie, numerację, listy wielopoziomowe,
+// wznowienie numeracji, własny znak wypunktowania oraz wcięcia i odstępy poziomów.
 package core
 
 import (
@@ -68,7 +41,8 @@ func listyRodzajZnany(rodzaj shared.StudioListKind) error {
 		"” kontrakt nie zna; rodzaje: " + strings.Join(nazwy, ", "))
 }
 
-// listyFormatZnany sprawdza format numeracji wobec kontraktu.
+// listyFormatZnany sprawdza, czy podany format numeracji stoi w kontrakcie,
+// i odmawia nazwanym wykazem formatów, gdy format jest nieznany.
 func listyFormatZnany(format shared.StudioListNumberFormat) error {
 	for _, wartosc := range shared.WartosciStudioListNumberFormat() {
 		if wartosc == format {
@@ -83,7 +57,8 @@ func listyFormatZnany(format shared.StudioListNumberFormat) error {
 		"” kontrakt nie zna; formaty: " + strings.Join(nazwy, ", "))
 }
 
-// listyZrodloZnane sprawdza źródło znaku wypunktowania wobec kontraktu.
+// listyZrodloZnane sprawdza, czy podane źródło znaku wypunktowania stoi
+// w kontrakcie, i odmawia nazwanym wykazem źródeł, gdy źródło jest nieznane.
 func listyZrodloZnane(zrodlo shared.StudioBulletSource) error {
 	for _, wartosc := range shared.WartosciStudioBulletSource() {
 		if wartosc == zrodlo {
@@ -98,7 +73,8 @@ func listyZrodloZnane(zrodlo shared.StudioBulletSource) error {
 		"” kontrakt nie zna; źródła: " + strings.Join(nazwy, ", "))
 }
 
-// listyDefinicja znajduje definicję listy po kodzie.
+// listyDefinicja znajduje w postaci dokumentu definicję listy o wskazanym
+// kodzie i oddaje pustą wartość, gdy kod jest pusty albo listy o takim kodzie nie ma.
 func listyDefinicja(forma *shared.StudioDocumentForm, kod string) *shared.StudioListDefinition {
 	szukany := strings.TrimSpace(kod)
 	if szukany == "" {
@@ -136,9 +112,8 @@ func listyPoziomWzorcowy(rodzaj shared.StudioListKind, poziom int) shared.Studio
 	case shared.StudioListKindMultilevel:
 		format := shared.StudioListNumberFormat(shared.StudioListNumberFormatArabic)
 		wynik.NumberFormat = &format
-		// Numeracja prawnicza wielopoziomowa: 1., 1.1., 1.1.2. — wzór składa się
-		// z numerów wszystkich poziomów nadrzędnych, bo tak ją czyta Operator
-		// w pismie z podstawami prawnymi.
+		// Wzór numeru wielopoziomowego łączy numery wszystkich poziomów
+		// nadrzędnych, na przykład 1.1.2.
 		czesci := make([]string, 0, poziom)
 		for i := 1; i <= poziom; i++ {
 			czesci = append(czesci, "%"+postacZapisLiczby(i))
@@ -172,7 +147,8 @@ func listyZapewnijPoziomy(definicja *shared.StudioListDefinition, poziom int) {
 	})
 }
 
-// listyPoziom znajduje poziom definicji.
+// listyPoziom znajduje w definicji listy poziom o wskazanym numerze i oddaje
+// pustą wartość, gdy definicja takiego poziomu jeszcze nie ma.
 func listyPoziom(definicja *shared.StudioListDefinition, poziom int) *shared.StudioListLevel {
 	for i := range definicja.Levels {
 		if definicja.Levels[i].Level == poziom {
@@ -204,7 +180,7 @@ func listyWciecieAkapitu(poziom *shared.StudioListLevel) shared.StudioParagraphF
 }
 
 // listyBlokiListy oddaje wskazania bloków należących do wskazanej listy,
-// w kolejności czytania.
+// w kolejności czytania dokumentu, aby dalsze czynności mogły przejść po jej punktach.
 func listyBlokiListy(forma *shared.StudioDocumentForm, kod string) []int {
 	wskazania := make([]int, 0, 8)
 	for i := range forma.Blocks {
@@ -222,12 +198,7 @@ func listyBlokiListy(forma *shared.StudioDocumentForm, kod string) []int {
 // ── Czynności ───────────────────────────────────────────────────────────────
 
 // ZastosujListe zakłada wypunktowanie, numerację albo listę wielopoziomową na
-// wskazanym fragmencie (`studio.list.apply`).
-//
-// Rodzaj `none` ZDEJMUJE listę — i jest czynnością prawdziwą, nie brakiem.
-// Zdjęcie listy z fragmentu, który do żadnej listy nie należy, wraca odmową
-// nazwaną: cisza kazałaby Operatorowi sądzić, że lista została zdjęta, choć jej
-// tam nigdy nie było.
+// wskazanym fragmencie dokumentu, a rodzaj none zdejmuje listę zamiast ją zakładać.
 func (a *adapterStudia) ZastosujListe(ctx context.Context,
 	z shared.StudioListApplyRequest) (shared.StudioListApplyResponse, error) {
 
@@ -263,8 +234,6 @@ func (a *adapterStudia) ZastosujListe(ctx context.Context,
 	}
 
 	// Lista wskazana kodem musi istnieć; brak wskazania zakłada listę nową.
-	// Wskazanie kodu, którego dokument nie ma, jest odmową nazwaną — cicha zamiana
-	// go na listę nową dałaby dwie listy tam, gdzie Operator chciał jednej.
 	var definicja *shared.StudioListDefinition
 	nowa := false
 	if z.ListId != nil && strings.TrimSpace(*z.ListId) != "" {
@@ -317,8 +286,8 @@ func (a *adapterStudia) ZastosujListe(ctx context.Context,
 	}
 	if bilans.Applied == 0 {
 		if nowa {
-			// Lista założona, a nie zastosowana, byłaby definicją bez ani jednego
-			// punktu — czyli zapisem, którego Operator nigdzie nie zobaczy.
+			// Lista założona bez zastosowania cofa się — nie zostaje definicją
+			// bez ani jednego punktu.
 			stan.forma.Lists = stan.forma.Lists[:len(stan.forma.Lists)-1]
 		}
 		return shared.StudioListApplyResponse{}, bladWskazaniaStudio(
@@ -345,7 +314,8 @@ func (a *adapterStudia) ZastosujListe(ctx context.Context,
 	}, nil
 }
 
-// listyZdejmij zdejmuje listę z akapitów zakresu — droga rodzaju `none`.
+// listyZdejmij zdejmuje listę z akapitów zakresu — drogę czynności zastosowania
+// listy z rodzajem none, który usuwa przynależność do listy zamiast ją zakładać.
 func (a *adapterStudia) listyZdejmij(ctx context.Context, stan *stanPostaci,
 	od, do int, odcinki [][2]int, bilans shared.StudioActionBalance,
 	autor shared.StudioAuthor) (shared.StudioListApplyResponse, error) {
@@ -362,9 +332,8 @@ func (a *adapterStudia) listyZdejmij(ctx context.Context, stan *stanPostaci,
 			}
 			blok.Paragraph.ListId = nil
 			blok.Paragraph.ListLevel = nil
-			// Wcięcie wniesione listą schodzi razem z nią, bo było jej częścią.
-			// Zostawienie go dałoby akapit bez punktu, ale wciśnięty tam, gdzie
-			// stał punkt.
+			// Wcięcie wniesione listą jest jej częścią i schodzi razem z nią
+			// przy zdjęciu listy.
 			blok.Paragraph.IndentLeftMm = postacWskaznikMiary(0)
 			blok.Paragraph.FirstLineIndentMm = postacWskaznikMiary(0)
 			bilans.Applied++
@@ -383,8 +352,8 @@ func (a *adapterStudia) listyZdejmij(ctx context.Context, stan *stanPostaci,
 	if err != nil {
 		return shared.StudioListApplyResponse{}, err
 	}
-	// Odpowiedź niesie definicję listy, z której punkty zeszły — Operator ma
-	// wiedzieć, czego zdjęcie dotyczyło, a nie dostać pole puste.
+	// Odpowiedź niesie definicję listy, z której punkty zeszły, zamiast
+	// pola pustego.
 	wynikowa := shared.StudioListDefinition{Id: zdjeta, Kind: shared.StudioListKindNone}
 	if zastana := listyDefinicja(&forma, zdjeta); zastana != nil {
 		wynikowa = *zastana
@@ -396,12 +365,8 @@ func (a *adapterStudia) listyZdejmij(ctx context.Context, stan *stanPostaci,
 	}, nil
 }
 
-// UstawNumeracjeListy ustawia format numeracji poziomu listy
-// (`studio.list.numbering.set`).
-//
-// Format prawniczy wielopoziomowy (1.1.2) bierze się z pola `pattern`, a nie
-// z domysłu: wzór numeru jest jawny, żeby pismo z podstawami prawnymi dało się
-// ponumerować dokładnie tak, jak wymaga wzór urzędowy.
+// UstawNumeracjeListy ustawia format numeracji, wzór numeru i punkt startu
+// poziomu listy wskazanego fragmentu dokumentu.
 func (a *adapterStudia) UstawNumeracjeListy(ctx context.Context,
 	z shared.StudioListNumberingSetRequest) (shared.StudioListNumberingSetResponse, error) {
 
@@ -464,8 +429,7 @@ func (a *adapterStudia) UstawNumeracjeListy(ctx context.Context,
 				"formatu, wzoru numeru ani punktu startu")
 	}
 	if definicja.Kind == shared.StudioListKindBullet || definicja.Kind == shared.StudioListKindNone {
-		// Lista, której poziom dostał numerację, przestaje być wypunktowaniem.
-		// Zostawienie rodzaju `bullet` dałoby definicję kłamiącą o sobie samej.
+		// Poziom, który dostał numerację, przestaje być wypunktowaniem tej listy.
 		definicja.Kind = shared.StudioListKindNumber
 	}
 
@@ -496,14 +460,8 @@ func (a *adapterStudia) UstawNumeracjeListy(ctx context.Context,
 	}, nil
 }
 
-// UstawPunktatorListy ustawia znak wypunktowania poziomu
-// (`studio.list.bullet.set`).
-//
-// Znak bierze się ze znaku gotowego, dowolnego symbolu, ikony albo obrazu
-// własnego — wszystkie cztery źródła stoją w kontrakcie i wszystkie tu działają.
-// Ikona i obraz idą ZASOBEM (`bulletAssetId`), a nie wklejonym rysunkiem: ikony
-// wystawia moduł Design (`design.icon.library.search`), a zasoby magazyn rdzenia,
-// i drugiego rachunku ikony Studio nie zakłada.
+// UstawPunktatorListy ustawia znak wypunktowania, wcięcie, odstęp i wyrównanie
+// poziomu listy, przyjmując znak, symbol, ikonę albo obraz własny jako źródło.
 func (a *adapterStudia) UstawPunktatorListy(ctx context.Context,
 	z shared.StudioListBulletSetRequest) (shared.StudioListBulletSetResponse, error) {
 
@@ -584,8 +542,8 @@ func (a *adapterStudia) UstawPunktatorListy(ctx context.Context,
 				"źródła, znaku, zasobu, wcięcia, odstępu ani wyrównania")
 	}
 
-	// Źródło niepodane wynika ze wskazanego znaku albo zasobu — Operator, który
-	// podał sam znak, nie musi jeszcze raz mówić, że to znak.
+	// Źródło niepodane wynika ze wskazanego znaku albo zasobu, więc nie trzeba
+	// go powtarzać.
 	if poziom.BulletSource == nil {
 		zrodlo := shared.StudioBulletSource(shared.StudioBulletSourceCharacter)
 		if poziom.BulletAssetId != nil {
@@ -654,13 +612,7 @@ func (a *adapterStudia) UstawPunktatorListy(ctx context.Context,
 }
 
 // PrzestawPoziomListy zwiększa albo zmniejsza poziom listy wskazanego fragmentu
-// (`studio.list.level.indent`).
-//
-// Wcięcie i odstęp poziomu idą ZA nim — to jest cała treść tej czynności:
-// „zwiększ wcięcie" w pakiecie biurowym zmienia poziom punktu, a nie samo
-// wcięcie akapitu. Zmniejszenie poniżej pierwszego poziomu nie zdejmuje listy
-// samo z siebie: zdjęcie listy jest osobną czynnością (`studio.list.apply`
-// z rodzajem `none`) i cichego zdejmowania tu nie ma.
+// dokumentu o podany krok, dodatni albo ujemny.
 func (a *adapterStudia) PrzestawPoziomListy(ctx context.Context,
 	z shared.StudioListLevelIndentRequest) (shared.StudioListLevelIndentResponse, error) {
 
@@ -752,13 +704,8 @@ func (a *adapterStudia) PrzestawPoziomListy(ctx context.Context,
 	}, nil
 }
 
-// WznowNumeracjeListy wznawia numerację listy od wskazanego miejsca
-// (`studio.list.restart`).
-//
-// Wznowienie jest ROZDZIELENIEM listy: punkty od wskazanego miejsca w dół
-// przechodzą do listy nowej o tych samych poziomach i własnym punkcie startu.
-// Powód stoi w nagłówku pliku — akapit nie ma w kontrakcie miejsca na punkt
-// startu, a udawanie go polem, którego nie ma, byłoby zapisem nie do odczytania.
+// WznowNumeracjeListy wznawia numerację listy od wskazanego miejsca dokumentu,
+// rozdzielając punkty od tego miejsca do listy nowej.
 func (a *adapterStudia) WznowNumeracjeListy(ctx context.Context,
 	z shared.StudioListRestartRequest) (shared.StudioListRestartResponse, error) {
 
@@ -782,9 +729,8 @@ func (a *adapterStudia) WznowNumeracjeListy(ctx context.Context,
 	}
 	kod := definicja.Id
 
-	// Lista nowa niesie poziomy listy zastanej KOPIĄ, nie wskaźnikiem — inaczej
-	// zmiana znaku wypunktowania w jednej przestawiłaby drugą i wznowienie
-	// przestałoby być rozdzieleniem.
+	// Lista nowa niesie poziomy listy zastanej kopią, nie wskaźnikiem, by nie
+	// przestawić obu naraz.
 	wznowiona := shared.StudioListDefinition{
 		Id:      nowyIdentyfikator(przedrostekListyPostaci),
 		Kind:    definicja.Kind,

@@ -5328,3 +5328,12 @@ Zdarzeń żadna z tych rodzin nie ma. Kontrakt zna zdarzenie zmiany pamięci, al
 pamięci przestrzeni roboczej i rozgłasza je ta domena; kontekst jest zestawem wskazań, a nie
 wpisem, więc rozgłaszanie go pod tą samą nazwą kazałoby oknu odświeżyć wykaz faktów po zmianie,
 która żadnego faktu nie dotknęła.
+
+## budowa/server/internal/core/handlers_sesja_konfiguracja.go
+To jest ta sama konfiguracja co rodzina config.*, nie drugi rejestr obok niej: konfiguracja sesji
+jest innym kształtem wartości w tym samym rejestrze ośmiu poziomów zasięgu i trzech osi. Dlatego
+port konfiguracji sesji wchodzi w skład portu Ustawienia, a nie obok niego — rdzeń ma jedną bramę
+do konfiguracji i jedno miejsce rozgłaszania zdarzenia zmiany. Zapis rozgłasza zmianę obszaru.
+Każdy dotknięty obszar wraca wpisem rezolwera i idzie zdarzeniem zmiany konfiguracji — obszar
+zapisany jako zmieniony, obszar wyczyszczony jako usunięty, bo skasowanie zapisu przywraca
+dziedziczenie. Klient nie musi odpytywać poziomu, żeby dowiedzieć się o zmianie.

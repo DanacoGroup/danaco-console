@@ -1,24 +1,7 @@
 // Odpowiedzialność pliku: wypełnienie komendy `knowledge.image.search` — osi
-// obrazu rodziny `knowledge.*`.
-//
-// Rodzina prowadzi dotąd wyłącznie tekst i to nie jest przeoczenie: budowanie
-// wskaźnika pomija plik, którego treści nie da się odczytać jako tekstu,
-// z powodu zapisanego w `adapter_modul_wiedza_zrodla.go` — obraz osadzony jako
-// ciąg bajtów daje wektor, który do niczego nie pasuje. Ta komenda nie zdejmuje
-// tamtego warunku, tylko wnosi drugą przestrzeń: model osi obrazu ma osobną
-// wieżę dla pikseli i osobną dla słów, więc zdanie i obraz spotykają się
-// w jednym miejscu, w którym oba coś znaczą.
-//
-// Obrazy bierze się z biblioteki, nie z przestrzeni roboczej okna. Biblioteka
-// jest zbiorem całej maszyny i wie o swoich plikach dwie rzeczy, których
-// katalog na dysku nie niesie: rodzaj treści zapisany przy wgraniu oraz
-// identyfikator, którym da się po obraz sięgnąć. Przejście katalogu dawałoby
-// wykaz plików, po które wołający nie miałby czym wrócić.
-//
-// Rozpoznanie obrazu idzie po rodzaju treści, a nie po rozszerzeniu nazwy.
-// Rozszerzenie jest napisem, który Operator może zmienić i który przy wgraniu
-// z innego modułu bywa go po prostu pozbawiony; rodzaj treści zapisuje rdzeń
-// przy wciąganiu bajtów do magazynu.
+// obrazu rodziny `knowledge.*`. Obrazy bierze się z biblioteki, nie
+// z przestrzeni roboczej, po rodzaju treści zapisanym przy wgraniu, nie po
+// rozszerzeniu nazwy pliku.
 package core
 
 import (
@@ -31,28 +14,20 @@ import (
 )
 
 const (
-	// domyslnaLiczbaObrazow wchodzi, gdy żądanie nie poda `limit`. Mniej niż
-	// fragmentów tekstu, bo obraz nie jest podstawą do zbudowania odpowiedzi —
-	// jest wskazaniem pliku, po który wołający ma sięgnąć.
+	// domyslnaLiczbaObrazow wchodzi, gdy żądanie nie poda `limit`, mniej niż
+	// fragmentów tekstu, bo obraz jest wskazaniem pliku, nie podstawą odpowiedzi.
 	domyslnaLiczbaObrazow = 5
 	// granicaLiczbyObrazow chroni przed żądaniem, które chce całą bibliotekę
-	// obrazów naraz.
+	// obrazów naraz, jednym przebiegiem wyszukiwania.
 	granicaLiczbyObrazow = 50
-	// przedrostekRodzajuObrazu rozpoznaje rodzaj treści będący obrazem.
+	// przedrostekRodzajuObrazu rozpoznaje rodzaj treści będący obrazem, po
+// prefiksie MIME zapisanym przy wgraniu pliku do biblioteki.
 	przedrostekRodzajuObrazu = "image/"
 )
 
-// SzukajObrazu obsługuje `knowledge.image.search`.
-//
-// Kolejność kroków jest ta sama co przy budowaniu wskaźnika i z tego samego
-// powodu: najpierw pytanie o gotowość modelu, dopiero potem odczyt biblioteki.
-// Odwrotnie, przy brakującym modelu, rdzeń przeczytałby wykaz plików po to,
-// żeby zaraz powiedzieć „nie ma czym porównać".
-//
-// Wynik pusty jest odpowiedzią, nie odmową — tak samo jak przy tekście.
-// Odpowiedź niesie przy tym liczbę obrazów wziętych do porównania, bo „nie mam
-// takiego obrazu" i „nie masz w bibliotece ani jednego obrazu" to dwie różne
-// odpowiedzi, których po samym pustym wykazie nie da się rozróżnić.
+// SzukajObrazu obsługuje `knowledge.image.search`. Kolejność kroków jest ta
+// sama co przy budowaniu wskaźnika: najpierw pytanie o gotowość modelu,
+// dopiero potem odczyt biblioteki. Wynik pusty jest odpowiedzią, nie odmową.
 func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	z shared.KnowledgeImageSearchRequest) (shared.KnowledgeImageSearchResponse, error) {
 
@@ -104,12 +79,9 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	}, nil
 }
 
-// obrazyBiblioteki wybiera z repozytorium wiedzy pliki będące obrazami.
-//
-// Wykaz idzie przez to samo repozytorium, którym czyta bibliotekę budowanie
-// wskaźnika — druga droga do tych samych wierszy byłaby drugą prawdą o tym, co
-// Operator w bibliotece ma. Plik bez odwołania do bajtów jest pomijany: wiersz
-// bez treści w magazynie niesie same metadane, a modelowi nie ma czego pokazać.
+// obrazyBiblioteki wybiera z repozytorium wiedzy pliki będące obrazami. Wykaz
+// idzie przez to samo repozytorium, którym czyta bibliotekę budowanie
+// wskaźnika. Plik bez odwołania do bajtów jest pomijany.
 func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 	projekt *string) ([]wiedza.Obraz, error) {
 
@@ -147,8 +119,7 @@ func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 }
 
 // przelozObraz składa pozycję kontraktu ze wskazaniem źródła. Ścieżka na dysku
-// do odpowiedzi nie wchodzi: wynosiłaby wołającemu układ dysku Operatora,
-// a identyfikator wystarcza, żeby po obraz sięgnąć modułem Library.
+// do odpowiedzi nie wchodzi, wynosiłaby wołającemu układ dysku Operatora.
 func przelozObraz(obraz wiedza.Obraz) shared.KnowledgeImageHit {
 	trafnosc := wiedza.WSetnych(obraz.Podobienst)
 	pozycja := shared.KnowledgeImageHit{Source: obraz.Zrodlo, Score: &trafnosc}
@@ -161,7 +132,8 @@ func przelozObraz(obraz wiedza.Obraz) shared.KnowledgeImageHit {
 	return pozycja
 }
 
-// granicaObrazowZadania rozstrzyga liczbę oddawanych obrazów.
+// granicaObrazowZadania rozstrzyga liczbę oddawanych obrazów, między
+// domyślną a górnym sufitem chroniącym przed pełnym przebiegiem biblioteki.
 func granicaObrazowZadania(limit *int) int {
 	if limit == nil || *limit <= 0 {
 		return domyslnaLiczbaObrazow

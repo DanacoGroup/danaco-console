@@ -5618,3 +5618,13 @@ Repozytorium kosza jest osobne od repozytorium sesji, bo tamto obsługuje sesje 
 ## budowa/server/internal/dane/pamiec.go
 Treść obszerna trafia do pliku, baza trzyma odwołanie. Konfigurację
 pamięci sesji obsługuje osobny plik repozytorium.
+
+## budowa/server/internal/protocol/fragment_test.go
+Rozjazd identyfikatora, numeru albo domknięcia zostawia okno w ładowaniu albo
+składa treść z dwóch tur naraz.
+
+Fragment niedomykający strumienia nie ma pola znacznika końca wcale, tak
+klient odróżnia stan jeszcze nie koniec od stanu koniec równy fałsz.
+
+Sprawdzian ciągłości identyfikatora przechodzi całą turę — żądanie, trzy
+fragmenty, domknięcie — i porównuje identyfikatory oraz kolejność numerów.

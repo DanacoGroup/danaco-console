@@ -1,33 +1,16 @@
+/**
+ * Materiał przechwycony w toku sesji przeglądania: zrzuty, archiwa stron
+ * i monitory zmian. Pamięć tego, co zgromadziło okno przechwytywania, bez
+ * odczytu z rdzenia i bez elementów widoku.
+ */
+
 import type { BrowserSnapshot } from '../../../../shared/contract';
 
 /**
- * Materiał przechwycony w toku sesji przeglądania: zrzuty, archiwa stron
- * i monitory zmian.
- *
- * Jedna odpowiedzialność: pamięć tego, co Capture & Monitor Panel zgromadził.
- * Bez odczytu z rdzenia i bez ani jednego elementu widoku — wzorem
- * `zebrane-w-sesji.ts`.
- *
- * Zbiór nie jest odbiciem rdzenia, bo odbijać nie ma czego: zapis pozycji jako
- * wytworu sesji ma komendę `browser.artifact.add`, ale komendy odczytu wykazu
- * wytworów okna kontrakt nie niesie. Pozycją jest migawka, którą rdzeń
- * oddał na żądanie Operatora; po przeładowaniu karty wykaz zaczyna się od nowa,
- * a same migawki zostają w rdzeniu pod swoimi identyfikatorami. Panel mówi
- * o tym wprost, zamiast obiecywać trwałość, której nie ma.
- *
- * Rodzaj pozycji rozstrzyga zawartość odpowiedzi, nie zamówienie okna. Rdzeń
- * pobiera dziś stronę bez uruchamiania przeglądarki (`przegladarka_pobieranie.go`),
- * więc migawka zamówiona ze zrzutem potrafi przyjść bez niego — pozycja nazywa
- * się wtedy archiwum albo treścią, a nie zrzutem. Rozpoznanie po odpowiedzi
- * nazwie ją zrzutem sama, gdy obraz zacznie przychodzić.
- *
- * Monitor stoi na adresie, nie na migawce: sprawdzenie polega na ponownym
- * pobraniu tej samej strony i zestawieniu treści z zapamiętaną. Adres jest
- * więc jego jedynym rozsądnym kluczem — dwa monitory tej samej strony
- * pilnowałyby dokładnie tego samego.
+ * Czym pozycja materiału naprawdę jest według zawartości odpowiedzi rdzenia:
+ * zrzut ekranu, archiwum strony albo sama jej treść. Rodzaju nie rozstrzyga
+ * zamówienie okna, lecz pola oddanej migawki.
  */
-
-/** Co pozycja materiału naprawdę niesie — rozstrzygnięte po odpowiedzi rdzenia. */
 export type RodzajPrzechwycenia = 'zrzut' | 'archiwum' | 'tresc';
 
 export interface Przechwycenie {
@@ -35,7 +18,11 @@ export interface Przechwycenie {
   rodzaj: RodzajPrzechwycenia;
 }
 
-/** Wynik ostatniego sprawdzenia monitora. */
+/**
+ * Wynik ostatniego sprawdzenia monitora zmian: monitor nietknięty od
+ * założenia, sprawdzony bez różnicy w treści albo sprawdzony ze stwierdzoną
+ * zmianą względem treści odniesienia.
+ */
 export type WynikMonitora = 'nietkniety' | 'bez-zmian' | 'zmiana';
 
 export interface MonitorZmian {
@@ -59,11 +46,7 @@ export interface MaterialSesji {
   monitory(): readonly MonitorZmian[];
   /** Dopisuje migawkę jako pozycję materiału i oddaje jej rozpoznany rodzaj. */
   dopisz(migawka: BrowserSnapshot): RodzajPrzechwycenia;
-  /**
-   * Zakłada monitor na stronie migawki i oddaje `false`, gdy monitor tego
-   * adresu już stoi — okno ma o tym powiedzieć zamiast meldować założenie,
-   * którego nie było.
-   */
+  // Zakłada monitor na stronie migawki; oddaje `false`, gdy monitor tego adresu już stoi.
   zalozMonitor(migawka: BrowserSnapshot): boolean;
   /** Zapisuje wynik sprawdzenia monitora; `null`, gdy monitora tego adresu nie ma. */
   zapiszSprawdzenie(adres: string, migawka: BrowserSnapshot): MonitorZmian | null;
@@ -122,14 +105,22 @@ export function utworzMaterialSesji(oglos: () => void): MaterialSesji {
   };
 }
 
-/** Czym pozycja jest według tego, co rdzeń w migawce oddał. */
+/**
+ * Rozpoznaje rodzaj pozycji z pól oddanej migawki: niepuste pole screenshotRef
+ * daje zrzut, niepuste pole html daje archiwum, a pozostałe przypadki samą
+ * treść strony.
+ */
 function rozpoznajRodzaj(migawka: BrowserSnapshot): RodzajPrzechwycenia {
   if ((migawka.screenshotRef ?? '').trim() !== '') return 'zrzut';
   if ((migawka.html ?? '').trim() !== '') return 'archiwum';
   return 'tresc';
 }
 
-/** Nazwa rodzaju pozycji mówiona Operatorowi. */
+/**
+ * Oddaje nazwę rodzaju pozycji w brzmieniu pokazywanym w oknie: zrzut ekranu,
+ * archiwum strony albo treść strony, zależnie od wartości wyliczenia
+ * RodzajPrzechwycenia.
+ */
 export function nazwaRodzaju(rodzaj: RodzajPrzechwycenia): string {
   if (rodzaj === 'zrzut') return 'zrzut ekranu';
   if (rodzaj === 'archiwum') return 'archiwum strony';

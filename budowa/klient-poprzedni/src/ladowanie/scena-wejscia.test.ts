@@ -6,7 +6,7 @@ import { utworzScenaWejscia } from './scena-wejscia';
  * Sprawdziany sceny wejścia pilnują trzech rzeczy, z których każda ma cenę
  * w produkcie: sceny, która nie staje (Operator patrzy na pustą stronę), sceny,
  * która nie schodzi (zasłona nad gotowym produktem) i sceny, która miga
- * (czyta się jak usterka obrazu).
+ * (czyta się jak usterka).
  */
 describe('scena wejścia', () => {
   beforeEach(() => {

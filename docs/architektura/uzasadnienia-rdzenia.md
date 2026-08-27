@@ -5239,3 +5239,19 @@ przejęcia zatrzymuje pętlę, funkcja oddania ją wznawia, a każda z nich rozg
 obserwatorom pętli.
 
 Zamiast odpowiedzi nieznanej komendy albo cichej zgody na przejęcie, które się nie odbyło.
+
+## budowa/server/internal/core/przenoszenie_parametry.go
+
+Kontrakt zostawia pole executionParams surowym JSON-em, bo nie każdy moduł
+wykonuje pracę tak samo, podczas gdy okno komunikacji ma ustalony zestaw
+parametrów wykonania i to on tędy jedzie.
+
+Pole agenta jedzie razem z kanałem modelu, bo przekazanie kontekstu przenosi
+całe stanowisko, nie samą pracę. Okno docelowe ma pracować tą samą
+tożsamością — inaczej ta sama wypowiedź trafiłaby do modelu z innym
+promptem systemowym i innym modelem bazowym, a korzystający z interfejsu
+zobaczyłby rozjazd bez przyczyny.
+
+Przy zmianie okna docelowego rola okna pozostaje nietknięta, ponieważ rola
+wiąże okno z koordynatorem pętli, a przekazanie kontekstu nie jest zmianą
+układu pętli.

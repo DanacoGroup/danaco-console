@@ -4722,3 +4722,15 @@ tego, co stało już na ekranie.
 Zestaw faz i znakowanie powłoki są wspólne dla wszystkich modułów i mieszkają
 w `komponenty/faza-okna`. W module Agents zostaje wyłącznie to, czym różni się on
 od pozostałych: własne klasy `da-stan*` oraz chowanie treści na czas ładowania.
+
+## budowa/klient-poprzedni/src/moduly/design/plansza-kompozycji.ts
+
+Przeciąganie jest miejscowe: wskaźnik zostaje przechwycony na warstwie przez
+`setPointerCapture`, przesunięcie liczy się w jednostkach kompozycji, czyli po
+podzieleniu przez powiększenie, a warstwa zablokowana nie rusza się wcale.
+
+Kliknięcie w puste płótno zdejmuje zaznaczenie, ponieważ inaczej nie da się wyjść
+z zaznaczenia wielokrotnego bez trafienia we właściwą warstwę.
+
+Plansza nie zna rdzenia. Ruch warstwy zmienia zapis kompozycji, a do rdzenia jedzie
+dopiero zapis całości komendą `design.board.update` — z okna, a nie z planszy.

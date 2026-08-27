@@ -28,29 +28,8 @@ import { utworzWyszukiwarkeFunkcji, type WyszukiwarkaFunkcji } from './wyszukiwa
 import { utworzWyzwalaczeOkien, type WyzwalaczeOkien } from './wyzwalacze-okien';
 
 /**
- * Moduł Translate — sześć okien operacyjnych w jednym układzie.
- *
- * Układ wynika z warstw widoczności opracowania, nie z upodobania. Warstwa
- * pierwsza stoi na ekranie bez interakcji: Source Panel i Translation Panels
- * obok siebie, bo zapis źródła aktualizuje wszystkie panele naraz i skutek
- * musi być widoczny w tej samej chwili. Format Studio jest kolumną sąsiadującą
- * warstwy drugiej, otwieraną przy pracy z dokumentem. Glossary Manager,
- * Translation Memory Panel i QA & Review Center są zarządcami warstwy trzeciej
- * — stoją w kolumnie bocznej i są zwinięte, dopóki ich nie wywołać.
- *
- * Chat Window i Execution Loop Window są oknami wspólnymi platformy i moduł ich
- * nie buduje: pierwsze montuje scena sesji, drugie należy do pętli wykonawczej.
- * Katalog okien mówi obok, ile okien modułu rdzeń zna, a ile moduł buduje —
- * liczba jest liczona z odpowiedzi rdzenia, nie wpisana.
- *
- * Cały moduł ma jeden stan. Tekst źródłowy, panele języków i identyfikator okna
- * są wspólne wszystkim oknom — gdyby każde prowadziło własną kopię, zapis
- * źródła odświeżałby jedno okno, a pozostałe zostałyby przy poprzedniej treści.
- *
- * Drogi warstwy czwartej są trzy i wszystkie prowadzą do tych samych rzeczy:
- * skrót klawiszowy, wyszukiwarka funkcji z pełnym katalogiem opracowania oraz
- * rozwinięcia przy oknach, których dotyczą. Zasada jednego kliknięcia jest przez
- * to spełniona także dla pozycji, które nie mają własnego przycisku w oknie.
+ * Moduł Translate łączy sześć okien operacyjnych w jednym układzie warstw widoczności; stan tekstu
+ * źródłowego, paneli języków i identyfikatora okna jest wspólny wszystkim oknom modułu.
  */
 export interface ModulTranslate {
   /** Element osadzany w obszarze roboczym powłoki. */
@@ -63,8 +42,7 @@ export interface ModulTranslate {
 
 export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
   const stan: StanTranslate = utworzStanTranslate(kanal);
-  // Sesja ostatniego wejścia — ponowienie odczytu kontekstu musi wiedzieć,
-  // o czyje okna pytać, a moduł nie sięga po sesję sam (dostaje ją z powłoki).
+  // Sesja ostatniego wejścia — ponowienie odczytu kontekstu jej wymaga, moduł nie sięga po nią sam.
   let ostatniaSesja = '';
 
   const kontekst: PasekKontekstu = utworzPasekKontekstu(stan, () => {
@@ -80,9 +58,7 @@ export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
   const glosariusz: OknoGlossaryManager = utworzOknoGlossaryManager(stan);
   const pamiec: OknoTranslationMemory = utworzOknoTranslationMemory(stan);
   const jakosc: OknoQaReview = utworzOknoQaReview(stan);
-  // Warsztat jest oknem zarządcy warstwy trzeciej, tak jak trzy okna obok:
-  // stoi zwinięty, dopóki Operator go nie wywoła, bo prowadzi czynności
-  // wsadowe i wymianę z otoczeniem, a nie bieżący przekład.
+  // Warsztat to okno zarządcy warstwy trzeciej, zwinięte, dopóki operator nie wywoła czynności wsadowej.
   const warsztat: OknoWarsztatTranslate = utworzOknoWarsztatTranslate(stan);
 
   const wyszukiwarka: WyszukiwarkaFunkcji = utworzWyszukiwarkeFunkcji();
@@ -141,10 +117,7 @@ export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
   boczna.className = 'mt-modul__boczna';
   boczna.append(glosariusz.element, pamiec.element, jakosc.element, warsztat.element);
 
-  // Pasek uczciwości bierze zdanie z bytu wspólnego (`moduly/katalog-okien.ts`),
-  // tego samego dla wszystkich modułów, więc zdanie o rozjeździe nie rozjedzie
-  // się między modułami po cichu. Byt wypowiada obie strony: okna katalogu
-  // rdzenia, których moduł nie buduje, oraz okna budowane spoza katalogu.
+  // Pasek uczciwości korzysta z bytu wspólnego dla modułów, więc jego zdanie nie rozjedzie się po cichu.
   const katalog = utworzKatalogOkien(kanal, KOD_MODULU, [
     KODY_OKIEN.zrodlo,
     KODY_OKIEN.panele,
@@ -197,8 +170,7 @@ export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
 
   odswiezWszystko();
 
-  // Jeden odczyt na cały kanał: jeśli o katalog okien zapytał już inny moduł
-  // albo powłoka, to wywołanie nie wyśle drugiego zapytania.
+  // Jeden odczyt na cały kanał: gdy katalog okien odpytał inny moduł, wywołanie nie powtarza zapytania.
   void katalog.odczytaj();
 
   return {
@@ -206,9 +178,7 @@ export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
 
     async wczytaj(idSesji) {
       ostatniaSesja = idSesji;
-      // Jedyny odczyt wykonywany bez czynności Operatora w oknach warstwy
-      // pierwszej. Macierz izolacji idzie obok, bo dotyczy procesu sesji i jej
-      // odmowa nie zatrzymuje modułu — powód zapisuje sama macierz.
+      // Jedyny odczyt bez czynności operatora w warstwie pierwszej; macierz sama zapisuje powód odmowy.
       await stan.wczytajKontekst(idSesji);
       void izolacja.odczytaj();
     },
@@ -216,11 +186,9 @@ export function utworzModulTranslate(kanal: Kanal): ModulTranslate {
     rozlacz() {
       odsubskrybuj();
       odepnijSkroty();
-      // Pasek uczciwości odpina się od wspólnego katalogu: bez tego wpis kanału
-      // trzymałby przerysowanie elementu zdjętego już z drzewa.
+      // Pasek uczciwości odpina się od katalogu, inaczej trzymałby przerysowanie usuniętego już elementu.
       katalog.zamknij();
-      // Stery kanału zwijają się przed zejściem modułu: rozwinięte trzymają
-      // nasłuch na dokumencie, którego zniknięcie elementu nie zdejmuje.
+      // Stery kanału zwijają się przed zejściem modułu, bo rozwinięte trzymają nasłuch na dokumencie.
       panele.rozlacz();
       stan.rozlacz();
     },

@@ -1,19 +1,4 @@
-// Odpowiedzialność pliku: cykl życia karty powłoki poza jej otwarciem —
-// komendy `terminal.session.close` i `terminal.session.list` — oraz adres celu
-// karty zdalnej (pola `remoteTarget`, `remotePort` i `hostId` żądania otwarcia).
-//
-// ── Dlaczego zamknięcie karty jest czynnością rdzenia, a nie widoku ──────────
-// Do tej pory zamknięcie karty żyło wyłącznie w kliencie: znikała zakładka,
-// a powłoka i jej procesy biegły dalej, o czym rdzeń nie wiedział nic. Skutkiem
-// było to, że `terminal.process.list` pokazywał procesy karty, której Operator
-// już nie widzi, a `Przygotuj` po restarcie odtwarzał karty zamknięte tygodnie
-// wcześniej. Zamknięcie ma więc wiersz i ma stan.
-//
-// ── Dlaczego wykaz kart składa się z dwóch źródeł ───────────────────────────
-// Tak samo jak wykaz procesów (`adapter_modul_terminal_monitor.go`): karta
-// czynna żyje w rejestrze pamięci, a karta zakończona zostaje w dzienniku bazy.
-// Bez rejestru zniknęłyby karty właśnie otwarte na rdzeniu bez bazy, bez
-// dziennika — karty zamknięte, o które kontrakt pyta polem `includeExited`.
+// Odpowiedzialność pliku: cykl życia karty powłoki poza jej otwarciem — terminal.session.close i .list — oraz adres celu karty zdalnej żądania otwarcia.
 package core
 
 import (
@@ -25,13 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZamknijKarte obsługuje `terminal.session.close`.
-//
-// Procesy karty kończą się WYŁĄCZNIE na wyraźne żądanie (`force`). Domyślne
-// zamknięcie zostawia je biegnące, bo karta jest profilem powłoki, a nie
-// właścicielem pracy: zamknięcie zakładki nie ma prawa przerwać budowania, które
-// trwa trzecią minutę. Kontrakt oddaje wykaz zakończonych, żeby Operator wiedział,
-// co dokładnie zatrzymał.
+// ZamknijKarte obsługuje terminal.session.close; procesy karty kończą się wyłącznie na wyraźne żądanie force, inaczej zostają biegnące.
 func (a *adapterTerminala) ZamknijKarte(ctx context.Context,
 	z shared.TerminalSessionCloseRequest) (shared.TerminalSessionCloseResponse, error) {
 
@@ -53,9 +32,7 @@ func (a *adapterTerminala) ZamknijKarte(ctx context.Context,
 			if stan, _, _ := proces.Migawka(); stan != shared.TerminalProcessStatusRunning {
 				continue
 			}
-			// Niepowodzenie jednego zakończenia nie wstrzymuje pozostałych ani
-			// samego zamknięcia karty: proces, którego nie udało się ubić, nie
-			// wchodzi do wykazu i tym samym nie jest zgłoszony jako zatrzymany.
+			// Niepowodzenie jednego nie wstrzymuje pozostałych; nieubity proces nie wchodzi do wykazu.
 			if err := proces.Zakoncz(true); err != nil {
 				continue
 			}
@@ -76,7 +53,7 @@ func (a *adapterTerminala) ZamknijKarte(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// WykazKart obsługuje `terminal.session.list`.
+// WykazKart obsługuje terminal.session.list, zwracając karty z rejestru pamięci i dziennika bazy od najnowszej.
 func (a *adapterTerminala) WykazKart(ctx context.Context,
 	z shared.TerminalSessionListRequest) (shared.TerminalSessionListResponse, error) {
 
@@ -118,11 +95,7 @@ func (a *adapterTerminala) WykazKart(ctx context.Context,
 	return shared.TerminalSessionListResponse{Sessions: wykaz, Total: len(wykaz)}, nil
 }
 
-// kartaPrzepuszczona sprawdza kartę trzema zawężeniami żądania.
-//
-// Zawężenie stanem wpisane wprost bierze pierwszeństwo nad `includeExited`:
-// pytanie o stan `exited` ma oddać karty zamknięte także wtedy, gdy pola
-// `includeExited` nie podano — inaczej odpowiedź byłaby zawsze pusta.
+// kartaPrzepuszczona sprawdza kartę trzema zawężeniami żądania, ze stanem wpisanym wprost mającym pierwszeństwo nad includeExited.
 func kartaPrzepuszczona(karta shared.TerminalSession, oknoKod string,
 	stan shared.TerminalSessionStatus, zZakonczonymi bool) bool {
 

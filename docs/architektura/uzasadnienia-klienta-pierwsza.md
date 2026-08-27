@@ -1421,3 +1421,13 @@ Wywołanie `speech.transcribe` rozpoznaje nagranie wskazane ścieżką na maszyn
 Pusta transkrypcja jest wynikiem prawidłowym, gdy pole `processed` niesie prawdę, ponieważ
 nagranie mogło zawierać ciszę albo szum; sprawdzian kształtu pyta zatem o obecność pól,
 a nie o niepustą treść.
+
+## budowa/klient-poprzedni/src/moduly/design/panel-warstw.ts
+
+Podział ról między kanwą a panelem jest następujący: kanwa pokazuje położenie
+warstwy, panel pokazuje porządek, blokadę i adnotację. Adnotacja jest polem
+notatki warstwy w kontrakcie, więc zostaje w kompozycji na trwałe.
+
+Blokada dotyczy wyłącznie położenia warstwy na kanwie. Wiersz warstwy
+zablokowanej pozostaje klikalny i edytowalny, a stan blokady niesie atrybut
+danych wiersza.

@@ -5294,3 +5294,40 @@ interfejsu.
 Odczyt jest odporny na brak katalogu: odpowiedź nieudana albo o innym kształcie daje wykaz
 pusty i wywołanie `NaNiepowodzenie`, a nie odrzucenie obietnicy. Okno rozróżnia dzięki temu
 katalog pusty po odmowie rdzenia od katalogu pustego na świeżo otwartym oknie.
+
+## budowa/klient-poprzedni/src/moduly/agents/testowany-agent.ts
+
+Czat modułu jest środowiskiem testowania wybranego eksperta i nie ma pamięci
+sesyjnej: rozmowa znika przy zamknięciu okna oraz przy zmianie testowanego
+eksperta.
+
+Rozgłos jest jednym bytem po stronie klienta, a nie polem modułu. Widok modułu
+staje obok sceny sesji, a nie zamiast niej, bo okno rozmowy jest oknem wiodącym
+każdego modułu i zostaje na planszy. Czat modułu jest więc tym samym oknem
+komunikacji ze sceny, przestawionym na ten moduł, a nie oknem wewnątrz modułu,
+a wybór eksperta żyje po drugiej stronie planszy, w stanie modułu. Byt jest
+wspólny, ponieważ nadawanie powstaje przy budowie widoku modułu, a odbiór przy
+wiązaniu gniazda sceny z oknem rdzenia; przekazanie z rąk do rąk wymagałoby
+przeciągnięcia uchwytu przez rejestr modułów i przez scenę sesji, czyli przez
+dwie warstwy, których ta rzecz nie dotyczy.
+
+Plik niczego nie czyści. Ogłasza wyłącznie zmianę testowanego eksperta i podaje
+zdanie o niej, a co z tym zrobić, rozstrzyga polityka ulotności rozmowy, która
+zna profil modułu i pole pamięci sesyjnej.
+
+Ustawienie tą samą parą identyfikatora i nazwy nie jest zmianą i nie ogłasza
+niczego. Rozgłos stanu modułu biegnie przy każdym odświeżeniu wykazu, przy
+każdej fazie odczytu i przy każdym wchłonięciu zmiany z rdzenia; gdyby każde
+z nich liczyło się jako zmiana testowanego eksperta, rozmowa znikałaby po
+zapisaniu instrukcji eksperta właśnie testowanego. Sama zmiana nazwy nie jest
+zmianą kontekstu i rozmowy nie kończy.
+
+Pierwszy wybór także nie jest zmianą. Moduł wchodzi z pustym wyborem i sam
+wskazuje pierwszego eksperta z biblioteki po odczycie z rdzenia; ogłoszenie
+tego jako wyczyszczenia rozmowy kasowałoby zapowiedź polityki wypisaną chwilę
+wcześniej i meldowało utratę wątku, którego jeszcze nie było.
+
+Zdanie o czacie testowym stoi w module, a nie tylko w oknie rozmowy, ponieważ
+przełączający eksperta w bibliotece ma przeczytać, co się stanie z rozmową,
+zanim się to stanie. Zdanie o zmianie nazywa poprzedniego eksperta, bo sama
+informacja o wyczyszczeniu rozmowy nie mówi, co ją wyczyściło.

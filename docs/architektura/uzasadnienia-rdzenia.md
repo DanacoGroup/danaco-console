@@ -5593,3 +5593,9 @@ odmowy nazwy pliku, ścieżki i miejsca pochodzenia.
 Program wołany przez rdzeń, ale nieobecny w wykazie zależności zewnętrznych,
 jest brakiem, o którym dowiaduje się dopiero po naciśnięciu przycisku — wykaz
 istnieje właśnie po to, żeby się nie dowiadywał tą drogą.
+
+## budowa/server/internal/core/handlers_workspace_planowanie.go
+Powód jest ten sam co przy pamięci projektu: rodzina liczy trzynaście komend i wpisanie ich do
+portu wspólnego zrobiłoby z niego wykaz wszystkiego, co moduł umie, zamiast wykazu tego, czym jest
+projekt. Zdarzeniem modułu jest jedno zdarzenie zmiany projektu — każda zmiana planu rozgłasza się
+projektem. Okna huba odświeżają się z tej jednej subskrypcji, a nie z trzynastu.

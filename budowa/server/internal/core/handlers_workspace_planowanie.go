@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: wpięcie komend huba planowania modułu Workspace —
-// zadania, tablica kanban, oś czasu i kalendarz.
-//
-// Port jest osobny od `PrzestrzenRobocza`, choć wypełnia go ten sam adapter.
-// Powód jest ten sam, co przy pamięci projektu: rodzina liczy trzynaście komend
-// i wpisanie ich do portu wspólnego zrobiłoby z niego wykaz wszystkiego, co
-// moduł umie, zamiast wykazu tego, czym jest projekt.
-//
-// Zdarzeniem modułu jest jedno `workspace.project.changed` — każda zmiana
-// planu rozgłasza się projektem. Okna huba odświeżają się z tej jednej
-// subskrypcji, a nie z trzynastu.
+// Plik wpina komendy huba planowania modułu Workspace: zadania, tablicę kanban, oś czasu
+// i kalendarz, jako port osobny od PrzestrzenRobocza, choć wypełnia go ten sam adapter.
 package core
 
 import (
@@ -17,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// PlanowanieProjektu jest portem huba planowania.
+// PlanowanieProjektu jest portem huba planowania: zadań, tablicy kanban, osi czasu i kalendarza projektu.
 type PlanowanieProjektu interface {
 	ZalozZadanie(ctx context.Context, z shared.WorkspaceTaskCreateRequest) (shared.WorkspaceTaskCreateResponse, error)
 	ZmienZadanie(ctx context.Context, z shared.WorkspaceTaskUpdateRequest) (shared.WorkspaceTaskUpdateResponse, error)
@@ -36,7 +27,7 @@ type PlanowanieProjektu interface {
 	Projekt(ctx context.Context, idProjektu string) (shared.WorkspaceProject, error)
 }
 
-// zarejestrujPlanowanieProjektu wpina dwanaście komend huba planowania.
+// zarejestrujPlanowanieProjektu wpina dwanaście komend huba planowania w rejestrze rdzenia tej platformy.
 func zarejestrujPlanowanieProjektu(r *Rejestr, p PlanowanieProjektu, e *emiter) {
 	if r == nil || p == nil {
 		return

@@ -1544,3 +1544,14 @@ Mission Control jako widok stojący obok strony głównej, a nie zagnieżdżony 
 Nazwa trasy pełni dwie role naraz: jest kluczem katalogu i wartością zapisywaną
 w adresie dokumentu. Dzięki temu odświeżenie strony wraca do tego samego widoku,
 a nie na początek przepływu.
+
+## budowa/klient-poprzedni/src/moduly/apps/indeks.ts
+
+Moduł nie osadza się sam w dokumencie: oddaje element, a warstwa składająca
+rozstrzyga, gdzie go postawić. Dzięki temu te same okna wchodzą i w obszar
+roboczy powłoki, i w stanowisko sprawdzianu.
+
+Pole `zamknij` podpina `rozlacz()` złożenia modułu. Bez niego subskrypcje stanu
+`apps.build.changed` oraz `progress.changed`, a wraz z nimi subskrypcje okien
+pomocniczych, żyją dalej po zejściu modułu ze sceny. Pole `zamknij` jest
+w typie `WidokModulu` opcjonalne, więc kompilator jego braku nie zgłosi.

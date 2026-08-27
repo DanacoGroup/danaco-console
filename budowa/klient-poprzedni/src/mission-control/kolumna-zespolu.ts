@@ -6,18 +6,19 @@ import { utworzSekcje } from './naglowek-sekcji';
 import { utworzStanPusty } from './stan-pusty';
 
 /**
- * Kolumna zespołu agentów: kto z zespołu pracuje i nad czym.
- *
- * Źródłem są otwarte okna komunikacji z odczytu `window.list` — rola okna
- * w pętli jest rolą agenta, a zajęcie pochodzi z etapu telemetrii
- * `progress.changed`. Liczba podagentów nie ma źródła w kontrakcie, więc wiersz
- * mówi to wprost zamiast pokazać wartość zastępczą.
+ * Kolumna zespołu agentów: kto z zespołu pracuje i nad czym. Źródłem są otwarte
+ * okna komunikacji z odczytu `window.list` — rola okna w pętli jest rolą agenta,
+ * a zajęcie pochodzi z etapu telemetrii `progress.changed`.
  */
 export interface KolumnaZespolu {
   element: HTMLElement;
   odswiez(zespol: AgentZespolu[]): void;
 }
-
+/**
+ * Buduje kolumnę zespołu agentów wraz z jej nagłówkiem i stanem pustym. Zwrócone
+ * odświeżenie wymienia całą listę wierszy, więc pulpit nie musi śledzić, który
+ * agent doszedł, a który zniknął z odczytu.
+ */
 /** Buduje kolumnę zespołu agentów. */
 export function utworzKolumneZespolu(zespol: AgentZespolu[]): KolumnaZespolu {
   const { element, cialo } = utworzSekcje(
@@ -51,7 +52,11 @@ export function utworzKolumneZespolu(zespol: AgentZespolu[]): KolumnaZespolu {
   return { element, odswiez };
 }
 
-/** Jeden agent: awatar z inicjałem, nazwa, rola, zajęcie i liczba podagentów. */
+/**
+ * Jeden agent: awatar z inicjałem, nazwa, rola, zajęcie i liczba podagentów.
+ * Agent bez procesu w telemetrii dostaje zdanie o braku procesu, a nie pustą
+ * komórkę, bo brak odczytu jest informacją.
+ */
 function wiersz(agent: AgentZespolu): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-agent';

@@ -2292,3 +2292,109 @@ jak czyjs podpis.
 
 Autor zostaje ten, kto adnotacje zalozyl — zmiana tresci przez druga osobe
 nie czyni jej autorka cudzej uwagi.
+
+## budowa/server/internal/zewnetrzne/uwierzytelnienie.go
+
+Surowe ciało odpowiedzi dostawcy nie jest komunikatem: nie mówi, czy to odmowa
+uwierzytelnienia, wyczerpany limit, zły model czy awaria dostawcy (wszystkie
+wracają tą samą drogą), nie mówi, którego poświadczenia kanał użył — sejf ma
+wiele wpisów, a odwołanie bywa też nazwą zmiennej środowiskowej — i nie mówi,
+co z tym zrobić. Operator z dwoma kontami u jednego dostawcy nie ma z takiego
+zdania jak zgadnąć, który klucz wygasł.
+
+Plik rozpoznaje i nazywa: bierze odwołanie, nie sekret, kod stanu i to, co
+powiedział dostawca, a oddaje zdanie dla człowieka. Odwołania nie rozwiązuje
+i sejfu nie dotyka — robi to `models.poswiadczenieZOdwolania`, bo kanały
+powstają fabryką z wiersza rejestru i sejf mają uchwytem pakietowym.
+
+Sekret przez ten plik nie przechodzi: wchodzi odwołanie — nazwa wpisu sejfu
+albo nazwa zmiennej — nigdy wartość. `BezSekretu` jest siatką bezpieczeństwa
+na drugą stronę: dostawcy wklejają fragment klucza we własny komunikat, a ten
+komunikat idzie Operatorowi i do dziennika.
+
+Wpis sejfu konta zakłada i nadpisuje `account.add` albo `account.update` polem
+`credential`; wskazanie kanałowi innego odwołania robi `channel.update`.
+
+Kontrakt nie ma pierwszorzędnego pola na odwołanie: żądanie aktualizacji
+kanału niesie nazwę, model, stan włączenia i konfigurację, a odwołanie jedzie
+parametrem `credentialRef` wewnątrz `config`. Samo wskazanie komendy
+`channel.update` wysłałoby Operatora szukać pola, którego w żądaniu nie ma.
+
+`OdmowaKanaluZewnetrznego` jest osobnym typem, a nie wynikiem zwykłego błędu
+tekstowego, żeby warstwa wyżej mogła zapytać, czy zawiodło poświadczenie —
+i wtedy nie ponawiać z tym samym kluczem — czy dostawca ma chwilową usterkę.
+Napis sklejony w miejscu wywołania tej wiedzy nie niesie.
+
+`KomunikatZCiala` wyjmuje z ciała odpowiedzi zdanie, które dostawca powiedział
+o sobie sam, gdy ścieżka z wiersza rejestru (`sciezka_bledu`) bywa
+nieustawiona, a wtedy bez rozpoznania Operatorowi szłoby całe surowe ciało
+JSON. Rozpoznanie ogólne łapie kształty, w których błąd zwracają dostawcy
+zgodni z OpenAI, Anthropic i większość bram API. Gdy wiersz ścieżkę ma, i tak
+wygrywa (`ZKomunikatem`) — to jest wartość zapasowa, nie druga prawda.
+
+`BezSekretu` wycina wartość klucza z tekstu idącego do Operatora i do
+dziennika, choć sekretu tu formalnie nie ma — przychodzi z drugiej strony:
+dostawcy wklejają klucz, bywa, że w całości, we własny komunikat błędu, a ten
+komunikat jedzie dalej jako treść odmowy. Sekret w dzienniku jest sekretem
+ujawnionym, a nikt nie zauważy tego przy zwykłej pracy. Wycina także sam
+klucz z wartości nagłówka. Wołający ma pod ręką zwykle całe „Bearer sk-…",
+a dostawca cytuje samo „sk-…" — porównanie wprost chybiłoby. Klucze nie mają
+spacji, więc człon po ostatniej spacji jest kluczem.
+
+`SekretZOdpowiedzi` odzyskuje wartość klucza z żądania, które tę odpowiedź
+wywołało — po to i tylko po to, żeby ją z komunikatu wyciąć. Kanał rozwiązuje
+odwołanie przy budowie żądania i sekretu nigdzie nie odkłada — i dobrze, bo
+każde miejsce przechowania jest miejscem wycieku. `http.Response.Request`
+niesie wysłane żądanie, więc wartość jest pod ręką dokładnie tam, gdzie
+potrzebna, i nie przechodzi przez żadne pole ani zmienną po drodze.
+
+Pole `Byt` struktury `Poswiadczenie`: dla drogi środowiskowej równa się
+nazwie zmiennej.
+
+Blokady fragmentów widziane przez postać dokumentu składa `blokadaZlozKontrakt`
+— tabela blokad należy do obszaru kontroli pracy i to on wie, jak wiersz
+przełożyć na kontrakt. Drugie przełożenie tej samej tabeli byłoby drugą
+prawdą o jednym wierszu.
+## server/internal/mowa/silnik.go
+
+Odbiorcy dostaja silnik wstrzyknieciem i nie buduja wlasnego. Czego silnik
+nie robi: nie syntezuje mowy — translate.speech.synthesize idzie w druga
+strone (tekst na dzwiek) i potrzebuje innego silnika, ktorego ten pakiet nie
+wnosi. Nie nagrywa: nagranie powstaje po stronie Operatora, a tutaj
+przychodzi juz jako sciezka pliku. Nie zna kontraktu: mowi wlasnymi typami.
+Dzwiek nie opuszcza maszyny Operatora: nie ma tu klienta HTTP ani adresu,
+pod ktory cokolwiek by poszlo. Jedyne wyjscie na zewnatrz procesu to
+uruchomienie pomocnika lokalnego.
+
+Silnik: wolajacy sklada ustawienia z konfiguracji zasiegu (config.get)
+i podaje gotowe; silnik nie siega do bazy po nastawy, bo dwie drogi do tej
+samej wartosci bylyby dwiema prawdami.
+
+uruchamiacz: bez niego silnik nie ma czym wywolac pomocnika lokalnego.
+
+ustawienia: zlozony z konfiguracji zasiegu przy zakladaniu.
+
+dziennik: silnik i tak rozpoznaje mowe tak samo jak z nim.
+
+teraz: czas wpisu podaje wolajacy.
+
+NowySilnik: ustawienia startuja wartosciami domyslnymi — brak wskazania
+Operatora znaczy wartosc domyslna, nie odmowe pracy.
+
+katalogPracy: gdy punkt izolacji jest wylaczony, proces rusza w katalogu
+biezacym rdzenia; inaczej brama izolacji uzupelnia katalog wlasny okna
+(session.SprawdzPolecenie).
+
+odnotujOdmowe: blad wraca nietkniety — jego typ niesie rozroznienie, po
+ktorym wolajacy nada wlasciwy kod kontraktu, a owiniecie go tutaj to
+rozroznienie by zatarlo.
+
+zapiszWpis: dziennik opisuje, co zrobiono z nagraniem, a wiersz o nagraniu,
+ktorego nie wskazano, nie odpowiada na zadne pytanie — i tak zostalby
+odrzucony przez sprawdzenie wpisu. Odmowa idzie wtedy do wolajacego sama
+droga bledu, bez wiersza.
+
+nowyIdentyfikator: licznik wymagalby wspolnego stanu, ktorego ten pakiet
+nie ma. Blad zrodla losowosci nie przerywa transkrypcji — identyfikator
+opada wtedy na znacznik czasu, bo wpis bez tozsamosci nie zapisze sie
+wcale, a to gorsza strata niz tozsamosc mniej odporna na zbieg.

@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: obszar Apps — plik warsztatu (tabela
-// `plik_warsztatu_apps`, `store/migracja_051_aplikacje.sql`), trwałość okna
-// Workspace modułu Apps (nie modułu Workspace).
-//
-// ZAPIS TO UPSERT PO KLUCZU (OKNO, WARSTWA, ŚCIEŻKA), NIE WSTAWIANIE KOLEJNYCH
-// WIERSZY. Kontrakt `AppsWorkspaceUpdateRequest` nie niesie odpowiednika
-// `createVersion` z modułu Developer (`store/migracja_042_developer.sql`) —
-// Operator nie zakłada tu migawki, tylko nadpisuje stan bieżący pliku warstwy.
-// Tabela ma więc jeden wiersz na trójkę (okno, warstwa, ścieżka); historii
-// wersji nie ma.
+// Plik prowadzi obszar Apps — plik warsztatu, trwałość okna Workspace modułu Apps; zapis jest operacją UPSERT po
+// kluczu okna, warstwy i ścieżki, więc tabela ma jeden wiersz na tę trójkę, a historii wersji nie prowadzi.
 package dane
 
 import (
@@ -37,9 +29,7 @@ const (
 	kolumnyPlikuWarsztatu = `id, okno, warstwa, sciezka, tresc, rozmiar, komponent_id,
 	                         utworzono, zaktualizowano`
 
-	// UPSERT po (okno, warstwa, sciezka) — patrz rozstrzygnięcie na czole
-	// pliku: `apps.workspace.update` nadpisuje stan bieżący, nie zakłada
-	// nowego wiersza historii.
+	// UPSERT po kluczu okna, warstwy i ścieżki: zapis nadpisuje stan bieżący pliku warstwy, nie zakłada nowego wiersza historii.
 	zapiszPlikWarsztatuApps = `INSERT INTO plik_warsztatu_apps
 	                    (okno, warstwa, sciezka, tresc, rozmiar, komponent_id)
 	                    VALUES (?, ?, ?, ?, ?, ?)
@@ -112,11 +102,7 @@ func (r *repozytoriumAplikacji) PlikiWarsztatu(ctx context.Context, okno string)
 	return lista, nil
 }
 
-// PlikWarsztatu oddaje na zewnątrz odczyt po kluczu naturalnym. Ciała nie
-// dubluje: woła `jedenPlikWarsztatu`, ten sam, którym repozytorium
-// zwraca stan po zapisie. Wołaczem jest `apps.workspace.update`, który przed
-// nadpisaniem pyta, czy plik już był — od tego zależy rodzaj zmiany w
-// zdarzeniu `apps.workspace.changed` (created czy updated).
+// PlikWarsztatu oddaje na zewnątrz odczyt po kluczu naturalnym, wołając ten sam odczyt, którym repozytorium zwraca stan po zapisie.
 func (r *repozytoriumAplikacji) PlikWarsztatu(ctx context.Context, okno string,
 	warstwa shared.AppWorkspaceLayer, sciezka string) (PlikWarsztatu, error) {
 
@@ -142,7 +128,7 @@ func (r *repozytoriumAplikacji) jedenPlikWarsztatu(ctx context.Context, okno str
 	return plik, nil
 }
 
-// odczytajPlikWarsztatu składa strukturę z jednego wiersza wyniku.
+// odczytajPlikWarsztatu składa strukturę pliku warsztatu wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajPlikWarsztatu(wiersz skaner) (PlikWarsztatu, error) {
 	var plik PlikWarsztatu
 	var warstwa string

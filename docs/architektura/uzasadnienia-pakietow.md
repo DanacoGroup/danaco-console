@@ -4464,3 +4464,13 @@ Zawężenie obowiązuje także przy wywołaniu narzędzia, nie tylko przy złoż
 wykazu: wykaz zawężony, z którego nadal da się wywołać wszystko, byłby
 zawężeniem pozornym, oszczędzającym żetony i nie zmieniającym niczego więcej.
 Odmowa dla nazwy spoza podzbioru jest treścią dla modelu, nie usterką procesu.
+
+## budowa/server/internal/dane/aplikacje_warsztat.go
+
+Kontrakt żądania aktualizacji warsztatu nie niesie odpowiednika zakładania migawki znanego
+z modułu Developer: Operator nie zakłada tu migawki, tylko nadpisuje stan bieżący pliku
+warstwy, dlatego tabela ma jeden wiersz na trójkę okna, warstwy i ścieżki.
+
+Odczyt po kluczu naturalnym wywołuje go komenda aktualizacji warsztatu, która przed
+nadpisaniem sprawdza, czy plik już istniał — od tego zależy rodzaj zmiany zgłoszonej
+w zdarzeniu zmiany warsztatu (założenie czy aktualizacja).

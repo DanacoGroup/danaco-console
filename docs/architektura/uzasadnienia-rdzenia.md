@@ -3287,3 +3287,27 @@ przy następnym otwarciu wykazu.
 Drugi wynik zwracany przez `zmierzMiare` mówi, czy pomiar się odbył — miara,
 której nie zmierzono, nie wyzwala niczego, bo nie ma wartości do porównania
 z progiem.
+
+## budowa/server/internal/core/adapter_narzedzia_dokument_formaty.go
+
+Trzy nazwy jednej rzeczy, dlatego tabela jest jedna: markdown kontraktu to
+markdown dla Pandoca i .md na dysku; txt to plain dla Pandoca i .txt na dysku
+— trzy osobne mapy rozjechałyby się przy pierwszym dołożonym formacie. Format
+nieznany jest odmową, nie domysłem: wołający dostaje wykaz tego, co rodzina
+umie, bo zgadnięty format kończy się plikiem, którego nikt nie otworzy, a
+koperta meldowałaby powodzenie.
+
+Pandoc ani nie czyta, ani nie zapisuje PDF-u bez silnika składu, dlatego
+czytaPandoc i piszePandoc są dla PDF-u fałszem: zapis PDF-u Pandokiem wymaga
+silnika składu wołanego przez niego samego, czyli procesu poza bramą rdzenia.
+Czytaniem PDF-u zajmuje się document.text.extract, a zapisem dwie drogi
+rdzenia: skład typstem albo LibreOffice.
+
+Rozpoznanie formatu wyłącznie po rozszerzeniu zrywałoby łańcuch najbardziej
+w tej rodzinie naturalny: zamień na PDF, a potem przeczytaj, co wyszło — bo
+wynik document.convert leży w magazynie jako blob bez kropki i bez
+rozszerzenia. Rozpoznanie po nagłówku jest odczytem, nie domysłem po nazwie:
+bajty %PDF- na początku pliku są definicją PDF-u, a nie poszlaką. Materiał,
+którego nagłówek nie mówi nic pewnego, oddaje pustkę, bo "nie wiem" jest
+odpowiedzią uczciwą, a zgadnięty format kończy się odmową narzędzia w połowie
+pracy albo, gorzej, treścią przeczytaną nie tym słownikiem.

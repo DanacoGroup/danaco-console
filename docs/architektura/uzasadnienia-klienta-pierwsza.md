@@ -49,3 +49,21 @@ nie mógł rozjechać się z rzeczywistą zawartością wykazu, który stoi obok
 
 Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji modułu
 Design buduje z niego listę do wyświetlenia.
+
+## budowa/klient-poprzedni/src/moduly/apps/narzedzia-apps.ts
+
+Narzędzia są pogrupowane wedle okna modułu Apps, w którym dana czynność się
+odbywa: Product Builder prowadzi produkt, etapy, kamienie milowe i oś czasu;
+Architecture Designer — walidację układu, wersje, adnotacje i eksport;
+warsztaty — podgląd, trasy, motyw, punkty końcowe i schemat; Deployment Panel
+— środowiska, zmienne, domenę, skalowanie, kondycję, dzienniki i artefakty;
+Publisher Panel — pakowanie, manifest, walidację, podpis i publikację.
+
+Zdanie o skutku jest w każdym narzędziu inne, bo skutek jest inny: liczba
+pozycji, nazwa bytu, kod odpowiedzi, odwołanie do pliku, wynik weryfikacji
+podpisu. Wspólny komunikat „gotowe" byłby meldunkiem, z którego nic nie
+wynika, a to jest dokładnie wzorzec, którego moduł ma nie powtarzać.
+
+Wartości startowe pól są przykładami z domeny produktu, nie wartościami
+wymuszonymi: Operator zmienia je przed wykonaniem, a puste pole nieobowiązkowe
+oznacza brak zawężenia.

@@ -4446,3 +4446,21 @@ znaczy oś platformy, tak samo jak domyślna wartość kolumny.
 Metody kontraktu opisują oś platformy. Oś modelu i konta obsługuje osobne
 rozszerzenie kontraktu; obie postaci wypełnia jedna implementacja, więc
 drugiego rozstrzygania nie ma.
+
+## budowa/server/internal/narzedzia/rozdzielnia_ekspert.go
+Ta droga stoi osobno od rozdzielni zwykłej, bo droga zwykła nie ma prawa się
+o nią potknąć: bez trybu eksperta cała maszyneria nie rusza ani razu
+i rozdzielnia zachowuje się tak, jak bez niej.
+
+Definicję czyta się przy pierwszym wykazie narzędzi, bo gniazdo do rdzenia
+jest leniwe z zamysłem. Odczyt udany zapamiętuje się na czas życia procesu:
+ekspert okna nie zmienia się w trakcie tury, a pytanie rdzenia przy każdym
+wykazie byłoby ruchem bez treści. Odczyt nieudany nie zapamiętuje się nigdy —
+rdzeń bywa niegotowy w chwili startu procesu modelu, więc każdy następny
+odczyt wykazu próbuje od nowa; zapamiętana porażka zamieniłaby jedno nieudane
+połączenie w oknie bez doboru narzędzi na całą turę.
+
+Zawężenie obowiązuje także przy wywołaniu narzędzia, nie tylko przy złożeniu
+wykazu: wykaz zawężony, z którego nadal da się wywołać wszystko, byłby
+zawężeniem pozornym, oszczędzającym żetony i nie zmieniającym niczego więcej.
+Odmowa dla nazwy spoza podzbioru jest treścią dla modelu, nie usterką procesu.

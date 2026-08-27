@@ -1,80 +1,54 @@
 /**
  * Progi, częstotliwość i czasy wyciszenia funkcji globalnej Always On Display.
- *
- * Każda wartość tego pliku pochodzi z opracowania
- * `docs/funkcje-globalne/always-on-display.md` — rozdz. 3.4 (progi
- * i częstotliwość) oraz rozdz. 3.5 (wyciszanie). Żadnej wartości tu nie
- * wymyślono; przy każdej stoi rozdział, z którego jest wzięta.
- *
- * Plik jest jednym miejscem, w którym te liczby stoją. Reguła rozpoznania
- * (`rozpoznanie-decyzji.ts`), magazyn kolejki (`kolejka-decyzji.ts`) i stan
- * obecności (`tryb-obecnosci.ts`) biorą je stąd, zamiast powtarzać u siebie.
- *
- * Opracowanie mówi (rozdz. 3.4, zdanie zamykające), że wszystkie te progi są
- * ustawieniami zasięgu „Always On Display" i podlegają zmianie z okna
- * konfiguracji, z okna Ustawień i poleceniem języka naturalnego. Kontrakt nie
- * niesie ani kategorii ustawień „Always On Display", ani komendy zapisującej
- * te wartości — dlatego wartości domyślne stoją tutaj jako stałe, a nie jako
- * odczyt `config.get`. Rozjazd jest zgłoszony, nie zasypany atrapą.
+ * Plik jest jedynym miejscem, w którym te liczby stoją; reguła rozpoznania,
+ * magazyn kolejki i stan obecności biorą je stąd, zamiast powtarzać u siebie.
  */
 
-/** Milisekunda liczona minutami — żeby liczby niżej dało się czytać wprost z opracowania. */
+/**
+ * Milisekunda liczona minutami, żeby progi czasowe niżej dało się czytać wprost
+ * w minutach, a nie przeliczać z liczby milisekund przy każdym odczycie.
+ */
 const MINUTA_MS = 60_000;
 
-/** Milisekunda liczona godzinami. */
+/**
+ * Milisekunda liczona godzinami, złożona z sześćdziesięciu minut. Stała służy
+ * zapisaniu czasu życia sugestii w jednostce, w której próg jest podawany.
+ */
 const GODZINA_MS = 60 * MINUTA_MS;
 
 /**
- * Progi wyzwalania sugestii — rozdz. 3.4 opracowania, kolumna „wartość domyślna".
- *
- * Nazwy pól są nazwami wierszy tabeli, a nie skrótami: próg czytany w kodzie ma
- * mówić to samo, co próg czytany w opracowaniu.
+ * Progi wyzwalania sugestii wraz z ich wartościami domyślnymi. Nazwy pól są
+ * pełnymi nazwami progów, a nie skrótami: próg czytany w kodzie ma mówić to
+ * samo, co próg czytany w tabeli wartości.
  */
 export const PROGI_AOD = {
-  /**
-   * Liczba sugestii ujawnianych samoczynnie w godzinie — 3.
-   * Po przekroczeniu kolejne trafiają do listy oczekujących bez dymka.
-   */
+  /** Liczba sugestii ujawnianych samoczynnie w godzinie: 3; kolejne czekają. */
   liczbaDymkowNaGodzine: 3,
 
-  /**
-   * Odstęp między dymkami — 5 minut.
-   * Dwie sugestie bliżej siebie łączą się w jedną pozycję zbiorczą.
-   */
+  /** Odstęp między dymkami: 5 minut; bliższe łączą się w pozycję zbiorczą. */
   odstepMiedzyDymkamiMs: 5 * MINUTA_MS,
 
-  /**
-   * Próg czasu oczekiwania zadania w kolejce — 15 minut.
-   * Przekroczenie tworzy sugestię klasy „stan kolejki zadań".
-   */
+  /** Próg czasu oczekiwania zadania w kolejce: 15 minut. */
   oczekiwanieWKolejceMs: 15 * MINUTA_MS,
 
-  /**
-   * Próg liczby ponowień zadania — 2.
-   * Trzecie ponowienie tego samego zadania tworzy sugestię o wadze wysokiej.
-   */
+  /** Próg liczby ponowień zadania: 2; trzecie tworzy sugestię wagi wysokiej. */
   liczbaPonowien: 2,
 
-  /**
-   * Próg wypełnienia kolejki — 80% pojemności.
-   * Przekroczenie tworzy sugestię klasy „stan kolejki zadań".
-   */
+  /** Próg wypełnienia kolejki: 80 procent pojemności. */
   wypelnienieKolejki: 0.8,
 
-  /**
-   * Próg powtarzalności czynności ręcznej — 3 wystąpienia w karcie sesji.
-   * Przekroczenie tworzy sugestię konfiguracji.
-   */
+  /** Próg powtarzalności czynności ręcznej: 3 wystąpienia w karcie sesji. */
   powtarzalnoscCzynnosci: 3,
 
-  /**
-   * Czas życia sugestii nieprzyjętej — 24 godziny.
-   * Po upływie sugestia otrzymuje status odrzuconej i znika z listy oczekujących.
-   */
+  /** Czas życia sugestii nieprzyjętej: 24 godziny, po których zostaje odrzucona. */
   czasZyciaSugestiiMs: 24 * GODZINA_MS,
 } as const;
 
-/** Rodzaje wyciszenia czasowego — rozdz. 3.5, kolumna „zakres". */
+/**
+ * Rodzaje wyciszenia czasowego dostępne w menu kebab: kwadrans, godzina oraz
+ * wyciszenie do końca dnia. Zakres jest zamknięty, więc rodzaj spoza wykazu nie
+ * powstaje w oknie ani nie wchodzi do stanu obecności.
+ */
 export const WyciszenieCzasowe = {
   /** 15 minut. */
   Kwadrans: 'kwadrans',
@@ -85,7 +59,11 @@ export const WyciszenieCzasowe = {
 } as const;
 export type WyciszenieCzasowe = (typeof WyciszenieCzasowe)[keyof typeof WyciszenieCzasowe];
 
-/** Nazwa wyciszenia widziana przez Operatora w menu kebab. */
+/**
+ * Nazwa wyciszenia widziana przez Operatora w menu kebab. Nazwa mówi o czasie
+ * trwania, a nie o rodzaju technicznym, ponieważ to czas jest tym, co Operator
+ * wybiera, przystawiając wyciszenie.
+ */
 export const NAZWY_WYCISZEN: Readonly<Record<WyciszenieCzasowe, string>> = {
   [WyciszenieCzasowe.Kwadrans]: 'Wycisz na 15 minut',
   [WyciszenieCzasowe.Godzina]: 'Wycisz na godzinę',

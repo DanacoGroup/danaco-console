@@ -2595,3 +2595,52 @@ identyfikatorze zewnętrznym warstwy, nie na kluczu wiersza. Powód: zapis
 planszy przepisuje wiersze warstw od nowa, więc klucz wiersza warstwy nie
 przeżywa zwykłego zapisu kompozycji, a identyfikator zewnętrzny przeżywa,
 ponieważ klient nadsyła go z powrotem przy każdym żądaniu.
+
+## budowa/server/internal/models/adapter_obrazy.go
+
+kanalObrazow jest bliźniakiem KanalAPI i dzieli z nim całą warstwę dostępową:
+nagłówki, klucz z sejfu albo ze zmiennej środowiskowej, dodatki ciała, limit
+czasu — jedna prawda o poświadczeniach, jedna o nagłówkach. Różni się kształtem
+żądania (prompt zamiast wiadomości) i tym, że wynik nadaje fragmentem image,
+nie porcjami tekstu.
+
+Kształt żądania jest ten, który dostawcy powtarzają za OpenAI Images: POST
+z ciałem {model, prompt, n, size} i odpowiedzią {"data":[{"b64_json"|"url"}]}.
+Powtarzają go dziś także dostawcy niezależni i bramy lokalne, więc jest to
+najczęstszy kształt, a nie jeden dostawca zaszyty w kodzie. Parametry wiersza
+rejestru: base_url (pełny adres punktu końcowego, wymagany), rozmiar (pole
+size, domyślnie 1024x1024), liczba (pole n, domyślnie 1), format_odpowiedzi
+(pole response_format, pusty = nie wysyłamy), sciezka_base64 (domyślnie
+data.0.b64_json), sciezka_adresu (domyślnie data.0.url), typ_tresci
+(domyślnie image/png), a także sciezka_bledu, naglowki, naglowek_klucza,
+przedrostek_klucza, cialo_dodatkowe i limit_sekund, jak w kanale api.
+
+Wiersz zakłada się channel.add z rodzajem api oraz parametrem adapter równym
+"obrazy". Rodzaj mówi, jak kanał rozmawia (HTTP), adapter mówi, co oddaje,
+dlatego rodzaju kanału nie trzeba dokładać ani migracją, ani do kontraktu.
+
+Wywołanie niosące Zapytanie.ObrazyWejsciowe jest edycją materiału, nie
+generowaniem od zera, i dostawcy dają na nią osobny punkt końcowy o osobnym
+kształcie żądania (u OpenAI images/edits: multipart/form-data z plikiem image
+i opcjonalną maską mask). Bramy lokalne częściej przyjmują ten sam adres
+z bajtami w polu JSON. Adapter zna oba kształty, bo obu nie da się pogodzić,
+a zgadywanie kończyłoby się odmową dostawcy zamiast obrazu. Parametry:
+adres_edycji (pusty = ten sam co base_url), postac_obrazu (wieloczesciowa
+domyślnie albo base64), pole_obrazu (domyślnie image), pole_maski (domyślnie
+mask). Wywołanie bez obrazu wejściowego idzie tą samą drogą co dotąd: pole
+puste nie zmienia ani adresu, ani kształtu ciała.
+
+Wiersz bez poświadczenia buduje się celowo: odmowa ma paść w chwili wywołania,
+wymieniając brak z nazwy, a nie zniknąć jako kanał pominięty w wykazie
+rejestru. Kanał tekstowy dopuszcza brak odwołania, bo punkt końcowy bez
+uwierzytelnienia istnieje (Ollama pod adresem pętli zwrotnej); punkt końcowy
+generujący obrazy bez klucza nie istnieje, więc brak odwołania rozstrzyga się
+przed żądaniem, zamiast wracać jako cudzy błąd dostawcy. To samo dotyczy
+odwołania, które jest, ale nie prowadzi do sekretu — sejf bez wpisu, zmienna
+środowiskowa nieustawiona: różnica jest widoczna w treści komunikatu, bo
+Operator poprawia te dwa stany w różnych miejscach.
+
+Materiał nieczytelny w cialoWieloczesciowe jest odmową, nie wysyłką bez
+materiału: żądanie samego polecenia wróciłoby obrazem wygenerowanym od zera,
+a Operator prosił o obróbkę swojego zdjęcia i dostałby cudze bez ani jednego
+słowa o podmianie.

@@ -2358,3 +2358,18 @@ Panel nie zna kontraktu i nie woła rdzenia bezpośrednio: droga wykonania akcji
 Żaden przycisk nie jest wygaszany ani warunkowany zaznaczeniem — brak warunku merytorycznego
 nazywa odpowiedź po kliknięciu, a nie odbiera klikalności. Każdy przycisk ma dymek objaśniający,
 czym akcja jest i czym się kończy.
+
+## budowa/klient-poprzedni/src/strona-glowna/menu-sesji.ts
+O tym, które czynności są sensowne dla wiersza, rozstrzyga moduł czynności sesji; menu ich nie zna.
+Pusty wykaz czynności daje wynik pusty zamiast pustego pojemnika — wiersz czysto informacyjny nie
+dostaje ramki po menu, którego nie ma. Na czas wykonania wiersz nie przyjmuje drugiej czynności,
+także z innego przycisku niż naciśnięty: archiwizacja w trakcie zmiany nazwy dawałaby dwa żądania
+o tę samą sesję o przypadkowej kolejności skutków. Zajętość nie jest bramą i nie gasi przycisków:
+atrybut wyłączenia nie jest stosowany nigdzie w produkcie — przycisk zostaje klikalny, a stan
+niesie napis: przycisk czynny dopisuje wielokropek, więc zajętość jest widoczna bez samego koloru.
+Naciśnięcie w trakcie biegu wraca meldunkiem, nie ciszą. Odmowa wraca meldunkiem, nie wyjątkiem:
+wykonanie oddaje zdanie albo wynik pusty, a menu podaje je dalej. Wyjątek nieprzewidziany też
+kończy się meldunkiem, żeby wiersz nie został z zablokowanymi przyciskami.
+
+## budowa/klient/src/gniazdo-zastepcze.ts
+Gniazdo zastępcze nie udaje rdzenia, lecz sprawdza zachowanie klienta wobec gniazda: kolejkowanie, ponawianie, kolejność stanów oraz przeżycie subskrypcji przy wymianie gniazda. Sama biblioteka gniazda nie podlega tu sprawdzeniu. Rozmowę z rdzeniem rzeczywistym mierzy osobny sprawdzian, który tego rdzenia wymaga.

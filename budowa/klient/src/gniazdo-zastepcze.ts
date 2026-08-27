@@ -1,10 +1,7 @@
 /**
- * Gniazdo zastępcze dla sprawdzianów — stoi w miejscu WebSocket środowiska.
- *
- * Zastępstwo, a nie rdzeń udawany: sprawdzane jest zachowanie klienta wobec
- * gniazda — kolejkowanie, ponawianie, kolejność stanów, przeżycie subskrypcji
- * przy wymianie gniazda — a nie sama biblioteka gniazda. Rozmowę z rdzeniem
- * prawdziwym mierzy osobny sprawdzian, który rdzenia wymaga.
+ * Gniazdo zastępcze zastępuje WebSocket środowiska w sprawdzianach, odwzorowując
+ * kolejkowanie, ponawianie oraz kolejność stanów klienta bez udziału rdzenia
+ * rzeczywistego.
  */
 export class GniazdoZastepcze {
   static readonly OPEN = 1;

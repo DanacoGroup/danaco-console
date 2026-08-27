@@ -110,7 +110,7 @@ func (a *adapterTerminala) ZalozObserwacje(ctx context.Context,
 	if err != nil {
 		return shared.TerminalWatchStartResponse{}, err
 	}
-	// Uprawnienie sprawdzamy przy zakładaniu, nie przy wyzwoleniu, by odmowa nie
+	// Uprawnienie sprawdza się przy zakładaniu, nie wyzwoleniu, by odmowa nie
 	// przyszła bez czytelnika.
 	if err := sprawdzUprawnienie(okno.TrybUprawnien, shared.ProcessInitiatorOperator); err != nil {
 		return shared.TerminalWatchStartResponse{}, err

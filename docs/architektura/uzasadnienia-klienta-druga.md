@@ -2773,3 +2773,10 @@ generatora identyfikatorów, żeby nie hodować drugiej reguły nadawania identy
 
 ## budowa/klient/src/protokol/koperta.ts
 Plik nie definiuje własnego typu komunikatu i nie powiela ani jednego literału nazwy — kształt koperty pochodzi wyłącznie ze współdzielonego kontraktu.
+
+## budowa/klient-poprzedni/src/moduly/studio/blokada-fragmentow.test.ts
+Sprawdziany mierzą trzy zachowania, których zgubienie przeszłoby niezauważone: zmiana obejmująca
+blokadę częściowo oddaje bilans akcji wraz z nazwą blokady zamiast milczeć o niej; odmowa zajęcia
+fragmentu nazywa wykonawcę i czas zajęcia zamiast wracać pustą odpowiedzią; zasięg obejmujący
+właściciela pisma jest opisany jako ustawienie jawne, bo blokada domyślnie jest skierowana
+przeciw modelowi, nie przeciw właścicielowi pisma.

@@ -1,11 +1,4 @@
-/* Suwak wartości ciągłej.
-
-   Zastosowanie wiodące: nakład rozumowania okna komunikacji
-   (szybciej ↔ mądrzej). Tor wypełniony sygnałem — wskazuje, nie działa.
-
-   `--dn-suwak-pozycja` nie jest żetonem warstwy `motyw/` — to zmienna ustawiana
-   w locie na elemencie (procent wypełnienia toru). Wartość zapasowa wynosi 50%,
-   więc bez ustawienia tor pokazuje połowę. */
+/* Arkusz opisuje suwak wartości ciągłej, którego tor wypełniony sygnałem wskazuje nakład rozumowania okna komunikacji, bez własnego działania. */
 
 .dn-suwak {
   appearance: none;

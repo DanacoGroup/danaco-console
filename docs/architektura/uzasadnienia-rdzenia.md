@@ -1528,3 +1528,16 @@ a przerwana sesja bez objęcia drzewa zostawiłaby je na maszynie Operatora.
 Strona, która nie kończy wczytywania, jest zjawiskiem codziennym. Każde
 otwarcie ma granicę czasu; po jej przekroczeniu sesja oddaje to, co zdążyła
 zebrać, albo odmawia — nigdy nie czeka bez końca.
+
+## budowa/server/internal/core/skutek_zdolnosci_wyszukiwania_test.go
+
+Część sprawdzianów żąda wag modeli na dysku i jest pomijana tam, gdzie wag
+nie ma. Pominięcie jest tu jedyną uczciwą odpowiedzią: wagi ważą łącznie
+blisko cztery gigabajty, więc sprawdzian, który by je pobierał, zamieniałby
+bieg sprawdzianów w pobieranie modeli, a sprawdzian, który by ich nie
+potrzebował, mierzyłby atrapę i milczałby dokładnie wtedy, gdy zdolność
+przestanie działać.
+
+Sprawdziany odmowy wag celowo nie żądają wag: brak silnika ma być
+odpowiedzią nazywającą brak na każdej maszynie, więc mierzy się go tam,
+gdzie modelu nie ma z samego założenia.

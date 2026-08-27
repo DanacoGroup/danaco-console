@@ -938,3 +938,26 @@ roboczy powłoki, i w podgląd sprawdzianu.
 Wytwórnia oddaje moduł wprost, ponieważ `ModulBrowser` niesie pola `element`
 i `wczytaj` żądane przez powłokę oraz czynność `rozlacz`, po którą sięga
 sprawdzian modułu.
+
+## budowa/klient-poprzedni/src/konfiguracja/kontrolki-liczbowe.ts
+
+Granice i skok pola liczbowego pochodzą z katalogu ustawień, a nie z kodu
+klienta. Katalog, który granic nie podaje, daje pole bez granic: brak metadanej
+nie jest błędem i niczego nie blokuje, więc kontrolka nie wymyśla ograniczenia,
+którego rdzeń nie postawił.
+
+Pole puste znaczy brak wartości, a nie zero. Odczyt oddaje wtedy `null`, przez
+co zapis czyści wartość zamiast wpisywać liczbę, której Operator nie podał.
+Rozróżnienie jest konieczne, ponieważ zero bywa wartością obowiązującą
+i podstawienie go pod pustkę zmieniałoby ustawienie bez wiedzy Operatora.
+
+## budowa/klient-poprzedni/src/mission-control/pasek-dzialan.ts
+
+Pasek ostatniego działania ma jedną odpowiedzialność: wypisuje, co pulpit właśnie
+nadał powłoce. Żaden przycisk pulpitu nie jest wyszarzony, a przycisk czynny bez
+widocznego skutku nie mówi Operatorowi, czy zamiar poszedł dalej. Pasek pokazuje
+zatem fakt nadania zamiaru, a nie wynik jego wykonania.
+
+Stąd bierze się dobór słów w treści paska. Zdanie mówi „zamiar nadany", nigdy
+„wykonano", ponieważ w chwili wypisania powłoka mogła jeszcze nie wysłać komendy,
+a rdzeń mógł jej nie potwierdzić.

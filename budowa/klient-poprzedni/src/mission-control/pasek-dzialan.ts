@@ -1,15 +1,10 @@
 import { elementIkony } from '../ikony/ikony';
 
 /**
- * Pasek ostatniego działania — potwierdzenie, że naciśnięcie zostało przyjęte.
- *
- * Jedna odpowiedzialność: wypisanie, co pulpit właśnie nadał powłoce. Żaden
- * przycisk pulpitu nie jest wyszarzony, a przycisk czynny bez widocznego skutku
- * nie mówi operatorowi, czy zamiar poszedł dalej — pasek pokazuje więc fakt
- * nadania zamiaru, nie wynik wykonania.
- *
- * Pasek pisze „zamiar nadany", nigdy „wykonano": powłoka mogła jeszcze nie
- * wysłać komendy, a rdzeń mógł jej nie potwierdzić.
+ * Pasek ostatniego działania potwierdza, że naciśnięcie zostało przyjęte:
+ * wypisuje, co pulpit nadał powłoce. Treść mówi „zamiar nadany", nigdy
+ * „wykonano", ponieważ pasek podaje fakt nadania zamiaru, a nie wynik jego
+ * wykonania.
  */
 export interface PasekDzialan {
   element: HTMLElement;
@@ -17,7 +12,11 @@ export interface PasekDzialan {
   zapisz(tresc: string): void;
 }
 
-/** Buduje pasek ostatniego działania. */
+/**
+ * Buduje pasek ostatniego działania jako stopkę o roli `status` i obszarze
+ * powiadamiania w trybie `polite`, ze znakiem informacyjnym oraz treścią
+ * początkową mówiącą, że żaden zamiar nie został jeszcze nadany.
+ */
 export function utworzPasekDzialan(): PasekDzialan {
   const element = document.createElement('footer');
   element.className = 'mc-dzialania';
@@ -42,7 +41,10 @@ export function utworzPasekDzialan(): PasekDzialan {
   };
 }
 
-/** Godzina nadania w postaci `gg:mm:ss`. */
+/**
+ * Podaje godzinę nadania w postaci `gg:mm:ss`, złożoną według ustawień
+ * regionalnych `pl-PL` z dwucyfrowej godziny, minuty i sekundy.
+ */
 function godzina(): string {
   return new Date().toLocaleTimeString('pl-PL', {
     hour: '2-digit',

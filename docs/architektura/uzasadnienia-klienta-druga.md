@@ -5417,3 +5417,10 @@ trybu, który ją pokazuje.
 Komplet klas wpisu łączy budowę z biblioteki, klasę semantyczną nadawcy,
 stan pracy i dwie nazwy własne jako uchwyty rozpoznania. Klasa oznaczająca,
 że tura jeszcze biegnie, niesie kropkę tętna przy nadawcy.
+
+## budowa/klient-poprzedni/src/moduly/workspace/biblioteka-czynnosci.ts
+Osobny plik od okna, bo to inna odpowiedzialność: okno składa kontrolki i prowadzi stany, tu leży
+przebieg trzech czynności wraz z ich obsługą niepowodzenia. Wgranie pliku potrafi oddać plik
+z identyfikatorem projektu, którego wykaz biblioteki dla tego projektu nie pokaże — sam zapis
+pliku nie dowodzi więc wgrania do projektu, dlatego każde zdanie sukcesu bierze wartości
+z odpowiedzi i sprawdza skutek w wykazie zasobów.

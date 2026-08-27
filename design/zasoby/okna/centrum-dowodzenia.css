@@ -554,6 +554,14 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
      przycisków w pasie własnej wysokości i daje wstążce pionowy pasek
      przesuwania. Komplet przycisków lewego okna zajmuje 238 px i mieści się
      w domyślnej szerokości okna (280 px). */
+ 
+.cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; } /* Komplet przycisków wstążki jest szerszy niż wstążka przy najmniejszej
+     szerokości panelu (238 px zawartości wobec 201 px pola), więc pas przewija
+     się w poziomie zamiast ucinać ostatni przycisk. Sam pasek przesuwania jest
+     schowany — przewijanie idzie kółkiem i gestem. Dymki tego nie dotyczy:
+     stoją w oknie widoku, poza polem przycinania wstążki. */
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .cd-strona .dn-obszar-pasek .dn-obszar-sterowanie { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 .cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
@@ -772,12 +780,21 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
    od ikony. Współrzędne podaje więc mechanizm okna w `--cd-dymek-x` i
    `--cd-dymek-y`, liczone z prostokąta wyzwalacza i przyciśnięte do widoku.
    ========================================================================== */
-/* Umocowanie do okna widoku obowiązuje wyłącznie na wyzwalaczu bieżącym.
-   Zmienne własne dziedziczą się w dół drzewa, więc bez tego zawężenia dymek
-   dziecka brałby współrzędne przodka i lądował po drugiej stronie okna. */
-.cd-strona [data-etykietka][data-dymek='tak']::after {
+/* Umocowanie do okna widoku obowiązuje na KAŻDYM dymku, także spoczywającym:
+   dymek pozycjonowany względem wyzwalacza wchodzi do pola przewijania swojego
+   pojemnika i sam z siebie daje mu poziomy pasek, choć jest niewidoczny.
+   Spoczywający stoi poza widokiem, bo i tak ma zerowe krycie.
+
+   Współrzędne dostaje wyłącznie wyzwalacz bieżący. Zmienne własne dziedziczą
+   się w dół drzewa, więc bez tego zawężenia dymek dziecka brałby współrzędne
+   przodka i lądował po drugiej stronie okna. */
+.cd-strona [data-etykietka]::after {
   position: fixed;
   inset: auto;
+  left: -9999px;
+  top: -9999px;
+}
+.cd-strona [data-etykietka][data-dymek='tak']::after {
   left: var(--cd-dymek-x);
   top: var(--cd-dymek-y);
   transform: translate(-50%, var(--dn-od-05));

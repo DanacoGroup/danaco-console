@@ -17,7 +17,7 @@ export type ZnanySprawca =
   | { rodzaj: 'operator-tutaj' }
   /** Rdzeń nazwał: Operator — ale z innego klienta (drugie okno, telefon, AOD). */
   | { rodzaj: 'operator-gdzie-indziej' }
-  /** Rdzeń nazwał: Operator, a my nie znamy własnego identyfikatora klienta. */
+  /** Rdzeń nazwał: Operator, a nie jest znany własnego identyfikatora klienta. */
   | { rodzaj: 'operator-nieznane-urzadzenie' }
   /** Rdzeń nazwał: model w oknie roboczym, narzędziem przez MCP. */
   | { rodzaj: 'model' }

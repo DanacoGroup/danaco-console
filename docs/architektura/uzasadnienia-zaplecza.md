@@ -2260,3 +2260,21 @@ pośrednia na cztery wartości byłaby złożonością bez odbiorcy.
 Znalezisko nie ma stanu „przyjęte/odrzucone”. Skan jest pomiarem stanu
 repozytorium w danej chwili, a nie listą zadań: kolejny przebieg zakłada nowe
 znaleziska, a poprzednie zostają śladem tamtego pomiaru.
+## budowa/server/internal/store/migracja_145_developer_testy_pokrycie.sql
+Migracja 145 — wyniki testów i pokrycie kodu przebiegu budowania (Developer,
+okno Build Output).
+
+Wynik testu powstaje z rozbioru logu przebiegu w chwili jego domknięcia,
+a nie z ponownego odpytywania logu przy każdym żądaniu. Powód jest praktyczny:
+w dzienniku przebiegu zostaje wyłącznie OGON logu (rdzeń przycina go do
+kilkuset wierszy), więc wynik testu odczytany godzinę później nie miałby
+z czego powstać. Rozbiór idzie raz, kiedy pełne wyjście jeszcze płynie.
+
+Pokrycie ma własną tabelę, bo jest pomiarem pliku, a nie testu: jeden przebieg
+daje setki wyników testów i dziesiątki wierszy pokrycia, i nic ich nie łączy
+poza przebiegiem.
+
+`wiersze_bez_pokrycia` trzymamy jako tekst z numerami rozdzielonymi
+przecinkiem. Odbiorcą jest nakładka pokrycia w edytorze, która bierze ten
+zbiór w całości dla jednego pliku; tabela wiersz-na-wiersz rosłaby o rząd
+wielkości bez jednego pytania, na które odpowiadałaby lepiej.

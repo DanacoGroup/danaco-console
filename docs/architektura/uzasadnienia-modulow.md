@@ -539,3 +539,21 @@ mieści się w granicach treści panelu — potwierdzenie jest tu warunkiem, nie
 ostrożnością, bo numer znaku podany przez program zewnętrzny liczy się
 w jego własnej jednostce, a wstawienie poprawki pod numerem niesprawdzonym
 popsułoby treść panelu w miejscu wybranym przypadkiem.
+
+## budowa/server/internal/core/adapter_modul_badania_analiza.go
+
+Sprzeczność wykryta między ustaleniami jest bytem zapisanym w bazie, nie
+widokiem wyliczonym w locie: bez wiersza zapisanego w bazie rozstrzygnięcie
+sprzeczności nie miałoby czego adresować, a samo rozstrzygnięcie nie
+przeżyłoby odświeżenia panelu — sprzeczność wróciłaby do rozstrzygania
+w kółko przy każdym kolejnym wykryciu.
+
+Detekcja sprzeczności liczbowych heurystyką poprzedza wywołanie modelu:
+rozbieżność dwóch liczb w zdaniach o tym samym przedmiocie da się wskazać
+bez modelu, więc para ustaleń z tym samym rdzeniem słownym i różnymi
+liczbami wchodzi jako sprzeczność z podaną różnicą już samą heurystyką.
+Model dokłada sprzeczności, których sama liczba nie widzi, ale nie jest
+warunkiem, żeby detektor w ogóle zadziałał.
+
+Sprzeczność raz rozstrzygnięta nie wraca jako nowa przy kolejnym wykryciu:
+wykrycie ma pokazywać rozbieżności wciąż otwarte, nie budzić te już zamknięte.

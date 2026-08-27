@@ -3804,3 +3804,15 @@ albo zbiór danych, którego rdzeń nie trzyma jako pliku, treści nie ma dziś 
 to Operatorowi zamiast pokazywać pusty czytnik; dobudowa uchwytu własnej komendy tę granicę
 zdejmuje. Mechanizm podglądu jest wspólny z podglądem plików modułu biblioteki — Research nie
 buduje drugiego czytnika obok tamtego.
+
+## budowa/klient/src/wejscie/skladniki/belka-okna.ts
+Znak w belce dorównuje wielkością kontrolkom, więc niesie kropkę w barwie sygnału: przygaszony monochromat czyta się jak brakująca ikona.
+
+## budowa/klient/src/wejscie/skladniki/fraza-nawigacyjna.ts
+Fraza stoi w treści, nie w pasie działań — w pasie zostają same czynności, inaczej zdanie, czynność poboczna i główna nie mieszczą się w jednym wierszu.
+
+## budowa/klient/src/wejscie/skladniki/pasek-postepu.ts
+Miara jest daną, a wygląd należy do arkusza stylu. Rolę paska postępu niesie tor, bo to on wyraża postęp; nazwa toru opisuje rzecz, a nie powtarza etykietę nad nim.
+
+## budowa/klient/src/wejscie/skladniki/pole-sesji.ts
+Samo hasło "pozostań zalogowany" nie niesie ani jednego, ani drugiego bez opisu skutku. Zgoda idzie do rdzenia jako pole trwania sesji: sesja bramki dostaje trwanie długie zamiast doby roboczej. Bramką nie jest — znosi powtarzanie logowania, niczego nie blokuje.

@@ -1,2 +1,2 @@
-/* Przełącznik środowisk w pasie konsoli. */
-/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();
+/* Przełącznik środowisk w pasie konsoli zaznacza wybrane środowisko atrybutem stanu i pokazuje powiadomienie o module i panelach właściwych temu środowisku. */
+(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();

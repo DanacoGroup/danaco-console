@@ -1071,3 +1071,37 @@ Wpis o pochodzeniu model jest propozycją czekającą na decyzję Operatora. Prz
 Rada doradcy jest jawna i nie wolno pokazywać jej jako własnej odpowiedzi eksperta. Gdyby zdanie o pochodzeniu rady składał widok, pierwszy widok, który by tego zaniechał, pokazałby radę bez źródła. Dlatego zdanie o pochodzeniu powstaje jeden raz w zapisie prowenancji, a widok pobiera treść rady razem z tym zdaniem z jednego miejsca.
 
 Kontrakt nie zawiera pola prowenancji ani komendy zapisującej ją w bazie, więc prowenancja żyje dokładnie tyle, co widok, a wykaz konsultacji mówi o tym wprost. Przeniesienie rady do instrukcji eksperta zabiera ze sobą etykietę oraz oba zdania prowenancji, dzięki czemu po wklejeniu nadal widać, skąd akapit pochodzi.
+
+## budowa/klient-poprzedni/src/konfiguracja/indeks.ts
+
+Okno konfiguracji jest jedno na klienta i trwa między otwarciami z tego samego
+powodu, dla którego router nie porzuca widoku opuszczonej trasy: powtórne
+otwarcie wraca do kategorii, na której poprzednie się zakończyło, zamiast
+zaczynać od początku. Trwałość okna utrzymuje przy okazji subskrypcję zdarzenia
+`config.changed`, dzięki czemu zapis dokonany w innym miejscu produktu dociera
+również wtedy, gdy okno pozostaje zamknięte.
+
+Kanał podaje się przy pierwszym otwarciu. Wywołanie z innym kanałem, właściwe
+dla ponownego połączenia z rdzeniem, buduje okno od nowa, aby komendy nie szły
+przez transport, którego już nie ma.
+
+## budowa/klient-poprzedni/src/mobile/kwit-decyzji.ts
+
+Telefon jest kanałem interwencji, a nie miejscem pracy: Operator podejmuje jedną decyzję
+i odchodzi od urządzenia. Potwierdzenie wypisane w oknie ginie razem z oknem, a pytanie
+o wynik wraca później, bez dostępu do pulpitu. Kwit leży w pamięci trwałej przeglądarki,
+więc pierwsze, co telefon pokazuje po ponownym otwarciu, to zdanie o wykonanej interwencji
+wraz z godziną, nazwą pozycji i stanem potwierdzonym przez rdzeń.
+
+Kwit niesie zdanie rdzenia, nie widoku. Każdy krok zapisuje nazwę komendy, rozstrzygnięcie
+wywołania i stan po zmianie wyjęty z odpowiedzi rdzenia — stan kolejki, zatrzymanie, źródło
+konfiguracji. Kwit nieudany zapisuje treść odmowy, bo niepowodzenie także jest wiadomością,
+na którą Operator czeka.
+
+Magazyn jest wstrzykiwany, wzorem `uwierzytelnienie/sesja-bramki.ts`: domyślnie pamięć trwała
+okna, a w sprawdzianie atrapa. Błąd pamięci nie zatrzymuje drogi interwencji — brak magazynu
+znaczy, że kwitu nie da się zapisać, a nie że decyzja się nie wykonała. Stąd kolejność:
+najpierw wywołanie rdzenia, potem kwit.
+
+Urządzenie bez pamięci trwałej pokazuje wyłącznie potwierdzenie bieżące, a po zamknięciu
+telefonu go nie ma. Taki jest stan faktyczny takiego urządzenia i okno go nie ukrywa.

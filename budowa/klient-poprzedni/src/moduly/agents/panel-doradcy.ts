@@ -14,19 +14,8 @@ import { kanalyDoradcze, type ZrodloDoradcy } from './zrodlo-doradcy';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Panel „Doradca” Agent Buildera — konsultacja eksperta modelem silniejszym.
- *
- * Widok pokazuje naraz kogo zapytano, o co i co doradca odpowiedział. Treść
- * rady stoi pod etykietą `ETYKIETA_RADY` i nie trafia do pola instrukcji
- * eksperta sama z siebie — przeniesienie jest osobnym kliknięciem i niesie
- * nagłówek prowenancji (`prowenancja-rady.ts`).
- *
- * Wybierany jest kanał, nie nazwa modelu: rejestr kanałów (`channel.list`) jest
- * jedynym miejscem, w którym rdzeń wie, czym się połączyć i czyim
- * poświadczeniem. Wykaz obejmuje kanały czynne poza kanałem bazowym eksperta.
- *
- * Konsultacji nie da się zapisać w rdzeniu — kontrakt nie ma takiej komendy —
- * więc wykaz żyje tyle, co widok.
+ * Panel „Doradca” w edytorze eksperta zapytuje model wskazany kanałem o poradę i pokazuje razem
+ * pytanie, drogę konsultacji oraz odpowiedź, bez zapisu konsultacji w rdzeniu.
  */
 export interface PanelDoradcy {
   element: HTMLElement;
@@ -66,8 +55,7 @@ export function utworzPanelDoradcy(
 
   const zapytaj = przycisk('Zapytaj doradcę', 'dn-btn dn-btn--sm dn-btn--atrament');
 
-  // Opis obok kontrolki zamiast wygaszenia kontrolki — druga z dwóch dróg
-  // dopuszczonych przez zasadę zero blokad, obok komunikatu po naciśnięciu.
+  // Opis obok kontrolki sygnalizuje niegotowość obok komunikatu wyświetlanego po naciśnięciu.
   const gotowosc = document.createElement('p');
   gotowosc.className = 'dn-pole-opis da-doradca__gotowosc';
   gotowosc.hidden = true;
@@ -104,15 +92,7 @@ export function utworzPanelDoradcy(
     odpowiedz.dataset['powodzenie'] = String(powodzenie);
   }
 
-  /**
-   * Powód, dla którego pytanie nie ma dziś jak pojechać; pusty znaczy gotowość.
-   *
-   * Powód nie odbiera przycisku i nie może tego robić: platforma nie stawia
-   * bram, a niegotowość sygnalizuje się PO naciśnięciu — komunikatem — albo
-   * opisem obok kontrolki. Przycisk wygaszony zabierał Operatorowi jedyną
-   * drogę dowiedzenia się, czego brakuje, bo `title` bywa niedostępny
-   * z klawiatury i milczy na urządzeniu dotykowym.
-   */
+  /** Powód niegotowości pytania do doradcy; pusty napis znaczy, że doradcę można zapytać. */
   function powodNiegotowosci(): string {
     if (ekspertCzynny === null) return 'Wybierz eksperta w bibliotece, zanim zapytasz doradcę.';
     if (doradca.kontrolka.value === '') {
@@ -132,8 +112,7 @@ export function utworzPanelDoradcy(
   }
 
   async function konsultuj(): Promise<void> {
-    // Niegotowość rozstrzyga się po naciśnięciu, nie przed nim: Operator
-    // dostaje zdanie o tym, czego brakuje, zamiast kontrolki, która nie reaguje.
+    // Niegotowość rozstrzyga się po naciśnięciu: Operator dostaje zdanie o brakującym warunku.
     const brak = powodNiegotowosci();
     if (brak !== '') {
       powiedz(brak, false);
@@ -213,15 +192,17 @@ export function utworzPanelDoradcy(
   }
 }
 
-/** Nazwa kanału widziana przez Operatora; identyfikator, gdy kanał zniknął. */
+/**
+ * Nazwa kanału widziana przez Operatora na wykazie konsultacji; gdy kanał zniknął z rejestru,
+ * wiersz pokazuje sam identyfikator zamiast nazwy.
+ */
 function nazwaKanalu(kanal: Channel | undefined, idKanalu: string): string {
   return kanal === undefined ? idKanalu : kanal.name;
 }
 
 /**
- * Jeden wiersz wykazu konsultacji. Kolejność bloków jest celowa: etykieta
- * odróżniająca radę od odpowiedzi eksperta, droga konsultacji, pytanie, na
- * końcu treść rady — pochodzenie widać, zanim widać treść.
+ * Wiersz wykazu konsultacji układa kolejno etykietę rady, drogę konsultacji, zadane pytanie
+ * i treść odpowiedzi, tak aby pochodzenie rady było widoczne wcześniej niż jej treść.
  */
 function wierszRady(zapis: ZapisProwenancji, wstaw: (tresc: string) => void): HTMLElement {
   const etykieta = document.createElement('strong');
@@ -255,8 +236,7 @@ function wierszRady(zapis: ZapisProwenancji, wstaw: (tresc: string) => void): HT
   element.dataset['doradca'] = zapis.rada.kanalDoradcy;
   element.append(etykieta, naglowek, droga, zadane, tresc);
 
-  // Tura urwana oddaje treść częściową. Zdanie o stanie wchodzi przed treść,
-  // nie zamiast niej.
+  // Tura urwana oddaje treść częściową; zdanie o stanie wchodzi przed treść, nie zamiast niej.
   const stan = zdanieOStanie(zapis.rada.stan);
   if (stan !== '') {
     const ostrzezenie = document.createElement('p');

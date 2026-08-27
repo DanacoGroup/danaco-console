@@ -6392,3 +6392,24 @@ panelu metadanych i archiwum jest długi, bo warstwa czwarta modułu jest
 obszerna, a kontrakt niesie dla niej dokładnie jedną komendę, przeliczenie
 wskaźnika znaczenia w zakładce higieny; inaczej wykaz wyglądałby na listę
 rzeczy zapomnianych, a jest pomiarem kontraktu.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts
+Plik ma jedną odpowiedzialność: słowo mówione do operatora. Pliki budujące elementy nie trzymają ani jednego zdania, bo wtedy zmiana brzmienia wymagałaby wejścia w widok, a te same zdania powtarzałyby się w kilku oknach naraz, na wzór pliku `sterowanie/etykiety-sterowania.ts`. Zdania o brakach stoją tu razem z resztą: brak drogi w kontrakcie jest treścią widoku tak samo jak nazwa przycisku — okno ma go wypowiedzieć, nie przemilczeć.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — kody okien operacyjnych
+Kody okien operacyjnych modułu są bezmodułowe: migracja rejestru okien operacyjnych nadaje definicjom okien kody bez przedrostka modułu, więc kody przychodzące z pola `Module.operationalWindowCodes` zestawiają się wprost z tymi wartościami. Rejestr rdzenia niesie dziś wiersze trzech pierwszych okien. Automation Studio i Capture & Monitor Panel opracowanie modułu wymienia na równi z nimi, więc moduł je buduje i podaje ich kody katalogowi — pasek uczciwości wypowiada wtedy rozjazd („kody budowane, których rdzeń modułowi nie przypisuje") zamiast go przemilczeć.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — klasy dymka
+Klasy własne dymka stoją w jednym miejscu, bo sięga po nie każdy dymek modułu: rozpisane literałem rozjechałyby się przy pierwszej zmianie nazwy klasy w arkuszu stylu. Fabryka jest wspólna, wygląd znaku pozostaje modułu — pierścień o wymiarze pola wyboru zamiast bibliotecznego kwadratu ikony.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — barwy adnotacji
+Żeton i klasa barwy adnotacji stoją w jednym wierszu, bo opisują tę samą barwę dwiema drogami: arkusz maluje próbkę na przycisku regułą klasy barwy, a płótno rysunkowe nie zna zmiennej stylu i musi dostać żeton po nazwie, żeby rozwiązać go w chwili rysowania. Rozdzielone na dwa wykazy rozjechałyby się przy zmianie palety. Żetony są prymitywne, nie semantyczne: barwa stanu przełącza się wraz z motywem, a tusz adnotacji ma być ten sam w obrazie wysłanym z motywu jasnego i z ciemnego, bo załącznik ogląda się poza motywem.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — klasyfikacje notatki
+Kod klasyfikacji notatki jest kluczem pamięci widoku, nazwa — napisem dla operatora. Kontrakt pola klasyfikacji nie niesie, więc oznaczenie żyje w karcie sesji i panel mówi o tym wprost.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — pozycje nieobsłużone
+Zdania o powodzie braku obsługi nie ma tutaj ani jednego. Powód rozstrzyga się przy oknie, z odczytu wykazu komend rdzenia: kontrakt komendę niesie, a rdzeń może mieć albo nie mieć jej uchwytu — i to się zmienia wraz z rdzeniem, nie wraz z tym plikiem. Zdanie wpisane tu na sztywno przestałoby być prawdziwe w dniu dobudowy obsługi i nikt by go nie zdjął. Nazwa komendy pochodzi wyłącznie ze stałych kontraktu, żeby zmiana jej nazwy w kontrakcie nie zostawiła w oknie zdania o komendzie, której już nie ma.
+
+## budowa/klient-poprzedni/src/moduly/agents/panel-doradcy.ts
+Treść rady stoi pod etykietą rady i nie trafia do pola instrukcji eksperta sama z siebie — przeniesienie jest osobnym kliknięciem i niesie nagłówek prowenancji. Wybierany jest kanał, nie nazwa modelu: rejestr kanałów jest jedynym miejscem, w którym rdzeń wie, czym się połączyć i czyim poświadczeniem; wykaz obejmuje kanały czynne poza kanałem bazowym eksperta. Powód nie odbiera przycisku i nie może tego robić, bo platforma nie stawia bram, a niegotowość sygnalizuje się po naciśnięciu komunikatem albo opisem obok kontrolki — przycisk wygaszony zabierałby Operatorowi jedyną drogę dowiedzenia się, czego brakuje, skoro tytuł bywa niedostępny z klawiatury i milczy na urządzeniu dotykowym.

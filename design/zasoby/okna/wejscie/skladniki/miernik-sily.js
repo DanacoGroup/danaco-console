@@ -1,10 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — MIERNIK SIŁY HASŁA
-
-   Cztery odcinki toru, zdanie o wyniku i cztery warunki. Znak warunku różni
-   się KSZTAŁTEM, nie samą barwą: niespełniony niesie puste kółko, spełniony
-   ptaszka. Ptaszek w każdym stanie czytał się jako „zrobione", a barwa jako
-   jedyna różnica łamie WCAG 1.4.1.
+/* Miernik siły hasła pokazuje cztery odcinki toru, zdanie o wyniku oraz cztery warunki, których spełnienie znak odróżnia kształtem, nie samą barwą.
+   Warunek niespełniony niesie puste kółko, spełniony ptaszek, ponieważ barwa
+   jako jedyna różnica narusza normę WCAG 1.4.1.
 
    Miernik wiąże się z polem przez `data-sila-dla`, nie przez sąsiedztwo
    w drzewie — sąsiedztwo bywa różne w różnych oknach i cicho się rozjeżdża.

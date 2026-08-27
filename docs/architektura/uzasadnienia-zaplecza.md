@@ -3036,3 +3036,6 @@ Przebudowa idzie parami, bo `debata_wypowiedz` wiąże się kluczem obcym
 z `debata_tura`: przemianowanie tabeli wskazywanej przeciąga za sobą
 deklarację klucza w tabeli wskazującej, więc obie muszą powstać na nowo
 w jednym kroku.
+
+## budowa/desktop/src-tauri/src/rdzen/nasluch.rs
+Rdzeń stoi na serwerze wdrożenia, a nie na urządzeniu Operatora, więc pytanie o łączność idzie zawsze pod wskazany serwer, nigdy pod pętlę zwrotną — pętla zwrotna dawałaby odpowiedź fałszywą niezależnie od rzeczywistego stanu rdzenia.

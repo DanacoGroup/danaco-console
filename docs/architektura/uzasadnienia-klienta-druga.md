@@ -5632,3 +5632,13 @@ wykres jest odmową nazwaną, widoczną przed próbą i kierującą do modułu p
 rachunku wykresu nie ma i okno tego nie udaje; odpowiedź o nieusunięciu jest czytana jako wynik,
 nie jako awaria, i nie zdejmuje obiektu z wykazu; brak tekstu zastępczego jest nazwany, bo
 wydanie bez obrazów inaczej nie powie, co w dokumencie stało.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/profile-widok.ts
+Przy każdym wierszu stoją trzy czynności i dwie z nich łatwo pomylić. Wczytanie pobiera profil do
+podglądu i do formularza — żaden poziom zasięgu po nim nie działa inaczej. Przypisanie do poziomu
+dopiero wiąże profil z wybranym poziomem i warstwą, i to po niej izolacja faktycznie się zmienia.
+Obie stoją obok siebie, więc różnica jest wypisana słowami przy każdym wierszu, a nie domyślana
+z kolejności przycisków. Usunięcie usuwa od razu — bez pytania o potwierdzenie, bez wygaszania, bez
+uprawnień. Profil izolacji rozstrzyga, co model widzi z sąsiedniego okna, i zmienia się na żądanie;
+skutek usunięcia stoi wprost przy przycisku. Ten plik nie woła rdzenia. Buduje węzły i oddaje
+naciśnięcia wywołującemu; nie zna ani jednej komendy, ani jednej barwy.

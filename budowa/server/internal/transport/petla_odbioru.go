@@ -13,30 +13,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// petlaOdbioru czyta komunikaty urządzenia i kieruje je do rdzenia.
-//
-// kontekstRdzenia jest kontekstem serwera, nie połączenia: rozłączenie klienta
-// nie przerywa pracy już rozpoczętej przez rdzeń — sesja, okno i proces biegną
-// dalej, a wynik trafi do pozostałych urządzeń konta rozgłoszeniem.
-//
-// zrodloRdzenia jest dostawcą bieżącej realizacji obsługi komend, a nie
-// wartością zamrożoną w chwili nawiązania. Rdzeń podłącza się po utworzeniu
-// serwera (PodlaczRdzen); połączenie nawiązane, zanim to nastąpi, musiałoby
-// wtedy trzymać nil-rdzeń na całe swoje życie. Pobranie rdzenia dopiero przy
-// obsłudze komunikatu sprawia, że komendy z takiego połączenia zaczynają być
-// obsługiwane, gdy tylko rdzeń zostanie podłączony.
-// straz jest rozstrzygnięciem o wystawieniu nasłuchu ustalonym raz, przy
-// normalizacji ustawień (`bramka.go`). Idzie przez pętlę odbioru do wykonania,
-// bo tam stoi jedyne wejście żądania do rdzenia.
+// Metoda petlaOdbioru czyta komunikaty urządzenia i kieruje je do rdzenia w kontekście serwera, nie połączenia.
 func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, straz straznikBramki) {
 	for {
 		_, dane, err := p.gniazdo.Read(p.kontekst)
 		if err != nil {
-			// Powód bierze się z błędu, nie ze stałej. Odczyt kończy się nie
-			// tylko odejściem urządzenia: przekroczenie LimitOdczytu zamyka
-			// gniazdo od strony rdzenia (kodem 1009), tak samo błąd ramkowania
-			// i zerwanie sieci. Linia dziennika jest jedynym trwałym śladem po
-			// takim zdarzeniu, więc ma nazwać, co naprawdę zaszło.
+			// Powód bierze się z błędu, nie ze stałej, bo linia dziennika ma nazwać, co naprawdę zaszło.
 			p.Zamknij(powodRozlaczenia(err))
 			return
 		}
@@ -44,13 +26,7 @@ func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia
 	}
 }
 
-// powodRozlaczenia nazywa koniec odczytu i nie zmyśla winnego. Odczyt kończy
-// się na cztery sposoby: przekroczenie LimitOdczytu zamyka gniazdo od strony
-// rdzenia (biblioteka odsyła kod 1009), zatrzymanie rdzenia zamyka je z woli
-// procesu, zerwanie sieci nie jest niczyją decyzją, a odejście urządzenia zamyka
-// je od jego strony. Linia dziennika jest jedynym trwałym śladem po rozłączeniu,
-// więc niesie to, co naprawdę zaszło, razem ze zdaniem biblioteki jako
-// szczegółem.
+// Funkcja powodRozlaczenia nazywa koniec odczytu i nie zmyśla winnego, niosąc prawdziwy powód rozłączenia gniazda.
 func powodRozlaczenia(err error) string {
 	if status := websocket.CloseStatus(err); status != -1 {
 		return fmt.Sprintf("kanał zamknięty przez urządzenie (kod %d)", status)
@@ -61,19 +37,7 @@ func powodRozlaczenia(err error) string {
 	return "odczyt przerwany: " + err.Error()
 }
 
-// przedstawZPowitania wyjmuje `clientId` z ładunku powitania i dokłada go do
-// tożsamości połączenia.
-//
-// Dlaczego tu, a nie w rdzeniu. Tożsamość jest własnością połączenia i mieszka
-// przy nim (`tozsamosc.go`); rdzeń ją czyta, a nie zapisuje. Gdyby zapisywał,
-// musiałby dostać ujście do ręki — a ujście do rdzenia świadomie nie idzie
-// (`core/adapter_transportu.go`: druga droga wyjścia obok Nadajnika).
-// Odczyt jest czysty: transport bierze pole, którego kształt i tak zna
-// z kontraktu, i nie rozstrzyga o nim niczego.
-//
-// Odczyt dzieje się przed oddaniem żądania rdzeniowi, więc zdarzenia rozgłoszone
-// przez samo powitanie znają już klienta. Ładunek nieczytelny albo pole puste
-// zostawia tożsamość nietkniętą — powitanie ma się udać zawsze.
+// Metoda przedstawZPowitania wyjmuje identyfikator klienta z ładunku powitania i dokłada go do tożsamości połączenia.
 func (p *Polaczenie) przedstawZPowitania(zadanie protocol.Request) {
 	if zadanie.Komenda != shared.CommandConnectionHello {
 		return
@@ -85,12 +49,7 @@ func (p *Polaczenie) przedstawZPowitania(zadanie protocol.Request) {
 	p.PrzedstawKlienta(powitanie.ClientId)
 }
 
-// przyjmij rozpoznaje komunikat i oddaje go rdzeniowi.
-//
-// Każde żądanie idzie osobnym biegiem, więc komenda długotrwała (message.send)
-// nie zatrzymuje odczytu i komenda przerywająca (message.stop) dociera w trakcie
-// jej wykonania. Odpowiedź niesie identyfikator żądania, więc kolejność
-// odpowiedzi nie ma znaczenia dla korelacji.
+// Metoda przyjmij rozpoznaje komunikat i oddaje go rdzeniowi, uruchamiając obsługę każdego żądania osobnym biegiem.
 func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, straz straznikBramki, dane []byte) {
 	zadanie, err := protocol.OdkodujZadanie(dane, rejestr)
 	if err != nil {
@@ -104,8 +63,7 @@ func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia fun
 	praca.Add(1)
 	go func() {
 		defer praca.Done()
-		// Rdzeń pobierany dopiero tutaj — w chwili obsługi komunikatu, nie
-		// nawiązania połączenia — więc odzwierciedla stan po każdym PodlaczRdzen.
+		// Rdzeń pobierany dopiero tutaj, przy obsłudze komunikatu, odzwierciedla stan po podłączeniu rdzenia.
 		rdzen := zrodloRdzenia()
 		odpowiedz := wykonajBezpiecznie(kontekstRdzenia, rdzen, zadanie, p, straz, p.dziennik)
 		if odpowiedz.Type == "" {

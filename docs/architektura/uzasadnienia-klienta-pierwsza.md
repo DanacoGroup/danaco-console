@@ -4144,3 +4144,18 @@ jako podstawa trafienia. Pokazany fragment pozwala Operatorowi sprawdzić
 dopasowanie zamiast przyjmować je na wiarę, a długi fragment zostaje skrócony.
 Trafność wchodzi do zdania tylko wtedy, gdy rdzeń ją podał, ponieważ wartość
 dopisana przez okno wyglądałaby na pomiar.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-narzedzi.ts
+
+Wywołania dzielą się na trzy rodziny, a każda odpowiada za inne pytanie okna.
+Komenda `tools.catalog.list` podaje, co w ogóle da się wywołać po ukośniku:
+narzędzia, umiejętności i komendy akcji w jednym wykazie. Rodzina
+`session.tool.*` podaje, co z tego jest dołożone do bieżącej karty sesji;
+dołożenie żyje w stanie sesji i nie rusza definicji eksperta. Rodzina
+`automation.*` prowadzi makro i rutynę asystenta do modułu Automations — rdzeń
+nie ma innego magazynu sekwencji kroków, więc jest to jedyne miejsce, w którym
+makro przeżywa sesję.
+
+Komenda `schedule.get` stoi po stronie odczytu do pary z
+`automation.schedule.set`. Bez niej okno pokazywałoby harmonogram, który samo
+wysłało, zamiast tego, który rdzeń trzyma.

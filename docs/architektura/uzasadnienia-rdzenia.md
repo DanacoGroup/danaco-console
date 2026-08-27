@@ -1486,3 +1486,16 @@ dokument złożony, którego rdzeń sam nie umie odczytać, potrzebuje programu
 zarejestrowanego w systemie pod tym czasownikiem. Gdy taki program nie jest
 zarejestrowany, odmowa mówi to wprost zamiast milczeć — plik wysłany
 w nicość wygląda jak wydruk, który się nie pojawił.
+
+## adapter_rozmowa.go
+
+Osłona gorutyny tury w `prowadzTure` jest rejestrowana pierwsza, więc przy panice biegnie
+ostatnia — dopiero po tym, jak strumień domknie się awaryjnie i bieg zostanie zapomniany;
+klient dostaje więc znacznik końca, a wpis rozmowy wychodzi ze stanu `strumien`, zanim
+panika przestanie lecieć. Bez tej osłony każda usterka adaptera w torze tury gasi cały
+rdzeń, a nie jedną turę: panika w gorutynie nie ma kto przechwycić i proces ginie z sesją,
+kolejką i połączeniem Operatora naraz — tak wywracał go pusty wskaźnik portu doraźnych
+dołożeń, jedna wada jednego adaptera zabierała całą pracę. Osłona nie jest zgodą na
+usterki i niczego nie ucisza: powód idzie do dziennika ze śladem stosu, żeby wada została
+zgłoszona jako wada, a nie zniknęła w ciszy; miarą jest to, że Operator traci jedną
+odpowiedź zamiast całej sesji.

@@ -15,29 +15,21 @@ import (
 )
 
 // adapterRozmowy wypełnia port Rozmowa: przyjmuje wiadomość okna, kieruje ją do
-// kanału modelu z rejestru i odsyła odpowiedź strumieniem.
-//
-// Odpowiedź komendy potwierdza przyjęcie wiadomości od razu, a treść modelu idzie
-// osobno — tura trwa dłużej niż wykonanie komendy, a klient nie może czekać na
-// potwierdzenie do końca odpowiedzi.
+// kanału modelu z rejestru i odsyła odpowiedź strumieniem, podczas gdy komenda
+// potwierdza przyjęcie wiadomości od razu, bez czekania na koniec odpowiedzi.
 type adapterRozmowy struct {
 	nadzorca *session.Nadzorca
 	kanaly   *models.Rejestr
 	nadajnik Nadajnik
 	dziennik *dziennikRozmowy
 	zycie    context.Context
-	// petla prowadzi bieg koordynator–wykonawca. Pusta pętla nie blokuje
-	// rozmowy — okno samodzielne pracuje bez niej.
+	// petla prowadzi bieg koordynator–wykonawca; okno samodzielne pracuje bez niej.
 	petla *session.Petla
 	// tozsamosc podaje nakładkę obowiązującą okna.
 	tozsamosc Tozsamosc
-	// agenci podają tożsamość eksperta wskazanego przez okno: warstwy promptu,
-	// model bazowy i nastawy procesu. Port pusty znaczy okno na modelu surowym.
+	// agenci podają tożsamość eksperta okna; port pusty znaczy model surowy.
 	agenci ZrodloTozsamosciAgenta
-	// dolozeniaSesji podaje doraźne dołożenia — drugie źródło zestawu narzędzi
-	// tury (adapter_rozmowa_zestaw.go). Pierwszym jest ekspert okna, wskazany
-	// portem `agenci` wyżej. Port pusty nie odbiera modelowi narzędzi: tura
-	// jedzie samą podstawą eksperta i melduje powód do dziennika rdzenia.
+	// dolozeniaSesji podaje doraźne dołożenia narzędzi tury, obok eksperta okna.
 	dolozeniaSesji DolozeniaNarzedziSesji
 	// zgloszoneZestawy pilnuje, by powód zestawu szedł do dziennika raz na
 	// powód, a nie raz na turę.
@@ -46,28 +38,17 @@ type adapterRozmowy struct {
 	// nadań okna.
 	katalog *KatalogRoboczy
 	mosty   *mostyOkna
-	// ciaglosc utrwala identyfikator rozmowy programu CLI przy oknie, dzięki
-	// czemu kolejna tura wznawia rozmowę zamiast zaczynać od zera.
-	// Port pusty nie blokuje rozmowy — znika tylko ciągłość.
+	// ciaglosc utrwala identyfikator rozmowy CLI; port pusty zaczyna każdą turę od zera.
 	ciaglosc CiagloscRozmowy
 	// wykonanie podaje nakład rozumowania i model zapasowy z konfiguracji.
-	// Port pusty zostawia decyzję kanałowi.
 	wykonanie ParametryWykonania
-	// konfiguracja odczytuje obowiązującą konfigurację sesji i tłumaczy jej
-	// obszary na wejście procesu (adapter_rozmowa_konfiguracja.go). Port pusty
-	// zostawia turę na wartościach okna i wiersza rejestru.
+	// konfiguracja tłumaczy obowiązującą konfigurację sesji na wejście procesu.
 	konfiguracja CzytelnikKonfiguracjiSesji
-	// zdarzenia utrwala zamknięcia tur. Port pusty nie blokuje rozmowy — znika
-	// wyłącznie dowód rozstrzygnięcia.
+	// zdarzenia utrwala zamknięcia tur; port pusty zostawia rozmowę bez dowodu rozstrzygnięcia.
 	zdarzenia *zdarzeniaWykonawcze
-	// bloki utrwala nietekstowe fragmenty strumienia w trakcie tury:
-	// rozumowanie, narzędzia, prowenancję. Port pusty nie blokuje rozmowy —
-	// historia wraca wtedy samym tekstem.
+	// bloki utrwala fragmenty nietekstowe tury; port pusty zwraca historię samym tekstem.
 	bloki *rejestratorBlokow
-	// zalaczniki jest magazynem bajtów załącznika wiadomości
-	// (adapter_rozmowa_zalaczniki.go). Magazyn pusty nie blokuje tury, ale
-	// załącznik niosący bajty zostaje wtedy niedoręczony i tura mówi to
-	// modelowi wprost, zamiast milczeć.
+	// zalaczniki jest magazynem bajtów załącznika; pusty zostawia go niedoręczonym, nazwanym wprost.
 	zalaczniki *magazynTresciBiblioteki
 
 	mu       sync.Mutex
@@ -112,36 +93,29 @@ func (a *adapterRozmowy) ZBlokami(b *rejestratorBlokow) *adapterRozmowy {
 	return a
 }
 
-// ZZalacznikami wpina magazyn załączników rozmowy nad katalogiem danych
-// wskazanym konfiguracją procesu — tą samą wartością, którą montaż podaje
-// sejfowi poświadczeń i magazynowi biblioteki (jedna prawda o katalogu).
-// Adapter bez tego portu prowadzi rozmowę, ale załącznik niosący bajty jedzie
-// do modelu jako niedoręczony, nie jako cisza.
+// ZZalacznikami wpina magazyn załączników nad katalogiem danych procesu —
+// tym samym, który montaż podaje sejfowi poświadczeń i bibliotece. Adapter
+// bez tego portu wysyła załącznik do modelu jako niedoręczony, nie jako ciszę.
 func (a *adapterRozmowy) ZZalacznikami(katalogDanych string) *adapterRozmowy {
 	a.zalaczniki = magazynZalacznikow(katalogDanych)
 	return a
 }
 
-// Wyslij przyjmuje wiadomość użytkownika i otwiera turę okna.
+// Wyslij przyjmuje wiadomość użytkownika, dopisuje ją do dziennika rozmowy
+// i otwiera turę okna gorutyną osobną od odpowiedzi tej komendy.
 func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest) (shared.MessageSendResponse, error) {
 	okno, err := a.nadzorca.Rejestr().Okno(z.WindowId)
 	if err != nil {
 		return shared.MessageSendResponse{}, bladSesji(err)
 	}
-	// Zajęcie okna idzie przed dziennikiem. Okno prowadzące turę odmawia
-	// (adapter_rozmowa_przerwanie.go), a odmowa nie może zostawić po sobie
-	// dwóch wierszy w dzienniku rozmowy — pytania, które nie pojechało, i
-	// odpowiedzi, która nigdy nie ruszy. Odwołanie tury powstaje więc tutaj,
-	// a nie po zapisie: wcześniej nie ma czego zajmować.
+	// Zajęcie okna idzie przed dziennikiem, żeby odmowa nie zostawiła pytania bez odpowiedzi.
 	kontekst, anuluj := context.WithCancel(a.zycie)
 	if !a.zajmijBieg(okno.Id, anuluj) {
 		anuluj()
 		return shared.MessageSendResponse{}, odmowaTuryWBiegu(okno.Id)
 	}
 
-	// Atrybucja tury: obie wiadomości powstają w tym samym oknie i w tej samej
-	// roli pętli, więc niosą tę samą metrykę — inaczej pytanie i odpowiedź jednego
-	// obiegu rozjechałyby się w kolumnach `persona` i `okno_zrodlowe_id`.
+	// Obie wiadomości tury niosą tę samą atrybucję okna i roli pętli.
 	atrybucja := atrybucjaOkna(okno)
 	pytanie := shared.Message{
 		Id: identyfikatorWiadomosci(), WindowId: okno.Id, SessionId: okno.IdSesji,
@@ -158,10 +132,7 @@ func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest
 	a.dziennik.Dopisz(pytanie)
 	a.dziennik.Dopisz(odpowiedz)
 
-	// Tożsamość strumienia zdejmuje się tutaj, a nie w turze: kontekst tury
-	// wisi na życiu adaptera (`a.zycie`), więc wpisu żądania już nie niesie.
-	// Zastępczo — dla tury powołanej poza drogą komendy — idzie identyfikator
-	// pytania.
+	// Tożsamość strumienia zdejmuje się tu — kontekst tury nie niesie już wpisu żądania.
 	idZadania := protocol.TozsamoscStrumienia(ctx, pytanie.Id)
 
 	go a.prowadzTure(kontekst, okno, pytanie, odpowiedz, idZadania)
@@ -169,31 +140,19 @@ func (a *adapterRozmowy) Wyslij(ctx context.Context, z shared.MessageSendRequest
 	return shared.MessageSendResponse{Message: pytanie}, nil
 }
 
-// Wykaz zwraca wiadomości okna.
+// Wykaz zwraca wiadomości okna z dziennika rozmowy wraz ze znacznikiem,
+// czy poza zwróconą stroną stoją wiadomości starsze.
 func (a *adapterRozmowy) Wykaz(_ context.Context, z shared.MessageListRequest) (shared.MessageListResponse, error) {
 	wiadomosci, sastarsze := a.dziennik.Wykaz(z.WindowId, z.Before, z.Limit)
 	return shared.MessageListResponse{Messages: wiadomosci, HasMore: sastarsze}, nil
 }
 
-// prowadzTure wykonuje jedną turę kanału modelu i odsyła jej strumień.
+// prowadzTure wykonuje jedną turę kanału modelu i odsyła jej strumień; biegnie
+// własną gorutyną, więc każda usterka w jej torze musi zostać przechwycona tutaj.
 func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno,
 	pytanie, odpowiedz shared.Message, idZadania string) {
 
-	// Osłona gorutyny tury. Rejestrowana PIERWSZA, więc przy panice biegnie
-	// OSTATNIA — dopiero po tym, jak strumień domknie się awaryjnie, a bieg
-	// zostanie zapomniany. Klient dostaje więc znacznik końca i wpis rozmowy
-	// wychodzi ze stanu `strumien`, a dopiero potem panika przestaje lecieć.
-	//
-	// Bez tej osłony KAŻDA usterka adaptera w torze tury gasi cały rdzeń, a nie
-	// jedną turę: panika w gorutynie nie ma kto przechwycić i proces ginie
-	// z sesją, kolejką i połączeniem Operatora naraz. Tak wywracał go pusty
-	// wskaźnik portu doraźnych dołożeń — jedna wada jednego adaptera zabierała
-	// całą pracę.
-	//
-	// Osłona NIE jest zgodą na usterki i niczego nie ucisza: powód idzie do
-	// dziennika ze śladem stosu, żeby wada została zgłoszona jako wada, a nie
-	// zniknęła w ciszy. Miarą jest to, że Operator traci jedną odpowiedź zamiast
-	// całej sesji.
+	// Osłona gorutyny tury: bez niej panika w torze tury gasi cały rdzeń.
 	defer func() {
 		powod := recover()
 		if powod == nil {
@@ -208,9 +167,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 	defer a.zapomnijBieg(okno.Id)
 
 	strumien := nowyNadawcaStrumienia(a.nadajnik, idZadania, okno.IdSesji)
-	// Wywołanie niżej domyka strumień także wtedy, gdy tura wyleci stąd
-	// panicznie: bez niego klient czekałby na znacznik końca, który nigdy by
-	// nie przyszedł, a wpis rozmowy stałby w stanie `strumien` na zawsze.
+	// Domyka strumień także wtedy, gdy tura wyleci stąd panicznie.
 	defer strumien.DomknijAwaryjnie(okno.Id, odpowiedz.Id)
 	var tresc strings.Builder
 	var idRozmowy string
@@ -219,17 +176,12 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 		if f.Kind == shared.ChunkKindText {
 			tresc.WriteString(models.TrescFragmentu(f))
 		}
-		// Zamknięcie tury przychodzi w ostatnim fragmencie. Zdejmujemy je
-		// tutaj, bo po zamknięciu strumienia nie ma już do niego drogi:
-		// identyfikator rozmowy domyka ciągłość, a całe zdarzenie rozstrzyga
-		// stan odpowiedzi i jedzie do tabeli zamknięć.
+		// Zamknięcie tury zdejmujemy tu — po zamknięciu strumienia nie ma już do niego drogi.
 		if z, jest := zamkniecieZFragmentu(f.Data); jest {
 			zamkniecie = &z
 			idRozmowy = z.IdRozmowyCLI
 		}
-		// Bloki nietekstowe (rozumowanie, narzędzia, prowenancja) jadą do bazy
-		// w trakcie tury, nie po niej — po zamknięciu strumienia nie ma już do
-		// nich drogi, a tekst i tak domknie dziennik.
+		// Bloki nietekstowe jadą do bazy w trakcie tury, nie po niej.
 		if a.bloki != nil {
 			a.bloki.Zanotuj(f)
 		}
@@ -239,43 +191,29 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 		return strumien.Fragment(ctx, f)
 	})
 
-	// Załączniki rozstrzygamy przed złożeniem zapytania: odwołanie niosące bajty
-	// staje się ścieżką na nośniku, a ścieżka wchodzi do treści pytania — kanał
-	// CLI nie ma pola na załącznik (adapter_rozmowa_zalaczniki.go).
+	// Załączniki rozstrzygamy przed zapytaniem: bajty stają się ścieżką w treści pytania.
 	zapytanie := zapytanieKanalu(okno, pytanie, odpowiedz, rozwiazZalaczniki(a.zalaczniki, pytanie.Attachments))
-	// Pamięć rozmowy: wcześniejsze wypowiedzi tego okna, bez bieżącej (ta jedzie
-	// w Tresc). Kanał bezstanowy (api) składa z niej kontekst wywołania, dzięki
-	// czemu odpowiada na całą rozmowę, a nie na turę od zera. Kanał
-	// z własną pamięcią (cli przez Wznowienie) może ją pominąć.
+	// Pamięć rozmowy niesie wcześniejsze wypowiedzi okna dla kanału bezstanowego.
 	zapytanie.Historia = a.historiaRozmowy(okno.Id, pytanie.Id)
-	// Wznowienie ustawiamy przed turą: puste znaczy „rozmowa nowa", niepuste
-	// trafia do `--resume` w argumentach procesu (injection/argumenty.go).
+	// Wznowienie puste znaczy „rozmowa nowa", niepuste trafia do `--resume`.
 	if a.ciaglosc != nil {
 		zapytanie.Wznowienie = a.ciaglosc.Przypomnij(kontekst, okno.Id)
 	}
 	zapytanie.Nakladka = a.nakladkaOkna(kontekst, okno)
 	a.uzupelnijSrodowisko(kontekst, okno, &zapytanie)
-	// Konfiguracja sesji dokłada rozstrzygnięcia obowiązujące: model i konto
-	// wywołania oraz powierzchnię procesu (ustawienia, środowisko, MCP). Idzie po
-	// uzupelnijSrodowisko, bo wskazanie per sesja/okno wygrywa z wartością okna
-	// tam, gdzie obszar jest wypełniony.
+	// Konfiguracja sesji idzie po środowisku okna — wskazanie sesji wygrywa.
 	a.uzupelnijKonfiguracje(kontekst, okno, &zapytanie)
-	// Ekspert nakłada się na końcu — model, ustawienia i mosty MCP wskazane
-	// przez niego mają ostatnie słowo, tak samo jak jego warstwy promptu.
+	// Ekspert nakłada się na końcu — jego ustawienia mają ostatnie słowo.
 	a.uzupelnijAgenta(kontekst, okno, &zapytanie)
 
 	err := a.kanaly.Wyslij(kontekst, zapytanie, ujscie)
-	// Kanał odmówił, zanim cokolwiek doszło do odbiorcy — tura może pojechać
-	// kanałem zapasowym wiersza rejestru, jawnie (adapter_rozmowa_zapas.go).
+	// Kanał odmówił bez dostawy — tura może pojechać kanałem zapasowym.
 	if zapasMozliwy(kontekst, err, tresc.Len() > 0, zamkniecie != nil) {
 		err, _ = a.pojedzZapasem(kontekst, zapytanie, ujscie, err)
 	}
-	// Utrwalenie idzie po turze i niezależnie od jej powodzenia: rozmowa mogła
-	// powstać po stronie programu `claude` nawet wtedy, gdy tura skończyła się
-	// błędem, a jej porzucenie kosztowałoby całą historię kontekstu.
+	// Utrwalenie idzie po turze niezależnie od jej powodzenia.
 	if a.ciaglosc != nil && idRozmowy != "" {
-		// Nieutrwalona ciągłość nie przerywa tury — następna zacznie rozmowę
-		// od nowa, co jest gorsze, ale nie jest awarią.
+		// Nieutrwalona ciągłość nie przerywa tury — następna zaczyna od zera.
 		_ = a.ciaglosc.Zapamietaj(kontekst, okno.Id, idRozmowy)
 	}
 	strumien.Zakoncz(okno.Id, odpowiedz.Id, tresc.String(), err)
@@ -284,8 +222,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 	}
 
 	odpowiedz.Content = tresc.String()
-	// Stan odpowiedzi rozstrzyga zdarzenie zamknięcia tury, nie słowo modelu:
-	// `is_error` zdarzenia `result` wygrywa z treścią.
+	// Stan odpowiedzi rozstrzyga zdarzenie zamknięcia tury, nie słowo modelu.
 	odpowiedz.Status = stanOdpowiedziZeZdarzen(kontekst, err, zamkniecie)
 	if a.zdarzenia != nil {
 		a.zdarzenia.ZanotujZamkniecie(okno.Id, odpowiedz.Id, zamkniecie, odpowiedz.Status)
@@ -294,13 +231,9 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 	a.rozglosWiadomosc(kontekst, odpowiedz)
 }
 
-// zapytanieKanalu składa zapytanie kanału z parametrów okna. Kanał nie sięga po
-// konfigurację sam — parametry przychodzą z okna, najwęższego poziomu zasięgu.
-//
-// Załączniki jadą w treści, bo kanał nie ma na nie pola: `models.Zapytanie`
-// przekłada się na `injection.Zapytanie`, które niesie jedno wejście rozmowy
-// (`Tekst`, stdin JSON-lines). Wplecione są odwołaniami nazwanymi (ścieżkami),
-// nie treścią: model sięga po plik narzędziem.
+// zapytanieKanalu składa zapytanie kanału z parametrów okna, najwęższego
+// poziomu zasięgu; kanał nie sięga po konfigurację sam. Załączniki jadą
+// w treści jako odwołania nazwane, ścieżkami, nie samą treścią bajtów.
 func zapytanieKanalu(okno session.Okno, pytanie, odpowiedz shared.Message, zalaczniki []zalacznikTury) models.Zapytanie {
 	return models.Zapytanie{
 		Zasiegi:             models.Zasiegi{Sesja: okno.IdSesji, Okno: okno.Id},
@@ -315,34 +248,19 @@ func zapytanieKanalu(okno session.Okno, pytanie, odpowiedz shared.Message, zalac
 }
 
 // metadaneNadania są tą częścią obszaru `Metadata` wiadomości, którą warstwa
-// trwałości przenosi do kolumn tabeli `wiadomosc` (`persona`, `okno_zrodlowe_id`).
-// Kształt jest powtórzony po nazwach kluczy, a nie zaimportowany: odpowiadający
-// mu typ warstwy danych jest jej prywatny, a rdzeń do środka warstwy nie sięga.
-// Klucze muszą zgadzać się co do znaku z `metadaneWiadomosci` w `dane/rozmowa.go`,
-// bo to one zamykają obieg zapis → kolumna → odczyt.
-//
-// Zużycia tokenów tu nie ma: podsumowanie tury kanału głównego
-// (`injection.ZakonczenieTury`) niesie koszt, liczbę tur i czas trwania, ale
-// surowe `usage` zdarzenia `result` zostaje w pakiecie `injection`. Wpisanie zer
-// wyglądałoby na zmierzone „zero tokenów", więc pola zostają nieobecne.
+// trwałości przenosi do kolumn tabeli `wiadomosc`; kształt jest powtórzony po
+// nazwach kluczy warstwy danych, nie zaimportowany, bo ten typ jest jej prywatny.
 type metadaneNadania struct {
 	Persona        string `json:"persona,omitempty"`
 	OknoZrodloweId string `json:"sourceWindowId,omitempty"`
 }
 
-// atrybucjaOkna składa metadane wiadomości nadawanej w oknie. Obie wartości
-// czyta z samego okna — rdzeń nie dolicza tu niczego, czego okno nie wie.
-//
-// Okno bez atrybucji (samodzielne, poza pętlą) daje obszar pusty, a nie obiekt
-// z pustymi polami: kontrakt zna `metadata` jako pole opcjonalne, a wiadomość
-// zwykłej rozmowy nie ma czego atrybuować.
+// atrybucjaOkna składa metadane wiadomości nadawanej w oknie, czytane z samego
+// okna; okno bez atrybucji daje obszar pusty, nie obiekt z pustymi polami.
 func atrybucjaOkna(okno session.Okno) json.RawMessage {
 	meta := metadaneNadania{
 		Persona: personaOkna(okno.RolaOkna),
-		// Okno źródłowe wypełnia się wyłącznie dla wykonawcy: to okno
-		// koordynatora zleciło mu turę, więc ono jest źródłem wypowiedzi —
-		// atrybucję w pętli niesie kolumna `okno_zrodlowe_id`. Dla koordynatora
-		// i okna samodzielnego pole zostaje puste.
+		// Okno źródłowe wypełnia się wyłącznie dla wykonawcy, zleceniodawcą tury.
 		OknoZrodloweId: okno.OknoKoordynatora,
 	}
 	if meta.Persona == "" && meta.OknoZrodloweId == "" {
@@ -350,20 +268,14 @@ func atrybucjaOkna(okno session.Okno) json.RawMessage {
 	}
 	surowe, err := json.Marshal(meta)
 	if err != nil {
-		// Niezłożona atrybucja nie może zabrać wiadomości — wiadomość jedzie
-		// bez metadanych, kolumny zostają puste.
+		// Niezłożona atrybucja nie może zabrać wiadomości — jedzie bez metadanych.
 		return nil
 	}
 	return surowe
 }
 
-// personaOkna przekłada rolę okna na personę wiadomości.
-//
-// Słownik kolumny jest węższy niż słownik kontraktu: `persona` przyjmuje
-// wyłącznie role pętli i tory pochodne, okna samodzielnego w nim nie ma,
-// a wpisanie „standalone" odbiłoby się warunkiem CHECK i wywróciłoby zapis całej
-// wiadomości. Dlatego okno poza pętlą zostaje bez persony — kolumna pusta znaczy
-// zwykłą wypowiedź Operatora albo modelu.
+// personaOkna przekłada rolę okna na personę wiadomości; słownik kolumny jest
+// węższy niż słownik kontraktu, więc okno poza pętlą zostaje bez persony.
 func personaOkna(rola shared.WindowRole) string {
 	switch rola {
 	case shared.WindowRoleCoordinator, shared.WindowRoleExecutor:
@@ -373,11 +285,9 @@ func personaOkna(rola shared.WindowRole) string {
 	}
 }
 
-// historiaRozmowy składa pamięć wcześniejszych tur okna dla kanału bezstanowego.
-// Bierze wiadomości sprzed bieżącego pytania (dziennik ma je już zapisane —
-// Wyslij dopisał pytanie i odpowiedź przed startem tury), pomija wypowiedzi bez
-// roli user/assistant oraz puste, i oddaje je w kolejności nadania. Pusta
-// historia nie jest błędem — pierwsza tura okna po prostu nie ma pamięci.
+// historiaRozmowy składa pamięć wcześniejszych tur okna dla kanału bezstanowego,
+// pomijając wypowiedzi bez roli user/assistant oraz puste. Pusta historia nie
+// jest błędem — pierwsza tura okna po prostu nie ma pamięci.
 func (a *adapterRozmowy) historiaRozmowy(idOkna, idPytania string) []models.WiadomoscHistorii {
 	if a.dziennik == nil {
 		return nil
@@ -408,12 +318,8 @@ func rolaHistorii(rola shared.MessageRole) string {
 	}
 }
 
-// rozglosWiadomosc zawiadamia urządzenia konta o zamkniętej odpowiedzi.
-//
-// Sprawcą jest rdzeń, nie ten, kto turę otworzył: rozgłaszana wiadomość to
-// odpowiedź zamknięta przez rdzeń po turze modelu, więc nikt jej nie wpisał
-// ręką. Autor promptu jest opisany zdarzeniem założenia wiadomości
-// w `handlers_message.go`.
+// rozglosWiadomosc zawiadamia urządzenia konta o zamkniętej odpowiedzi;
+// sprawcą jest rdzeń, nie ten, kto turę otworzył, bo nikt jej nie wpisał ręką.
 func (a *adapterRozmowy) rozglosWiadomosc(ctx context.Context, w shared.Message) {
 	nowyEmiter(a.nadajnik).wiadomosc(zSprawcaRdzenia(ctx), shared.ChangeKindUpdated, w)
 }

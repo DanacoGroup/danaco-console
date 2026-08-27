@@ -3470,3 +3470,6 @@ tej odmowy nie mówi operatorowi, czego brakuje, więc zdanie dokłada funkcja o
 rozbieżności odpowiedzi milczy z konstrukcji, a nie przez zaufanie do rdzenia. Kolejność instancji
 paneli bierzemy z rdzenia, nie z chwili dodania, inaczej dwa klienty tego samego konta pokazałyby
 panele w innym porządku.
+
+## budowa/klient/src/wejscie/ikony.ts
+Ten sam sygnet stoi w belce okna i w kolumnie tożsamości, w dwóch różnych wielkościach. Kropka sygnału w godle niesie klasę, nie wpisaną barwę: barwę rozstrzyga arkusz stylu, osobno dla belki i osobno dla kolumny tożsamości. Łańcuchy w tym pliku są rysunkami, nie tekstem — każdy zaczyna się od znacznika rysunku.

@@ -168,3 +168,13 @@ wyłącznie żetony warstwy motyw/ — ani żadnej reguły wygaszającej kontrol
 ## budowa/klient-poprzedni/src/dostepy/katalog-roboczy.css
 Ramę sekcji prowadzi plik dostepy.css; barwy pochodzą wyłącznie z żetonów
 warstwy motyw/.
+
+## budowa/klient-poprzedni/src/dostepy/nadania-okna.css
+Okno ma zbiór nadań, nie jedno — arkusz służy liście, nie pojedynczej
+wartości. Ramę sekcji prowadzi plik dostepy.css; żadna reguła nie wygasza
+kontrolki.
+
+## budowa/klient-poprzedni/src/dostepy/punkty-dostepu.css
+Wykaz jest rozdzielony rodzajem punktu dostępu. Ramę sekcji prowadzi plik
+dostepy.css, który ten arkusz wciąga; barwy pochodzą wyłącznie z żetonów
+warstwy motyw/.

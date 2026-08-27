@@ -2698,3 +2698,18 @@ wprost. Po przerysowaniu paska pole tonu panelu niesie tę samą wartość, któ
 panelu. Ta sama zasada rządzi polem tłumaczenia w pliku panel-jezyka.ts: kontrolka, w której
 operator właśnie pisze, należy do niego, dopóki jej nie odda, a zdarzenie zmiany tłumaczenia,
 przychodzące w środku pisania, nie może podmienić wpisywanego tonu.
+
+## budowa/klient-poprzedni/src/moduly/research/rama-badania.ts
+Obudowa okna jest jedna dla całego interfejsu, ale wykaz akcji i ich dymki objaśniające należą do
+modułu — panel akcji wnosi generyk akcji, którego rama sama nie potrzebuje; okna Research składają
+te dwie rzeczy w jednym miejscu, więc przedrostek klas modułu i sposób osadzenia panelu stoją razem.
+Przedrostek `mr` nie wnosi wyglądu, jest uchwytem jednej reguły własnej modułu — obwiedzenia okna,
+do którego nawigacja wewnątrzmodułowa przeniosła ognisko. Rama nie buduje elementów treści, dostaje
+je gotowe, tak jak przestrzeń modułu dostaje gotowe okna.
+
+## budowa/klient-poprzedni/src/moduly/studio/aparat-panel.test.ts
+Testy sprawdzają cztery reguły panelu aparatu dokumentu i pola: spis treści zakłada się
+z poziomów nagłówków wskazanych przez operatora, a numer nadaje rdzeń, więc okno nie numeruje
+niczego samo; element wymagający odświeżenia jest nazwany liczbą i znacznikiem w danych, więc
+spis treści rozjechany z dokumentem nie może wyglądać na zgodny; pole bez policzonej wartości
+mówi to wprost zamiast pokazywać pustkę; usunięcie odmówione nie zdejmuje elementu z wykazu.

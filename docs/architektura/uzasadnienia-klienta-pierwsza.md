@@ -6898,3 +6898,6 @@ osobną komendą monitorowania. Odczyt stanu wchodzi wywołaniem zwrotnym: sam
 raport jest złożeniem wierszy, a sięgnięcie po rdzeń zostaje po stronie
 wywołującego. Odczyt biegu koordynatora jest wyjęty poza źródło okien
 i stan wspólny, bo nie dotyka niczego z wnętrza okna.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-schowka.ts
+Schowek należy do maszyny Operatora i rdzeń go nie czyta: Operator kopiuje u siebie, okno oddaje skopiowaną treść rdzeniowi, a rdzeń daje jej trwałość — historia przestaje ginąć razem z kartą i jest ta sama na każdej maszynie tego samego Operatora; wklejenie jest ruchem powrotnym i wykonuje je okno, u siebie. Nastawę skrótu globalnego trzyma rdzeń, przechwycenie klawiszy należy do powłoki programu okiennego; odpowiedź mówi wprost, czy rejestracji ma kto dokonać, a okno powtarza to zdanie zamiast obiecywać skrót, który nikogo nie obudzi.

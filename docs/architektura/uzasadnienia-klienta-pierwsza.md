@@ -6268,3 +6268,14 @@ sprawdzać jej kształtu i wziąć jego kodu za kod rdzenia. Rozstrzygnięcie ma
 też odbiorcę poza tym plikiem, w źródle obserwowalności, gdzie rozróżnienie
 odmowy od odpowiedzi nieczytelnej ma tę samą wagę co tutaj; druga kopia tego
 rozstrzygnięcia dałaby dwa zdania o jednej ciszy rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zuzycie-zakladka.test.ts
+Sprawdzian zakładki zużycia pilnuje czterech rzeczy stanowiących o odbiorze:
+że zestawienie ma drogę z okna i idzie jednym wymiarem, że pusty okres ma
+zdanie zamiast pustego miejsca, że koszt niepełny mówi o sobie, i że raport
+rozliczeniowy wytwarza plik nazwany, a nie ciszę po naciśnięciu. Pobranie
+pliku podstawia w sprawdzianie wyłącznie te dwa punkty styku z API
+przeglądarki, którego środowisko sprawdzianu nie ma w całości.
+
+## budowa/klient-poprzedni/src/moduly/agents/wykaz-wtyczek.ts
+Wykaz wtyczek jest bytem odrębnym od konektora: konektor to droga do usługi, serwer MCP wskazany punktem dostępu podawanym powłoce przełącznikiem --mcp-config, a wtyczka to katalog rozszerzeń powłoki — zbiór poleceń, zaczepów i umiejętności wgrywany przez --plugin-dir. Kontrakt rozdziela oba byty osobnymi polami i komendami, więc rozdziela je i okno. Pole eksperta niesie same identyfikatory wtyczek, dlatego nazwę, wersję i źródło wiersz bierze z osobnego odczytu definicji; identyfikator zostaje w podpowiedzi wiersza, bo nim posługuje się czynność odłączenia. Gdy odczyt definicji odmówi albo jeszcze nie wrócił, wiersze pokazują same identyfikatory — uboższa treść nie jest awarią i nie odbiera przycisku odłączenia. Odczyt definicji odrzuca odpowiedź przedawnioną: między wysłaniem żądania a powrotem odpowiedzi operator może wybrać innego eksperta, a wtedy wykaz pokazywałby cudze wtyczki pod właściwymi kodami.

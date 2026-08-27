@@ -3382,3 +3382,10 @@ Oznaczenie maszyny bieżącej ma jednego pisarza: ZapewnijBiezace. Unikatowy ind
 
 ## budowa/server/internal/dane/developer.go
 Repozytorium nie dotyka plików na dysku: treść pliku roboczego żyje w katalogu roboczym okna i czyta ją rdzeń, a warstwa danych zapisuje wyłącznie migawkę zakładaną na wyraźne żądanie zapisu wersji, czyli stan, którego po nadpisaniu pliku na dysku już nie ma. Repozytorium nie prowadzi też samego budowania — uchwyt do biegnącego procesu ma rdzeń, tutaj zostaje wyłącznie ślad: zadanie, kod wyjścia, czasy i ogon dziennika. Przebieg już domknięty zostaje przy próbie ponownego domknięcia bez zmiany, żeby pierwszy prawdziwy kod wyjścia nie został nadpisany przez późniejsze przerwanie. Przebiegi zostawione w stanie running po poprzednim uruchomieniu rdzenia przechodzą po restarcie w stopped, ponieważ rdzeń nie ma już do nich uchwytu i wykazywanie ich jako czynnych byłoby nieprawdą.
+
+## budowa/server/internal/session/polecenie.go
+Pakiet session nie wie, jak zbudować wiersz poleceń kanału modelu, ponieważ to
+należy do warstwy kanału. Rozdzielenie idzie przez interfejs, nie przez wywołanie
+w głąb cudzego pakietu. Polecenie jest wspólnym kształtem, nie punktem uruchomienia:
+wypełnia je rdzeń poprzez moduły Terminal i Developer, a wykonuje warstwa kanału
+przez port Uruchamiacz. Sesja nie buduje polecenia i sama go nie wykonuje.

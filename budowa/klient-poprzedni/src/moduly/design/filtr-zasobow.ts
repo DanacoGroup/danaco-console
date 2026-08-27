@@ -5,15 +5,9 @@ import { przytnijKod, rozbijEtykiety } from './przyciecie-pol';
 import type { ZapytanieZasobow } from './zrodlo-designu';
 
 /**
- * Filtr wykazu zasobów — warunki, którymi Assets Panel zawęża odczyt.
- *
- * Jedna odpowiedzialność: zebranie warunków i oddanie ich oknu.
- *
- * Cztery pola idą do rdzenia, piąte zostaje tutaj. Rodzaj, etykiety, ulubione
- * i granica są polami żądania `design.asset.list` — zawężają odczyt. Fraza
- * wyszukiwania nie jest polem tego żądania, więc zawęża wyłącznie to, co już
- * wróciło; pole mówi o tym wprost, zamiast pozorować wyszukiwanie po stronie
- * rdzenia.
+ * Filtr wykazu zasobów zbiera warunki, którymi Assets Panel zawęża odczyt,
+ * i oddaje je oknu. Rodzaj, etykiety, znacznik ulubionego oraz górna granica są
+ * polami żądania odczytu, a fraza zawęża wyłącznie wynik już otrzymany.
  */
 export interface FiltrZasobow {
   element: HTMLElement;
@@ -25,7 +19,11 @@ export interface FiltrZasobow {
   widok(): 'siatka' | 'lista';
 }
 
-/** Wywołania zwrotne filtra — okno decyduje, co zrobić ze zmianą. */
+/**
+ * Wywołania zwrotne filtra rozdzielają trzy skutki zmiany: ponowny odczyt
+ * z rdzenia, zawężenie wyniku już otrzymanego oraz przestawienie widoku wykazu.
+ * Rozstrzygnięcie o skutku należy do okna gospodarza.
+ */
 export interface ObslugaFiltra {
   naOdczyt(): void;
   naZawezenie(): void;

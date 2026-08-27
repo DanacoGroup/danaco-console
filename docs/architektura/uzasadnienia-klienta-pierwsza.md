@@ -3970,3 +3970,13 @@ komunikacji i jeszcze inną dla wskazanego modelu.
 Pasek jest wyłącznie soczewką odczytu, a nie poleceniem. Zmiana punktu widzenia
 niczego nie zapisuje; przestawia jedynie miejsce, względem którego liczone jest
 dziedziczenie, i każe polom formularza przeliczyć swoje pochodzenie od nowa.
+
+## budowa/klient-poprzedni/src/moduly/design/filtr-zasobow.ts
+
+Filtr ma jedną odpowiedzialność: zebrać warunki zawężenia i oddać je oknu.
+Cztery pola filtra idą do rdzenia, piąte zostaje po stronie klienta. Rodzaj
+zasobu, etykiety, znacznik ulubionego oraz górna granica liczby zasobów są
+polami żądania `design.asset.list` i zawężają odczyt po stronie rdzenia. Fraza
+wyszukiwania nie jest polem tego żądania, więc zawęża wyłącznie wynik już
+otrzymany; pole mówi o tym wprost, zamiast pozorować wyszukiwanie po stronie
+rdzenia.

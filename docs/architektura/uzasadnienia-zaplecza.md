@@ -2830,3 +2830,31 @@ Punkt wznowienia przebiegu musi być trwały, ponieważ służy wznowieniu po aw
 
 ## budowa/server/internal/store/migracja_273_automations_alarmy.sql
 Kanały reguły alarmowania leżą jako zapis strukturalny, ponieważ kontrakt niesie je wykazem tekstów ustalanym w całości: reguła ma kanały takie, jakie zapisano ostatnio. Rozbicie na tabelę wierszy dałoby możliwość stanu, którego kontrakt nie zna — kanału dopisanego bez przepisania reguły.
+
+## budowa/server/internal/store/migracja_274_automations_skarbiec_audyt.sql
+Tabela poświadczeń automatyki nie ma i nie będzie miała kolumny na wartość: wartość leży w sejfie plikowym katalogu danych, tym samym, którym idą sekrety kont i punktów dostępu. Baza zna wyłącznie nazwę, zasięg i odwołanie, dzięki czemu odczyt bazy nie może wynieść sekretu — kolumny na niego po prostu nie ma, a nie dlatego, że filtr o tym pamięta.
+Dziennik audytu jest zapisem niezmiennym: wiersz raz dopisany nie jest zmieniany ani kasowany przez żadną komendę modułu. Automatyka usunięta zabiera swoje wpisy, lecz wpis o automatyce nieznanej jest dopuszczony, ponieważ audytowana bywa czynność, która żadnej automatyki nie dotyczy.
+## budowa/server/internal/store/migracja_165_lokalizacja_i_napisy.sql
+Migracja 165 — lokalizacja oprogramowania (`translate.resource.*`) i napisy
+(`translate.subtitle.*`, `translate.dubbing.script.build`).
+
+Zasób lokalizacyjny to plik kluczy wniesiony do okna: JSON, YAML, properties,
+Android XML, iOS strings i stringsdict, RESX, gettext PO. Klucz jest bytem
+adresowanym po nazwie w obrębie zasobu (`resource.key.context.set` przyjmuje
+`key`, nie identyfikator), więc para (zasób, klucz) jest kluczem naturalnym.
+
+`formy_mnogie` trzyma JSON, i to jest wyjątek świadomy: liczba form mnogich
+zależy od języka (angielski ma dwie, polski trzy, arabski sześć), a nazwy
+form są nazwami CLDR (`one`, `few`, `many`, `other`). Tabela dziecka miałaby
+tyle wierszy, ile form, i ani jednego zapytania, które by po nich zawężało —
+formy czyta się zawsze kompletem razem z kluczem.
+
+`zrzut_zasob_id` wskazuje zasób modułu Design (`zasob_design`) ze zrzutem
+ekranu, na którym klucz widać. Odwołanie jest miękkie (kod zewnętrzny, bez
+klucza obcego), bo zrzut należy do innego modułu i jego usunięcie nie ma
+prawa skasować kontekstu klucza.
+
+Kwestia napisów mieszka przy panelu, nie przy oknie: napisy są tłumaczone,
+więc każdy język ma własne taktowanie i własny podział linii. Import napisów
+wnosi kwestie źródłowe do okna, dlatego `panel_id` bywa pusty — wtedy kwestia
+jest kwestią materiału źródłowego, nie przekładu.

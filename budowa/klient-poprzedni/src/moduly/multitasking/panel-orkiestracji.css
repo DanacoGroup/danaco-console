@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PANEL ORKIESTRACJI ŚRODOWISKA MULTITASKINGU
-   ----------------------------------------------------------------------------
-   Arkusz opisuje układ sekcji sterowania zespołem: odstępy między podsekcjami,
-   rząd kontrolek i miejsce znaku objaśnienia [?] obok każdego elementu
-   konfiguracji.
-
-   Barwy i odstępy pochodzą wyłącznie z żetonów warstwy `motyw/`; arkusz nie
-   wprowadza własnych decyzji wyglądu ponad układ.
-
-   Arkusz nie wygasza kontrolek. Sekcja bez powiązania z modułem Automations
-   mówi o tym zdaniem, nie szarością.
-   ============================================================================ */
+/* Arkusz opisuje układ sekcji sterowania zespołem w panelu orkiestracji: odstępy między podsekcjami, rząd kontrolek i miejsce znaku objaśnienia przy każdym elemencie konfiguracji. */
 
 .dm-orkiestracja {
   display: flex;

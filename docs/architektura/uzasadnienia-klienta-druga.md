@@ -1451,3 +1451,24 @@ Okno nie przestawia nastaw pętli. Nastawy — czy pętla jest czynna, ilu
 wykonawców naraz, co przy spięciu — idą osobną rodziną komend. Okno je czyta
 i pokazuje wprost, a gdy pętla jest wyłączona, mówi to zdaniem, zamiast
 pozwalać naciskać przycisk, który i tak odmówi.
+
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-postaci-studio.ts
+
+Nastawy strony, marginesy i numeracja stały dotąd wyłącznie w kliencie, prowadzone
+przez sesję okna, a jedyną drogą trwałości był profil wydania — osiem pól bez
+oprawy, bez sekcji i bez formatu numeru. Rdzeń niesie dziś rodziny komend
+obejmujące stronę, sekcję, styl, formatowanie, listę, znak specjalny, widok,
+tabulator, tekst, postać dokumentu i pochodzenie fragmentów — i to one są
+jedyną drogą, którą nastawa Operatora przeżywa zapis.
+
+Metody biorą treść żądania z kontraktu w całości, a nie rozłożone argumenty.
+Rodzina postaci dokumentu ma pola liczone dziesiątkami — same nastawy strony
+to czternaście — i połowa z nich jest opcjonalna w znaczeniu „nie ruszaj tej
+cechy". Rozkładanie ich na argumenty zmuszałoby wołacza do podawania wartości
+tam, gdzie chce ciszy, a „podano zero" i „nie podano" znaczą tu różne rzeczy.
+
+Wywołanie idzie przez osłonę, bo komenda bez uchwytu w rdzeniu wraca kopertą
+ogólną bez pola stanu, którego korelacja klienta nie rozstrzyga — okno stałoby
+w ładowaniu bez końca. Osłona zamienia to w zwykłą odmowę nazywającą komendę;
+rodzina komend jest świeża, więc rdzeń starszy od klienta jest tu przypadkiem
+realnym, nie teoretycznym.

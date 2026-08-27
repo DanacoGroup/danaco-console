@@ -100,34 +100,8 @@ import { wywolajUczciwie } from './odmowa-rdzenia';
 
 /**
  * Postać dokumentu — droga okna do rdzenia dla nastaw strony, stylów,
- * formatowania, list, znaków, widoku i pochodzenia.
- *
- * ── Skąd ten plik ───────────────────────────────────────────────────────────
- * Nastawy strony, marginesy i numeracja stały dotąd WYŁĄCZNIE w kliencie:
- * `nastawy-strony.ts` prowadził je przez sesję okna, a jedyną drogą trwałości był
- * profil wydania (`studio.export.profile.save`), który niesie osiem pól i nie ma
- * ani oprawy, ani sekcji, ani formatu numeru. Rdzeń niesie dziś rodziny
- * `studio.page.*`, `studio.section.*`, `studio.style.*`, `studio.format.*`,
- * `studio.list.*`, `studio.symbol.*`, `studio.view.*`, `studio.ruler.tabstop.set`,
- * `studio.text.*`, `studio.document.form.*` i `studio.provenance.list` — i to one
- * są jedyną drogą, którą nastawa Operatora PRZEŻYWA ZAPIS.
- *
- * ── Dlaczego żądanie jedzie w całości ───────────────────────────────────────
- * Metody biorą treść żądania z kontraktu, a nie rozłożone argumenty. Rodzina
- * postaci dokumentu ma pola liczone dziesiątkami (same nastawy strony to
- * czternaście) i połowa z nich jest opcjonalna w znaczeniu „nie ruszaj tej
- * cechy". Rozkładanie ich na argumenty zmuszałoby wołacza do podawania wartości
- * tam, gdzie chce ciszy — a „podano zero" i „nie podano" znaczą tu różne rzeczy.
- * Ten sam wzorzec nosi `petla-zrodlo.ts`.
- *
- * ── Dlaczego `wywolajUczciwie` ──────────────────────────────────────────────
- * Komenda bez uchwytu w rdzeniu wraca kopertą `studio.unknown` bez pola `status`,
- * której korelacja klienta nie rozstrzyga — okno stałoby w ładowaniu bez końca.
- * Osłona zamienia to w zwykłą odmowę nazywającą komendę. Rodzina jest świeża,
- * więc rdzeń starszy od klienta jest tu przypadkiem realnym, nie teoretycznym.
- *
- * Źródło nie ma stanu i nie buduje elementu: sprawdza kształt odpowiedzi
- * i oddaje ją oknu.
+ * formatowania, list, znaków, widoku i pochodzenia. Źródło nie ma stanu i nie
+ * buduje elementu — sprawdza kształt odpowiedzi i oddaje ją oknu.
  */
 export interface ZrodloPostaciStudio {
   /* ── Postać w całości i treść fragmentu ──────────────────────────────────── */
@@ -288,12 +262,9 @@ export interface ZrodloPostaciStudio {
 }
 
 /**
- * Sprawdzian odpowiedzi czynności zmieniającej postać.
- *
- * Każda z nich oddaje `form` i `balance` — postać po zmianie oraz bilans tego, co
- * zmienione i co pominięte przez blokadę. Bilans jest polem OBOWIĄZKOWYM
- * kontraktu, więc jego brak nie jest „czynnością bez pominięć", tylko odpowiedzią
- * niezgodną z kontraktem: okno nie ma wtedy czym powiedzieć prawdy o skutku.
+ * Sprawdzian odpowiedzi czynności zmieniającej postać. Każda z nich oddaje
+ * `form` i `balance` — postać po zmianie oraz bilans tego, co zmienione i co
+ * pominięte przez blokadę; bilans jest polem obowiązkowym kontraktu.
  */
 function czyPostacIBilans(tresc: { form?: unknown; balance?: unknown }): boolean {
   return (
@@ -326,8 +297,7 @@ export function utworzZrodloPostaciStudio(kanal: Kanal): ZrodloPostaciStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioTextGet, zadanie),
         Command.StudioTextGet,
-        // Treść pusta jest odpowiedzią prawdziwą: fragment może być pusty po
-        // usunięciu. Sprawdza się obecność pola, nie jego długość.
+        // Treść pusta jest odpowiedzią prawdziwą — sprawdza się obecność pola, nie jego długość.
         (tresc) => czyTekst(tresc.text),
       );
     },
@@ -408,8 +378,7 @@ export function utworzZrodloPostaciStudio(kanal: Kanal): ZrodloPostaciStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioPageNumberingSet, zadanie),
         Command.StudioPageNumberingSet,
-        // `enabled: false` jest odpowiedzią poprawną — numeracja zdjęta. Pilnuje
-        // się obecności pola logicznego, nie jego wartości.
+        // enabled: false jest odpowiedzią poprawną — pilnuje się obecności pola, nie jego wartości.
         (tresc) =>
           czyObiekt(tresc.numbering) &&
           czyLogiczna((tresc.numbering as { enabled?: unknown }).enabled) &&
@@ -485,8 +454,7 @@ export function utworzZrodloPostaciStudio(kanal: Kanal): ZrodloPostaciStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioStyleDelete, zadanie),
         Command.StudioStyleDelete,
-        // `deleted: false` z odmową nazywającą powód jest odpowiedzią POPRAWNĄ:
-        // tak kontrakt opisuje styl fabryczny, którego rdzeń nie usuwa.
+        // deleted: false z odmową nazywającą powód jest odpowiedzią poprawną dla stylu fabrycznego.
         (tresc) => czyLogiczna(tresc.deleted) && czyPostacIBilans(tresc),
       );
     },
@@ -543,8 +511,7 @@ export function utworzZrodloPostaciStudio(kanal: Kanal): ZrodloPostaciStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioFormatPainterCopy, zadanie),
         Command.StudioFormatPainterCopy,
-        // Uchwyt pusty byłby malarzem bez czego nanieść: bez `clipId` druga
-        // połowa czynności nie ma czym zadziałać.
+        // Uchwyt pusty byłby malarzem bez czego nanieść — druga połowa czynności nie ma czym zadziałać.
         (tresc) => czyTekst(tresc.clipId) && tresc.clipId !== '',
       );
     },
@@ -641,8 +608,7 @@ export function utworzZrodloPostaciStudio(kanal: Kanal): ZrodloPostaciStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioSymbolAutoreplaceSet, zadanie),
         Command.StudioSymbolAutoreplaceSet,
-        // Kontrakt oddaje albo zasadę po zapisie, albo oznaczenie usunięcia — obie
-        // odpowiedzi są prawdziwe, żadna nie jest obowiązkowa osobno.
+        // Kontrakt oddaje albo zasadę po zapisie, albo oznaczenie usunięcia — obie są prawdziwe.
         (tresc) => czyObiekt(tresc.rule) || czyLogiczna(tresc.removed),
       );
     },

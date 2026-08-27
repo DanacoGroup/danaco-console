@@ -4958,3 +4958,16 @@ z tego pliku dałoby zdarzenie wyłącznie po zmianie zleconej z telefonu,
 a milczałoby przy zmianie zleconej z pulpitu — drugą, niepełną prawdę
 o procesie; dlatego rejestracja warstwy mobilnej nie przyjmuje nadajnika
 zdarzeń.
+
+## budowa/server/internal/core/adapter_narzedzia_media_przetworzenie.go
+Każda czynność wytwarza nowy zasób, źródło zostaje nietknięte: narzędzie zewnętrzne nigdy nie dostaje ścieżki źródła jako celu zapisu. Wejściem jest blob magazynu, plik pod sumą kontrolną, którego nadpisanie zerwałoby tożsamość wszystkich zasobów o tej treści, wyjściem plik katalogu tymczasowego.
+
+Pomiar idzie przed przetworzeniem, bo daje trzy rozstrzygnięcia, których inaczej trzeba by zgadywać: kontener domyślny, gdy wołający nie podał formatu, kodek dźwięku przy wyodrębnianiu ścieżki oraz to, czy materiał w ogóle niesie dźwięk. Zgadnięte, każde z nich kończy się plikiem pustym albo odmową samego binarium, czyli odmową bez nazwy braku.
+
+Parametru, którego czynność wymaga, plik się nie domyśla: operacja przycięcia bez granic daje odmowę nazywającą brak, a nie kopię materiału pod nazwą fragmentu.
+
+Sprawdzenie rozmiaru wyniku wyprzedza pomiar wyniku, bo narzędzie zewnętrzne potrafi zakończyć się powodzeniem, zostawiając plik pusty, gdy wskazany fragment leży poza materiałem, a zasobu bez bajtów magazyn nie przyjmuje.
+
+Zrzut klatki jest obrazem: jego wymiary czyta nagłówek pliku, tą samą drogą, którą mierzy je wniesienie zasobu, a pole czasu trwania zostaje puste, bo obraz nie trwa. Każdy inny wynik jest materiałem czasowym: mierzy go program pomiaru, a wymiary są brane ze strumienia obrazu, którego wyodrębniony dźwięk nie ma.
+
+Rozstrzygnięcie kontenera wyniku przy braku wskazania wołającego: operacja konwersji bez formatu jest odmową, bo bez wskazania program przepisałby materiał do tego samego kontenera i oddał kopię pod nazwą przekształcenia; zrzut klatki spada na PNG; wyodrębnienie dźwięku spada na kontener wyprowadzony z kodeka zmierzonego w materiale, więc ścieżkę da się przepisać bez ponownego kodowania; przycięcie i zmiana rozmiaru zostają w kontenerze źródła, bo żadna z tych czynności nie jest zmianą formatu.

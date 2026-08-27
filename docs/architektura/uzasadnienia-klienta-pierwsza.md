@@ -3758,3 +3758,12 @@ rozgałęzienie i warunek — należy do układania przebiegu, a nie do jego pro
 Pasek transportu pulpitu ich nie pokazuje, ale mapa ikon musi je znać, ponieważ
 wyliczenie kontraktu je niesie, a mapa niepełna nie skompilowałaby się przy pierwszym
 ich użyciu.
+
+## budowa/klient-poprzedni/src/dostepy/wybor-korzeni.ts
+
+Reguła pustego zbioru stoi przy kontrolce zdaniem, a nie w podpowiedzi, ponieważ
+Operator, który odznaczy wszystko, ma wiedzieć, że właśnie nadał wszystko.
+
+Nadanie nie sięga poza korzenie punktu, więc kontrolka nie przyjmuje ścieżki wpisanej
+z ręki: pokazuje korzenie punktu i pozwala je zaznaczyć. Poszerzenie obszaru wymaga
+zmiany punktu, nie nadania.

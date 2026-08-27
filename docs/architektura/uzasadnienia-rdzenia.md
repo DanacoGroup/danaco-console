@@ -1456,3 +1456,33 @@ także maskę, bo wywołanie bez materiału każe silnikowi wygenerować obraz n
 przetworzyć zdjęcie wniesione przez Operatora; plik wyniku ma wymiar, który czynność
 obiecała, a nie ten, który akurat oddał kanał; pole `computedBy` niesie wartość
 `kanalModelu`, a łańcuch edycji zapisuje tę samą drogę.
+
+## budowa/server/internal/core/urzadzenia_druk.go
+
+Warstwa druku lokalnego różni się od wydania plikiem: wydanie kończy pracę
+plikiem gotowym do drukarni, z przestrzenią barw, spadami i znacznikami
+cięcia, i kładzie go w magazynie jako zasób. Tego pliku nikt jednak nie
+wydrukował na drukarce stojącej obok Operatora — to jest dziura, którą
+zamyka ten plik: zasób wydany wcześniej, albo dowolny inny plik widziany
+przez rdzeń, idzie tu na kolejkę druku systemu.
+
+Kontrakt nie ma jeszcze komendy wysłania na drukarkę ani komendy wykazu
+drukarek; rodzina komend druku ma nastawy profilu, kontrolę przeddrukową,
+wydanie i podział wielkoformatowy, i na tym się kończy. Warstwa stoi tu
+gotowa i czeka na dwie komendy, które kontrakt musi wnieść. Do tego czasu
+funkcje tego pliku są wystawione poza pakiet, żeby adapter wołający mógł je
+wziąć jedną linią w dniu, w którym komendy powstaną, bez przepisywania
+warstwy.
+
+Rozdzielenie drogi po systemie operacyjnym opiera się na sprawdzeniu
+w czasie działania, nie na warunku budowy: budowa całego drzewa na jednym
+systemie nie skompilowałaby gałęzi drugiego systemu ani razu, więc zepsułaby
+się niezauważona aż do wydania instalki natywnej. Na Linuksie drogą jest
+CUPS, tą samą, którą druku używa cały system; na Windowsie drogą jest
+PowerShell, gdzie wykaz drukarek oddaje polecenie systemowe, a wysłanie idzie
+przez .NET albo przez czasownik powłoki systemu, zależnie od rodzaju pliku:
+obraz drukuje biblioteka .NET, tekst idzie przez bufor wydruku wprost, a
+dokument złożony, którego rdzeń sam nie umie odczytać, potrzebuje programu
+zarejestrowanego w systemie pod tym czasownikiem. Gdy taki program nie jest
+zarejestrowany, odmowa mówi to wprost zamiast milczeć — plik wysłany
+w nicość wygląda jak wydruk, który się nie pojawił.

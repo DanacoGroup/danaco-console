@@ -1,25 +1,7 @@
-// Odpowiedzialność pliku: CAŁA DROGA od dokumentu do trafienia w jednym
+// Odpowiedzialność pliku: cała droga od dokumentu do trafienia w jednym
 // miejscu — wniesienie treści do wskaźnika znaczenia i przeszukanie go.
-//
-// Ten plik zbiera drogę w jeden byt. Adapter rdzenia zostaje przy swojej
-// robocie: przekład kontraktu, zasięg izolacji, kody odmów.
-//
-// ── DLACZEGO WNOSZENIE IDZIE DOKUMENT PO DOKUMENCIE ─────────────────────────
-// Biblioteka Operatora bywa gigabajtem tekstu. Jedna transakcja na całość
-// znaczyłaby komplet wektorów w pamięci rdzenia, a przerwanie w połowie —
-// cofnięcie wszystkiego, co już policzono kwadransem procesora. Dlatego granica
-// niepodzielności biegnie po DOKUMENCIE: każdy, który wszedł, wszedł w całości
-// (patrz `Skladnica.Zapisz`), przerwany przebieg zostawia wskaźnik NIEPEŁNY,
-// ale SPÓJNY, a powtórzenie dokańcza resztę.
-//
-// ── DLACZEGO KASOWANIE ŹRÓDŁA POPRZEDZA ZAPIS ───────────────────────────────
-// Dokument SKRÓCONY od poprzedniego przebiegu zostawiłby inaczej fragmenty
-// treści, której już w nim nie ma — a wracałyby jako cytat z dokumentu, w
-// którym ich nie ma. Sam zapis jest wprawdzie nadpisujący (warunek
-// jednoznaczności: zakres, kod źródła, kolejność, model), ale nadpisuje tylko
-// te numery fragmentów, które przyszły; nadmiarowe zostają. Kasowanie jest
-// w TEJ SAMEJ chwili co zapis i dla tego samego źródła, więc okno, w którym
-// dokument jest niewidoczny, trwa tyle, ile jedna transakcja.
+// Adapter rdzenia zostaje przy swojej robocie: przekład kontraktu, zasięg
+// izolacji, kody odmów.
 package wiedza
 
 import (
@@ -29,35 +11,28 @@ import (
 	"time"
 )
 
-// Dokument to jedna jednostka treści przed podziałem na fragmenty.
-//
-// TREŚĆ PRZYCHODZI GOTOWA, a wskaźnik nie wie, skąd. Czytanie źródeł —
-// repozytorium biblioteki, historii rozmów, plików przestrzeni roboczej —
-// należy do warstwy, która te repozytoria zna (`core/adapter_modul_wiedza_zrodla.go`).
-// Druga droga do wierszy biblioteki założona tutaj byłaby drugą prawdą o tym,
-// co Operator w niej ma.
+// Dokument to jedna jednostka treści przed podziałem na fragmenty. Treść
+// przychodzi gotowa, a wskaźnik nie wie, skąd — czytanie źródeł należy do
+// warstwy, która te repozytoria zna.
 type Dokument struct {
-	// Zakres — `library`, `history` albo `workspace`. Napis przychodzi
-	// z adaptera, bo to on zna wyliczenie kontraktu.
+	// Zakres — `library`, `history` albo `workspace`.
 	Zakres string
 	// Zrodlo — nazwa CZYTELNA dla człowieka; wchodzi wprost do trafienia.
 	Zrodlo string
-	// ZrodloKod — identyfikator, którym da się po dokument sięgnąć. Pusty jest
-	// stanem poprawnym dla źródeł, które kodu nie mają.
+	// ZrodloKod — identyfikator, którym da się po dokument sięgnąć.
 	ZrodloKod string
 	// Tresc — cały tekst dokumentu.
 	Tresc string
 }
 
-// Wskaznik prowadzi wskaźnik znaczenia: wnosi do niego treść i przeszukuje go.
+// Wskaznik prowadzi wskaźnik znaczenia: wnosi do niego treść i przeszukuje
+// go po pytaniu zadanym przez Operatora.
 type Wskaznik struct {
-	// osadzarka — źródło wektorów wraz z nazwą modelu (patrz `osadzarka.go`).
+	// osadzarka — źródło wektorów wraz z nazwą modelu.
 	osadzarka Osadzarka
 	// skladnica — trwałość przy bazie rdzenia (`store/migracja_115_wskaznik_znaczenia.sql`).
 	skladnica *Skladnica
-	// dlugoscFragmentu — docelowa długość fragmentu w znakach. Wartość spoza
-	// przedziału sensownego sprowadza `Podziel` do domyślnej — jeden strażnik
-	// tej liczby, nie dwóch.
+	// dlugoscFragmentu — docelowa długość fragmentu w znakach.
 	dlugoscFragmentu int
 	// teraz oddaje czas w milisekundach epoki — jeden zegar na byt.
 	teraz func() int64
@@ -75,7 +50,8 @@ func NowyWskaznik(osadzarka Osadzarka, skladnica *Skladnica, dlugoscFragmentu in
 	}
 }
 
-// ZZegarem podstawia źródło czasu zapisu.
+// ZZegarem podstawia źródło czasu zapisu, zamiast zegara systemowego
+// użytego domyślnie przy starcie modułu.
 func (w *Wskaznik) ZZegarem(teraz func() int64) *Wskaznik {
 	if teraz != nil {
 		w.teraz = teraz
@@ -92,12 +68,9 @@ func (w *Wskaznik) Model() string {
 	return w.osadzarka.Model()
 }
 
-// Gotowy sprawdza, czy jest czym liczyć i gdzie zapisać, NIE licząc niczego.
-//
-// SPRAWDZENIE IDZIE PRZED CZYTANIEM TREŚCI i to jest rozstrzygnięcie:
-// odwrotnie byłoby taniej w przypadku szczęśliwym i znacznie gorzej w
-// przypadku brakującego silnika — rdzeń przeczytałby całą bibliotekę z dysku,
-// podzielił ją na fragmenty i dopiero wtedy powiedział „nie ma czym liczyć".
+// Gotowy sprawdza, czy jest czym liczyć i gdzie zapisać, nie licząc niczego.
+// Sprawdzenie idzie przed czytaniem treści, bo inaczej rdzeń przeczytałby
+// całą bibliotekę z dysku i dopiero wtedy powiedział „nie ma czym liczyć".
 func (w *Wskaznik) Gotowy(ctx context.Context, limit time.Duration) error {
 	if err := w.sprawny(); err != nil {
 		return err
@@ -114,7 +87,8 @@ func (w *Wskaznik) Wyczysc(ctx context.Context, zakresy []string) error {
 	return w.skladnica.UsunZakres(ctx, zakresy)
 }
 
-// Policz oddaje liczbę pozycji wskaźnika policzonych modelem tego wskaźnika.
+// Policz oddaje liczbę pozycji wskaźnika policzonych modelem tego
+// wskaźnika, obecnie ustawionym w konfiguracji.
 func (w *Wskaznik) Policz(ctx context.Context) (int, error) {
 	if err := w.sprawny(); err != nil {
 		return 0, err
@@ -138,9 +112,7 @@ func (w *Wskaznik) Wnies(ctx context.Context, dokumenty []Dokument,
 	for _, dokument := range dokumenty {
 		ile, err := w.wniesDokument(ctx, dokument, limit)
 		if err != nil {
-			// Liczba wniesionych do tej chwili wraca RAZEM z odmową: przebieg
-			// przerwany w połowie zostawia wskaźnik niepełny i wołający ma
-			// wiedzieć, ile weszło, zamiast zgadywać, czy weszło cokolwiek.
+			// Liczba wniesionych do tej chwili wraca razem z odmową.
 			return wniesione, err
 		}
 		wniesione += ile
@@ -148,7 +120,8 @@ func (w *Wskaznik) Wnies(ctx context.Context, dokumenty []Dokument,
 	return wniesione, nil
 }
 
-// wniesDokument przeprowadza jeden dokument przez całą drogę.
+// wniesDokument przeprowadza jeden dokument przez całą drogę: podział,
+// osadzenie, zapis do bazy danych.
 func (w *Wskaznik) wniesDokument(ctx context.Context, dokument Dokument,
 	limit time.Duration) (int, error) {
 
@@ -191,16 +164,8 @@ func (w *Wskaznik) wniesDokument(ctx context.Context, dokument Dokument,
 }
 
 // Szukaj oddaje `ile` fragmentów najbliższych pytaniu, od najbliższego.
-//
-// PYTANIE OSADZA SIĘ TYM SAMYM MODELEM, CO DOKUMENTY, i nie jest to szczegół
-// techniczny: wektor pytania z modelu innego niż wektory wskaźnika daje iloczyn
-// skalarny, który jest liczbą i nie znaczy nic. Zawężenie odczytu po nazwie
-// modelu jest jedyną obroną przed tym po zmianie ustawienia — a nazwa jest
-// jedna, bo pyta się o nią tego, kto liczy.
-//
-// WYNIK PUSTY JEST ODPOWIEDZIĄ, NIE ODMOWĄ: wskaźnik pusty albo
-// wiedza bez związku z pytaniem znaczą „nie mam na to nic". Inaczej niż BRAK
-// SILNIKA, który jest odmową, bo wtedy rdzeń nie wie, czy ma coś, czy nie ma.
+// Pytanie osadza się tym samym modelem, co dokumenty. Wynik pusty jest
+// odpowiedzią, nie odmową.
 func (w *Wskaznik) Szukaj(ctx context.Context, pytanie string, zakresy []string,
 	ile int, limit time.Duration) ([]Trafienie, error) {
 

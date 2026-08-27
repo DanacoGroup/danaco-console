@@ -4427,3 +4427,13 @@ i tak widzi w oknie konfiguracji.
 Pustka w polu Jezyk znaczyłaby co innego niż brak wpisu (rozpoznanie
 automatyczne zamiast polskiego), więc każdy kształt wartości konfiguracji
 niesie w tekstUstawienia własną wartość zastępczą.
+
+## budowa/server/internal/wiedza/przesiew_test.go
+
+Samo liczenie ocen sprawdza się tam, gdzie stoją wagi: internal/core,
+sprawdziany skutku rodziny knowledge.*. Tutaj mierzone jest to, co ma
+działać na każdej maszynie — bo kolejność ułożona źle jest usterką
+niezależną od tego, czy model odpowiedział dobrze.
+
+Ocena zerowa trzyma pozycję w wykazie po to, żeby wiązanie po pozycji się
+nie przesunęło — a nie po to, żeby stanąć w wyniku.

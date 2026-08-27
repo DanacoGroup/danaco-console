@@ -2544,3 +2544,15 @@ jest trafiona, gdy Operator wskazał ją jako bardziej przekonującą, dał jej
 wysoką ocenę, albo gdy wygrała głosowanie. Uczestnik bez ani jednej ocenionej
 wypowiedzi nie ma trafności do zmierzenia i nie wchodzi do wyniku — liczba
 wzięta z zera pomiarów byłaby wymysłem.
+
+## budowa/server/internal/core/adapter_modul_przegladarka_kanaly.go
+
+`browser.feed.subscribe` pobiera wskazany adres, rozpoznaje postać (RSS, Atom,
+JSON Feed) i odkłada wpisy przy subskrypcji — wiersz z samym adresem, bez ani
+jednego wpisu, byłby subskrypcją, o której nie wiadomo nawet, czy pod tym
+adresem stoi kanał.
+
+Rozbiór idzie biblioteką standardową (`encoding/xml`, `encoding/json`), bo RSS
+i Atom są dokumentami XML o ustalonym kształcie, a JSON Feed dokumentem JSON.
+Zewnętrzna biblioteka kanałów nie dołożyłaby tu niczego poza kolejną
+zależnością.

@@ -2580,3 +2580,29 @@ a nie okno sesji terminalowej, wiec zasady izolacji dla wywolan arsenalu
 biora sie z zasiegu platformy, tak samo jak w rodzinie narzedzi mediow —
 punkt izolacji wlaczony globalnie dziala tu tak samo jak dla modulu
 Terminal.
+
+## budowa/server/internal/core/adapter_modul_terminal_klucze.go
+
+Para kluczy powstaje biblioteką standardową Go — crypto/ed25519, crypto/rsa
+i crypto/ecdsa wytwarzają materiał, a golang.org/x/crypto/ssh zapisuje go
+w postaci OpenSSH i liczy odcisk. Program ssh-keygen byłby tu narzędziem spoza
+instalki wołanym po to, żeby zrobić rzecz, którą biblioteka standardowa robi
+w kilku wierszach — a wytworzenie klucza jest czynnością, bez której książka
+hostów przestaje mieć czym się łączyć. Ta sama decyzja zapadła przy obsłudze
+git, PDF i wyszukiwania w innych modułach rdzenia.
+
+Klucz prywatny nie opuszcza dysku maszyny rdzenia w żadną stronę: wytworzenie
+oddaje sam odcisk i klucz publiczny, wciągnięcie do wykazu bierze ścieżkę, nie
+treść, a wykaz nie ma pola, w którym materiał tajny mógłby się znaleźć.
+
+Kontrakt każe podawać hasło klucza odwołaniem do sejfu, nigdy treścią. Rdzeń
+nie ma dziś czytnika sejfu, więc żądanie z odwołaniem kończy się odmową
+nazywającą ten brak, zamiast po cichu wytworzyć klucz bez hasła w odpowiedzi
+na prośbę o klucz z hasłem — takie zachowanie byłoby cichym obniżeniem
+ochrony, gorszym niż odmowa.
+
+Klucz chroniony hasłem przy wciąganiu do wykazu czyta się tylko z hasłem,
+którego rdzeń nie ma, i to nie jest powód odmowy: wykaz ma nieść taki klucz,
+a program ssh odczyta go sam przy połączeniu. Odcisk bierze się wtedy z klucza
+publicznego — z pliku obok albo z części publicznej, którą niesie sam błąd
+odczytu.

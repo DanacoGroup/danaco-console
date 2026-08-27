@@ -1,18 +1,5 @@
-// Dławik prób wejścia przez bramkę: rosnąca zwłoka po próbach nieudanych,
-// zerowana pierwszym wejściem udanym.
-//
-// Dławik nie odmawia żadnej próby — nie ma tu progu, stanu „zablokowane” ani
-// kodu błędu „za dużo prób”. Ogranicza wyłącznie prędkość zgadywania: sekret
-// zgadywany po łączu lokalnym idzie tysiącami prób na sekundę, przy zwłoce
-// sięgającej pięciu sekund schodzi do dwunastu prób na minutę.
-//
-// Zwłoka nakładana jest na wejściu czynności, przed sprawdzeniem sekretu.
-// Czekanie dopiero po rozpoznaniu sekretu jako błędnego czyniłoby z czasu
-// odpowiedzi wskaźnik poprawności sekretu.
-//
-// Licznik prób żyje w pamięci, nie w bazie: jest stanem biegu procesu, nie
-// faktem o Operatorze. Zapisany w bazie przeżywałby restart i kazałby czekać
-// komuś, kto dopiero zaczyna.
+// Dławik prób wejścia przez bramkę: rosnąca zwłoka po próbach nieudanych, zerowana
+// pierwszym wejściem udanym, ograniczająca wyłącznie prędkość zgadywania sekretu.
 package core
 
 import (
@@ -21,42 +8,31 @@ import (
 	"time"
 )
 
-// zwlokaPierwszaDlawika jest zwłoką nałożoną na próbę NASTĘPUJĄCĄ PO pierwszej
-// nieudanej. Ćwierć sekundy jest poniżej progu, na którym człowiek zauważa
-// opóźnienie interfejsu, a maszynie odbiera już trzy czwarte prędkości.
+// zwlokaPierwszaDlawika jest zwłoką nałożoną na próbę następującą po pierwszej nieudanej,
+// poniżej progu zauważalnego przez człowieka.
 const zwlokaPierwszaDlawika = 250 * time.Millisecond
 
-// zwlokaGranicznaDlawika jest sufitem, powyżej którego zwłoka nie rośnie.
-// Wzrost wykładniczy bez sufitu po kilkunastu próbach daje czekanie liczone
-// w godzinach, czyli odmowę wykonaną zegarem. Pięć sekund zostawia Operatorowi
-// wejście w każdej chwili, a zgadującemu wyznacza pułap dwunastu prób na minutę.
+// zwlokaGranicznaDlawika jest sufitem, powyżej którego zwłoka nie rośnie, bo wzrost
+// wykładniczy bez sufitu dałby czekanie liczone w godzinach.
 const zwlokaGranicznaDlawika = 5 * time.Second
 
-// dlawikWejscia trzyma licznik prób nieudanych osobno dla każdej drogi wejścia.
-//
-// Kluczem jest droga wejścia, nie wołający: bramka jest jedna, a Operator
-// bezimienny (wzorzec Danaco HUB), więc nie ma konta, po którym można by liczyć.
-// Rozdzielenie po metodzie i urządzeniu sprawia, że seria chybionych PIN-ów na
-// tablecie nie spowalnia wejścia hasłem na maszynie roboczej — to dwa różne
-// sekrety.
+// dlawikWejscia trzyma licznik prób nieudanych osobno dla każdej drogi wejścia, kluczowany
+// metodą i urządzeniem, bo bramka jest jedna, a Operator bezimienny.
 type dlawikWejscia struct {
 	mu    sync.Mutex
 	proby map[string]int
 
-	// czekaj podstawia własne czekanie w miejsce zegara, żeby test mógł zmierzyć
-	// zwłokę bez odczekiwania jej. Wartość zerowa oznacza czekanie prawdziwe.
+	// czekaj podstawia własne czekanie w miejsce zegara, żeby test mógł zmierzyć zwłokę.
 	czekaj func(ctx context.Context, ile time.Duration)
 }
 
-// nowyDlawikWejscia zakłada dławik z pustym licznikiem.
+// nowyDlawikWejscia zakłada dławik z pustym licznikiem prób nieudanych dla każdej drogi wejścia do bramki.
 func nowyDlawikWejscia() *dlawikWejscia {
 	return &dlawikWejscia{proby: map[string]int{}}
 }
 
-// Zaczekaj nakłada zwłokę należną drodze wejścia i zwraca jej długość.
-//
-// Zwłoka wynika z prób wcześniejszych, więc pierwsza próba nie czeka nigdy.
-// Zerwanie kontekstu (rozłączony klient) kończy czekanie natychmiast.
+// Zaczekaj nakłada zwłokę należną drodze wejścia i zwraca jej długość; pierwsza próba nie
+// czeka nigdy, a zerwanie kontekstu kończy czekanie natychmiast.
 func (d *dlawikWejscia) Zaczekaj(ctx context.Context, droga string) time.Duration {
 	if d == nil {
 		return 0
@@ -82,24 +58,21 @@ func (d *dlawikWejscia) Zaczekaj(ctx context.Context, droga string) time.Duratio
 	return zwloka
 }
 
-// Niepowodzenie dolicza próbę nieudaną i zwraca zwłokę, która obejmie próbę
-// następną. Wartość zwrócona służy wyłącznie opisaniu stanu w odpowiedzi.
+// Niepowodzenie dolicza próbę nieudaną i zwraca zwłokę, która obejmie próbę następną na tej samej drodze wejścia.
 func (d *dlawikWejscia) Niepowodzenie(droga string) time.Duration {
 	if d == nil {
 		return 0
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	// Licznik przestaje rosnąć tam, gdzie zwłoka i tak stoi na suficie —
-	// inaczej rósłby bez końca i przepełniłby się przy dość długiej serii.
+	// Licznik przestaje rosnąć tam, gdzie zwłoka i tak stoi na suficie.
 	if zwlokaPoProbach(d.proby[droga]) < zwlokaGranicznaDlawika {
 		d.proby[droga]++
 	}
 	return zwlokaPoProbach(d.proby[droga])
 }
 
-// Wyzeruj kasuje licznik drogi wejścia. Woła się to po wejściu udanym: sekret
-// był dobry, więc następna próba nie czeka wcale.
+// Wyzeruj kasuje licznik drogi wejścia; woła się po wejściu udanym, gdy sekret był dobry, nie fałszywy.
 func (d *dlawikWejscia) Wyzeruj(droga string) {
 	if d == nil {
 		return
@@ -109,10 +82,7 @@ func (d *dlawikWejscia) Wyzeruj(droga string) {
 	delete(d.proby, droga)
 }
 
-// zwlokaPoProbach przekłada liczbę prób nieudanych na zwłokę: 0, 250 ms, 500,
-// 1000, 2000, 4000, dalej równo 5000 ms. Podwajanie daje szybki spadek prędkości
-// zgadywania przy pierwszych kilku próbach, a sufit nie pozwala mu przerodzić
-// się w odmowę.
+// zwlokaPoProbach przekłada liczbę prób nieudanych na zwłokę rosnącą podwajaniem aż do sufitu wartości.
 func zwlokaPoProbach(nieudane int) time.Duration {
 	if nieudane <= 0 {
 		return 0
@@ -127,9 +97,8 @@ func zwlokaPoProbach(nieudane int) time.Duration {
 	return zwloka
 }
 
-// drogaWejscia składa klucz licznika z metody i urządzenia żądania. Urządzenie
-// puste (wejście hasłem) daje klucz samej metody, bo hasło bramki jest jedno
-// dla całej platformy.
+// drogaWejscia składa klucz licznika z metody i urządzenia żądania; urządzenie puste daje
+// klucz samej metody, bo hasło bramki jest jedno dla całej platformy.
 func drogaWejscia(metoda, urzadzenie string) string {
 	if urzadzenie == "" {
 		return metoda

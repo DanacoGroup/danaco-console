@@ -1,18 +1,8 @@
 import type { StanRozmowy } from './stan-rozmowy';
 
 /**
- * Zegar ciszy — jedyna warstwa okna rozmowy, która mierzy czas.
- *
- * Domknięcie tury przychodzi wyłącznie zdarzeniem z rdzenia, a zerwany
- * strumień nie ma w kontrakcie własnego zdarzenia. Rdzeń ubity w połowie tury
- * zostawiłby więc wpis na stanie „wysyłanie" bez końca, dlatego warstwa
- * rozmowy rozpoznaje zerwanie po jedynym śladzie, jaki zostaje: po tym, że nic
- * nie przychodzi.
- *
- * Zegar niczego nie przerywa i nie zamyka tury — tura wraca do życia, gdy
- * nadejdzie fragment. Zegar wyłącznie nazywa to, co widać; różnicę między
- * długim rozumowaniem a martwym połączeniem rozstrzyga Operator, mając przed
- * sobą liczbę sekund.
+ * Zegar ciszy — jedyna warstwa okna rozmowy, która mierzy czas, bo rdzeń nie ma zdarzenia
+ * zerwanego strumienia.
  */
 export interface ZegarCiszy {
   /** Uruchamia odliczanie; wywołanie powtórne nie zakłada drugiego interwału. */
@@ -21,7 +11,10 @@ export interface ZegarCiszy {
   zatrzymaj: () => void;
 }
 
-/** Zależności zegara — stan tury i droga jego zmiany. */
+/**
+ * Zależności zegara ciszy: bieżący stan tury okna rozmowy oraz kierunek jego zmiany w
+ * czasie trwania.
+ */
 export interface OtoczenieZegara {
   /** Stan bieżący rozmowy; zegar go czyta, nie trzyma własnej kopii. */
   stan: () => StanRozmowy;
@@ -31,10 +24,16 @@ export interface OtoczenieZegara {
   ustawStan: (zmiana: Partial<StanRozmowy>) => void;
 }
 
-/** Takt odliczania. Sekunda: krócej byłoby migotaniem, dłużej — nieuwagą. */
+/**
+ * Takt odliczania zegara ciszy wynosi jedną sekundę: krócej byłoby migotaniem, dłużej
+ * nieuwagą operatora.
+ */
 const taktCiszy = 1000;
 
-/** Zakłada zegar ciszy nad podanym otoczeniem. */
+/**
+ * Zakłada zegar ciszy nad podanym otoczeniem stanu bieżącej rozmowy okna komunikacji z
+ * rdzeniem serwera.
+ */
 export function utworzZegarCiszy(o: OtoczenieZegara): ZegarCiszy {
   let uchwyt: ReturnType<typeof setInterval> | null = null;
 

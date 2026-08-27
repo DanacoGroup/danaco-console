@@ -2450,3 +2450,20 @@ bazą: wytwór i zrzut mają bajty w magazynie plików, pobranie ma plik na
 dysku, makro ma kroki możliwe do odtworzenia, a granica obowiązuje kolejne
 przebiegi Wykonawcy. Wiersz bez odwołania byłby zapisem bez pokrycia w
 rzeczywistym skutku.
+
+## budowa/server/internal/dane/orkiestracja_uklad.go
+
+Plik jest osobny od orchestration.go: tamten prowadzi łuki układu w tabeli
+zaleznosc_kroku_automatyki, tutaj mieszkają byty, których łuk nie wyraża.
+Bramka mówi, kiedy tory scalają się w jednym kroku, grupa mówi, że zbiór
+kroków biegnie razem, a kompensacja mówi, co zrobić, gdy przebieg pękł w pół.
+Wszystkie posługują się identyfikatorem zewnętrznym kroku, tak jak łuki: układ
+przepisuje się w całości, więc klucz wiersza kroku nie przeżywa przepisania,
+a napis Operatora przeżywa.
+
+Kolejki automatyki rozpoznaje nazwa równa jej kodowi, tak zakłada je
+core/adapter_modul_automations_kolejka.go i innej drogi nie ma.
+
+Skutek spięcia leży w tabeli kolejka, nie w samym znaczniku spięcia: znacznik
+bez przestawienia rodzaju kolejek i wiązania z oknem roli byłby zapisem,
+którego nikt nie czyta.

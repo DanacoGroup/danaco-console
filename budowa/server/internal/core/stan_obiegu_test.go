@@ -7,12 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przekład powodu zatrzymania biegu na wyliczenie kontraktu.
-//
-// Tu rozstrzyga się, czy układ złożony przez Operatora pozna MASZYNOWO wynik
-// pracy: `LoopState.stopReason` jest jedynym polem, którym rdzeń mówi, dlaczego
-// bieg stanął. Dopóki niosło trzy wartości, każda znaczyła „przerwane" i wynik
-// był nieodróżnialny od porzucenia.
+// Przekład powodu zatrzymania biegu na wyliczenie kontraktu przez pole LoopState.stopReason.
 
 // TestPowodyBieguRozrozniajaUkonczenieOdTrzechZatrzyman wykazuje, że cztery
 // powody pakietu sesji dają cztery różne wartości kontraktu — żaden nie schodzi

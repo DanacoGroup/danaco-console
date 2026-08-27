@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Diagnostics Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
+
 # Moduł Diagnostics — dokumentacja projektowa
 
 | | |
@@ -1099,24 +1101,31 @@ Współobecność Diagnostics, Developer i Terminala w jednym środowisku CodeSt
 ## 8. Scenariusze użycia
 
 **Scenariusz 1 — od zgłoszenia błędu do zagregowanego obrazu przyczyny.**
+
 Zespół otrzymuje zgłoszenie o błędach usługi płatności. Operator otwiera Errors Panel, odnajduje zgrupowany wpis z dwunastoma wystąpieniami, wybiera „Analizuj" z menu wiersza — Diagnostics Center agreguje ten błąd z powiązanymi logami z ostatniej godziny i przedstawia zwięzły wniosek: usługa zewnętrzna przekracza limit czasu odpowiedzi.
 
 **Scenariusz 2 — zlecenie złożone prowadzone w pętli wykonawczej.**
+
 Operator formułuje w Chat Window zlecenie „ustal przyczynę błędów usługi płatności". Koordynator dekomponuje je w Execution Loop Window na zadania: pobranie logów zakresu, zbudowanie odcisków błędów, korelację śladów wywołań modelu i wyliczenie metryk okresu. Wykonawca realizuje zadania i raportuje wynik każdego kroku; kontrola jakości odrzuca pierwszy wynik korelacji jako niekompletny i Koordynator ponawia zadanie z szerszym zakresem czasu. Po zakończeniu przebiegu Recommendations Panel prezentuje rekomendacje, a Chat Window — podsumowanie przebiegu.
 
 **Scenariusz 3 — zastosowanie poprawki z pełnym przeglądem.**
+
 Na podstawie analizy Recommendations Panel przedstawia rekomendację dodania limitu czasu i ponowienia próby połączenia. Operator wybiera „Zastosuj poprawkę" — Code Editor modułu Developer otwiera się z gotową zmianą przygotowaną do przeglądu. Po weryfikacji poprawności Operator zatwierdza zmianę w Git Panel; rekomendacja zostaje oznaczona jako zastosowana i wchodzi w okres obserwacji skuteczności.
 
 **Scenariusz 4 — weryfikacja hipotezy w rzeczywistym środowisku.**
+
 Przed wdrożeniem poprawki Operator potwierdza hipotezę o przeciążonej puli połączeń do bazy danych. Z poziomu Chat Window zleca sprawdzenie liczby aktywnych połączeń — polecenie wykonuje się w module Terminal, a wynik wraca do Diagnostics, potwierdzając lub obalając hipotezę przed podjęciem dalszych kroków.
 
 **Scenariusz 5 — prowenancja i koszt wywołania modelu.**
+
 Wpis logu ze znacznikiem `trace_id` prowadzi Operatora do Provenance Explorer, gdzie drzewo śladu ujawnia, że jedno z wywołań podagenta przekracza próg opóźnienia i zużywa nieproporcjonalnie dużo tokenów. Usage & Cost pokazuje udział tego kanału modelu w koszcie okresu i sygnalizuje zbliżenie do miękkiego progu budżetu sesji. Operator zmienia kanał modelu dla tego typu zadań, a porównanie kosztu i opóźnienia potwierdza efekt zmiany.
 
 **Scenariusz 6 — przegląd stanu systemu przed wydaniem.**
+
 Przed planowanym wydaniem lider techniczny otwiera Diagnostics Center, ustawia zakres czasu na ostatni tydzień i przegląda wskaźniki kondycji wszystkich komponentów oraz oś czasu zdarzeń. Health & Uptime potwierdza zużycie budżetu błędów poniżej limitu, brak nowych błędów krytycznych i stabilny trend czasu odpowiedzi; wynik eksportowany jest jako raport dla zespołu.
 
 **Scenariusz 7 — nadzór nad procesem autonomicznym środowiska MultitaskingAI.**
+
 Agent pełniący rolę Executora w nienadzorowanej pętli pracy ciągłej napotyka powtarzające się niepowodzenie kroku procesu. Zdarzenie trafia do Errors Panel modułu Diagnostics z pełnym kontekstem przebiegu, a reguła alertu wypycha sygnał do Always On Display. Operator zleca analizę przyczyny w Execution Loop Window, przegląda wniosek w Diagnostics Center i wprowadza poprawkę w module Developer, zanim proces wznowi kolejne uruchomienia według harmonogramu.
 
 ---
@@ -1152,4 +1161,5 @@ Agent pełniący rolę Executora w nienadzorowanej pętli pracy ciągłej napoty
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

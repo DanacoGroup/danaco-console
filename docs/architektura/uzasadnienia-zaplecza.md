@@ -2618,3 +2618,12 @@ Operator kliknął.
 
 Cyklu baza nie wykryje: to jest sprawdzenie rdzenia przed zapisem, bo cykl
 rozpoznaje się przejściem grafu, a nie warunkiem kolumny.
+## budowa/server/internal/store/migracja_218_workspace_tablica.sql
+Migracja 218 — kolumny tablicy kanban projektu.
+
+Kolumna jest nastawą Operatora i odwzorowuje się na stan zadania z zestawu
+wyjściowego platformy. Kolumna własna nie zakłada stanu nowego — dlatego
+kolumna `stan` ma ten sam warunek co zadanie, a nie własne słownictwo.
+
+Granica prac w toku jest sygnalizowana, nie egzekwowana: zero znaczy brak
+granicy, a przekroczenie wraca ostrzeżeniem odpowiedzi, nie odmową.

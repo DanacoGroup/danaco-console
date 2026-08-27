@@ -322,14 +322,17 @@
   transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
 }
 
-/* Kafel środowiska: przycisk zwęża się do samego grota, wyściółka schodzi do
-   miary odstępu, żeby obrys obejmował znak, a nie napis, którego już nie ma.
-   Rozmiar niesie osobna reguła na `svg`, bo miara ikony przycisku z warstwy
-   wspólnej ma wyższą swoistość niż zmienna na samym grocie. */
+/* Kafel środowiska: wejście niesie sam grot, bez obrysu i tła — tak samo jak
+   w kaflu modułu. Kontrolką zostaje, bo karta środowiska nie jest przyciskiem,
+   ale nie nosi już chromu przycisku bibliotecznego. */
 .cd-strona .cd-wejdz--grot {
-  /* Wyściółka pionowa zerowa: grot ma 32 px, a wiersz metryki karty stał na
-     przycisku tej samej miary — z wyściółką karta rosła o dziesięć pikseli. */
-  padding: 0 var(--dn-od-3);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
   min-width: 0;
 }
 .cd-strona .cd-wejdz--grot > .cd-grot-marki {
@@ -337,7 +340,17 @@
   height: var(--dn-od-8);
 }
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
-.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
+.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki {
+  color: var(--dn-tekst);
+  transform: translateX(var(--dn-od-05));
+}
+/* Obwódka fokusu nie ma już obrysu przycisku, na którym mogłaby usiąść —
+   siada więc na samym grocie. */
+.cd-strona .cd-wejdz--grot:focus-visible {
+  outline: var(--dn-obwodka) solid var(--dn-sygnal);
+  outline-offset: var(--dn-od-1);
+  border-radius: var(--dn-r-sm);
+}
 
 /* Kafel komponentu jest przyciskiem sam w sobie, więc grot stoi w nim jako
    znak, nie kontrolka: dosuwa się do prawej krawędzi i odpowiada na najechanie

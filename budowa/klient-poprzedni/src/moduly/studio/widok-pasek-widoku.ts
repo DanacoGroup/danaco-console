@@ -26,25 +26,11 @@ import {
 } from './widok-nastawy-operatora';
 
 /**
- * Pasek widoku — nastawy powierzchni pod ręką, a nie w stałej kolumnie.
- *
- * ── Powierzchnia należy do dokumentu ────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: panele wchodzą na żądanie i schodzą, gdy nie są
- * używane; stała kolumna może być wyłącznie trybem do wyboru. Dlatego pasek jest
- * wąskim rzędem przy krawędzi powierzchni, a nastawy rzadsze — układ kartek,
- * przewijanie, jednostka linijki, tryb dwóch dokumentów — siedzą w **nakładce**
- * rozwijanej przyciskiem „Nastawy widoku". Nakładka stoi NAD treścią i schodzi
- * naciśnięciem, `Escape` albo naciśnięciem poza nią: nie zabiera kartce ani
- * milimetra szerokości.
- *
- * ── Dlaczego nastawy widoku stoją przy powierzchni, a nie tylko na wstążce ───
- * Bo dotyczą tego, na co Operator patrzy, i sięga po nie co chwilę — skala i skok
- * o stronę są czynnościami ciągłymi, a nie wyprawą na zakładkę. Wstążka niesie
- * te same nastawy raz, jako gniazdo tego paska (`GniazdaWstazki.widok`), więc nie
- * ma dwóch miejsc, które mogłyby się rozjechać.
+ * Pasek widoku pływa przy krawędzi powierzchni i chowa nastawy rzadsze
+ * w nakładce, aby stała kolumna nie zabierała miejsca kartce. Czynności
+ * zebrane niżej pasek zleca powierzchni, bo to ona przechowuje stan widoku
+ * i skalę.
  */
-
-/** Czynności paska widoku zlecane powierzchni. */
 export interface CzynnosciPaskaWidoku {
   /** Skala wpisana albo z suwaka, w procentach. */
   naSkale(procent: number): void;
@@ -67,6 +53,7 @@ export interface CzynnosciPaskaWidoku {
   /** Panele jako nakładki albo jako stałe kolumny — wybór Operatora. */
   naUkladPaneli(uklad: 'nakladka' | 'kolumny'): void;
   /* ── Nastawy kartki ─────────────────────────────────────────────────────── */
+
   /** Nośnik z wykazu — oznaczenie ISO albo nazwa koperty. */
   naNosnik(oznaczenie: string): void;
   /** Nośnik własny podany wymiarami w milimetrach. */
@@ -86,7 +73,11 @@ export interface CzynnosciPaskaWidoku {
   naSzybkiDruk(): void;
 }
 
-/** Pasek widoku wraz z jego sterowaniem. */
+/**
+ * Pasek widoku wraz z jego sterowaniem: element gotowy do osadzenia w oknie,
+ * odświeżenie kontrolek po zmianie nastaw powierzchni oraz zamknięcie nakładki,
+ * gdy ognisko wraca do dokumentu.
+ */
 export interface PasekWidoku {
   element: HTMLElement;
   /** Przestawia kontrolki wedle nastaw obowiązujących. */
@@ -191,10 +182,8 @@ export function utworzPasekWidoku(
     'Tryb tego samego okna, nie osobne okno: kartka w nośniku i orientacji NAPRAWDĘ ustawionych, ' +
     'wraz z paginacją, nagłówkiem, stopką i numeracją. Pisanie w tym trybie jest wyłączone.');
 
-  // Szybkie drukowanie stoi w rzędzie STAŁYM, nie w nakładce: jedno naciśnięcie,
-  // ostatnie nastawy, bez okna nastaw — tak jak na pasku szybkiego dostępu pakietu
-  // biurowego. Bez drogi druku zostaje brakiem nazwanym, a nie przyciskiem, który
-  // milczy.
+  // Szybkie drukowanie stoi w rzędzie stałym; bez sterownika druku jest przyciskiem
+  // z nazwanym powodem.
   const szybkiDruk = czyDrukDostepny()
     ? przycisk('Szybkie drukowanie', 'szybki-druk', () => czynnosci.naSzybkiDruk(),
         'Drukuje od razu, ostatnimi nastawami druku, bez okna nastaw.')
@@ -549,9 +538,8 @@ export function utworzPasekWidoku(
       trybDokumentow.kontrolka.value = nowe.trybDokumentow;
       kierunek.element.hidden = nowe.trybDokumentow !== 'podzial';
       kierunek.kontrolka.value = nowe.kierunekPodzialu;
-      // Tryb źródłowy i podgląd wydruku wykluczają się: znaczniki nie mają
-      // paginacji, a podgląd nie ma znaczników. Wyłączony przełącznik mówi to
-      // wprost, zamiast oddawać widok, którego Operator nie zamawiał.
+      // Tryb źródłowy i podgląd wydruku wykluczają się — wyłączony przełącznik
+      // mówi to wprost.
       zrodlowy.kontrolka.disabled = podglad;
       podgladWydruku.kontrolka.disabled = nowe.trybZrodlowy;
       odswiezDruk();
@@ -580,7 +568,10 @@ function przycisk(
   return element;
 }
 
-/** Przełącznik paska wraz z etykietą i objaśnieniem. */
+/**
+ * Przełącznik paska wraz z etykietą i objaśnieniem widocznym jako podpowiedź
+ * oraz jako opis dostępności kontrolki dla czytnika ekranu.
+ */
 function przelacznik(
   etykieta: string,
   wlaczony: boolean,

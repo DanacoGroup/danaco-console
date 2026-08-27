@@ -4878,3 +4878,15 @@ sprawdzeniu, a przebudowa zabrałaby wybór trybu wpisany chwilę wcześniej.
 Stan pusty należy się wyłącznie odczytowi zakończonemu powodzeniem. W trakcie
 pytania rdzenia zdanie o braku punktów byłoby nieprawdą, a po niepowodzeniu
 odczytu pomyłką co do przyczyny.
+
+## budowa/klient-poprzedni/src/konfiguracja/wybor-kontrolki.ts
+
+Formularz okna konfiguracji powstaje z katalogu nastaw, więc rozdzielenie
+rodzaju wartości na kontrolkę ma dokładnie jeden punkt. Nowy rodzaj wartości
+w kontrakcie oznacza nowy przypadek w tym rozdzieleniu i nowego budowniczego
+obok, a nie nowy ekran ani zmianę w formularzu i w panelu kategorii.
+
+Rodzaj nieznany nie gasi pola. Rdzeń nowszy od klienta może przysłać rodzaj
+wartości, którego ten klient nie zna; zamiast pustego miejsca staje wtedy pole
+tekstowe z ostrzeżeniem, wartość pozostaje odczytywalna i zapisywalna jako
+napis, a nazwa rodzaju idzie do dziennika przeglądarki.

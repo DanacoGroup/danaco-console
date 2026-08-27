@@ -1,8 +1,4 @@
-/* Zakładki i pas kart sesji.
-
-   Wybór zakładki niesie zawsze `aria-selected='true'` — barwa tekstu sama
-   nie wystarcza; znaczenie dopowiada podkreślenie sygnałowe.
-   Pas kart sesji używa tej samej mechaniki, dokładając wstęgę aktywności. */
+/* Arkusz opisuje zakładki i pas kart sesji, w których wybór niesie zawsze aria-selected, dopowiedziany podkreśleniem sygnałowym. */
 
 .dn-zakladki {
   display: flex;
@@ -71,7 +67,7 @@
   border-color: var(--dn-obrys);
   color: var(--dn-tekst);
 }
-/* wstęga aktywnej karty — sygnał */
+/* Wstęga aktywnej karty sesji niesie sygnał barwą wypełnienia, umieszczona wzdłuż górnej krawędzi wybranej karty. */
 .dn-karta-sesji[aria-selected='true']::before {
   content: '';
   position: absolute;

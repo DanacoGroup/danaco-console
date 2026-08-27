@@ -1749,3 +1749,57 @@ Zapytanie próbne idzie po sieci naprawdę: składa żądanie pod adres
 czas oraz kod odpowiedzi zegarem, nie zgadywaniem. Brak adresu i brak
 podglądu razem znaczy odmowę z powodem, a nie wynik powodzenia wzięty
 znikąd.
+
+## budowa/server/internal/core/adapter_modul_terminal_analiza.go
+
+Mapa programów analizy dla poszczególnych powłok jest nieunikniona, ponieważ
+rozpoznanie składni Basha, PowerShella i Pythona to trzy odrębne, dojrzałe
+programy, których żaden rozsądny nakład pracy nie przepisze do Go. Mapa jest
+POMIERZONA, nie zgadnięta: bash ma ShellCheck do analizy i shfmt do
+formatowania, oba zmierzone i zainstalowane na maszynie rdzenia; powershell
+ma PSScriptAnalyzer wywoływany przez `Invoke-ScriptAnalyzer`
+i `Invoke-Formatter`, również zmierzony i zainstalowany; node ma wyłącznie
+`node --check`, czyli sam interpreter, którego karta node i tak wymaga, więc
+formatowania dla tej powłoki nie ma i odpowiedź go nie obiecuje; python ma
+Ruff (`ruff check`, `ruff format`), a gdy Ruffa na maszynie nie ma, zostaje
+`python -m py_compile` — sam interpreter, orzekający wtedy wyłącznie
+o składni, nie o regułach, i odpowiedź nazywa w takim wypadku interpreter,
+nie Ruffa. Cmd i ssh nie mają pozycji: dla wsadu cmd nie istnieje powszechnie
+przyjęty analizator, a ssh nie jest językiem, tylko transportem. Wykaz
+zawiera to, co zmierzono, i nic ponad to; powłoka spoza wykazu dostaje
+odpowiedź mówiącą wprost, że analizatora dla niej nie ma, ponieważ pusty
+wykaz uwag znaczyłby fałszywie, że treść jest bez zastrzeżeń.
+
+Treść skryptu trafia do programu analizy przez plik tymczasowy, nie przez
+strumień wejścia procesu, z dwóch niezależnych powodów. Każdy z programów
+analizy czyta plik; ShellCheck umie czytać też strumień, ale wtedy gubi
+nazwę pliku w uwagach. Jedyna droga uruchomienia rdzenia do procesu
+zewnętrznego (`zewnetrzne.Wolaj`) nie pisze na wejście procesu z zamysłu,
+ponieważ jednoczesne pisanie na wejście i czytanie wyjścia jest klasą
+zakleszczeń, której ten pakiet ma nie mieć. Ta sama droga sprawia, że Ruff
+formatuje plik, a nie strumień, mimo że `ruff format -` dałby ten sam
+wynik: droga rdzenia do procesu z zamysłu nie pisze na jego wejście, więc
+czytanie idzie z pliku, który po analizie znika z katalogu tymczasowego
+maszyny rdzenia.
+
+Python ma dwa programy, a pierwszeństwo należy do Ruffa: `python -m
+py_compile` orzeka wyłącznie o składni i jest wobec Pythona tym, czym
+ShellCheck jest wobec basha i PSScriptAnalyzer wobec PowerShella dla
+pozostałych powłok — orzeczeniem o składni oraz o regułach. Ruff obejmuje
+jedno i drugie: błąd składni wraca z niego jako uwaga `invalid-syntax`, więc
+pierwszeństwo Ruffa niczego nie odbiera. Gdy Ruffa na maszynie nie ma,
+zostaje interpreter, i wtedy odpowiedź nazywa interpreter, bo to on
+naprawdę sprawdzał treść — nazwa programu w odpowiedzi ma zgadzać się z tym,
+co ją wystawiło.
+
+Żądanie analizy nie niesie okna, a każdy proces rdzenia ma mieć obszar
+i zasady izolacji, więc SprawdzSkrypt bierze obszar pusty i zasady puste —
+rozstrzygnięcie, nie przeoczenie: program analizy czyta wyłącznie plik
+tymczasowy założony przez rdzeń, nie sięga do obszaru żadnego okna i nie ma
+z niego czego wynieść. Kod wyjścia różny od zera jest tu wynikiem analizy,
+nie usterką: ShellCheck i `node --check` kończą pracę niezerowo dokładnie
+wtedy, gdy mają co zgłosić; odpowiedź odmawia wyłącznie wtedy, gdy programu
+nie ma czym uruchomić. Formatowanie nieudane nie unieważnia analizy z tego
+samego powodu, dla którego formatowanie jest osobnym krokiem: uwagi są tym,
+po co komenda powstała, a treść sformatowana jest dodatkiem — gdy się nie
+uda, pole treści sformatowanej zostaje nieobecne, zgodnie z kontraktem.

@@ -188,6 +188,40 @@ go w raporcie**.
 
 ## Zgłoszenia oczekujące na teren
 
+### Os obrazu rozumie polszczyzne slabo
+
+CLIP ViT-L/14, wskazany pozycja 17, jest **modelem jednojezycznym angielskim**.
+Pomiar terenu `zdolnosc-wyszukiwania` na trzech obrazach:
+
+| Zdanie | Wynik |
+|---|---|
+| `a red circle` | trafienie pierwsze, margines wyrazny (0,250 wobec 0,179) |
+| `niebieski kwadrat` | trafienie pierwsze, **margines znika** (0,149 wobec 0,139) |
+| `zolty trojkat na czarnym tle` | trafienie **przegrywa** |
+
+**Skutek:** obietnica wyszukania obrazu zdaniem jest dzis slabsza dla Operatora
+piszacego po polsku niz po angielsku, a produkt jest polskojezyczny. Nastawa
+`wiedza_model_obrazu` pozwala podmienic model na wydanie wielojezyczne **bez
+zmiany kodu** — wybor modelu nalezy do Wlasciciela, bo poda go pozycja 17.
+
+### Wektory obrazow licza sie przy kazdym zapytaniu
+
+Os obrazu nie ma trwalosci wektorow: kolumna `zakres` tabeli wskaznika ma warunek
+na trzy wartosci, a migracja nalezy do innego terenu. Zmierzone: 17 s dla trzech
+obrazow. Przy bibliotece rzedu setek zapytanie zajmie odpowiednio wiecej, a sufit
+`GranicaObrazow` = 200 **obetnie wykaz bez ostrzezenia w odpowiedzi** — pole
+`examined` powie tylko, ile weszlo.
+
+### Cztery nastawy zdolnosci wyszukiwania bez wiersza w katalogu ustawien
+
+`wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`, `wiedza_model_obrazu`,
+`wiedza_katalog_obrazu` maja klucze i wartosci domyslne w `wiedza/ustawienia.go`,
+ale nie maja wierszy `definicja_ustawienia`. Zdolnosc dziala, bo rozstrzyganie
+czyta zapis niezaleznie od katalogu — ale `config.set` odmawia klucza spoza
+katalogu, wiec **Operator nie ustawi katalogu wag z okna konfiguracji**.
+Do domkniecia: cztery wiersze w migracji nastaw, wzorem czterech z migracji 115.
+
+
 ### Materialy wizerunkowe moga niesc ta sama obietnice szesciu postaci
 
 Teren `witryna-pobierania` sprowadzil tresc stron do dwoch postaci hybrydowych,

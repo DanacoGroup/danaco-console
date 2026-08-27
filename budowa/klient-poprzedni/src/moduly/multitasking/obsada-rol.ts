@@ -1,36 +1,25 @@
 import { WindowRole, type Window } from '../../../../shared/contract';
 
-/**
- * Obsada czterech okien ról MultitaskingAI zbudowana z pól kontraktu.
- *
- * Rola pochodzi z `WindowRole`, nie z domysłu. Koordynatorem jest okno
- * `coordinator`, wykonawcą okno `executor`, którego `coordinatorWindowId`
- * wskazuje tego koordynatora — to jest cała definicja pętli. Znakowanie ról po
- * tytule albo po kolejności rozjechałoby rdzeń z widokiem przy pierwszym
- * przepięciu wykonawcy pod innego koordynatora.
- *
- * Analityk stoi poza pętlą. Results Analyzer nie jest wykonawcą: nie kończy
- * tury, która miałaby wybudzić koordynatora, więc jego rolą kontraktową jest
- * `standalone`. Odróżnia go wskazanie zapisane na poziomie sesji — kontrakt nie
- * ma czwartej wartości `WindowRole`, a wymyślanie jej po stronie klienta
- * rozjechałoby wykaz ról z bazą.
- *
- * Kody okien są bezmodułowe: rejestr okien operacyjnych niesie `coordinator-chat`,
- * `executor-chat-1`, `executor-chat-2` i `results-analyzer`, bez przedrostka
- * modułu. Przynależność do modułu niesie osobna macierz, w której czterech okien
- * ról nie ma — liczą się tam jako okna pozamodułowe. Kod z przedrostkiem
- * wypisany w `data-okno` nie trafiłby w żaden wiersz rejestru i nawigacja po
- * kodzie okna nie miałaby w co skoczyć.
- */
+/** Obsada czterech okien ról modułu MultitaskingAI złożona z pól kontraktu. */
 
-/** Kody okien operacyjnych rejestru rdzenia — bez przedrostka modułu. */
+/**
+ * Kody okien operacyjnych rejestru rdzenia zapisane bez przedrostka modułu. Kod
+ * z przedrostkiem nie trafiłby w żaden wiersz rejestru, więc nawigacja po kodzie
+ * okna nie miałaby dokąd skoczyć.
+ */
 export const KOD_KOORDYNATORA = 'coordinator-chat';
 export const KOD_ANALITYKA = 'results-analyzer';
 
-/** Ilu wykonawców niesie wykaz okien: dwa wystąpienia Executor Chat. */
+/**
+ * Ilu wykonawców niesie wykaz okien operacyjnych: rejestr ma dwa wystąpienia
+ * okna wykonawcy, więc obsada przycina zbiór przypiętych okien do tej liczby.
+ */
 export const LICZBA_WYKONAWCOW = 2;
 
-/** Obsada ról odczytana z okien sesji. */
+/**
+ * Obsada ról odczytana z okien sesji: koordynator, przypięci do niego wykonawcy,
+ * wskazany analityk oraz okna wykonawcze należące do innego koordynatora.
+ */
 export interface Obsada {
   /** Okno koordynatora; puste, gdy sesja nie ma jeszcze zarządcy. */
   koordynator: Window | null;
@@ -42,7 +31,10 @@ export interface Obsada {
   obce: readonly Window[];
 }
 
-/** Pusta obsada — stan przed odczytem i po odmowie rdzenia. */
+/**
+ * Pusta obsada — stan przed pierwszym odczytem okien sesji oraz po odmowie
+ * rdzenia. Widok dostaje wtedy komplet pól bez wartości, a nie brak obsady.
+ */
 export const OBSADA_PUSTA: Obsada = {
   koordynator: null,
   wykonawcy: [],
@@ -51,11 +43,9 @@ export const OBSADA_PUSTA: Obsada = {
 };
 
 /**
- * Składa obsadę z okien sesji.
- *
- * Koordynatorem zostaje pierwsze okno roli `coordinator` w kolejności założenia;
- * druga taka rola w sesji jest osobną sceną, a nie konkurentem — moduł pokazuje
- * jedną parę naraz, tak jak pas relacji układu okien równoległych.
+ * Składa obsadę z okien sesji uporządkowanych po czasie założenia.
+ * Koordynatorem zostaje pierwsze okno roli koordynatora; druga taka rola jest
+ * osobną sceną, a nie konkurentem, bo moduł pokazuje jedną parę naraz.
  */
 export function zlozObsade(okna: readonly Window[], idAnalityka: string): Obsada {
   const wedlugCzasu = [...okna].sort((a, b) => a.createdAt - b.createdAt);
@@ -78,7 +68,10 @@ export function zlozObsade(okna: readonly Window[], idAnalityka: string): Obsada
   };
 }
 
-/** Czy okno należy do wykonawców tej obsady. */
+/**
+ * Czy okno o podanym oznaczeniu należy do wykonawców tej obsady. Rozstrzyga
+ * zbiór wykonawców przypiętych do koordynatora, a nie sama rola okna.
+ */
 export function czyWykonawca(obsada: Obsada, idOkna: string): boolean {
   return obsada.wykonawcy.some((okno) => okno.id === idOkna);
 }

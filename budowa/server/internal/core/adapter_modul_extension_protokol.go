@@ -192,8 +192,8 @@ func (r *rozmowaMcp) Powitaj(ctx context.Context) (string, error) {
 		ProtocolVersion string `json:"protocolVersion"`
 	}
 	if err := json.Unmarshal(wynik, &powitanie); err != nil {
-		// Serwer odpowiedział, ale nie tym kształtem — wersję protokołu podajemy
-		// wtedy swoją.
+		// Serwer odpowiedział, ale nie tym kształtem — wersja protokołu jest podawana
+		// wtedy własna.
 		return wersjaProtokoluMcp, nil
 	}
 	if powitanie.ProtocolVersion == "" {
@@ -274,7 +274,7 @@ func (r *rozmowaMcp) wymienStdio(bajty []byte) ([]byte, error) {
 		if len(przycieta) == 0 {
 			continue
 		}
-		// Nagłówek kadrowania długością nie jest ramką — pomijamy go i czytamy
+		// Nagłówek kadrowania długością nie jest ramką — jest pomijany, a odczyt trwa
 		// dalej.
 		if bytes.HasPrefix(przycieta, []byte("Content-Length:")) {
 			continue

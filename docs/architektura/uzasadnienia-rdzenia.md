@@ -5518,3 +5518,13 @@ odświeża się sam przy wgraniu pliku: osadzenie dokumentu to sekundy pracy pro
 pobiera rząd gigabajta wag, więc wpięcie go w komendę wgrania pliku zamieniłoby ją w operację,
 która czasem trwa minutę i czasem odmawia z powodu braku sieci. Budowanie wskaźnika jest czynnością
 osobną i świadomą.
+
+## budowa/server/internal/core/handlers_workspace.go
+Komenda wejścia do przestrzeni nie należy do tego obszaru: przeładowuje przestrzeń roboczą karty
+sesji na dowolny moduł i wpina ją nawigacja — nazwa jest wspólna, obszar nie.
+
+Jedno zdarzenie na cały moduł. Kontrakt daje modułowi wyłącznie zdarzenie zmiany projektu, więc
+każda zmiana stanu projektu — instrukcje, wpis pamięci, przypisanie eksperta — rozgłasza się tym
+samym zdarzeniem. Okna modułu odświeżają się z jednej subskrypcji, a nie z czterech. Odczyty
+niczego nie rozgłaszają poza jednym przypadkiem: wejście na pulpit projektu, którego jeszcze nie
+było, zakłada go — a założenie bytu jest zmianą.

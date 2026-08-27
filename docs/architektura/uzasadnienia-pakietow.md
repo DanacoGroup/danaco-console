@@ -3130,3 +3130,34 @@ odpowiada za założenie kolekcji i przypisanie zasobów, ten za odczyt kolekcji
 Reguła nie wykonuje się sama. Warstwa danych przechowuje warunek i wskazuje kolekcję docelową;
 przeliczenie, czyli zamiana warunku na wykaz zasobów, należy do rdzenia, bo to on zna znaczenie
 członów warunku.
+
+## workspace_zadania.go
+
+Wykaz zadań schodzi z bazy w całości dla jednego projektu, a zawężenia (stan, wykonawca, etykieta,
+fraza, termin) rozstrzyga rdzeń. Powód jest jeden: zawężeń jest siedem i wchodzą w dowolnym
+połączeniu, więc zapytanie składane z kawałków byłoby napisem budowanym w locie, a projekt liczy
+zadania w setkach, nie w milionach.
+
+## budowa/server/internal/dane/historia.go
+
+Repozytorium historii nie zakłada własnej tabeli: pozycją historii jest wiersz tabeli
+wiadomości, tylko on niesie rolę, treść i czas. Osobne repozytorium obok repozytorium
+wiadomości bierze się z drugiego pytania o tę samą tabelę — tamto prowadzi turę, pisze
+wypowiedź i czyta okno po kluczu wewnętrznym, nigdy nie usuwa; historia pyta po
+identyfikatorze kontraktowym okna, od najnowszej, kursorem czasu, i jako jedyna kasuje.
+Usunięcie zabiera też bloki wiadomości, ponieważ bez klucza obcego kaskada bazy ich nie
+sprząta.
+
+Liczba pozycji całego okna pomija warunek kursora celowo: kursor zaniżałby ją przy każdym
+kolejnym dociąganiu starszych pozycji, a wartość trafia do pola całkowitej liczby, które
+warstwa wyższa pokazuje jako rozmiar całej historii, także w ostrzeżeniu przed
+nieodwracalnym czyszczeniem okna w całości.
+
+Strona wykazu nie przecina grupy pozycji o jednym znaczniku czasu. Porządek wykazu ma dwa
+klucze — czas utworzenia i identyfikator wiersza malejąco — a kursor kontraktu niesie tylko
+pierwszy z nich, milisekundy. Gdy granica strony wypada w środku pozycji o tym samym
+znaczniku (zwykła tura: pytanie i odpowiedź powstają w tej samej milisekundzie), strona
+następna pytana warunkiem ostro mniejszym przeskoczyłaby rodzeństwo bezpowrotnie. Zamiast
+dokładać kontraktowi pole rozstrzygające remis, strona domyka się po stronie repozytorium:
+po pobraniu limitu wierszy dobierane jest jeszcze całe rodzeństwo ostatniego z nich. Strona
+bywa więc odrobinę dłuższa od limitu, za to kursor zawsze pada między grupami.

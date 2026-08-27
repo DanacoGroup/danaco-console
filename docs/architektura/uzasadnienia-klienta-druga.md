@@ -1956,3 +1956,26 @@ Tekst źródłowy mieszka w module stanu translate, żeby panele tłumaczenia pa
 a nie na własną kopię. Wszystkie trzy komendy rdzeń rejestruje i obsługuje wprost; bez zalogowanego
 modelu rdzeń oddaje stan zdegradowany z komunikatem o braku zalogowania — to jest odpowiedź rdzenia,
 nie brak uchwytu. Ścieżka odmowy zostaje na wypadek starszego rdzenia albo pośrednika.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-magazyn-widoku.ts
+Moduł nastaw operatora widoku od początku przyjmował magazyn podany z zewnątrz
+zamiast sięgać po magazyn przeglądarki wprost, żeby zapis dał się przełożyć na
+rdzeń bez zmiany wołających go miejsc. Ten moduł jest tym przełożeniem: zapis
+idzie do rdzenia komendami odczytu i zapisu widoku, więc nastawy przestają
+ginąć przy przesiadce na inne urządzenie.
+
+Magazyn nastaw widoku pozostaje z natury natychmiastowy: odczyt musi oddać
+wartość w chwili składania okna, a rdzeń odpowiada później. Zapis dwustopniowy
+rozwiązuje to bez kłamstwa — pamięć podręczna trzyma nastawy zapisane
+w rdzeniu, a wczytanie ją napełnia; do chwili odpowiedzi obowiązuje odbicie
+w magazynie przeglądarki, gdy jest dostępne, albo nastawy domyślne.
+
+Odbicie w przeglądarce zostaje, ponieważ pierwsza klatka okna rysuje się przed
+odpowiedzią rdzenia. Odbicie nie jest drugim źródłem prawdy: rdzeń nadpisuje
+je przy każdym odczycie, a zapis idzie do obu naraz. Bez odbicia każde wejście
+do modułu zaczynałoby się nastawami domyślnymi, choćby operator ustawił co
+innego wcześniej.
+
+Nieudany zapis nastawy widoku nie przerywa pracy, ale i nie milczy: idzie
+zdaniem zwrotnym do zaplecza, więc korzystający wie, że wybór nie przeżyje
+zamknięcia okna.

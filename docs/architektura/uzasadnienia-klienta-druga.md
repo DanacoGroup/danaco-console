@@ -5027,3 +5027,31 @@ zwraca loginu ani adresu. Pole bez komendy odczytu byłoby puste, więc pól tu 
 odczytu profilu wejdzie do kontraktu. Rodzina kont modeli nie jest tym, czego tu brakuje: opisuje konta
 modeli, nie konto operatora, i jest obsłużona w warstwie modeli; sekcja kont modeli niżej w rejestrze
 odsyła właśnie tam.
+
+## budowa/klient-poprzedni/src/moduly/translate/zapisy-zrodla.ts
+Odczyt i zapis mieszkają osobno, tak jak w sekcji dostępów: widok składa pola i przyciski, a to,
+co się dzieje po naciśnięciu, jest tutaj, dzięki czemu sprawdzian może wywołać zapis bez klikania
+w element, a plik widoku nie puchnie o obsługę odmów. Zdanie o wyniku mówi tylko to, co niesie
+odpowiedź rdzenia: zapis tekstu żadnego przekładu nie uruchamia, oddaje panele z ich dotychczasową
+treścią, a przelicza je dopiero dodanie celu albo korekta operatora; przy zapisie bez wskazanego
+języka źródłowego rdzeń oddaje pusty język, nazwany, nie przemilczany. Rozpoznanie języka nie
+wpisuje się do pola w ciemno: komenda rozpoznania przepuszcza odpowiedź modelu wprost do pola
+języka kontraktu, więc w polu potrafi wrócić komunikat kanału zamiast oznaczenia języka, a wartość
+niebędąca oznaczeniem języka wraca operatorowi dosłownie, jako odmowa, i nie nadpisuje tego, co
+sam wpisał.
+Rdzeń sprawdza pusty tekst dokładnie: pustego tekstu odmawia, ale samą spację czy sam znacznik
+kolejności bajtów przyjmuje i zapisuje, a okno takiego źródła nie wysyła i nie przypisuje
+rdzeniowi odmowy, której by nie było. Wskaźnik ładowania stoi przy tytule pasa, a przesłonięcie
+pola skasowałoby operatorowi z oczu to, co właśnie pisze. Odpowiedź zapisu niesie język i podział,
+które rdzeń oddał, a nie samą treść źródła. Przy polu pustym żądanie zapisu nie niesie języka,
+więc nie ma zamówienia, z którym można by zestawić odpowiedź; rdzeń oddaje wskazany język wprost,
+a przy żądaniu bez języka oddaje pole puste, kasując język zapisany wcześniej — obie drogi mają
+w oknie własne zdanie. Przerysowanie okna nie zdejmuje fazy trwającej, więc ogłoszenie wykonane
+przy zapalonym ładowaniu przeszłoby bez skutku i okno zostałoby z zapowiedzią wywołania, które
+się już skończyło.
+Kontrakt opisuje pole language jako rozpoznany język, a rdzeń prosi model o samą nazwę albo kod
+ISO 639-1 — oznaczenie języka to najwyżej kilka słów złożonych z liter, ewentualnie z kodem
+w nawiasie. Komunikat kanału mieści się zwykle w czterdziestu znakach, więc sama długość go nie
+odsiewa; odsiewa go zbiór znaków i liczba słów. Klient nie orzeka, że wartość jest błędna: oddaje
+ją operatorowi dosłownie i zostawia mu ocenę, nie wpisuje tylko cudzego komunikatu do pola języka
+i nie melduje go jako rozpoznania.

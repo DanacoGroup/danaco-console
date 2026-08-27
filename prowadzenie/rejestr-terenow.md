@@ -65,46 +65,6 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 **na rzecz `main`** — wersja z galezi cofnelaby dorobek calej tury.
 
 
-### okno-przygotowania
-
-Ostatni ekran drogi wejscia ma **slepy zaulek** i pasek, ktory nigdy nie dobiegnie
-konca. Zmierzone przez sesje pomiarowa w przegladarce wobec zywego rdzenia.
-
-| | |
-|---|---|
-| **Galaz** | `teren/okno-przygotowania` z `main` |
-| **Wykaz plikow** | `budowa/klient/src/wejscie/ekrany/przygotowanie.ts`, `budowa/klient/src/wejscie/tresci.ts`, `budowa/klient/src/wejscie/przebieg.ts`, sprawdziany w `budowa/klient/src/wejscie/` |
-| **Poza terenem** | `budowa/server/`, `budowa/shared/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
-
-**Pierwsza — przycisk prowadzi donikad.** „Pomin przywracanie sesji"
-(`przygotowanie.ts:64`) ma `komunikat: 'pominiecie'` i **nie ma przypisanej
-czynnosci**. Po klikniecu wystawia zdanie i nic wiecej sie nie dzieje; wykaz
-etapow i pasek zostaja bez zmiany. To **jedyne wyjscie** z ostatniego ekranu poza
-wylogowaniem.
-
-**Druga — pasek staje na 40% na zawsze.** Trzy z pieciu etapow przygotowania nie
-maja komendy w kontrakcie i zostaja w stanie oczekiwania. Zachowanie jest
-udokumentowane w kodzie jako zamierzone, ale odbior jest taki, jakby aplikacja
-sie zawiesila.
-
-**Czego NIE robisz.** Nie dokladasz komend do kontraktu — kontrakt nalezy w tej
-turze do innego terenu. Okno ma stac sie **uczciwe wobec tego, co potrafi**, a nie
-udawac postep, ktorego nie ma.
-
-**Kryteria odbioru.**
-
-1. Przycisk pominiecia **prowadzi dalej** albo znika. Jesli prowadzi - wykazane
-   przejsciem w przegladarce, z przytoczona odslona przed i po.
-2. Ostatni ekran **nie zostawia Operatora bez wyjscia**: z kazdej odslony jest
-   droga naprzod albo nazwany powod, dla ktorego jej nie ma.
-3. Postep nie udaje. Albo dobiega konca, albo mowi wprost, na co czeka - decyzja
-   Twoja, uzasadniona w raporcie.
-4. Tekst widoczny dla uzytkownika **wylacznie** w katalogu tresci - sprawdzian
-   `katalog-tresci.test.ts` przechodzi.
-5. `tsc --noEmit` bez bledu; sprawdziany klienta zdane (26 przebiegu, 7 katalogu).
-6. Wykazane **przejsciem w przegladarce** wobec zywego rdzenia, ze droga wejscia
-   dalej przechodzi od konca do konca. Zrzuty ekranu w katalogu tymczasowym.
-
 ### zdolnosc-wyszukiwania
 
 **Buduje dwie nowe zdolności produktu** na modelach, które stoją odłogiem.
@@ -151,6 +111,28 @@ Suma zastana: `b7d0436880d878e78576`.
    17 pominiętych, zero niezdanych.
 
 ## Zgłoszenia oczekujące na teren
+
+### Droga wejscia nie ma dokad prowadzic
+
+Po domknieciu przygotowania okno zostaje na ekranie **na zawsze**. `main.ts`
+montuje wylacznie trzy okna wejscia, a okno pracy — Centrum dowodzenia — istnieje
+jedynie jako prototyp w `design/05-okna/przeplyw/centrum-dowodzenia.html`.
+
+Wykonawca **nie dopowiedzial** przejscia ani zdania o nim: okno konczy na stanie
+prawdziwym (100%, komplet etapow zamkniety), a droga naprzod powstanie razem
+z oknem, do ktorego ma prowadzic. To jest fala 3 i czeka na prototyp.
+
+### Trzy etapy przygotowania wroca, gdy dostana komendy
+
+Wykaz etapow skrocono z pieciu do dwoch — do tych, ktore dzialajacy uklad mierzy.
+„Profil Operatora i uprawnienia", „Kanaly modeli i konektory" oraz „Magistrala
+kontekstu i pamiec projektow" **nie byly etapami czekajacymi, tylko obietnica,
+ktorej nikt nie wykona** — kontrakt nie ma dla nich komend.
+
+Podstawa: pozycja 12 rejestru decyzji — prototyp nie rozstrzyga, „ile jest czego
+— plikow, skladnikow, etapow", bo to mierzy dzialajacy uklad. Etapy wracaja do
+wykazu w dniu, w ktorym kontrakt dostanie dla nich komendy.
+
 
 ### Granica uprzezy nie wystarcza komendom neuronowym
 
@@ -723,6 +705,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `okno-przygotowania` | `teren/okno-przygotowania` | `fbb405d` | weryfikacja Prowadzacego wlasnym pomiarem: martwy przycisk **zniknal** (0 trafien przy 2 kontrolnych na nowa czynnosc), 27/27 sprawdzianow przebiegu, 7/7 katalogu tresci, `tsc` bez bledu; zrzuty obejrzane — postep dobiega 100%, odslona nieudana ma droge naprzod |
 | `odtwarzanie-twarzy` | `teren/odtwarzanie-twarzy` | `9cc5ccf` | weryfikacja Prowadzacego wlasnym pomiarem: **RMSE 1301,37** miedzy wynikiem `faces:false` a `faces:true`, roznica zlokalizowana na twarzy; wycinek obejrzany — zeby, wargi i faktura skory wyraznie odtworzone; zakres 5 plikow w `internal/core`; kontrakt nietkniety; wagi `GFPGANv1.4.pth` wczytane `strict=True`, 285 kluczy |
 | `witryna-pobierania` | `teren/witryna-pobierania` | `6ffe74f` | weryfikacja Prowadzacego wlasnym pomiarem: w tresci stron zostalo **jedno trafienie** wzorca zniesionych postaci i jest nim zdanie odmawiajace wprost z pozycji 8; sonda dodatnia tego samego wzorca daje 4 trafienia w `wydania.json` i 0 w `zloz.mjs`, wiec rozroznia; witryna sklada sie - 10 stron |
 | `usterki-rdzenia` | `teren/usterki-rdzenia` | trzy rewizje | weryfikacja Prowadzacego pomiarem: sprawdzian `TestTuraZamknietaBledemNieOglaszaUkonczenia` **padl na kodzie sprzed naprawy** z wlasciwym zdaniem i przeszedl po przywroceniu; zakres wylacznie `internal/core`; kontrakt nietkniety |

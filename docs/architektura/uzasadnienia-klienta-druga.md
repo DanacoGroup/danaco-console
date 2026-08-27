@@ -4345,3 +4345,21 @@ o granicę i nota ma je rozróżnić: sufit gniazd sceny okien równoległych, d
 Translate się mieści, i osobna granica okien komunikacji profilu Translate — okno komunikacji
 a panel języka to dwa różne byty. Forma noty idzie za wzorem sufitu uczestników z innego modułu,
 a sufit sceny jest importowany, nie przepisywany, więc liczba jedzie z pliku, w którym stoi.
+
+## budowa/klient-poprzedni/src/rozmowa/stopka-wpisu.ts
+Rozliczenie tury pod wypowiedzią to stopka i blok błędów, nie transkrypt:
+podsumowanie tury, konto kanału, typy zdarzeń i wykaz wytworów mówią, ile tura
+kosztowała i co po sobie zostawiła, a nie co model powiedział. Widok wpisu
+składa warstwy i steruje nimi; ten plik wie, jak wygląda jedna notka. O tym,
+które części pokazać, ten plik nie rozstrzyga — rozkład warstw przychodzi
+gotowy z widoku zapisu.
+
+Typy linii przechwyconych w turze niosą przejrzystość kanału, nie diagnostykę
+błędu. Tryb „Pełny" jest jedynym miejscem, w którym ta lista ma sens: poza nim
+jest szumem nad odpowiedzią. Spisu plików w wykazie wytworów nie ma: rdzeń go
+nie nadaje — wpis niesie wywołania narzędzi, a nie listę tego, co po nich
+zostało na dysku. Wytworem tury są więc nazwy narzędzi, które tura uruchomiła.
+
+Błąd tury nie podlega trybowi widoku transkryptu. Wpis, w którym tura padła,
+mówi o tym zawsze — schowanie błędu za ustawieniem widoku byłoby ciszą
+w miejscu, gdzie Operator musi wiedzieć, że kanał odmówił.

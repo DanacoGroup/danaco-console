@@ -5777,3 +5777,112 @@ z tego pliku wyłącznie go odczytują i przekładają. Podział idzie tą grani
 Rozróżnianie tokenu nieznanego, sesji unieważnionej i sesji wygasłej
 w odpowiedzi `RozpoznajSesjeBramki` mówiłoby pytającemu, czy trafił
 w istniejący token.
+
+## budowa/server/internal/core/adapter_modul_automations_kolejka.go
+
+Silnik jest jeden. Ten plik nie zmienia stanu żadnej pozycji: wszystko, co
+dotyczy cyklu życia zlecenia, jedzie przez adapterKolejek.Wykonaj, ten sam
+silnik, którym pracuje pętla sesyjna i MultitaskingAI. Tutaj leży wyłącznie
+to, czego kolejka nie wie: skąd wziąć zlecenia (z kroków automatyki, gdy
+kolejka jest jeszcze pusta), jak ułożyć pozycję (priorytet i skierowanie do
+innej kolejki) i co odnotować (przebieg automatyki realizowany przez tę
+kolejkę). Krok staje się zleceniem dopiero przy uruchomieniu: Workflow
+Builder buduje strukturę, a silnik kolejek ją wykonuje.
+
+Kolejka bez wpiętego silnika w UruchomAutomatyke nie ma czym ruszyć — odmowa
+jest wprost, nie cichym założeniem kolejki, która nigdy nie ruszy.
+
+Cykl w ulozoneKroki nie może wstrzymać uruchomienia — Orchestrator pokazuje
+go jako zastrzeżenie, a Operator decyduje.
+
+## budowa/server/internal/core/adapter_modul_roundtable_decyzja.go
+
+Kolumna z wynikiem rozjechałaby się z ocenami przy pierwszej zmianie wagi,
+która nie przeliczyłaby wszystkiego naraz.
+## budowa/server/internal/core/adapter_modul_poczta_przeklad.go
+
+Przeklad jest osobno od czynnosci, bo czyta sie inaczej niz logike
+i zmienia z innego powodu: przy zmianie kontraktu, a nie przy zmianie
+zachowania.
+
+Pusto znaczy nie wiem, nigdy zero. Kontrakt opisuje brak wartosci brakiem
+pola, wiec pole wypelnione pustym tekstem albo zerem byloby cecha, ktorej
+nikt nie wskazal. Pomocniki pilnuja tej granicy w jednym miejscu, zamiast
+powtarzac ja przy kazdym polu.
+
+rozpoznanaKontraktu: zmyslony identyfikator wygladalby jak skrzynka
+gotowa do uzycia, a pierwsze wywolanie z nim odmowiloby platforma nie zna
+skrzynki.
+
+wiadomoscKontraktu przeklada naglowek listu na MailMessage. Tresc zostaje
+pusta - wypelnia ja wylacznie mail.message.get, tak jak stanowi kontrakt.
+
+liczbaOpcjonalna oddaje wskaznik na liczbe dodatnia albo nic. Port zerowy
+nie istnieje, wiec zero jest tu brakiem wskazania, nie wartoscia.
+
+wartoscLubZero rozpakowuje wskaznik na liczbe - brak znaczy zero, czyli
+nie wskazano (wolajacy bierze wtedy port domyslny protokolu).
+## budowa/server/internal/core/adapter_modul_aplikacje_dzienniki.go
+
+Wiersze dziennika bierze się z jednej tabeli, którą wypełniają: silnik
+wykonania wdrożenia przy każdym kroku przebiegu, serwer podglądu przy
+podniesieniu i zatrzymaniu, zapytanie próbne oraz nadanie domeny i
+nastawy skalowania. Odczyt niczego nie dopisuje i niczego nie wymyśla —
+dziennik pusty znaczy, że w tym oknie nic jeszcze nie zaszło, a nie że
+rdzeń nie umie go pokazać.
+
+Pole strumieniowania mówi prawdę, a nie obietnicę. Kontrakt niesie je w
+obu odczytach. Rdzeń nie utrzymuje strumienia dziennika po tej komendzie
+— dziennik jedzie osobnym zdarzeniem przy przejściach przebiegu — więc
+pole wraca fałszem. Zwracanie prawdy kazałoby oknu czekać na strumień,
+którego nikt nie nadaje, i pokazywać wieczne łączenie.
+
+## budowa/server/internal/core/adapter_modul_isolation_rozgloszenie.go
+
+Zdarzenia opisują dwa różne byty. `isolation.profile.changed` dotyczy
+szablonu: profil powstał, zmienił się albo zniknął z katalogu; zapisanie
+profilu nie zmienia izolacji (`adapter_modul_isolation_profile.go`), więc
+samo to zdarzenie nie znaczy zmiany warunków pracy. `isolation.policy.changed`
+dotyczy polityki obowiązującej konkretne okno i jest sygnałem do
+przerysowania.
+
+Zdarzenie nie zastępuje `config.changed`: zapis punktu izolacji nadal
+rozgłasza `config.changed` z wierszem tabeli `ustawienie`, bo tak czyta go
+panel konfiguracji. `isolation.policy.changed` nie niesie wartości, tylko
+wskazanie okna, które ma przeliczyć swoją politykę.
+
+Ładunek kontraktu ma `windowId` jako pole wymagane, więc zmiana na poziomie
+szerszym niż okno — globalnym, środowiska, karty sesji — nie ma czego w nim
+postawić. Rdzeń nie rozgłasza wtedy zdarzenia z pustym oknem: takie zmiany
+zostają przy `config.changed`, bo rdzeń nie umie rozwinąć poziomu szerszego
+na listę objętych nim okien.
+
+Warstwa rozstrzyga, spod którego adresu wartości są czytane
+(`warstwaAdresu`), więc okno po przełączeniu pracuje na innym zestawie.
+Wybór zapisany dla karty sesji nie ma okna do wskazania i nie rozgłasza się
+— tak samo jak każdy poziom szerszy niż okno.
+## budowa/server/internal/core/adapter_modul_terminal_wyjscie_komenda.go
+
+Typ rozszerza port zamiast zakładać drugi adapter: osadza adapter modułu
+Terminal, więc niesie komplet jego komend i jest tym samym bytem, którym
+idą karty i procesy. Dziennik zbiorczy podpina się przy montażu, owijając
+nadajnik istniejącej pompy (`ZDziennikiemWyjscia`), a nie zakładając drugiej
+pompy.
+
+Żądanie bez `windowId` jest w kontrakcie dopuszczone i znaczy sam odczyt
+ogona — odpowiedź niesie wtedy `subscribed: false` wraz z wierszami.
+
+Wywołanie `ZDziennikiemWyjscia` jest bezpieczne przy powtórzeniu: nadajnik
+owinięty raz nie owija się drugi raz, bo każde owinięcie dokładałoby kolejną
+kopię tych samych wierszy do tego samego dziennika. Zerowy dziennik powoduje
+odmowę komendy z kodem `internal_error`.
+
+filtrZadania: oba wskazania działają łącznie — żądanie niosące kartę sesji
+i wykaz kart dostaje wiersze spełniające oba warunki naraz.
+
+sprawdzKarte szuka najpierw w rejestrze żywym, potem w tabeli kart terminala:
+karta zamknięta ma historię wyjścia, więc jej wskazanie nie jest błędem.
+
+ogonZadania czyta liczbę wierszy ogona. Brak wskazania daje ogon domyślny,
+zero — ogon pusty (żądanie samego zapisu na strumień), a liczba większa od
+pojemności dziennika schodzi do tej pojemności.

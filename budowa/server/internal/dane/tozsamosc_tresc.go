@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: treść kategorii zasad zapisana per oś (tabela
-// `dokument_tozsamosci`). Oś mówi, dla czego treść obowiązuje — dla platformy,
-// dla wskazanego modelu albo dla wskazanego konta. Która oś wygrywa, rozstrzyga
-// warstwa wyższa (`core/tozsamosc_wybor.go`); repozytorium wyłącznie oddaje
-// wiersze i zapisuje zmianę Operatora.
-//
-// Klucz zapisu jest trójką kategoria + oś + byt osi. Ta sama trójka jest
-// warunkiem UNIQUE w schemacie, więc zapis jest nadpisaniem, nie mnożeniem
-// wierszy o tym samym znaczeniu.
+// Plik zapisuje treść kategorii zasad tożsamości modelu per oś w tabeli
+// dokument_tozsamosci, kluczowaną trójką kategoria, oś i byt osi, jako
+// nadpisanie zamiast mnożenia wierszy.
 package dane
 
 import (
@@ -88,9 +82,8 @@ func (r *repozytoriumTozsamosci) Dokumenty(ctx context.Context, filtr FiltrTozsa
 }
 
 // ZapiszDokument zapisuje treść kategorii dla jednej osi i oddaje wiersz po
-// zmianie. Wiersz istniejący nadpisuje — Operator zmienia treść, nie zakłada
-// drugiej obok. Kategoria spoza katalogu jest błędem wskazania, nie awarią:
-// katalog jest zamkniętym zbiorem wierszy migracji.
+// zmianie, nadpisując wiersz istniejący. Kategoria spoza katalogu jest błędem
+// wskazania.
 func (r *repozytoriumTozsamosci) ZapiszDokument(ctx context.Context, dokument DokumentTozsamosci) (DokumentTozsamosci, error) {
 	os, err := osTozsamosciNaBaze(dokument.Os)
 	if err != nil {
@@ -153,7 +146,8 @@ func (r *repozytoriumTozsamosci) dokument(ctx context.Context, kod, os, osByt st
 	return dokument, err
 }
 
-// odczytajDokumentTozsamosci składa strukturę z jednego wiersza wyniku.
+// odczytajDokumentTozsamosci składa strukturę dokumentu tożsamości z jednego
+// wiersza wyniku zapytania, tłumacząc oś i tryb na wartości kontraktu.
 func odczytajDokumentTozsamosci(wiersz skaner) (DokumentTozsamosci, error) {
 	var dokument DokumentTozsamosci
 	var os, tryb string

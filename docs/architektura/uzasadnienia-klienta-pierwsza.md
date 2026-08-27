@@ -5741,3 +5741,13 @@ klasa usterki, która ujawnia się dopiero u Operatora.
 Komendy tego źródła grupują się tematycznie w warstwę językową Code Editora, historię pliku
 edytora, odczyt okna Build Output, Run & Debug, API Client, Data Console, Containers,
 zależności i bezpieczeństwo oraz operacje kontekstowe i sondę warsztatu.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-notes-panel.ts
+
+Notes Panel niesie jedną odpowiedzialność: złożenie okna i wykaz notatek. Formularz stoi w osobnym pliku formularza notatki, rozmowa z rdzeniem w osobnym pliku czynności notatek, jeden wiersz wykazu w osobnym pliku wiersza notatki.
+
+Edycja nie udaje zmiany: komenda aktualizacji notatki stoi w kontrakcie, ale to okno jeszcze jej nie wywołuje. Pozycja „Edytuj” wypełnia formularz treścią notatki i mówi wprost, powodem wziętym z odczytu wykazu komend rdzenia, że zapis utworzy notatkę nową, nie zmieni zastanej.
+
+Powód, dla którego zapis zakłada notatkę nową zamiast zmieniać zastaną, bierze się z odczytu wykazu komend rdzenia, nie z napisu w module: komenda aktualizacji notatki stoi w kontrakcie, więc od dnia, w którym rdzeń dostanie jej uchwyt, powód ma brzmieć inaczej i zabrzmi bez wchodzenia w ten plik.
+
+Trzy stany obowiązkowe wykazu notatek stosują ten sam zestaw reguł, co w panelu źródeł, bo oba wykazy przychodzą jednym zaciągnięciem. Kolejność pytań: czekanie, odmowa, pustka. Odmowa wykazu jest błędem panelu tylko przy pustym wykazie — z notatkami na ekranie wpisy zostają, a powód idzie zdaniem przy wykazie.

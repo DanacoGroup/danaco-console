@@ -79,76 +79,32 @@ odmowy milczącej, bo wysyła po nic.
 5. Kontrakt nietknięty — suma `334705bd88c2efc13779`.
 6. Rewizje obejmują wyłącznie pliki terenu.
 
-### sprawdziany-drogi-wejscia
-
-Trzy sprawdziany w `skutek_wydania_studia_test.go` rozjechały się z rdzeniem
-od chwili przejęcia — pomiar wcześniejszy wykazał, że opisują zamiar porzucony,
-którego nikt za zmianą nie poprawił. Osobno: droga bez poczty nie ma ani
-jednego sprawdzianu własnego — zachowanie rozstrzygnięte pozycją 11 stoi
-wyłącznie na komentarzu i pomiarze jednorazowym; pierwsza zmiana w bramce
-zniesie je bez niczyjej wiedzy.
-
-| Sprawdzian | Czego żąda | Co rdzeń robi |
-|---|---|---|
-| `TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta` | odmowy i zera wierszy przy braku nadajnika | zakłada konto, stawia znacznik, wpuszcza hasłem — pozycja 11 rozstrzyga na rzecz rdzenia |
-| `TestNieudaneNadanieListuCofaRejestracje` | cofnięcia rejestracji przy nadajniku nieosiągalnym | do zmierzenia w terenie |
-| `TestSkanowanieZUrzadzeniaOdmawiaNazwanie` | odmowy nazywającej brak | do zmierzenia w terenie |
-
-| | |
-|---|---|
-| **Gałąź** | `teren/sprawdziany-drogi-wejscia` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/skutek_wydania_studia_test.go`; nowy plik sprawdzianów drogi bez poczty w `internal/core/`; wyłącznie przy wykazanej pomiarem usterce rdzenia — plik bramy albo uwierzytelnienia niosący zachowanie |
-| **Poza terenem** | kontrakt, `zaleznosci_zewnetrzne.go`, `urzadzenia_skaner.go`, adaptery dokumentów, obrazu, przeglądarki, aplikacji, developer-api, mowy i `wiedza/` (pliki terenów biegnących), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
-| **Wykonawca** | sesja wysłana przez Prowadzącego 27.08.2026 |
-
-**Kryteria odbioru.**
-
-1. Dla każdego z trzech sprawdzianów rozstrzygnięte pomiarem, czy zawodzi
-   sprawdzian, czy rdzeń — z przytoczonym pomiarem — i poprawiona ta strona,
-   która się myli, a nie ta, którą łatwiej. Dla pierwszego rozstrzyga
-   pozycja 11: rdzeń ma rację.
-2. Droga bez poczty ma sprawdziany własne: rejestracja, wejście hasłem,
-   potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika — zgodne
-   z pozycją 11 rejestru decyzji.
-3. `gotestsum -- -count=1 ./...` — zero niepowodzeń; liczba pominiętych nie
-   rośnie, a jeśli któryś z trzech sprawdzianów stoi dziś wśród pominiętych,
-   po terenie pominięć ubywa.
-4. Kontrakt nietknięty.
-5. Rewizje obejmują wyłącznie pliki terenu.
-
-### odmowy-skanera
-
-Brak urządzenia jest już nazwany, ale brak programu `scanimage` na Linuksie
-wychodzi odmową arsenału bez wskazania drogi obejścia, podczas gdy
-`bladWarstwyWia` (`urzadzenia_skaner.go`) dla tej samej sytuacji na Windowsie
-podaje `studio.ingest.queue.add`. Ta sama asymetria w `wykazSkanerow`: gałąź
-Windows przekłada odmowę, gałąź Linux oddaje ją surową.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/odmowy-skanera` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/urzadzenia_skaner.go` oraz sprawdzian skanera (istniejący albo nowy plik sprawdzianu tego zakresu) |
-| **Poza terenem** | kontrakt, pozostałe pliki `internal/core/` — w szczególności adaptery czterech terenów biegnących równolegle — `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
-| **Wykonawca** | sesja wysłana przez Prowadzącego 27.08.2026 |
-
-**Kryteria odbioru.**
-
-1. Brak `scanimage` na Linuksie daje odmowę wskazującą
-   `studio.ingest.queue.add` — parytet z `bladWarstwyWia` — wykazane
-   sprawdzianem.
-2. `wykazSkanerow`: gałąź Linux przekłada odmowę tak samo jak gałąź Windows —
-   wykazane sprawdzianem.
-3. Komunikaty wzorowane na istniejącej gałęzi Windows — zero nowych nazw,
-   kodów i oznaczeń.
-4. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
-   2041 zdanych, 17 pominiętych, zero niezdanych.
-5. Kontrakt nietknięty.
-
 ## Zgłoszenia oczekujące na teren
 
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
+
+### Granica 15 s w uprzęży kontraktu jest ciasna dla warstwy skanera
+
+Ustalenie zmierzone przez teren `odmowy-skanera` i potwierdzone przez kontrolę.
+Generyczna uprząż zgodności kontraktu woła każdą komendę rdzenia z twardym
+limitem 15 s: `zgodnosc_kontraktu_test.go:215` i `:254`,
+`blokady_skutek_test.go:127`. Tymczasem czynność skanera na tej maszynie
+dochodzi do ~14,8 s (`scanimage --format=png` ~7,4 s + wykaz `scanimage -L`
+~7,4 s), a własne limity warstwy są znacznie wyższe — `granicaWykazuUrzadzen`
+45 s, `granicaSkanowaniaUrzadzenia` 5 min (`urzadzenia_skaner.go:63,68`). Pod
+obciążeniem maszyny generyczne 15 s ucina czynność przed jej własnym limitem
+i odmowa spada na kod czasu (`internal_error`) zamiast rozpoznać brak
+urządzenia (`not_found`). Na maszynie budowlanej bez żywego skanera komendy
+odmawiają natychmiast, więc chwiejność ujawnia się dopiero tam, gdzie warstwa
+realnie sonduje urządzenie — u Operatora na wolnej maszynie ta sama granica
+może uciąć legalną odmowę „brak urządzenia".
+
+Teren obejmuje uprząż zgodności kontraktu (pliki poza terenami zaplecza).
+Rozstrzygnięcie progu — podnieść do wartości spójnej z limitami warstwy —
+należy rozważyć wraz z tym, jak uprząż ma traktować komendy o własnych,
+dłuższych limitach.
 
 ### Rejestr rozjechany na gałęzi centrum poprawek — rozstrzygnięcie przy scaleniu
 
@@ -484,6 +440,8 @@ po raz drugi.
 | `zaplecze-modeli` | `teren/zaplecze-modeli` | `090acd6` silnik osadzeń na wagach stojących | kontrola osobnej sesji: teren zwrócony za niepełny wykaz postawionego, po uzupełnieniu przyjęty; kontroler powtórzył pomiar osadzeń niezależnie i przy odciętej sieci (`HF_HUB_OFFLINE=1`) — wymiar 1024, normy 1,000000, cos(kot,kot) 0,8348 wobec 0,2863–0,3353 dla par odległych; wagi `/opt` czytane, nie pobierane po raz drugi; kontrakt nietknięty. Scalone `ba82cb6` |
 | `obraz-i-diagramy` | `teren/obraz-i-diagramy` | `f7fab06` dogniecenie zapisu i metadane osadzone | kontrola osobnej sesji własnym biegiem: osiem zapór zdanych nietkniętych, 33 sprawdziany zdane w realnych czasach z przytoczonymi rozmiarami przed i po (PNG 3322→2456 B, JPEG 45399→39623 B, model barw paleta dowodzi wejścia pngquanta); sprawdziany maszyny bez programu wytwarzają ją naprawdę (`t.Setenv` na pusty katalog); kontrakt nietknięty; zero śladu mmdc w rdzeniu. Scalone `5b98585` |
 | `dokumenty-i-tekst` | `teren/dokumenty-i-tekst` | `ea05603` sześć programów treści pisanej · `aa695e6` poprawka nazwy po zwrocie | kontrola osobnej sesji: teren zwrócony za martwą nazwę `zasiegSyntezy` w komentarzu, po poprawce przyjęty; własny bieg kontrolera 14 zdanych, zero pominiętych; sprawdziany mierzą skutek — PDF czytany drugą komendą i innym programem, korekta aż po treść panelu w bazie, OCR dwoma przebiegami, brak programu wywołany `t.Setenv`; wybory hunspell i typst zweryfikowane uruchomieniem; kontrakt nietknięty. Scalone `43d05f6` |
+| `odmowy-skanera` | `teren/odmowy-skanera` | `1eaa58a` parytet odmów skanera Linux wobec Windows | kontrola osobnej sesji: `bladWarstwySane` wierne lustro `bladWarstwyWia` — ten sam kod `channel_unavailable`, ta sama droga obejścia `studio.ingest.queue.add`, pakiet czytany z braku nie zaszyty; sprawdzian parytetu woła obie warstwy i wymaga jednego kodu; brak wymuszony atrapą PATH z potwierdzeniem `zewnetrzne.Stoi=false`; bieg celowany 3 zdane; kontrakt nietknięty. Scalone `1dca877` |
+| `sprawdziany-drogi-wejscia` | `teren/sprawdziany-drogi-wejscia` | `1393e74` sprawdzian zdjęcia znacznika bramki | weryfikacja Prowadzącego mutacją rdzenia: wyłączenie `zdejmijZnacznikBezPoczty` daje sprawdzian niezdany („znacznik przeżył swój powód"), przywrócenie — zdany; trzy sprawdziany rozjazdu z rdzeniem były już przerobione przez `brama-i-droga-wejscia`, wykonawca to zmierzył i nie tknął; bieg celowany osiem zdanych; kontrakt nietknięty, jeden plik terenu. Scalone `4e70ef1` |
 | `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna

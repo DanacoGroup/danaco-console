@@ -2416,3 +2416,7 @@ bieżący, nierozpoczęty" wraz z checklistą, bo kontrakt niesie etapy jako zwy
 pola na stan — znaczek ukończenia postawiony tutaj byłby danymi zmyślonymi. Wskazanie etapu jest
 nastawą widoku i tylko nią: rdzeń nie ma gdzie zapisać, na którym etapie stoi badanie, więc po
 ponownym wejściu do modułu wskazanie zaczyna od zera, a okno tego nie ukrywa.
+
+## budowa/klient/src/polaczenie/dziennik-nieznanych.ts
+Rdzeń odpowiada na nieznaną komendę zdarzeniem `*.unknown` właściwym dla obszaru nazwy; każdy obszar kontraktu ma własne zdarzenie zapasowe. Dziennik obejmuje je wszystkie, sięgając po komplet z mapy kontraktu zdarzeń nieznanych, nigdy po literał nazwy: dopisanie obszaru w kontrakcie rozszerza dziennik samo, bez zmiany tego pliku.
+Osobno przechwytywane są koperty o typie spoza kontraktu — takie, których nie zna ani wykaz komend, ani wykaz zdarzeń. Powstają, gdy rdzeń wyprzedził klienta wersją albo gdy ramka była nieczytelna.

@@ -632,3 +632,18 @@ zdaniem osobnym, ponieważ to inna decyzja niż samo dalsze wniesienie materiał
 Zdanie o wyniku wydania nazywa wprost stratę cech, gdy format docelowy jest uboższy niż
 dokument: format uboższy jest sytuacją normalną, ale przemilczenie straty nie jest, więc
 wydanie, które zgubiło tabelę albo przypisy, mówi to wprost zamiast pokazywać samo „zapisano".
+
+## budowa/klient-poprzedni/src/moduly/studio/obiekt-panel.ts
+
+Panel nie rysuje ani jednego kształtu i nie prowadzi biblioteki ikon. Komenda
+studio.object.insert przyjmuje rodzaj kształtu i nazwę ikony, a rachunek stoi
+w module Design, który zakłada kształt od razu jako węzły ścieżki albo
+wyszukuje ikonę. Wskazanie węzła Designu idzie osobnym polem — to jedyna droga
+osadzenia kształtu złożonego w Designie.
+
+Rodzaj „wykres" stoi w kontrakcie, ale rdzeń go odmawia, ponieważ rachunku
+wykresu po stronie Studia nie ma. Odmowa jest widoczna zanim Operator naciśnie
+kontrolkę i mówi, co zrobić zamiast tego: złożyć wykres w module Design
+i osadzić go w dokumencie jako obiekt wskazany węzłem. Kontrolka kończąca się
+odmową rdzenia byłaby obietnicą bez pokrycia, a jej ukrycie zabrałoby
+Operatorowi wiedzę, że taka droga istnieje.

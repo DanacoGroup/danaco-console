@@ -1,24 +1,6 @@
-// Pakiet zewnetrzne jest JEDNĄ drogą, którą rdzeń woła binarium arsenału:
-// ImageMagick, libvips, ffmpeg, tesseract, pandoc, poppler, 7z i każde następne.
-//
-// Po co powstał. Produkt daje modelowi arsenał czynności — obraz, dźwięk,
-// dokument, archiwum — a większość z nich to opakowanie dojrzałego programu,
-// nie pisanie go od nowa w Go. Bez tego pakietu każda rodzina narzędzi
-// zbudowałaby własne uruchamianie procesu, własny limit czasu i własne
-// sprzątanie potomstwa — cztery prawdy o jednej rzeczy, a przy czwartej ktoś
-// zapomniałby ubić drzewo.
-//
-// Sekwencja jest przepisana z `mowa/uruchomienie.go`. W całym drzewie stoi
-// dokładnie jedno `exec.Command`
-// (`injection/rozruch.go`); wszystko inne idzie portem `session.Uruchamiacz`,
-// przez tę samą bramę izolacji okna i to samo obejmowanie potomstwa. Każde
-// odstępstwo od tej sekwencji jest wyciekiem procesu albo uchwytu — a binarium
-// przetwarzające film rozgałęzia wątki tak samo jak dekoder mowy.
-//
-// Czego ten pakiet nie robi. Nie wie, co znaczy wyjście programu: nie rozpoznaje
-// formatów, nie czyta obrazów i nie tłumaczy komunikatów ImageMagicka na polski.
-// Oddaje bajty i kod wyjścia; rozpoznanie należy do rodziny narzędzi, która zna
-// kształt odpowiedzi swojego programu.
+// Pakiet zewnetrzne jest jedną drogą, którą rdzeń woła binarium arsenału:
+// ImageMagick, libvips, ffmpeg, tesseract, pandoc, poppler, 7z i każde
+// następne. Nie wie, co znaczy wyjście programu: oddaje bajty i kod wyjścia.
 package zewnetrzne
 
 import (
@@ -36,30 +18,25 @@ import (
 // `Nazwa` jest nazwą dla CZŁOWIEKA i wchodzi do treści odmowy — Operator ma
 // przeczytać „brakuje ImageMagick (convert)", a nie samą ścieżkę programu.
 type Narzedzie struct {
-	// Nazwa czytelna, np. "ImageMagick".
+	// Nazwa czytelna, na przykład "ImageMagick".
 	Nazwa string
 	// Program to nazwa binarium w PATH albo ścieżka bezwzględna.
 	Program string
-	// Pakiet podpowiada, czym je dociągnąć — wchodzi do treści odmowy, żeby
-	// Operator nie musiał szukać. Puste pomija podpowiedź.
+	// Pakiet podpowiada, czym je dociągnąć. Puste pomija podpowiedź.
 	Pakiet string
 }
 
-// Wynik niesie surowy rezultat jednego uruchomienia.
-//
-// Dwa strumienie oddzielnie, tak samo jak w silniku mowy: na wyjściu stoi
-// wynik pracy (bywa nim binarna treść obrazu), na diagnostyce ostrzeżenia
-// programu. Sklejenie ich wstawiłoby ostrzeżenie w środek pliku PNG.
+// Wynik niesie surowy rezultat jednego uruchomienia. Dwa strumienie
+// oddzielnie: na wyjściu stoi wynik pracy, na diagnostyce ostrzeżenia
+// programu.
 type Wynik struct {
 	Wyjscie     []byte
 	Diagnostyka string
 }
 
-// BrakNarzedzia mówi, że binarium nie stoi na maszynie.
-//
-// Osobny typ, bo to odmowa innej klasy. „Nie ma czym" jest BRAKIEM, który
-// Operator usuwa jedną instalacją, a nie usterką rdzenia — i rodzina narzędzi
-// ma go odróżnić, żeby powiedzieć Operatorowi, co dociągnąć.
+// BrakNarzedzia mówi, że binarium nie stoi na maszynie. Osobny typ, bo to
+// odmowa innej klasy: brak, który Operator usuwa jedną instalacją, nie
+// usterka rdzenia.
 type BrakNarzedzia struct {
 	Narzedzie Narzedzie
 }
@@ -83,17 +60,8 @@ func Stoi(n Narzedzie) bool {
 }
 
 // Wolaj przeprowadza jedno uruchomienie narzędzia przez port session.Uruchamiacz.
-//
-// Limit czasu jest obowiązkowy — tak samo jak w silniku mowy. Transkodowanie
-// filmu bez granicy potrafi zająć maszynę na godziny, a program, który utknął
-// na uszkodzonym pliku, nie kończy się nigdy. Limit niedodatni to odmowa,
-// nie „bez granicy": wołający, który granicy nie podał, o niej zapomniał.
-//
-// Środowisko nie jest dziedziczone. Silnik mowy dziedziczy je, bo interpreter
-// Pythona musi odnaleźć własne biblioteki; narzędzia arsenału są binariami
-// samodzielnymi i nie mają powodu widzieć zmiennych rdzenia. Gdy okno ma
-// włączony punkt izolacji środowiska, brama niżej i tak rozstrzyga — ale
-// domyślna wartość ma być węższa, nie szersza.
+// Limit czasu jest obowiązkowy. Środowisko nie jest dziedziczone, bo
+// narzędzia arsenału są binariami samodzielnymi.
 func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	n Narzedzie, argumenty []string, katalog string, limit time.Duration) (Wynik, error) {
@@ -113,9 +81,7 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 			"naprawa: podać dodatnią granicę czasu przy wywołaniu")
 	}
 
-	// Do uruchomienia idzie ścieżka odnaleziona, nie sama nazwa: program
-	// dołożony do pakietu leży poza ścieżką wyszukiwania systemu i po nazwie
-	// nie wystartowałby.
+	// Do uruchomienia idzie ścieżka odnaleziona, nie sama nazwa programu.
 	polecenie := session.Polecenie{
 		Program:   sciezka,
 		Argumenty: argumenty,
@@ -133,8 +99,7 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces biegnie, a uchwytu drzewa nie ma — zostawienie go tak znaczyłoby
-		// sierotę poza rejestrem rdzenia.
+		// Proces biegnie, a uchwytu drzewa nie ma — trzeba go ubić od razu.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		return Wynik{}, errors.New("arsenał: nie można objąć drzewa procesu " +
@@ -147,11 +112,7 @@ func Wolaj(ctx context.Context, u session.Uruchamiacz, okno session.Okno,
 
 // zbierz prowadzi uruchomiony proces do końca: pompuje oba strumienie, czeka
 // z granicą czasu i ubija całe drzewo, gdy granica albo rdzeń każą przerwać.
-//
-// Pompy ruszają przed czekaniem. Bufor potoku ma kilkadziesiąt kilobajtów;
-// program piszący obraz na wyjście zablokowałby się na zapisie, a rdzeń czekałby
-// na koniec procesu, który czeka na rdzeń. Zakleszczenie kończy się dopiero
-// granicą czasu i wygląda jak zawieszone narzędzie.
+// Pompy ruszają przed czekaniem, żeby uniknąć zakleszczenia na buforze potoku.
 func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 	drzewo *session.DrzewoProcesu, limit time.Duration) (Wynik, error) {
 
@@ -180,13 +141,11 @@ func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 		bladZakonczenia = <-zakonczenie
 	}
 
-	// Odbiór z obu pomp PO zakończeniu i BEZWARUNKOWO, także przy przerwaniu:
-	// gorutyny zostałyby inaczej zawieszone na zapisie do kanału.
+	// Odbiór z obu pomp po zakończeniu i bezwarunkowo, także przy przerwaniu.
 	wynik := Wynik{Wyjscie: <-wyjscie, Diagnostyka: string(<-diagnostyka)}
 
 	if powod != "" {
-		// Wynik przerwany jest niepełny, więc NIE WOLNO oddać go jako udanego.
-		// Plik obrazu urwany w połowie jest gorszy niż jego brak.
+		// Wynik przerwany jest niepełny, więc nie wolno oddać go jako udanego.
 		return wynik, errors.New("arsenał: " + n.Nazwa + " przerwany — " + powod +
 			"; naprawa: podnieść granicę czasu albo podać mniejszy materiał")
 	}
@@ -199,10 +158,7 @@ func zbierz(ctx context.Context, n Narzedzie, uchwyt session.UchwytProcesu,
 }
 
 // opisDiagnostyki dokłada do odmowy to, co program powiedział o sobie sam.
-//
-// Bez tego członu Operator czyta „narzędzie zakończyło się niepowodzeniem"
-// i nie wie nic. Diagnostyka bywa długa, więc bierzemy jej początek — pierwsze
-// zdanie programu prawie zawsze niesie powód, a reszta jest śladem stosu.
+// Diagnostyka bywa długa, więc bierze się jej początek.
 func opisDiagnostyki(diagnostyka string) string {
 	tresc := strings.TrimSpace(diagnostyka)
 	if tresc == "" {

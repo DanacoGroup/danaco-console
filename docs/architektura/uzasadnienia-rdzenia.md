@@ -4789,3 +4789,13 @@ Fragmenty tury idą w kolejności nadania, pierwszy jest fragment prowenancji, k
 Pusta pula i pula bez wpiętego źródła zostają nietknięte przy odświeżeniu z katalogu na progu tury.
 
 Wskazanie kontraktowe konta, identyfikator liczbowy, tłumaczy na kod konta puli resolver montażu; bez tego tor kanału głównego jechałby zawsze rotacją puli.
+
+## budowa/server/internal/core/handlers_konfiguracja_prowenancja.go
+Kontrakt niesie w rodzinie config.* dziewięć komend; pozostałe siedem wpinają
+odrębne pliki obsługi, w tym cztery komendy jednolitego modelu konfiguracji
+sesji. Port jest rozszerzeniem portu ustawień, nie drugim portem: konfiguracja
+ma w rdzeniu jedną bramę, a prowenancja osadza port ustawień zamiast wchodzić
+osobnym polem, tak jak port pamięci osadza port przestrzeni roboczej. Żadna
+z dwóch komend tego pliku nie zapisuje wartości i żadna nie rozgłasza zdarzenia
+zmiany konfiguracji — pierwsza liczy prowenancję na świeżo, druga rozstrzyga
+wyłącznie zakres.

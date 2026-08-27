@@ -3,26 +3,7 @@ import { podepnijMostMotywu, type MostMotywu } from './most-motywu';
 import type { SekcjaUstawien } from './sekcje';
 import { utworzWierszNastawy, type WierszNastawy } from './wiersz-nastawy';
 
-/**
- * Sekcja „Wygląd i język" — dziś jedna nastawa ze sterem i jedno nazwane
- * miejsce puste.
- *
- * Motyw to ta sama nastawa, co na pasku górnym. Wiersz nie ma własnego stanu
- * ani własnego zapisu: bierze most (`most-motywu.ts`), jedynego właściciela tej
- * nastawy po stronie klienta, i jest jego drugim sterem — pierwszym jest
- * przełącznik na pasku. Zmiana tutaj przestawia pasek, zmiana na pasku
- * przestawia ten wiersz, a zmiana w drugim oknie dolatuje do obu zdarzeniem
- * `config.changed`.
- *
- * Opcje wyboru (`''` — preferencja systemu, `light`, `dark`) i ich etykiety
- * przychodzą z katalogu rdzenia, nie z tego pliku.
- *
- * Język interfejsu jest tu miejscem nazwanym, nie kontrolką. Katalog ustawień
- * rdzenia (`settings.definition.list`) nie niesie klucza języka interfejsu —
- * jedyny klucz językowy, `mowa_jezyk`, dotyczy rozpoznawania mowy. Kontrakt nie
- * ma komendy zmiany języka, a klient nie ma warstwy tłumaczeń, więc przełącznik
- * nie miałby dokąd pójść. Zamiast niego stoi zdanie mówiące, czego brakuje.
- */
+/** Sekcja wygląd i język niesie dziś jedną nastawę motywu ze sterem, dzieloną z paskiem górnym, i jedno nazwane miejsce puste dla języka interfejsu, którego kontrakt nie obsługuje. */
 export function utworzSekcjeWyglad(kanal: Kanal): SekcjaUstawien {
   const most: MostMotywu = podepnijMostMotywu(kanal);
 
@@ -48,11 +29,7 @@ export function utworzSekcjeWyglad(kanal: Kanal): SekcjaUstawien {
 
   let wiersz: WierszNastawy | null = null;
 
-  /**
-   * Buduje wiersz motywu z definicji katalogu — raz, przy pierwszym udanym
-   * odczycie. Kolejne zmiany wartości wchodzą przez `ustaw`, żeby przerysowanie
-   * nie zwijało wykazu pod ręką Operatora ani nie gubiło ogniska.
-   */
+  // Buduje wiersz motywu z definicji katalogu raz, przy pierwszym udanym odczycie.
   function pokaz(): void {
     const definicja = most.definicja();
     const odmowa = most.odmowa();
@@ -80,8 +57,7 @@ export function utworzSekcjeWyglad(kanal: Kanal): SekcjaUstawien {
     }
   }
 
-  // Most rozgłasza każdą zmianę wartości: własną, z paska i z drugiego okna.
-  // Sekcja nie pyta o nią ponownie — nadąża nasłuchem.
+  // Most rozgłasza każdą zmianę wartości: własną, z paska i z drugiego okna; sekcja nadąża nasłuchem.
   const odsubskrybuj = most.naZmiane(() => pokaz());
   pokaz();
 
@@ -95,8 +71,7 @@ export function utworzSekcjeWyglad(kanal: Kanal): SekcjaUstawien {
       void most.odczytaj().then(() => pokaz());
     },
 
-    // Most przeżywa zamknięcie okna, bo motyw obowiązuje także wtedy, gdy okno
-    // stoi zamknięte — sekcja zdejmuje wyłącznie własny nasłuch, nie most.
+    // Most przeżywa zamknięcie okna, bo motyw obowiązuje także wtedy, gdy okno stoi zamknięte.
     rozlacz: () => odsubskrybuj(),
   };
 }

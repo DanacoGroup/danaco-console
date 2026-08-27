@@ -2265,3 +2265,11 @@ nie rzuca wyjątkiem i nie odrzuca obietnicy — brak odpowiedzi powłoki niczeg
 wstrzymuje, bo interfejs ma własną drogę ustalenia adresu i własny stan łączności.
 Polecenia zmieniającego stan rdzenia tu nie ma: zatrzymanie rdzenia jest czynnością
 z zasobnika powłoki, a most nie tworzy drugiej drogi sterowania platformą.
+
+## budowa/klient-poprzedni/src/widok-sterowania/uchwyt-paska.ts
+
+Drugie wejście do tej samej szuflady stoi z paska, obok przełącznika motywu.
+Na pasku stoi wyłącznie przycisk ikonowy o wymiarze kontrolki paska; komplet
+kontrolek mieszka w kolumnie obok sceny, bo w prawym rogu paska nie miałby
+się gdzie zmieścić. Naciśnięty przy zwiniętej szufladzie rozwija ją, przy
+rozwiniętej — zwija.

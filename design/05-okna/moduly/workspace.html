@@ -350,10 +350,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Raport tygodniowy — redakcja</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Kampania Q3 — materiały</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Migracja bazy — dokumentacja</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Raport tygodniowy — redakcja</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Kampania Q3 — materiały</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Migracja bazy — dokumentacja</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji w kontekście bieżącego projektu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -385,7 +387,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Raport tygodniowy</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Redakcja bieżącego wydania</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Redakcja bieżącego wydania</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zbieranie danych źródłowych</span></button>
         <div class="dn-etyk-mono">Kampania Q3</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Materiały reklamowe</span></button>
@@ -492,8 +494,8 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dołącz z Project Library</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Szablony poleceń</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" aria-label="Claude in Chrome" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
@@ -505,7 +507,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>

@@ -4130,3 +4130,21 @@ okno wie o warstwie po odpowiedzi rdzenia, i powiadomienie obszarów o zmianie.
 
 ## budowa/klient/src/wejscie/skladniki/miernik-sily.ts
 Warunek niespełniony niesie puste kółko, spełniony ptaszka; ptaszek w każdym stanie czytałby się jako zrobione, a barwa jako jedyna różnica łamałaby wymaganie kontrastu. Miernik wiąże się z polem przez atrybut danych, nie przez sąsiedztwo w drzewie — sąsiedztwo bywa różne w różnych oknach i cicho się rozjeżdża. Regułę oceny niesie przebieg; miernik jej nie powtarza.
+
+## budowa/klient-poprzedni/src/strona-glowna/pozycje-komponentow.ts
+Różnica wobec strefy pierwszej: karta środowiska prowadzi do przestrzeni pracy, a kafel komponentu do
+zbudowania rzeczy, która w tej przestrzeni potem pracuje; różnicę niesie krój — nagłówkowy dla wejścia do
+środowiska, bazowy półgruby dla zbudowania komponentu. Rodzaj modułu i rodzaj komponentu własnego to dwa
+różne byty, więc kod spoza kontraktu jest tu błędem kompilacji, nie brakującym kaflem. Czas ostatniej
+zmiany przychodzi w milisekundach epoki; sformatowanie należy do widoku, bo rdzeń nie zna strefy czasowej
+operatora. O tym, co nastawia się na stronie głównej, rozstrzyga kolumna widoczności wystawiana
+w kontrakcie — kolejny moduł tak oznaczony ma dostać kafel bez zmiany w kliencie. Zamkniętego zbioru
+rodzajów pilnują nadal treści komponentu i wykaz rodzajów do założenia, bo zakładanie komponentu przyjmuje
+wyłącznie rodzaj z wyliczenia; kafel i zakładanie to dwie różne rzeczy. Kafel rodzaju nie ma metadanych
+i mieć nie może: rodzaj nie jest bytem w bazie, więc nie ma daty założenia ani stanu czynności — pole
+nieobecne znaczy kafel rodzaju, nie że metadanych nie odczytano. Kafel rodzaju, jeden z czterech stałych,
+prowadzi do zbudowania komponentu i identyfikatora nie ma; kafel personalizowany wskazuje komponent już
+zbudowany, więc niesie jego identyfikator, po którym rozpoznaje się jeden kafel spośród wielu tego samego
+rodzaju. Pusty ekran przed pierwszą odpowiedzią byłby gorszy niż cztery kafle, które i tak zostaną
+przerysowane po odpowiedzi rdzenia wykazem modułów. Nazwy i wezwania zostają miejscowe wyłącznie dla tej
+jednej klatki: kod rodzaju niesie kod, a nie napis na kaflu.

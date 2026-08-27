@@ -536,3 +536,75 @@ obcinać, ponieważ sama cisza byłaby najgorszą odpowiedzią: dokument
 zobaczyłby obcięty załącznik dopiero na wydruku. Samo zgłoszenie bez
 przeliczenia jest niewiele lepsze — zostawiałoby dokument w stanie, którego
 nie da się wydrukować, i kazałoby poprawiać każdą tabelę osobno.
+
+## adapter_modul_studio_blokady_zapora.go
+
+Sprawdzenie blokad stoi w rejestrze komend, nie w poszczególnych
+obsługiwaczach. Wymaganie mówi: sprawdzenie stoi na drodze każdej komendy
+zmieniającej dokument, po stronie serwera, przed dotknięciem treści. Komend
+zmieniających dokument Studio jest ponad setka i pisze je czterech
+wykonawców naraz — wywołanie sprawdzenia w każdym obsługiwaczu z osobna
+znaczyłoby sto miejsc do pominięcia przez pomyłkę, a każde pominięcie to
+cicha dziura w blokadzie. Zapora wpięta w rejestr obejmuje wszystkie te
+komendy jednym warunkiem, w tym te, których jeszcze nikt nie napisał, bo
+działa po nazwie rodziny komend, nie po wykazie obsługiwaczy. Rejestr jest
+jedynym miejscem, w którym rdzeń rozstrzyga, co wykonać, więc jest też
+jedynym miejscem, przez które przechodzi każde wywołanie — także wywołanie
+modelu, bo model woła komendy tą samą drogą co klient.
+
+Sprawdzenie idzie dwiema drogami wedle kształtu komendy. Komenda na
+fragmencie niesie zakres znany przed wykonaniem: zakres stykający się
+z blokadą wiążącą kończy się odmową nazwaną i obsługiwacz nie rusza. Komenda
+na całym dokumencie zakresu przed wykonaniem nie niesie — powstaje dopiero
+z rachunku obsługiwacza. Odmowa całości byłaby tu nieproporcjonalna, więc
+zapora zakłada kopię zapasową, puszcza obsługiwacza, a potem uzgadnia wynik
+z blokadami: fragmenty zablokowane wracają do brzmienia zastanego,
+a odpowiedź dostaje bilans pominięć. Blokada nie zostaje przy tym naruszona
+na zewnątrz, bo uzgodnienie zamyka się w tym samym wywołaniu.
+
+Bilans pominięć dopisuje się do odpowiedzi tej samej komendy, którą wywołanie
+zawołało, inaczej pominięcie zostałoby przemilczane. Dopisuje pole balance do
+gotowego ładunku JSON, zamiast żądać od każdego z czterech wykonawców, żeby
+dołożył u siebie to samo pole i pamiętał o nim w każdej nowej komendzie.
+
+Wykaz komend bez zmiany treści jest wykazem wyjątków, nie wykazem objętych,
+celowo: gdyby zapora obejmowała wykaz komend zmieniających, komenda dopisana
+i niewpisana do wykazu byłaby cichą dziurą w blokadzie. Wykaz wyjątków myli
+się w drugą stronę — komenda nowa jest domyślnie sprawdzana, a najgorsze, co
+może wyjść, to sprawdzenie zbędne przy odczycie. Czynności markup.add,
+markup.remove, clipboard.copy, clipboard.paste i diff.hunk.apply sprawdzają
+blokadę same, dokładniej niż zrobiłaby to zapora: markup.add jest jedyną
+drogą wykonawcy do fragmentu pod blokadą i musi przechodzić, a wyróżnienie
+barwą sprawdza blokadę osobno; markup.remove zdejmuje barwę z zakresu
+własnego znakowania, którego zapora z żądania nie zna; clipboard.paste jedzie
+polem offset, nie zakresem; diff.hunk.apply niesie w żądaniu zakres wersji
+źródłowej, nie treści bieżącej, więc uzgodnienie liczy się osobno, na treści
+bieżącej.
+
+Kopia zapasowa przed czynnością nieodwracalną obejmuje trzy przypadki:
+przyjęcie wszystkich zmian modelu, zamianę w całym dokumencie i zmianę
+formatu nośnika. Zapora zakłada kopię przed każdą czynnością na całym
+dokumencie, bo wszystkie trzy wchodzą tą drogą, a dołożenie do wykazu
+czwartej nie powinno wymagać osobnego pamiętania o kopii.
+
+Siatka śladu autora dopisuje ślad tam, gdzie obsługiwacz go nie odłożył,
+zamiast polegać na zaufaniu do obsługiwaczy. Powodem jest zmierzony
+przypadek: wywołanie zapisu dokumentu przez wykonawcę zmieniało treść
+i nie odkładało ani zmiany śledzonej, ani wpisu dziennika, więc praca modelu
+wchodziła do pisma niewidzialna dla przełącznika pokazującego działania
+modelu. Naprawa nie mogła stanąć w obsługiwaczu tej jednej komendy, bo komend
+zmieniających treść jest w Studiu ponad setka i pisze je czterech
+wykonawców, a każda nowa mogłaby przeoczyć ślad tak samo. Siatka mierzy więc
+skutek — czy treść się zmieniła — i dopisuje ślad tylko wtedy, gdy
+obsługiwacz go nie odłożył sam. Siatka nie zastępuje śladu odkładanego przez
+obsługiwacza: tamten zna zakres i rodzaj zmiany dokładnie, a siatka zna
+tylko to, że treść jest inna, dlatego jej zakres to zakres różnicy treści,
+nie zgadywane miejsce.
+
+## budowa/server/internal/core/adapter_modul_studio_ooxml_test.go
+
+Materiał próbny wpisuje się tu wprost jako archiwum ZIP ze składnikami XML w postaci, w jakiej wychodzą z pakietu biurowego, zamiast składać go własnym składaczem. Gdyby plik próbny powstawał składaczem rdzenia, sprawdzian mierzyłby zgodność składacza z własnym rozbiorem, czyli że rdzeń czyta to, co sam napisał — taki pomiar przechodzi także wtedy, gdy oba końce mylą się w ten sam sposób, a plik jest dla docelowego programu biurowego nieczytelny. Rozbiór ma zdać egzamin z cudzego pliku, nie ze swojego.
+
+Porównanie idzie po odczycie, nie po bajtach, bo ten sam dokument da się zapisać na wiele poprawnych sposobów: inna kolejność węzłów, inne nazwy stylów automatycznych, inne zaokrąglenie jednostek. Bajt w bajt nie zgodzi się nigdy i nie ma się zgodzić; miarą jest to, czy po wczytaniu wyniku postać jest ta sama — nazwa stylu akapitu, orientacja i marginesy sekcji, wymiary tabeli, jej wiersz nagłówkowy, scalenie komórek i szerokości kolumn.
+
+Plik wyklucza pięć rodzajów szkody: wczytanie dokumentu, po którym w postaci stoi sam tekst, a styl, sekcja i tabela przepadły; wydanie dokumentu, które zapisuje treść i gubi postać dokładnie w miejscu, które sprawdzian bada; wydanie do formatu uboższego, które o stracie milczy; wydanie wielostronicowe oddające jedną stronę, choć odpowiedź mówi inaczej; oraz plik wyjściowy niosący warstwę znakowania sesji, czyli komentarze i wyróżnienia w piśmie wysłanym na zewnątrz.

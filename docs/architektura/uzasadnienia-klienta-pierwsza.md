@@ -1313,3 +1313,16 @@ Zdanie składane z powodu wziętego w całości istnieje po to, żeby wywołanie
 po odmowie komendy nie powtarzało w każdym miejscu pary pól `code` i `message`.
 Para rozjeżdża się przy przepisywaniu, ponieważ łatwo podać kod z jednego
 wyniku, a wiadomość z drugiego.
+
+## budowa/klient-poprzedni/src/moduly/browser/przyciski-browser.ts
+
+Panele pomocnicze i wiersze wykazu modułu Browser potrzebują tego samego:
+zbudować przycisk i podpiąć nasłuch naciśnięcia. Czynność ta stoi w jednym
+pliku, żeby cztery pliki modułu nie rozjechały się przy pierwszej poprawce.
+Nazwa funkcji budującej zawiera wyraz „przycisk”, ponieważ po nim rozpoznają
+kontrolkę narzędzia zestawiające etykiety czynności okien; opakowanie nazwane
+inaczej chowa etykietę przed takim zestawieniem. Nazwy odmian zastępują napis
+klasy powtarzany przy każdym wywołaniu: `glowny` stoi tam, gdzie panel ma jedną
+czynność wiodącą, na przykład zapis albo dodanie, `zarys` przy pozostałych
+czynnościach panelu, `duch` przy pozycjach wykazu, gdzie przycisków w jednym
+wierszu jest wiele.

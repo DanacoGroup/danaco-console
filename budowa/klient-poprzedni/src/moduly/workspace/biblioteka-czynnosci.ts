@@ -5,18 +5,8 @@ import type { StanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Czynności okna Project Library sięgające poza sam wykaz: wgranie pliku,
- * udostępnienie zaznaczenia modułowi zewnętrznemu i etykieta zbiorcza.
- *
- * Osobny plik od okna, bo to inna odpowiedzialność: okno składa kontrolki
- * i prowadzi stany, tu leży przebieg trzech czynności wraz z ich obsługą
- * niepowodzenia.
- *
- * Potwierdzenie mówi to, co zrobił rdzeń, nie to, co wysłało okno: każde zdanie
- * sukcesu bierze wartości z odpowiedzi i sprawdza skutek w wykazie zasobów.
- * `library.file.upload` potrafi oddać plik z identyfikatorem projektu, którego
- * `workspace.library.list` dla tego projektu nie pokaże — sam zapis pliku nie
- * dowodzi więc wgrania do projektu.
+ * Czynności okna Project Library sięgające poza sam wykaz — wgranie pliku, udostępnienie
+ * zaznaczenia i etykieta zbiorcza — potwierdzają skutek w wykazie zasobów, nie w tym, co wysłało okno.
  */
 export interface ZaleznosciCzynnosci {
   zrodlo: ZrodloWorkspace;
@@ -77,9 +67,7 @@ export function czynnosciZbiorcze(z: ZaleznosciCzynnosci): CzynnosciZbiorcze {
         return;
       }
       if (okno === '') {
-        // Powód bierze się ze stanu, a ten z odpowiedzi rdzenia na `window.list`
-        // (`okno-rozmowy.ts`) — rozróżnia odmowę rdzenia od karty sesji, która
-        // nie ma jeszcze okna tego modułu.
+        // Powód bierze się ze stanu, a ten z odpowiedzi rdzenia na wykaz okien, rozróżniając odmowę od braku.
         tresc.blad(`Przeniesienie kontekstu wymaga okna rozmowy modułu. ${stan.powodBrakuOkna()}`);
         return;
       }
@@ -92,9 +80,7 @@ export function czynnosciZbiorcze(z: ZaleznosciCzynnosci): CzynnosciZbiorcze {
             return;
           }
           void z.odczytaj();
-          // `context.transfer` niesie w odpowiedzi znacznik przeniesienia i okno
-          // docelowe; zdanie bierze jedno i drugie stamtąd, bo rdzeń może przyjąć
-          // wywołanie bez przeniesienia albo otworzyć okno innego modułu.
+          // Odpowiedź przeniesienia niesie znacznik przeniesienia i okno docelowe, oba stamtąd bierze zdanie.
           const odpowiedz = wynik.wynik;
           if (odpowiedz.transferred !== true) {
             tresc.potwierdzenie(
@@ -122,8 +108,7 @@ export function czynnosciZbiorcze(z: ZaleznosciCzynnosci): CzynnosciZbiorcze {
         return;
       }
       tresc.ladowanie(`Nadawanie etykiety ${zaznaczone.size} plikom…`);
-      // Kontrakt nadaje etykietę po jednym pliku, więc czynność zbiorcza jest
-      // pętlą wywołań. Niepowodzenie choćby jednego wychodzi na wierzch.
+      // Kontrakt nadaje etykietę po pliku, więc czynność zbiorcza jest pętlą, a odmowa wychodzi na wierzch.
       void Promise.all(
         [...zaznaczone].map((identyfikator) => zrodlo.nadajEtykiete(identyfikator, etykiety)),
       ).then((wyniki) => {
@@ -136,9 +121,7 @@ export function czynnosciZbiorcze(z: ZaleznosciCzynnosci): CzynnosciZbiorcze {
           return;
         }
         void z.odczytaj();
-        // Rdzeń oddaje plik po zapisie wraz z jego etykietami — sprawdzenie idzie
-        // po tej odpowiedzi, nie po treści pola formularza, bo rdzeń może przyjąć
-        // wywołanie i nie zapisać nic.
+        // Rdzeń oddaje plik po zapisie wraz z etykietami — sprawdzenie idzie po tej odpowiedzi, nie po polu.
         const bezEtykiety = wyniki.filter(
           (wynik) =>
             wynik.wynik === undefined ||

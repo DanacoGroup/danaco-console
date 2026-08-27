@@ -4113,3 +4113,24 @@ granicę rdzenia.
 
 Wykaz kanałów niesie też wiersze nieczynne, więc da się odróżnić brak
 kanału od kanału wyłączonego.
+
+## budowa/server/internal/core/adapter_modul_studio_magazyn.go
+
+Po bajty magazynu sięga pięć rodzin naraz: wydanie archiwum, paczka
+redakcyjna, raport różnicy, wyrys stron i osadzenie zasobu w treści.
+Gdyby każda składała sobie sumę kontrolną i wiersz zasobu u siebie,
+wystarczyłaby jedna pomyłka w kolejności najpierw treść, potem wiersz,
+żeby w panelu zasobów pojawił się kafelek bez zawartości.
+
+Kolejność jest ta sama, co w całym rdzeniu (design.asset.upload): bajty
+trafiają do magazynu pod swoją sumą sha256, dopiero potem powstaje wiersz,
+który je wskazuje.
+
+Okno puste w odlozTrescStudia znaczy "wynik do żadnego okna nie należy" —
+odlozWynikArsenalu oddaje wtedy zasób złożony z ręki, z odwołaniem, którym
+plik da się odczytać. Kontrakt trzech czynności wydania ma windowId jako
+pole nieobowiązkowe, a Operator, który go nie podał, o kafelek nie prosił.
+
+Treść obszerna wersji dokumentu, odłożona poza bazą przez TrescOdwolanie,
+doczytuje się z magazynu, a nie odmawia: wydanie połowy dokumentu byłoby
+wydaniem dokumentu innego niż ten, który Operator widzi w edytorze.

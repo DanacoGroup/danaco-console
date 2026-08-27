@@ -4534,3 +4534,13 @@ Rozłączenie klienta nie kończy sesji ani procesów, więc strona główna mus
 żyje. Odpis żywego stanu niesie środowisko, moduł i liczbę okien — sekcja nie wymyśla ani jednej liczby,
 pokazuje wyłącznie to, co oddał rdzeń. Odmowa albo odpowiedź o złym kształcie daje stan błędu z treścią
 odmowy, a nie pusty widok udający brak sesji.
+
+## budowa/klient-poprzedni/src/moduly/translate/wystawienie-operacji.ts
+Opracowanie nazywa tę funkcję wystawieniem tłumaczenia i kontroli jakości jako operacji
+wywoływanych z zewnątrz — jedno z dwojga jest w kontrakcie naprawdę, drugiego nie ma, i element
+rozdziela je wprost: operacje modułu są zadeklarowane jako narzędzia modelu z nazwą, komendą
+i kompletem pól żądania, co jest interfejsem, którym wywołuje je model, i realnym wystawieniem
+operacji; webhooka wywoływanego z zewnątrz kontrakt nie wystawia, bo nie ma komendy zakładającej
+odbiornik ani adresu, pod który rdzeń by uderzył. Wykaz deklaracji nie jest przepisany: pochodzi
+ze stałej kontraktu, więc dopisanie komendy do obszaru zmienia go samo, a liczba pozycji jest
+liczona, nie wpisana.

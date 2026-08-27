@@ -4521,3 +4521,27 @@ z pola `speechRef` idzie do rdzenia, bajty wracają do karty, a odtwarza je prze
 
 Odnośnik zostaje widoczny obok przycisku po to, żeby dało się go przekazać dalej,
 a nie tylko odsłuchać na miejscu.
+
+## budowa/klient-poprzedni/src/moduly/apps/zdania-wdrozen.ts
+
+Składanie zdań stoi osobno od okna. Okno prowadzi rozmowę z rdzeniem: zbiera
+pola, wysyła, przyjmuje odpowiedź i nazywa stan. Składanie zdań z liczb i pól
+jest czynnością czystą, bez kanału i bez elementu, więc rozdział pozwala
+przeczytać je w całości bez czytania okna.
+
+Zdanie potwierdzające mówi o tym, co rdzeń oddał, a nie o tym, co okno wysłało.
+Samo wypisanie pól odpowiedzi jest za małe: zamówiono konkretne środowisko
+i konkretną czynność, więc gdy rdzeń odda co innego, rozejście pada wprost,
+a nie w drobnym druku. Cofnięcie sprawdza się osobno, ponieważ słowo o cofnięciu
+bierze się z zamówienia, a potwierdza je dopiero pole odpowiedzi wskazujące
+wdrożenie, z którego cofnięto.
+
+Powód pustego wykazu wdrożeń rozstrzyga najpierw odczyt. Pustka po udanym
+odczycie znaczy rzecz ostateczną: rdzeń przejrzał bazę i wdrożeń tego okna nie
+ma. To zdanie innej wagi niż brak odczytu i te dwa stany nie są zlewane.
+Pozostałe trzy gałęzie dotyczą chwili, gdy nikt jeszcze nie pytał. Zero ramek
+znaczy, że nic nie przyszło i nie pytano. Ramki bez pola wdrożenia znaczą, że
+przyszły, ale wdrożeń w nich nie było. Ramki z wdrożeniem przy pustym wykazie są
+sprzecznością wewnątrz okna, bo wykaz niczego nie zdejmuje, i zdanie nazywa ją
+wprost, zamiast zaokrąglać do jednej z pozostałych. Żadna gałąź nie orzeka
+o tym, czego rdzeń nie robi.

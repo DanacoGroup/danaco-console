@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Studio Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
+
 # Moduł Studio — dokumentacja projektowa
 
 | | |
@@ -326,12 +328,14 @@ Execution Loop Window prezentuje komunikację między Koordynatorem — komponen
 **Zawartość i pełny arsenał funkcji.**
 
 *Formaty i wczytywanie.*
+
 - Wczytanie dokumentu z Library, z urządzenia lokalnego (przeciągnij-upuść lub wybór pliku), z URL, ze schowka albo utworzenie dokumentu pustego.
 - Obsługa formatów: PDF, DOCX/DOC/ODT/RTF, TXT, Markdown/MDX, HTML, LaTeX, EPUB, XLSX/ODS/CSV, EML/MSG; renderowanie WYSIWYG dla Markdown i DOCX, widok tekstowy dla TXT.
 - Import ze schowka z automatycznym rozpoznaniem struktury (nagłówki, listy, tabele).
 - Przełącznik trybu pracy: WYSIWYG / Markdown / źródło / nakładka OCR dla skanów.
 
 *Formatowanie.*
+
 - Pasek narzędzi formatowania: pogrubienie, kursywa, podkreślenie, przekreślenie, nagłówki H1–H6, cytat blokowy, lista punktowana i numerowana, lista zadań, tabela, blok kodu, link, obraz, separator poziomy.
 - Style akapitu i motywy typografii dokumentu, spójne z systemem wizualnym platformy.
 - Tabele zaawansowane: scalanie komórek, nagłówki, sortowanie, suma kolumny.
@@ -340,29 +344,35 @@ Execution Loop Window prezentuje komunikację między Koordynatorem — komponen
 - Wzory matematyczne w notacji LaTeX oraz diagramy renderowane z opisu tekstowego.
 
 *Zaznaczenie i operacje kontekstowe.*
+
 - Zaznaczenie dowolnego fragmentu jako przedmiotu operacji AI — pasek pływający pojawia się nad zaznaczeniem z najczęstszymi operacjami (korekta, przepisz, streść, zmień styl).
 - Zaznaczenie całego dokumentu jednym poleceniem.
 - Kotwice, zakładki i minimapa nagłówków do szybkiej nawigacji.
 
 *Redakcja zespołowa.*
+
 - Komentarze przypięte do fragmentu, wątki komentarzy, oznaczenie „rozwiązane".
 - Śledzenie zmian z autorem wstawienia i usunięcia, akceptacja i odrzucenie pojedynczo.
 
 *Grep i wyszukiwanie lokalne.*
+
 - Wyszukaj i zamień (z obsługą wyrażeń regularnych) w treści bieżącego dokumentu, z podglądem przed zatwierdzeniem i cofnięciem.
 - Podświetlenie wszystkich wystąpień wzorca, nawigacja między trafieniami.
 
 *Współpraca z pozostałymi oknami.*
+
 - Wywołanie Tools Panel bezpośrednio z paska pływającego zaznaczenia.
 - Automatyczne odłożenie migawki do Session Repository przy każdej zaakceptowanej zmianie.
 - Podgląd na żywo w Preview Window przy przełączeniu widoku kolumnowego.
 - Przekazanie skanu lub obrazu do Ingest/OCR Panel i przyjęcie warstwy tekstowej z powrotem.
 
 *Praca skupiona i liczniki.*
+
 - Tryb skupienia z ukryciem kolumn bocznych i centrowaniem wiersza aktywnego.
 - Liczniki słów, znaków, zdań, akapitów, stron, czasu czytania i terminów unikalnych.
 
 *Zapis i eksport.*
+
 - Zapis ręczny i autozapis (interwał konfigurowalny z okna konfiguracji).
 - Eksport do PDF, DOCX, Markdown, TXT, HTML, EPUB, XLSX, druk.
 - Wysłanie bieżącej wersji do Library jednym poleceniem.
@@ -922,24 +932,31 @@ Zgodnie z zasadą nadrzędną platformy żaden z powyższych punktów nie jest w
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — korekta i akceptacja zmiany.**
+
 Użytkownik wczytuje dokument DOCX do Studio Editor, zaznacza akapit budzący wątpliwości stylistyczne, z paska pływającego wybiera „Korekta". Koordynator rozkłada zlecenie na zadania widoczne w Execution Loop Window, odpowiedź Wykonawcy trafia do Chat Window, a Diff/Grep Panel prezentuje różnicę. Użytkownik akceptuje zmianę fragmentarycznie — tylko dwie z trzech zaproponowanych poprawek — pozostawiając trzecią bez zmian. Session Repository zapisuje nową wersję.
 
 **Scenariusz 2 — cyfryzacja umowy ze skanu.**
+
 Kancelaria wczytuje osiemnastostronicowy skan umowy do Ingest/OCR Panel. Panel prostuje skos, odszumia obrazy i rozpoznaje tekst w językach polskim i angielskim. Execution Loop Window prowadzi kolejkę stron jako zadania pętli i ponawia rozpoznanie dwóch stron o niskiej pewności. Użytkownik koryguje kilka słów w podglądzie warstwy tekstowej, przekazuje wynik do Studio Editor, a z Preview Window eksportuje przeszukiwalny PDF z numeracją Bates.
 
 **Scenariusz 3 — praca dwujęzyczna.**
+
 Zespół lokalizacyjny ustanawia w oknie konfiguracji współdzielenie operacji kontekstowych AI między Studio a Translate na poziomie pary modułów. Redakcja dokumentu źródłowego w Studio Editor odzwierciedla się w tłumaczeniu zaznaczenia bezpośrednio z Tools Panel, bez opuszczania modułu Studio.
 
 **Scenariusz 4 — redakcja raportu z Research.**
+
 Analityk kończy pracę badawczą w module Research; z Report Builder przekazuje skompletowany raport do Studio. W Studio Editor prowadzi ostateczną redakcję językową, generuje streszczenie zarządcze operacją z Tools Panel, porównuje wynik z materiałem wejściowym w Diff/Grep Panel, a następnie eksportuje finalny PDF z Preview Window.
 
 **Scenariusz 5 — praca równoległa nad wieloma dokumentami.**
+
 Redaktor otwiera trzy karty sesji modułu Studio, każdą z osobnym dokumentem klienta. Domyślna izolacja kontekstu zapewnia, że polecenia wydane w jednej karcie nie wpływają na kontekst pozostałych. Dla dwóch kart dotyczących tego samego projektu redaktor włącza współdzielenie pamięci na poziomie „projekt", a operację korekty uruchamia wsadowo — Execution Loop Window prowadzi ją jako jedną pętlę obejmującą oba dokumenty.
 
 **Scenariusz 6 — powrót do wcześniejszej redakcji.**
+
 Po serii zmian klient prosi o powrót do wersji sprzed dwóch dni. Użytkownik odnajduje ją w Session Repository po etykiecie „do akceptacji klienta", otwiera podgląd, a następnie przywraca ją jako wersję bieżącą — operacja tworzy nową pozycję na końcu historii, zachowując wszystkie wersje pośrednie.
 
 **Scenariusz 7 — przekazanie paczki redakcyjnej.**
+
 Po zamknięciu redakcji użytkownik usuwa metadane dokumentu, nakłada podpis cyfrowy z Preview Window i generuje z Session Repository paczkę redakcyjną: dokument finalny, pełną historię wersji, raport zmian i adnotacje w jednym archiwum przekazania.
 
 ---
@@ -1176,4 +1193,5 @@ Moduł pozostaje zgodny z zasadą nadrzędną platformy: **zero blokad** — ża
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

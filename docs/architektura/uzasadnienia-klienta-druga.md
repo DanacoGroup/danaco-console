@@ -2599,3 +2599,12 @@ inaczej otrzymywałby fragmenty okna rozmowy i podglądu w tle podpisane uczestn
 
 ## budowa/klient/src/polaczenie/warstwa-polaczenia.test.ts
 Obietnica warstwy połączenia wobec warstw wyższych jest jedna: ramka wpisana przy rozłączeniu nie ginie, ponawianie nie ustaje, a subskrypcje przeżywają wymianę gniazda. Sprawdziany w tym pliku mierzą dokładnie to.
+
+## budowa/klient-poprzedni/src/moduly/translate/mapowanie-stylow.ts
+Ta sama zmienna zapisuje się na różnych platformach różnie, a przeniesienie materiału między nimi
+wymaga przełożenia zapisu, nie treści. Przekład działa na tekście źródłowym, ponieważ to on jest
+wzorcem dla wszystkich paneli — zamiana zapisu w jednym przekładzie bez zamiany go w źródle i w
+pozostałych panelach dałaby materiał niespójny co do zmiennych, czyli dokładnie tę usterkę, której
+szuka kontrola jakości. Wykaz zamian towarzyszy wynikowi zawsze, ponieważ przekład zapisu jest
+zmianą niewidoczną w treści na pierwszy rzut oka, a od niej zależy podstawienie wartości w gotowym
+produkcie.

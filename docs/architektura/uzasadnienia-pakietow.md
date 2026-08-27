@@ -5064,3 +5064,27 @@ oznaczałby przekład w każdym miejscu styku.
 Rejestr jest też wykazem tego, co rdzeń sam wystawił — a więc granicą
 odsłuchu: pobranie nagrania oddaje bajty z tego wykazu, a nie dowolnego
 pliku, którego ścieżkę ktoś przyśle.
+
+## budowa/server/internal/store/odwzorowanie_kontraktu_test.go
+
+Odwzorowanie kontraktu na schemat bazy ma być jeden do jednego i żyć wyłącznie w kontrakcie, ale ta
+deklaracja jest dziś obietnicą w pliku kontraktu, którą nic nie egzekwuje: kolumna może zostać
+przemianowana kolejną migracją, wartość może zostać dodana do kontraktu i pominięta w warunku
+sprawdzającym, a obie zmiany przechodzą kompilację po obu stronach i wychodzą dopiero zapisem
+odrzuconym przez bazę u odbiorcy. Źródłem prawdy jest tu schemat wygenerowany przejazdem migracji, nie
+treść plików migracji: ta sama nazwa kolumny występuje w kilkunastu tabelach naraz, więc odczyt z plików
+nie rozstrzygnąłby, o którą tabelę chodzi, a odczyt ze słownika schematu rozstrzyga.
+
+Wykaz odwzorowaniaRozeszlyeSieZeSchematem jest zaporą, nie zgodą — sprawdzian wypada niepomyślnie także
+wtedy, gdy rozjazd zostanie usunięty, a wiersz zostanie w wykazie. Wpis ProgressStatus wskazuje na
+kolumnę stanu tabeli procesów sesji, która powstała w kroku zakładającym okna, a odeszła w kroku
+zdejmującym sieroty transportu, ponieważ rejestr procesów żyje w pamięci rdzenia i tam jest jego jedyne
+miejsce; odwzorowanie w kontrakcie zostało po tabeli, której nie ma, a rozstrzygnięcie należy do
+kontraktu, nie do sprawdzianu, bo to plik kontraktu jest źródłem prawdy nazw, a nie schemat. Dalsza
+pozycja wykazu to inny rodzaj rozjazdu: nie ślad po tabeli zdjętej, lecz odwzorowanie wniesione przed
+migracją, która dopiero tabelę założy, ponieważ definicje komend modułów oddano wraz z miejscem danych,
+a scalanie kontraktu poszło jednym przebiegiem, podczas gdy migracje tabel powstają moduł po module
+w kroku dobudowy rdzenia. Wykaz sam się sprząta: gdy migracja modułu założy tabelę, sprawdzian wypadnie
+niepomyślnie z powodu wiersza, który został, a wpis znika wtedy razem z powodem, dla którego powstał.
+## budowa/server/internal/dane/roundtable_tury.go
+Numer tury nadaje baza, nie rdzeń: numer powstaje jako największy dotychczasowy w tym oknie plus jeden, wewnątrz transakcji zakładającej wiersz. Gdyby liczył go rdzeń, dwie tury uruchomione w tej samej chwili z dwóch urządzeń tego samego konta dostałyby ten sam numer, a więź jednoznaczności okna i numeru odrzuciłaby drugą. Zero w granicy liczby wypowiedzi znaczy bez granicy, więc jedno przygotowane zapytanie obsługuje zarówno wykaz pełny, jak i wykaz przycięty. Podniesienie numeru redakcji razem z treścią przy zastąpieniu wypowiedzi wynika z tego, że regeneracja jest zastąpieniem, a nie dopisaniem, więc licznik redakcji jest jedynym śladem, że treść się zmieniła. Wskazanie tury nieistniejącej przy dopisywaniu wypowiedzi nie dopisuje niczego i wraca jako ErrBrakWiersza, bo cichy zapis do nieistniejącej tury ukrywałby błąd wołającego. Zapis całej debaty w porządku tur i wypowiedzi istnieje, bo bez niego każda analiza całej debaty czytałaby tury osobno i składała je ręcznie w kolejności.

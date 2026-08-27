@@ -1,9 +1,7 @@
 /**
  * Bieżąca sesja klienta — identyfikator niesiony w kopertach wychodzących.
- *
- * Identyfikator nadaje rdzeń w odpowiedzi na `session.create`; do tej chwili
- * sesja jest pusta, a kontrakt taką kopertę dopuszcza (pole `sessionId`
- * opcjonalne, puste dla powitania połączenia).
+ * Identyfikator nadaje rdzeń w odpowiedzi na żądanie założenia sesji; do tej
+ * chwili sesja jest pusta.
  */
 export interface Sesja {
   /** Identyfikator sesji; pusty, dopóki rdzeń jej nie założył. */

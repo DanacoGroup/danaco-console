@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: obszar profili izolacji oraz odczyt słownika poziomów
-// zasięgu (tabela `poziom_zasiegu`) na potrzeby rodziny `isolation.*`.
-//
-// Czego tu nie ma — wartości izolacji. Jedenaście punktów izolacji leży w tabeli
-// `ustawienie` i czyta je repozytorium konfiguracji (`konfiguracja.go`,
-// `ustawienia_osi.go`); drugiego dostępu do tych samych wierszy ten plik nie
-// zakłada. Tutaj leży profil jako nazwany szablon przełączników, przypisanie
-// profilu do poziomu oraz warstwa wybrana przez Operatora.
-//
-// Słownik poziomów: komenda `isolation.scope.list` jest jego czytelnikiem —
-// nazwa poziomu i jego miejsce w kolejności rozstrzygania stoją w bazie i idą
-// stąd do Operatora, zamiast być drugi raz spisane w rdzeniu. Kolejność
-// rozstrzygania nadal należy do pakietu `internal/konfig` — tutaj czytamy opis
-// poziomu, nie regułę.
+// Plik obsługuje obszar profili izolacji oraz odczyt słownika poziomów zasięgu z tabeli
+// poziom_zasiegu na potrzeby rodziny poleceń isolation. Uzasadnienie granicy wobec
+// repozytorium konfiguracji niesie rozdział isolation.go dokumentacji architektury.
 package dane
 
 import (
@@ -39,7 +28,8 @@ type PrzelacznikProfiluIzolacji struct {
 	Wartosc string
 }
 
-// ProfilIzolacji to wiersz tabeli `profil_izolacji` wraz z jego przełącznikami.
+// ProfilIzolacji odwzorowuje wiersz tabeli profil_izolacji wraz z kompletem jego
+// przełączników — nazwany szablon ustawień izolacji, który operator przypisuje do poziomów.
 type ProfilIzolacji struct {
 	Kod            string
 	Nazwa          string
@@ -49,32 +39,26 @@ type ProfilIzolacji struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumIzolacji jest kontraktem obszaru profili izolacji.
+// RepozytoriumIzolacji jest kontraktem obszaru profili izolacji: definiuje odczyt słownika
+// poziomów, zapis i odczyt profili, przypisanie profilu do poziomu oraz wybór warstwy.
 type RepozytoriumIzolacji interface {
-	// PoziomyZasiegu zwraca osiem poziomów w kolejności pierwszeństwa rosnąco,
-	// czyli od najszerszego do najwęższego.
+	// PoziomyZasiegu zwraca osiem poziomów w kolejności pierwszeństwa, od najszerszego do najwęższego.
 	PoziomyZasiegu(ctx context.Context) ([]PoziomZasiegu, error)
-
-	// ZapiszProfil zakłada albo zmienia profil wraz z kompletem przełączników.
-	// Przełączniki są zastępowane w całości — profil opisuje stan, nie przyrost.
+	// ZapiszProfil zakłada albo zmienia profil wraz z kompletem przełączników, zastępowanych w całości.
 	ZapiszProfil(ctx context.Context, profil ProfilIzolacji) (ProfilIzolacji, error)
-	// Profil zwraca profil po kodzie; brak wiersza daje ErrBrakWiersza.
+	// Profil zwraca profil po kodzie. Brak wiersza daje ErrBrakWiersza.
 	Profil(ctx context.Context, kod string) (ProfilIzolacji, error)
 	// Profile zwraca wszystkie profile w kolejności nazwy.
 	Profile(ctx context.Context) ([]ProfilIzolacji, error)
-	// UsunProfil kasuje profil; drugi wynik mówi, czy wiersz istniał.
+	// UsunProfil kasuje profil. Drugi wynik mówi, czy wiersz istniał.
 	UsunProfil(ctx context.Context, kod string) (bool, error)
-
 	// PrzypiszProfil zapisuje, z którego profilu pochodzi polityka bytu poziomu.
 	PrzypiszProfil(ctx context.Context, kod string, poziom shared.ConfigScope, kluczZasiegu string) error
-	// ProfilPoziomu zwraca kod profilu przypisanego pod adresem; drugi wynik
-	// mówi, czy przypisanie w ogóle jest.
+	// ProfilPoziomu zwraca kod profilu przypisanego pod adresem. Drugi wynik mówi, czy przypisanie jest.
 	ProfilPoziomu(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu string) (string, bool, error)
-
 	// ZapiszWarstwe utrwala warstwę wybraną przez Operatora dla bytu poziomu.
 	ZapiszWarstwe(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu, warstwa string) error
-	// Warstwa zwraca warstwę wybraną dla bytu poziomu; drugi wynik mówi, czy
-	// wybór zapadł. Brak wyboru nie jest błędem.
+	// Warstwa zwraca warstwę wybraną dla bytu poziomu. Drugi wynik mówi, czy wybór w ogóle zapadł.
 	Warstwa(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu string) (string, bool, error)
 }
 
@@ -135,13 +119,9 @@ type repozytoriumIzolacji struct {
 	db        *sql.DB
 }
 
-// ProfileIzolacji oddaje repozytorium profili izolacji nad tą samą bazą, co
-// pozostałe obszary zestawu.
-//
-// Metoda, a nie pole struktury: obszar wchodzi jednym plikiem, bez dopisywania
-// pola do `Zestaw` i wiersza do `Otworz`. Repozytorium jest bezstanowe (trzyma
-// wyłącznie pamięć podręczną poleceń wspólną dla całego zestawu), więc kolejne
-// wywołania są równoważne.
+// ProfileIzolacji oddaje repozytorium profili izolacji nad tą samą bazą, co pozostałe
+// obszary zestawu. Jest metodą, nie polem struktury, ponieważ repozytorium jest bezstanowe
+// i kolejne wywołania są równoważne.
 func (z *Zestaw) ProfileIzolacji() RepozytoriumIzolacji {
 	if z == nil || z.zapytania == nil {
 		return nil
@@ -149,7 +129,8 @@ func (z *Zestaw) ProfileIzolacji() RepozytoriumIzolacji {
 	return &repozytoriumIzolacji{zapytania: z.zapytania, db: z.zapytania.db}
 }
 
-// PoziomyZasiegu czyta słownik poziomów zasięgu w kolejności pierwszeństwa.
+// PoziomyZasiegu czyta słownik poziomów zasięgu w kolejności pierwszeństwa rosnąco, od
+// poziomu najszerszego do najwęższego, wraz z nazwą każdego poziomu do wyświetlenia.
 func (r *repozytoriumIzolacji) PoziomyZasiegu(ctx context.Context) ([]PoziomZasiegu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPoziomowZasiegu)
 	if err != nil {
@@ -231,7 +212,8 @@ func (r *repozytoriumIzolacji) Profil(ctx context.Context, kod string) (ProfilIz
 	return profil, nil
 }
 
-// Profile zwraca wszystkie profile wraz z ich przełącznikami.
+// Profile zwraca wszystkie zapisane profile izolacji wraz z ich przełącznikami,
+// uporządkowane według nazwy profilu.
 func (r *repozytoriumIzolacji) Profile(ctx context.Context) ([]ProfilIzolacji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaProfiliIzolacji)
 	if err != nil {
@@ -280,7 +262,8 @@ func (r *repozytoriumIzolacji) UsunProfil(ctx context.Context, kod string) (bool
 	return zmienione > 0, nil
 }
 
-// PrzypiszProfil zapisuje przypisanie profilu do bytu poziomu zasięgu.
+// PrzypiszProfil zapisuje, który profil izolacji obowiązuje dla wskazanego bytu poziomu
+// zasięgu, nadpisując zastane przypisanie pod tym samym adresem.
 func (r *repozytoriumIzolacji) PrzypiszProfil(ctx context.Context, kod string,
 	poziom shared.ConfigScope, kluczZasiegu string) error {
 
@@ -307,7 +290,8 @@ func (r *repozytoriumIzolacji) ProfilPoziomu(ctx context.Context, poziom shared.
 	return r.jednaWartosc(ctx, pobierzPrzypisanieProfilu, poziom, kluczZasiegu)
 }
 
-// ZapiszWarstwe utrwala warstwę wybraną przez Operatora dla bytu poziomu.
+// ZapiszWarstwe utrwala warstwę wybraną przez operatora dla wskazanego bytu poziomu,
+// nadpisując zastany wybór pod tym samym adresem.
 func (r *repozytoriumIzolacji) ZapiszWarstwe(ctx context.Context, poziom shared.ConfigScope,
 	kluczZasiegu, warstwa string) error {
 
@@ -326,7 +310,8 @@ func (r *repozytoriumIzolacji) ZapiszWarstwe(ctx context.Context, poziom shared.
 	return nil
 }
 
-// Warstwa zwraca warstwę wybraną dla bytu poziomu.
+// Warstwa zwraca warstwę wybraną przez operatora dla wskazanego bytu poziomu. Drugi wynik
+// mówi, czy taki wybór w ogóle zapadł.
 func (r *repozytoriumIzolacji) Warstwa(ctx context.Context, poziom shared.ConfigScope,
 	kluczZasiegu string) (string, bool, error) {
 
@@ -357,7 +342,8 @@ func (r *repozytoriumIzolacji) jednaWartosc(ctx context.Context, zapytanie strin
 	return wartosc, true, nil
 }
 
-// przelaczniki czyta punkty izolacji zapisane w profilu.
+// przelaczniki czyta wszystkie punkty izolacji zapisane w profilu wskazanym kodem,
+// uporządkowane według klucza przełącznika.
 func (r *repozytoriumIzolacji) przelaczniki(ctx context.Context, kod string) ([]PrzelacznikProfiluIzolacji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPrzelacznikiProfilu)
 	if err != nil {
@@ -380,7 +366,8 @@ func (r *repozytoriumIzolacji) przelaczniki(ctx context.Context, kod string) ([]
 	return przelaczniki, wiersze.Err()
 }
 
-// odczytajProfilIzolacji składa profil z jednego wiersza wyniku.
+// odczytajProfilIzolacji składa strukturę ProfilIzolacji z jednego wiersza wyniku zapytania,
+// bez jego przełączników, które czyta osobna funkcja.
 func odczytajProfilIzolacji(wiersz skaner) (ProfilIzolacji, error) {
 	var profil ProfilIzolacji
 	err := wiersz.Scan(&profil.Kod, &profil.Nazwa, &profil.Opis, &profil.Utworzono, &profil.Zaktualizowano)

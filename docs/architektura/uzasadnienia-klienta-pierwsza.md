@@ -5449,3 +5449,16 @@ z powodem, a ekran pisze ten powód wprost — tak samo jak pulpit w `mission-co
 Wpięcie źródła to jedno wywołanie `zainstalujKolejkeDecyzji` przy montażu warstwy mobilnej.
 Ekran się przez nie nie zmienia: pozycje portu mają ten sam kształt co pozycje własne,
 opisany typem `PozycjaDecyzji`, więc wchodzą do tego samego wykazu i tego samego arkusza dróg.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-zakresu-eksperta.test.ts
+
+Sprawdzian główny pilnuje jednej rzeczy: czy każda komenda dołożona rdzeniowi
+ma drogę z okna. Wykaz nie jest przepisany z pamięci — powstaje z wywołań
+źródła, a porównywany jest ze stałymi kontraktu, więc komenda, którą ktoś kiedyś
+z okna wyjmie, zostanie tu nazwana.
+
+Pozostałe sprawdziany dotyczą rozstrzygnięć, które warstwa kliencka podejmuje
+sama i które łatwo cofnąć nieuważną poprawką. Wszystkie sprowadzają się do
+jednej zasady: zbiór pusty bywa żądaniem, a pole pominięte znaczy brak zmiany.
+Pomylenie tych dwóch rzeczy w jedną stronę odbiera ekspertowi wszystko,
+a w drugą nie zdejmuje niczego.

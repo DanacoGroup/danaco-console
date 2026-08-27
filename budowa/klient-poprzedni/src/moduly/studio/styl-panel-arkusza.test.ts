@@ -12,24 +12,10 @@ import {
 import { utworzStylPanelArkusza, type CzynnosciStyluPanelu } from './styl-panel-arkusza';
 import { utworzStylPanelList, type CzynnosciListPanelu } from './styl-panel-list';
 
-/**
- * Sprawdziany paneli arkusza stylów oraz list i znaków.
- *
- * Mierzą treść żądania, a nie samo naciśnięcie. Trzy rzeczy są tu mierzone
- * osobno, bo każda z nich była w tym produkcie wzorcem szkody:
- *
- *  1. Cecha logiczna ma TRZY stany, nie dwa. Naniesienie pogrubienia nie może
- *     przy okazji zdejmować kursywy, której Operator nie tknął.
- *  2. Czynność bez ani jednego wypełnionego pola jest odmawiana, a nie wysyłana
- *     jako żądanie, które niczego nie zmieni i wróci z `applied: 0`.
- *  3. Nastawa poziomu listy wymaga LISTY — bez jej wskazania okno mówi, czego
- *     brakuje, zamiast wysyłać żądanie z pustym identyfikatorem.
- */
-
-/** Zapis żądań złożonych przez panel. */
+/** Zapis żądań złożonych przez panel gromadzi nazwę wywołanej czynności wraz z pełną treścią zgłoszonego zadania, zachowując kolejność wywołań. */
 type Zapis = { nazwa: string; zadanie: Record<string, unknown> }[];
 
-/** Kontrolka pola o wskazanej etykiecie. */
+/** Kontrolka pola o wskazanej etykiecie odnajduje wiersz formularza dopasowany do etykiety i zwraca jego pole wejściowe gotowe do odczytu albo zapisu wartości. */
 function pole(korzen: HTMLElement, etykieta: string): HTMLInputElement & HTMLSelectElement {
   for (const wiersz of Array.from(korzen.querySelectorAll<HTMLElement>('.dn-pole'))) {
     const napis = wiersz.querySelector('label');

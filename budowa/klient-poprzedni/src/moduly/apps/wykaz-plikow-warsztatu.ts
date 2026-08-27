@@ -1,19 +1,9 @@
 import type { DeveloperFile } from '../../../../shared/contract';
 
 /**
- * Wykaz plików warsztatu okna — treść, którą oddaje `apps.workspace.list`.
- *
- * Wykaz pokazuje wszystkie pliki warsztatu okna, więc widać, że wpisana ścieżka
- * należy już do istniejącego pliku, zanim zapis go nadpisze.
- *
- * Wiersz jest przyciskiem: naciśnięcie wstawia ścieżkę i treść pliku do
- * formularza okna. Wiersz nieklikalny kazałby przepisywać ścieżkę ręcznie,
- * a przepisana ścieżka bywa innym plikiem — klucz warsztatu to
- * `(okno, warstwa, ścieżka)` co do znaku.
- *
- * Wykaz niczego nie streszcza: rozmiar i wersja idą tak, jak oddał je rdzeń,
- * a brak pola nazywamy brakiem, zamiast podstawiać zero, które wyglądałoby jak
- * zmierzona wartość.
+ * Wykaz plików warsztatu okna, czyli treść oddana przez komendę wykazu plików
+ * warsztatu. Pokazuje wszystkie pliki okna, a każdy wiersz jest przyciskiem,
+ * którego naciśnięcie wstawia ścieżkę i treść pliku do formularza okna.
  */
 export interface WykazPlikowWarsztatu {
   element: HTMLElement;
@@ -45,7 +35,11 @@ export function utworzWykazPlikowWarsztatu(
   };
 }
 
-/** Jeden plik warsztatu: przycisk ze ścieżką i zdaniem metadanych. */
+/**
+ * Buduje wiersz jednego pliku warsztatu jako przycisk, który niesie ścieżkę
+ * pliku oraz zdanie metadanych. Naciśnięcie przycisku oddaje cały opis pliku
+ * procedurze wyboru podanej przez okno wołające.
+ */
 function wiersz(plik: DeveloperFile, naWybor: (plik: DeveloperFile) => void): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'mp-wykaz__nazwa';
@@ -68,7 +62,11 @@ function wiersz(plik: DeveloperFile, naWybor: (plik: DeveloperFile) => void): HT
   return element;
 }
 
-/** Zdanie metadanych pliku: język, rozmiar, wersja — wyłącznie z pól rdzenia. */
+/**
+ * Składa zdanie metadanych pliku z języka, rozmiaru w bajtach oraz oznaczenia
+ * wersji, biorąc każdą część wyłącznie z pól oddanych przez rdzeń. Brak
+ * rozmiaru zostaje nazwany brakiem, a nie zastąpiony wartością zerową.
+ */
 function opiszMetadane(plik: DeveloperFile): string {
   const czesci: string[] = [];
   if (plik.language !== undefined) czesci.push(plik.language);

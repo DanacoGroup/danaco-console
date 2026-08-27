@@ -1237,3 +1237,9 @@ drugiej, odmiennej realizacji tej samej reguły.
 Nazwy miar w kaflach są dosłowne, ponieważ mają nie dopuścić do pomylenia wysycenia kanałów modelu z obciążeniem maszyny. Miara bez źródła w kontrakcie pokazuje kreskę i etykietę braku źródła zamiast wartości zastępczej, aby pulpit nie sugerował danych, których rdzeń nie dostarcza.
 
 Pas decyzji nie należy do tej sekcji. Sekcja udostępnia jedynie miejsce montażu pod rzędem kafli, a sam pas dokłada moduł mission-control.ts, który zna kolejność elementów pulpitu.
+
+## budowa/klient-poprzedni/src/moduly/apps/wykaz-plikow-warsztatu.ts
+
+Wykaz pokazuje wszystkie pliki warsztatu okna, dzięki czemu widać, że wpisana ścieżka należy już do istniejącego pliku, zanim zapis go nadpisze. Wiersz jest przyciskiem, ponieważ wiersz nieklikalny kazałby przepisywać ścieżkę ręcznie, a przepisana ścieżka bywa w rzeczywistości innym plikiem: klucz warsztatu tworzą okno, warstwa i ścieżka rozumiane co do znaku.
+
+Wykaz niczego nie streszcza. Rozmiar i wersja idą tak, jak oddał je rdzeń, a brak pola zostaje nazwany brakiem, zamiast zostać zastąpiony wartością zerową, która wyglądałaby jak wynik pomiaru.

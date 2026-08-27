@@ -3151,3 +3151,13 @@ Funkcje są czyste i nie znają DOM.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/okno.ts
 Moduł jest właściwością okna, nie wdrożenia: przestawienie modułu zmienia wskaźnik modułu, pasek narzędzi promptu i panel kontekstu, a historii wątku nie dotyka. Panelu akcji w tym złożeniu nie ma, bo pozycje panelu pochodzą z rejestru rdzenia, a złożenie bez kanału nie ma jak ich pobrać — panel bez katalogu byłby atrapą; okno z kanałem składa osobna warstwa rozmowy, w której panel akcji jest pełny. Okno przechowuje warstwę dyktowania i podaje ją elementowi rysującemu mikrofon, ponieważ zna oba końce — kanał i pasek poleceń — a warstwa sama ich nie widzi.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-cyfryzacji.ts
+Wsad wcześniej szedł jednym wywołaniem wydobycia tekstu, bez silnika, bez progu pewności i bez
+pojęcia kolejki. Dziś kolejkę prowadzi rdzeń, rozpoznanie ma pełne sterowanie, poprawka słowa
+wchodzi przed przyjęciem, a przyjęcie zakłada dokument wraz z pierwszą wersją, nie sam bufor
+edytora — poprzednio wynik szedł do bufora i panel musiał tłumaczyć brak pierwszej wersji, czego
+wydobycie tekstu nie zakładało. Dokument wchodzi do stanu modułu, żeby okno pracy zobaczyło go
+natychmiast. Odmowa jednej pozycji nie zatrzymuje pozostałych: zatrzymanie całej kolejki na
+pierwszym nieczytelnym skanie byłoby karą za materiał, a nie obsługą błędu, dlatego bilans na
+końcu mówi, ile pozycji przeszło, ile wróciło do ponowienia i ile odpadło.

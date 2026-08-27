@@ -1716,3 +1716,12 @@ jednej barwy.
 
 Okno otwiera się natychmiast, przed odpowiedzią rdzenia, a wykazy dojeżdżają do
 niego odpowiedzią.
+
+## budowa/klient-poprzedni/src/mission-control/kolumna-procesow.ts
+
+Wykaz procesów w tle buduje się wyłącznie ze zdarzeń telemetrii, ponieważ kontrakt nie ma komendy
+odczytu procesów bieżących. Do nadejścia pierwszego zdarzenia kolumna pokazuje stan pusty, który
+nazywa tę okoliczność wprost, zamiast udawać brak procesów.
+
+Stan procesu jest wypisany słowem obok paska postępu. Barwa paska wspiera odczyt, ale go nie
+zastępuje, dzięki czemu wykaz pozostaje czytelny bez rozróżniania barw.

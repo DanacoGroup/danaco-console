@@ -1,10 +1,13 @@
+/**
+ * Katalog narzędzi modelu pogrupowany po przeznaczeniu, na podstawie
+ * kontraktu. Plik składa pozycje z deklaracji narzędzi, wylicza grupy, podaje
+ * narzędzia jednej grupy i rozpoznaje kody wskazane przez okno wyboru.
+ */
 import {
   NARZEDZIA_MODELU,
   SEPARATOR_OBSZARU,
   type ToolDeclaration,
 } from '../../../../shared/contract';
-
-/** Katalog narzędzi modelu pogrupowany po przeznaczeniu, na podstawie kontraktu. */
 
 /**
  * Pozycja katalogu: jedno narzędzie modelu wraz z grupą swojego przeznaczenia. Pozycja

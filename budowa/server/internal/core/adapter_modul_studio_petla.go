@@ -190,7 +190,7 @@ func (p *adapterPetliStudia) petlaRozkladModelem(ctx context.Context,
 }
 
 // petlaWyjmijTablice wyłuskuje tablicę JSON z odpowiedzi modelu. Model bywa
-// rozmowny i opakowuje tablicę zdaniem albo płotkiem ```json — wyjmujemy ją po
+// rozmowny i opakowuje tablicę zdaniem albo płotkiem ```json — wyjmuje się ją po
 // pierwszym `[` i ostatnim `]`, zamiast odrzucać odpowiedź za obudowę.
 func petlaWyjmijTablice(tresc string) json.RawMessage {
 	od := strings.Index(tresc, "[")
@@ -335,7 +335,7 @@ func petlaWolnoPrzestawic(z, na shared.StudioTaskState) bool {
 			shared.StudioTaskStateSkipped,
 		},
 		// Zadanie pominięte wolno przywrócić do kolejki; domkniętego nie
-		// ruszamy wstecz.
+		// rusza się wstecz.
 		shared.StudioTaskStateSkipped: {shared.StudioTaskStatePending},
 		shared.StudioTaskStateDone:    {},
 	}
@@ -693,7 +693,7 @@ func (p *adapterPetliStudia) petlaZadanieNaKomende(rozklad *petlaRozkladStudia,
 		return "", nil, "dokument nie ma wskazanego okna, więc pętla nie ma kanału " +
 			"modelu, którym mogłaby wykonać zadanie"
 	}
-	// Wyliczenia kontraktu są stałymi nietypowanymi, więc typ podajemy
+	// Wyliczenia kontraktu są stałymi nietypowanymi, więc typ podaje się
 	// wprost.
 	var zakres shared.StudioOperationScope = shared.StudioOperationScopeDocument
 	if zadanie.ZakresOd != nil && zadanie.ZakresDo != nil {
@@ -1100,7 +1100,7 @@ func zarejestrujPetleWykonawczaStudia(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioPlanTaskUpdate, obsluz(petla.PrzestawZadanie))
 	r.Zarejestruj(shared.CommandStudioPlanStop, obsluz(petla.ZatrzymajPetle))
 
-	// Uruchomienie pętli zmienia dokument; czytamy go ponownie, bo
+	// Uruchomienie pętli zmienia dokument; czyta się go ponownie, bo
 	// odpowiedź komendy go nie niesie.
 	r.Zarejestruj(shared.CommandStudioPlanRun,
 		obsluz(func(ctx context.Context, z shared.StudioPlanRunRequest) (shared.StudioPlanRunResponse, error) {

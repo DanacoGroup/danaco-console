@@ -2,32 +2,12 @@ import { ProgressStatus } from '../../../shared/contract';
 import type { NazwaIkony } from '../ikony/zrodla-ikon';
 
 /**
- * Znaczenia stanów — jedno miejsce prawdy o tym, czym stan jest widziany.
- *
- * Stan nigdy nie jest sygnalizowany samym kolorem: katalog wiąże każdy stan
- * z ikoną i etykietą, więc odczyt nie zależy od barwy. Jeden zapis znaczenia
- * dla wszystkich widoków zastępuje rozsypane mapy stanu.
- *
- * Barw tu nie ma — mieszkają w `stany.css`, a tu stoi wyłącznie nazwa rodziny,
- * czyli wskazanie, którego wariantu biblioteki użyć. Cztery rodziny (`sukces`,
- * `ostrzezenie`, `blad`, `informacja`) plus brak rodziny (`neutralna`)
- * wystarczają, bo rozróżnienie niesie ikona i etykieta, nie kolejna barwa.
- *
- * Granica wiedzy: plik mówi, jak stan ma być pokazany. Nie mówi, jaki stan
- * jest — to rozstrzyga `shared/contract`.
+ * Katalog znaczeń stanów wiąże każdy stan z rodziną barw, ikoną i etykietą, tak by odczyt nigdy nie zależał od samego koloru, a nazwa rodziny barw wskazuje jedynie, którego wariantu biblioteki stylów użyć.
  */
-
-/** Rodzina barw stanu — nazwy wariantów `stany.css`; `neutralna` to brak rodziny. */
 export type RodzinaStanu = 'sukces' | 'ostrzezenie' | 'blad' | 'informacja' | 'neutralna';
 
 /**
- * Stan znaczący, czyli taki, który użytkownik ma odróżnić od innego.
- *
- * `do-weryfikacji` i `przyjety` nie mają odpowiednika w kontrakcie — patrz
- * `STANY_BEZ_ODPOWIEDNIKA_W_POSTEPIE`. `do-weryfikacji` siedzi na rodzinie
- * `ostrzezenie`, czyli dokładnie tej samej barwie co `wstrzymany`: dwa różne
- * stany, jedna barwa, więc bez ikony i bez etykiety byłyby na ekranie nie do
- * rozróżnienia.
+ * Stan znaczący to taki, który użytkownik ma odróżnić od innego; dwa stany dzielące tę samą rodzinę barw różnią się zawsze ikoną i etykietą, nigdy samą barwą.
  */
 export type ZnaczenieStanu =
   | 'oczekuje'
@@ -40,7 +20,7 @@ export type ZnaczenieStanu =
   | 'bledny'
   | 'anulowany';
 
-/** Znak stanu: rodzina barw, ikona, etykieta i informacja o pracy trwającej. */
+/** Znak stanu widziany przez interfejs: rodzina barw, ikona z biblioteki, etykieta po polsku oraz informacja o pracy trwającej teraz. */
 export interface ZnakStanu {
   /** Rodzina barw — sama nigdy nie wystarcza za odczyt stanu. */
   rodzina: RodzinaStanu;
@@ -48,12 +28,7 @@ export interface ZnakStanu {
   ikona: NazwaIkony;
   /** Etykieta po polsku — drugi znak niebędący kolorem. */
   etykieta: string;
-  /**
-   * Czy stan oznacza pracę trwającą teraz.
-   *
-   * Prawda wprowadza `.dn-spinner` obok etykiety — nigdy zamiast niej — oraz
-   * tętno kropki.
-   */
+  /** Czy stan oznacza pracę trwającą teraz; prawda dokłada wskaźnik obok etykiety oraz tętno kropki. */
   wTrakcie: boolean;
 }
 
@@ -73,8 +48,7 @@ export const ZNACZENIA_STANOW: Readonly<Record<ZnaczenieStanu, ZnakStanu>> = {
   zatrzymany: { rodzina: 'neutralna', ikona: 'zatrzymaj', etykieta: 'Zatrzymany', wTrakcie: false },
   // Dzieli rodzinę ze „wstrzymanym" — dlatego ikona musi być inna.
   'do-weryfikacji': { rodzina: 'ostrzezenie', ikona: 'walidator', etykieta: 'Do weryfikacji', wTrakcie: false },
-  // Dzieli rodzinę z „zakończonym" — „przyjęty" to zatwierdzenie wyniku,
-  // „zakończony" to sam koniec pracy. Dlatego ptaszek w kole, nie sam ptaszek.
+  // Dzieli rodzinę z zakończonym, lecz oznacza zatwierdzenie wyniku — stąd ptaszek w kole.
   przyjety: { rodzina: 'sukces', ikona: 'ptaszek-kolo', etykieta: 'Przyjęty', wTrakcie: false },
   zakonczony: { rodzina: 'sukces', ikona: 'ptaszek', etykieta: 'Zakończony', wTrakcie: false },
   bledny: { rodzina: 'blad', ikona: 'blad', etykieta: 'Błąd', wTrakcie: false },
@@ -97,24 +71,7 @@ export const ZNACZENIE_Z_POSTEPU: Readonly<Record<ProgressStatus, ZnaczenieStanu
 };
 
 /**
- * Stany katalogu, które nie mają odpowiednika w `ProgressStatus` — wymienione
- * wprost, nie przemilczane.
- *
- * Trzy pozycje, dwa różne powody:
- *
- *   `anulowany` — kontrakt go zna, tyle że pod innym wyliczeniem
- *   (`AssistantActionStatus.Cancelled`). Katalog motywu nie mapuje tego
- *   wyliczenia, bo moduł Assistant prowadzi własny wykaz plakietek
- *   (`moduly/assistant/etykiety-assistant.ts`) i oba wykazy się różnią:
- *   „w toku" idzie tam rodziną `sygnal`, a w parze okien rodziną `informacja`.
- *   Dołożenie tu drugiego zapisu bez usunięcia tamtego dałoby trzecią prawdę
- *   zamiast jednej.
- *
- *   `do-weryfikacji`, `przyjety` — kontrakt ich nie zna. Pozycja kolejki ma
- *   wyłącznie `QueueStatus` (idle, running, paused, stopped, done),
- *   postęp — `ProgressStatus`.
- *
- * Stan wniesiony do kontraktu wypada stąd i wchodzi do mapy.
+ * Stany katalogu bez odpowiednika w postępie kontraktu są wymienione wprost, nie przemilczane, bo stan wniesiony później do kontraktu wypada stąd i wchodzi do mapy.
  */
 export const STANY_BEZ_ODPOWIEDNIKA_W_POSTEPIE: readonly ZnaczenieStanu[] = [
   'do-weryfikacji',
@@ -122,7 +79,7 @@ export const STANY_BEZ_ODPOWIEDNIKA_W_POSTEPIE: readonly ZnaczenieStanu[] = [
   'anulowany',
 ];
 
-/** Znak stanu procesu oddanego przez rdzeń — jedno wejście dla widoków. */
+/** Znak stanu procesu oddanego przez rdzeń, obliczony jednym wejściem wspólnym dla wszystkich widoków interfejsu. */
 export function znakStanuPostepu(stan: ProgressStatus): ZnakStanu {
   return ZNACZENIA_STANOW[ZNACZENIE_Z_POSTEPU[stan]];
 }
@@ -150,12 +107,7 @@ export function wariantPlakietki(rodzina: RodzinaStanu): string {
 }
 
 /**
- * Klasa wariantu kropki dla znaku stanu; pusty łańcuch dla kropki sygnałowej.
- *
- * Praca trwająca bierze tętno, nie barwę rodziny — tętno jest jedynym ruchem
- * ciągłym interfejsu i jest zastrzeżone właśnie dla pracy w tle
- * (`komponenty/plakietka.css`). Przy `prefers-reduced-motion` tętno zamiera,
- * a jego znaczenie przejmuje pierścień statyczny — również w arkuszu.
+ * Klasa wariantu kropki dla znaku stanu — pusty łańcuch dla kropki sygnałowej, bo praca trwająca bierze tętno, nie barwę rodziny.
  */
 export function wariantKropki(znak: ZnakStanu): string {
   if (znak.wTrakcie) return 'dn-kropka--tetno';
@@ -169,8 +121,7 @@ export function wariantKropki(znak: ZnakStanu): string {
     case 'neutralna':
       return 'dn-kropka--neutralna';
     case 'informacja':
-      // Kropka bazowa jest kropką sygnału (`--dn-kropka`), a informacja to
-      // rodzina sygnału — osobnego wariantu nie ma.
+      // Kropka bazowa jest kropką sygnału, a informacja to rodzina sygnału — osobnego wariantu nie ma.
       return '';
   }
 }

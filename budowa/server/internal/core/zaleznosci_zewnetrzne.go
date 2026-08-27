@@ -70,6 +70,23 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "wycinanie tła obrazu oraz rozkład obrazu na warstwy " +
 				"(image.background.remove, image.layers.split) — obie czynności " +
 				"stoją na tej samej sieci segmentującej i znikają razem z nią"},
+		{Narzedzie: narzedzieOptipng(),
+			Zakres: "dogniecenie zapisu PNG przy zamianie formatu (image.convert) — " +
+				"bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem"},
+		{Narzedzie: narzedzieJpegoptim(),
+			Zakres: "dogniecenie zapisu JPEG przy zamianie formatu (image.convert) — " +
+				"bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem"},
+		{Narzedzie: narzedziePngquant(),
+			Zakres: "sprowadzenie PNG do palety przy zamianie formatu na zapis stratny " +
+				"(image.convert z lossless: false) — przy zapisie bezstratnym nie jest wołany"},
+		{Narzedzie: narzedzieCwebp(),
+			Zakres: "dogniecenie zapisu WEBP bezstratnego przy zamianie formatu " +
+				"(image.convert) — bez tego programu obraz zapisuje się koderem " +
+				"wkompilowanym; zapis stratny idzie inną drogą i nie jest dogniatany"},
+		{Narzedzie: narzedzieMetadanychBiblioteki,
+			Zakres: "odczyt metadanych IPTC, XMP i ID3 osadzonych w zasobie " +
+				"(library.metadata.get z includeTechnical) — EXIF i GPS czyta czytnik " +
+				"wkompilowany i te pola zostają także bez tego programu"},
 		{Narzedzie: narzedzieSyntezyMowy,
 			Zakres: "odsłuch przebiegu debaty syntezą mowy w module Roundtable"},
 		{Narzedzie: narzedzieGofmt,

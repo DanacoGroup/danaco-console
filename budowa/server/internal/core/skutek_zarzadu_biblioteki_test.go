@@ -1,14 +1,19 @@
 package core
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
 )
 
@@ -1076,6 +1081,208 @@ func TestOdczytMetadanychTechnicznychIdzieDoBajtow(t *testing.T) {
 	}
 	if techniczne.SizeBytes == nil || *techniczne.SizeBytes != int64(len(tresc)) {
 		t.Errorf("rozmiar z metadanych %v, treść ma %d bajtów", techniczne.SizeBytes, len(tresc))
+	}
+}
+
+// jpegZeZnacznikiemXmp składa najmniejszy poprawny JPEG niosący pakiet XMP
+// w segmencie APP1.
+//
+// Plik powstaje tutaj, a nie jest wnoszony jako materiał sprawdzianu, bo XMP
+// musi być OSADZONY w bajtach — sprawdzian mierzy odczyt z pliku, więc materiał
+// spoza pliku niczego by nie dowiódł. Zapis jest ręczny, bo koder `image/jpeg`
+// nie umie wstawić własnego segmentu.
+func jpegZeZnacznikiemXmp(t *testing.T, tytul string) []byte {
+	t.Helper()
+
+	var obraz bytes.Buffer
+	plotno := image.NewNRGBA(image.Rect(0, 0, 8, 8))
+	for y := 0; y < 8; y++ {
+		for x := 0; x < 8; x++ {
+			plotno.Set(x, y, color.NRGBA{R: uint8(x * 30), G: uint8(y * 30), B: 90, A: 255})
+		}
+	}
+	if err := jpeg.Encode(&obraz, plotno, nil); err != nil {
+		t.Fatalf("nie można złożyć obrazu sprawdzianu: %v", err)
+	}
+	bajty := obraz.Bytes()
+
+	// Nagłówek przestrzeni nazw jest tym, po którym czytnik rozpoznaje pakiet
+	// XMP wśród innych segmentów APP1 (EXIF używa tego samego znacznika).
+	pakiet := append([]byte("http://ns.adobe.com/xap/1.0/\x00"),
+		[]byte(`<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>`+
+			`<x:xmpmeta xmlns:x="adobe:ns:meta/">`+
+			`<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">`+
+			`<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">`+
+			`<dc:title><rdf:Alt><rdf:li xml:lang="x-default">`+tytul+
+			`</rdf:li></rdf:Alt></dc:title>`+
+			`</rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="w"?>`)...)
+
+	// Długość segmentu liczy się wraz z dwoma bajtami samej długości.
+	dlugosc := len(pakiet) + 2
+	segment := []byte{0xFF, 0xE1, byte(dlugosc >> 8), byte(dlugosc & 0xFF)}
+	segment = append(segment, pakiet...)
+
+	// Segment wchodzi zaraz za znacznikiem początku pliku (dwa bajty `SOI`).
+	zlozony := make([]byte, 0, len(bajty)+len(segment))
+	zlozony = append(zlozony, bajty[:2]...)
+	zlozony = append(zlozony, segment...)
+	zlozony = append(zlozony, bajty[2:]...)
+	return zlozony
+}
+
+// TestOdczytMetadanychOsadzonychCzytaXmpProgramem mierzy pole `xmp` kontraktu:
+// przed tą pracą nie wypełniała go żadna droga, więc opis zasobu milczał o XMP,
+// IPTC i ID3 niezależnie od tego, co plik naprawdę niósł.
+//
+// Sprawdzian pomija się z nazwanym powodem na maszynie bez programu: odczyt tych
+// trzech rodzin jest POSZERZENIEM opisu, a nie jego warunkiem — reszty pól
+// pilnuje `TestOdczytMetadanychTechnicznychIdzieDoBajtow`, który idzie zawsze.
+func TestOdczytMetadanychOsadzonychCzytaXmpProgramem(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieMetadanychBiblioteki) {
+		t.Skipf("na tej maszynie nie stoi %s (%s) — IPTC, XMP i ID3 są poszerzeniem opisu, "+
+			"więc bez programu nie ma czego mierzyć",
+			narzedzieMetadanychBiblioteki.Nazwa, narzedzieMetadanychBiblioteki.Program)
+	}
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const tytul = "Tytul osadzony w bajtach"
+	var wgrany shared.LibraryFileUploadResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryFileUpload,
+		shared.LibraryFileUploadRequest{
+			Name:          "zdjecie.jpg",
+			MimeType:      wskaznik("image/jpeg"),
+			ContentBase64: wskaznik(wBase64(jpegZeZnacznikiemXmp(t, tytul))),
+		}, &wgrany)
+
+	var odczyt shared.LibraryMetadataGetResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryMetadataGet,
+		shared.LibraryMetadataGetRequest{
+			FileId: wgrany.File.Id, IncludeTechnical: wskaznik(true),
+		}, &odczyt)
+
+	techniczne := odczyt.Metadata.Technical
+	if techniczne == nil {
+		t.Fatal("odczyt z żądaniem nie oddał metadanych osadzonych")
+	}
+	if len(techniczne.Xmp) == 0 {
+		t.Fatal("pole xmp jest puste, choć plik niesie pakiet XMP w segmencie APP1")
+	}
+	if !strings.Contains(string(techniczne.Xmp), tytul) {
+		t.Fatalf("pole xmp nie niesie tytułu osadzonego w pliku: %s", techniczne.Xmp)
+	}
+	t.Logf("pole xmp: %s", techniczne.Xmp)
+}
+
+// mp3ZeZnacznikiemId3 składa najmniejszy zapis MP3 niosący znacznik ID3v2
+// z ramką tytułu.
+//
+// Zapis jest ręczny z tego samego powodu, co przy XMP wyżej: znacznik musi być
+// OSADZONY w bajtach pliku, a biblioteka standardowa nie zapisuje MP3 wcale.
+func mp3ZeZnacznikiemId3(t *testing.T, tytul string) []byte {
+	t.Helper()
+
+	// Ramka TIT2 (tytuł): bajt kodowania ISO-8859-1 i sama treść.
+	tresc := append([]byte{0x00}, []byte(tytul)...)
+	ramka := append([]byte("TIT2"), byte(len(tresc)>>24), byte(len(tresc)>>16),
+		byte(len(tresc)>>8), byte(len(tresc)), 0x00, 0x00)
+	ramka = append(ramka, tresc...)
+
+	// Nagłówek ID3v2.3. Rozmiar znacznika idzie w zapisie synchsafe — siedem
+	// bitów na bajt — bo tak każe sam zapis ID3v2, nie wybór tego sprawdzianu.
+	rozmiar := len(ramka)
+	zapis := append([]byte{'I', 'D', '3', 0x03, 0x00, 0x00,
+		byte(rozmiar >> 21 & 0x7F), byte(rozmiar >> 14 & 0x7F),
+		byte(rozmiar >> 7 & 0x7F), byte(rozmiar & 0x7F)}, ramka...)
+
+	// Trzy ramki MPEG-1 Layer III ciszy (128 kb/s, 44,1 kHz) — bez nich plik
+	// byłby samym znacznikiem bez nagrania i nie uchodziłby za materiał.
+	cisza := append([]byte{0xFF, 0xFB, 0x90, 0x00}, make([]byte, 413)...)
+	for i := 0; i < 3; i++ {
+		zapis = append(zapis, cisza...)
+	}
+	return zapis
+}
+
+// TestOdczytMetadanychOsadzonychCzytaId3Programem mierzy pole `id3` kontraktu —
+// trzecią z rodzin, które czyta program (`dopiszMetadaneOsadzone`), i jedyną
+// dotyczącą nagrania, nie obrazu.
+func TestOdczytMetadanychOsadzonychCzytaId3Programem(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieMetadanychBiblioteki) {
+		t.Skipf("na tej maszynie nie stoi %s (%s) — IPTC, XMP i ID3 są poszerzeniem opisu, "+
+			"więc bez programu nie ma czego mierzyć",
+			narzedzieMetadanychBiblioteki.Nazwa, narzedzieMetadanychBiblioteki.Program)
+	}
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const tytul = "Tytul osadzony w bajtach"
+	var wgrany shared.LibraryFileUploadResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryFileUpload,
+		shared.LibraryFileUploadRequest{
+			Name:          "nagranie.mp3",
+			MimeType:      wskaznik("audio/mpeg"),
+			ContentBase64: wskaznik(wBase64(mp3ZeZnacznikiemId3(t, tytul))),
+		}, &wgrany)
+
+	var odczyt shared.LibraryMetadataGetResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryMetadataGet,
+		shared.LibraryMetadataGetRequest{
+			FileId: wgrany.File.Id, IncludeTechnical: wskaznik(true),
+		}, &odczyt)
+
+	techniczne := odczyt.Metadata.Technical
+	if techniczne == nil {
+		t.Fatal("odczyt z żądaniem nie oddał metadanych osadzonych")
+	}
+	if len(techniczne.Id3) == 0 {
+		t.Fatal("pole id3 jest puste, choć plik niesie znacznik ID3v2 z tytułem")
+	}
+	if !strings.Contains(string(techniczne.Id3), tytul) {
+		t.Fatalf("pole id3 nie niesie tytułu osadzonego w pliku: %s", techniczne.Id3)
+	}
+	t.Logf("pole id3: %s", techniczne.Id3)
+}
+
+// TestOdczytBezProgramuZostawiaPolaOsadzonePuste mierzy drugą połowę reguły
+// z nagłówka `dopiszMetadaneOsadzone`: brak programu zostawia pola IPTC, XMP
+// i ID3 puste, a odczyt opisu NIE odmawia i reszta pól przychodzi w komplecie.
+//
+// Pustą ścieżką wyszukiwania sprawdzian czyni z tej maszyny maszynę bez
+// programu, więc mierzy to zdanie wszędzie — nie tylko na cienkiej instalce.
+func TestOdczytBezProgramuZostawiaPolaOsadzonePuste(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	var wgrany shared.LibraryFileUploadResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryFileUpload,
+		shared.LibraryFileUploadRequest{
+			Name:          "zdjecie.jpg",
+			MimeType:      wskaznik("image/jpeg"),
+			ContentBase64: wskaznik(wBase64(jpegZeZnacznikiemXmp(t, "Tytul osadzony w bajtach"))),
+		}, &wgrany)
+
+	var odczyt shared.LibraryMetadataGetResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryMetadataGet,
+		shared.LibraryMetadataGetRequest{
+			FileId: wgrany.File.Id, IncludeTechnical: wskaznik(true),
+		}, &odczyt)
+
+	techniczne := odczyt.Metadata.Technical
+	if techniczne == nil {
+		t.Fatal("odczyt bez programu nie oddał metadanych osadzonych — miał oddać opis węższy, nie żaden")
+	}
+	if len(techniczne.Xmp) != 0 {
+		t.Fatalf("pole xmp niesie %s, choć maszyna nie ma czym go przeczytać — "+
+			"wynik bez pomiaru podany jako wynik", techniczne.Xmp)
+	}
+	// Wymiary liczy czytnik wkompilowany, więc mają przyjść także bez programu —
+	// to one dowodzą, że opis zwęził się o trzy pola, a nie wywrócił.
+	if techniczne.Width == nil || *techniczne.Width != 8 ||
+		techniczne.Height == nil || *techniczne.Height != 8 {
+		t.Fatalf("wymiary %v×%v nie przyszły z czytnika wkompilowanego, a od programu nie zależą",
+			techniczne.Width, techniczne.Height)
 	}
 }
 

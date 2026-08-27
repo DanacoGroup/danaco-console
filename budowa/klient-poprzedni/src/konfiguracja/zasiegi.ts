@@ -1,6 +1,9 @@
+/**
+ * Słownik dwóch prostopadłych wymiarów konfiguracji: poziomu zasięgu oraz osi.
+ * Plik ustawia oba wymiary w porządku pierwszeństwa, nazywa je po polsku wraz
+ * z bytem, który wskazują, i odczytuje jedno oraz drugie z wpisu konfiguracji.
+ */
 import { ConfigAxis, ConfigScope, type ConfigEntry } from '../../../shared/contract';
-
-/** Słownik dwóch prostopadłych wymiarów konfiguracji: poziomu zasięgu oraz osi. */
 
 /**
  * Osiem poziomów zasięgu w kolejności od najwęższego do najszerszego. Kolejność

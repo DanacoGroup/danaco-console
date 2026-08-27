@@ -365,3 +365,45 @@ CHECK schematu bazy i wracał kodem `internal_error` z `retryable: true`,
 cytując w treści warunek bazy wraz z nazwą kolumny. Żądanie takie nie mogło
 się udać przy żadnym ponowieniu, więc klient z pętlą ponowień powtarzał je bez
 końca, a operator dostawał zdanie o kolumnie zamiast o swoim żądaniu.
+
+## adapter_studio_pdf.go
+
+Cała rodzina czynności warsztatu PDF pracuje na bibliotece pdfcpu
+wkompilowanej w binarium rdzenia. Nie ma tu ani jednego uruchomienia procesu
+zewnętrznego i mieć nie będzie — to jest zasada bezwzględna produktu, nie
+wybór wygody. Funkcja zależna od programu, którego instalka nie niesie, jest
+u odbiorcy odmową, a nie funkcją: maszyna deweloperska ma doinstalowane
+wszystko, więc sprawdzian na niej świeci zielono przy czynności, która u
+odbiorcy nie ruszy ani razu. Komenda obsługiwana, która pod spodem woła cudzy
+program, jest fasadą — kontrakt niesie polecenie, adapter je przyjmuje, a
+odbiorca dostaje puste okno.
+
+Żadna z czynności nie zmienia materiału w miejscu. Wynik jest nowym zasobem
+pod własną sumą kontrolną, a materiał zostaje nietknięty — dokument zmieniony
+w miejscu byłby dokumentem, do którego nie ma jak wrócić. Praca idzie na
+bajtach w pamięci, nie na plikach pośrednich: magazyn oddaje treść, biblioteka
+przetwarza strumień, wynik wraca do magazynu; plik pośredni byłby trzecim
+miejscem, w którym ta sama treść żyje.
+
+Sprawdzanie zgodności biblioteki jest wyłączone, ponieważ dokumenty zastane
+bywają niezgodne ze specyfikacją w szczegółach, których nikt nie zmieni,
+a odmowa pracy nad takim dokumentem byłaby odmową pracy nad materiałem, który
+otwiera każda przeglądarka.
+
+Odchudzanie dokumentu nie przelicza obrazów w dół, więc zysk bywa mniejszy niż
+przy narzędziu rasteryzującym. Jest to zamiana świadoma: przeliczenie obrazów
+wymagałoby silnika rasteryzacji, czyli programu spoza instalki, a wtedy
+czynność przestałaby działać u odbiorcy.
+
+Czynność UlozStrony odmawia wstawienia stron z innego dokumentu, ponieważ
+biblioteka potrafi wstawić wyłącznie strony puste — wstawienie cudzej treści
+jest scalaniem z wyborem miejsca i ma iść komendą scalania, nie wstawiane
+jako puste kartki z meldunkiem powodzenia.
+
+Czynność stemplowania kładzie pieczęć nad treścią strony, nie pod nią —
+pieczęć schowana pod treścią byłaby pieczęcią niewidoczną mimo meldunku
+o powodzeniu.
+
+Czynność wyciągania obrazów i załączników oddaje liczbę wyciągniętą, nie
+zapowiedzianą: dokument bez obrazów oddaje zero i to jest odpowiedź
+prawdziwa, nie niepowodzenie.

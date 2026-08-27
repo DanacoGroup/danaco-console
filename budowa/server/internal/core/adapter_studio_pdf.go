@@ -1,26 +1,6 @@
-// Odpowiedzialność pliku: warsztat dokumentu PDF modułu Studio — scalanie,
-// podział, wybór stron i odchudzanie.
-//
-// ── Biblioteka wkompilowana, nigdy program zewnętrzny ───────────────────────
-// Cała rodzina pracuje na bibliotece `pdfcpu` wkompilowanej w binarium rdzenia.
-// Nie ma tu ani jednego uruchomienia procesu i mieć nie będzie — to jest zasada
-// bezwzględna produktu, nie wybór wygody:
-//
-// Funkcja zależna od programu, którego instalka nie niesie, jest u Operatora
-// odmową, a nie funkcją. Maszyna deweloperska ma doinstalowane wszystko, więc
-// sprawdzian na niej świeci zielono przy czynności, która u odbiorcy nie ruszy
-// ani razu. „Komenda obsługiwana", która pod spodem woła cudzy program, to
-// fasada: kontrakt niesie polecenie, adapter je przyjmuje, a Operator dostaje
-// puste okno.
-//
-// ── Materiał wchodzi zasobem, wynik wychodzi zasobem ────────────────────────
-// Żadna z tych czynności nie zmienia materiału w miejscu. Wynik jest nowym
-// zasobem pod własną sumą kontrolną, a materiał zostaje nietknięty — dokument
-// zmieniony w miejscu byłby dokumentem, do którego Operator nie ma jak wrócić.
-//
-// Praca idzie na bajtach w pamięci, nie na plikach pośrednich: magazyn oddaje
-// treść, biblioteka przetwarza strumień, wynik wraca do magazynu. Plik pośredni
-// byłby trzecim miejscem, w którym ta sama treść żyje.
+// Warsztat dokumentu PDF modułu Studio: scalanie, podział, stemplowanie
+// i odchudzanie na bibliotece pdfcpu wkompilowanej w rdzeń, nigdy na programie
+// zewnętrznym; materiał wchodzi zasobem, wynik wychodzi nowym zasobem.
 package core
 
 import (
@@ -56,7 +36,8 @@ func nowyAdapterPdfStudia() *adapterPdfStudia {
 	return &adapterPdfStudia{magazyn: magazynZasobowDesignu(konfiguracja.KatalogDanychDomyslny())}
 }
 
-// ZKatalogiemDanych przestawia magazyn wyników na katalog wskazany konfiguracją.
+// ZKatalogiemDanych przestawia magazyn wyników na katalog wskazany konfiguracją,
+// zamiast na katalog domyślny założony przy budowie adaptera.
 func (a *adapterPdfStudia) ZKatalogiemDanych(katalog string) *adapterPdfStudia {
 	if strings.TrimSpace(katalog) != "" {
 		a.magazyn = magazynZasobowDesignu(katalog)
@@ -64,23 +45,22 @@ func (a *adapterPdfStudia) ZKatalogiemDanych(katalog string) *adapterPdfStudia {
 	return a
 }
 
-// ZZasobami podaje magazyn zasobów: odczyt materiału i zapis wiersza wyniku.
+// ZZasobami podaje magazyn zasobów: repozytorium, przez które adapter czyta
+// materiał wejściowy i zapisuje wiersz zasobu wynikowego.
 func (a *adapterPdfStudia) ZZasobami(r dane.RepozytoriumDesignu) *adapterPdfStudia {
 	a.zasoby = r
 	return a
 }
 
-// odmowaPdf buduje odmowę rodziny warsztatu.
+// odmowaPdf buduje odmowę rodziny warsztatu, poprzedzając powód stałym
+// przedrostkiem, po którym rozpoznaje się źródło komunikatu.
 func odmowaPdf(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "warsztat PDF: "+powod))
 }
 
-// nastawyPdf oddaje konfigurację biblioteki.
-//
-// Sprawdzanie zgodności wyłączone: dokumenty zastane bywają niezgodne ze
-// specyfikacją w szczegółach, których Operator nie zmieni, a odmowa pracy nad
-// takim dokumentem byłaby odmową pracy nad materiałem, który otwiera każda
-// przeglądarka.
+// nastawyPdf oddaje konfigurację biblioteki ze sprawdzaniem zgodności
+// wyłączonym: dokumenty zastane bywają niezgodne ze specyfikacją w szczegółach,
+// których dokument otwierany przeglądarką i tak nie ujawnia.
 func nastawyPdf() *model.Configuration {
 	nastawy := model.NewDefaultConfiguration()
 	nastawy.ValidationMode = model.ValidationRelaxed
@@ -88,11 +68,8 @@ func nastawyPdf() *model.Configuration {
 }
 
 // trescMaterialu oddaje bajty wskazanego zasobu wraz ze sprawdzeniem, że jest
-// dokumentem PDF.
-//
-// Sprawdzenie formatu idzie przed pracą biblioteki: `pdfcpu` odmówiłby sam, ale
-// komunikatem o strukturze dokumentu, z którego Operator nie wyczyta, że podał
-// obraz zamiast dokumentu.
+// dokumentem PDF — biblioteka odmówiłaby dopiero komunikatem o strukturze,
+// nie o rodzaju pliku.
 func (a *adapterPdfStudia) trescMaterialu(ctx context.Context, kod string) ([]byte, error) {
 	bajty, err := a.bajtyZasobu(ctx, kod)
 	if err != nil {
@@ -130,7 +107,8 @@ func (a *adapterPdfStudia) bajtyZasobu(ctx context.Context, kod string) ([]byte,
 	return bajty, nil
 }
 
-// odlozPdf utrwala wynik w magazynie i zakłada wiersz zasobu.
+// odlozPdf utrwala wynik w magazynie pod formatem PDF i zakłada wiersz zasobu,
+// wywołując odlozTresc ze stałym formatem dokumentu.
 func (a *adapterPdfStudia) odlozPdf(ctx context.Context, bajty []byte,
 	nazwa, okno string) (shared.DesignAsset, error) {
 	return a.odlozTresc(ctx, bajty, nazwa, "pdf", okno)
@@ -143,8 +121,8 @@ func (a *adapterPdfStudia) odlozPdf(ctx context.Context, bajty []byte,
 func (a *adapterPdfStudia) odlozTresc(ctx context.Context, bajty []byte,
 	nazwa, format, okno string) (shared.DesignAsset, error) {
 
-	// Suma kontrolna liczy się tutaj, bo magazyn przyjmuje ją gotową: to on
-	// rozstrzyga o nazwie bloba, a nazwą jest suma treści.
+	// Suma kontrolna liczy się tutaj: magazyn przyjmuje ją gotową i rozstrzyga
+	// nazwę bloba.
 	skrot := sha256.Sum256(bajty)
 	suma := hex.EncodeToString(skrot[:])
 	odwolanie, err := a.magazyn.Zapisz(bajty, suma)
@@ -158,7 +136,8 @@ func (a *adapterPdfStudia) odlozTresc(ctx context.Context, bajty []byte,
 	})
 }
 
-// stronDokumentu liczy strony biblioteką — tą samą, która dokument przetwarza.
+// stronDokumentu liczy strony biblioteką pdfcpu — tą samą, która dokument
+// przetwarza dalej, więc liczba stron zgadza się z wynikiem czynności.
 func stronDokumentu(bajty []byte) (int, error) {
 	liczba, err := api.PageCount(bytes.NewReader(bajty), nastawyPdf())
 	if err != nil {
@@ -170,7 +149,8 @@ func stronDokumentu(bajty []byte) (int, error) {
 
 // ── Czynności ───────────────────────────────────────────────────────────────
 
-// ScalPdf łączy wskazane dokumenty w jeden, w podanej kolejności.
+// ScalPdf łączy wskazane dokumenty w jeden, w podanej kolejności, i oddaje
+// zasób wyniku wraz z liczbą stron dokumentu scalonego.
 func (a *adapterPdfStudia) ScalPdf(ctx context.Context,
 	z shared.StudioPdfMergeRequest) (shared.StudioPdfMergeResponse, error) {
 
@@ -245,14 +225,9 @@ func (a *adapterPdfStudia) PodzielPdf(ctx context.Context,
 	return shared.StudioPdfSplitResponse{AssetIds: kody, Parts: len(kody)}, nil
 }
 
-// OdchudzPdf zmniejsza objętość dokumentu.
-//
-// Biblioteka porządkuje strukturę i usuwa powielone zasoby; nie przelicza
-// obrazów w dół. Zysk bywa więc mniejszy niż przy narzędziu rasteryzującym —
-// i jest to zamiana świadoma: przeliczenie obrazów wymagałoby silnika
-// rasteryzacji, czyli programu spoza instalki, a wtedy czynność przestałaby
-// działać u Operatora. Odpowiedź niesie zysk zmierzony, więc Operator widzi,
-// ile naprawdę ubyło, zamiast czytać obietnicę.
+// OdchudzPdf zmniejsza objętość dokumentu porządkowaniem struktury i usuwaniem
+// powielonych zasobów, bez przeliczania obrazów w dół — odpowiedź niesie zysk
+// zmierzony, nie obietnicę.
 func (a *adapterPdfStudia) OdchudzPdf(ctx context.Context,
 	z shared.StudioPdfOptimizeRequest) (shared.StudioPdfOptimizeResponse, error) {
 
@@ -270,9 +245,8 @@ func (a *adapterPdfStudia) OdchudzPdf(ctx context.Context,
 	if err != nil {
 		return shared.StudioPdfOptimizeResponse{}, err
 	}
-	// Zysk bywa ujemny — dokument już odchudzony rośnie po ponownym zapisie.
-	// Liczba mówi prawdę zamiast pokazywać zero: Operator ma wiedzieć, że tej
-	// czynności nie warto powtarzać.
+	// Zysk bywa ujemny — dokument odchudzony rośnie po ponownym zapisie; liczba
+	// mówi prawdę zamiast zera.
 	return shared.StudioPdfOptimizeResponse{
 		Asset:      zasob,
 		SizeBytes:  wynik.Len(),
@@ -280,18 +254,9 @@ func (a *adapterPdfStudia) OdchudzPdf(ctx context.Context,
 	}, nil
 }
 
-// UlozStrony wykonuje czynności na stronach dokumentu, jedna po drugiej.
-//
-// Czynności składają się sekwencyjnie na tych samych bajtach: wynik pierwszej
-// jest materiałem drugiej. Wykonanie każdej osobno na materiale pierwotnym
-// dałoby wyniki wzajemnie sprzeczne — usunięcie strony przesuwa numerację
-// wszystkich następnych, więc druga czynność liczona od materiału trafiałaby
-// w stronę inną, niż wskazał Operator.
-//
-// Wstawienie stron z innego dokumentu nie ma tu drogi: biblioteka wstawia
-// strony PUSTE, a wstawienie cudzej treści jest scalaniem z wyborem miejsca.
-// Czynność odmawia i nazywa właściwą komendę, zamiast wstawić puste kartki
-// i zameldować powodzenie.
+// UlozStrony wykonuje czynności na stronach dokumentu sekwencyjnie na tych
+// samych bajtach, bo wynik pierwszej jest materiałem drugiej — inaczej
+// numeracja przesunięta usunięciem trafiałaby w stronę inną, niż wskazano.
 func (a *adapterPdfStudia) UlozStrony(ctx context.Context,
 	z shared.StudioPdfPagesReorderRequest) (shared.StudioPdfPagesReorderResponse, error) {
 
@@ -315,8 +280,8 @@ func (a *adapterPdfStudia) UlozStrony(ctx context.Context,
 			err = api.Trim(bytes.NewReader(bajty), &wynik, strony, nastawyPdf())
 
 		case shared.StudioPdfPageOperationKindPrzeniesienie:
-			// Zebranie stron w kolejności wskazanej przez Operatora — inaczej niż
-			// wydzielenie, które zachowuje kolejność dokumentu.
+			// Zebranie stron w kolejności wskazanej — inaczej niż wydzielenie,
+			// zachowujące kolejność dokumentu.
 			err = api.Collect(bytes.NewReader(bajty), &wynik, strony, nastawyPdf())
 
 		case shared.StudioPdfPageOperationKindObrot:
@@ -363,7 +328,8 @@ func (a *adapterPdfStudia) UlozStrony(ctx context.Context,
 	return shared.StudioPdfPagesReorderResponse{Asset: zasob, Pages: liczba}, nil
 }
 
-// opisPieczeci składa opis wyglądu pieczęci w postaci, którą czyta biblioteka.
+// opisPieczeci składa opis wyglądu pieczęci w postaci tekstowej, którą czyta
+// biblioteka pdfcpu: położenie, skalę, krycie i obrót.
 func opisPieczeci(krycie, obrot *int) string {
 	czesci := []string{"scalefactor:0.7 rel", "position:c"}
 	if krycie != nil {
@@ -448,12 +414,8 @@ func zakresStron(zakres *string) []string {
 	return []string{strings.TrimSpace(*zakres)}
 }
 
-// NumerujPdf nakłada numerację prawną Bates wraz z nagłówkiem i stopką.
-//
-// Numer jest inny na każdej stronie, więc pieczęć zakłada się stronie po
-// stronie: biblioteka nie zna wzorca „numer bieżącej strony", a numeracja
-// nałożona jednym przebiegiem miałaby wszędzie tę samą liczbę — czyli nie
-// byłaby numeracją.
+// NumerujPdf nakłada numerację prawną Bates wraz z nagłówkiem i stopką, stronie
+// po stronie, bo biblioteka nie zna wzorca „numer bieżącej strony".
 func (a *adapterPdfStudia) NumerujPdf(ctx context.Context,
 	z shared.StudioPdfBatesRequest) (shared.StudioPdfBatesResponse, error) {
 
@@ -525,7 +487,8 @@ func (a *adapterPdfStudia) NumerujPdf(ctx context.Context,
 	return shared.StudioPdfBatesResponse{Asset: zasob, LastNumber: ostatni}, nil
 }
 
-// zakladkiBiblioteki przenosi drzewo zakładek kontraktu na postać biblioteki.
+// zakladkiBiblioteki przenosi drzewo zakładek kontraktu na postać biblioteki
+// pdfcpu, sprawdzając po drodze tytuł i numer strony każdej zakładki.
 func zakladkiBiblioteki(zrodlo []shared.StudioPdfBookmark) ([]pdfcpu.Bookmark, error) {
 	wynik := make([]pdfcpu.Bookmark, 0, len(zrodlo))
 	for _, zakladka := range zrodlo {
@@ -585,11 +548,8 @@ func (a *adapterPdfStudia) UstawZakladki(ctx context.Context,
 }
 
 // WypelnijFormularz odczytuje pola formularza, a przy podanych wartościach
-// wypełnia je i oddaje dokument wypełniony.
-//
-// Żądanie bez wartości jest odczytem: kontrakt mówi wprost, że brak wartości
-// znaczy sam odczyt, więc wynik nie niesie wtedy zasobu — dokument nietknięty
-// odłożony jako nowy zasób byłby kopią bez powodu.
+// wypełnia je i oddaje dokument wypełniony; żądanie bez wartości jest samym
+// odczytem.
 func (a *adapterPdfStudia) WypelnijFormularz(ctx context.Context,
 	z shared.StudioPdfFormFillRequest) (shared.StudioPdfFormFillResponse, error) {
 
@@ -607,9 +567,8 @@ func (a *adapterPdfStudia) WypelnijFormularz(ctx context.Context,
 		return shared.StudioPdfFormFillResponse{Fields: polaFormularza(pola)}, nil
 	}
 
-	// Wypełnienie idzie przez postać wyprowadzoną z samego dokumentu: biblioteka
-	// przyjmuje wartości wyłącznie w opisie własnego formularza, więc wartości
-	// Operatora wpisuje się w opis wyprowadzony, zamiast składać go z niczego.
+	// Wypełnienie idzie przez opis wyprowadzony z dokumentu — biblioteka
+	// przyjmuje wartości tylko w nim.
 	opis, err := api.ExportForm(bytes.NewReader(bajty), "dokument", nastawyPdf())
 	if err != nil || opis == nil || len(opis.Forms) == 0 {
 		return shared.StudioPdfFormFillResponse{}, odmowaPdf(shared.ErrorCodeValidationFailed,
@@ -639,9 +598,8 @@ func (a *adapterPdfStudia) WypelnijFormularz(ctx context.Context,
 	}
 	wypelniony := wynik.Bytes()
 
-	// Utrwalenie zdejmuje interakcyjność przez zamknięcie pól: wartość zostaje
-	// widoczna, a odbiorca jej nie zmieni. Pole zamknięte, nie usunięte —
-	// usunięcie pola zabrałoby razem z nim wpisaną treść.
+	// Utrwalenie zamyka pola, nie usuwa ich — usunięcie zabrałoby razem z polem
+	// wpisaną treść.
 	if z.Flatten != nil && *z.Flatten {
 		nazwy := make([]string, 0, len(pola))
 		for _, pole := range pola {
@@ -714,7 +672,8 @@ func wpiszWartosci(formularz *form.Form, wartosci map[string]string) []string {
 	return nieznane
 }
 
-// polaFormularza przenosi pola biblioteki na postać kontraktu.
+// polaFormularza przenosi pola formularza z postaci biblioteki pdfcpu na postać
+// kontraktu, niosąc nazwę, rodzaj, wartość i opcje pola.
 func polaFormularza(zrodlo []form.Field) []shared.StudioPdfFormField {
 	pola := make([]shared.StudioPdfFormField, 0, len(zrodlo))
 	for _, pole := range zrodlo {
@@ -741,11 +700,8 @@ func polaFormularza(zrodlo []form.Field) []shared.StudioPdfFormField {
 }
 
 // WyciagnijZPdf wyjmuje z dokumentu osadzone obrazy i załączniki, zakładając
-// każdemu osobny zasób magazynu.
-//
-// Brak wskazania znaczy „wyciągnij jedno i drugie" — tak mówi kontrakt. Wynik
-// niesie liczbę wyciągniętą, a nie liczbę zapowiedzianą: dokument bez obrazów
-// oddaje zero i to jest odpowiedź prawdziwa, nie niepowodzenie.
+// każdemu osobny zasób magazynu; brak wskazania znaczy wyciągnięcie obu
+// rodzajów.
 func (a *adapterPdfStudia) WyciagnijZPdf(ctx context.Context,
 	z shared.StudioPdfExtractRequest) (shared.StudioPdfExtractResponse, error) {
 
@@ -788,8 +744,8 @@ func (a *adapterPdfStudia) WyciagnijZPdf(ctx context.Context,
 	}
 
 	if zalaczniki {
-		// Biblioteka przyjmuje katalog wyjściowy, ale przy odczycie surowym go
-		// nie dotyka: treść wraca strumieniem, więc plik pośredni nie powstaje.
+		// Biblioteka przy odczycie surowym nie dotyka katalogu wyjściowego:
+		// treść wraca strumieniem.
 		pozycje, err := api.ExtractAttachmentsRaw(bytes.NewReader(bajty), "", nil, nastawyPdf())
 		if err != nil {
 			return shared.StudioPdfExtractResponse{}, odmowaPdf(shared.ErrorCodeValidationFailed,
@@ -817,7 +773,8 @@ func (a *adapterPdfStudia) WyciagnijZPdf(ctx context.Context,
 	return shared.StudioPdfExtractResponse{AssetIds: kody, Extracted: len(kody)}, nil
 }
 
-// pierwszyNiepusty oddaje pierwsze wskazanie o niepustej treści.
+// pierwszyNiepusty oddaje pierwsze wskazanie o niepustej treści z podanego
+// ciągu, służąc jako nazwa zapasowa, gdy wskazanie pierwotne jest puste.
 func pierwszyNiepusty(wskazania ...string) string {
 	for _, wskazanie := range wskazania {
 		if strings.TrimSpace(wskazanie) != "" {
@@ -829,7 +786,8 @@ func pierwszyNiepusty(wskazania ...string) string {
 
 // ── Rejestracja ─────────────────────────────────────────────────────────────
 
-// WarsztatPdf wypełnia rodzinę `studio.pdf.*` w części zbudowanej.
+// WarsztatPdf wypełnia rodzinę komend `studio.pdf.*` w części zbudowanej
+// biblioteką pdfcpu: scalanie, podział, stemplowanie i odchudzanie.
 type WarsztatPdf interface {
 	ScalPdf(ctx context.Context, z shared.StudioPdfMergeRequest) (shared.StudioPdfMergeResponse, error)
 	PodzielPdf(ctx context.Context, z shared.StudioPdfSplitRequest) (shared.StudioPdfSplitResponse, error)
@@ -842,7 +800,8 @@ type WarsztatPdf interface {
 	WyciagnijZPdf(ctx context.Context, z shared.StudioPdfExtractRequest) (shared.StudioPdfExtractResponse, error)
 }
 
-// zarejestrujWarsztatPdf wpina czynności warsztatu dokumentu.
+// zarejestrujWarsztatPdf wpina czynności warsztatu dokumentu PDF do rejestru
+// komend, wiążąc każdą nazwę komendy z metodą warsztatu.
 func zarejestrujWarsztatPdf(r *Rejestr, w WarsztatPdf) {
 	if r == nil || w == nil {
 		return

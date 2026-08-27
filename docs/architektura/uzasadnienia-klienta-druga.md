@@ -4779,3 +4779,11 @@ istnieje i panel przeładowuje wtedy wykaz w całości. Źródło nie trzyma
 stanu, nie zna okna i nie rozstrzyga, czy zasada ma sens — to należy do
 panelu i do rdzenia; zdarzeń po oknie nie filtruje, bo filtr wymaga
 znajomości okna gospodarza, która jest w panelu.
+
+## budowa/klient-poprzedni/src/rozmowa/zapewnienie-kanalu.ts
+Rejestr kanałów jest sterowany danymi: kanał istnieje wtedy, gdy istnieje
+jego wiersz, a nie wtedy, gdy typ dopisano w kodzie. Świeża baza rdzenia nie
+ma ani jednego wiersza, więc okno komunikacji nie miałoby czym rozmawiać —
+warstwa dokłada wiersz komendą `channel.add`, tak samo jak zrobiłby to
+Operator w panelu sterowania okna. Niepowodzenie nie przerywa niczego poza
+tym wywołaniem: wynik niesie opis przeszkody, a okno pozostaje czynne.

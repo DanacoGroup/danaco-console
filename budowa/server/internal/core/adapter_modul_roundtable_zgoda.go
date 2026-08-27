@@ -1,18 +1,7 @@
-// Odpowiedzialność pliku: wykrywanie zgody i sporu — `roundtable.agreement.get`,
-// `roundtable.cluster.get`, `roundtable.crux.get`, `roundtable.convergence.get`,
-// `roundtable.drift.get` i `roundtable.calibration.get`.
-//
-// Wszystkie sześć liczy rdzeń, bez ani jednego wywołania modelu. Powód stoi
-// przy `adapter_modul_roundtable_podobienstwo.go`: panel odczytuje te wskaźniki
-// przy każdym otwarciu i po każdej turze, więc muszą być natychmiastowe,
-// powtarzalne i darmowe. Miara jest słabsza od zanurzeń semantycznych i to jest
-// napisane wprost — nie rozpoznaje synonimów — ale liczba, którą oddaje, jest
-// ta sama przy każdym odczycie i nie zależy od tego, który model akurat
-// odpowiedział.
-//
-// Stanowiskiem uczestnika w turze jest złożenie wszystkiego, co w niej
-// powiedział. Uczestnik, który w turze milczał, nie ma w niej stanowiska i nie
-// wchodzi do żadnego z tych rachunków — cisza nie jest zgodą ani sporem.
+// Odpowiedzialność pliku: wykrywanie zgody i sporu — sześć komend
+// `roundtable.*.get`, liczone przez rdzeń bez modelu, bo panel odczytuje je
+// przy każdym otwarciu i po każdej turze. Miara jest słabsza od zanurzeń
+// semantycznych, ale powtarzalna i darmowa.
 package core
 
 import (
@@ -24,25 +13,28 @@ import (
 )
 
 const (
-	// progZgodyStanowisk — od tej wartości dwa stanowiska uznaje się za zgodne.
+	// progZgodyStanowisk — od tej wartości podobieństwa dwa stanowiska uznaje
+	// się za zgodne w rachunku wskaźników.
 	progZgodyStanowisk = 0.34
 	// progSporuStanowisk — poniżej tej wartości para stanowisk jest sporna.
 	// Między progami leży pas, w którym para nie jest ani zgodna, ani sporna:
-	// wymuszanie rozstrzygnięcia w tym pasie dawałoby punkt zgody tam, gdzie
-	// uczestnicy powiedzieli po prostu co innego o czym innym.
+	// wymuszenie rozstrzygnięcia dałoby punkt zgody tam, gdzie uczestnicy
+	// powiedzieli po prostu co innego.
 	progSporuStanowisk = 0.12
 
 	przedrostekPunktuZgody = "punkt-"
 	przedrostekKlastra     = "klaster-"
 )
 
-// stanowiskoWTurze wiąże uczestnika z tym, co powiedział w jednej turze.
+// stanowiskoWTurze wiąże uczestnika z tym, co powiedział w jednej turze
+// rozmowy okrągłego stołu wprost.
 type stanowiskoWTurze struct {
 	Uczestnik string
 	Tresc     string
 }
 
-// Zgodnosc oddaje punkty zgody, punkty sporne i macierz zgodności par.
+// Zgodnosc oddaje punkty zgody, punkty sporne oraz macierz zgodności par
+// uczestników danej debaty rdzenia.
 func (a *adapterDebaty) Zgodnosc(ctx context.Context,
 	z shared.RoundtableAgreementGetRequest) (shared.RoundtableAgreementGetResponse, error) {
 
@@ -111,12 +103,10 @@ func (a *adapterDebaty) Zgodnosc(ctx context.Context,
 	return shared.RoundtableAgreementGetResponse{Points: punkty, Matrix: macierz}, nil
 }
 
-// Klastry grupuje uczestników w obozy zbliżonych stanowisk.
-//
-// Obóz powstaje przez domknięcie przechodnie relacji zgody: gdy A zgadza się
-// z B, a B z C, wszyscy trzej stoją w jednym obozie, choćby A i C mówili
-// o czym innym. To jest właściwe znaczenie „obozu" — o przynależności decyduje
-// ciągłość zgody, nie zgodność każdego z każdym.
+// Klastry grupuje uczestników w obozy zbliżonych stanowisk przez domknięcie
+// przechodnie relacji zgody: gdy A zgadza się z B, a B z C, wszyscy trzej
+// stoją w jednym obozie, choćby A i C mówili o czym innym. O przynależności
+// decyduje ciągłość zgody.
 func (a *adapterDebaty) Klastry(ctx context.Context,
 	z shared.RoundtableClusterGetRequest) (shared.RoundtableClusterGetResponse, error) {
 
@@ -131,9 +121,8 @@ func (a *adapterDebaty) Klastry(ctx context.Context,
 		return shared.RoundtableClusterGetResponse{}, err
 	}
 
-	// Stanowiskiem uczestnika w całym zakresie jest złożenie jego wypowiedzi
-	// ze wszystkich objętych tur — obóz opisuje uczestnika, nie jego pojedynczą
-	// wypowiedź.
+	// Stanowiskiem uczestnika w zakresie jest złożenie wypowiedzi ze
+	// wszystkich objętych tur.
 	calosc := make(map[string]string, 8)
 	kolejnosc := make([]string, 0, 8)
 	for _, kodTury := range kolejnoscTur {
@@ -200,10 +189,9 @@ func (a *adapterDebaty) Klastry(ctx context.Context,
 }
 
 // PunktSporny oddaje kluczowy punkt sporny rozpoznany w grafie argumentów.
-//
 // Brak grafu nie jest usterką: debata, której nikt jeszcze nie przeanalizował,
-// nie ma węzłów, a punktu spornego nie da się wskazać bez nich. Odpowiedź jest
-// wtedy pusta, bo kontrakt dopuszcza brak punktu wprost.
+// nie ma węzłów, więc punktu spornego nie da się wskazać — odpowiedź jest
+// wtedy pusta.
 func (a *adapterDebaty) PunktSporny(ctx context.Context,
 	z shared.RoundtableCruxGetRequest) (shared.RoundtableCruxGetResponse, error) {
 
@@ -219,7 +207,8 @@ func (a *adapterDebaty) PunktSporny(ctx context.Context,
 	return shared.RoundtableCruxGetResponse{Crux: graf.Crux}, nil
 }
 
-// Zbieznosc mierzy, jak blisko siebie stanęły stanowiska w kolejnych turach.
+// Zbieznosc mierzy, jak blisko siebie stanęły stanowiska uczestników
+// w kolejnych turach tej samej debaty.
 func (a *adapterDebaty) Zbieznosc(ctx context.Context,
 	z shared.RoundtableConvergenceGetRequest) (shared.RoundtableConvergenceGetResponse, error) {
 
@@ -258,7 +247,8 @@ func (a *adapterDebaty) Zbieznosc(ctx context.Context,
 	return shared.RoundtableConvergenceGetResponse{Points: pomiary}, nil
 }
 
-// Dryf pokazuje, jak stanowisko uczestnika zmieniało się między turami.
+// Dryf pokazuje, jak stanowisko uczestnika zmieniało się między kolejnymi
+// turami, w których zabrał głos.
 func (a *adapterDebaty) Dryf(ctx context.Context,
 	z shared.RoundtableDriftGetRequest) (shared.RoundtableDriftGetResponse, error) {
 
@@ -279,8 +269,7 @@ func (a *adapterDebaty) Dryf(ctx context.Context,
 	}
 
 	// Poprzednia tura, w której uczestnik zabrał głos — nie tura poprzednia
-	// z numeru. Uczestnik, który jedną turę przemilczał, zmienił stanowisko
-	// wobec tego, co powiedział ostatnio, a nie wobec swojego milczenia.
+	// z numeru porządkowego.
 	ostatnia := make(map[string]stanowiskoWTurze, 8)
 	ostatniaTura := make(map[string]string, 8)
 	wpisy := make([]shared.RoundtableDriftEntry, 0, 8)
@@ -309,13 +298,8 @@ func (a *adapterDebaty) Dryf(ctx context.Context,
 }
 
 // Kalibracja zestawia pewność deklarowaną przez uczestnika z trafnością
-// zmierzoną ocenami Operatora i wynikami głosowań.
-//
-// Trafność liczy się z tego, co naprawdę rozstrzygnięto: wypowiedź uczestnika
-// jest trafiona, gdy Operator wskazał ją jako bardziej przekonującą, dał jej
-// cztery gwiazdki lub więcej, albo gdy wygrała głosowanie. Uczestnik bez ani
-// jednej ocenionej wypowiedzi nie ma trafności do zmierzenia i nie wchodzi do
-// wyniku — liczba wzięta z zera pomiarów byłaby wymysłem.
+// zmierzoną ocenami Operatora i wynikami głosowań. Wypowiedź jest trafiona,
+// gdy Operator wskazał ją jako lepszą albo gdy wygrała głosowanie.
 func (a *adapterDebaty) Kalibracja(ctx context.Context,
 	z shared.RoundtableCalibrationGetRequest) (shared.RoundtableCalibrationGetResponse, error) {
 
@@ -381,9 +365,8 @@ func (a *adapterDebaty) Kalibracja(ctx context.Context,
 			ParticipantId: uczestnik, DeclaredConfidence: deklarowana,
 			MeasuredAccuracy: trafnosc, Samples: wpis.ocenionych,
 		}
-		// Miara Briera ma sens wyłącznie tam, gdzie pewność deklarowano.
-		// Policzona z zera deklaracji mówiłaby, że uczestnik był pewny w zerowym
-		// stopniu — a on nie był o nic pytany.
+		// Miara Briera ma sens tylko tam, gdzie pewność deklarowano — nie tam,
+		// gdzie nikt o nic nie pytał.
 		if len(wpis.pewnosci) > 0 {
 			roznica := deklarowana - trafnosc
 			brier := roznica * roznica
@@ -421,9 +404,8 @@ func (a *adapterDebaty) trafioneWypowiedzi(ctx context.Context,
 		}
 	}
 
-	// Głosowanie rozstrzyga wtedy, gdy warianty wskazywały wypowiedzi: wariant
-	// zwycięski znakuje swoją wypowiedź jako uznaną, pozostałe jako ocenione
-	// i nieuznane.
+	// Głosowanie rozstrzyga, gdy warianty wskazywały wypowiedzi: zwycięski
+	// znakuje wypowiedź jako uznaną.
 	glosowanie, err := a.repozytorium.OstatnieGlosowanieDebaty(ctx, okno)
 	if err == nil {
 		warianty, err := a.repozytorium.WariantyDebaty(ctx, glosowanie.Kod)

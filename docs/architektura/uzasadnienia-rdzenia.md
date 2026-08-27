@@ -4366,3 +4366,82 @@ wysyłane na stdin jako JSON-lines (`injection/ustawienia.go`,
 odwołania do modelu, a droga ta jest skuteczna: model czyta plik narzędziem
 odczytu. Odwołania niedoręczone stoją w tym samym bloku, aby model wiedział,
 że coś pokazano i czego nie dostał.
+
+TestIkonaNieznanaOdmawiaWskazaniemKatalogu: nazwa szukana jest umyślnie bez
+ani jednego słowa z etykiet katalogu — katalog Designu dopasowuje po
+zawieraniu w obie strony, więc nazwa niosąca „katalog" albo „folder"
+trafiłaby we wzór i sprawdzian mierzyłby coś innego.
+
+## budowa/server/internal/core/usterki_wejscia_test.go
+
+Straże drogi wejścia: trzy sprawdziany trzymają zachowania, których zerwanie
+zamyka Operatorowi drogę do platformy albo otwiera ją komuś, kto nie powinien
+wejść. Trzy razem, a nie osobno, bo trzymają się nawzajem: bramka zamknięta
+do potwierdzenia adresu bez drogi wyjścia z nieudanego nadania zamieniałaby
+zatrzymany serwer poczty w trwałą utratę produktu, a wykaz urządzeń bez
+wejścia hasłem nie miałby czego pokazać w oknie odbierania dostępu.
+
+TestBramkaZamknietaDoPotwierdzeniaAdresu: rejestracja nie zakładała sesji, ale
+zakładała kotwicę, a `auth.login` nie pytał o stan potwierdzenia w ogóle.
+Operator wołał więc logowanie zaraz po rejestracji i dostawał pełny token, nie
+zaglądając do skrzynki. Adres jest jedyną drogą odzyskania konta — adres
+niesprawdzony (literówka, cudza skrzynka, domena bez rekordu) wychodziłby na
+jaw dopiero w dniu, w którym trzeba nim odzyskać dostęp, a rejestracji nie da
+się powtórzyć.
+
+Odmowa ma prowadzić do naprawy: mówić, czego brakuje i czym to zrobić. „Nie
+wolno" bez drogi dalszej zostawia Operatora przed zamkniętą bramką bez
+klucza.
+
+TestNieudaneNadanieListuSchodziNaDrogeBezPoczty: sprawdzana bywała wyłącznie
+obecność nastaw konta nadawczego, przed zapisem. Samo nadanie idzie ostatnie,
+już po zapisaniu konta, kotwicy i drogi, a nastawa wskazana nie znaczy, że
+serwer odpowiada: przekaźnik bywa zatrzymany, zapora zamknięta, a nazwa hosta
+wpisana z literówką. Cofnięcie rejestracji było ratunkiem przed platformą nie
+do otwarcia, dopóki bramkę zamykał brak potwierdzenia adresu — konto
+zostawione po nieudanym nadaniu nie miało czym wejść. Odkąd konto bez
+potwierdzonego adresu wchodzi hasłem, ratunek jest zbędny, a sam był pułapką:
+literówka w nazwie hosta zamykała pierwsze uruchomienie równie szczelnie jak
+brak poczty w ogóle. Rejestracja schodzi więc na drogę bez poczty i kończy
+się tym samym stanem, co instalka, która nadajnika nie ma wcale. Rejestracja
+wykonuje się raz: gdyby nieudane nadanie cofało ją bez otwarcia drogi powrotu
+albo zostawiało konto bez klucza, pierwszy Operator tracił platformę na jedną
+niedostępność serwera poczty.
+
+Droga potwierdzenia zostaje po nieudanym nadaniu i to nie jest usterka: leży
+jako sam skrót materiału, który do nikogo nie dojechał, i wygasa po godzinie.
+Kasowanie jej wymagałoby czwartej czynności repozytorium dla stanu, który sam
+się kończy.
+
+TestWykazUrzadzenWidziWejscieHaslem: sesja brała urządzenie z wiersza metody,
+nie z żądania. Kotwica hasła urządzenia nie ma i mieć nie może — hasło nie
+jest materiałem jednej maszyny — więc `deviceId` z `auth.login` był
+porzucany. Maszyna nie pojawiała się w `device.list`, a `device.revoke` z jej
+identyfikatorem wracał `revoked: false` i zostawiał token czynny, w oknie,
+które istnieje po to, żeby Operator dostęp odbierał.
+
+## budowa/server/internal/core/adapter_wywolywacz.go
+
+Skrót globalny przechwytuje powłoka programu okiennego na maszynie
+Operatora, nie rdzeń: rdzeń stoi na serwerze i klawiatury tamtej maszyny
+nie widzi. Podział jest więc taki: rdzeń trzyma nastawę, dzięki czemu
+skrót jest ten sam na każdej maszynie tego samego Operatora i przeżywa
+ponowne zainstalowanie okna; powłoka rejestruje skrót u siebie i to ona
+wie, czy się udało — skrót zajęty przez inny program zajmie go dalej,
+cokolwiek rdzeń o tym sądzi.
+
+`supported` mówi, czy po drugiej stronie stoi powłoka, która w ogóle umie
+zarejestrować skrót globalny. Rdzeń wie to z jednego miejsca: z powitania.
+Klient deklaruje w nim swoje zdolności (`connection.hello`, pole
+`capabilities`), a rdzeń zapamiętuje deklarację. Przeglądarka takiej
+zdolności nie zadeklaruje i wtedy odpowiedź mówi wprost, że skrótu nie ma
+kto przechwycić — zamiast obiecywać skrót, który nikogo nie obudzi.
+
+`registered` nie jest zgadywane: jest prawdą wtedy i tylko wtedy, gdy skrót
+jest niepusty oraz stoi powłoka deklarująca zdolność. Rdzeń nie twierdzi,
+że rejestracja się powiodła, gdy nie ma komu jej wykonać.
+
+Zapis nastawy idzie pierwszy, a odpowiedź mówi osobno o zapisie i osobno
+o rejestracji — kontrakt mówi to wprost i tak jest tutaj. Skrót zajęty
+przez inny program nie jest błędem zapisu — Operator zwolni go później
+i nie będzie musiał wpisywać nastawy od nowa.

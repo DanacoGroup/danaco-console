@@ -14,13 +14,7 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .dn-boczna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
   .ws-boczna-tytul { font-weight:var(--dn-fw-polgruba); font-size:var(--dn-fs-sm); margin-right:auto; }
-  .dn-boczna-pozycja { display:flex; align-items:center; gap:var(--dn-od-2); width:100%; padding:var(--dn-od-2); border:1px solid transparent; border-radius:var(--dn-r-sm); background:transparent; color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); text-align:left; cursor:pointer; }
-  .dn-boczna-pozycja svg { width:18px; height:18px; flex:none; }
-  .dn-boczna-pozycja:hover { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); }
-  .dn-boczna-pozycja[aria-current="page"] { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); border-color:var(--dn-obrys-subtelny); font-weight:var(--dn-fw-polgruba); }
-  .dn-boczna-pozycja .znacznik { margin-left:auto; font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .ws-boczna-stopka { margin-top:auto; display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-top:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .ws-boczna-stopka svg { width:14px; height:14px; flex:none; }
   .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
@@ -403,7 +397,7 @@
         <button class="dn-boczna-pozycja" type="button" aria-current="page" data-modul="Workspace" data-okno="Project Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8z"/><path d="M2 12a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .6.9l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9A1 1 0 0 0 22 17"/></svg>
           <span>Workspace</span>
-          <span class="znacznik">wiodący</span>
+          <span class="dn-meta dn-na-koniec">wiodący</span>
         </button>
         <button class="dn-boczna-pozycja" type="button" data-modul="Design" data-okno="Design Board">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.3a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor"/></svg>

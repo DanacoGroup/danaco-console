@@ -277,7 +277,7 @@ function zdanieDecyzji(
 /**
  * Odstęp czasu opisany słowem — sekundy, minuty, godziny.
  *
- * Odstęp ujemny (zegar rdzenia przed zegarem klienta) opisujemy jako „przed
+ * Odstęp ujemny (zegar rdzenia przed zegarem klienta) opisywany jest jako „przed
  * chwilą", a nie liczbą ujemną: zegar rozjechany jest stanem możliwym i nie
  * jest powodem do rysowania nieprawdy.
  */
@@ -311,7 +311,7 @@ export function obserwacjaZMonitora(status: MonitorStatus): ObserwacjaProcesu {
 
 /**
  * Sprowadza treść `progress.changed` do obserwacji: zdarzenie nie niesie chwili
- * zmiany, więc podaje ją wywołujący, a pola `loop` tu nie czytamy, bo jest martwe
+ * zmiany, więc podaje ją wywołujący, a pola `loop` tu nie czyta się, bo jest martwe
  * w kontrakcie.
  */
 export function obserwacjaZPostepu(

@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: byty modułu Studio, które NIE należą do jednego
-// dokumentu — operacje własne Tools Panel, łańcuchy operacji, profile wydania,
-// szablony dokumentów, gałęzie oraz odwołania do wersji.
-//
-// Pierwsze cztery mieszkają w zasięgu konfiguracji (globalny, środowisko,
-// projekt, sesja), a nie przy dokumencie: Operator zapisuje własny prompt raz
-// i sięga po niego w każdym dokumencie. Wiązanie ich z dokumentem kazałoby
-// przepisywać je przy każdym nowym pliku.
-//
-// Gałąź i odwołanie do wersji należą do dokumentu, ale stoją tutaj, bo są
-// bytami rejestru — mają własny cykl życia i własny identyfikator zewnętrzny,
-// inaczej niż zmiana śledzona, która bez dokumentu nie znaczy nic.
+// Plik definiuje byty modułu Studio, które nie należą do jednego dokumentu:
+// operacje Tools Panel, łańcuchy operacji, profile wydania, szablony,
+// gałęzie i odwołania do wersji.
 package dane
 
 import (
@@ -20,9 +11,8 @@ import (
 )
 
 // WpisKatalogowyStudia to wiersz jednej z trzech tabel katalogowych modułu:
-// operacji własnej, łańcucha operacji albo profilu wydania. Trzy tabele mają tę
-// samą postać — kod, nazwa, ładunek, zasięg — więc jedna struktura opisuje
-// wszystkie trzy, a rozróżnia je tabela, z której wiersz przyszedł.
+// operacji własnej, łańcucha operacji albo profilu wydania, rozróżnianych
+// tabelą pochodzenia.
 type WpisKatalogowyStudia struct {
 	ID    int64
 	Kod   string
@@ -36,7 +26,8 @@ type WpisKatalogowyStudia struct {
 	Utworzono string
 }
 
-// SzablonStudia to wiersz tabeli `szablon_studio`.
+// SzablonStudia to wiersz tabeli szablon_studio: szablon dokumentu wraz z
+// formatem, treścią i polami metadanych.
 type SzablonStudia struct {
 	ID        int64
 	Kod       string
@@ -49,7 +40,8 @@ type SzablonStudia struct {
 	Utworzono string
 }
 
-// GalazStudia to wiersz tabeli `galaz_studio`.
+// GalazStudia to wiersz tabeli galaz_studio: gałąź dokumentu wraz z wersją
+// startową, wersją bieżącą i stanem scalenia.
 type GalazStudia struct {
 	ID               int64
 	Kod              string
@@ -61,7 +53,8 @@ type GalazStudia struct {
 	Utworzono        string
 }
 
-// OdwolanieWersji to wiersz tabeli `odwolanie_wersji_studio`.
+// OdwolanieWersji to wiersz tabeli odwolanie_wersji_studio: nazwane
+// odwołanie do wersji dokumentu, z opcjonalnym wygaśnięciem.
 type OdwolanieWersji struct {
 	ID        int64
 	Kod       string
@@ -110,7 +103,7 @@ func (o opisTabeliKatalogu) kolumnyOdczytu() string {
 }
 
 // ZapiszWpisKatalogowy zakłada albo nadpisuje wiersz jednej z trzech tabel
-// katalogowych modułu.
+// katalogowych, wskazanej parametrem tabela.
 func (r *repozytoriumStudia) ZapiszWpisKatalogowy(ctx context.Context,
 	tabela opisTabeliKatalogu, wpis WpisKatalogowyStudia) (WpisKatalogowyStudia, error) {
 
@@ -150,7 +143,8 @@ func (r *repozytoriumStudia) ZapiszWpisKatalogowy(ctx context.Context,
 	return r.WpisKatalogowy(ctx, tabela, wpis.Kod)
 }
 
-// WpisKatalogowy zwraca jeden wiersz tabeli katalogowej.
+// WpisKatalogowy zwraca jeden wiersz tabeli katalogowej, zwracając błąd
+// ErrBrakWiersza, gdy wpis nie istnieje.
 func (r *repozytoriumStudia) WpisKatalogowy(ctx context.Context,
 	tabela opisTabeliKatalogu, kod string) (WpisKatalogowyStudia, error) {
 
@@ -171,7 +165,8 @@ func (r *repozytoriumStudia) WpisKatalogowy(ctx context.Context,
 	return wpis, nil
 }
 
-// WpisyKatalogowe zwraca wiersze tabeli katalogowej dla wskazanego zasięgu.
+// WpisyKatalogowe zwraca wiersze tabeli katalogowej dla wskazanego zasięgu,
+// uporządkowane według nazwy.
 func (r *repozytoriumStudia) WpisyKatalogowe(ctx context.Context,
 	tabela opisTabeliKatalogu, zasieg string, zasiegID *string) ([]WpisKatalogowyStudia, error) {
 
@@ -179,7 +174,7 @@ func (r *repozytoriumStudia) WpisyKatalogowe(ctx context.Context,
 		zasieg = tabela.domyslnyZasieg
 	}
 	// Zasięg pusty w kolumnie i zasięg podany to dwa różne wiersze, więc
-	// porównanie identyfikatora zasięgu musi znosić NULL po obu stronach.
+	// porównanie znosi NULL.
 	zapytanie := "SELECT " + tabela.kolumnyOdczytu() + " FROM " + tabela.tabela +
 		" WHERE zasieg = ? AND (zasieg_id IS ? OR zasieg_id = ?) ORDER BY nazwa, id"
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
@@ -206,7 +201,8 @@ func (r *repozytoriumStudia) WpisyKatalogowe(ctx context.Context,
 	return lista, nil
 }
 
-// UsunWpisKatalogowy usuwa wiersz i mówi, czy było co usuwać.
+// UsunWpisKatalogowy usuwa wiersz i mówi, czy było co usuwać, oddając
+// informację o rzeczywistym skutku.
 func (r *repozytoriumStudia) UsunWpisKatalogowy(ctx context.Context,
 	tabela opisTabeliKatalogu, kod string) (bool, error) {
 
@@ -259,7 +255,8 @@ const (
 	                        ORDER BY fabryczny DESC, nazwa`
 )
 
-// ZapiszSzablon zakłada szablon dokumentu albo nadpisuje zastany.
+// ZapiszSzablon zakłada szablon dokumentu albo nadpisuje zastany po
+// identyfikatorze zewnętrznym szablonu.
 func (r *repozytoriumStudia) ZapiszSzablon(ctx context.Context,
 	szablon SzablonStudia) (SzablonStudia, error) {
 
@@ -279,7 +276,8 @@ func (r *repozytoriumStudia) ZapiszSzablon(ctx context.Context,
 	return r.Szablon(ctx, szablon.Kod)
 }
 
-// Szablon zwraca szablon o wskazanym kodzie.
+// Szablon zwraca szablon dokumentu o wskazanym kodzie, zwracając błąd
+// ErrBrakWiersza, gdy nie istnieje.
 func (r *repozytoriumStudia) Szablon(ctx context.Context, kod string) (SzablonStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSzablonStudia)
 	if err != nil {
@@ -295,7 +293,8 @@ func (r *repozytoriumStudia) Szablon(ctx context.Context, kod string) (SzablonSt
 	return szablon, nil
 }
 
-// Szablony zwraca komplet szablonów, fabryczne na początku.
+// Szablony zwraca komplet szablonów dokumentu, fabryczne na początku
+// wykazu, pozostałe wedle nazwy alfabetu.
 func (r *repozytoriumStudia) Szablony(ctx context.Context) ([]SzablonStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSzablonowStudia)
 	if err != nil {
@@ -360,7 +359,8 @@ const (
 	                     WHERE g.dokument_id = ? ORDER BY g.id`
 )
 
-// ZapiszGalaz zakłada gałąź dokumentu albo nadpisuje jej stan.
+// ZapiszGalaz zakłada gałąź dokumentu albo nadpisuje jej stan po
+// identyfikatorze zewnętrznym tej gałęzi.
 func (r *repozytoriumStudia) ZapiszGalaz(ctx context.Context,
 	dokumentID int64, galaz GalazStudia) (GalazStudia, error) {
 
@@ -379,7 +379,8 @@ func (r *repozytoriumStudia) ZapiszGalaz(ctx context.Context,
 	return r.Galaz(ctx, galaz.Kod)
 }
 
-// Galaz zwraca gałąź o wskazanym kodzie.
+// Galaz zwraca gałąź o wskazanym kodzie, zwracając błąd ErrBrakWiersza, gdy
+// gałąź nie istnieje w bazie.
 func (r *repozytoriumStudia) Galaz(ctx context.Context, kod string) (GalazStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzGalazStudia)
 	if err != nil {
@@ -395,7 +396,8 @@ func (r *repozytoriumStudia) Galaz(ctx context.Context, kod string) (GalazStudia
 	return galaz, nil
 }
 
-// Galezie zwraca gałęzie dokumentu w kolejności założenia.
+// Galezie zwraca gałęzie wskazanego dokumentu w kolejności założenia, od
+// pierwszej do ostatniej gałęzi.
 func (r *repozytoriumStudia) Galezie(ctx context.Context, dokumentID int64) ([]GalazStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaGaleziStudia)
 	if err != nil {
@@ -437,7 +439,8 @@ func odczytajGalazStudia(wiersz skaner) (GalazStudia, error) {
 
 // ── Odwołania do wersji ─────────────────────────────────────────────────────
 
-// ZapiszOdwolanieWersji zakłada odwołanie do wersji dokumentu.
+// ZapiszOdwolanieWersji zakłada odwołanie do wersji dokumentu o wskazanym
+// zasięgu i terminie wygaśnięcia.
 func (r *repozytoriumStudia) ZapiszOdwolanieWersji(ctx context.Context,
 	odwolanie OdwolanieWersji) (OdwolanieWersji, error) {
 
@@ -463,57 +466,63 @@ func (r *repozytoriumStudia) ZapiszOdwolanieWersji(ctx context.Context,
 }
 
 // ── Nazwane wejścia do trzech tabel katalogowych ────────────────────────────
-//
-// Kontrakt repozytorium mówi nazwami dziedziny („zapisz operację"), a nie
-// nazwą tabeli podanej parametrem: wołający nie ma rozstrzygać, w której
-// tabeli byt mieszka. Opis tabeli zostaje szczegółem tego pliku.
 
-// ZapiszOperacje zapisuje operację własną Tools Panel.
+// Kontrakt mówi nazwami dziedziny, nie nazwą tabeli.
+// ZapiszOperacje zapisuje operację własną Tools Panel, zakładając wpis
+// albo nadpisując zastany wiersz.
 func (r *repozytoriumStudia) ZapiszOperacje(ctx context.Context,
 	wpis WpisKatalogowyStudia) (WpisKatalogowyStudia, error) {
 	return r.ZapiszWpisKatalogowy(ctx, tabelaOperacjiStudia, wpis)
 }
 
-// Operacje zwraca operacje własne zasięgu.
+// Operacje zwraca operacje własne wskazanego zasięgu konfiguracji,
+// uporządkowane tak samo jak pozostałe tabele.
 func (r *repozytoriumStudia) Operacje(ctx context.Context,
 	zasieg string, zasiegID *string) ([]WpisKatalogowyStudia, error) {
 	return r.WpisyKatalogowe(ctx, tabelaOperacjiStudia, zasieg, zasiegID)
 }
 
-// UsunOperacje usuwa operację własną.
+// UsunOperacje usuwa operację własną o wskazanym kodzie zewnętrznym,
+// oddając informację, czy istniała.
 func (r *repozytoriumStudia) UsunOperacje(ctx context.Context, kod string) (bool, error) {
 	return r.UsunWpisKatalogowy(ctx, tabelaOperacjiStudia, kod)
 }
 
-// ZapiszLancuch zapisuje łańcuch operacji.
+// ZapiszLancuch zapisuje łańcuch operacji, zakładając wpis albo nadpisując
+// zastany po tym samym kodzie.
 func (r *repozytoriumStudia) ZapiszLancuch(ctx context.Context,
 	wpis WpisKatalogowyStudia) (WpisKatalogowyStudia, error) {
 	return r.ZapiszWpisKatalogowy(ctx, tabelaLancuchowStudia, wpis)
 }
 
-// Lancuch zwraca jeden łańcuch operacji.
+// Lancuch zwraca jeden łańcuch operacji o wskazanym kodzie zewnętrznym tej
+// samej tabeli katalogowej modułu.
 func (r *repozytoriumStudia) Lancuch(ctx context.Context, kod string) (WpisKatalogowyStudia, error) {
 	return r.WpisKatalogowy(ctx, tabelaLancuchowStudia, kod)
 }
 
-// Lancuchy zwraca łańcuchy operacji zasięgu.
+// Lancuchy zwraca łańcuchy operacji wskazanego zasięgu konfiguracji,
+// uporządkowane tak samo jak pozostałe.
 func (r *repozytoriumStudia) Lancuchy(ctx context.Context,
 	zasieg string, zasiegID *string) ([]WpisKatalogowyStudia, error) {
 	return r.WpisyKatalogowe(ctx, tabelaLancuchowStudia, zasieg, zasiegID)
 }
 
-// ZapiszProfilWydania zapisuje profil wydania dokumentu.
+// ZapiszProfilWydania zapisuje profil wydania dokumentu, zakładając wpis
+// albo nadpisując zastany wiersz.
 func (r *repozytoriumStudia) ZapiszProfilWydania(ctx context.Context,
 	wpis WpisKatalogowyStudia) (WpisKatalogowyStudia, error) {
 	return r.ZapiszWpisKatalogowy(ctx, tabelaProfiliStudia, wpis)
 }
 
-// ProfilWydania zwraca jeden profil wydania.
+// ProfilWydania zwraca jeden profil wydania o wskazanym kodzie zewnętrznym
+// tej tabeli katalogowej modułu.
 func (r *repozytoriumStudia) ProfilWydania(ctx context.Context, kod string) (WpisKatalogowyStudia, error) {
 	return r.WpisKatalogowy(ctx, tabelaProfiliStudia, kod)
 }
 
-// ProfileWydania zwraca profile wydania zasięgu.
+// ProfileWydania zwraca profile wydania zasięgu, uporządkowane tak samo jak
+// pozostałe tabele katalogowe.
 func (r *repozytoriumStudia) ProfileWydania(ctx context.Context,
 	zasieg string, zasiegID *string) ([]WpisKatalogowyStudia, error) {
 	return r.WpisyKatalogowe(ctx, tabelaProfiliStudia, zasieg, zasiegID)

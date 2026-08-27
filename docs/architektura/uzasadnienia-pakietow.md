@@ -3095,3 +3095,19 @@ powodzenie usunięcia.
 etapyKamieniOkna czyta jednym zapytaniem cały wykaz etapów okna zamiast
 jednego zapytania na każdy kamień milowy, bo wykaz kamieni ciągnąłby inaczej
 tyle zapytań, ile ma pozycji.
+
+## studio_katalogi.go
+
+Operacje własne Tools Panel, łańcuchy operacji i profile wydania mieszkają
+w zasięgu konfiguracji (globalny, środowisko, projekt, sesja), a nie przy
+dokumencie: Operator zapisuje własny prompt raz i sięga po niego w każdym
+dokumencie. Wiązanie ich z dokumentem kazałoby przepisywać je przy każdym
+nowym pliku.
+
+Gałąź i odwołanie do wersji należą do dokumentu, ale stoją w tym pliku,
+ponieważ są bytami rejestru — mają własny cykl życia i własny identyfikator
+zewnętrzny, inaczej niż zmiana śledzona, która bez dokumentu nie znaczy nic.
+
+Kontrakt repozytorium mówi nazwami dziedziny, na przykład zapisz operację, a
+nie nazwą tabeli podanej parametrem: wołający nie ma rozstrzygać, w której
+tabeli byt mieszka. Opis tabeli zostaje szczegółem tego pliku.

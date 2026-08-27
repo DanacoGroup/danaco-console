@@ -4639,3 +4639,49 @@ idzie do calego skladu.
 Odmowa zapisu przy wykrytym cyklu kasowałaby pracę wykonaną do chwili
 wykrycia usterki, zamiast pokazać, co wymaga poprawki. Odpowiedź niesie
 `valid=false` wraz z zastrzeżeniami zamiast odmowy.
+
+## budowa/server/internal/core/adapter_modul_automations_zmienne.go
+
+Układ kanwy jest zapisem, nie wyliczeniem. Bez niego położenie węzłów
+liczyłoby się z układu zależności przy każdym otwarciu okna, a Operator
+zastawałby kanwę ułożoną od nowa — praca nad rozmieszczeniem procesu nie
+przeżyłaby zamknięcia karty.
+
+Zapis zmiennych oddaje zastrzeżenia, lecz niczego nie odmawia. Zmienna
+nieużywana i mapowanie do kroku nieistniejącego są ostrzeżeniem na kanwie,
+tak samo jak reszta walidacji definicji: zapis pozostaje możliwy, bo
+Operator buduje proces etapami i połowa definicji jest stanem poprawnym.
+
+### UstawZmienne — pole mappings
+
+Zapis samych zmiennych nie ma kasować pracy nad przepływem danych — tak
+samo jak zapis definicji bez pola `steps` nie kasuje kroków.
+
+### UstawNotatkeKroku
+
+Krok przywrócony z wersji wcześniejszej zastanie notatkę na miejscu.
+Odpowiedź musi jednak nieść krok, więc brak kroku nazywa się wprost.
+## budowa/server/internal/core/adapter_modul_workspace_ical.go
+
+Instalka produktu niesie jedno binarium i nie wolno jej rozszerzać o
+zależność, której nie ma na maszynie budującej. Zakres potrzebny
+kalendarzowi projektu to sześć pól jednego składnika wraz z rozwijaniem
+złamanych wierszy. To jest czytnik na dwieście wierszy, a nie warstwa
+kalendarza — i jest wkompilowany w rdzeń, więc wciągnięcie pliku iCal
+działa na maszynie Operatora tak samo jak na serwerze.
+
+Wydarzenie bez tytułu albo bez czytelnego początku nie wchodzi do
+projektu, ale wraca powodem w polu pominięć. Milczące pomijanie
+zostawiłoby Operatora z kalendarzem niepełnym i bez śladu, czego w nim
+brakuje.
+
+## budowa/server/internal/core/adapter_modul_automations_przebiegi.go
+
+Etapem przebiegu jest pozycja kolejki, więc etap bieżący, liczba etapów
+i numer próby biorą się z pozycji — dokładnie tak, jak telemetria postępu
+liczy etapy kolejki. Rdzeń nie prowadzi drugiego licznika i nie zmyśla
+stopnia ukończenia.
+
+Licznik obiegów nie ma granicy: numer próby to najwyższy licznik obiegów
+wśród pozycji, a progu, po którym rdzeń odmawia powtórzenia, nie ma —
+przerwanie należy do Operatora, a przycisk zatrzymania jest zawsze czynny.

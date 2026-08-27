@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: skład debaty i jego odczyt — okno Model Panels.
-// Obsługuje `roundtable.debate.get`, `roundtable.model.list`,
-// `roundtable.model.remove`, `roundtable.model.update`, `roundtable.team.*`
-// i `roundtable.role.list`.
-//
-// Odczyt stanu debaty istnieje po to, żeby okno otwarte w trakcie debaty
-// wiedziało więcej niż to, co usłyszało zdarzeniem od swojego otwarcia. Bez
-// niego Operator, który odświeżył okno, widziałby debatę pustą aż do następnej
-// wypowiedzi.
+// Skład debaty i jego odczyt obsługuje komendy roundtable.debate.get,
+// roundtable.model.*, roundtable.team.* i roundtable.role.list. Odczyt stanu
+// debaty pozwala oknu otwartemu w jej trakcie poznać stan sprzed otwarcia.
 package core
 
 import (
@@ -17,17 +11,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostkiBytowSkladu — identyfikatory bytów dobudowanych migracjami 190–199.
+// przedrostekZespoluDebaty poprzedza identyfikator zapisanego zespołu debaty
+// generowany przy jego utrwaleniu, tak samo jak inne identyfikatory bytów.
 const (
 	przedrostekZespoluDebaty = "zespol-"
 )
 
 // StanDebaty oddaje pełny stan debaty okna: skład, tury, wypowiedzi
-// i stanowisko, gdy złożone.
-//
-// Granica i przesunięcie tną wypowiedzi, nie tury: tura bez wypowiedzi jest
-// nadal turą i Debate Panel musi ją pokazać, a wypowiedzi w długiej debacie
-// idą w tysiącach.
+// i stanowisko, gdy złożone. Granica i przesunięcie tną wypowiedzi, nie tury.
 func (a *adapterDebaty) StanDebaty(ctx context.Context,
 	z shared.RoundtableDebateGetRequest) (shared.RoundtableDebateGetResponse, error) {
 
@@ -60,8 +51,6 @@ func (a *adapterDebaty) StanDebaty(ctx context.Context,
 		Statements:   wypowiedziKontraktu(wycinek),
 	}
 	// Stanowisko wchodzi do migawki tylko wtedy, gdy naprawdę leży w bazie.
-	// Składanie go przy okazji odczytu stanu podbijałoby licznik wersji przy
-	// każdym otwarciu okna — a wersja liczy redakcje, nie odczyty.
 	if stanowisko, err := a.repozytorium.Stanowisko(ctx, okno, ""); err == nil {
 		wynik := stanowiskoKontraktu(stanowisko, nil)
 		migawka.Consensus = &wynik
@@ -69,7 +58,8 @@ func (a *adapterDebaty) StanDebaty(ctx context.Context,
 	return shared.RoundtableDebateGetResponse{Snapshot: migawka, Total: &lacznie}, nil
 }
 
-// wypowiedziZakresu czyta wypowiedzi jednej tury albo całego okna.
+// wypowiedziZakresu czyta wypowiedzi jednej tury, gdy podano jej kod, albo
+// wszystkie wypowiedzi okna debaty, gdy kod tury jest pusty.
 func (a *adapterDebaty) wypowiedziZakresu(ctx context.Context,
 	okno, turaKod string) ([]dane.WypowiedzDebaty, error) {
 
@@ -129,7 +119,8 @@ func wytnijWypowiedziDebaty(wypowiedzi []dane.WypowiedzDebaty,
 	return wycinek
 }
 
-// Uczestnicy oddaje skład debaty okna w kolejności głosu.
+// Uczestnicy oddaje skład debaty okna w kolejności głosu; okno wskazuje
+// żądanie, a jego brak komenda odrzuca odmową.
 func (a *adapterDebaty) Uczestnicy(ctx context.Context,
 	z shared.RoundtableModelListRequest) (shared.RoundtableModelListResponse, error) {
 
@@ -245,7 +236,8 @@ func (a *adapterDebaty) ZmienModel(ctx context.Context,
 	return shared.RoundtableModelUpdateResponse{Participant: uczestnikKontraktu(po)}, nil
 }
 
-// ZapiszZespol utrwala skład okna jako nazwany zespół.
+// ZapiszZespol utrwala skład okna jako nazwany zespół, gotowy do ponownego
+// wniesienia do innej debaty poleceniem WniesZespol.
 func (a *adapterDebaty) ZapiszZespol(ctx context.Context,
 	z shared.RoundtableTeamSaveRequest) (shared.RoundtableTeamSaveResponse, error) {
 
@@ -265,9 +257,7 @@ func (a *adapterDebaty) ZapiszZespol(ctx context.Context,
 
 	format := ""
 	if z.IncludeFormat != nil && *z.IncludeFormat {
-		// Format bierze się z tury ostatniej: to on jest formatem, w którym ten
-		// skład właśnie debatował. Debata bez ani jednej tury nie ma formatu do
-		// zapisania i zespół zostaje bez niego.
+		// Format bierze się z tury ostatniej — w niej ten skład debatował.
 		if tury, err := a.repozytorium.Tury(ctx, okno, 1); err == nil && len(tury) > 0 {
 			format = tury[0].Format
 		}
@@ -295,7 +285,8 @@ func (a *adapterDebaty) ZapiszZespol(ctx context.Context,
 	return shared.RoundtableTeamSaveResponse{Team: zespolKontraktu(zespol)}, nil
 }
 
-// Zespoly oddaje zapisane zespoły.
+// Zespoly oddaje zapisane zespoły, przefiltrowane po nazwie i ograniczone
+// liczbą wpisów zgodnie z żądaniem.
 func (a *adapterDebaty) Zespoly(ctx context.Context,
 	z shared.RoundtableTeamListRequest) (shared.RoundtableTeamListResponse, error) {
 
@@ -366,8 +357,7 @@ func (a *adapterDebaty) WniesZespol(ctx context.Context,
 		if err != nil {
 			return shared.RoundtableTeamApplyResponse{}, bladDebaty(err)
 		}
-		// Rola, waga i opis idą osobnym zapisem, bo dopisanie uczestnika opisuje
-		// go parą „kanał + tożsamość”, a reszta profilu należy do zmiany.
+		// Rola, waga i opis idą osobnym zapisem po dopisaniu uczestnika.
 		zapisany.Rola, zapisany.Waga = wpis.Rola, wpis.Waga
 		zapisany.Awatar, zapisany.OpisRoli = wpis.Awatar, wpis.OpisRoli
 		if err := a.repozytorium.ZmienUczestnika(ctx, zapisany); err != nil {
@@ -382,7 +372,8 @@ func (a *adapterDebaty) WniesZespol(ctx context.Context,
 	return shared.RoundtableTeamApplyResponse{Participants: uczestnicyKontraktu(uczestnicy)}, nil
 }
 
-// Role oddaje bibliotekę ról debaty wraz z promptami systemowymi.
+// Role oddaje bibliotekę ról debaty wraz z promptami systemowymi, przefiltrowaną
+// zapytaniem żądania, gdy je podano.
 func (a *adapterDebaty) Role(ctx context.Context,
 	z shared.RoundtableRoleListRequest) (shared.RoundtableRoleListResponse, error) {
 
@@ -401,11 +392,9 @@ func (a *adapterDebaty) Role(ctx context.Context,
 	return shared.RoundtableRoleListResponse{Roles: wykaz}, nil
 }
 
-// zespolKontraktu przekłada zapisany zespół na zespół kontraktu.
-//
-// Uczestnicy zespołu nie mają okna ani identyfikatora uczestnika, bo są kopią
-// składu, nie składem. Pola `id` i `windowId` zostają puste — zespół nie stoi
-// w żadnym oknie, dopóki się go nie wniesie.
+// zespolKontraktu przekłada zapisany zespół na zespół kontraktu. Uczestnicy
+// zespołu nie mają okna ani identyfikatora uczestnika, bo są kopią składu,
+// nie składem stojącym w oknie.
 func zespolKontraktu(z dane.ZespolDebaty) shared.RoundtableTeam {
 	sklad := make([]shared.RoundtableParticipant, 0, len(z.Uczestnicy))
 	for _, wpis := range z.Uczestnicy {
@@ -434,7 +423,8 @@ func zespolKontraktu(z dane.ZespolDebaty) shared.RoundtableTeam {
 	return zespol
 }
 
-// turyKontraktu przekłada wykaz tur.
+// turyKontraktu przekłada wykaz tur repozytorium na wykaz tur w kształcie,
+// który niesie kontrakt komendy roundtable.debate.get.
 func turyKontraktu(tury []dane.TuraDebaty) []shared.RoundtableTurn {
 	wykaz := make([]shared.RoundtableTurn, 0, len(tury))
 	for _, tura := range tury {
@@ -443,7 +433,8 @@ func turyKontraktu(tury []dane.TuraDebaty) []shared.RoundtableTurn {
 	return wykaz
 }
 
-// wypowiedziKontraktu przekłada wykaz wypowiedzi.
+// wypowiedziKontraktu przekłada wykaz wypowiedzi repozytorium na wykaz
+// wypowiedzi w kształcie, który niesie kontrakt.
 func wypowiedziKontraktu(wypowiedzi []dane.WypowiedzDebaty) []shared.RoundtableStatement {
 	wykaz := make([]shared.RoundtableStatement, 0, len(wypowiedzi))
 	for _, wypowiedz := range wypowiedzi {

@@ -1626,3 +1626,46 @@ Wykaz kroków `translate.step.list` stoi w kodzie, a nie w bazie, bo opisuje
 zdolności rdzenia, nie dane Operatora: krok istnieje dokładnie wtedy, gdy
 istnieje obsługująca go komenda, i znika razem z nią. Nazwy komend biorą się
 ze stałych kontraktu, więc wykaz nie ma jak rozjechać się z rejestrem.
+
+## adapter_modul_role.go
+
+Rodzina `role.*` jest fasadą, nie drugą prawdą o roli. Rola okna ma w rdzeniu
+jednego właściciela: pakiet `session` (rejestr okien i `rola_okna.go`, który
+zna słownik ról i normalizuje więź), a jej ślad trwały — kolumny
+`okno_komunikacji.rola_okna` i `okno_komunikacji.okno_koordynatora_id`
+z `migracja_002_okna.sql`. Rodzina `role.*` jedzie dokładnie na nich, tak samo
+jak `window.update`. Gdyby założyła własny zapis roli, produkt miałby dwie
+odpowiedzi na pytanie, jaką rolę ma to okno — jedną z `window.list`, drugą
+z `role.*`.
+
+Wobec `window.update` rodzina dokłada trzy rzeczy. Pierwsza to wcielenie
+(`persona`), którego `window.update` nie zna wcale. Druga to odmowa zamiast
+cichego pominięcia: `window.update` ze wskazaniem koordynatora dla okna, które
+wykonawcą nie jest, cicho zdejmuje wskazanie, a rodzina `role.*` odmawia
+z powodem, bo jej jedynym tematem jest właśnie rola i jej więź. Trzecia to
+ślad trwały — `window.update` zmienia wyłącznie rejestr pamięciowy, a `role.*`
+zapisuje rolę także do wiersza okna, gdy wiersz istnieje, bez czego
+`window.state.get` po restarcie rdzenia oddawałby rolę sprzed nadania.
+
+Wcielenie mieszka tam, gdzie już mieszka. Klient utrwala wcielenie okna
+komendą `config.set` na poziomie zasięgu okna pod kluczem
+`multitasking.wcielenie`. Rdzeń pisze i czyta ten sam adres, więc wcielenie
+nadane komendą `role.update` widzi selektor analityka i odwrotnie. Własny
+klucz albo własna tabela byłyby drugim wcieleniem tego samego okna.
+
+Drogi zapisu roli są dwie, bo okno ma dwa życia. Okno otwarte w tym
+uruchomieniu rdzenia stoi w rejestrze pamięciowym i to on jest jego prawdą
+bieżącą; okno sprzed restartu jest wyłącznie wierszem. Rodzina `role.*`
+obsługuje oba, zamiast odmawiać oknu, o którym Operator wie z
+`window.state.get`, że istnieje. Wskazania niewypełnione — rola i koordynator
+oba puste — niczego nie zmieniają: obie drogi sprowadzają się wtedy do odczytu
+stanu obowiązującego.
+
+Pomocnik `wskaznikPolaRoli` jest własny, a nie wspólny, bo pakiet niesie dwa
+pomocniki o nazwie zbliżonej i o różnym znaczeniu pustego napisu — jeden
+oddaje brak pola, drugi wskaźnik na pustkę. Rodzina `role.*` trzyma się
+zasady: koordynator pusty i wcielenie puste są brakiem pola.
+
+Więź z oknem, którego nie ma, byłaby potwierdzeniem relacji, która nie
+powstała. Rejestr pamięciowy sprawdza to sam, a na drodze wiersza sprawdza to
+`nadajRoleWWierszu`, bo tam nikt inny tego nie robi.

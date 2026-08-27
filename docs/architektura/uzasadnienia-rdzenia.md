@@ -1177,3 +1177,47 @@ przepisze obraz bez żadnego filtru. Dlatego każdy sprawdzian pyta o skutek:
 czy w PDF-ie da się odczytać zdanie, które do niego weszło, czy ustalenie
 niesie rodzaj i propozycję, czy tekst rozpoznany ze skanu niesie słowa
 materiału.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz.go
+
+Same czynności czterech narzędzi obrazu leżą w
+`adapter_narzedzia_obraz_czynnosci.go`, rachunek na pikselach —
+w `adapter_narzedzia_obraz_wkompilowany.go`, port i wpięcie —
+w `handlers_narzedzia_obraz.go`. Pracę wykonuje głównie biblioteka
+wkompilowana w binarium; program pakietu serwera (ImageMagick) zostaje drogą
+zapasową wyłącznie dla dwóch wyjść, których żaden koder czysto-Go nie
+zapisze — AVIF i WEBP stratny — oraz dla pomiaru pliku AVIF, którego nie ma
+czym zdekodować. Wykaz zależności pakietu serwera niesie ImageMagicka z tym
+właśnie zakresem, a osobny sprawdzian pilnuje, żeby ta droga nie wróciła jako
+droga podstawowa.
+
+Wołanie binarium idzie wyłącznie przez `zewnetrzne.Wolaj`: stamtąd prowadzi
+port `session.Uruchamiacz`, brama izolacji okna i objęcie drzewa procesów.
+Własnego `exec.Command` w tym pliku nie ma — odstępstwo od tej sekwencji
+kończy się wyciekiem procesu albo uchwytu.
+
+Bajty wyniku lądują w tym samym magazynie zasobów, co `design.asset.upload`
+(blob pod sumą sha256), a wiersz — w tej samej tabeli zasobów Designu. Drugi
+magazyn byłby drugą prawdą o tym, gdzie rdzeń trzyma bajty poza bazą, a
+Assets Panel przestałby widzieć połowę zasobów, które sam wytworzył.
+
+Źródło zostaje nietknięte: wynikiem każdej z trzech czynności zmieniających
+jest nowy zasób. Blob źródła leży pod swoją sumą kontrolną i nikt go tu nie
+otwiera do zapisu — rachunek czyta go, a bajty wyniku składa osobno; na
+drodze zapasowej program dostaje ścieżkę do odczytu, a wynik oddaje na
+standardowe wyjście.
+
+Brak binarium na drodze zapasowej jest odmową nazwaną: pakiet zewnętrzny
+oddaje wtedy sygnał braku narzędzia niosący nazwę programu i pakiet do
+doinstalowania. Rdzeń przekłada go na kod niedostępności kanału — ten sam,
+co przy braku silnika mowy — a nie na cichy zasób bez zmian, który
+wyglądałby jak udany retusz. Dotyczy to wyłącznie AVIF-a i WEBP-a stratnego:
+pozostałe czynności rodziny nie mają czego zabraknąć.
+
+ImageMagick siódmy stoi jednym plikiem `magick`, szósty — osobnymi
+`convert` i `identify`. Adapter pyta po kolei, który program stoi
+w systemie, i pierwszy obecny wygrywa; gdy nie ma żadnego, odmowa nazywa
+tryb siódmy, bo to on jest wskazówką do instalacji. Nazwa podpolecenia
+(na przykład `identify`) wchodzi na początek argumentów tylko wtedy, gdy
+wołany jest plik `magick`; wersja szósta ma na to osobne binarium
+i podpolecenia nie rozumie.

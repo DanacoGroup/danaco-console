@@ -1,26 +1,10 @@
 /**
- * Katalog funkcji modułu Terminal — inwentarz z dokumentacji projektowej wraz
- * ze stanem każdej pozycji w tej budowie.
- *
- * Po co on istnieje: moduł obiecuje zastąpić emulator terminala, multiplekser
- * sesji, klienta SSH i SFTP, harmonogram zadań, runner skryptów, menedżera
- * sekretów, konsolę szeregową i klienta kontenerów. Część tych zdolności ma
- * pokrycie w kontrakcie, część nie, a część wymaga programu, którego instalka
- * Danaco Console nie niesie. Bez wykazu Operator poznaje różnicę dopiero
- * w chwili, w której czegoś potrzebuje — a wtedy milczenie interfejsu czyta się
- * jak usterka platformy.
- *
- * Wykaz jest przepisem rozdziału „Katalog funkcji i narzędzi" dokumentacji
- * modułu, nie zbiorem pomysłów. Zmierzona liczba pozycji tego rozdziału wynosi
- * `LICZBA_POZYCJI` i tyle stoi niżej.
- *
- * Pozycja niesie trzy rzeczy: co funkcja robi, gdzie stoi w tej budowie albo
- * dlaczego jej nie ma, oraz od jakiego programu spoza instalki zależy. Zdania
- * o braku nazywają stronę braku: kontrakt bez komendy, rdzeń bez pomiaru, okno
- * poza tym złożeniem albo program, którego na maszynie rdzenia może nie być.
+ * Katalog funkcji modułu Terminal — inwentarz zdolności wraz ze stanem
+ * każdej pozycji: co funkcja robi, gdzie stoi albo dlaczego jej nie ma,
+ * oraz od jakiego programu spoza instalki zależy.
  */
 
-/** Rozdział katalogu, do którego pozycja należy. */
+/** Rozdział katalogu, do którego pozycja należy — siedem rodzin zdolności, jakie niesie moduł Terminal. */
 export type RodzinaFunkcji =
   | 'Powłoki, sesje i emulator terminala'
   | 'Zdalne wykonanie i połączenia'
@@ -30,7 +14,7 @@ export type RodzinaFunkcji =
   | 'Wynik, obserwowalność i rejestracja'
   | 'Narzędzia wiersza poleceń wbudowane w moduł';
 
-/** Jedna pozycja katalogu funkcji. */
+/** Jedna pozycja katalogu funkcji — rodzina, nazwa, działanie, stan wobec budowy i zależność zewnętrzna. */
 export interface PozycjaKatalogu {
   rodzina: RodzinaFunkcji;
   nazwa: string;
@@ -464,5 +448,5 @@ export const KATALOG_FUNKCJI: readonly PozycjaKatalogu[] = [
   },
 ];
 
-/** Zmierzona liczba pozycji katalogu — liczona z wykazu, nie wpisana. */
+/** Zmierzona liczba pozycji katalogu — liczona z długości wykazu, nigdy nie wpisana osobną stałą wprost. */
 export const LICZBA_POZYCJI = KATALOG_FUNKCJI.length;

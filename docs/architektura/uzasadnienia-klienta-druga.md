@@ -1488,3 +1488,17 @@ nieświeżości kłamałby o dokumencie, którego nagłówki się zmieniły.
 
 Numer przypisu i powołania nadaje rdzeń przy odświeżeniu, a panel go
 wyłącznie pokazuje: okno nie wymyśla żadnego kodu i nie numeruje niczego samo.
+
+## budowa/klient-poprzedni/src/moduly/terminal/katalog-funkcji.ts
+
+Moduł Terminal obiecuje zastąpić emulator terminala, multiplekser sesji,
+klienta SSH i SFTP, harmonogram zadań, uruchamianie skryptów, menedżera
+sekretów, konsolę szeregową i klienta kontenerów. Część tych zdolności ma
+pokrycie w kontrakcie, część nie, a część wymaga programu, którego instalka
+Danaco Console nie niesie. Bez tego wykazu Operator poznaje różnicę dopiero
+w chwili, w której czegoś potrzebuje — a wtedy milczenie interfejsu czyta się
+jak usterka platformy.
+
+Wykaz jest przepisem rozdziału „Katalog funkcji i narzędzi" dokumentacji
+modułu, nie zbiorem pomysłów; liczba jego pozycji jest zmierzona z długości
+wykazu, nie wpisana osobno.

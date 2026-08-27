@@ -12,44 +12,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany SKUTKU blokady fragmentu — fragmentu, którego model nie tknie.
-//
-// ── Dlaczego ten plik mierzy bazą, a nie odpowiedzią ────────────────────────
-// Blokada jest zabezpieczeniem PRZED MODELEM. Zabezpieczenie, o którym wiadomo
-// tylko tyle, że odpowiedziało odmową, jest zabezpieczeniem niesprawdzonym:
-// rdzeń mógł odmówić i zapisać zmianę mimo to, albo odmówić po zapisie. Dlatego
-// każdy sprawdzian tego pliku czyta treść dokumentu i wiersze blokad WPROST
-// z bazy, osobnym połączeniem, i pyta o świat, a nie o kopertę.
-//
-// Szkody, które ten plik ma wykluczyć — wszystkie cztery wystąpiły w produktach
-// tej klasy:
-//  1. blokada pilnowana wyłącznie w oknie: model woła komendy rdzenia tak samo
-//     jak klient, więc omija ją bez wysiłku;
-//  2. CICHA bezczynność zamiast odmowy — najgorsza możliwa odpowiedź, bo
-//     Operator myśli, że model wykonał polecenie;
-//  3. odmowa CAŁOŚCI przy zmianie obejmującej blokadę częściowo — zamiana
-//     w całym dokumencie przepada z powodu jednego zablokowanego cytatu;
-//  4. blokada skierowana przeciw Operatorowi — właściciel dokumentu nie może
-//     zmienić własnego fragmentu.
-//
-// ── Dlaczego ręka modelu bierze się tu z GNIAZDA ────────────────────────────
-// Sprawdzian, który podpisuje żądanie polem `author: model`, mierzy drogę
-// uprzejmą: model, który tego pola nie poda, nie zostanie sprawdzony. Dlatego
-// te sprawdziany stawiają tożsamość gniazda serwera narzędzi
-// (`transport.RodzajNarzedzi`) i pola `author` NIE podają. Mierzą więc to, czego
-// model nie może o sobie zataić.
-
+// Sprawdziany tego pliku mierzą skutek blokady fragmentu wprost w bazie
+// danych, osobnym połączeniem, zamiast ufać treści odpowiedzi rdzenia, i
+// wykonują żądania tożsamością gniazda serwera narzędzi zamiast polem `author`.
 const (
 	blokadaOknoSprawdzianu = "okno-blokad"
-	// Treść z tą samą frazą DWA razy: raz w miejscu, które zostanie zablokowane,
-	// raz poza blokadą. Na tym stoi pomiar bilansu — jedna zamiana wchodzi,
-	// druga nie, i odpowiedź musi powiedzieć która.
+	// Fraza powtórzona w treści dwukrotnie służy pomiarowi bilansu: jedno wystąpienie stoi
+	// pod blokadą, drugie poza nią, więc odpowiedź musi rozstrzygnąć, które wystąpienie zmieniła.
 	blokadaTrescSprawdzianu = "Umowa numer 17/2026 zawarta w Warszawie.\n" +
 		"Podstawa prawna: Umowa numer 17/2026.\n" +
 		"Uwagi redakcyjne do Umowa numer 17/2026 bez znaczenia prawnego."
 )
 
-// blokadaUprzazSprawdzianu trzyma rdzeń, kontekst życia i połączenie pomiarowe.
+// blokadaUprzazSprawdzianu trzyma zmontowany rdzeń, kontekst cyklu życia
+// sprawdzianu, niezależne połączenie pomiarowe z bazą danych oraz
+// identyfikator dokumentu, na którym prowadzone są sprawdziany blokad.
 type blokadaUprzazSprawdzianu struct {
 	zmontowany *Zmontowany
 	zycie      context.Context
@@ -125,8 +102,7 @@ func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	}
 	ctx, przerwij := context.WithTimeout(u.zycie, granicaKomendySprawdzianu)
 	defer przerwij()
-	// Tak wygląda gniazdo serwera narzędzi modelu i nic innego tak nie wygląda
-	// (`core/sprawca.go`): rodzaj `narzedzia` przedstawia się przy nawiązaniu.
+	// Rodzaj `narzedzia` przedstawia się przy nawiązaniu jako gniazdo modelu.
 	ctx = zPolaczeniem(ctx, transport.Tozsamosc{
 		IdPolaczenia: "gniazdo-narzedzi-sprawdzianu",
 		IdKlienta:    "serwer-narzedzi",
@@ -151,7 +127,8 @@ func (u *blokadaUprzazSprawdzianu) blokadaTrescZBazy(t *testing.T) string {
 	return tresc.String
 }
 
-// blokadaIleBlokadWBazie liczy wiersze blokad dokumentu.
+// blokadaIleBlokadWBazie liczy wiersze blokad fragmentu, jakie mają wskazany
+// dokument w bazie danych, niezależnie od tego, co o nich mówi odpowiedź rdzenia.
 func (u *blokadaUprzazSprawdzianu) blokadaIleBlokadWBazie(t *testing.T) int {
 	t.Helper()
 
@@ -164,8 +141,6 @@ func (u *blokadaUprzazSprawdzianu) blokadaIleBlokadWBazie(t *testing.T) int {
 	}
 	return liczba
 }
-
-// ── Sprawdzian pierwszy: odmowa NAZWANA ─────────────────────────────────────
 
 // TestBlokadaOdmawiaModelowiINazywaFragment mierzy sedno wymagania: czynność
 // modelu godząca w zablokowany fragment wraca błędem, który mówi, KTÓRY
@@ -211,8 +186,6 @@ func TestBlokadaOdmawiaModelowiINazywaFragment(t *testing.T) {
 	}
 }
 
-// ── Sprawdzian drugi: bilans, nie odmowa całości ────────────────────────────
-
 // TestBlokadaZamianaWCalymDokumencieOddajeBilans mierzy trzecią odpowiedź
 // zderzenia: zmiana obejmująca blokadę CZĘŚCIOWO wykonuje się POZA blokadą
 // i oddaje bilans. Odmowa całości byłaby nieproporcjonalna, przemilczenie
@@ -225,8 +198,7 @@ func TestBlokadaZamianaWCalymDokumencieOddajeBilans(t *testing.T) {
 	uprzaz.blokadaZalozBlokade(t, poczatek, koniec,
 		"podstawa prawna", "podstawa prawna — nie zmieniać")
 
-	// Zamiana w CAŁYM dokumencie: bez wskazania zakresu. Trafia w trzy miejsca,
-	// z których jedno stoi pod blokadą.
+	// Zamiana bez wskazania zakresu trafia w trzy miejsca, z których jedno jest zablokowane.
 	nowaTresc := strings.ReplaceAll(blokadaTrescSprawdzianu,
 		"Umowa numer 17/2026", "Umowa numer 18/2026")
 	odpowiedz := uprzaz.blokadaWykonajJakoModel(t, shared.CommandStudioDocumentSave,
@@ -288,8 +260,6 @@ func blokadaBilansZOdpowiedzi(t *testing.T, odpowiedz protocol.Koperta) shared.S
 	return *ladunek.Balance
 }
 
-// ── Sprawdzian trzeci: Operator bez przeszkód ───────────────────────────────
-
 // TestBlokadaNieZatrzymujeOperatora mierzy, że blokada jest skierowana przeciw
 // modelowi, a nie przeciw właścicielowi dokumentu. Blokada działająca także na
 // Operatora jest osobnym, jawnym ustawieniem — nie zachowaniem domyślnym.
@@ -300,8 +270,7 @@ func TestBlokadaNieZatrzymujeOperatora(t *testing.T) {
 	koniec := poczatek + len("Podstawa prawna: Umowa numer 17/2026.")
 	uprzaz.blokadaZalozBlokade(t, poczatek, koniec, "podstawa prawna", "nie zmieniać")
 
-	// Ta sama czynność, ten sam zakres, ręka Operatora — czyli bez tożsamości
-	// gniazda serwera narzędzi i bez podpisu `author`.
+	// Ta sama czynność ręką Operatora — bez tożsamości gniazda narzędzi.
 	nowaTresc := strings.Replace(blokadaTrescSprawdzianu,
 		"Podstawa prawna: Umowa numer 17/2026.",
 		"Podstawa prawna: Umowa numer 19/2026.", 1)
@@ -349,8 +318,6 @@ func TestBlokadaZasieguEveryoneWiazeTakzeOperatora(t *testing.T) {
 	}
 }
 
-// ── Sprawdzian czwarty: blokada przechodzi przez wersje ─────────────────────
-
 // TestBlokadaPrzechodziPrzezPrzywrocenieWersji mierzy, że przywrócenie
 // wcześniejszej wersji NIE GUBI blokad. Blokada wisi przy dokumencie, nie przy
 // wersji — ale sprawdzić trzeba świat, nie zamysł.
@@ -362,7 +329,7 @@ func TestBlokadaPrzechodziPrzezPrzywrocenieWersji(t *testing.T) {
 	kodBlokady := uprzaz.blokadaZalozBlokade(t, poczatek, koniec,
 		"podstawa prawna", "nie zmieniać")
 
-	// Wersja późniejsza, żeby było do czego wracać.
+	// Wersja późniejsza daje stan, do którego przywrócenie ma sens.
 	var drugiZapis shared.StudioDocumentSaveResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioDocumentSave,
 		shared.StudioDocumentSaveRequest{
@@ -402,8 +369,7 @@ func TestBlokadaPrzechodziPrzezPrzywrocenieWersji(t *testing.T) {
 			kodBlokady, wykaz.Locks)
 	}
 
-	// I dalej DZIAŁA — blokada, która przetrwała jako wiersz, ale przestała
-	// pilnować, jest gorsza niż zgubiona, bo wygląda na czynną.
+	// Blokada, która przetrwała jako wiersz, ale przestała pilnować, jest gorsza niż zgubiona.
 	odpowiedz := uprzaz.blokadaWykonajJakoModel(t, shared.CommandStudioTextEdit,
 		shared.StudioTextEditRequest{
 			DocumentId: uprzaz.dokument, RangeStart: poczatek, RangeEnd: koniec,
@@ -414,8 +380,6 @@ func TestBlokadaPrzechodziPrzezPrzywrocenieWersji(t *testing.T) {
 	}
 }
 
-// ── Sprawdzian piąty: blokadę zdejmuje wyłącznie Operator ───────────────────
-
 // TestBlokadaZdejmujeWylacznieOperator mierzy, że model blokady nie zdejmie —
 // ani wprost, ani obejściem przez podpisanie się Operatorem.
 func TestBlokadaZdejmujeWylacznieOperator(t *testing.T) {
@@ -425,8 +389,7 @@ func TestBlokadaZdejmujeWylacznieOperator(t *testing.T) {
 	koniec := poczatek + len("Podstawa prawna: Umowa numer 17/2026.")
 	kodBlokady := uprzaz.blokadaZalozBlokade(t, poczatek, koniec, "podstawa prawna", "nie zmieniać")
 
-	// Obejście: gniazdo narzędzi modelu, a w żądaniu podpis „Operator".
-	// Podpis jest twierdzeniem modelu o sobie, nie faktem — i nie ma go przepuścić.
+	// Podpis „Operator" w żądaniu jest twierdzeniem modelu o sobie, nie faktem.
 	operator := shared.StudioAuthor(shared.StudioAuthorUzytkownik)
 	odpowiedz := uprzaz.blokadaWykonajJakoModel(t, shared.CommandStudioLockRemove,
 		shared.StudioLockRemoveRequest{
@@ -443,7 +406,7 @@ func TestBlokadaZdejmujeWylacznieOperator(t *testing.T) {
 		t.Errorf("blokada zniknęła z bazy mimo odmowy: stoi %d wierszy", ile)
 	}
 
-	// Operator zdejmuje ją bez przeszkód.
+	// Operator zdejmuje własną blokadę bez przeszkód — zakaz obejmuje wyłącznie model.
 	var zdjecie shared.StudioLockRemoveResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioLockRemove,
 		shared.StudioLockRemoveRequest{DocumentId: uprzaz.dokument, LockId: kodBlokady}, &zdjecie)

@@ -680,3 +680,41 @@ Miara sprawdza postać podaną polem form, odczytaną ponownie osobnym
 wywołaniem — arkusz stylów, nastawy strony, tabelę i styl akapitu — a zapis
 bez pola form nie ma prawa zetrzeć postaci zastanej, bo brak pola znaczy
 brak zmiany postaci, nie postać wyzerowaną.
+
+## adapter_modul_studio_format.go
+
+Praca na fragmencie jest osią tego pliku: postać nałożona na zaznaczenie ma
+zmienić wyłącznie to zaznaczenie. Rachunek granic stoi w rachunku postaci
+(`postacRozetnij`, `postacFragmentyZakresu`) i ten plik się go tylko woła —
+dwa liczenia granic zaznaczenia rozjechałyby się przy pierwszej poprawce.
+
+Zabrana postać malarza leży wierszem tabeli `postac_malarza_studio`, nie
+w pamięci procesu, bo między zabraniem a położeniem stoją dwie osobne
+komendy — postać musi przeżyć czas między nimi, także przeładowanie rdzenia.
+Wiersz wygasa po godzinie: malarz jest narzędziem jednej czynności, a postać
+zabrana wczoraj i położona dziś byłaby zaskoczeniem, nie pomocą. Godzina
+obejmuje ciąg czynności modelu, który zabiera postać, robi kilka innych
+rzeczy i kładzie ją na końcu — dłuższy czas czyniłby z malarza magazyn,
+krótszy odbierałby postać w połowie roboty. Brak tabeli malarza jest brakiem
+montażu rdzenia i mówi to wprost, zamiast cicho wracać do pamięci procesu:
+cichy powrót dawałby malarza, który u jednego operatora przeżywa restart,
+a u drugiego nie.
+
+Zamiana wielkości liter jest zmianą treści, nie postaci: „Kowalski" zamienione
+na „KOWALSKI" ma inne litery, a nie inny krój, dlatego idzie drogą zamiany
+treści i odkłada zmianę śledzoną rodzaju wstawienie, a nie formatowanie —
+inaczej cofnięcie nie miałoby czego przywrócić.
+
+Odmowa przy braku wiersza malarza nazywa powód prawdziwy: wpis wygasły
+i wpis nieistniejący są dla warstwy danych tym samym brakiem wiersza, więc
+odmowa mówi o obu i podaje drogę wyjścia — zabranie postaci ponownie.
+
+Wyszukiwanie w `ZamienZPostacia` działa też samą postacią, bez tekstu:
+„wszystkie fragmenty czerwone zamień na czarne" jest zwykłym poleceniem
+redakcyjnym. Zaznaczanie wedle podobnego formatowania jest czynnością
+obowiązkową zlecenia, bo bez niej nie ma pracy na postaci fragmentami
+w długim dokumencie. Podobieństwo postaci znaku sprawdza cechy, które
+operator widzi gołym okiem — krój, stopień i grubość; barwa wyróżnienia
+i język nie liczą się do podobieństwa. Wzorzec przy wyszukiwaniu samą
+postacią sprawdza wyłącznie cechy, które sam niesie: wzorzec „barwa
+czerwona" ma trafiać we wszystko czerwone, niezależnie od kroju.

@@ -1,36 +1,15 @@
 import { znajdzWzorce } from './wzorce-placeholderow';
 
-/**
- * Pseudolokalizacja — przekształcenie tekstu źródłowego do testu interfejsu
- * przed właściwym przekładem.
- *
- * Trzy rzeczy, których szuka się w interfejsie przed tłumaczeniem, i trzy
- * zabiegi, które je pokazują:
- *
- *  — czy pole zniesie znaki diakrytyczne → litery zamieniane są na warianty
- *    z diakrytykami, sylwetka słowa zostaje czytelna;
- *  — czy pole zniesie dłuższy tekst → treść jest dopełniana do zadanego
- *    wydłużenia, bo przekład bywa dłuższy od źródła;
- *  — czy tekst nie jest sklejany z kawałków → treść dostaje ramkę, więc
- *    ucięcie i sklejenie widać na pierwszy rzut oka.
- *
- * Symbole zastępcze i znaczniki formatu przechodzą nietknięte. Przekształcenie
- * ich zapisu zamieniłoby test wyglądu w usterkę podstawienia, a to jest dokładnie
- * ta klasa błędu, której pseudolokalizacja ma NIE wprowadzać.
- *
- * Rdzeń o niczym tu nie wie: kontrakt nie ma komendy pseudolokalizacji, więc
- * wynik jest wyłącznie do odczytania i przeniesienia ręcznego. Okno mówi to
- * wprost przy wyniku, zamiast pozwolić sądzić, że coś zapisano.
- */
+/** Pseudolokalizacja przekształca tekst źródłowy do testu interfejsu przed właściwym przekładem. */
 
-/** Wydłużenie domyślne — punkt wyjścia pola, nie granica. */
+/** Wydłużenie domyślne pola dopełnienia jest punktem wyjścia, a nie granicą — wywołanie może podać wartość inną. */
 export const WYDLUZENIE_DOMYSLNE = 30;
 
-/** Ramka odcinająca początek i koniec treści — sklejenie kawałków widać od razu. */
+/** Ramka odcinająca początek i koniec treści wyniku sprawia, że sklejenie kawałków tekstu widać od razu. */
 const RAMKA_POCZATEK = '⟦';
 const RAMKA_KONIEC = '⟧';
 
-/** Znak dopełnienia — nie jest literą, więc nie udaje treści. */
+/** Znak dopełnienia treści wyniku nie jest literą alfabetu, więc wizualnie nie udaje rzeczywistej treści źródła. */
 const ZNAK_DOPELNIENIA = '·';
 
 /**
@@ -51,7 +30,7 @@ const DIAKRYTYKI = new Map<string, string>([
   ['W', 'Ŵ'], ['X', 'Ẋ'], ['Y', 'Ý'], ['Z', 'Ž'],
 ]);
 
-/** Wynik przekształcenia wraz z liczbami, które pozwalają je ocenić. */
+/** Wynik przekształcenia niesie tekst po pseudolokalizacji wraz z liczbami, które pozwalają ocenić skalę zmiany. */
 export interface WynikPseudolokalizacji {
   /** Tekst po przekształceniu. */
   readonly tekst: string;
@@ -102,7 +81,7 @@ function zdiakrytyzuj(odcinek: string): string {
   return wynik;
 }
 
-/** Zdanie o wyniku — liczby, nie zapewnienia. */
+/** Zdanie o wyniku pseudolokalizacji podaje liczby przekształcenia, a nie zapewnienia o jego jakości albo skutku. */
 export function zdanieOPseudolokalizacji(wynik: WynikPseudolokalizacji): string {
   if (wynik.dlugoscZrodla === 0) {
     return (

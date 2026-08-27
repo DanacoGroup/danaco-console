@@ -1,25 +1,7 @@
 // Odpowiedzialność pliku: zakres działania eksperta — moduły zastosowania,
-// osiem zakresów izolacji technicznej, granica Subagent Network, zdjęcie wpisów
-// uprawnień oraz odczyt konektorów i przypisań widziany OD STRONY EKSPERTA
-// (tabele `agent_modul_zastosowania`, `agent_izolacja_techniczna` z migracji
-// 276–277, kolumna `agent.limit_podagentow`, `agent_uprawnienie`,
-// `agent_konektor`, `przypisanie_agenta_projektu`, `obsada_biegu`).
-//
-// Repozytorium osobne, a nie kolejne czynności `RepozytoriumAgentow`: tamten
-// kontrakt opisuje bibliotekę ekspertów — założenie, wykaz, zmianę, usunięcie —
-// i pracuje w nim równolegle więcej rąk. Zakres działania jest inną
-// odpowiedzialnością: odpowiada nie na pytanie „jaki jest ten ekspert", lecz
-// „co temu ekspertowi wolno zrobić w systemie".
-//
-// ZAPIS, KTÓREGO NIKT NIE CZYTA PRZY WYKONANIU, JEST GORSZY NIŻ JEGO BRAK.
-// Wiersze zakładane tutaj czyta straż zakresu eksperta (`core/straz_eksperta.go`)
-// i na ich podstawie ODMAWIA: nałożenia eksperta na okno modułu, którego nie ma
-// w jego zakresie, oraz powołania podagentów przez eksperta z wyłączonym
-// Subagent Network. Bez tego Operator widziałby ograniczenie, którego nikt nie
-// egzekwuje.
-//
-// Brak wiersza znaczy stan wyjściowy platformy, czyli pełny dostęp: brak
-// modułów znaczy „wszędzie", brak przełącznika izolacji znaczy „nieodcięty".
+// osiem zakresów izolacji technicznej, granica Subagent Network, zdjęcie
+// wpisów uprawnień oraz odczyt konektorów i przypisań widziany od strony
+// eksperta.
 package dane
 
 import (
@@ -48,8 +30,8 @@ type PrzypisanieEksperta struct {
 	Rodzaj string
 	// CelKod jest kodem projektu albo identyfikatorem stanowiska obsady biegu.
 	CelKod string
-	// CelNazwa jest nazwą projektu albo nazwą biegu; pusta znaczy byt bez nazwy
-	// własnej i nie jest brakiem.
+	// CelNazwa jest nazwą projektu albo biegu; pusta oznacza byt bez nazwy
+	// własnej.
 	CelNazwa string
 	// Rola niesie rolę eksperta w projekcie albo wcielenie roli w biegu.
 	Rola string
@@ -58,41 +40,41 @@ type PrzypisanieEksperta struct {
 	Przypisano        string
 }
 
-// RepozytoriumZakresuAgenta jest kontraktem zakresu działania eksperta.
+// RepozytoriumZakresuAgenta jest kontraktem zakresu działania eksperta:
+// modułów, izolacji, granicy podagentów, uprawnień, konektorów i przypisań.
 type RepozytoriumZakresuAgenta interface {
-	// ModulyAgenta oddaje kody modułów zastosowania. Wycinek pusty znaczy brak
-	// ograniczenia — dostępność we wszystkich modułach.
+	// ModulyAgenta oddaje kody modułów zastosowania; pusty wycinek znaczy brak
+	// ograniczenia.
 	ModulyAgenta(ctx context.Context, kodAgenta string) ([]string, error)
-	// UstawModulyAgenta zastępuje komplet modułów zastosowania. Wycinek pusty
-	// zdejmuje ograniczenie i jest żądaniem, nie brakiem żądania.
+	// UstawModulyAgenta zastępuje komplet modułów zastosowania; wycinek pusty
+	// zdejmuje ograniczenie.
 	UstawModulyAgenta(ctx context.Context, kodAgenta string, kody []string) error
-	// IzolacjaAgenta oddaje zapisane przełączniki izolacji. Zakres bez wiersza
-	// w wyniku nie występuje — komplet ośmiu składa warstwa wyższa.
+	// IzolacjaAgenta oddaje zapisane przełączniki izolacji; komplet ośmiu
+	// zakresów składa warstwa wyższa.
 	IzolacjaAgenta(ctx context.Context, kodAgenta string) ([]PrzelacznikIzolacjiAgenta, error)
 	// UstawIzolacjeAgenta zapisuje wskazane przełączniki; zakres pominięty
 	// w wycinku zostaje bez zmiany.
 	UstawIzolacjeAgenta(ctx context.Context, kodAgenta string, przelaczniki []PrzelacznikIzolacjiAgenta) error
-	// GranicaPodagentow oddaje górną liczbę jednoczesnych podagentów eksperta.
-	// Zero znaczy Subagent Network wyłączony.
+	// GranicaPodagentow oddaje górną liczbę podagentów eksperta; zero znaczy
+	// Subagent Network wyłączony.
 	GranicaPodagentow(ctx context.Context, kodAgenta string) (int, error)
 	// UstawGranicePodagentow zapisuje tę granicę.
 	UstawGranicePodagentow(ctx context.Context, kodAgenta string, granica int) error
-	// UsunUprawnieniaAgenta zdejmuje wpisy uprawnień i oddaje liczbę zdjętych.
-	// Grupa pusta zdejmuje wpisy wszystkich grup; zakres pusty przy podanej
-	// grupie zdejmuje całą grupę wraz z zakresami.
+	// UsunUprawnieniaAgenta zdejmuje wpisy uprawnień i oddaje liczbę zdjętych,
+	// zawężone grupą i zakresem.
 	UsunUprawnieniaAgenta(ctx context.Context, kodAgenta, grupa, zakres string) (int, error)
 	// KonektoryAgenta oddaje konektory eksperta wraz z kodem punktu dostępu.
 	KonektoryAgenta(ctx context.Context, kodAgenta string) ([]KonektorAgenta, []string, error)
 	// UsunKonektorAgenta odłącza konektor od eksperta.
 	UsunKonektorAgenta(ctx context.Context, kodAgenta, kodKonektora string) (bool, error)
 	// ZapiszKonektorAgenta zmienia punkt dostępu, konfigurację i stan czynności
-	// konektora. Wskaźnik pusty zostawia pole bez zmiany.
+	// konektora eksperta.
 	ZapiszKonektorAgenta(ctx context.Context, kodAgenta, kodKonektora string,
 		punktID *int64, konfiguracja *string, aktywny *bool) (KonektorAgenta, string, error)
 	// UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji eksperta.
 	UsunUmiejetnoscAgenta(ctx context.Context, kodAgenta, kodUmiejetnosci string) (bool, error)
-	// PrzypisaniaEkspertow oddaje przypisania. Kod pusty zwraca przypisania
-	// wszystkich ekspertów; rodzaj pusty zwraca oba rodzaje.
+	// PrzypisaniaEkspertow oddaje przypisania, zawężone kodem eksperta
+	// i rodzajem, gdy podane.
 	PrzypisaniaEkspertow(ctx context.Context, kodAgenta, rodzaj string) ([]PrzypisanieEksperta, error)
 }
 
@@ -149,7 +131,8 @@ const (
 	usunUmiejetnoscZakresuAgenta = `DELETE FROM agent_umiejetnosc
 	                                 WHERE kod = ? AND agent_id = (SELECT id FROM agent WHERE kod = ?)`
 
-	// Przypisanie do projektu: Agent Manager modułu Workspace (migracja 035).
+	// Przypisanie do projektu: zapytanie czyta Agent Managera modułu Workspace,
+	// zapisany migracją 035, wraz z rolą i domyślnym wykonawcą.
 	przypisaniaProjektoweEkspertow = `SELECT pa.agent_kod, p.kod, p.nazwa,
 	                                         COALESCE(pa.rola, ''), pa.domyslny_wykonawca, pa.przypisano
 	                                    FROM przypisanie_agenta_projektu pa
@@ -167,7 +150,8 @@ const (
 	                               ORDER BY o.utworzono, o.id`
 )
 
-// repozytoriumZakresuAgenta obsługuje zakres działania eksperta.
+// repozytoriumZakresuAgenta obsługuje zakres działania eksperta, wiążąc
+// pamięć przygotowanych zapytań z bazą danych repozytorium.
 type repozytoriumZakresuAgenta struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -175,7 +159,8 @@ type repozytoriumZakresuAgenta struct {
 
 var _ RepozytoriumZakresuAgenta = (*repozytoriumZakresuAgenta)(nil)
 
-// noweRepozytoriumZakresuAgenta wiąże zakres działania eksperta z bazą.
+// noweRepozytoriumZakresuAgenta wiąże zakres działania eksperta z bazą danych
+// i pamięcią przygotowanych zapytań.
 func noweRepozytoriumZakresuAgenta(z *zapytania, db *sql.DB) *repozytoriumZakresuAgenta {
 	return &repozytoriumZakresuAgenta{zapytania: z, db: db}
 }
@@ -198,7 +183,8 @@ func (r *repozytoriumZakresuAgenta) numerEkspertaZakresu(ctx context.Context, ko
 	return id, nil
 }
 
-// ModulyAgenta oddaje kody modułów zastosowania eksperta.
+// ModulyAgenta oddaje kody modułów zastosowania wskazanego eksperta,
+// uporządkowane alfabetycznie według kodu modułu.
 func (r *repozytoriumZakresuAgenta) ModulyAgenta(ctx context.Context, kodAgenta string) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, modulyZakresuAgenta)
 	if err != nil {
@@ -254,7 +240,8 @@ func (r *repozytoriumZakresuAgenta) UstawModulyAgenta(ctx context.Context,
 	return nil
 }
 
-// IzolacjaAgenta oddaje zapisane przełączniki izolacji technicznej.
+// IzolacjaAgenta oddaje zapisane przełączniki izolacji technicznej wskazanego
+// eksperta, uporządkowane po zakresie.
 func (r *repozytoriumZakresuAgenta) IzolacjaAgenta(ctx context.Context,
 	kodAgenta string) ([]PrzelacznikIzolacjiAgenta, error) {
 
@@ -280,7 +267,8 @@ func (r *repozytoriumZakresuAgenta) IzolacjaAgenta(ctx context.Context,
 	return przelaczniki, wiersze.Err()
 }
 
-// UstawIzolacjeAgenta zapisuje wskazane przełączniki izolacji technicznej.
+// UstawIzolacjeAgenta zapisuje wskazane przełączniki izolacji technicznej
+// eksperta w jednej transakcji.
 func (r *repozytoriumZakresuAgenta) UstawIzolacjeAgenta(ctx context.Context,
 	kodAgenta string, przelaczniki []PrzelacznikIzolacjiAgenta) error {
 
@@ -310,7 +298,8 @@ func (r *repozytoriumZakresuAgenta) UstawIzolacjeAgenta(ctx context.Context,
 	return nil
 }
 
-// GranicaPodagentow oddaje górną liczbę jednoczesnych podagentów eksperta.
+// GranicaPodagentow oddaje górną liczbę jednoczesnych podagentów wskazanego
+// eksperta zapisaną przy nim.
 func (r *repozytoriumZakresuAgenta) GranicaPodagentow(ctx context.Context, kodAgenta string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, granicaPodagentowAgenta)
 	if err != nil {
@@ -326,7 +315,8 @@ func (r *repozytoriumZakresuAgenta) GranicaPodagentow(ctx context.Context, kodAg
 	return granica, nil
 }
 
-// UstawGranicePodagentow zapisuje granicę Subagent Network eksperta.
+// UstawGranicePodagentow zapisuje granicę Subagent Network eksperta i mówi,
+// czy wiersz eksperta istniał.
 func (r *repozytoriumZakresuAgenta) UstawGranicePodagentow(ctx context.Context,
 	kodAgenta string, granica int) error {
 
@@ -403,7 +393,8 @@ type czytelnikWierszaZakresu interface {
 	Scan(cele ...any) error
 }
 
-// odczytajKonektorZakresu składa konektor wraz z kodem punktu dostępu.
+// odczytajKonektorZakresu składa strukturę konektora wraz z kodem punktu
+// dostępu z jednego wiersza wyniku.
 func odczytajKonektorZakresu(zrodlo czytelnikWierszaZakresu) (KonektorAgenta, string, error) {
 	var wpis KonektorAgenta
 	var punkt sql.NullInt64
@@ -477,7 +468,8 @@ func (r *repozytoriumZakresuAgenta) ZapiszKonektorAgenta(ctx context.Context,
 	return r.konektorZakresu(ctx, kodAgenta, kodKonektora)
 }
 
-// konektorZakresu odczytuje jeden konektor eksperta wraz z kodem punktu.
+// konektorZakresu odczytuje jeden konektor wskazanego eksperta wraz z kodem
+// punktu dostępu, po kodzie konektora.
 func (r *repozytoriumZakresuAgenta) konektorZakresu(ctx context.Context,
 	kodAgenta, kodKonektora string) (KonektorAgenta, string, error) {
 
@@ -488,7 +480,8 @@ func (r *repozytoriumZakresuAgenta) konektorZakresu(ctx context.Context,
 	return odczytajKonektorZakresu(polecenie.QueryRowContext(ctx, kodKonektora, kodAgenta))
 }
 
-// UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji eksperta.
+// UsunUmiejetnoscAgenta zdejmuje umiejętność z definicji wskazanego eksperta
+// i mówi, czy umiejętność istniała.
 func (r *repozytoriumZakresuAgenta) UsunUmiejetnoscAgenta(ctx context.Context,
 	kodAgenta, kodUmiejetnosci string) (bool, error) {
 
@@ -507,11 +500,8 @@ func (r *repozytoriumZakresuAgenta) UsunUmiejetnoscAgenta(ctx context.Context,
 	return zdjete > 0, nil
 }
 
-// PrzypisaniaEkspertow oddaje przypisania widziane od strony eksperta.
-//
-// Dwa zapytania, nie jedno z UNION: źródła mają inne kolumny i inne znaczenie
-// celu — projekt ma kod własny, stanowisko obsady ma klucz wiersza — a złożenie
-// ich w jedno zapytanie kazałoby czytelnikowi zgadywać, skąd wziął się wiersz.
+// PrzypisaniaEkspertow oddaje przypisania widziane od strony eksperta,
+// złożone z dwóch osobnych zapytań o inne źródła zamiast zapytania z UNION.
 func (r *repozytoriumZakresuAgenta) PrzypisaniaEkspertow(ctx context.Context,
 	kodAgenta, rodzaj string) ([]PrzypisanieEksperta, error) {
 
@@ -537,15 +527,15 @@ func (r *repozytoriumZakresuAgenta) PrzypisaniaEkspertow(ctx context.Context,
 }
 
 // RodzajPrzypisaniaProjekt i RodzajPrzypisaniaRola powtarzają wartości
-// wyliczenia `AgentAssignmentKind` kontraktu. Pakiet `dane` nie zna pakietu
-// `shared` w tym miejscu jako słownika zapisu — wartości wchodzą tu napisem,
-// a sprawdzenie wskazania robi warstwa wyższa, która kontrakt zna.
+// wyliczenia `AgentAssignmentKind` kontraktu, wpisane napisem, bo pakiet
+// `dane` nie sięga po pakiet `shared`.
 const (
 	RodzajPrzypisaniaProjekt = "project"
 	RodzajPrzypisaniaRola    = "role"
 )
 
-// przypisaniaProjektowe czyta Agent Managera modułu Workspace.
+// przypisaniaProjektowe czyta przypisania eksperta do projektów zapisane
+// przez Agent Managera modułu Workspace.
 func (r *repozytoriumZakresuAgenta) przypisaniaProjektowe(ctx context.Context,
 	kodAgenta string) ([]PrzypisanieEksperta, error) {
 
@@ -572,7 +562,8 @@ func (r *repozytoriumZakresuAgenta) przypisaniaProjektowe(ctx context.Context,
 	return wynik, wiersze.Err()
 }
 
-// przypisaniaRolowe czyta obsadę biegu orkiestracji.
+// przypisaniaRolowe czyta przypisania eksperta do ról zapisane w obsadzie
+// biegu orkiestracji wraz z nazwą biegu.
 func (r *repozytoriumZakresuAgenta) przypisaniaRolowe(ctx context.Context,
 	kodAgenta string) ([]PrzypisanieEksperta, error) {
 

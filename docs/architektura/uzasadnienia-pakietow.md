@@ -2299,6 +2299,14 @@ Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy warstwy danych
 
 **ZapiszSkutekAutozapisu** — Skutek zapisu odkłada się osobnym poleceniem, bo pisze go inna czynność niż nastawy: nastawy stawia Operator, skutek zapisuje sam mechanizm autozapisu. Jedno wspólne polecenie kazałoby autozapisowi przepisywać nastawy, których nie zmieniał.
 
+### budowa/server/internal/dane/agent_zakres.go
+
+Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy zakresu działania eksperta widzianego od strony eksperta.
+
+**Plik** — Repozytorium osobne, a nie kolejne czynności `RepozytoriumAgentow`: tamten kontrakt opisuje bibliotekę ekspertów — założenie, wykaz, zmianę, usunięcie — i pracuje w nim równolegle więcej rąk. Zakres działania jest inną odpowiedzialnością: odpowiada nie na pytanie „jaki jest ten ekspert", lecz „co temu ekspertowi wolno zrobić w systemie". Zapis, którego nikt nie czyta przy wykonaniu, jest gorszy niż jego brak — wiersze zakładane tutaj czyta straż zakresu eksperta (`core/straz_eksperta.go`) i na ich podstawie odmawia: nałożenia eksperta na okno modułu, którego nie ma w jego zakresie, oraz powołania podagentów przez eksperta z wyłączonym Subagent Network. Bez tego Operator widziałby ograniczenie, którego nikt nie egzekwuje. Brak wiersza znaczy stan wyjściowy platformy, czyli pełny dostęp: brak modułów znaczy „wszędzie", brak przełącznika izolacji znaczy „nieodcięty".
+
+**PrzypisaniaEkspertow** — Dwa zapytania, nie jedno z UNION: źródła mają inne kolumny i inne znaczenie celu — projekt ma kod własny, stanowisko obsady ma klucz wiersza — a złożenie ich w jedno zapytanie kazałoby czytelnikowi zgadywać, skąd wziął się wiersz.
+
 ### budowa/server/internal/dane/studio_znakowanie_wykonawcy.go
 
 Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy części drugiej warstwy danych kontroli pracy modułu Studio.

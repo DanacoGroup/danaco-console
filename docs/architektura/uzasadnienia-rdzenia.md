@@ -3544,3 +3544,76 @@ a Operator po otwarciu dokumentu widzi tekst sprzed decyzji.
 `trescDokumentu` odczytuje treść dokumentu osobnym wywołaniem — to jest
 miara właściwa, bo Operator otworzy dokument ponownie, a nie przeczyta
 odpowiedź.
+
+## budowa/server/internal/core/adapter_rozmowa_zestaw.go
+
+Rdzeń nie zna nazw narzędzi eksperta i znać ich nie ma. Przełożenie kodu
+z definicji eksperta na pozycje wykazu (albo na całą ich grupę) należy do
+serwera narzędzi — `narzedzia/ekspert_wykaz.go` — bo tylko on trzyma wykaz
+kontraktu. Gdyby rdzeń wyliczał listę sam, powstałby drugi wykaz obok
+kontraktowego. Stąd wychodzi więc wskazanie: kod eksperta i nazwy dołożeń;
+rozwinięcie wskazania w wykaz robi strona przeciwna.
+
+Konfigurację MCP składa `mostyOkna.tekstZNarzedziami` — jedyna droga, którą
+jedzie rozmowa. Ten plik jej nie powtarza: bierze jej wynik i dokłada do
+gotowego wpisu `danaco` argumenty zestawu. To ten sam wzorzec, którym okno
+asystenta dokłada sobie zasięg klawiatury (`zZasiegiemKlawiatury`
+w `adapter_modul_asystent_sterowanie.go`). Tekst nieczytelny albo wpis
+`danaco` nieobecny (brak binarium serwera narzędzi — `most_narzedzi.go`
+melduje ten powód osobno) zostaje nietknięty: tura idzie z zestawem, jaki
+jest, zamiast paść na składaniu konfiguracji.
+
+Dokładanie argumentów jest tu wybiórcze, a nie hurtowe, i każdy nowy
+argument wymaga umowy, a nie założenia, ponieważ `cmd/danaco-narzedzia/main.go`
+woła `flag.Parse()` na domyślnym `flag.CommandLine`, czyli z `ExitOnError`:
+przełącznik, którego tamta strona nie zna, kończy proces serwera narzędzi.
+Skutek nie jest wtedy „tura bez kilku narzędzi", tylko „tura bez wykazu
+w całości" — i wygląda dla Operatora jak awaria modelu, nie jak rozjazd
+dwóch pakietów.
+
+Oba argumenty składane w tym pliku mają odczyt po drugiej stronie:
+`--zasieg ekspert --ekspert <kod>` w `narzedzia/zasieg_eksperta.go`,
+`ekspert_definicja.go` i `ekspert_wykaz.go`; `--dolozenia <lista>`
+w `narzedzia.RozbijDolozenia` i `WykazEksperta.ZDolozeniami` — wartość
+składa `injection.PrzelacznikDolozen`, czyli jedna definicja nazwy po obu
+stronach.
+
+Brak źródła dołożeń nie odbiera modelowi narzędzi: tura jedzie podstawą,
+jaką ma, i wpisuje do dziennika rdzenia powód. Meldunek idzie raz na powód,
+nie raz na turę — tak samo jak meldunek o braku binarium serwera narzędzi
+(`most_narzedzi.go`) i z tego samego powodu: tur bywa kilkaset dziennie,
+a powód się między nimi nie zmienia.
+
+Port `DolozeniaNarzedziSesji` jest wąski z rozmysłu: pyta o jedno i oddaje
+jedno. Sesja wskazana jest identyfikatorem kontraktowym, tym samym, który
+niesie `session.Okno.IdSesji` — przekład na klucz wiersza należy do strony
+odpowiadającej, tak jak przy każdym innym repozytorium. Dołożenia są listą
+jednorodną i nie niosą znacznika zawężenia, bo dołożenie z natury dokłada:
+nie potrafi zawęzić czegoś, czego samo nie ustanowiło.
+
+Drugiego wskazania eksperta w `zestawTury` nie ma i mieć nie może: dwa
+wskazania to dwie prawdy o tym, kim tura jest.
+
+`argumentyZestawu` niesie całą decyzję tego pliku: co wolno dołożyć,
+a czego nie wolno, i dlaczego. Przepisanie tekstu niżej jest już tylko
+mechaniką. Serwer narzędzi ma dziś jedno miejsce, w którym dołożenie może
+dojść do wykazu — złożenie wykazu eksperta (`narzedzia/ekspert_wykaz.go`).
+Okno bez eksperta nie przechodzi tą drogą wcale, więc argument dołożeń nie
+miałby tam czego dołożyć; cichy odrzut byłby tu gorszy niż brak, bo
+Operator widziałby narzędzie na wykazie sesji i nie widziałby go w turze.
+
+Zasięgu roli funkcja `zZestawemTury` nie tyka. Rola okna (`--zasieg
+klawiatura`) jedzie osobną drogą okna asystenta i dokłada, a nie zawęża;
+zasięg eksperta zawęża i wchodzi tutaj. Gdyby oba spotkały się kiedyś na
+jednym wpisie, rozstrzyga `narzedzia.RozpoznajZasieg`, czytając ostatnie
+wystąpienie przełącznika — i to jest rozstrzygnięcie tamtej strony, nie tej.
+
+`zKonfiguracjaZestawu` jest całą drogą złożoną w jedno wywołanie, żeby
+miejsce wpięcia w `adapter_rozmowa_srodowisko.go` pozostało jedną linią.
+
+Kluczem dziennika `zglosZestaw` jest sam powód, bez identyfikatorów okna
+i sesji: te idą do treści meldunku, ale nie do klucza — inaczej każde nowe
+okno wywoływałoby ten sam meldunek od nowa. Dziennikiem jest dziennik
+składacza mostów — ten sam, do którego idzie meldunek o braku binarium
+serwera narzędzi. Jedna sprawa, jedno miejsce. Dziennik niewskazany nie
+zmienia przebiegu tury; znika wyłącznie meldunek.

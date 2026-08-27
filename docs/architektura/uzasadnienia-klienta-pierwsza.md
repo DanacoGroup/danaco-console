@@ -2392,3 +2392,18 @@ dzięki czemu zmiana układu pola obowiązuje we wszystkich sekcjach naraz.
 
 Plik nie zna barw ani odstępów. Nadaje wyłącznie klasy z przedrostkiem `ao-`,
 a ich wygląd pokrywa `aod.css` żetonami `--dn-*`.
+
+## budowa/klient-poprzedni/src/moduly/design/polecenie-z-odmowy.ts
+
+Komenda `design.asset.generate` kończy się błędem, gdy w rejestrze brakuje kanału
+obrazowego, kanał jest nieczynny albo wskazany kanał okazuje się tekstowy, gdy
+brakuje poświadczenia, gdy odpowiedź nie niesie obrazu oraz gdy bajtów nie da się
+pobrać. Każda taka odmowa niesie gotową treść polecenia w polu
+`details.polecenie`, ponieważ rdzeń składa prompt w całości, zanim cokolwiek
+wyśle. Okno pokazuje ten tekst, aby praca nad promptem nie ginęła wraz z odmową
+i dała się użyć poza produktem, a zdanie towarzyszące mówi wprost, że obrazu nie
+ma i skąd tekst pochodzi.
+
+Kształt pola `details` jest sprawdzany, a nie zakładany: kontrakt opisuje je jako
+`unknown`, więc rzutowanie na własny typ byłoby obietnicą bez pokrycia. Brak pola
+albo pole innego kształtu daje pusty wynik, nie wyjątek.

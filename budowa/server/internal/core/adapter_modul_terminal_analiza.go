@@ -13,7 +13,9 @@
 //     `Invoke-Formatter`): zmierzone i zainstalowane;
 //   - node → `node --check`, czyli sam interpreter, którego karta `node` i tak
 //     wymaga; formatowania nie ma i odpowiedź go nie obiecuje;
-//   - python → `python -m py_compile`, tą samą drogą co wyżej;
+//   - python → Ruff (`ruff check`, `ruff format`): zmierzony i zainstalowany.
+//     Gdy go nie ma, zostaje `python -m py_compile`, czyli sam interpreter —
+//     orzeka wtedy o składni, a nie o regułach, i odpowiedź nazywa interpreter;
 //   - cmd i ssh → NIE MA POZYCJI. Dla wsadu `cmd` nie istnieje powszechnie
 //     przyjęty analizator, a `ssh` nie jest językiem, tylko transportem.
 //
@@ -22,7 +24,7 @@
 // pusty wykaz uwag znaczyłby fałszywie „treść bez zastrzeżeń".
 //
 // ── Dlaczego treść idzie plikiem, a nie strumieniem wejścia ─────────────────
-// Wszystkie trzy programy czytają plik; ShellCheck czyta i strumień, ale wtedy
+// Każdy z tych programów czyta plik; ShellCheck czyta i strumień, ale wtedy
 // gubi nazwę pliku w uwagach. Jedna droga uruchomienia rdzenia
 // (`zewnetrzne.Wolaj`) nie pisze na wejście procesu z zamysłu — pisanie na
 // wejście i czytanie wyjścia naraz jest tą klasą zakleszczeń, której ten pakiet
@@ -64,6 +66,11 @@ type analizatorPowloki struct {
 	// formatowanie składa wiersz formatowania; brak znaczy, że program tej
 	// powłoki formatowania nie umie, i odpowiedź nie obiecuje go wtedy wcale.
 	formatowanie func(sciezka string) (zewnetrzne.Narzedzie, []string)
+	// formatZPliku mówi, że program formatujący poprawia PLIK, zamiast pisać
+	// wynik na wyjście — treść odczytuje się wtedy z pliku po jego zakończeniu.
+	// Plik jest tymczasowy i należy do rdzenia, więc poprawka w miejscu nie
+	// dotyka niczego, co należy do Operatora.
+	formatZPliku bool
 }
 
 // narzedzieShellCheck, narzedzieShfmt i narzedziePowerShell są programami
@@ -139,6 +146,71 @@ var analizatory = map[shared.TerminalShell]analizatorPowloki{
 	},
 }
 
+// analizatorRuffa jest analizą Pythona pełną — składnią ORAZ regułami.
+//
+// Ruff formatuje PLIK, a nie strumień: treść sformatowaną oddaje jako poprawiony
+// plik, więc odczyt idzie z pliku (`formatZPliku`). Wywołanie ze strumienia
+// wejścia (`ruff format -`) dałoby to samo, ale jedyna droga rdzenia do procesu
+// z zamysłu na wejście procesu nie pisze.
+var analizatorRuffa = analizatorPowloki{
+	narzedzie:    narzedzieRuff,
+	rozszerzenie: ".py",
+	argumenty: func(sciezka string) []string {
+		return []string{"check", "--output-format", "json", "--no-cache",
+			"--force-exclude", sciezka}
+	},
+	czytaj: func(wyjscie, _ string) []shared.TerminalLintFinding {
+		return uwagiRuffa(wyjscie)
+	},
+	formatowanie: func(sciezka string) (zewnetrzne.Narzedzie, []string) {
+		return narzedzieRuff, []string{"format", "--no-cache", sciezka}
+	},
+	formatZPliku: true,
+}
+
+// analizatorDlaPowloki dobiera program analizy dla powłoki.
+//
+// Python ma dwa programy i pierwszeństwo ma Ruff: `python -m py_compile` orzeka
+// WYŁĄCZNIE o składni, a analiza tej komendy jest tym, czym ShellCheck jest dla
+// basha i PSScriptAnalyzer dla PowerShella — orzeczeniem o składni oraz
+// o regułach. Ruff obejmuje jedno i drugie: błąd składni wraca z niego jako
+// uwaga `invalid-syntax`, więc pierwszeństwo niczego nie odbiera.
+//
+// Gdy Ruffa na maszynie nie ma, zostaje interpreter — i wtedy odpowiedź nazywa
+// interpreter, bo to on sprawdzał. Nazwa programu w odpowiedzi ma zgadzać się
+// z tym, co naprawdę pracowało.
+func analizatorDlaPowloki(powloka shared.TerminalShell) (analizatorPowloki, bool) {
+	if powloka == shared.TerminalShellPython && zewnetrzne.Stoi(narzedzieRuff) {
+		return analizatorRuffa, true
+	}
+	analizator, jest := analizatory[powloka]
+	return analizator, jest
+}
+
+// uwagiRuffa czyta wynik `ruff check --output-format json`.
+func uwagiRuffa(wyjscie string) []shared.TerminalLintFinding {
+	uwagi := make([]shared.TerminalLintFinding, 0, 8)
+	var zapisy []wyjscieRuff
+	if err := json.Unmarshal([]byte(strings.TrimSpace(wyjscie)), &zapisy); err != nil {
+		return uwagi
+	}
+	for _, zapis := range zapisy {
+		uwaga := shared.TerminalLintFinding{
+			Line:     zapis.Location.Row,
+			Severity: wagaUwagi(zapis.Severity),
+			Message:  zapis.Message,
+		}
+		if zapis.Location.Column > 0 {
+			uwaga.Column = wskaznikLiczby(zapis.Location.Column)
+		}
+		if zapis.Code != "" {
+			uwaga.Rule = wskaznikTekstu(zapis.Code)
+		}
+		uwagi = append(uwagi, uwaga)
+	}
+	return uwagi
+}
+
 // SprawdzSkrypt obsługuje `terminal.script.lint`.
 //
 // Analiza nie ma okna w żądaniu, a każdy proces rdzenia musi mieć obszar
@@ -149,7 +221,7 @@ var analizatory = map[shared.TerminalShell]analizatorPowloki{
 func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 	z shared.TerminalScriptLintRequest) (shared.TerminalScriptLintResponse, error) {
 
-	analizator, jest := analizatory[z.Shell]
+	analizator, jest := analizatorDlaPowloki(z.Shell)
 	if !jest {
 		// Odpowiedź nazywa brak, zamiast oddać pusty wykaz uwag: „nie ma czym
 		// sprawdzić” to co innego niż „treść bez zastrzeżeń”.
@@ -208,7 +280,14 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 			// Formatowanie nieudane nie unieważnia analizy: uwagi są tym, po co
 			// komenda powstała, a treść sformatowana — dodatkiem. Pole zostaje
 			// wtedy nieobecne, zgodnie z kontraktem.
-			if err == nil && len(sformatowane.Wyjscie) > 0 {
+			switch {
+			case err != nil:
+			case analizator.formatZPliku:
+				if poprawiona, odczyt := os.ReadFile(sciezka); odczyt == nil {
+					tresc := string(poprawiona)
+					odpowiedz.Formatted = &tresc
+				}
+			case len(sformatowane.Wyjscie) > 0:
 				tresc := string(sformatowane.Wyjscie)
 				odpowiedz.Formatted = &tresc
 			}

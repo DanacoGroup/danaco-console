@@ -89,6 +89,15 @@ func (a *adapterDevelopera) NawigujDoSymbolu(ctx context.Context,
 			"nieznany rodzaj nawigacji po symbolu: " + string(z.Kind))
 	}
 
+	if _, jednorazowy := serwerJezykaPliku(sciezka); !jednorazowy {
+		// Pusty wykaz przy `serverAvailable: false` mówi „nie miałem czym
+		// sprawdzić" — i to jest tu prawdą. Wołanie serwera Go po plik
+		// TypeScriptu oddawałoby pusty wykaz przy `true`, czyli zdanie
+		// „sprawdziłem i nie ma", którego rdzeń nie ma prawa powiedzieć.
+		return shared.DeveloperSymbolNavigateResponse{
+			Symbols: []shared.DeveloperSymbol{}, ServerAvailable: false}, nil
+	}
+
 	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieGopls, argumenty,
 		filepath.Dir(sciezka), czasSerweraJezyka)
 	if err != nil {
@@ -377,6 +386,18 @@ func zawezDoZakresu(przed, po string, odWiersza, doWiersza *int) string {
 }
 
 // AnalizaStatyczna obsługuje `developer.lint.get`.
+//
+// ── Dlaczego programów jest kilka, a pole `linterAvailable` jedno ────────────
+// Repozytorium bywa wielojęzyczne, a analizator zna jeden język: `golangci-lint`
+// czyta Go, `Ruff` Pythona, `Stylelint` arkusze CSS, a `typos` szuka literówek
+// niezależnie od języka. Zgłoszenia idą do jednego wykazu, bo kontrakt niesie
+// w każdym z nich pole `source` — czytelnik widzi, który program je wystawił.
+//
+// Pole `linterAvailable` jest jedno i pochodzi z czasu, gdy program też był
+// jeden. Znaczy tu: CHOĆ JEDEN program odpowiedział. Fałsz zostaje więc tym,
+// czym był — stanem, w którym pusty wykaz zgłoszeń kłamałby, bo nie sprawdzono
+// niczym. Które programy milczały, tej odpowiedzi powiedzieć nie da się bez
+// zmiany kontraktu.
 func (a *adapterDevelopera) AnalizaStatyczna(ctx context.Context,
 	z shared.DeveloperLintGetRequest) (shared.DeveloperLintGetResponse, error) {
 
@@ -389,21 +410,30 @@ func (a *adapterDevelopera) AnalizaStatyczna(ctx context.Context,
 		return shared.DeveloperLintGetResponse{}, bladZadaniaDevelopera(
 			"okno " + z.WindowId + " nie ma katalogu roboczego, więc nie ma czego analizować")
 	}
-	cele := celeAnalizy(korzenie[0], z.Paths)
+	korzen := korzenie[0]
 
-	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieGolangciLint,
-		append([]string{"run", "--out-format=json", "--issues-exit-code=0"}, cele...),
-		korzenie[0], czasAnalizyStatycznej)
-	if err != nil {
-		if brakNarzedziaWarsztatu(err) {
-			return shared.DeveloperLintGetResponse{
-				Diagnostics: []shared.DeveloperDiagnostic{}, LinterAvailable: false}, nil
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 32)
+	odpowiedzialo := false
+	for _, analiza := range analizyRepozytorium(korzen, z.Paths) {
+		uwagi, zmierzono := a.przeprowadzAnalize(ctx, okno, korzen, analiza)
+		if !zmierzono {
+			continue
 		}
-		return shared.DeveloperLintGetResponse{}, bladWykonaniaDevelopera(
-			"analiza statyczna odmówiła: " + skrocDiagnostyke(wynik.Diagnostyka, err))
+		odpowiedzialo = true
+		zgloszenia = append(zgloszenia, uwagi...)
 	}
 
-	zgloszenia := zgloszeniaAnalizy(string(wynik.Wyjscie), korzenie[0])
+	if !odpowiedzialo {
+		return shared.DeveloperLintGetResponse{
+			Diagnostics: []shared.DeveloperDiagnostic{}, LinterAvailable: false}, nil
+	}
+	sort.SliceStable(zgloszenia, func(i, j int) bool {
+		if zgloszenia[i].Path != zgloszenia[j].Path {
+			return zgloszenia[i].Path < zgloszenia[j].Path
+		}
+		return zgloszenia[i].Line < zgloszenia[j].Line
+	})
+
 	granica := najwiecejZgloszenAnalizy
 	if z.Limit != nil && *z.Limit > 0 && *z.Limit < granica {
 		granica = *z.Limit
@@ -419,22 +449,7 @@ func (a *adapterDevelopera) AnalizaStatyczna(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// celeAnalizy składa wskazania dla lintera. Puste żądanie znaczy całe drzewo
-// repozytorium.
-func celeAnalizy(korzen string, sciezki []string) []string {
-	cele := make([]string, 0, len(sciezki))
-	for _, sciezka := range sciezki {
-		if tresc := strings.TrimSpace(sciezka); tresc != "" {
-			cele = append(cele, tresc)
-		}
-	}
-	if len(cele) == 0 {
-		return []string{"./..."}
-	}
-	return cele
-}
-
-// wyjscieAnalizy jest kształtem odpowiedzi `golangci-lint run --out-format=json`.
+// wyjscieAnalizy jest kształtem odpowiedzi `golangci-lint run` w postaci JSON.
 type wyjscieAnalizy struct {
 	Issues []struct {
 		FromLinter string `json:"FromLinter"`
@@ -500,6 +515,352 @@ func wagaAnalizy(waga string) shared.ProblemSeverity {
 	}
 }
 
+// serwerJezykaPliku dobiera serwer języka po rozszerzeniu pliku i mówi, czy
+// rdzeń ma czym go zapytać JEDNYM wywołaniem.
+//
+// ── Dlaczego TypeScript wraca z „nie ma czym" ────────────────────────────────
+// Warstwa językowa tego modułu pyta serwer pojedynczym wywołaniem
+// (`gopls definition …`) i odbiera odpowiedź z jego wyjścia; powód tego wyboru
+// stoi w nagłówku pliku. `gopls` taki tryb ma. Serwer języka TypeScriptu go NIE
+// ma: rozmawia wyłącznie sesją protokołu LSP na strumieniu wejścia — uzgodnienie,
+// otwarcie dokumentu, pytanie, zamknięcie — a jedyna droga rdzenia do procesu
+// (`zewnetrzne.Wolaj`) z zamysłu na wejście procesu nie pisze, bo pisanie
+// i czytanie naraz jest tą klasą zakleszczeń, której ten pakiet ma nie mieć.
+//
+// Dlatego pliki TypeScriptu dostają odpowiedź nazywającą brak zamiast wyniku
+// z serwera Go, który tego pliku nie rozumie. Sam program jest zadeklarowany
+// w wykazie zależności (`zaleznosci_zewnetrzne.go`), więc sonda startowa mówi
+// o nim Operatorowi — deklaracja opisuje zakres, który bez niego nie działa,
+// a nie obietnicę, że rdzeń już go woła.
+func serwerJezykaPliku(sciezka string) (zewnetrzne.Narzedzie, bool) {
+	switch strings.ToLower(filepath.Ext(sciezka)) {
+	case ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs":
+		return narzedzieSerweraTypeScript, false
+	default:
+		return narzedzieGopls, true
+	}
+}
+
+// ── Analizatory repozytorium ────────────────────────────────────────────────
+
+// analizaPozaGo opisuje jedno wywołanie programu analizy: co uruchomić, na czym
+// i jak odczytać wynik.
+type analizaPozaGo struct {
+	narzedzie zewnetrzne.Narzedzie
+	argumenty []string
+	// czytaj przekłada wyjście programu na zgłoszenia kontraktu. Dostaje oba
+	// strumienie, bo jedne programy piszą wynik na wyjście, inne na diagnostykę.
+	czytaj func(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic
+}
+
+// rozszerzeniaPythona i rozszerzeniaArkuszy nazywają pliki, które mają swój
+// analizator. Wykaz jest wzięty z tego, co program naprawdę czyta.
+var (
+	rozszerzeniaGo      = []string{".go"}
+	rozszerzeniaPythona = []string{".py", ".pyi"}
+	rozszerzeniaArkuszy = []string{".css", ".scss", ".less"}
+)
+
+// analizyRepozytorium dobiera programy, które w tym żądaniu mają co sprawdzić.
+//
+// ── Dlaczego dobór idzie po rozszerzeniu, a nie po tym, co stoi na maszynie ──
+// Program uruchomiony tam, gdzie nie ma ani jednego pliku jego języka, nie
+// milczy — ODMAWIA. `golangci-lint` w repozytorium bez plików Go kończy się
+// błędem „no go files to analyze", a odmowa jednego programu nie ma prawa
+// zabrać analizy pozostałym: repozytorium samego Pythona albo samego frontendu
+// zostałoby wtedy bez analizy w ogóle.
+//
+// Żądanie bez wskazania plików obejmuje całe drzewo i wtedy każdy program
+// dostaje swój katalog.
+func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
+	wskazane := make([]string, 0, len(sciezki))
+	for _, sciezka := range sciezki {
+		if tresc := strings.TrimSpace(sciezka); tresc != "" {
+			wskazane = append(wskazane, tresc)
+		}
+	}
+	caleDrzewo := len(wskazane) == 0
+
+	analizy := make([]analizaPozaGo, 0, 4)
+
+	plikiGo := sciezkiORozszerzeniu(wskazane, rozszerzeniaGo)
+	if caleDrzewo || len(plikiGo) > 0 {
+		cele := plikiGo
+		if caleDrzewo {
+			cele = []string{"./..."}
+		}
+		// `--output.json.path stdout` jest zapisem wydania drugiego programu;
+		// zapis `--out-format=json` z wydania pierwszego został z niego zdjęty
+		// i program odmawia wtedy uruchomienia, nazywając nieznany parametr.
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieGolangciLint,
+			argumenty: append([]string{"run", "--output.json.path", "stdout",
+				"--issues-exit-code=0"}, cele...),
+			czytaj: func(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
+				return zgloszeniaAnalizy(wyjscie, korzen)
+			},
+		})
+	}
+
+	pythony := sciezkiORozszerzeniu(wskazane, rozszerzeniaPythona)
+	if caleDrzewo || len(pythony) > 0 {
+		cele := pythony
+		if caleDrzewo {
+			cele = []string{"."}
+		}
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieRuff,
+			argumenty: append([]string{"check", "--output-format", "json",
+				"--no-cache", "--force-exclude"}, cele...),
+			czytaj: zgloszeniaRuff,
+		})
+	}
+
+	// Stylelint nie ma wbudowanego zestawu reguł: uruchomienie bez konfiguracji
+	// nie jest „analizą z ustawieniami domyślnymi", tylko brakiem analizy wraz
+	// z odmową programu. Zestaw reguł jest rozstrzygnięciem repozytorium, a nie
+	// rdzenia — więc arkusze analizuje się wyłącznie tam, gdzie repozytorium
+	// swój zestaw niesie.
+	arkusze := sciezkiORozszerzeniu(wskazane, rozszerzeniaArkuszy)
+	if (caleDrzewo || len(arkusze) > 0) && repozytoriumNiesieKonfiguracje(korzen,
+		konfiguracjeStylelinta) {
+		cele := arkusze
+		if caleDrzewo {
+			cele = []string{"**/*.css", "**/*.scss", "**/*.less"}
+		}
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieStylelint,
+			argumenty: append([]string{"--formatter", "json",
+				"--allow-empty-input"}, cele...),
+			czytaj: zgloszeniaStylelinta,
+		})
+	}
+
+	// Literówka nie ma języka, więc `typos` dostaje to, co wskazano, bez
+	// odsiewania po rozszerzeniu.
+	celeLiterowek := wskazane
+	if caleDrzewo {
+		celeLiterowek = []string{"."}
+	}
+	analizy = append(analizy, analizaPozaGo{
+		narzedzie: narzedzieTypos,
+		argumenty: append([]string{"--format", "json"}, celeLiterowek...),
+		czytaj:    zgloszeniaLiterowek,
+	})
+
+	return analizy
+}
+
+// przeprowadzAnalize uruchamia jeden program analizy i mówi, czy ZMIERZYŁ.
+//
+// Kod wyjścia różny od zera jest tu WYNIKIEM, nie usterką: Ruff, Stylelint
+// i `typos` kończą się niezerowo dokładnie wtedy, gdy mają co zgłosić. Miarą
+// pomiaru jest więc ODCZYTANA ODPOWIEDŹ, a nie kod wyjścia ani strumień, na
+// który program ją napisał — program obecny, który przewrócił się, nie oddając
+// nic czytelnego, NIE zmierzył niczego i jego milczenie nie ma prawa wyglądać
+// jak brak zastrzeżeń.
+func (a *adapterDevelopera) przeprowadzAnalize(ctx context.Context, okno session.Okno,
+	korzen string, analiza analizaPozaGo) ([]shared.DeveloperDiagnostic, bool) {
+
+	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, analiza.narzedzie,
+		analiza.argumenty, korzen, czasAnalizyStatycznej)
+	if brakNarzedziaWarsztatu(err) {
+		return nil, false
+	}
+	uwagi := analiza.czytaj(string(wynik.Wyjscie), wynik.Diagnostyka, korzen)
+	if err != nil && len(uwagi) == 0 {
+		return nil, false
+	}
+	return uwagi, true
+}
+
+// sciezkiORozszerzeniu odsiewa wskazania o żądanych rozszerzeniach.
+func sciezkiORozszerzeniu(sciezki, rozszerzenia []string) []string {
+	wybrane := make([]string, 0, len(sciezki))
+	for _, sciezka := range sciezki {
+		koncowka := strings.ToLower(filepath.Ext(sciezka))
+		for _, rozszerzenie := range rozszerzenia {
+			if koncowka == rozszerzenie {
+				wybrane = append(wybrane, sciezka)
+				break
+			}
+		}
+	}
+	return wybrane
+}
+
+// konfiguracjeStylelinta wylicza nazwy, pod którymi Stylelint szuka swojego
+// zestawu reguł w korzeniu repozytorium.
+var konfiguracjeStylelinta = []string{
+	".stylelintrc", ".stylelintrc.json", ".stylelintrc.yml", ".stylelintrc.yaml",
+	".stylelintrc.js", ".stylelintrc.cjs", ".stylelintrc.mjs",
+	"stylelint.config.js", "stylelint.config.cjs", "stylelint.config.mjs",
+}
+
+// repozytoriumNiesieKonfiguracje orzeka, czy w korzeniu repozytorium leży
+// którakolwiek z wymienionych konfiguracji.
+func repozytoriumNiesieKonfiguracje(korzen string, nazwy []string) bool {
+	for _, nazwa := range nazwy {
+		if _, err := os.Stat(filepath.Join(korzen, nazwa)); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// wyjscieRuff jest kształtem odpowiedzi `ruff check --output-format json`.
+type wyjscieRuff struct {
+	Code     string `json:"code"`
+	Message  string `json:"message"`
+	Filename string `json:"filename"`
+	Severity string `json:"severity"`
+	Location struct {
+		Row    int `json:"row"`
+		Column int `json:"column"`
+	} `json:"location"`
+	Fix *struct {
+		Message string `json:"message"`
+	} `json:"fix"`
+}
+
+// zgloszeniaRuff przekłada wynik Ruffa na zgłoszenia kontraktu.
+func zgloszeniaRuff(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	var uwagi []wyjscieRuff
+	if err := json.Unmarshal([]byte(strings.TrimSpace(wyjscie)), &uwagi); err != nil {
+		return nil
+	}
+	for _, uwaga := range uwagi {
+		zgloszenie := shared.DeveloperDiagnostic{
+			Path:     sciezkaWzgledemKorzenia(uwaga.Filename, korzen),
+			Line:     uwaga.Location.Row,
+			Severity: wagaAnalizy(uwaga.Severity),
+			Message:  uwaga.Message,
+			Source:   wskaznikTekstu(narzedzieRuff.Program),
+		}
+		if uwaga.Code != "" {
+			zgloszenie.Code = wskaznikTekstu(uwaga.Code)
+		}
+		if uwaga.Location.Column > 0 {
+			zgloszenie.Column = wskaznikLiczby(uwaga.Location.Column)
+		}
+		if uwaga.Fix != nil {
+			zgloszenie.FixAvailable = wskaznikPrawdy(true)
+		}
+		zgloszenia = append(zgloszenia, zgloszenie)
+	}
+	return zgloszenia
+}
+
+// wyjscieStylelinta jest kształtem odpowiedzi `stylelint --formatter json`.
+type wyjscieStylelinta struct {
+	Source   string `json:"source"`
+	Warnings []struct {
+		Line     int    `json:"line"`
+		Column   int    `json:"column"`
+		Rule     string `json:"rule"`
+		Severity string `json:"severity"`
+		Text     string `json:"text"`
+	} `json:"warnings"`
+}
+
+// zgloszeniaStylelinta przekłada wynik Stylelinta na zgłoszenia kontraktu.
+//
+// Wykaz czyta się z OBU strumieni, bo Stylelint pisze go na strumień
+// diagnostyczny, kiedy uwagi ma (kończy się wtedy kodem 2), a na wyjście — kiedy
+// ich nie ma. Zmierzone na tej maszynie; szukanie wykazu tam, gdzie jest, a nie
+// tam, gdzie wypadałoby, żeby był.
+func zgloszeniaStylelinta(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	var pliki []wyjscieStylelinta
+	if err := json.Unmarshal([]byte(strings.TrimSpace(wyjscie)), &pliki); err != nil {
+		if err := json.Unmarshal([]byte(strings.TrimSpace(diagnostyka)), &pliki); err != nil {
+			return nil
+		}
+	}
+	for _, plik := range pliki {
+		for _, uwaga := range plik.Warnings {
+			zgloszenie := shared.DeveloperDiagnostic{
+				Path:     sciezkaWzgledemKorzenia(plik.Source, korzen),
+				Line:     uwaga.Line,
+				Severity: wagaAnalizy(uwaga.Severity),
+				Message:  uwaga.Text,
+				Source:   wskaznikTekstu(narzedzieStylelint.Program),
+			}
+			if uwaga.Rule != "" {
+				zgloszenie.Code = wskaznikTekstu(uwaga.Rule)
+			}
+			if uwaga.Column > 0 {
+				zgloszenie.Column = wskaznikLiczby(uwaga.Column)
+			}
+			zgloszenia = append(zgloszenia, zgloszenie)
+		}
+	}
+	return zgloszenia
+}
+
+// wyjscieLiterowki jest kształtem jednego wiersza `typos --format json`.
+//
+// `typos` pisze po jednym zapisie JSON na wiersz, a nie jedną tablicę — i pisze
+// tam także wiersze innego rodzaju niż literówka (na przykład pominięty plik
+// binarny). Rodzaj jest więc czytany, a nie zakładany.
+type wyjscieLiterowki struct {
+	Rodzaj       string   `json:"type"`
+	Sciezka      string   `json:"path"`
+	Wiersz       int      `json:"line_num"`
+	Przesuniecie int      `json:"byte_offset"`
+	Literowka    string   `json:"typo"`
+	Poprawki     []string `json:"corrections"`
+}
+
+// zgloszeniaLiterowek przekłada wynik `typos` na zgłoszenia kontraktu.
+//
+// Waga jest ostrzeżeniem, nie błędem: literówka w identyfikatorze bywa nazwą
+// celowo skróconą, a program nie ma jak tego rozstrzygnąć. Podniesienie wagi
+// kazałoby Operatorowi poprawiać rzeczy, których nikt tak nie oznaczył.
+func zgloszeniaLiterowek(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	for _, wiersz := range strings.Split(wyjscie, "\n") {
+		tresc := strings.TrimSpace(wiersz)
+		if tresc == "" {
+			continue
+		}
+		var uwaga wyjscieLiterowki
+		if err := json.Unmarshal([]byte(tresc), &uwaga); err != nil {
+			continue
+		}
+		if uwaga.Rodzaj != "typo" {
+			continue
+		}
+		zdanie := "literówka „" + uwaga.Literowka + "”"
+		if len(uwaga.Poprawki) > 0 {
+			zdanie += "; poprawnie: " + strings.Join(uwaga.Poprawki, ", ")
+		}
+		zgloszenie := shared.DeveloperDiagnostic{
+			Path:     sciezkaWzgledemKorzenia(uwaga.Sciezka, korzen),
+			Line:     uwaga.Wiersz,
+			Severity: shared.ProblemSeverityWarning,
+			Message:  zdanie,
+			Source:   wskaznikTekstu(narzedzieTypos.Program),
+		}
+		// `byte_offset` liczy się od zera w obrębie wiersza, a kontrakt liczy
+		// kolumny od jedynki.
+		zgloszenie.Column = wskaznikLiczby(uwaga.Przesuniecie + 1)
+		zgloszenia = append(zgloszenia, zgloszenie)
+	}
+	return zgloszenia
+}
+
+// sciezkaWzgledemKorzenia dopełnia wskazanie względne do ścieżki bezwzględnej.
+// Programy analizy oddają raz jedno, raz drugie, a okno ma dostawać jedną postać.
+func sciezkaWzgledemKorzenia(sciezka, korzen string) string {
+	tresc := strings.TrimSpace(sciezka)
+	if tresc == "" || filepath.IsAbs(tresc) {
+		return tresc
+	}
+	return filepath.Join(korzen, tresc)
+}
+
 // Refaktoryzuj obsługuje `developer.refactor.apply`.
 //
 // Podgląd jest domyślny. Refaktoryzacja semantyczna dotyka wielu plików naraz,
@@ -522,6 +883,15 @@ func (a *adapterDevelopera) Refaktoryzuj(ctx context.Context,
 	argumenty, err := argumentyRefaktoryzacji(z, sciezka, zastosuj)
 	if err != nil {
 		return shared.DeveloperRefactorApplyResponse{}, err
+	}
+
+	if serwer, jednorazowy := serwerJezykaPliku(sciezka); !jednorazowy {
+		return shared.DeveloperRefactorApplyResponse{}, bladZasobuDevelopera(
+			"rdzeń nie ma czym przeprowadzić refaktoryzacji semantycznej pliku " +
+				filepath.Base(sciezka) + ": serwer języka tego pliku (" + serwer.Program +
+				") rozmawia wyłącznie sesją protokołu LSP, a warstwa językowa modułu " +
+				"pyta serwery pojedynczym wywołaniem. Droga, która działa: zmiana nazwy " +
+				"po składni komendą `developer.grep.replace` wzorcem z metazmienną")
 	}
 
 	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieGopls, argumenty,

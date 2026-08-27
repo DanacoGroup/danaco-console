@@ -2471,3 +2471,13 @@ wykaz identyfikatorów komponentów, bez współrzędnych i bez kierunku przepł
 więc rysunek strzałek wymagałby danych, których w kontrakcie nie ma. Kafel podaje
 zależność nazwami komponentów, a identyfikator wskazujący komponent spoza kanwy
 zostaje w treści wprost, żeby niespójność układu była widoczna zamiast zniknąć.
+
+## budowa/klient-poprzedni/src/mission-control/stan-zrodla.ts
+
+Plik ustala kształt i wartość początkową wsadu złożenia danych pulpitu. Pole
+`odczytano` mówi, czy rdzeń już się odezwał, i tym odróżnia pulpit pusty
+z powodu braku odpowiedzi od pulpitu pustego z powodu braku danych.
+
+Nazwa kolumny matrycy środowisk pochodzi z odczytu `environment.list`, a nie
+z kopii katalogu utrzymywanej w pulpicie. Dzięki temu kolumna znika i pojawia
+się wraz ze środowiskiem po stronie rdzenia, bez osobnej pielęgnacji kopii.

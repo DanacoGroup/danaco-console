@@ -1435,3 +1435,45 @@ i znacznik nieświeżości elementu aparatu idą z samego elementu, nie
 z przeliczenia od nowa: cofnięcie ma przywrócić stan sprzed czynności, a nie
 policzyć aparat na nowo z treści bieżącej, co wstawiłoby numery stron, których
 w stanie sprzed czynności nie było.
+
+## adapter_modul_studio_strona.go
+
+Każda czynność tego pliku idzie jedną drogą obszaru postaci: wczytanie
+postaci, zmiana postaci, zakończenie postaci. Dzięki temu zmiana śledzona
+autora model i wpis odwracalnego dziennika odkładają się same, tą samą
+drogą co zmiana kroju czy wcięcia — model, który przestawił nośnik
+załącznika na poziomą A3, jest widoczny w podświetleniu zmian modelu tak
+samo jak model, który dopisał akapit. Rodzaj czynności dziennika jest dla
+całego pliku jeden, bo Operator cofa „zmianę strony”, a nie „formatowanie”;
+rodzaj zmiany śledzonej idzie osobnym polem, bo wstawienie podziału jest
+wstawieniem, a wszystko inne formatowaniem.
+
+Sekcja bez własnych nastaw dziedziczy nastawy dokumentu — jej pole nastaw
+zostaje puste. Skopiowanie nastaw dokumentu do każdej sekcji przy
+zakładaniu dałoby dokument, w którym zmiana nośnika „dla całości” nie
+rusza ani jednej strony, bo każda sekcja trzymałaby własną kopię sprzed
+zmiany. Dlatego nastawa skuteczna liczy się przy odczycie, nakładając
+nastawy sekcji na nastawy dokumentu.
+
+Koperta bez położenia adresata i nadawcy byłaby nadrukiem w punkcie zero,
+czyli na samej krawędzi, więc położenie niepodane dostaje nastawę z normy:
+adresat w prawej dolnej ćwiartce, nadawca w lewym górnym narożniku.
+
+Podział jest blokiem nietekstowym: nie zajmuje ani jednego znaku treści,
+więc jego wstawienie nie przesuwa żadnego zaznaczenia ani zakotwiczenia.
+Podział wypadający w środku akapitu rozdziela ten akapit na dwa, a dopiero
+to rozdzielenie dokłada jeden znak podziału wiersza, o który przesuwa się
+wszystko, co za nim wisi; ten jeden znak trzeba potem uwzględnić
+w zakotwiczeniach, inaczej przypis za podziałem wskazywałby o literę
+wcześniej. Podział sekcji zakłada nową sekcję od miejsca podziału do końca
+dokumentu i skraca sekcję poprzednią — bez tego „podział sekcji” byłby
+kreską w treści, za którą nic się nie zmienia, a sensem sekcji są jej
+własne nastawy.
+
+Postać akapitu przy rozdzieleniu jedzie kopią: dwa akapity na jednej
+strukturze znaczyłyby, że wcięcie jednego zmienia drugi.
+
+Dokument bez ani jednej sekcji zapisanej oddaje sekcję jedną, obejmującą
+całą treść, bo taki dokument jest jedną sekcją, a pusty wykaz kazałby
+oknu twierdzić, że dokument nie ma strony; ta sekcja nie jest przy tym
+zakładana w bazie, bo odczyt nie ma prawa zapisywać.

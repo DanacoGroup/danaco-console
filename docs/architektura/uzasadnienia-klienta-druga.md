@@ -705,3 +705,17 @@ Sprawdzian obejmuje przebieg bez rdzenia uruchomionego: każda odsłona, w tym
 odsłona błędu połączenia i odsłona zwłoki nałożonej przez rdzeń, jest tu
 osiągalna naprawdę, a nie tylko opisana. Rozmowę z rdzeniem naprawdę
 uruchomionym mierzy osobny sprawdzian, który rdzenia wymaga.
+
+## budowa/klient-poprzedni/src/moduly/studio/blokada-panel.ts
+
+Panel łączy blokady fragmentów, zajęcia wykonawców i nastawy pracy kilku agentów naraz, bo
+wszystkie trzy odpowiadają na jedno pytanie: czego modelowi nie wolno tknąć i kto teraz pisze
+po którym akapicie. Blokada jest trwała i skierowana przeciw modelowi; zdejmuje ją wyłącznie
+operator konta, a zasięg obejmujący także operatora jest osobnym, jawnym ustawieniem, nie
+zachowaniem domyślnym. Zajęcie fragmentu jest czasowe i skierowane przeciw drugiemu wykonawcy;
+odmowa nazywa wykonawcę i czas, bo cicha odmowa kazałaby zgadywać, dlaczego fragment nie
+drgnął. Nastawy rozstrzygają, czy pętla wykonawcza i praca wielu agentów w ogóle stoją, ilu
+wykonawców pracuje naraz i co się dzieje przy spięciu; oba narzędzia są domyślnie wyłączone
+i włącza je operator konta, nie okno. Panel woła rdzeń sam, bo skutkiem każdej z tych czynności
+jest wykaz albo odmowa nazwana — jedno i drugie jest treścią widoczną, nie wartością pośrednią
+przekazywaną wyżej.

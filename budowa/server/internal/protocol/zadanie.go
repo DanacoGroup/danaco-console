@@ -7,14 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zasieg niesie kontekst wykonania komendy. Okno komunikacji jest bytem
-// pośrednim między sesją a wiadomością i najwęższym poziomem
-// zasięgu konfiguracji — wygrywa z projektem, środowiskiem
-// i pozostałymi poziomami.
-//
-// Jest soczewką na ładunek, nie komunikatem: kontrakt nie ma jednej struktury
-// zasięgu, więc cztery poziomy wyjmuje się z ładunku po nazwach pól, których
-// kontrakt używa w treściach komend.
+// Zasieg niesie kontekst wykonania komendy: okno komunikacji jest bytem
+// pośrednim między sesją a wiadomością, najwęższym poziomem zasięgu
+// konfiguracji.
 type Zasieg struct {
 	Srodowisko string `json:"environmentId,omitempty"`
 	Projekt    string `json:"projectId,omitempty"`
@@ -35,8 +30,8 @@ type Request struct {
 	ZnacznikCzasu int64
 }
 
-// trescNieznanejKomendy jest ładunkiem zdarzenia `*.unknown` w kształcie
-// kontraktu.
+// trescNieznanejKomendy jest ładunkiem zdarzenia unknown w kształcie
+// kontraktu, niosącym typ nierozpoznany.
 type trescNieznanejKomendy = shared.UnknownCommandPayload
 
 // powodNieznanej wyjaśnia klientowi, dlaczego typ nie został rozpoznany.
@@ -99,7 +94,8 @@ func (r Request) Koperta() Koperta {
 	}
 }
 
-// LadunekDo rozpakowuje ładunek żądania do struktury komendy z kontraktu.
+// LadunekDo rozpakowuje ładunek tego żądania wprost do struktury komendy
+// pochodzącej z tego samego kontraktu.
 func (r Request) LadunekDo(cel any) error {
 	if len(r.Ladunek) == 0 {
 		return nil
@@ -132,13 +128,8 @@ func OdpowiedzNieznanej(r Request) Koperta {
 	return zeStanemOdmowy(k, r.TypZadany)
 }
 
-// zeStanemOdmowy dokłada kopercie odmowy stan i błąd.
-//
-// Klient koreluje odpowiedź po identyfikatorze żądania i po stanie — koperta bez
-// pola `status` nie rozstrzyga obietnicy wywołania, więc okno stoi w wiecznym
-// ładowaniu. Odmowa jest zwykłą odpowiedzią błędną: ten sam identyfikator żądania,
-// stan `error` i kod `not_found`. Połączenie nie jest zrywane, sesja nie jest
-// blokowana, kolejne żądania są przyjmowane.
+// zeStanemOdmowy dokłada kopercie odmowy stan i błąd: ten sam identyfikator
+// żądania, stan error i kod not_found.
 func zeStanemOdmowy(k Koperta, typZadany shared.MessageType) Koperta {
 	stan := shared.EnvelopeStatus(shared.EnvelopeStatusError)
 	k.Status = &stan

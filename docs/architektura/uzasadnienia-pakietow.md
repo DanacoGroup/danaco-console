@@ -5835,3 +5835,14 @@ linia ma nieść. Adres bierze się z pola żądania HTTP, nie z nagłówków pr
 strona trzecia i można je napisać dowolnie, a dziennik ma nieść fakt gniazda, nie deklarację nadawcy.
 Brak adresu daje wpis oznaczony jako nieustalony zamiast pustego miejsca, żeby czytający widział różnicę
 między brakiem wiedzy a pominięciem.
+
+## budowa/server/internal/protocol/zadanie.go
+Okno komunikacji jako zasięg wygrywa z projektem, środowiskiem i pozostałymi
+poziomami. Zasieg jest soczewką na ładunek, nie komunikatem: kontrakt nie ma
+jednej struktury zasięgu, więc cztery poziomy wyjmuje się z ładunku po
+nazwach pól, których kontrakt używa w treściach komend.
+
+Klient koreluje odpowiedź po identyfikatorze żądania i po stanie: koperta bez
+pola stanu nie rozstrzyga obietnicy wywołania, więc okno stoi w wiecznym
+ładowaniu. Odmowa zeStanemOdmowy jest zwykłą odpowiedzią błędną; połączenie
+nie jest zrywane, sesja nie jest blokowana, kolejne żądania są przyjmowane.

@@ -5000,3 +5000,15 @@ katalogu po stronie klienta.
 Zdarzenie `progress.changed` niesie telemetrię postępu. Generowanie zasobu nim nie jedzie:
 komenda `design.asset.generate` wraca w jednej turze, bez pola `processId`, i nie wysyła
 po drodze żadnego `progress.changed`.
+
+## budowa/klient-poprzedni/src/moduly/browser/zrodlo-okien.ts
+
+Każda komenda obszaru `browser.*` wymaga pola `windowId`, a moduł dostaje
+z powłoki wyłącznie identyfikator sesji. Ustalenie okna stoi więc w jednym
+miejscu: pytanie o nie osobno w każdym oknie modułu dałoby kilka różnych okien
+dla jednego modułu. Odczyt okien sesji i odczyt stanu okna należą do obszaru
+okien, nie do obszaru `browser.*`, dlatego stoją w źródle osobnym wobec
+`zrodlo-browser.ts`.
+
+Rdzeń przestawia moduł okna komendą `workspace.enter`, więc oknem przeglądarki
+jest to, którego pole `moduleId` równa się kodowi modułu.

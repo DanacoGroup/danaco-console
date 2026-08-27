@@ -6662,3 +6662,12 @@ przycisku pierwszej akcji prowadzą do czterech różnych czynności: odśwież
 wykaz, dodaj plik, wskaż plik, przełącz obszar, a jeden przycisk o stałym
 napisie kierowałby w trzech z nich w złą stronę, więc każdy stan mówi to
 własnym zdaniem.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-automation-studio.ts
+Rozmowa z rdzeniem stoi w pliku `czynnosci-automatyk.ts`, widok tekstowy kroków w pliku `edytor-scenariusza.ts`, granice przebiegu w pliku `limity-przebiegu.ts`. Kroki scenariusza mają jedno miejsce: treść widoku tekstowego. Wykaz kart pod formularzem jest jego odczytem, a nie drugim zbiorem — dwa zbiory kroków rozjechałyby się przy pierwszej ręcznej poprawce, a operator nie wiedziałby, który z nich pojechał do rdzenia. Nagrywarka makra ma w kontrakcie własną komendę, której to okno jeszcze nie wywołuje — pozycja pyta więc rdzeń o jej pokrycie. Krok powstaje tymczasem z bieżącej migawki: przejście pod adres, który operator właśnie otworzył.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-automation-studio.ts — kroki przyjęte
+Karty kroków rysują się z ostatnio przyjętej treści, a nie z każdej litery wpisywanej w pole: treść w połowie poprawiona jest niepoprawnym zapisem JSON i wyczyściłaby wykaz kroków, których operator nie usuwał.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-automation-studio.ts — nazwa komendy kroku
+Krok z nazwą przepisaną ręcznie przeżyłby zmianę nazwy w kontrakcie i wracałby z rdzenia zdarzeniem obszaru nieznanego.

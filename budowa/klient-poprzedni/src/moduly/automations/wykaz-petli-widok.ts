@@ -1,24 +1,16 @@
+/**
+ * Widok wykazu gotowych pętli składa elementy wprost z bytów `AutomationWorkflow`,
+ * bez znajomości źródła danych i stanu okna. Przyjmuje wykaz, napis szukania oraz
+ * wywołanie zwrotne uruchomienia, a oddaje gotowy element albo zdanie o pustce.
+ */
 import type { AutomationWorkflow } from '../../../../shared/contract';
 import { przyciskAkcji as przycisk, pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
 
 /**
- * Widok wykazu gotowych pętli — czysta konstrukcja z bytów `AutomationWorkflow`.
- * Plik nie zna ani źródła, ani stanu modułu, ani stanu treści okna: dostaje
- * wykaz, napis szukania i wywołanie zwrotne uruchomienia, a oddaje albo gotowy
- * element, albo zdanie o pustce. Rozstrzygnięcie, co z tym zrobić, należy do
- * okna, bo w tym samym miejscu treści stoi jeszcze wykaz przekazań.
- *
- * Przycisk uruchomienia ma każda pozycja, także pętla wyłączona — jej stan stoi
- * w opisie pozycji, a nie w blokadzie wiersza. Wykaz skraca zawężenie: napis
- * szukania albo przełącznik „tylko czynne”, który zawęża żądanie do rdzenia
- * (`enabledOnly`).
- *
- * Szukanie idzie po stronie klienta, bo `automation.workflow.list` przyjmuje
- * wyłącznie `enabledOnly` i `limit`, a wykaz jest już w oknie. Dopasowanie bierze
- * kolejno nazwę, identyfikator i opis.
+ * Zawęża wykaz napisem szukania, dopasowując kolejno nazwę, identyfikator i opis
+ * pętli. Pusty napis oddaje wykaz w całości, a porównanie przebiega na zapisie
+ * sprowadzonym do małych liter w ustawieniu językowym polskim.
  */
-
-/** Zawęża wykaz napisem szukania; pusty napis oddaje wykaz w całości. */
 export function dopasowanePetle(
   petle: readonly AutomationWorkflow[],
   szukane: string,
@@ -50,7 +42,11 @@ export function opisPetli(petla: AutomationWorkflow): string {
   return opis === '' ? czesci.join(' · ') : `${czesci.join(' · ')} — ${opis}`;
 }
 
-/** Odmiana rzeczownika „krok” przez liczbę, według reguł polskiej liczebności. */
+/**
+ * Odmienia rzeczownik „krok” przez liczbę według reguł polskiej liczebności:
+ * liczba pojedyncza dla jedynki, mianownik liczby mnogiej dla końcówek od dwóch
+ * do czterech poza zakresem nastek, dopełniacz w pozostałych przypadkach.
+ */
 function odmianaKrokow(liczba: number): string {
   const reszta = liczba % 10;
   const setka = liczba % 100;
@@ -59,7 +55,11 @@ function odmianaKrokow(liczba: number): string {
   return 'kroków';
 }
 
-/** Wykaz gotowy do osadzenia albo zdanie o pustce — rozstrzygnięcie dla okna. */
+/**
+ * Wynik składania widoku: gotowy element do osadzenia albo zdanie o pustce.
+ * Rozstrzygnięcie, co z wynikiem zrobić, należy do okna, ponieważ w tym samym
+ * miejscu treści stoi jeszcze wykaz przekazań.
+ */
 export type WidokWykazuPetli =
   | { rodzaj: 'wykaz'; element: HTMLElement }
   | { rodzaj: 'pustka'; zdanie: string };

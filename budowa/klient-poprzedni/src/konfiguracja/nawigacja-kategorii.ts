@@ -2,19 +2,10 @@ import type { SettingCategory } from '../../../shared/contract';
 import { czyNazwaIkony, elementIkony } from '../ikony/ikony';
 
 /**
- * Lewa kolumna okna konfiguracji — kategorie z katalogu.
- *
- * Kolumna nie ma ani jednej pozycji zapisanej w kodzie. Kategorie przychodzą
- * komendą `settings.category.list` wraz z porządkiem, ikoną i zagnieżdżeniem;
- * nowa kategoria to nowy wiersz katalogu, nie zmiana tego pliku.
- *
- * Kategoria z wypełnionym `parentId` staje pod swoją nadrzędną jako pozycja
- * wcięta. Kategoria wskazująca rodzica, którego w katalogu nie ma, nie znika —
- * trafia na poziom najwyższy. Ukrycie pozycji z powodu niespójności katalogu
- * odebrałoby Operatorowi dostęp do ustawień.
- *
- * Żadna pozycja nie jest wygaszona: kategoria z `enabled` fałszywym nie jest
- * tu w ogóle rysowana, bo katalog pobierany jest bez wierszy nieczynnych.
+ * Lewa kolumna okna konfiguracji — kategorie z katalogu. Ani jedna pozycja nie
+ * jest zapisana w kodzie: wykaz przychodzi komendą `settings.category.list`
+ * wraz z porządkiem, ikoną i zagnieżdżeniem, więc nowa kategoria to nowy
+ * wiersz katalogu.
  */
 export interface NawigacjaKategorii {
   /** Kolumna osadzana w ciele okna. */
@@ -66,10 +57,8 @@ export function utworzNawigacjeKategorii(): NawigacjaKategorii {
     element,
 
     /**
-     * Przebudowa wykazu nie ogłasza wyboru. Kolumna oznacza kategorię czynną
-     * i na tym kończy swoją rolę; przebudowaniem formularza kieruje warstwa,
-     * która wykaz zamontowała. Bez tego rozdziału jedno wczytanie katalogu
-     * budowałoby formularz dwa razy.
+     * Przebudowa wykazu nie ogłasza wyboru: formularzem kieruje warstwa,
+     * która wykaz zamontowała.
      */
     odswiez(kategorie) {
       wykaz = kategorie;
@@ -84,7 +73,10 @@ export function utworzNawigacjeKategorii(): NawigacjaKategorii {
   };
 }
 
-/** Kategorie najwyższego poziomu: bez rodzica albo z rodzicem spoza katalogu. */
+/**
+ * Kategorie najwyższego poziomu: bez rodzica albo z rodzicem spoza katalogu,
+ * ponieważ niespójność katalogu nie może odebrać dostępu do ustawień.
+ */
 function najwyzszyPoziom(wykaz: readonly SettingCategory[]): SettingCategory[] {
   const znane = new Set(wykaz.map((kategoria) => kategoria.id));
   return wykaz.filter((kategoria) => {
@@ -93,12 +85,18 @@ function najwyzszyPoziom(wykaz: readonly SettingCategory[]): SettingCategory[] {
   });
 }
 
-/** Kategorie podrzędne wskazanej kategorii, w kolejności z katalogu. */
+/**
+ * Kategorie podrzędne wskazanej kategorii, w kolejności z katalogu, dobierane
+ * po wypełnionym wskazaniu kategorii nadrzędnej.
+ */
 function dzieci(wykaz: readonly SettingCategory[], rodzic: string): SettingCategory[] {
   return wykaz.filter((kategoria) => kategoria.parentId === rodzic);
 }
 
-/** Pozycja nawigacji; ikona nieznana zestawowi jest pomijana, nie zastępowana. */
+/**
+ * Pozycja nawigacji; ikona nieznana zestawowi jest pomijana, a nie zastępowana
+ * zamiennikiem, który sugerowałby znaczenie nieobecne w katalogu.
+ */
 function przycisk(
   kategoria: SettingCategory,
   wcieta: boolean,

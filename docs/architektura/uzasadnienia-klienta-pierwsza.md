@@ -4227,3 +4227,11 @@ wyliczane przez rdzeń, a podgląd jest wyłącznie pomocą przy układaniu zapi
 
 Rachunek biegnie na składowych czasu UTC, tak samo jak w rdzeniu, aby oba wyniki
 dawały się porównać bez przeliczania strefy.
+
+## budowa/klient-poprzedni/src/konfiguracja/nawigacja-kategorii.ts
+
+Kategoria z wypełnionym wskazaniem nadrzędnej staje pod nią jako pozycja wcięta. Kategoria wskazująca rodzica, którego w katalogu nie ma, nie znika, lecz trafia na poziom najwyższy: ukrycie pozycji z powodu niespójności katalogu odebrałoby Operatorowi dostęp do ustawień.
+
+Żadna pozycja nie jest wygaszona. Kategoria z fałszywym znacznikiem czynności nie jest tu w ogóle rysowana, ponieważ katalog pobierany jest bez wierszy nieczynnych.
+
+Przebudowa wykazu nie ogłasza wyboru. Kolumna oznacza kategorię czynną i na tym kończy swoją rolę, a przebudowaniem formularza kieruje warstwa, która wykaz zamontowała. Bez tego rozdziału jedno wczytanie katalogu budowałoby formularz dwa razy.

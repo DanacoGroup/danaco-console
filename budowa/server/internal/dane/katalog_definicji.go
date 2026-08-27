@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: odczyt pozycji katalogu ustawień wraz z ich
-// dopuszczalnymi wartościami, poziomami zasięgu i osiami. Pozycja katalogu
-// odpowiada strukturze SettingDefinition kontraktu — klient buduje z niej pole
-// formularza i nie zna ani jednego klucza z osobna.
-//
-// Zbiory poboczne (opcje, zasięgi, osie) czytane są trzema zapytaniami zbiorczo
-// i dokładane do pozycji w pamięci. Zapytania per pozycja nie ma.
+// Odpowiedzialność pliku: odczyt pozycji katalogu ustawień wraz z ich dopuszczalnymi wartościami,
+// poziomami zasięgu i osiami.
 package dane
 
 import (
@@ -44,7 +39,7 @@ const (
 	                      ORDER BY d.klucz, o.pierwszenstwo`
 )
 
-// Definicje zwraca pozycje katalogu wraz ze zbiorami pobocznymi.
+// Definicje zwraca pozycje katalogu ustawień wraz ze zbiorami pobocznymi — opcjami, zasięgami i osiami.
 func (r *repozytoriumKatalogUstawien) Definicje(ctx context.Context,
 	tylkoAktywne bool) ([]shared.SettingDefinition, error) {
 
@@ -73,7 +68,7 @@ func (r *repozytoriumKatalogUstawien) Definicje(ctx context.Context,
 	return pozycje, nil
 }
 
-// pozycje odczytuje same wiersze pozycji, bez zbiorów pobocznych.
+// pozycje odczytuje same wiersze pozycji katalogu ustawień, bez dołączania jakichkolwiek zbiorów pobocznych.
 func (r *repozytoriumKatalogUstawien) pozycje(ctx context.Context,
 	tylkoAktywne bool) ([]shared.SettingDefinition, error) {
 
@@ -101,7 +96,7 @@ func (r *repozytoriumKatalogUstawien) pozycje(ctx context.Context,
 	return lista, nil
 }
 
-// opcje zwraca dopuszczalne wartości pozycji, zgrupowane kluczem ustawienia.
+// opcje zwraca dopuszczalne wartości pozycji katalogu, zgrupowane kluczem ustawienia, którego dotyczą.
 func (r *repozytoriumKatalogUstawien) opcje(ctx context.Context) (map[string][]shared.SettingOption, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaOpcjiUstawien)
 	if err != nil {
@@ -129,7 +124,7 @@ func (r *repozytoriumKatalogUstawien) opcje(ctx context.Context) (map[string][]s
 	return zebrane, nil
 }
 
-// pary odczytuje relację klucz ustawienia → kod słownika (poziom zasięgu, oś).
+// pary odczytuje relację między kluczem ustawienia a kodem słownika poziomu zasięgu albo wybranej osi.
 func (r *repozytoriumKatalogUstawien) pary(ctx context.Context, zapytanie,
 	obszar string) (map[string][]string, error) {
 
@@ -157,7 +152,7 @@ func (r *repozytoriumKatalogUstawien) pary(ctx context.Context, zapytanie,
 	return zebrane, nil
 }
 
-// odczytajPozycjeKatalogu składa pozycję kontraktu z jednego wiersza.
+// odczytajPozycjeKatalogu składa pozycję kontraktu katalogu ustawień z jednego wiersza wyniku zapytania.
 func odczytajPozycjeKatalogu(wiersz skaner) (shared.SettingDefinition, error) {
 	var pozycja shared.SettingDefinition
 	var opis, domyslna, wzorzec, jednostka, podpowiedz, gdyKlucz, gdyWartosc string

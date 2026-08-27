@@ -1373,3 +1373,16 @@ przemilczenia.
 
 Klasyfikacja stoi przy wierszu jako lista wyboru, a nie jako ikona. Rodzaj notatki ma być czytelny
 bez najeżdżania na znak i bez rozróżniania barw, a zmiana klasyfikacji ma być jednym gestem.
+
+## budowa/klient-poprzedni/src/aplikacja/gospodarz-dokumentu.ts
+
+Gospodarz ma jedną odpowiedzialność: przygotowuje dokument oraz jeden element,
+do którego router wstawia widoki tras. Nie zna rdzenia ani żadnego widoku i nie
+wie nawet, ile tras ma aplikacja.
+
+Brak kontenera przygotowanego przez `index.html` nie zatrzymuje uruchomienia.
+Gospodarz trafia wtedy do ciała dokumentu, a aplikacja rusza normalnie.
+
+Tytuł dokumentu składa nazwę projektu wziętą z opisu okna z nazwą produktu,
+ponieważ nazwa projektu pochodzi z konfiguracji budowania i różni się między
+osadzeniami, natomiast nazwa produktu jest stała.

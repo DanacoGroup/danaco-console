@@ -5,15 +5,9 @@ import { utworzFormularzKonta } from './formularz-konta';
 import { utworzWykazKont } from './wykaz-kont';
 
 /**
- * Panel kont — wykaz po lewej, formularz jednego konta po prawej.
- *
- * Panel pamięta wyłącznie, które konto jest już wypełnione w formularzu. Bez tego
- * każde zdarzenie `account.changed` kasowałoby treść właśnie wpisywaną, więc
- * wypełnienie następuje przy zmianie konta czynnego, a nie przy każdym
- * przeliczeniu stanu.
- *
- * Ograniczenie rodzaju jest częścią żądania `account.list`, nie filtrem
- * w kliencie: rejestr kont bywa długi, a kolejność rotacji zna rdzeń.
+ * Panel kont, czyli wykaz kont po lewej stronie i formularz jednego konta po
+ * prawej. Panel pamięta wyłącznie, które konto jest już wypełnione
+ * w formularzu, i wypełnia formularz dopiero przy zmianie konta czynnego.
  */
 export interface PanelKont {
   /** Panel osadzany w sekcji modeli. */
@@ -63,8 +57,7 @@ export function utworzPanelKont(stan: StanKont): PanelKont {
   });
 
   noweKonto.addEventListener('click', () => {
-    // Wybór zdejmujemy zawsze, także wtedy, gdy już go nie ma — formularz ma
-    // wtedy wrócić do stanu czystego, a nie zostać z wpisanymi wartościami.
+    // Wybór zdejmujemy zawsze, także gdy już go nie ma, aby formularz wrócił do stanu czystego.
     wypelnione = null;
     formularz.pokaz(null);
     stan.wybierz(null);

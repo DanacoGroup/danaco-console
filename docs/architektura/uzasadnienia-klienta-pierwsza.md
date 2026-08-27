@@ -1326,3 +1326,9 @@ klasy powtarzany przy każdym wywołaniu: `glowny` stoi tam, gdzie panel ma jedn
 czynność wiodącą, na przykład zapis albo dodanie, `zarys` przy pozostałych
 czynnościach panelu, `duch` przy pozycjach wykazu, gdzie przycisków w jednym
 wierszu jest wiele.
+
+## budowa/klient-poprzedni/src/modele/panel-kont.ts
+
+Panel pamięta wyłącznie, które konto jest już wypełnione w formularzu. Bez tej pamięci każde zdarzenie zmiany konta kasowałoby treść właśnie wpisywaną przez Operatora, dlatego wypełnienie formularza następuje przy zmianie konta czynnego, a nie przy każdym przeliczeniu stanu.
+
+Ograniczenie rodzaju kont jest częścią żądania wykazu kont kierowanego do rdzenia, a nie filtrem zakładanym w kliencie. Rejestr kont bywa długi, a kolejność rotacji zna rdzeń, więc wybór rodzaju musi trafić do żądania, żeby wykaz pozostał zgodny z rejestrem.

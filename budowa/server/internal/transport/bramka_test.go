@@ -9,11 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Straż bramki jest jedyną granicą bezpieczeństwa tego pakietu i jedynym
-// miejscem, w którym cokolwiek się nie udaje z woli produktu. Sprawdziany niżej
-// mierzą ją tablicą, bo reguła ma dokładnie trzy wejścia — wymóg, rodzaj komendy
-// i więź gniazda — i każdy ich układ ma jedno rozstrzygnięcie. Pominięcie
-// któregokolwiek pola tablicy zostawia w straży dziurę wielkości jednej komendy.
+// Straż bramki jest jedyną granicą bezpieczeństwa tego pakietu i jedynym miejscem odmowy produktu.
 
 // ujscieSprawdzianu jest najuboższym ujściem, jakie straż widzi: identyfikatorem
 // i niczym więcej. Straż pyta wyłącznie o identyfikator, więc bogatsze ujście
@@ -36,7 +32,7 @@ func (rdzenBezStanuBramki) Obsluz(context.Context, protocol.Request, Ujscie) pro
 	return protocol.Koperta{}
 }
 
-// rdzenZeStanemBramki odpowiada na pytanie o więź gniazda.
+// rdzenZeStanemBramki jest rdzeniem, który odpowiada na pytanie o więź gniazda z ważną sesją tej bramki.
 type rdzenZeStanemBramki struct {
 	zwiazane map[string]bool
 }
@@ -79,8 +75,7 @@ func TestWymogLogowaniaRozstrzygaAdresAlboWskazanie(t *testing.T) {
 	}
 }
 
-// TestStrazPrzepuszczaWylacznieWedlugReguly przechodzi wszystkie układy trzech
-// wejść straży.
+// Metoda TestStrazPrzepuszczaWylacznieWedlugReguly przechodzi wszystkie układy trzech wejść straży bramki.
 func TestStrazPrzepuszczaWylacznieWedlugReguly(t *testing.T) {
 	zeStanem := rdzenZeStanemBramki{zwiazane: map[string]bool{"pol-zwiazane": true}}
 
@@ -128,15 +123,7 @@ func TestStrazPrzepuszczaWylacznieWedlugReguly(t *testing.T) {
 	}
 }
 
-// TestKomendyWejsciaToWylacznieBramka pilnuje wykazu, który sam siebie nazywa
-// wyczerpującym. Dopisanie komendy spoza tego wykazu otwiera ją na oścież przed
-// logowaniem, więc zmiana ma się o ten sprawdzian potknąć.
-//
-// Siedem pozycji, nie trzy: rejestracja jest dwukrokowa (`auth.verify` wydaje
-// token, nie `auth.register`), odzyskanie konta jest dwukrokowe, a przedłużenie
-// sesji dotyczy tokenu, który gniazda nie związał. Każda z nich pada z gniazda
-// jeszcze nieprzedstawionego i bez każdej z nich któraś droga wejścia jest
-// zamknięta na głucho.
+// TestKomendyWejsciaToWylacznieBramka pilnuje wykazu komend wejścia, który sam siebie nazywa wyczerpującym.
 func TestKomendyWejsciaToWylacznieBramka(t *testing.T) {
 	oczekiwane := map[shared.MessageType]bool{
 		shared.CommandConnectionHello:  true,

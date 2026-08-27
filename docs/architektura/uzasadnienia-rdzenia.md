@@ -5401,3 +5401,13 @@ w rdzeniu nie ma.
 procesu, i dotyczy ono procesu, nie zapisu na strumień. Wiersze wyjścia jadą zdarzeniem fragmentu
 strumienia prosto z dziennika zbiorczego, a nie z obsługiwacza żądania: proces pisze długo po tym,
 jak odpowiedź na komendę już wróciła.
+
+## budowa/server/internal/core/handlers_terminal_wyposazenie.go
+Port jest rozszerzeniem, nie drugim portem — tak samo jak wyjście: osadza port Terminal, bo
+wyposażenie modułu ma tego samego właściciela co karty i procesy, a adapter wypełniający jeden
+wypełnia wszystkie. Żadna z tych komend nie rozgłasza własnego zdarzenia i nie jest to przeoczenie:
+kontrakt daje modułowi jedno zdarzenie zmiany procesu, dotyczące procesu. Zmiany, które procesu
+dotyczą — wstrzymanie, zakończenie procesów zamykanej karty, wyzwolenie obserwacji — idą tym
+zdarzeniem z adaptera. Zmiany wpisu książki hostów czy pozycji biblioteki nie mają w kontrakcie
+zdarzenia, więc klient odświeża wykaz po własnym zapisie, zamiast dostawać rozgłoszenie nazwą,
+której kontrakt nie zna.

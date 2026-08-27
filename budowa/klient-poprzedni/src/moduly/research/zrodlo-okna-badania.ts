@@ -11,19 +11,8 @@ import { KOD_MODULU } from './kody-okien';
 import { utworzNasluchOdmow, type NasluchOdmow, type OdpowiedzBadania } from './nasluch-odmow';
 
 /**
- * Trzy komendy obszaru `window.*`, na których stoi moduł Research.
- *
- * Moduł pyta o okna, bo każda komenda `research.*` wymaga pola `windowId` —
- * „okna badania". Klient nie wymyśla tego identyfikatora: bierze go z rdzenia
- * komendą `window.list` zawężoną do sesji i do modułu `research`. Zaszyty
- * identyfikator byłby daną zmyśloną, a okno bez wskazania rdzenia pokazuje
- * stan pusty, zamiast udawać, że wie.
- *
- * Wszystkie trzy mają uchwyt w rdzeniu: `window.list` i `window.state.get`
- * (`core/handlers_window.go`, `core/handlers_nawigacja.go`) oraz
- * `window.action` (`core/adapter_okno_przekazanie_uchwyty.go` →
- * `CommandWindowAction`) — droga wykonania dla akcji panelu, których kontrakt
- * nie rozróżnia osobną komendą (Cytuj, Grupuj automatycznie, Porównaj źródła).
+ * Trzy komendy obszaru window w rdzeniu, na których stoi moduł Research: wykaz okien, stan
+ * okna i akcja panelu, wszystkie wymagające identyfikatora okna badania.
  */
 export interface ZrodloOknaBadania {
   /** Okna sesji należące do modułu Research, w kolejności rdzenia. */
@@ -80,7 +69,7 @@ export function utworzZrodloOknaBadania(kanal: Kanal): ZrodloOknaBadania {
   };
 }
 
-/** Sprawdzian odpowiedzi `window.action` zachowujący nazwę nieznanego typu. */
+/** Sprawdzian odpowiedzi akcji okna zachowujący nazwę nieznanego typu, żeby okno mogło wypisać ją Operatorowi wprost. */
 function sprawdzKsztaltAkcji(
   odpowiedz: OdpowiedzBadania<WindowActionResponse>,
 ): OdpowiedzBadania<WindowActionResponse> {

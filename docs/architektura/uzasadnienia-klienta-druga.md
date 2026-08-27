@@ -4833,3 +4833,15 @@ nazwą zostaje numer kolejny wystąpienia — reguła jest jedna, jawna i wypowi
 sprawozdaniu, bo nazwa zmiennej nie jest czymś, co wolno zgadnąć.
 Podwójne nawiasy pasują także do wzorca nazwy w pojedynczych nawiasach, więc bez pilnowania
 odcinków zajętych jedno wystąpienie policzyłoby się dwa razy pod dwiema nazwami stylu.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/zrodlo-podgladu-bash.ts
+Żądanie bez identyfikatora okna jest kontraktem dopuszczone i znaczy sam
+odczyt ogona — wraca wtedy wartość zapisu na żywo fałszywa, co nie jest
+awarią, i okno ma to powiedzieć wprost, zamiast milczeć albo udawać podgląd
+na żywo, którego nie ma. Kontrakt nie ma osobnego zdarzenia zbiorczego
+wyjścia, więc rdzeń rozsyła wiersze obserwatorowi wspólnym strumieniem
+fragmentów z identyfikatorem okna obserwującego i identyfikatorem
+wiadomości równym identyfikatorowi procesu, dlatego druga czynność tego
+źródła jest subskrypcją, a nie drugą komendą. To nie jest drugie źródło
+terminala: źródło terminala niesie komendy kart i procesów, a ten plik
+wyłącznie jedną komendę zbiorczego wyjścia i żadnej z tamtych nie powiela.

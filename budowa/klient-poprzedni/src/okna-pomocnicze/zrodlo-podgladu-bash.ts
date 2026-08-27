@@ -12,29 +12,7 @@ import { czyLogiczna, czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odp
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Źródło podglądu w tle — jedna komenda kontraktu (`terminal.output.stream`)
- * i jedna subskrypcja (`stream.chunk`).
- *
- * `shared/contract.ts` niesie `Command.TerminalOutputStream`, a rdzeń rejestruje
- * dla niej uchwyt (`server/internal/core/handlers_terminal_wyjscie.go`), więc
- * podgląd w tle stoi na tej komendzie, a nie na obejściu.
- *
- * Komenda robi dwie czynności naraz, a odpowiedź rozdziela je na dwa pola:
- * zapisuje wskazane okno na zbiorcze wyjście wszystkich otwartych kart
- * terminala (`subscribed`) oraz oddaje ogon historii (`lines`). Żądanie bez
- * `windowId` jest kontraktem dopuszczone i znaczy sam odczyt ogona — wraca
- * wtedy `subscribed: false`. To nie jest awaria i okno ma to powiedzieć wprost,
- * zamiast milczeć albo udawać podgląd na żywo, którego nie ma.
- *
- * Nowe wiersze jadą `stream.chunk`, nie osobnym zdarzeniem: kontrakt nie ma
- * zdarzenia zbiorczego wyjścia, a rdzeń rozsyła wiersze obserwatorowi wspólnym
- * strumieniem fragmentów z `windowId` okna obserwującego i `messageId` równym
- * identyfikatorowi procesu. Dlatego druga czynność tego źródła jest
- * subskrypcją, a nie drugą komendą.
- *
- * To nie jest drugie źródło terminala: `moduly/terminal/zrodlo-terminala.ts`
- * niesie komendy kart i procesów, a ten plik wyłącznie tę jedną i żadnej
- * z tamtych nie powiela.
+ * Źródło podglądu w tle stoi na jednej komendzie kontraktu i jednej subskrypcji: komenda zapisuje okno na zbiorcze wyjście i oddaje ogon historii, a nowe wiersze dochodzą tą samą subskrypcją, nie osobnym zdarzeniem.
  */
 export interface ZrodloPodgladuBash {
   /**
@@ -53,10 +31,7 @@ export interface ZrodloPodgladuBash {
 export function utworzZrodloPodgladuBash(kanal: Kanal): ZrodloPodgladuBash {
   return {
     async zapiszNaWyjscie(zadanie) {
-      // Sprawdzian kształtu obejmuje oba pola odpowiedzi, bo okno rozstrzyga
-      // z nich dwie różne rzeczy: `lines` daje historię, `subscribed` daje
-      // prawo do zdania „podgląd jest na żywo". Brak któregokolwiek zamienia
-      // odpowiedź w zwykłe niepowodzenie wywołania, a nie w pustą historię.
+      // Sprawdzian obejmuje oba pola odpowiedzi: historię oraz prawo do zdania, że podgląd jest na żywo.
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.TerminalOutputStream, zadanie),
         Command.TerminalOutputStream,

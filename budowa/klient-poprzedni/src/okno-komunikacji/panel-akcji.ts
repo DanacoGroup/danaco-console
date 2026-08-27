@@ -1,7 +1,7 @@
 import type { Action } from '../../../shared/contract';
 import type { ProfilModulu } from './profil-modulu';
 
-/** Panel akcji modułu — pozycje z rejestru rdzenia. */
+/** Panel akcji modułu pokazuje pozycje pobrane z rejestru rdzenia, uporządkowane w kolejności, w jakiej rejestr je zwraca. */
 export interface PanelAkcji {
   /** Element montowany w oknie komunikacji. */
   element: HTMLElement;
@@ -10,16 +10,7 @@ export interface PanelAkcji {
 }
 
 /**
- * Panel akcji budowany dynamicznie z rejestru akcji per moduł.
- *
- * Panel nie zna ani jednej akcji z nazwy — dostaje wiersze katalogu i rysuje
- * je w kolejności rejestru. Kliknięcie wstawia do pola wypowiedzi polecenie
- * wykonania akcji wraz z nazwą jej komendy kontraktu; wywołania dokonuje model
- * narzędziem platformy, więc panel nie buduje treści żądania, której
- * nie zna.
- *
- * Katalog pusty nie daje panelu pustego: zostaje wyjaśnienie, dlaczego pozycji
- * nie ma.
+ * Panel akcji budowany dynamicznie z rejestru akcji na moduł nie zna ani jednej akcji z nazwy: kliknięcie wstawia do pola wypowiedzi polecenie wykonania wraz z nazwą komendy kontraktu, a treść żądania buduje model, nie panel.
  */
 export function utworzPanelAkcji(naAkcje: (akcja: Action) => void): PanelAkcji {
   const element = document.createElement('section');
@@ -49,7 +40,7 @@ export function utworzPanelAkcji(naAkcje: (akcja: Action) => void): PanelAkcji {
   };
 }
 
-/** Pozycja panelu: etykieta katalogu, opis i komenda w podpowiedzi. */
+/** Pozycja panelu akcji niosąca etykietę katalogu, opis działania oraz komendę wstawianą do pola podpowiedzi. */
 function przycisk(akcja: Action, naAkcje: (akcja: Action) => void): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';

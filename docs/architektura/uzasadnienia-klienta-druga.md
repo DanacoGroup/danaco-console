@@ -3270,3 +3270,6 @@ klikalności ani jednej kontrolki: Reading View bez wskazanego źródła pokazuj
 czego czytać", a nie wygaszony przycisk. Ogłoszenie idzie wyłącznie po faktycznej zmianie — odbiorcą
 jest przerysowanie okien, a przerysowanie woła ograniczenie wskazania; ogłoszenie bezwarunkowe
 zamknęłoby pętlę bez końca. Ten sam wzorzec niesie plik `zaznaczenie-pozycji.ts`.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/panel-akcji.ts
+Katalog pusty nie daje panelu pustego: gdy pozycji nie ma, panel pokazuje wyjaśnienie powodu zamiast milczącej pustej przestrzeni.

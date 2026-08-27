@@ -4861,3 +4861,20 @@ integrację API i umiejętność.
 O tym, czym jest instalacja pozycji, rozstrzyga rdzeń, a nie ta warstwa. Źródło przekazuje
 pola kontraktu i oddaje odpowiedź bez dopowiedzenia, żeby znaczenie czynności zostało
 w jednym miejscu.
+
+## budowa/klient-poprzedni/src/dostepy/wykaz-punktow.ts
+
+Maszyna za mostem protokołu i katalog na dysku urządzenia to dwa różne ryzyka
+i dwie różne drogi sprawdzenia, więc wykaz rozdziela je rodzajem. Zlanie ich
+w jedną listę kazałoby czytać rodzaj z każdego wiersza z osobna.
+
+Karty przeżywają przeliczenie: zmiana stanu nanosi wartości na karty już
+zbudowane, a przebudowa następuje wyłącznie po zmianie składu wykazu. Inaczej
+wybór trybu i zaznaczenie korzeni ginęłyby przy każdym zdarzeniu z rdzenia. Do
+składu wchodzą korzenie, bo z nich powstaje wybór korzeni w karcie; stan punktu
+i czas sprawdzenia do składu nie wchodzą, ponieważ zmieniają się przy każdym
+sprawdzeniu, a przebudowa zabrałaby wybór trybu wpisany chwilę wcześniej.
+
+Stan pusty należy się wyłącznie odczytowi zakończonemu powodzeniem. W trakcie
+pytania rdzenia zdanie o braku punktów byłoby nieprawdą, a po niepowodzeniu
+odczytu pomyłką co do przyczyny.

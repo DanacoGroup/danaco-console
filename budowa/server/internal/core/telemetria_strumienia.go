@@ -5,18 +5,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// nadajnikZTelemetria czyta szynę zdarzeń i zamienia fragmenty strumienia
-// odpowiedzi na telemetrię postępu.
-//
-// Punkt podłączenia jest tutaj, a nie w adapterze rozmowy, z jednego powodu:
-// strumień jest jedyną drogą, którą tura mówi o sobie w czasie rzeczywistym
-// . Fragment tekstu jest kolejnym etapem, fragment wywołania
-// narzędzia — etapem nazwanym, a fragment ostatni domyka proces. Rodzaj „błąd"
-// w ostatnim fragmencie oznacza turę nieudaną, bo strumień ma jedną drogę dla
-// powodzenia i niepowodzenia.
-//
-// Zdarzenie telemetrii wychodzi nadajnikiem opakowanym, nie tym owiniętym, więc
-// nie wraca tutaj powtórnie.
+// nadajnikZTelemetria czyta szynę zdarzeń i zamienia fragmenty strumienia odpowiedzi na telemetrię postępu w czasie rzeczywistym. Zdarzenie telemetrii wychodzi nadajnikiem opakowanym, więc nie wraca tutaj powtórnie.
 type nadajnikZTelemetria struct {
 	nadajnik   Nadajnik
 	telemetria *telemetriaPostepu
@@ -56,7 +45,7 @@ func (n nadajnikZTelemetria) odnotuj(k protocol.Koperta) {
 	n.telemetria.Krok(opis, etapFragmentu(fragment.Kind))
 }
 
-// stanPoStrumieniu rozstrzyga stan procesu po ostatnim fragmencie tury.
+// stanPoStrumieniu rozstrzyga stan procesu po ostatnim fragmencie tury: powodzenie albo niepowodzenie.
 func stanPoStrumieniu(rodzaj shared.ChunkKind) shared.ProgressStatus {
 	if rodzaj == shared.ChunkKindError {
 		return shared.ProgressStatusFailed

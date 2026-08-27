@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: cztery komendy wyciszenia nakładki Always On Display
-// — `aod.mute.get`, `aod.mute.set`, `aod.signal.report`, `aod.signal.list`.
-//
-// Skąd to się wzięło. Rozstrzygnięcie Właściciela z 17.08.2026: „dodatkowa akcja
-// wyciszenia bezpośrednio z pozycji awatara". Wyciszenie stało dotąd wyłącznie
-// w oknie nakładki (`client/src/aod/wyciszenie-aod.ts`, zapis miejscowy
-// przeglądarki), więc Operator wyciszał sugestie w jednej powłoce, a w drugiej
-// wchodziły dalej. Wyciszenie musiało zostać bytem rdzenia i tym jest tutaj.
-//
-// Trzy rodzaje wyciszenia, nie pięć. Tabela rozdz. 3.5 opracowania
-// `funkcje-globalne/always-on-display.md` ma pięć wierszy: trzy pierwsze są
-// wyciszeniami (czasowe, kontekstowe, klasy zdarzeń), tryb cichy jest TRYBEM
-// OBECNOŚCI (rozdz. 9.2) i jedzie ustawieniem konfiguracji, a wyjątek wagi
-// krytycznej nie jest wyciszeniem, lecz regułą przebijającą każde z trzech.
-//
-// Odwracalność jednym ruchem. Założenie i zniesienie idą JEDNĄ komendą
-// `aod.mute.set` — polem `muted`. Druga komenda na zniesienie kazałaby oknu
-// trzymać dwie drogi do jednej czynności, a Operatorowi — pamiętać, którą z nich
-// wyciszył.
-//
-// Sygnał odkłada się nawet wyciszony. Wyciszenie wstrzymuje UJAWNIENIE, nie zapis
-// (rozdz. 3.1 i 3.5). Odpowiedź `aod.signal.report` mówi wprost, czy sygnał
-// wpadł w wyciszenie i w które — po to, żeby wołacz nie musiał zgadywać, czemu
-// nakładka milczy. `aod.signal.list` nazywa liczbę sygnałów wstrzymanych
-// i wyciszenia, które je wstrzymały: cisza, po której Operator nie wie, że coś
-// milczy, jest gorsza od braku wyciszenia.
+// Plik obsługuje cztery komendy wyciszenia nakładki Always On Display:
+// aod.mute.get, aod.mute.set, aod.signal.report oraz aod.signal.list,
+// prowadzone w rdzeniu niezależnie od okna nakładki.
 package core
 
 import (
@@ -36,9 +13,11 @@ import (
 )
 
 const (
-	// przedrostekWyciszeniaNakladki znakuje identyfikator wyciszenia nadany przez rdzeń.
+	// przedrostekWyciszeniaNakladki znakuje identyfikator wyciszenia nadany przez rdzeń,
+	// odróżniając go od identyfikatora sygnału przy odczycie dziennika zdarzeń.
 	przedrostekWyciszeniaNakladki = "wyc-"
-	// przedrostekSygnaluNakladki znakuje identyfikator sygnału nadany przez rdzeń.
+	// przedrostekSygnaluNakladki znakuje identyfikator sygnału nadany przez rdzeń,
+	// odróżniając go od identyfikatora wyciszenia przy odczycie dziennika zdarzeń.
 	przedrostekSygnaluNakladki = "syg-"
 )
 
@@ -73,18 +52,8 @@ func (a *adapterNakladkiAod) WyciszeniaNakladki(ctx context.Context,
 // ── aod.mute.set ────────────────────────────────────────────────────────────
 
 // PrzestawWyciszenieNakladki obsługuje `aod.mute.set`: zakłada wyciszenie
-// nakładki albo je znosi.
-//
-// Zniesienie wskazuje wyciszenie identyfikatorem albo — gdy okno go nie zna —
-// rodzajem i zakresem. Druga droga jest tą, którą idzie menu awatara znoszące to,
-// co samo wcześniej wyciszyło, bez pamiętania identyfikatorów.
-//
-// Odpowiedź zawsze niesie wykaz PO zmianie, więc powłoka nie pyta drugi raz,
-// oraz pole `changed`, które mówi, czy wykaz naprawdę się ruszył.
-// Wyciszenie objęte zmianą wraca OBOK odpowiedzi kontraktu — tą samą drogą,
-// którą `aod.chat.send` oddaje przyjętą wiadomość. Odpowiedź niesie wykaz po
-// zmianie, a rozgłoszenie `aod.mute.changed` potrzebuje jeszcze tego jednego
-// wyciszenia, którego dotyczyła czynność.
+// nakładki albo je znosi, wskazane identyfikatorem albo rodzajem i zakresem,
+// i oddaje wykaz wyciszeń po zmianie razem z polem `changed`.
 func (a *adapterNakladkiAod) PrzestawWyciszenieNakladki(ctx context.Context,
 	z shared.AodMuteSetRequest) (shared.AodMuteSetResponse, shared.AodMute, error) {
 
@@ -101,7 +70,9 @@ func (a *adapterNakladkiAod) PrzestawWyciszenieNakladki(ctx context.Context,
 	return a.zniesWyciszenie(ctx, z)
 }
 
-// zalozWyciszenie zapisuje wyciszenie i składa odpowiedź komendy.
+// zalozWyciszenie nadaje wyciszeniu identyfikator, wiąże je z urządzeniem
+// żądania, zapisuje je w magazynie i składa odpowiedź komendy z wykazem
+// wyciszeń po zmianie.
 func (a *adapterNakladkiAod) zalozWyciszenie(ctx context.Context,
 	z shared.AodMuteSetRequest, urzadzenie string) (shared.AodMuteSetResponse, shared.AodMute, error) {
 
@@ -126,7 +97,9 @@ func (a *adapterNakladkiAod) zalozWyciszenie(ctx context.Context,
 	}, wyciszenieKontraktu(zapisane), nil
 }
 
-// zniesWyciszenie znosi wyciszenie wskazane identyfikatorem albo rodzajem i zakresem.
+// zniesWyciszenie znosi wyciszenie wskazane identyfikatorem albo rodzajem
+// i zakresem, po czym składa odpowiedź komendy z wykazem wyciszeń czynnych
+// po zmianie.
 func (a *adapterNakladkiAod) zniesWyciszenie(ctx context.Context,
 	z shared.AodMuteSetRequest) (shared.AodMuteSetResponse, shared.AodMute, error) {
 
@@ -187,11 +160,8 @@ func (a *adapterNakladkiAod) wyciszenieDoZniesienia(ctx context.Context,
 // ── aod.signal.report ───────────────────────────────────────────────────────
 
 // ZglosSygnalNakladki obsługuje `aod.signal.report`: odkłada w rdzeniu sygnał
-// klasy zdarzeń wyzwalających i mówi, czy wpadł w wyciszenie.
-//
-// Sygnał wyciszony odkłada się NADAL. Wyciszenie wstrzymuje ujawnienie, a nie
-// zapis: skasowanie sygnału w chwili wyciszenia zabrałoby Operatorowi to, co miał
-// zobaczyć po jego zniesieniu.
+// klasy zdarzeń wyzwalających i mówi, czy sygnał wpadł w wyciszenie czynne
+// w tej chwili.
 func (a *adapterNakladkiAod) ZglosSygnalNakladki(ctx context.Context,
 	z shared.AodSignalReportRequest) (shared.AodSignalReportResponse, error) {
 
@@ -248,8 +218,8 @@ func (a *adapterNakladkiAod) SygnalyNakladki(ctx context.Context,
 	if err != nil {
 		return shared.AodSignalListResponse{}, err
 	}
-	// Zawężenie do klas idzie po odczycie, nie zapytaniem: klas bywa wiele,
-	// a zapytanie na jedną klasę oddałoby wykaz uboższy niż żądanie.
+	// Zawężenie do klas idzie po odczycie, nie zapytaniem — zapytanie na
+	// jedną klasę zwęziłoby wykaz.
 	wiersze, err := a.wyciszenia.SygnalyNakladki(ctx, dane.SygnalNakladki{
 		ModulKod: wartoscTekstu(z.ModuleId),
 		SesjaKod: wartoscTekstu(z.SessionId),
@@ -281,8 +251,8 @@ func (a *adapterNakladkiAod) SygnalyNakladki(ctx context.Context,
 		}
 		sygnaly = append(sygnaly, sygnalKontraktu(wiersz))
 	}
-	// Wyciszenia idą w kolejności wykazu czynnych, a nie w kolejności napotkania
-	// — odpowiedź ma wyglądać tak samo przy każdym odczycie.
+	// Wyciszenia idą w kolejności wykazu czynnych, nie napotkania, żeby
+	// odpowiedź była powtarzalna.
 	wyciszenia := make([]shared.AodMute, 0, len(wstrzymujace))
 	for _, wyciszenie := range czynne {
 		if _, wstrzymalo := wstrzymujace[wyciszenie.Identyfikator]; wstrzymalo {
@@ -298,23 +268,17 @@ func (a *adapterNakladkiAod) SygnalyNakladki(ctx context.Context,
 
 // ── reguła wyciszenia ──────────────────────────────────────────────────────
 
-// wyciszenieObejmujaceSygnal mówi, KTÓRE wyciszenie wstrzymuje ten sygnał.
-//
-// Odpowiedzią jest samo wyciszenie, nie „prawda albo fałsz": Operator ma
-// usłyszeć, co dokładnie milczy i do kiedy. Ta sama reguła stoi po stronie okna
-// (`wyciszenieObejmujace` w `client/src/aod/wyciszenie-aod.ts`) i obie muszą
-// rozstrzygać tak samo, bo obie odpowiadają na to samo pytanie.
-//
-// Sygnał bez modułu NIE WPADA w wyciszenie modułu, a sygnał bez karty sesji — w
-// wyciszenie karty: milczenie sygnału, o którym nie wiemy, czy dotyczy wyciszonego
-// bytu, byłoby ciszą bez podstawy.
+// wyciszenieObejmujaceSygnal wskazuje, które z wyciszeń czynnych wstrzymuje
+// dany sygnał, uwzględniając rodzaj wyciszenia, zakres oraz klasę zdarzeń
+// sygnału. Regułę powtarza client/src/aod/wyciszenie-aod.ts po stronie okna.
 func wyciszenieObejmujaceSygnal(czynne []dane.WyciszenieNakladki,
 	sygnal dane.SygnalNakladki) (dane.WyciszenieNakladki, bool) {
 
 	for _, wyciszenie := range czynne {
 		switch wyciszenie.Rodzaj {
 		case shared.AodMuteKindTimed:
-			// Wyciszenie czasowe obejmuje wszystko — rozdz. 3.5, kolumna „Zakres".
+			// Wyciszenie czasowe obejmuje każdy sygnał, niezależnie od modułu
+			// i klasy zdarzeń.
 			return wyciszenie, true
 		case shared.AodMuteKindContextual:
 			byt := sygnal.ModulKod
@@ -335,7 +299,8 @@ func wyciszenieObejmujaceSygnal(czynne []dane.WyciszenieNakladki,
 
 // ── ustalenia wspólne ──────────────────────────────────────────────────────
 
-// wyciszeniaCzynne odczytuje wyciszenia czynne o chwili bieżącej.
+// wyciszeniaCzynne odczytuje wyciszenia czynne o chwili bieżącej, pomijając
+// wyciszenia czasowe, których czas trwania już upłynął.
 func (a *adapterNakladkiAod) wyciszeniaCzynne(
 	ctx context.Context) ([]dane.WyciszenieNakladki, error) {
 
@@ -398,7 +363,8 @@ func wzorWyciszenia(z shared.AodMuteSetRequest) (dane.WyciszenieNakladki, error)
 	return wzor, nil
 }
 
-// opisBytuWyciszenia nazywa byt wyciszenia w treści odmowy.
+// opisBytuWyciszenia nazywa byt wyciszenia w treści odmowy, dobierając opis
+// do rodzaju: wyciszenie czasowe, zakres kontekstowy albo klasę zdarzeń.
 func opisBytuWyciszenia(wzor dane.WyciszenieNakladki) string {
 	switch wzor.Rodzaj {
 	case shared.AodMuteKindTimed:
@@ -410,7 +376,8 @@ func opisBytuWyciszenia(wzor dane.WyciszenieNakladki) string {
 	}
 }
 
-// sprawdzMagazynWyciszen odmawia, gdy magazynu wyciszeń nie wpięto.
+// sprawdzMagazynWyciszen odmawia, gdy magazynu wyciszeń nie wpięto do
+// adaptera, zamiast dopuścić dalsze odczyty i zapisy do składnika, którego nie ma.
 func (a *adapterNakladkiAod) sprawdzMagazynWyciszen() error {
 	if a.wyciszenia != nil {
 		return nil
@@ -428,7 +395,9 @@ func wyciszeniaKontraktu(wiersze []dane.WyciszenieNakladki) []shared.AodMute {
 	return wykaz
 }
 
-// wyciszenieKontraktu przekłada jeden wiersz wyciszenia na kształt kontraktu.
+// wyciszenieKontraktu przekłada jeden wiersz wyciszenia na kształt kontraktu,
+// ustawiając pola zakresu, klasy zdarzeń i chwili końca tylko wtedy, gdy
+// wiersz je niesie.
 func wyciszenieKontraktu(w dane.WyciszenieNakladki) shared.AodMute {
 	wyciszenie := shared.AodMute{
 		Id:        w.Identyfikator,
@@ -453,7 +422,8 @@ func wyciszenieKontraktu(w dane.WyciszenieNakladki) shared.AodMute {
 	return wyciszenie
 }
 
-// sygnalKontraktu przekłada wiersz sygnału na kształt kontraktu.
+// sygnalKontraktu przekłada wiersz sygnału na kształt kontraktu, ustawiając
+// liczbę wystąpień tylko wtedy, gdy wiersz sygnału ją niesie.
 func sygnalKontraktu(s dane.SygnalNakladki) shared.AodSignal {
 	sygnal := shared.AodSignal{
 		Id:         s.Identyfikator,

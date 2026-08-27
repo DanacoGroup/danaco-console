@@ -3816,3 +3816,10 @@ Miara jest daną, a wygląd należy do arkusza stylu. Rolę paska postępu niesi
 
 ## budowa/klient/src/wejscie/skladniki/pole-sesji.ts
 Samo hasło "pozostań zalogowany" nie niesie ani jednego, ani drugiego bez opisu skutku. Zgoda idzie do rdzenia jako pole trwania sesji: sesja bramki dostaje trwanie długie zamiast doby roboczej. Bramką nie jest — znosi powtarzanie logowania, niczego nie blokuje.
+
+## budowa/klient-poprzedni/src/strona-glowna/pytanie-o-nazwe.ts
+Z modalu korzystają czynności zmiany nazwy, kopii i przypisania projektu. Warstwę tła daje pseudoelement
+podkładu, a stos okien, pułapkę ogniska i zamknięcie klawiszem Escape zapewnia przeglądarka. Zamknięcie
+oznacza odmowę, nie nazwę pustą: Escape i przycisk odmowy dają brak wartości, więc wywołujący odróżnia
+odmowę od świadomie pustego napisu. Modal jest doklejany na czas pytania i usuwany po odpowiedzi, żeby
+pytania nie nawarstwiały się w drzewie przy każdym wierszu wykazu.

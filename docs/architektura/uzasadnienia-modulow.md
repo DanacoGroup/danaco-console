@@ -3209,3 +3209,224 @@ i odczytany z powrotem przy odnowieniu, zamiast brać stałą. Bez tego każde
 (`client/src/uwierzytelnienie/ekran-logowania.ts`) — ścinałoby sesję roczną
 do dwunastu godzin. Wiersz bez zapisanego trwania niesie zero i dostaje
 trwanie podstawowe.
+
+## budowa/server/internal/core/adapter_modul_studio.go
+
+Jedna droga zapisu: document.save jest jedynym miejscem, które zapisuje treść
+dokumentu — document.open tylko czyta albo zakłada wiersz pusty. Dwie ścieżki
+zapisu tej samej treści byłyby dwiema prawdami o tym samym bycie.
+
+Bez rejestru kanałów operacja kontekstowa — sedno modułu Studio — odmawia
+kodem channel_unavailable, bo nie ma czym wywołać modelu. Rejestr okien jest
+potrzebny, bo kanał modelu należy do okna: Studio pracuje w imieniu okna
+komunikacji i ma sięgnąć po kanał, który Operator ustawił temu oknu.
+
+Trzy zależności ZNarzedziami nie sprowadzają się do jednej: uruchamiacz
+startuje proces, rozstrzygacz mówi, jakie zasady obowiązują okno, a katalog
+wskazuje obszar, w którym proces wolno puścić. Ten sam komplet bierze adapter
+narzędzi dokumentu pod nazwą ZIzolacja. Zależność jest opcjonalna: bez niej
+czynności sięgające po arsenał odmawiają zdaniem nazywającym brak.
+
+Katalog danych ZZasobami jest ten sam, nad którym stoi magazyn zasobów
+Designu — wynik wydania Studia i wynik warsztatu PDF mają leżeć w jednym
+miejscu, bo dwa magazyny znaczyłyby dwa katalogi, z których jeden prędzej czy
+później zostałby przy kopii. Zależność jest opcjonalna: bez niej czynności
+wydania, wyrysu i osadzenia odmawiają zdaniem nazywającym brak.
+
+OtworzDokument nie doczytuje treści z Library przy wskazaniu pliku
+repozytorium — zrobiłoby to z adaptera Studio klienta modułu Library, którego
+konstruktor nie zna. Ścieżka urządzenia jest lokalna dla klienta; rdzeń nie ma
+dostępu do systemu plików Operatora.
+
+dane.ZapiszWersje zostawia wersja_biezaca_id nietknięty (patrz komentarz
+w studio_wersje.go) i oddaje wywołującemu decyzję, kiedy nowa wersja staje się
+bieżącą. document.save z createVersion=true zakłada wersję po to, żeby
+Operator dalej edytował od niej, więc od razu staje się bieżącą. Inaczej niż
+w PrzywrocWersje (studio_wersje.go), gdzie bieżącą staje się wersja wskazana
+przez Operatora, a nie najświeższa zapisana.
+
+Assets Panel i Preview Window widzą wynik po wierszu repozytorium Designu; bez
+tej pary wydanie archiwum, wyrys strony i osadzenie grafiki nie mają gdzie
+odłożyć tego, co zrobiły, a odczyt zasobu nie ma skąd wziąć materiału.
+## budowa/server/internal/core/adapter_modul_terminal_wyjscie_dziennik.go
+
+Byt osobny od adapter_modul_terminal_strumien.go: tamten rozsyla wyjscie
+jednego procesu do okna, w ktorym stoi karta (WindowId: proces.oknoKod),
+a tutaj zbiorcze wyjscie wszystkich kart odbiera okno wskazane w zadaniu,
+wraz z ogonem historii. Okno Output Console nie musi byc oknem karty.
+
+Dziennik nie czyta potokow procesow po raz drugi: owija nadajnik, ktorym
+istniejaca pompa juz wysyla fragmenty (nadajnikZDziennikiem). Fragment idzie
+swoja dotychczasowa droga nietkniety, a do dziennika i do okna obserwatora
+wchodzi jego kopia. Dwie pompy na jeden potok czytalyby sobie nawzajem bajty.
+
+Fragment nie jest wierszem: pompa czyta bloki po 32 KiB, a kontrakt niesie
+TerminalOutputLine, czyli wiersz. Blok bywa urwany w polowie wiersza, wiec
+resztka czeka na ciag dalszy, osobno dla wyjscia zwyklego i diagnostycznego
+(dwie gorutyny, dwa niezalezne strumienie). Resztka bez znaku konca linii
+dluzsza niz maksDlugoscWierszaWyjscia idzie do dziennika jako wiersz mimo
+wszystko, bo pasek postepu nie konczy sie nigdy, a zuzycie pamieci ma
+pozostac ograniczone.
+
+Wierszy wyjscia nie ma gdzie zapisac: schemat bazy ma tabele terminal_karta
+i terminal_proces, zadnej tabeli wyjscia. Dziennik jest wiec pierscieniem
+w pamieci, tak samo jak pamieciowa warstwa historii procesow
+(pojemnoscHistorii w adapter_modul_terminal_rejestr.go). Po restarcie ogon
+jest pusty.
+
+Kolejnosc w nadajnikZDziennikiem jest istotna: najpierw droga do okna karty,
+potem dziennik, zeby skladanie wierszy i rozsylka do obserwatorow nie
+opozniaja wyjscia karty.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_dokument.go
+
+Wczytanie dokumentu robi trzy rzeczy naraz i wszystkie trzy są trwałe: zakłada
+wiersz dokumentu, zapisuje jego segmenty i wstawia treść dokumentu jako tekst
+źródłowy okna. Trzecia jest tą, dla której Operator w ogóle wczytuje dokument:
+bez niej `target.add` nie miałby czego przetłumaczyć, a moduł meldowałby
+wczytanie dokumentu, po którym okno zostaje puste.
+
+### zapasDlugosciUkladu
+
+Powyżej piętnastu procent tekst realnie wychodzi poza ramkę, w której stał
+oryginał.
+
+### WczytajDokument — wskazanie zasobu
+
+Kontrakt dopuszcza wskazanie zasobu zamiast ścieżki. Rdzeń modułu Translate
+nie ma dostępu do magazynu zasobów Designu, więc nazywa to wprost, zamiast
+oddać pusty dokument z identyfikatorem donikąd.
+
+### WczytajDokument — rozpoznanie pisma
+
+Dokument bez warstwy tekstowej: rozpoznanie pisma idzie Tesseraktem
+z arsenału serwerowego — jedyna droga do treści skanu, i droga wskazana
+zasadą produktu (nagłówek `*_dokument_formaty.go`).
+
+### WczytajDokument — podział okna
+
+Podział okna idzie po segmentach dokumentu, nie po zdaniach: akapit dokumentu
+jest jednostką, którą Operator widzi w pliku źródłowym.
+
+### PorownajUklad — przesunięcie strony
+
+Akapity nadmiarowe po stronie przekładu przesuwają treść dalej niż
+w oryginale — to jest przesunięcie strony, nie brak.
+## budowa/server/internal/core/adapter_modul_przegladarka_zaplecze.go
+
+Magazyn bajtów sesji przeglądania jest ten sam co w Library i Design co do
+mechaniki (blob pod sumą sha256, zapis niepodzielny), a inny co do miejsca:
+bajty modułu Browser leżą w `<dane>/przegladarka/tresc`. Wspólny katalog
+z biblioteką mieszałby materiał trwały (dokument wniesiony do repozytorium
+wiedzy) z materiałem sesji (zrzut strony, archiwum, rejestr sieciowy) — a te
+dwa mają różny cykl życia.
+
+Silnik przeglądarki wchodzi tu jednym polem, nie jednym na rodzinę: Chromium
+startuje ten sam dla zrzutu, dla drzewa DOM i dla konsoli, więc drugie pole
+byłoby drugą prawdą o tym, czym rdzeń renderuje stronę.
+
+ZMagazynem jest wołane przy montażu adaptera — bez niego rodziny wytwarzające
+materiał (zrzut, archiwum, rejestr) nie mają gdzie odłożyć bajtów i mówią to
+wprost, zamiast meldować powodzenie bez treści.
+
+adresOstatniejStrony: komendy inspekcyjne kontrakt opisuje bez pola adresu —
+pytają o „bieżącą stronę okna", a bieżącą stroną okna jest ostatnia jego
+migawka.
+
+Kontrakt nie ma kodu „brakuje programu"; `validation_failed` kłamałby o winie
+żądania, a `internal_error` o usterce rdzenia. Treść odmowy `bladSilnikaPrzegladarki`
+nazywa różnicę wprost: przy braku niesie nazwę programu i podpowiedź
+instalacyjną z samego `zewnetrzne.BrakNarzedzia`.
+
+Wstawienie wartości do wyrażeń (jakoLiteral, jakoLiczba, jakoLogiczna) chroni
+przed wstrzyknięciem: selektor przychodzi z żądania, a selektor z apostrofem
+albo z domknięciem nawiasu przerwałby wyrażenie i wykonał na stronie coś
+innego, niż rdzeń napisał.
+## budowa/server/internal/core/adapter_modul_aplikacje_podglad.go
+
+Podgląd jest serwerem, który naprawdę stoi. Odpowiedź niesie adres, pod który
+Operator ma wejść: adres wymyślony byłby wzorcem szkody, którego pilnują
+sprawdziany skutku — odpowiedzią udaną, za którą nie ma niczego. Dlatego
+uruchomienie podglądu podnosi nasłuch na pętli zwrotnej, oddaje pod nim treść
+plików warsztatu wskazanej warstwy i zwraca adres wydany przez system
+operacyjny.
+
+Port wydaje system, nie konwencja. Nasłuch idzie na porcie zerowym pętli
+zwrotnej, więc dwa okna podglądane naraz nie walczą o ten sam numer, a rdzeń
+nie musi zgadywać, co na maszynie jest wolne. Adres jest zawsze pętlą
+zwrotną: podgląd służy Operatorowi tej maszyny, a wystawienie warsztatu na
+świat byłoby udostępnieniem kodu produktu bez czyjejkolwiek zgody.
+
+Serwer nie przeżywa restartu rdzenia i wiersz w bazie tego nie ukrywa:
+rejestr nasłuchów żyje w pamięci, a uruchomienie po restarcie podnosi nowy
+serwer pod nowym adresem. Odtwarzanie nasłuchów przy starcie stawiałoby
+podgląd, którego nikt w tej sesji nie zamówił.
+
+Zatrzymanie zamyka nasłuch. Zatrzymanie podglądu woła zamknięcie serwera i
+dopiero po jego powrocie melduje stan zatrzymany — inaczej pole potwierdzenia
+znaczyłoby jedynie zgłoszenie zamiaru, a port zostawałby zajęty.
+
+Treść obsługiwacza żądań serwera podglądu czyta się z bazy przy każdym
+żądaniu, nie z migawki z chwili podniesienia: warsztat zmienia się w trakcie
+pracy, a podgląd ma pokazywać stan bieżący.
+
+Uruchamiacz, rozstrzygacz i katalog dają dostęp do programów zewnętrznych
+rozpoznania pisma, zamiany formatów i pakowania. Brak pola form znaczy bez
+zmiany postaci, a nie postać wyzerowaną — zwykły zapis treści nie ma prawa
+zetrzeć arkusza stylów ani tabel. Wersje dokumentu założone przed dobudową
+pola autora go nie mają, a podstawienie tam Operatora zamieniłoby brak wiedzy
+w twierdzenie fałszywe dla każdej wersji, którą naprawdę zapisał model.
+## budowa/server/internal/core/adapter_modul_workspace_pliki.go
+
+Wydobycie nie zaklada drugiego warsztatu dokumentow: idzie ta sama droga co
+document.text.extract - najpierw warstwa tekstowa dokumentu, a dopiero po
+jej braku rozpoznanie pisma z pikseli. Dzieki temu pole method mowi prawde
+o tym, skad wziely sie znaki, a nie o tym, czego rdzen probowal.
+
+Duplikaty rozpoznaje tresc, nie nazwa. Grupe sklada suma kontrolna SHA-256
+liczona z bajtow pliku (biblioteka wkompilowana, zadnego programu
+z zewnatrz). Dwa pliki o roznych nazwach i tej samej tresci sa duplikatami;
+dwa pliki o tej samej nazwie i roznej tresci nie sa nimi wcale.
+
+Wykaz niczego nie scala: duplicate.list wskazuje plik proponowany do
+zachowania - najstarszy w grupie - i na tym konczy. Scalenie jest osobna
+komenda, bo usuniecie pliku z dysku jest czynnoscia nieodwracalna i ma byc
+decyzja Operatora.
+
+Podgląd pustej warstwy jest odmową, nie serwerem oddającym pustkę: Operator
+ma się dowiedzieć, że nie ma czego pokazać, a nie oglądać białą stronę i
+zgadywać, czy to wina warsztatu, czy nasłuchu.
+## budowa/server/internal/core/adapter_modul_auth_konto.go
+
+Droga potwierdzenia idzie listem, bo adres e-mail jest jedynym elementem
+tożsamości niezależnym od urządzenia: PIN i klucz Windows Hello zostają na
+maszynie, która mogła zginąć. W bazie leży wyłącznie skrót materiału wysłanego
+listem, tą samą drogą co tokeny sesji, więc kopia bazy nie pozwala potwierdzić
+cudzej tożsamości. Odpowiedź komendy auth.recover jest zawsze taka sama dla
+adresu właściciela i dla adresu obcego, inaczej komenda byłaby wyrocznią
+zdradzającą pytającemu adres Operatora, a jest osiągalna przed zalogowaniem.
+
+Brak konta nadawczego nazywa się przed zapisaniem drogi w bazie, żeby baza nie
+zostawała ze skrótem drogi, która nigdy nie wyszła listem — odmowa i tak mówi
+o poczcie, tylko o jeden wiersz później.
+
+Konto założone bez poczty (znacznik w sejfie) wchodzi hasłem, a nie drogą
+listowną: pierwszy klient zostawałby przed platformą na zawsze, bo listu nie
+ma skąd nadać, a drugiej rejestracji nie ma, bo wykonuje się raz. Adres
+pozostaje wtedy niepotwierdzony i nikt tego nie udaje — wiersz konta stoi na
+niepotwierdzone, a potwierdzenie czeka na pocztę.
+
+## budowa/server/internal/core/adapter_modul_automations_alarmy.go
+
+Zapis skarbca oddaje samą referencję, wykaz oddaje same referencje, a usunięcie
+oddaje sam skutek. Wartość idzie do sejfu plikowego katalogu danych — tego
+samego, którym jadą sekrety kont i punktów dostępu — i baza jej nie widzi, bo
+kolumny na nią nie ma.
+
+Usunięcie poświadczenia NIE jest wstrzymywane tym, że kroki je przywołują.
+Kontrakt mówi to wprost: pole `referencingStepIds` nazywa kroki, które
+straciły pokrycie, a usunięcie i tak następuje. Skarbiec, który odmawiałby
+zdjęcia wykradzionego klucza, byłby skarbcem działającym przeciw właścicielowi.
+
+Sejf kluczuje bytem, a referencja niesie przedrostek `sejf:` — rozbiera go
+wołający, bo sejf zapisał sam byt.

@@ -1243,3 +1243,17 @@ Pas decyzji nie należy do tej sekcji. Sekcja udostępnia jedynie miejsce monta�
 Wykaz pokazuje wszystkie pliki warsztatu okna, dzięki czemu widać, że wpisana ścieżka należy już do istniejącego pliku, zanim zapis go nadpisze. Wiersz jest przyciskiem, ponieważ wiersz nieklikalny kazałby przepisywać ścieżkę ręcznie, a przepisana ścieżka bywa w rzeczywistości innym plikiem: klucz warsztatu tworzą okno, warstwa i ścieżka rozumiane co do znaku.
 
 Wykaz niczego nie streszcza. Rozmiar i wersja idą tak, jak oddał je rdzeń, a brak pola zostaje nazwany brakiem, zamiast zostać zastąpiony wartością zerową, która wyglądałaby jak wynik pomiaru.
+
+## budowa/klient-poprzedni/src/komponenty/dymek.ts
+
+Znak zapytania jest przyciskiem, nie ozdobą: naciśnięcie prowadzi do niego
+ognisko, a ognisko pokazuje objaśnienie. Treść czytają technologie wspomagające
+z atrybutu `aria-label` znaku, więc dymek nie potrzebuje identyfikatora i nie
+zderza się z dymkami innych okien.
+
+Klasy wywołującego godzą jedną fabrykę z wyglądem właściwym dla miejsca
+wywołania. Klasa `.dn-btn-ikona` to kwadrat 32 px, na dotyku 40 px, o narożniku
+`--dn-r-sm`, z przezroczystym obrysem i wskaźnikiem `pointer`. Znaki modułów to
+obwódki 14–16 px o narożniku `--dn-r-pill`, z widocznym obrysem i wskaźnikiem
+`help`. Powłoka niesie z kolei zachowanie w rzędzie — `flex: none`, odstęp
+i `vertical-align` — którego `.dn-tooltip` nie zna.

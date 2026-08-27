@@ -5825,3 +5825,56 @@ Dla Discovery Panel i Reading View odmowa dotycząca okna spoza katalogu przycho
 wcześniej niż przy akcji bez wiersza w katalogu akcji: Discovery Panel i Reading View mają
 wiersz w opracowaniu modułu, a nie mają go jeszcze w migracjach katalogu okien rdzenia, więc
 akcja ma to zapowiadać, zamiast obiecywać drogę, której dziś nie ma nawet do połowy.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/okno-errors-panel.ts
+
+Stan pusty i stan odmowy odczytu są w oknie rozróżnione celowo: Errors Panel
+jest jedynym miejscem w produkcie, w którym widać odrzucenie komendy przez
+rdzeń, więc zrównanie tego stanu z pustym wykazem ukryłoby jedyny ślad
+odmowy dostępny dla Operatora.
+
+Kod odmowy nie leży w polu message błędu, tylko osobno. Pole errorCode
+niesie go w kontrakcie docelowym, a dzisiejszy rdzeń wkłada go jeszcze do
+context.errorCode; po tym kodzie rozpoznaje się rodzinę odmów zakończoną na
+unknown. Odczyt sięga do obu miejsc w tej kolejności, żeby wypełnienie pola
+kontraktowego przez rdzeń nie wymagało zmiany w tym pliku.
+
+Zakres czasu wykazu bierze się wyłącznie ze wspólnego stanu modułu przez
+subskrypcję zmiany tego stanu; okno nie prowadzi drugiego, własnego zakresu,
+bo dwa niezależne zakresy w jednym module rozjeżdżałyby się przy każdej
+zmianie jednego z nich.
+
+Subskrypcja zakresu jest wyłączana na czas zapisu migawki analizy: zapis
+migawki budzi ten sam nasłuch, który go wywołał, więc bez wyłączenia okno
+odczytywałoby wykaz dwa razy i migało stanem ładowania obok świeżo
+pokazanego potwierdzenia.
+
+Odczyt wykazu błędów należy wyłącznie do złożenia modułu, nie do wytwórni
+okna: wytwórnia woła odswiez() sama, tak jak pozostałe okna Diagnostics,
+a odczyt już w wytwórni obok odczytu ze złożenia wysyłałby dwa żądania
+error.list na jedno zmontowanie modułu.
+
+Pasek akcji niesie trzy pozycje bez pokrycia w kontrakcie: diagnostics.error.list
+jest wyłącznie odczytem, a DiagnosticError niesie pola status, priority i note
+bez komendy zapisu. Panel może po tych polach filtrować, nigdy ich nadawać.
+Powód każdej nieczynnej pozycji składa się z pól kontraktu, a nie z gotowego
+napisu, żeby zdanie o braku komendy zmieniło się samo w dniu, w którym
+komenda się pojawi.
+
+Zdanie potwierdzenia przekazania do analizy mówi, co objęła analiza, a nie
+co wysłało okno: rdzeń dobiera błędy uruchamianej analizy wyłącznie zakresem
+czasu i pola errorIds żądania nie używa, więc liczba wzięta z żądania
+przeczyłaby temu, co w tej samej chwili pokazuje Diagnostics Center. Rozjazd
+między wykazem wysłanym a objętym jest w zdaniu powiedziany wprost i tonem
+nieudanym.
+
+Wykaz błędów niesie liczbę wszystkich pozycji spełniających warunki osobno
+od samych pozycji: rdzeń liczy total osobnym zapytaniem, biorącym stan,
+priorytet i zakres czasu, a nie biorącym granicy, więc wykaz bywa ucięty
+granicą z pola okna albo granicą domyślną rdzenia. Rozjazd między total
+a liczbą oddanych pozycji jest widoczny wprost nad wykazem — ucięcie bez
+ostrzeżenia byłoby tej samej rodziny co pusty wykaz przy odmowie odczytu.
+
+Kod odmowy w polu errorCode ma pierwszeństwo przed kontekstem zapisu, bo
+odmowa komendy jest faktem o samym błędzie, a nie o okolicznościach jego
+zapisu.

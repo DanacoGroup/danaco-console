@@ -1,15 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY PRZESTRZENI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: odstępy, promienie zaokrągleń, cienie.
-
-   Jednostką bazową jest 4 px i każdy odstęp interfejsu jest jej
-   wielokrotnością; wartości spoza skali nie wchodzą.
-
-   Odstępy i promienie są niezależne od motywu. Cienie przełączają się wraz
-   z motywem, bo tonuje je barwa podłoża — stąd komplet obu motywów wraz
-   z zapasem na prefers-color-scheme.
-   ============================================================================ */
+/* Żetony przestrzeni systemu obejmują odstępy, promienie zaokrągleń i cienie zbudowane na jednostce bazowej czterech pikseli i jej wielokrotnościach. */
 
 :root {
   /* ---------------------------------------------------------------- *

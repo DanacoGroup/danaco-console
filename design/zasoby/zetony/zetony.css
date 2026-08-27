@@ -103,6 +103,8 @@
   --dn-rama-hover: rgba(255, 255, 255, 0.08);
   --dn-rama-obrys: rgba(255, 255, 255, 0.10);
   --dn-rama-obrys-mocny: rgba(255, 255, 255, 0.24);  /* ramka pozycji szyny nawigacji */
+  --dn-rama-tlo: rgba(255, 255, 255, 0.04);          /* subtelna powierzchnia wtopiona w ramę — grupy przełączników */
+  --dn-rama-pole: rgba(255, 255, 255, 0.06);         /* tło pola wyszukiwania na ramie */
 
   /* ==================================================================== *
    *  3 · TYPOGRAFIA — trzy role, trzy kroje                              *

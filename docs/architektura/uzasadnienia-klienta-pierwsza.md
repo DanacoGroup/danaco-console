@@ -6785,3 +6785,9 @@ nazwa wchodzi do samego sprawdzianu.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-wybudzenia.ts
 Rdzeń stoi na serwerze i mikrofonu tej maszyny nie widzi: nasłuch jest umową między oknem a rdzeniem — okno nagrywa u siebie, wysyła odcinki wraz z identyfikatorem okna, a rdzeń ogłasza, co w nich usłyszał, zdarzeniem częściowego rozpoznania oraz zdarzeniem wykrycia frazy wybudzającej; panel mówi to wprost, zamiast rysować mikrofon sugerujący, że rdzeń słucha sam. Odczyt stanu wykonalności oddaje niedostępność wraz z powodem, gdy wybudzenia nie da się wykonać, a panel powtarza powód i nie stawia przycisku obiecującego czynność, której nie ma czym wykonać.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-capture-monitor.ts — panel rodzin
+Rodziny prowadzone przez rdzeń obejmują monitory, kanały, kolejkę czytania, pobrania i wytwory sesji.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-zestawow.ts
+Kontekst jest zestawem wskazań: usunięcie kontekstu kasuje wskazanie, a nie wpisy pamięci, i okno mówi to wprost przy przycisku, żeby Operator nie bał się sprzątać zestawów roboczych, a zarazem nie sądził, że kasuje ustalenia. Zasada retencji obejmuje zapisy kolejne: zapis zasady nie rusza wstecz wpisów zastanych, odpowiedź niesie ich policzoną liczbę i okno ją pokazuje, żeby Operator wiedział, ilu ustaleń zasada dotknie przy najbliższym wygaszaniu, zanim to nastąpi. Miernik okna kontekstu liczy żetony tokenizatorem rdzenia, a odpowiedź niesie nazwę słownika, którym policzono; pomiar bywa niewykonalny, wtedy okno pokazuje powód zamiast paska wobec granicy, której nikt nie ustalił.

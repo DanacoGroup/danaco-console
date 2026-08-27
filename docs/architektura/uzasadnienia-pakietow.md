@@ -2651,3 +2651,14 @@ Interfejs RepozytoriumRozszerzen deklaruje plik extension.go; ten plik i trzy
 sąsiednie — extension_protokol.go, extension_integracje.go, extension_zaufanie.go
 — dokładają mu metody. Jedno repozytorium, cztery pliki wedle odpowiedzialności,
 tak jak w obszarze Apps.
+
+## kondycja.go
+
+Repozytorium nie wykonuje pomiaru i nie zna żadnego rodzaju sondy: zapisuje definicję
+i zapisuje wynik, który ktoś zmierzył. Rozdział jest tu istotny — gdyby warstwa danych
+umiała ustawić stan sondy wprost, istniałaby droga do odłożenia stanu bez pomiaru,
+a właśnie tego rodzina health zabrania.
+
+Zapis wyniku podnosi jednocześnie odbicie w definicji (pola ostatni_stan
+i ostatni_przebieg) w jednej transakcji, żeby wykaz sond nie pokazywał stanu innego
+niż ostatni wiersz serii.

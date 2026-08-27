@@ -11,21 +11,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Research: czy za odpowiedzią leży byt, który da się zmierzyć
-// niezależnie od tej odpowiedzi.
-//
-// Sprawdzian nie kończy się na `status: ok`. Po każdej udanej komendzie schodzi
-// do pliku bazy albo do magazynu bajtów i mierzy tam stan WŁASNYM zapytaniem:
-// wiersz źródła, wiązanie kodu z ustaleniem, wiersz sprzeczności, plik eksportu
-// o niezerowej długości. Wzorzec szkody, którego to pilnuje, ma w tym produkcie
-// precedens: komenda meldowała powodzenie i wykaz bytów, za którymi nie było
-// ani jednego bajtu.
-//
-// Rodziny zależne od sieci (odkrywanie, rozstrzyganie identyfikatorów) i od
-// modelu (streszczenie, weryfikacja, operacje kontekstowe) nie wchodzą tutaj
-// świadomie: ich skutek zależy od świata poza tą maszyną, a sprawdzian ma mierzyć
-// rdzeń, nie łącze. Wchodzi za to wszystko, co rdzeń robi sam.
-
 // poczatekTekstuBadania przycina treść do wielkości czytelnej w komunikacie
 // niepowodzenia — plik eksportu bywa dłuższy niż dziennik sprawdzianu.
 func poczatekTekstuBadania(tekst string, granica int) string {
@@ -35,7 +20,8 @@ func poczatekTekstuBadania(tekst string, granica int) string {
 	return tekst[:granica]
 }
 
-// bazaBadania otwiera plik bazy sprawdzianu do pomiaru niezależnego.
+// bazaBadania otwiera plik bazy sprawdzianu do pomiaru niezależnego, drugim
+// połączeniem obok tego, którym pracuje rdzeń.
 func bazaBadania(t *testing.T, katalogDanych string) *sql.DB {
 	t.Helper()
 
@@ -47,7 +33,8 @@ func bazaBadania(t *testing.T, katalogDanych string) *sql.DB {
 	return baza
 }
 
-// policzBadania oddaje pojedynczą liczbę zwróconą przez zapytanie pomiarowe.
+// policzBadania oddaje pojedynczą liczbę zwróconą przez zapytanie pomiarowe,
+// żeby sprawdziany nie powtarzały tego samego odczytu.
 func policzBadania(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -477,7 +464,7 @@ func TestSkutekPrzesiewuPrismaBadania(t *testing.T) {
 	okno := "okno-badania-prisma"
 
 	// Wynik odkrycia wchodzi tu wprost do bazy: sprawdzian mierzy przesiew,
-	// a nie łącze do dostawcy wyszukiwania.
+	// nie łącze wyszukiwania.
 	_, err := baza.Exec(`INSERT INTO wynik_odkrycia_badania (klucz, okno, tytul, dostawca)
 	    VALUES ('crossref:10.1/a', ?, 'Praca A', 'crossref'),
 	           ('crossref:10.1/b', ?, 'Praca B', 'crossref')`, okno, okno)

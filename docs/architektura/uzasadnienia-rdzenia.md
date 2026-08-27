@@ -668,3 +668,17 @@ Wzorzec sprawdzianu jest ten sam co przy warsztacie PDF: żaden sprawdzian nie
 kończy się na odczytaniu odpowiedzi komendy. Każdy schodzi własnym zapytaniem
 SQL do tabeli albo otwiera plik na dysku i mierzy go niezależnie od tego, co
 komenda zameldowała.
+
+## budowa/server/internal/core/skutek_badania_test.go
+
+Ten plik mierzy skutek modułu Research: czy za odpowiedzią komendy leży byt,
+który da się zmierzyć niezależnie od tej odpowiedzi. Żaden sprawdzian nie
+kończy się na `status: ok` — po każdej udanej komendzie schodzi do pliku
+bazy albo do magazynu bajtów i mierzy tam stan własnym zapytaniem: wiersz
+źródła, wiązanie kodu z ustaleniem, wiersz sprzeczności, plik eksportu
+o niezerowej długości.
+
+Rodziny zależne od sieci (odkrywanie, rozstrzyganie identyfikatorów) i od
+modelu (streszczenie, weryfikacja, operacje kontekstowe) nie wchodzą tutaj
+świadomie: ich skutek zależy od świata poza tą maszyną, a sprawdzian ma
+mierzyć rdzeń, nie łącze. Wchodzi za to wszystko, co rdzeń robi sam.

@@ -4749,3 +4749,21 @@ jest ukrywane, nie usuwane: usunięcie zabrałoby wraz z nim treść wpisaną do
 ostatniego wywołania, a operator zamyka kolumnę, żeby zrobić miejsce, nie żeby stracić pracę.
 Sama nazwa okna nie mówiłaby, co się stanie po naciśnięciu uchwytu, a stan otwarcia byłby wtedy
 niesiony wyłącznie przez atrybut dostępności, którego wzrokiem się nie czyta.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/obsluga-czynnosci-moderatora.ts
+Obsługa wydzielona z okna panelu moderatora na wzór kontekstu budowania z Build Output, zwartą
+odpowiedzialnością: wysyłka czynności, zapis tury, warunkowy zapis składu i złożenie zdania
+potwierdzenia. Potwierdzenie mówi, co zrobił rdzeń, a nie co wysłało okno: zdanie składa funkcja
+biorąca odpowiedź, nie napis wnoszony razem z żądaniem — gotowe zdanie sukcesu nie odróżniłoby
+zamknięcia tury od potwierdzenia tury już zamkniętej, a przy zmianie zagadnienia przemilczałoby,
+że rdzeń zamknął turę bieżącą i otworzył nową. Tura zapisywana jest zawsze, skład wyłącznie wtedy,
+gdy rdzeń go przysłał: pole składu jest w kontrakcie nieobowiązkowe, więc bez tego pola okno nie
+ma dowodu, że zmiana składu zaszła. Odmowa nie jest jedynym niepowodzeniem: sprawdzian kształtu
+oddaje niepowodzenie także wtedy, gdy rdzeń odpowiedział, ale bez pola obowiązkowego — zdanie
+„rdzeń odmówił" byłoby wtedy zarzutem, którego rdzeń nie orzekł. Dlatego mówimy o czynności, która
+nie doszła do skutku, a powód niesie treść błędu wprost z kontraktu.
+
+Rdzeń nie odmawia zamknięcia tury już zamkniętej — oddaje ją bez zmiany, więc okno nie ma czym
+odróżnić zamknięcia od potwierdzenia stanu zastanego. Stan sprzed wywołania też nie jest świadkiem
+pewnym, bo po zamknięciu potrafi jeszcze przyjść rozgłoszenie z turą oznaczoną jako otwarta,
+dlatego czasownik „zamknął" pada wyłącznie tam, gdzie stan sprzed wywołania mówił coś innego.

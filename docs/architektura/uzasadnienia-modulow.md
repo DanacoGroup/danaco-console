@@ -2501,3 +2501,24 @@ wymagane pole transcript nie wraca puste. Pole speak nie jest spełniane:
 syntezy mowy rdzeń nie ma, więc speechRef zostaje pusty — pole jest
 opcjonalne, a brak jest odpowiedzią zgodną z kontraktem, tak samo jak
 w assistant.voice.command i speech.synthesize.
+
+## adapter_modul_orchestration.go
+
+Rodzina orchestration.* jedzie na tej samej maszynerii co okno Orchestrator,
+zapisanej w tabelach kroku automatyki i zaleznosci kroku automatyki, a nie na
+wlasnej. Roznica wobec okna jest ziarno: okno Orchestrator przyjmuje komplet
+lukow, bo Workflow Builder wysyla caly uklad po zmianie, a rodzina
+orchestration.* pracuje pojedynczym lukiem — dependency.set doklada jeden,
+dependency.remove zdejmuje jeden. Zapis idzie dlatego osobnymi metodami zapisu
+i usuniecia pojedynczej zaleznosci, a nie podmiana kompletu, bo inaczej
+dolozenie jednego luku przepisywaloby wszystkie pozostale. Metody pliku stoja
+na adapterze modulu Automations, wiec uklad zaleznosci ma w rdzeniu jednego
+wlasciciela; sprawdzenie ukladu, wykrycie cyklu i sciezka krytyczna pochodza
+z osobnego pliku tego samego adaptera.
+
+Ocena ukladu nie blokuje zapisu. Kontrakt komendy dependency.set mowi to
+wprost: luk domykajacy cykl albo prowadzacy do kroku, ktorego jeszcze nie ma,
+zapisuje sie, a zastrzezenia wracaja w odpowiedzi osobnym polem oznaczajacym
+uklad niepoprawny. Odmawiane sa wylacznie zadania, ktorych schemat nie zna:
+luk bez wskazania kroku, petla wlasna oraz rodzaj zaleznosci spoza trzech
+wartosci kontraktu — sa to bledy zadania, nie stan ukladu.

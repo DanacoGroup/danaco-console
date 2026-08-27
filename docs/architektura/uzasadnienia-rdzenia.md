@@ -4811,3 +4811,14 @@ a pula rotacji bierze konta tego samego rodzaju; skasowanie konta odłącza
 kanały, ale ich nie kasuje. Poświadczenie wchodzi żądaniem i nie wychodzi
 żadną drogą — ani wykazem, ani odpowiedzią na zapis, ani zdarzeniem zmiany;
 odpowiedź niesie wyłącznie znacznik obecności poświadczenia.
+
+## budowa/server/internal/core/adapter_kanaly_sprawdzenie.go
+Sprawdzenie jest narzędziem pomocniczym, nie bramką: wynik niczego nie warunkuje, nie wstrzymuje zapisu eksperta, nie blokuje wysłania tury i nie wyłącza kanału. Operator pyta, czy kanał odpowiada, dostaje odpowiedź i sam decyduje, co z nią zrobić; kanał, który nie odpowiedział minutę temu, bywa sprawny teraz i odwrotnie.
+
+Sprawdzenie jest prawdziwym wywołaniem: rdzeń wysyła krótkie zapytanie tym samym rejestrem kanałów, którym jedzie okno rozmowy, i mierzy czas odpowiedzi. Sprawdzenie, które oglądałoby wyłącznie wiersz rejestru, mówiłoby jedynie, że kanał jest skonfigurowany, a Operator czyta z niego, że działa.
+
+Stan poświadczenia jest zawsze stanem, nigdy treścią: oddaje, czy poświadczenie jest ustawione, jakiego jest rodzaju i kiedy zostało zmienione. W pliku nie ma ścieżki, którą sekret wychodzi do klienta; wartość z sejfu służy wyłącznie do rozstrzygnięcia, czy jest niepusta.
+
+Interfejs sejfu poświadczeń zamiast pełnego typu istnieje po to, by adapter widział wyłącznie odczyt: węższy widok jest tu granicą, a nie ozdobą, ponieważ adapter, który nie umie zapisać, nie nadpisze cudzego klucza przy pomyłce.
+
+Kod odpowiedzi kanału bez wskazania jest błędem żądania Operatora, nie błędem rdzenia.

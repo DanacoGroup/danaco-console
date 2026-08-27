@@ -12,30 +12,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Design: czy za zasobem leżą bajty.
-//
-// Wzorzec szkody, którego pilnuje ten plik, wydarzył się w tym produkcie:
-// `design.asset.generate` meldował `status: ok` z wykazem zasobów rodzaju
-// `image`, za którymi nie było ani jednego bajtu. Koperta była poprawna,
-// kontrakt spełniony, a Assets Panel dostawał kafelki bez treści. Dlatego żaden
-// sprawdzian tego pliku nie kończy się na sprawdzeniu, że odpowiedź jest udana:
-// każdy schodzi po odwołaniu `asset.uri` do magazynu i pyta plik, ile ma bajtów
-// i czy są tymi bajtami, które wjechały.
-//
-// Kanał obrazowy jest tu prawdziwym kanałem rdzenia, nie zaślepką: wiersz
-// rejestru rodzaju `api` z parametrem `adapter: obrazy`, wskazujący adres
-// serwera podniesionego na czas sprawdzianu w tym samym procesie. Dzięki temu
-// droga mierzona jest tą samą drogą, którą jedzie wywołanie Operatora — żądanie
-// HTTP, odpowiedź kształtu OpenAI Images, fragment `image`, magazyn, wiersz —
-// a żaden program spoza maszyny nie jest do tego potrzebny.
-
-// zmiennaKluczaObrazow jest nazwą zmiennej środowiska, spod której kanał
-// obrazowy bierze klucz. Punkt końcowy generujący obrazy nie przyjmuje żądań
-// bez poświadczenia (`models/adapter_obrazy.go`), więc wiersz kanału musi
-// wskazać odwołanie także wtedy, gdy odbiorcą jest serwer sprawdzianu.
+// zmiennaKluczaObrazow nazywa zmienną środowiska, z której kanał obrazowy
+// bierze klucz poświadczenia wymagany nawet wtedy, gdy odbiorcą jest serwer
+// podniesiony na czas sprawdzianu.
 const zmiennaKluczaObrazow = "DANACO_SPRAWDZIAN_KLUCZ_OBRAZOW"
 
-// serwerObrazow podnosi punkt końcowy generowania obrazów na czas sprawdzianu.
+// serwerObrazow podnosi w tym samym procesie punkt końcowy generowania
+// obrazów na czas trwania sprawdzianu i sam się zamyka po jego zakończeniu.
 func serwerObrazow(t *testing.T, obsluga http.HandlerFunc) *httptest.Server {
 	t.Helper()
 
@@ -83,10 +66,9 @@ func wpiszKanalObrazowy(t *testing.T, zmontowany *Zmontowany, zycie context.Cont
 	return wynik.Channel.Id
 }
 
-// TestGenerowanieZasobuOddajeZasobZBajtamiObrazuWMagazynie mierzy skutek, nie
-// kopertę: po udanym `design.asset.generate` odwołanie zasobu ma prowadzić do
-// pliku, którego bajty są dokładnie tymi, które oddał kanał, a zmierzony format
-// i wymiary mają pochodzić z nagłówka tego pliku, nie z żądania.
+// TestGenerowanieZasobuOddajeZasobZBajtamiObrazuWMagazynie sprawdza, czy po
+// udanym `design.asset.generate` odwołanie zasobu prowadzi do pliku, którego
+// bajty są dokładnie tymi, które oddał kanał obrazowy.
 func TestGenerowanieZasobuOddajeZasobZBajtamiObrazuWMagazynie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -118,8 +100,8 @@ func TestGenerowanieZasobuOddajeZasobZBajtamiObrazuWMagazynie(t *testing.T) {
 		t.Errorf("treść pod odwołaniem ma %d bajtów i nie jest obrazem, który oddał kanał (%d bajtów)",
 			len(bajty), len(obraz))
 	}
-	// Nazwą bloba jest suma jego zawartości — rozjazd znaczy, że wiersz wskazuje
-	// treść inną niż ta, którą zmierzono przy zapisie.
+	// Nazwą bloba jest suma jego zawartości, więc rozjazd znaczy inną treść
+	// niż zmierzoną przy zapisie.
 	if suma := sumaSha256(obraz); !bytes.Contains([]byte(*zasob.Uri), []byte(suma)) {
 		t.Errorf("odwołanie %q nie niesie sumy kontrolnej utrwalonej treści (%s)", *zasob.Uri, suma)
 	}
@@ -131,11 +113,9 @@ func TestGenerowanieZasobuOddajeZasobZBajtamiObrazuWMagazynie(t *testing.T) {
 	}
 }
 
-// TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu pilnuje drugiej komendy
-// rodziny: `design.asset.list` jest jedynym, co Assets Panel widzi po odświeżeniu
-// okna. Wykaz, w którym choć jeden zasób nie ma bajtów pod swoim odwołaniem,
-// jest wykazem kafelków bez treści — niezależnie od tego, jak udana była
-// komenda, która je założyła.
+// TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu sprawdza, czy każdy
+// zasób oddany przez `design.asset.list` ma pod swoim odwołaniem rzeczywiste
+// bajty, niezależnie od drogi, którą wszedł do modułu.
 func TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -151,8 +131,8 @@ func TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu(t *testing.T) {
 			ChannelId: &kanal,
 		}, &zGenerowania)
 
-	// Druga droga zasobu do modułu — wniesienie przez Operatora. Wykaz nie
-	// odróżnia dróg, więc sprawdzian też nie: obie mają skończyć się bajtami.
+	// Druga droga zasobu do modułu: wniesienie przez operatora, sprawdzane
+	// tak samo jak generowanie.
 	wniesiony := obrazPNG(t, 4, 5)
 	var zWniesienia shared.DesignAssetUploadResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignAssetUpload,
@@ -174,8 +154,7 @@ func TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu(t *testing.T) {
 		t.Errorf("wykaz podaje łącznie %v zasobów, w oknie leżą 2", wykaz.Total)
 	}
 
-	// Zbiór treści leżących pod odwołaniami wykazu ma być zbiorem treści, które
-	// do modułu weszły — sprawdzenie po zawartości, nie po liczbie wierszy.
+	// Sprawdzenie porównuje zbiory treści, nie liczbę wierszy w wykazie.
 	oczekiwane := map[string]bool{sumaSha256(obraz): false, sumaSha256(wniesiony): false}
 	for _, zasob := range wykaz.Assets {
 		if zasob.Uri == nil {
@@ -199,11 +178,9 @@ func TestWykazZasobowOddajeOdwolaniaDoBajtowKazdegoZasobu(t *testing.T) {
 	}
 }
 
-// TestGenerowanieZasobuZAdresuWciagaBajtyZamiastZapisacOdsylacz pilnuje drugiej
-// postaci odpowiedzi dostawcy. Dostawcy zgodni z OpenAI Images oddają albo bajty,
-// albo odsyłacz — i odsyłacz bywa domyślny. Odsyłacz wygasa, więc zapisany jako
-// `uri` zasobu dałby zasób, który po godzinie przestaje mieć treść: kafelek
-// z bajtami dziś, bez bajtów jutro.
+// TestGenerowanieZasobuZAdresuWciagaBajtyZamiastZapisacOdsylacz sprawdza, czy
+// odpowiedź niosąca odsyłacz do obrazu zamiast jego bajtów kończy się
+// wciągnięciem treści spod odsyłacza, a nie zapisaniem samego odsyłacza.
 func TestGenerowanieZasobuZAdresuWciagaBajtyZamiastZapisacOdsylacz(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -245,11 +222,9 @@ func TestGenerowanieZasobuZAdresuWciagaBajtyZamiastZapisacOdsylacz(t *testing.T)
 	}
 }
 
-// TestGenerowanieBezKanaluObrazowegoOdmawiaZamiastZalozycKafelek jest
-// sprawdzianem wprost wymierzonym w szkodę: droga bez bajtów ma kończyć się
-// odmową nazywającą brak, a Assets Panel ma po niej zostać pusty. Sprawdzenie
-// samej odmowy nie wystarcza — kafelek mógłby powstać obok niej — więc po
-// odmowie pada `design.asset.list`.
+// TestGenerowanieBezKanaluObrazowegoOdmawiaZamiastZalozycKafelek sprawdza, czy
+// generowanie bez kanału obrazowego kończy się odmową i czy okno po niej
+// zostaje puste, potwierdzone osobnym odczytem `design.asset.list`.
 func TestGenerowanieBezKanaluObrazowegoOdmawiaZamiastZalozycKafelek(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -285,10 +260,9 @@ func TestGenerowanieBezKanaluObrazowegoOdmawiaZamiastZalozycKafelek(t *testing.T
 	}
 }
 
-// TestGenerowanieBezObrazuWOdpowiedziNieZostawiaZasobu pilnuje przypadku
-// najbliższego szkodzie: kanał odpowiada powodzeniem, tylko bez obrazu. Kiedyś
-// tędy przechodziło `ok` z zasobem bez treści; dziś ma tędy przechodzić odmowa,
-// a wykaz zasobów ma zostać pusty.
+// TestGenerowanieBezObrazuWOdpowiedziNieZostawiaZasobu sprawdza, czy odpowiedź
+// kanału bez treści obrazu kończy się odmową, a wykaz zasobów w oknie zostaje
+// pusty.
 func TestGenerowanieBezObrazuWOdpowiedziNieZostawiaZasobu(t *testing.T) {
 	przypadki := map[string]http.HandlerFunc{
 		"odpowiedź bez pola obrazu": func(w http.ResponseWriter, _ *http.Request) {
@@ -365,10 +339,9 @@ func TestWniesienieZasobuBezTresciNieZakladaWiersza(t *testing.T) {
 	}
 }
 
-// TestWniesienieZasobuSciezkaZamrazaTrescWMagazynie pilnuje obietnicy z nagłówka
-// wniesienia: ścieżka źródłowa jest źródłem bajtów, nie miejscem ich
-// składowania. Sprawdzian nadpisuje plik źródłowy po wniesieniu — zasób ma
-// zostać przy treści, którą Operator wniósł, a nie iść za cudzym plikiem.
+// TestWniesienieZasobuSciezkaZamrazaTrescWMagazynie sprawdza, czy zasób
+// wniesiony ścieżką zachowuje treść z chwili wniesienia także po nadpisaniu
+// pliku źródłowego.
 func TestWniesienieZasobuSciezkaZamrazaTrescWMagazynie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -387,8 +360,8 @@ func TestWniesienieZasobuSciezkaZamrazaTrescWMagazynie(t *testing.T) {
 	if wniesiony.Asset.Uri == nil {
 		t.Fatal("zasób wniesiony ścieżką nie ma odwołania do treści")
 	}
-	// Nadpisanie pliku źródłowego po wniesieniu: gdyby `uri` był wskaźnikiem na
-	// cudzy plik, treść zasobu zmieniłaby się teraz sama.
+	// Nadpisanie pliku źródłowego ujawniłoby wskaźnik zamiast zamrożonej
+	// treści zmianą zasobu.
 	zapiszPlikSprawdzianu(t, sciezka, obrazPNG(t, 40, 40))
 
 	if !bytes.Equal(bajtyPodOdwolaniem(t, katalog, *wniesiony.Asset.Uri), pierwotny) {
@@ -396,19 +369,9 @@ func TestWniesienieZasobuSciezkaZamrazaTrescWMagazynie(t *testing.T) {
 	}
 }
 
-// TestRodzajSpozaKontraktuWracaJakoPomylkaWolajacego pilnuje rozróżnienia, które
-// rdzeń stosuje w module Library, a Design go nie stosował: pomyłka wskazującego
-// nie ma prawa wracać jako awaria rdzenia oznaczona jako ponawialna.
-//
-// Rodzaj spoza siedmiu wartości kontraktu odbijał się dotąd od warunku CHECK
-// schematu i wracał kodem `internal_error` z `retryable: true`, cytując w treści
-// warunek bazy wraz z nazwą kolumny. Żądanie takie nie uda się przy ŻADNYM
-// ponowieniu, więc klient z pętlą ponowień powtarzał je bez końca, a Operator
-// dostawał zdanie o kolumnie zamiast o swoim żądaniu.
-//
-// Sprawdzian mierzy dwie rzeczy naraz: kod odmowy ORAZ to, że po odmowie
-// w oknie nie ma zasobu — bo sprawdzenie po zapisie zostawiałoby wiersz albo
-// bajty bez wskazującego ich zasobu.
+// TestRodzajSpozaKontraktuWracaJakoPomylkaWolajacego sprawdza, czy rodzaj
+// zasobu spoza wartości kontraktu wraca kodem pomyłki wołającego, a nie
+// ponawialną awarią rdzenia, i czy po odmowie okno zostaje bez zasobu.
 func TestRodzajSpozaKontraktuWracaJakoPomylkaWolajacego(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

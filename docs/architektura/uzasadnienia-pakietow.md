@@ -3819,3 +3819,17 @@ a interfejs uprawnień pokazuje mu stan wyjściowy zamiast pustego formularza.
 
 widocznoscKolumny: wartość spoza katalogu widoczności odbija się o warunek CHECK kolumny
 agent.widocznosc bazy danych, więc drugi katalog dopuszczalnych wartości nie powstaje w kodzie.
+
+## budowa/server/internal/dane/agent_archiwum.go
+
+Wybór między usunięciem a archiwizacją eksperta należy do Operatora, nie do rdzenia, więc
+rdzeń nie przekierowuje jednej komendy na drugą; usunięcie zostaje jedyną drogą utraty
+definicji eksperta, wzorem kosza sesji.
+
+Stan czynności eksperta wraca po przywróceniu taki, jaki był przed archiwizacją, zamiast
+zakładać, że każdy zarchiwizowany był czynny — ekspert wyłączony przed archiwizacją
+wróciłby inaczej, niż go odkładano.
+
+Migawek historii wersji archiwizacja nie mnoży: zapis nie rusza licznika wersji eksperta,
+więc wyzwalacz bazy uzupełnia migawkę wersji bieżącej zamiast zakładać nową. Odłożenie
+eksperta na półkę nie jest zmianą jego tożsamości.

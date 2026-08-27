@@ -1,22 +1,4 @@
--- Migracja 131 — szablony fabryczne modułu Studio.
---
--- Opracowanie modułu wymienia pięć układów predefiniowanych: pismo, umowa,
--- raport, notatka, oferta. Bez nich `studio.template.list` oddaje pustkę,
--- a `studio.template.apply` nie ma czego zastosować — komenda działałaby
--- poprawnie i bezużytecznie.
---
--- ── Dlaczego treść stoi w migracji, a nie w kodzie ──────────────────────────
--- Szablon jest DANĄ, nie zachowaniem: Operator go czyta, kopiuje i zmienia,
--- a nowy szablon ma być wierszem tabeli, nie wydaniem produktu. Zaszycie go
--- w kodzie kazałoby przebudować rdzeń, żeby dołożyć układ pisma.
---
--- ── Dlaczego pola są osobne od treści ───────────────────────────────────────
--- Treść niesie znaczniki `{{nazwa}}`, a wykaz pól mówi, które z nich Operator
--- ma wypełnić i jak się nazywają po ludzku. Bez wykazu okno musiałoby zgadywać
--- pola, parsując treść — i pomyliłoby się przy pierwszym znaczniku w cytacie.
---
--- Treści są układami pustymi, nie przykładami: żadnych zmyślonych stron umowy,
--- kwot ani nazwisk. Miejsce na dane wskazuje znacznik pola.
+-- Migracja 131 zasila tabelę szablon_studio pięcioma układami fabrycznymi pisma, umowy, raportu, notatki i oferty ze znacznikami pól do wypełnienia.
 
 INSERT INTO szablon_studio (identyfikator_zewnetrzny, nazwa, opis, format, tresc, pola_json, fabryczny)
 VALUES

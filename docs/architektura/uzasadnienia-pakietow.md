@@ -5697,3 +5697,30 @@ innego kodu nie dawał fałszywego trafienia.
 Typ, identyfikator i sesja koperty odpowiedzi pochodzą z żądania, dzięki
 czemu klient wiąże odpowiedź z wywołaniem, które ją wywołało. Ścieżka nie
 może zawieść, bo wynik jest już zserializowany przy budowie odpowiedzi.
+
+## budowa/server/internal/transport/kontrakt.go
+
+Transport nie zna rdzenia: zna wyłącznie interfejs Rdzen, który rdzeń realizuje, oraz kontrakt
+komunikatów. W tym pakiecie nie ma ani jednego importu pakietu wykonawczego — dzięki temu zamiana
+rdzenia nie dotyka transportu, a transport da się uruchomić w sprawdzianie z atrapą rdzenia po stronie
+sprawdzianu. Serwuje też pliki klienta i utrzymuje wiele połączeń równocześnie.
+
+Do czasu przypisania konta metodą PrzypiszKonto obowiązuje konto z parametru nawiązania połączenia,
+ponieważ uwierzytelnianie jest jedyną kontrolą dostępu i w fazie budowy nie działa. Koperta o pustym
+polu Type oznacza, że odpowiedź pójdzie osobno — transport nic wtedy nie odsyła, a rdzeń sam korzysta
+z ujścia albo rozgłośnika. Kontekst przekazywany rdzeniowi jest kontekstem serwera, nie połączenia:
+rozłączenie klienta nie przerywa rozpoczętej pracy rdzenia. Rdzeń opisuje drogę rozgłaszania portem
+własnym i sięga wprost po metodę Rozglos serwera — interfejs po stronie transportu byłby drugą
+deklaracją tej samej rzeczy.
+
+## budowa/server/internal/dane/biblioteka_slownik.go
+
+Wykaz słownika łączy dwa źródła — wpisy słownika i etykiety nadane przy zasobach — sumą
+zdejmującą powtórzenia, więc etykieta obecna w obu miejscach wychodzi w wykazie tylko raz.
+
+EtykietaSlownika: etykieta nosząca zasoby, ale bez własnego wpisu słownikowego, wraca
+z licznikiem użycia i pustym czasem założenia, bo istnieje mimo braku wiersza w słowniku.
+
+PrzemianujEtykiete zapisuje przez zastąpienie zamiast zwykłej aktualizacji, bo zasób noszący
+obie nazwy naraz złamałby klucz główny pary pliku i etykiety: wiersz stary ustępuje wtedy
+nowemu zamiast wywracać całą zmianę.

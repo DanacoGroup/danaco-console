@@ -1,16 +1,7 @@
 // Odpowiedzialność pliku: stan żywy modułu Developer — przebiegi budowania
 // biegnące w tej chwili wraz z uchwytami do ich drzew procesów i narastającym
-// ogonem logu.
-//
-// Na okno przypada jeden przebieg naraz: Build Output pokazuje jeden strumień
-// logu, więc dwa równoległe budowania wpisywałyby się w niego na przemian
-// i nie dałoby się ich rozdzielić. Drugie żądanie dla okna zajętego zostaje
-// odrzucone wraz z podpowiedzią, że trwający przebieg da się przerwać.
-//
-// Log przycina rdzeń, nie baza. Pełny log jedzie na żywo zdarzeniem
-// `developer.build.changed`; w pamięci i w dzienniku zostaje ogon, bo budowanie
-// dużego projektu ma dziesiątki tysięcy wierszy, a Build Output po ponownym
-// otwarciu potrzebuje końcówki, nie całości.
+// ogonem logu. Na okno przypada jeden przebieg naraz, a log przycina rdzeń,
+// nie baza.
 package core
 
 import (
@@ -23,7 +14,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// wierszyOgonaLogu jest liczbą wierszy zachowywanych w pamięci i w dzienniku.
+// wierszyOgonaLogu jest liczbą wierszy zachowywanych w pamięci i w dzienniku dla każdego przebiegu budowania okna.
 const wierszyOgonaLogu = 500
 
 // najwiecejWierszyTestow jest granicą zbioru wierszy niosących wynik testu.
@@ -42,13 +33,9 @@ type przebiegBudowania struct {
 
 	mu   sync.Mutex
 	stan shared.BuildStatus
-	// ogonPrzyciety mówi, czy z początku logu coś już wypadło. Bez tego pola
-	// Build Output pokazywałby końcówkę jako całość i Operator szukałby
-	// w niej wiersza, którego tam nigdy nie było.
+	// ogonPrzyciety mówi, czy z początku logu coś już wypadło, poza zachowaną końcówkę.
 	ogonPrzyciety bool
-	// wierszeTestow zbiera wyłącznie wiersze niosące wynik testu albo pokrycie.
-	// Zbiera je się w chwili, gdy płyną, bo ogon logu ich nie zachowa —
-	// przebieg z tysiącem testów wypycha je poza granicę ogona.
+	// wierszeTestow zbiera wiersze wyniku testu, bo ogon logu ich nie zachowa przy wielu testach.
 	wierszeTestow []string
 	kodWyjscia    *int
 	zgloszenia    []shared.BuildProblem
@@ -63,7 +50,7 @@ type przebiegBudowania struct {
 	koniec    chan struct{}
 }
 
-// Dopisz dokłada wiersz do ogona logu i rozpoznaje w nim zgłoszenie budowania.
+// Dopisz dokłada wiersz do ogona logu przebiegu i rozpoznaje w nim zgłoszenie budowania albo wynik testu.
 func (p *przebiegBudowania) Dopisz(wiersz string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -80,21 +67,21 @@ func (p *przebiegBudowania) Dopisz(wiersz string) {
 	}
 }
 
-// Ogon oddaje zachowaną końcówkę logu.
+// Ogon oddaje zachowaną końcówkę logu przebiegu budowania, złożoną w jeden napis do pokazania w oknie.
 func (p *przebiegBudowania) Ogon() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return strings.Join(p.ogon, "\n")
 }
 
-// OgonPrzyciety mówi, czy zachowana końcówka logu jest krótsza od całości.
+// OgonPrzyciety mówi, czy zachowana końcówka logu jest krótsza od całości zapisanego przebiegu budowania.
 func (p *przebiegBudowania) OgonPrzyciety() bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.ogonPrzyciety
 }
 
-// WierszeTestow oddaje zebrane wiersze wyniku testów i pokrycia.
+// WierszeTestow oddaje zebrane wiersze wyniku testów i pokrycia zebrane z przebiegu budowania danego okna platformy.
 func (p *przebiegBudowania) WierszeTestow() []string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -141,7 +128,7 @@ func (p *przebiegBudowania) Przerwij() error {
 	return nil
 }
 
-// Zwolnij oddaje uchwyty systemowe po zakończeniu przebiegu.
+// Zwolnij oddaje uchwyty systemowe po zakończeniu przebiegu budowania i zamyka kanał jego zakończenia raz.
 func (p *przebiegBudowania) Zwolnij() {
 	if p.drzewo != nil {
 		p.drzewo.Zwolnij()
@@ -151,7 +138,7 @@ func (p *przebiegBudowania) Zwolnij() {
 	}
 }
 
-// rejestrBudowan trzyma przebiegi czynne jednego biegu rdzenia, po jednym na okno.
+// rejestrBudowan trzyma przebiegi czynne jednego biegu rdzenia, po jednym przebiegu budowania na każde okno.
 type rejestrBudowan struct {
 	mu        sync.Mutex
 	przebiegi map[string]*przebiegBudowania
@@ -161,7 +148,7 @@ func nowyRejestrBudowan() *rejestrBudowan {
 	return &rejestrBudowan{przebiegi: make(map[string]*przebiegBudowania)}
 }
 
-// Zajmij wpisuje przebieg okna, o ile okno nie prowadzi już budowania.
+// Zajmij wpisuje przebieg okna do rejestru budowań, o ile to okno nie prowadzi już innego budowania w tle.
 func (r *rejestrBudowan) Zajmij(przebieg *przebiegBudowania) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -172,7 +159,7 @@ func (r *rejestrBudowan) Zajmij(przebieg *przebiegBudowania) bool {
 	return true
 }
 
-// Przebieg zwraca budowanie czynne w oknie.
+// Przebieg zwraca budowanie czynne w oknie wskazanym jego kodem, jeśli takie akurat w nim trwa teraz naprawdę.
 func (r *rejestrBudowan) Przebieg(oknoKod string) (*przebiegBudowania, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -204,7 +191,7 @@ func (r *rejestrBudowan) Zwolnij(przebieg *przebiegBudowania) {
 	}
 }
 
-// Zamknij przerywa wszystkie przebiegi czynne w chwili zatrzymania rdzenia.
+// Zamknij przerywa wszystkie przebiegi budowania czynne w chwili zatrzymania rdzenia platformy Danaco.
 func (r *rejestrBudowan) Zamknij() {
 	if r == nil {
 		return

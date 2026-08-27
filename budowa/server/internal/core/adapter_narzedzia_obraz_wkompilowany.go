@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: rachunek WKOMPILOWANY czterech czynności obrazu
-// modelu — `image.inspect`, `image.transform`, `image.adjust`, `image.convert`.
-// Czynności i ich odmowy stoją w `adapter_narzedzia_obraz_czynnosci.go`, wspólne
-// zaplecze (źródło, magazyn wyniku) w `adapter_narzedzia_obraz.go`.
-//
-// ── Dlaczego ten plik powstał ───────────────────────────────────────────────
-// Te cztery czynności liczył wcześniej program zewnętrzny, choć każdą z nich
-// wykonuje w całości biblioteka Go wkompilowana w binarium. Program zewnętrzny
-// wołany tam, gdzie biblioteka wystarcza, jest regresem: kosztuje uruchomienie
-// procesu, wiąże funkcję z wersją cudzego wydania i przy niekompletnym serwerze
-// zamienia retusz w odmowę. Rachunek stoi więc tutaj i idzie w procesie:
-// `disintegration/imaging` (skalowanie Lanczosem, kadr, obrót, odbicia,
-// korekcje barwne, rozmycie, wyostrzenie), `golang.org/x/image` (dekodery WEBP,
-// TIFF, BMP oraz kodery TIFF i BMP), `HugoSmits86/nativewebp` (zapis WEBP
-// bezstratnego), `rwcarlsen/goexif` (odczyt metadanych EXIF) i rachunek własny
-// na odszumianie medianą oraz rozciągnięcie poziomów.
-//
-// ── Gdzie rachunku Go NIE MA — i co się wtedy dzieje ────────────────────────
-// Dwa wyjścia nie mają w Go kodera i nie da się ich tu policzyć: **AVIF**
-// (kodera czysto-Go nie ma wcale) oraz **WEBP stratny** (`nativewebp` zapisuje
-// wyłącznie bezstratny VP8L). Tak samo AVIF nie ma dekodera, więc obraz w tym
-// formacie nie wchodzi. Te przypadki oddają `errBrakRachunkuGoObrazu`, a
-// czynność sięga wtedy po program pakietu serwera — jedyna droga, jaka zostaje,
-// i lepsza od odmowy, bo odmowa jest brakiem funkcji. Zapora
-// `zapora_narzedzi_obrazu_test.go` pilnuje, żeby ta droga została wyjątkiem
-// nazwanym, a nie wróciła jako droga podstawowa.
+// Rachunek wkompilowany czterech czynności obrazu modelu — `image.inspect`,
+// `image.transform`, `image.adjust`, `image.convert` — bibliotekami Go
+// wbudowanymi w binarium rdzenia, bez procesu zewnętrznego.
 package core
 
 import (
@@ -43,10 +20,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// errBrakRachunkuGoObrazu znaczy „tego nie policzy tu żadna biblioteka
-// wkompilowana" — a nie „czynność się nie udała". Wołający rozpoznaje ten błąd
-// i przechodzi na program pakietu serwera; każdy inny błąd jest odmową wprost,
-// bo obraz uszkodzony ma zostać nazwany, a nie oddany drugiej drodze.
+// errBrakRachunkuGoObrazu znaczy, że tego nie policzy tu żadna biblioteka
+// wkompilowana, a nie że czynność się nie udała. Wołający rozpoznaje ten błąd
+// i przechodzi na program pakietu serwera.
 var errBrakRachunkuGoObrazu = errors.New("rachunek wkompilowany nie zna tego formatu")
 
 // tloObrotuArsenalu wypełnia narożniki powstałe przy obrocie o kąt niebędący
@@ -64,11 +40,8 @@ type opisObrazuArsenalu struct {
 	metadane   string
 }
 
-// zbadajObrazArsenalu czyta sam nagłówek pliku — bez rozkodowania wszystkich
-// pikseli, bo do formatu i wymiarów nie są potrzebne.
-//
-// Metadane EXIF czytamy osobno i miękko: ich brak jest zwykłym stanem pliku
-// (PNG z ekranu nie ma EXIF-u), więc nie przerywa pomiaru.
+// zbadajObrazArsenalu czyta sam nagłówek pliku, bez rozkodowania pikseli.
+// Metadane EXIF czyta osobno i miękko — ich brak nie przerywa pomiaru.
 func zbadajObrazArsenalu(sciezka string) (opisObrazuArsenalu, error) {
 	plik, err := os.Open(sciezka)
 	if err != nil {
@@ -78,8 +51,7 @@ func zbadajObrazArsenalu(sciezka string) (opisObrazuArsenalu, error) {
 
 	nastawy, format, err := image.DecodeConfig(plik)
 	if err != nil {
-		// Format bez dekodera w drzewie — pomiar zostaje dla programu pakietu
-		// serwera, zamiast oddać wymiary zgadnięte.
+		// Format bez dekodera w drzewie — pomiar zostaje dla programu serwera.
 		return opisObrazuArsenalu{}, errBrakRachunkuGoObrazu
 	}
 
@@ -94,12 +66,8 @@ func zbadajObrazArsenalu(sciezka string) (opisObrazuArsenalu, error) {
 }
 
 // przestrzenBarwArsenalu nazywa przestrzeń barw modelem koloru, który oddał
-// dekoder. Nazwy zostają te, które produkt wypisywał do tej pory (`sRGB`,
-// `Gray`, `CMYK`), bo czyta je model w treści odpowiedzi — zmiana słownika
-// byłaby zmianą kontraktu przy okazji zmiany rachunku.
-//
-// YCbCr jest zapisem JPEG-owym barw sRGB, nie osobną przestrzenią widzianą przez
-// Operatora, więc wraca jako `sRGB`.
+// dekoder, słownikiem kontraktu: `sRGB`, `Gray`, `CMYK`. YCbCr jest zapisem
+// JPEG-owym barw sRGB, więc wraca jako `sRGB`.
 func przestrzenBarwArsenalu(model color.Model) string {
 	switch model {
 	case color.GrayModel, color.Gray16Model:
@@ -112,8 +80,7 @@ func przestrzenBarwArsenalu(model color.Model) string {
 		color.AlphaModel, color.Alpha16Model:
 		return "sRGB"
 	}
-	// Model nierozpoznany (paleta GIF-a, model własny dekodera) zostaje
-	// nienazwany: puste pole mówi „nie wiem", a wpisana nazwa kłamałaby.
+	// Model nierozpoznany zostaje nienazwany: puste pole mówi „nie wiem".
 	return ""
 }
 
@@ -137,9 +104,7 @@ func metadaneExifArsenalu(sciezka string) string {
 	if err := dane.Walk(zbieracz); err != nil {
 		return ""
 	}
-	// Porządek wypisania jest kolejnością obchodzenia znaczników — a ta idzie po
-	// mapie, więc różni się między wywołaniami. Sortowanie daje odpowiedź
-	// powtarzalną dla tego samego zdjęcia, a od niej zależy sprawdzian.
+	// Sortowanie daje odpowiedź powtarzalną, bo obchodzenie mapy jej nie daje.
 	sort.Strings(zbieracz.wiersze)
 	return strings.Join(zbieracz.wiersze, "\n")
 }
@@ -158,11 +123,8 @@ func (z *zbieraczExifArsenalu) Walk(nazwa exif.FieldName, znacznik *tiff.Tag) er
 	return nil
 }
 
-// przeksztalcObrazArsenalu liczy geometrię `image.transform`.
-//
-// Filtr Lanczosa dla każdego skalowania: to on jest wyborem domyślnym warsztatu
-// fotografii tego produktu, a dwa różne filtry w dwóch miejscach dawałyby dwa
-// różne wyniki tej samej prośby modelu.
+// przeksztalcObrazArsenalu liczy geometrię `image.transform`. Skalowanie idzie
+// zawsze filtrem Lanczosa — wyborem domyślnym warsztatu fotografii produktu.
 func przeksztalcObrazArsenalu(obraz image.Image,
 	z shared.ImageTransformRequest) (image.Image, error) {
 
@@ -171,10 +133,7 @@ func przeksztalcObrazArsenalu(obraz image.Image,
 		return przeskalujObrazArsenalu(obraz, z.Width, z.Height, z.KeepAspect)
 
 	case shared.ImageTransformKindThumbnail:
-		// Brak wymiarów bierze bok 256 — miniatura bez rozmiaru domyślnego nie
-		// byłaby czynnością osobną od skalowania. Metadanych miniatura nie
-		// niesie z natury tej drogi: rachunek składa nowy obraz z pikseli, więc
-		// EXIF źródła nie ma czym przejść.
+		// Brak wymiarów bierze domyślny bok 256; miniatura metadanych nie niesie.
 		szerokosc, wysokosc := z.Width, z.Height
 		if szerokosc == nil && wysokosc == nil {
 			bok := 256
@@ -201,8 +160,7 @@ func przeksztalcObrazArsenalu(obraz image.Image,
 			granice.Min.X+odsuniecieX+*z.Width,
 			granice.Min.Y+odsuniecieY+*z.Height,
 		)
-		// Kadr poza obrazem jest odmową, nie obrazem pustym: prostokąt rozminięty
-		// z powierzchnią oddałby zero pikseli opisanych jako skutek kadrowania.
+		// Kadr poza obrazem jest odmową, nie obrazem pustym opisanym jako skutek.
 		if kadr.Intersect(granice).Empty() {
 			return nil, bladWskazaniaObrazu(
 				"kadr nie ma części wspólnej z obrazem — poza jego powierzchnią nie ma czego wyciąć")
@@ -214,8 +172,7 @@ func przeksztalcObrazArsenalu(obraz image.Image,
 			return nil, bladWskazaniaObrazu("obrót wymaga pola degrees — obrót o nieznany kąt nie istnieje")
 		}
 		// Znak przeciwny: kontrakt liczy kąt zgodnie z ruchem wskazówek zegara,
-		// biblioteka — przeciwnie. Bez tej zamiany obrót o 90 stopni położyłby
-		// zdjęcie na drugą stronę.
+		// biblioteka przeciwnie.
 		return imaging.Rotate(obraz, -float64(*z.Degrees), tloObrotuArsenalu), nil
 
 	case shared.ImageTransformKindFlipHorizontal:
@@ -228,13 +185,8 @@ func przeksztalcObrazArsenalu(obraz image.Image,
 		"; kontrakt zna: resize, crop, rotate, flipHorizontal, flipVertical, thumbnail")
 }
 
-// przeskalujObrazArsenalu rozstrzyga skalowanie z pary wymiarów.
-//
-// Proporcje zachowujemy domyślnie, tak jak mówi kontrakt: model prosi zwykle
-// o „szerokość 800", a nie o rozciągnięcie zdjęcia. Obie miary podane przy
-// zachowanych proporcjach znaczą „zmieść się w tej ramce" (`Fit`), a nie
-// „rozciągnij do niej" — rozciągnięcie wymaga wskazania go wprost przez
-// `keepAspect=false`.
+// przeskalujObrazArsenalu rozstrzyga skalowanie z pary wymiarów. Proporcje
+// zachowuje domyślnie; rozciągnięcie do obu wymiarów wymaga `keepAspect=false`.
 func przeskalujObrazArsenalu(obraz image.Image, szerokosc, wysokosc *int,
 	zachowajProporcje *bool) (image.Image, error) {
 
@@ -259,12 +211,9 @@ func przeskalujObrazArsenalu(obraz image.Image, szerokosc, wysokosc *int,
 	return imaging.Resize(obraz, 0, *wysokosc, imaging.Lanczos), nil
 }
 
-// poprawObrazArsenalu liczy retusz `image.adjust`.
-//
-// Siła jest procentem w rozumieniu tej rodziny narzędzi. Brak pola `amount`
-// bierze wartość domyślną operacji, nie zero: zero byłoby poprawką bez skutku,
-// a model prosząc „rozjaśnij" bez liczby dostałby obraz nieodróżnialny od
-// źródła.
+// poprawObrazArsenalu liczy retusz `image.adjust`. Siła jest procentem tej
+// rodziny narzędzi; brak pola `amount` bierze wartość domyślną operacji,
+// nigdy zero.
 func poprawObrazArsenalu(obraz image.Image, z shared.ImageAdjustRequest) (image.Image, error) {
 	sila := domyslneSilyPoprawki[z.Operation]
 	if z.Amount != nil {
@@ -285,8 +234,7 @@ func poprawObrazArsenalu(obraz image.Image, z shared.ImageAdjustRequest) (image.
 	case shared.ImageAdjustKindDenoise:
 		return odszumMedianaArsenalu(obraz, przebiegiOdszumianiaArsenalu(sila)), nil
 	case shared.ImageAdjustKindGrayscale:
-		// Skala szarości nie ma stopni pośrednich w tej czynności — `amount` jest
-		// tu bez znaczenia i nie udajemy, że coś z nim robimy.
+		// Skala szarości nie ma stopni pośrednich — `amount` tu nic nie zmienia.
 		return imaging.Grayscale(obraz), nil
 	case shared.ImageAdjustKindAutoLevels:
 		return rozciagnijPoziomyArsenalu(obraz), nil
@@ -297,10 +245,7 @@ func poprawObrazArsenalu(obraz image.Image, z shared.ImageAdjustRequest) (image.
 }
 
 // sigmaZSilyArsenalu przekłada siłę w procentach na sigmę rozmycia albo
-// wyostrzenia. Pięćdziesiąt procent daje sigmę 1.0 — wartość, przy której skutek
-// jest widoczny na ekranie, a obraz nie wygląda na uszkodzony. Zero i wartości
-// ujemne dają najmniejszą sigmę o skutku widocznym, bo sigma zerowa nie
-// zrobiłaby nic, a czynność ma robić to, o co poproszono.
+// wyostrzenia; pięćdziesiąt procent daje sigmę 1.0, widoczną na ekranie.
 func sigmaZSilyArsenalu(sila int) float64 {
 	if sila <= 0 {
 		return 0.1
@@ -322,16 +267,9 @@ func przebiegiOdszumianiaArsenalu(sila int) int {
 	return przebiegi
 }
 
-// odszumMedianaArsenalu odszumia filtrem medianowym 3×3.
-//
-// Mediana, nie rozmycie: szum pojedynczych punktów (sól i pieprz z matrycy przy
-// wysokiej czułości) jest wartością odstającą, a mediana odstających nie bierze,
-// zamiast rozmazywać je po sąsiedztwie. Krawędzie zostają, bo po obu ich
-// stronach mediana wskazuje wartość strony liczniejszej — czego rozmycie Gaussa
-// nie robi.
-//
-// Kanał alfa liczy się tą samą medianą co barwy, osobno: mieszanie go z barwami
-// zmieniłoby przezroczystość na krawędziach wycięcia.
+// odszumMedianaArsenalu odszumia filtrem medianowym 3×3, nie rozmyciem, bo
+// mediana odrzuca wartości odstające zamiast je rozmazywać, a krawędzie
+// zostają ostre. Kanał alfa liczy się tą samą medianą co barwy, osobno.
 func odszumMedianaArsenalu(obraz image.Image, przebiegi int) image.Image {
 	wynik := imaging.Clone(obraz)
 	for i := 0; i < przebiegi; i++ {
@@ -384,14 +322,8 @@ func medianaSkladowejArsenalu(wartosci []uint8) uint8 {
 	return wartosci[len(wartosci)/2]
 }
 
-// rozciagnijPoziomyArsenalu rozciąga histogram każdej składowej barwnej na pełny
-// zakres — to jest „autoLevels" kontraktu.
-//
-// Skrajne wartości bierzemy z całego obrazu, ale rozciągamy tylko wtedy, gdy
-// zakres jest węższy niż pełny: obraz już rozciągnięty przeszedłby przez
-// mnożenie bez zmiany, a dzielenie przez zero przy obrazie jednobarwnym
-// wywróciłoby rachunek. Kanał alfa zostaje nietknięty — przezroczystość nie jest
-// jasnością.
+// rozciagnijPoziomyArsenalu rozciąga histogram każdej składowej barwnej na
+// pełny zakres — to jest „autoLevels" kontraktu. Kanał alfa zostaje nietknięty.
 func rozciagnijPoziomyArsenalu(obraz image.Image) image.Image {
 	zrodlo := imaging.Clone(obraz)
 	granice := zrodlo.Bounds()
@@ -419,8 +351,8 @@ func rozciagnijPoziomyArsenalu(obraz image.Image) image.Image {
 		gora := najwieksze[skladowa]
 		for wejscie := 0; wejscie < 256; wejscie++ {
 			if gora <= dol {
-				// Składowa jednobarwna — zostaje, jaka jest. Rozciąganie zakresu
-				// zerowej szerokości nie ma czego rozciągnąć.
+				// Składowa jednobarwna zostaje, jaka jest — zakres zerowy nie ma
+				// czego rozciągnąć.
 				tablice[skladowa][wejscie] = uint8(wejscie)
 				continue
 			}
@@ -449,12 +381,8 @@ func rozciagnijPoziomyArsenalu(obraz image.Image) image.Image {
 	return zrodlo
 }
 
-// odczytajObrazArsenalu dekoduje plik źródłowy do obrazu.
-//
-// Odmowa dekodera znaczy „nie ma czym tego przeczytać w procesie", a nie „plik
-// jest zepsuty": pod tą samą odmową kryje się AVIF, którego dekodera w Go nie
-// ma. Rozstrzyga to wołający, przechodząc na program pakietu serwera — gdyby
-// plik był naprawdę uszkodzony, tamta droga powie to wprost.
+// odczytajObrazArsenalu dekoduje plik źródłowy do obrazu. Odmowa dekodera
+// znaczy „nie ma czym tego przeczytać w procesie", nie „plik jest zepsuty".
 func odczytajObrazArsenalu(sciezka string) (image.Image, error) {
 	obraz, err := odczytajObrazPliku(sciezka)
 	if err != nil {
@@ -500,10 +428,8 @@ func zakodujObrazArsenalu(obraz image.Image, format string, jakosc *int,
 			return nil, err
 		}
 	case "webp":
-		// Koder czysto-Go zapisuje wyłącznie WEBP bezstratny. Prośba o zapis
-		// stratny (jakość podana, bezstratność niewskazana) nie ma tu rachunku
-		// i idzie do programu pakietu serwera — zapis bezstratny podany jako
-		// spełnienie prośby o kompresję byłby plikiem większym, niż model prosił.
+		// Koder czysto-Go zapisuje tylko WEBP bezstratny; zapis stratny idzie
+		// do programu serwera.
 		if jakosc != nil && (bezstratnie == nil || !*bezstratnie) {
 			return nil, errBrakRachunkuGoObrazu
 		}

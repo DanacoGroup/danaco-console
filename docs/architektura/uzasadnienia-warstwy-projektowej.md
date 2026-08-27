@@ -384,3 +384,12 @@ zmienia wyłącznie wartości żetonów, nie reguły komponentów. Właściwoś�
 color-scheme ustawiają arkusze semantyczne, osobno dla każdego motywu.
 Gęstość zwarta jest domyślna; wariant przestronny czeka pod atrybutem
 data-gestosc="przestronna".
+
+## budowa/klient-poprzedni/src/motyw/semantyczne-ciemny.css
+Skala nie sięga czystej czerni: kończy się na odcieniu #0A0A0A, a tło motywu
+to #0F0F0F. Budowa pliku jest identyczna jak w arkuszu motywu jasnego: wybór
+jawny przez atrybut, potem zapas rozstrzygany preferencją systemu. Drabina
+wag tekstu jest przeliczona dla tego motywu osobno, a nie odbita z jasnego:
+stopień trzeci stoi na #9E9E9E, ponieważ #7C7C7C na powierzchni #181818 daje
+tylko kontrast 4,25:1. Tekst drugoplanowy ustępuje mu miejsca na #C0C0C0,
+inaczej obie wagi zlałyby się w jedną.

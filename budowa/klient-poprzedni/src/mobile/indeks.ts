@@ -7,7 +7,6 @@
 import type { Kanal } from '../protokol/kanal';
 import { utworzOknoMobile, type OknoMobile } from './okno-mobile';
 
-
 /**
  * Okno zbudowane przy pierwszym otwarciu; `null` przed nim. Okno jest jedno na
  * klienta i żyje między otwarciami, więc powtórne otwarcie ponawia odczyt

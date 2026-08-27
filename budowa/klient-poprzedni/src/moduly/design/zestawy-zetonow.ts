@@ -270,7 +270,7 @@ export function utworzZestawyZetonow(
         idOkna: stan.idOkna(),
         nazwa: nazwa.kontrolka.value === '' ? 'Zestaw wczytany' : nazwa.kontrolka.value,
         trescBase64: wBaza64(tresc),
-        // Postaci nie narzucamy: rdzeń rozpoznaje ją po treści, wskazanie z okna byłoby zgadywaniem.
+        // Postaci nie narzucana jest: rdzeń rozpoznaje ją po treści, wskazanie z okna byłoby zgadywaniem.
         postac: '',
       }),
       {

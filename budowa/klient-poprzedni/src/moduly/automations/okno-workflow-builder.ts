@@ -98,7 +98,7 @@ export function utworzOknoWorkflowBuilder(
   /** Zapis definicji — zId mówi, czy w żądaniu idzie identyfikator zastany, bez niego powstaje duplikat. */
   function zapiszDefinicje(zId: boolean): void {
     const przedZapisem = wskazanie.value.trim();
-    // Zastrzeżenia liczymy przed wysłaniem — po zapisie okno pokazuje już definicję rdzenia.
+    // Zastrzeżenia liczone sa przed wysłaniem — po zapisie okno pokazuje już definicję rdzenia.
     const zastrzezenia = sprawdzDefinicje();
     tresc.ladowanie('Zapis definicji automatyki…');
     void zrodlo.zapiszAutomatyke(zadanieZapisu(zId)).then((wynik) => {

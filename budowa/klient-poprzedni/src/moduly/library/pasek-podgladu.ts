@@ -46,7 +46,10 @@ export function utworzPasekPodgladu(
   };
 }
 
-/** Przycisk paska wraz ze znacznikiem czynności w `dataset`. */
+/**
+ * Buduje przycisk paska: nadaje mu wariant wyglądu, zapisuje kod czynności
+ * w `dataset` elementu i wiąże przekazane wywołanie ze zdarzeniem naciśnięcia.
+ */
 function przyciskPaska(
   etykieta: string,
   kod: string,

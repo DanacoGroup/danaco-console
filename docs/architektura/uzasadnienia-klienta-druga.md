@@ -2910,3 +2910,6 @@ zwyczajne „nie ma powłoki".
 
 ## budowa/klient/src/protokol/ramka.ts
 Ramka nieczytelna albo o kształcie niezgodnym z kopertą nie blokuje sesji — wraca jako zdarzenie zapasowe z zachowaniem treści surowej w ładunku.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/wynik-dyktowania.ts
+Cisza jest prawidłowym wynikiem pomiaru: nagranie, w którym nie padło słowo, przeszło przez silnik tak samo jak nagranie z pełną wypowiedzią, dlatego stan bez mowy ma własny stan i własne zdanie zamiast być zlewany z odmową, co pokazywałoby awarię tam, gdzie jej nie ma, i rozmywałoby odmowę prawdziwą — brak modelu, brak silnika rozpoznawania albo brak drogi dostarczenia nagrania. Pole powodu wypełnia się tylko przy stanie nieprzetworzonym; przy dwóch pozostałych stanach pomiar się odbył i nie ma czego uzasadniać. Zdanie dla stanu bez mowy nazywa fakt, że nagranie przetworzono, a mowy w nim nie było, bez słowa błąd i bez wezwania do ponownego nagrania, bo cisza nie jest usterką.

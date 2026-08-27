@@ -3181,3 +3181,30 @@ samego źródła podagentów co panel, więc drugie źródło byłoby kopią.
 
 Nasłuchy odpina się przed zdjęciem sceny, ponieważ zdarzenie przyjęte po
 usunięciu elementu odświeżałoby widok już nieistniejący.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/telemetria-procesow.ts
+
+Zakres czasu nie dotyczy tego odczytu: `monitor.status` i `monitor.subscribe`
+nie mają w kontrakcie pól `fromTime` ani `toTime`, więc telemetria jest zawsze
+stanem bieżącym rejestru procesów, a zawężanie jej zakresem po stronie okna
+byłoby zawężaniem pozorowanym. Obserwacja zakłada się raz, odczyt powtarza
+się: pierwsze pytanie idzie `monitor.subscribe` (zapisuje okno na telemetrię),
+każde następne `monitor.status` (czyta i niczego nie zapisuje) — pole
+`windowId` znaczy w tych dwóch komendach co innego: w pierwszej jest oknem
+obserwatora, w drugiej sitem procesów, więc do odczytu nie idzie wcale.
+
+Na żywo idzie `progress.changed`. Zdarzenie niesie stan, etap i stopień
+ukończenia, lecz nie niesie czasu zmiany, dlatego wiersz odświeżony
+zdarzeniem pokazuje liczby ze zdarzenia, a czas nadal ten z odczytu, wraz ze
+zdaniem, skąd się bierze — podstawienie czasu klienta w miejsce czasu rdzenia
+byłoby wpisaniem do telemetrii wartości, której rdzeń nie orzekł.
+
+Eksport telemetrii stoi przy danych, a nie w pasku akcji okna: potwierdzenie
+eksportu wypisuje się w tej samej zakładce, w której widać eksportowany
+materiał, bo potwierdzenie na zakładce zasłoniętej nie byłoby potwierdzeniem.
+Wytwórnia sama nie czyta — pierwszy odczyt zleca złożenie modułu wywołaniem
+`odswiez()`, tak samo jak w panelu rekomendacji, żeby odczyt w wytwórni obok
+odczytu ze złożenia nie dał dwóch żądań na jedno zmontowanie okna.
+
+Po odmowie odczytu wykaz poprzedni też odchodzi: skoro odczyt się nie udał,
+wykaz przestaje być bieżący, a eksport oddałby go, jakby wciąż nim był.

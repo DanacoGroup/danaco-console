@@ -3623,3 +3623,19 @@ prowadzi do pracy w module, a nie do zbudowania rzeczy, więc tak jak kafel komp
 zarezerwowanego dla kart środowisk. Zapowiedź z liczbą modułów stoi zawsze, więc zwinięcie niczego nie
 ukrywa przed operatorem, a zapowiedź nad pustką mówiłaby o wykazie, którego nikt jeszcze nie odczytał. Zero
 okien jest stanem możliwym i mówi się je wprost, zamiast chować wiersz.
+
+## budowa/klient-poprzedni/src/moduly/translate/panel-jezyka.ts
+Okno jest instancją wielokrotną, liczoną jak liczba języków, więc panel jest tu tym, czym wiersz
+w liście: jedną rzeczą na jeden plik, a okno zbiorcze nimi zarządza i nie wie, jak są zbudowane.
+Każda instancja ma własny pas stanu i własny wiersz odpowiedzi, więc odmowa kontroli jakości dla
+jednego języka nie gasi panelu innego języka, dlatego stan okna powstaje osobno dla każdego panelu,
+a nie raz na okno zbiorcze. Drogą prowadzenia ogniska jest przejście skrótem między panelami
+wymagającymi uwagi: panel wskazany bez ogniska wymagałby jeszcze jednego kliknięcia, żeby zacząć
+poprawiać, a skrót ma prowadzić do pracy, nie do widoku. Instancja znika, gdy rdzeń przestaje
+oddawać jej panel, a jej ster kanału bywa wtedy rozwinięty i trzyma nasłuch na dokumencie, którego
+samo usunięcie elementu nie zdejmuje.
+Zapis korekty odpowiedzią niesie cały panel po korekcie razem z jego treścią, więc zgodność da się
+sprawdzić bez dodatkowego wywołania. Ton widać w dwóch miejscach i oba biorą z jednego źródła:
+nagłówek oraz pole tonu panelu w pasku narzędzi dostają ton z tej samej odpowiedzi rdzenia,
+w tym samym przebiegu. Zdanie o pustce panelu mówi, czym ten panel jest i czym się go zapełnia,
+zamiast nazywać brak; forma stanu pustego jest w module jedna, tytuł nad opisem, różnicuje ją treść.

@@ -568,3 +568,6 @@ komponenty/: arkusz nie zawiera barwy szesnastkowej ani odstępu spoza skali
 czterech pikseli. Akcent złoty ogranicza się do wstęgi pasa decyzji i cienia
 przycisku wezwania; nigdzie nie wypełnia powierzchni. Arkusz nie zawiera
 reguły disabled ani żadnej innej reguły wygaszającej.
+
+## design/zasoby/stanowisko.css
+Reakcja na wskazanie i naciśnięcie jest widoczna w każdym oknie tego pakietu, nie tylko w centrum dowodzenia: belka narzędzi, żetony polecenia i pulpit ramy podnoszą się o jeden piksel i ustępują pod naciśnięciem, nośnikiem reakcji jest tło, barwa i przekształcenie, nigdy sama zmiana rozmiaru ikony.

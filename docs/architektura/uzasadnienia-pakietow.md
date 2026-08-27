@@ -5848,3 +5848,15 @@ pola stanu nie rozstrzyga obietnicy wywołania, więc okno stoi w wiecznym
 nie jest zrywane, sesja nie jest blokowana, kolejne żądania są przyjmowane.
 ## budowa/server/internal/dane/studio.go
 Wersje dokumentu i propozycje zmiany leżą w plikach sąsiednich tego samego repozytorium, rozdzielonych wedle odpowiedzialności; interfejs deklaruje wyłącznie ten plik, w całości, także metody obszarów wersji i propozycji, żeby cały kontrakt obszaru stał w jednym miejscu. Pole treści niesie treść krótką wprost, a pole odwołania niesie odwołanie do pliku dla treści obszernej odczytanej do tekstu, tym samym sposobem co w repozytorium wiadomości. Postać dokumentu, czyli drzewo postaci, arkusz stylów, sekcje, obiekty osadzone, aparat i pola, wchodzi zagnieżdżonym interfejsem osobnego repozytorium postaci, a nie przepisaniem jego metod: obszar postaci ma kilkadziesiąt metod i wypisanie ich po raz drugi znaczyłoby dwa wykazy jednego kontraktu, z których jeden prędzej czy później zostałby w tyle. Studio ma jedno repozytorium, nie dwa, więc adapter modułu dostaje postać tą samą zależnością, którą dostaje dokument.
+
+## budowa/server/internal/dane/centrum_powiadomien.go
+
+Centrum powiadomień jest trwałym rejestrem tych samych zdarzeń, których ulotną postacią jest
+powiadomienie typu Toast. Rozgłoszenie zdarzenia i przekład na kształt kontraktu należą do
+rdzenia, nie do tego repozytorium.
+
+Odczytaj bez wskazanych identyfikatorów jest działaniem zbiorczym centrum: bierze wszystkie
+zdarzenia nowe naraz.
+
+Przywroc: bez tej operacji odłożenie zdarzenia na później byłoby cichym skasowaniem go
+z rejestru.

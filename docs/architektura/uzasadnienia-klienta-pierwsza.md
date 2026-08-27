@@ -2689,3 +2689,18 @@ Dopasowanie bierze kolejno nazwę, identyfikator i opis pętli.
 Widok oddaje osobne zdanie dla każdego rodzaju pustki: rdzeń bez ani jednej
 zapisanej pętli jest innym brakiem niż wykaz zawężony napisem, który do niczego
 nie pasuje.
+
+## budowa/klient-poprzedni/src/aod/sekcja-stanu.ts
+
+Wykaz procesów przypiętych niesie sekcja obecności, a nie sekcja stanu,
+ponieważ to w sekcji obecności Operator przypina i odpina proces. Wykaz stoi
+przy czynności, która go zmienia, dzięki czemu skutek czynności jest widoczny
+w tym samym miejscu, w którym została ona wykonana.
+
+Pola puste zostają puste: widok stawia oznaczenie braku zamiast wartości
+zmyślonej po stronie widoku. Świeża nakładka bez okna ogniskowanego jest
+stanem poprawnym, więc pusta karta sesji i puste okno nie są sygnałem błędu.
+
+Odmowa jednego odczytu jest faktem o jednym odczycie, a nie o całej nakładce.
+Pozostałe sekcje stoją na innych komendach i zostają widoczne, przez co odmowa
+komendy `aod.status.get` nie wygasza całego widoku.

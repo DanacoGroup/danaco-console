@@ -5105,3 +5105,20 @@ Ciąg jest jeden: strona główna, wykaz i wejście środowiska, wykaz modułów
 roboczej, stan okna komunikacji. Klient może wejść w dowolnym miejscu, na przykład wprost do
 środowiska zapamiętanego z poprzedniej pracy. Brak podłączonej domeny nie wywraca rdzenia: komenda
 nawigacji odpowie wtedy kodem nieznanej pozycji, a pozostałe domeny pracują dalej.
+
+## budowa/server/internal/core/handlers_orchestration.go
+Rodzina wpina się osobno od uchwytów modułu Automations, choć jedzie na tej samej maszynerii
+układu zależności: port rozszerza port Automatyki, bo układ zależności ma w rdzeniu jednego
+właściciela. Rozdział miejsc emisji zdarzeń układu: zapis i usunięcie zależności emitują zdarzenie
+tutaj; przepisanie całego układu automatyki emituje zdarzenie aktualizacji bez wskazania
+zależności, bo pole zależności zostaje wtedy puste; ustawienie harmonogramu automatyki emituje
+zdarzenie zmiany powiązania z identyfikatorem automatyki równym identyfikatorowi przebiegu. Dwa
+ostatnie przypadki obsługuje moduł Automations.
+
+Nieudany odczyt układu przed zapisem zależności nie wstrzymuje niczego — komenda wykonuje się tak
+samo, a rodzaj zmiany schodzi wtedy do wartości „zaktualizowano", bo stwierdzenie że układ się
+zmienił jest prawdziwe w obu przypadkach.
+
+Puste wskazanie łuku po rozgłoszeniu zmiany układu jest stanem zamierzonym: pole zależności jest
+nieobowiązkowe, bo przepisanie całego układu nie dotyczy żadnego jednego łuku — okno czyta wtedy
+zdarzenie jako polecenie przeliczenia układu od nowa.

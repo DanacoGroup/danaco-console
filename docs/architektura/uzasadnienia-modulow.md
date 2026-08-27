@@ -596,3 +596,28 @@ wchodziłby katalog `.git` i wszystko, co repozytorium ma z założenia poza
 obrazem. Dowiązania i pliki urządzeń zostają poza archiwum kontekstu, bo
 kontekst budowania jest zbiorem plików zwykłych i katalogów, a dowiązanie
 wskazujące poza katalog wyprowadziłoby budowanie z jego obszaru.
+
+## budowa/server/internal/core/adapter_modul_badania_lektura.go
+
+Źródło niesie tekst w swoim wierszu, jeżeli został już wydobyty —
+przechwyceniem strony, transkrypcją albo wcześniejszym rozpoznaniem pisma.
+Gdy tekstu nie ma, treść powstaje z załącznika pełnotekstowego przez port
+arsenału dokumentowego, ten sam Pandoc i poppler, którymi czyta moduł
+Library, nie drugą ich odmianę. Tekst raz wydobyty zostaje przy źródle:
+druga lektura tej samej pozycji nie ma po co uruchamiać arsenału powtórnie.
+
+Rozmowa oparta na korpusie odpowiada wyłącznie z treści wskazanych źródeł
+i mówi wprost, czy odpowiedź jest zakotwiczona w nich. Żądanie z wymogiem
+zakotwiczenia przy pustym korpusie kończy się odmową, nie odpowiedzią
+modelu z pamięci — odpowiedź badawcza bez źródła jest w tym module gorsza
+niż brak odpowiedzi.
+
+Wykrywanie tabel w tekście źródła idzie po siatce znaków: wiersz tabeli ma
+ten sam rozkład separatorów co jego sąsiedzi. Jest to heurystyka i tak się
+nazywa — tabela wykryta wchodzi do odpowiedzi, a rozstrzygnięcie, czy ją
+utrwalić, zostaje po stronie odbiorcy.
+
+Dobór fragmentów korpusu najbliższych pytaniu idzie po pokryciu słów
+pytania: bez magazynu wektorów jest to miara uboższa, ale prawdziwa — mierzy
+treść, która rzeczywiście leży w korpusie, a nie podobieństwo obiecane przez
+usługę, której instalacja nie niesie.

@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: jedyna droga modułu Studio do programu zewnętrznego
-// oraz do miejsca na dysku, w którym taki program wolno puścić.
-//
-// ── Dlaczego to stoi osobno ─────────────────────────────────────────────────
-// Rodzina cyfryzacji woła Tesseracta, wsad woła 7-Zipa. Obie potrzebują tego
-// samego: uruchamiacza, zasad izolacji obowiązujących okno i obszaru, w którym
-// proces ma pracować. Gdyby każda rodzina składała ten komplet u siebie, jedna
-// z nich prędzej czy później pominęłaby zasady izolacji — a to jest dokładnie
-// ta pomyłka, której punkt izolacji ma nie dopuścić.
-//
-// Warsztat dokumentu tędy NIE idzie i iść nie będzie: `studio.pdf.*` oraz
-// `studio.security.*` pracują biblioteką wkompilowaną w rdzeń, bez ani jednego
-// procesu potomnego. Pilnuje tego zapora `zapora_warsztatu_pdf_test.go`.
-//
-// ── Brak narzędzia to odmowa nazwana, nie panika ────────────────────────────
-// Rdzeń złożony bez warstwy kanału ma powiedzieć, czego mu brakuje, i pracować
-// dalej w pozostałych czynnościach. Odmowa niesie NAZWĘ programu i pakiet do
-// dociągnięcia, bo Operator ma przeczytać, co zainstalować, a nie szukać sam.
+// oraz do miejsca na dysku, w którym taki program wolno puścić; brak
+// narzędzia to odmowa nazwana, nie panika.
 package core
 
 import (
@@ -41,7 +26,8 @@ const (
 	granicaArsenalStudia     = 2 * time.Minute
 )
 
-// wolajNarzedzie uruchamia jeden program arsenału i oddaje jego wyjście.
+// wolajNarzedzie uruchamia jeden program arsenału i oddaje jego wyjście,
+// dobierając uruchamiacz, zasady izolacji i obszar roboczy okna.
 func (a *adapterStudia) wolajNarzedzie(ctx context.Context, n zewnetrzne.Narzedzie,
 	argumenty []string) ([]byte, error) {
 
@@ -79,11 +65,9 @@ func (a *adapterStudia) zasiegStudia() (session.Okno, session.Zasady, session.Ob
 	return okno, zasady, obszar
 }
 
-// bladArsenaluStudia przekłada odmowy pakietu `zewnetrzne` na kody kontraktu.
-// Rozstrzygnięcie jest to samo, co w rodzinie narzędzi dokumentu: brak
-// binarium jest zapleczem niedostępnym i kodem PONAWIALNYM, bo po instalacji to
-// samo żądanie przejdzie; naruszenie izolacji jest odmową uprawnienia; reszta
-// to usterka wewnętrzna wraz z diagnostyką programu.
+// bladArsenaluStudia przekłada odmowy pakietu zewnetrzne na kody kontraktu;
+// brak binarium jest zapleczem niedostępnym i kodem PONAWIALNYM, reszta to
+// usterka wewnętrzna z diagnostyką.
 func bladArsenaluStudia(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -97,13 +81,9 @@ func bladArsenaluStudia(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// katalogWsadu zakłada katalog na rozpakowany wsad.
-//
-// Katalog powstaje POD obszarem roboczym okna, a nie w katalogu tymczasowym
-// systemu: rozpakowany skan jest materiałem Operatora i ma podlegać tym samym
-// zasadom izolacji co reszta jego pracy. Nazwa bierze się z sumy nazwy
-// archiwum, więc rozpakowanie tego samego archiwum dwa razy trafia w to samo
-// miejsce, zamiast mnożyć katalogi.
+// katalogWsadu zakłada katalog na rozpakowany wsad POD obszarem roboczym
+// okna, a nie w katalogu tymczasowym systemu, żeby podlegał tym samym
+// zasadom izolacji.
 func (a *adapterStudia) katalogWsadu(archiwum string) (string, error) {
 	korzen := os.TempDir()
 	if a.katalog != nil {
@@ -136,14 +116,9 @@ func nazwaBezpieczna(nazwa string) string {
 	return string(oczyszczona)
 }
 
-// sciezkaZasobu wskazuje plik zasobu magazynu rdzenia.
-//
-// Droga jest jedna dla całego modułu: wiersz zasobu niesie odwołanie do bajtów,
-// a bajty leżą w magazynie zasobów pod sumą kontrolną treści. Rdzeń złożony bez
-// repozytorium zasobów odmawia zdaniem nazywającym brak i podaje drogę, która
-// działa bez niego — wskazanie materiału ścieżką widzianą przez rdzeń. Milczące
-// zejście na pustą ścieżkę dałoby odczyt pliku, którego nie ma, i wynik
-// wyglądający na prawdziwy.
+// sciezkaZasobu wskazuje plik zasobu magazynu rdzenia; droga jest jedna dla
+// całego modułu, a rdzeń złożony bez repozytorium zasobów odmawia zdaniem
+// nazywającym brak.
 func (a *adapterStudia) sciezkaZasobu(ctx context.Context, kodZasobu string) (string, error) {
 	kod := strings.TrimSpace(kodZasobu)
 	if a.zasoby == nil {

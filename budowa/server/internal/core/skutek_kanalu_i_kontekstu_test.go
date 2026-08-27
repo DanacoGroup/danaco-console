@@ -141,7 +141,7 @@ func TestZajetoscKontekstuLiczySieTokenizatorem(t *testing.T) {
 	sesja := zalozSesjeSprawdzianu(t, zmontowany, zycie)
 	okno := zalozOknoSprawdzianu(t, zmontowany, zycie, sesja, kanal)
 
-	// Historia rozmowy wnoszona wprost do tabeli: mierzymy tokenizator, a nie
+	// Historia rozmowy wnoszona wprost do tabeli: mierzy się tokenizator, a nie
 	// drogę tury przez kanał.
 	if _, err := baza.Exec(
 		`INSERT INTO wiadomosc (okno_komunikacji_id, rola, rodzaj_tresci, stan, tresc, kolejnosc)
@@ -234,7 +234,7 @@ func TestPowtorzenieWywolaniaZostawiaSlad(t *testing.T) {
 	baza := bazaSprawdzianu(t, katalog)
 	kanal := kanalEchoSprawdzianu(t, zmontowany, zycie, 8192)
 
-	// Pierwowzór wnoszony wprost do śladu: mierzymy powtórzenie, a nie drogę
+	// Pierwowzór wnoszony wprost do śladu: mierzy się powtórzenie, a nie drogę
 	// tury przez pętlę sesyjną.
 	if _, err := baza.Exec(
 		`INSERT INTO prowenancja_wywolanie

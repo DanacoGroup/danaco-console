@@ -4822,3 +4822,14 @@ Stan poświadczenia jest zawsze stanem, nigdy treścią: oddaje, czy poświadcze
 Interfejs sejfu poświadczeń zamiast pełnego typu istnieje po to, by adapter widział wyłącznie odczyt: węższy widok jest tu granicą, a nie ozdobą, ponieważ adapter, który nie umie zapisać, nie nadpisze cudzego klucza przy pomyłce.
 
 Kod odpowiedzi kanału bez wskazania jest błędem żądania Operatora, nie błędem rdzenia.
+
+## budowa/server/internal/core/handlers_konta_adapter.go
+Repozytorium oddaje wyłącznie znacznik obecności poświadczenia; metoda
+wynosząca odwołanie do sekretu nie jest w adapterze wywoływana ani razu,
+a struktura kontraktu konta nie ma pola na sekret, więc nie da się go wynieść
+nawet przez pomyłkę. Katalog danych obowiązujący dla sejfu poświadczeń wchodzi
+montażem: budowa rdzenia stawia jeden sejf nad katalogiem danych, który
+właściciel instalacji może przestawić przełącznikiem uruchomieniowym albo
+zmienną środowiskową, i wpina go metodą ZSejfem tą samą drogą, którą dostaje
+magazyn treści biblioteki. Sejf domyślny zostaje ustanowiony w konstruktorze
+dla wywołania bez montażu, żeby konstruktor nigdy nie oddał adaptera bez sejfu.

@@ -5549,3 +5549,5 @@ Odczyt i zapis zamknięcia sierot idą w jednej transakcji, bo między nimi
 nie ma prawa wejść powołanie nowego podagenta — zamknęłoby się dopiero co
 powołaną pracę. Sierot brak jest odpowiedzią poprawną i najczęstszą: rdzeń
 zamknięty porządnie zostawia wszystkich w stanie końcowym.
+## budowa/server/internal/dane/sesje.go
+Sesje w koszu nie wchodzą do wykazu sesji żywych: widzi je wyłącznie repozytorium kosza, a odczyt po identyfikatorze ich nie kryje, bo po nim odbywa się przywrócenie i czyszczenie. Usunięcie sesji przez tę warstwę kasuje sesję wraz z oknami i wiadomościami kaskadą schematu bazy, ale jest to prymityw warstwy danych: torem produktu jest kosz, gdzie polecenie usunięcia stawia znacznik, a fizyczne skasowanie wykonuje czyszczenie po terminie, bo tylko ono sprząta też bloki wiadomości.

@@ -2751,3 +2751,38 @@ byłoby potwierdzeniem czynności, która się nie odbyła.
 podejmuje zlecenie świeżo złożone. `resume` oddaje zlecenie temu samemu
 wykonawcy, tylko ze stanem wejścia `running`, bo wykonawca podejmuje
 wyłącznie `queued`. Bez wpiętego wykonawcy żadna z dwóch dróg nie robi nic.
+
+## adapter_modul_przegladarka_dostepnosc.go
+
+Moduł czyta stronę żywą trzema sondami: drzewem elementów, rejestrem żądań
+i konsolą. Audyt dostępności jest czwartą sondą i pyta o to samo — o stronę po
+zbudowaniu przez skrypty, nie o jej źródło. Reguła dostępności orzeka
+o etykiecie kontrolki wstawionej skryptem tak samo jak o etykiecie wpisanej
+w źródle; audyt czytający sam HTML odpowiedziałby o dokumencie, którego nikt
+nie ogląda. Adres bierze się z ostatniej migawki okna, tak samo jak w trzech
+sondach starszych; kontrakt nie niesie w żądaniu pola adresu, bo pyta
+o bieżącą stronę okna.
+
+Reguły WCAG są cudzą wiedzą i rdzeń jej nie przepisuje: między normą a jej
+sprawdzeniem stoją setki reguł, które ktoś utrzymuje wraz z kolejnymi
+wydaniami normy. Dlatego audyt idzie zewnętrznym programem, a nie własnym
+obchodem drzewa. Program dostaje tę samą przeglądarkę, którą rdzeń już
+deklaruje dla sond starszych, nie własną kopię pobieraną z sieci przy
+pierwszym uruchomieniu.
+
+Program audytujący nie mówi, czy strona się wczytała: dokument błędu 404 bywa
+poprawny wobec normy i wychodzi z audytu jako pusty wykaz naruszeń. Odpowiedź
+zero naruszeń dla strony, której pod danym adresem nie ma, byłaby brakiem
+pomiaru podanym jako pomiar — i to najgorszą jego postacią, bo wygląda dobrze
+i nie wzywa nikogo do sprawdzenia. Dlatego przed audytem rdzeń sięga po stronę
+własną drogą modułu, która orzeka o stanie odpowiedzi i o tym, czy zasób jest
+w ogóle stroną; odmowa stąd nazywa, czego nie zmierzono, zamiast podawać zero.
+Drugie potwierdzenie jest po stronie odpowiedzi programu: pusty wykaz jest
+wynikiem tylko wtedy, gdy program oddał tablicę JSON.
+
+Program audytu dostaje przeglądarkę wskazaną, nie szukaną: jego własna
+warstwa sterowania przeglądarką pobiera wydanie Chrome do katalogu pamięci
+podręcznej użytkownika, a rdzeń takiego pobrania nie robi. Wskazanie idzie
+plikiem nastaw, bo jedyna droga do procesu nie przekazuje zmiennych
+środowiska — i ma nie przekazywać, bo binarium arsenału nie ma powodu widzieć
+zmiennych rdzenia.

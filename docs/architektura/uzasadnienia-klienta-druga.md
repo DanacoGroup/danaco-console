@@ -2092,3 +2092,6 @@ a tu leży przebieg czynności wraz z tym, co po niej widzi operator, tym samym 
 czynności biblioteki. Potwierdzenie mówi to, co zapisał rdzeń, nie to, czego żądało okno: rdzeń
 oddaje po zapisie komplet uprawnień eksperta i ten komplet rozstrzyga. Po odpowiedzi okno odrysowuje
 wykaz, bo stan ładowania go opróżnia.
+
+## budowa/klient-poprzedni/src/strona-glowna/listwa-ustawien.ts
+Segmenty listwy dzieli delikatny separator wewnątrz jednej powierzchni, więc pas czyta się jako jeden byt o kilku wejściach, a nie jako trzecia siatka kart; pozycje listwy nie mają formy kart ani kafli. Segmenty ustawień są trzy: okno konfiguracji, tryb Mobile oraz Always On Display. Czwarty segment nie jest ustawieniem — „Dodaj nowy” otwiera formularz zakładania komponentu własnego i zgłasza to osobnym wywołaniem zwrotnym, nie przez wykaz ustawień, ponieważ pozycja, która ustawieniem nie jest, nie udaje jego kodu; zakładanie komponentu należy do strefy drugiej, więc przeniesienie segmentu jest zgłoszone, a nie wykonane z tego katalogu. Waga wizualna strefy jest najniższa z trzech: segment ma wysokość kontrolki i niesie ikonę oraz nazwę, bez wezwania do działania i bez metadanych. Żadna pozycja nie jest wyszarzona ani pozbawiona klikalności.

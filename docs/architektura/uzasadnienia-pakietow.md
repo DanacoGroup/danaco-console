@@ -3833,3 +3833,53 @@ wróciłby inaczej, niż go odkładano.
 Migawek historii wersji archiwizacja nie mnoży: zapis nie rusza licznika wersji eksperta,
 więc wyzwalacz bazy uzupełnia migawkę wersji bieżącej zamiast zakładać nową. Odłożenie
 eksperta na półkę nie jest zmianą jego tożsamości.
+
+## budowa/server/internal/models/zapytanie.go
+Kanał nie rozstrzyga konfiguracji wywołania sam — dostaje zasięgi po to, by móc
+je przekazać dalej i odnotować w prowenancji.
+
+Historia jest strukturą wewnętrzną pakietu, nie kontraktem: adapter kanału
+składa z niej pamięć wywołania, a wypełnia ją warstwa rozmowy z dziennika tury.
+Kanał bezstanowy składa z niej pamięć wywołania przy każdym wywołaniu; kanał
+z własną pamięcią może ją pominąć.
+
+Rozdzielenie ról obrazu wejściowego na materiał i maskę jest konieczne, bo dwie
+czynności warsztatu fotografii — uzupełnienie ubytku i rozszerzenie kadru —
+wysyłają obie role naraz, a punkty końcowe dostawcy przyjmują je osobnymi
+polami.
+
+Pole ObrazWejsciowy istnieje, bo bez niego kanał obrazowy umiał wyłącznie
+wygenerować obraz z samego polecenia tekstowego: cztery czynności warsztatu
+fotografii modułu Design — powiększenie, odcięcie tła, uzupełnienie ubytku
+i rozszerzenie kadru — nie miały jak dojść do wariantu neuronowego, choć mają
+go lepszy od rachunku na pikselach. Bajty jadą wyłącznie wprost, bez wariantu
+adresowego, jaki ma treść obrazu w drugą stronę: odpowiedź dostawcy bywa
+odsyłaczem, bo to dostawca trzyma plik, a materiał wejściowy leży w magazynie
+rdzenia, do którego punkt końcowy dostawcy nie ma jak sięgnąć — adres przyjęty
+tutaj byłby adresem, którego druga strona nie odczyta.
+
+Nazwa pliku obrazu wejściowego pozwala punktowi końcowemu rozpoznać format,
+gdy nie dostanie typu treści.
+
+ObrazyWejsciowe: kanał obrazowy bierze pierwszy materiał i pierwszą maskę
+z listy, bo punkty końcowe edycji przyjmują po jednym elemencie z każdej roli.
+
+Pułap kosztu tury pochodzi z nastawy pulap_kosztu_usd; zerowa wartość oznacza,
+że kanał nie dopisuje przełącznika ograniczającego budżet wywołania.
+
+Katalog roboczy sesji ustala się z konfiguracji operatora, kluczami obszaru
+katalogu roboczego.
+
+Konfiguracja mostów MCP sesji jedzie osobnymi przełącznikami obok konfiguracji
+mostów okna, więc nadania okna i wiązania sesji nie przykrywają się nawzajem.
+
+Plik ustawień sesji składa się z obszarów narzędzi i uprawnień konfiguracji
+sesji.
+
+Środowisko procesu kanału dokładają zmienne wyliczone z obszarów środowiska
+i dostawcy w konfiguracji sesji.
+
+Konto wybrane dla wywołania: gdy zapytanie nie wskazuje konta wprost, obowiązuje
+konto powiązane z wierszem kanału w rejestrze. Powiązanie kanału z kontem staje
+się dzięki temu widoczne w wywołaniu nawet bez konfiguracji sesji; brak obu
+źródeł oznacza, że tożsamość bierze się z otoczenia procesu.

@@ -10,7 +10,9 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 urwaniu.** Pisarz robi rewizje PO KAZDYM PLIKU (kod + przyrost docs razem);
 dziennik trwaly stoi w `~/robocze/prowadzenie/komentarze/` (pomiar bazowy,
 manifest porcji, dzienniki torow `<sektor>.jsonl` z liniami START/DONE).
-Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
+Granica liczy komentarz glowny: odsylacze, wskazania i dyrektywy sa
+z niej wylaczone (dopowiedzenie Wlasciciela w pozycji 18; wciela je
+instrument). Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
 zacommitowany, W-GRANICY i tokeny tozsame z baza `285f4bf`; DO ZROBIENIA =
 PONAD granica (pomiar `narzedzia/zrodlo-bez-komentarzy.go -gestosc`);
 podejrzany po urwaniu = ostatni START bez DONE w dzienniku toru →

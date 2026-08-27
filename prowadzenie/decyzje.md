@@ -1228,6 +1228,15 @@ wymaga wiecej niz zdania, **ma swoje miejsce i nim nie jest kod**.
 
 Plik kodu niesie **zdanie i odsylacz**, nie wyklad.
 
+**Dopowiedzenie Wlasciciela (27.08, po poludniu).** Odsylacze, wskazania
+i inne noty wewnatrz kodu, ktore nie stanowia komentarza glownego, **nie
+wliczaja sie w granice**. Operacyjnie (instrument
+`narzedzia/zrodlo-bez-komentarzy.go -gestosc`): z granicy wylaczone sa
+dyrektywy `//go:` oraz komentarze jednowierszowe niosace sciezke pliku
+(`docs/...`, `*.go`, `*.md`, `*.sql`) albo zaczynajace sie od
+„Uzasadnienie:", „Patrz", „Zob.". Komentarz blokowy i kazda tresc opisowa
+wliczaja sie zawsze.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

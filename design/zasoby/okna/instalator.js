@@ -226,8 +226,8 @@ function uruchom() {
     if (!wstecz || !dalej) return;
     var o = odslona();
     if (kopiuj) kopiuj.hidden = !(biezacy === 5 && o === 'blad');
-    wstecz.hidden = false; wstecz.disabled = false;
-    dalej.hidden = false; dalej.disabled = false;
+    wstecz.hidden = false; wstecz.setAttribute('aria-disabled', 'false');
+    dalej.hidden = false;
     dalej.setAttribute('aria-disabled', 'false');
 
     if (biezacy === 5) {
@@ -239,7 +239,7 @@ function uruchom() {
       /* Zapis w toku nie ma czego pominąć ani dokąd się cofnąć — pas niesie
          jedną czynność, przerwanie. W czasie wycofywania nie ma i jej. */
       wstecz.textContent = tekst('dzialania.anuluj');
-      wstecz.disabled = o === 'wycofywanie';
+      wstecz.setAttribute('aria-disabled', o === 'wycofywanie' ? 'true' : 'false');
       dalej.hidden = true;
       return;
     }
@@ -259,8 +259,8 @@ function uruchom() {
        żeby móc odpowiedzieć, czego brakuje. `aria-disabled` niesie stan wygaszony
        i ogłasza go czytnikowi, a klikalność zostaje. Krok 3 bez wybranej wersji
        nie ma czego wyjaśniać — pytanie jeszcze nie padło. */
-    dalej.setAttribute('aria-disabled', (biezacy === 2 && !zgodaPrzyjeta()) ? 'true' : 'false');
-    dalej.disabled = (biezacy === 3 && !wybranaWersja());
+    dalej.setAttribute('aria-disabled',
+      ((biezacy === 2 && !zgodaPrzyjeta()) || (biezacy === 3 && !wybranaWersja())) ? 'true' : 'false');
   }
   var NAWIGACJA = {
     spoczynek: tekst(K.stany.nawigacjaKroku2.spoczynek),
@@ -469,6 +469,7 @@ function uruchom() {
 
     var wstecz = e.target.closest('[data-krok-wstecz]');
     if (wstecz) {
+      if (wstecz.getAttribute('aria-disabled') === 'true') return;
       if (biezacy === 1 || zapisWToku()) { zamknijOkno(); return; }
       if (biezacy === 5 || biezacy === ILE) { wyjdz(); return; }
       pokaz(biezacy - 1);
@@ -477,6 +478,7 @@ function uruchom() {
     var dalej = e.target.closest('[data-krok-dalej]');
     if (dalej) {
       if (biezacy === 2 && !zgodaPrzyjeta()) { pokazBlad(true); return; }
+      if (biezacy === 3 && !wybranaWersja()) return;
       if (biezacy === 3 && !zgodnaWersja() && !wersjaMimoTo) { pokazNiezgodnosc(true); return; }
       if (biezacy === 5) { if (odslona() === 'blad') uruchomZapis(); return; }
       if (biezacy === ILE) { wyjdz(); return; }

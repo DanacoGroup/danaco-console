@@ -2220,3 +2220,14 @@ bezpośrednio nad instrukcję, której dotyczy, jako pełne zdanie: brak rdzenia
 rozmowy w tym stanowisku podglądu skutkuje pustymi gniazdami układu przy każdym
 uruchomieniu. Komentarz nad złożeniem obszaru skrócono do jednego zdania nazywającego
 elementy kompozycji bez wyliczenia wtórnego wobec kodu importów.
+
+## budowa/klient-poprzedni/src/moduly/workspace/poziomy-zasiegu.ts
+Poziom aplikacji stoi w wykazie, ale poza wyborem: kontrakt przypisuje mu nastawy samego programu,
+nie treści w nim prowadzonej, więc kontrolka oferująca ten poziom proponowałaby zapis, którego rdzeń
+nie ma gdzie umieścić. Nazwę zachowuje, bo rdzeń może oddać ten poziom w odpowiedzi, i okno ma go
+wtedy nazwać, a nie pokazać surowego kodu. Wykaz jest zapisany jako mapa poziomu na opis, więc poziom
+dołożony do kontraktu nie przejdzie kompilacji, dopóki nie zostanie rozstrzygnięte, czy moduł ma go
+pokazywać. Pamięć projektu otwiera się na poziomie projektu, bo taki jest jej domyślny zasięg —
+zmienia się wyłącznie kolejność prezentacji, nazwy zostają te same, więc oba okna pokazują tę samą
+nastawę pod tą samą nazwą. Miejsce puste w kolejności znaczy poza wyborem i wtedy powód pominięcia
+mówi, dlaczego.

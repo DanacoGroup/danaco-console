@@ -1,4 +1,4 @@
-# Wykaz biblioteki — 474 składników
+# Wykaz biblioteki — 473 składników
 
 Warstwa wspólna to trzynaście arkuszy. Okno składa się WYŁĄCZNIE z tych klas.
 Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundament.css, komponenty.css.
@@ -117,11 +117,11 @@ Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundam
 .dn-modal-uchwyt--sw .dn-modal-uchwyt--w 
 ```
 
-## panel-sesji.css — 14
+## panel-sesji.css — 13
 ```
-.dn-obszar-panel--boczny .dn-obszar-sterowanie .dn-panel-drzewo .dn-panel-galaz .dn-panel-galaz-grot
-.dn-panel-galaz-licznik .dn-panel-galaz-nazwa .dn-panel-glowa .dn-etyk-mono .dn-panel-poz
-.dn-panel-srod .dn-panel-stopka .dn-panel-wiersz .dn-panel-wykaz 
+.dn-etyk-mono .dn-obszar-panel--boczny .dn-obszar-sterowanie .dn-panel-drzewo .dn-panel-galaz .dn-panel-galaz-grot
+.dn-panel-galaz-licznik .dn-panel-galaz-nazwa .dn-panel-poz .dn-panel-srod .dn-panel-stopka .dn-panel-wiersz
+.dn-panel-wykaz
 ```
 
 ## pasek-okna.css — 6

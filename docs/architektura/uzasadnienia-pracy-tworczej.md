@@ -2921,3 +2921,63 @@ z dwoch przestrzeni; porownanie pytania z wektorem cudzego modelu daje
 liczbe, ktora wyglada jak trafnosc i nia nie jest. Stare wiersze zostaja
 w tabeli swiadomie — wracaja do uzytku, gdy Operator wroci do poprzedniego
 modelu, a rebuild je czysci.
+
+Rozdzielnik liczb wnętrza nawiasu w zapisie barwy bywa przecinkiem albo
+spacją (składnia CSS Color 4), a odsetek zamienia się na ułamek od razu —
+inaczej `hsl(210, 50%, 40%)` i `hsl(210 0.5 0.4)` znaczyłyby co innego,
+choć to ten sam zapis.
+
+Składowe rgb() bywają podane jako 0-255 albo jako odsetek zamieniony wyżej
+na ułamek. Rozróżnia je kres: wartość powyżej jedynki nie może być ułamkiem
+sRGB.
+
+L* w zapisie CSS idzie 0-100, a biblioteka liczy go 0-1. Ułamek podany
+wprost też jest tu poprawny i wchodzi bez skalowania.
+
+Nazwa barwy wchodzi wyłącznie przy trafieniu dokładnym. Nazwa "najbliższa"
+mówiłaby o barwie, której w żądaniu nie było — a pole jest niewymagane
+właśnie po to, żeby brak nazwy dało się powiedzieć wprost.
+
+Wartości niepomnożone przez krycie dawałyby przy kryciu częściowym barwę
+jaśniejszą, niż wskazano, i wyrys nie zgadzałby się z podglądem w oknie.
+
+Tekst duży wedle WCAG: od 18 punktów (24 px) albo od 14 punktów (18.66 px)
+przy pogrubieniu.
+
+`passesLargeAA` w wyniku kontrastu liczy się zawsze, a nie tylko wtedy, gdy
+wołający podał rozmiar pisma: pole odpowiada na pytanie, czy ta para nadaje
+się na nagłówek, co ma sens także bez wskazania rozmiaru. Rozmiar
+i pogrubienie rozstrzygają natomiast o `passesAA` — para na 4.0 jest zgodna
+dla tekstu dużego i niezgodna dla zwykłego, więc jedna odpowiedź na oba
+przypadki byłaby nieprawdziwa dla jednego z nich.
+
+## budowa/server/internal/wiedza/bledy.go
+
+Odpowiedź trafień po literach ma ten sam kształt co odpowiedź trafień po
+znaczeniu, więc pytający nie rozpoznałby podmiany i uznałby, że szukanej
+treści w wiedzy nie ma. Treść odmowy niesie trzy człony tak samo jak odmowy
+w `zewnetrzne/wolanie.go`.
+
+`brakWagStojacych` jest osobnym rodzajem od `brakModelu`, bo naprawa jest
+odwrotna: tam trzeba wagi ściągnąć, tu są już na dysku i odesłanie po nie
+kierowałoby Operatora po to, co już ma.
+
+`BrakSilnika`: brak usuwa się jedną instalacją, więc adapter rozpoznaje ten
+typ i znakuje go jako niedostępność zaplecza (`adapter_modul_wiedza.go`),
+a nie jako usterkę wewnętrzną. Różnica jest cała w treści, którą czytelnik
+dostaje: usterka wewnętrzna nie mówi ani czego brak, ani ile to waży, ani co
+zainstalować.
+
+Pole `Silnik` rozstrzyga o treści odmowy, nie o jej kodzie: brakuje trzech
+różnych bibliotek, trzech różnych kompletów wag i wskazuje się trzy różne
+ustawienia, a odmowa odsyłająca po `fastembed` w miejscu, w którym brakuje
+krzyżowego kodera, kierowałaby Operatora po rzecz, którą już ma.
+
+Pole `WagaMb` — gdy waga jest nieznana, człon o wadze po prostu nie wchodzi
+do zdania odmowy.
+
+`opisNaprawyDolozonej` prowadzi trzema drogami, bo trzy różne przyczyny: brak
+wag na dysku usuwa pobranie, wagi leżące a nieczytelne — wskazanie innego
+katalogu albo innego wydania modelu, a brak bibliotek — jedna instalacja
+w interpreterze, który już wskazano ustawieniem osadzarki (interpreter jest
+w pakiecie jeden, więc i ustawienie jest jedno).

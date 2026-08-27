@@ -5850,3 +5850,41 @@ poprawnym stanem, w którym kontrolka pokazuje mniej.
 Słownik środowisk, przez który KodSrodowiska szuka karty sesji, ma tyle
 wierszy, ile profili widoczności modułów — to garść wierszy zasianych
 migracją, a nie zbiór rosnący z bieżącą pracą w interfejsie.
+
+## budowa/server/internal/core/straz_eksperta.go
+
+Powód istnienia pliku jest jeden: zapis uprawnienia, który nie jest
+sprawdzany przy wykonaniu, jest gorszy niż jego brak. Bez tej straży okno
+Permissions Center pokazywałoby ograniczenie, którego nikt nie egzekwuje,
+i praca toczyłaby się w przekonaniu, że ekspert czegoś nie może, choć może.
+
+Straż nie stoi w sprzeczności z zasadą braku twardych blokad. Blokady
+wbudowanej na stałe tu nie ma: stanem wyjściowym eksperta jest pełny
+dostęp operacyjny i straż wtedy milczy. Odmawia wyłącznie tam, gdzie zakres
+został świadomie zawężony — zawężenie zignorowane byłoby kłamstwem okna,
+nie swobodą.
+
+Dwa miejsca odmowy w tym pliku odpowiadają dwóm z czterech grup zakresu
+Permissions Center: „Dostęp do modułów i zasobów" (nałożenie eksperta na
+okno modułu spoza jego zakresu, komenda agent.modules.set oraz wpis
+uprawnienia grupy modules) i „Zakres działania w MultitaskingAI" (powołanie
+podagentów przez eksperta z wyłączonym Subagent Network, komenda
+agent.subagent.set). Pozostałe dwie grupy — dostęp do rozszerzeń i izolacja
+techniczna — idą swoimi drogami: konektor niepodłączony po prostu nie
+wchodzi do parametru --mcp-config (plik most_okna.go), a zakresy izolacji
+technicznej wykonuje brama izolacji procesu, ta sama, którą korzysta okno
+konfiguracji punktów izolacji.
+
+Sprawdzenie modułu okna opiera się na dwóch niezależnych zapisach, które
+oba obowiązują: moduły zastosowania z komendy agent.modules.set, gdzie
+wykaz pusty znaczy brak ograniczenia, oraz wpis uprawnienia grupy modules
+z zakresem równym kodowi modułu i wartością granted=false, czyli świadome
+odebranie jednego modułu.
+
+Druga wartość zwracana przez GranicaPodagentowEksperta mówi, czy odpowiedź
+w ogóle dotyczy eksperta: ekspert nierozpoznany i straż bez biblioteki dają
+false, a wołający zostaje wtedy przy granicy platformy.
+
+kodModuluOkna zwraca "nie wiadomo", a nie odmowę, gdy katalog modułów nie
+da się odczytać, ponieważ zawężenie ma wynikać z decyzji podjętej
+świadomie, nie z nieudanego odczytu.

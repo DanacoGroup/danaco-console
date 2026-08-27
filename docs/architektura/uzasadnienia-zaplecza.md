@@ -2797,3 +2797,9 @@ Dlatego rośnie tabela `zatwierdzenie_panelu` (kontrakt: `ApprovalRecord`
 z własnym identyfikatorem, autorem i chwilą), a panel dostaje trzy kolumny
 migawki (`TranslationPanel.approvalStage/approvedBy/approvedAt`) — inaczej
 każdy odczyt panelu musiałby dociągać ostatni wiersz obiegu.
+
+## budowa/server/internal/store/migracja_271_automations_kroki_przebiegu.sql
+Stan kroku przebiegu wraz z ładunkami wejściowymi i wyjściowymi jest zapisem trwałym, odrębnym od stanu przebiegu wyprowadzanego z pozycji kolejki: kolejka po opróżnieniu traci pozycje, a drążenie do poziomu kroku i podgląd ładunku mają dalej mieć co pokazać, inaczej historia przebiegu kończyłaby się w chwili sprzątnięcia kolejki. Ładunki są redagowane przy odczycie, a nie przy zapisie, ponieważ reguła redakcji sekretów bywa zmieniana, a zapis już zredagowany nie da się odredagować.
+
+## budowa/desktop/src-tauri/src/menu_zasobnika.rs
+Menu zasobnika celowo nie ma pozycji zatrzymania rdzenia: rdzeń stoi na serwerze wdrożenia, powłoka go nie postawiła i nie ma czym go wygasić, więc taka pozycja obiecywałaby władzę, której powłoka nie ma.

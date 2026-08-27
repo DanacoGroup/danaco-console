@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: nazwane konteksty pamięci, kontekst czynny karty
-// sesji oraz zasady retencji (tabele `kontekst_pamieci`,
-// `kontekst_pamieci_czynny`, `zasada_retencji_pamieci`, migracja 294) —
-// dopełnienie rodziny `memory.*` obok `workspace_pamiec.go`.
-//
-// Kontekst jest zestawem WSKAZAŃ: usunięcie kontekstu nie kasuje ani jednego
-// wpisu pamięci, bo kontekst nie jest właścicielem treści. Dlatego wpisy idą
-// zapisem strukturalnym w kolumnie, a nie kluczem obcym z kaskadą.
+// Odpowiedzialność pliku: nazwane konteksty pamięci, kontekst czynny karty sesji oraz zasady retencji
+// (tabele `kontekst_pamieci`, `kontekst_pamieci_czynny`, `zasada_retencji_pamieci`, migracja 294).
 package dane
 
 import (
@@ -16,7 +10,7 @@ import (
 	"strings"
 )
 
-// KontekstPamieci to wiersz tabeli `kontekst_pamieci`.
+// KontekstPamieci to wiersz tabeli `kontekst_pamieci`, niosący nazwany zestaw wskazań pamięci profilu.
 type KontekstPamieci struct {
 	Kod             string
 	Nazwa           string
@@ -30,7 +24,7 @@ type KontekstPamieci struct {
 	Zaktualizowano  int64
 }
 
-// ZasadaRetencjiPamieci to wiersz tabeli `zasada_retencji_pamieci`.
+// ZasadaRetencjiPamieci to wiersz tabeli `zasada_retencji_pamieci`, niosący próg wygaszania wpisów pamięci.
 type ZasadaRetencjiPamieci struct {
 	Kod              string
 	Zasieg           string
@@ -43,7 +37,7 @@ type ZasadaRetencjiPamieci struct {
 	Zaktualizowano   int64
 }
 
-// RepozytoriumKontekstowPamieci jest kontraktem kontekstów i zasad retencji.
+// RepozytoriumKontekstowPamieci jest kontraktem kontekstów pamięci i ich zasad retencji dla danego profilu.
 type RepozytoriumKontekstowPamieci interface {
 	ZapiszKontekstPamieci(ctx context.Context, kontekst KontekstPamieci) (KontekstPamieci, error)
 	KontekstPamieciPoKodzie(ctx context.Context, kod string) (KontekstPamieci, error)
@@ -106,12 +100,12 @@ type repozytoriumKontekstowPamieci struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumKontekstowPamieci zakłada magazyn kontekstów nad bazą zestawu.
+// noweRepozytoriumKontekstowPamieci zakłada magazyn kontekstów pamięci nad bazą danych tego całego zestawu.
 func noweRepozytoriumKontekstowPamieci(z *zapytania, db *sql.DB) *repozytoriumKontekstowPamieci {
 	return &repozytoriumKontekstowPamieci{zapytania: z, db: db}
 }
 
-// ZapiszKontekstPamieci zakłada kontekst albo nadpisuje zastany po kodzie.
+// ZapiszKontekstPamieci zakłada kontekst pamięci albo nadpisuje zastany wiersz po jego unikalnym kodzie.
 func (r *repozytoriumKontekstowPamieci) ZapiszKontekstPamieci(ctx context.Context,
 	kontekst KontekstPamieci) (KontekstPamieci, error) {
 
@@ -133,7 +127,7 @@ func (r *repozytoriumKontekstowPamieci) ZapiszKontekstPamieci(ctx context.Contex
 	return r.KontekstPamieciPoKodzie(ctx, kontekst.Kod)
 }
 
-// KontekstPamieciPoKodzie zwraca jeden kontekst.
+// KontekstPamieciPoKodzie zwraca jeden kontekst pamięci wskazany jego unikalnym kodem tekstowym w bazie.
 func (r *repozytoriumKontekstowPamieci) KontekstPamieciPoKodzie(ctx context.Context,
 	kod string) (KontekstPamieci, error) {
 
@@ -149,7 +143,7 @@ func (r *repozytoriumKontekstowPamieci) KontekstPamieciPoKodzie(ctx context.Cont
 	return kontekst, err
 }
 
-// KontekstyPamieci zwraca konteksty w kolejności wyświetlania.
+// KontekstyPamieci zwraca konteksty pamięci danego profilu w kolejności ustalonej do ich wyświetlania.
 func (r *repozytoriumKontekstowPamieci) KontekstyPamieci(ctx context.Context, profil string,
 	zWylaczonymi bool) ([]KontekstPamieci, error) {
 
@@ -185,7 +179,7 @@ func (r *repozytoriumKontekstowPamieci) KontekstyPamieci(ctx context.Context, pr
 	return lista, nil
 }
 
-// UsunKontekstPamieci kasuje wskazanie. Wpisów pamięci nie rusza.
+// UsunKontekstPamieci kasuje jedynie wskazanie kontekstu pamięci; wpisów samej pamięci w ogóle nie rusza.
 func (r *repozytoriumKontekstowPamieci) UsunKontekstPamieci(ctx context.Context,
 	kod string) (bool, error) {
 
@@ -204,7 +198,7 @@ func (r *repozytoriumKontekstowPamieci) UsunKontekstPamieci(ctx context.Context,
 	return usuniete > 0, nil
 }
 
-// UaktywnijKontekstPamieci wskazuje kontekst czynny karty sesji.
+// UaktywnijKontekstPamieci wskazuje kontekst pamięci jako czynny dla wskazanej karty danej sesji rozmowy.
 func (r *repozytoriumKontekstowPamieci) UaktywnijKontekstPamieci(ctx context.Context,
 	sesja, kontekst string, chwila int64) error {
 
@@ -242,8 +236,7 @@ func (r *repozytoriumKontekstowPamieci) CzynnyKontekstPamieci(ctx context.Contex
 	return kod, nil
 }
 
-// ZapiszZasadeRetencjiPamieci zakłada zasadę albo nadpisuje zastaną w tym samym
-// zasięgu.
+// ZapiszZasadeRetencjiPamieci zakłada zasadę retencji pamięci albo nadpisuje zastaną w tym samym zasięgu.
 func (r *repozytoriumKontekstowPamieci) ZapiszZasadeRetencjiPamieci(ctx context.Context,
 	zasada ZasadaRetencjiPamieci) (ZasadaRetencjiPamieci, error) {
 
@@ -311,14 +304,8 @@ func (r *repozytoriumKontekstowPamieci) ZasadyRetencjiPamieci(ctx context.Contex
 	return lista, nil
 }
 
-// LiczbaWpisowPamieciProfilu liczy wpisy pamięci założone nie później niż
-// wskazana chwila — czyli te ZASTANE, których zasada dotknie przy najbliższym
-// wygaszaniu. Kontrakt `memory.retention.set` oddaje tę liczbę wprost i nie ma
-// prawa jej zgadywać: pochodzi z policzenia wierszy, nie z oszacowania.
-//
-// Granica jest znacznikiem czasu w zapisie kolumny `utworzono`
-// (`wpis_pamieci_projektu`, migracja 035) — czyli ISO-8601 w UTC. Porównanie
-// napisów jest tu poprawne, bo ten zapis rośnie leksykalnie razem z czasem.
+// LiczbaWpisowPamieciProfilu liczy wpisy pamięci założone nie później niż wskazana chwila — te zastane,
+// których zasada dotknie przy najbliższym wygaszaniu.
 func (r *repozytoriumKontekstowPamieci) LiczbaWpisowPamieciProfilu(ctx context.Context,
 	granica string) (int, error) {
 
@@ -331,7 +318,7 @@ func (r *repozytoriumKontekstowPamieci) LiczbaWpisowPamieciProfilu(ctx context.C
 	return liczba, nil
 }
 
-// odczytajKontekstPamieci przekłada wiersz na kontekst.
+// odczytajKontekstPamieci przekłada wiersz wyniku zapytania na pełną strukturę kontekstu tej samej pamięci.
 func odczytajKontekstPamieci(s skaner) (KontekstPamieci, error) {
 	var kontekst KontekstPamieci
 	var opis, prompt sql.NullString
@@ -348,7 +335,7 @@ func odczytajKontekstPamieci(s skaner) (KontekstPamieci, error) {
 	return kontekst, nil
 }
 
-// odczytajZasadeRetencjiPamieci przekłada wiersz na zasadę retencji.
+// odczytajZasadeRetencjiPamieci przekłada wiersz wyniku zapytania na pełną strukturę tej zasady retencji.
 func odczytajZasadeRetencjiPamieci(s skaner) (ZasadaRetencjiPamieci, error) {
 	var zasada ZasadaRetencjiPamieci
 	var wrazliwe, czynna int

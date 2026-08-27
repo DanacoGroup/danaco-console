@@ -6,6 +6,56 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### zaplecze-modeli
+
+**Szesnaście gigabajtów wag stoi na maszynie i nie ma czym się uruchomić.**
+Zmierzone: nie ma `torch`, `transformers`, `sentence-transformers`, `fastembed`,
+`kokoro` ani `segment_anything`. Stoją wyłącznie `onnxruntime` i `ctranslate2`.
+Skutek najcięższy: **własny silnik wiedzy rdzenia nie działa** — `knowledge.index`
+woła `internal/wiedza/pomocnik_osadzen.py`, a ten żąda `fastembed`.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/zaplecze-modeli` z `main` |
+| **Wykaz plików** | `budowa/server/internal/wiedza/`, `budowa/server/internal/core/adapter_modul_mowa*.go`, `adapter_narzedzia_obraz_model_silniki.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/` (kontrakt zmienia wyłącznie teren `pomiar-stron`), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery dokumentów, obrazu i przeglądarki |
+
+| Model | Waga | Format | Komenda, która po niego sięgnie |
+|---|---|---|---|
+| embedder (XLMRoberta, wymiar 1024) | 4,3 GB | `pytorch_model.bin` + ONNX | `knowledge.index`, `knowledge.search` |
+| reranker | 2,2 GB | `safetensors` | brak komendy — **zgłoś, nie dokładaj** |
+| CLIP | 1,6 GB | `safetensors` | brak komendy — zgłoś |
+| twarze | 692 MB | `.pth` | brak komendy — zgłoś |
+| Kokoro | 340 MB | 55 × `.bin`/`.pth`, **54 głosy, ani jednego polskiego** | `speech.*` — rozstrzygnij, czy wart deklaracji |
+| ESRGAN | 128 MB | `.pth` | `image.upscale` — **program `realesrgan-ncnn-vulkan` już stoi i rdzeń go zna** |
+| MobileSAM | 39 MB | `.pth` | `design.photo.select.object` **jest już zrobione w Go**, a zapora Design zabrania wołania procesu w tej rodzinie |
+
+**Instalowanie jest tu dozwolone — wyjątkowo i wyłącznie w tym terenie.**
+Właściciel polecił, żeby aplikacja miała wszystkie narzędzia czynne. Zaplecze
+modeli stoi w hybrydzie **na serwerze wdrożenia**, nie u Operatora, więc
+instalacja na maszynie budowlanej jest instalacją tego serwera. Każdą pozycję,
+którą postawisz, wypisujesz w raporcie wraz z wagą na dysku.
+
+**Kontraktu nie zmieniasz.** Model bez komendy w kontrakcie wraca zgłoszeniem
+wraz z propozycją obszaru — nie dokładasz komend, bo kontrakt należy w tej turze
+do innego terenu.
+
+**Kryteria odbioru.**
+
+1. `knowledge.index` i `knowledge.search` **działają** — wykazane uruchomieniem
+   na prawdziwej treści, z przytoczonym żądaniem i odpowiedzią rdzenia.
+2. Dla każdego z siedmiu modeli: albo działa i jest wykazany uruchomieniem, albo
+   ma podany powód, dla którego dziś nie może, wraz z tym, czego brakuje.
+3. Wagi, które stoją w `/opt/danaco-modele`, są **użyte** albo jest wprost
+   napisane, dlaczego rdzeń sięga po inne — pobranie drugiej kopii tego samego
+   modelu jest uchybieniem, chyba że podasz powód.
+4. Brak biblioteki albo wag daje odmowę **nazywającą brak i drogę naprawy**, nie
+   błąd wewnętrzny — wykazane sprawdzianem.
+5. `gotestsum -- -count=1 ./...` — zero niepowodzeń, wobec stanu zastanego
+   2041 zdanych, 17 pominiętych, zero niezdanych.
+6. Kontrakt nietknięty — wykazane sumą kontrolną.
+7. Wykaz wszystkiego, co postawiłeś na maszynie, wraz z wagą — w raporcie.
+
 ### dokumenty-i-tekst
 
 Siedem programów do treści pisanej. Wszystkie stoją na maszynie, komendy, które

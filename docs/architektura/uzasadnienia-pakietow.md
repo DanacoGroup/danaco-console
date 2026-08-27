@@ -3645,3 +3645,11 @@ nie z literałów wpisanych lokalnie w kodzie.
 Zapis układu sekcji panelu jest całościowy, nie różnicowy: podane sekcje wyznaczają układ panelu, a czego w żądaniu nie ma, tego po zapisie nie ma w bazie. Wynika to z kontraktu — polecenie zapisu niesie samo pole listy sekcji, bez znacznika czynności, więc jedynym czytelnym znaczeniem listy jest układ docelowy. Zapis różnicowy wymagałby, żeby klient wiedział, co w bazie leży teraz; wtedy dwa okna przestawiające ten sam panel rozjechałyby układ, bo każde dopisywałoby swoje do cudzego stanu. Skasowanie starego układu i wpisanie nowego idzie jedną transakcją, bo przerwane w połowie zostawiłyby panel bez sekcji, nieodróżnialny od panelu nigdy nieustawianego. Kolejność nadaje ten plik, nie wołający: baza pilnuje wyłącznie dolnej granicy numeru, a numery 1..N nanosi zapis sekcji, żeby wykaz czytany po numerze porządkowym był tym samym, co wykaz czytany po miejscu na liście.
 
 Odczyt po zapisie idzie po zamknięciu transakcji i po opadnięciu zapisów zbiegłych w czasie: układ obowiązujący to stan, który zastanie następny czytelnik. Dwa okna przestawiające ten sam panel dostają dzięki temu tę samą treść, więc odpowiedź niepodobna do żądania znaczy, że cudzy zapis wszedł po naszym. Licznik zapisów w toku pozwala odczytać układ dopiero wtedy, gdy zapisy zbiegłe w czasie opadły; czekanie ma kres, bo panel przestawiany bez ustanku nie może wstrzymać odpowiedzi w nieskończoność, a odczyt po upływie kresu jest nadal odczytem z nośnika.
+
+## budowa/server/internal/models/rejestr.go
+Stan „czynny” zwracany przez Kontrakt nie pokrywa się z wartością aktywny wiersza
+źródłowego. Wiersz może mieć aktywny równe jeden, a mimo to nie mieć zbudowanego
+adaptera, bo jego rodzaj nie ma fabryki albo fabryka odmówiła budowy — taki wiersz
+trafia do Pominiete. Kanał bez adaptera nie jest gotowy do pracy, więc przy
+ograniczeniu do kanałów czynnych nie jest zwracany jako czynny; inaczej okno
+wskazywałoby kanał, który przy pierwszej próbie odmawia działania.

@@ -1,10 +1,8 @@
-/* ============================================================================
-   EKRAN 2 — LICENCJA
-   ----------------------------------------------------------------------------
+/* Ekran drugi kreatora instalacji prezentuje treść umowy licencyjnej i wymaga jej zaakceptowania przed kontynuacją instalacji.
+
    Zgoda na dokument, którego nie da się przeczytać, byłaby zgodą pozorną —
    dlatego pole umowy bierze całą wolną wysokość kroku. Braku zgody nie tłumaczy
-   osobny komunikat: mówi o nim ta sama fraza, która w spoczynku mówi, co zrobić.
-   ============================================================================ */
+   osobny komunikat: mówi o nim ta sama fraza, która w spoczynku mówi, co zrobić. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

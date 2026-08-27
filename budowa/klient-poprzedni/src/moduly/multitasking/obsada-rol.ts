@@ -1,6 +1,9 @@
+/**
+ * Obsada czterech okien ról modułu MultitaskingAI złożona z pól kontraktu.
+ * Plik niesie kody okien operacyjnych oraz liczbę wykonawców i składa z okien
+ * sesji koordynatora, wykonawców, analityka oraz okna obce tej scenie.
+ */
 import { WindowRole, type Window } from '../../../../shared/contract';
-
-/** Obsada czterech okien ról modułu MultitaskingAI złożona z pól kontraktu. */
 
 /**
  * Kody okien operacyjnych rejestru rdzenia zapisane bez przedrostka modułu. Kod

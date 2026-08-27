@@ -5239,3 +5239,12 @@ Eksport zestawienia przebiegów istnieje w dwóch postaciach, bo służą dwóm 
 w Markdown czyta człowiek, a zestawienie rozdzielane średnikiem wchodzi do arkusza. Postaci
 przenośnego dokumentu okno nie składa, bo wymagałaby biblioteki składu, której warstwa
 kliencka platformy nie ma.
+
+## budowa/klient-poprzedni/src/moduly/browser/panel-wyodrebnien.ts
+
+Panel jest wynikiem pozycji „Wyodrębnij dane” paska dolnego oraz przycisku
+„Wyodrębnij” paska zaznaczenia. Wyodrębnienie dzieje się w kliencie, z treści,
+którą klient już ma: kontrakt nie ma komendy wyodrębniania danych ze strony,
+a migawka jest jedyną treścią, którą moduł dostał od rdzenia. To z niej
+wyjmowane są trzy rodzaje danych i dlatego panel nie podstawia żadnego pola,
+dopóki migawka nie przyjdzie.

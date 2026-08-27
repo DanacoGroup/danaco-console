@@ -4021,3 +4021,23 @@ Próg paska nie buduje menu rozwijanego. Jedyne menu biblioteczne
 bieżąca, a wybór liścia ją zmienia. Operacje jednorazowe wartości bieżącej nie
 mają, więc uchwyt pokazywałby napis, który niczego nie odzwierciedla — wszystkie
 dziewięć przycisków stoi wobec tego płasko.
+
+## budowa/klient-poprzedni/src/moduly/design/przyciecie-pol.ts
+
+Samo `trim()` przeglądarki tu nie wystarcza, ponieważ `trim()` JavaScriptu
+i `strings.TrimSpace` języka Go nie zdejmują tego samego. Produkcja WhiteSpace
+JavaScriptu nie zna znaku NEL (U+0085), a `unicode.IsSpace` w Go go zna;
+odwrotnie, `trim()` zdejmuje ZWNBSP (U+FEFF), którego Go nie rusza. Rdzeń
+etykiet nie przycina w ogóle — `dane/design_zasoby.go` odrzuca wyłącznie
+etykietę pustą — więc etykieta złożona z samego NEL zapisałaby się jako
+niewidoczna, a etykieta z NEL na końcu nie dałaby się odnaleźć filtrem wpisanym
+bez tego znaku.
+
+Brzegową pustką jest tutaj wszystko, co za biały znak uważa którakolwiek ze
+stron. Przycięcie idzie sumą obu zbiorów, więc do rdzenia jedzie to, co człowiek
+uznałby za wpisane — tak samo po stronie zapisu, czyli nadania etykiet, jak po
+stronie odczytu, czyli filtru wykazu. Środek wartości pozostaje nietknięty.
+
+Powtórzenia odpadają, ponieważ rdzeń i tak nie zapisze etykiety dwa razy: klucz
+główny tabeli `etykieta_zasobu_design` obejmuje etykietę, a odpowiedź niosłaby
+wtedy co innego niż żądanie.

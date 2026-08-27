@@ -906,3 +906,35 @@ Brak zapytania do rdzenia nie jest fazą okna, lecz fazą źródła danych, któ
 Specyfikacja mostu mcp-danaco-pulpit-console zabrania nadawania trybu zapisu na maszynie danaco-data bez wyraźnej potrzeby. Maszyna ta jest hostem produkcyjnej platformy LEX, a zapis modelu sięga tam zbiorów, z których korzysta cała kancelaria. Zakazu nie egzekwuje jednak kod klienta: nadanie zapisu pozostaje możliwe, ponieważ rozstrzyga o nim Operator. Egzekwuje go jawne, widoczne zdanie postawione przy przełączniku trybu, a nie podpowiedź ukryta pod kursorem.
 
 Wykaz maszyn chronionych stoi w kodzie, a nie w katalogu konfiguracji, ponieważ jest to ostrzeżenie bezpieczeństwa i nie może dać się wyłączyć zapisem w bazie. Rozszerzenie wykazu sprowadza się do jednego wiersza w stałej MASZYNY_CHRONIONE.
+
+## budowa/klient-poprzedni/src/moduly/design/kanaly-obrazowe.ts
+
+Żądanie `design.asset.generate` niesie pole `channelId`, a rdzeń sprawdza rodzaj
+wskazanego kanału zanim cokolwiek wyśle — kanał tekstowy odmawia kodem
+`validation_failed` w `core/adapter_modul_design_kanal.go`. Wykaz silników
+pokazuje więc kanały obrazowe jako wybieralne, a pozostałe wymienia z nazwy
+i z powodem, zamiast je ukrywać.
+
+Kolejność rozpoznania jest przepisana z funkcji `KluczAdaptera()`
+w `models/definicja.go`: parametr `adapter` ma pierwszeństwo, a rodzaj wiersza
+jest wartością zapasową. Do kontraktu obie strony jadą tym samym wierszem
+(`core/adapter_kanaly.go`, pola `Kind: k.RodzajKanalu` oraz
+`Config: ParametryJSON`), więc `Channel.kind` odpowiada polu `Rodzaj`,
+a `Channel.config.adapter` polu `Parametr`. Kluczem adaptera obrazowego jest
+napis `obrazy` — stała `AdapterObrazy` w `models/kanal.go`.
+
+Rozpoznanie może rozejść się z rdzeniem: klient czyta `config` jako treść
+nieokreśloną (`config?: unknown` kontraktu), więc kanał o parametrach zapisanych
+inaczej niż obiektem trafi między nieobrazowe. Ostateczną kontrolę wykonuje
+rdzeń — dlatego wskazanie kanału spoza wykazu obrazowego nie jest w oknie
+blokowane, tylko opisane.
+
+## budowa/klient-poprzedni/src/moduly/browser/indeks.ts
+
+Moduł nie osadza się sam w dokumencie: oddaje element, a warstwa składająca
+rozstrzyga, gdzie go postawić. Dzięki temu te same okna wchodzą i w obszar
+roboczy powłoki, i w podgląd sprawdzianu.
+
+Wytwórnia oddaje moduł wprost, ponieważ `ModulBrowser` niesie pola `element`
+i `wczytaj` żądane przez powłokę oraz czynność `rozlacz`, po którą sięga
+sprawdzian modułu.

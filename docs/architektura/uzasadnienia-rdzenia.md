@@ -5511,3 +5511,10 @@ Sprawdzian mierzy skutek, nie samą kopertę odpowiedzi: wnosi plik do
 biblioteki, po czym pyta narzędzie dokumentu o jego treść i porównuje ją
 z tym, co naprawdę weszło. Odpowiedź udana z pustym tekstem byłaby tą samą
 szkodą co odmowa.
+
+## budowa/server/internal/core/handlers_wiedza.go
+Port nie rozgłasza żadnego zdarzenia zmiany, bo nie ma okna, które by je odebrało. Wskaźnik nie
+odświeża się sam przy wgraniu pliku: osadzenie dokumentu to sekundy pracy procesora, a pierwsze
+pobiera rząd gigabajta wag, więc wpięcie go w komendę wgrania pliku zamieniłoby ją w operację,
+która czasem trwa minutę i czasem odmawia z powodu braku sieci. Budowanie wskaźnika jest czynnością
+osobną i świadomą.

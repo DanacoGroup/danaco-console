@@ -1588,3 +1588,21 @@ odmowę zamiast pracy programu.
 Sprawdzian niezależności od programu wytwarza maszynę bez programów na
 miejscu, pustą ścieżką wyszukiwania, więc reguła jest mierzona wszędzie,
 a nie tylko tam, gdzie programów akurat nie zainstalowano.
+
+## budowa/server/internal/core/wejscie_wniesienie_test.go
+
+Plik mierzy skutek wejścia dokumentu Operatora do edytora: czy postać pliku
+wchodzi bez utraty formy, czy zapis znaków jest rozpoznawany i czy kopia
+dokumentu jest bytem osobnym od oryginału. Miara jest zawsze taka sama i nie
+ocenia koperty odpowiedzi komendy — po czynności dokument czyta się ponownie
+przez `PostacDokumentu`, bo Operator otworzy go ponownie, a nie przeczyta
+odpowiedzi komendy wprost.
+
+Sprawdziany wykluczają cztery rodzaje szkody. Pierwsza to plik wniesiony jako
+treść płaska, z arkuszem stylów i tabelą zgubionymi po drodze, czyli postać
+ginąca przy wniesieniu. Druga to plik w stronie kodowej innej niż UTF-8
+wczytany jako ciąg nieczytelnych znaków, bez żadnego zdania o tym w bilansie
+czynności. Trzecia to kopia dokumentu założona jako drugie odwołanie do tego
+samego bytu, po której zmiana w kopii rusza oryginał. Czwarta to wniesienie
+oddane jako udane, a bez zapisu pochodzenia dokumentu, po którym nie da się
+odtworzyć, na czym pismo się opiera.

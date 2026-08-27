@@ -6,53 +6,40 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### warunek-ukonczenia-zadania
-
-Rdzeń zna trzy powody **zatrzymania** biegu — brak postępu, Operator, usterka
-(`LoopStopReason`, `stan_obiegu.go:18`, stałe `session.PowodZatrzymania`) —
-i żaden nie znaczy „ukończone z wynikiem". Pozycja 7 rejestru decyzji wymaga
-rozróżnienia maszynowego, a pozycja otwarta „Warunek ukończenia zadania"
-blokuje etap 2. Rozstrzygnięcie przyjęte do czasu rozstrzygnięcia Właściciela
-niesie [rejestr decyzji](decyzje.md): czwarta wartość `completed`, **bez bramki
-akceptacji** — bramka byłaby sprzeczna z zasadą zero blokad.
-
-Zakotwiczenie sprawdzone przed otwarciem: wartości `complete` nie ma w żadnym
-wyliczeniu tur, ale niesie ją `MessageStatus` (`pending`, `streaming`,
-`complete`, `stopped`, `error`). Ustalenie, czym dokładnie jest „koordynator
-skończył turę", należy do terenu i ma paść pomiarem, nie założeniem.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/warunek-ukonczenia-zadania` z `main` |
-| **Wykaz plików** | `budowa/shared/contract.json` wraz z generatami, `budowa/server/internal/core/stan_obiegu.go`, `budowa/server/internal/session/obieg.go`, `petla.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/server/internal/core/urzadzenia_skaner.go` i `skutek_wydania_studia_test.go` (tereny biegnące), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
-
-**Zmiana kontraktu jest dozwolona i obwarowana.** Suma zastana
-`334705bd88c2efc13779`, 1080 komend. Wolno **dołożyć** wartość wyliczenia.
-**Nie wolno** zmienić ani usunąć niczego istniejącego. Generator z
-`budowa/shared/gen` musi dawać wynik bajtowo powtarzalny w dwóch przebiegach.
-W rejestrze podajesz sumę zastaną i sumę po sobie.
-
-**Kryteria odbioru.**
-
-1. Ustalone **pomiarem**, nie założeniem, przy jakim stanie rdzenia koordynator
-   kończy turę i jak sprawdza się, że żadne okno wykonawcze tury nie prowadzi —
-   z przytoczonym miejscem w kodzie i wynikiem uruchomienia.
-2. `LoopStopReason` niesie czwartą wartość `completed`, a rdzeń ustawia ją
-   dokładnie w stanie z punktu 1 — wykazane sprawdzianem, który odróżnia
-   ukończenie od trzech zatrzymań.
-3. Bramki akceptacji nie ma — bieg po ukończeniu nie czeka na niczyje
-   potwierdzenie; wykazane sprawdzianem.
-4. Diff kontraktu zawiera wyłącznie dodania; generator bajtowo powtarzalny.
-5. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
-   podanego w raporcie, zmierzonego przed pierwszą zmianą.
-6. Rewizje obejmują wyłącznie pliki terenu.
+(brak — wszystkie tereny tej tury zamknięte i scalone)
 
 ## Zgłoszenia oczekujące na teren
 
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
+
+### Ukończenie biegu może raz na jakiś czas skłamać — domknięcie poza terenem
+
+Ustalenie terenu `warunek-ukonczenia-zadania`, wyprowadzone z odczytu dwóch
+funkcji. `powodTury` (`adapter_rozmowa_petla.go:46`) nie widzi `zamkniecie.Blad`,
+więc tura zamknięta zdarzeniem `result` z `is_error: true` przy sprawnym kanale
+idzie do pętli jako `PowodWynik` i pętla ogłosi `completed`, choć wiadomość
+dostaje stan `error`. Pętla używa jedynego sygnału, który dostaje, i nie dubluje
+odczytu zamknięcia — drugi czytelnik byłby drugą prawdą. Domknięcie: jeden wiersz
+w `adapter_rozmowa_petla.go` (przekazanie `zamkniecie` do `powodTury`) — plik
+poza terenem, więc zgłoszenie.
+
+Osobno, ta sama warstwa: pętla nie wie o **początku** tury wykonawcy (dowiaduje
+się z pierwszego fragmentu), więc wykonawca zlecony tuż przed końcem tury
+koordynatora jest przejściowo niewidoczny. Szczelina jest nieszkodliwa —
+samopodjęcie biegu po ukończeniu i tak rusza kolejny obieg, stan kontrolki sam
+się prostuje. Domknięcie do zera: `petla.ZTuraWBiegu(rozmowa.CzyTuraWBiegu)`,
+jeden wiersz w `montaz_rozmowa.go` — plik poza terenem. Uwaga dla wpinającego:
+w chwili `ZakonczTure` mapa `biegnace` wciąż zawiera okno koordynatora
+(`zapomnijBieg` jest `defer`), więc pytać wolno tylko o wykonawców.
+
+### Martwa funkcja `sterZlecenia` z komentarzem w nieistniejące miejsce
+
+`core/adapter_przejecie_sterowania.go:146` — doc funkcji `sterZlecenia` mówi
+„Woła ją przekład licznika obiegów w `core/stan_obiegu.go`", a `stan_obiegu.go`
+jej nie woła i nikt inny też nie. Funkcja martwa, komentarz kieruje w nieistniejące
+miejsce. Zauważone przy terenie `warunek-ukonczenia-zadania`, poza jego zakresem.
 
 ### Granica 15 s w uprzęży kontraktu jest ciasna dla warstwy skanera
 
@@ -88,15 +75,20 @@ przerobił ten plik mocno: pięć terenów zamkniętych, zgłoszenia i reguły o
 a wyglądałoby to na zwykłe scalenie. Praca w `design/` scala się normalnie —
 rozstrzygnięcie dotyczy wyłącznie `prowadzenie/rejestr-terenow.md`.
 
-### Kontrakt ruszył pierwszy raz od przejęcia
+### Kontrakt ruszył dwa razy od przejęcia — suma bieżąca `b7d0436880d878e78576`
 
-Do 27.08.2026 kontrakt stał nietknięty pod sumą `2cbb843d33f4531b05cd` — teren
-`pomiar-stron` dołożył trzy osie pomiaru strony i suma wynosi dziś
-`334705bd88c2efc13779` przy **1080 komendach** wobec 1077 zastanych. Zmiana
-przeszła kontrolę porównaniem strukturalnym: nic istniejącego nie ubyło ani się
-nie zmieniło. Odtąd sprawdzian nietykalności kontraktu odnosi się do sumy
-bieżącej, nie do sumy z pierwszego dnia; kolejny teren, który kontrakt dokłada,
-podaje w rejestrze sumę zastaną i sumę po sobie.
+Do 27.08.2026 kontrakt stał nietknięty pod sumą `2cbb843d33f4531b05cd`. Dwie
+zmiany, obie wyłącznie dodania, obie przez porównanie strukturalne potwierdzone
+jako niezmieniające niczego istniejącego:
+
+| Teren | Co dołożył | Suma po |
+|---|---|---|
+| `pomiar-stron` | trzy komendy pomiaru strony (1077 → 1080) | `334705bd88c2efc13779` |
+| `warunek-ukonczenia-zadania` | czwarta wartość `LoopStopReason` — `completed` | `b7d0436880d878e78576` |
+
+Sprawdzian nietykalności kontraktu odnosi się do sumy **bieżącej**
+`b7d0436880d878e78576`, nie do sumy z pierwszego dnia; kolejny teren, który
+kontrakt dokłada, podaje w rejestrze sumę zastaną i sumę po sobie.
 
 ### Wdrożenie musi założyć trzy nastawy, inaczej stojące wagi leżą odłogiem
 
@@ -412,6 +404,7 @@ po raz drugi.
 | `odmowy-skanera` | `teren/odmowy-skanera` | `1eaa58a` parytet odmów skanera Linux wobec Windows | kontrola osobnej sesji: `bladWarstwySane` wierne lustro `bladWarstwyWia` — ten sam kod `channel_unavailable`, ta sama droga obejścia `studio.ingest.queue.add`, pakiet czytany z braku nie zaszyty; sprawdzian parytetu woła obie warstwy i wymaga jednego kodu; brak wymuszony atrapą PATH z potwierdzeniem `zewnetrzne.Stoi=false`; bieg celowany 3 zdane; kontrakt nietknięty. Scalone `1dca877` |
 | `sprawdziany-drogi-wejscia` | `teren/sprawdziany-drogi-wejscia` | `1393e74` sprawdzian zdjęcia znacznika bramki | weryfikacja Prowadzącego mutacją rdzenia: wyłączenie `zdejmijZnacznikBezPoczty` daje sprawdzian niezdany („znacznik przeżył swój powód"), przywrócenie — zdany; trzy sprawdziany rozjazdu z rdzeniem były już przerobione przez `brama-i-droga-wejscia`, wykonawca to zmierzył i nie tknął; bieg celowany osiem zdanych; kontrakt nietknięty, jeden plik terenu. Scalone `4e70ef1` |
 | `odwolania-do-usunietych-skryptow` | `teren/odwolania-do-usunietych-skryptow` | `8451157` żywy skrypt pakietu w odmowie braku serwera narzędzi | **wykonawca urwał się na limicie sesji przed rewizją; pracę dokończył i zweryfikował Prowadzący sam, bez niezależnej kontroli — odstępstwo od rozdziału ról, wymuszone urwaniem, w trybie samodzielnym na polecenie Właściciela.** Weryfikacja: droga naprawy w odmowie istnieje — `scripts/pakiet-serwera.sh` żyje i buduje `danaco-narzedzia` z `server/cmd/danaco-narzedzia`, stawiając obok rdzenia (w. 72,83,101); zero odwołań do zniesionych skryptów w rdzeniu; próba mutacji: podmiana stałej na `wydanie.sh` daje obie straże niezdane, przywrócenie — zdane; kontrakt nietknięty. Scalone `8e504c3` |
+| `warunek-ukonczenia-zadania` | `teren/warunek-ukonczenia-zadania` | `06c81a1` rdzeń odróżnia ukończenie od trzech zatrzymań | weryfikacja Prowadzącego (tryb samodzielny) dwiema mutacjami: usunięcie mapowania `completed` daje „rozróżnienia maszynowego nie ma", wyłączenie samopodjęcia daje „ukończenie zachowuje się jak bramka akceptacji" — obie przywrócone zdane; kontrakt tylko dodania (`334705…` → `b7d04368…`), generator bajtowo powtarzalny w dwóch przebiegach; wykonawca ustalił pomiarem, że koniec tury koordynatora dotąd ginął (Wybudzacz odrzucał okna niebędące wykonawcami); brak bramki akceptacji zrobiony mechanizmem samopodjęcia, nie deklaracją. Scalone `e677a65` |
 | `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna

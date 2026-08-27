@@ -1,24 +1,6 @@
 // Komenda `terminal.process.suspend` — wstrzymanie i wznowienie procesu
-// rejestru rdzenia.
-//
-// ── Czego brakowało ─────────────────────────────────────────────────────────
-// Rdzeń umiał proces wyłącznie ZAKOŃCZYĆ, więc jedyną odpowiedzią na zadanie,
-// które zajęło maszynę, było wyrzucenie wykonanej przez nie pracy. Wstrzymanie
-// oddaje procesor bez utraty postępu (`session/wstrzymanie.go`).
-//
-// ── Dlaczego stan procesu nie zmienia się na „wstrzymany" ───────────────────
-// Bo takiego stanu nie ma w kontrakcie: `TerminalProcessStatus` zna `running`,
-// `finished`, `failed` i `stopped`. Proces wstrzymany JEST wciąż uruchomiony —
-// ma PID, pamięć i otwarte pliki — więc `running` jest o nim prawdą, a `stopped`
-// byłoby nieprawdą, bo ten stan oznacza w tym module zakończenie sygnałem.
-// Wstrzymania nie zgłaszamy więc stanem, którego kontrakt nie ma; zgłasza je
-// pole `supported` odpowiedzi wraz z powtarzalnością samej czynności.
-//
-// ── Dlaczego odpowiedź ma `supported`, a nie odmowę ─────────────────────────
-// Windows nie zna wstrzymania obcego drzewa procesów. „System tego nie umie" to
-// co innego niż „czynność zawiodła", i kontrakt mówi to wprost: fałsz znaczy, że
-// proces został nietknięty. Odmowa w tym miejscu kazałaby klientowi zgadywać,
-// czy proces jednak nie stanął.
+// rejestru rdzenia, oddające procesor bez utraty postępu. Stan procesu nie
+// zmienia się na wstrzymany: zgłasza to pole `supported` odpowiedzi.
 package core
 
 import (
@@ -29,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// WstrzymajProces obsługuje `terminal.process.suspend`.
+// WstrzymajProces obsługuje `terminal.process.suspend`, wstrzymując albo
+// wznawiając drzewo procesu wskazane identyfikatorem.
 func (a *adapterTerminala) WstrzymajProces(ctx context.Context,
 	z shared.TerminalProcessSuspendRequest) (shared.TerminalProcessSuspendResponse, error) {
 
@@ -57,8 +40,7 @@ func (a *adapterTerminala) WstrzymajProces(ctx context.Context,
 				kod+": "+err.Error()))
 	}
 	if wspierane {
-		// Zmiana biegu jest zmianą stanu procesu widoczną w Process Monitorze,
-		// więc idzie tą samą drogą co uruchomienie i zakończenie.
+		// Zmiana biegu jest zmianą stanu widoczną w Process Monitorze.
 		a.rozglos(shared.ChangeKindUpdated, proces)
 	}
 	return shared.TerminalProcessSuspendResponse{
@@ -68,12 +50,8 @@ func (a *adapterTerminala) WstrzymajProces(ctx context.Context,
 }
 
 // Wstrzymaj zatrzymuje albo wznawia drzewo procesu i zapamiętuje jego bieg.
-//
-// Powtórzenie czynności jest ciche i udane, i dlatego idzie do systemu tak samo
-// jak pierwsze wywołanie, bez skrótu po zapamiętanym biegu: SIGSTOP dla procesu
-// już wstrzymanego i SIGCONT dla biegnącego nie robią nic, a odpowiedź o wsparciu
-// platformy ma pochodzić od platformy, nie od pamięci rdzenia. Skrót
-// odpowiadałby „niewspierane” na wznowienie procesu, którego nikt nie wstrzymał.
+// Powtórzenie czynności jest ciche i udane, idzie do systemu jak pierwsze
+// wywołanie, bez skrótu po zapamiętanym biegu.
 func (p *procesTerminala) Wstrzymaj(wznowienie bool) (bool, error) {
 	var wspierane bool
 	var err error

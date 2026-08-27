@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Plik dostarcza rusztowanie podglądu przepływu wejścia: przejścia między etapami, dołączenie ramy aplikacji po wydaniu tokenu oraz symulację cyklu uzgodnienia protokołu. ============================================================================
    OPRAWA PODGLĄDU PRZEPŁYWU WEJŚCIA
 
    Rusztowanie, na którym ogląda się okna przepływu: przejścia między etapami

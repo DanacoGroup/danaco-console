@@ -1633,3 +1633,22 @@ dziewięcioma odczytami na punkt, a odszumienie przestałoby być czynnością
 wykonywalną w rozsądnym czasie. Kanał krycia przechodzi nietknięty:
 odszumienie zmienia barwę, nie przezroczystość, a uśrednienie krycia rozmyłoby
 wycinek odcięty od tła.
+
+## adapter_modul_design_ikony.go
+
+Ikona własna i wzór rdzenia to dwa byty, nie jeden: wzory rdzenia są
+wkompilowane i niezmienne, ikony własne leżą w bazie i mają okno.
+Identyfikator rozstrzyga, o który byt chodzi — wzór niesie przedrostek
+zestawu (`rdzen-24/dom`), ikona własna identyfikator zewnętrzny wiersza.
+Zmiana wzoru rdzenia jest niemożliwa i tak ma być: gdyby dała się zapisać,
+dwie instalacje produktu miałyby dwa różne katalogi pod tą samą nazwą.
+
+`design.icon.set` niesie `gridWarnings` — miejsca, w których ikona nie trzyma
+siatki (współrzędne poza polem, grubość obrysu inna niż zadeklarowana, brak
+pola widoku). `design.icon.generate` niesie `failedConcepts` — pojęcia, dla
+których ikona nie powstała. Zestaw, w którym połowa ikon nie weszła, wygląda
+bez tych pól jak zestaw kompletny.
+
+`design.font.preview` mówi polem `available`, czy rdzeń krój ma. Podgląd
+złożony krojem zastępczym wygląda identycznie jak prawdziwy, a wybrana
+wtedy typografia nie jest tą, którą zobaczy się u siebie.

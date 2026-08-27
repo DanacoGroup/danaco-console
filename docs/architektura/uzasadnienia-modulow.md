@@ -5203,3 +5203,78 @@ model byłaby listą, której nikt nie umie odtworzyć ani zakwestionować.
 Wykaz `slowaFunkcyjne` obejmuje polski i angielski, bo takie materiały
 wchodzą do tego modułu najczęściej; słowo spoza wykazu nie jest przez to
 terminem — jest kandydatem, o którym rozstrzyga Operator.
+
+## budowa/server/internal/core/adapter_modul_schedule.go
+
+To nie jest drugi moduł harmonogramu. Harmonogram ma w rdzeniu jednego
+właściciela — moduł Automations. Zapis prowadzi
+adapter_modul_automations_harmonogram.go i to on składa harmonogram kontraktu
+wraz z wyzwalaczami; ten plik dokłada wyłącznie odczyt trzema drogami:
+scheduleId (jeden harmonogram), workflowId (harmonogramy jednej automatyki,
+najwyżej jeden wg UNIQUE na harmonogram_automatyki.automatyka_id) albo bez
+wskazania (komplet harmonogramów platformy).
+
+enabledOnly jest sitem, nie warunkiem istnienia. Harmonogram wyłączony
+istnieje; żądanie z enabledOnly mówi oddaj wyłącznie obowiązujące, więc
+odsianie wyłączonego oddaje wykaz pusty, a nie odmowę. Odmowa not_found
+należy się bytowi, którego nie ma.
+
+Interfejs repozytoriumHarmonogramow stoi po stronie czytelnika: deklaracja
+mieszka w tym pliku, a nie w dane.RepozytoriumAutomatyk, bo wymaga jej
+wyłącznie rodzina schedule.* — wzorzec repozytoriumWpisowPamieci z rodziny
+memory.*.
+
+Gdy żądanie harmonogramWskazany niesie oba wskazania, muszą się zgadzać.
+Harmonogram należy do dokładnie jednej automatyki, więc żądanie sprzeczne
+("harmonogram H automatyki W", gdzie H należy do innej automatyki) nie da
+się spełnić ani po cichu zamienić na jedno ze wskazań.
+
+Wskazanie nieistniejącej automatyki w harmonogramyAutomatyki jest odmową
+not_found z jej nazwą — inaczej pomyłka w identyfikatorze wyglądałaby jak
+automatyka bez harmonogramu.
+
+Kontrakt niesie w AutomationSchedule.workflowId identyfikator zewnętrzny
+automatyki, a harmonogram trzyma klucz wiersza — bez odczytu automatykaHarmonogramu
+pole wyszłoby puste albo z liczbą, której klient nie zna. Klucz obcy
+harmonogramu jest wymagany i kasuje się kaskadowo
+(migracja_040_harmonogramy_przebiegi.sql), więc wiersz osierocony znaczy
+uszkodzoną bazę, stąd internal_error, a nie not_found.
+## budowa/server/internal/core/adapter_modul_workspace.go
+
+Instrukcje, pamiec, biblioteka i eksperci maja wlasne pliki adaptera.
+Kontrakt nie ma komendy zakladajacej projekt, dlatego
+workspace.dashboard.get zaklada wskazany projekt, gdy tego jeszcze nie ma,
+i rozglasza workspace.project.changed rodzajem created.
+
+adapterPrzestrzeniRoboczej wypelnia port PrzestrzenRobocza. Zaleznosci sa
+trzy: repozytorium modulu, rozstrzygacz osmiu poziomow zasiegu wraz
+z repozytorium konfiguracji (instrukcje warstwowe) oraz ustalacz katalogu
+roboczego (biblioteka projektu).
+
+ZInstrukcjami: bez podpiecia moduł pracuje dalej, a instrukcje
+odpowiadaja brakiem zapisu.
+
+Projekt oddaje projekt kontraktu - obslugiwacz potrzebuje go do
+rozgloszenia workspace.project.changed po komendach, ktorych wynik
+projektu nie niesie.
+
+projektDlaZapisu: komenda pamieci albo przypisania eksperta zastaje
+projekt gotowy rowniez wtedy, gdy pulpit nie byl jeszcze otwierany.
+
+## budowa/server/internal/core/adapter_modul_automations_harmonogram.go
+
+Rachunek najbliższego uruchomienia stoi w `adapter_modul_automations_cron.go`.
+Rdzeń nie ma budzika, który sam odpali automatykę o wyliczonej godzinie —
+kontrakt nie zna komendy ani zdarzenia, którym harmonogram zgłaszałby
+wyzwolenie. Harmonogram jest zapisem obowiązującym i wyliczeniem terminu;
+uruchomienie prowadzi Operator z Queue Managera albo Execution Monitora.
+## budowa/server/internal/core/adapter_modul_przegladarka_tematy.go
+
+Zmiana notatki zmienia to, co żądanie naprawdę przyniosło. Pole nieobecne
+znaczy "zostaw jak było", nie "wyczyść": Operator poprawiający treść notatki
+nie ma stracić cytatu, którego w żądaniu nie powtórzył (warstwa danych robi to
+wzorcem `COALESCE(?, kolumna)`).
+
+Skład zestawu i wątku liczy się z kolumny przynależności, nie z osobnej listy.
+Dzięki temu źródło usunięte znika ze składu samo, a nie zostaje w nim jako
+odwołanie donikąd.

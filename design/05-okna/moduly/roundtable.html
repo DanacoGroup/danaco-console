@@ -19,7 +19,7 @@
   .rt-modele { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--dn-od-2); min-height:0; flex:1; }
   .rt-modele .sta-okno { min-height:0; }
   .rt-mowca { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .rt-awatar { width:22px; height:22px; border-radius:var(--dn-r-pill); border:1.75px solid var(--dn-obrys); display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:var(--dn-fw-gruba); color:var(--dn-tekst-2); }
+  .rt-awatar { width:22px; height:22px; border-radius:var(--dn-r-pill); border:1.75px solid var(--dn-obrys); display:inline-flex; align-items:center; justify-content:center; font-size:var(--dn-fs-xs); font-weight:var(--dn-fw-gruba); color:var(--dn-tekst-2); }
   .rt-awatar--zywy { border-color:var(--dn-sygnal-500); }
   .rt-strumien { padding:var(--dn-od-2); font-size:var(--dn-fs-sm); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); overflow:auto; min-height:0; }
   .rt-kluczowy { border-left:2px solid var(--dn-sygnal-500); padding-left:var(--dn-od-2); margin:var(--dn-od-2) 0; color:var(--dn-tekst); }
@@ -584,7 +584,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną wielomodelową debatę z krytyką wzajemną.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną wielomodelową debatę z krytyką wzajemną.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -653,7 +653,7 @@
         <section class="sta-okno" id="panel-consensus" data-nazwa="Consensus Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><b>Consensus Panel</b></span><span class="dn-plakietka">wywoływany</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Wygenerowano z: 3 tur · 4 argumenty kluczowe</div>
+            <div class="dn-meta">Wygenerowano z: 3 tur · 4 argumenty kluczowe</div>
             <div class="pt-etykieta">Stanowisko uzgodnione</div>
             <div class="rt-kluczowy">„Wejście na rynek azjatycki jest zasadne pod warunkiem wdrożenia dodatkowych zabezpieczeń regulacyjnych i pilotażu regionalnego.”</div>
             <div class="rt-mp-dol" style="padding:0">
@@ -706,7 +706,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> klasyfikator wypowiedzi — teza/kontrargument <span class="dn-meta">1 m 12 s</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Analiza · Głos ostrożności — 10:17<br>Analiza · Zwolennik — 10:16<br>Synteza · Consensus — 10:14</div>
+            <div class="dn-meta">Analiza · Głos ostrożności — 10:17<br>Analiza · Zwolennik — 10:16<br>Synteza · Consensus — 10:14</div>
           </div>
         </section>
 

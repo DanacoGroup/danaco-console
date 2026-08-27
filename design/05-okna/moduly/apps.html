@@ -26,7 +26,7 @@
   .pb-strzalka { color:var(--dn-tekst-3); }
   .pb-kondycja { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--dn-od-2); }
   .pb-metryka { padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia); }
-  .pb-metryka .etyk { font-family:var(--dn-ff-mono); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-mono-wersaliki); color:var(--dn-tekst-3); }
+  .pb-metryka .etyk { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-mono-wersaliki); color:var(--dn-tekst-3); }
   .pb-metryka .liczba { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xl); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
   .pb-kafle { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:var(--dn-od-2); }
   .pb-kafel { display:flex; flex-direction:column; gap:var(--dn-od-1); padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia); cursor:pointer; text-align:left; transition:border-color var(--dn-czas-1) var(--dn-ease); }
@@ -47,7 +47,7 @@
   .ad-diagram .linia { stroke:var(--dn-tekst-3); stroke-width:1.5; fill:none; marker-end:url(#grot); }
   .ad-diagram .api { fill:var(--dn-sygnal); font-family:var(--dn-ff-mono); font-size:9px; }
   .kod-blok { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); background:var(--dn-powierzchnia-2); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); padding:var(--dn-od-2); color:var(--dn-tekst-2); white-space:pre; overflow:auto; }
-  .metoda { display:inline-grid; place-content:center; min-width:42px; height:18px; padding:0 6px; border-radius:var(--dn-r-xs); font-family:var(--dn-ff-mono); font-size:10px; font-weight:var(--dn-fw-polgruba); }
+  .metoda { display:inline-grid; place-content:center; min-width:42px; height:18px; padding:0 6px; border-radius:var(--dn-r-xs); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); font-weight:var(--dn-fw-polgruba); }
   .metoda--get { background:var(--dn-sygnal-tlo); color:var(--dn-sygnal); }
   .metoda--post { background:var(--dn-sukces-tlo); color:var(--dn-sukces-tekst); }
   .respo { display:inline-flex; gap:2px; }
@@ -561,7 +561,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację Executor 1 / Executor 2.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację Executor 1 / Executor 2.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>

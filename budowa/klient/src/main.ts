@@ -1,14 +1,7 @@
 /**
- * Złożenie klienta — jedyny punkt wejścia pakietu.
- *
- * Wyłącznie kompozycja: gniazdo, kanał, sesja, tożsamość, przebieg, montaż.
- * Zero rozgałęzień drogi wejścia i zero dotknięcia dokumentu poza wskazaniem
- * korzenia montażowi — etap i odsłonę rozstrzyga `przebieg.ts`, a węzły
- * stawia `montaz.ts`.
- *
- * Magazyn tokenu bramki zostaje domyślny, czyli w pamięci procesu. Magazyn
- * trwały należy do powłoki i żadne źródło go dziś nie wskazuje; magazyn
- * udający trwałość obiecywałby rozpoznanie urządzenia, którego nie ma.
+ * Plik stanowi jedyny punkt wejścia klienta i składa gniazdo, kanał, sesję,
+ * tożsamość, przebieg oraz montaż węzłów, nie wprowadzając własnych
+ * rozgałęzień drogi wejścia.
  */
 
 import { adresGniazdaRdzenia, adresRdzeniaLokalnego } from './polaczenie/adres-rdzenia.ts';
@@ -20,13 +13,8 @@ import { zamontuj } from './wejscie/montaz.ts';
 import { utworzPrzebieg } from './wejscie/przebieg.ts';
 
 /**
- * Adres gniazda rdzenia.
- *
- * Rdzeń wystawia pakiet interfejsu obok gniazda (`uchwytStatyki`
- * w `server/internal/transport/statyka.go`), więc dokument wczytany po HTTP
- * przyszedł z rdzenia i to jego adres jest adresem gniazda. Dokument wczytany
- * inaczej — z pliku albo z protokołu powłoki — pochodzenia nie niesie, więc
- * zostaje pętla zwrotna z portem domyślnym.
+ * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
+ * przypadkach zostaje pętla zwrotna z portem domyślnym.
  */
 function adresRdzenia(): string {
   return adresGniazdaRdzenia(globalThis.location.origin) ?? adresRdzeniaLokalnego();

@@ -2740,3 +2740,16 @@ dlatego panel prowadzi dla obu jeden wspólny wykaz do odświeżenia zamiast dw�
 ## budowa/klient/src/protokol/kanal.ts
 Kanał nie zna treści dziedzinowej. Nazwy komend i zdarzeń oraz kształty ich treści pochodzą wyłącznie z kontraktu współdzielonego: zmiana nazwy w kontrakcie przerywa kompilację klienta. Stąd jedno wejście wysyłające obsługuje każdą komendę kontraktu, a jedno wejście subskrybujące — każde jego zdarzenie; typ treści wyznacza nazwa. Komunikat nierozpoznany nie jest odrzucany.
 Dziennik zakładany jest od razu, bo komunikat nierozpoznany może przyjść przed pierwszą subskrypcją warstwy wyższej. Zapis i wpis do dziennika są jedyną reakcją: ani zdarzenie nieznane, ani koperta o typie spoza kontraktu nie zrywa połączenia i nie blokuje sesji.
+
+## budowa/klient-poprzedni/src/strona-glowna/wykonanie-nazwy.ts
+Trzy czynności stoją osobno od pozostałych, bo mają wspólny kształt — pytanie, odmowa, komenda, meldunek —
+i wspólny warunek zejścia: zamknięte pytanie kończy rzecz bez żadnego żądania. Zamknięcie pytania zwraca
+brak, nie napis pusty. Odmowa operatora nie jest odmową rdzenia i nie ma o niej czego meldować, a napis
+pusty bywa odpowiedzią sensowną — przy kopii oddaje nadanie nazwy rdzeniowi — więc te dwa przypadki nie
+mogą się zlać.
+
+## budowa/klient-poprzedni/src/strona-glowna/wpiecie-srodowisk.ts
+Źródłem prawdy jest wykaz środowisk pobierany z rdzenia, nie stała klienta. Wykaz zastany w kliencie
+zostaje jako wartość początkowa: odpowiedź rdzenia przychodzi po pierwszym rysowaniu i wtedy przerysowuje
+strefę. Odmowa i wykaz pusty nie gaszą ekranu — na miejscu zostaje wykaz zastany, po którym da się wejść
+do pracy.

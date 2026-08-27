@@ -2526,3 +2526,15 @@ zapisie i rozjeżdżałaby się z ocenami przy pierwszym pominięciu.
 Oceny wariantu w kryteriach idą jednym polem JSON, bo są mapą „kryterium →
 ocena" o kształcie zadanym przez kryteria tej macierzy. Tabela wiążąca
 dawałaby ten sam kształt kosztem trzeciego złączenia przy każdym odczycie.
+## budowa/server/internal/store/migracja_199_roundtable_wydanie.sql
+Migracja 199 — szablony moderacji i artefakty wydane z debaty.
+
+Szablon moderacji zapisuje format, liczbę tur, granicę czasu i kolejność
+głosu (opracowanie, 2.8.5). Kolejność jest listą kodów uczestników
+rozdzieloną znakiem nowego wiersza, a nie tabelą wiążącą: uczestnik należy do
+okna, a szablon ma przeżyć okno, więc więz obcy do składu zabiłby szablon
+razem z debatą, z której go zdjęto.
+
+Artefakt debaty niesie odwołanie do bajtów w magazynie treści, nie same bajty.
+Transkrypt, graf i nagranie idą w megabajtach, a baza rdzenia trzyma stan,
+nie treść — tak samo jak w bibliotece i w module Design.

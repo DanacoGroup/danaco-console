@@ -1891,3 +1891,53 @@ nie błędny.
 Współrzędne GPS są jedynym źródłem widoku mapy w module Library — bez nich
 widok nie ma czego nanieść, więc czytnik EXIF wydobywa je zawsze, gdy są
 obecne w pliku.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_korekta.go
+
+Korekta w tym pliku jest mechaniczna: ustalenia powstają z reguł wskazywalnych
+w tekście (podwójna spacja, spacja przed znakiem interpunkcyjnym, cudzysłów
+prosty zamiast drukarskiego, wielokropek złożony z trzech kropek, zdanie
+dłuższe od stu dwudziestu znaków), a każde niesie propozycję poprawki, którą
+`proofread.apply` wstawia w treść panelu.
+
+Wywołanie modelu językowego jest w tym miejscu świadomie pominięte. Ustalenie
+modelu bywa trafne, ale nie da się go zastosować mechanicznie ani powtórzyć:
+ten sam panel dałby przy drugim przebiegu inne ustalenia o innych
+identyfikatorach, a `proofread.apply` wskazywałby na ustalenia, których już
+nie ma. Pole `channelId` żądania zostaje w kontrakcie nietknięte, ponieważ
+komenda nie korzysta z niego.
+
+Reguła napisowa nie rozstrzyga o odmianie słowa ani o jego istnieniu w
+słowniku — to zadanie trzech programów zewnętrznych zebranych w
+`adapter_modul_tlumaczenie_korekta_silniki.go`. Wchodzą tą samą drogą co
+reguły wbudowane: ustalenie z propozycją, którą `proofread.apply` wstawia w
+treść. Warunek powtarzalności obowiązuje je tak samo — słownik odpowiada dwa
+razy tak samo, model nie.
+
+`consistency.check` porównuje panele okna między sobą oraz pary pamięci
+tłumaczeń: to samo zdanie źródłowe przełożone dwoma różnymi zdaniami i ten sam
+termin oddany dwoma różnymi słowami w jednym języku. Obie niezgodności są
+faktem o danych, nie opinią o stylu.
+
+## adapter_modul_aplikacje_uchwyty.go
+
+Rejestr komend rdzenia potrzebuje jednego miejsca wiazacego nazwe komendy z metoda
+portu; ten sam uklad stosuje adapter modulu Library. Zdarzenie apps.build.changed
+rozglasza sie z dwoch niezaleznych zrodel niosacych dwa rozne byty: zmiane etapu
+budowy produktu oraz zmiane stanu przebiegu wdrozenia. Silnik wykonania wdrozenia
+przesuwa przebieg przez kolejne stany po odeslaniu odpowiedzi komendy, dlatego
+rozgloszenie tych przejsc nie moze wychodzic wylacznie z obslugiwacza zadania —
+adapter przyjmuje droge do emitera przez metode portu, tak jak modul Developer
+przyjmuje ja dla przyrostu budowania. Zdarzenie apps.workspace.changed powstaje
+inaczej: rozgloszenie idzie z obslugiwacza komendy, ale droga podpieta tym samym
+sposobem, poniewaz emiter nalezy do rdzenia, a nie do adaptera; bez tej drogi drugie
+okno tej samej przestrzeni nie dowiaduje sie o zmianie pliku warsztatu.
+
+Sesja komunikatu apps.workspace.changed zostaje pusta, poniewaz warsztat nalezy do
+okna, a nie do sesji rdzenia: zdarzenie idzie do wszystkich polaczen konta i niesie
+identyfikator okna, po ktorym klient je przypisuje. Sesja komunikatu
+apps.build.changed dla wdrozenia zostaje pusta z innego powodu: rdzen rozglasza
+koniec wdrozenia takze wtedy, gdy okna nie ma juz w rejestrze, bo przebieg przezywa
+zamkniecie okna, a klient ma prawo zobaczyc jego wynik. W zdarzeniu tym pole Stage
+niesie wylacznie identyfikator okna, ktorego zmiana dotyczy, poniewaz nie ma tu
+etapu Product Buildera do pokazania.

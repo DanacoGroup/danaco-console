@@ -1,33 +1,7 @@
-// Odpowiedzialność pliku: korekta językowa i spójność modułu Translate —
-// `translate.proofread.run`, `translate.proofread.apply`
-// i `translate.consistency.check`.
-//
-// ── Korekta jest mechaniczna i przez to sprawdzalna ─────────────────────────
-// Ustalenia korekty powstają z reguł, które da się wskazać palcem w tekście:
-// podwójna spacja, spacja przed przecinkiem, cudzysłów prosty tam, gdzie rynek
-// docelowy stawia drukarski, wielokropek złożony z trzech kropek, zdanie
-// dłuższe od stu dwudziestu znaków. Każde ustalenie niesie propozycję poprawki,
-// a `proofread.apply` tę propozycję realnie wstawia w treść panelu.
-//
-// Nie ma tu wywołania modelu i to jest wybór, nie brak. Ustalenie modelu
-// bywa trafne, ale nie da się go zastosować mechanicznie ani powtórzyć: ten sam
-// panel dałby przy drugim przebiegu inne ustalenia o innych identyfikatorach,
-// a `proofread.apply` wskazywałby na ustalenia, których już nie ma. Pole
-// `channelId` żądania zostaje w kontrakcie nietknięte — komenda nie udaje, że
-// z niego korzysta.
-//
-// Regułą napisową nie da się jednak orzec o odmianie słowa ani o tym, czy słowo
-// w ogóle istnieje — do tego trzeba słownika. Trzy programy, które go mają,
-// stoją w `adapter_modul_tlumaczenie_korekta_silniki.go` i wchodzą tą samą
-// drogą co reguły wbudowane: ustalenie z propozycją, którą `proofread.apply`
-// wstawi w treść. Warunek powtarzalności obowiązuje je tak samo — słownik
-// odpowiada dwa razy tak samo, model nie.
-//
-// ── Spójność mierzy się na tym, co realnie zapisano ─────────────────────────
-// `consistency.check` porównuje panele okna między sobą i pary pamięci: to samo
-// zdanie źródłowe przełożone dwoma różnymi zdaniami i ten sam termin oddany
-// dwoma różnymi słowami w jednym języku. Obie niezgodności są faktem o danych,
-// nie opinią o stylu.
+// Plik obsługuje translate.proofread.run, translate.proofread.apply i
+// translate.consistency.check: korektę języka regułami wbudowanymi i słownikami
+// zewnętrznymi oraz sprawdzenie spójności segmentów i terminów między panelami
+// okna.
 package core
 
 import (
@@ -40,7 +14,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekUstaleniaKorekty znakuje identyfikator ustalenia korekty.
+// przedrostekUstaleniaKorekty znakuje identyfikator ustalenia korekty: kod
+// z tym przedrostkiem odróżnia zapis korekty od innych bytów bazy, gdy
+// proofread.apply adresuje go w żądaniu.
 const przedrostekUstaleniaKorekty = "kor-"
 
 // dlugieZdanie jest progiem czytelności: zdanie dłuższe od tylu znaków czyta
@@ -126,11 +102,8 @@ func (a *adapterTlumaczenia) SprawdzKorekte(ctx context.Context,
 		}
 	}
 
-	// Silniki zewnętrzne idą PO regułach wbudowanych i nie zastępują żadnej
-	// z nich: reguły rdzenia mierzą typografię i odstępy, których słownik nie
-	// widzi, a silniki mierzą gramatykę i pisownię, których reguła napisowa nie
-	// dosięgnie. Rodzaj kontroli spoza żądania odsiewa `dolóz`, tak samo jak
-	// przy regułach wbudowanych.
+	// Silniki zewnętrzne uzupełniają reguły wbudowane zakresem gramatyki
+	// i pisowni, nie dublują ich.
 	zewnetrzneUstalenia, err := a.ustaleniaSilnikow(ctx, panel.Jezyk, tresc)
 	if err != nil {
 		return shared.TranslateProofreadRunResponse{}, err
@@ -276,9 +249,8 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 			return shared.TranslateProofreadApplyResponse{}, bladWskazaniaTlumaczenia(
 				"ustalenie " + kod + " nie niesie propozycji poprawki — nie ma czego wstawić")
 		}
-		// Propozycja jest całą treścią po poprawce, nie łatą na fragment:
-		// reguły wyżej składają ją z bieżącej treści panelu. Kolejne ustalenia
-		// stosowane w tym samym wywołaniu pracują więc na treści już poprawionej.
+		// Propozycja to cała treść po poprawce, nie łata; ustalenia
+		// działają na treści już zmienionej.
 		tresc = *ustalenie.Propozycja
 		if err := a.repozytorium.RozstrzygnijUstalenieKorekty(ctx, kod, false); err != nil {
 			return shared.TranslateProofreadApplyResponse{}, bladTlumaczenia(err)
@@ -308,7 +280,9 @@ func (a *adapterTlumaczenia) ZastosujKorekte(ctx context.Context,
 	}, nil
 }
 
-// SprawdzSpojnosc obsługuje `translate.consistency.check`.
+// SprawdzSpojnosc obsługuje `translate.consistency.check`: wykrywa segmenty
+// przełożone niejednolicie w obrębie języka oraz terminy odbiegające od
+// słownika Operatora.
 func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 	z shared.TranslateConsistencyCheckRequest) (shared.TranslateConsistencyCheckResponse, error) {
 
@@ -324,9 +298,8 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 
 	ustalenia := []shared.ConsistencyFinding{}
 
-	// Niespójność segmentu: to samo zdanie źródłowe przełożone różnie w obrębie
-	// jednego języka. Pary bierzemy z pamięci, bo tam leży to, co realnie
-	// zatwierdzono, a nie bieżąca treść panelu w trakcie edycji.
+	// Pary bierzemy z pamięci tłumaczeń, bo tam leży treść zatwierdzona,
+	// nie bieżący szkic panelu.
 	for _, panel := range panele {
 		if wskazany != "" && panel.Kod != wskazany {
 			continue
@@ -356,9 +329,8 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 		}
 	}
 
-	// Niespójność terminu: termin słownika oddany w panelu inaczej niż każe
-	// odpowiednik Operatora. To jest niezgodność z rozstrzygnięciem, nie
-	// domysł o stylu.
+	// Niespójność terminu: treść panelu odbiega od odpowiednika ustalonego
+	// w słowniku Operatora.
 	terminy, err := a.repozytorium.Terminy(ctx)
 	if err != nil {
 		return shared.TranslateConsistencyCheckResponse{}, bladTlumaczenia(err)
@@ -378,8 +350,8 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 			if strings.Contains(*panel.Tresc, *termin.Cel) {
 				continue
 			}
-			// Termin źródłowy w treści przekładu, a odpowiednika nie ma —
-			// przekład zostawił brzmienie źródłowe wbrew słownikowi.
+			// Termin źródłowy pozostał w przekładzie zamiast odpowiednika
+			// ze słownika.
 			if strings.Contains(strings.ToLower(*panel.Tresc), strings.ToLower(termin.Zrodlo)) {
 				panelePominiete = append(panelePominiete, panel.Kod)
 			}

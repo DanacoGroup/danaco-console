@@ -1063,30 +1063,71 @@ u kogokolwiek — to jest osobny powód, dla którego wariant natywny nie powsta
 
 ---
 
+## 14. Bramkowania logowania nie ma — zwłoka zamiast progu
+
+**Data:** 2026-08-27 · **Stan:** obowiązuje · **Rozstrzygnął:** Prowadzący
+wobec sprzeczności dwóch źródeł przyjętych
+
+**Sprzeczność.** Prototyp wejścia niesie odsłonę „Logowanie wstrzymane" wraz
+ze zdaniem „Po pięciu nieudanych próbach logowanie zostaje wstrzymane na
+godzinę". Kontrakt przy `auth.login` stanowi coś przeciwnego i powołuje się na
+rozstrzygnięcie Właściciela: „Żadnego progu prób i żadnej odmowy »za dużo prób«
+tu nie ma i nie będzie — to byłoby bramkowanie (rozstrzygnięcie Właściciela
+z 14.08.2026)". Rdzeń realizuje kontrakt — zwłoka wykładnicza, bez progu.
+
+**Rozstrzygnięcie.** Obowiązuje kontrakt. Progu prób nie ma.
+
+**Powód.** Kontrakt niesie jawne, datowane rozstrzygnięcie Właściciela wraz
+z uzasadnieniem; prototyp niesie zdanie bez uzasadnienia i powstał później, ale
+nie zna tamtego rozstrzygnięcia. Pozycja 6 i zasada zero blokad stoją po tej
+samej stronie co kontrakt.
+
+**Odsłona prototypu zostaje i zmienia znaczenie.** Ekran „Logowanie wstrzymane"
+obsługuje **zwłokę**, nie zaporę: mówi, ile zostało do kolejnej próby, i sam
+zwalnia pole, gdy zwłoka minie. Czas bierze się z odpowiedzi rdzenia, nie
+z prototypu — to parametr inżynierski w rozumieniu pozycji 12.
+
+---
+
+## 15. Ostrzeżenie o niepotwierdzonym adresie wchodzi mimo milczenia prototypu
+
+**Data:** 2026-08-27 · **Stan:** obowiązuje · **Rozstrzygnął:** Prowadzący
+
+**Stan.** Pozycja 11 nazywa ostrzeżenie „wymagane, nie zalecane". Katalog treści
+prototypu nie ma go wcale — zero trafień przy kontroli osiemnastu trafień słowa
+„adres".
+
+**Rozstrzygnięcie.** Ostrzeżenie wchodzi. Milczenie prototypu nie jest
+rozstrzygnięciem przeciwnym, tylko brakiem: prototyp powstawał, zanim pozycja 11
+została zmierzona.
+
+**Treść niesie trzy rzeczy:** konto założone; adres niepotwierdzony; odzyskanie
+konta listem nie zadziała do chwili potwierdzenia. Sformułowanie wchodzi do
+katalogu treści terenu i wraca zgłoszeniem, żeby designer mógł je dopracować.
+
+**Granica, którą to wyznacza.** Prototyp przyjęty wiąże tym, **co mówi**. Tam,
+gdzie milczy, a obowiązująca pozycja rejestru czegoś wymaga, pierwszeństwo ma
+pozycja — i wykonawca dopisuje brakujące, zgłaszając to zamiast pomijać.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
 
-| Pozycja | Blokuje | Opis |
-|---|---|---|
-| Nazewnictwo metaforyczne w zachowanych plikach wykonawczych | etap 2 | Pliki w `narzedzia/` posługują się określeniami metaforycznymi zamiast terminologii zawodowej. Terminologia docelowa powstaje w etapie 2 i wtedy pliki wymagają uzgodnienia. |
-| Skład dokumentacji przekroju pionowego | etap 2 | Zakres opracowań powstających wraz z przekrojem — wyłącznie to, co przekrój obsługuje, nie pełny zbiór pięćdziesięciu jeden. |
-| Odłączenie karty do osobnego okna | etap 1 | Propozycja Właściciela: karta otwierana w drugim oknie aplikacji, poza oknem głównym — użyteczne na szerokim monitorze. Wymaga własnej nazwy, bo „okno robocze" jest już zajęte przez sesję. |
-| Grupowanie kart w paśmie | etap 1 | Pasmo ma dwa ułożenia: poziome oraz karty zgrupowane w jedną, rozwijalną. Reguły grupowania — co wolno zgrupować i kto o tym rozstrzyga — wymagają domknięcia. |
-| Okno boczne: samouczek i karta naraz | etap 1 | Okno boczne niesie samouczek, a także przyjmuje wskazaną kartę. Do rozstrzygnięcia, czy mieszczą się tam obie rzeczy jednocześnie, czy karta zastępuje samouczek na czas pobytu. |
-| Które moduły tworzą sesję | etap 2 | Sesja powstaje przy interakcji z modelem. Moduły wytwórcze — agenci, automatyzacje — jej nie tworzą. Podział wszystkich modułów na te dwa rodzaje wymaga rozstrzygnięcia, bo wyznacza zawartość wykazu sesji. |
-| Izolacja okna bez sesji | etap 2 | Okno robocze modułu wytwórczego nie ma sesji, a mimo to powstają w nim pliki. Czy podlega izolacji, a jeśli tak — czego dotyczy. |
-| Zamknięcie ostatniej karty czatu | etap 2 | Rozstrzygnięte jest, że zamknięcie okna nie kończy sesji. Pozostaje pytanie węższe: czy zamknięcie w oknie ostatniej karty z interakcją zmienia cokolwiek w stanie sesji. |
-| Zakres trybów `manual`, `auto`, `plan` | etap 2 | Czy `auto` obejmuje tworzenie i usuwanie plików obok edycji; czy `plan` dopuszcza odczyt, bez którego nie ma z czego planować. Zakres `bypass permissions` jest rozstrzygnięty: zniesienie zupełne. |
-| Warunek ukończenia zadania | etap 2 | Nakaz pracy do wyniku wymaga sprawdzalnej odpowiedzi na pytanie, kiedy zadanie jest ukończone. Bez niej praca ciągła albo kończy się przedwcześnie, albo nie kończy wcale. |
-| Sygnał ukończenia w kontrakcie | etap 2 | Ukończenie wyzwala czynność następną, więc „ukończone z wynikiem" i „przerwane" muszą być rozróżnialne maszynowo, nie z treści odpowiedzi. To pozycja kontraktu, nie stan interfejsu. |
-| Trwałość pętli | etap 2 | Praca licząca się w miesiącach przetrwa restart maszyny, awarię i zamknięcie aplikacji albo nie przetrwa wcale. Stan pętli musi być odtwarzalny z zapisu, nie z pamięci procesu. |
-| Zachowanie przy wyczerpaniu budżetu | etap 2 | Praca ciągła konsumuje zasób bez nadzoru. Do rozstrzygnięcia, co dzieje się z zadaniem, gdy zasób kończy się w połowie. Rozstrzygnięcie nie może przywracać pytania do Operatora — wyczerpanie zasobu jest zatrzymaniem z braku środków, nie prośbą o zgodę. |
-| Przerwanie pracy — natychmiastowość | etap 2 | Komponent przerwania w oknie czatu ma zatrzymywać pracę natychmiast, nie po zakończeniu bieżącej czynności. To wymaganie wobec architektury wykonania; komponent sam w sobie należy do okna czatu i jest niezależny od uprawnień. |
-| Dziennik pracy bez nadzoru | etap 2 | Praca prowadzona bez człowieka wymaga zapisu przebiegu, bo inaczej nie da się odtworzyć, dlaczego zadanie potoczyło się tak, a nie inaczej. |
-| Nazwy poziomów w bibliotece | etap 2 | Uzgodnienie `.dn-karty-sesji` i `.dn-karta-widoku` z modelem czterech poziomów, razem z przebudową mechanizmu kart. |
-| Wskaźnik izolacji — poziom przypisania | etap 2 | `izolacja.css` stanowi, że izolacja jest cechą okna roboczego; wskaźnik stoi w ramie aplikacji. |
-| Wartość domyślna `createVersion` | etap 2 | Kontrakt nie ustala, co znaczy brak pola w `studio.document.save`, choć w trzech komendach siostrzanych mówi wprost „brak znaczy tak". Rdzeń stosuje oba idiomy niejednolicie. Do rozstrzygnięcia wraz z tym, czy reguła obejmuje `document.save.as` i `document.form.save`. |
-| Potwierdzenie adresu po instalacji bez poczty | etap 2 | Po rejestracji bez nadajnika adres zostaje niepotwierdzony **na zawsze**: `auth.verify` przyjmuje wyłącznie token, `auth.register` odmawia kodem `conflict`, a droga z `auth.recover` jest wydana do innej czynności. Żadna z dziewięciu komend `auth.*` nie wydaje drogi potwierdzenia po raz drugi — choć opis `auth.verify` w kontrakcie stanowi, że wygasła droga „pozwala poprosić o nową". Skutek: adres, który pozycja 11 nazywa jedyną drogą odzyskania konta, nie daje się sprawdzić, a znacznik `bramka-bez-poczty` nie ma osiągalnej drogi zdjęcia. Naprawa wymaga nowej komendy, czyli zmiany kontraktu. |
-| Sprzeczne opisy odzyskiwania w kontrakcie | etap 2 | `auth.password.reset` stanowi, że „drogi odzyskania listem na adres e-mail dziś NIE MA — rdzeń poczty nie wysyła", a `auth.recover` w tym samym kontrakcie mówi, że serwer wysyła drogę potwierdzenia na wskazany adres. Dwa opisy przeczą sobie; jeden z nich kieruje wykonawcę przeciwko zachowaniu rdzenia. |
-| Metryki w planszach i indeksie designu | etap 1 | Podają wartości rozjechane ze stanem plików, a metody liczenia „interakcji" nie da się odtworzyć. Albo dostają definicję, albo znikają. |
+**Wykaz przeszedł pomiar 27.08.2026.** Z dwudziestu jeden pozycji osiemnaście
+rozstrzygały źródła — kontrakt, nagłówki rdzenia albo prototyp przyjęty —
+a cztery z nich stały na przesłance, którą pomiar obalił. Zostały trzy.
+
+| Pozycja | Blokuje | Opis | Rozstrzygnięcie, które przyjmuję do czasu Twojego |
+|---|---|---|---|
+| Skład dokumentacji przekroju pionowego | etap 2 | `plan-etapow.md` rezerwuje ten wykaz Właścicielowi wprost. Reguła jest zamknięta pozycją 4 — dokumentacja powstaje wraz z przekrojem i opisuje to, co działa. | Jeden dokument na każdy z siedmiu obszarów już wypisanych w zakresie etapu 2: kontrakt, rdzeń, kanał, klient, powłoka, trwałość, uwierzytelnienie. Powstają **po** uruchomieniu pionu. |
+| Odłączenie karty do osobnego okna | etap 3 | Źródła milczą całkowicie — zero trafień w całej warstwie projektowej. Pozycja 5 stanowi „jedna instancja aplikacji", więc drugie okno systemowe wymagałaby jej poszerzenia. | Odłożyć do etapu 3, a wchodząc — wprowadzić jako czwartą wartość poziomu **widok**, pod nazwą `okno odłączone`. Poziom „widok" jest już zdefiniowany jako miejsce wyświetlenia karty; drugie okno systemowe jest takim miejscem. |
+| Warunek ukończenia zadania | etap 2 | Rdzeń zna trzy powody **zatrzymania** — brak postępu, Operator, usterka — i żaden nie znaczy „ukończone z wynikiem". Pozycja 7 wymaga rozróżnienia maszynowego. | Dodać czwartą wartość `completed` do `LoopStopReason`, ustawianą, gdy tura koordynatora zamyka się stanem `complete`, a żadne okno wykonawcze nie prowadzi tury. **Bramki akceptacji nie wprowadzać** — byłaby sprzeczna z zasadą zero blokad. |
+
+Trzy pozycje zamknięte 27.08 wymagają roboty, nie rozstrzygnięcia, i przeszły do
+[rejestru terenów](rejestr-terenow.md) jako zgłoszenia: brak komendy ponownego
+wydania drogi potwierdzenia, nieaktualny opis `auth.password.reset` w kontrakcie
+oraz sześć wartości `PermissionMode` wobec czterech nazwanych w pozycji 6.
+

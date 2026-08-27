@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: odczyt warsztatu modułu Developer — dziennik
-// przebiegów budowania w wykazie, punkty przerwania, kolekcje zapytań API,
-// połączenia bazodanowe, znaleziska skanów oraz wyniki testów i pokrycie.
-//
-// Zawężenia wchodzą parametrem, nie sklejaniem tekstu SQL. Wartość pusta znaczy
-// „bez zawężenia”, więc jedno przygotowane zapytanie obsługuje wykaz pełny
-// i zawężony, a do treści polecenia nigdy nie wchodzi wartość z zewnątrz. Ten
-// sam wzorzec niesie `developer_odczyt.go` przy limicie.
+// Warstwa danych obsługuje odczyt warsztatu modułu Developer: dziennik
+// budowań, punkty przerwania, kolekcje zapytań, połączenia bazodanowe,
+// znaleziska skanów oraz wyniki testów i pokrycie.
 package dane
 
 import (
@@ -82,7 +77,8 @@ const (
 	                             ORDER BY sciezka`
 )
 
-// Przebiegi zwraca dziennik budowań okna od najnowszego.
+// Przebiegi zwraca dziennik budowań okna od najnowszego; stan pusty i limit
+// niedodatni nie zawężają wykazu.
 func (r *repozytoriumDevelopera) Przebiegi(ctx context.Context, oknoKod, stan string,
 	limit int) ([]PrzebiegBudowania, error) {
 
@@ -107,7 +103,8 @@ func (r *repozytoriumDevelopera) Przebiegi(ctx context.Context, oknoKod, stan st
 	return przebiegi, wiersze.Err()
 }
 
-// Przebieg zwraca jeden przebieg budowania po identyfikatorze.
+// Przebieg zwraca jeden przebieg budowania po jego identyfikatorze,
+// odczytany z tabeli developer_budowanie.
 func (r *repozytoriumDevelopera) Przebieg(ctx context.Context, kod string) (PrzebiegBudowania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPrzebiegBudowania)
 	if err != nil {
@@ -123,7 +120,8 @@ func (r *repozytoriumDevelopera) Przebieg(ctx context.Context, kod string) (Prze
 	return przebieg, nil
 }
 
-// PunktyPrzerwania zwraca punkty postawione w oknie.
+// PunktyPrzerwania zwraca punkty przerwania postawione w oknie; pusta
+// ścieżka pliku znaczy wszystkie pliki.
 func (r *repozytoriumDevelopera) PunktyPrzerwania(ctx context.Context,
 	oknoKod, sciezka string) ([]PunktPrzerwania, error) {
 
@@ -152,7 +150,8 @@ func (r *repozytoriumDevelopera) PunktyPrzerwania(ctx context.Context,
 	return punkty, wiersze.Err()
 }
 
-// KolekcjeApi zwraca kolekcje zapytań okna.
+// KolekcjeApi zwraca kolekcje zapytań HTTP okna; niepusty kod zawęża wykaz
+// do jednej kolekcji zapytań.
 func (r *repozytoriumDevelopera) KolekcjeApi(ctx context.Context,
 	oknoKod, kod string) ([]KolekcjaApi, error) {
 
@@ -178,7 +177,8 @@ func (r *repozytoriumDevelopera) KolekcjeApi(ctx context.Context,
 	return kolekcje, wiersze.Err()
 }
 
-// PolaczeniaDanych zwraca połączenia bazodanowe okna.
+// PolaczeniaDanych zwraca połączenia bazodanowe okna w kolejności nazwy,
+// bez treści hasła dostępowego.
 func (r *repozytoriumDevelopera) PolaczeniaDanych(ctx context.Context,
 	oknoKod string) ([]PolaczenieDanych, error) {
 
@@ -203,7 +203,8 @@ func (r *repozytoriumDevelopera) PolaczeniaDanych(ctx context.Context,
 	return polaczenia, wiersze.Err()
 }
 
-// PolaczenieDanychPoKodzie zwraca jedno połączenie bazodanowe.
+// PolaczenieDanychPoKodzie zwraca jedno połączenie bazodanowe po jego
+// identyfikatorze wiersza w bazie.
 func (r *repozytoriumDevelopera) PolaczenieDanychPoKodzie(ctx context.Context,
 	kod string) (PolaczenieDanych, error) {
 
@@ -221,7 +222,8 @@ func (r *repozytoriumDevelopera) PolaczenieDanychPoKodzie(ctx context.Context,
 	return polaczenie, nil
 }
 
-// Znaleziska zwraca spostrzeżenia skanów wedle filtru.
+// Znaleziska zwraca spostrzeżenia skanów wedle filtru, od najcięższej wagi
+// i najnowszego przebiegu skanu.
 func (r *repozytoriumDevelopera) Znaleziska(ctx context.Context,
 	filtr FiltrZnalezisk) ([]ZnaleziskoSkanu, error) {
 
@@ -249,7 +251,8 @@ func (r *repozytoriumDevelopera) Znaleziska(ctx context.Context,
 	return znaleziska, wiersze.Err()
 }
 
-// WynikiTestow zwraca wyniki testów przebiegu budowania.
+// WynikiTestow zwraca wyniki testów przebiegu budowania okna; pusty stan
+// znaczy wszystkie wyniki testu.
 func (r *repozytoriumDevelopera) WynikiTestow(ctx context.Context,
 	budowanieKod, stan string) ([]WynikTestu, error) {
 
@@ -276,7 +279,8 @@ func (r *repozytoriumDevelopera) WynikiTestow(ctx context.Context,
 	return wyniki, wiersze.Err()
 }
 
-// Pokrycie zwraca pomiar pokrycia przebiegu budowania.
+// Pokrycie zwraca pomiar pokrycia kodu przebiegu budowania; pusta ścieżka
+// znaczy wszystkie pliki pokrycia.
 func (r *repozytoriumDevelopera) Pokrycie(ctx context.Context,
 	budowanieKod, sciezka string) ([]PokryciePliku, error) {
 
@@ -303,7 +307,8 @@ func (r *repozytoriumDevelopera) Pokrycie(ctx context.Context,
 	return pokrycie, wiersze.Err()
 }
 
-// odczytajPolaczenieDanychDevelopera składa połączenie z jednego wiersza wyniku.
+// odczytajPolaczenieDanychDevelopera składa połączenie PolaczenieDanych
+// z jednego wiersza wyniku zapytania.
 func odczytajPolaczenieDanychDevelopera(
 	wiersz interface{ Scan(...any) error }) (PolaczenieDanych, error) {
 
@@ -316,11 +321,13 @@ func odczytajPolaczenieDanychDevelopera(
 	return polaczenie, err
 }
 
-// pobierzWersjePoKodzie czyta jedną migawkę pliku po jej identyfikatorze.
+// pobierzWersjePoKodzie czyta jedną migawkę pliku po jej identyfikatorze
+// wiersza tabeli developer_wersja_pliku.
 const pobierzWersjePoKodzie = `SELECT ` + kolumnyWersjiPliku + `
                                FROM developer_wersja_pliku WHERE kod = ?`
 
-// WersjaPoKodzie zwraca jedną migawkę treści pliku.
+// WersjaPoKodzie zwraca jedną migawkę treści pliku po jej identyfikatorze
+// wiersza w tabeli bazy danych.
 func (r *repozytoriumDevelopera) WersjaPoKodzie(ctx context.Context, kod string) (WersjaPliku, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWersjePoKodzie)
 	if err != nil {

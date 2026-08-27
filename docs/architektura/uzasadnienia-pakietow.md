@@ -3501,3 +3501,6 @@ pakiecie, choć sam session po niego nie sięga, ponieważ definiuje go strona
 znająca kształt uruchomienia okna, a wypełnia warstwa kanału; sięgają po niego
 moduły Terminal i Developer w rdzeniu, bo one uruchamiają procesy okna i one
 obejmują je drzewem.
+
+## budowa/server/internal/dane/developer_warsztat_odczyt.go
+Zawężenia wykazów wchodzą do zapytań jako parametr przygotowanego polecenia, nie sklejaniem tekstu SQL. Wartość pusta oznacza brak zawężenia, więc jedno przygotowane zapytanie obsługuje zarówno wykaz pełny, jak i zawężony, a wartość z zewnątrz nigdy nie trafia bezpośrednio do treści polecenia — ten sam wzorzec obsługuje limit wykazu w odczycie warsztatu.

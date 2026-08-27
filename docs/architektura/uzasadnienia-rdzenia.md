@@ -5954,3 +5954,12 @@ nie jest błędem — rdzeń pracuje także wtedy, gdy nikt nie słucha zdarzeń
 Powtórne domknięcie procesu już zamkniętego nie rozgłasza niczego, bo
 inaczej zatrzymana tura zgłaszałaby najpierw zatrzymanie, a zaraz potem
 niepowodzenie strumienia.
+
+## budowa/server/internal/core/kolejka_stany.go
+Kontrakt opisuje kolejkę, ale nie opisuje pozycji kolejki: nie ma ani struktury pozycji, ani
+wyliczenia jej stanów, ani werdyktu weryfikacji. Słownik w tym pliku odwzorowuje więc więzy
+sprawdzające schematu i stoi w jednym miejscu, żeby drugiego odwzorowania nie było. Po dopisaniu
+wyliczenia do kontraktu ten plik ustępuje stałym współdzielonym.
+
+Stan „przydzielona" ma wpis w tabeli przejść, choć rdzeń go nie wystawia: pozycja przydzielona
+oknu wykonawcy powstaje poza tą drogą, a silnik ma umieć ją podjąć zamiast się na niej zatrzymać.

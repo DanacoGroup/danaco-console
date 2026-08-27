@@ -2256,3 +2256,77 @@ bez utraty układu (PDF, PPTX, XLSX, ODT). Odmowa nazwana jest tu uczciwsza niż
 plik z rozszerzeniem, którego treść nie odpowiada rozszerzeniu; DOCX powstaje
 jako poprawne archiwum OOXML złożone z dwóch plików XML — tyle wystarcza, żeby
 otworzył go edytor tekstu.
+
+## adapter_modul_tlumaczenie_jakosc_zrodlo.go
+
+Porownanie ze zrodlem jest wykonalne, poniewaz panel widzi swoje okno: komenda
+quality.check niesie identyfikator panelu, a kod zewnetrzny okna doczytany
+zlaczeniem daje to, czego wymaga odczyt okna z repozytorium tlumaczen.
+
+Kontrola swiadomie nie sprawdza dwoch rodzajow wad. Poprawnie przelozona data
+zmienia zapis miedzy jezykami, wiec mechaniczne porownanie napisow uznaloby
+poprawny przeklad za wade; falszywy alarm w kontroli jakosci jest gorszy od
+braku kontroli, poniewaz uczy odbiorce ignorowac wynik, a uczciwe sprawdzenie
+wymagaloby rozpoznania daty w obu jezykach, czego rdzen nie ma — zasada
+dotyczaca dat idzie za to do polecenia dla modelu, gdzie zadac mozna wiecej,
+niz da sie zweryfikowac. Pominiecie zdania jest rzecza znaczeniowa, nie
+napisowa: stwierdzenie, czy segment zrodlowy ma swoj odpowiednik w przekladzie,
+wymaga rozumienia tresci, a zgrubny zastepnik liczacy zdania mylnie oskarzalby
+kazdy przeklad, ktory laczy albo dzieli zdania, co jest normalna, dobra robota
+tlumacza; sprawdzenie przyblizone dlugoscia zostaje pod osobnym rodzajem wady,
+gdzie jest uczciwe.
+
+Tekst zrodlowy zyjacy w pliku zrodlowym nie jest czytany przez ta warstwe,
+poniewaz nie siega ona po pliki spoza repozytorium — porownanie dziala
+wylacznie na tresci zapisanej przy oknie. Wykaz walut kontrolowanych jest
+zamkniety i krotki, zeby nie brac za kod waluty kazdego skrotowca zlozonego
+z trzech wielkich liter. Rozstrzygniecie, czy przecinek w zapisie liczby
+oddziela czesc dziesietna, czy tysiace, jest niejednoznaczne z samego napisu;
+przyjeta regula uznaje separator z dokladnie trzema cyframi po nim za separator
+tysiecy, a kazdy inny za dziesietny — regula myli sie na zapisie w rodzaju
+tysiaca pieciuset z przecinkiem dziesietnym, ale trafia w zdecydowanej
+wiekszosci zapisow. Kierunek sprawdzenia liczb i walut jest jednostronny:
+wartosc dolozona w przekladzie nie jest zglaszana, bo bywa dorobiona uczciwie,
+a wartosc zgubiona jest zawsze wada.
+
+## budowa/server/internal/core/adapter_modul_developer_kontekst.go
+
+Wartością komendy developer.contextual.op nie jest samo wywołanie modelu —
+to potrafi okno rozmowy. Wartością jest kontekst, którego okno rozmowy nie ma:
+treść pliku, na którym Operator stoi, zaznaczenie, na które wskazał, pliki,
+które sam dołączył, i stan repozytorium.
+
+Rodzaj renameSymbol jest w kontrakcie razem z operacjami modelu, lecz nie jest
+operacją modelu: zmiana nazwy symbolu w całym repozytorium jest czynnością
+rozstrzygalną i robi ją serwer języka, który zna graf odwołań. Skierowanie jej
+do modelu dałoby wynik prawdopodobny zamiast poprawnego, w czynności, której
+poprawność da się sprawdzić w całości.
+
+Granica wielkości pliku wciąganego do kontekstu istnieje, ponieważ kontekst
+modelu ma własną granicę, a plik wciągnięty w całości wypchnąłby z niego
+zaznaczenie, o które chodziło; plik większy od granicy wchodzi początkiem.
+
+Operacje wyjaśniające oddają samą treść wyniku bez zmiany tekstu, ponieważ
+wyjaśnienie nie jest zmianą pliku i wstawianie go do kodu byłoby szkodą; tylko
+operacje przepisujące kod oddają dodatkowo zmianę do przyjęcia w edytorze.
+
+Kolejność trzech części polecenia wysyłanego do kanału modelu — czego się
+oczekuje, na czym się pracuje, co jest kontekstem — jest stała, ponieważ
+model czyta polecenie od początku, a zadanie postawione po tysiącu wierszy
+kodu bywa przeczytane jako komentarz do tego kodu.
+
+Plik kontekstu, którego nie da się odczytać, nie zatrzymuje operacji: Operator
+dołączył go jako pomoc, a nie jako przedmiot zadania. Cisza byłaby jednak
+nieuczciwa, więc rdzeń dopisuje do polecenia informację o pominięciu.
+
+Kontrakt operacji kontekstowej nie niesie zakresu wierszami zaznaczenia, więc
+zakres zmiany dla zaznaczenia nie jest jeszcze odnajdywany w treści pliku;
+sama treść wyniku i tak wraca w polu result niezależnie od tego, czy zmianę
+udało się umiejscowić.
+
+Model odpowiada kodem w ogrodzeniu znaczników nawet wtedy, gdy poproszono
+o samą treść, a ogrodzenie wstawione wprost do pliku źródłowego jest błędem
+składni w każdym języku, więc zdejmijOgrodzenieKodu usuwa je przed zapisem.
+
+Bez sprawdzenia osobneSlowo dopasowanie symbolu Plik trafiałoby też
+w PlikRoboczy, a zmiana nazwy ruszyłaby symbol, którego nikt nie wskazał.

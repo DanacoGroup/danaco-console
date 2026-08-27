@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: moduł Translate — kontrola jakości porównująca panel
-// ze źródłem. Metody i funkcje na `*adapterTlumaczenia` (typ deklaruje
-// `adapter_modul_tlumaczenie.go`); kontrole liczone z samej treści panelu —
-// znaczniki niedomknięte i pusty panel „gotowy" — zostają
-// w `adapter_modul_tlumaczenie_jakosc.go`.
-//
-// Porównanie ze źródłem jest wykonalne, bo panel widzi swoje okno:
-// `quality.check` niesie sam `PanelId`, a `PanelTlumaczenia.OknoKod`
-// (doczytywany złączeniem) daje kod zewnętrzny okna, którego wymaga
-// `RepozytoriumTlumaczen.Okno`.
-//
-// Czego nie sprawdzamy i dlaczego nie udajemy, że sprawdzamy:
-//
-//   - `date` — data poprawnie przełożona zmienia zapis („3 maja 2024" ↔
-//     „May 3, 2024" ↔ „2024-05-03"). Mechaniczne porównanie napisów uznałoby
-//     poprawny przekład za wadę, a fałszywy alarm w kontroli jakości jest
-//     gorszy od braku kontroli: uczy Operatora ignorować wynik. Uczciwe
-//     sprawdzenie wymaga rozpoznania daty w obu językach, czego rdzeń nie ma.
-//     Zasada `date` idzie za to do polecenia dla modelu (`zasadyJakosci`) —
-//     żądać można więcej, niż da się zweryfikować.
-//   - `omission` — pominięcie zdania to rzecz znaczeniowa, nie napisowa:
-//     stwierdzenie, czy segment źródłowy ma swój odpowiednik w przekładzie,
-//     wymaga rozumienia treści. Zgrubny zastępnik (liczba zdań w źródle vs
-//     w panelu) mylnie oskarżałby każdy przekład, który łączy albo dzieli
-//     zdania — a to jest normalna, dobra robota tłumacza. Sprawdzenie
-//     przybliżone długością zostaje pod rodzajem `length`, gdzie jest uczciwe.
+// Modul Translate — kontrola jakosci porownujaca panel ze zrodlem. Metody
+// i funkcje na adapterTlumaczenia; kontrole liczone z samej tresci panelu
+// zostaja w osobnym pliku modulu.
 package core
 
 import (
@@ -36,15 +13,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// tekstZrodlowyPanelu doczytuje tekst źródłowy okna, do którego należy panel —
-// drogą przez kod zewnętrzny okna, jedyny, jaki przyjmuje `Okno`.
-//
-// Treść żyjąca w pliku (`TekstZrodlowyOdwolanie`) nie jest czytana:
-// ta warstwa nie sięga po pliki spoza repozytorium. Wtedy wynik jest pusty,
-// a kontrola porównawcza po prostu się nie odbywa — pusty tekst źródłowy nie
-// udaje źródła, przez co żadna liczba nie zostanie fałszywie zgłoszona jako
-// zgubiona. Brak okna jest natomiast usterką, nie normalnym stanem:
-// panel bez okna nie miałby prawa istnieć, więc idzie odmową.
+// tekstZrodlowyPanelu doczytuje tekst zrodlowy okna, do ktorego nalezy panel.
+// Pusty wynik oznacza brak zapisanego zrodla — kontrola porownawcza wtedy sie
+// nie odbywa; brak samego okna jest usterka i konczy sie odmowa.
 func (a *adapterTlumaczenia) tekstZrodlowyPanelu(ctx context.Context,
 	panel dane.PanelTlumaczenia) (string, error) {
 
@@ -61,41 +32,30 @@ func (a *adapterTlumaczenia) tekstZrodlowyPanelu(ctx context.Context,
 	return *okno.TekstZrodlowy, nil
 }
 
-// walutyKontrolowane to znaki i kody walut, których obecność w źródle
-// sprawdzamy w przekładzie. Wykaz jest zamknięty i krótki: „każde trzy wielkie
-// litery" brałoby za kod waluty każdy skrótowiec (`API`, `VAT`, `PDF`)
-// i zasypywało Operatora fałszywymi zastrzeżeniami.
+// walutyKontrolowane to znaki i kody walut, ktorych obecnosc w zrodle sprawdzamy
+// w przekladzie; wykaz jest zamkniety i krotki, zeby nie brac za kod waluty
+// kazdego skrotowca z trzech wielkich liter.
 var walutyKontrolowane = []string{
 	"zł", "€", "$", "£", "¥", "₴", "₽", "₺",
 	"PLN", "EUR", "USD", "GBP", "CHF", "JPY", "CZK", "SEK", "NOK", "DKK", "HUF", "UAH", "RON", "BGN",
 }
 
-// zapisDaty rozpoznaje datę zapisaną cyframi z myślnikiem, kropką albo ukośnikiem
-// („2024-05-03", „3.05.2024", „05/03/2024"). Służy wyłącznie do wycięcia daty
-// przed liczeniem liczb (`wartosciLiczbowe`) — nie jest kontrolą dat i nie
-// udaje jej; rodzaj `date` pozostaje niesprawdzany (nagłówek pliku).
+// zapisDaty rozpoznaje date zapisana cyframi z mysnikiem, kropka albo ukosnikiem.
+// Sluzy wylacznie do wyciecia daty przed liczeniem liczb — kontrola dat
+// pozostaje niesprawdzana.
 var zapisDaty = regexp.MustCompile(`\d{1,4}[-./]\d{1,2}[-./]\d{1,4}`)
 
-// proporcjeDlugosciPrzekladu wyznacza pas, w którym długość przekładu jest
-// uznawana za normalną. Języki różnią się rozwlekłością — przekład z angielskiego
-// na polski bywa o połowę dłuższy, na węgierski krótszy — więc pas jest
-// szeroki z rozmysłem. Nie mierzy stylu; łapie tylko przypadki rażące:
-// przekład ucięty w połowie albo model, który zamiast tłumaczyć napisał
-// wypracowanie.
+// proporcjeDlugosciPrzekladu wyznacza pas, w ktorym dlugosc przekladu jest
+// uznawana za normalna. Pas jest szeroki, bo jezyki roznia sie rozwleklosica;
+// lapie tylko przypadki razace.
 const (
 	najkrotszaProporcjaPrzekladu = 0.4
 	najdluzszaProporcjaPrzekladu = 2.5
 )
 
-// zbadajPanel składa komplet niezgodności panelu — jedno miejsce, z którego
-// korzystają obie drogi kontroli: komenda `quality.check` wołana przez
-// Operatora i migawka zdejmowana zaraz po przekładzie modelu (`target.add`).
-// Gdyby każda liczyła po swojemu, Operator dostawałby dwa różne wykazy wad
-// tego samego panelu.
-//
-// Puste `tekstZrodlowy` (okno bez zapisanego źródła) wyłącza kontrole
-// porównawcze — nie ma z czym porównywać. Kontrole z samej treści panelu
-// działają zawsze.
+// zbadajPanel skada komplet niezgodnosci panelu — jedno miejsce, z ktorego
+// korzysta komenda quality.check oraz migawka zdejmowana zaraz po przekladzie
+// modelu. Pusty tekst zrodlowy wylacza kontrole porownawcze.
 func zbadajPanel(panel dane.PanelTlumaczenia, tekstZrodlowy string) []dane.NiezgodnoscTlumaczenia {
 	var niezgodnosci []dane.NiezgodnoscTlumaczenia
 	niezgodnosci = append(niezgodnosci, sprawdzZnaczniki(panel)...)
@@ -116,16 +76,9 @@ func zbadajPanel(panel dane.PanelTlumaczenia, tekstZrodlowy string) []dane.Niezg
 	return niezgodnosci
 }
 
-// sprawdzLiczbyWzgledemZrodla zgłasza rodzaj `number` dla każdej liczby
-// obecnej w źródle, a nieobecnej w przekładzie. Porównanie idzie po wartości,
-// nie po napisie: „1 234,50", „1.234,50" i „1234.5" to ta sama liczba zapisana
-// zwyczajem trzech różnych języków (`wartosciLiczbowe`), a przekład ma prawo
-// zmienić zapis — nie ma prawa zmienić wartości.
-//
-// Kierunek sprawdzenia jest jednostronny: liczba dołożona w przekładzie nie
-// jest zgłaszana. Bywa dorobiona uczciwie (rozwinięcie „dwa" na „2")
-// i zgłaszanie jej dawałoby fałszywe alarmy; liczba zgubiona jest natomiast
-// zawsze wadą.
+// sprawdzLiczbyWzgledemZrodla zglasza rodzaj number dla kazdej liczby obecnej
+// w zrodle, a nieobecnej w przekladzie; porownanie idzie po wartosci, nie po
+// napisie. Liczba dolozona w przekladzie nie jest zglaszana.
 func sprawdzLiczbyWzgledemZrodla(zrodlo, tresc string) []dane.NiezgodnoscTlumaczenia {
 	wPrzekladzie := wartosciLiczbowe(tresc)
 	var wynik []dane.NiezgodnoscTlumaczenia
@@ -141,26 +94,12 @@ func sprawdzLiczbyWzgledemZrodla(zrodlo, tresc string) []dane.NiezgodnoscTlumacz
 	return wynik
 }
 
-// wartosciLiczbowe wyławia z tekstu liczby i sprowadza je do postaci
-// porównywalnej: bez separatorów tysięcy, z kropką dziesiętną, bez zer
-// nieznaczących. Wynikiem jest zbiór wartości (mapa na `bool`, bo Go nie ma
-// typu zbioru) — powtórzenie tej samej liczby w tekście nie jest osobnym
-// faktem do sprawdzenia.
-//
-// Ograniczenie: rozstrzygnięcie, czy przecinek w „1,5" oddziela
-// część dziesiętną (zwyczaj polski), czy tysiące (zwyczaj angielski), jest
-// niejednoznaczne z samego napisu. Przyjmujemy regułę: separator, po którym
-// idą dokładnie trzy cyfry i nic więcej z rzędu, to separator tysięcy; każdy
-// inny — dziesiętny. Reguła myli się na „1,500" oznaczającym półtora tysiąca
-// z przecinkiem dziesiętnym, ale trafia w zdecydowanej większości zapisów.
+// wartosciLiczbowe wylawia z tekstu liczby i sprowadza je do postaci
+// porownywalnej: bez separatorow tysiecy, z kropka dziesietna, bez zer
+// nieznaczacych. Wynikiem jest zbior wartosci bez powtorzen.
 func wartosciLiczbowe(tekst string) map[string]bool {
 	wynik := map[string]bool{}
-	// Daty wycinamy przed liczeniem liczb. Bez tego „2024-05-03" rozpada się na
-	// trzy liczby (2024, 5, 3), a poprawny przekład „w maju 2024" gubi dwie
-	// z nich — kontrola zgłaszałaby dwa fałszywe braki liczb za jedną poprawnie
-	// przełożoną datę. Skoro rodzaj `date` świadomie nie jest sprawdzany
-	// (nagłówek pliku), to jego składniki nie wchodzą bocznymi drzwiami jako
-	// `number`.
+	// Daty wycinamy przed liczeniem liczb, zeby zapis daty nie rozpadal sie na fałszywe braki liczb.
 	tekst = zapisDaty.ReplaceAllString(tekst, " ")
 	znaki := []rune(tekst)
 	for i := 0; i < len(znaki); {
@@ -193,10 +132,9 @@ func separatorLiczby(znaki []rune, i int) bool {
 	return i > 0 && cyfra(znaki[i-1]) && i+1 < len(znaki) && cyfra(znaki[i+1])
 }
 
-// znormalizujLiczbe sprowadza zapis liczby do jednej postaci wedle reguły
-// opisanej przy `wartosciLiczbowe`. Napis, którego nie da się odczytać jako
-// liczby, oddaje pusty wynik — wtedy nie wchodzi do porównania wcale, zamiast
-// wchodzić jako wartość zmyślona.
+// znormalizujLiczbe sprowadza zapis liczby do jednej postaci wedle reguly
+// opisanej przy wartosciLiczbowe. Napis nieczytelny jako liczba oddaje pusty
+// wynik i nie wchodzi do porownania.
 func znormalizujLiczbe(surowa string) string {
 	surowa = strings.ReplaceAll(surowa, " ", "")
 	ostatni := strings.LastIndexAny(surowa, ".,")
@@ -234,12 +172,9 @@ func sprawdzWalutyWzgledemZrodla(zrodlo, tresc string) []dane.NiezgodnoscTlumacz
 	return wynik
 }
 
-// sprawdzZnacznikiWzgledemZrodla zgłasza rodzaj `placeholder` dla znacznika
-// podstawienia obecnego w źródle, a nieobecnego w przekładzie. Kontrola z samej
-// treści panelu widzi wyłącznie klamrę niedomkniętą, a najczęstsza wada
-// znacznika jest inna — model tłumaczy nazwę w środku („{userName}" →
-// „{nazwaUżytkownika}") albo gubi znacznik zupełnie, i program podstawia wtedy
-// w pustkę.
+// sprawdzZnacznikiWzgledemZrodla zglasza rodzaj placeholder dla znacznika
+// podstawienia obecnego w zrodle, a nieobecnego w przekladzie: model tlumaczy
+// nazwe w srodku znacznika albo gubi znacznik zupelnie.
 func sprawdzZnacznikiWzgledemZrodla(zrodlo, tresc string) []dane.NiezgodnoscTlumaczenia {
 	var wynik []dane.NiezgodnoscTlumaczenia
 	for _, znacznik := range znacznikiPodstawienia(zrodlo) {
@@ -276,11 +211,9 @@ func znacznikiPodstawienia(tekst string) []string {
 	}
 }
 
-// sprawdzProporcjeDlugosci zgłasza rodzaj `length`, gdy przekład jest rażąco
-// krótszy albo dłuższy od źródła — pas dopuszczalny i jego uzasadnienie przy
-// stałych `najkrotszaProporcjaPrzekladu`/`najdluzszaProporcjaPrzekladu`.
-// Liczymy w runach, nie w bajtach: w bajtach każdy przekład na język
-// z diakrytyką albo alfabetem niełacińskim wychodziłby „za długi".
+// sprawdzProporcjeDlugosci zglasza rodzaj length, gdy przeklad jest razaco
+// krotszy albo dluzszy od zrodla. Liczymy w runach, nie w bajtach, zeby
+// diakrytyka i alfabet nielacinski nie liczyly sie jako nadmiar.
 func sprawdzProporcjeDlugosci(zrodlo, tresc string) []dane.NiezgodnoscTlumaczenia {
 	dlugoscZrodla := len([]rune(strings.TrimSpace(zrodlo)))
 	dlugoscPrzekladu := len([]rune(strings.TrimSpace(tresc)))
@@ -300,11 +233,9 @@ func sprawdzProporcjeDlugosci(zrodlo, tresc string) []dane.NiezgodnoscTlumaczeni
 			strconv.Itoa(dlugoscPrzekladu)+" znaków przekładu)")}
 }
 
-// niezgodnoscRodzaju składa jeden wiersz niezgodności dowolnego rodzaju.
-// `Segment` zostaje pusty: kontrole tego pliku porównują całe teksty, nie
-// segment po segmencie (przypisanie wady do segmentu wymagałoby dopasowania
-// segmentów źródła do segmentów przekładu, czyli tego samego rozumienia
-// treści, którego brak wyklucza sprawdzanie `omission` — nagłówek pliku).
+// niezgodnoscRodzaju skada jeden wiersz niezgodnosci dowolnego rodzaju. Pole
+// Segment zostaje puste: kontrole tego pliku porownuja cale teksty, nie
+// segment po segmencie.
 func niezgodnoscRodzaju(rodzaj shared.TranslationIssueKind, szczegol string) dane.NiezgodnoscTlumaczenia {
 	s := szczegol
 	return dane.NiezgodnoscTlumaczenia{Rodzaj: string(rodzaj), Szczegol: &s}

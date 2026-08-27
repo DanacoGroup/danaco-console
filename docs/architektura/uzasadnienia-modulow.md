@@ -2105,3 +2105,24 @@ z procesem — stąd wszystkie czynności tego pliku czytają bazę.
 Redakcja sekretów idzie przy odczycie, nie przy zapisie. Reguła redakcji bywa
 zmieniana, a zapis raz zredagowany nie da się odredagować — zapis surowy
 z redakcją dopiero przy wydaniu zachowuje obie możliwości.
+
+## adapter_modul_terminal_tunele.go
+
+Tunel dało się dotąd założyć wyłącznie poleceniem wydanym w karcie: biegł
+wtedy jako zwykły proces polecenia, bez wykazu tuneli i bez ich stanu,
+a zamknięcie sprowadzało się do odszukania właściwego wiersza w Process
+Monitorze. Prowadzenie tunelu jako bytu długożyjącego zastępuje ten stan.
+
+Wybór programu `ssh` zamiast własnego przekierowania w Go nie jest zasadą
+biblioteki zamiast programu, stosowaną gdzie indziej dla git, PDF
+i wyszukiwania: tu nie chodzi o czynność biblioteczną, tylko o transport, dla
+którego torem jest SSH — program `ssh` niesie uwierzytelnienie, szyfrowanie
+i sprawdzenie klucza hosta (`known_hosts`), których własne przekierowanie
+musiałoby dorobić od zera. Przekierowanie napisane w Go byłoby drugim,
+słabszym torem obok istniejącego, nie usunięciem zależności.
+
+Przełącznik `-o ExitOnForwardFailure=yes` sprawia, że `ssh` kończy się, gdy
+przekierowania nie udało się założyć, zamiast biec z otwartym połączeniem
+i zamkniętym portem. Rdzeń czeka chwilę na taki koniec przed odpowiedzią,
+a potem dogląda procesu do końca jego życia: stan `active` znaczy, że proces
+biegnie z założonym przekierowaniem, nie że polecenie zostało tylko wysłane.

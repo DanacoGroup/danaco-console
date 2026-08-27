@@ -1182,3 +1182,80 @@ wymaga przejścia wszystkich znakowań — a operator, który zmienia barwę „
 sprawdzenia", zmienia ją dla wszystkich, nie dla jednego miejsca. Rodzaje są
 zasięgu operatora, nie dokumentu: znacznik „wymaga źródła" obowiązuje we
 wszystkich pismach, a nie zakłada się go od nowa w każdym.
+
+## budowa/server/internal/store/migracja_115_wskaznik_znaczenia.sql
+
+Pełnotekstowy indeks treści biblioteki dopasowuje słowa, ten wskaźnik —
+znaczenia: trzyma wektor, czyli ciąg liczb, w którym bliskość odpowiada
+bliskości sensu, więc łączy zdania niemające wspólnego wyrazu. Zakresy obu
+struktur są różne: indeks pełnotekstowy widzi wyłącznie pliki biblioteki,
+wskaźnik obejmuje ponadto historię rozmów i pliki przestrzeni roboczej okna.
+
+Fragment i wektor są bytem wtórnym, odtwarzalnym przebiegiem budowy
+wskaźnika; bajty treści leżą w magazynie biblioteki pod sumą kontrolną,
+a odwołanie do treści pozostaje jedyną drogą do nich.
+
+Wektor jest polem binarnym, nie tabelą współrzędnych: czyta się go zawsze
+w całości i zawsze po to, żeby policzyć jeden iloczyn skalarny, a wiersz na
+współrzędną dałby przy dziesięciu tysiącach fragmentów blisko osiem milionów
+wierszy, o które nikt nie pyta pojedynczo. Kolumna wymiar pozwala rozpoznać
+wiersz uszkodzony, zanim trafi do porównania.
+
+Model stoi w wierszu i w warunku jednoznaczności, bo wektory dwóch modeli
+leżą w różnych przestrzeniach i ich iloczyn skalarny nie jest trafnością. Po
+zmianie ustawienia modelu w tabeli stoją dwa komplety, a odczyt zawęża się
+po modelu; wiersze poprzedniego modelu zostają i czyści je przebieg
+przebudowy wskaźnika.
+
+Kluczy obcych do źródła nie ma, bo jeden z trzech zakresów — plik przestrzeni
+roboczej — nie ma wiersza w żadnej tabeli, a trzy wzajemnie wykluczające się
+kolumny byłyby kształtem gorszym od jednego napisu. Fragmenty po skasowanym
+źródle sprząta przebieg budowy wskaźnika, który zna dziś istniejące źródła,
+a nie kaskada bazy, która ich nie zna.
+
+Kolumna utworzono niesie milisekundy epoki podane przez wołającego, a nie
+wyrażenie czasu bazy danych — bez wskazania źródła fragmentu model cytowałby
+bez możliwości sprawdzenia, czego kontrakt tej rodziny komend zakazuje.
+
+## budowa/server/internal/wiedza/pomocnik_przesiewu.py
+
+Osadzenia liczy `pomocnik_osadzen.py`, a ten pomocnik jest przebiegiem
+drugim. Różnica nie jest w modelu, tylko w tym, co model dostaje na wejście:
+osadzarka widzi pytanie i fragment osobno i sprowadza każde z nich do
+wektora, więc spotykają się dopiero jako dwie liczby, a krzyżowy koder czyta
+pytanie razem z fragmentem w jednym przebiegu i oddaje jedną ocenę ich
+dopasowania. Stąd bierze się kolejność inna niż z kosinusa, i stąd bierze się
+koszt: ocen jest tyle, ile kandydatów, a nie jedna na tekst raz na zawsze.
+
+Droga rozmowy jest ta sama co u osadzarki i to jest warunek, nie zbieg
+okoliczności: zlecenie przychodzi ścieżką pliku JSON w argumencie, odpowiedź
+wraca jednym obiektem JSON na standardowym wyjściu, a diagnostyka biblioteki
+idzie na strumień diagnostyczny. Rdzeń woła procesy wyłącznie przez
+`zewnetrzne/wolanie.go`, a ta droga nie podaje procesowi standardowego
+wejścia.
+
+Katalog modeli bywa dwiema różnymi rzeczami i pomocnik je rozróżnia tak samo
+jak osadzarka: pusty jest miejscem, do którego biblioteka dopiero pobierze
+wagi, a katalog, w którym wagi już leżą, jest samym modelem — wtedy
+biblioteka dostaje go wprost, pobieranie jest wyłączone zmienną
+`HF_HUB_OFFLINE`, a druga kopia tego, co stoi na dysku, nie powstaje.
+Rozstrzyga obecność pliku `model.safetensors`, bo tylko on jest tu wagami.
+
+Kształtu wag pomocnik nie odczytuje z osobnych deklaracji, inaczej niż
+osadzarka, ponieważ krzyżowy koder jest klasyfikatorem pary: `config.json`
+niesie komplet, ustrój transformera wraz z głową oceniającą, a warstwy
+łączącej tokeny w wektor tu po prostu nie ma, więc nie ma czego zgadywać ani
+skąd doczytywać.
+
+Brak jest odpowiedzią, a nie wywróceniem: gdy biblioteki nie ma albo wag nie
+da się wczytać, pomocnik oddaje `{"ok": false, "brak": …}` z nazwą braku
+i wagą modelu do dociągnięcia, a kod wyjścia zostaje zerowy.
+
+Katalog pobrania jest podawany jawnie z tego samego powodu, dla którego robi
+to pomocnik osadzeń: droga wołania procesu nie niesie `HOME` ani `HF_HOME`,
+więc bez tego wagi lądowałyby w katalogu pamięci podręcznej zależnym od tego,
+gdzie akurat stoi rdzeń, a nie w miejscu wskazanym ustawieniem.
+
+Wykaz tekstów pusty znaczy pytanie, czy koder stoi, a nie polecenie
+przesiania niczego: rdzeń pyta o to, zanim przeczyta wskaźnik, żeby odmówić
+wcześnie i nazwać brak. Ta sama umowa obowiązuje w pomocniku osadzeń.

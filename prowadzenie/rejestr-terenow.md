@@ -37,18 +37,13 @@ dobrac: 190 s razy ponad tysiac komend to bieg liczony w godzinach.
 
 ### centrum-poprawki
 
-**Wpis zalozony z opoznieniem — uchybienie Prowadzacego.** Teren pracuje od rana
-27.08 i ma 22 rewizje wlasne, a ustroj stanowi, ze teren bez wpisu nie jest
-otwarty. Wpis powstaje po fakcie, zeby praca miala umocowanie i kryteria, wobec
-ktorych da sie ja przyjac. Zaden dorobek nie jest przez to uniewazniony.
-
 | | |
 |---|---|
 | **Galaz** | `teren/centrum-poprawki` z `f8f05b1` |
 | **Drzewo** | `~/budowa` — drzewo glowne, przelaczone na te galaz |
 | **Wykonawca** | sesja designu |
 | **Wykaz plikow** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css` |
-| **Warstwa wspolna — tknieta** | `design/zasoby/rama.css` (+13/-4), `design/zasoby/panel-sesji.css` (+8/-2) |
+| **Warstwa wspolna** | **poza terenem** — zmiany w `rama.css` i `panel-sesji.css` wracaja zgloszeniem, patrz nizej |
 | **Dokumentacja terenu** | `design/01-dokumentacja-md/centrum-dowodzenia-uzasadnienia.md` — dopisany do wykazu po fakcie |
 | **Poza terenem** | `budowa/`, `docs/`, `prowadzenie/`, pliki `design/zasoby/` **inne niz wymienione wyzej** |
 
@@ -120,6 +115,18 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 
 ## Zgłoszenia oczekujące na teren
+
+### Warstwa wspolna zmieniona bez wlasnego terenu
+
+`design/zasoby/rama.css` (+13/-4) i `design/zasoby/panel-sesji.css` (+8/-2)
+zostaly zmienione przy pracy nad jednym oknem. Plan etapow stanowi: warstwa
+o zasiegu ogolnym „jest wspolna dla wszystkiego, co powstanie pozniej. **Zmiana
+w niej jest decyzja, nie poprawka okna.**"
+
+Skutek obejmuje **kazde okno**, ktore z tej warstwy wyrosnie — glif przycisku
+okna 12→16 px i uniesienie przez `top`. Domkniecie wymaga wlasnego terenu
+obejmujacego warstwe wspolna, z opisem, co i dlaczego sie zmienilo.
+
 
 ### Przesiew i os obrazu pobraly drugie kopie wag — 5,2 GB
 

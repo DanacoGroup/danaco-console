@@ -1,5 +1,7 @@
 // Źródła SVG — grupa: zasoby.
 // Nazwy i kolejność wprost z `ikony/manifest.json` (pozycje 41–54).
+// Każdy import wciąga treść pliku znacznikiem `?raw`, więc wykaz niesie
+// znaczniki SVG, a nie ścieżki do plików.
 
 import dokument from '../svg/dokument.svg?raw';
 import plik from '../svg/plik.svg?raw';
@@ -16,7 +18,11 @@ import wykres from '../svg/wykres.svg?raw';
 import terminal from '../svg/terminal.svg?raw';
 import galaz from '../svg/galaz.svg?raw';
 
-/** Zasoby i dane — dokumenty, katalogi, zestawienia, repozytoria. */
+/**
+ * Zasoby i dane — dokumenty, katalogi, zestawienia, repozytoria. Kluczem wykazu
+ * jest nazwa ikony, wartością treść pliku SVG. Zapis `as const` utrwala zbiór
+ * nazw w typie, więc odwołanie do nazwy spoza grupy nie przechodzi budowy.
+ */
 export const ZASOBY = {
   'dokument': dokument,
   'plik': plik,

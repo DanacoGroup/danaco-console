@@ -3919,3 +3919,10 @@ okno konfiguracji, mobile i wyświetlanie stałe. Pozostałe pozycje — uwierzy
 izolacji, dostępy oraz modele i tożsamość — są zakresami okna konfiguracji; własne wejście na listwie
 dawałoby dwie drogi do tej samej rzeczy. Pełny wykaz niesie dalej menu aplikacji w pasku, gdzie hierarchii
 stref nie ma.
+
+## budowa/klient-poprzedni/src/moduly/studio/dziennik-czynnosci.test.ts
+Sprawdziany dziennika czynności mierzą cztery rzeczy, których zgubienie kosztowałoby operatora
+pracę albo zaufanie: odmowę cofnięcia rozpoznaną jako odmowa mimo udanego wywołania, zależność
+nazwaną wprost zamiast schowaną za ogólnym „nie udało się", zdanie o różnicy drzew obecne przy
+każdym cofnięciu oraz liczbę zmian operatora zachowanych przy cofaniu pracy modelu. Sprawdzianu,
+że przycisk woła komendę, tu nie ma, bo taki sprawdzian mierzyłby tylko atrapę, którą sam stawia.

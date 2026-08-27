@@ -5723,3 +5723,10 @@ niewłączony — a nie odmowę wykonania.
 Ustalenie bez ścieżki daje obszar pusty. Obszar pusty przy izolacji włączonej jest naruszeniem
 rozstrzyganym w egzekutorze polecenia, a nie milczącym przejściem: okno bez własnego katalogu
 poszłoby do katalogu wspólnego.
+
+## budowa/server/internal/core/izolacja_kontekst.go
+Wymiar odrębny znaczy, że treść należąca do innego okna nie wchodzi do tury tego okna: nowa karta
+zaczyna z pustą historią, a pamięć jednego zasięgu pozostaje niewidoczna w innym. Egzekucja polega
+na odrzuceniu źródła cudzego, nie na cichym pominięciu go — Operator ma wiedzieć, że tura miała
+zaciągnąć treść spoza okna. Wymiar współdzielony nie ogranicza niczego; jest jawną decyzją
+Operatora o tym, że ta sama treść zasila kilka zasięgów.

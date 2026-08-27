@@ -20,7 +20,8 @@ ktorych da sie ja przyjac. Zaden dorobek nie jest przez to uniewazniony.
 | **Wykonawca** | sesja designu |
 | **Wykaz plikow** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css` |
 | **Warstwa wspolna — tknieta** | `design/zasoby/rama.css` (+13/-4), `design/zasoby/panel-sesji.css` (+8/-2) |
-| **Poza terenem** | `budowa/`, `docs/`, `prowadzenie/`, pozostale pliki `design/zasoby/` |
+| **Dokumentacja terenu** | `design/01-dokumentacja-md/centrum-dowodzenia-uzasadnienia.md` — dopisany do wykazu po fakcie |
+| **Poza terenem** | `budowa/`, `docs/`, `prowadzenie/`, pliki `design/zasoby/` **inne niz wymienione wyzej** |
 
 **Przedmiot.** Doprowadzenie okna centrum dowodzenia do postaci przyjetej przez
 Wlasciciela. Kompozycji nie przekazuje sie zleceniem — etap 1 prowadzi Wlasciciel,
@@ -57,6 +58,30 @@ kryterium etapu 1 sprawdzalne maszynowo; pozostale z niego wynikaja.
    `.dn-nrz-btn`, `.dn-etykietka`) albo kazde nadpisanie ma podany powod.
 6. **Zmiany w `rama.css` i `panel-sesji.css` opisane** — co, dlaczego i jaki
    skutek dla okien, ktore z tej warstwy wyrosna.
+8. **Uklad mierzy to, co okno oglasza.** Zmierzone 27.08: platno deklaruje
+   `container-type: inline-size` i wlasna nazwe **dwa razy**, a uklad przelacza
+   **dziesiec zapytan `@media` i ani jedno `@container`**. Okno mierzy wiec
+   szerokosc ekranu, choc samouczek zwezа samo platno — przy otwartym panelu
+   uklad nie odpowie. Albo zapytania ida na `@container`, albo deklaracja
+   platna znika. Wykazane przeszukaniem z sonda dodatnia.
+9. **Dokument uzasadnien nie przeczy arkuszowi.** Zmierzone 27.08:
+   `centrum-dowodzenia-uzasadnienia.md:13` twierdzi, ze punkty lamania mierza
+   szerokosc platna przez `@container plotno` — arkusz tego nie robi. Dokument
+   opisuje stan, ktorego nie ma.
+10. **Dokument ma miejsce w serii albo odsylacz.** Stoi w
+   `design/01-dokumentacja-md/` bez numeru w serii `01-`–`10-` i bez odsylacza
+   z ktoregokolwiek z nich. Dokument, do ktorego nic nie prowadzi, nie zostanie
+   przeczytany.
+11. **Objetosc komentarza w granicach reguly.** Zmierzone 27.08:
+   `centrum-dowodzenia.css` 24 882 znaki komentarza przy 1087 wierszach
+   (dopuszczalne 271), `rama.css` 30 726 przy 1906 (dopuszczalne 476),
+   `centrum-dowodzenia.js` 5 978 przy 492 (dopuszczalne 123). Komentarz opisuje
+   **regule obowiazujaca**, nie przebieg poprawki ani stan poprzedni — ustroj
+   zabrania kroniki w tresci.
+12. **Wiersz znacznika daje sie przejrzec.** Zmierzone 27.08:
+   `centrum-dowodzenia.html` niesie wiersze 23 252, 20 198 i 10 108 znakow bez
+   lamania — nieczytelne w przegladzie i w roznicy rewizji.
+
 7. Okno wczytuje sie **bez bledu konsoli** — wykazane uruchomieniem, z sonda
    dodatnia dowodzaca, ze odczyt konsoli lapie bledy.
 

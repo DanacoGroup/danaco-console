@@ -5706,3 +5706,10 @@ pozycji z ikoną obsługuje oba miejsca naraz. O tym, które pozycje wolno
 otworzyć, rozstrzyga wytwórnia paneli okien pomocniczych — pozycja spoza
 wykazu nie jest błędem i nie zostaje bez rysunku, tylko dostaje ikonę
 karty okna, bo każda z nich jest oknem obok rozmowy.
+
+## budowa/klient-poprzedni/src/moduly/workspace/czynnosci-wiedzy.ts
+Graf tej rodziny rysuje sieć odnośników, kto na kogo wskazuje wprost. Wyszukiwanie po znaczeniu
+prowadzi osobna rodzina komend wiedzy i nie ma go tutaj, żeby okno nie obiecywało podobieństwa
+tam, gdzie dostaje dopasowanie po słowach.
+Okno liczy nazwy odnośników przed zapisem, żeby pokazać operatorowi, do czego strona linkuje,
+zanim rdzeń odpowie.

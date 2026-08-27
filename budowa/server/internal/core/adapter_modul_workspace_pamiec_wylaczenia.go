@@ -1,27 +1,6 @@
-// Odpowiedzialność pliku: dwie komendy wyłączeń pamięci —
-// `memory.disable.list` i `memory.disable.set` — oraz uwzględnienie wyłączeń
-// w odczycie pamięci (`memory.list`).
-//
-// Skąd to się wzięło. Rozstrzygnięcie Właściciela z 17.08.2026: „niech będzie
-// opcja wyłączenia — wyłączenia całkiem, wyłączenia tylko dla niektórych modułów
-// itp. — ale to wszystko ma się sterować z pozycji Operatora w konfiguracji".
-// Do tej dobudowy takie żądanie kończyło się odmową `conflict`, bo schemat nie
-// znał tabeli wyłączeń; odmowa nazywała to wprost i była prawdziwa.
-//
-// Trzy czynności obok siebie i żadna nie jest drugą:
-//
-//   - `memory.delete` USUWA treść. Wpisu po niej nie ma.
-//   - `memory.detach` ZWĘŻA ZASIĘG samego wpisu do jego projektu. Wpis zostaje,
-//     ale obowiązuje węziej — zmienia się wiersz pamięci.
-//   - `memory.disable.set` WSTRZYMUJE wpis albo cały poziom pamięci we wskazanym
-//     zasięgu. Wiersz pamięci zostaje nietknięty; wpis nie wchodzi do kontekstu
-//     i wraca w całości po zniesieniu wyłączenia.
-//
-// Dlaczego wyłączony wpis jest NAZWANY, a nie przemilczany. Zasada zlecenia:
-// cisza, po której Operator nie wie, że coś jest wyłączone, jest gorsza od braku
-// wyciszenia. Dlatego `memory.list` oddaje wykaz wpisów wstrzymanych obok wykazu
-// czynnych i przy każdym mówi, KTÓRY zasięg go wyłączył — razem z tożsamością
-// wyłączenia, którym Operator znosi je jednym ruchem.
+// Plik obsluguje dwie komendy wylaczen pamieci — memory.disable.list i
+// memory.disable.set — oraz filtruje wpisy wylaczone przy odczycie pamieci
+// w komendzie memory.list.
 package core
 
 import (
@@ -32,13 +11,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekWylaczeniaPamieci znakuje identyfikator wyłączenia nadany przez rdzeń.
+// przedrostekWylaczeniaPamieci znakuje identyfikator wyłączenia nadany przez rdzeń
+// przy zapisie nowego wpisu w magazynie.
 const przedrostekWylaczeniaPamieci = "wyp-"
 
-// ZWylaczeniami wpina magazyn wyłączeń pamięci. Bez niego dwie komendy wyłączeń
-// odmawiają z kodem `internal_error` i nazwą niewpiętego składnika, a `memory.list`
-// nie ma czym odsiać wpisów wstrzymanych — i mówi to wprost, zamiast oddawać
-// wykaz, o którym nie wie, czy jest pełny.
+// ZWylaczeniami wpina magazyn wyłączeń pamięci. Bez niego komendy wyłączeń odmawiają
+// z kodem internal_error, a memory.list nie ma czym odsiać wpisów wstrzymanych.
 func (a *adapterPamieciPrzestrzeni) ZWylaczeniami(
 	w dane.RepozytoriumWylaczenPamieci) *adapterPamieciPrzestrzeni {
 
@@ -76,19 +54,9 @@ func (a *adapterPamieciPrzestrzeni) WylaczeniaPamieciZasiegu(ctx context.Context
 
 // ── memory.disable.set ───────────────────────────────────────────────────────
 
-// PrzestawWylaczeniePamieci obsługuje `memory.disable.set`: zakłada wyłączenie
-// pamięci albo je znosi.
-//
-// Zniesienie idzie tą samą komendą z polem `disabled` równym fałszowi —
-// odwracalność jednym ruchem jest wymogiem produktu, nie wygodą okna. Zniesienie
-// wskazuje wyłączenie identyfikatorem albo, gdy go nie zna, bytem i zasięgiem;
-// druga droga jest tą, którą idzie okno znoszące to, co samo wcześniej wyłączyło.
-//
-// Odpowiedź zawsze niesie wykaz PO zmianie, więc okno nie musi pytać drugi raz,
-// oraz pole `changed`, które mówi wprost, czy wykaz naprawdę się ruszył. Odmowa
-// nazywa brak: żądanie bez wskazania wpisu ani poziomu nie ma czego wyłączyć,
-// a zniesienie wyłączenia, którego nie ma, kończy się odmową `not_found`,
-// nie ciszą.
+// PrzestawWylaczeniePamieci obsługuje memory.disable.set: zakłada wyłączenie
+// pamięci albo je znosi tą samą komendą, z polem disabled równym fałszowi
+// dla zniesienia.
 func (a *adapterPamieciPrzestrzeni) PrzestawWylaczeniePamieci(ctx context.Context,
 	z shared.MemoryDisableSetRequest) (shared.MemoryDisableSetResponse, error) {
 
@@ -105,13 +73,13 @@ func (a *adapterPamieciPrzestrzeni) PrzestawWylaczeniePamieci(ctx context.Contex
 	return a.zniesWylaczenie(ctx, wzor, wartoscTekstu(z.DisableId))
 }
 
-// zalozWylaczenie zapisuje wyłączenie i składa odpowiedź komendy.
+// zalozWylaczenie zapisuje wyłączenie pamięci w magazynie i składa odpowiedź
+// komendy niosącą wykaz wyłączeń po zmianie.
 func (a *adapterPamieciPrzestrzeni) zalozWylaczenie(ctx context.Context,
 	wzor dane.WylaczeniePamieci) (shared.MemoryDisableSetResponse, error) {
 
 	if wzor.WpisIdentyfikator != "" {
-		// Wyłączenie wpisu, którego nie ma, wskazywałoby byt nieistniejący —
-		// i nie dałoby się go znieść, bo nie byłoby czego przywrócić.
+		// Wyłączenie wpisu, którego nie ma, wskazywałoby byt nieistniejący.
 		if _, err := a.wpisZadania(ctx, wzor.WpisIdentyfikator); err != nil {
 			return shared.MemoryDisableSetResponse{}, err
 		}
@@ -132,7 +100,8 @@ func (a *adapterPamieciPrzestrzeni) zalozWylaczenie(ctx context.Context,
 	}, nil
 }
 
-// zniesWylaczenie znosi wyłączenie wskazane identyfikatorem albo bytem i zasięgiem.
+// zniesWylaczenie znosi wyłączenie wskazane identyfikatorem albo bytem i zasięgiem,
+// gdy identyfikator nie jest znany.
 func (a *adapterPamieciPrzestrzeni) zniesWylaczenie(ctx context.Context,
 	wzor dane.WylaczeniePamieci, identyfikator string) (shared.MemoryDisableSetResponse, error) {
 
@@ -184,10 +153,8 @@ func (a *adapterPamieciPrzestrzeni) zniesWylaczenie(ctx context.Context,
 // ── uwzględnienie wyłączeń w odczycie pamięci ───────────────────────────────
 
 // sitoWylaczen składa sito wpisów pamięci z wyłączeń obowiązujących w rdzeniu.
-//
-// Wpis wstrzymuje wyłączenie wskazujące jego identyfikator wprost albo
-// wyłączenie całego poziomu pamięci, na którym wpis stoi. Zasięg wyłączenia
-// jedzie w odpowiedzi, żeby Operator wiedział, KTÓRY zasięg wpis wyciszył.
+// Zasięg wyłączenia jedzie w odpowiedzi, żeby Operator wiedział, który zasięg
+// wpis wyciszył.
 func (a *adapterPamieciPrzestrzeni) sitoWylaczen(ctx context.Context) (
 	func(dane.WpisPamieciProjektu) (shared.MemoryDisabledEntry, bool), error) {
 
@@ -225,11 +192,8 @@ func (a *adapterPamieciPrzestrzeni) sitoWylaczen(ctx context.Context) (
 	}, nil
 }
 
-// wylaczenieObejmujeWpis mówi, czy to wyłączenie wstrzymuje ten wpis.
-//
-// Wyłączenie wpisu wskazuje go identyfikatorem. Wyłączenie poziomu pamięci
-// wstrzymuje wpisy stojące na tym poziomie — poziom pamięci wpisu bierze się
-// z jego zasięgu współdzielenia, bo tym jednym polem wpis mówi, gdzie obowiązuje.
+// wylaczenieObejmujeWpis mówi, czy to wyłączenie wstrzymuje ten wpis: wskazaniem
+// identyfikatora wpisu albo poziomem pamięci, na którym wpis stoi.
 func wylaczenieObejmujeWpis(wylaczenie dane.WylaczeniePamieci,
 	wpis dane.WpisPamieciProjektu) bool {
 
@@ -240,10 +204,9 @@ func wylaczenieObejmujeWpis(wylaczenie dane.WylaczeniePamieci,
 	return ma && poziom == wylaczenie.PoziomPamieci
 }
 
-// poziomPamieciZasiegu przekłada zasięg wpisu na poziom pamięci. Cztery poziomy
-// pamięci mają odpowiednik wśród zasięgów konfiguracji; zasięg spoza tej czwórki
-// (moduł, para modułów, rola, okno) nie jest poziomem pamięci i wyłączenie
-// poziomu go nie dotyczy.
+// poziomPamieciZasiegu przekłada zasięg wpisu na poziom pamięci. Zasięg spoza
+// czterech poziomów pamięci nie jest poziomem pamięci i wyłączenie poziomu go
+// nie dotyczy.
 func poziomPamieciZasiegu(zasieg shared.ConfigScope) (shared.MemoryLevel, bool) {
 	switch zasieg {
 	case shared.ConfigScopeGlobal:
@@ -288,7 +251,8 @@ func wzorWylaczenia(z shared.MemoryDisableSetRequest) (dane.WylaczeniePamieci, e
 	return wzor, nil
 }
 
-// opisBytuWylaczenia nazywa byt wyłączenia w treści odmowy.
+// opisBytuWylaczenia nazywa byt wyłączenia w treści odmowy: wpis identyfikatorem
+// albo poziom pamięci nazwą poziomu.
 func opisBytuWylaczenia(wzor dane.WylaczeniePamieci) string {
 	if wzor.WpisIdentyfikator != "" {
 		return "pamięć wpisu " + wzor.WpisIdentyfikator
@@ -324,7 +288,8 @@ func wylaczeniaKontraktu(wiersze []dane.WylaczeniePamieci) []shared.MemoryDisabl
 	return wykaz
 }
 
-// wylaczenieKontraktu przekłada jeden wiersz wyłączenia na kształt kontraktu.
+// wylaczenieKontraktu przekłada jeden wiersz wyłączenia pamięci z magazynu na
+// kształt odpowiedzi kontraktu.
 func wylaczenieKontraktu(w dane.WylaczeniePamieci) shared.MemoryDisable {
 	wylaczenie := shared.MemoryDisable{
 		Id:        w.Identyfikator,

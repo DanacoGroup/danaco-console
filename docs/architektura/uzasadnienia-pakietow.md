@@ -3473,3 +3473,7 @@ bez zasięgu eksperta podnosi zasięg do zasięgu eksperta, z podniesieniem
 odnotowanym w dzienniku. Zasięg eksperta bez kodu eksperta nie ma o kogo
 zapytać rdzenia i schodzi do zasięgu okna, ponieważ zawężenie bez eksperta
 nie jest zawężeniem, tylko obietnicą bez pokrycia.
+
+## budowa/server/internal/transport/rozgloszenie.go
+Synchronizacja wielourządzeniowa nie ma własnego protokołu: nośnikiem jest
+zdarzenie właściwe zmienionemu obszarowi, rozgłoszone drogą rozgłoszenia kopert.

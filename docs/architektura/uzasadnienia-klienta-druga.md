@@ -2084,3 +2084,11 @@ Wpis rozpoznawany jest po kluczu, nie po pozycji: fragment strumienia odświeża
 Po zdjęciu wszystkich wpisów stan pusty wraca na wierzch, ale nie zostaje sam: wołający zaraz po wyczyszczeniu dopisuje zdanie o powodzie, żeby w miejscu zniknięcia rozmowy nie stał napis o rozmowie, która się jeszcze nie zaczęła.
 
 Dwie różne pustki dostają dwa różne zdania: to, że wątek się nie zaczął, i to, że tryb Streszczenie nie ma jeszcze czego streścić, to nie ten sam fakt. Drugi wariant tłumaczy, czym streszczenie jest i skąd się bierze.
+
+## budowa/klient-poprzedni/src/moduly/workspace/agenci-czynnosci.ts
+Czynności okna zarządcy ekspertów sięgające poza sam wykaz — zmiana uprawnienia eksperta i zdanie
+o przypisaniach projektu — stoją w osobnym pliku od okna, bo okno składa kontrolki i prowadzi odczyt,
+a tu leży przebieg czynności wraz z tym, co po niej widzi operator, tym samym wzorem co w module
+czynności biblioteki. Potwierdzenie mówi to, co zapisał rdzeń, nie to, czego żądało okno: rdzeń
+oddaje po zapisie komplet uprawnień eksperta i ten komplet rozstrzyga. Po odpowiedzi okno odrysowuje
+wykaz, bo stan ładowania go opróżnia.

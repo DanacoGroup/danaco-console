@@ -3499,3 +3499,8 @@ nie ukrywało jej przed operatorem. Druga siatka z własnym podpisem wydłużał
 sesje w tle oraz archiwum poniżej pierwszego ekranu; rodzaj kafla rozpoznaje się po wezwaniu wobec nazwy
 własnej. Po odpowiedzi rdzenia na wykaz modułów rozstrzyga rdzeń. Utworzenie komponentu jest czynnością
 wykonywaną po obejrzeniu tego, co już stoi.
+
+## budowa/klient-poprzedni/src/moduly/research/wybor-zrodel.ts
+Tak Findings Panel wiąże ustalenie ze źródłem, bez potrzeby osobnej komendy zapisu wiązania. Pusty
+katalog nie jest błędem ani blokadą: zdanie zastępcze mówi, skąd wziąć źródła, a formularz
+ustalenia zostaje w pełni czynny.

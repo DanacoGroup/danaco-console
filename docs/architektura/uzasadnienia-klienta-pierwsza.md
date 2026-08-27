@@ -2673,3 +2673,19 @@ adres zapisu, czyli miejsce, w którym komenda `config.set` zapisze wartość.
 Byt pusty znaczy poziom bez bytu: na osi poziomów jest to poziom globalny, a na
 osi rozstrzygania — platforma. Dzięki temu adres nie potrzebuje osobnego
 znacznika nieobecności bytu.
+
+## budowa/klient-poprzedni/src/moduly/automations/wykaz-petli-widok.ts
+
+Przycisk uruchomienia otrzymuje każda pozycja wykazu, również pętla wyłączona.
+Stan pętli stoi w opisie pozycji, a nie w blokadzie wiersza, ponieważ decyzja
+o uruchomieniu należy do okna, a nie do widoku wykazu.
+
+Zawężanie wykazu ma dwie drogi: napis szukania oraz przełącznik obejmujący
+wyłącznie pętle czynne, który zawęża żądanie do rdzenia polem `enabledOnly`.
+Szukanie przebiega po stronie klienta, ponieważ komenda `automation.workflow.list`
+przyjmuje jedynie `enabledOnly` oraz `limit`, a pełny wykaz jest już w oknie.
+Dopasowanie bierze kolejno nazwę, identyfikator i opis pętli.
+
+Widok oddaje osobne zdanie dla każdego rodzaju pustki: rdzeń bez ani jednej
+zapisanej pętli jest innym brakiem niż wykaz zawężony napisem, który do niczego
+nie pasuje.

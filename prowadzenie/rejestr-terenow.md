@@ -8,50 +8,41 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ### centrum-poprawki
 
-**Prototyp centrum dowodzenia po serii poprawek Właściciela.** Teren prowadzi
-wygląd i mechanikę okna `centrum-dowodzenia.html` — separatory pasa kart,
-kotwiczenie dymków, wstążki okien, kafle środowisk i modułów, animacje kafli
-oraz obrys w barwie znaku. Praca toczy się poprawka po poprawce, na wskazanie
-Właściciela ze zrzutu ekranu.
+Wygląd i mechanika okna `centrum-dowodzenia.html`: pas kart, kotwiczenie dymków,
+wstążki okien, kafle środowisk i modułów, animacje kafli, obrys w barwie znaku,
+skład jedenastu menu ogólnoaplikacyjnych.
 
 | | |
 |---|---|
 | **Gałąź** | `teren/centrum-poprawki` z `main` |
 | **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css`, `design/01-dokumentacja-md/11-uzasadnienia-okien.md` |
-| **Poza terenem** | `design/zasoby/zetony/` — bez zgody Właściciela nie rusza się palety ani skali; `design/zasoby/rama.css`, `karty-okna.css`, `panel-sesji.css` i pozostała warstwa wspólna; wszystkie okna poza centrum dowodzenia; `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `shared/` |
-
-**Warstwa wspólna jest poza terenem, a mimo to została tknięta.** Rewizje
-`9e73f37` i `aa8820e` zmieniły `zasoby/rama.css`: uniesienie przycisku wstążki
-przeszło z `transform` na `top`, a glif przycisku okna z 12 na 16 px. Pierwsza
-zmiana była konieczna — `transform` czyni z przodka blok odniesienia dla
-potomków umocowanych do okna widoku, przez co dymek etykiety tracił kotwicę.
-Obie obejmują wszystkie okna aplikacji i **wymagają kontroli poza tym terenem**.
+| **Poza terenem** | `design/zasoby/zetony/`, `design/zasoby/rama.css`, `karty-okna.css`, `panel-sesji.css` i pozostała warstwa wspólna; okna inne niż centrum dowodzenia; `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `shared/` |
 
 **Kryteria odbioru**
 
-- Każda poprawka zamknięta pomiarem w przeglądarce, nie deklaracją; wartość
-  przed i po podana w raporcie.
+- Każda poprawka zamknięta pomiarem w przeglądarce; wartość przed i po w raporcie.
 - Zero błędów konsoli i zero odpowiedzi 4xx przy załadowaniu okna.
-- Wysokości kafli i kart równe w obrębie strefy; opis kafla bez przypadkowego
-  łamania wiersza.
+- Zero naruszeń axe (WCAG 2.2 AA) w obu motywach.
+- Wysokości kafli równe w obrębie strefy; opis bez przypadkowego łamania wiersza.
 - Dymek każdego wyzwalacza mieści się w widoku i stoi pod swoim przyciskiem.
-- Wyłącznie żetony `--dn-*`; barwy, odstępy i rozmiary wpisane wprost wyłącznie
-  tam, gdzie Właściciel rozstrzygnął inaczej (barwy animacji kafli środowisk).
+- Wyłącznie żetony `--dn-*`; wartości wpisane wprost tylko tam, gdzie Właściciel
+  rozstrzygnął inaczej (barwy animacji kafli środowisk).
+- Gęstość komentarzy w limicie 250 znaków na 1000 wierszy.
 - Kontrolę przeprowadza sesja inna niż wykonawcza.
 
-**Nierozstrzygnięte, przeniesione poza teren**
+**Zgłoszenia poza terenem**
 
-- Punkty łamania siatki środowisk stoją na 1180 i 860 px, poza skalą
-  `--dn-bp-*` (640 / 960 / 1280 / 1600). Pochodzą sprzed tego terenu.
-- Rozstrzygnięcie o obrysie w barwie znaku żyje jako `--cd-obrys-marki`
-  w arkuszu jednego okna; przy rozszerzeniu na pozostałe okna należy do palety.
+- `zasoby/rama.css` zmieniony rewizjami `9e73f37` i `aa8820e` (uniesienie
+  przycisku przez `top` zamiast `transform`, glif przycisku okna 12 → 16 px).
+  Pierwsza zmiana była konieczna: `transform` czyni z przodka blok odniesienia
+  dla potomków umocowanych do okna widoku i odbierał dymkom kotwicę. Obie
+  obejmują wszystkie okna i wymagają terenu oraz kontroli poza tym wpisem.
+- 97 ze 100 arkuszy i mechanizmów w `design/zasoby/` przekracza limit gęstości
+  komentarza; porządek zrobiony wyłącznie w dwóch plikach tego terenu.
 - Wyściółka `.cd-tresc` przełącza się progiem ekranu (640 px), bo element nie
-  może odpytywać własnego pojemnika. Pozostałe punkty łamania idą za płótnem.
-- Trzy wiersze dokumentu okna mają 23 252, 20 198 i 10 108 znaków — znacznik bez
-  łamania jest nieczytelny w przeglądzie i w różnicy rewizji.
+  może odpytywać pojemnika, który sam deklaruje.
 - Stopka lewego okna sięga kanału wydań `pobierz.danaco-group.pl`, zgodnego
   z `wydania.json`, lecz nieopisanego w [rejestrze decyzji](decyzje.md).
-
 
 ### zaplecze-modeli
 

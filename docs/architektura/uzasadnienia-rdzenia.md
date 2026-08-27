@@ -2010,3 +2010,17 @@ Wyliczenie `DesignAssetKind` kontraktu ma trzy wartości — `image`, `vector`,
 `image`, tak samo jak w rodzinie mediów odkładającej nim dźwięk i film,
 bo wartość spoza wyliczenia postawiłaby przed klientem napis, którego jego
 typ nie zna. O tym, czym plik jest, mówi zmierzone pole `format`.
+
+## budowa/server/internal/core/aparat_skutek_test.go
+
+Plik mierzy skutek aparatu dokumentu: czy spis treści zgadza się z nagłówkami,
+czy przypis przenumerowuje się po wstawieniu przypisu przed nim i czy
+znacznik nieświeżości mówi prawdę.
+
+Sprawdziany wykluczają cztery rodzaje szkody. Pierwsza to spis treści oddany
+jako odświeżony, a niosący nagłówki sprzed zmiany. Druga to numeracja
+przypisów nadawana w kolejności zapisu, po której przypis wstawiony w środek
+dokumentu kłamie do końca życia pisma. Trzecia to znacznik nieświeżości
+trzymany w drzewie postaci — drzewo zapisuje się bez aparatu, więc znacznik
+ginąłby przy pierwszym zapisie. Czwarta to odwołanie do elementu, którego
+dokument nie ma, przyjęte jako założone.

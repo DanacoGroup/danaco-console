@@ -1157,3 +1157,18 @@ Gdy silnik wdrożeń wpisze do pola `logRef` zdanie o tym, dlaczego przebieg si�
 powiódł, tabela pokazuje jego treść tak, jak przyszła, i nazywa pole, z którego
 pochodzi. Samo słowo `failed` zostawiałoby Operatora bez wyjaśnienia, które
 przyszło w tej samej ramce.
+
+## budowa/klient-poprzedni/src/moduly/agents/indeks.ts
+
+Powłoka zna z tego katalogu jedną czynność: wytwarza moduł wytwórnią
+`utworzModulAgents`, przyjmując kanał rdzenia, stawia oddany element w obszarze
+roboczym i wywołuje czynność wczytania z identyfikatorem sesji. Kolejność jest
+wiążąca, ponieważ wczytanie żąda danych sesji, a element musi już stać
+w dokumencie, gdy odpowiedź wraca.
+
+Moduł nie osadza się sam w dokumencie i nie zna powłoki, dzięki czemu te same
+okna wchodzą zarówno w obszar roboczy powłoki, jak i w podgląd sprawdzianu.
+
+Kontekst testowanego eksperta jest wystawiony w interfejsie katalogu, ponieważ
+sięga po niego powłoka, a nie moduł. Zmianę testowanego agenta rozgłasza plik
+`aplikacja/ulotnosc-okna.ts`, na którym stoi okno rozmowy sesji.

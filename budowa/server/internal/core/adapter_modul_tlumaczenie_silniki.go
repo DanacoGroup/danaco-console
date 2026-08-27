@@ -190,7 +190,7 @@ func (a *adapterTlumaczenia) PolitykaPivota(ctx context.Context,
 	zasieg, zasiegID := zasiegZadania(z.Scope, z.ScopeId)
 	polityka, err := a.repozytorium.PolitykaPivotaZasiegu(ctx, zasieg, zasiegID)
 	if err != nil {
-		// Polityki nieustawionej nie udajemy odmowa: pusta polityka znaczy przeklad wprost.
+		// Polityki nieustawionej nie udaje się odmowa: pusta polityka znaczy przeklad wprost.
 		return shared.TranslatePivotPolicyGetResponse{Policy: shared.PivotPolicy{
 			Scope: shared.ConfigScope(zasieg),
 			Pairs: []shared.PivotPair{},

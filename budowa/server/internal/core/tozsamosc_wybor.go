@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: rozstrzygnięcie, która treść kategorii obowiązuje,
-// gdy zapisano ją na kilku osiach naraz.
-//
-// Reguła pierwszeństwa: konto bije model, a model bije platformę.
-//
-// Uzasadnienie płynie z kontraktu. Struktura Account niesie pole `defaultModel`
-// — to konto wskazuje model, którym pracuje, a nie model konto. Oś konta jest
-// więc bytem węższym: jedno konto obsługuje jeden zestaw modeli, jeden model
-// bywa obsługiwany przez wiele kont. Do tego konto jest nośnikiem
-// uwierzytelnienia i katalogu konfiguracji kanału głównego
-// (`CLAUDE_CONFIG_DIR` per okno), czyli tym bytem, przy którym Operator zakłada
-// odrębną tożsamość roboczą. Porządek osi powtarza zasadę „węższy wygrywa”,
-// tyle że na osi prostopadłej do poziomu zasięgu.
-//
-// Brak zapisu to co innego niż zapis pusty. Wygrywa zapis czynny osi najwęższej
-// — także wtedy, gdy jego treść jest pusta. To jedyna droga, by Operator
-// wyciszył kategorię dla jednego konta, nie ruszając platformy, i jest to ta
-// sama zasada, którą stosuje rezolwer konfiguracji: brak wiersza znaczy „nie
-// ustawiono”, wiersz z wartością pustą znaczy „ustawiono pustą”. Zapis
-// nieczynny jest jak brak wiersza — przepuszcza oś szerszą.
+// Plik rozstrzyga, która treść kategorii obowiązuje, gdy zapisano ją na kilku osiach naraz. Reguła pierwszeństwa: konto bije model, model bije platformę. Wygrywa zapis czynny osi najwęższej, także wtedy, gdy jego treść jest pusta.
 package core
 
 import (
@@ -27,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// wybranaTresc wiąże kategorię katalogu z treścią, która dla niej obowiązuje.
+// wybranaTresc wiąże kategorię katalogu z treścią, która dla niej obowiązuje, i informacją, czy w ogóle istnieje.
 type wybranaTresc struct {
 	Kategoria shared.IdentityCategory
 	Dokument  shared.IdentityDocument
@@ -80,10 +61,7 @@ func wybierzTresci(kategorie []shared.IdentityCategory,
 	return wybrane
 }
 
-// uporzadkujTresci układa kategorie wg krytyczności warstw, dalej wg porządku
-// katalogu, a przy równości wg kodu kategorii. Trzeci klucz nie jest ozdobą:
-// bez niego dwie kategorie o tej samej kolejności dawałyby prompt zależny od
-// kolejności odczytu, a ta sama konfiguracja ma dawać bajtowo ten sam prompt.
+// uporzadkujTresci układa kategorie wg krytyczności warstw, dalej wg porządku katalogu, a przy równości wg kodu kategorii, żeby ta sama konfiguracja dawała bajtowo ten sam prompt, niezależnie od kolejności odczytu.
 func uporzadkujTresci(wybrane []wybranaTresc) {
 	sort.SliceStable(wybrane, func(i, j int) bool {
 		lewa, prawa := wybrane[i].Kategoria, wybrane[j].Kategoria

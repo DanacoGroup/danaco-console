@@ -172,7 +172,25 @@ func TestZaporaKataloguWykrywaAtrape(t *testing.T) {
 // bez znaku — pustym prostokątem, którego Operator nie umie odczytać. Zestaw
 // czyta się z plików źródłowych ikon, bo one są jedyną prawdą o tym, co klient
 // umie narysować.
+//
+// Miara stoi i czeka, dopóki klient nie ma zestawu ikon. Powód pominięcia:
+// zestaw wchodzi do klienta wraz z ramą aplikacji, a przed nim nie ma czego
+// czytać. Zastępnika nie ma i być nie może — zestaw poprzedniego klienta
+// (`budowa/klient-poprzedni`) jest materiałem do przeszczepu, nie tym, co ten
+// klient umie narysować, a katalog ikon wkompilowany w rdzeń
+// (`core/adapter_modul_design_ikony_katalog.go`) jest materiałem komend
+// `design.icon.*` na innej siatce nazw, nie zestawem kontrolek okna. Miara
+// wzięta z któregokolwiek z nich świeciłaby zielono, nie mierząc okna.
+//
+// Warunek powrotu: katalog wskazany przez `sciezkaZrodelIkon`. Pominięcie jest
+// warunkowe, więc sprawdzian wraca sam w chwili, gdy zestaw stanie — nikt nie
+// musi o nim pamiętać.
 func TestKatalogAkcjiNieZmyslaIkon(t *testing.T) {
+	if !zrodlaIkonKlientaStoja() {
+		t.Skipf("klient nie ma jeszcze zestawu ikon — brak katalogu %s; sprawdzian "+
+			"wraca sam, gdy zestaw wejdzie wraz z ramą aplikacji", sciezkaZrodelIkon)
+	}
+
 	baza := swiezaBaza(t)
 	ikony := nazwyIkonKlienta(t)
 
@@ -184,15 +202,26 @@ func TestKatalogAkcjiNieZmyslaIkon(t *testing.T) {
 		}
 		if !ikony[pozycja.Ikona] {
 			t.Errorf("pozycja katalogu %s wskazuje ikonę %q, której nie ma w zestawie "+
-				"klienta (client/src/ikony/zrodla) — w oknie wyjdzie kontrolka bez znaku",
-				pozycja.Kod, pozycja.Ikona)
+				"klienta (%s) — w oknie wyjdzie kontrolka bez znaku",
+				pozycja.Kod, pozycja.Ikona, sciezkaZrodelIkon)
 		}
 	}
 }
 
 // sciezkaZrodelIkon wskazuje katalog źródeł ikon klienta, licząc od katalogu
 // pakietu store.
-const sciezkaZrodelIkon = "../../../client/src/ikony/zrodla"
+const sciezkaZrodelIkon = "../../../klient/src/ikony/zrodla"
+
+// zrodlaIkonKlientaStoja orzeka, czy klient ma już zestaw ikon.
+//
+// Ten warunek jest warunkiem powrotu sprawdzianu wyżej. Osobno od
+// `nazwyIkonKlienta`, bo dwa stany trzeba tu odróżnić: zestawu jeszcze nie ma
+// (pominięcie) i zestaw jest, ale nie daje nazw (niepowodzenie — zmienił
+// kształt albo sprawdzian czyta nie ten katalog).
+func zrodlaIkonKlientaStoja() bool {
+	opis, err := os.Stat(filepath.Clean(sciezkaZrodelIkon))
+	return err == nil && opis.IsDir()
+}
 
 // nazwyIkonKlienta czyta nazwy ikon z plików źródłowych zestawu.
 //

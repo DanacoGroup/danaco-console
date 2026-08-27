@@ -1,7 +1,9 @@
 package core
 
 import (
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -46,20 +48,39 @@ var plikiRachunkuObrazuRdzenia = []string{
 }
 
 // plikiWlasnegoExecuUzasadnione wylicza pliki, w których proces uruchamia się
-// z pominięciem `zewnetrzne.Wolaj`, wraz z powodem. Wykaz jest ZAMKNIĘTY:
-// dopisanie do niego pliku wymaga powodu tej samej wagi, co dwa poniżej, i jest
-// zmianą rozstrzygnięcia, nie porządkowaniem listy.
+// z pominięciem `zewnetrzne.Wolaj`, wraz z powodem. Klucz jest ścieżką liczoną
+// od `internal/`, bo zapora obejmuje cały ten katalog, a sama nazwa pliku nie
+// mówi, w którym pakiecie wywołanie stoi. Wykaz jest ZAMKNIĘTY: dopisanie do
+// niego pliku wymaga powodu tej samej wagi, co pozycje poniżej, i jest zmianą
+// rozstrzygnięcia, nie porządkowaniem listy.
 //
-//   - `adapter_modul_extension_protokol.go` i `adapter_modul_extension_integracje.go`
-//     uruchamiają program WSKAZANY PRZEZ ROZSZERZENIE, a nie program produktu.
-//     `zewnetrzne.Wolaj` sprawdza obecność narzędzia z deklaracji rdzenia —
-//     tu deklaracji nie ma, bo program przychodzi z manifestu rozszerzenia.
-//   - `adapter_modul_developer_narzedzia.go` pyta narzędzie o jego własną wersję
-//     ścieżką już rozwiązaną; to sonda obecności, nie czynność Operatora.
+//   - `core/adapter_modul_extension_protokol.go` i
+//     `core/adapter_modul_extension_integracje.go` uruchamiają program WSKAZANY
+//     PRZEZ ROZSZERZENIE, a nie program produktu. `zewnetrzne.Wolaj` sprawdza
+//     obecność narzędzia z deklaracji rdzenia — tu deklaracji nie ma, bo program
+//     przychodzi z manifestu rozszerzenia.
+//   - `core/adapter_modul_developer_narzedzia.go` pyta narzędzie o jego własną
+//     wersję ścieżką już rozwiązaną; to sonda obecności, nie czynność Operatora.
+//   - `injection/rozruch.go` JEST drogą, do której zapora odsyła: `zewnetrzne.Wolaj`
+//     idzie portem `session.Uruchamiacz`, a ten port kończy się tutaj. Pozycja nie
+//     jest wyjątkiem od reguły, tylko jej dnem — bez niej reguła nie ma się o co
+//     oprzeć, a `zewnetrzne/wolanie.go` nazywa ten plik jedynym `exec.Command`
+//     w drzewie.
+//   - `zdalne/pliki.go` przenosi plik programem `scp` i nie ma dziś drzwi, przez
+//     które mógłby przejść. Arsenał (`zewnetrzne.Wolaj`) zbiera całe wyjście do
+//     pamięci pod obowiązkową granicą czasu — przenosiny pliku dowolnego rozmiaru
+//     nie mają uczciwej granicy, a ich wyjście nie jest wynikiem do zebrania.
+//     Spawner platformy stoi po stronie kanału, a zależność biegnie od kanału do
+//     toru i nigdy odwrotnie (`zdalne/polecenie.go`), więc pakiet `zdalne` go nie
+//     zaimportuje. Pozycja stoi tu po to, żeby brak drzwi był widoczny zamiast
+//     niewidoczny — nagłówek `zdalne/zdalne.go` głosi, że pakiet procesów nie
+//     uruchamia, a ten plik je uruchamia.
 var plikiWlasnegoExecuUzasadnione = map[string]string{
-	"adapter_modul_extension_protokol.go":   "program z manifestu rozszerzenia, nie z deklaracji rdzenia",
-	"adapter_modul_extension_integracje.go": "program z manifestu rozszerzenia, nie z deklaracji rdzenia",
-	"adapter_modul_developer_narzedzia.go":  "sonda wersji narzędzia po ścieżce już rozwiązanej",
+	"core/adapter_modul_extension_protokol.go":   "program z manifestu rozszerzenia, nie z deklaracji rdzenia",
+	"core/adapter_modul_extension_integracje.go": "program z manifestu rozszerzenia, nie z deklaracji rdzenia",
+	"core/adapter_modul_developer_narzedzia.go":  "sonda wersji narzędzia po ścieżce już rozwiązanej",
+	"injection/rozruch.go":                       "jedyny spawner platformy — port session.Uruchamiacz, którym idzie zewnetrzne.Wolaj, kończy się tutaj",
+	"zdalne/pliki.go":                            "przenosiny scp bez drzwi: arsenał zbiera wyjście pod obowiązkową granicą czasu, a spawner platformy leży po stronie kanału, której pakiet zdalne nie importuje",
 }
 
 // TestRachunekObrazuRdzeniaNieWolaProcesu pilnuje, żeby pliki liczące obraz
@@ -138,6 +159,16 @@ func TestCzteryCzynnosciObrazuLiczaSieWkompilowane(t *testing.T) {
 	}
 }
 
+// korzenZapory wskazuje katalog, który zapora przegląda: całe `internal/`,
+// licząc od katalogu pakietu core.
+//
+// Nie sam `internal/core`. Reguła jednej drogi do procesu jest regułą rdzenia,
+// a nie regułą jednego pakietu: wywołanie przeniesione o katalog dalej wychodzi
+// spod niej, choć szkodę robi tę samą. Zapora czytająca własny katalog nie
+// widziałaby ani przenosin plików torem zdalnym, ani żadnego następnego
+// wywołania spoza tego katalogu.
+const korzenZapory = ".."
+
 // TestRdzenUruchamiaProcesyJednaDroga pilnuje, żeby każdy proces rdzenia szedł
 // przez `zewnetrzne.Wolaj`, poza zamkniętym wykazem pozycji uzasadnionych.
 //
@@ -146,38 +177,76 @@ func TestCzteryCzynnosciObrazuLiczaSieWkompilowane(t *testing.T) {
 // w niezrozumiały błąd zamiast zdania nazywającego brak, druga wypuszcza czynność
 // poza zasięg okna, trzecia zostawia sieroty po granicy czasu.
 func TestRdzenUruchamiaProcesyJednaDroga(t *testing.T) {
-	wpisy, err := os.ReadDir(".")
-	if err != nil {
-		t.Fatalf("nie można przejrzeć rdzenia: %v", err)
-	}
-	sprawdzonych := 0
-	for _, wpis := range wpisy {
-		nazwa := wpis.Name()
-		if wpis.IsDir() || !strings.HasSuffix(nazwa, ".go") ||
-			strings.HasSuffix(nazwa, "_test.go") {
-			continue
+	sprawdzonych, pozaRdzeniem := 0, 0
+	wolajace := map[string]bool{}
+
+	err := filepath.WalkDir(korzenZapory, func(sciezka string, wpis fs.DirEntry, blad error) error {
+		if blad != nil {
+			return blad
 		}
-		tresc, err := os.ReadFile(nazwa)
-		if err != nil {
-			t.Fatalf("nie można odczytać %s: %v", nazwa, err)
+		if wpis.IsDir() {
+			return nil
+		}
+		nazwa := wpis.Name()
+		if !strings.HasSuffix(nazwa, ".go") || strings.HasSuffix(nazwa, "_test.go") {
+			return nil
+		}
+		wzgledna, blad := filepath.Rel(korzenZapory, sciezka)
+		if blad != nil {
+			return blad
+		}
+		wzgledna = filepath.ToSlash(wzgledna)
+
+		tresc, blad := os.ReadFile(sciezka)
+		if blad != nil {
+			return blad
 		}
 		sprawdzonych++
+		if !strings.HasPrefix(wzgledna, "core/") {
+			pozaRdzeniem++
+		}
 		if !zawieraWolanieExecu(string(tresc)) {
-			continue
+			return nil
 		}
-		if powod, uzasadnione := plikiWlasnegoExecuUzasadnione[nazwa]; uzasadnione {
-			if powod == "" {
-				t.Errorf("plik %s stoi w wykazie bez powodu; wykaz bez powodów jest listą "+
-					"wyjątków, która rośnie sama", nazwa)
-			}
-			continue
+		wolajace[wzgledna] = true
+
+		powod, uzasadnione := plikiWlasnegoExecuUzasadnione[wzgledna]
+		if !uzasadnione {
+			t.Errorf("plik %s uruchamia proces własnym exec; jedyną drogą jest zewnetrzne.Wolaj "+
+				"— ona sprawdza obecność programu, nakłada bramę izolacji okna i obejmuje drzewo "+
+				"procesów granicą czasu", wzgledna)
+			return nil
 		}
-		t.Errorf("plik %s uruchamia proces własnym exec; jedyną drogą jest zewnetrzne.Wolaj "+
-			"— ona sprawdza obecność programu, nakłada bramę izolacji okna i obejmuje drzewo "+
-			"procesów granicą czasu", nazwa)
+		if powod == "" {
+			t.Errorf("plik %s stoi w wykazie bez powodu; wykaz bez powodów jest listą "+
+				"wyjątków, która rośnie sama", wzgledna)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("nie można przejrzeć %s: %v", korzenZapory, err)
 	}
+
+	// Dwie sondy zamiast jednej, bo dwa różne załamania dają ten sam cichy zielony
+	// wynik: obchód, który nie dotknął niczego, i obchód, który zawęził się z
+	// powrotem do własnego katalogu.
 	if sprawdzonych == 0 {
-		t.Fatal("zapora nie przejrzała ani jednego pliku rdzenia — przestała czegokolwiek pilnować")
+		t.Fatal("zapora nie przejrzała ani jednego pliku — przestała czegokolwiek pilnować")
+	}
+	if pozaRdzeniem == 0 {
+		t.Fatal("zapora nie wyszła poza internal/core — wywołanie przeniesione o katalog dalej " +
+			"wychodziłoby spod reguły, choć szkodę robi tę samą")
+	}
+
+	// Pozycja wykazu, która procesu już nie uruchamia, jest wyjątkiem bez
+	// przedmiotu — a wykaz z takimi pozycjami przestaje być zamknięty, bo nikt
+	// nie wie, które z nich jeszcze coś znaczą.
+	for sciezka := range plikiWlasnegoExecuUzasadnione {
+		if !wolajace[sciezka] {
+			t.Errorf("wykaz uzasadnionych niesie %s, a ten plik nie uruchamia procesu — "+
+				"pozycję zdejmuje się wraz z wywołaniem, którego dotyczyła; jeśli plik "+
+				"zmienił nazwę, popraw ścieżkę zamiast usuwać pozycję", sciezka)
+		}
 	}
 }
 
@@ -227,6 +296,13 @@ func TestProgramyRdzeniaStojaWWykazieZaleznosci(t *testing.T) {
 		{"typos", "literówki w treści repozytorium"},
 		{"stylelint", "analiza arkuszy CSS"},
 		{"typescript-language-server", "warstwa językowa TypeScriptu"},
+		// Interpretery kart Terminala. `terminal.script.lint` woła je wprost:
+		// node orzeka o składni skryptu karty node, python3 o składni skryptu
+		// karty python na maszynie bez Ruffa. Obecność interpretera na maszynie
+		// deweloperskiej jest oczywista i właśnie dlatego brak wpisu przetrwał —
+		// u Operatora ta sama funkcja odmawiałaby bez ostrzeżenia przy starcie.
+		{"node", "orzeczenie o składni skryptu karty node"},
+		{"python3", "orzeczenie o składni skryptu karty python bez Ruffa"},
 	} {
 		if _, stoi := zadeklarowane[narzedzie.program]; !stoi {
 			t.Errorf("wykaz zależności nie zna programu %s (%s); ten obszar nie ma biblioteki "+

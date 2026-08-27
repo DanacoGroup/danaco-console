@@ -6246,3 +6246,24 @@ silnika — to robi funkcja nakladkaZAgentem.
 Zawężenie zapisane w Permissions Center, którego nikt by w tym miejscu nie
 sprawdził, byłoby napisem w oknie konfiguracji i niczym więcej — zasada
 opisana w pliku straz_eksperta.go.
+
+## budowa/server/internal/core/tozsamosc_agenta_zrodlo.go
+
+Tożsamość eksperta leży w kilku tabelach naraz: agent (model, kanał,
+nastawy procesu), agent_warstwa (warstwy promptu) i agent_konektor (mosty
+MCP). Składacz wywołania nie ma prawa o tym wiedzieć, więc łączy je ten
+adapter.
+
+Każdy brak jest brakiem, nie błędem: ekspert bez warstw, bez modelu, bez
+nastaw i bez mostów jest poprawnym ekspertem, po prostu nakłada mniej.
+Odmowa idzie wyłącznie wtedy, gdy eksperta o wskazanym kodzie nie ma
+w katalogu, a i ona nie zatrzymuje tury — wywołujący zamienia ją na
+tożsamość pustą.
+
+Pole agent.instrukcje_systemowe jest warstwą zerową: idzie pierwsze spośród
+tego, co ekspert wnosi, w warstwie najbardziej krytycznej, i jedzie do
+składacza tak samo jak pozostałe warstwy.
+
+Konfiguracje MCP konektorów mają osobny port, bo konektory eksperta wiążą
+się z punktami dostępu, a te prowadzi inne repozytorium. Wpięcie jest
+opcjonalne: brak mostów nie unieważnia reszty tożsamości.

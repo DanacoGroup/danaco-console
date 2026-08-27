@@ -1,4 +1,8 @@
-/* Powody: 01-dokumentacja-md/11-uzasadnienia-okien.md */
+/* Arkusz układu okna centrum dowodzenia. Nadpisania klas biblioteki są ograniczone
+   selektorem .cd-strona i nie wychodzą poza to okno. Powód każdego z nich to kompozycja
+   pulpitu centrum, nie zmiana biblioteki dla innych okien: centrum obrysowuje swój obszar
+   barwą znaku (--cd-obrys-marki na .dn-narzedzia i .dn-obszar-panel), wyróżnia kartę
+   bieżącą tłem (--cd-tlo-karty-biezacej) i dostraja pasmo kart oraz pasek obszaru do pulpitu. */
 
 @supports not (color: color-mix(in oklab, red, blue)) {
   .cd-strona {
@@ -199,7 +203,7 @@
     border: 1px solid var(--cd-obrys-marki);
   background: transparent;
   gap: var(--dn-od-1);
-  height: 40px;
+  height: var(--dn-od-10);
    
 .cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; }   overflow-x: auto;
   scrollbar-width: none;

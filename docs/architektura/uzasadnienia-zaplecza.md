@@ -2375,3 +2375,14 @@ zna: tryb (widok, cała strona, obszar, element), format pliku oraz wymiary
 w pikselach. Wciśnięcie ich w kolumnę JSON wytworu odebrałoby możliwość
 odczytu zrzutu po odwołaniu (`browser.snapshot.screenshot.get` pyta
 `screenshotRef` albo `snapshotId`, a nie identyfikatorem wytworu).
+## budowa/server/internal/store/migracja_176_pobrania_przegladania.sql
+Migracja 176 — menedżer pobrań modułu Browser (`browser.download.*`).
+
+Pobranie jest bytem o własnym cyklu życia: czeka w kolejce, biegnie, bywa
+wstrzymane, kończy się powodzeniem, błędem albo przerwaniem. Postęp
+(`odebrano_bajtow` wobec `razem_bajtow`) jest liczbą mierzoną w trakcie, nie
+opisem — wykaz pobrań ma pokazywać, ile naprawdę leży na dysku.
+
+Komunikat błędu stoi w kolumnie obok stanu, bo „nie udało się" bez powodu
+każe Operatorowi zgadywać, czy ponowienie ma sens. Ta sama zasada rządzi
+odmowami rdzenia.

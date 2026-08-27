@@ -6246,3 +6246,25 @@ pudełko rozjechałoby się przy pierwszej zmianie odstępu, a różnią się
 treścią, nie kształtem. Akapit objaśnienia jest częścią wyposażenia
 kontenera, a nie ozdobą jednej zakładki, ponieważ zakładki warstwy
 eksperckiej mówią o własnej granicy zdaniem, nie milczeniem.
+
+## budowa/klient-poprzedni/src/moduly/browser/czynnosci-automatyk.ts
+Plik ma jedną odpowiedzialność: wywołania rdzenia w imieniu okna. Okno składa kontrolki i wykaz; tutaj mieszka to, co dzieje się po naciśnięciu, wraz z oceną odpowiedzi w pliku `skutek-zapisu.ts`. Każda czynność odpowiada zapowiedzią przed wywołaniem, a po odpowiedzi rdzenia albo wynikiem, albo powodem odmowy. Wynik pusty znaczy, że rdzeń nie oddał treści i powód już podano — okno nie ma wtedy czym zastąpić wykazu i zostawia ten, który operator widzi.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zrodlo-diagnostics.ts
+Port diagnostyki jest w rdzeniu odbiorcą odmów wykonania komend, a przeglądarka
+błędów pokazuje te odmowy; źródło, które połknęłoby odmowę odczytu i oddało
+pusty wykaz, kłamałoby o własnym niepowodzeniu w oknie poświęconym
+niepowodzeniom cudzym. Asymetria kontraktu jest zamierzona: identyfikator
+okna występuje wyłącznie przy uruchomieniu analizy i jest tam nieobowiązkowy,
+ponieważ analiza zapisuje, z którego okna ją uruchomiono, a pozostałe trzy
+komendy czytają dziennik, błędy i rekomendacje całej instalacji, więc pojęcia
+okna nie mają. Wynik warstwy protokołu nie odróżnia sam z siebie odmowy
+rdzenia od odpowiedzi, której klient nie zrozumiał, ani od odpowiedzi bez
+treści, a to trzy różne zdania, z których tylko jedno znaczy odmowę rdzenia;
+rozstrzygnięcie zapada w tym miejscu, bo tylko tutaj widać surową odpowiedź
+przed sprawdzianem kształtu. Kolejność sprawdzeń w rozstrzygnięciu jest
+istotna: dopóki nie wiadomo, czy odpowiedź surowa była odmową, nie wolno
+sprawdzać jej kształtu i wziąć jego kodu za kod rdzenia. Rozstrzygnięcie ma
+też odbiorcę poza tym plikiem, w źródle obserwowalności, gdzie rozróżnienie
+odmowy od odpowiedzi nieczytelnej ma tę samą wagę co tutaj; druga kopia tego
+rozstrzygnięcia dałaby dwa zdania o jednej ciszy rdzenia.

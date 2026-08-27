@@ -5776,3 +5776,23 @@ dzieje: w którym środowisku sesja stoi, ile okien ma otwartych, w ilu trwa
 strumień odpowiedzi, co widzą przez nadania dostępu i czy pracuje w nich
 bieg naprawczy koordynatora. Sesje i okna zna nadzorca, bieg zna pętla,
 nadania zna warstwa danych, a punkt pracy zna telemetria.
+
+## budowa/server/internal/core/katalog_roboczy.go
+Katalog roboczy nie jest dostępem. Dostęp mówi, do jakich maszyn i katalogów model ma wgląd;
+katalog roboczy mówi, gdzie model zostawia własne pliki. To dwa niezależne ustawienia, więc ten
+moduł nie zna punktów dostępu ani nadań i nigdy o nie nie pyta. Stan wyjściowy: katalog powstaje
+automatycznie w miejscu instalacji aplikacji głównej, a katalogi sesyjne leżą wewnątrz. Operator
+nadpisuje to z okna konfiguracji dwoma ustawieniami rozstrzyganymi po ośmiu poziomach zasięgu. Ten
+plik trzyma wyłącznie regułę składania ścieżki — funkcje czyste, bez dotknięcia dysku i bez
+rezolwera. Ustalenie z rezolwera i degradacja leżą w innym pliku tego pakietu.
+
+Gdy ścieżki pliku wykonywalnego nie da się ustalić, KatalogInstalacji wraca katalog bieżący, a gdy
+i tego nie ma — katalog bieżący w zapisie względnym. Żadna z tych ścieżek nie kończy się błędem:
+brak rozpoznania miejsca instalacji nie może zatrzymać startu sesji.
+
+Wzorzec bez znacznika identyfikatora dostaje identyfikator na końcu, więc wzorzec „pliki" daje
+ścieżkę postaci podstawa/pliki/identyfikator. Wzorzec, który wyprowadzałby poza podstawę, jest
+odrzucany na rzecz wzorca domyślnego: ustawienie Operatora steruje układem katalogów wewnątrz
+podstawy, nie omija samej podstawy.
+
+Identyfikator, z którego nie zostaje ani jeden znak po oczyszczeniu, dostaje nazwę zastępczą.

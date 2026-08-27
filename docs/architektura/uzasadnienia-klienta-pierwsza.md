@@ -971,3 +971,10 @@ grot oraz prześwit między grotami przestają być czytelne.
 Odmianę znaku dobiera się do podłoża, a nie do motywu interfejsu, ponieważ barwy znaku są wpisane
 w plik źródłowy. Pasek kokpitu pozostaje atramentowy w obu motywach, więc leży na nim odmiana
 przeznaczona na podłoże ciemne, niezależnie od tego, który motyw jest czynny.
+
+## budowa/klient-poprzedni/src/moduly/apps/warsztaty-apps.ts
+
+Opisy warsztatów stoją osobno od ramy warsztatu, ponieważ rama jest czynnością
+budującą okno, a opisy są wykazem danych. Wykaz odwzorowuje warstwy wyliczenia
+`AppWorkspaceLayer` z kontraktu, więc trzeci warsztat może powstać dopiero po
+rozszerzeniu kontraktu, a nie po zmianie samego widoku.

@@ -3050,3 +3050,15 @@ rubryki i uzasadnienie wypowiedziane przez model.
 Rubryka bywa wspólna dla platformy albo związana z jednym oknem. Okno puste
 znaczy rubrykę wspólną — `roundtable.rubric.list` bez wskazania okna oddaje
 wtedy same wspólne, a ze wskazaniem wspólne i te jednego okna.
+## budowa/server/internal/store/migracja_196_roundtable_ranking.sql
+Migracja 196 — ranking uczestników akumulowany między sesjami.
+
+Kluczem rankingu jest tożsamość, nie uczestnik. Uczestnik jest bytem okna
+i ginie razem z debatą, a ranking ma przetrwać sesję (opracowanie, 2.5.5).
+Tożsamością jest para „kanał modelu + nazwa persony", zapisana jako jeden
+klucz — dzięki temu ten sam model w dwóch personach ma dwie punktacje, a ta
+sama persona w dwóch oknach jedną.
+
+Zakres i algorytm wchodzą do klucza jednoznaczności, bo ta sama tożsamość ma
+odrębną punktację w rankingu środowiska i w rankingu jednego okna, a Elo
+i Glicko liczą się inaczej i nie wolno ich sumować.

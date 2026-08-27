@@ -5860,3 +5860,32 @@ zdarzenia nowe naraz.
 
 Przywroc: bez tej operacji odłożenie zdarzenia na później byłoby cichym skasowaniem go
 z rejestru.
+
+## budowa/server/internal/transport/petla_odbioru.go
+
+Kontekst rdzenia jest kontekstem serwera, nie połączenia: rozłączenie klienta nie przerywa pracy już
+rozpoczętej przez rdzeń, sesja, okno i proces biegną dalej, a wynik trafi do pozostałych urządzeń konta
+rozgłoszeniem. Źródło rdzenia jest dostawcą bieżącej realizacji obsługi komend, a nie wartością
+zamrożoną w chwili nawiązania: rdzeń podłącza się po utworzeniu serwera, a połączenie nawiązane, zanim
+to nastąpi, musiałoby wtedy trzymać pusty rdzeń na całe swoje życie. Pobranie rdzenia dopiero przy
+obsłudze komunikatu sprawia, że komendy z takiego połączenia zaczynają być obsługiwane, gdy tylko
+rdzeń zostanie podłączony. Straż jest rozstrzygnięciem o wystawieniu nasłuchu ustalonym raz, przy
+normalizacji ustawień, i idzie przez pętlę odbioru do wykonania, ponieważ tam stoi jedyne wejście
+żądania do rdzenia.
+
+Odczyt w pętli odbioru kończy się na cztery sposoby: przekroczenie limitu odczytu zamyka gniazdo od
+strony rdzenia, zatrzymanie rdzenia zamyka je z woli procesu, zerwanie sieci nie jest niczyją decyzją,
+a odejście urządzenia zamyka je od jego strony. Linia dziennika jest jedynym trwałym śladem po
+rozłączeniu, więc niesie to, co naprawdę zaszło, razem ze zdaniem biblioteki jako szczegółem.
+
+Odczyt tożsamości z powitania dzieje się w tym pliku, a nie w rdzeniu, ponieważ tożsamość jest
+własnością połączenia i mieszka przy nim; rdzeń ją czyta, a nie zapisuje. Gdyby zapisywał, musiałby
+dostać ujście do ręki, a ujście do rdzenia świadomie nie idzie tą drogą. Odczyt jest czysty: transport
+bierze pole, którego kształt i tak zna z kontraktu, i nie rozstrzyga o nim niczego. Odczyt dzieje się
+przed oddaniem żądania rdzeniowi, więc zdarzenia rozgłoszone przez samo powitanie znają już klienta.
+Ładunek nieczytelny albo pole puste zostawia tożsamość nietkniętą, ponieważ powitanie ma się udać
+zawsze.
+
+Każde żądanie w metodzie przyjmij idzie osobnym biegiem, więc komenda długotrwała nie zatrzymuje
+odczytu, a komenda przerywająca dociera w trakcie jej wykonania. Odpowiedź niesie identyfikator
+żądania, więc kolejność odpowiedzi nie ma znaczenia dla korelacji.

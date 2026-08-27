@@ -48,37 +48,6 @@ W rejestrze podajesz sumę zastaną i sumę po sobie.
    podanego w raporcie, zmierzonego przed pierwszą zmianą.
 6. Rewizje obejmują wyłącznie pliki terenu.
 
-### odwolania-do-usunietych-skryptow
-
-Sześć skryptów instalek natywnych usunięto z repozytorium pozycją 8 pkt 4
-(teren `aktualizacja-powloki-i-skrypty`, rewizja `880b41f`). Rdzeń wciąż je
-przywołuje: `budowa/server/internal/narzedzia/wpiecie.go:52` w komentarzu
-i `:111` w treści odmowy — komunikat radzi Operatorowi budowę skryptem, którego
-nie ma. Odmowa, która wskazuje nieistniejącą drogę naprawy, jest gorsza od
-odmowy milczącej, bo wysyła po nic.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/odwolania-do-usunietych-skryptow` z `main` |
-| **Wykaz plików** | `budowa/server/internal/narzedzia/wpiecie.go` wraz ze sprawdzianami tego pakietu; pozostałe pliki **wyłącznie** te, które przeszukanie wskaże jako przywołujące usunięte skrypty, i wyłącznie poza plikami terenów biegnących |
-| **Poza terenem** | `budowa/shared/`, `budowa/server/internal/core/` (tereny biegnące), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/scripts/` (skrypty żywe mają osobne zgłoszenie) |
-
-**Kryteria odbioru.**
-
-1. Przeszukanie całego repozytorium za nazwami sześciu usuniętych skryptów
-   (`instalka-natywna-win.sh`, `instalka-natywna-linux.sh`,
-   `instalka-windows.sh`, `instalka-pelna.sh`, `wydanie.sh`, `pakowanie.sh`)
-   z przytoczonym poleceniem i pełnym wykazem trafień — potwierdzone, że wzorzec
-   w ogóle łapie.
-2. Każde trafienie w rdzeniu albo poprawione, albo wypisane wraz z powodem,
-   dla którego zostaje (materiał zamknięty, dokument audytowy).
-3. Odmowa `wpiecie.go` wskazuje drogę naprawy, która **istnieje** — wykazane
-   sprawdzianem czytającym treść odmowy.
-4. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
-   podanego w raporcie.
-5. Kontrakt nietknięty — suma `334705bd88c2efc13779`.
-6. Rewizje obejmują wyłącznie pliki terenu.
-
 ## Zgłoszenia oczekujące na teren
 
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
@@ -442,6 +411,7 @@ po raz drugi.
 | `dokumenty-i-tekst` | `teren/dokumenty-i-tekst` | `ea05603` sześć programów treści pisanej · `aa695e6` poprawka nazwy po zwrocie | kontrola osobnej sesji: teren zwrócony za martwą nazwę `zasiegSyntezy` w komentarzu, po poprawce przyjęty; własny bieg kontrolera 14 zdanych, zero pominiętych; sprawdziany mierzą skutek — PDF czytany drugą komendą i innym programem, korekta aż po treść panelu w bazie, OCR dwoma przebiegami, brak programu wywołany `t.Setenv`; wybory hunspell i typst zweryfikowane uruchomieniem; kontrakt nietknięty. Scalone `43d05f6` |
 | `odmowy-skanera` | `teren/odmowy-skanera` | `1eaa58a` parytet odmów skanera Linux wobec Windows | kontrola osobnej sesji: `bladWarstwySane` wierne lustro `bladWarstwyWia` — ten sam kod `channel_unavailable`, ta sama droga obejścia `studio.ingest.queue.add`, pakiet czytany z braku nie zaszyty; sprawdzian parytetu woła obie warstwy i wymaga jednego kodu; brak wymuszony atrapą PATH z potwierdzeniem `zewnetrzne.Stoi=false`; bieg celowany 3 zdane; kontrakt nietknięty. Scalone `1dca877` |
 | `sprawdziany-drogi-wejscia` | `teren/sprawdziany-drogi-wejscia` | `1393e74` sprawdzian zdjęcia znacznika bramki | weryfikacja Prowadzącego mutacją rdzenia: wyłączenie `zdejmijZnacznikBezPoczty` daje sprawdzian niezdany („znacznik przeżył swój powód"), przywrócenie — zdany; trzy sprawdziany rozjazdu z rdzeniem były już przerobione przez `brama-i-droga-wejscia`, wykonawca to zmierzył i nie tknął; bieg celowany osiem zdanych; kontrakt nietknięty, jeden plik terenu. Scalone `4e70ef1` |
+| `odwolania-do-usunietych-skryptow` | `teren/odwolania-do-usunietych-skryptow` | `8451157` żywy skrypt pakietu w odmowie braku serwera narzędzi | **wykonawca urwał się na limicie sesji przed rewizją; pracę dokończył i zweryfikował Prowadzący sam, bez niezależnej kontroli — odstępstwo od rozdziału ról, wymuszone urwaniem, w trybie samodzielnym na polecenie Właściciela.** Weryfikacja: droga naprawy w odmowie istnieje — `scripts/pakiet-serwera.sh` żyje i buduje `danaco-narzedzia` z `server/cmd/danaco-narzedzia`, stawiając obok rdzenia (w. 72,83,101); zero odwołań do zniesionych skryptów w rdzeniu; próba mutacji: podmiana stałej na `wydanie.sh` daje obie straże niezdane, przywrócenie — zdane; kontrakt nietknięty. Scalone `8e504c3` |
 | `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna

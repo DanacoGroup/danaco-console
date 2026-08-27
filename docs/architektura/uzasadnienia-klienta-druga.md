@@ -158,3 +158,26 @@ sumą zapisów bloków poprzedzających i zapisem bloku bieżącego do miejsca
 kliknięcia — tak samo, jak treść dokumentu jedzie do rdzenia — a punkt poza
 treścią oddaje `null`, nie zero, bo zero jest położeniem prawdziwym i pomyłka
 tutaj wysłałaby operację na początek dokumentu.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-postac-dokumentu.ts
+
+Warstwa postaci spaja panele okna pracy z komendami rdzenia: panele składają
+treść żądania z pól i nic więcej wiedzieć nie muszą, a warstwa dokłada do
+każdego żądania identyfikator dokumentu, zakres z bieżącego zaznaczenia oraz
+autora czynności, woła rdzeń, czyta jego bilans i mówi Operatorowi, co się
+stało — łącznie z tym, czego czynność nie zrobiła i przez którą blokadę.
+Zakres dokłada się w warstwie, nie w panelu, bo zaznaczenie jest jedno na
+moduł i mieszka w stanie — gdyby panel je czytał sam, powstałoby drugie
+miejsce wiedzące, nad czym Operator pracuje, i te dwa rozjechałyby się przy
+pierwszym przełączeniu zakładki dokumentu.
+
+Autor czynności jedzie jawnie: czynność Operatora odkłada się jako zmiana
+autora `uzytkownik`, czynność modelu jako zmiana autora `model`, inaczej
+przełącznik pokazujący pracę modelu nie miałby czego podświetlić. Warstwa
+zawsze podaje autorem Operatora, bo to jego panel — droga modelu do tych
+samych komend idzie osobno, narzędziami modelu, i pola autora tam nie
+zapomina. Brak wczytanego dokumentu jest odmową nazwaną, nie ciszą: każda
+z komend przyjmuje identyfikator dokumentu jako pole obowiązkowe, bo żądanie
+bez dokumentu nie ma czego dotyczyć, a wysłanie go z polem pustym wróciłoby
+błędem walidacji, którego Operator by nie zrozumiał — warstwa mówi więc
+wprost, czego brakuje i po czyjej stronie leży brak.

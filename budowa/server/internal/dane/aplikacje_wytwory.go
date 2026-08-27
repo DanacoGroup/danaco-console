@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: obszar Apps — wytwory pracy modułu. Serwer podglądu
-// i motyw (`podglad_apps`, `motyw_apps`, migracja 203), dziennik usług i wdrożeń
-// (`wiersz_dziennika_apps`, migracja 204), artefakty budowania (`artefakt_apps`,
-// migracja 205) oraz pakiety rozszerzenia (`pakiet_apps`, migracja 206).
-//
-// Wspólne tym czterem bytom jest to, że każdy wskazuje coś poza bazą: adres
-// stojącego serwera, wiersz dziennika wytworzony przez pracę, plik archiwum
-// w magazynie treści rdzenia. Wiersz bez tego czegoś byłby meldunkiem bez
-// skutku — dlatego zapisuje je wyłącznie kod, który skutek właśnie wywołał.
+// Plik definiuje obszar Apps: wytwory pracy modułu — serwer podglądu, motyw
+// produktu, dziennik usług i wdrożeń, artefakty budowania oraz pakiety
+// rozszerzenia.
 package dane
 
 import (
@@ -15,7 +9,8 @@ import (
 	"fmt"
 )
 
-// PodgladApp to wiersz tabeli `podglad_apps` — jeden serwer podglądu na okno.
+// PodgladApp to wiersz tabeli podglad_apps: jeden serwer podglądu na okno,
+// wraz z adresem i stanem pracy.
 type PodgladApp struct {
 	Okno       string
 	Warstwa    string
@@ -25,14 +20,16 @@ type PodgladApp struct {
 	Zatrzymano *int64
 }
 
-// MotywApp to wiersz tabeli `motyw_apps`.
+// MotywApp to wiersz tabeli motyw_apps: motyw produktu ustawiony dla okna,
+// zapisany w postaci tekstu JSON.
 type MotywApp struct {
 	Okno           string
 	Tresc          string
 	Zaktualizowano string
 }
 
-// WierszDziennikaApp to wiersz tabeli `wiersz_dziennika_apps`.
+// WierszDziennikaApp to wiersz tabeli wiersz_dziennika_apps: jeden wpis
+// dziennika usługi albo przebiegu wdrożenia.
 type WierszDziennikaApp struct {
 	ID           int64
 	Okno         string
@@ -42,7 +39,8 @@ type WierszDziennikaApp struct {
 	Tresc        string
 }
 
-// ArtefaktApp to wiersz tabeli `artefakt_apps`.
+// ArtefaktApp to wiersz tabeli artefakt_apps: plik powstały z budowania,
+// wraz z sumą kontrolną i rozmiarem.
 type ArtefaktApp struct {
 	ID            int64
 	Kod           string
@@ -55,7 +53,8 @@ type ArtefaktApp struct {
 	Utworzono     string
 }
 
-// PakietApp to wiersz tabeli `pakiet_apps`.
+// PakietApp to wiersz tabeli pakiet_apps: paczka rozszerzenia złożona z
+// manifestu, artefaktu i podpisu.
 type PakietApp struct {
 	ID                int64
 	Kod               string
@@ -165,7 +164,8 @@ const (
 	                    WHERE okno = ? ORDER BY id`
 )
 
-// ZapiszPodgladApp utrwala stan serwera podglądu okna.
+// ZapiszPodgladApp utrwala stan serwera podglądu okna, nadpisując zastany
+// wiersz tego samego okna produktu.
 func (r *repozytoriumAplikacji) ZapiszPodgladApp(ctx context.Context, podglad PodgladApp) error {
 	if podglad.Okno == "" {
 		return fmt.Errorf("dane: podgląd aplikacji bez okna")
@@ -182,7 +182,8 @@ func (r *repozytoriumAplikacji) ZapiszPodgladApp(ctx context.Context, podglad Po
 	return nil
 }
 
-// PodgladApp zwraca stan serwera podglądu okna.
+// PodgladApp zwraca stan serwera podglądu okna, zwracając błąd
+// ErrBrakWiersza, gdy podgląd nie istnieje.
 func (r *repozytoriumAplikacji) PodgladApp(ctx context.Context, okno string) (PodgladApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPodgladApp)
 	if err != nil {
@@ -202,7 +203,8 @@ func (r *repozytoriumAplikacji) PodgladApp(ctx context.Context, okno string) (Po
 	return podglad, nil
 }
 
-// ZapiszMotywApp utrwala motyw produktu okna.
+// ZapiszMotywApp utrwala motyw produktu okna, nadpisując zastany zapis
+// tego samego okna aplikacji Apps.
 func (r *repozytoriumAplikacji) ZapiszMotywApp(ctx context.Context, motyw MotywApp) (MotywApp, error) {
 	if motyw.Okno == "" {
 		return MotywApp{}, fmt.Errorf("dane: motyw aplikacji bez okna")
@@ -220,7 +222,8 @@ func (r *repozytoriumAplikacji) ZapiszMotywApp(ctx context.Context, motyw MotywA
 	return r.MotywApp(ctx, motyw.Okno)
 }
 
-// MotywApp zwraca motyw produktu okna; brak wraca jako ErrBrakWiersza.
+// MotywApp zwraca motyw produktu okna; brak wraca jako ErrBrakWiersza, gdy
+// motyw nie był jeszcze ustawiony.
 func (r *repozytoriumAplikacji) MotywApp(ctx context.Context, okno string) (MotywApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzMotywApp)
 	if err != nil {
@@ -237,7 +240,8 @@ func (r *repozytoriumAplikacji) MotywApp(ctx context.Context, okno string) (Moty
 	return motyw, nil
 }
 
-// DopiszWierszDziennikaApp dopisuje jeden wiersz dziennika modułu.
+// DopiszWierszDziennikaApp dopisuje jeden wiersz dziennika modułu, wiążąc
+// go opcjonalnie z wdrożeniem i komponentem.
 func (r *repozytoriumAplikacji) DopiszWierszDziennikaApp(ctx context.Context, wiersz WierszDziennikaApp) error {
 	if wiersz.Okno == "" {
 		return fmt.Errorf("dane: wiersz dziennika aplikacji bez okna")
@@ -321,7 +325,8 @@ func (r *repozytoriumAplikacji) wierszeDziennikaApp(ctx context.Context, zapytan
 	return lista, nil
 }
 
-// policzDziennikApp liczy wiersze dziennika spełniające warunki odczytu.
+// policzDziennikApp liczy wiersze dziennika spełniające warunki odczytu,
+// wspólne dla dziennika usługi i wdrożenia.
 func (r *repozytoriumAplikacji) policzDziennikApp(ctx context.Context, zapytanie string,
 	argumenty ...any) (int, error) {
 
@@ -355,7 +360,8 @@ func (r *repozytoriumAplikacji) ZalozArtefaktApp(ctx context.Context, artefakt A
 	return r.ArtefaktApp(ctx, artefakt.Kod)
 }
 
-// ArtefaktApp zwraca jeden artefakt po kodzie zewnętrznym.
+// ArtefaktApp zwraca jeden artefakt po kodzie zewnętrznym, zwracając błąd
+// ErrBrakWiersza, gdy artefakt nie istnieje.
 func (r *repozytoriumAplikacji) ArtefaktApp(ctx context.Context, kod string) (ArtefaktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzArtefaktApp)
 	if err != nil {
@@ -372,7 +378,7 @@ func (r *repozytoriumAplikacji) ArtefaktApp(ctx context.Context, kod string) (Ar
 }
 
 // ArtefaktyApp zwraca artefakty okna, od najnowszego; puste wdrożenie nie
-// zawęża wykazu.
+// zawęża wykazu do jednego przebiegu.
 func (r *repozytoriumAplikacji) ArtefaktyApp(ctx context.Context, okno, wdrozenie string) ([]ArtefaktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaArtefaktowApp)
 	if err != nil {
@@ -443,7 +449,8 @@ func (r *repozytoriumAplikacji) ZapiszPakietApp(ctx context.Context, pakiet Paki
 	return r.PakietApp(ctx, pakiet.Kod)
 }
 
-// PakietApp zwraca jeden pakiet po kodzie zewnętrznym.
+// PakietApp zwraca jeden pakiet po kodzie zewnętrznym, zwracając błąd
+// ErrBrakWiersza, gdy pakiet nie istnieje.
 func (r *repozytoriumAplikacji) PakietApp(ctx context.Context, kod string) (PakietApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPakietApp)
 	if err != nil {
@@ -486,7 +493,8 @@ func (r *repozytoriumAplikacji) PakietyApp(ctx context.Context, okno string) ([]
 	return lista, nil
 }
 
-// odczytajPakietApp składa pakiet z jednego wiersza wyniku.
+// odczytajPakietApp składa pakiet z jednego wiersza wyniku zapytania,
+// zamieniając kolumny nullowalne na wskaźniki.
 func odczytajPakietApp(wiersz skaner) (PakietApp, error) {
 	var pakiet PakietApp
 	var manifest, artefakt, sciezka, podpis, rozszerzenie sql.NullString
@@ -506,7 +514,8 @@ func odczytajPakietApp(wiersz skaner) (PakietApp, error) {
 	return pakiet, nil
 }
 
-// odczytajArtefaktApp składa artefakt z jednego wiersza wyniku.
+// odczytajArtefaktApp składa artefakt z jednego wiersza wyniku zapytania,
+// zamieniając kolumny nullowalne na wskaźniki.
 func odczytajArtefaktApp(wiersz skaner) (ArtefaktApp, error) {
 	var artefakt ArtefaktApp
 	var wdrozenie, suma sql.NullString

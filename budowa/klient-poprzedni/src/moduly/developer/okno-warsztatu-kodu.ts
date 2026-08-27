@@ -20,29 +20,9 @@ import { rysujZaleznosci, zaleznosci } from './zaleznosci-zewnetrzne';
 import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
- * Warsztat kodu — pasek operacji Code Editora wyniesiony do własnego okna:
- * nawigacja po symbolach, formatowanie, analiza statyczna, refaktoryzacje,
- * historia wersji pliku, operacje kontekstowe modelu oraz sonda programów
- * warsztatu na serwerze.
- *
- * ── Dlaczego osobne okno, a nie pasek w edytorze ───────────────────────────
- * Opracowanie opisuje te czynności jako pasek pływający nad zaznaczeniem.
- * Pasek pływający wymaga zaznaczenia w polu edycji, a pole edycji Code Editora
- * jest zwykłym obszarem tekstu bez modelu dokumentu — zaznaczenie znika przy
- * pierwszym kliknięciu poza nim. Okno jest tym samym zestawem czynności podanym
- * w postaci, która nie potrzebuje żywego zaznaczenia: plik bierze się ze stanu
- * modułu, a zaznaczenie wpisuje się jawnie.
- *
- * ── Wynik jest propozycją, nie zapisem ─────────────────────────────────────
- * Refaktoryzacja i operacje modelu wracają jako podgląd zmiany. Zapis na dysk
- * jest osobnym rozstrzygnięciem Operatora, bo to ta jedna chwila, w której da
- * się pracę modelu odrzucić.
- *
- * ── Brak programu nie jest odmową ──────────────────────────────────────────
- * Nawigacja po symbolach i analiza statyczna niosą w odpowiedzi jawne pole
- * mówiące, czy serwer języka i linter były osiągalne. Okno rozróżnia „nie ma
- * wystąpień” od „nie było czym sprawdzić” — pierwsze naprawia się w kodzie,
- * drugie instalacją po stronie serwera.
+ * Warsztat kodu to pasek operacji Code Editora wyniesiony do własnego okna: nawigacja po symbolach,
+ * formatowanie, analiza statyczna, refaktoryzacje, historia wersji pliku, operacje kontekstowe
+ * modelu oraz sonda programów warsztatu na serwerze.
  */
 export interface OknoWarsztatuKodu {
   element: HTMLElement;
@@ -160,8 +140,7 @@ export function utworzOknoWarsztatuKodu(
           `${symbol.name} — ${symbol.path}:${String(symbol.line)}` +
             `${symbol.column === undefined ? '' : `:${String(symbol.column)}`}`,
         );
-        // Wskazanie wiedzie do Code Editora tą samą drogą, co kliknięcie
-        // w Project Tree: stan modułu jest jedną prawdą o otwartym pliku.
+        // Wskazanie prowadzi do Code Editora tą samą drogą co kliknięcie w Project Tree.
         element.addEventListener('click', () => stan.wskazPlik(symbol.path));
         return element;
       }),
@@ -296,8 +275,7 @@ export function utworzOknoWarsztatuKodu(
       tresc.blad(opisOdmowyBledu('Przywrócenie wersji pliku', wynik.blad), wynik.blad);
       return;
     }
-    // Stan modułu dostaje przywrócony plik, żeby Code Editor pokazał to, co
-    // naprawdę leży teraz na dysku, a nie treść sprzed przywrócenia.
+    // Stan modułu dostaje przywrócony plik, żeby Code Editor pokazał treść z dysku.
     stan.ustawPlik(wynik.wynik);
     tresc.potwierdzenie(
       `Plik ${wynik.wynik.path} przywrócony; stan sprzed przywrócenia rdzeń odłożył jako nową migawkę.`,
@@ -373,20 +351,19 @@ export function utworzOknoWarsztatuKodu(
 
   return {
     element: rama.element,
-    // Okno nie odpytuje rdzenia samo: każda z tych czynności jest poleceniem
-    // Operatora nad wskazanym plikiem, a nie stanem do odtworzenia.
+    // Okno nie odpytuje rdzenia samo — każda czynność jest osobnym poleceniem Operatora.
     odswiez: () => undefined,
     zamknij: () => undefined,
   };
 }
 
-/** liczbaPola czyta liczbę z pola; wartość nieczytelna spada na wartość zastępczą. */
+/** liczbaPola czyta liczbę wpisaną w polu formularza; wartość nieczytelną zastępuje przekazaną wartością domyślną. */
 function liczbaPola(kontrolka: HTMLInputElement, zastepcza: number): number {
   const liczba = Number.parseInt(kontrolka.value, 10);
   return Number.isNaN(liczba) || liczba < 1 ? zastepcza : liczba;
 }
 
-/** akapitWarsztatu składa jeden wiersz treści okna. */
+/** akapitWarsztatu składa pojedynczy wiersz treści okna z przekazanego zdania, gotowy do wstawienia do listy wyników. */
 function akapitWarsztatu(zdanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mdev-wiersz';
@@ -394,7 +371,7 @@ function akapitWarsztatu(zdanie: string): HTMLElement {
   return element;
 }
 
-/** blokWarsztatu składa miejsce na treść wielowierszową — wynik operacji. */
+/** blokWarsztatu składa element na treść wielowierszową, w którym okno pokazuje wynik wykonanej operacji kontekstowej. */
 function blokWarsztatu(zawartosc: string): HTMLElement {
   const element = document.createElement('pre');
   element.className = 'mdev-blok';

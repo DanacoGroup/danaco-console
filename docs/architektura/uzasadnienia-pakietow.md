@@ -3014,3 +3014,58 @@ każdy wskazuje coś poza bazą: adres stojącego serwera, wiersz dziennika
 wytworzony przez pracę, plik archiwum w magazynie treści rdzenia. Wiersz bez
 tego czegoś byłby meldunkiem bez skutku, dlatego zapisuje go wyłącznie kod,
 który ten skutek właśnie wywołał.
+
+## budowa/server/internal/dane/kroki_zlecenia.go
+
+Sterowanie krokiem oddaje wyłącznie to, czego pozycja_kolejki nie umie
+powiedzieć: że krok stoi, na jaką decyzję czeka, jaka decyzja zapadła i czy
+dojechała do wykonawcy. Metody siedzą na repozytoriumKolejek, a nie na
+własnym typie, bo wstrzymanie kroku i stan kroku to dwa pytania o tę samą
+tabelę pozycja_kolejki i ten sam dziennik log_akcji_kolejki: osobne
+repozytorium musiałoby powtórzyć odczyt położenia pozycji i własnym zapisem
+dziennika rozjechać się z zapisem silnika, wzorem par Moduly/Macierz
+i Sesje/KoszSesji — jedna implementacja, dwa widoki. Rozszerzenie widać przez
+RepozytoriumWstrzymanKroku: port sięga po nie asercją typu, tak jak rdzeń
+sięga po wiazaneKolejki przy queue.list i queue.link.
+
+Stany czeka i biegnie nie należą do słownika kolumny wstrzymanie_kroku.stan:
+czyta się je z pozycja_kolejki.stan, a zapisane drugi raz byłyby drugą
+prawdą.
+
+Akcje dziennika kolejki zapisywane przez sterowanie krokiem idą do tego
+samego log_akcji_kolejki, co działania silnika — jeden ślad, nie dwa.
+
+CzyZastosowane: epizod zdecydowany, lecz niezastosowany, to decyzja w
+drodze — nie wolno jej zgubić.
+
+RepozytoriumWstrzymanKroku wypełnia ta sama implementacja, co
+RepozytoriumKolejek — drugiej nie ma.
+
+Zapis decyzji wchodzi wyłącznie na epizod jeszcze nierozstrzygnięty
+i jeszcze niezastosowany. Warunek stoi w SQL, nie w warstwie wyżej, bo
+inaczej dwa równoległe rozstrzygnięcia nadpisałyby się nawzajem. Zastosowanie
+wchodzi wyłącznie na epizod rozstrzygnięty i jeszcze niezastosowany, więc
+powtórne wywołanie nie zrobi drugiego zastosowania.
+
+WstrzymajKrok: krok w stanie końcowym odbija się o CHECK schematu, a odmowa
+jest wtedy prawdą o kroku, nie awarią zapisu.
+
+CzynneWstrzymanie: brak epizodu nie jest błędem, bo większość kroków nigdy
+nie była wstrzymana.
+
+ZapiszDecyzje: epizod już rozstrzygnięty albo już zastosowany nie zostaje
+ruszony — zapytanie ma warunek i brak trafienia jest tu odmową, nie ciszą.
+
+OznaczZastosowanie: doręczenie zapisuje się osobno od zastosowania, bo to
+dwa różne fakty — krok ruszył zgodnie z decyzją, i decyzja dojechała do
+tego, kto pracę wykonuje.
+
+CzynneWstrzymaniaKolejki: indeks częściowy schematu gwarantuje najwyżej
+jeden epizod na krok, więc mapa po identyfikatorze pozycji niczego nie
+gubi.
+
+HistoriaWstrzymanKroku: wiersze zastosowane zostają w wykazie, bo ślad
+wstrzymania jest częścią przejrzystości pętli.
+
+pozycjaWstrzymania odczytuje krok, którego dotyczy epizod, w tej samej
+transakcji co zapis, żeby dziennik nie wskazał innego kroku niż zapis.

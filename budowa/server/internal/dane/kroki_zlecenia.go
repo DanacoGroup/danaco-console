@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: sterowanie pojedynczym krokiem zlecenia — tabela
-// `wstrzymanie_kroku`. Krokiem jest wiersz `pozycja_kolejki`; tutaj nie ma
-// drugiego bytu kroku ani drugiej kopii jego stanu pracy. Jest wyłącznie to,
-// czego `pozycja_kolejki` nie umie powiedzieć: że krok stoi, na jaką decyzję
-// czeka, jaka decyzja zapadła i czy dojechała do wykonawcy.
-//
-// Metody siedzą na `repozytoriumKolejek`, a nie na własnym typie, bo wstrzymanie
-// kroku i stan kroku to dwa pytania o tę samą tabelę `pozycja_kolejki` i ten sam
-// dziennik `log_akcji_kolejki`. Osobne repozytorium musiałoby powtórzyć odczyt
-// położenia pozycji i własnym zapisem dziennika rozjechać się z zapisem silnika.
-// Wzorem par Moduly/Macierz i Sesje/KoszSesji: jedna implementacja, dwa widoki.
-// Rozszerzenie widać przez `RepozytoriumWstrzymanKroku` — port sięga po nie
-// asercją typu, tak jak rdzeń sięga po `wiazaneKolejki` przy
-// `queue.list`/`queue.link`.
+// Sterowanie pojedynczym krokiem zlecenia: tabela `wstrzymanie_kroku`.
+// Krokiem jest wiersz `pozycja_kolejki`; tu nie ma drugiego bytu kroku ani
+// drugiej kopii jego stanu pracy.
 package dane
 
 import (
@@ -53,7 +42,8 @@ type WstrzymanieKroku struct {
 	DoreczonoO       *string
 }
 
-// CzyZdecydowane mówi, czy Operator już rozstrzygnął ten epizod.
+// CzyZdecydowane mówi, czy Operator już rozstrzygnął dany epizod
+// wstrzymania tego kroku zlecenia w kolejce.
 func (w WstrzymanieKroku) CzyZdecydowane() bool {
 	return w.Stan != StanKrokuWstrzymany
 }
@@ -68,27 +58,26 @@ func (w WstrzymanieKroku) CzyZastosowane() bool {
 // pojedynczym krokiem. Wypełnia je ta sama implementacja, co
 // `RepozytoriumKolejek` — drugiej nie ma.
 type RepozytoriumWstrzymanKroku interface {
-	// WstrzymajKrok zakłada epizod wstrzymania. `stanPozycjiPrzed` musi być
-	// stanem roboczym — stanu końcowego schemat odmawia.
+	// WstrzymajKrok zakłada epizod wstrzymania; stanPozycjiPrzed musi być
+	// stanem roboczym.
 	WstrzymajKrok(ctx context.Context, pozycjaID int64, stanPozycjiPrzed string,
 		powod *string) (WstrzymanieKroku, error)
 
 	// CzynneWstrzymanie zwraca epizod niezastosowany, jeśli taki jest.
 	CzynneWstrzymanie(ctx context.Context, pozycjaID int64) (WstrzymanieKroku, bool, error)
 
-	// ZapiszDecyzje odnotowuje rozstrzygnięcie Operatora. Nie stosuje go —
-	// zastosowanie jest osobnym faktem i osobnym zapisem.
+	// ZapiszDecyzje odnotowuje rozstrzygnięcie Operatora; zastosowanie jest
+	// osobnym zapisem.
 	ZapiszDecyzje(ctx context.Context, wstrzymanieID int64, stan string,
 		uzasadnienie *string) (WstrzymanieKroku, error)
 
-	// OznaczZastosowanie zamyka epizod: decyzja zmieniła los kroku.
-	// `doreczono` mówi, czy trafiła też do wykonawcy — fałsz zostawia
-	// `doreczono_o` pusty i to jest prawda o braku wykonawcy, nie usterka.
+	// OznaczZastosowanie zamyka epizod; doreczono mówi, czy decyzja trafiła
+	// do wykonawcy.
 	OznaczZastosowanie(ctx context.Context, wstrzymanieID int64,
 		doreczono bool) (WstrzymanieKroku, error)
 
-	// CzynneWstrzymaniaKolejki zwraca epizody niezastosowane wszystkich kroków
-	// kolejki, po identyfikatorze pozycji. Kolejka bez wstrzymań daje mapę pustą.
+	// CzynneWstrzymaniaKolejki zwraca epizody niezastosowane wszystkich
+	// kroków kolejki, po pozycji.
 	CzynneWstrzymaniaKolejki(ctx context.Context, kolejkaID int64) (map[int64]WstrzymanieKroku, error)
 
 	// HistoriaWstrzymanKroku zwraca wszystkie epizody kroku, od najstarszego.
@@ -353,7 +342,8 @@ func (r *repozytoriumKolejek) HistoriaWstrzymanKroku(ctx context.Context,
 	return lista, nil
 }
 
-// wstrzymanie odczytuje jeden epizod po identyfikatorze.
+// wstrzymanie odczytuje jeden epizod wstrzymania kroku po jego
+// identyfikatorze wiersza w bazie danych.
 func (r *repozytoriumKolejek) wstrzymanie(ctx context.Context, id int64) (WstrzymanieKroku, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWstrzymanie)
 	if err != nil {
@@ -390,7 +380,8 @@ func pozycjaWstrzymania(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	return pozycjaID, nil
 }
 
-// odczytajWstrzymanie składa strukturę z jednego wiersza wyniku.
+// odczytajWstrzymanie składa pełną strukturę WstrzymanieKroku z jednego
+// wiersza wyniku zapytania SQL bazy.
 func odczytajWstrzymanie(wiersz skaner) (WstrzymanieKroku, error) {
 	var w WstrzymanieKroku
 	var powod, uzasadnienie, zdecydowano, zastosowano, doreczono sql.NullString

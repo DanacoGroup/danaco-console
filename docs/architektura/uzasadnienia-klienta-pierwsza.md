@@ -6383,3 +6383,12 @@ z bajtami nie ma.
 
 ## budowa/klient-poprzedni/src/moduly/apps/strona-dystrybucji.test.ts
 Sprawdziany pilnują pięciu zachowań, które łatwo zepsuć po cichu: zawężenie katalogu odsiewa po polach niesionych przez pozycję i nazywa zakres szukania zamiast pozwalać czytać pustkę jako brak pozycji; odczyt katalogu zastępuje zbiór, a nie dokłada do niego, inaczej w wykazie zostawałaby pozycja, której rdzeń już nie zna; zdarzenie zmiany rozszerzenia zmienia zbiór niezależnie od tego, gdzie zaszła zmiana, a usunięcie zdejmuje też wskazanie panelu bocznego; żadna kontrolka okien nie ma atrybutu wyłączenia zgodnie z zasadą zero blokad platformy, więc kontrolka bez pokrycia ma być klikalna i nazywać brak; instalacja niesie pochodzenie pozycji, bo to jedyne pole rozstrzygające stan wyjściowy rejestracji.
+
+## budowa/klient-poprzedni/src/moduly/library/etykiety-biblioteki.ts
+Teksty stoją w osobnym pliku, bo to inna odpowiedzialność niż budowa widoku:
+zdania mówiące, czego kontrakt nie niesie, dają się przeczytać w jednym
+miejscu i tam poprawić, gdy komenda wejdzie do kontraktu. Wykaz czynności
+panelu metadanych i archiwum jest długi, bo warstwa czwarta modułu jest
+obszerna, a kontrakt niesie dla niej dokładnie jedną komendę, przeliczenie
+wskaźnika znaczenia w zakładce higieny; inaczej wykaz wyglądałby na listę
+rzeczy zapomnianych, a jest pomiarem kontraktu.

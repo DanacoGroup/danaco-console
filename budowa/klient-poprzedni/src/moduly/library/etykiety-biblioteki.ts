@@ -1,15 +1,8 @@
 import type { PozycjaBezKomendy } from './panel-akcji';
 
-/**
- * Teksty widoczne dla Operatora, wyjęte z plików budujących elementy.
- *
- * Osobny plik, bo to inna odpowiedzialność niż budowa widoku: zdania mówiące,
- * czego kontrakt nie niesie, dają się przeczytać w jednym miejscu i tam
- * poprawić, gdy komenda wejdzie do kontraktu. Każda pozycja nazywa czynność
- * okna i powód, dla którego nie ma za nią komendy.
- */
+// Teksty widoczne dla użytkownika, wyjęte z plików budujących elementy: nazywają czynność i powód.
 
-/** Czynności panelu Library Explorera bez komendy kontraktu. */
+/** Czynności panelu Library Explorera bez komendy kontraktu, wraz z powodem, dla którego danej komendy nie ma. */
 export const BEZ_KOMENDY_EXPLORER: readonly PozycjaBezKomendy[] = [
   {
     etykieta: 'Eksport',
@@ -37,7 +30,7 @@ export const BEZ_KOMENDY_EXPLORER: readonly PozycjaBezKomendy[] = [
   },
 ];
 
-/** Czynności panelu File Preview bez komendy kontraktu. */
+/** Czynności panelu File Preview bez komendy kontraktu, wraz z powodem, dla którego danej komendy nie ma. */
 export const BEZ_KOMENDY_PODGLAD: readonly PozycjaBezKomendy[] = [
   {
     etykieta: 'Porównaj z…',
@@ -68,7 +61,7 @@ export const BEZ_KOMENDY_WERSJE: readonly PozycjaBezKomendy[] = [
   },
 ];
 
-/** Czynności panelu Tags & Collections bez komendy kontraktu. */
+/** Czynności panelu Tags & Collections bez komendy kontraktu, wraz z powodem, dla którego danej komendy nie ma. */
 export const BEZ_KOMENDY_ETYKIETY: readonly PozycjaBezKomendy[] = [
   {
     etykieta: 'Kolekcja inteligentna',
@@ -99,13 +92,9 @@ export const BEZ_KOMENDY_ETYKIETY: readonly PozycjaBezKomendy[] = [
 ];
 
 /**
- * Czynności panelu Metadata & Archive Panel bez komendy kontraktu.
- *
- * Wykaz jest długi, bo warstwa czwarta modułu jest obszerna, a kontrakt niesie
- * dla niej dokładnie jedną komendę: `knowledge.index` (przeliczenie wskaźnika
- * znaczenia, zakładka Higiena). Każda pozycja nazywa nie tylko brak, lecz jego
- * przyczynę — inaczej wykaz wyglądałby na listę rzeczy zapomnianych, a jest
- * pomiarem kontraktu.
+ * Czynności panelu Metadata & Archive Panel bez komendy kontraktu: wykaz jest
+ * długi, bo warstwa czwarta modułu jest obszerna, a każda pozycja nazywa nie
+ * tylko brak, lecz jego przyczynę.
  */
 export const BEZ_KOMENDY_METADANE: readonly PozycjaBezKomendy[] = [
   {

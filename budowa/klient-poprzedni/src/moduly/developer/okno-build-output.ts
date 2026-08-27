@@ -101,7 +101,7 @@ export function utworzOknoBudowania(
       return;
     }
     tresc.ladowanie('Uruchamianie budowania…');
-    // Log czyścimy teraz, przed odpowiedzią, żeby zdarzenie trafiło do logu już pustego.
+    // Log czyszczony jest teraz, przed odpowiedzią, żeby zdarzenie trafiło do logu już pustego.
     kontekst.logi.length = 0;
     kontekst.oczekujeWlasnegoStartu = true;
     kontekst.ostatnieZadanie = zadanie;

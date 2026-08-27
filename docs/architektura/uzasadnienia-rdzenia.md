@@ -4319,3 +4319,50 @@ z położenia skryptu, a nie wypisaną wprost:
 `pomocniki/transkrypcja/wymagania.txt` jest jedynym miejscem, w którym stoi
 nazwa i wersja biblioteki rozpoznawania, więc prowizjonowanie ma go
 zainstalować przez `-r`, zamiast powtarzać nazwę pakietu u siebie.
+
+## budowa/server/internal/core/wstawienia_skutek_test.go
+
+Skutek wstawień: czy obiekt osadzony w dokumencie niesie pochodzenie i czy
+odmowa jest nazwana tam, gdzie rdzeń nie ma czym wykonać czynności. Szkody,
+które ten plik ma wykluczyć: 1. obraz wstawiony bez zapisanego pochodzenia —
+za tydzień nikt nie odtworzy, na czym pismo się opiera; 2. obiekt o zerowym
+rozmiarze, czyli niewidzialny, oddany jako wstawiony; 3. uprzejma odmowa bez
+nazwania braku — Operator ma wiedzieć, po czyjej stronie brakuje i którą
+drogą czynność jest wykonalna; 4. usunięcie obiektu, po którym wykaz nadal go
+pokazuje.
+
+## budowa/server/internal/core/adapter_rozmowa_zalaczniki.go
+
+Odwołania z `MessageSendRequest.attachments` idą dwiema drogami: do wiersza
+wiadomości (`adapter_rozmowa.go`) oraz do treści zapytania kanału. Drugiej
+drogi nie da się ominąć, bo `zapytanieKanalu` niesie samą treść, a kanał CLI
+nie ma osobnego pola na załącznik.
+
+Kontrakt nazywa elementy listy „odwołaniami do załączników" i nie zawęża
+ich kształtu. Rdzeń rozstrzyga trzy przypadki: URI danych
+(`data:image/png;base64,…`) niesie bajty ze sobą — lądują w magazynie
+treści rdzenia, a do modelu idzie ścieżka bloba, tak posyła adnotacje
+moduł Browser (`client/src/moduly/browser/warstwa-adnotacji.ts`); ścieżka
+bezwzględna istniejącego pliku idzie dalej bez kopiowania — tego samego
+rodzaju odwołanie zapisuje moduł Library (`adapter_modul_library_magazyn.go`);
+pozostałe odwołania wracają nazwane jako niedoręczone, bez zgadywania.
+
+Ładunek base64 nie wchodzi do treści: model nie zdekoduje kilobajtów
+napisu, a okno kontekstu za nie zapłaci. Wchodzi wyłącznie ścieżka, po którą
+model sięga narzędziem odczytu pliku.
+
+Plik nie zmienia kształtu kontraktu i nie sprząta magazynu: blob adresowany
+sumą kontrolną żyje tak samo długo jak wiersz wiadomości, który go
+wymienia.
+
+Pole `Sciezka` puste w `zalacznikTury` znaczy odwołanie nierozwiązane —
+wtedy `Powod` podaje przyczynę, a treść wiadomości niesie to zdanie do
+modelu i do operatora.
+
+Blok odwołań idzie w treści, a nie osobnym polem, bo kanał główny przyjmuje
+od rdzenia dokładnie jedno wejście rozmowy: `injection.Zapytanie.Tekst`,
+wysyłane na stdin jako JSON-lines (`injection/ustawienia.go`,
+`injection/przebieg.go`). Ścieżka wpleciona w treść jest więc jedyną drogą
+odwołania do modelu, a droga ta jest skuteczna: model czyta plik narzędziem
+odczytu. Odwołania niedoręczone stoją w tym samym bloku, aby model wiedział,
+że coś pokazano i czego nie dostał.

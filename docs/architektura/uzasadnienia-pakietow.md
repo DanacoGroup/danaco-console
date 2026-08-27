@@ -2739,3 +2739,59 @@ Zmienna środowiskowa niesie wartość jawną albo odwołanie do sekretu, nigdy 
 Warunek CHECK schematu pilnuje tego po raz drugi, a warstwa dane odrzuca obie wartości
 podane jednocześnie, żeby literówka wołającego wracała czytelnym powodem, a nie treścią
 błędu SQL.
+
+## prowenancja.go
+
+Ślad jest podstawą dwóch rzeczy naraz: Provenance Explorer pyta o pojedyncze
+wywołanie, a rozliczenie zużycia liczy sumy po wymiarze. Obie odpowiedzi powstają
+z tej samej tabeli — druga tabela z tymi samymi liczbami rozjechałaby się
+z pierwszą przy pierwszej korekcie cennika.
+
+Zawężenie wykazu idzie do bazy, nie do pętli w Go. Wywołań przybywa w tempie pracy
+operatora, a wykaz bez zawężenia po czasie potrafi zająć całą tabelę.
+
+Odwzorowanie wymiaru rozliczenia na kolumnę tabeli stoi w repozytorium, a nie
+w adapterze, ponieważ to warstwa danych wie, którą kolumną grupuje. Wymiar spoza
+wykazu jest odmową, nie cichym zejściem do wymiaru domyślnego — suma policzona
+po innej osi niż zamówiona wyglądałaby identycznie jak zamówiona i nie dałoby się
+ich odróżnić.
+
+## design.go
+
+Interfejs RepozytoriumDesignu deklaruje wyłącznie ten plik, w całości —
+także metody obszarów zasobów i kompozycji — żeby kontrakt stał w jednym
+miejscu; implementację niosą design_zasoby.go i design_kompozycje.go. Prompt
+ma własną tabelę, ponieważ wiele zasobów i wariantów powstaje z tego samego
+promptu: prompt_design jest jedną prawdą o promptcie, a
+zasob_design.prompt_id jedynym odwołaniem.
+
+Metoda UstawUlubionyZasobu stoi osobno od ZapiszZasob z podmienionym polem,
+ponieważ pełny zapis wymaga kompletu pól zasobu: oznaczenie ulubionego przez
+odczyt-zmień-zapisz nadpisywałoby przy wyścigu dwóch komend cudzą zmianę
+nazwy czy wymiarów wartością sprzed odczytu.
+
+Ikony własne: w bazie leżą wyłącznie ikony własne, ponieważ katalog ikon
+otwartoźródłowych jest wkompilowany w binarium rdzenia — repozytorium go nie
+zna i nie ma go czym zasiać ani zgubić.
+
+Warsztat fotografii: łańcuch edycji nie dubluje wariantów zasobu, bo że
+wariant powstał ze źródła, mówi kolumna zasob_design.wariant_zasobu_id.
+Metody warsztatu trzymają to, czego ta kolumna nie niesie — czynność, jej
+nastawy i drogę rachunku.
+
+Ścieżki wektorowe: ścieżka jest bytem osobnym od warstwy, ponieważ krzywa
+nie mieści się w prostokącie warstwy, a operacja logiczna potrzebuje obu
+krzywych z osobna.
+
+Ramki makiety: przynależność warstwy do ramki wiąże się identyfikatorem
+zewnętrznym warstwy, ponieważ zapis planszy przepisuje komplet warstw od
+nowa i klucz wiersza warstwy tego zapisu nie przeżywa.
+
+Gradienty wypełnienia: gradient rozstrzyga się celem — kompozycją, ścieżką
+albo warstwą — nie identyfikatorem osobnym: zapis gradientu zakłada albo
+zmienia gradient stojący na wskazanym bycie, a nie dokłada drugi obok.
+
+Funkcja noweRepozytoriumDesignu przyjmuje parametr bazy danych osobno,
+ponieważ obszar kompozycji prowadzi zapis pełnej listy warstw w transakcji
+(usuń i wstaw od nowa), której zapis promptu nie potrzebuje — mieści się w
+jednym poleceniu.

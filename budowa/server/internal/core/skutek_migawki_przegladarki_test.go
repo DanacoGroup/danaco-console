@@ -1,3 +1,5 @@
+// Skutek modułu Browser: czy migawka niesie koniec strony, a przy stronie
+// ponad granicą — czy rdzeń odmówił i nie zostawił po sobie migawki uciętej.
 package core
 
 import (
@@ -9,25 +11,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek modułu Browser: czy migawka nie jest ogryzkiem podanym jako całość.
-//
-// Migawka jest tym, co model i Operator widzą zamiast strony. Szkoda, którą ten
-// plik ma wykluczyć, polegała na uciszeniu przekroczenia rozmiaru: rdzeń czytał
-// tyle, ile mieściła granica, i podawał ucięty początek jako pełną treść strony.
-// Odpowiedź była udana, migawka istniała, a model wnioskował z połowy dokumentu,
-// nie wiedząc, że to połowa.
-//
-// Dlatego sprawdziany tego pliku nie pytają, czy migawka powstała. Pytają, czy
-// niesie koniec strony, a przy stronie ponad granicą — czy rdzeń odmówił i nie
-// zostawił po sobie migawki, którą `browser.snapshot.get` podałby dalej jako
-// bieżący stan strony.
-//
-// Zrzut ekranu wymaga silnika przeglądarki spoza biblioteki standardowej, więc
-// rdzeń go nie wypełnia. To nie jest brak do zmierzenia sprawdzianem skutku,
-// tylko granica nazwana wprost: pole `screenshotRef` ma zostać puste, i to
-// właśnie sprawdzian niżej stwierdza — pustka jest tu prawdą, a odsyłacz
-// wskazujący nic byłby drugą postacią tej samej szkody.
 
 // znacznikKonca stoi na samym końcu ciała strony sprawdzianu. Migawka, która go
 // nie niesie, jest migawką początku strony, choć podaje się za migawkę strony.
@@ -48,7 +31,8 @@ func stronaSprawdzianu(wypelniacz int) string {
 	return b.String()
 }
 
-// serwerStrony podnosi witrynę sprawdzianu oddającą zadaną treść.
+// serwerStrony podnosi witrynę sprawdzianu oddającą zadaną treść ciała strony
+// pod wskazaną ścieżką, do wywołania przez sprawdziany migawki.
 func serwerStrony(t *testing.T, obsluga http.HandlerFunc) *httptest.Server {
 	t.Helper()
 
@@ -57,7 +41,8 @@ func serwerStrony(t *testing.T, obsluga http.HandlerFunc) *httptest.Server {
 	return serwer
 }
 
-// serwerTresci podnosi witrynę oddającą jeden dokument HTML.
+// serwerTresci podnosi witrynę oddającą jeden dokument HTML o zadanej treści,
+// do sprawdzianów, które nie potrzebują znacznika końca strony.
 func serwerTresci(t *testing.T, tresc string) *httptest.Server {
 	t.Helper()
 
@@ -67,11 +52,8 @@ func serwerTresci(t *testing.T, tresc string) *httptest.Server {
 	})
 }
 
-// TestMigawkaNiesieKoniecPobranejStronyANieJejPoczatek jest sprawdzianem wprost
-// wymierzonym w szkodę: tekst migawki ma nieść ostatnie zdanie strony, a nie
-// urywać się tam, gdzie skończył się bufor. Sprawdzenie długości nie
-// wystarczyłoby — ucięcie zawsze daje jakąś długość — więc miarą jest znacznik
-// stojący na samym końcu ciała.
+// TestMigawkaNiesieKoniecPobranejStronyANieJejPoczatek mierzy, że tekst migawki
+// niesie ostatnie zdanie strony, a nie urywa się tam, gdzie skończył się bufor.
 func TestMigawkaNiesieKoniecPobranejStronyANieJejPoczatek(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -106,18 +88,17 @@ func TestMigawkaNiesieKoniecPobranejStronyANieJejPoczatek(t *testing.T) {
 	if !strings.Contains(*migawka.Snapshot.Text, "Pierwszy akapit strony.") {
 		t.Error("tekst migawki nie niesie początku strony")
 	}
-	// Zawartość skryptu nie jest treścią widzianą przez czytelnika i nie ma
-	// prawa wejść do tekstu renderowanego.
+	// Zawartość skryptu nie jest treścią widzianą przez czytelnika.
+
+	// Nie ma prawa wejść do tekstu renderowanego.
 	if strings.Contains(*migawka.Snapshot.Text, "var pominac") {
 		t.Error("tekst migawki niesie zawartość skryptu zamiast treści strony")
 	}
 }
 
-// TestStronaPonadGranicaRozmiaruNieZostawiaMigawkiOgryzka mierzy samą szkodę.
-// Strona większa niż granica rdzenia ma skończyć się odmową, a okno ma zostać
-// bez migawki — bo migawka ucięta, raz zapisana, jest odtąd podawana przez
-// `browser.snapshot.get` jako bieżący stan strony i nic już nie mówi o tym, że
-// jest połową.
+// TestStronaPonadGranicaRozmiaruNieZostawiaMigawkiOgryzka mierzy samą szkodę:
+// strona większa niż granica rdzenia ma skończyć się odmową, a okno ma zostać
+// bez migawki.
 func TestStronaPonadGranicaRozmiaruNieZostawiaMigawkiOgryzka(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -136,9 +117,8 @@ func TestStronaPonadGranicaRozmiaruNieZostawiaMigawkiOgryzka(t *testing.T) {
 }
 
 // TestStronaDeklarujacaRozmiarPonadGranicaNieJestPobierana pilnuje tej samej
-// granicy po drugiej stronie: gdy witryna sama zapowiada rozmiar większy niż
-// granica, rdzeń nie ma po co ciągnąć ani bajta. Skutek ma być ten sam co wyżej
-// — brak migawki, nie migawka skrócona.
+// granicy po drugiej stronie: witryna zapowiada rozmiar większy niż granica,
+// więc rdzeń nie ma po co ciągnąć bajta.
 func TestStronaDeklarujacaRozmiarPonadGranicaNieJestPobierana(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -196,10 +176,8 @@ func TestOdpowiedzBezTresciNieZakladaMigawkiPrzejscia(t *testing.T) {
 }
 
 // TestMigawkaOddajeZrodloStronyDopieroNaZadanie pilnuje pola, które wychodzi
-// warunkowo. Brak HTML-a przy `includeHtml` niewskazanym jest oszczędnością, nie
-// brakiem treści — ale wskazanie flagi ma oddać źródło całe, aż po zamknięcie
-// dokumentu. Źródło ucięte byłoby tą samą szkodą co tekst ucięty, tylko
-// w drugim polu.
+// warunkowo: wskazanie flagi `includeHtml` ma oddać źródło całe, aż po
+// zamknięcie dokumentu.
 func TestMigawkaOddajeZrodloStronyDopieroNaZadanie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -231,8 +209,9 @@ func TestMigawkaOddajeZrodloStronyDopieroNaZadanie(t *testing.T) {
 		t.Errorf("źródło w migawce ma %d bajtów, strona miała %d — dokument jest niepełny",
 			len(*zeZrodlem.Snapshot.Html), len(tresc))
 	}
-	// Zrzutu ekranu rdzeń nie robi (brak silnika przeglądarki). Pole ma zostać
-	// puste — odsyłacz wskazujący nic byłby migawką kłamiącą o tym, co ma.
+	// Zrzutu ekranu rdzeń nie robi, brak silnika przeglądarki. Pole ma zostać puste.
+
+	// Odsyłacz wskazujący nic byłby migawką kłamiącą o tym, co ma.
 	if zeZrodlem.Snapshot.ScreenshotRef != nil {
 		t.Errorf("migawka niesie odsyłacz do zrzutu ekranu (%q), którego rdzeń nie wykonuje",
 			*zeZrodlem.Snapshot.ScreenshotRef)
@@ -241,8 +220,7 @@ func TestMigawkaOddajeZrodloStronyDopieroNaZadanie(t *testing.T) {
 
 // TestSnapshotGetOddajeMigawkeNajswiezszegoPrzejscia pilnuje wskaźnika czasu:
 // `browser.snapshot.get` pyta o okno, nie o kod migawki, więc ma oddać stan
-// bieżący. Wydanie migawki poprzedniej pokazywałoby modelowi stronę, z której
-// Operator już wyszedł — ta sama szkoda co ogryzek, tylko w innym wymiarze.
+// bieżący.
 func TestSnapshotGetOddajeMigawkeNajswiezszegoPrzejscia(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -271,8 +249,9 @@ func TestSnapshotGetOddajeMigawkeNajswiezszegoPrzejscia(t *testing.T) {
 	if migawka.Snapshot.Text == nil || !strings.Contains(*migawka.Snapshot.Text, "treść druga") {
 		t.Errorf("migawka niesie %v zamiast treści strony, na której stoi okno", migawka.Snapshot.Text)
 	}
-	// Migawka poprzedniego przejścia zostaje w historii, ale nie jest stanem
-	// bieżącym — jej treść nie ma prawa wyjść jako odpowiedź na pytanie o okno.
+	// Migawka poprzedniego przejścia zostaje w historii, ale nie jest stanem bieżącym.
+
+	// Jej treść nie ma prawa wyjść jako odpowiedź na pytanie o okno.
 	if migawka.Snapshot.Text != nil && strings.Contains(*migawka.Snapshot.Text, "treść pierwsza") {
 		t.Error("migawka bieżąca niesie treść strony poprzedniej")
 	}

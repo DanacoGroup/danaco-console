@@ -1213,3 +1213,72 @@ Zasób bez zapisanej licencji jest usterką, nie zasobem: wciągnięcie zasobu
 zapisuje licencję razem z nim i odmawia, jeśli zapis licencji się nie udał —
 materiał, o którym nikt później nie powie, czy wolno go było użyć, jest
 gorszy niż brak materiału.
+
+## adapter_modul_studio_petla.go
+
+Pętla wykonawcza i praca kilku wykonawców naraz są domyślnie wyłączone;
+włącza je Operator jawnym, odwracalnym ustawieniem. Uruchomienie pętli przy
+wyłączonej nastawie wraca odmową nazywającą brak nastawy — started: false
+wraz z refusalReason mówiącym, czego brakuje i czym się to włącza — zamiast
+ciszy albo udanym przebiegiem bez pracy: plan „uruchomiony”, który nie
+wykonał ani jednego zadania, jest wzorcem szkody, którego produkt nie
+powtarza. Rozkład zlecenia nastawy nie wymaga, bo ułożenie zadań niczego
+nie uruchamia i nie tyka dokumentu.
+
+Nastawy pętli mieszkają w rodzinie studio.agents.settings.* i idą zasięgami
+rodziny config.*. Pętla ich nie zapisuje i nie trzyma własnej kopii — czyta
+je wywołaniem obsługiwacza z rejestru komend, a nie własnym odczytem
+konfiguracji, bo nazwy kluczy należą do tego, kto nastawy wystawia; brak
+obsługiwacza nastaw znaczy dla pętli to samo, co nastawa wyłączona.
+
+Rodzina studio.plan.* okna w żądaniu nie niesie: dokument Studia zna swoje
+okno, więc pętla bierze je stąd, tą samą drogą, którą wzięłaby je operacja
+kontekstowa.
+
+Zadanie jedzie rejestrem, nie wywołaniem adaptera wprost. Wywołanie metody
+adaptera wprost byłoby krótsze o dwie warstwy i ominęłoby oba owinięcia,
+które stoją w rejestrze: podpis wykonawcy i zaporę blokad fragmentu. Pętla
+omijająca zaporę byłaby cichą dziurą w blokadzie — Operator oznaczyłby
+podstawę prawną jako nietykalną, a pętla przepisałaby ją, bo „to nie klient
+wołał”. Model woła komendy tą samą drogą co klient, więc pętla też.
+
+Tożsamość wykonawcy jedzie kontekstem, bo żądanie operacji kontekstowej pól
+podpisu nie ma. Bez tego zapora wzięłaby pracę pętli za pracę Operatora,
+a blokada jest skierowana przeciw wykonawcy, nie przeciw właścicielowi
+dokumentu — i przepuściłaby ją.
+
+Podpis wykonawcy w ładunku jest konieczny, nie ozdobny: zapora blokad
+fragmentu rozpoznaje wykonawcę z dwóch źródeł, z faktu gniazda i z podpisu
+w ładunku żądania. Pętlę puszcza Operator przyciskiem w oknie, więc gniazdo
+mówi „Operator”, a pracę wykonuje model. Podpis jedzie mapą, nie strukturą
+żądania, bo studio.contextual.op pól podpisu w kontrakcie nie ma — ładunek
+jest wywołaniem wewnętrznym rdzenia, składanym po to, żeby przejść tą samą
+drogą, którą idzie klient, wraz z jej owinięciami; obsługiwacz komendy pól
+nadmiarowych nie widzi.
+
+## adapter_modul_studio_wejscie_postac.go
+
+Komenda `studio.document.save` przyjmowała wcześniej tylko `documentId`,
+`content` i `title`, więc postać dokumentu ginęła przy każdym zapisie: model
+widział tekst, nie widział kroju ani tabeli. Kontrakt dostał pole `form`, drogę,
+którą postać dojeżdża do rdzenia i wraca z niego nieuszkodzona.
+
+Wcześniejsza wersja tego odcinka nie miała jeszcze warstwy danych postaci
+i odkładała postać ładunkiem JSON w tabeli katalogowej modułu, pod własnym
+zasięgiem. Po wniesieniu warstwy danych postaci obie metody czytania i zapisu
+zostały przełożone na `postacWczytaj` i `postacZapisz` obszaru postaci, żeby
+dwa magazyny jednej postaci nie niosły dwóch prawd o tym samym dokumencie:
+odcinek kontroli pracy, wołający `wejsciePostacDokumentu` przy zakładaniu
+kopii zapasowej, czytając dawny magazyn dostawał postać pustą dla dokumentu,
+który postać ma.
+
+Gdy żądanie zapisu niesie i treść, i postać: treść z pola `content` jest
+prawdą o literach, to, co użytkownik ma w edytorze; postać z pola `form` jest
+prawdą o strukturze — arkusz stylów, nastawy strony, sekcje, tabele, obiekty
+i aparat. Utrwalenie postaci składa treść z bloków i wpisuje ją do wiersza,
+a wołający nadpisuje ją potem treścią z żądania, inaczej zapis cofałby litery
+dopisane w oknie do stanu, który zna drzewo postaci.
+
+Nazwa nośnika podana przez Operatora ma pierwszeństwo przy nastawach strony
+i nie jest sprawdzana wykazem, ponieważ wykaz nośników stoi w module Design,
+do którego ten odcinek nie sięga.

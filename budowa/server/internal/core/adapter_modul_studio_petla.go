@@ -1,40 +1,7 @@
-// Odpowiedzialność pliku: pętla wykonawcza modułu Studio — pięć czynności
-// rodziny `studio.plan.*`: rozkład zlecenia dokumentowego na zadania, odczyt
-// rozkładu, przestawienie zadania, puszczenie pętli i jej zatrzymanie.
-//
-// Byty, na których pętla pracuje — rozkład, zadanie, magazyn i rozłożenie
-// zlecenia na czynności — leżą w `adapter_modul_studio_zadania.go`.
-//
-// ── Pętla jest NARZĘDZIEM NIEURUCHAMIANYM NA STARCIE ────────────────────────
-// Rozstrzygnięcie Właściciela: pętla wykonawcza i praca kilku wykonawców naraz
-// są domyślnie WYŁĄCZONE i włącza je Operator jawnym, odwracalnym ustawieniem.
-// Dlatego `studio.plan.run` przy wyłączonej nastawie wraca ODMOWĄ NAZYWAJĄCĄ
-// BRAK NASTAWY — `started: false` wraz z `refusalReason` mówiącym, czego brakuje
-// i czym się to włącza. Nie ciszą i nie udanym przebiegiem bez pracy: plan
-// „uruchomiony”, który nie wykonał ani jednego zadania, jest dokładnie tym
-// wzorcem szkody, którego ten produkt nie ma prawa powtarzać.
-//
-// Rozkład zlecenia (`studio.plan.create`) nastawy NIE wymaga i nie może
-// wymagać: ułożenie zadań niczego nie uruchamia i nie tyka dokumentu, a Operator
-// ma prawo zobaczyć rozkład przed decyzją o włączeniu pętli.
-//
-// ── Nastaw nie zakładamy po raz drugi ───────────────────────────────────────
-// Nastawy pętli mieszkają w rodzinie `studio.agents.settings.*` i idą zasięgami
-// rodziny `config.*`. Pętla ich NIE zapisuje i nie trzyma własnej kopii — czyta
-// je wywołaniem obsługiwacza `studio.agents.settings.get` z rejestru komend.
-// Droga przez rejestr, a nie przez własny odczyt konfiguracji, jest wybrana
-// świadomie: nazwy kluczy należą do tego, kto nastawy wystawia, a odgadnięcie
-// ich tutaj założyłoby drugi magazyn pod pozorem odczytu.
-//
-// Brak obsługiwacza nastaw znaczy dla pętli to samo, co nastawa wyłączona —
-// z odmową, która nazywa właśnie ten brak. Jest to prawda o stanie rdzenia,
-// a nie ograniczenie zmyślone.
-//
-// ── Okno bierze się z dokumentu ─────────────────────────────────────────────
-// Każde zadanie wykonuje się silnikiem modelu, a kanał modelu należy do okna.
-// Rodzina `studio.plan.*` okna w żądaniu nie niesie — i nie musi: dokument
-// Studia zna swoje okno (`dane.DokumentStudia.Okno`), więc pętla bierze je
-// stąd, tą samą drogą, którą wzięłaby je operacja kontekstowa.
+// Pętla wykonawcza modułu Studio obsługuje pięć czynności rodziny
+// studio.plan.*: rozkład zlecenia na zadania, odczyt rozkładu, przestawienie
+// zadania, uruchomienie pętli i jej zatrzymanie; domyślnie jest wyłączona,
+// włącza ją Operator nastawą.
 package core
 
 import (
@@ -56,12 +23,9 @@ const (
 	petlaWykonawcowDomyslnie = 1
 )
 
-// adapterPetliStudia prowadzi pętlę wykonawczą modułu Studio.
-//
-// Typ jest osobny od `adapterStudia`, a nie dopisany do niego polami, bo pętla
-// ma stan własny (magazyn rozkładów) i własną zależność (rejestr komend, którym
-// czyta nastawy). Dokument, repozytorium i silnik modelu bierze przez adapter
-// Studia — drugiej drogi do dokumentu w tym module nie ma i mieć nie ma.
+// adapterPetliStudia prowadzi pętlę wykonawczą modułu Studio: typ osobny od
+// adapterStudia, bo pętla ma stan własny (magazyn rozkładów) i własną
+// zależność (rejestr komend, którym czyta nastawy).
 type adapterPetliStudia struct {
 	studio  *adapterStudia
 	magazyn *petlaMagazynStudia
@@ -69,7 +33,8 @@ type adapterPetliStudia struct {
 	emiter  *emiter
 }
 
-// nowyAdapterPetliStudia wiąże pętlę z adapterem Studia i rejestrem komend.
+// nowyAdapterPetliStudia wiąże pętlę z adapterem Studia i rejestrem komend,
+// tworząc pusty magazyn rozkładów gotowy do przyjęcia pierwszego zlecenia.
 func nowyAdapterPetliStudia(studio *adapterStudia, rejestr *Rejestr, e *emiter) *adapterPetliStudia {
 	return &adapterPetliStudia{
 		studio: studio, magazyn: petlaNowyMagazyn(), rejestr: rejestr, emiter: e,
@@ -78,13 +43,9 @@ func nowyAdapterPetliStudia(studio *adapterStudia, rejestr *Rejestr, e *emiter) 
 
 // ── studio.plan.create ──────────────────────────────────────────────────────
 
-// RozlozZlecenie obsługuje `studio.plan.create`.
-//
-// Rozkład idzie trzema drogami po kolei i pierwsza, która da zadania, wygrywa:
-// zadania podane wprost przez Operatora albo przez model, rozkład ułożony
-// modelem, rozkład własny po czynnościach nazwanych w zleceniu. Trzecia droga
-// nie zawodzi nigdy — zlecenie nierozpoznane daje jedno zadanie niosące je
-// w całości, bo rozkład pusty byłby odpowiedzią udaną bez treści.
+// RozlozZlecenie obsługuje studio.plan.create: rozkład idzie trzema drogami
+// po kolei, a pierwsza, która da zadania, wygrywa — zadania wskazane wprost,
+// rozkład ułożony modelem, rozkład własny rdzenia, który nie zawodzi nigdy.
 func (p *adapterPetliStudia) RozlozZlecenie(ctx context.Context,
 	z shared.StudioPlanCreateRequest) (shared.StudioPlanCreateResponse, error) {
 
@@ -99,9 +60,8 @@ func (p *adapterPetliStudia) RozlozZlecenie(ctx context.Context,
 
 	surowe := p.petlaZadaniaZlecenia(ctx, z, dokument.Okno)
 	if len(surowe) == 0 {
-		// Nie może się zdarzyć — rozkład własny zawsze daje co najmniej jedno
-		// zadanie. Odmowa stoi tu jako zapora, a nie jako ścieżka: rozkład pusty
-		// oddany jako udany byłby usterką gorszą niż błąd.
+		// Rozkład własny zawsze daje co najmniej jedno zadanie — odmowa stoi tu
+		// jako zapora, nie ścieżka.
 		return shared.StudioPlanCreateResponse{}, bladStudio(
 			protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 				"moduł Studio: rozkład zlecenia nie dał ani jednego zadania")))
@@ -119,9 +79,8 @@ func (p *adapterPetliStudia) RozlozZlecenie(ctx context.Context,
 		Utworzono:      teraz,
 		Zaktualizowano: teraz,
 	}
-	// Zakres zlecenia schodzi na każde zadanie, które własnego nie ma: „popraw
-	// ten akapit” dotyczy akapitu w każdej swojej czynności, nie tylko
-	// w pierwszej.
+	// Zakres zlecenia schodzi na każde zadanie bez własnego zakresu, nie
+	// tylko na pierwsze.
 	for numer := range surowe {
 		if surowe[numer].ZakresOd == nil && z.RangeStart != nil {
 			surowe[numer].ZakresOd = z.RangeStart
@@ -151,11 +110,8 @@ func (p *adapterPetliStudia) petlaZadaniaZlecenia(ctx context.Context,
 }
 
 // petlaZadaniaZLadunku czyta zadania podane wprost w kształcie
-// `StudioDocumentTask[]`.
-//
-// Ładunek nieczytelny NIE jest odmową: kontrakt nazywa to pole nieobowiązkowym,
-// a rozkład ma wtedy pójść drogą następną. Odmowa zabrałaby Operatorowi rozkład
-// z powodu jednego pola, którego mógł nie wypełniać.
+// StudioDocumentTask[]. Ładunek nieczytelny nie jest odmową: kontrakt nazywa
+// to pole nieobowiązkowym, a rozkład idzie wtedy drogą następną.
 func petlaZadaniaZLadunku(ladunek json.RawMessage) []petlaZadanieStudia {
 	if len(ladunek) == 0 || strings.TrimSpace(string(ladunek)) == "null" {
 		return nil
@@ -189,13 +145,9 @@ func petlaZadaniaZLadunku(ladunek json.RawMessage) []petlaZadanieStudia {
 	return zadania
 }
 
-// petlaRozkladModelem prosi model o rozkład zlecenia na zadania.
-//
-// Odpowiedź modelu ma być tablicą JSON o polach `kind`, `title` i `instruction`.
-// Odpowiedź innego kształtu nie jest odmową — rozkład idzie wtedy drogą własną
-// rdzenia. Model jest tu ułatwieniem, nie warunkiem: pętla, która bez modelu nie
-// umie rozłożyć zlecenia, byłaby funkcją zależną od kanału, a rozkład zależny
-// nie jest.
+// petlaRozkladModelem prosi model o rozkład zlecenia na zadania w postaci
+// tablicy JSON o polach kind, title i instruction. Odpowiedź innego kształtu
+// nie jest odmową — rozkład idzie wtedy drogą własną rdzenia.
 func (p *adapterPetliStudia) petlaRozkladModelem(ctx context.Context,
 	zlecenie, okno string) []petlaZadanieStudia {
 
@@ -251,7 +203,8 @@ func petlaWyjmijTablice(tresc string) json.RawMessage {
 
 // ── studio.plan.get ─────────────────────────────────────────────────────────
 
-// Rozklad obsługuje `studio.plan.get`.
+// Rozklad obsługuje studio.plan.get: oddaje rozkład wskazany identyfikatorem
+// albo wykaz rozkładów dokumentu wraz z rozkładem najświeższym.
 func (p *adapterPetliStudia) Rozklad(_ context.Context,
 	z shared.StudioPlanGetRequest) (shared.StudioPlanGetResponse, error) {
 
@@ -277,19 +230,16 @@ func (p *adapterPetliStudia) Rozklad(_ context.Context,
 	for _, rozklad := range znalezione {
 		rozklady = append(rozklady, petlaZlozRozklad(rozklad, z.State))
 	}
-	// Rozkład bieżący dokumentu jest najświeższym — magazyn oddaje wykaz w tej
-	// kolejności, więc pierwszy wpis jest nim wprost.
+	// Rozkład bieżący jest najświeższym — magazyn oddaje wykaz w tej
+	// kolejności.
 	return shared.StudioPlanGetResponse{Plan: rozklady[0], Plans: rozklady}, nil
 }
 
 // ── studio.plan.task.update ─────────────────────────────────────────────────
 
-// PrzestawZadanie obsługuje `studio.plan.task.update`.
-//
-// Przejście stanu jest sprawdzane, a nie przyjmowane na słowo: zadanie
-// domknięte, które wraca do biegu bez decyzji o ponowieniu, zgubiłoby wynik
-// swojej poprzedniej pracy. Przejście niedozwolone wraca odmową nazywającą oba
-// stany.
+// PrzestawZadanie obsługuje studio.plan.task.update: przejście stanu jest
+// sprawdzane, a nie przyjmowane na słowo, bo zadanie domknięte wracające do
+// biegu bez decyzji o ponowieniu zgubiłoby wynik poprzedniej pracy.
 func (p *adapterPetliStudia) PrzestawZadanie(_ context.Context,
 	z shared.StudioPlanTaskUpdateRequest) (shared.StudioPlanTaskUpdateResponse, error) {
 
@@ -342,7 +292,9 @@ func (p *adapterPetliStudia) PrzestawZadanie(_ context.Context,
 	}, nil
 }
 
-// petlaWykonawcaZadania składa tożsamość wykonawcy, któremu zadanie powierzono.
+// petlaWykonawcaZadania składa tożsamość wykonawcy, któremu zadanie
+// powierzono, z identyfikatora i nazwy eksperta oraz identyfikatora
+// podagenta z żądania.
 func petlaWykonawcaZadania(kodEksperta, nazwaEksperta, kodPodagenta *string, _ string) *shared.StudioActor {
 	wykonawca := shared.StudioActor{Kind: shared.StudioAuthorModel}
 	if kodEksperta != nil && strings.TrimSpace(*kodEksperta) != "" {
@@ -382,8 +334,8 @@ func petlaWolnoPrzestawic(z, na shared.StudioTaskState) bool {
 			shared.StudioTaskStatePending, shared.StudioTaskStateRunning,
 			shared.StudioTaskStateSkipped,
 		},
-		// Zadanie pominięte wolno przywrócić do kolejki; domkniętego nie ruszamy
-		// wstecz, bo jego wynik jest już w dokumencie.
+		// Zadanie pominięte wolno przywrócić do kolejki; domkniętego nie
+		// ruszamy wstecz.
 		shared.StudioTaskStateSkipped: {shared.StudioTaskStatePending},
 		shared.StudioTaskStateDone:    {},
 	}
@@ -395,7 +347,8 @@ func petlaWolnoPrzestawic(z, na shared.StudioTaskState) bool {
 	return false
 }
 
-// petlaPrzestawStan przestawia stan zadania wraz z jego znacznikami czasu.
+// petlaPrzestawStan przestawia stan zadania wraz z jego znacznikami czasu:
+// podjęcia przy przejściu w bieg i domknięcia przy zakończeniu.
 func petlaPrzestawStan(zadanie *petlaZadanieStudia, stan shared.StudioTaskState) {
 	zadanie.Stan = stan
 	teraz := petlaTeraz()
@@ -408,8 +361,8 @@ func petlaPrzestawStan(zadanie *petlaZadanieStudia, stan shared.StudioTaskState)
 	}
 }
 
-// petlaPrzelicz przestawia stan rozkładu wedle stanów jego zadań. Wołający
-// trzyma zamek magazynu.
+// petlaPrzelicz przestawia stan rozkładu wedle stanów jego zadań — wołający
+// trzyma zamek magazynu przez cały czas przeliczania.
 func petlaPrzelicz(rozklad *petlaRozkladStudia) {
 	if rozklad.Stan == shared.StudioPlanStateStopped {
 		return
@@ -437,7 +390,9 @@ func petlaPrzelicz(rozklad *petlaRozkladStudia) {
 
 // ── studio.plan.run ─────────────────────────────────────────────────────────
 
-// PuscPetle obsługuje `studio.plan.run`.
+// PuscPetle obsługuje studio.plan.run: sprawdza nastawy, dobiera zadania
+// gotowe w kolejnych obiegach i wykonuje je aż do wyczerpania albo
+// zatrzymania.
 func (p *adapterPetliStudia) PuscPetle(ctx context.Context,
 	z shared.StudioPlanRunRequest) (shared.StudioPlanRunResponse, error) {
 
@@ -452,9 +407,8 @@ func (p *adapterPetliStudia) PuscPetle(ctx context.Context,
 
 	nastawy, powodBraku := p.petlaNastawy(ctx, rozklad.KodDokumentu)
 	if powodBraku != "" {
-		// Odmowa nazywa brak nastawy i drogę jej włączenia. Nie jest błędem
-		// protokołu, bo kontrakt przewidział na to pole `refusalReason` —
-		// Operator ma dostać rozkład wraz z powodem, a nie samą porażkę.
+		// Odmowa nazywa brak nastawy i drogę jej włączenia, polem
+		// refusalReason kontraktu.
 		powod := powodBraku
 		return shared.StudioPlanRunResponse{
 			Plan: petlaZlozRozklad(rozklad, nil), Started: false, RefusalReason: &powod,
@@ -533,8 +487,8 @@ func (p *adapterPetliStudia) PuscPetle(ctx context.Context,
 			break
 		}
 		if probny {
-			// Przebieg próbny sprawdza rozkład i zależności raz. Drugi obieg
-			// oglądałby te same zadania, bo próba niczego nie przestawia.
+			// Przebieg próbny sprawdza rozkład raz — drugi obieg oglądałby te
+			// same zadania.
 			break
 		}
 	}
@@ -556,7 +510,8 @@ func (p *adapterPetliStudia) PuscPetle(ctx context.Context,
 	}, nil
 }
 
-// petlaLiczba zamienia liczbę na napis bez sięgania po strconv w treści zdania.
+// petlaLiczba zamienia liczbę na napis bez sięgania po strconv w treści
+// zdania bilansu, budując cyfry od końca liczby.
 func petlaLiczba(ile int) string {
 	if ile == 0 {
 		return "0"
@@ -569,14 +524,16 @@ func petlaLiczba(ile int) string {
 	return string(cyfry)
 }
 
-// petlaCzyZatrzymana mówi, czy Operator zatrzymał pętlę tego rozkładu.
+// petlaCzyZatrzymana mówi, czy Operator zatrzymał pętlę tego rozkładu,
+// czytając znacznik pod zamkiem magazynu.
 func (p *adapterPetliStudia) petlaCzyZatrzymana(rozklad *petlaRozkladStudia) bool {
 	p.magazyn.zamek.Lock()
 	defer p.magazyn.zamek.Unlock()
 	return rozklad.zatrzymanie
 }
 
-// petlaZatrzymaj przestawia rozkład w stan zatrzymany wraz z powodem.
+// petlaZatrzymaj przestawia rozkład w stan zatrzymany wraz z powodem i
+// znacznikiem czasu ostatniej zmiany.
 func (p *adapterPetliStudia) petlaZatrzymaj(rozklad *petlaRozkladStudia, powod string) {
 	p.magazyn.zamek.Lock()
 	defer p.magazyn.zamek.Unlock()
@@ -585,11 +542,9 @@ func (p *adapterPetliStudia) petlaZatrzymaj(rozklad *petlaRozkladStudia, powod s
 	rozklad.Zaktualizowano = petlaTeraz()
 }
 
-// petlaZadaniaGotowe wybiera zadania, które wolno podjąć w tym obiegu: czekające
-// i takie, których wszystkie zależności są domknięte.
-//
-// Zadanie czekające na zależność NIEUDANĄ przechodzi w stan `blocked` — Operator
-// ma widzieć, że stoi ono na czymś, co się nie udało, a nie że „jeszcze czeka".
+// petlaZadaniaGotowe wybiera zadania, które wolno podjąć w tym obiegu:
+// czekające i takie, których wszystkie zależności są domknięte. Zadanie
+// czekające na zależność nieudaną przechodzi w stan blocked.
 func (p *adapterPetliStudia) petlaZadaniaGotowe(rozklad *petlaRozkladStudia,
 	naraz int, dopuszczeni map[string]bool) []*petlaZadanieStudia {
 
@@ -636,27 +591,10 @@ func (p *adapterPetliStudia) petlaZadaniaGotowe(rozklad *petlaRozkladStudia,
 	return gotowe
 }
 
-// petlaWykonajZadanie wykonuje jedno zadanie i oddaje, czy pętla zrobiła postęp.
-//
-// ── Zadanie jedzie REJESTREM, nie wywołaniem adaptera wprost ────────────────
-// To jest rozstrzygnięcie nośne dla całej pętli. Wywołanie metody adaptera
-// wprost byłoby krótsze o dwie warstwy — i ominęłoby oba owinięcia, które stoją
-// w rejestrze: podpis wykonawcy i ZAPORĘ BLOKAD FRAGMENTU. Pętla omijająca
-// zaporę byłaby cichą dziurą w blokadzie: Operator oznaczyłby podstawę prawną
-// jako nietykalną, a pętla przepisałaby ją, bo „to nie klient wołał".
-// Model woła komendy tą samą drogą co klient — więc pętla też.
-//
-// Tożsamość wykonawcy jedzie kontekstem (`kontrolaZapiszWykonawce`), bo żądanie
-// operacji kontekstowej pól podpisu nie ma. Bez tego zapora wzięłaby pracę pętli
-// za pracę Operatora, a blokada jest skierowana przeciw wykonawcy, nie przeciw
-// właścicielowi dokumentu — i przepuściłaby ją.
-//
-// ── Czym zadanie się wykonuje ───────────────────────────────────────────────
-// Zadanie treści i postaci idzie `studio.contextual.op`: wynik wchodzi do
-// dokumentu jako zmiana śledzona autora `model`, więc praca pętli jest widoczna
-// w podświetleniu zmian modelu i cofa się tak samo jak każda inna. Zadanie
-// rodzaju `export` idzie `studio.document.export.format` — bo wydania nie wolno
-// udawać operacją na treści.
+// petlaWykonajZadanie wykonuje jedno zadanie i oddaje, czy pętla zrobiła
+// postęp: komenda jedzie rejestrem z podpisem wykonawcy w kontekście;
+// zadanie treści idzie studio.contextual.op, zadanie wydania —
+// studio.document.export.format.
 func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 	rozklad *petlaRozkladStudia, zadanie *petlaZadanieStudia, okno string,
 	bilans *shared.StudioActionBalance) bool {
@@ -683,8 +621,8 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 		if odpowiedz.Blad != nil {
 			powod = protocol.Opis(*odpowiedz.Blad)
 		}
-		// Odmowa zapory blokad wraca właśnie tutaj — i właśnie dlatego trafia
-		// do kolejki jako powód przy zadaniu, a nie do dziennika obok.
+		// Odmowa zapory blokad trafia do kolejki jako powód przy zadaniu, nie
+		// do dziennika.
 		p.petlaDomknijPorazke(rozklad, zadanie, numer, ile, powod, nil, bilans)
 		return false
 	}
@@ -701,9 +639,8 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 	if kodPropozycji != "" {
 		zadanie.KodyCzynnosci = append(zadanie.KodyCzynnosci, kodPropozycji)
 	}
-	// Zadanie WYKONANE, które po drodze potknęło się o blokadę, niesie o tym
-	// zdanie przy sobie. Pominięcie fragmentu jest częścią prawdy o wyniku:
-	// „gotowe" bez wzmianki o blokadzie byłoby przemilczeniem.
+	// Zadanie wykonane mimo napotkanej blokady niesie o tym zdanie przy
+	// sobie.
 	if len(pominiete) > 0 {
 		nota := petlaZdanieOPominieciach(pominiete)
 		zadanie.PowodPorazki = &nota
@@ -734,16 +671,14 @@ func (p *adapterPetliStudia) petlaWykonajZadanie(ctx context.Context,
 	return true
 }
 
-// petlaZadanieNaKomende przekłada zadanie na komendę kontraktu wraz z ładunkiem.
-// Trzeci wynik jest powodem, dla którego przekład się nie udał.
+// petlaZadanieNaKomende przekłada zadanie na komendę kontraktu wraz
+// z ładunkiem. Trzeci wynik jest powodem, dla którego przekład się nie udał.
 func (p *adapterPetliStudia) petlaZadanieNaKomende(rozklad *petlaRozkladStudia,
 	zadanie *petlaZadanieStudia, okno string) (shared.MessageType, json.RawMessage, string) {
 
 	if zadanie.Rodzaj == shared.StudioTaskKindExport {
-		// Format wydania bierze się ze słów zlecenia, a nie z domysłu: „przygotuj
-		// wersję do druku" znaczy PDF, „oddaj w Wordzie" znaczy docx. Zlecenie
-		// nienazywające formatu dostaje PDF, bo tak Operator mówi o wydaniu
-		// najczęściej — i widzi to w bilansie, więc pomyłka jest odwracalna.
+		// Format wydania bierze się ze słów zlecenia; zlecenie bez nazwanego
+		// formatu dostaje pdf.
 		ladunek, err := json.Marshal(shared.StudioDocumentExportFormatRequest{
 			DocumentId: rozklad.KodDokumentu,
 			Format:     petlaFormatWydania(rozklad.Zlecenie + " " + zadanie.Polecenie),
@@ -758,8 +693,8 @@ func (p *adapterPetliStudia) petlaZadanieNaKomende(rozklad *petlaRozkladStudia,
 		return "", nil, "dokument nie ma wskazanego okna, więc pętla nie ma kanału " +
 			"modelu, którym mogłaby wykonać zadanie"
 	}
-	// Wyliczenia kontraktu są stałymi nietypowanymi, więc typ podajemy wprost —
-	// inaczej wnioskowanie dałoby zwykły napis, a pole żądania chce wyliczenia.
+	// Wyliczenia kontraktu są stałymi nietypowanymi, więc typ podajemy
+	// wprost.
 	var zakres shared.StudioOperationScope = shared.StudioOperationScopeDocument
 	if zadanie.ZakresOd != nil && zadanie.ZakresDo != nil {
 		zakres = shared.StudioOperationScopeSelection
@@ -789,24 +724,8 @@ func (p *adapterPetliStudia) petlaZadanieNaKomende(rozklad *petlaRozkladStudia,
 }
 
 // petlaPodpiszLadunek dokłada do ładunku podpis wykonawcy, w którego imieniu
-// pętla woła komendę.
-//
-// ── Dlaczego to jest konieczne, a nie ozdobne ───────────────────────────────
-// Zapora blokad fragmentu rozpoznaje wykonawcę z DWÓCH źródeł: z faktu gniazda
-// (serwer narzędzi modelu przedstawia się przy nawiązaniu) i z podpisu
-// w ładunku żądania. Pętlę puszcza Operator — przyciskiem w oknie — więc gniazdo
-// mówi „Operator", a pracę wykonuje MODEL. Bez podpisu zapora wzięłaby robotę
-// pętli za robotę Operatora i przepuściła ją przez fragment zablokowany przed
-// wykonawcą. Blokada jest skierowana przeciw wykonawcy, nie przeciw właścicielowi
-// dokumentu — a pętla jest wykonawcą.
-//
-// ── Dlaczego przez mapę, a nie przez strukturę żądania ──────────────────────
-// `studio.contextual.op` pól podpisu w kontrakcie nie ma. Podpis nie jedzie tu
-// jednak drutem: ładunek jest wywołaniem WEWNĘTRZNYM rdzenia, składanym po to,
-// żeby przejść tą samą drogą, którą idzie klient — wraz z jej owinięciami. Nazwy
-// pól są te, które zapora czyta z każdego ładunku Studia, więc podpis jest
-// oświadczeniem pętli o sobie, a nie nowym polem kontraktu. Obsługiwacz komendy
-// pól nadmiarowych nie widzi.
+// pętla woła komendę: zapora blokad fragmentu rozpoznaje wykonawcę z podpisu
+// w ładunku, bo gniazdo mówi „Operator”, a pracuje model.
 func petlaPodpiszLadunek(ladunek json.RawMessage, rozklad *petlaRozkladStudia) json.RawMessage {
 	pola := map[string]json.RawMessage{}
 	if err := json.Unmarshal(ladunek, &pola); err != nil {
@@ -833,7 +752,8 @@ func petlaPodpiszLadunek(ladunek json.RawMessage, rozklad *petlaRozkladStudia) j
 	return podpisany
 }
 
-// petlaFormatWydania rozpoznaje format wydania ze słów zlecenia.
+// petlaFormatWydania rozpoznaje format wydania ze słów zlecenia, dobierając
+// format najbliższy początkowi treści, a przy braku wskazania — pdf.
 func petlaFormatWydania(tresc string) shared.StudioExportFormat {
 	nazwy := map[string]shared.StudioExportFormat{
 		"docx": shared.StudioExportFormatDocx,
@@ -899,12 +819,8 @@ func (p *adapterPetliStudia) petlaKontekstWykonawcy(ctx context.Context,
 }
 
 // petlaCzytajWynik wyjmuje z odpowiedzi to, czego pętla potrzebuje: treść
-// wyniku, kod propozycji i wykaz pominięć.
-//
-// Czytanie idzie po polach, nie po strukturze jednej komendy: pętla wykonuje
-// zadania kilkoma różnymi komendami, a bilans blokad dopisuje do odpowiedzi
-// zapora, nie obsługiwacz. Struktura konkretnej komendy zgubiłaby więc albo
-// bilans, albo wynik.
+// wyniku, kod propozycji i wykaz pominięć, czytane po polach, bo pętla
+// wykonuje zadania kilkoma różnymi komendami.
 func petlaCzytajWynik(ladunek json.RawMessage) (string, string, []shared.StudioSkippedItem) {
 	if len(ladunek) == 0 {
 		return "", "", nil
@@ -929,8 +845,8 @@ func petlaCzytajWynik(ladunek json.RawMessage) (string, string, []shared.StudioS
 	if pola.Balance != nil {
 		pominiete = append(pominiete, pola.Balance.Skipped...)
 	}
-	// Wydanie do formatu ubozszego niż dokument oddaje własny wykaz cech
-	// pominiętych. To też jest pominięcie i też ma być widoczne w kolejce.
+	// Wydanie do formatu uboższego niż dokument oddaje własny wykaz cech
+	// pominiętych.
 	if pola.Result != nil {
 		if wynik == "" && pola.Result.Path != nil {
 			wynik = *pola.Result.Path
@@ -955,7 +871,8 @@ func petlaPominiecieZadania(zadanie *petlaZadanieStudia,
 	return przeniesione
 }
 
-// petlaZdanieOPominieciach składa zdanie o pominięciach dla wiersza kolejki.
+// petlaZdanieOPominieciach składa zdanie o pominięciach dla wiersza kolejki,
+// dołączając nazwę blokady do każdego powodu, gdy ta jest znana.
 func petlaZdanieOPominieciach(pominiete []shared.StudioSkippedItem) string {
 	czesci := make([]string, 0, len(pominiete))
 	for _, pozycja := range pominiete {
@@ -968,7 +885,8 @@ func petlaZdanieOPominieciach(pominiete []shared.StudioSkippedItem) string {
 	return "zadanie wykonane z pominięciami: " + strings.Join(czesci, "; ")
 }
 
-// petlaDomknijPorazke zamyka zadanie stanem nieudanym i wpisuje powód do bilansu.
+// petlaDomknijPorazke zamyka zadanie stanem nieudanym i wpisuje powód do
+// bilansu wraz ze wskazaniem blokady, gdy ta zaszła.
 func (p *adapterPetliStudia) petlaDomknijPorazke(rozklad *petlaRozkladStudia,
 	zadanie *petlaZadanieStudia, numer, ile int, powod string,
 	blokada *shared.StudioSkippedItem, bilans *shared.StudioActionBalance) {
@@ -1018,13 +936,9 @@ func (p *adapterPetliStudia) petlaOglosPostep(rozklad *petlaRozkladStudia,
 
 // ── studio.plan.stop ────────────────────────────────────────────────────────
 
-// ZatrzymajPetle obsługuje `studio.plan.stop`.
-//
-// Zatrzymanie ZATRZYMUJE: podnosi znacznik, który pętla sprawdza przed każdym
-// zadaniem i po każdym obiegu, a zadania stojące w biegu odstawia z powrotem do
-// czekania — wraz z powodem, który mówi, że zostały PRZERWANE. Zadanie nie
-// znika i nie udaje domkniętego; to, co zrobiono przed zatrzymaniem, zostaje
-// w dokumencie.
+// ZatrzymajPetle obsługuje studio.plan.stop: podnosi znacznik, który pętla
+// sprawdza przed każdym zadaniem i po każdym obiegu, a zadania w biegu
+// odstawia z powrotem do czekania z powodem przerwania.
 func (p *adapterPetliStudia) ZatrzymajPetle(_ context.Context,
 	z shared.StudioPlanStopRequest) (shared.StudioPlanStopResponse, error) {
 
@@ -1068,12 +982,9 @@ func (p *adapterPetliStudia) ZatrzymajPetle(_ context.Context,
 
 // ── Nastawy pętli ───────────────────────────────────────────────────────────
 
-// petlaNastawy czyta nastawy pętli obsługiwaczem `studio.agents.settings.get`.
-//
-// Oddaje nastawy albo — gdy pętli włączyć nie sposób — powód odmowy nazywający
-// brak. Powód jest napisem, nie błędem: kontrakt `studio.plan.run` ma na to pole
-// `refusalReason`, a Operator ma dostać zdanie mówiące, co włączyć, nie samo
-// „nie".
+// petlaNastawy czyta nastawy pętli obsługiwaczem studio.agents.settings.get
+// i oddaje je albo — gdy pętli włączyć nie sposób — powód odmowy nazywający
+// brak, jako napis w polu refusalReason.
 func (p *adapterPetliStudia) petlaNastawy(ctx context.Context,
 	kodDokumentu string) (shared.StudioAgentSettings, string) {
 
@@ -1119,7 +1030,8 @@ func (p *adapterPetliStudia) petlaNastawy(ctx context.Context,
 	return wynik.Settings, ""
 }
 
-// petlaGranicaObiegow oddaje górną granicę obiegów tego uruchomienia.
+// petlaGranicaObiegow oddaje górną granicę obiegów tego uruchomienia:
+// z żądania, z nastawy Operatora albo z wartości domyślnej.
 func petlaGranicaObiegow(nastawy shared.StudioAgentSettings, zZadania *int) int {
 	if zZadania != nil && *zZadania > 0 {
 		return *zZadania
@@ -1130,7 +1042,8 @@ func petlaGranicaObiegow(nastawy shared.StudioAgentSettings, zZadania *int) int 
 	return petlaObiegiDomyslnie
 }
 
-// petlaGranicaBezPostepu oddaje liczbę obiegów bez postępu, po której pętla staje.
+// petlaGranicaBezPostepu oddaje liczbę obiegów bez postępu, po której pętla
+// staje, z nastawy Operatora albo z wartości domyślnej.
 func petlaGranicaBezPostepu(nastawy shared.StudioAgentSettings) int {
 	if nastawy.LoopNoProgressThreshold != nil && *nastawy.LoopNoProgressThreshold > 0 {
 		return *nastawy.LoopNoProgressThreshold
@@ -1152,7 +1065,8 @@ func petlaWykonawcowNaraz(nastawy shared.StudioAgentSettings) int {
 	return petlaWykonawcowDomyslnie
 }
 
-// petlaDopuszczeni składa zbiór wykonawców dopuszczonych do rozkładu.
+// petlaDopuszczeni składa zbiór wykonawców dopuszczonych do rozkładu
+// z wykazu identyfikatorów żądania, pomijając wpisy puste.
 func petlaDopuszczeni(kody []string) map[string]bool {
 	if len(kody) == 0 {
 		return nil
@@ -1168,13 +1082,9 @@ func petlaDopuszczeni(kody []string) map[string]bool {
 
 // ── Rejestracja ─────────────────────────────────────────────────────────────
 
-// zarejestrujPetleWykonawczaStudia wpina pięć komend rodziny `studio.plan.*`.
-//
-// Port Studia wchodzi tu rzutowaniem DWUWARTOŚCIOWYM na typ adaptera modułu:
-// pętla stoi na dokumencie i na silniku modelu, a jedno i drugie należy do tego
-// adaptera. Port wypełniony atrapą albo innym typem nie wywraca montażu —
-// rodzina zostaje nieobsłużona i widać to w wykazie komend powitania, tak samo
-// jak każda domena bez portu.
+// zarejestrujPetleWykonawczaStudia wpina pięć komend rodziny studio.plan.*.
+// Port Studia wchodzi rzutowaniem dwuwartościowym na typ adaptera modułu,
+// bo pętla stoi na dokumencie i na silniku modelu tego adaptera.
 func zarejestrujPetleWykonawczaStudia(r *Rejestr, m Studio, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -1190,11 +1100,8 @@ func zarejestrujPetleWykonawczaStudia(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioPlanTaskUpdate, obsluz(petla.PrzestawZadanie))
 	r.Zarejestruj(shared.CommandStudioPlanStop, obsluz(petla.ZatrzymajPetle))
 
-	// Uruchomienie pętli zmienia treść dokumentu — każde wykonane zadanie
-	// odkłada w nim zmianę śledzoną autora `model`. Rozgłoszenie idzie tą samą
-	// drogą, którą idzie po operacji kontekstowej: dokument czytamy ponownie,
-	// bo odpowiedź komendy go nie niesie. Nieudany odczyt gasi samo
-	// rozgłoszenie, a nie przebieg — praca jest już zapisana.
+	// Uruchomienie pętli zmienia dokument; czytamy go ponownie, bo
+	// odpowiedź komendy go nie niesie.
 	r.Zarejestruj(shared.CommandStudioPlanRun,
 		obsluz(func(ctx context.Context, z shared.StudioPlanRunRequest) (shared.StudioPlanRunResponse, error) {
 			odpowiedz, err := petla.PuscPetle(ctx, z)

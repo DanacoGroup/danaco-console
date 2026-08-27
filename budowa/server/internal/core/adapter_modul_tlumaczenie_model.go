@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: most modułu Translate do modelu w jednym miejscu —
-// wybór kanału, złożenie polecenia przekładu, wywołanie modelu i rozgłoszenie
-// zmiany panelu. Metody stoją na wspólnym `*adapterTlumaczenia`, którego typ,
-// konstruktor i przedrostki deklaruje `adapter_modul_tlumaczenie.go`.
-//
-// Droga modelu (przekład panelu, rozpoznanie języka) to jedna odpowiedzialność
-// wołana z trzech komend (`target.add`, `backtranslation.run`,
-// `source.detect`), więc leży w jednym pliku i ma jeden opis granicy: brak
-// kanału jest odmową wprost, nigdy pustym napisem udającym przekład.
-//
-// Kanał wskazuje Operator polem `channelId`, a rozstrzyga to `kanalZadania`:
-//
-//   - wskazania nie ma → kanał domyślny czynny (brak wskazania jest wskazaniem
-//     na wartość domyślną, nie odmową);
-//   - wskazanie wskazuje kanał czynny i gotowy → przekład idzie tym kanałem;
-//   - wskazanie wskazuje kanał nieznany albo nieczynny → odmowa nazwana. Ciche
-//     zejście na kanał domyślny wypełniłoby panel przekładem modelu, którego
-//     Operator nie wybrał, i nic by o tym nie powiedziało.
+// Odpowiedzialność pliku: most modułu Translate do modelu — wybór kanału, złożenie polecenia przekładu, wywołanie modelu i rozgłoszenie zmiany panelu, dla przekładu, przekładu zwrotnego i rozpoznania języka.
 package core
 
 import (
@@ -27,32 +10,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZWyjsciem wpina szynę zdarzeń rdzenia — most, którym moduł rozgłasza
-// `translate.translation.changed` po zmianie treści panelu. Wpięcie robi
-// `zarejestrujTlumaczenie` (ten sam emiter, który dostają pozostałe moduły
-// w `kompozycja.go`), więc montaż portów nie musi znać tej zależności.
-// Nadajnik niepodłączony nie jest błędem: rdzeń tłumaczy także wtedy, gdy nikt
-// nie słucha zdarzeń — `emiter.wyslij` sam odsiewa pusty nadajnik.
+// ZWyjsciem wpina szynę zdarzeń rdzenia — most, którym moduł rozgłasza translate.translation.changed po zmianie treści panelu.
 func (a *adapterTlumaczenia) ZWyjsciem(wyjscie *emiter) *adapterTlumaczenia {
 	a.wyjscie = wyjscie
 	return a
 }
 
-// kanalZadania rozstrzyga, którym kanałem pójdzie operacja modelu — jedno
-// miejsce dla wszystkich komend modelowych modułu, żeby wskazanie Operatora
-// znaczyło wszędzie to samo.
-//
-// Odmowy są trzy i każda mówi o czym innym: kanał nieznany, kanał znany, lecz
-// wyłączony, i kanał włączony, lecz bez zbudowanego adaptera. Naprawia się je
-// trzema różnymi ruchami (poprawić identyfikator, włączyć kanał, poprawić jego
-// konfigurację), więc każda ma własne zdanie. Żadna nie schodzi po cichu na
-// kanał domyślny, bo przekład wykonany innym modelem niż wskazany byłby
-// przekładem, o którym Operator nie miałby skąd wiedzieć.
-//
-// Kanał „gotowy" znaczy tu to samo, co w `Rejestr.Kontrakt(true)`: wiersz
-// czynny, który ma zbudowany adapter. Wiersz z `aktywny = 1` bez
-// adaptera (rodzaj bez fabryki, fabryka odmówiła budowy) odmówi przy pierwszej
-// turze, więc lepiej powiedzieć to teraz niż w połowie przekładu.
+// kanalZadania rozstrzyga, którym kanałem pójdzie operacja modelu, na podstawie wskazania Operatora, z odmową wprost przy kanale nieznanym, wyłączonym albo bez zbudowanego adaptera.
 func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 	if a.kanaly == nil {
 		return "", bladBrakuKanalowTlumaczenia()
@@ -61,8 +25,7 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 	if wskazany != nil {
 		kod = strings.TrimSpace(*wskazany)
 	}
-	// Brak wskazania jest wskazaniem na kanał domyślny — droga sprzed pola
-	// `channelId`, zachowana bez zmiany.
+	// Brak wskazania jest wskazaniem na kanał domyślny, drogą sprzed pola channelId.
 	if kod == "" {
 		domyslny, ok := a.domyslnyKanalModelu()
 		if !ok {
@@ -71,11 +34,7 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 		return domyslny, nil
 	}
 
-	// Wykaz, a nie `Kontrakt(true)`: wykaz niesie także wiersze nieczynne, więc
-	// da się odróżnić „nie ma takiego kanału" od „jest, ale wyłączony". Gdyby
-	// szukać wyłącznie wśród czynnych, obie sytuacje zlałyby się w jedną odmowę
-	// i Operator nie wiedziałby, czy pomylił identyfikator, czy zapomniał
-	// włączyć kanał.
+	// Wykaz niesie też wiersze nieczynne, więc odróżnia brak kanału od kanału wyłączonego.
 	for _, wiersz := range a.kanaly.Wykaz() {
 		if wiersz.Identyfikator() != kod && strings.TrimSpace(wiersz.Kod) != kod {
 			continue
@@ -100,11 +59,7 @@ func (a *adapterTlumaczenia) kanalZadania(wskazany *string) (string, error) {
 			"(channel.list) albo pominąć pole channelId, żeby jechać kanałem domyślnym"))
 }
 
-// domyslnyKanalModelu ustala domyślny czynny kanał modelu — pierwszy wiersz
-// rejestru czynny i gotowy do pracy (wzór `adapter_kolejki.go`:
-// `rozwiazKanalPozycji`). Droga dla żądań bez `channelId`. Brak rejestru albo
-// brak czynnego kanału znaczy „nie ma czym wołać modelu": druga wartość false,
-// a wywołujący odmawia wprost, zamiast oddać wynik udający przekład.
+// domyslnyKanalModelu ustala domyślny czynny kanał modelu: pierwszy wiersz rejestru czynny i gotowy do pracy, droga dla żądań bez channelId.
 func (a *adapterTlumaczenia) domyslnyKanalModelu() (string, bool) {
 	if a.kanaly == nil {
 		return "", false
@@ -116,23 +71,7 @@ func (a *adapterTlumaczenia) domyslnyKanalModelu() (string, bool) {
 	return czynne[0].Id, true
 }
 
-// przetlumaczModelem woła model, żeby przełożyć tekst źródłowy na język
-// docelowy panelu, i oddaje sam przekład. Kanał rozstrzyga `kanalZadania` ze
-// wskazania Operatora; jego brak albo wskazanie niedobre kończy się odmową
-// wprost. Pusta odpowiedź modelu również jest odmową, bo pusty panel „po
-// przekładzie" byłby atrapą.
-//
-// Słownik Operatora wchodzi dwa razy: raz do treści polecenia
-// (`poleceniePrzekladu` dostaje `wiazania`), raz po odpowiedzi modelu jako
-// mechaniczna podmiana terminów zostawionych w brzmieniu źródłowym
-// (`zastosujTerminySlownika`, ta sama funkcja co w `glossary.apply`).
-// Uzasadnienie obu dróg niesie nagłówek
-// `adapter_modul_tlumaczenie_polecenia.go`. Nieudany odczyt słownika odmawia
-// całego przekładu, bo przekład pomijający terminologię Operatora oddawałby po
-// cichu co innego, niż zamówiono.
-//
-// Ton panelu też idzie do polecenia — inaczej kolumna `ton` (`panel.tone.set`)
-// byłaby zapisem bez skutku.
+// przetlumaczModelem woła model, żeby przełożyć tekst źródłowy na język docelowy panelu, stosując słownik Operatora w poleceniu i po odpowiedzi, oraz oddaje sam przekład.
 func (a *adapterTlumaczenia) przetlumaczModelem(ctx context.Context,
 	oknoKod, jezykDocelowy string, ton *string, tekstZrodlowy string,
 	wskazanyKanal *string) (string, error) {
@@ -154,20 +93,12 @@ func (a *adapterTlumaczenia) przetlumaczModelem(ctx context.Context,
 	if przeklad == "" {
 		return "", bladTlumaczenia(errPustyPrzeklad)
 	}
-	// Siatka bezpieczeństwa słownika. Podmiana obejmuje wyłącznie odpowiedniki
-	// języka docelowego — terminy nietykalne mają w wyniku zostać w brzmieniu
-	// źródłowym, więc podmienianie ich byłoby złamaniem zakazu Operatora, a nie
-	// jego pilnowaniem. Liczba podmian nie idzie nigdzie dalej: kontrakt
-	// `target.add` nie ma pola na taką liczbę, a `ChangedCount` należy do
-	// `glossary.apply`, nie do przekładu.
+	// Podmiana słownika obejmuje odpowiedniki celu; terminy nietykalne zostają w brzmieniu źródłowym.
 	przeklad, _ = zastosujTerminySlownika(przeklad, wiazania.odpowiedniki)
 	return przeklad, nil
 }
 
-// przetlumaczZwrotnieModelem woła model o przekład panelu z powrotem na język
-// źródłowy okna — obsługa `backtranslation.run`. Słownik tu nie wchodzi (powód
-// przy `polecenieTlumaczeniaZwrotnego`), bo kontrola wierności, która sama
-// naprawia terminologię, niczego nie kontroluje.
+// przetlumaczZwrotnieModelem woła model o przekład panelu z powrotem na język źródłowy okna, obsługując backtranslation.run bez udziału słownika.
 func (a *adapterTlumaczenia) przetlumaczZwrotnieModelem(ctx context.Context,
 	oknoKod, jezykZrodlowy, tekstPanelu string, wskazanyKanal *string) (string, error) {
 
@@ -187,17 +118,13 @@ func (a *adapterTlumaczenia) przetlumaczZwrotnieModelem(ctx context.Context,
 	return zwrotne, nil
 }
 
-// rozpoznajJezykModelem pyta model o język tekstu i oddaje surową, przyciętą
-// odpowiedź. Kanał jak wyżej — domyślny czynny, brak to odmowa wprost. Pusta
-// odpowiedź modelu jest odmową, nie „nierozpoznanym językiem": rdzeń nie
-// zgaduje ani nie udaje rozpoznania.
+// rozpoznajJezykModelem pyta model o język tekstu i oddaje surową, przyciętą odpowiedź; pusta odpowiedź modelu jest odmową.
 func (a *adapterTlumaczenia) rozpoznajJezykModelem(ctx context.Context, tekst string) (string, error) {
 	kanal, ok := a.domyslnyKanalModelu()
 	if !ok {
 		return "", bladBrakuKanalowTlumaczenia()
 	}
-	// Rozpoznanie języka nie należy do żadnego okna — Zasięg okna zostaje pusty
-	// (żądanie `source.detect` nie niesie okna, tylko sam tekst).
+	// Rozpoznanie języka nie należy do żadnego okna: żądanie source.detect niesie sam tekst.
 	odpowiedz, err := a.zapytajModel(ctx, "", kanal, polecenieRozpoznaniaJezyka(tekst))
 	if err != nil {
 		return "", err
@@ -209,12 +136,7 @@ func (a *adapterTlumaczenia) rozpoznajJezykModelem(ctx context.Context, tekst st
 	return odpowiedz, nil
 }
 
-// rozglosZmianePanelu rozgłasza `translate.translation.changed` po zmianie
-// treści panelu. Zdarzenie idzie bez identyfikatora sesji: schemat okna
-// tłumaczenia nie wiąże sesji (patrz `dane.OknoTlumaczenia`), więc zmiana
-// rozgłasza się bez niej, zamiast nie rozgłaszać się wcale. Nadajnik
-// niepodłączony jest odsiewany w `emiter.wyslij`, a nil-emiter — w jego
-// odbiorniku nil, więc wywołanie jest bezpieczne bez wpiętej szyny.
+// rozglosZmianePanelu rozgłasza translate.translation.changed po zmianie treści panelu, bez identyfikatora sesji, bo schemat okna tłumaczenia jej nie wiąże.
 func (a *adapterTlumaczenia) rozglosZmianePanelu(zmiana shared.ChangeKind, panel dane.PanelTlumaczenia) {
 	a.wyjscie.wyslij(shared.EventTranslateTranslationChanged, "",
 		shared.TranslateTranslationChangedEvent{Change: zmiana, Panel: zlozPanelTlumaczenia(panel)})

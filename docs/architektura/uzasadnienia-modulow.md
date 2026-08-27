@@ -2717,3 +2717,37 @@ a nie awarią platformy.
 Każda ramka rozmowy idzie do dziennika: żądanie i odpowiedź zapisują się wraz
 z korelacją, więc wykaz dziennika protokołu pokazuje rozmowę, która naprawdę
 się odbyła, a diagnoza błędu integracji ma z czego wyjść.
+
+## budowa/server/internal/core/adapter_modul_asystent_czynnosci.go
+
+Typ `adapterAsystenta` i przyjęcie polecenia głosowego deklaruje
+`adapter_modul_asystent.go`; ten plik dokłada metody na tym samym typie, bez
+drugiej deklaracji. Zlecenie asystenta ma automat stanu
+`queued/running/paused/done/failed/cancelled` z kontraktu — inny byt niż
+katalog akcji (`core/akcje.go`, statyczny spis dostępnych czynności) i inny
+niż stan pętli sesyjnej kolejki. Nieznane zlecenie wraca odmową, nie cichą
+zgodą: sterowanie zleceniem, którego nie ma, nie może wyglądać jak sukces.
+
+Stan sprzed zapisu w `StanCzynnosci` czytany jest zawsze, bo od niego zależą
+dwie rzeczy: `resume` ma wznowić zlecenie wstrzymane, a nie dokładać drugiej
+tury zleceniu, które właśnie biegnie (oba stoją po zapisie w stanie
+`running`, więc po nim już ich nie odróżnić); a zlecenie zamknięte
+(`done`/`failed`/`cancelled`) nie ma czego wznawiać ani wstrzymywać. Bez tego
+odczytu `resume` na zleceniu zamkniętym przestawiłby je na `running`, nikt by
+go nie podjął — wykonawca wchodzi tylko ze stanu `queued`/`paused` — i wiersz
+stałby w toku bez końca, bez wykonawcy i bez zdarzenia.
+
+Anulowanie i wstrzymanie sięgają do biegu, nie tylko do wiersza: zlecenie
+biegnące ma turę modelu w locie, a samo przestawienie stanu zostawiłoby ją
+pracującą dalej na cudzy rachunek. Przerwanie idzie przed zapisem, żeby
+wykonawca zastał już decyzję Operatora, gdy tura wróci z błędem.
+
+Priorytet idzie osobnym zapisem, bo kontrakt pozwala przy sterowaniu zmienić
+kolejność obsługi w Actions Monitor — przyjęcie priorytetu bez zapisania go
+byłoby potwierdzeniem czynności, która się nie odbyła.
+
+`retry` przestawia zlecenie na `queued`, które znaczy „do wykonania", nie
+„czeka na kolejny ręczny ruch": wykonawca podejmuje je tą samą drogą, którą
+podejmuje zlecenie świeżo złożone. `resume` oddaje zlecenie temu samemu
+wykonawcy, tylko ze stanem wejścia `running`, bo wykonawca podejmuje
+wyłącznie `queued`. Bez wpiętego wykonawcy żadna z dwóch dróg nie robi nic.

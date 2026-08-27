@@ -1030,3 +1030,11 @@ Klasa `dn-sesja` należy do karty sesji w pasie powłoki
 zawężenia selektora rodzicem. Korzeń sceny nosi własną nazwę `dn-scena-sesji`,
 ponieważ w przeciwnym razie wpadłby pod tamtą regułę i zszedł do szerokości
 słupka nawigacji.
+
+## budowa/klient-poprzedni/src/moduly/library/indeks.ts
+
+Moduł nie osadza się sam w dokumencie i nie zna powłoki: oddaje element,
+a warstwa składająca rozstrzyga, gdzie go postawić.
+
+Kod `library` odpowiada kolumnie `modul.kod` w rdzeniu, a wpis do rejestru
+modułów wiąże widok z modułem właśnie po tym kodzie.

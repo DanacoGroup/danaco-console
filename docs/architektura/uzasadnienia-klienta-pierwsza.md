@@ -6062,3 +6062,18 @@ o czymś innym niż wykaz pod nim.
 Wykaz przerysowany z odpowiedzi pojedynczej pozycji potrafiłby pokazać stan, którego
 rdzeń nie ma, dlatego wywołanie zmieniające katalog zawsze kończy się ponownym
 odczytem wykazu.
+
+## budowa/klient-poprzedni/src/moduly/automations/walidacja-definicji.ts
+Rdzeń ocenia układ zależności komendą `orchestration.validate`, lecz ocenia go dopiero po zapisie
+i wyłącznie na krawędziach grafu. Zastrzeżenia rozstrzygalne bez pytania rdzenia — krok bez
+identyfikatora, identyfikator powtórzony, krok odwołujący się do poprzednika, którego w definicji
+nie ma, krok bez treści właściwej jego rodzajowi — okno wypowiada od razu, przy wpisywaniu, ponieważ
+czekanie z nimi na odpowiedź rdzenia oznaczałoby zapis definicji wadliwej. Zastrzeżenie nie jest
+bramą: zapis pozostaje możliwy, a wynik jest ostrzeżeniem sygnalizowanym przy kroku, którego dotyczy;
+tak samo postępuje rdzeń z układem zależności zawierającym cykl. Plik jest czysty: nie dotyka
+dokumentu i nie woła rdzenia. Krok bez połączenia jest zgłaszany dopiero wtedy, gdy definicja
+w ogóle używa zależności — definicja bez ani jednej zależności wykonuje kroki w kolejności zapisu
+i jest poprawna, więc każdy jej krok byłby wtedy zgłoszony bez powodu. Rachunek cyklu jest zwykłym
+przeglądem w głąb ze znacznikiem odwiedzin: krok napotkany powtórnie na tej samej ścieżce zamyka
+cykl, a kroki cyklu wracają kompletem, bo sygnalizacja stoi przy każdym z nich, a nie przy jednym
+wybranym.

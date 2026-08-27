@@ -2,14 +2,15 @@
 
 .cd-siatka-srodowisk { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
-.cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; padding: var(--dn-od-4); }
+/* Pas krawędziowy karty. Ani znak, ani treść nie wchodzą w margines: wyściółka
+   idzie o stopień wyżej, więc znak w lewym górnym narożniku i pismo pod nim
+   przesuwają się w prawo i w dół (wskazanie Właściciela z 27.08.2026). */
+.cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; padding: var(--dn-od-8); }
 
 .cd-karta-akcent .cd-metryka-czlon { display: block; }
 
 .cd-karta-akcent > .cd-karta-godlo svg { width: 100%; height: 100%; }
 
-/* Stopka karty wiodącej dosuwa się do dna kafla — sama karta jest kolumną. */
-.dn-karta-srodowiska--akcent > .dn-karta-stopka { margin-top: auto; }
 
 .cd-karta-meta .cd-wejdz { margin-left: auto; }
 
@@ -19,19 +20,40 @@
 
 .cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
 
-/* Cztery kafle w rzędzie. Szerokość kafla wiąże stopień nazwy: przy 289 px
-   kafla układ poziomy (znak | treść | grot) oddaje nazwie 144 px po odjęciu
-   wyściółki 48, znaku 40, grotu 33 i dwóch luk 24 px. „Automations" zajmuje
-   128 px na stopniu 21 — zapas 16 px. Na stopniu 24 (148 px) nie wchodzi,
-   dlatego nazwa modułu stoi niżej niż nazwa środowiska. */
+/* Liczba kafli w rzędzie zależy od tego, ile miejsca potrzebuje NAZWA.
+   Nazwa modułu stoi na stopniu równym nazwie środowiska (36 px), a najdłuższa
+   („Automations") zajmuje na nim 218 px. Kafel w układzie poziomym potrzebuje
+   więc: 218 nazwy + 54 znaku + 8 + 8 luk + 38 grotu + 40 wyściółki = 366 px.
+   Rachunek szerokości kafla: nazwa 148 px („Automations" na 24 px) + znak 40
+   + luka znak→treść 16 (podwójna) + luka treść→grot 8 + grot 38 + wyściółka
+   32 z lewej i 64 z prawej = 346 px, z zapasem pomiarowym 360 px. Stąd progi
+   płótna: 4 × 360 + 36 = 1476 px, 3 × 360 + 24 = 1104 px, 2 × 360 + 12 = 732 px.
+   Nazwa nigdy nie wychodzi z kafla przy żadnej szerokości okna. */
 .cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
+@container plotno (max-width: 1490px) {
+  .cd-siatka-kafli { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container plotno (max-width: 1115px) {
+  .cd-siatka-kafli { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container plotno (max-width: 740px) {
+  .cd-siatka-kafli { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Luki wewnątrz kafla zeszły do minimów wskazanych przez Właściciela
+   (znak → treść 8 px, grot → krawędź 24 px), żeby oddać szerokość nazwie:
+   przy nich nazwa dostaje 147 px i mieści się na stopniu 21 px (128 px). */
 .cd-kafel {
   display: flex;
   align-items: center;
-  gap: var(--dn-od-3);
+  gap: var(--dn-od-4);
   width: 100%;
-    padding: var(--dn-od-6);
+  /* Margines lewy równy marginesowi karty środowiska (32 px), prawy dwa razy
+     większy (64 px) — wskazanie Właściciela. Pion zostaje na 20 px. */
+  padding: var(--dn-od-5) var(--dn-od-16) var(--dn-od-5) var(--dn-od-8);
 }
 
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
@@ -40,13 +62,14 @@
 
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
-/* Grot dosuwa się do prawej krawędzi kafla i odsuwa od treści pełnym stopniem
-   siatki: bez tego zapasu nazwa modułu i grot czytały się jako jedno pasmo. */
+/* Grot stoi po prawej, ale nie przy samej krawędzi: odsuwa się od niej o dwa
+   stopnie siatki, żeby nie dotykał obrysu kafla (wskazanie Właściciela —
+   strzałka w lewo). Od treści dzieli go luka minimalna 8 px. */
 .cd-kafel-grot {
   display: flex;
   align-items: center;
   margin-left: auto;
-  padding-left: var(--dn-od-4);
+  padding-left: var(--dn-od-2);
   flex: none;
 }
 
@@ -102,11 +125,11 @@
 .cd-siatka-wlasnych:empty + .cd-wlasne-pusto { display: flex; }
 
 @container plotno (max-width: 820px) {
-  .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cd-siatka-srodowisk, .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @container plotno (max-width: 500px) {
-  .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
+  .cd-siatka-srodowisk, .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
 }
 
 .cd-strona .cd-siatka-srodowisk > .dn-karta-srodowiska { overflow: hidden; }

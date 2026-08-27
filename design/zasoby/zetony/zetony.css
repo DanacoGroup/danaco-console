@@ -223,7 +223,7 @@
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
   /* Cel kliknięcia grotu wejścia. Znak w środku jest niższy (--dn-wym-grot-znak):
      przycisk ma być duży pod palcem, znak marki — spokojny. */
-  --dn-wym-grot: 108px;            /* cel przycisku grotu na karcie środowiska */
+  --dn-wym-grot: 108px;            /* cel przycisku grotu — obejmuje znak 88 x 54 px */
   --dn-wym-grot-znak: 54px;        /* wysokość podwójnego szewronu w przycisku */
   /* Grot kafla modułu stoi na wartości niezależnej, nie na udziale celu: inaczej
      powiększenie przycisku na karcie środowiska pociągałoby za sobą kafle. */
@@ -231,8 +231,11 @@
   /* Emblemat środowiska i znak modułu mają jeden wymiar — rozstrzygnięcie
      Właściciela z 27.08.2026: kafel strefy 2 czyta się na równi z kartą
      strefy 1, więc znak nie może być od niej mniejszy. */
-  --dn-wym-godlo-karty: 54px;      /* emblemat karty środowiska */
-  --dn-wym-znak-modulu: 40px;      /* znak kafla modułu — o stopień mniejszy od emblematu */
+  --dn-wym-godlo-karty: 62px;      /* emblemat karty środowiska (54 + 15%) */
+  /* Znak kafla modułu ODWIĄZANY od emblematu karty: powiększenie emblematu
+     dotyczyło kart środowisk, a w kaflu modułu nazwa 36 px nie ma już zapasu —
+     każdy piksel znaku odbierany jest nazwie. */
+  --dn-wym-znak-modulu: 40px;      /* znak kafla modułu */
   --dn-wym-kafel-modulu: 122px;    /* najmniejsza wysokość kafla modułu */
   --dn-wym-spinner: 14px;
   --dn-wym-fokus: 2px;             /* pierścień fokusu */
@@ -368,6 +371,9 @@
   --dn-obrys: var(--dn-szary-200);           /* #D5D7DC · L*  86 */
   --dn-obrys-subtelny: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 */
   --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
+  /* Kreska wyrazna — kontrolka stojaca na plotnie, bez wlasnego wypelnienia.
+     Obrys mocny daje na powierzchni panelu 8 stopni L* i ginie; ten daje 30. */
+  --dn-obrys-wyrazny: var(--dn-szary-400);   /* #9A9EA6 · L* 63 */
 
   --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
@@ -461,6 +467,7 @@
   --dn-obrys: var(--dn-szary-800);           /* #2A2A2A */
   --dn-obrys-subtelny: var(--dn-szary-850);  /* #212121 */
   --dn-obrys-mocny: var(--dn-szary-750);     /* #3A3A3A */
+  --dn-obrys-wyrazny: var(--dn-szary-700);   /* #464A52 · L* 31,4 */
 
   --dn-tekst: var(--dn-szary-100);           /* #ECECEC · 15,0:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł

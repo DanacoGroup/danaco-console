@@ -6,7 +6,106 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-(brak — wszystkie tereny tej tury zamknięte i scalone)
+### usterki-rdzenia
+
+Trzy usterki wykryte pomiarem w poprzedniej turze, wszystkie poza zakresem terenów,
+które je znalazły. Każda jest wąska i jednoznaczna.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/usterki-rdzenia` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/adapter_rozmowa_petla.go`, `adapter_przejecie_sterowania.go`, `zgodnosc_kontraktu_test.go`, `blokady_skutek_test.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
+
+**Pierwsza — ukończenie biegu kłamie przy błędzie kanału.** `powodTury`
+(`adapter_rozmowa_petla.go:46`) nie widzi `zamkniecie.Blad`, więc tura zamknięta
+zdarzeniem `result` z `is_error: true` przy **sprawnym** kanale idzie do pętli jako
+`PowodWynik`, a pętla ogłasza `completed` — choć wiadomość dostaje stan `error`.
+To wprost przeczy pozycji, którą teren `warunek-ukonczenia-zadania` właśnie wniósł.
+Domknięcie wskazane przez znalazcę: przekazanie `zamkniecie` do `powodTury`.
+
+**Druga — martwa funkcja z komentarzem w nieistniejące miejsce.**
+`adapter_przejecie_sterowania.go:146`, funkcja `sterZlecenia`: doc mówi „Woła ją
+przekład licznika obiegów w `core/stan_obiegu.go`", a `stan_obiegu.go` jej nie
+woła i nikt inny też nie.
+
+**Trzecia — granica 15 s uprzęży jest ciaśniejsza niż czynność, którą mierzy.**
+Uprząż zgodności kontraktu woła każdą komendę z twardym limitem 15 s
+(`zgodnosc_kontraktu_test.go:215` i `:254`, `blokady_skutek_test.go:127`).
+Czynność skanera dochodzi na tej maszynie do ~14,8 s, a własne limity warstwy są
+znacznie wyższe: `granicaWykazuUrzadzen` 45 s, `granicaSkanowaniaUrzadzenia` 5 min.
+Sprawdzian chwieje się z powodu uprzęży, nie rdzenia.
+
+**Kryteria odbioru.**
+
+1. Tura zamknięta błędem przy sprawnym kanale **nie ogłasza ukończenia** —
+   wykazane sprawdzianem, który **zawodzi na kodzie sprzed naprawy**.
+2. Martwa funkcja usunięta albo podłączona; jeśli usunięta, wykazane
+   przeszukaniem, że nikt jej nie woła — z sondą dodatnią dowodzącą, że wzorzec łapie.
+3. Granica uprzęży ustalona tak, żeby najwolniejsza mierzona czynność mieściła się
+   z zapasem; wartość **wyprowadzona z pomiaru**, nie wzięta z sufitu, i uzasadniona.
+4. `gotestsum -- -count=1 ./...` — **zero niepowodzeń** wobec stanu zastanego
+   2106 zdanych, 17 pominiętych, zero niezdanych.
+5. Kontrakt nietknięty — wykazane sumą kontrolną.
+
+### nastawy-wdrozenia
+
+Silnik wiedzy działa na stojących wagach, **ale dopiero po nastawach**. Bez nich
+wdrożenie pobierze drugi model zamiast użyć 4,3 GB, które już leżą na dysku.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/nastawy-wdrozenia` z `main` |
+| **Wykaz plików** | `budowa/server/internal/wiedza/`, migracje nastaw w `budowa/server/internal/store/`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/server/internal/core/` |
+
+**Przedmiot.** Doprowadzić do tego, żeby **świeże wdrożenie użyło wag, które stoją**,
+bez ręcznego ustawiania czegokolwiek po instalacji. Wykaz nastaw i ich wartości
+niesie zgłoszenie „Wdrożenie musi założyć trzy nastawy" w tym rejestrze —
+przeczytaj je, zanim cokolwiek zmienisz.
+
+**Kryteria odbioru.**
+
+1. Rdzeń postawiony na **świeżej bazie** indeksuje i wyszukuje wagami
+   z `/opt/danaco-modele`, **bez ani jednego pobrania z sieci** — wykazane
+   uruchomieniem `knowledge.index` i `knowledge.search`, z przytoczonym trafieniem.
+2. Wykazane, że rdzeń **nie sięgnął** po model z migracji 115 — przeszukaniem
+   dziennika albo katalogu pamięci podręcznej, z sondą dodatnią.
+3. Nastawa niesie wartość domyślną, nie wymaga czynności wdrożeniowca; jeżeli
+   wymaga — powód stoi w opisie nastawy.
+4. `gotestsum -- -count=1 ./...` — zero niepowodzeń.
+5. Kontrakt nietknięty.
+
+### powloka-i-wydanie
+
+Powłoka i kanał wydań niosą ślady wariantu natywnego, którego pozycja 8 nie
+przewiduje, oraz odsyłacze do skryptów usuniętych w poprzedniej turze.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/powloka-i-wydanie` z `main` |
+| **Wykaz plików** | `budowa/desktop/`, `budowa/witryna/wydania.json`, `budowa/scripts/` |
+| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `design/`, `prowadzenie/` |
+
+| Rzecz | Stan |
+|---|---|
+| `budowa/witryna/wydania.json:63` | wystawia artefakty natywne **zniesione pozycją 8**: `natywna_x64-setup.exe`, `.deb`, `.AppImage` |
+| `aktualizacja/pobranie.rs:35` | `ADRES_KANALU` **powiela** `kanal.adres` z `wydania.json` bez sprawdzianu wiążącego — przeniesienie kanału rozejdzie wartości bez śladu |
+| `aktualizacja/pobranie.rs:327` | `ADRES_Z_WYKAZU` wskazuje wydanie `.AppImage`, którego nie ma |
+| `scripts/arsenal-serwera.sh:8`, `instalka-hybryda-win-x64.sh:5,87`, `-arm.sh:4,24` | odsyłacze do usuniętego `instalka-windows.sh` |
+
+**Kryteria odbioru.**
+
+1. Kanał wydań wystawia **wyłącznie** postaci przewidziane pozycją 8 — hybryda
+   Windows 11 x64 i ARM64. Wykazane odczytem pliku i wykazem postaci.
+2. Rozjazd między `ADRES_KANALU` a `kanal.adres` **wykrywany maszynowo** —
+   sprawdzian zawodzi po ręcznej zmianie jednej z dwóch wartości. Wykaż to
+   uruchomieniem sprawdzianu po takiej zmianie.
+3. Zero odsyłaczy do plików nieistniejących w `budowa/scripts/` — wykazane
+   przeszukaniem, z sondą dodatnią.
+4. `cargo test` powłoki przechodzi (23 zdane w poprzedniej turze); powłoka buduje
+   się na **oba** cele Windows 11 — wykazane przytoczonym wynikiem obu przebiegów.
+5. Pakiet dalej **nie zawiera rdzenia** — wykazane wykazem zawartości, nie deklaracją.
 
 ## Zgłoszenia oczekujące na teren
 

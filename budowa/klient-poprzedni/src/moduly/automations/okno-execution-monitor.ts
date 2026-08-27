@@ -41,17 +41,9 @@ import {
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Execution Monitor — okno monitora modułu Automations: stan każdego przebiegu,
- * interwencja przy błędzie i ponowne uruchomienie. Wiersz przebiegu niesie etap
- * bieżący, liczbę etapów, stopień ukończenia, stan i licznik obiegów.
- *
- * Przycisk zatrzymania nie ma warunku — nie jest wyszarzany ani przy przebiegu
- * zakończonym, ani przy braku odczytu. Odmowa rdzenia jest widoczna w stanie
- * błędu okna.
- *
- * „Na żywo" znaczy ze zdarzenia, nie z odpytywania: okno słucha
- * `automation.execution.status` i przerysowuje wiersz przebiegu, gdy zdarzenie
- * przyjdzie — także z pracy innego okna albo innego urządzenia tego konta.
+ * Execution Monitor jest oknem monitora modułu Automations: stan każdego
+ * przebiegu, interwencja przy błędzie i ponowne uruchomienie, z wierszem
+ * niosącym etap, stopień ukończenia i licznik obiegów.
  */
 export interface OknoExecutionMonitora {
   element: HTMLElement;
@@ -89,14 +81,7 @@ export function utworzOknoExecutionMonitora(
     };
   }
 
-  /**
-   * Rysuje komplet widoków w jednym miejscu treści.
-   *
-   * Miejsce czyści się przy każdym wskazaniu (`stan-tresci.ts`), więc widoki
-   * dokładają się jednym przebiegiem: wykaz przebiegów, oś czasu, metryki,
-   * szuflada błędów i dziennik. Przełączniki paska decydują, które z nich stoją
-   * na ekranie — wszystkie naraz zajęłyby kolumnę okna pomocniczego bez reszty.
-   */
+  // Rysuje komplet widoków w jednym miejscu treści: wykaz, oś czasu, metryki, błędy i dziennik.
   function rysuj(): void {
     const wszystkie = [...przebiegi.values()];
     const widoczne = zawezonePrzebiegi(wszystkie, zawezenie());
@@ -131,11 +116,7 @@ export function utworzOknoExecutionMonitora(
     }
   }
 
-  /**
-   * Odczyt przebiegów. Oddaje obietnicę, żeby interwencja mogła odświeżyć wykaz
-   * i dopiero potem wypowiedzieć swoje zdanie — inaczej odczyt nadpisałby
-   * potwierdzenie interwencji zdaniem o obserwacji.
-   */
+  // Odczyt przebiegów oddaje obietnicę, żeby interwencja odświeżyła wykaz przed potwierdzeniem.
   function odczytaj(): Promise<void> {
     tresc.ladowanie('Odczyt przebiegów automatyki…');
     const zadanie = zadaniePrzebiegow(idOkna, stan.automatyka(), powierzchnia.granica.value);
@@ -156,13 +137,7 @@ export function utworzOknoExecutionMonitora(
     });
   }
 
-  /**
-   * Interwencja w przebiegu.
-   *
-   * Zdanie potwierdzenia niesie licznik oddany przez rdzeń: odpowiedź ma pole
-   * `cycle`, więc podajemy jego wartość zamiast orzekać o zmianie, której okno
-   * nie zmierzyło.
-   */
+  // Interwencja w przebiegu; potwierdzenie niesie licznik obiegów oddany przez rdzeń w polu cycle.
   function interwencja(dzialanie: QueueAction, zdanie: string): void {
     const kolejka = stan.kolejka();
     if (kolejka === '') {
@@ -191,15 +166,7 @@ export function utworzOknoExecutionMonitora(
     });
   }
 
-  /**
-   * Przerwanie przebiegu wraz z cofnięciem.
-   *
-   * Opracowanie żąda, by przerwanie było natychmiastowe, a „Cofnij" stało przez
-   * krótki czas po akcji. Cofnięciem jest wznowienie tej samej kolejki — innej
-   * drogi kontrakt nie ma, bo `QueueAction` nie zna działania odwracającego
-   * zatrzymanie. Okno mówi to wprost i nie obiecuje przywrócenia stanu sprzed
-   * zatrzymania: wznawia kolejkę, a co z niej zostało, rozstrzyga rdzeń.
-   */
+  // Przerwanie przebiegu wraz z cofnięciem; cofnięciem jest wznowienie tej samej kolejki.
   function przerwijZCofnieciem(): void {
     interwencja(QueueAction.Stop, 'Rdzeń przyjął zatrzymanie kolejki przebiegu.');
     powierzchnia.cofnij.hidden = false;
@@ -222,14 +189,7 @@ export function utworzOknoExecutionMonitora(
   /** Uchwyt odliczania widoczności cofnięcia; zdejmowany przy zamknięciu okna. */
   let odliczanieCofniecia: ReturnType<typeof setTimeout> | undefined;
 
-  /**
-   * Eksport zestawienia przebiegów.
-   *
-   * Dwie postacie, bo służą dwóm czynnościom: opis w Markdown czyta człowiek,
-   * a zestawienie rozdzielane średnikiem wchodzi do arkusza. Postaci
-   * przenośnego dokumentu okno nie składa — wymagałaby biblioteki składu, której
-   * warstwa kliencka platformy nie ma.
-   */
+  // Eksport zestawienia w dwóch postaciach: Markdown dla człowieka, wiersze średnikiem dla arkusza.
   function raportuj(rozszerzenie: string, rodzajTresci: string, zloz: () => string): void {
     if (przebiegi.size === 0) {
       tresc.potwierdzenie('Nie ma czego wyeksportować — wykaz przebiegów jest pusty.', false);
@@ -270,13 +230,11 @@ export function utworzOknoExecutionMonitora(
     przerysuj: rysuj,
   });
 
-  // Aktualizacja na żywo: zdarzenie zastępuje wiersz przebiegu, nie cały wykaz —
-  // dzięki temu odczyt Operatora nie znika przy każdej zmianie stanu.
+  // Aktualizacja na żywo zastępuje wiersz przebiegu, nie cały wykaz, więc odczyt nie znika.
   const odsubskrybuj = zrodlo.naStanPrzebiegu((zdarzenie) => {
     if (stan.automatyka() !== '' && zdarzenie.execution.workflowId !== stan.automatyka()) return;
     przebiegi.set(zdarzenie.execution.id, zdarzenie.execution);
-    // Wiersz logu przychodzi wyłącznie tą drogą i drugi raz nie przyjdzie,
-    // więc dziennik przyjmuje go przed przerysowaniem widoku.
+    // Wiersz logu przychodzi wyłącznie tą drogą, więc dziennik przyjmuje go najpierw.
     dziennik.przyjmij(zdarzenie);
     rysuj();
     if (zdarzenie.stepLabel !== undefined) {
@@ -294,10 +252,10 @@ export function utworzOknoExecutionMonitora(
   };
 }
 
-/** Jak długo po przerwaniu stoi przycisk cofnięcia. */
+/** Jak długo po przerwaniu przebiegu stoi na ekranie przycisk cofnięcia tej czynności, w milisekundach. */
 const CZAS_NA_COFNIECIE_MS = 15_000;
 
-/** Stany przebiegu w wykazie zawężenia; pusta wartość znaczy „wszystkie”. */
+/** Stany przebiegu dostępne w wykazie zawężenia okna; pusta wartość wykazu znaczy wszystkie stany naraz. */
 const STANY_ZAWEZENIA: ReadonlyArray<[string, string]> = [
   ['', 'wszystkie stany'],
   ...Object.values(AutomationExecutionStatus).map(
@@ -305,7 +263,7 @@ const STANY_ZAWEZENIA: ReadonlyArray<[string, string]> = [
   ),
 ];
 
-/** Akapit opisowy pod treścią okna — zdanie o dzienniku i o pochodzeniu danych. */
+/** Akapit opisowy umieszczany pod treścią okna — zdanie o dzienniku zdarzeń i o pochodzeniu danych źródłowych. */
 function akapitOpisowy(zdanie: string): HTMLElement {
   const akapit = document.createElement('p');
   akapit.className = 'dn-pole-opis';
@@ -313,7 +271,7 @@ function akapitOpisowy(zdanie: string): HTMLElement {
   return akapit;
 }
 
-/** Zdanie o przebiegu: etapy, stopień ukończenia, licznik obiegów i powód błędu. */
+/** Zdanie o przebiegu automatyki: etapy, stopień ukończenia, licznik obiegów naprawczych i powód błędu, gdy wystąpił. */
 function opisPrzebiegu(przebieg: AutomationExecution): string {
   const etapy =
     przebieg.totalSteps === undefined || przebieg.totalSteps === 0
@@ -324,7 +282,7 @@ function opisPrzebiegu(przebieg: AutomationExecution): string {
   return `${przebieg.status}; ${etapy}; ${obiegi}${powod}`;
 }
 
-/** Stopień ukończenia w procentach; przebieg zamknięty pokazuje sto. */
+/** Stopień ukończenia przebiegu w procentach; przebieg zakończony powodzeniem pokazuje zawsze pełne sto procent. */
 function stopien(przebieg: AutomationExecution): number {
   if (przebieg.status === AutomationExecutionStatus.Succeeded) return 100;
   const etapow = przebieg.totalSteps ?? 0;
@@ -332,7 +290,7 @@ function stopien(przebieg: AutomationExecution): number {
   return Math.round((((przebieg.currentStep ?? 1) - 1) / etapow) * 100);
 }
 
-/** Raport przebiegów w Markdown — treść pliku eksportu. */
+/** Raport przebiegów automatyki złożony w formacie Markdown — gotowa treść pliku eksportowanego przez okno. */
 function raportPrzebiegow(przebiegi: readonly AutomationExecution[]): string {
   const wiersze = ['# Raport przebiegów automatyki', ''];
   for (const przebieg of przebiegi) {
@@ -351,7 +309,7 @@ function raportPrzebiegow(przebiegi: readonly AutomationExecution[]): string {
   return wiersze.join('\n');
 }
 
-/** Przyciski paska akcji Execution Monitora. */
+/** Przyciski paska akcji tego okna Execution Monitora, wraz z przyciskami pozycji bez pokrycia w kontrakcie. */
 interface AkcjeMonitora {
   odswiezPrzycisk: HTMLButtonElement;
   uruchomPonownie: HTMLButtonElement;
@@ -364,11 +322,9 @@ interface AkcjeMonitora {
 }
 
 /**
- * Składa pasek akcji okna i osadza go w ramie.
- *
- * Pozycje bez pokrycia nazywają komendę, której im brakuje, i biorą swoje
- * rozstrzygnięcie z wykazu komend rdzenia — zdanie wpisane tu na sztywno
- * przestałoby być prawdą w dniu, w którym rdzeń tę komendę dostanie.
+ * Składa pasek akcji okna i osadza go w ramie; pozycje bez pokrycia nazywają
+ * brakującą komendę i biorą rozstrzygnięcie z wykazu komend rdzenia
+ * odczytanego w czasie działania.
  */
 function zlozAkcjeMonitora(gospodarz: HTMLElement, pokrycie: PokrycieKomend): AkcjeMonitora {
   const odswiezPrzycisk = przycisk('Odśwież przebiegi', 'dn-btn dn-btn--atrament');
@@ -377,8 +333,7 @@ function zlozAkcjeMonitora(gospodarz: HTMLElement, pokrycie: PokrycieKomend): Ak
   // Przerwanie biegu przerywa pracę, więc bierze wariant `--niebezpieczny`
   // z biblioteki kontrolek.
   const przerwij = przycisk('Przerwij przebieg', 'dn-btn dn-btn--niebezpieczny');
-  // Cofnięcie stoi obok przerwania i pokazuje się dopiero po nim: przycisk
-  // widoczny stale obiecywałby czynność, która bez przerwania nie ma przedmiotu.
+  // Cofnięcie stoi obok przerwania i pokazuje się dopiero po nim, bo bez przerwania nie ma przedmiotu.
   const cofnij = przycisk('Cofnij przerwanie');
   cofnij.hidden = true;
   const raportMarkdown = przycisk('Eksportuj raport (Markdown)');
@@ -431,7 +386,7 @@ function zlozAkcjeMonitora(gospodarz: HTMLElement, pokrycie: PokrycieKomend): Ak
   };
 }
 
-/** Kontrolki okna: pasek akcji, pola zawężenia i przełączniki widoków. */
+/** Kontrolki tego okna: pasek akcji, pola zawężenia wykazu przebiegów oraz przełączniki widoczności widoków. */
 interface PowierzchniaMonitora extends AkcjeMonitora {
   granica: HTMLInputElement;
   stanPrzebiegu: HTMLSelectElement;
@@ -443,7 +398,7 @@ interface PowierzchniaMonitora extends AkcjeMonitora {
   dziennikWidoczny: HTMLButtonElement;
 }
 
-/** Składa kontrolki okna, pasek akcji i ciało ramy. */
+/** Składa kontrolki tego okna, pasek akcji oraz ciało ramy z miejscem na treść i stan wykazu przebiegów. */
 function zlozPowierzchnieMonitora(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -515,8 +470,7 @@ function podepnijAkcjeMonitora(
   powierzchnia.raportZestawienia.addEventListener('click', obsluga.raportZestawienia);
   powierzchnia.dziennikPliku.addEventListener('click', obsluga.dziennikPliku);
 
-  // Zawężenie i przełączniki widoku pracują na wykazie już odczytanym, więc
-  // przerysowują treść bez pytania rdzenia.
+  // Zawężenie i przełączniki widoku pracują na wykazie już odczytanym, bez pytania rdzenia.
   powierzchnia.stanPrzebiegu.addEventListener('change', obsluga.przerysuj);
   for (const kontrolka of [powierzchnia.odDnia, powierzchnia.doDnia, powierzchnia.szukanie]) {
     kontrolka.addEventListener('input', obsluga.przerysuj);

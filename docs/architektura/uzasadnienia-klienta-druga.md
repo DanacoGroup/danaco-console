@@ -3044,3 +3044,19 @@ rozjeżdżają się przy pierwszej zmianie po stronie rdzenia.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/historia.ts
 Klasa neutralna dzielona z systemem oraz ikona pozostają rozróżnione celowo: klasa mówi o randze wypowiedzi, a ikona o jej źródle, więc wynik narzędzia nosi tę samą klasę co komunikat systemowy, lecz nigdy tę samą ikonę.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-qa-review.ts
+Okno robi to, czego pojedynczy panel zrobić nie może: kontrakt ma kontrolę jakości jednego panelu,
+więc kontrola zbiorcza jest powtórzeniem tej komendy dla każdego panelu, i okno mówi to wprost,
+zamiast sugerować zdolność wsadową, której rdzeń nie ma. Wywołania idą równolegle, bo kontrola
+jednego panelu nie zależy od kontroli drugiego, więc szeregowanie ich tylko wydłużałoby czekanie,
+a odmowa jednego panelu zostaje przy nim i nie przerywa pozostałym. Przebieg akceptacji tłumaczenie
+– korekta – zatwierdzenie pokazuje stany, które kontrakt zna: oczekuje, tłumaczenie w toku, gotowe,
+błąd; etapu zatwierdzenia ani autora zmiany w kontrakcie nie ma, więc wskaźnik mówi o stanie
+wykonania i nazywa tę różnicę, zamiast malować przebieg, którego rdzeń nie prowadzi.
+Bilans sprawdzenia wszystkich paneli jest obowiązkowy: przy wielu wywołaniach część potrafi się
+nie udać, a zdanie mówiące wyłącznie o powodzeniu ukryłoby panele, których nie sprawdzono, dlatego
+powody odmów idą po nazwie panelu, żeby wiadomo było który. Zastrzeżenia w wykazie nie są wynikiem
+ostatniego kliknięcia, tylko odbiciem tego, co rdzeń trzyma przy panelach: kontrola zapisuje je
+w panelu, a panel wraca do modułu zdarzeniem zmiany, dzięki czemu wykaz jest prawdziwy także wtedy,
+gdy kontrolę uruchomiono z paska narzędzi pojedynczego panelu.

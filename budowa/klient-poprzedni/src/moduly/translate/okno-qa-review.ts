@@ -15,24 +15,8 @@ import type { StanTranslate } from './stan-translate';
 import { oznaczWarstwe, utworzRozwiniecie } from './warstwy-translate';
 
 /**
- * QA & Review Center — okno **zarządca** modułu Translate.
- *
- * Okno robi to, czego pojedynczy panel zrobić nie może: prowadzi kontrolę
- * jakości wszystkich paneli naraz i zbiera ich zastrzeżenia w jednym wykazie.
- * Kontrakt ma kontrolę jakości jednego panelu, więc kontrola zbiorcza jest
- * powtórzeniem tej komendy dla każdego panelu — i okno mówi to wprost, zamiast
- * sugerować zdolność wsadową, której rdzeń nie ma.
- *
- * Wywołania idą równolegle. Kontrola jednego panelu nie zależy od kontroli
- * drugiego, więc szeregowanie ich tylko wydłużałoby czekanie; odmowa jednego
- * panelu zostaje przy nim i nie przerywa pozostałym (`Promise.allSettled` nie
- * jest tu potrzebny, bo źródło modułu oddaje odmowę wynikiem, nie wyjątkiem).
- *
- * Przebieg akceptacji tłumaczenie → korekta → zatwierdzenie pokazuje stany,
- * które kontrakt zna: oczekuje, tłumaczenie w toku, gotowe, błąd. Etapu
- * zatwierdzenia ani autora zmiany w kontrakcie nie ma, więc wskaźnik mówi
- * o stanie wykonania i nazywa tę różnicę, zamiast malować przebieg, którego
- * rdzeń nie prowadzi.
+ * QA Review Center to okno zarządca modułu Translate: prowadzi kontrolę jakości wszystkich paneli
+ * naraz i zbiera ich zastrzeżenia w jednym wykazie, wywołaniami równoległymi bez wzajemnej zależności.
  */
 export interface OknoQaReview {
   element: HTMLElement;
@@ -103,14 +87,7 @@ export function utworzOknoQaReview(stan: StanTranslate): OknoQaReview {
   element.dataset['okno'] = 'qa-review-center';
   element.append(naglowekOkna('QA & Review Center', 'zarządca'), okno.element);
 
-  /**
-   * Przerysowanie odbudowuje wykaz zastrzeżeń z paneli stanu modułu.
-   *
-   * Zastrzeżenia nie są tu wynikiem ostatniego kliknięcia, tylko odbiciem tego,
-   * co rdzeń trzyma przy panelach: kontrola zapisuje je w panelu, a panel
-   * wraca do modułu zdarzeniem zmiany. Dzięki temu wykaz jest prawdziwy także
-   * wtedy, gdy kontrolę uruchomiono z paska narzędzi pojedynczego panelu.
-   */
+  /** Przerysowanie odbudowuje wykaz zastrzeżeń z paneli stanu modułu, zapisanych w nich przez kontrolę. */
   function odswiez(): void {
     const panele = stan.panelJezykow();
     zastrzezenia.replaceChildren(...panele.map(grupaPanelu));
@@ -128,11 +105,8 @@ export function utworzOknoQaReview(stan: StanTranslate): OknoQaReview {
 }
 
 /**
- * `translate.quality.check` powtórzona dla każdego panelu okna.
- *
- * Bilans jest obowiązkowy: przy wielu wywołaniach część potrafi się nie udać,
- * a zdanie mówiące wyłącznie o powodzeniu ukryłoby panele, których nie
- * sprawdzono. Powody odmów idą po nazwie panelu, żeby wiadomo było który.
+ * Sprawdzenie wszystkich paneli powtarza komendę translate.quality.check dla każdego z nich; bilans
+ * mówi o powodzeniu i o panelach, których nie sprawdzono, nazwanych po kolei.
  */
 async function sprawdzWszystkie(
   stan: StanTranslate,
@@ -165,7 +139,7 @@ async function sprawdzWszystkie(
   odpowiedz.pokaz(bilans('Kontrola jakości', sprawozdania), czyWszystkieUdane(sprawozdania));
 }
 
-/** `translate.panel.export` powtórzony dla każdego panelu okna. */
+/** Komenda translate.panel.export powtórzona dla każdego panelu okna, wydająca panel w wybranym formacie pliku eksportu tłumaczenia. */
 async function wydajWszystkie(
   stan: StanTranslate,
   format: ExportFormat,
@@ -194,7 +168,7 @@ async function wydajWszystkie(
   odpowiedz.pokaz(bilans('Eksport zbiorczy', sprawozdania), czyWszystkieUdane(sprawozdania));
 }
 
-/** Jedno sprawozdanie wraz z językiem panelu, którego dotyczy. */
+/** Jedno sprawozdanie kontroli jakości wraz z językiem panelu, którego dotyczy, ustawione w kolejności wystąpienia paneli w oknie. */
 interface SprawozdaniePanelu {
   jezyk: string;
   sprawozdanie: Sprawozdanie;
@@ -215,7 +189,7 @@ function bilans(czynnosc: string, sprawozdania: readonly SprawozdaniePanelu[]): 
     .join(' · ')}`;
 }
 
-/** Grupa zastrzeżeń jednego panelu — nagłówek z językiem i stanem, pod nim wykaz. */
+/** Grupa zastrzeżeń jednego panelu ma nagłówek z językiem i stanem panelu, a pod nim wykaz poszczególnych zastrzeżeń kontroli. */
 function grupaPanelu(panel: TranslationPanel): HTMLElement {
   const tytul = document.createElement('h5');
   tytul.className = 'mt-jakosc__tytul';
@@ -256,7 +230,7 @@ function grupaPanelu(panel: TranslationPanel): HTMLElement {
   return element;
 }
 
-/** Wskaźnik przebiegu — liczony ze stanów paneli, jedynego, co kontrakt niesie. */
+/** Wskaźnik przebiegu jest liczony ze stanów paneli, jedynego, co kontrakt niesie o przebiegu akceptacji tłumaczenia. */
 function zdaniePrzebiegu(panele: readonly TranslationPanel[]): string {
   if (panele.length === 0) return 'Przebieg: okno nie zna ani jednego panelu języka.';
   const gotowe = panele.filter((panel) => panel.status === TranslationStatus.Ready).length;
@@ -269,7 +243,7 @@ function zdaniePrzebiegu(panele: readonly TranslationPanel[]): string {
   );
 }
 
-/** Warstwa druga: profil kontroli jakości. */
+/** Warstwa druga niesie profil kontroli jakości, wskazujący zakres sprawdzeń wykonywanych przy każdym wywołaniu komendy. */
 function profilKontroli(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 2,
@@ -281,7 +255,7 @@ function profilKontroli(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa trzecia: menu wydania i przebiegu akceptacji. */
+/** Warstwa trzecia mieści menu wydania panelu oraz przebiegu akceptacji tłumaczenia, dla których kontrakt nie ma osobnej komendy. */
 function menuWydania(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 3,
@@ -299,7 +273,7 @@ function menuWydania(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa trzecia: korekta językowa panelu. */
+/** Warstwa trzecia niesie korektę językową panelu, uruchamianą osobno od kontroli jakości i przebiegu akceptacji wyniku. */
 function korektaJezykowa(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 3,

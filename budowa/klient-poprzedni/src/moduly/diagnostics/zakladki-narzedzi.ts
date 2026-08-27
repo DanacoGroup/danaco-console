@@ -1,30 +1,14 @@
 /**
- * Pas zakładek kontenera Observability Tools.
- *
- * Kontener zbiera pięć narzędzi obserwowalności w jednej kolumnie, więc
- * przełącznik obszarów jest jego mechaniką własną, a nie ozdobą. Wygląd
- * w całości z biblioteki (`komponenty/zakladki.css`, klasy `dn-zakladki`
- * i `dn-zakladka`); tutaj leży wyłącznie zachowanie.
- *
- * Zakładka niewidoczna nie jest zakładką porzuconą: obszar zostaje w drzewie
- * i traci wyłącznie widoczność, więc wpisany filtr i odczytany wykaz przeżywają
- * zajrzenie do sąsiedniej zakładki.
- *
- * Wędrówka strzałkami należy do wzorca zakładek: pas ma jeden przystanek
- * tabulatora (zakładka czynna), a strzałki przenoszą wybór między zakładkami.
- * Bez tego pas pięciu przycisków byłby pięcioma przystankami przed treścią.
- *
- * Bliźniaczy mechanizm stoi w `modele/zakladki-sekcji.ts` dla okna modeli, lecz
- * jest przywiązany do klas rodziny `dm-` i do arkusza tamtego okna. Wspólnego
- * komponentu zakładek biblioteka `komponenty/` dziś nie ma — zgłoszone
- * właścicielowi projektu.
+ * Pas zakładek kontenera Observability Tools steruje przełączaniem obszarów wraz
+ * z wędrówką strzałkami: wygląd pochodzi z biblioteki komponentów, tutaj leży
+ * wyłącznie zachowanie.
  */
 
-/** Jedna zakładka kontenera: kod obszaru, nazwa i jego treść. */
+/** Jedna zakładka kontenera: kod obszaru sterujący wyborem, nazwa widoczna na przycisku i treść osadzana pod pasem. */
 export interface PozycjaZakladkiNarzedzi {
   /** Kod obszaru — nośnik wyboru i wartość `data-zakladka`, nie tekst na ekran. */
   kod: string;
-  /** Nazwa własna narzędzia, dokładnie jak w opracowaniu modułu. */
+  /** Nazwa własna narzędzia widoczna na przycisku zakładki. */
   nazwa: string;
   /** Obszar osadzany pod pasem zakładek. */
   element: HTMLElement;
@@ -81,7 +65,7 @@ export function utworzZakladkiNarzedzi(
     for (const sluchacz of [...sluchacze]) sluchacz(kod);
   }
 
-  /** Przenosi wybór o wskazany krok i zabiera za nim ognisko. */
+  /** Przenosi wybór o wskazany krok i zabiera za nim ognisko klawiatury. */
   function przesun(krok: number): void {
     const teraz = kody.indexOf(czynna);
     if (teraz < 0 || kody.length === 0) return;
@@ -137,7 +121,7 @@ export function cialoNarzedzia(...czesci: readonly HTMLElement[]): HTMLElement {
   return element;
 }
 
-/** Pasek czynności zakładki — przyciski i pola nad miejscem treści. */
+/** Pasek czynności zakładki: przyciski akcji i pola formularza nad miejscem treści, ułożone w jednym rzędzie poziomym. */
 export function pasekNarzedzia(...kontrolki: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dg-narzedzie__pasek';

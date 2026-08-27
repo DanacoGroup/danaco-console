@@ -6230,3 +6230,19 @@ przy otwarciu i sama pamięta, że jeszcze nie pytała.
 
 ## budowa/klient-poprzedni/src/moduly/automations/wzorce-cyklicznosci.ts
 Operator ustala cykliczność wzorcem („co tydzień, poniedziałek, 07:00”), a kontrakt niesie ją jednym polem `AutomationSchedule.cron`. Plik jest przekładem w obie strony: składa zapis z nastaw i rozpoznaje wzorzec w zapisie odczytanym z rdzenia, żeby okno otwarte na harmonogramie zastanym pokazywało wzorzec, a nie samą składnię cron. Przekład jest zawężony do wzorców, które da się zapisać pięcioma polami notacji: zapis odczytany z rdzenia i niepasujący do żadnego wzorca zostaje wzorcem własnym, a jego treść idzie do pola zapisu bez zmiany. Rachunek kolejnych terminów uruchomienia należy do pliku `nastepne-uruchomienia.ts`.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zakladki-narzedzi.ts
+Zakładka niewidoczna nie jest zakładką porzuconą: obszar zostaje w drzewie
+i traci wyłącznie widoczność, więc wpisany filtr i odczytany wykaz przeżywają
+zajrzenie do sąsiedniej zakładki. Wędrówka strzałkami należy do wzorca
+zakładek: pas ma jeden przystanek tabulatora na zakładce czynnej, a strzałki
+przenoszą wybór między zakładkami, więc pas pięciu przycisków nie staje się
+pięcioma przystankami przed treścią. Bliźniaczy mechanizm stoi w module
+zakładek sekcji dla okna modeli, lecz jest przywiązany do własnej rodziny
+klas i do arkusza tamtego okna; wspólnego komponentu zakładek biblioteka
+komponentów dziś nie ma. Obudowa ciała zakładki stoi w jednym miejscu, a nie
+w każdej zakładce z osobna, ponieważ pięć zakładek składających własne
+pudełko rozjechałoby się przy pierwszej zmianie odstępu, a różnią się
+treścią, nie kształtem. Akapit objaśnienia jest częścią wyposażenia
+kontenera, a nie ozdobą jednej zakładki, ponieważ zakładki warstwy
+eksperckiej mówią o własnej granicy zdaniem, nie milczeniem.

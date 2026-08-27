@@ -3823,3 +3823,81 @@ Port niewypełniony nie rejestruje niczego: komendy odpowiadają wtedy
 Jeden port na całą rodzinę: pięć komend obsługuje jeden byt — pozycję
 katalogu — i jedną maszynerię. Osobny port „instalacji" obok portu
 „katalogu" byłby dwiema prawdami o jednej tabeli.
+
+## budowa/server/internal/core/zgodnosc_kontraktu_test.go
+
+Zgodność rdzenia z kontraktem. Kontrakt jest jedynym źródłem prawdy nazw, ale
+sam z siebie niczego nie wymusza: nazwa może stać w `contract.json`,
+wygenerować się do `contract.go` i nie mieć po stronie rdzenia ani jednego
+obsługiwacza. Kompilacja tego nie wychwyci — stała jest użyta w kontrakcie,
+więc nie jest martwa. Grep tego też nie rozstrzygnie. Część rejestracji idzie
+przez zmienną (`r.Zarejestruj(n.Przejecie, …)`, `r.Zarejestruj(nazwa,
+obsluga)`), więc wyliczenie literałów w źródle zaniża wynik i nie wiadomo o ile.
+Jedynym pomiarem, który mówi prawdę, jest zmontowany rejestr.
+
+granicaKomendySprawdzianu: wartość wychodzi z granicy warstwy, nie z czasu
+pomiaru. Najdłuższa czynność mierzona uprzężą jest czynnością skanera i sama
+stoi pod granicą `granicaWykazuUrzadzen` (45 s, `urzadzenia_skaner.go`):
+komenda, której urządzenie nie odpowiada, wraca odmową dopiero po tym czasie.
+Uprząż ciaśniejsza od tej granicy urywa komendę przed jej własną odmową
+i melduje usterkę rdzenia tam, gdzie zwisło urządzenie — tak chwiał się
+sprawdzian przy granicy 15 s, podczas gdy czynność skanera dochodzi na tej
+maszynie do ~14,8 s. Zapas ponad granicę warstwy to 15 s: tyle trwa montaż
+rdzenia i droga koperty wokół samej czynności, a jest to zarazem
+czterokrotność najdłuższego zmierzonego wywołania. Granica pozostaje o rząd
+wielkości niższa od granicy pojedynczego przebiegu skanera (5 min), więc zwis
+rdzenia nadal wychodzi w minutach, nie w godzinach.
+
+komendyBezObslugiwacza: wykaz jest zaporą, nie zgodą: sprawdzian wypada
+niepomyślnie zarówno wtedy, gdy pojawi się brak spoza wykazu, jak i wtedy, gdy
+brak z wykazu zostanie uzupełniony, a wiersz zostanie. Dług nie rośnie po cichu
+i nie znika po cichu. Klient nie zobaczy tych komend w powitaniu, bo powitanie
+oddaje wykaz z rejestru rdzenia. Wołanie ich wraca zdarzeniem `*.unknown`
+z kodem `not_found` — odmową nazwaną, nie zerwaniem połączenia. Wykaz jest
+dziś PUSTY: każda komenda kontraktu ma w rdzeniu obsługiwacza. Pustego wykazu
+nie zwijamy do usunięcia zmiennej — obie zapory niżej stoją na niej i mają
+działać dalej, a wiersz dopisany tu w przyszłości ma być decyzją widoczną
+w przeglądzie, nie skutkiem ubocznym.
+
+TestRejestrPokrywaKomendyKontraktu: komenda bez obsługiwacza nie jest błędem
+zrywającym, ale jest funkcją zapowiedzianą i niedostarczoną, czyli dokładnie
+tym, czego wykaz braków nie widzi.
+
+TestRejestrNieMaNazwSpozaKontraktu: nazwa taka byłaby funkcją
+nieudokumentowaną — klient nie miałby jak jej wywołać, bo bindingi powstają
+wyłącznie z kontraktu.
+
+TestPowitanieOddajeWykazZRejestru: rozjazd tych dwóch zbiorów oznacza, że
+klient odblokowuje okna funkcji, których rdzeń nie ma — albo ukrywa te, które
+ma.
+
+TestKomendaSpozaKontraktuWracaJakoNieznana: połączenie nie jest zrywane —
+sprawdzian dowodzi tego wywołaniem kolejnej komendy po odmowie.
+
+powitanieSprawdzianu: powitanie jest tu narzędziem, nie przedmiotem pomiaru —
+oba sprawdziany powyżej pytają o wykaz komend i o to, czy rdzeń pracuje po
+odmowie. Treść niepełna mierzyłaby w tym miejscu bramę kontraktu zamiast tego,
+o co sprawdzianom idzie.
+
+TestKazdaKomendaZnosiPustyLadunek: sprawdzian nie ocenia treści odpowiedzi —
+ocenia, że obsługiwacz nie przerywa wykonania i że odmowa jest odmową nazwaną:
+koperta ze stanem i kodem kontraktu. Ładunek pusty jest tu przypadkiem
+granicznym najtańszym do wywołania i najczęstszym w praktyce: tak wygląda
+żądanie klienta z niewypełnionym formularzem oraz wywołanie narzędzia przez
+model, który pominął parametr.
+
+## budowa/server/internal/core/skutek_centrum_powiadomien_test.go
+
+Uprząż sprawdzianów jest ta sama, co dla pozostałych sprawdzianów skutku
+(`zmontujDoPomiaruSkutku`): świeża baza, pełny montaż, komendy przez
+rejestr.
+
+Waga zdarzenia bierze się z taksonomii klasy, a nie ze zgłoszenia —
+zgłoszenie jej nie podało.
+
+Klasa „zakończenie" ma w katalogu kanał Mobile włączony domyślnie, więc
+zdarzenie idzie obiema drogami; nastawy rozstrzygają o kanale, nie kod
+adaptera.
+
+Klasa „wzmianka" nie ma kanału dodatkowego w katalogu, więc zdarzenie
+zostaje w samym centrum — sprawdzian odłożenia nie dotyka kolejki doręczeń.

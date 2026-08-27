@@ -1,7 +1,10 @@
+/**
+ * Cztery stany okna modułu Library: puste, ładowanie, błąd oraz gotowe. Plik
+ * składa powłokę okna z miejscem na treść, komunikatem stanu i oznaczeniem
+ * fazy, a stan przesłania treść zamiast ją kasować.
+ */
 import { elementIkony } from '../../ikony/ikony';
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
-
-/** Cztery stany okna modułu Library: puste, ładowanie, błąd oraz gotowe. */
 
 /**
  * Powłoka okna wraz z komunikatem stanu. Stan nie kasuje treści, tylko ją przesłania,

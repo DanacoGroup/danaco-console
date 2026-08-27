@@ -1326,3 +1326,33 @@ Partia importu wsadowego dostaje własny identyfikator, który wchodzi w pole
 pochodzenia każdego źródła z niej pozyskanego. Dzięki temu identyfikator
 partii w odpowiedzi jest wskazaniem, po którym da się odnaleźć skutek
 partii w bazie, nie numerem zadania, które nigdzie nie stoi.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie.go
+
+Rozpoznanie źródła rozpoznaje język modelem: rdzeń nie ma własnego silnika
+rozpoznania, tylko most do rejestru kanałów, który pyta domyślny czynny
+kanał, jaki to język. Bez wpiętego rejestru albo bez czynnego kanału odmawia
+wprost, zamiast zgadywać po znakach diakrytycznych.
+
+Zapis źródła nie wytwarza treści tłumaczenia — zapisuje sam tekst źródłowy
+i liczbę segmentów. Treść panelu powstaje dopiero przy dodaniu panelu, gdzie
+znany jest język docelowy; bez czynnego kanału dodanie panelu odmawia
+zamiast zakładać panel pusty.
+
+Segmentacja tekstu idzie podziałem własnym, bez biblioteki zewnętrznej: tekst
+dzieli się na zdania po znaku końca zdania, po którym stoi biały znak albo
+koniec tekstu. Skróty w rodzaju „np." albo „ul." rozłamią zdanie tam, gdzie
+językoznawczo się nie kończy — podział semantyczny wymagałby słownika
+skrótów albo modelu, których rdzeń nie ma. Komenda podziału na segmenty nie
+zapisuje nic do bazy: segmenty nie mają własnej tabeli, więc powtórne
+wywołanie na tym samym tekście daje ten sam wynik bez efektu ubocznego.
+
+Pole pewności rozpoznania języka zostaje puste: model oddaje nazwę języka,
+nie miarę pewności, a rdzeń nie dorabia liczby, której nikt uczciwie nie
+wypełni.
+
+Niezgodności panelu nie są polem repozytorium panelu — wypełnia je odczyt
+obszaru jakości, tak samo jak ustalenia badania nie są polem źródła badania.
+Kod okna w bycie kontraktu panelu jest kodem zewnętrznym, doczytanym
+złączeniem w warstwie danych, nie numerem wiersza wewnętrznego, bo numer
+wiersza nie zaadresowałby po stronie klienta żadnego okna.

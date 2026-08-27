@@ -2139,3 +2139,32 @@ systemu. Na polskim Windowsie znaczy to strone kodowa 1250, w ktorej
 transkrypcja rozpada sie na krzaki, zanim rdzen zdazy ja odczytac.
 Wymuszenie UTF-8 w jednym miejscu jest jedyna obrona, ktora nie zalezy od
 tego, kto pomocnika wola.
+
+Rdzeń nie ma mechanizmu odczytu pliku odwołania na warstwie `core`, więc
+`trescBytuPorownania` odmawia wprost zamiast oddać porównanie połowy treści.
+
+Druga wartość zwracana przez `trescBytuPorownania` to kod strony, nie
+znacznik jej istnienia. Idzie wprost do `StudioTextMatch.VersionId`, które
+kontrakt opisuje jako wersję, w której wystąpiło trafienie — po tym kodzie
+poznaje się, gdzie wzorzec się znalazł. Stały napis w tym miejscu sprawiłby,
+że każde trafienie wyglądałoby tak samo.
+
+Odmowa `brakStronPorownania` idzie do Operatora, więc mówi, co dopisać:
+sam wzorzec bez wskazanej strony jest innym brakiem niż jedna strona bez
+drugiej, choć obydwa kończą się tą samą pustą odpowiedzią.
+
+Porównanie w `policzFragmentyRoznicy` jest własne i proste, nie algorytm
+klasy diff (Myers, LCS wielowierszowy) — dla dokumentów Studio Editor (tekst
+krótki, nie repozytorium kodu) rozstrzygnięcie, co się zmieniło pomiędzy
+niezmienionym początkiem a niezmienionym końcem, wystarcza i jest o rząd
+prościej opisać i sprawdzić niż pełny LCS.
+
+Rodzaj fragmentu w `fragmentZmiany`: obie strony dają "changed", sama
+docelowa "added", sama bazowa "removed" — panel różnic pokazuje trzy różne
+oznaczenia, jedno na fragment.
+
+Wiersz pusty do przeszukania w `szukajWzorca` (strona porównania pominięta)
+oddaje wykaz pusty, nie błąd — szukanie bez treści jest pytaniem poprawnym,
+tylko bez odpowiedzi.
+
+Zmiana śledzona ma swoje wiersze w `dane/studio_adnotacje.go`.

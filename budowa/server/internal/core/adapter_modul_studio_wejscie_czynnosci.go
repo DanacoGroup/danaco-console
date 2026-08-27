@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: osiem czynności WEJŚCIA do edytora modułu Studio —
-// założenie dokumentu pustego, wniesienie pliku wprost do edytora, zamiana PDF
-// na dokument edytowalny, wniesienie obrazu, zapis pod nową nazwą, kopia
-// dokumentu oraz wniesienie fragmentu z Biblioteki i ze strony sieci.
-//
-// ── Wprost do edytora, nie do kolejki ───────────────────────────────────────
-// Wymaganie Właściciela jest tu dosłowne: „Operator wskazuje plik i treść staje
-// w edytorze gotowa do pracy, z zachowaną postacią. Nie jako załącznik, nie jako
-// pozycja kolejki do przyjęcia". Dlatego każda czynność tego pliku kończy się
-// ZAPISANĄ POSTACIĄ dokumentu, a nie wierszem kolejki. Jedyny wyjątek jest
-// nazwany wprost: PDF ze samych skanów nie ma czego wnieść do edytora, więc
-// idzie na rozpoznanie pisma — i odpowiedź to mówi, zamiast oddać pustą kartkę.
-//
-// ── Bilans zamiast ciszy ────────────────────────────────────────────────────
-// Każde wniesienie oddaje bilans: co odzyskano, a czego nie. Plik Operatora
-// niesie rzeczy, których rdzeń nie odczytuje — i to jest normalne. Nienormalne
-// byłoby oddanie dokumentu okaleczonego jako „wczytanego bez uwag".
-//
-// ── Postać zapisuje obszar postaci ──────────────────────────────────────────
-// Drzewo, treść i wiersze idą przez `wejscieUtrwalPostac`, czyli przez
-// `postacZapisz` obszaru postaci. Dziennik czynności dostaje wpis rodzaju
-// `importChange` — Operator cofa „wniesienie pliku", nie „zmianę treści".
+// Odpowiedzialność pliku: osiem czynności wejścia do edytora modułu Studio,
+// od założenia dokumentu pustego po wniesienie pliku, obrazu, fragmentu
+// z Biblioteki i ze strony sieci, każda z zapisaną postacią i bilansem.
 package core
 
 import (
@@ -36,10 +17,8 @@ import (
 
 // ZalozDokument obsługuje `studio.document.create` — zakłada dokument pusty,
 // czyli nową stronę gotową do pisania, z arkuszem stylów i nastawami strony
-// domyślnymi albo przejętymi z szablonu.
-//
-// Dokument bez akapitu byłby stroną, na której nie ma gdzie postawić kursora,
-// więc pusty akapit jest tu treścią, nie ozdobą (`wejscieNowaPostac`).
+// domyślnymi albo przejętymi z szablonu, wraz z pustym akapitem, na którym
+// staje kursor.
 func (a *adapterStudia) ZalozDokument(ctx context.Context,
 	z shared.StudioDocumentCreateRequest) (shared.StudioDocumentCreateResponse, error) {
 
@@ -90,8 +69,7 @@ func (a *adapterStudia) ZalozDokument(ctx context.Context,
 		stan.forma = wejscieNowaPostac(dokument.Kod, nazwaNosnika, z.Orientation)
 		stan.opisCzynnosci = "założenie dokumentu pustego"
 	}
-	// Nastawy nośnika wskazane przez Operatora mają pierwszeństwo nad nastawami
-	// szablonu: Operator, który wybrał kopertę, wybrał ją świadomie.
+	// Nastawy nośnika wskazane wprost mają pierwszeństwo nad nastawami szablonu.
 	if nazwa := strings.TrimSpace(wartoscTekstu(z.PaperName)); nazwa != "" && stan.forma.PageSetup != nil {
 		stan.forma.PageSetup.PageSize = wejscieWskaznikTekstu(nazwa)
 	}
@@ -103,8 +81,7 @@ func (a *adapterStudia) ZalozDokument(ctx context.Context,
 		return shared.StudioDocumentCreateResponse{}, err
 	}
 	if szablon != nil {
-		// Blokady wzorcowe szablonu idą do dokumentu z niego zakładanego —
-		// fragmenty wzorcowe pisma mają zostać wzorcowe.
+		// Blokady wzorcowe szablonu idą do dokumentu z niego zakładanego.
 		if _, err := a.blokadaPrzenieSzablon(ctx, stan.dokument.ID, szablon.Id); err != nil {
 			return shared.StudioDocumentCreateResponse{}, err
 		}
@@ -120,28 +97,21 @@ func (a *adapterStudia) ZalozDokument(ctx context.Context,
 }
 
 // wejscieOdlozCzynnosc dopisuje czynność wejścia do odwracalnego dziennika
-// dokumentu. Rodzaj jest zawsze `importChange`: Operator cofa „wniesienie",
-// a nie „zmianę treści", i po tym rozpoznaje wpis w wykazie.
+// dokumentu, zawsze rodzajem `importChange`, po którym wpis rozpoznaje się
+// w wykazie jako wniesienie, odróżnione od zwykłej zmiany treści.
 func (a *adapterStudia) wejscieOdlozCzynnosc(ctx context.Context, stan *stanPostaci,
 	autor shared.StudioAuthor) error {
 
 	dlugosc := postacDlugosc(&stan.forma)
-	// Wykonawca wchodzi z podpisu żądania — wniesienie pliku przez agenta ma być
-	// podpisane jego kodem tak samo jak zmiana postaci, bo Operator pyta „kto
-	// wniósł to pismo" tym samym wykazem.
+	// Wykonawca wchodzi z podpisu żądania, tak samo jak przy zmianie postaci.
 	return a.postacOdlozCzynnosc(ctx, stan, postacWykonawca(ctx, autor),
 		shared.StudioActionKindImportChange, 0, dlugosc, nil,
 		shared.StudioActionBalance{Applied: 1})
 }
 
 // wejsciePrzepiszIdentyfikatory nadaje nowe identyfikatory wszystkim bytom
-// postaci przenoszonej między dokumentami.
-//
-// Bez tego kopia dokumentu i dokument z szablonu przejęłyby identyfikatory
-// sekcji, obiektów i pól oryginału — a te są kluczami wierszy JEDNOZNACZNYMI
-// w całej bazie. Upsert po takim kluczu nie założyłby wiersza nowego, tylko
-// PRZENIÓSŁ wiersz oryginału do kopii. Kopia zabrałaby wtedy oryginałowi jego
-// własną postać, co jest dokładnie tą szkodą, którą sprawdzian kopii mierzy.
+// postaci przenoszonej między dokumentami, żeby kopia i oryginał nie dzieliły
+// kluczy wierszy jednoznacznych w całej bazie.
 func wejsciePrzepiszIdentyfikatory(forma *shared.StudioDocumentForm) {
 	nowe := map[string]string{}
 	przepisz := func(stary, przedrostek string) string {
@@ -200,9 +170,7 @@ func wejsciePrzepiszIdentyfikatory(forma *shared.StudioDocumentForm) {
 			forma.Blocks[i].Paragraph.ListId = &nowy
 		}
 	}
-	// Blokady fragmentów NIE dostają tu nowych identyfikatorów: przenosi je
-	// obszar kontroli pracy własnym zapisem, a wiersz blokady zakłada się tam
-	// wraz z kodem. Dwa nadania kodu jednej blokadzie dałyby blokadę-widmo.
+	// Blokady fragmentów nie dostają tu nowych identyfikatorów, tylko przy przeniesieniu.
 	forma.Locks = nil
 	forma.Revision = nil
 	forma.UpdatedAt = nil
@@ -210,12 +178,9 @@ func wejsciePrzepiszIdentyfikatory(forma *shared.StudioDocumentForm) {
 
 // ── Wniesienie pliku do edytora ─────────────────────────────────────────────
 
-// WniesPlikDoEdytora obsługuje `studio.document.import.file`.
-//
-// Format rozpoznaje się po ZAWARTOŚCI, nie po rozszerzeniu (patrz
-// `wejscieRozpoznajFormat`), a zapis znaków — przed rozbiorem treści, bo pismo
-// w Windows-1250 wczytane jako UTF-8 daje krzaczki, a krzaczki są gorsze niż
-// odmowa: model przeczyta je jako słowa i zacznie na nich pracować.
+// WniesPlikDoEdytora obsługuje `studio.document.import.file`: format
+// rozpoznaje się po zawartości pliku, nie po rozszerzeniu, a zapis znaków
+// ustala się przed rozbiorem treści.
 func (a *adapterStudia) WniesPlikDoEdytora(ctx context.Context,
 	z shared.StudioDocumentImportFileRequest) (shared.StudioDocumentImportFileResponse, error) {
 
@@ -254,11 +219,7 @@ func (a *adapterStudia) WniesPlikDoEdytora(ctx context.Context,
 	odKursora, doKursora := 0, 0
 
 	if z.InsertAtOffset != nil && strings.TrimSpace(wartoscTekstu(z.DocumentId)) != "" {
-		// Wniesienie W MIEJSCE KURSORA do dokumentu istniejącego. Postać pliku
-		// wnoszonego schodzi wtedy do treści z jej formatowaniem znaku, bo
-		// wstawienie CAŁEJ postaci w środek dokumentu znaczyłoby podmianę
-		// arkusza stylów i nastaw strony dokumentu Operatora — a o to nie
-		// prosił. Strata jest nazwana w bilansie, nie przemilczana.
+		// Wniesienie w miejsce kursora do dokumentu istniejącego, bez postaci pliku.
 		zastany, err := a.postacWczytaj(ctx, dokument.Kod)
 		if err != nil {
 			return shared.StudioDocumentImportFileResponse{}, err
@@ -392,12 +353,9 @@ func (a *adapterStudia) wejscieRozbierzPlik(kodDokumentu string, bajty []byte,
 
 // ── PDF na dokument edytowalny ──────────────────────────────────────────────
 
-// WniesPdfDoEdytora obsługuje `studio.document.import.pdf`.
-//
-// PDF ze samych skanów NIE UDAJE konwersji: wchodzi do kolejki rozpoznania
-// pisma, a odpowiedź oddaje pozycję tej kolejki wraz z bilansem mówiącym, że
-// warstwy tekstowej nie było. Oddanie pustego dokumentu byłoby tu twierdzeniem
-// „przekonwertowałem i tyle w nim jest" — twierdzeniem fałszywym.
+// WniesPdfDoEdytora obsługuje `studio.document.import.pdf`; PDF ze samych
+// skanów nie udaje konwersji — wchodzi do kolejki rozpoznania pisma, a odpowiedź
+// oddaje pozycję tej kolejki wraz z bilansem mówiącym, że warstwy tekstowej nie było.
 func (a *adapterStudia) WniesPdfDoEdytora(ctx context.Context,
 	z shared.StudioDocumentImportPdfRequest) (shared.StudioDocumentImportPdfResponse, error) {
 
@@ -442,8 +400,7 @@ func (a *adapterStudia) WniesPdfDoEdytora(ctx context.Context,
 			Okno:            z.WindowId,
 			SciezkaZrodlowa: &wskazanie,
 			ZasobID:         z.AssetId,
-			// Stan „oczekuje" jest tu prawdą: rozpoznanie pisma jeszcze nie
-			// zaszło, a pozycja czeka na nie w kolejce.
+			// Stan „oczekuje": rozpoznanie pisma jeszcze nie zaszło.
 			Stan: "oczekuje",
 		})
 		if err != nil {
@@ -462,8 +419,7 @@ func (a *adapterStudia) WniesPdfDoEdytora(ctx context.Context,
 		}, nil
 	}
 
-	// Bajty obrazów wyjętych ze stron idą do magazynu zasobów rdzenia — dopiero
-	// wtedy obiekt postaci wskazuje coś, co Preview Window potrafi pokazać.
+	// Bajty obrazów wyjętych ze stron idą do magazynu zasobów rdzenia.
 	odzyskane.Postac.DocumentId = dokument.Kod
 	if len(odzyskane.Obrazy) > 0 {
 		for _, obraz := range odzyskane.Obrazy {
@@ -471,9 +427,7 @@ func (a *adapterStudia) WniesPdfDoEdytora(ctx context.Context,
 				"obraz z PDF strona "+strconv.Itoa(obraz.NumerStrony)+"."+obraz.Format,
 				dokument.Okno, obraz.Szerokosc, obraz.Wysokosc)
 			if err != nil {
-				// Brak magazynu jest usterką montażu rdzenia, nie brakiem
-				// funkcji — i tak jest nazwany. Odzyskanie tekstu przez to nie
-				// przepada: bilans mówi, że obrazy nie weszły.
+				// Odzyskanie tekstu nie przepada — bilans mówi, że obrazy nie weszły.
 				odzyskane.Bilans.Skipped = append(odzyskane.Bilans.Skipped,
 					shared.StudioSkippedItem{
 						Reason: "obrazu nie dało się odłożyć w magazynie zasobów rdzenia",
@@ -544,8 +498,7 @@ func (a *adapterStudia) WniesObraz(ctx context.Context,
 	if miejsce > dlugosc {
 		miejsce = dlugosc
 	}
-	// Blokada obowiązuje PRZED dotknięciem treści: obraz wstawiony w środek
-	// zablokowanego fragmentu zmieniłby fragment, który ma zostać dosłowny.
+	// Blokada obowiązuje przed dotknięciem treści, nie po nim.
 	odcinki, pominiete := postacOdcinkiDozwolone(&stan.forma, miejsce, miejsce, autor)
 	if len(odcinki) == 0 {
 		return shared.StudioDocumentImageImportResponse{}, bladWskazaniaStudio(
@@ -613,13 +566,8 @@ func (a *adapterStudia) WniesObraz(ctx context.Context,
 }
 
 // wejscieObiektObrazu składa obiekt obrazu wedle wskazanego źródła i odkłada
-// bajty w magazynie zasobów rdzenia, gdy przyszły z zewnątrz.
-//
-// Węzeł modułu Design jest tu przypadkiem osobnym i nazwanym: rdzeń NIE wchodzi
-// w moduł Design, a węzeł wektorowy nie jest obrazem rastrowym — jego wyrys
-// wydaje `design.vector.export` do zasobu magazynu. Dlatego wniesienie z Designu
-// przyjmuje kod węzła DO ZAPISU POCHODZENIA, a bajty bierze z zasobu wskazanego
-// obok. Brak jednego i drugiego jest brakiem wskazania, i tak się nazywa.
+// bajty w magazynie zasobów rdzenia, gdy przyszły z zewnątrz; źródło modułu
+// Design przyjmuje kod węzła do zapisu pochodzenia, a bajty bierze z zasobu.
 func (a *adapterStudia) wejscieObiektObrazu(ctx context.Context, dokument dane.DokumentStudia,
 	z shared.StudioDocumentImageImportRequest) (shared.StudioDocumentObject,
 	shared.StudioProvenanceKind, *string, error) {
@@ -726,7 +674,8 @@ func wejscieRozszerzenieObrazu(nazwa string) string {
 	return nazwa[wskazanie+1:]
 }
 
-// wejscieNazwaObrazuZAdresu składa nazwę zasobu z adresu obrazu.
+// wejscieNazwaObrazuZAdresu składa nazwę zasobu z ostatniego człona ścieżki
+// adresu obrazu, albo z nazwy zapasowej, gdy adres ścieżki nie niesie.
 func wejscieNazwaObrazuZAdresu(adres string) string {
 	if rozbity, err := url.Parse(adres); err == nil {
 		if nazwa := strings.Trim(rozbity.Path, "/"); nazwa != "" {
@@ -758,7 +707,8 @@ func (a *adapterStudia) wejscieObrazZeSieci(ctx context.Context, adres string) (
 	return bajty, nil
 }
 
-// wejscieSekcjaMiejsca oddaje sekcję, w której stoi wskazane miejsce treści.
+// wejscieSekcjaMiejsca oddaje sekcję, w której stoi wskazane miejsce treści,
+// albo sekcję ostatnią, gdy miejsce wykracza poza zasięgi wszystkich sekcji.
 func wejscieSekcjaMiejsca(forma *shared.StudioDocumentForm, miejsce int) *string {
 	for _, sekcja := range forma.Sections {
 		if miejsce >= sekcja.RangeStart && miejsce <= sekcja.RangeEnd {
@@ -771,7 +721,8 @@ func wejscieSekcjaMiejsca(forma *shared.StudioDocumentForm, miejsce int) *string
 	return nil
 }
 
-// wejscieWskaznikZakotwiczenia oddaje wskaźnik na rodzaj zakotwiczenia.
+// wejscieWskaznikZakotwiczenia oddaje wskaźnik na kopię wskazanego rodzaju
+// zakotwiczenia obiektu, do pola kontraktu, które wskaźnika wymaga.
 func wejscieWskaznikZakotwiczenia(wartosc shared.StudioAnchorKind) *shared.StudioAnchorKind {
 	kopia := wartosc
 	return &kopia
@@ -780,11 +731,8 @@ func wejscieWskaznikZakotwiczenia(wartosc shared.StudioAnchorKind) *shared.Studi
 // ── Zapis pod nową nazwą ────────────────────────────────────────────────────
 
 // ZapiszDokumentPodNazwa obsługuje `studio.document.save.as` — zapisuje dokument
-// pod nową nazwą albo do wskazanego pliku, WRAZ Z CAŁĄ POSTACIĄ.
-//
-// Postać idzie przez `postacZapisz`, więc arkusz stylów, nastawy strony, sekcje,
-// tabele, obiekty i aparat przechodzą przez zapis nietknięte — to jest ta droga,
-// którą postać przestaje ginąć.
+// pod nową nazwą albo do wskazanego pliku, wraz z całą postacią przez zapis
+// obszaru postaci: arkusz stylów, nastawy strony, sekcje, tabele i obiekty.
 func (a *adapterStudia) ZapiszDokumentPodNazwa(ctx context.Context,
 	z shared.StudioDocumentSaveAsRequest) (shared.StudioDocumentSaveAsResponse, error) {
 
@@ -846,15 +794,9 @@ func (a *adapterStudia) ZapiszDokumentPodNazwa(ctx context.Context,
 
 // ── Kopia dokumentu ─────────────────────────────────────────────────────────
 
-// SkopiujDokument obsługuje `studio.document.copy` — zakłada kopię dokumentu
-// wraz z całą postacią oraz, wedle jawnego wyboru Operatora, z historią wersji
-// albo bez niej.
-//
-// Kopia jest OSOBNYM dokumentem, nie drugim odwołaniem do tego samego. Dlatego
-// wszystkie byty postaci dostają nowe identyfikatory
-// (`wejsciePrzepiszIdentyfikatory`): identyfikator wspólny znaczyłby jeden
-// wiersz w bazie widziany z dwóch dokumentów, a zmiana w kopii ruszałaby
-// oryginał.
+// SkopiujDokument obsługuje `studio.document.copy` — zakłada kopię dokumentu,
+// osobną od oryginału, wraz z całą postacią i, wedle jawnego wyboru w żądaniu,
+// z historią wersji, blokadami fragmentów, znakowaniem i komentarzami.
 func (a *adapterStudia) SkopiujDokument(ctx context.Context,
 	z shared.StudioDocumentCopyRequest) (shared.StudioDocumentCopyResponse, error) {
 
@@ -927,9 +869,7 @@ func (a *adapterStudia) SkopiujDokument(ctx context.Context,
 		}
 	}
 
-	// Blokady fragmentów przechodzą DOMYŚLNIE: fragment wzorcowy pisma ma
-	// zostać wzorcowy także w kopii. Znakowanie i komentarze — domyślnie nie,
-	// bo są rozmową o dokumencie, a nie jego treścią.
+	// Blokady fragmentów przechodzą domyślnie; znakowanie i komentarze — nie.
 	if z.IncludeLocks == nil || *z.IncludeLocks {
 		if err := a.wejsciePrzeniesBlokady(ctx, zrodlo.dokument.ID, nowy.ID, nowy.Kod); err != nil {
 			return shared.StudioDocumentCopyResponse{}, err
@@ -951,7 +891,8 @@ func (a *adapterStudia) SkopiujDokument(ctx context.Context,
 	}, nil
 }
 
-// wejsciePrzeniesBlokady przenosi blokady fragmentów do kopii dokumentu.
+// wejsciePrzeniesBlokady przenosi blokady fragmentów do kopii dokumentu, każdą
+// pod nowym kodem, wskazującą dokument docelowy.
 func (a *adapterStudia) wejsciePrzeniesBlokady(ctx context.Context,
 	zrodloID, celID int64, celKod string) error {
 
@@ -974,7 +915,8 @@ func (a *adapterStudia) wejsciePrzeniesBlokady(ctx context.Context,
 	return nil
 }
 
-// wejsciePrzeniesZnakowanie przenosi znakowanie i komentarze do kopii dokumentu.
+// wejsciePrzeniesZnakowanie przenosi znakowanie i komentarze do kopii dokumentu,
+// każdy wpis pod nowym kodem, wskazujący dokument docelowy.
 func (a *adapterStudia) wejsciePrzeniesZnakowanie(ctx context.Context,
 	zrodloID, celID int64) error {
 
@@ -999,12 +941,8 @@ func (a *adapterStudia) wejsciePrzeniesZnakowanie(ctx context.Context,
 // ── Wniesienie z Biblioteki ─────────────────────────────────────────────────
 
 // WniesZBiblioteki obsługuje `studio.insert.from.library` — wnosi plik, wzór,
-// załącznik albo obraz z Biblioteki WPROST DO DOKUMENTU w miejsce kursora, wraz
-// z zapisem pochodzenia.
-//
-// „Wprost do dokumentu" znaczy: nie do kolejki wczytywania i nie do zasobów.
-// Zapis pochodzenia jest tu obowiązkowy — bez niego za tydzień nikt nie
-// odtworzy, na jakim pliku pismo się opiera.
+// załącznik albo obraz z Biblioteki wprost do dokumentu w miejsce kursora, nie
+// do kolejki wczytywania, wraz z obowiązkowym zapisem pochodzenia.
 func (a *adapterStudia) WniesZBiblioteki(ctx context.Context,
 	z shared.StudioInsertFromLibraryRequest) (shared.StudioInsertFromLibraryResponse, error) {
 
@@ -1048,9 +986,7 @@ func (a *adapterStudia) WniesZBiblioteki(ctx context.Context,
 	koniec := miejsce
 
 	if z.AsObject != nil && *z.AsObject || z.AsAttachment != nil && *z.AsAttachment {
-		// Plik wchodzi jako obiekt osadzony albo załącznik: bajty idą do
-		// magazynu zasobów, a w treści staje obiekt zakotwiczony w miejscu
-		// kursora.
+		// Plik wchodzi obiektem osadzonym, zakotwiczonym w miejscu kursora.
 		zasob, err := a.odlozTrescStudia(ctx, bajty, nazwa,
 			wejscieRozszerzenieObrazu(nazwa), stan.dokument.Okno)
 		if err != nil {
@@ -1141,14 +1077,8 @@ func (a *adapterStudia) WniesZBiblioteki(ctx context.Context,
 // ── Wniesienie ze strony sieci ──────────────────────────────────────────────
 
 // WniesZeSieci obsługuje `studio.insert.from.web` — wnosi fragment albo obraz ze
-// strony sieci wprost do dokumentu w miejsce kursora, wraz z zapisem pochodzenia:
-// adresem i czasem sięgnięcia.
-//
-// Fragment wskazany w oknie przeglądarki (pole `text`) ma pierwszeństwo nad
-// pobraniem strony: Operator widział dokładnie ten fragment i to on ma wejść.
-// Bez niego rdzeń pobiera stronę `net/http` — bez silnika przeglądarki, więc
-// strona zbudowana wyłącznie skryptem oddaje mało treści. To jest cena znana
-// i nazwana w bilansie, nie przeoczenie.
+// strony sieci wprost do dokumentu w miejsce kursora, wraz z zapisem pochodzenia;
+// fragment wskazany w oknie przeglądarki ma pierwszeństwo nad pobraniem strony.
 func (a *adapterStudia) WniesZeSieci(ctx context.Context,
 	z shared.StudioInsertFromWebRequest) (shared.StudioInsertFromWebResponse, error) {
 

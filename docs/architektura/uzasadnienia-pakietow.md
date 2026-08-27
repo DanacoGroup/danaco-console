@@ -4495,3 +4495,32 @@ przy pierwszej zmianie kolumn.
 
 Liczba pozycji spełniających te same warunki co strona wykazu, ale bez ograniczenia LIMIT,
 opisuje rozmiar całej historii wdrożeń, nie rozmiar zwróconej strony.
+
+## budowa/server/internal/dane/komponenty.go
+Wiersz komponentu jest kaflem Strefy 2, który wskazuje byt magazynu
+modułowego kolumną bytu docelowego. Nie powiela bytu modułowego i nie jest
+jego drugą prawdą: kroki automatyki, umiejętności eksperta i pamięć projektu
+zostają w swoich tabelach, a to repozytorium nie tyka żadnej z nich.
+
+Konstruktor bierze współdzieloną pamięć zapytań zestawu, tak jak pozostałe
+repozytoria pakietu — zamknięcie zestawu zwalnia wyłącznie tę jedną pamięć
+poleceń. Połączenia z bazą konstruktor nie bierze i brać nie musi: żaden
+zapis tego rejestru nie obejmuje drugiej tabeli, więc transakcji
+wielotabelowej tu nie ma.
+
+Kontrakt oznacza pole dołączenia komponentów niczynnych jako niewymagane,
+a Strefa 2 pokazuje domyślnie kafle czynne.
+
+Baza nie wstawia własnego znacznika czasu, bo kolumna niesie wartość
+kontraktu bez przekładu; dwa zegary dla jednego pola byłyby dwiema prawdami.
+
+Drugi wynik przypisania komponentu mówi, czy przypisanie coś zmieniło —
+powtórzenie tego samego przypisania nie dochodzi do skutku i odpowiedź
+komendy oddaje wtedy brak zmiany zamiast udawać czynność.
+
+Porządek wykazu komponentów biegnie indeksem tabeli po rodzaju, nazwie
+i identyfikatorze, więc kolejność wyświetlania kontraktu jest stała między
+wywołaniami.
+
+Warstwa wyższa sprawdza wartość kontraktu, to repozytorium sprawdza skutek
+zapisu.

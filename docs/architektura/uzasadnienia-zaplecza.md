@@ -989,3 +989,59 @@ kolumna niesie sam fakt pochodzenia. Wiersze zastane dostają `personal`, bo
 wszystkie powstały wywołaniem `extension.install` przez operatora; wpisanie im
 `danaco` byłoby ogłoszeniem, że coś jest częścią pakietu serwera, choć nikt
 tego nie dostarczył.
+
+## budowa/server/internal/store/migracja_077_obsada_biegu.sql
+
+Obsada od jednego do czterech uczestników z rolami służy modułowi
+automatyzacji, a przepływ wieloagentowy potrzebuje dokładnie tego samego
+bytu: udział bierze od jednego do czterech modeli z podziałem na role. Drugi
+komplet tabel dałby dwa słowniki ról, dwa sufity liczebności i dwa silniki
+wybudzeń — dwie prawdy o jednym mechanizmie. Przeszkodą był warunek
+obowiązkowego wskazania automatyzacji w dawnej tabeli obsady: bieg
+orkiestracji sesyjnej zakłada się w oknie i nie ma wiersza w tabeli
+automatyzacji. Ta migracja rozluźnia nośnik: obsada wisi albo na
+automatyzacji, albo na biegu orkiestracji, nigdy na obu i nigdy na żadnym —
+tym samym wzorcem, którym silnik kolejek jest wspólny dla pętli sesyjnej
+i przepływu wieloagentowego.
+
+Górna granica czterech miejsc siedzi w warunku sprawdzającym: koordynator,
+dwaj wykonawcy i analityk. Nie jest to sprzeczne z górną granicą piętnastu
+podagentów: obsada liczy stanowiska w scenie, a podagenci pracują pod jednym
+wykonawcą, w tle, bez własnego gniazda — dwa różne sufity dwóch różnych
+bytów.
+
+Ponad obsadę odziedziczoną z modułu automatyzacji każde stanowisko niesie
+własny prompt, własne narzędzia i własny profil izolacji, inaczej udział
+kilku modeli z podziałem na role znaczyłby tylko kilka nazw zamiast kilku
+różnie wyposażonych stanowisk. Obsada niczego nie zabrania: bieg bez obsady
+rusza na modelu wskazanym w kroku albo w oknie, a pusty wykaz obsady to
+krótsza lista, nie odmowa.
+
+Bieg orkiestracji nie korzysta z tabeli przebiegów automatyzacji, bo tamta
+wisi na obowiązkowym wskazaniu zapisanej definicji; bieg orkiestracji
+zakłada się w oknie i bywa jednorazowy, a zmuszanie operatora do zapisania
+automatyzacji, żeby móc zestawić dwa modele, byłoby zbędną przeszkodą. Stan
+oczekujący jest tu wartością pierwszej klasy: bieg zawieszony na sygnał ze
+świata to stan tego bytu, nie dopisek.
+
+SQLite nie zdejmuje warunku obowiązkowości ani warunku sprawdzającego, więc
+przebudowa dawnej tabeli obsady idzie przez założenie nowej tabeli
+i przepisanie wierszy; na dawną tabelę nie wskazywał żaden klucz obcy, więc
+przebudowa obejmuje jedną tabelę i kaskada nie ma czego zabrać. Warunek
+dokładnie jednego nośnika jest tu sednem poprawności: wiersz bez nośnika to
+obsada niczyja, wiersz z dwoma — obsada dwóch biegów naraz; SQLite liczy
+wyrażenia logiczne jako zero i jeden, więc suma dwóch testów równa jeden
+wyraża dokładnie jeden nośnik bez wyzwalacza. Jednoznaczność miejsca idzie
+dwoma indeksami częściowymi, nie jednym złożonym warunkiem unikalności, bo
+taki warunek przepuściłby dwa wiersze o tym samym miejscu dla różnych
+biegów orkiestracji, ponieważ wartość pusta nie równa się samej sobie; dwa
+indeksy częściowe pilnują każdego nośnika osobno i dokładnie.
+
+Trwałą tożsamością podagenta jest pozycja kolejki, a proces modelu jest
+wyłącznie sposobem jej wykonania. Podagent nie jest oknem, bo agentów bywa
+więcej niż gniazd sceny; nie jest samym procesem, bo wykaz zakończonych
+przeżywa restart rdzenia, a proces nie; jego pracę wykonuje silnik kolejek,
+który już istnieje. Ponad pozycję kolejki ten wiersz niesie to, czego
+pozycja nie wie: kto ją wykonuje w rozumieniu obsady, pod jakim biegiem
+biegnie i ile kosztowała — żetony, narzędzia i czas są polami, bo pokazuje
+je panel zadań w tle, a struktura kontraktowa podagenta ich nie niesie.

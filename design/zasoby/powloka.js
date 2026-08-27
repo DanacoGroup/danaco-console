@@ -1,4 +1,4 @@
-/* ════════════════════════════════════════════════════════════════════════
+/* powloka.js jest jedynym źródłem prawdy dla powłoki prototypów Danaco Console; opisuje wstrzykiwane elementy okna, wymienione w dalszej części komentarza.
    powloka.js — jedno źródło prawdy dla powłoki prototypów Danaco Console.
    Zawiera markup stałych elementów okna: szyna nawigacji, belka tytułowa,
    pasek edycji (wstążka), pasek stanu oraz okno „Dostosuj paski".

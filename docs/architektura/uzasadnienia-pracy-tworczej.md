@@ -2635,3 +2635,61 @@ nil znaczy "lancuch konczy sie tutaj", a nie usterke.
 
 BrakNagrania: kod bledu kontraktu jest wtedy "zly argument", nie "usterka
 rdzenia".
+
+Wariant symulacji wady widzenia wskazuje źródło: symulacja jest tym samym
+obrazem widzianym inaczej, więc powiązanie jest tu prawdziwe i pozwala oknu
+pokazać parę przed i po.
+
+Kanał brakujący w macierzach wad widzenia zastępuje kombinacja dwóch
+pozostałych — dlatego wiersz odpowiadający brakującemu czopkowi nie jest
+zerowy, a wypełniony.
+
+Rachunek symulacji wady widzenia idzie punkt po punkcie: obraz
+kilkumegapikselowy przechodzi w czasie niezauważalnym dla Operatora,
+a próbkowanie oszczędzające rachunek dałoby obraz o niższej rozdzielczości
+niż źródło — czyli mniej, niż Operator wniósł.
+
+Achromatopsja w symulacji wady widzenia jest całkowitym brakiem widzenia
+barw. Wynikiem jest luminancja względna wedle wag WCAG — tych samych, którymi
+rdzeń liczy kontrast, żeby dwie czynności nie miały dwóch prawd o tym, co
+jest jasne.
+
+Składowe symulacji mnoży się przez krycie, bo `image/draw` liczy w formacie
+z kryciem wmnożonym.
+
+Zasób bez treści w magazynie jest odmową przy odczycie obrazu, nie pustym
+obrazem: wiersz bez bajtów jest kafelkiem, za którym nic nie leży.
+## server/internal/poczta/imap_zapis.go
+
+Szkic zapisuje sie na serwerze, nie u siebie. Szkic trzymany w bazie rdzenia
+bylby szkicem, ktorego Operator nie zobaczy w swoim kliencie poczty — a caly
+sens tego kroku polega na tym, zeby zobaczyl go tam, gdzie zawsze, zanim
+cokolwiek wyjdzie w swiat. IMAP nie zna poprawiania w miejscu. Zmiana
+szkicu to APPEND nowej wersji i skasowanie starej — tak robi kazdy klient
+poczty, bo protokol nie daje nic innego. Kolejnosc jest tu zamierzona:
+NAJPIERW dokladany jest nowy, POTEM kasowany stary. Odwrotnie awaria
+w polowie zostawilaby Operatora bez obu wersji odpowiedzi, ktora model dla
+niego napisal.
+
+Niepowodzenie kasowania POPRZEDNIEJ wersji szkicu: Operator zobaczy wtedy
+dwie wersje — co jest stanem gorszym niz jedna, ale nieporownanie lepszym
+niz odmowa po udanym zapisie.
+
+Dwie osobne komendy STORE: zadanie ma prawo zrobic naraz jedno i drugie
+(np. "przeczytana i wyrozniona" z listu nieprzeczytanego i niewyroznionego).
+
+znacznikiZmiany: zadanie unread: true ZDEJMUJE znacznik, a unread: false go
+doklada; pomylenie tych dwoch kierunkow oznaczaloby, ze rdzen oznacza listy
+dokladnie na odwrot, niz prosi Operator.
+
+dolozDoFolderu: serwer bez UIDPLUS konczy APPEND powodzeniem bez podania
+UID-u. Zwracane jest wtedy zero, a wolajacy odnajduje wiadomosc osobnym
+szukaniem, zamiast odmawiac czynnosci, ktora sie udala.
+
+odnajdzFolder: folder szkicow nazywa sie "Drafts" na jednym serwerze,
+"INBOX.Drafts" na drugim i "[Gmail]/Wersje robocze" na trzecim. Zaszycie
+ktorejkolwiek nazwy oznaczaloby, ze szkic laduje w NOWYM folderze o nazwie
+"Drafts", ktorego Operator nigdy nie otwiera — czyli ze znika.
+
+Folder domyslny: CREATE na folderze zastanym konczy sie bledem, ktory jest
+tu pomijany swiadomie — "juz jest" to dokladnie ten stan, o ktory chodzilo.

@@ -75,7 +75,12 @@ func main() {
 			}
 		}
 		wiersze := bytes.Count(tresc, []byte("\n")) + 1
-		granica := wiersze * 250 / 1000
+		// Granica schodkowa (dopowiedzenie trzecie pozycji 18): 250 znaków
+		// dla każdego pliku, plus 250 za każdy pełny tysiąc wierszy.
+		granica := 250
+		if wiersze >= 1000 {
+			granica = (wiersze / 1000) * 250
+		}
 		stan := "W-GRANICY"
 		if znaki > granica {
 			stan = "PONAD"

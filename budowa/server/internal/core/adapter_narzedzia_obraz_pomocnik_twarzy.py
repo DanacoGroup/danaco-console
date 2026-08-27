@@ -45,7 +45,7 @@ def main():
     if obraz is None:
         odpowiedz({"ok": False, "powod": "nie da się odczytać obrazu wejściowego " + wejscie})
 
-    # Liczymy na procesorze bezwarunkowo, żeby wynik był tą samą drogą powtarzalny na każdej maszynie.
+    # Liczenie idzie na procesorze bezwarunkowo, dla powtarzalnego wyniku na każdej maszynie.
     urzadzenie = torch.device("cpu")
 
     try:

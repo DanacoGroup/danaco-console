@@ -2776,3 +2776,30 @@ obu poziom globalny. Wskazanie wprost jest brane, ale nie na wiarę: poziom
 okna bez okna i poziom karty bez karty ani okna to zakres, którego nie da się
 pokazać. Okno zna swoją kartę, więc wskazanie okna wystarcza także poziomowi
 karty sesji, i wystarcza wtedy, gdy klient karty nie podał.
+
+## budowa/server/internal/core/uprzaz_wejscia_test.go
+
+Sprawdzian mierzy skutek wychodzący poza proces: konto zapisuje się w bazie,
+a droga potwierdzenia idzie listem — sprawdzian, który mierzy wyłącznie
+kopertę odpowiedzi, przepuściłby zarówno list, który poszedł, jak i list,
+który przepadł, bo odpowiedź wygląda tak samo. Uprząż zgodności z kontraktem
+tego nie mierzy: nie zwraca bazy wołającemu, bo dowodem założenia konta jest
+wiersz w tabeli konta właściciela, nie zdanie w odpowiedzi; nie stawia
+odbiornika SMTP na pętli zwrotnej, bo dowodem wysłania listu jest list.
+
+Odbiornik testowy jest prawdziwym gniazdem na porcie efemerycznym, nie
+zaślepką podstawioną w miejsce funkcji wysyłki: zaślepka sprawdzałaby, czy
+rdzeń woła funkcję, gniazdo sprawdza, czy list doszedł, i pozwala przeczytać
+jego treść, rozstrzygając, że niesie drogę i nie niesie hasła.
+
+Sieci sprawdzian nie dotyka: nasłuch stoi na pętli zwrotnej, a nastawy idą
+z wyłączonym StartTLS, więc rozmowa nie próbuje ani podnieść TLS, ani wyjść
+poza maszynę.
+
+Sejf poświadczeń, w którym leży znacznik bramki bez poczty i sekret kotwicy,
+jest otwierany nad tym samym katalogiem danych, który dostał rdzeń, więc
+czytany jest ten sam plik, do którego rdzeń pisze.
+
+Droga zapisu konta nadawczego w sprawdzianie jest ta sama co w produkcie, nie
+skrót przez nastawy montażu: badane jest właśnie to, co dzieje się, gdy poczta
+pojawia się po rejestracji.

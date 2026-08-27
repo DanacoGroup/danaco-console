@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: egzekucja zakresu `odczyt_zapis_plikow` — dostępu do
-// plików poza własnym katalogiem roboczym okna.
-//
-// Obszar dozwolony bierze się z dwóch miejsc: własnego katalogu roboczego okna
-// oraz korzeni nadań dostępu tego okna (nadanie żyje per okno). Nadanie niesie
-// także tryb, więc korzeń nadany do odczytu nie staje się korzeniem do zapisu.
-//
-// Straż egzekwuje ścieżki, po które rdzeń sięga w imieniu okna, oraz wykaz korzeni
-// podawany procesowi modelu przy uruchomieniu. Nie zabroni uruchomionemu procesowi
-// otworzyć pliku samodzielnie — to leży poza zasięgiem rdzenia i wymaga środków
-// systemu operacyjnego.
+// Plik egzekwuje zakres odczyt_zapis_plikow: dostęp do plików poza własnym katalogiem roboczym
+// okna, biorąc obszar dozwolony z katalogu roboczego okna i korzeni nadań dostępu tego okna.
 package core
 
 import (
@@ -19,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// korzenDozwolony to jeden korzeń jawnie udostępniony oknu wraz z trybem.
+// korzenDozwolony to jeden korzeń jawnie udostępniony oknu wraz z trybem odczytu albo zapisu jego zawartości.
 type korzenDozwolony struct {
 	// Sciezka korzenia.
 	Sciezka string
@@ -27,7 +18,7 @@ type korzenDozwolony struct {
 	Zapis bool
 }
 
-// strazPlikow rozstrzyga, czy ścieżka mieści się w obszarze plikowym okna.
+// strazPlikow rozstrzyga, czy ścieżka mieści się w obszarze plikowym okna komunikacji tego rdzenia platformy.
 type strazPlikow struct {
 	zasady   session.Zasady
 	wlasny   string
@@ -48,11 +39,8 @@ func nowaStrazPlikow(zasady session.Zasady, katalogWlasny string,
 	}
 }
 
-// korzenieDozwolone wylicza korzenie katalogów jawnie dozwolonych oknu wraz
-// z trybem. Zawężenie korzeni nadania do korzeni punktu robi KorzenieNadania —
-// reguła zawężenia ma w drzewie jedno miejsce. Nadanie nieczynne
-// i punkt nieczynny nie wnoszą nic: brak wiersza znaczy brak uprawnienia, nie
-// awarię odczytu.
+// korzenieDozwolone wylicza korzenie katalogów jawnie dozwolonych oknu wraz z trybem, gdzie brak
+// wiersza nadania znaczy brak uprawnienia, nie awarię odczytu.
 func korzenieDozwolone(nadania []NadanieMostu) []korzenDozwolony {
 	korzenie := make([]korzenDozwolony, 0, len(nadania))
 	for _, nadanie := range nadania {
@@ -72,7 +60,7 @@ func korzenieDozwolone(nadania []NadanieMostu) []korzenDozwolony {
 	return korzenie
 }
 
-// sprawdzOdczyt odrzuca odczyt ścieżki spoza obszaru okna.
+// sprawdzOdczyt odrzuca odczyt ścieżki spoza obszaru okna komunikacji rdzenia tej platformy dla konta.
 func (s *strazPlikow) sprawdzOdczyt(sciezka string) error {
 	return s.sprawdz(sciezka, false)
 }
@@ -98,8 +86,7 @@ func (s *strazPlikow) Katalogi(zadane []string) ([]string, error) {
 	return zadane, nil
 }
 
-// sprawdz rozstrzyga jedną ścieżkę. Straż niewpięta i zakres wyłączony nie
-// ograniczają niczego.
+// sprawdz rozstrzyga jedną ścieżkę; straż niewpięta i zakres wyłączony nie ograniczają niczego w oknie.
 func (s *strazPlikow) sprawdz(sciezka string, zapis bool) error {
 	if s == nil || !s.zasady.Pliki {
 		return nil

@@ -10,19 +10,12 @@ import { zadajPowitanie } from './powitanie.ts';
 import { utworzSesje } from './sesja.ts';
 import { tozsamoscKlienta } from './tozsamosc-klienta.ts';
 
-/**
- * Rozmowa z rdzeniem uruchomionym naprawdę.
- *
- * Sprawdzian wymaga rdzenia nasłuchującego pod adresem lokalnym i bez niego
- * nie ma czego zmierzyć. Milczenie rdzenia kończy się tu niepowodzeniem
- * nazywającym przeszkodę, nie pominięciem: sprawdzian, który sam siebie
- * odpuszcza przy braku rdzenia, wygląda potem tak samo jak sprawdzian zdany.
- */
+// Rozmowa z rdzeniem uruchomionym naprawdę — wymaga rdzenia nasłuchującego pod adresem lokalnym.
 
-/** Górna granica oczekiwania na odpowiedź rdzenia. */
+/** Górna granica oczekiwania na odpowiedź rdzenia, wyrażona w milisekundach jako czas maksymalny dopuszczalny. */
 const GRANICA_MS = 10_000;
 
-/** Rozstrzyga obietnicę albo przerywa ją z nazwaniem przeszkody. */
+/** Rozstrzyga obietnicę albo przerywa ją z nazwaniem przeszkody, gdy czas oczekiwania na odpowiedź minie. */
 function wGranicyCzasu<T>(obietnica: Promise<T>, czynnosc: string): Promise<T> {
   return Promise.race([
     obietnica,
@@ -79,7 +72,7 @@ await bieg('rozmowa z rdzeniem', {
   },
 });
 
-/** Odpowiedź powitania bez wykazu komend — ten liczy setki pozycji. */
+/** Odpowiedź powitania bez wykazu komend — ten liczy setki pozycji i zaśmiecałby dziennik tego sprawdzianu. */
 function zwiezle(odpowiedz: ConnectionHelloResponse | undefined): Record<string, unknown> {
   if (odpowiedz === undefined) return {};
   const { commands, ...reszta } = odpowiedz;

@@ -132,7 +132,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   background: var(--dn-powierzchnia);
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
-  line-height: 1.3;
+  line-height: var(--dn-lh-ciasny);
   text-align: center;
   color: var(--dn-tekst-2);
 }

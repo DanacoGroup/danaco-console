@@ -2858,3 +2858,28 @@ Kwestia napisów mieszka przy panelu, nie przy oknie: napisy są tłumaczone,
 więc każdy język ma własne taktowanie i własny podział linii. Import napisów
 wnosi kwestie źródłowe do okna, dlatego `panel_id` bywa pusty — wtedy kwestia
 jest kwestią materiału źródłowego, nie przekładu.
+## budowa/server/internal/store/migracja_170_karty_przegladania.sql
+Migracja 170 — karty przeglądania, grupy kart i przestrzenie robocze modułu
+Browser.
+
+Opracowanie modułu (rozdz. 2.1) stawia kartę, grupę kart i przestrzeń roboczą
+obok siebie jako trzy różne byty jednego okna przeglądarki: karta niesie
+adres, grupa niesie nazwę i barwę zwijanego zestawu, a przestrzeń robocza jest
+zapisanym kompletem kart przełączanym bez utraty stanu. Trzy byty, trzy
+tabele — jedna tabela z kolumną „rodzaj" kazałaby każdemu odczytowi odsiewać
+dwie trzecie wierszy.
+
+Karta zamknięta zostaje w tabeli. `browser.tab.close` oddaje `closed:true`,
+a nie „karty nigdy nie było": karta zamknięta jest częścią historii okna
+i przestrzeni roboczej, która ją zapamiętała. Kolumna `zamknieta` odsiewa ją
+z wykazu `browser.tab.list`, zamiast kasować wiersz, do którego odwołuje się
+zapisany zestaw.
+
+Grupa i przestrzeń nie niosą składu w kolumnie tekstowej. Skład jest po
+stronie karty (`grupa`, `przestrzen`), bo karta należy do jednej grupy
+i jednej przestrzeni naraz. Wykaz identyfikatorów przepisany do kolumny JSON
+byłby drugą prawdą o tej samej przynależności — i rozjechałby się przy
+pierwszym zamknięciu karty.
+
+Okno jest kolumną tekstową, nie więzem obcym — tak samo jak w migracji 047:
+`windowId` modułu Browser jest oknem operacyjnym, nie oknem komunikacji.

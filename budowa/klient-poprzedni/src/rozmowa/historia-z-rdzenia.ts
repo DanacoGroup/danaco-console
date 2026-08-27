@@ -12,19 +12,7 @@ import { obiekt, tekst } from './odczyt-fragmentu';
 import { czyPustaTura, nowyWpis, type StanWpisu, type WpisRozmowy } from './wpis-rozmowy';
 import { odtworzZapisanyBlok } from './zlozenie-tury';
 
-/**
- * Odtworzenie historii okna z rdzenia.
- *
- * Komenda `message.list` daje wiadomości leżące w bazie, więc odświeżenie okna
- * albo powrót do sesji pokazuje wątek, a nie pustkę. Wpisy odtworzone są
- * domknięte: pochodzą z zapisu, nie ze strumienia, więc nie mają tury w biegu
- * ani fragmentów do doliczenia.
- *
- * Wywołujący dostaje dwie drogi — `przyjmij` (na sukces, także z pustą tablicą)
- * i `zglosNiepowodzenie` (na odmowę, z gotowym zdaniem złożonym z powodu
- * koperty) — i ma obsłużyć obie. Odmowa rdzenia i historia naprawdę pusta muszą
- * wyglądać na ekranie inaczej.
- */
+/** Funkcja wczytuje historię okna z rdzenia komendą message.list i przekłada otrzymane wiadomości na wpisy rozmowy dla wywołującego. */
 export function wczytajHistorie(
   kanal: Kanal,
   idOkna: string,
@@ -44,17 +32,7 @@ export function wczytajHistorie(
   });
 }
 
-/**
- * Przekład wiadomości kontraktu na wpis rozmowy.
- *
- * Treść wpisu bierze się z pola `content`; wiadomość przerwana albo błędna
- * wraca z treścią, którą zdążyła zebrać — pokazanie jej jest uczciwsze niż
- * ukrycie tury, która się odbyła.
- *
- * Stan wpisu bierze się z pola `status` wiadomości, nie z samego faktu zapisu:
- * tura przerwana i tura zamknięta błędem mają po odświeżeniu okna wyglądać tak
- * samo jak w chwili, w której się odbyły.
- */
+/** Funkcja przekłada wiadomość kontraktu na wpis rozmowy, ustalając jego treść, nadawcę i stan na podstawie pól wiadomości. */
 function wpisZWiadomosci(
   wiadomosc: Message,
   rolaOkna: WindowRole | null,
@@ -77,33 +55,23 @@ function wpisZWiadomosci(
   wpis.domkniety = true;
   wpis.znacznikCzasu = wiadomosc.createdAt;
 
-  // Rdzeń oddaje nietekstowe fragmenty tury — tok rozumowania, narzędzia
-  // z wynikami, prowenancję, konto, błędy — w `metadata.blocks`; do wpisu
-  // wchodzą tą samą logiką, którą składa je strumień żywy
-  // (odtworzZapisanyBlok → rozdzielacz rodzajów).
+  // Rdzeń oddaje nietekstowe fragmenty tury w polu metadata.blocks tą samą logiką co strumień żywy.
   for (const blok of blokiZapisane(wiadomosc.metadata)) {
     odtworzZapisanyBlok(wpis, blok.rodzaj, blok.tresc, blok.dane);
   }
-  // Tura bez tekstu przestaje być „zamknięta bez odpowiedzi", jeżeli bloki
-  // przyniosły rozumowanie albo narzędzie — pustkę mierzy się po doliczeniu
-  // wszystkich warstw wpisu, tak jak przy turze żywej (czyPustaTura).
+  // Tura bez tekstu przestaje być pusta, jeżeli bloki przyniosły rozumowanie albo narzędzie.
   if (wpis.stan === 'pusty' && !czyPustaTura(wpis)) wpis.stan = 'zakonczony';
   return wpis;
 }
 
-/** Jeden blok wiadomości odczytany z metadanych. */
+/** Interfejs opisuje jeden blok wiadomości odczytany z metadanych zapisanej wiadomości kontraktu rdzenia. */
 interface BlokZapisany {
   rodzaj: string;
   tresc: string;
   dane: unknown;
 }
 
-/**
- * Odczyt wykazu `blocks` z metadanych wiadomości. Odczyt jest tolerancyjny
- * (wzorem `odczyt-fragmentu.ts`): brak obszaru, obszar cudzego kształtu albo
- * pozycja bez rodzaju dają mniej bloków — historia ma się wyświetlić, a nie
- * zniknąć od nieczytelnej pozycji.
- */
+/** Funkcja odczytuje wykaz bloków z metadanych wiadomości w sposób tolerancyjny na brak albo niewłaściwy kształt danych. */
 function blokiZapisane(metadata: unknown): BlokZapisany[] {
   const obszar = obiekt(metadata);
   const surowe = obszar?.['blocks'];
@@ -118,12 +86,7 @@ function blokiZapisane(metadata: unknown): BlokZapisany[] {
   return bloki;
 }
 
-/**
- * Stan wpisu odtworzonego z zapisu — wprost ze stanu wiadomości kontraktu.
- *
- * Wypowiedź Operatora nie ma stanu tury: jest tym, co napisał, i nie może
- * wrócić z zapisu jako „zamknięta bez odpowiedzi", nawet gdyby zapis był pusty.
- */
+/** Funkcja ustala stan wpisu odtworzonego z zapisu wprost na podstawie stanu zapisanego w wiadomości kontraktu. */
 function stanZapisany(wiadomosc: Message, odOperatora: boolean): StanWpisu {
   if (odOperatora) return 'zakonczony';
   if (wiadomosc.status === MessageStatus.Error) return 'bledny';

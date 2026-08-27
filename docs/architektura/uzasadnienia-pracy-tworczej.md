@@ -3789,3 +3789,87 @@ z zamyslem kontraktu ("brak znaczy koniec wykazu").
 zmianyModeluWybierz: trzy kopie tego przesiewu rozjechalyby sie przy
 pierwszej poprawce i licznik przy przelaczniku przestalby zgadzac sie
 z tym, po czym Operator skacze.
+
+## budowa/server/internal/wiedza/podobienstwo.go
+
+Produkt wozi sterownik `modernc.org/sqlite`, czyli SQLite przepisany na Go,
+bez zależności od C. Rozszerzenie wektorowe `sqlite-vec` wydawane jest jako
+biblioteka natywna (`.so`, `.dylib`, `.dll`) ładowana przez
+`sqlite3_load_extension`, a sterownik nie wystawia drogi włączenia ładowania
+rozszerzeń — `load_extension('vec0')` kończy się `SQL logic error: not
+authorized (1)`. Nie miałby też jak jej wystawić: kod przepisany na Go nie
+wciągnie do siebie natywnej biblioteki C. Drogą alternatywną byłaby zamiana
+sterownika na wariant z CGO w całym produkcie.
+
+Zostaje przegląd zupełny: wektory leżą w tabeli, a podobieństwo liczy się
+w Go dla każdego wiersza. Przy 768 wymiarach i jednym rdzeniu przegląd stu
+tysięcy wektorów zajmuje rząd sześćdziesięciu milisekund, a biblioteka rzędu
+tysiąca dokumentów daje kilkanaście tysięcy fragmentów, czyli kilkanaście
+milisekund na zapytanie — wobec sekund, które zajmuje wczytanie wag przez
+pomocnika (nagłówek `silnik.go`). Indeks przybliżony zaczyna się opłacać
+dopiero powyżej setek tysięcy pozycji.
+
+Wektory wchodzą do bazy znormalizowane. Podobieństwo kosinusowe to iloczyn
+skalarny podzielony przez iloczyn długości, a długość wektora dokumentu nie
+zmienia się między zapytaniami; wektor podzielony przez własną długość już
+przy zapisie sprawia, że porównanie jest samym iloczynem skalarnym, a wynik
+wprost kosinusem.
+
+`rozmiarLiczby`: cztery bajty, nie osiem — osiem bajtów zapisywałoby zera po
+przecinku, których w wektorze nie ma — dwukrotność miejsca i dwukrotność
+odczytu z dysku za zero dokładności.
+
+`Znormalizuj`: wektor zerowy wraca bez zmiany, a nie przez dzielenie przez
+zero, bo jego iloczyn skalarny z czymkolwiek wynosi zero, więc nigdy nie
+wygra rankingu, podczas gdy wektor z NaN psułby porównania.
+
+`NaBajty`: porządek bajtów ustalony jawnie, a nie odziedziczony po maszynie,
+bo baza bywa przenoszona między maszynami razem z katalogiem danych, a
+wektor odczytany w odwrotnym porządku bajtów to nie gorsze trafienia, tylko
+liczby bez żadnego związku z tekstem.
+
+`blisko`: różna długość wektorów znaczy różne modele, więc te dwa wektory
+nie leżą w jednej przestrzeni i porównanie ich części byłoby liczbą udającą
+wynik.
+
+`Najblizsze`: kosinus niedodatni znaczy, że fragment nie ma z pytaniem nic
+wspólnego, a oddanie go jako trafienia dałoby cytat do zbudowania
+odpowiedzi z niczego.
+
+`posortujMalejaco`: sortowanie stabilne, żeby dwa fragmenty o równej ocenie
+wracały zawsze w tej samej kolejności — inaczej to samo pytanie zadane dwa
+razy dawałoby dwie różne odpowiedzi bez żadnej zmiany w wiedzy. Wspólne dla
+obu przebiegów: pierwszy układa po kosinusie, drugi po ocenie kodera
+(`przesiew.go`), a wymóg powtarzalności jest ten sam.
+
+`WSetnych`: zaokrąglenie w górę od połowy; `score` większe od stu byłoby
+liczbą spoza zakresu obiecanego przez kontrakt.
+## server/internal/core/adapter_modul_studio_katalogi.go
+
+Operator zapisuje wlasny prompt raz i siega po niego w kazdym dokumencie,
+a zespol pracujacy nad projektem ma widziec lancuchy tego projektu, nie
+cudze. Zasieg jest wiec czescia tozsamosci wpisu, nie ozdoba: ten sam
+identyfikator w dwoch zasiegach to dwa rozne wpisy. chain.run sprawdza
+lancuch, dokument i zakres, po czym oddaje identyfikator przebiegu wraz
+z liczba krokow. Samych krokow nie puszcza synchronicznie: kazdy jest
+operacja kontekstowa wychodzaca do kanalu modelu, a odpowiedz kontraktu
+nie niesie ich wynikow — niesie przebieg, po ktorym poznaje sie zadania.
+Wykonanie kroku po kroku prowadzi petla wykonawcza okna, a postep idzie
+zdarzeniem. Udawanie tu wykonania oddawaloby steps policzone z definicji
+i przebieg, za ktorym nic nie stoi.
+
+ZastosujSzablon: pole bez wartosci zostaje w tresci WIDOCZNE jako
+znacznik, a nie znika — dokument z pustym miejscem po polu wyglada na
+kompletny, a nie jest.
+
+wypelnijSzablon: wartosci przychodza surowym JSON-em, bo kontrakt opisuje
+je typem json — szablon nie ma z gory znanego zbioru pol i miec nie moze.
+Tresc nieczytelna zostawia szablon nietkniety: dokument ze znacznikami
+jest odroznialny od dokumentu wypelnionego, a dokument wypelniony
+bzdura — nie.
+
+UstawFormatDokumentu: przestawienie formatu bez zamiany zostawia ten sam
+tekst pod nowa nazwa formatu, co bywa wlasciwe (markdown oznaczony jako
+tekst czysty). Zamiana tresci miedzy formatami nalezy do obszaru
+dokumentow i idzie osobna komenda — tutaj bylaby druga droga do tej samej
+czynnosci.

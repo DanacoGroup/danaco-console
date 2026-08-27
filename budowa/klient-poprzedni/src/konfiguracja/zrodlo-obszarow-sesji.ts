@@ -13,19 +13,9 @@ import { czescAdresu } from './zrodlo-wartosci';
 
 /**
  * Dwie komendy jednolitego modelu konfiguracji sesji: `config.effective.get`
- * i `config.session.set`.
- *
- * `config.get` oddaje pojedyncze klucze katalogu ustawień — płaskie wpisy
- * `ConfigEntry` ze wszystkich poziomów naraz — więc dziedziczenie jednego klucza
- * rozstrzyga klient (`rozstrzygniecie.ts`). `config.effective.get` oddaje obszary
- * konfiguracji sesji już rozstrzygnięte przez rdzeń, wraz z pochodzeniem obszaru
- * (pole `source`) i z rozejściem katalogu roboczego. Klient tego rachunku wykonać
- * nie może: nie zna pełnej ścieżki bytów ani rejestrów spoza rodziny `config.*`
- * (rejestr kont, rejestr kanałów, katalog tożsamości, nadania dostępu), z których
- * treść obszaru jest składana.
- *
- * Wynik obu czynności wraca opakowany, więc okno odróżnia obszar bez zapisu
- * od nieudanego zapytania.
+ * oddaje obszary rozstrzygnięte przez rdzeń wraz z pochodzeniem, a
+ * `config.session.set` zapisuje wskazane obszary pod wskazanym adresem. Wynik
+ * obu czynności wraca opakowany.
  */
 export interface ZrodloObszarowSesji {
   /** `config.effective.get` — obszary rozstrzygnięte wraz z pochodzeniem. */
@@ -44,8 +34,7 @@ export interface ZrodloObszarowSesji {
 export function utworzZrodloObszarowSesji(kanal: Kanal): ZrodloObszarowSesji {
   return {
     async obowiazujaca(punkt, obszary) {
-      // Poziom i byt idą tym samym tłumaczeniem adresu, co `config.set`.
-      // Pusty wykaz obszarów znaczy w kontrakcie komplet, więc go nie wysyłamy.
+      // Pusty wykaz obszarów znaczy w kontrakcie komplet, więc nie jest wysyłany.
       const zadanie = {
         ...czescAdresu(punkt),
         ...(obszary === undefined || obszary.length === 0 ? {} : { areas: [...obszary] }),
@@ -72,12 +61,9 @@ export function utworzZrodloObszarowSesji(kanal: Kanal): ZrodloObszarowSesji {
 }
 
 /**
- * Kształt odpowiedzi `config.effective.get`, tak jak produkuje ją
- * `server/internal/core/sesja_konfiguracja_skladanie.go`: `config`, `origins`
- * i `workingDirectory` wychodzą zawsze, `capabilities` wyłącznie na żądanie,
- * a `unsupportedFields` tą ścieżką nie wychodzi. Sprawdzian pilnuje trzech pól
- * obowiązkowych i ani jednego więcej — pole nieobowiązkowe w sprawdzianie
- * zamieniłoby zdrową odpowiedź w fałszywą odmowę.
+ * Kształt odpowiedzi `config.effective.get`: pola konfiguracji, pochodzenia
+ * i katalogu roboczego wychodzą zawsze, a możliwości wyłącznie na żądanie.
+ * Sprawdzian pilnuje trzech pól obowiązkowych i ani jednego więcej.
  */
 function czyKsztaltObowiazujacej(tresc: ConfigEffectiveGetResponse): boolean {
   const obowiazujaca = tresc.effective as unknown;
@@ -90,10 +76,9 @@ function czyKsztaltObowiazujacej(tresc: ConfigEffectiveGetResponse): boolean {
 }
 
 /**
- * Kształt odpowiedzi `config.session.set`: rdzeń oddaje stan poziomu po zapisie
- * (`config`), wykaz obszarów faktycznie na nim zapisanych (`storedAreas`)
- * i wpisy rezolwera. `unsupportedFields` tą ścieżką nie wraca — okno pokazuje
- * je, gdy przyjdą, i nie wymaga ich do uznania zapisu za udany.
+ * Kształt odpowiedzi `config.session.set`: rdzeń oddaje stan poziomu po zapisie,
+ * wykaz obszarów faktycznie na nim zapisanych oraz wpisy rezolwera. Sprawdzian
+ * obejmuje dwa pola obowiązkowe.
  */
 function czyKsztaltZapisu(tresc: ConfigSessionSetResponse): boolean {
   return czyObiekt(tresc.config as unknown) && czyTablica(tresc.storedAreas);

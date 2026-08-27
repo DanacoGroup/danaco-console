@@ -5556,3 +5556,6 @@ szerokość gniazda. Cykl życia panelu wraz z subskrypcją rdzenia należy do
 tego, kto panel powołał — zamykanie paneli przy każdym ustawieniu stosu
 ubiłoby panel przeniesiony na pełny ekran. Podział szerokości między
 rozmowę a kolumnę należy do sceny i jej arkusza stylów.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/wpis.ts
+Przekład roli kontraktu na klasę biblioteki obejmuje cztery wartości — rolę użytkownika na klasę człowieka, rolę modelu na klasę inteligencji, a role systemu i narzędzia na wspólną klasę systemową — i jest wystawiany wraz z medalionem, którego wymaga dwukolumnowa siatka wiersza wpisu.

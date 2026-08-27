@@ -127,3 +127,26 @@ cienkiej instalce.
 Zapora pokrycia rodziny `library.*` stoi obok sprawdzianu pokrycia całego
 kontraktu, bo ten moduł ma osobno pilnować, żeby żadna z jego 48 komend nie
 została bez uchwytu w rejestrze rdzenia.
+
+## budowa/server/internal/core/skutek_designu_test.go
+
+Moduł Design ma w tym produkcie precedens szkody: `design.asset.list` meldował
+kiedyś `status: ok` z wykazem zasobów, za którymi nie było ani jednego bajtu.
+Koperta była udana i zarazem kłamała, a klient czyta kopertę, nie komentarz
+w kodzie. Od tamtej pory każdy sprawdzian tego pliku schodzi po odwołaniu do
+magazynu albo do bazy i mierzy niezależnie, nigdy nie kończąc się na treści
+odpowiedzi. Stąd dwa narzędzia pomiaru, oba omijające rdzeń: wydanie zasobu
+jest dekodowane z powrotem jako obraz i mierzone co do wymiarów po skali, bo
+odpowiedź mówiąca „oto png @2x” nie jest dowodem — dowodem jest `image.Decode`,
+któremu te bajty wystarczą, i szerokość, która wyszła dwa razy większa; a
+kolekcja, wersja kompozycji, adnotacja i zestaw żetonów są odczytywane drugim,
+niezależnym połączeniem SQLite do pliku bazy stanowiska, bo rdzeń nie bierze
+w tym odczycie udziału — gdyby zapis nie doszedł do pliku, odpowiedź komendy
+i tak wyglądałaby tak samo. Sumę kontrolną treści sprawdzian liczy z bajtów,
+nie przepisuje jej z odpowiedzi, więc zgodność tych dwóch wartości jest tu
+mierzona, a nie założona.
+
+Funkcja pomocnicza `zycieZGniazdemDesignu` podstawia tożsamość połączenia,
+bo uprząż woła rdzeń z pominięciem gniazda, a zgłoszenie obecności bez
+rozpoznanego klienta jest odmawiane — inaczej sprawdzian mierzyłby wywołanie,
+które w produkcie nie zachodzi.

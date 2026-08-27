@@ -305,7 +305,7 @@ Mapowanie ról kontraktu komunikacji: `user → --czlowiek` · `assistant → --
 | Wcięcie poziome | `--dn-od-4` / `--dn-od-3` / `--dn-od-5` | 16 / 12 / 20 px | bez zmian |
 | Odstęp ikona–etykieta | `--dn-od-2` | 8 px | bez zmian |
 | Promień | `--dn-r-sm` | 6 px | bez zmian |
-| Stopień pisma | `--dn-fs-base` / `-sm` / `-md` | 13 / 12 / 14 px | 14 px w gęstości przestronnej |
+| Stopień pisma | `--dn-fs-base` / `-sm` / `-md` | 14 / 13 / 15 px | 15 px w gęstości przestronnej |
 | Waga pisma | `--dn-fw-srednia` | 500 | bez zmian |
 
 **Żetony użyte.** `--dn-obrys-mocny` · `--dn-powierzchnia` · `--dn-tekst` · `--dn-hover` · `--dn-atrament` · `--dn-atrament-hover` · `--dn-atrament-tekst` · `--dn-sygnal-wypelnienie` · `--dn-sygnal-wypelnienie-hover` · `--dn-sygnal-tlo` · `--dn-sygnal-obrys` · `--dn-sygnal` · `--dn-tekst-2` · `--dn-blad-obrys` · `--dn-blad-tekst` · `--dn-fokus` · `--dn-czas-1` · `--dn-czas-2` · `--dn-ease` · `--dn-wym-spinner` · `--dn-r-pill`.
@@ -448,7 +448,7 @@ Biblioteka v2.0 świadomie **nie mnoży klas** na `input` / `textarea` / `select
 | Walidacja w toku | — | `.dn-spinner` obok pola; pole pozostaje edytowalne |
 | Warunek niespełniony | — | Brak stanu wizualnego; ograniczenie opisane w `.dn-pole-opis` albo w dymku |
 
-**Wymiary i żetony.** Wysokość `--dn-wym-kontrolka` 32 px (dotyk / przestronna 40) · `textarea` min. `calc(--dn-wym-kontrolka * 2)` = 64 px · wcięcie `0 --dn-od-3` (12 px), w `textarea` `--dn-od-2 --dn-od-3` · promień `--dn-r-sm` 6 px · stopień `--dn-fs-base` 13 px · etykieta i opis `--dn-fs-sm` 12 px · odstęp w kolumnie `--dn-od-1` 4 px.
+**Wymiary i żetony.** Wysokość `--dn-wym-kontrolka` 32 px (dotyk / przestronna 40) · `textarea` min. `calc(--dn-wym-kontrolka * 2)` = 64 px · wcięcie `0 --dn-od-3` (12 px), w `textarea` `--dn-od-2 --dn-od-3` · promień `--dn-r-sm` 6 px · stopień `--dn-fs-base` 14 px · etykieta i opis `--dn-fs-sm` 13 px · odstęp w kolumnie `--dn-od-1` 4 px.
 
 **Żetony użyte.** `--dn-obrys-mocny` · `--dn-powierzchnia` · `--dn-powierzchnia-2` · `--dn-tekst` · `--dn-tekst-2` · `--dn-tekst-3` · `--dn-fokus` · `--dn-cien-sygnal` · `--dn-blad-tekst` · `--dn-r-sm` · `--dn-fs-base` · `--dn-fs-sm` · `--dn-fw-srednia` · `--dn-czas-2` · `--dn-ease`.
 
@@ -506,7 +506,7 @@ Biblioteka v2.0 świadomie **nie mnoży klas** na `input` / `textarea` / `select
 
 **Stany.** Komponent nie ma stanów własnych — przekazuje je kontrolce wewnętrznej. Najechanie zmienia kursor; fokus dotyczy kontrolki, nie opakowania.
 
-**Wymiary i żetony.** `min-height: --dn-wym-kontrolka` (32 px, dotyk 40) · odstęp `--dn-od-2` 8 px · stopień `--dn-fs-base` 13 px.
+**Wymiary i żetony.** `min-height: --dn-wym-kontrolka` (32 px, dotyk 40) · odstęp `--dn-od-2` 8 px · stopień `--dn-fs-base` 14 px.
 
 **Zachowanie.** Element `<label>` z zagnieżdżoną kontrolką — kliknięcie w dowolne miejsce wiersza przełącza wartość. Nie stosować `for` przy zagnieżdżeniu; przy kontrolce poza etykietą — `for` obowiązkowe.
 
@@ -748,7 +748,7 @@ Biblioteka v2.0 świadomie **nie mnoży klas** na `input` / `textarea` / `select
 
 **Stany.** Pasek jest kontenerem statycznym. Stany należą do elementów wewnątrz: `.dn-btn-ikona--na-ramie`, `.dn-pasek-szukaj` (fokus: obrys `--dn-fokus` + poświata `--dn-cien-sygnal`), `.dn-awatar`.
 
-**Wymiary i żetony.** Wysokość `--dn-wym-pasek` 48 px (gęstość przestronna 56) · wcięcie `0 --dn-od-3` 12 px · odstęp `--dn-od-2` 8 px · pole wyszukiwania: `flex:1`, maks. 420 px, min. wys. 30 px, tło `rgba(255,255,255,.06)`, obrys `--dn-rama-obrys` · logotyp `--dn-fs-md` 14 px, podpis `--dn-fs-xs` 11 px.
+**Wymiary i żetony.** Wysokość `--dn-wym-pasek` 48 px (gęstość przestronna 56) · wcięcie `0 --dn-od-3` 12 px · odstęp `--dn-od-2` 8 px · pole wyszukiwania: `flex:1`, maks. 420 px, min. wys. 30 px, tło `rgba(255,255,255,.06)`, obrys `--dn-rama-obrys` · logotyp `--dn-fs-md` 15 px, podpis `--dn-fs-xs` 12 px.
 
 **Żetony użyte.** `--dn-rama` · `--dn-rama-tekst` · `--dn-rama-tekst-2` · `--dn-rama-obrys` · `--dn-rama-hover` · `--dn-wym-pasek` · `--dn-od-2` · `--dn-od-3` · `--dn-ff-naglowek` · `--dn-ff-mono` · `--dn-fs-md` · `--dn-fs-xs` · `--dn-fw-gruba` · `--dn-ls-mono-wersaliki` · `--dn-fokus` · `--dn-cien-sygnal` · `--dn-r-sm`.
 
@@ -882,7 +882,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | Fokus | `:focus-visible` | Pierścień 2 px |
 | Wyłączona | — | **Nie istnieje** — karta albo jest, albo została zamknięta |
 
-**Wymiary i żetony.** Pas: wys. `--dn-wym-pas-kart` 36 px (przestronna 40), wcięcie `0 --dn-od-2`, odstęp `--dn-od-1`, przewijanie poziome bez widocznego paska · Karta: margines górny `--dn-od-1` 4 px, wcięcie `0 --dn-od-2 0 --dn-od-3`, promień `--dn-r-sm --dn-r-sm 0 0`, stopień `--dn-fs-sm` 12 px, wstęga `--dn-wym-wstega` 2 px.
+**Wymiary i żetony.** Pas: wys. `--dn-wym-pas-kart` 36 px (przestronna 40), wcięcie `0 --dn-od-2`, odstęp `--dn-od-1`, przewijanie poziome bez widocznego paska · Karta: margines górny `--dn-od-1` 4 px, wcięcie `0 --dn-od-2 0 --dn-od-3`, promień `--dn-r-sm --dn-r-sm 0 0`, stopień `--dn-fs-sm` 13 px, wstęga `--dn-wym-wstega` 2 px.
 
 **Żetony użyte.** `--dn-wym-pas-kart` · `--dn-powierzchnia-2` · `--dn-powierzchnia` · `--dn-obrys` · `--dn-hover` · `--dn-tekst-2` · `--dn-tekst` · `--dn-kropka` · `--dn-wym-wstega` · `--dn-r-sm` · `--dn-fs-sm` · `--dn-czas-2`.
 
@@ -936,7 +936,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | Fokus | `:focus-visible` | Pierścień 2 px |
 | Niedostępna zawartość | — | Zakładka pozostaje klikalna; po przełączeniu panel wyjaśnia stan komunikatem albo pustym stanem |
 
-**Wymiary i żetony.** Pozycja: min. wys. `--dn-wym-kontrolka` 32 px, wcięcie `0 --dn-od-3` 12 px, odstęp `--dn-od-2` 8 px, stopień `--dn-fs-base` 13 px, waga 500 · Grupa: odstęp `--dn-od-1` 4 px, kreska dolna `--dn-obrys` · Wskaźnik 2 px `--dn-kropka`.
+**Wymiary i żetony.** Pozycja: min. wys. `--dn-wym-kontrolka` 32 px, wcięcie `0 --dn-od-3` 12 px, odstęp `--dn-od-2` 8 px, stopień `--dn-fs-base` 14 px, waga 500 · Grupa: odstęp `--dn-od-1` 4 px, kreska dolna `--dn-obrys` · Wskaźnik 2 px `--dn-kropka`.
 
 **Zachowanie.** Kliknięcie czyni zakładkę wybraną i podmienia zawartość panelu bez przeładowania okna. Zmiana natychmiastowa, przejście barwy w czasie `--dn-czas-2`.
 
@@ -970,7 +970,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Stany.** Spoczynek (tekst `--dn-tekst-2`, tło przezroczyste) · najechanie (tło `--dn-hover`, tekst `--dn-tekst`) · fokus (pierścień 2 px). Pozycja nie ma stanu wybranego — listwa prowadzi dalej, nie przełącza widoku w miejscu.
 
-**Wymiary i żetony.** Kontener: wcięcie `--dn-od-2 --dn-od-3`, odstęp `--dn-od-2`, promień `--dn-r-lg` 10 px · Pozycja: min. wys. `calc(--dn-wym-kontrolka − --dn-od-1)` = 28 px, wcięcie `0 --dn-od-3`, promień `--dn-r-sm`, stopień `--dn-fs-sm` 12 px. Żetony: `--dn-powierzchnia-2` · `--dn-obrys` · `--dn-tekst-2` · `--dn-tekst` · `--dn-hover` · `--dn-r-lg` · `--dn-r-sm`.
+**Wymiary i żetony.** Kontener: wcięcie `--dn-od-2 --dn-od-3`, odstęp `--dn-od-2`, promień `--dn-r-lg` 10 px · Pozycja: min. wys. `calc(--dn-wym-kontrolka − --dn-od-1)` = 28 px, wcięcie `0 --dn-od-3`, promień `--dn-r-sm`, stopień `--dn-fs-sm` 13 px. Żetony: `--dn-powierzchnia-2` · `--dn-obrys` · `--dn-tekst-2` · `--dn-tekst` · `--dn-hover` · `--dn-r-lg` · `--dn-r-sm`.
 
 **Zachowanie.** Kliknięcie otwiera powiązane okno platformowe. Listwa nie zmienia własnego wyglądu po kliknięciu — skutkiem jest zmiana widoku, nie stan pozycji.
 
@@ -1064,7 +1064,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | Ładowanie | — | `.dn-spinner` w miejscu treści ciała |
 | Błąd | — | `.dn-plakietka--blad` w nagłówku albo komunikat w ciele; karta nie zmienia obrysu |
 
-**Wymiary i żetony.** Promień `--dn-r-lg` 10 px · obrys 1 px `--dn-obrys` · cień `--dn-cien-1`, przy najechaniu `--dn-cien-2` · nagłówek: wcięcie `--dn-od-3 --dn-od-4`, odstęp `--dn-od-2`, kreska `--dn-obrys-subtelny` · tytuł `--dn-fs-lg` 16 px, krój `--dn-ff-naglowek`, waga `--dn-fw-polgruba` 600, odstęp liter `--dn-ls-naglowek` · ciało: wcięcie `--dn-odstep-panel --dn-od-4` (12/16 px; w gęstości przestronnej 20/16).
+**Wymiary i żetony.** Promień `--dn-r-lg` 10 px · obrys 1 px `--dn-obrys` · cień `--dn-cien-1`, przy najechaniu `--dn-cien-2` · nagłówek: wcięcie `--dn-od-3 --dn-od-4`, odstęp `--dn-od-2`, kreska `--dn-obrys-subtelny` · tytuł `--dn-fs-lg` 17 px, krój `--dn-ff-naglowek`, waga `--dn-fw-polgruba` 600, odstęp liter `--dn-ls-naglowek` · ciało: wcięcie `--dn-odstep-panel --dn-od-4` (12/16 px; w gęstości przestronnej 20/16).
 
 **Zachowanie.** Karta bazowa jest bierna. Karta klikalna otwiera powiązany widok kliknięciem w dowolne miejsce poza akcjami w nagłówku. Karty w jednym panelu mają jednakową szerokość i zmienną wysokość — nie wyrównuje się ich sztucznie.
 
@@ -1123,7 +1123,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | Fokus | `:focus-visible` | Pierścień 2 px + odsunięcie |
 | Ładowanie | — | Wskaźnik w miejscu opisu na czas przygotowania powłoki środowiska |
 
-**Wymiary i żetony.** Wcięcie `--dn-od-6` 24 px · promień `--dn-r-xl` 14 px · godło 40×40 px, margines dolny `--dn-od-4` · tytuł `--dn-fs-3xl` 30 px, waga 600, interlinia ciasna · motto `--dn-fs-sm` 12 px krojem mono, barwa `--dn-tekst-3` · opis `--dn-fs-base` 13 px, `--dn-tekst-2`, maks. 44 znaki w wierszu · wstęga `--dn-wym-wstega` 2 px w barwie `--dn-kropka` · uniesienie 2 px w czasie `--dn-czas-2`.
+**Wymiary i żetony.** Wcięcie `--dn-od-6` 24 px · promień `--dn-r-xl` 14 px · godło 40×40 px, margines dolny `--dn-od-4` · tytuł `--dn-fs-3xl` 30 px, waga 600, interlinia ciasna · motto `--dn-fs-sm` 13 px krojem mono, barwa `--dn-tekst-3` · opis `--dn-fs-base` 14 px, `--dn-tekst-2`, maks. 44 znaki w wierszu · wstęga `--dn-wym-wstega` 2 px w barwie `--dn-kropka` · uniesienie 2 px w czasie `--dn-czas-2`.
 
 **Zachowanie.** Kliknięcie otwiera powłokę środowiska i przenosi Operatora do warstwy modułów. Wstęga jest **jedynym miejscem sygnału** na tej karcie — reszta pozostaje monochromatyczna. Karta nie animuje się w spoczynku.
 
@@ -1158,7 +1158,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Stany.** Spoczynek (tło `--dn-panel`, obrys `--dn-obrys`) · najechanie (obrys `--dn-obrys-mocny`, tło `--dn-powierzchnia` — kafel „wychodzi" z panelu) · fokus (pierścień 2 px). Kafel nie unosi się jak karta środowiska — różnica masy jest celowa.
 
-**Wymiary i żetony.** Wcięcie `--dn-od-4` 16 px · odstęp `--dn-od-3` 12 px · promień `--dn-r-lg` 10 px · ikona: `--dn-wym-awatar-lg` 36 px, promień `--dn-r-md` 8 px · etykieta `--dn-fs-base` 13 px waga 600 · opis `--dn-fs-sm` 12 px.
+**Wymiary i żetony.** Wcięcie `--dn-od-4` 16 px · odstęp `--dn-od-3` 12 px · promień `--dn-r-lg` 10 px · ikona: `--dn-wym-awatar-lg` 36 px, promień `--dn-r-md` 8 px · etykieta `--dn-fs-base` 14 px waga 600 · opis `--dn-fs-sm` 13 px.
 
 **Zachowanie.** Kliknięcie otwiera kreator komponentu własnego — zwykle w postaci modala (Automations, Agents, Workspace, Assistant).
 
@@ -1218,7 +1218,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | Pusta | — | `.dn-pusty-stan` w miejsce ciała tabeli |
 | Sortowanie | `aria-sort` na `th` | Grot kierunku przy nazwie kolumny |
 
-**Wymiary i żetony.** Nagłówek: wys. `calc(--dn-wym-wiersz − --dn-od-1)` = 32 px, tło `--dn-panel`, krój `--dn-ff-mono`, stopień `--dn-fs-xs` 11 px, wersaliki, odstęp liter `--dn-ls-mono-wersaliki` 0,14 em, barwa `--dn-tekst-3`, przyklejony (`position: sticky`, warstwa `--dn-z-przybornik` = 10) · Komórka: wys. `--dn-wym-wiersz` 36 px (dotyk 44, przestronna 44), wcięcie `0 --dn-od-3`, wyrównanie do środka w pionie · Stopień treści `--dn-fs-base` 13 px.
+**Wymiary i żetony.** Nagłówek: wys. `calc(--dn-wym-wiersz − --dn-od-1)` = 32 px, tło `--dn-panel`, krój `--dn-ff-mono`, stopień `--dn-fs-xs` 12 px, wersaliki, odstęp liter `--dn-ls-mono-wersaliki` 0,14 em, barwa `--dn-tekst-3`, przyklejony (`position: sticky`, warstwa `--dn-z-przybornik` = 10) · Komórka: wys. `--dn-wym-wiersz` 36 px (dotyk 44, przestronna 44), wcięcie `0 --dn-od-3`, wyrównanie do środka w pionie · Stopień treści `--dn-fs-base` 14 px.
 
 **Zachowanie.** Nagłówek pozostaje widoczny przy przewijaniu ciała. Wiersze monitorów aktualizują się na żywo, bez działania Operatora. Kolumna akcji zawiera `.dn-btn-ikona`; kolumna właściwości binarnej — `.dn-przelacznik`.
 
@@ -1263,7 +1263,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Stany.** Statyczna.
 
-**Wymiary i żetony.** Stopień `--dn-fs-sm` 12 px w kontekście tabeli · barwa `--dn-tekst-2` · krój `--dn-ff-mono` · `font-variant-numeric: tabular-nums`.
+**Wymiary i żetony.** Stopień `--dn-fs-sm` 13 px w kontekście tabeli · barwa `--dn-tekst-2` · krój `--dn-ff-mono` · `font-variant-numeric: tabular-nums`.
 
 **Zachowanie.** Liczby o równej szerokości znaku nie „skaczą" przy odświeżaniu monitora — to warunek czytelności okien aktualizowanych na żywo.
 
@@ -1302,7 +1302,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Stany.** Plakietka jest **nośnikiem stanu innej jednostki**, nie ma stanów interakcji własnych. Jeśli pełni funkcję filtru klikalnego, musi być `<button>` i przejmuje stany przycisku.
 
-**Wymiary i żetony.** Wcięcie `1px --dn-od-2 2px` · promień `--dn-r-pill` (wariant `--rola`: `--dn-r-xs` 3 px) · stopień `--dn-fs-xs` 11 px, waga 500 · ikona 12×12 px · odstęp `--dn-od-1` 4 px · `white-space: nowrap`.
+**Wymiary i żetony.** Wcięcie `1px --dn-od-2 2px` · promień `--dn-r-pill` (wariant `--rola`: `--dn-r-xs` 3 px) · stopień `--dn-fs-xs` 12 px, waga 500 · ikona 12×12 px · odstęp `--dn-od-1` 4 px · `white-space: nowrap`.
 
 **Zachowanie.** Nie zawija się i nie skraca treści — jeśli etykieta jest długa, należy skrócić treść, nie plakietkę.
 
@@ -1382,7 +1382,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Stany.** Pusty stan sam jest stanem panelu. Osadzony przycisk przejmuje pełny zestaw stanów `.dn-btn`.
 
-**Wymiary i żetony.** Wcięcie `--dn-od-10 --dn-od-5` (40/20 px) · odstęp `--dn-od-2` 8 px · ikona 28×28 px · tytuł `--dn-fs-lg` 16 px, krój `--dn-ff-naglowek`, waga 600 · opis `--dn-fs-sm` 12 px, maks. 40 znaków w wierszu · barwa całości `--dn-tekst-3`.
+**Wymiary i żetony.** Wcięcie `--dn-od-10 --dn-od-5` (40/20 px) · odstęp `--dn-od-2` 8 px · ikona 28×28 px · tytuł `--dn-fs-lg` 17 px, krój `--dn-ff-naglowek`, waga 600 · opis `--dn-fs-sm` 13 px, maks. 40 znaków w wierszu · barwa całości `--dn-tekst-3`.
 
 **Zachowanie.** Bierny widok informacyjny. Jeżeli zawiera akcję — dokładnie jedną, nazywającą pierwszy krok („Dodaj pierwsze źródło", „Zaplanuj pierwsze zadanie").
 
@@ -1427,7 +1427,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 | 100% | Wypełnienie na całej szerokości; etykieta podaje wynik |
 | Nieokreślony | Nie jest stanem tego komponentu — dla nieznanego zakresu stosuje się `.dn-spinner` |
 
-**Wymiary i żetony.** Tor: wys. 4 px, promień `--dn-r-pill`, tło `--dn-powierzchnia-2`, przycinanie zawartości · Wypełnienie: `--dn-sygnal-wypelnienie`, przejście szerokości `--dn-czas-3 --dn-ease` · Etykieta: krój `--dn-ff-mono`, stopień `--dn-fs-xs` 11 px, barwa `--dn-tekst-2` · Odstęp `--dn-od-3` 12 px.
+**Wymiary i żetony.** Tor: wys. 4 px, promień `--dn-r-pill`, tło `--dn-powierzchnia-2`, przycinanie zawartości · Wypełnienie: `--dn-sygnal-wypelnienie`, przejście szerokości `--dn-czas-3 --dn-ease` · Etykieta: krój `--dn-ff-mono`, stopień `--dn-fs-xs` 12 px, barwa `--dn-tekst-2` · Odstęp `--dn-od-3` 12 px.
 
 **Zachowanie.** Szerokość wypełnienia zmienia się płynnie; wartość liczbowa w etykiecie zmienia się skokowo. Etykieta zawsze podaje wartość słownie i liczbowo („krok 3 z 7"), nigdy sam procent bez kontekstu.
 
@@ -1479,7 +1479,7 @@ Siatka kroku: `20px 1fr auto` — znak stanu, nazwa kroku, metadane krojem mono.
 
 **Stany.** Stan kroku **jest** jego wariantem — nie ma osobnej warstwy stanów. Znak stanu zawsze niesie ikonę albo numer; kreska barwna jest wzmocnieniem, nie jedynym nośnikiem.
 
-**Wymiary i żetony.** Krok: min. wys. `--dn-wym-wiersz` 36 px, wcięcie `0 --dn-od-3`, siatka `20px 1fr auto`, odstęp `--dn-od-3` · Kreska lewa 2 px · Znak: 20×20 px, promień `--dn-r-pill`, obrys 1 px, ikona 12×12 px, krój mono `--dn-fs-xs` · Metadane: krój mono, `--dn-fs-xs` 11 px, barwa `--dn-tekst-3`.
+**Wymiary i żetony.** Krok: min. wys. `--dn-wym-wiersz` 36 px, wcięcie `0 --dn-od-3`, siatka `20px 1fr auto`, odstęp `--dn-od-3` · Kreska lewa 2 px · Znak: 20×20 px, promień `--dn-r-pill`, obrys 1 px, ikona 12×12 px, krój mono `--dn-fs-xs` · Metadane: krój mono, `--dn-fs-xs` 12 px, barwa `--dn-tekst-3`.
 
 **Zachowanie.** Kroki aktualizują się na żywo. Wstrzymanie kolejki (wariant `--wstrzymany`) zatrzymuje kroki następne, ale **nie odbiera Operatorowi żadnej kontrolki** — akcje „Ponów", „Pomiń", „Zakończ" pozostają klikalne.
 
@@ -1544,7 +1544,7 @@ Siatka kroku: `20px 1fr auto` — znak stanu, nazwa kroku, metadane krojem mono.
 | Błąd | — | Komunikat osadzony w ciele, nad stopką — nie zastępuje stopki |
 | Próba zatwierdzenia z brakami | — | Przycisk stopki **pozostaje klikalny**; braki ujawnia komunikat przy polach, nigdy blokada przycisku |
 
-**Wymiary i żetony.** Szerokość `min(--dn-wym-modal, calc(100vw − --dn-od-8))` = maks. 560 px · wysokość `min(80dvh, 720px)` · promień `--dn-r-lg` 10 px · cień `--dn-cien-lg` (największy w systemie) · nakładka `--dn-nakladka` + `backdrop-filter: blur(2px)` — **jedyne miejsce rozmycia w całym interfejsie** · nagłówek i stopka: wcięcie `--dn-od-4 --dn-od-5` · ciało: wcięcie `--dn-od-5` 20 px · tytuł `--dn-fs-xl` 20 px krojem nagłówkowym · warstwa `--dn-z-modal` = 900.
+**Wymiary i żetony.** Szerokość `min(--dn-wym-modal, calc(100vw − --dn-od-8))` = maks. 560 px · wysokość `min(80dvh, 720px)` · promień `--dn-r-lg` 10 px · cień `--dn-cien-lg` (największy w systemie) · nakładka `--dn-nakladka` + `backdrop-filter: blur(2px)` — **jedyne miejsce rozmycia w całym interfejsie** · nagłówek i stopka: wcięcie `--dn-od-4 --dn-od-5` · ciało: wcięcie `--dn-od-5` 20 px · tytuł `--dn-fs-xl` 21 px krojem nagłówkowym · warstwa `--dn-z-modal` = 900.
 
 **Zachowanie.** Otwarcie przez `showModal()` (albo atrybut `command="show-modal"` z zapasem w `wspolne.js`). Zamknięcie: przycisk zamknięcia w nagłówku, klawisz `Escape`, kliknięcie w nakładkę, akcja w stopce. Nakładka wstrzymuje interakcję z tłem wyłącznie na czas otwarcia — droga wyjścia jest zawsze dostępna.
 
@@ -1598,7 +1598,7 @@ Siatka kroku: `20px 1fr auto` — znak stanu, nazwa kroku, metadane krojem mono.
 
 **Stany.** Pojawienie (animacja `dn-wejscie`, 0,22 s — ta sama co modal) · widoczny · znikanie (po czasie ekspozycji albo po kliknięciu zamknięcia) · najechanie na przycisk zamknięcia. Powiadomienie **nie ma** stanu ładowania ani błędu własnego — wariant `--blad` opisuje cudzą operację.
 
-**Wymiary i żetony.** Szerokość `--dn-wym-toast-min` 280 px do `--dn-wym-toast-max` 420 px · wcięcie `--dn-od-3 --dn-od-4` · promień `--dn-r-md` 8 px · tło `--dn-panel`, obrys `--dn-obrys`, cień `--dn-cien-3` · ikona `--dn-wym-ikona` 16 px · tytuł `--dn-fs-base` 13 px waga 600 · treść `--dn-fs-sm` 12 px, barwa `--dn-tekst-2` · warstwa `--dn-z-powiadomienie` 1000.
+**Wymiary i żetony.** Szerokość `--dn-wym-toast-min` 280 px do `--dn-wym-toast-max` 420 px · wcięcie `--dn-od-3 --dn-od-4` · promień `--dn-r-md` 8 px · tło `--dn-panel`, obrys `--dn-obrys`, cień `--dn-cien-3` · ikona `--dn-wym-ikona` 16 px · tytuł `--dn-fs-base` 14 px waga 600 · treść `--dn-fs-sm` 13 px, barwa `--dn-tekst-2` · warstwa `--dn-z-powiadomienie` 1000.
 
 **Zachowanie.** Pojawia się samoczynnie w reakcji na zdarzenie systemowe. Znika po czasie ekspozycji albo natychmiast po zamknięciu. Kilka powiadomień układa się pionowo, najnowsze na dole stosu. Nie wstrzymuje interakcji z resztą widoku.
 
@@ -1642,7 +1642,7 @@ Siatka kroku: `20px 1fr auto` — znak stanu, nazwa kroku, metadane krojem mono.
 | Ukryty | — | Krycie 0, `visibility: hidden`, `pointer-events: none`, przesunięcie 4 px w dół |
 | Widoczny | `:hover`, `:focus-within` | Krycie 1, widoczność, przesunięcie do 0 — czas `--dn-czas-2` 0,16 s |
 
-**Wymiary i żetony.** Maks. szerokość 260 px · wcięcie `--dn-od-2 --dn-od-3` (8/12 px) · promień `--dn-r-sm` 6 px · tło `--dn-rama`, tekst `--dn-rama-tekst` — powierzchnia atramentowa w obu motywach · cień `--dn-cien-3` · stopień `--dn-fs-sm` 12 px · odsunięcie `--dn-od-2` 8 px · warstwa `--dn-z-tooltip` 1100.
+**Wymiary i żetony.** Maks. szerokość 260 px · wcięcie `--dn-od-2 --dn-od-3` (8/12 px) · promień `--dn-r-sm` 6 px · tło `--dn-rama`, tekst `--dn-rama-tekst` — powierzchnia atramentowa w obu motywach · cień `--dn-cien-3` · stopień `--dn-fs-sm` 13 px · odsunięcie `--dn-od-2` 8 px · warstwa `--dn-z-tooltip` 1100.
 
 **Zachowanie.** Pojawia się przy najechaniu myszą i przy fokusie klawiatury (`:focus-within` — warunek dostępności, nie ozdoba). Znika po utracie obu. Nie wymaga kliknięcia ani zamykania.
 
@@ -1778,7 +1778,7 @@ Gradienty (`--dn-grad-atrament`, `--dn-grad-sygnal`) występują tu w jednym z t
 | Ograniczony ruch | Tętno zamiera; pierścień pozostaje statyczny |
 | Wyłączony | **Nie istnieje jako stan interfejsu** — ukrycie Always On Display jest ustawieniem, nie blokadą |
 
-**Wymiary i żetony.** Pozycja `right/bottom: --dn-od-5` 20 px · warstwa `--dn-z-aod` 1200 · promień `--dn-r-pill` · wcięcie `--dn-od-2 --dn-od-4 --dn-od-2 --dn-od-2` · rdzeń `--dn-wym-awatar-lg` 36 px na `--dn-grad-sygnal` · pierścień `inset: -3px`, obrys 1 px `--dn-sygnal-obrys`, animacja `dn-tetno` 2,4 s · treść `--dn-fs-sm` 12 px, maks. 36 znaków · tło `--dn-panel`, cień `--dn-cien-3`.
+**Wymiary i żetony.** Pozycja `right/bottom: --dn-od-5` 20 px · warstwa `--dn-z-aod` 1200 · promień `--dn-r-pill` · wcięcie `--dn-od-2 --dn-od-4 --dn-od-2 --dn-od-2` · rdzeń `--dn-wym-awatar-lg` 36 px na `--dn-grad-sygnal` · pierścień `inset: -3px`, obrys 1 px `--dn-sygnal-obrys`, animacja `dn-tetno` 2,4 s · treść `--dn-fs-sm` 13 px, maks. 36 znaków · tło `--dn-panel`, cień `--dn-cien-3`.
 
 **Zachowanie.** Widoczny stale, niezależnie od karty sesji i modułu — nie podlega przeładowaniu obszaru roboczego. Aktywacja otwiera powierzchnię natychmiastowej interakcji; zamknięcie przywraca spoczynek bez utraty kontekstu.
 
@@ -1839,7 +1839,7 @@ Rozróżnienie roli **wewnątrz** klasy niesie ikona w medalionie, nazwa nadawcy
 
 **Stany.** Spoczynek · pracuje (kropka tętna 2,4 s przy nadawcy, dodawana pseudoelementem) · ograniczony ruch (tętno zamiera). Wpis nie ma stanów najechania ani wyboru — to treść, nie kontrolka. Akcje wpisu (kopiuj, odpowiedz) należą do przybornika pojawiającego się obok.
 
-**Wymiary i żetony.** Maks. szerokość 860 px · siatka `--dn-wym-awatar-sm 1fr`, odstęp `--dn-od-2 --dn-od-3` · wcięcie `--dn-od-3 --dn-od-4` · obrys 1 px `--dn-obrys-subtelny`, lewa krawędź 2 px · promień `--dn-r-md` 8 px · medalion 24×24 px, promień `--dn-r-sm`, ikona `--dn-wym-ikona-sm` 14 px · nadawca `--dn-fs-xs` 11 px, waga 600, wersaliki, odstęp liter `--dn-ls-wersaliki` 0,08 em · godzina krojem mono `--dn-fs-xs` · treść `--dn-fs-md` 14 px, interlinia `--dn-lh-luzny` 1,6, `white-space: pre-wrap`.
+**Wymiary i żetony.** Maks. szerokość 860 px · siatka `--dn-wym-awatar-sm 1fr`, odstęp `--dn-od-2 --dn-od-3` · wcięcie `--dn-od-3 --dn-od-4` · obrys 1 px `--dn-obrys-subtelny`, lewa krawędź 2 px · promień `--dn-r-md` 8 px · medalion 24×24 px, promień `--dn-r-sm`, ikona `--dn-wym-ikona-sm` 14 px · nadawca `--dn-fs-xs` 12 px, waga 600, wersaliki, odstęp liter `--dn-ls-wersaliki` 0,08 em · godzina krojem mono `--dn-fs-xs` · treść `--dn-fs-md` 15 px, interlinia `--dn-lh-luzny` 1,6, `white-space: pre-wrap`.
 
 **Zachowanie.** Wpisy układają się chronologicznie w pasie komunikacji o wysokości `--dn-wym-pas-komunikacji` 320 px. Treść odbierana strumieniowo narasta w miejscu; wpis pozostaje oznaczony jako pracujący do zakończenia strumienia.
 
@@ -1898,7 +1898,7 @@ Rozróżnienie roli **wewnątrz** klasy niesie ikona w medalionie, nazwa nadawcy
 | Z treścią | — | Obszar rośnie od 40 px do 160 px, potem przewija się wewnętrznie |
 | Wysyłanie | — | Przycisk wysyłki z `aria-busy`; pole pozostaje edytowalne — Operator może pisać kolejne polecenie |
 
-**Wymiary i żetony.** Wcięcie `--dn-od-2` 8 px · odstęp `--dn-od-2` · promień `--dn-r-md` 8 px · obszar: min. 40 px, maks. 160 px, wcięcie `--dn-od-2 0`, stopień `--dn-fs-md` 14 px, interlinia bazowa, bez zmiany rozmiaru ręcznego · grot: krój mono, waga 600, barwa `--dn-kropka`, wcięcie górne `--dn-od-2`, niezaznaczalny.
+**Wymiary i żetony.** Wcięcie `--dn-od-2` 8 px · odstęp `--dn-od-2` · promień `--dn-r-md` 8 px · obszar: min. 40 px, maks. 160 px, wcięcie `--dn-od-2 0`, stopień `--dn-fs-md` 15 px, interlinia bazowa, bez zmiany rozmiaru ręcznego · grot: krój mono, waga 600, barwa `--dn-kropka`, wcięcie górne `--dn-od-2`, niezaznaczalny.
 
 **Zachowanie.** Obszar rośnie wraz z treścią do 160 px. Grot jest sygnaturą wejścia — powtarza motyw godła (podwójny grot i kropka), nie jest kontrolką. Wysłanie polecenia czyści obszar i dodaje wpis do listy rozmowy.
 
@@ -1996,7 +1996,7 @@ Legenda: `●●●` największe w platformie nasilenie komponentu · `●●` z
 | `.dn-postep` | ●●● | ● | — | ● | ● | ●●● | ● | ● | ●● | ● |
 | `.dn-kolejka` / `.dn-krok` | — | ●● | — | ● | ●● | ●●● | ● | — | ●● | ● |
 | `.dn-modal` | ● | ●● | ●● | ● | ● | ●● | ●●● | ●● | ● | ● |
-| `.dn-toast` | ● | ●● | ● | ● | ● | ●● | ●●● | ●● | ●● | ●●● |
+| `.dn-toast` | ● | ●● | ● | ● | ● | ●● | ●●● | ●● | ●● | — |
 | `.dn-tooltip` | — | ● | ● | ●● | ● | ●● | ●●● | ●● | ● | ● |
 | `.dn-spinner` | ●●● | ●● | ● | ● | ●●● | ●● | ● | ● | ●● | ●● |
 | `.dn-awatar` | — | ● | ● | ●● | ●●● | ●●● | ● | ●● | ●●● | ●● |
@@ -2004,7 +2004,7 @@ Legenda: `●●●` największe w platformie nasilenie komponentu · `●●` z
 | `.dn-wpis` | — | — | — | ● | ●●● | ●●● | — | — | ●● | ●●● |
 | `.dn-prompt` | — | — | — | ● | ●●● | ●●● | — | — | ●● | ●●● |
 
-**Odczyt macierzy.** Okno Konfiguracji jest największym w platformie skupiskiem kontrolek formularza — `.dn-przelacznik` (11 przełączników na jeden poziom zasięgu w macierzy izolacji), `.dn-wybor`, `.dn-tooltip` (objaśnienie `[?]` przy każdym ustawieniu) i `.dn-toast` (potwierdzenie zapisu profilu). Środowisko MultitaskingAI skupia komponenty orkiestracji: `.dn-kolejka`, `.dn-tabela`, `.dn-awatar`, `.dn-aod`. Chat Window jest jedynym miejscem `.dn-wpis` i głównym miejscem `.dn-prompt`.
+**Odczyt macierzy.** Okno Konfiguracji jest największym w platformie skupiskiem kontrolek formularza — `.dn-przelacznik` (11 przełączników na jeden poziom zasięgu w macierzy izolacji), `.dn-wybor`, `.dn-tooltip` (objaśnienie `[?]` przy każdym ustawieniu) i `.dn-toast` (potwierdzenie zapisu profilu). Środowisko MultitaskingAI skupia komponenty orkiestracji: `.dn-kolejka`, `.dn-tabela`, `.dn-awatar`, `.dn-aod`. Chat Window jest jedynym miejscem `.dn-wpis` i głównym miejscem `.dn-prompt`. Mobile nie używa `.dn-toast` — okno `mobile.html` buduje własny `.mo-push` poza biblioteką, dlatego kolumna Mobile ma dla powiadomienia wartość „—".
 
 ---
 
@@ -2107,12 +2107,12 @@ Wartość odziedziczona jest **stanem informacyjnym**, nie ograniczeniem. Przeł
 
 | Żeton | Wartość | Komponenty |
 |---|---|---|
-| `--dn-fs-xs` | 11 px | `.dn-plakietka`, `.dn-tabela th`, `.dn-krok-meta`, `.dn-postep-etykieta`, `.dn-wpis-nadawca`, `.dn-wpis-godzina`, `.dn-pasek-logotyp small`, `.dn-awatar--sm` |
-| `--dn-fs-sm` | 12 px | `.dn-btn--sm`, `.dn-pole-etykieta`, `.dn-pole-opis`, `.dn-pole-blad`, `.dn-karta-sesji`, `.dn-listwa-pozycja`, `.dn-toast-tresc`, `.dn-tooltip-tresc`, `.dn-pusty-stan-opis`, `.dn-aod-tresc`, `.dn-dane`, `.dn-karta-srodowiska-motto` |
-| `--dn-fs-base` | 13 px | `.dn-btn`, `.dn-pole-kontrolka`, `.dn-wybor`, `.dn-zakladka`, `.dn-boczna-pozycja`, `.dn-tabela td`, `.dn-krok`, `.dn-kafel`, `.dn-toast-tytul`, `.dn-karta-srodowiska-opis` |
-| `--dn-fs-md` | 14 px | `.dn-btn--lg`, `.dn-wpis-tresc`, `.dn-prompt-obszar`, `.dn-pasek-logotyp`, `.dn-awatar--lg` |
-| `--dn-fs-lg` | 16 px | `.dn-karta-tytul`, `.dn-pusty-stan-tytul` |
-| `--dn-fs-xl` | 20 px | `.dn-modal-tytul` |
+| `--dn-fs-xs` | 12 px | `.dn-plakietka`, `.dn-tabela th`, `.dn-krok-meta`, `.dn-postep-etykieta`, `.dn-wpis-nadawca`, `.dn-wpis-godzina`, `.dn-pasek-logotyp small`, `.dn-awatar--sm` |
+| `--dn-fs-sm` | 13 px | `.dn-btn--sm`, `.dn-pole-etykieta`, `.dn-pole-opis`, `.dn-pole-blad`, `.dn-karta-sesji`, `.dn-listwa-pozycja`, `.dn-toast-tresc`, `.dn-tooltip-tresc`, `.dn-pusty-stan-opis`, `.dn-aod-tresc`, `.dn-dane`, `.dn-karta-srodowiska-motto` |
+| `--dn-fs-base` | 14 px | `.dn-btn`, `.dn-pole-kontrolka`, `.dn-wybor`, `.dn-zakladka`, `.dn-boczna-pozycja`, `.dn-tabela td`, `.dn-krok`, `.dn-kafel`, `.dn-toast-tytul`, `.dn-karta-srodowiska-opis` |
+| `--dn-fs-md` | 15 px | `.dn-btn--lg`, `.dn-wpis-tresc`, `.dn-prompt-obszar`, `.dn-pasek-logotyp`, `.dn-awatar--lg` |
+| `--dn-fs-lg` | 17 px | `.dn-karta-tytul`, `.dn-pusty-stan-tytul` |
+| `--dn-fs-xl` | 21 px | `.dn-modal-tytul` |
 | `--dn-fs-3xl` | 30 px | `.dn-karta-srodowiska-tytul` |
 
 ### A.4. Czasy i krzywe
@@ -2226,7 +2226,7 @@ Katalog komponentów v1.0 (`docs/interfejs-uzytkownika/katalog-komponentow.md`, 
 | 10 | Kropka statusu awatara | 11 px | **8 px** | v2.0 |
 | 11 | Pusty stan — opis | 42 znaki | **40 znaków (`40ch`)** | v2.0 |
 | 12 | Przycisk — stopień i waga | 13 px, `semibold` | **13 px (`--dn-fs-base`), waga 500** | v2.0 — skala v2.0 ma inną bazę niż v1.0 |
-| 13 | Skala typografii | 12·13·15·16·18·22·28·36·46 | **11·12·13·14·16·20·24·30·40** | v2.0 — skala zwarta kokpitu |
+| 13 | Skala typografii | 12·13·15·16·18·22·28·36·46 | **12·13·14·15·17·21·24·30·40** | v2.0 — skala zwarta kokpitu |
 | 14 | Wartości pikselowe w arkuszu | podawane wprost | **wyłącznie żetony** | v2.0 — „zero wartości zaszytych" |
 | 15 | Tętno kropki | brak w katalogu | **2,4 s** (`--dn-czas-tetno`) | v2.0 — element sygnaturowy |
 

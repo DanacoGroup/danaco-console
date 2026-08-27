@@ -446,3 +446,40 @@ w którym padło polecenie.
 Odmowa `odnotujOdmowe` trafia do historii oprócz dymka powiadomienia, bo
 powiadomienie znika po sekundach, a Operator wraca po przebieg rozmowy do
 historii i ma tam znaleźć ślad każdej odmowy.
+
+## budowa/klient-poprzedni/src/dostepy/dodanie-katalogu.ts
+
+Drogą pierwszą i właściwą jest natywne okno wyboru powłoki. Ścieżka wraca z niego
+istniejąca i rozwinięta, więc punkt zakładany na niej nie wskazuje miejsca, którego
+nie ma.
+
+Drogą drugą jest pole ścieżki wpisywanej z ręki. Nie jest ono atrapą ani zapasem na
+gorsze czasy: interfejs bywa otwarty w przeglądarce, bez powłoki, a wtedy natywnego
+okna po prostu nie ma. Pole zostaje czynne zawsze, także w powłoce, ponieważ Operator
+znający ścieżkę nie musi jej odklikiwać.
+
+Przycisk natywnego wyboru nie jest wygaszany poza powłoką. Naciśnięcie daje odpowiedź:
+zdanie o tym, że okno systemowe należy do powłoki, oraz przeniesienie uwagi do pola
+ścieżki.
+
+Katalog zakładany tą drogą leży na maszynie bieżącej, czyli na tej, na której stoi
+powłoka. Schemat wymaga wskazania urządzenia, a jego identyfikator poda komenda
+`device.list`, gdy trafi do kontraktu. Do tego czasu drugi argument funkcji
+`zalozKatalogLokalny` zostaje pusty i rdzeń odmawia z powodem, bez atrapy
+identyfikatora.
+
+## budowa/klient-poprzedni/src/moduly/agents/podglad-wywolania.ts
+
+Podgląd pyta rdzeń o gotowe wywołanie zamiast składać wiersz polecenia po
+swojemu. Gdyby okno składało wywołanie własnymi regułami, pokazywałoby wiersz,
+którego tura nigdy nie wykona — rdzeń liczy podgląd tymi samymi funkcjami,
+którymi wykonuje wysłanie wiadomości, wraz z nałożeniem eksperta okna.
+
+Wywołanie liczy się dla okna komunikacji, a moduł agentów żadnego okna rozmowy
+nie zna: okna modułu i okna rozmowy są odrębnymi bytami. Dlatego identyfikator
+okna wpisuje Operator, a bez niego podgląd rdzenia nie pyta, zamiast sięgać po
+okno przypadkowe.
+
+Pusty prompt systemowy jest odpowiedzią, nie brakiem odpowiedzi: znaczy, że ani
+oś, ani ekspert nie wnoszą treści systemowej. Pole zostaje wtedy widoczne wraz
+z takim zdaniem, zamiast się schować i sugerować, że odczyt się nie odbył.

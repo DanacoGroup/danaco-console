@@ -1289,3 +1289,71 @@ byłaby sprzecznością, której nikt by nie wykrył.
 Paczka przesłana leży na dysku. `extension.package.upload` przyjmuje bajty
 i oddaje `uploadRef`, którym woła się potem instalację; wiersz bez pliku byłby
 meldunkiem o przesyłce, której nie ma.
+
+## budowa/server/internal/store/migracja_150_badania_dobudowa.sql
+
+Moduł Research miał w schemacie pięć tabel (źródło, ustalenie, wiązanie, raport,
+sekcja, eksport, przestrzeń) obsługujących pięć komend, a kontrakt niesie ich
+siedemdziesiąt sześć wobec dziewięciu okien i ośmiu rodzin funkcji opracowania
+modułu. Migracja dobudowuje brakujące byty: katalogowanie źródeł, załączniki,
+treść do lektury, adnotacje i wypisy, książkę kodów, sprzeczności, weryfikacje,
+wątki, ślad prowenancji, pytania badawcze, odkrycia i ich przesiew, monitory,
+style cytowania, szablony, wersje raportu, komentarze recenzji, bloki wstawek
+oraz szablony i udostępnienia eksportu.
+
+Treść źródła jest kolumną źródła, nie osobną tabelą: tekst wydobyty ze źródła
+nie ma tożsamości własnej, nie da się go wskazać bez wskazania źródła, nie ma
+historii i ginie razem ze źródłem. Tabela podrzędna dałaby złączenie przy
+każdym otwarciu lektury i nic w zamian. Liczba stron i warstwa tekstowa idą
+obok tekstu jako jego cechy: „skan bez warstwy tekstowej" jest stanem treści,
+nie stanem źródła.
+
+Wynik odkrycia jest bytem trwałym, nie wartością liczoną na żądanie:
+`research.discovery.reject` odrzuca wynik po kluczu, a `research.prisma.get`
+liczy przesiew — bez wiersza wyniku nie ma czego odrzucić ani czego policzyć,
+liczniki PRISMA byłyby liczbami wymyślonymi w chwili odpytania, a odrzucenie
+nie przeżyłoby odświeżenia panelu. Wynik zapisuje się w chwili wyszukania,
+a odrzucenie jest zmianą jego stanu.
+
+Wersja raportu niesie migawkę sekcji, nie różnicę: `research.report.diff`
+porównuje dwie wskazane wersje, także nieprzyległe. Łańcuch różnic wymagałby
+odtworzenia stanu przez złożenie wszystkich kroków pośrednich i rozsypałby się
+przy pierwszym kroku zgubionym — migawka jest samowystarczalna, dwie wersje
+wystarczą do porównania.
+
+Tabela `eksport_raportu_badania` powstaje na nowo (kopia, przepisanie wierszy,
+podmiana nazwy), bo więz CHECK na kolumnie `format` wymieniał pięć formatów,
+a kontrakt niesie osiem (doszły pptx, xlsx, latex), a SQLite nie zna zmiany
+warunku CHECK w miejscu; przeniesienie wierszy zachowuje ślad eksportów już
+wykonanych.
+
+## budowa/server/internal/store/migracja_117_profil_asystenta.sql
+
+Wywołanie polecenia głosowego asystenta niosło identyfikator profilu od
+pierwszej wersji kontraktu, lecz krok wcześniejszy, wprowadzający zlecenie
+i dziennik, nie znał ani profilu, ani kolumny, w której dałoby się go
+zapamiętać: adapter przyjmował wskazanie profilu i porzucał je bez śladu,
+bo pole żądania było etykietą bez bytu po drugiej stronie.
+
+Profil nie jest ozdobą wykazu okien. Niesie warstwę promptu, która mówi
+modelowi, że działa jako narzędzie operatora, nie jako autor samodzielny —
+a to ona rozstrzyga, czy model sięgnie po narzędzia platformy, czy
+odpowie tekstem we własnym oknie. Bez miejsca na jej zapis asystent
+wracałby do bycia zwykłym czatem przy pierwszym uruchomieniu, bo warstwy
+nie miałby gdzie postawić; stąd byt trwały, nie etykieta przejściowa.
+
+Profil nie jest zestawem uprawnień blokujących: żadna kolumna tabeli nie
+dopuszcza ani nie odmawia czynności, wszystkie są nastawą zasięgu pracy, a
+zasięg domyślny jest pełny. Kolumna trybu uprawnień startuje więc z
+wartości najszerszej, a nie najwęższej, bo profil świeżo założony ma
+pracować, nie prosić o zgodę na każdym kroku.
+
+Pola tabeli pochodzą wyłącznie z tego, co niesie kontrakt i widok okna
+asystenta: nazwa, warstwa promptu, kanał modelu, głos syntezy, środowisko
+wykonania jako zasięg maszyny, tryb uprawnień jako zasięg pracy i znacznik
+profilu domyślnego. Osobne rozmowy przypisane do profilu wymagałyby
+kolumny w tabeli okna komunikacji albo w wykazie rozmów, więc ten krok
+migracji ich nie dotyka. Nie ma też osobnego przełącznika włączenia
+syntezy: pusty głos syntezy już znaczy brak syntezy, a osobna flaga
+byłaby drugą prawdą o tym samym fakcie. Czas jest liczbą — milisekundami
+epoki, tak jak w krokach migracji wcześniejszych tego obszaru.

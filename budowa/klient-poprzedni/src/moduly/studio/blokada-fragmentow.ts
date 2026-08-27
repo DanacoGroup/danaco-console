@@ -6,50 +6,24 @@ import {
   type StudioFragmentLock,
 } from '../../../../shared/contract';
 
-/**
- * Blokada fragmentu i zajęcie fragmentu — dwie różne rzeczy, oba w rdzeniu.
- *
- * ── Blokada obowiązuje W RDZENIU, nie w oknie ───────────────────────────────
- * Sprawdzenie stoi na drodze każdej komendy zmieniającej dokument, po stronie
- * serwera, PRZED dotknięciem treści. Blokada pilnowana przez okno byłaby
- * pozorna: model woła komendy rdzenia tak samo jak klient, więc ominąłby ją bez
- * wysiłku. Okno pokazuje więc blokady i ich skutki, a nie wykonuje ich.
- *
- * ── Dwa byty, których nie wolno pomieszać ───────────────────────────────────
- *   — **blokada** (`studio.lock.*`) jest trwała i skierowana przeciw MODELOWI;
- *     zdejmuje ją wyłącznie Operator, a model, który uzna zmianę za konieczną,
- *     zakłada propozycję na marginesie i tyle;
- *   — **zajęcie** (`studio.agents.claim`) jest czasowe i skierowane przeciw
- *     DRUGIEMU WYKONAWCY, żeby dwóch agentów nie pisało po tym samym akapicie.
- *     Wygasa samo, a odmowa nazywa wykonawcę i czas.
- *
- * ── Bilans zamiast przemilczenia ────────────────────────────────────────────
- * Zmiana obejmująca blokadę częściowo wykonuje się POZA blokadą i oddaje bilans:
- * co przeszło, co pominięte i przez którą blokadę. Odmowa całości byłaby
- * nieproporcjonalna, ale przemilczenie pominięcia jest zakazane — dlatego zdanie
- * o bilansie nazywa blokady po nazwie, nie po liczbie.
- *
- * Plik nie zna DOM ani rdzenia.
- */
-
-/** Zdanie o tym, gdzie blokada obowiązuje — jedno miejsce tej treści w oknie. */
+/** Zdanie wyświetlane oknu o tym, że blokada obowiązuje w rdzeniu przed dotknięciem treści dokumentu, jedyne miejsce niosące tę treść w interfejsie. */
 export const BLOKADA_STOI_W_RDZENIU =
   'Blokada obowiązuje W RDZENIU, przed dotknięciem treści — nie w oknie. Czynność modelu godząca ' +
   'w zablokowany fragment wraca błędem nazywającym fragment i blokadę, a nie cichą bezczynnością.';
 
-/** Zdanie o tym, kto blokadę zdejmuje. */
+/** Zdanie wyświetlane oknu o tym, że blokadę fragmentu zdejmuje wyłącznie operator, a model może jedynie założyć propozycję na marginesie. */
 export const BLOKADA_ZDEJMUJE_OPERATOR =
   'Blokadę zdejmuje WYŁĄCZNIE Operator. Model jej nie zdejmuje i nie prosi o zdjęcie obejściem — ' +
   'jeśli uzna, że fragment wymaga zmiany, zakłada propozycję na marginesie.';
 
-/** Nazwa zasięgu blokady widoczna dla Operatora. */
+/** Nazwa zasięgu blokady widoczna dla operatora, rozróżniająca ustawienie jawne obejmujące oboje od domyślnego skierowanego wyłącznie przeciw modelowi. */
 export function blokadaNazwaZasiegu(zasieg: StudioLockScope): string {
   return zasieg === StudioLockScope.Everyone
     ? 'model i Operator — ustawienie jawne, nie domyślne'
     : 'wyłącznie model — Operator zmienia fragment bez przeszkód';
 }
 
-/** Zdanie o jednej blokadzie: nazwa, powód, zakres, zasięg i pochodzenie. */
+/** Zdanie opisujące jedną blokadę fragmentu: jej nazwę, powód założenia, zakres znaków, zasięg działania i pochodzenie z szablonu albo ręczne. */
 export function blokadaOpisz(blokada: StudioFragmentLock): string {
   const powod =
     blokada.reason === undefined || blokada.reason === ''
@@ -77,7 +51,7 @@ export function blokadaOpisz(blokada: StudioFragmentLock): string {
   );
 }
 
-/** Zdanie o wykazie blokad; pusty wykaz też jest odpowiedzią. */
+/** Zdanie opisujące wykaz blokad dokumentu, w którym pusty wykaz też jest pełnoprawną odpowiedzią, a nie brakiem danych. */
 export function blokadaOpiszWykaz(blokady: readonly StudioFragmentLock[]): string {
   if (blokady.length === 0) {
     return (
@@ -123,7 +97,7 @@ export function blokadaBilansPominiec(bilans: StudioActionBalance): string | nul
   );
 }
 
-/** Zdanie o zajęciu fragmentu przez wykonawcę wraz z czasem wygaśnięcia. */
+/** Zdanie opisujące zajęcie fragmentu przez wykonawcę: kto je trzyma, jaki zakres znaków obejmuje, w jakim jest stanie i kiedy zajęcie wygasa. */
 export function blokadaOpiszZajecie(zajecie: StudioAgentSlot): string {
   const kto =
     zajecie.actor.agentName ?? zajecie.actor.agentId ?? 'wykonawca nienazwany';
@@ -171,7 +145,7 @@ export function blokadaOpiszOdmoweZajecia(
   );
 }
 
-/** Czy zakres zaznaczenia nadaje się na blokadę albo zajęcie. */
+/** Sprawdza, czy zakres zaznaczenia nadaje się na podstawę blokady albo zajęcia fragmentu, czyli czy koniec jest większy od początku. */
 export function blokadaZakresPoprawny(
   zakres: { poczatek: number; koniec: number } | null,
 ): boolean {

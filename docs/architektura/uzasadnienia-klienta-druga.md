@@ -1556,3 +1556,55 @@ Rozróżnienie autora wpisu schowka nie wchodzi w zakres kontraktu.
 Przedrostek klas CSS „dw-" jest ustalany lokalnie, bo nośnik stanu treści jest współdzielony
 między modułami, a każdy moduł nadaje własny przedrostek. Stan błędu przenosi kod i komunikat
 z kontraktu, aby okno po niepowodzeniu zapytania nie wyglądało jak okno z pustą, ale poprawną listą.
+
+## budowa/klient-poprzedni/src/moduly/research/dymek-badania.ts
+Znak dymku Research zachowuje trzy własności wspólnej fabryki bez zmian: pokazanie na najechaniu albo ustawieniu ogniska bez kliknięcia i bez osobnego zamykania, prowadzenie ogniska przyciskiem z odpowiedzią na każde naciśnięcie oraz treść w atrybucie opisującym, dzięki czemu dymek nie potrzebuje identyfikatora i nie zderza się między oknami. Znak Research różni się od biblioteki wyglądem — jest pierścieniem o średnicy czternaście do szesnastu pikseli ze wskaźnikiem pomocy, a nie kwadratowym przyciskiem biblioteki — dlatego klasa znaku zastępuje klasę biblioteczną, a klasa powłoki dokłada się do klasy dymka.
+
+## budowa/klient-poprzedni/src/sterowanie/zrodlo-kanalow.ts
+Zakładanie stoi w tym samym źródle co usuwanie, ponieważ świeża baza ma dokładnie jeden kanał, a okno komunikacji kanału wymaga; panel z samym usuwaniem pozwoliłby nieodwracalnie skasować jedyny kanał produktu bez drogi powrotu. Wykazu kanałów to źródło nie pobiera — rejestr kanałów jest czytającą pamięcią podręczną nad odczytem wykazu, wspólną całemu klientowi, i po udanym zapisie panel odświeża tę pamięć. Każda czynność oddaje wynik z kodem odmowy, nigdy samej treści, aby odmowa rdzenia dojechała do widoku, a nie wyglądała jak wykonanie. Pole rodzaju kanału nie występuje w opisie zmiany, ponieważ kontrakt zmiany rodzaju kanału po założeniu nie przewiduje, a formularz komunikuje to wprost zamiast przyjmować wpis, który rdzeń zignoruje. Sprawdzenie łączności jest narzędziem pomocniczym, nie bramką — jego wynik nie wstrzymuje zapisu, nie wyłącza wiersza ani nie blokuje wysłania tury, bo kanał niedostępny przed chwilą bywa sprawny teraz. Odpowiedź o stanie poświadczenia mówi, czy poświadczenie jest ustawione, jakiego jest rodzaju i gdzie mieszka, lecz nigdy nie niesie samego sekretu.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/sesja-bramki.ts
+
+Transportem jest jedno gniazdo WebSocket, nie seria żądań HTTP, więc ciasteczka
+nie ma: token wraca z `auth.login` i tylko klient może go przechować między
+uruchomieniami. Bez zapisu każdy start aplikacji wymagałby hasła, a bramka ma
+stać przy wejściu raz, nie przy każdym otwarciu okna.
+
+W zapisie leży sesja w kształcie kontraktu (`AuthSession`): token, czas
+wygaśnięcia, metoda. Token jest poświadczeniem na okaziciela — rdzeń trzyma
+w bazie wyłącznie jego skrót, więc jedyną kopią tokenu jest właśnie ten zapis.
+`localStorage` interfejsu podawanego z `127.0.0.1` i z powłoki natywnej jest
+magazynem lokalnym tej samej maszyny, czyli tym samym progiem zaufania, na
+którym stoi plik sejfu rdzenia obok bazy.
+
+Magazyny są dwa, bo wybór trwałości logowania jest jawny. Pole „Nie wyloguj
+mnie" na ekranie logowania rozstrzyga, gdzie sesja wyląduje: zaznaczone kładzie
+ją w `localStorage` i sesja przeżywa zamknięcie aplikacji, niezaznaczone —
+w `sessionStorage`, skąd ginie razem z oknem.
+
+Skutek jest dwustronny: ta sama wartość idzie żądaniem `auth.login` jako
+`keepSignedIn` i rozstrzyga w rdzeniu o trwaniu sesji — 365 dni zamiast doby
+roboczej. Trwanie jest zapisane przy wierszu sesji, więc `auth.token.refresh`
+go nie ścina. Zapis w przeglądarce bez tego byłby obietnicą, której rdzeń nie
+dotrzymuje.
+
+Odczyt pyta obu magazynów, w kolejności od trwałego. Inaczej zmiana
+rozstrzygnięcia między jednym a drugim uruchomieniem zostawiałaby sesję
+niewidoczną, a wyglądałoby to jak jej wygaśnięcie. Kasowanie czyści oba
+z tego samego powodu.
+
+Żaden błąd pamięci nie zatrzymuje uruchomienia: brak magazynu, zapis nieczytelny
+i kształt spoza kontraktu znaczą to samo — sesji zapisanej nie ma i wejście
+wymaga hasła. O tym, czy sesja jeszcze żyje, rozstrzyga wyłącznie rdzeń
+odpowiedzią na `auth.token.refresh`; ten plik nie porównuje czasów i niczego
+nie unieważnia sam.
+
+Zapisana sesja leży wyłącznie w jednym magazynie naraz: pole „Nie wyloguj mnie"
+nie pamięta własnego zaznaczenia osobnym zapisem, tylko czyta miejsce, w którym
+sesja naprawdę leży. Osobny zapis rozjechałby się z magazynem przy pierwszym
+czyszczeniu pamięci i pokazywałby zaznaczone pole nad sesją, która ginie
+z oknem.
+
+Czas ważności idzie z odpowiedzi rdzenia (`expiresAt`), nie ze stałej klienta —
+długość życia sesji zna wyłącznie rdzeń. Data pełna pojawia się tylko wtedy,
+gdy wygaśnięcie wypada innego dnia; w dniu bieżącym wystarcza godzina.

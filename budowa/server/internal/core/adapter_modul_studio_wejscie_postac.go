@@ -105,7 +105,7 @@ func (a *adapterStudia) wejsciePostacDokumentu(ctx context.Context,
 	}
 	stan, err := a.postacWczytaj(ctx, kodDokumentu)
 	if err != nil {
-		// Dokumentu, którego nie ma, nie udajemy postacią pustą, żeby brak nie wyszedł jako brak formatowania
+		// Dokumentu, którego nie ma, nie udaje się postacią pustą, żeby brak nie wyszedł jako brak stylu
 		return pusta, err
 	}
 	return stan.forma, nil

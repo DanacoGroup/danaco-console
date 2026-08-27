@@ -1,20 +1,22 @@
 import { type AutomationDependency, type AutomationOrchestratorDefineResponse } from '../../../../shared/contract';
 import { przyciskAkcji as przycisk, pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
 
-/**
- * Rysowanie układu zależności — czyste fragmenty widoku Orchestratora.
- *
- * Jedyna odpowiedzialność tego pliku to postać układu na ekranie. Żaden fragment
- * nie woła rdzenia i nie zna stanu okna; jeden bierze wywołanie zwrotne
- * usunięcia, bo przycisk wiersza musi sięgnąć po zapis układu.
- */
+/** Rysowanie układu zależności — czyste fragmenty widoku Orchestratora. */
 
-/** Zależność nazwana jednym napisem — do zdań potwierdzenia i porównań. */
+/**
+ * Zależność nazwana jednym napisem, złożonym z kroku wyjściowego i docelowego.
+ * Ten sam napis idzie do zdań potwierdzenia i do porównań, więc Operator czyta
+ * dokładnie to, co program porównuje.
+ */
 export function opisZaleznosci(zaleznosc: AutomationDependency): string {
   return `${zaleznosc.fromStepId} → ${zaleznosc.toStepId}`;
 }
 
-/** Czy rdzeń oddał tę zależność — porównanie po obu krokach i rodzaju. */
+/**
+ * Czy rdzeń oddał tę zależność. Porównanie idzie po obu krokach i po rodzaju,
+ * ponieważ ta sama para kroków może być związana więcej niż jednym rodzajem
+ * zależności, a identyfikatora zależność nie ma.
+ */
 export function zawiera(
   oddane: readonly AutomationDependency[],
   szukana: AutomationDependency,
@@ -51,7 +53,11 @@ export function ocenaUkladu(wynik: AutomationOrchestratorDefineResponse): HTMLEl
   return ocena;
 }
 
-/** Wykaz zastrzeżeń; `null` znaczy „układ bez zastrzeżeń", nie „brak danych". */
+/**
+ * Wykaz zastrzeżeń do układu. Brak wykazu znaczy układ bez zastrzeżeń, a nie brak
+ * danych, dlatego pusty zbiór zdań daje `null` zamiast pustego elementu, którego
+ * okno musiałoby jeszcze odróżniać od wykazu niewczytanego.
+ */
 export function zastrzezeniaUkladu(zdania: readonly string[]): HTMLElement | null {
   if (zdania.length === 0) return null;
   const zastrzezenia = wykaz('Zastrzeżenia do układu', 'da-wykaz');
@@ -61,7 +67,11 @@ export function zastrzezeniaUkladu(zdania: readonly string[]): HTMLElement | nul
   return zastrzezenia;
 }
 
-/** Stan pusty układu — automatyka bez zależności jest poprawna, nie wadliwa. */
+/**
+ * Stan pusty układu. Automatyka bez zależności jest poprawna, a nie wadliwa, więc
+ * zdanie mówi wprost, że kroki wykonają się w kolejności zapisu, zamiast zapowiadać
+ * brak albo błąd.
+ */
 export function pustyUklad(): HTMLElement {
   const puste = document.createElement('p');
   puste.className = 'dn-pole-opis';
@@ -69,7 +79,11 @@ export function pustyUklad(): HTMLElement {
   return puste;
 }
 
-/** Wykaz zależności; krok na ścieżce krytycznej dostaje `data-sciezka`. */
+/**
+ * Wykaz zależności układu wraz z przyciskiem usunięcia przy każdym wierszu. Krok
+ * leżący na ścieżce krytycznej dostaje atrybut `data-sciezka`, więc arkusz stylów
+ * wyróżnia go bez drugiego wykazu po stronie widoku.
+ */
 export function listaZaleznosci(
   uklad: readonly AutomationDependency[],
   sciezka: ReadonlySet<string>,

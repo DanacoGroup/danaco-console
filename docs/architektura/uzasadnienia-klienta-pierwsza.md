@@ -4235,3 +4235,9 @@ Kategoria z wypełnionym wskazaniem nadrzędnej staje pod nią jako pozycja wci�
 Żadna pozycja nie jest wygaszona. Kategoria z fałszywym znacznikiem czynności nie jest tu w ogóle rysowana, ponieważ katalog pobierany jest bez wierszy nieczynnych.
 
 Przebudowa wykazu nie ogłasza wyboru. Kolumna oznacza kategorię czynną i na tym kończy swoją rolę, a przebudowaniem formularza kieruje warstwa, która wykaz zamontowała. Bez tego rozdziału jedno wczytanie katalogu budowałoby formularz dwa razy.
+
+## budowa/klient-poprzedni/src/moduly/automations/widok-ukladu.ts
+
+Jedyną odpowiedzialnością pliku jest postać układu na ekranie. Żaden fragment nie woła
+rdzenia i nie zna stanu okna; jeden bierze wywołanie zwrotne usunięcia, ponieważ przycisk
+wiersza musi sięgnąć po zapis układu.

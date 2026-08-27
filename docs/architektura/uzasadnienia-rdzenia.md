@@ -6379,3 +6379,9 @@ w maszyny. Odmowa rozmowy z powodu niedostępnego katalogu dostępów byłaby br
 dokumentacja nie stawia.
 
 Odmowa dołożenia wpisu serwera narzędzi ma być powiedziana, a nie przemilczana.
+
+## budowa/server/internal/core/narzedzia_sesji_odbiornik_test.go
+Bez straży pierwsza wysłana wiadomość w takim montażu zabijała cały proces rdzenia panicą w
+gorutynie tury, a Operator tracił sesję, kolejkę i połączenie naraz. Sprawdzian pilnuje zamiany
+paniki na odmowę, a nie samego montażu: montaż dziś wpina adapter poprawnie, ale to jest stan do
+popsucia jednym pominiętym ogniwem, i wtedy skutkiem ma być zdanie, nie zgaszony rdzeń.

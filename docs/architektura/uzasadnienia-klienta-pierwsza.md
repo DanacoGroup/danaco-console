@@ -6322,3 +6322,6 @@ okna. Rozbieżność pola wskazania wersji znaczy, że wiersz historii powstał,
 ale dokument został przy innej wersji, więc okno ogłasza to odmową.
 Rozbieżność sum kontrolnych znaczy, że dokument niesie wersję, ale nie jej
 bajty; wtedy zdanie mówi o wersji tyle, ile rdzeń podał, i ani słowa więcej.
+
+## budowa/klient-poprzedni/src/moduly/agents/panel-zespolow.ts
+Panel zespołów ekspertów stoi przy bibliotece ekspertów, bo zespół jest nazwanym składem tej samej biblioteki; osobne okno musiałoby wykaz ekspertów powielić albo pokazywać skład samymi identyfikatorami. Zapis bez wskazanego zespołu zakłada nowy — to drugie znaczenie tego samego przycisku, wypisane przy nim wprost. Zespół założony na innym urządzeniu konta dochodzi zdarzeniem zmiany zespołu, więc panel nie odpytuje rdzenia w pętli.

@@ -2319,10 +2319,9 @@ Plik kontekstu, którego nie da się odczytać, nie zatrzymuje operacji: Operato
 dołączył go jako pomoc, a nie jako przedmiot zadania. Cisza byłaby jednak
 nieuczciwa, więc rdzeń dopisuje do polecenia informację o pominięciu.
 
-Kontrakt operacji kontekstowej nie niesie zakresu wierszami zaznaczenia, więc
-zakres zmiany dla zaznaczenia nie jest jeszcze odnajdywany w treści pliku;
-sama treść wyniku i tak wraca w polu result niezależnie od tego, czy zmianę
-udało się umiejscowić.
+Zakres zmiany zależy od tego, na czym Operator pracował: przy zaznaczeniu jest
+nim samo zaznaczenie, przy całym pliku — cały plik od pierwszego wiersza.
+Treść wyniku wraca w polu result niezależnie od zakresu zmiany.
 
 Model odpowiada kodem w ogrodzeniu znaczników nawet wtedy, gdy poproszono
 o samą treść, a ogrodzenie wstawione wprost do pliku źródłowego jest błędem
@@ -2330,3 +2329,18 @@ składni w każdym języku, więc zdejmijOgrodzenieKodu usuwa je przed zapisem.
 
 Bez sprawdzenia osobneSlowo dopasowanie symbolu Plik trafiałoby też
 w PlikRoboczy, a zmiana nazwy ruszyłaby symbol, którego nikt nie wskazał.
+
+## budowa/server/internal/core/adapter_modul_badania_przestrzen.go
+
+Pokrycie pytania badawczego liczy się z wiązań w katalogu źródeł, nie
+z deklaracji: pytanie jest pokryte wtedy, gdy istnieje źródło przypisane do
+niego wprost. Licznik pokrycia wyliczony z samej liczby źródeł mówiłby, że
+badanie posuwa się do przodu, nawet gdy operator dorzuca materiał niezwiązany
+z żadnym pytaniem — a to jest dokładnie ten stan, przed którym panel postępu
+ma ostrzegać.
+
+Świeżość badania jest faktem, a sugestia odświeżenia progiem: data najnowszego
+źródła bierze się wprost z bazy, a sugestia odświeżenia jest porównaniem tej
+daty z progiem świeżości. Próg wchodzi do odpowiedzi razem z sugestią, żeby
+operator wiedział, wobec czego rdzeń mierzy, a nie dostawał samego ostrzeżenia
+bez podstawy.

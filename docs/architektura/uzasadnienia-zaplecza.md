@@ -1077,3 +1077,44 @@ zapisane, a nie to, co wygodne dla rozbioru. Brak podanego portu znaczy port
 obowiązujący — ten sam, na którym rdzeń nasłuchuje domyślnie. Więcej niż
 jeden dwukropek poza nawiasami jest adresem IPv6 podanym bez nich: portu
 w takim zapisie nie ma, cała treść jest hostem.
+
+## budowa/server/internal/store/migracja_076_rodzaj_modulu.sql
+
+Moduły nie są jednym gatunkiem: część to środowiska robocze — okna czatu z
+narzędziami i oknami pomocniczymi, część to kompozytory wytwarzające
+pozycje używane w innych modułach, jeden jest repozytorium plików, a
+czwartym rodzajem jest sekcja konfiguracyjna. Bez kolumny rodzaj tabela
+modul nie odróżniała ich niczym, więc podziału nie dało się wyprowadzić z
+rdzenia i strona główna musiała trzymać własny wykaz kafli strefy 2.
+Kolumna jest opcjonalna: moduł dołożony później, którego rodzaju jeszcze
+nie ustalono, ma prawo pozostać z wartością pustą, odróżnialną od każdej z
+czterech wartości właściwych; wymuszenie wartości obowiązkowej skutkowałoby
+rodzajem wpisanym byle jak przy zakładaniu wiersza. Rodzaj sekcja
+konfiguracyjna nie dostaje w tej migracji ani jednego modułu.
+
+Zbiór czterech wartości pilnuje treść tej migracji i warstwa danych, nie
+warunek CHECK w schemacie, ponieważ SQLite nie umie dołożyć takiego
+warunku przez ALTER TABLE bez przepisania całej tabeli, a przepisanie
+pociągnęłoby za sobą klucze obce wskazujące tabelę modul.
+
+Ikony piętnastu modułów przenoszą się z mapy klienta do bazy, ponieważ
+kolumna ikony w tabeli modul stała pusta, więc boczna nawigacja musiała
+trzymać kopię faktu należącego do bazy; każda z przenoszonych nazw
+istnieje już w zestawie ikon klienta.
+
+Moduł Automations traci widoczność w bocznej nawigacji, bo działa ze
+strefy 2 strony głównej i nie otwiera własnego okna modułowego. Droga
+wejścia zostaje: kafel strefy 2 niesie kod modułu zawsze, a klient otwiera
+moduł spoza wykazu nawigacji przez osobną ścieżkę odczytu kompletu modułów
+platformy. Wiersze pary moduł-środowisko zostają w macierzy z widocznością
+wyłączoną, a nie znikają: macierz ma być kompletem par, a odsłonięcie
+modułu jest zmianą bitu, nie wstawieniem wiersza.
+
+ALTER TABLE ADD COLUMN w SQLite przepisuje sam nagłówek schematu, nie
+tabelę, więc kolumna dopuszczająca wartość pustą i bez wartości domyślnej
+nie dotyka żadnego wiersza istniejących danych. Aktualizacje wartości idą
+w tej samej transakcji co zmiana schematu, więc schemat nie zostanie
+zastosowany bez treści ani treść bez schematu. Dopasowanie wiersza idzie
+po kolumnie kodu, jedynej z warunkiem jednoznaczności, więc każda
+aktualizacja trafia w dokładnie jeden wiersz albo w żaden; brak wiersza o
+danym kodzie nie jest tu błędem.

@@ -1847,3 +1847,12 @@ Tabela nie ma klucza na parze (agent_id, nazwa), bo ekspert może mieć dwie
 wtyczki tej samej nazwy w różnych wersjach albo z różnych źródeł, a kontrakt
 kasuje wtyczkę po `pluginId`, nie po nazwie — klucz na nazwie odbierałby tę
 możliwość bez powodu.
+
+## design/03-marka/emblematy/generator-godel.py
+
+Warianty barwne emblematów z wypaloną barwą (dla rastrów i osadzeń, które nie
+potrafią dziedziczyć currentColor) trzymają zasadę bezwzględną: cały emblemat
+niesie jedną barwę, kropka nigdy nie odrywa się barwą od obrysu. Tę zasadę
+ustala księga znaku razem z arkuszem komponenty.css, a generator jej pilnuje
+programowo zamiast zdawać się na ręczne przestrzeganie przy każdym nowym
+osadzeniu.

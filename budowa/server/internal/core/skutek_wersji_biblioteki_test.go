@@ -1,3 +1,6 @@
+// Sprawdza, czy wskaźnik wersji biblioteki wskazuje właściwy plik: treść czytana
+// przez podgląd ma odpowiadać sumie kontrolnej bajtów zapisanych do repozytorium,
+// nie samemu identyfikatorowi wpisu w bazie danych.
 package core
 
 import (
@@ -6,20 +9,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek modułu Library: czy wskaźnik wersji wskazuje właściwy plik.
-//
-// Wersja, po której nie da się odtworzyć zawartości, nie jest wersją. Szkoda,
-// którą ten plik ma wykluczyć, ma w tym produkcie dwie postacie. Pierwsza:
-// wersja wgrana ścieżką odkładała wskaźnik na cudzy plik, więc treść „utrwalona"
-// zmieniała się sama, gdy Operator nadpisał plik na dysku. Druga: przywrócenie
-// meldowało powodzenie, nie zmieniając tego, co widzi czytelnik.
-//
-// Dlatego żaden sprawdzian tego pliku nie kończy się na `ok` ani na porównaniu
-// samych identyfikatorów. Każdy pyta czytelnika treści — `library.file.preview`
-// — co widzi po zmianie, i porównuje to z sumą kontrolną bajtów, które do
-// repozytorium naprawdę weszły. Podgląd jest tu miarą właściwą: to on, a nie
-// wiersz w bazie, jest tym, co Operator dostaje do ręki.
 
 // trescBiezaca odczytuje treść widzianą dziś przez czytelnika pliku. Podgląd
 // tekstowy czyta bajty spod odwołania pliku, więc jego wynik jest odpowiedzią na
@@ -44,7 +33,8 @@ func trescBiezaca(t *testing.T, zmontowany *Zmontowany, zycie context.Context, k
 	return *podglad.Preview.Text
 }
 
-// wgrajPlikTekstowy wnosi plik o zadanej treści i oddaje jego opis kontraktowy.
+// wgrajPlikTekstowy wnosi do repozytorium plik o zadanej treści tekstowej i oddaje
+// jego opis kontraktowy, gotowy do dalszego porównania w sprawdzianach tego pliku.
 func wgrajPlikTekstowy(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa, tresc string) shared.LibraryFile {
 	t.Helper()
@@ -59,10 +49,9 @@ func wgrajPlikTekstowy(t *testing.T, zmontowany *Zmontowany, zycie context.Conte
 	return wynik.File
 }
 
-// TestWgraniePlikuUtrwalaTrescPodWlasnaSumaKontrolna sprawdza wejście do
-// rodziny: po wgraniu plik ma nieść miarę tych bajtów, które przyszły, a
-// czytelnik ma widzieć dokładnie je. Bez tego reszta sprawdzianów porównywałaby
-// dwie nieprawdy.
+// TestWgraniePlikuUtrwalaTrescPodWlasnaSumaKontrolna sprawdza wejście do rodziny:
+// po wgraniu plik niesie sumę kontrolną wgranych bajtów, a czytelnik widzi
+// dokładnie tę treść.
 func TestWgraniePlikuUtrwalaTrescPodWlasnaSumaKontrolna(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -83,11 +72,9 @@ func TestWgraniePlikuUtrwalaTrescPodWlasnaSumaKontrolna(t *testing.T) {
 	}
 }
 
-// TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje jest sprawdzianem
-// wprost wymierzonym w szkodę wskaźnika. Mierzy trzy rzeczy naraz i każda z nich
-// osobno bywała fałszywa: czytelnik po przywróceniu widzi treść przywróconej
-// wersji, miara pliku opisuje tę treść, a wskaźnik wersji bieżącej pokazuje na
-// wersję, o którą Operator prosił — nie na najnowszą.
+// TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje mierzy trzy rzeczy
+// naraz: czytelnik po przywróceniu widzi treść przywróconej wersji, suma pliku
+// opisuje tę treść, a wskaźnik wersji bieżącej wskazuje wersję, o którą proszono.
 func TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -105,8 +92,7 @@ func TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje(t *testing.T) 
 			Label:         wskaznik("po korekcie"),
 		}, &dolozona)
 
-	// Dołożenie wersji ma zmienić treść bieżącą — inaczej przywrócenie nie miałoby
-	// czego cofać i sprawdzian niżej przechodziłby zawsze.
+	// Dołożenie wersji zmienia treść bieżącą — inaczej sprawdzian niżej przechodziłby zawsze.
 	if widziana := trescBiezaca(t, zmontowany, zycie, plik.Id); widziana != druga {
 		t.Fatalf("po dołożeniu wersji czytelnik widzi %q, dołożono %q", widziana, druga)
 	}
@@ -139,11 +125,9 @@ func TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje(t *testing.T) 
 	}
 }
 
-// TestPrzywroceniePilnujeGranicPlikuIZostawiaTrescNietknieta pilnuje drugiej
-// postaci szkody wskaźnika: wersja wskazana kodem z cudzej historii. Kod wersji
-// jest szukany wyłącznie w obrębie wskazanego pliku, więc żądanie ma odmówić —
-// a plik ma zostać przy swojej treści. Sprawdzenie samej odmowy nie wystarcza:
-// przepisanie treści mogłoby zajść przed nią.
+// TestPrzywroceniePilnujeGranicPlikuIZostawiaTrescNietknieta sprawdza, że wersja
+// szukana jest wyłącznie w obrębie wskazanego pliku, więc żądanie z kodem wersji
+// cudzego pliku ma odmówić, a treść obu plików ma pozostać nietknięta.
 func TestPrzywroceniePilnujeGranicPlikuIZostawiaTrescNietknieta(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -171,11 +155,9 @@ func TestPrzywroceniePilnujeGranicPlikuIZostawiaTrescNietknieta(t *testing.T) {
 	}
 }
 
-// TestTrescWgranaSciezkaNieIdzieZaNadpisanymPlikiemZrodlowym mierzy obietnicę,
-// bez której historia wersji nie jest historią: ścieżka źródłowa jest źródłem
-// bajtów, nie miejscem ich składowania. Sprawdzian nadpisuje plik na dysku po
-// wgraniu i po dołożeniu wersji — obie treści mają przeżyć nadpisanie, a
-// przywrócenie ma wrócić do bajtów sprzed niego.
+// TestTrescWgranaSciezkaNieIdzieZaNadpisanymPlikiemZrodlowym sprawdza, że ścieżka
+// źródłowa jest jedynie źródłem bajtów w chwili wgrania, nie miejscem ich
+// składowania: nadpisanie pliku na dysku nie zmienia treści już utrwalonej.
 func TestTrescWgranaSciezkaNieIdzieZaNadpisanymPlikiemZrodlowym(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -192,8 +174,7 @@ func TestTrescWgranaSciezkaNieIdzieZaNadpisanymPlikiemZrodlowym(t *testing.T) {
 		}, &wgrany)
 	wersjaPierwotna := *wgrany.File.VersionId
 
-	// Nadpisanie pliku źródłowego po wgraniu. Gdyby odwołanie wskazywało cudzy
-	// plik, wersja utrwalona zmieniłaby treść teraz — bez żadnej komendy.
+	// Nadpisanie pliku źródłowego po wgraniu nie może zmienić treści już utrwalonej.
 	zapiszPlikSprawdzianu(t, sciezka, []byte("treść podmieniona za plecami rdzenia"))
 
 	if widziana := trescBiezaca(t, zmontowany, zycie, wgrany.File.Id); widziana != pierwotna {
@@ -220,10 +201,9 @@ func TestTrescWgranaSciezkaNieIdzieZaNadpisanymPlikiemZrodlowym(t *testing.T) {
 	}
 }
 
-// TestWersjaZnacznikNieWymazujeTresciBiezacej pilnuje wersji bez treści —
-// kamienia milowego zakładanego na tym, co w pliku jest. Wersja pusta zabrałaby
-// plikowi odwołanie do treści przy przywróceniu, więc „oznaczenie kamienia"
-// niszczyłoby zasób, który miało utrwalić.
+// TestWersjaZnacznikNieWymazujeTresciBiezacej sprawdza, że wersja założona bez
+// nowej treści zachowuje treść bieżącą pliku, ponieważ znacznik ma opisywać stan
+// istniejący, a nie zastępować go pustką.
 func TestWersjaZnacznikNieWymazujeTresciBiezacej(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -242,8 +222,7 @@ func TestWersjaZnacznikNieWymazujeTresciBiezacej(t *testing.T) {
 		t.Errorf("po założeniu znacznika czytelnik widzi %q zamiast %q", widziana, tresc)
 	}
 
-	// Przywrócenie znacznika też ma zostawić treść — to ta sama treść, więc
-	// przywrócenie jest bezczynnością, nie wymazaniem.
+	// Przywrócenie znacznika zostawia treść — to ta sama treść.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryVersionRestore,
 		shared.LibraryVersionRestoreRequest{FileId: plik.Id, VersionId: znacznik.Version.Id}, nil)
 	if widziana := trescBiezaca(t, zmontowany, zycie, plik.Id); widziana != tresc {

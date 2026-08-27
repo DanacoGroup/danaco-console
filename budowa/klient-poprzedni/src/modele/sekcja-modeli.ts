@@ -73,7 +73,7 @@ export function utworzSekcjeModeli(kanal: Kanal): SekcjaModeli {
 
   const naniesPodpowiedzi = (): void => os.ustawPodpowiedzi(modele, podpowiedziKont());
 
-  /** Podpowiedzi modeli składamy z rejestru kanałów i z modeli domyślnych kont. */
+  /** Podpowiedzi modeli powstają z rejestru kanałów i z modeli domyślnych kont. */
   const odswiezPodpowiedzi = (): void => {
     void zrodloModeli.identyfikatory(stanKont.konta()).then((odczytane) => {
       modele = odczytane;

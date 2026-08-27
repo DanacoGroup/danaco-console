@@ -5636,3 +5636,33 @@ zapis bez identyfikatora zakłada zespół, z identyfikatorem zmienia istniejąc
 przypadkach niesie ten sam kształt, więc po niej samej rozróżnić się tego nie da. Odczyt nie
 rozgłasza: wykaz i wczytanie zespołu niczego nie zmieniają, więc nie mają czego ogłaszać — zdarzenie
 po odczycie byłoby zawiadomieniem o zmianie, której nie było.
+
+## budowa/server/internal/core/skutek_znacznika_bez_poczty_test.go
+
+Znacznik auth:bramka-bez-poczty zdejmuje jeden warunek wejścia i tylko
+jeden: bramki nie zamyka potwierdzenie, którego platforma nie miała czym
+wysłać. Wyjątek ma trwać dokładnie tak długo, jak trwa jego powód, a powód
+kończy się w chwili, w której adres zostaje potwierdzony. Znacznik, który
+przeżyje potwierdzenie, przestaje być wyjątkiem pierwszego uruchomienia
+i staje się trwałym obejściem bramki: od tej chwili konto cofnięte do stanu
+niepotwierdzonego wchodziłoby hasłem mimo działającej poczty. Ten sprawdzian
+mierzy stronę, której nie mierzy granica istnienia znacznika w pliku
+skutek_wejscia_test.go: tamta prowadzi drogę z pocztą, gdzie znacznik nie
+powstaje w ogóle, więc przechodzi także wtedy, gdy rdzeń znacznika nie
+zdejmuje.
+
+Bramka wpuszczająca hasłem i bramka trzymana wierszem konta oddają
+w kopercie odpowiedzi to samo, dlatego dowodem w teście jest odczyt sejfu po
+potwierdzeniu, nie samo pole verified.
+
+Bramka otwarta po potwierdzeniu adresu nie zamyka wejścia, które przed nim
+działało.
+
+wydajDrogeWeryfikacji idzie warstwą danych, nie komendą, bo na instalce bez
+poczty żadna komenda tej drogi nie wydaje: rejestracja wykonuje się raz
+i list wyszedłby tylko z niej, a komenda auth.recover wydaje drogę do innego
+celu, której auth.verify nie przyjmuje — wykazuje to test
+TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu. Brak tej drogi nie jest
+przedmiotem tego pomiaru — mierzone jest to, co rdzeń robi, gdy adres
+zostaje potwierdzony. Sprawdzian trzyma sam materiał drogi, bo z bazy
+odczytać się go nie da — leży tam wyłącznie jego skrót.

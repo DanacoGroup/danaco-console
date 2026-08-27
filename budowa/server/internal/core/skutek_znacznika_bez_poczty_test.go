@@ -9,28 +9,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek zdjęcia znacznika bramki bez poczty.
-//
-// Znacznik `auth:bramka-bez-poczty` zdejmuje jeden warunek wejścia i tylko
-// jeden: bramki nie zamyka potwierdzenie, którego platforma nie miała czym
-// wysłać (rejestr decyzji, pozycja 11). Wyjątek ma więc trwać dokładnie tak
-// długo, jak trwa jego powód — a powód kończy się w chwili, w której adres
-// zostaje potwierdzony.
-//
-// Znacznik, który przeżyje potwierdzenie, przestaje być wyjątkiem pierwszego
-// uruchomienia i staje się trwałym obejściem bramki: od tej chwili konto
-// cofnięte do stanu niepotwierdzonego wchodziłoby hasłem mimo działającej
-// poczty. Dlatego mierzona jest tu strona, której nie mierzy granica istnienia
-// znacznika w `skutek_wejscia_test.go`: tamta prowadzi drogę Z POCZTĄ, gdzie
-// znacznik nie powstaje w ogóle, więc przechodzi także wtedy, gdy rdzeń
-// znacznika nie zdejmuje.
+// Skutek zdjęcia znacznika bramki bez poczty: warunek wejścia znika, gdy adres zostaje potwierdzony.
 
-// TestPotwierdzenieAdresuZdejmujeZnacznikPostawionyBezPoczty prowadzi całą drogę
-// bez poczty do końca: znacznik powstaje przy rejestracji, a potwierdzenie
-// adresu go kasuje.
-//
-// Dowodem jest odczyt sejfu po potwierdzeniu, nie `verified: true` — bramka
-// wpuszczająca hasłem i bramka trzymana wierszem konta oddają w kopercie to samo.
+// TestPotwierdzenieAdresuZdejmujeZnacznikPostawionyBezPoczty prowadzi całą drogę bez poczty do końca: znacznik powstaje przy rejestracji, a potwierdzenie adresu go kasuje. Dowodem jest odczyt sejfu po potwierdzeniu, nie pole verified.
 func TestPotwierdzenieAdresuZdejmujeZnacznikPostawionyBezPoczty(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaBrak)
 
@@ -66,8 +47,7 @@ func TestPotwierdzenieAdresuZdejmujeZnacznikPostawionyBezPoczty(t *testing.T) {
 			" warunek potwierdzenia na instalce, która ten adres właśnie potwierdziła", adres)
 	}
 
-	// Bramka zostaje otwarta: potwierdzenie adresu przestawia ją z wyjątku na
-	// wiersz konta, a nie zamyka wejścia, które przed nim działało.
+	// Bramka zostaje otwarta: potwierdzenie adresu przestawia ją z wyjątku na wiersz konta.
 	var wejscie shared.AuthLoginResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthLogin, shared.AuthLoginRequest{
 		Method: shared.AuthMethodKindPassword,
@@ -79,19 +59,7 @@ func TestPotwierdzenieAdresuZdejmujeZnacznikPostawionyBezPoczty(t *testing.T) {
 	}
 }
 
-// wydajDrogeWeryfikacji zakłada drogę potwierdzenia adresu i oddaje materiał,
-// który Operator przepisałby z listu.
-//
-// Idzie warstwą danych, nie komendą, bo na instalce bez poczty żadna komenda tej
-// drogi nie wydaje: rejestracja wykonuje się raz i list wyszedłby tylko z niej,
-// a `auth.recover` wydaje drogę do innego celu, której `auth.verify` nie
-// przyjmuje (wykazuje to `TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu`).
-// Brak tej drogi jest zgłoszeniem rejestru terenów, nie przedmiotem tego pomiaru
-// — mierzone jest to, co rdzeń robi, GDY adres zostaje potwierdzony.
-//
-// Zapis idzie dokładnie tak, jak robi to `wyslijDrogePotwierdzenia`: skrót
-// materiału, cel weryfikacji, godzina ważności. Sprawdzian trzyma sam materiał,
-// bo z bazy odczytać się go nie da — leży tam wyłącznie jego skrót.
+// wydajDrogeWeryfikacji zakłada drogę potwierdzenia adresu i oddaje materiał, który trzeba przepisać z listu, zapisując go tak samo jak funkcja wyslijDrogePotwierdzenia: skrót materiału, cel weryfikacji, godzinę ważności.
 func wydajDrogeWeryfikacji(t *testing.T, u uprzazWejscia) string {
 	t.Helper()
 

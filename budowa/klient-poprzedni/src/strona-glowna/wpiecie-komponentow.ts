@@ -7,27 +7,7 @@ import { pozycjeZKomponentow } from './pozycje-personalizowane';
 import type { KodSrodowiska } from './pozycje-srodowisk';
 import type { StrefaKomponentow } from './strefa-komponentow';
 
-/**
- * Wpięcie macierzy widoczności w kafle strefy drugiej.
- *
- * Docelowe środowisko kafla wynika z macierzy `srodowisko_modul`, którą rdzeń
- * podaje w `environment.list`. Kopia tej macierzy po stronie klienta mogłaby
- * rozjechać się z bazą po cichu, więc jej tutaj nie ma.
- *
- * Zapytanie o środowiska pada tu osobno, z `includeModules: true`, bo
- * `wpiecie-srodowisk.ts` pyta bez tego pola — kartom strefy pierwszej moduły
- * nie są potrzebne. Podobnie `module.list` wołają dwa wpięcia: to po kafle
- * strefy drugiej, a `wpiecie-modulow.ts` po kafle modułów poza nawigacją.
- * Scalenie wołań wymaga zmiany w `aplikacja/widok-strony-glownej.ts`, poza tym
- * pakietem; strona wstaje raz na wejście, nie w pętli, więc dwa wołania są
- * ceną za niezależność obu wpięć.
- *
- * Kafel jest zawsze klikalny i zawsze prowadzi do pracy. Gdy macierz jeszcze
- * nie przyszła albo moduł nie stoi w żadnej bocznej nawigacji, przejście idzie
- * do środowiska początkowego — nadal ze wskazaniem modułu — zamiast pokazać
- * odmowę lub kafel wyszarzony.
- */
-
+/** Wpięcie macierzy widoczności w kafle strefy drugiej łączy odpowiedź rdzenia o środowiskach i modułach z kaflami, kierując przejście do środowiska początkowego, gdy macierz jeszcze nie przyszła. */
 export interface ZaleznosciWpieciaKomponentow {
   /** Kanał kontraktu — źródło macierzy widoczności i wykazu komponentów. */
   kanal: Kanal;
@@ -44,12 +24,7 @@ export interface WpiecieKomponentow {
   wybierz(kodModulu: string): void;
 }
 
-/**
- * Wezwanie kafla, gdy rdzeń nie opisał modułu — z wykazu zastanego.
- *
- * Kod nieznany zastanej czwórce zwraca `undefined`, a przekład sięga wtedy po
- * własną wartość ostateczną.
- */
+/** Wezwanie kafla, gdy rdzeń nie opisał modułu, sięga po wykaz zastany; kod nieznany czwórce zwraca brak wartości ostatecznej. */
 function wezwanieZastane(kod: string): string | undefined {
   return POZYCJE_KOMPONENTOW.find((pozycja) => pozycja.kod === kod)?.wezwanie;
 }
@@ -65,11 +40,7 @@ export function wepnijKomponenty(
     macierz.ustawZeSrodowisk(srodowiska);
   });
 
-  // Kafle strefy drugiej wynikają z kolumny
-  // `modul.konfigurowany_na_stronie_glownej`, którą kontrakt wystawia jako
-  // `Module.configuredOnHome` — nie z zamkniętego wyliczenia `ComponentKind`.
-  // Dzięki temu oznaczenie kolejnego modułu w bazie zmienia ekran bez zmiany
-  // kodu. Odmowa rdzenia zostawia czwórkę zastaną, więc strefa nie gaśnie.
+  // Kafle strefy drugiej wynikają z kolumny widoczności na stronie głównej, nie z wyliczenia rodzajów.
   zaleznosci.kanal.wyslij(Command.ModuleList, {}, (wynik) => {
     const moduly = wynik.wynik?.modules;
     if (!wynik.udany || moduly === undefined) return;
@@ -78,11 +49,7 @@ export function wepnijKomponenty(
     );
   });
 
-  // Kafle personalizowane: każdy komponent zbudowany przez Operatora dostaje
-  // własny kafel pod nadaną mu nazwą. Wykaz przychodzi bez `includeDisabled`,
-  // więc komponent wyłączony skraca listę zamiast dawać kafel wyszarzony.
-  // Odmowa rdzenia zostawia same kafle rodzajów — te wynikają z kontraktu,
-  // nie z tej odpowiedzi.
+  // Kafle personalizowane: każdy komponent zbudowany przez operatora dostaje kafel pod nadaną nazwą.
   function odczytajKomponenty(): void {
     zaleznosci.kanal.wyslij(Command.ComponentList, {}, (wynik) => {
       const komponenty = wynik.wynik?.components;
@@ -94,18 +61,11 @@ export function wepnijKomponenty(
   odczytajKomponenty();
 
   return {
-    // Ponowny odczyt po założeniu, nie doklejenie kafla z odpowiedzi.
-    // `component.create` oddaje komponent, ale o wykazie rozstrzyga rdzeń:
-    // kafel doklejony po stronie widoku pokazywałby stan, którego drugi
-    // odczyt nie potwierdził.
+    // Ponowny odczyt po założeniu, nie doklejenie kafla z odpowiedzi, bo o wykazie rozstrzyga rdzeń.
     odswiez: odczytajKomponenty,
 
     wybierz(kodModulu) {
-      // Wskazanie modułu idzie zawsze, także gdy macierz go nie zna. Moduł
-      // niewidoczny w żadnej bocznej nawigacji nie ma pozycji na liście, ale
-      // ma okna; powłoka otwiera go wtedy drogą bezpośrednią, z katalogu
-      // `module.list` z pominięciem wykazu. Zgubienie wskazania odbierałoby
-      // kaflowi jedyne wejście do tych okien.
+      // Wskazanie modułu idzie zawsze, także gdy macierz go nie zna; moduł bez pozycji na liście ma okna.
       const srodowisko = macierz.srodowiskoModulu(kodModulu) ?? macierz.srodowiskoPoczatkowe();
       zaleznosci.naPrzejscie(srodowisko, kodModulu);
     },

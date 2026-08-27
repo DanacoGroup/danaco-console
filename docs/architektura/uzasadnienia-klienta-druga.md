@@ -3324,3 +3324,14 @@ danych, tu żadna go nie ma. Komendy zbiorowe oddają wykaz sesji faktycznie prz
 krótszy od żądania, stąd meldunek składany jest z wyniku. Po każdej udanej zmianie woła się odświeżenie
 podane przez wpięcie: rdzeń rozsyła zdarzenie zmiany sesji, ale archiwum jest odpytywane osobno i tego
 zdarzenia nie widzi.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-narzedzi.ts
+Zakres operacji kontekstowej bierze się ze stanu modułu, nie z kontrolki wyboru: zakres skuteczny
+liczy stan studia i biorą go stamtąd wszyscy trzej odbiorcy — wskaźnik panelu, pasek zaznaczenia
+edytora i to żądanie — bo druga kopia nastawy trzymana osobno w liście wyboru panelu rozjeżdżała
+się ze stanem. Wybór zakresu zaznaczenia bez samego zaznaczenia nie jest blokowany: schodzi na
+cały dokument, a panel pisze o tym we wskaźniku zakresu, natomiast żądanie z zakresem zaznaczenia
+i bez jego granic dostałoby odmowę walidacji. Operacja kontekstowa wraca odpowiedzią pomyślną
+także wtedy, gdy kanał modelu oddał zamiast wyniku swój własny komunikat — rdzeń tego nie
+odróżnia, bo dostał zwykły tekst — dlatego zdanie o wyniku mówi wprost, ile treści przyszło
+i że przyjęcie podmieni nią dokument, zamiast zgadywać po samej treści.

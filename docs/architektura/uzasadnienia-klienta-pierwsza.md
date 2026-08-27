@@ -1935,3 +1935,14 @@ Katalog roboczy modelu jest ustawieniem niezależnym od dostępów, ponieważ ob
 Obszar nie jest kopią okna konfiguracji. Pokazuje dwa klucze, ponieważ bez nich sekcja dostępów byłaby niepełna: po nadaniu modelowi dostępu do katalogów następne pytanie dotyczy miejsca, w którym model będzie pisał. Pełny wybór poziomów zasięgu i osi zostaje w oknie konfiguracji, które prowadzi jedyny rachunek dziedziczenia wartości.
 
 Wczytanie danych nie czeka na rdzeń i nie blokuje osadzenia obszaru. Pola stoją od razu z wartościami domyślnymi, a odpowiedź rdzenia nanosi na nie wartości obowiązujące.
+
+## budowa/klient-poprzedni/src/moduly/design/tor-komendy.ts
+
+Słownik zdań o torze komend stoi osobno od słownika etykiet modułu Design,
+ponieważ tamten plik jest słownikiem nazw i braków, a ten niesie wiedzę o drodze
+żądania: o kolejności kroków rdzenia, o tym, co zastępuje stan poprzedni,
+i o tym, czego kontrakt nie przewiduje wcale.
+
+Zdanie o torze nie orzeka o powodzie odmowy. Powód niesie opis odmowy wyjęty
+z odpowiedzi rdzenia, a słownik dokłada wyłącznie to, czego rdzeń o sobie nie
+mówi.

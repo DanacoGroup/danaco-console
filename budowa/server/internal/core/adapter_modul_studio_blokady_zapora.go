@@ -384,7 +384,7 @@ func (a *adapterStudia) sladOwin(obsluga Obsluga) Obsluga {
 			return odpowiedz
 		}
 		if a.sladIleZmianWykonawcy(ctx, po.ID) > sladowPrzed {
-			// Obsługiwacz odłożył ślad sam — drugiego nie dokładamy.
+			// Obsługiwacz odłożył ślad sam — drugiego nie dokłada się.
 			return odpowiedz
 		}
 		if err := a.sladOdlozBrakujacy(ctx, po, wykonawca, trescPrzed, trescPo); err != nil {

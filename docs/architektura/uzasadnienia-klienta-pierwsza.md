@@ -4063,3 +4063,44 @@ Pięć pozostałych trybów wymaga bytów, których kompozycja nie zna: ścieżk
 z węzłami, kształtu innego niż prostokąt, tekstu, maski przezroczystości oraz
 pędzla działającego na pikselach zasobu. Kompozycja niesie warstwę o położeniu,
 rozmiarze, kolejności, blokadzie i adnotacji, i tyle jedzie do rdzenia.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/zaczep-asystenta.ts
+
+Warstwa osadza się w `aplikacja/widok-srodowiska.ts`, ponieważ tylko tam znana jest
+jednocześnie powłoka i droga do rdzenia. Favikon ląduje w korzeniu powłoki, obok obszaru
+roboczego: moduł podmienia zawartość obszaru w `aplikacja/przestrzen-modulu.ts`, więc
+favikon leżący poza nim zostaje widoczny przy każdej zmianie modułu.
+
+Dwa inne zaczepy się nie nadają. Plik `aplikacja/scena-sesji.ts` trzyma okna równoległe
+liczone do sufitu `LICZBA_MAX` z `okna-rownolegle/identyfikatory.ts`, a asystent nie jest
+oknem sceny — profil daje mu `granicaOkien: 1` i postać `dymek-glosowy` — więc zabierałby
+gniazdo oknu komunikacji i znikał razem ze sceną. Plik `powloka/powloka.ts` buduje także
+stanowisko podglądu `powloka/podglad.ts`, które o rdzeniu nie wie; zaczep tam wymusiłby
+albo wersję niemą, albo przeciek drogi do rdzenia w dół.
+
+Dymek jest jeden na widok środowiska. Liczby `granicaOkien` nie przepisano do tego pliku:
+`okno-dymkowe.ts` bierze ją z rejestru profilów.
+
+Profil daje `pamiecSesyjna: true`, więc zwinięcie dymka nie czyści historii, a `schowaj()`
+wyłącznie chowa element. Rozmowa ginąca po zwinięciu wyglądałaby na awarię.
+
+Favikon i stan spina jedna subskrypcja: `stan.obserwuj` przenosi na favikon pracę asystenta
+i licznik nieprzeczytanych posunięć. Otwarcie dymka zeruje licznik, zamknięcie znów go
+zbiera — dopóki dymek stoi odsłonięty, posunięcia są czytane na bieżąco.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja.test.ts
+
+Sprawdzian ujawnia pracę modeli w oknie Provenance Explorer i pilnuje czterech rzeczy, o które ta zakładka istnieje: że wykaz wywołań ma drogę z okna, że odczyt śladu przynosi drzewo odcinków i treść, że ocena jest czynnością z własnym chwytem, oraz że wydanie śladu mówi, co plik poniesie. Piąta rzecz jest równie ważna: pustka rejestru ma zdanie, a nie migające puste miejsce.
+
+## budowa/klient-poprzedni/src/moduly/apps/os-etapow.ts
+
+Oś prowadzi wyłącznie do okien, które moduł zbudował. Pozycje przychodzą z pliku
+składającego moduł, a nie z wykazu zapisanego w samej osi, dzięki czemu
+dopisanie okna nie wymaga poprawki w drugim miejscu.
+
+Kolejność etapów — architektura, warsztaty, wdrożenie — jest kolejnością
+procesu, a nie bramą. Naciśnięcie etapu późniejszego jest dozwolone i prowadzi
+ognisko do jego okna.
+
+Oś nie udaje stanu etapu. Stan przychodzi zdarzeniem `apps.build.changed`
+i rysuje go osobny wykaz okna.

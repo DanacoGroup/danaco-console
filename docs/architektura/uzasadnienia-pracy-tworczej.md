@@ -426,3 +426,89 @@ Obie komendy tego pliku oddają ramkę i warstwy, nie plik graficzny, bo makieta
 Komenda design.mockup.import rozkłada zrzut na obszary rachunkiem własnym na pikselach: barwa tła z obwodu obrazu, progowanie odstępstwa od tła, spójne bloki, prostokąty otaczające. Treść napisów czyta program tesseract, składnik pakietu serwera wołany tą samą drogą, co w warsztacie Studia i w module Translate; czytnika liter w czystym Go nie ma, więc plik ma nazwany wyjątek zapory izolacji na własne wywołanie programu zewnętrznego.
 
 Pole recognizeText domyślnie znaczy tak, a układ makiety nie ma prawa zależeć od odczytu liter. Gdy pole podano wprost jako prawdziwe, brak programu jest odmową nazwaną, nie pustym odczytem udającym, że napisów nie było. Gdy pole jest pominięte, obowiązuje domyślne włączenie, ale odczyt jest dodatkiem do układu: brak programu daje wtedy makietę z układem, a każda linia tekstu niesie w adnotacji zdanie o tym, że treści nie odczytano i dlaczego. Obszary, których rdzeń nie rozłożył na elementy, wracają w polu unrecognizedRegions jako bilans zamiast ciszy.
+## adapter_modul_design_makiety.go
+
+Wykaz nastaw urządzeń stoi w jednym miejscu i czytają go dwie czynności:
+zakładanie ramki, które wypełnia wymiary z nazwy nastawy, oraz wykaz ramek,
+który oddaje ten sam wykaz w polu `devicePresets`. Osobny wykaz w kliencie
+rozjechałby się przy pierwszej poprawce, a Operator dostałby ramkę telefonu
+o wymiarach tabletu.
+
+Ramka wyznacza obszar wydania, a kompozycja pozostaje samym płótnem: to
+rozmiar ramki zmienia się przy sprawdzaniu układu na innym urządzeniu.
+Warstwa należy najwyżej do jednej ramki, bo warstwa w dwóch ramkach naraz
+musiałaby przy `design.frame.resize.apply` przyjąć dwa różne położenia.
+
+Więz responsywny przelicza się rachunkiem, nie zapowiedzią: `design.frame.
+resize.apply` liczy nowe położenia warstw z kotwic i oddaje warstwy po
+przeliczeniu, odczytane z bazy. Warstwa bez więzu zostaje tam, gdzie była —
+brak więzu jest rozstrzygnięciem Operatora, nie luką do wypełnienia domysłem.
+
+Prototyp niesie bilans zamiast ciszy: `design.prototype.get` niesie
+`unreachableFrameIds`, wykaz ramek, do których nie prowadzi żadne połączenie,
+bo prototyp z ramką osieroconą wygląda w oknie jak prototyp kompletny, a
+dopiero przy przejściu okazuje się, że tam nie da się dojść. `design.
+constraint.set` niesie `changed`, liczbę więzi rzeczywiście zmienionych, nie
+liczbę nadesłanych.
+
+Znaczenie kotwic więzu responsywnego przy zmianie rozmiaru ramki: `start`
+trzyma odległość od krawędzi początkowej, lewej albo górnej; `end` trzyma
+odległość od krawędzi końcowej; `center` trzyma środek warstwy w środku
+ramki; `stretch` trzyma obie odległości naraz, więc warstwa rośnie razem
+z ramką; `scale` skaluje położenie i rozmiar warstwy proporcjonalnie do
+zmiany rozmiaru ramki.
+
+Usunięcie ramki nie usuwa jej warstw: warstwa jest bytem kompozycji, a ramka
+tylko ją grupowała, więc warstwy zwolnione wracają w `releasedLayerIds`
+zamiast zniknąć bez śladu.
+
+Wynik układu automatycznego jest zapisany, nie policzony na boku: układ
+automatyczny jest zmianą kompozycji, a nie podglądem układu.
+
+Instancja komponentu wskazuje komponent kluczem obcym i czyta z niego
+warianty, więc zmiana komponentu dochodzi do wszystkich jego instancji bez
+osobnego zapisu; liczba instancji w odpowiedzi na zapis komponentu pochodzi
+z odczytu po zapisie, nie z żądania, bo żądanie nie zna tej liczby.
+
+Przy wskazanej ramce początkowej rachunek nieosiągalności jest przejściem po
+grafie od niej: nieosiągalna jest ramka, do której nie prowadzi żadna droga,
+a nie tylko ta bez połączenia wchodzącego wprost. Bez wskazania początku
+nieosiągalna jest ramka bez ani jednego połączenia wchodzącego, bo nie
+wiadomo, skąd Operator zaczyna przegląd prototypu.
+
+## adapter_modul_studio_aparat.go
+
+Element aparatu ma swój wiersz w tabeli `element_aparatu_studio`, bo się o niego
+pyta wprost: „które spisy są nieświeże", „ile jest przypisów", „czy indeks
+zgadza się z treścią". Drzewo postaci niesie go tylko jako odczyt złożony
+przez `postacZlozAparat`; zapis idzie zawsze wierszem, dlatego `postacZapisz`
+wycina aparat z drzewa — dwa zapisy jednego bytu rozjechałyby się przy
+pierwszej poprawce.
+
+Spis treści, spisy ilustracji i tabel oraz indeks muszą być odświeżalne
+i mieć znacznik nieświeżości — kolumnę `nieswiezy`, a nie domysł okna: zmiana
+nagłówka zapala znacznik natychmiast, żeby operator wiedział, że spis pokazuje
+stan sprzed zmiany.
+
+Numeracja przypisów, podpisów i powołań liczy się od miejsca w treści, nie od
+kolejności zapisu: przypis wstawiony przed innym ma przenumerować oba, dlatego
+numer nie jest nadawany przy zapisie, a przy odświeżeniu, z porządku
+zakotwiczeń. Numer nadany przy zapisie byłby numerem, który po pierwszym
+wstawieniu w środek dokumentu przestaje być prawdziwy.
+
+Rachunek stron akapitów bierze geometrię z nastaw każdej sekcji z osobna, nie
+ze stałego rozmiaru strony: akapit należy do sekcji, której zakres go
+obejmuje, a sekcja rozpoczynająca się od nowej strony przerywa rachunek
+wierszy i zaczyna kartkę od nowa. Sekcja `continuous` łamania nie przerywa,
+bo jej sensem jest ciągłość — nowe nastawy obowiązują wtedy od miejsca cięcia,
+a nie od nowej kartki. Rachunek idzie tym samym silnikiem, którym jedzie
+podgląd wydruku (`krojWyrysuStudia`, `zlamWierszStudia`), bez wyrysu obrazów,
+bo do numeru strony obraz nie jest potrzebny — drugi rachunek łamania dałby
+spis treści wskazujący inne strony niż podgląd, co jest gorsze niż brak
+numerów.
+
+`newPage`, `evenPage` i `oddPage` przerywają stronę na początku sekcji;
+parzystości i nieparzystości rachunek na razie nie dopełnia pustą kartką, bo
+wyrys jej nie rysuje i numer wskazywałby stronę, której w podglądzie nie ma.
+`continuous` i `newColumn` nie przerywają: pierwsze z zamysłu, drugie dlatego,
+że wyrys składa jedną kolumnę.

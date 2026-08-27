@@ -1028,3 +1028,33 @@ Oprawa zeszytowa wymaga liczby stron podzielnej przez cztery, bo arkusz
 zgięty na pół daje cztery strony; publikacja niespełniająca tego warunku
 dostaje odmowę, a nie ciche dołożenie wakatów, ponieważ strona pusta
 w środku książki jest rozstrzygnięciem, nie zaokrągleniem.
+
+## budowa/server/internal/core/adapter_modul_studio_wstawienia.go
+
+Wstawienie obrazu bez zapisanego pochodzenia jest brakiem, nie skrótem: każdy
+obiekt niosący bajty ma zapisane, skąd jest — zasób magazynu rdzenia, węzeł
+modułu Design, plik Biblioteki, baza zdjęciowa albo adres w sieci. Obraz bez
+pochodzenia jest za czas obrazem, o którym nikt nie wie, czy wolno go było użyć.
+
+Obiekt nie nosi bajtów w swoim wierszu: nosi wskazanie zasobu, a bajty leżą
+w magazynie pod sumą kontrolną. Droga odłożenia bajtów w magazynie zasobów
+rdzenia jest jedna dla całego modułu i nie zakłada się jej drugi raz.
+
+Ikona wchodzi z katalogu modułu Design, tego samego, z którego korzysta
+wyszukiwanie ikon w tym module — drugiego katalogu ikon Studio nie zakłada
+i mieć nie będzie. Kształt rysowany na miejscu opisuje się rodzajem, rozmiarem
+i wyglądem, a nie własnym rachunkiem ścieżek; kształt wymagający ścieżek
+edytowalnych wskazuje się węzłem modułu Design, który powstaje osobną
+czynnością tego modułu.
+
+Odmowa wstawienia wykresu jest nazwana, nie cicha: rdzeń nie ma rachunku
+wykresu i nie udaje, że ma. Wykres składa się w module Design i wstawia się
+do dokumentu jako obraz albo węzeł Designu.
+
+Zdjęcie z bazy zdjęciowej leży w magazynie zasobów jak każdy inny zasób,
+lecz pochodzenie „baza zdjęciowa” zostaje zapisane osobno, bo mówi o prawach
+do użycia obrazu.
+
+Adres źródła w sieci zapisuje się jako pochodzenie, ale bajtów rdzeń stąd nie
+pobiera: pobranie treści z sieci ma w rdzeniu własną, osobną drogę — druga
+droga pobrania byłaby drugą prawdą o tym, co i skąd weszło do dokumentu.

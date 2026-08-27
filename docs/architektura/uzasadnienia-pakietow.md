@@ -2960,3 +2960,49 @@ dwie miary, których nie da się wziąć z magazynu śladu wywołań ani z
 dziennika błędów — a bez nich reguły miar probeFailure i processFailure
 nigdy by się nie wyzwoliły. Zapytania stoją w tym repozytorium, ponieważ to
 ewaluacja reguły ich potrzebuje; żadne inne repozytorium ich nie woła.
+
+## budowa/server/internal/dane/terminal_wyposazenie_zapis.go
+
+Usunięcie oddaje prawdę o skutku (bool), a nie samo „nie było błędu". Kontrakt
+komend terminal.host.remove, terminal.script.remove i terminal.key.remove
+mówi wprost: fałsz znaczy, że wpisu nie było, i nie jest błędem. Bez policzenia
+zmienionych wierszy rdzeń nie miałby czym tego rozróżnić i odpowiadałby prawdą
+zawsze.
+
+W ZapiszSkrypt odczytanie numeru wersji osobnym zapytaniem przed zapisem
+dałoby dwóm równoległym zapisom ten sam numer, a warunek UNIQUE na parze
+pozycja-wersja odrzuciłby drugi z nich; numer nadaje więc baza wyrażeniem
+wersja + 1 wykonanym w tej samej transakcji co wpis wersji.
+
+## budowa/server/internal/dane/zlecenia_kolejki.go
+
+Tabela zlecenie_kolejki nie jest drugim silnikiem kolejek ani drugą tabelą
+pozycji obok pozycja_kolejki: ta ostatnia opisuje etap pętli
+koordynator-wykonawca (tytuł, treść zlecenia, werdykt weryfikacji, licznik
+obiegów), podczas gdy kontraktowy QueueItem niesie ładunek strukturalny,
+priorytet, termin wykonania, klucz idempotencji i warunek przetworzenia.
+Wtłoczenie jednego w drugie kazałoby kolumnie tytul nieść ładunek,
+a werdykt_weryfikacji stan o zupełnie innym słowniku.
+
+Zlecenie martwe zostaje w tej samej tabeli, ze stanem martwe. Kolejka zadań
+martwych jest widokiem, nie osobnym magazynem: queue.dead.list bez wskazania
+kolejki oddaje zadania martwe wszystkich kolejek, więc przeniesienie ich
+gdzie indziej odebrałoby im pochodzenie.
+
+Stan pusty w wykazie zleceń kolejki znaczy wszystkie stany: zadania martwe
+i zdjęte wychodzą wtedy razem z resztą, bo Queue Manager pokazuje je
+w kolumnie stanu, a nie ukrywa przed Operatorem.
+
+PolitykaKolejki: kolejka bez zapisanej polityki nie jest kolejką bez
+polityki, bo kolumny mają wartości domyślne modelu konfiguracji.
+
+ZlecenieKluczem: ten sam klucz idempotencji w dwóch kolejkach opisuje dwa
+różne zlecenia dwóch różnych torów, więc odczyt zawsze pyta o parę
+kolejka-klucz, nie o sam klucz.
+
+ZleceniaKolejki: wykaz zleceń bywa przycięty granicą wyniku, a licznik
+wszystkich zleceń kolejki nie, dlatego funkcja zwraca oba osobno.
+
+Odcinek głębokości kolejki wraca z zapytania jako numer, więc chwilę
+odtwarza się mnożeniem numeru przez długość odcinka — tak powstaje początek
+odcinka w sekundach epoki.

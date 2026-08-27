@@ -1,27 +1,12 @@
 import { SessionStatus } from '../../../shared/contract';
 import type { WpisSesji } from './zrodlo-sesji';
 
-/**
- * Czynności historii sesji — co strefa umie zlecić rdzeniowi.
- *
- * Nazywa operacje historii w języku widoku i rozstrzyga, które z nich mają sens
- * dla danego wiersza. Plik nie zna kanału ani kontraktu — wykonanie podaje
- * wpięcie.
- *
- * Warunki stoją tutaj, a nie w karcie: karta buduje wiersz, menu buduje
- * przyciski, i żadne z nich nie rozstrzyga, czy wznowienie sesji czynnej ma
- * sens. Jedno miejsce daje jedną odpowiedź i jedno miejsce do poprawienia, gdy
- * rdzeń zmieni stany sesji.
- *
- * Brak czynności zdejmuje przycisk, zamiast go wyszarzać: przycisk widoczny,
- * którego naciśnięcie nic nie robi, jest atrapą. Wiersz bez czynności jest
- * czysto informacyjny.
- */
+/** Plik nazywa czynności historii sesji i rozstrzyga, które z nich strefa udostępnia dla wiersza. */
 
-/** Wynik czynności w postaci zdania na ekran; `null` znaczy „bez meldunku”. */
+/** Wynik czynności historii wyrażony jako zdanie gotowe do wyświetlenia na ekranie; wartość `null` znaczy brak meldunku. */
 export type MeldunekCzynnosci = string | null;
 
-/** Jedna czynność historii; obietnica trzyma przycisk zajęty do końca. */
+/** Jedna czynność historii sesji zwraca obietnicę, która trzyma przycisk zajęty aż do jej rozstrzygnięcia. */
 export type Wykonanie = (wpis: WpisSesji) => Promise<MeldunekCzynnosci>;
 
 /**
@@ -47,7 +32,7 @@ export interface CzynnosciSesji {
   zatrzymaj?: Wykonanie;
 }
 
-/** Pozycja menu gotowa do zbudowania: napis, wykonanie i postać przycisku. */
+/** Pozycja menu gotowa do zbudowania niesie napis widoczny na przycisku, wykonanie czynności oraz postać przycisku. */
 export interface PozycjaCzynnosci {
   klucz: string;
   napis: string;
@@ -94,16 +79,14 @@ export function czynnosciWiersza(
     wyjasnienie: 'Zakłada osobną sesję z kopią zapisu. Kopia nie jest odnośnikiem do źródła.',
   });
 
-  // Zatrzymanie ma sens wyłącznie przy turze w biegu — zero okien
-  // strumieniujących znaczy, że komenda nie miałaby czego zatrzymać.
+  // Zatrzymanie ma sens tylko przy turze w biegu.
   dodaj(biegnie, czynnosci.zatrzymaj, {
     klucz: 'stop',
     napis: 'Zatrzymaj tury',
     wyjasnienie: 'Przerywa tury biegnące w oknach tej sesji. Sesja zostaje otwarta.',
     postac: 'dn-btn--niebezpieczny',
   });
-  // Wznowienie dotyczy sesji, która nie biegnie — wstrzymanej albo zakończonej.
-  // Sesja czynna nie ma czego wznawiać.
+  // Wznowienie dotyczy sesji wstrzymanej albo zakończonej.
   dodaj(
     stan === SessionStatus.Paused || stan === SessionStatus.Finished,
     czynnosci.wznow,

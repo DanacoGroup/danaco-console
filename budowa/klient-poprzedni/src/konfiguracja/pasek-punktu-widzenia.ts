@@ -4,16 +4,9 @@ import { utworzWyborAdresu } from './wybor-adresu';
 import { OSIE_OD_NAJWEZSZEJ, ZASIEGI_OD_NAJWEZSZEGO } from './zasiegi';
 
 /**
- * Pasek punktu widzenia — selektor zasięgu okna konfiguracji.
- *
- * Wartość ustawienia nie jest jedna: zależy od tego, dla kogo pytamy.
- * Ten sam klucz może mieć inną wartość globalnie, inną w oknie komunikacji
- * i jeszcze inną dla wskazanego modelu. Pasek ustala, **dla kogo** okno liczy
- * wartości obowiązujące; każde pole formularza przelicza wtedy swoje
- * pochodzenie od nowa.
- *
- * Zmiana punktu widzenia niczego nie zapisuje. To wyłącznie soczewka —
- * odczyt, nie polecenie.
+ * Pasek punktu widzenia — selektor zasięgu okna konfiguracji. Ustala, dla kogo
+ * okno liczy wartości obowiązujące; każde pole formularza przelicza wtedy swoje
+ * pochodzenie od nowa. Zmiana punktu widzenia niczego nie zapisuje.
  */
 export interface PasekPunktuWidzenia {
   /** Pas nad ciałem okna. */

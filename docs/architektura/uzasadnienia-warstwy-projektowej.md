@@ -220,3 +220,84 @@ o równych składowych RGB, a jedyną barwą akcentu systemu jest błękit
 sygnałowy. Po stopniu #7C7C7C nie sięga już żadna rola tekstu: na papierze
 #F4F4F4 stopień ten daje kontrast 3,80:1, za jasny na tekst i na obrys,
 a na powierzchni #181818 — 4,25:1, za ciemny na tekst drugoplanowy.
+
+## budowa/klient-poprzedni/src/komponenty/ikona.css
+Rozmiar ikony niosą atrybuty width i height nadawane przez ikony/ikony.ts
+z parametru rozmiar. Klasa niesie znaczenie, nie wygląd: po niej selekcjonują
+sprawdziany i zaczepiają się motywy. Nośnik jest elementem wierszowym i nie
+kurczy się w kontenerze elastycznym.
+
+## budowa/klient-poprzedni/src/komponenty/indeks.css
+Warunkiem użycia jest wcześniejsze wczytanie warstwy żetonów z katalogu
+motyw/: kolejność importów jest kolejnością kaskady. Preferencja ograniczonego
+ruchu jest respektowana globalnie w warstwie żetonów, więc biblioteka nie
+powtarza tej reguły osobno — wyjątkiem jest zamiana tętna kropki na pierścień
+statyczny w pliku plakietka.css.
+
+## budowa/klient-poprzedni/src/komponenty/postep.css
+Weryfikacja kroku ma trzy wyjścia: poprawny w zieleni (przeszedł), błędy
+w bursztynie (błędy i licznik obiegów) oraz wstrzymany w czerwieni (zdarzenie
+nieoczekiwane, kolejka wstrzymana). Stan nigdy nie jest niesiony samym
+kolorem: znak kroku niesie zawsze ikonę albo etykietę.
+
+## budowa/klient-poprzedni/src/komponenty/powiadomienie.css
+Stos powiadomień stoi na osobnej warstwie z-index. Stan nigdy nie jest
+niesiony samym kolorem: obok krawędzi stanu każdy wariant niesie ikonę
+w tej samej barwie oraz tytuł.
+
+## budowa/klient-poprzedni/src/komponenty/suwak.css
+Zmienna pozycji suwaka nie jest żetonem warstwy motyw/ — to zmienna ustawiana
+w locie na elemencie jako procent wypełnienia toru. Wartość zapasowa wynosi
+50%, więc bez ustawienia tor pokazuje połowę.
+
+## budowa/klient-poprzedni/src/konfiguracja/konfiguracja.css
+Barw własnych nie ma — wszystko pochodzi z żetonów warstwy motyw/:
+monochromatyczna precyzja, jeden błękit sygnałowy, gęstość zwarta. Sygnał
+jest rzadki: błękit pojawia się tylko w trzech miejscach — kategorii czynnej
+w kolumnie, plakietce pochodzenia wartości nadpisanej i wierszu
+dziedziczenia, który obowiązuje. Pole bez zastosowania znika w całości
+zamiast leżeć szare i nieczynne.
+
+## budowa/klient-poprzedni/src/konfiguracja/pola-konfiguracji.css
+Sygnał w barwie błękitnej występuje tu dokładnie dwa razy: plakietka
+pochodzenia wartości nadpisanej oraz wiersz dziedziczenia, który obowiązuje.
+
+## budowa/klient-poprzedni/src/modele/modele.css
+Błękit oznacza pozycję czynną wykazu oraz plakietkę konta domyślnego;
+bursztyn jest zarezerwowany dla ostrzeżenia, że tryb ZASTĄP zdejmuje prompt
+fabryczny. Pole bez zastosowania — katalog konfiguracji przy koncie API, byt
+osi przy osi platformy — znika w całości, zamiast stać wygaszone.
+
+## budowa/klient-poprzedni/src/modele/tozsamosc.css
+Tryb ZASTĄP zdejmuje prompt fabryczny w całości, więc jego ostrzeżenie stoi
+w bursztynie na pełnej szerokości i na stałe. Tryb DOŁĄCZ dostaje barwę
+informacyjną.
+
+## budowa/klient-poprzedni/src/modele/wykazy.css
+Pozycja wykazu opisująca byt nieczynny nie jest wygaszona ani nieklikalna:
+nieczynność jest stanem danych, nie blokadą interfejsu.
+
+## budowa/klient-poprzedni/src/moduly/design/design.css
+Kontrolki formularza modułu pochodzą z modele/kontrolki-formularza, więc
+moduł wciąga też arkusz modele.css, inaczej pola dm-* byłyby bez oprawy.
+Arkusz jest podzielony na cztery pliki wzdłuż odpowiedzialności: rama modułu
+i okien wraz ze stanami stoi tutaj; kompozycja.css niesie kanwę, warstwy
+i panele boczne; zasoby.css niesie wykaz zasobów i kreator promptu;
+podglad.css niesie płytę Preview Window i porównanie wariantów.
+
+## budowa/klient-poprzedni/src/moduly/design/podglad.css
+Płyta sygnalizuje kreską brak treści obrazu: obrys ciągły należy się treści,
+którą rdzeń oddał, obrys kreskowany — miejscu na treść, której nie ma. Ta
+sama zasada obowiązuje w polu podglądu karty zasobu i w miniaturze paska
+postępu, żeby brak wyglądał wszędzie w module tak samo.
+
+## budowa/klient-poprzedni/src/moduly/design/tokeny.css
+Okno pokazuje barwy produktu, więc próbka musi nieść barwę wpisaną w locie —
+to jedyne miejsce w module, w którym barwa trafia do stylu z kodu jako dana
+odczytana z motywu, nie jako decyzja projektowa. Sam arkusz nie zna ani
+jednej wartości szesnastkowej poza próbkami.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-project-tree.css
+Reszta wyglądu okna, poza menu kontekstowym, idzie z arkusza modułu
+developer.css. Plik nie zna barwy dosłownej ani rozmiaru dosłownego —
+wyłącznie żetony motywu.

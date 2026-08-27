@@ -408,7 +408,7 @@ function wykazStanuKolejki(kolejka: Queue): HTMLElement {
 /**
  * Zdanie o polityce kolejki. Brak polityki nie jest brakiem danych: kolejka
  * bez zapisanej polityki pracuje na wartościach domyślnych silnika i tak to
- * nazywamy, zamiast pokazywać puste pole.
+ * jest nazywane, zamiast pokazywać puste pole.
  */
 function opisPolityki(polityka: Queue['policy']): string {
   if (polityka === undefined) return 'bez zapisanej polityki — wartości domyślne silnika';

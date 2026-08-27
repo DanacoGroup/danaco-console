@@ -2704,3 +2704,41 @@ stanem poprawnym, więc pusta karta sesji i puste okno nie są sygnałem błędu
 Odmowa jednego odczytu jest faktem o jednym odczycie, a nie o całej nakładce.
 Pozostałe sekcje stoją na innych komendach i zostają widoczne, przez co odmowa
 komendy `aod.status.get` nie wygasza całego widoku.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-build-output.ts
+
+Build Output i Run & Debug tworzą jedno okno o dwóch częściach zajmujących tę samą kolumnę,
+przełączanych pasem zakładek w jej nagłówku — stąd jedna rama, dwie zakładki i jeden kod
+okna `build-output` z katalogu rdzenia; Run & Debug nie jest osobnym oknem i osobnego
+wiersza katalogu nie dostaje.
+
+Aktualizacja na żywo idzie ze zdarzenia `developer.build.changed`, które okno subskrybuje
+bezpośrednio u źródła, mimo że `stan-developer.ts` subskrybuje to samo zdarzenie i budzi
+okna przez `stan.naZmiane(...)`: stan tylko rozgłasza, że coś się zmieniło, po filtrze
+`windowId`, nie niesie pola `logLine` ani przebiegu z treści zdarzenia, a kontrakt nie ma
+komendy, którą dałoby się dogonić stan inaczej. Ta druga subskrypcja bierze więc co innego
+niż subskrypcja stanu i nie jest powieleniem tej samej pracy.
+
+Zgłoszenie przebiegu prowadzi do pliku: zgłoszenia niosą pola `path` i `line`, a każde ze
+ścieżką ma przejście „Otwórz w edytorze”, które woła `stan.wskazPlik`, a Code Editor otwiera
+plik sam.
+
+Log jest ucięty przy otwarciu okna w trakcie przebiegu i rośnie wyłącznie z pola `logLine`
+kolejnych zdarzeń, więc okno otwarte po starcie przebiegu — albo przebiegu uruchomionego
+przez inne okno tego konta — widzi tylko ogon logu. Ucięcie jest oznaczone wprost w treści
+okna, nie zamaskowane.
+
+Szukanie w logu i zawężanie zgłoszeń wagą są czynnościami wyłącznie klienckimi nad
+materiałem już zebranym, bo kontrakt nie ma komendy, którą dałoby się dopytać rdzeń
+o wiersze pominięte, i widok mówi to wprost. Waga zgłoszenia pochodzi z pola `severity`
+oddanego przez rdzeń, nie z rozpoznawania treści wiersza logu.
+
+Zdanie stanu pustego o tym, czym rozporządza rdzeń, składa `katalog-komend.ts` z rejestru
+komend wziętego z odpowiedzi `connection.hello` — z tego, co rdzeń rzeczywiście
+zarejestrował, a nie z napisu wpisanego na stałe w kliencie.
+
+Powtórzenie uruchomienia komendą `developer.build.run` znaczy to samo żądanie, a nie to,
+co aktualnie stoi w polach kreatora — od tego jest osobny przycisk uruchomienia. Gdy okno
+nie wysłało jeszcze niczego samo, bo przebieg zaczęło inne okno tego konta, powtarza samo
+zadanie z migawki rdzenia i mówi wprost, że parametrów zadania nie zna, ponieważ
+`DeveloperBuild` ich nie niesie.

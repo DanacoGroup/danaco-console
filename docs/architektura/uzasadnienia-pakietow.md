@@ -4981,3 +4981,32 @@ Wzorzec nazw narzędzi mieszka w kontrakcie, lecz generator Go go nie
 wyprowadza. Zapisanie go literałem byłoby drugim źródłem prawdy, które
 rozjedzie się przy pierwszej zmianie notacji, dlatego wzorzec jest odczytany,
 a nie założony, i potwierdzony na każdej deklaracji wykazu.
+
+## budowa/server/internal/store/nastawy_wiedzy_test.go
+
+Wartość domyślną odbiorca dostaje z bazy: rozstrzygacz zasięgu oddaje wartość domyślną definicji
+ustawienia jako rozstrzygnięcie o tym pochodzeniu, a adapter wiedzy nanosi je na komplet nastaw. Stałe
+pakietu wiedza wchodzą tam, gdzie rozstrzygacza nie ma. Rozjazd między jednym a drugim nie wywraca
+niczego przy starcie — daje dwie różne odpowiedzi na pytanie, czym rdzeń liczy, zależne od drogi
+wywołania, a rozpoznać to można dopiero po pustym wyniku wyszukiwania. Sprawdzian wiąże więc obie
+prawdy w jedną.
+
+Świeże wdrożenie ma wystartować na wagach rozłożonych na maszynie odbiorcy, więc pusty katalog wag jest
+tu regresją, a nie wyborem.
+
+## budowa/server/internal/dane/mobile.go
+Warstwa mobilna nie ma własnej tabeli. Proces mobilny jest wpisem rejestru
+telemetrii postępu trzymanego w pamięci; sesje, okna, procesy i kolejki mają
+swoich właścicieli, a ten plik dokłada wyłącznie odczyt.
+
+Metody siedzą na repozytoriach okien i kolejek, bo tabela ma jednego
+właściciela. Osobne repozytorium mobilne z własnymi zapytaniami nad tymi
+tabelami byłoby drugim czytelnikiem cudzych tabel i rozjechałoby się
+z właścicielem przy pierwszej zmianie słownika stanów. Osobny jest wyłącznie
+plik, żeby widać było, po co te rachunki powstały.
+
+Czynność bytu mierzy się tu stanem spoza stanów końcowych: sesja czynna to
+stan czynny albo wstrzymany, nigdy zakończony ani archiwalny. Kolejka idzie
+tą samą miarą: czynna jest bezczynna, pracująca i wstrzymana, końcowe są
+zatrzymana i wyczerpana. Okno komunikacji zna dwa stany, więc liczą się
+wiersze w stanie otwartym.

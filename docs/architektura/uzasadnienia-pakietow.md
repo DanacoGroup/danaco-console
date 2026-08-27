@@ -2272,3 +2272,29 @@ Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy kontraktu komu
 **KnownSettingKeys** — Lista informacyjna, nie brama — katalog ustawien jest sterowany danymi, wiec nowa pozycja to nowy wiersz, nie zmiana kodu.
 
 **KnownSessionConfigKeys** — Klucz powstaje mechanicznie: "sesja.konfiguracja." + wartosc SessionConfigArea. Konfiguracja sesji nie ma wlasnego rezolwera — idzie tym samym rezolwerem osmiu poziomow i trzech osi, ktory obsluguje config.get i config.set. Lista informacyjna, nie brama.
+
+### budowa/server/internal/dane/studio_kontrola_pracy.go
+
+Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy warstwy danych blokad, dziennika czynności i kopii zapasowych modułu Studio.
+
+**Plik** — Trzy obszary (blokady fragmentów, dziennik czynności wraz z zależnościami, kopie zapasowe i nastawy pracy) leżą w jednym pliku, bo wiąże je jedno pytanie zadawane w jednym miejscu: czy tę zmianę wolno wnieść, a jeśli tak, to czym ją potem cofnąć. Blokada odpowiada na pierwszą połowę, dziennik na drugą, a kopia zapasowa jest siatką pod obiema — zakłada się ją przed czynnością nieodwracalną i po nieudanym zapisie. Rozdzielenie ich na trzy pliki rozdzieliłoby zapytania, które i tak padają razem. Znakowanie fragmentów, zajęcia wykonawców i spięcia leżą osobno, w warstwie danych znakowania wykonawcy: tamte opisują, co ktoś o dokumencie powiedział i kto nad nim pracuje, a nie czego nie wolno tknąć. Wygasanie zajęcia i wygasanie kopii zapasowej liczy się w SQL (`strftime('now')`), bo obie wielkości muszą być tym samym zegarem co kolumny `utworzono` i `wygasa` w tych wierszach — zegar rdzenia i zegar bazy rozjadą się przy pierwszej różnicy strefy, a wtedy kopia wygasłaby wcześniej albo później, niż mówi nastawa Operatora.
+
+**BlokadaFragmentuStudia** — Pole `Zasieg` rozstrzyga, kogo blokada dotyczy: wartość `model` (postać domyślna) wiąże wyłącznie wykonawców, wartość `everyone` wiąże także Operatora. Operator zmienia fragment zablokowany bez przeszkód, dopóki nie zażąda zasięgu `everyone` jawnie.
+
+**CzynnoscDokumentuStudia** — Pola `StanPrzed` i `StanPo` niosą wycinek objęty czynnością, nie migawkę całego dokumentu — inaczej cofnięcie czynności ze środka dziennika zabrałoby ze sobą wszystko, co po niej weszło, czyli byłoby przywróceniem wersji zamiast cofnięciem jednej zmiany.
+
+**KopiaZapasowaStudia** — Pola `UdaloSie` i `PowodNiepowodzenia` istnieją, bo wskaźnik zapisano pokazany przy zapisie nieudanym jest najgorszym możliwym błędem tego modułu: Operator zamknie okno i straci pracę. Kopia nieudana zostaje wierszem — musi być widoczna i nazwana, a nie zniknąć razem z niepowodzeniem.
+
+**blokadyStudiaPrzesun** — Przesunięcie zakresu po wpisie następuje przed blokadą leżącą za punktem edycji. Bez tego blokada zaczęłaby po pierwszej edycji chronić nie ten fragment, co miała, i to bez śladu. Kolumna `przesuniecia` rośnie razem z zakresem: jest miarą zaufania do zakresu, widoczną dla Operatora w wykazie.
+
+**kopieStudiaPrzemiec** — Zasada wygasania kopii jest jawnym, odwracalnym ustawieniem Operatora, więc granice podaje wołający, a nie stała rdzenia. Kopia nieudana nie wygasa razem z udanymi: jest jedynym śladem, że praca nie doszła na dysk, i ma zostać, dopóki Operator jej nie zobaczy.
+
+**PrzesunBlokadyFragmentow** — Blokada leżąca przed punktem edycji zostaje nietknięta; leżąca za nim jedzie o różnicę długości. Blokada, w której środek trafiła edycja, też zostaje nietknięta — skoro edycja weszła w blokadę, wolno jej było tam wejść (Operator albo zasięg `model` przy czynności Operatora), a wtedy zakres blokady ma zostać taki, jaki Operator ustawił.
+
+**ZapiszCzynnoscDokumentu** — Kolejność nadaje baza, nie wołający: dwie czynności zapisane w tej samej chwili muszą dostać różne numery, a numer nadany przez rdzeń z odczytu stanu bieżącego byłby wyścigiem. Więz UNIQUE(dokument, kolejnosc) zamienia ten wyścig w błąd zapisu, zamiast w dwa wpisy o tym samym miejscu w porządku.
+
+**CzynnosciDokumentu** — Zależności doczytywane są jednym zapytaniem dla całego dokumentu, nie zapytaniem na wpis: dziennik długiego dokumentu ma setki wpisów, a pytanie na każdy wpis zamieniłoby odczyt wykazu w setki zapytań.
+
+**NastawaPracy** — Wiersz nastaw zakłada się przy odczycie, nie przy zapisie, bo odczyt nastaw autozapisu ma oddać nastawy obowiązujące także wtedy, gdy Operator nigdy ich nie ruszał — a wtedy obowiązują wartości domyślne kolumn, i to jest odpowiedź, nie brak danych.
+
+**ZapiszSkutekAutozapisu** — Skutek zapisu odkłada się osobnym poleceniem, bo pisze go inna czynność niż nastawy: nastawy stawia Operator, skutek zapisuje sam mechanizm autozapisu. Jedno wspólne polecenie kazałoby autozapisowi przepisywać nastawy, których nie zmieniał.

@@ -1,24 +1,7 @@
 // Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio —
 // blokady fragmentów (migracja 363), odwracalny dziennik czynności wraz
-// z zależnościami (364) oraz kopie zapasowe i nastawy pracy okna (366).
-//
-// ── Dlaczego te trzy obszary leżą w jednym pliku ─────────────────────────────
-// Wiąże je jedno pytanie, zadawane w jednym miejscu: „czy tę zmianę wolno
-// wnieść, a jeśli tak, to czym ją potem cofnąć". Blokada odpowiada na pierwszą
-// połowę, dziennik na drugą, a kopia zapasowa jest siatką pod obiema — zakłada
-// się ją PRZED czynnością nieodwracalną i po nieudanym zapisie. Rozdzielenie
-// ich na trzy pliki rozdzieliłoby zapytania, które i tak padają razem.
-//
-// Znakowanie fragmentów, zajęcia wykonawców i spięcia leżą osobno
-// (`studio_znakowanie_wykonawcy.go`): tamte opisują, co ktoś o dokumencie
-// POWIEDZIAŁ i kto nad nim PRACUJE, a nie czego nie wolno tknąć.
-//
-// ── Dlaczego czas mierzy baza, nie rdzeń ─────────────────────────────────────
-// Wygasanie zajęcia i wygasanie kopii zapasowej liczy się w SQL
-// (`strftime('now')`), bo obie wielkości muszą być tym samym zegarem co kolumny
-// `utworzono` i `wygasa` w tych wierszach. Zegar rdzenia i zegar bazy rozjadą
-// się przy pierwszej różnicy strefy, a wtedy kopia wygasłaby wcześniej albo
-// później, niż mówi nastawa Operatora.
+// z zależnościami (migracja 364) oraz kopie zapasowe i nastawy pracy okna
+// (migracja 366).
 package dane
 
 import (
@@ -28,11 +11,9 @@ import (
 	"fmt"
 )
 
-// BlokadaFragmentuStudia to wiersz tabeli `blokada_fragmentu_studio`.
-//
-// `Zasieg` rozstrzyga, kogo blokada dotyczy: `model` (postać domyślna) wiąże
-// wyłącznie wykonawców, `everyone` wiąże także Operatora. Operator zmienia
-// fragment zablokowany bez przeszkód, dopóki nie zażąda tego drugiego jawnie.
+// BlokadaFragmentuStudia to wiersz tabeli `blokada_fragmentu_studio`, niosący
+// zakres chronionego fragmentu dokumentu wraz z zasięgiem, powodem założenia
+// i licznikiem przesunięć.
 type BlokadaFragmentuStudia struct {
 	ID              int64
 	Kod             string
@@ -63,11 +44,9 @@ type BlokadaSzablonuStudia struct {
 	Zasieg     string
 }
 
-// CzynnoscDokumentuStudia to wiersz tabeli `czynnosc_dokumentu_studio`.
-//
-// `StanPrzed` i `StanPo` niosą WYCINEK objęty czynnością, nie migawkę całego
-// dokumentu — inaczej cofnięcie czynności ze środka dziennika zabrałoby ze sobą
-// wszystko, co po niej weszło, czyli byłoby przywróceniem wersji.
+// CzynnoscDokumentuStudia to wiersz tabeli `czynnosc_dokumentu_studio`, niosący
+// jeden odwracalny wpis dziennika wraz z wycinkiem dokumentu objętym
+// czynnością, jej autorem i stanem.
 type CzynnoscDokumentuStudia struct {
 	ID               int64
 	Kod              string
@@ -88,18 +67,15 @@ type CzynnoscDokumentuStudia struct {
 	ZadanieKod       *string
 	Stan             string
 	Utworzono        string
-	// PodstawyKody i StojaceNaNiej wypełnia odczyt z tabeli zależności. Puste
-	// znaczy „czynność samodzielna", nie „nie wiadomo".
+	// PodstawyKody i StojaceNaNiej wypełnia odczyt zależności; puste znaczy
+	// czynność samodzielną.
 	PodstawyKody  []string
 	StojaceNaNiej []string
 }
 
-// KopiaZapasowaStudia to wiersz tabeli `kopia_zapasowa_studio`.
-//
-// `UdaloSie` i `PowodNiepowodzenia` istnieją, bo wskaźnik „zapisano" pokazany
-// przy zapisie nieudanym jest najgorszym możliwym błędem tego modułu: Operator
-// zamknie okno i straci pracę. Kopia nieudana ZOSTAJE wierszem — musi być
-// widoczna i nazwana, a nie zniknąć razem z niepowodzeniem.
+// KopiaZapasowaStudia to wiersz tabeli `kopia_zapasowa_studio`, niosący jedną
+// kopię dokumentu wraz z wynikiem zapisu — udanym albo nieudanym — i powodem
+// założenia.
 type KopiaZapasowaStudia struct {
 	ID                 int64
 	Kod                string
@@ -160,10 +136,9 @@ const (
 	blokadaStudiaUsun = `DELETE FROM blokada_fragmentu_studio
 	                     WHERE identyfikator_zewnetrzny = ?`
 
-	// Przesunięcie zakresu po wpisie PRZED blokadą. Bez tego blokada zaczęłaby
-	// po pierwszej edycji chronić nie ten fragment, co miała — i to bez słowa.
-	// `przesuniecia` rośnie razem z zakresem: jest miarą zaufania do zakresu,
-	// widoczną dla Operatora w wykazie.
+	// Przesunięcie zakresu po wpisie przed blokadą, tak by blokada nadal
+	// chroniła ten sam fragment dokumentu po edycji poprzedzającej jej
+	// położenie. Kolumna `przesuniecia` liczy wykonane przesunięcia.
 	blokadyStudiaPrzesun = `UPDATE blokada_fragmentu_studio
 	                        SET zakres_od = zakres_od + ?, zakres_do = zakres_do + ?,
 	                            przesuniecia = przesuniecia + 1,
@@ -263,10 +238,9 @@ const (
 		` WHERE k.zmiany_niezapisane = 1 AND (? = '' OR d.okno = ?)
 		  ORDER BY k.utworzono DESC, k.id DESC`
 
-	// Przemiatanie kopii wygasłych. Zasada wygasania jest jawnym, odwracalnym
-	// ustawieniem Operatora, więc granice podaje wołający, a nie stała rdzenia.
-	// Kopia NIEUDANA nie wygasa razem z udanymi: jest jedynym śladem, że praca
-	// nie doszła na dysk, i ma zostać, dopóki Operator jej nie zobaczy.
+	// Przemiatanie kopii wygasłych dokumentu. Granice wygasania podaje
+	// wołający zgodnie z nastawą Operatora. Kopia nieudana nie wygasa razem
+	// z udanymi i pozostaje wierszem do czasu przejrzenia.
 	kopieStudiaPrzemiec = `DELETE FROM kopia_zapasowa_studio
 	                       WHERE dokument_id = ? AND udalo_sie = 1 AND zmiany_niezapisane = 0
 	                         AND (utworzono < strftime('%Y-%m-%dT%H:%M:%fZ','now', ?)
@@ -321,7 +295,9 @@ const (
 
 // ── Blokady fragmentów ──────────────────────────────────────────────────────
 
-// ZapiszBlokadeFragmentu zakłada blokadę fragmentu dokumentu.
+// ZapiszBlokadeFragmentu zakłada blokadę fragmentu dokumentu, uzupełniając
+// zasięg i rodzaj założyciela wartościami domyślnymi, gdy wołający ich nie
+// poda, i oddaje zapisany wiersz.
 func (r *repozytoriumStudia) ZapiszBlokadeFragmentu(ctx context.Context, dokumentID int64,
 	blokada BlokadaFragmentuStudia) (BlokadaFragmentuStudia, error) {
 
@@ -350,7 +326,8 @@ func (r *repozytoriumStudia) ZapiszBlokadeFragmentu(ctx context.Context, dokumen
 	return r.BlokadaFragmentu(ctx, blokada.Kod)
 }
 
-// BlokadaFragmentu oddaje blokadę o wskazanym kodzie.
+// BlokadaFragmentu oddaje blokadę fragmentu o wskazanym kodzie zewnętrznym
+// albo błąd ErrBrakWiersza, gdy blokada o tym kodzie nie istnieje.
 func (r *repozytoriumStudia) BlokadaFragmentu(ctx context.Context,
 	kod string) (BlokadaFragmentuStudia, error) {
 
@@ -369,7 +346,9 @@ func (r *repozytoriumStudia) BlokadaFragmentu(ctx context.Context,
 	return blokada, nil
 }
 
-// BlokadyFragmentow oddaje blokady dokumentu w kolejności położenia w treści.
+// BlokadyFragmentow oddaje wszystkie blokady wskazanego dokumentu,
+// uporządkowane według położenia zakresu w treści, od pierwszego fragmentu
+// do ostatniego.
 func (r *repozytoriumStudia) BlokadyFragmentow(ctx context.Context,
 	dokumentID int64) ([]BlokadaFragmentuStudia, error) {
 
@@ -397,7 +376,8 @@ func (r *repozytoriumStudia) BlokadyFragmentow(ctx context.Context,
 	return lista, nil
 }
 
-// UsunBlokadeFragmentu zdejmuje blokadę i mówi, czy była.
+// UsunBlokadeFragmentu zdejmuje blokadę o wskazanym kodzie zewnętrznym
+// i oddaje wartość logiczną mówiącą, czy blokada o tym kodzie istniała.
 func (r *repozytoriumStudia) UsunBlokadeFragmentu(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, blokadaStudiaUsun)
 	if err != nil {
@@ -414,13 +394,9 @@ func (r *repozytoriumStudia) UsunBlokadeFragmentu(ctx context.Context, kod strin
 	return zdjete > 0, nil
 }
 
-// PrzesunBlokadyFragmentow przesuwa zakresy blokad leżących ZA punktem edycji.
-//
-// Blokada leżąca przed punktem edycji zostaje nietknięta; leżąca za nim jedzie
-// o różnicę długości. Blokada, w której środek trafiła edycja, też zostaje
-// nietknięta — bo skoro edycja weszła w blokadę, to znaczy, że wolno jej było
-// tam wejść (Operator albo zasięg `model` przy czynności Operatora), a wtedy
-// zakres blokady ma zostać taki, jaki Operator ustawił.
+// PrzesunBlokadyFragmentow przesuwa zakresy blokad leżących za punktem edycji
+// o różnicę długości. Blokada leżąca przed punktem edycji oraz blokada,
+// w której środek trafiła edycja, zostają nietknięte.
 func (r *repozytoriumStudia) PrzesunBlokadyFragmentow(ctx context.Context,
 	dokumentID int64, odPozycji int64, przesuniecie int64) error {
 
@@ -440,7 +416,8 @@ func (r *repozytoriumStudia) PrzesunBlokadyFragmentow(ctx context.Context,
 	return nil
 }
 
-// ZapiszBlokadeSzablonu zakłada blokadę wzorcową szablonu pisma.
+// ZapiszBlokadeSzablonu zakłada blokadę wzorcową szablonu pisma, kopiowaną
+// później do każdego dokumentu zakładanego z tego szablonu.
 func (r *repozytoriumStudia) ZapiszBlokadeSzablonu(ctx context.Context,
 	blokada BlokadaSzablonuStudia) error {
 
@@ -462,7 +439,8 @@ func (r *repozytoriumStudia) ZapiszBlokadeSzablonu(ctx context.Context,
 	return nil
 }
 
-// BlokadySzablonu oddaje blokady wzorcowe szablonu.
+// BlokadySzablonu oddaje wykaz blokad wzorcowych wskazanego szablonu pisma,
+// uporządkowany według położenia zakresu w treści.
 func (r *repozytoriumStudia) BlokadySzablonu(ctx context.Context,
 	szablonKod string) ([]BlokadaSzablonuStudia, error) {
 
@@ -496,13 +474,9 @@ func (r *repozytoriumStudia) BlokadySzablonu(ctx context.Context,
 
 // ── Dziennik czynności ──────────────────────────────────────────────────────
 
-// ZapiszCzynnoscDokumentu odkłada wpis dziennika i oddaje go wraz z nadaną
-// kolejnością.
-//
-// Kolejność nadaje baza, nie wołający: dwie czynności zapisane w tej samej
-// chwili muszą dostać różne numery, a numer nadany przez rdzeń z odczytu „ile
-// jest teraz" byłby wyścigiem. Więz UNIQUE(dokument, kolejnosc) zamienia ten
-// wyścig w błąd zapisu, zamiast w dwa wpisy o tym samym miejscu w porządku.
+// ZapiszCzynnoscDokumentu odkłada wpis dziennika czynności dokumentu i oddaje
+// go wraz z kolejnością nadaną przez bazę, nie przez wołającego, wraz
+// z zapisanymi zależnościami od czynności podstawowych.
 func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokumentID int64,
 	czynnosc CzynnoscDokumentuStudia) (CzynnoscDokumentuStudia, error) {
 
@@ -538,8 +512,8 @@ func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokume
 		return CzynnoscDokumentuStudia{}, fmt.Errorf(
 			"dane: nie można zapisać czynności dokumentu %q: %w", czynnosc.Kod, err)
 	}
-	// Zależności zapisujemy po wierszu czynności, bo polecenie wiąże je po
-	// identyfikatorze zewnętrznym — a ten musi już w tabeli stać.
+	// Zależności zapisujemy po wierszu czynności — wiążą się po
+	// identyfikatorze już zapisanym w tabeli.
 	for _, podstawa := range czynnosc.PodstawyKody {
 		if err := r.ZapiszZaleznoscCzynnosci(ctx, czynnosc.Kod, podstawa, nil); err != nil {
 			return CzynnoscDokumentuStudia{}, err
@@ -548,7 +522,8 @@ func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokume
 	return r.CzynnoscDokumentu(ctx, czynnosc.Kod)
 }
 
-// nastepnaKolejnoscCzynnosciStudia liczy numer porządkowy następnej czynności.
+// nastepnaKolejnoscCzynnosciStudia liczy numer porządkowy następnej czynności
+// dziennika wskazanego dokumentu na podstawie najwyższej kolejności zapisanej.
 func (r *repozytoriumStudia) nastepnaKolejnoscCzynnosciStudia(ctx context.Context,
 	dokumentID int64) (int64, error) {
 
@@ -564,7 +539,8 @@ func (r *repozytoriumStudia) nastepnaKolejnoscCzynnosciStudia(ctx context.Contex
 	return kolejnosc, nil
 }
 
-// CzynnoscDokumentu oddaje wpis dziennika o wskazanym kodzie, bez zależności.
+// CzynnoscDokumentu oddaje wpis dziennika czynności o wskazanym kodzie
+// zewnętrznym, bez wypełnionych zależności od innych czynności.
 func (r *repozytoriumStudia) CzynnoscDokumentu(ctx context.Context,
 	kod string) (CzynnoscDokumentuStudia, error) {
 
@@ -584,11 +560,8 @@ func (r *repozytoriumStudia) CzynnoscDokumentu(ctx context.Context,
 }
 
 // CzynnosciDokumentu oddaje dziennik dokumentu od najświeższego wpisu, wraz
-// z obu kierunkami zależności wypełnionymi.
-//
-// Zależności doczytujemy JEDNYM zapytaniem dla całego dokumentu, nie zapytaniem
-// na wpis: dziennik długiego dokumentu ma setki wpisów, a pytanie na wpis
-// zamieniłoby odczyt wykazu w setki zapytań.
+// z obu kierunkami zależności wypełnionymi jednym wspólnym zapytaniem dla
+// całego dokumentu, nie zapytaniem osobnym na każdy wpis.
 func (r *repozytoriumStudia) CzynnosciDokumentu(ctx context.Context,
 	dokumentID int64) ([]CzynnoscDokumentuStudia, error) {
 
@@ -655,7 +628,8 @@ func (r *repozytoriumStudia) zaleznosciCzynnosciStudia(ctx context.Context,
 	return naNiej, podstawy, nil
 }
 
-// ZapiszZaleznoscCzynnosci zapisuje, że czynność stoi na podstawie.
+// ZapiszZaleznoscCzynnosci zapisuje, że wskazana czynność stoi na podstawie
+// innej czynności, pomijając zapis, gdy oba kody są puste albo równe.
 func (r *repozytoriumStudia) ZapiszZaleznoscCzynnosci(ctx context.Context,
 	czynnoscKod, podstawaKod string, powod *string) error {
 
@@ -700,7 +674,8 @@ func (r *repozytoriumStudia) PrzestawStanCzynnosci(ctx context.Context,
 
 // ── Kopie zapasowe ──────────────────────────────────────────────────────────
 
-// ZapiszKopieZapasowa odkłada kopię zapasową dokumentu — także nieudaną.
+// ZapiszKopieZapasowa odkłada kopię zapasową dokumentu, także nieudaną,
+// uzupełniając powód założenia wartością domyślną, gdy wołający jej nie poda.
 func (r *repozytoriumStudia) ZapiszKopieZapasowa(ctx context.Context, dokumentID int64,
 	kopia KopiaZapasowaStudia) (KopiaZapasowaStudia, error) {
 
@@ -725,7 +700,8 @@ func (r *repozytoriumStudia) ZapiszKopieZapasowa(ctx context.Context, dokumentID
 	return r.KopiaZapasowa(ctx, kopia.Kod)
 }
 
-// KopiaZapasowa oddaje kopię o wskazanym kodzie.
+// KopiaZapasowa oddaje kopię zapasową o wskazanym kodzie zewnętrznym albo
+// błąd ErrBrakWiersza, gdy kopia o tym kodzie nie istnieje.
 func (r *repozytoriumStudia) KopiaZapasowa(ctx context.Context,
 	kod string) (KopiaZapasowaStudia, error) {
 
@@ -744,7 +720,8 @@ func (r *repozytoriumStudia) KopiaZapasowa(ctx context.Context,
 	return kopia, nil
 }
 
-// KopieZapasowe oddaje kopie dokumentu, od najświeższej.
+// KopieZapasowe oddaje wszystkie kopie zapasowe wskazanego dokumentu,
+// uporządkowane od najświeższej do najstarszej.
 func (r *repozytoriumStudia) KopieZapasowe(ctx context.Context,
 	dokumentID int64) ([]KopiaZapasowaStudia, error) {
 
@@ -759,7 +736,8 @@ func (r *repozytoriumStudia) KopieNiezapisane(ctx context.Context,
 	return r.kopieZapasoweStudia(ctx, kopieStudiaNiezapisane, okno, okno)
 }
 
-// kopieZapasoweStudia jest wspólnym odczytem wykazu kopii.
+// kopieZapasoweStudia jest wspólnym odczytem wykazu kopii zapasowych,
+// dzielonym przez KopieZapasowe i KopieNiezapisane pod różnym poleceniem SQL.
 func (r *repozytoriumStudia) kopieZapasoweStudia(ctx context.Context,
 	polecenieSQL string, argumenty ...any) ([]KopiaZapasowaStudia, error) {
 
@@ -802,8 +780,8 @@ func (r *repozytoriumStudia) PrzemiecKopieZapasowe(ctx context.Context, dokument
 	if err != nil {
 		return 0, err
 	}
-	// Modyfikator SQLite w postaci „-168 hours"; liczba i jednostka jedzą jednym
-	// napisem, bo `strftime` nie przyjmuje ich osobno.
+	// Modyfikator SQLite ma postać „-168 hours" — `strftime` przyjmuje liczbę
+	// i jednostkę jednym napisem.
 	granica := fmt.Sprintf("-%d hours", wygasanieGodzin)
 	wynik, err := polecenie.ExecContext(ctx, dokumentID, granica, dokumentID, ileZachowac)
 	if err != nil {
@@ -820,12 +798,9 @@ func (r *repozytoriumStudia) PrzemiecKopieZapasowe(ctx context.Context, dokument
 
 // ── Nastawy pracy: autozapis i wygasanie kopii ──────────────────────────────
 
-// NastawaPracy oddaje nastawy pracy dla pary (okno, dokument) albo dla samego
-// okna, zakładając wiersz domyślny, gdy go jeszcze nie ma.
-//
-// Wiersz zakłada się przy odczycie, nie przy zapisie, bo `autosave.get` ma
-// oddać nastawy obowiązujące także wtedy, gdy Operator nigdy ich nie ruszał —
-// a wtedy obowiązują wartości domyślne kolumn, i to jest odpowiedź, nie brak.
+// NastawaPracy oddaje nastawy pracy dla pary okno-dokument albo dla samego
+// okna, zakładając wiersz z wartościami domyślnymi, gdy go jeszcze nie ma.
+// Wiersz zakłada się przy odczycie, nie przy zapisie.
 func (r *repozytoriumStudia) NastawaPracy(ctx context.Context, okno string,
 	dokumentID *int64) (NastawaPracyStudia, error) {
 
@@ -854,7 +829,8 @@ func (r *repozytoriumStudia) NastawaPracy(ctx context.Context, okno string,
 	return nastawa, nil
 }
 
-// zalozNastaweStudia zakłada wiersz nastaw, jeśli go nie ma.
+// zalozNastaweStudia zakłada wiersz nastaw pracy dla pary okno-dokument albo
+// dla samego okna, jeśli taki wiersz jeszcze nie istnieje.
 func (r *repozytoriumStudia) zalozNastaweStudia(ctx context.Context, okno string,
 	dokumentID *int64) error {
 
@@ -873,7 +849,8 @@ func (r *repozytoriumStudia) zalozNastaweStudia(ctx context.Context, okno string
 	return nil
 }
 
-// ZapiszNastaweAutozapisu zapisuje nastawy autozapisu i wygasania kopii.
+// ZapiszNastaweAutozapisu zapisuje nastawy autozapisu oraz reguły wygasania
+// kopii zapasowych dla wskazanego wiersza nastaw pracy okna.
 func (r *repozytoriumStudia) ZapiszNastaweAutozapisu(ctx context.Context,
 	nastawa NastawaPracyStudia) error {
 
@@ -895,11 +872,9 @@ func (r *repozytoriumStudia) ZapiszNastaweAutozapisu(ctx context.Context,
 	return nil
 }
 
-// ZapiszSkutekAutozapisu odkłada wynik zapisu samoczynnego — także nieudany.
-//
-// Osobne polecenie, bo skutek pisze zapis, a nastawy pisze Operator. Nieudany
-// zapis musi zostawić ślad NAZWANY: wskaźnik „zapisano" pokazany po
-// niepowodzeniu jest najgorszym możliwym błędem tego modułu.
+// ZapiszSkutekAutozapisu odkłada wynik zapisu samoczynnego dokumentu, także
+// nieudany, osobnym poleceniem od zapisu nastaw Operatora, tak by
+// niepowodzenie zapisu zostawiło nazwany, widoczny ślad.
 func (r *repozytoriumStudia) ZapiszSkutekAutozapisu(ctx context.Context, nastawaID int64,
 	chwila *string, nieudany bool, powod *string) error {
 

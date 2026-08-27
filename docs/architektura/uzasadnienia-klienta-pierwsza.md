@@ -6716,3 +6716,9 @@ w pętli.
 
 ## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — treść wskaźnika obecności
 Stan wskaźnika obecności niesie napis, nie samą barwę, bo model widzi dokładnie treść migawki i dokładnie z tej chwili jej pobrania.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — płótno adnotacji jako rodzeństwo
+Płótno adnotacji jest rodzeństwem podglądu strony, nie jego dzieckiem, więc oznaczanie strony nie wstrzykuje w jej dokument ani jednego węzła.
+
+## budowa/klient-poprzedni/src/moduly/assistant/edytor-makra.ts
+Makro asystenta nie ma własnego magazynu w kontrakcie i opracowanie modułu prowadzi je tam, gdzie magazyn jest — przekazanie powtarzalnego makra lub rutyny do modułu Automations przyciskiem wysyłki. Kroki wpisuje się w JSON, bo dokładnie taki kształt niesie kontrakt; sprawdzenie jest tu, a nie w rdzeniu, z jednego powodu — błąd składni ma się nazwać przy polu, w którym powstał, zanim cokolwiek pojedzie do rdzenia. Sprawdzian pilnuje wyłącznie tego, co kontrakt uznaje za wymagane, identyfikatora kroku i jego rodzaju, reszty pól nie zgaduje; formatu YAML edytor nie przyjmuje i nie udaje, że przyjmuje. Pól opcjonalnych rozbiór kroków nie egzekwuje: rozstrzyga o nich rdzeń, a klient, który by je narzucił, odmawiałby definicji poprawnych.

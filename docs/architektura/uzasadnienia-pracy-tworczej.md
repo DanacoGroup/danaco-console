@@ -3679,3 +3679,113 @@ utrzymywany w rdzeniu.
 `ostatnieZdanie`: cięcie pada na pierwszej spacji za granicą liczoną od
 końca, a gdy spacji tam nie ma — na najbliższym początku znaku UTF-8, więc
 zakładka nie zaczyna się od rozłupanej litery.
+
+## budowa/server/internal/wiedza/silnik.go
+
+Osadzenia liczy się w dwóch chwilach — przy budowaniu wskaźnika
+(knowledge.index) i przy zapytaniu (knowledge.search) — i musi je liczyć
+ten sam model tym samym sposobem. Wektor dokumentu policzony jednym
+modelem, a wektor pytania drugim, dają iloczyn skalarny, który jest liczbą
+i nawet wygląda sensownie, a nie znaczy nic.
+
+Proces silnika startuje wyłącznie przez `zewnetrzne.Wolaj`: w całym
+produkcie stoi dokładnie jedno exec.Command, a każde uruchomienie idzie tą
+samą bramą izolacji okna i tym samym obejmowaniem potomstwa. Proces
+Pythona liczący na wielu wątkach bez objęcia drzewem zostawiałby sieroty
+po każdym przekroczeniu czasu.
+
+Każde wołanie silnika wczytuje model od nowa: prawie cały czas zlecenia to
+start procesu i wczytanie wag (rząd gigabajta) do pamięci, a nie samo
+porównanie wektorów. Proces rezydentny skróciłby zapytanie, ale wymaga
+dwukierunkowej rozmowy z procesem żyjącym między żądaniami, a
+`zewnetrzne.Wolaj` prowadzi rozmowę jednorazową i jest jedyną dozwoloną
+drogą startu procesu.
+
+Granica czasu silnika jest dwojaka. Pierwsze uruchomienie pobiera wagi
+modelu, więc granica budowania wskaźnika jest liczona w minutach; zapytanie
+ma wagi już na dysku i granica jest liczona w sekundach. Jedna wspólna
+granica byłaby albo za krótka na pobranie, albo tak długa, że zawieszone
+zapytanie wyglądałoby na pracujące.
+
+Limit budowania wskaźnika obejmuje pobranie wag przy pierwszym uruchomieniu.
+
+Wielkość partii silnika: uruchomienie procesu kosztuje kilka sekund
+(wczytanie wag), więc partia ma być duża; wykaz w pliku JSON o kilkuset
+fragmentach to kilkaset kilobajtów, czyli nic.
+
+## budowa/server/internal/core/adapter_modul_design_kompozycje.go
+
+Typ adaptera `adapterDesignu` i jego konstruktor deklaruje
+`adapter_modul_design.go`; ten plik dokłada wyłącznie metody obszaru
+kompozycji.
+
+Zapis jest zawsze pełny, jedną ścieżką. `design.board.update` nadsyła całą
+listę warstw na nowo — kontrakt (`DesignBoardUpdateRequest.Layers`) nie zna
+trybu częściowej zmiany. Adapter nie dogaduje różnicy względem stanu
+zastanego; warstwa danych (`ZapiszKompozycje`) usuwa i wstawia komplet od
+nowa w jednej transakcji. Brak `BoardId` zakłada kompozycję nową — adapter
+nadaje wtedy nowy identyfikator zewnętrzny przed wywołaniem repozytorium, bo
+repozytorium samo zna wyłącznie „załóż albo nadpisz" po tym identyfikatorze.
+
+Zasób warstwy wskazuje identyfikatorem zewnętrznym, nie kluczem obcym.
+Warstwa może wskazywać zasób spoza Assets Panelu w chwili zapisu — kolumna
+`warstwa_kompozycji_design.zasob_id` jest w `migracja_048_design.sql` typu
+TEXT — więc adapter nie sprawdza istnienia zasobu przed zapisem.
+
+Odczyt w `Kompozycje` jest drugą stroną zapisu: kod kompozycji nadaje adapter
+przy pierwszym `design.board.update` (`plansza-…`), więc bez tej komendy
+Operator po odświeżeniu okna nie miałby ani planszy, ani czym o nią zapytać,
+a kolejny zapis zakładałby kompozycję nową obok zastanej.
+
+Repozytorium nie przycina wykazu kompozycji — gdyby `Total` i długość wykazu
+miały prawo się różnić, byłaby to strona, a nie komplet. Kompozycja bez
+warstw zostaje w wykazie, bo pominięcie takiej kompozycji ukryłoby przed
+Operatorem planszę, którą sam założył.
+
+Warstwy idą osobnym odczytem na kompozycję, tak samo jak składa je
+`ZapiszKompozycje`, bo schemat `migracja_048_design.sql` trzyma je w osobnej
+tabeli. Jedno okno niesie jednostki plansz, więc pętla odczytów jest tu
+tańsza niż złączenie rozklejane potem w pamięci.
+
+Kolejność w wykazie kontraktu jest kolejnością renderowania, więc brak
+`Order` w `przelozWarstwyDoZapisu` odziedzicza pozycję w liście.
+
+Sprawdzenie Gotowy idzie przed budowaniem wskaźnika i przed zapytaniem, bo
+odmowa "nie ma czym" jest dla Operatora czymś innym niż "liczyło i się
+wywróciło". Pomocnik przygotowuje model i wraca, więc przy pierwszym razie
+pobierze też wagi.
+
+Osadzanie partiami, nie wszystko naraz: wykaz kilkudziesięciu tysięcy
+fragmentów w jednym pliku zlecenia zająłby pomocnikowi pamięć
+proporcjonalną do całej biblioteki. Kolejność wektorów odpowiada
+kolejności tekstów i to jest warunek — wołający wiąże je pozycją, nie
+treścią. Wykaz pusty do osadzenia nie jest pytaniem o gotowość silnika,
+tylko pracą, której nie ma (od pytania jest `Gotowy`).
+## server/internal/core/adapter_modul_studio_zmiany_modelu.go
+
+Wlasciciel oznaczyl to wymaganie jako WAZNE i nazwal je swoim glownym
+narzedziem kontroli nad praca modelu w dokumencie. Model, ktory przestawil
+kroj albo wciecie, ma byc widoczny tak samo jak ten, ktory dopisal akapit.
+Zmiana postaci bez zmiany liter NIE MOZE byc niewidzialna — dlatego
+rachunek bierze zmiany sledzone rodzaju formatowanie na rowni
+z wstawienie i usuniecie, a wykaz oddaje tez czynnosci dziennika autora
+model, bo tam stoi cale drzewo postaci. Agentow Operator zaklada w module
+Agents dowolnie wielu i dwoch moze pracowac nad jednym dokumentem naraz.
+Przelacznik pokazujacy ich jako jednego bylby bezuzyteczny wlasnie wtedy,
+kiedy jest najbardziej potrzebny. Dlatego odpowiedz niesie byAgent —
+rozbicie wedle kodu agenta i podagenta. Wymaganie mowi wprost: dokument
+ma wrocic do stanu sprzed pracy modelu Z ZACHOWANIEM zmian Operatora
+naniesionych w tym czasie. Przywrocenie wersji skasowaloby prace
+Operatora. Dlatego cofa sie POJEDYNCZE zmiany sledzone autora model —
+od konca dokumentu, bo zakresy liczone sa w tresci sprzed decyzji —
+i pojedyncze czynnosci dziennika autora model.
+
+PrzeskocDoZmianyModelu: "nastepna zmiana modelu" znaczy nastepna, do
+ktorej okno ma przewinac, a nie nastepna zapisana.
+
+Wykaz pusty: licznik zero mowi to wprost, a change pozostaje pusty
+z zamyslem kontraktu ("brak znaczy koniec wykazu").
+
+zmianyModeluWybierz: trzy kopie tego przesiewu rozjechalyby sie przy
+pierwszej poprawce i licznik przy przelaczniku przestalby zgadzac sie
+z tym, po czym Operator skacze.

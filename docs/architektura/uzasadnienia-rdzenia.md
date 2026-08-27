@@ -5366,3 +5366,15 @@ Zapis bloków korzysta z tabeli blok_wiadomosci wprowadzonej migracją
 store/migracja_096_tresc_rozmowy.sql. Okno, którego zapis bloków zawiódł,
 schodzi z rejestracji do końca życia procesu — wzorem degradacji dziennika
 rozmowy: jedno zgłoszenie do dziennika rdzenia, zero powtórek.
+
+## budowa/server/internal/core/handlers_terminal.go
+Jedno zdarzenie na cały moduł. Kontrakt daje modułowi wyłącznie zdarzenie zmiany procesu, więc
+każda zmiana stanu procesu — uruchomienie, zakończenie, ubicie — rozgłasza się tym samym
+zdarzeniem. Monitor procesów odświeża się z jednej subskrypcji, a nie z odpytywania. Wyjście
+procesu nie idzie tą drogą: strumień konsoli wyjścia jedzie zdarzeniem fragmentu strumienia, bo
+trwa dłużej niż wykonanie komendy i bo kontrakt nie ma zapowiadanego zdarzenia strumienia wyjścia
+terminala. Składa go adapter strumienia terminala.
+
+Rozgłoszeń po wykonaniu komendy i zabiciu procesu nie ma tutaj z zamysłem: zdarzenie nadaje
+adapter, bo tylko on wie, kiedy proces naprawdę zmienił stan. Podwójne rozgłoszenie z obsługiwacza
+dałoby monitorowi procesów ten sam wiersz dwa razy.

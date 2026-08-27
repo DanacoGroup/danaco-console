@@ -96,7 +96,7 @@ func zalozPanelBezModelu(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 	if kod == "" {
 		t.Fatalf("import XLIFF nie założył panelu języka %s", jezyk)
 	}
-	// Treść panelu ustawiamy wprost, by sprawdzian pracował na dokładnie
+	// Treść panelu ustawia się wprost, by sprawdzian pracował na dokładnie
 	// zadeklarowanym tekście.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTranslateTranslationSet,
 		shared.TranslateTranslationSetRequest{PanelId: kod, Text: tresc}, nil)
@@ -139,7 +139,7 @@ func TestPamiecTlumaczenLezyWBazieIWPliku(t *testing.T) {
 		t.Fatalf("eksport zgłosił %d par, a w pamięci jest jedna", wydana.ExportedCount)
 	}
 
-	// Plik czytamy drogą importu — mierzymy, że wynik jest prawdziwym TMX, nie
+	// Plik czyta się drogą importu — mierzy się, że wynik jest prawdziwym TMX, nie
 	// napisem o TMX.
 	pary, err := wczytajParyWymiany(sciezka)
 	if err != nil {
@@ -653,7 +653,7 @@ func TestPrzebiegPakietowyZostawiaPozycje(t *testing.T) {
 	zalozOknoZrodlowe(t, zmontowany, zycie, "okno-pakietu", "wstęp")
 	zalozPanelBezModelu(t, zmontowany, zycie, db, "okno-pakietu", "angielski",
 		"Amount and placeholder are gone.")
-	// Źródło ustawiamy PO panelu: import wnosi własne, kolejność odwrotna
+	// Źródło ustawia się PO panelu: import wnosi własne, kolejność odwrotna
 	// zrównałaby je z przekładem.
 	zalozOknoZrodlowe(t, zmontowany, zycie, "okno-pakietu", "Kwota 100 zł i {znacznik}.")
 

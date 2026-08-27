@@ -2835,3 +2835,21 @@ Odcinki są w kontrakcie obowiązkowe i puste dla wywołania bez drzewa, więc i
 brak jest odpowiedzią nieczytelną, a nie wywołaniem prostym. Treść wydania śladu
 bywa pusta legalnie, gdy zakres nie obejmuje żadnego wywołania, ale format
 i licznik muszą przyjść.
+
+## budowa/klient-poprzedni/src/moduly/research/badanie-zdjecie-adnotacji.ts
+
+Komenda `research.annotation.remove` usuwa podświetlenie albo notatkę, a rdzeń
+nie ma komendy, która by je przywróciła: adnotacja niesie cytat, komentarz
+i kotwicę pozycji, a po zdjęciu nie ma z czego ich odtworzyć. Dlatego czynność
+mówi to przed wykonaniem i wymaga drugiego naciśnięcia tego samego chwytu.
+
+Uzbrojenie jest wiedzą modułu, a nie okna: adnotacja wskazana w widoku czytania
+i chwyt naciśnięty w panelu akcji tego samego okna dotyczą jednego badania,
+a moduł prowadzi jedno badanie na sesję — stan trzyma `stan-badania.ts`. Osobne
+uzbrojenie dla każdego okna pozwoliłoby uzbroić w jednym oknie, a zdjąć
+w drugim, czyli bez ostrzeżenia w miejscu naciśnięcia.
+
+Zapowiedź nie jest okienkiem dialogowym i nie odbiera klikalności: pierwsze
+naciśnięcie oddaje zdanie odmowy z powodem, drugie wykonuje. Adnotacja wskazana
+inna niż uzbrojona uzbraja od nowa, więc zdjęciu zawsze towarzyszy ostrzeżenie
+nazywające rzecz zdejmowaną.

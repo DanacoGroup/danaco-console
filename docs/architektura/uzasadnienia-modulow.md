@@ -6030,3 +6030,1162 @@ protokołu.
 Zwrócenie pustki zamiast błędu w `sprawdzKatalog` skasowałoby całą boczną
 nawigację bez wyjaśnienia: pusta macierz znaczy „żaden moduł nie stoi
 w nawigacji”, a macierz nieodczytana znaczy błąd złożenia rdzenia.
+
+## budowa/server/internal/core/adapter_modul_poczta_skrzynki.go
+
+Trzy czynności nad katalogiem skrzynek: podpięcie (mail.account.add),
+odpięcie (mail.account.remove) i rozpoznanie nastaw z urządzenia
+(mail.account.discover). Typ adaptera, jego montaż i otwieranie połączenia
+leżą w adapter_modul_poczta.go. Żadna z tych trzech nie jest narzędziem
+modelu: model, który sam podpina albo odpina skrzynkę, decyduje o rzeczy,
+której mu nie powierzono.
+
+Pierwsza podpięta skrzynka jest domyślna i nie ma o to osobnego pytania: przy
+jednej skrzynce odpowiedź jest jedna, a bez niej wszystkie komendy bez
+accountId odmawiałyby mimo podpiętej poczty.
+
+Zgadywanie hosta po domenie adresu byłoby zmyśleniem nastawy: imap. przed
+domeną trafia u części dostawców i nie trafia u reszty, a skutkiem
+nietrafienia jest skrzynka podpięta do serwera, którego nie ma.
+
+Odwrotna kolejność zapisu (wiersz przed sejfem) zostawiłaby przy awarii
+sejfu skrzynkę bez poświadczenia, wyglądającą na gotową, a odmawiającą przy
+pierwszym użyciu.
+
+Kontrakt nie ma pola szyfruj, bo przydział IANA rozstrzyga to jednoznacznie:
+993 i 995 są szyfrowane od pierwszego bajtu, 143 i 110 nie są. Port
+nieszyfrowany jest wskazaniem, nie furtką: znaczy, że skrzynka stoi na
+serwerze bez TLS-a. Podniesienie go po cichu zerwałoby uścisk dłoni,
+a obniżenie szyfrowanego odebrałoby ochronę bez pytania, więc zapisuje się
+wartość podaną. Wysyłka i tak podnosi się do STARTTLS, gdy serwer go
+ogłasza (poczta/smtp.go).
+
+Skrzynki u dostawcy Odepnij nie tyka i nie ma jak tknąć: rdzeń nie zna
+komendy, którą kasuje się cudze konto pocztowe.
+
+Sekret ginie razem z wierszem: zostawiony w sejfie byłby hasłem do skrzynki,
+o której platforma zapomniała, i nie byłoby już czym kazać go skasować.
+
+Rozpoznaj niczego nie podpina i po żadne hasło nie sięga; szczegóły
+i granice tego odczytu opisuje poczta/rozpoznanie.go.
+## budowa/server/internal/core/adapter_modul_roundtable_tura.go
+
+Pytanie idzie do wszystkich naraz: uczestnicy mówią równocześnie, nie
+sekwencyjnie, więc formaty swobodny i strukturalny rozsyłają je N gorutynami
+nad jednym rejestrem kanałów. Dwa formaty mówią po kolei — tura okrężna
+i debata oksfordzka są z definicji sekwencyjne: kolejny uczestnik odnosi się
+do tego, co powiedziano przed nim. Kolejność bierze się z pola kolejnosc
+ustawianego w Moderator Panelu, a wypowiedzi wcześniejsze wchodzą do pytania
+jako tło; bez tego kolejność głosu byłaby ustawieniem bez skutku.
+
+Zajęcie okna idzie przed założeniem tury — odmowa nie ma prawa zostawić po
+sobie wiersza tury, której nikt nie poprowadzi, ani rozgłoszenia o jej
+otwarciu, bo panel pokazałby wtedy turę powstałą i martwą. Rozgłoszenie
+domykające niesie turę wraz z zapisem: Debate Panel poznaje po nim koniec
+zbierania wypowiedzi, a Consensus Panel — moment, w którym stanowisko ma
+sens.
+
+granicaTur: granica dziedziczy się po turze poprzedniej — Operator ustawia
+liczbę tur raz, przy uruchomieniu debaty, a nie przy każdym pytaniu; zero
+znaczy debatę bez granicy.
+## budowa/server/internal/core/adapter_modul_agents_model.go
+
+Kanal wskazany przez okno jest sprawdzany w rejestrze kanalow rdzenia -
+tym samym, ktory obsluguje channel.list i okna rozmowy. Adapter nie zna
+zadnego dostawcy z nazwy; zna wylacznie kod wiersza rejestru.
+
+Sprawdzenie jest mozliwe, nie obowiazkowe. Rejestr pusty znaczy rejestr
+jeszcze nie wstal, a nie kanal nie istnieje, wiec odmowa zapisu w takim
+stanie zablokowalaby konfiguracje eksperta z powodu lezacego poza nia.
+Odmowa zapada dopiero wtedy, gdy rejestr cos zna, a wskazania w nim nie
+ma.
+## budowa/server/internal/core/adapter_modul_terminal_proces.go
+
+Stan procesu czytaja trzy watki naraz: obslugiwacz komendy, pompa
+wyjscia i obserwator zakonczenia. Dlatego kazdy odczyt idzie migawka pod
+zamkiem, a nie wprost po polach - inaczej Process Monitor pokazywalby
+stan wpisany w polowie.
+
+Domknij zwraca falsz, gdy proces byl juz domkniety - pierwszy prawdziwy
+wynik nie ma prawa zostac nadpisany przez pozniejsze ubicie.
+
+Rozroznienie sygnalu wymuszonego i lagodnego nie odwzorowuje pary
+SIGTERM/SIGKILL, poniewaz program pracuje takze na Windows, gdzie sygnalu
+lagodnego dla obcego procesu nie ma.
+## budowa/server/internal/core/adapter_modul_terminal_hosty.go
+
+Książka żyła w widoku klienta: ginęła przy odświeżeniu strony, a jedyną drogą
+wyniesienia jej poza jedno posiedzenie był wywóz do pliku (migracja 246).
+
+Ani hasła, ani frazy klucza wpis nie niesie. Pole `keyId` wskazuje wpis
+wykazu kluczy, a ten niesie ścieżkę pliku na maszynie rdzenia. Materiał
+klucza nie przechodzi przez łącze ani przez bazę w żadną stronę.
+
+Wpis wskazany identyfikatorem, którego nie ma, powstaje pod tym
+identyfikatorem zamiast kończyć się odmową: klient, który zapamiętał wpis
+sprzed czyszczenia bazy, ma go odtworzyć bez zmiany wskazań, na które
+powołują się jego karty i tunele.
+
+Odczyt po zapisie, a nie odbicie żądania: znaczniki czasu nadaje baza,
+a odpowiedź ma nieść wpis w brzmieniu, w jakim naprawdę leży w dzienniku.
+
+Karty już otwarte do usuniętego hosta biegną dalej — tak mówi kontrakt — bo
+adres przeszedł do karty przy jej otwarciu i nie jest odczytywany z książki
+przy każdym poleceniu.
+
+Wyposażenie Terminala — książka hostów, biblioteka, klucze, tunele
+i obserwacje — jest z natury trwałe. Rdzeń bez dziennika nie ma go gdzie
+trzymać, więc odpowiada odmową zamiast pustym wykazem: pusty wykaz znaczyłby
+"nic nie zapisano", a prawdą jest "nie ma gdzie zapisywać".
+
+## budowa/server/internal/core/adapter_modul_terminal_bieg.go
+
+Obserwator zakończenia pracuje poza żądaniem: komenda terminal.command.exec
+kończy się, gdy proces ruszy, nie gdy się skończy — kompilacja trwa dłużej
+niż każde sensowne oczekiwanie na odpowiedź, a rozłączenie klienta nie ma
+prawa przerwać pracy rdzenia. Stan końcowy dochodzi zdarzeniem.
+
+Proces już biegnie, a uchwytu drzewa nie ma — zostawienie go tak znaczyłoby
+sierotę poza rejestrem rdzenia.
+
+Rozgłoszenie idzie przed pompą wyjścia, a nie po niej. Klient rozpoznaje
+fragment strumienia po identyfikatorze procesu, więc gdyby pierwszy fragment
+wyprzedził zdarzenie created, Output Console odrzuciłaby początek wyjścia
+jako cudzy — i nikt by tych wierszy nie zobaczył.
+
+Kod ujemny w wynikZakonczenia znaczy zakończenie sygnałem — proces został
+zatrzymany z zewnątrz, a nie zawiódł na własnym wyniku.
+## budowa/server/internal/core/adapter_modul_auth_dlawik.go
+
+Dławik nie odmawia żadnej próby — nie ma tu progu, stanu zablokowanego
+ani kodu błędu za dużo prób. Ogranicza wyłącznie prędkość zgadywania:
+sekret zgadywany po łączu lokalnym idzie tysiącami prób na sekundę, przy
+zwłoce sięgającej pięciu sekund schodzi do dwunastu prób na minutę.
+
+Zwłoka nakładana jest na wejściu czynności, przed sprawdzeniem sekretu.
+Czekanie dopiero po rozpoznaniu sekretu jako błędnego czyniłoby z czasu
+odpowiedzi wskaźnik poprawności sekretu.
+
+Licznik prób żyje w pamięci, nie w bazie: jest stanem biegu procesu, nie
+faktem o Operatorze. Zapisany w bazie przeżywałby restart i kazałby
+czekać komuś, kto dopiero zaczyna.
+
+Ćwierć sekundy pierwszej zwłoki jest poniżej progu, na którym człowiek
+zauważa opóźnienie interfejsu, a maszynie odbiera już trzy czwarte
+prędkości.
+
+Pięć sekund granicy zwłoki zostawia Operatorowi wejście w każdej chwili,
+a zgadującemu wyznacza pułap dwunastu prób na minutę.
+
+Kluczem licznika jest droga wejścia, nie wołający: bramka jest jedna, a
+Operator bezimienny, wzorcem Danaco HUB, więc nie ma konta, po którym
+można by liczyć. Rozdzielenie po metodzie i urządzeniu sprawia, że seria
+chybionych PIN-ów na tablecie nie spowalnia wejścia hasłem na maszynie
+roboczej — to dwa różne sekrety.
+
+Zwłoka po próbach przekłada liczbę prób nieudanych na kolejne wartości:
+zero, 250 ms, 500, 1000, 2000, 4000, dalej równo 5000 ms. Podwajanie daje
+szybki spadek prędkości zgadywania przy pierwszych kilku próbach, a sufit
+nie pozwala mu przerodzić się w odmowę.
+
+Licznik przestaje rosnąć tam, gdzie zwłoka i tak stoi na suficie — inaczej
+rósłby bez końca i przepełniłby się przy dość długiej serii.
+## budowa/server/internal/core/adapter_modul_developer_rejestr.go
+
+Na okno przypada jeden przebieg naraz: Build Output pokazuje jeden strumień
+logu, więc dwa równoległe budowania wpisywałyby się w niego na przemian i nie
+dałoby się ich rozdzielić — drugie żądanie dla okna zajętego zostaje
+odrzucone wraz z podpowiedzią, że trwający przebieg da się przerwać. Log
+przycina rdzeń, nie baza: pełny log jedzie na żywo zdarzeniem
+developer.build.changed, a w pamięci i w dzienniku zostaje ogon, bo
+budowanie dużego projektu ma dziesiątki tysięcy wierszy, a Build Output po
+ponownym otwarciu potrzebuje końcówki, nie całości.
+
+Pole ogonPrzyciety mówi, czy z początku logu coś już wypadło — bez tego pola
+Build Output pokazywałby końcówkę jako całość i Operator szukałby w niej
+wiersza, którego tam nigdy nie było. Pole wierszeTestow zbiera wyłącznie
+wiersze niosące wynik testu albo pokrycie, w chwili gdy płyną, bo ogon logu
+ich nie zachowa — przebieg z tysiącem testów wypycha je poza granicę ogona.
+
+Przerwij kończy całe drzewo procesu budowania: budowanie uruchamia
+narzędzia, które uruchamiają kolejne procesy, więc przerwanie samego
+korzenia zostawiłoby kompilator przy życiu i przy zajętych plikach.
+Zwolnij(rejestrBudowan) usuwa przebieg okna, o ile to wciąż ten sam przebieg
+— sprawdzenie tożsamości chroni przed usunięciem budowania uruchomionego
+zaraz po zakończeniu poprzedniego.
+## budowa/server/internal/core/adapter_modul_asystent_sterowanie.go
+
+`zapytanieZlecenia` składa wywołanie kanału z pól okna — kanał, katalogi,
+środowisko, tryb, rola — i nie dokłada `KonfiguracjaMCP`. Rozmowa dokłada ją
+zawsze, bo dopiero wpis `danaco` w pliku `--mcp-config` mówi procesowi
+modelu, że narzędzia sterowania platformą istnieją. Tura zlecenia bez tego
+wpisu nie miałaby ani jednego narzędzia i zostawałaby przy samej odpowiedzi
+tekstem.
+
+Stąd ta sama tura, ten sam rejestr kanałów i ten sam składacz mostów co
+w rozmowie; drugiej drogi do narzędzi nie ma. Model zlecenia dostaje wykaz
+narzędzi kontraktu, więc ciąg `window.create` → `message.send` w oknie
+docelowym wykonuje się przez rdzeń, komendami kontraktu.
+
+Bez wpiętego składacza mostów tura idzie samym tekstem. Bez binarium serwera
+narzędzi odmawia `most_narzedzi.go`, meldując powód do dziennika rdzenia;
+ten plik tego nie powtarza ani nie obchodzi.
+
+Ślad jest skutkiem ubocznym drogi, nie dopiskiem: każde posunięcie asystenta
+idzie komendą kontraktu przez rdzeń, a rdzeń rozgłasza je tak samo jak
+posunięcie Operatora — `window.create` → `window.changed`, `message.send` →
+`message.changed` + `stream.chunk` + `progress.changed`, `session.focus` →
+`session.focus.changed`. Ekran Operatora dostaje komplet zdarzeń, choć akcje
+szły innym połączeniem.
+
+Ślad nie niesie sprawcy: ani `Window`, ani `Message`, ani `Session`, ani
+`AssistantAction` nie mają takiego pola, a żadne zdarzenie nie niesie
+identyfikatora połączenia, które czynność wywołało. Ekran Operatora widzi
+więc, że okno się otworzyło i że prompt poszedł, ale nie odróżni ruchu
+asystenta od własnego. Dopisanie pola byłoby zmianą zamrożonego kontraktu.
+
+ZMostami: wpięcie osobnego składacza dałoby asystentowi drugi wykaz narzędzi
+i drugą prawdę o tym, czym model steruje platformą. Wskaźnik nil wpięty bez
+sprawdzenia zamieniłby brak składacza w panikę przy pierwszym zleceniu
+zamiast w pracę w zakresie niepełnym.
+
+uzupelnijNarzedzia: wyliczenie konfiguracji sięga do repozytoriów nadań
+i punktów dostępu, więc potrzebuje kontekstu; ta sama granica przebiega
+w rozmowie (`zapytanieKanalu` obok `uzupelnijSrodowisko`). Wartość pusta nie
+nadpisuje niczego: "okno bez nadań i bez narzędzi" znaczy tu turę bez
+przełącznika `--mcp-config`, a nie wyczyszczenie czegoś, co ktoś wcześniej
+ustalił.
+
+zZasiegiemKlawiatury: asystent ustawia konfigurację zlecenia i wybiera
+model. Obie te czynności to komendy, które wykaz narzędzi kontraktu pomija
+(`config.session.set`, `model.channel.set`), bo model nie przestawia sobie
+własnego wyposażenia. Dla okna roboczego ten zakaz zostaje nietknięty. Okno
+asystenta jest innym bytem: nie pracuje nad zadaniem, tylko nastawia okno
+docelowe, w którym pracować będzie model docelowy — tak jak robiłby to
+Operator ręką na klawiaturze.
+
+Nie ma komendy, którą model poprosiłby o szerszy zasięg, ani pola żądania,
+które by go niosło. Okno cudze — także okno docelowe, do którego asystent
+zaraz napisze — dostaje zasięg zwykły.
+
+Konfigurację składa `mostyOkna.tekstZNarzedziami` — ta sama i jedyna droga,
+którą jedzie rozmowa. Ten kod jej nie powtarza: bierze jej wynik i dokłada
+do gotowego wpisu argument roli. Wynik nieczytelny albo wpis `danaco`
+nieobecny zostawia tekst nietknięty: tura idzie w zasięgu, jaki jest,
+zamiast paść na składaniu konfiguracji.
+
+## budowa/server/internal/core/adapter_modul_wiedza_obraz.go
+
+Rodzina knowledge.* prowadzi dotąd wyłącznie tekst i to nie jest przeoczenie:
+budowanie wskaźnika pomija plik, którego treści nie da się odczytać jako
+tekstu (adapter_modul_wiedza_zrodla.go) — obraz osadzony jako ciąg bajtów
+daje wektor, który do niczego nie pasuje. Ta komenda nie zdejmuje tamtego
+warunku, tylko wnosi drugą przestrzeń: model osi obrazu ma osobną wieżę dla
+pikseli i osobną dla słów, więc zdanie i obraz spotykają się w jednym
+miejscu, w którym oba coś znaczą.
+
+Biblioteka jest zbiorem całej maszyny i wie o swoich plikach dwie rzeczy,
+których katalog na dysku nie niesie: rodzaj treści zapisany przy wgraniu
+oraz identyfikator, którym da się po obraz sięgnąć. Przejście katalogu
+dawałoby wykaz plików, po które wołający nie miałby czym wrócić.
+
+Rozszerzenie nazwy jest napisem, który Operator może zmienić i który przy
+wgraniu z innego modułu bywa go po prostu pozbawiony; rodzaj treści zapisuje
+rdzeń przy wciąganiu bajtów do magazynu.
+
+Kolejność kroków w SzukajObrazu (najpierw gotowość modelu, dopiero potem
+odczyt biblioteki) jest odwrotna do przeczytania wykazu plików na próżno przy
+brakującym modelu. Odpowiedź niesie liczbę obrazów wziętych do porównania,
+bo "nie mam takiego obrazu" i "nie masz w bibliotece ani jednego obrazu" to
+dwie różne odpowiedzi, których po samym pustym wykazie nie da się rozróżnić.
+
+Wykaz w obrazyBiblioteki idzie przez to samo repozytorium, którym czyta
+bibliotekę budowanie wskaźnika — druga droga do tych samych wierszy byłaby
+drugą prawdą o tym, co Operator w bibliotece ma. Plik bez odwołania do
+bajtów jest pomijany: wiersz bez treści w magazynie niesie same metadane,
+a modelowi nie ma czego pokazać.
+
+Identyfikator w przelozObraz wystarcza, żeby po obraz sięgnąć modułem
+Library.
+## budowa/server/internal/core/adapter_modul_urzadzenia.go
+
+Urządzeniem konta jest to, które kiedykolwiek weszło przez bramkę — a to
+wiedzą sesje bramki. Osobnej tabeli urządzeń nie ma z rozmysłem:
+wymagałaby sprzątania wierszy, których nic już nie dotyczy, i
+rozjeżdżałaby się z prawdą przy pierwszym unieważnieniu, o którym ktoś
+zapomniałby ją powiadomić.
+
+Wiersz własnego urządzenia wygląda w wykazie tak samo jak każdy inny,
+więc bez oznaczenia Operator odbiera dostęp sobie i traci go w tej samej
+chwili. Rozstrzygnięcie należy do rdzenia, nie do klienta: klient zna
+identyfikator, który sam nadał, ale nie wie, którą sesją stoi połączenie.
+
+Zero zamkniętych sesji nie jest odmową: urządzenie mogło już nie mieć
+ważnego tokenu, a skutek żądany przez Operatora, że to urządzenie nie ma
+dostępu, i tak obowiązuje.
+
+## budowa/server/internal/core/adapter_modul_developer.go
+
+Obszar okna i sprawdzenie ścieżek leżą w `_okno.go`, praca z plikiem
+w `_plik.go`, drzewo w `_drzewo.go`, repozytorium w `_git.go`
+i `_git_wykonanie.go`, budowanie w `_budowanie.go` i `_budowanie_bieg.go`,
+ewidencja przebiegów w `_rejestr.go`, a przekład na kontrakt
+w `_przeklad.go`.
+
+Przed każdą zmianą stoją dwie bramy, w tej kolejności: tryb uprawnień okna —
+czy wolno w ogóle zmienić stan systemu (PermissionMode, `_okno.go`); tryb
+`plan` wyklucza zapis pliku, czynność repozytorium i uruchomienie
+budowania; oraz obszar okna — czy ścieżka mieści się w katalogach
+roboczych okna (`_okno.go`), a przy uruchomieniu procesu dodatkowo
+egzekutor izolacji (`session.SprawdzPolecenie` nad zasadami z `izolacja.go`).
+
+Rdzeń nie buduje własnego `exec.Cmd`: git i zadanie budowania startuje ten
+sam port `session.Uruchamiacz`, którym jedzie okno rozmowy i moduł
+Terminal — Terminal jest warstwą wykonawczą budowania, instalacji
+zależności i uruchamiania.
+
+### pola adapterDevelopera
+
+sesjeDebugowania: stan żywy, nie zapis — sesja ma uchwyt do procesu
+adaptera i gaśnie razem z nim.
+
+okna: bez niego moduł nie wiedziałby, w jakim obszarze wolno mu pracować,
+a praca „gdziekolwiek" nie jest pracą w warunkach niepełnych danych, tylko
+wyjściem poza izolację okna.
+## budowa/server/internal/core/adapter_modul_developer_plik.go
+
+Plik binarny wraca bez treści, a nie jako błąd: DeveloperFile.content jest
+w kontrakcie polem opcjonalnym, bo nie każdy plik repozytorium da się pokazać
+w edytorze tekstu — klient dostaje rozmiar i rodzaj treści zamiast bajtów,
+których i tak nie mógłby zapisać z powrotem. Wersja zakładana przez
+createVersion powstaje z treści sprzed zapisu, bo to ona jest punktem
+powrotu — migawka po zapisie byłaby kopią tego, co leży na dysku.
+
+zalozWersje: brak żądania wersji nie zakłada niczego; żądanie wersji przy
+braku dziennika kończy się odmową, a nie cichym pominięciem punktu powrotu.
+## budowa/server/internal/core/adapter_modul_developer_przeklad.go
+
+Zgłoszenie kompilatora rozpoznaje wykaz wyrażeń regularnych, nie drabina
+warunków: nowe narzędzie budowania to nowa pozycja wykazu. Bez rozpoznanego
+pliku i wiersza Build Output nie ma jak przejść z błędu do Diagnostics
+Center.
+## budowa/server/internal/core/adapter_modul_orkiestracja_rozgloszenie.go
+
+Panel Subagent Network nie musi odpytywać wykazu podagentów, dopóki
+zdarzenie leci przy każdej zmianie stanu, nie tylko przy tej widzianej
+przez uchwyt komendy.
+
+Trzy momenty, które panel musi zobaczyć: powołanie wprost z wierszy
+założonych przy powołaniu podagenta; zmianę stanu przy wejściu w bieg,
+przy przepisaniu stanu pozycji na stan podagenta i przy niepowodzeniu
+pracy w tle; zatrzymanie, bo zatrzymanie nie kasuje wiersza, tylko
+przestawia go na stan zatrzymany — kasowanie kazałoby panelowi zdjąć
+podagenta z wykazu, a ma on tam zostać widoczny jako zatrzymany.
+
+Rozgłoszenie odczytuje wiersz po zapisie, a nie składa go z tego, co
+zapisał. Kolumny czasu i pole wyniku nadaje zapytanie, więc struktura
+złożona w rdzeniu rozjechałaby się z tym, co odda wykaz podagentów.
+
+Emisja pusta znosi się sama: brak nadajnika, nieudany odczyt wiersza po
+zapisie ani wykaz pusty nie wywracają czynności — praca podagenta już się
+wykonała, a zdarzenie jest jej relacją, nie jej warunkiem.
+
+## budowa/server/internal/core/adapter_modul_library_sprzatanie.go
+
+Bez sprzątania magazyn treści (adapter_modul_library_magazyn.go) tylko
+przyrasta: wiersz pliku znika kaskadą ON DELETE CASCADE albo czyszczeniem
+stanu trwałego, wersja zostaje zastąpiona, zapis przerywa się na os.Rename
+i zostawia tresc-*.czesciowa — a bajty leżą dalej. To magazyn, a nie baza,
+wypełniałby wtedy dysk Operatora.
+
+Sprzątanie idzie przemiataniem przy starcie, a nie zliczaniem odwołań.
+Zliczanie wymaga miejsca, w którym się kasuje, a moduł Library takiego
+miejsca nie ma: wśród dziesięciu jego komend
+(adapter_modul_library_uchwyty.go) nie ma ani jednej usuwającej plik czy
+wersję. Bloby osierocają się więc wyłącznie drogami, których ten moduł nie
+kontroluje: kaskadą z wiersza usuniętego gdzie indziej, awarią zapisu,
+zastąpieniem treści bieżącej. Licznik wpięty w komendę, która nie istnieje,
+nie zliczyłby niczego.
+
+Blob jest dzielony: jego nazwą jest suma sha256 treści, więc dwa wgrania
+tej samej zawartości wskazują jeden plik na nośniku, a plik i jego wersje
+wskazują go po wielekroć. Licznik musiałby być drugą, osobno utrzymywaną
+prawdą o tym, co baza i tak wie z kolumn tresc_odwolanie, i rozjechałby się
+przy pierwszym zapisie przerwanym w połowie.
+
+Przemiatanie startowe pyta o to samo wprost: żywe odwołania czyta z bazy
+(dane.OdwolaniaTresci, jedno zapytanie po obu tabelach), po czym obchodzi
+katalog magazynu i kasuje to, czego w tym wykazie nie ma. Nie potrzebuje
+budzika ani wątku — start jest jedynym momentem, w którym rdzeń i tak czyta
+stan trwały i w którym nikt równolegle nie wgrywa pliku; tak samo sprzątają
+kosz sesji i retencja historii (trwalosc_kosza.go). Za bezczynności rdzenia
+sprzątanie ma zero kosztu, a po awarii zapisu naprawia stan samo, bez
+komendy naprawczej.
+
+Cena jest jedna: blob osierocony między dwoma startami przeżyje do
+następnego. Miejsce na nośniku odzyskuje się z opóźnieniem, treść natomiast
+nie ginie przedwcześnie, bo o życiu bloba rozstrzyga baza, a nie licznik.
+
+Nieudany odczyt wykazu wstrzymuje sprzątanie w całości. Wykaz niepełny
+znaczyłby, że żywe bloby wyglądają na porzucone — sprzątanie skasowałoby
+wtedy treść biblioteki nie do odzyskania. Brak wiedzy nie jest wiedzą
+o braku.
+
+Sprzątanie idzie przy starcie, więc własnych zapisów rdzeń jeszcze nie
+prowadzi w karencjaPlikuCzesciowego — ale drugi rdzeń Operatora,
+wystartowany na tym samym katalogu danych, może akurat wciągać wielki plik.
+
+Błąd obejścia pojedynczego wpisu jest pominięciem, nie przerwaniem: jeden
+nieczytelny katalog nie ma prawa zostawić całego magazynu nieposprzątanego.
+
+Plik tymczasowy nigdy nie jest odwołaniem w bazie (odwołaniem staje się
+dopiero nazwa po przemianowaniu), więc rozstrzyga o nim sam wiek.
+
+## budowa/server/internal/core/adapter_modul_developer_budowanie.go
+
+Bieg procesu, pompa logu i domknięcie leżą w
+`adapter_modul_developer_budowanie_bieg.go`.
+
+Zadanie jest wierszem polecenia, nie nazwą z katalogu. Kontrakt daje pole
+`task` („zadanie budowania") i `arguments` („parametry zadania"), a rdzeń
+nie ma katalogu zadań, z którego mógłby nazwę rozwinąć. Pierwsze słowo
+zadania jest programem, reszta — jego wiodącymi parametrami, więc zarówno
+„go", jak i „npm run build" wpisane w jedno pole dają spodziewane
+polecenie. O tym, czy wolno je uruchomić, rozstrzyga egzekutor izolacji
+okna.
+
+### przerwijBudowanie
+
+Build Output pokazuje wtedy wynik ostatniego znanego przebiegu zamiast
+czerwonego komunikatu o niczym.
+## budowa/server/internal/core/adapter_modul_terminal_uprawnienia.go
+
+Tryb uprawnień rozstrzyga tutaj, a nie tylko w kanale modelu. Wartości
+trybu uprawnień odpowiadają przełącznikowi trybu kanału głównego i tam
+ograniczają model. Terminal uruchamia proces urządzenia z pominięciem
+kanału, więc bez tej samej bramy okno w trybie planistycznym, bez zmian w
+systemie, uruchamiałoby polecenia powłoki.
+
+Rozstrzyga inicjator, nie samo okno. Kontrakt nie ma rundy zgody dla
+terminala: nie istnieje komenda pytająca Operatora, czy uruchomić, i
+czekająca na odpowiedź. Dlatego w trybach wymagających zgody proces
+zlecony przez model zostaje odrzucony — zgody nie ma jak uzyskać.
+Polecenie Operatora przechodzi, bo jego kliknięcie jest tą zgodą.
+## budowa/server/internal/core/adapter_modul_workspace_pamiec_sesji.go
+
+Komenda memory.toggle nie dotyka wpisów pamięci: przestawia widoczność
+poziomów i zgodę na zapis dla jednej karty sesji, a wpisy leżą w innej tabeli
+i zmienia je wyłącznie rodzina memory.set / memory.detach / memory.delete.
+Poziomów pamięci jest pięć, poziomów zasięgu osiem. Kontrakt niesie żądanie
+jako ConfigScope[], a obszar pamięci zna wyłącznie wartości dopuszczone przez
+CHECK kolumny zasob_pamieci.poziom; para modułów, rola i okno poziomami
+pamięci nie są. Poziom spoza tej piątki jest odmawiany kodem
+validation_failed, a nie pomijany — wynik nie może zgłaszać jako włączony
+poziomu, którego nie zapisano.
+
+poziomyPamieciKontraktu wiąże dwa istniejące słowniki — wartości kolumny
+i wyliczenie shared.ConfigScope — zamiast zakładać trzeci spis poziomów.
+kolejnoscPoziomowPamieci trzyma poziomy od najszerszego do najwęższego, tak
+jak stoją w wartości domyślnej kolumny, żeby dwa przestawienia o tej samej
+treści dawały tę samą odpowiedź niezależnie od kolejności żądania.
+
+PrzestawPamiecSesji: pole niewskazane zostawia stan bez zmian — pusta lista
+poziomów tak mówi wprost kontrakt, a brak writeEnabled znaczy to samo dla
+zapisu. Karta bez wiersza konfiguracji ma stan domyślny — wszystkie poziomy
+i zapis czynny — bo brak wiersza jest ustawieniem domyślnym, nie odmową
+dostępu.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_pamiec.go
+
+O tym, kiedy para jest zatwierdzona, rozstrzyga wywołujący. Chwile są dwie,
+obie po treści, która realnie powstała: `target.add` — model oddał przekład
+i panel został zapisany, pary idą do pamięci po zapisie panelu, bo dopiero
+wtedy istnieje `panel_id`, którego wymaga klucz obcy tabeli; `translation.set`
+— Operator poprawił przekład, więc parę zatwierdził człowiek. Pominięcie jej
+znaczyłoby, że pamięć pamięta wyłącznie model, a poprawki Operatora zapomina.
+
+Chwilą trzecią nie jest `backtranslation.run`: tłumaczenie zwrotne jest
+kontrolą, a nie przekładem do ponownego użycia, i zanieczyściłoby pamięć
+parami w odwrotną stronę.
+
+Sparowanie segmentów jest częścią trudną. Rdzeń ma jedno narzędzie podziału —
+`podzielNaZdania`, podział mechaniczny po znakach końca zdania. Model
+tłumaczący nie ma obowiązku zachować liczby zdań: scala dwa zdania w jedno,
+rozbija jedno na dwa albo dokłada zdanie wyjaśniające. Stąd rozstrzygnięcie
+ostrożne: liczba segmentów po obu stronach równa i większa od zera daje
+parowanie kolejne, segment po segmencie; liczby różne albo któraś strona bez
+segmentów dają jedną parę całościową — cały tekst źródłowy do całego
+przekładu. Dopasuje się rzadziej, ale jest prawdziwa. Rozdzielanie n zdań
+źródła na m zdań przekładu "mniej więcej po kolei" wytworzyłoby pary,
+w których segment docelowy nie jest przekładem segmentu źródłowego, a pamięć
+podpowiadałaby je jako gotowe zdania.
+
+Miary podobieństwa, która pozwoliłaby parować przy różnych liczbach (na
+przykład wyrównania długościami albo przez model), rdzeń nie ma i ten plik
+jej nie dorabia.
+
+Błąd zapisu pary jest pomijany, tak samo jak błąd zapisu migawki jakości
+w `DodajPanel`: przekład już powstał i jest w ręku Operatora, więc pamięć
+jest wzbogaceniem, a nie warunkiem przekładu.
+
+`Podpowiedzi` szuka po kolumnie `jezyk` i pyta, co wpisać w języku docelowym
+dla danego segmentu, więc kluczem jest język, na który tłumaczono. Zapisanie
+tam języka źródłowego uczyniłoby całą tabelę nieosiągalną dla odczytu.
+
+`podzielNaZdania` odsiewa puste odcinki, więc pusty segment to sytuacja
+skrajna, ale wiersz z pustym segmentem docelowym byłby podpowiedzią "nic".
+## budowa/server/internal/core/adapter_modul_asystent_uchwyty.go
+
+Port wymienia wszystkie komendy modułu, wzorem innych plików uchwytów:
+rejestr rdzenia potrzebuje jednego miejsca wiążącego nazwę komendy z
+metodą portu, niezależnie od tego, który plik adaptera którą metodę
+implementuje.
+
+Zdarzenie zmiany akcji rozgłasza wykonawca zleceń przy zmianie stanu
+podjętego zlecenia, własnym emiterem na nadajniku wpiętym osobną metodą,
+a nie obsługa komend. Komendy modułu — polecenie, stan, dziennik — nic
+nie rozgłaszają same, więc parametr emitera zostaje nieużyty, na wzór
+pozostałych funkcji rejestrujących innych modułów.
+
+## budowa/server/internal/core/adapter_modul_library_tresc.go
+
+Obie komendy przyjmują tę samą parę pól kontraktu (contentBase64,
+sourcePath) i muszą ją rozstrzygać tak samo — dwa rachunki nad jedną treścią
+byłyby dwiema prawdami o jej integralności. Dostęp do nośnika i miara treści
+to osobna odpowiedzialność od składania odpowiedzi kontraktu, stąd podział
+wobec adapter_modul_library.go.
+
+Treść zawsze ląduje w magazynie rdzenia. Gdyby sourcePath stawała się
+odwołaniem do treści, plik wgrany ścieżką i potem nadpisany na dysku
+zmieniałby treść swojej rzekomo utrwalonej wersji, a library.version.restore
+przywracałby wskaźnik do treści, której już nie ma. Wersja, po której nie da
+się odtworzyć zawartości, nie jest wersją — więc ścieżka jest źródłem
+bajtów, a miejscem ich składowania jest magazyn treści rdzenia
+(adapter_modul_library_magazyn.go), tak samo jak dla treści przysłanej
+base64. Ścieżka źródłowa nie znika bez śladu: zostaje przy pliku w kolumnie
+sciezka (migracja_045_biblioteka.sql) jako informacja, skąd plik przyszedł.
+
+Granicy rozmiaru nie ma. Obie drogi idą strumieniem albo jednym buforem już
+przysłanym przez klienta, więc duży plik nie ma jak przewrócić rdzenia
+pamięcią; odmowa opisuje brak (nie da się otworzyć, nie da się zapisać),
+nigdy zakaz "plik za duży".
+
+Żądanie trescWgrania bez jednego i drugiego pola nie jest błędem — wraca
+sama pustka. Taka komenda oznacza wersję-znacznik (kamień milowy na treści
+bieżącej, trescNowejWersji) albo plik zakładany bez zawartości; odmowa
+należy tu wyłącznie do zapisu, który się nie powiódł.
+
+Ścieżki źródłowej wskazanej przez wołającego bladZapisuTresciBiblioteki nie
+dotyczy: jej brak jest pomyłką żądania i wraca bladWskazaniaBiblioteki.
+Komenda odmawia w całości: plik, którego bajtów nie ma nigdzie, nie może
+trafić do wykazu jako wgrany.
+
+Z wpiętym magazynem wgranie zawsze zostawia odwołanie, więc do
+bladBrakuTresciBiblioteki trafiają wiersze starsze oraz wersje-znaczniki
+założone na pliku bez treści.
+
+Pomyłka wskazującego nie jest awarią rdzenia. Ścieżka przychodzi z żądania:
+literówka, plik usunięty, brak praw albo wskazany katalog to brak po
+stronie wołającego — żądanie nie ma prawa się udać przy żadnym ponowieniu.
+Kod internal_error z retryable:true zapętliłby klienta ponawiającego
+żądanie.
+
+## budowa/server/internal/core/adapter_modul_library_indeks.go
+
+Indeks zasila się przy zapisie, nie przy odczycie: skanowanie blobów przy
+każdym żądaniu wyszukiwania otwierałoby wszystkie pliki repozytorium na
+każde naciśnięcie klawisza w Library Explorerze, a koszt rósłby
+z rozmiarem biblioteki zamiast z liczbą trafień. Wpięcia są trzy i wszystkie
+tam, gdzie zmienia się treść bieżąca pliku: `Wgraj`, `DolozWersje`,
+`PrzywrocWersje`.
+
+Nieudane zaindeksowanie nie jest odmową komendy. W chwili indeksowania
+bajty leżą już na nośniku, a wiersz pliku w bazie; odmowa dawałaby błąd
+przy pliku, który jest wgrany i widoczny w wykazie. Brak wiersza indeksu
+odbiera tylko trafność wyszukiwania po treści — nazwa dopasowuje się dalej,
+bo `Szukaj` trzyma oba człony w alternatywie. Niepowodzenie idzie więc do
+dziennika rdzenia, a komenda kończy się powodzeniem.
+
+### granicaIndeksowaniaTresci
+
+Podgląd i wersje czytają bajty dalej w całości mimo obcięcia wyciągu
+indeksowanego.
+
+### wyciagTekstowy
+
+Treść z bajtem zerowym albo z niepoprawnym UTF-8 nie jest tekstem i nie ma
+czego wnieść do wyszukiwania po słowach. Nieczytelne odwołanie oddaje
+pustkę bez zgłaszania błędu: sprawa czytelności treści należy do podglądu
+(`trescPodgladuBiblioteki`, odmowa wprost), a nie do zasilania indeksu,
+które komendy nie wywraca.
+
+### bezObcietegoZnaku
+
+Znak ma najwyżej cztery bajty, więc cofa się najwyżej o trzy — dalsze
+cofanie znaczyłoby, że treść jest niepoprawna sama z siebie, a to
+rozstrzyga `utf8.Valid` u wołającego.
+## budowa/server/internal/core/adapter_modul_library_kolekcje.go
+
+Składanie `LibraryFile` należy do `a.zloz`. Ten obszar nie dubluje przekładu
+wiersza na kontrakt i nie dopisuje `CollectionIds` z żądania: `a.zloz` czyta
+przynależność z bazy, więc odpowiedź opisuje stan zapisany, a nie treść
+żądania.
+
+Pozostałe błędy (usterka wewnętrzna, brak wskazania, plik nieznany) składa
+`adapter_modul_library.go` (`bladBiblioteki`, `bladWskazaniaBiblioteki`,
+`bladNieznanegoPlikuBiblioteki`).
+
+`UstawKolekcjePliku` odmawia tym samym `ErrBrakWiersza` dla pliku nieznanego
+co dla kolekcji nieznanej, więc bez sprawdzenia pliku literówka w kodzie
+pliku wracałaby jako "kolekcja nie istnieje" — odmowa opisująca nie ten
+brak, co trzeba.
+
+Kolekcja nieznana wywraca całą komendę, a gdyby etykiety podmieniły się
+przed tą odmową, połowa zmiany zostałaby utrwalona mimo błędu. Kolejność
+zastępuje tu transakcję obejmującą obie tabele. Wykaz pusty też jest
+ustawieniem — zdejmuje plik ze wszystkich kolekcji.
+## budowa/server/internal/core/adapter_modul_diagnostics_bledy.go
+
+Błędy biorą się z odmów, które rdzeń rzeczywiście wydał. Dyspozytor komend
+oddaje tu każdą odpowiedź błędną wraz z kodem ze słownika ErrorCode
+kontraktu, więc Errors Panel pokazuje błędy ostatnich tur i operacji — innego
+źródła moduł nie ma. Odcisk łączy komendę z kodem i treścią: ta sama odmowa
+tej samej komendy jest jednym błędem o wielu wystąpieniach. Identyfikatory
+sesji i okna do odcisku nie wchodzą — gdyby wchodziły, ten sam błąd
+w dziesięciu oknach dałby dziesięć wierszy zamiast jednej usterki.
+
+ZapiszNiepowodzenie: niepowodzenie samego zapisu nie może zmienić odpowiedzi
+na komendę, której dotyczy. Wpis dziennika powstaje zawsze, także gdy zapis
+błędu się nie powiedzie — Logs Viewer jest wtedy jedynym śladem odmowy.
+
+total w WykazBledow liczy się osobno, bez granicy: długość zwróconej listy
+zgadzałaby się sama ze sobą i niczego nie mówiła, bo repozytorium ucina
+wykaz na 500 wierszach po cichu. Kontrakt nie niesie tu pola truncated (ma
+je diagnostics.log.query), więc osobno liczony total jest jedyną drogą,
+którą okno porówna ile oddano z ile jest.
+
+poziomKoduBledu: odmowa z powodu braku uprawnienia albo braku bytu jest
+zdarzeniem zwykłej pracy, sygnalizuje ją poziom warn. Usterka rdzenia
+i niedostępność kanału są awarią i idą poziomem error — zrównanie obu
+kazałoby przeglądać setki odmów normalnych, żeby znaleźć jedną awarię.
+
+## budowa/server/internal/core/adapter_modul_terminal_cel.go
+
+### Dlaczego adres przestał jechać zmienną środowiska
+
+Karta zdalna brała dotąd adres ze zmiennej `SSH_TARGET`, bo kontrakt nie
+miał na niego pola. Miało to dwa skutki, których żaden nie był zamierzony:
+portu nie dało się podać osobno (zmienna niesie jeden napis, a `ssh` chce
+`-p`), a zmienne środowiska karty z zamysłu nie mają kolumny w bazie —
+więc karta zdalna odtworzona po restarcie rdzenia traciła adres i pierwsze
+polecenie kończyło się odmową. Kontrakt ma dziś pola wprost, a karta —
+kolumny (migracja 251). Zmienna `SSH_TARGET` zostaje jako droga zastępcza,
+nie jako droga główna: karta założona przed tą zmianą i klient, który
+jeszcze nie przestawił się na nowe pola, mają dalej działać.
+
+### Wpis książki hostów jest wskazaniem, nie kopią
+
+Materiału klucza nie tyka nikt: `ssh` dostaje ścieżkę przełącznikiem `-i`,
+a plik czyta sam, na maszynie rdzenia.
+
+## budowa/server/internal/core/adapter_modul_developer_git_wykonanie.go
+
+Git startuje portem session.Uruchamiacz, tak samo jak okno rozmowy
+i terminal. Dzięki temu czynność repozytorium przechodzi przez ten sam
+mechanizm obejmowania potomstwa, co pozostałe procesy okna.
+
+Konflikt scalenia, odrzucone wysłanie czy brak gałęzi są wynikami czynności,
+nie awariami: wracają jako GitActionResult{succeeded:false} wraz z wyjściem
+gita, a nie jako błąd komendy.
+
+Czynność repozytorium trwa sekundy i jej wynik jest odpowiedzią na komendę,
+więc uruchomienie uruchomGit jest synchroniczne.
+
+Stan repozytorium doczytuje się po czynności, bo tylko wtedy odzwierciedla
+to, co Git Panel ma pokazać. Niepowodzenie odczytu stanu nie unieważnia
+czynności, która już się wykonała.
+## budowa/server/internal/core/adapter_modul_developer_git_stan.go
+
+Bez stanu dołączonego do wyniku czynności okno po zatwierdzeniu zmian dalej
+pokazywałoby wykaz sprzed niego.
+
+Niepowodzenie któregokolwiek odczytu zostawia pole puste — czynność, która
+się wykonała, nie ma prawa zostać unieważniona przez nieudany odczyt.
+
+Bez rozróżnienia kodów konfliktu Git Panel pokazywałby plik z konfliktem
+jako zwykłą zmianę, a znaczniki scalenia trafiłyby do zatwierdzenia razem
+z kodem.
+
+odmowaIzolacjiDevelopera: usterka innego rodzaju idzie dalej bez zmiany —
+kod `permission_denied` ma znaczyć zatrzymanie przez izolację, a nie "coś
+się nie udało".
+## budowa/server/internal/core/adapter_modul_orkiestracja_wykaz.go
+
+Wykaz pusty jest poprawną odpowiedzią, nie odmową: okno, które nikogo nie
+powołało, dostaje wykaz pusty i pusty panel — zawężenia są warunkami
+zapytania, nie warunkami wstępnymi żądania. Pole waitForAll oznacza czekanie
+rzeczywiste: odpowiedź pyta bazę w takcie, aż wszyscy objęci zbieraniem wejdą
+w stan końcowy albo aż zerwie się kontekst żądania; odpowiedź natychmiastowa
+z complete=false pomijałaby to pole, a górnego limitu czekania adapter nie
+narzuca — czekanie kończy zamknięcie żądania przez klienta.
+
+Domyślnie rodzic zbiera po drodze. Podagenta powołuje model w trakcie tury
+rodzica, więc odpowiedź domyślnie blokująca zatrzymywałaby turę
+orkiestratora na cudzej pracy i unieważniała sens tła. Czekania na
+pierwszego kontrakt nie zna (nie ma pola waitForAny) i ten adapter go nie
+wymyśla; rodzic osiąga to samo, zbierając po drodze i czytając pole
+complete oraz stany pozycji.
+
+Wykaz(subagent.list): oba wskazania (okno i sesja) idą do zapytania
+jednocześnie, podane naraz zawężają wykaz podwójnie, co nie jest
+sprzecznością, tylko węższym pytaniem. Kontrakt opisuje sessionId jako kartę
+sesji braną pod uwagę, gdy okna nie wskazano.
+
+objeciZbieraniem: pusta lista wskazań znaczy komplet — tak mówi kontrakt.
+Komplet zawęża się wtedy oknem, jeśli okno wskazano; żądanie bez okna i bez
+wskazania podagentów zbiera wszystkich. Wskazanie, któremu nie odpowiada
+żaden wiersz, jest pomyłką co do bytu, nie pustym wynikiem: pusty wykaz
+czyta się jako ci podagenci nic nie oddali, a nie jako takich podagentów
+nie ma.
+
+## budowa/server/internal/core/adapter_modul_roundtable_magazyn.go
+
+Magazyn jest własny, a nie wspólny z biblioteką, bo artefakt debaty nie jest
+plikiem Operatora: powstaje z zapisu debaty, wskazuje na okno i ginie razem
+z katalogiem danych. Wspólny magazyn wymagałby wiersza w bibliotece, czyli
+kartoteki nad każdym eksportem transkryptu.
+
+Odwołanie wychodzące na zewnątrz jest ścieżką względną magazynu, liczoną od
+katalogu danych, zawsze z ukośnikiem / — tak samo jak w bibliotece
+i w module Design. Ścieżka bezwzględna wynosiłaby układ katalogów serwera do
+klienta, który i tak stoi na innej maszynie.
+
+Odwołanie w wydajArtefaktDebaty jest sprawdzalne: pod nazwą pliku (sumą
+kontrolną treści) leży ta zawartość albo nie leży nic.
+
+Przemianowanie między wolumenami jest kopiowaniem, czyli oknem, w którym pod
+odwołaniem leży treść obcięta.
+
+## budowa/server/internal/core/adapter_modul_asystent_zastane.go
+
+Wykonawca zleceń (`adapter_modul_asystent_wykonawca.go`) prowadzi zlecenia
+biegnące teraz; ten plik zajmuje się wyłącznie spadkiem po procesie, który
+już nie żyje. Osobna odpowiedzialność, osobny plik, ten sam typ
+`adapterAsystenta`.
+
+### ZDomknieciemZastanych
+
+Wykonawca wchodzi wyłącznie drogą świeżego polecenia, `retry` albo
+`resume` — bez tego przeglądu Actions Monitor pokazywałby wiersz „w toku"
+bez wyniku i bez powodu na zawsze. Tura tamtego zlecenia nie istnieje, bo
+umarła z procesem. Przegląd idzie gorutyną, bo montaż nie ma czekać na
+obejście wszystkich okien; bez nadzorcy sesji albo kontekstu życia nie ma
+czego przeglądać.
+
+### domknijZastaneZlecenia
+
+Droga domknięcia jest ta sama co przy zerwaniu w trakcie pracy
+(`zerwijZlecenie`) — jedno domknięcie, nie dwa.
+## budowa/server/internal/core/adapter_modul_workspace_biblioteka.go
+
+Komenda wgrania pliku należy do modułu Library (`library.file.upload`), więc
+tabela plików w module Workspace nie miałaby pisarza. Project Library jest
+odpowiednikiem okna Library Explorer zawężonym do zakresu projektu, którym
+jest katalog roboczy projektu.
+## budowa/server/internal/core/adapter_modul_terminal_skrypty.go
+
+Biblioteka żyła jedno posiedzenie, a jedyną drogą jej zachowania był wywóz do
+pliku. Skrypt uruchamiany na maszynach Operatora jest treścią, do której
+trzeba móc wrócić, więc każdy zapis zakłada kolejną wersję, a nie nadpisuje
+poprzedniej (migracja 247). Numer wersji nadaje rdzeń, nie żądanie — kontrakt
+mówi to wprost, a powód jest współbieżnościowy: numer odczytany przed
+zapisem rozjechałby się przy dwóch zapisach naraz. Numer nadaje więc baza
+w jednej transakcji z wpisem wersji (dane/terminal_wyposazenie_zapis.go).
+
+## budowa/server/internal/core/adapter_modul_automations_wspolne.go
+
+Dziennik audytu nie jest komendą, którą Operator woła. Jest skutkiem
+ubocznym czynności zmieniających: zapis definicji, publikacja, zmiana
+harmonogramu, uruchomienie i przerwanie przebiegu zostawiają po sobie wpis.
+Dlatego nanosi go rdzeń przy okazji czynności, a nie osobne żądanie klienta
+— audyt, który trzeba jawnie zawołać, jest audytem, o którym się zapomina.
+
+Nieudany zapis audytu nie wywraca czynności, która się powiodła. Wpis
+audytu opisuje fakt, a fakt już zaszedł: odmowa komendy z powodu dziennika
+mówiłaby Operatorowi, że czynność się nie odbyła, choć się odbyła.
+
+Rdzeń pracuje na jednym koncie Operatora i kontrakt nie niesie tożsamości
+w żądaniach modułu w wykonawcaAudytu, więc zapis niesie prawdę: czynność
+wykonał Operator tej instalacji. Wartość zmyślona (nazwisko, adres) byłaby
+zapisem audytu, któremu nie wolno wierzyć.
+
+Rodzina automation.execution.* wskazuje przebieg, a nie automatykę w
+wierszPrzebiegu, więc ta droga powtarza się w niej sześć razy.
+
+Okno pokazuje inny komunikat i inaczej podpowiada Operatorowi dla
+bladNieznanegoBytuAutomatyki, zależnie od tego, czy bytu nie ma, czy odczyt
+się nie powiódł.
+## budowa/server/internal/core/adapter_modul_terminal_przeklad.go
+
+Wykaz procesów składa się z dwóch źródeł, więc gdyby każde zawężało po
+swojemu, ten sam filtr dałby niespójny wynik. Dziennik dostaje filtr wprost
+w zapytaniu, a stan żywy — tę samą czwórkę warunków sprawdzoną na widoku
+kontraktu.
+
+Karta nie jest procesem: procesem jest każde wykonane w niej polecenie i to
+ono ma PID oraz kod wyjścia. Oba pola są w kontrakcie opcjonalne.
+
+kartaWierszaKontraktu: na tym stoi ta część `terminal.session.list`, która
+sięga po karty zamknięte — rejestr pamięci ich nie trzyma po restarcie
+rdzenia.
+
+Wpisanie zera zamiast pustego pola zużycia procesora i pamięci znaczyłoby
+"nic nie zużywa" zamiast "brak danych".
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_mowa_glos.go
+
+Odpowiedź na pytanie „czym przeczytać ten panel i jakim głosem". Nagłówek
+`adapter_modul_tlumaczenie_mowa_silnik.go` opisuje pierwszeństwo pipera
+przed espeakiem i kolejność źródeł ścieżek.
+
+### dobierzSyntezator
+
+Zejście na espeaka daje wtedy nagranie gorszym głosem, a użyty silnik
+widać w nazwie pliku, która niesie `espeak-ng`.
+
+### dobierzSyntezator — brak głosu
+
+Brak głosu przy stojącym binarium ma osobny powód i osobną naprawę.
+
+### programEspeaka
+
+Ta sama trójstopniowa zasada co przy pipeze, bez członu arsenału:
+espeak-ng instaluje się pakietem systemowym i stoi w PATH albo nie ma go
+wcale.
+
+### glosPipera
+
+Dopasowanie idzie po przedrostku nazwy pliku, zgodnie ze zwyczajem
+nazewniczym głosów pipera: `pl_PL-darkman-medium.onnx`,
+`en_US-lessac-medium.onnx`. Język panelu skraca się do członu przed `_`
+albo `-` (`pl-PL` → `pl`) i szuka pliku, którego nazwa zaczyna się od
+tego członu zakończonego `_` albo `-`. Warunek zakończenia jest istotny:
+bez niego `pl` dopasowałoby `pl…` w dowolnym dłuższym kodzie języka,
+dając lektora mówiącego w innym języku. Dobór silnika ma się skończyć
+wyborem albo odmową dwuczłonową, a katalogu głosów może nie być.
+
+### skrotJezyka
+
+Nazwy pełne („polski", „polish") skrótu nie dają — zostają sobą i nie
+dopasują żadnego pliku; tabelki nazw języków tu nie ma, więc „polski"
+nie zamienia się w `pl`.
+## budowa/server/internal/core/adapter_modul_aplikacje_wspolne.go
+
+Osobny plik, bo te same cztery czynności powtarzają się w każdym z sześciu
+plików obszaru. Przedrostek App w nazwach jest wymogiem przestrzeni nazw
+pakietu core: pracuje w niej kilku wykonawców naraz i nazwa bez przedrostka
+obszaru zderzyłaby się z cudzą.
+
+oknoAplikacji: nazwa komendy wchodzi do treści odmowy, bo Operator czyta ją
+w oknie i musi wiedzieć, która droga stanęła — wszystkie komendy modułu
+wymagają windowId, więc bez nazwy każda odmawiałaby tym samym zdaniem.
+
+Magazyn wytworów modułu leży w katalogu danych rdzenia, obok magazynu
+biblioteki (biblioteka/tresc) i zasobów Designu (design/zasoby). Osobny
+podkatalog, bo moduły nie dzielą stanu: skasowanie wytworów Apps nie ma
+prawa ruszyć treści biblioteki, a artefakt wdrożenia nie ma prawa mieszać
+się z zasobem wizualnym.
+
+rozglosEtap: brak podpięcia nie zmienia pracy modułu — rdzeń zapisuje także
+wtedy, gdy nikt nie słucha zdarzeń apps.build.changed.
+
+## budowa/server/internal/core/adapter_modul_developer_drzewo.go
+
+session.Ustawienia niesie listę katalogów roboczych, a nie jeden katalog,
+więc żądanie bez wskazania ścieżki zwraca korzenie wszystkich naraz — każdy
+jako węzeł bez rodzica. Pole root odpowiedzi jest jedno i niesie katalog
+pierwszy.
+
+Ścieżki węzłów są bezwzględne, bo przy wielu korzeniach ścieżka względna
+jest wieloznaczna: src/main.go może istnieć w każdym z katalogów roboczych.
+
+Przekroczenie granicy liczby węzłów kończy się odmową, nie obcięciem
+wyniku: kontrakt nie ma pola "wynik niepełny", więc obcięte drzewo byłoby
+dla klienta nieodróżnialne od repozytorium mniejszego, niż jest.
+
+## budowa/server/internal/core/adapter_modul_terminal_wykonanie.go
+
+Sam bieg procesu leży w adapter_modul_terminal_bieg.go. Proces przeżywa
+rozłączenie klienta: gniazdo WebSocket może paść w połowie kompilacji,
+a kompilacja ma dobiec końca. Dlatego obserwator zakończenia pracuje we
+własnej gorutynie i własnym kontekście, a nie w kontekście komendy.
+## budowa/server/internal/core/adapter_modul_agents_zasoby.go
+
+Konektor rodzaju mcp wskazuje istniejący most. Rdzeń ma jeden katalog
+serwerów MCP — tabelę punkt_dostepu, z której most_okna.go składa wpisy
+mcpServers procesu modelu. Konektor eksperta nie kopiuje adresu ani
+poświadczenia mostu, tylko niesie wskazanie jego kodu, dzięki czemu zmiana
+adresu maszyny w oknie konfiguracji dosięga także ekspertów.
+
+Uprawnienie jest konfiguracją możliwości, nie bramą: odebranie uprawnienia
+zapisuje wiersz przyznane = 0 i nic więcej — rdzeń nie odmawia z jego powodu
+żadnej komendy. Stanem wyjściowym eksperta jest pełny dostęp operacyjny,
+zakładany przy jego założeniu.
+## budowa/server/internal/core/adapter_modul_terminal_strumien.go
+
+`windowId` wskazuje okno terminala, `messageId` — identyfikator procesu
+z rejestru, a numer fragmentu i znacznik końca żyją w kopercie. Dzięki temu
+Output Console rozdziela wyjście po procesach i po kartach, nie zakładając
+drugiego protokołu.
+
+Odczyt jest blokowy: surowe bajty trafiają do bufora 32 KiB i wysyłane jest
+tyle, ile przyszło. Odczyt po liniach zawiesiłby się na wyjściu bez znaku
+końca linii (pasek postępu), a fragment na linię zamieniłby jedno `find /`
+w setki tysięcy kopert. Odczyt blokowy sam skleja napływ: im szybciej proces
+pisze, tym większe porcje wracają z jednego odczytu.
+
+Pompuj wywołuje się w osobnej gorutynie — jedną dla wyjścia zwykłego, jedną
+dla diagnostycznego.
+
+Fragment ostatni zamyka strumień procesu znacznikiem `done` — bez niego
+Output Console czekałby na ciąg dalszy, którego nigdy nie będzie.
+
+## budowa/server/internal/core/adapter_modul_terminal_wstrzymanie.go
+
+Rdzeń umiał proces wyłącznie zakończyć, więc jedyną odpowiedzią na zadanie,
+które zajęło maszynę, było wyrzucenie wykonanej przez nie pracy. Wstrzymanie
+oddaje procesor bez utraty postępu (session/wstrzymanie.go).
+
+Takiego stanu jak wstrzymany nie ma w kontrakcie: TerminalProcessStatus zna
+running, finished, failed i stopped. Proces wstrzymany jest wciąż
+uruchomiony — ma PID, pamięć i otwarte pliki — więc running jest o nim
+prawdą, a stopped byłoby nieprawdą, bo ten stan oznacza w tym module
+zakończenie sygnałem. Wstrzymania nie zgłasza się więc stanem, którego
+kontrakt nie ma; zgłasza je pole supported odpowiedzi wraz z powtarzalnością
+samej czynności.
+
+Windows nie zna wstrzymania obcego drzewa procesów. "System tego nie umie"
+to co innego niż "czynność zawiodła", i kontrakt mówi to wprost: fałsz
+znaczy, że proces został nietknięty. Odmowa w tym miejscu kazałaby
+klientowi zgadywać, czy proces jednak nie stanął.
+
+Zmiana biegu jest zmianą stanu procesu widoczną w Process Monitorze, więc
+idzie tą samą drogą co uruchomienie i zakończenie.
+
+SIGSTOP dla procesu już wstrzymanego i SIGCONT dla biegnącego nie robią
+nic, a odpowiedź o wsparciu platformy ma pochodzić od platformy, nie od
+pamięci rdzenia. Skrót odpowiadałby niewspierane na wznowienie procesu,
+którego nikt nie wstrzymał.
+## budowa/server/internal/core/adapter_modul_workspace_agenci.go
+
+Tożsamość, model bazowy, umiejętności i uprawnienia eksperta prowadzi
+biblioteka ekspertów (`agent.*`); tu zapisuje się wyłącznie rola projektowa
+i status wykonawcy domyślnego.
+
+PrzypiszAgenta: wskazanie domyślnego wykonawcy zdejmuje je z poprzedniego —
+wykonawca domyślny jest jeden (repozytorium pilnuje tego w jednej transakcji).
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_mowa.go
+
+Port `Tlumaczenie` i rejestracja komend stoją osobno — ten plik dokłada
+tylko metody. Mowę syntezuje `espeak-ng`, syntezator lokalny uruchamiany
+portem `session.Uruchamiacz` — tą samą drogą, którą chodzi silnik
+rozpoznawania mowy (pakiet `server/internal/mowa`). Wybór syntezatora, jego
+cena (głos brzydki) i powód odrzucenia `pipera` opisuje nagłówek
+`adapter_modul_tlumaczenie_mowa_silnik.go`.
+
+Kolumna `nagranie_odnosnik` (`migracja_055_jakosc_i_mowa.sql`, tabela
+`panel_tlumaczenia_synteza_mowy`) niesie ścieżkę pliku, który naprawdę
+powstał, i tę samą ścieżkę oddaje pole `Path` odpowiedzi. Ślad zapisuje
+się dopiero po syntezie — wiersz z odnośnikiem do nagrania, którego nie
+ma, mówiłby nieprawdę.
+
+Brak syntezatora jest odmową, nie atrapą. Gdy programu nie ma na maszynie,
+gdy rdzeń nie ma uruchamiacza albo gdy syntezator nie zna głosu dla języka
+panelu — komenda odmawia, nazywając brak i wskazując naprawę, zamiast
+oddać pustą ścieżkę udającą nagranie.
+
+Rdzeń nie ma magazynu blobów (ten sam brak, co w Library, Research i przy
+słowniku tego samego modułu). `panel.export` zapisuje ślad — format i czas
+w tabeli `panel_tlumaczenia_eksport` — ale nie wytwarza pliku na dysku.
+Kolumna `plik_odnosnik` wraca NULL, a pole `Path` odpowiedzi puste.
+`Format` bierze wartość kontraktu wprost (`pdf`, `docx`, `markdown`,
+`html`, `txt`), bez tłumaczenia wartości.
+
+### SyntezujMowe
+
+Żądanie bez panelu — nie ma czego odsłuchać. Panel bez treści — odsłuch
+pustki dałby nagranie ciszy udające przeczytany przekład; brak treści
+jest tu wiadomością, a nie plikiem do wytworzenia. Panel bez języka —
+syntezator dostaje głos z pola `jezyk` panelu i rdzeń nie podstawia za nie
+własnego domyślnego (nagłówek silnika: „głosu się nie zgaduje"). Odmowy
+samego silnika (brak programu, brak głosu dla języka, izolacja) przychodzą
+z `zsyntezujDoPliku` już oznakowane kodem kontraktu.
+
+### SyntezujMowe — ślad
+
+Nieudany zapis śladu nie przewraca komendy: nagranie już powstało, a jego
+ścieżka jest dla Operatora wartościowsza niż wiersz historii, który można
+powtórzyć. Ta sama zasada, co przy migawce jakości w `DodajPanel`.
+
+## budowa/server/internal/core/adapter_modul_extension_rozgloszenie.go
+
+Podział wobec adapter_modul_extension.go idzie wzdłuż odpowiedzialności,
+wzorem pary adapter_modul_isolation.go / adapter_modul_isolation_rozgloszenie.go.
+
+Stan pozycji katalogu zmieniają trzy komendy z pięciu: extension.install →
+created, extension.configure → updated, extension.toggle → updated,
+extension.uninstall → deleted. extension.list niczego nie zmienia
+i niczego nie rozgłasza.
+
+Przywrócenie pozycji odinstalowanej idzie jako created, nie updated. Wiersz
+stoi w katalogu przez cały czas (odinstalowanie zdejmuje znaczniki, nie
+wiersz), ale zdarzenie opisuje pozycję katalogu, nie wiersz tabeli. Skoro
+odinstalowanie mówi deleted, to instalacja tej samej pozycji musi mówić
+created — inaczej para komend byłaby niesymetryczna i klient, który po
+deleted zdjął pozycję z widoku, po updated nie miałby czego zaktualizować.
+
+extension.uninstall nie ma kłopotu z ładunkiem sprzed usunięcia. Wzorzec
+memory.changed czyta wpis przed skasowaniem, bo memory.delete kasuje wiersz
+i po nim nie ma czego włożyć w ładunek. Tutaj kasowania nie ma:
+ZmienRozszerzenie oddaje wiersz po zdjęciu znaczników i tego żąda kontrakt —
+pole extension opisane jest jako "Rozszerzenie po zmianie". Odczyt uprzedni
+dałby ładunek nieprawdziwy: pozycję ze znacznikami installed/enabled jeszcze
+ustawionymi, przy change: deleted.
+
+Rozgłoszenie idzie wyłącznie po udanym zapisie i nigdy po odmowie; brak
+nadajnika nie wywraca komendy, bo emiter.wyslij na nilu milczy.
+
+Dopóki montaz_porty.go składa port bez wywołania ZRozgloszeniem,
+a.rozgloszenie zostaje nilem i wszystkie cztery wywołania niżej milkną.
+
+## budowa/server/internal/core/adapter_modul_automations_obserwatorzy.go
+
+Rejestr nie służy rozsyłaniu zdarzeń: automation.execution.status dociera
+do wszystkich połączeń konta i rejestr niczego w tym nie zmienia. Rozwiązuje
+inną rzecz — telemetrię postępu. Proces kolejki przypina się do okna
+(opisProcesu.IdOkna), a kolejka wykonująca automatykę powstaje ze strony
+głównej, więc nie ma okna rozmowy, pod którym miałaby się zgłaszać. Oknem,
+które tę pracę obserwuje, jest Execution Monitor; rejestr jest jedynym
+miejscem, z którego rdzeń może się tego dowiedzieć.
+
+subscribed mówi prawdę: zapisanie okna jest czynnością o skutku, a komenda
+wywołana bez windowId jest zwykłym odczytem i oddaje false.
+
+Queue.windowIds nazywa okno wprost w przypniOknaObserwatorow — powiązanie
+jest dodatkiem, nie warunkiem.
+## budowa/server/internal/core/adapter_modul_diagnostics.go
+
+Dziennik leży w adapter_modul_diagnostics_dziennik.go, błędy w
+adapter_modul_diagnostics_bledy.go, analiza wraz z rekomendacjami w
+adapter_modul_diagnostics_analiza.go, przekład wierszy w
+adapter_modul_diagnostics_przeklad.go. Moduł ma dwa źródła faktów: dziennik
+rdzenia — adapter jest odbiorcą wyjścia *log.Logger rdzenia, więc każda
+linia, którą rdzeń zapisuje o sobie, staje się wpisem widocznym w Logs
+Viewer; i odmowy wykonania komend — dyspozytor oddaje adapterowi każdą
+odpowiedź błędną wraz z kodem ze słownika ErrorCode kontraktu, więc Errors
+Panel pokazuje błędy rzeczywistych tur i operacji. Adapter nie liczy
+obciążenia maszyny, nie sprawdza usług zewnętrznych i nie ocenia stanu
+zdrowia systemu — rdzeń takich faktów nie wystawia, okno pokazuje w tych
+miejscach brak danych.
+
+Pole wpisy przyjmuje linie dziennika bez blokowania piszącego: zapis do bazy
+idzie osobną goroutine, bo log.Logger trzyma przy zapisie własną blokadę, a
+czekanie na dysk pod tą blokadą wstrzymywałoby cały rdzeń. Pole przedrostek
+i flagi opisują format dziennika rdzenia, potrzebny do dokładnego zdjęcia
+z linii nagłówka, który log.Logger sam dołożył.
+
+Zamknij domyka pisarza dziennika. Wpisy już zakolejkowane zostają zapisane,
+bo ostatnie linie przed zatrzymaniem rdzenia niosą najwięcej dla diagnozy.
+bladBrakuTrwalosci: pusty wykaz znaczyłby, że nic się nie wydarzyło, a tego
+adapter bez dziennika nie ma jak stwierdzić.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_wspolne.go
+
+Wpisane do pierwszego z brzegu byłyby zależnością tamtego pliku od
+wszystkich pozostałych.
+
+### wskaznikNapisu
+
+Pusty napis w polu nieobowiązkowym kontraktu udawałby wartość podaną.
+
+### podobienstwoSegmentow
+
+Sto znaczy segmenty identyczne po sprowadzeniu do jednakowych odstępów
+i wielkości liter. Wybór miary nie jest kosmetyczny: pamięć tłumaczeń
+branży posługuje się dokładnie tą miarą przy „dopasowaniu rozmytym 85%",
+więc próg wpisany przez Operatora znaczy tu to samo, co znaczył
+w narzędziu, z którego przyszedł.
+
+### segmentyOkna
+
+Kolejność jest istotna. Trwały podział jest odpowiedzią Operatora na
+podział mechaniczny.
+
+### trescPanelu
+
+Czynność na pustym panelu (korekta, napisy, dubbing, wydanie) nie ma
+materiału, a wynik pusty nie jest wynikiem.
+
+### liczbaZnakow
+
+Kontrola długości linii napisów i czytelności ma mierzyć to, co widzi
+czytelnik.
+
+### liczbaZeWskazania
+
+Kontrakt niesie numery segmentów wykazem napisów, więc odczyt jest tu,
+a nie w każdej komendzie z osobna.
+## budowa/server/internal/core/adapter_modul_automations_cron.go
+
+Każde pole zapisu cron dopuszcza *, listę a,b, zakres a-b i krok */n albo
+a-b/n. Zapis nieodczytany daje brak terminu, nie termin zgadnięty — Operator
+widzi wtedy w oknie, że cykliczność nie została zrozumiana. Kolumna
+strefa_czasowa harmonogramu jest zapisana i wychodzi kontraktem, lecz nie
+przesuwa wyliczenia: przesunięcie bez bazy stref dawałoby termin fałszywy
+w każdej strefie z czasem letnim.
+## budowa/server/internal/core/adapter_modul_auth_pierwsze_uruchomienie.go
+
+Klient uruchamia okno i pierwsze, co widzi, to rejestracja. Świeża instalka
+nie ma konta nadawczego platformy (mailer.host, mailer.address bez wartości
+domyślnej), więc dopóki założenie bramki wymagało poczty, pierwszego konta
+nie dawało się założyć w ogóle: Załóż konto oddawało internal_error, a
+odmowa odsyłała do okna Konfiguracji, do którego bez konta nie sposób
+wejść. Poczta jest potrzebna do pisania do innych ludzi — do potwierdzania
+ich adresów i do odzyskiwania hasła listem — a nie do postawienia bramki na
+własnym urządzeniu.
+
+Znacznik mówi: konto założono, listu nie było komu nadać, adres pozostaje
+niepotwierdzony. Nie mówi, że adres jest w porządku — dlatego konto zostaje
+w bazie niepotwierdzone i nikt tego stanu nie udaje. Znacznik zdejmuje
+wyłącznie jeden warunek: bramki nie zamyka brak potwierdzenia, którego
+platforma nie miała czym wysłać. Bramkę nadal otwiera hasło i tylko hasło.
+
+Powód, dla którego znacznik leży w sejfie, a nie w bazie: tabela
+potwierdzenie_tozsamosci przyjmuje dwa cele i tylko dwa (CHECK (cel IN
+('weryfikacja', 'odzyskanie'))), a konto_wlasciciela ma jedną kolumnę stanu
+— trzeciego stanu nie ma gdzie zapisać bez zmiany schematu, którego rdzeń
+nie jest w tej chwili właścicielem. Sejf poświadczeń jest tym samym
+magazynem trwałym, w którym leży już sekret kotwicy, i chodzi do niego ten
+sam przedrostek auth: — więc pamięć bramki zostaje w jednym miejscu, a nie
+w dwóch.
+
+zapiszZnacznikBezPoczty: niepowodzenie zapisu jest odmową rejestracji, nie
+ciszą — bramka bez tego wpisu byłaby kontem, którego hasło działa, a bramka
+i tak nie wpuszcza.
+## budowa/server/internal/core/adapter_modul_automations_pozycje.go
+
+Układanie nie jest wykonaniem: żadna z tych czynności nie zmienia stanu
+zlecenia ani go nie posuwa. Stan prowadzi wyłącznie silnik kolejek
+(kolejka_silnik.go); tu rozstrzyga się, które zlecenie jest wcześniej i w
+której kolejce stoi.
+
+bladNiedostepnegoSilnika: kontrakt nie ma kodu domena niewpięta, więc odmowa
+idzie kodem channel_unavailable — jedynym, który mówi nie ma przez co
+wykonać i jest ponawialny: wpięcie silnika czyni żądanie wykonalnym bez
+zmiany treści.
+## budowa/server/internal/core/adapter_modul_automations_cron_zapis.go
+
+Pole nieczytelne nie jest naprawiane domysłem. Odczyt oddaje brak
+rozpoznania, a rachunek terminu oddaje wtedy brak terminu — okno mówi
+Operatorowi, że cykliczność nie została zrozumiana, zamiast pokazać godzinę
+wziętą z niczego.

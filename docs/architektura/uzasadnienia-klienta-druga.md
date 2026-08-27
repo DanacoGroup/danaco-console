@@ -4574,3 +4574,7 @@ brakuje, czytelne bez naciskania czegokolwiek. Szukanie idzie środkiem nazwy, o
 nazwy pozycji są w większości angielskie i złożone, więc szukanie wyłącznie od początku nazwy nie
 trafiłoby przy słowie wpisanym z pamięci ze środka nazwy.
 Pozycja z komendami wymienia je co do nazwy, pozycja bez komend mówi, czego brakuje.
+
+## budowa/klient/src/wejscie/skladniki/baner.ts
+Barwa stanu obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan kształtem — barwa jako jedyna różnica nie wystarcza wymaganiu kontrastu. Głowa z licznikiem rozpada się na trzy części: to, co przed liczbą, sam licznik i to, co po niej — inaczej mechanika musiałaby przepisywać całe zdanie co sekundę, a wtedy czytnik ekranu ogłaszałby je od nowa.
+Odsłona zwłoki dostaje wartość licznika z pomiaru dopiero po odmowie rdzenia, a węzeł musi już wtedy stać.

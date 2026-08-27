@@ -5719,3 +5719,25 @@ Potwierdzenie zatwierdzenia bez opisu używa `potwierdzenie(zdanie, false)`, nie
 `blad(...)`, bo to nie jest odmowa rdzenia ani nieudany odczyt, tylko lokalna walidacja przed
 wysłaniem — treść okna z wynikiem ostatniej czynności ma zostać nietknięta, a `potwierdzenie`
 właśnie tego nie kasuje.
+
+## budowa/klient-poprzedni/src/moduly/developer/zrodlo-warsztatu.ts
+
+Interfejs `ZrodloDeveloper` obsługuje okna wiodące modułu Developer — edytor, drzewo,
+repozytorium i budowanie — a ten warsztat obsługuje rodziny komend należące do zakładek
+Dev Tools, panelu Run & Debug i paska operacji kontekstowych. Rozdział między obu źródłami
+idzie po odbiorcy komend, nie po wielkości pliku: Project Tree nie ma nic wspólnego
+z kontenerami, a jedna umowa na wszystko kazałaby każdemu oknu przyjmować zależność od
+czterdziestu metod, z których używa czterech.
+
+Każda czynność tego źródła oddaje `Wynik`, nie samą treść odpowiedzi: okna mają obowiązkowy
+stan błędu, więc źródło nie połyka odmowy i nie zwraca w jej miejsce pustego wykazu. Pusty
+wykaz kontenerów i odmowa odczytu to dwa różne zdania, a Operator ma prawo wiedzieć, które
+z nich obowiązuje — stąd brak zastępowania odmowy pustą tablicą w całym pliku.
+
+Każda odpowiedź przechodzi przez `sprawdzKsztalt`: rdzeń rozminięty z kontraktem nie ma
+prawa dojść do okna jako wartość niezdefiniowana w środku rysowania widoku, bo to jest ta
+klasa usterki, która ujawnia się dopiero u Operatora.
+
+Komendy tego źródła grupują się tematycznie w warstwę językową Code Editora, historię pliku
+edytora, odczyt okna Build Output, Run & Debug, API Client, Data Console, Containers,
+zależności i bezpieczeństwo oraz operacje kontekstowe i sondę warsztatu.

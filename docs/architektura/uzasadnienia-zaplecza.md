@@ -2515,3 +2515,14 @@ dozwoloną, a dwa głosy tej samej osoby liczone dwukrotnie nie są.
 Kształt głosu zależy od metody, więc kolumny są trzy i wszystkie mogą być
 puste: aprobata wypełnia `aprobaty`, metody rankingowe `ranking`, skala
 punktowa i metoda kwadratowa `punkty_json`.
+## budowa/server/internal/store/migracja_197_roundtable_macierz.sql
+Migracja 197 — macierz decyzyjna wariantów i kryteriów z wagami.
+
+Wynik wariantu (`total`) liczy się przy odczycie z ocen i wag, a nie stoi
+w kolumnie: zmiana wagi jednego kryterium przestawia wynik każdego wariantu
+naraz, więc kolumna wymagałaby przeliczenia całej macierzy przy każdym
+zapisie i rozjeżdżałaby się z ocenami przy pierwszym pominięciu.
+
+Oceny wariantu w kryteriach idą jednym polem JSON, bo są mapą „kryterium →
+ocena" o kształcie zadanym przez kryteria tej macierzy. Tabela wiążąca
+dawałaby ten sam kształt kosztem trzeciego złączenia przy każdym odczycie.

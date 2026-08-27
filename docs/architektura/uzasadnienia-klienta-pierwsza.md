@@ -1654,3 +1654,10 @@ Stanu `odczyt` nie wpisuje tu nikt: wynik oddawany jest dopiero po obu komendach
 więc stan oczekiwania ustawia wołający w `stan-przegladania.ts` przed czekaniem.
 Wartość stoi mimo to w jednym typie z pozostałymi, ponieważ panele czytają jeden
 stan wykazu, a nie dwa niezależne.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/stany-okna.ts
+
+Stan błędu jest rozłączny ze stanem pustki. Okno roli, które po odmowie odczytu
+pokazałoby wyzerowany licznik zamiast błędu, sugerowałoby zatrzymany bieg tam,
+gdzie bieg trwa, a odmowa odczytu i brak pozycji w wykazie są dla Operatora
+dwiema różnymi wiadomościami.

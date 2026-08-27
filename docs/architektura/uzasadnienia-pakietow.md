@@ -3173,3 +3173,12 @@ jedno zapytanie łączące obie tabele przez UNION.
 
 ## budowa/server/internal/dane/tlumaczenie_segmentacja.go
 Segmenty okna zapisywane są zawsze kompletem: UstawSegmentyOkna wymienia cały wykaz okna w jednej transakcji. Scalenie dwóch segmentów przesuwa numery wszystkich następnych, więc zapis punktowy musiałby i tak dotknąć całego wykazu — tylko w kilku osobnych transakcjach, z oknem, w którym numeracja jest podwójna albo dziurawa.
+
+## budowa/server/cmd/danaco-console/uruchomienie/rozgalezienie.go
+Rola hub uruchamia wyłącznie tor interfejsu: nasłuch transportu na porcie
+rdzenia, ze strumieniami procesu pozostawionymi nietkniętymi. Rola agent
+uruchamia wyłącznie tor wykonawczy: żądania kontraktu przychodzą strumieniem
+wejścia, odpowiedzi idą strumieniem wyjścia, żaden port nie jest zajmowany.
+Rola all uruchamia oba tory naraz, z torem interfejsu jako wiodącym. Rola
+spoza tego katalogu nie zatrzymuje procesu, tylko schodzi na zachowanie roli
+all, ponieważ brak rozpoznanego ustawienia ma dawać pracę, nie odmowę.

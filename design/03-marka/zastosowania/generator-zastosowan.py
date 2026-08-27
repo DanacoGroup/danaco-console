@@ -40,11 +40,11 @@ for k in (KAT_SVG, KAT_PNG):
 # W plikach SVG barwy podajemy dosłownie (to barwy własne znaku), obok podany
 # jest odpowiadający żeton systemu — w HTML obowiązuje wyłącznie var(--dn-*).
 TLO_CIEMNE = "#0F0F0F"   # --dn-tlo (ciemny)        = szary-950
-TLO_JASNE = "#F4F4F4"    # --dn-tlo (jasny)         = szary-50
-MEDALION = "#131313"     # --dn-rama                = szary-925
-POWIERZCHNIA_C = "#181818"  # --dn-powierzchnia (c) = szary-900
+TLO_JASNE = "#F3F4F6"    # --dn-tlo (jasny)         = szary-50
+MEDALION = "#111317"     # --dn-rama                = szary-925
+POWIERZCHNIA_C = "#16181D"  # --dn-powierzchnia (c) = szary-900
 INK_C = "#ECECEC"        # --dn-tekst (ciemny)      = szary-100
-INK_J = "#181818"        # --dn-tekst (jasny)       = szary-900
+INK_J = "#16181D"        # --dn-tekst (jasny)       = szary-900
 TEKST2_C = "#9E9E9E"     # --dn-tekst-2 (ciemny)    = szary-400
 TEKST2_J = "#616161"     # --dn-tekst-2 (jasny)     = szary-600
 TEKST3 = "#7C7C7C"       # --dn-tekst-3 (oba)       = szary-500

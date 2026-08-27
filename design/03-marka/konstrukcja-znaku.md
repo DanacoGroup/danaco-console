@@ -575,10 +575,10 @@ w logotypie — na osi wersalika**, bo w wierszu wersalikowym oś optyczna jest
 
 | Plik | Groty | Kropka sygnetu | Logotyp | Kropka po CONSOLE |
 |---|---|---|---|---|
-| `logo-poziomy.svg` | `#181818` | `#3B6FE0` | `#181818` | `#3B6FE0` |
-| `logo-poziomy-na-ciemnym.svg` | `#F4F4F4` | `#5C8CEC` | `#F4F4F4` | `#3B6FE0` |
-| `logo-poziomy-mono-czarny.svg` | `#181818` | `#181818` | `#181818` | `#3B6FE0` |
-| `logo-poziomy-mono-bialy.svg` | `#F4F4F4` | `#F4F4F4` | `#F4F4F4` | `#3B6FE0` |
+| `logo-poziomy.svg` | `#16181D` | `#3B6FE0` | `#16181D` | `#3B6FE0` |
+| `logo-poziomy-na-ciemnym.svg` | `#F3F4F6` | `#5C8CEC` | `#F3F4F6` | `#3B6FE0` |
+| `logo-poziomy-mono-czarny.svg` | `#16181D` | `#16181D` | `#16181D` | `#3B6FE0` |
+| `logo-poziomy-mono-bialy.svg` | `#F3F4F6` | `#F3F4F6` | `#F3F4F6` | `#3B6FE0` |
 
 **Uwaga wdrożeniowa.** W plikach mono kropka po `CONSOLE` pozostaje w barwie
 sygnałowej. Przy zamówieniu reprodukcji **jednokolorowej** (jeden kolor farby,
@@ -1072,7 +1072,7 @@ Rysunek: **`konstrukcja/rys-12-znak-w-interfejsie.svg`**
 ### 14.1 Pasek górny — 48 px [REGUŁA]
 
 Pasek górny (`--dn-wym-pasek` = 48 px) jest **zawsze atramentowy**
-(`--dn-rama` = `szary-925` #131313) w obu motywach. Godło stoi na nim
+(`--dn-rama` = `szary-925` #111317) w obu motywach. Godło stoi na nim
 w **wariancie na ciemnym tle**.
 
 | Parametr | Wartość | Wyprowadzenie |
@@ -1166,20 +1166,20 @@ Odczytane z plików. Kolumna „żeton" wskazuje odpowiednik w `zetony.css` —
 
 | Plik | Groty | Żeton | Kropka | Żeton |
 |---|---|---|---|---|
-| `sygnet.svg` | **#181818** | `--dn-szary-900` | **#3B6FE0** | `--dn-sygnal-500` |
-| `sygnet-na-ciemnym.svg` | **#F4F4F4** | `--dn-szary-50` | **#5C8CEC** | `--dn-sygnal-400` |
-| `sygnet-mono-czarny.svg` | #181818 | `--dn-szary-900` | #181818 | `--dn-szary-900` |
-| `sygnet-mono-bialy.svg` | #F4F4F4 | `--dn-szary-50` | #F4F4F4 | `--dn-szary-50` |
-| `sygnet-uproszczony.svg` | #181818 | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
-| `sygnet-uproszczony-na-ciemnym.svg` | #F4F4F4 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
-| `logo-poziomy.svg` | #181818 | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
-| `logo-poziomy-na-ciemnym.svg` | #F4F4F4 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
-| `logo-pionowy.svg` | #181818 | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
-| `logo-pionowy-na-ciemnym.svg` | #F4F4F4 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
-| `favicon.svg` | #181818 / **#F4F4F4** (media query) | — | #3B6FE0 / **#5C8CEC** | — |
-| `ikona-aplikacji.svg` | #F4F4F4 na kaflu **#131313** | `--dn-rama` | #5C8CEC | `--dn-sygnal-400` |
+| `sygnet.svg` | **#16181D** | `--dn-szary-900` | **#3B6FE0** | `--dn-sygnal-500` |
+| `sygnet-na-ciemnym.svg` | **#F3F4F6** | `--dn-szary-50` | **#5C8CEC** | `--dn-sygnal-400` |
+| `sygnet-mono-czarny.svg` | #16181D | `--dn-szary-900` | #16181D | `--dn-szary-900` |
+| `sygnet-mono-bialy.svg` | #F3F4F6 | `--dn-szary-50` | #F3F4F6 | `--dn-szary-50` |
+| `sygnet-uproszczony.svg` | #16181D | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
+| `sygnet-uproszczony-na-ciemnym.svg` | #F3F4F6 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
+| `logo-poziomy.svg` | #16181D | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
+| `logo-poziomy-na-ciemnym.svg` | #F3F4F6 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
+| `logo-pionowy.svg` | #16181D | `--dn-szary-900` | #3B6FE0 | `--dn-sygnal-500` |
+| `logo-pionowy-na-ciemnym.svg` | #F3F4F6 | `--dn-szary-50` | #5C8CEC | `--dn-sygnal-400` |
+| `favicon.svg` | #16181D / **#F3F4F6** (media query) | — | #3B6FE0 / **#5C8CEC** | — |
+| `ikona-aplikacji.svg` | #F3F4F6 na kaflu **#111317** | `--dn-rama` | #5C8CEC | `--dn-sygnal-400` |
 
-**Uwaga [ZAMKNIĘTE]:** atrament znaku na ciemnym tle to **`#F4F4F4`
+**Uwaga [ZAMKNIĘTE]:** atrament znaku na ciemnym tle to **`#F3F4F6`
 (`szary-50`)**, a nie `#ECECEC` (`szary-100`, żeton tekstu w motywie ciemnym).
 Znak jest o jeden stopień jaśniejszy od tekstu — celowo: godło ma stać przed
 treścią, nie zlewać się z nią. Wyjątkiem jest **pasek górny**, gdzie godło
@@ -1201,11 +1201,11 @@ Pomiar według **WCAG 2.1 · współczynnik luminancji względnej**. Dla znaku
 graficznego obowiązuje próg **3 : 1** (kryterium 1.4.11 — kontrast elementów
 nietekstowych). Kolumna „ocena": ✓ spełnia, ✗ nie spełnia.
 
-#### 15.3.1 Warianty na jasnym tle — groty `#181818`
+#### 15.3.1 Warianty na jasnym tle — groty `#16181D`
 
 | Tło | Żeton | Kontrast grotów | Ocena | Kontrast kropki `#3B6FE0` | Ocena |
 |---|---|---:|:-:|---:|:-:|
-| `#F4F4F4` | `--dn-tlo` (jasny) | **16,14 : 1** | ✓ | **4,21 : 1** | ✓ |
+| `#F3F4F6` | `--dn-tlo` (jasny) | **16,14 : 1** | ✓ | **4,21 : 1** | ✓ |
 | `#FFFFFF` | `--dn-powierzchnia` (jasny) | **17,76 : 1** | ✓ | **4,63 : 1** | ✓ |
 | `#FAFAFA` | `--dn-panel` (jasny) | **17,01 : 1** | ✓ | 4,44 : 1 | ✓ |
 | `#ECECEC` | `--dn-powierzchnia-2` (jasny) | **15,03 : 1** | ✓ | **3,92 : 1** | ✓ |
@@ -1220,14 +1220,14 @@ dopuszczalnym dla wariantu z kolorową kropką.** Na tłach ciemniejszych kropka
 spada poniżej 3 : 1 — wtedy obowiązuje **wariant mono** albo **wariant na
 ciemnym tle**.
 
-#### 15.3.2 Warianty na ciemnym tle — groty `#F4F4F4`
+#### 15.3.2 Warianty na ciemnym tle — groty `#F3F4F6`
 
 | Tło | Żeton | Kontrast grotów | Ocena | Kontrast kropki `#5C8CEC` | Ocena |
 |---|---|---:|:-:|---:|:-:|
 | `#0A0A0A` | `--dn-szary-1000` | **18,00 : 1** | ✓ | 6,53 : 1 | ✓ |
 | `#0F0F0F` | `--dn-tlo` (ciemny) | **17,43 : 1** | ✓ | **5,86 : 1** | ✓ |
-| `#131313` | `--dn-rama` | **16,89 : 1** | ✓ | **5,68 : 1** | ✓ |
-| `#181818` | `--dn-powierzchnia` (ciemny) | **16,14 : 1** | ✓ | **5,43 : 1** | ✓ |
+| `#111317` | `--dn-rama` | **16,89 : 1** | ✓ | **5,68 : 1** | ✓ |
+| `#16181D` | `--dn-powierzchnia` (ciemny) | **16,14 : 1** | ✓ | **5,43 : 1** | ✓ |
 | `#212121` | `--dn-panel` (ciemny) | **14,64 : 1** | ✓ | 4,92 : 1 | ✓ |
 | `#2A2A2A` | `--dn-szary-800` | **13,05 : 1** | ✓ | **4,39 : 1** | ✓ |
 | `#3A3A3A` | `--dn-szary-750` | 10,34 : 1 | ✓ | 3,48 : 1 | ✓ |
@@ -1243,11 +1243,11 @@ dopuszczalnym dla wariantu z kolorową kropką.** Powyżej — wariant mono bia�
 
 | Tło | Wariant znaku | Kontrast | Ocena | Uwaga |
 |---|---|---:|:-:|---|
-| `#3B6FE0` (`sygnal-500`) | mono biały `#F4F4F4` | 3,49 : 1 | ✓ | dopuszczalne wyłącznie w ekspozycji ≥ 48 px |
-| `#3B6FE0` | mono czarny `#181818` | **3,84 : 1** | ✓ | preferowany na sygnale |
+| `#3B6FE0` (`sygnal-500`) | mono biały `#F3F4F6` | 3,49 : 1 | ✓ | dopuszczalne wyłącznie w ekspozycji ≥ 48 px |
+| `#3B6FE0` | mono czarny `#16181D` | **3,84 : 1** | ✓ | preferowany na sygnale |
 | `#3B6FE0` | pełny (kropka `#3B6FE0`) | — | **✗** | **kropka znika w tle — zakazane** |
 | `#2457C9` (`sygnal-600`) | mono biały `#FFFFFF` | 6,40 : 1 | ✓ | — |
-| `#173A8C` (`sygnal-800`) | na ciemnym `#F4F4F4` | 9,45 : 1 | ✓ | kropka `#5C8CEC` → 1,80 : 1 ✗ → **użyj mono białego** |
+| `#173A8C` (`sygnal-800`) | na ciemnym `#F3F4F6` | 9,45 : 1 | ✓ | kropka `#5C8CEC` → 1,80 : 1 ✗ → **użyj mono białego** |
 | `#EDF3FE` (`sygnal-100`) | pełny na jasnym | 15,94 / 4,15 | ✓ | — |
 
 **Reguła bezwzględna [REGUŁA]: znaku w wariancie pełnym nie umieszcza się na
@@ -1455,7 +1455,7 @@ i **dlaczego to szkodzi**. Wszystkie mają żywe odpowiedniki w prototypie
 
 | Parametr | Wartość |
 |---|---|
-| przestrzeń źródłowa | **sRGB** — `#181818` atrament, `#3B6FE0` kropka |
+| przestrzeń źródłowa | **sRGB** — `#16181D` atrament, `#3B6FE0` kropka |
 | konwersja do CMYK | **wyłącznie z profilu ICC nośnika** dostarczonego przez drukarnię (renderowanie perceptual dla zdjęć, **relative colorimetric dla znaku**) |
 | nadruk (overprint) | **wyłączony** dla obu elementów |
 | zalewkowanie (trapping) | **niepotrzebne** — elementy się nie stykają (prześwit 16 j.) |
@@ -1487,7 +1487,7 @@ Nie podajemy numeru, bo:
 4. **zapisz wybrany numer w tym dokumencie** — do tego czasu pozostaje
    „do ustalenia z drukarnią".
 
-Atrament `#181818` w druku jednokolorowym: **czerń procesowa 100 %**, nie
+Atrament `#16181D` w druku jednokolorowym: **czerń procesowa 100 %**, nie
 czerń kompozytowa (bogata czerń rozjeżdża się przy małych elementach).
 
 ### 17.3 Grawer laserowy i mechaniczny
@@ -1681,7 +1681,7 @@ Do wydruku i powieszenia obok stanowiska:
    PRÓG WARIANTU    24 px  ·  dolna granica systemu 16 px
    MIN. DRUK        sygnet 9 mm · lockup 28 mm · grawer 15 mm · haft 40 mm
    KONTRAST         groty ≥ 3:1 · KROPKA ≥ 3:1 (to jest ten trudny)
-   BARWY            #181818 / #3B6FE0   ·   #F4F4F4 / #5C8CEC
+   BARWY            #16181D / #3B6FE0   ·   #F3F4F6 / #5C8CEC
 ```
 
 ---

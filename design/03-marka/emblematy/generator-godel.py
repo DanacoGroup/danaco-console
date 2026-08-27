@@ -33,13 +33,13 @@ for k in (KAT_SVG, KAT_SVG_MARKA, KAT_PNG, KAT_IKONA, KAT_FAVICON):
     os.makedirs(k, exist_ok=True)
 
 # ── barwy (odpowiedniki żetonów; w plikach SVG barwy własne marki podajemy dosłownie) ──
-INK_JASNY = "#181818"   # --dn-tekst (motyw jasny)  = szary-900
+INK_JASNY = "#16181D"   # --dn-tekst (motyw jasny)  = szary-900
 INK_CIEMNY = "#ECECEC"  # --dn-tekst (motyw ciemny) = szary-100
 DOT_JASNY = "#3B6FE0"   # --dn-kropka (motyw jasny)  = sygnal-500
 DOT_CIEMNY = "#5C8CEC"  # --dn-kropka (motyw ciemny) = sygnal-400
 SYGNAL_JASNY = "#2457C9"   # --dn-sygnal (motyw jasny)  = sygnal-600
 SYGNAL_CIEMNY = "#8FB2F5"  # --dn-sygnal (motyw ciemny) = sygnal-300
-GRUNT = "#131313"       # --dn-rama = szary-925 — grunt kafla i ikony aplikacji
+GRUNT = "#111317"       # --dn-rama = szary-925 — grunt kafla i ikony aplikacji
 
 # ── ZATWIERDZONA geometria sygnetu „Delegacja" (siatka 96×96) ───────────────
 GROT_1 = "M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"
@@ -410,7 +410,7 @@ MANIFEST = """{
   "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "any",
   "background_color": "#0F0F0F",
-  "theme_color": "#131313",
+  "theme_color": "#111317",
   "categories": ["productivity", "developer", "business"],
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
@@ -449,11 +449,11 @@ SNIPPET = """<!-- ════════════════════�
 
 <!-- 5. Barwa paska systemowego — rama kokpitu w motywie ciemnym,
         papier roboczy w motywie jasnym -->
-<meta name="theme-color" content="#F4F4F4" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131313" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F4F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
 
 <!-- 6. Kafel Windows (opcjonalnie — bez pliku browserconfig.xml) -->
-<meta name="msapplication-TileColor" content="#131313">
+<meta name="msapplication-TileColor" content="#111317">
 <meta name="msapplication-TileImage" content="/icon-192.png">
 
 <!-- 7. Nazwa aplikacji w trybie samodzielnym -->

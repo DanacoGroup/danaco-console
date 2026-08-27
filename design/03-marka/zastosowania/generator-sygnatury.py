@@ -125,12 +125,12 @@ def zbuduj(wariant, tlo, tlo_strony, tekst, tekst2, tekst3, obrys, sygnal, ink, 
 
 
 def main():
-    # wersja jasna — tło białe, atrament #181818
-    zbuduj("jasna", tlo="#FFFFFF", tlo_strony="#F4F4F4", tekst="#181818",
+    # wersja jasna — tło białe, atrament #16181D
+    zbuduj("jasna", tlo="#FFFFFF", tlo_strony="#F3F4F6", tekst="#16181D",
            tekst2="#616161", tekst3="#7C7C7C", obrys="#E3E3E3",
            sygnal="#2457C9", ink=gz.INK_J, dot=gz.DOT_J)
-    # wersja ciemna — tło #131313 (rama kokpitu), biel źródłowa
-    zbuduj("ciemna", tlo="#131313", tlo_strony="#0F0F0F", tekst="#ECECEC",
+    # wersja ciemna — tło #111317 (rama kokpitu), biel źródłowa
+    zbuduj("ciemna", tlo="#111317", tlo_strony="#0F0F0F", tekst="#ECECEC",
            tekst2="#9E9E9E", tekst3="#7C7C7C", obrys="#2A2A2A",
            sygnal="#8FB2F5", ink=gz.INK_C, dot=gz.DOT_C)
     # znaki pomocnicze do ręcznego wklejenia

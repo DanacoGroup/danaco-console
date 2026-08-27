@@ -616,18 +616,18 @@ W dokumentach HTML i CSS obowiązuje bezwzględnie `var(--dn-*)`.
 
 | Rola w znaku | Wartość | Żeton systemu | Występuje w |
 |---|---|---|---|
-| Atrament — groty i typografia na jasnym tle | `#181818` | `--dn-szary-900` | wszystkie warianty podstawowe i `mono-czarny` |
+| Atrament — groty i typografia na jasnym tle | `#16181D` | `--dn-szary-900` | wszystkie warianty podstawowe i `mono-czarny` |
 | Atrament jasny — groty i typografia na ciemnym tle | `#ECECEC` | `--dn-szary-100` | warianty `-na-ciemnym` wytworzone w tym opracowaniu |
-| Biel źródłowa — j.w. w plikach źródłowych | `#F4F4F4` | `--dn-szary-50` | 6 plików przeniesionych z `zasoby/marka/logo/` |
+| Biel źródłowa — j.w. w plikach źródłowych | `#F3F4F6` | `--dn-szary-50` | 6 plików przeniesionych z `zasoby/marka/logo/` |
 | Kropka sygnału na jasnym tle | `#3B6FE0` | `--dn-sygnal-500` | warianty podstawowe |
 | Kropka sygnału na ciemnym tle | `#5C8CEC` | `--dn-sygnal-400` | warianty `-na-ciemnym` |
-| Pole medalionu atramentowego | `#131313` | `--dn-szary-925` | `sygnet-w-kole`, `sygnet-w-kwadracie` |
-| Pole medalionu odwróconego | `#F4F4F4` | `--dn-szary-50` | `*-w-kole-na-ciemnym`, `*-w-kwadracie-na-ciemnym` |
+| Pole medalionu atramentowego | `#111317` | `--dn-szary-925` | `sygnet-w-kole`, `sygnet-w-kwadracie` |
+| Pole medalionu odwróconego | `#F3F4F6` | `--dn-szary-50` | `*-w-kole-na-ciemnym`, `*-w-kwadracie-na-ciemnym` |
 | Deskryptor na jasnym tle | `#616161` | `--dn-szary-600` | konfiguracja F |
 | Deskryptor na ciemnym tle | `#9E9E9E` | `--dn-szary-400` | konfiguracja F |
 
 **Czerń absolutna (RGB 0, 0, 0) nie występuje w żadnym pliku repozytorium.**
-Wariant „mono czarny" używa atramentu `#181818` — czerni systemu, nie czerni absolutnej.
+Wariant „mono czarny" używa atramentu `#16181D` — czerni systemu, nie czerni absolutnej.
 
 ### 9.1 Kontrast kropki względem tła
 
@@ -637,15 +637,15 @@ względnej). Próg dla elementów graficznych i komponentów interfejsu wynosi
 
 | Powierzchnia | Element znaku | Kontrast | Ocena |
 |---|---|---:|---|
-| `#F4F4F4` papier roboczy | kropka `#3B6FE0` | 4,21 : 1 | element graficzny — **spełnia** |
+| `#F3F4F6` papier roboczy | kropka `#3B6FE0` | 4,21 : 1 | element graficzny — **spełnia** |
 | `#FFFFFF` powierzchnia karty | kropka `#3B6FE0` | 4,63 : 1 | **spełnia** |
 | `#0F0F0F` podłoże motywu ciemnego | kropka `#5C8CEC` | 5,86 : 1 | **spełnia** |
-| `#131313` rama i pole medalionu | kropka `#5C8CEC` | 5,68 : 1 | **spełnia** |
-| `#F4F4F4` papier roboczy | atrament `#181818` | 16,14 : 1 | **spełnia z zapasem** |
+| `#111317` rama i pole medalionu | kropka `#5C8CEC` | 5,68 : 1 | **spełnia** |
+| `#F3F4F6` papier roboczy | atrament `#16181D` | 16,14 : 1 | **spełnia z zapasem** |
 | `#0F0F0F` podłoże motywu ciemnego | atrament jasny `#ECECEC` | 16,23 : 1 | **spełnia z zapasem** |
-| `#0F0F0F` podłoże motywu ciemnego | biel źródłowa `#F4F4F4` | 17,43 : 1 | **spełnia z zapasem** |
-| `#131313` pole medalionu | atrament jasny `#ECECEC` | 15,73 : 1 | **spełnia z zapasem** |
-| `#F4F4F4` papier roboczy | deskryptor `#616161` | 5,63 : 1 | tekst — **spełnia** |
+| `#0F0F0F` podłoże motywu ciemnego | biel źródłowa `#F3F4F6` | 17,43 : 1 | **spełnia z zapasem** |
+| `#111317` pole medalionu | atrament jasny `#ECECEC` | 15,73 : 1 | **spełnia z zapasem** |
+| `#F3F4F6` papier roboczy | deskryptor `#616161` | 5,63 : 1 | tekst — **spełnia** |
 | `#0F0F0F` podłoże motywu ciemnego | deskryptor `#9E9E9E` | 7,15 : 1 | tekst — **spełnia** |
 
 Kropka nigdy nie niesie informacji **samym kolorem** — w znaku jest formą
@@ -695,7 +695,7 @@ zamykającą kompozycję, nie stanem.
 | 11 | **Rekonstrukcja logotypu z zainstalowanego kroju** | pliki zawierają krzywe; skład tekstowy da inne światła i inne rozstrzelenie |
 | 12 | **Zamiana `CONSOLE` na nazwę modułu lub środowiska** | logotyp identyfikuje produkt, nie jego część |
 | 13 | **Emoji, ikona zastępcza lub tekst „logo" w miejscu znaku** | zakaz systemowy (kontrakt systemu projektowego) |
-| 14 | **Czerń absolutna (RGB 0, 0, 0) w jakimkolwiek pliku znaku** | zakaz systemowy — atramentem jest `#181818` |
+| 14 | **Czerń absolutna (RGB 0, 0, 0) w jakimkolwiek pliku znaku** | zakaz systemowy — atramentem jest `#16181D` |
 
 ---
 
@@ -774,11 +774,11 @@ nie rozstrzygała formy. Każde jest odwracalne i każde ma uzasadnienie.
 ciemnego.
 
 **Stan zastany.** Sześć plików przeniesionych z `zasoby/marka/logo/` używa
-`#F4F4F4` (`--dn-szary-50`). Pliki te przeniesiono **bajt w bajt**, ponieważ
+`#F3F4F6` (`--dn-szary-50`). Pliki te przeniesiono **bajt w bajt**, ponieważ
 są wersją zatwierdzoną wymienioną w kontrakcie systemu projektowego — podmiana wartości bez
 decyzji Właściciela byłaby zmianą znaku.
 
-**Skutek.** Różnica jasności między `#F4F4F4` a `#ECECEC` to 3 punkty w skali
+**Skutek.** Różnica jasności między `#F3F4F6` a `#ECECEC` to 3 punkty w skali
 0–255 — niedostrzegalna gołym okiem, bez wpływu na kontrast (oba przekraczają
 13 : 1 na podłożu `#0F0F0F`). **Rekomendacja:** przy najbliższej rewizji plików
 źródłowych ujednolicić do `#ECECEC`, tak aby znak i tekst interfejsu miały
@@ -787,7 +787,7 @@ w motywie ciemnym tę samą wartość.
 ### Medalion jako pole własne znaku, nie jako powtórzenie tła
 
 **Rozstrzygnięcie.** `sygnet-w-kole.svg` i `sygnet-w-kwadracie.svg` mają pole
-**atramentowe** (`#131313`), mimo że nazwa nie zawiera przyrostka
+**atramentowe** (`#111317`), mimo że nazwa nie zawiera przyrostka
 `-na-ciemnym`. Warianty z przyrostkiem `-na-ciemnym` mają pole **jasne**.
 
 **Uzasadnienie.** Medalion istnieje po to, by dać znakowi **własne pole** tam,

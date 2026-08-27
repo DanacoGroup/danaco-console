@@ -626,10 +626,10 @@ i osobny wariant pliku `sygnet-do-grawerowania.svg` (kropka jako obrys, nie plam
 
 | Wariant | Groty / typografia | Kropka | Plik (przyrostek) |
 |---|---|---|---|
-| **podstawowy** | `#181818` atrament | `#3B6FE0` sygnał | *(brak przyrostka)* |
-| **na ciemnym** | `#F4F4F4` biel źródłowa | `#5C8CEC` sygnał jasny | `-na-ciemnym` |
-| **mono czarny** | `#181818` | `#181818` — **kropka też atramentem** | `-mono-czarny` |
-| **mono biały** | `#F4F4F4` | `#F4F4F4` — **kropka też bielą** | `-mono-bialy` |
+| **podstawowy** | `#16181D` atrament | `#3B6FE0` sygnał | *(brak przyrostka)* |
+| **na ciemnym** | `#F3F4F6` biel źródłowa | `#5C8CEC` sygnał jasny | `-na-ciemnym` |
+| **mono czarny** | `#16181D` | `#16181D` — **kropka też atramentem** | `-mono-czarny` |
+| **mono biały** | `#F3F4F6` | `#F3F4F6` — **kropka też bielą** | `-mono-bialy` |
 
 **Mono nie znaczy „czarno-biały" — znaczy „jednobarwny".** W wariancie mono
 kropka przyjmuje barwę grotów. To jedyny dozwolony przypadek, w którym kropka
@@ -670,10 +670,10 @@ traci barwę sygnału.
 
 | Konfiguracja | Opis | Zastosowanie |
 |---|---|---|
-| **sygnet w kole** | sygnet na kole `#131313`, oś optyczna x = 50,75 | awatar systemu, medalion nadawcy |
-| **sygnet w kwadracie** | sygnet na kaflu `#131313` z promieniem 224/1024 | ikona aplikacji, kafel skrótu |
+| **sygnet w kole** | sygnet na kole `#111317`, oś optyczna x = 50,75 | awatar systemu, medalion nadawcy |
+| **sygnet w kwadracie** | sygnet na kaflu `#111317` z promieniem 224/1024 | ikona aplikacji, kafel skrótu |
 
-Obie konfiguracje pochodne używają **pola medalionu `#131313`** (`--dn-szary-925`)
+Obie konfiguracje pochodne używają **pola medalionu `#111317`** (`--dn-szary-925`)
 — tej samej barwy, co rama kokpitu. Znak w medalionie zawsze stoi na atramencie,
 niezależnie od motywu strony.
 
@@ -698,12 +698,12 @@ Zapotrzebowanie na układ nieprzewidziany zgłasza się na adres z rozdz. 17.
 
 | Rola | Wartość | Żeton systemu | Występuje w |
 |---|---|---|---|
-| **Atrament** — groty i typografia na jasnym | `#181818` | `--dn-szary-900` | warianty podstawowe, `mono-czarny` |
+| **Atrament** — groty i typografia na jasnym | `#16181D` | `--dn-szary-900` | warianty podstawowe, `mono-czarny` |
 | **Atrament jasny** — na ciemnym | `#ECECEC` | `--dn-szary-100` | warianty wytworzone `-na-ciemnym` |
-| **Biel źródłowa** — na ciemnym | `#F4F4F4` | `--dn-szary-50` | 6 plików źródłowych `-na-ciemnym` |
+| **Biel źródłowa** — na ciemnym | `#F3F4F6` | `--dn-szary-50` | 6 plików źródłowych `-na-ciemnym` |
 | **Kropka sygnału** | `#3B6FE0` | `--dn-sygnal-500` | wszystkie warianty na jasnym |
 | **Kropka sygnału jasna** | `#5C8CEC` | `--dn-sygnal-400` | wszystkie warianty na ciemnym |
-| **Pole medalionu** | `#131313` | `--dn-szary-925` | koło, kafel, ikona aplikacji |
+| **Pole medalionu** | `#111317` | `--dn-szary-925` | koło, kafel, ikona aplikacji |
 | **Deskryptor na jasnym** | `#616161` | `--dn-szary-600` | linia `AI Operating Environment` |
 | **Deskryptor na ciemnym** | `#9E9E9E` | `--dn-szary-400` | jw. |
 
@@ -717,7 +717,7 @@ przesłanym drukarni, w podglądzie systemu operacyjnego, w grawerce.
 W dokumentach HTML i CSS obowiązuje bezwzględnie `var(--dn-*)`. [NIENEGOCJOWALNE]
 
 **Czerń absolutna (RGB 0, 0, 0) nie występuje w żadnym pliku repozytorium.**
-Atramentem systemu jest `#181818`. [NIENEGOCJOWALNE]
+Atramentem systemu jest `#16181D`. [NIENEGOCJOWALNE]
 
 ### 8.3 Zestawienie dozwolonych par tło / znak z pomiarem kontrastu
 
@@ -725,25 +725,25 @@ Pomiary metodą WCAG 2.1. Próg dla elementów graficznych: **3 : 1**.
 
 | # | Tło | Element znaku | Wariant pliku | Kontrast | Ocena |
 |---:|---|---|---|---:|---|
-| 1 | `#F4F4F4` tło jasne | atrament `#181818` | podstawowy | **16,14 : 1** | zapas |
-| 2 | `#F4F4F4` tło jasne | kropka `#3B6FE0` | podstawowy | **4,21 : 1** | spełnia |
-| 3 | `#FFFFFF` powierzchnia | atrament `#181818` | podstawowy | **17,76 : 1** | zapas |
+| 1 | `#F3F4F6` tło jasne | atrament `#16181D` | podstawowy | **16,14 : 1** | zapas |
+| 2 | `#F3F4F6` tło jasne | kropka `#3B6FE0` | podstawowy | **4,21 : 1** | spełnia |
+| 3 | `#FFFFFF` powierzchnia | atrament `#16181D` | podstawowy | **17,76 : 1** | zapas |
 | 4 | `#FFFFFF` powierzchnia | kropka `#3B6FE0` | podstawowy | **4,63 : 1** | spełnia |
-| 5 | `#ECECEC` powierzchnia-2 | atrament `#181818` | podstawowy | **14,96 : 1** | zapas |
-| 6 | `#0F0F0F` tło ciemne | biel źródłowa `#F4F4F4` | na ciemnym | **17,43 : 1** | zapas |
+| 5 | `#ECECEC` powierzchnia-2 | atrament `#16181D` | podstawowy | **14,96 : 1** | zapas |
+| 6 | `#0F0F0F` tło ciemne | biel źródłowa `#F3F4F6` | na ciemnym | **17,43 : 1** | zapas |
 | 7 | `#0F0F0F` tło ciemne | kropka `#5C8CEC` | na ciemnym | **5,86 : 1** | spełnia |
-| 8 | `#131313` rama / medalion | atrament jasny `#ECECEC` | na ciemnym | **15,58 : 1** | zapas |
-| 9 | `#131313` rama / medalion | kropka `#5C8CEC` | na ciemnym | **5,68 : 1** | spełnia |
-| 10 | `#181818` powierzchnia ciemna | atrament jasny `#ECECEC` | na ciemnym | **15,03 : 1** | zapas |
-| 11 | `#F4F4F4` tło jasne | deskryptor `#616161` | podstawowy | **5,63 : 1** | tekst AA |
+| 8 | `#111317` rama / medalion | atrament jasny `#ECECEC` | na ciemnym | **15,58 : 1** | zapas |
+| 9 | `#111317` rama / medalion | kropka `#5C8CEC` | na ciemnym | **5,68 : 1** | spełnia |
+| 10 | `#16181D` powierzchnia ciemna | atrament jasny `#ECECEC` | na ciemnym | **15,03 : 1** | zapas |
+| 11 | `#F3F4F6` tło jasne | deskryptor `#616161` | podstawowy | **5,63 : 1** | tekst AA |
 | 12 | `#0F0F0F` tło ciemne | deskryptor `#9E9E9E` | na ciemnym | **7,15 : 1** | tekst AA |
 
 ### 8.4 Pary zabronione [NIENEGOCJOWALNE]
 
 | Tło | Wariant | Kontrast | Dlaczego zabronione |
 |---|---|---:|---|
-| `#0F0F0F` | podstawowy (atrament `#181818`) | 1,08 : 1 | znak znika |
-| `#F4F4F4` | na ciemnym (biel `#F4F4F4`) | 1,00 : 1 | znak znika całkowicie |
+| `#0F0F0F` | podstawowy (atrament `#16181D`) | 1,08 : 1 | znak znika |
+| `#F3F4F6` | na ciemnym (biel `#F3F4F6`) | 1,00 : 1 | znak znika całkowicie |
 | `#3B6FE0` (sygnał) | dowolny z kropką sygnału | — | kropka znika w tle |
 | `#7C7C7C` (szary-500) | dowolny | < 3 : 1 dla kropki | tło pośrednie — patrz rozdz. 9.3 |
 
@@ -762,11 +762,11 @@ w kadrze pozostał jeden sygnał.
 
 | Typ tła | Zakres jasności | Wariant znaku | Uwaga |
 |---|---|---|---|
-| **jasne jednolite** | L ≥ 70 (`#F4F4F4`, `#FFFFFF`, `#ECECEC`, `#FAFAFA`) | podstawowy | układ referencyjny |
-| **ciemne jednolite** | L ≤ 25 (`#0F0F0F`, `#131313`, `#181818`, `#212121`) | na ciemnym | układ referencyjny |
+| **jasne jednolite** | L ≥ 70 (`#F3F4F6`, `#FFFFFF`, `#ECECEC`, `#FAFAFA`) | podstawowy | układ referencyjny |
+| **ciemne jednolite** | L ≤ 25 (`#0F0F0F`, `#111317`, `#16181D`, `#212121`) | na ciemnym | układ referencyjny |
 | **zdjęcie przyciemnione** | po przyciemnieniu L ≤ 25 na całym polu ochronnym | na ciemnym | wymaga warstwy przyciemniającej |
 | **zdjęcie rozjaśnione** | po rozjaśnieniu L ≥ 70 na całym polu ochronnym | podstawowy | rzadziej stosowane |
-| **medalion na dowolnym tle** | pole `#131313` pod znakiem | na ciemnym | rozwiązanie awaryjne — zawsze poprawne |
+| **medalion na dowolnym tle** | pole `#111317` pod znakiem | na ciemnym | rozwiązanie awaryjne — zawsze poprawne |
 
 ### 9.2 Zdjęcie jako tło — procedura [REGUŁA]
 
@@ -796,7 +796,7 @@ znakiem daje różny kontrast w różnych punktach kropki (naruszenie 10.13).
 
 ### 9.4 Znak na tle marki (rama kokpitu)
 
-W pasku górnym aplikacji znak stoi na **`#131313`** (`--dn-rama`) **w obu
+W pasku górnym aplikacji znak stoi na **`#111317`** (`--dn-rama`) **w obu
 motywach**. Pasek górny jest jedynym elementem interfejsu, który nie przełącza
 się z motywem — i dlatego znak w pasku zawsze jest w wariancie `-na-ciemnym`,
 także wtedy, gdy strona jest w motywie jasnym.
@@ -1039,7 +1039,7 @@ Nie zastępują się wzajemnie.
 
 **`favicon.svg` jest jedynym plikiem znaku, który reaguje na motyw systemu.**
 Zawiera regułę `@media (prefers-color-scheme: dark)` przełączającą barwy
-z `#181818` / `#3B6FE0` na `#F4F4F4` / `#5C8CEC`. To wyjątek uzasadniony
+z `#16181D` / `#3B6FE0` na `#F3F4F6` / `#5C8CEC`. To wyjątek uzasadniony
 technicznie: karta przeglądarki nie ma tła, na którym można byłoby wybrać wariant.
 
 ### 12.2 Ikona aplikacji
@@ -1049,8 +1049,8 @@ technicznie: karta przeglądarki nie ma tła, na którym można byłoby wybrać 
 | `ikona-aplikacji.svg` | 1024 × 1024 | **224** (21,9 %) | 6,6133 | translate(194,6 · 194,6) |
 | `ikona-maskowalna.svg` | 1024 × 1024 | **0** (kadr pełny) | 5,5467 | translate(245,8 · 245,8) |
 
-Pole ikony: `#131313` (`--dn-szary-925`) — barwa ramy kokpitu.
-Znak: biel źródłowa `#F4F4F4`, kropka `#5C8CEC`.
+Pole ikony: `#111317` (`--dn-szary-925`) — barwa ramy kokpitu.
+Znak: biel źródłowa `#F3F4F6`, kropka `#5C8CEC`.
 
 ### 12.3 Siatka bezpieczna ikony maskowalnej
 
@@ -1208,7 +1208,7 @@ slate/niebieskiego ani ciepłego beżu. „Odcienie bieli i czerni" dosłownie.
 |---|---|---|
 | `--dn-szary-0` | `#FFFFFF` | powierzchnia pod znakiem (karta) |
 | `--dn-szary-25` | `#FAFAFA` | tło dopuszczone |
-| `--dn-szary-50` | `#F4F4F4` | tło jasne · **biel źródłowa znaku** |
+| `--dn-szary-50` | `#F3F4F6` | tło jasne · **biel źródłowa znaku** |
 | `--dn-szary-100` | `#ECECEC` | powierzchnia-2 · **atrament jasny znaku** |
 | `--dn-szary-150` | `#E3E3E3` | obrys |
 | `--dn-szary-200` | `#D7D7D7` | — |
@@ -1220,8 +1220,8 @@ slate/niebieskiego ani ciepłego beżu. „Odcienie bieli i czerni" dosłownie.
 | `--dn-szary-750` | `#3A3A3A` | obrys mocny (ciemny) |
 | `--dn-szary-800` | `#2A2A2A` | obrys (ciemny) |
 | `--dn-szary-850` | `#212121` | panel ciemny |
-| `--dn-szary-900` | `#181818` | **atrament znaku** |
-| `--dn-szary-925` | `#131313` | **rama kokpitu · pole medalionu** |
+| `--dn-szary-900` | `#16181D` | **atrament znaku** |
+| `--dn-szary-925` | `#111317` | **rama kokpitu · pole medalionu** |
 | `--dn-szary-950` | `#0F0F0F` | tło ciemne |
 | `--dn-szary-1000` | `#0A0A0A` | kraniec skali |
 
@@ -1267,7 +1267,7 @@ z rodziną sygnału — to jedno z rozstrzygnięć kierunku.
 
 | Żeton | Definicja | Zakres |
 |---|---|---|
-| `--dn-grad-atrament` | `linear-gradient(180deg, #2A2A2A, #131313)` | awatary bez zdjęcia |
+| `--dn-grad-atrament` | `linear-gradient(180deg, #2A2A2A, #111317)` | awatary bez zdjęcia |
 | `--dn-grad-sygnal` | `linear-gradient(135deg, #5C8CEC, #2457C9)` | rdzeń AOD, grafiki brandowe |
 
 **Gradient nigdy nie jest tłem przycisku, karty ani sekcji — i nigdy nie wypełnia
@@ -1281,21 +1281,21 @@ znaku.** [NIENEGOCJOWALNE]
 
 | Miejsce | Konfiguracja | Wielkość | Tło | Wariant pliku |
 |---|---|---:|---|---|
-| **Pasek górny** (48 px) | sygnet + logotyp | 28 px | `#131313` rama | `-na-ciemnym` |
+| **Pasek górny** (48 px) | sygnet + logotyp | 28 px | `#111317` rama | `-na-ciemnym` |
 | **Okno startowe** (ładowanie) | lockup pionowy | 160 px szer. | tło motywu | wg motywu |
 | **Okno rejestracji i logowania** | lockup pionowy | 140 px szer. | powierzchnia karty | wg motywu |
 | **Strona główna** — karty środowisk | emblemat środowiska | 24 px | powierzchnia karty | `currentColor` |
 | **Karta sesji** | kropka tętna | 6 px | pas kart | `--dn-kropka` |
-| **Okno komunikacji** — medalion systemu | sygnet w kole | 28 px | `#131313` | `-na-ciemnym` |
+| **Okno komunikacji** — medalion systemu | sygnet w kole | 28 px | `#111317` | `-na-ciemnym` |
 | **Always On Display** | sygnet (rdzeń awatara) | 96 px | tło AOD | `-na-ciemnym` |
 | **Modal „O programie"** | lockup poziomy | 180 px szer. | powierzchnia modala | wg motywu |
 | **Karta przeglądarki** | sygnet uproszczony | 16 px | — | `favicon.svg` |
-| **Ekran domowy / pulpit** | sygnet w kaflu | 192–1024 px | `#131313` | `ikona-aplikacji.svg` |
+| **Ekran domowy / pulpit** | sygnet w kaflu | 192–1024 px | `#111317` | `ikona-aplikacji.svg` |
 
 ### 15.2 Pasek górny — układ referencyjny
 
 ```
-   ┌─ pasek górny 48 px · tło #131313 w OBU motywach ───────────────────────┐
+   ┌─ pasek górny 48 px · tło #111317 w OBU motywach ───────────────────────┐
    │  ◄16►  ▛▚▛▚●  ◄12►  DANACO CONSOLE  ◄12►│  … szukaj …      ☾  ⚙  ◄16►│
    │        └ 28 px ┘     └ Space Grotesk ┘   │                             │
    └────────────────────────────────────────────────────────────────────────┘
@@ -1309,7 +1309,7 @@ znaku.** [NIENEGOCJOWALNE]
 | pole ochronne pionowe | 10 px góra/dół | ½ pola (wyjątek 5.5) |
 | prześwit znak → logotyp | 12 px | `--dn-od-3` |
 | margines lewy | 16 px | `--dn-od-4` |
-| tło | `#131313` | `--dn-rama` |
+| tło | `#111317` | `--dn-rama` |
 
 ### 15.3 Okno startowe i okno logowania
 
@@ -1330,7 +1330,7 @@ siebie. Kropka znaku jest statyczna, kropka wskaźnika pulsuje.
 ### 15.4 Always On Display
 
 W AOD sygnet pełni funkcję **rdzenia awatara**. Konfiguracja: sygnet w kole,
-96 px, wariant `-na-ciemnym`, na polu `#131313`.
+96 px, wariant `-na-ciemnym`, na polu `#111317`.
 
 Wokół rdzenia rysowany jest pierścień postępu w barwie sygnału. Przy
 `prefers-reduced-motion` pierścień jest **statyczny** — nie pulsuje.
@@ -1347,9 +1347,9 @@ bo przełącza się powierzchnia, na której stoi.
 ```
    motyw jasny                    motyw ciemny
    ┌──────────────────────┐       ┌──────────────────────┐
-   │▓ pasek #131313  ▛▚● ▓│       │▓ pasek #131313  ▛▚● ▓│  ← znak -na-ciemnym
+   │▓ pasek #111317  ▛▚● ▓│       │▓ pasek #111317  ▛▚● ▓│  ← znak -na-ciemnym
    ├──────────────────────┤       ├──────────────────────┤     BEZ ZMIANY
-   │  treść #F4F4F4       │       │  treść #0F0F0F       │
+   │  treść #F3F4F6       │       │  treść #0F0F0F       │
    │       ▛▚●            │       │       ▛▚●            │  ← znak przełącza się
    └──────────────────────┘       └──────────────────────┘
 ```
@@ -1553,7 +1553,7 @@ do ½ wartości** (10 px przy znaku 28 px); w poziomie obowiązuje pełne ½X.
 **Uzasadnienie.** Pasek ma stałą wysokość 48 px (`--dn-wym-pasek`). Pełne pole
 ochronne (½X przy znaku 28 px = 14 px góra i dół) wymagałoby paska 56 px, co
 złamałoby żeton wymiaru. Redukcja pionowa jest bezpieczna, bo pasek jest jednolitą
-powierzchnią `#131313` — w polu ochronnym i tak nic nie stoi.
+powierzchnią `#111317` — w polu ochronnym i tak nic nie stoi.
 
 ### Katalog naruszeń liczy 16 pozycji
 
@@ -1602,7 +1602,7 @@ wariantów jednego znaku.
   POLE OCHRONNE  ≥ ½X = 22 j. ze wszystkich stron
   MIN. EKRAN     24 px (pełny) · 16 px (uproszczony)
   MIN. DRUK      9 mm (pełny sygnet)
-  ATRAMENT       #181818 (jasne tło) · #F4F4F4 / #ECECEC (ciemne tło)
+  ATRAMENT       #16181D (jasne tło) · #F3F4F6 / #ECECEC (ciemne tło)
   KROPKA         #3B6FE0 (jasne tło) · #5C8CEC (ciemne tło)
   KROJE          DANACO — Space Grotesk 700 · CONSOLE — IBM Plex Mono 500 / 0,30 em
   ZAKAZ          czerń absolutna · gradient · cień · obrys · obrót · deformacja

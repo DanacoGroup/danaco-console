@@ -1,25 +1,7 @@
-// Odpowiedzialność pliku: `developer.contextual.op` — operacje kontekstowe
-// paska pływającego Code Editora: generuj, refaktoryzuj, wyjaśnij, udokumentuj,
-// napraw, napisz test, zoptymalizuj, przepisz na inny język, zmień nazwę symbolu.
-//
-// ── Skąd bierze się kontekst ────────────────────────────────────────────────
-// Wartością tej komendy nie jest samo wywołanie modelu — to potrafi okno rozmowy.
-// Wartością jest KONTEKST, którego okno rozmowy nie ma: treść pliku, na którym
-// Operator stoi, zaznaczenie, na które wskazał, pliki, które sam dołączył,
-// i stan repozytorium. Rdzeń składa je w jedno polecenie, zamiast kazać
-// Operatorowi wklejać je ręcznie.
-//
-// ── Zmiana nazwy symbolu nie idzie do modelu ────────────────────────────────
-// Rodzaj `renameSymbol` jest w kontrakcie razem z operacjami modelu, lecz nie
-// jest operacją modelu: zmiana nazwy symbolu w całym repozytorium jest czynnością
-// ROZSTRZYGALNĄ i robi ją serwer języka, który zna graf odwołań. Skierowanie jej
-// do modelu dałoby wynik prawdopodobny zamiast poprawnego — i to w czynności,
-// której poprawność da się sprawdzić.
-//
-// ── Wynik jest propozycją, nie zapisem ──────────────────────────────────────
-// Odpowiedź niesie treść i wykaz zmian, a nie zapisany plik. Tak stanowi
-// opracowanie: „wynik jako różnica do akceptacji”. Model, który sam nadpisuje
-// plik, odbiera Operatorowi tę jedną chwilę, w której da się jego pracę odrzucić.
+// developer.contextual.op obsługuje operacje kontekstowe paska pływającego
+// Code Editora. Rdzeń sam składa kontekst polecenia z treści pliku,
+// zaznaczenia i dołączonych plików. Odpowiedź niesie treść i wykaz zmian,
+// nie zapisany plik.
 package core
 
 import (
@@ -38,7 +20,8 @@ import (
 // wciągnięty w całości wypchnąłby z niego zaznaczenie, o które chodziło.
 const najwiekszyKontekstPliku = 60 * 1024
 
-// OperacjaKontekstowa obsługuje `developer.contextual.op`.
+// OperacjaKontekstowa obsługuje developer.contextual.op: kieruje rodzaj
+// renameSymbol do serwera języka, pozostałe rodzaje — do kanału modelu.
 func (a *adapterDevelopera) OperacjaKontekstowa(ctx context.Context,
 	z shared.DeveloperContextualOpRequest) (shared.DeveloperContextualOpResponse, error) {
 
@@ -102,8 +85,6 @@ func (a *adapterDevelopera) OperacjaKontekstowa(ctx context.Context,
 
 	odpowiedz := shared.DeveloperContextualOpResponse{Result: tresc}
 	// Operacje przepisujące kod oddają dodatkowo zmianę do przyjęcia w edytorze.
-	// Operacje wyjaśniające oddają samą treść — wyjaśnienie nie jest zmianą
-	// pliku i wstawianie go do kodu byłoby szkodą.
 	if operacjaPrzepisujaca(z.Operation) && z.Path != nil {
 		if zmiana, jest := zmianaZOdpowiedzi(z, tresc); jest {
 			odpowiedz.Edits = []shared.DeveloperTextEdit{zmiana}
@@ -112,7 +93,8 @@ func (a *adapterDevelopera) OperacjaKontekstowa(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// znanaOperacjaKontekstowa sprawdza rodzaj wobec słownika kontraktu.
+// znanaOperacjaKontekstowa sprawdza rodzaj wobec słownika kontraktu obsłużonych
+// operacji, z pominięciem rodzaju renameSymbol.
 func znanaOperacjaKontekstowa(rodzaj shared.ContextualOpKind) bool {
 	switch rodzaj {
 	case shared.ContextualOpKindGenerate, shared.ContextualOpKindRefactor,
@@ -125,7 +107,8 @@ func znanaOperacjaKontekstowa(rodzaj shared.ContextualOpKind) bool {
 	}
 }
 
-// operacjaPrzepisujaca mówi, czy wynik operacji jest nową treścią kodu.
+// operacjaPrzepisujaca mówi, czy wynik operacji jest nową treścią kodu, a nie
+// wyjaśnieniem, którego nie wolno wstawiać do pliku.
 func operacjaPrzepisujaca(rodzaj shared.ContextualOpKind) bool {
 	switch rodzaj {
 	case shared.ContextualOpKindGenerate, shared.ContextualOpKindRefactor,
@@ -138,11 +121,8 @@ func operacjaPrzepisujaca(rodzaj shared.ContextualOpKind) bool {
 }
 
 // polecenieOperacjiKontekstowej składa treść wysyłaną do kanału modelu.
-//
-// Polecenie ma trzy części w stałej kolejności: czego się oczekuje, na czym się
-// pracuje, co jest kontekstem. Kolejność jest stała, bo model czyta polecenie
-// od początku — zadanie postawione po tysiącu wierszy kodu bywa przeczytane
-// jako komentarz do tego kodu.
+// Polecenie ma trzy części w stałej kolejności: czego się oczekuje, na czym
+// się pracuje, co jest kontekstem.
 func (a *adapterDevelopera) polecenieOperacjiKontekstowej(oknoKod string,
 	z shared.DeveloperContextualOpRequest) (string, error) {
 
@@ -171,9 +151,7 @@ func (a *adapterDevelopera) polecenieOperacjiKontekstowej(oknoKod string,
 	for _, dodatkowy := range z.ContextPaths {
 		tresc, sciezka, err := a.trescPlikuKontekstu(oknoKod, dodatkowy)
 		if err != nil {
-			// Plik kontekstu, którego nie da się odczytać, nie zatrzymuje
-			// operacji: Operator dołączył go jako pomoc, a nie jako przedmiot
-			// zadania. Cisza byłaby jednak nieuczciwa, więc mówimy o pominięciu.
+			// Plik kontekstu, którego nie da się odczytać, nie zatrzymuje operacji.
 			zapis.WriteString("Plik kontekstu " + dodatkowy + " pominięto: " +
 				err.Error() + "\n\n")
 			continue
@@ -187,7 +165,8 @@ func (a *adapterDevelopera) polecenieOperacjiKontekstowej(oknoKod string,
 	return zapis.String(), nil
 }
 
-// zadanieOperacji nazywa oczekiwanie właściwe rodzajowi operacji.
+// zadanieOperacji nazywa oczekiwanie właściwe rodzajowi operacji i dołącza
+// wskazanie Operatora, gdy żądanie je niesie.
 func zadanieOperacji(z shared.DeveloperContextualOpRequest) string {
 	wskazowka := ""
 	if z.Instruction != nil && strings.TrimSpace(*z.Instruction) != "" {
@@ -227,7 +206,8 @@ func zadanieOperacji(z shared.DeveloperContextualOpRequest) string {
 	}
 }
 
-// trescPlikuKontekstu czyta plik obszaru okna wraz z przycięciem do granicy.
+// trescPlikuKontekstu czyta plik obszaru okna wraz z przycięciem do granicy
+// kontekstu i oddaje treść razem ze ścieżką, pod którą plik znaleziono.
 func (a *adapterDevelopera) trescPlikuKontekstu(oknoKod, wskazanie string) (string, string, error) {
 	_, sciezka, err := a.plikOkna(oknoKod, wskazanie)
 	if err != nil {
@@ -245,13 +225,9 @@ func (a *adapterDevelopera) trescPlikuKontekstu(oknoKod, wskazanie string) (stri
 	return string(bajty), sciezka, nil
 }
 
-// zmianaZOdpowiedzi składa zmianę tekstu z wyniku operacji.
-//
-// Zakres zmiany zależy od tego, na czym Operator pracował: przy zaznaczeniu jest
-// nim zaznaczenie, przy całym pliku — cały plik. Kontrakt niesie zakres
-// wierszami, więc zakres zaznaczenia odnajduje się w treści pliku; zaznaczenia,
-// którego w pliku nie ma (bo bufor nie jest zapisany), nie umiemy umiejscowić
-// i wtedy zmiana nie powstaje — sama treść wyniku i tak wraca w polu `result`.
+// zmianaZOdpowiedzi składa zmianę tekstu z wyniku operacji. Zakres zmiany
+// zależy od tego, na czym Operator pracował: przy zaznaczeniu jest nim
+// zaznaczenie, przy całym pliku — cały plik.
 func zmianaZOdpowiedzi(z shared.DeveloperContextualOpRequest,
 	tresc string) (shared.DeveloperTextEdit, bool) {
 
@@ -292,12 +268,9 @@ func zdejmijOgrodzenieKodu(tresc string) string {
 	return strings.TrimRight(pole, "\n")
 }
 
-// zmianaNazwyPrzezSerwerJezyka kieruje `renameSymbol` do serwera języka.
-//
-// Kontrakt operacji kontekstowej nie niesie położenia kursora, a serwer języka
-// go wymaga: symbol rozpoznaje się po miejscu, nie po nazwie. Miejsce ustala się
-// z zaznaczenia — Operator zaznacza symbol, którego nazwę zmienia — przez
-// odnalezienie go w treści pliku.
+// zmianaNazwyPrzezSerwerJezyka kieruje renameSymbol do serwera języka. Kontrakt
+// operacji kontekstowej nie niesie położenia kursora, więc miejsce symbolu
+// ustala się odnalezieniem zaznaczenia w treści pliku.
 func (a *adapterDevelopera) zmianaNazwyPrzezSerwerJezyka(ctx context.Context,
 	z shared.DeveloperContextualOpRequest) (shared.DeveloperContextualOpResponse, error) {
 
@@ -385,7 +358,8 @@ func osobneSlowo(wiersz string, poczatek, dlugosc int) bool {
 	return koniec >= len(wiersz) || !znakNazwy(rune(wiersz[koniec]))
 }
 
-// znakNazwy mówi, czy znak może stać wewnątrz nazwy symbolu.
+// znakNazwy mówi, czy znak może stać wewnątrz nazwy symbolu: litera łacińska,
+// cyfra albo podkreślenie, zgodnie z typowym alfabetem identyfikatorów.
 func znakNazwy(znak rune) bool {
 	return znak == '_' || (znak >= 'a' && znak <= 'z') || (znak >= 'A' && znak <= 'Z') ||
 		(znak >= '0' && znak <= '9')

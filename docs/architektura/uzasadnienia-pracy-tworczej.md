@@ -1058,3 +1058,92 @@ do użycia obrazu.
 Adres źródła w sieci zapisuje się jako pochodzenie, ale bajtów rdzeń stąd nie
 pobiera: pobranie treści z sieci ma w rdzeniu własną, osobną drogę — druga
 droga pobrania byłaby drugą prawdą o tym, co i skąd weszło do dokumentu.
+
+## budowa/server/internal/core/adapter_modul_studio_blokady_dane.go
+
+Kontrakt danych odcinka jest własny i węższy niż `dane.RepozytoriumStudia`,
+ponieważ `dane/studio.go` deklaruje to repozytorium w całości, a dopisanie tam
+metod byłoby wejściem w plik cudzego odcinka. Rdzeń bierze więc dokładnie te
+metody, których używa, rzutowaniem dwuwartościowym: rdzeń złożony z
+repozytorium bez tych tabel pracuje dalej w pozostałych czynnościach Studia, a
+brak nazywa się wprost, zamiast wywracać proces przy montażu. Ten sam wzór
+trzyma odcinek postaci dokumentu i wyposażenie Terminala.
+
+Rozstrzygnięcie, czyja ręka wykonuje czynność, stoi na jednym pytaniu: czy
+komendę zawołał operator, czy wykonawca. Kontrakt daje dwie drogi odpowiedzi:
+fakt gniazda (`transport.Tozsamosc.Narzedzia()` — serwer narzędzi modelu
+przedstawia się przy nawiązaniu gniazda, czego okno operatora nigdy nie robi
+i czego model nie układa sobie sam w treści żądania) oraz pole żądania
+(`author`, `agentId`, `agentName`, `subagentId` — jedyna droga, która mówi,
+który z wielu wykonawców pracuje, skoro operator zakłada w module Agents
+dowolnie wielu agentów, a gniazdo ich nie rozróżnia).
+
+Zasada łącząca obie drogi: wykonawcą jest ten, kogo wskazuje szerszy z dwóch
+sygnałów. Czynność jest czynnością operatora wtedy i tylko wtedy, gdy milczą
+oba sygnały — gniazdo nie jest serwerem narzędzi i żądanie nie podpisuje się
+wykonawcą; wystarczy jeden sygnał, żeby czynność była czynnością wykonawcy.
+Samo pole żądania osobno byłoby zaporą, którą model omija pominięciem pola —
+to usterka do naprawy, nie zamierzone ograniczenie. Samo gniazdo osobno nie
+rozdziela dwóch agentów pracujących naraz, więc podświetlenie zmian
+wykonawcy pokazywałoby obu jako jednego.
+
+Tożsamość agenta (kod, nazwa, wersja, podagent) bierze się wyłącznie z pola
+żądania, bo gniazdo jej nie niesie; wchodzi także wtedy, gdy rodzaj wyszedł
+z gniazda, ponieważ podpis mówi wtedy, który z wielu wykonawców to był.
+Zmiana bez wskazanego agenta zostaje poprawna, ponieważ dokumenty i wiersze
+sprzed dobudowy tego pola nie mają go, a odmowa przy nich karałaby za wiek
+wiersza.
+
+Granica zasady: `Rodzaj=narzedzia` jedzie parametrem nawiązania gniazda, a
+tożsamość połączenia jest opisem, nie zaporą. Opis wzięty tu pod uwagę może
+czynność wyłącznie zawęzić w prawach (uczynić ją czynnością wykonawcy), nigdy
+jej praw nie rozszerza. Zatajenie tego parametru nie otwiera niczego, dopóki
+żądanie podpisuje się wykonawcą, ani wtedy, gdy oba sygnały milczą — wtedy
+rdzeń nie ma po czym rozpoznać wykonawcy, co jest brakiem wiedzy rdzenia, nie
+luką tej zasady. Wiązanie tożsamości serwera narzędzi przy jego starcie leży
+poza tym plikiem.
+
+Kontekst wywołania, nie parametr sygnatury, niesie rozpoznanego wykonawcę do
+czynności postaci dokumentu, ponieważ takich czynności jest trzydzieści osiem
+i wszystkie kończą jedną drogą. Przełożenie podpisu przez trzydzieści osiem
+sygnatur znaczyłoby trzydzieści osiem miejsc do pominięcia przez pomyłkę, a
+każde pominięcie zmieniałoby zapis na podpisany „nienazwanym" — tym samym
+rachunkiem, którym zapora blokad stanęła w rejestrze, a nie w
+obsługiwaczach. Kontekst obejmuje też komendy, których jeszcze nikt nie
+napisał.
+
+Zakres żądania liczy się w znakach, nie w bajtach, ponieważ kontrakt nazywa
+początek fragmentu w znakach, a cięcie po bajtach rozcinałoby polskie litery
+dwubajtowe: blokada założona w tekście z „ą" chroniłaby wtedy pół znaku, a
+bilans mówiłby o zakresie, którego w treści nie ma. Zakres pusty jest
+punktem wstawienia i styka się z blokadą, w której środku leży, ponieważ
+wpis w środek zablokowanego cytatu jest zmianą tego cytatu, choć nie usuwa
+ani jednej litery; punkt na samej krawędzi blokady nie styka się, ponieważ
+dopisanie za zablokowanym fragmentem go nie rusza.
+
+Odmowa blokady nazywa fragment i blokadę zamiast milczeć, ponieważ cicha
+bezczynność byłaby najgorszą możliwą odpowiedzią — operator myślałby, że
+model wykonał polecenie.
+
+## adapter_modul_studio_pola.go
+
+Pole ma swój wiersz w tabeli `pole_dokumentu_studio` z kolumną `nieswieze`,
+odpowiadającą na pytanie, które pola wymagają odświeżenia. Wartość zapisana
+w wierszu jest wartością z chwili odświeżenia, a nie z chwili odczytu — inaczej
+dokument wydany do PDF-u i dokument otwarty w edytorze pokazywałyby dwie różne
+wartości tej samej daty.
+
+Numer strony liczy się tym samym silnikiem łamania, co podgląd wydruku,
+funkcją `aparatStronyAkapitow`, i tymi samymi nastawami sekcji. Osobny rachunek
+dałby numer strony inny niż widziany w podglądzie, co jest gorsze niż brak
+numeru.
+
+Pole obliczane liczy rachunek wkompilowany w tym pliku: liczby, cztery
+działania, nawiasy oraz działania na kolumnie tabeli (SUMA, ŚREDNIA, MIN,
+MAKS, LICZBA). Wyrażenia, którego rachunek nie zna, nie liczy w przybliżeniu —
+odmowa nazywa miejsce i znak, na którym rachunek się zatrzymał.
+
+Rdzeń nie trzyma imienia i nazwiska autora dokumentu, tylko rodzaj autora
+ostatniej wersji: Operator albo model. Pole autora oddaje więc to, co rdzeń
+wie na pewno, i nazywa wprost to, czego nie wie, zamiast wpisywać nazwę
+Operatora, której rdzeń nie ma.

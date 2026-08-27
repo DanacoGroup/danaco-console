@@ -236,7 +236,7 @@ func zakresWartosciDesignu(z shared.DesignChartRenderRequest) (float64, float64)
 		najwieksza = 0
 	}
 	if najwieksza == najmniejsza {
-		// Wartości równe dałyby zakres zerowy i dzielenie przez zero — rozszerzamy go o jedność.
+		// Wartości równe dałyby zakres zerowy i dzielenie przez zero — rozszerza się go o jedność.
 		najwieksza = najmniejsza + 1
 	}
 	return najmniejsza, najwieksza

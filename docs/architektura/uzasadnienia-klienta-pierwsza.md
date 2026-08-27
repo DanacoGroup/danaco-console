@@ -4709,3 +4709,16 @@ znaczyłby, że ten sam stan okna nazywa się gdzie indziej inaczej.
 
 Między złożeniem okna a pierwszym odświeżeniem Operator widzi zdanie, które i tak
 zobaczyłby przy pustym wyniku.
+
+## budowa/klient-poprzedni/src/moduly/agents/stan-okna.ts
+
+Rdzeń odpowiada na każde wywołanie, również odmową, a odmowa jest pokazywana
+w oknie, w którym została wywołana, a nie wyłącznie w dzienniku przeglądarki.
+
+Stan nie zastępuje treści, tylko ją przesłania. Gdy okno wraca do fazy `gotowe`,
+wcześniejsza treść jest nietknięta, dzięki czemu nieudane odświeżenie nie kasuje
+tego, co stało już na ekranie.
+
+Zestaw faz i znakowanie powłoki są wspólne dla wszystkich modułów i mieszkają
+w `komponenty/faza-okna`. W module Agents zostaje wyłącznie to, czym różni się on
+od pozostałych: własne klasy `da-stan*` oraz chowanie treści na czas ładowania.

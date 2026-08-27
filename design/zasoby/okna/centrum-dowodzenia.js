@@ -400,6 +400,17 @@
     return plotno.measureText(tekst).width + m.wyscielka;
   }
 
+  /* Szyna stoi nieruchomo, a jej miara jest potrzebna przy każdym najechaniu —
+     wystarczy zmierzyć ją raz i odświeżyć, gdy okno zmieni rozmiar. */
+  var lewaZapamietana = null;
+  function strefaLewa() {
+    if (lewaZapamietana !== null) { return lewaZapamietana; }
+    var szyna = document.querySelector('.dn-szyna-nawigacji');
+    var r = szyna ? szyna.getBoundingClientRect() : null;
+    lewaZapamietana = (r && r.width) ? Math.max(MARGINES, r.right + MARGINES) : MARGINES;
+    return lewaZapamietana;
+  }
+
   function zdejmij(el) {
     if (!el) { return; }
     el.style.removeProperty('--cd-dymek-x');
@@ -422,12 +433,7 @@
     /* Lewa strefa bezpieczna omija pionową szynę nawigacji: dymek pierwszego
        przycisku wstążki dosuwał się do krawędzi okna i wchodził na szynę,
        która stoi wyżej w układzie. Granicę odsuwamy za prawą krawędź szyny. */
-    var lewaStrefa = MARGINES;
-    var szyna = document.querySelector('.dn-szyna-nawigacji');
-    if (szyna) {
-      var rsz = szyna.getBoundingClientRect();
-      if (rsz.width) { lewaStrefa = Math.max(MARGINES, rsz.right + MARGINES); }
-    }
+    var lewaStrefa = strefaLewa();
     var lewaGranica = lewaStrefa + polowa;
     var prawaGranica = window.innerWidth - MARGINES - polowa;
     if (prawaGranica > lewaGranica) {
@@ -480,6 +486,7 @@
     if (ostatni) { ustaw(ostatni); }
   }, true);
   window.addEventListener('resize', function () {
+    lewaZapamietana = null;
     if (ostatni) { ustaw(ostatni); }
   });
 })();

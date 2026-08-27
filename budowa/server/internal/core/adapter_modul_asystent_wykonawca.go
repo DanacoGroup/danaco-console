@@ -212,7 +212,7 @@ func (a *adapterAsystenta) trescPolecenia(ctx context.Context, kodZlecenia strin
 		return ""
 	}
 	// WpisyZlecenia oddaje wpisy od najnowszego — polecenie jest najstarsze,
-	// więc idziemy od końca listy.
+	// stąd odczyt idzie od końca.
 	for i := len(wpisy) - 1; i >= 0; i-- {
 		if wpisy[i].Rodzaj == string(shared.AssistantActivityKindCommand) {
 			if tresc := strings.TrimSpace(wpisy[i].Tresc); tresc != "" {

@@ -1,16 +1,6 @@
-// Moduł Library — wgranie, wykaz, podgląd i wyszukiwanie pliku repozytorium
-// wiedzy. Wersje mają własny plik (`adapter_modul_library_wersje.go`), kolekcje
-// i etykiety swoje (`adapter_modul_library_kolekcje.go`,
-// `adapter_modul_library_uchwyty.go` — tam też stoi port `Biblioteka`
-// i `zarejestrujBiblioteke`). Typ adaptera i konstruktor stoją tutaj, bo metody
-// rozłożone po tych plikach wiszą na jednym `*adapterBiblioteki`.
-//
-// `library.file.search` dopasowuje frazę do nazwy pliku albo do jego treści —
-// ta druga przez indeks pełnotekstowy FTS5 (`dane/biblioteka_indeks_tresci.go`),
-// zasilany przy każdym zapisie treści (`adapter_modul_library_indeks.go`).
-// Bajty leżą poza bazą (`tresc_odwolanie`), indeks jest ich odtwarzalnym
-// wyciągiem tekstowym; dopasowanie jest trafieniem w słowo, nie w znaczenie.
-// `library.file.list` zawęża wykaz po nazwie i nie szuka w dokumentach.
+// Moduł Library obsługuje wgranie, wykaz, podgląd i wyszukiwanie pliku
+// repozytorium wiedzy; typ adaptera i konstruktor stoją tutaj, metody wersji,
+// kolekcji i etykiet leżą w plikach sąsiednich.
 package core
 
 import (
@@ -46,23 +36,14 @@ const (
 	przedrostekSugestiiBiblioteki      = "sug-"
 )
 
-// adapterBiblioteki wypełnia część portu Biblioteka. Zależności są dwie:
-// wspólne repozytorium modułu, rozłożone po stronie danych na kilka plików wedle
-// odpowiedzialności, ale niosące jeden typ, oraz magazyn treści na dysku
-// (`adapter_modul_library_magazyn.go`) — baza trzyma wyłącznie odwołanie do
-// treści, więc same bajty muszą mieć gdzie leżeć.
+// adapterBiblioteki wypełnia część portu Biblioteka: łączy repozytorium
+// modułu z magazynem treści na dysku, bo baza trzyma wyłącznie odwołanie do
+// bajtów, nie same bajty.
 type adapterBiblioteki struct {
 	repozytorium dane.RepozytoriumBiblioteki
 	magazyn      *magazynTresciBiblioteki
-	// Uruchamiacz, rozstrzygacz i katalog roboczy są trójką arsenału: jedyną
-	// drogą, którą rdzeń woła binarium spoza siebie
-	// (`zewnetrzne.Wolaj`). Moduł używa jej dokładnie w jednym miejscu — pomiar
-	// czasu trwania nagrania przy odczycie metadanych osadzonych
-	// (`adapter_modul_library_technika.go`). Brak trójki nie wyłącza modułu:
-	// pole czasu trwania po prostu nie wchodzi do odpowiedzi.
-	// Kanały modelu zasilają klasyfikację wsadową
-	// (`adapter_modul_library_sugestie.go`). Ten sam rejestr, którym jedzie okno
-	// rozmowy — drugiego silnika modelu w rdzeniu nie ma.
+	// Uruchamiacz, rozstrzygacz i katalog to trójka arsenału; kanały zasilają
+	// klasyfikację wsadową.
 	kanaly       *models.Rejestr
 	uruchamiacz  session.Uruchamiacz
 	rozstrzygacz *konfig.Rozstrzygacz
@@ -79,16 +60,8 @@ func (a *adapterBiblioteki) ZNarzedziami(uruchamiacz session.Uruchamiacz,
 }
 
 // nowyAdapterBiblioteki wiąże adapter z repozytorium modułu i wpina magazyn
-// treści oparty o katalog danych rdzenia — tak samo, jak `nowyAdapterKont`
-// wpina sejf poświadczeń (`handlers_konta_adapter.go`). Bez magazynu plik wgrany
-// samym `contentBase64` nie ma odwołania i podgląd go odmawia.
-//
-// Katalog jest tu domyślny (`konfiguracja.KatalogDanychDomyslny`);
-// obowiązujący — przestawiony przełącznikiem
-// `-dane` albo zmienną `DANACO_KATALOG_DANYCH` — zna wyłącznie montaż
-// (`Montaz.Konfiguracja.KatalogDanych`) i podaje go przez `ZKatalogiemDanych`
-// przy składaniu portu (`montaz_porty.go`). Wartość domyślna stoi tu dla
-// wywołania bez montażu, żeby konstruktor nigdy nie oddał adaptera bez magazynu.
+// treści na katalogu domyślnym, żeby konstruktor nigdy nie oddał adaptera bez
+// magazynu.
 func nowyAdapterBiblioteki(repozytorium dane.RepozytoriumBiblioteki) *adapterBiblioteki {
 	return &adapterBiblioteki{
 		repozytorium: repozytorium,
@@ -97,15 +70,8 @@ func nowyAdapterBiblioteki(repozytorium dane.RepozytoriumBiblioteki) *adapterBib
 }
 
 // ZKatalogiemDanych przestawia magazyn treści na katalog danych wskazany
-// konfiguracją procesu. Wołane przez montaż, który jako jedyny zna rzeczywisty
-// katalog; bez wywołania magazyn stoi na katalogu domyślnym.
-//
-// Tu wypada też sprzątanie magazynu (`adapter_modul_library_sprzatanie.go`): to
-// jedyna chwila startu rdzenia, w której moduł zna już swój prawdziwy katalog
-// danych i jeszcze nie obsługuje żadnej komendy — tak samo sprząta kosz sesji
-// (`trwalosc_kosza.go`). Sprzątanie idzie synchronicznie: obchód katalogu jest
-// tani wobec odtworzenia stanu, a rdzeń przyjmujący wgrania w trakcie
-// przemiatania widziałby wykaz żywych odwołań sprzed nich.
+// konfiguracją procesu i sprząta magazyn synchronicznie, zanim moduł zacznie
+// obsługiwać komendy.
 func (a *adapterBiblioteki) ZKatalogiemDanych(katalog string) *adapterBiblioteki {
 	if katalog != "" {
 		a.magazyn = nowyMagazynTresciBiblioteki(katalog)
@@ -114,19 +80,9 @@ func (a *adapterBiblioteki) ZKatalogiemDanych(katalog string) *adapterBiblioteki
 	return a
 }
 
-// Wgraj obsługuje `library.file.upload`. Schemat trzyma treść poza bazą
-// (`tresc_odwolanie`), więc wgranie kończy się odwołaniem do treści, nigdy
-// treścią w wierszu.
-//
-// Obie drogi wgrania prowadzą do jednego magazynu: treść przysłana base64
-// i treść wciągnięta spod `sourcePath` lądują w magazynie treści rdzenia
-// (`adapter_modul_library_tresc.go`, `adapter_modul_library_magazyn.go`),
-// a odwołaniem jest ścieżka bloba. Ścieżka źródłowa zostaje przy pliku
-// w kolumnie `sciezka` — mówi, skąd plik przyszedł, i nie jest wskaźnikiem na
-// treść żywą, którą ktoś z zewnątrz mógłby nadpisać po wgraniu.
-//
-// Nieudany zapis treści odmawia całego wgrania: wiersz pliku powstaje dopiero po
-// utrwaleniu bajtów, inaczej wykaz pokazywałby plik, za którym nie ma nic.
+// Wgraj obsługuje `library.file.upload`: zapisuje treść w magazynie i wiersz
+// pliku odwołaniem do niej, dopiero po udanym utrwaleniu bajtów, żeby wykaz
+// nie pokazywał pliku bez treści.
 func (a *adapterBiblioteki) Wgraj(ctx context.Context,
 	z shared.LibraryFileUploadRequest) (shared.LibraryFileUploadResponse, error) {
 
@@ -149,8 +105,7 @@ func (a *adapterBiblioteki) Wgraj(ctx context.Context,
 		return shared.LibraryFileUploadResponse{}, bladBiblioteki(err)
 	}
 
-	// Pierwsza wersja towarzyszy wgraniu — Versioning Panel ma się od czego
-	// zacząć, zamiast pokazywać pusty wykaz aż do pierwszej zmiany.
+	// Pierwsza wersja towarzyszy wgraniu, żeby wykaz wersji nie zaczynał się pusty.
 	wersja, err := a.repozytorium.ZapiszWersje(ctx, plik.ID, dane.WersjaPlikuBiblioteki{
 		Kod: nowyIdentyfikator(przedrostekWersjiBiblioteki), PlikID: plik.ID,
 		RozmiarBajtow: rozmiar, SumaKontrolna: sumaKontrolna, TrescOdwolanie: trescOdwolanie,
@@ -169,9 +124,7 @@ func (a *adapterBiblioteki) Wgraj(ctx context.Context,
 			return shared.LibraryFileUploadResponse{}, bladBiblioteki(err)
 		}
 	}
-	// Indeks treści zasila się przy zapisie, nie przy wyszukiwaniu
-	// (`adapter_modul_library_indeks.go`) — bez tego `library.file.search`
-	// wraca do dopasowywania samej nazwy pliku.
+	// Indeks treści zasila się przy zapisie, nie przy wyszukiwaniu.
 	a.zaindeksujTresc(ctx, plik)
 
 	kontrakt, err := a.zloz(ctx, plik)
@@ -182,9 +135,8 @@ func (a *adapterBiblioteki) Wgraj(ctx context.Context,
 }
 
 // plikZBiezacaWersja odkłada nadany identyfikator wersji na wiersz pliku
-// przed ponownym zapisem — `ZapiszPlik` nadpisuje przez `identyfikator_zewnetrzny`
-// (ON CONFLICT), więc drugie wywołanie ze zmienionym `WersjaBiezacaID` po
-// prostu aktualizuje wskaźnik, nie zakłada drugiego wiersza.
+// przed ponownym zapisem, który aktualizuje wskaźnik wersji bieżącej, zamiast
+// zakładać drugi wiersz.
 func plikZBiezacaWersja(plik dane.PlikBiblioteki, wersjaID int64) dane.PlikBiblioteki {
 	plik.WersjaBiezacaID = &wersjaID
 	return plik
@@ -195,9 +147,7 @@ func plikZBiezacaWersja(plik dane.PlikBiblioteki, wersjaID int64) dane.PlikBibli
 func (a *adapterBiblioteki) Wykaz(ctx context.Context,
 	z shared.LibraryFileListRequest) (shared.LibraryFileListResponse, error) {
 
-	// Wykaz domyślny pokazuje zasoby czynne. Archiwum ma własną drogę
-	// (`library.file.restore` po kodzie zasobu i pulpit stanu), a wykaz, który
-	// pokazuje zarchiwizowane obok czynnych, znosi sens kosza repozytorium.
+	// Wykaz domyślny pokazuje wyłącznie zasoby czynne; archiwum ma własną drogę odczytu.
 	stan := dane.StanZasobuCzynny
 	filtr := filtrZadania(z.Query, z.Tags, z.CollectionId, z.ProjectId, z.Limit, z.Offset)
 	filtr.Stan = &stan
@@ -218,10 +168,8 @@ func (a *adapterBiblioteki) Wykaz(ctx context.Context,
 func (a *adapterBiblioteki) Szukaj(ctx context.Context,
 	z shared.LibraryFileSearchRequest) (shared.LibraryFileSearchResponse, error) {
 
-	// Sprawdzenie pustki patrzy na tę samą, przyciętą postać frazy, która idzie
-	// do indeksu FTS5: fraza z samych spacji nie jest równa "", więc bez
-	// przycięcia zeszłaby do FTS5 jako pusty wzorzec MATCH i wróciłaby błędem
-	// SQL zamiast odmową żądania.
+	// Przycięcie frazy poprzedza sprawdzenie pustki, żeby biały znak nie
+	// trafił do indeksu jako wzorzec.
 	fraza := strings.TrimSpace(z.Query)
 	if fraza == "" {
 		return shared.LibraryFileSearchResponse{}, bladWskazaniaBiblioteki("żądanie bez frazy wyszukiwania")
@@ -238,15 +186,9 @@ func (a *adapterBiblioteki) Szukaj(ctx context.Context,
 	return shared.LibraryFileSearchResponse{Files: pliki, Total: lacznie}, nil
 }
 
-// Podglad obsługuje `library.file.preview`. Podgląd nie ma własnej tabeli —
-// buduje się z bieżącej wersji pliku przy każdym żądaniu. Plik bez
-// `tresc_odwolanie` wraca odmową; gdy odwołanie jest, podgląd tekstowy czyta
-// spod niego treść (`trescPodgladuBiblioteki`), a obraz oddaje odwołanie w polu
-// `imageRef`.
-//
-// Podgląd nie rozróżnia dróg wgrania: odwołanie jest ścieżką na dysku niezależnie
-// od tego, czy wskazuje `sourcePath`, czy bloba w magazynie treści rdzenia
-// (`Wgraj`, `adapter_modul_library_magazyn.go`), więc czytelnik jest jeden.
+// Podglad obsługuje `library.file.preview`: buduje się z bieżącej wersji
+// pliku przy każdym żądaniu, odmawia bez odwołania do treści, a obraz i tekst
+// czyta ten sam czytelnik spod tego odwołania.
 func (a *adapterBiblioteki) Podglad(ctx context.Context,
 	z shared.LibraryFilePreviewRequest) (shared.LibraryFilePreviewResponse, error) {
 
@@ -261,11 +203,8 @@ func (a *adapterBiblioteki) Podglad(ctx context.Context,
 	rodzaj := rodzajPodgladu(plik.MimeType, *plik.TrescOdwolanie)
 	podglad := shared.LibraryPreview{FileId: plik.Kod, Kind: rodzaj}
 	if rodzaj == shared.LibraryPreviewKindText {
-		// Podgląd tekstowy czyta treść spod odwołania: kontrakt ma dla niego
-		// pole `text` wraz z granicą `maxChars` i znacznikiem `truncated`, więc
-		// rdzeń odczytuje początek pliku i oddaje go jako treść. Odmowa idzie
-		// dopiero wtedy, gdy odwołania nie da się odczytać
-		// (`bladOdczytuTresciBiblioteki`).
+		// Podgląd tekstowy czyta początek pliku spod odwołania i oddaje go
+		// z granicą i znacznikiem obcięcia.
 		tekst, skrocono, err := trescPodgladuBiblioteki(*plik.TrescOdwolanie, z.MaxChars)
 		if err != nil {
 			return shared.LibraryFilePreviewResponse{}, err
@@ -279,9 +218,7 @@ func (a *adapterBiblioteki) Podglad(ctx context.Context,
 		}
 		return shared.LibraryFilePreviewResponse{Preview: podglad}, nil
 	}
-	// Odwołanie wychodzi wyłącznie przy obrazie i wyłącznie w postaci względnej;
-	// oba zawężenia stoją przy `odwolanieObrazuPodgladu`
-	// (`adapter_modul_library_podglad.go`).
+	// Odwołanie wychodzi wyłącznie przy obrazie i wyłącznie w postaci względnej.
 	podglad.ImageRef = odwolanieObrazuPodgladu(rodzaj, *plik.TrescOdwolanie)
 	if z.Page != nil {
 		podglad.Page = z.Page
@@ -317,8 +254,8 @@ func (a *adapterBiblioteki) plik(ctx context.Context, kod string) (dane.PlikBibl
 	return plik, nil
 }
 
-// zlozWiele składa listę plików kontraktu z wierszy repozytorium — wspólne
-// dla `Wykaz` i `Szukaj`.
+// zlozWiele składa listę plików kontraktu z wierszy repozytorium, wspólną
+// drogą, którą idą komendy `Wykaz` i `Szukaj`.
 func (a *adapterBiblioteki) zlozWiele(ctx context.Context, wiersze []dane.PlikBiblioteki) ([]shared.LibraryFile, error) {
 	pliki := make([]shared.LibraryFile, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -332,17 +269,8 @@ func (a *adapterBiblioteki) zlozWiele(ctx context.Context, wiersze []dane.PlikBi
 }
 
 // zloz składa plik kontraktu z wiersza repozytorium wraz z etykietami,
-// kolekcjami i identyfikatorem wersji bieżącej.
-//
-// Kolekcje czyta się z bazy (`KolekcjePliku`,
-// `dane/biblioteka_kolekcje_pliku.go`), nie z żądania — dzięki temu każda
-// odpowiedź niosąca plik mówi tę samą przynależność, niezależnie od drogi.
-//
-// Pole `path` kontraktu niesie ścieżkę WEWNĄTRZ repozytorium
-// (`sciezka_repozytorium`, migracja 180), którą nadaje `library.file.move` — nie
-// ścieżkę źródłową z maszyny Operatora. Ta druga zostaje w kolumnie `sciezka`
-// jako prowenancja wewnętrzna i z rdzenia nie wychodzi: wyniosłaby na zewnątrz
-// układ cudzego dysku wraz z nazwami katalogów.
+// kolekcjami czytanymi z bazy i identyfikatorem wersji bieżącej; pole `path`
+// niesie ścieżkę wewnątrz repozytorium, nie ścieżkę źródłową z maszyny Operatora.
 func (a *adapterBiblioteki) zloz(ctx context.Context, wiersz dane.PlikBiblioteki) (shared.LibraryFile, error) {
 	etykiety, err := a.repozytorium.Etykiety(ctx, wiersz.ID)
 	if err != nil {
@@ -362,11 +290,9 @@ func (a *adapterBiblioteki) zloz(ctx context.Context, wiersz dane.PlikBiblioteki
 	}, nil
 }
 
-// idWersjiBiezacej odnajduje kod wersji bieżącej pliku wśród jego historii.
-// `PlikBiblioteki.WersjaBiezacaID` niesie klucz wewnętrzny wiersza, a kontrakt
-// chce kod (`LibraryFile.versionId`) — jedyny sposób przełożenia jednego na
-// drugie to przejrzeć wykaz wersji tego pliku (repozytorium nie ma odczytu
-// wersji po samym kluczu).
+// idWersjiBiezacej odnajduje kod wersji bieżącej pliku wśród jego historii,
+// bo pole wewnętrzne niesie klucz wiersza, a kontrakt chce kod, którego
+// repozytorium nie odczytuje wprost po samym kluczu.
 func (a *adapterBiblioteki) idWersjiBiezacej(ctx context.Context, wiersz dane.PlikBiblioteki) *string {
 	if wiersz.WersjaBiezacaID == nil {
 		return nil
@@ -394,12 +320,14 @@ func bladBiblioteki(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladWskazaniaBiblioteki nazywa brak danych w żądaniu — błąd żądania, nie rdzenia.
+// bladWskazaniaBiblioteki nazywa brak danych w żądaniu jako błąd żądania, nie
+// awarię rdzenia, i znakuje go kodem odrzucenia walidacji.
 func bladWskazaniaBiblioteki(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "moduł Library: "+powod))
 }
 
-// bladNieznanegoPlikuBiblioteki odróżnia „pliku nie ma" od „odczyt się nie powiódł".
+// bladNieznanegoPlikuBiblioteki odróżnia brak pliku o wskazanym kodzie od
+// nieudanego odczytu repozytorium i znakuje każdy przypadek osobnym kodem.
 func bladNieznanegoPlikuBiblioteki(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -418,7 +346,8 @@ func bladNieznanejEtykietyBiblioteki(nazwa string, err error) error {
 	return bladBiblioteki(err)
 }
 
-// bladNieznanejReguly odróżnia „reguły nie ma" od awarii odczytu.
+// bladNieznanejReguly odróżnia brak reguły o wskazanym kodzie od awarii
+// odczytu repozytorium i znakuje każdy przypadek osobnym kodem kontraktu.
 func bladNieznanejReguly(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -427,7 +356,8 @@ func bladNieznanejReguly(kod string, err error) error {
 	return bladBiblioteki(err)
 }
 
-// bladNieznanejSugestii odróżnia „sugestii nie ma" od awarii odczytu.
+// bladNieznanejSugestii odróżnia brak sugestii o wskazanym kodzie od awarii
+// odczytu repozytorium i znakuje każdy przypadek osobnym kodem kontraktu.
 func bladNieznanejSugestii(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

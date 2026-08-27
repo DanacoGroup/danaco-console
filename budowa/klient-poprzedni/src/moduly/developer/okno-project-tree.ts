@@ -19,29 +19,9 @@ import type { ZrodloDeveloper } from './zrodlo-developer';
 import './okno-project-tree.css';
 
 /**
- * Project Tree — okno pomocnicze modułu Developer: nawigacja po plikach
- * i otwarcie pliku w Code Editor.
- *
- * Otwarcie pliku to wyłącznie `stan.wskazPlik` — Code Editor sam nasłuchuje
- * i sam woła `developer.file.open`; wołanie jej też stąd czytałoby plik dwa
- * razy.
- *
- * `developer.tree.get` oddaje listę płaską — hierarchię składa `zbudujDrzewo`
- * z `parentPath`. Żaden węzeł nie znika po cichu: samowskazanie rodzica, cykl
- * wzajemny, zduplikowana ścieżka i rodzic nieobecny w wykazie trafiają do
- * korzenia z jawną adnotacją (`wykryjCykle`). Gdyby po złożeniu nie zostało
- * nic, `rysujDrzewoProjektu` nazywa to stanem błędu, nie stanem „treść”.
- *
- * Pole „Katalog” niesie żądanie Operatora, `root` z odpowiedzi — miejsce, od
- * którego rdzeń naprawdę czytał. Okno pokazuje jedno i drugie (`opiszKorzen`).
- *
- * Menu kontekstowe pod prawym przyciskiem myszy jest tu jedynym takim
- * przypadkiem w platformie — gdzie indziej „menu kontekstowe” znaczy lewy klik
- * ikony `⋯`. Stąd nasłuch `contextmenu` z `preventDefault`.
- *
- * Jedenaście z trzynastu pozycji menu nie ma pokrycia w kontrakcie — stoją
- * jako `przyciskBezKomendy` z powodem. „Skopiuj ścieżkę” (schowek) i „Odśwież”
- * (odczyt) są zrobione naprawdę.
+ * Project Tree jest oknem pomocniczym modułu Developer: nawigacja po plikach
+ * repozytorium i otwarcie wskazanego pliku w Code Editor przez wywołanie
+ * stan.wskazPlik.
  */
 export interface OknoProjectTree {
   element: HTMLElement;
@@ -103,22 +83,16 @@ export function utworzOknoProjectTree(
   });
   const odsubskrybuj = stan.naZmiane(rysuj);
 
-  // Jeden punkt wejścia dla odczytu — złożenie modułu woła `odswiez()` samo,
-  // tak jak `moduly/automations/indeks.ts` woła je raz dla każdego okna po
-  // złożeniu. Wywołanie tutaj powielałoby `developer.tree.get` przy montażu.
+  // Jeden punkt wejścia dla odczytu: złożenie modułu woła odswiez() samo, dla każdego okna.
   return { element: rama.element, odswiez: odczytaj, zamknij: odsubskrybuj };
 }
 
-/** Kontrolki Operatora: ścieżka, głębokość, pozycje ukryte oraz przycisk odświeżenia. */
+/** Kontrolki Operatora dostępne w oknie Project Tree: ścieżka katalogu, głębokość drzewa, pozycje ukryte oraz przycisk odświeżenia widoku drzewa. */
 interface PowierzchniaDrzewa {
   sciezka: HTMLInputElement;
   glebokosc: HTMLInputElement;
   ukryte: HTMLInputElement;
-  /**
-   * Zawężenie po fragmencie nazwy — czynność WYŁĄCZNIE kliencka nad węzłami już
-   * odczytanymi. Nie jedzie do rdzenia i nie jest tym samym co pole „Katalog”,
-   * które zmienia zakres odczytu.
-   */
+  // Zawężenie po fragmencie nazwy jest czynnością kliencką nad węzłami już odczytanymi.
   szukaj: HTMLInputElement;
   odswiezPrzycisk: HTMLButtonElement;
   zwinPrzycisk: HTMLButtonElement;
@@ -127,12 +101,9 @@ interface PowierzchniaDrzewa {
 }
 
 /**
- * Pokazuje korzeń, od którego rdzeń naprawdę czytał drzewo.
- *
- * Osobny wiersz obok pola „Katalog”, bo pole niesie żądanie Operatora (puste
- * znaczy „czytaj od korzenia okna”), a odpowiedź rdzenia niesie `root` — i to
- * są dwie różne rzeczy. Bez tego wiersza pusty katalog roboczy i katalog nie
- * ten, co trzeba, wyglądają identycznie.
+ * Pokazuje korzeń, od którego rdzeń naprawdę czytał drzewo, osobnym wierszem
+ * obok pola Katalog, bo pole niesie żądanie Operatora, a odpowiedź rdzenia
+ * niesie pole root — to są dwie różne rzeczy.
  */
 function opiszKorzen(miejsce: HTMLElement, korzen: string): void {
   miejsce.dataset['wskazana'] = korzen === '' ? 'nie' : 'tak';
@@ -142,7 +113,7 @@ function opiszKorzen(miejsce: HTMLElement, korzen: string): void {
       : `Rdzeń czytał od: ${korzen}`;
 }
 
-/** Składa pasek narzędzi i panel akcji ramy; ciało ramy dostaje stan treści. */
+/** Składa pasek narzędzi i panel akcji ramy tego okna; ciało ramy okna dostaje miejsce na stan treści całego drzewa projektu. */
 function zlozPowierzchnieDrzewa(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -175,7 +146,7 @@ function zlozPowierzchnieDrzewa(
   return { sciezka, glebokosc, ukryte, szukaj, odswiezPrzycisk, zwinPrzycisk, korzen };
 }
 
-/** Zadanie odczytu drzewa z kontrolek Operatora; puste pola nie trafiają do żądania. */
+/** Zadanie odczytu drzewa złożone z kontrolek wypełnionych przez Operatora; puste pola nie trafiają do żądania wysyłanego rdzeniowi. */
 function zadanieDrzewa(idOkna: string, powierzchnia: PowierzchniaDrzewa): DeveloperTreeGetRequest {
   const zadanie: DeveloperTreeGetRequest = { windowId: idOkna };
   const sciezka = powierzchnia.sciezka.value.trim();
@@ -186,7 +157,7 @@ function zadanieDrzewa(idOkna: string, powierzchnia: PowierzchniaDrzewa): Develo
   return zadanie;
 }
 
-/** Węzeł drzewa hierarchicznego złożony z listy płaskiej po `parentPath`. */
+/** Węzeł drzewa hierarchicznego złożony z listy płaskiej węzłów po polu parentPath odpowiedzi rdzenia na żądanie odczytu. */
 interface WezelDrzewa {
   wezel: DeveloperTreeNode;
   dzieci: WezelDrzewa[];
@@ -195,15 +166,9 @@ interface WezelDrzewa {
 }
 
 /**
- * Składa listę płaską węzłów w hierarchię; katalogi przed plikami, alfabetycznie.
- *
- * Żaden węzeł nie znika. Węzły stoją w tablicy indeksowanej po pozycji, a nie
- * w mapie kluczowanej ścieżką, bo mapa gubi jeden z dwóch węzłów o tej
- * samej `path` (drugi nadpisuje pierwszy). Rodzic każdego węzła idzie przez
- * odrębną mapę ścieżka→pierwszy indeks, więc dwa węzły o tej samej ścieżce
- * zostają oba na scenie, a dzieci trafiają do pierwszego z nich. Samowskazanie
- * i cykl wzajemny (`wykryjCykle`) trafiają do korzenia z adnotacją, zamiast
- * znikać z drzewa razem z całym cyklem.
+ * Składa listę płaską węzłów w hierarchię, katalogi przed plikami,
+ * alfabetycznie; samowskazanie i cykl wzajemny trafiają do korzenia z jawną
+ * adnotacją zamiast znikać z drzewa razem z całym cyklem.
  */
 function zbudujDrzewo(wezly: readonly DeveloperTreeNode[]): WezelDrzewa[] {
   const wpisy: WezelDrzewa[] = wezly.map((wezel) => ({ wezel, dzieci: [] }));
@@ -275,7 +240,7 @@ function posortujDrzewo(lista: WezelDrzewa[]): void {
   for (const wpis of lista) posortujDrzewo(wpis.dzieci);
 }
 
-/** Wywołania zwrotne widoku drzewa: stan wspólny, rozwinięcia lokalne, menu. */
+/** Wywołania zwrotne widoku drzewa projektu: stan wspólny całego okna, rozwinięcia lokalne katalogów oraz obsługa menu kontekstowego. */
 interface ObslugaWezla {
   stan: StanDevelopera;
   rozwiniete: Set<string>;
@@ -286,16 +251,9 @@ interface ObslugaWezla {
 }
 
 /**
- * Zawęża drzewo do gałęzi zawierających trafienie.
- *
- * Katalog zostaje na scenie, gdy trafienie ma którykolwiek z jego potomków —
- * inaczej plik znaleziony trzy poziomy w głąb wisiałby bez ścieżki i nie dałoby
- * się powiedzieć, skąd pochodzi. Katalog trafiony własną nazwą zachowuje
- * komplet dzieci, bo szukającemu katalogu chodzi o jego zawartość.
- *
- * Zawężenie buduje nowe wpisy zamiast przycinać istniejące: `zbudujDrzewo`
- * biegnie od nowa przy każdym rysowaniu, ale adnotacja osierocenia ma przeżyć
- * zawężenie, więc jest przenoszona wprost.
+ * Zawęża drzewo do gałęzi zawierających trafienie; katalog zostaje na scenie,
+ * gdy trafienie ma któregokolwiek z jego potomków, a katalog trafiony własną
+ * nazwą zachowuje komplet dzieci.
  */
 function zawezDrzewo(lista: readonly WezelDrzewa[], fraza: string): WezelDrzewa[] {
   const szukane = fraza.toLocaleLowerCase('pl-PL');
@@ -311,29 +269,25 @@ function zawezDrzewo(lista: readonly WezelDrzewa[], fraza: string): WezelDrzewa[
   return wynik;
 }
 
-/** Rysuje drzewo albo stan pustki — pustka bywa poprawna. */
+/** Rysuje drzewo projektu w treści tego okna albo stan pustki — pustka drzewa bywa stanem poprawnym, a nie błędem odczytu. */
 function rysujDrzewoProjektu(
   wezly: readonly DeveloperTreeNode[],
   tresc: StanTresci,
   obsluga: ObslugaWezla,
 ): void {
   if (wezly.length === 0) {
-    // Zdanie mówi, co oddał rdzeń, i nie orzeka przy okazji, że katalog
-    // roboczy okna jest repozytorium — katalog sesji świeżego okna nie ma
-    // `.git`, a `developer.git.action` odpowiada wtedy „not a git repository”.
+    // Zdanie mówi, co oddał rdzeń, nie orzekając przy okazji, że katalog roboczy jest repozytorium.
     tresc.pusto('Rdzeń nie oddał ani jednego węzła dla tego katalogu.');
     return;
   }
   const wszystkie = zbudujDrzewo(wezly);
-  // Węzły są, ale żadnego nie dało się umieścić w hierarchii — to nie jest
-  // „treść” (miejsce byłoby puste bez wyjaśnienia), to nazwany błąd.
+  // Węzły są, ale żadnego nie dało się umieścić w hierarchii — to nazwany błąd, nie pustka.
   if (wszystkie.length === 0) {
     tresc.blad('Rdzeń oddał węzły drzewa, których nie dało się złożyć w hierarchię.');
     return;
   }
   const korzenie = obsluga.fraza === '' ? wszystkie : zawezDrzewo(wszystkie, obsluga.fraza);
-  // Pustka po zawężeniu to nie pustka katalogu — dwa różne zdania o tym samym
-  // odczycie, więc i dwa różne komunikaty.
+  // Pustka po zawężeniu to nie pustka katalogu — dwa różne zdania o tym samym odczycie danych.
   if (korzenie.length === 0) {
     tresc.pusto(
       `Żadna pozycja odczytanego drzewa nie zawiera w nazwie „${obsluga.fraza}”. ` +
@@ -349,23 +303,18 @@ function rysujDrzewoProjektu(
   tresc.tresc().append(lista);
 }
 
-/** Pojedynczy węzeł drzewa: nazwa klikalna, opis, ewentualne dzieci rozwinięte. */
+/** Pojedynczy węzeł drzewa projektu: nazwa klikalna węzła, opis, ewentualne dzieci rozwinięte pod nim rekurencyjnie w głąb. */
 function rysujWezel(wpis: WezelDrzewa, obsluga: ObslugaWezla): HTMLLIElement {
   const jestKatalogiem = wpis.wezel.kind === TreeNodeKind.Directory;
   const li = document.createElement('li');
   li.className = 'mdev-wezel';
   li.dataset['rodzaj'] = wpis.wezel.kind;
   li.dataset['wskazany'] = obsluga.stan.sciezka() === wpis.wezel.path ? 'tak' : 'nie';
-  // Wskazany to nie to samo co wczytany: wskazanie biegnie natychmiast po
-  // kliknięciu, a plik pojawia się w edytorze dopiero z odpowiedzią rdzenia —
-  // która potrafi nie przyjść wcale (odmowa) albo przyjść dla innej ścieżki.
+  // Wskazany to nie to samo co wczytany: wskazanie biegnie natychmiast, plik z opóźnieniem.
   const wczytany = obsluga.stan.plik()?.path === wpis.wezel.path;
   li.dataset['wczytany'] = wczytany ? 'tak' : 'nie';
   if (wpis.osierocony !== undefined) li.dataset['osierocony'] = 'tak';
-  // Zawężenie rozwija gałęzie samo: trafienie ukryte w zwiniętym katalogu nie
-  // byłoby trafieniem widocznym, a Operator wpisał frazę właśnie po to, żeby je
-  // zobaczyć. Rozwinięcia własne Operatora zostają nietknięte i wracają
-  // z chwilą wyczyszczenia pola.
+  // Zawężenie rozwija gałęzie samo; rozwinięcia Operatora wracają po wyczyszczeniu pola szukania.
   const rozwiniety = obsluga.fraza !== '' || obsluga.rozwiniete.has(wpis.wezel.path);
 
   const nazwa = document.createElement('button');
@@ -401,7 +350,7 @@ function rysujWezel(wpis: WezelDrzewa, obsluga: ObslugaWezla): HTMLLIElement {
   return li;
 }
 
-/** Zdanie opisowe węzła: rozmiar, czas zmiany, a na końcu powód osierocenia wprost. */
+/** Zdanie opisowe pojedynczego węzła drzewa: rozmiar pliku, czas ostatniej zmiany, a na końcu powód osierocenia wprost. */
 function opisWezla(wpis: WezelDrzewa, wczytany: boolean): string {
   const wezel = wpis.wezel;
   const czesci: string[] = [];
@@ -416,7 +365,7 @@ function opisWezla(wpis: WezelDrzewa, wczytany: boolean): string {
   return czesci.join(' · ');
 }
 
-/** Menu kontekstowe prawego przycisku — jedyny udokumentowany przypadek platformy. */
+/** Menu kontekstowe pod prawym przyciskiem myszy — jedyny udokumentowany taki przypadek w całej platformie Danaco Console. */
 interface MenuKontekstowe {
   pokaz(x: number, y: number, wezel: DeveloperTreeNode, tresc: StanTresci, naOdswiez: () => void): void;
 }
@@ -463,7 +412,7 @@ function utworzMenuKontekstowe(): MenuKontekstowe {
   };
 }
 
-/** Przycisk czynności menu, realnej — zamyka menu po wykonaniu. */
+/** Przycisk czynności menu kontekstowego, realnej wobec rdzenia albo schowka — zamyka to menu po wykonaniu czynności. */
 function zbudujCzynnoscMenu(etykieta: string, naKlik: () => void): HTMLButtonElement {
   const przycisk = przyciskAkcji(etykieta, 'dn-btn dn-btn--zarys');
   przycisk.addEventListener('click', naKlik);
@@ -471,15 +420,9 @@ function zbudujCzynnoscMenu(etykieta: string, naKlik: () => void): HTMLButtonEle
 }
 
 /**
- * Jedenaście pozycji menu bez pokrycia w kontrakcie.
- *
- * Powody składa `powodBezKomendy` z wykazu komend odczytanego w czasie
- * działania, a każda pozycja nazywa komendę, która musiałaby powstać — po to,
- * żeby przycisk i komenda dołożona później mówiły o czynności tym samym słowem.
- *
- * Wykaz powstaje wytwórnią, a nie stałą modułu: `powodBezKomendy` czyta wykaz
- * komend, więc stała liczona przy wczytaniu pliku zamroziłaby zdanie na stan
- * z chwili wczytania modułu.
+ * Jedenaście pozycji menu bez pokrycia w kontrakcie; powody składa
+ * powodBezKomendy z wykazu komend odczytanego w czasie działania, więc stała
+ * liczona przy wczytaniu pliku zamroziłaby zdanie.
  */
 function brakiKomendMenu(): ReadonlyArray<readonly [string, string]> {
   const jedenPlikNaOkno =
@@ -529,7 +472,7 @@ function brakiKomendMenu(): ReadonlyArray<readonly [string, string]> {
   ];
 }
 
-/** Jedyna czynność menu czysto kliencka: schowek Operatora, żadnej komendy rdzenia. */
+/** Jedyna czynność tego menu czysto kliencka: zapis ścieżki do schowka Operatora, bez udziału żadnej komendy rdzenia. */
 async function skopiujSciezke(sciezka: string, tresc: StanTresci): Promise<void> {
   try {
     await navigator.clipboard.writeText(sciezka);

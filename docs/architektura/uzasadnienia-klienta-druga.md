@@ -3693,3 +3693,12 @@ zmianie treści badania: ta sama nastawa pokazywałaby w dwóch oknach dwie ró�
 obowiązkowe, nie domyślne. Ogłoszenie idzie wyłącznie po faktycznej zmianie: odbiorcą jest
 przerysowanie okien, a przerysowanie woła ograniczenie zaznaczenia — ogłoszenie bezwarunkowe
 zamknęłoby pętlę bez końca.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-sesji.ts
+Strefa nie zna kanału ani nazwy żadnej komendy — dane przynosi źródło sesji, a wiąże je warstwa wpięcia
+sesji. Wykaz powstaje wyłącznie z wpisów rdzenia, w trzech postaciach bez danych miejscowych: oczekiwanie,
+gdy rdzeń jeszcze nie odpowiedział, pusto, gdy rdzeń odpowiedział i sesji w tle nie ma, oraz błąd, gdy rdzeń
+odmówił — stan pusty nie udaje wtedy braku sesji. Zapowiedź niesie liczbę sesji, więc zwinięcie domyślne
+nie ukrywa faktu, że coś trwa. Dopisek niesie liczbę sesji z migawki, nigdy liczbę wymyśloną. Montaż bez
+tożsamości klienta zostaje przy wykazie informacyjnym. Inaczej ta sama odpowiedź rdzenia pojawiałaby się
+w dwóch postaciach zależnie od tego, kto ją wywołał, gdyby menu wiersza budowało własne miejsce na treść.

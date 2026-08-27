@@ -5,25 +5,12 @@ import { utworzStrefeZwijana } from './strefa-zwijana';
 import type { WykazSrodowisk } from './wykaz-srodowisk';
 import type { MigawkaSesji } from './zrodlo-sesji';
 
-/**
- * Strefa sesji w tle.
- *
- * Pokazuje migawkę źródła sesji i zgłasza żądanie powrotu. Strefa nie zna
- * kanału ani nazwy żadnej komendy — dane przynosi `zrodlo-sesji`, a wiąże je
- * `wpiecie-sesji`.
- *
- * Trzy postacie, żadnych danych miejscowych:
- *   oczekiwanie — rdzeń jeszcze nie odpowiedział na `session.list`,
- *   pusto       — rdzeń odpowiedział i sesji w tle nie ma,
- *   błąd        — rdzeń odmówił; stan pusty nie udaje wtedy braku sesji.
- * Wykaz powstaje wyłącznie z wpisów rdzenia.
- */
-
+/** Strefa sesji w tle pokazuje migawkę źródła sesji i zgłasza żądanie powrotu, rozróżniając osobnymi napisami oczekiwanie, brak sesji i odmowę rdzenia. */
 const ETYKIETA = 'Sesje w tle';
 const WYJASNIENIE =
   'Rozłączenie klienta nie kończy sesji ani jej procesów — tu widać sesje trwające na rdzeniu.';
 
-/** Treści stanów pustych; opisy nazywają przyczynę, nie udają danych. */
+/** Treści stanów pustych strefy sesji w tle: opisy nazywają przyczynę braku wykazu, nie udają danych, których nie ma. */
 const PUSTE = {
   oczekiwanie: {
     ikona: 'zegar',
@@ -49,10 +36,7 @@ export interface StrefaSesji {
   ustawMigawke(migawka: MigawkaSesji): void;
   /** Nadaje czynność powrotu; `null` zdejmuje przyciski z wierszy. */
   ustawPowrot(czynnosc: CzynnoscPowrotu | null): void;
-  /**
-   * Nadaje czynności historii sesji. Wykaz pusty zdejmuje menu z wierszy —
-   * montaż bez tożsamości klienta zostaje przy wykazie informacyjnym.
-   */
+  /** Nadaje czynności historii sesji; wykaz pusty zdejmuje menu z wierszy sesji. */
   ustawCzynnosci(czynnosci: CzynnosciSesji): void;
   /** Dokłada wgląd w archiwum pod wykazem sesji bieżących; wolno raz. */
   osadzArchiwum(element: HTMLElement): void;
@@ -60,18 +44,13 @@ export interface StrefaSesji {
   zglosKomunikat(tekst: string): void;
 }
 
-/**
- * @param srodowiska Wykaz środowisk strony — nazwa środowiska w wierszu sesji
- *   pochodzi z tego samego bytu, co nazwa na karcie strefy pierwszej.
- */
+/** Buduje strefę sesji dla podanego wykazu środowisk, z którego wiersz sesji czerpie nazwę środowiska tak samo jak karta strefy pierwszej. */
 export function utworzStrefeSesji(srodowiska: WykazSrodowisk): StrefaSesji {
   let powrot: CzynnoscPowrotu | null = null;
   let czynnosci: CzynnosciSesji = {};
   let migawka: MigawkaSesji = { stan: 'oczekiwanie', wpisy: [] };
 
-  // Strefa jest zwinięta domyślnie: sesje w tle to wgląd w pracę już biegnącą,
-  // czyli drugi plan wobec dróg wejścia w pracę nową. Zapowiedź niesie liczbę
-  // sesji, więc zwinięcie nie ukrywa faktu, że coś trwa.
+  // Strefa jest zwinięta domyślnie: sesje w tle to wgląd w pracę już biegnącą.
   const strefa = utworzStrefeZwijana({
     etykieta: ETYKIETA,
     wyjasnienie: WYJASNIENIE,
@@ -88,18 +67,12 @@ export function utworzStrefeSesji(srodowiska: WykazSrodowisk): StrefaSesji {
 
   const tresc = document.createElement('div');
   tresc.className = 'dn-strona__sesje';
-  // Wykaz zmienia się zdarzeniami rdzenia w trakcie pracy — czytnik ekranu
-  // dostaje zmianę bez odebrania ogniska.
+  // Wykaz zmienia się zdarzeniami rdzenia w trakcie pracy; czytnik dostaje zmianę bez odebrania ogniska.
   tresc.setAttribute('aria-live', 'polite');
 
   strefa.cialo.append(komunikat, tresc);
 
-  /**
-   * Dopisek zapowiedzi — liczba sesji z migawki, nigdy liczba wymyślona.
-   *
-   * Przed odpowiedzią rdzenia i przy odmowie dopisek jest pusty: „0" znaczyłoby
-   * „rdzeń odpowiedział i sesji nie ma", czyli co innego.
-   */
+  // Dopisek jest pusty przed odpowiedzią rdzenia i przy odmowie, bo zero znaczyłoby co innego.
   function odswiezDopisek(): void {
     if (migawka.stan === 'oczekiwanie' || migawka.stan === 'blad') {
       strefa.ustawDopisek('');
@@ -133,12 +106,7 @@ export function utworzStrefeSesji(srodowiska: WykazSrodowisk): StrefaSesji {
     return wykaz;
   }
 
-  /**
-   * Meldunek czynności idzie tą samą drogą co odmowa powrotu: jedno pole nad
-   * wykazem, znikające przy następnej migawce. Menu wiersza nie buduje
-   * własnego miejsca na treść — inaczej ta sama odpowiedź rdzenia pojawiałaby
-   * się w dwóch postaciach zależnie od tego, kto ją wywołał.
-   */
+  // Meldunek czynności idzie drogą odmowy powrotu; menu wiersza nie buduje własnego miejsca na treść.
   function zglos(tekst: string): void {
     komunikat.textContent = tekst;
     komunikat.hidden = false;
@@ -161,16 +129,14 @@ export function utworzStrefeSesji(srodowiska: WykazSrodowisk): StrefaSesji {
       przerysuj();
     },
     osadzArchiwum(archiwum) {
-      // Archiwum stoi pod wykazem i poza `tresc`, bo `tresc` jest w całości
-      // przerysowywana przy każdej migawce — wgląd rozwinięty przez Operatora
-      // zwijałby się wtedy przy każdej zmianie w sesjach bieżących.
+      // Archiwum stoi poza treścią przerysowywaną, żeby wgląd rozwinięty nie zwijał się przy zmianie sesji.
       strefa.cialo.append(archiwum);
     },
     zglosKomunikat: zglos,
   };
 }
 
-/** Stan pusty z biblioteki komponentów (`.dn-pusty-stan`, `komponenty/drobne.css`). */
+/** Buduje jeden ze stanów pustych strefy z gotowego wzoru biblioteki komponentów, dobranego po postaci przekazanej wywołaniu. */
 function zbudujPustke(postac: keyof typeof PUSTE, opisBledu?: string): HTMLElement {
   const wzor = PUSTE[postac];
   const pustka = document.createElement('div');

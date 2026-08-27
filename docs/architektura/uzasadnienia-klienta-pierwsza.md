@@ -5462,3 +5462,55 @@ sama i które łatwo cofnąć nieuważną poprawką. Wszystkie sprowadzają się
 jednej zasady: zbiór pusty bywa żądaniem, a pole pominięte znaczy brak zmiany.
 Pomylenie tych dwóch rzeczy w jedną stronę odbiera ekspertowi wszystko,
 a w drugą nie zdejmuje niczego.
+
+## budowa/klient-poprzedni/src/moduly/assistant/etykiety-assistant.ts
+
+Pliki budujące elementy modułu nie noszą napisów, bo napis zmienia się
+z innego powodu niż układ — zmieniany w dziesięciu miejscach rozjeżdżałby
+się między oknami. Wartości słowników są kluczowane stałymi kontraktu, więc
+dopisanie stanu w kontrakcie przerywa kompilację tutaj, zamiast wypuścić na
+ekran pusty napis.
+
+Nazwa klasy plakietki stanu jest wykazem jawnym, nie sklejką składaną
+w czasie działania: nazwa złożona doklejeniem stanu do przedrostka byłaby
+poza zasięgiem kontroli klas arkusza stylów.
+
+Poziomy zasięgu pamięci przestawiane w zakładce kontekstów są węższym
+wykazem niż pełny zasięg konfiguracji platformy, bo dotyczą wyłącznie
+poziomów widoczności pamięci karty sesji: globalny, projekt, karta sesji
+i okno komunikacji — te, na których pamięć asystenta ma treść.
+
+Każde zdanie stanu pustego ma dwie części: czym okno jest i czym się je
+zapełnia. Zdanie mówiące wyłącznie, czego nie ma, zostawiałoby Operatora
+przed oknem, o którym nie wie ani po co ono stoi, ani co miałby zrobić,
+żeby coś w nim zobaczyć. Każde okno ma swoje zdanie spoczynku osobne od
+zdania po odpowiedzi rdzenia, bo to dwa różne fakty: przed pytaniem
+i po odpowiedzi.
+
+Zdania wykazu zleceń spoza okna modułu nie są zdaniami stanu pustego,
+ponieważ sekcja jest ukryta, dopóki nie ma czego pokazać — pustki nie ma
+więc czym nazywać. Zdanie zasięgu mówi wprost, czego w wykazie nie będzie:
+zleceń zamkniętych przed otwarciem modułu. Wykaz podany bez tego
+zastrzeżenia wyglądałby na komplet pracy asystenta w sesji, a nim nie jest,
+ponieważ kontrakt nie ma odczytu zleceń zamkniętych przed wejściem do
+modułu.
+
+## budowa/klient-poprzedni/src/aplikacja/pas-posuniec.ts
+
+Lewa strona pasa mówi, że asystent pracuje i nad czym, czyli o zleceniach modułu
+Assistant. Prawa wymienia posunięcia: nawigację, okna i polecenia. Praca modelu
+docelowego, czyli odpowiedź i strumień, na pas nie wchodzi — dzieje się w oknie i tam jest
+jej miejsce. Zlanie obu warstw odebrałoby rozeznanie, kto co zrobił.
+
+Pas nie jest bramką: nie ma w nim przycisku zgody, odmowy ani wstrzymania. Jedyny
+przycisk przesuwa widok wtedy, gdy podążanie zostało wstrzymane, ponieważ Operator pisał.
+Posunięcie asystenta dokonało się przed pojawieniem się przycisku i nic na niego nie
+czeka; pas zamienia wstrzymane przejście w jedno naciśnięcie, zamiast je zgubić.
+
+Nazwa pasa idzie atrybutem `aria-label`, a nie nagłówkiem, ponieważ pas jest obszarem
+uzupełniającym, a nie sekcją pracy. Atrybut `aria-live` w wierszach niżej niesie zmiany
+bez zabierania ogniska.
+
+Zdanie o źródle ruchu mówi najwyżej tyle, ile niesie kontrakt: przy pewności niepełnej
+posunięcie pochodzi spoza tego połączenia i tak też jest nazwane. Rozstrzyga o tym
+nagłówek `zrodlo-posuniec.ts`.

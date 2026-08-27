@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: wpięcie rejestru kont modeli i kont programów code
-// CLI — tworzenie i dodawanie kont z okna konfiguracji.
-//
-// KONTO A KANAŁ. Konto jest profilem uwierzytelnienia, kanał — definicją
-// rozmowy z modelem. Jeden kanał wskazuje konto preferowane, jedno konto
-// obsługuje wiele kanałów, a pula rotacji bierze konta tego samego rodzaju.
-// Dlatego skasowanie konta ODŁĄCZA kanały, ale ich nie kasuje.
-//
-// Poświadczenie wchodzi żądaniem i nie wychodzi żadną drogą: ani
-// wykazem, ani odpowiedzią na zapis, ani zdarzeniem zmiany. Odpowiedź niesie
-// wyłącznie znacznik `hasCredential`.
+// Plik wpina rejestr kont modeli i kont programów wiersza poleceń, obsługując
+// tworzenie, zmianę, usuwanie oraz ustawienie konta domyślnego z okna
+// konfiguracji.
 package core
 
 import (
@@ -17,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Konta jest portem rejestru kont.
+// Konta jest portem rejestru kont: profili uwierzytelnienia współdzielonych
+// przez kanały rozmowy z modelem oraz przez pulę rotacji tego samego rodzaju.
 type Konta interface {
 	Dodaj(ctx context.Context, z shared.AccountAddRequest) (shared.AccountAddResponse, error)
 	Wykaz(ctx context.Context, z shared.AccountListRequest) (shared.AccountListResponse, error)
@@ -26,7 +19,8 @@ type Konta interface {
 	UstawDomyslne(ctx context.Context, z shared.AccountDefaultSetRequest) (shared.AccountDefaultSetResponse, error)
 }
 
-// zarejestrujKonta wpina pięć komend rejestru kont.
+// zarejestrujKonta wpina pięć komend rejestru kont i rozgłasza zdarzenie
+// zmiany konta po każdym udanym zapisie.
 func zarejestrujKonta(r *Rejestr, konta Konta, e *emiter) {
 	if r == nil || konta == nil {
 		return

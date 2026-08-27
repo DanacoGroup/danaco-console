@@ -4803,3 +4803,11 @@ wyłącznie zakres.
 Ścieżka obsługi nieznanej komendy jest fail-open: nieznana nazwa nie stanowi błędu protokołu i nie zamyka niczego. Połączenie pozostaje otwarte, sesja pracuje dalej, kolejne żądania są przyjmowane, a klient otrzymuje zdarzenie obszaru żądanego typu z nazwą, której nie rozpoznano, więc widzi przyczynę zamiast ciszy. Nazwę zdarzenia wyznacza kontrakt na podstawie obszaru żądanego typu — rdzeń nie dobiera jej sam i nie zawiera żadnego literału nazwy zdarzenia.
 
 Komunikat niepoprawny strukturalnie nie ma typu ani identyfikatora, więc nie da się zbudować dla niego żądania ani skorelować odpowiedzi z żądaniem. Mimo to odpowiedź zostaje wysłana — zerwanie połączenia byłoby nieproporcjonalną karą za jeden zepsuty bajt. Typ odpowiedzi wyznacza kontrakt: nierozpoznany komunikat bez obszaru należy do obszaru połączenia, więc wraca jego zdarzeniem `*.unknown`, a kod błędu informuje klienta, że przyczyną jest niepoprawna treść, a nie nieznana nazwa.
+
+## budowa/server/internal/core/handlers_konta.go
+Konto jest profilem uwierzytelnienia, kanał jest definicją rozmowy z modelem.
+Jeden kanał wskazuje konto preferowane, jedno konto obsługuje wiele kanałów,
+a pula rotacji bierze konta tego samego rodzaju; skasowanie konta odłącza
+kanały, ale ich nie kasuje. Poświadczenie wchodzi żądaniem i nie wychodzi
+żadną drogą — ani wykazem, ani odpowiedzią na zapis, ani zdarzeniem zmiany;
+odpowiedź niesie wyłącznie znacznik obecności poświadczenia.

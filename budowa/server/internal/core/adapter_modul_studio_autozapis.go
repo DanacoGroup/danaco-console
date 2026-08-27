@@ -1,27 +1,4 @@
-// Odpowiedzialność pliku: AUTOZAPIS, KOPIE ZAPASOWE i SZEREGI WERSJI —
-// `studio.autosave.get/set/run`, `studio.backup.create/list/restore`,
-// `studio.version.series.list` i `studio.version.restore.initial`.
-//
-// ── Dlaczego autozapis idzie OSOBNYM szeregiem wersji ───────────────────────
-// Wersje nazwane i kluczowe zakłada Operator; to jest historia jego decyzji.
-// Gdyby zapisy samoczynne wchodziły do tego samego wykazu, po godzinie pracy
-// historia przestałaby być historią decyzji i stała się dziennikiem naciśnięć
-// klawisza — Operator nie znalazłby w niej własnej wersji nazwanej. Rozróżnienie
-// idzie kolumną `szereg` (migracja 367) i pojęcia wersji kluczowej NIE zakłada
-// się drugiego: Studio ma je w `studio.version.label.set`.
-//
-// ── Dlaczego kopia zapasowa jest osobna od wersji ────────────────────────────
-// Kopia ma przetrwać awarię procesu I AWARIĘ ZAPISU. Wersja leży w repozytorium
-// i zakłada się ją tym samym zapisem, który właśnie się nie udał — więc wersja
-// nie ochroni pracy przed nieudanym zapisem. Kopia zakłada się niezależnie.
-//
-// ── Uczciwość zapisu, wymóg bezwzględny ─────────────────────────────────────
-// Wskaźnik „zapisano" pokazany, gdy zapis się nie udał, jest najgorszym możliwym
-// błędem tego modułu: Operator zamknie okno i straci pracę. Dlatego nieudany
-// zapis samoczynny NIE wraca odmową, która przepadnie w logu — wraca odpowiedzią
-// niosącą `saved: false`, NAZWANY powód i KOPIĘ, w której praca została. Wiersz
-// nastaw zapamiętuje ten skutek, więc następne `autosave.get` powie prawdę także
-// wtedy, gdy okno tymczasem się przeładowało.
+// Plik prowadzi autozapis, kopie zapasowe i szeregi wersji: autosave get/set/run, backup create/list/restore, version series list oraz version restore initial, trzymając zapisy samoczynne osobno od decyzji Operatora.
 package core
 
 import (
@@ -37,7 +14,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// NastawyAutozapisu obsługuje `studio.autosave.get`.
+// NastawyAutozapisu oddaje nastawy autozapisu dla pary okno-dokument albo samego okna (`studio.autosave.get`).
 func (a *adapterStudia) NastawyAutozapisu(ctx context.Context,
 	z shared.StudioAutosaveGetRequest) (shared.StudioAutosaveGetResponse, error) {
 
@@ -48,11 +25,7 @@ func (a *adapterStudia) NastawyAutozapisu(ctx context.Context,
 	return shared.StudioAutosaveGetResponse{Settings: autozapisZlozNastawy(nastawa)}, nil
 }
 
-// UstawAutozapis obsługuje `studio.autosave.set`.
-//
-// Zasada wygasania kopii jest tu JAWNYM, ODWRACALNYM ustawieniem Operatora —
-// nie stałą rdzenia. Pola pominięte zostają w brzmieniu zastanym: żądanie
-// przestawiające sam odstęp nie ma zerować liczby zachowywanych kopii.
+// UstawAutozapis zmienia nastawy autozapisu, w tym zasadę wygasania kopii: pola pominięte zostają w brzmieniu zastanym (`studio.autosave.set`).
 func (a *adapterStudia) UstawAutozapis(ctx context.Context,
 	z shared.StudioAutosaveSetRequest) (shared.StudioAutosaveSetResponse, error) {
 
@@ -109,7 +82,7 @@ func (a *adapterStudia) UstawAutozapis(ctx context.Context,
 	return shared.StudioAutosaveSetResponse{Settings: autozapisZlozNastawy(zapisana)}, nil
 }
 
-// WykonajAutozapis obsługuje `studio.autosave.run`.
+// WykonajAutozapis wykonuje zapis samoczynny wraz z kopią zapasową sprzed zapisu (`studio.autosave.run`).
 func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 	z shared.StudioAutosaveRunRequest) (shared.StudioAutosaveRunResponse, error) {
 
@@ -131,9 +104,7 @@ func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 		powod = *z.Trigger
 	}
 
-	// Postać z żądania wchodzi PRZED treścią: treść dokumentu wylicza się z
-	// drzewa (`postacZapisz`), więc odwrotna kolejność nadpisałaby ją drzewem
-	// sprzed edycji.
+	// Postać z żądania wchodzi przed treścią: treść dokumentu wylicza się z drzewa (postacZapisz).
 	if len(z.Form) > 0 {
 		var forma shared.StudioDocumentForm
 		if err := json.Unmarshal(z.Form, &forma); err != nil {
@@ -152,8 +123,7 @@ func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 	}
 	tresc := postacTekstFormy(&stan.forma)
 
-	// KOPIA ZAPASOWA IDZIE PIERWSZA i niesie zmiany niezapisane. Gdyby zapis się
-	// nie udał, praca zostaje w niej — i to jest cała jej rola.
+	// Kopia zapasowa idzie pierwsza i niesie zmiany niezapisane; gdyby zapis padł, praca zostaje w niej.
 	postacJSON, bladZapisuPostaci := json.Marshal(stan.forma)
 	kopiaWiersz := dane.KopiaZapasowaStudia{
 		Kod:               nowyIdentyfikator(przedrostekKopiiStudia),
@@ -173,8 +143,7 @@ func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 	}
 	zlozonaKopia := autozapisZlozKopie(kopia)
 
-	// Zapis właściwy. Niepowodzenie NIE wraca odmową: wraca odpowiedzią mówiącą
-	// wprost, że się nie udało, wraz z kopią, w której praca została.
+	// Zapis właściwy: niepowodzenie nie wraca odmową, wraca odpowiedzią z nazwanym powodem i kopią pracy.
 	if err := a.postacZapisz(ctx, stan); err != nil {
 		powodNiepowodzenia := "zapis samoczynny dokumentu " + stan.dokument.Kod +
 			" nie doszedł do skutku: " + err.Error() +
@@ -192,11 +161,7 @@ func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 		}, nil
 	}
 
-	// Zapis się udał, więc kopia przestaje nieść pracę, której w dokumencie nie
-	// ma. Wiersz zostaje — jest częścią wykazu kopii — ale zakłada się nowy
-	// z wyzerowanym wskaźnikiem, bo tabela nie przestawia tej kolumny po fakcie,
-	// a nadpisanie wiersza kopii zatarłoby ślad, że kopia była zakładana przed
-	// zapisem.
+	// Zapis się udał: zakłada się nowy wiersz kopii z wskaźnikiem zerowym, by nie zatrzeć śladu.
 	chwila := time.Now().UTC().Format(time.RFC3339Nano)
 	if err := skladnica.ZapiszSkutekAutozapisu(ctx, nastawa.ID, &chwila, false, nil); err != nil {
 		return shared.StudioAutosaveRunResponse{}, bladStudio(err)
@@ -241,7 +206,7 @@ func (a *adapterStudia) WykonajAutozapis(ctx context.Context,
 	}, nil
 }
 
-// ZalozKopieZapasowa obsługuje `studio.backup.create`.
+// ZalozKopieZapasowa zakłada kopię zapasową dokumentu na wyraźne żądanie Operatora (`studio.backup.create`).
 func (a *adapterStudia) ZalozKopieZapasowa(ctx context.Context,
 	z shared.StudioBackupCreateRequest) (shared.StudioBackupCreateResponse, error) {
 
@@ -291,11 +256,7 @@ func (a *adapterStudia) ZalozKopieZapasowa(ctx context.Context,
 	return shared.StudioBackupCreateResponse{Backup: autozapisZlozKopie(kopia)}, nil
 }
 
-// KopieDokumentu obsługuje `studio.backup.list`.
-//
-// Bez wskazania dokumentu oddaje kopie niosące zmiany NIEZAPISANE po wszystkich
-// dokumentach okna — tym Studio samo zgłasza „mam niezapisany dokument z godziny
-// X, przywrócić?", zamiast czekać, aż Operator się domyśli.
+// KopieDokumentu wykazuje kopie zapasowe dokumentu, albo, bez wskazania, kopie niosące zmiany niezapisane po wszystkich dokumentach okna (`studio.backup.list`).
 func (a *adapterStudia) KopieDokumentu(ctx context.Context,
 	z shared.StudioBackupListRequest) (shared.StudioBackupListResponse, error) {
 
@@ -355,9 +316,7 @@ func (a *adapterStudia) PrzywrocKopie(ctx context.Context,
 			"kopia zapasowa nie istnieje: "+z.BackupId)
 	}
 	if !kopia.UdaloSie {
-		// Kopia NIEUDANA nie niesie pracy — niesie ślad, że praca nie doszła na
-		// dysk. Przywrócenie z niej wstawiłoby do dokumentu pustkę i nazwało to
-		// przywróceniem.
+		// Kopia nieudana nie niesie pracy, tylko ślad, że praca nie doszła na dysk.
 		powod := "kopia " + kopia.Kod + " jest zapisem NIEUDANYM"
 		if kopia.PowodNiepowodzenia != nil {
 			powod += " (" + *kopia.PowodNiepowodzenia + ")"
@@ -428,7 +387,7 @@ func (a *adapterStudia) PrzywrocKopie(ctx context.Context,
 	}, nil
 }
 
-// WersjeWSzeregach obsługuje `studio.version.series.list`.
+// WersjeWSzeregach wykazuje wersje dokumentu w obu szeregach, Operatora i autozapisu (`studio.version.series.list`).
 func (a *adapterStudia) WersjeWSzeregach(ctx context.Context,
 	z shared.StudioVersionSeriesListRequest) (shared.StudioVersionSeriesListResponse, error) {
 
@@ -446,9 +405,7 @@ func (a *adapterStudia) WersjeWSzeregach(ctx context.Context,
 	}
 
 	odpowiedz := shared.StudioVersionSeriesListResponse{Versions: []shared.StudioVersion{}}
-	// Licznik obu szeregów liczy się z CAŁEGO wykazu, nie z tego, co zostało po
-	// zawężeniu: przełącznik „pokaż także zapisy samoczynne" ma pokazywać, ile
-	// ich jest, jeszcze przed włączeniem.
+	// Licznik obu szeregów liczy się z całego wykazu, nie z tego, co zostało po zawężeniu żądaniem.
 	for _, wiersz := range wiersze {
 		if wiersz.Szereg == string(shared.StudioVersionSeriesAutosave) {
 			odpowiedz.AutosaveCount++
@@ -473,20 +430,14 @@ func (a *adapterStudia) WersjeWSzeregach(ctx context.Context,
 	case err == nil:
 		odpowiedz.InitialVersionId = &zalozycielska.Kod
 	case errors.Is(err, dane.ErrBrakWiersza):
-		// Dokument bez ani jednej wersji Operatora nie ma wersji założycielskiej
-		// i to jest prawda o nim, nie brak wiedzy rdzenia.
+		// Dokument bez ani jednej wersji Operatora nie ma wersji założycielskiej, i to jest prawda o nim.
 	default:
 		return shared.StudioVersionSeriesListResponse{}, bladStudio(err)
 	}
 	return odpowiedz, nil
 }
 
-// PrzywrocWersjeZalozycielska obsługuje `studio.version.restore.initial`.
-//
-// Wersje nowsze ZOSTAJĄ — tak samo jak przy `studio.repository.restore` — więc
-// samo cofnięcie do stanu pierwotnego jest odwracalne. Wersja stanu bieżącego
-// zakłada się PRZED powrotem, bo inaczej praca sprzed powrotu nie miałaby
-// w historii ani jednego punktu, do którego Operator mógłby wrócić.
+// PrzywrocWersjeZalozycielska cofa dokument do wersji założycielskiej: wersje nowsze zostają, więc cofnięcie jest odwracalne (`studio.version.restore.initial`).
 func (a *adapterStudia) PrzywrocWersjeZalozycielska(ctx context.Context,
 	z shared.StudioVersionRestoreInitialRequest) (shared.StudioVersionRestoreInitialResponse, error) {
 
@@ -568,12 +519,7 @@ func (a *adapterStudia) PrzywrocWersjeZalozycielska(ctx context.Context,
 
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
-// autozapisNastawa odczytuje wiersz nastaw pracy dla pary okno-dokument albo dla
-// samego okna, zakładając go, gdy Operator nigdy nastaw nie ruszał.
-//
-// Okno bierze się ze wskazania, a gdy go nie ma — z dokumentu. Nastawy bez okna
-// nie istnieją: nastawa okna jest wierszem tej samej tabeli i musi wiedzieć,
-// czyja jest.
+// autozapisNastawa odczytuje wiersz nastaw pracy dla pary okno-dokument albo samego okna, zakładając go, gdy Operator nigdy nastaw nie ruszał.
 func (a *adapterStudia) autozapisNastawa(ctx context.Context, oknoZadania,
 	dokumentZadania *string) (dane.NastawaPracyStudia, dane.DokumentStudia, error) {
 
@@ -645,7 +591,7 @@ func autozapisZlozNastawy(wiersz dane.NastawaPracyStudia) shared.StudioAutosaveS
 	return nastawy
 }
 
-// autozapisZlozKopie składa kopię zapasową kontraktu z wiersza.
+// autozapisZlozKopie składa kopię zapasową kontraktu z wiersza warstwy danych, gotową do odpowiedzi kontraktu.
 func autozapisZlozKopie(wiersz dane.KopiaZapasowaStudia) shared.StudioDocumentBackup {
 	bajtow := wiersz.RozmiarBajtow
 	return shared.StudioDocumentBackup{
@@ -660,11 +606,7 @@ func autozapisZlozKopie(wiersz dane.KopiaZapasowaStudia) shared.StudioDocumentBa
 	}
 }
 
-// autozapisZlozWersje składa wersję kontraktu z wiersza szeregu.
-//
-// Autor wychodzi WYŁĄCZNIE wtedy, gdy wiersz go niesie: wersje założone przed
-// dobudową tego pola autora nie mają, a podstawienie tu Operatora zamieniłoby
-// brak wiedzy w twierdzenie fałszywe dla każdej wersji zapisanej przez model.
+// autozapisZlozWersje składa wersję kontraktu z wiersza szeregu, oddając autora tylko wtedy, gdy wiersz go niesie.
 func autozapisZlozWersje(wiersz dane.WersjaSzereguStudia) shared.StudioVersion {
 	wersja := shared.StudioVersion{
 		Id:              wiersz.Kod,
@@ -683,10 +625,7 @@ func autozapisZlozWersje(wiersz dane.WersjaSzereguStudia) shared.StudioVersion {
 		autor := shared.StudioAuthor(*wiersz.Autor)
 		wersja.Author = &autor
 	}
-	// Szereg wychodzi opisem w podsumowaniu wyłącznie wtedy, gdy wiersz go nie
-	// niesie inaczej: kontrakt wersji nie ma pola szeregu, a wykaz rozdziela je
-	// licznikami odpowiedzi. Etykieta zapisu samoczynnego mówi to Operatorowi
-	// wprost, żeby pozycja wykazu była odróżnialna także w oderwaniu od licznika.
+	// Szereg wychodzi etykietą podsumowania wyłącznie dla zapisu samoczynnego wersji.
 	if wiersz.Szereg == string(shared.StudioVersionSeriesAutosave) && wersja.Label == nil {
 		etykieta := "zapis samoczynny"
 		wersja.Label = &etykieta

@@ -5994,3 +5994,59 @@ raz na tę samą warstwę nadpisuje ten, który tam stoi, choćby przyszedł z n
 identyfikatorem.
 ## budowa/server/internal/dane/studio_praca_widok.go
 Repozytorium sąsiednie zna ten sam wiersz od strony autozapisu: odstęp, zdarzenia okna, wygasanie kopii, skutek ostatniego zapisu. Kolumny widoku, czyli tryb powierzchni, skala, linijki, układ stron, przewijanie, podświetlenie zmian wykonawcy i przybornik, pytane są przez zupełnie inną parę komend, nigdy razem z nastawami autozapisu. Osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia nastawy: tabela jest jedna, wiersz zakłada się jedną drogą, a każda z dwóch grup kolumn ma własne polecenie zapisu, bo jedno polecenie na obie grupy kazałoby widokowi przepisywać nastawy autozapisu, których nie zmieniał. Wołający sięga najpierw po zapis pełnej nastawy pracy, potem po ten odczyt widoku, bo dwie drogi zakładania tego samego wiersza rozjechałyby się przy pierwszej zmianie wartości domyślnej.
+
+## budowa/server/internal/repozytorium/szukanie.go
+Wyszukiwanie globalne jest czynnością, bez której Code Editor przestaje być
+edytorem kodu, więc silnik regexp nie może zależeć od zewnętrznego programu,
+którego instalka nie niesie. RE2 nie ma odwołań wstecznych, i to jest jedyna
+różnica, którą Operator zobaczy: wyrażenie z odwołaniem wstecznym dostanie
+odmowę nazwaną, nie ciche zero trafień. Wyszukiwanie, które wchodzi w katalog
+zależności i katalog budowania, oddaje tysiące trafień w kodzie, którego
+Operator nie pisał, i jest wtedy bezużyteczne, choć formalnie poprawne.
+
+Granica domyślna istnieje, bo wyszukanie pojedynczej litery w dużym
+repozytorium dałoby zbiór, którego klient nie postawi na ekranie, a rdzeń
+trzymałby go w pamięci w całości.
+
+Trzecia wartość zwracana przez Szukaj mówi, czy wynik przycięto granicą;
+druga niesie, ile trafień znaleziono przed przycięciem — sam wykaz przycięty
+bez tej liczby kazałby Operatorowi zgadywać, czy zobaczył wszystko.
+
+Podgląd jest stanem domyślnym pracy eksperckiej w Zamien: zamiana masowa
+dotyka wielu plików naraz i cofnięcie po niej nie istnieje. Dlatego czynność
+oddaje wykaz zmian razem z odpowiedzią o tym, czy je zapisała, a nie samo
+słowo wykonano, z którego Operator nie wyczyta, co się stało z jego kodem.
+
+Katalog bez repozytorium też podlega przeszukaniu w obszarSzukania: Operator
+otwiera w oknie także katalogi, których nie wersjonuje, a odmowa wyszukiwania
+byłaby wtedy odmową bez powodu; reguły pomijania są wtedy puste poza
+katalogiem repozytorium.
+
+Plik ignorowanych ścieżek korzenia niesie reguły katalogów budowania
+i zależności, czyli te, których pominięcie decyduje o użyteczności wyniku.
+Reguły podkatalogów zawężają wynik dodatkowo, a ich brak oznacza wyłącznie
+kilka trafień więcej, nigdy mniej.
+
+Dopasowanie wzorca w pasujeGlob idzie dwutorowo, bo Operator pisze wzorce
+zarówno rozszerzenia plików, jak i ścieżek katalogów; dopasowanie ścieżek nie
+zna podwójnej gwiazdki, więc taki wzorzec sprowadza się do przedrostka
+ścieżki — to jest znaczenie, którego Operator się spodziewa.
+
+PlikiDoPrzejrzenia jest wystawione poza pakiet dla skanowania bezpieczeństwa
+i jakości: skan przechodzi dokładnie ten sam zbiór plików, co wyszukiwanie,
+więc jedno przejście ma stanowić jedną prawdę o tym, co należy do
+repozytorium. Skan zgłaszający sekret w katalogu pobranych zależności byłby
+wykazem, którego nikt nie czyta. Wzorce włączające zawężają wynik tak samo,
+jak w Szukaj; pusty wykaz znaczy całe drzewo.
+
+## budowa/server/internal/dane/design_ikony.go
+
+Katalog ikon otwartoźródłowych bazy nie dotyka: jest wkompilowany w binarium rdzenia, więc
+rdzeń zna go bez kroku zasiewu, a stanowisko bez ani jednej ikony własnej i tak ma czego
+szukać.
+
+Nazwa ikony jest jedyna w oknie — zderzenie wychodzi jako błąd bazy, nie jako cicha podmiana
+cudzej ikony: dwie ikony o jednej nazwie w jednym oknie dałyby sprite z dwoma symbolami
+o tym samym identyfikatorze, czyli plik, którego przeglądarka nie złoży.
+
+Etykiety ikon idą po zamknięciu kursora zapytania, tak samo jak przy kolekcjach.

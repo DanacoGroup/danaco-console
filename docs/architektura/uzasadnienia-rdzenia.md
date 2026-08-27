@@ -5444,3 +5444,14 @@ Wartością domyślną klucza rozstrzygającego tryb podania nakładki jest tryb
 
 Zdarzenie niesie treść, bo okno konfiguracji otwarte na drugim urządzeniu ma ją pokazać bez
 dopytywania. Nie jest to sekret: prompt systemowy jest zasadą pracy modelu, nie poświadczeniem.
+
+## budowa/server/internal/core/sesja_konfiguracja_zapis.go
+
+Dziedziczenie ośmiu poziomów zasięgu nie zachodzi w tym pliku — odpowiada za
+nie plik sesja_konfiguracja_skladanie.go. Konfiguracja sesji nie jest drugim
+rejestrem ustawień, tylko innym kształtem wartości w rejestrze istniejącym,
+dlatego obszary nie mają własnej tabeli.
+
+Obszar wskazany w polu areas żądania, dla którego żądanie nie niesie treści,
+zostaje usunięty z danego poziomu i wtedy obowiązuje poziom szerszy. Obszar
+spoza pola areas nie jest ruszany przy zapisie.

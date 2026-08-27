@@ -739,3 +739,16 @@ Wiersz paska powstaje ze zdania złożonego przez `zdanieKwitu` z odpowiedzi
 rdzenia, nie z zamiaru klienta. Kwit nieudany stoi na tym samym pasku wraz
 z treścią odmowy, ponieważ odmowa jest rozstrzygnięciem równie wiążącym jak
 przyjęcie i ma być widoczna w tym samym miejscu.
+
+## budowa/klient-poprzedni/src/mission-control/naglowek-pulpitu.ts
+
+Nagłówek ma jedną odpowiedzialność: podaje tytuł ekranu i jawnie nazywa
+pochodzenie liczb pokazywanych niżej. Dopóki odczyt z rdzenia nie nadszedł,
+a więc dopóki źródło danych ma wartość `ZrodloDanych.Oczekiwanie`, przy tytule
+stoi plakietka oczekiwania wraz ze zdaniem wyjaśniającym. Zdanie jest konieczne,
+ponieważ bez niego pusty ekran zostałby wzięty za pomiar mówiący, że pracy
+nie ma.
+
+Po pierwszym odczycie plakietka mówi o danych pochodzących z rdzenia. Pulpit nie
+zna innych źródeł: liczby albo pochodzą z odczytu rdzenia przez kanał kontraktu,
+albo nie ma ich wcale, a sekcje pokazują stany puste.

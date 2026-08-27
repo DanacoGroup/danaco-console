@@ -38,58 +38,14 @@ import { utworzWyborDrzewem, type PozycjaWyboru, type WyborDrzewem } from './wyb
 import type { ZrodloTerminala } from './zrodlo-terminala';
 import { notaZaleznosci, PROGRAMY_CZYNNOSCI } from './zaleznosci-zewnetrzne';
 
-/**
- * Task & Schedule — okno zarządcy modułu Terminal: zadania projektu, odczyt
- * harmonogramów i kolejek, potok poleceń oraz historia przebiegów tego okna.
- *
- * `terminal.command.exec` uruchamia zadanie i krok potoku, `terminal.output.read`
- * oddaje wynik kroku wraz z kodem wyjścia, `schedule.get` czyta harmonogramy,
- * `automation.workflow.save` i `automation.schedule.set` zakładają plan zadania
- * powłoki, a `queue.list` i `queue.action` pokazują kolejkę silnika pętli
- * obsługującą to okno i posuwają ją sześcioma działaniami słownika kontraktu.
- *
- * ── Plan zadania powłoki: druga POWIERZCHNIA, nie druga rodzina komend ──────
- * Opracowanie modułu opisuje okno Task & Schedule z runnerem zadań i wyrażeniami
- * cron („cron 0 3 * * * kopia zapasowa → jutro 03:00”), a kontrakt wiąże
- * cykliczność z AUTOMATYKĄ, nie z kartą powłoki: zapisuje ją
- * `automation.schedule.set`, czyta `schedule.get`. Rozjazd rozstrzyga się na
- * korzyść kontraktu — rodzina zostaje jedna, a to okno jest jej drugą
- * powierzchnią. Rodziny `terminal.schedule.*` nie ma i nie będzie: dwie rodziny
- * na jeden harmonogram to dwie prawdy o jednym bycie.
- *
- * Zaplanowanie zadania idzie więc dwoma krokami tej samej rodziny:
- * `automation.workflow.save` zapisuje automatykę o jednym kroku rodzaju
- * `command` wołającym `terminal.command.exec`, a `automation.schedule.set`
- * dokłada jej wyrażenie cron. Edytora automatyk to okno nie stawia — pełna praca
- * na krokach, wersjach i zmiennych zostaje w module Automations, a kopia tamtego
- * edytora tutaj rozjechałaby się z pierwowzorem.
- *
- * ── Plan nie jest budzikiem i okno tego nie ukrywa ──────────────────────────
- * Rdzeń wylicza chwilę najbliższego uruchomienia, ale nie ma czym odpalić
- * automatyki samodzielnie: kontrakt nie zna komendy ani zdarzenia, którym
- * harmonogram zgłaszałby wyzwolenie. Zapisany plan jest zapisem obowiązującym
- * wraz z terminem, a uruchomienie prowadzi Operator z okien modułu Automations.
- * Potwierdzenie zapisu mówi to wprost — plan przedstawiony jako budzik byłby
- * obietnicą uruchomienia, którego nikt nie wykona.
- *
- * Kolejki okno nie zakłada: `queue.create` żąda identyfikatora karty sesji.
- * Niesie go od scalenia kontraktu pole `parentSessionId` karty terminala, ale
- * rdzeń jeszcze go nie wypełnia, więc do czasu wpięcia obsługi kolejka powstaje
- * poza tym oknem.
- *
- * Potok jest sekwencjonowaniem po stronie klienta, nie silnikiem w rdzeniu:
- * okno wysyła krok, czeka na jego domknięcie odczytem wyjścia i dopiero wtedy
- * decyduje o następnym. Zamknięcie okna w trakcie przerywa sekwencjonowanie,
- * ale nie przerywa kroku już uruchomionego — ten kończy się w rdzeniu i widać
- * go w Process Monitorze.
- */
+/** Okno zarządcy modułu Terminal: zadania projektu, harmonogramy i kolejki rdzenia, potok poleceń oraz historia przebiegów tego okna. */
 export interface OknoZadanIHarmonogramu {
   element: HTMLElement;
   odswiez(): void;
   czynnosci: readonly CzynnoscOkna[];
 }
 
-/** Sekcje okna — jedna naraz w ciele, bo każda jest osobnym zadaniem Operatora. */
+/** Sekcje okna Task & Schedule pokazywane jedna naraz w ciele, bo każda z nich jest osobnym zadaniem Operatora. */
 const SEKCJE: readonly PozycjaWyboru[] = [
   ['zadania', 'Zadania projektu', 'Zadania odczytane z manifestu w katalogu roboczym karty bieżącej.'],
   ['harmonogram', 'Harmonogram i kolejki', 'Odczyt harmonogramów rdzenia i kolejek silnika pętli obsługujących to okno.'],
@@ -97,16 +53,7 @@ const SEKCJE: readonly PozycjaWyboru[] = [
   ['historia', 'Historia przebiegów', 'Uruchomienia wydane z tego okna wraz z ich stanem i kodem wyjścia.'],
 ];
 
-/**
- * Ile milisekund rdzeń ma czekać na domknięcie kroku potoku.
- *
- * Górna granica kontraktu, w odróżnieniu od podglądu wyjścia w Process
- * Monitorze, gdzie czekanie jest krótkie, bo Operator patrzy na okno. Tutaj
- * czekanie jest warunkiem decyzji: bez kodu wyjścia kroku nie ma jak
- * rozstrzygnąć, czy wolno ruszyć z krokiem następnym. Krok, który nie domknie
- * się w tej granicy, zatrzymuje potok wraz ze zdaniem o powodzie — zgadywanie
- * powodzenia byłoby gorsze od zatrzymania.
- */
+/** Górna granica czekania rdzenia na domknięcie kroku potoku: krok bez kodu wyjścia w tej granicy zatrzymuje potok ze zdaniem o powodzie. */
 const CZEKANIE_NA_KROK_MS = 60000;
 
 export function utworzOknoZadanIHarmonogramu(
@@ -136,9 +83,7 @@ export function utworzOknoZadanIHarmonogramu(
 
   function pokaz(): void {
     const sekcja = kontrolki.sekcja.wartosc();
-    // Pole kroków potoku znika z pola widzenia atrybutem, a nie wyjęciem
-    // z dokumentu: element wyjęty traci ognisko, a przebieg potoku przerysowuje
-    // okno po każdym kroku.
+    // Pole kroków potoku znika atrybutem, nie wyjęciem z dokumentu — wyjęty element traci ognisko.
     kontrolki.pojemnikPotoku.hidden = sekcja !== 'potok';
     const miejsce = tresc.tresc();
     switch (sekcja) {
@@ -173,15 +118,7 @@ export function utworzOknoZadanIHarmonogramu(
     return karta;
   }
 
-  /**
-   * Wykrycie zadań projektu — odczyt manifestu KOMENDĄ RDZENIA.
-   *
-   * Do niedawna okno wypisywało manifest poleceniem powłoki, więc wykrycie zadań
-   * zależało od tego, czy na maszynie stoi program wypisujący plik, i od składni
-   * powłoki karty. `terminal.file.read` czyta plik rdzeniem, więc zależność
-   * znika, a odczyt działa jednakowo w każdej powłoce — także tam, gdzie żadnego
-   * `cat` ani `Get-Content` nie ma.
-   */
+  // Wykrycie zadań czyta manifest komendą rdzenia, nie poleceniem powłoki — działa jednakowo wszędzie.
   function wykryjZadania(): void {
     const karta = kartaWykonania('wykrycie zadań');
     if (karta === null) return;
@@ -342,19 +279,7 @@ export function utworzOknoZadanIHarmonogramu(
       });
   }
 
-  /**
-   * Zakłada plan zadania powłoki dwoma krokami JEDNEJ rodziny komend.
-   *
-   * Kolejność jest wymuszona kontraktem, nie wygodą: cykliczność wskazuje
-   * automatykę identyfikatorem, więc automatyka musi istnieć wcześniej. Gdy
-   * pierwszy krok przejdzie, a drugi nie, okno mówi o automatyce zapisanej BEZ
-   * cykliczności i podaje jej identyfikator — milczenie zostawiłoby Operatorowi
-   * automatykę, o której nie wie, a druga próba założyłaby ją po raz drugi.
-   *
-   * Krok automatyki niesie kartę bieżącą, bo `terminal.command.exec` żąda karty.
-   * Karta zamknięta przed uruchomieniem unieważnia plan — i to też jest w zdaniu
-   * potwierdzenia, zamiast wyjść dopiero przy uruchomieniu.
-   */
+  // Plan zadania zakłada się dwoma krokami jednej rodziny komend w kolejności wymuszonej kontraktem.
   async function zaplanujZadanie(): Promise<void> {
     const karta = kartaWykonania('zaplanowanie zadania powłoki');
     if (karta === null) return;
@@ -453,8 +378,7 @@ export function utworzOknoZadanIHarmonogramu(
       if (miejsce < 0) kolejki.push(zapisana);
       else kolejki.splice(miejsce, 1, zapisana);
       pokaz();
-      // Stan bierze się z odpowiedzi, nie z żądania: silnik potrafi przyjąć
-      // wstrzymanie i oddać kolejkę nadal biegnącą.
+      // Stan bierze się z odpowiedzi, nie z żądania — silnik może oddać kolejkę mimo wstrzymania.
       tresc.potwierdzenie(
         `Rdzeń oddał kolejkę ${zapisana.id} w stanie ${zapisana.status} po działaniu ${dzialanie}.`,
         true,
@@ -623,7 +547,7 @@ export function utworzOknoZadanIHarmonogramu(
   return { element: rama.element, odswiez: pokaz, czynnosci };
 }
 
-/** Wynik jednego kroku potoku — treść wiersza wykazu i rozstrzygnięcie o kontynuacji. */
+/** Wynik jednego kroku potoku: treść wiersza wykazu wraz z rozstrzygnięciem o kontynuacji do kroku następnego. */
 interface WynikKroku {
   polecenie: string;
   /** Proces rejestru rdzenia; pusty, gdy rdzeń nie przyjął uruchomienia. */
@@ -632,13 +556,7 @@ interface WynikKroku {
   zdanie: string;
 }
 
-/**
- * Jeden krok potoku: uruchomienie polecenia i odczyt jego wyniku.
- *
- * Rozstrzygnięcie bierze się z kodu wyjścia, nie z faktu, że żądanie poszło.
- * Krok, który nie domknął się w granicy czekania, nie jest ani udany, ani
- * nieudany — okno mówi to wprost i zatrzymuje potok, zamiast zgadywać.
- */
+/** Jeden krok potoku: uruchomienie polecenia i odczyt jego wyniku, rozstrzygnięty kodem wyjścia, nie samym faktem żądania. */
 async function wykonajKrok(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -695,7 +613,7 @@ async function wykonajKrok(
   };
 }
 
-/** Wykaz zadań projektu wraz z uruchomieniem każdego z nich. */
+/** Wykaz zadań projektu Terminal wraz z przyciskiem uruchomienia każdego zadania z osobna, w kolejności manifestu. */
 function sekcjaZadan(
   zadania: readonly ZadanieManifestu[],
   uruchom: (zadanie: ZadanieManifestu) => void,
@@ -732,7 +650,7 @@ function sekcjaZadan(
   return blok;
 }
 
-/** Wykaz harmonogramów oddanych przez rdzeń. */
+/** Wykaz harmonogramów oddanych przez rdzeń komendą odczytu harmonogramów, gotowych do wglądu Operatora. */
 function sekcjaHarmonogramu(harmonogramy: readonly AutomationSchedule[]): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-harmonogram';
@@ -768,18 +686,7 @@ function sekcjaHarmonogramu(harmonogramy: readonly AutomationSchedule[]): HTMLEl
   return blok;
 }
 
-/**
- * Krok automatyki wołający polecenie powłoki.
- *
- * Rodzaj `command` znaczy „krok wywołuje komendę kontraktu”, więc krok niesie
- * nazwę komendy i treść jej żądania — a nie polecenie powłoki wprost. Dzięki temu
- * plan przechodzi tą samą bramą uprawnień i tym samym egzekutorem izolacji, co
- * polecenie wydane ręcznie z karty; krok omijający komendę byłby drugą drogą do
- * powłoki, bez ani jednego z tych sprawdzeń.
- *
- * Identyfikator kroku jest nazwą czynności, nie liczbą porządkową: automatyka
- * planu ma dokładnie jeden krok, więc numer nie rozróżniałby niczego.
- */
+/** Krok automatyki wywołujący polecenie powłoki przez komendę kontraktu terminala, a nie powłokę wprost. */
 function krokPoleceniaPowloki(idKarty: string, polecenie: string): AutomationStep {
   return {
     id: 'polecenie-powloki',
@@ -808,7 +715,7 @@ function opisHarmonogramu(harmonogram: AutomationSchedule): string {
   return czesci.join(' · ');
 }
 
-/** Wykaz kolejek silnika pętli wraz z sześcioma działaniami słownika kontraktu. */
+/** Wykaz kolejek silnika pętli tego okna wraz z sześcioma działaniami słownika kontraktu dla każdej z nich. */
 function sekcjaKolejek(
   kolejki: readonly Queue[],
   wykonaj: (kolejka: Queue, dzialanie: QueueAction) => void,
@@ -855,7 +762,7 @@ function opisKolejki(kolejka: Queue): string {
   return czesci.join(' · ');
 }
 
-/** Nazwa działania kolejki po polsku; wartość kontraktu zostaje w podpowiedzi przycisku. */
+/** Nazwa działania kolejki po polsku, wypisywana w podpowiedzi przycisku obok wartości kontraktu silnika. */
 function nazwaDzialania(dzialanie: QueueAction): string {
   switch (dzialanie) {
     case QueueAction.Start:
@@ -873,7 +780,7 @@ function nazwaDzialania(dzialanie: QueueAction): string {
   }
 }
 
-/** Wykaz wyników potoku — jeden wiersz na krok, w kolejności wykonania. */
+/** Wykaz wyników potoku poleceń tego okna — jeden wiersz na krok, w kolejności jego wykonania w potoku. */
 function sekcjaWynikowPotoku(wyniki: readonly WynikKroku[]): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-potok';
@@ -903,15 +810,7 @@ function sekcjaWynikowPotoku(wyniki: readonly WynikKroku[]): HTMLElement {
   return blok;
 }
 
-/** Historia przebiegów wydanych z tego okna, złożona z rejestru procesów rdzenia. */
-/**
- * Sekcja obserwacji plików.
- *
- * Licznik wyzwoleń stoi w opisie, bo bez niego obserwacja założona
- * i niedziałająca wygląda tak samo jak taka, która nie miała czego złapać.
- * Powód niepowodzenia też: stan `failed` bez powodu mówi wyłącznie, że coś nie
- * wyszło.
- */
+/** Sekcja obserwacji plików: licznik wyzwoleń w opisie odróżnia obserwację bezczynną od założonej bez skutku, a powód niepowodzenia mówi więcej niż sam stan failed. */
 function sekcjaObserwacji(
   obserwacje: readonly TerminalWatch[],
   zatrzymaj: (kod: string) => void,
@@ -1011,7 +910,7 @@ function chwila(znacznik: number): string {
   return new Date(znacznik).toISOString().replace('T', ' ').slice(0, 19);
 }
 
-/** Kontrolki okna Task & Schedule. */
+/** Kontrolki okna Task & Schedule — pola, przyciski i pojemniki sekcji zadań, harmonogramu, potoku i kolejek. */
 interface PowierzchniaZadan {
   sekcja: WyborDrzewem;
   manifest: WyborDrzewem;
@@ -1090,9 +989,7 @@ function zlozPowierzchnieZadan(
     'samą drogą co polecenie wydane ręcznie: przez bramę uprawnień okna i egzekutor izolacji.';
   const odczytajObserwacje = przyciskAkcji('Odczytaj obserwacje');
 
-  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu: próg
-  // powiadomienia świadomie nie poszedł do scalenia, bo kanał powiadomień jest
-  // własnością platformy, a nie modułu.
+  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu — kanał powiadomień należy do platformy.
   const powiadomienia = pokrycie.przycisk(
     'Powiadomienie o długim zadaniu',
     'terminal.notification.set',

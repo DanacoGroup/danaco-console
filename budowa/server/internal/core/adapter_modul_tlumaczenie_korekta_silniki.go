@@ -638,7 +638,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 // wolajKorekte przeprowadza jedno uruchomienie programu korekty w katalogu
 // roboczym czynności.
 //
-// Zasięg platformy składa `zasiegSyntezy` — ta sama trójka okno–zasady–obszar,
+// Zasięg platformy składa `zasiegProgramowTlumaczenia` — ta sama trójka okno–zasady–obszar,
 // którą jedzie synteza mowy tego modułu. Katalog roboczy jest tu podany WPROST,
 // nie zostawiony bramie: vale szuka swojej konfiguracji w katalogu, z którego
 // ruszył, więc uruchomienie gdzie indziej kończyłoby się błędem braku

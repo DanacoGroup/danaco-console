@@ -6292,3 +6292,17 @@ repozytorium niosą bajty: archiwum powstaje w rdzeniu i ląduje w repozytorium
 jako nowy zasób, a wywóz opisowy zostaje obok jako dwie różne rzeczy, których
 okno nie myli. Wskaźnik retencji czyta politykę z rdzenia wraz z raportem
 zasobów zbliżających się do końca okresu.
+
+## budowa/klient-poprzedni/src/moduly/browser/czynnosci-materialu.ts
+Plik ma jedną odpowiedzialność: wywołania rdzenia w imieniu panelu. Panel składa kontrolki i wykaz, pamięć materiału stoi w pliku `material-sesji.ts`, a ocena odpowiedzi w pliku `skutek-zapisu.ts`. Sprawdzenie monitora przechodzi pod jego adres, ponieważ polecenie `browser.snapshot.get` oddaje treść strony bieżącej okna, a nie dowolnej strony. Sprawdzenie przestawia więc wspólny podgląd — operator ma o tym wiedzieć przed naciśnięciem, nie po nim, więc mówi mu to zarówno dymek przy pozycji, jak i zdanie odpowiedzi.
+
+## budowa/klient-poprzedni/src/moduly/library/czynnosci-zbiorcze.ts
+Panel Explorera wymienia osiem czynności zbiorczych: etykietę, przypisanie do
+kolekcji, otwarcie w module źródłowym, przeniesienie w strukturze,
+archiwizację i przywrócenie, usunięcie trwałe oraz udostępnienie
+odnośnikiem. Usunięcie trwałe pyta osobno, ponieważ jest jedyną czynnością
+nieodwracalną w tym module, więc pierwsze naciśnięcie zapowiada skutek,
+a dopiero drugie go wykonuje; potwierdzenie w tym samym kliknięciu byłoby
+zgodą pozorną. Plik buduje wyłącznie kontrolki i pokazuje odpowiedź,
+a rozmowę z rdzeniem prowadzi moduł zapisów zbiorczych, zachowując jedną
+odpowiedzialność na plik.

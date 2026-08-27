@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pl-PL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console</title>
+<link rel="icon" href="../../design/zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./arkusze.css">
+</head>
+
+<!--
+  Dokument okna drogi wejścia.
+
+  Niesie wyłącznie miejsca montażu i oprawę sceny. Okna składa `montaz.ts`
+  ze składników, a tekst niesie `tresci.ts` — dokument nie ma ani jednego
+  zdania widocznego dla użytkownika poza nazwą produktu w tytule karty.
+
+  Trzy miejsca montażu, po jednym na etap drogi wejścia. Stoją w dokumencie
+  wszystkie naraz, bo montaż buduje okna raz, przy starcie; widoczne jest to,
+  w którym stoi czynna odsłona.
+
+  Motywu dokument nie narzuca: `zetony.css` daje `:root:not([data-theme])`
+  motyw zgodny z ustawieniem systemu, a żadne źródło nie wskazuje motywu,
+  od którego produkt ma się zaczynać.
+-->
+<body>
+
+<div class="we-scena">
+  <div data-wejscie-okno="uruchomienie"></div>
+</div>
+
+<div class="we-scena">
+  <div data-wejscie-okno="dostep"></div>
+</div>
+
+<div class="we-scena">
+  <div data-wejscie-okno="przygotowanie"></div>
+</div>
+
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

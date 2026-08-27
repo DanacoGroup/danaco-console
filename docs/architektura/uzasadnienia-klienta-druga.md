@@ -5506,3 +5506,11 @@ jedyną odpowiedzią: sama zmiana wartości pod palcami Operatora byłaby posuni
 nad obszarem staje ślad — co się zmieniło i czego to dotyczyło. Ślad nie powie, czyja ręka. Oba
 zdarzenia idą bez pól sprawcy, choć rdzeń wypełnia je w innych kopertach, więc ślad mówi „nie
 wiadomo, czyja ręka" — napis pewniejszy niż dowód byłby gorszy od jego braku.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/indeks.ts
+Montaż na scenie powłoki: tworzy się układ funkcją zamontowania okien
+wraz z korzeniem, rdzeniem i opisem, po czym ustawia się liczbę okien,
+nadaje role poszczególnym gniazdom komendą nadania roli i pokazuje
+przekazanie między dwoma gniazdami komendą pokazania przekazania. Sam
+układ powstaje przez osobną funkcję tworzącą i nie wymaga rdzenia — montaż
+dokłada wyłącznie podpięcie pierwszego gniazda do łączności.

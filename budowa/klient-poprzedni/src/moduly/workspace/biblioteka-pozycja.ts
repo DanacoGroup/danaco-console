@@ -40,7 +40,7 @@ export function pozycjaPliku(wpis: LibraryFile, czynnosci: CzynnosciPliku): HTML
   return element;
 }
 
-/** Wykaz wersji jednego pliku — odpowiedź komendy `library.version.list`. */
+/** Buduje wykaz wersji jednego pliku biblioteki projektu na podstawie odpowiedzi komendy rdzenia wymieniającej wersje. */
 export function wykazWersji(nazwaPliku: string, wersje: readonly LibraryVersion[]): HTMLElement {
   const lista = wykaz(`Wersje pliku ${nazwaPliku}`, 'dw-wykaz');
   for (const wersja of wersje) {
@@ -55,7 +55,7 @@ export function wykazWersji(nazwaPliku: string, wersje: readonly LibraryVersion[
   return lista;
 }
 
-/** Treść pliku w postaci base64 — kształt pola `contentBase64` kontraktu. */
+/** Zamienia binarną zawartość pliku na postać tekstową base64 zgodną z odpowiednim polem kontraktu wgrywania. */
 export function naBase64(zawartosc: ArrayBuffer): string {
   const bajty = new Uint8Array(zawartosc);
   let tekst = '';

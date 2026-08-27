@@ -719,3 +719,22 @@ wykonawców pracuje naraz i co się dzieje przy spięciu; oba narzędzia są dom
 i włącza je operator konta, nie okno. Panel woła rdzeń sam, bo skutkiem każdej z tych czynności
 jest wykaz albo odmowa nazwana — jedno i drugie jest treścią widoczną, nie wartością pośrednią
 przekazywaną wyżej.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-script-library.ts
+
+Do rdzenia idą dwie komendy uruchomienia: jedna wykonuje treść skryptu,
+a druga oddaje wynik sprawdzenia składni. Rdzeń podaje treść programowi
+powłoki jako pojedynczy argument, więc skrypt wieloliniowy wykonuje się bez
+zapisywania go do pliku — dlatego biblioteka nie potrzebuje ani komendy
+zapisu pliku, ani ścieżki na dysku serwera.
+
+Każdy zapis pozycji zakłada kolejną wersję, więc poprzednie brzmienie treści
+zostaje w dzienniku wersji; usunięcie zabiera pozycję wraz ze wszystkimi jej
+wersjami naraz.
+
+Analizę treści prowadzi program leżący na maszynie rdzenia, osobny od
+kontroli wstępnej okna. Odpowiedź niesie pole mówiące, czy program analizy
+był dostępny, i okno je pokazuje, bo pusty wykaz uwag przy braku programu
+znaczyłby fałszywie „treść bez zastrzeżeń". Kontrola wstępna okna zostaje
+obok analizy, nie zamiast niej: sprawdza to, co da się rozstrzygnąć bez
+żadnego programu, i robi to w chwili pisania.

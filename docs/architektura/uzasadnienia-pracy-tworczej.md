@@ -1322,3 +1322,18 @@ wszystkie kroje ikonowe i tego oczekuje arkusz stylów, który je odczyta.
 Ikona, z której nie da się wyciągnąć ani jednej ścieżki, jest odmową całego
 pakietu składania kroju: krój z pustym glifem w środku wygląda jak krój
 gotowy, a w miejscu tej ikony pokazuje nic.
+
+## adapter_modul_studio_tabele.go
+
+Rachunek siatki tabeli stoi w pliku pomocniczym, a droga zapisu, zmiany
+śledzonej i dziennika w obszarze postaci — ten plik nie liczy żadnej z tych
+rzeczy drugi raz.
+
+Tabela wchodzi do drzewa dokumentu blokiem nietekstowym, więc jej wstawienie
+nie przesuwa ani jednego zakresu zaznaczenia, przypisu ani blokady. Gdyby
+tabela zajmowała znaki treści, każde jej wstawienie rozjeżdżałoby wszystko,
+co wisi na miejscu w treści.
+
+Ustawianie postaci tabeli i komórek rozstrzyga zasięg wskazania tak samo, jak
+w pakiecie biurowym: brak wskazania wiersza i kolumny znaczy całą tabelę,
+wskazanie samego wiersza — cały wiersz, samej kolumny — całą kolumnę.

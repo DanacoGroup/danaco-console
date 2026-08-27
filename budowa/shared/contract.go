@@ -10663,6 +10663,8 @@ const (
 	CommandKnowledgeIndex MessageType = "knowledge.index"
 	// Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci
 	CommandKnowledgeSearch MessageType = "knowledge.search"
+	// Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+	CommandKnowledgeImageSearch MessageType = "knowledge.image.search"
 	// Doklada narzedzie albo skill do sesji na czas jej trwania. Definicji eksperta NIE RUSZA (rozstrzygniecie Wlasciciela, rozdz. 5): dolozenie zyje w stanie sesji, przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
 	CommandSessionToolAttach MessageType = "session.tool.attach"
 	// Zdejmuje dolozenie z sesji. Zestaw wraca do podstawy z definicji eksperta; sama definicja nie zmienia sie ani o joto, bo nigdy nie byla zmieniana
@@ -15378,6 +15380,18 @@ type KnowledgeHit struct {
 	Score *int `json:"score,omitempty"`
 	// Z ktorego zakresu pochodzi
 	Scope KnowledgeScope `json:"scope"`
+}
+
+// KnowledgeImageHit — Obraz odnaleziony zdaniem opisujacym jego tresc. Osobna struktura od KnowledgeHit, bo obraz nie ma fragmentu tekstu do zacytowania — wskazaniem jest sam plik
+type KnowledgeImageHit struct {
+	// Nazwa pliku obrazu w bibliotece
+	Source string `json:"source"`
+	// Identyfikator zrodla, ktorym da sie po obraz siegnac
+	SourceId *string `json:"sourceId,omitempty"`
+	// Rodzaj obrazu zapisany przy pliku biblioteki
+	MimeType *string `json:"mimeType,omitempty"`
+	// Trafnosc w setnych — 100 znaczy najblizszy mozliwy
+	Score *int `json:"score,omitempty"`
 }
 
 // SessionTool — Narzedzie dolozone do sesji komenda po ukosniku. Zyje W STANIE SESJI, nie w definicji eksperta: definicja pozostaje nietknieta, dolozenie przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
@@ -28092,6 +28106,10 @@ type KnowledgeSearchRequest struct {
 	Limit *int `json:"limit,omitempty"`
 	// Projekt, ktorego wiedze przeszukac po znaczeniu
 	ProjectId *string `json:"projectId,omitempty"`
+	// Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze
+	Rerank *bool `json:"rerank,omitempty"`
+	// Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic
+	RerankCandidates *int `json:"rerankCandidates,omitempty"`
 }
 
 // KnowledgeSearchResponse — Tresc wyniku knowledge.search — Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci
@@ -28100,6 +28118,30 @@ type KnowledgeSearchResponse struct {
 	Results []KnowledgeHit `json:"results"`
 	// Liczba fragmentow spelniajacych warunki
 	Total int `json:"total"`
+	// Czy kolejnosc ulozyl przesiew. Bez tego pola nie da sie odroznic odpowiedzi przesianej od odpowiedzi z samego pierwszego przebiegu, a `score` w obu ma ten sam ksztalt
+	Reranked *bool `json:"reranked,omitempty"`
+}
+
+// KnowledgeImageSearchRequest — Tresc zadania knowledge.image.search — Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+type KnowledgeImageSearchRequest struct {
+	// Zdanie opisujace szukany obraz
+	Query string `json:"query"`
+	// Gorna granica liczby obrazow
+	Limit *int `json:"limit,omitempty"`
+	// Projekt, ktorego obrazy przeszukac
+	ProjectId *string `json:"projectId,omitempty"`
+}
+
+// KnowledgeImageSearchResponse — Tresc wyniku knowledge.image.search — Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+type KnowledgeImageSearchResponse struct {
+	// Obrazy od najtrafniejszego
+	Results []KnowledgeImageHit `json:"results"`
+	// Liczba obrazow spelniajacych warunki
+	Total int `json:"total"`
+	// Ile obrazow biblioteki weszlo do porownania. Wynik pusty przy zerze znaczy brak obrazow, a nie brak trafienia — dwie rozne odpowiedzi, ktorych bez tej liczby nie da sie rozroznic
+	Examined *int `json:"examined,omitempty"`
+	// Model osi obrazu, ktorym liczono podobienstwo
+	Model *string `json:"model,omitempty"`
 }
 
 // SessionToolAttachRequest — Tresc zadania session.tool.attach — Doklada narzedzie albo skill do sesji na czas jej trwania. Definicji eksperta NIE RUSZA (rozstrzygniecie Wlasciciela, rozdz. 5): dolozenie zyje w stanie sesji, przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
@@ -45466,6 +45508,7 @@ func WszystkieKomendy() []MessageType {
 		CommandImageBackgroundRemove,
 		CommandKnowledgeIndex,
 		CommandKnowledgeSearch,
+		CommandKnowledgeImageSearch,
 		CommandSessionToolAttach,
 		CommandSessionToolDetach,
 		CommandSessionToolList,
@@ -46700,6 +46743,7 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandImageBackgroundRemove:               {},
 	CommandKnowledgeIndex:                      {},
 	CommandKnowledgeSearch:                     {},
+	CommandKnowledgeImageSearch:                {},
 	CommandSessionToolAttach:                   {},
 	CommandSessionToolDetach:                   {},
 	CommandSessionToolList:                     {},
@@ -47973,7 +48017,8 @@ func NarzedziaModelu() []ToolDeclaration {
 		{Name: "danaco_image_upscale", Command: CommandImageUpscale, Description: "Powieksza obraz z odtworzeniem szczegolu (superrozdzielczosc). Zastepuje wyspecjalizowane modele powiekszajace; bez zainstalowanego silnika odmawia, nazywajac brak — nigdy nie oddaje zwyklego rozciagniecia jako powiekszenia. Uzyj, gdy Operator prosi o powiekszenie zdjecia bez utraty ostrosci", Parameters: []ToolParameter{{Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, w ktorym powstaje wynik; brak znaczy zasob poza wykazem okna"}, {Name: "assetId", Type: "string", Items: "", Required: false, Description: "Zasob z magazynu rdzenia"}, {Name: "sourcePath", Type: "string", Items: "", Required: false, Description: "Sciezka pliku na dysku Operatora"}, {Name: "scale", Type: "integer", Items: "", Required: false, Description: "Krotnosc powiekszenia; brak bierze dwukrotne"}, {Name: "faces", Type: "boolean", Items: "", Required: false, Description: "Czy poprawiac twarze osobnym przebiegiem"}}},
 		{Name: "danaco_image_background_remove", Command: CommandImageBackgroundRemove, Description: "Usuwa tlo z obrazu, zostawiajac przezroczystosc. Zastepuje wyspecjalizowane narzedzia wycinania; bez silnika odmawia, nazywajac brak. Uzyj, gdy Operator prosi o wyciecie obiektu albo usuniecie tla", Parameters: []ToolParameter{{Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, w ktorym powstaje wynik; brak znaczy zasob poza wykazem okna"}, {Name: "assetId", Type: "string", Items: "", Required: false, Description: "Zasob z magazynu rdzenia"}, {Name: "sourcePath", Type: "string", Items: "", Required: false, Description: "Sciezka pliku na dysku Operatora"}, {Name: "model", Type: "string", Items: "", Required: false, Description: "Model wycinania; brak bierze domyslny silnika"}}},
 		{Name: "danaco_knowledge_index", Command: CommandKnowledgeIndex, Description: "Buduje wskaznik ZNACZENIA dla tresci Operatora — biblioteki, historii rozmow, plikow przestrzeni roboczej. Wyszukiwanie po slowach juz dziala (library.file.search); to jest droga do wyszukiwania po SENSIE. Uzyj raz na jakis czas albo po wniesieniu duzej partii tresci, zeby wyszukiwanie po znaczeniu bylo aktualne", Parameters: []ToolParameter{{Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres wskaznika; brak bierze biblioteke", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen ma wejsc do wskaznika"}, {Name: "rebuild", Type: "boolean", Items: "", Required: false, Description: "Czy przebudowac wskaznik od zera"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego pamiec i notatki maja wejsc do wskaznika znaczenia"}}},
-		{Name: "danaco_knowledge_search", Command: CommandKnowledgeSearch, Description: "Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci. Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Pytanie albo opis szukanej tresci"}, {Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres szukania", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen przeszukac"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby fragmentow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego wiedze przeszukac po znaczeniu"}}},
+		{Name: "danaco_knowledge_search", Command: CommandKnowledgeSearch, Description: "Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci. Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Pytanie albo opis szukanej tresci"}, {Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres szukania", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen przeszukac"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby fragmentow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego wiedze przeszukac po znaczeniu"}, {Name: "rerank", Type: "boolean", Items: "", Required: false, Description: "Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze"}, {Name: "rerankCandidates", Type: "integer", Items: "", Required: false, Description: "Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic"}}},
+		{Name: "danaco_knowledge_image_search", Command: CommandKnowledgeImageSearch, Description: "Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora. Uzyj, gdy Operator pyta o obraz, ktorego nazwy nie pamieta — opisz zdaniem, co ma byc na obrazie, zamiast zgadywac nazwe pliku", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Zdanie opisujace szukany obraz"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby obrazow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego obrazy przeszukac"}}},
 		{Name: "danaco_session_tool_list", Command: CommandSessionToolList, Description: "Zwraca narzedzia dolozone do sesji. Zestaw narzedzi tury to definicja eksperta PLUS te dolozenia — bez tego odczytu druga polowa zestawu bylaby niewidoczna. Uzyj, aby sprawdzic, jakie narzedzia Operator dolozyl do tej sesji poza zestawem eksperta", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: true, Description: "Sesja"}}},
 		{Name: "danaco_tools_catalog_list", Command: CommandToolsCatalogList, Description: "Zwraca wykaz pozycji po ukosniku — narzedzia do dolozenia i komendy akcji w jednym wykazie. Wykaz liczy setki pozycji, wiec zadanie niesie zawezenie tekstem, rodzajem i grupa; dopasowanie idzie takze SRODKIEM nazwy, bo przy przedrostkach zrodla szukanie od poczatku byloby bezuzyteczne (rozdz. 7.2). Uzyj, aby odszukac pozycje po ukosniku po nazwie albo przeznaczeniu i wskazac Operatorowi, co moze dolozyc", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: false, Description: "Sesja, dla ktorej oznaczyc pozycje juz dolozone; puste zostawia pole attached puste"}, {Name: "kind", Type: "string", Items: "", Required: false, Description: "Zawezenie do rodzaju wpisu; puste zwraca oba rodzaje", Enum: []string{"tool", "action"}}, {Name: "group", Type: "string", Items: "", Required: false, Description: "Zawezenie do grupy po przeznaczeniu"}, {Name: "query", Type: "string", Items: "", Required: false, Description: "Tekst zawezajacy; dopasowanie w dowolnym miejscu nazwy pelnej, skroconej i opisu, porzadek wedlug trafnosci przed alfabetem"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Liczba pozycji; puste zwraca komplet"}, {Name: "offset", Type: "integer", Items: "", Required: false, Description: "Przesuniecie wykazu"}, {Name: "profileId", Type: "string", Items: "", Required: false, Description: "Profil asystenta, wedlug ktorego zaznaczyc zakresy i limity pozycji"}}},
 		{Name: "danaco_studio_document_form_get", Command: CommandStudioDocumentFormGet, Description: "Oddaje pelna postac dokumentu — arkusz stylow, nastawy strony, sekcje, bloki, tabele, obiekty, aparat i pola. Uzyj, aby zobaczyc postac dokumentu — kroj, wciecia, sekcje, tabele i obiekty — zanim cokolwiek w niej zmienisz", Parameters: []ToolParameter{{Name: "documentId", Type: "string", Items: "", Required: true, Description: "Dokument Studia, ktorego czynnosc dotyczy"}, {Name: "includeBlocks", Type: "boolean", Items: "", Required: false, Description: "Czy oddac bloki tresci; brak znaczy tak"}, {Name: "rangeStart", Type: "integer", Items: "", Required: false, Description: "Poczatek fragmentu w znakach; brak znaczy caly dokument"}, {Name: "rangeEnd", Type: "integer", Items: "", Required: false, Description: "Koniec fragmentu w znakach; brak znaczy caly dokument"}}},
@@ -48318,6 +48363,7 @@ var KomendyNarzedzi = map[string]MessageType{
 	"danaco_image_background_remove":         CommandImageBackgroundRemove,
 	"danaco_knowledge_index":                 CommandKnowledgeIndex,
 	"danaco_knowledge_search":                CommandKnowledgeSearch,
+	"danaco_knowledge_image_search":          CommandKnowledgeImageSearch,
 	"danaco_session_tool_list":               CommandSessionToolList,
 	"danaco_tools_catalog_list":              CommandToolsCatalogList,
 	"danaco_studio_document_form_get":        CommandStudioDocumentFormGet,

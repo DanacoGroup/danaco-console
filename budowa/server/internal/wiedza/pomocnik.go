@@ -35,9 +35,25 @@ import (
 //go:embed pomocnik_osadzen.py
 var skryptPomocnika string
 
+// skryptPrzesiewu — treść pomocnika przesiewu wkompilowana w binarium.
+//
+//go:embed pomocnik_przesiewu.py
+var skryptPrzesiewu string
+
+// skryptObrazu — treść pomocnika osi obrazu wkompilowana w binarium.
+//
+//go:embed pomocnik_obrazu.py
+var skryptObrazu string
+
 const (
 	// nazwaSkryptu jest nazwą pliku wyłożonego na dysk.
 	nazwaSkryptu = "pomocnik_osadzen.py"
+	// nazwaSkryptuPrzesiewu i nazwaSkryptuObrazu są nazwami plików dwóch
+	// pozostałych pomocników. Każdy leży pod własną nazwą w tym samym katalogu:
+	// jeden plik o zmiennej treści nie dałby się obejrzeć przed uruchomieniem,
+	// a właśnie po to katalog danych jest miejscem wyłożenia.
+	nazwaSkryptuPrzesiewu = "pomocnik_przesiewu.py"
+	nazwaSkryptuObrazu    = "pomocnik_obrazu.py"
 	// podkatalogWiedzy oddziela rzeczy wskaźnika od reszty katalogu danych.
 	podkatalogWiedzy = "wiedza"
 	// podkatalogModeli mieści wagi pobrane przez bibliotekę.
@@ -67,18 +83,26 @@ const (
 // wydanie na dysku ma leżeć wersja z tego binarium. Koszt to zapis kilku
 // kilobajtów raz na żądanie indeksowania.
 func wylozSkrypt(katalogDanych string) (string, error) {
+	return wylozPomocnika(katalogDanych, nazwaSkryptu, skryptPomocnika)
+}
+
+// wylozPomocnika wykłada jeden wkompilowany skrypt pod jego własną nazwą.
+// Trzej pomocnicy pakietu — osadzenia, przesiew i oś obrazu — jadą tą samą
+// drogą: druga droga wykładania byłaby drugą prawdą o tym, gdzie Operator ma
+// szukać kodu, który rdzeń uruchamia na jego maszynie.
+func wylozPomocnika(katalogDanych, nazwa, tresc string) (string, error) {
 	katalog := filepath.Join(katalogDanych, podkatalogWiedzy)
 	if err := os.MkdirAll(katalog, prawaKatalogu); err != nil {
 		return "", fmt.Errorf("wskaźnik znaczenia: katalog %s: %w", katalog, err)
 	}
-	docelowy := filepath.Join(katalog, nazwaSkryptu)
+	docelowy := filepath.Join(katalog, nazwa)
 
-	tymczasowy, err := os.CreateTemp(katalog, nazwaSkryptu+".*.czesciowy")
+	tymczasowy, err := os.CreateTemp(katalog, nazwa+".*.czesciowy")
 	if err != nil {
 		return "", fmt.Errorf("wskaźnik znaczenia: plik tymczasowy w %s: %w", katalog, err)
 	}
 	nazwaTymczasowa := tymczasowy.Name()
-	if _, err := tymczasowy.WriteString(skryptPomocnika); err != nil {
+	if _, err := tymczasowy.WriteString(tresc); err != nil {
 		tymczasowy.Close()
 		os.Remove(nazwaTymczasowa)
 		return "", fmt.Errorf("wskaźnik znaczenia: zapis pomocnika: %w", err)
@@ -155,4 +179,17 @@ func katalogWag(katalogDanych, wskazanie string) string {
 		return wskazanie
 	}
 	return filepath.Join(katalogDanych, podkatalogWiedzy, podkatalogModeli)
+}
+
+// katalogWagOsobny rozstrzyga, gdzie leżą wagi modelu innego niż osadzenia.
+//
+// Osobny podkatalog na model, a nie wspólny worek: biblioteka wykłada wagi
+// modelu stojącego wprost w katalogu wskazanym, więc dwa modele w jednym
+// katalogu byłyby dwoma plikami `model.safetensors` w tym samym miejscu —
+// czyli jednym z nich nadpisanym przez drugi.
+func katalogWagOsobny(katalogDanych, wskazanie, podkatalog string) string {
+	if wskazanie != "" {
+		return wskazanie
+	}
+	return filepath.Join(katalogDanych, podkatalogWiedzy, podkatalogModeli, podkatalog)
 }

@@ -85,3 +85,45 @@ Sprawdzian audytu wydajności Core Web Vitals jest wyjątkiem od zasady tego
 pliku: pomija się bez programu pomiarowego, bo audyt wydajności z założenia
 idzie programem, a nie biblioteką wkompilowaną w rdzeń; odmowę przy jego
 braku mierzy sprawdzian osobny.
+
+## budowa/server/internal/core/skutek_zarzadu_biblioteki_test.go
+
+Sprawdziany rodziny `library.*` nie kończą się na odpowiedzi komendy: moduł
+Design w tym produkcie już meldował `status: ok` wraz z wykazem zasobów, za
+którymi nie było ani jednego bajtu. Każdy sprawdzian tego pliku schodzi niżej
+niż rdzeń — otwiera plik bazy osobnym połączeniem SQL albo czyta bajty
+z magazynu treści na dysku — i pyta o to samo, co komenda zameldowała. Miara
+jest niezależna, nie druga komenda: gdyby stan czytała inna komenda tego
+samego modułu, obie mogłyby mylić się zgodnie, bo adapter oddający wykaz
+z tego samego miejsca, w którym zapisał, potwierdziłby sam siebie.
+
+Sprawdzian opisu zasobu mierzy skutek w tabeli opisu, a nie samą odpowiedź
+komendy, ponieważ odpowiedź niesie opis po zapisie i sama z siebie zawsze
+wygląda pomyślnie.
+
+Sprawdzian weryfikacji integralności mierzy drogę, której żadne okno nigdy
+nie przejdzie normalnie: bajtów zasobu nie oddaje żadna komenda kontraktu,
+więc treść na dysku podmienia sam sprawdzian.
+
+Pulpit stanu na pustym repozytorium sprawdza przypadek graniczny agregatów:
+sumowanie po zbiorze pustym daje w SQL wartość pustą, a pulpit ma pola
+liczbowe bez stanu pustego — zbiór pusty ma dać zera, nie odmowę, bo zero
+zasobów jest wynikiem, a nie niepowodzeniem odczytu.
+
+Pliki `jpegZeZnacznikiemXmp` i `mp3ZeZnacznikiemId3` składają materiał ręcznie,
+bo znacznik XMP i ID3v2 musi być osadzony w bajtach samego pliku, a materiał
+wniesiony spoza pliku niczego by nie dowiódł; koder `image/jpeg` nie umie
+wstawić własnego segmentu, a biblioteka standardowa nie zapisuje MP3 wcale.
+
+Sprawdzian odczytu metadanych osadzonych przez XMP pomija się z nazwanym
+powodem na maszynie bez programu: odczyt XMP, IPTC i ID3 jest poszerzeniem
+opisu, a nie jego warunkiem — resztę pól pilnuje sprawdzian odczytu metadanych
+technicznych, który idzie zawsze.
+
+Sprawdzian braku programu zeruje ścieżkę wyszukiwania, żeby uczynić z bieżącej
+maszyny maszynę bez programu, i mierzy to zdanie wszędzie, nie tylko na
+cienkiej instalce.
+
+Zapora pokrycia rodziny `library.*` stoi obok sprawdzianu pokrycia całego
+kontraktu, bo ten moduł ma osobno pilnować, żeby żadna z jego 48 komend nie
+została bez uchwytu w rejestrze rdzenia.

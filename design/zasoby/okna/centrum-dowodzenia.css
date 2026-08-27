@@ -846,4 +846,23 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-odstep { display: none; }
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-nadmiar { margin-left: 0; }
 .cd-strona .dn-obszar-pasek .dn-pasek-okna-rozdzielacz { height: var(--dn-wym-ikona); }
+/* Kafel pod wskaźnikiem ujawnia animację. Metryka i zdanie opisowe biegną po
+   niej, więc samo rozjaśnienie tła zabrałoby im czytelność — razem z animacją
+   wzmacnia się dlatego barwa pisma, z tekstu drugorzędnego na pierwszorzędny.
+   Obie wartości dobrane pomiarem kontrastu na najjaśniejszych klatkach pętli:
+   przy 0.5 i piśmie pierwszorzędnym najsłabszy kontrast opisu to 4,74 : 1. */
+.cd-strona .dn-karta-srodowiska:hover .cd-karta-anim,
+.cd-strona .dn-karta-srodowiska:focus-within .cd-karta-anim {
+  opacity: 0.5;
+}
+.cd-strona .dn-karta-srodowiska:hover .dn-karta-srodowiska-opis,
+.cd-strona .dn-karta-srodowiska:hover .dn-karta-srodowiska-motto,
+.cd-strona .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-opis,
+.cd-strona .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-motto {
+  color: var(--dn-tekst);
+}
+.cd-strona .cd-karta-anim,
+.cd-strona .dn-karta-srodowiska-opis,
+.cd-strona .dn-karta-srodowiska-motto { transition: opacity var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
+
 /* === koniec agent-5 === */

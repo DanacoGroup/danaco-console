@@ -360,3 +360,91 @@
     }, 220);
   }, true);
 })();
+
+/* Kotwica dymka. Dymek jest umocowany do okna widoku, żeby wyjść poza pole
+   przycinania paneli; współrzędne muszą więc pochodzić z prostokąta wyzwalacza,
+   bo miejsce spoczynkowe pseudoelementu wypada w każdym pojemniku inaczej.
+   Dymek staje pod wyzwalaczem, wyśrodkowany; przy krawędzi okna jest do niej
+   przyciskany, a przy dolnej krawędzi przeskakuje nad wyzwalacz.
+
+   Zmienne własne dziedziczą się w dół drzewa, więc same nie wystarczą: dymek
+   dziecka brałby współrzędne przodka, który był pod wskaźnikiem wcześniej.
+   Nośnikiem jest dlatego znacznik `data-dymek` na wyzwalaczu bieżącym — poza
+   nim obowiązuje umocowanie biblioteczne. */
+(function () {
+  var ODSTEP = 4;
+  var MARGINES = 8;
+  var ostatni = null;
+  var plotno = null;
+
+  /* Szerokości pseudoelementu nie da się zmierzyć, ale da się zmierzyć napis
+     krojem, którym jest złożony — to wystarcza do dociśnięcia do krawędzi. */
+  function szerokosc(el, tekst) {
+    if (!plotno) { plotno = document.createElement('canvas').getContext('2d'); }
+    var s = window.getComputedStyle(el);
+    plotno.font = s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
+    return plotno.measureText(tekst).width + 20;
+  }
+
+  function zdejmij(el) {
+    if (!el) { return; }
+    el.style.removeProperty('--cd-dymek-x');
+    el.style.removeProperty('--cd-dymek-y');
+    el.removeAttribute('data-dymek');
+  }
+
+  function ustaw(el) {
+    var tekst = el.getAttribute('data-etykietka');
+    if (!tekst) { return; }
+    var r = el.getBoundingClientRect();
+    if (!r.width) { return; }
+
+    if (ostatni && ostatni !== el) { zdejmij(ostatni); }
+    ostatni = el;
+
+    var polowa = szerokosc(el, tekst) / 2;
+    var x = r.left + r.width / 2;
+    var lewaGranica = MARGINES + polowa;
+    var prawaGranica = window.innerWidth - MARGINES - polowa;
+    if (prawaGranica > lewaGranica) {
+      x = Math.min(Math.max(x, lewaGranica), prawaGranica);
+    } else {
+      x = window.innerWidth / 2;
+    }
+
+    /* Przy dolnej krawędzi okna dymek nie ma dokąd opaść — staje nad
+       wyzwalaczem. Wysokość dymka to jeden wiersz pisma z wyściółką. */
+    var wysokosc = r.height ? 26 : 26;
+    var y = r.bottom + ODSTEP;
+    if (y + wysokosc > window.innerHeight - MARGINES) {
+      y = r.top - ODSTEP - wysokosc;
+    }
+
+    el.style.setProperty('--cd-dymek-x', Math.round(x) + 'px');
+    el.style.setProperty('--cd-dymek-y', Math.round(y) + 'px');
+    el.setAttribute('data-dymek', 'tak');
+  }
+
+  function zWezla(cel) {
+    return cel && cel.closest ? cel.closest('[data-etykietka]') : null;
+  }
+
+  ['pointerover', 'focusin'].forEach(function (n) {
+    document.addEventListener(n, function (e) {
+      var el = zWezla(e.target);
+      if (el) { ustaw(el); } else if (ostatni) { zdejmij(ostatni); ostatni = null; }
+    }, true);
+  });
+  ['pointerout', 'focusout'].forEach(function (n) {
+    document.addEventListener(n, function (e) {
+      var el = zWezla(e.target);
+      if (el && el === ostatni) { zdejmij(el); ostatni = null; }
+    }, true);
+  });
+  window.addEventListener('scroll', function () {
+    if (ostatni) { ustaw(ostatni); }
+  }, true);
+  window.addEventListener('resize', function () {
+    if (ostatni) { ustaw(ostatni); }
+  });
+})();

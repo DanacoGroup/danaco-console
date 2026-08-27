@@ -6044,3 +6044,36 @@ jakim znakiem punkt narysować; wcięcie poziomu, które nie schodzi do akapitu,
 miałaby czym pokazać znacznika wcięcia; numeracja prawnicza wielopoziomowa bez wzoru składanego
 z poziomów nadrzędnych, gdzie zapis złożony jest wtedy niewykonalny; rodzaj listy spoza kontraktu
 przyjęty w ciszy.
+
+## budowa/server/internal/core/tozsamosc_agenta.go
+
+Pole ConfigAxis kontraktu jest zbiorem zamkniętym trzech wartości: platform,
+model, account. Oś odpowiada na pytanie, dla czego wartość obowiązuje przy
+rozstrzyganiu konfiguracji, i stoi prostopadle do poziomu zasięgu. Ekspert
+nie jest ani zasięgiem, ani przedmiotem rozstrzygania — jest tożsamością
+nałożoną na kanał konkretnego okna, zgodnie z opisem pola w kontrakcie:
+agent nie zastępuje kanału, kanał jest drogą do modelu, a agent tożsamością
+nałożoną na tę drogę.
+
+Ekspert wchodzi jako czwarte źródło treści do tych samych trzech warstw
+(konstytucja, profil roli, ekspertyza), którymi jadą osie, i przez ten sam
+składacz. Jako źródło nie wymaga zmiany kontraktu ani rozstrzygacza
+konfiguracji, a skutek jest ten sam: treść eksperta dojeżdża do procesu.
+
+Ekspert dopisuje i nigdy nie zastępuje. Prompt systemowy platformy jest
+pierwszą paczką, wbudowaną i zawsze obowiązującą; ekspert dokłada do niej
+warstwę instrukcji kontraktowej jako zakres własny operatora okna. Treść
+eksperta idzie ostatnia w każdej warstwie i niczego nie kasuje, a przełącznik
+wiersza wywołania jest przy nim zawsze dopisujący. Nośniki trybu
+zastępowania (agent_warstwa.tryb w bazie, Agent.mode w kontrakcie) zostają
+zapisane, ale ten składacz ich nie czyta.
+
+InstrukcjeSystemowe nie jest czwartą warstwą obok trzech, bo nie ma
+własnego pola w models.Nakladka i mieć go nie musi — jest wstępem do
+konstytucji eksperta, nie osobnym poziomem krytyczności; kolumna źródłowa
+w bazie to agent.instrukcje_systemowe.
+
+ZrodloTozsamosciAgenta jest osobnym portem, a nie sięgnięciem do
+repozytoriów wprost, żeby składacz wywołania miał jednego dostawcę
+tożsamości eksperta i nie musiał wiedzieć, że siedzi ona w czterech
+tabelach.

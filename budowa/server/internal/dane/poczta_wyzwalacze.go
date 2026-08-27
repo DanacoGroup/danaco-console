@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: pytanie „które automatyki uruchamia list z tej
-// skrzynki" — obsługa wyzwalacza rodzaju `mail`.
-//
-// Rozszerzenie idzie osobnym interfejsem, nie dopiskiem do
-// `RepozytoriumAutomatyk` — z tego samego powodu, dla którego zrobiła to pętla
-// wykonawcza (`automatyka_petla.go`): interfejs mieszka w `automations.go`.
-// Rdzeń sięga po `RepozytoriumWyzwalaczyPoczty` asercją typu na repozytorium
-// automatyk.
-//
-// Jedna tabela, drugie pytanie. Wiersze wyzwalaczy zapisuje wyłącznie
-// `automations_harmonogram.go`; tu leży sam odczyt odwrotny — od skrzynki do
-// automatyki — którego okno Scheduler nigdy nie zadaje.
+// Plik odpowiada na pytanie, które automatyki uruchamia list przychodzący
+// do wskazanej skrzynki, obsługując wyzwalacz rodzaju poczty.
 package dane
 
 import (
@@ -20,9 +10,8 @@ import (
 // RepozytoriumWyzwalaczyPoczty odpowiada obserwatorowi poczty na pytanie,
 // które automatyki czekają na list. Rdzeń bierze je asercją typu.
 type RepozytoriumWyzwalaczyPoczty interface {
-	// AutomatykiNaList zwraca automatyki CZYNNE z czynnym wyzwalaczem rodzaju
-	// `mail` pasującym do skrzynki: wyrażenie równe kodowi skrzynki albo `*`
-	// albo puste (znaczy „każda"). Harmonogram wyłączony wyłącza i wyzwalacz.
+	// AutomatykiNaList zwraca automatyki czynne, których wyzwalacz mail
+	// pasuje do wskazanej skrzynki.
 	AutomatykiNaList(ctx context.Context, kodSkrzynki string) ([]Automatyka, error)
 }
 
@@ -42,7 +31,8 @@ const automatykiNaListSQL = `SELECT DISTINCT ` + kolumnyAutomatykiZPrzedrostkiem
 const kolumnyAutomatykiZPrzedrostkiem = `a.id, a.identyfikator_zewnetrzny, a.nazwa,
 	a.opis, a.czynna, a.wersja, a.utworzono, a.zaktualizowano`
 
-// AutomatykiNaList — patrz RepozytoriumWyzwalaczyPoczty.
+// AutomatykiNaList zwraca automatyki czynne obserwujące pocztę, których
+// wyzwalacz pasuje do wskazanej skrzynki albo jest wyrażeniem pustym.
 func (r *repozytoriumAutomatyk) AutomatykiNaList(ctx context.Context,
 	kodSkrzynki string) ([]Automatyka, error) {
 

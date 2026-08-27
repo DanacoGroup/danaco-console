@@ -1,15 +1,5 @@
-// Egzekucja zakresu `dostep_sieciowy` — połączeń wychodzących zestawianych
-// i konfigurowanych przez rdzeń w imieniu okna.
-//
-// Zakres włączony znaczy: wolno sięgać wyłącznie tam, gdzie Operator dał oknu
-// jawne nadanie. Wykaz maszyn bierze się więc z nadań dostępu okna, nie
-// z osobnego ustawienia — drugiego miejsca, w którym Operator wskazywałby
-// maszyny, w produkcie nie ma.
-//
-// Granica egzekucji: straż rozstrzyga adresy, po które sięga rdzeń, oraz wykaz
-// mostów podawany procesowi modelu w konfiguracji MCP. Gniazda otwierane przez
-// sam proces modelu pozostają poza jej zasięgiem — na to potrzeba zapory albo
-// przestrzeni nazw sieci, czyli środka systemu, nie rdzenia.
+// Plik egzekwuje zakres dostep_sieciowy: połączenia wychodzące zestawiane i konfigurowane przez
+// rdzeń w imieniu okna, dopuszczając wyłącznie maszyny, którym Operator dał jawne nadanie.
 package core
 
 import (
@@ -20,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// strazSieci rozstrzyga, czy adres mieści się w obszarze sieciowym okna.
+// strazSieci rozstrzyga, czy adres mieści się w obszarze sieciowym okna komunikacji tego rdzenia platformy.
 type strazSieci struct {
 	zasady session.Zasady
 	hosty  map[string]struct{}

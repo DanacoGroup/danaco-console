@@ -5752,3 +5752,17 @@ Sprzątanie w metodzie Zachowaj idzie od strony okien żywych, a nie od
 zdarzenia zamknięcia okna, bo rejestr biegów nie ma prawa trzymać okna przy
 życiu dłużej niż rejestr nadzorcy. Wykaz pusty niczego nie kasuje, ponieważ
 brak wiedzy o oknach nie jest wiedzą o ich zamknięciu.
+
+## budowa/server/internal/core/stan_obiegu_test.go
+
+Pole LoopState.stopReason jest jedynym polem, którym rdzeń mówi, dlaczego
+bieg stanął, więc od niego zależy, czy układ złożony przez korzystającego
+z interfejsu pozna maszynowo wynik pracy. Dopóki pole niosło trzy wartości,
+każda znaczyła przerwane i wynik był nieodróżnialny od porzucenia.
+
+## budowa/server/internal/core/izolacja_siec.go
+Wykaz maszyn bierze się z nadań dostępu okna, nie z osobnego ustawienia — drugiego miejsca,
+w którym Operator wskazywałby maszyny, w produkcie nie ma. Granica egzekucji: straż rozstrzyga
+adresy, po które sięga rdzeń, oraz wykaz mostów podawany procesowi modelu w konfiguracji.
+Gniazda otwierane przez sam proces modelu pozostają poza jej zasięgiem — na to potrzeba zapory
+albo przestrzeni nazw sieci, czyli środka systemu, nie rdzenia.

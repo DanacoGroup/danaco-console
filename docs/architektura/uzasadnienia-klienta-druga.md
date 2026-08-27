@@ -1950,3 +1950,9 @@ czynności i nie rozstrzyga, co z sesją wolno zrobić — oddaje wpis albo pust
 wartość, która oznacza brak wiedzy, nie zakaz: dopóki rdzeń nie oddał wykazu,
 sekcja czynności pozostaje krótsza, bo czynności bez znanego stanu sesji nie
 da się uczciwie nazwać.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-zrodla.ts
+Tekst źródłowy mieszka w module stanu translate, żeby panele tłumaczenia patrzyły na ten sam tekst,
+a nie na własną kopię. Wszystkie trzy komendy rdzeń rejestruje i obsługuje wprost; bez zalogowanego
+modelu rdzeń oddaje stan zdegradowany z komunikatem o braku zalogowania — to jest odpowiedź rdzenia,
+nie brak uchwytu. Ścieżka odmowy zostaje na wypadek starszego rdzenia albo pośrednika.

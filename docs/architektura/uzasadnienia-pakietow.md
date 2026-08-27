@@ -3536,3 +3536,30 @@ co dziennik akcji, a rozbiór wykonuje warstwa wyższa.
 
 Wąski kontrakt odczytu śladu sterowania pozwala warstwie wyższej sięgnąć po tę jedną metodę asercją typu, bez
 dopisywania linii do szerokiego kontraktu obszaru okien.
+
+## budowa/server/internal/dane/asystent_profil.go
+Profil niesie warstwę promptu zlecenia — zdanie, które mówi modelowi, że jest
+klawiaturą operatora, a nie autorem odpowiedzi. To ono rozstrzyga, czy model
+sięgnie po narzędzia platformy, czy odpisze tekstem. Reszta kolumn to nastawy
+tury, które w innym razie bierze wiersz okna. Plik ma sam odczyt, bez zapisu:
+zakładanie profilu, wykaz profili i wskazanie domyślnego to trzy czynności
+operatora, a kontrakt nie ma dla nich ani jednej komendy; metoda zapisu bez
+wołającego byłaby drogą, której nikt nie przechodzi.
+
+Pola środowiska wykonania i trybu uprawnień niosą wartości kontraktu wprost,
+ponieważ kolumna ma na nich warunek CHECK, a rdzeń wkłada je do zapytania
+kanału bez przekładu. Pakiet danych nie zależy od pakietu kontraktu, więc
+typem jest tu napis; jedynym miejscem, w którym te napisy stają się typami
+kontraktu, jest adapter modułu.
+
+Wskaźniki przy warstwie promptu, kanale modelu i głosie syntezy są rozmyślne:
+wartość pusta bazy znaczy, że profil nie ma w tej sprawie zdania i wtedy
+obowiązuje nastawa okna. Pusty napis znaczyłby, że profil kasuje nastawę
+okna — a profil ma zasięg pracy poszerzać, nie zabierać.
+
+Domyślny profil jest co najwyżej jeden, czego pilnuje indeks częściowy bazy.
+Ograniczenie liczby wyników do jednego stoi w zapytaniu mimo to, żeby odczyt
+nie zależał od tego, czy ten indeks przetrwał każdą przyszłą zmianę schematu.
+
+## budowa/server/internal/dane/workspace.go
+Projekt zakłada się przy pierwszym wejściu do niego: kontrakt nie ma komendy zakładającej projekt osobno, a widok pulpitu projektu ma odpowiedzieć, nie odmówić — brak wiersza jest więc stanem początkowym, nie błędem.

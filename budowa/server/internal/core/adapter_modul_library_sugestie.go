@@ -1,26 +1,6 @@
-// Moduł Library — klasyfikacja wsadowa i sugestie porządkujące:
-// `library.classify.run`, `library.suggestion.list`, `library.suggestion.apply`.
-//
-// Domyślnym zachowaniem modułu jest SUGESTIA z akceptacją Operatora, nie zapis
-// bez pytania. Klasyfikacja wytwarza więc wiersze sugestii, a dopiero
-// `library.suggestion.apply` zamienia je w zmianę zasobu. Żądanie z `apply`
-// wykonuje obie czynności naraz — i to jest wybór Operatora, nie domyślne
-// zachowanie rdzenia.
-//
-// Sugestie mają dwa źródła i oba są prawdziwe:
-//
-//   - **Model** — gdy żądanie wskazuje kanał, a rdzeń ma wpięty rejestr kanałów.
-//     Model dostaje początek treści zasobu i oddaje propozycje etykiet. Jego
-//     odpowiedź jest propozycją, więc idzie do tabeli sugestii, a nie wprost na
-//     zasób.
-//   - **Pomiar rdzenia** — zawsze. Zasób bez etykiety i bez kolekcji jest
-//     osierocony, zasób dzielący sumę kontrolną z innym jest duplikatem, a zasób
-//     niosący numer PESEL, NIP albo numer rachunku jest treścią wrażliwą do
-//     przeglądu. Trzy reguły audytu z opracowania modułu, policzone, nie
-//     zgadnięte — i działające także wtedy, gdy modelu nie ma wcale.
-//
-// Uzasadnienie jest przy każdej sugestii obowiązkowo: przyjęcie propozycji bez
-// podanego powodu byłoby zaufaniem bez podstawy.
+// Moduł Library obsługuje klasyfikację wsadową i sugestie porządkujące:
+// library.classify.run, library.suggestion.list oraz library.suggestion.apply.
+// Klasyfikacja wytwarza sugestie; dopiero zatwierdzenie zmienia zasób.
 package core
 
 import (
@@ -69,7 +49,8 @@ func (a *adapterBiblioteki) ZKanalamiModelu(kanaly *models.Rejestr) *adapterBibl
 	return a
 }
 
-// KlasyfikujWsadowo obsługuje `library.classify.run`.
+// KlasyfikujWsadowo obsługuje `library.classify.run`: liczy sugestie modelu
+// i pomiaru rdzenia dla wskazanych zasobów i zapisuje je do przeglądu.
 func (a *adapterBiblioteki) KlasyfikujWsadowo(ctx context.Context,
 	z shared.LibraryClassifyRunRequest) (shared.LibraryClassifyRunResponse, error) {
 
@@ -146,7 +127,7 @@ func (a *adapterBiblioteki) KlasyfikujWsadowo(ctx context.Context,
 		}
 		if len(etykietyModelu) == 0 && len(etykiety) == 0 && tresc != "" {
 			// Model niedostępny nie znaczy braku propozycji: słowa najczęstsze
-			// w treści są kandydatami na etykiety i są policzone, nie zgadnięte.
+			// w treści też są kandydatami.
 			etykietyModelu = slowaKluczoweTresciBiblioteki(tresc, 3)
 		}
 		for _, etykieta := range etykietyModelu {
@@ -192,7 +173,8 @@ func (a *adapterBiblioteki) KlasyfikujWsadowo(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// WykazSugestii obsługuje `library.suggestion.list`.
+// WykazSugestii obsługuje `library.suggestion.list`: oddaje sugestie
+// zapisane dla zasobu, filtrowane rodzajem i ograniczone liczbą.
 func (a *adapterBiblioteki) WykazSugestii(ctx context.Context,
 	z shared.LibrarySuggestionListRequest) (shared.LibrarySuggestionListResponse, error) {
 
@@ -215,12 +197,9 @@ func (a *adapterBiblioteki) WykazSugestii(ctx context.Context,
 	return shared.LibrarySuggestionListResponse{Suggestions: sugestie, Total: lacznie}, nil
 }
 
-// RozstrzygnijSugestie obsługuje `library.suggestion.apply`.
-//
-// Przyjęcie WYKONUJE czynność, którą sugestia opisuje: etykieta zostaje nadana,
-// kolekcja przypisana, duplikat zarchiwizowany. Samo oznaczenie sugestii jako
-// przyjętej byłoby meldunkiem bez skutku — dokładnie tym wzorcem szkody, przed
-// którym stoi ten moduł.
+// RozstrzygnijSugestie obsługuje `library.suggestion.apply`: przyjęcie
+// wykonuje czynność, którą sugestia opisuje — etykieta zostaje nadana,
+// kolekcja przypisana, duplikat zarchiwizowany.
 func (a *adapterBiblioteki) RozstrzygnijSugestie(ctx context.Context,
 	z shared.LibrarySuggestionApplyRequest) (shared.LibrarySuggestionApplyResponse, error) {
 
@@ -279,7 +258,8 @@ func (a *adapterBiblioteki) RozstrzygnijSugestie(ctx context.Context,
 	return shared.LibrarySuggestionApplyResponse{AppliedCount: przyjete, Files: pliki}, nil
 }
 
-// wykonajSugestie wykonuje czynność opisaną sugestią.
+// wykonajSugestie wykonuje czynność opisaną sugestią, dobierając operację
+// do jej rodzaju: etykieta, kolekcja, duplikat albo zasób osierocony.
 func (a *adapterBiblioteki) wykonajSugestie(ctx context.Context, sugestia dane.SugestiaBiblioteki) error {
 	zasob, err := a.plik(ctx, sugestia.PlikKod)
 	if err != nil {
@@ -313,9 +293,8 @@ func (a *adapterBiblioteki) wykonajSugestie(ctx context.Context, sugestia dane.S
 			return bladNieznanejKolekcji(*sugestia.Wartosc, err)
 		}
 	case "duplikat":
-		// Przyjęcie wskazania duplikatu archiwizuje zasób wskazany jako kopia —
-		// oryginał zostaje. Archiwum jest odwracalne, więc pomyłka kosztuje jedno
-		// przywrócenie.
+		// Przyjęcie wskazania duplikatu archiwizuje kopię — oryginał zostaje,
+		// a archiwum jest odwracalne.
 		if _, err := a.repozytorium.UstawStanPlikow(ctx, []string{zasob.Kod},
 			dane.StanZasobuZarchiwizowany); err != nil {
 			return bladBiblioteki(err)
@@ -323,15 +302,15 @@ func (a *adapterBiblioteki) wykonajSugestie(ctx context.Context, sugestia dane.S
 		a.odnotuj(ctx, shared.LibraryAuditActionArchive, wskazanieBiblioteki(zasob.Kod),
 			"archiwizacja duplikatu po przyjęciu sugestii")
 	case "osierocony":
-		// Wskazanie zasobu osieroconego jest informacją, nie czynnością: rdzeń
-		// nie wie, jaką etykietę Operator chciałby nadać. Przyjęcie zdejmuje
-		// sugestię z wykazu i to jest cały jej skutek.
+		// Wskazanie zasobu osieroconego jest informacją, nie czynnością;
+		// przyjęcie tylko zdejmuje sugestię.
 		return nil
 	}
 	return nil
 }
 
-// trescDoKlasyfikacji oddaje początek treści tekstowej zasobu.
+// trescDoKlasyfikacji oddaje początek treści tekstowej zasobu, przycięty
+// do granicy znaków przyjmowanej przez model.
 func (a *adapterBiblioteki) trescDoKlasyfikacji(zasob dane.PlikBiblioteki) string {
 	if zasob.TrescOdwolanie == nil || *zasob.TrescOdwolanie == "" {
 		return ""
@@ -351,12 +330,9 @@ func (a *adapterBiblioteki) trescDoKlasyfikacji(zasob dane.PlikBiblioteki) strin
 	return string(runy)
 }
 
-// etykietyOdModelu prosi model o propozycje etykiet dla zasobu.
-//
-// Odpowiedź modelu bywa dowolna, więc rdzeń bierze z niej wyłącznie to, co
-// rozpozna: wykaz JSON albo wiersze rozdzielone przecinkiem. Odpowiedź, z której
-// nic nie da się wyczytać, oddaje pustkę — a wtedy propozycje składa pomiar
-// rdzenia.
+// etykietyOdModelu prosi model o propozycje etykiet dla zasobu i bierze
+// z odpowiedzi wyłącznie to, co rozpozna: wykaz JSON albo wiersze rozdzielone
+// przecinkiem.
 func (a *adapterBiblioteki) etykietyOdModelu(ctx context.Context, kanal *string,
 	nazwa, tresc string) []string {
 
@@ -384,7 +360,8 @@ func (a *adapterBiblioteki) etykietyOdModelu(ctx context.Context, kanal *string,
 	return etykietyZOdpowiedziModelu(odpowiedz.String())
 }
 
-// etykietyZOdpowiedziModelu wyciąga wykaz etykiet z odpowiedzi modelu.
+// etykietyZOdpowiedziModelu wyciąga wykaz etykiet z odpowiedzi modelu,
+// rozpoznając wykaz JSON albo wartości rozdzielone przecinkiem.
 func etykietyZOdpowiedziModelu(odpowiedz string) []string {
 	tekst := strings.TrimSpace(odpowiedz)
 	if tekst == "" {
@@ -418,8 +395,8 @@ func oczyscEtykietyBiblioteki(propozycje []string) []string {
 	return wynik
 }
 
-// slowaKluczoweTresciBiblioteki wybiera najczęstsze słowa treści jako kandydatów na
-// etykiety.
+// slowaKluczoweTresciBiblioteki wybiera najczęstsze słowa treści jako
+// kandydatów na etykiety, gdy model nie jest dostępny albo nie odpowiedział.
 func slowaKluczoweTresciBiblioteki(tresc string, ile int) []string {
 	licznik := map[string]int{}
 	for slowo := range odciskTekstuBiblioteki([]byte(tresc)) {
@@ -449,7 +426,8 @@ func slowaKluczoweTresciBiblioteki(tresc string, ile int) []string {
 	return slowa
 }
 
-// trescWrazliwaBiblioteki nazywa rodzaj danych wrażliwych rozpoznanych w treści.
+// trescWrazliwaBiblioteki nazywa rodzaj danych wrażliwych rozpoznanych
+// w treści, łącząc nazwy wszystkich dopasowanych wzorców.
 func trescWrazliwaBiblioteki(tresc string) string {
 	if tresc == "" {
 		return ""
@@ -463,7 +441,8 @@ func trescWrazliwaBiblioteki(tresc string) string {
 	return strings.Join(trafienia, ", ")
 }
 
-// zawieraTekstBiblioteki mówi, czy wykaz niesie już tę wartość.
+// zawieraTekstBiblioteki mówi, czy wykaz niesie już tę wartość, porównując
+// teksty bez rozróżniania wielkości liter.
 func zawieraTekstBiblioteki(wykaz []string, szukany string) bool {
 	for _, wartosc := range wykaz {
 		if strings.EqualFold(wartosc, szukany) {
@@ -479,7 +458,8 @@ func wskazanieLiczbyBiblioteki(wartosc int64) *int64 {
 	return &wartosc
 }
 
-// sugestiaKontraktuBiblioteki przenosi wiersz sugestii na kontrakt.
+// sugestiaKontraktuBiblioteki przenosi wiersz sugestii na kontrakt,
+// ustawiając pole pewności tylko wtedy, gdy wiersz je niesie.
 func sugestiaKontraktuBiblioteki(wiersz dane.SugestiaBiblioteki) shared.LibrarySuggestion {
 	sugestia := shared.LibrarySuggestion{
 		Id: wiersz.Kod, FileId: wiersz.PlikKod, Kind: rodzajSugestiiKontraktu(wiersz.Rodzaj),

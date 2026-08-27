@@ -234,3 +234,39 @@ zwracane po czynności niesie zawsze liczbę albo identyfikator wzięty wprost
 z odpowiedzi rdzenia, nigdy samo potwierdzenie w rodzaju „gotowe" — zdanie
 bez pokrycia w odpowiedzi byłoby meldunkiem bez skutku, którego Operator nie
 mógłby sprawdzić.
+
+## budowa/klient-poprzedni/src/moduly/design/zrodlo-designu.ts
+
+Zbiór zasobów mieszka w `stan-designu.ts`, żeby trzy okna patrzyły na jeden
+zbiór, a nie na osobne kopie.
+
+Zasób wchodzi do modułu dwiema drogami, które się nie zastępują: `design.asset.generate`
+daje zasób z pracy modelu i wymaga kanału obrazowego, a jego brak jest odmową
+nazywającą brak, nigdy obrazem zastępczym; `design.asset.upload` daje zasób
+z pliku wskazanego przez Operatora i działa bez żadnego kanału modelu, wnosząc
+treść już istniejącą.
+
+Przy wgraniu Operator wskazuje plik, klient czyta go i oddaje treść w polu
+`contentBase64`, a rdzeń zapisuje ją w swoim magazynie pod sumą kontrolną. Od
+tej chwili zasób nie zależy już od pliku na dysku, który Operator może
+nadpisać albo skasować.
+
+Treść idzie bajtami, nie ścieżką, mimo że kontrakt zna oba pola. `sourcePath`
+każe rdzeniowi otworzyć plik pod wskazaną ścieżką, a rdzeń biegnie na innej
+maszynie niż przeglądarka Operatora: ścieżka z jego pulpitu nie znaczy tam nic
+albo znaczy coś zupełnie innego. Klient czyta plik sam i wysyła to, co
+przeczytał.
+
+Odmowa wraca polem `blad`, nie wyjątkiem: rdzeń odmawia czynności na zasobie,
+którego nie zna, a okno pokazuje to zdanie i zostaje czynne.
+
+Wskazanie kanału zlecenia generowania jedzie polem `channelId`: rdzeń sprawdza
+po nim rodzaj kanału i odmawia wskazania tekstowego.
+
+Pola opisowe zlecenia wgrania — nazwa, format, wymiary — idą tylko wtedy, gdy
+klient je zmierzył; podstawienie wartości domyślnej byłoby wpisaniem rdzeniowi
+metadanych, których nikt nie sprawdził.
+
+Skala i jakość zlecenia wydania są w kontrakcie opcjonalne: zero wysłane do
+rdzenia byłoby żądaniem obrazu o zerowym boku albo zerowym stopniu kompresji
+i wróciłoby odmową, dlatego pole zerowe nie wchodzi do żądania.

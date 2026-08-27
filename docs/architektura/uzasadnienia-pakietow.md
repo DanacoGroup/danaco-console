@@ -3990,3 +3990,44 @@ wpychanie mu wtedy poświadczenia kończy się odmową przy komendzie, która be
 uwierzytelnienia by przeszła.
 ## budowa/server/internal/dane/poczta_skrzynki.go
 Ta sama tabela skrzynka_pocztowa niesie dwa różne pytania: repozytorium poczty czyta ją pod kątem obserwatora poczty (skrzynki czynne, takt odpytywania), a to repozytorium pod kątem rodziny mail (podpięcie, wykaz, domyślna). Drugiej tabeli na skrzynkę nie ma: gdyby była, automatyka wyzwalana listem nie widziałaby skrzynki podpiętej komendą. Hasła tu nie ma: kolumna z odwołaniem do sejfu niesie wskazanie na wpis sejfu poświadczeń, a kolumny na sam sekret schemat nie zna, więc żaden odczyt tego repozytorium nie ma jak go wynieść. Zdjęcie domyślności z pozostałych skrzynek i nadanie jej nowej idą jedną transakcją, bo indeks częściowy schematu dopuszcza jedną domyślną skrzynkę naraz.
+
+## budowa/server/internal/dane/jakosc.go
+Zapis jest wymianą, nie dokładaniem. Kontrakt odpowiedzi kontroli jakości nie
+niesie pola przyrostowego, ani identyfikatora kontroli poprzedniej — oddaje
+płaski wykaz zastrzeżeń bieżącego stanu panelu. Każde wywołanie kontroli
+liczy niezgodności na nowo z treści panelu i zastępuje poprzedni wykaz tej
+samej kontroli, tym samym wzorcem co zapis kroków automatyzacji. Dopisywanie
+dawałoby narastającą listę powtórzeń tej samej usterki przy każdej kolejnej
+kontroli tego samego panelu.
+
+## budowa/server/internal/dane/jakosc_eksport.go
+Ten plik zawiera wyłącznie zapis i odczyt śladu eksportu; typ, interfejs
+i konstruktor repozytorium tłumaczeń leżą w innym pliku. Rdzeń nie ma
+magazynu plików binarnych, więc zlecenie eksportu nie wytwarza pliku
+i odnośnik do pliku zostaje pusty, dopóki plik realnie nie powstał poza
+rdzeniem. Zapisywany jest wyłącznie ślad zlecenia eksportu: w jakim formacie
+i kiedy. Czas jest liczbą milisekund epoki, tym samym wzorem co w pozostałych
+miejscach warstwy trwałości.
+
+Panel, którego nie ma, wraca jako błąd braku wiersza — cicha zgoda na eksport
+bytu, którego nie ma, byłaby potwierdzeniem czynności, która się nie odbyła.
+
+## budowa/server/internal/dane/jakosc_mowa.go
+Zasila komendę syntezy mowy; plik jest osobny od pliku niezgodności jakości
+i od pliku śladów eksportu. Rdzeń nie syntezuje mowy — ten sam brak jak
+w module Assistant. Odnośnik do nagrania niesie odwołanie do pliku
+dostarczonego z zewnątrz, jeśli kiedykolwiek powstanie; metoda zapisu nie
+dorabia mu wartości domyślnej — brak zostaje pusty, bo rdzeń nie syntezuje,
+a zmyślona ścieżka byłaby obietnicą bez pokrycia.
+
+## budowa/server/internal/narzedzia/adres.go
+Port czyta pakiet konfiguracja, ten sam, który ustala port nasłuchu procesu
+rdzenia, więc zmiana portu przez Operatora przestawia obie strony naraz.
+Odczyt zmiennej środowiska po nazwie dosłownej należy wyłącznie do tamtego
+pakietu, a serwer narzędzi dziedziczy środowisko po procesie modelu, który
+dziedziczy je po rdzeniu.
+
+Pętla zwrotna jest wyborem, nie skrótem: serwer narzędzi stoi zawsze na tej
+samej maszynie co proces modelu, który go uruchomił, a proces modelu stoi
+przy rdzeniu, który go zrodził. Adres inny niż pętla zwrotna byłby wtedy
+zgadywaniem — Operator wskazuje go przełącznikiem, gdy układ jest inny.

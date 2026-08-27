@@ -2954,3 +2954,12 @@ dodatkowego zapytania.
 Tożsamość klienta zgłaszana w powitaniu jest stała, a nie świeżo nadawana
 przy każdym wywołaniu, ponieważ obsługiwacz powitania nie czyta żądania i
 nowy identyfikator rozdzieliłby ognisko od połączenia, które je zgłosiło.
+
+## budowa/klient-poprzedni/src/strona-glowna/wpiecie-sesji.ts
+Ten plik jest jedynym w katalogu znającym kanał i czynność powrotu naraz. Powrót wiąże połączenie i po nim
+przenosi ognisko: powiązanie odtwarza okna i kieruje ich strumienie na to połączenie, a odmowa przeniesienia
+ogniska nie cofa powiązania, bo sesja jest już związana. Oba żądania niosą tożsamość klienta z powitania
+połączenia, więc tożsamości nie nadaje się tu po raz drugi. Montaż bez tożsamości klienta dostaje wykaz
+czysto informacyjny, bez przycisku powrotu; pozostałe czynności historii — nazwa, kopia, projekt, archiwum
+i bieg sesji — idą na sam identyfikator sesji, więc wpinane są przed wyjściem po braku tożsamości: wykaz bez
+powrotu nadal daje się porządkować.

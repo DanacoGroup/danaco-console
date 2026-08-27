@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: zamiana maski rastrowej na ścieżki — obrys konturu,
-// upraszczanie łamanej i ścieńczanie do linii środkowej. To czysta arytmetyka
-// na tablicy pikseli; wołający (`adapter_narzedzia_obraz_wektor.go`) rozstrzyga,
-// skąd maska pochodzi i co z gotowymi ścieżkami zrobić.
-//
-// ── Dlaczego własna arytmetyka, a nie program zewnętrzny ────────────────────
-// Zamiana rastra na ścieżki bywa robiona programem `potrace`. Program ten nie
-// stoi na serwerze, a instalka Operatora nie niesie żadnego programu — czynność
-// oparta na nim byłaby u odbiorcy odmową, a nie funkcją. Obrys konturu,
-// upraszczanie Ramera–Douglasa–Peuckera i ścieńczanie Zhanga–Suena to
-// algorytmy opisane i skończone; wkompilowane w binarium działają wszędzie tam,
-// gdzie działa rdzeń.
-//
-// Wynikiem jest łamana, nie krzywa Béziera. To rozstrzygnięcie, nie brak:
-// łamana po uproszczeniu opisuje kontur wiernie i przewidywalnie, a
-// dopasowanie krzywych wprowadza odchylenie, którego Operator nie kontroluje
-// żadnym polem kontraktu. Pole `simplify` steruje właśnie odchyleniem łamanej
-// i mówi wprost, ile go wolno.
+// upraszczanie łamanej i ścieńczanie do linii środkowej, czystą arytmetyką na
+// tablicy pikseli, bez programu zewnętrznego typu `potrace`.
 package core
 
 import (
@@ -30,7 +15,8 @@ type maskaRastrowa struct {
 	pola      []bool
 }
 
-// nowaMaskaRastrowa zakłada pustą maskę o zadanych wymiarach.
+// nowaMaskaRastrowa zakłada pustą maskę o zadanych wymiarach, gotową do
+// wypełnienia przynależnością pikseli przed śledzeniem konturu.
 func nowaMaskaRastrowa(szerokosc, wysokosc int) *maskaRastrowa {
 	return &maskaRastrowa{
 		szerokosc: szerokosc,
@@ -48,7 +34,8 @@ func (m *maskaRastrowa) wewnatrz(x, y int) bool {
 	return m.pola[y*m.szerokosc+x]
 }
 
-// ustaw wpisuje przynależność piksela.
+// ustaw wpisuje przynależność piksela do obszaru, milcząc na współrzędnej
+// spoza obrazu zamiast wywracać się paniką indeksu.
 func (m *maskaRastrowa) ustaw(x, y int, wartosc bool) {
 	if x < 0 || y < 0 || x >= m.szerokosc || y >= m.wysokosc {
 		return
@@ -56,7 +43,8 @@ func (m *maskaRastrowa) ustaw(x, y int, wartosc bool) {
 	m.pola[y*m.szerokosc+x] = wartosc
 }
 
-// liczbaPol zwraca liczbę pikseli należących do obszaru.
+// liczbaPol zwraca liczbę pikseli należących do obszaru, do porównań progu
+// wielkości bez osobnego przechodzenia po całej masce.
 func (m *maskaRastrowa) liczbaPol() int {
 	liczba := 0
 	for _, pole := range m.pola {
@@ -67,30 +55,23 @@ func (m *maskaRastrowa) liczbaPol() int {
 	return liczba
 }
 
-// punktSladu jest wierzchołkiem łamanej w układzie obrazu.
+// punktSladu jest wierzchołkiem łamanej w układzie obrazu, we współrzędnych
+// zmiennoprzecinkowych, żeby uproszczenie mogło przesuwać punkty swobodnie.
 type punktSladu struct {
 	X float64
 	Y float64
 }
 
 // kierunkiObrysu to osiem kierunków sąsiedztwa w kolejności zgodnej z ruchem
-// wskazówek zegara, zaczynając od wschodu. Kolejność ma znaczenie: śledzenie
-// konturu metodą Moore'a chodzi po sąsiadach właśnie w tym porządku i to on
-// rozstrzyga, że kontur zewnętrzny wychodzi zgodnie z ruchem wskazówek.
+// wskazówek zegara, zaczynając od wschodu — kolejność, w jakiej metoda Moore'a
+// obchodzi sąsiadów.
 var kierunkiObrysu = [8][2]int{
 	{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1},
 }
 
-// obrysyMaski zwraca kontury wszystkich spójnych obszarów maski.
-//
-// Metoda jest klasycznym śledzeniem sąsiedztwa Moore'a: znajdź piksel brzegowy,
-// obejdź obszar dookoła, wróć do punktu wyjścia. Piksele już objęte konturem
-// znakujemy, żeby ten sam obszar nie dał dwóch identycznych ścieżek — bez tego
-// każdy piksel brzegu byłby początkiem osobnego obejścia.
-//
-// Obszary mniejsze niż `najmniejszyObszar` pomijamy: pojedyncze piksele szumu
-// dałyby setki ścieżek o wielkości kropki, przez które wynik jest cięższy od
-// źródła i nie do otwarcia w edytorze wektorowym.
+// obrysyMaski zwraca kontury wszystkich spójnych obszarów maski, metodą
+// śledzenia sąsiedztwa Moore'a, pomijając obszary mniejsze niż
+// `najmniejszyObszar`.
 func obrysyMaski(maska *maskaRastrowa, najmniejszyObszar int) [][]punktSladu {
 	if maska == nil {
 		return nil
@@ -103,8 +84,9 @@ func obrysyMaski(maska *maskaRastrowa, najmniejszyObszar int) [][]punktSladu {
 			if !maska.wewnatrz(x, y) || odwiedzone.wewnatrz(x, y) {
 				continue
 			}
-			// Piksel wewnętrzny (otoczony ze wszystkich stron) nie zaczyna
-			// konturu — kontur zaczyna się na brzegu obszaru.
+			// Piksel wewnętrzny (otoczony ze wszystkich stron) nie zaczyna konturu.
+
+			// Kontur zaczyna się na brzegu obszaru.
 			if maska.wewnatrz(x-1, y) && maska.wewnatrz(x+1, y) &&
 				maska.wewnatrz(x, y-1) && maska.wewnatrz(x, y+1) {
 				continue
@@ -118,11 +100,9 @@ func obrysyMaski(maska *maskaRastrowa, najmniejszyObszar int) [][]punktSladu {
 	return kontury
 }
 
-// obejdzObszar prowadzi jedno obejście konturu od wskazanego piksela brzegowego.
-//
-// Granica liczby kroków chroni przed obrazem, którego kontur z jakiegoś powodu
-// nie domyka się w punkcie wyjścia: pętla bez granicy zawiesiłaby żądanie na
-// zawsze, a odmowa po granicy jest odpowiedzią.
+// obejdzObszar prowadzi jedno obejście konturu od wskazanego piksela
+// brzegowego. Granica liczby kroków chroni przed konturem, który się nie
+// domyka: bez niej pętla zawiesiłaby żądanie na zawsze.
 func obejdzObszar(maska, odwiedzone *maskaRastrowa, startX, startY int) []punktSladu {
 	kontur := []punktSladu{}
 	biezacyX, biezacyY := startX, startY
@@ -133,8 +113,9 @@ func obejdzObszar(maska, odwiedzone *maskaRastrowa, startX, startY int) []punktS
 		kontur = append(kontur, punktSladu{X: float64(biezacyX), Y: float64(biezacyY)})
 		odwiedzone.ustaw(biezacyX, biezacyY, true)
 
-		// Szukamy następnego piksela obszaru, obchodząc sąsiadów od kierunku
-		// „w tył i w lewo" — tak, żeby obejście trzymało się brzegu.
+		// Następny piksel obszaru szuka się od kierunku „w tył i w lewo".
+
+		// Tak, żeby obejście trzymało się brzegu obszaru.
 		znaleziono := false
 		poczatek := (kierunek + 6) % 8
 		for obrot := 0; obrot < 8; obrot++ {
@@ -206,8 +187,8 @@ func uproscOdcinek(punkty []punktSladu, poczatek, koniec int, tolerancja float64
 }
 
 // odlegloscOdOdcinka liczy odległość punktu od odcinka. Odcinek zdegenerowany
-// do punktu daje odległość od tego punktu — bez tego przypadku dzielilibyśmy
-// przez zero na konturze zamkniętym w jednym pikselu.
+// do punktu daje odległość od tego punktu, zamiast dzielenia przez zero na
+// konturze zamkniętym w jednym pikselu.
 func odlegloscOdOdcinka(punkt, poczatek, koniec punktSladu) float64 {
 	dx := koniec.X - poczatek.X
 	dy := koniec.Y - poczatek.Y
@@ -227,12 +208,8 @@ func odlegloscOdOdcinka(punkt, poczatek, koniec punktSladu) float64 {
 }
 
 // scienczMaske sprowadza obszar do linii o grubości jednego piksela —
-// algorytm Zhanga–Suena. Zasila obrys linii środkowej (`centerline`): rysunek
-// kreskowy obrysowany po konturze dałby każdą kreskę jako podwójną pętlę,
-// a obrysowany po linii środkowej — jako jedną kreskę.
-//
-// Algorytm chodzi naprzemiennie dwoma podprzebiegami, aż przestanie cokolwiek
-// zdejmować. Granica przebiegów chroni przed układem, który oscyluje.
+// algorytm Zhanga–Suena — i zasila obrys linii środkowej (`centerline`).
+// Granica przebiegów chroni przed układem, który oscyluje.
 func scienczMaske(maska *maskaRastrowa) *maskaRastrowa {
 	if maska == nil {
 		return nil
@@ -266,14 +243,8 @@ func scienczMaske(maska *maskaRastrowa) *maskaRastrowa {
 	return praca
 }
 
-// czyZdejmowalny rozstrzyga warunki Zhanga–Suena dla jednego piksela.
-//
-// Sąsiedzi liczeni są w kolejności zegarowej od północy. Warunki są cztery:
-// liczba sąsiadów mieści się w 2..6 (piksel nie jest ani końcem, ani wnętrzem),
-// przejść z tła do obszaru jest dokładnie jedno (zdjęcie nie rozerwie linii),
-// oraz dwie pary sąsiadów zależne od podprzebiegu — to one na przemian ścinają
-// obszar z dwóch przeciwnych stron, żeby linia wyszła pośrodku, a nie przy
-// jednej krawędzi.
+// czyZdejmowalny rozstrzyga cztery warunki Zhanga–Suena dla jednego piksela,
+// licząc sąsiadów w kolejności zegarowej od północy.
 func czyZdejmowalny(maska *maskaRastrowa, x, y, podprzebieg int) bool {
 	polnoc := maska.wewnatrz(x, y-1)
 	polnocnyWschod := maska.wewnatrz(x+1, y-1)

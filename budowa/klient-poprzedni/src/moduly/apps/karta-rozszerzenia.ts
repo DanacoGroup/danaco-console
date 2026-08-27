@@ -1,20 +1,9 @@
 import { ExtensionOrigin, type Extension } from '../../../../shared/contract';
 
 /**
- * Karta pozycji katalogu rozszerzeń — siatka kart App Catalogu.
- *
- * Karta pokazuje wyłącznie pola, które rdzeń oddał: nazwę, rodzaj, wersję,
- * pochodzenie, opis oraz dwa stany — zainstalowania i włączenia. Pola, których
- * pozycja nie niesie (dziennik zmian, wykaz narzędzi, wymagane uprawnienia),
- * nie mają tu zaślepki: stoją w wykazie braków okna, żeby nieobecność była
- * widoczna zamiast udawanej.
- *
- * Stan nigdy nie opiera się na samej barwie — plakietka niesie słowo, a nie
- * tylko odmianę. Cztery stany opracowania (dostępna, zainstalowana wyłączona,
- * zainstalowana włączona, dostępna aktualizacja) składamy z dwóch pól kontraktu;
- * czwartego stanu nie udajemy, bo rejestr nie niesie wersji dostępnej.
- *
- * Karta nie zna kanału i niczego nie wysyła — oddaje naciśnięcia oknu.
+ * Karta pozycji katalogu rozszerzeń w siatce kart App Catalogu. Pokazuje
+ * wyłącznie pola oddane przez rdzeń: nazwę, rodzaj, wersję, pochodzenie, opis
+ * oraz stany zainstalowania i włączenia. Kanału nie zna i niczego nie wysyła.
  */
 export interface CzynnosciKarty {
   /** Instalacja pozycji jeszcze niezainstalowanej. */
@@ -25,30 +14,37 @@ export interface CzynnosciKarty {
   wskaz(pozycja: Extension): void;
 }
 
-/** Napisy pochodzenia; wartości kontraktu mają w interfejsie nazwy Operatora. */
+/**
+ * Napisy pochodzenia rozszerzenia: wartościom wyliczenia ExtensionOrigin
+ * z kontraktu przypisuje brzmienia pokazywane w interfejsie katalogu.
+ */
 const NAZWY_POCHODZENIA: Readonly<Record<string, string>> = {
   [ExtensionOrigin.Danaco]: 'Danaco Plugin',
   [ExtensionOrigin.Personal]: 'Personal',
 };
 
-/** Nazwa pochodzenia albo sama wartość, gdy rdzeń oddał wartość spoza wyliczenia. */
+/**
+ * Oddaje nazwę pochodzenia rozszerzenia w brzmieniu interfejsu, a gdy rdzeń
+ * oddał wartość spoza wyliczenia ExtensionOrigin — samą tę wartość bez zmiany.
+ */
 export function nazwaPochodzenia(pochodzenie: string): string {
   return NAZWY_POCHODZENIA[pochodzenie] ?? pochodzenie;
 }
 
 /**
- * Zdanie o stanie pozycji — słowo, nie barwa.
- *
- * Rozróżnia trzy stany, bo tyle niosą dwa pola kontraktu. Czwarty stan
- * opracowania („dostępna aktualizacja") wymaga zestawienia wersji zainstalowanej
- * z wersją rejestru, a tej drugiej pozycja nie niesie.
+ * Zdanie o stanie pozycji podawane słowem, nie barwą. Rozróżnia trzy stany, bo
+ * tyle niosą pola installed oraz enabled kontraktu; stanu z dostępną
+ * aktualizacją nie podaje, bo pozycja nie niesie wersji rejestru.
  */
 export function opisStanu(pozycja: Extension): string {
   if (!pozycja.installed) return 'dostępna';
   return pozycja.enabled ? 'zainstalowana, włączona' : 'zainstalowana, wyłączona';
 }
 
-/** Odmiana plakietki stanu; nazwy z biblioteki `komponenty/`. */
+/**
+ * Odmiana plakietki stanu pozycji dobierana z pól installed oraz enabled;
+ * nazwy klas pochodzą z biblioteki komponentów interfejsu.
+ */
 function odmianaStanu(pozycja: Extension): string {
   if (!pozycja.installed) return 'dn-plakietka';
   return pozycja.enabled ? 'dn-plakietka dn-plakietka--sukces' : 'dn-plakietka dn-plakietka--ostrzezenie';
@@ -97,9 +93,7 @@ export function utworzKarteRozszerzenia(
   const pasek = document.createElement('div');
   pasek.className = 'mp-karta__pasek';
 
-  // Instalacja i przełączenie to dwie różne komendy, więc dwa różne przyciski.
-  // Jeden przycisk o zmiennym napisie kazałby Operatorowi zgadywać, którą
-  // czynność zaraz zleci.
+  // Instalacja i przełączenie to dwie różne komendy, więc karta daje dwa osobne przyciski.
   if (!pozycja.installed) {
     pasek.append(
       przyciskKarty('Zainstaluj', 'dn-btn dn-btn--sm dn-btn--atrament', () =>
@@ -115,9 +109,7 @@ export function utworzKarteRozszerzenia(
       ),
     );
   }
-  // Znacznik uprawnień opracowania: karta otwiera Permissions & Trust Center
-  // na swojej pozycji. Przycisk jest czynny także dla pozycji niezainstalowanej,
-  // bo zakres dostępu ogląda się PRZED włączeniem.
+  // Przycisk uprawnień jest czynny także przed instalacją, bo zakres ogląda się wcześniej.
   pasek.append(
     przyciskKarty('Uprawnienia i zaufanie', 'dn-btn dn-btn--sm dn-btn--duch', () =>
       czynnosci.wskaz(pozycja),
@@ -127,7 +119,11 @@ export function utworzKarteRozszerzenia(
   return element;
 }
 
-/** Przycisk karty; naciśnięcie oddaje pozycję oknu, karta nic nie wysyła. */
+/**
+ * Przycisk paska karty złożony z etykiety, klasy odmiany oraz funkcji
+ * wywoływanej po naciśnięciu; naciśnięcie karta oddaje oknu i sama niczego
+ * nie wysyła.
+ */
 function przyciskKarty(etykieta: string, klasa: string, naNacisniecie: () => void): HTMLElement {
   const element = document.createElement('button');
   element.type = 'button';

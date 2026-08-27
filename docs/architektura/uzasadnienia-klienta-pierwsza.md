@@ -3693,3 +3693,33 @@ wartością domyślną i tak został nazwany.
 
 Każdy zapis wolno usunąć. Usunięcie nie jest niszczeniem ustawienia, tylko zdjęciem
 nadpisania, po którym wartość wraca do poziomu szerszego.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sterowanie-koordynatora.ts
+
+Pas sterowania koordynatora zestawia siedem przycisków, z których pięć — Start, Stop, Pauza, Wznów i Powtórz — dzieli jeden silnik kolejek: idą akcją kolejki na kolejce etapu, tej samej, którą obsługuje pętla sesyjna i moduł Automations. Koordynator nie ma własnego wykonawcy zleceń i nie prowadzi biegu naprawczego: bieg prowadzi rdzeń, a licznik obiegów przychodzi z odczytu stanu okna.
+
+Przycisk „Przekaż” wydaje zlecenie wykonawcy. Adresata i treść rozstrzyga tryb współpracy; nośnikiem jest wysłanie wiadomości, ponieważ okno wykonawcy jest oknem komunikacji. Droga modelu, czyli wywołanie narzędzia platformy, biegnie obok i tej kontrolki nie zastępuje.
+
+Przycisk „Waliduj” sprawdza przebieg, a nie ocenia wynik: kontrakt nie ma komendy oceny, więc przycisk odczytuje stan koordynatora i wykonawców i mówi, czy tura trwa, ile obiegów zliczono i czy bieg stoi wraz z powodem. Ocena treści wyniku należy do modułu Results Analyzer.
+
+Zatrzymanie biegu gasi kolejkę etapu i tury wykonawców naraz. Kolejność ma znaczenie: najpierw gaśnie tura, która właśnie zużywa czas modelu, a dopiero potem kolejka, która mogłaby ją wznowić.
+
+Przekazanie zlecenia to dwie czynności i obie muszą się odbyć. Doręczenie treści oknu wykonawcy pozwala mu ruszyć do pracy. Utrwalenie w bazie rdzenia zapisuje, kto komu co zlecił, i zakłada pozycję kolejki; bez niego więź ginie z zamknięciem przeglądarki, a moduł Mission Control nie ma czego pokazać po ponownym uruchomieniu. Kolejność ma znaczenie: najpierw zapis, potem doręczenie — odwrotna zostawiałaby wykonawcę pracującego nad zleceniem, którego nikt nie odnotował. Nieudany zapis nie wstrzymuje doręczenia i nie liczy się jako niedoręczenie: dwa rodzaje niepowodzenia wracają osobnymi wykazami, bo pierwszy mówi, że wykonawca nie dostał pracy, a drugi, że dostał, ale po ponownym uruchomieniu nikt tego nie odtworzy.
+
+## budowa/klient-poprzedni/src/moduly/apps/karta-rozszerzenia.ts
+
+Pola, których pozycja katalogu nie niesie — dziennik zmian, wykaz narzędzi oraz
+wymagane uprawnienia — nie mają na karcie zaślepki. Stoją w wykazie braków okna,
+żeby nieobecność danych była widoczna, a nie udawana.
+
+Stan pozycji nigdy nie opiera się na samej barwie: plakietka niesie słowo, a nie
+tylko odmianę stylu. Cztery rozróżnialne stany (dostępna, zainstalowana
+wyłączona, zainstalowana włączona, dostępna aktualizacja) składa się z dwóch pól
+kontraktu, więc czwartego z nich karta nie podaje — rejestr nie niesie wersji
+dostępnej do zestawienia z wersją zainstalowaną.
+
+Instalacja i przełączenie mają w rdzeniu osobne komendy, dlatego karta stawia
+dwa osobne przyciski. Jeden przycisk o zmiennym napisie kazałby zgadywać, którą
+czynność zaraz zleca. Przycisk uprawnień otwiera Permissions & Trust Center na
+pozycji karty i pozostaje czynny również dla pozycji niezainstalowanej, ponieważ
+zakres dostępu ogląda się przed włączeniem.

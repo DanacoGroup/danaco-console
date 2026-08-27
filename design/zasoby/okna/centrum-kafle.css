@@ -1,7 +1,7 @@
 /* Powody: 01-dokumentacja-md/11-uzasadnienia-okien.md */
 
 .cd-strona .cd-kafel-tresc .dn-kafel-opis,
-.cd-strona .cd-wlasny-rodzaj { color: var(--cd-tekst-opisu); }
+.cd-strona .cd-wlasny-rodzaj { color: var(--dn-tekst-opis); }
 
 .cd-siatka-srodowisk { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 

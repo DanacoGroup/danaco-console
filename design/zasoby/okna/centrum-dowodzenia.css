@@ -2,21 +2,6 @@
 
 :root { --cd-maks-tresc: 100%; }
 
-.cd-strona {
-  --cd-udzial-krawedzi: 46%;
-  --cd-udzial-tla: 13%;
-  --cd-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) var(--cd-udzial-krawedzi), var(--dn-obrys-mocny));
-  --cd-tlo-karty-biezacej: color-mix(in oklab, var(--dn-sygnal-500) var(--cd-udzial-tla), var(--dn-wstazka));
-}
-
-.cd-strona {
-  --cd-tekst-opisu: color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
-}
-
-@supports not (color: color-mix(in oklab, red, blue)) {
-  .cd-strona { --cd-tekst-opisu: var(--dn-tekst-2); }
-}
-
 .cd-strona .cd-listwa-poz { color: var(--dn-tekst-2); }
 
 .cd-strona .cd-listwa-poz:hover,

@@ -4998,3 +4998,12 @@ komendy" ani, najgorzej, pusty wykaz procesów. Rodzina nie rozgłasza zdarzeń,
 bo telemetria postępu ma w rdzeniu jednego producenta zdarzenia zmiany
 postępu; odczyt stanu niczego nie zmienia, a zapis obserwacji zmienia pamięć
 rdzenia, dla której kontrakt zdarzenia nie ma.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_model_port.go
+Port jest osobny od portu ImageMagicka mimo wspólnego przedrostka nazw komend. Tamten stoi wyłącznie na ImageMagicku i wywraca się na braku jednego binarium; ten stoi na dwóch silnikach neuronowych, z których każdy może być nieobecny osobno. Wpięcie tych metod do tamtego interfejsu związałoby dostępność sześciu komend w jedno wspólne rozstrzygnięcie dostępności, choćby maszyna z ImageMagickiem i bez sieci powiększającej straciła retusz razem z powiększaniem.
+
+Ta para komend nie ma zdarzeń, więc port nie bierze nadajnika: wytworzony zasób jest zasobem modułu Design i to jego rodzina zdarzeń o zasobach mówi.
+
+Port niewypełniony nie rejestruje niczego: obie komendy odpowiedzą wtedy odmową nieznanej komendy, a pozostałe domeny pracują bez zmian.
+
+Adapter wypełnia port w całości; gdyby port i adapter się rozjechały, kompilacja stanie w tym miejscu, a nie dopiero na martwej komendzie.

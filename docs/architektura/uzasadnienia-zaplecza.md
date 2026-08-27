@@ -1118,3 +1118,67 @@ zastosowany bez treści ani treść bez schematu. Dopasowanie wiersza idzie
 po kolumnie kodu, jedynej z warunkiem jednoznaczności, więc każda
 aktualizacja trafia w dokładnie jeden wiersz albo w żaden; brak wiersza o
 danym kodzie nie jest tu błędem.
+
+## budowa/server/internal/store/migracja_128_studio_dobudowa.sql
+
+Moduł Studio miał w kontrakcie sześć komend i trzy tabele (dokument, wersja,
+propozycja zmiany), a opracowanie modułu opisuje osiem okien i dwanaście rodzin
+funkcji. Migracja dobudowuje byty, na których te funkcje stoją: komentarze
+i adnotacje, zmiany śledzone, gałęzie dokumentu, kolejkę cyfryzacji, operacje
+własne, łańcuchy, profile wydania, szablony i odwołania do wersji.
+
+Komentarz redakcyjny i adnotacja różnicy dzielą jedną tabelę, nie dwie: poza
+polem zakresu (znaki dla komentarza, numer fragmentu porównania dla adnotacji)
+mają te same sześć kolumn — dokument, wątek nadrzędny, autor, treść, stan
+rozwiązania, czas. Dwie tabele o sześciu wspólnych kolumnach rozjechałyby się
+przy pierwszej poprawce, a zapytanie o wszystko, co ktoś napisał przy
+dokumencie, wymagałoby sumy dwóch zapytań.
+
+Autor jest kolumną wersji, nie osobną tabelą: rozdział 3.6 opracowania żąda
+przy każdej wersji rozróżnienia zmiany operatora od zmiany modelu, a autor jest
+cechą wersji, nie bytem samodzielnym — nie ma stanu, nie ma historii i nie
+istnieje bez wersji. Kolumna dopuszcza NULL, więc wersje założone przed tą
+migracją pozostają poprawne i czytają się jako autor nieznany, nie jako
+operator, którym mogły nie być.
+
+Krok łańcucha i pole szablonu są tekstem (JSON), nie osobną tabelą podrzędną:
+nie są wyszukiwane, nie mają własnego cyklu życia i nie wiąże się z nimi nic
+z zewnątrz — istnieją wyłącznie jako zawartość swojego rodzica. Tabela
+podrzędna dałaby złączenie przy każdym odczycie i nic w zamian.
+
+Warstwa słów rozpoznanych i bloki układu w `pozycja_wczytywania_studio` stoją
+tekstem w formacie JSON z tego samego powodu: są odczytem z materiału, nie
+bytem samodzielnym, i giną razem z pozycją.
+
+Ingest/OCR Panel jest ósmym oknem modułu z opracowania. Katalog rdzenia znał
+dla Studia pięć okien, więc okno zbudowane w kliencie nie miało wiersza,
+do którego mogłoby się odwołać; kategoria „narzedzia" kończyła się na pozycji
+15, więc szesnasta dokleja się na końcu bez przestawiania wiersza zastanego.
+
+## budowa/server/internal/store/migracja_365_studio_znakowanie.sql
+
+Trzy rzeczy nie wolno pomieszać. Komentarz nie niesie brzmienia — zmiana
+śledzona jest już w treści. Propozycja na marginesie niesie brzmienie i nie
+jest w treści — operator ją przyjmuje, odrzuca albo poprawia. To trzy różne
+czynności i okno ma je odróżniać wyraźnie.
+
+Komentarz ma już swoją tabelę (`komentarz_studio`) i zmiana śledzona swoją
+(`zmiana_sledzona_studio`). Tutaj leży to, czego nie miały: wyróżnienie barwą,
+znacznik własny operatora i propozycja z brzmieniem. Trzy rodzaje w jednej
+tabeli, bo pracuje się nimi tak samo — wszystkie są przypięte do fragmentu,
+wszystkie mają autora i stan, i wszystkie wchodzą do jednego wykazu znakowań,
+po którym operator skacze i który odhacza.
+
+Wyróżnienie tła jest cechą postaci znaku (`highlightColor` w drzewie postaci)
+— i tam musi być, bo inaczej nie wyszłoby przy wydaniu do docx ani do PDF.
+Wiersz w tabeli znakowań jest czymś innym: jest pozycją wykazu, po której się
+przechodzi, którą się filtruje wedle autora i którą się zdejmuje jednym
+poleceniem. Bez tego wiersza wyróżnienie modelu w długim dokumencie ginie:
+postać wie, że tło jest żółte, ale nie wie, kto je nadał ani po co.
+
+Znacznik własny („do sprawdzenia", „wymaga źródła", „gotowe") ma nazwę, barwę
+i wykaz. Trzymanie barwy przy każdym użyciu znaczyłoby, że zmiana barwy rodzaju
+wymaga przejścia wszystkich znakowań — a operator, który zmienia barwę „do
+sprawdzenia", zmienia ją dla wszystkich, nie dla jednego miejsca. Rodzaje są
+zasięgu operatora, nie dokumentu: znacznik „wymaga źródła" obowiązuje we
+wszystkich pismach, a nie zakłada się go od nowa w każdym.

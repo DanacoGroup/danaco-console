@@ -3904,3 +3904,5 @@ zdążył już nadać ponownie czemu innemu. Bezpieczeństwo stoi wyłącznie na
 zakonczony pod tą samą blokadą, co w metodzie Ubij: kto zastanie wartość fałszywą, ten jeden przechodzi
 dalej. Tego nie wolno uprościć do sprawdzenia stanu przed działaniem, ponieważ byłoby to sprawdzenie
 i działanie rozdzielone w czasie, przy którym obaj wołający mogliby wejść równocześnie.
+## budowa/server/internal/dane/poczta.go
+Repozytorium nie mówi żadnym protokołem: odbiór i wysyłka listów należą do warstwy poczty, tu leży wyłącznie trwałość. Hasła tu nie ma: kolumna z odwołaniem do poświadczeń niesie wskazanie na sejf poświadczeń, a repozytorium nigdy nie widzi sekretu w jawnej postaci.

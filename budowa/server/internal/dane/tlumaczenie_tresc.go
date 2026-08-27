@@ -1,19 +1,6 @@
-// Odpowiedzialność pliku: zmiany treści panelu tłumaczenia — tłumaczenie
-// (korekta Operatora), tłumaczenie zwrotne, ton i stan. Cztery metody typu
-// `*repozytoriumTlumaczen`, którego typ i konstruktor deklaruje
-// `dane/tlumaczenie.go`; ten plik nie wnosi własnego typu ani interfejsu.
-//
-// Ton jest kolumną panelu, nie osobnym bytem: `panel.tone.set` pisze przez
-// metodę tego pliku, bo `ton` mieszka w `panel_tlumaczenia`
-// (`migracja_053_tlumaczenie.sql`).
-//
-// Każda z czterech metod przy nieznanym kodzie panelu wraca ErrBrakWiersza.
-// Cicha zgoda na zmianę bytu, którego nie ma, byłaby potwierdzeniem czynności,
-// która się nie odbyła, więc każda metoda sprawdza `RowsAffected` wzorem
-// `UstawStanZlecenia` w `dane/asystent.go`.
-//
-// Czas jest liczbą milisekund epoki, wzorem `dane/asystent.go` — cały moduł
-// Translate idzie tym samym sposobem.
+// Plik zmienia treść panelu tłumaczenia: tłumaczenie, tłumaczenie zwrotne, ton
+// i stan, jako cztery metody typu repozytoriumTlumaczen zadeklarowanego w
+// pliku tlumaczenie.go.
 package dane
 
 import (
@@ -40,12 +27,9 @@ const (
 	                   WHERE identyfikator_zewnetrzny = ?`
 )
 
-// UstawTlumaczenie zapisuje korektę Operatora — treść krótką wprost w `tresc`
-// i (dla treści obszernej) odwołanie do pliku w `tresc_odwolanie`.
-// Oba pola przychodzą jako wskaźniki: `nil` zostawia kolumnę pustą, bo
-// `translation.set` może nieść samą treść krótką albo samo odwołanie, zależnie
-// od rozmiaru tekstu — rdzeń nie zgaduje, które pole miało zostać wyczyszczone.
-// Kod panelu nieznany wraca jako ErrBrakWiersza.
+// UstawTlumaczenie zapisuje korektę operatora: treść krótką w kolumnie tresc
+// i odwołanie do pliku obszernej treści w kolumnie tresc_odwolanie. Kod panelu
+// nieznany wraca jako ErrBrakWiersza.
 func (r *repozytoriumTlumaczen) UstawTlumaczenie(ctx context.Context, kodPanelu string,
 	tresc, odwolanie *string) (PanelTlumaczenia, error) {
 
@@ -68,10 +52,9 @@ func (r *repozytoriumTlumaczen) UstawTlumaczenie(ctx context.Context, kodPanelu 
 	return r.Panel(ctx, kodPanelu)
 }
 
-// UstawTlumaczenieZwrotne zapisuje wynik `backtranslation.run` w kolumnie
-// `tresc_zwrotna`. Kontrakt oddaje jeden tekst na panel bez historii przebiegów
-// (`migracja_053_tlumaczenie.sql`) — zapis nadpisuje, nie dokłada wiersza. Kod panelu nieznany
-// wraca jako ErrBrakWiersza.
+// UstawTlumaczenieZwrotne zapisuje wynik tłumaczenia zwrotnego w kolumnie
+// tresc_zwrotna, nadpisując poprzedni zapis. Kod panelu nieznany wraca jako
+// ErrBrakWiersza.
 func (r *repozytoriumTlumaczen) UstawTlumaczenieZwrotne(ctx context.Context,
 	kodPanelu, tresc string) (PanelTlumaczenia, error) {
 

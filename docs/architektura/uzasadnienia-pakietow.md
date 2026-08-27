@@ -3182,3 +3182,6 @@ wejścia, odpowiedzi idą strumieniem wyjścia, żaden port nie jest zajmowany.
 Rola all uruchamia oba tory naraz, z torem interfejsu jako wiodącym. Rola
 spoza tego katalogu nie zatrzymuje procesu, tylko schodzi na zachowanie roli
 all, ponieważ brak rozpoznanego ustawienia ma dawać pracę, nie odmowę.
+
+## budowa/server/internal/dane/tlumaczenie_tresc.go
+Ton jest kolumną panelu, nie osobnym bytem: żądanie ustawienia tonu pisze przez metodę tego pliku, bo pole ton mieszka w tabeli panel_tlumaczenia (migracja_053_tlumaczenie.sql). Każda z czterech metod przy nieznanym kodzie panelu wraca ErrBrakWiersza, ponieważ cicha zgoda na zmianę bytu, którego nie ma, byłaby potwierdzeniem czynności, która się nie odbyła — każda metoda sprawdza liczbę wierszy dotkniętych zapisem. Czas jest liczbą milisekund epoki, wzorem reszty modułu Translate. UstawTlumaczenie przyjmuje treść i odwołanie jako wskaźniki: pusta wartość zostawia kolumnę bez zmiany, bo zgłoszenie korekty może nieść samą treść krótką albo samo odwołanie do pliku, zależnie od rozmiaru tekstu.

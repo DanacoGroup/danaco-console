@@ -1201,3 +1201,16 @@ albo pokazać się Operatorowi surowym literałem kontraktu.
 Etykieta braku źródła zastępuje liczbę wszędzie tam, gdzie kontrakt miary dziś
 nie niesie. Pulpit nie pokazuje wartości wymyślonej — brak źródła danych jest
 nazywany wprost.
+
+## budowa/klient-poprzedni/src/konfiguracja/stany-odczytu.ts
+
+Komunikat blokowy nie znika po naciśnięciu przycisku ponowienia. Naciśnięcie wyzwala kolejny odczyt
+i zostawia zdanie na miejscu, dopóki sytuacja nie ustanie; zdejmuje je dopiero odczyt zakończony
+powodzeniem.
+
+Stan pustego katalogu ustawień należy do panelu kategorii, a nie do tego pasa, ponieważ mówi
+o zawartości katalogu, a nie o przebiegu odczytu.
+
+Zawężenie zależności pasa do fazy odczytu i powodu niepowodzenia czyni z niego jeden byt dla obu
+odczytów okna konfiguracji: katalogu ustawień oraz konfiguracji obowiązującej. Stan konfiguracji
+spełnia ten kształt bez żadnej zmiany.

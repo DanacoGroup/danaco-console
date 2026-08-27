@@ -20,6 +20,20 @@ use sha2::{Digest, Sha256};
 
 use super::Odmowa;
 
+/// Adres kanału pobrań — `kanal.adres` z wykazu wydań
+/// `budowa/witryna/wydania.json`, jedynego źródła prawdy strony „Pobierz”
+/// i banera aktualizacji. Wszystkie pola `plik` wykazu leżą pod tym adresem.
+///
+/// Powłoka pobiera wydania wyłącznie spod tego adresu. Bez tego przywiązania
+/// suma SHA-256 niczego by nie chroniła: adres i sumę podaje powłoce ta sama
+/// strona, więc strona podstawiona wskazałaby własny plik wraz z jego poprawną
+/// sumą. Kanał jest częścią powłoki z tego samego powodu, z którego suma jest
+/// częścią wykazu — ogniwo zaufania nie może pochodzić od strony, którą wiąże.
+///
+/// Porównanie jest dosłowne (przedrostek znak w znak) i kończy się ukośnikiem,
+/// więc `pobierz.danaco-group.pl.obcy-serwer` przedrostka nie przejdzie.
+const ADRES_KANALU: &str = "https://pobierz.danaco-group.pl/";
+
 /// Górny pułap wielkości pliku wydania — 512 MiB.
 ///
 /// Zabezpieczenie przed zapełnieniem dysku przez odpowiedź bez końca z serwera
@@ -42,10 +56,12 @@ pub struct Pobrany {
 /// `suma_zadana` to suma w zapisie szesnastkowym (wielkość liter bez znaczenia),
 /// pochodząca z `wydania.json` czytanego przez interfejs po HTTPS.
 ///
-/// Łańcuch zaufania ma dwa ogniwa: HTTPS chroni wykaz wydań, z którego pochodzi
-/// suma, a suma chroni pobrany plik. Adres inny niż `https://` jest odmawiany,
-/// bo po zwykłym HTTP pośrednik podmienia plik i sumę naraz, co unieważnia
-/// całe sprawdzenie.
+/// Łańcuch zaufania ma trzy ogniwa: kanał pobrań wkompilowany w powłokę
+/// (`ADRES_KANALU`) ogranicza, skąd plik w ogóle może przyjść; HTTPS chroni
+/// wykaz wydań, z którego pochodzi suma; a suma chroni pobrany plik. Adres
+/// inny niż `https://` jest odmawiany, bo po zwykłym HTTP pośrednik podmienia
+/// plik i sumę naraz — a adres spoza kanału jest odmawiany, bo adres i sumę
+/// podaje powłoce ta sama strona, więc bez kanału nic nie wiąże ich z wydawcą.
 pub fn pobierz_i_sprawdz(
     adres: &str,
     suma_zadana: &str,
@@ -191,7 +207,7 @@ pub fn pobierz_i_sprawdz(
 /// `ocen_pobrane`, bo `format!("{:x}")` daje małe litery, a wykaz wydań pisany
 /// ręcznie potrafi mieć wielkie.
 ///
-/// Wydzielone z `pobierz_i_sprawdz`, bo są to jedyne dwie odmowy padające przed
+/// Wydzielone z `pobierz_i_sprawdz`, bo są to jedyne odmowy padające przed
 /// pierwszym bajtem z gniazda; test może je wywołać bez dostępu do sieci.
 fn sprawdz_zadanie(adres: &str, suma_zadana: &str) -> Result<String, Odmowa> {
     if !adres.starts_with("https://") {
@@ -201,6 +217,21 @@ fn sprawdz_zadanie(adres: &str, suma_zadana: &str) -> Result<String, Odmowa> {
                 "Adres wydania nie zaczyna się od „https://” ({adres}). \
                  Aktualizacja nie została pobrana, bo po zwykłym HTTP nie da się \
                  odróżnić pliku wydawcy od podstawionego."
+            ),
+        ));
+    }
+
+    // Adres musi leżeć w kanale pobrań. Bez tego warunku powłoka pobierałaby
+    // spod dowolnego adresu, który wskaże strona — a stronie wystarczy podać
+    // do niego pasującą sumę, bo obie wartości przychodzą tym samym poleceniem.
+    if !adres.starts_with(ADRES_KANALU) {
+        return Err(Odmowa::nowa(
+            "adres-poza-kanalem",
+            format!(
+                "Adres wydania ({adres}) nie leży w kanale pobrań {ADRES_KANALU} — \
+                 jedynym miejscu, z którego wykaz wydań wskazuje pliki. \
+                 Aktualizacja nie została pobrana: plik spoza kanału nie pochodzi \
+                 od wydawcy, więc nie ma czym potwierdzić, co by przyszło z sieci."
             ),
         ));
     }
@@ -275,4 +306,74 @@ fn ocen_pobrane(
 fn posprzataj(plik_roboczy: &Path, odmowa: Odmowa) -> Odmowa {
     let _ = fs::remove_file(plik_roboczy);
     odmowa
+}
+
+#[cfg(test)]
+mod testy {
+    //! Testy sprawdzenia żądania — wszystkie biegną bez sieci, bo `sprawdz_zadanie`
+    //! pada przed pierwszym bajtem z gniazda. Osią jest przywiązanie do kanału
+    //! pobrań: adres spoza `ADRES_KANALU` ma zostać odrzucony, zanim cokolwiek
+    //! poleci przez sieć i zanim powstanie plik roboczy.
+
+    use super::*;
+
+    /// Poprawna co do zapisu suma SHA-256 — 64 znaki szesnastkowe. Testom
+    /// adresu wystarczy zapis; z niczym go tu nie porównują.
+    fn suma_poprawna() -> String {
+        "a".repeat(64)
+    }
+
+    /// Adres wzięty wprost z pola `plik` wykazu `budowa/witryna/wydania.json`.
+    const ADRES_Z_WYKAZU: &str = "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-18/Danaco%20Console_1.0.0_hybryda_amd64.AppImage";
+
+    #[test]
+    fn adres_z_kanalu_przechodzi() {
+        let suma = sprawdz_zadanie(ADRES_Z_WYKAZU, &suma_poprawna())
+            .expect("adres z wykazu wydań leży w kanale i ma przejść");
+        assert_eq!(suma, suma_poprawna(), "suma ma wrócić w małych literach");
+    }
+
+    #[test]
+    fn adres_spoza_kanalu_odrzucony() {
+        // Strona podstawiona wskazuje własny serwer wraz z pasującą sumą.
+        // Sama suma tego nie zatrzyma — zatrzymać ma kanał.
+        let odmowa = sprawdz_zadanie("https://obcy-serwer.example/wydanie.AppImage", &suma_poprawna())
+            .expect_err("adres spoza kanału pobrań nie ma prawa przejść");
+        assert_eq!(odmowa.powod, "adres-poza-kanalem");
+        assert!(
+            odmowa.zdanie.contains(ADRES_KANALU),
+            "odmowa ma nazwać kanał, żeby było wiadomo, skąd wydania przychodzą: {}",
+            odmowa.zdanie
+        );
+    }
+
+    #[test]
+    fn kanal_jako_poczatek_obcej_nazwy_odrzucony() {
+        // Nazwa hosta zaczynająca się nazwą kanału to wciąż obcy host —
+        // ukośnik na końcu `ADRES_KANALU` musi to odciąć.
+        let odmowa = sprawdz_zadanie(
+            "https://pobierz.danaco-group.pl.obcy-serwer.example/wydanie.AppImage",
+            &suma_poprawna(),
+        )
+        .expect_err("host o nazwie zaczynającej się nazwą kanału jest poza kanałem");
+        assert_eq!(odmowa.powod, "adres-poza-kanalem");
+    }
+
+    #[test]
+    fn adres_http_odrzucony_wczesniejsza_odmowa() {
+        // HTTP pada na warunku protokołu, nie kanału — Operator ma usłyszeć
+        // o HTTP, a nie ogólnik o kanale.
+        let odmowa = sprawdz_zadanie("http://pobierz.danaco-group.pl/wydanie.AppImage", &suma_poprawna())
+            .expect_err("adres bez https nie ma prawa przejść");
+        assert_eq!(odmowa.powod, "adres-nie-https");
+    }
+
+    #[test]
+    fn suma_w_zlym_zapisie_odrzucona_takze_dla_adresu_z_kanalu() {
+        // Kanał nie zdejmuje pozostałych warunków — suma obcięta pada tak samo
+        // jak przed przywiązaniem do kanału.
+        let odmowa = sprawdz_zadanie(ADRES_Z_WYKAZU, "abc123")
+            .expect_err("suma krótsza niż 64 znaki nie ma prawa przejść");
+        assert_eq!(odmowa.powod, "suma-w-zlym-zapisie");
+    }
 }

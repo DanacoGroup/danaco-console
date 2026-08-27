@@ -6306,3 +6306,17 @@ Słownictwo trybu (odczyt, zapis) tu nie ma z zamysłem: jest ono własnością 
 a nie typu kontraktu, więc mieszka w tabeli argumentu trybu mostu i dojeżdża tutaj polem
 ArgumentTrybu. Zapisanie go drugi raz w kodzie sprawiłoby, że most o innym słownictwie wymagałby
 zmiany rdzenia zamiast wiersza w tabeli.
+
+## budowa/server/internal/core/trwalosc_kosza.go
+
+Sesja znika z historii bieżącej natychmiast po usunięciu, bo wykaz sesji
+żywych kosza nie widzi (plik dane/sesje.go), a wraca w całości komendą
+session.restore. Utrata danych następuje wyłącznie wskutek session.delete;
+czyszczenie po terminie jest drugą fazą tej samej czynności, nie osobną
+drogą utraty.
+
+Czyszczenie wykonuje się przy starcie rdzenia — jedynym momencie, w którym
+rdzeń i tak czyta całą tabelę sesji, w pliku odtworzenie_stanu.go — więc
+nie potrzeba budzika ani osobnego wątku. Trzydzieści dni daje okno dłuższe
+niż typowy urlop: sesja usunięta i nieprzywrócona przez miesiąc jest
+decyzją, nie pomyłką.

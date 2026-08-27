@@ -2275,3 +2275,31 @@ a nie dwa.
 Operatorowi odpowiedź. Gdy zamiar nie ma odpowiednika w komendzie kontraktu albo
 rdzeń odmawia wykonania, dymek mówi to wprost, zamiast udawać czynność wykonaną.
 Milczenie po naciśnięciu byłoby dla Operatora nieodróżnialne od powodzenia.
+
+## budowa/klient-poprzedni/src/moduly/library/ster-modulu.ts
+
+Wybór modułu docelowego jest wyborem z katalogu, a nie polem tekstowym. Komenda
+przeniesienia z nieznanym kodem modułu wraca powodzeniem, a rdzeń zakłada okno
+z dokładnie tym kodem, więc literówka kończy się oknem, do którego nikt nie
+wejdzie. Katalog pozycji pochodzi z komendy wykazu modułów.
+
+Wybór zmienia nastawę we wspólnym stanie modułu. Nastawa jest jedna dla całego
+modułu Library, więc zmiana dokonana w oknie eksploratora jest widoczna w oknie
+podglądu pliku i odwrotnie.
+
+Pozycja pusta zostaje w wykazie: bierze ona moduł wytwórcy przeniesionego pliku,
+a ster tę drogę nazywa wprost, zamiast kazać jej się domyślać z pustego pola.
+
+Gdy wykaz modułów wróci odmową, ster ma samą pozycję pustą, a pod nim stoi powód
+odmowy. Milcząca lista z jedną pozycją wyglądałaby jak platforma z jednym
+modułem, czyli mówiłaby Operatorowi nieprawdę o stanie rdzenia.
+
+Moduł Library wypada z własnego wykazu pozycji, ponieważ przeniesienie kompletu
+do modułu, w którym Operator już stoi, założyłoby drugie okno tego samego modułu
+i nie otworzyłoby niczego nowego. Tak samo zawęża swój katalog moduł Design.
+
+Przy odświeżeniu wartość bierze się ze stanu modułu, a nie z kontrolki: funkcja
+ustawiająca pozycje utrzymuje poprzedni wybór, o ile pozycja nadal istnieje, ale
+prawdą o nastawie jest stan, także wtedy, gdy zmieniło ją drugie okno. Nastawa
+wskazująca moduł, którego katalog już nie zna, zniknęłaby po cichu na pozycję
+pustą, czyli przeniesienie poszłoby gdzie indziej, niż mówił ster przed chwilą.

@@ -389,3 +389,25 @@ właścicielowi produktu i zdanie widoczne Operatorowi mówiły o tej samej kome
 nazwy idzie za bytem, którego dotyczy: czynności na katalogu rozszerzeń należą do obszaru
 `extension`, bo katalog stoi poziom wyżej niż moduł, a czynności na produkcie budowanym
 w module — do obszaru `apps`.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-integrations-hub.ts
+
+Okno pokazuje dwa rodzaje pozycji katalogu — serwer protokołu MCP i integrację
+przez interfejs API — bo tylko te dwa są drogą do usługi zewnętrznej. Wtyczki
+i umiejętności nie należą do tego okna: są rozszerzeniami powłoki i sposobami
+wykonania zadań, nie drogami do usług zewnętrznych, więc ich miejsce jest
+w katalogu aplikacji.
+
+Test połączenia i monitor zdrowia sprawdzają most, przez który dochodzi się do
+serwera, a nie usługę stojącą za mostem. Sprawdzenie oddaje stan, czas
+i korzenie potwierdzone przez punkt dostępu; czasu odpowiedzi samej integracji
+ani liczby jej narzędzi kontrakt nie niesie, więc okno tej wartości nie zmyśla.
+
+Integracja bez punktu dostępu nie jest usterką: pozycja rodzaju API bywa
+dostępna wprost adresem, a punkt dostępu opisuje most do maszyny. Okno
+odróżnia brak mostu od mostu nieznanego rdzeniowi, ponieważ to dwa różne stany
+i drugi z nich jest niespójnością rejestru.
+
+Transport protokołu MCP da się dziś wpisać wyłącznie do nieprzezroczystej
+konfiguracji w postaci zapisu JSON. Kontrakt nie nazywa tego pola osobno, więc
+rdzeń i okno mogą rozumieć wpisaną wartość odmiennie.

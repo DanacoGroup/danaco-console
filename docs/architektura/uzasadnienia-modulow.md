@@ -742,3 +742,39 @@ Trzy drogi wnoszące źródło — dodanie, przechwycenie strony i import —
 rozgłaszają to samo zdarzenie zmiany źródła z rodzajem „utworzono”, żeby okno
 katalogu zobaczyło nową pozycję bez odpytywania; usunięcie rozgłasza to
 zdarzenie z samym wskazaniem zdjętej pozycji, bo pełny byt już nie istnieje.
+
+## budowa/server/internal/core/adapter_modul_roundtable_ocena.go
+
+Wskazanie wypowiedzi bardziej przekonującej jest pojedynkiem dwóch tożsamości
+i tak jest liczone: punktacja obu przesuwa się natychmiast po zapisaniu
+oceny, nie dopiero po zamknięciu debaty. Ranking, który aktualizuje się
+dopiero na koniec, nie pokazywałby niczego w trakcie debaty, a Operator
+ocenia właśnie w trakcie.
+
+Elo przesuwa obie punktacje o wartość zależną od różnicy między nimi.
+Glicko i TrueSkill dokładają do tego niepewność oszacowania: im mniej
+pojedynków ma tożsamość, tym większy krok przesunięcia, bo tym mniej
+wiadomo o jej sile. Różnica między tymi dwoma algorytmami leży w tempie
+zawężania tej niepewności; niepewność maleje z każdym pojedynkiem, ale nie
+schodzi do zera, bo tożsamość, o której „wiadomo wszystko", przestałaby
+reagować na kolejne wyniki.
+
+Suma wag kryteriów rubryki ma wynosić jedność, tak jak mówi kontrakt.
+Rubryka o sumie innej dawałaby wynik werdyktu, którego nie da się porównać
+z wynikiem z innej rubryki, więc odmowa zapisu jest tu jedyną uczciwą
+odpowiedzią.
+
+Sędzia oceniający wypowiedź jest uczestnikiem składu debaty, więc ocenia
+własnym kanałem modelu i własną tożsamością. Punkty odczytuje się z jego
+odpowiedzi tekstowej; odpowiedź bez rozpoznanych liczb zostawia punkty
+zerowe dla danego kryterium, a uzasadnieniem werdyktu jest to, co sędzia
+naprawdę powiedział — rdzeń nie wystawia oceny za niego.
+
+Kryterium, którego sędzia nie ocenił w odpowiedzi, dostaje zero i tak też
+wchodzi do wyniku ważonego. Pominięcie takiego kryterium w mianowniku
+dawałoby wynik wyższy za odpowiedź uboższą niż za odpowiedź pełną.
+
+Rachunek dziesięciu do potęgi w krzywej oczekiwania Elo liczy się szeregiem
+wykładniczym 10^x = e^(x·ln10), zbieżnym do wystarczającej dokładności po
+kilkunastu wyrazach, bo argument jest tu zawsze mały — różnica punktacji
+dzielona przez czterysta.

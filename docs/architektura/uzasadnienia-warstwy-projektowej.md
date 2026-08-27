@@ -416,3 +416,6 @@ Pasek sięga wyłącznie po żetony rama z pliku motyw/rama.css, które stoją p
 blokami motywów. Tło pola wyszukiwania w pasku jest półprzezroczystą bielą
 sześcioprocentową, a nie żetonem: to warstwa na atramencie ramy, niezależna
 od motywu.
+
+## design/zasoby/zetony/zetony.css
+Powielenie wartości cienia sygnału i pozostałych żetonów między blokiem `prefers-color-scheme` i blokami motywów jest świadome: stanowi mechanizm kaskady na wypadek braku jawnego wyboru motywu, a nie drugie źródło prawdy dla tych wartości. Sekcja czternasta, dotycząca ograniczonego ruchu bez konfiguracji per komponent, nie ma jeszcze treści — zachowanie `prefers-reduced-motion` obsługuje w całości plik `zetony/ruch.css`.

@@ -1633,3 +1633,15 @@ Zestaw faz i ich znakowanie pochodzą ze wspólnego modułu faz okna: ta sama
 nazwa fazy trafia do atrybutu danych w każdym module, więc wspólny selektor
 i wspólny sprawdzian mają się o co oprzeć. W tym module zostaje wyłącznie to,
 czym Studio różni się świadomie: wskaźnik odczytu i chowanie treści.
+
+## budowa/klient-poprzedni/src/moduly/research/formularz-zrodla.ts
+Formularz wydzielono z okna zarządzania źródłami, ponieważ katalogowanie źródła i ocena jego wiarygodności to osobne funkcje operatora z własnymi polami w kontrakcie (rodzaj, pochodzenie, adres, dokument repozytorium, ocena wiarygodności). Każde pole niesie dymek objaśnienia, bo każde jest elementem konfiguracji zlecenia. Rodzaj źródła i ocena wiarygodności idą przez wspólny wybór nastawy — obsadę bibliotecznego menu drzewa, gdzie uchwyt pokazuje wartość bieżącą, a natywna lista rozwijana pokazywałaby ją dopiero po rozwinięciu; pola tekstowe zostają polami tekstowymi, bo nie ma w nich czego rozwijać.
+Rzutowanie wartości sterowania na wyliczenie kontraktu odbywa się wyłącznie w funkcji pomocniczej: ster oddaje napis, którego pozycje pochodzą z wyliczeń kontraktu, więc innej wartości wydać nie może, a pusty wybór wraca wartością zastępczą, nie napisem pustym.
+
+## budowa/klient-poprzedni/src/moduly/wiedza/indeks.ts
+Katalog wiedzy stoi osobno od katalogu poczty, bo to dwie różne dziedziny rdzenia: poczta sięga
+po skrzynkę Operatora stojącą poza urządzeniem, wiedza po treści własne leżące w rdzeniu. Wspólny
+katalog zlepiłby dwa słowniki pojęć w jeden. Rejestr modułów wiąże widok z kodem modułu rdzenia,
+a tabela modułów nie niesie osobnego kodu ani dla poczty, ani dla wiedzy — drugi wpis rejestru
+czekałby na kod, którego nawigacja nigdy nie poda. Okno wchodzi do sceny przez złożenie modułu
+poczty, które ma w rejestrze jeden wpis. Dlatego ten plik nie wystawia stałej modułu.

@@ -67,3 +67,46 @@ wynika, a to jest dokładnie wzorzec, którego moduł ma nie powtarzać.
 Wartości startowe pól są przykładami z domeny produktu, nie wartościami
 wymuszonymi: Operator zmienia je przed wykonaniem, a puste pole nieobowiązkowe
 oznacza brak zawężenia.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-apps.ts
+
+Obszar apps.* jest dwukierunkowy: obok trzech komend zapisu (architektura,
+plik warsztatu, wdrożenie) stoją trzy komendy odczytu — apps.deployment.list,
+apps.architecture.get, apps.workspace.list. Bez nich moduł po odświeżeniu
+okna przeglądarki zaczynałby od zera, bo wypełniałyby go tylko zdarzenia
+bieżącej sesji gniazda, a historia wdrożeń trzymana w bazie znikałaby z oczu.
+Każdy odczyt oddaje ten sam kształt, którym odpowiada jego komenda zapisu.
+
+Zdarzenie apps.workspace.changed jest drogą rozgłoszenia dla
+apps.workspace.update: bez niego plik zapisany w jednym oknie nie docierałby
+do drugiego, dopóki plik nie zostałby odczytany ręcznie. Wchodzi tą samą
+bramą co apps.build.changed — subskrypcją źródła, nie własnym gniazdem.
+
+Źródło nie ma własnego stanu: jest warstwą wywołań i sprawdzianu kształtu
+odpowiedzi. Stan produktu mieszka osobno, żeby pięć okien patrzyło na jeden
+zbiór, a nie na pięć kopii.
+
+Komendy zapisu mają uchwyt w rdzeniu, więc wywołanie wraca zwykłą
+odpowiedzią albo odmową merytoryczną, nie kopertą apps.unknown. Droga przez
+warstwę odmowy rdzenia zabezpiecza ścieżkę fail-open: gdyby uchwyt zniknął
+albo rdzeń nie rozpoznał którejś komendy, obietnica wywołania ma się czym
+rozstrzygnąć zamiast wisieć bez końca, a okno nazywa odmowę zamiast ją ukryć.
+
+Pola tożsamości idą do rdzenia tak, jak je wpisano, bez przycięcia po drodze
+po stronie klienta. Przycięcie w przeglądarce i przycięcie w rdzeniu nie są
+tym samym działaniem i rozjeżdżają się na dwóch znakach białych, których
+jedna strona zdejmuje, a druga zostawia. Ma to znaczenie na ścieżce
+warsztatu, bo klucz złożony z okna, warstwy i ścieżki czyni ją tożsamością
+pliku: przycięcie po stronie klienta zapisałoby plik pod ścieżką inną niż
+wpisana albo odrzuciłoby ścieżkę, którą rdzeń przyjmuje. Rdzeń przycina te
+pola po swojemu i to on jest tu jedyną władzą; o pustce pola rozstrzyga
+więc pustka dosłowna, a okno zestawia potem wpisane z oddanym i ogłasza
+różnicę.
+
+Sprawdzian kształtu odpowiedzi jest przy każdej komendzie osobny i pyta
+o pole, którego okno naprawdę używa. Sprawdzanie, czy cokolwiek wróciło,
+przepuściłoby odpowiedź o kształcie innym niż kontraktowy, a okno wywróciłoby
+się dopiero przy rysowaniu. Pustka nie jest tu uszkodzonym kształtem: wykaz
+pusty i pole opcjonalne bez wartości są odpowiedziami prawdziwymi i znaczą,
+że w tym oknie danej rzeczy jeszcze nie ma — dlatego przy nich sprawdzian
+pyta o tablicę albo przepuszcza wszystko, zamiast żądać obiektu.

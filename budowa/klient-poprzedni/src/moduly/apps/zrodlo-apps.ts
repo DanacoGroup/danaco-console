@@ -77,48 +77,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { utworzWywolanieApps, type WywolanieApps } from './odmowa-rdzenia';
 
 /**
- * Czterdzieści jeden komend obszaru `apps.*` i dwa jego zdarzenia — cały
- * kontrakt modułu.
- *
- * Obszar jest dwukierunkowy: obok trzech komend zapisu (architektura, plik
- * warsztatu, wdrożenie) stoją trzy komendy odczytu — `apps.deployment.list`,
- * `apps.architecture.get`, `apps.workspace.list`. Bez nich moduł po
- * odświeżeniu okna przeglądarki zaczynałby od zera, bo wypełniałyby go tylko
- * zdarzenia bieżącej sesji gniazda, a historia wdrożeń trzymana w bazie
- * znikałaby Operatorowi z oczu. Każdy odczyt oddaje ten sam kształt, którym
- * odpowiada jego komenda zapisu — druga struktura o tym samym bycie byłaby
- * drugą prawdą.
- *
- * `apps.workspace.changed` jest drogą rozgłoszenia dla `apps.workspace.update`:
- * bez niej plik zapisany w jednym oknie nie docierałby do drugiego, dopóki
- * Operator nie odczytałby warsztatu ręcznie. Wchodzi tą samą bramą co
- * `apps.build.changed` — subskrypcją źródła, nie własnym gniazdem.
- *
- * Źródło nie ma własnego stanu: jest warstwą wywołań i sprawdzianu kształtu
- * odpowiedzi. Stan produktu mieszka w `stan-produktu.ts`, żeby pięć okien
- * patrzyło na jeden zbiór, a nie na pięć kopii.
- *
- * Komendy zapisu mają uchwyt w rdzeniu — wpina je `zarejestrujAplikacje`
- * (`adapter_modul_aplikacje_uchwyty.go`), więc wywołanie wraca zwykłą
- * odpowiedzią albo odmową merytoryczną, nie kopertą `apps.unknown`.
- *
- * Droga przez `odmowa-rdzenia.ts` zabezpiecza ścieżkę fail-open: gdyby uchwyt
- * zniknął albo rdzeń nie rozpoznał którejś komendy, obietnica wywołania ma się
- * czym rozstrzygnąć zamiast wisieć bez końca, a okno nazywa odmowę zamiast ją
- * ukryć — koperta zdarzenia odmowy sama korelacji nie rozstrzyga.
- *
- * Pola tożsamości idą do rdzenia tak, jak je wpisano — bez `trim()` po drodze.
- * `trim()` przeglądarki i `strings.TrimSpace` rdzenia nie są tym samym
- * przycięciem i rozjeżdżają się na dwóch znakach: JavaScript zdejmuje U+FEFF
- * (ZWNBSP), którego Go zostawia, a Go zdejmuje U+0085 (NEL), którego JavaScript
- * zostawia. Ma to znaczenie na ścieżce warsztatu, bo klucz
- * `(okno, warstwa, ścieżka)` czyni ją tożsamością pliku: przycięcie po stronie
- * klienta zapisałoby plik pod ścieżką inną niż wpisana albo odrzuciłoby
- * ścieżkę, którą rdzeń przyjmuje. Rdzeń przycina te pola po swojemu
- * (`adapter_modul_aplikacje_wdrozenie.go`: `strings.TrimSpace(z.Path)`
- * rozstrzyga o pustce, a zapisywana jest wartość surowa) i to on jest tu
- * jedyną władzą. O tym, czy pole jest puste, rozstrzyga więc pustka dosłowna;
- * okno zestawia potem wpisane z oddanym i ogłasza różnicę.
+ * Czterdzieści jeden komend obszaru apps.* i dwa jego zdarzenia stanowią cały
+ * kontrakt modułu Apps; komendom zapisu odpowiadają komendy odczytu tego
+ * samego kształtu.
  */
 export interface ZlecenieArchitektury {
   idOkna: string;
@@ -128,7 +89,7 @@ export interface ZlecenieArchitektury {
   komponenty: readonly AppComponent[];
 }
 
-/** Zlecenie zapisu pliku warsztatu — jedna komenda obsługuje obie warstwy. */
+/** Zlecenie zapisu pliku warsztatu jednej z dwóch warstw — jedna komenda kontraktu obsługuje obie warstwy interfejsu i zaplecza. */
 export interface ZlecenieWarsztatu {
   idOkna: string;
   warstwa: AppWorkspaceLayer;
@@ -137,7 +98,7 @@ export interface ZlecenieWarsztatu {
   idKomponentu: string;
 }
 
-/** Zlecenie wdrożenia; cofnięcie to to samo wywołanie z odnośnikiem wersji. */
+/** Zlecenie wdrożenia produktu na środowisko; cofnięcie do wcześniejszej wersji to to samo wywołanie z podanym odnośnikiem wersji. */
 export interface ZlecenieWdrozenia {
   idOkna: string;
   srodowisko: AppDeployEnvironment;
@@ -147,21 +108,14 @@ export interface ZlecenieWdrozenia {
   cofnijDo: string;
 }
 
-/**
- * Zawężenie odczytu wdrożeń — pola żądania `apps.deployment.list`.
- *
- * Puste środowisko i zerowa granica znaczą „bez zawężenia": pola są w kontrakcie
- * opcjonalne, a granica pominięta bierze granicę rdzenia. Klient nie podstawia
- * tu własnych wartości domyślnych, bo podstawiona granica byłaby cudzą decyzją
- * przebraną za kontrakt.
- */
+/** Zawężenie odczytu wdrożeń — pola żądania apps.deployment.list; puste środowisko i zerowa granica znaczą brak zawężenia. */
 export interface ZapytanieWdrozen {
   idOkna: string;
   srodowisko: AppDeployEnvironment | '';
   granica: number;
 }
 
-/** Metadane produktu — pola żądania `apps.product.save`. */
+/** Metadane produktu modułu Apps — pola żądania apps.product.save: nazwa, opis, platformy docelowe i repozytorium. */
 export interface ZlecenieProduktu {
   idOkna: string;
   nazwa: string;
@@ -186,7 +140,7 @@ export interface ZlecenieEtapu {
   wykonawca: string | null;
 }
 
-/** Zlecenie zapisu kamienia milowego. */
+/** Zlecenie zapisu kamienia milowego produktu wraz z terminem, stanem realizacji i powiązanymi etapami budowy trackera. */
 export interface ZlecenieKamienia {
   idOkna: string;
   idKamienia: string;
@@ -196,7 +150,7 @@ export interface ZlecenieKamienia {
   idEtapow: readonly string[];
 }
 
-/** Zlecenie zapisu notatki projektowej kanwy. */
+/** Zlecenie zapisu notatki projektowej kanwy architektury wraz z jej powiązaniami zależności między komponentami. */
 export interface ZlecenieAdnotacji {
   idOkna: string;
   idAdnotacji: string;
@@ -206,7 +160,7 @@ export interface ZlecenieAdnotacji {
   tresc: string;
 }
 
-/** Zlecenie zapytania próbnego do punktu końcowego. */
+/** Zlecenie zapytania próbnego do punktu końcowego, wykonywanego naprawdę wobec wskazanego środowiska wdrożeniowego. */
 export interface ZlecenieProby {
   idOkna: string;
   metoda: AppEndpointMethod;
@@ -216,7 +170,7 @@ export interface ZlecenieProby {
   srodowisko: AppDeployEnvironment | '';
 }
 
-/** Zlecenie zapisu zmiennej środowiskowej — wartość jawna ALBO sekret. */
+/** Zlecenie zapisu zmiennej środowiskowej — wartość jawna albo odwołanie do sekretu, nigdy oba naraz w jednym żądaniu. */
 export interface ZlecenieZmiennej {
   idOkna: string;
   srodowisko: AppDeployEnvironment;
@@ -225,7 +179,7 @@ export interface ZlecenieZmiennej {
   odwolanieSekretu: string;
 }
 
-/** Zlecenie nadania domeny środowiska. */
+/** Zlecenie nadania domeny środowiska wraz z wymaganymi wpisami DNS potwierdzającymi własność podanej domeny. */
 export interface ZlecenieDomeny {
   idOkna: string;
   srodowisko: AppDeployEnvironment;
@@ -233,7 +187,7 @@ export interface ZlecenieDomeny {
   wpisyDns: unknown;
 }
 
-/** Zlecenie nastawy skalowania; wartość ujemna znaczy „bez zmiany". */
+/** Zlecenie nastawy skalowania usługi wdrożonej na środowisku; wartość ujemna znaczy brak zmiany bieżącej nastawy. */
 export interface ZlecenieSkalowania {
   idOkna: string;
   srodowisko: AppDeployEnvironment;
@@ -243,7 +197,7 @@ export interface ZlecenieSkalowania {
   reguly: unknown;
 }
 
-/** Zlecenie publikacji pakietu do rejestru organizacji. */
+/** Zlecenie publikacji pakietu rozszerzenia do prywatnego rejestru organizacji wraz z notatką towarzyszącą wydaniu. */
 export interface ZleceniePublikacji {
   idOkna: string;
   idPakietu: string;
@@ -252,22 +206,9 @@ export interface ZleceniePublikacji {
 }
 
 /**
- * Cała reszta obszaru — trzydzieści pięć komend dobudowanych do sześciu, od
- * których moduł zaczynał.
- *
- * Jedno źródło, nie trzydzieści pięć: każde wywołanie idzie tą samą drogą
- * (`utworzWywolanieApps`), więc odmowa `apps.unknown` rozstrzyga obietnicę
- * wszędzie tak samo, a okno nazywa brak zamiast wisieć.
- *
- * Sprawdzian kształtu odpowiedzi jest przy każdej komendzie osobny i pyta
- * o pole, którego okno naprawdę używa. Sprawdzanie „czy cokolwiek wróciło"
- * przepuściłoby odpowiedź o kształcie innym niż kontraktowy, a okno wywróciłoby
- * się dopiero przy rysowaniu.
- *
- * Pustka NIE jest tu uszkodzonym kształtem. Wykaz pusty (`total: 0`) i pole
- * opcjonalne bez wartości (`product`, `theme`, `schema`) są odpowiedziami
- * prawdziwymi i znaczą „w tym oknie tego jeszcze nie ma" — dlatego przy nich
- * sprawdzian pyta o tablicę albo przepuszcza wszystko, zamiast żądać obiektu.
+ * Cała reszta obszaru apps.* — trzydzieści pięć komend dobudowanych do
+ * sześciu początkowych, wywoływanych jednym źródłem przez wspólną drogę
+ * wywołania.
  */
 export interface ZrodloApps {
   zapiszArchitekture(z: ZlecenieArchitektury): Promise<Wynik<{ architecture: AppArchitecture }>>;
@@ -285,6 +226,7 @@ export interface ZrodloApps {
     warstwa: AppWorkspaceLayer | '',
   ): Promise<Wynik<AppsWorkspaceListResponse>>;
   // ── Product Builder ───────────────────────────────────────────────────
+
   /** `apps.product.get` — metadane produktu okna; brak produktu to pustka. */
   produkt(idOkna: string): Promise<Wynik<{ product?: AppProduct }>>;
   /** `apps.product.save` — nazwa, opis, platformy docelowe i repozytorium. */
@@ -314,6 +256,7 @@ export interface ZrodloApps {
   ): Promise<Wynik<{ entries: AppTimelineEntry[]; total: number }>>;
 
   // ── Architecture Designer ─────────────────────────────────────────────
+
   /** `apps.architecture.validate` — zastrzeżenia układu; żadne nie blokuje. */
   sprawdzArchitekture(
     idOkna: string,
@@ -332,6 +275,7 @@ export interface ZrodloApps {
   ): Promise<Wynik<{ artifactRef: string; sizeBytes: number }>>;
 
   // ── Frontend i Backend Workspace ──────────────────────────────────────
+
   /** `apps.preview.start` — podniesienie serwera podglądu warstwy. */
   uruchomPodglad(
     idOkna: string,
@@ -356,6 +300,7 @@ export interface ZrodloApps {
   schemat(idOkna: string, idKomponentu: string): Promise<Wynik<{ schema?: AppSchema }>>;
 
   // ── Deployment Panel ──────────────────────────────────────────────────
+
   /** `apps.environment.list` — środowiska wdrożeniowe produktu. */
   srodowiska(
     idOkna: string,
@@ -380,6 +325,7 @@ export interface ZrodloApps {
   ): Promise<Wynik<{ health: AppDeploymentHealth }>>;
 
   // ── Dzienniki i artefakty ─────────────────────────────────────────────
+
   /** `apps.service.log.read` — dziennik usług okna. */
   dziennikUslugi(
     idOkna: string,
@@ -399,6 +345,7 @@ export interface ZrodloApps {
   ): Promise<Wynik<{ artifacts: AppArtifact[]; total: number }>>;
 
   // ── Publisher Panel ───────────────────────────────────────────────────
+
   /** `apps.package.build` — złożenie archiwum pakietu z artefaktu. */
   zbudujPakiet(
     idOkna: string,
@@ -490,10 +437,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsDeploymentList, zadanie),
         Command.AppsDeploymentList,
-        // Sprawdzamy tablicę, a nie jej długość: wykaz pusty jest odpowiedzią
-        // poprawną i znaczy „rdzeń nie zna wdrożeń tego okna". Pomylenie pustki
-        // z uszkodzonym kształtem odebrałoby oknu jedyny stan, w którym wolno mu
-        // powiedzieć „nic tu jeszcze nie ma".
+        // Sprawdzamy tablicę, nie jej długość: wykaz pusty to odpowiedź poprawna, nie kształt uszkodzony.
         (tresc) => czyTablica(tresc.deployments),
       );
     },
@@ -503,10 +447,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsArchitectureGet, zadanie),
         Command.AppsArchitectureGet,
-        // Pole `architecture` jest w kontrakcie opcjonalne — jego brak znaczy
-        // „okno nie ma jeszcze żadnej architektury" i jest odpowiedzią udaną.
-        // Żądanie kształtu obiektu odrzuciłoby tę odpowiedź jako uszkodzoną
-        // i okno ogłosiłoby odmowę tam, gdzie rdzeń rzetelnie powiedział „pusto".
+        // Pole architecture jest opcjonalne; jego brak to odpowiedź udana, nie kształt uszkodzony.
         () => true,
       );
     },
@@ -527,9 +468,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsProductGet, { windowId: idOkna }),
         Command.AppsProductGet,
-        // Pole `product` jest opcjonalne: okno bez zapisanego produktu dostaje
-        // odpowiedź udaną i pustą. Żądanie obiektu ogłaszałoby odmowę tam,
-        // gdzie rdzeń rzetelnie powiedział „jeszcze nic".
+        // Pole product jest opcjonalne: brak zapisanego produktu daje odpowiedź udaną i pustą.
         () => true,
       );
     },
@@ -570,8 +509,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       if (z.nazwa !== '') zadanie.name = z.nazwa;
       if (z.kolejnosc > 0) zadanie.order = z.kolejnosc;
       if (z.stan !== '') zadanie.status = z.stan;
-      // Pusty łańcuch JEST wartością: zdejmuje przypisanie wykonawcy. Wysyłamy
-      // pole zawsze, gdy nie jest `null` — patrz komentarz przy ZlecenieEtapu.
+      // Pusty łańcuch jest wartością: zdejmuje wykonawcę; wysyłamy pole zawsze, gdy nie jest null.
       if (z.wykonawca !== null) zadanie.ownerAgentId = z.wykonawca;
       return sprawdzKsztalt(
         await wywolaj(Command.AppsStageSave, zadanie),
@@ -630,8 +568,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsArchitectureValidate, { windowId: idOkna }),
         Command.AppsArchitectureValidate,
-        // Układ bez zastrzeżeń oddaje pustą tablicę i to jest wynik najlepszy
-        // z możliwych — sprawdzamy tablicę, nie jej długość.
+        // Układ bez zastrzeżeń oddaje pustą tablicę — wynik najlepszy; sprawdzamy tablicę, nie jej długość.
         (tresc) => czyTablica(tresc.issues),
       );
     },
@@ -666,8 +603,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsArchitectureExport, { windowId: idOkna, format }),
         Command.AppsArchitectureExport,
-        // Odwołanie puste znaczyłoby wytwór bez bajtów — dokładnie ten wzorzec
-        // szkody, którego moduł ma nie powtórzyć.
+        // Odwołanie puste znaczyłoby wytwór bez bajtów — wzorzec szkody, którego moduł ma nie powtórzyć.
         (tresc) => typeof tresc.artifactRef === 'string' && tresc.artifactRef !== '',
       );
     },
@@ -738,8 +674,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsEndpointProbe, zadanie),
         Command.AppsEndpointProbe,
-        // Usługa, która nie odpowiada, wraca wynikiem o kodzie 0 i powodem —
-        // to odpowiedź udana, bo konstruktor zapytań ma pokazać także awarię.
+        // Usługa, która nie odpowiada, wraca kodem 0 i powodem — to odpowiedź udana, pokazująca awarię.
         (tresc) => czyObiekt(tresc.result),
       );
     },
@@ -781,8 +716,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
         environment: z.srodowisko,
         name: z.nazwa,
       };
-      // Kontrakt wyklucza te dwa pola wzajemnie, więc klient nie wysyła obu —
-      // wysłanie obu przeniosłoby rozstrzygnięcie na rdzeń i wróciłoby odmową.
+      // Kontrakt wyklucza te dwa pola wzajemnie; wysłanie obu przeniosłoby rozstrzygnięcie na rdzeń.
       if (z.odwolanieSekretu !== '') zadanie.secretRef = z.odwolanieSekretu;
       else zadanie.value = z.wartosc;
       return sprawdzKsztalt(
@@ -907,8 +841,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
         await wywolaj(Command.AppsPackageSign, {
           windowId: idOkna,
           packageId: idPakietu,
-          // Do rdzenia idzie ODWOŁANIE do klucza, nigdy jego treść: klucz
-          // wydawcy leży w warstwie sekretów i przez kontrakt nie przechodzi.
+          // Do rdzenia idzie odwołanie do klucza, nie treść; klucz leży w warstwie sekretów.
           signingKeyRef: odwolanieKlucza,
         }),
         Command.AppsPackageSign,

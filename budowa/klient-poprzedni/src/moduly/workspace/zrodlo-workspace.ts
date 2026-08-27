@@ -33,24 +33,7 @@ import { KLUCZ_INSTRUKCJI } from './wynik-czastkowy';
 import { czynnosciSasiednie, type CzynnosciSasiednie } from './zrodlo-sasiadow';
 
 /**
- * Moduł Workspace widziany przez klienta — komendy obszaru `workspace.*`, które
- * okna modułu dziś wywołują, wraz z czynnościami sąsiednimi.
- *
- * Obszar liczy w kontrakcie więcej komend, niż stoi w tym pliku: zadania,
- * tablica, harmonogram, kalendarz, notatki, graf wiedzy, oś czasu i komentarze
- * mają nazwy, lecz nie mają jeszcze obsługi w rdzeniu ani okien w tym module.
- * Nieobecność w tym pliku znaczy „niezbudowane”, nie „nieistniejące
- * w kontrakcie” — o pokryciu każdej z nich orzeka `braki-kontraktu.ts`, pytając
- * rdzeń o jego własny wykaz.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść. Okna modułu mają obowiązkowy
- * stan błędu, więc źródło nie połyka niepowodzenia ani nie zwraca pustej listy
- * w jego miejsce — widok ma odróżnić „nic nie ma” od „nie udało się zapytać”.
- * Stąd brak `?? []` w całym pliku.
- *
- * Czynności spoza obszaru — wgranie pliku, wersje, etykieta, uprawnienie
- * eksperta, przeniesienie kontekstu — leżą w `zrodlo-sasiadow.ts` i wchodzą tu
- * rozszerzeniem, bo należą do innych modułów.
+ * Plik udostępnia klientowi komendy obszaru workspace wywoływane dziś przez okna modułu wraz z czynnościami sąsiednimi przeniesionymi z innych modułów, a każda czynność oddaje wynik odróżniający brak danych od nieudanego zapytania.
  */
 export interface ZrodloWorkspace extends CzynnosciSasiednie {
   /** `workspace.dashboard.get` — zestawienie stanu projektu. */
@@ -67,23 +50,9 @@ export interface ZrodloWorkspace extends CzynnosciSasiednie {
   zapiszWpisPamieci(
     zadanie: WorkspaceContextSetRequest,
   ): Promise<Wynik<WorkspaceContextSetResponse>>;
-  /**
-   * `memory.delete` — usunięcie wpisu pamięci wskazanego identyfikatorem.
-   *
-   * Osobna rodzina komend niż `workspace.context.*`, ale ten sam byt:
-   * `memory.delete` kasuje wpis założony przez `workspace.context.set`, po czym
-   * znika on z `context.get`. `memory.detach` nie jest tu wystawiony, bo
-   * kontrakt oznacza jego znaczenie jako nieustalone.
-   */
+  /** Usunięcie wpisu pamięci założonego zapisem instrukcji; inna rodzina komend niż pamięć projektu. */
   usunWpisPamieci(zadanie: MemoryDeleteRequest): Promise<Wynik<MemoryDeleteResponse>>;
-  /**
-   * `memory.list` — wpisy pamięci widoczne w zasięgu karty sesji.
-   *
-   * To nie jest drugie źródło prawdy dla `workspace.context.get`. Tamta komenda
-   * pyta o pamięć projektu; ta pyta o to, co widzi karta sesji przy włączonych
-   * poziomach — a poziomy przestawia `memory.toggle`. Bez tej pary poziomów
-   * pamięci nie da się przestawić z widoku.
-   */
+  /** Wpisy pamięci widoczne w zasięgu karty sesji przy włączonych poziomach, nie pamięć samego projektu. */
   pamiecSesji(zadanie: MemoryListRequest): Promise<Wynik<WorkspaceMemoryEntry[]>>;
   /** `memory.set` — zapis ustalenia w zasięgu innym niż projekt. */
   zapiszPamiec(zadanie: MemorySetRequest): Promise<Wynik<MemorySetResponse>>;

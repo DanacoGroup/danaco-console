@@ -5102,3 +5102,46 @@ pomijane, bo melduje o nim Prompt Builder wraz ze słowem modelu.
 Znacznik obecności na kanwie jest sprawozdaniem okna roboczego, a nie
 zapowiedzią: zasób już dołożony do kompozycji nie jest kładziony drugi raz
 i zdanie mówi to wprost, zamiast zostawiać licznik, który podskoczył bez powodu.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/dostepnosc-mowy.ts
+
+Stan drogi głosowej ma cztery ogniwa. Droga polecenia do rdzenia jest zbudowana:
+komenda `assistant.voice.command` stoi w kontrakcie i ma uchwyt w rdzeniu, więc
+polecenie dojeżdża, zakłada zlecenie i wraca z jego stanem. Rozpoznania mowy nie
+ma: żądanie z samym odwołaniem do nagrania, bez transkrypcji, zostawia zlecenie
+w stanie oczekiwania, ponieważ rdzeń czeka na tekst i sam go nie wytworzy. Nie ma
+też czym wytworzyć odwołania do nagrania — żadna komenda kontraktu nie przyjmuje
+nagrania z przeglądarki, więc klient nie ma dokąd wysłać tego, co by nagrał,
+a nagrywanie do pamięci i wyrzucanie nagrania byłoby atrapą mikrofonu. Syntezy
+odpowiedzi nie ma: odwołanie do mowy w odpowiedzi wraca puste, a pole żądania
+o odczytanie odpowiedzi nie ma kolumny w schemacie. Komenda
+`translate.speech.synthesize` syntezuje treść panelu tłumaczenia, żąda
+identyfikatora tego panelu i odpowiedzi asystenta nie odczyta.
+
+## budowa/klient-poprzedni/src/dostepy/zrodlo-nadan.ts
+
+Trzy komendy zapisujące zwracają nie tylko zmienione nadanie, lecz komplet nadań
+okna po zmianie, ponieważ przestawienie kolejności albo oznaczenia głównego
+dotyka pozostałych wierszy, a widok musi je zobaczyć w jednej odpowiedzi.
+
+## budowa/klient-poprzedni/src/moduly/automations/maszyna-stanow.ts
+
+Model stanów nie jest wymyślony po stronie okna: stany są kompletem wyliczenia
+`AutomationExecutionStatus`, a przejścia wynikają z działań, które kontrakt na
+przebiegu dopuszcza — uruchomienia, wstrzymania, wznowienia, zatrzymania oraz
+zamknięcia przebiegu powodzeniem albo błędem.
+
+Widok jest wykazem, a nie rysunkiem: przejść jest siedem, a rysunek siedmiu
+strzałek nie mówi więcej niż siedem zdań i kosztuje drugą kanwę w module. Pusty
+stan bieżący znaczy, że żaden przebieg nie jest wskazany; wykaz stoi wtedy bez
+wyróżnienia i jest samym modelem.
+
+## budowa/klient-poprzedni/src/dostepy/lista-nadan.ts
+
+Kolejność nadań rozstrzyga, w jakiej postaci trafią one do konfiguracji mostów,
+a nadanie główne wskazuje punkt, od którego model zaczyna.
+
+Lista przebudowuje się przy każdej zmianie zbioru i jest to wybór świadomy:
+zmiana kolejności albo oznaczenia głównego przestawia wszystkie wiersze naraz,
+więc nanoszenie wartości na wiersze już zbudowane byłoby trudniejsze i mniej
+wierne niż zbudowanie ich od nowa z odpowiedzi rdzenia.

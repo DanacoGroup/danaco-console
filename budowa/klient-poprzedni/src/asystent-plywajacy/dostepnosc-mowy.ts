@@ -1,32 +1,16 @@
 /**
- * Czym rozporządza dziś kanał głosowy Asystenta — jedno miejsce, w którym stoi
- * odpowiedź, i jedno źródło zdania, którym przycisk głosu odmawia.
- *
- * Stan drogi głosowej:
- *
- * - Droga polecenia do rdzenia jest: `assistant.voice.command` stoi
- *   w kontrakcie i ma uchwyt w rdzeniu — polecenie dojeżdża, zakłada zlecenie
- *   i wraca z jego stanem.
- * - Rozpoznania mowy nie ma. Żądanie z samym `audioRef`, bez `transcript`,
- *   zostawia zlecenie w stanie `queued`: rdzeń czeka na tekst i sam go nie
- *   wytworzy.
- * - Nie ma czym wytworzyć `audioRef` — żadna komenda kontraktu nie przyjmuje
- *   nagrania z przeglądarki, więc klient nie ma dokąd wysłać tego, co by
- *   nagrał. Nagrywanie do pamięci i wyrzucanie nagrania byłoby atrapą
- *   mikrofonu.
- * - Syntezy odpowiedzi nie ma: `speechRef` odpowiedzi wraca puste, a pole
- *   `speak` żądania nie ma kolumny w schemacie.
- *   `translate.speech.synthesize` syntezuje treść panelu tłumaczenia (żąda
- *   `panelId`) i odpowiedzi asystenta nie odczyta.
- *
- * Dymek prowadzi więc rozmowę tekstem — jednym wywołaniem
- * `assistant.voice.command` z polem `transcript` — a o braku głosu mówi
- * wprost, zamiast go udawać.
+ * Czym rozporządza dziś kanał głosowy Asystenta. Dymek prowadzi rozmowę tekstem,
+ * jednym wywołaniem komendy `assistant.voice.command` z polem transkrypcji,
+ * a o braku głosu mówi wprost, zamiast go udawać.
  */
 
 import { pokazKomunikat } from '../aplikacja/komunikaty';
 
-/** Ogniwo drogi głosowej wraz z odpowiedzią, czy jest zbudowane. */
+/**
+ * Ogniwo drogi głosowej wraz z odpowiedzią, czy jest zbudowane: nazwa widoczna
+ * dla Operatora i w zgłoszeniu do rdzenia, wskaźnik istnienia oraz dowód, czyli
+ * komenda, pole kontraktu albo plik rdzenia.
+ */
 export interface OgniwoGlosu {
   /** Nazwa ogniwa widoczna dla Operatora i w zgłoszeniu do rdzenia. */
   nazwa: string;
@@ -36,7 +20,11 @@ export interface OgniwoGlosu {
   dowod: string;
 }
 
-/** Ogniwa, z których składa się rozmowa głosowa, wraz ze stanem każdego. */
+/**
+ * Ogniwa, z których składa się rozmowa głosowa, wraz ze stanem każdego z nich.
+ * Wykaz jest jednym miejscem, w którym stoi odpowiedź o stanie kanału głosowego,
+ * i jednym źródłem zdania, którym przycisk głosu odmawia.
+ */
 export const OGNIWA_GLOSU: readonly OgniwoGlosu[] = [
   {
     nazwa: 'Droga polecenia do rdzenia',
@@ -60,19 +48,27 @@ export const OGNIWA_GLOSU: readonly OgniwoGlosu[] = [
   },
 ];
 
-/** Czy Operator może dziś powiedzieć polecenie zamiast je napisać. */
+/**
+ * Czy Operator może dziś powiedzieć polecenie zamiast je napisać. Odpowiedź
+ * twierdząca wymaga wszystkich ogniw drogi głosowej naraz, ponieważ brak
+ * jednego przerywa drogę w całości.
+ */
 export function czyGlosDziala(): boolean {
   return OGNIWA_GLOSU.every((ogniwo) => ogniwo.jest);
 }
 
-/** Ogniwa, których brakuje — wykaz do zbudowania w rdzeniu i w kontrakcie. */
+/**
+ * Ogniwa, których brakuje, czyli wykaz do zbudowania w rdzeniu i w kontrakcie.
+ * Wykaz powstaje z odsiania ogniw już zbudowanych, więc nie rozjeżdża się
+ * z zapisem stanu drogi głosowej.
+ */
 export function brakujaceOgniwa(): readonly OgniwoGlosu[] {
   return OGNIWA_GLOSU.filter((ogniwo) => !ogniwo.jest);
 }
 
 /**
- * Zdanie stojące w dymku od chwili otwarcia — o braku wiadomo przed
- * naciśnięciem mikrofonu, a nie dopiero po nim.
+ * Zdanie stojące w dymku od chwili otwarcia, żeby o braku kanału głosowego
+ * wiadomo było przed naciśnięciem mikrofonu, a nie dopiero po nim.
  */
 export const ZAPOWIEDZ_BRAKU_GLOSU =
   'Ten dymek prowadzi dziś rozmowę TEKSTEM. Rdzeń nie rozpoznaje mowy i nie odczytuje ' +
@@ -80,7 +76,11 @@ export const ZAPOWIEDZ_BRAKU_GLOSU =
   'choć moduł jest do niego przeznaczony. Wpisane polecenie jedzie naprawdę, ' +
   'komendą assistant.voice.command.';
 
-/** Powód odmowy przycisku głosu — rozwinięcie zapowiedzi o wykaz braków. */
+/**
+ * Powód odmowy przycisku głosu, będący rozwinięciem zapowiedzi o wykaz ogniw,
+ * których brakuje, wraz z dowodem zmierzenia każdego z nich. Wykaz nadaje się
+ * wprost na zgłoszenie braku do rdzenia.
+ */
 export function powodOdmowyGlosu(): string {
   const braki = brakujaceOgniwa()
     .map((ogniwo) => `• ${ogniwo.nazwa} — ${ogniwo.dowod}`)
@@ -95,11 +95,9 @@ export function powodOdmowyGlosu(): string {
 }
 
 /**
- * Odpowiedź na naciśnięcie przycisku głosu.
- *
- * Przycisk zostaje klikalny i za każdym razem mówi to samo zdanie. Wygaszony
- * przycisk kazałby zgadywać, czy głos jest niedostępny chwilowo, czy
- * niezbudowany w ogóle.
+ * Odpowiedź na naciśnięcie przycisku głosu. Przycisk zostaje klikalny i za
+ * każdym razem mówi to samo zdanie, ponieważ przycisk wygaszony kazałby zgadywać,
+ * czy głos jest niedostępny chwilowo, czy niezbudowany w ogóle.
  */
 export function odmowMowy(): void {
   pokazKomunikat({

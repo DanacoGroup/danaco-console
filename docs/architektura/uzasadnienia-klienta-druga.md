@@ -1739,3 +1739,6 @@ Komendy wykazu okien sesji i odczytu parametrów wykonania wymagają identyfikat
 bierze się z rdzenia, nigdy z literału po stronie klienta. Idą zwykłą drogą wywołania, nie drogą
 odmowy, ponieważ rdzeń je obsługuje i odpowiedź przychodzi kopertą ze statusem, którą korelacja
 rozpoznaje.
+
+## budowa/klient-poprzedni/src/strona-glowna/etykiety-sesji.ts
+Żadna funkcja tego pliku nie wymyśla danych: każda przekłada wartość oddaną przez rdzeń, a wartość nieobecną oddaje jako `undefined`, dzięki czemu karta pomija cały fragment zamiast pokazać wartość zmyśloną. Nazw środowisk plik nie niesie — daje je osobne źródło zasilane wykazem z rdzenia, żeby na jednym ekranie nie stały dwa źródła tej samej nazwy.

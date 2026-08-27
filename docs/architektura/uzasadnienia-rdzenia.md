@@ -1444,3 +1444,15 @@ przeszukuje cały wiersz, i gdyby ktoś dołożył kolumnę i zapisał w niej se
 ten sprawdzian by upadł. Druga: czy dziennik audytu zapełnia się sam, przy
 okazji czynności, bo audyt, który trzeba jawnie zawołać, jest audytem,
 o którym się zapomina.
+
+## skutek_drogi_neuronowej_designu_test.go
+
+Sprawdziany tego pliku mierzą wywołanie cudzego silnika żądaniem wychodzącym do kanału
+obrazowego, nie samą odpowiedzią rdzenia, bo odpowiedź poprawna kształtem potrafi
+ukrywać żądanie, które nie niesie materiału. Przy każdej z czterech czynności —
+powiększeniu, usunięciu tła, domalowaniu i rozszerzeniu kadru — mierzone są trzy rzeczy:
+żądanie do kanału niesie zdjęcie Operatora, a przy domalowaniu i rozszerzeniu kadru
+także maskę, bo wywołanie bez materiału każe silnikowi wygenerować obraz nowy zamiast
+przetworzyć zdjęcie wniesione przez Operatora; plik wyniku ma wymiar, który czynność
+obiecała, a nie ten, który akurat oddał kanał; pole `computedBy` niesie wartość
+`kanalModelu`, a łańcuch edycji zapisuje tę samą drogę.

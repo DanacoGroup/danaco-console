@@ -961,3 +961,34 @@ w którym nie widać niczego, wygląda identycznie jak plik uszkodzony.
 niewymagane kontraktu nie weszło do odpowiedzi wcale, a dla wykazu niepustego
 ustala stałą kolejność, żeby dwa wywołania tej samej komendy nie różniły się
 porządkiem zastrzeżeń.
+
+## adapter_modul_studio_wejscie_pdf.go
+
+PDF nie niesie struktury akapitu ani tabeli, tylko rozkaz postawienia napisu w
+danym miejscu strony. Akapit, wiersz tabeli i kolumna są wnioskiem z układu
+napisów, a nie zapisem w pliku, dlatego wynik nazywa się odzyskaniem i idzie
+z bilansem: ile stron miało warstwę tekstową, ile akapitów odtworzono, ile
+układów tabelarycznych rozpoznano, a ile pozostało nierozpoznanych. Dokument
+złożony z samych skanów nie przechodzi przez konwersję udawaną — wchodzi do
+kolejki rozpoznania pisma, a odpowiedź wprost podaje pozycję tej kolejki.
+
+Rozbiór PDF idzie biblioteką `pdfcpu`, wkompilowaną w binarium rdzenia.
+Programów zewnętrznych zdjętych z rdzenia nie wywołuje się — wykaz zdjętych
+trzyma zapora rdzenia w pliku `zapora_warsztatu_pdf_test.go`. Biblioteka jest
+wkompilowana, bo proces potomny byłby tu regresem: jedno binarium serwera
+zamieniłoby się w dwa, doszedłby koszt uruchomienia procesu i ryzyko rozjazdu
+wersji. Rozpoznanie pisma ze skanu idzie osobną drogą, kolejką wczytywania
+modułu, ponieważ wymaga biblioteki Tesseract, składnika pakietu serwera —
+i tak też jest zgłoszone, jako brak w wykazie zależności pakietu.
+
+Poziom nagłówka w odtworzonym dokumencie rozpoznaje się po układzie wiersza:
+krótkości, braku kropki na końcu, zapisie wersalikami albo numeracji własnej
+pisma źródłowego (na przykład „1.2.3"), a nie po stylu, którego PDF nie niesie.
+Ten poziom idzie do bloku akapitu, bo bez niego spis treści złożony po
+wniesieniu dokumentu nie miałby czego zebrać, choć nagłówki w tekście stoją.
+
+Tabela powstaje z bloku wierszy tabelarycznych wtedy i tylko wtedy, gdy liczba
+kolumn jest zgodna w całym bloku albo różni się o jedną. Blok o rozjeżdżającej
+się liczbie kolumn nie jest tabelą, tylko tekstem ułożonym w kolumny, i wtedy
+wchodzi do dokumentu jako akapity z zachowanym rozkładem odstępów, a bilans
+liczy go jako układ nierozpoznany.

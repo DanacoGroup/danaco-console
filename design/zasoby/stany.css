@@ -1,8 +1,6 @@
-/* ZNACZNIKI STANU — jeden kod dla sesji, okien, kart i grup
-   `data-stan`: praca (błękit, tętno w strefie bieżącej) · reakcja (bursztyn) ·
-   blad (czerwień) · zakonczone (sam obrys) · brak (miejsce zachowane).
-   Stan zbiorczy pozycji nadrzędnej wylicza `stany.js`: blad › reakcja › praca ›
-   zakonczone. Tętno tylko przy `data-tetno="tak"` — jeden ruch ciągły na widok. */
+/* Znaczniki stanu niosą jeden kod barwy i kształtu dla sesji, okien, kart i grup, rozróżniając stany pracy, reakcji, błędu, zakończenia i braku.
+   Stan zbiorczy pozycji nadrzędnej wylicza plik `stany.js`. Tętno pojawia się
+   tylko przy atrybucie `data-tetno="tak"`, jeden ruch ciągły na widok. */
 .dn-stan-znacznik {
   display: inline-block;
   flex: none;

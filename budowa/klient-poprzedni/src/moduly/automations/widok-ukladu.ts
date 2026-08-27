@@ -1,7 +1,10 @@
+/**
+ * Rysowanie układu zależności — czyste fragmenty widoku Orchestratora. Plik
+ * nazywa zależność jednym napisem, orzeka o jej obecności w zbiorze i buduje
+ * ocenę układu, zastrzeżenia, wykaz zależności oraz opis ścieżki krytycznej.
+ */
 import { type AutomationDependency, type AutomationOrchestratorDefineResponse } from '../../../../shared/contract';
 import { przyciskAkcji as przycisk, pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
-
-/** Rysowanie układu zależności — czyste fragmenty widoku Orchestratora. */
 
 /**
  * Zależność nazwana jednym napisem, złożonym z kroku wyjściowego i docelowego.

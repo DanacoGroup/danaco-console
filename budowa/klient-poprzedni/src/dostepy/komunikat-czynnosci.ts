@@ -2,12 +2,10 @@ import { ErrorCode } from '../../../shared/contract';
 import type { Wynik } from '../protokol/kanal';
 
 /**
- * Odpowiedź widoku na czynność Operatora — jedno miejsce w sekcji dostępów.
- *
- * Każde naciśnięcie daje odpowiedź. Nadanie dostępu, odebranie go, zmiana trybu
- * i sprawdzenie punktu kończą się zdaniem przy kontrolce — powodzenie mówi, co
- * się stało, niepowodzenie mówi, co odpowiedział rdzeń. Po milczeniu Operator
- * nie wie, czy model ma już dostęp, czy nie.
+ * Odpowiedź widoku na czynność Operatora w sekcji dostępów: nadanie dostępu,
+ * odebranie go, zmiana trybu i sprawdzenie punktu kończą się zdaniem przy
+ * kontrolce; powodzenie niesie treść własną, niepowodzenie treść odpowiedzi
+ * rdzenia.
  */
 export interface KomunikatCzynnosci {
   /** Element osadzany pod kontrolką. */
@@ -44,11 +42,9 @@ export function utworzKomunikatCzynnosci(klasa = ''): KomunikatCzynnosci {
 }
 
 /**
- * Odmowa własna widoku — czynność, której nie ma po co wysyłać do rdzenia.
- *
- * Kształt jest ten sam co wyniku komendy, więc widok nie potrzebuje drugiej
- * ścieżki obsługi: odmowa braku okna rozmowy wygląda dla niego jak odmowa
- * rdzenia i tak samo trafia do zdania przy kontrolce.
+ * Odmowa własna widoku dla czynności, której nie ma po co wysyłać do rdzenia.
+ * Kształt odpowiedzi jest ten sam co wyniku komendy, więc widok nie potrzebuje
+ * drugiej ścieżki obsługi i nanosi ją jak odmowę rdzenia.
  */
 export function odmowaWlasna(tresc: string): Wynik<never> {
   return {

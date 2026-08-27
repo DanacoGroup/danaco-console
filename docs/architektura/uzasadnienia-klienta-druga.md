@@ -3875,3 +3875,22 @@ komendę dodania źródła.
 Wzorzec jest ten sam co w podglądzie zetonów motywu: widok daje się obejrzeć bez montażu w powłoce
 aplikacji, nie wchodzi do pakietu głównego i niczego z niego nie importuje. Bez parametrów w adresie
 obowiązuje preferencja systemu i brak środowiska czynnego.
+
+## budowa/klient-poprzedni/src/moduly/studio/dymki-komentarzy.ts
+Na marginesie dokumentu stają trzy różne byty i operator ma po samym wyglądzie wiedzieć, na
+który patrzy: komentarz mówi o fragmencie i nie niesie brzmienia, więc treści nie zmienia ani
+teraz, ani po rozwiązaniu wątku; propozycja zmiany niesie brzmienie fragmentu, które jeszcze
+nie weszło w treść, i operator ją przyjmuje, odrzuca albo poprawia; zmiana śledzona jest już
+w treści i czeka na decyzję. Zlanie ich w jedną kartę odebrałoby operatorowi rozróżnienie, po
+którym poznaje, czy dokument już się zmienił, dlatego każda karta niesie własny rodzaj, własny
+nagłówek i własne zdanie o skutku decyzji, a arkusz stylów daje im trzy różne obramowania.
+Komentarz stoi jako dymek przy miejscu w treści, nie w osobnym wykazie: kotwica w treści
+wskazuje fragment, a karta ustawia się na jej wysokości, natomiast spis do przejścia stoi
+osobno w przyborniku znakowania — jedno nie zastępuje drugiego, dymek mówi „tu", spis mówi
+„ile jeszcze". Kontrakt nie niesie usunięcia komentarza, tylko dodanie, wykaz i rozwiązanie,
+dlatego przycisku usuwającego nie ma, a jego miejsce zajmuje rozwiązanie wątku wraz ze zdaniem
+o tej różnicy. Karta propozycji brzmienia różni się od zmiany śledzonej tym, że decyzja idzie
+osobną komendą dla propozycji, nie dla zmiany śledzonej — dwie różne komendy dla dwóch różnych
+bytów. Karta zmiany śledzonej stoi na marginesie obok oznaczenia w treści, bo oznaczenie mówi
+gdzie, a karta mówi, co było przed zmianą, i to drugie jest tym, czego operator potrzebuje do
+decyzji.

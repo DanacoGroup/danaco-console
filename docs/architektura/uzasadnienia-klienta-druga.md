@@ -5514,3 +5514,25 @@ nadaje role poszczególnym gniazdom komendą nadania roli i pokazuje
 przekazanie między dwoma gniazdami komendą pokazania przekazania. Sam
 układ powstaje przez osobną funkcję tworzącą i nie wymaga rdzenia — montaż
 dokłada wyłącznie podpięcie pierwszego gniazda do łączności.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcje.ts
+Okno ma sześć sekcji: konto, uwierzytelnianie, wygląd i język, urządzenia, powiadomienia, konta modeli.
+Jedna z nich, konto, stoi jako miejsce nazwane: mówi, czego w rdzeniu nie ma, i nie niesie ani jednego
+pola, przycisku czy przełącznika bez pokrycia. Ujawnianie stopniowe obowiązuje wewnątrz sekcji tak samo
+jak w oknie: na nastawę przypada jeden wiersz, na wierszu uchwyt z wartością bieżącą, a wybór rozwija się
+dopiero pod kliknięciem. Samo okno jest przywoływane z listwy Centrum dowodzenia. Sekcji zbudowanych na
+rodzinie komend kont i tożsamości modeli tu nie ma: te same komendy niesie już warstwa modeli — rejestr
+kont, katalog kategorii tożsamości, dokumenty per oś, nakładka obowiązująca — a druga rama do tych samych
+danych byłaby drugą prawdą; pozycja kont modeli nie niesie ani jednego pola tamtych komend, tylko zdanie
+i drogę do tamtego okna. Okno ustawień istnieje, bo pozycja stoi w katalogu okien operacyjnych rdzenia,
+a uwierzytelnianie i motyw nie mają dokąd pójść — warstwa modeli niesie tożsamość modelu, nie nastawy
+operatora. Stan sześciu sekcji: konto jest miejscem nazwanym, bo bramka nie zna encji konta, a kontrakt
+nie ma rodziny profilu; uwierzytelnianie niesie cztery komendy po zalogowaniu z wykazem metod odświeżanym
+na żywo zdarzeniem zmiany bramki; wygląd ma jeden ster motywu i jedną prawdę z rdzeniem, a język
+interfejsu jest nazwany jako brak, bez kontrolki; urządzenia niosą wykaz powiązany z kontem z
+unieważnieniem tokenu, odświeżany na żywo zdarzeniem zmiany urządzeń; powiadomienia niosą macierz nastaw
+katalogu — przełącznik główny, siedem klas zdarzeń i kanały dostarczenia — bo model danych mówi wprost, że
+zakres klas i kanał dostarczenia są ustawieniami konfiguracyjnymi, więc droga jest ta sama, co do każdej
+innej nastawy platformy, a samego doręczania nie ma jeszcze czym wykonać i sekcja mówi to wprost; konta
+modeli są pozycją odsyłającą do warstwy modeli. Kolumnę nawigacji osadza rama okna ustawień, gdy rejestr
+niesie więcej niż jedną pozycję.

@@ -5222,3 +5222,21 @@ przyszłaby ta sama zmiana. Odmowa jednego panelu zostaje w tym panelu: źródł
 i nie przerywa pozostałym instancjom pracy.
 Rdzeń przycina wskazanie kanału i pustego traktuje jak brak, ale wysyłanie pustej wartości
 nazwałoby wskazaniem coś, czego operator nie wskazał.
+
+## budowa/klient-poprzedni/src/moduly/studio/linijka-podzialka.ts
+Chwyt marginesu i zakładanie tabulatora liczą się w milimetrach, a rysują w punktach ekranu przy
+skali widoku, która bywa inna niż sto procent — pomyłka o krok podziałki przesuwa margines pisma
+urzędowego, więc rachunek ma dać się sprawdzić bez przeglądarki, a linijka ma go wyłącznie
+rysować. Jednostka jest wyborem operatora: milimetry albo cale, a podziałka calowa nie jest
+podziałką milimetrową z inną etykietą — kreski stoją co jedną ósmą cala, a przyciąganie chodzi
+po jednej szesnastej cala, bo tak działa linijka w pakiecie biurowym i tak operator spodziewa się,
+że tabulator wskoczy. Kreska, która przy danej skali stanęłaby bliżej niż najmniejszy
+rozróżnialny odstęp od poprzedniej, jest pomijana, bo podziałka zlana w szarą wstęgę nie mówi
+nic, a udaje, że mówi; napisy niosą pełne centymetry albo cale, bo to one są miarą, w której
+operator myśli o marginesie. Chwyt puszczony między kreskami ma wskoczyć na kreskę, bo margines
+w rodzaju 19,73 mm nie jest nastawą, którą ktoś świadomie wybiera, a zakres jest przycinany, nie
+odrzucany, więc chwyt wleczony za krawędź kartki zostaje na krawędzi. Skala niedodatnia albo
+nieskończona bierze wartość jeden zamiast dzielić przez zero, bo chwyt linijki nie jest miejscem,
+w którym wolno oddać nieskończoność. Wcięcie pierwszego wiersza akapitu jest liczone względem
+wcięcia lewego, nie od krawędzi pola, dzięki czemu przeciągnięcie wcięcia lewego zabiera pierwszy
+wiersz ze sobą, co jest zachowaniem, którego operator się spodziewa.

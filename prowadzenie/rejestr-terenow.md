@@ -6,6 +6,99 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### nastawy-zdolnosci-i-mowy
+
+Dwie zdolnosci dzialaja, ale Operator nie ustawi ich z okna konfiguracji, bo
+klucze nie maja wierszy w katalogu ustawien. Osobno: 641 MB wag mowy lezy
+w pamieci podrecznej zamiast w katalogu modeli.
+
+| | |
+|---|---|
+| **Galaz** | `teren/nastawy-zdolnosci-i-mowy` z `main` |
+| **Wykaz plikow** | migracje nastaw w `budowa/server/internal/store/`, `budowa/server/internal/mowa/`, sprawdziany tych pakietow |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/server/internal/wiedza/`, `budowa/server/internal/core/` |
+
+**Pierwsze.** Cztery klucze — `wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`,
+`wiedza_model_obrazu`, `wiedza_katalog_obrazu` — maja wartosci domyslne w kodzie,
+ale **nie maja wierszy `definicja_ustawienia`**. `config.set` odmawia klucza spoza
+katalogu, wiec okno konfiguracji ich nie wystawi. Wzor: cztery wiersze migracji 115.
+
+**Drugie.** Zgloszenie „Wagi mowy stoja poza katalogiem modeli": 641 MB, w tym
+`models--Systran--faster-whisper-small`, stoi w `~/.cache/huggingface`, a nastawa
+`mowa_katalog_modeli` jest pusta. Poprzedni teren slusznie nie zalozyl nastawy
+wskazujacej katalog nieistniejacy — to wymaga zarazem przeniesienia wag i zmiany
+`mowa/ustawienia.go`, czyli tego terenu.
+
+**Kryteria odbioru.**
+
+1. Cztery klucze zdolnosci wyszukiwania widoczne w katalogu ustawien — wykazane
+   uruchomieniem `config.set` na kazdym z nich, z przytoczona odpowiedzia.
+2. Silnik mowy uzywa wag **stojacych na dysku**, bez pobrania — wykazane
+   uruchomieniem transkrypcji, **z sonda dodatnia** dowodzaca, ze instrument
+   pobranie wykryje.
+3. Istniejacych migracji **nie ruszono** — wykazane `git diff`.
+4. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
+   — zero niepowodzen wobec stanu zastanego.
+5. Kontrakt nietkniety — wykazane suma kontrolna.
+
+### arsenal-wdrozenia
+
+Rdzen wola programy, ktorych skrypt prowizjonowania serwera nie stawia. Na
+maszynie Operatora te komendy odmowia mimo poprawnego kodu.
+
+| | |
+|---|---|
+| **Galaz** | `teren/arsenal-wdrozenia` z `main` |
+| **Wykaz plikow** | `budowa/scripts/arsenal-serwera.sh`, `budowa/scripts/pakiet-serwera.sh` |
+| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `budowa/desktop/`, `budowa/witryna/`, `design/`, `prowadzenie/` |
+
+**Przedmiot.** Arsenal stawia dzis `realesrgan-ncnn-vulkan` i `rembg`. Rdzen wola
+ponadto `danaco-twarze` (pomocnik odtwarzania twarzy wraz ze srodowiskiem
+pythonowym i dwoma zestawami wag), a zdolnosci wyszukiwania — stos `torch`
+i `transformers`. Wykaz zaleznosci rdzenia niesie pelne podpowiedzi instalacyjne;
+`prowadzenie/srodowisko-maszyny.md` sekcja 4a podaje, co i ile wazy.
+
+**Kryteria odbioru.**
+
+1. Skrypt stawia wszystko, po co rdzen siega — wykazane zestawieniem wykazu
+   zaleznosci rdzenia wobec tego, co skrypt instaluje, **pozycja po pozycji**.
+2. Skrypt jest **odtwarzalny**: dwa przebiegi na tym samym stanie dają ten sam
+   wynik, a przebieg na stanie juz postawionym niczego nie psuje.
+3. Kazda pozycja ma podana wage i zrodlo; suma wag zgadza sie z sekcja 4a
+   dokumentu srodowiska.
+4. Skrypt **nie jest uruchamiany** na tej maszynie w calosci — sprawdzasz go
+   odczytem i sondami czastkowymi, i **mowisz wprost**, czego nie da sie
+   sprawdzic bez czystego serwera.
+
+### uprzaz-komend-neuronowych
+
+Generyczna uprzaz sprawdzianow urywa kazda komende liczaca modelem, wiec zadnej
+z nich nie da sie zmierzyc jej droga. Dwa tereny obeszly to wlasna droga i oba
+zglosily to jako obejscie.
+
+| | |
+|---|---|
+| **Galaz** | `teren/uprzaz-komend-neuronowych` z `main` |
+| **Wykaz plikow** | `budowa/server/internal/core/zgodnosc_kontraktu_test.go`, `budowa/server/internal/core/blokady_skutek_test.go` |
+| **Poza terenem** | wszystko inne |
+
+**Zmierzone.** Granica uprzezy wynosi dzis 60 s (`granicaWykazuUrzadzen` + 15 s).
+`image.upscale` potrzebuje **90 s bez twarzy i 190 s z twarzami**, przesiew
+wyszukiwania okolo **30 s** na wczytanie wag. Wartosc jednolita nie da sie
+dobrac: 190 s razy ponad tysiac komend to bieg liczony w godzinach.
+
+**Kryteria odbioru.**
+
+1. Komenda liczaca modelem daje sie zmierzyc uprzezа — wykazane sprawdzianem,
+   ktory **przechodzi** dla takiej komendy, a **zawodzi** przy granicy sprzed
+   zmiany.
+2. Bieg calego pakietu `internal/core` **nie wydluza sie** ponad to, co dzis —
+   zmierzone przed i po, obie liczby przytoczone.
+3. Rozroznienie komend nie jest wykazem imion wpisanym recznie, albo jest —
+   i wtedy powod stoi w komentarzu, a wykaz ma jedno miejsce.
+4. `gotestsum -- -count=1 -timeout 40m ./...` — zero niepowodzen.
+
+
 ### centrum-poprawki
 
 **Wpis zalozony z opoznieniem — uchybienie Prowadzacego.** Teren pracuje od rana

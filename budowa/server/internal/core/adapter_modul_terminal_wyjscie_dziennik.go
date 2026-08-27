@@ -1,31 +1,4 @@
-// Zbiorcze wyjście modułu Terminal: dziennik wierszy ze wszystkich otwartych
-// kart powłoki oraz ewidencja okien zapisanych na ten strumień. Na tym stoi
-// komenda `terminal.output.stream`
-// (`adapter_modul_terminal_wyjscie_komenda.go`).
-//
-// Byt osobny od `adapter_modul_terminal_strumien.go`: tamten rozsyła wyjście
-// jednego procesu do okna, w którym stoi karta (`WindowId: proces.oknoKod`),
-// a tutaj zbiorcze wyjście wszystkich kart odbiera okno wskazane w żądaniu,
-// wraz z ogonem historii. Okno Output Console nie musi być oknem karty.
-//
-// Dziennik nie czyta potoków procesów po raz drugi: owija nadajnik, którym
-// istniejąca pompa już wysyła fragmenty (`nadajnikZDziennikiem`). Fragment idzie
-// swoją dotychczasową drogą nietknięty, a do dziennika i do okna obserwatora
-// wchodzi jego kopia. Dwie pompy na jeden potok czytałyby sobie nawzajem bajty.
-//
-// Fragment nie jest wierszem: pompa czyta bloki po 32 KiB, a kontrakt niesie
-// `TerminalOutputLine`, czyli wiersz. Blok bywa urwany w połowie wiersza, więc
-// resztka czeka tu na ciąg dalszy, osobno dla wyjścia zwykłego i diagnostycznego
-// (dwie gorutyny, dwa niezależne strumienie). Resztka bez znaku końca linii
-// dłuższa niż `maksDlugoscWierszaWyjscia` idzie do dziennika jako wiersz mimo
-// wszystko, bo pasek postępu nie kończy się nigdy, a zużycie pamięci ma pozostać
-// ograniczone.
-//
-// Wierszy wyjścia nie ma gdzie zapisać: schemat bazy ma tabele `terminal_karta`
-// i `terminal_proces`, żadnej tabeli wyjścia. Dziennik jest więc pierścieniem
-// w pamięci, tak samo jak pamięciowa warstwa historii procesów
-// (`pojemnoscHistorii` w `adapter_modul_terminal_rejestr.go`). Po restarcie ogon
-// jest pusty.
+// Zbiorcze wyjście modułu Terminal: dziennik wierszy ze wszystkich otwartych kart powłoki wraz z ewidencją okien zapisanych na strumień komendy terminal.output.stream.
 package core
 
 import (
@@ -38,20 +11,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// pojemnoscDziennikaWyjscia ogranicza liczbę wierszy trzymanych w pamięci.
-// Powyżej progu wypada wiersz najstarszy.
+// pojemnoscDziennikaWyjscia ogranicza liczbę wierszy trzymanych w pamięci; powyżej progu wypada wiersz najstarszy z pierścienia dziennika.
 const pojemnoscDziennikaWyjscia = 5000
 
-// domyslnyOgonWyjscia obowiązuje, gdy żądanie nie poda własnej liczby wierszy.
+// domyslnyOgonWyjscia obowiązuje, gdy żądanie ogona dziennika nie poda własnej liczby żądanych wierszy wyjścia.
 const domyslnyOgonWyjscia = 200
 
-// maksDlugoscWierszaWyjscia domyka wiersz, którego proces nie domyka sam.
+// maksDlugoscWierszaWyjscia domyka wiersz, którego proces sam nie domyka, ograniczając rozmiar pojedynczego wpisu dziennika.
 const maksDlugoscWierszaWyjscia = 8 * 1024
 
-// przypisanieWyjscia wiąże proces z kartą, oknem i sesją. Zapamiętujemy je przy
-// pierwszym fragmencie, bo proces zakończony wypada kiedyś z rejestru żywego
-// (`rejestrTerminala.Przytnij`), a jego ostatnie wiersze mają wtedy nadal
-// wskazywać kartę, z której wyszły.
+// przypisanieWyjscia wiąże proces z kartą, oknem i sesją. Zapis powstaje przy pierwszym fragmencie, bo proces zakończony wypada z rejestru żywego, a jego ostatnie wiersze mają nadal wskazywać kartę, z której wyszły.
 type przypisanieWyjscia struct {
 	kartaKod string
 	oknoKod  string
@@ -74,7 +43,7 @@ type filtrWyjscia struct {
 	karty   map[string]struct{}
 }
 
-// przepuszcza sprawdza wiersz obiema warunkami filtru.
+// przepuszcza sprawdza, czy wiersz spełnia oba warunki filtru zbiorczego wyjścia jednocześnie: kartę i sesję żądania.
 func (f filtrWyjscia) przepuszcza(w wpisWyjscia) bool {
 	if len(f.karty) > 0 {
 		if _, jest := f.karty[w.wiersz.TerminalSessionId]; !jest {
@@ -84,18 +53,16 @@ func (f filtrWyjscia) przepuszcza(w wpisWyjscia) bool {
 	return f.idSesji == "" || w.idSesji == f.idSesji
 }
 
-// obserwacjaWyjscia jest jednym oknem zapisanym na zbiorcze wyjście.
+// obserwacjaWyjscia jest jednym oknem zapisanym na odbiór zbiorczego wyjścia, wraz z jego filtrem i licznikiem fragmentów.
 type obserwacjaWyjscia struct {
 	oknoKod string
 	idSesji string
 	filtr   filtrWyjscia
-	// numer prowadzi ciąg numerów fragmentów tego okna. Ciąg jest własny, bo
-	// okno obserwatora dostaje wyjście wielu procesów naraz, a kontrakt
-	// numeruje fragmenty w obrębie jednego strumienia.
+	// numer prowadzi własny ciąg numerów, bo obserwator dostaje wyjście wielu procesów naraz.
 	numer atomic.Int64
 }
 
-// dziennikWyjscia trzyma ogon zbiorczego wyjścia i wykaz okien obserwujących.
+// dziennikWyjscia trzyma ogon zbiorczego wyjścia w pamięci oraz wykaz okien zapisanych na jego obserwację.
 type dziennikWyjscia struct {
 	mu sync.Mutex
 	// wpisy jest pierścieniem wierszy w kolejności wypisania.
@@ -107,14 +74,13 @@ type dziennikWyjscia struct {
 	// obserwatorzy wiąże okno odbierające z jego zawężeniem.
 	obserwatorzy map[string]*obserwacjaWyjscia
 
-	// rejestr służy wyłącznie odczytaniu przypisania procesu przy pierwszym
-	// fragmencie. Dziennik niczego w nim nie zmienia.
+	// rejestr służy wyłącznie odczytaniu przypisania procesu przy pierwszym fragmencie.
 	rejestr *rejestrTerminala
 	// dalej jest nadajnikiem, którym idzie kopia wiersza do okna obserwatora.
 	dalej Nadajnik
 }
 
-// nowyDziennikWyjscia zakłada pusty dziennik zbiorczego wyjścia.
+// nowyDziennikWyjscia zakłada pusty dziennik zbiorczego wyjścia, gotowy do przyjmowania fragmentów i obserwacji okien.
 func nowyDziennikWyjscia(rejestr *rejestrTerminala) *dziennikWyjscia {
 	return &dziennikWyjscia{
 		niedokonczone: make(map[string]string),
@@ -161,8 +127,7 @@ func (d *dziennikWyjscia) Ogon(filtr filtrWyjscia, ile int) []shared.TerminalOut
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	// Przebieg od końca bierze ostatnie pasujące wiersze; odwrócenie wyniku
-	// przywraca kolejność wypisania, której żąda kontrakt.
+	// Przebieg od końca bierze pasujące wiersze; odwrócenie wyniku przywraca kolejność wypisania.
 	for i := len(d.wpisy) - 1; i >= 0 && len(wynik) < ile; i-- {
 		if filtr.przepuszcza(d.wpisy[i]) {
 			wynik = append(wynik, d.wpisy[i].wiersz)
@@ -182,8 +147,7 @@ func (d *dziennikWyjscia) przyjmij(k protocol.Koperta) {
 	}
 	fragment, err := protocol.FragmentZKoperty(k)
 	if err != nil {
-		// Fragment nieczytelny dla dziennika poszedł już swoją drogą do okna
-		// karty, więc pominięcie go kosztuje tylko brak wiersza w ogonie.
+		// Fragment nieczytelny dla dziennika poszedł już do okna karty; pominięcie nie traci wiersza tam.
 		return
 	}
 	kodProcesu := strings.TrimSpace(fragment.MessageId)
@@ -192,9 +156,7 @@ func (d *dziennikWyjscia) przyjmij(k protocol.Koperta) {
 	}
 	przypisanie, zna := d.przypisanie(kodProcesu)
 	if !zna {
-		// Wiersz bez karty nie ma jak wejść do zbiorczego wyjścia: pole
-		// `terminalSessionId` jest w kontrakcie wymagane, a wpisanie tam pustki
-		// byłoby wskazaniem karty, której nie ma.
+		// Wiersz bez karty nie wchodzi tu: pole sesji wymagane, pustka wskazywałaby kartę, której nie ma.
 		return
 	}
 
@@ -270,7 +232,7 @@ func (d *dziennikWyjscia) zloz(kodProcesu string, kanal shared.TerminalOutputCha
 	return wiersze
 }
 
-// odloz wpisuje jeden wiersz do pierścienia i rozsyła go obserwatorom.
+// odloz wpisuje jeden wiersz do pierścienia dziennika i rozsyła jego kopię wszystkim zapisanym obserwatorom okien.
 func (d *dziennikWyjscia) odloz(przypisanie przypisanieWyjscia, kodProcesu string,
 	kanal shared.TerminalOutputChannel, tekst string) {
 
@@ -303,8 +265,7 @@ func (d *dziennikWyjscia) odloz(przypisanie przypisanieWyjscia, kodProcesu strin
 		return
 	}
 	for _, obserwacja := range odbiorcy {
-		// Okno karty dostało ten wiersz swoją drogą — drugi raz dostawałoby go
-		// podwójnie i Output Console pokazywałaby każdy wiersz dwa razy.
+		// Okno karty dostało już ten wiersz swoją drogą; drugi raz dublowałoby wpis w Output Console.
 		if obserwacja.oknoKod == wpis.oknoKod || !obserwacja.filtr.przepuszcza(wpis) {
 			continue
 		}
@@ -336,17 +297,13 @@ func (d *dziennikWyjscia) wyslijDoOkna(dalej Nadajnik, obserwacja *obserwacjaWyj
 	dalej.Rozglos(koperta)
 }
 
-// nadajnikZDziennikiem owija nadajnik pompy wyjścia: fragment idzie dalej
-// nietknięty, a jego kopia wchodzi do dziennika zbiorczego.
-//
-// Kolejność jest istotna — najpierw droga do okna karty, potem dziennik — żeby
-// składanie wierszy i rozsyłka do obserwatorów nie opóźniały wyjścia karty.
+// nadajnikZDziennikiem owija nadajnik pompy wyjścia: fragment idzie dalej nietknięty, a jego kopia wchodzi do dziennika zbiorczego wyjścia.
 type nadajnikZDziennikiem struct {
 	dalej    Nadajnik
 	dziennik *dziennikWyjscia
 }
 
-// Rozglos wypełnia port Nadajnik.
+// Rozglos wypełnia port Nadajnik, przekazując fragment dalej i odkładając jego kopię w dzienniku zbiorczego wyjścia.
 func (n *nadajnikZDziennikiem) Rozglos(k protocol.Koperta) {
 	if n.dalej != nil {
 		n.dalej.Rozglos(k)

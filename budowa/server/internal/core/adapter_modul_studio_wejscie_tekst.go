@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: wniesienie do edytora plików, które nie są archiwum
-// biurowym — tekstu czystego, markdown, RTF i HTML — wraz z ROZPOZNANIEM ZAPISU
-// ZNAKÓW, oraz wykaz nośników, na którym stoją nastawy strony tego odcinka.
-//
-// ── Dlaczego rozpoznanie zapisu znaków jest tu osobną pracą ────────────────
-// Pliki Operatora bywają starsze niż UTF-8. Pismo urzędowe z lat, w których
-// pisano je w Windows-1250, wczytane jako UTF-8 daje albo błąd, albo tekst
-// z krzaczkami w miejscu „ą", „ę", „ł". Krzaczki są tu gorsze niż odmowa: model
-// przeczyta je jako słowa i zacznie na nich pracować. Dlatego zapis znaków
-// rozpoznaje się PRZED rozbiorem treści, a rozpoznanie wychodzi kontraktem
-// w bilansie — Operator ma wiedzieć, jak rdzeń odczytał jego plik.
-//
-// Rozpoznanie idzie `golang.org/x/net/html/charset` i `golang.org/x/text/encoding`
-// — obie biblioteki z rodziny wzorcowej Go, obie już w drzewie zależności.
-// Kolejność rozstrzygania: znacznik kolejności bajtów, potem deklaracja
-// w treści (nagłówek XML, `meta charset` HTML), potem sprawdzenie poprawności
-// UTF-8, a na końcu miara rozkładu bajtów rozstrzygająca między stronami
-// kodowymi używanymi w polskich dokumentach.
+// biurowym — tekstu czystego, markdown, RTF i HTML — wraz z rozpoznaniem
+// zapisu znaków, oraz wykaz nośników z nastawami strony.
 package core
 
 import (
@@ -34,7 +19,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Nazwy zapisów znaków, które ten rachunek rozpoznaje i wymienia w bilansie.
+// Nazwy zapisów znaków, które ten rachunek rozpoznaje i wymienia w bilansie
+// odczytu wniesionego dokumentu.
 const (
 	wejscieZapisUtf8         = "UTF-8"
 	wejscieZapisUtf16LE      = "UTF-16LE"
@@ -53,12 +39,9 @@ func wejscieRozstrzygaczZnakowXml(nazwa string, strumien io.Reader) (io.Reader, 
 }
 
 // wejscieRozpoznajZapisZnakow przekłada bajty pliku na napis UTF-8 i oddaje
-// nazwę rozpoznanego zapisu.
-//
-// Wskazanie Operatora ma pierwszeństwo nad rozpoznaniem: kto wie, w czym jest
-// jego plik, wie to lepiej niż miara rozkładu bajtów. Wskazanie nieznanej nazwy
-// jest jednak odmową, nie cichym zejściem na UTF-8 — inaczej Operator dostałby
-// krzaczki i myślał, że jego wskazanie zadziałało.
+// nazwę rozpoznanego zapisu; wskazanie Operatora ma pierwszeństwo nad
+// rozpoznaniem, a wskazanie nieznanej nazwy jest odmową, nie cichym zejściem
+// na UTF-8.
 func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, string, error) {
 	if wskazanie != nil && strings.TrimSpace(*wskazanie) != "" {
 		nazwa := strings.TrimSpace(*wskazanie)
@@ -88,9 +71,8 @@ func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, strin
 		return tekst, wejscieZapisUtf16BE, err
 	}
 
-	// Deklaracja w treści — nagłówek XML albo `meta charset` HTML. Biblioteka
-	// czyta jedno i drugie; wynik bierzemy tylko wtedy, gdy nazwał coś innego
-	// niż UTF-8, bo domyślnie zwraca właśnie UTF-8 i to nie jest rozpoznanie.
+	// Wynik deklaracji w treści bierzemy tylko wtedy, gdy nazwał coś innego
+	// niż UTF-8.
 	if _, nazwa, pewne := charset.DetermineEncoding(bajty, ""); pewne &&
 		!strings.EqualFold(nazwa, "utf-8") && !strings.EqualFold(nazwa, "windows-1252") {
 
@@ -102,17 +84,14 @@ func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, strin
 		}
 	}
 
-	// Poprawny UTF-8 jest UTF-8. Napis, który przechodzi sprawdzenie ciągów
-	// wielobajtowych, nie jest stroną kodową jednobajtową przez przypadek —
-	// prawdopodobieństwo takiego zbiegu jest znikome dla tekstu z diakrytyką.
+	// Napis, który przechodzi próbę ciągów wielobajtowych, nie jest stroną
+	// jednobajtową przypadkiem.
 	if utf8.Valid(bajty) {
 		return string(bajty), wejscieZapisUtf8, nil
 	}
 
-	// Zostają strony kodowe jednobajtowe. Rozstrzyga miara: która z nich daje
-	// więcej liter polskich, ta jest właściwa. To jest ROZPOZNANIE PO ROZKŁADZIE,
-	// nie odczyt deklaracji — i tak wychodzi w bilansie, żeby Operator wiedział,
-	// że rdzeń zgadywał, a nie czytał.
+	// Wśród stron kodowych jednobajtowych wygrywa ta, która daje więcej liter
+	// polskich.
 	najlepsza, najlepszyTekst, najlepszaMiara := wejscieZapisNierozpoznny, "", -1
 	for _, nazwa := range []string{
 		wejscieZapisWindows1250, wejscieZapisIso88592, wejscieZapisWindows1252,
@@ -139,7 +118,8 @@ func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, strin
 	return najlepszyTekst, najlepsza, nil
 }
 
-// wejscieZapisPoNazwie oddaje przekład zapisu znaków po nazwie.
+// wejscieZapisPoNazwie oddaje przekład zapisu znaków rozpoznany po jego
+// nazwie z rejestru IANA znaków, albo nic.
 func wejscieZapisPoNazwie(nazwa string) encoding.Encoding {
 	switch nazwa {
 	case wejscieZapisWindows1250:
@@ -153,7 +133,8 @@ func wejscieZapisPoNazwie(nazwa string) encoding.Encoding {
 	return przeklad
 }
 
-// wejscieZastosujZapis przekłada bajty na UTF-8 wskazanym zapisem.
+// wejscieZastosujZapis przekłada bajty pliku na napis w UTF-8 wskazanym,
+// konkretnym zapisem znaków pliku.
 func wejscieZastosujZapis(bajty []byte, przeklad encoding.Encoding) (string, error) {
 	if przeklad == nil {
 		return string(bajty), nil
@@ -167,8 +148,7 @@ func wejscieZastosujZapis(bajty []byte, przeklad encoding.Encoding) (string, err
 
 // wejscieMiaraPolskosci liczy litery, które w polskim tekście występują,
 // a w tekście odczytanym niewłaściwą stroną kodową zamieniają się w znaki
-// sterujące albo w symbole. Miara jest miarą, nie dowodem — dlatego nazwa
-// rozpoznanego zapisu idzie do bilansu.
+// sterujące albo symbole.
 func wejscieMiaraPolskosci(tekst string) int {
 	const polskie = "ąćęłńóśźżĄĆĘŁŃÓŚŹŻ"
 	miara := 0
@@ -188,12 +168,8 @@ func wejscieMiaraPolskosci(tekst string) int {
 
 // ── Markdown ────────────────────────────────────────────────────────────────
 
-// wejsciePostacZMarkdown składa postać dokumentu z markdown.
-//
-// Rozbiór jest własny, wierszowy, a nie przez `goldmark`: potrzebny jest tu
-// przekład na STYLE NAZWANE i bloki dokumentu, a nie na HTML, który goldmark
-// oddaje. Przekład HTML→postać dokumentu przez drugą drogę byłby dłuższy
-// i gubiłby to samo. Rozpoznaje: nagłówki krzyżykami, cytat blokowy, listę
+// wejsciePostacZMarkdown składa postać dokumentu z markdown rozbiorem
+// własnym, wierszowym: rozpoznaje nagłówki krzyżykami, cytat blokowy, listę
 // wypunktowaną i numerowaną, tabelę kreskami, blok kodu i akapit.
 func wejsciePostacZMarkdown(kodDokumentu, tresc string) (shared.StudioDocumentForm, []shared.StudioSkippedItem) {
 	postac := wejscieNowaPostac(kodDokumentu, "", nil)
@@ -246,9 +222,8 @@ func wejsciePostacZMarkdown(kodDokumentu, tresc string) (shared.StudioDocumentFo
 			domknijAkapit()
 
 		case strings.HasPrefix(przyciety, "```"), strings.HasPrefix(przyciety, "~~~"):
-			// Blok kodu wychodzi akapitami o kroju stałej szerokości. Styl
-			// „kod" nie stoi w arkuszu domyślnym, więc krój idzie postacią
-			// znaku wprost — to strata nazwana, nie przemilczana.
+			// Blok kodu wychodzi akapitami o kroju stałej szerokości wpisanym
+			// wprost w postać znaku.
 			domknijAkapit()
 			ogranicznik := przyciety[:3]
 			numer++
@@ -353,7 +328,8 @@ func wejsciePostacZMarkdown(kodDokumentu, tresc string) (shared.StudioDocumentFo
 	return postac, pominiete
 }
 
-// wejscieWskaznikRodzajuPodzialu oddaje wskaźnik na rodzaj podziału.
+// wejscieWskaznikRodzajuPodzialu oddaje wskaźnik na wartość rodzaju podziału,
+// żeby oznaczyć go bez alokacji.
 func wejscieWskaznikRodzajuPodzialu(wartosc shared.StudioBreakKind) *shared.StudioBreakKind {
 	kopia := wartosc
 	return &kopia
@@ -443,7 +419,8 @@ func wejscieSzukajZamkniecia(znaki []rune, od int, znacznik string) int {
 	return -1
 }
 
-// wejscieCzyWierszTabeli rozstrzyga, czy wiersz jest wierszem tabeli markdown.
+// wejscieCzyWierszTabeli rozstrzyga, czy wiersz tekstu jest wierszem tabeli
+// markdown zapisanej kreskami.
 func wejscieCzyWierszTabeli(wiersz string) bool {
 	return strings.Contains(wiersz, "|") && strings.Count(wiersz, "|") >= 2
 }
@@ -466,7 +443,7 @@ func wejscieCzyWierszRozdzielajacyTabeli(wiersz string) bool {
 }
 
 // wejscieCzyWierszNumerowany rozstrzyga, czy wiersz zaczyna pozycję listy
-// numerowanej („1. treść").
+// numerowanej, zapisanej jako „1. treść".
 func wejscieCzyWierszNumerowany(wiersz string) bool {
 	kropka := strings.Index(wiersz, ".")
 	if kropka <= 0 || kropka+1 >= len(wiersz) || wiersz[kropka+1] != ' ' {
@@ -476,10 +453,9 @@ func wejscieCzyWierszNumerowany(wiersz string) bool {
 	return err == nil
 }
 
-// wejsciePostacTabeliZMarkdown składa tabelę z wierszy markdown i oddaje, ile
-// wierszy zużyła. Wyrównanie kolumn bierze się z wiersza kresek (`:---`, `---:`,
-// `:---:`) i wchodzi do postaci akapitu komórek — inaczej byłaby to wiedza
-// z pliku wyrzucona przy wczytaniu.
+// wejsciePostacTabeliZMarkdown składa tabelę z wierszy markdown i oddaje,
+// ile wierszy zużyła; wyrównanie kolumn bierze się z wiersza kresek i wchodzi
+// do postaci akapitu komórek.
 func wejsciePostacTabeliZMarkdown(wiersze []string,
 	postac *shared.StudioDocumentForm) (*shared.StudioDocumentTable, int) {
 
@@ -519,9 +495,8 @@ func wejsciePostacTabeliZMarkdown(wiersze []string,
 			WidthPt: wejscieWskaznikRzeczywisty(0.5),
 		},
 	}
-	// Szerokości kolumn są POLICZONE z obszaru pisania, nie zerowe: tabela
-	// markdown szerokości nie niesie, a zero po zapisie do docx dałoby kolumny
-	// niewidoczne.
+	// Szerokości kolumn są policzone z obszaru pisania, nie zerowe — zero
+	// dałoby kolumny niewidoczne.
 	rowna := ooxmlSzerokoscObszaruPisania(postac) / float64(kolumny)
 	for i := 0; i < kolumny; i++ {
 		tabela.ColumnWidthsMm = append(tabela.ColumnWidthsMm, rowna)
@@ -552,7 +527,8 @@ func wejsciePostacTabeliZMarkdown(wiersze []string,
 	return &tabela, zuzyte
 }
 
-// wejscieKomorkiWierszaMarkdown rozbija wiersz tabeli na komórki.
+// wejscieKomorkiWierszaMarkdown rozbija wiersz tabeli markdown na komórki po
+// znaku pionowej kreski tekstu.
 func wejscieKomorkiWierszaMarkdown(wiersz string) []string {
 	przyciety := strings.TrimSpace(wiersz)
 	przyciety = strings.TrimPrefix(przyciety, "|")
@@ -565,7 +541,8 @@ func wejscieKomorkiWierszaMarkdown(wiersz string) []string {
 	return komorki
 }
 
-// wejscieWyrownaniaKolumnMarkdown czyta wyrównania kolumn z wiersza kresek.
+// wejscieWyrownaniaKolumnMarkdown czyta wyrównania kolumn tabeli z jej
+// wiersza kresek pod jej nagłówkiem.
 func wejscieWyrownaniaKolumnMarkdown(wiersz string) []*shared.StudioTextAlign {
 	komorki := wejscieKomorkiWierszaMarkdown(wiersz)
 	wyrownania := make([]*shared.StudioTextAlign, 0, len(komorki))
@@ -588,13 +565,9 @@ func wejscieWyrownaniaKolumnMarkdown(wiersz string) []*shared.StudioTextAlign {
 
 // ── HTML ────────────────────────────────────────────────────────────────────
 
-// wejsciePostacZHtml składa postać dokumentu z HTML.
-//
-// Rozbiór idzie `golang.org/x/net/html` — rozbiorem zgodnym z zachowaniem
-// przeglądarki, a nie wyrażeniem regularnym po znacznikach. HTML Operatora
-// bywa niepoprawny (niezamknięte znaczniki, atrybuty bez cudzysłowów), a ten
-// rozbiór to znosi tak samo jak przeglądarka. Wyrażenie regularne po
-// znacznikach rozsypałoby się na pierwszym takim pliku.
+// wejsciePostacZHtml składa postać dokumentu z HTML, rozbiorem biblioteki
+// `golang.org/x/net/html` zgodnym z zachowaniem przeglądarki, znoszącym
+// znaczniki niezamknięte i atrybuty bez cudzysłowów.
 func wejsciePostacZHtml(kodDokumentu, tresc string) (shared.StudioDocumentForm, []shared.StudioSkippedItem) {
 	pominiete := make([]shared.StudioSkippedItem, 0, 2)
 	drzewo, err := html.Parse(strings.NewReader(tresc))
@@ -620,7 +593,8 @@ func wejsciePostacZHtml(kodDokumentu, tresc string) (shared.StudioDocumentForm, 
 	return postac, pominiete
 }
 
-// wejscieStanHtml zbiera stan rozbioru HTML: składany akapit i wykaz pominięć.
+// wejscieStanHtml zbiera stan rozbioru HTML: składany akapit i wykaz
+// pominięć, przekazywany rekurencją.
 type wejscieStanHtml struct {
 	postac    *shared.StudioDocumentForm
 	sekcja    string
@@ -628,18 +602,15 @@ type wejscieStanHtml struct {
 	fragmenty []shared.StudioDocumentRun
 }
 
-// przejdz przechodzi drzewo HTML, składając bloki dokumentu.
-//
-// Postać znaku PŁYNIE W DÓŁ drzewa: `<b><i>tekst</i></b>` daje fragment
-// pogrubiony i pochylony naraz, bo każdy poziom dokłada swoją cechę do postaci
-// odziedziczonej. Postać liczona osobno na każdym poziomie zgubiłaby zewnętrzną.
+// przejdz przechodzi drzewo HTML, składając bloki dokumentu; postać znaku
+// płynie w dół drzewa, bo każdy poziom dokłada swoją cechę do postaci
+// odziedziczonej.
 func (s *wejscieStanHtml) przejdz(wezel *html.Node, odziedziczona shared.StudioCharacterFormat) {
 	if wezel.Type == html.TextNode {
 		tekst := strings.ReplaceAll(wezel.Data, "\n", " ")
 		if strings.TrimSpace(tekst) == "" {
-			// Sam odstęp między znacznikami blokowymi nie jest treścią, ale
-			// odstęp między znacznikami tekstowymi jest — inaczej „<b>a</b> <i>b</i>"
-			// dałoby „ab".
+			// Odstęp między znacznikami blokowymi nie jest treścią, ale między
+			// tekstowymi jest.
 			if tekst != "" && len(s.fragmenty) > 0 {
 				s.fragmenty = append(s.fragmenty, shared.StudioDocumentRun{Text: " "})
 			}
@@ -761,14 +732,16 @@ func (s *wejscieStanHtml) przejdz(wezel *html.Node, odziedziczona shared.StudioC
 	s.przejdzDzieci(wezel, postac)
 }
 
-// przejdzDzieci przechodzi dzieci węzła.
+// przejdzDzieci przechodzi kolejno wszystkie dzieci węzła drzewa, z tą samą
+// postacią znaku odziedziczoną.
 func (s *wejscieStanHtml) przejdzDzieci(wezel *html.Node, postac shared.StudioCharacterFormat) {
 	for dziecko := wezel.FirstChild; dziecko != nil; dziecko = dziecko.NextSibling {
 		s.przejdz(dziecko, postac)
 	}
 }
 
-// domknijAkapit odkłada zebrane fragmenty jako blok akapitu.
+// domknijAkapit odkłada zebrane fragmenty tekstu jako gotowy blok akapitu
+// bieżącego dokumentu i czyści je.
 func (s *wejscieStanHtml) domknijAkapit(styl string, poziomKonspektu int) {
 	if len(s.fragmenty) == 0 {
 		return
@@ -798,7 +771,8 @@ func (s *wejscieStanHtml) domknijAkapit(styl string, poziomKonspektu int) {
 	s.fragmenty = nil
 }
 
-// czytajTabeleHtml składa tabelę z HTML wraz ze scaleniami.
+// czytajTabeleHtml składa tabelę dokumentu z tabeli HTML wraz ze scaleniami
+// komórek wierszy i kolumn tabeli.
 func (s *wejscieStanHtml) czytajTabeleHtml(wezel *html.Node) {
 	wiersze := wejscieWezlyHtml(wezel, "tr")
 	if len(wiersze) == 0 {
@@ -877,12 +851,8 @@ func (s *wejscieStanHtml) czytajTabeleHtml(wezel *html.Node) {
 	})
 }
 
-// czytajObrazHtml zakłada obiekt obrazu wskazanego znacznikiem.
-//
-// Bajtów obrazu ten rachunek NIE pobiera: pobranie z sieci należy do czynności
-// wniesienia ze strony (`studio.insert.from.web`), która ma na to kontekst
-// żądania i granicę czasu. Tutaj powstaje obiekt wraz z adresem — i to jest
-// prawda o tym, co rdzeń wie.
+// czytajObrazHtml zakłada obiekt obrazu wskazanego znacznikiem, wraz z jego
+// adresem; bajtów obrazu ten rachunek nie pobiera.
 func (s *wejscieStanHtml) czytajObrazHtml(wezel *html.Node) {
 	adres := wejscieAtrybutHtml(wezel, "src")
 	if adres == "" {
@@ -915,7 +885,8 @@ func (s *wejscieStanHtml) czytajObrazHtml(wezel *html.Node) {
 	})
 }
 
-// wejsciePostacZnakuAlboNic oddaje postać znaku albo nic, gdy postać jest pusta.
+// wejsciePostacZnakuAlboNic oddaje postać znaku albo nic, gdy postać jest
+// pusta, bez ustawionych cech znaku.
 func wejsciePostacZnakuAlboNic(postac shared.StudioCharacterFormat) *shared.StudioCharacterFormat {
 	if postac.FontFamily == nil && postac.FontSizePt == nil && postac.Bold == nil &&
 		postac.Italic == nil && postac.Underline == nil && postac.Strikethrough == nil &&
@@ -997,7 +968,7 @@ func wejscieBarwaZeStyluHtml(wartosc string) string {
 }
 
 // wejscieStopienZeStyluHtml czyta stopień pisma podany w punktach albo
-// w punktach obrazu.
+// w punktach obrazu ze stylu węzła.
 func wejscieStopienZeStyluHtml(wartosc string) (float64, bool) {
 	oczyszczona := strings.ToLower(strings.TrimSpace(wartosc))
 	switch {
@@ -1014,7 +985,8 @@ func wejscieStopienZeStyluHtml(wartosc string) (float64, bool) {
 	return 0, false
 }
 
-// wejscieAtrybutHtml oddaje atrybut węzła HTML.
+// wejscieAtrybutHtml oddaje wartość atrybutu węzła HTML po jego nazwie, albo
+// napis pusty, gdy go nie ma.
 func wejscieAtrybutHtml(wezel *html.Node, nazwa string) string {
 	for _, atrybut := range wezel.Attr {
 		if strings.EqualFold(atrybut.Key, nazwa) {
@@ -1024,7 +996,8 @@ func wejscieAtrybutHtml(wezel *html.Node, nazwa string) string {
 	return ""
 }
 
-// wejscieLiczbaAtrybutuHtml oddaje atrybut jako liczbę albo wartość domyślną.
+// wejscieLiczbaAtrybutuHtml oddaje atrybut węzła HTML jako liczbę albo
+// wartość domyślną, gdy rozbiór zawiedzie.
 func wejscieLiczbaAtrybutuHtml(wezel *html.Node, nazwa string, domyslna int) int {
 	tekst := strings.TrimSuffix(wejscieAtrybutHtml(wezel, nazwa), "px")
 	liczba, err := strconv.Atoi(strings.TrimSpace(tekst))
@@ -1034,7 +1007,8 @@ func wejscieLiczbaAtrybutuHtml(wezel *html.Node, nazwa string, domyslna int) int
 	return liczba
 }
 
-// wejscieWezlyHtml zbiera wgłąb węzły o wskazanej nazwie.
+// wejscieWezlyHtml zbiera wgłąb całego drzewa dokumentu HTML węzły noszące
+// wskazaną nazwę znacznika HTML.
 func wejscieWezlyHtml(wezel *html.Node, nazwa string) []*html.Node {
 	wynik := make([]*html.Node, 0, 8)
 	var przejdz func(*html.Node)
@@ -1050,7 +1024,8 @@ func wejscieWezlyHtml(wezel *html.Node, nazwa string) []*html.Node {
 	return wynik
 }
 
-// wejscieTekstHtml składa treść tekstową węzła wraz z dziećmi.
+// wejscieTekstHtml składa treść tekstową węzła HTML wraz z treścią tekstową
+// wszystkich jego węzłów dzieci.
 func wejscieTekstHtml(wezel *html.Node) string {
 	var budowa strings.Builder
 	var przejdz func(*html.Node)
@@ -1076,18 +1051,10 @@ func wejscieTekstHtml(wezel *html.Node) string {
 
 // ── RTF ─────────────────────────────────────────────────────────────────────
 
-// wejsciePostacZRtf składa postać dokumentu z RTF.
-//
-// RTF jest formatem znakowym o składni własnej — nie XML i nie archiwum.
-// Rozbiór jest własny i obejmuje to, co niesie pismo: akapity (`\par`),
-// pogrubienie, kursywę, podkreślenie, stopień pisma (`\fsN`, w półpunktach),
-// wyrównanie (`\qc`, `\qr`, `\qj`) oraz znaki spoza zakresu jednobajtowego
-// zapisane jako `\'hh` i `\uN`.
-//
-// UCZCIWIE: tabele RTF (`\trowd`) i obrazy (`\pict`) NIE są odzyskiwane. Tabela
-// RTF jest ciągiem akapitów z granicami komórek zapisanymi w rozkazach składu,
-// więc jej odzyskanie jest odtworzeniem układu, nie odczytem struktury. Wchodzi
-// treścią i wychodzi w bilansie jako układ nierozpoznany.
+// wejsciePostacZRtf składa postać dokumentu z RTF rozbiorem własnym: czyta
+// akapity, pogrubienie, kursywę, podkreślenie, stopień pisma i wyrównanie;
+// tabele i obrazy RTF nie są odzyskiwane, wchodzą treścią i wychodzą
+// w bilansie jako układ nierozpoznany.
 func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, []shared.StudioSkippedItem) {
 	pominiete := make([]shared.StudioSkippedItem, 0, 2)
 	postac := wejscieNowaPostac(kodDokumentu, "", nil)
@@ -1160,10 +1127,8 @@ func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, [
 			}
 			switch rozkaz {
 			case "'":
-				// Znak zapisany szesnastkowo w bieżącej stronie kodowej. RTF
-				// pisma polskiego jedzie zwykle windows-1250, i tak go czytamy —
-				// nagłówek `\ansicpgN` bywa nieprawdziwy częściej niż strona
-				// kodowa, którą naprawdę użyto.
+				// Znak zapisany szesnastkowo czytamy stroną windows-1250,
+				// typową dla RTF pisma polskiego.
 				if pomijanaGrupa == 0 && maParametr {
 					przelozone, err := wejscieZastosujZapis([]byte{byte(parametr)}, charmap.Windows1250)
 					if err == nil {
@@ -1172,8 +1137,8 @@ func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, [
 				}
 			case "u":
 				if pomijanaGrupa == 0 && maParametr {
-					// `\uN` niesie znak Unicode; wartość ujemna jest zapisem
-					// liczby bez znaku, którą RTF wyraża w zakresie ujemnym.
+					// `\uN` niesie znak Unicode; wartość ujemna jest liczbą bez
+					// znaku w zapisie RTF.
 					kod := parametr
 					if kod < 0 {
 						kod += 65536
@@ -1197,9 +1162,8 @@ func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, [
 					stan.stopien = wejscieWskaznikRzeczywisty(float64(parametr) / 2)
 				}
 			case "cf":
-				// Barwa idzie numerem w tabeli barw dokumentu. Tabeli nie
-				// czytamy, więc numeru nie da się przełożyć na barwę i pole
-				// zostaje puste — to jest brak, nie zmyślona barwa.
+				// Barwa idzie numerem tabeli barw, której nie czytamy, więc
+				// pole zostaje puste, nie zmyślone.
 			case "ql":
 				wyrownanie = wejscieWskaznikWyrownania(shared.StudioTextAlignLeft)
 			case "qc":
@@ -1285,7 +1249,8 @@ func (s *wejscieStanRtf) zastosujPrzelacznik(rozkaz string, parametr int, maPara
 	}
 }
 
-// postacZnaku składa postać znaku ze stanu grupy RTF.
+// postacZnaku składa postać znaku dokumentu ze stanu bieżącej grupy
+// formatującej pisma w rozbiorze RTF.
 func (s wejscieStanRtf) postacZnaku() *shared.StudioCharacterFormat {
 	postac := shared.StudioCharacterFormat{FontSizePt: s.stopien}
 	if s.pogrubienie {
@@ -1363,20 +1328,16 @@ func wejscieRozkazRtf(znaki []byte, poczatek int) (string, int, bool, int) {
 
 // ── Wykaz nośników ──────────────────────────────────────────────────────────
 
-// wejscieWymiarNosnika jest wymiarami nośnika w milimetrach.
+// wejscieWymiarNosnika jest parą liczb, wymiarami fizycznego nośnika
+// papieru, wyrażonymi w milimetrach.
 type wejscieWymiarNosnika struct {
 	szerokosc float64
 	wysokosc  float64
 }
 
-// wejscieWymiaryNosnika oddaje wymiary nośnika po nazwie.
-//
-// Wykaz nośników NIE JEST tu zakładany od nowa: czytany jest wykaz wspólny
-// rdzenia (`wykazNosnikowDruku` z `nosniki_druku_wspolne.go`), bo dwa wykazy
-// rozmiarów w jednym produkcie rozjadą się przy pierwszej poprawce i Operator
-// dostanie A3 o wymiarach A4. Wcześniej stał tu odczyt wykazu własnego modułu
-// Design; wykaz wspólny zastąpił oba i niesie koperty C4, C5 oraz C6 wskazane
-// przez Właściciela.
+// wejscieWymiaryNosnika oddaje wymiary nośnika po nazwie, czytane z wykazu
+// wspólnego rdzenia `wykazNosnikowDruku`, żeby dwa wykazy rozmiarów w jednym
+// produkcie nie rozjechały się przy pierwszej poprawce.
 func wejscieWymiaryNosnika(nazwa string) (wejscieWymiarNosnika, bool) {
 	szukana := strings.ToLower(strings.TrimSpace(nazwa))
 	if szukana == "" {
@@ -1408,7 +1369,8 @@ func wejscieNazwaNosnikaZWymiarow(szerokosc, wysokosc float64) (string, bool) {
 	return "", false
 }
 
-// wejscieBliskie rozstrzyga, czy dwa wymiary są tym samym wymiarem.
+// wejscieBliskie rozstrzyga, czy dwa podane wymiary są w praktyce tym samym
+// wymiarem nośnika papieru druku.
 func wejscieBliskie(pierwszy, drugi float64) bool {
 	roznica := pierwszy - drugi
 	if roznica < 0 {

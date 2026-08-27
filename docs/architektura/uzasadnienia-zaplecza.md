@@ -2987,3 +2987,18 @@ powstaje po pracy: niesie wynik walidacji i jej zapis, żeby Operator mógł
 wrócić do pytania „czy ten dokument naprawdę przeszedł normalizację" bez
 powtarzania utrwalenia. Zasób wytworzony wskazywany jest kodem, bo bywa go
 brak — profil PREMIS/METS opisuje zasób, nie wytwarza nowego pliku.
+## budowa/server/internal/store/migracja_190_roundtable_sklad.sql
+Migracja 190 — skład debaty rozszerzony do kształtu kontraktu: tożsamość
+uczestnika, rola w naradzie, waga kompetencji, oznaczenie kluczowego oraz
+zespoły i biblioteka ról.
+
+Migracja 044 zakładała skład pod cztery komendy obszaru i wprost odnotowała,
+że kolumny „kluczowy" nie ma, bo żadna komenda nie potrafiła jej ustawić.
+Kontrakt ma dziś `roundtable.model.update` z polami `key`, `weight`, `role`,
+`avatar`, `roleDescription` i `agentId` — kolumny przestały być miejscem,
+do którego nic nie pisze, więc powstają.
+
+Zespół (`roundtable.team.save`) jest kopią składu, nie odwołaniem do niego.
+Skład okna zmienia się po zapisaniu zespołu, a zespół ma zostać taki, jaki
+był w chwili zapisu — inaczej „wnieś zespół" wnosiłoby stan bieżący cudzego
+okna zamiast zapamiętanego układu.

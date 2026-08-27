@@ -15,12 +15,14 @@ Powiązane: [05 — style CSS](05-styles-css.md), [03 — widok](03-design-view.
 Teren `centrum-poprawki`. Pliki: `05-okna/przeplyw/centrum-dowodzenia.html`,
 `zasoby/okna/centrum-dowodzenia.css`, `zasoby/okna/centrum-dowodzenia.js`.
 
-Punkty łamania układu mierzą **szerokość ekranu** (`@media`), nie szerokość
-płótna. Płótno deklaruje `container-type: inline-size` i nazwę `plotno`, ale
-żadne zapytanie `@container` z tej deklaracji nie korzysta — otwarcie panelu
-samouczka zwęża płótno o 320 px i jest wyrównywane osobnym warunkiem
-`body:has(#panel-samouczek:not([hidden]))`. To rozjazd do rozstrzygnięcia,
-odnotowany w rejestrze terenów.
+Punkty łamania układu mierzą **szerokość płótna** (`@container plotno`), nie
+szerokość ekranu. Płótno przełącza siatki stref na dwie kolumny poniżej 820 px
+i na jedną poniżej 500 px; belka pierwszego wejścia i listwa ustawień idą tym
+samym progiem. Otwarcie panelu samouczka zwęża płótno i przełącza układ samo,
+bez osobnego warunku.
+
+Wyjątkiem jest wyściółka samego `.cd-tresc` — element nie może odpytywać
+pojemnika, który sam deklaruje, więc ta jedna reguła zostaje przy progu ekranu.
 
 ### Arkusz
 

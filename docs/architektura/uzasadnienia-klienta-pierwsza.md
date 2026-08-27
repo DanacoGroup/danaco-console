@@ -6508,3 +6508,31 @@ wyczyszczone jawnie kasuje wartość, dokładnie tak, jak mówi kontrakt.
 
 ## budowa/klient-poprzedni/src/moduly/apps/braki-kontraktu.ts
 Panele akcji okien Apps wymieniają więcej czynności, niż obszar apps niesie komend; czynność bez komendy zostaje widoczna i klikalna, a naciśnięcie mówi, czego brakuje. Powód składa się z wykazu komend kontraktu przy składaniu okna, więc dopisanie komendy do kontraktu przepisuje zdanie samo. Wobec bliźniaczego pliku modułu Diagnostics dochodzą tu dwie rzeczy: pozycja znika sama, gdy wskazana komenda wejdzie do kontraktu, a wskazanie cudzej drogi jest sprawdzane — zdanie o komendzie z innego obszaru pada wyłącznie wtedy, gdy ta komenda stoi w wykazie, w przeciwnym razie zdanie mówi o jej zniknięciu. Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje — brak jest po stronie kontraktu i tylko o kontrakcie zdanie mówi. Pełny powód dla jednej pozycji jest wyeksportowany, bo ta sama treść idzie do dymka, do tytułu i do opisu dostępności przycisku, a sprawdzian sięga po nią bez budowania dokumentu. Które pozycje są jeszcze brakiem jest wyeksportowane, żeby dało się to sprawdzić bez DOM.
+
+## budowa/klient-poprzedni/src/moduly/browser/macierz-izolacji.ts
+Punkty izolacji właściwe przeglądaniu obejmują dostęp sieciowy procesu sesji, kontenery tożsamości i zakres pętli wykonawczej. Panel pokazuje, co z nich obowiązuje dla okna przeglądarki, i tylko to. Zapisu tu nie ma: przełączniki i profile zapisuje okno konfiguracji punktów izolacji, a dwa miejsca zapisujące tę samą politykę dawałyby dwa różne zdania o tym, co obowiązuje. Nazwy punktów izolacji przychodzą ze słownika okna punktów izolacji — własny wykaz nazw w module znaczyłby, że ten sam przełącznik nazywa się w dwóch oknach inaczej. Stan przełącznika nigdy nie jest samą barwą: przy każdej pozycji stoi słowo „odcięty" albo „wspólny", bo panel czyta się także bez rozróżniania barw.
+
+## budowa/klient-poprzedni/src/moduly/library/modul-library.ts
+Układ wynika z roli okna: Library Explorer jest oknem wiodącym i jedynym
+z własnym wejściem, a File Preview, Versioning Panel, Tags & Collections
+i Metadata & Archive Panel odnoszą się do wykazu i do pliku wskazanego wyżej,
+więc wskazanie w przeglądarce przestawia pozostałe cztery okna naraz, bo
+stan jest jeden. Przekazanie z innego modułu ma odbiorcę w oknie wiodącym:
+komenda przekazania rozgłasza zmianę okna, a nie zmianę pliku, i nie zakłada
+pliku w repozytorium, więc nasłuch wyłącznie na zdarzeniu zmiany pliku
+przekazania by nie zobaczył. Dziesięć komend obszaru biblioteki ma uchwyt
+w rdzeniu, a cztery z nich — wgranie, dołożenie i przywrócenie wersji oraz
+ustawienie etykiet — rozgłaszają po udanym wykonaniu zdarzenie zmiany pliku,
+które jest jedyną drogą odświeżenia okien poza ich własnym działaniem.
+Rodziny arsenału moduł bierze wyłącznie drogą ścieżki na dysku, co jest
+rozstrzygnięciem mierzonym, nie ostrożnością, ponieważ wszystkie trzy
+rodziny rozwiązują identyfikator zasobu przez repozytorium modułu
+projektowego, a plik biblioteki leży w innym rejestrze i wróciłby stamtąd
+odmową; przycisk wysyłający identyfikator zasobu biblioteki zawodziłby
+zawsze, więc go nie ma. Kontrakt niesie jednak drugą drogę źródła, treść
+wciąganą do magazynu pod sumą kontrolną, i tą drogą trzy czynności stoją
+w obszarze archiwum: rozpoznanie, przetworzenie i spakowanie materiału. Ich
+wynik jest zasobem magazynu projektowego, nie zasobem biblioteki, i widok
+mówi to zdaniem, żeby nikt nie wziął jednego za drugie. Straż odmów i odmowa
+nieznanej komendy zostają na miejscu, bo mierzą stan rdzenia w chwili
+wywołania: gdyby uchwyt wypadł, okno powie to z pomiaru, a nie z komentarza.

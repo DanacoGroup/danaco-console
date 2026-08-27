@@ -122,3 +122,11 @@ wyników i podgląd treści. Osadzenie przeglądarki i biblioteki ma część
 nagłówkową, przewijany podgląd treści źródła i listę pochodzeń. Mikrofon
 w trakcie nagrywania dodatkowo pulsuje animacją tętna, sygnalizując aktywne
 nagrywanie dźwięku.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-postac.css
+Panele nastaw strony są nakładkami otwieranymi z pasa otwarć, domyślnie
+schowanymi atrybutem hidden; stałej kolumny nie zajmują i zajmować nie mogą,
+więc arkusz nie zawiera ani jednej reguły szerokości kolumny. Żetony barw
+i odstępów pochodzą z warstwy wspólnej produktu — arkusz nie zakłada własnej
+palety, żeby panel nastaw strony wyglądał jak reszta modułu studia, a nie jak
+osobna wyspa wizualna.

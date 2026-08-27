@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: drobne narzędzia wspólne dobudowanym rodzinom modułu
-// Translate — odczyt pól nieobowiązkowych żądania, odmowa o pliku, miara
-// podobieństwa segmentów i trwały podział okna.
-//
-// Powód osobnego pliku: te cztery rzeczy są potrzebne w ośmiu plikach modułu.
-// Wpisane do pierwszego z brzegu byłyby zależnością tamtego pliku od wszystkich
-// pozostałych.
+// Plik obsługuje drobne narzędzia wspólne dobudowanym rodzinom modułu Translate: odczyt pól nieobowiązkowych żądania, odmowa o pliku, miara podobieństwa segmentów i trwały podział okna, potrzebne w ośmiu plikach modułu.
 package core
 
 import (
@@ -18,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// napisZeWskaznika oddaje treść pola nieobowiązkowego albo pusty napis.
+// napisZeWskaznika oddaje treść pola nieobowiązkowego albo pusty napis, gdy wskaźnik żądania jest pusty.
 func napisZeWskaznika(wartosc *string) string {
 	if wartosc == nil {
 		return ""
@@ -26,7 +20,7 @@ func napisZeWskaznika(wartosc *string) string {
 	return *wartosc
 }
 
-// liczbaCalkowitaZeWskaznika oddaje wartość pola nieobowiązkowego albo zero.
+// liczbaCalkowitaZeWskaznika oddaje wartość pola nieobowiązkowego albo zero, gdy wskaźnik żądania jest pusty.
 func liczbaCalkowitaZeWskaznika(wartosc *int) int {
 	if wartosc == nil {
 		return 0
@@ -43,10 +37,7 @@ func wskaznikNapisu(wartosc string) *string {
 	return &wartosc
 }
 
-// bladPlikuTlumaczenia nazywa niepowodzenie pracy na pliku wskazanym przez
-// Operatora. Plik nieobecny albo niedostępny jest pomyłką wskazania, nie
-// usterką rdzenia — ponowienie żądania nic nie zmieni, więc kod odmowy nie
-// zachęca klienta do pętli ponowień.
+// bladPlikuTlumaczenia nazywa niepowodzenie pracy na pliku wskazanym przez Operatora. Plik nieobecny albo niedostępny jest pomyłką wskazania, nie usterką rdzenia, więc kod odmowy nie zachęca do pętli ponowień.
 func bladPlikuTlumaczenia(sciezka string, err error) error {
 	if os.IsNotExist(err) {
 		return bladWskazaniaTlumaczenia("pliku " + sciezka + " nie ma pod wskazaną ścieżką")
@@ -54,14 +45,7 @@ func bladPlikuTlumaczenia(sciezka string, err error) error {
 	return bladWskazaniaTlumaczenia("nie można sięgnąć po plik " + sciezka + ": " + err.Error())
 }
 
-// podobienstwoSegmentow mierzy bliskość dwóch segmentów w procentach: sto
-// znaczy segmenty identyczne po sprowadzeniu do jednakowych odstępów i wielkości
-// liter, zero — rozbieżne całkowicie.
-//
-// Miarą jest odległość edycyjna (Levenshtein) odniesiona do długości segmentu
-// dłuższego. Wybór nie jest kosmetyczny: pamięć tłumaczeń branży posługuje się
-// dokładnie tą miarą przy „dopasowaniu rozmytym 85%", więc próg wpisany przez
-// Operatora znaczy u nas to samo, co znaczył w narzędziu, z którego przyszedł.
+// podobienstwoSegmentow mierzy bliskość dwóch segmentów w procentach: sto znaczy identyczne, zero — rozbieżne całkowicie. Miarą jest odległość edycyjna (Levenshtein) odniesiona do długości segmentu dłuższego.
 func podobienstwoSegmentow(pierwszy, drugi string) int {
 	a := []rune(strings.ToLower(strings.Join(strings.Fields(pierwszy), " ")))
 	b := []rune(strings.ToLower(strings.Join(strings.Fields(drugi), " ")))
@@ -71,8 +55,7 @@ func podobienstwoSegmentow(pierwszy, drugi string) int {
 	if len(a) == 0 || len(b) == 0 {
 		return 0
 	}
-	// Wiersz poprzedni i bieżący wystarczą — pełna macierz zajęłaby pamięć
-	// proporcjonalną do iloczynu długości, a nikt tu nie odtwarza drogi edycji.
+	// Wiersz poprzedni i bieżący wystarczą, bo nikt tu nie odtwarza drogi edycji.
 	poprzedni := make([]int, len(b)+1)
 	biezacy := make([]int, len(b)+1)
 	for j := range poprzedni {
@@ -94,12 +77,7 @@ func podobienstwoSegmentow(pierwszy, drugi string) int {
 	return 100 * (dluzszy - odleglosc) / dluzszy
 }
 
-// segmentyOkna oddaje podział okna: trwały, gdy Operator scalał albo dzielił
-// segmenty, a przy jego braku — podział wyprowadzony z tekstu źródłowego.
-//
-// Kolejność jest istotna. Trwały podział jest odpowiedzią Operatora na podział
-// mechaniczny; branie podziału mechanicznego mimo istnienia trwałego cofałoby
-// każde scalenie przy kolejnym wywołaniu.
+// segmentyOkna oddaje podział okna: trwały, gdy Operator scalał albo dzielił segmenty, a przy jego braku — podział wyprowadzony z tekstu źródłowego. Branie podziału mechanicznego mimo istnienia trwałego cofałoby każde scalenie przy kolejnym wywołaniu.
 func (a *adapterTlumaczenia) segmentyOkna(ctx context.Context,
 	okno dane.OknoTlumaczenia) ([]string, error) {
 
@@ -140,7 +118,7 @@ func liczbaZeWskazania(wskazanie string) (int, error) {
 	return strconv.Atoi(strings.TrimSpace(wskazanie))
 }
 
-// wagaOdmowyKontroli sprowadza wagę zapisaną w bazie do wartości kontraktu.
+// wagaOdmowyKontroli sprowadza wagę zapisaną w bazie do wartości kontraktu, odczytaną z tabeli kontroli jakości.
 func wagaOdmowyKontroli(waga string) shared.ProofreadSeverity {
 	return shared.ProofreadSeverity(waga)
 }

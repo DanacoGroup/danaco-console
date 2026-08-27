@@ -2268,3 +2268,10 @@ Podział wobec pliku `zrodlo-biblioteki.ts` biegnie wzdłuż odpowiedzialności:
 historia dokumentu należy tutaj, natomiast plik, wyszukiwanie i kolekcje należą
 tam. Kształt pozostaje jeden, `ZrodloBiblioteki`, aby okna widziały jedno źródło,
 a nie dwa.
+
+## budowa/klient-poprzedni/src/aplikacja/komunikaty.ts
+
+Żaden przycisk w aplikacji nie jest wyszarzany, więc każde naciśnięcie musi dać
+Operatorowi odpowiedź. Gdy zamiar nie ma odpowiednika w komendzie kontraktu albo
+rdzeń odmawia wykonania, dymek mówi to wprost, zamiast udawać czynność wykonaną.
+Milczenie po naciśnięciu byłoby dla Operatora nieodróżnialne od powodzenia.

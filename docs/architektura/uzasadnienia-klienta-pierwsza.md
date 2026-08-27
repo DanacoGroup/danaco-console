@@ -4172,3 +4172,58 @@ Bieg naprawczy nie ma limitu, dlatego licznik obiegów stoi przy każdej kolejce
 przejrzystość zastępuje w tym miejscu bramę zatrzymującą bieg. Sterowanie jest
 ręczne i żaden przycisk transportu nie jest wyszarzony; stan kolejki poznaje się
 po plakietce ze słowem, a nie po dostępności przycisku.
+
+## budowa/klient-poprzedni/src/moduly/katalog-okien.ts
+
+Liczba wpisana w pasek uczciwości na stałe rozjeżdża się z rdzeniem po
+cichu: katalog okien zmienia migracja rdzenia, a napis nie jest z nim
+niczym połączony. Ten byt liczy rozjazd z odczytu, więc pasek nie orzeka
+o czymś, czego rdzeń nie powiedział.
+
+Byt stoi w korzeniu warstwy modułów, a nie w pojedynczym module, bo tę samą
+potrzebę ma każdy moduł kontraktu; kopia na moduł dałaby tyle samo
+rozjeżdżających się zdań o jednym stanie produktu. Bliźniakiem jest byt
+rozstrzygający to samo o pokryciu komend.
+
+Prawda pochodzi z odczytu wykazu modułów: rdzeń oddaje kody okien
+operacyjnych otwieranych wraz z modułem. Czego moduł buduje, rdzeń nie wie
+i wiedzieć nie może — tę połowę podaje moduł.
+
+Okno rozmowy nie jest oknem operacyjnym modułu: katalog rdzenia niesie kod
+okna rozmowy w każdym module, a montuje je scena sesji, nie rejestr
+modułów. Wykaz, który tego nie odejmuje, przypisuje każdemu modułowi brak
+okna, które w rzeczywistości działa.
+
+Rozstrzygnięcia są cztery, bo każde znaczy co innego: stan nieustalony
+znaczy, że rdzeń jeszcze nie odpowiedział albo odmówił, a cisza nie jest
+orzeczeniem o braku; stan modułu nieznanego znaczy, że rdzeń nie wymienia
+tego modułu wcale, więc katalogu jego okien nie ma czym sprawdzić; stan
+katalogu pełnego znaczy, że moduł buduje każde okno operacyjne swojego
+katalogu; stan katalogu szerszego znaczy, że katalog niesie kody, których
+moduł nie buduje. Niezależnie od nich wychodzi wykaz kodów poza katalogiem:
+kod, który moduł buduje, a rdzeń mu go nie przypisuje — to nie brak modułu,
+tylko rozjazd z rdzeniem.
+
+Odczyt jest jeden na połączenie, nie jeden na moduł — moduły pytające
+o ten sam katalog dałyby tyle samo zbędnych zapytań. Katalog leży w pamięci
+podręcznej przypisanej do kanału: pierwszy odczyt pyta, pozostałe czekają
+na tę samą odpowiedź. Odmowa nie zostaje w pamięci, więc kolejny odczyt
+ponawia pytanie.
+
+Unieważnienie katalogu następuje przy zerwaniu połączenia: transport
+ponawia połączenie pod tym samym kanałem, więc po zerwaniu można trafić na
+rdzeń o innym katalogu. Dlatego byt nasłuchuje odpowiedzi odczytu wykazu
+modułów na całym kanale — każdy odczyt, także cudzy, odświeża katalog bez
+ani jednego zapytania stąd. Powłoka może też wymusić zapomnienie katalogu
+wprost, osobnym wywołaniem.
+
+## budowa/klient-poprzedni/src/moduly/automations/nastepne-uruchomienia.ts
+
+Rachunek kolejnych terminów prowadzony jest po stronie klienta, ponieważ dotyczy
+cykliczności jeszcze niezapisanej. Kontrakt nie ma ani pola z wykazem kolejnych
+terminów, ani komendy próbnego wyliczenia, więc podgląd nie ma czego zażądać od
+rdzenia. Wartością obowiązującą po zapisie pozostaje pole `AutomationSchedule.nextRunAt`
+wyliczane przez rdzeń, a podgląd jest wyłącznie pomocą przy układaniu zapisu.
+
+Rachunek biegnie na składowych czasu UTC, tak samo jak w rdzeniu, aby oba wyniki
+dawały się porównać bez przeliczania strefy.

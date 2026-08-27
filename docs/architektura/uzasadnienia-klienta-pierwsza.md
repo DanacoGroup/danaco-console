@@ -2912,3 +2912,21 @@ rdzenia.
 Zasięgi katalogu roboczego są węższe niż komplet zasięgów konfiguracji: katalog
 roboczy jest własnością instalacji, środowiska, projektu, sesji oraz okna, a nie
 pary modułów.
+
+## budowa/klient-poprzedni/src/moduly/agents/stan-agentow.ts
+
+Pięć okien modułu — Agent Builder, Model Configuration, Skills Manager,
+Connectors Manager, Permissions Center — pracuje na jednym zbiorze stanu. Gdyby
+każde okno prowadziło własny wykaz i własny wybór, zmiana modelu bazowego nie
+odświeżałaby biblioteki, a przypisanie umiejętności dotyczyłoby innego eksperta
+niż ten pokazany w edytorze. Poza własnym działaniem stan odświeża wyłącznie
+zdarzenie rdzenia; odpytywania w pętli tu nie ma.
+
+Ogłoszenie zmiany stanu ustawia najpierw eksperta testowanego, dopiero potem
+woła słuchaczy okien. Czat modułu jest czatem testowym bez pamięci sesyjnej:
+rozmowa znika przy zamknięciu okna i przy zmianie testowanego eksperta, a okno
+rozmowy stoi obok widoku modułu, więc o przełączeniu dowiaduje się wyłącznie
+tym wywołaniem. Kolejność jest treścią: rozmowa zdąży się wyczyścić i nazwać
+powód, zanim okna modułu przerysują się na nowego eksperta. Odwrotna kolejność
+pokazywałaby przez moment czat poprzedniego eksperta w oknach już opisanych
+nazwą następnego.

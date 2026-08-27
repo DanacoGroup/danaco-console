@@ -6124,3 +6124,22 @@ Wyjątek bez kształtu odmowy oznacza powłokę, która polecenia nie zna, albo
 przerwany kanał komunikacji z powłoką; dostaje osobny kod zamiast zgadywanego
 kodu powłoki. Zdanie odmowy układa powłoka, nie interfejs: tylko ona wie, czy
 zabrakło łączności, prawa zapisu, czy zgodności sumy kontrolnej.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-model-configuration.ts
+Lista kanałów pochodzi z komendy channel.list — tego samego rejestru, z którego biorą
+kanał okna rozmowy. Okno nie ma własnej listy dostawców i nie zna nazw programów CLI;
+kanały „Code CLI", „Agent SDK" i „API" są wierszami tego rejestru wraz z transportem,
+nie gałęziami w kodzie. Zmiana kanału przełącza zestaw pól zależnych. Zestaw bierze się
+z deklaracji zdolności adaptera (obszar model konfiguracji sesji), więc przełącza się
+sam, gdy zmieni się kanał albo transport. Komendy okna to zapis modelu bazowego oraz
+odczyt rejestru kanałów i deklaracji zdolności. Komenda nadania kanału modelu oknu
+komunikacji tu nie występuje, bo Model Configuration dotyczy jednego eksperta i żadnego
+okna komunikacji nie prowadzi — nie ma czym wskazać identyfikatora okna. Wszystkie
+cztery pola są odczytywalne z bytu eksperta, a bazą trzyma je migracja agentów. Formularz
+pokazuje więc stan rdzenia, a nie własną pamięć — przy zmianie eksperta pola przyjmują
+wartości nowego, a nie zostają po poprzedniku. Puste pole znaczy „ekspert tego nie ma",
+i tak je opisuje.
+
+Parametry są w kontrakcie wartością JSON dowolnego kształtu, więc do pola idą tekstem
+sformatowanym, nie surowym rzutowaniem na napis, bo to dałoby treść nieczytelną zamiast
+tej, którą operator ma poprawić. Brak wartości daje pole puste, a nie napis „undefined".

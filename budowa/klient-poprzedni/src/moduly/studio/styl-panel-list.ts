@@ -24,36 +24,14 @@ import {
 } from '../../modele/kontrolki-formularza';
 import { BEZ_ZMIANY, liczbaPola, poleLiczbowe, tekstPola, wyborPola } from './strona-pola-postaci';
 
-/**
- * Panel list i znaków specjalnych.
- *
- * ── Co tu stoi ──────────────────────────────────────────────────────────────
- * Wypunktowanie, numeracja i lista wielopoziomowa na fragmencie; znak
- * wypunktowania poziomu wraz z wcięciem, odstępem i wyrównaniem; format
- * numeracji poziomu wraz ze wzorem numeru („%1.%2.") i punktem startu;
- * wznowienie numeracji; poziom listy w górę i w dół. Do tego tablica znaków
- * z szukaniem po nazwie i kodzie, znaki ostatnio użyte oraz autozamiana skrótów.
- *
- * ── Dlaczego wzór numeru jest polem, a nie wyborem ──────────────────────────
- * Bo numeracja prawnicza wielopoziomowa („1.1.2") jest wzorem, nie pozycją
- * wykazu. Format `legal` mówi rdzeniowi RODZAJ, a wzór mówi POSTAĆ — Operator
- * pisma urzędowego potrzebuje obojga i nie da się go zamknąć w wykazie gotowych.
- *
- * ── Dlaczego znaki są ostatnio użyte, a nie ulubione ────────────────────────
- * Kontrakt oddaje `recentlyUsed` przy znaku i to on rozstrzyga, co stoi pod ręką.
- * Drugiego pojęcia okno nie zakłada: wykaz jest jeden i pochodzi z rdzenia,
- * więc znaki ostatnio użyte przeżywają zamknięcie karty.
- *
- * Panel nie woła rdzenia i nie zna dokumentu — składa treść żądania i oddaje ją
- * warstwie wyżej.
- */
+/** Panel list i znaków: wypunktowanie, numeracja, wielopoziomowość i tablica znaków z autozamianą. */
 
-/** Treść żądania bez dokumentu — dokument dokłada warstwa wołająca rdzeń. */
+/** Treść żądania bez pola dokumentu — dokument dokłada dopiero warstwa wołająca rdzeń komendą właściwą temu żądaniu. */
 type BezDokumentu<T> = Omit<T, 'documentId'>;
-/** Treść żądania bez dokumentu i bez zakresu. */
+/** Treść żądania bez pola dokumentu i bez pól zakresu fragmentu — obie wartości dokłada warstwa wołająca rdzeń. */
 type BezZakresu<T> = Omit<T, 'documentId' | 'rangeStart' | 'rangeEnd'>;
 
-/** Czynności panelu list i znaków. */
+/** Czynności panelu list i znaków zlecane oknu: zastosowanie listy, ustawienie punktatora i numeracji poziomu, wznowienie numeracji, zmiana poziomu, wstawienie znaku oraz zapis reguły autozamiany. */
 export interface CzynnosciListPanelu {
   naListe(zadanie: BezZakresu<StudioListApplyRequest>): void;
   naPunktator(zadanie: BezDokumentu<StudioListBulletSetRequest>): void;
@@ -67,7 +45,7 @@ export interface CzynnosciListPanelu {
   naOdczyt(): void;
 }
 
-/** Panel list i znaków wraz z jego sterowaniem. */
+/** Panel list i znaków wraz z jego sterowaniem: widoczność panelu, pokazanie list dokumentu, tablicy znaków, reguł autozamiany oraz odpowiedzi na żądanie. */
 export interface StylPanelList {
   element: HTMLElement;
   przestawWidocznosc(): void;
@@ -429,9 +407,7 @@ export function utworzStylPanelList(czynnosci: CzynnosciListPanelu): StylPanelLi
             `${znak.recentlyUsed === true ? ' · ostatnio użyty' : ''}`;
           kafel.setAttribute('aria-label', `Wstaw znak ${znak.name}`);
           kafel.addEventListener('click', () => {
-            // Wybranie z tablicy jedzie KODEM, nie samym znakiem: kod jest
-            // jednoznaczny także dla znaków, które w polu tekstowym wyglądają
-            // identycznie — twarda spacja i spacja zwykła są tego przykładem.
+            // Wybranie z tablicy jedzie kodem — jest jednoznaczny nawet dla znaków wyglądających identycznie.
             czynnosci.naZnak({ code: znak.code, character: znak.character });
           });
           return kafel;
@@ -471,7 +447,7 @@ export function utworzStylPanelList(czynnosci: CzynnosciListPanelu): StylPanelLi
   };
 }
 
-/** Formaty numeracji wraz z prawniczą wielopoziomową. */
+/** Formaty numeracji poziomu wraz z prawniczą wielopoziomową — wykaz pozycji do wyboru w polu formatu numeracji panelu list. */
 const FORMATY_NUMERACJI = [
   BEZ_ZMIANY,
   { wartosc: StudioListNumberFormat.Arabic, etykieta: 'Cyfry arabskie — 1, 2, 3' },
@@ -482,7 +458,7 @@ const FORMATY_NUMERACJI = [
   { wartosc: StudioListNumberFormat.Legal, etykieta: 'Prawnicza wielopoziomowa — 1.1.2' },
 ];
 
-/** Grupa pól panelu. */
+/** Grupa pól panelu złożona z nagłówka tytułowego oraz przekazanej zawartości, ułożona w jednym bloku pionowym. */
 function grupa(tytul: string, zawartosc: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ms-postac__tytul';

@@ -583,3 +583,19 @@ po nieudanym zapisie kosztowałoby Operatora pracę.
 
 Panel woła rdzeń sam; treść i postać do odłożenia bierze z kontekstu, bo
 powierzchnia dokumentu jest po stronie okna.
+
+## budowa/klient-poprzedni/src/moduly/studio/styl-panel-list.ts
+
+Wzór numeru numeracji jest polem, nie wyborem z wykazu, ponieważ numeracja
+prawnicza wielopoziomowa typu 1.1.2 jest wzorem, nie pozycją wykazu gotowych.
+Format `legal` mówi rdzeniowi rodzaj numeracji, a wzór mówi jej postać —
+pismo urzędowe wymaga obu wartości naraz i nie da się go zamknąć w wykazie
+gotowych wzorów.
+
+Znaki tablicy są znakami ostatnio użytymi, nie ulubionymi, ponieważ kontrakt
+oddaje pole `recentlyUsed` przy każdym znaku i to ono rozstrzyga, co stoi pod
+ręką. Panel nie zakłada drugiego pojęcia obok tego pola: wykaz jest jeden
+i pochodzi z rdzenia, więc znaki ostatnio użyte przeżywają zamknięcie karty.
+
+Panel nie woła rdzenia i nie zna dokumentu — składa treść żądania i oddaje ją
+warstwie wyżej, która dokłada dokument i zakres przed wywołaniem komendy.

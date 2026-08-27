@@ -93,5 +93,9 @@ Wykaz narzędzi dostępnych na maszynie wraz z wersjami prowadzi
 Wszystkie są zainstalowane — nie instaluj niczego. Brakujące narzędzie jest
 zgłoszeniem do Prowadzącego.
 
+**Wyjątek udziela się terenowi wpisem w rejestrze terenów**, nazywa go wprost
+i wygasa razem z tym terenem. Wszystko, co teren postawi, trafia do raportu
+odbioru wraz z wagą na dysku i do `prowadzenie/srodowisko-maszyny.md`.
+
 Przed zamknięciem terenu wygaś procesy, które uruchomiłeś, i usuń pliki robocze.
 Sesja, która zostawia po sobie działający proces, nie zamknęła pracy.

@@ -152,6 +152,25 @@ Suma zastana: `b7d0436880d878e78576`.
 
 ## Zgłoszenia oczekujące na teren
 
+### Granica uprzezy nie wystarcza komendom neuronowym
+
+Teren `usterki-rdzenia` podniosl granice uprzezy zgodnosci kontraktu z 15 s do
+60 s, wyprowadzajac ja z granicy warstwy skanera. Teren `odtwarzanie-twarzy`
+zmierzyl, ze **problem jest szerszy**: `image.upscale` na procesorze potrzebuje
+okolo **90 s bez twarzy i 190 s z twarzami**, a przesiew wyszukiwania wczytuje
+wagi przez okolo 30 s.
+
+**Skutek:** sprawdzianu skutku komendy neuronowej nie da sie napisac droga
+generycznej uprzezy — kazdy taki przebieg zostanie urwany i zamelduje usterke
+rdzenia tam, gdzie po prostu liczyl model. Oba tereny obeszly to wlasna droga
+wykonania z osobna granica, i oba zglosily to jako obejscie, nie rozwiazanie.
+
+**Do rozstrzygniecia:** czy uprzaz ma dostac granice zaleznа od rodzaju komendy
+(komendy neuronowe osobno), czy komendy liczace modelami maja byc z niej wyjete
+i mierzone wlasna droga. Wartosc jednolita nie da sie pogodzic: 190 s dla kazdej
+z ponad tysiaca komend to bieg sprawdzianow liczony w godzinach.
+
+
 ### Pakiet serwera nie stawia jeszcze pomocnika twarzy
 
 Rdzen wola `danaco-twarze`, a `scripts/arsenal-serwera.sh` stawia dzis wylacznie

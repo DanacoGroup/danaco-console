@@ -5099,3 +5099,9 @@ niewpięta nie zmienia niczego, bo stanem wyjściowym platformy jest pełny dost
 Pozycja bez wiersza zakresu przechodzi bez zapytania i bez rachunku, bo stanem wyjściowym jest
 pełny dostęp, a rachunek prowadzony dla wszystkich pozycji dopisywałby wiersz przy każdym
 wywołaniu narzędzia w produkcie.
+
+## budowa/server/internal/core/handlers_nawigacja.go
+Ciąg jest jeden: strona główna, wykaz i wejście środowiska, wykaz modułów, wejście przestrzeni
+roboczej, stan okna komunikacji. Klient może wejść w dowolnym miejscu, na przykład wprost do
+środowiska zapamiętanego z poprzedniej pracy. Brak podłączonej domeny nie wywraca rdzenia: komenda
+nawigacji odpowie wtedy kodem nieznanej pozycji, a pozostałe domeny pracują dalej.

@@ -8,31 +8,19 @@ import type { WidokZapisu } from './widok-zapisu';
 import { utworzWidokRozmowy } from './widok-rozmowy';
 import { dolozenieKanalu, nasluchDolozen, zrodloWykazuKanalu } from './zrodlo-wykazu-ukosnika';
 
-/** Ustawienia montażu: rozmowa oraz to, czym okno różni się w module. */
+/** Interfejs ustawień montażu rozszerza opcje rozmowy o moduł okna, kontekst wykonania oraz politykę pamięci właściwą temu modułowi. */
 export interface OpcjeMontazu extends OpcjeRozmowy {
   /** Moduł okna znany powłoce; brak = okno zapyta rdzeń `window.state.get`. */
   modul?: string;
   /** Parametry wykonania okna pokazywane w panelu kontekstu. */
   kontekst?: KontekstOkna;
-  /**
-   * Polityka pamięci rozmowy dla kodu modułu (`ulotnosc.ts`).
-   *
-   * Podaje ją warstwa składająca, bo tylko ona zna moduły i ich konteksty
-   * robocze. Pominięta znaczy „każdy moduł z pamięcią".
-   */
+  /** Polityka pamięci rozmowy właściwa dla kodu modułu, ustalana przez warstwę składającą. */
   politykaModulu?: (kod: string) => PolitykaUlotnosci;
-  /**
-   * Gotowy pasek zlecenia — rząd sterów koperty, stawiany w rzędzie akcji pod
-   * polem wypowiedzi.
-   *
-   * Montaż go nie buduje i nie zagląda do środka — przepuszcza element do widoku
-   * nietknięty. Buduje go ten, kto ma komplet sterowania okna
-   * (`aplikacja/wiazanie-gniazda.ts`); podgląd rozmowy go nie ma i pomija.
-   */
+  /** Gotowy pasek zlecenia stawiany w rzędzie akcji pod polem wypowiedzi, przekazany bez ingerencji. */
   pasekZlecenia?: HTMLElement;
 }
 
-/** Rozmowa wraz z jej widokiem, gotowa do osadzenia w oknie. */
+/** Interfejs zamontowanej rozmowy udostępnia warstwę rozmowy wraz z widokiem, sterowanie modułem oraz trybem widoku transkryptu. */
 export interface ZamontowanaRozmowa {
   /** Warstwa rozmowy — wysyłka, przerwanie, wpisy. */
   rozmowa: Rozmowa;
@@ -42,13 +30,7 @@ export interface ZamontowanaRozmowa {
   ustawModul(kod: string): void;
   /** Moduł, w którym okno pracuje w tej chwili. */
   modul(): string;
-  /**
-   * Przestawia widok transkryptu — cztery tryby z `WIDOKI_ZAPISU`.
-   *
-   * To jest wejście dla menu sesji powłoki. Powłoka nie musi znać ani wpisów,
-   * ani warstw: podaje kod trybu i dostaje przerysowany zapis. Wywołanie nigdy
-   * nie jest odrzucane i nigdy nie kosztuje rundy do rdzenia.
-   */
+  /** Przestawia widok transkryptu na jeden z czterech trybów, będąc wejściem dla menu sesji powłoki. */
   ustawWidokZapisu(widok: WidokZapisu): void;
   /** Tryb widoku transkryptu, w którym okno pracuje w tej chwili. */
   widokZapisu(): WidokZapisu;
@@ -56,31 +38,14 @@ export interface ZamontowanaRozmowa {
   rozlacz(): void;
 }
 
-/**
- * Osadza rozmowę okna w dokumencie.
- *
- * Jedna odpowiedzialność: powiązanie warstwy rozmowy z jej widokiem i wstawienie
- * całości w kontener. To jest punkt styku warstwy rozmowy z powłoką — powłoka
- * nie musi znać ani widoku, ani kontraktu.
- *
- * Moduł okna jest śledzony, nie zakładany: okno pyta rdzeń o swój moduł
- * i słucha zmian (`window.changed`), więc `workspace.enter` wykonane gdziekolwiek
- * indziej przestawia to okno samo. Powłoka może też przestawić okno wprost przez
- * `ustawModul`, gdy zna wynik komendy wcześniej.
- *
- * Ognisko ląduje na polu wypowiedzi od razu po złożeniu.
- */
+/** Funkcja osadza rozmowę okna w dokumencie, wiążąc warstwę rozmowy z jej widokiem, śledząc moduł okna wprost z rdzenia zamiast go zakładać. */
 export function zamontujRozmowe(
   kontener: HTMLElement,
   kanal: Kanal,
   idOkna: string,
   opcje: OpcjeMontazu = {},
 ): ZamontowanaRozmowa {
-  // Śledzenie modułu idzie przed rozmową: polityka pamięci zależy od modułu,
-  // a rozmowa musi ją znać już w chwili złożenia, bo to ona rozstrzyga, czy okno
-  // w ogóle woła `message.list`. Odwrotna kolejność dałaby okno modułu bez
-  // pamięci sesyjnej, które odtwarza wątek z rdzenia, zanim się dowie, że nie
-  // miało prawa go odtworzyć.
+  // Śledzenie modułu poprzedza rozmowę: polityka pamięci zależy od modułu już przy złożeniu.
   const sledzenie = sledzModulOkna(kanal, idOkna, opcje.modul ?? '');
   const polityka = opcje.politykaModulu;
   const rozmowa = utworzRozmowe(kanal, idOkna, {
@@ -90,9 +55,7 @@ export function zamontujRozmowe(
   const widok = utworzWidokRozmowy(rozmowa, {
     modul: sledzenie.biezacy(),
     katalogAkcji: zrodloAkcjiKanalu(kanal),
-    // Wykaz po ukośniku dostaje każde okno z kanałem — bez nastawy i bez
-    // przełącznika. Jest jedyną drogą doraźnego dostępu do narzędzia, więc nie
-    // może zależeć od tego, którym oknem Operator akurat pracuje.
+    // Wykaz po ukośniku dostaje każde okno z kanałem, bez osobnej nastawy i przełącznika.
     zrodloWykazuUkosnika: zrodloWykazuKanalu(kanal),
     dolozenieNarzedzia: dolozenieKanalu(kanal),
     ...(opcje.kontekst === undefined ? {} : { kontekst: opcje.kontekst }),
@@ -101,14 +64,7 @@ export function zamontujRozmowe(
       : { pasekZlecenia: opcje.pasekZlecenia }),
   });
 
-  // Dołożenie narzędzia cudzą ręką. Wybór z tego okna melduje się sam
-  // z odpowiedzi komendy; poszerzenie zestawu spoza okna przychodzi wyłącznie
-  // zdarzeniem `session.tool.attached`.
-  //
-  // Powód niepodpięcia nasłuchu nie idzie do wątku przy montażu. Gdy zdarzenia
-  // nie ma w wygenerowanym kontrakcie, ten sam brak melduje się zdaniem w chwili
-  // sięgnięcia po wykaz (`zrodlo-wykazu-ukosnika.ts`), więc powtarzanie go przy
-  // otwarciu każdego okna byłoby hałasem.
+  // Dołożenie narzędzia spoza tego okna zgłasza się wyłącznie zdarzeniem dołożenia narzędzia sesji.
   const odsubskrybujDolozenia = nasluchDolozen(kanal, (zdanie) =>
     rozmowa.zglosKomunikat(zdanie),
   );

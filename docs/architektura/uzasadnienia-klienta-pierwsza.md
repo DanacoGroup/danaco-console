@@ -3681,3 +3681,15 @@ Lista wyboru pokazuje tryb okna, a nie wybór wskazany przez Operatora.
 Przeglądarka przestawia listę natychmiast, a zapis idzie dopiero po niej, więc
 po odmowie rdzenia lista stałaby na wartości, której okno nie ma. Dlatego każda
 odmowa cofa listę do trybu ostatnio potwierdzonego przez rdzeń.
+
+## budowa/klient-poprzedni/src/konfiguracja/lancuch-zasiegow.ts
+
+Wiersz, z którego pochodzi wartość obowiązująca w punkcie widzenia okna, jest oznaczony
+sygnałem. Pozostałe zapisy zostają widoczne, ponieważ Operator ma wiedzieć nie tylko to,
+co obowiązuje, lecz także to, co czeka na innym poziomie.
+
+Ostatni wiersz należy do wartości domyślnej katalogu. Brak zapisu nie jest dziurą: jest
+wartością domyślną i tak został nazwany.
+
+Każdy zapis wolno usunąć. Usunięcie nie jest niszczeniem ustawienia, tylko zdjęciem
+nadpisania, po którym wartość wraca do poziomu szerszego.

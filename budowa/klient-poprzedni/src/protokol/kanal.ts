@@ -15,21 +15,14 @@ import { utworzKorelacje } from './korelacja';
 import { odczytajRamke, zapiszRamke } from './ramka';
 import type { Sesja } from './sesja';
 
-/** Wynik komendy widziany przez wywołującego. */
+/** Wynik komendy widziany przez wywołującego, złożony z flagi powodzenia, treści wyniku oraz opisu błędu. */
 export interface Wynik<T> {
   udany: boolean;
   wynik?: T;
   blad?: ErrorInfo;
 }
 
-/**
- * Kanał komunikatów — cienka warstwa nad kontraktem osadzona na transporcie.
- *
- * Kanał nie zna treści dziedzinowej. Nazwy komend i zdarzeń oraz kształty ich
- * treści pochodzą wyłącznie z `shared/contract.ts`: zmiana nazwy
- * w `contract.json` przerywa kompilację klienta. Komunikat nierozpoznany nie
- * jest odrzucany.
- */
+/** Kanał komunikatów — cienka warstwa nad kontraktem osadzona na transporcie, nieznająca treści dziedzinowej. */
 export interface Kanal {
   /** Wysyła komendę kontraktu; zwraca identyfikator żądania. */
   wyslij<K extends Command>(
@@ -86,16 +79,13 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
     dziennikNieznanych: () => dziennik,
   };
 
-  // Dziennik zakładamy od razu, bo komunikat nierozpoznany może przyjść przed
-  // pierwszą subskrypcją widoku. Zapis i wpis do konsoli są jedyną reakcją:
-  // ani zdarzenie `*.unknown`, ani koperta o typie spoza kontraktu nie zrywa
-  // połączenia i nie blokuje sesji.
+  // Dziennik zakładamy od razu, bo komunikat nierozpoznany może przyjść przed pierwszą subskrypcją.
   const dziennik = zalozDziennikNieznanych(kanal);
 
   return kanal;
 }
 
-/** Przekłada kopertę odpowiedzi na wynik komendy. */
+/** Przekłada kopertę odpowiedzi rdzenia na wynik komendy widziany przez wywołującego dany kanał klienta. */
 function zbudujWynik<T>(odpowiedz: Envelope): Wynik<T> {
   if (!czyUdana(odpowiedz)) {
     return { udany: false, blad: odpowiedz.error };

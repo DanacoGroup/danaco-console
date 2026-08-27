@@ -1883,3 +1883,8 @@ wskazują tę samą stronę sceny — kierunek biegu zlecenia — i stoją po st
 okna partnera. U koordynatora grot wychodzi z napisu ku wykonawcy, u wykonawcy
 wchodzi w napis od strony koordynatora, dzięki czemu kierunek pętli czyta się
 bez czytania słów; gniazdo spoza więzi nie dostaje napisu.
+
+## budowa/klient-poprzedni/src/moduly/translate/porownanie-paneli.ts
+Zestawienie jest czynnością czysto miejscową: niczego nie liczy i o nic nie pyta rdzenia. Panele
+są dokładnie dwa; przy innej liczbie wskazań zestawienie mówi wprost, czego oczekuje, zamiast
+pokazać cokolwiek.

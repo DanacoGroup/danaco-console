@@ -3136,3 +3136,24 @@ Sprawdzenie kondycji jest dziennikiem, nie stanem. `AppDeploymentHealth`
 niesie `availabilityPercent` — udział w oknie pomiaru — którego z jednego
 wiersza „stan bieżący" policzyć się nie da. Każde `apps.deployment.health.get`
 dopisuje więc wynik swojego sprawdzenia, a udział liczy się z wierszy.
+## budowa/server/internal/store/migracja_203_apps_podglad_motyw.sql
+Migracja 203 — moduł Apps, warsztaty frontendu i backendu: podgląd na żywo
+oraz motyw produktu.
+
+Podgląd ma jeden wiersz na okno, nie na warstwę. `apps.preview.stop` niesie
+samo `windowId` — nie ma czym wskazać, którą z dwóch warstw zatrzymać — więc
+w oknie stoi najwyżej jeden serwer podglądu naraz, a `apps.preview.start`
+z inną warstwą przestawia ten sam wiersz. Kolumna `warstwa` mówi, co ten
+serwer dziś pokazuje.
+
+Adres podglądu jest adresem serwera, który naprawdę stoi. Rdzeń podnosi go
+na pętli zwrotnej i oddaje pod nim treść plików warsztatu — kolumna trzyma
+adres wydany przez system operacyjny przy nasłuchu, a nie adres wymyślony.
+Po restarcie rdzenia serwer nie stoi, więc wiersz zostaje w stanie `stopped`:
+odtwarzanie nasłuchów z bazy przy starcie obiecywałoby podgląd, którego nikt
+nie zamawiał.
+
+Motyw jest surowym JSON-em kontraktu (`apps.theme.set` przyjmuje pole `json`,
+`apps.theme.get` oddaje je z powrotem). Rdzeń go nie rozkłada na zmienne
+stylistyczne: kształt motywu należy do systemu wizualnego produktu, nie do
+platformy, a rozłożenie go tutaj byłoby drugą prawdą o cudzym kształcie.

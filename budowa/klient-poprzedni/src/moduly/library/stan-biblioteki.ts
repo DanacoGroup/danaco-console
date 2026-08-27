@@ -19,24 +19,9 @@ import type { ZrodloBiblioteki } from './zrodlo-biblioteki';
 import type { ZrodloZnaczenia } from './zrodlo-znaczenia';
 
 /**
- * Jeden zbiór plików na cały moduł Library.
- *
- * Pięć okien — Library Explorer, File Preview, Versioning Panel,
- * Tags & Collections oraz Metadata & Archive Panel — pracuje na tym samym
- * zaznaczeniu i tym samym pliku czynnym. Gdyby każde prowadziło własny wykaz,
- * etykieta trafiłaby na inny plik niż ten pokazany w podglądzie, a panel wersji
- * pokazywałby historię trzeciego. Zależności wykazu — „File Preview aktywuje
- * się po wybraniu pliku", „akcje zbiorcze operują na zaznaczeniu Explorera" —
- * mieszkają tutaj, nie w oknach.
- *
- * Tutaj mieszka też forma prezentacji wykazu i tryb wyszukiwania. Ani jedno,
- * ani drugie nie jest własnością okna: wybór widoku zmienia to, co Operator
- * widzi w Explorerze, a tryb rozstrzyga, którą komendą pójdzie następne
- * szukanie — obie wartości muszą przeżyć przerysowanie okna.
- *
- * Poza własnym działaniem stan odświeża wyłącznie zdarzenie: artefakt wytworzony
- * w Studio, Research czy Browser dociera przez `library.file.changed`, a stan
- * wciąga go tak samo jak własne wgranie. Odpytywania w pętli nie ma.
+ * Stan biblioteki utrzymuje jeden zbiór plików i jedno zaznaczenie na cały
+ * moduł: pięć okien pracują na tym samym pliku czynnym, a forma prezentacji
+ * i tryb wyszukiwania mieszkają tu, nie w oknach.
  */
 export type {
   FazaWykazu,
@@ -89,24 +74,12 @@ export interface StanBiblioteki {
   /** Powód pustego katalogu modułów; pusty napis znaczy „odczyt się udał". */
   powodModulow(): string;
   ustawModuly(moduly: readonly Module[], powod: string): void;
-  /**
-   * Nastawa modułu docelowego przeniesienia — jedna na cały moduł.
-   *
-   * Ten sam ster stoi w Explorerze i w File Preview; obie kontrolki czytają
-   * i zapisują tę wartość, więc zmiana w jednym oknie jest w drugim widoczna
-   * natychmiast. Pusty napis znaczy „moduł wytwórcy pliku".
-   */
+  // Nastawa modułu docelowego jest jedna na cały moduł: ten sam ster czytają Explorer i File Preview.
   modulDocelowy(): string;
   ustawModulDocelowy(kod: string): void;
-  /**
-   * Co rdzeń odpowiedział o treści pliku — osobno od jego metryki.
-   *
-   * Wykaz plików, podgląd i wgranie muszą mówić o tym samym pliku to samo:
-   * jedno źródło werdyktu jest tu z tego samego powodu, co jeden zbiór plików.
-   * Plik nieodpytany zwraca `nieznana`, nie `brak`.
-   */
+  // Co rdzeń odpowiedział o treści pliku, osobno od metryki; plik nieodpytany zwraca nieznana, nie brak.
   tresc(idPliku: string): StanTresci;
-  /** Odkłada werdykt poznany przy okazji innego wywołania — np. podglądu okna. */
+  /** Odkłada werdykt poznany przy okazji innego wywołania, na przykład podglądu okna. */
   zapiszTresc(idPliku: string, stan: StanTresci): void;
   /** Pyta rdzeń o treść pliku i odkłada jego odpowiedź; zwraca ją wołającemu. */
   zbadajTresc(idPliku: string): Promise<StanTresci>;
@@ -155,9 +128,7 @@ export function utworzStanBiblioteki(
         ]),
       ].sort((pierwsza, druga) => pierwsza.localeCompare(druga, 'pl')),
 
-    // Dwa zawężenia składają się koniunkcyjnie: katalog struktury i zbiór
-    // wskazany przez raport albo wyszukiwanie. Kolejność nie ma znaczenia dla
-    // wyniku, ale zbiór wskazany idzie pierwszy, bo bywa znacznie węższy.
+    // Dwa zawężenia składają się koniunkcyjnie; zbiór wskazany idzie pierwszy, bo bywa znacznie węższy.
     widoczne() {
       const wskazane =
         magazyn.zawezenie === null

@@ -3049,3 +3049,19 @@ Wiersz niebieżący nie jest zatem „nieznany" z braku odpowiedzi — po prostu
 Werdykt `brak` znaczy, że nie ma do czego wracać. Werdykt `odmowa` znaczy, że rdzeń treści
 nie oddał, ale też o niej nie orzekł, więc nie odbiera przycisku przywrócenia. Werdykt
 `odwolanie` znaczy wskazanie miejsca zamiast bajtów.
+
+## budowa/klient-poprzedni/src/konfiguracja/panel-obszarow-sesji.ts
+
+Zasięg jest widoczny w dwóch miejscach, bo mówi o dwóch rzeczach. Nagłówek
+sekcji mówi, dla kogo liczona jest konfiguracja i pod jaki adres pójdzie zapis;
+oba biorą się z punktu widzenia ustawionego paskiem u góry okna, więc panel nie
+stawia drugiego selektora zasięgu. Plakietka przy obszarze mówi natomiast, skąd
+wartość przyszła: z którego rejestru, z którego poziomu i z której osi.
+
+Ładowanie i odmowa idą tym samym pasem stanów odczytu, którym idą stany
+katalogu, a pustka idzie stanem pustym panelu kategorii. Żadnego z tych trzech
+stanów panel nie buduje sam.
+
+Zapis wybranych obszarów zawsze kończy się zdaniem odpowiedzi. Wybór pusty nie
+idzie do rdzenia, ponieważ komenda z pustym wykazem obszarów nie zapisałaby
+niczego, a milczący przycisk wyglądałby jak awaria.

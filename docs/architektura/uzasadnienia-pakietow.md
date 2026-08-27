@@ -4653,3 +4653,62 @@ własnego słowa nie ma prawa skasować zdania zapisanego wcześniej, w odróżn
 wyróżnienia, które kasuje powód razem ze znacznikiem.
 ## budowa/server/internal/dane/roundtable_decyzja.go
 Zmiana wagi jednego kryterium przestawia wynik każdego wariantu naraz, więc kolumna z wynikiem ważonym rozjechałaby się z ocenami przy pierwszym pominięciu przeliczenia; z tego powodu wynik ważony nie jest przechowywany, tylko liczony przez rdzeń przy odczycie.
+
+## budowa/server/internal/store/katalog_akcji_test.go
+
+Panel akcji i siatka szybkich akcji nie mają własnej listy pozycji — biorą ją komendą listowania z
+tabeli akcja. Wiersz katalogu wskazuje komendę kolumną komenda, a kolumna ta nie jest kluczem obcym
+i być nim nie może, ponieważ kontrakt mieszka w osobnym pliku, nie w bazie; baza przyjmie więc każdą
+nazwę, także nazwę komendy, której nie ma. Skutek takiego wiersza u operatora: kontrolka jest, daje
+się nacisnąć i wraca odmową nieznanej komendy. Jest to atrapa — element, który obiecuje czynność, a nie
+ma za sobą ani jednego wykonawcy, co jest kłamstwem odwrotnym do wykazu braków, który już raz mówił
+o brakach, których nie było. Dlatego kontrola stoi w tym pliku, a nie w kodzie rdzenia: pyta o stan po
+pełnym przejeździe migracji, więc obejmuje każdy wiersz katalogu, także wiersz wniesiony migracją, która
+jeszcze nie istnieje. Sprawdzian wypada niepomyślnie także wtedy, gdy katalog zostanie opróżniony, bo
+zaczyn akcji jest treścią produktu, nie danymi przykładowymi.
+
+Zapory nie wolno osłabić wykazem wyjątków: pozycja bez pokrycia w kontrakcie nie ma stanu przejściowego
+„jeszcze nie", dopóki komendy nie ma, kontrolki też nie ma być, a wiersz dochodzi migracją razem
+z komendą. Funkcja pozycjeBezPokrycia liczy do tego samego wykazu również pozycję bez ani jednej
+komendy, ponieważ kontrolka bez komendy i kontrolka z komendą nieistniejącą kończą się u operatora tym
+samym, czyli naciśnięciem bez skutku; wyliczenie stoi osobno od sprawdzianu po to, żeby dało się je
+nakarmić wierszem, którego w katalogu nie ma.
+
+Sprawdzian, który przechodzi na katalogu zdrowym, ale przeszedłby też na katalogu z atrapą, jest
+sprawdzianem pozornym, a pozorny sprawdzian jest gorszy od jego braku, bo świeci zielono i nikt nie
+patrzy dalej. Droga niepomyślna jest tu mierzona wprost: wiersz wskazujący komendę, której nie ma, oraz
+wiersz bez komendy muszą wyjść z wyliczenia oba.
+
+Test ikon pilnuje drugiej połowy tej samej obietnicy: pozycja z ikoną, której nie ma w zestawie klienta,
+wychodzi w oknie kontrolką bez znaku, pustym prostokątem nieczytelnym dla operatora. Zestaw czyta się
+z plików źródłowych ikon, ponieważ są jedyną prawdą o tym, co klient umie narysować. Sprawdzian stoi
+i czeka, dopóki klient nie ma zestawu ikon, ponieważ zestaw wchodzi do klienta wraz z ramą aplikacji,
+a przed nim nie ma czego czytać; zastępnika nie ma i być nie może, bo zestaw poprzedniego klienta jest
+materiałem do przeszczepu, nie tym, co obecny klient umie narysować, a katalog ikon wkompilowany
+w rdzeń jest materiałem komend na innej siatce nazw, nie zestawem kontrolek okna — miara wzięta
+z któregokolwiek z nich świeciłaby zielono, nie mierząc okna. Warunkiem powrotu jest katalog wskazany
+stałą sciezkaZrodelIkon; pominięcie jest warunkowe, więc sprawdzian wraca sam w chwili, gdy zestaw
+stanie.
+
+Warunek powrotu w funkcji zrodlaIkonKlientaStoja stoi osobno od funkcji nazwyIkonKlienta, bo dwa stany
+trzeba odróżnić: zestawu jeszcze nie ma, co jest pominięciem, oraz zestaw jest, ale nie daje nazw, co
+jest niepowodzeniem — zmienił kształt albo sprawdzian czyta niewłaściwy katalog. Odczyt nazw idzie po
+kluczach zapisu obiektu, ponieważ nazwa ikony stoi w tych plikach jako klucz wcięty dwoma znakami
+odstępu; rozbiór składni języka źródłowego byłby tu kodem, który sam może się mylić, a wzorzec klucza
+wystarcza, bo pliki źródeł mają jeden kształt pilnowany przez formater klienta.
+
+## budowa/server/internal/narzedzia/wpiecie_test.go
+Odmowa wskazująca plik, którego nie ma, jest gorsza od odmowy milczącej: wysyła
+Operatora po nic. Sprawdziany tego pliku nie poprzestają na czytaniu napisu
+odmowy — biorą z niego ścieżki i mierzą, czy te ścieżki leżą w drzewie budowy,
+bo sam napis mógłby wskazywać cokolwiek i nadal wyglądać poprawnie.
+
+Bez potwierdzenia miejsca w korzenBudowy sprawdzian mierzący obecność pliku
+nie odróżniłby pliku nieobecnego od pomiaru wykonanego w złym miejscu: obie
+drogi kończą się tym samym błędem odczytu pliku, a znaczą co innego.
+
+Ścieżkę wyszukiwania systemu w powodBrakuBinarium podmienia się na katalog
+pusty, żeby wyszukanie binarium nie miało czego znaleźć; obok binarium
+sprawdzianu, które stoi w katalogu tymczasowym budowania, serwera narzędzi
+też nie ma. Gdyby mimo to Wpis oddał ścieżkę, sprawdzian pada zamiast przejść:
+odmowy, której nie było, nie wolno uznać za odmowę zbadaną.

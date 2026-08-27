@@ -1,10 +1,6 @@
-// Odpowiedzialność pliku: sprawdziany odmowy wpisu `danaco` — czy odmowa przy
-// braku binarium serwera narzędzi prowadzi do naprawy, która ISTNIEJE.
-//
-// Odmowa wskazująca plik, którego nie ma, jest gorsza od odmowy milczącej:
-// wysyła Operatora po nic. Sprawdziany poniżej nie poprzestają na czytaniu
-// napisu — biorą z niego ścieżki i MIERZĄ, czy te ścieżki leżą w drzewie.
-// Sam napis mógłby wskazywać cokolwiek i nadal wyglądać poprawnie.
+// Plik sprawdza, czy odmowa wpisu danaco przy braku binarium serwera narzędzi
+// prowadzi do naprawy, która istnieje, przez pomiar ścieżek w drzewie, nie
+// samego napisu.
 package narzedzia
 
 import (
@@ -15,8 +11,7 @@ import (
 )
 
 // skryptyZniesione wylicza skrypty instalek natywnych usunięte z repozytorium
-// wraz z modelem wdrożenia (pozycja 8 rejestru decyzji: produkt występuje
-// wyłącznie w postaci hybrydowej). Odmowa nie ma prawa odesłać do żadnego.
+// wraz z modelem wdrożenia hybrydowego; odmowa nie ma prawa odesłać do żadnego.
 var skryptyZniesione = []string{
 	"instalka-natywna-win.sh",
 	"instalka-natywna-linux.sh",
@@ -26,13 +21,9 @@ var skryptyZniesione = []string{
 	"pakowanie.sh",
 }
 
-// korzenBudowy oddaje katalog `budowa/` — korzeń modułu Go, od którego liczone
-// są ścieżki wskazywane w odmowie.
-//
-// Najpierw potwierdza, że trafił tam, gdzie miał trafić (`go.mod` modułu),
-// i dopiero wtedy oddaje ścieżkę. Bez tego potwierdzenia sprawdzian mierzący
-// obecność pliku nie odróżniłby pliku nieobecnego od pomiaru w złym miejscu —
-// obie drogi kończą się tym samym błędem `os.Stat`, a znaczą co innego.
+// korzenBudowy oddaje katalog budowy, korzeń modułu Go, od którego liczone są
+// ścieżki wskazywane w odmowie, po potwierdzeniu, że trafił we właściwe
+// miejsce.
 func korzenBudowy(t *testing.T) string {
 	t.Helper()
 	korzen := filepath.Join("..", "..", "..")
@@ -44,14 +35,8 @@ func korzenBudowy(t *testing.T) string {
 	return korzen
 }
 
-// powodBrakuBinarium wywołuje `Wpis` w warunkach, w których serwera narzędzi
-// nie da się znaleźć, i oddaje powód odmowy.
-//
-// Ścieżkę wyszukiwania systemu podmieniamy na katalog pusty, żeby `exec.LookPath`
-// nie miał czego znaleźć; obok binarium sprawdzianu, które stoi w katalogu
-// tymczasowym budowania, serwera narzędzi też nie ma. Gdyby mimo to `Wpis`
-// oddał ścieżkę, sprawdzian pada zamiast przejść — odmowy, której nie było,
-// nie wolno uznać za odmowę zbadaną.
+// powodBrakuBinarium wywołuje Wpis w warunkach, w których serwera narzędzi nie
+// da się znaleźć, i oddaje powód odmowy.
 func powodBrakuBinarium(t *testing.T) string {
 	t.Helper()
 	t.Setenv("PATH", t.TempDir())

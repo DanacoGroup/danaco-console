@@ -5698,3 +5698,24 @@ Diagnostics Center jest oknem wiodącym modułu Diagnostics: przegląd zagregowa
 Skróty zakresu czasu obejmują ostatnią godzinę, dzień, tydzień oraz zakres własny. Pozycja bez okna znosi zawężenie: zakres pusty jest stanem poprawnym modułu, nie brakiem. Skrót nie liczy niczego, czego nie widać: wyliczoną chwilę wpisuje w pola początku i końca, więc Operator czyta z okna dokładnie te liczby, które idą do rdzenia.
 
 Rdzeń nie honoruje dziś dwóch pól żądania analizy: uruchomienie analizy dobiera błędy wyłącznie zakresem czasu, a pole porównania migawki nie ustawia się nigdy, więc identyfikator analizy porównywanej nie pojawi się w odpowiedzi nawet wtedy, gdy porównywana analiza istnieje. Potwierdzenie zawsze udane robiłoby z tych dwóch pól bez skutku pola pozornie działające. Zdanie potwierdzenia mówi więc liczbami z odpowiedzi, a każde pominięte pole żądania wychodzi na wierzch tonem nieudanym. Gdy rdzeń zacznie te pola honorować, zastrzeżenia znikną same, bo nic o zachowaniu rdzenia nie jest tu wpisane na sztywno.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-git-panel.ts
+
+Czynności typu `GitActionKind` idą przez komendę `developer.git.action`; świeżo otwarty
+panel nie wie o repozytorium nic i mówi to wprost stanem pustym, zamiast udawać czyste
+repozytorium. Okno stoi we wspólnym stanie modułu: nasłuchuje `stan.naZmiane` i podstawia
+wskazaną ścieżkę do pola „Ścieżki”, dopóki Operator nie wpisze własnej, a ścieżki z własnego
+wyniku oddaje z powrotem przez `stan.wskazPlik`, czym otwiera je w Code Editorze.
+
+Zdanie stanu pustego, o tym czego kontrakt nie niesie, składa `katalog-komend.ts` z rejestru
+komend wziętego z odpowiedzi `connection.hello`, a nie stała zapisana w tym pliku: napis na
+stałe zostałby na scenie jako nieprawda w dniu dołożenia brakującej komendy.
+
+Etykieta przycisku wysłania wymuszonego nie nazywa polecenia gita wprost: pole kontraktu to
+`force`, a czym rdzeń je wykonuje, mówi pole `output` wyniku — napis o poleceniu rozjechałby
+się przy zmianie rdzenia, a wyjście polecenia jest zawsze świeże.
+
+Potwierdzenie zatwierdzenia bez opisu używa `potwierdzenie(zdanie, false)`, nie
+`blad(...)`, bo to nie jest odmowa rdzenia ani nieudany odczyt, tylko lokalna walidacja przed
+wysłaniem — treść okna z wynikiem ostatniej czynności ma zostać nietknięta, a `potwierdzenie`
+właśnie tego nie kasuje.

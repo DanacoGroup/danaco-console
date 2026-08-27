@@ -3,18 +3,9 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Automatyka bieżąca modułu — jedna prawda dla pięciu okien.
- *
- * Wszystkie okna pracują nad tą samą automatyką: Workflow Builder buduje jej
- * kroki, Orchestrator układa między nimi zależności, Scheduler nadaje jej
- * cykliczność, Queue Manager uruchamia jej kolejkę, a Execution Monitor
- * pokazuje jej przebiegi. Gdyby każde okno trzymało własne wskazanie, zmiana
- * automatyki w jednym rozjechałaby cztery pozostałe.
- *
- * Kolejka bieżąca stoi obok automatyki, bo Queue Manager musi wiedzieć, którą
- * kolejkę posuwa, a Execution Monitor — po której przyszedł stan przebiegu.
- * Kolejka jest bytem silnika kolejek, nie definicji, więc nie należy do
- * `AutomationWorkflow` i nie da się jej z niego odczytać.
+ * Automatyka bieżąca modułu — jedna prawda dla pięciu okien. Wszystkie okna
+ * pracują nad tą samą automatyką, więc gdyby każde trzymało własne wskazanie,
+ * zmiana automatyki w jednym rozjechałaby cztery pozostałe.
  */
 export interface StanAutomatyki {
   /** Identyfikator automatyki bieżącej; pusty znaczy „nie wskazano”. */
@@ -35,7 +26,11 @@ export interface StanAutomatyki {
   zamknij(): void;
 }
 
-/** Zależności stanu: automatyka i kolejka otwierane od razu. */
+/**
+ * Zależności stanu: automatyka i kolejka otwierane od razu. Obie są nieobowiązkowe,
+ * bo moduł otwarty bez wskazania czeka na wybór, zamiast podstawiać pierwszą pozycję
+ * z wykazu i pracować nad nieswoją automatyką.
+ */
 export interface OpcjeStanu {
   automatyka?: string;
   kolejka?: string;
@@ -54,9 +49,7 @@ export function utworzStanAutomatyki(
     for (const sluchacz of [...sluchacze]) sluchacz();
   }
 
-  // Stan przebiegu przychodzi także z pracy innego okna albo innego urządzenia
-  // tego konta. Dotyczy naszej automatyki — więc definicja w oknie jest już
-  // nieaktualna i okna mają się odczytać ponownie.
+  // Stan przebiegu z innego okna tego konta unieważnia definicję w oknie.
   const odsubskrybujPrzebieg = zrodlo.naStanPrzebiegu((tresc) => {
     if (tresc.execution.workflowId !== idAutomatyki) return;
     powiadom();

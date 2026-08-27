@@ -274,7 +274,7 @@ func (r *repozytoriumDesignu) ZapiszSymbolDesignu(ctx context.Context, symbol Sy
 			return fmt.Errorf("dane: nie można zapisać symbolu design %q: %w", symbol.Kod, err)
 		}
 
-		// Symbol mógł powstać dopiero w tej transakcji: klucz wiersza czytamy przed podmianą jego członków.
+		// Symbol mógł powstać dopiero w tej transakcji: klucz wiersza czyta się przed podmianą jego członków.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzSymbolDesignu)
 		if err != nil {
 			return err

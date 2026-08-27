@@ -1,38 +1,6 @@
-// Odpowiedzialność pliku: tablica znaków specjalnych — wykaz do wybrania wraz
-// z wyszukaniem po nazwie i po kodzie, znaki ostatnio użyte, wstawienie znaku
-// w miejsce kursora oraz zasady autozamiany skrótu na znak.
-//
-// ── Dlaczego tablica znaków stoi w rdzeniu, a nie w bazie ────────────────────
-// Nazwy znaków, ich punkty kodowe i grupy są WIEDZĄ rdzenia — tak samo jak
-// arkusz stylów fabryczny i wykaz nośników druku. Do bazy schodzi wyłącznie to,
-// co Operator zmienił (jego zasady autozamiany) albo czym się posłużył (jego
-// znaki ostatnio użyte). Wpisanie tablicy do migracji dałoby dwa wykazy, które
-// rozjadą się przy pierwszym uzupełnieniu.
-//
-// ── Dlaczego wstawienie znaku idzie drogą zmiany treści ─────────────────────
-// Znak specjalny jest ZNAKIEM, nie obiektem: § w treści pisma ma się liczyć do
-// długości akapitu, znaleźć w wyszukiwaniu i przenieść przy zmianie formatu tak
-// samo jak litera. Dlatego wstawienie idzie przez `postacZamienTresc`, tę samą
-// drogę, którą idzie pisanie — a nie przez osobny byt, którego reszta modułu by
-// nie widziała. Skutkiem jest zmiana śledzona autora `model`, gdy znak wstawił
-// model, i wpis dziennika, którym da się to cofnąć pojedynczo.
-//
-// ── Dlaczego autozamiana nie zamienia niczego w rdzeniu ─────────────────────
-// Zasada autozamiany jest NASTAWĄ, a nie czynnością na dokumencie: zamiana
-// zachodzi w chwili pisania, czyli w oknie, na naciśnięcie klawisza. Rdzeń
-// trzyma wykaz zasad, wystawia go oknu i pozwala go zmienić — i tyle ma robić.
-// Gdyby rdzeń przepuszczał treść przez zasady przy zapisie, Operator, który
-// napisał „(c)" świadomie, dostałby znak praw autorskich wbrew sobie i nie
-// miałby czym tego cofnąć.
-//
-// Wykaz zasad — także fabrycznych — stoi przy tym W BAZIE, nie w tym pliku.
-// Migracja 368 założyła tabelę `autozamiana_znaku_studio` wraz z kolumną
-// `fabryczna` i wpisała zasady fabryczne wierszami, żeby Operator mógł je
-// WYŁĄCZYĆ; migracja 371 dołożyła do tamtego wykazu znaki prawnicze i ułamki.
-// Powtórzenie wykazu fabrycznego tutaj byłoby drugą prawdą o tym, co wchodzi
-// w miejsce skrótu, i pierwsza poprawka by je rozjechała. To jest odwrotnie niż
-// z tablicą znaków wyżej — i różnica jest z zamysłu: tablicy znaków Operator nie
-// zmienia, a zasadę autozamiany zmienia i wyłącza.
+// Odpowiedzialność pliku: tablica znaków specjalnych do wybrania, wyszukiwanie
+// po nazwie i po kodzie, znaki ostatnio użyte, wstawienie znaku w miejsce
+// kursora oraz zasady autozamiany skrótu na znak.
 package core
 
 import (
@@ -50,11 +18,12 @@ import (
 // Dwadzieścia cztery mieści się w tablicy okna bez przewijania.
 const symbolIleOstatnich = 24
 
-// symbolIleDomyslnie to ile znaków oddaje wykaz bez wskazania granicy.
+// symbolIleDomyslnie to ile znaków oddaje wykaz zawężenia, gdy żądanie nie
+// wskazuje własnej granicy liczby wyników.
 const symbolIleDomyslnie = 200
 
-// Grupy znaków. Nazwy są pełne i polskie, bo wchodzą wprost do okna wyboru —
-// żadnego kodu ani skrótu.
+// Grupy znaków. Nazwy są pełne i polskie, bo wchodzą wprost do okna wyboru
+// znaku, zamiast przechodzić przez osobny słownik tłumaczeń kodu na etykietę.
 const (
 	symbolGrupaMatematyczne = "matematyczne"
 	symbolGrupaWaluty       = "waluty"
@@ -66,11 +35,8 @@ const (
 )
 
 // SymbolSkladnicaStudia jest kontraktem tabel tablicy znaków: zasad autozamiany
-// i znaków ostatnio użytych (migracja 371).
-//
-// Obszar sięga po nie osobnym kontraktem, a nie po całe repozytorium — tak samo
-// jak obszar kontroli pracy po swoje tabele. Brak tych tabel jest brakiem
-// montażu rdzenia i mówi to wprost, zamiast udawać puste wykazy.
+// i znaków ostatnio użytych, wprowadzonych migracją 371. Brak tych tabel przy
+// montażu rdzenia jest usterką zaplecza, zgłaszaną wprost, a nie pustym wykazem.
 type SymbolSkladnicaStudia interface {
 	ZapiszZasadeAutozamiany(ctx context.Context,
 		zasada dane.ZasadaAutozamianyStudia) (dane.ZasadaAutozamianyStudia, error)
@@ -81,7 +47,8 @@ type SymbolSkladnicaStudia interface {
 	ZnakiOstatnioUzyte(ctx context.Context, ile int) ([]dane.ZnakOstatnioUzytyStudia, error)
 }
 
-// symbolSkladnica oddaje tabele tablicy znaków.
+// symbolSkladnica oddaje tabele tablicy znaków z repozytorium zmontowanego
+// rdzenia, zgłaszając brak montażu albo brak migracji 371 osobną odmową.
 func (a *adapterStudia) symbolSkladnica() (SymbolSkladnicaStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, postacBladZaplecza(
@@ -95,12 +62,9 @@ func (a *adapterStudia) symbolSkladnica() (SymbolSkladnicaStudia, error) {
 	return skladnica, nil
 }
 
-// symbolTablica wylicza znaki do wybrania.
-//
-// Wykaz jest tym, czego Właściciel wymienia wprost: znaki matematyczne, waluty,
-// litery greckie, strzałki, znaki prawnicze, znaki diakrytyczne oraz znaki
-// interpunkcyjne niedostępne z klawiatury — półpauza, pauza, cudzysłowy
-// drukarskie, twarda spacja, twardy dywiz i znak podziału wyrazu.
+// symbolTablica wylicza znaki do wybrania: znaki matematyczne, waluty, litery
+// greckie, strzałki, znaki prawnicze, znaki diakrytyczne oraz znaki
+// interpunkcyjne niedostępne z klawiatury.
 func symbolTablica() []shared.StudioSymbol {
 	wykaz := make([]shared.StudioSymbol, 0, 220)
 	dodaj := func(grupa string, znak string, nazwa string) {
@@ -112,9 +76,7 @@ func symbolTablica() []shared.StudioSymbol {
 		})
 	}
 
-	// Znaki interpunkcyjne niedostępne z klawiatury. Stoją pierwsze, bo są
-	// najczęściej potrzebne w pismie polskim: półpauza w zakresach liczb,
-	// cudzysłowy drukarskie w cytatach, twarda spacja przed jednostką.
+	// Znaki interpunkcyjne niedostępne z klawiatury stoją w wykazie pierwsze.
 	dodaj(symbolGrupaInterpunkcja, "–", "półpauza")
 	dodaj(symbolGrupaInterpunkcja, "—", "pauza")
 	dodaj(symbolGrupaInterpunkcja, "‐", "dywiz")
@@ -135,7 +97,7 @@ func symbolTablica() []shared.StudioSymbol {
 	dodaj(symbolGrupaInterpunkcja, "†", "krzyżyk")
 	dodaj(symbolGrupaInterpunkcja, "‡", "krzyżyk podwójny")
 
-	// Znaki prawnicze — te, które Właściciel wymienia po nazwie.
+	// Znaki prawnicze, nazwane wprost w wykazie znaków do wybrania.
 	dodaj(symbolGrupaPrawnicze, "§", "paragraf")
 	dodaj(symbolGrupaPrawnicze, "¶", "znak akapitu")
 	dodaj(symbolGrupaPrawnicze, "©", "prawa autorskie")
@@ -242,8 +204,8 @@ func symbolTablica() []shared.StudioSymbol {
 		dodaj(symbolGrupaGreckie, litera.znak, "litera grecka wielka "+litera.nazwa)
 	}
 
-	// Znaki diakrytyczne — samodzielne i łączące. Samodzielne służą pismu obcemu,
-	// łączące składaniu znaku, którego w wykazie nie ma.
+	// Znaki diakrytyczne, samodzielne dla pisma obcego i łączące do składania
+	// znaku spoza wykazu.
 	diakrytyczne := []struct{ znak, nazwa string }{
 		{"´", "akcent ostry"}, {"`", "akcent słaby"}, {"ˆ", "daszek"},
 		{"˜", "tylda"}, {"¨", "diereza"}, {"˚", "kółko"},
@@ -262,7 +224,8 @@ func symbolTablica() []shared.StudioSymbol {
 	return wykaz
 }
 
-// symbolGrupy oddaje grupy znaków w kolejności, w jakiej stoją w tablicy.
+// symbolGrupy oddaje grupy znaków w kolejności, w jakiej stoją w tablicy,
+// każdą dokładnie raz, bez powtórzeń nazwy grupy.
 func symbolGrupy() []string {
 	grupy := make([]string, 0, 7)
 	znane := map[string]bool{}
@@ -326,13 +289,9 @@ func symbolZnakZKodu(kod string) (string, bool) {
 
 // ── Czynności ───────────────────────────────────────────────────────────────
 
-// TabliceZnakow oddaje znaki do wybrania (`studio.symbol.list`).
-//
-// Wyszukiwanie idzie po NAZWIE i po KODZIE naraz — Właściciel wymienia oba —
-// a znaki ostatnio użyte stoją na wierzchu i są oznaczone, żeby okno mogło je
-// pokazać osobno. Zawężenie, które nie trafia w ani jeden znak, jest odmową
-// nazwaną: pusty wykaz z odpowiedzią „ok" znaczyłby dla okna, że tablica znaków
-// jest pusta.
+// TabliceZnakow oddaje znaki do wybrania (`studio.symbol.list`), z wyszukiwaniem
+// po nazwie i po kodzie naraz oraz ze znakami ostatnio użytymi oznaczonymi
+// osobno. Zawężenie bez trafienia w ani jeden znak jest odmową nazwaną.
 func (a *adapterStudia) TabliceZnakow(ctx context.Context,
 	z shared.StudioSymbolListRequest) (shared.StudioSymbolListResponse, error) {
 
@@ -386,17 +345,13 @@ func (a *adapterStudia) TabliceZnakow(ctx context.Context,
 		if szukane != "" && !symbolPasuje(znak, szukane) {
 			continue
 		}
-		// Kolejność użycia niesie porządek wykazu, a nie pole znaku: kontrakt ma
-		// na to samo `recentlyUsed`, a wymyślanie drugiego pola nie wchodzi
-		// w rachubę.
+		// Kolejność użycia niesie porządek wykazu, nie pole znaku: kontrakt ma
+		// na to `recentlyUsed`.
 		znak.RecentlyUsed = postacWskaznikPrawdy(uzyty)
 		wybrane = append(wybrane, znak)
 	}
 
-	// Znak wskazany kodem, którego tablica nie niesie, i tak jest znakiem —
-	// Unicode ma ich więcej, niż zmieści się w wykazie. Odmowa w tym miejscu
-	// byłaby odmową wobec znaku istniejącego, więc znak wchodzi do wyniku
-	// z nazwą mówiącą, że pochodzi z kodu.
+	// Znak wskazany kodem spoza tablicy wchodzi do wyniku z nazwą z kodu.
 	if szukane != "" && len(wybrane) == 0 {
 		if znak, jest := symbolZnakZKodu(szukane); jest {
 			wybrane = append(wybrane, shared.StudioSymbol{
@@ -422,8 +377,7 @@ func (a *adapterStudia) TabliceZnakow(ctx context.Context,
 			". Grupy znane: " + strings.Join(symbolGrupy(), ", "))
 	}
 
-	// Znaki ostatnio użyte idą na wierzch, w kolejności od najbliższego ręce —
-	// tak stanowi wymaganie „znaki ostatnio użyte pod ręką".
+	// Znaki ostatnio użyte idą na wierzch, w kolejności od najbliższego użycia.
 	sort.SliceStable(wybrane, func(i, j int) bool {
 		pierwszy := kolejnoscUzycia[strings.ToUpper(wybrane[i].Code)]
 		drugi := kolejnoscUzycia[strings.ToUpper(wybrane[j].Code)]
@@ -474,13 +428,9 @@ func symbolPasuje(znak shared.StudioSymbol, szukane string) bool {
 	return false
 }
 
-// WstawZnak wstawia znak specjalny w miejsce kursora (`studio.symbol.insert`).
-//
-// Znak da się wskazać na trzy sposoby: samym znakiem, punktem kodowym albo nazwą
-// z tablicy — Właściciel wymaga wszystkich trzech, bo „wstaw tu paragraf" jest
-// poleceniem modelu, a nie kliknięciem w tablicę. Znak wchodzi drogą zmiany
-// treści, więc zmiana śledzona autora `model` i wpis dziennika odkładają się
-// same, a blokada fragmentu zatrzymuje wstawienie odmową nazwaną.
+// WstawZnak wstawia znak specjalny w miejsce kursora (`studio.symbol.insert`),
+// wskazany samym znakiem, punktem kodowym albo nazwą z tablicy. Blokada
+// fragmentu zatrzymuje wstawienie odmową nazwaną.
 func (a *adapterStudia) WstawZnak(ctx context.Context,
 	z shared.StudioSymbolInsertRequest) (shared.StudioSymbolInsertResponse, error) {
 
@@ -508,9 +458,7 @@ func (a *adapterStudia) WstawZnak(ctx context.Context,
 		}
 	}
 
-	// Postać znaku przejmuje się z miejsca wstawienia: paragraf wstawiony
-	// w wytłuszczony nagłówek ma być wytłuszczony, a nie wrócić do kroju
-	// domyślnego.
+	// Postać znaku przejmuje się z miejsca wstawienia.
 	postacRozetnij(&stan.forma, miejsce)
 	var przejeta *shared.StudioCharacterFormat
 	if wskazania := postacFragmentyZakresu(&stan.forma, miejsce, miejsce); len(wskazania) > 0 {
@@ -543,12 +491,9 @@ func (a *adapterStudia) WstawZnak(ctx context.Context,
 	}, nil
 }
 
-// symbolRozstrzygnij ustala, który znak Operator albo model wskazał.
-//
-// Kolejność jest z zamysłu: sam znak, potem punkt kodowy, potem nazwa. Znak
-// podany wprost jest najmniej dwuznaczny, a nazwa najbardziej — nazwa niepełna
-// dopasowuje się po zawarciu i wtedy odmowa mówi, ile znaków ją spełnia, zamiast
-// wstawić pierwszy napotkany.
+// symbolRozstrzygnij ustala, który znak Operator albo model wskazał, w
+// kolejności: sam znak, potem punkt kodowy, potem nazwa, od najmniej do
+// najbardziej dwuznacznego sposobu wskazania.
 func symbolRozstrzygnij(z shared.StudioSymbolInsertRequest) (shared.StudioSymbol, error) {
 	tablica := symbolTablica()
 
@@ -564,9 +509,8 @@ func symbolRozstrzygnij(z shared.StudioSymbolInsertRequest) (shared.StudioSymbol
 				return zTablicy, nil
 			}
 		}
-		// Znak spoza tablicy jest znakiem prawdziwym: Unicode ma ich więcej, niż
-		// zmieści się w wykazie okna. Odmowa byłaby tu odmową wobec znaku,
-		// który istnieje.
+		// Znak spoza tablicy jest znakiem istniejącym w Unicode, więc wchodzi
+		// do wyniku zamiast odmowy.
 		return shared.StudioSymbol{
 			Code:      symbolKodZnaku(znak),
 			Character: znak,
@@ -640,12 +584,9 @@ func symbolRozstrzygnij(z shared.StudioSymbolInsertRequest) (shared.StudioSymbol
 		"wstawienie znaku bez wskazania znaku — podaj pole character, code albo name")
 }
 
-// ZasadyAutozamiany oddaje wykaz zasad autozamiany
-// (`studio.symbol.autoreplace.list`).
-//
-// Wykaz jest zszyty z dwóch miejsc: zasady fabryczne wylicza rdzeń, zasady własne
-// i wyłączenia fabrycznych stoją w bazie. Zasada Operatora o tym samym skrócie
-// PRZEBIJA fabryczną — łącznie z jej wyłączeniem.
+// ZasadyAutozamiany oddaje wykaz zasad autozamiany, zszyty z zasad fabrycznych
+// wyliczonych przez rdzeń oraz zasad własnych i wyłączeń z bazy — zasada
+// Operatora o tym samym skrócie przebija fabryczną, łącznie z jej wyłączeniem.
 func (a *adapterStudia) ZasadyAutozamiany(ctx context.Context,
 	z shared.StudioSymbolAutoreplaceListRequest) (shared.StudioSymbolAutoreplaceListResponse, error) {
 
@@ -689,13 +630,9 @@ func (a *adapterStudia) ZasadyAutozamiany(ctx context.Context,
 }
 
 // UstawZasadeAutozamiany zakłada, zmienia, wyłącza albo usuwa zasadę
-// autozamiany (`studio.symbol.autoreplace.set`).
-//
-// Zasady fabrycznej nie da się usunąć — odmowa nazywa powód i wskazuje drogę
-// wyjścia (wyłączenie polem `enabled`), wzorem `studio.operation.delete`, który
-// robi to samo dla operacji fabrycznych. Nastawa jest jawna i odwracalna: zasada
-// wyłączona zostaje w wykazie, więc Operator widzi, że ją wyłączył, a nie że
-// zniknęła.
+// autozamiany (`studio.symbol.autoreplace.set`). Zasady fabrycznej nie da się
+// usunąć, tylko wyłączyć polem `enabled` — zasada wyłączona zostaje widoczna
+// w wykazie zamiast zniknąć.
 func (a *adapterStudia) UstawZasadeAutozamiany(ctx context.Context,
 	z shared.StudioSymbolAutoreplaceSetRequest) (shared.StudioSymbolAutoreplaceSetResponse, error) {
 
@@ -709,8 +646,7 @@ func (a *adapterStudia) UstawZasadeAutozamiany(ctx context.Context,
 		return shared.StudioSymbolAutoreplaceSetResponse{}, err
 	}
 
-	// Czy zasada jest fabryczna, wie BAZA — kolumna `fabryczna` z migracji 368.
-	// Rdzeń tego nie zgaduje z własnego wykazu, bo własnego wykazu nie ma.
+	// Czy zasada jest fabryczna, wie baza — kolumna `fabryczna` z migracji 368.
 	zastana, err := skladnica.ZasadaAutozamiany(ctx, skrot)
 	zastanaJest := err == nil
 	if err != nil && !errors.Is(err, dane.ErrBrakWiersza) {
@@ -743,10 +679,7 @@ func (a *adapterStudia) UstawZasadeAutozamiany(ctx context.Context,
 		}, nil
 	}
 
-	// Zasada wskazana samym skrótem bez zamiennika jest przestawieniem tego, co
-	// już stoi — najczęściej wyłączeniem. Zamiennik bierze się wtedy z zasady
-	// zastanej; jej brak jest odmową nazwaną, bo zasada bez zamiennika nie ma
-	// czego wstawić.
+	// Zasada bez zamiennika przestawia to, co już stoi w zasadzie zastanej.
 	zamiennik := ""
 	switch {
 	case z.Replacement != nil:

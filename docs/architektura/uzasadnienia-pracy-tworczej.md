@@ -241,3 +241,32 @@ DOCX jest archiwum ZIP z trzema częściami obowiązkowymi, więc składa się g
 instalka nie niesie. Dokument nie ma stylów ani tabel i mieć nie udaje: niesie
 akapity tekstu, otwiera się w każdym edytorze i daje się dalej redagować,
 a to jest dokładnie to, po co paczka redakcyjna powstaje.
+
+## adapter_modul_studio_symbole.go
+
+Tablica znaków, jej punkty kodowe i grupy stanowią wiedzę rdzenia, tak samo jak
+arkusz stylów fabryczny i wykaz nośników druku. Do bazy schodzi wyłącznie to, co
+Operator zmienił — jego zasady autozamiany — albo czym się posłużył — jego znaki
+ostatnio użyte. Wpisanie tablicy do migracji dałoby dwa wykazy, które rozjadą się
+przy pierwszym uzupełnieniu.
+
+Wstawienie znaku idzie drogą zmiany treści, ponieważ znak specjalny jest znakiem,
+nie obiektem: ma się liczyć do długości akapitu, znaleźć w wyszukiwaniu i
+przenieść przy zmianie formatu tak samo jak litera. Wstawienie idzie przez
+funkcję zamiany treści, tę samą drogę, którą idzie pisanie, dzięki czemu zmiana
+śledzona autora i wpis dziennika odkładają się bez osobnego mechanizmu.
+
+Autozamiana jest nastawą, a nie czynnością na dokumencie: zamiana zachodzi w
+chwili pisania, w oknie, na naciśnięcie klawisza. Rdzeń trzyma wykaz zasad,
+wystawia go oknu i pozwala go zmienić. Gdyby rdzeń przepuszczał treść przez
+zasady przy zapisie, znak wpisany świadomie zostałby zamieniony wbrew woli
+piszącego bez możliwości cofnięcia tego pojedynczego przypadku.
+
+Wykaz zasad, także fabrycznych, stoi w bazie, nie w tym pliku. Migracja 368
+założyła tabelę zasad autozamiany wraz z kolumną oznaczającą zasadę fabryczną i
+wpisała zasady fabryczne wierszami, aby dało się je wyłączyć; migracja 371
+dołożyła do tego wykazu znaki prawnicze i ułamki. Powtórzenie wykazu fabrycznego
+w tym pliku byłoby drugą prawdą o tym, co wchodzi w miejsce skrótu, a pierwsza
+poprawka rozjechałaby obie wersje. Jest to odwrotne podejście niż przy tablicy
+znaków: tablicy znaków Operator nie zmienia, a zasadę autozamiany zmienia i
+wyłącza.

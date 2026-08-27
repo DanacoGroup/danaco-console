@@ -665,3 +665,9 @@ brak treści, zamiast udawać obraz, którego nie otrzymał.
 Pole `truncated` odpowiedzi mówi o skróceniu podglądu po stronie rdzenia.
 Wypisane pod treścią zdanie odróżnia fragment pliku od jego całości, dzięki
 czemu odczyt niepełny nie jest brany za odczyt kompletny.
+
+## budowa/klient-poprzedni/src/konfiguracja/kontrolka.ts
+
+Formularz okna konfiguracji powstaje z katalogu pozycji i z założenia nie zna żadnej kontrolki z osobna. Zna wyłącznie wspólny kształt zadeklarowany w tym pliku, co pozwala złożyć ekran z pozycji katalogu bez wiedzy o rodzaju wartości, jaki za nimi stoi.
+
+Konsekwencją takiego rozdziału jest koszt rozszerzenia. Dodanie kolejnego rodzaju wartości do kontraktu sprowadza się do jednego przypadku w module rozdzielającym wybor-kontrolki.ts oraz do jednej funkcji budującej kontrolkę. Nie powstaje przy tym nowy ekran ani zmiana w samym formularzu.

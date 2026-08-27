@@ -3653,3 +3653,18 @@ adaptera, bo jego rodzaj nie ma fabryki albo fabryka odmówiła budowy — taki 
 trafia do Pominiete. Kanał bez adaptera nie jest gotowy do pracy, więc przy
 ograniczeniu do kanałów czynnych nie jest zwracany jako czynny; inaczej okno
 wskazywałoby kanał, który przy pierwszej próbie odmawia działania.
+
+## budowa/server/internal/dane/diagnostics_bledy.go
+Wystąpienie podnosi licznik, nie zakłada wiersza. Ten sam błąd powtórzony
+tysiąc razy jest jednym wierszem o tysiącu wystąpień. Gdyby każde wystąpienie
+zakładało wiersz, panel błędów pokazywałby ostatnią minutę pracy i gubił błąd
+rzadki, a to właśnie rzadki błąd bywa przyczyną awarii.
+
+Stan, priorytet i notatka należą do operatora. Powtórne wystąpienie nie
+przestawia ich z powrotem na wartość początkową: rozstrzygnięcie operatora nie
+ma prawa zniknąć dlatego, że błąd wystąpił jeszcze raz.
+
+Zliczenie bez ograniczenia liczby wyników istnieje po to, żeby wykaz błędów
+mógł podać liczbę całkowitą niezależną od długości zwróconej listy — inaczej
+liczba całkowita zawsze równałaby się liczbie oddanych wierszy i panel błędów
+nigdy nie dowiedziałby się, że wykaz ucięto na granicy pięciuset pozycji.

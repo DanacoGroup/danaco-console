@@ -1,14 +1,5 @@
 // Odpowiedzialność pliku: błędy modułu Diagnostics — dopisanie wystąpienia,
 // odczyt zawężony filtrem, odczyt po kodach i rozkład stanów.
-//
-// WYSTĄPIENIE PODNOSI LICZNIK, NIE ZAKŁADA WIERSZA. Ten sam błąd powtórzony
-// tysiąc razy jest jednym wierszem o tysiącu wystąpień. Gdyby każde wystąpienie
-// zakładało wiersz, Errors Panel pokazywałby ostatnią minutę pracy i gubił błąd
-// rzadki, a to właśnie rzadki błąd bywa przyczyną awarii.
-//
-// STAN, PRIORYTET I NOTATKA NALEŻĄ DO OPERATORA. Powtórne wystąpienie nie
-// przestawia ich z powrotem na „nowy": rozstrzygnięcie Operatora nie ma prawa
-// zniknąć dlatego, że błąd wystąpił jeszcze raz.
 package dane
 
 import (
@@ -49,10 +40,8 @@ const (
 	                ORDER BY ostatnie DESC, id DESC
 	                LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 
-	// policzBledy liczy wiersze pasujące do filtru BEZ granicy. Wykaz błędów
-	// oddaje `total` z tego rachunku, nie z długości zwróconej listy: inaczej
-	// `total` zawsze równałby się liczbie oddanych wierszy i Errors Panel nigdy
-	// nie dowiedziałby się, że wykaz ucięto na granicy 500.
+	// policzBledy liczy wiersze pasujące do filtru bez ograniczenia liczby wyników, aby wykaz błędów mógł podać
+	// liczbę całkowitą niezależną od długości zwróconej listy.
 	policzBledy = `SELECT COUNT(*) FROM diagnostyka_blad
 	                WHERE (? = '' OR stan = ?)
 	                  AND (? = '' OR priorytet = ?)
@@ -95,7 +84,7 @@ func (r *repozytoriumDiagnostyki) ZapiszBlad(ctx context.Context,
 	return zapisany, nil
 }
 
-// Bledy zwraca wykaz zawężony filtrem, od wystąpienia najświeższego.
+// Bledy zwraca wykaz błędów diagnostycznych zawężony filtrem wyszukiwania, uporządkowany od wystąpienia najświeższego.
 func (r *repozytoriumDiagnostyki) Bledy(ctx context.Context, filtr FiltrBledow) ([]BladDiagnostyczny, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzBledy)
 	if err != nil {
@@ -139,8 +128,7 @@ func (r *repozytoriumDiagnostyki) BledyPoKodach(ctx context.Context, kody []stri
 	if len(kody) == 0 {
 		return nil, nil
 	}
-	// Liczba znaków zapytania zmienia się z liczbą kodów, więc treść składa się
-	// tutaj — wartości i tak idą parametrami, nigdy sklejeniem.
+	// Zapytanie składa się tutaj, bo liczba kodów zmienia jego długość; wartości idą parametrami.
 	zapytanie := `SELECT ` + kolumnyBleduDiagnostycznego + ` FROM diagnostyka_blad
 	              WHERE kod IN (` + strings.TrimSuffix(strings.Repeat("?,", len(kody)), ",") + `)
 	              ORDER BY ostatnie DESC, id DESC`
@@ -160,7 +148,7 @@ func (r *repozytoriumDiagnostyki) BledyPoKodach(ctx context.Context, kody []stri
 	return zbierzBledy(wiersze)
 }
 
-// StanyBledow zwraca rozkład błędów po stanach w zakresie czasu.
+// StanyBledow zwraca rozkład liczby błędów diagnostycznych pogrupowanych według stanu, w podanym zakresie czasu.
 func (r *repozytoriumDiagnostyki) StanyBledow(ctx context.Context, od, do int64) (LicznikStanow, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, policzStanyBledow)
 	if err != nil {
@@ -184,7 +172,7 @@ func (r *repozytoriumDiagnostyki) StanyBledow(ctx context.Context, od, do int64)
 	return licznik, wiersze.Err()
 }
 
-// zbierzBledy przenosi wiersze wyniku do wykazu bytów obszaru.
+// zbierzBledy przenosi wiersze wyniku zapytania do wykazu bytów błędów diagnostycznych obszaru danych.
 func zbierzBledy(wiersze *sql.Rows) ([]BladDiagnostyczny, error) {
 	bledy := make([]BladDiagnostyczny, 0, 16)
 	for wiersze.Next() {
@@ -197,7 +185,7 @@ func zbierzBledy(wiersze *sql.Rows) ([]BladDiagnostyczny, error) {
 	return bledy, wiersze.Err()
 }
 
-// odczytajBladDiagnostyczny składa błąd z jednego wiersza wyniku.
+// odczytajBladDiagnostyczny składa strukturę błędu diagnostycznego z jednego wiersza wyniku zapytania do bazy.
 func odczytajBladDiagnostyczny(s skaner) (BladDiagnostyczny, error) {
 	var blad BladDiagnostyczny
 	err := s.Scan(&blad.Kod, &blad.Odcisk, &blad.Tresc, &blad.Zrodlo, &blad.KodBledu,

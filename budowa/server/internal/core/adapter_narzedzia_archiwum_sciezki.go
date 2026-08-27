@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: formaty, ścieżki i odmowy rodziny `archive.*` —
-// rozstrzygnięcia wspólne dla pakowania i rozpakowania, wyjęte z trzonu
-// (`adapter_narzedzia_archiwum.go`).
-//
-// ── format rozpoznajemy z bajtów, a nie z nazwy ────────────────────────────
-// Blob magazynu nazywa się swoją sumą kontrolną i nie ma rozszerzenia. Gdyby
-// format brać z nazwy, `archive.unpack` na własnym wytworze `archive.pack`
-// musiałby albo odmówić („zasób nie niesie formatu"), albo zaufać polu `format`
-// wiersza — czyli etykiecie, którą ktoś kiedyś wpisał, a nie zawartości pliku.
-// `7z l` rozpoznaje zip i 7z po sygnaturze bez względu na nazwę, więc etykieta
-// jest tu zbędna. Czytamy sygnaturę: to wiedza o pliku, nie o jego opisie.
+// Plik podaje formaty, ścieżki i odmowy rodziny archive: rozstrzygnięcia wspólne dla pakowania i rozpakowania archiwum w katalogu roboczym okna.
 package core
 
 import (
@@ -23,7 +13,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// formatArchiwum nazywa jeden z trzech formatów, które ta rodzina obsługuje.
+// formatArchiwum nazywa jeden z trzech formatów archiwum, które ta rodzina czynności obsługuje w rejestrze narzędzi rdzenia.
 type formatArchiwum string
 
 const (
@@ -32,13 +22,7 @@ const (
 	formatTarGz formatArchiwum = "tar.gz"
 )
 
-// rozpoznajFormatArchiwum czyta sygnaturę pliku i nazywa format.
-//
-// Sygnatury są krótkie i jednoznaczne: `PK\x03\x04` otwiera zip, `7z¼¯'\x1c`
-// otwiera 7z, `\x1f\x8b` otwiera strumień gzip (a więc i tar.gz). Plik krótszy
-// niż sygnatura albo o sygnaturze nieznanej jest odmową, a nie domysłem „to
-// pewnie zip": rozpakowywanie czegoś, czego nie rozpoznaliśmy, kończy się
-// komunikatem `7z` w obcym języku zamiast zdaniem o tym, co jest nie tak.
+// rozpoznajFormatArchiwum czyta sygnaturę pliku i nazywa format zip, 7z albo tar.gz na podstawie zawartości, a nie nazwy pliku.
 func rozpoznajFormatArchiwum(sciezka string) (formatArchiwum, error) {
 	plik, err := os.Open(sciezka)
 	if err != nil {
@@ -67,10 +51,7 @@ func rozpoznajFormatArchiwum(sciezka string) (formatArchiwum, error) {
 		"rozpoznanie idzie po zawartości pliku, nie po jego nazwie")
 }
 
-// rozstrzygnijFormatDocelowy przekłada pole `format` żądania na jeden z trzech
-// formatów. Brak pola bierze zip — tak mówi kontrakt i tak jest najrozsądniej:
-// zip otwiera się dwukrotnym kliknięciem w każdym systemie, więc Operator
-// dostający archiwum nie potrzebuje niczego doinstalowywać.
+// rozstrzygnijFormatDocelowy przekłada pole format żądania na jeden z trzech formatów archiwum, biorąc zip przy braku wskazania.
 func rozstrzygnijFormatDocelowy(zadany *string) (formatArchiwum, error) {
 	if bezWartosci(zadany) {
 		return formatZip, nil
@@ -89,7 +70,7 @@ func rozstrzygnijFormatDocelowy(zadany *string) (formatArchiwum, error) {
 		" nie jest obsługiwany — narzędzie pakuje do zip, 7z albo tar.gz")
 }
 
-// nazwaBezKatalogow wycina samą nazwę pliku ze ścieżki.
+// nazwaBezKatalogow wycina samą nazwę pliku ze ścieżki wskazanej w żądaniu, odrzucając wszystkie prowadzące katalogi.
 func nazwaBezKatalogow(sciezka string) string {
 	sciezka = strings.TrimRight(sciezka, "/\\")
 	if i := strings.LastIndexAny(sciezka, "/\\"); i >= 0 {
@@ -98,14 +79,7 @@ func nazwaBezKatalogow(sciezka string) string {
 	return sciezka
 }
 
-// sciezkaWzgledemKatalogu rozstrzyga ścieżkę żądania względem katalogu okna
-// i pilnuje, żeby wynik z tego katalogu nie wyszedł.
-//
-// Sprawdzenia są dwa, bo są dwa sposoby ucieczki. Ścieżka bezwzględna („/etc",
-// „C:\Windows") omija katalog okna wprost. Ścieżka względna wychodzi z niego
-// członem `..`, i tego nie widać po samym napisie — dlatego liczymy ścieżkę
-// oczyszczoną (`filepath.Rel` po `filepath.Clean`) i pytamy, czy nadal leży
-// wewnątrz. Napis „a/../../b" wygląda niewinnie i wskazuje piętro wyżej.
+// sciezkaWzgledemKatalogu rozstrzyga ścieżkę żądania względem katalogu okna i pilnuje, żeby wynik z tego katalogu nie wyszedł.
 func sciezkaWzgledemKatalogu(katalog, zadana string) (string, error) {
 	zadana = strings.TrimSpace(zadana)
 	if zadana == "" {
@@ -126,11 +100,7 @@ func sciezkaWzgledemKatalogu(katalog, zadana string) (string, error) {
 	return pelna, nil
 }
 
-// bladArsenaluArchiwum przekłada odmowę pakietu `zewnetrzne` na kod kontraktu.
-//
-// Brak binarium dostaje inny kod niż niepowodzenie programu, i to jest cała
-// istota typu `*BrakNarzedzia`: „nie ma czym" Operator usuwa jedną instalacją,
-// a „program się wywrócił" jest usterką przetwarzania.
+// bladArsenaluArchiwum przekłada odmowę pakietu narzędzi zewnętrznych na kod kontraktu, rozróżniając brak binarium od niepowodzenia programu.
 func bladArsenaluArchiwum(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -146,16 +116,13 @@ func bladArchiwumNiedostepnego(powod string) error {
 		"narzędzia archiwum: "+powod))
 }
 
-// bladWskazaniaArchiwum nazywa brak albo niepoprawność wskazania w żądaniu —
-// usterka wołającego, nie rdzenia. Tym kodem idą też obie granice
-// bezpieczeństwa: archiwum wychodzące poza katalog i archiwum przekraczające
-// granicę rozmiaru są odmową wobec materiału, a nie awarią rdzenia.
+// bladWskazaniaArchiwum nazywa brak albo niepoprawność wskazania w żądaniu, w tym obie granice bezpieczeństwa katalogu i rozmiaru archiwum.
 func bladWskazaniaArchiwum(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"narzędzia archiwum: "+powod))
 }
 
-// bladPrzetwarzaniaArchiwum znakuje pakowanie, które ruszyło i się nie udało.
+// bladPrzetwarzaniaArchiwum znakuje pakowanie, które ruszyło i się nie udało podczas przetwarzania archiwum.
 func bladPrzetwarzaniaArchiwum(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"narzędzia archiwum: "+powod))

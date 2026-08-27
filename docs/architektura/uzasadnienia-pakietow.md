@@ -4476,3 +4476,9 @@ nadpisaniem sprawdza, czy plik już istniał — od tego zależy rodzaj zmiany z
 w zdarzeniu zmiany warsztatu (założenie czy aktualizacja).
 ## budowa/server/internal/dane/role.go
 Rola okna mieszka w kolumnie tabeli okien, a więź koordynator-wykonawca w kolumnie sąsiedniej, tam gdzie kontrakt widzi rolę okna i identyfikator okna koordynatora. Ten plik nie zakłada żadnego bytu: dokłada wyłącznie zapis i odczyt tych dwóch kolumn po identyfikatorze, którym posługuje się kontrakt. Osobno od repozytorium okien, bo tamten plik czyta i pisze kolumnę roli wyłącznie jako część pełnego wiersza okna po identyfikatorze wewnętrznym, więc zapis samej roli musiałby wpierw wczytać całe okno wraz z katalogami roboczymi i zapisać je z powrotem, nadpisując po drodze pola, o które komenda przypisania roli nie prosi. Wcielenie roli tu nie ma: nie jest kolumną tego wiersza, tylko wpisem w tabeli ustawień na poziomie zasięgu okna, bo tam zapisuje je warstwa kliencka, a rdzeń sięga po ten sam adres przez repozytorium konfiguracji, zamiast zakładać drugą prawdę o wcieleniu. Metoda dostępu do repozytorium ról, a nie pole struktury, bo rola okna nie jest osobnym obszarem danych, tylko widokiem na dwie kolumny obszaru okien, który zestaw już niesie własnym polem; pole dołożone obok tamtego zapowiadałoby drugie repozytorium tego samego bytu.
+
+## budowa/server/internal/narzedzia/schemat.go
+Przekład schematu jest płytki z zamysłem: kontrakt niesie już gotowy typ
+schematu, typ elementu tablicy i komplet wartości wyliczenia, wyliczone raz
+przez generator przy budowie kontraktu; powtórzenie tamtego rozstrzygania
+tutaj byłoby drugim odwzorowaniem tych samych typów.

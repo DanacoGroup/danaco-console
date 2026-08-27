@@ -4936,3 +4936,8 @@ Odtworzenie sesji po identyfikatorze rdzenia obsługuje też powrót sesji z kos
 
 ## budowa/server/internal/core/okna_utrwalone.go
 Rejestr nadzorcy zna wyłącznie okna bieżącego uruchomienia rdzenia. Po jego restarcie okna wskazane przez klienta istnieją już tylko wierszami w bazie, i wtedy ten odczyt odpowiada na pytanie o okna otwarte przed restartem. Wiersz niesie klucze obce, kontrakt niesie kody, więc przekład dokłada słowniki modułów i kanałów modelu.
+## budowa/server/internal/core/pamiec_sesji_kolejek.go
+Powiązanie kolejki z sesją i oknami mieszka w pamięci procesu, a nie w bazie ani w kontrakcie, z powodu tymczasowego: kolumna łącząca kolejkę z sesją wskazuje wiersz sesji, a sesja żyje w pamięci pakietu sesji pod identyfikatorem tekstowym, dla którego wiersza nie ma. Kontrakt jest w tym względzie w porządku i nie wymaga zmiany. Wprowadzenie trwałości sesji zdejmie ten plik w całości, a powiązanie wróci wtedy do kolumny bazy.
+
+## budowa/server/internal/core/pokrycie_kontraktu_test.go
+Pokrycie kontraktu liczono wcześniej czytaniem źródeł wyrażeniem dopasowującym wywołania rejestracji komend, a ta miara myliła się w obie strony: komendy wpinane przez parametr, a nie literałem nazwy, wyrażenie omijało, więc wychodziły z pomiaru jako komendy bez obsługi, choć rdzeń od dawna na nie odpowiada; a wywołanie rejestracji w gałęzi kodu, do której montaż nigdy nie dochodzi, pomiar liczył jako pokrycie. Rejestr zna prawdę, bo to on rozstrzyga, czy komenda dostanie uchwyt, czy odpowiedź o nieznanej komendzie, więc sprawdzian pyta jego, a nie źródeł.

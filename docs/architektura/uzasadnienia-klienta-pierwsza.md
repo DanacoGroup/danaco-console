@@ -2150,3 +2150,33 @@ Komenda wskazująca konto domyślne przestawia dwa wiersze naraz, a odpowiedź r
 Menu nosi pasek Centrum dowodzenia oraz pasek Mission Control. Pozycje pochodzą z wykazu pozycji ustawień, czyli z tego samego wykazu, z którego powstaje listwa ustawień strony głównej, ponieważ drugi wykaz rozjechałby się z pierwszym przy dopisaniu pozycji. Skutek naciśnięcia również jest wspólny i rozstrzyga go wykaz skutków ustawień, więc samo menu nie wie, co stanie się po wyborze pozycji.
 
 Rozwijanie wnosi komponent menu rozwijanego z katalogu okien równoległych wraz z obsługą klawiatury, znacznikiem zapowiadającym menu podręczne, zamykaniem po wskazaniu poza obszarem oraz warstwą przybornika. Menu nie zastępuje listwy strony głównej, lecz daje te same pozycje tam, gdzie listwy nie ma: na Mission Control oraz po zwinięciu strony w dół.
+
+## budowa/klient-poprzedni/src/moduly/assistant/okno-command-tools-hub.ts
+
+Okno zamyka obszary szybkich akcji, wywołań narzędzi oraz proaktywności modułu.
+Każda z czterech pierwszych zakładek stoi nad rzeczywistą komendą kontraktu: zakładka
+Akcje nad `action.list`, czyli katalogiem akcji zasięgu modułu; zakładka Makra nad
+`automation.workflow.save`, jedynym trwałym miejscem dla sekwencji kroków; zakładka
+Narzędzia i MCP nad `tools.catalog.list` wraz z rodziną `session.tool.*`; zakładka
+Rutyny nad `automation.workflow.list`, `schedule.get` oraz `automation.schedule.set`.
+
+Zakładki „Umiejętności" osobno nie ma z rozstrzygnięcia, nie z przeoczenia: kontrakt
+trzyma narzędzia i umiejętności w jednym katalogu i rozróżnia je polem `kind` oraz
+przedrostkiem źródła. Druga zakładka nad tą samą komendą udawałaby drugie źródło,
+a rozróżnienie robi filtr rodzaju w zakładce narzędzi.
+
+Piąta zakładka stoi nad rodzinami `clipboard.*` (trwała historia schowka), `snippet.*`
+(słownik skrótów rozwijanych we wszystkich polach platformy) oraz `launcher.hotkey.*`
+(skrót globalny wywoływacza). Schowka maszyny Operatora rdzeń nie czyta i zakładka tego
+nie udaje: podział ról jest widoczny na ekranie, w pliku `panel-schowka.ts`.
+
+Plik odpowiada wyłącznie za skład okna. Wywołania mieszkają w `zrodlo-narzedzi.ts`,
+a każda zakładka ma własny plik obszaru.
+
+Siatka akcji jest tym samym widokiem katalogu, który stoi w Voice Console: drugim
+widokiem, a nie drugim źródłem. Obie sięgają `action.list` zasięgu modułu, a naciśnięcie
+kafla wypełnia to samo pole polecenia.
+
+Trzy odczyty składania okna idą równolegle, ponieważ katalog akcji, katalog narzędzi
+i wykaz rutyn dotyczą trzech różnych rodzin komend i żaden nie warunkuje pozostałych.
+Każdy nazywa swoje niepowodzenie w swoim obszarze.

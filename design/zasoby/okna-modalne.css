@@ -1,6 +1,5 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNA NAKŁADKOWE (dialog jako okno)
-   ----------------------------------------------------------------------------
+/* Arkusz stylów wprowadza warstwę okienną dla nakładek modalnych, umożliwiając ich przesuwanie, rozciąganie oraz zwijanie do nagłówka.
+
    Nakładka `<dialog class="dn-modal">` przestaje być pudełkiem przyklejonym
    do środka ekranu, a staje się oknem: da się je przesunąć, rozciągnąć,
    zwinąć do nagłówka i rozłożyć na cały obszar przeglądarki. Powód jest
@@ -14,8 +13,7 @@
    Zachowanie dokłada okna-modalne.js — on ustawia atrybuty
    data-okno-stan / data-okno-* oraz wstrzykuje uchwyty i przyciski.
 
-   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
-   ============================================================================ */
+   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy. */
 
 /* ══ 1 · GEOMETRIA OKNA ═══════════════════════════════════════════════════ */
 

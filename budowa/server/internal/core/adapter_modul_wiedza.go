@@ -1,34 +1,6 @@
-// Odpowiedzialność pliku: wypełnienie portu Wiedza dwiema komendami tekstowymi
-// rodziny `knowledge.*` — przełożenie żądań kontraktu na zlecenia pakietu
-// `wiedza` i, co ważniejsze, przełożenie jego typowanych odmów na kody
-// kontraktu. Oś obrazu stoi obok, w `adapter_modul_wiedza_obraz.go`.
-//
-// Wyszukiwanie po słowach działa w module Library (indeks FTS5,
-// `migracja_111_indeks_tresci_biblioteki.sql`). Ta rodzina wnosi wyszukiwanie
-// po znaczeniu, a różnica jest cała w tym, czego tamto nie umie: pytanie „co
-// robić, gdy padła maszyna" nie ma z dokumentem o awarii węzła ani jednego
-// wspólnego słowa, więc indeks liter go nie znajdzie.
-//
-// Pomocnik osadzeń startuje tym samym uruchamiaczem i przez tę samą bramę
-// izolacji, co każdy inny proces drzewa, więc potrzebuje trójki
-// `session.Okno` + `session.Zasady` + `session.Obszar`. Żądania `knowledge.*`
-// niosą co najwyżej `windowId`, i to po to, żeby wskazać przestrzeń do
-// przeszukania — nie po to, żeby w tym oknie liczyć. Wskaźnik jest jeden na
-// maszynę i wspólny dla wszystkich okien
-// (`migracja_115_wskaznik_znaczenia.sql`), więc trójka składa się w zasięgu
-// platformy, tą samą drogą co w silniku mowy:
-//
-//	zasady := ZasadyIzolacji(rozstrzygacz, konfig.Kontekst{})
-//	obszar := ObszarOkna(katalog.Ustal(konfig.Kontekst{}, ""), "")
-//
-// Pusty kontekst zasięgu jest poprawnym adresem najszerszego z poziomów, a nie
-// podstawieniem pustych struktur po cichu.
-//
-// Silnik powstaje na każde wywołanie, tak samo jak w module mowy:
-// `ZUstawieniami` mutuje byt, więc jedna instancja współdzielona przez
-// równoległe żądania oznaczałaby wyścig o nastawy. Nastawy są przy tym świeże —
-// zmiana `wiedza_model` komendą `config.set` wchodzi w następnym przebiegu, bez
-// restartu rdzenia.
+// Plik wypełnia port Wiedza dwiema komendami rodziny `knowledge.*`: przekłada
+// żądania kontraktu na zlecenia pakietu `wiedza` i jego typowane odmowy na
+// kody kontraktu kanału; oś obrazu stoi w innym pliku tej samej warstwy.
 package core
 
 import (
@@ -54,32 +26,33 @@ const domyslnaLiczbaTrafien = 10
 // fragmentów po 700 znaków to już 70 tysięcy znaków odpowiedzi.
 const granicaTrafien = 100
 
-// adapterWiedzy wypełnia port Wiedza.
+// adapterWiedzy wypełnia port Wiedza: łączy silnik osadzeń, składnicę
+// wektorów oraz repozytoria treści biblioteki i historii pod jedną bramą
+// izolacji zasięgu platformy.
 type adapterWiedzy struct {
-	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu
-	// w drzewie. Bez niego moduł nie ruszy pomocnika osadzeń.
+	// uruchamiacz jest jedyną drogą uruchomienia pomocnika osadzeń w drzewie
+	// procesów izolacji.
 	uruchamiacz session.Uruchamiacz
-	// katalogDanych — ten sam katalog, w którym leżą baza, sejf poświadczeń
-	// i magazyn treści biblioteki. Tam wykłada się pomocnik i tam lądują wagi.
+	// katalogDanych wskazuje katalog danych, w którym leżą baza, sejf
+	// poświadczeń i wagi pomocnika.
 	katalogDanych string
-	// rozstrzygacz i katalog składają nastawy oraz zasady izolacji zasięgu
-	// platformy — te same dwa źródła, którymi jadą Terminal, Developer i mowa.
+	// rozstrzygacz i katalog składają zasady izolacji oraz obszar zasięgu
+	// platformy.
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// skladnica trzyma wektory przy bazie rdzenia. Zależność obowiązkowa:
-	// wskaźnik bez miejsca zapisu nie jest wskaźnikiem, a odmowa nazywa to
-	// wprost zamiast oddawać pustkę udającą wynik.
+	// skladnica trzyma wektory przy bazie rdzenia; brak miejsca zapisu
+	// adapter nazywa odmową wprost.
 	skladnica *wiedza.Skladnica
-	// biblioteka i historia to źródła treści czytane przez repozytoria, a nie
-	// własnym SQL-em: druga droga do tych samych wierszy byłaby drugą prawdą
-	// o tym, co Operator ma w bibliotece.
+	// biblioteka i historia to źródła treści, czytane przez repozytoria, nie
+	// własnym zapytaniem SQL.
 	biblioteka dane.RepozytoriumBiblioteki
 	historia   dane.RepozytoriumHistorii
 	// teraz oddaje czas w milisekundach epoki — jeden zegar na byt.
 	teraz func() int64
 }
 
-// nowyAdapterWiedzy wiąże port z uruchamiaczem procesów i katalogiem danych.
+// nowyAdapterWiedzy wiąże port z uruchamiaczem procesów i katalogiem danych,
+// ustawiając zegar systemowy jako źródło znacznika czasu zapisu wektorów.
 func nowyAdapterWiedzy(uruchamiacz session.Uruchamiacz, katalogDanych string) *adapterWiedzy {
 	return &adapterWiedzy{
 		uruchamiacz:   uruchamiacz,
@@ -88,12 +61,9 @@ func nowyAdapterWiedzy(uruchamiacz session.Uruchamiacz, katalogDanych string) *a
 	}
 }
 
-// skladnicaWiedzy składa trwałość wskaźnika nad bazą montażu.
-//
-// Osobna funkcja, a nie wyrażenie w miejscu wpięcia: montaż bez bazy jest
-// stanem, który zdarza się przy rdzeniu składanym do sprawdzenia transportu,
-// i `nil` przechodzi tędy bez warunku po stronie wołającego. Składnica pusta
-// nie udaje wtedy, że działa — odmawia zdaniem nazywającym brak.
+// skladnicaWiedzy składa trwałość wskaźnika nad bazą montażu; montaż bez bazy
+// oddaje składnicę pustą, która odmawia zdaniem nazywającym brak, zamiast
+// udawać działanie.
 func skladnicaWiedzy(m Montaz) *wiedza.Skladnica {
 	if m.Baza == nil {
 		return nil
@@ -101,19 +71,22 @@ func skladnicaWiedzy(m Montaz) *wiedza.Skladnica {
 	return wiedza.NowaSkladnica(m.Baza.DB)
 }
 
-// ZIzolacja podpina rozstrzygacz zasięgu i ustalacz katalogu roboczego.
+// ZIzolacja podpina rozstrzygacz zasięgu i ustalacz katalogu roboczego,
+// którymi adapter składa trójkę izolacji platformy przy każdym wywołaniu portu.
 func (a *adapterWiedzy) ZIzolacja(rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterWiedzy {
 	a.rozstrzygacz, a.katalog = rozstrzygacz, katalog
 	return a
 }
 
-// ZeSkladnica podpina trwałość wskaźnika nad bazą rdzenia.
+// ZeSkladnica podpina trwałość wskaźnika nad bazą rdzenia, bez której adapter
+// nie ma miejsca do zapisu wektorów wskaźnika znaczenia.
 func (a *adapterWiedzy) ZeSkladnica(s *wiedza.Skladnica) *adapterWiedzy {
 	a.skladnica = s
 	return a
 }
 
-// ZeZrodlami podpina repozytoria, z których czytana jest treść Operatora.
+// ZeZrodlami podpina repozytoria biblioteki i historii, z których adapter
+// czyta treść Operatora budowaną we wskaźniku znaczenia.
 func (a *adapterWiedzy) ZeZrodlami(biblioteka dane.RepozytoriumBiblioteki,
 	historia dane.RepozytoriumHistorii) *adapterWiedzy {
 
@@ -121,13 +94,9 @@ func (a *adapterWiedzy) ZeZrodlami(biblioteka dane.RepozytoriumBiblioteki,
 	return a
 }
 
-// Wskaznik obsługuje `knowledge.index`.
-//
-// Kolejność kroków jest rozstrzygnięciem: najpierw pytanie o gotowość silnika,
-// dopiero potem odczyt treści. Odwrotnie, przy brakującym silniku, rdzeń
-// przeczytałby całą bibliotekę z dysku, podzielił ją na fragmenty i dopiero
-// wtedy powiedział „nie ma czym liczyć". Sprawdzenie gotowości kosztuje jedno
-// uruchomienie pomocnika.
+// Wskaznik obsługuje `knowledge.index`: sprawdza gotowość silnika, zanim
+// odczyta treść, aby uniknąć podziału całej biblioteki na fragmenty przed
+// stwierdzeniem, że nie ma czym liczyć.
 func (a *adapterWiedzy) Wskaznik(ctx context.Context,
 	z shared.KnowledgeIndexRequest) (shared.KnowledgeIndexResponse, error) {
 
@@ -169,13 +138,9 @@ func (a *adapterWiedzy) Wskaznik(ctx context.Context,
 	return shared.KnowledgeIndexResponse{Indexed: wniesione, Total: wszystkie, Model: &model}, nil
 }
 
-// wniesDokumenty dzieli treść na fragmenty, osadza je i zapisuje.
-//
-// Dokument po dokumencie, a nie wszystko naraz w jednej transakcji: biblioteka
-// Operatora bywa gigabajtem tekstu, a jedna transakcja na całość znaczyłaby
-// komplet wektorów w pamięci rdzenia. Przerwanie w połowie przebiegu zostawia
-// wskaźnik niepełny, ale spójny — każdy dokument, który wszedł, wszedł w całości
-// (patrz `wiedza.Skladnica.Zapisz`), a powtórzony przebieg dokończy resztę.
+// wniesDokumenty dzieli treść dokumentów na fragmenty, osadza je i zapisuje
+// pojedynczo, dokument po dokumencie, żeby przerwanie w połowie przebiegu
+// zostawiło wskaźnik niepełny, ale spójny.
 func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silnik,
 	okno session.Okno, zasady session.Zasady, obszar session.Obszar,
 	ustawienia wiedza.Ustawienia, dokumenty []dokumentWiedzy) (int, error) {
@@ -195,9 +160,8 @@ func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silni
 			return wniesione, err
 		}
 
-		// Kasowanie przed zapisem: dokument skrócony od poprzedniego przebiegu
-		// zostawiłby inaczej fragmenty treści, której już nie ma — a wracałyby
-		// jako cytat z dokumentu, w którym ich nie ma.
+		// Kasowanie przed zapisem usuwa fragmenty dokumentu skróconego od
+		// poprzedniego przebiegu.
 		if err := a.skladnica.UsunZrodlo(ctx, dokument.Zakres, dokument.ZrodloKod); err != nil {
 			return wniesione, err
 		}
@@ -222,22 +186,9 @@ func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silni
 	return wniesione, nil
 }
 
-// Szukaj obsługuje `knowledge.search`.
-//
-// Pytanie osadza się tym samym modelem, co dokumenty: wektor pytania z modelu
-// innego niż wektory wskaźnika daje iloczyn skalarny, który jest liczbą i nie
-// znaczy nic. Zawężenie odczytu po nazwie modelu (`wiedza.Skladnica.Pozycje`)
-// jest jedyną obroną przed tym po zmianie ustawienia.
-//
-// Wynik pusty jest odpowiedzią, nie odmową: wskaźnik pusty albo wiedza bez
-// związku z pytaniem znaczą „nie mam na to nic" i model ma to usłyszeć wprost.
-// Inaczej brak silnika, który jest odmową — wtedy rdzeń nie wie, czy ma coś,
-// czy nie ma.
-//
-// Pole `rerank` dokłada drugi przebieg (`zPrzesiewem` niżej). Pierwszy zostaje
-// niezmieniony i wykonuje się zawsze: przesiew nie ZASTĘPUJE kosinusa, tylko
-// układa na nowo tych kandydatów, których kosinus wybrał — krzyżowym koderem nie
-// da się przejrzeć całego wskaźnika (uzasadnienie liczbami w `wiedza/przesiew.go`).
+// Szukaj obsługuje `knowledge.search`: osadza pytanie tym samym modelem co
+// dokumenty, zawęża odczyt wskaźnika po nazwie modelu i oddaje wynik pusty
+// jako odpowiedź, nie jako odmowę.
 func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	z shared.KnowledgeSearchRequest) (shared.KnowledgeSearchResponse, error) {
 
@@ -280,19 +231,9 @@ func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	return odpowiedzSzukania(trafienia, false), nil
 }
 
-// zPrzesiewem przeprowadza drugi przebieg: bierze kandydatów pierwszego
-// przebiegu i oddaje ich w kolejności ułożonej przez krzyżowy koder.
-//
-// Kandydatów jest więcej niż oddawanych fragmentów i to jest sens rzeczy —
-// przesiew może wynieść na czoło fragment, który po samych wektorach był
-// dwudziesty. Gdyby kandydatami było dokładnie tyle, ile fragmentów wraca,
-// przesiew przestawiałby wyłącznie kolejność wewnątrz zbioru już wybranego.
-//
-// Odmowa przesiewu jest odmową całego żądania, a nie zejściem na wynik
-// pierwszego przebiegu. Wołający prosił o kolejność ułożoną na nowo; oddanie mu
-// po cichu tej samej kolejności, którą miał bez pytania, byłoby odpowiedzią
-// nierozpoznawalnie gorszą — pole `reranked` istnieje właśnie po to, żeby
-// odróżnienie było możliwe, ale milcząca podmiana czyniłaby je kłamstwem.
+// zPrzesiewem przeprowadza drugi przebieg wyszukiwania: bierze kandydatów
+// pierwszego przebiegu i oddaje ich w kolejności ułożonej przez krzyżowy
+// koder, gdy żądanie poprosiło o przesiew.
 func (a *adapterWiedzy) zPrzesiewem(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar, ustawienia wiedza.Ustawienia,
 	pytanie string, wektorPytania []float32, pozycje []wiedza.Pozycja,
@@ -317,11 +258,8 @@ func (a *adapterWiedzy) zPrzesiewem(ctx context.Context, okno session.Okno,
 	return odpowiedzSzukania(wiedza.PoPrzesiewie(kandydaci, oceny, granica), true), nil
 }
 
-// odpowiedzSzukania składa odpowiedź kontraktu z wykazu trafień.
-//
-// Pole `reranked` wchodzi zawsze, gdy przesiew się odbył, także przy wykazie
-// pustym: „nie mam na to nic" po przesiewie i „nie mam na to nic" bez niego są
-// dwiema różnymi odpowiedziami i wołający ma prawo je rozróżnić.
+// odpowiedzSzukania składa odpowiedź kontraktu z wykazu trafień; pole
+// `reranked` wchodzi zawsze, gdy przesiew się odbył, także przy wykazie pustym.
 func odpowiedzSzukania(trafienia []wiedza.Trafienie, przesiane bool) shared.KnowledgeSearchResponse {
 	wyniki := make([]shared.KnowledgeHit, 0, len(trafienia))
 	for _, trafienie := range trafienia {
@@ -359,7 +297,8 @@ func przelozTrafienie(trafienie wiedza.Trafienie) shared.KnowledgeHit {
 	return pozycja
 }
 
-// granicaZadania rozstrzyga liczbę oddawanych fragmentów.
+// granicaZadania rozstrzyga liczbę oddawanych fragmentów, biorąc wartość
+// domyślną albo żądaną, obciętą do granicy technicznej wskaźnika.
 func granicaZadania(limit *int) int {
 	if limit == nil || *limit <= 0 {
 		return domyslnaLiczbaTrafien
@@ -370,11 +309,8 @@ func granicaZadania(limit *int) int {
 	return *limit
 }
 
-// zakresyZadania rozwija wskazanie kontraktu na wykaz zakresów wskaźnika.
-//
-// Brak wskazania bierze bibliotekę — tak stanowi kontrakt wprost („Zakres
-// wskaznika; brak bierze biblioteke"). `all` rozwija się na trzy zakresy, bo
-// „wszystko" nie jest czwartym miejscem, z którego coś pochodzi.
+// zakresyZadania rozwija wskazanie kontraktu na wykaz zakresów wskaźnika;
+// brak wskazania bierze bibliotekę, a `all` rozwija się na trzy zakresy razem.
 func zakresyZadania(zakres *shared.KnowledgeScope) ([]string, error) {
 	if zakres == nil {
 		return []string{shared.KnowledgeScopeLibrary}, nil
@@ -410,7 +346,8 @@ func (a *adapterWiedzy) ustawienia() wiedza.Ustawienia {
 	return komplet
 }
 
-// silnik składa silnik osadzeń na nastawach tego wywołania.
+// silnik składa silnik osadzeń na nastawach danego wywołania, tworzony na
+// nowo za każdym razem, bo `ZUstawieniami` mutuje jego stan wewnętrzny.
 func (a *adapterWiedzy) silnik(ustawienia wiedza.Ustawienia) *wiedza.Silnik {
 	return wiedza.NowySilnik(a.uruchamiacz, a.katalogDanych).ZUstawieniami(ustawienia)
 }
@@ -432,17 +369,9 @@ func (a *adapterWiedzy) zasiegPlatformy() (session.Okno, session.Zasady, session
 	return okno, zasady, obszar
 }
 
-// bladWiedzy znakuje odmowę pakietu kodem kontraktu.
-//
-//   - `wiedza.BrakSilnika` → `channel_unavailable`, w praktyce nieponawialny
-//     mimo ponawialności kodu: zaplecze liczenia jest niedostępne i to samo
-//     żądanie powiedzie się bez zmiany dopiero po naprawie z treści odmowy.
-//     Kod odróżniający „nie ma biblioteki" od „nie ma wag" w katalogu kontraktu
-//     nie istnieje; rozróżnienie niesie treść, trójczęściowa i różna dla obu.
-//   - naruszenie izolacji → `permission_denied`, tak samo jak znakuje je
-//     Terminal — dwie reguły dla jednej bramy byłyby rozjazdem.
-//   - reszta → `internal_error`. Kod domyślny jest najostrzejszy z zamysłem:
-//     nieznana odmowa jest przypadkiem, którego rdzeń nie przewidział.
+// bladWiedzy znakuje odmowę pakietu kodem kontraktu: brak silnika daje
+// `channel_unavailable`, naruszenie izolacji `permission_denied`, a każda
+// inna odmowa najostrzejszy kod `internal_error`.
 func bladWiedzy(err error) error {
 	var brakSilnika *wiedza.BrakSilnika
 	if errors.As(err, &brakSilnika) {
@@ -454,7 +383,8 @@ func bladWiedzy(err error) error {
 	return odmowaWiedzy(shared.ErrorCodeInternalError, err.Error())
 }
 
-// bladZadaniaWiedzy znakuje wadę żądania kodem kontraktu.
+// bladZadaniaWiedzy znakuje wadę żądania kodem kontraktu odrzucenia
+// walidacji, wspólnym dla wszystkich komend rodziny `knowledge.*`.
 func bladZadaniaWiedzy(powod string) error {
 	return odmowaWiedzy(shared.ErrorCodeValidationFailed, powod)
 }

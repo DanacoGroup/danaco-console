@@ -1535,3 +1535,63 @@ nie wchodzi drugie żądanie z tego samego gniazda — dwie równoległe zmiany
 hasła odpowiadają wtedy obie `changed: true`, a bramkę otwiera tylko jedno
 z dwóch nowych haseł, bo drugi zapis do sejfu nadpisuje pierwszy. Sejf jest
 plikiem z wpisami i transakcji nie zna, więc niepodzielność musi stanąć tutaj.
+
+## budowa/server/internal/core/adapter_modul_wiedza.go
+
+Wyszukiwanie po słowach działa w module Library indeksem pełnotekstowym. Ta
+rodzina komend wnosi wyszukiwanie po znaczeniu, a różnica leży w tym, czego
+tamto nie umie: pytanie o postępowanie przy awarii maszyny nie ma z dokumentem
+opisującym awarię węzła ani jednego wspólnego słowa, więc indeks liter go nie
+znajdzie.
+
+Pomocnik osadzeń startuje tym samym uruchamiaczem i przez tę samą bramę
+izolacji co każdy inny proces drzewa, więc potrzebuje trójki okno, zasady i
+obszar zasięgu platformy. Żądania rodziny `knowledge.*` niosą co najwyżej
+identyfikator okna, i to po to, żeby wskazać przestrzeń do przeszukania, nie
+po to, żeby w tym oknie liczyć. Wskaźnik jest jeden na maszynę i wspólny dla
+wszystkich okien, więc trójka składa się w zasięgu platformy, tą samą drogą co
+w silniku mowy: pusty kontekst zasięgu jest poprawnym adresem najszerszego
+z poziomów, a nie podstawieniem pustych struktur po cichu.
+
+Silnik osadzeń powstaje na każde wywołanie, tak samo jak w module mowy: metoda
+ustawień mutuje byt, więc jedna instancja współdzielona przez równoległe
+żądania oznaczałaby wyścig o nastawy. Nastawy są przy tym świeże — zmiana
+modelu wiedzy wchodzi w następnym przebiegu, bez restartu rdzenia.
+
+Składanie trwałości wskaźnika nad bazą montażu stoi w osobnej funkcji, a nie
+w wyrażeniu w miejscu wpięcia: montaż bez bazy jest stanem, który zdarza się
+przy rdzeniu składanym do sprawdzenia transportu, a wartość pusta przechodzi
+tędy bez warunku po stronie wołającego.
+
+Wnoszenie dokumentów do wskaźnika idzie dokument po dokumencie, a nie
+wszystko naraz w jednej transakcji: biblioteka Operatora bywa gigabajtem
+tekstu, a jedna transakcja na całość znaczyłaby komplet wektorów w pamięci
+rdzenia naraz. Kasowanie poprzednich fragmentów źródła przed zapisem nowych
+zapobiega temu, żeby fragmenty treści skróconej od poprzedniego przebiegu
+zostały i wracały jako cytat z dokumentu, w którym ich już nie ma.
+
+Wyszukiwanie oddaje wynik pusty jako odpowiedź, nie jako odmowę: wskaźnik
+pusty albo wiedza bez związku z pytaniem znaczą brak trafień i model ma to
+usłyszeć wprost. Odmiennie brak silnika, który jest odmową, ponieważ wtedy
+rdzeń nie wie, czy wskaźnik coś ma, czy nie ma.
+
+Pole przesiewu dokłada drugi przebieg wyszukiwania. Pierwszy przebieg zostaje
+niezmieniony i wykonuje się zawsze: przesiew nie zastępuje podobieństwa
+kosinusowego, tylko układa na nowo tych kandydatów, których podobieństwo
+kosinusowe wybrało, bo krzyżowym koderem nie da się przejrzeć całego
+wskaźnika. Kandydatów jest przy tym więcej niż fragmentów oddawanych
+w odpowiedzi: przesiew może wynieść na czoło fragment, który po samym
+podobieństwie wektorów był daleko za progiem odpowiedzi, a gdyby kandydatów
+było dokładnie tyle, ile fragmentów wraca, przesiew przestawiałby wyłącznie
+kolejność wewnątrz zbioru już wybranego. Odmowa przesiewu jest odmową całego
+żądania, a nie cichym zejściem na wynik pierwszego przebiegu, ponieważ
+wołający prosił o kolejność ułożoną na nowo.
+
+Znakowanie odmów pakietu wiedzy trzyma trzy gałęzie: brak silnika osadzeń daje
+kod niedostępności kanału, w praktyce nieponawialny mimo ponawialności samego
+kodu, bo zaplecze liczenia jest niedostępne i to samo żądanie powiedzie się
+bez zmiany dopiero po naprawie opisanej treścią odmowy; naruszenie izolacji
+daje kod odmowy uprawnień, tak samo jak znakuje je moduł Terminal, żeby dwie
+reguły dla jednej bramy nie rozjechały się; każda pozostała odmowa dostaje kod
+błędu wewnętrznego jako najostrzejszy z zamysłem, bo nieznana odmowa jest
+przypadkiem, którego rdzeń nie przewidział.

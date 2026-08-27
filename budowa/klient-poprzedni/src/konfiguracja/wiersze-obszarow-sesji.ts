@@ -9,15 +9,13 @@ import {
 import { stanPusty } from './panel-kategorii';
 import type { StanObszarowSesji } from './stan-obszarow-sesji';
 
-/**
- * Wiersze wykazu obszarów i trzy pasy poboczne panelu konfiguracji
- * obowiązującej: stan pusty, rozejście katalogu roboczego, pola nieobsłużone.
- *
- * Wszystkie czynności są czyste — biorą stan i element, nie domykają się na
- * niczym; wytwórnia panelu zawiera dzięki temu samo złożenie.
- */
+/** Wiersze wykazu obszarów i trzy pasy poboczne panelu konfiguracji obowiązującej. */
 
-/** Wiersz jednego obszaru: nazwa, plakietka pochodzenia, wybór do zapisu. */
+/**
+ * Wiersz jednego obszaru: nazwa, plakietka pochodzenia oraz pole wyboru do zapisu.
+ * Plakietka mówi, skąd wartość obszaru pochodzi, więc Operator widzi zapis własny
+ * sesji obok wartości odziedziczonej, zanim cokolwiek zaznaczy.
+ */
 export interface WierszObszaru {
   element: HTMLElement;
   obszar: SessionConfigArea;
@@ -57,7 +55,11 @@ export function trescWykazu(
   ];
 }
 
-/** Zdanie stanu pustego dobrane do fazy odczytu. */
+/**
+ * Zdanie stanu pustego dobrane do fazy odczytu. Brak wykazu przed pierwszym pytaniem
+ * i brak wykazu po odpowiedzi rdzenia to dwie różne rzeczy, więc każda faza dostaje
+ * własne zdanie zamiast wspólnego komunikatu.
+ */
 function zdanieBezObszarow(stan: StanObszarowSesji): string {
   switch (stan.faza()) {
     case 'spoczynek':
@@ -96,7 +98,11 @@ export function ubierzWiersze(
   }
 }
 
-/** Rozejście katalogu roboczego — wypisane wprost, nie pomijane milczeniem. */
+/**
+ * Rozejście katalogu roboczego wypisane wprost, a nie pomijane milczeniem. Katalog
+ * inny niż obowiązujący zmienia znaczenie każdej ścieżki w sesji, więc pas poboczny
+ * nazywa różnicę zamiast zostawiać ją do odkrycia.
+ */
 export function ubierzKatalog(stan: StanObszarowSesji, katalog: HTMLElement): void {
   const obowiazujaca = stan.obowiazujaca();
   if (obowiazujaca === null) {

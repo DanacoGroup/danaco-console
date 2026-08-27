@@ -5331,3 +5331,11 @@ Zdanie o czacie testowym stoi w module, a nie tylko w oknie rozmowy, ponieważ
 przełączający eksperta w bibliotece ma przeczytać, co się stanie z rozmową,
 zanim się to stanie. Zdanie o zmianie nazywa poprzedniego eksperta, bo sama
 informacja o wyczyszczeniu rozmowy nie mówi, co ją wyczyściło.
+
+## budowa/klient-poprzedni/src/konfiguracja/wiersze-obszarow-sesji.ts
+
+Trzy pasy poboczne panelu to stan pusty, rozejście katalogu roboczego oraz pola
+nieobsłużone.
+
+Wszystkie czynności pliku są czyste: biorą stan i element, nie domykają się na niczym.
+Dzięki temu wytwórnia panelu zawiera samo złożenie.

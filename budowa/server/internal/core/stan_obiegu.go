@@ -5,21 +5,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przekład biegu naprawczego pętli koordynator–wykonawca na kształt
-// kontraktu.
-//
-// Licznik obiegów pakietu sesji — liczba obiegów, obiegi bez postępu i nazwany
-// powód zatrzymania — przechodzi tutaj w strukturę LoopState kontraktu. Jest to
-// jedyne miejsce tego przekładu.
+// Przekład biegu naprawczego pętli koordynator-wykonawca na strukturę LoopState kontraktu.
 
-// powodyBiegu wiążą nazwany powód zatrzymania pakietu sesji z wyliczeniem
-// kontraktu. Katalog wartości należy w całości do kontraktu — rdzeń żadnej nie
-// dopisuje.
-//
-// Cztery wartości dzielą się na dwie klasy i to jest właśnie rozróżnienie
-// maszynowe, po którym układ poznaje wynik pracy: `noProgress`, `manual`
-// i `failure` zastają zadanie PRZERWANE, `completed` — SKOŃCZONE z wynikiem.
-// Pole `stopReason` biegu jest jedynym miejscem, w którym rdzeń tę różnicę mówi.
+// powodyBiegu wiążą nazwany powód zatrzymania pakietu sesji z wyliczeniem kontraktu, którego katalog wartości należy w całości do kontraktu. Wartości noProgress, manual i failure zastają zadanie przerwane, a completed skończone z wynikiem.
 var powodyBiegu = map[session.PowodZatrzymania]shared.LoopStopReason{
 	session.ZatrzymanieBrakPostepu: shared.LoopStopReasonNoProgress,
 	session.ZatrzymanieRecznie:     shared.LoopStopReasonManual,
@@ -76,8 +64,7 @@ func czyBiegZmieniony(poprzedni, biezacy shared.LoopState) bool {
 		powodOdpisu(poprzedni.StopReason) != powodOdpisu(biezacy.StopReason)
 }
 
-// powodOdpisu odczytuje powód zatrzymania jako wartość porównywalną; brak
-// powodu daje wartość pustą.
+// powodOdpisu odczytuje powód zatrzymania jako wartość porównywalną; brak powodu daje wartość pustą, gotową do porównania wskaźników.
 func powodOdpisu(p *shared.LoopStopReason) shared.LoopStopReason {
 	if p == nil {
 		return ""

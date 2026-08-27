@@ -1,15 +1,11 @@
 /**
- * Nagrywanie dźwięku z mikrofonu — surowy silnik, bez widoku.
- *
- * Jedna odpowiedzialność: otworzyć strumień, zebrać bajty, oddać je i zamknąć
- * strumień. Plik nie tworzy DOM-u, nie rysuje przycisku, nie wysyła nagrania
- * nigdzie dalej i nie zna transkrypcji — wynik oddaje wywołującemu.
+ * Nagrywanie to surowy silnik obsługi mikrofonu bez widoku: otwiera strumień, zbiera bajty, zamyka go i oddaje wynik wywołującemu, nie tworząc interfejsu ani nie znając transkrypcji.
  */
 
-/** Stan nagrywania; `konczy` to czas między poleceniem stopu a gotowymi bajtami. */
+/** Stan nagrywania — pole `konczy` mierzy czas od polecenia zatrzymania do chwili, w której bajty nagrania są gotowe do odczytu. */
 export type StanNagrywania = 'bezczynne' | 'nagrywa' | 'konczy';
 
-/** Gotowe nagranie oddane wywołującemu. */
+/** Gotowe nagranie oddane wywołującemu, niosące bajty zapisu wraz z rodzajem treści i zmierzonym czasem trwania nagrywania. */
 export interface Nagranie {
   bajty: Blob;
   /** Rodzaj MIME faktycznie użyty przez `MediaRecorder`. */
@@ -30,14 +26,7 @@ export interface Nagrywanie {
 }
 
 /**
- * Kolejność preferencji rodzaju treści.
- *
- * Silnik transkrypcji przyjmuje `.wav .ogg .m4a .webm`. `audio/webm` stoi
- * pierwszy, bo w oknie osadzonym opartym o Chromium bywa jedynym wspieranym
- * zapisem — ale pierwszeństwo to nie pewność, więc każdą pozycję i tak
- * przepuszczamy przez `isTypeSupported`. Kodek podajemy tam,
- * gdzie przeglądarki go wymagają do rozstrzygnięcia; wpis bez kodeka stoi
- * zaraz za nim jako zapasowy.
+ * Kolejność preferencji rodzaju treści odzwierciedla wsparcie silnika transkrypcji, sprawdzane każdorazowo metodą `isTypeSupported` przed użyciem.
  */
 const PREFEROWANE_RODZAJE: readonly string[] = [
   'audio/webm;codecs=opus',
@@ -48,7 +37,7 @@ const PREFEROWANE_RODZAJE: readonly string[] = [
   'audio/wav',
 ];
 
-/** Zdania odmowy — dwa różne powody dostają dwa różne zdania. */
+/** Zdania odmowy nagrywania — brak zgody użytkownika i brak sprzętu audio dostają osobne, rozróżnialne komunikaty błędu. */
 const POWOD_ODMOWA_ZGODY =
   'Nie ma zgody na mikrofon. Przeglądarka odmówiła dostępu do dźwięku dla tej ' +
   'konsoli. Otwórz ustawienia witryny w przeglądarce i zezwól na mikrofon, a potem ' +
@@ -68,12 +57,7 @@ const POWOD_NIEZNANY =
   'dźwięku z wykazu.';
 
 /**
- * Najlepszy rodzaj treści obsługiwany przez to okno.
- *
- * Zwraca pusty napis, gdy żadna pozycja wykazu nie przechodzi — wtedy
- * `MediaRecorder` dostaje wybór własny, a `rodzajTresci` bierzemy z niego po
- * fakcie. `audio/webm` nie wraca stąd na wiarę: napis rodzaju, którego zapis
- * nie użył, byłby atrapą podpisu pod bajtami.
+ * Najlepszy rodzaj treści obsługiwany przez to okno, ustalony metodą `isTypeSupported`, a nie zakładany na podstawie samej preferencji `audio/webm`.
  */
 export function wybierzRodzajTresci(): string {
   const silnik = (globalThis as { MediaRecorder?: typeof MediaRecorder }).MediaRecorder;
@@ -82,12 +66,7 @@ export function wybierzRodzajTresci(): string {
 }
 
 /**
- * Zdanie dla błędu `getUserMedia`.
- *
- * Odmowa i brak sprzętu to dwie różne rzeczy. Pierwsza jest decyzją, którą
- * Operator cofa w ustawieniach przeglądarki; druga jest stanem biurka, który
- * naprawia kabel. Wspólne zdanie „nie udało się nagrać” kazałoby szukać po
- * omacku w obu przypadkach.
+ * Zdanie błędu dla `getUserMedia` rozróżnia odmowę zgody użytkownika od braku sprzętu audio, ponieważ każda z nich wymaga innej naprawy.
  */
 export function opiszOdmoweNagrywania(blad: unknown): string {
   const nazwa = (blad as { name?: string } | null)?.name ?? '';
@@ -117,13 +96,7 @@ export function utworzNagrywanie(): Nagrywanie {
     }
   }
 
-  /**
-   * Zamknięcie strumienia.
-   *
-   * Dopóki ścieżka żyje, system pokazuje, że konsola słucha. Ścieżka zostawiona
-   * po nagraniu zapala lampkę mikrofonu, choć nikt nie nagrywa, więc `stop()`
-   * idzie po każdej drodze wyjścia — udanej, przerwanej i błędnej.
-   */
+  /** Zamknięcie strumienia biegnie każdą drogą wyjścia, by nie zostawić zapalonej lampki mikrofonu. */
   function zwolnijSciezki(): void {
     strumien?.getTracks().forEach((sciezka) => sciezka.stop());
     strumien = null;
@@ -139,8 +112,7 @@ export function utworzNagrywanie(): Nagrywanie {
       throw new Error(POWOD_BRAK_SILNIKA);
     }
 
-    // Puste `idUrzadzenia` znaczy „wejście domyślne systemu” — nie jest błędem
-    // i nie zawęża zapytania, bo `deviceId: ''` odrzuciłoby każde urządzenie.
+    // Puste `idUrzadzenia` oznacza urządzenie domyślne, nie pusty ciąg w zapytaniu `deviceId`.
     const wiezy: MediaStreamConstraints = {
       audio: idUrzadzenia === '' ? true : { deviceId: { exact: idUrzadzenia } },
     };
@@ -159,8 +131,7 @@ export function utworzNagrywanie(): Nagrywanie {
     try {
       zapis = new silnik(otwarty, rodzaj === '' ? undefined : { mimeType: rodzaj });
     } catch (blad) {
-      // Strumień już żyje — bez tego zwolnienia lampka zostałaby zapalona po
-      // błędzie, którego Operator nawet nie spowodował.
+      // Zwolnienie żyjącego strumienia zapobiega zapalonej lampce mikrofonu po błędzie Operatora.
       zwolnijSciezki();
       console.error('[dyktowanie] zapis nie ruszył', blad);
       throw new Error(POWOD_BRAK_SILNIKA);
@@ -177,8 +148,7 @@ export function utworzNagrywanie(): Nagrywanie {
   function zakoncz(): Promise<Nagranie | null> {
     if (stanBiezacy !== 'nagrywa' || zapis === null) return Promise.resolve(null);
     const biezacy = zapis;
-    // Trwanie mierzy zegar, nie rozmiar bajtów: przepływność zależy od kodeka
-    // i ciszy, więc dzielenie rozmiaru przez cokolwiek dawałoby liczbę zmyśloną.
+    // Czas trwania mierzy zegar, nie rozmiar bajtów — przepływność zależy od kodeka i ciszy w nagraniu.
     const trwanieMs = Math.max(0, Math.round(performance.now() - poczatek));
     ustawStan('konczy');
 
@@ -190,8 +160,7 @@ export function utworzNagrywanie(): Nagrywanie {
         zwolnijSciezki();
         ustawStan('bezczynne');
 
-        // Zero bajtów to nie jest nagranie ciszy — to nagranie, którego nie
-        // było. Pusty `Blob` udawałby wypowiedź i poszedłby do transkrypcji.
+        // Zero bajtów oznacza brak nagrania, nie ciszę — pusty `Blob` nie idzie do transkrypcji.
         if (porzucone || zebrane.length === 0) {
           rozstrzygnij(null);
           return;

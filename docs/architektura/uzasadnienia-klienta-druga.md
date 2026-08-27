@@ -2420,3 +2420,17 @@ ponownym wejściu do modułu wskazanie zaczyna od zera, a okno tego nie ukrywa.
 ## budowa/klient/src/polaczenie/dziennik-nieznanych.ts
 Rdzeń odpowiada na nieznaną komendę zdarzeniem `*.unknown` właściwym dla obszaru nazwy; każdy obszar kontraktu ma własne zdarzenie zapasowe. Dziennik obejmuje je wszystkie, sięgając po komplet z mapy kontraktu zdarzeń nieznanych, nigdy po literał nazwy: dopisanie obszaru w kontrakcie rozszerza dziennik samo, bez zmiany tego pliku.
 Osobno przechwytywane są koperty o typie spoza kontraktu — takie, których nie zna ani wykaz komend, ani wykaz zdarzeń. Powstają, gdy rdzeń wyprzedził klienta wersją albo gdy ramka była nieczytelna.
+
+## budowa/klient-poprzedni/src/moduly/research/pustka-okien.ts
+Stan pusty tłumaczy, czym okno jest i jak je zapełnić, a nie melduje samą nieobecność pozycji —
+takie zdania są tekstem produktu, nie logiką widoku, i mają dać się przeczytać obok siebie oraz
+poprawić w jednym miejscu, gdy kontrakt dostanie komendę, której dziś nie ma. Ten sam wzorzec niesie
+plik `moduly/library/etykiety-biblioteki.ts`. Brak okna badania to co innego niż pusty wykaz, więc
+rozróżnienie stoi w jednym miejscu, nie w siedmiu oknach: komendy zapisu źródła, ustalenia i budowy
+raportu mają pole `windowId` obowiązkowe, więc bez okna zaproszenie „skataloguj pierwsze źródło"
+prowadzi Operatora wprost pod odmowę. Żadne z tych zdań nie odbiera klikalności ani jednej
+kontrolce — nazywa warunek merytoryczny, po czym formularze i przyciski zostają czynne, a odmowa
+rdzenia wraca własnymi słowami rdzenia.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/nagrywanie.ts
+Kolejność preferencji rodzaju treści: silnik transkrypcji przyjmuje zapisy `.wav .ogg .m4a .webm`, a `audio/webm` stoi pierwszy, bo w oknie osadzonym opartym o technologię Chromium bywa jedynym wspieranym zapisem; kodek dobiera się tam, gdzie przeglądarka go wymaga do rozstrzygnięcia, a wpis bez kodeka stoi zaraz za nim jako zapasowy. Zwrócony rodzaj treści nie wraca na podstawie samej preferencji — pusty napis, gdy żadna pozycja wykazu nie przechodzi, oznacza wybór własny nagrywarki, odczytany dopiero po fakcie, aby napis rodzaju nie stał się atrapą podpisu pod bajtami, których nie użył. Wspólne zdanie odmowy dla braku zgody i braku sprzętu kazałoby szukać przyczyny po omacku — pierwsza jest decyzją cofalną w ustawieniach przeglądarki, druga stanem sprzętu naprawianym kablem.

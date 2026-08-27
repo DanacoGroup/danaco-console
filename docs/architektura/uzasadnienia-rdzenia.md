@@ -1078,3 +1078,67 @@ zgodności z kontraktem i nie mówi nic o tym, czy cokolwiek zostało. Dlatego
 żaden sprawdzian tutaj nie kończy się na odczytaniu odpowiedzi komendy: każdy
 schodzi własnym zapytaniem SQL do pliku bazy albo do pliku na dysku i mierzy
 niezależnie od tego, co rdzeń zameldował.
+
+## budowa/server/internal/core/przegladarka_pobieranie.go
+
+`browser.navigate` sięga po stronę realnym HTTP GET-em (biblioteka
+standardowa `net/http`, bez zależności), z limitem czasu i rozmiaru, i
+wydobywa z HTML-a tytuł oraz tekst renderowany, którymi wypełnia migawkę
+opisaną w `adapter_modul_przegladarka.go`. Strona może milczeć, ale rdzeń nie
+udaje, że odpowiedziała: błąd transportu, stan nienoszący treści (4xx, 5xx,
+204/205, przekierowanie bez `Location`) albo treść nietekstowa wraca uczciwym
+błędem — migawka powstaje tylko z faktycznie pobranej strony, nie z pustki
+podszytej pod sukces. Zrzut ekranu wymaga silnika przeglądarki poza
+`net/http` i nie jest tu wypełniany.
+
+Rdzeń stoi na maszynie operatora, więc adres wskazany przez model nie jedzie
+w świat bez granic. Cztery granice, każda odmawiająca zdaniem po polsku, nie
+ciszą i nie wyjątkiem: protokół (tylko `http`/`https`, żadnego `file:`,
+`ftp:` ani `data:`), czas całego pobrania, rozmiar odpowiedzi i długość
+łańcucha przekierowań. Odmowa opisuje brak, nie zakaz postawiony operatorowi.
+
+Adres jest obcinany raz, na wejściu funkcji `pobierzStrone`, i to jest cała
+prawda o nim dalej: gdyby odstępy zdejmował sam sprawdzian protokołu, a do
+złożenia żądania szedł łańcuch nieobcięty, adres z otaczającymi spacjami
+przeszedłby granicę protokołu i rozbiłby się dopiero o
+`http.NewRequestWithContext` zdaniem o pierwszym segmencie ścieżki — dwie
+prawdy o jednym adresie w jednej funkcji.
+
+`http.Client` zawija powód niepowodzenia w `*url.Error`; rozwinięcie sprawia,
+że zdanie odmowy niesie samą przyczynę, nie powtórzony adres z prefiksem
+„Get". Odmowa własna z `CheckRedirect` wraca tą samą drogą co usterka
+transportu, ale nią nie jest: zły protokół kolejnego skoku i zbyt długi
+łańcuch to wada adresu, nie milczenie gospodarza.
+
+Deklarowany rozmiar sprawdzamy przed czytaniem: gdy serwer sam mówi, że
+przysyła więcej niż granica, nie ma po co ciągnąć ani bajta. Czytanie idzie
+o bajt więcej niż granica, bo nadmiarowy bajt jest dowodem, że strona się nie
+zmieściła — bez niego ucięcie byłoby nie do odróżnienia od strony, która ma
+dokładnie tyle treści, a wtedy migawka kłamałaby po cichu.
+
+`sprawdzStanOdpowiedzi` istnieje, bo sam warunek „poza 200-399 odmawiaj"
+przepuszczałby dwie odpowiedzi, które treści strony nie niosą wcale: 3xx,
+które dojechało aż tutaj tylko wtedy, gdy przekierowanie nie wskazało
+`Location`, oraz 204/205, które z definicji nie mają ciała. Obie skończyłyby
+się stanem powodzenia i migawką bez tytułu, tekstu i HTML-a, a
+`browser.snapshot.get` oddałby tę pustkę modelowi jako bieżący stan strony,
+a historia nawigacji zapisałaby przejście, którego nie było.
+
+W `pilnujPrzekierowan` granica znaczy dokładnie to, co mówi odmowa: pole
+niosące żądania już wysłane zawiera przy pierwszym przekierowaniu żądanie
+pierwotne, więc przy k-tym skoku długość wynosi k. Warunek ponad pięć
+odrzucałby zatem skok piąty, czyli przepuszczał tylko cztery, podczas gdy
+zdanie odmowy mówi „dalej niż pięć razy" — miara i zdanie muszą być tą samą
+prawdą, więc odmowa pada dopiero za granicą.
+
+Kanały wchodzą tą samą drogą co strony: `browser.feed.subscribe` pobiera
+dokument RSS, Atom albo JSON Feed tym samym pobraniem, a serwery kanałów
+deklarują je własnymi typami (`application/rss+xml`, `application/atom+xml`,
+`application/feed+json`, `application/json`). Bez tych typów subskrypcja
+odmawiałaby zdaniem „zasób nie jest stroną do odczytu" przy dokumencie, który
+jest dokładnie tym, o co poprosił operator.
+
+Wydobycie tekstu renderowanego biblioteką standardową, bez zależności
+`x/net/html`, nie jest pełnym silnikiem renderującym — to uczciwe wydobycie
+treści czytelnej dla modelu: usunięcie bloków skryptów i stylów, zdjęcie
+pozostałych znaczników, odkodowanie encji i zbicie odstępów.

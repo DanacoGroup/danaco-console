@@ -1,6 +1,10 @@
+/**
+ * Książka kodów badania składana z tekstu okna komendą `research.codebook.set`.
+ * Plik rozkłada tekst wiersz po wierszu na nazwę i definicję, złącza kody
+ * z książką rdzenia i podaje liczniki kodów dopisanych, poprawionych oraz
+ * zachowanych bez zmiany.
+ */
 import type { ResearchCode } from '../../../../shared/contract';
-
-/** Książka kodów badania składana z tekstu okna komendą `research.codebook.set`. */
 
 /**
  * Kod wpisany przez Operatora: nazwa oraz nieobowiązkowa definicja. Definicja

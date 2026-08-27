@@ -2803,3 +2803,58 @@ czytany jest ten sam plik, do którego rdzeń pisze.
 Droga zapisu konta nadawczego w sprawdzianie jest ta sama co w produkcie, nie
 skrót przez nastawy montażu: badane jest właśnie to, co dzieje się, gdy poczta
 pojawia się po rejestracji.
+
+## budowa/server/internal/core/handlers_developer.go
+
+Plik wpina komendy obszaru `developer.*` modułu Developer wraz z jego oknami
+operacyjnymi: Code Editor, Project Tree, Git Panel i Build Output. Kontrakt
+daje modułowi jedno zdarzenie, `developer.build.changed`, więc każdy przyrost
+budowania — start, kolejny wiersz logu, domknięcie — rozgłasza się przebiegiem
+po zmianie; Build Output odświeża się z jednej subskrypcji, a nie z
+odpytywania.
+
+Podział dróg w Git Panelu jest jawny: `developer.git.action` wykonuje
+czynności zmieniające repozytorium wedle zamkniętego słownika, a
+`developer.git.status`, `.diff`, `.log`, `.branch.list` i `.conflict.*`
+wyłącznie czytają. Odczyt stoi na bibliotece `go-git` wkompilowanej w rdzeń
+i nie startuje ani jednego procesu — Git Panel ma się otwierać także tam,
+gdzie programu `git` nie ma, bo instalka go nie niesie.
+
+`PodepnijPrzyrostBudowania` oddaje adapterowi drogę do zdarzenia przyrostu.
+Budowanie kończy się poza wykonaniem komendy, czasem minuty później, a log
+narasta przez cały ten czas, więc rozgłoszenie nie może iść wyłącznie
+z obsługiwacza żądania. Sesja komunikatu przyrostu zostaje pusta: przebieg
+należy do okna, a rdzeń rozgłasza go także wtedy, gdy okna nie ma już
+w rejestrze — budowanie przeżywa zamknięcie okna, a klient ma prawo zobaczyć
+jego koniec.
+
+Odczyt repozytorium w Git Panelu to sześć czynności na bibliotece `go-git`
+wkompilowanej w rdzeń, bez ani jednego procesu potomnego.
+
+Historia pliku edytora to wersja robocza zakładana przy zapisie. To nie jest
+historia repozytorium: tamta należy do Gita i jedzie `git.log`.
+
+Warstwa językowa Code Editora jako jedyna w module woła programy serwera
+(gopls, gofmt, goimports, prettier, golangci-lint), bo program jest tą wiedzą
+o kodzie; brak programu wraca polem `serverAvailable`/`linterAvailable`,
+a nie odmową całej komendy.
+
+Odczyt okna Build Output daje historię przebiegów, log, wynik testów
+i pokrycie. Wynik testów i pokrycie powstają z rozbioru wyjścia w chwili
+biegu, a nie z ponownego czytania przyciętego dziennika.
+
+Okno Run & Debug na protokole DAP: punkt przerwania jest trwały i należy do
+okna, a sesja debugowania jest żywa i gaśnie razem z procesem adaptera.
+
+Zakładka Data Console stoi na `database/sql` ze sterownikami wkompilowanymi
+w rdzeń. Hasło nie leży w opisie połączenia, tylko w sejfie.
+
+Zakładka Containers stoi na Docker SDK Go rozmawiającym z gniazdem silnika.
+Silnika nie da się wkompilować: jego brak wraca polem `engineAvailable`.
+
+Zależności, bezpieczeństwo i jakość liczą własne parsery manifestów i własne
+reguły skanowania, bez zależności od programu spoza instalki.
+
+Przebieg obciążeniowy stoi przy zapytaniu pojedynczym, bo jest tym samym
+zapytaniem powtórzonym pod obciążeniem, z tym samym podstawianiem zmiennych
+środowiska kolekcji.

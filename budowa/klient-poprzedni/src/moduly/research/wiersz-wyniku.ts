@@ -2,16 +2,8 @@ import { przycisk } from '../../modele/kontrolki-formularza';
 import type { WynikOdkrycia } from './wynik-odkrycia';
 
 /**
- * Jedna pozycja wykazu wyników Discovery Panel.
- *
- * Jedna odpowiedzialność: przełożenie pozycji wyniku na wiersz z metadanymi,
- * fragmentem i akcją podstawową „→ Dodaj do źródeł". Przycisk jest czynny
- * zawsze, także dla pozycji już przeniesionej: powtórzenie kończy się
- * odpowiedzią rdzenia, nie odebraniem klikalności.
- *
- * Wiersz nie niesie pola wyboru. Zaznaczenie wielokrotne w module dotyczy
- * źródeł i ustaleń — bytów badania — a pozycja wyniku badaniem jeszcze nie
- * jest; staje się nim dopiero po skatalogowaniu.
+ * Jedna pozycja wykazu wyników Discovery Panel: wynik przełożony na wiersz z metadanymi,
+ * fragmentem i akcją dodania do źródeł.
  */
 export function utworzWierszWyniku(
   pozycja: WynikOdkrycia,
@@ -41,7 +33,7 @@ export function utworzWierszWyniku(
   return element;
 }
 
-/** Fragment treści oddany przez rdzeń — cytat, więc bez skracania i bez zmian. */
+/** Fragment treści oddany przez rdzeń jako cytat wyniku wyszukiwania, wypisany bez skracania i bez zmian jego treści. */
 function fragment(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mr-wykaz__fragment';

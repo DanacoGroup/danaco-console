@@ -2441,3 +2441,12 @@ Funkcja ZapiszUprawnieniaRozszerzenia wymienia komplet uprawnień jednej strony
 zamiast dokładać wiersze do istniejących: manifest, który przestał deklarować
 uprawnienie, ma przestać je pokazywać, a nadanie zdjęte przez Operatora ma
 zniknąć z tabeli, a nie pozostać w niej jako nieaktualny wiersz.
+
+## przegladarka_wytwory.go
+
+Kolumna odwołania do treści (`tresc_odwolanie`) w tabelach wytworu, zrzutu i
+pobrania jest NOT NULL, ponieważ wiersz reprezentuje coś, co istnieje poza
+bazą: wytwór i zrzut mają bajty w magazynie plików, pobranie ma plik na
+dysku, makro ma kroki możliwe do odtworzenia, a granica obowiązuje kolejne
+przebiegi Wykonawcy. Wiersz bez odwołania byłby zapisem bez pokrycia w
+rzeczywistym skutku.

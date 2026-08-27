@@ -1,14 +1,5 @@
-//! Dziennik powłoki — jedyne miejsce, w którym powłoka zostawia ślad.
-//!
-//! Powłoka pracuje bez konsoli (podsystem okienkowy, `main.rs`), więc to, co ma
-//! do powiedzenia o swoim starcie, wskazaniu rdzenia i aktualizacji, musi mieć
-//! dokąd trafić. Brak możliwości otwarcia pliku nie wstrzymuje startu — zapis
-//! jest wtedy pomijany, bo dziennik nie jest bramą.
-//!
-//! Katalog jest własnością powłoki, nie rdzenia. Zmiennej `DANACO_KATALOG_DANYCH`
-//! ten moduł nie czyta: należy ona do rdzenia, a rdzeń stoi na serwerze
-//! wdrożenia i wskazuje nią katalog na TAMTEJ maszynie. Powłoka pisze u siebie,
-//! obok pliku nastaw (`nastawy.rs`), bo oba pliki są jej własne.
+//! Moduł prowadzi dziennik powłoki: jedyne miejsce, w którym powłoka bez konsoli
+//! zostawia ślad o swoim starcie, wskazaniu rdzenia i aktualizacji.
 
 use std::env;
 use std::fs::{create_dir_all, OpenOptions};
@@ -19,7 +10,7 @@ use std::path::PathBuf;
 /// do powłoki.
 pub const NAZWA_PLIKU: &str = "powloka-dziennik.log";
 
-/// Katalog danych powłoki: `%LOCALAPPDATA%\DanacoConsole`.
+/// Katalog danych powłoki, własny i osobny od katalogu danych rdzenia: `%LOCALAPPDATA%\DanacoConsole`.
 pub fn katalog_danych() -> PathBuf {
     let baza = env::var("LOCALAPPDATA")
         .or_else(|_| env::var("HOME"))
@@ -27,13 +18,12 @@ pub fn katalog_danych() -> PathBuf {
     PathBuf::from(baza).join("DanacoConsole")
 }
 
-/// Ścieżka pliku dziennika powłoki.
+/// Ścieżka pliku dziennika powłoki, złożona z katalogu danych powłoki i nazwy pliku dziennika powłoki.
 pub fn sciezka() -> PathBuf {
     katalog_danych().join(NAZWA_PLIKU)
 }
 
-/// Dopisuje wiersz do dziennika. Niepowodzenie zapisu jest pomijane —
-/// dziennik nie jest bramą.
+/// Dopisuje wiersz do dziennika powłoki, pomijając niepowodzenie zapisu bez wstrzymania startu powłoki.
 pub fn dopisz(wiersz: &str) {
     let sciezka = sciezka();
     if let Some(katalog) = sciezka.parent() {

@@ -2695,3 +2695,9 @@ Kolejność definicji jest pierwszą wolną w obrębie kategorii.
 Kolejność w module jest dopisaniem na koniec, nie przestawieniem. Okna zastane
 zostają na swoich miejscach: zmiana porządku wyświetlania należy do projektu
 interfejsu, nie do migracji domykającej katalog.
+
+## budowa/server/internal/store/migracja_269_kolejka_polityka.sql
+Polityka kolejki i dodanie rodzaju kolejki uruchamianej z zegara idą w jednym kroku, ponieważ obie zmiany dotyczą tabeli kolejki, a przenoszenie danych nie zmienia warunku kolumny w miejscu — rozdzielenie ich na dwa kroki oznaczałoby dwa przepisania tej samej tabeli. Polityka idzie kolumnami tabeli kolejki, a nie tabelą obok, ponieważ jest polem bytu kolejki o krotności jeden do jednego, bez własnego cyklu życia; tabela obok kazałaby każdemu odczytowi kolejki wykonywać złączenie, by dowiedzieć się rzeczy o samej kolejce. Rodzaj kolejki dostaje trzecią wartość dla kolejki uruchamianej z zegara, ponieważ wcześniejszy warunek dopuszczał tylko kolejkę sesyjną i kolejkę wieloczynnościową, a bez tej wartości automatyka z harmonogramem nigdy się nie uruchamiała — przebieg odbijał się od warunku kolumny, mimo poprawnie złożonego żądania. Wartości domyślne polityki są wartościami domyślnymi modelu konfiguracji: zasięg lokalny, bez ograniczenia współbieżności i tempa, trzy próby z wycofaniem wykładniczym i rozproszeniem czasowym, kolejka zadań martwych włączona; kolejka założona przed tym krokiem dostaje je tak samo jak kolejka założona po nim.
+
+## budowa/desktop/src-tauri/src/dziennik.rs
+Powłoka pracuje bez konsoli w podsystemie okienkowym, więc brak możliwości otwarcia pliku dziennika nie wstrzymuje startu — zapis jest wtedy pomijany, bo dziennik nie jest bramą. Katalog danych jest własnością powłoki, nie rdzenia: zmienna wskazująca katalog danych rdzenia dotyczy maszyny serwera wdrożenia, a powłoka pisze dziennik u siebie, obok pliku nastaw, bo oba pliki są jej własne.

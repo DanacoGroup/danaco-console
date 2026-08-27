@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# Skrypt uruchamiany bezpośrednio, interpreter systemowy wskazany wprost w tym pierwszym wierszu pliku wykonywalnego.
 """
 Danaco Console — generator nośników marki (zastosowania).
 
@@ -28,7 +28,6 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 
-# ── katalogi ────────────────────────────────────────────────────────────────
 BAZA = os.path.dirname(os.path.abspath(__file__))
 KAT_SVG = os.path.join(BAZA, "svg")
 KAT_PNG = os.path.join(BAZA, "png")
@@ -51,7 +50,6 @@ TEKST3 = "#7C7C7C"       # --dn-tekst-3 (oba)       = szary-500
 DOT_C = "#5C8CEC"        # --dn-kropka (ciemny)     = sygnal-400
 DOT_J = "#3B6FE0"        # --dn-kropka (jasny)      = sygnal-500
 
-# ── treści (wyłącznie z dokumentacji produktu) ──────────────────────────────
 PRODUKT = "Danaco Console"
 DESKRYPTOR = "AI Operating Environment"
 ZDANIE = ("Zarzadzaj cyfrowa organizacja."
@@ -64,7 +62,6 @@ PRODUCENT = "Danaco Holding Group Sp. z o.o."
 KONTAKT = "support@danaco-group.pl"
 WERSJA = "v2.0 · status deweloperski"
 
-# ── geometria ZATWIERDZONA (nie zmieniać) ──────────────────────────────────
 GROT_1 = "M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"
 GROT_2 = "M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"
 KROPKA = (83, 63.5, 6.5)            # cx, cy, r w siatce 96x96 (zapis jak w pliku źródłowym)
@@ -73,7 +70,6 @@ KROPKA_UPR = (79, 69, 9)
 OS_OPTYCZNA_X = 50.75               # środek farby sygnetu (12 → 89,5)
 OS_OPTYCZNA_Y = 48.0
 
-# ── kroje (podzbiory latin + latin-ext czytane razem) ──────────────────────
 RODZINY = {
     "sg700": ["space-grotesk-latin-700-normal.woff2",
               "space-grotesk-latin-ext-700-normal.woff2"],
@@ -147,7 +143,6 @@ def tekst(tekst_zrodlowy, rodzina, rozmiar, x, y, barwa,
     return '<path fill="%s"%s d="%s"/>' % (barwa, atr_krycie, " ".join(kawalki))
 
 
-# ── elementy znaku ──────────────────────────────────────────────────────────
 def sygnet(x, y, bok, ink, dot, uproszczony=False, krycie_grotow=None,
            krycie_kropki=None):
     """Sygnet wpisany w kwadrat `bok` × `bok` (siatka 96 × 96), lewy górny róg (x, y)."""
@@ -227,8 +222,7 @@ def lockup_pionowy(x, y, skala, ink, dot):
     srodek = (sygnet(31.7, 0, 96, ink, dot)
               + logotyp(12.0, 136 - LOGO_WYS_WERSALIKA, 1.0, ink, dot)
               .replace('translate(12.0000,', 'translate(12.0000,'))
-    # CONSOLE w lockupie pionowym jest wyśrodkowany pod DANACO (metryka pliku:
-    # DANACO x = 12,0 · CONSOLE x = 42,2), więc składamy go osobno.
+    # CONSOLE jest wyśrodkowany pod DANACO, więc składamy go osobno.
     srodek = (sygnet(31.7, 0, 96, ink, dot)
               + tekst("DANACO", "sg700", LOGO_DANACO_ROZM, 12.0, 136.0, ink,
                       tracking=LOGO_DANACO_TRACK)
@@ -255,7 +249,6 @@ LOCKUP_POZIOMY_SZER = 76 + szerokosc("DANACO", "sg700", LOGO_DANACO_ROZM,
 LOCKUP_KOMPAKT_SZER = LOCKUP_POZIOMY_SZER + 10.4
 
 
-# ── siatka konstrukcyjna tła ────────────────────────────────────────────────
 def siatka(szer, wys, modul, barwa, krycie=0.045):
     linie = []
     x = float(modul)
@@ -288,9 +281,6 @@ def zapisz(nazwa, tresc_svg, png_szer=None):
     return sciezka
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  1 · OBRAZ OPEN GRAPH 1200 × 630
-# ════════════════════════════════════════════════════════════════════════════
 def obraz_og():
     W, H, M = 1200, 630, 80
     t = [siatka(W, H, 48, INK_C, 0.04)]
@@ -324,9 +314,6 @@ def obraz_og():
     zapisz("obraz-og-1200x630-jasny", dokument(W, H, "".join(t), TLO_JASNE), 1200)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  2 · BANER LINKEDIN 1584 × 396
-# ════════════════════════════════════════════════════════════════════════════
 def baner_linkedin():
     W, H, M = 1584, 396, 120
     t = [siatka(W, H, 44, INK_C, 0.04)]
@@ -359,9 +346,6 @@ def baner_linkedin():
     zapisz("baner-linkedin-1584x396-jasny", dokument(W, H, "".join(t), TLO_JASNE), 1584)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  3 · TAPETY — znak zdegradowany do znaku wodnego, kropka jedynym akcentem
-# ════════════════════════════════════════════════════════════════════════════
 def tapeta(szer, wys, modul, ciemna=True):
     ink = INK_C if ciemna else INK_J
     dot = DOT_C if ciemna else DOT_J
@@ -379,13 +363,9 @@ def tapeta(szer, wys, modul, ciemna=True):
     zapisz(nazwa, dokument(szer, wys, "".join(t), tlo), szer)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  4 · TŁA SLAJDU 1920 × 1080
-# ════════════════════════════════════════════════════════════════════════════
 def tla_slajdu():
     W, H, M = 1920, 1080, 120
-    # 4a — slajd tytułowy: lockup pionowy 340 px szer. (≈ 60 mm na slajdzie),
-    #      prawe dwie trzecie pozostają puste pod tytuł prezentacji
+    # 4a — slajd tytułowy; prawe dwie trzecie pozostają puste pod tytuł.
     t = [siatka(W, H, 60, INK_C, 0.035)]
     sk = 340.0 / 159.0
     t.append(lockup_pionowy(M, H / 2 - (172 * sk) / 2 - 40, sk, INK_C, DOT_C))
@@ -421,9 +401,6 @@ def tla_slajdu():
            dokument(W, H, "".join(t), TLO_JASNE), 1920)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  5 · KARTA TYTUŁOWA DOKUMENTACJI 1600 × 900
-# ════════════════════════════════════════════════════════════════════════════
 def karta_tytulowa():
     W, H, M = 1600, 900, 100
     t = [siatka(W, H, 50, INK_C, 0.035)]
@@ -457,16 +434,12 @@ def karta_tytulowa():
            dokument(W, H, "".join(t), TLO_JASNE), 1600)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  6 · WIZYTÓWKA 90 × 50 mm
-# ════════════════════════════════════════════════════════════════════════════
 def wizytowka():
     W, H = 90.0, 50.0          # mm — układ współrzędnych = milimetry
     Mrg = 7.0
     # awers — atrament, lockup kompaktowy 28 mm
     skala = 28.0 / LOCKUP_KOMPAKT_SZER
-    # środek farby lockupu kompaktowego leży na y = 41,5 j. (nie 48) — ink obejmuje
-    # sygnet 16…80 i wersalik DANACO 35,2…59; oś optyczna karty na 45 % wysokości
+    # Środek farby lockupu leży na y = 41,5, nie 48 — oś optyczna karty na 45% wysokości.
     t = [lockup_kompaktowy(Mrg, H * 0.45 - 41.5 * skala, skala, INK_C, DOT_C)]
     t.append(tekst(DESKRYPTOR.upper(), "mono400", 2.1, Mrg, H - Mrg, TEKST3,
                    tracking=0.14))
@@ -518,9 +491,6 @@ def _wizytowka_srodek(strona):
             + sygnet(W - Mrg - 11.0, Mrg, 11.0, INK_J, DOT_J))
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  7 · EKRAN POWITALNY (SPLASH)
-# ════════════════════════════════════════════════════════════════════════════
 def ekran_powitalny(szer, wys, modul):
     k = szer / 1280.0
     t = [siatka(szer, wys, modul, INK_C, 0.030)]
@@ -545,9 +515,6 @@ def ekran_powitalny(szer, wys, modul):
            dokument(szer, wys, "".join(t), TLO_CIEMNE), szer)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  8 · AWATAR / IKONA PROFILU 400 × 400
-# ════════════════════════════════════════════════════════════════════════════
 def awatar():
     R = 400
     znak = sygnet_wysrodkowany(R / 2, R / 2, R * 0.52, INK_C, DOT_C)
@@ -576,9 +543,6 @@ def awatar():
            dokument(R, R, znak_u, MEDALION), 400)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  9 · ZNAKI WODNE
-# ════════════════════════════════════════════════════════════════════════════
 def znaki_wodne():
     # sygnet — na jasnym (atrament 8 %) i na ciemnym (biel 10 %)
     for nazwa, ink, kry in (("znak-wodny-sygnet-na-jasnym", INK_J, 0.08),
@@ -609,7 +573,6 @@ def znaki_wodne():
         zapisz(nazwa, tresc, 480)
 
 
-# ════════════════════════════════════════════════════════════════════════════
 def main():
     obraz_og()
     baner_linkedin()

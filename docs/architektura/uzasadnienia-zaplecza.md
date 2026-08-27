@@ -574,3 +574,33 @@ dowodzi, że rdzeń nie wrócił do produktu hybrydowego przy zmianie
 konfiguracji. Ostatnia zapora bada binarkę wypakowaną z instalatora, a nie
 tę z katalogu docelowego, bo tylko wypakowana binarka jest tym, co dostanie
 operator.
+
+## budowa/server/internal/store/migracja_362_studio_obiekty_i_aparat.sql
+
+Obraz, kształt, ikona i pole tekstowe są bytami, po których się pyta
+niezależnie od tego, gdzie w treści wiszą: które obiekty w dokumencie
+przyszły z modułu Design, co jest osadzone z bazy zdjęciowej, które obiekty
+są bez tekstu zastępczego. Drzewo postaci trzyma tylko zakotwiczenie
+obiektu, a jego opis leży w tabeli obiektu — dlatego wstawienie obiektu nie
+przepisuje całego drzewa, a wykaz obiektów nie wymaga jego rozbierania.
+Bajty obiektu leżą w magazynie zasobów pod sumą kontrolną, tym samym, którym
+posługuje się warsztat PDF i moduł Design; drugiego magazynu Studio nie
+zakłada, kolumna trzyma odwołanie, nie zawartość. Fragment i obraz
+wciągnięty ze strony albo z Biblioteki niesie zapis pochodzenia przy samym
+obiekcie, bo obiekt ma jedno źródło i nie dzieli się na fragmenty; dla
+treści dzielącej się na fragmenty służy do tego osobna tabela z migracji 368.
+
+Spis treści, spis ilustracji, przypis dolny i końcowy, podpis, zakładka,
+odwołanie wzajemne, odsyłacz, powołanie, bibliografia, hasło i indeks
+różnią się tym, co niosą, ale nie tym, jak się nimi pracuje: każdy jest
+przypięty do miejsca w treści, każdy ma numer nadawany przy odświeżeniu i
+każdy może być nieświeży. Trzynaście tabel o tym samym kształcie
+znaczyłoby trzynaście zapytań przy każdym odświeżeniu aparatu, więc rodzaj
+elementu rozstrzyga kolumna rodzaj, a to, co swoiste dla rodzaju, leży w
+kolumnie dane_json.
+
+Pole jest przeliczane, nie zbierane: numer strony, liczba stron, data i
+pole obliczane liczą się z układu i z właściwości dokumentu, a nie z
+nagłówków. Odświeżenie pól i odświeżenie aparatu są dwiema czynnościami o
+różnym koszcie i różnej porze — pola odświeżają się przy każdym podglądzie,
+a elementy aparatu dopiero na żądanie.

@@ -2,22 +2,8 @@ import { przycisk } from '../../modele/kontrolki-formularza';
 import { WARSTWY, oznaczWarstwe, type WarstwaWidocznosci } from './warstwy-translate';
 
 /**
- * Wyzwalacze okien warstw drugiej i trzeciej — pas, z którego otwiera się to,
- * co w stanie spoczynku modułu jest zwinięte.
- *
- * Opracowanie modułu rozstrzyga postać spoczynkową wprost: w stanie spoczynku
- * widoczne są elementy warstwy pierwszej oraz zwinięte wyzwalacze warstw
- * wyższych, a okna zarządców pozostają zwinięte do chwili wywołania i po
- * zamknięciu znikają z przestrzeni roboczej. Ten pas jest tymi wyzwalaczami.
- *
- * Zwinięte nie znaczy niedostępne i nie znaczy zablokowane. Wyzwalacz stoi na
- * ekranie zawsze, jest w pełni klikalny, niesie nazwę okna, jego warstwę
- * i znacznik wywołania z ikonografii opracowania, a stan otwarcia mówi
- * `aria-expanded` — nie sama barwa.
- *
- * Okno zamknięte jest ukrywane, nie usuwane. Usunięcie zabrałoby wraz z nim
- * treść wpisaną do jego pól i wynik ostatniego wywołania, a Operator zamyka
- * kolumnę, żeby zrobić miejsce, nie żeby stracić pracę.
+ * Wyzwalacze okien warstw drugiej i trzeciej to pas, z którego otwiera się to, co w stanie
+ * spoczynku modułu jest zwinięte, ale nie zablokowane.
  */
 export interface OpisWyzwalacza {
   /** Kod okna — ten sam, którym moduł zgłasza je w katalogu okien. */
@@ -51,9 +37,7 @@ export function utworzWyzwalaczeOkien(opisy: readonly OpisWyzwalacza[]): Wyzwala
   for (const opis of opisy) {
     const uchwyt = przycisk(etykieta(opis), 'dn-btn dn-btn--sm dn-btn--zarys mt-wyzwalacze__uchwyt');
     oznaczWarstwe(uchwyt, opis.warstwa);
-    // Uchwyt znakuje się inaczej niż okno, którym steruje. Ten sam znacznik na
-    // obu dałby dwa węzły pod jednym zapytaniem, a pierwszy z nich — uchwyt —
-    // odpowiadałby na pytanie o widoczność okna.
+    // Uchwyt znakuje się inaczej niż okno, którym steruje, inaczej dwa węzły odpowiadałyby zapytaniu.
     uchwyt.dataset['wyzwalacz'] = opis.kod;
     uchwyt.title = `${WARSTWY[opis.warstwa].nazwa} — ${WARSTWY[opis.warstwa].dostep}`;
     uchwyt.addEventListener('click', () => ustaw(opis, opis.okno.hidden));
@@ -84,11 +68,8 @@ export function utworzWyzwalaczeOkien(opisy: readonly OpisWyzwalacza[]): Wyzwala
 }
 
 /**
- * Etykieta uchwytu niesie czynność, którą naciśnięcie wykona.
- *
- * Uchwyt zwinięty mówi „Otwórz", rozwinięty — „Zamknij". Sama nazwa okna nie
- * mówiłaby, co się stanie po naciśnięciu, a stan otwarcia byłby wtedy niesiony
- * wyłącznie przez `aria-expanded`, którego wzrokiem się nie czyta.
+ * Etykieta uchwytu niesie czynność, którą naciśnięcie wykona: uchwyt zwinięty mówi Otwórz,
+ * rozwinięty Zamknij, zamiast liczyć na sam stan otwarcia.
  */
 function etykieta(opis: OpisWyzwalacza, otwarte = false): string {
   const czynnosc = otwarte ? 'Zamknij' : 'Otwórz';

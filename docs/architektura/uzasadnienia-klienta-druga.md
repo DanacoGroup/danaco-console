@@ -4738,3 +4738,14 @@ kompilator zatrzyma się na wpisie w mapie wytwórni. Plik nie czyta rejestru
 i nie zna stanów pozycji — posiadanie wytwórni i nazwanie pozycji zbudowaną
 w rejestrze to dwie różne prawdy, zestawiane osobno, a rozjazd między nimi
 zgłasza pas okien pomocniczych.
+
+## budowa/klient-poprzedni/src/moduly/translate/wyzwalacze-okien.ts
+Opracowanie modułu rozstrzyga postać spoczynkową wprost: w stanie spoczynku widoczne są elementy
+warstwy pierwszej oraz zwinięte wyzwalacze warstw wyższych, a okna zarządców pozostają zwinięte do
+chwili wywołania i po zamknięciu znikają z przestrzeni roboczej. Wyzwalacz stoi na ekranie zawsze,
+jest w pełni klikalny, niesie nazwę okna, jego warstwę i znacznik wywołania z ikonografii
+opracowania, a stan otwarcia mówi atrybut rozwinięcia dostępności, nie sama barwa. Okno zamknięte
+jest ukrywane, nie usuwane: usunięcie zabrałoby wraz z nim treść wpisaną do jego pól i wynik
+ostatniego wywołania, a operator zamyka kolumnę, żeby zrobić miejsce, nie żeby stracić pracę.
+Sama nazwa okna nie mówiłaby, co się stanie po naciśnięciu uchwytu, a stan otwarcia byłby wtedy
+niesiony wyłącznie przez atrybut dostępności, którego wzrokiem się nie czyta.

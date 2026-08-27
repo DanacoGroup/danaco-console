@@ -1,3 +1,5 @@
+*Dokument stanowi katalog komponentów interfejsu wielokrotnego użytku platformy Danaco Console wraz z ich formą, wagą wizualną, stanami i warstwami widoczności.*
+
 # Danaco Console — Katalog komponentów interfejsu
 
 | | |
@@ -1256,7 +1258,7 @@ Każda nowa karta sesji otrzymuje domyślnie odrębny układ okien, odrębną hi
 
 **Zachowanie po interakcji.** Pojawia się i znika wraz ze stanem, który opisuje — nie ma własnej animacji wejścia/wyjścia odrębnej od reszty układu. Jeśli zawiera akcję (np. „Spróbuj ponownie”), kliknięcie wyzwala tę akcję bez usuwania samego komunikatu, dopóki sytuacja nie ustanie.
 
-**Gdzie używany.** Dziewięć paneli zgłaszających stan operacyjny — m.in. niedostępność mechanizmu Subagent Network, niepowodzenie wczytania pliku, potwierdzenie wklejenia w Terminalu, błąd kroku planu w oknach roboczych ról MultitaskingAI; ogólnie wszędzie tam, gdzie stan błędu lub ostrzeżenia musi pozostać widoczny w układzie, a nie zniknąć samoczynnie jak Powiadomienie.
+**Gdzie używany.** Dziewięć paneli zgłaszających stan operacyjny — między innymi niedostępność mechanizmu Subagent Network, niepowodzenie wczytania pliku, potwierdzenie wklejenia w Terminalu, błąd kroku planu w oknach roboczych ról MultitaskingAI; ogólnie wszędzie tam, gdzie stan błędu lub ostrzeżenia musi pozostać widoczny w układzie, a nie zniknąć samoczynnie jak Powiadomienie.
 
 ---
 
@@ -1377,9 +1379,9 @@ Każda nowa karta sesji otrzymuje domyślnie odrębny układ okien, odrębną hi
 | Odłożenie | Przenosi zdarzenie do stanu odłożonego i przywraca je po wskazanym czasie |
 | Oznaczenie jako odczytane | Zmienia stan zdarzenia bez podejmowania działania |
 
-**Relacja do powiadomień wypychanych funkcji Mobile.** Centrum powiadomień jest źródłem zdarzeń dla funkcji globalnej Mobile (`funkcje-globalne/mobile.md`). Zdarzenie o wadze „wymagająca decyzji" jest wypychane na sparowane urządzenie mobilne jako powiadomienie systemowe; obsługa zdarzenia na urządzeniu i obsługa w kolumnie centrum prowadzą do tego samego stanu encji `powiadomienie` (`architektura/model-danych.md`, rozdz. 18.4). Zakres klas wypychanych na urządzenie jest ustawieniem konfiguracyjnym sekcji powiadomień okna Ustawień (`interfejs-uzytkownika/ustawienia.md`, rozdz. 7).
+**Relacja do powiadomień wypychanych funkcji Mobile.** Centrum powiadomień jest źródłem zdarzeń dla funkcji globalnej Mobile. Zdarzenie o wadze „wymagająca decyzji" jest wypychane na sparowane urządzenie mobilne jako powiadomienie systemowe; obsługa zdarzenia na urządzeniu i obsługa w kolumnie centrum prowadzą do tego samego stanu encji `powiadomienie` (rozdz. 18.4). Zakres klas wypychanych na urządzenie jest ustawieniem konfiguracyjnym sekcji powiadomień okna Ustawień (rozdz. 7).
 
-**Relacja do sugestii Always On Display.** Sugestia Always On Display (`funkcje-globalne/always-on-display.md`) nie jest zdarzeniem centrum powiadomień: centrum rejestruje zdarzenia, które zaszły, Always On Display proponuje działania, które użytkownik może podjąć. Plakietka powiadomień na awatarze Always On Display prezentuje ten sam licznik zdarzeń nowych co plakietka paska kontekstu i otwiera tę samą kolumnę centrum powiadomień.
+**Relacja do sugestii Always On Display.** Sugestia Always On Display nie jest zdarzeniem centrum powiadomień: centrum rejestruje zdarzenia, które zaszły, Always On Display proponuje działania, które użytkownik może podjąć. Plakietka powiadomień na awatarze Always On Display prezentuje ten sam licznik zdarzeń nowych co plakietka paska kontekstu i otwiera tę samą kolumnę centrum powiadomień.
 
 **Gdzie używany.** Powłoka każdego środowiska platformy — TalkIn, WorkSpace, CodeStudio, MultitaskingAI; okna operacyjne wszystkich modułów; funkcja globalna Mobile (widok listy zdarzeń urządzenia); funkcja globalna Always On Display (plakietka na awatarze).
 
@@ -1464,7 +1466,7 @@ Każda nowa karta sesji otrzymuje domyślnie odrębny układ okien, odrębną hi
 
 **Zachowanie po interakcji.** Aktywacja (kliknięcie lub gest dedykowany) otwiera natychmiastową powierzchnię interakcji, niezależnie od tego, w którym środowisku lub module znajduje się aktualnie użytkownik — funkcja globalna nie tworzy własnej przestrzeni roboczej i nie podlega mechanizmowi przeładowania właściwemu kartom sesji. Zamknięcie powierzchni interakcji przywraca stan spoczynku (pływający awatar), bez utraty dostępu — Always On Display pozostaje uruchomiony w tle.
 
-**Odesłanie.** Pełną dokumentację projektową funkcji, którą komponent zakotwicza — reguły wyzwalania sugestii, katalog rodzajów sugestii, tor głosowy, zachowanie per środowisko i per moduł, warstwy widoczności oraz punkty sterowania — zawiera `funkcje-globalne/always-on-display.md`.
+**Funkcja zakotwiczona.** Reguły wyzwalania sugestii, katalog ich rodzajów, tor głosowy, zachowanie per środowisko i per moduł, warstwy widoczności oraz punkty sterowania są wspólne całej platformie.
 
 **Gdzie używany.** Pozycja „Always On Display” listwy ustawień strefy 3 strony głównej (jeden z kilku równoważnych punktów dostępu — funkcja pozostaje dostępna również z poziomu każdego środowiska i modułu, nie tylko ze strony głównej); pływający element ponad całą powłoką aplikacji; sekcja Monitor procesu panelu orkiestracji środowiska MultitaskingAI, jako obserwator lub operator procesu.
 

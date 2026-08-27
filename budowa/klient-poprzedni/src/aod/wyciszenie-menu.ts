@@ -13,35 +13,10 @@ import { zdanieGranicyWyciszenia } from './wyciszenie-braki-kontraktu';
 import type { KontekstWyciszenia } from './wyciszenie-kontekst';
 
 /**
- * Menu kebab (⋮) wyciszania — rozdz. 2.6 („Wyciszenie sugestii … Menu kebab
- * powierzchni interakcji"), 3.5 (pięć rodzajów wyciszenia) i 8.3 („grupowanie
- * logiczne akcji: menu kebab zbierające wyciszanie") opracowania
- * `docs/funkcje-globalne/always-on-display.md`.
- *
- * Jedno menu, dwa miejsca osadzenia: powierzchnia interakcji awatara (warstwa 1,
- * wyciszenie od ręki bez otwierania kolumny) i nagłówek powierzchni interakcji
- * (rozdz. 2.3). Dwie kopie tego samego menu czytają ten sam stan i rysują się
- * jego powiadomieniem, więc nigdy nie mówią dwóch różnych rzeczy.
- *
- * Menu niesie komplet rozdz. 3.5:
- *   • trzy czasy wyciszenia czasowego,
- *   • wyciszenie bieżącego modułu i bieżącej karty sesji (kontekstowe),
- *   • wyciszenie każdej z sześciu klas zdarzeń rozdz. 3.2,
- *   • tryb cichy,
- *   • podgląd wyciszeń czynnych — każde swoim zdaniem, z „do kiedy" — wraz ze
- *     zniesieniem jednym kliknięciem, osobno i wszystkich naraz.
- *
- * ŻADNA pozycja nie pyta o potwierdzenie i żadna nie jest wyszarzana — reguła
- * przyjęta w `cztery-stery.ts`. Pozycja, której nakładka dziś nie ma czym
- * wykonać (wyciszenie modułu, którego rdzeń nie wskazał), zostaje klikalna
- * i mówi, czego brakuje oraz po czyjej stronie.
- *
- * Menu jest osobnym wyzwalaczem wobec awatara: kliknięcie pojedyncze i podwójne
- * awatara zostają nietknięte, a znak `⋮` jest zwykłym przyciskiem — osiągalnym
- * klawiszem tabulacji, otwieranym `Enter` i `Spacja`, zamykanym `Esc`, z ruchem
- * strzałkami po pozycjach.
+ * Menu kebab wyciszania: jedno menu w dwóch miejscach osadzenia, niosące wszystkie
+ * rodzaje wyciszenia — czasowe, kontekstowe, klasy zdarzeń, tryb cichy i podgląd
+ * wyciszeń czynnych.
  */
-
 export interface MenuWyciszenia {
   /** Element do wstawienia obok awatara albo w nagłówek powierzchni. */
   element: HTMLElement;
@@ -60,12 +35,7 @@ export interface OpisMenuWyciszenia {
   stan: StanObecnosci;
   /** Zegar podawany z zewnątrz — reguła i menu są sprawdzalne bez zegara maszyny. */
   teraz: () => number;
-  /**
-   * Kontekst nakładki: bieżący moduł i bieżąca karta sesji.
-   *
-   * Pominięty znaczy „menu nie zna bieżącego bytu" — pozycje kontekstowe
-   * zostają widoczne i mówią to wprost, zamiast zniknąć.
-   */
+  /** Kontekst nakładki: bieżący moduł i karta sesji; pominięty, pozycje zostają widoczne. */
   kontekst?: KontekstWyciszenia;
   /** Krótkie zameldowanie czynności poza menu, gdy osadzający ma gdzie je pokazać. */
   zamelduj?: (zdanie: string) => void;
@@ -353,8 +323,7 @@ export function utworzMenuWyciszenia(opis: OpisMenuWyciszenia): MenuWyciszenia {
 
     for (const [klasa, pozycja] of pozycjeKlas) {
       const wyciszona = wyciszenia.czyKlasaWyciszona(klasa);
-      // Stan nie idzie samą barwą: wyciszona klasa niesie znak wyboru i zmienia
-      // czasownik pozycji na przeciwny.
+      // Stan nie idzie samą barwą: wyciszona klasa niesie znak wyboru i zmienia czasownik.
       pozycja.dataset['wyciszone'] = String(wyciszona);
       pozycja.textContent = wyciszona
         ? `● Przywróć klasę „${NAZWY_KLAS[klasa]}"`
@@ -396,13 +365,7 @@ export function utworzMenuWyciszenia(opis: OpisMenuWyciszenia): MenuWyciszenia {
     zamknij();
   }
 
-  /**
-   * Klawiatura menu: `Esc` zamyka i wraca na znak, strzałki chodzą po pozycjach.
-   *
-   * Menu jest dostępne z klawiatury bez skrótu własnego — znak stoi w kolejności
-   * tabulacji obok awatara. Skrótu nie wymyślamy: załącznik A.1 opracowania
-   * wymienia pięć skrótów funkcji i menu kebab nie jest jednym z nich.
-   */
+  /** Klawiatura menu: Esc zamyka i wraca na znak, strzałki chodzą po pozycjach. */
   function naKlawisz(zdarzenie: KeyboardEvent): void {
     if (lista.hidden) return;
     const cel = zdarzenie.target;

@@ -1,19 +1,4 @@
-// ============================================================================
-// DANACO CONSOLE — PODGLĄD ŻETONÓW  (RUSZTOWANIE, POZA PAKIETEM PRODUKTU)
-// ----------------------------------------------------------------------------
-// Wykłada na jeden ekran wszystkie żetony motywu — barwy, typografię,
-// przestrzeń, ruch — w obu motywach naraz, żeby zmianę wartości dało się
-// zobaczyć, a nie tylko odczytać z pliku.
-//
-// Strona nie dowodzi, że produkt działa: nie ma tu rdzenia, kanału kontraktu,
-// sesji ani okien — sam katalog wartości z `zetony.json`. Poprawny wygląd
-// żetonu tutaj nie znaczy, że jakikolwiek ekran produktu go używa. Do pakietu
-// plik nie wchodzi: `main.ts` go nie wciąga, `vite build` czyta wyłącznie
-// `index.html`.
-//
-// Uruchomienie:  cd budowa/client && npm run dev
-//                → http://localhost:5173/src/motyw/podglad-zetonow.html
-// ============================================================================
+/** Strona podglądu żetonów wykłada na jeden ekran wszystkie żetony motywu — barwy, typografię, przestrzeń i ruch — w obu motywach naraz, poza pakietem produktu i bez potwierdzania działania samego produktu. */
 
 import zetony from './zetony.json';
 import { elementIkony } from '../ikony/ikony';
@@ -64,7 +49,7 @@ function wypelnijProbkami(id: string, slowniki: Slownik[]): void {
   );
 }
 
-/** Barwy prymitywne — skale surowe, nie do użycia wprost w komponentach. */
+/** Barwy prymitywne — skale surowe wykorzystywane pośrednio, nie przeznaczone do użycia wprost w komponentach interfejsu. */
 function pokazPrymitywy(): void {
   const { szarosc, sygnal, stany } = zetony.prymitywy;
   wypelnijProbkami('prymitywy', [
@@ -76,13 +61,13 @@ function pokazPrymitywy(): void {
   ]);
 }
 
-/** Rama kokpitu — stała w obu motywach; dowód, że nie przełącza się z motywem. */
+/** Rama kokpitu pozostaje stała w obu motywach, co dowodzi, że jej wygląd nie przełącza się razem z motywem. */
 function pokazRame(): void {
   const { _uwaga: _pominiete, ...zetonyRamy } = zetony['rama-kokpitu'];
   wypelnijProbkami('rama', [zetonyRamy]);
 }
 
-/** Gradienty — wyłącznie ilustracyjne, nigdy tło przycisku, karty ani sekcji. */
+/** Gradienty pełnią funkcję wyłącznie ilustracyjną i nigdy nie stanowią tła przycisku, karty ani sekcji interfejsu. */
 function pokazGradienty(): void {
   const { _zakres: _pominiete, ...zetonyGradientow } = zetony.gradienty;
   wypelnijProbkami('gradienty', [zetonyGradientow]);
@@ -103,14 +88,7 @@ function pokazSemantyczne(): void {
 }
 
 /**
- * Plakietka stanu — barwa zawsze z ikoną i etykietą, nigdy sama.
- *
- * Barwy bierze rodzina z `stany.css`; ikonę i napis — katalog znaczeń
- * (`znaczenia-stanow.ts`). Rodzina `neutralna` nie ma własnych żetonów: to
- * plakietka bazowa, a znaczenie niesie w niej wyłącznie znak.
- *
- * Sekcja odpowiada na pytanie, czy Operator odróżni te stany, nie widząc barw
- * — dlatego pokazuje stany, a nie samą paletę.
+ * Plakietka stanu łączy barwę zawsze z ikoną i etykietą, nigdy nie pokazując samej barwy, a sekcja sprawdza, czy Operator odróżni stany bez ich widzenia.
  */
 function plakietkaStanu(stan: ZnaczenieStanu): HTMLElement {
   const znak = ZNACZENIA_STANOW[stan];
@@ -131,18 +109,12 @@ function plakietkaStanu(stan: ZnaczenieStanu): HTMLElement {
   napis.textContent = znak.etykieta;
   plakietka.append(elementIkony(znak.ikona, { rozmiar: 14 }), napis);
 
-  // Wskaźnika pracy trwającej (`.dn-spinner`) ta strona nie pokazuje: mieszka
-  // w bibliotece komponentów, a rusztowanie wciąga wyłącznie `motyw.css`.
-  // Odtworzenie go tutaj lokalnie byłoby drugim zapisem tego samego bytu.
+  // Wskaźnik pracy trwającej nie występuje tu — mieszka w bibliotece komponentów, nie w tym rusztowaniu.
   return plakietka;
 }
 
 /**
- * Wszystkie stany znaczące naraz — w tym dwa, których rdzeń jeszcze nie zna.
- *
- * „Wstrzymany" i „Do weryfikacji" stoją na tej samej barwie i różnią się
- * wyłącznie ikoną oraz napisem — sekcja stawia je obok siebie, żeby to było
- * widać bez dokładania piątej barwy.
+ * Sekcja pokazuje wszystkie stany znaczące naraz, w tym dwa nieznane jeszcze rdzeniowi, stawiając obok siebie stany dzielące tę samą barwę, by różnicę niosły ikona i etykieta.
  */
 function pokazStany(): void {
   const cel = element('stany');
@@ -164,8 +136,7 @@ function pokazTypografie(): void {
   cel.replaceChildren(
     ...stopnie.map(([nazwa, oczekiwana]) => {
       const pozycja = wiersz(`${oczekiwana} — Danaco Console · ${nazwa}`);
-      // Stopień bierze się z żetonu, nie z liczby w pliku: gęstość przestronna
-      // (data-gestosc) przestawia --dn-fs-base i wiersz musi za tym nadążyć.
+      // Stopień pochodzi z żetonu gęstości, nie z liczby w pliku, więc wiersz musi nadążać za jego zmianą.
       pozycja.style.fontSize = `var(${nazwa})`;
       pozycja.style.lineHeight = 'var(--dn-lh-ciasny)';
       return pozycja;
@@ -215,7 +186,7 @@ function pokazPromienieICienie(): void {
   );
 }
 
-/** Wykaz wartości skalarnych grupy — wymiary, siatka, warstwy. */
+/** Wykaz wartości skalarnych grupy żetonów — wymiary, siatka oraz warstwy nakładania elementów interfejsu. */
 function pokazWykaz(id: string, grupa: Record<string, unknown>): void {
   const cel = element(id);
   if (cel === null) return;

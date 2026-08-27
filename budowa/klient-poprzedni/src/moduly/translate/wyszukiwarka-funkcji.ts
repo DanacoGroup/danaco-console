@@ -8,22 +8,8 @@ import {
 import { WARSTWY, utworzRozwiniecie, type Rozwiniecie } from './warstwy-translate';
 
 /**
- * Wyszukiwarka funkcji modułu — droga warstwy czwartej do każdej pozycji
- * katalogu.
- *
- * Zasada jednego kliknięcia mówi, że każdy element modułu jest osiągalny jednym
- * kliknięciem, jednym skrótem albo jednym poleceniem. Wyszukiwarka jest tą
- * drogą dla pozycji, które nie mają własnego przycisku w oknie: nazywa je,
- * mówi, w którym oknie stoją i na której warstwie, oraz podaje przy każdej
- * jedno z dwojga — komendę kontraktu albo brak.
- *
- * Wyszukiwarka niczego nie uruchamia i nie udaje, że uruchamia. Pozycja bez
- * komendy nie dostaje tu przycisku, który po naciśnięciu przeprosi — dostaje
- * zdanie o tym, czego brakuje, czytelne bez naciskania czegokolwiek.
- *
- * Szukanie idzie środkiem nazwy, opisu i grupy, bo nazwy pozycji są w większości
- * angielskie i złożone: szukanie wyłącznie od początku nazwy nie znalazłoby
- * „Placeholder Style Mapping" po słowie „placeholder" wpisanym z pamięci.
+ * Wyszukiwarka funkcji modułu jest drogą warstwy czwartej do każdej pozycji katalogu: nazywa
+ * element, mówi, w którym oknie stoi, i podaje komendę kontraktu albo brak.
  */
 export interface WyszukiwarkaFunkcji {
   /** Element osadzany w module. */
@@ -118,11 +104,8 @@ function zdaniePodsumowania(ile: number, szukane: string, wybranaGrupa: string):
 }
 
 /**
- * Jeden wiersz katalogu.
- *
- * Zdanie o pokryciu buduje się z pól pozycji, nie z osobnego napisu przy każdej
- * z nich: pozycja z komendami wymienia je co do nazwy, pozycja bez komend mówi,
- * czego brakuje. Dzięki temu dopisanie komendy do pozycji zmienia zdanie samo.
+ * Jeden wiersz katalogu buduje zdanie o pokryciu z pól pozycji, nie z osobnego napisu, więc
+ * dopisanie komendy do pozycji zmienia zdanie samo.
  */
 function wierszPozycji(pozycja: PozycjaKatalogu): HTMLElement {
   const nazwa = document.createElement('span');

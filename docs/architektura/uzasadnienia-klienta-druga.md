@@ -4563,3 +4563,14 @@ w całości, a nie pustkę, bo pole szukania niewypełnione nie jest zawężenie
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/przeplyw-komunikatow.ts
 Prawdę o stanie okna zna rdzeń, nie znacznik lokalny: znacznik nieaktualny kosztuje jedno zbędne zatrzymanie, które zawsze odpowiada, nie utratę wiadomości. Klient wysyła zatrzymanie i wysyłkę jako parę sekwencyjną, nie równoległą — komendy nadane naraz dotarłyby w kolejności niegwarantowanej i wysłanie mogłoby wyprzedzić zatrzymanie, trafiając na okno nadal zajęte i kończąc się odmową. Nieudane zatrzymanie nie wstrzymuje wysłania: jeżeli tura zdążyła tymczasem dobiec końca sama, wysłanie przechodzi, a jeżeli nie, odmowa przychodzi z rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/translate/wyszukiwarka-funkcji.ts
+Zasada jednego kliknięcia mówi, że każdy element modułu jest osiągalny jednym kliknięciem, jednym
+skrótem albo jednym poleceniem, a wyszukiwarka jest tą drogą dla pozycji, które nie mają własnego
+przycisku w oknie: nazywa je, mówi, na której warstwie stoją, i podaje przy każdej komendę
+kontraktu albo brak. Wyszukiwarka niczego nie uruchamia i nie udaje, że uruchamia: pozycja bez
+komendy nie dostaje tu przycisku, który po naciśnięciu przeprosi, tylko zdanie o tym, czego
+brakuje, czytelne bez naciskania czegokolwiek. Szukanie idzie środkiem nazwy, opisu i grupy, bo
+nazwy pozycji są w większości angielskie i złożone, więc szukanie wyłącznie od początku nazwy nie
+trafiłoby przy słowie wpisanym z pamięci ze środka nazwy.
+Pozycja z komendami wymienia je co do nazwy, pozycja bez komend mówi, czego brakuje.

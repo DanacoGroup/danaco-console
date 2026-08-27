@@ -1991,3 +1991,22 @@ Komenda memory.set niesie pole scopeId, którego workspace.context.set nie ma:
 wskazany byt zasięgu jest brany wprost z żądania, a bez wskazania obowiązuje
 reguła okna Context Memory — bytem poziomu projektu jest sam projekt, a byt
 poziomu szerszego pozostaje pusty.
+
+## adapter_modul_przegladarka_karty.go
+
+`browser.tab.open` wywołane z polem `url` woła to samo pobranie strony, którym
+idzie `browser.navigate`, i odkłada migawkę. Inaczej karta byłaby wierszem
+w bazie z adresem, którego nikt nie odwiedził, a odpowiedź niosłaby pole
+`snapshot` wzięte znikąd.
+
+Przestrzeń robocza zapisuje skład kart, nie ich kopię: `browser.workspace.save`
+przypisuje wskazane karty do przestrzeni, a `browser.workspace.open` odtwarza
+z nich rząd kart okna. Kopia kart dałaby dwa byty o tym samym adresie i dwie
+sprzeczne odpowiedzi na pytanie, która karta jest tą otwartą.
+
+Przywrócenie przestrzeni budzi karty stopniowo: `browser.tab.update` z polem
+`active` odsyła kartę po stronę dopiero wtedy, gdy Operator na nią przechodzi,
+zamiast odpalać wszystkie przejścia naraz przy samym otwarciu przestrzeni.
+Karty zamknięte w chwili zapisu też wracają, ponieważ przestrzeń pamięta
+zestaw z chwili zapisu, nie to, co akurat było otwarte — przywrócenie tylko
+kart żywych byłoby przywróceniem zestawu okrojonego bez odnotowania ubytku.

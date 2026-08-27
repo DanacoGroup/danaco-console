@@ -240,8 +240,8 @@ func (s *odfStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 		case "table":
 			s.czytajTabele(wezel)
 		case "section", "text-box", "frame":
-			// Sekcja nazwana ODF i ramka tekstowa opakowują zwykłą treść —
-			// schodzimy do wnętrza, zamiast pomijać.
+			// Sekcja nazwana ODF i ramka tekstowa zawierają zwykłą treść:
+			// schodzi się do wnętrza, zamiast pomijać.
 			if wezel.Nazwa.Local == "frame" {
 				s.czytajObraz(wezel)
 			}

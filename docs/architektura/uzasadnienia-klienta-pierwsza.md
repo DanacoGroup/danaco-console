@@ -6020,3 +6020,32 @@ oknie i nie gasi pozostałych.
 Drzewo wyboru narzędzi zakłada nasłuchy zamknięcia kliknięciem obok i klawiszem Escape
 na dokumencie, więc bez jawnego zamknięcia przeżyłoby własne okno i reagowało na
 klawiaturę w module, którego już nie ma.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-agent-builder.ts
+Okno składa się z trzech części: widoku „Biblioteka ekspertów", widoku „Edytor" z paskiem
+zakładek oraz panelu „Historia wersji". Zakładka „Tożsamość" pokazuje edytor tego okna;
+pozostałe zakładki przenoszą ognisko do właściwego okna modułu — model bazowy mieszka
+w Model Configuration, umiejętności w Skills Manager i tak dalej. Pasek nie powiela więc
+żadnego formularza. Panel „Zespoły ekspertów" składa nazwany skład z tego samego wykazu,
+który okno pokazuje po lewej, dlatego dostaje bibliotekę z metody odświeżenia i nie
+odpytuje rdzenia po raz drugi. Licznik narzędzi stoi pod tożsamością, bo ekspert to
+tożsamość plus dobór narzędzi. Liczba nie jest tu liczona po raz drugi: licznik narzędzi
+jest jednym bytem obsadzonym także w Skills Managerze i Connectors Managerze, więc
+przypisanie kodu w tamtych oknach przestawia tę liczbę w tej samej klatce.
+
+Wywołanie agent.assignment.list bez wskazania eksperta oddaje przypisania wszystkich —
+dokładnie po to, żeby karta każdego miała licznik po jednym odczycie, a nie po jednym
+na kartę. Odmowa nie gasi biblioteki: karty zostają bez plakietki, bo zero wpisane
+z ciszy byłoby nieprawdą.
+
+Panel historii bierze kanał, a nie stan modułu, bo wykaz wersji nie da się wyprowadzić
+z wykazu biblioteki. Po przywróceniu ekspert wraca tą samą drogą co po każdym innym
+zapisie — wchłonięciem, żeby okna eksperta przerysowały się w tej klatce.
+
+Bez oddzwonienia po archiwizacji ekspert odłożony wisiałby na liście do najbliższego
+odczytu, czyli wyglądałby na niezarchiwizowanego.
+
+Atrybut aria-selected ustawione raz przy budowie byłoby fałszywym stanem: pasek
+meldowałby wybór tożsamości nawet po kliknięciu innej zakładki, a czytnik ekranu
+dostawałby zapewnienie o wyborze, którego operator nie dokonał. Ognisko przenosi moduł,
+ale to pasek wie, którą zakładkę przycisnięto, więc znakowanie należy do niego.

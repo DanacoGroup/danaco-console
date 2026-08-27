@@ -5364,3 +5364,24 @@ Zakładka Usage & Cost stoi w kontenerze Observability Tools, nie w Diagnostics 
 Zakładka trzyma się trzech rozstrzygnięć. Pierwsze: jeden wymiar naraz, tak jak stanowi kontrakt — wykaz mówi, po którym wymiarze jest zebrany, ponieważ tabela z dwoma wymiarami pod jednym nagłówkiem byłaby wykazem, którego rdzeń nigdy nie oddał. Drugie: puste zestawienie nie jest brakiem — okres bez ani jednego wywołania jest poprawną odpowiedzią i zakładka nazywa to zdaniem, osobno od odmowy rdzenia i osobno od stanu, w którym o zestawienie jeszcze nie zapytano. Trzecie: koszt niepełny mówi o sobie — wywołanie kanału bez cennika nie wchodzi do kosztu, a kontrakt niesie na to osobne pole pokrycia cennikiem i pole kosztu poza cennikiem; suma podana bez tego zastrzeżenia wyglądałaby na pełny rachunek, będąc tylko jego częścią.
 
 Raport wytwarza plik: komenda budowy raportu oddaje treść, nie zasób w magazynie, więc wytworem jest plik pobrany na dysk Operatora, nazwany okresem i postacią, żeby dwa raporty nie nadpisały się wzajemnie.
+
+## budowa/klient-poprzedni/src/moduly/design/slowo-modelu.ts
+
+Rdzeń odkłada bajty obrazu w magazynie pod sumą sha256 i zakłada wiersz zasobu z polami
+`uri`, `format` oraz wymiarami odczytanymi z nagłówka pliku. Pole `name` jest opcjonalne
+i bywa odpowiedzią modelu tekstowego, dlatego okno traktuje je jako słowo modelu, a nie
+tytuł zasobu. Wynik pusty znaczy, że rdzeń nie podał nazwy w ogóle; to inny stan niż nazwa
+pusta w znakach i okno musi je rozróżniać.
+
+Generowanie zakłada wiersz dopiero po utrwaleniu bajtów w magazynie, a wgranie — po zapisaniu
+pliku, więc puste pole `uri` znaczy zasób założony drogą, która tego pola nie wypełniła.
+
+Pole `uri` jest ścieżką w systemie plików rdzenia: magazyn treści oddaje ścieżkę złożoną
+z katalogu i sumy kontrolnej, i ta ścieżka wchodzi do wiersza jako odwołanie. Przeglądarka
+ścieżki dyskowej nie otworzy, więc wstawiona w `<img src>` daje zdarzenie `error`, którego
+przyczyną nie jest sama przeglądarka.
+
+Komenda oddająca treść zasobu jest już w kontrakcie i obejmuje cały magazyn, a nie sam obszar
+Designu — zasób Design, plik Library i dokument Studia leżą w jednym repozytorium. Brakuje jej
+uchwytu w rdzeniu, więc okno nadal nie ma skąd wziąć bajtów; jest to brak obsługi, a nie brak
+drogi.

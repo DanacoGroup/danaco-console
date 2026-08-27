@@ -1,16 +1,5 @@
-// Odpowiedzialność pliku: doklejenie zapisanych bloków wiadomości do historii
-// okna oddawanej kontraktem — bez zmiany kontraktu.
-//
-// Typ Message ma pole pojemne `metadata` (json.RawMessage); bloki wracają w nim
-// pod kluczem `blocks`, obok atrybucji i zużycia, które metadaneKontraktu składa
-// z kolumn (dane/rozmowa.go). Klient odtwarza z nich tok rozumowania, narzędzia
-// i prowenancję wpisu tą samą logiką, którą składa turę żywą
-// (budowa/client/src/rozmowa/zlozenie-tury.ts).
-//
-// Kształt bloku w metadanych powtarza kształt fragmentu strumienia po nazwach
-// kluczy kontraktu (`kind`, `text`, `data` — StreamChunkEvent) plus chwilę
-// `at`: dzięki temu klient nie potrzebuje drugiego słownika rodzajów ani
-// drugiego czytnika ładunku.
+// Plik dokleja zapisane bloki wiadomości do historii okna oddawanej
+// kontraktem klienta, bez zmiany samego kontraktu.
 package dane
 
 import (
@@ -20,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// blokKontraktu to jedna pozycja wykazu `blocks` w metadanych wiadomości.
+// blokKontraktu to jedna pozycja wykazu bloków w metadanych wiadomości,
+// niosąca rodzaj, treść, dane i chwilę powstania.
 type blokKontraktu struct {
 	Rodzaj shared.ChunkKind `json:"kind"`
 	Tresc  string           `json:"text,omitempty"`

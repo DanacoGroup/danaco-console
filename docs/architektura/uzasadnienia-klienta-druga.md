@@ -1764,3 +1764,9 @@ bo ten sam kod niesie w module dwie różne odmowy: powyższą oraz odmowę impo
 rdzeń nie czyta plików z dysku Operatora i zdanie o kanale modelu byłoby nieprawdziwe. Zdanie mówi też,
 dlaczego Operator nie ma tu pola wyboru: żądania modelowe nie niosą identyfikatora kanału, więc rdzeń
 bierze kanał domyślny czynny, a klient nie wymyśla pól kontraktu.
+
+## budowa/klient-poprzedni/src/moduly/translate/pola-zrodla.ts
+Skład pola — etykieta, podpowiedź, dymek, wykaz podpowiadanych wartości — to inna odpowiedzialność
+niż to, co dzieje się po naciśnięciu przycisku, dlatego pola są wydzielone z okna, które składa
+całość i wiąże zdarzenia. Dymek objaśnienia dostaje każde pole zmieniające treść żądania: język
+źródłowy oraz ponowna segmentacja.

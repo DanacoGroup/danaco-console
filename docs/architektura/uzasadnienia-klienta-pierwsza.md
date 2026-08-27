@@ -1974,3 +1974,18 @@ reszty byłoby skutkiem, którego nikt nie zamówił.
 Sekcja tworzenia stoi na pulpicie, ponieważ bez niej jedyną drogą do pracy jest kliknięcie sesji już biegnącej w matrycy. Rząd kafli otwiera wejście tam, gdzie nic jeszcze nie biegnie, dlatego każdy kafel jest czynny od razu, żaden nie czeka na spełnienie warunku, a podpis kafla nazywa byt, który powstanie po naciśnięciu.
 
 Etykiety kafli idą krojem bazowym półgrubym, a nie krojem szeryfowym, ponieważ różnica krojów niesie w tym miejscu znaczenie: krój szeryfowy oznacza wejście do środowiska, a krój bazowy oznacza zbudowanie komponentu.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-okna-modulu.ts
+
+Każde żądanie obszaru niesie pole `windowId`, które kontrakt nazywa oknem
+modułu Apps, więc identyfikator musi pochodzić z rdzenia, a nie z wyliczenia po
+stronie widoku. Podaje go komenda `window.list` zawężona do sesji i do okien
+modułu Apps, przy czym pole `Window.moduleId` niesie to, co rdzeń przypisał
+oknu przy wejściu w obszar roboczy komendą `workspace.enter`.
+
+Brak okna jest stanem poprawnym, ponieważ sesja bywa jeszcze nieznana w chwili
+wejścia w moduł. Wykaz wraca wtedy pusty, a okna modułu pokazują stan pusty
+nazywający brakujący warunek, zamiast wysyłać żądanie bez identyfikatora.
+
+Wybór okna bierze pierwsze okno o module zgodnym z kodem modułu. Gdy rdzeń nie
+przypisał żadnego, wynikiem jest pusty łańcuch, a nie okno przypadkowe.

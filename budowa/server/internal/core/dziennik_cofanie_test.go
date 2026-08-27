@@ -1,3 +1,4 @@
+// Sprawdziany rachunku cofania z dziennika czynności wykluczają cofnięcie ze środka jako przywrócenie wersji, cofnięcie po cichu z zależnością i cofnięcie postaci, które nie rusza liter.
 package core
 
 import (
@@ -9,18 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany rachunku cofania z dziennika czynności.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. cofnięcie czynności ze ŚRODKA dziennika, które wgrywa stan sprzed niej
-//     w miejsce dokumentu i zabiera ze sobą wszystko, co po niej weszło —
-//     czyli jest przywróceniem wersji podanym jako cofnięcie pojedyncze;
-//  2. cofnięcie czynności, na której stoi późniejsza, wykonane PO CICHU —
-//     dokument zostaje wtedy w stanie niespójnym, a Operator o tym nie wie;
-//  3. cofnięcie POSTACI, które nie działa: pomyłkowa zmiana kroju nie rusza
-//     ani jednej litery, więc treść sprzed jej nie odtworzy.
-
-// dziennikBlokDoSprawdzenia składa blok o wskazanym brzmieniu i kroju.
+// dziennikBlokDoSprawdzenia składa blok o wskazanym brzmieniu i kroju, gotowy do wpisania w dokument sprawdzianu.
 func dziennikBlokDoSprawdzenia(kod, tekst, kroj string) shared.StudioDocumentBlock {
 	return shared.StudioDocumentBlock{
 		Id:   kod,
@@ -182,11 +172,7 @@ func TestDziennikPonowienieWymagaStojacejPodstawy(t *testing.T) {
 	}
 }
 
-// TestDziennikStanWpisuJestSlownikiemTabeli pilnuje pomyłki, która raz już
-// przeszła kompilację: stan wpisu dziennika to WYŁĄCZNIE `active` albo
-// `reverted`, a rodzaj czynności to `StudioActionKind`, nie `StudioChangeKind`.
-// Podanie jednego w miejsce drugiego wywraca się dopiero na ograniczeniu tabeli
-// — po zapisaniu zmiany, czyli w najgorszym możliwym miejscu.
+// TestDziennikStanWpisuJestSlownikiemTabeli pilnuje pomyłki, która raz już przeszła kompilację: stan wpisu to wyłącznie active albo reverted, a rodzaj czynności to StudioActionKind, nie StudioChangeKind.
 func TestDziennikStanWpisuJestSlownikiemTabeli(t *testing.T) {
 	stany := shared.WartosciStudioActionState()
 	if len(stany) != 2 {
@@ -195,10 +181,7 @@ func TestDziennikStanWpisuJestSlownikiemTabeli(t *testing.T) {
 	if string(stany[0]) != "active" || string(stany[1]) != "reverted" {
 		t.Errorf("słownik stanów wpisu rozjechał się z migracją 364: %+v", stany)
 	}
-	// Dwanaście od dobudowy z 17.08.2026: doszła „zmiana pola" (`fieldChange`),
-	// bez której pola odkładały się jako `objectChange` i nie dawały się cofnąć
-	// osobno. Słownik tabeli poszerza migracja 378 — liczba tutaj i warunek CHECK
-	// tam muszą się zgadzać, bo rozjazd wywala się PO wykonaniu czynności.
+	// Słownik tabeli poszerza migracja 378 — liczba rodzajów tutaj i warunek CHECK tam muszą się zgadzać.
 	if len(shared.WartosciStudioActionKind()) != 12 {
 		t.Errorf("rodzajów czynności dziennika ma być dwanaście, jest %d",
 			len(shared.WartosciStudioActionKind()))
@@ -207,8 +190,7 @@ func TestDziennikStanWpisuJestSlownikiemTabeli(t *testing.T) {
 		t.Errorf("rodzajów zmiany śledzonej ma być trzy, jest %d",
 			len(shared.WartosciStudioChangeKind()))
 	}
-	// Żaden rodzaj zmiany śledzonej nie może być zarazem rodzajem czynności
-	// dziennika — inaczej pomyłka przeszłaby niezauważona.
+	// Żaden rodzaj zmiany śledzonej nie może być zarazem rodzajem czynności dziennika.
 	for _, zmiana := range shared.WartosciStudioChangeKind() {
 		for _, czynnosc := range shared.WartosciStudioActionKind() {
 			if string(zmiana) == string(czynnosc) {

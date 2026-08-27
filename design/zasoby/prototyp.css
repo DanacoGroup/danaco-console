@@ -223,7 +223,10 @@ body.pt-pelny-ekran { overflow: hidden; }
   transition: background var(--dn-czas-1) var(--dn-ease);
 }
 .pt-pozycja:hover { background: var(--dn-hover); }
-.pt-pozycja[aria-selected='true'] {
+/* Pozycja bieżąca niesie `aria-current`, nie `aria-selected`: przycisk bez roli
+   `tab`/`option` nie dopuszcza `aria-selected`, a wykaz sesji nie jest ani paskiem
+   zakładek, ani listą wyboru. Ta sama konwencja co w `.dn-boczna-pozycja`. */
+.pt-pozycja[aria-current] {
   background: var(--dn-sygnal-tlo);
   box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
 }

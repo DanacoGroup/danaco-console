@@ -642,3 +642,15 @@ dotyka pozostałych wierszy. Widok bierze komplet zamiast składać go z domysł
 Nadanie bez okna rozmowy nie idzie do rdzenia, ponieważ nadanie żyje przy oknie i bez okna nie ma
 czego nadać. Odmowa przyjmuje kształt wyniku komendy, żeby widok nie potrzebował drugiej ścieżki
 obsługi.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-backend-workspace.ts
+
+Plik jest wiązaniem, a nie drugim widokiem. Formularz warsztatu stoi raz,
+w `okno-warsztatu.ts`, natomiast osobny plik daje jedno miejsce w drzewie, po
+którym widać, że okno warstwy usług jest zbudowane, a nie tylko wymienione
+w słowniku kodów okien.
+
+Kod okna nie pada tu literałem: ramę woła `utworzRameApps(opis.kodOkna, …)` ze
+zmiennej, dzięki czemu `KODY_OKIEN` pozostaje jedynym miejscem, w którym kody
+okien modułu Apps są zapisane. Okna Studio rozdziela ta sama zasada —
+`okno-studio.ts` jest wspólną ramą, a poszczególne okna mają własne pliki.

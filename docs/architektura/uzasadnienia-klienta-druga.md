@@ -5745,3 +5745,15 @@ pełnej pętli, bo analityk nie miałby gdzie stanąć obok pary, którą ocenia
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/zrodlo-srodowiska.ts
 Zasięg wykonania ma w kliencie dwa widoki — listę wyboru w szufladzie ustawień i ten przełącznik nad polem wypowiedzi — a reguła protokołu nie jest pisana po raz drugi: odczyt idzie tym samym stanem sterowania, zapis tą samą zmianą okna, tą samą komendą i tym samym identyfikatorem okna, więc oba widoki przyjmują wyłącznie stan potwierdzony przez rdzeń. Nazwa maszyny zdalnej jest ustawieniem poziomu okna, nie polem samej zmiany okna, dlatego port osobno wczytuje ustawienia zasięgu okna — bez tego przełącznik pokazywałby brak wskazania przy hoście już zapisanym w bazie.
+
+## budowa/klient-poprzedni/src/rozmowa/wpis-rozmowy.ts
+Wpis modelu odpowiada jednej turze, nie jednemu fragmentowi. Wszystko, co
+turę opisuje — prowenancja wywołania, tok rozumowania, wywołania narzędzi,
+konto, błędy, podsumowanie — wisi przy tym samym wpisie, zamiast rozsypywać
+się po historii na osobne pozycje. Dzięki temu to, co poszło do modelu, stoi
+obok tego, co model odpowiedział.
+
+Pytanie o pustą turę dotyczy wszystkich warstw wpisu, nie samego tekstu: tura,
+która oddała sam tok rozumowania albo samo wywołanie narzędzia, coś
+przyniosła. Pusta jest dopiero taka, po której na ekranie nie zostaje nic
+prócz nagłówka.

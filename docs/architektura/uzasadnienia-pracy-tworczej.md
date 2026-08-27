@@ -270,3 +270,88 @@ w tym pliku byłoby drugą prawdą o tym, co wchodzi w miejsce skrótu, a pierws
 poprawka rozjechałaby obie wersje. Jest to odwrotne podejście niż przy tablicy
 znaków: tablicy znaków Operator nie zmienia, a zasadę autozamiany zmienia i
 wyłącza.
+
+## adapter_modul_studio_postac.go
+
+Pozostałe obszary postaci dokumentu stoją w plikach sąsiednich (formatowanie,
+styl, strona, sekcje, listy, tabele, wstawienia, aparat, widok) i wołają
+rachunek z tego pliku, zamiast liczyć zakresy drugi raz. Kontrakt mówi
+o zakresie „w znakach", a pismo polskie ma znaki dwubajtowe — cały plik liczy
+w runach, nie w bajtach, bo zakres liczony bajtami rozjechałby się na
+pierwszym „ż" i dałby wytłuszczoną połowę litery.
+
+Treść dokumentu jest prawdą złożoną w `dokument_studio.tresc`: tam ją zapisuje
+`document.save` i tam jej szuka podgląd. Drzewo postaci niesie tę samą treść
+rozłożoną na bloki i fragmenty, więc wczytanie postaci uzgadnia drzewo
+z treścią — gdy treść zmieniła się drogą, której postać nie zna, bloki idą za
+treścią, a postać akapitów i fragmentów zostaje przypisana po kolejności.
+Zapis postaci przepisuje treść z drzewa, więc od tej chwili obie strony mówią
+to samo. Z tego samego powodu zamiana treści idzie po elementach, nie po
+napisie: zamiana napisu w napisie gubi kroje, wcięcia i granice akapitów,
+więc treść rozkłada się na elementy — znak wraz ze swoją postacią albo granica
+akapitu wraz z postacią akapitu, który za nią się zaczyna — i zamiana jest
+wycięciem odcinka elementów oraz wstawieniem odcinka nowego.
+
+Bloki nietekstowe (tabela, obiekt, podział) nie zajmują ani jednego znaku
+treści — ich miejsce niesie kolejność bloków, dlatego wstawienie tabeli nie
+przesuwa ani jednego zakresu zaznaczenia. Rozcięcie fragmentów na granicach
+zakresu jest warunkiem wymagania „zastosowanie postaci do fragmentu zmienia
+wyłącznie ten fragment": bez rozcięcia postać nakładałaby się na cały
+fragment, który zaznaczenie przecina, nie na samo zaznaczenie.
+
+Blokada odcinka jest skierowana przeciw modelowi, nie przeciw właścicielowi
+dokumentu. Zmiana obejmująca blokadę częściowo wykonuje się poza blokadą
+i oddaje bilans pominięcia — odmowa całości byłaby nieproporcjonalna, a
+przemilczenie pominięcia jest zakazane.
+
+Czynność modelu odkłada się jako zmiana śledzona zawsze, bo na tym stoi
+przełącznik „pokaż wszystko, co zrobił model" i wymaganie, żeby zmiana
+postaci bez zmiany liter nie była niewidzialna. Czynność operatora odkłada
+się wyłącznie wtedy, gdy śledzenie zmian w dokumencie jest włączone — inaczej
+operator dostawałby wykaz zmian do przyjęcia po każdym własnym kliknięciu
+pogrubienia.
+
+Rodzaj zmiany śledzonej i rodzaj czynności dziennika są dwoma osobnymi
+słownikami z osobnymi polami. Zmiana śledzona zna trzy wartości (wstawienie,
+usunięcie, formatowanie), bo tyle rozróżnia adiustacja; dziennik zna
+jedenaście wartości `StudioActionKind`, bo operator cofa „zmianę stylu", nie
+„formatowanie". Podanie jednego słownika w miejsce drugiego przechodzi
+kompilację i wywraca się dopiero na ograniczeniu tabeli, dlatego pola są
+rozdzielone.
+
+Podpis wykonawcy czynności wchodzi z kontekstu jednym czytaniem: wkłada go
+tam wpięcie rejestru `podpisWykonawcyStudia`, które czyta z ładunku pola
+`agentId`, `agentName` i `subagentId` — te same, które kontrakt niesie przy
+każdej komendzie Studia z polem `author`. Bez tego wpięcia rozbicie zmian po
+wykonawcy pokazywałoby wszystkie czynności postaci jako czynności
+nienazwanego: rodzaj autora zapisywałby się, a kod agenta nie, choć żądanie
+go niosło. Rodzaj autora rozstrzyga się zasadą „szerszy wygrywa" — tą samą,
+którą stosuje `kontrolaRozpoznajWykonawce`.
+
+Dziennik czynności jest wspólny dla całego modułu: wykaz i cofanie wystawia
+inny odcinek, a każda czynność zmieniająca dokument tam odkłada swój wpis —
+inaczej cofnięcie pojedynczej zmiany postaci nie miałoby czego cofnąć. Stan
+sprzed czynności idzie całym drzewem postaci, nie samą treścią, bo pomyłkowa
+zmiana kroju w całym dokumencie nie rusza ani jednej litery, więc treść
+sprzed jej nie odtworzy. Kod agenta w tym wpisie rozróżnia dwóch wykonawców
+pracujących naraz nad jednym pismem, czego samo pole rodzaju autora (gruby
+podział człowiek-wykonawca) nie rozdziela.
+
+Stempel wykonawcy na zmianie śledzonej idzie po odłożeniu czynności, bo niesie
+także jej kod dla wiązania — tak samo jak w obszarze schowka i różnicy wersji,
+gdzie drugiej drogi zakładania wiersza zmiany Studio nie ma. Bez tego wiązania
+cofnięcie czynności zostawiłoby zmianę śledzoną wiszącą w powietrzu, a operator
+widziałby do rozstrzygnięcia zmianę, której już nie ma. Brak tabel obszaru
+kontroli pracy nie unieważnia samej czynności — postać jest już zapisana,
+i odmowa w tym miejscu byłaby nieprawdą o tym, co się stało.
+
+Przesunięcie zakotwiczeń po zmianie długości treści obejmuje obiekty, pola,
+aparat, sekcje i blokady, bo bez niego przypis wstawiony na stronie pierwszej
+wskazywałby po dopisaniu akapitu na zdanie ze strony drugiej — cichą szkodę,
+po której nikt nie wie, kiedy dokument się rozjechał.
+
+Zapis drzewa sprzed czynności przy wczytaniu postaci jest jedynym miejscem,
+w którym da się go jeszcze zapisać: po czynności drzewo jest już zmienione,
+więc dziennik nie miałby skąd go wziąć jako stan „przed". Odczyt płaci za to
+jednym zapisem drzewa do napisu — tą samą cenę dziennik płaci już za stan po
+czynności.

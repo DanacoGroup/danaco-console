@@ -2736,3 +2736,7 @@ hasło indeksu i indeks — a pola dokumentu niosą numer strony, liczbę stron,
 tytuł i autora dokumentu, właściwość oraz pole obliczane. Obie rodziny dzielą tę samą oś:
 element wyliczany z dokumentu, który po zmianie treści staje się nieświeży i wymaga odświeżenia,
 dlatego panel prowadzi dla obu jeden wspólny wykaz do odświeżenia zamiast dwóch osobnych.
+
+## budowa/klient/src/protokol/kanal.ts
+Kanał nie zna treści dziedzinowej. Nazwy komend i zdarzeń oraz kształty ich treści pochodzą wyłącznie z kontraktu współdzielonego: zmiana nazwy w kontrakcie przerywa kompilację klienta. Stąd jedno wejście wysyłające obsługuje każdą komendę kontraktu, a jedno wejście subskrybujące — każde jego zdarzenie; typ treści wyznacza nazwa. Komunikat nierozpoznany nie jest odrzucany.
+Dziennik zakładany jest od razu, bo komunikat nierozpoznany może przyjść przed pierwszą subskrypcją warstwy wyższej. Zapis i wpis do dziennika są jedyną reakcją: ani zdarzenie nieznane, ani koperta o typie spoza kontraktu nie zrywa połączenia i nie blokuje sesji.

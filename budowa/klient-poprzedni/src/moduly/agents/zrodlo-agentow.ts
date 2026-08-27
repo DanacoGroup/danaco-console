@@ -35,17 +35,8 @@ import type {
 } from './zlecenia-agentow';
 
 /**
- * Komendy obszaru `agent.*` widziane przez okna modułu Agents.
- *
- * Źródło nie ma własnego stanu i niczego nie pamięta — jest wyłącznie warstwą
- * wywołań i sprawdzianu kształtu odpowiedzi. Stan biblioteki ekspertów mieszka
- * w `stan-agentow.ts`, żeby pięć okien modułu patrzyło na jeden zbiór, a nie na
- * pięć osobnych kopii.
- *
- * Żadne wywołanie nie rzuca wyjątkiem ani nie odrzuca obietnicy: niepowodzenie
- * wraca polem `blad` wyniku, a okno pokazuje je w swoim stanie błędu. Dotyczy to
- * także treści JSON wpisanej przez Operatora — niepoprawny zapis jest odmową
- * wywołania, nie wyjątkiem wywracającym widok.
+ * Komendy obszaru agent widziane przez okna modułu Agents nie rzucają wyjątkiem — niepowodzenie
+ * wraca polem błędu wyniku, a źródło nie ma własnego stanu.
  */
 export interface ZrodloAgentow {
   wykaz(fraza: string, tylkoCzynne: boolean): Promise<Wynik<{ agents: Agent[]; total?: number }>>;
@@ -64,12 +55,7 @@ export interface ZrodloAgentow {
   usunWarstwe(idEksperta: string, warstwa: IdentityLayer): Promise<Wynik<{ agent: Agent }>>;
   dodajWtyczke(zlecenie: ZlecenieWtyczki): Promise<Wynik<{ plugin: AgentPlugin }>>;
   odlaczWtyczke(idEksperta: string, idWtyczki: string): Promise<Wynik<{ agent: Agent }>>;
-  /**
-   * Wtyczki eksperta wraz z definicją (`agent.plugin.list`).
-   *
-   * `Agent.pluginIds` niesie same identyfikatory, więc bez tej czynności wykaz
-   * nie zna ani nazwy nadanej przez Operatora, ani wersji, ani źródła.
-   */
+  /** Wtyczki eksperta wraz z definicją, bo pole identyfikatorów nie niesie nazwy, wersji ani źródła. */
   wtyczki(idEksperta: string): Promise<Wynik<{ plugins: AgentPlugin[] }>>;
   /** Subskrypcja zdarzenia `agent.changed` — jedynego zdarzenia obszaru. */
   naZmiane(sluchacz: (tresc: AgentChangedEvent) => void): Odsubskrybuj;
@@ -95,15 +81,10 @@ export function utworzZrodloAgentow(kanal: Kanal): ZrodloAgentow {
       if (tozsamosc.model.trim() !== '') zadanie.model = tozsamosc.model.trim();
       if (tozsamosc.imie.trim() !== '') zadanie.displayName = tozsamosc.imie.trim();
       if (tozsamosc.favikon.trim() !== '') zadanie.favicon = tozsamosc.favikon.trim();
-      // Tryb idzie wyłącznie przy odstępstwie. Pominięcie pola znaczy w rdzeniu
-      // `DOLACZ` — stan domyślny — więc wysyłanie go zawsze nie zmieniałoby
-      // niczego poza tym, że zakładanie eksperta wyglądałoby na wybór między
-      // dwiema równorzędnymi wartościami.
+      // Tryb idzie wyłącznie przy odstępstwie, bo pominięcie pola znaczy w rdzeniu tryb domyślny.
       if (tozsamosc.zastepuje) zadanie.mode = IdentityMode.ZASTAP;
       zadanie.visibility = tozsamosc.widocznosc;
-      // Poziomy pamięci jadą zawsze, także puste: pusty zbiór jest w kontrakcie
-      // jedynym zapisem wyłączenia pamięci, a pominięcie pola znaczy co innego
-      // — „bez zmiany”.
+      // Poziomy pamięci jadą zawsze, także puste — pusty zbiór jest zapisem wyłączenia pamięci.
       zadanie.memoryLevels = [...tozsamosc.poziomyPamieci];
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.AgentCreate, zadanie),
@@ -120,10 +101,7 @@ export function utworzZrodloAgentow(kanal: Kanal): ZrodloAgentow {
       if (zmiana.czynny !== undefined) zadanie.enabled = zmiana.czynny;
       if (zmiana.imie !== undefined) zadanie.displayName = zmiana.imie;
       if (zmiana.favikon !== undefined) zadanie.favicon = zmiana.favikon;
-      // Przy zmianie tryb idzie w obie strony, inaczej niż przy zakładaniu:
-      // cofnięcie odstępstwa to podanie `DOLACZ` wprost. Pominięcie pola
-      // zostawiłoby w rdzeniu wartość starą i odznaczenie kontrolki nie doszłoby
-      // do skutku.
+      // Przy zmianie tryb idzie w obie strony: cofnięcie odstępstwa to podanie trybu domyślnego wprost.
       if (zmiana.zastepuje !== undefined) {
         zadanie.mode = zmiana.zastepuje ? IdentityMode.ZASTAP : IdentityMode.DOLACZ;
       }
@@ -203,15 +181,7 @@ export function utworzZrodloAgentow(kanal: Kanal): ZrodloAgentow {
       );
     },
 
-    /**
-     * Zapis warstwy podaje stan czynności zawsze, choć kontrakt ma to pole
-     * opcjonalne. Pominięcie znaczyłoby w rdzeniu „warstwa czynna", więc
-     * wyłączenie warstwy nie doszłoby do skutku.
-     *
-     * Trybu podania żądanie nie niesie, bo kontrakt go nie ma: warstwa eksperta
-     * dopisuje się do promptu systemowego jako zakres użytkownika i nigdy go nie
-     * zastępuje (`warstwy-promptu.ts`).
-     */
+    /** Zapis warstwy podaje stan czynności zawsze, bo pominięcie w rdzeniu znaczyłoby warstwę czynną. */
     async zapiszWarstwe(zlecenie) {
       const zadanie: AgentLayerSetRequest = {
         agentId: zlecenie.idEksperta,
@@ -274,14 +244,20 @@ export function utworzZrodloAgentow(kanal: Kanal): ZrodloAgentow {
   };
 }
 
-/** Wynik odczytu treści JSON wpisanej w oknie. */
+/**
+ * Wynik odczytu treści JSON wpisanej w oknie niesie wartość odczytaną z tekstu albo opis błędu,
+ * gdy Operator wpisał zapis niepoprawny składniowo.
+ */
 interface OdczytJSON {
   udany: boolean;
   wartosc?: unknown;
   blad?: ErrorInfo;
 }
 
-/** Odczyt JSON wpisanego przez Operatora; pusty tekst znaczy brak wartości. */
+/**
+ * Odczyt JSON wpisanego przez Operatora zwraca pustą wartość dla pustego tekstu, a błędny zapis
+ * zwraca odmowę z opisem, zamiast rzucać wyjątkiem wywracającym widok okna.
+ */
 function odczytajJSON(tekst: string, nazwaPola: string): OdczytJSON {
   if (tekst.trim() === '') return { udany: true };
   try {

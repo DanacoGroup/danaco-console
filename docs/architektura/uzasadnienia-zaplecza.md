@@ -319,3 +319,55 @@ kolekcji odwołuje się do wiersza `kolekcja_biblioteki`.
 Podgląd (`LibraryPreview`) nie ma własnej tabeli. To widok obliczany w locie
 z bieżącej wersji pliku (rodzaj podglądu wynika z `mime_type`, treść
 z `tresc_odwolanie` wersji) — trwały byt tu jest jeden: wersja pliku.
+
+## budowa/scripts/instalka-hybryda-win-x64.sh
+
+Produkt ma jedną postać: hybrydę. U operatora staje samo okno, a rdzeń,
+serwer narzędzi i arsenał stoją na serwerze wdrożenia. Instalka rdzenia nie
+niesie i nieść nie ma — to jest sens tego produktu, nie oszczędność na
+rozmiarze: rdzeń jest jeden, utrzymuje go administrator w jednym miejscu,
+a okno u operatora nie ma czego aktualizować poza sobą.
+
+Powłoka zna trzy stany wskazania rdzenia: wskazanie niezłożone, rdzeń na tym
+urządzeniu, rdzeń na serwerze. Ta instalka jest dla trzeciego stanu. Po
+instalacji obowiązuje jeszcze stan pierwszy — powłoka nie stawia niczego
+i czeka, aż operator wskaże host rdzenia w oknie albo aż wskaże go zmienna
+środowiskowa DANACO_HOST_RDZENIA.
+
+Mimo braku rdzenia instalka niesie pakiet interfejsu — nie jako osobny plik,
+lecz w środku pliku wykonywalnego powłoki. Ustawienie frontendDist w
+konfiguracji Tauri jest ustawieniem budowy, nie zasobem instalatora: pakiet
+klienta zostaje wkompilowany w binarkę powłoki i nie da się go z instalki
+wyjąć, nie odbierając powłoce wyjścia awaryjnego.
+
+Skrypt woła złożenie pakietu, nie pełną budowę: pełna budowa uruchomiłaby
+przebudowę klienta, a ta do budowy powłoki nie należy; złożenie pakietu
+niczego nie kompiluje i bierze gotową binarkę z katalogu docelowego. Nakładki
+konfiguracyjnej nie ma i nie jest potrzebna, bo konfiguracja opisuje wprost
+produkt hybrydowy, ponieważ innego produktu nie ma. Skrypt nie podpisuje
+instalatora — podpis Authenticode wymaga certyfikatu i hosta Windows — i nie
+sprawdza, czy instalator się uruchamia, bo tego nie da się sprawdzić bez
+maszyny z Windows.
+
+Cecha budowy tauri/custom-protocol nie jest ozdobna: bez niej gotowy plik
+zachowuje się jak budowa deweloperska, a rozstrzygnięcie źródła interfejsu
+zatrzymuje się na drugim warunku, nigdy nie sprawdzając warunku „rdzeń
+nasłuchujący" — jedynego, na którym ten produkt stoi. Cecha jest podana
+z wiersza poleceń, nie dopisana do pliku manifestu budowy, bo ten manifest
+jest wspólny dla obu celów budowy i nie należy wyłącznie do tego skryptu.
+
+Zapora rozstrzyga o osadzonych zasobach, a nie o obecności adresu serwera
+rozwojowego w binarce: konfiguracja produktu wchodzi do binarki zawsze,
+niezależnie od tego, która droga do interfejsu jest czynna, więc taka zapora
+milczałaby przy pliku zepsutym. Sondą jest nazwa pliku interfejsu z sumą
+treści w nazwie — taki napis nie ma jak trafić do binarki inaczej niż przez
+osadzenie pakietu klienta, i zmienia się z każdą przebudową klienta, dlatego
+skrypt czyta go z katalogu, a nie wpisuje na sztywno. Sondy oparte na
+rozszerzeniu czcionki albo na pliku indeksu są mylące, bo obie zapalają się
+w binarce także bez osadzonych zasobów.
+
+Cel złożenia zawiera 7z, ponieważ tylko wykaz zawartości gotowego pliku
+dowodzi, że rdzeń nie wrócił do produktu hybrydowego przy zmianie
+konfiguracji. Ostatnia zapora bada binarkę wypakowaną z instalatora, a nie
+tę z katalogu docelowego, bo tylko wypakowana binarka jest tym, co dostanie
+operator.

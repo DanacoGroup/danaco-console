@@ -2929,3 +2929,28 @@ nie mogą wyglądać tak samo. Zdanie nazywa termin, którego rdzeń szukał, bi
 odpowiedzi, a nie z żądania: zdanie zbudowane z żądania przypisywałoby rdzeniowi przeszukanie
 o zakresie, którego okno nie widziało, a rozbieżność echa jest odmową, bo znaczy, że szukano
 czegoś innego.
+
+## budowa/klient-poprzedni/src/moduly/wykaz-komend-rdzenia.ts
+Wykaz jest warstwą niższą niż pokrycie komend: nie zna dokumentu ani
+kontrolki, zna tylko odpowiedź rdzenia i zdania, które z niej wynikają.
+Prawda bierze się wyłącznie z powitania połączenia, nie z wykazu komend
+zapisanego w kontrakcie, bo rdzeń oddaje w odpowiedzi powitania komendy,
+które naprawdę obsługuje. Obsługiwacz powitania nie czyta żądania i niczego
+nie zapisuje, więc powtórne powitanie jest czystym odczytem, nie drugim
+uzgodnieniem połączenia. Samych komend świadomie się nie pyta wywołaniem
+niszczącym tylko po to, by zobaczyć odmowę.
+
+Dwa pierwsze z pięciu rozstrzygnięć pokrycia rozstrzyga sam kontrakt, bez
+pytania rdzenia, więc są widoczne jeszcze przed odpowiedzią powitania.
+Jedno powitanie przypada na połączenie, nie na moduł: wykaz leży w pamięci
+podręcznej przypisanej do kanału, więc pierwszy odczyt pyta, a pozostałe
+czekają na tę samą odpowiedź; odmowa w pamięci nie zostaje, więc kolejne
+wywołanie ponawia pytanie. Wykaz zmienia się z wersją rdzenia, nie w toku
+sesji, ale transport ponawia połączenie pod tym samym kanałem, więc po
+zerwaniu można trafić na rdzeń inny niż odczytany — dlatego nasłuch
+powitania obejmuje cały kanał, także powitania cudze, i odświeża wykaz bez
+dodatkowego zapytania.
+
+Tożsamość klienta zgłaszana w powitaniu jest stała, a nie świeżo nadawana
+przy każdym wywołaniu, ponieważ obsługiwacz powitania nie czyta żądania i
+nowy identyfikator rozdzieliłby ognisko od połączenia, które je zgłosiło.

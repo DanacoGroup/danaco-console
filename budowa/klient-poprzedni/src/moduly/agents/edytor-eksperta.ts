@@ -9,20 +9,9 @@ import {
 } from './warstwy-promptu';
 
 /**
- * Widok „Edytor” Agent Buildera, zakładka **Tożsamość** — łącznik trzech części.
- *
- * Edytor składa formularz tożsamości (nazwa, imię własne, favikon, opis,
- * instrukcje) z edytorem warstw promptu i z wykazem kategorii tożsamości
- * pochodzącym z katalogu rdzenia. Każda z tych rzeczy ma własne wywołania
- * i własne odmowy, więc mieszka we własnym pliku; tutaj zostaje samo złożenie
- * i przekazanie eksperta czynnego w dół.
- *
- * Katalog kategorii jest tylko do odczytu: kategorie tożsamości
- * (`identity.category.list`) są własnością rdzenia i edytor nie dopisuje ani
- * jednej własnej. Pokazujemy je jako kontekst, w który wchodzą warstwy
- * eksperta, a nie po to, by je stąd zmieniać.
- *
- * Sam edytor nie wykonuje ani jednego wywołania rdzenia.
+ * Widok edytora Agent Buildera w zakładce tożsamości, będący łącznikiem trzech
+ * części: formularza tożsamości, edytora warstw promptu oraz wykazu kategorii
+ * tożsamości pochodzącego z katalogu rdzenia.
  */
 export interface EdytorEksperta {
   element: HTMLElement;
@@ -34,7 +23,11 @@ export interface EdytorEksperta {
   dopiszDoInstrukcji(tresc: string): void;
 }
 
-/** Zależności edytora. */
+/**
+ * Zależności edytora: wywołanie następujące po udanym zapisie eksperta, po
+ * którym moduł odświeża bibliotekę. Edytor sam żadnego wywołania rdzenia nie
+ * wykonuje, więc innych zależności nie ma.
+ */
 export interface OpcjeEdytora {
   /** Wywoływane po udanym zapisie — moduł odświeża wtedy bibliotekę. */
   naZapisie(ekspert: Agent): void;

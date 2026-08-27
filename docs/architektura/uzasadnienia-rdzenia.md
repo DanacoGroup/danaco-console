@@ -1554,3 +1554,37 @@ Zakres wyłączony przepuszcza wszystko celowo: pełny dostęp w ramach uprawnie
 operatora jest stanem wyjściowym platformy. Z tego powodu każdy sprawdzian
 w pliku włącza zakres wprost, zamiast liczyć na wartość domyślną — sprawdzian
 zapomniany o tym mierzyłby ciszę zamiast granicy.
+
+## skutek_dogniecenia_obrazu_test.go
+
+Dogniecenie zapisu przy konwersji obrazu jest ulepszeniem, nie warunkiem: przy
+braku programu zewnętrznego konwersja ma oddać ten sam obraz zapisany dłuższym
+strumieniem. Sprawdzian mierzący zysk na rozmiarze mierzy więc obecność
+programu tak samo jak jego pracę, dlatego na maszynie bez niego pomija się
+z nazwanym powodem zamiast zawieść albo przejść bez zmierzenia niczego.
+Sprawdzian TestKonwersjaUdajeSieNiezaleznieOdProgramuDogniatajacego mierzy
+odwrotną połowę reguły i dlatego nigdy się nie pomija.
+
+Obraz sprawdzianu dogniecenia niesie gradient o łagodnym przebiegu, bo koder
+wkompilowany zapisuje go z zapasem miejsca do skrócenia; obraz jednolity
+nie nadawałby się do pomiaru, ponieważ koder Go zapisuje go już blisko
+granicy i zysk bywa zerowy, co czytałoby się jak brak dogniecenia.
+
+Sprawdzian PNG i sprawdzian JPEG porównują zapis programu zewnętrznego
+z zapisem kodera Go policzonym na miejscu, a nie ze stałą liczbą bajtów:
+stała rozjechałaby się przy pierwszej zmianie biblioteki i zaczęłaby mierzyć
+jej wydanie zamiast pracy programu.
+
+Sprawdzian zapisu stratnego mierzy model barw wyniku, a nie samą liczbę
+bajtów: plik palety niesie `color.Palette`, a zapis pełnobarwny — `NRGBA`.
+Model palety dowodzi, że wynik programu został wzięty, bo koder wkompilowany
+palety nie zapisuje. Obraz tego sprawdzianu niesie dwieście barw rozrzuconych
+bez ładu, ponieważ zapis pełnobarwny nie ma czego przewidzieć i płaci trzy
+bajty za punkt, a paleta mieści wszystkie barwy co do jednej; gradient
+nadałby się gorzej, bo pngquant odmawia sprowadzenia płynnego przejścia do
+palety, gdy nie mieści się w progu jakości, i sprawdzian mierzyłby wtedy
+odmowę zamiast pracy programu.
+
+Sprawdzian niezależności od programu wytwarza maszynę bez programów na
+miejscu, pustą ścieżką wyszukiwania, więc reguła jest mierzona wszędzie,
+a nie tylko tam, gdzie programów akurat nie zainstalowano.

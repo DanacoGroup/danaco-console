@@ -1371,3 +1371,28 @@ skompresowanych metodą Flate od wersji formatu PDF 1.5 wzwyż, więc napis
 standardowej wystarcza, bo to ta sama kompresja. Wzorzec bez ukośnika po
 `Page` odróżnia stronę od drzewa stron (`/Type /Pages`), które w pliku
 występuje raz.
+
+## budowa/server/internal/core/adapter_kondycja.go
+
+Zasada rodziny health.*: każda wartość pochodzi z pomiaru. Komenda zdrowia,
+która oddaje stan sprawności nie zmierzywszy niczego, jest gorsza niż jej
+brak — to fasada, przez którą awaria przechodzi niezauważona. W tym pliku
+nie ma ani jednej ścieżki oddającej stan `up` bez wykonanego pomiaru: sonda,
+której rdzeń nie ma czym wykonać, kończy się stanem `unknown` wraz z
+powodem, nigdy stanem `up` dlatego, że nic nie zawiodło.
+
+Dostępność liczy się z wierszy, nie z licznika: `health.uptime.get` nie
+czyta żadnej kolumny „dostępność", tylko bierze serię pomiarów z zakresu
+czasu i liczy udział wyników udanych. Licznik podnoszony przy zapisie
+rozjechałby się z serią przy pierwszym usunięciu wyników albo zmianie
+zakresu, a rozjazd byłby niewidoczny — obie liczby wyglądają tak samo.
+
+Sam przebieg sondy, czyli co właściwie mierzy każdy jej rodzaj, leży
+w `adapter_kondycja_pomiar.go`; port i wpięcie — w `handlers_kondycja.go`.
+
+Trzy zależności ponad repozytorium — uruchamiacz procesów, rejestr kanałów
+i izolacja wraz z katalogiem roboczym — obsługują trzy rodzaje pomiaru,
+których rdzeń nie wykona sam: sondę `command` (uruchamiacz), sondę
+`modelCall` (rejestr kanałów) oraz drogę wspólną z wszystkimi wołaniami
+arsenału (izolacja). Brak którejkolwiek nie psuje montażu: psuje jeden
+rodzaj sondy, która wtedy oddaje `unknown` wraz z powodem.

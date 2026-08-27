@@ -1,24 +1,5 @@
-// Odpowiedzialność pliku: archiwum eksperta — odłożenie go poza wykaz czynnych
-// bez utraty definicji i historii, powrót z archiwum oraz wykaz zarchiwizowanych
-// (kolumny `agent.zarchiwizowano_o` i `agent.aktywny_przed_archiwum`). Historia
-// wersji leży w `agent_wersje.go` — to ta sama implementacja repozytorium,
-// rozdzielona na dwa pliki.
-//
-// Archiwizacja nie jest usunięciem i go nie zastępuje. `agent.delete` zostaje
-// tym, czym był: jedyną drogą utraty definicji eksperta (wzorzec kosza sesji).
-// Archiwum jest drogą drugą — odwracalną i niczego nietracącą.
-// Wybór między nimi należy do Operatora, nie do rdzenia, więc rdzeń nie
-// przekierowuje jednej komendy na drugą.
-//
-// Stan czynności wraca taki, jaki był. Archiwizacja zapamiętuje `aktywny`
-// w `aktywny_przed_archiwum` i gasi ekspertowi czynność, żeby zniknął z wykazu
-// `enabledOnly`. Powrót oddaje zapamiętaną wartość zamiast zakładać, że każdy
-// zarchiwizowany był czynny — ekspert wyłączony przed archiwizacją wróciłby
-// inaczej, niż go odkładano.
-//
-// Migawki archiwizacja nie mnoży. Zapis nie rusza licznika `agent.wersja`, więc
-// wyzwalacz bazy uzupełnia migawkę wersji bieżącej zamiast zakładać nową.
-// Odłożenie eksperta na półkę nie jest zmianą jego tożsamości.
+// Plik prowadzi archiwum eksperta: odłożenie go poza wykaz czynnych bez utraty definicji i historii, powrót z archiwum
+// oraz wykaz zarchiwizowanych; archiwizacja jest drogą odwracalną, odrębną od usunięcia, a historia wersji leży w agent_wersje.go.
 package dane
 
 import (
@@ -29,8 +10,7 @@ import (
 // RepozytoriumArchiwumAgentow jest kontraktem archiwum biblioteki ekspertów.
 // Wypełnia go ta sama implementacja co historię wersji.
 type RepozytoriumArchiwumAgentow interface {
-	// Zarchiwizuj odkłada eksperta poza wykaz czynnych. Wynik `false` znaczy
-	// „nie było czego archiwizować albo już leżał w archiwum”.
+	// Zarchiwizuj odkłada eksperta poza wykaz czynnych; wynik false znaczy brak eksperta do archiwizacji.
 	Zarchiwizuj(ctx context.Context, kodAgenta string) (bool, error)
 	// PrzywrocZArchiwum oddaje eksperta wykazowi czynnych wraz z zapamiętanym
 	// stanem czynności.
@@ -90,11 +70,8 @@ func (r *repozytoriumWersjiAgenta) przestawArchiwum(ctx context.Context, zapytan
 	return liczba > 0, nil
 }
 
-// Archiwum oddaje ekspertów odłożonych. Wiersz niesie samą definicję bez
-// powiązań: okno archiwum wybiera eksperta do przywrócenia po nazwie i dacie
-// odłożenia, a komplet umiejętności, konektorów i uprawnień dostaje z
-// `agent.list` w chwili, gdy ekspert wróci między czynnych. Dobieranie ich tutaj
-// byłoby trzema zapytaniami na widok, którego nikt o nie nie pyta.
+// Archiwum oddaje ekspertów odłożonych, od odłożonego najpóźniej; wiersz niesie samą definicję eksperta bez powiązań,
+// które okno dobiera osobno przy przywróceniu.
 func (r *repozytoriumWersjiAgenta) Archiwum(ctx context.Context) ([]Agent, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaArchiwumAgentow)
 	if err != nil {

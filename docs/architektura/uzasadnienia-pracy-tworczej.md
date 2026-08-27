@@ -2048,3 +2048,94 @@ całego zapytania, więc mieści się w przedziale od zera do jedynki i da się
 porównywać między dokumentami — inaczej próg `minScore` znaczyłby co innego
 w każdym z nich.
 
+
+## budowa/server/internal/core/adapter_modul_studio_roznice.go
+
+Plik dopisuje się na `adapterStudia` zadeklarowanym w `adapter_modul_studio.go`.
+Fragmenty różnicy liczy ten plik w locie — `DiffHunk` nie ma tabeli,
+a porównanie wierszowe jest własne, bez biblioteki zewnętrznej.
+
+Wynik operacji kontekstowej wchodzi do dokumentu, a nie stoi obok: Operator
+i model pracują nad tą samą treścią w tym samym miejscu. Wynik odłożony
+wyłącznie jako propozycja wymagałby drugiej powierzchni tekstowej, a takiej
+nie ma. Wynik wchodzi więc w miejsce zakresu operacji, a jego przyjęcie albo
+odrzucenie idzie drogą, która już istnieje: `studio.tracking.list` pokazuje
+zmiany oczekujące, `studio.tracking.decide` rozstrzyga je pojedynczo albo
+grupą. Propozycja zostaje zapisana dalej, bo po jej identyfikatorze
+porównuje się strony w `studio.diff.compare`.
+
+Silnik operacji kontekstowej jedzie tym samym rejestrem kanałów, co okno
+rozmowy i moduł Roundtable. Odmowa pada tylko tam, gdzie czegoś naprawdę
+brakuje: rdzeń złożony bez rejestru (silnik jest dodatkiem, nie warunkiem
+startu), okno bez kanału, kanał spoza rejestru, silnik bez ani jednego
+fragmentu treści. Każda z tych odmów nazywa brak wprost.
+
+Propozycja zmiany powstaje po wykonaniu operacji kontekstowej, nie przed nim.
+Zapis przed wywołaniem zostawiałby w panelu narzędzi propozycje puste po
+każdej nieudanej próbie.
+
+Zakres zmiany śledzonej wskazuje miejsce wyniku w treści nowej: przyjęcie
+zostawia wtedy treść bez ruchu, a odrzucenie wstawia w to miejsce treść
+sprzed operacji. Zakres liczony w treści starej wskazywałby po zapisie nie
+ten fragment, o który szło.
+
+Wersję zakłada `zalozWersjeDokumentu` z autorem `model` i odwołaniem do
+propozycji — ta sama droga, którą idzie decyzja o propozycji. Drugiej drogi
+zakładania wersji Studio nie ma.
+
+Zakres poza treścią i zakres odwrócony w operacji kontekstowej schodzą na
+cały dokument, a nie na odmowę: odmowa zapisu wyrzuciłaby pracę już
+wykonaną. Cały dokument jest przy tym zakresem prawdziwym — tyle właśnie
+model dostał w treści polecenia.
+
+Parametry operacji jadą do modelu, a nie tylko do bazy. Kontrakt niesie je
+jako parametry operacji wymagane przez pozycję rejestru, a wiersz polecenia
+okna pracy wkłada tam słowa Operatora i nastawy suwaków koncepcyjnych.
+Pominięte tutaj byłyby nastawą, której model nigdy nie przeczyta — suwak
+przestawiałby wtedy pole bez skutku.
+
+Zakres operacji niesie kontrakt polami selectionStart/selectionEnd, nie
+osobnym napisem zaznaczenia. Wycinek bierze się po runach, nie po bajtach:
+dokument polski ma znaki dwubajtowe i cięcie po bajtach rozcinałoby litery.
+
+Porównanie idzie po dwóch treściach: wersja wobec wersji albo wersja wobec
+propozycji, bo pole `proposalId` jest zamienne z `targetVersionId`.
+
+Żądanie porównania, z którego nie da się policzyć ani fragmentów różnicy,
+ani trafień wzorca, jest żądaniem bez odpowiedzi. Powodzenie z kopertą pustą
+mówiłoby oknu, że porównano i nie ma różnic, a rdzeń niczego nie porównał:
+fragmenty potrzebują dwóch stron, a wzorzec potrzebuje strony, po której ma
+szukać — sama treść dokumentu stroną porównania nie jest.
+
+Strona porównania pominięta w `trescStrony` oddaje pusty identyfikator:
+`Porownaj` odróżnia po nim brak wskazania strony od strony o treści pustej.
+## server/internal/mowa/pomocnik.go
+
+Wzorzec odnajdywania jest ten sam, co w narzedzia/wpiecie.go: najpierw obok
+binarium rdzenia, potem droga zapasowa, a gdy zawiodą obie, typowany blad
+zamiast sciezki. Sciezka zmyslona jest gorsza od odmowy, bo odmowe da sie
+powiedziec Operatorowi, a zmyslona sciezka wraca dopiero jako niezrozumialy
+blad uruchomienia procesu. Plik skladla jedynie nazwe programu i wykaz
+argumentow; start procesu nalezy wylacznie do portu session.Uruchamiacz.
+Jedyny wyjatek to exec.LookPath — ono nie uruchamia procesu, tylko przeglada
+sciezke wyszukiwania systemu, dokladnie tak jak robi to narzedzia/wpiecie.go.
+
+interpreterPreferowany: trojka jawnie, bo gola nazwa python na wielu
+systemach wciaz wskazuje wydanie drugie, w ktorym pomocnik sie nie uruchomi.
+
+interpreterZapasowy: typowo Windows i czesc obrazow kontenerowych.
+
+OdnajdzPomocnika: interpreter — wskazanie Operatora wchodzi wprost, bez
+sprawdzania na dysku, bo moze byc nazwa do rozwiniecia przez system albo
+dowiazaniem srodowiska wirtualnego, a odmowa na podstawie wlasnego
+sprawdzenia uniewazniałaby to ustawienie. Gdy wskazania nie ma, szukany jest
+python3, a gdy i tego nie ma, zostaje python. Ta ostatnia wartosc jest
+zgadywana i moze nie istniec; odmowa przyjdzie wtedy z uruchomienia procesu,
+bo tylko ono zna prawde o wykonywalnosci.
+
+Argumenty: pomocnik oddaje tekst transkrypcji na standardowe wyjscie,
+a Python bez przelacznika -X utf8 koduje je wedlug ustawien regionalnych
+systemu. Na polskim Windowsie znaczy to strone kodowa 1250, w ktorej
+transkrypcja rozpada sie na krzaki, zanim rdzen zdazy ja odczytac.
+Wymuszenie UTF-8 w jednym miejscu jest jedyna obrona, ktora nie zalezy od
+tego, kto pomocnika wola.

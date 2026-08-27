@@ -19,18 +19,13 @@ import {
   type ZapisKompozycji,
 } from './zapis-kompozycji';
 
+// Kompozycja Design Board widziana przez okno: zapis układu i rozgłaszanie jego zmian.
+
 /**
- * Kompozycja Design Board widziana przez okno — zapis wraz z rozgłaszaniem
- * jego zmian.
- *
- * Jedno źródło prawdy o układzie na całe okno.
- *
- * Kompozycja powstaje w kliencie, zanim pojedzie do rdzenia: komenda
- * `design.board.update` przyjmuje gotowy układ w polu `layers`, więc wywołanie
- * idzie przy zapisie, nie przy każdym ruchu warstwy. Kanwa, panel warstw
- * i narzędzia wyrównania pracują na tym jednym zapisie.
+ * Położenie i rozmiar warstwy, czyli cztery liczby opisujące jeden prostokąt
+ * w układzie współrzędnych kanwy. Wartości są podawane w jednostkach kompozycji,
+ * a nie w pikselach ekranu, więc nie zależą od powiększenia widoku.
  */
-/** Położenie i rozmiar warstwy — cztery liczby opisujące jeden prostokąt. */
 export interface Prostokat {
   x: number;
   y: number;
@@ -47,11 +42,7 @@ export interface StanKompozycji {
   idKompozycji(): string;
   ustawNazwe(nazwa: string): void;
   ustawIdKompozycji(id: string): void;
-  /**
-   * Wstawia kompozycję odczytaną z rdzenia — zastępuje układ na kanwie.
-   * Droga powrotna dla `design.board.update`, dzięki której odświeżenie okna
-   * pokazuje kompozycję zapisaną w bazie, a nie pustą kanwę.
-   */
+  /** Wstawia kompozycję odczytaną z rdzenia; zastępuje dotychczasowy układ kanwy. */
   wczytaj(identyfikator: string, nazwa: string, warstwy: readonly DesignBoardLayer[]): void;
   dolozZasob(zasob: DesignAsset): void;
   dolozElement(nazwa: string): void;
@@ -65,13 +56,7 @@ export interface StanKompozycji {
   przestawBlokade(idWarstwy: string): void;
   ustawAdnotacje(idWarstwy: string, tresc: string): void;
   przesun(idWarstwy: string, x: number, y: number): void;
-  /**
-   * Ustawia położenie i rozmiar warstwy naraz — droga inspektora właściwości.
-   *
-   * Cztery liczby idą jedną zmianą, bo opisują jeden prostokąt: cztery osobne
-   * wywołania rozgłosiłyby cztery stany pośrednie, w których warstwa ma nowe
-   * położenie przy starym rozmiarze.
-   */
+  /** Ustawia położenie i rozmiar warstwy naraz — droga inspektora właściwości. */
   ustawGeometrie(idWarstwy: string, prostokat: Prostokat): void;
   wyrownaj(os: OsWyrownania): void;
   /** Rozmieszcza warstwy zaznaczone w równych odstępach. */

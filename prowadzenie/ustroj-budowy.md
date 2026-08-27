@@ -88,6 +88,11 @@ Reguły obowiązujące każdą sesję:
 - Komunikat rewizji: tryb oznajmujący, jedno zdanie, do 70 znaków.
 - Zmiana wykraczająca poza teren wraca do Prowadzącego jako zgłoszenie.
 - Drzewo robocze po zamknięciu terenu jest usuwane — `git worktree remove`.
+  **Przed usunięciem sprawdza się, czy nic w nim nie biegnie.** Drzewo zdjęte spod
+  działającego pomiaru unieważnia ten pomiar bez ostrzeżenia: bieg kończy się
+  wtedy serią niepowodzeń `no such file or directory`, które wyglądają jak usterki
+  kodu. Zdarzyło się to Prowadzącemu przy zamykaniu terenu `nastawy-wdrozenia` —
+  osiem fałszywych niepowodzeń w biegu, który do tej chwili był czysty.
 
 ## 5. Bramki
 

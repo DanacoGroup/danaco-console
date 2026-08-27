@@ -4287,3 +4287,29 @@ Gniazdo niesie także rozgłoszenia rdzenia — zdarzenia i fragmenty strumienia
 innych okien — dlatego Wykonaj rozpoznaje odpowiedź po trzech rzeczach naraz:
 identyfikatorze żądania, nazwie komendy i obecności pola stanu. Rozgłoszenie
 nie ma stanu i nosi nazwę zdarzenia, więc nie da się go wziąć za odpowiedź.
+
+## budowa/server/internal/dane/konta_wiersz.go
+Kolumna poświadczenia dochodzi tutaj wyłącznie jako znacznik obecności
+policzony w zapytaniu — struktura nie ma pola na jej treść, więc odczyt
+katalogu nie ma czym wynieść odwołania.
+
+## budowa/server/internal/dane/konta_domyslne.go
+Repozytorium ma jedynie zdjąć oznaczenie domyślności z poprzedniego konta
+i nadać je nowemu w jednej transakcji, żeby indeks nigdy nie zobaczył dwóch
+kont domyślnych naraz.
+
+## budowa/server/internal/dane/konta_powiazanie.go
+Wiązaniem jest kolumna kanału modelu wskazująca konto, z kasowaniem
+kaskadowym do wartości pustej, i nic poza nią — konto i kanał to dwa różne
+byty. Kanał jest definicją rozmowy z modelem: jak wołać, jakim modelem,
+z jakimi parametrami. Konto jest profilem uwierzytelnienia. Jeden kanał
+wskazuje konto preferowane, jedno konto może obsługiwać wiele kanałów,
+a pula rotacji bierze konta tego samego rodzaju — dlatego kanał pracuje
+dalej także wtedy, gdy jego konto preferowane wyczerpało limit.
+
+Z tego wynika sposób usuwania: skasowanie konta odłącza kanały, ale ich nie
+kasuje. Kontrakt oddaje to wykazem odłączonych kanałów w odpowiedzi
+usunięcia konta, więc repozytorium musi odczytać wykaz kanałów przed
+skasowaniem wiersza — po skasowaniu wiązania już nie ma.
+## budowa/server/internal/dane/przekazanie_okna_akcje.go
+Katalog akcji mówi, jakie akcje istnieją; ten dziennik mówi, kiedy i z jakim skutkiem konkretne okno je wykonało, na wzór dziennika akcji kolejki: przejrzystość zamiast bramy. Typ repozytorium i konstruktor deklaruje plik sąsiedni tego samego obszaru; ten plik dokłada wyłącznie metody dziennika akcji. Parametry i wynik są surowym zapisem, nierozbieranym, bo kształt obu pól zależy od konkretnej akcji z katalogu, którego warstwa danych akcji nie zna, podobnie jak komplet kontekstu przekazania niesie treść bez rozbioru w zapytaniu. Pole niesie identyfikator zewnętrzny okna, ten sam, którym okno wychodzi kontraktem na warstwę wyższą, bo warstwa wyższa nie zna wewnętrznych kluczy liczbowych.

@@ -2351,3 +2351,10 @@ odpowiada temu modułowi.
 
 ## budowa/klient-poprzedni/src/moduly/research/pamiec-badania.ts
 Pamięć ma jedną odpowiedzialność: przechowanie i ogłoszenie zmiany. Pamięć nie zna kontraktu i nie woła rdzenia — dzięki temu odczyt badania i wykazy okien patrzą na ten sam zbiór, a nie na jego kopie. Fazy są trzy, nie dwie: stan przed pytaniem, stan pytania w toku i stan, w którym rdzeń nic nie ma, zostają rozróżnialne, bo zlanie ich w jedno kazałoby zgadywać, czy czekać, czy działać.
+
+## budowa/klient-poprzedni/src/moduly/research/panel-akcji.ts
+Panel nie zna kontraktu i nie woła rdzenia bezpośrednio: droga wykonania akcji, czy to komenda
+`window.action`, komenda dziedzinowa, czy uczciwa odmowa, należy do okna, nie do paska przycisków.
+Żaden przycisk nie jest wygaszany ani warunkowany zaznaczeniem — brak warunku merytorycznego
+nazywa odpowiedź po kliknięciu, a nie odbiera klikalności. Każdy przycisk ma dymek objaśniający,
+czym akcja jest i czym się kończy.

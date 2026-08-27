@@ -5612,3 +5612,14 @@ działa — zostaje widoczna, klikalna i niesie powód wprost.
 Parametr etykieta niesie napis na przycisku, czynność jest tym, czego kontrolka miała dokonać,
 i wchodzi do zdania powodu, a komendy to komendy, które by tego dokonały; brak nazw znaczy, że
 okno nie zna żadnej.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/montaz-ukladu.ts
+Pierwsze gniazdo obejmuje okno uzgodnione z rdzeniem — to ono ma
+identyfikator nadany komendą tworzenia okna i to na nim wisi przepływ
+komunikatów; pozostałe gniazda pracują z własnym opisem, dopóki rdzeń nie
+otworzy dla nich osobnych okien. Wskaźnik łączności w pasku górnym nie
+sięga okna na pełnym ekranie ani dalszej kolumny sceny, a polecenie
+wysłane po zerwanym łączu szłoby w próżnię — łącze jest jedno, więc
+odpowiedź w każdym nagłówku ma być ta sama. Okno bywa już otwarte w chwili
+montażu, a bywa, że dopiero powstanie, stąd oba wejścia kodu okna, nie
+jedno.

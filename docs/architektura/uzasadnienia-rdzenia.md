@@ -225,3 +225,27 @@ Test odmowy bez programu audytującego zwęża ścieżkę wyszukiwania do katalo
 z samą przeglądarką, aby odróżnić brak programu audytującego od braku
 przeglądarki — odmowa o przeglądarce mówiłaby o innym braku niż ten, który
 sprawdzian bada.
+
+## budowa/server/internal/core/studio_dlugi_domkniecie_test.go
+
+Ten plik mierzy skutek, nie kopertę, dla sześciu długów funkcjonalnych modułu
+Studio: paginacji spisu treści liczonej kartką A4 zaszytą na stałe, przez co
+numer strony zgadzał się z podglądem, a nie z nastawami dokumentu; cofnięcia
+czynności, które odtwarzało treść i postać, a aparat dokumentu zostawiało
+w brzmieniu bieżącym; malarza formatów żyjącego w pamięci procesu, przez co
+postać zabrana przepadała przy przeładowaniu rdzenia; zmiany postaci zapisanej
+bez kodu wykonawcy, po której rozbicie zmian po wykonawcy pokazywało dwóch
+agentów jako jednego nienazwanego; sortowania tabeli układającego
+„Łukasiewicza” za „Zawadzkim”, bo porównanie szło po Unikodzie, a nie
+porządkiem alfabetycznym pisma polskiego; oraz wklejenia „zachowaj postać
+źródła”, które zachowywało postać miejsca wklejenia zamiast postaci źródła.
+
+Cofnięcie czynności aparatu jest mierzone po dwóch stronach naraz: z drzewa
+postaci i z wiersza aparatu czytanego przez `studio.apparatus.list` — usunięcie
+elementu tylko z jednej z tych dwóch stron zostawiłoby czytelnika z przypisem,
+którego dokument już nie niesie, albo z wierszem bez pokrycia w drzewie.
+
+Wklejenie sposobem „zachowaj postać źródła” różni się od sposobu „scal
+postać”: gdy wpis schowka nie przenosi postaci źródła, oba sposoby dają ten
+sam wynik, więc sam fakt powodzenia wklejenia niczego nie dowodzi — dowodem
+jest wytłuszczenie fragmentu źródłowego widoczne w miejscu wklejenia.

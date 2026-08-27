@@ -992,3 +992,39 @@ kolumn jest zgodna w całym bloku albo różni się o jedną. Blok o rozjeżdża
 się liczbie kolumn nie jest tabelą, tylko tekstem ułożonym w kolumny, i wtedy
 wchodzi do dokumentu jako akapity z zachowanym rozkładem odstępów, a bilans
 liczy go jako układ nierozpoznany.
+
+## adapter_modul_design_druk.go
+
+Kompozycja Design Board nie niesie jednostki w kontrakcie — warstwa niesie
+same liczby. Część drukarska czyta je jako milimetry i stosuje to
+rozstrzygnięcie spójnie w kontroli przeddrukowej, wydaniu i podziale na
+kafle, dzięki czemu kompozycja 210×297 jest arkuszem A4, a nie prostokątem
+bez nazwanego rozmiaru. Wyrys ekranowy liczy te same liczby jako piksele,
+bo tam nie ma nośnika, więc nie ma czego mierzyć w milimetrach.
+
+Komenda design.print.export odmawia wydania przy wadzie o wadze błędu: plik
+nie do druku wydany jako gotowy do druku idzie do drukarni, wraca po dniu
+i kosztuje nakład. Pominięcie kontroli jest świadomym wyborem operatora
+i wraca w odpowiedzi polem preflightSkipped, więc pominięcie nie przechodzi
+w ciszy.
+
+Zastrzeżenia kontroli przeddrukowej wychodzą uporządkowane po wadze:
+najpierw to, co blokuje druk, potem to, co grozi jakością, w kolejności
+stabilnej między dwiema kontrolami tego samego materiału.
+
+Rdzeń nie rozkłada profili ICC i nie przelicza barw przez nie, więc wydanie
+w CMYK idzie bez osadzonego profilu, a kontrola przeddrukowa zwraca to jako
+zastrzeżenie zamiast milczeć.
+
+Profil wydania domyślny, bez wskazania wprost i bez identyfikatora, niesie
+CMYK w rozdzielczości drukarskiej i bez spadu, ponieważ spad dołożony po
+cichu zmieniałby wymiar strony.
+
+Publikacja wielostronicowa przepuszczona ze stroną nie do druku wraca
+z drukarni tak samo jak pojedynczy arkusz, tylko drożej, więc kontrola
+przeddrukowa obejmuje każdą stronę osobno.
+
+Oprawa zeszytowa wymaga liczby stron podzielnej przez cztery, bo arkusz
+zgięty na pół daje cztery strony; publikacja niespełniająca tego warunku
+dostaje odmowę, a nie ciche dołożenie wakatów, ponieważ strona pusta
+w środku książki jest rozstrzygnięciem, nie zaokrągleniem.

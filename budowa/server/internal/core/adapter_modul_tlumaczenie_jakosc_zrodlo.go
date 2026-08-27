@@ -32,7 +32,7 @@ func (a *adapterTlumaczenia) tekstZrodlowyPanelu(ctx context.Context,
 	return *okno.TekstZrodlowy, nil
 }
 
-// walutyKontrolowane to znaki i kody walut, ktorych obecnosc w zrodle sprawdzamy
+// walutyKontrolowane to znaki i kody walut, ktorych obecnosc w zrodle jest sprawdzana
 // w przekladzie; wykaz jest zamkniety i krotki, zeby nie brac za kod waluty
 // kazdego skrotowca z trzech wielkich liter.
 var walutyKontrolowane = []string{
@@ -99,7 +99,7 @@ func sprawdzLiczbyWzgledemZrodla(zrodlo, tresc string) []dane.NiezgodnoscTlumacz
 // nieznaczacych. Wynikiem jest zbior wartosci bez powtorzen.
 func wartosciLiczbowe(tekst string) map[string]bool {
 	wynik := map[string]bool{}
-	// Daty wycinamy przed liczeniem liczb, zeby zapis daty nie rozpadal sie na fałszywe braki liczb.
+	// Daty są wycinane przed liczeniem liczb, zeby zapis daty nie rozpadal sie na fałszywe braki liczb.
 	tekst = zapisDaty.ReplaceAllString(tekst, " ")
 	znaki := []rune(tekst)
 	for i := 0; i < len(znaki); {
@@ -212,7 +212,7 @@ func znacznikiPodstawienia(tekst string) []string {
 }
 
 // sprawdzProporcjeDlugosci zglasza rodzaj length, gdy przeklad jest razaco
-// krotszy albo dluzszy od zrodla. Liczymy w runach, nie w bajtach, zeby
+// krotszy albo dluzszy od zrodla. Liczenie idzie w runach, nie w bajtach, zeby
 // diakrytyka i alfabet nielacinski nie liczyly sie jako nadmiar.
 func sprawdzProporcjeDlugosci(zrodlo, tresc string) []dane.NiezgodnoscTlumaczenia {
 	dlugoscZrodla := len([]rune(strings.TrimSpace(zrodlo)))

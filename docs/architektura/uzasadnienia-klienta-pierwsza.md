@@ -3526,3 +3526,21 @@ z wyłączeniem.
 Dlatego pod grupą stoi zdanie czytające stan bieżący, a nie stała treść:
 Operator ma widzieć, że odznaczenie wszystkiego jest wyłączeniem pamięci, zanim
 naciśnie zapis. Zdanie zmienia się przy każdym kliknięciu.
+
+## budowa/klient-poprzedni/src/komponenty/faza-okna.ts
+
+Zestaw faz nie zna wartości spoczynku. Zdanie o tym, że rdzeń nie był jeszcze
+pytany, opisuje stan źródła danych, a nie stan okna, i ma własny typ
+`FazaOdczytu` w `dostepy/stan-dostepow.ts` oraz w stanach pozostałych modułów.
+Moduły odwzorowują go na okienne `puste` z osobną treścią komunikatu — tak
+robią `moduly/design/okno-assets-panel.ts` oraz
+`moduly/library/okno-library-explorer.ts`.
+
+Widoczność wskaźnika odczytu i chowanie treści na czas ładowania zostają
+w modułach i różnią się między nimi celowo: Assistant oraz Apps zostawiają treść
+widoczną w ładowaniu, Design i Research ją chowają.
+
+Rola `alert` należy się wyłącznie odmowie, ponieważ przerywa czytnikowi ekranu
+bieżącą wypowiedź; pozostałe fazy idą jako `status`. Pas komunikatu znika tylko
+w fazie `gotowe` — stan przesłania treść, a nie kasuje jej, więc po powrocie do
+fazy `gotowe` widać to, co stało na ekranie przed nieudanym odświeżeniem.

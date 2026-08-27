@@ -2312,3 +2312,20 @@ wewnątrz `BrowserBookmark` — nie jest to byt samodzielny, który ktokolwiek
 wyszukuje niezależnie od zakładki. Osobna tabela wiązań dawałaby złączenie
 przy każdym odczycie i ani jednego nowego pytania, na które umiałaby
 odpowiedzieć.
+## budowa/server/internal/store/migracja_172_monitory_przegladania.sql
+Migracja 172 — monitory zmian strony (`browser.monitor.*`).
+
+Monitor pilnuje strony między sprawdzeniami, więc musi trzymać odniesienie:
+treść z chwili założenia albo z chwili ostatniego przyjętego sprawdzenia.
+Bez odniesienia „zmieniło się" nie ma względem czego być prawdą, a komenda
+`browser.monitor.check` oddawałaby zawsze `changed:false` albo zawsze
+`changed:true` — i jedno, i drugie jest meldunkiem bez pomiaru.
+
+Odniesienie idzie odwołaniem do pliku, nie treścią w kolumnie: strona bywa
+setkami kilobajtów tekstu, a wzorem jest `migawka_strony.tekst_odwolanie`
+z migracji 047. Obok odwołania stoi długość odniesienia — dzięki niej wykaz
+monitorów mówi o rozmiarze pilnowanej treści bez sięgania po plik.
+
+Stan sprawdzenia (`pending`, `unchanged`, `changed`, `failed`) jest kolumną,
+a nie wyliczeniem z dat: sprawdzenie nieudane (`failed`) też jest
+sprawdzeniem, ma swój czas i nie wolno go pomylić z „bez zmian".

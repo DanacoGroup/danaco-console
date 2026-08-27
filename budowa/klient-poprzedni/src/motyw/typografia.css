@@ -1,18 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY TYPOGRAFII
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: kroje, skala stopni, grubości, interlinie, tracking.
-   Warstwa niezależna od motywu — te same wartości w jasnym i ciemnym.
-
-   Trzy role, trzy kroje:
-     Space Grotesk  — nagłówki, tytuły środowisk, logotyp (wejście i tożsamość)
-     IBM Plex Sans  — interfejs i treść (praca)
-     IBM Plex Mono  — dane techniczne, identyfikatory, terminal (maszyna)
-   Pliki krojów wczytuje fonty.css (OFL 1.1, podzbiory latin + latin-ext).
-
-   Wzorce tekstowe (.dn-etykieta-wersalikowa, .dn-etykieta-mono, .dn-dane)
-   należą do fundament.css — ta warstwa deklaruje wyłącznie wartości.
-   ============================================================================ */
+/* Żetony typografii obejmują kroje, skalę stopni, grubości, interlinie i tracking — warstwa niezależna od motywu, wspólna dla jasnego i ciemnego wariantu. */
 
 :root {
   /* ---------------------------------------------------------------- *

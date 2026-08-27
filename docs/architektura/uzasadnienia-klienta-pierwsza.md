@@ -5192,3 +5192,22 @@ Telemetria milcząca nie jest telemetrią zerową. Gdy monitor nie ma procesu dl
 odmówił odpowiedzi, wiersz nie rysuje pustego wskaźnika, ponieważ pusty wskaźnik znaczyłby
 „zero etapów za sobą" — stan, którego nikt nie odczytał. Wiersz mówi wtedy wprost, że etapu
 nie oddano, i skąd ta cisza pochodzi.
+
+## budowa/klient-poprzedni/src/moduly/browser/podglad-strony.ts
+
+Przewijanie i zaznaczenie dzieją się w kliencie, na odczytanej migawce, ponieważ to ona
+jest treścią widzianą przez model. Przewinięcie strony po stronie rdzenia ma osobną
+komendę `browser.scroll`, której podgląd jeszcze nie wywołuje; powód stoi przy przyciskach
+nawigacji, w `formularz-nawigacji.ts`.
+
+Treść idzie przez `textContent`, nigdy przez `innerHTML`. Pole `html` migawki jest treścią
+obcą, a wstrzyknięcie go do dokumentu powłoki wpuściłoby cudzy znacznik do interfejsu
+Operatora.
+
+W trybie czytnika źródło strony znika z widoku, ale nie z migawki, więc wyłączenie trybu
+pokazuje je z powrotem bez ponownego odczytu.
+
+Wiersz wskazuje się udziałem w treści, a nie pomiarem wysokości linii: treść jest jednym
+węzłem tekstowym, więc pozycji wiersza nie da się odczytać z układu bez rozbicia jej na
+elementy, a to zmieniłoby drzewo dokumentu podglądu, które ma pozostać tym samym, co widzi
+model.

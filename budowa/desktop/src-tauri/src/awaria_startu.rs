@@ -24,7 +24,7 @@
 
 use std::panic;
 
-use crate::rdzen::dziennik;
+use crate::dziennik;
 
 /// Instaluje hak paniki procesu. Wołać jako pierwszą instrukcję `main`.
 pub fn zainstaluj() {

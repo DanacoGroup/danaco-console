@@ -1,4 +1,11 @@
 //! Okno główne powłoki — jedno okno natywne z interfejsem.
+//!
+//! Interfejs pochodzi z pakietu wkompilowanego w powłokę (`frontendDist`
+//! w `tauri.conf.json`) i z żadnego innego miejsca. To jest cały produkt
+//! na urządzeniu Operatora: okno wraz z interfejsem, bez rdzenia. Dlatego
+//! adresu strony nie ma czego rozstrzygać w czasie pracy — nastawa budowania
+//! rozstrzyga go raz, a powłoka nie niesie żadnego adresu zapasowego, w tym
+//! adresu serwera rozwojowego.
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
@@ -10,9 +17,9 @@ pub const ETYKIETA: &str = "glowne";
 /// Tytuł okna widoczny na pasku systemu.
 pub const TYTUL: &str = "Danaco Console";
 
-/// Otwiera okno główne pod wskazanym adresem interfejsu.
-pub fn otworz(aplikacja: &AppHandle, adres: WebviewUrl) -> tauri::Result<WebviewWindow> {
-    let okno = WebviewWindowBuilder::new(aplikacja, ETYKIETA, adres)
+/// Otwiera okno główne z pakietem interfejsu.
+pub fn otworz(aplikacja: &AppHandle) -> tauri::Result<WebviewWindow> {
+    let okno = WebviewWindowBuilder::new(aplikacja, ETYKIETA, WebviewUrl::default())
         .title(TYTUL)
         .inner_size(1440.0, 900.0)
         .min_inner_size(960.0, 640.0)

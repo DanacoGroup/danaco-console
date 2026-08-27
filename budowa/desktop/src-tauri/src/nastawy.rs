@@ -1,19 +1,18 @@
 //! Nastawy powłoki zapisane trwale — wskazanie Operatora, gdzie stoi rdzeń.
 //!
-//! Po co plik, skoro jest zmienna środowiska. Adresu serwera nie zna instalator
-//! i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie wie, pod
-//! jaką nazwą stoi rdzeń tego Operatora. Wiedza pojawia się przy pierwszym
-//! uruchomieniu okna i musi przetrwać jego zamknięcie — inaczej przy każdym
-//! starcie powłoka wracałaby do rdzenia lokalnego, czyli do maszyny bez
-//! arsenału.
+//! Po co plik, skoro jest zmienna środowiska. Adresu serwera wdrożenia nie zna
+//! instalator i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie
+//! wie, pod jaką nazwą stoi rdzeń tego Operatora. Wiedza pojawia się przy
+//! pierwszym uruchomieniu okna i musi przetrwać jego zamknięcie — inaczej przy
+//! każdym starcie powłoka pytałaby o to samo.
 //!
 //! Zmienna `DANACO_HOST_RDZENIA` zostaje i stoi WYŻEJ niż ten plik: jest
 //! narzędziem wykonawcy i środowiska serwerowego, gdzie nastawę wnosi jednostka
 //! usługi, a nie okno. Kolejność warstw rozstrzyga `ustawienia.rs`.
 //!
-//! Plik leży w katalogu danych rdzenia (`rdzen::dziennik::katalog_danych`), bo
-//! to jedyny katalog, który powłoka i rdzeń już dzielą; drugie miejsce zapisu
-//! byłoby drugim stanem do pogodzenia przy przenoszeniu profilu.
+//! Plik leży w katalogu danych powłoki (`dziennik::katalog_danych`), obok jej
+//! dziennika: oba pliki należą do powłoki i drugie miejsce zapisu byłoby drugim
+//! stanem do pogodzenia przy przenoszeniu profilu.
 
 use std::fs::{create_dir_all, rename, File};
 use std::io::Write;
@@ -21,7 +20,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::rdzen::dziennik;
+use crate::dziennik;
 
 /// Nazwa pliku nastaw powłoki w katalogu danych.
 pub const NAZWA_PLIKU: &str = "powloka-nastawy.json";
@@ -34,8 +33,7 @@ const ROZSZERZENIE_PRZEJSCIOWE: &str = "nowy";
 /// domyślnymi liczbami przy zapisie.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Nastawy {
-    /// Host, na którym stoi rdzeń — nazwa serwera albo `127.0.0.1` dla rdzenia
-    /// na tym urządzeniu.
+    /// Serwer wdrożenia, na którym stoi rdzeń.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host_rdzenia: Option<String>,
     /// Port nasłuchu rdzenia, gdy Operator wskazał inny niż domyślny.

@@ -20,9 +20,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-use crate::rdzen::{dziennik, UchwytRdzenia};
+use crate::dziennik;
 
 /// Ile czasu dostaje interfejs na odebranie odpowiedzi, zanim powłoka zniknie.
 ///
@@ -67,8 +67,6 @@ pub struct Przebieg {
     pub bajtow: u64,
     /// Suma SHA-256 policzona z pobranego pliku — zgodna z żądaną.
     pub suma_sha256: String,
-    /// Co się stało z rdzeniem w tle.
-    pub rdzen: String,
     /// Za ile milisekund aplikacja zniknie z ekranu.
     pub restart_za_ms: u64,
     /// Zdanie dla Operatora.
@@ -128,7 +126,7 @@ pub fn zajmij_wylacznosc() -> Result<StrazWylacznosci, Odmowa> {
 ///
 /// Kolejność jest warunkiem poprawności i nie wolno jej mieszać:
 /// rozpoznanie drogi → pobranie → **sprawdzenie sumy** → założenie →
-/// zatrzymanie rdzenia → ponowny start.
+/// ponowny start.
 pub fn wykonaj(aplikacja: &AppHandle, adres: &str, suma_sha256: &str) -> Result<Przebieg, Odmowa> {
     dziennik::dopisz(&format!("aktualizacja: żądanie wydania spod {adres}"));
 
@@ -196,19 +194,9 @@ fn przebieg_pod_straza(
     })?;
     dziennik::dopisz(&format!("aktualizacja: {}", zalozenie.zdanie));
 
-    // Rdzeń w tle. Powłoka go postawiła, więc powłoka go sprząta — inaczej po
-    // restarcie zostałby proces stary, trzymający port, a nowa powłoka
-    // zastałaby „rdzeń cudzy" i pracowała na rdzeniu niezaktualizowanym.
-    // Idzie to przez `UchwytRdzenia::zatrzymaj`, który ubija i czeka (`wait`);
-    // bez czekania zostałby proces osierocony, a drugiej drogi zatrzymywania
-    // rdzenia obok tej z zasobnika nie budujemy. Rdzeń zastany — postawiony
-    // poza powłoką — nie należy do nas i zostaje; to nie jest błąd
-    // i aktualizacji nie przerywa.
-    let rdzen = match aplikacja.state::<UchwytRdzenia>().zatrzymaj() {
-        Ok(zdanie) => zdanie,
-        Err(powod) => format!("Rdzeń pozostawiony bez zmian: {powod}"),
-    };
-    dziennik::dopisz(&format!("aktualizacja: {rdzen}"));
+    // Rdzenia ten przebieg nie dotyka. Stoi on na serwerze wdrożenia i jest
+    // utrzymywany tam; aktualizacja wymienia wyłącznie plik powłoki na
+    // urządzeniu Operatora.
 
     // Ponowny start — po zwłoce, żeby odpowiedź zdążyła dojść do banera.
     zaplanuj_ponowny_start(aplikacja, zalozenie.restartuje_powloka);
@@ -218,7 +206,6 @@ fn przebieg_pod_straza(
         zalozone: zalozenie.zalozone,
         bajtow: pobrany.bajtow,
         suma_sha256: pobrany.suma_sha256,
-        rdzen,
         restart_za_ms: ZWLOKA_RESTARTU.as_millis() as u64,
         zdanie: zalozenie.zdanie,
     })
@@ -231,8 +218,7 @@ fn przebieg_pod_straza(
 /// starego wydania. Dzięki temu po podmianie wstaje wydanie nowe.
 ///
 /// Gdy zakłada instalator zewnętrzny (Windows), powłoka wyłącznie schodzi
-/// z drogi — `zakoncz_powloke` zostawia rdzeń przy pracy, a rdzeń zatrzymano
-/// tu jawnie krok wcześniej, bo aktualizacja wymienia także jego plik.
+/// z drogi — `zakoncz_powloke` kończy proces okna i nic poza nim.
 fn zaplanuj_ponowny_start(aplikacja: &AppHandle, restartuje_powloka: bool) {
     let aplikacja = aplikacja.clone();
     std::thread::spawn(move || {

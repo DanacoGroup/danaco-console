@@ -1,54 +1,33 @@
 //! Ustawienia powłoki obowiązujące w chwili pracy.
 //!
-//! Trzy warstwy, od najsłabszej: wartość domyślna → nastawy zapisane trwale
-//! (`nastawy.rs`) → zmienna środowiska. Brak jakiejkolwiek warstwy nie wstrzymuje
-//! startu okna. Nazwy `DANACO_PORT` i `DANACO_KATALOG_DANYCH` są własnością
-//! rdzenia (`server/internal/konfiguracja/srodowisko.go`); powłoka je wyłącznie
-//! czyta i przekazuje dziecku.
+//! Dwie warstwy, od słabszej: nastawy zapisane trwale (`nastawy.rs`) → zmienna
+//! środowiska. Trzeciej — wartości domyślnej hosta — nie ma i nie może być:
+//! rdzeń stoi na serwerze wdrożenia, a jego nazwy nie zna ani powłoka, ani
+//! instalator. Brak obu warstw znaczy więc „wskazania nie złożono", a nie
+//! „rdzeń stoi tu obok". Nazwy `DANACO_PORT` i `DANACO_KATALOG_DANYCH` są
+//! własnością rdzenia (`server/internal/konfiguracja/srodowisko.go`); powłoka
+//! je wyłącznie czyta.
 //!
 //! Dlaczego zmienna stoi nad plikiem. Plik niesie wskazanie Operatora złożone
 //! w oknie i ma przetrwać zamknięcie okna. Zmienna niesie wskazanie tego, kto
 //! stawia proces — wykonawcy przy budowie, jednostki usługi na serwerze — i musi
 //! brać górę, bo inaczej plik z jednej maszyny sterowałby uruchomieniem na
 //! drugiej po skopiowaniu profilu.
-//!
-//! Dwóch zmiennych nie wolno mylić. `DANACO_HOST_RDZENIA` rozstrzyga, gdzie
-//! stoi rdzeń: steruje adresem złożonym w `adres_rdzenia_http` i przełącznikiem
-//! `rdzen_lokalny` (czy `main.rs` w ogóle stawia proces lokalny).
-//! `DANACO_ADRES_INTERFEJSU` rozstrzyga wyłącznie, skąd ładuje się strona
-//! (`zrodlo_interfejsu.rs`) — osobna decyzja, osobny skutek. Wskazanie
-//! jednej z nich nie zmienia drugiej.
 
 use std::env;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use crate::nastawy::{self, Nastawy};
 
-/// Port nasłuchu rdzenia lokalnego. Musi być równy `PortDomyslny`
+/// Port nasłuchu rdzenia. Musi być równy `PortDomyslny`
 /// z `server/internal/konfiguracja/ustawienia.go` (17870) — tamten plik jest
 /// źródłem prawdy, ta stała jest jego jedyną kopią po stronie Rust powłoki.
 pub const PORT_DOMYSLNY: u16 = 17870;
 
-/// Host rdzenia lokalnego — wartość obowiązująca, gdy Operator nie wskazał ani
-/// nastawy, ani zmiennej. Jedyne miejsce literału `127.0.0.1` po stronie Rust
-/// powłoki; `adres_rdzenia_http` i testy budują adres z tej stałej, nie
-/// wpisują go wprost.
-pub const HOST_DOMYSLNY: &str = "127.0.0.1";
-
 /// Zmienna wskazująca port rdzenia — wspólna z rdzeniem i wzorcem `.env.example`.
 pub const ZMIENNA_PORT: &str = "DANACO_PORT";
-/// Zmienna wskazująca ścieżkę binarki rdzenia, gdy leży poza miejscami znanymi powłoce.
-pub const ZMIENNA_RDZEN: &str = "DANACO_RDZEN";
-/// Zmienna wskazująca adres interfejsu (serwer rozwojowy albo rdzeń serwujący pakiet).
-/// Rozstrzyga, skąd ładuje się strona — nie gdzie stoi rdzeń (zob. `ZMIENNA_HOST_RDZENIA`).
-pub const ZMIENNA_ADRES_INTERFEJSU: &str = "DANACO_ADRES_INTERFEJSU";
-/// Zmienna wskazująca host, na którym stoi rdzeń — wariant wirtualny (rdzeń na
-/// serwerze) zamiast lokalnego (rdzeń na tym urządzeniu). Brak wskazania oddaje
-/// rozstrzygnięcie nastawom zapisanym, a przy ich braku `HOST_DOMYSLNY`. Jawne
-/// wskazanie hosta innego niż domyślny wyłącza stawianie procesu lokalnego
-/// (`Ustawienia::rdzen_lokalny`, `rdzen::uruchomienie::nie_stawiaj_lokalnie`,
-/// wołane z `main.rs`).
+/// Zmienna wskazująca serwer wdrożenia, na którym stoi rdzeń. Stoi wyżej niż
+/// wskazanie złożone w oknie; jej brak oddaje rozstrzygnięcie nastawom zapisanym.
 pub const ZMIENNA_HOST_RDZENIA: &str = "DANACO_HOST_RDZENIA";
 
 /// Nazwa warstwy, z której pochodzi obowiązujące wskazanie hosta. Wchodzi do
@@ -57,7 +36,7 @@ pub const ZMIENNA_HOST_RDZENIA: &str = "DANACO_HOST_RDZENIA";
 /// środowiska jest silniejsze od zapisu w oknie.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Warstwa {
-    /// Wskazania nie ma w żadnej warstwie — obowiązuje wartość domyślna.
+    /// Wskazania nie ma w żadnej warstwie — powłoka nie wie, gdzie szukać rdzenia.
     Brak,
     /// Wskazanie z nastaw zapisanych trwale, złożone w oknie.
     Nastawy,
@@ -76,6 +55,23 @@ impl Warstwa {
     }
 }
 
+/// Złożone wskazanie, gdzie stoi rdzeń: serwer wdrożenia i port jego nasłuchu.
+#[derive(Clone, Debug)]
+pub struct Wskazane {
+    /// Nazwa albo adres serwera wdrożenia.
+    pub host: String,
+    /// Port nasłuchu rdzenia na tym serwerze.
+    pub port: u16,
+}
+
+impl Wskazane {
+    /// Adres HTTP rdzenia złożony ze wskazania. Jedyne miejsce, w którym ten
+    /// adres powstaje — nigdzie indziej nie jest wpisywany literałem.
+    pub fn adres_http(&self) -> String {
+        format!("http://{}:{}", self.host, self.port)
+    }
+}
+
 /// Komplet ustawień powłoki obowiązujących w chwili pracy.
 ///
 /// Warstwa środowiska jest ustalona raz, przy starcie procesu. Warstwa nastaw
@@ -87,12 +83,8 @@ impl Warstwa {
 pub struct Ustawienia {
     /// Port wskazany zmienną środowiska; brak = nastawy albo `PORT_DOMYSLNY`.
     port_ze_srodowiska: Option<u16>,
-    /// Host wskazany zmienną środowiska; brak = nastawy albo `HOST_DOMYSLNY`.
+    /// Host wskazany zmienną środowiska; brak = rozstrzygają nastawy.
     host_ze_srodowiska: Option<String>,
-    /// Jawnie wskazana binarka rdzenia; brak = wyszukanie w miejscach znanych.
-    pub sciezka_rdzenia: Option<PathBuf>,
-    /// Jawnie wskazany adres interfejsu; brak = rozstrzygnięcie w `zrodlo_interfejsu`.
-    pub adres_interfejsu: Option<String>,
     /// Nastawy zapisane trwale — warstwa zmienialna w trakcie pracy okna.
     zapisane: Arc<Mutex<Nastawy>>,
 }
@@ -104,21 +96,23 @@ impl Ustawienia {
         Self {
             port_ze_srodowiska: port_ze_srodowiska(),
             host_ze_srodowiska: niepusta(ZMIENNA_HOST_RDZENIA),
-            sciezka_rdzenia: niepusta(ZMIENNA_RDZEN).map(PathBuf::from),
-            adres_interfejsu: niepusta(ZMIENNA_ADRES_INTERFEJSU),
             zapisane: Arc::new(Mutex::new(nastawy::czytaj())),
         }
     }
 
-    /// Host rdzenia obowiązujący: zmienna środowiska, nastawy zapisane,
-    /// a przy braku obu `HOST_DOMYSLNY`. Nigdy literał wpisany wprost.
-    pub fn host(&self) -> String {
-        if let Some(host) = self.host_ze_srodowiska.as_deref() {
-            return host.to_string();
-        }
-        self.nastawy()
-            .host_rdzenia
-            .unwrap_or_else(|| HOST_DOMYSLNY.to_string())
+    /// Wskazanie obowiązujące, gdy jest złożone: zmienna środowiska przed
+    /// nastawami zapisanymi. `None` znaczy pierwsze uruchomienie po instalacji —
+    /// powłoka nie zgaduje wtedy żadnego adresu, bo każdy zgadnięty byłby
+    /// adresem cudzym albo pustym.
+    pub fn wskazanie(&self) -> Option<Wskazane> {
+        let host = match self.host_ze_srodowiska.as_deref() {
+            Some(host) => host.to_string(),
+            None => self.nastawy().host_rdzenia?,
+        };
+        Some(Wskazane {
+            host,
+            port: self.port(),
+        })
     }
 
     /// Port rdzenia obowiązujący: zmienna środowiska, nastawy zapisane,
@@ -129,23 +123,9 @@ impl Ustawienia {
             .unwrap_or(PORT_DOMYSLNY)
     }
 
-    /// Adres HTTP rdzenia obowiązujący — złożony z hosta i portu
-    /// obowiązujących: host z `host()`, port z `port()`, żaden nie jest
-    /// literałem wpisanym we `format!`.
-    pub fn adres_rdzenia_http(&self) -> String {
-        format!("http://{}:{}", self.host(), self.port())
-    }
-
-    /// Czy rdzeń ma stać na tej maszynie. Prawda przy wskazaniu równym
-    /// `HOST_DOMYSLNY` i przy braku wskazania. Fałsz wyłącznie, gdy host
-    /// obowiązujący jest inny — wariant wirtualny (rdzeń na serwerze).
-    ///
-    /// Steruje tylko tym, czy `main.rs` stawia proces rdzenia lokalnie. Skąd
-    /// ładuje się strona interfejsu, rozstrzyga osobno `adres_interfejsu`
-    /// i `zrodlo_interfejsu.rs`; wskazanie adresu interfejsu na hosta zdalnego
-    /// samo z siebie nie wyłącza stawiania rdzenia lokalnie.
-    pub fn rdzen_lokalny(&self) -> bool {
-        self.host() == HOST_DOMYSLNY
+    /// Adres HTTP rdzenia obowiązujący albo `None`, gdy wskazania nie złożono.
+    pub fn adres_rdzenia_http(&self) -> Option<String> {
+        self.wskazanie().map(|wskazane| wskazane.adres_http())
     }
 
     /// Warstwa, z której pochodzi obowiązujące wskazanie hosta.
@@ -159,22 +139,13 @@ impl Ustawienia {
         Warstwa::Brak
     }
 
-    /// Czy wskazanie zostało w ogóle złożone — w oknie albo zmienną.
-    ///
-    /// Fałsz znaczy pierwsze uruchomienie: powłoka nie wie jeszcze, czy rdzeń ma
-    /// stanąć na tym urządzeniu, czy stoi na serwerze, więc nie stawia procesu
-    /// lokalnego i czeka na rozstrzygnięcie Operatora (`main.rs`).
-    pub fn wskazanie_zlozone(&self) -> bool {
-        self.warstwa_wskazania() != Warstwa::Brak
-    }
-
     /// Zapisuje wskazanie Operatora trwale i wprowadza je w życie dla wszystkich
     /// kopii ustawień. Zwraca zdanie o niepowodzeniu, gdy zapis się nie udał —
     /// wskazanie nieutrwalone nie zostaje przyjęte, bo zniknęłoby przy następnym
     /// starcie i Operator dowiedziałby się o tym dopiero wtedy.
     ///
-    /// Wskazanie ze zmiennej środowiska nie znika przez ten zapis: `host()` pyta
-    /// zmienną pierwszą, a okno dostaje warstwę w odpowiedzi
+    /// Wskazanie ze zmiennej środowiska nie znika przez ten zapis: `wskazanie()`
+    /// pyta zmienną pierwszą, a okno dostaje warstwę w odpowiedzi
     /// (`warstwa_wskazania`) i wie, że zapis nie rozstrzyga.
     pub fn zapisz_wskazanie(&self, host: &str, port: u16) -> Result<(), String> {
         let nowe = Nastawy {

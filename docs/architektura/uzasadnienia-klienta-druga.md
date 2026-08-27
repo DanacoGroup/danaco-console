@@ -4505,3 +4505,9 @@ Rozstrzygnięcia stanu wpisu domkniętego zdarzeniem zmiany wiadomości są
 cztery, nie dwa: tura zamknięta błędem i tura, która nie przyniosła ani
 jednego znaku, mają własne stany. Bez nich obie wyglądałyby na ekranie tak
 samo jak udana — pustą ramką z napisem „zakończona".
+
+## budowa/klient/src/wejscie/wejscie-z-rdzeniem.test.ts
+Sprawdzian przytacza odpowiedzi rdzenia i wymaga bazy świeżej: rejestracja wykonuje się raz, więc rdzeń z założonym już kontem odmawia jej, a wtedy nie ma czego zmierzyć. Wyjątkiem jest bieg wskazujący drogę potwierdzenia: ten kontynuuje rejestrację z biegu poprzedniego, więc konta oczekuje, zamiast go zakładać. Inaczej gałęzi z kontem nadawczym nie dałoby się domknąć — drogę niesie list, a list powstaje dopiero przy rejestracji.
+Milczenie rdzenia kończy się tu niepowodzeniem nazywającym przeszkodę, nie pominięciem: sprawdzian, który sam siebie odpuszcza przy braku rdzenia, wygląda potem tak samo jak sprawdzian zdany.
+Obie gałęzie mierzy ten sam bieg, uruchomiony dwa razy: raz wobec rdzenia bez konta nadawczego, raz wobec rdzenia z kontem nadawczym. Gałąź rozstrzyga odpowiedź rdzenia, nie nastawa sprawdzianu.
+Bez konta nadawczego bramka wpuszcza hasłem od razu. Z kontem nadawczym bramka jest zamknięta do chwili potwierdzenia adresu — i to jest właściwa droga tej gałęzi, nie usterka. Drogę potwierdzenia niesie list, więc sprawdzian bierze ją z zewnątrz; bez niej mierzy samą odmowę.

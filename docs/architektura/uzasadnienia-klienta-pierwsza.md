@@ -3008,3 +3008,21 @@ wyłącznie `none`, `pause`, `resume`, `cancel` oraz `retry`, a komenda
 Podszycie się pod `pause` albo `retry` po to, żeby przemycić priorytet, przestawiłoby stan
 zlecenia, o który nikt nie prosił. Pole zostaje więc przy `none`, a rozbieżność nazywa wiersz
 odpowiedzi okna składany przez `skutek-sterowania.ts`.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-punktow-dostepu.ts
+
+Serwer MCP jest w kontrakcie pozycją katalogu rozszerzeń, a most, którym się do
+niego dochodzi — punktem dostępu `AccessPoint`. Oba byty łączy pole
+`Extension.accessPointId`, więc okno integracji potrzebuje obu wykazów:
+z pierwszego bierze rodzaj i stan włączenia, z drugiego adres mostu, korzenie
+oraz wynik ostatniego sprawdzenia.
+
+Komenda `access.point.check` jest jedyną drogą kontraktu do testu połączenia
+i do monitora zdrowia: odpowiada, czy punkt odpowiada, jakie korzenie potwierdza
+i co poszło nie tak. Nie jest to sprawdzenie kondycji samego rozszerzenia —
+sprawdzeniu podlega most, a nie usługa stojąca za nim. Korzenie i szczegół
+bywają puste także przy sprawdzeniu udanym, dlatego całą odpowiedź niesie pole
+stanu.
+
+Źródło nie ma własnego stanu ani nie zna okna. Wykazy trzyma `stan-rozszerzen.ts`,
+żeby cztery okna patrzyły na jeden zbiór danych.

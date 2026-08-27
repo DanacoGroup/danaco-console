@@ -1,16 +1,5 @@
-// Obszar adnotacji kompozycji Design Board (tabela
-// `adnotacja_kompozycji_design`, migracja 234) — część `RepozytoriumDesignu`
-// zadeklarowanego w `design.go`.
-//
-// Adnotacja przeżywa zapis układu warstw. Pole `warstwa_kompozycji_design.adnotacja`
-// jedzie razem z całym układem i wraca przepisane od nowa przy każdym
-// `design.board.update`, więc uwaga zostawiona przez jedną osobę znikałaby przy
-// pierwszym przesunięciu warstwy przez drugą — powód rozdziału stoi w nagłówku
-// migracji 234.
-//
-// Wątek powstaje przez `nadrzedna_id`; porządek odczytu jest chronologiczny
-// (rosnąco po kluczu), bo wątek czyta się w kolejności powstawania, a nie od
-// najświeższego.
+// Plik prowadzi obszar adnotacji kompozycji Design Board, część RepozytoriumDesignu; adnotacja przeżywa zapis układu
+// warstw, bo pole adnotacji jedzie osobno od układu; wątek powstaje przez pole nadrzędnej, a porządek odczytu jest chronologiczny.
 package dane
 
 import (
@@ -20,10 +9,7 @@ import (
 	"fmt"
 )
 
-// AdnotacjaDesignu to wiersz tabeli `adnotacja_kompozycji_design`. WarstwaID
-// i NadrzednaID są identyfikatorami zewnętrznymi, nie kluczami wierszy —
-// warstwa bywa już usunięta z kompozycji, a odpowiedź w wątku zakłada się
-// w jednym przebiegu okna z adnotacją nadrzędną.
+// AdnotacjaDesignu to wiersz tabeli `adnotacja_kompozycji_design`; WarstwaID i NadrzednaID są identyfikatorami zewnętrznymi, nie kluczami wierszy.
 type AdnotacjaDesignu struct {
 	ID           int64
 	Kod          string
@@ -61,12 +47,7 @@ const (
 		  ORDER BY id`
 )
 
-// ZapiszAdnotacjeDesignu zakłada adnotację albo nadpisuje zastaną po
-// identyfikatorze zewnętrznym i oddaje stan po zapisie.
-//
-// Autor nie wchodzi w nadpisanie: adnotację zakłada jedna osoba, a zmiana
-// treści przez drugą nie czyni jej autorką cudzej uwagi. Kolumna `autor`
-// zapisuje się więc wyłącznie przy założeniu.
+// ZapiszAdnotacjeDesignu zakłada adnotację albo nadpisuje zastaną po identyfikatorze zewnętrznym; autor zapisuje się wyłącznie przy założeniu.
 func (r *repozytoriumDesignu) ZapiszAdnotacjeDesignu(ctx context.Context,
 	adnotacja AdnotacjaDesignu) (AdnotacjaDesignu, error) {
 
@@ -148,7 +129,7 @@ func (r *repozytoriumDesignu) AdnotacjeKompozycjiDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajAdnotacjeDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajAdnotacjeDesignu składa strukturę adnotacji wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajAdnotacjeDesignu(wiersz skaner) (AdnotacjaDesignu, error) {
 	var adnotacja AdnotacjaDesignu
 	var warstwaID, nadrzednaID, autor sql.NullString

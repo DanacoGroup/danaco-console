@@ -4588,3 +4588,60 @@ metodami, bo zmiana priorytetu nie pociąga za sobą zmiany stanu.
 ZakonczZlecenie ustawia stan końcowy i wynik jednym zapisem, żeby okno monitorujące zlecenia
 nie zobaczyło przez chwilę stanu bez pasującego wyniku ani wyniku bez stanu — oba pola
 pochodzą z jednego zdarzenia, zakończenia tury modelu.
+
+## budowa/server/internal/narzedzia/wpiecie.go
+Okno wchodzi argumentem uruchomienia, nie zmienną środowiska, jak już stosuje
+most mcp-danaco-pulpit-console: to, co rozstrzyga zasięg jednego wpisu, idzie
+argumentem, a to, co dzielą wszystkie wpisy, idzie środowiskiem. Cztery
+powody: wpis powstaje osobno dla każdego okna, a proces modelu jest jeden na
+okno, więc argument należy do wpisu i różni się wpis po wpisie, podczas gdy
+zmienna środowiska należy do procesu i tej rozdzielczości nie ma; zmienną
+środowiska dziedziczy każdy proces potomny modelu, a argument nie wychodzi
+poza to jedno uruchomienie, i identyfikator okna jako uchwyt do sterowania
+platformą nie ma powodu wędrować dalej; argument widać w samej konfiguracji
+MCP, więc czytając ten plik wiadomo, którego okna dotyczy, a wpis bez
+argumentu byłby dla wszystkich okien identyczny; argument pominięty widać od
+razu w wierszu uruchomienia, podczas gdy zmienna pusta jest nieodróżnialna od
+nieustawionej. Adres rdzenia idzie drogą przeciwną, środowiskiem, bo jest
+wspólny dla całej instalacji i czyta go ten sam pakiet konfiguracji co
+w rdzeniu.
+
+Okno puste w Wpis daje fałsz: serwer narzędzi bez okna nie miałby zasięgu,
+więc zamiast wpisu bez zasięgu lepiej wpisu nie dokładać wcale, a rozmowa
+toczy się wtedy bez sterowania platformą, nie z narzędziami mierzącymi
+w nikąd. Powód odmowy jest zwracany, bo ścieżkę binarium oddaje się dopiero
+po sprawdzeniu, że plik istnieje: gdy pakiet serwera złożono bez serwera
+narzędzi, wpis wskazywałby plik, którego nie ma, a narzędzia sterowania
+platformą nie działałyby bez śladu; odmowa musi być powiedziana wprost, bo
+brak wpisu i wpis martwy wyglądają dla operatora tak samo, a naprawa jest
+inna.
+
+sciezkaProgramu szuka binarium obok binarium, które właśnie pracuje, bo
+rdzeń i serwer narzędzi wychodzą z jednego budowania i jadą w jednym pakiecie
+instalacyjnym, więc stoją w tym samym katalogu. Gdy obok go nie ma, albo gdy
+miejsca bieżącego procesu nie da się ustalić, zostaje ścieżka wyszukiwania
+systemu, droga uruchomienia z procesu stojącego w katalogu tymczasowym.
+Dopiero gdy zawiodą obie drogi, funkcja zwraca błąd zamiast ścieżki: ścieżka
+zmyślona jest gorsza od braku wpisu, bo o braku wpisu da się powiedzieć.
+
+brakBinarium jest osobnym typem, a nie samym napisem, żeby wywołujący mógł
+ten jeden przypadek odróżnić od pozostałych odmów: to jedyna odmowa, która
+znaczy, że produkt zbudowano lub spakowano niekompletnie, a nie że dane okno
+nie ma zasięgu. Droga wskazana w komunikacie błędu jest jedyną, którą serwer
+narzędzi w produkcie powstaje: instalacja Operatora nie niesie ani rdzenia,
+ani serwera narzędzi, więc oba stoją wyłącznie w pakiecie serwera.
+
+## budowa/server/internal/dane/kopiowanie_sesji.go
+Kopiowanie idzie po wierszach bazy, nie po rejestrze żywym: kopia ma być
+wiernym odbiciem zapisu, a rejestr żywy niesie wyłącznie sesje otwarte.
+Sesja sprzed restartu ma dać się skopiować tak samo jak ta z bieżącej pracy.
+
+Odwzorowanie okien źródłowych na docelowe podaje wywołujący — to on nadaje
+nowym oknom identyfikatory rdzenia i zna ich wiersze. Warstwa danych nie
+zakłada okien sama, bo cykl życia okna należy do pakietu sesji.
+
+Wiadomość kopiowana traci powiązanie z oknem źródłowym: w kopii nie ma bytu,
+na który mogłoby wskazywać, a wskazanie na okno oryginału byłoby więzią
+między dwiema niezależnymi sesjami. Funkcja zwraca liczbę skopiowanych
+wiadomości — jedyną miarę, po którą sięga wywołujący; struktura wyniku
+byłaby typem bez odbiorcy.

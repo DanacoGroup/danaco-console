@@ -1,8 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — KOD POTWIERDZAJĄCY
-
-   Sześć pól po jednym znaku, odliczanie ważności i czynność poboczna. Pola
-   zaczynają PUSTE: okno pokazuje odsłonę przed wpisaniem, a nie udaje, że
+/* Kod potwierdzający składa się z sześciu pól po jednym znaku, odliczania ważności kodu oraz czynności pobocznej, a pola startują puste przed wpisaniem znaków.
+   Okno pokazuje w ten sposób odsłonę przed wpisaniem, a nie udaje, że
    użytkownik zdążył już coś wpisać.
 
    Każdy zestaw rządzi się sam — mechanika wiąże pola grupami, więc kursor nie

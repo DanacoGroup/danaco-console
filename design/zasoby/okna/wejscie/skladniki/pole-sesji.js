@@ -1,9 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — ZGODA NA TRWAŁĄ SESJĘ
-
-   Pole wyboru z opisem skutku. Opis mówi, co ta zgoda daje i kiedy jej nie
-   zaznaczać — samo „pozostań zalogowany" nie niesie ani jednego, ani drugiego.
-   ============================================================================ */
+/* Zgoda na trwałą sesję jest polem wyboru z opisem skutku, który mówi, co ta zgoda daje i kiedy operator nie powinien jej zaznaczać podczas logowania. */
 (function () {
 'use strict';
 var W = window.DanacoWejscie;

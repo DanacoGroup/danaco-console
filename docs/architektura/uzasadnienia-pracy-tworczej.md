@@ -4320,3 +4320,45 @@ zasobu jest odpowiedzią (removed: false), a nie odmową.
 
 Semantyka podmiany etykiet, nie dokładania, jest zapisana w kontrakcie.
 Odpowiedź niesie etykiety odczytane z bazy, nie echo żądania.
+
+## budowa/server/internal/poczta/smtp.go
+
+Pakiet niczego nie pyta o zgodę: wysyła, gdy dostanie polecenie, i zostawia
+ślad w dwóch miejscach, bo każde odpowiada na inne pytanie: kopia
+w folderze Sent skrzynki Operatora odpowiada na pytanie, co wyszło z jego
+skrzynki (widzi ją w swoim kliencie poczty, obok listów wysłanych
+własnoręcznie); wiersz list_wyslany w bazie rdzenia odpowiada na pytanie,
+co wysłała platforma i czy się udało (zapisuje go adapter rdzenia
+adapter_modul_poczta_wysylka.go, także dla wysyłki nieudanej).
+
+List leżący w wysłanych, który nigdy nie wyszedł, byłby dowodem czynności,
+której nie było. Odwrotnie — nieudane odłożenie kopii po udanym nadaniu
+nie unieważnia nadania i nie jest odmową komendy: listu i tak nie da się
+cofnąć, więc odpowiedź musi mówić, że wyszedł.
+
+SMTP jedzie biblioteką standardową, tym samym powodem, co odbiór IMAP-em.
+
+Identyfikator wysyłki jest jedyną wartością, po której da się ten list
+rozpoznać u odbiorcy i w folderze wysłanych.
+
+Kopia w wysłanych nosi znacznik Seen, bo listu, który Operator sam
+wysłał, nie czyta się jako nowego.
+
+Uwierzytelnienie SMTP jest warunkowe. Serwer wysyłkowy dostawcy zawsze go
+żąda, ale serwer stojący na tej samej maszynie (albo przekaźnik w sieci
+Operatora) często nie ogłasza AUTH wcale. Wpychanie mu wtedy poświadczenia
+kończy się odmową serwera przy komendzie, która bez AUTH przeszłaby.
+
+Adres net.JoinHostPort, a nie sklejenie z dwukropkiem: adres IPv6 sam
+niesie dwukropki, więc "::1:587" byłoby adresem, którego nie da się
+rozebrać.
+
+STARTTLS wymuszany na serwerze, który go nie ma, zerwałby rozmowę zamiast
+zabezpieczyć ją mocniej.
+
+Po domknięciu strumienia serwer bierze list na siebie — od tej chwili nie
+da się go cofnąć.
+
+PLAIN posyła hasło wprost i biblioteka standardowa dopuszcza go wyłącznie
+po TLS-ie (albo na pętli zwrotnej). Dzięki kolejności CRAM-MD5 przed
+PLAIN hasło Operatora nie wyjdzie nieszyfrowanym łączem.

@@ -2905,3 +2905,11 @@ wchodziłyby dalej.
 Zestaw pól baza w strukturze Zestaw obsługuje repozytoria składane na żądanie
 poza konstruktorem Otworz (Rozszerzenia, NarzedziaSesji), które potrzebują
 bezpośredniego połączenia do własnych transakcji.
+
+## studio_postac_obiekty.go
+
+Aparat dokumentu i pola stoją w jednym pliku, nie osobno, ponieważ pracuje
+się nimi tą samą drogą: oba są przypięte do miejsca w treści, oba bywają
+nieświeże i oba odświeża się wykazem, nie po jednym wierszu. Rozdział na
+osobne pliki byłby rozdziałem na papierze — kod odczytu i zapisu byłby ten
+sam dwa razy. Nazwy pomocnicze tego pliku niosą przedrostek postac.

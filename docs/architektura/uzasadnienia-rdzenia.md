@@ -323,3 +323,45 @@ Odmowa rachunku wkompilowanego w `policzWkompilowanym` — kadr poza obrazem,
 operacja spoza wyliczenia — wraca wprost i kończy czynność: droga zapasowa nie
 ma jej czym naprawić, a jej uruchomienie zamieniłoby odmowę czytelną na odmowę
 programu.
+
+## budowa/server/internal/core/postac_skutek_stylu_test.go
+
+Ten plik mierzy skutek trzech wymagań odbioru, których nie mierzył żaden inny
+plik: zmiana stylu nazwanego przestawia wszystkie miejsca, które go używają;
+zastosowanie postaci do fragmentu zmienia wyłącznie ten fragment, bez
+rozlania się na akapit sąsiedni; a czynność wywołana jako narzędzie modelu
+odkłada zmianę śledzoną autora `model`, a nie autora `uzytkownik`, bo bez
+tego przełącznik pokazujący wszystko, co zrobił model, nie ma czego
+podświetlić.
+
+Miara nie idzie z odpowiedzi czynności, bo odpowiedź pisze ten sam kod, który
+zmieniał dokument, i potwierdzałaby samą siebie. Idzie dwiema drogami
+niezależnymi: drugim połączeniem do pliku bazy własnym zapytaniem SQL,
+z pytaniem „czy to naprawdę leży w bazie”, oraz osobnym wywołaniem komendy
+odczytu, z pytaniem „czy Operator, który otworzy dokument ponownie, zobaczy
+to samo”. Wszystkie czynności idą przez rejestr, a nie po adapterze, bo
+narzędzie modelu jedzie dokładnie tą drogą — pomiar autora `model` mierzy
+wtedy drogę, którą naprawdę pojedzie model.
+
+## budowa/server/internal/core/skutek_zasobu_designu_test.go
+
+Wzorzec szkody, którego pilnuje ten plik, wydarzył się już w tym produkcie:
+`design.asset.generate` meldował `status: ok` z wykazem zasobów rodzaju
+`image`, za którymi nie było ani jednego bajtu. Koperta była poprawna, kontrakt
+spełniony, a panel zasobów dostawał kafelki bez treści. Z tego powodu żaden
+sprawdzian tego pliku nie kończy się na sprawdzeniu, że odpowiedź jest udana:
+każdy schodzi po odwołaniu `asset.uri` do magazynu i pyta plik, ile ma bajtów
+i czy są tymi bajtami, które wjechały.
+
+Kanał obrazowy jest w tych sprawdzianach prawdziwym kanałem rdzenia, nie
+zaślepką: wiersz rejestru rodzaju `api` z parametrem `adapter: obrazy`,
+wskazujący adres serwera podniesionego na czas sprawdzianu w tym samym
+procesie. Droga mierzona jest dzięki temu tą samą drogą, którą przechodzi
+wywołanie operatora — żądanie HTTP, odpowiedź kształtu OpenAI Images, fragment
+`image`, magazyn, wiersz — bez żadnego programu spoza maszyny.
+
+Rodzaj zasobu spoza siedmiu wartości kontraktu odbijał się dotąd od warunku
+CHECK schematu bazy i wracał kodem `internal_error` z `retryable: true`,
+cytując w treści warunek bazy wraz z nazwą kolumny. Żądanie takie nie mogło
+się udać przy żadnym ponowieniu, więc klient z pętlą ponowień powtarzał je bez
+końca, a operator dostawał zdanie o kolumnie zamiast o swoim żądaniu.

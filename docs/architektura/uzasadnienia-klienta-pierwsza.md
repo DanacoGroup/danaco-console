@@ -4976,3 +4976,9 @@ wraz z nazwą i wykazem warstw; liczba warstw, która wróciła, jest jedyną mi
 tego, ile ich leży w rdzeniu. Przy nadaniu etykiet zestaw zastępuje poprzedni,
 więc różnica wobec zestawu zamówionego znaczy, że zapis nie jest tym, o który
 proszono, i musi być odmową, a nie milczeniem.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-obsady.ts
+
+Panel obsady odpowiada za scenę; czym rola jest nadawana i skąd bierze się zdanie o skutku, rozstrzyga moduł nadania ról, który woła komendę nadania roli oraz komendę zmiany wcielenia. Okno powstaje na wzór okna istniejącego: założenie okna wymaga kanału modelu, katalogów roboczych, zasięgu wykonania i trybu uprawnień, więc klient bierze te pola z okna, które w sesji już stoi. Sesja bez ani jednego okna nie daje wzorca i panel mówi to wprost, zamiast wysyłać żądanie skazane na odmowę. Panel ma własne miejsce stanu treści i nie oddaje meldunków wywołaniu zwrotnemu sceny, ponieważ inaczej odmowy rdzenia przepadałyby w ciszy.
+
+Wykaz okien obcych wychodzi nieosadzony: jest jedną z sekcji panelu, a o tym, gdzie sekcja stoi i czy jest zwinięta, rozstrzyga układ z rdzenia. Osadzenie go na sztywno byłoby drugą prawdą o kolejności.

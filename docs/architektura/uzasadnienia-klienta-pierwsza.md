@@ -2383,3 +2383,12 @@ Brak jest tu brakiem po stronie kontraktu i wyłącznie o kontrakcie zdanie mów
 
 Treść czynności podaje okno wywołujące, ponieważ to okno zna przeznaczenie danej
 pozycji inwentarza kontrolek.
+
+## budowa/klient-poprzedni/src/aod/pola-wykazu.ts
+
+Cztery sekcje okna — stan, podpowiedzi, obecność i kontekst — wypisują pola tym
+samym wykazem `dl`. Wspólne miejsce trzyma pętlę `dt`/`dd` w jednym egzemplarzu,
+dzięki czemu zmiana układu pola obowiązuje we wszystkich sekcjach naraz.
+
+Plik nie zna barw ani odstępów. Nadaje wyłącznie klasy z przedrostkiem `ao-`,
+a ich wygląd pokrywa `aod.css` żetonami `--dn-*`.

@@ -264,7 +264,7 @@ export function utworzOknoPetliWykonawczej(
     stan.ustawOdmowePrzebiegu(null);
     const bilans = wynik.wynik.balance;
     if (bilans !== undefined && bilans.skippedCount > 0) {
-      // Pominięcia przebiegu pokazujemy nad kolejką, bo dotyczą przebiegu w całości, nie jednego zadania.
+      // Pominięcia przebiegu pokazywane są nad kolejką, bo dotyczą przebiegu w całości, nie jednego zadania.
       okno.stan.blad(zdanieOPominieciach(bilans.note, bilans.skippedCount));
     } else {
       okno.stan.gotowe();

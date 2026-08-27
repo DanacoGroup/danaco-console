@@ -1,18 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — POLE WYBORU Z OPISEM
-   ----------------------------------------------------------------------------
-   Pole wyboru i zdanie mówiące, co się stanie po jego zaznaczeniu. Opis nie
-   tłumaczy, czym jest pole wyboru — mówi o skutku. Kontrolka i jej opis są
-   jedną grupą: dzieli je odstęp mniejszy niż do następnej grupy.
-
-   Właściwości:
-     etykieta   klucz katalogu — treść przy kontrolce
-     opis       klucz katalogu — zdanie o skutku (opcjonalne)
-     id         identyfikator opisu, wiązany przez `aria-describedby`
-     zaznaczone true | false
-     dane       atrybuty `data-*` na kontrolce
-     stan       'nieczynne' | null
-   ============================================================================ */
+/* Pole wyboru z opisem łączy kontrolkę wyboru ze zdaniem mówiącym o skutku jej zaznaczenia, nie o tym, czym jest pole wyboru, a oba elementy tworzą jedną grupę wizualną. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

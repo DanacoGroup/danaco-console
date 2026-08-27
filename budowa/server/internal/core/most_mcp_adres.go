@@ -16,6 +16,7 @@ type AdresPolaczeniaMostu struct {
 	Port       string
 	Klucz      string
 }
+
 // AdresMostu wyprowadza adres połączenia z punktu dostępu. Pierwszeństwo ma pole endpoint, bo
 // tylko ono niesie konto i port; pole host uzupełnia nazwę maszyny, gdy endpoint jej nie podał.
 func AdresMostu(punkt shared.AccessPoint) AdresPolaczeniaMostu {

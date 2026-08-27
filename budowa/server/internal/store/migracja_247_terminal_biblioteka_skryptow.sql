@@ -1,18 +1,5 @@
--- Migracja 247 — biblioteka skryptów i snippetów modułu Terminal
--- (okno Script Library).
---
--- Dlaczego wersje mają własną tabelę, a nie kolumnę `wersja` na pozycji.
--- Kontrakt komendy `terminal.script.save` mówi wprost: zapis zakłada KOLEJNĄ
--- WERSJĘ, a numer nadaje rdzeń. Pozycja z jedną kolumną treści traciłaby
--- poprzednie brzmienie przy każdym zapisie, a skrypt uruchamiany na maszynach
--- Operatora jest dokładnie tym rodzajem treści, do której trzeba móc wrócić po
--- nieudanej poprawce. Tabela pozycji niesie więc treść BIEŻĄCĄ (żeby wykaz
--- czytał się jednym zapytaniem), a tabela wersji — pełny ślad.
---
--- `alias` jest skrótem przywołującym snippet z palety poleceń, więc musi być
--- jednoznaczny w obrębie biblioteki. Warunek UNIQUE stoi na wyrażeniu, nie na
--- kolumnie wprost: aliasu nie ma większość pozycji, a NULL w SQLite nie zderza
--- się z NULL, więc wiele pozycji bez aliasu współistnieje bez przeszkody.
+-- Migracja 247 zakłada tabele biblioteki skryptów i migawek modułu Terminal
+-- wraz z pełną historią wersji treści, przechowywaną odrębnie od pozycji bieżącej.
 
 CREATE TABLE terminal_skrypt (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,9 +26,7 @@ CREATE INDEX idx_terminal_skrypt_rodzaj ON terminal_skrypt(rodzaj, nazwa);
 CREATE UNIQUE INDEX idx_terminal_skrypt_alias ON terminal_skrypt(alias)
     WHERE alias IS NOT NULL AND alias <> '';
 
--- Wersje pozycji. Kasowanie kaskadowe jest z zamysłu: `terminal.script.remove`
--- usuwa pozycję WRAZ ZE WSZYSTKIMI JEJ WERSJAMI, a wersja bez pozycji nie ma
--- nazwy ani powłoki i nie da się jej pokazać.
+-- Usunięcie pozycji biblioteki kasuje kaskadowo wszystkie jej wersje, ponieważ wersja bez pozycji nie ma nazwy ani powłoki.
 CREATE TABLE terminal_skrypt_wersja (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     skrypt_kod  TEXT    NOT NULL REFERENCES terminal_skrypt(kod) ON DELETE CASCADE,

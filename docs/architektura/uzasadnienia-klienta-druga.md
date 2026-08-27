@@ -4853,3 +4853,19 @@ wiąże, zanim zwiąże, i że powtórzone przypisanie nie udaje czynności, kt�
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-mikrofonu.ts
 Komponent ma dwa uchwyty w jednym pudełku: przycisk nagrywania i uchwyt drzewa. Nagrywanie jest czynnością, a wybór mikrofonu nastawą; gest przytrzymania zajmuje naciśnięcie przycisku, a uchwyt menu otwiera się kliknięciem — jeden przycisk pełniący obie role zaczynałby nagranie przy każdym otwarciu wykazu. Drzewo ma dwa poziomy: gałąź „Mikrofon” niesie wykaz urządzeń, a przełącznik „Przytrzymaj, aby nagrać” stoi poziom wyżej, bo dotyczy gestu, nie sprzętu. Mikrofonu bez silnika nie stawia się wcale — sprawdzenie dostępności jest pytaniem zadanym zanim cokolwiek powstanie, stąd obietnica w wyniku i wartość pusta zamiast steru; wyszarzona ikona albo ikona odmawiająca po naciśnięciu obiecywałaby zdolność, której nie ma, a krótszy pasek niczego nie obiecuje.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-argument-map.ts
+Okno pokazuje strukturę zapisu debaty i nie udaje grafu argumentów. Graf jest dziś w kontrakcie
+wykonalny: wypowiedź niesie pole odpowiedzi na inną wypowiedź oraz typ aktu mowy, a węzły
+i krawędzie oddaje komenda wykazu argumentów. Niezbudowana jest obsługa — rdzeń pól relacji jeszcze
+nie wypełnia, a to okno komendy grafu nie wywołuje. Do tego czasu okno liczy chronologię i zbieżność
+leksykalną wypowiedzi, mierzy pokrycie pól relacji i mówi wprost, czego brakuje: obsługi, nie
+kontraktu. Nazwy widoków mówią, co liczą, żeby „macierz zbieżności" nie czytała się jako macierz
+zgodności stanowisk. Wyliczenia siedzą w pliku struktury argumentów; tutaj zostaje wywołanie,
+rysowanie i eksport. Subskrypcji strumienia okno nie zakłada — jedna na całe złożenie stoi
+w indeksie modułu, a przyrost przychodzi wywołaniem odświeżenia głosów. Okno nie wywołuje dziś ani
+jednej komendy obszaru: wszystko, co pokazuje, pochodzi ze stanu debaty wspólnego oknom modułu.
+
+Pozycje bez obsługi stoją widoczne, bo okno bez nich wyglądałoby na analizę kompletną. Każda
+nazywa po naciśnięciu komendę, która ją wykona, gdy powstanie jej obsługa — nie mówi już, że
+kontrakt jej nie przewiduje, bo przewiduje.

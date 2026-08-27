@@ -22,25 +22,8 @@ import {
 } from './struktura-argumentow';
 
 /**
- * Argument Map & Analysis — okno monitora otwierane jako rozszerzenie boczne.
- *
- * Okno pokazuje strukturę zapisu debaty i nie udaje grafu argumentów. Graf jest
- * dziś w kontrakcie wykonalny: `RoundtableStatement` niesie `replyToId`
- * i `speechAct`, a węzły i krawędzie oddaje `roundtable.argument.list`.
- * Niezbudowana jest obsługa — rdzeń pól relacji jeszcze nie wypełnia, a to okno
- * komendy grafu nie wywołuje. Do tego czasu okno liczy chronologię i zbieżność
- * leksykalną wypowiedzi, mierzy pokrycie pól relacji i mówi wprost, czego
- * brakuje: obsługi, nie kontraktu.
- *
- * Nazwy widoków mówią, co liczą, żeby „macierz zbieżności” nie czytała się jako
- * macierz zgodności stanowisk.
- *
- * Wyliczenia siedzą w `struktura-argumentow.ts`; tutaj zostaje wywołanie,
- * rysowanie i eksport. Subskrypcji strumienia okno nie zakłada — jedna na całe
- * złożenie stoi w `indeks.ts`, a przyrost przychodzi wywołaniem `odswiezGlosy`.
- *
- * Okno nie wywołuje dziś ani jednej komendy obszaru: wszystko, co pokazuje,
- * pochodzi ze stanu debaty wspólnego oknom modułu.
+ * Argument Map & Analysis — okno monitora otwierane jako rozszerzenie boczne, liczące
+ * chronologię i zbieżność wypowiedzi, nie graf argumentów.
  */
 export interface OknoArgumentMap {
   element: HTMLElement;
@@ -51,7 +34,7 @@ export interface OknoArgumentMap {
   zamknij(): void;
 }
 
-/** Widok analizy wybierany przełącznikiem warstwy drugiej. */
+/** Widok analizy wybierany przełącznikiem warstwy drugiej: struktura chronologiczna, zbieżność leksykalna albo macierz par mówców. */
 type WidokAnalizy = 'struktura' | 'zbieznosc' | 'macierz';
 
 const OPISY_WIDOKU: ReadonlyArray<readonly [string, string]> = [
@@ -74,9 +57,7 @@ export function utworzOknoArgumentMap(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Czynności analityczne wołają komendy obszaru wprost: analizę zapisu, graf,
-  // oznaczenie argumentu kluczowego, rejestr dowodów i wskaźniki zgody. Rodzaj
-  // analizy i format wydania biorą się z przełączników okna.
+  // Czynności analityczne wołają komendy obszaru wprost; rodzaj analizy bierze się z przełączników okna.
   const powierzchnia = zlozPowierzchnieAnalizy(
     rama,
     tresc.element,
@@ -140,7 +121,7 @@ export function utworzOknoArgumentMap(
   return { element: rama.element, odswiez: rysuj, odswiezGlosy, zamknij: odsubskrybuj };
 }
 
-/** Opis tury bieżącej dla nagłówka i eksportu. */
+/** Opis tury bieżącej dla nagłówka analizy i eksportu, złożony z numeru, stanu i zagadnienia tury zapisanej w kontrakcie. */
 function opisTury(stan: StanDebaty): string {
   const definicja = stan.definicjaTury();
   if (definicja === null) return 'tury nieznanej temu oknu';
@@ -148,7 +129,7 @@ function opisTury(stan: StanDebaty): string {
   return `tury #${definicja.index} (${definicja.status})${temat}`;
 }
 
-/** Nagłówek: czego dotyczy analiza i czego kontrakt do niej nie daje. */
+/** Nagłówek analizy: liczba wypowiedzi, mówców i znaków tury bieżącej, wraz ze zdaniem o polach relacji, których kontrakt nie wypełnia. */
 function naglowekStruktury(stan: StanDebaty, struktura: StrukturaDebaty): HTMLElement {
   const blok = document.createElement('div');
   blok.className = 'dr-analiza__naglowek';
@@ -168,7 +149,7 @@ function naglowekStruktury(stan: StanDebaty, struktura: StrukturaDebaty): HTMLEl
   return blok;
 }
 
-/** Widok chronologiczny — węzeł na wypowiedź, w kolejności przyjścia. */
+/** Widok chronologiczny — węzeł na wypowiedź, w kolejności przyjścia, z kolejnością, mówcą, chwilą i długością treści. */
 function widokStruktury(struktura: StrukturaDebaty): HTMLElement {
   const lista = document.createElement('ul');
   lista.className = 'dr-wezly';
@@ -196,7 +177,7 @@ function widokStruktury(struktura: StrukturaDebaty): HTMLElement {
   return lista;
 }
 
-/** Widok zbieżności — zdania powtórzone u kilku mówców i zdania własne. */
+/** Widok zbieżności — zdania powtórzone dosłownie u kilku mówców, po sprowadzeniu do jednej postaci leksykalnej, oraz zdania własne. */
 function widokZbieznosci(struktura: StrukturaDebaty): HTMLElement {
   const blok = document.createElement('div');
   blok.className = 'dr-analiza__blok';
@@ -236,7 +217,7 @@ function widokZbieznosci(struktura: StrukturaDebaty): HTMLElement {
   return blok;
 }
 
-/** Ile zdań każdy mówca powiedział wyłącznie sam. */
+/** Ile zdań każdy mówca powiedział wyłącznie sam, licząc tylko zdania, które przeszły próg długości porównania. */
 function wykazWlasnych(struktura: StrukturaDebaty): HTMLElement {
   const lista = document.createElement('ul');
   lista.className = 'dr-wezly';
@@ -263,7 +244,7 @@ function wykazWlasnych(struktura: StrukturaDebaty): HTMLElement {
   return lista;
 }
 
-/** Widok macierzy — pary mówców i liczba zdań wspólnych. */
+/** Widok macierzy — pary mówców i liczba zdań wspólnych między nimi, licząc wyłącznie zdania powtórzone dosłownie. */
 function widokMacierzy(struktura: StrukturaDebaty): HTMLElement {
   const lista = document.createElement('ul');
   lista.className = 'dr-wezly';
@@ -291,18 +272,15 @@ function widokMacierzy(struktura: StrukturaDebaty): HTMLElement {
   return lista;
 }
 
-/** Kontrolki okna. */
+/** Kontrolki okna: przełącznik widoku analizy oraz przycisk eksportu struktury tury bieżącej do dokumentu Markdown. */
 interface PowierzchniaAnalizy {
   widok: HTMLSelectElement;
   eksport: HTMLButtonElement;
 }
 
 /**
- * Pasek akcji okna: jeden eksport wykonalny i cztery pozycje bez obsługi.
- *
- * Pozycje bez obsługi stoją widoczne, bo okno bez nich wyglądałoby na analizę
- * kompletną. Każda nazywa po naciśnięciu komendę, która ją wykona, gdy powstanie
- * jej obsługa — nie mówi już, że kontrakt jej nie przewiduje, bo przewiduje.
+ * Pasek akcji okna: jeden eksport wykonalny i cztery pozycje bez obsługi, każda nazywająca
+ * komendę, która ją wykona po zbudowaniu.
  */
 function zlozAkcjeAnalizy(gospodarz: HTMLElement): HTMLButtonElement {
   const eksport = przycisk('Eksportuj strukturę', 'dn-btn dn-btn--atrament');
@@ -340,12 +318,12 @@ function zlozAkcjeAnalizy(gospodarz: HTMLElement): HTMLButtonElement {
   return eksport;
 }
 
-/** Zestaw akcji warstwy trzeciej — operacje analityczne jeszcze niezbudowane. */
+/** Zestaw akcji warstwy trzeciej — operacje analityczne jeszcze niezbudowane, wypisane obok eksportu wykonalnego. */
 function zlozZestawAnalizy(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Operacje analityczne okna', czynnosci);
 }
 
-/** Składa przełącznik widoku, pasek akcji, warstwy i ciało ramy. */
+/** Składa przełącznik widoku, pasek akcji, warstwy analizy oraz ciało ramy okna z gotowymi kontrolkami sterowania. */
 function zlozPowierzchnieAnalizy(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,

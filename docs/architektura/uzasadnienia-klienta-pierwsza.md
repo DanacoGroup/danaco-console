@@ -2662,3 +2662,14 @@ powtórne otwarcie ponawia odczyt zamiast budować okno od nowa.
 Kanał podaje się przy pierwszym otwarciu. Wywołanie z innym kanałem, czyli po
 ponownym połączeniu z rdzeniem, rozłącza okno dotychczasowe i buduje je na nowo,
 żeby przyszłe komendy `mobile.*` nie szły przez transport, którego już nie ma.
+
+## budowa/klient-poprzedni/src/konfiguracja/adres-ustawienia.ts
+
+Ten sam kształt adresu służy dwóm rolom, dlatego mieszka w jednym module.
+Pierwszą rolą jest punkt widzenia, czyli miejsce, z którego oglądana jest
+konfiguracja i względem którego liczone jest dziedziczenie. Drugą rolą jest
+adres zapisu, czyli miejsce, w którym komenda `config.set` zapisze wartość.
+
+Byt pusty znaczy poziom bez bytu: na osi poziomów jest to poziom globalny, a na
+osi rozstrzygania — platforma. Dzięki temu adres nie potrzebuje osobnego
+znacznika nieobecności bytu.

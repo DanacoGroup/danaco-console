@@ -1609,3 +1609,20 @@ Kwestie napisów są trwałe, zapisane w osobnej tabeli, ponieważ sprawdzenie
 taktowania napisów i złożenie scenariusza dubbingu nie miałyby czego mierzyć
 bez zapisanego przebiegu: taktowanie jest własnością materiału, a nie tekstu
 panelu, więc musi przeżyć poza pojedynczym wywołaniem eksportu.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_wymiana_zewnetrzna.go
+
+Plik obsługuje `translate.handoff.build`, `.receive`,
+`translate.bridge.source.receive`, `translate.bridge.result.send`,
+`translate.artifact.publish` i `translate.step.list`. Pakiet przekazania
+niesie dokładnie te zawartości, o które prosi żądanie: XLIFF z jednostkami,
+TMX z pamięcią, TBX z terminologią i plik instrukcji.
+
+`artifact.publish` odkłada wytwór do magazynu treści rdzenia i zakłada wiersz
+pliku biblioteki. Jest to jedyna droga, którą wytwór Translate staje się
+widoczny dla reszty platformy — bez wiersza plik leżałby na dysku bez jednego
+bytu, który by o nim wiedział.
+
+Wykaz kroków `translate.step.list` stoi w kodzie, a nie w bazie, bo opisuje
+zdolności rdzenia, nie dane Operatora: krok istnieje dokładnie wtedy, gdy
+istnieje obsługująca go komenda, i znika razem z nią. Nazwy komend biorą się
+ze stałych kontraktu, więc wykaz nie ma jak rozjechać się z rejestrem.

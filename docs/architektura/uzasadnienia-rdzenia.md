@@ -2399,3 +2399,35 @@ TestWersjaZnacznikNieWymazujeTresciBiezacej pilnuje wersji bez treści,
 kamienia milowego zakładanego na tym, co w pliku jest. Wersja pusta
 zabrałaby plikowi odwołanie do treści przy przywróceniu, więc oznaczenie
 kamienia niszczyłoby zasób, który miało utrwalić.
+
+## adapter_narzedzia_sesji.go
+
+Wykaz pozycji po ukośniku nie jest osobną tabelą, lecz składa się na bieżąco
+z dwóch źródeł. Komendy kontraktu tworzą pozycje rodzaju `action`: komenda
+wykonuje czynność aplikacji i zestawu narzędzi modelu nie zmienia, a jej opis
+pochodzi z deklaracji narzędzi modelu, gdzie jest polem obowiązkowym. Katalog
+rozszerzeń tworzy pozycje rodzaju `tool`: powołanie narzędzia albo skilla,
+jedyne pozycje poszerzające zestaw modelu na czas sesji. Osobnego katalogu
+akcji nie ma, bo każdy jego wiersz wskazywałby komendę już obecną w wykazie
+z pierwszego źródła i dublowałby pozycję pod inną nazwą modułową.
+
+Zdejmowanie dołożenia oddaje w drugiej wartości pozycje faktycznie zdjęte,
+nazwane pełną nazwą. Zdarzenie zdjęcia narzędzia musi nazwać pozycję pełną
+nazwą, ponieważ odpowiedź kontraktu niesie wyłącznie zestaw po czynności
+i sama nie pozwala odczytać, co zniknęło; żądanie mogło przy tym przyjść
+nazwą skróconą.
+
+Metoda oddająca same nazwy dołożeń sesji dla składania zestawu narzędzi tury
+modelu jest osobna od wykazu dla operatora, ponieważ tamten oddaje pozycje
+w pełnym kształcie, a ta oddaje wskazanie dla procesu modelu. Nazwą jest
+nazwa pełna z przedrostkiem źródła, ponieważ to ona jest tożsamością
+dołożenia rozpoznawaną po drugiej stronie składania zestawu tury. Straż
+odbiornika zerowego w tej metodzie chroni przed zatrzymaniem całego procesu
+rdzenia w gorutynie tury, gdyby adapter trafił do składacza zestawu przez
+interfejs z zerowym wskaźnikiem schowanym wewnątrz — takie porównanie
+u wołającego przechodzi niezauważone.
+
+Przedrostek źródła pozycji rozszerzenia pochodzi z kodu, gdy kod go niesie
+w jednym napisie ze źródłem i nazwą skróconą; w pozostałych wypadkach
+przedrostek bierze się z pochodzenia pozycji, aby żadna pozycja wykazu nie
+została bez źródła.

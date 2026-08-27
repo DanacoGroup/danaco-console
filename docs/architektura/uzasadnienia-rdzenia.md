@@ -4749,3 +4749,20 @@ jakości). Zapis pierwotny jest wtedy właściwą odpowiedzią.
 Program, który zakończył się powodzeniem i nie zostawił pliku krótszego, nie
 miał czego skrócić. Oddanie jego wyniku mimo to powiększyłoby zasób w imię
 jego zmniejszenia.
+
+## budowa/server/internal/core/adapter_doradcy_konsultacja.go
+Adapter doradcy wykonuje konsultację tą samą drogą, którą przechodzi każdy inny wołacz kanału; ten plik zawiera wyłącznie to, co należy do komendy: odczyt okna, złożenie pytania z danych okna, strumień jawności i przełożenie wyniku na kontrakt.
+
+Jawność nie działa jak bufor: ujście konsultacji jest nadawcą strumienia, więc fragmenty trafiają kopertami stream.chunk do okna pytającego, tą samą drogą, którą płynie odpowiedź agenta, debata Roundtable i wyjście terminala. Bez tego stanowisko widziałoby wyłącznie skrót rady w zdarzeniu advisor.consulted, a pytanie, doradca i rada nie stałyby w jednym oknie.
+
+Kim jest pytający, rozstrzyga okno, a nie żądanie: model podaje wyłącznie sprawę, kontekst i prośbę o doradcę, więc pole pytającego nie da się podać samym żądaniem.
+
+Okno zamknięte nie konsultuje, ponieważ w oknie zamkniętym nie pracuje agent, a zdarzenie konsultacji rozgłaszałoby pracę okna, które stanęło. Sprawdzenie jest tym samym, które wykonują pozostałe moduły oknowe. Kod odpowiedzi mówi prawdę o powodzie: stan zasobu, nie brak kanału, i nie jest ponawialny, bo okno samo się nie otworzy.
+
+Identyfikator strumienia jest tożsamością jednej konsultacji: wchodzi do koperty jako identyfikator żądania i do fragmentów jako identyfikator wiadomości, więc klient wie, że fragmenty należą do jednego wywołania.
+
+Wartości doboru w kontrakcie są dwie, ale wskazanie Operatora nie ma jeszcze w produkcie danych źródłowych: pole kanału modelu okna mówi, którym modelem pracuje okno, nie kogo Operator wyznaczył na doradcę. Podstawienie jednego pod drugie ogłaszałoby wskazanie Operatora przy każdej konsultacji bez prośby.
+
+Pole niosące identyfikator strumienia zasila identyfikator wiadomości wszystkich fragmentów kanału; bez niego fragmenty rady jechałyby do okna bez wskazania, do czego należą.
+
+Ujście konsultacji zbiera cały tekst, łącznie z blokiem jawności doklejanym przy konsultacji, ponieważ fragment domykający ma być tym, co Operator widzi w oknie po konsultacji, czyli radą wraz z podpisem, kto jej udzielił.

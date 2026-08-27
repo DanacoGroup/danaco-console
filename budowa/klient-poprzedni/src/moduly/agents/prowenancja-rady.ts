@@ -8,7 +8,6 @@
 import { MessageStatus } from '../../../../shared/contract';
 import type { RadaDoradcy } from './zrodlo-doradcy';
 
-
 /**
  * Jedna pozycja wykazu konsultacji: rada doradcy wraz ze zdaniem nagłówkowym
  * o tym, kto pytał i kogo, oraz ze zdaniem o drodze żądania przez rdzeń.

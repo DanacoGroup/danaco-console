@@ -5276,3 +5276,41 @@ Prompt wpisany spoza tego połączenia idzie przez pole wypowiedzi, żeby było
 widać, skąd się wziął, zamiast wejść do wątku jako zastany fakt. Wpis modelu
 wchodzi do wątku równocześnie i bez zwłoki, bo odwrócenie kolejności
 postawiłoby odpowiedź przed pytaniem, na które odpowiada.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszary.ts
+Podział na obszary idzie za maszynerią rdzenia, która rozstrzyga punkt izolacji na dwóch
+prostopadłych osiach: oś rozstrzygania — konto, model, platforma — dla czego wartość obowiązuje;
+poziom zasięgu — okno, rola, sesja, projekt, para modułów, moduł, środowisko, globalny — jak wąsko
+wartość obowiązuje. Poziom rozstrzyga pierwszy, oś dopiero w jego ramach. Na te dwie osie nakłada się
+przedmiot izolacji — jedenaście kluczy w dwóch grupach: kontekst, trzy klucze, wartość odrębna albo
+współdzielona, domyślnie odrębna: historia wymiany, pamięć długoterminowa, bieżący stan roboczy —
+pliki, projekt, załączniki, zmienne; zakres techniczny, osiem kluczy, wartość włączony albo
+wyłączony, domyślnie wyłączony — stan wyjściowy platformy to pełna swoboda operacyjna: katalog
+roboczy sesji, środowisko procesu, katalog danych modelu, dostęp sieciowy, odczyt i zapis plików,
+konto i token, model procesu, serwer wykonania. Egzekutor po stronie rdzenia bierze wartość włączoną
+i odrzuca wykonanie, które by ją naruszyło; wartość wyłączona niczego nie ogranicza. Polityka
+efektywna składa te ustawienia w jeden rozstrzygnięty podgląd na dany kontekst: dla każdego klucza
+wynik i poziom, z którego pochodzi. Osobnym pojęciem maszynerii jest profil: nazwany zestaw trzech
+przełączników kontekstu i ośmiu zakresów technicznych, niezależny od przypisania — ten sam profil
+bywa przypisany kilku sesjom, rolom, projektom i oknom. Stąd sześć obszarów tego okna, rozłożonych na
+trzy panele: panel selektora zasięgu, lewy — poziom zasięgu, na którym reguła obowiązuje, oraz oś
+rozstrzygania w ramach poziomu; panel macierzy izolacji, środkowy — trzy punkty izolacji kontekstu
+oraz osiem punktów izolacji zakresu technicznego; panel profilu i podglądu, prawy — nazwane zestawy
+jedenastu punktów z zapisem, wczytaniem, przypisaniem do poziomu i usunięciem, oraz podgląd polityki
+efektywnej z rozstrzygnięciem i pochodzeniem każdego z jedenastu punktów dla wybranego kontekstu.
+Kontrakt wpięcia: każdy plik obszaru eksportuje dokładnie jedną funkcję wytwórczą i nic więcej
+publicznego poza własnymi typami pomocniczymi. Kontrakt obszaru i zależności obszaru są zdefiniowane
+tutaj — obszar ich nie definiuje ponownie. Rama okna montuje element każdego obszaru w jego panelu
+i woła odświeżenie przy otwarciu okna oraz po każdej zmianie zasięgu, warstwy i po zdarzeniu rdzenia;
+zamknięcie przy demontażu okna, jeśli obszar go zwrócił. Wszystkie dwanaście komend izolacji stoją
+w kontrakcie współdzielonym, a rdzeń ma je zarejestrowane. Obszary wołają je naprawdę; stan „rdzeń
+nie niesie" zostaje wyłącznie tam, gdzie czynności brakuje w kontrakcie — dziś jest to zapis wartości
+na wskazanej osi rozstrzygania.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/etykiety-paneli.ts
+Plik stoi osobno od etykiet układu, bo tamten plik mówi o scenie — liczbie
+okien, rolach i pasie relacji — a panele należą do rozmowy, nie do sceny.
+Stoją tu wyłącznie napisy oprawy: nazwy i przeznaczenia paneli przychodzą
+ze spisu okien pomocniczych. Konwencja jest wspólna z etykietami układu —
+stałe wersalikowe dla napisów stałych, funkcje dla zdań składanych, polska
+odmiana rozpisana przypadkami zamiast doklejania końcówek.

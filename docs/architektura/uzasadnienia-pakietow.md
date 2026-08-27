@@ -5630,3 +5630,11 @@ Sprawdzian ciągłości identyfikatora przechodzi całą turę — żądanie, tr
 fragmenty, domknięcie — i porównuje identyfikatory oraz kolejność numerów.
 ## budowa/server/internal/dane/skroty_tekstowe.go
 Skrót rozwija się we wszystkich polach tekstowych platformy, więc słownik skrótów należy do rdzenia, nie do jednego modułu. Profil pusty znaczy skrót wspólny; zapisuje się pustym napisem, nie wartością pustą bazy, bo warunek jednoznaczności nad kolumną dopuszczającą taką wartość nie pilnowałby niczego.
+
+## budowa/server/internal/dane/biblioteka_kolekcje_pliku.go
+
+UstawKolekcjePliku ma semantykę ustawienia, nie dokładania: stan po zapisie jest wykazem
+z żądania, więc zdejmuje plik z kolekcji pominiętych w wykazie. Kolekcja nieznana w żądaniu
+jest odmową całości: wykaz z kodem, którego nie ma, wskazuje przynależność nieosiągalną,
+a wykonanie reszty zdjęłoby plik z kolekcji zastanych na podstawie żądania zrozumianego
+tylko częściowo.

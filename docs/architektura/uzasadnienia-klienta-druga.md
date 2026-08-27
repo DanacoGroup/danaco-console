@@ -2858,3 +2858,8 @@ pustka znaczy, że moduł jest dostępny wyłącznie ze strony głównej. Gdy rd
 ukryta zamiast stać z nagłówkiem nad pustką: brak odpowiedzi nie jest wykazem pustym. Przejście idzie
 z samym kodem modułu, bez środowiska — moduł w żadnym nie stoi, więc powłoka otwiera go z pominięciem
 macierzy widoczności.
+
+## budowa/klient/src/protokol/powitanie.ts
+Dopiero z odpowiedzi klient dowiaduje się, jaką wersję protokołu zna rdzeń i które komendy ta wersja rdzenia obsługuje. Rozstrzygnięcie, co zrobić z rozjazdem wersji, należy do warstwy wyższej — protokół oddaje odpowiedź w kształcie kontraktu.
+Wersja protokołu w żądaniu pochodzi ze stałej kontraktu, nie z literału: klient przedstawia się tą wersją, z którą został zbudowany.
+Token wiąże połączenie z sesją bramki. Jego brak nie jest błędem — rdzeń odpowiada wtedy brakiem uwierzytelnienia. Token dostarcza wołający, bo magazyn sesji bramki nie należy do warstwy protokołu.

@@ -1,16 +1,8 @@
 import { liczba, listaTekstow, obiekt, tekst } from './odczyt-fragmentu';
 
 /**
- * Prowenancja wywołania — odpowiedź na pytanie „co poszło do modelu".
- *
- * Rdzeń nadaje ją pierwszym fragmentem strumienia, przed jakąkolwiek treścią
- * odpowiedzi, także wtedy, gdy proces kanału w ogóle nie wystartuje
- * (server/internal/injection/przebieg.go). Kształt odpowiada strukturze
- * `injection.Prowenancja`; nazwy pól po stronie sieci są angielskie, po stronie
- * modułu polskie.
- *
- * Prowenancja jest wyłącznie opisem wywołania — niczego nie dopuszcza ani nie
- * wstrzymuje.
+ * Prowenancja wywołania odpowiada na pytanie, co dokładnie poszło do modelu, i niczego nie
+ * dopuszcza ani nie wstrzymuje.
  */
 export interface Prowenancja {
   /** Plik wykonywalny kanału. */
@@ -56,11 +48,7 @@ export interface Prowenancja {
   /** Chwila złożenia prowenancji, zapis ISO 8601. */
   chwila: string;
 
-  // ── Pola dodatkowe kanałów sieciowych/echo ─────────────────────────────
-  // Serwer emituje je tylko dla kanałów bez procesu (api/echo); dla kanału
-  // głównego CLI są nieobecne i zostają puste. Pokazujemy je wyłącznie, gdy
-  // niosą wartość (models/prowenancja.go, znaczniki `,omitempty`).
-  /** Kod kanału z rejestru, który wykonuje wywołanie. */
+  /** Kod kanału z rejestru, który wykonuje wywołanie; puste dla kanałów bez sieci. */
   kanal: string;
   /** Klucz adaptera obsługującego kanał (echo, cli, api, …). */
   adapter: string;
@@ -107,7 +95,10 @@ export function odczytajProwenancje(dane: unknown): Prowenancja | null {
   };
 }
 
-/** Wiersz wywołania w postaci jednej linii — do nagłówka bloku prowenancji. */
+/**
+ * Wiersz wywołania zapisany w postaci jednej linii tekstu, wykorzystywany w nagłówku bloku
+ * prowenancji.
+ */
 export function wierszWywolania(p: Prowenancja): string {
   return [p.program, ...p.argv].filter((czesc) => czesc.length > 0).join(' ');
 }

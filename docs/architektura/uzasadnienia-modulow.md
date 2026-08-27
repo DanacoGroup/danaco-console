@@ -1179,3 +1179,32 @@ Transliteracja znaków diakrytycznych rozkłada literę kanonicznie, zdejmuje
 znak łączący i składa z powrotem: „ą" staje się „a", a „ł" zostaje, bo nie
 jest literą ze znakiem łączącym — zamianę liter osobnych jak „ł" na „l"
 rdzeń robi osobno, wprost.
+
+## budowa/server/internal/core/adapter_modul_extension.go
+
+Rozszerzenie jest pozycją katalogu platformy, którą ekspert dopiero bierze,
+nie mostem MCP i nie konektorem eksperta. Most mieszka w punkcie dostępu,
+z którego rdzeń składa listę serwerów MCP procesu modelu; pozycja rodzaju MCP
+wskazuje most polem odwołania i tyle, drugiego rejestru serwerów MCP platforma
+nie ma. Konektor eksperta należy do jednego eksperta, katalog stoi poziom
+wyżej i do eksperta nie należy. Katalog jest więc warstwą nad tymi tabelami,
+a nie ich kopią: ekspert bierze pozycję zakładając sobie odpowiedni konektor
+albo umiejętność, a ten adapter tych tabel nie dotyka.
+
+Instalacja zakłada pozycję w katalogu platformy i znaczy ją jako
+zainstalowaną, nic więcej: nie sięga do sieci, nie pobiera paczki, nie
+rozpakowuje archiwum, nie uruchamia procesu i nie zakłada punktu dostępu.
+Szersze znaczenie zmieniłoby klasę bezpieczeństwa całego produktu, z programu
+wykonującego wyłącznie własny kod na program wykonujący kod przyniesiony
+z zewnątrz. Napis podany w polu źródła nie jest wyrzucany, ląduje w kolumnie
+źródła zadeklarowanego jako zapis faktu, że taki adres podano; kształt
+kontraktu pola źródła nie ma, więc nie wychodzi w odpowiedzi.
+
+Odinstalowanie zdejmuje znaczniki, nie wiersz: gdyby kasowało pozycję, wykaz
+katalogu nie miałby czego zawężać przełącznikiem instalacji, bo katalog
+zawierałby wtedy wyłącznie pozycje zainstalowane. Odinstalowana pozycja
+zostaje w katalogu ze swoją konfiguracją, a ponowna instalacja tym samym
+kodem ją przywraca. Katalog jest rejestrem i nikt w rdzeniu go jeszcze nie
+czyta: włączenie pozycji rodzaju MCP nie dokłada mostu do procesu modelu, bo
+lista serwerów MCP składa się z punktów dostępu, a drugi pisarz tej listy
+byłby drugą prawdą.

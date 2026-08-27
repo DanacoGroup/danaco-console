@@ -1,25 +1,7 @@
-// Rodzina `extension.*` — Integrations Hub i MCP & Connector Console: transport,
-// poświadczenie, odkrywanie narzędzi, próbne wywołanie, log protokołu,
-// piaskownica, import definicji API, webhooki, odwzorowania, metryki użycia,
-// kondycja i audyt.
-//
-// Obsługiwane komendy: `extension.transport.set`, `extension.credential.bind`,
-// `extension.tool.list`, `extension.tool.call`, `extension.protocol.log.list`,
-// `extension.sandbox.run`, `extension.definition.import`,
-// `extension.webhook.list`, `extension.webhook.save`, `extension.mapping.save`,
-// `extension.usage.get`, `extension.health.check`, `extension.audit.list`.
-//
-// ROZMOWA Z SERWEREM JEST PRAWDZIWA. Odkrywanie narzędzi, próbne wywołanie
-// i sprawdzenie kondycji wołają serwer MCP klientem wkompilowanym w rdzeń
-// (`adapter_modul_extension_protokol.go`) — po transporcie, który Operator
-// wskazał. Każda ramka idzie do dziennika protokołu, a każde wywołanie do
-// dziennika użycia; metryki i audyt liczą się potem z tych wierszy, nie
-// z licznika w pamięci.
-//
-// IMPORT DEFINICJI CZYTA OPIS, NIE ZGADUJE OPERACJI. OpenAPI 3 rozkłada
-// biblioteka `getkin/kin-openapi`, wkompilowana w binarium; schemat GraphQL
-// rozkłada czytnik własny, bo wykaz operacji to w nim wyłącznie pola typów
-// `Query` i `Mutation`. Żadna z dwóch dróg nie woła programu z zewnątrz.
+// Pakiet obsługuje rodzinę komend `extension.*`: transport, poświadczenie,
+// odkrywanie i wywołanie narzędzi MCP, dziennik protokołu, piaskownicę, import
+// definicji API, webhooki, odwzorowania, metryki użycia, kondycję i audyt
+// rozszerzeń.
 package core
 
 import (
@@ -41,7 +23,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// czasPiaskownicyRozszerzenia jest granicą przebiegu próbnego umiejętności.
+// czasPiaskownicyRozszerzenia ogranicza czas trwania pojedynczego przebiegu
+// próbnego umiejętności albo wtyczki uruchamianego komendą piaskownicy
+// rozszerzeń.
 const czasPiaskownicyRozszerzenia = 30 * time.Second
 
 // UstawTransport obsługuje `extension.transport.set`. Pole `probe` włącza
@@ -107,9 +91,7 @@ func (a *adapterRozszerzen) PowiazPoswiadczenie(ctx context.Context,
 	if err != nil {
 		return shared.ExtensionCredentialBindResponse{}, bladRozszerzenia(err)
 	}
-	// Odwołanie wchodzi też do rejestru referencji: Permissions & Trust Center
-	// pyta o nie osobno (`extension.secret.list`), a referencja znana wyłącznie
-	// jednej integracji byłaby niewidoczna dla rejestru rotacji.
+	// Odwołanie wchodzi też do rejestru referencji sekretów rozszerzeń.
 	if _, err := a.rejestr.ZapiszSekretRozszerzenia(ctx, dane.SekretRozszerzenia{
 		Odwolanie: odwolanie, SposobLogowania: &sposob, Zaktualizowano: a.teraz(),
 	}, false); err != nil {
@@ -126,9 +108,8 @@ func (a *adapterRozszerzen) PowiazPoswiadczenie(ctx context.Context,
 		"poświadczenie powiązane sposobem "+sposob)
 
 	odpowiedz := shared.ExtensionCredentialBindResponse{Extension: pozycja}
-	// Adres zgody powstaje wyłącznie dla OAuth2 i wyłącznie wtedy, gdy
-	// integracja ma adres, do którego można pokierować przeglądarkę. Adres
-	// wymyślony byłby odesłaniem Operatora donikąd.
+	// Adres zgody powstaje wyłącznie dla uwierzytelnienia OAuth2 z ustawionym
+	// adresem integracji.
 	if z.AuthKind == shared.ExtensionAuthKindOauth2 && integracja.Adres != nil && *integracja.Adres != "" {
 		adres := strings.TrimSuffix(*integracja.Adres, "/") + "/authorize"
 		if len(z.Scopes) > 0 {
@@ -335,7 +316,9 @@ func tekstWynikuNarzedzia(wynik json.RawMessage) string {
 	return strings.Join(czesci, "\n")
 }
 
-// WypiszLogProtokolu obsługuje `extension.protocol.log.list`.
+// WypiszLogProtokolu obsługuje komendę `extension.protocol.log.list`,
+// zwracając ramki dziennika protokołu rozmowy z serwerem pozycji wraz
+// z licznikiem ogółem.
 func (a *adapterRozszerzen) WypiszLogProtokolu(ctx context.Context,
 	z shared.ExtensionProtocolLogListRequest) (shared.ExtensionProtocolLogListResponse, error) {
 
@@ -370,15 +353,9 @@ func (a *adapterRozszerzen) WypiszLogProtokolu(ctx context.Context,
 	return shared.ExtensionProtocolLogListResponse{Frames: ramki, Total: razem}, nil
 }
 
-// UruchomPiaskownice obsługuje `extension.sandbox.run` — przebieg próbny
+// UruchomPiaskownice obsługuje `extension.sandbox.run`: przebieg próbny
 // umiejętności albo wtyczki na przykładowym wejściu, bez podłączania do
-// eksperta produkcyjnego.
-//
-// PIASKOWNICA URUCHAMIA TO, CO OPERATOR PODŁĄCZYŁ. Pozycja z transportem
-// procesu lokalnego dostaje wejście na standardowe wejście procesu i oddaje
-// jego wyjście; pozycja rozmawiająca protokołem MCP dostaje `tools/call`.
-// Pozycja bez jednego i drugiego nie ma czego uruchomić — i wraca odmową
-// z powodem, a nie wynikiem udającym przebieg.
+// eksperta produkcyjnego, transportem procesu lokalnego albo protokołem MCP.
 func (a *adapterRozszerzen) UruchomPiaskownice(ctx context.Context,
 	z shared.ExtensionSandboxRunRequest) (shared.ExtensionSandboxRunResponse, error) {
 
@@ -412,8 +389,7 @@ func (a *adapterRozszerzen) UruchomPiaskownice(ctx context.Context,
 	switch {
 	case integracja.Polecenie != nil && strings.TrimSpace(*integracja.Polecenie) != "":
 		polecenie := strings.Fields(*integracja.Polecenie)
-		// #nosec G204 — polecenie pochodzi wprost od Operatora, który podłączył
-		// tę pozycję jako rozszerzenie; rdzeń go nie składa z cudzych danych.
+		// #nosec G204 — polecenie pochodzi od integracji podłączonej rdzeniowi.
 		proces := exec.CommandContext(przebieg, polecenie[0], polecenie[1:]...)
 		proces.Stdin = strings.NewReader(string(z.Input))
 		wynik, err := proces.CombinedOutput()
@@ -451,8 +427,8 @@ func (a *adapterRozszerzen) UruchomPiaskownice(ctx context.Context,
 	}
 
 	czas := time.Since(poczatek).Milliseconds()
-	// Log przebiegu ląduje w magazynie treści rdzenia — kontrakt oddaje do niego
-	// odwołanie, więc musi za nim leżeć plik.
+	// Log przebiegu ląduje w magazynie treści rdzenia, do którego kontrakt
+	// oddaje odwołanie.
 	dziennik := "wejście:\n" + string(z.Input) + "\n\nwyjście:\n" + string(wyjscie)
 	if powod != "" {
 		dziennik += "\n\npowód niepowodzenia:\n" + powod
@@ -472,15 +448,16 @@ func (a *adapterRozszerzen) UruchomPiaskownice(ctx context.Context,
 	odpowiedz := shared.ExtensionSandboxRunResponse{
 		Ok: powod == "", LogRef: &odwolanie, DurationMs: int(czas),
 	}
-	// Wyjście wchodzi w pole `output` wyłącznie wtedy, gdy jest JSON-em —
-	// kontrakt ma tam typ `json`, a napis wciśnięty w to pole zepsułby kopertę.
+	// Wyjście wchodzi w pole `output` wyłącznie wtedy, gdy jest poprawnym
+	// JSON-em.
 	if json.Valid(wyjscie) {
 		odpowiedz.Output = json.RawMessage(wyjscie)
 	}
 	return odpowiedz, nil
 }
 
-// wniesLogPiaskownicy kładzie dziennik przebiegu w magazynie treści rdzenia.
+// wniesLogPiaskownicy kładzie dziennik przebiegu piaskownicy w magazynie
+// treści rdzenia i oddaje odwołanie do zapisanego pliku wraz z jego rozmiarem.
 func (a *adapterRozszerzen) wniesLogPiaskownicy(dziennik string) (string, int64, error) {
 	bajty := []byte(dziennik)
 	suma := sumaTresciApp(bajty)
@@ -491,7 +468,9 @@ func (a *adapterRozszerzen) wniesLogPiaskownicy(dziennik string) (string, int64,
 	return odwolanieWytworuApp(sciezka), int64(len(bajty)), nil
 }
 
-// ZaimportujDefinicje obsługuje `extension.definition.import` — patrz czoło pliku.
+// ZaimportujDefinicje obsługuje `extension.definition.import`: rozkłada opis
+// OpenAPI 3 albo schemat GraphQL wskazanej pozycji na wykaz operacji
+// rozszerzenia.
 func (a *adapterRozszerzen) ZaimportujDefinicje(ctx context.Context,
 	z shared.ExtensionDefinitionImportRequest) (shared.ExtensionDefinitionImportResponse, error) {
 
@@ -543,9 +522,8 @@ func (a *adapterRozszerzen) ZaimportujDefinicje(ctx context.Context,
 		return shared.ExtensionDefinitionImportResponse{}, err
 	}
 
-	// Operacje lądują w wykazie narzędzi pozycji — to ten sam wykaz, który
-	// pokazuje inspektor po odkryciu MCP. Konektor zbudowany z opisu API ma się
-	// w nim znaleźć tak samo, bo z punktu widzenia eksperta jest tym samym.
+	// Operacje lądują w tym samym wykazie narzędzi pozycji, który wypełnia
+	// odkrywanie MCP.
 	wiersze := make([]dane.NarzedzieRozszerzenia, 0, len(operacje))
 	for _, operacja := range operacje {
 		wiersze = append(wiersze, dane.NarzedzieRozszerzenia{
@@ -569,7 +547,8 @@ func (a *adapterRozszerzen) ZaimportujDefinicje(ctx context.Context,
 	return shared.ExtensionDefinitionImportResponse{Extension: pozycja, Operations: operacje}, nil
 }
 
-// trescDefinicjiRozszerzenia bierze opis z żądania albo pobiera go spod adresu.
+// trescDefinicjiRozszerzenia bierze treść opisu wprost z żądania albo pobiera
+// ją spod adresu wskazanego w żądaniu importu definicji rozszerzenia.
 func (a *adapterRozszerzen) trescDefinicjiRozszerzenia(ctx context.Context,
 	z shared.ExtensionDefinitionImportRequest) ([]byte, string, error) {
 
@@ -604,7 +583,8 @@ func (a *adapterRozszerzen) trescDefinicjiRozszerzenia(ctx context.Context,
 	return tresc, adres, nil
 }
 
-// zalozAlboOdswiezPozycje zakłada pozycję katalogu albo odświeża zastaną.
+// zalozAlboOdswiezPozycje zakłada nową pozycję katalogu rozszerzeń dla
+// podanego kodu albo odświeża nazwę i konfigurację pozycji już zastanej.
 func (a *adapterRozszerzen) zalozAlboOdswiezPozycje(ctx context.Context,
 	kod, nazwa, konfiguracja string, teraz int64) (dane.Rozszerzenie, error) {
 
@@ -636,7 +616,9 @@ func (a *adapterRozszerzen) zalozAlboOdswiezPozycje(ctx context.Context,
 	return zalozona, nil
 }
 
-// operacjeZOpenapi rozkłada opis OpenAPI 3 na wykaz operacji.
+// operacjeZOpenapi rozkłada opis OpenAPI 3, wczytany biblioteką
+// `getkin/kin-openapi`, na uporządkowany wykaz operacji dostępnych jako
+// narzędzia.
 func operacjeZOpenapi(tresc []byte) ([]shared.ExtensionToolEntry, string, error) {
 	czytnik := openapi3.NewLoader()
 	czytnik.IsExternalRefsAllowed = false
@@ -729,10 +711,12 @@ func schematWejsciaOperacji(operacja *openapi3.Operation) json.RawMessage {
 	return schemat
 }
 
-// wzorzecPolaGraphql wyłuskuje pola typów `Query` i `Mutation` schematu GraphQL.
+// wzorzecPolaGraphql wyłuskuje ze schematu GraphQL pojedyncze pola typów
+// `Query` i `Mutation` wraz z ich opisem zwracanym po dwukropku.
 var wzorzecPolaGraphql = regexp.MustCompile(`(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(\([^)]*\))?\s*:\s*([^\n#]+)`)
 
-// wzorzecTypuGraphql wyłuskuje bloki typów operacji.
+// wzorzecTypuGraphql wyłuskuje ze schematu GraphQL bloki treści typów
+// operacji `Query` i `Mutation`, ograniczone parą nawiasów klamrowych.
 var wzorzecTypuGraphql = regexp.MustCompile(`(?s)\btype\s+(Query|Mutation)\s*\{(.*?)\n\}`)
 
 // operacjeZGraphql rozkłada schemat GraphQL na wykaz operacji. Operacją jest
@@ -762,7 +746,8 @@ func operacjeZGraphql(tresc []byte) ([]shared.ExtensionToolEntry, string, error)
 	return operacje, "", nil
 }
 
-// WypiszWebhooki obsługuje `extension.webhook.list`.
+// WypiszWebhooki obsługuje komendę `extension.webhook.list`, zwracając wykaz
+// webhooków rozszerzeń filtrowany kodem pozycji i kierunkiem.
 func (a *adapterRozszerzen) WypiszWebhooki(ctx context.Context,
 	z shared.ExtensionWebhookListRequest) (shared.ExtensionWebhookListResponse, error) {
 
@@ -793,7 +778,8 @@ func (a *adapterRozszerzen) WypiszWebhooki(ctx context.Context,
 	return shared.ExtensionWebhookListResponse{Webhooks: webhooki, Total: len(webhooki)}, nil
 }
 
-// ZapiszWebhook obsługuje `extension.webhook.save`.
+// ZapiszWebhook obsługuje komendę `extension.webhook.save`, zakładając nowy
+// webhook rozszerzenia albo zapisując zmianę webhooka zastanego.
 func (a *adapterRozszerzen) ZapiszWebhook(ctx context.Context,
 	z shared.ExtensionWebhookSaveRequest) (shared.ExtensionWebhookSaveResponse, error) {
 
@@ -823,9 +809,8 @@ func (a *adapterRozszerzen) ZapiszWebhook(ctx context.Context,
 	if z.Enabled != nil {
 		czynny = *z.Enabled
 	}
-	// Adres nasłuchu webhooka przychodzącego składa rdzeń, nie Operator: to on
-	// wie, pod jaką ścieżką odbiera zdarzenia, a adres podany z zewnątrz
-	// wskazywałby cudzy serwer.
+	// Adres nasłuchu webhooka przychodzącego składa rdzeń, nie integracja
+	// zewnętrzna.
 	var nasluch *string
 	if z.Direction == shared.ExtensionWebhookDirectionInbound {
 		nasluch = wskaznikNapisuApp("/webhook/" + wiersz.Kod + "/" + kod)
@@ -911,8 +896,8 @@ func zastrzezeniaOdwzorowania(reguly json.RawMessage) []string {
 	return zastrzezenia
 }
 
-// PobierzUzycie obsługuje `extension.usage.get` — metryki liczone z wierszy
-// wywołań (czoło pliku).
+// PobierzUzycie obsługuje komendę `extension.usage.get`: metryki wywołań
+// i niepowodzeń liczone z wierszy dziennika użycia rozszerzeń.
 func (a *adapterRozszerzen) PobierzUzycie(ctx context.Context,
 	z shared.ExtensionUsageGetRequest) (shared.ExtensionUsageGetResponse, error) {
 
@@ -925,8 +910,7 @@ func (a *adapterRozszerzen) PobierzUzycie(ctx context.Context,
 			return shared.ExtensionUsageGetResponse{}, err
 		}
 	}
-	// Okno domyślne to ostatnia doba: metryka bez granic byłaby sumą od
-	// początku świata, a panel pyta o „okno czasu".
+	// Okno domyślne obejmuje ostatnią dobę.
 	do := a.teraz()
 	if z.Until != nil && *z.Until > 0 {
 		do = *z.Until
@@ -957,7 +941,8 @@ func (a *adapterRozszerzen) PobierzUzycie(ctx context.Context,
 	}, nil
 }
 
-// SprawdzKondycje obsługuje `extension.health.check` — patrz czoło pliku.
+// SprawdzKondycje obsługuje komendę `extension.health.check`: powitanie
+// protokołu MCP wskazanej pozycji albo wszystkich pozycji włączonych.
 func (a *adapterRozszerzen) SprawdzKondycje(ctx context.Context,
 	z shared.ExtensionHealthCheckRequest) (shared.ExtensionHealthCheckResponse, error) {
 
@@ -973,9 +958,7 @@ func (a *adapterRozszerzen) SprawdzKondycje(ctx context.Context,
 		}
 		wiersze = append(wiersze, wiersz)
 	} else {
-		// Bez wskazania sprawdzamy pozycje WŁĄCZONE: panel zdrowia mówi
-		// o integracjach czynnych, a pukanie do wyłączonych byłoby ruchem
-		// sieciowym, którego nikt nie zamawiał.
+		// Bez wskazania kodu sprawdzeniu podlegają wyłącznie pozycje włączone.
 		wszystkie, err := a.rejestr.Rozszerzenia(ctx, dane.FiltrRozszerzen{TylkoZainstalowane: true})
 		if err != nil {
 			return shared.ExtensionHealthCheckResponse{}, bladRozszerzenia(err)
@@ -1037,8 +1020,8 @@ func (a *adapterRozszerzen) zmierzKondycjeRozszerzenia(ctx context.Context,
 	wynik.LatencyMs = &czas
 
 	if err != nil {
-		// Serwer stoi, ale wykazu nie oddał — to stan pośredni, nie awaria
-		// i nie zdrowie. Kontrakt ma dla niego osobną wartość.
+		// Serwer odpowiada, lecz wykazu nie oddał — kontrakt ma dla tego stanu
+		// osobną wartość.
 		wynik.Status = shared.ExtensionHealthStatus(shared.ExtensionHealthStatusDegraded)
 		wynik.HandshakeError = wskaznikNapisuApp(err.Error())
 		a.odlozKondycjeRozszerzenia(ctx, wiersz.Identyfikator, wynik)
@@ -1071,7 +1054,8 @@ func (a *adapterRozszerzen) odlozKondycjeRozszerzenia(ctx context.Context, kod s
 	_ = a.rejestr.DopiszKondycjeRozszerzenia(ctx, wiersz)
 }
 
-// odlozRamkiProtokolu zapisuje ramki rozmowy w dzienniku protokołu.
+// odlozRamkiProtokolu zapisuje ramki odbytej rozmowy protokołu MCP
+// w dzienniku protokołu rozszerzenia i czyści bufor ramek rozmowy.
 func (a *adapterRozszerzen) odlozRamkiProtokolu(ctx context.Context, kod string, rozmowa *rozmowaMcp) {
 	if rozmowa == nil {
 		return
@@ -1119,8 +1103,7 @@ func (a *adapterRozszerzen) WypiszAudyt(ctx context.Context,
 		return shared.ExtensionAuditListResponse{}, bladRozszerzenia(err)
 	}
 
-	// Uprawnienia czytamy raz na pozycję, nie raz na wpis: audyt jednej pozycji
-	// ma zwykle setki wywołań i tyle samo odczytów byłoby pracą bez odbiorcy.
+	// Uprawnienia czytamy raz na pozycję rozszerzenia, nie raz na wpis audytu.
 	uprawnieniaPozycji := map[string][]shared.ExtensionPermission{}
 	wpisy := make([]shared.ExtensionAuditEntry, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -1146,7 +1129,8 @@ func (a *adapterRozszerzen) WypiszAudyt(ctx context.Context,
 	return shared.ExtensionAuditListResponse{Entries: wpisy, Total: razem}, nil
 }
 
-// polaczenieRozszerzenia składa opis rozmowy z serwerem pozycji.
+// polaczenieRozszerzenia składa opis połączenia z serwerem pozycji na
+// podstawie zapisanej integracji: transportu, adresu i polecenia.
 func (a *adapterRozszerzen) polaczenieRozszerzenia(ctx context.Context,
 	wiersz dane.Rozszerzenie) (polaczenieMcp, error) {
 
@@ -1170,7 +1154,8 @@ func (a *adapterRozszerzen) polaczenieRozszerzenia(ctx context.Context,
 	}, nil
 }
 
-// webhookKontraktu przekłada wiersz webhooka na kształt kontraktu.
+// webhookKontraktu przekłada wiersz webhooka rozszerzenia z bazy danych na
+// kształt webhooka zwracany kontraktem komunikacji.
 func webhookKontraktu(wiersz dane.WebhookRozszerzenia) shared.ExtensionWebhook {
 	return shared.ExtensionWebhook{
 		Id: wiersz.Kod, ExtensionId: wiersz.RozszerzenieKod,
@@ -1181,7 +1166,8 @@ func webhookKontraktu(wiersz dane.WebhookRozszerzenia) shared.ExtensionWebhook {
 	}
 }
 
-// sprawdzTransportRozszerzenia dopuszcza wyłącznie transporty kontraktu.
+// sprawdzTransportRozszerzenia dopuszcza wyłącznie wartości transportu
+// wymienione w kontrakcie: stdio, sse, http, streamableHttp.
 func sprawdzTransportRozszerzenia(transport shared.McpTransport) error {
 	switch transport {
 	case shared.McpTransportStdio, shared.McpTransportSse,
@@ -1192,7 +1178,8 @@ func sprawdzTransportRozszerzenia(transport shared.McpTransport) error {
 		" — dopuszczalne: stdio, sse, http, streamableHttp")
 }
 
-// sprawdzSposobLogowaniaRozszerzenia dopuszcza wyłącznie sposoby kontraktu.
+// sprawdzSposobLogowaniaRozszerzenia dopuszcza wyłącznie sposoby logowania
+// integracji wymienione w kontrakcie komunikacji.
 func sprawdzSposobLogowaniaRozszerzenia(sposob shared.ExtensionAuthKind) error {
 	switch sposob {
 	case shared.ExtensionAuthKindOauth2, shared.ExtensionAuthKindApiKey,
@@ -1204,7 +1191,8 @@ func sprawdzSposobLogowaniaRozszerzenia(sposob shared.ExtensionAuthKind) error {
 		strconv.Quote(string(sposob)) + " — dopuszczalne: oauth2, apiKey, token, basic, none")
 }
 
-// sprawdzRodzajNarzedziaRozszerzenia dopuszcza wyłącznie rodzaje kontraktu.
+// sprawdzRodzajNarzedziaRozszerzenia dopuszcza wyłącznie rodzaje wpisów
+// wykazu narzędzi wymienione w kontrakcie: narzędzie, zasób, podpowiedź.
 func sprawdzRodzajNarzedziaRozszerzenia(rodzaj shared.ExtensionToolKind) error {
 	switch rodzaj {
 	case shared.ExtensionToolKindTool, shared.ExtensionToolKindResource,
@@ -1215,7 +1203,8 @@ func sprawdzRodzajNarzedziaRozszerzenia(rodzaj shared.ExtensionToolKind) error {
 		" — dopuszczalne: tool, resource, prompt")
 }
 
-// sprawdzKierunekWebhooka dopuszcza wyłącznie kierunki kontraktu.
+// sprawdzKierunekWebhooka dopuszcza wyłącznie kierunki webhooka wymienione
+// w kontrakcie: przychodzący albo wychodzący.
 func sprawdzKierunekWebhooka(kierunek shared.ExtensionWebhookDirection) error {
 	switch kierunek {
 	case shared.ExtensionWebhookDirectionInbound, shared.ExtensionWebhookDirectionOutbound:
@@ -1225,7 +1214,8 @@ func sprawdzKierunekWebhooka(kierunek shared.ExtensionWebhookDirection) error {
 		strconv.Quote(string(kierunek)) + " — dopuszczalne: inbound, outbound")
 }
 
-// sprawdzFormatDefinicjiRozszerzenia dopuszcza wyłącznie formaty kontraktu.
+// sprawdzFormatDefinicjiRozszerzenia dopuszcza wyłącznie formaty definicji
+// wymienione w kontrakcie: OpenAPI 3 albo GraphQL.
 func sprawdzFormatDefinicjiRozszerzenia(format shared.ExtensionDefinitionFormat) error {
 	switch format {
 	case shared.ExtensionDefinitionFormatOpenapi3, shared.ExtensionDefinitionFormatGraphql:

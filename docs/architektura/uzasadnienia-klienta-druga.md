@@ -1551,3 +1551,8 @@ Komendy schowka nie niosą pola autora, więc wpis odłożony przez model i wpis
 operatora są w rdzeniu nierozróżnialne. Odkładając fragment za modelem, okno
 zapisuje pole `sourceWindowId` — jedyne pole pochodzenia, które wpis niesie.
 Rozróżnienie autora wpisu schowka nie wchodzi w zakres kontraktu.
+
+## budowa/klient-poprzedni/src/moduly/workspace/stany-okna.ts
+Przedrostek klas CSS „dw-" jest ustalany lokalnie, bo nośnik stanu treści jest współdzielony
+między modułami, a każdy moduł nadaje własny przedrostek. Stan błędu przenosi kod i komunikat
+z kontraktu, aby okno po niepowodzeniu zapytania nie wyglądało jak okno z pustą, ale poprawną listą.

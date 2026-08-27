@@ -12,23 +12,13 @@ import {
 import type { ZrodloSekcjiPaneli } from './zrodlo-sekcji-paneli';
 
 /**
- * Sekcje panelu okna — wspólny mechanizm zwijania, przestawiania i zdejmowania
- * sekcji dla wszystkich okien operacyjnych. Moduł podaje własne sekcje oraz
- * identyfikator panelu; pętlę „odczytaj układ · zmień · zapisz · przerysuj"
- * niesie ten plik.
- *
- * Układ adresuje parę (okno, panel), więc bez wskazanego okna zmiana zostaje
- * miejscowa i mówi to wprost. Widok przerysowuje się układem oddanym przez
- * rdzeń w polu `sections`, nie układem wysłanym — rozjazd obu jest wtedy
- * widoczny od razu. Zapis, który dałby układ tożsamy z bieżącym, nie idzie.
+ * Sekcje panelu okna — wspólny mechanizm zwijania, przestawiania i zdejmowania sekcji dla wszystkich
+ * okien operacyjnych.
  */
 export interface SekcjePanelu {
   /** Element osadzany w ciele panelu — sekcje wraz z pasem sekcji zdjętych. */
   element: HTMLElement;
-  /**
-   * Wskazanie okna, do którego panel należy. Pusty napis znaczy „okna nie ma
-   * jeszcze" — układ zostaje miejscowy i nie jest utrwalany.
-   */
+  /** Wskazanie okna, do którego panel należy; puste znaczy, że okna nie ma, a układ zostaje miejscowy. */
   ustawOkno(idOkna: string): void;
   /** Ponowny odczyt układu z rdzenia i przerysowanie. */
   odswiez(): void;
@@ -84,12 +74,7 @@ export function utworzSekcjePanelu(opcje: OpcjeSekcjiPanelu): SekcjePanelu {
     );
   }
 
-  /**
-   * Zapis układu zamierzonego i przerysowanie tym, co rdzeń oddał.
-   *
-   * Bez wskazanego okna nie ma czego adresować: zmiana zostaje wyłącznie
-   * w tym widoku, a meldunek nazywa przyczynę.
-   */
+  /** Zapis układu zamierzonego i przerysowanie tym, co rdzeń oddał; bez okna zmiana zostaje w tym widoku. */
   async function zapisz(zamierzony: PanelSection[], czynnosc: string): Promise<void> {
     if (tenSamUklad(zamierzony, uklad)) return;
     if (idOkna === '') {
@@ -111,8 +96,7 @@ export function utworzSekcjePanelu(opcje: OpcjeSekcjiPanelu): SekcjePanelu {
     }
     uklad = scalUklad(wynik.wynik, sekcje);
     narysuj();
-    // Zdanie rozróżnia układ oddany przez rdzeń: tożsamy z zamierzonym znaczy
-    // „zapisane", inny — „przyjęte, ale nie tak".
+    // Zdanie rozróżnia zapis: układ zgodny z zamierzonym to zapisane, inny — przyjęte inaczej.
     meldunek(
       tenSamUklad(uklad, zamierzony)
         ? `Rdzeń zapisał układ sekcji panelu ${panelId} okna ${idOkna} (${czynnosc}).`
@@ -157,7 +141,7 @@ export function utworzSekcjePanelu(opcje: OpcjeSekcjiPanelu): SekcjePanelu {
   };
 }
 
-/** Treść odmowy wraz z kodem kontraktu — ta sama postać co w modułach. */
+/** Treść odmowy wraz z kodem kontraktu, złożona w tej samej postaci co w pozostałych modułach interfejsu. */
 function powodOdmowy(blad?: ErrorInfo): string {
   if (blad === undefined) return 'Rdzeń nie podał przyczyny.';
   return `Powód: ${blad.message} (kod ${blad.code}).`;

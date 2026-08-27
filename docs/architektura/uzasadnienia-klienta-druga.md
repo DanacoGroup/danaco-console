@@ -3969,3 +3969,30 @@ Kody pochodzą z kontraktu i odpowiadają kolumnie kodu środowiska; opisy trzym
 kluczowanym tym typem, więc zmiana kodu w kontrakcie przerywa kompilację klienta zamiast dawać cichą lukę.
 Środowisko o kodzie spoza kontraktu zostaje na ekranie z godłem zastępczym — wykaz kontraktu jest
 informacyjny, nie bramą.
+
+## budowa/klient-poprzedni/src/protokol/uzgodnienie.ts
+Kolejność wynika z kontraktu: powitanie połączenia, założenie sesji, otwarcie okna. Okno jest bytem
+pośrednim między sesją a wiadomością, więc wiadomość można wysłać dopiero po jego otwarciu.
+Niepowodzenie etapu nie blokuje połączenia ani kolejnych prób — dotyczy wyłącznie bieżącego
+wywołania. Uzgodnienie wita rdzeń w chwili nawiązania połączenia, czyli zanim podano hasło, więc
+niesie wtedy token sesji poprzedniej albo żaden. Po wejściu przez bramkę rdzeń musi dowiedzieć się,
+które gniazdo należy teraz do której sesji; inaczej zerowanie hasła rozłączyłoby tego, kto właśnie
+zmienił hasło. Powitanie jest odczytem — nie zakłada ani sesji pracy, ani okna — więc powtórzenie
+niczego nie dubluje. Ciągu dalszego uzgodnienia to wywołanie nie uruchamia; tamten idzie przy
+nawiązaniu połączenia. Pole tożsamości jest tym samym identyfikatorem klienta, którego żądają inne
+wejścia platformy. Widok bierze je stąd, zamiast wołać budowę tożsamości klienta po raz drugi: każde
+wywołanie nadaje identyfikator nowy, a ognisko jest właściwością klienta — drugi identyfikator
+rozdzieliłby ognisko od połączenia, które je zgłosiło. Token dostarcza funkcja, nie wartość, ponieważ
+powitanie idzie przy każdym nawiązaniu połączenia — także po zerwaniu i ponownym połączeniu — a sesja
+bramki może się między nimi zmienić: wejście, wylogowanie, wygaśnięcie. Wartość zamrożona przy
+składaniu warstwy niosłaby stan sprzed uruchomienia i wiązałaby połączenie z sesją, której już nie ma.
+Warstwa protokołu nie zna pochodzenia tokenu: magazyn sesji należy do warstwy uwierzytelnienia, stąd
+wstrzyknięcie od składającego. Brak tokenu nie jest błędem — rdzeń odpowiada brakiem uwierzytelnienia,
+a ekran logowania i tak stoi nad aplikacją.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/panel-pomocniczy.ts
+Tytuł, czynności i stany treści należą do samego panelu, nie do umowy. Plik
+nie zna kodów paneli i niczego nie buduje: mapowanie kodu na wytwórnię stoi
+w pliku wytwórni paneli, a spis opisowy w rejestrze pomocniczych. Umowa nie
+wymaga ramy okna, choć panel wolno w nią ubrać — okno podglądu w tle tak
+robi — a umowa i tak oddaje wyłącznie sam element.

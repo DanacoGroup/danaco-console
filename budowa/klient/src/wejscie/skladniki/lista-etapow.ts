@@ -1,22 +1,16 @@
 /**
- * SKŁADNIK — WYKAZ ETAPÓW.
- *
- * Wykaz kroków ze stanem i miarą po prawej. Znak kroku idzie ZA STANEM: ptaszek
- * dla zrobionego, tętno dla trwającego, krzyżyk dla nieudanego, numer dla
- * czekającego. Znak zostawiony z poprzedniego stanu kłamie — ptaszek przy
- * kroku w toku mówi, że rzecz jest skończona.
- *
- * Jeden składnik obsługuje cztery etapy łączenia i pięć etapów przygotowania:
- * różni je wyłącznie gałąź katalogu, z której biorą się nazwy i miary.
+ * Składnik — wykaz etapów. Wykaz kroków ze stanem i miarą po prawej; znak
+ * kroku idzie za stanem, zależnie od tego, czy krok jest gotowy, w toku,
+ * nieudany, czy czeka.
  */
 
 import { ikony } from '../ikony.ts';
 import { el, tekst, wykaz, zeZnacznika, type DanePodstawienia } from '../narzedzia.ts';
 
-/** Stan jednego kroku wykazu. */
+/** Stan jednego kroku wykazu, rozstrzygający, jaki znak stanie przy tym kroku na całej liście jego etapów. */
 export type StanKroku = 'gotowy' | 'pracuje' | 'blad' | 'oczekuje';
 
-/** Miara stojąca po prawej stronie kroku. */
+/** Miara stojąca po prawej stronie kroku, opisana kluczem katalogu i danymi do podstawienia w jej treść. */
 export interface MiaraKroku {
   /** Klucz miary w gałęzi `miary` katalogu. */
   klucz: string;

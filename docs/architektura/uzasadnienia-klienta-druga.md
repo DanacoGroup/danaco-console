@@ -4007,3 +4007,6 @@ wywołań komend, znający zaznaczenie i wskazania okien — druga taka sama met
 wieloma przepisaniami tego samego wywołania. Sprawdzian kształtu warstwy protokołu zna wyłącznie
 ogólny wynik i o polu nieznanego typu nie wie; bez tego przełożenia odmowa nieznanej komendy
 dochodziłaby do okna jako zwykły błąd i okno nie miałoby czego wypisać.
+
+## budowa/klient/src/wejscie/skladniki/lista-etapow.ts
+Znak zostawiony z poprzedniego stanu kłamie — ptaszek przy kroku w toku mówi, że rzecz jest skończona. Jeden składnik obsługuje cztery etapy łączenia i pięć etapów przygotowania: różni je wyłącznie gałąź katalogu, z której biorą się nazwy i miary.

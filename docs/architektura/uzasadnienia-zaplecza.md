@@ -2948,3 +2948,6 @@ głębokości (`LibraryCollection.parentId`), reguła — kolekcję inteligentn�
 (`LibraryCollection.ruleId`), której zawartość wynika z warunku, a nie
 z ręcznego przypisania. Kolumna reguły nie ma klucza obcego, bo tabela reguł
 powstaje krok dalej (182), a kolejność kroków jest jednokierunkowa.
+
+## budowa/desktop/src-tauri/src/okno.rs
+Interfejs pochodzi wyłącznie z pakietu wkompilowanego w powłokę i z żadnego innego miejsca — to jest cały produkt na urządzeniu Operatora, okno wraz z interfejsem, bez rdzenia. Adresu strony nie ma czego rozstrzygać w czasie pracy: nastawa budowania rozstrzyga go raz, a powłoka nie niesie żadnego adresu zapasowego, w tym adresu serwera rozwojowego.

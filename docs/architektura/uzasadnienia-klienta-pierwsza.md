@@ -5751,3 +5751,30 @@ Edycja nie udaje zmiany: komenda aktualizacji notatki stoi w kontrakcie, ale to 
 Powód, dla którego zapis zakłada notatkę nową zamiast zmieniać zastaną, bierze się z odczytu wykazu komend rdzenia, nie z napisu w module: komenda aktualizacji notatki stoi w kontrakcie, więc od dnia, w którym rdzeń dostanie jej uchwyt, powód ma brzmieć inaczej i zabrzmi bez wchodzenia w ten plik.
 
 Trzy stany obowiązkowe wykazu notatek stosują ten sam zestaw reguł, co w panelu źródeł, bo oba wykazy przychodzą jednym zaciągnięciem. Kolejność pytań: czekanie, odmowa, pustka. Odmowa wykazu jest błędem panelu tylko przy pustym wykazie — z notatkami na ekranie wpisy zostają, a powód idzie zdaniem przy wykazie.
+
+## budowa/klient-poprzedni/src/moduly/automations/okno-orchestrator.ts
+
+Walidacja nie jest bramą — rdzeń zapisuje układ także wtedy, gdy ma cykl,
+i oddaje zastrzeżenia, które okno pokazuje wprost. Zastrzeżenie do układu
+nie jest niepowodzeniem czynności: werdykt o czynności należy do odpowiedzi
+na wywołanie, werdykt o układzie stoi osobno — w ocenie układu i w wykazie
+zastrzeżeń. Pole `criticalPathStepIds` liczy rdzeń, który zna cały układ;
+drugi rachunek w oknie byłby drugą prawdą o tym samym grafie. Układ
+pokazują trzy widoki tej samej treści: kanwa grafu (`graf-krokow.ts`),
+wykaz zależności i model stanów przebiegu (`maszyna-stanow.ts`) — kanwa
+mówi, jak długi jest łańcuch i gdzie tory się rozchodzą, wykaz co z czym
+jest związane i którą zależność usunąć, model co przebiegowi wolno dalej.
+
+Panel zależności stoi w narzędziach kontekstowych, bo zawęża i bada ten
+sam układ, którym gospodaruje panel akcji okna. Panel dopełnień układu
+(bramka dołączenia, grupa kroków, krok wycofujący i spięcie kolejek
+z silnikiem środowiska MultitaskingAI) stoi obok panelu zależności, bo
+gospodaruje tym samym układem — innym jego wymiarem.
+
+Usunięcie zależności komendą `orchestration.dependency.remove` oddaje pole
+`removed` oraz `dependencies` po usunięciu; pełny obraz układu — ocenę
+i ścieżkę krytyczną — odczytuje się po niej ponownym
+`automation.orchestrator.define` bez zmiany, bo komenda usunięcia oddaje
+same zależności. Nazwa pliku eksportu bierze identyfikator automatyki;
+automatyka niewskazana daje nazwę rodzajową, bo plik ma się zapisać mimo
+wszystko.

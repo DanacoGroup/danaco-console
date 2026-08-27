@@ -5396,3 +5396,26 @@ Powiązanie nie jest domyślne, więc sekcja bez wskazanej automatyki opisuje je
 założenia. Brak powiązania nie wyłącza kontrolek pracujących na samej sesji, czyli kolejek
 i monitora; zawęża wyłącznie to, co adresuje pole `workflowId` — zależności i harmonogram —
 ponieważ bez niego żądanie nie ma adresu.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-zaznaczenia.ts
+
+Pasek niesie pięć czynności na zaznaczonym fragmencie strony: wyjaśnienie,
+wyodrębnienie, notatkę, tłumaczenie i pytanie własne. Wyjaśnienie i pytanie idą
+tą samą komendą i różnią się treścią pytania: pierwsze pyta zdaniem stałym,
+drugie tym, co wpisano obok. Tłumaczenie wywołuje czynność strony wspólną
+z paskiem dolnym, więc przekazanie fragmentu do modułu tłumaczącego jest jednym
+wywołaniem, nie dwoma podobnymi. Notatka należy do panelu notatek i pasek
+przenosi do niego wyłącznie fragment.
+
+Pasek nie znika i nie gaśnie: przy pustym zaznaczeniu przyciski zostają
+naciskalne i nazywają, czego brakuje, a znacznik zaznaczenia niesie tę różnicę
+do arkusza stylów i do sprawdzianu.
+
+Wyjaśnienie idzie komendą wysłania wiadomości skierowaną do okna modułu, tego
+samego, którego identyfikator niosą pozostałe komendy obszaru. Osobna komenda
+wyjaśniania nie miałaby w rdzeniu odbiorcy.
+
+Zdanie po wyodrębnieniu bierze się ze skutku dopisania, a nie z samego
+naciśnięcia: fragment już wyodrębniony nie wchodzi do wykazu po raz drugi,
+a zdanie o dopisaniu byłoby wtedy potwierdzeniem czynności, która się nie
+odbyła.

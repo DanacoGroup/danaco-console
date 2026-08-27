@@ -4,24 +4,9 @@ import { skutekPytania } from './skutek-zapisu';
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Pasek pływający zaznaczenia — `[Wyjaśnij] [Wyodrębnij] [Notatka] [Tłumacz]
- * [Zapytaj]`, panel akcji modułu Browser.
- *
- * Jedna odpowiedzialność: pięć czynności wykonywanych na zaznaczonym fragmencie
- * strony.
- *
- * „Wyjaśnij" i „Zapytaj" idą tą samą komendą i różnią się treścią pytania:
- * pierwsze pyta zdaniem stałym, drugie tym, co Operator wpisał obok. „Tłumacz"
- * wywołuje czynność strony wspólną z paskiem dolnym — przekazanie fragmentu
- * do modułu Translate jest jednym wywołaniem, nie dwoma podobnymi.
- *
- * Pasek nie znika i nie gaśnie: przy pustym zaznaczeniu przyciski zostają
- * naciskalne i nazywają, czego brakuje. Znacznik `data-zaznaczenie` niesie tę
- * różnicę do arkusza stylów i do sprawdzianu.
- *
- * „Wyjaśnij" idzie przez `message.send` skierowany do okna modułu — tego
- * samego, którego identyfikator niosą komendy `browser.*`. Osobna komenda
- * `browser.explain` nie miałaby w rdzeniu odbiorcy.
+ * Pasek pływający zaznaczenia modułu Browser: pięć czynności wykonywanych na
+ * zaznaczonym fragmencie strony. Pasek nie znika i nie gaśnie, a przy pustym
+ * zaznaczeniu przyciski zostają naciskalne i nazywają, czego brakuje.
  */
 export interface PasekZaznaczenia {
   element: HTMLElement;
@@ -29,7 +14,11 @@ export interface PasekZaznaczenia {
   odswiez(): void;
 }
 
-/** Czego pasek potrzebuje z zewnątrz: notatka należy do Notes Panel. */
+/**
+ * Ujścia, których pasek potrzebuje z zewnątrz: przeniesienie fragmentu do
+ * formularza notatki, przekazanie go do tłumaczenia oraz zdanie odpowiedzi
+ * pokazywane po każdym naciśnięciu przycisku paska.
+ */
 export interface UjsciaZaznaczenia {
   /** Przenosi fragment do formularza notatki (Notes Panel). */
   naNotatke(fragment: string): void;
@@ -73,10 +62,7 @@ export function utworzPasekZaznaczenia(
     return true;
   }
 
-  /**
-   * Pytanie o zaznaczony fragment. `polecenie` jest zdaniem otwierającym —
-   * stałym przy „Wyjaśnij", wpisanym przez Operatora przy „Zapytaj".
-   */
+  // Pyta o zaznaczony fragment; wskazane polecenie jest zdaniem otwierajacym.
   async function zapytajOFragment(polecenie: string): Promise<void> {
     if (brakZaznaczenia()) return;
     const idOkna = stan.idOkna();
@@ -111,9 +97,7 @@ export function utworzPasekZaznaczenia(
 
   wyodrebnij.addEventListener('click', () => {
     if (brakZaznaczenia()) return;
-    // Zdanie bierze się ze skutku dopisania, nie z naciśnięcia: fragment już
-    // wyodrębniony nie wchodzi do wykazu po raz drugi, a zdanie o dopisaniu
-    // byłoby wtedy potwierdzeniem czynności, która się nie odbyła.
+    // Zdanie bierze sie ze skutku dopisania, a nie z samego nacisniecia.
     const dopisany = stan.zebrane.dopiszWyodrebniony(fragment());
     ujscia.powiedz(
       dopisany

@@ -548,3 +548,25 @@ Wywołanie `showModal` daje nakładkę, umieszczenie na stosie okien i obsługę
 klawisza Escape. W środowisku, które tej metody nie ma, powłoka otwiera okno
 zwykłym ustawieniem stanu otwarcia, ponieważ okno ma się pokazać niezależnie od
 dostępności metody.
+
+## budowa/klient-poprzedni/src/moduly/apps/zrodlo-izolacji-apps.ts
+
+Granica pojęciowa jest tu istotna i okno musi ją nazwać wprost. Komenda
+`isolation.policy.preview` oddaje politykę platformy rozstrzygniętą po ośmiu
+poziomach zasięgu, a nie izolację nadaną pojedynczemu rozszerzeniu. Osiem
+zakresów technicznych — katalog roboczy, środowisko procesu, dostęp sieciowy,
+odczyt i zapis plików, konto i token, model procesu, serwer wykonania oraz
+katalog danych modelu — opisuje warunki, w jakich kod się wykonuje, a w tych
+samych warunkach wykona się kod rozszerzenia. Deklaracji uprawnień rozszerzenia
+kontrakt nie niesie, więc okno mówi o tym wprost, zamiast podstawiać jedno
+za drugie.
+
+Poziom zasięgu źródło bierze najwęższy, jaki moduł zna. Podanie okna modułu każe
+rdzeniowi rozstrzygnąć dziedziczenie aż do niego, więc odpowiedź opisuje
+politykę obowiązującą pracy prowadzonej w tym oknie. Bez okna źródło pyta
+o poziom modułu, a wtedy odpowiedź opisuje warunki wspólne wszystkim jego oknom:
+zdanie pozostaje prawdziwe, tyle że szersze.
+
+Warstwy żądanie nie podaje. Warstwa pominięta znaczy warstwę obowiązującą,
+a wskazanie którejkolwiek innej byłoby cudzym rozstrzygnięciem przebranym
+za odczyt stanu.

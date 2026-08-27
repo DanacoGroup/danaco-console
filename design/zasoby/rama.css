@@ -85,7 +85,7 @@
    10 px rysunku przy grubości kreski jak w Segoe Fluent. Skala 24→16 daje
    kreskę 1,17 px, wyrazistą tak jak systemowe minimalizuj/maksymalizuj/zamknij;
    przy 12 px kreska schodziła do 0,88 px i znak czytał się cienko i drobno. */
-.dn-belka-btn svg { width: 16px; height: 16px; }
+.dn-belka-btn svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
 .dn-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
 .dn-belka-btn:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);

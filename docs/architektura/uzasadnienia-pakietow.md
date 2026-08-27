@@ -5393,3 +5393,29 @@ Rdzeń nie czyta schowka maszyny Operatora i ta warstwa niczego takiego nie udaj
 ZapiszSzablonAutomatyki zapisuje szablon i jego parametry jedną transakcją, bo szablon
 zapisany z parametrami poprzedniej wersji byłby formularzem pytającym o pola, których
 szablon już nie zna.
+
+## budowa/server/internal/podagenci/siec_granica.go
+Przycinanie samego wywołania przepuszcza dwa wywołania po piętnaście, bo
+granica dotyczy stanu całej sieci okna, nie kształtu pojedynczego żądania.
+Miejsce w sieci zajmują wyłącznie podagenci czynni, czyli ci, którzy pracę
+mają przed sobą albo w toku; podagent zakończony, błędny i zatrzymany
+miejsca nie trzyma, inaczej okno zużyłoby piętnaście miejsc raz na całą swoją
+historię.
+
+Żądanie większe niż liczba wolnych miejsc wykonuje się na tylu, ile jest
+wolnych. Odmowa zostaje na jeden przypadek: sieć pełna, gdzie przyciąć można
+wyłącznie do zera, a powołanie zerowe udawałoby wykonanie; odmowa niesie
+wtedy zdanie mówiące, co zrobić — zebrać wyniki albo zatrzymać któregoś.
+
+Orzeczenie stanu końcowego w StanKoncowy jest wspólne dla granicy sieci, kto
+zajmuje miejsce, zbierania wyników, czy komplet gotowy, i domknięcia
+zatrzymania, czy wiersz wciąż kłamie; trzy osobne odpowiedzi rozjechałyby się
+przy pierwszej zmianie słownika stanów.
+
+Wiersze podawane do MiejscaWSieci muszą pochodzić z jednego okna: granica
+jest granicą sieci wykonawcy, nie granicą platformy — liczenie kompletu bazy
+zamknęłoby powołanie u wszystkich, gdy jedno okno zapełni swoją sieć.
+
+Bez repozytorium albo bez kodu okna granica w PrzydzialOkna nie ma czego
+liczyć i oddaje przydział samego wywołania; przydział wyliczony z nieudanego
+odczytu byłby granicą zmyśloną.

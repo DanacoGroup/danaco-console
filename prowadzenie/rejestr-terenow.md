@@ -157,38 +157,42 @@ przeczytaj je, zanim cokolwiek zmienisz.
 4. `gotestsum -- -count=1 ./...` — zero niepowodzeń.
 5. Kontrakt nietknięty.
 
-### powloka-i-wydanie
-
-Powłoka i kanał wydań niosą ślady wariantu natywnego, którego pozycja 8 nie
-przewiduje, oraz odsyłacze do skryptów usuniętych w poprzedniej turze.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/powloka-i-wydanie` z `main` |
-| **Wykaz plików** | `budowa/desktop/`, `budowa/witryna/wydania.json`, `budowa/scripts/` |
-| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `design/`, `prowadzenie/` |
-
-| Rzecz | Stan |
-|---|---|
-| `budowa/witryna/wydania.json:63` | wystawia artefakty natywne **zniesione pozycją 8**: `natywna_x64-setup.exe`, `.deb`, `.AppImage` |
-| `aktualizacja/pobranie.rs:35` | `ADRES_KANALU` **powiela** `kanal.adres` z `wydania.json` bez sprawdzianu wiążącego — przeniesienie kanału rozejdzie wartości bez śladu |
-| `aktualizacja/pobranie.rs:327` | `ADRES_Z_WYKAZU` wskazuje wydanie `.AppImage`, którego nie ma |
-| `scripts/arsenal-serwera.sh:8`, `instalka-hybryda-win-x64.sh:5,87`, `-arm.sh:4,24` | odsyłacze do usuniętego `instalka-windows.sh` |
-
-**Kryteria odbioru.**
-
-1. Kanał wydań wystawia **wyłącznie** postaci przewidziane pozycją 8 — hybryda
-   Windows 11 x64 i ARM64. Wykazane odczytem pliku i wykazem postaci.
-2. Rozjazd między `ADRES_KANALU` a `kanal.adres` **wykrywany maszynowo** —
-   sprawdzian zawodzi po ręcznej zmianie jednej z dwóch wartości. Wykaż to
-   uruchomieniem sprawdzianu po takiej zmianie.
-3. Zero odsyłaczy do plików nieistniejących w `budowa/scripts/` — wykazane
-   przeszukaniem, z sondą dodatnią.
-4. `cargo test` powłoki przechodzi (23 zdane w poprzedniej turze); powłoka buduje
-   się na **oba** cele Windows 11 — wykazane przytoczonym wynikiem obu przebiegów.
-5. Pakiet dalej **nie zawiera rdzenia** — wykazane wykazem zawartości, nie deklaracją.
-
 ## Zgłoszenia oczekujące na teren
+
+### Strona pobierania obiecuje warianty zniesione pozycja 8
+
+Wykaz wydan sprowadzono do dwoch postaci hybrydowych, tresci strony wokol niego
+nie. `budowa/witryna/tresc/strony.mjs:114,116,292,295,339` oraz
+`tresc/pobierz.mjs:331,427,435,445,475` niosa rozdzial o wyborze miedzy hybryda
+a postacia natywna, pakiety Linuksa, instrukcje sumy kontrolnej dla AppImage
+i zdanie o braku instalki natywnej dla Windows. Dane wystawiaja dwie postaci,
+a strona obiecuje szesc.
+
+### Instalka wychodzi bez licencji i instrukcji
+
+Skrypty instalek wymagaly z korzenia czterech dokumentow produktu i pakowaly je
+do zasobow instalki. W korzeniu stoi dzis sam `CLAUDE.md`, wiec krok padal na
+pierwszym pliku i teren `powloka-i-wydanie` go zdjal, zeby skrypty w ogole biegly.
+Skutek: produkt koncowy nie niesie warunkow licencji ani instrukcji. Skrypty
+wydania 1.0 przerywaly budowe przy ich braku, nazywajac to wprost: instalator bez
+licencji i instrukcji nie jest produktem koncowym. Rozstrzygniecie nalezy do
+Wlasciciela.
+
+### Droga aktualizacji dla Linuksa zyje w powloce
+
+`budowa/desktop/src-tauri/src/aktualizacja/droga.rs` niesie wariant AppImage,
+sprawdzenie naglowka ELF i piec sprawdzianow dla platformy, ktorej pozycja 8 nie
+przewiduje. Zostawione swiadomie: usuniecie zmienialo liczbe sprawdzianow, ktora
+kryterium odbioru bralo za odniesienie.
+
+### Katalog pakietu interfejsu ma dwie nazwy w drodze wdrozenia
+
+`server/internal/konfiguracja/katalog_klienta.go` liczy domyslnie na `klient/dist`
+i wprost ostrzega, ze dwie nazwy jednego katalogu wracaja odmowa przy pierwszym
+uruchomieniu. Jednostka systemd w `budowa/packaging/` klade tymczasem sciezke
+`client/dist`. Dziala wylacznie dlatego, ze jednostka podaje ja jawnie.
+Ujednolicenie wymaga terenu obejmujacego `budowa/packaging/`.
+
 
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
@@ -572,6 +576,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `powloka-i-wydanie` | `teren/powloka-i-wydanie` | `13b947b`, `8d99ae4` | weryfikacja Prowadzacego pomiarem: wykaz wydan sprowadzony do dwoch postaci hybrydowych (0 trafien wzorca natywna/AppImage przy 10 kontrolnych); sprawdzian wiazacy adres padl po wprowadzonym rozjezdzie i przeszedl po cofnieciu; 25 sprawdzianow powloki zdanych |
 | `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` wyjątek powitania · `e41dd78` straże drogi bez poczty · `9a8ec0c` brak skanera | weryfikacja Prowadzącego pomiarem: bieg wymuszony `-count=1` 537 s — 2029 sprawdzianów, 1 niezdany wobec 4 zastanych; powitanie niepełne odpowiada wersją protokołu na żywym rdzeniu, `channel.add` z brakiem pola dalej odmawia; kontrakt nietknięty |
 | `prototypy` | `teren/prototypy` | paczki instalatora i drogi wejścia | przyjęte przez Właściciela; weryfikacja Prowadzącego pomiarem: oba okna wczytują się bez błędu konsoli, zero łańcuchów widocznych poza katalogiem treści |
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |

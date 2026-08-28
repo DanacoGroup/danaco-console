@@ -6546,3 +6546,13 @@ platforma.
 Poziom pusty w polu scope wpisu kontraktu nie jest błędem ani stanem
 wyjątkowym; jest informacją, że wartość pochodzi z warstwy definicji, nie
 z zapisanego ustawienia.
+
+## budowa/server/internal/konfig/osie.go
+Klucz rozstrzygania ustawienia jest złożony: klucz, poziom, byt poziomu, oś
+i byt osi. Poziom rozstrzyga pierwszeństwo zawsze przed osią, więc
+ustawienie zapisane per konto na poziomie globalnym nie bije ustawienia
+zapisanego na oknie komunikacji. Zapis na oknie jest aktem najwęższym
+i najbardziej celowym, a oś opisuje adresata wartości, nie jej wagę.
+Odwrotna kolejność oznaczałaby, że wybór konta unieważnia decyzję podjętą
+wprost w oknie, co odbierałoby operatorowi sterowanie zamiast je
+rozszerzać.

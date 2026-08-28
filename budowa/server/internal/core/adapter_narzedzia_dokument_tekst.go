@@ -140,11 +140,12 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 
 	jezyk := jezykRozpoznaniaDokumentu(z.Language)
 	wymuszone := z.ForceOcr != nil && *z.ForceOcr
+	obrobkaWstepna := z.Preprocess != nil && *z.Preprocess
 
 	switch {
 	case obrazyDokumentu[zrodlo.format]:
 		// Obraz ma wyłącznie piksele, więc usedOcr jest tu prawdziwe zawsze i bez wyjątku.
-		tekst, err := a.rozpoznajPismo(ctx, zrodlo.sciezka, jezyk)
+		tekst, err := a.rozpoznajPismo(ctx, zrodlo.sciezka, jezyk, obrobkaWstepna)
 		if err != nil {
 			return shared.DocumentTextExtractResponse{}, err
 		}
@@ -160,7 +161,8 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 		return shared.DocumentTextExtractResponse{Text: tekst, Pages: &strony, UsedOcr: true}, nil
 
 	case zrodlo.format == "pdf":
-		return a.tekstZPdf(ctx, katalogPracy, zrodlo.sciezka, jezyk, odStrony, doStrony, wymuszone)
+		return a.tekstZPdf(ctx, katalogPracy, zrodlo.sciezka, jezyk, odStrony, doStrony,
+			wymuszone, obrobkaWstepna)
 
 	default:
 		if wymuszone {
@@ -238,7 +240,7 @@ func (a *adapterNarzedziDokumentu) tekstTika(ctx context.Context,
 // pisma stosuje dopiero po jej braku albo na wyraźne żądanie Operatora, bo
 // pikselowy odczyt bywa mniej wierny niż zapisane znaki.
 func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, plik, jezyk string,
-	odStrony, doStrony *int, wymuszone bool) (shared.DocumentTextExtractResponse, error) {
+	odStrony, doStrony *int, wymuszone, obrobkaWstepna bool) (shared.DocumentTextExtractResponse, error) {
 
 	warstwa, stron, bladWarstwy := a.warstwaTekstowaPdf(ctx, plik, odStrony, doStrony)
 	if bladWarstwy != nil && !wymuszone {
@@ -251,7 +253,8 @@ func (a *adapterNarzedziDokumentu) tekstZPdf(ctx context.Context, katalogPracy, 
 		}, nil
 	}
 
-	tekst, przetworzone, err := a.rozpoznajPismoWPdf(ctx, katalogPracy, plik, jezyk, odStrony, doStrony)
+	tekst, przetworzone, err := a.rozpoznajPismoWPdf(ctx, katalogPracy, plik, jezyk,
+		odStrony, doStrony, obrobkaWstepna)
 	if err != nil {
 		return shared.DocumentTextExtractResponse{}, err
 	}
@@ -295,7 +298,7 @@ func (a *adapterNarzedziDokumentu) warstwaTekstowaPdf(ctx context.Context, plik 
 // i puszcza każdy przez rozpoznanie pisma; niższa rozdzielczość gubi znaki
 // diakrytyczne polskiego materiału.
 func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katalogPracy, plik,
-	jezyk string, odStrony, doStrony *int) (string, int, error) {
+	jezyk string, odStrony, doStrony *int, obrobkaWstepna bool) (string, int, error) {
 
 	przedrostek := filepath.Join(katalogPracy, "strona")
 	argumenty := append([]string{"-r", "300", "-png"}, zakresDlaPopplera(odStrony, doStrony)...)
@@ -315,7 +318,7 @@ func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katal
 
 	czesci := make([]string, 0, len(obrazy))
 	for _, obraz := range obrazy {
-		tekst, err := a.rozpoznajPismo(ctx, obraz, jezyk)
+		tekst, err := a.rozpoznajPismo(ctx, obraz, jezyk, obrobkaWstepna)
 		if err != nil {
 			return "", 0, err
 		}
@@ -324,16 +327,78 @@ func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katal
 	return strings.Join(czesci, "\n"), len(obrazy), nil
 }
 
-// rozpoznajPismo puszcza jeden obraz przez Tesseracta i oddaje odczytany
-// tekst wprost ze standardowego wyjścia programu, więc na dysku nie zostaje
-// żaden plik poza katalogiem roboczym czynności.
-func (a *adapterNarzedziDokumentu) rozpoznajPismo(ctx context.Context, obraz, jezyk string) (string, error) {
+// rozpoznajPismo puszcza jeden obraz przez Tesseracta, poprzedzone obróbką
+// wstępną unpaperem przy zamówieniu jej polem preprocess, i oddaje odczytany
+// tekst wprost ze standardowego wyjścia programu.
+func (a *adapterNarzedziDokumentu) rozpoznajPismo(ctx context.Context, obraz, jezyk string,
+	obrobkaWstepna bool) (string, error) {
+
+	material, posprzataj, err := a.obrazPoObrobceWstepnej(ctx, obraz, obrobkaWstepna)
+	if err != nil {
+		return "", err
+	}
+	defer posprzataj()
+
 	wyjscie, err := a.wolaj(ctx, narzedzieTesseract,
-		[]string{obraz, "stdout", "-l", jezyk}, granicaRozpoznaniaDokumentu)
+		[]string{material, "stdout", "-l", jezyk}, granicaRozpoznaniaDokumentu)
 	if err != nil {
 		return "", err
 	}
 	return string(wyjscie), nil
+}
+
+// obrazPoObrobceWstepnej oddaje ścieżkę obrazu bez zmiany, gdy żądanie nie
+// zamówiło obróbki wstępnej; przy zamówieniu przepuszcza obraz przez unpapera.
+func (a *adapterNarzedziDokumentu) obrazPoObrobceWstepnej(ctx context.Context, obraz string,
+	obrobkaWstepna bool) (string, func(), error) {
+
+	pusto := func() {}
+	if !obrobkaWstepna {
+		return obraz, pusto, nil
+	}
+	if !zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
+		return "", pusto, odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
+			"żądanie zamówiło obróbkę wstępną obrazu (pole preprocess), a programu "+
+				narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
+				") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+				narzedzieCzyszczeniaSkanu.Pakiet+
+				". Droga, która działa bez niego: wysłać żądanie bez pola preprocess — "+
+				"rozpoznanie pobiegnie na materiale bez obróbki")
+	}
+
+	katalog, err := os.MkdirTemp("", "danaco-dokument-obrobka-")
+	if err != nil {
+		return "", pusto, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"nie można założyć katalogu roboczego obróbki wstępnej: "+err.Error())
+	}
+	posprzataj := func() { _ = os.RemoveAll(katalog) }
+
+	wejscie, err := materialWPnm(obraz, katalog)
+	if err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	wyjscie := filepath.Join(katalog, "oczyszczony.ppm")
+	if _, err := a.wolaj(ctx, narzedzieCzyszczeniaSkanu,
+		argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie), granicaRozpoznaniaDokumentu); err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	// unpaper potrafi skończyć się powodzeniem i nie zostawić pliku wyniku.
+	if opis, err := os.Stat(wyjscie); err != nil || opis.Size() == 0 {
+		posprzataj()
+		return "", pusto, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"unpaper zakończył pracę, ale obrazu po obróbce nie ma pod "+wyjscie+
+				" — materiał do rozpoznania nie powstał")
+	}
+	return wyjscie, posprzataj, nil
+}
+
+// argumentyObrobkiWstepnejDokumentu składa wiersz wywołania unpapera dla pola
+// preprocess: prostowanie, odszumianie i przycinanie marginesów włączone,
+// filtr czerni wyłączony jawnie — tak samo jak w drodze Studia.
+func argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie string) []string {
+	return []string{"--layout", "single", "--no-blackfilter", wejscie, wyjscie}
 }
 
 // jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do nazwy języka

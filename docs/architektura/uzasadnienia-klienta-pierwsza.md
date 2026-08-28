@@ -8039,3 +8039,20 @@ Rodzina `mobile.*` jest już wpięta i to zostało zmierzone, nie założone: `m
 Ekran, któremu odmówiono ról, dalej pokazuje kolejki — odmowa jednej komendy nie unieważnia pozostałych.
 
 Bieg naprawczy pytany jest wyłącznie o okna koordynatorów, bo `loop` jest puste dla okna samodzielnego i wykonawczego — pozostałe pytania byłyby ruchem bez odbiorcy.
+
+## budowa/klient-poprzedni/src/moduly/design/zrodlo-designu.test.ts
+Sprawdzian pilnuje, czy każda komenda rodziny design ma drogę z okna do rdzenia,
+przy czym wykaz oczekiwany nie jest tu przepisany — powstaje z wywołań źródła,
+a porównywany jest ze stałymi kontraktu, więc komenda dołożona do kontraktu
+i pominięta w oknie zostanie tu nazwana. Dróg z okna do rdzenia są dwie i
+sprawdzian przechodzi obie: pierwsza to źródło obszaru, metoda na komendę
+typowana kontraktem, tą drogą jadą okna warstwy pierwszej; druga to warsztaty,
+jedna droga na komendę wskazaną katalogiem czynności, tą jadą okna warsztatowe,
+bo osobna metoda na każdą z wielu komend byłaby wieloma miejscami na tę samą
+pomyłkę. Pozostałe sprawdziany dotyczą rozstrzygnięć, które warstwa kliencka
+podejmuje sama i które łatwo cofnąć nieuważną poprawką: pola opcjonalne idą do
+rdzenia wyłącznie wskazane, bo pole wysłane „na wszelki wypadek" jest zdaniem
+o woli operatora, którego operator nie wypowiedział. Żądanie w przelocie drugą
+drogą jest puste, bo sprawdzian pyta o drogę, nie o kształt żądania — kształt
+sprawdza rdzeń osobno, a odmowa walidacji z nazwą pola jest odpowiedzią, którą
+kanał próbny i tak zwraca jako powodzenie.

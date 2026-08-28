@@ -778,3 +778,26 @@ arkuszu: wspólne klasy niosą pas zakładek `.dn-zakladki` i chmurkę dymka
 `.dn-tooltip`, ale nie niosą ani odmiany pigułkowej grupy jednokrotnego
 wyboru, ani znaku objaśnienia — obie formy stoją więc pod nazwą własną
 widoku, nie na aliasie zgodności.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/okno.css
+Wygląd wpisu, pola promptu, przycisku i kropki stanu niesie biblioteka,
+w tym arkuszu ich nie ma. Arkusz nie niesie ani jednej barwy, ani wymiaru
+własnego, woła żeton w miejscu użycia. Definicje `--dc-*` stoją
+w `powloka.css`, bo sięga po nie `sterowanie/sterowanie.css`. Zerowania,
+podłoża dokumentu ani kroju bazowego arkusz nie powtarza: należą do
+`motyw/fundament.css`, a wysokość gospodarza do `.dn-aplikacja`. Znacznik
+stawia klasy biblioteki: `.dn-wpis` z odmianami `--czlowiek`,
+`--inteligencja`, `--system` z `komponenty/wpis.css`; `.dn-prompt`
+i `.dn-btn--sygnal` w polu wpisywania z `komponenty/drobne.css`
+i `komponenty/przycisk.css`; `.dn-kropka` z odmianą stanu w listwie
+z `komponenty/plakietka.css`. Role kontraktu przekłada na te odmiany
+`historia.ts`: user na czlowiek, assistant na inteligencja, system i tool
+na system. Klasy `.dc-*` w tym arkuszu to wyłącznie rozkład okna: siatka,
+listwa tożsamości, obszar przewijania, biblioteka nie ma dla nich
+odpowiednika. Nazwy wpisu i historii należą do katalogu `rozmowa/`
+(`rozmowa/wpis.css`, `rozmowa/rozmowa.css`), okno ich nie definiuje.
+
+Kropka stanu połączenia jest komponentem biblioteki: barwy stanu wybiera
+`naglowek.ts` odmianą `.dn-kropka--*`. Pole wpisywania nie odtwarza listwy:
+ramka pola już oddziela je od historii, a druga krawędź nad nią byłaby
+kreską bez zadania.

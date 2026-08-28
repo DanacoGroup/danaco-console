@@ -7465,3 +7465,13 @@ droga od pliku do dokumentu jest cała. Pusty wykaz urządzeń wejściowych jest
 nazwany jako brak maszyny rdzenia, a nie jako odmowa produktu, i nazwany
 przed próbą, nie po niej. Rdzeń w sprawdzianach jest atrapą, ponieważ
 sprawdzian pyta o zachowanie modułu, nie serwera.
+
+## budowa/klient-poprzedni/src/moduly/terminal/widok-wyjscia.ts
+Wzorzec wyszukiwania wpisuje operator w trakcie pisania, więc przez większość
+czasu jest niedokończony i niepoprawny; niepoprawne wyrażenie regularne
+wraca stąd jako treść błędu, a nie jako wyjątek, żeby okno pokazało stan
+błędu z powodem zamiast gasnąć. Konsola i karta powłoki patrzą na ten sam
+bufor, ale mają różne miejsce: konsola jest oknem obserwacyjnym na pół
+ekranu, a ogon w karcie stoi pod opisem karty i ma być podglądem, nie drugą
+konsolą — nastawa okna rysowania stoi w widoku wyjścia, a nie w drugiej
+wytwórni wierszy, żeby dwa rysowania tej samej treści się nie rozjechały.

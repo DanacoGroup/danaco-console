@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: wpięcie czterech komend obszaru `diagnostics.*` —
-// modułu Diagnostics wraz z jego czterema oknami operacyjnymi (Diagnostics
-// Center, Logs Viewer, Errors Panel, Recommendations Panel).
-//
-// Cały moduł ma jedno zdarzenie. Kontrakt daje modułowi wyłącznie
-// `diagnostics.analysis.changed`, więc Recommendations Panel odświeża się
-// z jednej subskrypcji po każdym uruchomieniu analizy w Diagnostics Center.
-//
-// Dziennik i błędy zdarzenia nie mają: kontrakt nie niesie ani zdarzenia
-// dopisania wpisu, ani zgłoszenia błędu. Logs Viewer odczytuje więc
-// `diagnostics.log.query` w odstępie zadanym przez Operatora, a rdzeń niczego
-// nie rozgłasza na wyrost.
+// Plik wpina cztery komendy obszaru `diagnostics.*`, obsługujące moduł
+// Diagnostics wraz z jego czterema oknami operacyjnymi opartymi na jednym
+// zdarzeniu zmiany analizy.
 package core
 
 import (
@@ -19,7 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Diagnostyka jest portem modułu Diagnostics.
+// Diagnostyka jest portem modułu Diagnostics, obsługującym dziennik, wykaz
+// błędów, uruchomienie analizy i wykaz rekomendacji tego modułu.
 type Diagnostyka interface {
 	PrzeszukajDziennik(ctx context.Context, z shared.DiagnosticsLogQueryRequest) (shared.DiagnosticsLogQueryResponse, error)
 	WykazBledow(ctx context.Context, z shared.DiagnosticsErrorListRequest) (shared.DiagnosticsErrorListResponse, error)
@@ -31,12 +23,7 @@ type Diagnostyka interface {
 }
 
 // ObserwatorNiepowodzen przyjmuje odmowę wykonania komendy, żeby stała się
-// faktem widocznym w Errors Panel.
-//
-// Port jest osobny od portu modułu ze względu na kierunek zależności: rdzeń nie
-// ma prawa wiedzieć, że istnieje moduł Diagnostics — wie wyłącznie, że ktoś może
-// chcieć usłyszeć o niepowodzeniu. Bez tego rozdzielenia dyspozytor komend
-// zależałby od jednego z modułów.
+// faktem widocznym w Errors Panel, portem osobnym od portu modułu Diagnostics.
 type ObserwatorNiepowodzen interface {
 	ZapiszNiepowodzenie(ctx context.Context, n NiepowodzenieKomendy)
 }
@@ -50,17 +37,16 @@ type NiepowodzenieKomendy struct {
 	Blad    shared.ErrorInfo
 }
 
-// zarejestrujDiagnostyke wpina cztery komendy modułu Diagnostics.
+// zarejestrujDiagnostyke wpina cztery komendy modułu Diagnostics i podpina
+// rozgłoszenie zmiany analizy przekazane przez adapter.
 func zarejestrujDiagnostyke(r *Rejestr, d Diagnostyka, e *emiter) {
 	if r == nil || d == nil {
 		return
 	}
 	d.PodepnijRozgloszenie(e.analizaDiagnostyczna)
 
-	// Rozgłoszenia po `diagnostics.analyze.run` nie ma tutaj z zamysłem:
-	// zdarzenie nadaje adapter, bo tylko on wie, czy migawka rzeczywiście
-	// powstała. Rozgłoszenie z obsługiwacza powiadamiałoby także o analizie,
-	// której zapis się nie powiódł.
+	// Rozgłoszenia po `diagnostics.analyze.run` nie ma tutaj celowo: nadaje
+	// je adapter.
 	r.Zarejestruj(shared.CommandDiagnosticsLogQuery, obsluz(d.PrzeszukajDziennik))
 	r.Zarejestruj(shared.CommandDiagnosticsErrorList, obsluz(d.WykazBledow))
 	r.Zarejestruj(shared.CommandDiagnosticsAnalyzeRun, obsluz(d.UruchomAnalize))
@@ -87,11 +73,8 @@ func (r *Rdzen) odnotujNiepowodzenie(ctx context.Context, z protocol.Request, bl
 }
 
 // odmowaNieznanej buduje odpowiedź na komendę bez uchwytu i odnotowuje ją jako
-// odmowę — tak samo jak odmowę merytoryczną obsługiwacza. Źródłem odmowy jest
-// typ żądany, nie `<obszar>.unknown`: Errors Panel stawia `source` w tytule
-// pozycji jako nazwę odrzuconej komendy i po niej grupuje wystąpienia. Nazwa
-// zdarzenia obszaru zlepiłaby wszystkie nieobsłużone komendy obszaru w jeden
-// nierozróżnialny wiersz.
+// odmowę, ze źródłem równym typowi żądanemu, żeby Errors Panel grupował
+// wystąpienia po nazwie odrzuconej komendy.
 func (r *Rdzen) odmowaNieznanej(ctx context.Context, z protocol.Request) protocol.Koperta {
 	koperta := odpowiedzNieznanej(z)
 	odmowa := z

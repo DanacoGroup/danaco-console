@@ -1,21 +1,5 @@
-// Odpowiedzialność pliku: rodzina `snippet.*` — słownik skrótów tekstowych
-// rozwijanych w dłuższą treść.
-//
-// ── Dlaczego słownik należy do rdzenia ──────────────────────────────────────
-// Skrót rozwija się we WSZYSTKICH polach tekstowych platformy, a nie w jednym
-// oknie. Gdyby mieszkał w kliencie, ta sama fraza rozwijałaby się inaczej na
-// dwóch maszynach tego samego Operatora, a przeniesienie pracy na inną maszynę
-// oznaczałoby przepisywanie słownika od nowa.
-//
-// Samo ROZWINIĘCIE robi okno, u siebie, w chwili pisania — rdzeń nie widzi
-// pola tekstowego i widzieć go nie musi. Rdzeń trzyma słownik i pilnuje, żeby
-// jeden profil nie miał dwóch rozwinięć tego samego skrótu.
-//
-// ── Pola szablonu ───────────────────────────────────────────────────────────
-// Skrót bywa szablonem z polami do wypełnienia (`variables`). Rdzeń zna ich
-// NAZWY, ale ich nie wypełnia: wypełnia je Operator w chwili rozwinięcia, a
-// wartości bywają różne przy każdym użyciu. Podstawienie czegokolwiek po
-// stronie rdzenia dałoby szablon rozwinięty raz na zawsze.
+// Plik wypełnia rodzinę komend snippet.* przechowującą słownik skrótów tekstowych rozwijanych w
+// treść dłuższą, wspólny dla wszystkich pól tekstowych platformy i niezależny od maszyny.
 package core
 
 import (
@@ -32,17 +16,20 @@ import (
 
 const przedrostekSkrotuTekstowego = "skrot-"
 
-// adapterSkrotowTekstowych wypełnia port `SkrotyTekstowe`.
+// adapterSkrotowTekstowych wypełnia port SkrotyTekstowe, wiążąc go z repozytorium skrótów
+// przechowywanym w bazie danych rdzenia.
 type adapterSkrotowTekstowych struct {
 	repozytorium dane.RepozytoriumSkrotow
 }
 
-// nowyAdapterSkrotowTekstowych wiąże port ze słownikiem skrótów.
+// nowyAdapterSkrotowTekstowych wiąże port ze słownikiem skrótów, tworząc adapter gotowy do obsługi
+// komend rodziny snippet.
 func nowyAdapterSkrotowTekstowych(repozytorium dane.RepozytoriumSkrotow) *adapterSkrotowTekstowych {
 	return &adapterSkrotowTekstowych{repozytorium: repozytorium}
 }
 
-// WykazSkrotow obsługuje `snippet.list`.
+// WykazSkrotow obsługuje snippet.list — zwraca skróty pasujące do zapytania wraz z łączną liczbą
+// pozycji w słowniku.
 func (a *adapterSkrotowTekstowych) WykazSkrotow(ctx context.Context,
 	z shared.SnippetListRequest) (shared.SnippetListResponse, error) {
 
@@ -61,7 +48,8 @@ func (a *adapterSkrotowTekstowych) WykazSkrotow(ctx context.Context,
 	return shared.SnippetListResponse{Snippets: wykaz, Total: wszystkich}, nil
 }
 
-// ZapiszSkrot obsługuje `snippet.set`.
+// ZapiszSkrot obsługuje snippet.set — zapisuje nowy skrót albo aktualizuje istniejący, zwracając
+// zapisaną pozycję słownika.
 func (a *adapterSkrotowTekstowych) ZapiszSkrot(ctx context.Context,
 	z shared.SnippetSetRequest) (shared.SnippetSetResponse, error) {
 
@@ -74,8 +62,7 @@ func (a *adapterSkrotowTekstowych) ZapiszSkrot(ctx context.Context,
 			"skrót bez frazy wyzwalającej — nie ma czego wpisać, żeby się rozwinął")
 	}
 	if strings.ContainsAny(skrot, " \t\n") {
-		// Skrót ze spacją nie rozwinąłby się nigdy: okno rozpoznaje skrót po
-		// jednym słowie, a fraza wieloczłonowa jest zwykłym zdaniem.
+		// Skrót ze spacją nie rozwinąłby się: rozpoznawanie działa po jednym słowie.
 		return shared.SnippetSetResponse{}, bladWskazaniaSkrotu(
 			"skrót „" + skrot + "” zawiera odstęp — rozwijanie rozpoznaje skrót po " +
 				"jednym słowie, więc fraza z odstępem nigdy by się nie rozwinęła")
@@ -108,7 +95,8 @@ func (a *adapterSkrotowTekstowych) ZapiszSkrot(ctx context.Context,
 	return shared.SnippetSetResponse{Snippet: skrotKontraktu(zapisany)}, nil
 }
 
-// UsunSkrot obsługuje `snippet.delete`.
+// UsunSkrot obsługuje snippet.delete — usuwa wskazany skrót ze słownika i zwraca informację, czy
+// pozycja istniała.
 func (a *adapterSkrotowTekstowych) UsunSkrot(ctx context.Context,
 	z shared.SnippetDeleteRequest) (shared.SnippetDeleteResponse, error) {
 
@@ -125,7 +113,8 @@ func (a *adapterSkrotowTekstowych) UsunSkrot(ctx context.Context,
 	return shared.SnippetDeleteResponse{Deleted: usuniety}, nil
 }
 
-// zapisPolSzablonu składa nazwy pól w zapis strukturalny kolumny.
+// zapisPolSzablonu składa nazwy pól szablonu w zapis strukturalny kolumny bazy, zwracając pustą
+// tablicę dla braku pól.
 func zapisPolSzablonu(pola []string) string {
 	if len(pola) == 0 {
 		return "[]"
@@ -137,7 +126,8 @@ func zapisPolSzablonu(pola []string) string {
 	return string(bajty)
 }
 
-// odczytPolSzablonu rozkłada zapis strukturalny kolumny na nazwy pól.
+// odczytPolSzablonu rozkłada zapis strukturalny kolumny bazy na nazwy pól szablonu, zwracając
+// pustą wartość dla zapisu bez treści.
 func odczytPolSzablonu(zapis string) []string {
 	if strings.TrimSpace(zapis) == "" {
 		return nil
@@ -149,7 +139,8 @@ func odczytPolSzablonu(zapis string) []string {
 	return pola
 }
 
-// skrotKontraktu przekłada wiersz na pozycję słownika kontraktu.
+// skrotKontraktu przekłada wiersz repozytorium na pozycję słownika kontraktu, dołączając kod
+// profilu tylko dla skrótu do niego przypisanego.
 func skrotKontraktu(s dane.SkrotTekstowy) shared.TextSnippet {
 	pozycja := shared.TextSnippet{
 		Id: s.Kod, Shortcut: s.Skrot, Content: s.Tresc, Description: s.Opis,
@@ -163,14 +154,16 @@ func skrotKontraktu(s dane.SkrotTekstowy) shared.TextSnippet {
 	return pozycja
 }
 
-// bladZapleczaSkrotow nazywa brak słownika po stronie rdzenia.
+// bladZapleczaSkrotow nazywa brak wpiętego słownika skrótów po stronie rdzenia i wskazuje sposób
+// naprawy.
 func bladZapleczaSkrotow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"skróty tekstowe: rdzeń nie ma wpiętego słownika — naprawa: podpiąć "+
 			"repozytorium skrótów przy składaniu rdzenia"))
 }
 
-// bladWskazaniaSkrotu nazywa niepoprawne żądanie.
+// bladWskazaniaSkrotu nazywa niepoprawne żądanie dotyczące skrótu, na przykład skrót bez frazy
+// wyzwalającej.
 func bladWskazaniaSkrotu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"skróty tekstowe: "+powod))

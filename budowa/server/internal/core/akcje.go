@@ -7,19 +7,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// Kształt katalogu akcji ma jedno źródło prawdy — `shared/contract.json`.
-// Rdzeń nie powtarza tu struktur, wyłącznie nadaje im nazwy dziedziny, tak samo
-// jak `models.RodzajFragmentu` robi to z rodzajem fragmentu.
-//
-// Typy poniżej są aliasami kształtów wygenerowanych z kontraktu, więc zmiana
-// kontraktu przerywa kompilację rdzenia, zamiast rozjeżdżać go po cichu.
+// Kształt katalogu akcji ma jedno źródło prawdy — shared/contract.json. Typy poniżej są
+// aliasami kształtów wygenerowanych z kontraktu, więc zmiana kontraktu przerywa kompilację
+// rdzenia, zamiast rozjeżdżać go po cichu.
 type (
-	// AkcjaKatalogu to pozycja katalogu akcji odsyłana klientowi i kanałowi modelu.
+	// AkcjaKatalogu to pozycja katalogu akcji odsyłana klientowi i kanałowi modelu, jako element
+	// listy wykazu.
 	AkcjaKatalogu = shared.Action
 	// ZadanieKatalogAkcji jest żądaniem odczytu katalogu akcji. Pominięty poziom
 	// zasięgu zwraca katalog w całości — brak zawężenia nie jest błędem.
 	ZadanieKatalogAkcji = shared.ActionListRequest
-	// WynikKatalogAkcji jest odpowiedzią odczytu katalogu akcji.
+	// WynikKatalogAkcji jest odpowiedzią odczytu katalogu akcji, niosącą wykaz pozycji całego
+	// katalogu akcji.
 	WynikKatalogAkcji = shared.ActionListResponse
 )
 
@@ -36,10 +35,12 @@ type ZrodloAkcji interface {
 	Akcje(ctx context.Context) ([]dane.Akcja, error)
 }
 
-// zrodloAkcjiFunkcja pozwala podać źródło samą funkcją, bez typu pomocniczego.
+// zrodloAkcjiFunkcja pozwala podać źródło katalogu samą funkcją, bez tworzenia osobnego
+// typu pomocniczego.
 type zrodloAkcjiFunkcja func(ctx context.Context) ([]dane.Akcja, error)
 
-// Akcje wypełnia ZrodloAkcji funkcją.
+// Akcje wypełnia interfejs ZrodloAkcji zwykłą funkcją, adaptując ją do kształtu wymaganego
+// przez rejestr.
 func (f zrodloAkcjiFunkcja) Akcje(ctx context.Context) ([]dane.Akcja, error) {
 	return f(ctx)
 }

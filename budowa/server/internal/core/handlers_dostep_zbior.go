@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: odczyt kompletu nadań jednego okna i nałożenie na
-// nadanie pól wskazanych w żądaniu zmiany.
-//
-// Kod punktu odczytywany jest raz na punkt, nie raz na nadanie: okno bywa
-// związane z kilkoma nadaniami tego samego mostu (odczyt i zapis osobno), więc
-// bez pamięci podręcznej ten sam wiersz punktu szedłby z bazy wielokrotnie przy
-// jednym odczycie zbioru.
+// Plik odczytuje komplet nadań jednego okna i nakłada na nadanie pola
+// wskazane w żądaniu zmiany, z pamięcią podręczną kodu punktu.
 package core
 
 import (
@@ -14,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// zbiorOkna zwraca komplet nadań okna przełożony na struktury kontraktu.
+// zbiorOkna zwraca komplet nadań okna przełożony na struktury kontraktu,
+// w kolejności zapisanej w bazie.
 func (a *adapterNadanDostepu) zbiorOkna(ctx context.Context, okno dane.Okno,
 	tylkoAktywne bool) ([]shared.AccessGrant, error) {
 
@@ -86,7 +82,8 @@ func zastosujZmianeNadania(nadanie *dane.Nadanie, z shared.AccessGrantUpdateRequ
 	}
 }
 
-// liczbaLub odczytuje pole liczbowe opcjonalne kontraktu.
+// liczbaLub odczytuje pole liczbowe opcjonalne kontraktu, oddając wartość
+// domyślną, gdy pole jest puste.
 func liczbaLub(wartosc *int, domyslna int) int {
 	if wartosc == nil {
 		return domyslna

@@ -1,9 +1,6 @@
-// Przekaz zdarzeń zaczepów do modułu Diagnostics. Każde zdarzenie zostawia wpis
-// dziennika (Logs Viewer), a niepowodzenie zaczepu dodatkowo wiersz błędu
-// (Errors Panel).
-//
-// Przekaz jest śladem po zdarzeniu, nie oceną i nie blokadą — rdzeń odnotowuje,
-// co zaszło, i nie wstrzymuje z tego powodu żadnej tury.
+// Przekaz zdarzeń zaczepów do modułu Diagnostics jest śladem po zdarzeniu, nie oceną i nie
+// blokadą. Każde zdarzenie zostawia wpis dziennika, a niepowodzenie zaczepu dodatkowo wiersz
+// błędu.
 package core
 
 import (
@@ -50,9 +47,8 @@ func (o *zdarzeniaWykonawcze) przekazDiagnostyce(okno string, e injection.Zdarze
 	zrodlo := zrodloZaczepu(e)
 	tresc := trescWpisuZaczepu(e)
 
-	// Wpis dziennika powstaje dla każdego zdarzenia: zwykła praca idzie poziomem
-	// `info`, niepowodzenie poziomem `warn`. Zrównanie obu poziomów gubiłoby
-	// odmowy wśród setek zdarzeń udanych.
+	// Wpis dziennika idzie poziomem info dla pracy zwykłej i poziomem warn dla niepowodzenia
+	// zaczepu.
 	poziom := shared.LogLevel(shared.LogLevelInfo)
 	if e.Niepowodzenie() {
 		poziom = shared.LogLevelWarn
@@ -71,11 +67,7 @@ func (o *zdarzeniaWykonawcze) przekazDiagnostyce(okno string, e injection.Zdarze
 		return
 	}
 
-	// Niepowodzenie zaczepu wchodzi do Errors Panel jako odmowa. Kod
-	// `permission_denied` jest najbliższym słowem kontraktu na odmowę zaczepu:
-	// zaczep niesie politykę, a jego niezerowe wyjście jest odmową tej polityki.
-	// Poziom i priorytet zostają przy regułach słownika (warn / low) — odmowa
-	// zaczepu jest zdarzeniem zwykłej pracy, nie awarią.
+	// Niepowodzenie zaczepu wchodzi do Errors Panel jako odmowa polityki zaczepu.
 	kontekst, err := json.Marshal(kontekstZaczepu{
 		HookName: e.Nazwa, HookEvent: e.Zdarzenie, Outcome: e.Wynik,
 		ExitCode: e.KodWyjscia, WindowId: okno,
@@ -100,7 +92,8 @@ func (o *zdarzeniaWykonawcze) przekazDiagnostyce(okno string, e injection.Zdarze
 	}
 }
 
-// trescWpisuZaczepu opisuje zdarzenie zaczepu jednym zdaniem dziennika.
+// trescWpisuZaczepu opisuje zdarzenie zaczepu jednym zdaniem dziennika, złożonym z rodzaju
+// zdarzenia i jego wyniku.
 func trescWpisuZaczepu(e injection.ZdarzenieZaczepu) string {
 	czesci := make([]string, 0, 4)
 	switch {

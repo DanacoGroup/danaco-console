@@ -6684,3 +6684,752 @@ znakowania zaszyty jako operator, przez co znakowanie modelu ginie
 w przełączniku pokazującym wszystko, co zrobił model; oraz brzmienie
 zastane fragmentu liczone w bajtach — dokument polski ma litery
 dwubajtowe, a wycinek policzony po bajtach rozciąłby taką literę w środku.
+
+## budowa/server/internal/core/adapter_nawigacja_dziedziczenie.go
+Wejście do modułu niesie w kontrakcie wyłącznie sesję, moduł i ewentualne okno
+do ponownego użycia. Gdyby okno powstawało z samego modułu, powstawałoby bez
+kanału modelu, czyli jako okno, które się rysuje i nie umie rozmawiać. Kanał
+dobiera się z tego, czym sesja już rozmawia, a brak obu źródeł daje okno bez
+kanału: rdzeń nie odmawia wtedy wejścia do modułu, a okno zgłasza brak dopiero
+przy próbie tury.
+
+Dziedziczy się komplet parametrów wykonania, nie sam kanał, ponieważ okno
+modułu ma pozostać samodzielne i nie wchodzić do cudzej pętli koordynator
+wykonawca.
+
+## budowa/server/internal/core/handlers_aod.go
+Nakładka stałej obecności asystenta stoi na jednym porcie, bo siedem komend
+obsługuje jedną powierzchnię i jedno pojęcie stanu — osobne porty dla stanu,
+rozmowy i obserwacji byłyby trzema prawdami o jednym bycie. Rodzina nie ma
+zdarzenia własnego: wiadomość założona przez `aod.chat.send` idzie zdarzeniem
+`message.changed`, tym samym, którym idzie wiadomość z okna rozmowy, bo jest to
+ta sama wiadomość w tej samej historii. Zlecenie założone przez
+`aod.voice.command` rozgłasza moduł Assistant przez `assistant.action.changed`,
+więc obsługa komendy nie rozgłasza go drugi raz. Port niewypełniony nie
+rejestruje niczego: komendy odpowiadają wtedy `aod.unknown`, a pozostałe domeny
+pracują bez zmian. Rozgłoszenie wyciszenia po `aod.mute.set` odróżnia zdarzenie
+realne od powtórzonego bez zmiany, bo bez tego rozróżnienia jedna powłoka
+wyciszałaby, a druga wciąż pokazywałaby sugestie tej samej rozmowy.
+
+## budowa/server/internal/core/handlers_centrum_powiadomien.go
+Rodzina `notification.*` ma sam odczyt i zmianę stanu, bez komendy zgłaszającej
+zdarzenie: powiadomienia zgłasza platforma tam, gdzie coś zaszło, przez
+`adapter_centrum_powiadomien.go`, funkcję `Zglos`, a komenda w kontrakcie
+pozwalałaby klientowi wpisać do rejestru zdarzenie, które nigdy nie zaszło.
+Zdarzeń `notification.raised` i `notification.changed` nie rozgłasza ten plik,
+tylko adapter, bo rozgłasza je także droga wewnętrzna, która przez rejestr
+komend nie przechodzi — rozgłoszenie w dwóch miejscach dałoby przy zgłoszeniu
+dwie koperty o jednym zdarzeniu.
+
+## budowa/server/internal/core/handlers_channel.go
+Rejestr kanałów jest sterowany danymi: nowy kanał to nowy wiersz rejestru, nie
+nowy typ w kodzie ani nowa gałąź warunku. Rdzeń nie zna ani jednego rodzaju
+kanału — rodzaj jest wartością danych, którą czyta warstwa modeli. Kontrakt nie
+ma zdarzenia zmiany kanału, więc ta domena niczego nie rozgłasza, a rdzeń nie
+dokłada zdarzenia spoza kontraktu. Parametry kanału niosą wyłącznie odwołania
+do danych dostępowych, nigdy ich treść — pilnuje tego warstwa danych, rdzeń
+przenosi ładunek bez zaglądania do niego.
+
+## budowa/server/internal/core/handlers_config.go
+Domena konfiguracji ma dziewięć poziomów zasięgu, od zasięgu aplikacji,
+najszerszego, po okno komunikacji, najwęższe i wygrywające z pozostałymi.
+Rdzeń nie rozstrzyga pierwszeństwa poziomów ani nie zna katalogu ustawień — to
+należy do warstwy konfiguracji, rdzeń wyłącznie kieruje komendę i rozgłasza
+zmianę. Komenda `config.reset` przywraca wartość domyślną: skutkiem jest
+usunięcie ustawienia z poziomu, więc zmiana idzie jako usunięcie wpisu, a brak
+ustawienia znaczy wartość domyślną, nigdy blokadę.
+
+## budowa/server/internal/core/handlers_connection.go
+Powitanie uzgadnia wersję i oddaje klientowi wykaz komend rzeczywiście
+obsługiwanych przez rdzeń, nie wykaz z kontraktu, więc klient dowiaduje się
+z niego, co ta wersja rdzenia potrafi, zamiast zgadywać po odpowiedziach.
+Powitanie niesie token i jest jedyną drogą, którą token sesji bramki wchodzi do
+rdzenia, bo transportem jest jedno gniazdo, więc nie ma nagłówka na każdym
+żądaniu ani ciasteczka. Uzgodnienie nie jest bramą: token niepasujący, wygasły
+albo pusty nie odrzuca powitania i nie zamyka połączenia, tylko zmienia jedno
+pole odpowiedzi, a klient czyta `authenticated` i sam rozstrzyga, czy pokazać
+okno logowania. Pole `gatewayConfigured` odróżnia dwie różne pustki: bramka
+istnieje, ale operator nie jest zalogowany, prowadzi do okna logowania, a
+bramki nie ma wcale prowadzi do okna pierwszej rejestracji — bez tego pola
+klient musiałby wyprowadzać stan z odmowy `auth.login`. Pole `loginRequired`
+jest odczytem przy nawiązaniu: warstwa nasłuchu składa straż bramki raz na
+połączenie, więc chwilą, w której nastawa poziomu `aplikacja` ma znaczenie,
+jest właśnie powitanie. Rdzeń czyta ją tym samym rozstrzygaczem, którym idzie
+każde inne ustawienie platformy w `nastawy_aplikacji.go`, więc zmianę zapisaną
+komendą `config.set` widać od następnego połączenia, bez restartu rdzenia.
+Deklaracja zdolności klienta w polu `capabilities` jest zapamiętywana, bo
+powitanie jest jedyną chwilą, w której klient o sobie mówi — korzysta z niej
+rodzina `launcher.hotkey.*`, ponieważ skrót globalny przechwytuje powłoka
+programu okiennego, więc rdzeń musi wiedzieć, czy po drugiej stronie stoi
+ktoś, kto to potrafi.
+
+Funkcja `zwiazPowitanie` traktuje błąd odczytu jako fałsz, tak samo jak token
+nieznany, bo powitanie ma się udać zawsze — jedyną szkodą z niedostępnej bazy
+jest to, że operator zobaczy okno logowania. Powitanie nierozpoznane zrywa
+poprzednią więź tego połączenia zamiast zostawić ją nietkniętą, bo więź
+nietknięta kazałaby rdzeniowi odpowiadać `authenticated: false`, a mimo to
+uważać gniazdo za związane z sesją sprzed powitania i wyłączać ją ze zmiany
+hasła — czyli oszczędzać sesję, której wołający nie przedstawił. Zerwanie nie
+jest bramką: niczego nie odrzuca i połączenia nie zamyka, tylko sprowadza stan
+do nieustalenia, kto woła.
+
+## budowa/server/internal/core/adapter_nawigacja_slowniki.go
+Wskazanie środowiska i modułu z żądania rozpoznaje się dwojako, kodem albo
+identyfikatorem wiersza, ponieważ kontrakt niesie jedno pole environmentId
+lub moduleId, a klient może mieć w ręku dowolne z nich. Wskazanie
+nierozpoznane nie jest błędem: funkcja zwraca fałsz, a obsługujący komendę
+odpowiada pusto zamiast zgłaszać usterkę.
+
+Macierz środowisk buduje jedno złączenie zamiast pętli zapytań po jednym na
+moduł. Porządek wiersza w wyniku ustala zapytanie z pliku dane/macierz.go,
+sortujące po kolejności środowiska, kodzie środowiska, kolejności modułu
+w środowisku i kodzie modułu.
+
+## budowa/server/internal/core/handlers_context.go
+Port `ZajetoscKontekstu` jest osobny od portu `Przenoszenie`, mimo wspólnego
+przedrostka `context.`: przeniesienie kompletu kontekstu między oknami i pomiar
+zajętości okna nie mają ze sobą nic wspólnego poza słowem w nazwie — pierwsze
+zakłada okno, drugie liczy żetony tokenizatorem. Wspólny port związałby ich
+dostępność w jedno rozstrzygnięcie zamiast dwóch niezależnych. Komenda
+`context.usage.get` niczego nie rozgłasza: pomiar jest odczytem, a zmianę
+zajętości wywołuje tura, o której mówi już rodzina `message.*`. Przekazanie
+kompletu kontekstu idzie jedną komendą, nie ścieżką per moduł, więc rdzeń nie
+rozgałęzia się tu na moduł docelowy; przeniesienie kończy się oknem docelowym,
+więc rdzeń rozgłasza zmianę tego okna tą samą drogą, co przy założeniu okna.
+
+## budowa/server/internal/core/handlers_diagnostics.go
+Moduł Diagnostics obejmuje cztery okna operacyjne: Diagnostics Center, Logs
+Viewer, Errors Panel i Recommendations Panel. Cały moduł ma jedno zdarzenie —
+kontrakt daje mu wyłącznie zdarzenie zmiany analizy, więc Recommendations Panel
+odświeża się z jednej subskrypcji po każdym uruchomieniu analizy w Diagnostics
+Center. Dziennik i błędy zdarzenia nie mają: kontrakt nie niesie ani zdarzenia
+dopisania wpisu, ani zgłoszenia błędu, więc Logs Viewer odczytuje dziennik
+w odstępie zadanym przez operatora, a rdzeń niczego nie rozgłasza na wyrost.
+Port obserwatora niepowodzeń jest osobny od portu modułu ze względu na kierunek
+zależności: rdzeń nie ma prawa wiedzieć, że istnieje moduł Diagnostics, wie
+wyłącznie, że ktoś może chcieć usłyszeć o niepowodzeniu — bez tego rozdzielenia
+dyspozytor komend zależałby od jednego z modułów. Funkcja `odmowaNieznanej`
+odnotowuje odmowę ze źródłem równym typowi żądanemu, nie nazwie zdarzenia
+obszaru, bo Errors Panel stawia to źródło w tytule pozycji i po nim grupuje
+wystąpienia — nazwa zdarzenia obszaru zlepiłaby wszystkie nieobsłużone komendy
+w jeden nierozróżnialny wiersz. Rozgłoszenia po uruchomieniu analizy nie ma
+w obsługiwaczu z zamysłem: nadaje je adapter, bo tylko on wie, czy migawka
+rzeczywiście powstała — rozgłoszenie z obsługiwacza powiadamiałoby także
+o analizie, której zapis się nie powiódł.
+
+## budowa/server/internal/core/adapter_okna_trwalosc.go
+Bez zapisu wiersza okna w chwili założenia wszystko, co pyta o okno bazę
+zamiast rejestru nadzorcy — powołanie podagentów, przekazanie okna, nadania
+dostępu, odtworzenie stanu po restarcie — nie znajduje okna świeżo otwartego.
+Sesję utrwala od razu inny plik rdzenia; okno utrwala ten plik.
+
+Niepowodzenie zapisu nie przerywa zakładania tak samo jak przy sesji: okno
+żyje w rejestrze i pracuje, tylko nie przetrwa restartu rdzenia bez bazy.
+
+Wiersz okna niesie klucze obce, a rejestr nadzorcy kody, więc trzeba
+rozstrzygnąć trzy więzy: sesję, moduł i kanał modelu. Sesji się przy tym nie
+zakłada, ponieważ jej wiersz powstaje przy założeniu sesji, a okno bez sesji
+nie jest oknem — drugie miejsce zakładania sesji byłoby drugą prawdą o niej.
+
+## budowa/server/internal/core/handlers_doradcy.go
+Adapter wraz z rozstrzygnięciami leży w `adapter_doradcy.go`, pojęcie doradcy
+i sufit siły w `podagenci/doradca.go` oraz `podagenci/doradca_wybor.go`.
+Odbiorcą rady jest model w trakcie tury, bo to on staje przed rozstrzygnięciem,
+w którym rada się przydaje. Rodzina ma jedną komendę: kontrakt nie zna ani
+wykazu doradców, ani historii konsultacji jako osobnych komend — wykaz
+kandydatów oddaje metoda `Doradcy()` adaptera, a historia konsultacji leży
+w dzienniku `konsultacja_doradcy` i czeka na własną komendę; dopisanie nazw,
+których klient nie zna, byłoby rozrostem kontraktu bez odbiorcy. Zdarzenie
+jest częścią czynności: rada ma być jawna w strumieniu i w prowenancji,
+inaczej agent działa na przesłance, której w aktach nie ma, dlatego port
+oddaje obok wyniku gotowy ładunek zdarzenia, a jego skrót liczy funkcja
+`podagenci.ZlozRade`, więc obsługiwacz go nie przelicza. Sesja nie stoi
+w ładunku zdarzenia, bo kontrakt jej tam nie ma — zdarzenie wskazuje okno,
+a koperta wskazuje kartę sesji, w której to okno pracuje; adapter zna oba
+fakty z danych okna, obsługiwacz żadnego z nich nie zna. Zdarzenie idzie
+wyłącznie po konsultacji udanej: odmowa doboru, czyli każda próba sięgnięcia
+przez model po model silniejszy bez wyraźnego wskazania, wraca pytającemu
+błędem i ląduje w dzienniku konsultacji jako wpis odmowy, bo rozgłoszenie
+udanej konsultacji po próbie, która się nie odbyła, byłoby fałszywym
+powiadomieniem.
+
+## budowa/server/internal/core/handlers_dostep.go
+Obszar dostępów obejmuje cztery byty, których nie wolno mieszać. Punkt dostępu
+mówi, do jakich maszyn i katalogów model ma wgląd. Nadanie wiąże punkt z jednym
+oknem rozmowy, a okno ma zbiór nadań, w którym kolejność i oznaczenie głównego
+niosą znaczenie. Środowisko jest czymś trzecim, profilem widoczności modułów
+w bocznej nawigacji, i tej rodziny komend nie dotyka. Katalog roboczy modelu
+jest ustawieniem osobnym `katalog.roboczy.*` i mówi, gdzie model zostawia
+własne pliki. Rdzeń rozgłasza zmianę obu bytów, bo okno konfiguracji bywa
+otwarte na kilku urządzeniach konta naraz, a nośnikiem synchronizacji jest
+zdarzenie zmiany właściwe obszarowi.
+
+## budowa/server/internal/core/adapter_okno_akcja.go
+Typ i konstruktor deklaruje inny plik rdzenia; ten plik dokłada wyłącznie
+metodę obszaru dziennika akcji, tym samym wzorcem, jakim inne pliki dokładają
+metody obok typu zadeklarowanego gdzie indziej.
+
+Metoda nie wykonuje akcji katalogu, tylko sprawdza ją, zapisuje ślad
+zgłoszenia i odmawia wprost, ponieważ meldunek o wykonaniu czynności, której
+nikt nie wykonał, jest gorszy od odmowy: zgłaszający odchodzi od ekranu
+przekonany, że rzecz się stała.
+
+Katalog akcji niesie kod komendy docelowej, więc wykonanie jest kiedyś
+osiągalne, ale nie da się go domknąć teraz uczciwie z dwóch powodów.
+Obsługiwacze rdzenia przyjmują pełną kopertę żądania z tożsamością klienta,
+wiązaniem sesji i identyfikatorem żądania, a port przekazania okna dostaje
+samą treść bez koperty — sklejenie koperty zastępczej znaczyłoby wykonanie
+komendy w cudzym albo w żadnym kontekście sesji, czyli zamianę fałszywego
+meldunku na fałszywy skutek. Parametry komendy window.action to surowy JSON
+o kształcie zależnym od akcji, a kontrakt nie mówi, że jest to treść żądania
+komendy docelowej — przyjęcie tego założenia byłoby zgadywaniem kontraktu.
+
+Dlatego metoda robi trzy rzeczy, do których ma pełne pokrycie, i ani jednej
+więcej: sprawdza akcję w katalogu, zostawia trwały ślad zgłoszenia w dzienniku
+i odmawia wprost kodem kontraktu, podając kod komendy, którą zgłaszający ma
+wywołać sam. Odmowa niesie tę samą wiedzę co wykonanie, bez fałszu o skutku.
+
+Zapis śladu zgłoszenia pełni dwie role naraz: jest zapisem tego, kto, w którym
+oknie i o co prosił, oraz jedynym sprawdzeniem istnienia okna, bo nieznane
+okno odrzuca repozytorium samo. Nieudany zapis kończy się własną odmową, żeby
+brak okna nie zlał się w odpowiedzi z odmową wykonania akcji katalogu.
+
+## budowa/server/internal/core/handlers_dostep_ksztalt.go
+Sprawdzenie kształtu punktu jest w rdzeniu, a nie w warstwie danych, bo dotyczy
+żądania: baza pilnuje więzu, ale zgłasza go jako awarię zapisu, a operator ma
+dostać odmowę merytoryczną z powodem, nie błąd wewnętrzny rdzenia. Most MCP bez
+nazwy maszyny i bez adresu nie ma dokąd prowadzić. Katalog lokalny bez pola
+`deviceId` nie jest odrzucany: pole jest w kontrakcie opcjonalne, a jego
+pominięcie znaczy, że katalog leży na tej maszynie — katalog wskazany oknem
+powłoki leży na maszynie, na której działa rdzeń, i tę maszynę katalog urządzeń
+zna z rozpoznania startowego, kolumny `biezace`. Oba przypadki odmowy
+urządzenia są brakiem w żądaniu albo w stanie platformy, nie awarią trwałości,
+więc operator ma zobaczyć zdanie, a nie ciszę ani błąd wewnętrzny — każdy inny
+błąd idzie dalej nietknięty, bo rdzeń nie zgaduje za bazę, czy zawiódł dysk,
+czy schemat.
+
+## budowa/server/internal/core/adapter_okno_przekazanie_uchwyty.go
+Implementacja portu leży w dwóch plikach: jeden obsługuje przekazanie okna,
+drugi akcję panelu okna. Komenda listowania akcji nie jest tu dublowana,
+ponieważ rejestruje ją inna funkcja rejestrująca w pliku kompozycji rdzenia —
+podwójna rejestracja tej samej nazwy komendy nadpisałaby jeden obsługiwacz
+drugim bez ostrzeżenia.
+
+Emiter zdarzeń zostaje w sygnaturze funkcji rejestrującej dla zgodności
+z pozostałymi funkcjami rejestrującymi moduły, mimo że kontrakt nie ma
+zdarzenia rozgłaszającego wykonanie akcji okna ani nowe przekazanie.
+
+## budowa/server/internal/core/handlers_dostep_nadania.go
+Port pracuje zbiorem, nie pojedynczym nadaniem: każda czynność zapisu oddaje
+nie tylko wiersz zmieniony, ale komplet nadań okna po zmianie. Kolejność
+i oznaczenie głównego są własnością zbioru, więc dopisanie jednego nadania
+przestawia pozostałe — klient, który dostałby sam zmieniony wiersz, pokazałby
+zbiór nieprawdziwy. Zawężenie korzeni poza obszar punktu jest odmową
+merytoryczną, błędem `dane.ErrPozaKorzeniami`, nie awarią zapisu, bo nadanie
+dostępu szerszego, niż punkt obiecuje, byłoby obejściem granicy uprawnień.
+
+## budowa/server/internal/core/handlers_dostep_przeklad.go
+Punkt wychodzi kontraktem pod swoim trwałym kodem, nie pod numerem wiersza,
+bo kod jest tym, czym operator posługuje się w konfiguracji mostu i co
+przeżywa przeniesienie bazy. Nadanie wychodzi pod identyfikatorem zewnętrznym
+nadanym przez rdzeń, a gdy wiersz powstał wprost w bazie, pod numerem
+wiersza, tak samo jak przy oknach i sesjach. Identyfikatorem urządzenia
+w kontrakcie jest klucz wiersza katalogu, ten sam, który wychodzi z powrotem
+polem `AccessPoint.deviceId`. Ciche `nil` rozbiłoby się dopiero o więz
+schematu `CHECK(rodzaj <> 'localDirectory' OR urzadzenie_id IS NOT NULL)`,
+a operator dostałby awarię zapisu zamiast powodu, dlatego wartość nieliczbowa
+odmawia zapisu wprost. Brak pola to nie to samo co pole niezrozumiałe:
+pominięcie jest dopuszczone kontraktem i znaczy, że urządzenia nie wskazano,
+co dla katalogu lokalnego rozstrzyga warstwa trwałości maszyną, na której
+działa rdzeń.
+
+## budowa/server/internal/core/handlers_dostep_punkty.go
+Usunięcie punktu i sprawdzenie osiągalności leżą w
+`handlers_dostep_sprawdzenie.go`. Punkt dostępu jest bytem konfiguracji
+platformy, nie sesji: raz opisana maszyna albo katalog służy wielu oknom
+rozmowy, a wiązanie z oknem jest osobnym bytem, nadaniem. Pole próby
+osiągalności zastępuje funkcję wolnostojącą, bo próba sięgnięcia do maszyny
+jest wywołaniem świata zewnętrznego i test musi umieć podstawić w jej miejsce
+własną. Pominięcie takiego pola przy zmianie punktu zostawiłoby wiersz przy
+dawnym urządzeniu i potwierdziłoby zmianę, której nie było, dlatego wskazanie
+urządzenia, które nie jest identyfikatorem katalogu, wraca odmową.
+
+## budowa/server/internal/core/handlers_dostep_sprawdzenie.go
+Katalog leżący na tej maszynie sprawdza się wprost, istnieniem i
+otwieralnością ścieżki. Maszyny za mostem MCP rdzeń sam nie odpyta: most jest
+procesem klienta modelu, nie klientem rdzenia, dlatego punkt mostowy bez
+wpiętej próby wraca stanem nierozpoznanym wraz z powodem, nie stanem
+nieosiągalnym — stan nierozpoznany nie wygasza kontrolki, a zgadywanie
+niedostępności wyłączałoby operatorowi sprawny most. Katalog widoczny stąd
+jest katalogiem osiągalnym i tak wraca; katalog niewidoczny stąd nie jest
+jeszcze katalogiem nieosiągalnym, bo punkt rodzaju localDirectory należy do
+wskazanego urządzenia, a rdzeń nie musi pracować na tym samym — rozstrzygnięcie
+należy do agenta urządzenia, a do czasu jego wpięcia rdzeń mówi wprost, czego
+nie wie.
+
+## budowa/server/internal/core/adapter_rozmowa_konfiguracja.go
+Jednolity model konfiguracji zapisuje komenda ustawiania konfiguracji sesji;
+ten plik jest jego czytelnikiem na drodze tury. Obszary tłumaczą się na te
+same pola zapytania, którymi jedzie reszta wywołania, a stamtąd na wejście
+warstwy wstrzykiwania parametrów procesu: model i konto na wybór wywołania,
+narzędzia i uprawnienia na ustawienia procesu, środowisko i dostawca na
+zmienne środowiska, integracje zewnętrzne na osobną konfigurację. Zmiana
+obszaru w oknie konfiguracji zmienia więc zbudowane wywołanie modelu. Brak
+czytelnika albo błąd odczytu zostawia turę na wartościach okna i wiersza
+rejestru: konfiguracja sesji dokłada rozstrzygnięcia, nie odbiera dawnych.
+
+Przełożone są obszary: model, konto, uprawnienia, narzędzia, zaczepy,
+umiejętności (samo wyłączenie obszaru), środowisko, dostawca (fragment) oraz
+integracje zewnętrzne.
+
+Czytelnik konfiguracji obowiązującej jest portem osobnym od portu konfiguracji
+sesji rodziny komend config.session — tamten port mówi typami kontraktu, ten
+oddaje już złożony model.
+
+Konto z obszaru account rozstrzyga się według sposobu wyboru: sposoby fixed
+i kindDefault biorą wskazane konto wprost, sposób pool bierze pierwsze konto
+puli jako wejście rotacji. Rotacja po wyczerpaniu limitu należy do puli kont
+warstwy wstrzykiwania parametrów procesu — tu zapada tylko wskazanie wejściowe.
+
+Obszary i fragmenty obszarów bez odpowiednika na powierzchni procesu, wymienione
+jawnie, żeby obszar wypełniony a nieprzełożony nie uchodził za wpięty:
+
+Obszar pamięci pozostaje w całości poza powierzchnią. Treść pamięci wpisana
+wprost w konfiguracji wymaga zapisania pliku pamięci projektu w katalogu
+roboczym, a warstwa wstrzykiwania parametrów nie zapisuje dziś plików sesji
+ani nie ma na to pola w ustawieniach czy zapytaniu. Przełączniki pamięci
+projektu i użytkownika oraz dodatkowe ścieżki pamięci nie mają odpowiednika
+w pliku ustawień bieżącej powierzchni. Wpięcie wymaga nowego mechanizmu —
+zapisu plików sesji wraz z polem, które je niesie — i leży poza tym plikiem.
+
+Obszar umiejętności poza samym wyłączeniem: wyłączenie obszaru odmawia
+narzędzia obsługującego umiejętności. Dopuszczanie imienne umiejętności,
+katalogi wyszukiwania i samowykrywanie nie mają pola ani przełącznika na
+bieżącej powierzchni, ponieważ imienny słownik reguł tego narzędzia nie jest
+tu potwierdzony, więc jego wpisanie byłoby atrapą.
+
+Obszar tożsamości systemowej jedzie osobną drogą nakładki tożsamości, nie tym
+przekładem.
+
+Obszary kontekstu projektu, kontekstu rozmowy, katalogu roboczego, katalogów
+dodatkowych, wejścia i wyjścia, środowiska wykonania oraz cyklu życia sesji
+wpina warstwa okna — katalog roboczy, mosty, parametry wykonania — albo nie są
+wpięte wcale.
+
+Obszar dostawcy poza adresem punktu końcowego, temperatura próbkowania modelu
+i funkcje beta modelu nie mają odpowiednika na powierzchni wywołania albo mają
+osobny przełącznik, który nie jest dziś wpięty.
+
+## budowa/server/internal/core/handlers_dostep_zbior.go
+Kod punktu odczytywany jest raz na punkt, nie raz na nadanie: okno bywa
+związane z kilkoma nadaniami tego samego mostu, przy odczycie i zapisie
+osobno, więc bez pamięci podręcznej ten sam wiersz punktu szedłby z bazy
+wielokrotnie przy jednym odczycie zbioru.
+
+## budowa/server/internal/core/adapter_rozmowa_petla.go
+Pakiet sesji rozstrzyga, kiedy zacząć obieg koordynatora — pilnuje wybudzeń,
+licznika obiegów i warunku zatrzymania. Ten plik rozstrzyga, jak go zacząć.
+Drugiego silnika tury w rdzeniu nie ma.
+
+Warunki zamknięcia tury i ich kolejność są te same, co przy ustalaniu stanu
+odpowiedzi ze zdarzeń kanału w innym pliku rdzenia, celowo: pętla poznaje
+wynik pracy po powodzie tury, a uczestnik rozmowy po stanie wiadomości, oba
+wychodzą z jednego zamknięcia zdarzenia. Zdarzenie wyniku z oznaczeniem błędu
+liczy się także wtedy, gdy kanał dowiózł turę bez błędu — inaczej tura
+zamknięta błędem przy sprawnym kanale szłaby do pętli jako wynik i bieg
+ogłaszałby ukończenie, choć wiadomość ma stan błędu.
+
+## budowa/server/internal/core/handlers_isolation.go
+Dwanaście komend obsługuje jedno okno i jedną maszynerię: te same jedenaście
+punktów izolacji, ten sam adres zapisu i ten sam rozstrzygacz ośmiu poziomów —
+trzy porty, dla macierzy, profili i podglądu, byłyby trzema prawdami o jednym
+module. Rodzina ma trzy zdarzenia i żadne nie leci z tego pliku, bo rozgłasza
+je adapter, jedyny, który wie, co naprawdę poszło do bazy i pod jaki adres:
+`config.changed`, bo zapis punktu izolacji zmienia wiersz tabeli `ustawienie`
+i idzie tym samym zdarzeniem, co zapis rodziny `config.*`; `isolation.profile.
+changed` przy założeniu, zmianie i skasowaniu profilu; `isolation.policy.
+changed`, gdy polityka obowiązująca okna stała się inna, po zapisie punktu pod
+adresem okna, po przypisaniu profilu do okna i po przełączeniu warstwy okna.
+Zapis samego profilu polityki nie zmienia, bo profil jest szablonem, więc
+`isolation.profile.changed` i `isolation.policy.changed` nie chodzą parami —
+uchwyty w tym pliku nie biorą nadajnika, bo brałyby go po to, żeby go nie
+użyć. Port niewypełniony nie rejestruje niczego: komendy odpowiedzą wtedy
+`isolation.unknown`, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/handlers_komponenty.go
+Adapter rodziny leży w `adapter_modul_komponenty.go`, a schemat rejestru
+w `store/migracja_059_komponenty_strony_glownej.sql`. Komend jest pięć, choć
+rodzina liczy sześć pozycji kontraktu: `component.changed` jest zdarzeniem,
+nie komendą, stoi w dziale zdarzeń kontraktu i niesie ładunek, nie parę
+żądanie-wynik, więc nie rejestruje się go w rejestrze komend, tylko wychodzi
+nadajnikiem po komendzie, która zmieniła stan. Na całą rodzinę przypada jedno
+zdarzenie, wzorem `agent.changed` i `workspace.project.changed`: założenie,
+zmiana, przypisanie i usunięcie rozgłaszają się tym samym zdarzeniem, różniąc
+się polem zmiany, więc Strefa 2 odświeża się z jednej subskrypcji. Usunięcie
+rozgłasza komponent z samym identyfikatorem, bo po usunięciu nie ma już czego
+dobrać z rejestru, tak samo jak `agent.changed` przy usunięciu agenta —
+kontrakt wymaga pola komponentu w ładunku, więc idzie tam identyfikator bytu,
+który zniknął, a nie pusty kształt bez tożsamości. Przypisanie rozgłasza się
+tylko wtedy, gdy doszło do skutku: powtórzone przypisanie niczego nie zmienia,
+a zdarzenie zmiany po czynności, która nic nie zmieniła, byłoby fałszywym
+powiadomieniem.
+
+## budowa/server/internal/core/handlers_kondycja.go
+Rodzina jest przekrojowa, nie modułowa: kondycję czyta Health & Uptime Panel
+modułu Diagnostics, ale też Always On Display i pulpit operatora, a rdzeń nie
+ma prawa wiedzieć, że istnieje moduł Diagnostics, więc port jest własny.
+Zdarzeń rodzina nie ma — kontrakt nie zna zdarzenia zmiany kondycji, więc
+żadna z sześciu komend niczego nie rozgłasza i port nie bierze nadajnika.
+O wyzwoleniu alertu na nieudanej sondzie mówi zdarzenie rodziny alertów, nie
+kondycji. Port niewypełniony nie rejestruje niczego: sześć komend odpowie
+wtedy stanem nieznanym, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/adapter_rozmowa_petla_test.go
+Powód zakończenia tury wychodzi z tej samej trójcy warunków, co stan
+wiadomości, więc oba rozstrzygnięcia muszą się zgadzać: wiadomość ze stanem
+błędu przy biegu ogłoszonym jako ukończony jest sprzecznością, którą
+uczestnik rozmowy widzi na dwóch kontrolkach naraz.
+
+Atrapa kanału mierzy tylko turę, która przeszła kanałem sprawnie, więc kanał
+musi oddać strumień i zwrócić brak błędu.
+
+Kanał w sprawdzianie zamknięcia błędem działa — oddaje strumień i nie zwraca
+błędu — a mimo to zdarzenie wyniku niesie oznaczenie błędu. Wiadomość dostaje
+wtedy stan błędu; bieg ogłoszony przy tym jako ukończony z wynikiem mówiłby
+odwrotnie, niż mówi wiadomość.
+
+Sprawdzian zamknięcia wynikiem pilnuje drugiej strony rozróżnienia: zamknięcie
+bez błędu nadal kończy bieg ukończeniem z wynikiem. Bez tego sprawdzianu
+naprawa mogłaby odebrać pętli ukończenie w ogóle i nikt by tego nie zauważył.
+
+## budowa/server/internal/core/handlers_konfiguracja.go
+Katalog jest sterowany danymi: nowa pozycja okna konfiguracji to nowy wiersz
+migracji, nie nowa gałąź w rdzeniu. Rdzeń nie zna ani jednego klucza z osobna,
+zna wyłącznie sposób odczytania katalogu, więc całe okno konfiguracji
+obsługuje jeden port, a nie obsługiwacz na ustawienie. Odczyt katalogu
+niczego nie zmienia, więc zdarzenia zmiany tu nie ma — wartości zmienia
+rodzina `config.*` i to ona rozgłasza zdarzenie zmiany konfiguracji.
+
+## budowa/server/internal/core/adapter_rozmowa_przerwanie.go
+Kontrakt zna zatrzymanie odpowiedzi jako osobną komendę; klient, który chce
+przerwać i wysłać wiadomość od razu, wysyła najpierw zatrzymanie, potem
+wysłanie.
+
+Odczyt zajętości okna osobny od zapisu zostawiłby szczelinę, w której dwie
+wiadomości nadane w tej samej chwili obie zobaczyłyby okno wolne i obie
+ruszyłyby turę. Okno zajęte nie jest przerywane — wywołujący dostaje fałsz
+i dostaje odmowę.
+
+Przerwanie tury jest wydzielone z zatrzymania przycisku, bo zamykanie okna
+nie jest przyciskiem uczestnika rozmowy: nie dotyczy pętli naprawczej i nie
+odpowiada kontraktem.
+
+## budowa/server/internal/core/handlers_konfiguracja_katalog.go
+Zawężenie katalogu robione jest w rdzeniu, a nie zapytaniem SQL per warunek,
+bo katalog liczy dziesiątki wierszy i jest odczytywany w całości przy
+otwarciu okna konfiguracji — drugie zapytanie na każdy filtr kupiłoby tu
+wyłącznie czterokrotnie większą powierzchnię błędu w warstwie trwałości.
+Filtr niepasujący do żadnego wiersza daje wykaz pusty, nie błąd: okno
+konfiguracji ma się otworzyć także wtedy, gdy kategoria jest jeszcze pusta.
+
+## budowa/server/internal/core/handlers_konfiguracja_odmowy.go
+Cztery rodziny komend, katalog ustawień, dostępy, konta i tożsamość modelu,
+są jednym oknem konfiguracji i muszą odmawiać tak samo — bez tego jedna
+rodzina zwracałaby wskazanie nieznanego wiersza, druga błąd wewnętrzny,
+a trzecia pustą odpowiedź na ten sam przypadek nieznanego identyfikatora.
+Odmowa merytoryczna niesie kod kontraktu i dotyczy jednego wywołania; awaria
+warstwy trwałości idzie dalej bez tłumaczenia, bo rdzeń nie zgaduje za bazę,
+czy zawiódł dysk, czy schemat. Wykaz i odczyt nigdy nie odmawiają z powodu
+pustki — pusto znaczy pusto.
+
+## budowa/server/internal/core/adapter_rozmowa_srodowisko.go
+Katalog roboczy mówi, gdzie model zostawia własne pliki, i pochodzi
+z rozstrzygnięcia dwóch kluczy katalogu ustawień. Nadania dostępu mówią,
+do czego model sięga, i pochodzą ze zbioru nadań tego jednego okna. Ani jedno
+nie wynika z drugiego, więc ani jedno nie jest liczone z drugiego. Brak
+ustalenia katalogu zostawia domyślne zachowanie kanału, a brak nadań zostawia
+proces bez przełącznika konfiguracji mostów. Rozmowa toczy się w obu
+przypadkach.
+
+Mosty do maszyn przysługują z nadania, narzędzia platformy każdemu oknu, które
+w ogóle rozmawia — inaczej model nie otworzyłby modułu bez wglądu w serwer,
+co popychałoby do rozdawania dostępu, którego nikt nie potrzebuje. Granica
+uprawnień siedzi wewnątrz wykazu narzędzi: zapisy zastrzeżone są poza nim
+strukturalnie.
+
+Zestaw narzędzi tury składa się przy budowaniu środowiska, nie przy starcie
+procesu. Wynik jedynego składacza konfiguracji przechodzi przez dopisanie
+zestawu w innym pliku rdzenia: podstawa z definicji eksperta plus doraźne
+dołożenia sesji. Drugiej konfiguracji nie ma; zestaw niezawężony nie dokłada
+nic i tura jedzie pełnym wykazem kontraktu.
+
+Wartość pusta ustawień wykonania nie nadpisuje tego, co przyszło z okna albo
+z wiersza rejestru: brak wskazania na żadnym poziomie znaczy zostawienie
+decyzji kanałowi, a nie jej wyczyszczenie. Dlatego przypisanie jest warunkowe,
+nie bezwarunkowe.
+
+## budowa/server/internal/core/adapter_rozmowa_tozsamosc.go
+Rdzeń nie składa treści systemowej samodzielnie, bierze wynik jedynego
+składacza. Po wyliczeniu osi modelu i konta nakładka dostaje warstwy eksperta
+wskazanego przez okno — jedyne miejsce, w którym tożsamość eksperta wchodzi
+do treści systemowej procesu. Okno przychodzi w wywołaniu w całości, nie
+samym identyfikatorem: kod eksperta jest nastawą okna, więc pytanie o niego
+rejestru drugi raz byłoby powtórzeniem odczytu, który wywołujący już wykonał.
+
+Tryb nakładki — czy tożsamość zamienia treść systemową, czy się do niej
+dokłada — pochodzi z jedynego przekładu trybu w rdzeniu, więc rozstrzygnięcie
+dojeżdża do procesu modelu tą samą drogą, którą pokazuje okno konfiguracji.
+
+## budowa/server/internal/core/adapter_rozmowa_wykonanie.go
+Konfiguracja przechowuje pod kluczem kanal_modelu_zapasowy kod wiersza
+rejestru kanałów, a przełącznik --fallback-model oczekuje identyfikatora
+modelu u dostawcy, stąd potrzeba odwzorowania kodu kanału na identyfikator.
+
+## budowa/server/internal/core/adapter_rozmowa_zapas.go
+Zapas bierze się z parametru wiersza rejestru kanałów, wartości danych na
+równi z innymi parametrami wiersza. Kolejność zapasowa nie jest polityką
+kodu: kod zna wyłącznie jeden krok z kanału na jego zapas.
+
+Jawność przełączenia ma trzy nogi: fragment metadanych konta w strumieniu
+tury pokazuje przełączenie w rozmowie, wiersz w tabeli przełączeń kanału jest
+śladem trwałym, a prowenancja drugiego wywołania pokazuje, czym tura
+faktycznie pojechała. Przełączenie bez którejkolwiek nogi byłoby
+przełączeniem po cichu.
+
+Trzy warunki graniczące uczciwość zapasu: tura przerwana ręcznie nie jest
+odmową kanału; tura, której tekst już poszedł do odbiorcy, nie może pojechać
+drugi raz, bo powtórzyłaby wypowiedź — ta sama reguła co przy rotacji kont;
+tura zamknięta zdarzeniem wyniku skończyła się po stronie modelu, więc nie ma
+czego ponawiać.
+
+Krok przełączenia jest jeden z zamysłu. Łańcuch kolejnych zapasów wykonywałby
+turę kanałem odległym od pierwotnego wyboru o wiele decyzji, z których każda
+zapadłaby bez udziału tego wyboru. Jeden krok jest widoczny i odwracalny;
+łańcuch to polityka, której kod nie zna.
+
+## budowa/server/internal/core/adapter_sesje_projekt.go
+PrzypiszProjekt obsługuje jedną komendą oba warianty żądania — przeniesienie do
+istniejącego projektu oraz przeniesienie z założeniem nowego — ponieważ z punktu
+widzenia historii to ten sam gest: wskazanie, dokąd sesja ma odtąd należeć.
+Rozróżnia je wyłącznie to, czy podano istniejący kod projektu, czy nazwę nowego.
+
+## budowa/server/internal/core/adapter_sesje_usuwanie.go
+Usun jest jedyną drogą utraty danych sesji w produkcie: znacznik kosza zdejmuje
+sesję z historii od ręki, a trwałe czyszczenie startowe po terminie kosza kasuje
+zapis fizycznie — to druga faza tego samego usuwania, nie nowa droga utraty.
+Pomyłkę naprawia odwracalność, nie bramka potwierdzenia: w oknie terminu sesja
+wraca w całości komendą session.restore. Zamknięcie okna i zamknięcie sesji
+zmieniają wyłącznie stan — wiadomości, okna, artefakty i katalog roboczy
+zostają nietknięte. Wskazań może być wiele, bo usunięcie zaznaczonych i
+usunięcie jednej to w historii sesji ten sam gest; wskazanie bez odpowiednika
+nie jest błędem i wraca w polu missingIds, ponieważ usuwanie zbiorcze nie może
+paść przez jedną pozycję usuniętą wcześniej z drugiego okna.
+
+## budowa/server/internal/core/adapter_sesje_bieg.go
+Zatrzymanie sesji nie zamyka jej ani okien, ponieważ uczestnik rozmowy chce
+wstrzymać pracę modelu, a nie stracić miejsce, w którym pracuje. Okna zostają
+otwarte, zapis zostaje w całości, wznowienie pracy jest kolejną wiadomością.
+Okno bez tury w biegu nie jest błędem i po prostu nie trafia do wykazu okien
+przerwanych.
+
+## budowa/server/internal/core/adapter_skroty_tekstowe.go
+Słownik skrótów tekstowych mieszka w rdzeniu, a nie w kliencie, ponieważ skrót
+rozwija się we wszystkich polach tekstowych platformy, a nie w jednym oknie.
+Gdyby mieszkał w kliencie, ta sama fraza rozwijałaby się inaczej na dwóch
+maszynach tego samego profilu, a przeniesienie pracy na inną maszynę
+oznaczałoby przepisywanie słownika od nowa. Samo rozwinięcie wykonuje okno,
+u siebie, w chwili pisania — rdzeń nie widzi pola tekstowego i widzieć go nie
+musi; rdzeń trzyma słownik i pilnuje, żeby jeden profil nie miał dwóch
+rozwinięć tego samego skrótu.
+
+Skrót bywa szablonem z polami do wypełnienia. Rdzeń zna ich nazwy, ale ich nie
+wypełnia — wypełnia je użytkownik w chwili rozwinięcia, a wartości bywają różne
+przy każdym użyciu. Podstawienie czegokolwiek po stronie rdzenia dałoby
+szablon rozwinięty raz na zawsze.
+
+## budowa/server/internal/core/adapter_stan_okna.go
+Odpowiedź StanOkna składa się z trzech warstw, bo z trzech warstw składa się
+samo okno: parametry wykonania zna rejestr nadzorcy, a po restarcie rdzenia —
+wiersz bazy; stan procesu zna rejestr procesów; historię zna baza. Pytanie
+o stan nie ma prawa zerwać niczego, dlatego okno nieznane żadnemu z rejestrów
+otrzymuje odpowiedź pustą ze stanem pending zamiast odmowy.
+
+## budowa/server/internal/core/adapter_sesje_historia.go
+Wszystkie czynności tego pliku są odwracalne — żadna nie traci zapisu.
+Jedyną drogą utraty danych pozostaje usunięcie sesji, obsłużone w osobnym
+pliku. Archiwizacja przenosi sesję poza historię bieżącą, ale zapis zostaje
+w całości w tej samej bazie, oznaczony stanem, i wraca po przywróceniu.
+
+Przy przywracaniu kolejność jest istotna: najpierw schodzi znacznik kosza,
+inaczej sesja zostałaby niewidzialna mimo stanu czynnego, potem stan, na
+końcu powrót do rejestru żywego — wiersz wraca tam już jako czynny.
+
+## budowa/server/internal/core/adapter_transportu.go
+Zależność między rdzeniem a transportem idzie w jedną stronę. Transport nie
+zna rdzenia — zna wyłącznie własne interfejsy Rdzen, Ujscie i Rozglosnik, więc
+da się go wymienić i uruchomić bez rdzenia. Rdzeń zna transport, bo to w
+rdzeniu stoi montaż, który składa serwer i podaje mu to wejście. Prawdą wartą
+pilnowania nie jest brak obu zależności, tylko brak cyklu: dopisanie w
+transporcie importu z rdzenia wywraca kompilację, i o to właśnie chodzi.
+
+Obsluz bierze z ujścia jedno: jego tożsamość. Wchodzi ona do kontekstu żądania
+w całości, ponieważ bez niej rdzeń nie umiałby odpowiedzieć na pytanie, kto
+stoi po drugiej stronie tego gniazda — a od tego zależy powitanie, wyłączenie
+bieżącej sesji ze zmiany hasła oraz sprawca wpisywany w zdarzenia zmiany.
+Poszerzenie tego jednego wpisu jest tu istotą: drugi wpis obok byłby drugą
+prawdą o tym samym gnieździe. Samo ujście dalej nie idzie: rdzeń nie umie
+odesłać czegokolwiek do jednego urządzenia z pominięciem rozgłoszenia, bo to
+byłaby druga droga wyjścia obok nadajnika.
+
+## budowa/server/internal/core/adapter_sesje_kopia.go
+Usunięcie kopii nie rusza źródła, a usunięcie źródła nie rusza kopii, inaczej
+kopiowanie byłoby współdzieleniem pod inną nazwą. Okna kopii zakłada
+nadzorca, nie warstwa danych, ponieważ cykl życia okna należy do pakietu
+sesji — dzięki temu kopia od razu żyje w rejestrze i daje się otworzyć bez
+restartu rdzenia.
+
+Rozmowa programu wywoływanego z wiersza poleceń nie jest przenoszona przy
+kopiowaniu: kopia zaczyna własną, bo wznowienie cudzej rozmowy dołączałoby
+nowe tury do wątku źródła.
+
+## budowa/server/internal/core/adapter_wiazanie_sesji.go
+Pole resumed odpowiedzi Powiaz mówi, czy sesja trwała na rdzeniu mimo
+rozłączenia klienta. Prawda znaczy, że okna mają procesy i stan bieżący;
+fałsz — że sesja wraca z wierszy, więc klient odtwarza historię, a procesów
+nie ma. Sesja nieznana obu warstwom daje bound równe fałsz zamiast błędu:
+klient ma wtedy wejść na stronę główną, a nie stracić połączenie.
+
+Zawężenie okien w zapamietaj dotyczy wyłącznie okien objętych powiązaniem —
+sesja niesie komplet swoich okien niezależnie od tego, które z nich klient
+chce słyszeć.
+
+## budowa/server/internal/core/adapter_sesje_kosz.go
+Kontrakt mówi o komendzie przywracania sesji jako przywróceniu do historii
+bieżącej — i dokładnie to robi powrót z kosza; osobnej komendy kosz nie
+dostaje.
+
+Powrót ma dwie części, bo usunięcie miało dwie: usunięcie sesji zdjęło
+znacznikiem wiersz z wykazów oraz wyprowadziło sesję z rejestru żywego.
+Przywrócenie czyści znacznik i wnosi sesję z powrotem do rejestru — bez tego
+wykaz sesji, czytający rejestr, dalej by jej nie widział, a przywrócenie
+byłoby słowem bez skutku.
+
+Wniesienie do rejestru żywego idzie po przestawieniu stanu w bazie, więc
+wiersz wraca do rejestru już jako czynny, a nie w stanie sprzed usunięcia.
+Ślad niepowodzenia jednej sesji zostaje w dzienniku rdzenia.
+
+## budowa/server/internal/core/adapter_zdarzenia_zaczepow.go
+Dziennik zdarzeń dostaje każde zdarzenie zaczepu wraz z surową kopertą jako
+dowodem, a tabela zamknięć dostaje zdarzenie result wraz ze stanem, który
+z niego wyprowadzono. Zapis następuje po zdarzeniu i nie steruje przebiegiem
+tury.
+
+W stanOdpowiedziZeZdarzen pole is_error rozstrzyga niezależnie od podtypu,
+ponieważ podtyp success występuje także przy is_error równym true. Tura bez
+zamknięcia — na kanale, który zamknięcia nie nadaje, na przykład echo albo
+api — kończy się stanem ukończonym.
+
+## budowa/server/internal/core/adapter_zdarzenia_zaczepow_diagnostyka.go
+Kod permission_denied jest najbliższym słowem kontraktu na odmowę zaczepu:
+zaczep niesie politykę, a jego niezerowe wyjście jest odmową tej polityki.
+Poziom i priorytet zostają przy regułach słownika — warn i low — ponieważ
+odmowa zaczepu jest zdarzeniem zwykłej pracy, a nie awarią.
+
+## budowa/server/internal/core/akcje_rejestr.go
+Wzorcem RejestrAkcji jest rejestr kanałów modelu models.Rejestr — ta sama
+mechanika, inny byt. Rejestr wypełnia port Akcje, więc nie ma osobnego
+adaptera powtarzającego jego treść: jeden byt, jeden moduł.
+
+Wykaz: pierwszy odczyt po nieudanym starcie odbudowuje katalog sam —
+niepowodzenie odbudowy nie unieważnia odpowiedzi, tylko zostawia wykaz pusty.
+
+## budowa/server/internal/core/autor_na_drogach_test.go
+Sprawdzian wykazu dróg zmiany dokumentu wynika z założenia, że przełącznik
+pokazujący wszystko, co zrobił model, stoi na tym, że każda droga zmiany
+zostawia ślad podpisany wykonawcą. Sprawdzian jednej drogi dowodzi jednej
+drogi. Ten wykaz zmierzył pięć dróg i na jednej znalazł dziurę: zapis
+dokumentu zawołany przez wykonawcę zmieniał treść i nie odkładał ani zmiany
+śledzonej, ani wpisu dziennika. Dziura została zamknięta osobną siatką śladu
+wykonawcy; sprawdzian zostaje, żeby nie wróciła i żeby każda nowa droga
+trafiła tu przed odbiorem.
+
+Ręka modelu bierze się z gniazda serwera narzędzi, a pole author sprawdzian
+celowo nie podaje — mierzy to, czego model nie może o sobie zataić.
+
+## budowa/server/internal/core/ciaglosc_rozmowy.go
+Port CiagloscRozmowy jest celowo wąski — dwie czynności na jednej kolumnie.
+Rozmowa należy do okna, nie do sesji: dwa okna jednej sesji prowadzą dwie
+niezależne rozmowy z modelem i muszą mieć osobne wznowienia.
+
+## budowa/server/internal/core/dziennik_rozmowy.go
+Dzięki utrwalaniu w bazie rozmowa przeżywa restart rdzenia. Pamięć procesu
+zostaje jako bufor podręczny o ograniczonej pojemności i ma dwa zadania:
+odpowiadać bez odpytywania bazy w trakcie trwającej tury oraz przejąć
+rozmowę, gdy zapis zawiedzie. Awaria trwałości nie przerywa rozmowy — okno
+schodzi na bufor, zdarzenie trafia do dziennika procesu, tura biegnie dalej.
+
+## budowa/server/internal/core/gotowosc_odsluchu_test.go
+Pomiar odsłuchu jest osobny od pomiaru dyktowania. Komenda
+speech.availability.get obiecuje modelowi sprawdzenie dyktowania albo
+odsłuchu, a przez długi czas mierzyła sam łańcuch transkrypcji: na maszynie
+z Pythonem i modelem, lecz bez pipera i espeaka, meldowała gotowość, a odsłuch
+odmawiał. Pole synthesisAvailable zamyka ten rozjazd. Sprawdzian pilnuje, że
+pomiar odsłuchu mówi prawdę, gdy żadnego syntezatora nie ma.
+
+Brak jest wymuszony zmiennymi środowiska i odcięciem PATH, nie stanem
+maszyny: na stanowisku deweloperskim piper i espeak bywają doinstalowane
+ręcznie, więc sprawdzian liczący na ich nieobecność kłamałby tam, gdzie
+się go uruchamia.
+
+## budowa/server/internal/core/handlers_agenci.go
+Cały obszar modułu Agents ma jedno zdarzenie. Kontrakt daje modułowi wyłącznie
+agent.changed, więc zmiana modelu bazowego, przypisanie umiejętności,
+podłączenie konektora i zmiana uprawnienia rozgłaszają się tak samo jak
+zmiana tożsamości: rodzajem updated wraz z ekspertem po zmianie. Okna modułu
+odświeżają się z jednej subskrypcji, a nie z pięciu.
+
+Dwie komendy oddają co innego niż eksperta: dodanie konektora oddaje
+konektor, a ustawienie uprawnienia — wykaz uprawnień. Zdarzenie ma nieść
+eksperta, więc obsługiwacz dobiera go portem Pobierz. Nieudany dobór nie
+wywraca komendy — zmiana już zaszła, gaśnie wyłącznie rozgłoszenie.
+
+## budowa/server/internal/core/handlers_agent_warstwy.go
+Port WarstwyEksperta jest wtopiony w port Agenci, a nie podawany osobno:
+Agenci wędruje do rejestru jednym wywołaniem zarejestrujAgentow, więc port
+osobny wymagałby dodatkowego pola w Portach i dodatkowej linii w kompozycji.
+Kosztem jest interfejs Agenci szerszy o pięć czynności.
+
+Kontrakt daje modułowi Agents wyłącznie zdarzenie agent.changed, więc zapis
+warstwy i przypisanie wtyczki rozgłaszają się tak samo jak przypisanie
+umiejętności: rodzajem updated wraz z ekspertem po zmianie.
+
+Plik nie sprawdza wartości — nazwa warstwy i tryb podania są sprawdzane
+w adapterze, przy katalogu wartości kontraktu. Nie odmawia też z powodu
+niewpiętego repozytorium: odmowa jest odpowiedzią domeny, a nie dyspozycji.
+
+## budowa/server/internal/core/handlers_agent_zakres.go
+Port ZakresEksperta jest osobny od portu Agenci, bo Agenci opisuje bibliotekę
+ekspertów — założenie, wykaz, zmianę, usunięcie — i wtopienie dwunastu
+czynności zakresu rozdęłoby go ponad czytelność. Osobny port kosztuje jedno
+pole w Portach i jedną linię w kompozycji.
+
+Kontrakt daje modułowi Agents wyłącznie zdarzenie agent.changed, więc każda
+komenda zmieniająca rozgłasza się rodzajem updated wraz z ekspertem po
+zmianie, tym samym wzorcem co w module Agenci. Komendy odczytujące milczą:
+wykaz niczego nie zmienia, więc nie ma czego rozgłaszać.
+
+## budowa/server/internal/core/handlers_akcje.go
+Rdzeń nie zna ani jednej akcji — zna wyłącznie sposób jej odczytania. Nazwa
+komendy jest parametrem, a nie literałem w tym pliku: podaje ją punkt
+składania stałą pakietu shared, dokładnie jak przy pozostałych domenach.
+Pusta nazwa albo brak portu nie rejestruje niczego. Komenda odpowie wtedy
+kodem unknown, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/handlers_alerty.go
+Rodzina alert.* jest przekrojowa: reguły czyta panel alertów modułu
+Diagnostics, ale wyzwolenie dociera też do wyświetlacza stale widocznego
+i do poczty, a rdzeń nie ma prawa wiedzieć, że moduł Diagnostics istnieje.
+Bez zdarzenia alert.triggered użytkownik dowiadywałby się o wyzwoleniu
+dopiero przy następnym otwarciu wykazu, czyli wtedy, kiedy i tak już patrzy.
+Port niewypełniony nie rejestruje niczego: pięć komend odpowie wtedy kodem
+unknown, a pozostałe domeny pracują bez zmian.

@@ -1,21 +1,6 @@
-// Plik wpina siedem komend rodziny `aod.*` — nakładki Always On Display, czyli
-// trybu stałej obecności asystenta.
-//
-// Cała nakładka stoi na jednym porcie: siedem komend obsługuje jedną
-// powierzchnię i jedno pojęcie stanu, więc osobne porty stanu, rozmowy
-// i obserwacji byłyby trzema prawdami o jednym bycie. Sam adapter niczego nie
-// posiada — składa odpowiedzi z telemetrii, nadzorcy sesji, portu rozmowy,
+// Plik rejestruje siedem komend rodziny `aod.*`, obsługujących nakładkę stałej
+// obecności asystenta przez jeden wspólny port telemetrii, sesji, rozmowy,
 // modułu Assistant i katalogu akcji.
-//
-// Rodzina nie ma zdarzenia własnego. Rozgłasza się wyłącznie to, co naprawdę
-// powstało: wiadomość założona przez `aod.chat.send` idzie zdarzeniem
-// `message.changed` — tym samym, którym idzie wiadomość z okna rozmowy, bo jest
-// to ta sama wiadomość w tej samej historii. Zlecenie założone przez
-// `aod.voice.command` rozgłasza moduł Assistant (`assistant.action.changed`),
-// więc obsługa komendy nie rozgłasza go drugi raz.
-//
-// Port niewypełniony nie rejestruje niczego: komendy odpowiadają wtedy
-// `aod.unknown`, a pozostałe domeny pracują bez zmian.
 package core
 
 import (
@@ -41,20 +26,16 @@ type NakladkaAod interface {
 	// PolecenieGlosoweNakladki obsługuje `aod.voice.command`.
 	PolecenieGlosoweNakladki(ctx context.Context, z shared.AodVoiceCommandRequest) (shared.AodVoiceCommandResponse, error)
 
-	// WyslijZNakladki obsługuje `aod.chat.send`. Oddaje przyjętą wiadomość obok
-	// odpowiedzi kontraktu, bo odpowiedź niesie sam identyfikator, a rozgłoszenie
-	// `message.changed` potrzebuje całej wiadomości — tej samej, którą rozgłasza
-	// `message.send`.
+	// WyslijZNakladki obsługuje `aod.chat.send` i oddaje przyjętą wiadomość obok
+	// odpowiedzi kontraktu.
 	WyslijZNakladki(ctx context.Context,
 		z shared.AodChatSendRequest) (shared.AodChatSendResponse, shared.Message, error)
 
 	// WyciszeniaNakladki obsługuje `aod.mute.get`.
 	WyciszeniaNakladki(ctx context.Context,
 		z shared.AodMuteGetRequest) (shared.AodMuteGetResponse, error)
-	// PrzestawWyciszenieNakladki obsługuje `aod.mute.set` — założenie wyciszenia
-	// i jego zniesienie idą jedną komendą. Oddaje wyciszenie objęte zmianą obok
-	// odpowiedzi kontraktu, bo rozgłoszenie `aod.mute.changed` niesie i jedno
-	// wyciszenie, i wykaz po zmianie.
+	// PrzestawWyciszenieNakladki obsługuje `aod.mute.set` — jedna komenda ustawia
+	// i znosi wyciszenie.
 	PrzestawWyciszenieNakladki(ctx context.Context,
 		z shared.AodMuteSetRequest) (shared.AodMuteSetResponse, shared.AodMute, error)
 	// ZglosSygnalNakladki obsługuje `aod.signal.report`.
@@ -69,7 +50,8 @@ type NakladkaAod interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ NakladkaAod = (*adapterNakladkiAod)(nil)
 
-// zarejestrujNakladkeAod wpina siedem komend rodziny `aod.*`.
+// zarejestrujNakladkeAod wpina siedem komend rodziny `aod.*` w router, wiążąc
+// każdą z metodą portu NakladkaAod.
 func zarejestrujNakladkeAod(r *Rejestr, n NakladkaAod, e *emiter) {
 	if r == nil || n == nil {
 		return
@@ -98,10 +80,8 @@ func zarejestrujNakladkeAod(r *Rejestr, n NakladkaAod, e *emiter) {
 	r.Zarejestruj(shared.CommandAodMuteSet,
 		obsluz(func(ctx context.Context, z shared.AodMuteSetRequest) (shared.AodMuteSetResponse, error) {
 			odpowiedz, wyciszenie, err := n.PrzestawWyciszenieNakladki(ctx, z)
-			// Rozgłoszenie jest tu połową funkcji, nie ozdobą: bez niego Operator
-			// wyciszałby w jednej powłoce, a sugestie wchodziłyby w drugiej — i to
-			// jest dokładnie ta szkoda, którą ta dobudowa znosi. Wykaz powtórzony
-			// bez zmiany nie jest zdarzeniem.
+			// Rozgłoszenie odróżnia zdarzenie realne od powtórzonego bez zmiany,
+			// zapobiegając rozjazdowi powłok.
 			if err == nil && odpowiedz.Changed {
 				e.wyciszenieNakladki(rodzajZmianyWyciszenia(z.Muted), wyciszenie, odpowiedz.Mutes)
 			}

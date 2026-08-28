@@ -10,36 +10,7 @@ import { wywolaj } from '../../protokol/wywolanie';
 import { opisOdmowy } from '../../komponenty/odmowa';
 
 /**
- * Dyktowanie — wymóg osobisty Właściciela, funkcja działająca.
- *
- * ── Droga jest jedna i już stoi w kontrakcie ────────────────────────────────
- * Nie zakładamy drugiej: `speech.availability.get` sprawdza silnik,
- * `speech.audio.upload` przyjmuje bajty nagrania i oddaje `audioRef`,
- * `speech.transcribe` zamienia nagranie na tekst. Nagranie NIE OPUSZCZA maszyny
- * rdzenia — tak stanowi kontrakt tych komend i tak tu zostaje: bajty jadą do
- * magazynu nagrań rdzenia, nie do sieci.
- *
- * ── Silnik mowy jedzie z pakietem serwera ───────────────────────────────────
- * Rozstrzygnięcie Właściciela: silnik mowy jest **składnikiem pakietu serwera**,
- * razem z rozpoznaniem pisma i obsługą archiwów — nie rzeczą, którą Operator
- * sobie doinstalowuje. Dyktowanie jest więc funkcją, na którą można liczyć,
- * a nie możliwością warunkową.
- *
- * Sprawdzenie dostępności zostaje, bo zmieniło znaczenie: odmowa nie mówi już
- * „tej funkcji nie ma w produkcie", lecz **„ten serwer jest niekompletny"** —
- * i nazywa brakujący składnik. Brak silnika jest usterką wdrożenia serwera,
- * nie ograniczeniem produktu, i tak brzmi zdanie, które Operator zobaczy.
- *
- * Trzy stany odpowiedzi `speech.transcribe` są rozróżnione, bo znaczą różne
- * rzeczy: rozpoznano tekst (`processed` prawda, `transcript` niepusty),
- * przetworzono, lecz mowy nie było (`processed` prawda, `transcript` pusty — to
- * FAKT pomiaru, nie awaria) i nie przetworzono (odmowa).
- *
- * ── Dwa miejsca dyktowania, jeden rachunek ──────────────────────────────────
- * Ten sam przycisk obsadza wiersz polecenia (treść polecenia dla modelu)
- * i treść dokumentu (dyktafon wzorem wstążki pakietu biurowego). Różni je
- * wyłącznie to, komu oddają rozpoznany tekst — `naTekst` — i napis na przycisku.
- * Druga droga nagrywania rozjechałaby się z pierwszą przy pierwszej poprawce.
+ * Interfejs MowaZrodlo niesie drogę dyktowania: sprawdzenie dostępności silnika mowy, wniesienie nagrania do magazynu rdzenia i jego przepisanie na tekst.
  */
 export interface MowaZrodlo {
   /** Uczciwy stan silnika mowy. */
@@ -91,7 +62,7 @@ export function utworzMowaZrodlo(kanal: Kanal): MowaZrodlo {
   };
 }
 
-/** Czym mikrofon rozporządza po stronie karty. */
+/** Interfejs ZapleczeMikrofonu niesie to, czym mikrofon rozporządza po stronie karty: źródło komend, tożsamość sesji i okna, oraz odbiór tekstu. */
 export interface ZapleczeMikrofonu {
   zrodlo: MowaZrodlo;
   /** Karta sesji, której nagranie dotyczy. */
@@ -106,7 +77,7 @@ export interface ZapleczeMikrofonu {
   etykieta?: string;
 }
 
-/** Przycisk mikrofonu wraz z jego stanem. */
+/** Interfejs PrzyciskMikrofonu niesie przycisk mikrofonu wraz z jego stanem: elementem, przerwaniem nagrania i sprawdzeniem, czy nagranie trwa. */
 export interface PrzyciskMikrofonu {
   element: HTMLButtonElement;
   /** Przerywa nagranie, gdy trwa — okno chowające wiersz polecenia woła to. */
@@ -115,7 +86,7 @@ export interface PrzyciskMikrofonu {
   nagrywa(): boolean;
 }
 
-/** Typ treści nagrania preferowany; przeglądarka bez niego dostaje wybór własny. */
+/** Stała TYP_NAGRANIA niesie preferowany typ treści nagrania; przeglądarka bez jego obsługi dostaje wybór własny formatu. */
 const TYP_NAGRANIA = 'audio/webm';
 
 export function utworzPrzyciskMikrofonu(zaplecze: ZapleczeMikrofonu): PrzyciskMikrofonu {
@@ -204,12 +175,7 @@ export function utworzPrzyciskMikrofonu(zaplecze: ZapleczeMikrofonu): PrzyciskMi
     );
   }
 
-  /**
-   * Prosi przeglądarkę o mikrofon.
-   *
-   * Odmowa Operatora i brak urządzenia to dwie różne rzeczy i obie mają tu
-   * własne zdanie — „mikrofon nie działa" nie powiedziałoby, czego szukać.
-   */
+  /** Prosi przeglądarkę o mikrofon; odmowa Operatora i brak urządzenia mają tu osobne zdania. */
   async function pobierzStrumien(): Promise<MediaStream | null> {
     if (navigator.mediaDevices === undefined) {
       zaplecze.naZdanie(
@@ -307,18 +273,13 @@ export function utworzPrzyciskMikrofonu(zaplecze: ZapleczeMikrofonu): PrzyciskMi
 }
 
 /**
- * Bajty nagrania w postaci base64, bez przedrostka schematu danych.
- *
- * Kontrakt `speech.audio.upload` żąda samych bajtów, a `FileReader` oddaje je
- * z przedrostkiem `data:…;base64,` — przedrostek schodzi tutaj, w jednym
- * miejscu, żeby nie jechał do rdzenia jako część nagrania.
+ * Funkcja naBase64 zwraca bajty nagrania w postaci base64, bez przedrostka schematu danych, który FileReader dokłada, a rdzeń nie oczekuje.
  */
 async function naBase64(dane: Blob): Promise<string> {
   const bufor = await dane.arrayBuffer();
   const bajty = new Uint8Array(bufor);
   let napis = '';
-  // Porcjami, bo `String.fromCharCode` z rozwinięciem całej tablicy przekracza
-  // dopuszczalną liczbę argumentów wywołania przy nagraniu dłuższym niż chwila.
+  // Porcjami, bo String.fromCharCode z całą tablicą naraz przekracza limit argumentów wywołania.
   const porcja = 8192;
   for (let poczatek = 0; poczatek < bajty.length; poczatek += porcja) {
     napis += String.fromCharCode(...bajty.subarray(poczatek, poczatek + porcja));

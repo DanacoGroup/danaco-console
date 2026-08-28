@@ -7533,3 +7533,20 @@ zmienia się w filtrze panelu zasobów.
 
 ## budowa/klient-poprzedni/src/modele/formularz-konta.ts
 Pole poświadczenia jest wyłącznie wejściem: kontrakt nie zwraca zapisanej wartości żadną komendą, a puste pole przy zmianie zostawia poświadczenie dotychczasowe, zamiast je kasować. Komenda zmiany konta nie przyjmuje rodzaju, więc przy zmianie konta rodzaj jest plakietką informacyjną, a nie kontrolką. Katalog konfiguracji dotyczy wyłącznie kont programu code CLI; dla pozostałych rodzajów pole znika w całości.
+
+## budowa/klient-poprzedni/src/moduly/design/kolekcje-designu.ts
+Kolekcja jest bytem osobnym od etykiety, choć obie grupują zasoby. Etykieta jest słowem: nie ma
+nazwy własnej ani porządku, a przemianowanie jej wymaga przepisania każdego zasobu z osobna.
+Kolekcja ma nazwę, opis i kolejność, i przeżywa odświeżenie okna, bo leży w bazie stanowiska.
+
+Panel nie wysyła nigdy stanu kolekcji, tylko zmianę jednego zasobu: kolekcja bywa duża,
+a przepisywanie jej przy każdej zmianie jest drogą do zgubienia zawartości, gdy dwa okna wyślą
+swój stan naraz.
+
+Liczba zasobów w podpisie pochodzi z odpowiedzi rdzenia, a nie z długości wykazu, który okno akurat
+trzyma. Prawdą o kolekcji jest to, co w niej leży w bazie.
+
+Zawężenie do zasobu ukryłoby te kolekcje, do których Operator akurat chce zasób dołożyć.
+
+Zasób, który w kolekcji już był albo go w niej nie było, nie zmienił niczego, a potwierdzenie
+zmiany byłoby potwierdzeniem czynności, która się nie odbyła.

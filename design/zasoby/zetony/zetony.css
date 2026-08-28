@@ -172,6 +172,7 @@
    * ==================================================================== */
   --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
   --dn-wym-ikonowy: 34px;          /* przycisk ikonowy */
+  --dn-wym-pole-dotyku: 24px;      /* najmniejsze pole trafienia — WCAG 2.5.8 */
   --dn-wym-belka-btn: 46px;        /* przycisk sterowania oknem — szerokość wg Windows */
   --dn-wym-belka: 48px;            /* belka tytułowa okna — jej wysokość wyznacza szerokość szyny nawigacji */
   --dn-wym-stan: 28px;             /* pasek stanu (dolny) */

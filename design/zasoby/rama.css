@@ -73,7 +73,7 @@
 .dn-belka-btn {
   display: grid;
   place-content: center;
-  width: 46px;
+  width: var(--dn-wym-belka-btn);
   height: var(--dn-wym-belka);
   border: 0;
   background: transparent;

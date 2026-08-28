@@ -7729,3 +7729,22 @@ nowa. Sprawdzane są cztery pola, bo tylko tyle niesie żądanie i tyle wraca
 w odpowiedzi rdzenia; identyfikator terminu sprawdzany jest wyłącznie przy
 edycji, bo przy terminie nowym nadaje go rdzeń i nie ma go z czym
 porównać.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-dokumentu-studio.ts
+Obszar studio nie ma komendy przyjmującej plik ani wydającej dokument w formacie wyjściowym:
+studio.document.open ze wskazaniem ścieżki albo pliku Library zakłada dokument pusty,
+a studio.document.save przyjmuje sam napis. Cyfryzacja materiału i zamiana formatu są
+w kontrakcie, ale w obszarze document — i to one są jedynym wejściem modułu od strony pliku
+oraz jedynym wyjściem do formatu binarnego. Moduł ich nie kopiuje: woła je wprost, tak samo
+jak woła window.list i action.list.
+
+Wywołanie idzie zwykłą drogą protokołu, nie osłoną funkcji wywolajUczciwie z odmowa-rdzenia.ts:
+ta rozpoznaje koperty studio.unknown i window.unknown, a obszar document własnego zdarzenia
+nierozpoznanego nie ma — kontrakt kieruje go na zdarzenie połączenia, więc odmowa przychodzi
+kopertą ze statusem i korelacja rozpoznaje ją bez pomocy.
+
+Ścieżka pliku jest ścieżką po stronie rdzenia. Klient dysku nie czyta i nie zapisuje — podaje
+wskazanie i oddaje wynik odpowiedzi rdzenia.
+
+Zamiana formatu: treść jedzie polem content, a nie ścieżką, bo dokument Studia mieszka
+w rdzeniu pod studio.document.save, a nie na dysku, więc wskazanie ścieżki oddawałoby do
+zamiany plik, którego treść mogła się już rozejść z treścią zaakceptowaną w module.

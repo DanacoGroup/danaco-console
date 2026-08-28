@@ -6953,3 +6953,16 @@ jest wywołaniem świata zewnętrznego i test musi umieć podstawić w jej miejs
 własną. Pominięcie takiego pola przy zmianie punktu zostawiłoby wiersz przy
 dawnym urządzeniu i potwierdziłoby zmianę, której nie było, dlatego wskazanie
 urządzenia, które nie jest identyfikatorem katalogu, wraca odmową.
+
+## budowa/server/internal/core/handlers_dostep_sprawdzenie.go
+Katalog leżący na tej maszynie sprawdza się wprost, istnieniem i
+otwieralnością ścieżki. Maszyny za mostem MCP rdzeń sam nie odpyta: most jest
+procesem klienta modelu, nie klientem rdzenia, dlatego punkt mostowy bez
+wpiętej próby wraca stanem nierozpoznanym wraz z powodem, nie stanem
+nieosiągalnym — stan nierozpoznany nie wygasza kontrolki, a zgadywanie
+niedostępności wyłączałoby operatorowi sprawny most. Katalog widoczny stąd
+jest katalogiem osiągalnym i tak wraca; katalog niewidoczny stąd nie jest
+jeszcze katalogiem nieosiągalnym, bo punkt rodzaju localDirectory należy do
+wskazanego urządzenia, a rdzeń nie musi pracować na tym samym — rozstrzygnięcie
+należy do agenta urządzenia, a do czasu jego wpięcia rdzeń mówi wprost, czego
+nie wie.

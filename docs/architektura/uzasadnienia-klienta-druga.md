@@ -6496,3 +6496,20 @@ Wykaz komend nie jest tu przepisany — powstaje z wywołań czynności, a poró
 kontraktu, więc komenda dołożona do kontraktu i pominięta w oknie zostanie tu nazwana. Pozostałe
 sprawdziany dotyczą bytów rozstrzygalnych bez rdzenia: kolejności kart w kolumnie tablicy, paska
 postępu, wcięcia drzewa stron i odnośników wyjętych z treści notatki.
+
+## budowa/klient-poprzedni/src/powloka/zrodlo-nawigacji.ts
+Jedna odpowiedzialność: zamiana odpowiedzi rdzenia na wykaz nawigacji. Plik nie buduje ani jednego
+elementu i nie zna nazwy ani jednej komendy — bierze gotowe opakowania warstwy protokołu. Wejście do
+środowiska oddaje środowisko razem z jego modułami, każdy z katalogiem okien operacyjnych, więc jedno
+wywołanie wystarcza na cały wykaz. Wykaz modułów zawężony do środowiska jest drugim podejściem na
+wypadek, gdy wejście oddało wykaz pusty mimo nawigacji modułowej. Nieudane wywołanie daje wykaz pusty
+wraz z treścią odmowy, a nie zaszytą listę modułów — kopia katalogu w kliencie byłaby drugim źródłem
+prawdy o tym, co rdzeń niesie.
+
+## budowa/klient-poprzedni/src/moduly/workspace/wspolpraca-projektu.ts
+Okno gromadzi czynności przekrojowe: żadna z nich nie należy do jednego bytu projektu, wszystkie
+dotyczą projektu jako całości. Wyszukiwanie idzie po słowach nad zadaniami, notatkami, plikami,
+ustaleniami i instrukcjami — dopasowanie po znaczeniu prowadzi osobna rodzina komend i okno go nie
+obiecuje. Treść pliku wchodzi do wyszukiwania dopiero po wydobyciu: plik bez wyciągu daje się
+znaleźć wyłącznie po nazwie, dlatego przycisk wydobycia stoi obok pola wyszukiwania, a nie
+w innym oknie.

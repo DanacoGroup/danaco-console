@@ -7665,3 +7665,23 @@ Złożenie jest czystym przełożeniem stanu zebranego przez `zrodlo-pulpitu.ts`
 Kolumny matrycy pochodzą z rdzenia w całości — kod, nazwa, motto i kolejność z odczytu `environment.list`. Przed pierwszą odpowiedzią kolumn nie ma: nagłówek pulpitu mówi „oczekiwanie na rdzeń", a matryca pokazuje ten sam stan zamiast zastępczego kompletu kolumn zbudowanego z kodów modułów.
 
 Treść karty środowiska strony głównej jest osobna od motta kolumny matrycy i nie jest tu powielana. Kolejność kolumn `Environment.order` odpowiada kolumnie `srodowisko.kolejnosc`; klient nie sortuje po nazwie ani po kodzie, bo porządek kart jest zapisany w bazie.
+
+## budowa/klient-poprzedni/src/moduly/agents/archiwum-ekspertow.ts
+Historia wersji ma własny panel i tu jej nie ma: archiwum odpowiada na pytanie, gdzie ekspert poszedł, a historia — co się z jego tożsamością działo. Dwa wykazy wersji w jednym oknie byłyby dwiema prawdami o tym samym. Kontrolka pyta rdzeń, a nie stałą: wywołanie dostaje wyłącznie czynność, którą rdzeń melduje przy powitaniu połączenia; pozostałe zostają kontrolką nazywającą brak. Dzięki temu panel mówi prawdę także przed rdzeniem starszym niż on sam — przy wdrożeniach on-premise to stan normalny. Archiwizacja nie jest wyłączeniem: wyłączony ekspert zostaje w bibliotece i da się go edytować, a wyłączenie znaczy „nie obsługuje okien”, nie „zeszedł z drogi”. Archiwum ma własne komendy — przywrócenie dotyczy pozycji, nie panelu, i stoi przy każdym wierszu wykazu, bez kontrolki zbiorczej, która musiałaby pytać, którego eksperta dotyczy.
+
+## budowa/klient-poprzedni/src/moduly/agents/archiwum-ekspertow.ts (wiersz czynności)
+Czynność, którą rdzeń melduje, dostaje kontrolkę wywołującą. Czynność bez drogi zostaje kontrolką klikalną, która naciśnięta nazywa brak dymkiem, zamiast milczeć albo być wygaszona. Czynność pozycji nie ma kontrolki zbiorczej — jej miejsce jest przy wierszu wykazu.
+
+## budowa/klient-poprzedni/src/moduly/design/okna-warsztatow-designu.ts
+Bez tych okien siedemdziesiąt pięć komend byłoby funkcjami, których Operator nie ma. Nastawy stoją
+danymi, nie pięcioma plikami po jednym oknie: różnią się kodem katalogu rdzenia, tytułem, rolą,
+grupą czynności i zdaniem objaśnienia, a poza tym są tym samym oknem.
+
+Kody są kodami katalogu rdzenia. Bez wiersza w katalogu klient postawiłby okno, o którym rdzeń nie
+wie: wykaz modułów zaniżałby zakres modułu, a pas uczciwości meldowałby, że okno stoi poza
+katalogiem.
+
+Pięć źródeł byłoby pięcioma połączeniami do tego samego kanału. Kanał wchodzi wprost, a nie ze
+stanu modułu: stan oddaje źródła obszaru Design i zaplecza, a warsztaty idą dowolną komendą
+z katalogu czynności. Dołożenie kanału do stanu tylko dla nich otwierałoby wszystkim oknom drogę
+obok źródeł, które stan dla nich trzyma.

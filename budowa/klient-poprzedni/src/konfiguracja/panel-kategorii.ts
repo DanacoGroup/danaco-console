@@ -4,23 +4,10 @@ import type { StanKonfiguracji } from './stan-konfiguracji';
 import { polePozostajeWidoczne } from './widocznosc-pol';
 
 /**
- * Prawa kolumna okna: formularz jednej kategorii zbudowany z katalogu.
- *
- * Panel nie zna ani jednego pola z góry. Dostaje kategorię, pyta stan
- * o należące do niej pozycje katalogu i buduje po jednym wierszu na pozycję.
- * Zaszycie tu listy pól oznaczałoby, że dodanie ustawienia wymaga zmiany kodu
- * w dwóch miejscach — czego to okno ma właśnie nie robić.
- *
- * Kategoria bez pozycji nie daje pustego prostokąta: mówi wprost, że katalog
- * nie ma dla niej wierszy.
- *
- * Jedna kategoria ma tu przejście dalej. Zakres „Izolacja" jest rozwinięty
- * w osobnym, trzypanelowym oknie punktów izolacji (rozdz. 6 Modelu
- * konfiguracji), bo ma własną złożoność: dwa rodzaje izolacji, siedem poziomów
- * zasięgu i profile. Jedenaście wierszy katalogu pokazywanych tutaj to te same
- * klucze, ale bez selektora zasięgu, macierzy i podglądu polityki efektywnej —
- * przejście stoi więc nad formularzem, żeby ta pozycja nawigacji prowadziła
- * tam, gdzie zakres jest konfigurowany w całości.
+ * Prawa kolumna okna: formularz jednej kategorii zbudowany z katalogu. Panel
+ * nie zna pola z góry — dostaje kategorię, pyta stan o jej pozycje i buduje
+ * wiersz na pozycję. Kategoria bez pozycji mówi wprost, że katalog nie ma dla
+ * niej wierszy.
  */
 export interface PanelKategorii {
   /** Kolumna treści osadzana w ciele okna. */
@@ -32,11 +19,9 @@ export interface PanelKategorii {
 }
 
 /**
- * Kod kategorii katalogu rozwiniętej we własnym oknie — jedyna nazwa zakresu,
- * którą ten plik zna. Nie jest to lista pól zaszyta w kodzie interfejsu, tylko
- * punkt styku dwóch okien: katalog niesie wiersze, a to, że pozycja „Izolacja"
- * otwiera okno punktów izolacji, jest wymaganiem struktury okna (rozdz. 3.2
- * Modelu konfiguracji), nie metadaną ustawienia.
+ * Kod kategorii katalogu rozwiniętej we własnym oknie punktów izolacji —
+ * jedyna nazwa zakresu, którą ten plik zna; punkt styku dwóch okien, nie
+ * lista pól zaszyta w kodzie interfejsu.
  */
 const KATEGORIA_IZOLACJI = 'izolacja';
 
@@ -116,12 +101,8 @@ export function utworzPanelKategorii(
 
 /**
  * Przejście do okna punktów izolacji nad formularzem zakresu „Izolacja".
- *
- * Zdanie mówi, czego formularz poniżej nie daje, zamiast samego „otwórz" —
- * różnica między jedenastoma wierszami katalogu a oknem z selektorem zasięgu
- * i podglądem polityki efektywnej jest powodem, dla którego to przejście tu
- * stoi. Przycisk nie zastępuje formularza i niczego nie wygasza: obie drogi
- * pozostają czynne.
+ * Zdanie mówi, czego formularz poniżej nie daje, zamiast samego „otwórz".
+ * Przycisk nie zastępuje formularza: obie drogi pozostają czynne.
  */
 function przejscieDoIzolacji(naOtwarcie: () => void): HTMLElement {
   const zdanie = document.createElement('p');
@@ -147,12 +128,9 @@ function przejscieDoIzolacji(naOtwarcie: () => void): HTMLElement {
 const TYTUL_BEZ_KATEGORII = 'Brak kategorii ustawień';
 
 /**
- * Zdanie stanu pustego dobrane do fazy odczytu.
- *
- * Ten sam pusty katalog znaczy co innego w trakcie pytania rdzenia, co innego
- * po jego odmowie, a co innego, gdy rdzeń odpowiedział i naprawdę nie ma ani
- * jednej kategorii. Jedno zdanie na trzy przypadki kazałoby zgadywać, czy
- * czekać, czy działać.
+ * Zdanie stanu pustego dobrane do fazy odczytu: ten sam pusty katalog znaczy
+ * co innego w trakcie pytania rdzenia, co innego po odmowie, a co innego,
+ * gdy kategorii naprawdę nie ma.
  */
 function zdanieBezKategorii(stan: StanKonfiguracji): string {
   switch (stan.faza()) {
@@ -167,13 +145,9 @@ function zdanieBezKategorii(stan: StanKonfiguracji): string {
 }
 
 /**
- * Stan pusty formularza — rodzina `.dn-pusty-stan`.
- *
- * Mówi, że brak treści jest oczekiwany i nie jest błędem ładowania — o błędzie
- * mówi komunikat blokowy nad stopką okna.
- *
- * Eksportowany, bo panel obszarów konfiguracji sesji potrzebuje dokładnie tego
- * samego stanu pustego; różni je wyłącznie klasa rodziny.
+ * Stan pusty formularza — rodzina `.dn-pusty-stan`. Mówi, że brak treści jest
+ * oczekiwany, nie błędem ładowania. Eksportowany, bo panel obszarów sesji
+ * potrzebuje tego samego stanu pustego.
  */
 export function stanPusty(
   tytul: string,

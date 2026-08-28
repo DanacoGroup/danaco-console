@@ -6940,3 +6940,12 @@ nie ma wcale. Miejsce na znacznik otwarcia jest zajęte zawsze, bo
 przełączenie panelu zmienia jego widoczność, nie szerokość wiersza.
 Działania sesji nie są panelami i nie powstają tutaj — doklejają się za
 kreską, a kreska rysuje się tylko wtedy, gdy jest co za nią postawić.
+
+## budowa/klient-poprzedni/src/moduly/studio/powiazanie-rozmowy.ts
+Okno rozmowy jest jednym oknem na cały produkt i przy zmianie modułu przestawia wygląd,
+narzędzia oraz kontekst; stoi na scenie sesji, obok obszaru modułu, nie wewnątrz niego, więc
+moduł z własnym czatem prowadziłby drugi zapis tej samej rozmowy. Pasek nazywa to powiązanie
+i wylicza narzędzia promptu, które niesie profil Studia, bo bez tego nie widać, że operacje
+panelu narzędzi zleca się z okna komunikacji sesji. Liczby okien rozmowy pasek nie podaje, bo
+profil Studia stoi na granicy niepodanej, więc wypisanie stamtąd liczby podawałoby wartość
+zastępczą jako ustaloną.

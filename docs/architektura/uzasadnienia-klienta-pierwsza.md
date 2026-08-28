@@ -7920,3 +7920,26 @@ ma w historii.
 Bilans zamiast ciszy także w oknie: pole, które rdzeń wypełnił powodem niepowodzenia, ma być
 widoczne w meldunku. Meldunek „gotowe" nad odpowiedzią z trzema nieudanymi rozmiarami byłby tym
 samym kłamstwem, przed którym broni się rdzeń.
+
+## budowa/klient-poprzedni/src/aod/awatar-aod.ts
+Pływający awatar jest CAŁĄ powierzchnią funkcji Always On Display w stanie spoczynku:
+pojedyncze koło przy prawej krawędzi obszaru roboczego, bez etykiety, bez ramki
+kontenera, ponad całą powłoką aplikacji. Nie znika przy przełączeniu środowiska
+ani modułu, bo warstwa, w której siedzi, leży poza obszarem podmienianym przez
+moduł.
+
+Żaden ze stanów nie jest niesiony samą barwą: przy każdym stoi etykieta dostępności
+i tytuł, a stany „sugestia oczekująca” i „waga wysoka” niosą dodatkowo plakietkę
+liczbową — stan nigdy samym kolorem.
+
+Awatar nie zna kanału, kolejki ani dymka. Przyjmuje dwa wywołania zwrotne
+(kliknięcie, kliknięcie podwójne) i cztery czynności nastawcze; co za nimi
+stoi, rozstrzyga `warstwa-aod.ts`.
+
+Zero jako liczba oczekujących sugestii chowa plakietkę samo z siebie, stan „ukryta
+(zero)”. Plakietka ukryta ustawieniem wyciszenia idzie osobno przez
+`ustawPlakietkeWidoczna`.
+
+Przeglądarka wysyła `click` przed `dblclick`, więc bez tego odstępu każde kliknięcie
+podwójne otwierałoby najpierw dymek. Odstęp jest krótszy niż czas reakcji na otwarty
+dymek, więc pojedyncze kliknięcie nadal działa od ręki.

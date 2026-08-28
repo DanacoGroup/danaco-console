@@ -8309,3 +8309,25 @@ Odpięcie idzie bez pytania o potwierdzenie, a puste pole identyfikatora procesu
 wolno wysłać — pustą wartość ocenia rdzeń (`validation_failed`). `detach`
 procesu nieprzypiętego kończy się `not_found`; to stan poprawny, nie awaria,
 i zdanie odmowy z `odmowy-aod.ts` mówi to wprost.
+## budowa/klient-poprzedni/src/aod/sekcja-podpowiedzi.ts
+Rdzeń układa podpowiedzi od bytu najwęższego do platformy — najpierw okno
+ogniskowane, potem sesja, na końcu platforma. Sekcja tej kolejności nie
+przestawia; numer porządkowy listy pokazuje ją wprost.
+
+Przy pozycji stoi `commandType`, czyli nazwa proponowanej komendy. Przycisku
+„wykonaj” nie ma: kontrakt daje nazwę komendy, ale nie daje jej żądania.
+
+Sugestie dzielą się na cztery rodzaje — `doradztwo`, `konfiguracja`, `problem`,
+`kolejny_krok` — i każdemu przypisany jest własny komplet działań. Struktura
+`AodSuggestion` kontraktu pola rodzaju nie niesie, więc sugestia przychodząca
+z rdzenia ma rodzaj nieznany. Sekcja mówi to wprost i wypisuje katalog obok
+wykazu, zamiast zgadywać rodzaj z treści zdania — zgadnięty rodzaj podstawiłby
+cudzy komplet działań pod cudzą sugestię. Rodzaj mają wyłącznie decyzje
+rozpoznane przez samą nakładkę, w sekcji decyzji czekających.
+
+Wykaz pusty jest stanem poprawnym.
+
+Katalog rodzajów sugestii stoi w powierzchni interakcji na stałe, a nie przy
+pozycji, właśnie dlatego, że pozycji nie da się do rodzaju przypisać: kontrakt
+nie niesie tego pola. Operator widzi więc, jakie rodzaje funkcja zna i jakie
+działania każdy niesie, i widzi zarazem, dlaczego przy pozycji rodzaju nie ma.

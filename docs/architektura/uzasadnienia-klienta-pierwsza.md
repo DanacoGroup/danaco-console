@@ -7530,3 +7530,6 @@ rozstrzygnąć stan okna samo. Do odmowy okno dokleja zdanie o torze komendy, bo
 powód dotyczy wtedy żądania; zerwanego połączenia żadne pole żądania nie
 tłumaczy, więc przy nim dopisek byłby wyłącznie hałasem. Granicę wyjściową
 zmienia się w filtrze panelu zasobów.
+
+## budowa/klient-poprzedni/src/modele/formularz-konta.ts
+Pole poświadczenia jest wyłącznie wejściem: kontrakt nie zwraca zapisanej wartości żadną komendą, a puste pole przy zmianie zostawia poświadczenie dotychczasowe, zamiast je kasować. Komenda zmiany konta nie przyjmuje rodzaju, więc przy zmianie konta rodzaj jest plakietką informacyjną, a nie kontrolką. Katalog konfiguracji dotyczy wyłącznie kont programu code CLI; dla pozostałych rodzajów pole znika w całości.

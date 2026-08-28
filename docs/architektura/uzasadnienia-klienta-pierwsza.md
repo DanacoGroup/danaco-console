@@ -8189,3 +8189,12 @@ okna modułu naprawdę wołają, a porównanie jej z rejestrem rdzenia wykrywa d
 różne usterki — komendę wołaną, a niezarejestrowaną (martwy port), oraz komendę
 zarejestrowaną, a niewołaną (funkcję rdzenia bez drogi z okna). Wykaz
 wywiedziony wprost z kontraktu nie ujawniłby żadnej z tych dwóch usterek.
+
+## budowa/klient-poprzedni/src/moduly/agents/braki-modulu.ts
+Wykaz stoi w module, a nie rozsypany po oknach, bo odpowiada na pytanie zadawane raz i o całość: czego ten moduł nie potrafi i po czyjej stronie brak leży. Nazwa komendy pochodzi ze stałej kontraktu, nie z napisu: napis przetrwałby zmianę nazwy w kontrakcie i zostawiłby zdanie o pozycji, której już nie ma pod tą nazwą, podczas gdy stała przerywa kompilację i każe poprawkę wykonać. Zdanie o każdej pozycji bierze się z odpowiedzi rdzenia, nie ze stałej wpisanej w moduł. Byt pokrycia rozstrzyga pięć stanów i odróżnia brak w kontrakcie od braku uchwytu w rdzeniu. Pozycja nie znika i nie jest wygaszona — kontrolka zostaje klikalna i po naciśnięciu nazywa stan pozycji.
+
+## budowa/klient-poprzedni/src/moduly/agents/braki-modulu.ts (dwie pozycje wykazu)
+Wykaz liczył czternaście pozycji, dopóki rodzina komend agenta nie miała uchwytów. Dwanaście z nich zeszło stąd nie dlatego, że przestały być potrzebne, lecz dlatego, że mają już drogę z okna do rdzenia: umiejętności i konektory w swoich zarządcach, podgląd wersji w panelu historii, licznik przypisań na karcie eksperta, a cztery grupy zakresu w panelu uprawnień. Zostają dwie i obie należą do rodziny komend rejestru kanałów modelu, nie do modułu Agents — moduł ich potrzebuje, ale nie jest ich właścicielem, a dobudowanie ich stąd byłoby wejściem w cudzy obszar.
+
+## budowa/klient-poprzedni/src/moduly/agents/braki-modulu.ts (przerysowanie wykazu)
+Liczby nie ma przed odpowiedzią rdzenia i nie jest to niedopatrzenie: policzenie braków z ciszy byłoby orzeczeniem, którego nikt nie wydał. Dopiero powitanie mówi, ile z tych komend rdzeń faktycznie rejestruje.

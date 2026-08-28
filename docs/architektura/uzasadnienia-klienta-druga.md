@@ -6266,3 +6266,8 @@ wspólną wszystkim oknom operacyjnym modułu i stoi ponad nimi, zamiast w jedny
 pozostałe okna sięgałyby do cudzego widoku. Pozostałe parametry wykonania, takie jak moduł, kanał
 modelu, zasięg, tryb uprawnień, rola i katalogi robocze, stoją na tym samym ekranie w osobnym
 panelu sterowania oknem, więc powtarzanie ich tutaj zajmowałoby przestrzeń bez nowej treści.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/stan-pary.ts
+Warstwa widoku czyta nazwy stanów kolejki wprost z kontraktu, zamiast
+prowadzić własny katalog nazw, żeby uniknąć rozjazdu przy zmianie
+kontraktu.

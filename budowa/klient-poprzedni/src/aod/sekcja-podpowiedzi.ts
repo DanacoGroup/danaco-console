@@ -4,34 +4,14 @@ import type { ZrodloAod } from './zrodlo-komend';
 import { utworzAkapit, utworzPodtytul } from './pola-wykazu';
 import { DZIALANIA_RODZAJU, NAZWY_RODZAJOW, POWSTANIE_RODZAJU, RodzajSugestii } from './rodzaje-sugestii';
 
-/**
- * Lista oczekujących sugestii przychodzących z rdzenia (`aod.suggestion`).
- *
- * Rdzeń układa podpowiedzi od bytu najwęższego do platformy — najpierw okno
- * ogniskowane, potem sesja, na końcu platforma. Sekcja tej kolejności nie
- * przestawia; numer porządkowy listy pokazuje ją wprost.
- *
- * Przy pozycji stoi `commandType`, czyli nazwa proponowanej komendy. Przycisku
- * „wykonaj" nie ma: kontrakt daje nazwę komendy, ale nie daje jej żądania.
- *
- * RODZAJ SUGESTII. Opracowanie (rozdz. 4) dzieli sugestie na cztery rodzaje —
- * `doradztwo`, `konfiguracja`, `problem`, `kolejny_krok` — i każdemu przypisuje
- * własny komplet działań. Struktura `AodSuggestion` kontraktu pola rodzaju NIE
- * NIESIE, więc sugestia przychodząca z rdzenia ma rodzaj nieznany. Sekcja mówi
- * to wprost i wypisuje katalog obok wykazu, zamiast zgadywać rodzaj z treści
- * zdania — zgadnięty rodzaj podstawiłby cudzy komplet działań pod cudzą
- * sugestię. Rodzaj mają wyłącznie decyzje rozpoznane przez samą nakładkę
- * (sekcja decyzji czekających powyżej).
- *
- * Wykaz pusty jest stanem poprawnym.
- */
+/** Lista oczekujących sugestii przychodzących z rdzenia, uszeregowana od bytu najwęższego do platformy. */
 export interface SekcjaPodpowiedzi {
   element: HTMLElement;
   /** Pyta rdzeń o podpowiedzi dla wskazanego okna, sesji albo procesu. */
   odswiez(zadanie: AodSuggestionRequest): Promise<void>;
 }
 
-/** Górna granica liczby podpowiedzi — nakładka jest wąska, wykaz musi być krótki. */
+/** Górna granica liczby podpowiedzi pokazywanych naraz — nakładka jest wąska, więc wykaz musi być krótki. */
 const GRANICA = 8;
 
 export function utworzSekcjePodpowiedzi(zrodlo: ZrodloAod): SekcjaPodpowiedzi {
@@ -82,14 +62,7 @@ export function utworzSekcjePodpowiedzi(zrodlo: ZrodloAod): SekcjaPodpowiedzi {
   };
 }
 
-/**
- * Katalog rodzajów sugestii wypisany pod wykazem — rozdz. 4 opracowania.
- *
- * Katalog stoi w powierzchni interakcji na stałe, a nie przy pozycji, właśnie
- * dlatego, że pozycji nie da się do rodzaju przypisać: kontrakt nie niesie tego
- * pola. Operator widzi więc, jakie rodzaje funkcja zna i jakie działania każdy
- * niesie, i widzi zarazem, dlaczego przy pozycji rodzaju nie ma.
- */
+/** Katalog rodzajów sugestii wypisany pod wykazem, bo pojedynczej pozycji nie da się do rodzaju przypisać. */
 function utworzKatalogRodzajow(): HTMLElement {
   const katalog = document.createElement('details');
   katalog.className = 'ao-katalog';
@@ -150,8 +123,7 @@ function zbudujPozycje(podpowiedz: AodSuggestion): HTMLLIElement {
   stopka.textContent = opisPozycji(podpowiedz);
   pozycja.append(stopka);
 
-  // Rodzaj i waga sugestii: pól tych kontrakt nie niesie, więc pozycja mówi to
-  // wprost zamiast wypisywać wartość wziętą z niczego.
+  // Rodzaj i waga sugestii: pól tych kontrakt nie niesie, pozycja mówi to wprost.
   const rodzaj = document.createElement('p');
   rodzaj.className = 'ao-podpowiedz__opis';
   rodzaj.textContent = 'rodzaj i waga: nie do odczytania — kontrakt nie niesie tych pól';

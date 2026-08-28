@@ -7734,3 +7734,26 @@ zostaje pominięty.
 Od otwarcia ekranu do wykonanej decyzji prowadzą dwa dotknięcia: karta, potem droga. Nagłówek melduje każdą odmowę odczytu osobno. Wykaz pusty to nie to samo co brak źródła — „Nic nie czeka” pada wyłącznie wtedy, gdy odczyty doszły; przy odmowach ekran mówi, że nie wie.
 
 Zdarzenie `mobile.process.changed` nie ma po stronie rdzenia producenta (`handlers_mobile.go`), więc nasłuch przerysowania wykazu stoi na trzech zdarzeniach, które go mają — telefon nie ma być odpytywany palcem.
+
+## budowa/klient-poprzedni/src/moduly/design/zapis-kompozycji.ts
+Rozgłaszaniem zmian zajmuje się osobny zapis stanu kompozycji: zmiana układu jest
+rachunkiem na liczbach, rozgłoszenie obsługą obserwatorów, rozdzielone czytają
+się i sprawdzają osobno. Wstawienie kompozycji z rdzenia zastępuje układ, nie
+scala go: kompozycja z rdzenia jest pełnym stanem planszy, a nie jej dokładką,
+więc scalenie dałoby układ, którego nie ma ani na ekranie, ani w bazie. Okno
+mówi wprost, że odczyt nadpisuje to, co ma na kanwie. Identyfikator wchodzi
+razem z układem, bo bez niego kolejny zapis założyłby kompozycję nową zamiast
+zaktualizować odczytaną i plansza rozmnażałaby się w bazie po jednej sztuce na
+każde wejście w moduł. Licznik warstw przesuwa się ponad wczytane, żeby kod
+warstwy dokładanej po odczycie nie zderzył się z kodem warstwy, która przyszła
+z rdzenia. Kolumna zewnętrznego identyfikatora warstwy jest unikalna w całej
+tabeli, nie w obrębie pojedynczej kompozycji, a wstawienie warstw idzie bez
+scalania po konflikcie — kod z samego licznika okna wracałby po każdym
+przeładowaniu do tej samej wartości i zderzałby się z warstwą zapisaną
+wcześniej, co rdzeń odrzuca naruszeniem unikalności. Człon losowy identyfikatora
+zapewnia unikalność, a numer porządkowy zostaje z przodu, żeby kod warstwy dało
+się przeczytać w panelu warstw. Formaty społecznościowe stoją w jednym rzędzie,
+a nie w siatce, żeby oglądać obok siebie kadr tego samego materiału w trzech
+proporcjach. Szerokość ramki obszaru roboczego pochodzi z punktu łamania
+produktu, a wysokość zostaje przy boku wyjściowym, bo punkty łamania opisują
+wyłącznie szerokość; wysokość ustawia się osobno w inspektorze właściwości.

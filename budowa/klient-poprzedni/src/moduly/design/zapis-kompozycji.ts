@@ -1,16 +1,9 @@
 import type { DesignAsset, DesignBoardLayer } from '../../../../shared/contract';
 import { nowyIdentyfikator } from '../../protokol/identyfikator';
 
-/**
- * Zapis kompozycji Design Board wraz z czynnościami, które go zmieniają.
- *
- * Odpowiada wyłącznie za układ warstw i zaznaczenie — bez powiadamiania widoku
- * i bez wywołań rdzenia; rozgłaszaniem zmian zajmuje się `stan-kompozycji.ts`.
- * Zmiana układu jest rachunkiem na liczbach, rozgłoszenie obsługą obserwatorów;
- * rozdzielone czytają się i sprawdzają osobno.
- */
+/** Zapis kompozycji Design Board wraz z czynnościami zmieniającymi układ warstw i zaznaczenie. */
 
-/** Widok kanwy: powiększenie, przesunięcie swobodne, siatka pomocnicza. */
+/** Widok kanwy: powiększenie, przesunięcie swobodne oraz siatka pomocnicza widoczne w oknie modułu Design. */
 export interface WidokKanwy {
   /** Powiększenie; 1 znaczy skalę naturalną. */
   powiekszenie: number;
@@ -19,7 +12,7 @@ export interface WidokKanwy {
   siatka: boolean;
 }
 
-/** Oś wyrównania warstw zaznaczonych. */
+/** Oś wyrównania warstw zaznaczonych na kanwie kompozycji: krawędź, środek albo przeciwna krawędź układu. */
 export type OsWyrownania = 'lewo' | 'srodek' | 'prawo' | 'gora' | 'srodek-pion' | 'dol';
 
 /**
@@ -34,7 +27,7 @@ export type SzablonUkladu =
   | 'arkusz-brandingowy'
   | 'formaty-spolecznosciowe';
 
-/** Pełny zapis kompozycji — jedyny nośnik prawdy o układzie. */
+/** Pełny zapis kompozycji — jedyny nośnik prawdy o układzie warstw, zaznaczeniu i widoku kanwy modułu Design. */
 export interface ZapisKompozycji {
   warstwy: DesignBoardLayer[];
   wybor: string[];
@@ -44,10 +37,10 @@ export interface ZapisKompozycji {
   licznik: number;
 }
 
-/** Bok wyjściowy warstwy na kanwie, w jednostkach kompozycji. */
+/** Bok wyjściowy nowej warstwy dokładanej na kanwie, wyrażony w jednostkach kompozycji modułu Design okna. */
 export const BOK_WYJSCIOWY = 240;
 
-/** Odstęp między warstwami układanymi szablonem. */
+/** Odstęp w jednostkach kompozycji między warstwami układanymi automatycznie wybranym szablonem układu. */
 const ODSTEP = 24;
 
 export function pustyZapis(): ZapisKompozycji {
@@ -62,20 +55,8 @@ export function pustyZapis(): ZapisKompozycji {
 }
 
 /**
- * Wstawia kompozycję odczytaną z rdzenia na miejsce układu bieżącego.
- *
- * Zastępuje, nie scala: kompozycja z rdzenia jest pełnym stanem planszy, a nie
- * jej dokładką — scalenie dałoby układ, którego nie ma ani na ekranie, ani
- * w bazie, a zapisany z powrotem założyłby byt trzeci. Okno mówi Operatorowi
- * wprost, że odczyt nadpisuje to, co ma na kanwie.
- *
- * Identyfikator wchodzi razem z układem, bo bez niego kolejny zapis założyłby
- * kompozycję nową zamiast zaktualizować odczytaną i plansza rozmnażałaby się
- * w bazie po jednej sztuce na każde wejście w moduł.
- *
- * Licznik warstw przesuwamy ponad wczytane, żeby kod warstwy dokładanej po
- * odczycie nie zderzył się z kodem warstwy, która przyszła z rdzenia
- * (uzasadnienie unikalności przy `nowyKodWarstwy` niżej).
+ * Wstawia kompozycję odczytaną z rdzenia na miejsce układu bieżącego,
+ * zastępując go pełnym stanem planszy przeniesionym z rdzenia.
  */
 export function wczytajUklad(
   zapis: ZapisKompozycji,
@@ -90,7 +71,7 @@ export function wczytajUklad(
   zapis.licznik = Math.max(zapis.licznik, warstwy.length);
 }
 
-/** Dokłada warstwę zbudowaną z zasobu Assets Panel. */
+/** Dokłada nową warstwę kompozycji zbudowaną z zasobu wybranego w panelu Assets Panel modułu Design okna. */
 export function dolozZasob(zapis: ZapisKompozycji, zasob: DesignAsset): void {
   dolozWarstwe(zapis, {
     assetId: zasob.id,
@@ -100,24 +81,12 @@ export function dolozZasob(zapis: ZapisKompozycji, zasob: DesignAsset): void {
   });
 }
 
-/** Dokłada warstwę pomocniczą bez zasobu — element biblioteki pomocniczej. */
+/** Dokłada warstwę pomocniczą bez zasobu, czyli element wzięty z biblioteki pomocniczej modułu Design okna. */
 export function dolozElement(zapis: ZapisKompozycji, nazwa: string): void {
   dolozWarstwe(zapis, { note: nazwa });
 }
 
-/**
- * Identyfikator warstwy — kod, który okno nadaje bytowi rdzenia.
- *
- * Sam licznik okna nie wystarcza. Kolumna
- * `warstwa_kompozycji_design.identyfikator_zewnetrzny` jest UNIQUE w całej
- * tabeli, nie w obrębie kompozycji (`migracja_048_design.sql`),
- * a `design.board.update` wstawia warstwy zwykłym INSERT-em bez ON CONFLICT.
- * Kod z licznika wracałby po każdym przeładowaniu okna do „warstwa-1"
- * i zderzał się z warstwą kompozycji zapisanej wcześniej, co rdzeń odrzuca
- * naruszeniem ograniczenia UNIQUE. Człon losowy bierzemy
- * z `protokol/identyfikator.ts`, a numer porządkowy zostaje z przodu, żeby kod
- * warstwy dało się przeczytać w panelu warstw.
- */
+/** Identyfikator warstwy — kod nadawany przez okno bytowi rdzenia, unikalny w tabeli warstw kompozycji. */
 function nowyKodWarstwy(numer: number): string {
   return nowyIdentyfikator(`warstwa-${numer}`);
 }
@@ -140,7 +109,7 @@ function dolozWarstwe(zapis: ZapisKompozycji, czesc: Partial<DesignBoardLayer>):
   ];
 }
 
-/** Nanosi zmianę na jedną warstwę. */
+/** Nanosi zmianę na jedną warstwę kompozycji wskazaną kodem, pozostawiając pozostałe warstwy bez zmian. */
 export function zmienWarstwe(
   zapis: ZapisKompozycji,
   idWarstwy: string,
@@ -175,12 +144,12 @@ export function przestawZaznaczenie(
   zapis.wybor = juzSam ? [] : [idWarstwy];
 }
 
-/** Warstwy objęte działaniem narzędzi: zaznaczone i niezablokowane. */
+/** Warstwy objęte działaniem narzędzi kompozycji: zaznaczone na kanwie i przy tym niezablokowane w oknie. */
 export function objeteWarstwy(zapis: ZapisKompozycji): DesignBoardLayer[] {
   return zapis.warstwy.filter((w) => zapis.wybor.includes(w.id) && w.locked !== true);
 }
 
-/** Nanosi wynik działania narzędzia na zapis, zachowując kolejność warstw. */
+/** Nanosi wynik działania narzędzia na zapis kompozycji, zachowując kolejność warstw w wykazie zapisu kanwy. */
 export function naniesWarstwy(
   zapis: ZapisKompozycji,
   zmienione: readonly DesignBoardLayer[],
@@ -189,7 +158,7 @@ export function naniesWarstwy(
   zapis.warstwy = zapis.warstwy.map((w) => wedlugKodu.get(w.id) ?? w);
 }
 
-/** Wyrównanie warstw do skrajnej albo środkowej pozycji zbioru. */
+/** Wyrównanie warstw zaznaczonych do skrajnej albo środkowej pozycji całego zbioru wybranych warstw kanwy. */
 export function wyrownajWarstwy(
   wybrane: readonly DesignBoardLayer[],
   os: OsWyrownania,
@@ -214,7 +183,7 @@ export function wyrownajWarstwy(
   });
 }
 
-/** Równe odstępy między warstwami wzdłuż jednej osi. */
+/** Równe odstępy między warstwami zaznaczonymi na kanwie, rozłożone wzdłuż jednej wybranej osi układu warstw. */
 export function rozmiescWarstwy(
   wybrane: readonly DesignBoardLayer[],
   pionowo: boolean,
@@ -236,23 +205,14 @@ export function rozmiescWarstwy(
   );
 }
 
-/**
- * Trzy role formatu społecznościowego wymienione w opracowaniu — post, relacja
- * i okładka — wyrażone PROPORCJĄ, nie rozmiarem konkretnej platformy.
- *
- * Proporcja jest tym, co opracowanie rozstrzyga („rozmiary postów, relacji
- * i okładek"); wpisanie tu pikseli którejś platformy byłoby wniesieniem do
- * produktu liczby, której nie ma w żadnym dokumencie projektu i która starzeje
- * się razem z cudzym interfejsem. Bok dłuższy bierze się z boku wyjściowego
- * kompozycji, więc szablon skaluje się razem z kanwą.
- */
+/** Trzy role formatu społecznościowego — post, relacja i okładka — wyrażone proporcją, a nie rozmiarem. */
 const PROPORCJE_SPOLECZNOSCIOWE: readonly (readonly [number, number])[] = [
   [1, 1], // post kwadratowy
   [9, 16], // relacja pionowa
   [16, 9], // okładka pozioma
 ];
 
-/** Cztery szablony układu wymienione w panelu akcji modułu Design. */
+/** Cztery szablony układu wymienione w panelu akcji modułu Design: tablica nastroju, siatka porównawcza, arkusz brandingowy i formaty społecznościowe. */
 export function ulozWedlugSzablonu(
   wszystkie: readonly DesignBoardLayer[],
   szablon: SzablonUkladu,
@@ -270,13 +230,7 @@ export function ulozWedlugSzablonu(
   }));
 }
 
-/**
- * Formaty społecznościowe: każda warstwa dostaje kolejną z trzech proporcji,
- * a wszystkie stoją w jednym rzędzie wyrównane do wspólnej linii górnej.
- *
- * Rząd, a nie siatka: formaty ogląda się obok siebie, żeby porównać kadr tego
- * samego materiału w trzech proporcjach.
- */
+/** Formaty społecznościowe: każda warstwa dostaje kolejną z trzech proporcji, w jednym rzędzie do wspólnej linii górnej. */
 function ulozFormaty(wszystkie: readonly DesignBoardLayer[]): DesignBoardLayer[] {
   let przesuniecie = 0;
   return wszystkie.map((warstwa, numer) => {
@@ -301,12 +255,8 @@ function ulozFormaty(wszystkie: readonly DesignBoardLayer[]): DesignBoardLayer[]
 }
 
 /**
- * Dokłada ramkę obszaru roboczego o zadanej szerokości.
- *
- * Szerokość pochodzi z punktu łamania produktu, a WYSOKOŚĆ zostaje przy boku
- * wyjściowym, bo punkty łamania opisują wyłącznie szerokość. Podstawienie tu
- * wysokości byłoby wniesieniem wymiaru, którego kierunek projektowy nie
- * rozstrzyga; Operator ustawia ją w inspektorze właściwości.
+ * Dokłada ramkę obszaru roboczego o zadanej szerokości, zachowując wysokość
+ * równą bokowi wyjściowemu kompozycji.
  */
 export function dolozRamke(zapis: ZapisKompozycji, nazwa: string, szerokosc: number): void {
   dolozWarstwe(zapis, { note: nazwa, width: szerokosc });

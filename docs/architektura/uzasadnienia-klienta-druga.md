@@ -6513,3 +6513,14 @@ ustaleniami i instrukcjami — dopasowanie po znaczeniu prowadzi osobna rodzina 
 obiecuje. Treść pliku wchodzi do wyszukiwania dopiero po wydobyciu: plik bez wyciągu daje się
 znaleźć wyłącznie po nazwie, dlatego przycisk wydobycia stoi obok pola wyszukiwania, a nie
 w innym oknie.
+
+## budowa/klient-poprzedni/src/moduly/studio/pasek-statusu.ts
+Pasek statusu żąda od modułu trzech rzeczy: stanu zapisu, liczby słów i numeru wersji, a wszystkie
+trzy da się powiedzieć prawdziwie z tego, co moduł już ma, bez wywołania rdzenia. Stan zapisu
+poznaje się po różnicy między treścią roboczą a zaakceptowaną, bo bufor edytora i treść ustalona
+są dwoma osobnymi polami stanu, więc niezapisane zmiany są tu faktem odczytanym, nie znacznikiem
+ustawianym ręcznie przy każdym naciśnięciu klawisza. Numer wersji bierze się z pola dokumentu;
+dokument przed pierwszym zapisem wersji nie ma i pasek mówi to wprost, zamiast pokazywać zero,
+bo zero wyglądałoby na wersję o numerze zero. Format dokumentu stoi w pasku stanu od scalenia
+okien, bo nosił go wcześniej wskaźnik paska narzędzi edytora, a pasek narzędzi rozszedł się na
+wstążkę okna pracy — format jest cechą dokumentu, nie czynnością, więc jego miejsce jest tutaj.

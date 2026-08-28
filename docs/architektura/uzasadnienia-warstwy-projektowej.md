@@ -732,3 +732,13 @@ i pozostawała rozróżnialna od dwóch pozostałych. Pierścień fokusu bierze
 ten sam błękit co tekst sygnałowy (#2457C9, współczynnik 5,82:1); poświata
 idzie za nim tą samą barwą, żeby pierścień i jego cień nie tworzyły dwóch
 różnych błękitów.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/czynnosci.css
+Kreskę, listę rozwijaną i sekcję paneli opisuje `menu.css`, ten arkusz jej
+nie dotyka. Rytm jest ten sam co nad kreską: ikona, nazwa i przeznaczenie,
+skrót klawiszowy wyrównany do prawej; odstępy, promienie i rozmiary pisma
+biorą te same żetony, po które sięga `.dn-menu-paneli__pozycja`. Arkusz nie
+ma reguł wygaszenia, ponieważ pozycja bez pokrycia w produkcie nie powstaje.
+Barwa ostrzegawcza idzie żetonem `--dn-blad-*`, nie wartością; rodzinę
+`--dn-ostrzezenie-*` pominięto, bo niosłaby inny kolor. Ten sam żeton nosi
+`.dn-btn--niebezpieczny`, jedna barwa dla jednego znaczenia.

@@ -7553,3 +7553,8 @@ nazwę nastawy: stoi na nim „Bash”, a nie „Powłoka” — nazwa rodzajowa
 do etykiety dostępności i do podpowiedzi. Wartość pusta jest wartością:
 pusty ciąg znaczy „bez zawężenia” w wykazie procesów i ma własną pozycję
 „Wszystkie procesy”, inaczej z filtra nie byłoby drogi powrotnej.
+
+## budowa/klient-poprzedni/src/sterowanie/panel-kanalow.ts
+Panel obsługuje wszystkie trzy czynności rejestru, bo instalacja ma na starcie jeden kanał, a okno komunikacji bez kanału nie ma czym rozmawiać. Rejestr kanałów pozostaje bytem tylko do odczytu: panel nie ma do rejestru żadnej drogi zapisu. Po udanym zapisie woła odświeżenie rejestru — zamówienie listy kanałów, którego wynik rejestr rozgłasza wszystkim czytelnikom: oknu rozmowy, sterowaniom modelu głównego i zapasowego, panelowi modeli i widokowi wspólnemu. Jeden zapis odświeża wszystkich, a żaden z czytelników nie wie o istnieniu tego panelu. Usunięcie idzie w dwóch krokach, przyciskiem w wariancie ostrzegawczym stojącym na końcu panelu akcji; w wierszach wykazu przycisku usuwania nie ma.
+
+Panel nie ma ani jednej reguły stylu własnej dla gniazd ramy okna, więc klasy modułu byłyby uchwytami bez żadnej reguły.

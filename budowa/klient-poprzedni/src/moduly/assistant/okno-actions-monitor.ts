@@ -14,46 +14,26 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 import { wierszZlecenia } from './wiersz-zlecenia';
 
-/** Kod okna w katalogu rdzenia (`okno_operacyjne.kod`). */
+/**
+ * Kod okna w katalogu okien operacyjnych rdzenia, pole `okno_operacyjne.kod`,
+ * po którym rdzeń rozpoznaje to okno w zleceniach i w zapisie czynności.
+ */
 export const KOD_OKNA = 'actions-monitor';
 
 /**
- * Actions Monitor — okno monitorujące modułu Assistant.
- *
- * Dwie funkcje operatora: przegląd statusu zlecenia wieloetapowego oraz
- * wstrzymanie lub anulowanie działania. Panel akcji niesie sześć pozycji —
- * wstrzymanie, wznowienie, anulowanie, Ponów, Szczegóły, Pokaż wynik — i
- * priorytetyzację zleceń; wszystkie mieszczą się w jednej komendzie
- * `assistant.action.status` wraz z polami `control` i `priority`.
- *
- * Okno nie ma pętli odświeżania: `assistant.action.changed` wciąga zmianę
- * stanu zlecenia w chwili, w której rdzeń ją ogłasza. Subskrypcja mieszka
- * w stanie modułu, więc zdarzenie zmienia wszystkie trzy okna naraz.
- *
- * Zdanie potwierdzenia mówi, co zrobił rdzeń, a nie co wysłało okno: składa je
- * `skutek-sterowania.ts` ze zlecenia, które wróciło, bo nie każde przyjęte
- * żądanie coś zmienia. Sprawdzane są wszystkie zamówienia panelu — cztery
- * przyciski stanu tak samo jak priorytet — inaczej przycisk meldowałby sukces
- * także wtedy, gdy rdzeń oddał `failed`.
- *
- * Nagłówek kolumn zostaje w stanie pustym: pustka dotyczy ciała tabeli, nie
- * jej budowy.
- *
- * Druga tabela zbiera zlecenia spoza tego okna. Praca asystenta wydana
- * w nakładce AOD siada na oknie, które nakładka dobiera sama
- * (`adapter_modul_aod.go`, `oknoZadania`) — zwykle na oknie rozmowy, nie na
- * oknie modułu. Bez drugiej tabeli taka praca byłaby w monitorze niewidzialna,
- * bo stan modułu odrzuca zdarzenia o cudzym `windowId`. Tabela ma ten sam
- * panel akcji, bo rdzeń przyjmuje sterowanie po `actionId`, nie po oknie
- * (`adapter_modul_asystent_czynnosci.go`, `steruj`). Sekcja jest ukryta,
- * dopóki nie ma czego pokazać.
+ * Actions Monitor to okno monitorujące modułu Assistant: przegląd statusu
+ * zlecenia wieloetapowego oraz wstrzymanie albo anulowanie działania. Panel
+ * akcji i priorytet mieszczą się w jednej komendzie stanu zlecenia.
  */
 export interface OknoActionsMonitor {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Kolumny tabeli zleceń — nagłówek trwa niezależnie od zawartości. */
+/**
+ * Nagłówki kolumn tabeli zleceń; stoją niezależnie od zawartości, więc tabela
+ * pozostaje czytelna także przy pustym wykazie i przy odczycie w toku.
+ */
 const KOLUMNY = ['Zlecenie', 'Stan', 'Etap', 'Priorytet', 'Panel akcji'] as const;
 
 export function utworzOknoActionsMonitor(stan: StanAssistant): OknoActionsMonitor {
@@ -103,8 +83,7 @@ export function utworzOknoActionsMonitor(stan: StanAssistant): OknoActionsMonito
       return;
     }
     stan.wchlon(wynik.wynik.actions);
-    // Ocena dostaje zamówienie w całości — sterowanie i priorytet — bo tylko
-    // mając jedno i drugie może porównać je ze zleceniem, które wróciło.
+    // Ocena dostaje zamówienie w całości, bo porównuje je ze zleceniem zwróconym.
     const skutek = opisSkutku(wynik.wynik.actions, idZlecenia, sterowanie, priorytet);
     odpowiedz.pokaz(skutek.zdanie, skutek.udany);
   }
@@ -124,15 +103,12 @@ export function utworzOknoActionsMonitor(stan: StanAssistant): OknoActionsMonito
     );
 
   function odswiez(): void {
-    // Filtr zawęża oba wykazy tym samym warunkiem: zlecenie spoza okna modułu
-    // przechodzi przez te same stany co własne, więc dwa różne zawężenia
-    // znaczyłyby dwie prawdy o jednym filtrze.
+    // Filtr zawęża oba wykazy tym samym warunkiem, bo stany zleceń są wspólne.
     const zlecenia = stan.zlecenia().filter((zlecenie) => filtr.przepusc(zlecenie));
     const obce = stan.zleceniaObce().filter((zlecenie) => filtr.przepusc(zlecenie));
     wlasne.cialo.replaceChildren(...zlecenia.map(rysuj));
     spoza.cialo.replaceChildren(...obce.map(rysuj));
-    // Sekcja bez wierszy nie stoi pusta: nie ma stanu własnego i nie miałaby go
-    // czym nazwać. Pustkę całego wykazu nazywa okno.
+    // Sekcja bez wierszy nie ma stanu własnego; pustkę wykazu nazywa okno.
     sekcjaSpoza.hidden = obce.length === 0;
     naniesFaze(okno, stan, zlecenia.length + obce.length, filtr);
   }
@@ -141,7 +117,10 @@ export function utworzOknoActionsMonitor(stan: StanAssistant): OknoActionsMonito
   return { element, odswiez };
 }
 
-/** Stopka okna: brama potwierdzeń, dla której kontrakt nie ma drogi. */
+/**
+ * Stopka okna z bramą potwierdzeń zleceń wymagających decyzji Operatora,
+ * dla której kontrakt nie niesie osobnej komendy przekazania.
+ */
 function stopka(): HTMLElement {
   const brama = przycisk('Brama potwierdzeń akcji', 'dn-btn dn-btn--sm dn-btn--duch');
   brama.dataset['brak'] = 'brama-potwierdzen';
@@ -153,7 +132,10 @@ function stopka(): HTMLElement {
   return element;
 }
 
-/** Nanosi fazę odczytu; ciało tabeli znika, nagłówek kolumn zostaje. */
+/**
+ * Nanosi fazę odczytu na tabelę zleceń: ciało tabeli znika na czas pytania
+ * do rdzenia, a nagłówek kolumn zostaje, żeby układ okna nie skakał.
+ */
 function naniesFaze(okno: StanOkna, stan: StanAssistant, ile: number, filtr: FiltrZlecen): void {
   const faza = stan.faza();
   if (faza === 'blad') {
@@ -165,11 +147,7 @@ function naniesFaze(okno: StanOkna, stan: StanAssistant, ile: number, filtr: Fil
     return;
   }
   if (ile === 0) {
-    // Pustka przed pytaniem, pustka po odpowiedzi i pustka po zawężeniu to trzy
-    // różne zdania: okno nie orzeka o zleceniach rdzenia, zanim rdzeń się o nich
-    // wypowie, i nie mówi „rdzeń nie prowadzi ani jednego", gdy wykaz ukrył
-    // własny filtr okna. Każde zdanie nazywa przy tym samo okno — pustka ma
-    // tłumaczyć, przed czym Operator stoi, a nie tylko czego nie ma.
+    // Pustka przed pytaniem, po odpowiedzi i po zawężeniu to trzy różne zdania.
     if (stan.pytanoOZlecenia() && filtr.zawezony()) {
       okno.puste(
         `Wykaz jest zawężony do zleceń o statusie: ${filtr.nazwa()}. ` +
@@ -184,7 +162,10 @@ function naniesFaze(okno: StanOkna, stan: StanAssistant, ile: number, filtr: Fil
   okno.gotowe();
 }
 
-/** Tabela zleceń wraz z własnym ciałem — ta sama budowa dla obu wykazów. */
+/**
+ * Buduje tabelę zleceń wraz z jej ciałem; ta sama budowa obsługuje wykaz
+ * zleceń własnych okna oraz wykaz zleceń pochodzących spoza niego.
+ */
 function utworzTabeleZlecen(): { tabela: HTMLTableElement; cialo: HTMLTableSectionElement } {
   const cialo = document.createElement('tbody');
   const tabela = document.createElement('table');
@@ -193,7 +174,10 @@ function utworzTabeleZlecen(): { tabela: HTMLTableElement; cialo: HTMLTableSecti
   return { tabela, cialo };
 }
 
-/** Tytuł sekcji zleceń spoza okna — stopień niżej niż nazwa okna (h3). */
+/**
+ * Tytuł sekcji zleceń pochodzących spoza okna modułu, o stopień niższy niż
+ * nazwa samego okna, żeby porządek nagłówków strony pozostał zachowany.
+ */
 function tytulSpoza(): HTMLElement {
   const element = document.createElement('h4');
   element.className = 'dn-karta-tytul ma-spoza__tytul';
@@ -201,7 +185,10 @@ function tytulSpoza(): HTMLElement {
   return element;
 }
 
-/** Zdanie o zasięgu wykazu — mówi także, czego w nim nie ma. */
+/**
+ * Zdanie o zasięgu wykazu zleceń, nazywające zarówno to, co wykaz obejmuje,
+ * jak i to, czego w nim nie ma, żeby Operator nie brał braku za pustkę.
+ */
 function zasiegSpoza(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis ma-spoza__zasieg';
@@ -222,7 +209,10 @@ function naglowekTabeli(): HTMLTableSectionElement {
   return naglowek;
 }
 
-/** „Szczegóły" — to, co rdzeń o zleceniu powiedział, bez ani jednego domysłu. */
+/**
+ * Rozwinięcie szczegółów zlecenia: podaje wyłącznie to, co rdzeń o zleceniu
+ * powiedział, bez uzupełniania brakujących pól domysłem po stronie okna.
+ */
 function opisZlecenia(zlecenie: AssistantAction): string {
   return [
     `Zlecenie: ${zlecenie.title ?? zlecenie.id}`,
@@ -235,7 +225,10 @@ function opisZlecenia(zlecenie: AssistantAction): string {
   ].join('\n');
 }
 
-/** „Pokaż wynik" — pole `result`; jego brak nazywamy, nie zmyślamy. */
+/**
+ * Odsłonięcie wyniku zlecenia z pola `result` odpowiedzi rdzenia; brak wyniku
+ * okno nazywa wprost, zamiast podstawiać treść zastępczą.
+ */
 function opisWyniku(zlecenie: AssistantAction): string {
   if (zlecenie.result === undefined || zlecenie.result === '') {
     return 'Rdzeń nie oddał wyniku tego zlecenia (pole result jest puste).';

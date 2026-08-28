@@ -312,7 +312,7 @@ i wola piec komend z tysiaca osiemdziesieciu jeden. Teren stawia RAME APLIKACJI:
 powierzchnie, w ktora droga wejscia przekazuje sterowanie po wejsciu do srodowiska.
 
 Zrodlem ksztaltu jest przyjety prototyp `design/05-okna/przeplyw/centrum-dowodzenia.html`
-wraz z opisem `docs/interfejs-uzytkownika/pakiet-pieciu-okien.md`. Rama obejmuje
+wraz z przyjetym prototypem okna centrum dowodzenia. Rama obejmuje
 trzy strefy prototypu: szyne nawigacji, belke tytulowa i pas stanu. Zawartosc okna
 roboczego NIE nalezy do tego terenu.
 
@@ -438,7 +438,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-studio-design` z `main` |
-| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go`, `adapter_modul_design_*.go`, pakiety `internal/wiedza/`, `internal/mowa/`, `internal/poczta/`, `internal/zewnetrzne/` oraz nowy `docs/architektura/uzasadnienia-studio-design.md` |
+| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go`, `adapter_modul_design_*.go`, pakiety `internal/wiedza/`, `internal/mowa/`, `internal/poczta/`, `internal/zewnetrzne/` |
 | **Skala** | 125 plikow, 854 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-moduly`, `komentarz-rdzen`, `komentarz-pakiety` |
 
@@ -472,7 +472,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-moduly` z `main` |
-| **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` oraz nowy `docs/architektura/uzasadnienia-modulow.md` |
+| **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` |
 | **Skala** | 262 plikow, 1072 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-rdzen`, `komentarz-pakiety` |
 
@@ -506,7 +506,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-rdzen` z `main` |
-| **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` oraz nowy `docs/architektura/uzasadnienia-rdzenia.md` |
+| **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` |
 | **Skala** | 364 plikow, 1228 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-pakiety` |
 
@@ -540,7 +540,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-pakiety` z `main` |
-| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietami `core`, `wiedza`, `mowa`, `poczta`, `zewnetrzne` (te niesie teren studio-design), wraz z `budowa/server/cmd/`, oraz nowy `docs/architektura/uzasadnienia-pakietow.md` |
+| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietami `core`, `wiedza`, `mowa`, `poczta`, `zewnetrzne` (te niesie teren studio-design), wraz z `budowa/server/cmd/` |
 | **Skala** | 430 plikow, 1013 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-rdzen` |
 

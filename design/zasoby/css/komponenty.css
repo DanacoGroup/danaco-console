@@ -4256,3 +4256,111 @@ button.dn-link {
 /* Plakietka sygnalu na jasnym tle: stopien sygnalu daje na niej 3,9-4,3:1,
    wiec tekst schodzi o stopien nizej, osobno na kazdy motyw. */
 [data-wnetrze='przyrzadowe'] .dn-plakietka--sygnal { color: var(--pz-plakietka-tekst); }
+
+/* ══ Przedsionek srodowiska ══════════════════════════════════════════════
+   Widok modulow, na ktory wchodzi sie ze srodowiska. Ta sama obudowa co
+   w centrum: nadpis wersalikowy, kafel jako przyrzad, listwa u dolu. */
+
+[data-wnetrze='przyrzadowe'] .pd-plotno {
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--pz-punkt) 1px, transparent 1.6px);
+  background-size: var(--pz-siatka) var(--pz-siatka);
+  background-attachment: local;
+}
+
+[data-wnetrze='przyrzadowe'] .pd-nadtytul,
+[data-wnetrze='przyrzadowe'] .pd-motto {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+[data-wnetrze='przyrzadowe'] .pd-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-display);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Nadpis strefy: znak kwadratowy, wersaliki maszynowe, kreska do krawedzi. */
+[data-wnetrze='przyrzadowe'] .pd-strefa-tytul {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-normalna);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+[data-wnetrze='przyrzadowe'] .pd-strefa-tytul::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--dn-sygnal);
+  border-radius: 1px;
+}
+[data-wnetrze='przyrzadowe'] .pd-strefa-tytul::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--dn-obrys);
+}
+
+/* Kafel modulu jako przyrzad: gradient, pas uruchomienia przy lewej krawedzi,
+   nazwa pismem maszynowym, licznik w stopce. */
+[data-wnetrze='przyrzadowe'] .pd-kafel {
+  position: relative;
+  overflow: hidden;
+  background: var(--pz-kafel-tlo);
+  border-color: var(--dn-obrys);
+}
+[data-wnetrze='przyrzadowe'] .pd-kafel::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--pz-akcent-2), var(--dn-sygnal-wypelnienie));
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--dn-czas-3) var(--dn-ease);
+}
+[data-wnetrze='przyrzadowe'] .pd-kafel:is(:hover, :focus-within)::before { transform: scaleY(1); }
+[data-wnetrze='przyrzadowe'] .pd-kafel:is(:hover, :focus-within) { border-color: var(--dn-sygnal); }
+[data-wnetrze='przyrzadowe'] .pd-kafel-nazwa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst);
+}
+[data-wnetrze='przyrzadowe'] .pd-kafel-meta,
+[data-wnetrze='przyrzadowe'] .pd-sesja-meta,
+[data-wnetrze='przyrzadowe'] .pd-listwa-meta {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Przelacznik zakresu sesji — plaskie przelaczniki wersalikowe. */
+[data-wnetrze='przyrzadowe'] .pd-filtr {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Listwa czynnosci u dolu przedsionka — pas na barwie obrzeza. */
+[data-wnetrze='przyrzadowe'] .pd-listwa {
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}

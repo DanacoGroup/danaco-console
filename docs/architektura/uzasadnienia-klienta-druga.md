@@ -7784,3 +7784,10 @@ przestawia się więc na zasób wynikowy i od tej chwili rozpoznanie pisma pracu
 po czyszczeniu.
 
 Zrównanie skali szarości z binaryzacją byłoby obietnicą progowania, którego nikt nie wykonuje.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-osadzenia.ts
+Windowid jest polem obowiązkowym komendy studio.document.open, a moduł dostaje z powłoki
+wyłącznie identyfikator sesji. Wskazanie okna poprzedza więc całą pracę modułu i nie należy
+do żadnego okna operacyjnego z osobna — stąd własny plik, a nie doklejenie do zrodlo-studio.ts.
+
+Komenda window.state.get jest wspólna każdemu oknu operacyjnemu: niesie moduł, kanał modelu,
+katalogi robocze, zasięg wykonania, tryb uprawnień i rolę.

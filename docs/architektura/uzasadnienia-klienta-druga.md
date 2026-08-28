@@ -7683,3 +7683,17 @@ istnieje, ale akcja spoza katalogu wraca zwykłą kopertą błędu not_found z p
 istnieje w katalogu akcji. Brakuje więc wiersza katalogu, a nie uchwytu komendy, i tak ma to być
 widoczne. Osłona funkcji wywolajUczciwie zostaje na wypadek koperty window.unknown, która nie
 niesie pola status i sama by się nie skorelowała.
+
+## budowa/klient-poprzedni/src/moduly/translate/etykiety-translate.ts
+Teksty są wyjęte z plików budujących elementy, żeby zmiana zdania nie była
+zmianą widoku. Dwa rodzaje katalogu są rozdzielone: katalog zamknięty
+pochodzi z kontraktu i jest listą wyboru, bo formaty eksportu i stany panelu
+mają w kontrakcie skończony zbiór wartości; katalog otwarty jest wyłącznie
+podpowiedzią, bo kontrakt przyjmuje język i ton jako dowolny napis i nie ma
+komendy zwracającej ich wykaz — pole zostaje edytowalne, a podpowiedź nie
+udaje katalogu rdzenia. Rdzeń oddaje ton panelu w odpowiedziach dodania
+celu, ustawienia przekładu i ustawienia tonu; nagłówek pokazuje tę właśnie
+wartość, a nie treść pola wejściowego. Pole języka źródłowego jest
+wejściem: rozpoznanie wpisuje tam rdzeń, którego jeszcze nie ma u siebie,
+więc wartość bieżącą pokazuje osobne zdanie obok pola. Tytuł i opis stanu
+pustego są rozdzielone, bo nośnik stanu pustego ma dwa stopnie pisma.

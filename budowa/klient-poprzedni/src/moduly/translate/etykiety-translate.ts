@@ -2,22 +2,12 @@ import { ExportFormat, TranslationStatus } from '../../../../shared/contract';
 import type { ZdanieStanu } from './stan-okna-translate';
 
 /**
- * Teksty i katalogi widoczne dla Operatora w module Translate.
- *
- * Wyjęte z plików budujących elementy, żeby zmiana zdania nie była zmianą
- * widoku — tak samo jak `sterowanie/etykiety-sterowania.ts`.
- *
- * Dwa rodzaje katalogu są rozdzielone:
- *
- *  — katalog zamknięty pochodzi z kontraktu i jest listą wyboru: formaty
- *    eksportu (`ExportFormat`) i stany panelu (`TranslationStatus`) mają
- *    w kontrakcie skończony zbiór wartości, więc lista wyboru jest tu prawdą;
- *  — katalog otwarty jest wyłącznie podpowiedzią: kontrakt przyjmuje język
- *    i ton jako dowolny napis i nie ma komendy zwracającej ich wykaz. Pole
- *    zostaje edytowalne, a podpowiedź nie udaje katalogu rdzenia.
+ * Teksty i katalogi widoczne dla operatora w module Translate.
  */
 
-/** Podpowiedź języków docelowych — pole pozostaje otwarte na kod spoza wykazu. */
+/**
+ * Podpowiedź języków docelowych tłumaczenia; pole pozostaje otwarte na kod języka spoza wykazu kontraktu.
+ */
 export const PODPOWIEDZ_JEZYKOW: readonly string[] = [
   'pl',
   'en',
@@ -29,7 +19,9 @@ export const PODPOWIEDZ_JEZYKOW: readonly string[] = [
   'cs',
 ];
 
-/** Podpowiedź tonu tłumaczenia — kontrakt przyjmuje dowolny napis. */
+/**
+ * Podpowiedź tonu tłumaczenia w panelu Translate; kontrakt przyjmuje w tym polu dowolny napis operatora.
+ */
 export const PODPOWIEDZ_TONU: readonly string[] = [
   'neutralny',
   'formalny',
@@ -39,7 +31,9 @@ export const PODPOWIEDZ_TONU: readonly string[] = [
   'techniczny',
 ];
 
-/** Formaty eksportu panelu — katalog zamknięty kontraktu (`ExportFormat`). */
+/**
+ * Formaty eksportu panelu Translate tworzą katalog zamknięty, pochodzący wprost ze słownika kontraktu.
+ */
 export const FORMATY_EKSPORTU: readonly { wartosc: ExportFormat; etykieta: string }[] = [
   { wartosc: ExportFormat.Docx, etykieta: 'DOCX' },
   { wartosc: ExportFormat.Txt, etykieta: 'Tekst zwykły' },
@@ -58,15 +52,7 @@ export const FORMATY_EKSPORTU: readonly { wartosc: ExportFormat; etykieta: strin
 export const WARTOSC_KANALU_OKNA = 'kanał czynny okna';
 
 /**
- * Ton panelu widoczny w nagłówku instancji — jedna prawda o nastawie.
- *
- * Rdzeń oddaje `panel.tone` w odpowiedziach `target.add`, `translation.set`
- * i `panel.tone.set`; nagłówek pokazuje tę właśnie wartość, a nie treść pola
- * wejściowego.
- *
- * Pusty ton jest stanem, nie brakiem danych: kontrakt nie wymaga tonu, a panel
- * bez niego przekłada się tonem domyślnym rdzenia. Zdanie mówi to wprost,
- * zamiast pokazywać pustkę albo kreskę.
+ * Ton panelu widoczny w nagłówku instancji jest jedną prawdą o nastawie tonu, oddawaną wprost przez rdzeń.
  */
 export function opisTonuPanelu(ton: string | undefined): string {
   const nazwa = (ton ?? '').trim();
@@ -74,16 +60,7 @@ export function opisTonuPanelu(ton: string | undefined): string {
 }
 
 /**
- * Zdanie o języku źródłowym, który trzyma rdzeń — druga strona jednej prawdy.
- *
- * Pole „Język źródłowy" jest wejściem: `source.detect` wpisuje tam rozpoznanie,
- * którego rdzeń u siebie jeszcze nie ma. Gdyby to samo pole przerysowywać
- * wartością rdzenia, każde ogłoszenie stanu kasowałoby świeże rozpoznanie.
- * Wartość bieżącą pokazuje więc zdanie obok pola, czytając `stan.jezykZrodlowy()`.
- *
- * Rozbieżność jest nazwana, nie uzgodniona po cichu: okno nic samo nie wysyła
- * ani nie nadpisuje, mówi tylko, że obie wartości się różnią i co je uzgodni
- * (zapis źródła).
+ * Zdanie o języku źródłowym trzymanym przez rdzeń pokazuje rozbieżność ze stanem lokalnym bez cichego uzgadniania.
  */
 export function zdanieJezykaRdzenia(
   tekstRdzenia: string,
@@ -108,7 +85,9 @@ export function zdanieJezykaRdzenia(
   );
 }
 
-/** Nazwa stanu panelu widoczna dla Operatora. */
+/**
+ * Nazwa stanu panelu tłumaczenia widoczna dla operatora w nagłówku bieżącej instancji panelu Translate.
+ */
 export function nazwaStanuPanelu(stan: TranslationStatus): string {
   if (stan === TranslationStatus.Pending) return 'oczekuje';
   if (stan === TranslationStatus.Translating) return 'tłumaczenie w toku';
@@ -117,13 +96,7 @@ export function nazwaStanuPanelu(stan: TranslationStatus): string {
 }
 
 /**
- * Zdania stanów pustych — jedna forma, różnicowana wyłącznie treścią.
- *
- * Każde z nich tłumaczy, czym okno jest i jak je zapełnić: pustka jest stanem
- * oczekiwanym, więc zdanie prowadzi do pierwszej czynności, zamiast nazywać brak.
- *
- * Tytuł i opis są rozdzielone, bo nośnik stanu pustego ma dwa stopnie pisma:
- * tytuł 13 px półgrubym i opis 12 px.
+ * Zdania stanów pustych panelu Translate mają jedną formę, różnicowaną wyłącznie treścią komunikatu operatora.
  */
 export const PUSTE: Record<
   'zrodlo' | 'panele' | 'glosariusz' | 'pamiec' | 'formaty' | 'jakosc',
@@ -168,17 +141,15 @@ export const PUSTE: Record<
 };
 
 /**
- * Odmowa, nie pustka — dlatego zdanie stoi poza wykazem stanów pustych.
- *
- * Brak okna sesji nie jest stanem oczekiwanym pierwszego użycia: moduł nie ma
- * wtedy czym zaadresować ani jednego żądania i mówi to jako powód niewykonania
- * czynności (`okno.blad`, wiersz odpowiedzi).
+ * Odmowa braku okna sesji stoi poza wykazem stanów pustych, bo nie jest stanem oczekiwanym pierwszego użycia.
  */
 export const BRAK_OKNA =
   'Rdzeń nie zwrócił żadnego okna tej sesji. Bez identyfikatora okna nie ma czym ' +
   'zaadresować translate.source.set ani translate.target.add.';
 
-/** Zdania objaśnień [?] przy elementach konfiguracji modułu. */
+/**
+ * Zdania objaśnień widoczne w dymkach pomocy przy elementach konfiguracji panelu modułu Translate tej budowy.
+ */
 export const OBJASNIENIA = {
   jezykZrodlowy:
     'Puste pole zostawia rozpoznanie językowi rdzenia — kontrakt dopuszcza żądanie bez ' +

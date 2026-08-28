@@ -7047,3 +7047,15 @@ przeglądarki — wołający podaje zmierzone pole widoku, a funkcja oddaje
 procenty. Skala jest pamiętana przy dokumencie, nie przy oknie, zgodnie
 z wymogiem zlecenia: po powrocie do pisma po dwóch dniach dokument pokazuje
 się w skali, w której nad nim pracowano, a drugie pismo w swojej własnej.
+
+## budowa/klient-poprzedni/src/moduly/studio/szablon-panel.test.ts
+Warsztat szablonów sprawdza cztery zachowania, których pominąć nie wolno.
+Szablon zapisany z bieżącego dokumentu niesie blokady wzorcowe: fragmenty
+wzorcowe pisma mają zostać wzorcowe także w dokumentach powstałych z tego
+szablonu, więc pole includeLocks jedzie do rdzenia jawnie. Szablonu
+fabrycznego rdzeń nie usuwa, a panel czyta odpowiedź deleted: pozycja zostaje
+na miejscu, a powód jest nazwany, ponieważ zdjęcie jej z widoku byłoby
+udawaniem skutku, który nie zaszedł. Wypełnienie, przy którym pominięto pole
+wymagane, mówi to wprost i nie przedstawia się jako powodzenie, ponieważ
+dokument powstał z dziurami. Szablon bez postaci wzorcowej albo bez blokad
+nazywa ten brak, zamiast pokazać sam tytuł.

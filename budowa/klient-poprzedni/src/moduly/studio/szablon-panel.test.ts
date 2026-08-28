@@ -6,21 +6,6 @@ import { utworzStanStudio } from './stan-studio';
 import { utworzSzablonPanel } from './szablon-panel';
 import { utworzSzablonZrodlo } from './szablon-zrodlo';
 
-/**
- * Warsztat szablonów — cztery rzeczy, których przemilczeć nie wolno.
- *
- *   1. szablon zapisany z bieżącego dokumentu niesie BLOKADY WZORCOWE: fragmenty
- *      wzorcowe pisma mają zostać wzorcowe także w dokumentach z szablonu, więc
- *      pole `includeLocks` jedzie do rdzenia jawnie;
- *   2. szablonu fabrycznego rdzeń nie usuwa i panel czyta odpowiedź `deleted`:
- *      pozycja zostaje, a powód jest nazwany. Zdjęcie jej z widoku byłoby
- *      udawaniem skutku;
- *   3. wypełnienie, przy którym Operator pominął pole WYMAGANE, mówi to wprost
- *      i nie mieni się powodzeniem — dokument powstał z dziurami;
- *   4. szablon bez postaci wzorcowej albo bez blokad nazywa ten brak, zamiast
- *      pokazać sam tytuł.
- */
-
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
@@ -56,7 +41,7 @@ function stanZDokumentem(kanal: Kanal) {
   return stan;
 }
 
-/** Pole tekstowe panelu odnajdywane po etykiecie, nie po kolejności. */
+/** Funkcja polePoEtykiecie odnajduje pole tekstowe panelu po etykiecie widocznej w interfejsie, a nie po kolejności elementów w drzewie. */
 function polePoEtykiecie(element: HTMLElement, fragment: string): HTMLInputElement {
   const etykiety = [...element.querySelectorAll('label')];
   const etykieta = etykiety.find((pozycja) => (pozycja.textContent ?? '').includes(fragment));

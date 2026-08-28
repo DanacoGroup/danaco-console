@@ -7465,3 +7465,21 @@ nie zna; okno nazywa ten brak zamiast wysyłać plik w próżnię.
 
 Postacie wydania nie są tu ozdobą: zmienne CSS to postać, w której ten produkt żetony trzyma;
 pozostałe trzy są postaciami, w których przyjmuje je kod korzystający z systemu.
+
+## budowa/klient-poprzedni/src/moduly/design/etykiety-designu.ts
+Wykaz braków jest danymi, a nie zdaniami rozsianymi po widokach, żeby każde okno nazywało ten sam
+brak tak samo. Wpis znika stąd z chwilą, w której kontrakt dostaje komendę dla danej czynności.
+
+Kod modułu z kolumny katalogu rdzenia jest jedynym miejscem w kliencie wiążącym ten katalog z kodem
+modułu Design; nie jest kopią katalogu modułów — moduł mówi wyłącznie, którym modułem sam jest,
+wykazu pozostałych czternastu tu nie ma.
+
+Okno Tokens & System Panel jest piątym oknem operacyjnym modułu: rozjazd nie jest przemilczany,
+moduł zgłasza katalogowi okien komplet pięciu kodów, a byt wspólny wypowiada obie strony różnicy —
+okna rejestru, których moduł nie buduje, oraz okna budowane spoza rejestru. Dopisanie wiersza do
+rejestru rdzenia zdejmie tę drugą połowę bez zmiany ani jednej linii tutaj.
+
+Wykaz czynności bez drogi powstał, gdy kontrakt nie niósł dla nich ani jednej komendy. Po scaleniu
+rodziny komend design większość z nich komendę już ma — brakiem jest już uchwyt w rdzeniu i droga
+z okna, a to jest inne zdanie. Rozstrzygnięcie o pokryciu nie należy jednak do tego pliku: napis nie
+jest z rdzeniem połączony i zestarzeje się znowu.

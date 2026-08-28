@@ -1,14 +1,6 @@
 import { Command } from '../../../../shared/contract';
 
-/**
- * Teksty widoczne dla Operatora w module Design — wyjęte z plików budujących
- * elementy (konwencja katalogu modułu): słownik nazw okien i wykaz funkcji
- * bez drogi w kontrakcie.
- *
- * Wykaz braków jest danymi, a nie zdaniami rozsianymi po widokach, żeby każde
- * okno nazywało ten sam brak tak samo. Wpis znika stąd z chwilą, w której
- * kontrakt dostaje komendę dla danej czynności.
- */
+// Teksty dla Operatora w module Design: słownik nazw okien i wykaz funkcji bez drogi w kontrakcie.
 
 /**
  * Kod modułu z kolumny `modul.kod` rdzenia.
@@ -19,7 +11,7 @@ import { Command } from '../../../../shared/contract';
  */
 export const KOD_MODULU = 'design';
 
-/** Nazwa i rola okna operacyjnego, zgodnie z katalogiem rdzenia. */
+/** Nazwa i rola okna operacyjnego modułu Design, zgodnie z katalogiem okien prowadzonym przez rdzeń systemu. */
 export interface OpisOkna {
   /** Kod okna w katalogu rdzenia (`okna_modulu.kod`). */
   kod: string;
@@ -57,18 +49,9 @@ export const OKNO_PREVIEW_WINDOW: OpisOkna = {
 };
 
 /**
- * Piąte okno operacyjne modułu — opracowanie wymienia je wśród okien modułu
- * wraz z rolą, zawartością i sposobem wywołania.
- *
- * Kod nie pochodzi z rejestru okien rdzenia, bo rejestr tego okna nie zna:
- * katalog wnosi dla modułu Design cztery przypięcia. Kod powstaje tu wedle tej
- * samej reguły, którą stosują pozostałe moduły budujące okna spoza rejestru —
- * nazwa własna okna zapisana małymi literami z łącznikami.
- *
- * Rozjazd nie jest przemilczany: moduł zgłasza katalogowi okien komplet pięciu
- * kodów, a byt wspólny wypowiada obie strony różnicy — okna rejestru, których
- * moduł nie buduje, oraz okna budowane spoza rejestru. Dopisanie wiersza do
- * rejestru rdzenia zdejmie tę drugą połowę bez zmiany ani jednej linii tutaj.
+ * Piąte okno operacyjne modułu, wymienione wraz z rolą i zawartością. Kod nie pochodzi z rejestru
+ * okien rdzenia, lecz z tej samej reguły, którą stosują pozostałe moduły budujące okna spoza
+ * rejestru: nazwa własna zapisana małymi literami z łącznikami.
  */
 export const OKNO_TOKENS_SYSTEM_PANEL: OpisOkna = {
   kod: 'tokens-system-panel',
@@ -76,7 +59,7 @@ export const OKNO_TOKENS_SYSTEM_PANEL: OpisOkna = {
   rola: 'zarządca',
 };
 
-/** Kody okien operacyjnych budowanych przez moduł — bez okna rozmowy. */
+/** Kody okien operacyjnych budowanych przez moduł Design, z pominięciem okna rozmowy prowadzonej z modelem. */
 export const KODY_OKIEN: readonly string[] = [
   OKNO_DESIGN_BOARD.kod,
   OKNO_PREVIEW_WINDOW.kod,
@@ -85,7 +68,7 @@ export const KODY_OKIEN: readonly string[] = [
   OKNO_TOKENS_SYSTEM_PANEL.kod,
 ];
 
-/** Funkcja panelu akcji, dla której kontrakt nie ma komendy. */
+/** Funkcja panelu akcji modułu Design, dla której kontrakt aplikacji nie ma jeszcze przypisanej komendy rdzenia. */
 export interface BrakDrogi {
   /** Kod używany w atrybucie `data-brak` — po nim pyta sprawdzian. */
   kod: string;
@@ -96,21 +79,11 @@ export interface BrakDrogi {
 }
 
 /**
- * Czynności panelu akcji modułu, których okno nie wykonuje.
- *
- * Wykaz powstał, gdy kontrakt nie niósł dla nich ani jednej komendy. Po
- * scaleniu rodziny `design.*` większość z nich komendę MA — brakiem jest już
- * uchwyt w rdzeniu i droga z okna, a to jest inne zdanie. Powody mówią to
- * wprost, zamiast twierdzić dalej, że kontrakt czegoś nie zna.
- *
- * Rozstrzygnięcie o pokryciu nie należy jednak do tego pliku: napis nie jest
- * z rdzeniem połączony i zestarzeje się znowu. Mierzy je pas uczciwości modułu,
- * pytając rdzeń o wykaz jego komend; te zdania opisują wyłącznie DROGĘ, czyli
- * to, czego żaden odczyt nie powie.
+ * Czynności panelu akcji modułu, których okno nie wykonuje, bo kontrakt nie niósł dla nich komendy;
+ * powody opisują wyłącznie drogę do rdzenia, nie stan pokrycia, który mierzy pas uczciwości modułu.
  */
 export const BRAKI: Readonly<Record<string, BrakDrogi>> = {
-  // Przypisania zasobu do kolekcji nie ma tu jako braku: to osobna czynność,
-  // a nie odmiana etykietowania, które drogę do rdzenia już ma.
+  // Przypisanie zasobu do kolekcji nie jest tu brakiem: to osobna czynność, nie odmiana etykietowania.
   eksportZbiorczy: {
     kod: 'eksport-zbiorczy',
     nazwa: 'Pobierz zbiorczo',

@@ -414,10 +414,13 @@ func zagwarantujCzyszczenieSkanuDostepne() error {
 }
 
 // argumentyObrobkiWstepnejDokumentu składa wiersz wywołania unpapera dla pola
-// preprocess: prostowanie, odszumianie i przycinanie marginesów włączone,
-// filtr czerni wyłączony jawnie — tak samo jak w drodze Studia.
+// preprocess przez wspólne argumentyCzyszczenia modułu Studio, w wariancie
+// „wszystko włączone poza progowaniem" — jedno źródło wiersza zamiast
+// powielonego, żeby rozejście stron przestało być możliwe po cichu.
 func argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie string) []string {
-	return []string{"--layout", "single", "--no-blackfilter", wejscie, wyjscie}
+	return argumentyCzyszczenia(nastawyRozpoznania{
+		Prostowanie: true, Odszumianie: true, PrzycinanieMarginesow: true,
+	}, wejscie, wyjscie)
 }
 
 // jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do nazwy języka

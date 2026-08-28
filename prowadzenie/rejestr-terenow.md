@@ -749,10 +749,20 @@ Skutek: czyszczenie pamięci podręcznej kasuje działającą funkcję bez ślad
 w produkcie, a wagi są przywiązane do konta uruchamiającego. Rozstrzygnięcie
 przyjęte: przenieść wagi do `/opt/danaco-modele/mowa` i wskazać je nastawą.
 
-Do rozstrzygnięcia zostaje jedno: czy zrównać obie rodziny w kodzie, żeby pusta
-nastawa mowy znaczyła to samo co pusta nastawa wiedzy. To zmiana zachowania
-domyślnego wraz z migracją — `migracja_075_mowa.sql` niesie dziś wartość pustą
-zgodną ze stałą co do znaku, więc ruszenie samej stałej stworzyłoby dwie prawdy.
+**Domkniete 28.08 — sprawdzone, ze wszystkie trzy nastawy sa juz zalozone.**
+Zgloszenie zdezaktualizowaly migracje 401 i 403 wraz z odpowiadajacymi im stalymi:
+
+| Nastawa | Wartosc domyslna | Stala Go | Migracja |
+|---|---|---|---|
+| `wiedza_model` | `BAAI/bge-m3` | `wiedza.ModelDomyslny` | 401 |
+| `wiedza_katalog_modeli` | `/opt/danaco-modele/embedder` | `wiedza.KatalogModeliDomyslny` | 401 |
+| `mowa_katalog_modeli` | `/opt/danaco-modele/mowa` | `mowa.KatalogModeliDomyslny` | 403 |
+
+Kazda para stala–migracja zgadza sie co do znaku, wiec dwoch prawd nie ma.
+Pytanie o zrownanie rodzin rozstrzygnelo sie inaczej, niz je postawiono: pustej
+nastawy mowy nie trzeba przedefiniowywac, bo wartosc domyslna przestala byc pusta.
+Puste znaczy dalej „pamiec podreczna biblioteki" i jest to wybor Operatora, a nie
+stan zastany po wdrozeniu.
 
 ### Trzy modele bez komendy w kontrakcie
 

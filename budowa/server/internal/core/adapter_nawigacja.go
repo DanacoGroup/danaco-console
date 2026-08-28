@@ -8,14 +8,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterNawigacji wypełnia port Nawigacja: słownikami platformy z bazy oraz
-// żywym rejestrem sesji i okien nadzorcy.
-//
-// Środowisko, moduł, karta sesji i okno operacyjne są wierszami słownika — ich
-// jedyną prawdą jest baza, dlatego żadnego z nich rdzeń nie trzyma w pamięci.
-// Sesja i okno komunikacji mają dwie warstwy: wiersz utrwalony przetrwa restart
-// rdzenia, a byt żywy w nadzorcy niesie proces okna. Strona główna pokazuje
-// obie, bo rozłączenie klienta nie kończy sesji ani procesów.
+// adapterNawigacji wypełnia port Nawigacja słownikami platformy z bazy oraz
+// żywym rejestrem sesji i okien nadzorcy, łącząc wiersz utrwalony z bytem
+// żywym tak, aby rozłączenie klienta nie kończyło sesji ani procesów.
 type adapterNawigacji struct {
 	zestaw     *dane.Zestaw
 	nadzorca   *session.Nadzorca
@@ -124,10 +119,8 @@ func (a *adapterNawigacji) srodowiska(ctx context.Context, zModulami bool) ([]sh
 	return wykaz, nil
 }
 
-// sesjeCzynne łączy sesje żywe rejestru nadzorcy z sesjami utrwalonymi w bazie.
-// Kolejność źródeł nie jest obojętna: sesja żywa niesie procesy i okna, więc
-// wygrywa z własnym wierszem. Wiersz bez odpowiednika w rejestrze to sesja,
-// która przetrwała restart rdzenia — i ona także należy do konta.
+// sesjeCzynne łączy sesje żywe rejestru nadzorcy z sesjami utrwalonymi w bazie;
+// sesja żywa niesie procesy i okna, więc wygrywa z własnym wierszem utrwalonym.
 func (a *adapterNawigacji) sesjeCzynne(ctx context.Context) ([]shared.Session, error) {
 	wykaz := []shared.Session{}
 	widziane := map[string]struct{}{}
@@ -194,7 +187,7 @@ func (a *adapterNawigacji) ogniskoWykazu(idKlienta string, wskazana *string, ses
 	return nil
 }
 
-// czynna odróżnia kartę sesji, do której można wrócić, od zamkniętej.
+// czynna odróżnia kartę sesji, do której można wrócić, od karty już zamkniętej i niedostępnej dla konta.
 func czynna(stan shared.SessionStatus) bool {
 	return stan == shared.SessionStatusActive || stan == shared.SessionStatusPaused
 }

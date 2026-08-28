@@ -7697,3 +7697,12 @@ wartość, a nie treść pola wejściowego. Pole języka źródłowego jest
 wejściem: rozpoznanie wpisuje tam rdzeń, którego jeszcze nie ma u siebie,
 więc wartość bieżącą pokazuje osobne zdanie obok pola. Tytuł i opis stanu
 pustego są rozdzielone, bo nośnik stanu pustego ma dwa stopnie pisma.
+
+## budowa/klient-poprzedni/src/sterowanie/wykaz-kanalow.ts
+Drugiej listy kanałów tu nie ma: treść pochodzi w całości z rejestru kanałów, a nazwa wiersza z funkcji nazwy kanału — tej samej, którą niesie sterowanie modelu okna. Wykaz nie pyta rdzenia i nie trzyma własnej kopii kanałów, tylko wskazanie.
+
+Stan „jeszcze nie wiadomo" to co innego niż stan „rejestr pusty"; rozróżnia je znacznik odpowiedzi otrzymanej z rejestru. Bez tego wskaźnik ładowania nie zgasłby na rdzeniu o autentycznie pustym rejestrze, a taki rejestr jest stanem poprawnym — wpisy zaczynu dają się skasować.
+
+Odmowa nie jest pustką. Rejestr po odmowie odczytu listy kanałów zachowuje wykaz poprzedni i samej odmowy nie niesie, więc jej treść wkłada tu panel osobnym wywołaniem; inaczej nieudany odczyt wyglądałby jak rejestr pusty.
+
+Usuwania w wierszu nie ma, bo przycisk czynności nieodwracalnej przy każdej pozycji leży na wyciągnięcie omyłkowego kliknięcia; usuwanie stoi w panelu akcji, dotyczy kanału wskazanego i wymaga potwierdzenia.

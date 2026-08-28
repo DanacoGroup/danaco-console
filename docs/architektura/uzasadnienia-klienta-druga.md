@@ -6280,3 +6280,17 @@ wskazać maszynę; ten sam klucz odczytuje sekcja tożsamości urządzenia w okn
 
 ## budowa/klient-poprzedni/src/polaczenie/warstwa-lacznosci.test.ts
 Sprawdziany tego pliku mierzą dokładnie obietnicę warstwy łączności: kolejkowanie przy braku rdzenia, opróżnienie kolejki po powrocie połączenia oraz ponawianie, które nie ustaje.
+
+## budowa/klient-poprzedni/src/moduly/workspace/pulpit-projektu.ts
+Wskazanie projektu jest polem, nie wykazem — okno nie zna komendy zwracającej listę projektów.
+Wpisany identyfikator idzie do rdzenia komendą zestawienia pulpitu, a co rdzeń z nim zrobi, mówi
+jego odpowiedź. Powody bezczynności przycisków bez pokrycia bierze wykaz braków z wykazu komend
+kontraktu, a nie z napisu na stałe.
+Stan „archived" znaczy projekt zamknięty, dostępny do podglądu. Ten sam napis stanu stoi w wierszu
+Stan prac poniżej plakietki. Kod spoza kontraktu w wadze plakietki: przypisanie mu wagi sukces
+albo neutralna byłoby zgadywaniem, bo okno nie wie, co rdzeń przez niego rozumie.
+Każdy licznik na kaflu bierze się z pola, które zestawienie pulpitu niesie; liczby wymyślonej nie
+ma tu żadnej, a pole pominięte przez rdzeń mówi o sobie wprost. Zestawienie nieodczytane nie daje
+zera przy liczniku kafla — o liczbie pozycji nie wiadomo wtedy nic. Pole pominięte przez rdzeń
+w opisie liczby nie jest zerem: wartość domyślna zero stawiałaby przed oczami liczbę, której
+rdzeń nie podał, nie do odróżnienia od zmierzonego zera.

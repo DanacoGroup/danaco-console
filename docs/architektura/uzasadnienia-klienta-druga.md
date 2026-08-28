@@ -6966,3 +6966,12 @@ Składa źródła komend znakowania i operacji, schowka, mowy, osadzenia oraz
 użycia w jeden interfejs, żeby dołożenie kolejnej rodziny komend nie było
 zmianą w podpisie okna. Nazwy metod noszą przedrostki swoich rodzin, więc suma
 nie ma ani jednej kolizji nazw.
+
+## budowa/klient-poprzedni/src/moduly/studio/roznica-i-trafienia.ts
+Kontrakt komendy studio.diff.compare łączy porównanie wersji i wyszukiwanie
+wzorca w jednej odpowiedzi: pole hunks, pole matches albo oba naraz. Wyrys
+funkcji wyrysFragmentow jest przez to jeden i nie zakłada, która tablica
+przyszła — brak obu jest poprawnym wynikiem, który panel przedstawia jako
+pustkę merytoryczną, nie błąd. Rodzaj fragmentu jest daną przenoszoną do
+atrybutu data-rodzaj elementu, nie barwą ustaloną w kodzie; barwę dobiera
+arkusz stylu modułu na podstawie żetonów motywu.

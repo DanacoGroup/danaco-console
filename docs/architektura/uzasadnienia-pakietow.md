@@ -6991,3 +6991,8 @@ Osobny wynik logiczny WpisPamieciPoIdentyfikatorze jest potrzebny, bo brak
 wiersza nie jest awarią odczytu, lecz stanem, który warstwa wyższa zamienia na
 odmowę z kodem `not_found` — funkcja `wpisPamieci` zawija `sql.ErrNoRows`
 we własny błąd.
+
+## budowa/server/internal/dane/workspace_zaleznosci.go
+Baza pilnuje jednoznaczności krawędzi; cyklu nie pilnuje, bo cykl rozpoznaje
+się przejściem grafu, a nie warunkiem kolumny. Przejście grafu wykonuje rdzeń
+przed zapisem — tutaj leży wyłącznie odczyt i zapis.

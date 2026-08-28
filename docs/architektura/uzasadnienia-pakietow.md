@@ -6378,3 +6378,12 @@ błędem.
 
 Funkcja rozeslij woła każdy czynny adres i oddaje klucze rejestracji, które kopertę przyjęły; urządzenie
 nieobecne odpowiada fałszem, co nie jest błędem przebiegu, tylko powodem ponowienia.
+
+## budowa/server/internal/zdalne/tor.go
+
+Droga rozstrzygnięcia toru ma pięć ogniw i każde brakujące jest osobną, nazwaną odmową: zasilenie bazy
+rdzenia, host wskazany ustawieniem wykonania na poziomie okna albo globalnym, host wpisany do wykazu
+hostów zdalnych, zgoda operatora na tym wierszu wydana oraz program SSH obecny na maszynie rdzenia.
+Odmowa nie jest bramką wobec operatora maszyny: każda mówi, co się nie stało, dlaczego, i którym ruchem
+operator to zmienia. Zgoda per host chroni maszyny operatora — rdzeń nie zainicjuje połączenia z maszyną,
+której mu nie oddano.

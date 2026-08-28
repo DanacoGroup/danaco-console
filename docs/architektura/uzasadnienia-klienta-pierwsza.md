@@ -9342,3 +9342,28 @@ o tym po napisie, skutek nazywa osobna funkcja opisu złożenia, z odpowiedzi.
 Zdanie pustki podglądu dobiera osobny plik pustki okien: przy niewskazanym
 oknie badania żądanie budowy odmawia i żadna z dwóch dróg budowy nie ruszy,
 więc tłumaczenie tam reguły dwóch dróg myliłoby operatora.
+
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-zakresu.ts
+
+Dwie akcje kończą się w tym oknie albo komendą research.workspace.set.
+Pozostałe — pytania badawcze, notatka robocza, luki, świeżość, cztery
+reprezentacje materiału oraz diagram przesiewu — własnej komendy nie mają
+i idą drogą generyczną window.action, której odmowę okno wypisuje słowami
+rdzenia.
+
+Porządek pracy prowadzi od Discovery Panel do Sources Manager, a nie wprost do
+formularza źródła, dlatego akcja badania zakresu przechodzi do okna odkrywania.
+
+Rdzeń ma prawo zapisać co innego niż przyszło w żądaniu: przyciąć zakres albo
+odsiać etap. Przy samym zdaniu potwierdzającym podmiana byłaby niewidoczna,
+więc skutek zapisu porównuje zamówienie z odpowiedzią. Porównanie kosztuje
+jeden przebieg po wykazie i nazywa rozbieżność wprost.
+
+Stan pusty opisuje plik pustka-okien.ts wspólnie dla okien modułu, a nie
+stan.powod(), które w tej fazie niesie komunikat rdzenia o niewskazanym oknie
+badania — zdanie techniczne trafiłoby w miejsce opisu pustego zakresu.
+
+Żądanie składane bez wskazania treści wracałoby odmową walidacji, z której nic
+nie wynika dla obsługującego okno. Pole zakresu niesie temat badania, z którego
+biorą treść pytania badawcze oraz notatka robocza, wypisywane po jednym
+w wierszu.

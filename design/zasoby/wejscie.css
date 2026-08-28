@@ -442,7 +442,8 @@
 /* Odsyłacz w oknie wejściowym. Wpleciony w zdanie stopki różni się od tekstu
    otoczenia wyłącznie barwą (1,03:1 w motywie jasnym), więc niesie też
    podkreślenie — WCAG 1.4.1 wymaga rozróżnienia niebędącego samym kolorem. */
-.au-link { font-size: var(--dn-fs-sm); }
+/* Odnośnik postawiony na przycisku musi zdjąć tło i obrys przeglądarki. */
+.au-link { font-size: var(--dn-fs-sm); border: 0; background: transparent; }
 .we-fraza .au-link { text-decoration: underline; text-underline-offset: 2px; }
 
 

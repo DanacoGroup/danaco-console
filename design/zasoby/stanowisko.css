@@ -178,7 +178,10 @@
   font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); background: var(--dn-powierzchnia);
 }
 .sta-zrodlo svg { width: 12px; height: 12px; }
+/* Tło i obrys deklarowane wprost: przycisk bez nich bierze `buttonface` i `buttonborder`
+   z arkusza przeglądarki — w motywie ciemnym Chromium daje szarość #6B6B6B spoza palety. */
 .sta-zrodlo .odepnij { display: inline-grid; place-content: center; width: 14px; height: 14px;
+  border: 0; background: transparent;
   border-radius: var(--dn-r-pill); color: var(--dn-tekst-3); }
 .sta-zrodlo .odepnij:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
@@ -211,8 +214,10 @@
   transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
 }
 .sta-prompt:focus-within { border-color: var(--dn-fokus); box-shadow: var(--dn-cien-sygnal); }
+/* Znak zachęty jest pismem, nie kropką: barwa kropki spełnia próg 3:1 dla grafiki,
+   a pismo wymaga 4,5:1. W motywie jasnym --dn-kropka dawało 3,91:1 na powierzchni. */
 .sta-prompt-grot { align-self: start; padding-top: 6px; font-family: var(--dn-ff-mono);
-  font-weight: var(--dn-fw-polgruba); color: var(--dn-kropka); user-select: none; }
+  font-weight: var(--dn-fw-polgruba); color: var(--dn-sygnal); user-select: none; }
 .sta-prompt-obszar {
   min-height: 28px; max-height: 140px; padding: 4px 0;
   border: none; background: transparent; color: var(--dn-tekst);

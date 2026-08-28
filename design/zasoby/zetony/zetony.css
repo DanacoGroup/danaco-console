@@ -30,6 +30,7 @@
   --dn-szary-200: #D5D7DC;
   --dn-szary-300: #BDC0C6;
   --dn-szary-400: #9A9EA6;
+  --dn-szary-450: #8D9199;
   --dn-szary-500: #787C85;
   --dn-szary-600: #5D6169;
   --dn-szary-700: #464A52;
@@ -76,11 +77,11 @@
   --dn-znak-poswiata: #5C8CEC;
 
   /* --- STANY — prymitywy (informacja = rodzina sygnału)                */
-  --dn-zielen-700: #1E7A46;  --dn-zielen-400: #4FBD85;
+  --dn-zielen-700: #1C7442;  --dn-zielen-400: #4FBD85;
   --dn-zielen-200: #BCE3CD;  --dn-zielen-100: #E7F5EE;
   --dn-bursztyn-700: #8A5B0C; --dn-bursztyn-400: #E0A63C;
   --dn-bursztyn-200: #EED9A7; --dn-bursztyn-100: #FBF2DE;
-  --dn-czerwien-700: #C0362F; --dn-czerwien-400: #EE7168;
+  --dn-czerwien-700: #BA342E; --dn-czerwien-400: #EE7168;
   --dn-czerwien-200: #F3C8C4; --dn-czerwien-100: #FCEDEB;
 
   /* ==================================================================== *
@@ -475,7 +476,11 @@
      przez co po nagłówku wszystko czytało się jednym głosem. */
   --dn-tekst-wiodacy: var(--dn-szary-300);
   --dn-tekst-2: var(--dn-szary-400);         /* #9A9EA6 · 6,8:1 na tle */
-  --dn-tekst-3: var(--dn-szary-500);         /* #787C85 · wyłącznie metadane */
+  /* W ciemnym trzeci stopień nie może iść odcieniem 500: na panelu daje 3,86:1,
+     a WCAG 1.4.3 wymaga 4,50 dla pisma drobnego, którym metadane są z definicji.
+     Odcień 450 przechodzi na wszystkich czterech powierzchniach (4,55–5,88)
+     i zostaje odrębny od drugiego stopnia. */
+  --dn-tekst-3: var(--dn-szary-450);         /* #8D9199 · wyłącznie metadane */
   --dn-tekst-inv: var(--dn-szary-950);
 
   /* działanie główne — inwersja atramentu (tu: biel) */
@@ -543,7 +548,7 @@
     --dn-obrys: var(--dn-szary-150); --dn-obrys-subtelny: var(--dn-szary-100);
     --dn-obrys-mocny: var(--dn-szary-300);
     --dn-tekst: var(--dn-szary-900); --dn-tekst-2: var(--dn-szary-600);
-    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-0);
+    --dn-tekst-3: var(--dn-szary-600); --dn-tekst-inv: var(--dn-szary-0);
     --dn-atrament: var(--dn-szary-900); --dn-atrament-hover: var(--dn-szary-1000);
     --dn-atrament-tekst: var(--dn-szary-0);
     --dn-sygnal: var(--dn-sygnal-600); --dn-sygnal-mocny: var(--dn-sygnal-700);
@@ -590,7 +595,7 @@
     --dn-obrys: var(--dn-szary-800); --dn-obrys-subtelny: var(--dn-szary-850);
     --dn-obrys-mocny: var(--dn-szary-750);
     --dn-tekst: var(--dn-szary-100); --dn-tekst-2: var(--dn-szary-400);
-    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-950);
+    --dn-tekst-3: var(--dn-szary-450); --dn-tekst-inv: var(--dn-szary-950);
     --dn-atrament: var(--dn-szary-100); --dn-atrament-hover: var(--dn-szary-25);
     --dn-atrament-tekst: var(--dn-szary-950);
     --dn-sygnal: var(--dn-sygnal-300); --dn-sygnal-mocny: var(--dn-sygnal-200);

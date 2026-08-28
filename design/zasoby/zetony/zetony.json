@@ -29,6 +29,7 @@
       "--dn-szary-200": "#D5D7DC",
       "--dn-szary-300": "#BDC0C6",
       "--dn-szary-400": "#9A9EA6",
+      "--dn-szary-450": "#8D9199",
       "--dn-szary-500": "#787C85",
       "--dn-szary-600": "#5D6169",
       "--dn-szary-700": "#464A52",
@@ -83,19 +84,19 @@
   },
   "semantyczne": {
     "jasny": {
-      "--dn-tlo": "#F3F4F6",
-      "--dn-powierzchnia": "#FFFFFF",
-      "--dn-powierzchnia-2": "#EBECEF",
-      "--dn-panel": "#F9FAFB",
-      "--dn-hover": "rgba(10,10,10,0.05)",
-      "--dn-wcisniecie": "rgba(10,10,10,0.09)",
-      "--dn-nakladka": "rgba(10,10,10,0.45)",
-      "--dn-obrys": "#E1E3E7",
-      "--dn-obrys-subtelny": "#EBECEF",
+      "--dn-tlo": "#E1E3E7",
+      "--dn-powierzchnia": "#EBECEF",
+      "--dn-powierzchnia-2": "#E1E3E7",
+      "--dn-panel": "#F3F4F6",
+      "--dn-hover": "rgba(10, 10, 10, 0.05)",
+      "--dn-wcisniecie": "rgba(10, 10, 10, 0.09)",
+      "--dn-nakladka": "rgba(10, 10, 10, 0.45)",
+      "--dn-obrys": "#D5D7DC",
+      "--dn-obrys-subtelny": "#E1E3E7",
       "--dn-obrys-mocny": "#BDC0C6",
       "--dn-tekst": "#16181D",
       "--dn-tekst-2": "#5D6169",
-      "--dn-tekst-3": "#787C85",
+      "--dn-tekst-3": "#5D6169",
       "--dn-tekst-inv": "#FFFFFF",
       "--dn-atrament": "#16181D",
       "--dn-atrament-hover": "#080A0D",
@@ -108,22 +109,22 @@
       "--dn-sygnal-obrys": "#C9DAFB",
       "--dn-kropka": "#3B6FE0",
       "--dn-fokus": "#3B6FE0",
-      "--dn-fokus-cien": "rgba(59,111,224,0.30)"
+      "--dn-fokus-cien": "rgba(59, 111, 224, 0.30)"
     },
     "ciemny": {
       "--dn-tlo": "#0D0F13",
       "--dn-powierzchnia": "#16181D",
       "--dn-powierzchnia-2": "#111317",
       "--dn-panel": "#1E2126",
-      "--dn-hover": "rgba(255,255,255,0.06)",
-      "--dn-wcisniecie": "rgba(255,255,255,0.10)",
-      "--dn-nakladka": "rgba(0,0,0,0.62)",
+      "--dn-hover": "rgba(255, 255, 255, 0.06)",
+      "--dn-wcisniecie": "rgba(255, 255, 255, 0.10)",
+      "--dn-nakladka": "rgba(0, 0, 0, 0.62)",
       "--dn-obrys": "#272A30",
       "--dn-obrys-subtelny": "#1E2126",
       "--dn-obrys-mocny": "#373A41",
       "--dn-tekst": "#EBECEF",
       "--dn-tekst-2": "#9A9EA6",
-      "--dn-tekst-3": "#787C85",
+      "--dn-tekst-3": "#8D9199",
       "--dn-tekst-inv": "#0D0F13",
       "--dn-atrament": "#EBECEF",
       "--dn-atrament-hover": "#F9FAFB",
@@ -132,11 +133,11 @@
       "--dn-sygnal-mocny": "#C9DAFB",
       "--dn-sygnal-wypelnienie": "#3B6FE0",
       "--dn-sygnal-wypelnienie-hover": "#5C8CEC",
-      "--dn-sygnal-tlo": "rgba(59,111,224,0.16)",
-      "--dn-sygnal-obrys": "rgba(92,140,236,0.40)",
+      "--dn-sygnal-tlo": "rgba(59, 111, 224, 0.16)",
+      "--dn-sygnal-obrys": "rgba(92, 140, 236, 0.40)",
       "--dn-kropka": "#5C8CEC",
       "--dn-fokus": "#5C8CEC",
-      "--dn-fokus-cien": "rgba(92,140,236,0.35)"
+      "--dn-fokus-cien": "rgba(92, 140, 236, 0.35)"
     }
   },
   "stany-semantyczne": {
@@ -339,12 +340,12 @@
     "jasny": {
       "--dn-obrys-marki": "#819DD5",
       "--dn-tlo-wybrane": "#E4EDFD",
-      "--dn-tekst-opis": "#6D717A"
+      "--dn-tekst-opis": "#5D6169"
     },
     "ciemny": {
       "--dn-obrys-marki": "#3B5487",
       "--dn-tlo-wybrane": "#2A3345",
-      "--dn-tekst-opis": "#858992"
+      "--dn-tekst-opis": "#92969E"
     },
     "_zapas": {
       "--dn-obrys-marki": "var(--dn-sygnal-800)",
@@ -355,18 +356,18 @@
   },
   "cienie": {
     "jasny": {
-      "--dn-cien-1": "0 1px 2px rgba(10,10,10,0.05)",
-      "--dn-cien-2": "0 2px 8px rgba(10,10,10,0.07), 0 1px 2px rgba(10,10,10,0.05)",
-      "--dn-cien-3": "0 8px 24px rgba(10,10,10,0.12)",
-      "--dn-cien-lg": "0 20px 48px rgba(10,10,10,0.18)",
-      "--dn-cien-sygnal": "0 0 0 3px rgba(59,111,224,0.18)"
+      "--dn-cien-1": "0 1px 2px rgba(10, 10, 10, 0.05)",
+      "--dn-cien-2": "0 2px 8px rgba(10, 10, 10, 0.07), 0 1px 2px rgba(10, 10, 10, 0.05)",
+      "--dn-cien-3": "0 8px 24px rgba(10, 10, 10, 0.12)",
+      "--dn-cien-lg": "0 20px 48px rgba(10, 10, 10, 0.18)",
+      "--dn-cien-sygnal": "0 0 0 3px rgba(59, 111, 224, 0.18)"
     },
     "ciemny": {
-      "--dn-cien-1": "0 1px 2px rgba(0,0,0,0.35)",
-      "--dn-cien-2": "0 3px 10px rgba(0,0,0,0.42), 0 1px 2px rgba(0,0,0,0.30)",
-      "--dn-cien-3": "0 10px 30px rgba(0,0,0,0.52)",
-      "--dn-cien-lg": "0 24px 60px rgba(0,0,0,0.65)",
-      "--dn-cien-sygnal": "0 0 0 3px rgba(92,140,236,0.22)"
+      "--dn-cien-1": "0 1px 2px rgba(0, 0, 0, 0.35)",
+      "--dn-cien-2": "0 3px 10px rgba(0, 0, 0, 0.42), 0 1px 2px rgba(0, 0, 0, 0.30)",
+      "--dn-cien-3": "0 10px 30px rgba(0, 0, 0, 0.52)",
+      "--dn-cien-lg": "0 24px 60px rgba(0, 0, 0, 0.65)",
+      "--dn-cien-sygnal": "0 0 0 3px rgba(92, 140, 236, 0.22)"
     },
     "_uwaga": "cien-sygnal ZAREZERWOWANY: pierscien pola aktywnego i poswiata kropki sygnalu"
   }

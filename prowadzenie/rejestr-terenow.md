@@ -181,6 +181,42 @@ Studia — nadaja sie do ponownego uzycia bez przenoszenia kodu.
 | **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy; `budowa/klient/src/main.ts` (zniesiony na rzecz `aplikacja.ts` — dwa punkty wejscia otwieralyby dwa polaczenia i dwie maszyny stanu); `budowa/klient/package.json` wylacznie w zakresie dopisania sprawdzianow ramy do polecenia `testy` |
 | **Poza terenem** | `budowa/klient/src/wejscie/`, `polaczenie/`, `protokol/`; caly `design/`; rdzen; `prowadzenie/` |
 
+**Runda trzecia — bateria mutacji jako kryterium odbioru.** Dwie niezalezne kontrole
+zwrocily runde druga. Kazda z ponizszych mutacji przechodzi DZIS na zielono; po naprawie
+KAZDA ma oblewac. To jest miara odbioru, nie wskazowka.
+
+| | Mutacja | Co obnaza |
+|---|---|---|
+| M1 | wstawic z powrotem `przekazano = true` przed wolaniem przekazania | sprawdzian mierzy WLASNA KOPIE zatrzasku (`przekazanie.test.ts:266-287`), nie kod produkcyjny; `aplikacja.ts` nie jest importowana przez zaden sprawdzian |
+| M2 | zapisac `liczbaSesji: 0` na sztywno w `montaz.ts:40` i `:75` | nastawa niesie `sessions: []`, wiec sprawdzian porownuje 0 z 0 |
+| M3 | `w.moduly.slice(0, 1)` w `skladniki/szyna.ts:43` | nastawa niesie JEDEN modul, wiec szyna z wykazu jest nieodrozznialna od szyny rysujacej pierwszy element |
+| M4 | wyciac znak motywu i wezel `[data-stan-motyw]` | zaden sprawdzian po niego nie siega; `motywCiemny()` nie wykonuje sie ani razu |
+
+Nastawy sprawdzianow musza NIESC MATERIAL, ktory rozroznia: co najmniej dwa moduly
+i co najmniej jedna sesja. Nastawa pusta zamienia miare w porownanie zera z zerem.
+
+**Cicha awaria, ktora runda druga PRZESUNELA, zamiast usunac.** `przekazanie.ts:41-49`:
+`zdejmijOknoWejscia()` i `scenaWejscia.hidden = true` wykonuja sie PRZED `zamontujRame`,
+a `miejsceRamy.hidden = false` dopiero po nim. Kazdy wyjatek montazu zostawia OBA wezly
+ukryte — Operator dostaje bialy ekran. Wyjatek polyka `przebieg.ts:333-338`
+(`try { sluchacz(stan) } catch { console.error }`), zatrzask zostaje `false`, wiec proba
+wraca przy kazdej zmianie stanu i rzuca od nowa. Zadnej odmowy nazwanej.
+Pokazane uruchomieniem, nie czytaniem.
+
+**Pozostale drogi bez odmowy:** `montaz.ts:46` i `skladniki/szyna.ts:43` robia
+`w.moduly.map(...)` bez sprawdzenia — rdzen oddajacy `environment.enter` bez `modules`
+albo z `null` daje to samo; `montaz.ts:66` zaklada `querySelector(...)!` zamiast odmowic;
+`narzedzia.ts:50` rzuca wyjatek zamiast nazwac odmowe, i to w trakcie montazu.
+
+**Rama nie subskrybuje przebiegu** (`montaz.ts`): liczba sesji i nazwa srodowiska sa
+zamrozone na chwile montazu. Zerwanie polaczenia prowadzi przez `przebieg.ts:356-362`
+cala droge wejscia od nowa, ale scena jest ukryta, a jej sluchacz odsubskrybowany.
+Operator zostaje w ramie, ktora nie ma jak nic powiedziec, bez drogi powrotu.
+Rozstrzygniecie o zakresie naprawy nalezy do wykonawcy i ma byc NAZWANE — jesli
+subskrypcja wykracza poza ten teren, ma powstac zgloszenie, a nie milczenie.
+
+`src/rama/dom-zastepczy.ts:1` — naglowek 355 znakow przy limicie 350.
+
 **Przedmiot.** Droga wejscia konczy sie komenda `environment.enter` i okno zostaje
 na ekranie na zawsze, bo nie ma dokad prowadzic. Klient bierzacy liczy 51 plikow
 i wola piec komend z tysiaca osiemdziesieciu jeden. Teren stawia RAME APLIKACJI:

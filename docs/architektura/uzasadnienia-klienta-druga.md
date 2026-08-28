@@ -6118,3 +6118,15 @@ wywołanie i odda inny zestaw poziomów, nie zrobił tego, o co proszono. Poziom
 przestawienia to ten sam wykaz, co w pamięci projektu i w Instructions Panel, prowadzony jednym
 źródłem nazw, żeby ta sama nastawa nie nazywała się w trzech oknach na trzy sposoby.
 Warunek wstępny zwraca prawdę i wypisuje powód, gdy karty jeszcze nie ma.
+
+## budowa/klient-poprzedni/src/ustawienia/zrodlo-powiadomien.ts
+Sekcja nie ma własnej rodziny kontraktu i mieć jej nie powinna: model danych mówi wprost, że zakres klas
+zdarzeń i kanał dostarczenia są ustawieniami konfiguracyjnymi; katalog wnosi je migracją bazy danych,
+a droga do nich jest tą samą drogą, co do każdej innej nastawy platformy. Katalog przychodzi jednym
+wywołaniem po kategorii, wartości jednym wywołaniem po poziomie — odczyt bez klucza oddaje komplet
+zapisów zasięgu; piętnaście par pytań na otwarcie sekcji byłoby trzydziestoma kopertami po treść, którą
+rdzeń oddaje w dwóch. Katalog dopuszcza trzy poziomy zapisu, bo tak stoi w dokumentach dostawy, ale okno
+ustawień jest oknem poziomu aplikacji i nie ma w nim ani selektora środowiska, ani karty sesji; zawężenie
+środowiskiem należy do okna konfiguracji, gdzie łańcuch zasięgów jest widoczny i wybieralny. Zapisu nie
+ma znaczy, że obowiązuje domyślna, nie fałsz — inaczej sekcja pokazywałaby wszystko wyłączone na świeżej
+bazie, choć katalog mówi aktywne.

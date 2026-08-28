@@ -7207,3 +7207,9 @@ identyfikatora koordynatora z pustym napisem byłoby zawężeniem do okna,
 którego nie ma, i oddałoby wykaz pusty bez powodu. Odczyt wywołany po
 zdjęciu roli zawraca też do wykazu nadań, więc drugiego wywołania stąd nie
 ma: byłoby tym samym pytaniem zadanym dwa razy pod rząd.
+
+## budowa/klient-poprzedni/src/moduly/design/adnotacje-kompozycji.ts — treść przy zamknięciu wątku
+Kontrakt wymaga pola treści przy każdym zapisie, a podstawienie treści z pola okna przepisałoby cudzą uwagę przy okazji zamykania wątku.
+
+## budowa/klient-poprzedni/src/moduly/design/adnotacje-kompozycji.ts — położenie z przesunięcia kanwy
+Kursor myszy śledzony w pętli byłby ruchem na łączu, którego nikt nie zamawiał, a widok przesunięcia kanwy mówi, na co operator patrzy.

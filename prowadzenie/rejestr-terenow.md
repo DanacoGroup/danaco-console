@@ -6,6 +6,51 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### wpiecie-analizy-typescriptu
+
+| | |
+|---|---|
+| **Galaz** | `teren/wpiecie-analizy-typescriptu` z `main` |
+| **Drzewo** | `~/robocze/wpiecie-analizy-typescriptu` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_modul_developer_jezyk.go`; `budowa/server/internal/core/adapter_modul_developer_narzedzia.go`; ich sprawdziany |
+| **Poza terenem** | kontrakt i wytwory, migracje, klient, `design/`, `prowadzenie/` |
+
+**Przedmiot — zdolnosc produktu, ktorej nie ma.** Analiza statyczna TypeScriptu
+i JavaScriptu NIE JEST WPIETA, choc arsenal ja obiecuje. Wykaz zaleznosci wydawany przez
+binarium rdzenia mowi o `eslint` wprost: „analiza statyczna kodu TypeScript i JavaScript".
+Program stoi na maszynie. Pracy nie dostaje.
+
+Zmierzone przez kontrole i potwierdzone przez prowadzenie:
+- `narzedzieEslint` wystepuje w rdzeniu WYLACZNIE w wykazie warsztatu
+  (`adapter_modul_developer_narzedzia.go:73`) i w wykazie zaleznosci. Jedyne uruchomienie
+  to `eslint --version` z `developer.toolchain.check` — oslona na PATH pokazala dokladnie
+  to i nic wiecej. Po takim kryterium „wpiety" bylby kazdy program na maszynie.
+- `analizyRepozytorium` (`adapter_modul_developer_jezyk.go:499`) zna wylacznie
+  `golangci-lint`, `ruff`, `stylelint` i `typos`. Pliki `.ts` i `.js` nie trafiaja nigdzie.
+- `narzedzieStaticcheck` jest w tym samym polozeniu: tylko wykaz warsztatu, zero pracy.
+- `serwerJezykaPliku` (`:471-477`) oddaje dla `.ts/.js` `narzedzieSerweraTypeScript`
+  z druga wartoscia `false`, a komentarz `adapter_modul_developer_narzedzia.go:58` mowi
+  wprost: „rdzen nie ma dzis czym go zapytac". Nawigacja po symbolach i przeksztalcenia
+  w plikach TypeScriptu sa niedostepne.
+
+**Skutek dla Operatora.** Modul Developer sprawdza kod Go i Pythona, a kodu, w ktorym
+napisany jest wlasny klient produktu, nie sprawdza wcale.
+
+**Kryteria odbioru.**
+1. `developer.lint.get` na pliku `.ts` albo `.js` kieruje prace do `eslint` i oddaje
+   jego uwagi. Dowodem jest URUCHOMIENIE przez montaz produkcyjny — oslona na PATH
+   zapisujaca wywolanie albo odczyt uwag zwroconych przez program.
+2. `developer.scan.run` obejmuje pliki `.ts` i `.js`, jesli tam jest co sprawdzic.
+3. `staticcheck` dostaje prace albo ZNIKA z wykazu warsztatu. Program w wykazie, ktory
+   nigdy nie dostaje pracy, klamie Operatorowi o zdolnosci produktu.
+4. `serwerJezykaPliku` dla `.ts/.js`: albo rdzen ma czym go zapytac, albo odmowa jest
+   NAZWANA i mowi Operatorowi, czego brakuje — nie cicha druga wartosc `false`.
+   Rozstrzygniecie nalezy do wykonawcy i ma byc nazwane.
+5. Sprawdzian mierzy SKUTEK i PADA przed naprawa. Sprawdzian na samo wywolanie programu
+   jest brakiem sprawdzianu.
+6. `go build ./...` oraz `go test -run 'Developer|Jezyk|Lint|Scan|Warsztat' ./internal/core/`.
+
+
 ### narzedzia-odblokowujace-arsenal
 
 | | |

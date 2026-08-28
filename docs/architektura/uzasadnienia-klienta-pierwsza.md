@@ -6946,3 +6946,29 @@ rdzeń. Zgłoszenie niezgodności idzie do okna koordynatora zwykłym zapisem
 wiadomości. Wcielenie roli analityka niesie własny wykaz kryteriów oceny
 i własny nagłówek zgłoszenia; wartość utrwala zapis ustawienia na poziomie
 okna analityka.
+
+## budowa/klient-poprzedni/src/moduly/browser/plotno-adnotacji.ts
+Pasek narzędzi jest osobno, a złożenie jednego z drugim w warstwę nad podglądem stoi w pliku `warstwa-adnotacji.ts`. Płótno nie dopisuje ani jednego węzła do elementu podglądu, nie zmienia mu klas i niczego z niego nie czyta — leży nad nim. Tło jest przezroczyste, bo zrzutu strony nie ma: rdzeń pobiera stronę biblioteką HTTP i zostawia pole zrzutu puste. Rysunek powstaje więc po tym, co pokazuje scena, i nie utrwala tła. Kontekst rysunkowy oddaje wartość pustą w środowisku bez rasteryzacji — wtedy nie ma czego wykreślić, ale wykaz śladów, wybór narzędzia i czyszczenie działają nietknięte.
+
+## budowa/klient-poprzedni/src/moduly/browser/plotno-adnotacji.ts — rozwiązanie barwy żetonu
+Płótno rysunkowe nie zna zmiennej stylu wprost, więc żeton trzeba rozwiązać z wyliczonego stylu elementu. Gdy arkusz nie jest wczytany, w sprawdzianie bez stylów, wraca się do koloru tekstu elementu, a nie do barwy zapisanej wprost w kodzie — żadna z nich nie ma prawa tam paść.
+
+## budowa/klient-poprzedni/src/moduly/browser/plotno-adnotacji.ts — bufor po zmianie rozmiaru
+Zmiana rozmiaru zeruje bufor płótna, więc obraz odtwarza się z wykazu śladów. Obserwator rozmiaru bywa nieobecny w środowisku sprawdzianu, a jego brak nie jest powodem, by tryb adnotacji przestał działać.
+
+## budowa/klient-poprzedni/src/moduly/browser/plotno-adnotacji.ts — spłaszczenie płótna
+Gdy przeglądarka nie oddała obrazu, okno ma o tym powiedzieć, a nie wysłać pustkę zamiast rysunku adnotacji.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-orkiestracji.ts
+Środowisko nie udostępnia modułów w bocznej nawigacji, więc okien do modułu
+nie przypina. Sekcja Role montuje istniejącą scenę czterech okien
+roboczych, wraz z panelem podagentów w oknie wykonawcy; dwa wystąpienia
+wykonawcy to jeden typ okna w dwóch wystąpieniach, nie dwa osobne okna.
+Pozostałe cztery sekcje pracują na oknach modułu automatyzacji, bo własnych
+okien nie mają, i każda niesie podsekcję powiązania mówiącą, czy powiązanie
+jest skonfigurowane i jak je założyć, zamiast rysować pustkę albo udawać
+własne okno. Sekcja nieznana temu plikowi nie gaśnie i nie znika: przestrzeń
+robocza pokazuje wtedy stan pusty z nazwą sekcji, a brak ustawienia układu
+podsekcji znaczy układ domyślny, nigdy niedostępność. Adresem układu jest
+okno, a panel orkiestracji należy do środowiska; sesja bez ani jednego okna
+zostawia układ miejscowy, o czym powłoka mówi przy pierwszej zmianie.

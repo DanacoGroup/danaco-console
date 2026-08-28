@@ -21,24 +21,7 @@ import type { RejestrKanalow } from './rejestr-kanalow';
 import { utworzWykazKanalow } from './wykaz-kanalow';
 import { utworzZrodloKanalow } from './zrodlo-kanalow';
 
-/**
- * Panel rejestru kanałów modelu — miejsce, w którym zakłada się, zmienia
- * i wykreśla wiersz rejestru (`channel.add`, `channel.update`,
- * `channel.remove`). Panel obsługuje wszystkie trzy czynności, bo instalacja ma
- * na starcie jeden kanał, a okno komunikacji bez kanału nie ma czym rozmawiać.
- *
- * Rejestr kanałów pozostaje bytem tylko do odczytu: panel nie ma do
- * `rejestr-kanalow.ts` żadnej drogi zapisu. Po udanym zapisie woła
- * `rejestr.odswiez()` — zamówienie `channel.list`, którego wynik rejestr
- * rozgłasza wszystkim czytelnikom (okno rozmowy, sterowania modelu głównego
- * i zapasowego, panel modeli, Roundtable). Jeden zapis odświeża wszystkich,
- * a żaden z czytelników nie wie o istnieniu tego panelu.
- *
- * Usunięcie idzie w dwóch krokach, przyciskiem w wariancie
- * `dn-btn--niebezpieczny` stojącym na końcu panelu akcji; w wierszach wykazu
- * przycisku usuwania nie ma. Zachowanie przy odmowie opisuje
- * `czynnosci-kanalow.ts`.
- */
+/** Panel rejestru kanałów modelu: miejsce zakładania, zmiany i wykreślania wiersza rejestru, z odświeżeniem wszystkich czytelników po zapisie. */
 export interface ZaleznosciPaneluKanalow {
   kanal: Kanal;
   /** Wspólny rejestr kanałów klienta. Panel go czyta i zamawia odświeżenie. */
@@ -88,7 +71,7 @@ export function utworzPanelKanalow(zaleznosci: ZaleznosciPaneluKanalow): PanelKa
   return { element: rama.element, odswiez };
 }
 
-/** Rama okna wraz z dymkiem objaśnienia w nagłówku. */
+/** Rama okna wraz z dymkiem objaśnienia w nagłówku, opisującym operatorowi przeznaczenie panelu rejestru kanałów. */
 function zlozRame(): RamaOkna {
   return utworzRameOkna({
     tytul: 'Rejestr kanałów modelu',
@@ -97,8 +80,7 @@ function zlozRame(): RamaOkna {
     przeznaczenie:
       'Zakładanie, zmiana i wykreślanie wierszy rejestru kanałów — channel.add, channel.update, channel.remove.',
     modul: 'Sterowanie okna',
-    // Bez `przedrostek`: panel nie ma ani jednej reguły własnej dla gniazd ramy,
-    // więc klasy modułu byłyby uchwytami bez reguł (rama-okna.ts, pole `przedrostek`).
+    // Bez przedrostka: panel nie ma reguł własnych dla gniazd ramy, więc klasy modułu byłyby bez reguł.
     dodatkiNaglowka: [utworzDymekObjasnienia(OBJASNIENIE)],
   });
 }
@@ -121,7 +103,7 @@ function zlozAkcje(kontekst: KontekstKanalow): HTMLElement[] {
   ];
 }
 
-/** Przycisk panelu; wariant domyślny jest zarysowy, bo wyróżniony ma być jeden. */
+/** Przycisk panelu narzędzi; wariant domyślny jest zarysowy, bo wyróżniony kolorem ma być tylko jeden przycisk. */
 function przyciskNarzedzia(
   etykieta: string,
   przyKlikniecu: () => void,

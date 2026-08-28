@@ -6830,3 +6830,25 @@ Wiersz okna niesie klucze obce, a rejestr nadzorcy kody, więc trzeba
 rozstrzygnąć trzy więzy: sesję, moduł i kanał modelu. Sesji się przy tym nie
 zakłada, ponieważ jej wiersz powstaje przy założeniu sesji, a okno bez sesji
 nie jest oknem — drugie miejsce zakładania sesji byłoby drugą prawdą o niej.
+
+## budowa/server/internal/core/handlers_doradcy.go
+Adapter wraz z rozstrzygnięciami leży w `adapter_doradcy.go`, pojęcie doradcy
+i sufit siły w `podagenci/doradca.go` oraz `podagenci/doradca_wybor.go`.
+Odbiorcą rady jest model w trakcie tury, bo to on staje przed rozstrzygnięciem,
+w którym rada się przydaje. Rodzina ma jedną komendę: kontrakt nie zna ani
+wykazu doradców, ani historii konsultacji jako osobnych komend — wykaz
+kandydatów oddaje metoda `Doradcy()` adaptera, a historia konsultacji leży
+w dzienniku `konsultacja_doradcy` i czeka na własną komendę; dopisanie nazw,
+których klient nie zna, byłoby rozrostem kontraktu bez odbiorcy. Zdarzenie
+jest częścią czynności: rada ma być jawna w strumieniu i w prowenancji,
+inaczej agent działa na przesłance, której w aktach nie ma, dlatego port
+oddaje obok wyniku gotowy ładunek zdarzenia, a jego skrót liczy funkcja
+`podagenci.ZlozRade`, więc obsługiwacz go nie przelicza. Sesja nie stoi
+w ładunku zdarzenia, bo kontrakt jej tam nie ma — zdarzenie wskazuje okno,
+a koperta wskazuje kartę sesji, w której to okno pracuje; adapter zna oba
+fakty z danych okna, obsługiwacz żadnego z nich nie zna. Zdarzenie idzie
+wyłącznie po konsultacji udanej: odmowa doboru, czyli każda próba sięgnięcia
+przez model po model silniejszy bez wyraźnego wskazania, wraca pytającemu
+błędem i ląduje w dzienniku konsultacji jako wpis odmowy, bo rozgłoszenie
+udanej konsultacji po próbie, która się nie odbyła, byłoby fałszywym
+powiadomieniem.

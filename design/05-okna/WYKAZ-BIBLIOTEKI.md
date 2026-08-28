@@ -1,12 +1,12 @@
-# Wykaz biblioteki — 473 składników
+# Wykaz biblioteki — 474 składników
 
 Warstwa wspólna to trzynaście arkuszy. Okno składa się WYŁĄCZNIE z tych klas.
 Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundament.css, komponenty.css.
 
-## fundament.css — 11
+## fundament.css — 12
 ```
 .dn-dane .dn-etykieta-mono .dn-etykieta-wersalikowa .dn-kbd .dn-kod .dn-kod--schemat
-.dn-kod--wiersz .dn-separator .dn-separator--na-plotnie .dn-separator--pionowy .dn-sr-only
+.dn-kod--wiersz .dn-separator .dn-separator--na-plotnie .dn-separator--pionowy .dn-separator--znak .dn-sr-only
 ```
 
 ## komponenty.css — 289
@@ -27,26 +27,26 @@ Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundam
 .dn-kafel-znak .dn-kanwa .dn-karta .dn-karta--klikalna .dn-karta--wybrana .dn-karta-cialo
 .dn-karta-naglowek .dn-karta-sesji .dn-karta-sesji-zamknij .dn-karta-srodowiska .dn-karta-srodowiska--akcent .dn-karta-srodowiska-godlo
 .dn-karta-srodowiska-motto .dn-karta-srodowiska-opis .dn-karta-srodowiska-tytul .dn-karta-stopka .dn-karta-tlo .dn-karta-tytul
-.dn-kartka .dn-kartka-numer .dn-kartka-tytul .dn-karty-sesji .dn-kolejka .dn-krok
-.dn-krok--bledy .dn-krok--poprawny .dn-krok--pracuje .dn-krok--wstrzymany .dn-krok-meta .dn-krok-opis
-.dn-krok-stan .dn-krok-znak .dn-kropka .dn-kropka--blad .dn-kropka--neutralna .dn-kropka--ostrzezenie
-.dn-kropka--sukces .dn-kropka--sygnal .dn-kropka--tetno .dn-kryteria .dn-kryterium .dn-lid
-.dn-lid--bez-odstepu .dn-lid--na-ramie .dn-link .dn-link--cichy .dn-link--drugorzedny .dn-link--na-ramie
-.dn-listwa .dn-listwa-pozycja .dn-listwa-pozycja--pulpit .dn-meta .dn-meta--mocna .dn-meta--na-ramie
-.dn-meta--przygaszona .dn-meta--w-wierszu .dn-modal .dn-modal--szeroki .dn-modal-cialo .dn-modal-lid
-.dn-modal-naglowek .dn-modal-stopka .dn-modal-tlo .dn-modal-tytul .dn-modal-zamknij .dn-na-koniec
-.dn-na-najechanie .dn-nauka .dn-nauka-kroki .dn-nauka-nota .dn-nauka-numer .dn-nauka-wstep
-.dn-nota .dn-okno-wejsciowe .dn-okno-wejsciowe--jednokolumnowe .dn-okno-wejsciowe--z-belka .dn-okno-wejsciowe-belka .dn-okno-wejsciowe-panel
-.dn-okno-wejsciowe-panel--scentrowany .dn-pas-dzialan .dn-pas-dzialan--ciag .dn-pasek .dn-pasek-godlo .dn-pasek-logotyp
-.dn-pasek-prawa .dn-pasek-szukaj .dn-plakietka .dn-plakietka--blad .dn-plakietka--informacja .dn-plakietka--ostrzezenie
-.dn-plakietka--rola .dn-plakietka--sukces .dn-plakietka--sygnal .dn-plyw .dn-pole .dn-pole--rosnace
-.dn-pole-blad .dn-pole-etyk .dn-pole-etykieta .dn-pole-grupa .dn-pole-grupa--rzad .dn-pole-kontrolka
-.dn-pole-opis .dn-pole-zestaw .dn-pole-zestaw--osadzona .dn-postep .dn-postep--z-glowa .dn-postep-etykieta
-.dn-postep-glowa .dn-postep-tor .dn-postep-tor--nieokreslony .dn-postep-wartosc .dn-potwierdzenie .dn-potwierdzenie-pole
-.dn-potwierdzenie-stopka .dn-powloki .dn-prompt .dn-prompt-grot .dn-prompt-obszar .dn-przelacznik
-.dn-przewijane .dn-przewijane-suwak .dn-przewijane-szyna .dn-przybornik .dn-pusty-stan .dn-pusty-stan--zwarty
-.dn-pusty-stan-opis .dn-pusty-stan-tytul .dn-radio .dn-scena .dn-scena--gora .dn-sekcja-tytul
-.dn-sep-pionowy .dn-sila .dn-sila-odcinek .dn-sila-opis .dn-sila-tor .dn-spinner
+.dn-kartka .dn-kartka-numer .dn-kartka-tytul .dn-karty-sesji .dn-karty-sesji-tory .dn-kolejka
+.dn-krok .dn-krok--bledy .dn-krok--poprawny .dn-krok--pracuje .dn-krok--wstrzymany .dn-krok-meta
+.dn-krok-opis .dn-krok-stan .dn-krok-znak .dn-kropka .dn-kropka--blad .dn-kropka--neutralna
+.dn-kropka--ostrzezenie .dn-kropka--sukces .dn-kropka--sygnal .dn-kropka--tetno .dn-kryteria .dn-kryterium
+.dn-lid .dn-lid--bez-odstepu .dn-lid--na-ramie .dn-link .dn-link--cichy .dn-link--drugorzedny
+.dn-link--na-ramie .dn-listwa .dn-listwa-pozycja .dn-listwa-pozycja--pulpit .dn-meta .dn-meta--mocna
+.dn-meta--na-ramie .dn-meta--przygaszona .dn-meta--w-wierszu .dn-modal .dn-modal--szeroki .dn-modal-cialo
+.dn-modal-lid .dn-modal-naglowek .dn-modal-stopka .dn-modal-tlo .dn-modal-tytul .dn-modal-zamknij
+.dn-na-koniec .dn-na-najechanie .dn-nauka .dn-nauka-kroki .dn-nauka-nota .dn-nauka-numer
+.dn-nauka-wstep .dn-nota .dn-okno-wejsciowe .dn-okno-wejsciowe--jednokolumnowe .dn-okno-wejsciowe--z-belka .dn-okno-wejsciowe-belka
+.dn-okno-wejsciowe-panel .dn-okno-wejsciowe-panel--scentrowany .dn-pas-dzialan .dn-pas-dzialan--ciag .dn-pasek .dn-pasek-godlo
+.dn-pasek-logotyp .dn-pasek-prawa .dn-pasek-szukaj .dn-plakietka .dn-plakietka--blad .dn-plakietka--informacja
+.dn-plakietka--ostrzezenie .dn-plakietka--rola .dn-plakietka--sukces .dn-plakietka--sygnal .dn-plyw .dn-pole
+.dn-pole--rosnace .dn-pole-blad .dn-pole-etyk .dn-pole-etykieta .dn-pole-grupa .dn-pole-grupa--rzad
+.dn-pole-kontrolka .dn-pole-opis .dn-pole-zestaw .dn-pole-zestaw--osadzona .dn-postep .dn-postep--z-glowa
+.dn-postep-etykieta .dn-postep-glowa .dn-postep-tor .dn-postep-tor--nieokreslony .dn-postep-wartosc .dn-potwierdzenie
+.dn-potwierdzenie-pole .dn-potwierdzenie-stopka .dn-powloki .dn-prompt .dn-prompt-grot .dn-prompt-obszar
+.dn-przelacznik .dn-przewijane .dn-przewijane-suwak .dn-przewijane-szyna .dn-przybornik .dn-pusty-stan
+.dn-pusty-stan--zwarty .dn-pusty-stan-opis .dn-pusty-stan-tytul .dn-radio .dn-scena .dn-scena--gora
+.dn-sekcja-tytul .dn-sila .dn-sila-odcinek .dn-sila-opis .dn-sila-tor .dn-spinner
 .dn-spis-tresci .dn-suwak .dn-szukaj .dn-szyna-modulu .dn-szyna-modulu-glowa .dn-szyna-modulu-lista
 .dn-tabela .dn-tabela--tresc .dn-tabela-ikona-tekst .dn-tabela-liczba .dn-tekst-ciagly .dn-tekst-ciagly--dokument
 .dn-tekst-ciagly--drobny .dn-tekst-ciagly--osadzony .dn-toast .dn-toast--blad .dn-toast--informacja .dn-toast--ostrzezenie

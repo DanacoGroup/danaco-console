@@ -872,3 +872,35 @@ wyłącznie `.dn-karty-lista`, bo lista zakładek nie może mieć dzieci innych
 niż `tab`. Geometria pochodzi ze wzorca pasa kart i jest zapisana raz,
 w jednym bloku zmiennych komponentu — pozostałe reguły wyłącznie się do
 niej odwołują.
+
+## design/zasoby/kreator.css
+Bryła okna prowadzi przez ponumerowane kroki: instalator, przepływ
+wejścia, przygotowanie środowiska. Trzy pasma stoją jedno pod drugim, belka
+tytułowa, korpus złożony z szyny kroków i płótna, oraz pas działań, a korpus
+dzieli się na dwie kolumny. Tym różni się od okna wejściowego
+(`.dn-okno-wejsciowe` w `komponenty.css`), które ma dwie kolumny i nie ma
+pasa działań na dnie: tam czynność stoi w panelu, tu biegnie pod obiema
+kolumnami. Trzy strefy okna rozdziela sama powierzchnia, bez kreski: belka
+jest najciemniejsza, szyna kroków to obrzeże, a płótno treści jest
+najjaśniejsze. Okno kreatora stoi przed uwierzytelnieniem, więc nie ma ramy
+aplikacji — belka tego okna nie jest `.dn-belka` z `rama.css`, tamta należy
+do ramy aplikacji i niesie jej sterowanie. Kolejne okno kreatora nie
+przepisuje stąd żadnej reguły: wpina ten arkusz i używa klas, a to, co
+należy do jednego okna, a nie do rodziny, stoi w `okna/<okno>.css`.
+Wyłącznie żetony `var(--dn-*)`, oba motywy.
+
+Okno instalatora nie zmienia rozmiaru między krokami, bo `min(…, 100%)`
+wiązałoby szerokość z treścią kroku przez rusztowanie prototypu, które
+kurczy się do zawartości. Kolumna boczna traci wcięcie, bo równy podział
+rozjeżdżał wiersze tabeli. Granicę treści kroku z kolumną boczną niesie
+kreska z lewej, ponieważ sama różnica powierzchni ginęła wzrokowo.
+
+Blok dokumentu kroku: wyjaśnienie pod polem stoi w trzecim stopniu
+kontrastu, bo jest przypisem do pola, nie jego treścią. Pole warunków
+bierze całą wolną wysokość kroku — sztywne 190 pikseli zostawiało pod
+spodem prawie dwieście pikseli pustki, a treść i tak się nie mieściła.
+Powierzchnia jest zagłębiona o jeden stopień, nie o cztery: żeton tła na
+ciemnym panelu robił studnię, w której tekst leżał na prawie czarnym. Pole
+warunków licencji jest osadzonym tekstem ciągłym z biblioteki — własne
+zostaje wyłącznie to, czego biblioteka znać nie może: tło strefy tego okna
+i obrys odcinający je od płótna kroku.

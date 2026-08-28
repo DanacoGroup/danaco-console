@@ -6541,3 +6541,8 @@ rozstrzygnięcia nastawy.
 Porządek adresów zwracanych dla kontekstu jest dwupoziomowy: najpierw
 poziom zasięgu, a w ramach poziomu oś, w kolejności konto, model,
 platforma.
+
+## budowa/server/internal/konfig/odwzorowanie_kontraktu.go
+Poziom pusty w polu scope wpisu kontraktu nie jest błędem ani stanem
+wyjątkowym; jest informacją, że wartość pochodzi z warstwy definicji, nie
+z zapisanego ustawienia.

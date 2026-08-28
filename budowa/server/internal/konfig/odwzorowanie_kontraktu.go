@@ -3,12 +3,9 @@ package konfig
 import "danacoconsole/shared"
 
 // WpisKontraktu zamienia rozstrzygnięcie na wpis konfiguracji kontraktu.
-//
-// Pole scope niesie poziom, z którego pochodzi wartość — to jest odpowiedź na
-// pytanie „skąd wzięła się ta wartość". Dla wartości domyślnej poziom pozostaje
-// pusty, bo wartość nie pochodzi z żadnego zapisu. Pusty poziom nie
-// jest błędem ani stanem wyjątkowym; jest informacją, że obowiązuje warstwa
-// definicji.
+// Pole scope niesie poziom, z którego pochodzi wartość; dla wartości
+// domyślnej poziom pozostaje pusty, ponieważ wartość nie pochodzi z żadnego
+// zapisu.
 func (w Wynik) WpisKontraktu() shared.ConfigEntry {
 	wpis := shared.ConfigEntry{
 		Key:   w.Klucz,

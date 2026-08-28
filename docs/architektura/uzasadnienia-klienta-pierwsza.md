@@ -7619,3 +7619,28 @@ Pas relacji dokłada `mission-control.ts` pod matrycą — to osobny plik, bo ni
 Kontrakt wskazuje środowisko sesji wyłącznie w `presence.environmentCode` sesji trwających — sesję bez tego odpisu matryca wypisuje osobno pod kolumnami zamiast zgadywać przypisanie; wiersz sesji poza środowiskami nie jest kontrolką wejścia, bo wejście wymaga środowiska.
 
 Wskaźnik pracy w tle to kropka `dn-kropka--tetno` przy tytule; postęp etapów mieszka osobno, w kolumnie „Procesy w tle".
+
+## budowa/klient-poprzedni/src/moduly/design/nadanie-etykiet.ts
+Zbiera pełny zestaw etykiet jednego zasobu i oddaje go rdzeniowi komendą ustawienia etykiet.
+Kontrolka stoi przy filtrze wykazu, bo pole zasila to samo zawężenie co pole etykiet żądania
+odczytu wykazu zasobów.
+
+Pole pokazuje stan bieżący zasobu przy każdym przewybraniu, a wyczyszczenie pola zdejmuje
+wszystkie etykiety; pusty zestaw jest drogą udaną, nie odmową.
+
+Etykietę przycina wspólny moduł przycinania pól, nie metoda standardowa: rdzeń zapisuje etykietę
+co do znaku, a przycinanie przeglądarki zostawia znak NEL (U+0085), więc zestaw złożony z samego
+NEL dałby etykietę niewidoczną o długości jednego znaku. Przycięcie jest wspólne z filtrem wykazu,
+żeby etykieta nadana i szukana były jednym ciągiem znaków.
+
+Rdzeń oddaje etykiety odczytane z bazy po zapisie, nie echo żądania, więc zdanie skutku stoi na
+odpowiedzi, a różnica wobec zestawu zamówionego jest odmową.
+
+Cisza kanału nie jest odmową nadania — rdzeń mógł etykiety zapisać, mimo że gniazdo padło przed
+odpowiedzią.
+
+Wciągnięcie zasobu do zbioru modułu gubi wskazanie promptu źródłowego: odpowiedź nadania etykiet
+niesie te same klucze co odczyt wykazu, bez klucza promptu, bo repozytorium nie ma przekładu klucza
+wiersza promptu na kod kontraktu. Zasób świeżo wygenerowany traci więc po otagowaniu wskazanie
+promptu w Preview Window; okno mówi o tym wprost w wierszu „Prompt źródłowy" zamiast dorabiać
+wartość z poprzedniej odpowiedzi.

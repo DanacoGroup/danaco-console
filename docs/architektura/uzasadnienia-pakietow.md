@@ -6175,3 +6175,13 @@ SprawdzKatalogDanych obsługuje zarówno sprawdzenie polecenia, jak i punkt,
 w którym kanał wybiera katalog konfiguracji konta — reguła jest jedna.
 Wskazanie puste jest naruszeniem: kanał bez wskazania sięga po katalog
 wspólny, a właśnie tego izolacja zabrania.
+
+## budowa/server/internal/session/izolacja_przydzial.go
+Każdy z trzech zakresów izolacji ma tę samą treść: włączony znaczy zasób
+dedykowany oknu, wyłączony znaczy zasób wspólny platformy. Egzekucja jest
+jedna dla trzech zakresów: zasób, którego właścicielem nie jest to okno,
+zostaje odrzucony. Właściciela wskazuje ten, kto zasób przydziela — rejestr
+procesów kluczowany oknem, pula kont oddająca kod profilu, przydział serwera
+wykonania.
+## budowa/server/internal/dane/studio_wejscie_pochodzenie.go
+Wiersz pochodzenia zakłada ten, kto fragment wnosi: wniesienie pliku, obrazu, fragmentu z biblioteki albo ze strony sieci. Wykaz pochodzenia czyta go inny odcinek repozytorium, dlatego odczyt jest tu równie pełny jak zapis, żeby tamten odcinek nie musiał zakładać drugiego. Zakres jest liczony w znakach, tak samo jak zakres blokady; fragment usunięty zostawia wiersz o zerowej długości świadomie, bo to, że Operator wniósł kiedyś fragment z danego źródła, jest faktem, którego usunięcie tekstu nie unieważnia.

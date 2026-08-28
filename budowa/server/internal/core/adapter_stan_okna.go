@@ -8,14 +8,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// StanOkna zwraca stan okna komunikacji: parametry wykonania, stan procesu,
-// miarę historii i — na żądanie — konfigurację efektywną.
-//
-// Odpowiedź składa się z trzech warstw, bo z trzech warstw składa się samo okno:
-// parametry wykonania zna rejestr nadzorcy (a po restarcie rdzenia wiersz),
-// stan procesu zna rejestr procesów, historię zna baza. Okno nieznane wszystkim
-// trzem daje odpowiedź pustą ze stanem `pending` — pytanie o stan nie ma prawa
-// zerwać niczego.
+// StanOkna zwraca stan okna komunikacji: parametry wykonania, stan procesu, miarę historii
+// i — na żądanie — konfigurację efektywną. Okno nieznane rejestrom daje odpowiedź pustą
+// ze stanem pending.
 func (a *adapterNawigacji) StanOkna(ctx context.Context, z shared.WindowStateGetRequest) (shared.WindowStateGetResponse, error) {
 	wynik := shared.WindowStateGetResponse{
 		ProcessStatus: a.stanProcesu(z.WindowId),
@@ -35,24 +30,22 @@ func (a *adapterNawigacji) StanOkna(ctx context.Context, z shared.WindowStateGet
 
 	if z.IncludeConfig != nil && *z.IncludeConfig && a.ustawienia != nil {
 		idOkna := z.WindowId
-		// Poziom zasięgu najwęższy: bez wskazania poziomu wraca polityka
-		// efektywna okna, czyli wartość obowiązująca wraz z jej źródłem.
+		// Poziom zasięgu najwęższy: brak wskazania zwraca politykę efektywną okna z jej źródłem.
 		wpisy, err := a.ustawienia.Odczytaj(ctx, shared.ConfigGetRequest{ScopeId: &idOkna})
 		if err != nil {
 			return shared.WindowStateGetResponse{}, err
 		}
 		wynik.Config = wpisy.Entries
 	}
-	// Bieg naprawczy wychodzi wyłącznie dla okna koordynatora; okno samodzielne
-	// i wykonawcze nie prowadzą pętli.
+	// Bieg naprawczy wychodzi tylko dla okna koordynatora, nie dla samodzielnego i wykonawczego.
 	if bieg, jest := a.biegi.Stan(z.WindowId); jest {
 		wynik.Loop = &bieg
 	}
 	return wynik, nil
 }
 
-// oknoStanu zwraca okno żywe z rejestru nadzorcy, a gdy tego nie ma —
-// utrwalone wierszem.
+// oknoStanu zwraca okno żywe z rejestru nadzorcy, a gdy tego okna tam nie ma, zwraca okno
+// utrwalone wierszem bazy.
 func (a *adapterNawigacji) oknoStanu(ctx context.Context, idOkna string) (shared.Window, error) {
 	if a.nadzorca != nil {
 		if okno, err := a.nadzorca.Rejestr().Okno(idOkna); err == nil {

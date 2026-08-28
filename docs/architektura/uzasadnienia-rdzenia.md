@@ -7246,3 +7246,10 @@ Skrót bywa szablonem z polami do wypełnienia. Rdzeń zna ich nazwy, ale ich ni
 wypełnia — wypełnia je użytkownik w chwili rozwinięcia, a wartości bywają różne
 przy każdym użyciu. Podstawienie czegokolwiek po stronie rdzenia dałoby
 szablon rozwinięty raz na zawsze.
+
+## budowa/server/internal/core/adapter_stan_okna.go
+Odpowiedź StanOkna składa się z trzech warstw, bo z trzech warstw składa się
+samo okno: parametry wykonania zna rejestr nadzorcy, a po restarcie rdzenia —
+wiersz bazy; stan procesu zna rejestr procesów; historię zna baza. Pytanie
+o stan nie ma prawa zerwać niczego, dlatego okno nieznane żadnemu z rejestrów
+otrzymuje odpowiedź pustą ze stanem pending zamiast odmowy.

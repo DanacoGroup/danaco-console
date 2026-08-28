@@ -7224,3 +7224,10 @@ zostają nietknięte. Wskazań może być wiele, bo usunięcie zaznaczonych i
 usunięcie jednej to w historii sesji ten sam gest; wskazanie bez odpowiednika
 nie jest błędem i wraca w polu missingIds, ponieważ usuwanie zbiorcze nie może
 paść przez jedną pozycję usuniętą wcześniej z drugiego okna.
+
+## budowa/server/internal/core/adapter_sesje_bieg.go
+Zatrzymanie sesji nie zamyka jej ani okien, ponieważ uczestnik rozmowy chce
+wstrzymać pracę modelu, a nie stracić miejsce, w którym pracuje. Okna zostają
+otwarte, zapis zostaje w całości, wznowienie pracy jest kolejną wiadomością.
+Okno bez tury w biegu nie jest błędem i po prostu nie trafia do wykazu okien
+przerwanych.

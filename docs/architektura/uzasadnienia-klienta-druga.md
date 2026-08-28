@@ -5837,3 +5837,13 @@ potem rozstrzyganie osi, więc poziom bierzemy zawsze z dozwolonych zasięgów d
 wołającego. Definicja niesie dozwolone zasięgi i to ona rozstrzyga; klient nie wybiera poziomu za katalog,
 bo rdzeń takiego zapisu nie odrzuci i pomyłka byłaby cicha. Odmowa nie wywraca odczytu: brak definicji
 albo brak wartości wraca jako pole puste wraz ze zdaniem odmowy, a nie jako wyjątek.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/rodzaje-obszaru.ts
+Te same liczby czyta rachunek podziału gniazda, uchwyt szerokości i arkusz
+toru — trzy kopie tej samej liczby dałyby trzy różne progi czytelności po
+pierwszej poprawce, a jedno źródło znaczy, że podniesienie minimum jest
+jedną zmianą. Moduł nie zna DOM, nie zna paneli po nazwie i nie rozstrzyga,
+ile paneli wolno otworzyć — oddaje liczby, a decyzję podejmuje ten, kto
+pyta; gdy miejsca zabraknie, szerokość zmienia się uchwytem, panel nie
+chowa się sam. Widok pełnoekranowy jest obszarem biorącym całą scenę, bez
+sąsiada, z którym miałby się dzielić.

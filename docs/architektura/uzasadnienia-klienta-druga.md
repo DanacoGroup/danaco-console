@@ -7938,3 +7938,40 @@ poprawnym położeniem suwaka: zsunięty na sam początek pokazywałby wtedy ca�
 bufor, a opis pod nim mówiłby o wierszu zerowym. Rozróżnienie stanu nietkniętego
 od ustawionego na zero musi istnieć w wartości, a nie w domyśle — stąd liczba
 ujemna.
+## budowa/klient-poprzedni/src/moduly/terminal/biblioteka-skryptow.ts
+Biblioteka jest widokiem na dziennik rdzenia: wykaz czyta komendą terminal.script.list,
+a zapis idzie przez terminal.script.save, który zakłada kolejną wersję pozycji. Ten byt trzyma
+pozycje w pamięci wyłącznie po to, żeby je pokazać i sprawdzić przed uruchomieniem — po
+odświeżeniu strony wykaz wraca z rdzenia. Wywóz do pliku zostaje jako droga wyniesienia treści
+poza rdzeń.
+
+Uruchomienie idzie tą samą drogą co każde polecenie karty: rdzeń podaje treść jako pojedynczy
+argument programowi powłoki (bash -c, powershell -Command, python -u -c, node -e), więc skrypt
+wieloliniowy wykonuje się bez zapisywania go do pliku. Stąd wynika warunek, o którym okno
+przypomina: powłoka karty musi być tą, w której skrypt napisano — treść Basha podana programowi
+python nie jest skryptem, tylko błędem składni.
+
+Parametry deklaruje się nagłówkiem w komentarzu na początku treści, postaci:
+  # args:
+  #   srodowisko: nazwa środowiska wdrożenia
+  #   wersja: numer wydania
+a w treści stoją jako {{srodowisko}}. Podstawienie dzieje się w kliencie przed wysłaniem, więc
+w potwierdzeniu widać polecenie, które naprawdę poszło do rdzenia — nie szablon.
+
+Nagłówek deklaracji parametrów stoi w komentarzu, bo skrypt ma pozostać uruchamialny także poza
+platformą — plik z deklaracją w składni obcej powłoce nie wykonałby się nigdzie indziej.
+Przyjmowane są oba znaki komentarza wykazu powłok: kratka (Bash, PowerShell, Python) i podwójny
+ukośnik (Node.js).
+
+Podstawienie parametrów: skrypt z pustą ścieżką w miejscu parametru wykonałby się na katalogu
+głównym zamiast odmówić, dlatego odwołanie bez wartości zostaje w treści widoczne.
+
+Kontrola wstępna nie jest linterem. Analizę statyczną prowadzą osobne programy (shellcheck,
+shfmt, PSScriptAnalyzer, ruff), których instalka nie niesie; komenda uruchamiająca je nad treścią
+stoi w kontrakcie i okno ją wywołuje osobną czynnością. Kontrola wstępna działa niezależnie od
+nich i wychwytuje to, co daje się rozstrzygnąć pewnie: pustkę, znaki końca wiersza rodem
+z Windows, znacznik kolejności bajtów i rozjazd między deklaracją parametrów a ich użyciem.
+
+Sprawdzenie składni: pozostałe powłoki wykazu kontraktu nie mają przełącznika sprawdzającego albo
+jego użycie wymagałoby przeniesienia treści przez plik, którego moduł nie ma czym zapisać — okno
+mówi to wprost, zamiast pokazywać przycisk bez skutku.

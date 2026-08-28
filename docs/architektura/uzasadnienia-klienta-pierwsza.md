@@ -6984,3 +6984,9 @@ Przechwycenie zamawia i zrzut ekranu, i źródło strony, a wraca z tym, co rdze
 
 ## budowa/klient-poprzedni/src/moduly/automations/panel-dozoru.ts
 Trzynaście czynności szuflad i paneli popover okna przebiegów obejmuje przeglądarkę logów, drążenie do poziomu kroku, punkty wznowienia, wznowienie od punktu, podgląd i odtworzenie ładunku, reguły alarmowania, budżety czasu, skarbiec poświadczeń i dziennik audytu. Execution Monitor pokazuje historię wielu uruchomień naraz, a te czynności dotyczą jednego z nich — podstawienie przebiegu bieżącego kazałoby zgadywać, którego. Skarbiec i audyt stoją tu, bo obie rodziny przenikają okno przebiegów: poświadczenie jest tym, czego krok potrzebował, żeby przebieg się powiódł, a audyt odpowiada na pytanie, kto zmienił definicję między dwoma przebiegami; osobnego okna dla nich dokument projektowy nie zna, obie rodziny wprost nie mają odrębnych okien.
+
+## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — liczba kroków automatyki
+Liczba kroków ma znaczenie osobne od samego zapisu: samo słowo „zapisano" nie pokazuje, że scenariusz przyjęty z krokami odrzuconymi nic nie zrobi.
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-nadzoru.ts
+Cztery z pięciu czynności żądają harmonogramu, nie automatyki — kontrakt wskazuje go osobnym polem; panel pyta więc o niego wprost i nie podstawia w jego miejsce automatyki bieżącej, bo harmonogram ma własny identyfikator i to on jest przedmiotem tych czynności. Piąta, adres webhooka, żąda automatyki i tę bierze ze stanu modułu. Klucz podpisu nie wraca i nie może wrócić: odpowiedź niesie referencję, a nie wartość — panel pokazuje dokładnie to, co dostał, i niczego nie dopowiada.

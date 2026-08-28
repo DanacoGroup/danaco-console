@@ -8911,3 +8911,42 @@ samo jak stany okien. Przejście dla modułu potrzebującego sesji już przy
 montażu jest odmianą przejścia dla modułu pracującego w oknie: tamten pyta
 rdzeń o okna, ten wystarcza sobie samą sesją, a montaż jest odroczony do
 wczytania, bo w chwili tworzenia widoku sesja bywa jeszcze nieznana.
+
+## budowa/klient-poprzedni/src/aplikacja/widok-strony-glownej.ts
+Tożsamość klienta pochodzi z powitania (`uzgodnienie.klient`) — bez niej strefa
+sesji w tle pokazuje wykaz bez czynności powrotu, bo `session.bind` żąda
+`clientId` z powitania, nie tożsamości nadanej po raz drugi.
+
+Obietnica `gotowa` spełnia się w obu przypadkach, bo jest sygnałem „strona ma
+czym stanąć”, nie sygnałem powodzenia. Czeka na nią scena wejścia (`ladowanie/`);
+odmowa, która nigdy nie domyka obietnicy, zostawiłaby scenę nad gotowym produktem.
+
+Bez tożsamości klienta `home.enter` nie idzie i obietnica jest spełniona od razu —
+stanowisko podglądu buduje stronę bez uzgodnienia i nie ma na co czekać.
+
+Strona sama nie otwiera środowiska i nie wysyła komendy — zgłasza wybór, a skutek
+należy do tej warstwy.
+
+Zmiana środowiska prowadzi przez tę stronę, dlatego jest ona trasą początkową:
+uruchomienie aplikacji pokazuje przedpokój pracy, a nie okno komunikacji wyrwane
+z kontekstu.
+
+Kontrakt daje nawigacji jeden ciąg: `home.enter` → `environment.list` →
+`environment.enter` → `module.list` → `workspace.enter`.
+
+Ponad `environment.list` wejście daje: środowiska z kodami modułów
+(`adapterNawigacji.StronaGlowna` woła `srodowiska(ctx, true)`), sesje czynne
+konta, sesję ostatnio ogniskowaną na tym kliencie oraz żywy stan sesji trwających
+w tle. `environment.list` bez `includeModules` nie niesie żadnej z tych rzeczy
+i o żadną nie da się dopytać bez `clientId`.
+
+Sesje z odpowiedzi zostają nieużyte: strefa sesji ma źródło ciągłe —
+`session.list`, zdarzenia rdzenia i archiwum (`zasilSesjeStronyGlownej`) —
+a `home.enter` oddaje jedynie migawkę sesji czynnych. Zasilenie strefy z obu
+naraz dałoby dwie rozjeżdżające się prawdy o tej samej rzeczy.
+
+Bez tożsamości klienta wejścia nie ma: `clientId` jest w żądaniu polem
+obowiązkowym i musi pochodzić z powitania (drugie wywołanie `tozsamoscKlienta()`
+nadałoby identyfikator nowy i rozdzieliło ognisko od połączenia). Stanowisko
+podglądu buduje stronę bez uzgodnienia, więc dla niego zostaje odczyt samego
+wykazu — brak tożsamości nie gasi ekranu.

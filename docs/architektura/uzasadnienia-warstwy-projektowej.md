@@ -672,3 +672,7 @@ Błękit sygnałowy występuje w dwóch miejscach: plakietka nadania głównego 
 plakietka punktu już nadanego oknu. Ostrzeżenie o zapisie na maszynie
 chronionej idzie barwą ostrzegawczą, nie sygnałową, ponieważ jest to inny
 rodzaj komunikatu i nie konkuruje z akcentem barwy sygnałowej.
+
+## budowa/klient-poprzedni/src/moduly/design/zasoby.css
+Układ kompozycji modułu ma własny arkusz `kompozycja.css`, oddzielony od
+tego pliku, który obejmuje wyłącznie filtr, wykaz zasobów i kreator promptu.

@@ -6649,3 +6649,28 @@ tych rodzin i nie przepuszcza ani zewnetrzne.Wolaj, ani exec.Command.
 
 Zapora działa w obie strony: gdy plik rodziny zniknie albo zmieni nazwę,
 kończy się niepowodzeniem zamiast cicho przestać czegokolwiek pilnować.
+
+## budowa/server/internal/core/zdarzenia.go
+
+Obsługiwacz po udanej zmianie stanu zgłasza ją emiterowi, a transport
+roznosi zdarzenie dalej — rdzeń wykonuje komendy także wtedy, gdy nikt nie
+słucha zdarzeń.
+
+Kontekst w podpisie funkcji zdarzeń niosących sprawcę jest potrzebny, bo
+bez niego rdzeń nie ma jak odpowiedzieć na pytanie, czyja ręka wykonała
+zmianę — odpowiedź jest własnością wywołania, nie zmienionego bytu.
+Kontekst niesie już tożsamość żądania i tożsamość połączenia, więc sprawca
+jest tu bytem tej samej klasy i nie dokłada ani jednego parametru
+domenowego. Kontekst bez gniazda nie jest błędem: pola zostają puste,
+a zdarzenie idzie tak samo — kontrakt mówi wprost, że brak znaczy „rdzeń
+nie potrafił tego rozstrzygnąć", i to jest wtedy prawda.
+
+Dopiero pole actor pozwala interfejsowi napisać „Asystent" zamiast „spoza
+tego połączenia" przy wiadomości, której rola sama tego nie mówi.
+
+zlecenieAsystenta rozgłasza assistant.action.changed, czyli zmianę stanu
+zlecenia modułu Assistant. Producentem jest tor wykonawcy zleceń, w pliku
+adapter_modul_asystent_wykonawca.go, a nośnikiem ten sam emiter rdzenia,
+co dla pozostałych zmian obszarów.
+
+Producentem telemetrii postępu jest wyłącznie plik telemetria.go.

@@ -7167,3 +7167,19 @@ postać w tym panelu i oddaje ją oknu, które jedyne wie, czym postać akapitu
 jest. Gdy postać dokumentu wejdzie do kontraktu, malarz przejdzie na komendę
 rdzenia i przetrwa zamknięcie karty; dziś żyje przez sesję okna i panel mówi
 to wprost.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-podzialu-powierzchni.ts
+Zakładki i podział powierzchni są trybami równorzędnymi, a Operator przełącza
+się między nimi kiedy chce, bez utraty stanu. Przełączenie na zakładki nie
+rozbiera drugiego pola i nie oddaje jego zawartości — pole zostaje złożone,
+tylko schowane; niewidoczny nie znaczy niedostępny, bo dokument w polu
+schowanym jest dalej otwarty, dalej ma swoje zaznaczenie i dalej jest
+dostępny modelowi. Granica podziału jest elementem separatora z wartością
+w procentach, a nie samą kreską do chwytania myszą, ponieważ podział
+powierzchni bez klawiatury byłby czynnością dostępną tylko części
+Operatorów: strzałki przesuwają granicę o dwa punkty procentowe, klawisze
+Home i End dosuwają ją do granic pola pracy, a Enter przywraca podział na
+pół. Moduł nie zna dokumentu ani stanu modułu wyższego poziomu — bierze dwa
+elementy i rozkłada je na powierzchni, a to, który dokument stoi w którym
+polu, rozstrzyga okno pracy, inaczej podział trzymałby drugi stan dokumentu
+obok stanu modułu i oba rozjechałyby się przy pierwszym zapisie.

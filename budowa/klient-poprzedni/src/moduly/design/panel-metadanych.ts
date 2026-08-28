@@ -8,24 +8,8 @@ import { skutekPrzekazania } from './skutek-designu';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Panel metadanych jednego zasobu wskazanego w Assets Panel wraz
- * z przekazaniem go do modułu docelowego.
- *
- * „Wyślij do modułu docelowego" idzie komendą `context.transfer` — jedyną
- * zbudowaną w kontrakcie drogą przeniesienia kompletu kontekstu. Wykaz modułów
- * docelowych przychodzi z rdzenia (`module.list`), nie z kopii katalogu po
- * stronie klienta.
- *
- * `ContextBundle` nie ma pola zasobu wizualnego, więc zasób jedzie polem
- * `documentIds` wraz z poleceniem nazywającym go po imieniu — to przybliżenie
- * kontraktu, nie jego pełne pokrycie.
- *
- * Potwierdzenie opisuje okno, które wróciło, a nie moduł zamówiony w polu
- * wyboru: `context.transfer` nie sprawdza katalogu modułów — przepisuje
- * `targetModuleId` do okna docelowego i oddaje `transferred: true` także dla
- * kodu, którego katalog nie zna. Jedynym polem mówiącym, gdzie zasób wylądował,
- * jest `window.moduleId` odpowiedzi; rozbieżność wobec zamówienia jest odmową
- * (`skutek-designu.ts`).
+ * Panel metadanych jednego zasobu wskazanego w Assets Panel wraz z przekazaniem go do modułu
+ * docelowego jedyną zbudowaną w kontrakcie drogą.
  */
 export interface PanelMetadanych {
   element: HTMLElement;
@@ -53,10 +37,7 @@ export function utworzPanelMetadanych(stan: StanDesignu): PanelMetadanych {
 
   const rzadBrakow = document.createElement('div');
   rzadBrakow.className = 'md-braki__rzad';
-  // Eksport zbiorczy ma już komendę w kontrakcie, ale nie ma uchwytu w rdzeniu,
-  // więc stoi tu jako kontrolka nazywająca stan drogi. Etykietowanie, wgranie
-  // i usunięcie zasobu mają własne kontrolki wykonujące
-  // (`nadanie-etykiet.ts`, `wgranie-zasobu.ts`, `czynnosci-zasobu.ts`).
+  // Eksport zbiorczy ma już komendę w kontrakcie, ale bez uchwytu w rdzeniu stoi jako nazwany brak.
   rzadBrakow.append(przyciskBrakuDrogi(BRAKI.eksportZbiorczy));
 
   const element = document.createElement('section');
@@ -78,8 +59,7 @@ export function utworzPanelMetadanych(stan: StanDesignu): PanelMetadanych {
       return;
     }
     odpowiedz.pokaz(`Przekazanie zasobu „${nazwaZasobu(zasob)}"…`, true);
-    // Pod czuwaniem — po zerwaniu gniazda wiersz mówi prawdę o braku
-    // rozstrzygnięcia zamiast stać na zdaniu o przekazaniu w toku.
+    // Pod czuwaniem — po zerwaniu gniazda wiersz mówi prawdę o braku rozstrzygnięcia, nie o toku.
     const wynik = await stan.czuwanie.prowadz(
       'przekazanie zasobu',
       stan.zaplecze.przekaz({
@@ -128,7 +108,7 @@ export function utworzPanelMetadanych(stan: StanDesignu): PanelMetadanych {
   };
 }
 
-/** Historia wariantów: zasoby wskazujące ten sam pierwowzór albo ten zasób. */
+/** Historia wariantów: zasoby wskazujące ten sam pierwowzór co zasób wskazany albo wskazujące ten zasób. */
 function wierszeWariantow(
   wszystkie: readonly DesignAsset[],
   zasob: DesignAsset,

@@ -7152,3 +7152,18 @@ Zamknięcie karty przypiętej jest zwykłym przyciskiem, a odmowę zamknięcia r
 funkcja zamknijKarte w oknie wiodącym. Dzięki temu powód odmowy ma jedno miejsce
 i jest widoczny w stanie treści, zamiast bramy sprawdzającej przypięcie w samym pasku
 oraz osobnego obejścia w panelu akcji.
+
+## budowa/klient-poprzedni/src/moduly/studio/schowek-historia.ts
+Historia schowka jest wykazem do wyboru, nie samym wklejeniem ostatniego
+wpisu. Panel łączy wykaz wpisów sprzed kilku ruchów, przypinanie wpisów,
+które mają zostać na stałe, i wklejanie w dwóch postaciach: z zachowaniem
+postaci akapitu albo jako czysty tekst — to jest jawny wybór Operatora,
+a oba warianty są równorzędne, więc przycisk jest jeden dla każdego, a nie
+jeden domyślny z ukrytym drugim. Malarz formatów stoi w tym panelu, nie
+w schowku rdzenia, ponieważ kopiuje postać, nie treść, i nie jest wpisem
+schowka rdzenia: kontrakt schowka niesie treść i rodzaj — tekst, obraz,
+ścieżkę pliku — a nie arkusz nastaw akapitu. Malarz trzyma więc pobraną
+postać w tym panelu i oddaje ją oknu, które jedyne wie, czym postać akapitu
+jest. Gdy postać dokumentu wejdzie do kontraktu, malarz przejdzie na komendę
+rdzenia i przetrwa zamknięcie karty; dziś żyje przez sesję okna i panel mówi
+to wprost.

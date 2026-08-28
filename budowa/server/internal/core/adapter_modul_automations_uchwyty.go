@@ -1,18 +1,4 @@
-// Wpięcie sześciu komend obszaru `automation.*` — modułu Automations wraz z
-// jego pięcioma oknami operacyjnymi (Workflow Builder, Scheduler, Queue
-// Manager, Orchestrator, Execution Monitor).
-//
-// Jedno działanie na kolejce rozgłasza dwa zdarzenia i nie jest to powtórzenie.
-// `queue.changed` niesie kolejkę i dotyczy Queue Managera oraz Mission Control;
-// `automation.execution.status` niesie przebieg automatyki i zasila Execution
-// Monitor. Są to dwa różne byty tej samej czynności, więc rozgłaszają się
-// osobno. Trzeci nośnik — telemetria postępu `progress.changed` — wychodzi
-// z adaptera kolejek i tu się go nie powtarza.
-//
-// Osobnych komend odczytu harmonogramu, wykazu kolejek i układu zależności
-// `shared/contract.json` nie zna. Ich pracę wykonują komendy istniejące: układ
-// zależności prowadzi `automation.orchestrator.define`, a stan przebiegów
-// `automation.execution.subscribe`.
+// Wpięcie sześciu komend obszaru automation.* modułu Automations wraz z pięcioma oknami operacyjnymi; jedno działanie kolejki rozgłasza dwa różne zdarzenia osobno.
 package core
 
 import (
@@ -21,7 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Automatyki jest portem modułu Automations.
+// Automatyki jest portem modułu Automations, wystawiającym sześć komend obszaru automation.*, wraz z jego oknami.
 type Automatyki interface {
 	Zapisz(ctx context.Context, z shared.AutomationWorkflowSaveRequest) (shared.AutomationWorkflowSaveResponse, error)
 	Wykaz(ctx context.Context, z shared.AutomationWorkflowListRequest) (shared.AutomationWorkflowListResponse, error)
@@ -29,13 +15,11 @@ type Automatyki interface {
 	DzialanieKolejki(ctx context.Context, z shared.AutomationQueueActionRequest) (shared.AutomationQueueActionResponse, error)
 	Zaleznosci(ctx context.Context, z shared.AutomationOrchestratorDefineRequest) (shared.AutomationOrchestratorDefineResponse, error)
 	Przebiegi(ctx context.Context, z shared.AutomationExecutionSubscribeRequest) (shared.AutomationExecutionSubscribeResponse, error)
-	// PrzebiegKolejki oddaje przebieg wykonywany przez kolejkę. Służy
-	// rozgłoszeniu `automation.execution.status` po działaniu, którego wynik
-	// niesie kolejkę, a nie przebieg.
+	// PrzebiegKolejki oddaje przebieg wykonywany przez kolejkę, do rozgłoszenia stanu przebiegu.
 	PrzebiegKolejki(ctx context.Context, idKolejki string) (shared.AutomationExecution, bool)
 }
 
-// zarejestrujAutomatyki wpina sześć komend modułu Automations.
+// zarejestrujAutomatyki wpina sześć komend modułu Automations do rejestru obsługiwaczy komend rdzenia.
 func zarejestrujAutomatyki(r *Rejestr, m Automatyki, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -55,9 +39,7 @@ func zarejestrujAutomatyki(r *Rejestr, m Automatyki, e *emiter) {
 	r.Zarejestruj(shared.CommandAutomationOrchestratorDefine,
 		obsluz(func(ctx context.Context, z shared.AutomationOrchestratorDefineRequest) (shared.AutomationOrchestratorDefineResponse, error) {
 			odpowiedz, err := m.Zaleznosci(ctx, z)
-			// Żądanie bez `dependencies` jest samym sprawdzeniem układu
-			// zastanego („Waliduj graf”) — niczego nie zmienia, więc niczego
-			// nie rozgłasza. Zdarzenie po odczycie byłoby szumem.
+			// Żądanie bez dependencies sprawdza układ zastany, niczego nie zmienia ani nie rozgłasza.
 			if err == nil && z.Dependencies != nil {
 				e.ukladOrkiestracji(shared.ChangeKindUpdated, "")
 			}
@@ -120,19 +102,7 @@ func (e *emiter) przebiegAutomatyki(przebieg shared.AutomationExecution, nazwaEt
 	e.wyslij(shared.EventAutomationExecutionStatus, "", tresc)
 }
 
-// powiazanieAutomatyki rozgłasza `automation.link.changed` — zmianę powiązania
-// automatyki z bytem wyzwalającym.
-//
-// Bytem wyzwalającym jest harmonogram: `automation.schedule.set` zapisuje
-// cykliczność i wyzwalacze, czyli jedyne w rdzeniu wskazanie, co ma automatykę
-// uruchomić. Ładunek kontraktu niesie samo `automationId`, więc mówi
-// „powiązanie tej automatyki jest inne niż było", a nie jakie. Bliski krewny,
-// `queue.link`, wiąże kolejkę z automatyką i rozgłasza `queue.changed`, bo
-// bytem zmienianym jest tam kolejka, nie automatyka.
-//
-// Rodzaj zmiany jest zawsze `updated`. Automatyka powiązanie ma zawsze,
-// choćby puste (harmonogram nieczynny, zero wyzwalaczy) — `created`
-// i `deleted` opisywałyby byt o własnym cyklu życia, którego tu nie ma.
+// powiazanieAutomatyki rozgłasza automation.link.changed po zmianie powiązania automatyki z bytem wyzwalającym, zawsze jako rodzaj updated.
 func (e *emiter) powiazanieAutomatyki(zmiana shared.ChangeKind, idAutomatyki string) {
 	if idAutomatyki == "" {
 		return

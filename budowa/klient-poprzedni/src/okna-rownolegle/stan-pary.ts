@@ -2,12 +2,7 @@ import { QueueStatus, WindowRole } from '../../../shared/contract';
 import type { NazwaIkony } from '../ikony/ikony';
 
 /**
- * Stan pary koordynator–wykonawca.
- *
- * Jedna odpowiedzialność: ustalenie, w jakim położeniu jest pętla, oraz
- * sprowadzenie stanu kolejki z kontraktu do stanu widocznego na scenie.
- * Warstwa widoku nie prowadzi własnego katalogu nazw kolejki — czyta je
- * z `shared/contract`.
+ * Stan pary koordynator-wykonawca ustala, w jakim położeniu jest pętla, oraz sprowadza stan kolejki z kontraktu do stanu widocznego na scenie, bez własnego katalogu nazw kolejki.
  */
 export type StanPary =
   /** Brak dwóch okien w rolach koordynatora i wykonawcy. */
@@ -23,19 +18,14 @@ export type StanPary =
   /** Chwila przekazania zlecenia z okna koordynatora do okna wykonawcy. */
   | 'przekazanie';
 
-/** Wygląd stanu: ikona, wariant plakietki i kropka — nigdy sama barwa. */
+/** Wygląd stanu pary: ikona, wariant plakietki i kropka — nigdy sama barwa, żeby odczyt nie zależał od koloru. */
 export interface WygladStanu {
   ikona: NazwaIkony;
   /** Klasa wariantu `.dn-plakietka--*`; pusta dla plakietki neutralnej. */
   wariantPlakietki: string;
   /** Klasa wariantu `.dn-kropka--*`; pusta dla kropki sygnałowej. */
   wariantKropki: string;
-  /**
-   * Czy stan oznacza pracę trwającą teraz.
-   *
-   * Prawda wprowadza `.dn-spinner` biblioteki, czyli stan ładowania. Wskaźnik
-   * stoi obok etykiety, nigdy zamiast niej.
-   */
+  /** Czy stan oznacza pracę trwającą teraz; prawda wprowadza wskaźnik ładowania obok etykiety. */
   wTrakcie: boolean;
 }
 
@@ -64,7 +54,7 @@ export function wygladStanu(stan: StanPary): WygladStanu {
   }
 }
 
-/** Skrót zapisu wyglądu — cztery pola w jednym wierszu gałęzi. */
+/** Skrót zapisu wyglądu stanu pary — cztery pola złożone w jednym wierszu gałęzi, bez powtarzania nazw pól. */
 function znak(
   ikona: NazwaIkony,
   wariantPlakietki: string,

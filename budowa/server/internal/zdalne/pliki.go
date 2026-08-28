@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: przenosiny plików torem zdalnym. Nośnikiem jest `scp`
-// po tym samym SSH i pod tą samą zgodą per host, co tor procesu; każdy wykonany
-// ruch bajtów zostawia wiersz prowenancji w `zdalne_przeniesienie`.
-//
-// Nagrania dźwięku nie jadą tym torem: dźwięk nie opuszcza maszyny Operatora
-// (klient pilnuje tego w `dostarczenie-nagrania.ts`), a potrzeby też nie ma —
-// silnik mowy jest usługą rdzenia i bierze ścieżkę na maszynie silnika
-// (mowa/nagranie.go), więc transkrypcja domyka się przed torem, a do procesu
-// zdalnego jedzie wyłącznie tekst. Wykaz rozszerzeń nagrań jest jeden,
-// `mowa.FormatyNagran` — drugiej listy ten plik nie zakłada.
-//
-// Konsument. W rdzeniu funkcję woła spoina katalogów roboczych przy zasięgu
-// `remote`.
+// Pakiet zdalne przenosi pliki torem zdalnym po tym samym SSH i tej samej zgodzie per host, co tor procesu.
 package zdalne
 
 import (
@@ -29,9 +17,9 @@ import (
 type Kierunek string
 
 const (
-	// Wyslanie — plik z maszyny rdzenia na host zdalny.
+	// Wyslanie oznacza ruch pliku z maszyny rdzenia na wskazany host zdalny przez dokładnie ten sam tor SSH.
 	Wyslanie Kierunek = "wyslanie"
-	// Pobranie — plik z hosta zdalnego na maszynę rdzenia.
+	// Pobranie oznacza ruch pliku z hosta zdalnego z powrotem na maszynę rdzenia przez dokładnie ten sam tor.
 	Pobranie Kierunek = "pobranie"
 )
 
@@ -86,7 +74,7 @@ func odmowDzwieku(sciezki ...string) error {
 	return nil
 }
 
-// adresSCP składa zdalny koniec drogi w postaci [użytkownik@]adres:ścieżka.
+// Metoda adresSCP składa zdalny koniec drogi w postaci adresu użytkownika, hosta oraz jego ścieżki pliku.
 func (h Host) adresSCP(sciezka string) string {
 	przod := h.AdresPolaczenia()
 	if uzytkownik := strings.TrimSpace(h.Uzytkownik); uzytkownik != "" {
@@ -95,7 +83,7 @@ func (h Host) adresSCP(sciezka string) string {
 	return przod + ":" + sciezka
 }
 
-// port zwraca port hosta; zero schodzi na 22 — domyślny port SSH.
+// Funkcja port zwraca port danego hosta wskazany w jego danych; wartość zero schodzi na domyślny port SSH.
 func port(h Host) int {
 	if h.Port == 0 {
 		return 22
@@ -103,7 +91,7 @@ func port(h Host) int {
 	return h.Port
 }
 
-// rozmiar mierzy plik lokalny; brak pomiaru daje zero, nie odmowę.
+// Funkcja rozmiar mierzy rozmiar wskazanego pliku lokalnego; brak możliwości pomiaru daje zero, nie odmowę.
 func rozmiar(sciezka string) int64 {
 	opis, err := os.Stat(sciezka)
 	if err != nil {

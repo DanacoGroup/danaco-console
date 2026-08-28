@@ -1,5 +1,7 @@
 // Źródła SVG — grupa: nawigacja.
 // Nazwy i kolejność wprost z `ikony/manifest.json` (pozycje 1–13).
+// Każdy import wciąga treść pliku znacznikiem `?raw`, więc wykaz niesie
+// znaczniki SVG, a nie ścieżki do plików.
 
 import dom from '../svg/dom.svg?raw';
 import menu from '../svg/menu.svg?raw';
@@ -15,7 +17,11 @@ import filtr from '../svg/filtr.svg?raw';
 import zamknij from '../svg/zamknij.svg?raw';
 import kartaOkna from '../svg/karta-okna.svg?raw';
 
-/** Nawigacja i orientacja — ruch po widokach, karty, okna. */
+/**
+ * Nawigacja i orientacja — ruch po widokach, karty, okna. Kluczem wykazu jest
+ * nazwa ikony, wartością treść pliku SVG. Zapis `as const` utrwala zbiór nazw
+ * w typie, więc odwołanie do nazwy spoza grupy nie przechodzi budowy.
+ */
 export const NAWIGACJA = {
   'dom': dom,
   'menu': menu,

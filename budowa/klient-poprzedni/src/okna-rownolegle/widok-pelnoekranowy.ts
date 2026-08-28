@@ -3,37 +3,8 @@ import './panele.css';
 import { utworzNaglowekPanelu } from './naglowek-panelu';
 
 /**
- * Widok pełnoekranowy — trzeci rodzaj obszaru sceny okien równoległych.
- *
- * Scena dzieli szerokość między trzy byty (`rodzaje-obszaru.ts`): kolumnę
- * rozmowy, kolumnę paneli i widok pełnoekranowy. Ten trzeci jako jedyny nie ma
- * sąsiada — bierze całą scenę, bo panel w kolumnie trzyma minimum szerokości,
- * a treść, która się w nim nie mieści (różnica plikowa, drzewo, renderowana
- * strona), potrzebuje sceny, nie kolumny.
- *
- * Treść jest przenoszona, nie kopiowana. Drugi egzemplarz panelu znaczyłby
- * drugą subskrypcję rdzenia (panel podglądu bash trzyma `stream.chunk`),
- * a przy zamknięciu jednego z nich — subskrypcję osieroconą. Dlatego `pokaz`
- * zapamiętuje miejsce, z którego treść zabrał (rodzic i następnik), a `ukryj`
- * odkłada ją dokładnie tam. Bez zapamiętanego następnika panel wracałby na
- * koniec stosu i kolejność paneli zmieniałaby się po każdym wyjściu z pełnego
- * ekranu.
- *
- * Klawisz `Escape` wychodzi — wzorzec zwijania z
- * `widok-sterowania/szuflada.ts`: nasłuch `keydown` stoi na elemencie widoku,
- * nie na dokumencie. Wynikają z tego dwie rzeczy, obie tu potrzebne: sprzątanie
- * jest zbędne, bo nasłuch ginie razem z elementem, a klawisz działa tylko
- * wtedy, gdy ognisko jest wewnątrz widoku — nie zabiera `Escape` niczemu innemu
- * na scenie. Dlatego `pokaz` przenosi ognisko na widok, tak jak szuflada oddaje
- * je uchwytowi przy zwinięciu.
- *
- * Wyjście nie jest zamknięciem: oddaje treść z powrotem do stosu, a panel żyje
- * dalej ze swoją subskrypcją. Zamknięcie panelu należy do jego obudowy w stosie
- * i tam zostaje.
- *
- * Widok nie buduje treści, nie zna paneli po kodzie, nie zna rejestru ani
- * wytwórni. Nie rozstrzyga też, co robi scena, gdy się pokazuje — chowanie
- * kolumn należy do układu, który ten widok osadził.
+ * Widok pełnoekranowy: trzeci rodzaj obszaru sceny okien równoległych, zajmujący całą
+ * scenę bez sąsiada, przenoszący treść panelu tymczasowo i oddający ją klawiszem Escape.
  */
 export interface WidokPelnoekranowy {
   /** Element osadzany na scenie; chowa się sam, gdy nic nie pokazuje. */
@@ -45,7 +16,10 @@ export interface WidokPelnoekranowy {
   widoczny(): boolean;
 }
 
-/** Miejsce, z którego treść została zabrana — żeby wróciła dokładnie tam. */
+/**
+ * Miejsce, z którego treść panelu została zabrana na czas widoku pełnoekranowego,
+ * zapamiętane po to, żeby po wyjściu wróciła dokładnie tam, skąd pochodzi.
+ */
 interface MiejscePochodzenia {
   rodzic: ParentNode;
   /** Węzeł, przed którym treść stała. `null` = stała na końcu. */
@@ -70,8 +44,7 @@ export function utworzWidokPelnoekranowy(naWyjscie: () => void): WidokPelnoekran
 
   function ukryj(): void {
     if (trzymana !== null && pochodzenie !== null) {
-      // Odłożenie przed zapamiętanym następnikiem; `insertBefore` z `null`
-      // znaczy „na koniec" — czyli dokładnie stan, w którym treść była ostatnia.
+      // Odłożenie przed zapamiętanym następnikiem; brak następnika znaczy koniec listy.
       pochodzenie.rodzic.insertBefore(trzymana, pochodzenie.nastepnik);
     }
     trzymana = null;
@@ -93,20 +66,17 @@ export function utworzWidokPelnoekranowy(naWyjscie: () => void): WidokPelnoekran
   return {
     element,
     pokaz(tytul, tresc) {
-      // Pokazanie drugiej treści bez wyjścia oddaje pierwszą na swoje miejsce;
-      // inaczej poprzedni panel zostałby bez wnętrza i bez śladu, gdzie stał.
+      // Pokazanie drugiej treści bez wyjścia oddaje pierwszą na swoje miejsce, żeby nie zniknęła bez śladu.
       if (trzymana !== null) ukryj();
 
-      // Treść bez rodzica nie ma dokąd wrócić — widok tego nie zmyśla i nie
-      // podstawia własnego gniazda, bo odłożyłby ją do siebie samego.
+      // Treść bez rodzica nie ma dokąd wrócić — widok tego nie zmyśla i nie podstawia własnego gniazda.
       const rodzic = tresc.parentNode;
       pochodzenie = rodzic === null ? null : { rodzic, nastepnik: tresc.nextSibling };
       trzymana = tresc;
 
       const nowy = utworzNaglowekPanelu(tytul, [
         {
-          // Ikona pod czynność, nie pod wygląd narzędzia: czynnością jest
-          // zamknięcie tego obszaru sceny.
+          // Ikona pod czynność: czynnością jest zamknięcie tego obszaru sceny.
           ikona: 'zamknij',
           etykieta: `Zamknij widok pełnoekranowy panelu ${tytul} — klawisz Escape`,
           dzialanie: wyjdz,

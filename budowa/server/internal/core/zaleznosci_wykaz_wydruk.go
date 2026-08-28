@@ -1,37 +1,13 @@
 package core
 
-// Odpowiedzialność pliku: wypisać wykaz zależności zewnętrznych oraz arsenał
-// mowy w postaci nadającej się do maszynowego odczytu, żeby prowizjonowanie
-// serwera brało nazwy pakietów z tego samego rejestru, z którego bierze je sonda
-// startowa.
-//
-// ── Po co osobny tryb, skoro sonda już wypisuje braki do dziennika ────────────
-// Dziennik startu mówi Operatorowi, czego brakuje na TEJ maszynie — jest
-// diagnozą stanu zastanego. Prowizjonowanie potrzebuje czego innego: pełnego
-// wykazu pakietów DO POSTAWIENIA na serwerze docelowym, niezależnie od tego, co
-// stoi na maszynie budującej. To ta sama wiedza (te same deklaracje narzędzi),
-// ale wyprowadzona kompletnie i w postaci, którą skrypt rozbierze na pola.
-//
-// ── Dlaczego to jedyne miejsce nazw pakietów ──────────────────────────────────
-// `zaleznosci_zewnetrzne.go` w nagłówku ostrzega: druga lista rozjedzie się
-// z pierwszą przy pierwszej zmianie pakietu. Skrypt prowizjonowania
-// (`scripts/arsenal-serwera.sh`) NIE przepisuje nazw — woła binarium rdzenia
-// w tym trybie i konsumuje wynik. Zmiana pola `Pakiet` w deklaracji narzędzia
-// dojeżdża więc i do sondy startowej, i do prowizjonowania jednym ruchem.
-//
-// ── Dlaczego warstwa jest liczona tutaj, a nie w skrypcie ─────────────────────
-// Rozdział na warstwę obowiązkową i decyzyjną jest rozstrzygnięciem, nie
-// formatowaniem: silnik kontenerów został WSTRZYMANY przez Właściciela i nie
-// może zostać postawiony milcząco. Gdyby ten rozdział robił skrypt dopasowaniem
-// napisów w powłoce, byłby drugą regułą obok deklaracji — nietypowaną,
-// niesprawdzalną i cichą przy pomyłce. Tutaj jest jedną funkcją z jednym
-// sprawdzianem, a skrypt tylko czyta gotową kolumnę.
+// Rozdział na warstwę jest jedną funkcją z jednym sprawdzianem, nie formatowaniem w skrypcie.
 
 import (
 	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"danacoconsole/server/internal/mowa"
@@ -48,36 +24,37 @@ const (
 // Nazwy warstw prowizjonowania. Warstwa mówi, CZYM postawić program — a przy
 // silniku kontenerów: że nie stawiać go bez wyraźnego żądania.
 const (
-	// WarstwaObowiazkowa — pakiety dystrybucji, bez których moduły odmawiają.
+	// WarstwaObowiazkowa — pakiety dystrybucji podawane programowi apt wprost oraz polecenia
+	// `pip install`, dla których prowizjonowanie ma osobną gałąź.
 	WarstwaObowiazkowa = "obowiazkowa-apt"
-	// WarstwaWarsztatGo — programy dokładane przez `go install`.
+	// WarstwaObowiazkowaRecznie — pozycje obowiązkowe, których prowizjonowanie nie postawi samo:
+	// podpowiedzi zapisane zdaniem oraz polecenia menedżerów spoza apt i pip. Rozbicie takiego
+	// pola na spacjach dałoby programowi apt nazwy, których nie zna, i przerwało przebieg.
+	WarstwaObowiazkowaRecznie = "obowiazkowa-recznie"
+	// WarstwaWarsztatGo — programy dokładane przez go install, osobno od pakietów dystrybucji tego systemu.
 	WarstwaWarsztatGo = "warsztat-go"
-	// WarstwaWarsztatNpm — programy dokładane przez `npm i -g`.
+	// WarstwaWarsztatNpm — programy dokładane przez npm i -g, osobno od pakietów dystrybucji tego systemu.
 	WarstwaWarsztatNpm = "warsztat-npm"
-	// WarstwaSnap — programy, których dystrybucja nie ma w apt.
+	// WarstwaSnap — programy, których dystrybucja nie ma w apt, dokładane przez menedżera snap tego systemu.
 	WarstwaSnap = "snap"
 	// WarstwaModelRecznie — silniki i wagi z wydań spoza repozytoriów
 	// dystrybucji; kroki ręczne, bo automat na nich zawodzi.
 	WarstwaModelRecznie = "model-recznie"
-	// WarstwaDecyzyjna — silnik kontenerów, WSTRZYMANY decyzją Właściciela.
-	// Prowizjonowanie go pomija, dopóki nie zażąda się go wprost.
+	// WarstwaDecyzyjna — silnik kontenerów, wstrzymany, więc prowizjonowanie go pomija, dopóki nie zażąda się go wprost.
 	WarstwaDecyzyjna = "decyzyjna"
 )
 
-// ZadanoWykazZaleznosci mówi, czy w argumentach procesu stoi żądanie wypisania
-// wykazu zależności. Sprawdzane przed odczytem konfiguracji, bo wykaz nie
-// potrzebuje ani bazy, ani katalogu danych — a zestaw flag konfiguracji
-// odrzuciłby ten argument jako nierozpoznany.
+// ZadanoWykazZaleznosci mówi, czy w argumentach procesu stoi żądanie wypisania wykazu zależności; sprawdzane przed odczytem konfiguracji, bo wykaz nie potrzebuje bazy ani katalogu danych.
 func ZadanoWykazZaleznosci(argumenty []string) bool {
 	return zadanoZnacznik(argumenty, znacznikWykazuZaleznosci)
 }
 
-// ZadanoWykazMowy mówi, czy zażądano wypisania arsenału mowy.
+// ZadanoWykazMowy mówi, czy zażądano wypisania arsenału mowy w postaci nadającej się do odczytu maszynowego.
 func ZadanoWykazMowy(argumenty []string) bool {
 	return zadanoZnacznik(argumenty, znacznikWykazuMowy)
 }
 
-// zadanoZnacznik odpowiada, czy argumenty niosą wskazany znacznik.
+// zadanoZnacznik odpowiada, czy argumenty procesu niosą wskazany znacznik trybu wypisania wykazu zależności.
 func zadanoZnacznik(argumenty []string, znacznik string) bool {
 	for _, argument := range argumenty {
 		if argument == "-"+znacznik || argument == "--"+znacznik {
@@ -87,16 +64,14 @@ func zadanoZnacznik(argumenty []string, znacznik string) bool {
 	return false
 }
 
-// WarstwaZaleznosci rozstrzyga, do której warstwy prowizjonowania należy
-// pozycja wykazu.
+// WarstwaZaleznosci rozstrzyga warstwę pozycji wykazu: silnik kontenerów po programie, warsztaty
+// po przedrostku polecenia, a pozycje obowiązkowe po kształcie pola. Dopasowanie warsztatu Go
+// bierze przedrostek, nie podnapis: „cargo install typos-cli" niesie „go install" wewnątrz
+// „[car]go install", a mimo to nie jest poleceniem Go.
 //
-// Silnik kontenerów rozpoznajemy po programie, nie po podpowiedzi
-// instalacyjnej: w wykazie stoją dwie jego deklaracje („Docker" warsztatu
-// Developera i „Docker (klient wiersza poleceń)" modułu Terminal), niosą różne
-// podpowiedzi, a obie mają trafić do warstwy decyzyjnej. Pozostałe warstwy
-// bierzemy z treści podpowiedzi, bo ona już dziś mówi, czym program dociągnąć.
-// Kolejność pytań jest istotna: podpowiedź `go install github.com/...` niesie
-// adres GitHuba, a nie jest krokiem ręcznym.
+// Pole obowiązkowe idzie do warstwy podawanej programowi apt wyłącznie wtedy, gdy w całości
+// składa się z nazw pakietów dystrybucji. Zdanie i polecenie obcego menedżera trafiają do
+// warstwy ręcznej, ponieważ prowizjonowanie rozbija pole warstwy apt na spacjach.
 func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	program := strings.TrimSpace(pozycja.Narzedzie.Program)
 	pakiet := strings.TrimSpace(pozycja.Narzedzie.Pakiet)
@@ -105,7 +80,7 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 		return WarstwaDecyzyjna
 	}
 	switch {
-	case strings.Contains(pakiet, "go install"):
+	case strings.HasPrefix(pakiet, "go install "):
 		return WarstwaWarsztatGo
 	case strings.HasPrefix(pakiet, "npm "):
 		return WarstwaWarsztatNpm
@@ -114,19 +89,39 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	case strings.Contains(pakiet, "github.com"),
 		strings.Contains(pakiet, "środowisku pythonowym"):
 		return WarstwaModelRecznie
-	default:
+	case strings.HasPrefix(pakiet, "pip install "):
 		return WarstwaObowiazkowa
+	case wykazNazwPakietow(pakiet):
+		return WarstwaObowiazkowa
+	default:
+		return WarstwaObowiazkowaRecznie
 	}
 }
 
-// WypiszWykazZaleznosci wypisuje komplet zależności zewnętrznych, po jednym
-// wierszu na pozycję wykazu, w polach rozdzielonych znakiem tabulacji:
-//
-//	warstwa <TAB> program <TAB> pakiet <TAB> stoi <TAB> nazwa <TAB> zakres
-//
-// Wiersze komentarza zaczynają się od `#` — skrypt konsumujący je pomija.
-// Kolejność jest ta sama, którą ustala `zaleznosciZewnetrzne` (alfabetyczna po
-// nazwie czytelnej), więc dwa kolejne wywołania dają ten sam wykaz.
+// nazwaPakietuDystrybucji dopasowuje nazwę pakietu wedle polityki nazw Debiana: mała litera
+// albo cyfra na początku, dalej litery, cyfry, kropka, plus i minus.
+var nazwaPakietuDystrybucji = regexp.MustCompile(`^[a-z0-9][a-z0-9.+-]*$`)
+
+// wykazNazwPakietow mówi, czy pole składa się wyłącznie z nazw pakietów dystrybucji rozdzielonych
+// spacją. Polecenie obcego menedżera nazwy przypomina, więc rozstrzyga drugi człon: pole, którego
+// drugim członem jest „install", jest poleceniem, nie wykazem.
+func wykazNazwPakietow(pole string) bool {
+	czlony := strings.Fields(pole)
+	if len(czlony) == 0 {
+		return false
+	}
+	if len(czlony) > 1 && czlony[1] == "install" {
+		return false
+	}
+	for _, czlon := range czlony {
+		if !nazwaPakietuDystrybucji.MatchString(czlon) {
+			return false
+		}
+	}
+	return true
+}
+
+// WypiszWykazZaleznosci wypisuje komplet zależności zewnętrznych, po jednym wierszu na pozycję wykazu, w polach rozdzielonych znakiem tabulacji: warstwa, program, pakiet, stoi, nazwa, zakres.
 func WypiszWykazZaleznosci(wyjscie io.Writer) error {
 	if _, err := fmt.Fprintln(wyjscie,
 		"# wykaz zależności zewnętrznych rdzenia — pola: "+
@@ -152,17 +147,7 @@ func WypiszWykazZaleznosci(wyjscie io.Writer) error {
 	return nil
 }
 
-// WypiszWykazMowy wypisuje arsenał mowy — tę jego część, której nie widać
-// w wykazie zależności zewnętrznych.
-//
-// Wykaz zależności niesie z mowy tylko syntezator zapasowy (eSpeak NG), bo tylko
-// on jest zwykłym programem na ścieżce. Reszta arsenału mowy to piper wraz
-// z plikami głosów, biblioteka pythonowa rozpoznawania (faster-whisper) i wagi
-// jej modelu — rzeczy stawiane inaczej niż pakietem dystrybucji, a bez nich
-// mikrofon i odsłuch odmawiają Operatorowi tak samo. Wartości pochodzą ze
-// stałych rdzenia (nazwy programów, miejsca arsenału, zmienne wskazania) oraz
-// z ustawień silnika mowy (`mowa.ModelDomyslny`) — nie są tu wpisane po raz
-// drugi. Postać wiersza: klucz <TAB> wartość.
+// WypiszWykazMowy wypisuje arsenał mowy — tę jego część, której nie widać w wykazie zależności zewnętrznych, bo stawiana jest inaczej niż pakietem dystrybucji, wierszem klucz-wartość.
 func WypiszWykazMowy(wyjscie io.Writer) error {
 	wiersze := [][2]string{
 		{"# arsenał mowy — pola: klucz", "wartość"},
@@ -187,17 +172,7 @@ func WypiszWykazMowy(wyjscie io.Writer) error {
 	return nil
 }
 
-// wierszePomocnikaMowy oddaje położenie pomocnika transkrypcji wraz z plikiem
-// jego zależności pythonowych.
-//
-// Plik zależności wskazujemy ścieżką wyliczoną z położenia skryptu, a nie
-// wypisaną wprost: `pomocniki/transkrypcja/wymagania.txt` jest jedynym miejscem,
-// w którym stoi nazwa i wersja biblioteki rozpoznawania, więc prowizjonowanie ma
-// go zainstalować przez `-r`, zamiast powtarzać nazwę pakietu u siebie.
-//
-// Gdy skryptu nie widać (rdzeń uruchomiony poza pakietem produktu), wypisujemy
-// przeszukane miejsca — to jedyna wskazówka naprawy, którą warto podać
-// prowizjonowaniu.
+// wierszePomocnikaMowy oddaje położenie pomocnika transkrypcji wraz z plikiem jego zależności pythonowych; gdy skryptu nie widać, wypisuje przeszukane miejsca jako wskazówkę naprawy.
 func wierszePomocnikaMowy() [][2]string {
 	pomocnik, err := mowa.OdnajdzPomocnika("")
 	if err != nil {

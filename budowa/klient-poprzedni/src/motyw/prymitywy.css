@@ -1,20 +1,7 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY PRYMITYWNE
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: surowe skale barw systemu, niezależne od motywu.
-
-   Komponenty nie sięgają po te żetony wprost — odwołują się wyłącznie do
-   żetonów semantycznych (semantyczne-jasny.css / semantyczne-ciemny.css,
-   stany.css), które z tych wartości korzystają.
-
-   Kierunek: monochromatyczna precyzja — neutralne są czysto neutralne (równe
-   składowe RGB), jedyną barwą akcentu systemu jest błękit sygnałowy.
-   ============================================================================ */
+/* Żetony prymitywne niosą surowe skale barw systemu niezależne od motywu; komponenty odwołują się wyłącznie do żetonów semantycznych, które z nich korzystają. */
 
 :root {
-  /* ---------------------------------------------------------------- *
-   * SZAROŚĆ — czysto neutralna (równe RGB): odcienie bieli i czerni   *
-   * ---------------------------------------------------------------- */
+  /* SZAROŚĆ — czysto neutralna (równe RGB): odcienie bieli i czerni. */
   --dn-szary-0: #FFFFFF;      /* wyłącznie powierzchnie kart i tekst na atramencie */
   --dn-szary-25: #FAFAFA;
   --dn-szary-50: #F4F4F4;
@@ -23,10 +10,7 @@
   --dn-szary-200: #D7D7D7;
   --dn-szary-300: #C0C0C0;
   --dn-szary-400: #9E9E9E;
-  /* Skala prymitywów jest pełna — stopień istnieje niezależnie od tego, czy
-     bierze go który żeton semantyczny. Po #7C7C7C nie sięga tu żadna rola
-     tekstu: na papierze #F4F4F4 daje 3,80:1 (za jasny na tekst i na obrys),
-     a na powierzchni #181818 — 4,25:1 (za ciemny na tekst drugoplanowy). */
+  /* Skala prymitywów jest pełna niezależnie od tego, które stopnie biorą żetony semantyczne. */
   --dn-szary-500: #7C7C7C;
   --dn-szary-600: #616161;
   --dn-szary-700: #4A4A4A;
@@ -38,24 +22,17 @@
   --dn-szary-950: #0F0F0F;
   --dn-szary-1000: #0A0A0A;   /* kraniec skali; #000000 jest zakazane */
 
-  /* ---------------------------------------------------------------- *
-   * SYGNAŁ — błękit sygnałowy (jedyna barwa akcentu systemu)          *
-   * Sygnał wskazuje, nie działa: fokus, stan aktywny, postęp, kropka. *
-   * ---------------------------------------------------------------- */
+  /* SYGNAŁ — błękit sygnałowy, jedyna barwa akcentu: fokus, stan aktywny, postęp, kropka. */
   --dn-sygnal-100: #EDF3FE;
   --dn-sygnal-200: #C9DAFB;
   --dn-sygnal-300: #8FB2F5;
   --dn-sygnal-400: #5C8CEC;
   --dn-sygnal-500: #3B6FE0;   /* bazowy — kropka sygnału, fokus */
   --dn-sygnal-600: #2457C9;   /* tekst i wypełnienia na jasnym */
-  --dn-sygnal-700: #1D49AF;   /* najciemniejszy błękit w użyciu: sygnał mocny
-                                 i najechanie na wypełnieniu */
-  --dn-sygnal-800: #173A8C;   /* kraniec skali; żaden żeton semantyczny go nie
-                                 bierze — stopień istnieje dla pełni skali */
+  --dn-sygnal-700: #1D49AF;   /* najciemniejszy błękit w użyciu: sygnał mocny i najechanie na wypełnieniu */
+  --dn-sygnal-800: #173A8C;   /* kraniec skali; żaden żeton semantyczny go nie bierze — stopień istnieje dla pełni skali */
 
-  /* ---------------------------------------------------------------- *
-   * STANY — prymitywy (informacja = rodzina sygnału)                  *
-   * ---------------------------------------------------------------- */
+  /* STANY — prymitywy: informacja to rodzina sygnału. */
   --dn-zielen-700: #1E7A46;
   --dn-zielen-400: #4FBD85;
   --dn-zielen-200: #BCE3CD;

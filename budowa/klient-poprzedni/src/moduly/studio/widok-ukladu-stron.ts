@@ -1,32 +1,13 @@
 import type { TrybPrzewijania, UkladKartek } from './widok-nastawy-operatora';
 
-/**
- * Układ kartek na powierzchni — jedna, wiele obok siebie, rozkładówka.
- *
- * ── Trzy rzeczy, których nie wolno pomylić ──────────────────────────────────
- * 1. „Widok dwóch stron" to dwie strony TEGO SAMEGO dokumentu obok siebie i stoi
- *    tutaj. 2. „Dwa dokumenty obok siebie" to podział powierzchni i stoi
- *    w `widok-podzialu-powierzchni.ts`. 3. Rozkładówka to nie „dwie strony obok
- *    siebie": to książka, w której strona pierwsza stoi SAMA po prawej, a dalej
- *    idą pary parzysta–nieparzysta. Bez tego rozkładówka pokazywałaby parę 1–2,
- *    której w oprawionym pismie nigdy nie widać naraz.
- *
- * Plik nie zna DOM: bierze liczbę stron i nastawy, oddaje rzędy numerów.
- */
-
-/** Miejsce w rzędzie: numer strony albo puste miejsce rozkładówki. */
+/** Typ MiejsceWRzedzie opisuje jedno miejsce w rzędzie układu kartek: numer strony obecnej w tym miejscu albo wartość pustą, gdy rozkładówka zostawia miejsce bez strony. */
 export type MiejsceWRzedzie = number | null;
 
-/** Rzędy kartek — po jednym wierszu na rząd. */
+/** Typ RzedyKartek opisuje układ kartek powierzchni dokumentu jako listę rzędów, w której każdy rząd jest listą miejsc typu MiejsceWRzedzie. */
 export type RzedyKartek = readonly (readonly MiejsceWRzedzie[])[];
 
 /**
- * Rozkłada strony na rzędy.
- *
- * @param liczbaStron Liczba stron po podziale; zero oddaje jeden rząd pusty,
- *   bo dokument bez treści ma jedną kartkę gotową do pisania, a nie zero kartek.
- * @param uklad Wybór Operatora.
- * @param kartekWRzedzie Liczba kartek w rzędzie przy układzie „obok siebie".
+ * Funkcja rozlozKartkiWRzedy rozkłada strony dokumentu na rzędy kartek według wybranego układu, zwracając dla dokumentu bez stron jeden rząd pusty zamiast rzędów zero.
  */
 export function rozlozKartkiWRzedy(
   liczbaStron: number,
@@ -38,8 +19,7 @@ export function rozlozKartkiWRzedy(
     return Array.from({ length: ile }, (_, numer) => [numer + 1]);
   }
   if (uklad === 'rozkladowka') {
-    // Strona pierwsza jest stroną otwarcia: stoi sama, po prawej. Puste miejsce
-    // po lewej jest miejscem okładki, nie stroną — dlatego `null`, nie numer.
+    // Strona pierwsza jest stroną otwarcia i stoi sama po prawej; puste miejsce po lewej to okładka.
     const rzedy: MiejsceWRzedzie[][] = [[null, 1]];
     for (let numer = 2; numer <= ile; numer += 2) {
       rzedy.push(numer + 1 <= ile ? [numer, numer + 1] : [numer, null]);
@@ -59,7 +39,7 @@ export function rozlozKartkiWRzedy(
   return rzedy;
 }
 
-/** Liczba kolumn, jaką układ zajmuje — do arkusza siatki. */
+/** Funkcja kolumnyUkladu zwraca liczbę kolumn, jaką wybrany układ kartek zajmuje na powierzchni dokumentu, do zastosowania w arkuszu stylów siatki. */
 export function kolumnyUkladu(uklad: UkladKartek, kartekWRzedzie: number): number {
   if (uklad === 'jedna') return 1;
   if (uklad === 'rozkladowka') return 2;
@@ -67,11 +47,7 @@ export function kolumnyUkladu(uklad: UkladKartek, kartekWRzedzie: number): numbe
 }
 
 /**
- * Strona rozkładówki, na której stoi kartka — do marginesów odbicia.
- *
- * Strona nieparzysta jest prawą stroną rozkładówki. Zgadza się to
- * z `marginesyKartki`, gdzie margines wewnętrzny strony nieparzystej stoi po
- * lewej — inaczej oprawa rysowałaby się po przeciwnej stronie rowka.
+ * Funkcja stronaRozkladowki zwraca stronę rozkładówki, na której stoi kartka o podanym numerze: strona nieparzysta jest prawą stroną, a parzysta lewą, zgodnie z marginesyKartki.
  */
 export function stronaRozkladowki(numerStrony: number): 'lewa' | 'prawa' {
   return numerStrony % 2 === 0 ? 'lewa' : 'prawa';
@@ -97,7 +73,7 @@ export function kartkaPrzyPrzewinieciu(
   return Math.min(Math.max(numer, 1), ile);
 }
 
-/** Przewinięcie, przy którym górna krawędź wskazanej kartki stoi u góry widoku. */
+/** Funkcja przewiniecieDoKartki zwraca przewinięcie, przy którym górna krawędź wskazanej kartki styka się z górną krawędzią widoku powierzchni dokumentu. */
 export function przewiniecieDoKartki(
   numerStrony: number,
   wysokoscKartki: number,
@@ -107,7 +83,7 @@ export function przewiniecieDoKartki(
   return (numer - 1) * (wysokoscKartki + odstep);
 }
 
-/** Zdanie o układzie kartek — do paska stanu powierzchni. */
+/** Funkcja opiszUkladKartek zwraca zdanie opisujące bieżący układ kartek, tryb przewijania i liczbę stron do wyświetlenia w pasku stanu powierzchni. */
 export function opiszUkladKartek(
   uklad: UkladKartek,
   kartekWRzedzie: number,

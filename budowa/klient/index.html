@@ -9,15 +9,17 @@
 </head>
 
 <!--
-  Dokument okna drogi wejścia.
+  Dokument klienta: scena drogi wejścia, po niej miejsce ramy aplikacji.
 
-  Niesie wyłącznie miejsca montażu i oprawę sceny. Okna składa `montaz.ts`
-  ze składników, a tekst niesie `tresci.ts` — dokument nie ma ani jednego
-  zdania widocznego dla użytkownika poza nazwą produktu w tytule karty.
+  Niesie wyłącznie miejsca montażu i oprawę sceny. Okna drogi wejścia składa
+  `wejscie/montaz.ts`, ramę aplikacji `rama/montaz.ts` — dokument nie ma ani
+  jednego zdania widocznego dla użytkownika poza nazwą produktu w tytule karty.
 
-  Trzy miejsca montażu, po jednym na etap drogi wejścia. Stoją w dokumencie
+  Trzy miejsca montażu drogi wejścia, po jednym na etap. Stoją w dokumencie
   wszystkie naraz, bo montaż buduje okna raz, przy starcie; widoczne jest to,
-  w którym stoi czynna odsłona.
+  w którym stoi czynna odsłona. Rama zaczyna ukryta — `aplikacja.ts` zdejmuje
+  scenę drogi wejścia i odkrywa ramę dokładnie wtedy, gdy przebieg wchodzi do
+  środowiska; do tej chwili miejsce ramy stoi puste.
 
   Motywu dokument nie narzuca: `zetony.css` daje `:root:not([data-theme])`
   motyw zgodny z ustawieniem systemu, a żadne źródło nie wskazuje motywu,
@@ -25,6 +27,7 @@
 -->
 <body>
 
+<div data-wejscie>
 <div class="we-scena">
   <div data-wejscie-okno="uruchomienie"></div>
 </div>
@@ -36,7 +39,10 @@
 <div class="we-scena">
   <div data-wejscie-okno="przygotowanie"></div>
 </div>
+</div>
 
-<script type="module" src="./src/main.ts"></script>
+<div data-rama-aplikacji hidden></div>
+
+<script type="module" src="./src/aplikacja.ts"></script>
 </body>
 </html>

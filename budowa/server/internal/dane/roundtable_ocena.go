@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: ocena Operatora, rubryki oceny, werdykty
-// modeli-sędziów i ranking akumulowany między sesjami
-// (`store/migracja_195_roundtable_ocena.sql`, `..._196_roundtable_ranking.sql`).
-//
-// Ranking kluczuje się tożsamością, nie uczestnikiem: uczestnik jest bytem okna
-// i ginie razem z debatą, a punktacja ma przetrwać sesję.
+// Plik utrzymuje ocenę Operatora, rubryki oceny, werdykty modeli-sędziów
+// i ranking akumulowany między sesjami debaty.
 package dane
 
 import (
@@ -13,7 +9,7 @@ import (
 	"fmt"
 )
 
-// OcenaDebaty to ocena postawiona przez Operatora.
+// OcenaDebaty to ocena wypowiedzi debaty postawiona wprost przez Operatora w oknie komunikacji Roundtable.
 type OcenaDebaty struct {
 	Kod       string
 	Okno      string
@@ -25,7 +21,7 @@ type OcenaDebaty struct {
 	Utworzono string
 }
 
-// RubrykaDebaty to nazwana rubryka oceny wraz z kryteriami.
+// RubrykaDebaty to nazwana rubryka oceny debaty wraz z jej kryteriami, każdym niosącym własną wagę oceny.
 type RubrykaDebaty struct {
 	Kod       string
 	Okno      string
@@ -34,7 +30,7 @@ type RubrykaDebaty struct {
 	Kryteria  []KryteriumRubrykiDebaty
 }
 
-// KryteriumRubrykiDebaty to jedno kryterium rubryki wraz z wagą.
+// KryteriumRubrykiDebaty to jedno kryterium rubryki wraz z wagą wchodzącą do sumy jedności całej rubryki.
 type KryteriumRubrykiDebaty struct {
 	Kod       string
 	Rubryka   string
@@ -44,7 +40,7 @@ type KryteriumRubrykiDebaty struct {
 	Kolejnosc int
 }
 
-// WerdyktDebaty to ocena wystawiona przez model-sędziego.
+// WerdyktDebaty to ocena wystawiona przez model-sędziego wraz z uzasadnieniem i punktacją kryteriów rubryki.
 type WerdyktDebaty struct {
 	Kod          string
 	Okno         string
@@ -58,7 +54,7 @@ type WerdyktDebaty struct {
 	Utworzono    string
 }
 
-// PozycjaRankinguDebaty to jedna tożsamość w rankingu.
+// PozycjaRankinguDebaty to jedna tożsamość w rankingu wraz z jej punktacją i liczbą pojedynków rozegranych.
 type PozycjaRankinguDebaty struct {
 	KluczTozsamosci string
 	Nazwa           string
@@ -72,8 +68,7 @@ type PozycjaRankinguDebaty struct {
 	Zaktualizowano  string
 }
 
-// RepozytoriumDebatyOceny jest częścią kontraktu obszaru odpowiadającą za ocenę
-// i ranking.
+// RepozytoriumDebatyOceny jest częścią kontraktu obszaru Roundtable odpowiadającą za ocenę i ranking debat.
 type RepozytoriumDebatyOceny interface {
 	ZapiszOceneDebaty(ctx context.Context, ocena OcenaDebaty) (OcenaDebaty, error)
 	OcenyDebaty(ctx context.Context, okno string) ([]OcenaDebaty, error)
@@ -168,7 +163,7 @@ const (
 	                        LIMIT (CASE WHEN ? > 0 THEN ? ELSE -1 END)`
 )
 
-// ZapiszOceneDebaty dopisuje ocenę Operatora.
+// ZapiszOceneDebaty dopisuje ocenę Operatora do dziennika ocen wypowiedzi debaty w danym oknie Roundtable.
 func (r *repozytoriumRoundtable) ZapiszOceneDebaty(ctx context.Context,
 	ocena OcenaDebaty) (OcenaDebaty, error) {
 
@@ -187,7 +182,7 @@ func (r *repozytoriumRoundtable) ZapiszOceneDebaty(ctx context.Context,
 	return odczytajOceneDebaty(odczyt.QueryRowContext(ctx, ocena.Kod))
 }
 
-// OcenyDebaty zwraca oceny Operatora postawione w oknie.
+// OcenyDebaty zwraca wszystkie oceny Operatora postawione w oknie debaty, w kolejności ich zapisu do dziennika.
 func (r *repozytoriumRoundtable) OcenyDebaty(ctx context.Context, okno string) ([]OcenaDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzOcenyDebaty)
 	if err != nil {
@@ -251,7 +246,7 @@ func (r *repozytoriumRoundtable) ZapiszRubrykeDebaty(ctx context.Context,
 	return r.RubrykaDebatyPoKodzie(ctx, rubryka.Kod)
 }
 
-// RubrykaDebatyPoKodzie zwraca rubrykę wraz z kryteriami.
+// RubrykaDebatyPoKodzie zwraca rubrykę oceny debaty wraz z jej kryteriami po jej kodzie zewnętrznym wprost.
 func (r *repozytoriumRoundtable) RubrykaDebatyPoKodzie(ctx context.Context,
 	kod string) (RubrykaDebaty, error) {
 
@@ -275,7 +270,7 @@ func (r *repozytoriumRoundtable) RubrykaDebatyPoKodzie(ctx context.Context,
 	return rubryka, nil
 }
 
-// RubrykiDebaty zwraca rubryki wspólne oraz te należące do wskazanego okna.
+// RubrykiDebaty zwraca rubryki wspólne oraz te należące do wskazanego okna, wraz z kompletem ich kryteriów.
 func (r *repozytoriumRoundtable) RubrykiDebaty(ctx context.Context,
 	okno string) ([]RubrykaDebaty, error) {
 
@@ -311,7 +306,7 @@ func (r *repozytoriumRoundtable) RubrykiDebaty(ctx context.Context,
 	return rubryki, nil
 }
 
-// kryteriaRubrykiDebaty czyta kryteria jednej rubryki.
+// kryteriaRubrykiDebaty czyta kryteria jednej rubryki w kolejności ich zapisanej pozycji wśród kryteriów.
 func (r *repozytoriumRoundtable) kryteriaRubrykiDebaty(ctx context.Context,
 	rubryka string) ([]KryteriumRubrykiDebaty, error) {
 
@@ -337,7 +332,7 @@ func (r *repozytoriumRoundtable) kryteriaRubrykiDebaty(ctx context.Context,
 	return kryteria, wiersze.Err()
 }
 
-// ZapiszWerdyktDebaty dopisuje ocenę wystawioną przez sędziego.
+// ZapiszWerdyktDebaty dopisuje ocenę wystawioną przez sędziego do dziennika werdyktów debaty Roundtable.
 func (r *repozytoriumRoundtable) ZapiszWerdyktDebaty(ctx context.Context, werdykt WerdyktDebaty) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszWerdyktDebaty)
 	if err != nil {
@@ -351,7 +346,7 @@ func (r *repozytoriumRoundtable) ZapiszWerdyktDebaty(ctx context.Context, werdyk
 	return nil
 }
 
-// WerdyktyDebaty zwraca werdykty sędziów wystawione w oknie.
+// WerdyktyDebaty zwraca werdykty sędziów wystawione w oknie debaty, w kolejności ich zapisu do dziennika.
 func (r *repozytoriumRoundtable) WerdyktyDebaty(ctx context.Context,
 	okno string) ([]WerdyktDebaty, error) {
 
@@ -378,7 +373,7 @@ func (r *repozytoriumRoundtable) WerdyktyDebaty(ctx context.Context,
 	return werdykty, wiersze.Err()
 }
 
-// ZapiszPozycjeRankinguDebaty utrwala punktację tożsamości po pojedynku.
+// ZapiszPozycjeRankinguDebaty utrwala punktację tożsamości po pojedynku, zakładając albo nadpisując wiersz.
 func (r *repozytoriumRoundtable) ZapiszPozycjeRankinguDebaty(ctx context.Context,
 	pozycja PozycjaRankinguDebaty) error {
 
@@ -395,7 +390,7 @@ func (r *repozytoriumRoundtable) ZapiszPozycjeRankinguDebaty(ctx context.Context
 	return nil
 }
 
-// PozycjaRankinguDebaty zwraca punktację jednej tożsamości.
+// PozycjaRankinguDebaty zwraca punktację jednej tożsamości w danym zakresie, oknie i algorytmie rankingu.
 func (r *repozytoriumRoundtable) PozycjaRankinguDebaty(ctx context.Context,
 	klucz, zakres, okno, algorytm string) (PozycjaRankinguDebaty, error) {
 
@@ -415,7 +410,7 @@ func (r *repozytoriumRoundtable) PozycjaRankinguDebaty(ctx context.Context,
 	return pozycja, nil
 }
 
-// RankingDebaty zwraca ranking od najwyższej punktacji.
+// RankingDebaty zwraca ranking od najwyższej punktacji, zawężony zakresem, oknem i algorytmem liczenia.
 func (r *repozytoriumRoundtable) RankingDebaty(ctx context.Context, zakres, okno, algorytm string,
 	limit int) ([]PozycjaRankinguDebaty, error) {
 
@@ -440,7 +435,7 @@ func (r *repozytoriumRoundtable) RankingDebaty(ctx context.Context, zakres, okno
 	return ranking, wiersze.Err()
 }
 
-// odczytajOceneDebaty składa ocenę z jednego wiersza wyniku.
+// odczytajOceneDebaty składa ocenę Operatora z jednego wiersza wyniku danego zapytania do bazy danych.
 func odczytajOceneDebaty(wiersz interface{ Scan(...any) error }) (OcenaDebaty, error) {
 	var ocena OcenaDebaty
 	err := wiersz.Scan(&ocena.Kod, &ocena.Okno, &ocena.Rodzaj, &ocena.Wypowiedz, &ocena.Uczestnik,
@@ -454,7 +449,7 @@ func odczytajOceneDebaty(wiersz interface{ Scan(...any) error }) (OcenaDebaty, e
 	return ocena, nil
 }
 
-// odczytajPozycjeRankinguDebaty składa pozycję rankingu z jednego wiersza.
+// odczytajPozycjeRankinguDebaty składa pozycję rankingu tożsamości z jednego wiersza wyniku zapytania.
 func odczytajPozycjeRankinguDebaty(wiersz interface{ Scan(...any) error }) (PozycjaRankinguDebaty, error) {
 	var pozycja PozycjaRankinguDebaty
 	err := wiersz.Scan(&pozycja.KluczTozsamosci, &pozycja.Nazwa, &pozycja.Zakres, &pozycja.Okno,

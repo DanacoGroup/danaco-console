@@ -14,33 +14,16 @@ import { ODCZYTY } from './etykiety-assistant';
 import type { ZrodloNarzedzi } from './zrodlo-narzedzi';
 
 /**
- * Edytor makra Command & Tools Hub — definicja kroków i jej przekazanie do
- * modułu Automations.
- *
- * Makro asystenta nie ma własnego magazynu w kontrakcie i opracowanie modułu
- * prowadzi je tam, gdzie magazyn jest: „Przekazanie powtarzalnego makra lub
- * rutyny do modułu Automations przyciskiem »→ Wyślij do Automations«". Zapis
- * idzie więc komendą `automation.workflow.save`, a kroki wchodzą w jej pole
- * `steps`.
- *
- * Kroki wpisuje się w JSON, bo dokładnie taki kształt niesie kontrakt
- * (`AutomationStep[]`). Sprawdzenie jest tu, a nie w rdzeniu, z jednego powodu:
- * błąd składni ma się nazwać przy polu, w którym powstał, zanim cokolwiek
- * pojedzie do rdzenia. Sprawdzian pilnuje wyłącznie tego, co kontrakt uznaje za
- * wymagane — identyfikatora kroku i jego rodzaju; reszty pól nie zgaduje.
- *
- * YAML-a edytor nie przyjmuje i nie udaje, że przyjmuje (`BRAKI.makroYaml`).
+ * Edytor makra w Command & Tools Hub definiuje kroki i przekazuje je do modułu Automations
+ * komendą zapisu przebiegu, bo makro nie ma własnego magazynu w kontrakcie.
  */
 export interface EdytorMakra {
   element: HTMLElement;
 }
 
 /**
- * Kroki podpowiedziane w pustym edytorze — kształt, nie treść do wysłania.
- *
- * Nazwa komendy pochodzi z `Command`, a nie z napisu wpisanego wprost: nazwa
- * powielona w kliencie przeżyłaby zmianę w kontrakcie i zostawiła w podpowiedzi
- * wywołanie, które rdzeń odbiłby zdarzeniem nieznanej komendy.
+ * Kroki podpowiedziane w pustym edytorze pokazują kształt, nie treść do wysłania, z nazwą
+ * komendy pochodzącą wprost z kontraktu.
  */
 const WZOR_KROKOW = `[
   {
@@ -75,8 +58,7 @@ export function utworzEdytorMakra(zrodlo: ZrodloNarzedzi): EdytorMakra {
 
   const pobierz = przyciskAkcji('Pobierz definicję makra', 'dn-btn dn-btn--sm dn-btn--zarys');
   pobierz.addEventListener('click', () => {
-    // Pobranie nie potrzebuje komendy: definicja jest już w oknie. Plik oddaje
-    // dokładnie to, co Operator widzi w polu.
+    // Pobranie nie potrzebuje komendy: plik oddaje dokładnie to, co Operator widzi w polu.
     pobierzPlik(
       `makro-asystenta-${nazwaPliku(nazwa.value)}.json`,
       JSON.stringify({ name: nazwa.value, description: opis.value, steps: kroki.value }, null, 2),
@@ -141,8 +123,7 @@ export function utworzEdytorMakra(zrodlo: ZrodloNarzedzi): EdytorMakra {
       );
       return;
     }
-    // Potwierdzenie mówi to, co zapisał rdzeń: liczba kroków w odpowiedzi bywa
-    // inna niż w zamówieniu, gdy rdzeń kroku nie przyjął.
+    // Potwierdzenie mówi to, co zapisał rdzeń — liczba kroków bywa inna niż w zamówieniu.
     const zapisana = wynik.wynik.workflow;
     odpowiedz.pokaz(
       `Rdzeń zapisał automatykę ${zapisana.id} („${zapisana.name}") z ` +
@@ -155,7 +136,7 @@ export function utworzEdytorMakra(zrodlo: ZrodloNarzedzi): EdytorMakra {
   return { element };
 }
 
-/** Wynik rozbioru pola kroków: kroki albo powód, dla którego ich nie ma. */
+/** Wynik rozbioru pola kroków niesie kroki albo powód, dla którego ich nie ma, gdy zapis Operatora nie jest poprawnym JSON. */
 interface RozbiorKrokow {
   kroki: AutomationStep[];
   /** Pusty napis znaczy „rozbiór się udał". */
@@ -163,12 +144,8 @@ interface RozbiorKrokow {
 }
 
 /**
- * Rozbiór pola kroków wraz ze sprawdzeniem kształtu wymaganego przez kontrakt.
- *
- * Sprawdzane są wyłącznie dwa pola obowiązkowe `AutomationStep` —
- * identyfikator i rodzaj. Pól opcjonalnych okno nie egzekwuje: rozstrzyga
- * o nich rdzeń, a klient, który by je narzucił, odmawiałby definicji
- * poprawnych.
+ * Rozbiór pola kroków wraz ze sprawdzeniem kształtu wymaganego przez kontrakt: identyfikator
+ * i rodzaj każdego kroku.
  */
 function rozbierzKroki(zapis: string): RozbiorKrokow {
   const tresc = zapis.trim();
@@ -212,7 +189,7 @@ function rozbierzKroki(zapis: string): RozbiorKrokow {
   return { kroki, powod: '' };
 }
 
-/** Nazwa makra sprowadzona do bezpiecznego członu nazwy pliku. */
+/** Nazwa makra sprowadzona do bezpiecznego członu nazwy pliku, bez znaków, których system plików nie akceptuje. */
 function nazwaPliku(nazwa: string): string {
   const oczyszczona = nazwa
     .trim()

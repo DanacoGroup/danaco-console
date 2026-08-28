@@ -1,17 +1,4 @@
-/* ============================================================================
-   POWŁOKA · WYKAZ WYNIKÓW WYSZUKIWANIA GLOBALNEGO
-   ----------------------------------------------------------------------------
-   Zawieszenie wykazu i wzorca pustki pod polem paska. Wygląd wykazu niesie
-   w całości `komponenty/menu-drzewo.css`, a wygląd pustki `komponenty/drobne.css`
-   (`.dn-pusty-stan`); tutaj zostaje wyłącznie geometria zawieszenia, bo tylko
-   ona zależy od miejsca w pasku.
-
-   Nośnik ma wysokość zerową, bo siedzi wewnątrz pola poleceń
-   (`.dn-pasek-gorny__pole`). Wysokość własna rozepchnęłaby pasek w chwili
-   pojawienia się wyników.
-
-   Wszystkie wartości pochodzą z żetonów `motyw/`.
-   ============================================================================ */
+/* Wykaz wyników wyszukiwania globalnego opisuje wyłącznie geometrię zawieszenia pod polem paska, o wysokości zerowej, żeby nie rozpychać paska. */
 
 .dn-wyniki {
   position: absolute;

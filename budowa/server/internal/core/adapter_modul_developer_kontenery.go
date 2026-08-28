@@ -1,28 +1,6 @@
-// Odpowiedzialność pliku: cztery komendy zakładki Containers w Dev Tools —
-// `developer.container.list`, `developer.container.action`,
-// `developer.image.build` i `developer.compose.up`.
-//
-// ── Zestaw narzędziowy Docker SDK, nie program `docker` ─────────────────────
-// Rozmowa idzie biblioteką `github.com/docker/docker/client` wkompilowaną
-// w rdzeń, przez gniazdo silnika. To ta sama zasada, co przy repozytorium
-// (`go-git` zamiast programu `git`): rdzeń nie startuje procesu potomnego
-// i nie zależy od tego, czy ktoś doinstalował klienta wiersza poleceń.
-// Podman wystawia to samo API OCI pod własnym gniazdem, więc obsługuje się go
-// tą samą drogą — wskazuje się go zmienną `DOCKER_HOST`.
-//
-// ── Czego biblioteka nie zastąpi ────────────────────────────────────────────
-// Biblioteka rozmawia z SILNIKIEM, a silnika nie da się wkompilować. Gdy na
-// serwerze nie ma ani Dockera, ani Podmana, odpowiedź `developer.container.list`
-// przychodzi z `engineAvailable: false` i pustym wykazem — JAWNIE mówi
-// o braku, zamiast udawać, że kontenerów nie ma. Instalacja silnika po stronie
-// serwera jest zmianą ciężką i należy do Właściciela, nie do wykonawcy modułu.
-//
-// ── Compose bez programu `docker compose` ───────────────────────────────────
-// Plik `docker-compose.yml` czyta i wykonuje rdzeń: rozbiera opis usług, zakłada
-// sieć stosu i startuje kontenery przez to samo API. Obsługiwany jest zakres
-// używany w oknie — obraz, polecenie, zmienne, porty, wolumeny, zależności —
-// a nie każda konstrukcja, jaką Compose zna; konstrukcja nieznana wraca zdaniem
-// nazywającym ją po nazwie, a nie cichym pominięciem.
+// Pakiet obsługuje zakładkę Containers w Dev Tools: wykaz, czynności, log,
+// budowanie obrazu i kompozycję kontenerów biblioteką klienta OCI
+// wkompilowaną w rdzeń, bez uruchamiania programu `docker`.
 package core
 
 import (
@@ -50,12 +28,14 @@ import (
 )
 
 const (
-	// czasSilnikaKontenerow jest granicą jednej rozmowy z silnikiem.
+	// czasSilnikaKontenerow jest granicą jednej rozmowy z silnikiem kontenerów,
+	// wspólną wszystkim czynnościom poza budowaniem obrazu.
 	czasSilnikaKontenerow = 60 * time.Second
 	// czasBudowaniaObrazu jest granicą budowania obrazu. Budowanie bywa długie,
 	// lecz nie nieskończone — obraz budujący się godzinę trzyma połączenie okna.
 	czasBudowaniaObrazu = 30 * time.Minute
-	// najwiecejWierszyLoguKontenera jest domyślną głębokością logu kontenera.
+	// najwiecejWierszyLoguKontenera jest domyślną głębokością logu kontenera,
+	// gdy żądanie nie poda własnej głębokości.
 	najwiecejWierszyLoguKontenera = 500
 )
 
@@ -90,14 +70,16 @@ func brakSilnikaKontenerow(err error) bool {
 		strings.Contains(tresc, "permission denied")
 }
 
-// bladSilnikaKontenerow składa zdanie odmowy dla braku silnika.
+// bladSilnikaKontenerow składa zdanie odmowy dla braku silnika kontenerów,
+// z nazwą czynności, której silnik zabrakło.
 func bladSilnikaKontenerow(czynnosc string) error {
 	return bladZasobuDevelopera("na serwerze nie odpowiada żaden silnik kontenerów " +
 		"(Docker ani Podman), więc " + czynnosc + " nie ma czym się wykonać; " +
 		"naprawa po stronie serwera: " + narzedzieSilnikaKontenerow.Pakiet)
 }
 
-// WykazKontenerow obsługuje `developer.container.list`.
+// WykazKontenerow obsługuje `developer.container.list`: wykaz kontenerów
+// widzianych przez silnik wraz ze stanem dostępności silnika samego.
 func (a *adapterDevelopera) WykazKontenerow(ctx context.Context,
 	z shared.DeveloperContainerListRequest) (shared.DeveloperContainerListResponse, error) {
 
@@ -158,7 +140,8 @@ func (a *adapterDevelopera) WykazKontenerow(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// kontenerKontraktu przekłada opis silnika na opis kontraktu.
+// kontenerKontraktu przekłada opis kontenera zwrócony silnikiem na kształt
+// kontenera zwracany kontraktem komunikacji.
 func kontenerKontraktu(pozycja container.Summary) shared.ContainerInfo {
 	opis := shared.ContainerInfo{
 		Id:     pozycja.ID,
@@ -202,7 +185,8 @@ func nazwaKontenera(nazwy []string, identyfikator string) string {
 	return identyfikator
 }
 
-// stanKontenera przekłada stan silnika na stan kontraktu.
+// stanKontenera przekłada stan kontenera zwrócony silnikiem na stan kontenera
+// wymieniony w kontrakcie komunikacji.
 func stanKontenera(stan string) shared.ContainerStatus {
 	switch strings.ToLower(strings.TrimSpace(stan)) {
 	case "running":
@@ -212,16 +196,15 @@ func stanKontenera(stan string) shared.ContainerStatus {
 	case "dead":
 		return shared.ContainerStatusDead
 	case "exited", "removing", "restarting":
-		// Kontener wznawiany zgłasza się jako zakończony do chwili, w której
-		// wystartuje — kontrakt nie ma dla tej chwili własnego stanu, a wykaz
-		// odświeży się przy następnym odczycie.
+		// Kontener wznawiany zgłasza się jako zakończony do chwili, w której wystartuje.
 		return shared.ContainerStatusExited
 	default:
 		return shared.ContainerStatusCreated
 	}
 }
 
-// CzynnoscKontenera obsługuje `developer.container.action`.
+// CzynnoscKontenera obsługuje `developer.container.action`: start, stop,
+// restart, wznowienie albo usunięcie kontenera wskazanego identyfikatorem.
 func (a *adapterDevelopera) CzynnoscKontenera(ctx context.Context,
 	z shared.DeveloperContainerActionRequest) (shared.DeveloperContainerActionResponse, error) {
 
@@ -269,8 +252,7 @@ func (a *adapterDevelopera) CzynnoscKontenera(ctx context.Context,
 	if wyjscie != "" {
 		odpowiedz.Output = wskaznikTekstu(wyjscie)
 	}
-	// Usunięty kontener nie ma już opisu do odczytania — odpowiedź niesie wtedy
-	// sam identyfikator i stan `exited`, bo to jest prawda o tym, co zaszło.
+	// Usunięty kontener nie ma już opisu — odpowiedź niesie sam identyfikator i stan.
 	if z.Action == shared.ContainerActionKindRemove {
 		odpowiedz.Container = shared.ContainerInfo{
 			Id:     identyfikator,
@@ -283,7 +265,8 @@ func (a *adapterDevelopera) CzynnoscKontenera(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// opisKontenera odczytuje stan kontenera po wykonanej czynności.
+// opisKontenera odczytuje stan kontenera po wykonanej czynności, do złożenia
+// odpowiedzi bieżącym opisem, nie samą deklaracją sukcesu.
 func opisKontenera(ctx context.Context, silnik *client.Client,
 	identyfikator string) shared.ContainerInfo {
 
@@ -301,7 +284,8 @@ func opisKontenera(ctx context.Context, silnik *client.Client,
 	}
 }
 
-// logKontenera czyta ogon logu kontenera.
+// logKontenera czyta ogon logu kontenera o żądanej głębokości wierszy,
+// oczyszczony z nagłówków multipleksowania strumieni silnika.
 func logKontenera(ctx context.Context, silnik *client.Client, identyfikator string,
 	ogon *int) (string, error) {
 
@@ -326,12 +310,8 @@ func logKontenera(ctx context.Context, silnik *client.Client, identyfikator stri
 	return oczyscLogKontenera(bajty), nil
 }
 
-// oczyscLogKontenera zdejmuje ośmiobajtowe nagłówki multipleksowania strumieni.
-//
-// Silnik przeplata wyjście i diagnostykę jednym strumieniem, znakując każdą
-// porcję nagłówkiem: bajt strumienia, trzy zerowe i czterobajtowa długość.
-// Bez zdjęcia nagłówków log w oknie miałby co kilkadziesiąt znaków wtrącone
-// znaki sterujące.
+// oczyscLogKontenera zdejmuje ośmiobajtowe nagłówki multipleksowania, którymi
+// silnik znakuje porcje strumienia przeplatającego wyjście i diagnostykę.
 func oczyscLogKontenera(bajty []byte) string {
 	zapis := strings.Builder{}
 	for i := 0; i+8 <= len(bajty); {
@@ -353,7 +333,8 @@ func oczyscLogKontenera(bajty []byte) string {
 	return zapis.String()
 }
 
-// BudujObraz obsługuje `developer.image.build`.
+// BudujObraz obsługuje `developer.image.build`: pakuje kontekst budowania
+// i prowadzi budowanie obrazu silnikiem, czytając dziennik postępu.
 func (a *adapterDevelopera) BudujObraz(ctx context.Context,
 	z shared.DeveloperImageBuildRequest) (shared.DeveloperImageBuildResponse, error) {
 
@@ -446,7 +427,8 @@ func odczytajPrzebiegBudowaniaObrazu(zrodlo io.Reader) (string, error) {
 	}
 }
 
-// KompozycjaKontenerow obsługuje `developer.compose.up`.
+// KompozycjaKontenerow obsługuje `developer.compose.up`: czyta plik stosu
+// i podnosi jego usługi kontenerami przez silnik.
 func (a *adapterDevelopera) KompozycjaKontenerow(ctx context.Context,
 	z shared.DeveloperComposeUpRequest) (shared.DeveloperComposeUpResponse, error) {
 
@@ -484,8 +466,8 @@ func (a *adapterDevelopera) KompozycjaKontenerow(ctx context.Context,
 	return a.podniesStos(kontekst, silnik, stos, wybrane, opis)
 }
 
-// opisKompozycji jest odczytanym `docker-compose.yml` w zakresie, którym moduł
-// się posługuje.
+// opisKompozycji jest odczytanym plikiem `docker-compose.yml` w zakresie pól,
+// którym ten moduł się posługuje, nie każdą konstrukcją formatu Compose.
 type opisKompozycji struct {
 	Services map[string]struct {
 		Image       string            `yaml:"image"`
@@ -498,7 +480,8 @@ type opisKompozycji struct {
 	} `yaml:"services"`
 }
 
-// wczytajOpisKompozycji czyta plik stosu.
+// wczytajOpisKompozycji czyta plik stosu Compose z katalogu okna i rozbiera
+// go do zakresu pól, którym moduł się posługuje.
 func wczytajOpisKompozycji(sciezka string) (opisKompozycji, error) {
 	bajty, err := os.ReadFile(sciezka)
 	if err != nil {
@@ -513,7 +496,8 @@ func wczytajOpisKompozycji(sciezka string) (opisKompozycji, error) {
 	return opis, nil
 }
 
-// usluigWybrane zwraca nazwy usług do uruchomienia w kolejności ustalonej.
+// usluigWybrane zwraca nazwy usług do uruchomienia w kolejności ustalonej:
+// wszystkie usługi opisu, gdy żądanie nie wskazało zawężenia wprost.
 func usluigWybrane(opis opisKompozycji, zadane []string) []string {
 	wszystkie := make([]string, 0, len(opis.Services))
 	for nazwa := range opis.Services {
@@ -553,10 +537,12 @@ func nazwaStosu(sciezka string) string {
 	return nazwa
 }
 
-// etykietaStosu jest kluczem, po którym rozpoznaje się kontenery stosu.
+// etykietaStosu jest kluczem etykiety, po którym rdzeń rozpoznaje kontenery
+// należące do jednego stosu Compose podniesionego oknem.
 const etykietaStosu = "com.docker.compose.project"
 
-// podniesStos zakłada i startuje kontenery usług.
+// podniesStos zakłada i startuje kontenery usług wybranych z opisu stosu,
+// budując najpierw obrazy usług, które opis wskazuje budowaniem.
 func (a *adapterDevelopera) podniesStos(ctx context.Context, silnik *client.Client,
 	stos string, usluigi []string, opis opisKompozycji) (shared.DeveloperComposeUpResponse, error) {
 
@@ -566,16 +552,14 @@ func (a *adapterDevelopera) podniesStos(ctx context.Context, silnik *client.Clie
 	for _, nazwa := range usluigi {
 		usluga := opis.Services[nazwa]
 		if strings.TrimSpace(usluga.Image) == "" {
-			// Usługa budowana z `build:` wymaga wcześniejszego zbudowania
-			// obrazu — mówimy to wprost zamiast startować kontener bez obrazu.
+			// Usługa budowana z `build:` wymaga wcześniejszego zbudowania obrazu.
 			zapis.WriteString(nazwa + ": pominięta — usługa nie wskazuje obrazu (`image`), " +
 				"a budowanie z `build` idzie komendą developer.image.build\n")
 			continue
 		}
 		kontener := stos + "-" + nazwa
 
-		// Kontener o tej nazwie z poprzedniego biegu zostaje usunięty: stos
-		// podnosi się do stanu opisanego plikiem, a nie dokłada do zastanego.
+		// Kontener o tej nazwie z poprzedniego biegu zostaje usunięty przed startem.
 		_ = silnik.ContainerRemove(ctx, kontener, container.RemoveOptions{Force: true})
 
 		nastawy := &container.Config{
@@ -617,7 +601,8 @@ func (a *adapterDevelopera) podniesStos(ctx context.Context, silnik *client.Clie
 	return odpowiedz, nil
 }
 
-// zatrzymajStos zatrzymuje i usuwa kontenery stosu.
+// zatrzymajStos zatrzymuje i usuwa kontenery stosu rozpoznane etykietą stosu,
+// bez względu na to, które usługi opis stosu dziś wymienia.
 func (a *adapterDevelopera) zatrzymajStos(ctx context.Context, silnik *client.Client,
 	stos string, usluigi []string) (shared.DeveloperComposeUpResponse, error) {
 
@@ -666,8 +651,8 @@ func zmienneUslugi(zapis any) []string {
 	}
 }
 
-// polecenieUslugi sprowadza obie postacie zapisu polecenia (tekst i wykaz) do
-// wykazu argumentów.
+// polecenieUslugi sprowadza obie postacie zapisu polecenia usługi Compose —
+// tekst i wykaz — do jednego wykazu argumentów procesu.
 func polecenieUslugi(zapis any) []string {
 	switch wartosc := zapis.(type) {
 	case string:
@@ -683,7 +668,8 @@ func polecenieUslugi(zapis any) []string {
 	}
 }
 
-// tekstWartosciYaml sprowadza wartość odczytaną z pliku do tekstu.
+// tekstWartosciYaml sprowadza wartość odczytaną z pliku YAML do tekstu, bez
+// względu na to, czy plik zapisał ją jako napis, liczbę czy wartość logiczną.
 func tekstWartosciYaml(wartosc any) string {
 	if wartosc == nil {
 		return ""
@@ -698,7 +684,8 @@ func tekstWartosciYaml(wartosc any) string {
 	return strings.Trim(string(bajty), `"`)
 }
 
-// nastawyGospodarza składa przypisania portów i nastawę wznowienia.
+// nastawyGospodarza składa przypisania portów i nastawę wznowienia kontenera
+// usługi, do przekazania silnikowi przy jego założeniu.
 func nastawyGospodarza(porty []string, wznowienie string) (*container.HostConfig, error) {
 	nastawy := &container.HostConfig{PortBindings: map[nat.Port][]nat.PortBinding{}}
 	nastawy.PublishAllPorts = false
@@ -717,7 +704,8 @@ func nastawyGospodarza(porty []string, wznowienie string) (*container.HostConfig
 	return nastawy, nil
 }
 
-// rozbierzPrzypisaniePortu rozbiera zapis `8080:80` albo `8080:80/tcp`.
+// rozbierzPrzypisaniePortu rozbiera zapis `8080:80` albo `8080:80/tcp` na
+// port gospodarza, port kontenera i protokół.
 func rozbierzPrzypisaniePortu(zapis string) (nat.Port, string, error) {
 	tresc := strings.TrimSpace(zapis)
 	protokol := "tcp"
@@ -732,15 +720,15 @@ func rozbierzPrzypisaniePortu(zapis string) (nat.Port, string, error) {
 	case 2:
 		return nat.Port(czesci[1] + "/" + protokol), czesci[0], nil
 	case 3:
-		// Zapis z adresem gospodarza (`127.0.0.1:8080:80`) — adres pomijamy,
-		// bo przypisanie i tak wiąże port na wszystkich adresach maszyny.
+		// Zapis z adresem gospodarza niesie adres, który tu jest pomijany.
 		return nat.Port(czesci[2] + "/" + protokol), czesci[1], nil
 	default:
 		return "", "", errors.New("nieczytelne przypisanie portu: " + zapis)
 	}
 }
 
-// dockerBuildOptions składa nastawy budowania obrazu.
+// dockerBuildOptions składa nastawy budowania obrazu przekazywane silnikowi:
+// znacznik obrazu, ścieżkę pliku Dockerfile i argumenty budowania.
 func dockerBuildOptions(dockerfile, znacznik string,
 	parametry json.RawMessage) build.ImageBuildOptions {
 
@@ -763,16 +751,8 @@ func dockerBuildOptions(dockerfile, znacznik string,
 	return nastawy
 }
 
-// archiwumKontekstuBudowania pakuje katalog kontekstu budowania do archiwum tar.
-//
-// Silnik przyjmuje kontekst budowania wyłącznie jako strumień archiwum — nie ma
-// drogi wskazania mu katalogu, bo gniazdo bywa po drugiej stronie sieci.
-// Pakowanie idzie strumieniem przez potok, a nie do pliku tymczasowego: kontekst
-// dużego repozytorium ma setki megabajtów, a plik tymczasowy tej wielkości
-// zostawałby na dysku serwera po każdym nieudanym budowaniu.
-//
-// Reguły `.dockerignore` są brane pod uwagę: bez nich do obrazu wchodziłby
-// katalog `.git` i wszystko, co repozytorium ma z założenia poza obrazem.
+// archiwumKontekstuBudowania pakuje katalog kontekstu budowania strumieniem
+// do archiwum tar, z regułami `.dockerignore` uwzględnionymi.
 func archiwumKontekstuBudowania(katalog string) (io.ReadCloser, error) {
 	pomijaj, err := regulyPomijaniaKontekstu(katalog)
 	if err != nil {
@@ -799,9 +779,7 @@ func archiwumKontekstuBudowania(katalog string) (io.ReadCloser, error) {
 				}
 				return nil
 			}
-			// Dowiązania i pliki urządzeń zostają poza archiwum: kontekst
-			// budowania jest zbiorem plików zwykłych i katalogów, a dowiązanie
-			// wskazujące poza katalog wyprowadziłoby budowanie z jego obszaru.
+			// Dowiązania i pliki urządzeń zostają poza archiwum kontekstu.
 			if !opis.Mode().IsRegular() && !opis.IsDir() {
 				return nil
 			}

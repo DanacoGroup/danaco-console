@@ -18,13 +18,9 @@ import type { ZrodloBiegu } from './zrodlo-biegu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
 /**
- * Results Analyzer — okno monitora zbierające wyniki obu wykonawców.
- *
- * Przycisk „Stan monitora" woła `monitor.status` i melduje stan procesów
- * telemetrii oddany przez rdzeń. Zgłoszenie niezgodności idzie do okna
- * koordynatora zwykłym `message.send`. Wcielenie roli analityka niesie własny
- * wykaz kryteriów oceny i własny nagłówek zgłoszenia; wartość utrwala
- * `config.set` na poziomie okna analityka.
+ * Results Analyzer jest oknem monitora zbierającym wyniki obu wykonawców:
+ * melduje stan procesów telemetrii i zgłasza werdykt do okna koordynatora, a
+ * wcielenie roli analityka utrwala się na poziomie okna.
  */
 export interface OknoAnalityka {
   element: HTMLElement;
@@ -40,7 +36,7 @@ export interface OpcjeAnalityka {
   komendy: WykazKomendRdzenia;
 }
 
-/** Ile ostatnich wiadomości okna wystarcza, żeby znaleźć wynik wykonawcy. */
+/** Ile ostatnich wiadomości danego okna wystarcza, żeby na pewno znaleźć w nich wynik pracy tego wykonawcy. */
 const GLEBOKOSC_ODCZYTU = 20;
 
 export function utworzOknoAnalityka(opcje: OpcjeAnalityka): OknoAnalityka {
@@ -77,11 +73,7 @@ export function utworzOknoAnalityka(opcje: OpcjeAnalityka): OknoAnalityka {
     void zapiszWcielenie().then(() => zglos('konflikt rozstrzygnięty'));
   });
 
-  /**
-   * Zgłoszenie werdyktu do okna koordynatora.
-   *
-   * Bez wskazanego koordynatora zgłoszenie nie ma adresata i okno mówi to wprost.
-   */
+  // Zgłoszenie werdyktu do okna koordynatora; bez wskazanego koordynatora zgłoszenie nie ma adresata.
   async function zglos(werdykt: string): Promise<void> {
     const koordynator = stan.obsada().koordynator;
     if (koordynator === null) {
@@ -90,8 +82,7 @@ export function utworzOknoAnalityka(opcje: OpcjeAnalityka): OknoAnalityka {
     }
     const tresc = trescZgloszenia(opisWcielenia(stan.wcielenie()), werdykt, uzasadnienie.value);
     const wynik = await opcje.bieg.wyslij({ windowId: koordynator.id, content: tresc });
-    // Zgłoszenie liczy się za przekazane dopiero wtedy, gdy rdzeń odda wiadomość:
-    // analityk pisze do cudzego okna, więc adresat wymaga potwierdzenia.
+    // Zgłoszenie liczy się za przekazane dopiero, gdy rdzeń odda wiadomość zapisaną w cudzym oknie.
     if (!wynik.udany || wynik.wynik === undefined) {
       tresci.blad('Rdzeń odmówił przyjęcia zgłoszenia.', wynik.blad);
       return;
@@ -113,12 +104,7 @@ export function utworzOknoAnalityka(opcje: OpcjeAnalityka): OknoAnalityka {
     tresci.potwierdzenie(zdanie, udane);
   }
 
-  /**
-   * Odczyt zbiorczego stanu procesów telemetrii (`monitor.status`).
-   *
-   * Sitem jest sesja analityka, a przy wskazanym oknie analityka także jego
-   * identyfikator. Meldunek podaje liczbę procesów i ich stany oddane przez rdzeń.
-   */
+  // Odczyt zbiorczego stanu procesów telemetrii; sitem jest sesja analityka i jego okno, jeśli wskazane.
   async function odczytajStanMonitora(): Promise<void> {
     const analityk = stan.obsada().analityk;
     tresci.ladowanie('Odczyt stanu monitora…');
@@ -166,7 +152,7 @@ export function utworzOknoAnalityka(opcje: OpcjeAnalityka): OknoAnalityka {
   };
 }
 
-/** Kontrolki własne okna analityka wraz z miejscami na kryteria i zestawienie. */
+/** Kontrolki własne okna analityka wraz z miejscami na kryteria oceny, zestawienie wyników i uzasadnienie. */
 interface PowierzchniaAnalityka {
   uzasadnienie: HTMLTextAreaElement;
   wcielenie: HTMLSelectElement;
@@ -210,8 +196,7 @@ function zlozPowierzchnieAnalityka(
 
   rama.akcje.append(zatwierdz, odrzuc, rozstrzygnij);
   rama.narzedzia.append(wcielenie, stanMonitora);
-  // W wykazie braków zostaje tylko `role.update`: komendy `monitor.*` rdzeń
-  // rejestruje i okno je woła, więc jako brak byłyby zgłoszone fałszywie.
+  // W wykazie braków zostaje tylko zmiana roli: komendy monitora rdzeń rejestruje, więc nie są brakiem.
   rama.cialo.append(kryteria, zestaw, uzasadnienie, stanTresci, komendy.wykazBrakow([
     'role.update',
   ]));
@@ -219,7 +204,7 @@ function zlozPowierzchnieAnalityka(
   return { uzasadnienie, wcielenie, kryteria, zatwierdz, odrzuc, rozstrzygnij, zestaw, stanMonitora };
 }
 
-/** Jeden proces w meldunku stanu monitora — złożony z tego, co oddał rdzeń. */
+/** Jeden proces w meldunku stanu monitora, złożony z tego, co oddał o nim rdzeń: etap, postęp i jego stan. */
 function opisProcesuMonitora(status: MonitorStatus): string {
   const etap =
     status.stageIndex !== undefined && status.stageCount !== undefined
@@ -231,7 +216,7 @@ function opisProcesuMonitora(status: MonitorStatus): string {
   return `${status.label ?? status.processId} (${status.status}${etap}${ukonczenie})`;
 }
 
-/** Pozycje wykazu kryteriów bieżącego wcielenia — czysta zamiana zdań na wiersze. */
+/** Pozycje wykazu kryteriów bieżącego wcielenia — czysta zamiana zdań kryteriów na wiersze listy widoku. */
 function pozycjeKryteriow(kryteria: readonly string[]): HTMLElement[] {
   return kryteria.map((pozycja) => {
     const wiersz = document.createElement('li');
@@ -240,12 +225,12 @@ function pozycjeKryteriow(kryteria: readonly string[]): HTMLElement[] {
   });
 }
 
-/** Waga plakietki kompletu wyników: brak wyników ostrzega, komplet oznacza sukces. */
+/** Waga plakietki kompletu wyników: brak wyników ostrzega, komplet oznacza sukces, reszta jest neutralna. */
 function wagaKompletuWynikow(gotowe: number, wszystkich: number): 'neutralna' | 'sukces' | 'ostrzezenie' {
   return gotowe === 0 ? 'ostrzezenie' : gotowe === wszystkich ? 'sukces' : 'neutralna';
 }
 
-/** Wyniki obu wykonawców złożone do zestawienia; sam odczyt stanu wspólnego. */
+/** Wyniki obu wykonawców złożone do zestawienia; sam odczyt stanu wspólnego, bez sięgania do rdzenia po nic. */
 function wynikiWykonawcow(stan: StanMultitaskingu): readonly WynikWykonawcy[] {
   return stan.obsada().wykonawcy.map((okno, miejsce) => ({
     numer: miejsce + 1,
@@ -280,8 +265,7 @@ async function utrwalWcielenie(
     scope: ConfigScope.Window,
     scopeId: analityk.id,
   });
-  // Odmowa cofa widok: selektor pokazujący wcielenie, którego rdzeń nie zapisał,
-  // sugerowałby, że kryteria oceny są utrwalone.
+  // Odmowa cofa widok: selektor pokazujący niezapisane wcielenie sugerowałby utrwalone kryteria oceny.
   if (!wynik.udany || wynik.wynik === undefined) {
     stan.ustawWcielenie(poprzednie);
     return {
@@ -297,12 +281,12 @@ async function utrwalWcielenie(
   };
 }
 
-/** Zdanie o przekazanym zgłoszeniu — złożone z wiadomości, którą oddał rdzeń. */
+/** Zdanie o przekazanym zgłoszeniu — złożone z wiadomości, którą oddał rdzeń po zapisie w oknie koordynatora. */
 function zdanieOZgloszeniu(wiadomosc: Message, werdykt: string, koordynator: string): string {
   return `Rdzeń zapisał zgłoszenie „${werdykt}" w oknie koordynatora ${koordynator} jako wiadomość ${wiadomosc.id} (stan ${wiadomosc.status}).`;
 }
 
-/** Pierwsze wypełnienie wyników wykonawców; dalej żywi je `message.changed`. */
+/** Pierwsze wypełnienie wyników wykonawców przy otwarciu okna; dalej żywi je zdarzenie zmiany wiadomości. */
 async function wczytajWynikiWykonawcow(
   bieg: ZrodloBiegu,
   stan: StanMultitaskingu,

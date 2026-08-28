@@ -3,17 +3,9 @@ import type { StanDostepow } from './stan-dostepow';
 import { utworzWierszNadania } from './wiersz-nadania';
 
 /**
- * Zbiór nadań okna rozmowy — druga połowa sekcji dostępów.
- *
- * Okno ma zbiór nadań, nie jedno nadanie. Lista pokazuje ten zbiór
- * w kolejności, z jawnym oznaczeniem nadania głównego: kolejność rozstrzyga,
- * w jakiej postaci nadania trafią do konfiguracji mostów, a główne wskazuje
- * punkt, od którego model zaczyna.
- *
- * Lista przebudowuje się przy każdej zmianie zbioru. To świadomy wybór: zmiana
- * kolejności albo oznaczenia głównego przestawia wszystkie wiersze naraz, więc
- * nanoszenie wartości na wiersze już zbudowane byłoby trudniejsze i mniej
- * wierne niż zbudowanie ich od nowa z odpowiedzi rdzenia.
+ * Zbiór nadań okna rozmowy, będący drugą połową sekcji dostępów. Lista pokazuje
+ * ten zbiór w kolejności, z jawnym oznaczeniem nadania głównego, i przebudowuje
+ * się przy każdej zmianie zbioru.
  */
 export interface ListaNadan {
   /** Element osadzany w sekcji dostępów. */
@@ -91,8 +83,9 @@ export function utworzListeNadan(stan: StanDostepow): ListaNadan {
 }
 
 /**
- * Podpis zbioru — zmiana któregokolwiek członu przebudowuje listę. Człony
- * odpowiadają dokładnie temu, co wiersz rysuje.
+ * Podpis zbioru nadań, którego zmiana przebudowuje listę. Człony podpisu
+ * odpowiadają dokładnie temu, co wiersz rysuje, więc podpis nie zmienia się bez
+ * zmiany widocznej na ekranie.
  */
 function podpisZbioru(nadania: readonly AccessGrant[]): string {
   return nadania
@@ -105,7 +98,11 @@ function podpisZbioru(nadania: readonly AccessGrant[]): string {
     .join('|');
 }
 
-/** Zdanie nagłówka: które okno i ile nadań. */
+/**
+ * Zdanie nagłówka listy: które okno rozmowy jest związane z sekcją i ile nadań
+ * ma ten zbiór. Nadanie żyje w obrębie jednego okna rozmowy, więc drugie okno
+ * tej samej sesji ma własny zbiór.
+ */
 function zdanieOpisu(okno: string, liczba: number): string {
   if (okno === '') return 'Sekcja nie jest związana z oknem rozmowy.';
   return `Okno ${okno} · nadań: ${liczba}. Nadanie żyje per okno rozmowy, nie per sesja — drugie okno tej samej sesji ma własny zbiór.`;
@@ -120,7 +117,11 @@ const KOMUNIKAT_BEZ_NADAN =
 const KOMUNIKAT_BEZ_GLOWNEGO =
   'Żadne nadanie nie jest oznaczone jako główne. Oznacz jedno — od niego model zaczyna, gdy nie wskazano punktu wprost.';
 
-/** Zdanie zamiast pustej listy — Operator ma wiedzieć, dlaczego nic nie ma. */
+/**
+ * Zdanie stawiane zamiast pustej listy, żeby Operator wiedział, dlaczego nic
+ * w niej nie ma. Pusty zbiór nadań bywa stanem poprawnym, więc lista nazywa go
+ * zdaniem zamiast pokazywać pusty prostokąt.
+ */
 function pusty(tresc: string): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'dd-nadania__pusty';

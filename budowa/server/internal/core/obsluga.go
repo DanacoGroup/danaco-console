@@ -6,38 +6,18 @@ import (
 	"danacoconsole/server/internal/protocol"
 )
 
-// obsluz buduje obsługiwacza komendy z czynności domeny.
-//
-// Cała powtarzalna praca dyspozycji dzieje się tutaj raz: odczytanie ładunku
-// w kształcie żądania kontraktu, wywołanie czynności, zamiana wyniku albo błędu
-// na odpowiedź protokołu. Dzięki temu pliki handlers_*.go zawierają wyłącznie
-// wiązanie nazwy kontraktu z czynnością — bez powielonej obsługi błędów.
-//
-// Typ żądania Z i typ wyniku W pochodzą z pakietu shared, więc zmiana kontraktu
-// przerywa kompilację obsługiwacza zamiast rozjeżdżać się z nim po cichu.
+// obsluz buduje obsługiwacza komendy z czynności domeny: odczytuje ładunek żądania kontraktu, wywołuje czynność i zamienia wynik lub błąd na odpowiedź protokołu.
 func obsluz[Z any, W any](czynnosc func(context.Context, Z) (W, error)) Obsluga {
 	return func(ctx context.Context, z protocol.Request) protocol.Odpowiedz {
 		var zadanie Z
 		if err := z.LadunekDo(&zadanie); err != nil {
 			return bladNiepoprawnegoLadunku(err)
 		}
-		// Zgodność z kontraktem sprawdza się PRZED czynnością domeny i po
-		// odczytaniu ładunku: odczyt orzeka o kształcie treści, brama — o jej
-		// zawartości. Bez bramy czynność domeny dostawała żądanie niepełne
-		// i uzupełniała brak wartością domyślną, meldując powodzenie.
-		//
-		// Kontekst wchodzi do bramy, bo powitanie przepuszczone mimo braków
-		// zostawia po sobie wpis w dzienniku rdzenia, a dziennik jedzie właśnie
-		// kontekstem (`rdzen.go`). O tym, która komenda bramie nie podlega,
-		// rozstrzyga sama brama — obsługiwacz komend po nazwach nie rozróżnia.
+		// Zgodność z kontraktem sprawdza się po odczytaniu ładunku, przed wywołaniem czynności domeny.
 		if err := sprawdzZadanieWobecKontraktu(ctx, z.Komenda, z.Ladunek, zadanie); err != nil {
 			return porazka(err)
 		}
-		// Tożsamość żądania jedzie dalej kontekstem, bo ładunek jej nie niesie:
-		// pole `id` mieszka w kopercie, a czynność domeny dostaje wyłącznie
-		// rozpakowaną treść. Bez tego wpisu nadawca strumienia nie miałby czym
-		// powtórzyć identyfikatora zadania w kopertach `stream.chunk`, choć
-		// kontrakt każe mu go powtarzać (`protocol/tozsamosc_zadania.go`).
+		// Tożsamość żądania jedzie kontekstem, bo ładunek jej nie niesie; pole id mieszka w kopercie.
 		rezultat, err := czynnosc(protocol.ZIdZadania(ctx, z.Id), zadanie)
 		if err != nil {
 			return porazka(err)

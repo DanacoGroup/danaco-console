@@ -1,25 +1,4 @@
-// Plik wpina pięć komend historii i archiwum eksperta — `agent.version.list`,
-// `agent.version.restore`, `agent.archive`, `agent.restore`,
-// `agent.archive.list` — wraz z portem WersjeEksperta i jego wypełnieniem.
-//
-// Historia i archiwum stoją w osobnym porcie, a nie w porcie Agenci: siedzą
-// w innych tabelach, mają własne repozytoria i wchodzą do rdzenia jednym
-// wywołaniem `zarejestrujWersjeEksperta`. Wtopienie ich w interfejs Agenci
-// rozdęłoby port biblioteki o pięć czynności z biblioteką niezwiązanych.
-//
-// Nazwy komend i kształty pól pochodzą wyłącznie z pakietu `shared`; powielenie
-// literału nazwy po którejkolwiek stronie jest błędem.
-//
-// Kształt `AgentVersion` jest ten sam co w `StudioVersion` i `LibraryVersion`:
-// `id · agentId · label · suma kontrolna · createdAt`. Migawka tożsamości nie
-// jedzie w wierszu wykazu — wykaz trzyma sumę kontrolną, a treść pobiera się
-// osobno przy przywróceniu. `mode` jest polem niewymaganym i niesie trzeci stan
-// promptu: brak wartości znaczy prompt globalny, `DOLACZ` prompt dopisywany,
-// `ZASTAP` odstępstwo jawne.
-//
-// Kontrakt daje modułowi Agents wyłącznie zdarzenie `agent.changed`, więc
-// przywrócenie wersji, archiwizacja i powrót z archiwum rozgłaszają się
-// rodzajem `updated` wraz z ekspertem po zmianie.
+// Plik wpina pięć komend historii i archiwum eksperta — agent.version.list, agent.version.restore, agent.archive, agent.restore, agent.archive.list — wraz z portem WersjeEksperta.
 package core
 
 import (
@@ -33,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WersjeEksperta jest portem historii i archiwum eksperta.
+// WersjeEksperta jest portem historii i archiwum eksperta, wypełnianym repozytoriami danych w tym samym pliku.
 type WersjeEksperta interface {
 	WykazWersji(ctx context.Context, z shared.AgentVersionListRequest) (shared.AgentVersionListResponse, error)
 	PrzywrocWersje(ctx context.Context, z shared.AgentVersionRestoreRequest) (shared.AgentVersionRestoreResponse, error)
@@ -49,8 +28,7 @@ func zarejestrujWersjeEksperta(r *Rejestr, wersje WersjeEksperta, e *emiter) {
 		return
 	}
 
-	// Dwa odczyty bez zdarzenia — wykaz historii i wykaz archiwum niczego nie
-	// zmieniają, więc nie ma czego rozgłaszać.
+	// Dwa odczyty bez zdarzenia — wykaz historii i wykaz archiwum niczego nie zmieniają.
 	r.Zarejestruj(shared.CommandAgentVersionList, obsluz(wersje.WykazWersji))
 	r.Zarejestruj(shared.CommandAgentArchiveList, obsluz(wersje.WykazArchiwum))
 
@@ -66,9 +44,7 @@ func zarejestrujWersjeEksperta(r *Rejestr, wersje WersjeEksperta, e *emiter) {
 	r.Zarejestruj(shared.CommandAgentArchive,
 		obsluz(func(ctx context.Context, z shared.AgentArchiveRequest) (shared.AgentArchiveResponse, error) {
 			w, err := wersje.Zarchiwizuj(ctx, z)
-			// Zdarzenie idzie rodzajem `updated`, nie `deleted`: ekspert nadal
-			// istnieje wraz z definicją i historią, tylko zszedł z wykazu
-			// czynnych. `deleted` kazałoby oknom zapomnieć byt, który wróci.
+			// Zdarzenie idzie rodzajem updated, nie deleted: ekspert istnieje nadal, zszedł z wykazu czynnych.
 			if err == nil && w.Archived && w.Agent != nil {
 				e.agent(shared.ChangeKindUpdated, *w.Agent)
 			}
@@ -106,7 +82,7 @@ func NowyPortWersjiEksperta(historia dane.RepozytoriumWersjiAgenta,
 	return &adapterWersjiEksperta{historia: historia, archiwum: archiwum, biblioteka: biblioteka}
 }
 
-// WykazWersji oddaje historię eksperta od najnowszej wersji.
+// WykazWersji oddaje historię eksperta od najnowszej wersji, bez treści migawek, wyłącznie ich tożsamość.
 func (a *adapterWersjiEksperta) WykazWersji(ctx context.Context,
 	z shared.AgentVersionListRequest) (shared.AgentVersionListResponse, error) {
 
@@ -124,10 +100,7 @@ func (a *adapterWersjiEksperta) WykazWersji(ctx context.Context,
 	return shared.AgentVersionListResponse{AgentId: z.AgentId, Versions: wersje, Total: len(wersje)}, nil
 }
 
-// PrzywrocWersje zapisuje wskazaną wersję jako wersję kolejną i oddaje eksperta
-// po zmianie wraz z migawką nowo powstałą. Wersję wskazuje `versionId`, nie
-// numer — tak wskazuje ją `library.version.restore`. Numer zostaje porządkiem
-// historii, tożsamością wersji jest klucz wiersza, bo tylko on jest niezmienny.
+// PrzywrocWersje zapisuje wskazaną wersję jako wersję kolejną i oddaje eksperta po zmianie wraz z migawką nowo powstałą; wersję wskazuje versionId, nie numer.
 func (a *adapterWersjiEksperta) PrzywrocWersje(ctx context.Context,
 	z shared.AgentVersionRestoreRequest) (shared.AgentVersionRestoreResponse, error) {
 
@@ -193,8 +166,7 @@ func (a *adapterWersjiEksperta) Zarchiwizuj(ctx context.Context,
 	return wynik, nil
 }
 
-// PrzywrocZArchiwum oddaje eksperta wykazowi czynnych wraz z zapamiętanym
-// stanem czynności.
+// PrzywrocZArchiwum oddaje eksperta wykazowi czynnych wraz z zapamiętanym stanem czynności sprzed odłożenia.
 func (a *adapterWersjiEksperta) PrzywrocZArchiwum(ctx context.Context,
 	z shared.AgentRestoreRequest) (shared.AgentRestoreResponse, error) {
 
@@ -235,7 +207,7 @@ func (a *adapterWersjiEksperta) WykazArchiwum(ctx context.Context,
 	return shared.AgentArchiveListResponse{Agents: eksperci, Total: len(eksperci)}, nil
 }
 
-// ekspert dobiera eksperta z biblioteki na potrzeby wyniku i rozgłoszenia.
+// ekspert dobiera eksperta z biblioteki na potrzeby wyniku komendy oraz rozgłoszenia zdarzenia zmiany.
 func (a *adapterWersjiEksperta) ekspert(ctx context.Context, kod string) (shared.Agent, error) {
 	if a.biblioteka == nil {
 		return shared.Agent{}, bladBrakuKatalogu("ekspertów")
@@ -266,10 +238,7 @@ func wersjaEkspertaKontraktu(kodAgenta string, w dane.WersjaAgenta) shared.Agent
 	return wersja
 }
 
-// sumaTozsamosci liczy sumę kontrolną migawki. Liczy się ją w rdzeniu, a nie
-// trzyma w kolumnie, bo migawki zakłada wyzwalacz bazy — kolumna wymagałaby
-// liczenia sumy w SQL, gdzie nie ma po temu narzędzia. Suma obejmuje wyłącznie
-// pola tożsamości: dwie wersje o równej sumie są nieodróżnialne w oknie.
+// sumaTozsamosci liczy sumę kontrolną migawki w rdzeniu, a nie w kolumnie, bo migawki zakłada wyzwalacz bazy; suma obejmuje wyłącznie pola tożsamości.
 func sumaTozsamosci(w dane.WersjaAgenta) string {
 	skrot := sha256.Sum256([]byte(strings.Join([]string{
 		w.Nazwa, w.Opis, w.InstrukcjeSystemowe,

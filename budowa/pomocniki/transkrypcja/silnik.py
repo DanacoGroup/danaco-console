@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Silnik transkrypcji jest warstwą styku z biblioteką faster-whisper i nie wypisuje
+# niczego na standardowe wyjście.
 """Silnik transkrypcji Danaco Console — warstwa styku z faster-whisper.
 
 Moduł nie ma CLI i nie drukuje na stdout. Rozdzielenie jest celowe: stdout
@@ -17,28 +19,19 @@ import os
 import platform
 from pathlib import Path
 
-# Wykaz przyjmowanych formatów jest zamknięty i krótki: to kontenery, które
-# realnie wychodzą z przeglądarkowego nagrywania i z dyktafonów w telefonach.
-# Wykaz nie obejmuje wszystkiego, co potrafi przeczytać ffmpeg, bo pomocnik nie
-# ma jak zagwarantować, że ffmpeg jest w systemie w wersji, która dany kontener
-# otworzy. Odmowa z nazwanym wykazem mówi więcej niż wyjątek z wnętrza
-# biblioteki.
+# Wykaz przyjmowanych formatów jest zamknięty i krótki: obejmuje kontenery
+# wychodzące z nagrywania w przeglądarce i z dyktafonów telefonów, nie wszystko,
+# co czyta ffmpeg.
 PRZYJMOWANE_ROZSZERZENIA = (".wav", ".ogg", ".m4a", ".webm")
 
-# Nazwa repozytorium modelu jest znana i stała: faster-whisper pobiera wagi
-# z Hugging Face Hub spod "Systran/faster-whisper-<rozmiar>", a Hub zapisuje
-# je w katalogu "models--Systran--faster-whisper-<rozmiar>". Ta konwencja
-# pozwala sprawdzić obecność modelu samym zajrzeniem na dysk, bez ładowania
-# setek megabajtów do pamięci — w trybie --wersja to różnica między odpowiedzią
-# natychmiastową a kilkusekundowym mieleniem.
+# Nazwa repozytorium modelu jest stała: faster-whisper pobiera wagi z Hugging Face
+# Hub, który zapisuje je w katalogu według tego wzorca nazwy.
 _SZABLON_KATALOGU = "models--Systran--faster-whisper-{}"
 
 
 def silnik_obecny() -> bool:
     """Czy moduł faster_whisper da się w ogóle zaimportować."""
-    # Sprawdzenie idzie przez find_spec, nie przez import: import
-    # faster_whisper ciągnie za sobą ctranslate2, bibliotekę natywną ważącą
-    # dziesiątki megabajtów. W trybie --wersja pytanie brzmi tylko „czy jest".
+    # Sprawdzenie idzie przez find_spec, nie import: import ciągnie ciężką bibliotekę natywną.
     return importlib.util.find_spec("faster_whisper") is not None
 
 
@@ -49,16 +42,14 @@ def wersja_silnika() -> str:
 
         return "faster-whisper " + version("faster-whisper")
     except Exception:
-        # Pusty napis zamiast zgadywania: bez metadanych pakietu (instalacja
-        # z katalogu, nietypowe spakowanie) wersja nie jest znana.
+        # Pusty napis zamiast zgadywania: bez metadanych pakietu wersja nie jest znana.
         return ""
 
 
 def katalogi_cache(katalog_modeli: str = "") -> list[Path]:
     """Miejsca, w których model mógł wylądować, w kolejności pierwszeństwa."""
     if katalog_modeli:
-        # Katalog podany wprost wygrywa i jest jedyny: model znaleziony gdzie
-        # indziej i tak nie zostałby użyty, bo download_root wskaże ten katalog.
+        # Katalog podany wprost wygrywa i jest jedyny, bo download_root wskaże właśnie ten katalog.
         return [Path(katalog_modeli).expanduser()]
     kandydaci = []
     for zmienna in ("HF_HUB_CACHE", "HUGGINGFACE_HUB_CACHE"):
@@ -77,8 +68,7 @@ def sciezka_modelu(model: str, katalog_modeli: str = "") -> Path | None:
     nazwa = _SZABLON_KATALOGU.format(model)
     for katalog in katalogi_cache(katalog_modeli):
         kandydat = katalog / nazwa
-        # Sprawdzana jest obecność pliku wag, nie samego katalogu: przerwane
-        # pobieranie zostawia pustą skorupę katalogu, która modelem nie jest.
+        # Sprawdzana jest obecność pliku wag, nie katalogu: przerwane pobieranie zostawia pustą skorupę.
         if kandydat.is_dir() and any(kandydat.rglob("model.bin")):
             return kandydat
         # Model wypakowany "płasko" (bez układu Huba) też jest poprawny.
@@ -94,9 +84,7 @@ def opis_python() -> str:
 
 def powod_braku_silnika() -> str:
     """Odmowa trójczęściowa dla przypadku: nie ma modułu faster_whisper."""
-    # Zdanie rozpoznawcze jest dosłowne i niezmienne: rdzeń rozróżnia dwa
-    # rodzaje niegotowości po treści powodu, a Operator po tym samym zdaniu
-    # trafia do właściwego akapitu README. Przeredagowanie zepsułoby oba.
+    # Zdanie rozpoznawcze jest dosłowne i niezmienne: Operator trafia po nim do właściwego akapitu README.
     return (
         "Silnik faster-whisper niedostępny w Pythonie. "
         "Pomocnik transkrypcji nie ma czym rozpoznać mowy, więc nie zgłasza "
@@ -128,24 +116,18 @@ def transkrybuj(
     """Zwraca (tekst, długość nagrania w sekundach). Wyjątki idą w górę."""
     from faster_whisper import WhisperModel
 
-    # CPU i int8 są wpisane na sztywno i nie mają przełącznika. Pomocnik ma
-    # działać na maszynie takiej, jaka jest, a ta w ogólności nie ma karty
-    # graficznej; opcja device="cuda" dawałaby konfigurację, która zawodzi
-    # dopiero przy pierwszym nagraniu.
+    # CPU i int8 są wpisane na sztywno, bo pomocnik ma działać także bez karty graficznej.
     silnik = WhisperModel(
         model,
         device="cpu",
         compute_type="int8",
         download_root=katalog_modeli or None,
+        local_files_only=True,
     )
     segmenty, info = silnik.transcribe(str(sciezka), language=jezyk or None)
 
-    # Segmenty są generatorem — dopiero iteracja wykonuje rozpoznanie.
-    # Sklejenie idzie tutaj, żeby poza tą funkcją nikt nie musiał wiedzieć,
-    # że faster-whisper zwraca leniwy strumień.
+    # Segmenty są generatorem; sklejenie idzie tutaj, żeby wywołujący nie znał leniwego strumienia.
     czesci = [s.text for s in segmenty]
 
-    # Długość idzie z info.duration, czyli z długości nagrania. Czas
-    # przetwarzania jest liczbowo podobny, ale to inna wielkość: zależy od
-    # obciążenia maszyny, nie od materiału. Pole opisuje nagranie i tylko je.
+    # Długość pochodzi z info.duration, czasu nagrania, nie z czasu przetwarzania materiału.
     return "".join(czesci).strip(), float(getattr(info, "duration", 0.0) or 0.0)

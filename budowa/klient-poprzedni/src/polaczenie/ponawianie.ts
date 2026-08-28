@@ -1,4 +1,4 @@
-/** Polityka odstępu między kolejnymi próbami połączenia. */
+/** Polityka odstępu między kolejnymi próbami połączenia, wywoływana przy każdym ponawianiu łączności z rdzeniem. */
 export interface PolitykaPonawiania {
   /** Odstęp w milisekundach przed próbą o podanym numerze (od 1). */
   opoznienie(numerProby: number): number;

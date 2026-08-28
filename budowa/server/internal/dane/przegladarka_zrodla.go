@@ -1,12 +1,4 @@
-// Odpowiedzialność pliku: źródła zebrane w toku przeglądania (tabela
-// `zrodlo_przegladania`) — trwałość szuflady Sources.
-//
-// Tabela `zrodlo_przegladania` nie jest tabelą `zrodlo_badania` modułu Research.
-// `BrowserSource` to odcisk strony zebrany w toku przeglądania — ma `snapshotId`
-// i `key`, jest zawsze powiązany z oknem operacyjnym. `ResearchSource` ocenia
-// wiarygodność zasobu badawczego i niesie inny kształt (`kind`, `credibility`,
-// `libraryFileId`). Różne kształty, różne cykle życia — osobna tabela, nie
-// współdzielenie.
+// Odpowiedzialność pliku: źródła zebrane w toku przeglądania, wiersze tabeli zrodlo_przegladania, trwałość szuflady Sources okna operacyjnego.
 package dane
 
 import (
@@ -16,7 +8,7 @@ import (
 	"fmt"
 )
 
-// ZrodloPrzegladania to wiersz tabeli `zrodlo_przegladania`.
+// ZrodloPrzegladania to wiersz tabeli zrodlo_przegladania, niosący adres, tytuł i przynależność do zestawu tematycznego.
 type ZrodloPrzegladania struct {
 	ID                  int64
 	Kod                 string
@@ -25,9 +17,7 @@ type ZrodloPrzegladania struct {
 	Tytul               *string
 	MigawkaZewnetrznaID *string
 	Kluczowe            bool
-	// Grupa niesie zestaw tematyczny, do którego źródło należy
-	// (`browser.source.group.set`, migracja 179). Pusty wskaźnik znaczy „poza
-	// zestawami", nie „zestaw bez nazwy".
+	// Grupa niesie zestaw tematyczny źródła; wskaźnik pusty znaczy poza zestawami, nie zestaw bez nazwy.
 	Grupa     *string
 	Utworzono string
 }
@@ -51,10 +41,7 @@ const (
 	pobierzZrodloPrzegladania = `SELECT ` + kolumnyZrodlaPrzegladania + `
 	                             FROM zrodlo_przegladania WHERE identyfikator_zewnetrzny = ?`
 
-	// Jedno zapytanie na wszystkie zawężenia zamiast sklejania SQL-a w locie:
-	// zerowy `tylkoKluczowe` wyłącza warunek kluczowości, więc plan i wpis
-	// w podręcznej pamięci `przygotuj` są jedne, niezależnie od filtru.
-	// Kolejność zgodna z indeksem idx_zrodlo_przegladania_okno (okno, utworzono DESC, id).
+	// Jedno zapytanie na wszystkie zawężenia, zamiast sklejania SQL-a w locie, trzyma jeden plan zapytania w pamięci podręcznej.
 	listaZrodelPrzegladania = `SELECT ` + kolumnyZrodlaPrzegladania + `
 	                           FROM zrodlo_przegladania
 	                           WHERE okno = ? AND (? = 0 OR kluczowe = 1)
@@ -99,7 +86,7 @@ func (r *repozytoriumPrzegladania) ZapiszZrodlo(ctx context.Context, zrodlo Zrod
 	return r.jednoZrodlo(ctx, zrodlo.Kod)
 }
 
-// jednoZrodlo odczytuje pojedynczy wiersz źródła po kodzie zewnętrznym.
+// jednoZrodlo odczytuje pojedynczy wiersz źródła po kodzie zewnętrznym, zwracając ErrBrakWiersza przy braku wiersza.
 func (r *repozytoriumPrzegladania) jednoZrodlo(ctx context.Context, kod string) (ZrodloPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodloPrzegladania)
 	if err != nil {
@@ -115,10 +102,7 @@ func (r *repozytoriumPrzegladania) jednoZrodlo(ctx context.Context, kod string) 
 	return zrodlo, nil
 }
 
-// Zrodla zwraca źródła okna od najnowszego — szuflada Sources pokazuje to, co
-// zebrano w danym oknie operacyjnym, ewentualnie zawężone filtrem. Wykaz pusty
-// jest prawidłowym wynikiem, nie brakiem wiersza: okno bez źródeł nie jest
-// oknem nieznanym (rozróżnienie robi `OknoZnane`).
+// Zrodla zwraca źródła okna od najnowszego, ewentualnie zawężone filtrem; wykaz pusty jest wynikiem prawidłowym, nie brakiem wiersza.
 func (r *repozytoriumPrzegladania) Zrodla(ctx context.Context,
 	filtr FiltrZrodelPrzegladania) ([]ZrodloPrzegladania, error) {
 
@@ -153,7 +137,7 @@ func (r *repozytoriumPrzegladania) Zrodla(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajZrodloPrzegladania składa strukturę z jednego wiersza wyniku.
+// odczytajZrodloPrzegladania składa strukturę źródła z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajZrodloPrzegladania(wiersz skaner) (ZrodloPrzegladania, error) {
 	var zrodlo ZrodloPrzegladania
 	var tytul, migawkaZewnetrznaID, grupa sql.NullString

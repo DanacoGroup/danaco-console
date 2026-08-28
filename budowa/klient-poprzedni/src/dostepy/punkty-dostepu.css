@@ -1,12 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA DOSTĘPÓW · WYKAZ PUNKTÓW DOSTĘPU
-   ----------------------------------------------------------------------------
-   Wykaz rozdzielony rodzajem, karta jednego punktu, przełącznik trybu wraz
-   z ostrzeżeniem o zapisie oraz wybór korzeni katalogowych. Ramę sekcji
-   prowadzi `dostepy.css`, który ten arkusz wciąga.
-
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
-   ============================================================================ */
+/* Arkusz opisuje wykaz punktów dostępu: kartę jednego punktu, przełącznik trybu z ostrzeżeniem o zapisie oraz wybór korzeni katalogowych. */
 
 @import './dodanie-katalogu.css';
 

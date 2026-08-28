@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: adres celu karty powłoki zdalnej — pola
-// `remoteTarget`, `remotePort` i `hostId` żądania `terminal.session.open`.
-//
-// ── Dlaczego adres przestał jechać zmienną środowiska ────────────────────────
-// Karta zdalna brała dotąd adres ze zmiennej `SSH_TARGET`, bo kontrakt nie miał
-// na niego pola. Miało to dwa skutki, których żaden nie był zamierzony: portu
-// nie dało się podać osobno (zmienna niesie jeden napis, a `ssh` chce `-p`),
-// a zmienne środowiska karty z zamysłu NIE MAJĄ kolumny w bazie — więc karta
-// zdalna odtworzona po restarcie rdzenia traciła adres i pierwsze polecenie
-// kończyło się odmową. Kontrakt ma dziś pola wprost, a karta — kolumny
-// (migracja 251).
-//
-// Zmienna `SSH_TARGET` zostaje jako droga zastępcza, nie jako droga główna:
-// karta założona przed tą zmianą i klient, który jeszcze nie przestawił się na
-// nowe pola, mają dalej działać.
-//
-// ── Wpis książki hostów jest wskazaniem, nie kopią ──────────────────────────
-// Pole `hostId` bierze z wpisu adres, port, katalog roboczy i ŚCIEŻKĘ klucza.
-// Materiału klucza nie tyka nikt: `ssh` dostaje ścieżkę przełącznikiem `-i`,
-// a plik czyta sam, na maszynie rdzenia.
+// Plik obsługuje adres celu karty powłoki zdalnej: pola `remoteTarget`, `remotePort` i `hostId` żądania `terminal.session.open`. Wpis książki hostów jest wskazaniem, nie kopią: karta bierze zeń adres, port, katalog i ścieżkę klucza.
 package core
 
 import (
@@ -29,11 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// wskazCelZdalny wypełnia adres celu karty z żądania albo z wpisu książki hostów.
-//
-// Wskazania sprzeczne kończą się odmową, a nie cichym pierwszeństwem jednego
-// z nich: Operator, który podał i wpis książki, i własny adres, ma dwa różne
-// zamiary i nie ma powodu zgadywać, który z nich jest ważniejszy.
+// wskazCelZdalny wypełnia adres celu karty z żądania albo z wpisu książki hostów. Wskazania sprzeczne kończą się odmową, a nie cichym pierwszeństwem jednego z nich.
 func (a *adapterTerminala) wskazCelZdalny(ctx context.Context, karta *kartaTerminala,
 	z shared.TerminalSessionOpenRequest) error {
 
@@ -52,15 +29,14 @@ func (a *adapterTerminala) wskazCelZdalny(ctx context.Context, karta *kartaTermi
 	if z.RemotePort != nil && *z.RemotePort > 0 {
 		karta.portZdalny = *z.RemotePort
 	}
-	// Droga zastępcza: karta bez pola `remoteTarget`, ale ze zmienną `SSH_TARGET`
-	// w środowisku, zachowuje się jak dotąd.
+	// Droga zastępcza: karta bez pola `remoteTarget`, ale ze zmienną `SSH_TARGET`, działa jak dotąd.
 	if karta.celZdalny == "" {
 		karta.celZdalny = strings.TrimSpace(karta.srodowisko[zmiennaCeluSSH])
 	}
 	return nil
 }
 
-// celZWpisuKsiazki bierze adres, port, katalog i ścieżkę klucza z książki hostów.
+// celZWpisuKsiazki bierze adres, port, katalog i ścieżkę klucza z wpisu książki hostów wskazanego identyfikatorem.
 func (a *adapterTerminala) celZWpisuKsiazki(ctx context.Context, karta *kartaTerminala,
 	kodHosta string) error {
 
@@ -88,9 +64,7 @@ func (a *adapterTerminala) celZWpisuKsiazki(ctx context.Context, karta *kartaTer
 	}
 	klucz, err := a.repozytorium.Klucz(ctx, *wpis.KluczKod)
 	if errors.Is(err, dane.ErrBrakWiersza) {
-		// Wpis wskazuje klucz zdjęty z wykazu. Karta rusza z kluczem domyślnym
-		// konfiguracji maszyny — tak samo jak wpis bez wskazania klucza —
-		// bo odmowa byłaby tu surowsza od skutku.
+		// Wpis wskazuje klucz zdjęty z wykazu; karta rusza wtedy z kluczem domyślnym konfiguracji maszyny.
 		return nil
 	}
 	if err != nil {

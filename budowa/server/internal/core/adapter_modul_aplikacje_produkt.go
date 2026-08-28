@@ -1,28 +1,7 @@
-// Moduł Apps — Product Builder: produkt okna, etapy budowy, kamienie milowe,
-// powiązania z innymi modułami i całościowa oś czasu projektu.
-//
-// Obsługiwane komendy: `apps.product.get`, `apps.product.save`,
-// `apps.product.link.list`, `apps.stage.list`, `apps.stage.save`,
-// `apps.milestone.list`, `apps.milestone.save`, `apps.milestone.delete`,
-// `apps.timeline.list`. Typ adaptera i port stoją w
-// `adapter_modul_aplikacje.go` i `adapter_modul_aplikacje_uchwyty.go`.
-//
-// OŚ CZASU NIE MA WŁASNEJ TABELI I MIEĆ JEJ NIE MOŻE. `AppTimelineKind` niesie
-// dokładnie pięć wartości — architecture, workspace, stage, deployment,
-// package — i każda z nich ma już w bazie swój wiersz ze znacznikiem czasu:
-// historię wersji układu, plik warsztatu, etap, przebieg wdrożenia, pakiet.
-// Osobna tabela zdarzeń byłaby SZÓSTĄ kopią tych samych faktów, rozjeżdżającą
-// się przy pierwszym zapisie, który zapomni ją dopisać. Oś czasu składa się
-// więc z odczytów tych pięciu źródeł i sortuje po czasie.
-//
-// POWIĄZANIA MODUŁÓW SĄ MIERZONE, NIE DEKLAROWANE. Opracowanie mówi wprost:
-// „powiązania nie są aktywne domyślnie", a kontrakt nie daje komendy, którą
-// dałoby się je włączyć — `apps.product.link.list` jest w rodzinie sam. Gdyby
-// rdzeń oddawał tu stałą listę z `enabled: false`, meldowałby wykaz, za którym
-// nic nie stoi. Zamiast tego każde powiązanie liczy w bazie to, czym naprawdę
-// żyje w tym oknie, a pole `detail` mówi, co policzono. Powiązanie czynne
-// znaczy więc „w tym oknie to powiązanie ma już treść", a nie „ktoś zaznaczył
-// przełącznik".
+// Moduł Apps — Product Builder zarządza produktem okna, etapami budowy,
+// kamieniami milowymi, powiązaniami z innymi modułami oraz osią czasu
+// projektu komendami rodziny `apps.product`, `apps.stage`, `apps.milestone`
+// i `apps.timeline`.
 package core
 
 import (
@@ -36,17 +15,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów bytów strony budowy produktu.
+// Przedrostki identyfikatorów bytów strony budowy produktu: produktu, etapu
+// budowy i kamienia milowego, nadawane przy zakładaniu nowego wiersza.
 const (
 	przedrostekProduktuApp = "prod-"
 	przedrostekEtapuApp    = "etap-"
 	przedrostekKamieniaApp = "kmil-"
 )
 
-// granicaOsiCzasuApp jest górną granicą strony osi czasu przy braku wskazania
-// w żądaniu. Oś czasu składa się z pięciu źródeł naraz, więc projekt prowadzony
-// od miesięcy oddawałby przy każdym otwarciu Product Buildera wszystko, co
-// kiedykolwiek w nim zaszło.
+// granicaOsiCzasuApp jest górną granicą strony osi czasu projektu przy braku
+// wskazania granicy w żądaniu.
 const granicaOsiCzasuApp = 200
 
 // PobierzProdukt obsługuje `apps.product.get`. Okno bez zapisanego produktu
@@ -106,8 +84,9 @@ func (a *adapterAplikacji) ZapiszProdukt(ctx context.Context,
 	return shared.AppsProductSaveResponse{Product: produktKontraktu(zapisany)}, nil
 }
 
-// WypiszPowiazaniaProduktu obsługuje `apps.product.link.list`. Każde powiązanie
-// jest liczone w bazie — patrz rozstrzygnięcie na czole pliku.
+// WypiszPowiazaniaProduktu obsługuje `apps.product.link.list`. Każde
+// powiązanie liczy w bazie danych to, czym naprawdę żyje w tym oknie, a nie
+// deklaruje stały stan włączenia niezależny od zawartości okna.
 func (a *adapterAplikacji) WypiszPowiazaniaProduktu(ctx context.Context,
 	z shared.AppsProductLinkListRequest) (shared.AppsProductLinkListResponse, error) {
 
@@ -176,7 +155,8 @@ func (a *adapterAplikacji) WypiszPowiazaniaProduktu(ctx context.Context,
 	return shared.AppsProductLinkListResponse{Links: powiazania}, nil
 }
 
-// WypiszEtapy obsługuje `apps.stage.list`.
+// WypiszEtapy obsługuje `apps.stage.list` i oddaje etapy budowy okna,
+// z możliwością zawężenia wykazu do jednego stanu etapu.
 func (a *adapterAplikacji) WypiszEtapy(ctx context.Context,
 	z shared.AppsStageListRequest) (shared.AppsStageListResponse, error) {
 
@@ -204,9 +184,8 @@ func (a *adapterAplikacji) WypiszEtapy(ctx context.Context,
 }
 
 // ZapiszEtap obsługuje `apps.stage.save`. Brak `stageId` zakłada etap nowy;
-// wskazanie zmienia zastany. Pusty łańcuch w `ownerAgentId` zdejmuje
-// przypisanie wykonawcy — kontrakt mówi to wprost, więc pole rozróżnia trzy
-// stany: brak wskazania (zostaw), pusty łańcuch (zdejmij), wartość (przypisz).
+// wskazanie zmienia zastany, a pole `ownerAgentId` rozróżnia trzy stany
+// wykonawcy: pominięcie, zdjęcie przypisania i przypisanie nowego.
 func (a *adapterAplikacji) ZapiszEtap(ctx context.Context,
 	z shared.AppsStageSaveRequest) (shared.AppsStageSaveResponse, error) {
 
@@ -263,14 +242,13 @@ func (a *adapterAplikacji) ZapiszEtap(ctx context.Context,
 	if err != nil {
 		return shared.AppsStageSaveResponse{}, bladAplikacji(err)
 	}
-	// Etap jest drugim źródłem `apps.build.changed` obok wdrożenia — panel
-	// Product Buildera rysuje oś etapów z tego samego zdarzenia, którym dostaje
-	// przejścia wdrożenia.
+	// Etap jest też źródłem zdarzenia `apps.build.changed` obok wdrożenia.
 	a.rozglosEtap(zmianaZalozenia(nowy), etapKontraktu(zapisany))
 	return shared.AppsStageSaveResponse{Stage: etapKontraktu(zapisany)}, nil
 }
 
-// WypiszKamienieMilowe obsługuje `apps.milestone.list`.
+// WypiszKamienieMilowe obsługuje `apps.milestone.list` i oddaje kamienie
+// milowe okna, z możliwością zawężenia wykazu do jednego stanu kamienia.
 func (a *adapterAplikacji) WypiszKamienieMilowe(ctx context.Context,
 	z shared.AppsMilestoneListRequest) (shared.AppsMilestoneListResponse, error) {
 
@@ -297,7 +275,8 @@ func (a *adapterAplikacji) WypiszKamienieMilowe(ctx context.Context,
 	return shared.AppsMilestoneListResponse{Milestones: kamienie, Total: len(kamienie)}, nil
 }
 
-// ZapiszKamienMilowy obsługuje `apps.milestone.save`.
+// ZapiszKamienMilowy obsługuje `apps.milestone.save` i zakłada kamień milowy
+// nowy albo zmienia zastany, zależnie od obecności identyfikatora w żądaniu.
 func (a *adapterAplikacji) ZapiszKamienMilowy(ctx context.Context,
 	z shared.AppsMilestoneSaveRequest) (shared.AppsMilestoneSaveResponse, error) {
 
@@ -344,9 +323,7 @@ func (a *adapterAplikacji) ZapiszKamienMilowy(ctx context.Context,
 }
 
 // UsunKamienMilowy obsługuje `apps.milestone.delete`. Kamień, którego nie ma,
-// kończy się odmową `not_found`, a nie polem `deleted: false` — klient
-// odróżnia „usunięto" od „nie było czego usunąć" po odmowie, bo pole logiczne
-// oddane jako powodzenie kazałoby mu zgadywać, czy operacja się odbyła.
+// kończy się odmową `not_found`, nie polem `deleted: false`.
 func (a *adapterAplikacji) UsunKamienMilowy(ctx context.Context,
 	z shared.AppsMilestoneDeleteRequest) (shared.AppsMilestoneDeleteResponse, error) {
 
@@ -375,8 +352,9 @@ func (a *adapterAplikacji) UsunKamienMilowy(ctx context.Context,
 	return shared.AppsMilestoneDeleteResponse{Deleted: usuniety}, nil
 }
 
-// WypiszOsCzasu obsługuje `apps.timeline.list` — chronologię projektu złożoną
-// z pięciu źródeł (patrz czoło pliku), od najnowszego zdarzenia.
+// WypiszOsCzasu obsługuje `apps.timeline.list` i składa chronologię projektu
+// z architektury, warsztatu, etapów, wdrożeń i pakietów okna, od najnowszego
+// zdarzenia, bez własnej tabeli zdarzeń.
 func (a *adapterAplikacji) WypiszOsCzasu(ctx context.Context,
 	z shared.AppsTimelineListRequest) (shared.AppsTimelineListResponse, error) {
 
@@ -487,10 +465,7 @@ func (a *adapterAplikacji) WypiszOsCzasu(ctx context.Context,
 		}
 		wybrane = append(wybrane, zdarzenie)
 	}
-	// Porządek malejący po czasie, a przy równym czasie po identyfikatorze:
-	// pięć źródeł zapisuje znaczniki z rozdzielczością milisekundy, więc dwa
-	// zdarzenia tej samej milisekundy bez drugiego klucza zamieniałyby się
-	// miejscami między wywołaniami.
+	// Porządek malejący po czasie, przy równym czasie po identyfikatorze.
 	sort.SliceStable(wybrane, func(i, j int) bool {
 		if wybrane[i].OccurredAt != wybrane[j].OccurredAt {
 			return wybrane[i].OccurredAt > wybrane[j].OccurredAt
@@ -517,7 +492,8 @@ func powiazanieProduktu(kod string, ile int, co string) shared.AppProductLink {
 	return shared.AppProductLink{ModuleCode: kod, Enabled: ile > 0, Detail: &opis}
 }
 
-// produktKontraktu przekłada wiersz produktu na kształt kontraktu.
+// produktKontraktu przekłada wiersz produktu z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func produktKontraktu(wiersz dane.ProduktApp) shared.AppProduct {
 	platformy := make([]shared.AppProductPlatform, 0, len(wiersz.Platformy))
 	for _, platforma := range wiersz.Platformy {
@@ -530,7 +506,8 @@ func produktKontraktu(wiersz dane.ProduktApp) shared.AppProduct {
 	}
 }
 
-// etapKontraktu przekłada wiersz etapu na kształt kontraktu.
+// etapKontraktu przekłada wiersz etapu budowy z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func etapKontraktu(wiersz dane.EtapApp) shared.AppStage {
 	kolejnosc := wiersz.Kolejnosc
 	return shared.AppStage{
@@ -540,7 +517,8 @@ func etapKontraktu(wiersz dane.EtapApp) shared.AppStage {
 	}
 }
 
-// kamienKontraktu przekłada wiersz kamienia milowego na kształt kontraktu.
+// kamienKontraktu przekłada wiersz kamienia milowego z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func kamienKontraktu(wiersz dane.KamienMilowyApp) shared.AppMilestone {
 	return shared.AppMilestone{
 		Id: wiersz.Kod, WindowId: wiersz.Okno, Name: wiersz.Nazwa,
@@ -549,7 +527,8 @@ func kamienKontraktu(wiersz dane.KamienMilowyApp) shared.AppMilestone {
 	}
 }
 
-// sprawdzStanEtapuApp dopuszcza wyłącznie stany kontraktu.
+// sprawdzStanEtapuApp dopuszcza wyłącznie stany etapu przewidziane
+// kontraktem i odmawia każdej innej wartości pola stanu.
 func sprawdzStanEtapuApp(stan shared.AppStageStatus) error {
 	switch stan {
 	case shared.AppStageStatusPending, shared.AppStageStatusActive,
@@ -560,7 +539,8 @@ func sprawdzStanEtapuApp(stan shared.AppStageStatus) error {
 		" — dopuszczalne: pending, active, done, blocked")
 }
 
-// sprawdzStanKamieniaApp dopuszcza wyłącznie stany kontraktu.
+// sprawdzStanKamieniaApp dopuszcza wyłącznie stany kamienia milowego
+// przewidziane kontraktem i odmawia każdej innej wartości pola stanu.
 func sprawdzStanKamieniaApp(stan shared.AppMilestoneStatus) error {
 	switch stan {
 	case shared.AppMilestoneStatusPlanned, shared.AppMilestoneStatusActive,
@@ -571,7 +551,8 @@ func sprawdzStanKamieniaApp(stan shared.AppMilestoneStatus) error {
 		" — dopuszczalne: planned, active, reached, missed")
 }
 
-// sprawdzPlatformeProduktuApp dopuszcza wyłącznie platformy kontraktu.
+// sprawdzPlatformeProduktuApp dopuszcza wyłącznie platformy produktu
+// przewidziane kontraktem i odmawia każdej innej wartości platformy.
 func sprawdzPlatformeProduktuApp(platforma shared.AppProductPlatform) error {
 	switch platforma {
 	case shared.AppProductPlatformWeb, shared.AppProductPlatformMobile,

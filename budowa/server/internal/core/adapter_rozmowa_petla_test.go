@@ -1,3 +1,6 @@
+// Plik sprawdza warunek ukończenia biegu widziany od strony warstwy rozmowy:
+// pętla odróżnia pracę skończoną z wynikiem od przerwanej po tej samej
+// wartości, co stan wiadomości.
 package core
 
 import (
@@ -14,18 +17,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Warunek ukończenia biegu widziany od strony warstwy rozmowy.
-//
-// Pętla odróżnia pracę skończoną z wynikiem od przerwanej po jednej wartości —
-// powodzie zakończenia tury, który podaje jej warstwa rozmowy. Powód wychodzi
-// z tej samej trójcy warunków, co stan wiadomości, więc oba rozstrzygnięcia
-// muszą się zgadzać: wiadomość ze stanem `error` przy biegu ogłoszonym jako
-// ukończony jest sprzecznością, którą Operator widzi na dwóch kontrolkach naraz.
-
 // zamknieciePrzezKanal jest kanałem modelu, który dowozi turę sprawnie i domyka
-// ją zdarzeniem `result` o zadanym `is_error`. Atrapa jest tu jedyną drogą
-// pomiaru: rozróżnienie dotyczy tury, która PRZESZŁA kanałem, więc kanał musi
-// oddać strumień i zwrócić brak błędu.
+// ją zdarzeniem wyniku o zadanym oznaczeniu błędu, jako jedyna droga tego
+// pomiaru.
 type zamknieciePrzezKanal struct {
 	blad bool
 }
@@ -34,8 +28,7 @@ func (zamknieciePrzezKanal) Kod() string                 { return "zamkniecie" }
 func (zamknieciePrzezKanal) Definicja() models.Definicja { return models.Definicja{} }
 
 func (k zamknieciePrzezKanal) Wyslij(ctx context.Context, z models.Zapytanie, u models.Ujscie) error {
-	// Kształt fragmentu kończącego turę jest przepisany z kanału głównego
-	// (injection/kanal.go): rodzaj `text`, a podsumowanie tury w polu `data`.
+	// Kształt fragmentu kończącego turę jest przepisany z kanału głównego.
 	dane, err := json.Marshal(map[string]any{
 		"cliSessionId": "rozm-zamkniecie",
 		"subtype":      "success",
@@ -54,7 +47,8 @@ func (k zamknieciePrzezKanal) Wyslij(ctx context.Context, z models.Zapytanie, u 
 	})
 }
 
-// zrodloJednegoKanalu podaje rejestrowi kanałów jeden czynny wiersz.
+// zrodloJednegoKanalu podaje rejestrowi kanałów jeden czynny wiersz, potrzebny
+// sprawdzianowi do wskazania kanału tury.
 type zrodloJednegoKanalu struct{}
 
 func (zrodloJednegoKanalu) Definicje(context.Context) ([]models.Definicja, error) {
@@ -98,9 +92,7 @@ func noweStanowiskoTuryKoordynatora(t *testing.T, bladZamkniecia bool) *stanowis
 		t.Fatalf("okno wykonawcze nie powstało: %v", err)
 	}
 
-	// Obieg rusza atrapą uruchomienia, a nie warstwą rozmowy: mierzone jest
-	// zamknięcie tury koordynatora, więc obieg ma tylko postawić licznik na
-	// wartości większej od zera.
+	// Obieg rusza atrapą uruchomienia: mierzone jest zamknięcie tury koordynatora.
 	petla := session.NowaPetla(nadzorca, session.UruchomienieFunkcja(
 		func(session.Obieg) error { return nil }), session.UstawieniaPetli{})
 
@@ -158,17 +150,10 @@ func (s *stanowiskoTuryKoordynatora) turaKoordynatora(t *testing.T) shared.Messa
 // TestTuraZamknietaBledemNieOglaszaUkonczenia mierzy zgodność dwóch
 // rozstrzygnięć wyprowadzonych z tego samego zamknięcia tury: stanu wiadomości
 // i powodu zatrzymania biegu.
-//
-// Kanał tu DZIAŁA — oddaje strumień i nie zwraca błędu — a mimo to zdarzenie
-// `result` niesie `is_error: true`. Wiadomość dostaje wtedy stan `error`; bieg
-// ogłoszony przy tym jako ukończony z wynikiem mówiłby Operatorowi i układowi
-// dokładnie odwrotnie, niż mówi wiadomość.
 func TestTuraZamknietaBledemNieOglaszaUkonczenia(t *testing.T) {
 	s := noweStanowiskoTuryKoordynatora(t, true)
 
-	// Bieg musi mieć za sobą obieg: bieg przed pierwszym obiegiem nie kończy
-	// się z żadnego powodu, więc bez tego kroku sprawdzian przechodziłby
-	// niezależnie od naprawy.
+	// Bieg musi mieć za sobą obieg, inaczej sprawdzian przejdzie niezależnie od naprawy.
 	s.petla.ZakonczTure(s.wykonawca.Id, session.PowodWynik)
 	if s.petla.Stan(s.koordynator.Id).Obiegow == 0 {
 		t.Fatal("licznik obiegów stoi na zerze — bieg nie ruszył, nie ma czego mierzyć")

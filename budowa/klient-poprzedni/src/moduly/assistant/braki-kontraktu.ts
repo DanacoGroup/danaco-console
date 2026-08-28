@@ -2,14 +2,8 @@ import { pokazKomunikat } from '../../aplikacja/komunikaty';
 
 /**
  * Funkcje wykazu okien modułu Assistant, dla których kontrakt nie ma drogi.
- *
- * Jedyna odpowiedzialność tego pliku to nazwanie braku. Okno nie stawia w tych
- * miejscach przycisku wygaszonego ani milczącego — kontrolka zostaje klikalna
- * i odpowiada zdaniem mówiącym, czego w kontrakcie nie ma. Tak samo postępuje
- * `aplikacja/zamiary-pulpitu.ts`.
- *
- * Każde zdanie wymienia komendę albo pole, którego brakuje, żeby zgłoszenie
- * braku dało się napisać wprost z ekranu.
+ * Jedyną odpowiedzialnością tego pliku jest nazwanie braku, a każde zdanie
+ * wymienia komendę albo pole, którego brakuje.
  */
 export const BRAKI = {
   szukanieZnaczeniem:
@@ -60,7 +54,11 @@ export const BRAKI = {
     'automation.workflow.save.',
 } as const;
 
-/** Odpowiedź na naciśnięcie kontrolki bez drogi w kontrakcie. */
+/**
+ * Odpowiedź na naciśnięcie kontrolki, dla której kontrakt drogi nie ma: okno
+ * pokazuje komunikat wagi ostrzegawczej ze zdaniem nazywającym brak, zamiast
+ * milczeć albo wygaszać kontrolkę.
+ */
 export function zglosBrak(tytul: string, tresc: string): void {
   pokazKomunikat({ tytul, tresc, waga: 'ostrz' });
 }

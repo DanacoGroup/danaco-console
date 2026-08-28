@@ -16,21 +16,7 @@ import { utworzStanOknaBadania } from './stan-okna-badania';
 import { utworzWierszZrodla } from './wiersz-zrodla';
 
 /**
- * Sources Manager — okno **zarządca** źródeł badania.
- *
- * Trzy czynności: dodanie źródła, katalogowanie (typ, pochodzenie, adres,
- * dokument repozytorium) i ocena wiarygodności. Wszystkie mieszczą się
- * w jednej komendzie `research.source.add` — kontrakt ma dla nich pola.
- *
- * Pole zawężania działa po stronie klienta i nie woła rdzenia. Komenda odczytu
- * wykazu wraz z polami zawężającymi jest już w kontrakcie, ale rdzeń nie ma dla
- * niej uchwytu, więc wykaz mieszka w pamięci modułu i tam też się zawęża. Po
- * dobudowie zawężanie ma przenieść się do żądania — wtedy zniknie i ta uwaga.
- *
- * Zawężenie nie zdejmuje zaznaczenia — źródło niewidoczne w wykazie pozostaje
- * zaznaczone i idzie do ustalenia, a okno mówi o tym liczbą przy polu.
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-zrodel`.
+ * Sources Manager jest oknem zarządcą źródeł badania, łączącym dodanie źródła, katalogowanie i ocenę wiarygodności w jednej komendzie kontraktu.
  */
 export interface OknoSourcesManager {
   element: HTMLElement;
@@ -106,9 +92,7 @@ export function utworzOknoSourcesManager(
         }),
       ),
     );
-    // Stan okna liczy się z wykazu PEŁNEGO, nie z zawężonego: zawężenie bez
-    // trafień nie znaczy, że katalog jest pusty, a zaproszenie „skataloguj
-    // pierwsze źródło" postawione nad katalogiem pełnym byłoby nieprawdą.
+    // Stan okna liczy się z wykazu pełnego, nie zawężonego, by zaproszenie nie mijało się z prawdą.
     ustawStanZrodel(kontekst, zrodla.length);
   }
 
@@ -116,7 +100,7 @@ export function utworzOknoSourcesManager(
   return { element: rama.element, odswiez };
 }
 
-/** Zawężenie wykazu po frazie — tytuł, pochodzenie i adres źródła. */
+/** Funkcja zawęża wykaz źródeł po frazie szukanej w tytule, pochodzeniu oraz adresie źródła po stronie klienta. */
 function zawez(zrodla: readonly ResearchSource[], fraza: string): readonly ResearchSource[] {
   const szukana = fraza.trim().toLocaleLowerCase('pl-PL');
   if (szukana === '') return zrodla;
@@ -128,7 +112,7 @@ function zawez(zrodla: readonly ResearchSource[], fraza: string): readonly Resea
   );
 }
 
-/** Zdanie o tym, ile pozycji widać, ile jest i ile zaznaczono poza widokiem. */
+/** Funkcja układa zdanie informujące, ile pozycji jest widocznych, ile jest w katalogu oraz ile zaznaczono poza widokiem. */
 function opisZawezenia(wszystkie: number, widoczne: number, zaznaczone: number): string {
   const podstawa =
     widoczne === wszystkie

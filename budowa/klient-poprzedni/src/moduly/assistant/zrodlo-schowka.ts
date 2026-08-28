@@ -17,25 +17,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLiczba, czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Dziewięć komend Command & Tools Hub: historia schowka, słownik skrótów
- * tekstowych i skrót globalny wywoływacza poleceń.
- *
- * ── Czyj jest schowek ───────────────────────────────────────────────────────
- * Schowek należy do maszyny Operatora i rdzeń go NIE czyta. Podział ról jest
- * taki: Operator kopiuje u siebie, okno oddaje skopiowaną treść rdzeniowi
- * (`clipboard.push`), a rdzeń daje jej trwałość — historia przestaje ginąć
- * razem z kartą i jest ta sama na każdej maszynie tego samego Operatora.
- * Wklejenie jest ruchem powrotnym i wykonuje je okno, u siebie.
- *
- * ── Skrót globalny ──────────────────────────────────────────────────────────
- * Nastawę trzyma rdzeń, przechwycenie klawiszy należy do powłoki programu
- * okiennego. Odpowiedź `launcher.hotkey.*` mówi wprost, czy rejestracji ma kto
- * dokonać — okno powtarza to zdanie zamiast obiecywać skrót, który nikogo nie
- * obudzi.
- */
+/** Dziewięć komend Command & Tools Hub: historia, słownik skrótów tekstowych i skrót globalny. */
 
-/** Wpis oddawany rdzeniowi po skopiowaniu treści u Operatora. */
+/** Wpis oddawany rdzeniowi po skopiowaniu treści u Operatora niesie rodzaj, okno źródłowe i znacznik wrażliwości. */
 export interface WpisSchowkaDoZapisu {
   tresc: string;
   rodzaj?: ClipboardEntryKind;
@@ -43,7 +27,7 @@ export interface WpisSchowkaDoZapisu {
   wrazliwy?: boolean;
 }
 
-/** Skrót tekstowy zapisywany z okna; puste `id` zakłada nowy. */
+/** Skrót tekstowy zapisywany z okna niesie skrót, treść, opis i pola szablonu; puste id zakłada nowy wpis. */
 export interface SkrotDoZapisu {
   id: string;
   skrot: string;
@@ -74,7 +58,7 @@ export interface ZrodloSchowka {
   zapiszSkrotGlobalny(skrot: string): Promise<Wynik<LauncherHotkeySetResponse>>;
 }
 
-/** Górna granica historii — okno pokazuje ostatnie kopie, nie całe archiwum. */
+/** Górna granica historii — okno pokazuje ostatnie kopie, nie całe archiwum przechowywane po stronie rdzenia. */
 const GRANICA_HISTORII = 100;
 
 export function utworzZrodloSchowka(kanal: Kanal): ZrodloSchowka {

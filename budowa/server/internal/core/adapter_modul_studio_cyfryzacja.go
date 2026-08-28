@@ -1,27 +1,6 @@
-// Odpowiedzialność pliku: moduł Studio — Ingest/OCR Panel. Kolejka wczytywania
-// po stronie rdzenia, rozpoznanie pisma z pełnym sterowaniem, korekta
-// rozpoznania i przyjęcie wyniku jako dokumentu roboczego.
-//
-// ── Czym to się różni od `document.text.extract` ─────────────────────────────
-// Rodzina `document.*` jest narzędziem MODELU: jedno wywołanie, jeden napis na
-// wyjściu, brak stanu. Ingest/OCR Panel jest stanowiskiem OPERATORA: materiał
-// czeka w kolejce, wraca do niej po poprawce obrazu, dostaje korektę słowa
-// i dopiero na końcu staje się dokumentem. Dlatego kolejka ma tabelę, a wynik
-// rozpoznania niesie słowa wraz z pewnością — bez nich korekta rozpoznania nie
-// ma czego poprawiać.
-//
-// ── Skąd biorą się słowa i pewność ───────────────────────────────────────────
-// Tesseract oddaje je sam, wyjściem `tsv`: jeden wiersz na słowo, z ramką
-// i pewnością w skali 0–100. Rdzeń niczego tu nie szacuje i niczego nie
-// dopowiada — pewność pozycji jest średnią pewności jej słów, a gdy Tesseract
-// nie oddał ani jednego słowa, pewności nie ma wcale i pole zostaje puste.
-// Pusta pewność i pewność zerowa to dwie różne rzeczy.
-//
-// ── Obraz przed rozpoznaniem ────────────────────────────────────────────────
-// Cztery nastawy kontraktu opisują obróbkę wstępną skanu — prostowanie skosu,
-// odszumianie, progowanie i przycinanie marginesów — i prowadzi je unpaper,
-// zanim materiał zobaczy Tesseract. Rozstrzygnięcia tej drogi stoją przy
-// `oczyscMaterial`.
+// Plik obsługuje moduł Studio Ingest/OCR Panel: kolejkę wczytywania po stronie rdzenia,
+// rozpoznanie pisma z pełnym sterowaniem, korektę rozpoznania i przyjęcie wyniku jako
+// dokumentu roboczego.
 package core
 
 import (
@@ -54,10 +33,9 @@ const (
 	jezykRozpoznaniaStudia = "pol"
 )
 
-// nastawyRozpoznania to nastawy zapamiętane przy pozycji kolejki. Struktura
-// kontraktu (`StudioRecognitionSettings`) jedzie tu przez JSON, bo pozycja
-// pamięta je po to, żeby ponowienie po poprawce obrazu poszło tymi samymi
-// nastawami, którymi szło pierwsze rozpoznanie.
+// nastawyRozpoznania to nastawy zapamiętane przy pozycji kolejki. Struktura kontraktu
+// jedzie tu przez JSON, bo pozycja pamięta je po to, żeby ponowienie po poprawce obrazu
+// poszło tymi samymi nastawami, którymi szło pierwsze rozpoznanie.
 type nastawyRozpoznania struct {
 	Silnik                string   `json:"silnik,omitempty"`
 	Jezyki                []string `json:"jezyki,omitempty"`
@@ -71,11 +49,9 @@ type nastawyRozpoznania struct {
 	StronaDo              *int     `json:"stronaDo,omitempty"`
 }
 
-// DolozDoKolejki obsługuje `studio.ingest.queue.add`.
-//
-// Archiwum rozpakowuje się do pozycji, a nie zostaje jedną pozycją: wsad ma być
-// kolejką materiałów, nie kolejką paczek. Ścieżki i zasoby wchodzą obok siebie,
-// bo kontrakt dopuszcza oba wskazania w jednym żądaniu.
+// DolozDoKolejki obsługuje komendę studio.ingest.queue.add. Archiwum rozpakowuje się do
+// pozycji, a nie zostaje jedną pozycją, bo wsad ma być kolejką materiałów, nie kolejką
+// paczek.
 func (a *adapterStudia) DolozDoKolejki(ctx context.Context,
 	z shared.StudioIngestQueueAddRequest) (shared.StudioIngestQueueAddResponse, error) {
 
@@ -139,7 +115,8 @@ func (a *adapterStudia) DolozDoKolejki(ctx context.Context,
 	return shared.StudioIngestQueueAddResponse{Items: pozycje}, nil
 }
 
-// KolejkaWczytywania obsługuje `studio.ingest.queue.list`.
+// KolejkaWczytywania obsługuje komendę studio.ingest.queue.list, oddając pozycje kolejki
+// wraz z ich stanem i nastawami.
 func (a *adapterStudia) KolejkaWczytywania(ctx context.Context,
 	z shared.StudioIngestQueueListRequest) (shared.StudioIngestQueueListResponse, error) {
 
@@ -159,12 +136,9 @@ func (a *adapterStudia) KolejkaWczytywania(ctx context.Context,
 	return shared.StudioIngestQueueListResponse{Items: pozycje}, nil
 }
 
-// Rozpoznaj obsługuje `studio.ingest.recognize`.
-//
-// Pozycja przechodzi tu przez trzy stany, nie przez jeden: „przetwarzanie" na
-// czas wywołania, potem „gotowa" albo „odmowa", a przy pewności poniżej progu —
-// „ponowienie". Stan „ponowienie" nie jest odmową: tekst jest, tylko rdzeń
-// mówi wprost, że sam sobie nie ufa i pozycja czeka na poprawę obrazu.
+// Rozpoznaj obsługuje komendę studio.ingest.recognize. Pozycja przechodzi tu przez trzy
+// stany: przetwarzanie na czas wywołania, potem gotowa albo odmowa, a przy pewności
+// poniżej progu — ponowienie.
 func (a *adapterStudia) Rozpoznaj(ctx context.Context,
 	z shared.StudioIngestRecognizeRequest) (shared.StudioIngestRecognizeResponse, error) {
 
@@ -198,8 +172,9 @@ func (a *adapterStudia) Rozpoznaj(ctx context.Context,
 
 	odczyt, err := a.rozpoznajMaterial(ctx, sciezka, nastawy)
 	if err != nil {
-		// Odmowa rozpoznania zostaje przy pozycji, a nie tylko w odpowiedzi:
-		// Operator ma zobaczyć powód przy materiale także po odświeżeniu okna.
+		// Odmowa rozpoznania zostaje przy pozycji, nie tylko w odpowiedzi.
+
+		// Powód jest widoczny przy materiale także po odświeżeniu okna.
 		powod := err.Error()
 		pozycja.Stan = "odmowa"
 		pozycja.PowodOdmowy = &powod
@@ -249,12 +224,9 @@ func (a *adapterStudia) Rozpoznaj(ctx context.Context,
 	}, nil
 }
 
-// PoprawRozpoznanie obsługuje `studio.ingest.correction.set`.
-//
-// Poprawka zmienia dwie rzeczy naraz i musi zmienić obie: słowo na warstwie
-// tekstowej oraz tekst pozycji. Zmiana samego słowa zostawiłaby tekst, który
-// Operator zaraz przyjmie do edytora, w postaci sprzed poprawki — czyli
-// poprawka byłaby widoczna i bezskuteczna.
+// PoprawRozpoznanie obsługuje komendę studio.ingest.correction.set. Poprawka zmienia dwie
+// rzeczy naraz: słowo na warstwie tekstowej oraz tekst pozycji, bo zmiana samego słowa
+// zostawiłaby tekst w postaci sprzed poprawki.
 func (a *adapterStudia) PoprawRozpoznanie(ctx context.Context,
 	z shared.StudioIngestCorrectionSetRequest) (shared.StudioIngestCorrectionSetResponse, error) {
 
@@ -310,11 +282,9 @@ func (a *adapterStudia) PoprawRozpoznanie(ctx context.Context,
 	return shared.StudioIngestCorrectionSetResponse{Item: złóżPozycjeWczytywania(zapisana)}, nil
 }
 
-// PrzyjmijPozycje obsługuje `studio.ingest.item.accept`.
-//
-// Wiele pozycji składa się w JEDEN dokument w kolejności podania — tak działa
-// skan wielostronicowy rozłożony na pliki. Dokument dostaje od razu wersję
-// pierwszą, bo opracowanie obiecuje ją przy przyjęciu wyniku cyfryzacji.
+// PrzyjmijPozycje obsługuje komendę studio.ingest.item.accept. Wiele pozycji składa się w
+// jeden dokument w kolejności podania — tak działa skan wielostronicowy rozłożony na
+// pliki.
 func (a *adapterStudia) PrzyjmijPozycje(ctx context.Context,
 	z shared.StudioIngestItemAcceptRequest) (shared.StudioIngestItemAcceptResponse, error) {
 
@@ -382,12 +352,9 @@ func (a *adapterStudia) PrzyjmijPozycje(ctx context.Context,
 	}, nil
 }
 
-// UrzadzeniaWejsciowe obsługuje `studio.ingest.device.list`.
-//
-// Wykaz pochodzi od warstwy urządzeń systemu — SANE na Linuksie, WIA na
-// Windowsie (`urzadzenia_skaner.go`) — nie z domysłu rdzenia. Brak warstwy jest
-// odpowiedzią „nie ma czym szukać", a nie pustym wykazem: pusty wykaz znaczyłby
-// „szukałem i nic nie ma", czego rdzeń bez warstwy nie wie.
+// UrzadzeniaWejsciowe obsługuje komendę studio.ingest.device.list. Wykaz pochodzi od
+// warstwy urządzeń systemu, nie z domysłu rdzenia: brak warstwy jest odpowiedzią „nie ma
+// czym szukać", a nie pustym wykazem.
 func (a *adapterStudia) UrzadzeniaWejsciowe(ctx context.Context,
 	_ shared.StudioIngestDeviceListRequest) (shared.StudioIngestDeviceListResponse, error) {
 
@@ -429,7 +396,8 @@ func odczytajUrzadzenia(wyjscie string) []shared.StudioInputDevice {
 
 // ── Rozpoznanie ─────────────────────────────────────────────────────────────
 
-// odczytMaterialu niesie wynik jednego przebiegu rozpoznania.
+// odczytMaterialu niesie wynik jednego przebiegu rozpoznania: tekst, liczbę stron i
+// pewność, gdy Tesseract ją oddał.
 type odczytMaterialu struct {
 	tekst   string
 	stron   int64
@@ -444,8 +412,8 @@ func (a *adapterStudia) rozpoznajMaterial(ctx context.Context, sciezka string,
 
 	jezyk := jezykRozpoznaniaStudia
 	if len(nastawy.Jezyki) > 0 {
-		// Tesseract przyjmuje zestaw języków rozdzielony plusem — to jest
-		// właściwa droga wskazania „pol + eng", a nie dwa osobne przebiegi.
+		// Tesseract przyjmuje zestaw języków rozdzielony plusem: to droga wskazania „pol
+		// plus eng" naraz.
 		jezyk = strings.Join(nastawy.Jezyki, "+")
 	}
 
@@ -474,35 +442,15 @@ func (a *adapterStudia) rozpoznajMaterial(ctx context.Context, sciezka string,
 	}, nil
 }
 
-// ── Przygotowanie obrazu przed rozpoznaniem ─────────────────────────────────
-//
-// Cztery nastawy kontraktu — `deskew`, `denoise`, `binarize`, `trimMargins` —
-// opisują obróbkę wstępną skanu i prowadzi je unpaper: program napisany
-// dokładnie do tego, do prostowania skosu, odsiewania szumu, progowania i
-// odcinania czarnych obrzeży po kopiarce. Rdzeń nie liczy tego sam, bo skos
-// wykrywa się przemiataniem obrazu pod kątem, a nie jedną pętlą po pikselach.
-//
-// ── Kiedy unpaper NIE rusza ─────────────────────────────────────────────────
-// Gdy żadna z czterech nastaw nie jest włączona. Przebieg „bez niczego" i tak
-// przepisałby obraz przez konwersję do PNM i z powrotem, płacąc uruchomieniem
-// procesu za wynik, o który nikt nie prosił.
-//
-// ── Nastawa wyłączona wyłącza filtr, a nie zostawia go domyślnie ────────────
-// unpaper ma wszystkie filtry włączone domyślnie, a kontrakt ma je domyślnie
-// wyłączone (`bool` bez wskazania znaczy „nie"). Rdzeń wyrównuje te dwie
-// domyślności: filtr, o który nikt nie prosił, jest wyłączany jawnie. Bez tego
-// jedno `deskew: true` włączyłoby po cichu także odszumianie i progowanie —
-// czyli obróbkę, której Operator nie zamówił i której nie zobaczy w nastawach
-// pozycji. Blackfilter, którego kontrakt nie ma wcale, jest wyłączony zawsze.
-
-// czyszczenieZadane odpowiada, czy którakolwiek z czterech nastaw obróbki
-// wstępnej jest włączona.
+// czyszczenieZadane odpowiada, czy którakolwiek z czterech nastaw obróbki wstępnej jest
+// włączona, rozstrzygając, czy unpaper ma w ogóle ruszyć.
 func czyszczenieZadane(nastawy nastawyRozpoznania) bool {
 	return nastawy.Prostowanie || nastawy.Odszumianie ||
 		nastawy.Progowanie || nastawy.PrzycinanieMarginesow
 }
 
-// argumentyCzyszczenia składa wiersz wywołania unpapera z nastaw pozycji.
+// argumentyCzyszczenia składa wiersz wywołania unpapera z nastaw pozycji, wyłączając
+// jawnie każdy filtr, o który nikt nie prosił.
 func argumentyCzyszczenia(nastawy nastawyRozpoznania, wejscie, wyjscie string) []string {
 	argumenty := []string{"--layout", "single", "--no-blackfilter"}
 	if !nastawy.Prostowanie {
@@ -520,17 +468,9 @@ func argumentyCzyszczenia(nastawy nastawyRozpoznania, wejscie, wyjscie string) [
 	return append(argumenty, wejscie, wyjscie)
 }
 
-// oczyscMaterial przepuszcza materiał przez unpapera i oddaje ścieżkę wyniku
-// wraz z posprzątaniem katalogu roboczego.
-//
-// unpaper czyta i pisze WYŁĄCZNIE PNM (`pbm`, `pgm`, `ppm`) — tak stanowi jego
-// opis i tak zachowuje się na maszynie budowy, gdzie PNG odrzuca zdaniem
-// „unsupported pixel format". Zamiana idzie biblioteką wkompilowaną, nie
-// programem: dekodery PNG, JPEG, GIF, TIFF, BMP i WEBP są w binarium rdzenia,
-// a zapis PNM to nagłówek i bajty pikseli. Wołanie tu ImageMagicka byłoby
-// procesem tam, gdzie biblioteka wystarcza.
-//
-// Materiał, który JEST już PNM-em, idzie do unpapera bez przepisywania.
+// oczyscMaterial przepuszcza materiał przez unpapera i oddaje ścieżkę wyniku z
+// posprzątaniem katalogu roboczego. unpaper czyta i pisze wyłącznie postać PNM, więc inny
+// materiał przechodzi zamianę biblioteką przed wywołaniem.
 func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
 	nastawy nastawyRozpoznania) (string, func(), error) {
 
@@ -557,8 +497,9 @@ func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
 		posprzataj()
 		return "", pusto, err
 	}
-	// Rozszerzenie wyniku idzie za typem, który unpaper zapisze: przy progowaniu
-	// jest to mapa bitowa, poza nim — ten sam typ, co wejście.
+	// Rozszerzenie wyniku idzie za typem, który unpaper zapisze.
+
+	// Przy progowaniu jest to mapa bitowa, poza nim — ten sam typ, co wejście.
 	wyjscie := filepath.Join(katalog, "oczyszczony.ppm")
 	if nastawy.Progowanie {
 		wyjscie = filepath.Join(katalog, "oczyszczony.pbm")
@@ -569,9 +510,9 @@ func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
 		posprzataj()
 		return "", pusto, err
 	}
-	// Program potrafi skończyć się powodzeniem i nie zostawić pliku — wtedy
-	// rozpoznanie pobiegłoby na ścieżce, pod którą nic nie leży, i odmówiłoby
-	// zdaniem o Tesseractcie zamiast o obróbce.
+	// Program potrafi skończyć się powodzeniem i nie zostawić pliku.
+
+	// Rozpoznanie pobiegłoby wtedy na ścieżce, pod którą nic nie leży.
 	if opis, err := os.Stat(wyjscie); err != nil || opis.Size() == 0 {
 		posprzataj()
 		return "", pusto, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -581,7 +522,8 @@ func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
 	return wyjscie, posprzataj, nil
 }
 
-// materialWPnm oddaje ścieżkę materiału w postaci, którą unpaper przyjmie.
+// materialWPnm oddaje ścieżkę materiału w postaci, którą unpaper przyjmie, zamieniając go
+// najpierw na mapę PPM, gdy nie jest już postacią PNM.
 func materialWPnm(sciezka, katalog string) (string, error) {
 	bajty, err := os.ReadFile(sciezka)
 	if err != nil {
@@ -612,14 +554,9 @@ func czyPnm(bajty []byte) bool {
 	return len(bajty) >= 2 && bajty[0] == 'P' && bajty[1] >= '1' && bajty[1] <= '6'
 }
 
-// zapiszPpm zapisuje obraz jako mapę PPM (P6): trzy bajty na piksel, bez
-// kompresji.
-//
-// Obraz idzie najpierw na BIAŁE TŁO. Materiał z przezroczystością (skan
-// zapisany jako PNG z kanałem alfa) rozłożyłby się inaczej: piksel
-// przezroczysty ma w Go składowe pomnożone przez alfę, więc wyszedłby czarny —
-// czyli kartka miałaby czarne pole tam, gdzie nie ma nic. Biel jest tu kolorem
-// papieru, nie wyborem estetycznym.
+// zapiszPpm zapisuje obraz jako mapę PPM: trzy bajty na piksel, bez kompresji, na białym
+// tle, bo piksel przezroczysty ma składowe pomnożone przez alfę i bez podłożenia bieli
+// wyszedłby czarny.
 func zapiszPpm(sciezka string, obraz image.Image) error {
 	granice := obraz.Bounds()
 	naPapierze := image.NewRGBA(granice)
@@ -803,7 +740,8 @@ func liczbaStron(slowa []shared.StudioRecognizedWord) int {
 
 // ── Materiał i wsad ─────────────────────────────────────────────────────────
 
-// materialPozycji wskazuje plik, na którym pracuje rozpoznanie.
+// materialPozycji wskazuje plik, na którym pracuje rozpoznanie, biorąc ścieżkę źródłową
+// albo materiał odtworzony z zasobu pozycji.
 func (a *adapterStudia) materialPozycji(ctx context.Context,
 	pozycja dane.PozycjaWczytywania) (string, error) {
 
@@ -820,7 +758,8 @@ func (a *adapterStudia) materialPozycji(ctx context.Context,
 	return sciezka, nil
 }
 
-// rozpakujWsad rozpakowuje archiwum i oddaje ścieżki jego pozycji.
+// rozpakujWsad rozpakowuje archiwum i oddaje ścieżki jego pozycji, jedną na każdy plik
+// materiału znaleziony wewnątrz.
 func (a *adapterStudia) rozpakujWsad(ctx context.Context, archiwum string) ([]string, error) {
 	katalog, err := a.katalogWsadu(archiwum)
 	if err != nil {
@@ -855,7 +794,8 @@ func złóżPozycjeWczytywania(wiersz dane.PozycjaWczytywania) shared.StudioInge
 	return pozycja
 }
 
-// złóżNastawy sprowadza nastawy kontraktu do postaci zapamiętywanej przy pozycji.
+// złóżNastawy sprowadza nastawy kontraktu do postaci zapamiętywanej przy pozycji, oddając
+// nastawy domyślne, gdy kontrakt ich nie niesie.
 func złóżNastawy(z *shared.StudioRecognitionSettings) nastawyRozpoznania {
 	if z == nil {
 		return nastawyRozpoznania{}
@@ -877,15 +817,17 @@ func złóżNastawy(z *shared.StudioRecognitionSettings) nastawyRozpoznania {
 	return nastawy
 }
 
-// nastawyPozycji odczytuje nastawy zapamiętane przy pozycji kolejki.
+// nastawyPozycji odczytuje nastawy zapamiętane przy pozycji kolejki, wracając do nastaw
+// domyślnych, gdy zapis jest pusty albo nieczytelny.
 func nastawyPozycji(pozycja dane.PozycjaWczytywania) nastawyRozpoznania {
 	if pozycja.NastawyJSON == nil || *pozycja.NastawyJSON == "" {
 		return nastawyRozpoznania{}
 	}
 	var nastawy nastawyRozpoznania
 	if err := json.Unmarshal([]byte(*pozycja.NastawyJSON), &nastawy); err != nil {
-		// Nastawy nieczytelne nie zatrzymują rozpoznania: wracamy do domyślnych
-		// i rozpoznajemy, bo materiał jest ważniejszy od zapamiętanej nastawy.
+		// Nastawy nieczytelne nie zatrzymują rozpoznania: wracamy do domyślnych.
+
+		// Materiał jest ważniejszy od zapamiętanej nastawy.
 		return nastawyRozpoznania{}
 	}
 	return nastawy

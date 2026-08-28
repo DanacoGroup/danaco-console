@@ -15,25 +15,9 @@ import { utworzStanOkna } from './stan-okna';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Metadata & Archive Panel — okno zarządcy modułu
- * (`library.metadata-archive-panel`).
- *
- * Okno skupia trzy obszary pracy z zasobem, które w innym układzie rozpraszają
- * się między pozostałe okna: opis, utrwalenie i higienę. Przełącza je selektor
- * obszaru, a nie pasek zakładek — tak opisuje ten element dokumentacja modułu
- * i taki jest sens rozróżnienia: zakładki obiecują trzy równorzędne widoki
- * jednego bytu, a tu Metadane mówią o pliku wskazanym, Archiwum i Higiena — o
- * całym repozytorium.
- *
- * Zależność wejściowa różni się więc obszarem. Metadane bez wskazania pliku nie
- * mają o czym mówić i okno stoi wtedy w stanie pustym. Archiwum i Higiena
- * pracują na wykazie i wskazania nie potrzebują — potrzebują odczytanego
- * wykazu, którego dostarcza Library Explorer.
- *
- * Kod okna nie jest dziś w katalogu okien operacyjnych rdzenia: migracja
- * `migracja_031_okna_modulow.sql` przypisuje modułowi Library cztery okna.
- * Okno buduje się mimo to, bo dokumentacja modułu wymienia je jako siódme okno
- * operacyjne; rozjazd z katalogiem rdzenia należy do rdzenia, nie do klienta.
+ * Okno Metadata & Archive Panel zarządcy skupia trzy obszary pracy z zasobem:
+ * Metadane dotyczą pliku wskazanego, a Archiwum i Higiena całego repozytorium,
+ * przełączane selektorem obszaru, nie zakładkami.
  */
 export interface OknoMetadanych {
   element: HTMLElement;
@@ -42,7 +26,7 @@ export interface OknoMetadanych {
   wczytaj(): Promise<void>;
 }
 
-/** Trzy obszary panelu; Metadane są obszarem wyjściowym. */
+/** Trzy obszary panelu okna zarządcy; Metadane są obszarem wyjściowym, widocznym od razu po otwarciu okna. */
 type ObszarPanelu = 'metadane' | 'archiwum' | 'higiena';
 
 const OBSZARY: ReadonlyArray<{ kod: ObszarPanelu; etykieta: string }> = [
@@ -75,15 +59,9 @@ export function utworzOknoMetadanych(
   const metadane = utworzMetadanePliku(stan);
   const archiwum = utworzArchiwumRepozytorium(stan);
   const higiena = utworzHigienaRepozytorium(stan);
-  // Warstwa czwarta modułu — reguły, schemat, retencja, nasłuchy, sugestie
-  // i porównanie. Stoi przy obszarze Archiwum, bo to sterowanie repozytorium,
-  // nie praca nad wskazanym plikiem.
+  // Warstwa czwarta stoi przy obszarze Archiwum, bo to sterowanie repozytorium, nie praca nad plikiem.
   const administracja = utworzAdministracjeRepozytorium(stan);
-  // Trzy czynności arsenału nad treścią z dysku Operatora: rozpoznanie
-  // materiału, jego przetworzenie i spakowanie archiwum. Stoją przy obszarze
-  // Archiwum, bo obie mówią o utrwaleniu treści, i są od czynności
-  // repozytorium rozdzielone własnym nagłówkiem oraz zdaniem o zbiorze,
-  // którego dotyczą — wynik idzie do magazynu zasobów, nie do biblioteki.
+  // Trzy czynności arsenału stoją przy Archiwum, bo mówią o utrwaleniu treści, nie o bibliotece.
   const materialPanel = utworzPanelMaterialu(material);
   const pakowanie = utworzPanelPakowania(material);
 
@@ -115,36 +93,18 @@ export function utworzOknoMetadanych(
   rama.narzedzia.append(selektor.element);
   rama.cialo.append(okno.element, panel.element);
 
-  /**
-   * Obszar nieczynny znika z widoku, ale zostaje w drzewie: opis wpisany
-   * w formularz Dublin Core przeżywa zajrzenie do Higieny, tak samo jak
-   * odpowiedź pokazana przy wywozie manifestu.
-   */
+  // Obszar nieczynny znika z widoku, ale zostaje w drzewie: wpisany opis przeżywa zmianę obszaru.
   function ustawWidocznosc(): void {
     metadane.element.hidden = obszar !== 'metadane';
     archiwum.element.hidden = obszar !== 'archiwum';
-    // Czynności arsenału nie potrzebują ani wskazanego pliku, ani odczytanego
-    // wykazu — pracują na ścieżce z dysku Operatora. Widoczność wiąże je
-    // z obszarem Archiwum, bo o utrwaleniu treści mówią, ale zależności
-    // wejściowej obszaru nie dziedziczą.
+    // Czynności arsenału pracują na ścieżce z dysku, lecz widoczność wiąże je z obszarem Archiwum.
     materialPanel.element.hidden = obszar !== 'archiwum';
     pakowanie.element.hidden = obszar !== 'archiwum';
     administracja.element.hidden = obszar !== 'archiwum';
     higiena.element.hidden = obszar !== 'higiena';
   }
 
-  /**
-   * Stany obowiązkowe okna czytane z fazy wykazu plików.
-   *
-   * Okno nie ma własnego odczytu poza przeliczeniem wskaźnika znaczenia:
-   * kontrakt nie ma komendy metadanych zasobu, więc wszystko, co panel
-   * pokazuje, pochodzi z wykazu przyniesionego przez Library Explorer i
-   * z odpowiedzi o treści odłożonej przez File Preview.
-   *
-   * Zależność wejściowa różni się obszarem, więc stan pusty też się różni —
-   * jedno zdanie dla wszystkich trzech obszarów orzekałoby o wskazaniu pliku
-   * także tam, gdzie wskazanie nie jest do niczego potrzebne.
-   */
+  // Stany okna czytane z fazy wykazu; zależność wejściowa różni się obszarem, więc różni się stan pusty.
   function ustawStan(): void {
     if (stan.faza() === 'odczyt') {
       okno.ladowanie('Rdzeń odczytuje wykaz plików — panel opisuje to, co z niego przyszło.');
@@ -190,14 +150,10 @@ export function utworzOknoMetadanych(
     ustawStan();
   }
 
-  // Okno wychodzi z wytwórni w stanie spójnym: bez tego wywołania wszystkie
-  // trzy obszary stałyby w drzewie widoczne naraz aż do pierwszego odświeżenia.
+  // Okno wychodzi z wytwórni w stanie spójnym, inaczej trzy obszary stałyby widoczne do odświeżenia.
   ustawWidocznosc();
 
-  // Przycisku pierwszej akcji okno nie ustawia świadomie: jego cztery stany
-  // puste prowadzą do czterech różnych czynności (odśwież wykaz, dodaj plik,
-  // wskaż plik, przełącz obszar), a jeden przycisk o stałym napisie kierowałby
-  // w trzech z nich w złą stronę. Każdy stan mówi to zdaniem.
+  // Przycisku pierwszej akcji okno nie ustawia świadomie, bo cztery stany prowadzą do różnych czynności.
 
   return {
     element: rama.element,
@@ -206,7 +162,7 @@ export function utworzOknoMetadanych(
   };
 }
 
-/** Przekład wartości selektora na obszar; wartość spoza wykazu bierze Metadane. */
+/** Przekład wartości selektora na obszar panelu; wartość spoza wykazu bierze obszar Metadane jako domyślny. */
 function odczytajObszar(wartosc: string): ObszarPanelu {
   const pozycja = OBSZARY.find((wpis) => wpis.kod === wartosc);
   return pozycja === undefined ? 'metadane' : pozycja.kod;

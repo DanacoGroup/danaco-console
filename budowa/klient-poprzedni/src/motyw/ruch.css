@@ -1,9 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY RUCHU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: krzywa czasowa, czasy przejść, tętno kropki sygnału
-   oraz obsługa preferencji ograniczonego ruchu.
-   ============================================================================ */
+/* Żetony ruchu obejmują krzywą czasową, czasy przejść, tętno kropki sygnału oraz obsługę preferencji ograniczonego ruchu interfejsu. */
 
 :root {
   /* Jedna krzywa dla całego interfejsu — spójność ruchu. */

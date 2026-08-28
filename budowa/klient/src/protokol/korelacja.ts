@@ -1,11 +1,9 @@
 import type { Envelope } from '../../../shared/contract.ts';
 
 /**
- * Wiązanie odpowiedzi z żądaniem po identyfikatorze koperty.
- *
- * Kontrakt zapowiada dokładnie jedną odpowiedź na komendę, a odpowiedź powtarza
- * identyfikator żądania. Rejestr nie wprowadza limitu czasu ani limitu żądań
- * oczekujących: zerwanie połączenia nie kończy pracy rdzenia nad poleceniem.
+ * Wiązanie odpowiedzi z żądaniem po identyfikatorze koperty. Kontrakt
+ * zapowiada dokładnie jedną odpowiedź na komendę, a odpowiedź powtarza
+ * identyfikator żądania.
  */
 export type OdbiorcaOdpowiedzi = (odpowiedz: Envelope) => void;
 

@@ -12,16 +12,9 @@ import { utworzZakladkeZuzycia } from './zuzycie-zakladka';
 import { utworzZrodloDiagnostics } from './zrodlo-diagnostics';
 import { utworzZrodloZuzycia } from './zuzycie-zrodlo';
 
-/**
- * Zużycie i koszt — zakładka Usage & Cost kontenera Observability Tools.
- *
- * Sprawdzian pilnuje czterech rzeczy stanowiących o odbiorze: że zestawienie ma
- * drogę z okna i idzie jednym wymiarem, że PUSTY okres ma zdanie, a nie puste
- * miejsce, że koszt niepełny mówi o sobie, i że raport rozliczeniowy WYTWARZA
- * plik nazwany, a nie ciszę po naciśnięciu.
- */
+// Sprawdzian pilnuje drogi zestawienia, pustego okresu, kosztu niepełnego i wytworzenia pliku.
 
-/** Pozycja zestawienia w postaci, w której rdzeń ją oddaje. */
+/** Pozycja zestawienia w postaci, w której rdzeń ją oddaje, wraz z domyślnymi wartościami liczbowymi zużycia. */
 function pozycja(zmiany: Partial<UsageAggregate> = {}): UsageAggregate {
   return {
     dimension: UsageDimension.Channel,
@@ -35,7 +28,7 @@ function pozycja(zmiany: Partial<UsageAggregate> = {}): UsageAggregate {
   };
 }
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Kanał próbny zapamiętuje wysłane żądania i oddaje odpowiedź wskazaną dla danej komendy, imitując rdzeń. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -60,7 +53,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
   return { kanal, wyslane };
 }
 
-/** Zakładka złożona wraz z kanałem próbnym. */
+/** Zakładka złożona wraz z kanałem próbnym, gotowa do sprawdzenia zachowania bez połączenia z rdzeniem. */
 function zakladka(odpowiedzi: Record<string, unknown>) {
   const { kanal, wyslane } = kanalProbny(odpowiedzi);
   const stan = utworzStanDiagnostyki(utworzZrodloDiagnostics(kanal), {
@@ -70,7 +63,7 @@ function zakladka(odpowiedzi: Record<string, unknown>) {
   return { zakladka: zbudowana, element: zbudowana.pozycja.element, wyslane };
 }
 
-/** Czeka na rozstrzygnięcie obietnic w kolejce zadań mikro. */
+/** Czeka na rozstrzygnięcie wszystkich obietnic w kolejce zadań mikro, tak aby renderowanie zdążyło się dokonać. */
 async function przemiel(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -163,8 +156,7 @@ describe('zakładka Usage & Cost', () => {
 
 describe('raport rozliczeniowy (usage.report.build)', () => {
   beforeEach(() => {
-    // Pobranie pliku sięga po API przeglądarki, którego środowisko sprawdzianu
-    // nie ma w całości; podstawiamy wyłącznie te dwa punkty styku.
+    // Pobranie pliku sięga po API przeglądarki, którego środowisko sprawdzianu nie ma w całości.
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:raport');
     globalThis.URL.revokeObjectURL = vi.fn();
   });

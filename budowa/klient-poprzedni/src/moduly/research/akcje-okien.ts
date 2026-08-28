@@ -2,43 +2,16 @@ import { Command } from '../../../../shared/contract';
 import type { AkcjaOkna } from './panel-akcji';
 
 /**
- * Katalog akcji siedmiu okien Research.
- *
- * Jedna odpowiedzialność: nazwanie akcji i wskazanie drogi ich wykonania. Droga
- * stoi tu, a nie w oknie, bo rozstrzyga o odbiorze: akcja bez wykonawcy idzie
- * generycznym `window.action`, zamiast znikać z paska albo udawać wykonanie.
- *
- * Nazwa komendy NIGDY nie jest tu napisem. Kod akcji, która ma w kontrakcie
- * własną komendę, bierze się ze stałej `Command.*` — inaczej zmiana nazwy
- * w `contract.json` zostawiłaby w panelu martwe wywołanie, którego kompilator
- * nie wychwyci. Zaporę na to niesie `src/kontrakt.test.ts`.
- *
- * Wykaz nie jest kopią rejestru akcji rdzenia. Rejestr (`action.list`) opisuje
- * akcje modułu w bazie, a zaczyn katalogu akcji
- * (`budowa/server/internal/store/migracja_009_zaczyn_akcji.sql`) zakłada dla
- * modułu Research wyłącznie trzy pozycje paska promptu — pozycje wiadomości —
- * bo powstają złączeniem z tabelą `modul`. Pozostałe kody z tego pliku wiersza
- * w katalogu nie mają, więc panel zbudowany wyłącznie z rejestru byłby pusty.
- * Wykaz znika, gdy rejestr odda te same pozycje.
+ * Katalog akcji siedmiu okien modułu Research nazywa akcje i wskazuje drogę
+ * ich wykonania, którą nazywa ten typ; kod komendy zawsze bierze się ze
+ * stałej Command.*, nigdy nie jest napisem.
  */
-
-/** Czym akcja się dziś kończy. */
 export type DrogaAkcji =
   /** Okno wykonuje ją u siebie albo komendą, której rdzeń już słucha. */
   | 'okno'
-  /**
-   * Zdolność ma w kontrakcie własną komendę, którą rdzeń obsługuje. Kod akcji
-   * jest nazwą tej komendy, wziętą ze stałej `Command.*`, a wywołanie składa
-   * `wywolania-komend.ts`.
-   */
+  // Zdolność ma w kontrakcie komendę obsługiwaną przez rdzeń; kod akcji jest nazwą komendy.
   | 'komenda'
-  /**
-   * Zdolności nie odpowiada osobna komenda kontraktu — jest nastawą pola
-   * komendy istniejącej albo należy do okna konfiguracji. Wychodzi generycznym
-   * `window.action`; rdzeń tę komendę zna, więc odmowa jest merytoryczna:
-   * `not_found` z katalogu akcji albo `conflict` braku wykonawcy
-   * (`budowa/server/internal/core/adapter_okno_akcja.go`).
-   */
+  // Zdolności nie odpowiada osobna komenda kontraktu; wychodzi generycznym window.action.
   | 'akcja';
 
 export interface AkcjaBadania extends AkcjaOkna {
@@ -64,12 +37,8 @@ function doKomendy(komenda: Command, nazwa: string, czynnosc: string): AkcjaBada
 }
 
 /**
- * Zdanie o akcji, którą wykonuje komenda kontraktu.
- *
- * Rozróżnienie wobec `BEZ_KOMENDY` nie jest odcieniem: tam osobnej komendy nie
- * ma i mieć nie musi, więc pozycja wychodzi generycznym `window.action`. Tu
- * komenda istnieje, rdzeń ma jej uchwyt, a okno wywołuje ją wprost — i odmowa,
- * którą Operator zobaczy, mówi o jego badaniu, nie o brakach rdzenia.
+ * Zdanie o akcji, którą wykonuje komenda kontraktu; rozróżnienie wobec
+ * BEZ_KOMENDY nie jest odcieniem — tu komenda istnieje i rdzeń ma jej uchwyt.
  */
 const BEZ_UCHWYTU =
   'Komenda jest w kontrakcie i rdzeń ma dla niej uchwyt — kod tej akcji jest jej nazwą, ' +
@@ -78,20 +47,15 @@ const BEZ_UCHWYTU =
   'materiału, dostawca bez odpowiedzi), nie brakiem uchwytu.';
 
 /**
- * Zdanie o akcji, której osobnej komendy w kontrakcie nie ma.
- *
- * Zostaje ono przy pozycjach, które komendą nie są i nie mają nią być: nastawy
- * będące polem komendy istniejącej oraz ustawienia należące do okna
- * konfiguracji. Treść ma się zgadzać ze słowami odmowy rdzenia — zapowiedź
- * braku wykonawcy przy odmowie płynącej z katalogu akcji prowadziłaby w złą
- * stronę przy szukaniu przyczyny.
+ * Zdanie o akcji, której osobnej komendy w kontrakcie nie ma i mieć nie musi;
+ * treść ma się zgadzać ze słowami odmowy rdzenia z katalogu akcji.
  */
 const BEZ_KOMENDY =
   'Osobnej komendy kontrakt dla tej pozycji nie ma i mieć nie musi, więc wychodzi ona ' +
   'generycznym window.action. Rdzeń odmówi na pierwszym kroku — „akcja … nie istnieje ' +
   'w katalogu akcji" — bo zaczyn katalogu nie ma wiersza dla tego kodu.';
 
-/** Nastawa będąca polem komendy istniejącej — wskazanie, którym polem. */
+/** Nastawa będąca polem komendy istniejącej w kontrakcie — wskazanie, którym dokładnie polem tej komendy jest ona niesiona. */
 function poleKomendy(komenda: Command, pole: string): string {
   return (
     `Ta pozycja jest nastawą, nie osobną czynnością: niesie ją pole ${pole} komendy ` +
@@ -101,19 +65,15 @@ function poleKomendy(komenda: Command, pole: string): string {
 }
 
 /**
- * Zdanie o oknie, którego katalog okien rdzenia jeszcze nie zna.
- *
- * Discovery Panel i Reading View mają wiersz w opracowaniu modułu, a nie mają go
- * w migracjach 030 i 031. Odmowa przyjdzie więc o krok wcześniej niż przy akcji
- * bez wiersza w katalogu akcji — na samym oknie — i akcja ma to zapowiadać,
- * zamiast obiecywać drogę, której dziś nie ma nawet do połowy.
+ * Zdanie o oknie, którego katalog okien rdzenia jeszcze nie zna; odmowa
+ * przyjdzie na samym oknie, zanim rdzeń dojdzie do katalogu akcji.
  */
 const OKNO_SPOZA_KATALOGU =
   'Uwaga: katalog okien rdzenia nie zna jeszcze tego okna (migracje 030 i 031 zakładają dla ' +
   'modułu Research pięć okien, a opracowanie wylicza siedem), więc odmowa przyjdzie na oknie, ' +
   'zanim rdzeń dojdzie do katalogu akcji.';
 
-/** Research Workspace — okno wiodące, punkt wejścia modułu. */
+/** Research Workspace jest głównym oknem wiodącym modułu Research i stanowi punkt wejścia do całej pracy badawczej. */
 export const AKCJE_WORKSPACE: readonly AkcjaBadania[] = [
   okno('research.scope.edit', 'Edytuj zakres', 'Przenosi ognisko do pola zakresu badania. Zapis idzie komendą research.workspace.set, której rdzeń słucha.'),
   okno('research.scope.investigate', 'Zbadaj →', 'Zapisuje zakres i przenosi ognisko do Discovery Panel, żeby wyszukać materiał.'),
@@ -130,7 +90,7 @@ export const AKCJE_WORKSPACE: readonly AkcjaBadania[] = [
   akcja('research.scope.evidenceTable', 'Tabela dowodów', `Zestawienie ustaleń ze źródłami i oceną. Jako blok raportu niesie ją pole kind komendy research.report.insert; jako widok przestrzeni składa się z materiału, który okno ma. ${BEZ_KOMENDY}`),
 ];
 
-/** Discovery Panel — wyszukiwanie i odkrywanie źródeł. */
+/** Discovery Panel jest oknem wyszukiwania i odkrywania źródeł w toku badania prowadzonego w module Research. */
 export const AKCJE_ODKRYWANIA: readonly AkcjaBadania[] = [
   okno('research.discovery.run', 'Szukaj', 'Uruchamia zapytanie w trybie bieżącym. Tryb semantyczny idzie komendą knowledge.search, pełnotekstowy — library.file.search; obu rdzeń słucha.'),
   okno('research.discovery.toSources', '→ Sources Manager', 'Przenosi ognisko do katalogu źródeł; pozycje wstawia przycisk „→ Dodaj do źródeł" przy wyniku, komendą research.source.add.'),
@@ -145,7 +105,7 @@ export const AKCJE_ODKRYWANIA: readonly AkcjaBadania[] = [
   akcja('research.discovery.providers', 'Dostawcy wyszukiwania', `Zestaw dostawców webowych i naukowych oraz ich klucze dostępu. Należy do okna konfiguracji, nie do panelu badania. ${BEZ_KOMENDY}`),
 ];
 
-/** Sources Manager — zarządca źródeł badania. */
+/** Sources Manager jest oknem zarządcy źródeł badania, katalogującym pozycje zebrane w toku pracy badawczej. */
 export const AKCJE_ZRODEL: readonly AkcjaBadania[] = [
   okno('research.source.new', '+ Dodaj źródło', 'Przenosi ognisko do formularza katalogowania źródła.'),
   okno('research.source.link', 'Powiąż z ustaleniem', 'Przenosi zaznaczone źródła do formularza ustalenia w Findings Panel; powiązanie zapisuje research.finding.add.'),
@@ -168,7 +128,7 @@ export const AKCJE_ZRODEL: readonly AkcjaBadania[] = [
   doKomendy(Command.ResearchReadingOpen, 'Podgląd', 'Treść źródła bez opuszczania katalogu.'),
 ];
 
-/** Reading View — lektura materiału i wypisy z niego. */
+/** Reading View jest oknem lektury materiału źródłowego oraz sporządzania wypisów i podświetleń z jego treści. */
 export const AKCJE_LEKTURY: readonly AkcjaBadania[] = [
   okno('research.reading.toFinding', '→ ustalenie', 'Zapisuje zaznaczony fragment jako ustalenie z cytatem i powiązaniem do czytanego źródła — komenda research.finding.add, której rdzeń słucha.'),
   okno('research.reading.reload', 'Wczytaj ponownie', 'Powtarza odczyt bieżącej strony materiału komendą library.file.preview.'),
@@ -186,7 +146,7 @@ export const AKCJE_LEKTURY: readonly AkcjaBadania[] = [
   akcja('research.reading.find', 'Szukaj w treści', `Wyszukiwanie w treści materiału z podświetleniem trafień. Treść okno już ma — szukanie odbywa się w niej, bez pytania rdzenia. ${BEZ_KOMENDY}`),
 ];
 
-/** Findings Panel — ustalenia narastające w toku badania. */
+/** Findings Panel jest oknem ustaleń narastających w toku badania, wraz z ich klasyfikacją i powiązaniami. */
 export const AKCJE_USTALEN: readonly AkcjaBadania[] = [
   okno('research.finding.new', '+ Nowe ustalenie', 'Czyści formularz i przenosi do niego ognisko; zapis idzie research.finding.add bez pola findingId.'),
   okno('research.finding.edit', 'Edytuj', 'Wciąga zaznaczone ustalenie do formularza; zapis idzie research.finding.add z polem findingId.'),
@@ -209,7 +169,7 @@ export const AKCJE_USTALEN: readonly AkcjaBadania[] = [
   akcja('research.finding.compare', 'Porównaj źródła', `Zestawienie źródeł ustalenia obok siebie. Powstaje z materiału, który okno ma — powiązania niesie już samo ustalenie. ${BEZ_KOMENDY}`),
 ];
 
-/** Report Builder — kreator dokumentu końcowego. */
+/** Report Builder jest oknem kreatora dokumentu końcowego, składającego raport z sekcji i ustaleń badania. */
 export const AKCJE_RAPORTU: readonly AkcjaBadania[] = [
   okno('research.report.section.add', '+ Dodaj sekcję', 'Dokłada pustą sekcję do redakcji; sekcje jadą w polu sections komendy research.report.build.'),
   okno('research.report.toExport', '→ Export Panel', 'Przenosi ognisko do Export Panel. Panel jest czynny zawsze; brak raportu nazywa komunikatem, nie blokadą.'),
@@ -225,7 +185,7 @@ export const AKCJE_RAPORTU: readonly AkcjaBadania[] = [
   doKomendy(Command.ResearchReportContextualOp, 'Operacje na zaznaczeniu', 'Korekta, streszczenie, zmiana stylu i rozwinięcie zaznaczonego fragmentu.'),
 ];
 
-/** Export Panel — wydanie raportu w formacie dokumentowym. */
+/** Export Panel jest oknem wydania gotowego raportu w formacie dokumentowym wybranym samodzielnie przez Operatora. */
 export const AKCJE_EKSPORTU: readonly AkcjaBadania[] = [
   okno('research.export.run', 'Eksportuj teraz', 'Wydaje raport komendą research.report.export w wybranym formacie i miejscu docelowym; rdzeń jej słucha.'),
   okno('research.export.again', 'Pobierz ponownie', 'Powtarza ostatni eksport tą samą komendą; powtórzenie jest bezpieczne po stronie logiki, nie przez blokadę kontrolki.'),

@@ -1,3 +1,6 @@
+// Plik sprawdza skutek autozapisu i kopii zapasowych: wskaźnik zapisano
+// pokazany, gdy zapis się nie udał, jest najgorszym błędem, bo Operator
+// zamknie okno i straci pracę.
 package core
 
 import (
@@ -9,20 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany SKUTKU autozapisu i kopii zapasowych.
-//
-// ── Szkoda, którą ten plik ma wykluczyć w pierwszej kolejności ───────────────
-// Wskaźnik „zapisano" pokazany, gdy zapis się NIE UDAŁ, jest najgorszym możliwym
-// błędem tego modułu: Operator zamknie okno i straci pracę. Dlatego sprawdzian
-// mierzy zapis NIEUDANY, a nie tylko udany — i mierzy go na prawdziwym
-// niepowodzeniu zapisu, nie na atrapie.
-//
-// Niepowodzenie wywołujemy, zabierając rdzeniowi tabelę, w którą zapisuje postać
-// dokumentu. To jest niepowodzenie tej samej klasy, co awaria dysku albo
-// uszkodzony plik bazy: zapis wchodzi tą samą drogą i pada w tym samym miejscu.
-// Atrapa repozytorium mierzyłaby wtedy atrapę.
-
-// autozapisSkutekTresc jest treścią, której zapis samoczynny ma nie zgubić.
+// autozapisSkutekTresc jest treścią, której zapis samoczynny ma nie zgubić,
+// niezależnie od tego, czy zapis się powiedzie, czy nie.
 const autozapisSkutekTresc = "Pismo w toku redakcji.\nAkapit niezapisany."
 
 // TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano jest sprawdzianem
@@ -31,7 +22,7 @@ const autozapisSkutekTresc = "Pismo w toku redakcji.\nAkapit niezapisany."
 func TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano(t *testing.T) {
 	uprzaz := blokadaZmontuj(t)
 
-	// Autozapis włączony jawnie — jak przełącznikiem na pasku szybkiego dostępu.
+	// Autozapis włączony jawnie, jak przełącznikiem na pasku szybkiego dostępu.
 	odstep := 60
 	var nastawy shared.StudioAutosaveSetResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioAutosaveSet,
@@ -39,7 +30,7 @@ func TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano(t *testing.T) {
 			DocumentId: &uprzaz.dokument, Enabled: true, IntervalSeconds: &odstep,
 		}, &nastawy)
 
-	// Zapis udany na wejściu — żeby było widać różnicę między „stało" i „padło".
+	// Zapis udany na wejściu, żeby było widać różnicę między stało a padło.
 	tresc := autozapisSkutekTresc
 	var udany shared.StudioAutosaveRunResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioAutosaveRun,
@@ -48,11 +39,8 @@ func TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano(t *testing.T) {
 		t.Fatalf("zapis samoczynny nie doszedł do skutku na zdrowej bazie: %+v", udany.FailureReason)
 	}
 
-	// ── Prawdziwa awaria ZAPISU, przy zdrowym ODCZYCIE ───────────────────────
-	// Wyzwalacz odrzuca każdy zapis postaci, a odczyt zostawia nietknięty. To jest
-	// właśnie ten stan, o który idzie wymaganie: rdzeń CZYTA dokument, przyjmuje
-	// pracę, a utrwalić jej nie potrafi. Zabranie całej tabeli mierzyłoby co
-	// innego — tam pada już odczyt i nie ma nawet czego zapisać.
+	// Wyzwalacz odrzuca zapis postaci, odczyt zostawia nietknięty: rdzeń czyta,
+	// ale zapisać nie może.
 	if _, err := uprzaz.baza.Exec(
 		`CREATE TRIGGER awaria_zapisu_postaci
 		 BEFORE UPDATE ON postac_dokumentu_studio
@@ -69,8 +57,7 @@ func TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano(t *testing.T) {
 		shared.CommandStudioAutosaveRun,
 		shared.StudioAutosaveRunRequest{DocumentId: uprzaz.dokument, Content: &nowaTresc})
 
-	// Odmowa też jest dopuszczalna — byle NIE „zapisano". Niedopuszczalne jest
-	// jedno: odpowiedź udana mówiąca, że zapis stanął.
+	// Odmowa też jest dopuszczalna, byle nie zapisano.
 	if odpowiedz.Error == nil {
 		if err := protocol.LadunekDo(odpowiedz, &nieudany); err != nil {
 			t.Fatalf("nieczytelny ładunek odpowiedzi: %v", err)
@@ -121,12 +108,12 @@ func TestAutozapisSkutekNieudanyZapisNiePokazujeZapisano(t *testing.T) {
 }
 
 // TestAutozapisSkutekWersjaIdzieOsobnymSzeregiem mierzy, że zapisy samoczynne
-// NIE zaśmiecają historii Operatora: idą osobnym szeregiem, odróżnialnym
+// nie zaśmiecają historii Operatora: idą osobnym szeregiem, odróżnialnym
 // w wykazie.
 func TestAutozapisSkutekWersjaIdzieOsobnymSzeregiem(t *testing.T) {
 	uprzaz := blokadaZmontuj(t)
 
-	// Trzy zapisy samoczynne.
+	// Trzy zapisy samoczynne, jeden po drugim, tworzące osobny szereg wersji.
 	for _, tresc := range []string{"Wersja robocza jeden.", "Wersja robocza dwa.",
 		"Wersja robocza trzy."} {
 
@@ -159,7 +146,7 @@ func TestAutozapisSkutekWersjaIdzieOsobnymSzeregiem(t *testing.T) {
 			"zapisy samoczynne zaśmieciły jego historię", operatora)
 	}
 
-	// Wykaz szeregów oddaje oba liczniki i wskazuje wersję założycielską.
+	// Wykaz szeregów oddaje oba liczniki i wskazuje wersję założycielską dokumentu.
 	var wykaz shared.StudioVersionSeriesListResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioVersionSeriesList,
 		shared.StudioVersionSeriesListRequest{DocumentId: uprzaz.dokument}, &wykaz)
@@ -168,13 +155,8 @@ func TestAutozapisSkutekWersjaIdzieOsobnymSzeregiem(t *testing.T) {
 			wykaz.AutosaveCount, wykaz.OperatorCount)
 	}
 
-	// Zawężenie do szeregu Operatora nie pokazuje zapisów samoczynnych — na tym
-	// stoi przełącznik „pokaż także zapisy samoczynne" w wykazie historii.
-	//
-	// Mierzone LICZBĄ pozycji, a nie polem szeregu w pozycji: `StudioVersion`
-	// w kontrakcie pola `series` nie ma (odcinek kontraktu ma je dołożyć), więc
-	// odróżnialność wychodzi dziś zawężeniem wykazu i dwoma licznikami. To jest
-	// prawdziwy stan i tak jest zgłoszony — sprawdzian mierzy to, co jest.
+	// Zawężenie do szeregu Operatora nie pokazuje zapisów samoczynnych, mierzone
+	// liczbą pozycji wykazu.
 	szereg := shared.StudioVersionSeries(shared.StudioVersionSeriesOperator)
 	var tylkoOperator shared.StudioVersionSeriesListResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioVersionSeriesList,
@@ -199,8 +181,8 @@ func TestAutozapisSkutekWersjaIdzieOsobnymSzeregiem(t *testing.T) {
 }
 
 // TestKopiaSkutekPrzywrocenieDoNowegoDokumentu mierzy, że przywrócenie kopii
-// zapasowej DO NOWEGO dokumentu nie kasuje tego, co jest — a nowy dokument jest
-// osobnym bytem, nie drugim odwołaniem do tego samego.
+// zapasowej do nowego dokumentu nie kasuje tego, co jest, bo nowy dokument
+// jest osobnym bytem.
 func TestKopiaSkutekPrzywrocenieDoNowegoDokumentu(t *testing.T) {
 	uprzaz := blokadaZmontuj(t)
 
@@ -251,20 +233,19 @@ func TestKopiaSkutekPrzywrocenieDoNowegoDokumentu(t *testing.T) {
 }
 
 // TestKopiaSkutekWykazZglaszaNiezapisane mierzy przywrócenie po nagłym
-// zamknięciu: rdzeń SAM zgłasza, że ma niezapisany dokument, a nie czeka, aż
+// zamknięciu: rdzeń sam zgłasza, że ma niezapisany dokument, a nie czeka, aż
 // Operator się domyśli.
 func TestKopiaSkutekWykazZglaszaNiezapisane(t *testing.T) {
 	uprzaz := blokadaZmontuj(t)
 
-	// Kopia niosąca zmiany niezapisane powstaje przy zapisie samoczynnym —
-	// dokładnie tak, jak powstałaby przed nagłym zamknięciem okna.
+	// Kopia niosąca zmiany niezapisane powstaje przy zapisie samoczynnym.
 	tresc := "Praca, której Operator nie zapisał."
 	var zapis shared.StudioAutosaveRunResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioAutosaveRun,
 		shared.StudioAutosaveRunRequest{DocumentId: uprzaz.dokument, Content: &tresc}, &zapis)
 
-	// Kopię niosącą zmiany niezapisane zakładamy wprost — zapis udany zeruje ten
-	// wskaźnik, a mierzymy stan po nagłym zamknięciu, czyli bez zapisu udanego.
+	// Kopię niosącą zmiany niezapisane zakłada się wprost, mierząc stan po
+	// nagłym zamknięciu, bez zapisu.
 	trescNiezapisana := "Akapit, który nie doszedł na dysk."
 	if _, err := uprzaz.baza.Exec(
 		`INSERT INTO kopia_zapasowa_studio

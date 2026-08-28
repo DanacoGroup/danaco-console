@@ -2,25 +2,10 @@ import { pokazKomunikat } from '../../aplikacja/komunikaty';
 import { oznaczWarstwe } from './warstwy-designu';
 
 /**
- * Pasek kontekstu kanwy Design Board — znaczniki warstwy pierwszej.
- *
- * Opracowanie wymienia nad kanwą znaczniki projektu, środowiska, modelu, trybu
- * narzędzia i poziomu powiększenia, a przy znaczniku kontekstowym stanowi, że
- * kliknięcie otwiera selektor warstwy drugiej, który zwija się po wyborze.
- *
- * Selektorów pasek NIE dubluje. Wybór silnika stoi w Prompt Builderze, tryb
- * narzędzia w znaczniku trybu nad kanwą, powiększenie w przyborniku — a dwie
- * kontrolki nastawiające jedną wartość rozjeżdżają się przy pierwszej zmianie
- * i Operator przestaje wiedzieć, która mówi prawdę. Kliknięcie znacznika mówi
- * więc, GDZIE jego selektor stoi, i tam Operatora odsyła.
- *
- * Znacznik środowiska jest tu jedynym, który nie ma czego pokazać. Środowisko
- * jest własnością powłoki i moduł nie dostaje go ani parametrem, ani żadną
- * komendą swojego obszaru; znacznik mówi to wprost, zamiast wpisywać nazwę
- * wziętą z niczego.
+ * Źródło wartości znaczników paska kontekstu kanwy Design Board: okno modułu,
+ * liczba kanałów obrazowych rejestru, tryb narzędzia i powiększenie. Pasek
+ * własnych selektorów nie stawia, tylko nazywa miejsce, w którym każdy stoi.
  */
-
-/** Skąd znacznik bierze wartość i gdzie stoi jego selektor. */
 export interface ZrodloZnacznika {
   /** Okno modułu ustalone z rdzenia; puste, gdy rdzeń go nie wskazał. */
   okno(): string;
@@ -39,7 +24,10 @@ export interface PasekKontekstu {
   odswiez(): void;
 }
 
-/** Jeden znacznik paska: nazwa, wartość bieżąca i zdanie po naciśnięciu. */
+/**
+ * Jeden znacznik paska: przycisk osadzany w pasku oraz nastawa wartości
+ * bieżącej wraz ze zdaniem pokazywanym po naciśnięciu znacznika.
+ */
 interface Znacznik {
   element: HTMLButtonElement;
   ustaw(wartosc: string, zdanie: string): void;
@@ -64,8 +52,7 @@ export function utworzPasekKontekstu(zrodlo: ZrodloZnacznika): PasekKontekstu {
     powiekszenie.element,
   );
 
-  // Środowisko nie zmienia się w cyklu życia modułu i nie zależy od stanu, więc
-  // stoi raz — odświeżanie go co ramkę powtarzałoby tę samą prawdę.
+  // Srodowisko nie zmienia sie w cyklu zycia modulu, wiec znacznik stoi raz.
   srodowisko.ustaw(
     'nie podane',
     'Moduł Design jest dostępny w środowiskach WorkSpace i CodeStudio, ale KTÓRE z nich ' +
@@ -112,11 +99,9 @@ export function utworzPasekKontekstu(zrodlo: ZrodloZnacznika): PasekKontekstu {
 }
 
 /**
- * Znacznik kontekstowy — pigułka klikalna zawsze.
- *
- * Przycisk, nie napis: opracowanie stanowi, że znacznik kontekstowy otwiera się
- * kliknięciem, a element nieklikalny nie miałby jak tego spełnić. Zdanie idzie
- * dymkiem, bo znacznik ma zostać pigułką, a nie rozrosnąć się w akapit.
+ * Składa znacznik kontekstowy jako pigułkę klikalną zawsze. Naciśnięcie
+ * pokazuje zdanie komunikatem, a to samo zdanie idzie w atrybut opisu, żeby
+ * technologie wspomagające czytały je bez naciskania.
  */
 function znacznik(nazwa: string): Znacznik {
   const element = document.createElement('button');

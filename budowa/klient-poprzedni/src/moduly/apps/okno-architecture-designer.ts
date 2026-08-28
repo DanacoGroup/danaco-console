@@ -17,22 +17,7 @@ import { utworzPrzybornikApps } from './przybornik-apps';
 import type { StanProduktu } from './stan-produktu';
 import { utworzWyborZMenu, wierszWyboru } from './wybor-z-menu';
 
-/**
- * Architecture Designer — okno kreatora modułu Apps, punkt wyjścia procesu.
- *
- * Definiowanie komponentów rozwiązania i ustalenie zależności stoją na jednej
- * komendzie kontraktu — `apps.architecture.define` — która przyjmuje szablon
- * i komplet komponentów wraz z ich `dependsOn`.
- *
- * „Waliduj” to ta sama komenda, nie druga droga: kontrakt nie ma osobnej
- * komendy walidacji, zwraca za to `validationIssues` w architekturze po zapisie.
- * Przycisk pozostaje klikalny przy pustej kanwie — odpowiedź jest opisowa,
- * nie blokadą.
- *
- * Zdanie potwierdzające bierze treść z odpowiedzi, nie z zamówienia: wymienia
- * identyfikator, wersję, szablon i komponenty tak, jak oddał je rdzeń, a każdą
- * rozbieżność z zamówieniem i każde zastrzeżenie walidacji ogłasza odmową.
- */
+/** Interfejs opisuje okno kreatora modułu Apps, które definiuje komponenty rozwiązania i ich zależności jedną komendą kontraktu. */
 export interface OknoArchitectureDesigner {
   element: HTMLElement;
   odswiez(): void;
@@ -57,9 +42,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
   const dodaj = przycisk('Dodaj komponent do kanwy', 'dn-btn dn-btn--sm dn-btn--zarys');
   const waliduj = przycisk('Waliduj', 'dn-btn dn-btn--sm dn-btn--zarys');
   const zapisz = przycisk('Zapisz architekturę', 'dn-btn dn-btn--sm dn-btn--atrament');
-  // Odczyt stoi w tym samym pasku co zapis, bo jest jego odwrotnością. Bez
-  // niego kanwa zaczyna pusta przy każdym wejściu w moduł, choć rdzeń trzyma
-  // architekturę w bazie.
+  // Odczyt stoi w tym pasku co zapis: bez niego kanwa startuje pusta mimo zapisanej architektury.
   const odczytaj = przycisk('Odczytaj architekturę z rdzenia', 'dn-btn dn-btn--sm dn-btn--zarys');
   const odpowiedz = utworzWierszOdpowiedzi();
 
@@ -100,17 +83,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
   zapisz.addEventListener('click', () => void wyslij('Zapis architektury'));
   odczytaj.addEventListener('click', () => void odczytajArchitekture());
 
-  /**
-   * Odczyt architektury zapisanej w rdzeniu.
-   *
-   * Odczyt nadpisuje kanwę i mówi o tym wprost: architektura oddana przez rdzeń
-   * wchodzi wraz ze swoim kompletem komponentów, więc komponenty zestawione
-   * na kanwie, a jeszcze niezapisane, po tym kroku znikają. Zdanie wymienia
-   * liczbę komponentów, która przyszła.
-   *
-   * Brak architektury jest odpowiedzią, nie odmową — rdzeń oddaje wtedy wynik
-   * udany bez pola, kanwa zostaje nietknięta.
-   */
+  // Odczyt architektury z rdzenia nadpisuje kanwę; brak architektury to odpowiedź, nie odmowa.
   async function odczytajArchitekture(): Promise<void> {
     rama.ladowanie('Odczyt architektury z rdzenia…');
     odpowiedz.pokaz('Odczyt architektury: żądanie wysłane do rdzenia…', true);
@@ -133,9 +106,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
       return;
     }
     nazwa.kontrolka.value = oddana.name ?? '';
-    // Szablon spoza wyliczenia nie wchodzi na uchwyt po cichu: wykaz niesie
-    // trzy wartości kontraktu, a szablon czwarty nie ma w nim pozycji do
-    // wskazania. Zdanie mówi wtedy o rozejściu okna z rdzeniem.
+    // Szablon spoza wyliczenia kontraktu nie wchodzi cicho — zdanie zgłasza rozejście z rdzeniem.
     const szablonPrzyjety = szablon.ustawWartosc(oddana.template);
     const uwagaSzablonu = szablonPrzyjety
       ? ''
@@ -183,12 +154,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
       odpowiedz.pokaz(zdanie, false);
       return;
     }
-    // Przesłona zdejmowana tutaj, nie w `odswiez`: `odswiez` wychodzi przy
-    // fazie `ladowanie`, więc bez zamknięcia fazy okno pokazywałoby wskaźnik
-    // pracy po jej zakończeniu. Po zamknięciu fazy przeliczamy widok, bo
-    // wchłonięcie architektury ogłosiło zmianę jeszcze w fazie `ladowanie`
-    // i tamten przebieg wyszedł bez rozstrzygnięcia między pustą kanwą
-    // a kanwą z komponentami.
+    // Przesłonę zamykana jest tutaj, nie w odswiez, które przy fazie ladowanie kończy się wcześniej.
     rama.gotowe();
     odswiez();
     const zastrzezenia = oddana.validationIssues ?? [];
@@ -196,8 +162,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
       `układ ${oddana.id} w wersji ${oddana.version ?? 'bez numeru'} — szablon ` +
       `${oddana.template}, komponentów ${(oddana.components ?? []).length}`;
     if (zastrzezenia.length > 0) {
-      // Zastrzeżenie rdzenia nie jest potwierdzeniem — zdanie musi je wymienić,
-      // tak samo jak robi to wiersz „Wersje” pod spodem.
+      // Zastrzeżenie rdzenia nie jest potwierdzeniem — zdanie musi je wymienić tak jak wiersz Wersje.
       odpowiedz.pokaz(
         `${czynnosc}: rdzeń zapisał ${opisUkladu}, ale ZGŁOSIŁ ZASTRZEŻENIA ` +
           `(${zastrzezenia.length}): ${zastrzezenia.join(' · ')}`,
@@ -228,15 +193,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
   return { element: rama.element, odswiez };
 }
 
-/**
- * Czym oddany układ różni się od zamówionego — pusty łańcuch, gdy niczym.
- *
- * Zestawiane są zbiory identyfikatorów, nie listy. Rdzeń trzyma komponenty
- * i krawędzie zależności w osobnych tabelach i oddaje je w porządku własnym,
- * a powtórzoną krawędź zdejmuje kluczem pierwotnym. Porządek i powtórzenie nie
- * są więc rozbieżnością, tylko cudzym sposobem przechowywania; rozbieżnością
- * jest komponent, który zniknął, albo taki, którego nikt nie zamawiał.
- */
+/** Funkcja porównuje układ oddany przez rdzeń z zamówionym i zwraca opis rozbieżności komponentów, szablonu i zależności; pusty łańcuch oznacza brak rozbieżności. */
 function rozbieznoscUkladu(
   zamowione: readonly AppComponent[],
   zamowionySzablon: string,
@@ -265,13 +222,7 @@ function rozbieznoscUkladu(
   return rozejscia.join('; ');
 }
 
-/**
- * Które zamówione krawędzie zależności nie wróciły z rdzenia.
- *
- * Zależność jest wskazaniem identyfikatora innego komponentu, więc jej zgubienie
- * zmienia układ tak samo jak zgubienie komponentu, a kanwa zaciągnięta
- * z odpowiedzi sama z siebie nie pokazuje, że zamówiono więcej.
- */
+/** Funkcja zwraca wykaz zamówionych krawędzi zależności między komponentami, które nie wróciły w odpowiedzi rdzenia po zapisie architektury. */
 function zgubioneZaleznosci(
   zamowione: readonly AppComponent[],
   oddane: readonly AppComponent[],
@@ -289,28 +240,9 @@ function zgubioneZaleznosci(
   return zgubione;
 }
 
-/**
- * Zdanie o pustym polu `validationIssues` — orzeka o odebranej ramce, nie
- * o zachowaniu rdzenia.
- *
- * Rdzeń tego pola nie wylicza: adapter czyta zastrzeżenia z bazy, zapisuje je
- * z powrotem tym samym UPSERT-em i oddaje w odpowiedzi, więc jedynym pisarzem
- * kolumny jest ten, kto ją przed chwilą przeczytał. Zdanie „bez zastrzeżeń"
- * byłoby zapewnieniem o sprawdzeniu, którego nikt nie wykonał.
- *
- * Własny walidator w oknie byłby drugą prawdą o tym samym układzie i zacierał
- * granicę odpowiedzialności: zastrzeżenia widoczne w oknie sugerowałyby, że zna
- * je rdzeń.
- *
- * Rozróżnienie pola nieobecnego od pola obecnego i pustego sprawia, że w dniu,
- * w którym rdzeń zacznie zastrzeżenia liczyć, zdanie zmieni treść bez tknięcia
- * tego pliku.
- */
+/** Funkcja opisuje puste pole zastrzeżeń walidacji w ramce rdzenia i rozróżnia jego brak od jego obecności bez treści. */
 function opisPustychZastrzezen(architektura: AppArchitecture): string {
-  // Kontrakt deklaruje pole jako `?: string[]`, ale gniazdo przynosi w tym
-  // miejscu JSON-owy `null`. Rzutowanie nie poszerza umowy — nazywa kształt,
-  // który naprawdę przychodzi, żeby rozróżnienie „pola nie ma" od „pole jest
-  // puste" opierało się na ramce, a nie na deklaracji.
+  // Gniazdo oddaje pole jako null mimo deklaracji kontraktu; rzutowanie nazywa kształt ramki.
   const pole = architektura.validationIssues as readonly string[] | null | undefined;
   if (pole === undefined || pole === null) {
     return (
@@ -321,7 +253,7 @@ function opisPustychZastrzezen(architektura: AppArchitecture): string {
   return 'Pole validationIssues przyszło puste.';
 }
 
-/** Wiersz „Wersje” panelu akcji — numer i zastrzeżenia z odpowiedzi rdzenia. */
+/** Funkcja składa treść wiersza „Wersje” panelu akcji: numer wersji i zastrzeżenia walidacji z odpowiedzi rdzenia, gdy są obecne. */
 function opisWersji(stan: StanProduktu): string {
   const architektura = stan.architektura();
   if (architektura === null) {

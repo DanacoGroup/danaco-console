@@ -5,15 +5,8 @@ import type { StanPrzegladania } from './stan-przegladania';
 
 /**
  * Panel akcji Notes Panel po stronie rdzenia: zapis notatki, otwarcie źródła
- * powiązanego i przekazanie notatek do Research albo Library.
- *
- * Jedna odpowiedzialność: rozmowa z rdzeniem w imieniu panelu notatek. Panel
- * składa formularz i wykaz; tutaj mieszka to, co dzieje się po naciśnięciu.
- *
- * Zdanie końcowe każdej czynności powstaje z odpowiedzi rdzenia
- * (`skutek-zapisu.ts`), nie z treści żądania: zapis notatki opisuje jej postać
- * po zapisie, a `context.transfer` oddaje okno docelowe wraz z jego modułem
- * i znacznikiem `transferred`.
+ * powiązanego i przekazanie notatek do modułu Research albo Library. Jedyną
+ * odpowiedzialnością pliku jest rozmowa z rdzeniem w imieniu panelu notatek.
  */
 export interface TrescNotatki {
   tresc: string;
@@ -52,9 +45,7 @@ export function utworzCzynnosciNotatek(
         powiedz(opisOdmowy('Zapis notatki', wynik.blad?.code, wynik.blad?.message), false);
         return false;
       }
-      // Wykaz dopisujemy także wtedy, gdy postać zapisana rozjeżdża się
-      // z wysłaną: notatka w rdzeniu jest i widok ma pokazać jej prawdziwą
-      // postać obok zdania o rozjeździe.
+      // Wykaz dopisuje się także przy rozjeździe postaci zapisanej z wysłaną.
       stan.zebrane.dopiszNotatke(wynik.wynik.note);
       const skutek = skutekZapisuNotatki(wynik.wynik.note, zapis);
       powiedz(skutek.zdanie, skutek.udany);
@@ -105,7 +96,11 @@ export function utworzCzynnosciNotatek(
   };
 }
 
-/** Źródła powiązane z notatkami, bez powtórzeń — ładunek `knowledgeSourceIds`. */
+/**
+ * Źródła powiązane z notatkami, bez powtórzeń; wynik idzie do ładunku pola
+ * `knowledgeSourceIds`. Powtórzone źródło kazałoby rdzeniowi wiązać to samo
+ * miejsce dwa razy, więc zbiór odsiewa je przed wysłaniem.
+ */
 function zrodlaNotatek(notatki: readonly BrowserNote[]): string[] {
   const zebrane = new Set<string>();
   for (const notatka of notatki) {

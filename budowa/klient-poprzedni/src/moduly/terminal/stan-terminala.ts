@@ -4,16 +4,7 @@ import { utworzBuforWyjscia, type BuforWyjscia } from './bufor-wyjscia';
 import type { ZrodloTerminala } from './zrodlo-terminala';
 
 /**
- * Stan modułu Terminal — jedna prawda dla trzech okien operacyjnych.
- *
- * Karty otwiera Terminal Tabs, procesy kończy Process Monitor, a wyjście zbiera
- * Output Console — wszystkie trzy patrzą na ten sam przebieg. Gdyby każde okno
- * trzymało własny wykaz, zakończenie procesu w monitorze nie zgasłoby w konsoli,
- * a karta zamknięta w oknie wiodącym dalej przyjmowałaby polecenia.
- *
- * Okna monitorujące żyją ze zdarzeń, nie z odpytywania: `terminal.process.changed`
- * i `stream.chunk` wchodzą tutaj i stąd budzą okna. Odczyt `terminal.process.list`
- * służy wyłącznie pierwszemu wypełnieniu i wznowieniu po rozłączeniu.
+ * Stan modułu Terminal jest jedną prawdą dla trzech okien operacyjnych: kart, procesów i wyjścia, budzonych zdarzeniami, a nie odpytywaniem.
  */
 export interface StanTerminala {
   /** Okno komunikacji, w którym pracuje moduł. */
@@ -52,7 +43,9 @@ export interface StanTerminala {
   zamknij(): void;
 }
 
-/** Zależności stanu. */
+/**
+ * Zależności stanu modułu Terminal: rejestr otwartych procesów, bufor wyjścia i źródło zdarzeń terminala.
+ */
 export interface OpcjeStanu {
   /** Okno komunikacji modułu — bez niego nie ma czego otworzyć. */
   okno: string;
@@ -80,9 +73,7 @@ export function utworzStanTerminala(zrodlo: ZrodloTerminala, opcje: OpcjeStanu):
   });
 
   const odsubskrybujWyjscie = zrodlo.naFragmentWyjscia((tresc, koperta) => {
-    // Strumień jest wspólny dla całej platformy: jadą nim także
-    // odpowiedzi modelu. Do konsoli wchodzi wyłącznie fragment procesu, który
-    // moduł zna z rejestru rdzenia — inaczej okno pokazywałoby cudzą rozmowę.
+    // Strumień jest wspólny dla platformy; do konsoli wchodzi wyłącznie fragment znanego procesu.
     if (tresc.windowId !== opcje.okno || !procesy.has(tresc.messageId)) return;
     const dopisane = bufor.dopisz(
       tresc.messageId,
@@ -138,15 +129,7 @@ export function utworzStanTerminala(zrodlo: ZrodloTerminala, opcje: OpcjeStanu):
 }
 
 /**
- * Karty okna: wykaz, ognisko, przypięcia i ostatnie polecenia.
- *
- * Podzbiór domyka się sam — zamknięcie karty gasi jej przypięcie i jej polecenie
- * w jednym miejscu. Rejestr nie zna ani rdzenia, ani bufora, ani subskrypcji;
- * zmianę melduje przekazanym `powiadom`.
- *
- * `zapamietajPolecenie` nie melduje zmiany: ostatnie polecenie jest nośnikiem
- * czynności „uruchom ponownie”, a nie treścią okna, więc budzenie okien przy
- * każdym zapisie przerysowywałoby konsolę bez powodu.
+ * Karty okna terminala: wykaz otwartych kart, ognisko, przypięcia i ostatnio wykonane polecenia każdej z nich.
  */
 interface RejestrKart {
   karty(): readonly TerminalSession[];
@@ -172,10 +155,7 @@ function utworzRejestrKart(powiadom: () => void): RejestrKart {
 
     kartaBiezaca: () => karty.find((karta) => karta.id === biezaca) ?? null,
 
-    // Ognisko wolno przestawić wyłącznie na kartę, którą widok zna. Wykaz
-    // procesów przychodzi z rdzenia i niesie karty spoza tego widoku (z innej
-    // sesji, sprzed zamknięcia karty); ustawienie ogniska na taki identyfikator
-    // zostawiłoby okno wiodące bez karty bieżącej mimo otwartych kart.
+    // Ognisko wolno przestawić wyłącznie na kartę znaną temu widokowi, nie na kartę z innej sesji.
     ustawKarte(idKarty) {
       if (biezaca === idKarty) return true;
       if (!karty.some((karta) => karta.id === idKarty)) return false;

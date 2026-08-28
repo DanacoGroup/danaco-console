@@ -1,10 +1,8 @@
 /*
- * Warstwa wizualna modułu Library: rozkład pięciu okien, pięć postaci wykazu
- * plików, wykaz wersji, panel metadanych i znakowanie faz stanu. Ani jednej
- * barwy zapisanej wprost — wartości pochodzą z żetonów motywu, a wygląd
- * kontrolek z biblioteki `dn-*`. Kontrolki formularza biorą się
- * z `modele/kontrolki-formularza`, więc moduł wciąga też `modele.css` —
- * inaczej pola `dm-*` byłyby bez oprawy.
+ * Warstwa wizualna modułu Library: rozkład okien, wykaz plików i wersji,
+ * panel metadanych, znakowanie faz stanu. Barwy pochodzą z żetonów motywu.
+ * Import `modele.css` zapewnia oprawę kontrolek `dm-*` z biblioteki
+ * kontrolek formularza.
  */
 
 @import '../../modele/modele.css';

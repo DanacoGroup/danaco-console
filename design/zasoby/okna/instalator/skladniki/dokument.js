@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — DOKUMENT OSADZONY
-   ----------------------------------------------------------------------------
+/* Składnik dokumentu osadzonego wyświetla w całości akt prawny albo instrukcję w polu przewijanym o stałej wysokości, pobierając treść z rejestru.
+
    Akt prawny albo instrukcja wyświetlana w całości w polu przewijanym o stałej
    wysokości. Treść NIE stoi w znaczniku — składnik bierze ją z rejestru treści
    `window.DanacoTresci`, który wypełniają wpięte pliki treści. Dokument ma więc
@@ -13,8 +12,7 @@
    Właściwości:
      zrodlo     nazwa pozycji w rejestrze `window.DanacoTresci`
      etykieta   klucz katalogu — nazwa obszaru dla czytnika ekranu
-     rosnace    true — pole bierze całą wolną wysokość kroku
-   ============================================================================ */
+     rosnace    true — pole bierze całą wolną wysokość kroku */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

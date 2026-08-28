@@ -1,20 +1,4 @@
-// Odpowiedzialność pliku: zasilanie indeksu treści modułu Library — co z bajtów
-// pliku trafia do indeksu pełnotekstowego FTS5 i kiedy. Samo wyszukiwanie leży
-// po stronie danych (`dane/biblioteka_indeks_tresci.go`, `Szukaj`); tu jest
-// odczyt treści spod odwołania i rozstrzygnięcie, czy to w ogóle jest tekst.
-//
-// Indeks zasila się przy zapisie, nie przy odczycie: skanowanie blobów przy
-// każdym żądaniu wyszukiwania otwierałoby wszystkie pliki repozytorium na każde
-// naciśnięcie klawisza w Library Explorerze, a koszt rósłby z rozmiarem
-// biblioteki zamiast z liczbą trafień. Wpięcia są trzy i wszystkie tam, gdzie
-// zmienia się treść bieżąca pliku: `Wgraj`, `DolozWersje`, `PrzywrocWersje`.
-//
-// Nieudane zaindeksowanie nie jest odmową komendy. W chwili indeksowania bajty
-// leżą już na nośniku, a wiersz pliku w bazie; odmowa dawałaby błąd przy pliku,
-// który jest wgrany i widoczny w wykazie. Brak wiersza indeksu odbiera tylko
-// trafność wyszukiwania po treści — nazwa dopasowuje się dalej, bo `Szukaj`
-// trzyma oba człony w alternatywie. Niepowodzenie idzie więc do dziennika
-// rdzenia, a komenda kończy się powodzeniem.
+// Plik obsługuje zasilanie indeksu treści modułu Library: co z bajtów pliku trafia do indeksu FTS5 i kiedy. Wyszukiwanie leży po stronie danych (`dane/biblioteka_indeks_tresci.go`); tu jest odczyt treści i rozstrzygnięcie, czy to tekst.
 package core
 
 import (
@@ -28,11 +12,7 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// granicaIndeksowaniaTresci obcina wyciąg indeksowany z jednego pliku.
-// Megabajt tekstu to kilkaset stron; bez tej granicy jeden plik dziennika na
-// kilka gigabajtów wciągnąłby się do bazy w całości. To granica indeksu, nie
-// treści: bajty pozostają na nośniku nietknięte, a podgląd i wersje czytają je
-// dalej w całości.
+// granicaIndeksowaniaTresci obcina wyciąg indeksowany z jednego pliku. Megabajt tekstu to kilkaset stron; bez granicy plik na kilka gigabajtów wciągnąłby się do bazy w całości. To granica indeksu, nie treści: bajty pozostają na nośniku nietknięte.
 const granicaIndeksowaniaTresci = 1 << 20
 
 // zaindeksujTresc odczytuje treść spod odwołania pliku i podmienia jego wyciąg
@@ -46,25 +26,13 @@ func (a *adapterBiblioteki) zaindeksujTresc(ctx context.Context, plik dane.PlikB
 	if plik.TrescOdwolanie != nil && *plik.TrescOdwolanie != "" {
 		wyciag = wyciagTekstowy(*plik.TrescOdwolanie)
 	}
-	// Wyciąg pusty (treść nietekstowa albo plik bez treści) zdejmuje wiersz
-	// z indeksu — inaczej plik, którego nową wersją jest obraz, trafiałby
-	// nadal we frazy z treści poprzedniej, tekstowej.
+	// Wyciąg pusty zdejmuje wiersz z indeksu, inaczej obraz trafiałby we frazy treści poprzedniej.
 	if err := a.repozytorium.ZapiszIndeksTresci(ctx, plik.ID, wyciag); err != nil {
 		log.Printf("moduł Library: nie można zaindeksować treści pliku %s: %v", plik.Kod, err)
 	}
 }
 
-// wyciagTekstowy oddaje początek treści pliku jako tekst do zaindeksowania,
-// a dla treści, która tekstem nie jest, oddaje pustkę.
-//
-// Rozstrzyga treść, nie typ MIME: `mimeType` jest polem żądania i bywa go brak
-// albo bywa niezgodny z bajtami, więc indeks oparty na tej deklaracji wpuściłby
-// bajty obrazu jako tekst. Treść z bajtem zerowym albo z niepoprawnym UTF-8 nie
-// jest tekstem i nie ma czego wnieść do wyszukiwania po słowach.
-//
-// Nieczytelne odwołanie oddaje pustkę bez zgłaszania błędu: sprawa czytelności
-// treści należy do podglądu (`trescPodgladuBiblioteki`, odmowa wprost), a nie
-// do zasilania indeksu, które komendy nie wywraca.
+// wyciagTekstowy oddaje początek treści pliku jako tekst do zaindeksowania, a dla treści, która tekstem nie jest, oddaje pustkę. Rozstrzyga treść, nie typ MIME, bo pole to bywa nieobecne albo niezgodne z bajtami.
 func wyciagTekstowy(odwolanie string) string {
 	plik, err := os.Open(odwolanie)
 	if err != nil {
@@ -83,9 +51,7 @@ func wyciagTekstowy(odwolanie string) string {
 			return ""
 		}
 	}
-	// Obcięcie granicą mogło rozciąć ostatni znak wielobajtowy — sam ogon
-	// znaku nie jest „niepoprawnym UTF-8" pliku, tylko skutkiem naszego cięcia,
-	// więc odpada przed rozstrzygnięciem, czy treść jest tekstem.
+	// Obcięcie granicą mogło rozciąć ostatni znak wielobajtowy — to skutek cięcia, nie błędu UTF-8 pliku.
 	bajty = bezObcietegoZnaku(bajty)
 	if !utf8.Valid(bajty) {
 		return ""

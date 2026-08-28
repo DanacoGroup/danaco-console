@@ -1,20 +1,10 @@
 import { elementIkony } from '../ikony/ikony';
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 
-/** Liczba ustawień okna pokazywana przy uchwycie. */
+/** Liczba ustawień okna pokazywana przy uchwycie szuflady jako plakietka sygnałowa z liczbą pozycji podsumowania. */
 const LICZBA_USTAWIEN = 8;
 
-/**
- * Szuflada sterowania — oprawa, która czyni kontrolki widocznymi.
- *
- * Zwinięta pokazuje podsumowanie ośmiu wartości, rozwinięta — komplet
- * kontrolek z katalogu `sterowanie/`. Zwijanie nie jest blokadą: żaden
- * element nie traci klikalności, zmienia się wyłącznie to, która warstwa
- * zajmuje miejsce. Uchwyt pozostaje czynny w każdym stanie.
- *
- * Stan szuflady jest ogłaszany magistralą, więc uchwyt paska górnego
- * i uchwyt panelu pokazują tę samą prawdę, zamiast każdy swoją.
- */
+/** Szuflada sterowania jest oprawą czyniącą kontrolki widocznymi: zwinięta pokazuje podsumowanie wartości, rozwinięta — komplet kontrolek, a stan ogłasza magistralą wspólną dla obu uchwytów. */
 export interface Szuflada {
   /** Element montowany w kolumnie sterowania. */
   element: HTMLElement;
@@ -28,7 +18,7 @@ export interface Szuflada {
   naZmiane(sluchacz: (otwarta: boolean) => void): Odsubskrybuj;
 }
 
-/** Warstwy szuflady: odczyt widoczny po zwinięciu i kontrolki po rozwinięciu. */
+/** Warstwy szuflady: podsumowanie widoczne po zwinięciu oraz komplet kontrolek widoczny po rozwinięciu, powiązane wspólnym identyfikatorem okna. */
 export interface WarstwySzuflady {
   /** Podsumowanie ośmiu wartości — warstwa zwiniętej szuflady. */
   podsumowanie: HTMLElement;
@@ -82,8 +72,7 @@ export function utworzSzuflade(warstwy: WarstwySzuflady): Szuflada {
 
   uchwyt.addEventListener('click', () => ustaw(!otwarta));
 
-  // Klawisz wyjścia zwija szufladę i wraca ogniskiem na uchwyt. Nie zamyka
-  // niczego nieodwracalnie — komplet kontrolek jest o jedno naciśnięcie stąd.
+  // Klawisz wyjścia zwija szufladę i wraca ogniskiem na uchwyt, bez trwałego zamknięcia.
   element.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.key !== 'Escape' || !otwarta) return;
     ustaw(false);

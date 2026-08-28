@@ -1,22 +1,5 @@
 // Jedna prawda o tym, co Operator czyta, gdy zewnętrzny dostawca odmówi
 // kanałowi modelu — i o tym, skąd kanał bierze poświadczenie.
-//
-// Surowe ciało odpowiedzi dostawcy nie jest komunikatem: nie mówi, czy to odmowa
-// uwierzytelnienia, wyczerpany limit, zły model czy awaria dostawcy (wszystkie
-// wracają tą samą drogą), nie mówi, którego poświadczenia kanał użył — sejf ma
-// wiele wpisów, a odwołanie bywa też nazwą zmiennej środowiskowej — i nie mówi,
-// co z tym zrobić. Operator z dwoma kontami u jednego dostawcy nie ma z takiego
-// zdania jak zgadnąć, który klucz wygasł.
-//
-// Plik rozpoznaje i nazywa: bierze odwołanie (nie sekret), kod stanu i to, co
-// powiedział dostawca, a oddaje zdanie dla człowieka. Odwołania nie rozwiązuje
-// i sejfu nie dotyka — robi to `models.poswiadczenieZOdwolania`, bo kanały
-// powstają fabryką z wiersza rejestru i sejf mają uchwytem pakietowym.
-//
-// Sekret przez ten plik nie przechodzi: wchodzi odwołanie — nazwa wpisu sejfu
-// albo nazwa zmiennej — nigdy wartość. `BezSekretu` jest siatką bezpieczeństwa
-// na drugą stronę: dostawcy wklejają fragment klucza we własny komunikat, a ten
-// komunikat idzie Operatorowi i do dziennika.
 package zewnetrzne
 
 import (
@@ -26,20 +9,21 @@ import (
 	"strings"
 )
 
-// PrzedrostekSejfu znakuje odwołanie wskazujące wpis sejfu poświadczeń, a nie
-// zmienną środowiskową. Napis jest ten sam, którym sejf znakuje zapis
-// (`dane.przedrostekOdwolania`) i którym rozpoznaje go kanał API
-// (`models.przedrostekSejfu`) — to format przenoszony bazą, nie importowany typ.
+// PrzedrostekSejfu znakuje odwołanie wskazujące wpis sejfu poświadczeń,
+// a nie zmienną środowiskową otoczenia procesu.
 const PrzedrostekSejfu = "sejf:"
 
 // Rodzaje źródła poświadczenia. Wartości są częścią zdania dla Operatora, więc
 // brzmią po polsku i w dopełniaczu — wchodzą w „poświadczeniem z ...".
 const (
-	// ZrodloSejf — odwołanie wskazuje wpis sejfu poświadczeń.
+	// ZrodloSejf — odwołanie wskazuje wpis sejfu poświadczeń, a nie nazwę
+	// zmiennej środowiskowej otoczenia procesu.
 	ZrodloSejf = "sejf"
-	// ZrodloSrodowisko — odwołanie jest nazwą zmiennej środowiskowej.
+	// ZrodloSrodowisko — odwołanie jest nazwą zmiennej środowiskowej,
+	// odczytywanej z otoczenia procesu w chwili wywołania.
 	ZrodloSrodowisko = "środowisko"
-	// ZrodloBrak — kanał nie ma odwołania; punkt końcowy bez uwierzytelnienia.
+	// ZrodloBrak — kanał nie ma żadnego odwołania; punkt końcowy działa bez
+	// uwierzytelnienia po stronie dostawcy.
 	ZrodloBrak = "brak"
 )
 
@@ -53,8 +37,7 @@ type Poswiadczenie struct {
 	// Zrodlo mówi, jaką drogą odwołanie się rozwiązuje: ZrodloSejf,
 	// ZrodloSrodowisko albo ZrodloBrak.
 	Zrodlo string
-	// Byt jest nazwą samego wpisu — bez przedrostka sejfu. Dla drogi
-	// środowiskowej równa się nazwie zmiennej.
+	// Byt jest nazwą samego wpisu, bez przedrostka sejfu.
 	Byt string
 }
 
@@ -94,20 +77,11 @@ func (p Poswiadczenie) Opis() string {
 }
 
 // WskazanieOdwolania nazywa miejsce, w którym Operator przestawia odwołanie
-// kanału.
-//
-// Kontrakt nie ma pierwszorzędnego pola na odwołanie: `ChannelUpdateRequest`
-// niesie name/model/enabled/config, a odwołanie jedzie parametrem
-// `credentialRef` wewnątrz `config` (`core/adapter_kanaly.go`,
-// `kluczOdwolaniaKanalu`). Samo „użyj channel.update" wysłałoby Operatora
-// szukać pola, którego w żądaniu nie ma.
+// kanału — parametr wewnątrz pola konfiguracji, nie osobne pole żądania.
 const WskazanieOdwolania = "channel.update (pole config, klucz „credentialRef”)"
 
 // Naprawa mówi, co zrobić, żeby poświadczenie znów było ważne — komendami,
-// które kontrakt rzeczywiście ma. Wpis sejfu konta zakłada i nadpisuje
-// `account.add` / `account.update` polem `credential` (bytem sejfu jest nazwa
-// konta, `core/handlers_konta_adapter.go`); wskazanie kanałowi innego odwołania
-// robi `channel.update`.
+// które kontrakt rzeczywiście ma.
 func (p Poswiadczenie) Naprawa() string {
 	switch p.Zrodlo {
 	case ZrodloSejf:
@@ -128,25 +102,31 @@ func (p Poswiadczenie) Naprawa() string {
 }
 
 // Rodzaje odmowy dostawcy. Rozróżnienie istnieje po to, żeby Operator nie
-// szukał złego klucza, gdy skończyły się środki, i nie doładowywał konta, gdy
-// klucz jest odwołany — jedną drogą (kodem stanu HTTP) wracają rzeczy, które
-// naprawia się zupełnie inaczej.
+// szukał złego klucza, gdy skończyły się środki, i nie doładowywał konta,
+// gdy klucz jest odwołany.
 const (
-	// OdmowaUwierzytelnienia — 401: dostawca nie uznał poświadczenia.
+	// OdmowaUwierzytelnienia — kod stanu 401: dostawca nie uznał podanego
+	// poświadczenia za ważne w tym żądaniu.
 	OdmowaUwierzytelnienia = "uwierzytelnienie"
-	// OdmowaUprawnienia — 403: poświadczenie uznane, czynność niedozwolona.
+	// OdmowaUprawnienia — kod stanu 403: poświadczenie zostało uznane, ale
+	// sama czynność jest niedozwolona.
 	OdmowaUprawnienia = "uprawnienie"
-	// OdmowaPlatnosci — 402: konto bez środków albo bez czynnego abonamentu.
+	// OdmowaPlatnosci — kod stanu 402: konto dostawcy jest bez środków albo
+	// bez czynnego, opłaconego abonamentu.
 	OdmowaPlatnosci = "płatność"
-	// OdmowaNatezenia — 429: przekroczone natężenie albo przydział.
+	// OdmowaNatezenia — kod stanu 429: przekroczone dopuszczalne natężenie
+	// żądań albo przyznany przydział.
 	OdmowaNatezenia = "natężenie"
-	// OdmowaPoDostawcy — 5xx: usterka po stronie dostawcy.
+	// OdmowaPoDostawcy — kody stanu 5xx: usterka leży po stronie zewnętrznego
+	// dostawcy, nie samego kanału.
 	OdmowaPoDostawcy = "dostawca"
-	// OdmowaZadania — pozostałe: żądanie odrzucone co do treści.
+	// OdmowaZadania — pozostałe kody: żądanie zostało odrzucone co do swojej
+	// treści, nie z powodu poświadczenia.
 	OdmowaZadania = "żądanie"
 )
 
-// RodzajOdmowy przekłada kod stanu na rodzaj odmowy.
+// RodzajOdmowy przekłada kod stanu odpowiedzi dostawcy na rodzaj odmowy,
+// znany dalszym warstwom rdzenia.
 func RodzajOdmowy(status int) string {
 	switch {
 	case status == http.StatusUnauthorized:
@@ -176,8 +156,8 @@ func dotyczyPoswiadczenia(rodzaj string) bool {
 	}
 }
 
-// naglowekOdmowy jest pierwszym zdaniem komunikatu — mówi, co się stało, zanim
-// padnie którykolwiek szczegół.
+// naglowekOdmowy jest pierwszym zdaniem komunikatu dla Operatora — mówi, co
+// się stało, zanim padnie którykolwiek szczegół sprawy.
 func naglowekOdmowy(rodzaj string) string {
 	switch rodzaj {
 	case OdmowaUwierzytelnienia:
@@ -219,12 +199,7 @@ func naprawaOdmowy(rodzaj string, p Poswiadczenie) string {
 }
 
 // OdmowaKanaluZewnetrznego jest odmową zewnętrznego dostawcy w postaci, którą
-// Operator umie przeczytać, a rdzeń rozpoznać.
-//
-// Jest osobnym typem, a nie wynikiem `errors.New`, żeby warstwa wyżej mogła
-// zapytać przez `errors.As`, czy zawiodło poświadczenie (i wtedy nie ponawiać
-// z tym samym kluczem), czy dostawca ma chwilową usterkę. Napis sklejony
-// w miejscu wywołania tej wiedzy nie niesie.
+// Operator umie przeczytać, a rdzeń rozpoznać po typie, nie po treści napisu.
 type OdmowaKanaluZewnetrznego struct {
 	// Kanal jest kodem kanału z wiersza rejestru.
 	Kanal string
@@ -241,9 +216,7 @@ type OdmowaKanaluZewnetrznego struct {
 
 // NowaOdmowaKanaluZewnetrznego składa odmowę z tego, co kanał ma pod ręką
 // w chwili niepowodzenia: kodu kanału, odwołania z wiersza, kodu stanu i ciała
-// odpowiedzi. Sekret podaje się wyłącznie po to, by wyciąć go z komunikatu
-// dostawcy; nigdzie nie jest zapisywany. Wołający bez sekretu pod ręką podaje
-// pusty napis.
+// odpowiedzi.
 func NowaOdmowaKanaluZewnetrznego(kanal, odwolanie string, status int,
 	cialoOdpowiedzi []byte, sekret string) *OdmowaKanaluZewnetrznego {
 
@@ -258,9 +231,7 @@ func NowaOdmowaKanaluZewnetrznego(kanal, odwolanie string, status int,
 }
 
 // ZKomunikatem podmienia komunikat dostawcy na wyjęty ścieżką z wiersza
-// rejestru (parametr `sciezka_bledu`). Wiersz zna kształt odpowiedzi swojego
-// dostawcy lepiej niż rozpoznanie ogólne, więc gdy ścieżka coś dała — wygrywa.
-// Pusty napis nie podmienia niczego: gorszy komunikat nie ma wypierać lepszego.
+// rejestru. Pusty napis nie podmienia niczego.
 func (o *OdmowaKanaluZewnetrznego) ZKomunikatem(komunikat, sekret string) *OdmowaKanaluZewnetrznego {
 	if oczyszczony := BezSekretu(strings.TrimSpace(komunikat), sekret); oczyszczony != "" {
 		o.KomunikatDostawcy = oczyszczony
@@ -268,7 +239,8 @@ func (o *OdmowaKanaluZewnetrznego) ZKomunikatem(komunikat, sekret string) *Odmow
 	return o
 }
 
-// DotyczyPoswiadczenia mówi wołającemu, czy tę odmowę naprawia się kluczem.
+// DotyczyPoswiadczenia mówi wołającemu, czy tę odmowę naprawia się kluczem,
+// czy przyczyna leży całkiem gdzie indziej.
 func (o *OdmowaKanaluZewnetrznego) DotyczyPoswiadczenia() bool {
 	return dotyczyPoswiadczenia(o.Rodzaj)
 }
@@ -294,18 +266,12 @@ func (o *OdmowaKanaluZewnetrznego) Error() string {
 // zalewa Operatora i dziennik.
 const granicaKomunikatu = 400
 
-// kluczeKomunikatu są miejscami, w których dostawcy trzymają zdanie o błędzie.
-// Kolejność jest kolejnością szukania: od najbardziej szczegółowego.
+// kluczeKomunikatu są miejscami, w których dostawcy trzymają zdanie o błędzie,
+// a kolejność jest kolejnością szukania: od najbardziej szczegółowego.
 var kluczeKomunikatu = []string{"message", "error_description", "detail", "error", "msg"}
 
 // KomunikatZCiala wyjmuje z ciała odpowiedzi zdanie, które dostawca powiedział
-// o sobie sam.
-//
-// Ścieżka z wiersza rejestru (`sciezka_bledu`) bywa nieustawiona, a wtedy bez
-// rozpoznania Operatorowi szłoby całe surowe ciało JSON. Rozpoznanie ogólne
-// łapie kształty, w których błąd zwracają dostawcy zgodni z OpenAI, Anthropic
-// i większość bram API. Gdy wiersz ścieżkę ma, i tak wygrywa (ZKomunikatem) —
-// to jest wartość zapasowa, nie druga prawda.
+// o sobie sam, gdy wiersz rejestru nie wskazuje własnej ścieżki błędu.
 func KomunikatZCiala(cialo []byte) string {
 	tresc := strings.TrimSpace(string(cialo))
 	if tresc == "" {
@@ -328,11 +294,12 @@ func zJsonu(cialo []byte) string {
 	return szukajKomunikatu(rozebrane, 0)
 }
 
-// glebokoscSzukania ogranicza schodzenie w głąb odpowiedzi. Bez granicy głęboko
-// zagnieżdżona (albo złośliwie zbudowana) odpowiedź kosztowałaby stos.
+// glebokoscSzukania ogranicza schodzenie w głąb odpowiedzi, żeby zagnieżdżona
+// albo złośliwie zbudowana odpowiedź nie kosztowała stosu wywołań.
 const glebokoscSzukania = 6
 
-// szukajKomunikatu przegląda rozebrany JSON w poszukiwaniu zdania o błędzie.
+// szukajKomunikatu przegląda rozebrany zapis JSON w poszukiwaniu zdania
+// o błędzie, schodząc rekurencyjnie w głąb struktury.
 func szukajKomunikatu(wezel any, glebokosc int) string {
 	if glebokosc > glebokoscSzukania {
 		return ""
@@ -368,7 +335,8 @@ func zObiektu(obiekt map[string]any, glebokosc int) string {
 	return ""
 }
 
-// skroc przycina komunikat do granicy, zostawiając znak, że coś ucięto.
+// skroc przycina komunikat do granicy długości, zostawiając na końcu znak,
+// że dalsza treść została ucięta.
 func skroc(tresc string) string {
 	if len(tresc) <= granicaKomunikatu {
 		return tresc
@@ -380,16 +348,8 @@ func skroc(tresc string) string {
 // niż pożytku: krótki napis trafiłby w zwykłe słowo komunikatu i zamazał je.
 const najkrotszySekret = 8
 
-// BezSekretu wycina wartość klucza z tekstu idącego do Operatora i do dziennika.
-//
-// Po co, skoro sekretu tu nie ma. Bo przychodzi z drugiej strony: dostawcy
-// wklejają klucz (bywa, że w całości) we własny komunikat błędu, a ten komunikat
-// jedzie dalej jako treść odmowy. Sekret w dzienniku jest sekretem ujawnionym,
-// a nikt nie zauważy tego przy zwykłej pracy.
-//
-// Wycina także sam klucz z wartości nagłówka. Wołający ma pod ręką zwykle całe
-// „Bearer sk-…", a dostawca cytuje samo „sk-…" — porównanie wprost chybiłoby.
-// Klucze nie mają spacji, więc człon po ostatniej spacji jest kluczem.
+// BezSekretu wycina wartość klucza z tekstu idącego do Operatora i do dziennika,
+// choć sekretu tu formalnie nie ma.
 func BezSekretu(tekst, sekret string) string {
 	if tekst == "" {
 		return tekst
@@ -418,12 +378,6 @@ func kandydaciSekretu(sekret string) []string {
 
 // SekretZOdpowiedzi odzyskuje wartość klucza z żądania, które tę odpowiedź
 // wywołało — po to i tylko po to, żeby ją z komunikatu wyciąć.
-//
-// Dlaczego tą drogą, a nie argumentem z góry. Kanał rozwiązuje odwołanie przy
-// budowie żądania i sekretu nigdzie nie odkłada — i dobrze, bo każde miejsce
-// przechowania jest miejscem wycieku. `http.Response.Request` niesie
-// wysłane żądanie, więc wartość jest pod ręką dokładnie tam, gdzie potrzebna,
-// i nie przechodzi przez żadne pole ani zmienną po drodze.
 func SekretZOdpowiedzi(odpowiedz *http.Response, nazwaNaglowka string) string {
 	if odpowiedz == nil || odpowiedz.Request == nil {
 		return ""

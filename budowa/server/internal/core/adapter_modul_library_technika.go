@@ -1,26 +1,7 @@
-// Moduł Library — metadane osadzone w pliku: rodzaj treści rozpoznany
-// z zawartości, wymiary obrazu, liczba stron dokumentu, czas trwania nagrania
-// oraz EXIF wraz ze współrzędnymi GPS, IPTC, XMP i ID3.
-//
-// Odczyt wchodzi wyłącznie na wyraźne żądanie (`includeTechnical`), bo otwiera
-// bajty zasobu — przy wykazie kilkuset plików byłby to koszt, którego wykaz nie
-// potrzebuje.
-//
-// Skąd co pochodzi:
-//   - rodzaj treści — z zawartości, nie z rozszerzenia (`http.DetectContentType`),
-//   - wymiary obrazu — z nagłówka formatu (`image.DecodeConfig`), bez dekodowania
-//     całego obrazu do pamięci,
-//   - liczba stron dokumentu — z `pdfcpu`, biblioteki wkompilowanej w binarium,
-//   - EXIF i GPS — z własnego czytnika niżej: to kilkadziesiąt wierszy pracy na
-//     strukturze TIFF, a nie powód, żeby wciągać zależność,
-//   - czas trwania nagrania — z `ffprobe`, który stoi na serwerze razem
-//     z rdzeniem i jest wołany jedyną dozwoloną drogą (`zewnetrzne.Wolaj`),
-//   - IPTC, XMP i ID3 — z `exiftool`, tą samą drogą. Te trzy nie są jedną
-//     strukturą jak EXIF, więc czytnik własny nie wchodzi w rachubę; powód
-//     stoi przy `dopiszMetadaneOsadzone`.
-//
-// Współrzędne GPS są jedynym źródłem widoku mapy w Library Explorer — bez nich
-// widok nie ma czego nanieść, więc czytnik EXIF ma je wprost, a nie „kiedyś".
+// Moduł Library czyta metadane osadzone w bajtach zasobu: rodzaj treści,
+// wymiary, liczba stron, czas nagrania, EXIF z GPS oraz IPTC, XMP i ID3.
+// Odczyt wchodzi na żądanie, bo otwiera bajty zasobu, a przy wykazie wielu
+// plików byłby kosztowny.
 package core
 
 import (
@@ -48,11 +29,11 @@ import (
 )
 
 // errPustyObrazBiblioteki nazywa obraz bez ani jednego punktu — odcisk nie ma
-// wtedy z czego powstać.
+// wtedy z czego powstać, więc dalszy odczyt metadanych kończy się tym błędem.
 var errPustyObrazBiblioteki = errors.New("moduł Library: obraz bez punktów")
 
-// granicaPomiaruNagrania — `ffprobe` czyta nagłówki, nie materiał, więc granica
-// jest krótka.
+// granicaPomiaruNagrania ogranicza czas wywołania `ffprobe` — program czyta
+// tylko nagłówki, nie materiał, więc granica pozostaje krótka.
 const granicaPomiaruNagrania = 20 * time.Second
 
 // narzedziePomiaruBiblioteki opisuje binarium arsenału używane do pomiaru
@@ -73,11 +54,9 @@ var narzedzieMetadanychBiblioteki = zewnetrzne.Narzedzie{
 	Nazwa: "ExifTool", Program: "exiftool", Pakiet: "libimage-exiftool-perl",
 }
 
-// metadaneTechniczne czyta metadane osadzone w bajtach zasobu.
-//
-// Odczyt nie odmawia: zasób bez treści pod odwołaniem, format nieznany czy
-// nagłówek uszkodzony oddają mniej pól, a nie błąd całej komendy. Opis zasobu
-// jest wtedy niepełny i to jest prawda o pliku, nie usterka rdzenia.
+// metadaneTechniczne czyta metadane osadzone w bajtach zasobu. Odczyt nie
+// odmawia: zasób bez treści, format nieznany czy nagłówek uszkodzony oddają
+// mniej pól, a nie błąd całej komendy — opis jest wtedy niepełny, nie błędny.
 func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *shared.LibraryTechnicalMetadata {
 	if zasob.TrescOdwolanie == nil || *zasob.TrescOdwolanie == "" {
 		return nil
@@ -117,24 +96,10 @@ func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *share
 	return techniczne
 }
 
-// dopiszMetadaneOsadzone wypełnia trzy pola kontraktu, których czytnik wyżej nie
-// umie przeczytać: IPTC, XMP i ID3.
-//
-// ── Dlaczego programem, skoro EXIF czyta czytnik własny ─────────────────────
-// EXIF jest jedną strukturą TIFF i mieści się w kilkudziesięciu wierszach — to
-// jest powód, dla którego stoi wyżej jako kod. Pozostałe trzy nie są jedną
-// strukturą: IPTC jest zapisem rekordowym w segmencie APP13, XMP drzewem RDF/XML
-// osadzanym inaczej w każdym formacie kontenera, ID3 dwiema niezgodnymi
-// rodzinami wersji. Napisanie ich od nowa byłoby przepisaniem cudzej pracy
-// wieloletniej, a nie kilkudziesięcioma wierszami — i właśnie takiego przypadku
-// dotyczy druga połowa reguły produktu: nie ma biblioteki, program jest
-// składnikiem pakietu serwera.
-//
-// ── Poszerzenie, nie warunek ────────────────────────────────────────────────
-// Odczyt opisu nie odmawia z żadnego powodu (patrz `metadaneTechniczne`) i ta
-// droga tego nie zmienia: brak programu, plik bez tych metadanych albo
-// odpowiedź, której nie da się rozebrać, zostawiają pola puste. Opis zasobu
-// jest wtedy węższy, a nie błędny — dokładnie tak, jak przy braku `ffprobe`.
+// dopiszMetadaneOsadzone wypełnia trzy pola kontraktu, których czytnik EXIF nie
+// umie przeczytać: IPTC, XMP i ID3, korzystając z `exiftool` jako jedynego
+// programu zdolnego rozebrać te formaty. Brak programu albo metadanych
+// zostawia pola puste, nie błąd.
 func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 	techniczne *shared.LibraryTechnicalMetadata) {
 
@@ -156,10 +121,7 @@ func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
 	}
 
-	// `-g1` grupuje wynik rodziną pierwszą, więc odpowiedź sama mówi, do
-	// którego pola kontraktu należy każdy wpis. Bez grupowania trzeba by wołać
-	// program trzy razy albo zgadywać przynależność po nazwie znacznika.
-	// `-n` wyłącza upiększanie wartości: pole ma nieść to, co stoi w pliku.
+	// `-g1` grupuje wynik rodziną pierwszą; `-n` wyłącza upiększanie wartości pól.
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieMetadanychBiblioteki, []string{
 			"-json", "-n", "-g1", "-IPTC:all", "-XMP:all", "-ID3:all", sciezka,
@@ -168,16 +130,15 @@ func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 		return
 	}
 
-	// Program oddaje tablicę o jednym elemencie na plik — pytamy o jeden plik.
+	// Program oddaje tablicę o jednym elemencie na plik — pytanie dotyczy jednego pliku.
 	var odpowiedz []map[string]json.RawMessage
 	if err := json.Unmarshal(wynik.Wyjscie, &odpowiedz); err != nil || len(odpowiedz) == 0 {
 		return
 	}
 	iptc, xmp, id3 := map[string]json.RawMessage{}, map[string]json.RawMessage{}, map[string]json.RawMessage{}
 	for grupa, wpisy := range odpowiedz[0] {
-		// Nazwy grup rodziny pierwszej niosą wariant zapisu w przyrostku
-		// (`XMP-dc`, `ID3v2_4`), a kontrakt ma po jednym polu na rodzinę —
-		// dlatego rozstrzyga przedrostek, a warianty scalają się w jedno pole.
+		// Wariant zapisu stoi w przyrostku grupy; kontrakt ma jedno pole na
+		// rodzinę, rozstrzyga przedrostek.
 		switch {
 		case strings.HasPrefix(grupa, "IPTC"):
 			iptc[grupa] = wpisy
@@ -202,11 +163,9 @@ func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 	}
 }
 
-// zmierzCzasTrwania woła `ffprobe` dla materiału dźwiękowego i filmowego.
-//
-// Brak binarium nie jest tu odmową: pole czasu trwania po prostu nie wchodzi do
-// odpowiedzi. Materiał niebędący nagraniem nie jest w ogóle mierzony — pomiar
-// dokumentu byłby uruchomieniem procesu bez powodu.
+// zmierzCzasTrwania woła `ffprobe` dla materiału dźwiękowego i filmowego. Brak
+// binarium nie jest odmową: pole czasu trwania po prostu nie wchodzi do
+// odpowiedzi, a materiał niebędący nagraniem nie jest mierzony wcale.
 func (a *adapterBiblioteki) zmierzCzasTrwania(sciezka, rodzaj string) *int {
 	if !strings.HasPrefix(rodzaj, "audio/") && !strings.HasPrefix(rodzaj, "video/") {
 		return nil
@@ -217,9 +176,8 @@ func (a *adapterBiblioteki) zmierzCzasTrwania(sciezka, rodzaj string) *int {
 	ctx, przerwij := context.WithTimeout(context.Background(), granicaPomiaruNagrania)
 	defer przerwij()
 
-	// Zasięg pomiaru jest platformowy — żądanie opisu zasobu okna nie niesie,
-	// bo pyta o plik, nie o okno (ten sam powód co przy rodzinie mediów,
-	// `adapter_narzedzia_media.go`).
+	// Zasięg pomiaru jest platformowy: żądanie dotyczy pliku, nie okna — opis
+	// okna nie niesie znaczenia.
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}
@@ -248,12 +206,8 @@ func (a *adapterBiblioteki) zmierzCzasTrwania(sciezka, rodzaj string) *int {
 	return &milisekundy
 }
 
-// ── Czytnik EXIF ────────────────────────────────────────────────────────────
-//
-// EXIF jest strukturą TIFF osadzoną w segmencie APP1 pliku JPEG albo stojącą
-// wprost na początku pliku TIFF. Czytnik przechodzi katalog główny, katalog EXIF
-// i katalog GPS, biorąc znaczniki, które mówią coś Operatorowi: aparat, czas
-// zdjęcia, parametry naświetlenia i położenie.
+// Czytnik EXIF: struktura TIFF osadzona w segmencie APP1 pliku JPEG albo na
+// początku pliku TIFF.
 
 // znacznikiExifBiblioteki nazywa znaczniki po ludzku — surowy numer znacznika
 // w odpowiedzi byłby danymi bez znaczenia.
@@ -272,6 +226,9 @@ var znacznikiExifBiblioteki = map[uint16]string{
 }
 
 // odczytajExifBiblioteki oddaje wpisy EXIF oraz współrzędne GPS, gdy są.
+// Czytnik przechodzi katalog główny, katalog EXIF i katalog GPS, biorąc
+// znaczniki, które niosą aparat, czas zdjęcia, parametry naświetlenia
+// i położenie.
 func odczytajExifBiblioteki(bajty []byte) (map[string]string, *float64, *float64) {
 	blok := blokTiffBiblioteki(bajty)
 	if len(blok) < 8 {
@@ -299,7 +256,8 @@ func odczytajExifBiblioteki(bajty []byte) (map[string]string, *float64, *float64
 }
 
 // blokTiffBiblioteki wydobywa blok TIFF: z segmentu APP1 pliku JPEG albo
-// z początku pliku TIFF.
+// wprost z początku pliku TIFF, gdy zasób jest zapisany w tym formacie
+// bezpośrednio.
 func blokTiffBiblioteki(bajty []byte) []byte {
 	if bytes.HasPrefix(bajty, []byte{0x49, 0x49, 0x2A, 0x00}) ||
 		bytes.HasPrefix(bajty, []byte{0x4D, 0x4D, 0x00, 0x2A}) {
@@ -451,11 +409,10 @@ func wartoscWpisuExif(blok []byte, kolejnosc binary.ByteOrder, wpis []byte,
 	return blok[przesuniecie : przesuniecie+dlugosc]
 }
 
-// wspolrzedneExif przekłada wpisy GPS na stopnie dziesiętne.
-//
-// EXIF trzyma położenie jako trójkę stopnie-minuty-sekundy wraz z półkulą
-// w osobnym wpisie. Widok mapy potrzebuje liczby, więc przekład jest tutaj, a
-// nie w oknie — inaczej każde okno robiłoby go po swojemu.
+// wspolrzedneExif przekłada wpisy GPS na stopnie dziesiętne. EXIF trzyma
+// położenie jako stopnie-minuty-sekundy wraz z półkulą w osobnym wpisie.
+// Przekład stoi tutaj, a nie w oknie, inaczej każde okno robiłoby go
+// po swojemu.
 func wspolrzedneExif(blok []byte, kolejnosc binary.ByteOrder,
 	gps map[uint16][]byte) (*float64, *float64) {
 

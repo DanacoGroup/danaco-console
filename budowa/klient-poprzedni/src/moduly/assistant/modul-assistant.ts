@@ -17,46 +17,9 @@ import { utworzZrodloNarzedzi, type ZrodloNarzedzi } from './zrodlo-narzedzi';
 import { utworzZrodloPamieci, type ZrodloPamieci } from './zrodlo-pamieci';
 
 /**
- * Moduł Assistant — pięć okien operacyjnych osadzonych w jednym układzie.
- *
- * Układ wynika z roli okna. Voice Console jest oknem wiodącym i punktem wejścia
- * modułu, więc stoi w pasie pierwszym na całą szerokość. Actions Monitor
- * i Activity Feed monitorują ten sam przebieg — zlecenie kończy się w monitorze
- * i wchodzi do dziennika — więc stoją w pasie drugim obok siebie. Memory &
- * Context Manager i Command & Tools Hub zarządzają zasobem, a nie przebiegiem:
- * pamięcią, kontekstami, narzędziami i rutynami. Stoją w pasie trzecim, bo
- * praca w nich poprzedza polecenie albo je przeżywa, a nie towarzyszy mu.
- *
- * Chat Window i Execution Loop Window są oknami wspólnymi platformy i leżą poza
- * tym katalogiem: pas komunikacji montuje scena sesji, ta sama we wszystkich
- * modułach.
- *
- * Cały moduł ma jeden stan: zlecenie założone w Voice Console pojawia się
- * w monitorze bez drugiego odczytu, a wybór zlecenia w monitorze zawęża
- * dziennik. Dwa równoległe stany dałyby dwie prawdy o tym samym zleceniu.
- *
- * Źródła wywołań są trzy, bo trzy są rodziny komend, po które moduł sięga:
- * `zrodlo-assistant.ts` prowadzi obszar `assistant.*` wraz z jego zdarzeniem,
- * `zrodlo-pamieci.ts` — `memory.*` i `knowledge.*`, `zrodlo-narzedzi.ts` —
- * `tools.*`, `session.tool.*` i `automation.*`. Jedno źródło o trzech
- * rodzinach urosłoby do pliku, w którym odmowa pamięci i odmowa harmonogramu
- * leżą obok siebie bez żadnego związku.
- *
- * Wszystkie trzy komendy obszaru `assistant.*` mają uchwyt w rdzeniu; wpina je
- * `zarejestrujAsystenta`
- * (`server/internal/core/adapter_modul_asystent_uchwyty.go`), wołane
- * z `kompozycja.go`, a port `Asystent` wypełnia `montaz_porty.go`. Rdzeń
- * przyjmuje `assistant.voice.command`, prowadzi zlecenie przez stany
- * (w kolejce → w toku → wykonane/błąd) i ogłasza każdą zmianę zdarzeniem
- * `assistant.action.changed`. Actions Monitor odświeża się na to zdarzenie bez
- * odpytywania, więc stan zlecenia zmienia się w oknie w chwili, w której
- * zmienia się w rdzeniu. Odmowę merytoryczną okna pokazują jako swój stan błędu
- * wraz z powodem.
- *
- * Tam, gdzie kontrakt nie niesie drogi — przesył dźwięku, odsłuch syntezy
- * i nagrania, reguły retencji pamięci, nazwane konteksty, zakres uprawnień
- * narzędzia, schowek i skróty tekstowe — okno zgłasza brak wprost
- * (`braki-kontraktu.ts`).
+ * Moduł Assistant składa pięć okien operacyjnych w jednym układzie: okno
+ * wiodące poleceń głosowych, dwa okna monitorujące przebieg oraz dwa okna
+ * zarządzające zasobem pamięci, kontekstów, narzędzi i rutyn.
  */
 export interface ModulAssistant {
   /** Element osadzany w obszarze roboczym powłoki; moduł nie osadza go sam. */
@@ -76,9 +39,7 @@ export function utworzModulAssistant(kanal: Kanal): ModulAssistant {
   const monitor: OknoActionsMonitor = utworzOknoActionsMonitor(stan);
   const dziennik: OknoActivityFeed = utworzOknoActivityFeed(stan);
   const zarzadcaPamieci: OknoMemoryContextManager = utworzOknoMemoryContextManager(stan, pamiec);
-  // Kafel akcji wypełnia pole polecenia Voice Console, tak samo jak kafel
-  // siatki w samym oknie wiodącym: wysyłkę rozstrzyga Operator, a droga do
-  // rdzenia zostaje jedna.
+  // Kafel akcji wypełnia pole polecenia; wysyłkę rozstrzyga Operator.
   const hub: OknoCommandToolsHub = utworzOknoCommandToolsHub(stan, narzedzia, (tresc) =>
     konsola.ustawPolecenie(tresc),
   );
@@ -107,11 +68,9 @@ export function utworzModulAssistant(kanal: Kanal): ModulAssistant {
     element,
 
     async wczytaj(idSesji) {
-      // Okno modułu ustalamy przed odczytami: `assistant.voice.command` wymaga
-      // pola windowId, a odczyty zawężają się do okna, jeżeli rdzeń je zna.
+      // Okno modułu ustala się przed odczytami, bo polecenie wymaga wskazania okna.
       await stan.ustalOkno(idSesji);
-      // Odczyty idą równolegle: każdy dotyczy innej komendy, a żaden nie
-      // warunkuje drugiego. Odmowa jednego zostaje w jego oknie.
+      // Odczyty idą równolegle; odmowa jednego zostaje w jego oknie.
       await Promise.all([
         stan.odswiezZlecenia(),
         stan.odswiezDziennik(),

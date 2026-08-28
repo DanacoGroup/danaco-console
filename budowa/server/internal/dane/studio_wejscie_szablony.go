@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: warstwa danych warsztatu szablonów pism modułu Studio
-// — kolumny dobudowane migracją 367 nad tabelą `szablon_studio` (kategoria,
-// postać wzorcowa, miniatura, źródło pliku, dokument źródłowy, czas zmiany)
-// oraz usunięcie szablonu własnego.
-//
-// ── Dlaczego OSOBNY wiersz kontraktu, a nie dopisek do `SzablonStudia` ──────
-// `SzablonStudia` i jego trzy metody stoją w `studio_katalogi.go` — pliku innego
-// odcinka, w który wchodzić nie wolno. Kolumny z migracji 367 tamten odczyt
-// pomija, więc szablon czytany tamtą drogą NIE NIESIE postaci wzorcowej: ani
-// arkusza stylów, ani nastaw strony, ani nagłówka i stopki. A to jest wprost
-// wymaganie Właściciela — szablon niesie te rzeczy NARAZ.
-//
-// Dlatego ten plik ogłasza `SzablonWarsztatuStudia`: ten sam wiersz tej samej
-// tabeli, widziany w pełni. Druga tabela szablonów byłaby drugim wykazem
-// i drugą prawdą; drugi ODCZYT jednej tabeli nią nie jest, bo zapis idzie
-// upsertem po tym samym kluczu i kolumny nie zachodzą na siebie: tamten zapis
-// przepisuje nazwę, opis, format, treść i pola, ten dokłada resztę.
-//
-// ── Dlaczego pola zostają w `pola_json` ─────────────────────────────────────
-// Powód stoi w migracji 367 i nie powtarzam go tu: wykaz pól czyta się CAŁY
-// przy wypełnianiu i nikt nie pyta o jedno pole osobno. Kształt zapisu rośnie
-// (rodzaj, opis, wartości do wyboru, miejsce w treści), miejsce zostaje jedno.
+// Repozytorium ogłasza SzablonWarsztatuStudia jako wiersz tabeli `szablon_studio`
+// wzbogacony migracją 367 o kategorię, postać wzorcową, miniaturę, źródło pliku,
+// dokument źródłowy, czas zmiany oraz usunięcie szablonu własnego.
 package dane
 
 import (
@@ -41,9 +22,8 @@ type SzablonWarsztatuStudia struct {
 	// PolaJSON niesie wykaz pól do wypełnienia w kształcie
 	// `shared.StudioTemplateFieldSpec[]`.
 	PolaJSON *string
-	// PostacJSON niesie postać wzorcową w tym samym kształcie, którym jedzie
-	// postać dokumentu — szablon zakłada dokument, więc jego postać musi dać
-	// się podstawić bez przekładu.
+	// PostacJSON niesie postać wzorcową w tym samym kształcie, co postać
+	// dokumentu, bez przekładu.
 	PostacJSON          *string
 	Kategoria           *string
 	MiniaturaZasobKod   *string
@@ -71,11 +51,8 @@ const (
 	                          zrodlo_pliku, dokument_zrodlowy_kod, fabryczny,
 	                          utworzono, zaktualizowano`
 
-	// Zapis jest upsertem po kluczu zewnętrznym — tym samym, którym jedzie
-	// zapis z `studio_katalogi.go`. Kolumna `fabryczny` przy nadpisaniu ZOSTAJE
-	// nietknięta: szablon fabryczny ma zostać fabryczny, bo od tego zależy, czy
-	// da się go usunąć, a zapis warsztatu nie jest miejscem na przestawienie
-	// tego rozstrzygnięcia.
+	// Zapis jest upsertem po kluczu zewnętrznym, tym samym, którym jedzie zapis
+	// z `studio_katalogi.go`, do tabeli `szablon_studio`.
 	wejscieZapiszSzablon = `INSERT INTO szablon_studio
 	                        (identyfikator_zewnetrzny, nazwa, opis, format, tresc, pola_json,
 	                         postac_json, kategoria, miniatura_zasob_kod, zrodlo_pliku,
@@ -136,7 +113,8 @@ func (r *repozytoriumStudia) ZapiszSzablonWarsztatu(ctx context.Context,
 	return r.SzablonWarsztatu(ctx, szablon.Kod)
 }
 
-// SzablonWarsztatu oddaje szablon wraz z postacią wzorcową.
+// SzablonWarsztatu oddaje szablon warsztatu wraz z postacią wzorcową i polami
+// do wypełnienia z tabeli `szablon_studio`.
 func (r *repozytoriumStudia) SzablonWarsztatu(ctx context.Context,
 	kod string) (SzablonWarsztatuStudia, error) {
 

@@ -17,16 +17,9 @@ export interface WlasciwosciGlowy {
   lid?: string | null;
   /** Dane podstawiane w zdanie wprowadzające. */
   daneLidu?: DanePodstawienia;
-  /**
-   * Węzły zamiast samego tekstu zdania — gdy w zdaniu stoi wyróżniony fragment,
-   * na przykład adres pisany krojem maszynowym.
-   */
+  /** Węzły zamiast tekstu zdania — dla wyróżnionego fragmentu, na przykład adresu krojem maszynowym. */
   lidWezly?: Dziecko[] | null;
-  /**
-   * Węzły między tytułem a zdaniem wprowadzającym. Tor kroków należy do głowy
-   * ekranu, nie stoi obok niej: głowa ma własny rytm odstępów i wyjęcie toru
-   * poza nią rozstraja go.
-   */
+  /** Węzły między tytułem a zdaniem wprowadzającym; tor kroków należy do głowy, nie stoi obok niej. */
   poTytule?: Dziecko[] | null;
 }
 

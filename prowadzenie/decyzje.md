@@ -1259,7 +1259,7 @@ porcje. Zdanie wlicza sie do granicy, odsylacz nie.
 
 **Dopowiedzenie piate Wlasciciela (27.08, po poludniu).** Odsylacze do docs
 NIE sa obowiazkowe i domyslnie ich nie ma — to zbedna komplikacja i lancuszek:
-mapowanie jest mechaniczne (sekcja w `docs/architektura/uzasadnienia-*.md`
+mapowanie bylo mechaniczne (sekcja w dokumencie uzasadnien, zniesionym 28.08
 nazywa sie sciezka pliku), wiec konwencje zapisuje sie RAZ, w przewodniku
 wykonawcy i w naglowkach plikow uzasadnien, nie w kazdym pliku kodu.
 Naglowek pliku to samo pelne zdanie odpowiedzialnosci. Wskazanie miejsca
@@ -1375,10 +1375,61 @@ zaakceptowana wraz z nia.
   zszedl na szczebel drugiego, bo na poprzednim dawal 3,80 : 1. Rozroznienie niesie
   pismo maszynowe i stopien 12 px. Piec obejsc rozsianych po bibliotece stracilo
   powod istnienia i czeka na zdjecie.
-- Straznik normy zera byl do dzis martwy w trzech miejscach; kazdy jego wynik
+- Sprawdzenie normy zera bylo do dzis martwe w trzech miejscach; kazdy jego wynik
   „czysto" sprzed 2026-08-27 jest bez wartosci.
 
 ---
+
+## 20. Wykaz narzędzi modelu ma zejść do zasady zapisanej w kontrakcie
+
+Kontrakt sam zapisuje kryterium wystawiania komend kanałowi modelu
+(`contract.json`, sekcja `narzedzia.opis`): narzędziem jest każda komenda
+**poza dwiema grupami** — warstwą połączenia klienta (`connection.hello`,
+`session.bind`), która nie jest sterowaniem platformą, oraz zapisem do punktów
+dostępu i nadań, kont i treści tożsamości. Zdanie kończy się wprost: *„Model nie
+rozszerza własnego dostępu, nie zakłada kont i nie podmienia własnej tożsamości;
+**odczyt tych rejestrów ma, zapisu nie**"*.
+
+**Stan zmierzony 28.08.2026.** Kontrakt niesie 1081 komend i 340 deklaracji
+narzędzi. Warstwa narzędzi jest wewnętrznie spójna: zero deklaracji wskazuje
+komendę nieistniejącą, zero jest bez zdania `zastosowanie`, zero się powtarza.
+Nie jest natomiast zgodna z własną zasadą:
+
+| | |
+|---|---|
+| komend niewystawionych | 741 |
+| objętych którymkolwiek z dwóch wyjątków | **25** |
+| odstępstwo od zasady zapisanej w kontrakcie | **716** |
+
+Rozkład pokrycia po obszarach nie układa się w żadną regułę: 17 obszarów pokrytych
+w całości, 36 częściowo, **13 zerowo**. Wewnątrz części — Studio 116/179 (64%),
+Design 8/104 (7%), Research 5/76 (6%), Extension 1/37 (2%). Różnica między 64%
+a 2% nie jest polityką, tylko śladem tego, gdzie kto pracował.
+
+**Trzynaście obszarów bez ani jednego narzędzia** znaczy, że model nie sięgnie tam
+wcale: `alert`, `auth`, `clipboard`, `connection`, `device`, `health`, `launcher`,
+`mobile`, `model`, `provenance`, `retention`, `snippet`, `usage`. Po odjęciu tego,
+co wyjątki obejmują naprawdę — `connection.hello`, dziewięć komend `auth.*`,
+`device.revoke` i `model.channel.set` — zostają **32 komendy wyłączone bez podstawy**.
+Wśród nich cały `provenance` (5 komend), o którym kontrakt mówi wprost, że odczyt
+tych rejestrów model mieć ma, oraz `device.list`, czyli odczyt rejestru urządzeń.
+
+**Rozstrzygnięcie.** Zasada zapisana w kontrakcie obowiązuje, bo jest jedynym
+zapisanym kryterium; nie ma decyzji, która by ją zawężała. Implementacja schodzi
+do niej etapami, od największych dziur:
+
+1. **Trzynaście obszarów zerowych** — 32 komendy. Obszar bez ani jednego narzędzia
+   jest modułem niedostępnym dla modelu, a to jest usterka, nie oszczędność.
+2. **Obszary częściowe**, w kolejności wielkości braku: Design, Research, Studio,
+   Translate, Developer, Browser, Roundtable, Library.
+3. Gdyby na którymkolwiek etapie okazało się, że pełne pokrycie jest szkodliwe —
+   na przykład wykaz narzędzi przestaje się mieścić w oknie modelu — **kryterium
+   zmienia się w kontrakcie, w `narzedzia.opis`, a nie milczeniem w wykazie**.
+   Zasada niezapisana nie obowiązuje i nie da się jej sprawdzić.
+
+Deklaracja narzędzia nie powiela kształtu żądania: wskazuje komendę i dopisuje
+jedno zdanie mówiące modelowi, kiedy po nie sięgnąć. Zdanie powstaje z opisu
+komendy w kontrakcie, nie z domysłu.
 
 ## Pozycje otwarte
 

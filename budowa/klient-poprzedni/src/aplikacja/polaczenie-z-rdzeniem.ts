@@ -11,7 +11,11 @@ import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta';
 import { utworzUzgodnienie, type Uzgodnienie } from '../protokol/uzgodnienie';
 import { odczytajSesje } from '../uwierzytelnienie/sesja-bramki';
 
-/** Droga klienta do rdzenia: transport, kanał kontraktu, uzgodnienie. */
+/**
+ * Droga klienta do rdzenia zebrana w jednym obiekcie: adres gniazda, transport
+ * ramek, kanał komunikatów kontraktu, sesja nadana przez rdzeń, uzgodnienie
+ * oraz nawigacja platformy podawana powłoce.
+ */
 export interface PolaczenieZRdzeniem {
   /** Adres gniazda rdzenia użyty przy złożeniu. */
   adres: string;
@@ -23,45 +27,28 @@ export interface PolaczenieZRdzeniem {
   sesja: Sesja;
   /** Uzgodnienie: powitanie, sesja, okno komunikacji. */
   uzgodnienie: Uzgodnienie;
-  /**
-   * Nawigacja platformy dla bocznej kolumny powłoki: `environment.enter`
-   * i `module.list` osadzone na tym kanale.
-   *
-   * Pole służy wyłącznie powłoce: powstaje ona bez połączenia i nie ma jak
-   * sięgnąć po kanał sama, więc dostaje te dwie drogi gotowe. Widoki mające
-   * kanał wołają opakowania wprost — `home.enter` widok strony głównej,
-   * `workspace.enter` przestrzeń modułu — bez obiektu pośredniego.
-   */
+  /** Nawigacja platformy dla bocznej kolumny powłoki, osadzona na tym kanale. */
   platforma: NawigacjaPlatformy;
 }
 
 /**
- * Złożenie warstw łączności w jedną drogę do rdzenia.
- *
- * Plik wyłącznie składa — nie zna ramki, nie buduje koperty i nie zna nazwy
- * żadnej komendy. Nazwy pochodzą z pakietu `shared` i żyją w warstwie
- * protokołu.
- *
- * Złożenie nie otwiera połączenia. Rozpoczęcie łączności należy do cyklu
- * życia, żeby moment jej nawiązania był jednym miejscem, a nie skutkiem
- * ubocznym budowy obiektów.
+ * Złożenie warstw łączności w jedną drogę do rdzenia: adres, transport, sesja,
+ * kanał, uzgodnienie i nawigacja platformy. Plik wyłącznie składa i nie otwiera
+ * połączenia; rozpoczęcie łączności należy do cyklu życia.
  */
 export function zlozPolaczenieZRdzeniem(opis: OpisOkna): PolaczenieZRdzeniem {
   const adres = adresRdzenia();
   const transport = utworzTransport(adres);
   const sesja = utworzSesje();
   const kanal = utworzKanal(transport, sesja);
-  // Token sesji bramki czytany przy każdym powitaniu, nie raz przy składaniu:
-  // po ponownym nawiązaniu połączenia obowiązuje sesja bieżąca, nie ta sprzed
-  // zerwania.
+  // Token sesji bramki czytany przy każdym powitaniu, żeby po zerwaniu
+  // obowiązywała sesja bieżąca.
   const uzgodnienie = utworzUzgodnienie(kanal, zamowienieOkna(opis), tozsamoscKlienta(), () =>
     odczytajSesje()?.token,
   );
 
-  // Nawigacja powłoki składa się tutaj, a nie w uzgodnieniu: uzgodnienie
-  // odpowiada wyłącznie za powitanie, sesję i okno, i o nawigacji nic nie wie.
-  // Korzeń montażu klienta jest jedynym punktem znającym jednocześnie kanał
-  // i odbiorcę tych dróg.
+  // Nawigacja powłoki składa się tutaj, bo uzgodnienie odpowiada tylko za
+  // powitanie, sesję i okno.
   const platforma: NawigacjaPlatformy = {
     wejdzDoSrodowiska: (zadanie) => zadajWejscieDoSrodowiska(kanal, zadanie),
     wykazModulow: (zadanie = {}) => zadajWykazModulow(kanal, zadanie),

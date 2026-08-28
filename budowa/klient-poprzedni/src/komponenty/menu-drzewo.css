@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Arkusz zawiera jeden mechanizm rozwijany wspólny dla całej aplikacji, ponieważ ujawnianie stopniowe trzyma na ekranie wyłącznie uchwyt z bieżącą wartością, a drzewo funkcji chowa pod nim.
    DANACO CONSOLE — MENU-DRZEWO · JEDEN MECHANIZM ROZWIJANY DLA CAŁEJ APLIKACJI
    ----------------------------------------------------------------------------
    Ujawnianie stopniowe: na ekranie stoi sam uchwyt z bieżącą wartością, a całe
@@ -81,12 +81,12 @@
   font-size: var(--dn-fs-sm);
 }
 
-/* Zwinięte menu nie zostawia po sobie paska szukania wiszącego nad układem. */
+/* Zwinięte menu nie zostawia po sobie paska szukania wiszącego nad układem, ponieważ pole traci sens bez rozwiniętego wykazu, któremu ma służyć. */
 .dn-drzewo[data-otwarte='nie'] .dn-drzewo__szukanie {
   display: none;
 }
 
-/* Wykaz podchodzi pod pole szukania, gdy ono stoi — jedna bryła, nie dwie. */
+/* Wykaz podchodzi pod pole szukania, gdy ono stoi, aby razem tworzyły jedną bryłę wizualną, a nie dwa osobne, luźno powiązane elementy interfejsu. */
 .dn-drzewo:has(.dn-drzewo__szukanie:not([hidden])) .dn-drzewo__lista {
   top: calc(100% + var(--dn-od-1) + var(--dn-wym-wiersz));
   border-radius: 0 0 var(--dn-r-sm) var(--dn-r-sm);

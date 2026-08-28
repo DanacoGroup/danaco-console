@@ -1,3 +1,7 @@
+/**
+ * Baner „Aktualizuje” to pas w górnej części okna aplikacji, który jednym
+ * kliknięciem zakłada dostępne wydanie i uruchamia aplikację ponownie.
+ */
 import './aktualizacja.css';
 
 import { czyPowlokaNatywna } from '../powloka/powloka-natywna';
@@ -13,41 +17,13 @@ import {
 import { nowszeWydanie, type Wydanie } from './wykaz-wydan';
 import { utworzWykazWydanWidok } from './wykaz-wydan-widok';
 
-/**
- * Baner „Aktualizuje" — pas w oknie aplikacji, który działa jak przycisk: jedno
- * kliknięcie zakłada wydanie i uruchamia aplikację ponownie. Nie ma okna „czy na
- * pewno" — kliknięcie jest zgodą, a jedynym miejscem, gdzie produkt o cokolwiek
- * pyta, zostaje logowanie.
- *
- * Pas pojawia się wyłącznie wtedy, gdy jest co zakładać. Brak sieci, brak wydań
- * i wydanie nie nowsze od zainstalowanego znaczą to samo: baneru nie ma. Sam
- * z siebie nic nie aktualizuje — dopóki nikt nie kliknie, aplikacja pracuje na
- * wersji zainstalowanej.
- *
- * Odmowa zostaje na widoku: gdy powłoka nie zdoła założyć wydania (zła suma,
- * brak uprawnień, starsza powłoka bez tego polecenia), baner nie znika, tylko
- * zamienia się w zdanie mówiące, co poszło nie tak i co z tym zrobić.
- *
- * Zdanie zachęty rozstrzyga powłoka (`drogaAktualizacji()`), a nie samo
- * rozpoznanie środowiska: na kopii z pakietu `.deb` powłoka odmawia podmiany
- * zaraz po kliknięciu. Gdy powłoka milczy, pas obiecuje tylko to, co wiadomo na
- * pewno — że kliknięcie założy wydanie; o restarcie mówi dopiero zdanie
- * powodzenia, które i tak układa powłoka.
- *
- * Tor postępu rysuje się wyłącznie wtedy, gdy powłoka poda liczbę pobranych
- * bajtów oraz całość. Gdy poda same bajty, jest licznik megabajtów bez toru.
- * Gdy nie poda nic, pas mówi to wprost i pokazuje upływ czasu od kliknięcia —
- * jedyną liczbę, którą zna. Pasek udający procenty byłby atrapą.
- */
-
-/** Jak długo czekać z pierwszym pytaniem o wydania — żeby nie konkurować z uruchomieniem. */
+/** Ustala czas oczekiwania przed pierwszym zapytaniem o dostępne wydania, aby nie konkurować z uruchomieniem aplikacji. */
 const ZWLOKA_PIERWSZEGO_PYTANIA = 8_000;
 
-/** Co ile pytać ponownie. Doba: wydania nie powstają częściej, a produkt bywa
- *  otwarty tygodniami. */
+/** Ustala odstęp między kolejnymi zapytaniami o wydania: doba, ponieważ wydania nie powstają częściej, a aplikacja bywa otwarta tygodniami. */
 const ODSTEP_PYTANIA = 24 * 60 * 60 * 1000;
 
-/** Co ile odświeżać upływ czasu w pasie, gdy powłoka postępu nie podaje. */
+/** Ustala częstotliwość odświeżania wyświetlanego upływu czasu w pasie, gdy powłoka nie podaje postępu pobierania. */
 const TETNO_LICZNIKA = 1_000;
 
 export interface BanerAktualizacji {
@@ -58,16 +34,11 @@ export interface BanerAktualizacji {
 }
 
 /**
- * Buduje baner nad gospodarzem dokumentu.
- *
- * `gospodarz` to element, na którego górze pas ma stanąć. Domyślnie `document.body`
- * — baner należy do okna aplikacji, nie do trasy ani modułu, więc nie mieszka
- * w routerze i nie znika przy zmianie widoku.
+ * Buduje baner nad wskazanym elementem, domyślnie nad treścią dokumentu,
+ * ponieważ pas należy do okna aplikacji, a nie do pojedynczej trasy.
  */
 export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body): BanerAktualizacji {
-  // Obudowa trzyma pas i przycisk wykazu jako rodzeństwo. Zagnieżdżenie
-  // przycisku wykazu w banerze byłoby niepoprawnym znacznikiem i pułapką dla
-  // czytnika ekranu: jedno kliknięcie trafiałoby w dwa sterowniki naraz.
+  // Obudowa trzyma pas i przycisk wykazu jako rodzeństwo, nie zagnieżdżenie.
   const obudowa = document.createElement('div');
   obudowa.className = 'da-pas';
   obudowa.hidden = true;
@@ -111,11 +82,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     droga = await drogaAktualizacji();
   }
 
-  /**
-   * Zdanie zachęty — tyle obietnicy, ile jest pokrycia. Trzy stany wiedzy
-   * o drodze dają trzy różne zdania; milczenie powłoki nie jest podstawą ani do
-   * obietnicy restartu, ani do zapowiedzi niepowodzenia.
-   */
+  /** Zdanie zachęty odpowiada wiedzy o drodze aktualizacji: trzy stany dają trzy różne zdania. */
   function zachetaDoKlikniecia(): string {
     if (droga === undefined || droga === null) return 'Kliknij, żeby je założyć.';
     if (droga.mozliwa) return 'Kliknij, żeby je założyć — aplikacja uruchomi się ponownie.';
@@ -139,9 +106,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
 
   function pokaz(wydanie: Wydanie): void {
     zloz('Aktualizuje', `Wydanie ${wydanie.wersja} z ${wydanie.data} jest gotowe. ${zachetaDoKlikniecia()}`);
-    // Pas wraca do bycia przyciskiem. Bez tego wiersza `disabled` ustawione
-    // w `pokazOdmowe()` zostawałoby do końca życia okna i baner pokazywałby
-    // zachętę „Kliknij" przy kliknięciu, które nic nie robi.
+    // Pas wraca do bycia przyciskiem po odmowie, inaczej zostaje trwale wyłączony.
     pas.disabled = false;
     pas.removeAttribute('aria-busy');
     wynikNaWidoku = false;
@@ -159,15 +124,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     return `${minuty}:${String(sekundy % 60).padStart(2, '0')}`;
   }
 
-  /**
-   * Tor postępu; powstaje wyłącznie przy znanej całości pobrania.
-   *
-   * Bez `calosc` nie ma procentu, a tor bez procentu to pas, którego długość
-   * niczego nie oznacza — wtedy idzie sam licznik megabajtów. Znaczniki są
-   * `<span>`-ami, bo zawartość mieszka wewnątrz `<button>`, który dopuszcza
-   * wyłącznie treść frazową; klasy biblioteki (`dn-postep`) działają tak samo
-   * niezależnie od znacznika.
-   */
+  /** Tor postępu powstaje wyłącznie przy znanej całości pobrania, inaczej pokazuje sam licznik. */
   function torPostepu(postep: PostepAktualizacji): HTMLSpanElement | null {
     if (postep.calosc === null) return null;
     const udzial = Math.min(1, Math.max(0, postep.pobrano / postep.calosc));
@@ -197,9 +154,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     const rozmiar = wydanie.rozmiar ? ` (${wydanie.rozmiar} wg wykazu)` : '';
 
     if (ostatniPostep === null) {
-      // Powłoka milczy, więc pas mówi o tym wprost, zamiast rysować tor bez
-      // danych. Upływ czasu widocznie się zmienia, więc okno nie wygląda na
-      // zawieszone, a żaden procent nie jest zmyślony.
+      // Powłoka milczy, więc pas pokazuje wprost upływ czasu zamiast zmyślonego procentu.
       zloz(
         'Aktualizuję…',
         `Pobieram wydanie ${wydanie.wersja}${rozmiar}. ` +
@@ -234,9 +189,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     ostatniPostep = null;
     poczatekPracy = Date.now();
     rysujPrace(wydanie);
-    // Praca trwa — pas przestaje przyjmować kliknięcia. Dwa kliknięcia pod rząd
-    // uruchomiłyby dwa równoległe pobrania piszące w ten sam plik roboczy,
-    // każde liczące sumę z własnego strumienia.
+    // Praca trwa, więc pas przestaje przyjmować kliknięcia do jej zakończenia.
     pas.disabled = true;
     pas.setAttribute('aria-busy', 'true');
     zatrzymajLicznik();
@@ -252,23 +205,13 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
 
   function pokazOdmowe(kod: string, powod: string): void {
     zloz('Aktualizacja nieudana', powod, 'da-baner__znak--odmowa');
-    // Przy odmowie trwałej pas przestaje być przyciskiem: powtórzone kliknięcie
-    // dałoby tę samą odmowę co do słowa, a Operator ma zamiast tego przeczytać
-    // powód. Przy odmowie przemijającej (brak łączności, pobieranie przerwane)
-    // ponowienie jest jedyną sensowną czynnością i baner jej nie odbiera.
+    // Odmowa trwała wyłącza pas, odmowa przemijająca pozostawia możliwość ponowienia.
     pas.disabled = !odmowaPrzemijajaca(kod);
     pas.removeAttribute('aria-busy');
     wynikNaWidoku = true;
   }
 
-  /**
-   * Droga niedostępna rozpoznana przed pobraniem — inny znak niż odmowa.
-   *
-   * „Aktualizacja nieudana" byłoby tu nieprawdą, bo nic się nie zaczęło.
-   * Powłoka z góry mówi, że tej kopii nie podmieni (pakiet `.deb` idzie przez
-   * `dpkg`), więc Operator dostaje jej zdanie i wie, co zrobić sam. Żaden bajt
-   * nie idzie po nic.
-   */
+  /** Droga niedostępna rozpoznana przed pobraniem otrzymuje inny znak niż odmowa czynności. */
   function pokazDrogeNiedostepna(zdanie: string): void {
     zloz('Założysz to ręcznie', zdanie, 'da-baner__znak--odmowa');
     pas.disabled = true;
@@ -284,44 +227,28 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
   }
 
   async function zapytaj(): Promise<void> {
-    // Obieg pytania nie depcze czynności, która trwa. Bez tej zapory budzik
-    // nadpisałby napis „Aktualizuję…" zachętą i pas znów przyjmowałby
-    // kliknięcia, dokładając kolejne pobranie do tego samego pliku roboczego.
-    // Po powodzeniu wynik też zostaje na widoku, bo restart bywa odłożony albo
-    // nieudany, a to jedyna informacja Operatora o tym, co się stało.
+    // Obieg pytania pomija czynność trwającą albo już zakończoną, a wynik zostaje na widoku.
     if (zdjety || wTrakcie || zalozone) return;
     const wydanie = await nowszeWydanie(tozsamoscKlienta().wersja);
     if (zdjety) return;
     if (wydanie === null) {
-      // Pusty wykaz (albo wykaz bez nowszego wydania) znaczy „nie ma co
-      // zakładać", a nie „skasuj zdanie o tym, co się przed chwilą stało".
-      // Po udanej podmianie z nieudanym restartem to jedyna informacja
-      // Operatora o przebiegu.
+      // Pusty wykaz nie kasuje wyniku poprzedniej czynności widocznego na pasie.
       if (wynikNaWidoku) return;
       obudowa.hidden = true;
       return;
     }
     await ustalDroge();
-    // Drugie sprawdzenie po czekaniu: między pytaniem o wykaz a pytaniem
-    // o drogę mija czas sieciowy, a pas jest przez ten czas klikalny, więc
-    // zakładanie mogło już ruszyć. Bez tego wiersza `pokaz()` nadpisałoby
-    // „Aktualizuję…" zachętą i przywróciło `disabled = false`, zdejmując zaporę
-    // dwukliku.
+    // Drugie sprawdzenie po czekaniu chroni przed nadpisaniem stanu podjętej czynności.
     if (zdjety || wTrakcie || zalozone) return;
     proponowane = wydanie;
     pokaz(wydanie);
   }
 
   async function zaloz(wydanie: Wydanie): Promise<void> {
-    // Zapora wejścia: jedna aktualizacja naraz, bo druga pisałaby w ten sam
-    // plik roboczy obok aplikacji. Powłoka ma tę samą zaporę u siebie, bo
-    // kliknięcia to nie jedyna droga do polecenia; tutaj stoi po to, żeby
-    // Operator w ogóle nie zobaczył drugiego przebiegu.
+    // Zapora wejścia dopuszcza jedną aktualizację naraz, bo druga pisałaby w ten sam plik.
     if (wTrakcie || zalozone) return;
 
-    // Droga niemożliwa rozstrzyga się przed pobraniem. Powłoka sprawdza to samo
-    // u siebie, ale rozstrzygnięcie tutaj oszczędza Operatorowi migającego
-    // „Aktualizuję…", po którym natychmiast przychodzi odmowa.
+    // Droga niemożliwa rozstrzyga się przed pobraniem, zanim ruszy zbędna praca.
     if (droga !== undefined && droga !== null && !droga.mozliwa) {
       pokazDrogeNiedostepna(droga.zdanie);
       return;
@@ -330,11 +257,9 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     wTrakcie = true;
     pokazPrace(wydanie);
 
-    // Nasłuch zakładamy na czas jednego przebiegu. Zdarzenie dotyczy tego
-    // pobrania i po jego końcu nie ma czego słuchać.
+    // Nasłuch działa wyłącznie na czas jednego przebiegu pobierania.
     const nasluch = nasluchujPostepu((postep) => {
-      // Zdarzenie spóźnione o przebieg albo przychodzące do banera już zdjętego
-      // nie ma czego przerysować — i nie ma prawa wskrzesić zdjętego pasa.
+      // Zdarzenie spóźnione albo dotyczące zdjętego banera nie przerysowuje pasa.
       if (!wTrakcie || zdjety) return;
       ostatniPostep = postep;
       rysujPrace(wydanie);
@@ -355,9 +280,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
       return;
     }
     zalozone = true;
-    // Powłoka odkłada restart o `restart_za_ms`, więc jest chwila na pokazanie
-    // zdania powodzenia. Układa je powłoka — ona jedna wie, co się stało
-    // z plikiem i z rdzeniem w tle.
+    // Zdanie powodzenia pochodzi od powłoki, która zna stan pliku i rdzenia.
     pokazPrzebieg(wynik.przebieg.zdanie);
   }
 
@@ -366,9 +289,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
     void zaloz(proponowane);
   };
 
-  // Ujawnianie stopniowe: chronologia wydań rozwija się dopiero, gdy Operator
-  // o nią poprosi, i dopiero wtedy pyta kanał. Zwinięcie jej nie kasuje —
-  // kolejne przywołanie pokazuje to, co już wiadomo, i pyta na nowo.
+  // Chronologia wydań rozwija się dopiero na żądanie i pyta kanał od nowa.
   przyciskWykazu.onclick = (): void => {
     const rozwiniety = przyciskWykazu.getAttribute('aria-expanded') === 'true';
     if (rozwiniety) {
@@ -383,14 +304,7 @@ export function utworzBanerAktualizacji(gospodarz: HTMLElement = document.body):
 
   return {
     uruchom(): void {
-      // Poza powłoką natywną (interfejs otwarty w przeglądarce, podgląd
-      // dewelopera) baner nie miałby czego zrobić po kliknięciu: podmiana pliku
-      // i restart są własnością powłoki. Pytanie kanału wydań byłoby wtedy
-      // ruchem w sieć po nic, a jego niepowodzenie ląduje w dzienniku konsoli
-      // jako błąd zasobu i wygląda jak usterka produktu.
-      //
-      // Sprawdzamy wprost obecność powłoki, a nie wykonalność podmiany — o tę
-      // drugą pyta się powłoki przez `drogaAktualizacji()`.
+      // Poza powłoką natywną baner nie ma czynności do wykonania po kliknięciu.
       if (!czyPowlokaNatywna()) return;
       gospodarz.prepend(obudowa);
       budzik = window.setTimeout(function pytaj() {

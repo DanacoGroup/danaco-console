@@ -3,23 +3,20 @@ import type { KomunikatCzynnosci } from './komunikat-czynnosci';
 import type { StanDostepow } from './stan-dostepow';
 
 /**
- * Usunięcie punktu dostępu — czynność nieodwracalna, więc dwustopniowa.
- *
- * Usunięcie punktu unieważnia WSZYSTKIE nadania, które się na niego powoływały,
- * także w oknach, których Operator w tej chwili nie widzi. Pierwsze naciśnięcie
- * mówi więc, co się stanie, i zamienia przycisk w potwierdzenie; drugie wysyła
- * komendę. Okna `confirm` nie używamy: blokuje wątek dokumentu i nie da się go
- * ubrać w warstwę wizualną platformy.
- *
- * Zamiar wygasa sam po chwili. Przycisk zostawiony w stanie „potwierdź" byłby
- * pułapką dla kolejnego kliknięcia w to samo miejsce.
+ * Usunięcie punktu dostępu jest czynnością nieodwracalną, więc przebiega
+ * dwustopniowo: pierwsze naciśnięcie zapowiada skutek i zamienia przycisk
+ * w potwierdzenie, a dopiero drugie wysyła komendę do rdzenia.
  */
 export interface PrzyciskUsuniecia {
   /** Przycisk osadzany w nagłówku karty punktu. */
   element: HTMLButtonElement;
 }
 
-/** Ile milisekund trwa zamiar usunięcia, zanim przycisk wróci do stanu wyjściowego. */
+/**
+ * Czas trwania zamiaru usunięcia, podany w milisekundach; po jego upływie
+ * przycisk wraca do stanu wyjściowego, ponieważ przycisk zostawiony w stanie
+ * potwierdzenia byłby pułapką dla kolejnego naciśnięcia w to samo miejsce.
+ */
 const TRWANIE_ZAMIARU = 6000;
 
 export function utworzPrzyciskUsuniecia(
@@ -33,9 +30,8 @@ export function utworzPrzyciskUsuniecia(
   element.setAttribute('aria-label', `Usuń punkt dostępu ${punkt.name}`);
 
   let zamiar = false;
-  // Typ zegara bierzemy z samego `setTimeout`, a nie z `number`: przeglądarka
-  // zwraca liczbę, środowisko Node — uchwyt `Timeout`, a w drzewie obecne są
-  // definicje obu.
+  // Typ zegara pochodzi z `setTimeout`: przeglądarka zwraca liczbę,
+  // a środowisko Node uchwyt `Timeout`.
   let zegar: ReturnType<typeof globalThis.setTimeout> | undefined;
 
   function stanWyjsciowy(): void {

@@ -7,23 +7,18 @@ import (
 	"time"
 )
 
-// RejestrProcesow trzyma procesy kluczowane identyfikatorem okna: sesja nie ma
-// tu żadnego wpisu, ma go każde okno z osobna.
-//
-// Rejestr nie uruchamia procesów i nie zna drogi ich uruchomienia. Proces tury
-// startuje warstwa kanału, a tutaj trafia przez Przejmij — objęty uchwytem
-// drzewa, gotowy do zatrzymania.
+// RejestrProcesow trzyma procesy kluczowane identyfikatorem okna; sesja nie ma tu żadnego wpisu, ma go każde okno z osobna.
 type RejestrProcesow struct {
 	mu      sync.Mutex
 	procesy map[string]*Proces
 }
 
-// NowyRejestrProcesow zakłada pusty rejestr procesów okien.
+// Funkcja NowyRejestrProcesow zakłada pusty rejestr procesów okien, gotowy do przyjmowania kolejnych wpisów.
 func NowyRejestrProcesow() *RejestrProcesow {
 	return &RejestrProcesow{procesy: make(map[string]*Proces)}
 }
 
-// Proces zwraca proces okna, o ile okno go ma.
+// Metoda Proces zwraca proces powiązany z oknem o podanym identyfikatorze, o ile takie okno go posiada.
 func (r *RejestrProcesow) Proces(idOkna string) (*Proces, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -31,8 +26,7 @@ func (r *RejestrProcesow) Proces(idOkna string) (*Proces, bool) {
 	return proces, jest
 }
 
-// Zatrzymaj ubija proces okna wraz z całym drzewem potomstwa i wykreśla go
-// z rejestru.
+// Metoda Zatrzymaj ubija proces okna wraz z całym drzewem potomstwa i wykreśla jego wpis z rejestru procesów.
 func (r *RejestrProcesow) Zatrzymaj(idOkna string) error {
 	r.mu.Lock()
 	proces, jest := r.procesy[idOkna]
@@ -59,12 +53,12 @@ func (r *RejestrProcesow) ZatrzymajOkna(idOkien []string) error {
 	return pierwszaUsterka
 }
 
-// ZatrzymajWszystkie ubija procesy wszystkich okien rejestru.
+// Metoda ZatrzymajWszystkie ubija procesy wszystkich okien zapisanych obecnie w tym rejestrze procesów.
 func (r *RejestrProcesow) ZatrzymajWszystkie() error {
 	return r.ZatrzymajOkna(r.Okna())
 }
 
-// Okna wylicza identyfikatory okien mających wpis w rejestrze procesów.
+// Metoda Okna wylicza identyfikatory wszystkich okien, które mają aktualnie wpis w tym rejestrze procesów.
 func (r *RejestrProcesow) Okna() []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -76,7 +70,7 @@ func (r *RejestrProcesow) Okna() []string {
 	return wykaz
 }
 
-// Biegnace wylicza okna, których procesy nadal pracują.
+// Metoda Biegnace wylicza spośród okien tego rejestru te, których procesy nadal faktycznie pracują teraz.
 func (r *RejestrProcesow) Biegnace() []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -90,17 +84,7 @@ func (r *RejestrProcesow) Biegnace() []string {
 	return wykaz
 }
 
-// Przejmij obejmuje biegnący już proces okna uchwytem systemowym i wpisuje go
-// do rejestru. Jest to jedyna droga wpisu do tego rejestru: proces tury startuje
-// warstwa kanału (injection.Uruchom), a bez przejęcia zamknięcie okna nie
-// zatrzymałoby tego, co model uruchomił.
-//
-// Przejęcie zakłada Job Object na Windows albo grupę procesów na systemach
-// uniksowych, dzięki czemu ubicie okna kończy także wnuki procesu, bez `taskkill`
-// i bez zależności od narzędzi systemu.
-//
-// Niepowodzenie przejęcia nie przerywa tury: proces biegnie i odpowiada, tylko
-// jego potomstwo nie jest objęte uchwytem.
+// Metoda Przejmij obejmuje biegnący już proces okna uchwytem systemowym i wpisuje go do rejestru procesów.
 func (r *RejestrProcesow) Przejmij(idOkna string, pid int) error {
 	if r == nil || idOkna == "" || pid <= 0 {
 		return nil
@@ -112,8 +96,7 @@ func (r *RejestrProcesow) Przejmij(idOkna string, pid int) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if poprzedni, jest := r.procesy[idOkna]; jest && poprzedni != nil {
-		// Tura poprzednia tego okna już się zamknęła; jej uchwyt zwalniamy,
-		// żeby rejestr nie rósł o martwe wpisy przy każdej turze.
+		// Tura poprzednia tego okna już się zamknęła; zwalniamy jej uchwyt, by rejestr nie rósł.
 		_ = poprzedni.Ubij()
 	}
 	proces := &Proces{
@@ -123,10 +106,7 @@ func (r *RejestrProcesow) Przejmij(idOkna string, pid int) error {
 		drzewo:      drzewo,
 	}
 	r.procesy[idOkna] = proces
-	// Dogląd startuje po wstawieniu wpisu do mapy i tylko tutaj. Przejmij jest
-	// jedyną drogą wpisu do rejestru, więc obserwacja pokrywa każdy wpis i
-	// żaden proces kończący się sam nie zostaje w rejestrze jako „biegnący".
-	// Gorutyna nie sięga po r.mu, więc start pod zamkiem niczego nie blokuje.
+	// Dogląd startuje po wstawieniu wpisu do mapy, jako jedyna droga obserwacji każdego procesu.
 	go proces.dogladaj()
 	return nil
 }

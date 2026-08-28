@@ -1,3 +1,8 @@
+/**
+ * Rozmowa okna Automation Studio z rdzeniem: odczyt automatyk, zapis definicji,
+ * harmonogram, przebiegi i przekazanie scenariusza do modułu Automations.
+ */
+
 import type {
   AutomationExecution,
   AutomationSchedule,
@@ -8,21 +13,7 @@ import { opisOdmowy } from '../../komponenty/odmowa';
 import { skutekHarmonogramu, skutekPrzekazania, skutekZapisuAutomatyki } from './skutek-zapisu';
 import type { StanPrzegladania } from './stan-przegladania';
 
-/**
- * Rozmowa Automation Studio z rdzeniem: odczyt automatyk, zapis definicji,
- * harmonogram, przebiegi i przekazanie scenariusza do modułu Automations.
- *
- * Jedna odpowiedzialność: wywołania rdzenia w imieniu okna. Okno składa
- * kontrolki i wykaz; tutaj mieszka to, co dzieje się po naciśnięciu, wraz
- * z oceną odpowiedzi (`skutek-zapisu.ts`).
- *
- * Każda czynność odpowiada: zapowiedź przed wywołaniem, a po odpowiedzi rdzenia
- * albo wynik, albo powód odmowy. Wynik `null` znaczy „rdzeń nie oddał treści,
- * powód już powiedziano" — okno nie ma wtedy czym zastąpić wykazu i zostawia
- * ten, który Operator widzi.
- */
-
-/** Scenariusz przeglądania w postaci, w której idzie do rdzenia. */
+/** Scenariusz przeglądania w postaci, w której idzie do rdzenia — zestaw kroków wraz z nazwą, opisem i stanem aktywności. */
 export interface DefinicjaAutomatyki {
   /** Automatyka zmieniana; pusty napis zakłada nową. */
   identyfikator: string;
@@ -88,8 +79,7 @@ export function utworzCzynnosciAutomatyk(
         krokow: definicja.kroki.length,
       });
       powiedz(skutek.zdanie, skutek.udany);
-      // Definicja z rdzenia wraca także przy rozjeździe: wiersz istnieje, więc
-      // okno ma pokazać jego prawdziwą postać obok zdania o rozbieżności.
+      // Definicja z rdzenia wraca mimo rozjazdu — wiersz pokazuje jej postać obok zdania o rozbieżności.
       return wynik.wynik.workflow;
     },
 
@@ -148,9 +138,7 @@ export function utworzCzynnosciAutomatyk(
       }
       const idOkna = stan.idOkna();
       powiedz('Odczyt przebiegów automatyki…', true);
-      // Okno podaje się jako odbiorca telemetrii tylko wtedy, gdy rdzeń je
-      // wskazał: pole `windowId` wysłane pusto zapisywałoby obserwację na
-      // oknie, którego nie ma.
+      // Okno zgłasza się odbiorcą telemetrii, gdy rdzeń je wskazał — inaczej trafi na nieistniejące okno.
       const wynik = await stan.automatyki.przebiegi({
         workflowId: idAutomatyki,
         ...(idOkna === '' ? {} : { windowId: idOkna }),

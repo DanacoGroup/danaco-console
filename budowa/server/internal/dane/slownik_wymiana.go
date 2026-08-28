@@ -1,18 +1,4 @@
-// Odpowiedzialność pliku: ślady wymiany słownika (Glossary Panel) modułu
-// Translate — import i eksport terminów (TBX/CSV), tabele
-// `slad_importu_slownika` i `slad_eksportu_slownika`. Typ, interfejs
-// i konstruktor deklaruje `tlumaczenie.go`; tu wyłącznie implementacja czterech
-// metod wymiany na `*repozytoriumTlumaczen`.
-//
-// Tabele są dwie, bo import i eksport to różne kierunki z różną kolumną wyniku
-// (`liczba_zaimportowanych` kontra `liczba_wyeksportowanych`) — wspólna tabela
-// byłaby dwiema prawdami o jednym bycie.
-//
-// Ślad eksportu nie niesie dowodu powstania pliku: rdzeń nie ma magazynu blobów,
-// a kontrakt `TranslateGlossaryExportResponse` oddaje wyłącznie `ExportedCount`,
-// bez identyfikatora pliku ani rozmiaru — inaczej niż `research.report.export`
-// (`dane/badania_raport.go`, `EksportRaportu.PlikBibliotekiID`/`RozmiarBajtow`).
-// `Sciezka` niesie więc ścieżkę żądaną, nie ścieżkę wyniku.
+// Odpowiedzialność pliku: ślady wymiany słownika modułu Translate, import i eksport terminów, w dwóch osobnych tabelach różnych kierunków.
 package dane
 
 import (
@@ -129,7 +115,7 @@ func (r *repozytoriumTlumaczen) ZapiszEksportSlownika(ctx context.Context, slad 
 	return zapisany, nil
 }
 
-// ImportySlownika zwraca najświeższe ślady importu, najnowsze pierwsze.
+// ImportySlownika zwraca najświeższe ślady importu terminów słownika, najnowsze wpisy pierwsze w tym wykazie.
 func (r *repozytoriumTlumaczen) ImportySlownika(ctx context.Context, limit int) ([]SladImportuSlownika, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSladowImportuSlownika)
 	if err != nil {
@@ -155,7 +141,7 @@ func (r *repozytoriumTlumaczen) ImportySlownika(ctx context.Context, limit int) 
 	return lista, nil
 }
 
-// EksportySlownika zwraca najświeższe ślady eksportu, najnowsze pierwsze.
+// EksportySlownika zwraca najświeższe ślady eksportu terminów, najnowsze wpisy pierwsze w tym wykazie.
 func (r *repozytoriumTlumaczen) EksportySlownika(ctx context.Context, limit int) ([]SladEksportuSlownika, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSladowEksportuSlownika)
 	if err != nil {
@@ -192,7 +178,7 @@ func odczytajSladImportuSlownika(wiersz skaner) (SladImportuSlownika, error) {
 	return slad, err
 }
 
-// odczytajSladEksportuSlownika składa strukturę z jednego wiersza wyniku.
+// odczytajSladEksportuSlownika składa strukturę śladu z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajSladEksportuSlownika(wiersz skaner) (SladEksportuSlownika, error) {
 	var slad SladEksportuSlownika
 	err := wiersz.Scan(&slad.ID, &slad.Kod, &slad.Sciezka, &slad.LiczbaWyeksportowanych, &slad.Utworzono)

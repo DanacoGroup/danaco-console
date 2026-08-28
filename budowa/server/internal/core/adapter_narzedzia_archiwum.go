@@ -1,24 +1,4 @@
-// Odpowiedzialność pliku: wspólne zaplecze dwóch narzędzi archiwum
-// (`archive.pack`, `archive.unpack`) — wołanie `7z` przez pakiet `zewnetrzne`,
-// rozstrzygnięcie katalogu roboczego okna, odczyt wskazanych zasobów
-// i odłożenie wyniku w magazynie. Formaty, ścieżki i odmowy leżą
-// w `adapter_narzedzia_archiwum_sciezki.go`, pakowanie
-// w `adapter_narzedzia_archiwum_pakowanie.go`, rozpakowanie wraz z obroną
-// przed ucieczką ze ścieżki w `adapter_narzedzia_archiwum_rozpakowanie.go`,
-// czytanie spisu archiwum w `adapter_narzedzia_archiwum_spis.go`, port
-// i wpięcie w `handlers_narzedzia_archiwum.go`.
-//
-// Wszystkie formaty obsługuje jedno binarium wołane przez `zewnetrzne.Wolaj` —
-// przez port `session.Uruchamiacz`, bramę izolacji okna i objęcie drzewa
-// procesów; własnego `exec.Command` w tych plikach nie ma. Spis archiwum czyta
-// ten sam program, który potem rozpakowuje, więc wyrok o zawartości nie
-// rozjeżdża się z rozpakowaniem — osobne `unzip` i `tar` dawałyby trzy postacie
-// spisu i trzy okazje do obejścia tej kontroli.
-//
-// Archiwum wytworzone przez `archive.pack` ląduje w tym samym magazynie, co
-// `design.asset.upload` (`magazynZasobowDesignu`, blob pod sumą sha256), a jego
-// wiersz w tabeli `zasob_design`. Drugi magazyn byłby drugą prawdą o tym, gdzie
-// rdzeń trzyma bajty poza bazą.
+// Plik niesie wspólne zaplecze dwóch narzędzi archiwum — archive.pack i archive.unpack: wołanie 7z przez pakiet zewnetrzne, rozstrzygnięcie katalogu roboczego okna, odczyt wskazanych zasobów i odłożenie wyniku w magazynie.
 package core
 
 import (
@@ -36,37 +16,16 @@ import (
 )
 
 const (
-	// granicaNarzedziArchiwum ogranicza jedno uruchomienie `7z`
-	// (`zewnetrzne.Wolaj` granicy niedodatniej nie przyjmuje). Dziesięć minut
-	// starczy na spakowanie katalogu roboczego, a zarazem kończy pracę programu
-	// karmionego archiwum uszkodzonym, które potrafi mielić bez końca.
+	// granicaNarzedziArchiwum ogranicza jedno uruchomienie 7z. Dziesięć minut starczy na spakowanie katalogu roboczego, a zarazem kończy pracę programu karmionego archiwum uszkodzonym, które potrafi mielić bez końca.
 	granicaNarzedziArchiwum = 600 * time.Second
 
-	// oknoZasobowNarzedziArchiwum jest półką na zasoby powstałe z pakowania
-	// i rozpakowania. Kolumna `zasob_design.okno` jest NOT NULL, a żądania
-	// `archive.*` nie niosą okna, bo model woła je z rozmowy, nie z Assets
-	// Panelu. Półka ma nazwę własną, żeby zasoby archiwum nie wchodziły do
-	// filtra cudzego okna — ta sama zasada obowiązuje w rodzinie obrazu
-	// i mediów.
+	// oknoZasobowNarzedziArchiwum jest półką na zasoby powstałe z pakowania i rozpakowania. Kolumna zasob_design.okno jest NOT NULL, a żądania archive.* nie niosą okna, bo model woła je z rozmowy, nie z Assets Panelu.
 	oknoZasobowNarzedziArchiwum = "narzedzia-archiwum"
 
-	// granicaRozpakowaniaBajty ogranicza rozmiar treści po rozpakowaniu i broni
-	// przed bombą dekompresyjną, czyli archiwum kilkukilobajtowym rozwijającym
-	// się do gigabajtów.
-	//
-	// Dwa gibibajty leżą kilkanaście razy powyżej największego archiwum, jakie
-	// ten produkt ma do wydania (własne drzewo źródeł), i wiele rzędów wielkości
-	// poniżej znanych bomb rozwijających się do terabajtów. Rozpakowanie idzie
-	// przez kwarantannę, więc treść leży przez chwilę w dwóch egzemplarzach —
-	// granica musi zmieścić się na nośniku dwukrotnie.
+	// granicaRozpakowaniaBajty ogranicza rozmiar treści po rozpakowaniu i broni przed bombą dekompresyjną, czyli archiwum kilkukilobajtowym rozwijającym się do gigabajtów. Dwa gibibajty muszą zmieścić się na nośniku dwukrotnie.
 	granicaRozpakowaniaBajty int64 = 2 << 30
 
-	// granicaRozpakowaniaPozycji jest drugą granicą tej samej obrony: liczbą
-	// pozycji. Bomba nie musi być wielka w bajtach — archiwum miliona pustych
-	// plików wyczerpuje i-węzły nośnika, nie zajmując go w bajtach prawie wcale,
-	// a granica rozmiaru przepuściłaby je bez słowa. Sto tysięcy pozycji leży
-	// kilkakrotnie powyżej liczby plików całego drzewa tego produktu wraz
-	// z zależnościami.
+	// granicaRozpakowaniaPozycji jest drugą granicą tej samej obrony: liczbą pozycji, bo bomba nie musi być wielka w bajtach, a wyczerpuje i-węzły nośnika, których granica rozmiaru by nie dostrzegła.
 	granicaRozpakowaniaPozycji = 100000
 )
 
@@ -81,11 +40,7 @@ func narzedzie7z() zewnetrzne.Narzedzie {
 	}
 }
 
-// adapterNarzedziArchiwum wypełnia port `NarzedziaArchiwum`. Zależności są
-// trzy, tak jak w rodzinie obrazu: repozytorium Designu (odczyt zasobów
-// wskazanych przez model i zapis zasobu powstałego), magazyn (miejsce na bajty)
-// oraz uruchamiacz wraz z dwoma źródłami izolacji (jedyna droga startu
-// procesu). Adapter nie pamięta niczego między wywołaniami.
+// adapterNarzedziArchiwum wypełnia port NarzedziaArchiwum. Zależności są trzy: repozytorium Designu, magazyn bajtów oraz uruchamiacz wraz z dwoma źródłami izolacji. Adapter nie pamięta niczego między wywołaniami.
 type adapterNarzedziArchiwum struct {
 	repozytorium  dane.RepozytoriumDesignu
 	magazyn       *magazynTresciBiblioteki
@@ -108,12 +63,7 @@ func nowyAdapterNarzedziArchiwum(repozytorium dane.RepozytoriumDesignu,
 	}
 }
 
-// ZArsenalem wpina drogę do binarium: uruchamiacz procesów i te same dwa źródła
-// izolacji, którymi pracują Terminal, Developer, silniki mowy oraz arsenały
-// obrazu i mediów.
-//
-// Brak tej zależności nie psuje montażu — obie komendy archiwum odmawiają
-// wtedy, nazywając brak, zamiast udawać, że archiwum powstało.
+// ZArsenalem wpina drogę do binarium: uruchamiacz procesów i te same dwa źródła izolacji, którymi pracują Terminal, Developer, silniki mowy oraz arsenały obrazu i mediów.
 func (a *adapterNarzedziArchiwum) ZArsenalem(uruchamiacz session.Uruchamiacz,
 	rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterNarzedziArchiwum {
 
@@ -123,11 +73,7 @@ func (a *adapterNarzedziArchiwum) ZArsenalem(uruchamiacz session.Uruchamiacz,
 	return a
 }
 
-// zasiegNarzedzi składa trójkę okno–zasady–obszar dla zasięgu platformy, tą
-// samą drogą i z tego samego powodu, co rodzina obrazu: żądanie `archive.*`
-// niesie samo archiwum, a nie okno rozmowy, więc adresem jest najszerszy
-// z ośmiu poziomów zasięgu, a nie puste struktury znaczące „izolacja
-// wyłączona".
+// zasiegNarzedzi składa trójkę okno–zasady–obszar dla zasięgu platformy: żądanie archive.* niesie samo archiwum, a nie okno rozmowy, więc adresem jest najszerszy z ośmiu poziomów zasięgu.
 func (a *adapterNarzedziArchiwum) zasiegNarzedzi() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -143,13 +89,7 @@ func (a *adapterNarzedziArchiwum) zasiegNarzedzi() (session.Okno, session.Zasady
 	return okno, zasady, obszar
 }
 
-// katalogRoboczyOkna oddaje katalog, względem którego rozstrzygane są wszystkie
-// ścieżki tej rodziny.
-//
-// Na nim stoi obrona ścieżek: `targetPath` przyjęty jako ścieżka bezwzględna
-// pozwalałby modelowi rozsypać zawartość archiwum w dowolnym miejscu maszyny —
-// w `~/.ssh`, w katalogu autostartu, w cudzym projekcie. Katalog roboczy okna
-// jest jedynym miejscem, w którym model ma prawo pisać.
+// katalogRoboczyOkna oddaje katalog, względem którego rozstrzygane są wszystkie ścieżki tej rodziny. Katalog roboczy okna jest jedynym miejscem, w którym model ma prawo pisać.
 func (a *adapterNarzedziArchiwum) katalogRoboczyOkna() (string, error) {
 	_, _, obszar := a.zasiegNarzedzi()
 	sciezka := strings.TrimSpace(obszar.KatalogRoboczy)
@@ -215,13 +155,7 @@ func (a *adapterNarzedziArchiwum) zasobArchiwum(ctx context.Context,
 	return zasob, *zasob.URI, nil
 }
 
-// katalogRoboczyTymczasowy zakłada katalog na pracę pośrednią (rusztowanie
-// pakowania, kwarantanna rozpakowania).
-//
-// Podstawa jest wskazywana, a nie zostawiana systemowi: `podstawa` niepusta
-// trzyma pracę na tym samym nośniku, co jej cel, więc przeniesienie gotowej
-// treści jest niepodzielnym przemianowaniem, a nie kopiowaniem między
-// wolumenami. Przy rozpakowaniu to warunek poprawności, nie oszczędność.
+// katalogRoboczyTymczasowy zakłada katalog na pracę pośrednią — rusztowanie pakowania, kwarantannę rozpakowania. Podstawa wskazana trzyma pracę na tym samym nośniku, co jej cel.
 func katalogRoboczyTymczasowy(podstawa, przedrostek string) (string, error) {
 	podstawa = strings.TrimSpace(podstawa)
 	if podstawa != "" {
@@ -236,18 +170,7 @@ func katalogRoboczyTymczasowy(podstawa, przedrostek string) (string, error) {
 	return katalog, nil
 }
 
-// odlozArchiwumJakoZasob utrwala gotowy plik archiwum w magazynie i zakłada
-// jego wiersz — tą samą drogą, którą idzie `design.asset.upload`.
-//
-// Kolejność jest zamierzona: najpierw bajty, potem wiersz. Wiersz powstaje
-// dopiero po utrwaleniu treści, inaczej Assets Panel pokazywałby kafelek, za
-// którym nie ma nic.
-//
-// Wyliczenie `DesignAssetKind` kontraktu ma trzy wartości — `image`, `vector`,
-// `composition` — i ani jednej na archiwum. Rodzajem jest `image`, tak samo jak
-// w rodzinie mediów odkładającej nim dźwięk i film: wartość spoza wyliczenia
-// postawiłaby przed klientem napis, którego jego typ nie zna i którego panel
-// nie umiałby narysować. O tym, czym plik jest, mówi zmierzone pole `format`.
+// odlozArchiwumJakoZasob utrwala gotowy plik archiwum w magazynie i zakłada jego wiersz, tą samą drogą, którą idzie design.asset.upload. Kolejność jest zamierzona: najpierw bajty, potem wiersz.
 func (a *adapterNarzedziArchiwum) odlozArchiwumJakoZasob(ctx context.Context,
 	sciezka, nazwa string, format formatArchiwum) (shared.DesignAsset, int64, error) {
 

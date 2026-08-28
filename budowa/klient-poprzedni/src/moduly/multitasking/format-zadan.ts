@@ -1,19 +1,15 @@
 /**
- * Zapis liczb i czasów panelu „Zadania w tle" — sam tekst, bez komend
- * i bez tworzenia elementów.
- *
- * Plik stoi osobno, bo zapis czasu trwania jest potrzebny w trzech miejscach
- * naraz (wiersz podsumowania przepływu, kolumna „Czas" tabeli agentów, licznik
- * zwiniętych) i trzy kopie tej samej reguły rozjechałyby się przy pierwszej
- * poprawce.
- *
- * Czas bierze się ze znaczników kontraktu: `Subagent.startedAt`
- * i `Subagent.finishedAt` to milisekundy epoki i oba są nieobowiązkowe.
- * Podagent bez znacznika startu dostaje brak, a nie czas zerowy — zero
- * znaczyłoby „ruszył i nic nie trwał".
+ * Zapis liczb i czasów panelu „Zadania w tle" — sam tekst, bez komend i bez
+ * tworzenia elementów. Czas bierze się ze znaczników kontraktu
+ * `Subagent.startedAt` oraz `Subagent.finishedAt`, podanych w milisekundach
+ * epoki i nieobowiązkowych.
  */
 
-/** Zapis czasu trwania po polsku: `24 m 19 s`, `1 h 04 m`, `19 s`. */
+/**
+ * Zapis czasu trwania po polsku w postaci `24 m 19 s`, `1 h 04 m` albo `19 s`.
+ * Jednostka mniejsza jest dopełniana zerem do dwóch cyfr, a wartości ujemne
+ * są przycinane do zera.
+ */
 export function zapiszCzas(milisekundy: number): string {
   const sekundyRazem = Math.max(0, Math.floor(milisekundy / 1000));
   const godziny = Math.floor(sekundyRazem / 3600);
@@ -25,12 +21,10 @@ export function zapiszCzas(milisekundy: number): string {
 }
 
 /**
- * Czas trwania odcinka albo brak.
- *
- * `doKiedy` puste znaczy „praca trwa" — wtedy odcinek liczy się do chwili
- * podanej przez wołającego, a nie do `Date.now()` wziętego wewnątrz. Chwila
- * przychodzi z zewnątrz, żeby wszystkie wiersze jednego przerysowania mierzyły
- * się do tej samej sekundy.
+ * Czas trwania odcinka albo brak. Puste `doKiedy` znaczy „praca trwa" —
+ * odcinek liczy się wtedy do chwili podanej przez wołającego, nie do
+ * `Date.now()` branego wewnątrz. Chwila przychodzi z zewnątrz, aby wiersze
+ * przerysowania mierzyły się jednakowo.
  */
 export function czasOdcinka(
   odKiedy: number | undefined,
@@ -42,7 +36,11 @@ export function czasOdcinka(
   return Math.max(0, koniec - odKiedy);
 }
 
-/** Zapis czasu odcinka albo zdanie o braku znacznika — nigdy zero z domysłu. */
+/**
+ * Zapis czasu odcinka albo zdanie o braku znacznika czasu. Brak nigdy nie
+ * zamienia się w zero, ponieważ zero znaczyłoby, że praca ruszyła i nie
+ * trwała ani chwili.
+ */
 export function zapiszCzasOdcinka(czas: number | null): string {
   return czas === null ? 'bez znacznika czasu' : zapiszCzas(czas);
 }

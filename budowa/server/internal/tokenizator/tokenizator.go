@@ -1,26 +1,4 @@
-// Pakiet tokenizator liczy żetony tekstu tak, jak liczy je model — po to, żeby
-// zajętość okna kontekstu (`context.usage.get`) była POMIAREM, a nie
-// oszacowaniem.
-//
-// ── Dlaczego nie „znaki podzielone przez cztery" ────────────────────────────
-// Przybliżenie po długości tekstu myli się o kilkadziesiąt procent na języku
-// polskim (znaki diakrytyczne rozpadają się na osobne żetony), a jeszcze
-// bardziej na kodzie źródłowym i na zapisie strukturalnym. Licznik, który myli
-// się o kilkadziesiąt procent, jest gorszy niż jego brak: Operator widzi pasek
-// „w normie" i traci turę na przepełnieniu okna.
-//
-// ── Dlaczego biblioteka wkompilowana, a nie program ─────────────────────────
-// Słownik BPE jest wkompilowany w binarium rdzenia razem z pakietem. Nie ma tu
-// ani jednego procesu potomnego, ani jednego pobrania z sieci w trakcie
-// żądania: tokenizator ma działać na maszynie odciętej od świata tak samo, jak
-// na maszynie deweloperskiej.
-//
-// ── Czego ten pakiet nie robi ───────────────────────────────────────────────
-// Nie udaje, że zna podział na żetony każdego modelu świata. Zna rodziny
-// słowników, które naprawdę ma; model spoza nich dostaje słownik najbliższy
-// wraz z jawnym powiedzeniem, którym słownikiem policzono (`Nazwa`). Nazwa
-// wchodzi do odpowiedzi kontraktu (`ContextUsage.tokenizer`), więc czytelnik
-// wie, czym zmierzono — a nie dostaje liczby bez świadka.
+// Pakiet tokenizator liczy żetony tekstu tak, jak liczy je model, żeby zajętość okna kontekstu była pomiarem, a nie oszacowaniem.
 package tokenizator
 
 import (
@@ -30,16 +8,16 @@ import (
 	"github.com/tiktoken-go/tokenizer"
 )
 
-// Licznik jest jednym słownikiem BPE wraz z jego nazwą.
+// Licznik jest jednym słownikiem BPE wraz z jego nazwą, używanym do liczenia żetonów w każdym podanym tekście.
 type Licznik struct {
 	nazwa     string
 	kodowanie tokenizer.Codec
 }
 
-// Nazwa oddaje nazwę słownika, którym policzono — wchodzi do odpowiedzi wprost.
+// Metoda Nazwa oddaje nazwę słownika, którym policzono tekst; wchodzi do odpowiedzi kontraktu wprost dla czytelnika.
 func (l Licznik) Nazwa() string { return l.nazwa }
 
-// Policz zwraca liczbę żetonów tekstu.
+// Metoda Policz zwraca liczbę żetonów danego tekstu policzoną słownikiem BPE przypisanym do tego licznika.
 func (l Licznik) Policz(tekst string) int {
 	if l.kodowanie == nil || tekst == "" {
 		return 0
@@ -73,16 +51,10 @@ var slownikiModeli = []struct {
 	{"text-embedding", tokenizer.Cl100kBase},
 }
 
-// slownikDomyslny jest brany dla modeli spoza wykazu — w tym dla rodziny
-// Claude, której słownika nikt nie publikuje.
-//
-// To jest wybór świadomy, a nie zaniedbanie: `cl100k_base` jest najbliższym
-// dostępnym podziałem dla modeli tej klasy, a odpowiedź MÓWI, że policzono
-// właśnie nim. Czytelnik dostaje liczbę wraz z nazwą miary, więc wie, na ile
-// jest wiążąca — inaczej niż przy liczbie podanej bez słowa.
+// slownikDomyslny jest brany dla modeli spoza wykazu, w tym dla modeli, których słownika nikt nie publikuje.
 const slownikDomyslny = tokenizer.Cl100kBase
 
-// DlaModelu zwraca licznik właściwy nazwie modelu.
+// Funkcja DlaModelu zwraca licznik właściwy nazwie modelu wskazanego jako argument tego wywołania funkcji.
 func DlaModelu(model string) (Licznik, error) {
 	nazwa := strings.ToLower(strings.TrimSpace(model))
 	kodowanie := slownikDomyslny
@@ -95,7 +67,7 @@ func DlaModelu(model string) (Licznik, error) {
 	return dlaKodowania(kodowanie)
 }
 
-// dlaKodowania buduje albo oddaje z pamięci licznik jednego słownika.
+// Funkcja dlaKodowania buduje albo oddaje z pamięci podręcznej licznik jednego wskazanego słownika kodowania.
 func dlaKodowania(kodowanie tokenizer.Encoding) (Licznik, error) {
 	zamek.Lock()
 	defer zamek.Unlock()

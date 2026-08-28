@@ -10,27 +10,9 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { Kanal, Wynik } from '../../protokol/kanal';
 import { sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 
-/**
- * Wywołanie komendy obszaru `translate.*` — jedyna droga modułu do rdzenia.
- *
- * Rdzeń odpowiada na komendę, której nie obsługuje, kopertą `translate.unknown`
- * (`server/internal/protocol/zadanie.go`). Koperta niesie identyfikator
- * żądania, ale nie niesie pola `status`, więc korelacja klienta nie rozpoznaje
- * jej jako odpowiedzi (`protokol/koperta.ts` — `czyOdpowiedz`). Zwykłe
- * `wywolaj` czekałoby na nią bez końca, a okno stałoby w stanie ładowania na
- * zawsze.
- *
- * Dlatego wywołanie nasłuchuje `translate.unknown` równolegle z odpowiedzią
- * i rozstrzyga się na tym, co przyjdzie pierwsze. Odmowa wraca nazwana: pole
- * `odmowa.zadanyTyp` niesie `requestedType` z rdzenia, więc okno mówi wprost,
- * której komendy rdzeń nie zna, zamiast pokazać pustą listę jako wynik.
- *
- * To nie jest druga droga do rdzenia: wysyłka idzie tym samym `kanal.wyslij`,
- * a nazwa komendy pochodzi wyłącznie ze stałych kontraktu. Obietnica nigdy nie
- * jest odrzucana.
- */
+/** Wywołanie komendy obszaru translate jest jedyną drogą modułu do rdzenia, z odmową nazwaną typem. */
 
-/** Odmowa rdzenia nazwana żądanym typem — treść zdarzenia `translate.unknown`. */
+/** Odmowa rdzenia nazwana żądanym typem stanowi treść zdarzenia nieznanej komendy, gdy rdzeń nie rozpoznał żądania. */
 export interface OdmowaRdzenia {
   /** Typ, którego rdzeń nie rozpoznał (`requestedType`). */
   zadanyTyp: string;
@@ -39,11 +21,8 @@ export interface OdmowaRdzenia {
 }
 
 /**
- * Wynik wywołania modułu — `Wynik` protokołu poszerzony o nazwaną odmowę.
- *
- * Pole `blad` jest wypełnione także przy odmowie, więc widok, który zna tylko
- * `Wynik`, zachowuje się poprawnie; `odmowa` pozwala oknu odróżnić „rdzeń nie
- * zna tej komendy" od „rdzeń ją zna i zawiódł".
+ * Wynik wywołania modułu poszerza wynik protokołu o nazwaną odmowę, pozwalając oknu odróżnić
+ * nieznaną komendę od zwykłego zawodu rdzenia.
  */
 export interface WynikTranslate<T> extends Wynik<T> {
   odmowa?: OdmowaRdzenia;
@@ -67,8 +46,7 @@ export function zadaj<K extends Command>(
       rozstrzygnij(wynik);
     }
 
-    // Subskrypcja przed wysyłką: odpowiedź rdzenia bywa natychmiastowa,
-    // a odmowa przepuszczona byłaby zawieszeniem okna bez wyjścia.
+    // Subskrypcja przed wysyłką: odpowiedź bywa natychmiastowa, odmowa przepuszczona zawiesiłaby okno.
     odsubskrybuj = kanal.naZdarzenie(EventType.TranslateUnknown, (tresc) => {
       if (!dotyczyZadania(tresc, idZadania, komenda)) return;
       zakoncz(zbudujOdmowe(komenda, tresc));
@@ -81,12 +59,8 @@ export function zadaj<K extends Command>(
 }
 
 /**
- * Czy odmowa dotyczy tego właśnie żądania.
- *
- * Rdzeń podaje `requestId` i po nim rozpoznajemy odmowę w pierwszej
- * kolejności. Gdy pola zabrakło — starszy rdzeń albo pośrednik — zostaje
- * dopasowanie po żądanym typie: mylna zbieżność jest mniej szkodliwa niż okno
- * czekające bez końca.
+ * Dopasowanie odmowy do żądania idzie po identyfikatorze żądania w pierwszej kolejności, a po
+ * żądanym typie, gdy pola brak.
  */
 function dotyczyZadania(
   tresc: UnknownCommandPayload,
@@ -99,12 +73,8 @@ function dotyczyZadania(
 }
 
 /**
- * Odmowa jako wynik nieudany.
- *
- * Kod `not_found` jest wyborem świadomym: kontrakt nie ma kodu „komenda
- * nieobsługiwana", a spośród ośmiu kodów to ten mówi „wskazanego bytu nie ma".
- * Rzeczą, której nie ma, jest tutaj uchwyt komendy. Zdanie błędu nazywa typ
- * wprost, więc Operator nie musi znać kodu, żeby zrozumieć odmowę.
+ * Odmowa jako wynik nieudany bierze kod braku bytu, bo kontrakt nie ma osobnego kodu na komendę
+ * nieobsługiwaną przez rdzeń.
  */
 function zbudujOdmowe<T>(komenda: string, tresc: UnknownCommandPayload): WynikTranslate<T> {
   const zadanyTyp = ((tresc.requestedType ?? '').trim() || komenda);

@@ -1,24 +1,10 @@
 /**
- * Skróty klawiszowe modułu Terminal — załącznik dokumentacji modułu przełożony
- * na wiązania klawiatury i na wykaz widoczny dla Operatora.
- *
- * Wykaz obejmuje wszystkie skróty załącznika, także te należące do okna rozmowy
- * i okna pętli wykonawczej, których to złożenie nie osadza — bo są to okna
- * wspólne platformie, składane przez scenę sesji. Pozycja takiego skrótu stoi
- * w wykazie z jawnym zdaniem o tym, gdzie skrót działa; usunięcie jej byłoby
- * ukryciem połowy załącznika, a wiązanie go tutaj przechwytywałoby klawisze
- * cudzemu oknu.
- *
- * Nasłuch stoi na węźle modułu, nie na dokumencie: skrót ma działać, gdy praca
- * dzieje się w Terminalu, a nie odbierać klawisze reszcie platformy.
- *
- * Część skrótów załącznika należy do przeglądarki i przeglądarka oddaje je
- * dopiero wtedy, gdy pozwala na to jej własna polityka. Wykaz mówi to wprost
- * przy każdej takiej pozycji zamiast obiecywać zachowanie, którego moduł nie
- * ma jak wymusić — każda z tych czynności ma drugą drogę w palecie poleceń.
+ * Skróty klawiszowe modułu Terminal łączą wiązania klawiatury z czynnościami okna oraz oddzielnym wykazem skrótów spoza tego złożenia.
  */
 
-/** Czynność, do której skrót prowadzi. Nazwa słowna, nie kod. */
+/**
+ * Czynność, do której skrót prowadzi w module Terminal, zapisana nazwą słowną, a nie wewnętrznym kodem zdarzenia.
+ */
 export type CzynnoscSkrotu =
   | 'nowa-karta'
   | 'zamknij-karte'
@@ -29,7 +15,9 @@ export type CzynnoscSkrotu =
   | 'szukaj-w-konsoli'
   | 'przestaw-kolejke';
 
-/** Jedno wiązanie klawiatury. */
+/**
+ * Jedno wiązanie klawiatury z czynnością skrótu, wraz z kombinacją klawiszy i opisem widocznym w wykazie skrótów.
+ */
 export interface WiazanieSkrotu {
   /** Wartość `KeyboardEvent.key` po sprowadzeniu do małych liter. */
   klawisz: string;
@@ -45,7 +33,9 @@ export interface WiazanieSkrotu {
   opis: string;
 }
 
-/** Skróty, które to złożenie wiąże i wykonuje. */
+/**
+ * Skróty, które to złożenie klawiatury wiąże i wykonuje bezpośrednio w module Terminal bieżącego okna.
+ */
 export const WIAZANIA: readonly WiazanieSkrotu[] = [
   {
     klawisz: 't',
@@ -121,14 +111,18 @@ export const WIAZANIA: readonly WiazanieSkrotu[] = [
   },
 ];
 
-/** Pozycja załącznika, której to złożenie nie wiąże, wraz z powodem. */
+/**
+ * Pozycja skrótu załącznika, której to złożenie klawiatury nie wiąże samodzielnie, wraz z powodem tego wyłączenia.
+ */
 export interface SkrotPozaZlozeniem {
   zapis: string;
   okno: string;
   opis: string;
 }
 
-/** Skróty załącznika należące do okien wspólnych platformie. */
+/**
+ * Skróty załącznika należące do okien wspólnych całej platformie, pokazywane osobno od skrótów tego złożenia.
+ */
 export const SKROTY_POZA_ZLOZENIEM: readonly SkrotPozaZlozeniem[] = [
   {
     zapis: 'Ctrl/Cmd + Enter',
@@ -157,7 +151,9 @@ export const SKROTY_POZA_ZLOZENIEM: readonly SkrotPozaZlozeniem[] = [
   },
 ];
 
-/** Nasłuch skrótów założony na węźle modułu. */
+/**
+ * Nasłuch skrótów klawiatury założony na węźle modułu Terminal, wraz z metodą jego zdjęcia przy zamknięciu.
+ */
 export interface Skroty {
   /** Zdejmuje nasłuch. Wołane przy zamykaniu modułu. */
   zamknij(): void;
@@ -175,8 +171,7 @@ export function zwiazSkroty(
   czynnosci: Readonly<Partial<Record<CzynnoscSkrotu, () => void>>>,
 ): Skroty {
   function naKlawisz(zdarzenie: KeyboardEvent): void {
-    // Klawisz modyfikujący jest inny na obu systemach i oba są tu równoprawne:
-    // zapis „Ctrl/Cmd" załącznika znaczy dokładnie tyle.
+    // Klawisz modyfikujący jest inny na obu systemach; zapis „Ctrl/Cmd" znaczy dokładnie tyle.
     const sterujacy = zdarzenie.ctrlKey || zdarzenie.metaKey;
     const klawisz = zdarzenie.key.toLowerCase();
     for (const wiazanie of WIAZANIA) {

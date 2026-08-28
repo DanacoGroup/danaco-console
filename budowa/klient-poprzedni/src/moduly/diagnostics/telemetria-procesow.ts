@@ -22,41 +22,9 @@ import type { WynikDiagnostyki } from './zrodlo-diagnostics';
 import type { ZrodloObserwowalnosci } from './zrodlo-obserwowalnosci';
 
 /**
- * Telemetria procesów — jeden odczyt, dwie perspektywy.
- *
- * Zakładki Metrics & Performance oraz Health & Uptime opisują w opracowaniu
- * dwa różne pytania („jak szybko idzie praca” i „czy platforma stoi”), lecz
- * kontrakt niesie na oba jeden materiał: `MonitorStatus`. Gdyby każda zakładka
- * czytała rdzeń osobno, w jednej chwili pokazywałyby dwie migawki tej samej
- * telemetrii i Operator nie miałby jak orzec, która jest bieżąca. Odczyt jest
- * więc jeden, a zakładki różnią się wyłącznie tym, co z niego czytają:
- * Metrics & Performance przebieg procesu po procesie, Health & Uptime
- * zestawienie stanów.
- *
- * Zakres czasu wspólny modułowi tego odczytu nie dotyczy: `monitor.status`
- * i `monitor.subscribe` nie mają w kontrakcie pól `fromTime` ani `toTime`, więc
- * telemetria jest zawsze stanem bieżącym rejestru procesów. Zawężanie jej
- * zakresem po stronie okna byłoby zawężaniem pozorowanym.
- *
- * Obserwacja zakłada się raz, odczyt powtarza się: pierwsze pytanie idzie
- * `monitor.subscribe` (zapisuje okno na telemetrię), każde następne
- * `monitor.status` (czyta i niczego nie zapisuje). Pole `windowId` znaczy
- * w tych dwóch komendach co innego — w pierwszej jest oknem obserwatora,
- * w drugiej sitem procesów — więc do odczytu nie idzie wcale.
- *
- * Na żywo idzie `progress.changed`. Zdarzenie niesie stan, etap i stopień
- * ukończenia, lecz NIE niesie czasu zmiany — dlatego wiersz odświeżony
- * zdarzeniem pokazuje liczby ze zdarzenia, a czas nadal ten z odczytu, wraz
- * ze zdaniem, skąd się bierze. Podstawienie czasu klienta w miejsce czasu
- * rdzenia byłoby wpisaniem do telemetrii wartości, której rdzeń nie orzekł.
- *
- * Eksport telemetrii stoi przy danych, a nie w pasku akcji okna: potwierdzenie
- * eksportu wypisuje się w tej samej zakładce, w której widać eksportowany
- * materiał. Potwierdzenie na zakładce zasłoniętej nie byłoby potwierdzeniem.
- *
- * Wytwórnia sama nie czyta — pierwszy odczyt zleca złożenie modułu wywołaniem
- * `odswiez()`, tak samo jak w Recommendations Panelu. Odczyt w wytwórni obok
- * odczytu ze złożenia dałby dwa żądania na jedno zmontowanie okna.
+ * Telemetria procesów — jeden odczyt, dwie perspektywy: zakładki Metrics & Performance
+ * i Health & Uptime czytają jeden materiał (`MonitorStatus`) z jednego odczytu, żeby
+ * Operator nie widział dwóch migawek tej samej telemetrii naraz.
  */
 export interface TelemetriaProcesow {
   /** Ciało zakładki Metrics & Performance. */
@@ -84,12 +52,7 @@ export function utworzTelemetrieProcesow(
   /** Los zapisu obserwacji; `undefined`, dopóki obserwacji nie zakładano. */
   let obserwacjaZapisana: boolean | undefined;
 
-  /**
-   * Pobiera stan procesów. Obserwację zakłada się RAZ — przy pierwszym
-   * odczycie — a każdy następny idzie `monitor.status`, bo powtarzanie zapisu
-   * przy każdym odświeżeniu byłoby zapisywaniem tego samego okna na tę samą
-   * telemetrię bez powodu.
-   */
+  /** Pobiera stan procesów — obserwację zakłada tylko pierwszy odczyt, dalej idzie monitor.status. */
   async function pobierz(): Promise<WynikDiagnostyki<MonitorStatus[]>> {
     if (obserwacjaZapisana !== undefined) {
       return zrodlo.stanProcesow(zadanieStanu());
@@ -107,19 +70,14 @@ export function utworzTelemetrieProcesow(
   }
 
   function odswiez(): void {
-    // Zmiany sprzed żądania zawiera już migawka, którą rdzeń właśnie zbuduje;
-    // zmiany doniesione PO wysłaniu żądania zostają, bo migawka może ich nie
-    // objąć, a wyczyszczenie mapy dopiero przy odpowiedzi by je zgubiło.
+    // Zmiany sprzed żądania zawiera już migawka; zmiany po żądaniu zostają, bo migawka może ich nie objąć.
     zmiany.clear();
     odczyt = 'w-toku';
     metryki.ladowanie('Odczyt telemetrii procesów…');
     kondycja.ladowanie('Odczyt telemetrii procesów…');
     void pobierz().then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Odmowa nie zostaje pustym wykazem: rdzeń bez wpiętego rejestru
-        // telemetrii odmawia głośno, a wykaz pusty nazwałby to „brakiem
-        // procesów”. Wykaz poprzedni też odchodzi — po odmowie nie jest już
-        // bieżący, a eksport oddałby go jako gdyby był.
+        // Odmowa nie zostaje pustym wykazem — pusty wykaz nazwałby to brakiem procesów, co nie jest prawdą.
         procesy = [];
         odczyt = 'nieudany';
         const zdanie = zdanieNiepowodzenia('odczytu telemetrii procesów', wynik.powod);
@@ -158,13 +116,9 @@ export function utworzTelemetrieProcesow(
   }
 
   const odsubskrybuj = zrodlo.naPostep((tresc) => {
-    // Zdarzenie o procesie spoza ostatniego odczytu też ma znaczenie: rejestr
-    // rdzenia zna proces, którego okno jeszcze nie widziało. Wiersz powstaje
-    // wtedy z samego zdarzenia i mówi to o sobie wprost.
+    // Zdarzenie o procesie spoza odczytu też ma znaczenie — wiersz powstaje wtedy z samego zdarzenia.
     zmiany.set(tresc.processId, tresc);
-    // Przerysowanie ma sens wyłącznie nad udanym odczytem. W trakcie odczytu
-    // nie ma czego przerysowywać, a po odmowie wykaz zbudowany ze zdarzeń
-    // zastąpiłby na ekranie treść odmowy — czyli ukryłby ją.
+    // Przerysowanie ma sens wyłącznie nad udanym odczytem — po odmowie zdarzenia zasłoniłyby treść odmowy.
     if (odczyt !== 'udany') return;
     rysuj();
   });
@@ -178,30 +132,22 @@ export function utworzTelemetrieProcesow(
 }
 
 /**
- * Żądanie obserwacji. `windowId` jest tu oknem ODBIERAJĄCYM telemetrię, nie
- * sitem procesów; sitem są `processIds` i `sessionId`. `processIds` nie idzie
- * wcale — pusty wykaz znaczy w kontrakcie komplet procesów, a to jest zakres
- * właściwy oknu, które patrzy na kondycję całej instalacji, nie jednego
- * przebiegu.
+ * Żądanie obserwacji: windowId jest tu oknem odbierającym telemetrię, nie sitem
+ * procesów — sitem są processIds i sessionId, a pusty wykaz procesów oznacza komplet.
  */
 function zadanieObserwacji(idOkna: string): MonitorSubscribeRequest {
   return idOkna === '' ? {} : { windowId: idOkna };
 }
 
 /**
- * Żądanie odczytu stanu — bez ani jednego pola.
- *
- * `windowId` znaczy w `monitor.status` co innego niż w `monitor.subscribe`:
- * tam jest oknem obserwatora, tutaj SITEM procesów. Podanie go zawęziłoby
- * odświeżenie do procesów okna Diagnostics, czyli do innego zbioru niż ten,
- * który oddał odczyt pierwszy — wykaz kurczyłby się po każdym odświeżeniu bez
- * żadnej zmiany w rdzeniu.
+ * Żądanie odczytu stanu, bez ani jednego pola: windowId znaczy tu sito procesów, nie
+ * okno obserwatora jak w monitor.subscribe, więc podanie go zawęziłoby odczyt.
  */
 function zadanieStanu(): MonitorStatusRequest {
   return {};
 }
 
-/** Zdanie o odczycie — liczba procesów oraz los samego zapisu obserwacji. */
+/** Zdanie o odczycie — liczba odczytanych procesów rejestru rdzenia oraz los samego zapisu obserwacji na oknie. */
 function zdanieOOdczycie(ile: number, zapisana: boolean | undefined, idOkna: string): string {
   const podstawa = `Odczytano telemetrię ${ile} proces(ów) rejestru rdzenia.`;
   if (zapisana === true) return `${podstawa} Obserwacja zapisana na oknie ${idOkna}.`;
@@ -213,7 +159,7 @@ function zdanieOOdczycie(ile: number, zapisana: boolean | undefined, idOkna: str
   );
 }
 
-/** Zakładka Metrics & Performance: pasek czynności nad miejscem treści. */
+/** Zakładka Metrics & Performance: pasek czynności nad miejscem treści, z przyciskiem eksportu telemetrii procesów. */
 function zakladkaMetryk(stanTresci: HTMLElement, eksportuj: () => void): HTMLElement {
   const eksport = przyciskAkcji('Eksportuj telemetrię procesów');
   eksport.addEventListener('click', eksportuj);
@@ -246,7 +192,7 @@ function zakladkaMetryk(stanTresci: HTMLElement, eksportuj: () => void): HTMLEle
   );
 }
 
-/** Zakładka Health & Uptime: zestawienie stanów wraz z granicą tego, co wiadomo. */
+/** Zakładka Health & Uptime: zestawienie stanów procesów wraz z jasną granicą tego, co kontrakt naprawdę wie. */
 function zakladkaKondycji(stanTresci: HTMLElement): HTMLElement {
   return cialoNarzedzia(
     objasnienieNarzedzia(
@@ -278,7 +224,7 @@ function zakladkaKondycji(stanTresci: HTMLElement): HTMLElement {
   );
 }
 
-/** Wykaz procesów — perspektywa Metrics & Performance. */
+/** Wykaz procesów — perspektywa Metrics & Performance, przebieg proces po procesie, w kolejności odczytu rdzenia. */
 function rysujMetryki(
   procesy: readonly MonitorStatus[],
   zmiany: ReadonlyMap<string, ProgressChangedEvent>,
@@ -298,7 +244,7 @@ function rysujMetryki(
   tresc.tresc().append(lista);
 }
 
-/** Jeden wiersz procesu; zmiana ze zdarzenia bierze pierwszeństwo nad odczytem. */
+/** Jeden wiersz procesu; zmiana doniesiona zdarzeniem progress.changed bierze pierwszeństwo przed danymi z odczytu. */
 function wierszProcesu(proces: MonitorStatus, zmiana: ProgressChangedEvent | undefined): HTMLElement {
   const stan = zmiana?.status ?? proces.status;
   const pozycja = pozycjaWykazu(proces.label ?? proces.processId, opisProcesu(proces, zmiana), 'dg');
@@ -330,7 +276,7 @@ function wierszZeZdarzenia(zmiana: ProgressChangedEvent): HTMLElement {
   return pozycja.element;
 }
 
-/** Zdanie opisu procesu: etap, ukończenie, obiegi, okno i sesja. */
+/** Zdanie opisu procesu: etap, ukończenie, obiegi naprawcze, okno i sesja, złożone w jedną linię tekstu. */
 function opisProcesu(proces: MonitorStatus, zmiana: ProgressChangedEvent | undefined): string {
   const czesci: string[] = [`proces ${proces.processId}`];
   if (proces.stage !== undefined && proces.stage !== '') czesci.push(`etap ${proces.stage}`);
@@ -345,12 +291,11 @@ function opisProcesu(proces: MonitorStatus, zmiana: ProgressChangedEvent | undef
   return czesci.join(' · ');
 }
 
-/** Zdanie o treści zdarzenia postępu — wyłącznie liczby, które rdzeń podał. */
+/** Zdanie o treści zdarzenia postępu — wyłącznie te liczby, które rdzeń faktycznie podał w tym zdarzeniu. */
 function opisPostepu(zmiana: ProgressChangedEvent): string {
   const etap =
     zmiana.stepLabel === undefined || zmiana.stepLabel === '' ? '' : `${zmiana.stepLabel}, `;
-  // `totalSteps` równe zeru znaczy w kontrakcie „liczba etapów nieznana”,
-  // a nie „zero etapów” — ułamek z zerem w mianowniku byłby wtedy zmyśleniem.
+  // totalSteps równe zeru znaczy liczbę etapów nieznaną, nie zero etapów.
   const kroki =
     zmiana.totalSteps === 0
       ? `krok ${zmiana.currentStep} z nieznanej liczby`
@@ -358,7 +303,7 @@ function opisPostepu(zmiana: ProgressChangedEvent): string {
   return `${etap}${kroki}, ukończenie ${zmiana.percent}%`;
 }
 
-/** Zestawienie stanów — perspektywa Health & Uptime. */
+/** Zestawienie stanów — perspektywa Health & Uptime: liczba procesów w każdym możliwym stanie postępu pracy. */
 function rysujKondycje(
   procesy: readonly MonitorStatus[],
   zmiany: ReadonlyMap<string, ProgressChangedEvent>,
@@ -390,7 +335,7 @@ function rysujKondycje(
   tresc.tresc().append(lista, uwaga);
 }
 
-/** Kolejność stanów w zestawieniu: od pracy trwającej do zakończeń. */
+/** Kolejność stanów w zestawieniu Health & Uptime: od pracy trwającej do wszystkich stanów zakończenia procesu. */
 const KOLEJNOSC_STANOW: readonly ProgressStatus[] = [
   ProgressStatus.Running,
   ProgressStatus.Pending,
@@ -400,7 +345,7 @@ const KOLEJNOSC_STANOW: readonly ProgressStatus[] = [
   ProgressStatus.Failed,
 ];
 
-/** Liczba procesów w każdym stanie; zmiana ze zdarzenia liczy się nad odczytem. */
+/** Liczba procesów w każdym stanie; zmiana doniesiona zdarzeniem liczy się nad wynikiem ostatniego odczytu. */
 function policzStany(
   procesy: readonly MonitorStatus[],
   zmiany: ReadonlyMap<string, ProgressChangedEvent>,
@@ -415,11 +360,8 @@ function policzStany(
 }
 
 /**
- * Plakietka stanu procesu — ikona i etykieta obok barwy.
- *
- * Znak bierze się z katalogu motywu (`motyw/znaczenia-stanow.ts`), a nie
- * z własnej mapy okna: stan procesu jest tym samym pojęciem tutaj, na karcie
- * sesji i w monitorze pracy ciągłej, więc ma jedną nazwę i jeden znak.
+ * Plakietka stanu procesu — ikona i etykieta obok barwy, wzięte z katalogu motywu, żeby
+ * stan procesu miał tę samą nazwę i znak wszędzie w aplikacji.
  */
 function plakietkaStanu(stan: ProgressStatus): HTMLElement {
   const znak = znakStanuPostepu(stan);

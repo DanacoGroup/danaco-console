@@ -1,25 +1,7 @@
-// Odpowiedzialność pliku: postać znaku i postać akapitu na wskazanym
-// fragmencie, czyszczenie formatowania, wielkość liter, malarz formatów,
-// zaznaczanie wedle podobnego formatowania oraz znajdź i zamień z postacią.
-//
-// ── Fragment, nie dokument ───────────────────────────────────────────────────
-// Osią tego odcinka jest praca na fragmencie: postać nałożona na zaznaczenie ma
-// zmienić WYŁĄCZNIE to zaznaczenie. Rachunek stoi w `_postac.go`
-// (`postacRozetnij`, `postacFragmentyZakresu`) i tu się go tylko woła — dwa
-// liczenia granic zaznaczenia rozjechałyby się przy pierwszej poprawce.
-//
-// ── Malarz formatów kopiuje postać, nie treść ────────────────────────────────
-// Zabrana postać leży w WIERSZU tabeli `postac_malarza_studio` (migracja 368),
-// nie w pamięci procesu. Powód zapisała sama migracja: między zabraniem
-// a położeniem stoją DWIE osobne komendy, więc postać musi przeżyć czas między
-// nimi — także przeładowanie rdzenia. Do 17.08.2026 leżała tu w pamięci procesu
-// i przepadała przy restarcie: Operator zabierał postać, rdzeń wstawał od nowa,
-// a położenie odmawiało „takiej postaci nie znam". Przy pracy modelu przepadała
-// łatwiej jeszcze, bo model zabiera postać jednym narzędziem, a kładzie drugim,
-// niekiedy po kilku innych czynnościach.
-//
-// Wiersz WYGASA — malarz jest narzędziem jednej czynności, a postać zabrana
-// wczoraj i położona dziś byłaby zaskoczeniem, nie pomocą.
+// Postać znaku i postać akapitu na wskazanym fragmencie, czyszczenie
+// formatowania, wielkość liter, malarz formatów, zaznaczanie wedle podobnego
+// formatowania oraz znajdź i zamień z postacią; malarz kopiuje postać wierszem
+// tabeli, nie pamięcią procesu.
 package core
 
 import (
@@ -34,20 +16,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// postacTrwanieMalarza mówi, jak długo obowiązuje zabrana postać.
-//
-// Godzina jest miarą jednej pracy nad pismem: obejmuje ciąg czynności modelu,
-// który zabiera postać, robi kilka innych rzeczy i kładzie ją na końcu, a nie
-// przenosi postaci na następny dzień. Dłuższy czas czyniłby z malarza magazyn,
-// krótszy odbierałby postać w połowie roboty.
+// postacTrwanieMalarza mówi, jak długo obowiązuje zabrana postać: godzina jest
+// miarą jednej pracy nad pismem, nie magazynem na później.
 const postacTrwanieMalarza = time.Hour
 
-// MalarzSkladnicaStudia jest kontraktem tabeli malarza formatów (migracja 368).
-//
-// Obszar sięga po nią osobnym kontraktem — tak samo jak obszar tablicy znaków
-// po swoje tabele. Brak tabeli jest brakiem montażu rdzenia i mówi to wprost,
-// zamiast cicho wracać do pamięci procesu: cichy powrót dawałby malarza, który
-// u jednego Operatora przeżywa restart, a u drugiego nie.
+// MalarzSkladnicaStudia jest kontraktem tabeli malarza formatów (migracja
+// 368); brak tabeli jest brakiem montażu rdzenia i mówi to wprost.
 type MalarzSkladnicaStudia interface {
 	ZapiszPostacMalarza(ctx context.Context,
 		postac dane.PostacMalarzaStudia) (dane.PostacMalarzaStudia, error)
@@ -56,7 +30,8 @@ type MalarzSkladnicaStudia interface {
 	SprzatnijPostacieMalarza(ctx context.Context) (int, error)
 }
 
-// malarzSkladnica oddaje tabelę malarza formatów.
+// malarzSkladnica oddaje tabelę malarza formatów, odmawiając wprost, gdy
+// rdzeń jej nie zmontował przy starcie.
 func (a *adapterStudia) malarzSkladnica() (MalarzSkladnicaStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, postacBladZaplecza(
@@ -70,17 +45,15 @@ func (a *adapterStudia) malarzSkladnica() (MalarzSkladnicaStudia, error) {
 	return skladnica, nil
 }
 
-// postacZabrana to postać zabrana malarzem, złożona z wiersza albo do wiersza.
+// postacZabrana to postać zabrana malarzem, złożona z wiersza albo do wiersza
+// tabeli malarza formatów.
 type postacZabrana struct {
 	znak   *shared.StudioCharacterFormat
 	akapit *shared.StudioParagraphFormat
 }
 
-// postacZabranaDoWiersza przekłada zabraną postać na wiersz warstwy danych.
-//
-// Postać jedzie zapisem JSON, bo tabela ma na nią dwie kolumny tekstowe, a nie
-// kolumnę na każdą z siedemnastu cech znaku. Kolumna na każdą cechę znaczyłaby
-// migrację przy każdym polu dołożonym do kontraktu.
+// postacZabranaDoWiersza przekłada zabraną postać na wiersz warstwy danych;
+// postać jedzie zapisem JSON, nie osobną kolumną na każdą cechę.
 func postacZabranaDoWiersza(kod, okno, kodDokumentu string,
 	zabrana postacZabrana) (dane.PostacMalarzaStudia, error) {
 
@@ -138,7 +111,7 @@ func postacZabranaZWiersza(wiersz dane.PostacMalarzaStudia) (postacZabrana, erro
 // ── Postać znaku ────────────────────────────────────────────────────────────
 
 // UstawPostacZnaku nakłada postać znaku na fragment
-// (`studio.format.character.set`).
+// (`studio.format.character.set`), z opcją powiększenia względem stopnia skutecznego.
 func (a *adapterStudia) UstawPostacZnaku(ctx context.Context,
 	z shared.StudioFormatCharacterSetRequest) (shared.StudioFormatCharacterSetResponse, error) {
 
@@ -169,9 +142,7 @@ func (a *adapterStudia) UstawPostacZnaku(ctx context.Context,
 			run := &stan.forma.Blocks[wskazanie[0]].Runs[wskazanie[1]]
 			nowa := zmiana
 			if z.FontSizeStepPt != nil {
-				// Powiększenie liczy się od stopnia SKUTECZNEGO, nie od zera:
-				// fragment bez własnego stopnia bierze go z arkusza stylów,
-				// a „powiększ o 2" ma go powiększyć, nie ustawić na 2.
+				// Powiększenie liczy się od stopnia skutecznego — „powiększ o 2” powiększa, nie ustawia na 2.
 				skuteczna := postacZnakSkutecznyWBloku(&stan.forma,
 					&stan.forma.Blocks[wskazanie[0]], run.Format)
 				podstawa := 11.0
@@ -240,7 +211,8 @@ func (a *adapterStudia) PostacZnaku(ctx context.Context,
 
 // ── Postać akapitu ──────────────────────────────────────────────────────────
 
-// UstawPostacAkapitu nakłada postać akapitu (`studio.format.paragraph.set`).
+// UstawPostacAkapitu nakłada postać akapitu (`studio.format.paragraph.set`)
+// na wszystkie akapity zakresu.
 func (a *adapterStudia) UstawPostacAkapitu(ctx context.Context,
 	z shared.StudioFormatParagraphSetRequest) (shared.StudioFormatParagraphSetResponse, error) {
 
@@ -288,8 +260,7 @@ func (a *adapterStudia) UstawPostacAkapitu(ctx context.Context,
 			blok := &stan.forma.Blocks[wskazanie]
 			nowa := zmiana
 			if z.IndentStepMm != nil {
-				// „Zwiększ wcięcie" liczy od wcięcia skutecznego i nie schodzi
-				// pod zero — wcięcie ujemne wyrzuciłoby tekst za margines.
+				// „Zwiększ wcięcie” liczy od wcięcia skutecznego i nie schodzi pod zero.
 				skuteczna := postacAkapitSkuteczny(&stan.forma, *blok)
 				podstawa := 0.0
 				if skuteczna.IndentLeftMm != nil {
@@ -329,7 +300,8 @@ func (a *adapterStudia) UstawPostacAkapitu(ctx context.Context,
 	}, nil
 }
 
-// postacAkapitPusty mówi, czy żądanie nie niesie ani jednej cechy akapitu.
+// postacAkapitPusty mówi, czy żądanie nie niesie ani jednej cechy akapitu do
+// ustawienia na fragmencie.
 func postacAkapitPusty(zmiana shared.StudioParagraphFormat) bool {
 	return zmiana.Align == nil && zmiana.FirstLineIndentMm == nil && zmiana.IndentLeftMm == nil &&
 		zmiana.IndentRightMm == nil && zmiana.SpaceBeforePt == nil && zmiana.SpaceAfterPt == nil &&
@@ -339,7 +311,8 @@ func postacAkapitPusty(zmiana shared.StudioParagraphFormat) bool {
 		zmiana.RightToLeft == nil
 }
 
-// PostacAkapitu oddaje postać akapitu fragmentu (`studio.format.paragraph.get`).
+// PostacAkapitu oddaje postać akapitu fragmentu (`studio.format.paragraph.get`)
+// wraz z cechami niejednolitymi.
 func (a *adapterStudia) PostacAkapitu(ctx context.Context,
 	z shared.StudioFormatParagraphGetRequest) (shared.StudioFormatParagraphGetResponse, error) {
 
@@ -394,11 +367,8 @@ func postacJuzJest(wykaz []string, nazwa string) bool {
 
 // ── Czyszczenie i wielkość liter ────────────────────────────────────────────
 
-// CzyscPostac zdejmuje formatowanie z fragmentu (`studio.format.clear`).
-//
-// Brak wskazania, co czyścić, znaczy OBOJE — tak brzmi „czyszczenie
-// formatowania" ze wstążki pakietu biurowego. Nazwa stylu zostaje: czyszczenie
-// zdejmuje postać nałożoną ręcznie, a nie przypisanie do stylu nazwanego.
+// CzyscPostac zdejmuje formatowanie z fragmentu (`studio.format.clear`); brak
+// wskazania znaczy oboje, a nazwa stylu zostaje.
 func (a *adapterStudia) CzyscPostac(ctx context.Context,
 	z shared.StudioFormatClearRequest) (shared.StudioFormatClearResponse, error) {
 
@@ -473,12 +443,8 @@ func (a *adapterStudia) CzyscPostac(ctx context.Context,
 }
 
 // UstawWielkoscLiter przekłada wielkość liter fragmentu
-// (`studio.format.case.set`).
-//
-// To jest zmiana TREŚCI, nie postaci: „Kowalski" zamienione na „KOWALSKI" ma
-// inne litery, a nie inny krój. Dlatego idzie drogą zamiany treści i odkłada
-// zmianę śledzoną rodzaju wstawienie, a nie formatowanie — inaczej cofnięcie
-// nie miałoby czego przywrócić.
+// (`studio.format.case.set`); to zmiana treści, nie postaci, więc idzie
+// drogą zamiany treści.
 func (a *adapterStudia) UstawWielkoscLiter(ctx context.Context,
 	z shared.StudioFormatCaseSetRequest) (shared.StudioFormatCaseSetResponse, error) {
 
@@ -496,9 +462,7 @@ func (a *adapterStudia) UstawWielkoscLiter(ctx context.Context,
 
 	odcinki, pominiete := postacOdcinkiDozwolone(&stan.forma, od, do, autor)
 	bilans := shared.StudioActionBalance{Skipped: pominiete}
-	// Odcinki idą OD KOŃCA: zamiana wielkości liter nie zmienia długości, ale
-	// gdy kiedyś zmieni (np. „ß" na „SS"), przebieg od końca nie unieważni
-	// zakresów odcinków jeszcze nieprzetworzonych.
+	// Odcinki idą od końca, żeby zmiana długości nie unieważniła zakresów jeszcze nieprzetworzonych.
 	for i := len(odcinki) - 1; i >= 0; i-- {
 		odcinek := odcinki[i]
 		biezace := []rune(postacTekstFormy(&stan.forma))
@@ -528,7 +492,8 @@ func (a *adapterStudia) UstawWielkoscLiter(ctx context.Context,
 	return shared.StudioFormatCaseSetResponse{Form: forma, Balance: bilansGotowy, Change: zmiana}, nil
 }
 
-// postacPrzelozWielkosc przekłada wielkość liter wedle wskazanej odmiany.
+// postacPrzelozWielkosc przekłada wielkość liter wedle wskazanej odmiany:
+// wielka, mała, przełącznik, każde słowo albo zdanie.
 func postacPrzelozWielkosc(zrodlo string, odmiana shared.StudioCaseTransform) string {
 	switch odmiana {
 	case shared.StudioCaseTransformUpper:
@@ -543,9 +508,7 @@ func postacPrzelozWielkosc(zrodlo string, odmiana shared.StudioCaseTransform) st
 			return unicode.ToUpper(litera)
 		}, zrodlo)
 	case shared.StudioCaseTransformCapitalize:
-		// Każde słowo wielką literą. Granicą słowa jest wszystko, co nie jest
-		// literą ani cyfrą — inaczej „e-mail" wyszłoby jako „E-mail" tam, gdzie
-		// pakiet biurowy daje „E-Mail".
+		// Każde słowo wielką literą; granicą słowa jest wszystko, co nie jest literą ani cyfrą.
 		wynik := make([]rune, 0, len(zrodlo))
 		poczatek := true
 		for _, litera := range zrodlo {
@@ -583,7 +546,8 @@ func postacPrzelozWielkosc(zrodlo string, odmiana shared.StudioCaseTransform) st
 
 // ── Malarz formatów ─────────────────────────────────────────────────────────
 
-// ZabierzPostac zabiera postać fragmentu (`studio.format.painter.copy`).
+// ZabierzPostac zabiera postać fragmentu (`studio.format.painter.copy`)
+// i odkłada ją wierszem malarza formatów.
 func (a *adapterStudia) ZabierzPostac(ctx context.Context,
 	z shared.StudioFormatPainterCopyRequest) (shared.StudioFormatPainterCopyResponse, error) {
 
@@ -611,9 +575,7 @@ func (a *adapterStudia) ZabierzPostac(ctx context.Context,
 	odpowiedz := shared.StudioFormatPainterCopyResponse{
 		ClipId: nowyIdentyfikator(przedrostekMalarzaPostaci), Character: &znak,
 	}
-	// Postać akapitu idzie razem z postacią znaku wtedy, gdy Operator o to
-	// poprosi: malarz kliknięty na słowie ma malować krój, a nie przestawiać
-	// wyrównanie akapitu, w który się trafi.
+	// Postać akapitu idzie z postacią znaku na żądanie — malarz na słowie maluje krój, nie wyrównanie.
 	if z.IncludeParagraph != nil && *z.IncludeParagraph {
 		if bloki := postacBlokiZakresu(&stan.forma, od, do); len(bloki) > 0 {
 			akapit := postacAkapitSkuteczny(&stan.forma, stan.forma.Blocks[bloki[0]])
@@ -621,15 +583,10 @@ func (a *adapterStudia) ZabierzPostac(ctx context.Context,
 			odpowiedz.Paragraph = &akapit
 		}
 	}
-	// Wpisy wygasłe schodzą przy zabraniu nowej postaci, a nie przy odczycie:
-	// zabranie jest czynnością zmieniającą stan, więc sprzątanie na jego drodze
-	// nie zamienia odczytu w zapis. Niepowodzenie sprzątania nie unieważnia
-	// zabrania — postać jest ważniejsza od porządku w tabeli.
+	// Wpisy wygasłe schodzą przy zabraniu, nie przy odczycie; sprzątanie zabrania nie unieważnia.
 	_, _ = skladnica.SprzatnijPostacieMalarza(ctx)
 
-	// Oknem wpisu jest okno DOKUMENTU: żądanie malarza okna nie niesie, a wykaz
-	// „nanieś to, co ostatnio zabrałem" musi mieć po czym rozdzielić dwóch
-	// Operatorów pracujących naraz. Tą samą drogą idzie okno wpisu schowka.
+	// Oknem wpisu jest okno dokumentu — wykaz „nanieś ostatnio zabrane” rozdziela dwóch Operatorów.
 	wiersz, err := postacZabranaDoWiersza(odpowiedz.ClipId, stan.dokument.Okno,
 		stan.dokument.Kod, zabrana)
 	if err != nil {
@@ -642,7 +599,7 @@ func (a *adapterStudia) ZabierzPostac(ctx context.Context,
 }
 
 // PolozPostac kładzie zabraną postać na fragmencie
-// (`studio.format.painter.apply`).
+// (`studio.format.painter.apply`) wedle wskazanego uchwytu.
 func (a *adapterStudia) PolozPostac(ctx context.Context,
 	z shared.StudioFormatPainterApplyRequest) (shared.StudioFormatPainterApplyResponse, error) {
 
@@ -655,9 +612,7 @@ func (a *adapterStudia) PolozPostac(ctx context.Context,
 		return shared.StudioFormatPainterApplyResponse{}, err
 	}
 
-	// Uchwyt podany wskazuje wprost, czego położyć; uchwyt pusty znaczy „połóż
-	// to, co ostatnio zabrałem w tym oknie". Druga droga jest tu potrzebna, bo
-	// malarz jest gestem, a gest nie niesie identyfikatorów.
+	// Uchwyt podany wskazuje wprost, czego położyć; pusty znaczy „połóż to, co ostatnio zabrałem w oknie”.
 	wiersz, err := malarzWiersz(ctx, skladnica, strings.TrimSpace(z.ClipId), stan.dokument.Okno)
 	if err != nil {
 		return shared.StudioFormatPainterApplyResponse{}, err
@@ -704,14 +659,9 @@ func (a *adapterStudia) PolozPostac(ctx context.Context,
 	}, nil
 }
 
-// malarzWiersz odnajduje wiersz zabranej postaci: po uchwycie albo — gdy uchwytu
-// nie podano — najświeższy niewygasły wpis okna.
-//
-// Odmowa nazywa POWÓD, i to powód prawdziwy: wpis wygasły i wpis nieistniejący
-// są dla warstwy danych tym samym brakiem wiersza, więc odmowa mówi o obu
-// i podaje drogę wyjścia. Dawna treść odmowy („postać żyje w pamięci rdzenia
-// i kończy się wraz z jego działaniem") przestała być prawdą razem z pamięcią
-// procesu i zniknęła.
+// malarzWiersz odnajduje wiersz zabranej postaci: po uchwycie albo — gdy
+// uchwytu nie podano — najświeższy niewygasły wpis okna. Odmowa nazywa powód
+// prawdziwy, wspólny dla wpisu wygasłego i nieistniejącego.
 func malarzWiersz(ctx context.Context, skladnica MalarzSkladnicaStudia,
 	uchwyt, okno string) (dane.PostacMalarzaStudia, error) {
 
@@ -737,11 +687,8 @@ func malarzWiersz(ctx context.Context, skladnica MalarzSkladnicaStudia,
 // ── Zaznaczanie wedle podobnego formatowania ────────────────────────────────
 
 // ZaznaczPodobne oddaje fragmenty o postaci podobnej do wzorca
-// (`studio.format.similar.select`).
-//
-// Wzorcem jest albo styl nazwany, albo postać fragmentu wskazanego zakresem.
-// Bez tej czynności nie ma pracy na postaci fragmentami w długim dokumencie —
-// dlatego zlecenie stawia ją jako obowiązkową.
+// (`studio.format.similar.select`): stylu nazwanego albo postaci fragmentu
+// wskazanego zakresem.
 func (a *adapterStudia) ZaznaczPodobne(ctx context.Context,
 	z shared.StudioFormatSimilarSelectRequest) (shared.StudioFormatSimilarSelectResponse, error) {
 
@@ -839,7 +786,8 @@ func postacZnakPodobny(wzor, biezaca shared.StudioCharacterFormat) bool {
 		postacTenSamTekst(wzor.Color, biezaca.Color)
 }
 
-// postacAkapitPodobny porównuje postać akapitu wedle cech widocznych.
+// postacAkapitPodobny porównuje postać akapitu wedle cech widocznych: wyrównania,
+// wcięcia lewego i wcięcia pierwszego wiersza.
 func postacAkapitPodobny(wzor, biezacy shared.StudioParagraphFormat) bool {
 	return postacToSamoWyrownanie(wzor.Align, biezacy.Align) &&
 		postacTaSamaMiara(wzor.IndentLeftMm, biezacy.IndentLeftMm) &&
@@ -848,13 +796,8 @@ func postacAkapitPodobny(wzor, biezacy shared.StudioParagraphFormat) bool {
 
 // ── Znajdź i zamień z postacią ──────────────────────────────────────────────
 
-// ZamienZPostacia szuka i zamienia treść ORAZ postać
-// (`studio.format.replace`).
-//
-// Trzy rzeczy naraz, bo tak brzmi zamówienie: zamiana brzmienia, zamiana
-// postaci znalezionego fragmentu i zamiana stylu nazwanego. Wyszukiwanie samą
-// postacią (bez tekstu) też działa — „wszystkie fragmenty czerwone zamień na
-// czarne" jest zwykłym poleceniem redakcyjnym.
+// ZamienZPostacia szuka i zamienia treść oraz postać (`studio.format.replace`):
+// brzmienie, postać znalezionego fragmentu i styl nazwany, także bez tekstu.
 func (a *adapterStudia) ZamienZPostacia(ctx context.Context,
 	z shared.StudioFormatReplaceRequest) (shared.StudioFormatReplaceResponse, error) {
 
@@ -926,8 +869,7 @@ func (a *adapterStudia) ZamienZPostacia(ctx context.Context,
 
 	bilans := shared.StudioActionBalance{Skipped: []shared.StudioSkippedItem{}}
 	zamienione := 0
-	// Trafienia idą OD KOŃCA: zamiana zmienia długość treści i przebieg od
-	// początku unieważniłby położenia trafień jeszcze nieprzetworzonych.
+	// Trafienia idą od końca — zamiana zmieniająca długość nie unieważni trafień nieprzetworzonych.
 	for i := len(trafienia) - 1; i >= 0; i-- {
 		trafienie := trafienia[i]
 		odcinki, pominiete := postacOdcinkiDozwolone(&stan.forma, trafienie[0], trafienie[1], autor)
@@ -1021,8 +963,7 @@ func (a *adapterStudia) postacZnajdzTrafienia(forma *shared.StudioDocumentForm,
 		return trafienia, nil
 	}
 
-	// Wyszukiwanie samą postacią albo samym stylem idzie po fragmentach: każdy
-	// fragment ma jednolitą postać, więc trafieniem jest cały fragment.
+	// Wyszukiwanie samą postacią albo stylem idzie po fragmentach — każdy fragment ma jednolitą postać.
 	postacPrzeliczZakresy(forma)
 	for i := range forma.Blocks {
 		blok := &forma.Blocks[i]
@@ -1095,7 +1036,7 @@ func postacZnakZgodnyZWzorem(wzor, biezaca shared.StudioCharacterFormat) bool {
 }
 
 // postacTrafieniaNapisu szuka brzmienia w obszarze i oddaje zakresy w znakach
-// całego dokumentu.
+// całego dokumentu, nie samego obszaru.
 func postacTrafieniaNapisu(obszar, szukane string, przesuniecie int,
 	zWielkoscia, caleSlowo bool) [][2]int {
 

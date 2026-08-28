@@ -23,20 +23,9 @@ import { utworzStanTresci, type StanTresci } from './stany-okna';
 import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
 /**
- * Errors Panel — okno pomocnicze modułu Diagnostics.
- *
- * Port `Diagnostyka` przyjmuje w rdzeniu odmowy wykonania komend; każda odmowa
- * staje się wierszem `DiagnosticError`, w którym `source` niesie nazwę
- * odrzuconej komendy. Stan pusty i stan odmowy odczytu są tu rozróżnione, bo
- * okno jest jedynym miejscem w produkcie, gdzie widać odrzucenie komendy.
- *
- * Kod odmowy nie leży w `message`, tylko osobno: w polu `errorCode` błędu,
- * a w dzisiejszym rdzeniu jeszcze w `context.errorCode`. Po nim rozpoznaje się
- * `*.unknown`, więc `opisBledu` wydobywa go wprost, nie tylko zrzuca `context`
- * jako JSON.
- *
- * Zakres czasu bierze się ze wspólnego stanu modułu (`stan.zakres()`) przez
- * `stan.naZmiane(...)`; okno nie prowadzi drugiego.
+ * Errors Panel pokazuje odmowy wykonania komend zgłoszone przez rdzeń jako
+ * wiersze `DiagnosticError`, w których pole `source` niesie nazwę odrzuconej
+ * komendy, a zakres czasu wykazu pochodzi ze wspólnego stanu modułu.
  */
 export interface OknoErrorsPanel {
   element: HTMLElement;
@@ -64,10 +53,7 @@ export function utworzOknoErrorsPanel(
   const odczytaj = (): void => wczytajBledy(zrodlo, stan, powierzchnia, wykazBledow, tresc);
   const eksportuj = (): void => eksportujBledy(wykazBledow.pozycje, tresc);
 
-  // Subskrypcja jedzie przez zmienną, żeby `zapiszMigawkeBezPodwojnegoOdczytu`
-  // mogła ją na chwilę wyłączyć: `stan.ustawMigawke` woła `powiadom()`, które
-  // bez tego obudziłoby WŁASNY `odczytaj()` okna — miganie stanem ładowania
-  // obok świeżo pokazanego potwierdzenia i zbędne drugie żądanie.
+  // Zapis migawki wyłącza subskrypcję na chwilę, żeby uniknąć drugiego odczytu.
   let odsubskrybujZakres = stan.naZmiane(odczytaj);
   function zapiszMigawkeBezPodwojnegoOdczytu(migawka: Parameters<StanDiagnostyki['ustawMigawke']>[0]): void {
     odsubskrybujZakres();
@@ -79,20 +65,13 @@ export function utworzOknoErrorsPanel(
 
   podepnijAkcjeErrorsPanel(powierzchnia, { odczytaj, eksportuj, przekazDoAnalizy });
 
-  // Wytwórnia okna nie czyta sama — pierwszy odczyt zleca złożenie modułu
-  // wywołaniem `odswiez()`, tak jak w pozostałych oknach Diagnostics. Odczyt
-  // w wytwórni obok odczytu ze złożenia dawał dwa żądania `error.list` na
-  // jedno zmontowanie modułu.
+  // Pierwszy odczyt zleca złożenie modułu wywołaniem `odswiez()`, nie wytwórnia.
   return { element: rama.element, odswiez: odczytaj, zamknij: () => odsubskrybujZakres() };
 }
 
 /**
- * Wykaz widoczny w oknie wraz z licznością, którą orzekł rdzeń.
- *
- * `wszystkich` trzyma się przy pozycjach, a nie w miejscu wywołania, bo
- * przerysowanie wykazu bez nowego odczytu (po przekazaniu błędów do analizy)
- * musi powtórzyć tę samą liczbę — inaczej ostrzeżenie o wykazie uciętym
- * znika po czynności, która niczego w wykazie nie zmieniła.
+ * Wykaz błędów widocznych w oknie wraz z licznością wszystkich pozycji
+ * spełniających warunki, którą osobnym zapytaniem orzekł rdzeń.
  */
 interface WykazBledow {
   pozycje: Map<string, DiagnosticError>;
@@ -126,7 +105,10 @@ function wczytajBledy(
   });
 }
 
-/** Eksport wykazu widocznego w oknie jako plik Markdown (bez pokrycia w kontrakcie, klienckie). */
+/**
+ * Eksportuje wykaz błędów widocznych w oknie jako plik Markdown; kontrakt
+ * komendy eksportu nie niesie, więc plik składa i pobiera wyłącznie interfejs.
+ */
 function eksportujBledy(bledy: Map<string, DiagnosticError>, tresc: StanTresci): void {
   if (bledy.size === 0) {
     tresc.potwierdzenie('Nie ma czego wyeksportować — wykaz błędów jest pusty.', false);
@@ -174,14 +156,9 @@ function przekazBledyDoAnalizy(
 }
 
 /**
- * Zdanie potwierdzenia przekazania — mówi, co objęła analiza, a nie co wysłało
- * okno.
- *
- * Rdzeń `errorIds` z żądania nie używa: `UruchomAnalize` dobiera błędy
- * wyłącznie zakresem czasu, więc liczba wzięta z żądania przeczyłaby temu, co
- * w tej samej chwili pokazuje Diagnostics Center. Wszystkie liczby zdania
- * biorą się z migawki oddanej przez rdzeń, a rozjazd między wykazem wysłanym
- * a objętym jest powiedziany wprost i tonem nieudanym.
+ * Zdanie potwierdzenia przekazania do analizy — mówi, co objęła analiza,
+ * a nie co wysłało okno; wszystkie liczby zdania biorą się z migawki, którą
+ * oddał rdzeń.
  */
 function zdanieOPrzekazaniu(
   analiza: DiagnosticAnalysis,
@@ -214,7 +191,10 @@ function zdanieOPrzekazaniu(
   };
 }
 
-/** Przyciski paska akcji Errors Panel. */
+/**
+ * Przyciski paska akcji Errors Panel: odświeżenie wykazu, eksport do pliku
+ * i przekazanie widocznych błędów do analizy Diagnostics Center.
+ */
 interface AkcjeErrorsPanel {
   odswiezPrzycisk: HTMLButtonElement;
   eksportPrzycisk: HTMLButtonElement;
@@ -222,14 +202,9 @@ interface AkcjeErrorsPanel {
 }
 
 /**
- * Składa pasek akcji okna. Kontrakt `diagnostics.error.list` jest WYŁĄCZNIE
- * odczytem — `DiagnosticError` niesie pola `status`, `priority`, `note`, ale
- * komendy zapisu nie ma. Panel może po tych polach FILTROWAĆ, nigdy ich
- * NADAWAĆ, więc trzy czynności z inwentarza są jawnie bez pokrycia.
- *
- * POWÓD KAŻDEJ NIECZYNNEJ POZYCJI SKŁADA SIĘ Z KONTRAKTU, a nie z napisu
- * (`braki-kontraktu.ts`): zdanie o braku komendy ma się zmienić samo w dniu,
- * w którym komenda się pojawi, bo napisu nikt wtedy nie zdejmie.
+ * Składa pasek akcji okna. Kontrakt `diagnostics.error.list` jest wyłącznie
+ * odczytem, więc panel może polami stanu, priorytetu i notatki błędu jedynie
+ * filtrować, nigdy ich nadawać, a nieczynne pozycje niosą powód wprost.
  */
 function zlozAkcjeErrorsPanel(gospodarz: HTMLElement): AkcjeErrorsPanel {
   const odswiezPrzycisk = przycisk('Odśwież błędy', 'dn-btn dn-btn--atrament');
@@ -268,7 +243,10 @@ function zlozAkcjeErrorsPanel(gospodarz: HTMLElement): AkcjeErrorsPanel {
   return { odswiezPrzycisk, eksportPrzycisk, analizaPrzycisk };
 }
 
-/** Filtry okna: stan, priorytet i górna granica wykazu. */
+/**
+ * Filtry okna: stan błędu, priorytet błędu i górna granica liczby pozycji
+ * wykazu, którą przyjmuje żądanie odczytu skierowane do rdzenia.
+ */
 interface FiltryErrorsPanel {
   statusWybor: WyborZMenu;
   priorytetWybor: WyborZMenu;
@@ -291,15 +269,17 @@ const OPCJE_PRIORYTETU = [
   { wartosc: DiagnosticPriority.Low, etykieta: 'Niski' },
 ] as const;
 
-/** Kontrolki okna: filtry, pasek akcji i ciało ramy. */
+/**
+ * Kontrolki okna: filtry stanu i priorytetu, pasek akcji oraz ciało ramy,
+ * do którego trafia wykaz błędów albo zdanie o stanie odczytu.
+ */
 interface PowierzchniaErrorsPanel extends AkcjeErrorsPanel, FiltryErrorsPanel {}
 
 function zlozPowierzchnieErrorsPanel(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
 ): PowierzchniaErrorsPanel {
-  // Rozwijanie z biblioteki, nie natywny `<select>`: `komponenty/menu-drzewo.ts`
-  // przez obsadę `moduly/apps/wybor-z-menu.ts`.
+  // Rozwijanie z biblioteki `komponenty/menu-drzewo.ts`, nie natywny `<select>`.
   const statusWybor = utworzWyborZMenu('Stan błędu', OPCJE_STANU);
   const priorytetWybor = utworzWyborZMenu('Priorytet błędu', OPCJE_PRIORYTETU);
   const granica = poleLiczbowe('Górna granica liczby błędów', 'domyślnie wszystkie');
@@ -316,9 +296,6 @@ function zlozPowierzchnieErrorsPanel(
     }),
     wiersz('Granica', granica, {
       klasa: 'dg-wiersz',
-      // NIE „puste pole zwraca wszystkie" — tego okno nie wie i wiedzieć nie
-      // może. Rdzeń ma własną granicę domyślną, a jedyną prawdą o liczności
-      // jest `total` z odpowiedzi, wypisany nad wykazem.
       objasnienie: 'Puste pole nie narzuca granicy z okna; obowiązuje wtedy granica rdzenia. Ile błędów spełnia warunki, a ile rdzeń oddał, mówi zdanie nad wykazem.',
     }),
   );
@@ -362,20 +339,13 @@ function zadanieBledow(
 }
 
 /**
- * Rysuje wykaz błędów, stan pustki albo notatkę o wykazie uciętym.
- *
- * `total` większe od liczby oddanych błędów jest widoczne wprost — wykaz
- * ucięty bez ostrzeżenia jest kłamstwem tej samej rodziny co pusty wykaz
- * przy odmowie. Rozjazd jest osiągalny: rdzeń liczy `total` osobnym
- * zapytaniem, które bierze stan, priorytet i zakres czasu, a granicy nie
- * bierze wcale — wykaz ucina granica z pola „Granica" albo granica domyślna
- * rdzenia.
+ * Rysuje wykaz błędów, stan pustki albo notatkę o wykazie uciętym; rozjazd
+ * między liczbą `total` a liczbą oddanych pozycji jest pokazany wprost.
  */
 function rysujBledy(bledy: readonly DiagnosticError[], total: number | undefined, tresc: StanTresci): void {
   const posortowane = [...bledy].sort((a, b) => b.lastSeenAt - a.lastSeenAt);
   if (posortowane.length === 0) {
-    // Pustka jest stanem poprawnym — instalacja bez błędów w zakresie czasu
-    // nie jest usterką, i to jest zdanie inne niż stan błędu odczytu.
+    // Pustka jest stanem poprawnym, odrębnym od stanu błędu odczytu.
     tresc.pusto('Żaden błąd nie spełnia warunków w wybranym zakresie i filtrach.');
     return;
   }
@@ -389,12 +359,14 @@ function rysujBledy(bledy: readonly DiagnosticError[], total: number | undefined
   cialo.append(listaBledow(posortowane));
 }
 
-/** Buduje wykaz błędów — czysta konstrukcja z danych. */
+/**
+ * Buduje wykaz błędów jako czystą konstrukcję z danych, wraz z czasem
+ * wystąpienia i licznikiem powtórzeń każdej pozycji.
+ */
 function listaBledow(bledy: readonly DiagnosticError[]): HTMLElement {
   const lista = wykaz('Błędy zgłoszone przez rdzeń', 'dg-wykaz');
   for (const blad of bledy) {
-    // `source` jest nazwą odrzuconej komendy (np. library.collection.create),
-    // nie ozdobnym opisem — dlatego stoi w tytule pozycji wprost.
+    // `source` jest nazwą odrzuconej komendy, nie opisem — stoi w tytule wprost.
     const pozycja = pozycjaWykazu(blad.source ?? '(źródło nieznane)', opisBledu(blad), 'dg');
     pozycja.element.dataset['priorytet'] = blad.priority;
     pozycja.element.dataset['stanBledu'] = blad.status;
@@ -406,8 +378,7 @@ function listaBledow(bledy: readonly DiagnosticError[]): HTMLElement {
 
     const licznik = document.createElement('span');
     licznik.className = 'dg-wpis__licznik';
-    // Brak `occurrences` nie znaczy „jedna odmowa" — rdzeń nie podał
-    // licznika. Podstawienie jedynki byłoby atrapą danych.
+    // Brak `occurrences` nie znaczy jedną odmowę — rdzeń nie podał licznika.
     licznik.textContent = opisLicznika(blad.occurrences);
     pozycja.akcje.append(licznik);
 
@@ -416,21 +387,17 @@ function listaBledow(bledy: readonly DiagnosticError[]): HTMLElement {
   return lista;
 }
 
-/** Tekst licznika wystąpień — brak pola jest powiedziany jako brak, nie jako `×1`. */
+/**
+ * Tekst licznika wystąpień błędu — brak pola jest powiedziany jako brak
+ * liczby, a nie zastąpiony domyślną wartością jednego wystąpienia.
+ */
 function opisLicznika(occurrences: number | undefined): string {
   return occurrences === undefined ? 'liczba wystąpień nieznana' : `×${occurrences}`;
 }
 
 /**
- * Kod odmowy wiersza błędu — pole kontraktu przed kontekstem zapisu.
- *
- * Kontrakt trzyma kod w polu własnym błędu (`DiagnosticError.errorCode`):
- * odmowa komendy jest faktem o samym błędzie, nie o okolicznościach jego
- * zapisu. Dzisiejszy rdzeń tego pola jeszcze nie wypełnia i wkłada kod do
- * `context.errorCode` — dlatego czytane są oba miejsca, w tej kolejności.
- * Sam odczyt kontekstu nie jest tu obejściem: gdy rdzeń zacznie wypełniać pole
- * kontraktu, gałąź zapasowa przestanie być osiągalna sama z siebie, bez zmiany
- * w tym pliku.
+ * Kod odmowy wiersza błędu — czytany z pola kontraktu `errorCode`, a przy
+ * jego braku z `context.errorCode`, gdzie kod wkłada dzisiejszy rdzeń.
  */
 function kodOdmowy(blad: DiagnosticError): string | undefined {
   if (blad.errorCode !== undefined && blad.errorCode !== '') return blad.errorCode;
@@ -440,7 +407,10 @@ function kodOdmowy(blad: DiagnosticError): string | undefined {
   return typeof kod === 'string' && kod !== '' ? kod : undefined;
 }
 
-/** Zdanie opisu pozycji: treść, kod odmowy, odcisk i kontekst zapisu. */
+/**
+ * Zdanie opisu pozycji wykazu: treść błędu, kod odmowy, odcisk, notatka
+ * i pozostały kontekst zapisu, w tej kolejności.
+ */
 function opisBledu(blad: DiagnosticError): string {
   const czesci = [blad.message];
   const kod = kodOdmowy(blad);
@@ -453,7 +423,10 @@ function opisBledu(blad: DiagnosticError): string {
   return czesci.join(' — ');
 }
 
-/** Raport błędów w Markdown — treść pliku eksportu. */
+/**
+ * Raport błędów w formacie Markdown — treść pliku, który pobiera eksport
+ * wykazu błędów widocznego w oknie Errors Panel.
+ */
 function raportBledow(bledy: readonly DiagnosticError[]): string {
   const wiersze = ['# Raport błędów Errors Panel', ''];
   for (const blad of bledy) {

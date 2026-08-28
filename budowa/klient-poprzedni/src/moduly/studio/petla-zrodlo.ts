@@ -34,27 +34,7 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
-/**
- * Wywołania okna pętli wykonawczej — dwanaście komend trzech rodzin.
- *
- * ── Co tu należy do kogo ────────────────────────────────────────────────────
- * Pięć komend `studio.plan.*` obsługuje pętla wykonawcza rdzenia. Cztery komendy
- * `studio.agents.*` — nastawy, obsada fragmentów i spięcia — obsługuje warstwa
- * kontroli pracy; okno je WOŁA i nie zakłada dla nich drugiego magazynu ani
- * drugiej drogi. Trzy komendy łańcucha i wsadu (`studio.chain.*`,
- * `studio.batch.run`) są w rdzeniu zbudowane od dawna i nie miały czym być
- * uruchomione — to okno jest tym czymś.
- *
- * Źródło nie ma stanu i nie buduje ani jednego elementu: jest warstwą wywołań
- * i sprawdzenia kształtu odpowiedzi. Stan przebiegu mieszka w `petla-stan.ts`.
- *
- * ── Dlaczego osłona odmowy ──────────────────────────────────────────────────
- * `wywolajUczciwie` broni okna przed kopertą `studio.unknown`, która nie niesie
- * pola `status` i nigdy by się nie skorelowała — okno stałoby w ładowaniu bez
- * końca. Rodziny `studio.plan.*` i `studio.agents.*` są świeże i wystawiane
- * przez różnych wykonawców, więc odmowa „nie ma uchwytu" jest tu ścieżką
- * realną, nie teoretyczną, i ma wracać jako nazwany błąd.
- */
+/** Wywołania okna pętli wykonawczej, dwanaście komend trzech rodzin: rozkład zadań, kontrola pracy wykonawców i łańcuchy operacji. */
 export interface ZrodloPetli {
   /** `studio.plan.create` — rozkłada zlecenie dokumentowe na zadania. */
   rozlozZlecenie(zadanie: StudioPlanCreateRequest): Promise<Wynik<StudioPlanCreateResponse>>;
@@ -124,10 +104,7 @@ export function utworzZrodloPetli(kanal: Kanal): ZrodloPetli {
     },
 
     async puscPetle(zadanie) {
-      // `started: false` z powodem odmowy jest odpowiedzią POPRAWNĄ, nie
-      // usterką kształtu: tak kontrakt opisuje pętlę wyłączoną nastawą. Sprawdzian
-      // pilnuje więc obecności pola, a nie jego wartości — inaczej okno uznałoby
-      // uczciwą odmowę za zepsutą odpowiedź i zgubiłoby jej powód.
+      // Odmowa z powodem jest odpowiedzią poprawną: sprawdzian pilnuje obecności pola, nie jego wartości.
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioPlanRun, zadanie),
         Command.StudioPlanRun,
@@ -192,9 +169,7 @@ export function utworzZrodloPetli(kanal: Kanal): ZrodloPetli {
     },
 
     async uruchomWsad(zadanie) {
-      // Wsad odrzucający wszystkie dokumenty nadal ma kształt poprawny —
-      // `accepted: 0` wraz z wykazem odrzuceń jest BILANSEM, a bilans jest tu
-      // wynikiem wymaganym, nie awarią.
+      // Wsad odrzucający wszystkie dokumenty ma kształt poprawny: bilans jest tu wynikiem wymaganym.
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioBatchRun, zadanie),
         Command.StudioBatchRun,

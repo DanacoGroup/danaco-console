@@ -33,7 +33,7 @@ const (
 	                              FROM konfiguracja_pamieci_sesji WHERE sesja_id = ?`
 )
 
-// UstawKonfiguracjeSesji zapisuje konfigurację pamięci sesji.
+// UstawKonfiguracjeSesji zapisuje konfigurację pamięci sesji wraz z listą jej aktywnych poziomów zapisu.
 func (r *repozytoriumPamieci) UstawKonfiguracjeSesji(ctx context.Context,
 	konfiguracja KonfiguracjaPamieci) error {
 
@@ -76,7 +76,7 @@ func (r *repozytoriumPamieci) KonfiguracjaSesji(ctx context.Context,
 	return konfiguracja, true, nil
 }
 
-// zlozPoziomy zapisuje listę poziomów jako wartość kolumny.
+// zlozPoziomy zapisuje listę poziomów pamięci jako pojedynczą wartość tekstową kolumny w bazie danych.
 func zlozPoziomy(poziomy []PoziomPamieci) string {
 	nazwy := make([]string, 0, len(poziomy))
 	for _, poziom := range poziomy {
@@ -87,7 +87,7 @@ func zlozPoziomy(poziomy []PoziomPamieci) string {
 	return strings.Join(nazwy, ",")
 }
 
-// rozlozPoziomy odczytuje listę poziomów z wartości kolumny.
+// rozlozPoziomy odczytuje listę poziomów pamięci z wartości tekstowej kolumny zapisanej w bazie danych.
 func rozlozPoziomy(wartosc string) []PoziomPamieci {
 	poziomy := []PoziomPamieci{}
 	for _, nazwa := range strings.Split(wartosc, ",") {

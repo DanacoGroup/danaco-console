@@ -1,19 +1,11 @@
 import type { RozliczenieUsuniecia } from './usuniecie-sesji';
 
-/**
- * Zdania rozliczenia usunięcia: co rdzeń skasował, a czego nie znalazł.
- *
- * Każdy z dwóch wykazów rdzenia idzie osobnym zdaniem, bo sesja bez
- * odpowiednika w historii to nie sesja skasowana. Odpowiedź udana z pustym
- * wykazem usuniętych znaczy „nic nie zginęło" i tak brzmi jej zdanie.
- * Sesję nazywamy tytułem karty z pasa; gdy tytułu nie ma, zdanie pokazuje
- * sam identyfikator. Funkcje są czyste i nie znają DOM.
- */
+// Zdania rozliczenia usunięcia: co rdzeń skasował, a czego nie znalazł spośród wskazanych sesji.
 
-/** Odczyt tytułu karty dla identyfikatora sesji; pusty napis znaczy „nie znam". */
+/** Odczyt tytułu karty sesji dla wskazanego identyfikatora sesji; pusty napis znaczy, że tytułu nie znamy. */
 export type TytulSesji = (idSesji: string) => string;
 
-/** Wykaz nazw w cudzysłowie drukarskim, po przecinku. */
+/** Wykaz nazw sesji zapisany w cudzysłowie drukarskim, kolejne pozycje rozdzielone przecinkiem i spacją. */
 function nazwy(idSesji: readonly string[], tytul: TytulSesji): string {
   return idSesji
     .map((id) => {
@@ -23,7 +15,7 @@ function nazwy(idSesji: readonly string[], tytul: TytulSesji): string {
     .join(', ');
 }
 
-/** Odmiana rzeczownika „sesja" przez liczbę — zdanie nie mówi „1 sesje". */
+/** Odmiana rzeczownika sesja przez liczbę wskazanych sesji, tak żeby zdanie nigdy nie powiedziało „1 sesje". */
 function ileSesji(liczba: number): string {
   if (liczba === 1) return '1 sesję';
   const dziesiatki = liczba % 100;
@@ -35,7 +27,7 @@ function ileSesji(liczba: number): string {
 /**
  * Zdanie o tym, co rdzeń faktycznie skasował.
  *
- * Licznik bierzemy z `liczba` (pole `deletedCount` rdzenia), a nie z długości
+ * Licznik pochodzi z `liczba` (pole `deletedCount` rdzenia), a nie z długości
  * wykazu: rozbieżność obu jest wtedy widoczna, a nie zamaskowana.
  */
 export function zdanieUsunietych(
@@ -74,7 +66,7 @@ export function trescRozliczenia(
   return pominiete === null ? pierwsze : `${pierwsze} ${pominiete}`;
 }
 
-/** Czy rozliczenie nadaje się na komunikat o wadze „błąd" — nic nie zginęło. */
+/** Czy rozliczenie usunięcia nadaje się na komunikat o wadze błędu — sprawdza, że nic w nim nie zginęło. */
 export function czyRozliczeniePuste(rozliczenie: RozliczenieUsuniecia): boolean {
   return rozliczenie.usuniete.length === 0;
 }

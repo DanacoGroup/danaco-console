@@ -10,23 +10,8 @@ import {
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Szablony i historia promptów w Prompt Builderze —
- * `design.prompt.template.save`, `design.prompt.template.list`,
- * `design.prompt.history.list`.
- *
- * Do tej pory obie rzeczy żyły w oknie do zamknięcia karty przeglądarki. Prompt
- * Builder wypracowywał polecenie, Operator zamykał kartę i praca znikała.
- *
- * ── Szablon wraca do pól, a nie tylko na listę ──────────────────────────────
- * Wykaz szablonów, z którego nie da się szablonu użyć, byłby spisem cudzej
- * pracy. Wybór pozycji oddaje prompt kreatorowi (`naSzablon`), a ten wstawia go
- * w swoje pola — dopiero to czyni szablon szablonem.
- *
- * ── Historia jest zapisem tego, co się stało ────────────────────────────────
- * Prompt bez ani jednego zasobu zostaje w historii: kanał bywa odmawiał,
- * a wtedy prompt jest zapisem próby — czyli dokładnie tego, po co Operator do
- * historii sięga. Panel pokazuje przy każdym prompcie liczbę zasobów, które
- * z niego powstały, więc próba nieudana odróżnia się od udanej bez zgadywania.
+ * Szablony i historia promptów w Prompt Builderze, trwałe na koncie zamiast ginące z zamknięciem
+ * karty przeglądarki.
  */
 export interface SzablonyPromptu {
   element: HTMLElement;
@@ -34,7 +19,7 @@ export interface SzablonyPromptu {
   wczytaj(): Promise<void>;
 }
 
-/** Czym panel steruje w kreatorze. */
+/** Czym panel szablonów i historii promptów steruje wprost w oknie kreatora, wraz z jego bieżącą treścią. */
 export interface SterowanieSzablonami {
   /** Prompt zbudowany w kreatorze — zapisywany jako szablon. */
   prompt(): DesignPrompt;
@@ -85,8 +70,7 @@ export function utworzSzablonyPromptu(
   wczytajSzablony.addEventListener('click', () => void odczytajSzablony());
   wczytajHistorie.addEventListener('click', () => void odczytajHistorie());
   uzyj.addEventListener('click', () => wstawSzablon());
-  // Wybór pozycji przepisuje nazwę do pola: nadpisanie szablonu bez jego nazwy
-  // w polu zapisałoby go pod nazwą pustą i wykaz przestałby się dać czytać.
+  // Wybór pozycji przepisuje nazwę do pola: nadpisanie bez nazwy zapisałoby szablon pod nazwą pustą.
   wybor.kontrolka.addEventListener('change', () => {
     const szablon = szablony.find((pozycja) => pozycja.id === wybor.kontrolka.value);
     nazwa.kontrolka.value = szablon?.name ?? '';
@@ -206,8 +190,7 @@ export function utworzSzablonyPromptu(
     odpowiedz.pokaz('Odczyt historii poleceń…', true);
     const wynik = await stan.czuwanie.prowadz(
       'odczyt historii promptów',
-      // Granica zero zostawia rdzeniowi jego własną: okno nie zna liczby
-      // wydań i przycięcie wymyślone tutaj ukrywałoby część historii.
+      // Granica zero zostawia rdzeniowi jego własną: przycięcie wymyślone tutaj ukrywałoby część historii.
       stan.zrodlo.historiaPromptow(stan.idOkna(), 0),
       {
         wToku: (zdanie) => odpowiedz.pokaz(zdanie, true),
@@ -230,8 +213,7 @@ export function utworzSzablonyPromptu(
         wiersz.textContent =
           `${zapis.prompt.subject} — zasobów: ${zasobow}` +
           (zapis.channelId === undefined ? '' : ` · kanał ${zapis.channelId}`);
-        // Pozycja historii jest klikalna: wraca w pola kreatora, żeby polecenie
-        // dało się poprawić i wydać jeszcze raz.
+        // Pozycja historii jest klikalna: wraca w pola kreatora, żeby polecenie dało się poprawić i wydać.
         wiersz.tabIndex = 0;
         wiersz.addEventListener('click', () => {
           sterowanie.naSzablon(zapis.prompt);

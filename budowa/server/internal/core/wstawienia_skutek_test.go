@@ -1,3 +1,5 @@
+// Skutek wstawień: czy obiekt osadzony w dokumencie niesie pochodzenie i czy
+// odmowa jest nazwana tam, gdzie rdzeń nie ma czym wykonać czynności.
 package core
 
 import (
@@ -8,18 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek wstawień: czy obiekt osadzony w dokumencie niesie POCHODZENIE i czy
-// odmowa jest nazwana tam, gdzie rdzeń nie ma czym wykonać czynności.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. obraz wstawiony bez zapisanego pochodzenia — za tydzień nikt nie odtworzy,
-//     na czym pismo się opiera (zlecenie mówi o tym wprost);
-//  2. obiekt o zerowym rozmiarze, czyli niewidzialny, oddany jako wstawiony;
-//  3. uprzejma odmowa bez nazwania braku — Operator ma wiedzieć, po czyjej
-//     stronie brakuje i którą drogą czynność jest wykonalna;
-//  4. usunięcie obiektu, po którym wykaz nadal go pokazuje.
-
-// obiektUprzazSprawdzianu składa adapter modułu nad bazą sprawdzianu.
+// obiektUprzazSprawdzianu składa adapter modułu nad bazą sprawdzianu, gotowy
+// do wywołania komend wstawiania i usuwania obiektów dokumentu.
 func obiektUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, string) {
 	t.Helper()
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
@@ -124,7 +116,8 @@ func TestWykresOdmawiaNazwaniemBrakuPoStronieRdzenia(t *testing.T) {
 	}
 }
 
-// TestPoleTekstoweBezTresciOdmawia pilnuje zakazu odpowiedzi „ok" bez skutku.
+// TestPoleTekstoweBezTresciOdmawia pilnuje zakazu odpowiedzi „ok" bez skutku:
+// pole tekstowe bez treści nie ma prawa wejść jako obiekt wstawiony.
 func TestPoleTekstoweBezTresciOdmawia(t *testing.T) {
 	adapter, zycie, dokument := obiektUprzazSprawdzianu(t)
 
@@ -174,7 +167,8 @@ func TestObiektRozmiarZachowujeProporcje(t *testing.T) {
 	}
 }
 
-// TestObiektPostacBezCechyOdmawia pilnuje zakazu odpowiedzi bez skutku.
+// TestObiektPostacBezCechyOdmawia pilnuje zakazu odpowiedzi bez skutku: obiekt
+// postaci bez wskazanej cechy nie ma prawa wejść jako narysowany.
 func TestObiektPostacBezCechyOdmawia(t *testing.T) {
 	adapter, zycie, dokument := obiektUprzazSprawdzianu(t)
 
@@ -235,10 +229,6 @@ func TestUsuniecieObiektuZdejmujeGoZWykazu(t *testing.T) {
 
 // TestIkonaNieznanaOdmawiaWskazaniemKatalogu pilnuje, że nazwy ikon biorą się
 // z katalogu modułu Design, a nie z drugiego wykazu w Studiu.
-//
-// Nazwa szukana jest umyślnie bez ani jednego słowa z etykiet katalogu: katalog
-// Designu dopasowuje po zawieraniu w obie strony, więc nazwa niosąca „katalog"
-// albo „folder" trafiłaby we wzór i sprawdzian mierzyłby coś innego.
 func TestIkonaNieznanaOdmawiaWskazaniemKatalogu(t *testing.T) {
 	adapter, zycie, dokument := obiektUprzazSprawdzianu(t)
 
@@ -254,7 +244,8 @@ func TestIkonaNieznanaOdmawiaWskazaniemKatalogu(t *testing.T) {
 	}
 }
 
-// TestIkonaBezNazwyOdmawia pilnuje, że ikona nie wchodzi bez wskazania wzoru.
+// TestIkonaBezNazwyOdmawia pilnuje, że ikona nie wchodzi bez wskazania wzoru,
+// bo bez wzoru katalog Designu nie ma czego dopasować.
 func TestIkonaBezNazwyOdmawia(t *testing.T) {
 	adapter, zycie, dokument := obiektUprzazSprawdzianu(t)
 

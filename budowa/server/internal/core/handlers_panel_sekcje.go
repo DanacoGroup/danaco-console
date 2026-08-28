@@ -1,9 +1,6 @@
 // Odpowiedzialność pliku: układ sekcji panelu okna — `panel.sections.get`
-// i `panel.sections.set`. Nośnikiem układu jest tabela z migracji
-// `migracja_105_sekcje_paneli.sql`.
-//
-// Role okna prowadzi osobny plik `handlers_role_wykaz.go`: rola okna i sekcje
-// paneli to dwie odpowiedzialności.
+// i `panel.sections.set`. Rola okna prowadzi osobny plik
+// `handlers_role_wykaz.go`: to dwie odpowiedzialności.
 package core
 
 import (
@@ -16,13 +13,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// SekcjePaneli jest portem układu sekcji panelu okna.
+// SekcjePaneli jest portem układu sekcji panelu okna, obsługującym rodzinę
+// komend `panel.sections.*` niezależnie od portu ról.
 type SekcjePaneli interface {
 	UkladPanelu(ctx context.Context, z shared.PanelSectionsGetRequest) (shared.PanelSectionsGetResponse, error)
 	UstawUklad(ctx context.Context, z shared.PanelSectionsSetRequest) (shared.PanelSectionsSetResponse, error)
 }
 
-// Rozjazd portu z adapterem zatrzymuje kompilację tutaj, nie na martwej komendzie.
+// Rozjazd portu z adapterem zatrzymuje kompilację tutaj, nie na martwej
+// komendzie odkrytej dopiero w czasie działania rdzenia.
 var _ SekcjePaneli = (*adapterSekcjiPaneli)(nil)
 
 // zarejestrujSekcjePaneli wpina `panel.sections.get` i `panel.sections.set`.
@@ -77,9 +76,7 @@ func (a *adapterSekcjiPaneli) UkladPanelu(ctx context.Context,
 }
 
 // UstawUklad zapisuje układ sekcji panelu w całości: podane sekcje wyznaczają
-// układ, a czego w żądaniu nie ma, tego po zapisie nie ma. Pole `order`
-// rozstrzyga porządek, ale kolejne pozycje nadaje rdzeń jako 1..N — układ
-// z dziurami („1, 7, 9") wracałby w kolejności zależnej od bazy.
+// układ, a czego w żądaniu nie ma, tego po zapisie nie ma.
 func (a *adapterSekcjiPaneli) UstawUklad(ctx context.Context,
 	z shared.PanelSectionsSetRequest) (shared.PanelSectionsSetResponse, error) {
 
@@ -90,10 +87,9 @@ func (a *adapterSekcjiPaneli) UstawUklad(ctx context.Context,
 	if a.uklady == nil {
 		return shared.PanelSectionsSetResponse{}, bladNosnikaPaneli()
 	}
-	// Pole `sections` jest wymagane. Brak pola to brak, nie polecenie: wraca
-	// odmowa, żeby żądanie milczące o układzie nie skasowało układu zapisanego.
-	// Wykaz pusty (`"sections": []`) pozostaje czynnością poprawną — zdejmuje
-	// układ własny i przywraca układ domyślny widoku.
+	// Pole `sections` jest wymagane: brak pola to brak, nie polecenie.
+
+	// Wykaz pusty (`"sections": []`) zdejmuje układ własny, jest poprawny.
 	if z.Sections == nil {
 		return shared.PanelSectionsSetResponse{}, bladSekcjiPanelu("żądanie zapisu układu " +
 			"panelu " + panel + " okna " + okno + " bez pola `sections`; Operator poda sekcje " +
@@ -183,25 +179,25 @@ func sekcjeKontraktu(uklad []dane.SekcjaPanelu) []shared.PanelSection {
 	return sekcje
 }
 
-// ── odmowy ───────────────────────────────────────────────────────────────────
-// Każda odmowa mówi trzy rzeczy: co odmówiło (przedrostek), dlaczego (powód
-// nazwany) i czym czytelnik to zmieni (czynność po średniku).
+// Odmowy: każda mówi co, dlaczego i czym czytelnik to zmieni.
 
-// bladSekcjiPanelu składa odmowę żądania niezgodnego z kontraktem rodziny.
+// bladSekcjiPanelu składa odmowę żądania niezgodnego z kontraktem rodziny,
+// wspólną dla całego pliku, wraz z powodem i czynnością naprawy.
 func bladSekcjiPanelu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"sekcje panelu: "+powod))
 }
 
 // bladNosnikaPaneli nazywa brak trwałości układu — milczenie oddałoby pusty
-// panel jako stan zastany.
+// panel jako stan zastany, zamiast nazwać brak repozytorium.
 func bladNosnikaPaneli() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"sekcje panelu: trwałość układu paneli niewpięta, migracja 105 nie ma nośnika; "+
 			"Operator uruchomi rdzeń z bazą danych — układ paneli nie żyje w pamięci"))
 }
 
-// bladOdczytuPanelu niesie usterkę odczytu wraz z adresem, którego dotyczy.
+// bladOdczytuPanelu niesie usterkę odczytu wraz z adresem, którego dotyczy,
+// i odsyła Operatora do dziennika rdzenia przy powtórnym nawrocie.
 func bladOdczytuPanelu(okno, panel string, err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"sekcje panelu: nie można odczytać układu panelu "+panel+" okna "+okno+": "+

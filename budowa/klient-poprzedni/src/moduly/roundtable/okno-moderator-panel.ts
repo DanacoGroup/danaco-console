@@ -30,27 +30,8 @@ import { ODSTEP_ZEGARA_MS, zdanieZegara } from './zegar-tury';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
 /**
- * Moderator Panel — okno zarządcy modułu Roundtable: ukierunkowanie dyskusji,
- * zamknięcie tury, wybór kolejnego zagadnienia i kolejność głosu; aktywne
- * w toku całej sesji Roundtable.
- *
- * Wyliczenie `ModeratorAction` niesie dziś dziewięć wartości; okno wysyła pięć
- * starszych — `Direct`, `CloseTurn`, `NextTopic`, `Mute`, `Unmute`. Czterech
- * nowszych (`SetSpeakingOrder`, `InjectCounterVoice`, `OpenSideThread`,
- * `MergeSideThread`) jeszcze nie wysyła: obsługi nie zbudowano. Kolejność głosu
- * jedzie zatem nadal razem z `action: Direct`, samodzielnie albo obok `message`
- * (`RoundtableModeratorDirectRequest.speakingOrder?: string[]`), choć wartość
- * `SetSpeakingOrder` jest już w wyliczeniu i przeniesienie na nią kolejności
- * usunęłoby niepewność opisaną przy `przesunKolejnosc`.
- *
- * `participants` w odpowiedzi jest polem nieobowiązkowym, więc okno musi umieć
- * jego brak i wtedy nie potwierdza zmiany składu. Kiedy skład przyjdzie, okno
- * wpisuje go do `stan.ustawUczestnikow(...)` — to jedyna droga, którą Model
- * Panels i Consensus Panel dowiadują się o składzie.
- *
- * Skład i kanały idą wyłącznie ze stanu (`stan.uczestnicy()`,
- * `stan.opisKanalu`) — tego samego rejestru, którym jedzie okno rozmowy. Okno
- * nie woła `channel.list` na własną rękę.
+ * Moderator Panel — okno zarządcy modułu Roundtable: ukierunkowanie dyskusji, zamknięcie tury,
+ * wybór zagadnienia i kolejność głosu, aktywne przez całą sesję.
  */
 export interface OknoModeratorPanel {
   element: HTMLElement;
@@ -76,8 +57,7 @@ export function utworzOknoModeratorPanel(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Czynności moderacji wołają komendy obszaru wprost: zapis szablonu, wykaz
-  // szablonów, wydanie transkryptu, odsłuch i odczyt stanu debaty z rdzenia.
+  // Czynności moderacji wołają komendy obszaru wprost: szablon, transkrypt, odsłuch i stan debaty.
   const powierzchnia = zlozPowierzchnieModeratora(
     rama,
     tresc.element,
@@ -98,14 +78,7 @@ export function utworzOknoModeratorPanel(
     powierzchnia.zegar.textContent = zdanieZegara(stan.definicjaTury(), Date.now());
   }
 
-  /**
-   * Zdanie o czynności należy do tury, w której padło.
-   *
-   * Pas czynności trzyma treść do następnego zapisu, więc bez tego odmowa
-   * dotycząca jednej tury wisiałaby nad następną. Wraz ze zmianą tury zdanie
-   * schodzi (ten sam wzór, co czyszczenie odpowiedzi przy zmianie eksperta
-   * w `agents/okno-skills-manager.ts`).
-   */
+  // Zdanie o czynności należy do tury, w której padło, i schodzi wraz ze zmianą tury.
   function rysuj(): void {
     const biezaca = stan.definicjaTury()?.id ?? '';
     if (biezaca !== turaZdania) {
@@ -116,23 +89,13 @@ export function utworzOknoModeratorPanel(
     rysujTuraISklad(stan, tresc, { przelaczWyciszenie, przesunKolejnosc });
   }
 
-  /**
-   * Odmowa czynności idzie pasem czynności, nie stanem błędu okna.
-   *
-   * `tresc.blad(...)` czyści miejsce treści, więc zabrałby z ekranu turę i cały
-   * skład — okno pokazywałoby pustą debatę tam, gdzie debata jest. Stan błędu
-   * zostaje przy nieudanym odczycie, po którym treści naprawdę nie ma. Tutaj
-   * treść zostaje przerysowana, a powód odmowy stoi obok niej
-   * w `data-udane='false'` (arkusz maluje go barwą błędu).
-   */
+  // Odmowa czynności idzie pasem czynności, nie stanem błędu okna, który zabrałby z ekranu skład.
   function odmow(zdanie: string): void {
     rysuj();
     tresc.potwierdzenie(zdanie, false);
   }
 
-  // Obsługa odpowiedzi czynności (zapis tury, warunkowy zapis składu, dobór
-  // zdania potwierdzenia) jest wydzielona do `utworzKontekstCzynnosci`
-  // — zwarta odpowiedzialność, która nie musi siedzieć w wytwórni.
+  // Obsługa odpowiedzi czynności jest wydzielona do osobnego kontekstu, zwartej odpowiedzialności.
   const kontekst = utworzKontekstCzynnosci(zrodlo, stan, tresc, rysuj);
 
   function skieruj(): void {
@@ -162,8 +125,7 @@ export function utworzOknoModeratorPanel(
       odmow('Debata nie ma otwartej tury — nie ma czego zamykać.');
       return;
     }
-    // Stan tury sprzed wywołania jest jedynym świadkiem tego, czy zamknięcie
-    // cokolwiek zmieniło: rdzeń oddaje turę już zamkniętą bez odmowy.
+    // Stan tury sprzed wywołania jest jedynym świadkiem, czy zamknięcie coś zmieniło.
     const przed = stan.definicjaTury();
     const bylaZamknieta = przed !== null && przed.status === RoundtableTurnStatus.Closed;
     kontekst.obsluz(
@@ -207,13 +169,7 @@ export function utworzOknoModeratorPanel(
     );
   }
 
-  /**
-   * Przesunięcie w kolejności głosu.
-   *
-   * Przyciski skrajnych wierszy są klikalne zawsze, a ruch niewykonalny dostaje
-   * zdanie w pasie czynności — obok wykazu, który zostaje na ekranie.
-   * Wygaszenie przycisku milczałoby o powodzie.
-   */
+  // Przesunięcie w kolejności głosu; ruch niewykonalny dostaje zdanie w pasie czynności.
   function przesunKolejnosc(idUczestnika: string, kierunek: -1 | 1): void {
     const biezaca = uczestnicyWKolejnosci(stan).map((uczestnik) => uczestnik.id);
     const indeks = biezaca.indexOf(idUczestnika);
@@ -238,10 +194,7 @@ export function utworzOknoModeratorPanel(
       {
         czynnosc: 'zmiana kolejności głosu',
         potwierdz: (odpowiedz) => potwierdzKolejnosc(odpowiedz, przestawiona, stan),
-        // Okno wysyła kolejność obok czynności `Direct`, więc po odmowie nie
-        // wie, czego rdzeń odmówił: interwencji czy kolejności. Wyliczenie ma
-        // dziś wartość `SetSpeakingOrder`, która tę niepewność usuwa — okno
-        // jeszcze jej nie wysyła, bo obsługi nie zbudowano.
+        // Okno wysyła kolejność obok czynności Direct, więc po odmowie nie wie, co dokładnie odmówiono.
         przyNiepowodzeniu:
           'Okno wysyła kolejność głosu obok czynności moderatora, więc NIE WIE, czy rdzeń kolejność zapisał. ' +
           'Wyliczenie ModeratorAction ma już osobną wartość setSpeakingOrder; okno jeszcze jej nie wysyła.',
@@ -251,14 +204,10 @@ export function utworzOknoModeratorPanel(
 
   podepnijAkcjeModeratora(powierzchnia, { skieruj, zamknijTure, nastepneZagadnienie });
 
-  // Jeden punkt wejścia dla pierwszego rysowania jest `odswiez()`, wołany raz
-  // przez złożenie modułu — wytwórnia okna nie czyta stanu sama.
+  // Jeden punkt wejścia dla pierwszego rysowania — wytwórnia okna nie czyta stanu sama.
   const odsubskrybuj = stan.naZmiane(() => rysuj());
 
-  // Zegar chodzi własnym rytmem, bo mierzy czas, a nie zmianę stanu: bez niego
-  // licznik stałby nieruchomo między przyrostami debaty. Odświeża sam napis
-  // zegara, nie cały skład — przerysowanie wykazu co sekundę kasowałoby wpisaną
-  // treść interwencji i przenosiło ognisko.
+  // Zegar chodzi własnym rytmem, mierzy czas, nie zmianę stanu; odświeża sam napis, nie skład.
   const zegarBiegnie = window.setInterval(odswiezZegar, ODSTEP_ZEGARA_MS);
   odswiezZegar();
 
@@ -272,7 +221,7 @@ export function utworzOknoModeratorPanel(
   };
 }
 
-/** Kontrolki panelu akcji i ciała ramy. */
+/** Kontrolki panelu akcji i ciała ramy: pola interwencji i zagadnienia, przyciski czynności oraz napis zegara tury. */
 interface PowierzchniaModeratora {
   poleInterwencji: HTMLTextAreaElement;
   poleZagadnienia: HTMLInputElement;
@@ -284,13 +233,8 @@ interface PowierzchniaModeratora {
 }
 
 /**
- * Składa pasek akcji ramy z czterema czynnościami prawdziwymi kontraktu
- * (interwencja, zamknięcie tury, zmiana zagadnienia; kolejność głosu i
- * wyciszenie siedzą przy wierszu uczestnika, bo potrzebują jego tożsamości)
- * oraz z pozycjami, których obsługi jeszcze nie zbudowano.
- *
- * Wydzielone z wytwórni okna — fragment czysty, bez domknięcia na
- * stanie modułu.
+ * Składa pasek akcji ramy z czterema czynnościami prawdziwymi kontraktu oraz z pozycjami,
+ * których obsługi jeszcze nie zbudowano.
  */
 function zlozAkcjeModeratora(gospodarz: HTMLElement): {
   wyslijInterwencje: HTMLButtonElement;
@@ -329,12 +273,12 @@ function zlozAkcjeModeratora(gospodarz: HTMLElement): {
   return { wyslijInterwencje, zamknijTure, ustawZagadnienie };
 }
 
-/** Zestaw akcji warstwy trzeciej — czynności moderacji jeszcze niezbudowane. */
+/** Zestaw akcji warstwy trzeciej — czynności moderacji jeszcze niezbudowane, wypisane obok czynności prawdziwych kontraktu. */
 function zlozZestawModeratora(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Zestaw operacji moderacyjnych', czynnosci);
 }
 
-/** Składa formularz interwencji i zagadnienia oraz ciało ramy. */
+/** Składa formularz interwencji i zagadnienia oraz ciało ramy okna wraz z zestawem akcji warstwy trzeciej i zegarem tury. */
 function zlozPowierzchnieModeratora(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -369,7 +313,7 @@ function zlozPowierzchnieModeratora(
   };
 }
 
-/** Podpina pasek akcji do czynności okna. */
+/** Podpina pasek akcji do czynności okna: wysłanie interwencji, zamknięcie tury oraz ustawienie kolejnego zagadnienia. */
 function podepnijAkcjeModeratora(
   powierzchnia: PowierzchniaModeratora,
   obsluga: { skieruj: () => void; zamknijTure: () => void; nastepneZagadnienie: () => void },

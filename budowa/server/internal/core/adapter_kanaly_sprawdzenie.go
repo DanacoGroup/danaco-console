@@ -1,22 +1,4 @@
-// Odpowiedzialność pliku: `channel.check` i `channel.credential.status` — dwie
-// czynności pytające o kanał modelu, dołożone do rejestru z `adapter_kanaly.go`.
-//
-// ── Sprawdzenie jest narzędziem pomocniczym, nie bramką ─────────────────────
-// Wynik `channel.check` NICZEGO nie warunkuje: nie wstrzymuje zapisu eksperta,
-// nie blokuje wysłania tury, nie wyłącza kanału. Operator pyta „czy to
-// odpowiada", dostaje odpowiedź i sam decyduje, co z nią zrobić. Kanał, który
-// nie odpowiedział minutę temu, bywa sprawny teraz — i odwrotnie.
-//
-// Sprawdzenie jest PRAWDZIWYM wywołaniem: rdzeń wysyła krótkie zapytanie tym
-// samym rejestrem kanałów, którym jedzie okno rozmowy, i mierzy czas
-// odpowiedzi. Sprawdzenie, które ogląda wyłącznie wiersz rejestru, mówiłoby
-// „skonfigurowany", a Operator czyta z niego „działa".
-//
-// ── Stan poświadczenia to STAN, nigdy treść ─────────────────────────────────
-// `channel.credential.status` oddaje: czy poświadczenie jest ustawione, jakiego
-// jest rodzaju i kiedy zostało zmienione. TREŚCI NIE ODDAJE I ODDAWAĆ NIE MOŻE.
-// W tym pliku nie ma ani jednej ścieżki, którą sekret wychodzi do klienta —
-// wartość z sejfu służy wyłącznie do rozstrzygnięcia, czy jest niepusta.
+// Plik obsługuje czynności channel.check i channel.credential.status: sprawdzenie kanału modelu prawdziwym wywołaniem oraz odczyt stanu poświadczenia bez ujawniania jego treści.
 package core
 
 import (
@@ -32,34 +14,25 @@ import (
 )
 
 const (
-	// granicaSprawdzeniaKanalu domyka jedno sprawdzenie. Piętnaście sekund
-	// starcza każdemu kanałowi na odpowiedź na jedno słowo, a dłuższe czekanie
-	// i tak nie jest odpowiedzią, na którą ktokolwiek czeka przy przycisku.
+	// granicaSprawdzeniaKanalu domyka jedno sprawdzenie po piętnastu sekundach, bo dłuższe czekanie nie jest odpowiedzią przy przycisku.
 	granicaSprawdzeniaKanalu = 15 * time.Second
 
-	// trescSprawdzeniaKanalu jest zapytaniem sprawdzającym. Krótkie z zamysłu:
-	// pytamy, czy kanał odpowiada, a nie prosimy o treść, za którą Operator
-	// zapłaci przy każdym kliknięciu w „sprawdź".
+	// trescSprawdzeniaKanalu jest krótkim zapytaniem sprawdzającym: pyta, czy kanał odpowiada, zamiast prosić o treść.
 	trescSprawdzeniaKanalu = "ping"
 )
 
-// sejfPoswiadczen jest tą częścią sejfu, której potrzebuje stan poświadczenia:
-// samo pytanie, czy pod odwołaniem coś leży.
-//
-// Interfejs zamiast typu, bo adapter ma widzieć wyłącznie odczyt — węższy
-// widok jest tu granicą, a nie ozdobą: adapter, który nie umie zapisać, nie
-// nadpisze cudzego klucza przy pomyłce.
+// sejfPoswiadczen jest tą częścią sejfu, której potrzebuje stan poświadczenia: samym pytaniem, czy pod odwołaniem coś leży.
 type sejfPoswiadczen interface {
 	Odczytaj(ctx context.Context, byt string) (string, bool)
 }
 
-// ZSejfem wpina sejf poświadczeń — źródło stanu, nie treści.
+// ZSejfem wpina sejf poświadczeń jako źródło stanu poświadczenia, nie jego treści, do adaptera kanałów rejestru modeli.
 func (a *adapterKanalow) ZSejfem(sejf sejfPoswiadczen) *adapterKanalow {
 	a.sejf = sejf
 	return a
 }
 
-// Sprawdz obsługuje `channel.check`.
+// Sprawdz obsługuje channel.check: wysyła krótkie zapytanie sprawdzające tym samym rejestrem kanałów, którym jedzie okno rozmowy.
 func (a *adapterKanalow) Sprawdz(ctx context.Context,
 	z shared.ChannelCheckRequest) (shared.ChannelCheckResponse, error) {
 
@@ -76,9 +49,7 @@ func (a *adapterKanalow) Sprawdz(ctx context.Context,
 		}, nil
 	}
 	if _, jest := a.rejestr.Kanal(kod); !jest {
-		// Kanał, którego nie ma w rejestrze, nie jest odmową sprawdzenia: jest
-		// odpowiedzią „nie odpowiada, bo go nie ma". Odmowa kazałaby oknu
-		// pokazać błąd tam, gdzie Operator ma wiersz wyłączony albo źle wpisany.
+		// Kanał, którego nie ma w rejestrze, oddaje odpowiedź nie odpowiada, a nie odmowę sprawdzenia.
 		szczegol := "kanału nie ma w rejestrze kanałów rdzenia albo jest wyłączony"
 		return shared.ChannelCheckResponse{
 			Reachable: false, CheckedAt: chwila.UnixMilli(), Detail: &szczegol,
@@ -123,7 +94,7 @@ func (a *adapterKanalow) Sprawdz(ctx context.Context,
 	}, nil
 }
 
-// StanPoswiadczenia obsługuje `channel.credential.status`.
+// StanPoswiadczenia obsługuje channel.credential.status i oddaje wyłącznie stan poświadczenia kanału, nigdy jego treść.
 func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 	z shared.ChannelCredentialStatusRequest) (shared.ChannelCredentialStatusResponse, error) {
 
@@ -146,8 +117,7 @@ func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 	stan := shared.ChannelCredentialStatus{ChannelId: kod}
 	odwolanie := strings.TrimSpace(wartoscTekstu(kanal.PoswiadczenieOdwolanie))
 	if odwolanie == "" {
-		// Kanał bez odwołania to kanał bez uwierzytelnienia — na przykład model
-		// lokalny. To odpowiedź, nie brak: `present: false` bez rodzaju.
+		// Kanał bez odwołania nie wymaga uwierzytelnienia, na przykład model lokalny; to odpowiedź, nie brak.
 		return shared.ChannelCredentialStatusResponse{Status: stan}, nil
 	}
 
@@ -158,23 +128,19 @@ func (a *adapterKanalow) StanPoswiadczenia(ctx context.Context,
 
 	if a.sejf != nil {
 		if wartosc, jest := a.sejf.Odczytaj(ctx, odwolanie); jest {
-			// Wartość służy WYŁĄCZNIE do rozstrzygnięcia, czy jest niepusta.
-			// Poza tym warunkiem nie jest nigdzie użyta i nigdzie nie wychodzi.
+			// Wartość służy wyłącznie do rozstrzygnięcia, czy jest niepusta, i nigdzie indziej nie wychodzi.
 			stan.Present = strings.TrimSpace(wartosc) != ""
 		}
 	}
 	if !stan.Present {
-		// Sejf nie zna odwołania — ale poświadczenie bywa też zmienną
-		// środowiskową maszyny rdzenia, bo `credentialRef` jest właśnie jej
-		// nazwą. Odpowiedź musi rozróżnić „nie ustawiono" od „ustawiono gdzie
-		// indziej", więc mówi, gdzie rdzeń szukał.
+		// Poświadczenie bywa też zmienną środowiskową maszyny rdzenia; odpowiedź podaje, gdzie rdzeń szukał.
 		zarzadca = zarzadcaPoswiadczeniaKanalu(kanal) + " (odwołanie: " + odwolanie + ")"
 		stan.ManagedBy = &zarzadca
 	}
 	return shared.ChannelCredentialStatusResponse{Status: stan}, nil
 }
 
-// przedrostekSprawdzeniaKanalu znakuje identyfikator wywołania sprawdzającego.
+// przedrostekSprawdzeniaKanalu znakuje identyfikator wywołania sprawdzającego w rejestrze kanałów modeli.
 const przedrostekSprawdzeniaKanalu = "sprawdzenie-kanalu-"
 
 // rodzajPoswiadczeniaKanalu nazywa rodzaj poświadczenia na podstawie parametrów
@@ -194,7 +160,7 @@ func rodzajPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	return "klucz kanału API"
 }
 
-// zarzadcaPoswiadczeniaKanalu nazywa miejsce, w którym poświadczenie mieszka.
+// zarzadcaPoswiadczeniaKanalu nazywa miejsce, w którym poświadczenie kanału mieszka: rejestr kont albo sejf rdzenia.
 func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	if kanal.KontoID != nil {
 		return "rejestr kont platformy"

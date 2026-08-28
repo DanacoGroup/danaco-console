@@ -1,19 +1,6 @@
 // Odpowiedzialność pliku: monitory zmian strony — `browser.monitor.add`,
-// `.list`, `.check`, `.remove`.
-//
-// Monitor mierzy, a nie melduje. Założenie monitora POBIERA stronę i odkłada jej
-// treść jako odniesienie; sprawdzenie pobiera ją ponownie i zestawia obie treści
-// wiersz po wierszu. Monitor bez odniesienia oddawałby zawsze „bez zmian" albo
-// zawsze „zmiana" — jedno i drugie jest meldunkiem bez pomiaru, a to wzorzec
-// szkody, którego ten produkt już raz doświadczył.
-//
-// Różnica jest liczbą, nie wrażeniem: `BrowserContentDiff` niesie liczbę wierszy
-// dodanych, usuniętych, numer pierwszego wiersza różnicy i przyrost znaków.
-// Wszystkie cztery liczone są z dwóch treści, nie z niczego.
-//
-// Próg zmiany odsiewa drgania. Strona z zegarem albo licznikiem odwiedzin różni
-// się przy każdym pobraniu; próg podany w znakach mówi, od jakiej różnicy zmiana
-// jest zmianą. Bez progu każdy taki monitor alarmowałby co godzinę.
+// `.list`, `.check`, `.remove`. Monitor mierzy, a nie melduje: różnica jest
+// liczbą, nie wrażeniem.
 package core
 
 import (
@@ -81,13 +68,13 @@ func (a *adapterPrzegladarki) ZalozMonitor(ctx context.Context,
 	return shared.BrowserMonitorAddResponse{Monitor: monitorKontraktu(zapisany)}, nil
 }
 
-// WykazMonitorow obsługuje `browser.monitor.list`.
+// WykazMonitorow obsługuje `browser.monitor.list` i oddaje monitory
+// zawężone tym samym oknem operacyjnym, co pozostałe polecenia modułu.
 func (a *adapterPrzegladarki) WykazMonitorow(ctx context.Context,
 	z shared.BrowserMonitorListRequest) (shared.BrowserMonitorListResponse, error) {
 
-	// Karta sesji zawęża tak samo jak okno: monitory modułu Browser stoją przy
-	// oknie operacyjnym, a `sessionId` żądania jest drugą drogą wskazania tego
-	// samego wykazu, nie drugim wykazem.
+	// Karta sesji zawęża tak samo jak okno: `sessionId` jest drugą drogą
+	// wskazania wykazu.
 	okno := wartoscTekstuLubPusta(z.WindowId)
 	if okno == "" {
 		okno = wartoscTekstuLubPusta(z.SessionId)
@@ -121,7 +108,7 @@ func (a *adapterPrzegladarki) SprawdzMonitor(ctx context.Context,
 	tresc, err := pobierzStrone(ctx, monitor.Url)
 	if err != nil {
 		// Nieudane sprawdzenie jest sprawdzeniem: monitor odnotowuje stan
-		// `failed` i czas próby, zamiast udawać, że niczego nie było.
+		// `failed` i czas próby.
 		monitor.Stan = string(shared.BrowserMonitorStatusFailed)
 		monitor.Sprawdzono = terazWBazie()
 		if _, zapis := a.repozytorium.ZapiszMonitor(ctx, monitor); zapis != nil {
@@ -154,9 +141,8 @@ func (a *adapterPrzegladarki) SprawdzMonitor(ctx context.Context,
 	} else {
 		monitor.Stan = string(shared.BrowserMonitorStatusUnchanged)
 	}
-	// Odniesienie przesuwa się tylko na żądanie. Bez tego pierwsze sprawdzenie
-	// po zmianie zjadałoby ją: kolejne sprawdzenie porównywałoby nową treść
-	// z nową treścią i meldowało spokój na stronie, która właśnie się zmieniła.
+	// Odniesienie przesuwa się tylko na żądanie, inaczej pierwsze sprawdzenie
+	// po zmianie zjadałoby ją.
 	if z.UpdateBaseline != nil && *z.UpdateBaseline {
 		odwolanie, err := a.zapiszTresc([]byte(biezaca))
 		if err != nil {
@@ -176,7 +162,8 @@ func (a *adapterPrzegladarki) SprawdzMonitor(ctx context.Context,
 	}, nil
 }
 
-// ZdejmijMonitor obsługuje `browser.monitor.remove`.
+// ZdejmijMonitor obsługuje `browser.monitor.remove` i usuwa monitor wraz
+// z jego odniesieniem oraz historią sprawdzeń.
 func (a *adapterPrzegladarki) ZdejmijMonitor(ctx context.Context,
 	z shared.BrowserMonitorRemoveRequest) (shared.BrowserMonitorRemoveResponse, error) {
 
@@ -195,13 +182,8 @@ func (a *adapterPrzegladarki) ZdejmijMonitor(ctx context.Context,
 }
 
 // trescPilnowana zawęża treść strony do fragmentu wskazanego selektorem.
-//
 // Selektor jest tu wskazaniem TEKSTOWYM, nie selektorem CSS wykonywanym na
-// drzewie: monitor pobiera stronę HTTP-em, bez uruchamiania jej, więc zawęża
-// treść do wierszy niosących wskazany napis. To jest granica nazwana wprost,
-// a nie udawanie zawężenia po drzewie DOM: wskazanie, którego na stronie nie
-// ma, daje treść pustą i monitor pilnuje wtedy pustki — co widać w wykazie po
-// zerowej długości odniesienia.
+// drzewie: monitor pobiera stronę HTTP-em, bez uruchamiania jej.
 func trescPilnowana(tekst string, selektor *string) string {
 	wskazanie := wartoscTekstuLubPusta(selektor)
 	if wskazanie == "" {
@@ -216,12 +198,9 @@ func trescPilnowana(tekst string, selektor *string) string {
 	return strings.Join(wybrane, "\n")
 }
 
-// roznicaTresci mierzy różnicę dwóch treści wiersz po wierszu.
-//
-// Miara jest prosta i uczciwa: wiersze porównywane po kolei, a nadmiar po
-// jednej ze stron liczy się jako dopisanie albo usunięcie. Nie jest to
-// najkrótsza ścieżka edycji — i nie ma być, bo monitor odpowiada na pytanie
-// „czy i jak bardzo się zmieniło", a nie „jaka jest najoszczędniejsza łata".
+// roznicaTresci mierzy różnicę dwóch treści wiersz po wierszu. Miara jest
+// prosta i uczciwa: wiersze porównywane po kolei, a nadmiar po jednej ze
+// stron liczy się jako dopisanie albo usunięcie.
 func roznicaTresci(odniesienie, biezaca string) shared.BrowserContentDiff {
 	stare := strings.Split(odniesienie, "\n")
 	nowe := strings.Split(biezaca, "\n")
@@ -290,7 +269,8 @@ func bezwzglednaLiczba(wartosc int64) int64 {
 	return wartosc
 }
 
-// monitorKontraktu przekłada wiersz monitora na byt kontraktu.
+// monitorKontraktu przekłada wiersz monitora z bazy danych na byt kontraktu
+// zwracany wołającemu przez moduł Browser.
 func monitorKontraktu(w dane.MonitorPrzegladania) shared.BrowserMonitor {
 	monitor := shared.BrowserMonitor{
 		Id:              w.Kod,

@@ -7,37 +7,7 @@ import type { PropozycjaZmiany } from './pola-stanu';
 import { NAZWY_RODZAJOW, RodzajZnakowania } from './przybornik-wykaz';
 import { nazwaAutora, opiszZmiane, zmianyOczekujace } from './zmiany-modelu';
 
-/**
- * Margines dokumentu — TRZY RÓŻNE BYTY, nie jeden.
- *
- * ── Rozstrzygnięcie Właściciela ─────────────────────────────────────────────
- * Na marginesie stają trzy rzeczy i Operator ma **po wyglądzie** wiedzieć, na
- * którą patrzy:
- *
- *   — **komentarz** — mówi o fragmencie i NIE niesie brzmienia; treści nie
- *     zmienia ani teraz, ani po rozwiązaniu wątku;
- *   — **propozycja zmiany** — niesie brzmienie fragmentu, ale NIE weszła
- *     w treść; Operator ją przyjmuje, odrzuca albo poprawia;
- *   — **zmiana śledzona** — jest JUŻ w treści i czeka na decyzję.
- *
- * Zlanie ich w jedną kartę „uwaga modelu" zabrałoby Operatorowi rozróżnienie, po
- * którym poznaje, czy dokument już się zmienił, czy jeszcze nie. Dlatego każda
- * karta niesie `data-rodzaj`, własny nagłówek i własne zdanie o skutku decyzji,
- * a arkusz `przybornik-znakowania.css` daje im trzy różne obramowania.
- *
- * ── Dlaczego dymek, a nie sama lista ────────────────────────────────────────
- * Komentarz ma stać przy miejscu, nie w wykazie. Kotwica w treści
- * (`powierzchnia-dokumentu.ts`) wskazuje fragment, a karta ustawia się na jej
- * wysokości. Spis do przejścia stoi osobno, w przyborniku znakowania — jedno nie
- * zastępuje drugiego: dymek mówi „tu", spis mówi „ile jeszcze".
- *
- * ── Czego kontrakt nie ma ───────────────────────────────────────────────────
- * Usunięcia komentarza. `studio.comment.*` niesie dodanie, wykaz i rozwiązanie;
- * komendy usuwającej nie ma. Przycisk „Usuń" nie jest więc udawany — jego
- * miejsce zajmuje „Rozwiąż wątek" wraz ze zdaniem o tej różnicy.
- */
-
-/** Czynności marginesu zlecane oknu. */
+/** Margines dokumentu niesie trzy różne byty rozróżnialne wyglądem — komentarz, propozycję brzmienia i zmianę śledzoną; czynności marginesu zlecane oknu obejmują odpowiedź, rozwiązanie wątku, kotwicę i decyzje. */
 export interface CzynnosciDymkow {
   /** Odpowiada w wątku wskazanego komentarza. */
   naOdpowiedz(idWatku: string, tresc: string): void;
@@ -51,7 +21,7 @@ export interface CzynnosciDymkow {
   naDecyzjeZmiany(kodZmiany: string, przyjmij: boolean): void;
 }
 
-/** Co stoi na marginesie w tej chwili. */
+/** Wpisy stojące na marginesie w tej chwili: komentarze, co najwyżej jedna propozycja brzmienia oraz zmiany śledzone dokumentu. */
 export interface WpisyMarginesu {
   komentarze: readonly StudioComment[];
   /** Propozycja brzmienia czekająca na decyzję; `null`, gdy żadnej nie ma. */
@@ -62,16 +32,10 @@ export interface WpisyMarginesu {
   zmiany: readonly StudioTrackedChange[];
 }
 
-/** Kolumna marginesu wraz z jej odświeżeniem. */
+/** Kolumna marginesu dokumentu wraz z metodą przerysowania i odczytem liczby otwartych wątków komentarzy. */
 export interface DymkiKomentarzy {
   element: HTMLElement;
-  /**
-   * Przerysowuje margines.
-   *
-   * `polozenie` oddaje wysokość kotwicy w punktach powierzchni; kotwica bez
-   * położenia (znakowanie dotyczące całego dokumentu albo fragmentu, którego już
-   * nie ma) stawia kartę w kolejności wykazu, a nie na zgadniętej wysokości.
-   */
+  /** Przerysowuje margines; kotwica bez wysokości stawia kartę w kolejności wykazu, nie na pozycji. */
   pokaz(wpisy: WpisyMarginesu, polozenie: (kod: string) => number | null): void;
   /** Liczba wątków otwartych — do zdania paska stanu. */
   ile(): number;
@@ -131,13 +95,13 @@ export function utworzDymkiKomentarzy(czynnosci: CzynnosciDymkow): DymkiKomentar
   return { element, pokaz, ile: () => watki };
 }
 
-/** Stawia kartę na wysokości kotwicy albo w kolejności wykazu. */
+/** Stawia kartę marginesu na wysokości jej kotwicy w treści albo, gdy kotwica jej nie ma, w kolejności wykazu. */
 function ustawWysokosc(karta: HTMLElement, wysokosc: number | null): void {
   if (wysokosc !== null) karta.style.top = `${wysokosc}px`;
   karta.dataset['zakotwiczony'] = wysokosc === null ? 'nie' : 'tak';
 }
 
-/** Buduje kartę komentarza wraz z wątkiem odpowiedzi. */
+/** Buduje kartę komentarza wraz z wątkiem odpowiedzi, przyciskiem odpowiedzi, rozwiązania wątku i przejścia do kotwicy. */
 function utworzDymek(
   komentarz: StudioComment,
   odpowiedzi: readonly StudioComment[],
@@ -202,14 +166,7 @@ function utworzDymek(
   return dymek;
 }
 
-/**
- * Karta propozycji brzmienia.
- *
- * Odróżniona od komentarza tym, że **pokazuje brzmienie** wraz z jego długością,
- * i od zmiany śledzonej tym, że mówi wprost: w treści tego jeszcze nie ma.
- * Decyzja idzie `studio.proposal.decide`, a nie `studio.tracking.decide` — to
- * dwie różne komendy dla dwóch różnych bytów.
- */
+/** Karta propozycji brzmienia, odróżniona od komentarza pokazaniem brzmienia wraz z jego długością, a od zmiany śledzonej tym, że brzmienie jeszcze nie weszło w treść. */
 function utworzKartePropozycji(
   propozycja: PropozycjaZmiany,
   zakres: { poczatek: number; koniec: number } | null,
@@ -259,13 +216,7 @@ function utworzKartePropozycji(
   return karta;
 }
 
-/**
- * Karta zmiany śledzonej.
- *
- * Stoi na marginesie obok oznaczenia w treści, bo oznaczenie w treści mówi
- * „gdzie", a karta mówi „co było przed" — i to drugie jest tym, czego Operator
- * potrzebuje do decyzji.
- */
+/** Karta zmiany śledzonej, stojąca na marginesie obok oznaczenia w treści, które mówi gdzie, podczas gdy karta mówi, co było przed zmianą. */
 function utworzKarteZmiany(
   zmiana: StudioTrackedChange,
   czynnosci: CzynnosciDymkow,
@@ -321,7 +272,7 @@ function utworzKarteZmiany(
   return karta;
 }
 
-/** Nagłówek karty: nazwa rodzaju i zdanie o tym, czym się on różni. */
+/** Nagłówek karty marginesu: nazwa rodzaju wpisu i zdanie tłumaczące, czym ten rodzaj różni się od pozostałych dwóch. */
 function naglowekKarty(nazwa: string, czym: string): HTMLElement {
   const podpis = document.createElement('p');
   podpis.className = 'ms-dymek__rodzaj';
@@ -334,7 +285,7 @@ function naglowekKarty(nazwa: string, czym: string): HTMLElement {
   return naglowek;
 }
 
-/** Głowa wpisu: autor, czas i zakres, o ile komentarz jest przypięty. */
+/** Głowa wpisu karty: autor, czas utworzenia i zakres fragmentu, o ile komentarz jest przypięty do konkretnego miejsca. */
 function glowaWpisu(komentarz: StudioComment): HTMLElement {
   const glowa = document.createElement('p');
   glowa.className = 'ms-dymek-komentarza__glowa';
@@ -347,7 +298,7 @@ function glowaWpisu(komentarz: StudioComment): HTMLElement {
   return glowa;
 }
 
-/** Treść wpisu karty. */
+/** Buduje element z treścią tekstową wpisu karty marginesu, wspólny dla komentarza i jego odpowiedzi w wątku. */
 function trescWpisu(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'ms-dymek-komentarza__tresc';

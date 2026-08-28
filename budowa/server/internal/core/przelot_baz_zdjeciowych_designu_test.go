@@ -1,3 +1,6 @@
+// Przelot ośmiu dróg HTTP dostawców baz zdjęciowych modułu Design: dowodzi, że
+// każda droga rdzenia dociera do końca żądania wobec serwera próbnego
+// udającego kształt odpowiedzi dostawcy.
 package core
 
 import (
@@ -8,27 +11,6 @@ import (
 	"strings"
 	"testing"
 )
-
-// Przelot ośmiu dróg HTTP dostawców baz zdjęciowych modułu Design.
-//
-// ── Czego ten sprawdzian dowodzi, a czego NIE ───────────────────────────────
-// DOWODZI, że dla każdego z ośmiu dostawców droga idzie do końca: rdzeń składa
-// adres, wysyła żądanie po HTTP, nosi klucz tam, gdzie dostawca go żąda, rozkłada
-// odpowiedź i wypełnia z niej wspólną postać zasobu. Serwer próbny stoi w uprzęży
-// i odpowiada kształtami, które rdzeń zakłada.
-//
-// NIE dowodzi, że kształt odpowiedzi zgadza się z tym, co dostawca naprawdę
-// wysyła. Kształty pochodzą z dokumentacji, nie z pomiaru na jego API, i tego
-// sprawdzian bez konta u dostawcy nie zamknie. Ta połowa braku zostaje otwarta
-// i jest tak nazwana — inaczej zielony wynik tego pliku czytałoby się jako
-// „dostawcy zmierzeni", a zmierzona jest DROGA.
-//
-// ── Dlaczego bez zmian w rdzeniu ────────────────────────────────────────────
-// Każda droga dostawcy przyjmuje klienta HTTP jako argument, więc sprawdzian
-// podstawia własnego — z przekładnią, która przepisuje gospodarza adresu na
-// serwer próbny i zapisuje, o co rdzeń naprawdę poprosił. Rdzeń nie dostaje ani
-// jednego pola „adres na potrzeby sprawdzianu", bo pole takie żyłoby w produkcie
-// i dałoby się nim wskazać serwer obcy.
 
 // przekladniaDostawcowSprawdzianu przepisuje adres żądania na serwer próbny
 // i zapisuje żądanie w takiej postaci, w jakiej rdzeń je złożył.
@@ -47,7 +29,7 @@ func (p *przekladniaDostawcowSprawdzianu) RoundTrip(zadanie *http.Request) (*htt
 	return p.spod.RoundTrip(zadanie)
 }
 
-// ostatnieZadanie oddaje żądanie wysłane jako ostatnie.
+// ostatnieZadanie oddaje żądanie wysłane jako ostatnie do serwera próbnego przekładni, albo brak, gdy przekładnia nie zanotowała jeszcze żadnego.
 func (p *przekladniaDostawcowSprawdzianu) ostatnieZadanie() *http.Request {
 	if len(p.zadania) == 0 {
 		return nil
@@ -105,8 +87,7 @@ func odpowiedziDostawcowSprawdzianu() map[string]string {
 			"pageURL":"https://pixabay/zdjecie","previewURL":"https://tresc/pb-preview.jpg",
 			"webformatURL":"https://tresc/pb-web.jpg","largeImageURL":"https://tresc/pb-large.jpg",
 			"user":"AnnaAutorka"}]}`,
-		// Smithsonian Open Access — kształt ODCZYTANY z żywego API (media leżą
-		// w `online_media`, nie wprost w `descriptiveNonRepeating`).
+		// Smithsonian Open Access: media leżą w online_media, nie wprost w descriptiveNonRepeating.
 		"/openaccess/api/v1.0/search": `{"response":{"rows":[{"id":"sm-1","title":"Rycina",
 			"content":{"freetext":{"name":[{"content":"Anna Autorka"}]},
 			"descriptiveNonRepeating":{"guid":"https://n2t.net/ark:/65665/sm-1",
@@ -122,8 +103,8 @@ func odpowiedziDostawcowSprawdzianu() map[string]string {
 	}
 }
 
-// serwerDostawcowSprawdzianu stawia serwer próbny wraz z klientem, który do niego
-// przekierowuje.
+// serwerDostawcowSprawdzianu stawia serwer próbny wraz z klientem, który do
+// niego przekierowuje żądania rdzenia.
 func serwerDostawcowSprawdzianu(t *testing.T) (*httptest.Server,
 	*przekladniaDostawcowSprawdzianu, *http.Client) {
 
@@ -133,9 +114,7 @@ func serwerDostawcowSprawdzianu(t *testing.T) (*httptest.Server,
 	serwer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, z *http.Request) {
 		tresc, jest := tresci[z.URL.Path]
 		if !jest {
-			// Ścieżka, której serwer próbny nie zna, jest NIEPOWODZENIEM sprawdzianu,
-			// nie pustą odpowiedzią: znaczy, że rdzeń poszedł gdzie indziej, niż
-			// sprawdzian mierzy.
+			// Ścieżka, której serwer próbny nie zna, jest niepowodzeniem sprawdzianu: rdzeń poszedł gdzie indziej.
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte(`{"blad":"serwer próbny nie zna ścieżki ` + z.URL.Path + `"}`))
 			return
@@ -235,8 +214,7 @@ func TestOsiemDrogDostawcowZdjecPrzechodziPrzelotem(t *testing.T) {
 			continue
 		}
 
-		// Adres złożony przez rdzeń — gospodarz i ścieżka. Rdzeń pytający innego
-		// gospodarza pytałby w produkcie kogoś innego, niż Operator zamówił.
+		// Adres złożony przez rdzeń — gospodarz i ścieżka żądania wysłanego do dostawcy.
 		zadanie := przekladnia.zadania[0]
 		if zadanie.URL.Host != przypadek.gospodarz {
 			t.Errorf("dostawca %s: rdzeń zapytał gospodarza %s, a droga prowadzi do %s",
@@ -246,8 +224,7 @@ func TestOsiemDrogDostawcowZdjecPrzechodziPrzelotem(t *testing.T) {
 			t.Errorf("dostawca %s: rdzeń zapytał o ścieżkę %s, a droga wyszukania to %s",
 				przypadek.dostawca, zadanie.URL.Path, przypadek.sciezkaSzukaj)
 		}
-		// Nagłówek rozpoznawczy jest wymagany przez część dostawców i bez niego
-		// odpowiadają odmową — Operator widziałby dostawcę jako niedostępnego.
+		// Nagłówek rozpoznawczy jest wymagany przez część dostawców, inaczej odpowiadają odmową.
 		if zadanie.Header.Get("User-Agent") == "" {
 			t.Errorf("dostawca %s: żądanie bez nagłówka rozpoznawczego", przypadek.dostawca)
 		}
@@ -274,17 +251,13 @@ func TestOsiemDrogDostawcowZdjecPrzechodziPrzelotem(t *testing.T) {
 			t.Errorf("dostawca %s: tytuł zasobu to %q, a odpowiedź niosła %q",
 				przypadek.dostawca, zasob.Tytul, przypadek.tytul)
 		}
-		// Wyszukanie musi dać adres, którym okno pokaże podgląd. Adres pełnej treści
-		// bywa u dostawcy znany dopiero przy wciągnięciu — tak jest u NASA, której
-		// wyszukanie oddaje wyłącznie podgląd, a plik źródłowy stoi pod osobną
-		// drogą. Dlatego warunkiem jest tu JEDEN z dwóch adresów, a pełny mierzy się
-		// na drodze wciągnięcia niżej.
+		// Wyszukanie musi dać adres podglądu albo pełnej treści — pełny bywa znany
+		// dopiero przy wciągnięciu.
 		if zasob.Podglad == "" && zasob.Pelny == "" {
 			t.Errorf("dostawca %s: zasób bez ani jednego adresu — okno nie ma czego pokazać",
 				przypadek.dostawca)
 		}
-		// Licencja jest warunkiem wciągnięcia: zasób z bazy zewnętrznej bez
-		// zapisanej licencji jest usterką, nie zasobem.
+		// Licencja jest warunkiem wciągnięcia: zasób bez zapisanej licencji jest usterką.
 		if !strings.HasPrefix(zasob.Licencja, przypadek.licencja) {
 			t.Errorf("dostawca %s: licencja zasobu to %q, a ma zaczynać się od %q",
 				przypadek.dostawca, zasob.Licencja, przypadek.licencja)
@@ -315,16 +288,9 @@ func TestOsiemDrogDostawcowZdjecPrzechodziPrzelotem(t *testing.T) {
 	}
 }
 
-// TestSmithsonianBezMediowWWierszuNieMilczy jest sprawdzianem na defekt
-// zmierzony na ŻYWYM API: rdzeń szukał mediów pod
-// `content.descriptiveNonRepeating.media`, a odpowiedź `api.si.edu` niesie je pod
-// `…descriptiveNonRepeating.online_media.media`. Wiersze przychodziły, żaden nie
-// dawał się złożyć w zasób, komenda oddawała wykaz pusty BEZ błędu — więc
-// dostawca nie wracał ani w wykazie, ani w `providersFailed`, a Operator czytał
-// to jako „fraza nie ma zdjęć".
-//
-// Sprawdzian mierzy obie strony: kształt właściwy daje zasób, a wiersze bez
-// mediów dają odmowę NAZWANĄ wraz z liczbą wierszy.
+// TestSmithsonianBezMediowWWierszuNieMilczy sprawdza defekt zmierzony na
+// żywym API: odpowiedź niesie media pod inną ścieżką, niż zakłada rdzeń,
+// więc wiersze bez mediów mają dawać odmowę nazwaną, a nie pusty wykaz bez błędu.
 func TestSmithsonianBezMediowWWierszuNieMilczy(t *testing.T) {
 	odpowiedz := `{"response":{"rows":[
 		{"id":"sm-9","title":"Opis bez obrazu","content":{"freetext":{},
@@ -360,8 +326,7 @@ func TestSmithsonianBezMediowWWierszuNieMilczy(t *testing.T) {
 
 // TestDostawcaZdjecOdpowiadajacyOdmowaWracaBledem pilnuje warunku odwrotnego:
 // odpowiedź o stanie błędu nie ma prawa wyjść z rdzenia jako pusty wykaz
-// zasobów. Pusty wykaz bez powodu Operator odczyta jako „fraza nie ma zdjęć",
-// a to nieprawda o frazie i prawda o sieci.
+// zasobów bez powodu.
 func TestDostawcaZdjecOdpowiadajacyOdmowaWracaBledem(t *testing.T) {
 	serwer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
@@ -384,9 +349,7 @@ func TestDostawcaZdjecOdpowiadajacyOdmowaWracaBledem(t *testing.T) {
 				dostawca.Nazwa, len(zasoby))
 		}
 		if err == nil && len(zasoby) == 0 {
-			// Met składa wynik z dwóch wywołań i pierwsze pada, więc wykaz jest
-			// pusty bez błędu — ale wtedy bilans komendy zapisuje dostawcę jako
-			// tego, który nic nie dał. Warunkiem jest, żeby NIE oddał zasobu.
+			// Met składa wynik z dwóch wywołań; gdy pierwsze pada, wykaz jest pusty bez błędu.
 			continue
 		}
 	}

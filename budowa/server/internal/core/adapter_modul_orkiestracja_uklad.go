@@ -1,22 +1,4 @@
-// Odpowiedzialność pliku: cztery komendy dopełniające układ zależności —
-// `orchestration.gate.set`, `orchestration.group.set`,
-// `orchestration.compensation.set` i `orchestration.multitasking.link`.
-//
-// Jadą tą samą maszynerią co `adapter_modul_orchestration.go`: układ zależności
-// ma w rdzeniu jednego właściciela, więc metody stoją na adapterze modułu
-// Automations, a nie na własnym adapterze obok.
-//
-// Łuk nie wyraża wszystkiego, co układ musi umieć powiedzieć. Bramka mówi,
-// KIEDY tory scalają się w jednym kroku — łuk mówi tylko, że się schodzą.
-// Grupa mówi, że zbiór kroków biegnie razem — łuk wiąże parami. Kompensacja
-// mówi, co zrobić, gdy przebieg pękł w pół — łuk o błędzie nie mówi nic.
-//
-// SPIĘCIE Z MULTITASKINGAI NIE JEST ZNACZNIKIEM. Silnik kolejek jest w rdzeniu
-// jeden i drugiego nie ma; środowisko MultitaskingAI odróżnia się od pętli
-// sesyjnej tym, czyim koordynatorem kolejka jest prowadzona i jakiego jest
-// rodzaju. Spięcie przestawia właśnie to na kolejkach automatyki, rozłączenie
-// zdejmuje. Zapis bez tego skutku byłby polem, które Operator przestawia,
-// a system ignoruje.
+// Plik obsługuje cztery komendy dopełniające układ zależności: ustawienie bramki, grupy, kompensacji oraz spięcie z kolejką MultitaskingAI, prowadzone na adapterze modułu Automations.
 package core
 
 import (
@@ -28,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekGrupyUkladu znakuje kod grupy kroków nadany przez rdzeń.
+// przedrostekGrupyUkladu znakuje kod grupy kroków nadany przez rdzeń, aby odróżnić go od kodów bramek i kompensacji zapisanych w tej samej tabeli układu.
 const przedrostekGrupyUkladu = "og-"
 
 // ZUkladem wpina repozytorium dopełnień układu. Bez niego cztery komendy
@@ -40,13 +22,7 @@ func (a *adapterAutomatyk) ZUkladem(uklad dane.RepozytoriumUkladuOrkiestracji) *
 
 // ── orchestration.gate.set ───────────────────────────────────────────────────
 
-// UstawBramke ustala regułę scalenia torów równoległych na wskazanym kroku
-// i oddaje bramki układu po zapisie wraz z jego oceną.
-//
-// Ocena nie blokuje zapisu — tak samo jak przy `orchestration.dependency.set`.
-// Bramka na kroku, którego jeszcze nie ma, zapisuje się, a zastrzeżenie wraca
-// w odpowiedzi: Workflow Builder buduje układ krok po kroku i odmowa kazałaby
-// Operatorowi układać go w jedynej dopuszczonej kolejności.
+// UstawBramke ustala regułę scalenia torów równoległych na wskazanym kroku i oddaje bramki układu po zapisie wraz z jego oceną. Ocena nie blokuje zapisu.
 func (a *adapterAutomatyk) UstawBramke(ctx context.Context,
 	z shared.OrchestrationGateSetRequest) (shared.OrchestrationGateSetResponse, error) {
 
@@ -69,8 +45,7 @@ func (a *adapterAutomatyk) UstawBramke(ctx context.Context,
 	if z.Count != nil {
 		licznik = *z.Count
 	}
-	// Reguła licznikowa bez liczby torów byłaby bramką, o której nikt nie umie
-	// powiedzieć, kiedy się otwiera. To błąd żądania, nie stan układu.
+	// Reguła licznikowa bez liczby torów nie wskazuje, kiedy się otwiera — to błąd żądania.
 	if z.Rule == shared.OrchestrationGateRuleCount && licznik < 1 {
 		return shared.OrchestrationGateSetResponse{},
 			bladWskazaniaAutomatyki("reguła licznikowa wymaga liczby torów większej od zera")
@@ -131,7 +106,7 @@ func (a *adapterAutomatyk) zastrzezeniaBramek(ctx context.Context, automatykaID 
 	return zastrzezenia, nil
 }
 
-// regulaBramkiZnana sprawdza wskazanie wobec trzech reguł kontraktu.
+// regulaBramkiZnana sprawdza wskazanie reguły scalenia wobec trzech reguł dopuszczonych kontraktem, odrzucając wartość spoza tego zbioru.
 func regulaBramkiZnana(regula shared.OrchestrationGateRule) bool {
 	for _, znana := range shared.WartosciOrchestrationGateRule() {
 		if znana == regula {
@@ -141,7 +116,7 @@ func regulaBramkiZnana(regula shared.OrchestrationGateRule) bool {
 	return false
 }
 
-// bramkiKontraktu przekłada wiersze bramek na kształt kontraktu.
+// bramkiKontraktu przekłada wiersze bramek odczytane z repozytorium układu na kształt bramek zgodny z kontraktem odpowiedzi.
 func bramkiKontraktu(idUkladu string, wiersze []dane.BramkaUkladu) []shared.OrchestrationGate {
 	bramki := make([]shared.OrchestrationGate, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -199,7 +174,7 @@ func (a *adapterAutomatyk) UstawGrupe(ctx context.Context,
 	return shared.OrchestrationGroupSetResponse{Groups: grupyKontraktu(z.WorkflowId, grupy)}, nil
 }
 
-// rodzajGrupowaniaZnany sprawdza wskazanie wobec trzech rodzajów kontraktu.
+// rodzajGrupowaniaZnany sprawdza wskazanie rodzaju grupowania wobec trzech rodzajów dopuszczonych kontraktem, odrzucając wartość spoza tego zbioru.
 func rodzajGrupowaniaZnany(rodzaj shared.AutomationDependencyKind) bool {
 	for _, znany := range shared.WartosciAutomationDependencyKind() {
 		if znany == rodzaj {
@@ -209,7 +184,7 @@ func rodzajGrupowaniaZnany(rodzaj shared.AutomationDependencyKind) bool {
 	return false
 }
 
-// grupyKontraktu przekłada wiersze grup na kształt kontraktu.
+// grupyKontraktu przekłada wiersze grup odczytane z repozytorium układu na kształt grup zgodny z kontraktem odpowiedzi.
 func grupyKontraktu(idUkladu string, wiersze []dane.GrupaUkladu) []shared.OrchestrationGroup {
 	grupy := make([]shared.OrchestrationGroup, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -300,11 +275,7 @@ func (a *adapterAutomatyk) SpnijZMultitaskingiem(ctx context.Context,
 	}, nil
 }
 
-// oknoRoliSpiecia przekłada wskazanie roli na klucz wiersza okna.
-//
-// Rola środowiska MultitaskingAI jest rolą NADANĄ OKNU (`role.assign`), więc
-// wskazanie roli jest wskazaniem okna. Rola nierozpoznana wraca odmową: spięcie
-// z rolą, której nie ma, nie spięłoby niczego, a odpowiedź brzmiałaby udanie.
+// oknoRoliSpiecia przekłada wskazanie roli na klucz wiersza okna. Rola nierozpoznana wraca odmową, ponieważ nie ma czego spiąć.
 func (a *adapterAutomatyk) oknoRoliSpiecia(ctx context.Context, wskazanie *string) (*int64, error) {
 	kod := strings.TrimSpace(wartoscTekstu(wskazanie))
 	if kod == "" {

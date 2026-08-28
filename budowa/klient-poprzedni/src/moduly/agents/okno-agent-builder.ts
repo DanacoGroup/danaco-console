@@ -18,25 +18,8 @@ import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 import type { Kanal } from '../../protokol/kanal';
 
 /**
- * Agent Builder — okno kreator, punkt wejścia modułu Agents.
- *
- * Trzy części: widok „Biblioteka ekspertów”, widok „Edytor” z paskiem zakładek
- * oraz panel „Historia wersji”.
- *
- * Zakładka „Tożsamość” pokazuje edytor tego okna; pozostałe zakładki przenoszą
- * ognisko do właściwego okna modułu — model bazowy mieszka w Model
- * Configuration, umiejętności w Skills Manager i tak dalej. Pasek nie powiela
- * więc żadnego formularza.
- *
- * Panel „Zespoły ekspertów” składa nazwany skład z tego samego wykazu, który
- * okno pokazuje po lewej — dlatego dostaje bibliotekę z `odswiez()` i nie
- * odpytuje rdzenia po raz drugi.
- *
- * Licznik narzędzi stoi pod tożsamością, bo ekspert to tożsamość plus dobór
- * narzędzi. Liczba nie jest tu liczona po raz drugi: `licznik-narzedzi.ts`
- * jest jednym bytem obsadzonym także w Skills Managerze i Connectors
- * Managerze, więc przypisanie kodu w tamtych oknach przestawia tę liczbę
- * w tej samej klatce.
+ * Agent Builder to okno kreatora i punkt wejścia modułu Agents, złożone z biblioteki
+ * ekspertów, edytora z paskiem zakładek i panelu historii wersji.
  */
 export interface OknoAgentBuilder {
   element: HTMLElement;
@@ -48,7 +31,10 @@ export interface OknoAgentBuilder {
   rozlacz(): void;
 }
 
-/** Kody zakładek edytora odpowiadające oknom modułu. */
+/**
+ * Kody zakładek paska edytora wraz z nazwami wyświetlanymi w interfejsie, odpowiadające
+ * oknom modułu Agents, do których zakładka przenosi ognisko.
+ */
 export const ZAKLADKI_EDYTORA = [
   { kod: 'tozsamosc', nazwa: 'Tożsamość' },
   { kod: 'model-configuration', nazwa: 'Model bazowy' },
@@ -71,14 +57,7 @@ export function utworzOknoAgentBuilder(
   const biblioteka: BibliotekaEkspertow = utworzBiblioteke(stan);
   const zakres: ZrodloZakresuEksperta = utworzZrodloZakresuEksperta(kanal);
 
-  /**
-   * Liczby przypisań dla całej biblioteki jednym wywołaniem.
-   *
-   * `agent.assignment.list` bez wskazania eksperta oddaje przypisania
-   * WSZYSTKICH — dokładnie po to, żeby karta każdego miała licznik po jednym
-   * odczycie, a nie po jednym na kartę. Odmowa nie gasi biblioteki: karty
-   * zostają bez plakietki, bo zero wpisane z ciszy byłoby nieprawdą.
-   */
+  /** Odczytuje liczby przypisań dla całej biblioteki jednym wywołaniem agent.assignment.list. */
   async function wczytajPrzypisania(): Promise<void> {
     const wynik = await zakres.przypisania();
     if (!wynik.udany || wynik.wynik === undefined) return;
@@ -91,10 +70,7 @@ export function utworzOknoAgentBuilder(
   const edytor: EdytorEksperta = utworzEdytorEksperta(stan, {
     naZapisie: () => void stan.odswiez(),
   });
-  // Panel historii woła rdzeń sam, więc bierze kanał, a nie stan modułu:
-  // wykaz wersji jest własnością rdzenia i nie da się go wyprowadzić z wykazu
-  // biblioteki. Po przywróceniu ekspert wraca tą samą drogą co po każdym innym
-  // zapisie — wchłonięciem, żeby okna eksperta przerysowały się w tej klatce.
+  // Panel historii woła rdzeń przez kanał, bo wykaz wersji jest własnością rdzenia.
   const historia: PanelHistorii = utworzPanelHistorii(kanal, {
     naPrzywroceniu: (ekspert) => {
       stan.wchlon(ekspert);
@@ -108,18 +84,14 @@ export function utworzOknoAgentBuilder(
     (tresc) => edytor.dopiszDoInstrukcji(tresc),
   );
 
-  // Archiwizacja i powrót z archiwum ruszają bibliotekę czynną, więc panel
-  // dostaje odczyt biblioteki jako oddzwonienie. Bez tego ekspert odłożony
-  // wisiałby na liście do najbliższego odczytu — czyli wyglądałby na
-  // niezarchiwizowanego.
+  // Panel archiwum dostaje odczyt biblioteki jako oddzwonienie po archiwizacji i przywróceniu.
   const archiwum: PanelArchiwum = utworzPanelArchiwum(kanal, () => void stan.odswiez());
 
   const zespoly: PanelZespolow = utworzPanelZespolow(kanal);
 
   const licznik: LicznikNarzedzi = utworzLicznikNarzedzi();
 
-  // Podsumowanie dostaje ten sam przenośnik ogniska co pasek zakładek, bo robi
-  // to samo: wiersz „Model: —” prowadzi do okna, które model ustala.
+  // Podsumowanie dostaje ten sam przenośnik ogniska co pasek zakładek.
   const podsumowanie: PodsumowanieDefinicji = utworzPodsumowanieDefinicji({
     naZakladke: (kod) => opcje.naZakladke(kod),
   });
@@ -130,15 +102,7 @@ export function utworzOknoAgentBuilder(
 
   const przyciskiZakladek: HTMLButtonElement[] = [];
 
-  /**
-   * Znakuje zakładkę czynną.
-   *
-   * `aria-selected` ustawione raz przy budowie byłoby fałszywym stanem: pasek
-   * meldowałby `tozsamosc: true` także po kliknięciu innej zakładki, a czytnik
-   * ekranu dostawałby zapewnienie o wyborze, którego Operator nie dokonał.
-   * Ognisko przenosi moduł, ale to pasek wie, którą zakładkę przycisnięto,
-   * więc znakowanie należy do niego.
-   */
+  /** Znakuje zakładkę czynną atrybutem aria-selected dla czytnika ekranu. */
   function oznaczZakladke(kod: string): void {
     for (const przycisk of przyciskiZakladek) {
       przycisk.setAttribute('aria-selected', String(przycisk.dataset['zakladka'] === kod));
@@ -178,8 +142,7 @@ export function utworzOknoAgentBuilder(
   cialo.className = 'da-builder__cialo';
   cialo.append(biblioteka.element, prawa);
 
-  // Uprzedzenie stoi przed stratą: wybór eksperta w bibliotece czyści czat
-  // testowy tego modułu, więc nota jest widoczna, zanim Operator kliknie.
+  // Nota informuje, że wybór eksperta w bibliotece czyści czat testowy modułu.
   const notaCzatu = document.createElement('p');
   notaCzatu.className = 'dn-pole-opis da-granica';
   notaCzatu.dataset['nota'] = 'czat-testowy';
@@ -206,9 +169,7 @@ export function utworzOknoAgentBuilder(
     },
 
     async wczytajKategorie() {
-      // Rejestr kanałów doradczych jedzie razem z katalogiem kategorii: obie
-      // rzeczy są kontekstem edytora, oba odczyty są niezależne i odmowa
-      // jednego zostaje w jego panelu.
+      // Rejestr kanałów doradczych i katalog kategorii to niezależne odczyty kontekstu edytora.
       await Promise.all([
         doradca.wczytajKanaly(),
         archiwum.wczytajPokrycie(),

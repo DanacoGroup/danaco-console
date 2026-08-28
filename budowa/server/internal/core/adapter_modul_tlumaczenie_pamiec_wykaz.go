@@ -1,17 +1,7 @@
-// Odpowiedzialność pliku: pamięć tłumaczeń jako byt Operatora — rodzina
-// `translate.memory.*` poza `memory.suggest`, która leży
-// w `adapter_modul_tlumaczenie_pamiec.go` i zbiera pary automatycznie.
-//
-// Dziesięć komend, jedna zasada wspólna: pamięć jest własnością Operatora, a nie
-// pochodną paneli. Dlatego para wniesiona ręcznie (`memory.set`) i para z pliku
-// wymiany (`memory.import`) nie mają panelu, a usunięcie panelu nie zabiera ze
-// sobą par, które z niego kiedyś zdjęto (klucz obcy `ON DELETE SET NULL`,
-// migracja 160).
-//
-// Wymiana idzie standardem TMX, wkompilowanym w rdzeń przez `encoding/xml`
-// biblioteki Go — bez ani jednego programu zewnętrznego. Plik CSV (kolumny:
-// segment źródłowy, segment docelowy, język) jest drogą drugą, bo tyle właśnie
-// eksportuje większość arkuszy, w których Operator prowadzi terminologię.
+// Pamięć tłumaczeń jako byt Operatora: rodzina translate.memory.* poza
+// memory.suggest, które zbiera pary automatycznie. Pamięć jest własnością
+// Operatora, a nie pochodną paneli. Wymiana idzie standardem TMX
+// wkompilowanym w rdzeń oraz plikiem CSV.
 package core
 
 import (
@@ -27,7 +17,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekWpisuPamieciTlumaczen znakuje identyfikator pary pamięci nadany przez rdzeń.
+// przedrostekWpisuPamieciTlumaczen znakuje identyfikator pary pamięci nadany
+// przez rdzeń przy jej zapisie.
 const przedrostekWpisuPamieciTlumaczen = "wpm-"
 
 // progDopasowaniaDomyslny obowiązuje, gdy ani żądanie, ani polityka okna nie
@@ -36,7 +27,8 @@ const przedrostekWpisuPamieciTlumaczen = "wpm-"
 // nie jest tym samym zdaniem.
 const progDopasowaniaDomyslny = 75
 
-// WykazPamieci obsługuje `translate.memory.list`.
+// WykazPamieci obsługuje `translate.memory.list`, filtrując pary po języku,
+// frazie, projekcie i zasięgu.
 func (a *adapterTlumaczenia) WykazPamieci(ctx context.Context,
 	z shared.TranslateMemoryListRequest) (shared.TranslateMemoryListResponse, error) {
 
@@ -87,9 +79,8 @@ func (a *adapterTlumaczenia) UstawWpisPamieci(ctx context.Context,
 		Klient:          z.Client,
 		Zasieg:          "card",
 	}
-	// Pole `context` kontraktu niesie sąsiedztwo pary jednym napisem — rdzeń
-	// zapisuje je jako kontekst poprzedzający, bo tam trafia, gdy pary rodzą się
-	// z paneli, i tam go szuka dopasowanie kontekstowe.
+	// Pole context niesie sąsiedztwo pary jednym napisem; rdzeń zapisuje je
+	// jako kontekst poprzedzający.
 	if z.Context != nil && strings.TrimSpace(*z.Context) != "" {
 		wpis.KontekstPoprzedni = z.Context
 	}
@@ -100,7 +91,8 @@ func (a *adapterTlumaczenia) UstawWpisPamieci(ctx context.Context,
 	return shared.TranslateMemorySetResponse{Entry: zlozWpisPamieci(zapisany)}, nil
 }
 
-// UsunWpisPamieci obsługuje `translate.memory.delete`.
+// UsunWpisPamieci obsługuje `translate.memory.delete`, usuwając jedną
+// wskazaną parę pamięci tłumaczeń.
 func (a *adapterTlumaczenia) UsunWpisPamieci(ctx context.Context,
 	z shared.TranslateMemoryDeleteRequest) (shared.TranslateMemoryDeleteResponse, error) {
 
@@ -116,9 +108,8 @@ func (a *adapterTlumaczenia) UsunWpisPamieci(ctx context.Context,
 }
 
 // ImportujPamiec obsługuje `translate.memory.import`. Czyta plik TMX albo CSV
-// spod wskazanej ścieżki i wnosi z niego pary. Para już obecna w pamięci (ten
-// sam język i ten sam segment źródłowy) jest pomijana, chyba że Operator
-// zażądał nadpisania — stąd dwie liczby w odpowiedzi.
+// i wnosi z niego pary. Para już obecna w pamięci jest pomijana, chyba że
+// żądanie zażądało nadpisania.
 func (a *adapterTlumaczenia) ImportujPamiec(ctx context.Context,
 	z shared.TranslateMemoryImportRequest) (shared.TranslateMemoryImportResponse, error) {
 
@@ -215,10 +206,8 @@ func (a *adapterTlumaczenia) UtrzymajPamiec(ctx context.Context,
 	switch z.Kind {
 	case shared.TranslationMemoryMaintenanceKindDeduplicate,
 		shared.TranslationMemoryMaintenanceKindMerge:
-		// Duplikat to para o tym samym języku i tej samej parze segmentów.
-		// Scalanie idzie o krok dalej: zderza pary o tym samym segmencie
-		// źródłowym i zostawia najświeższą, bo to ona niesie ostatnie
-		// rozstrzygnięcie Operatora.
+		// Duplikat to para o tym samym języku i parze segmentów; scalanie
+		// zderza pary o tym samym źródle.
 		poScaleniu := z.Kind == shared.TranslationMemoryMaintenanceKindMerge
 		doUsuniecia := nadmiaroweParyPamieci(wpisy, poScaleniu)
 		if naSucho {
@@ -314,9 +303,8 @@ func nadmiaroweParyPamieci(wpisy []dane.WpisPamieciTlumaczenPelny, poZrodle bool
 }
 
 // TlumaczWstepnie obsługuje `translate.memory.pretranslate`. Wypełnia panele
-// treścią złożoną z par pamięci: segment po segmencie, biorąc dopasowanie
-// powyżej progu. Segment bez dopasowania zostaje w brzmieniu źródłowym —
-// tłumaczenie wstępne nie udaje, że przetłumaczyło wszystko.
+// treścią złożoną z par pamięci powyżej progu. Segment bez dopasowania
+// zostaje w brzmieniu źródłowym.
 func (a *adapterTlumaczenia) TlumaczWstepnie(ctx context.Context,
 	z shared.TranslateMemoryPretranslateRequest) (shared.TranslateMemoryPretranslateResponse, error) {
 
@@ -414,9 +402,8 @@ func najlepszaPara(pary []dane.WpisPamieciTlumaczenPelny, segment string) (strin
 }
 
 // WyrownajTeksty obsługuje `translate.memory.align`. Dzieli oba teksty na
-// zdania i paruje je po kolei. Miara pary (`score`) mówi, na ile podział obu
-// stron jest zgodny: przy równej liczbie zdań para jest pewna, przy nierównej
-// wyrównanie jest domysłem i miara to pokazuje, zamiast milczeć.
+// zdania i paruje je po kolei. Miara pary mówi, na ile podział obu stron
+// jest zgodny.
 func (a *adapterTlumaczenia) WyrownajTeksty(ctx context.Context,
 	z shared.TranslateMemoryAlignRequest) (shared.TranslateMemoryAlignResponse, error) {
 
@@ -433,8 +420,8 @@ func (a *adapterTlumaczenia) WyrownajTeksty(ctx context.Context,
 	docelowe := podzielNaZdania(z.TargetText)
 	pewnosc := 100
 	if len(zrodlowe) != len(docelowe) {
-		// Podział rozjechał się między stronami — para po numerze jest wtedy
-		// domysłem, nie ustaleniem. Miara spada proporcjonalnie do rozjazdu.
+		// Podział rozjechał się między stronami, para po numerze jest wtedy
+		// domysłem, nie ustaleniem.
 		pewnosc = 100 * min(len(zrodlowe), len(docelowe)) / max(len(zrodlowe), len(docelowe))
 	}
 
@@ -527,7 +514,8 @@ func (a *adapterTlumaczenia) UstawPolitykePamieci(ctx context.Context,
 		Policy: zlozPolitykePamieci(okno.Kod, zapisana)}, nil
 }
 
-// zlozPolitykePamieci przekłada wiersz polityki na byt kontraktu.
+// zlozPolitykePamieci przekłada wiersz polityki pamięci tłumaczeń danego
+// okna na byt kontraktu tego okna.
 func zlozPolitykePamieci(oknoKod string, polityka dane.PolitykaPamieciOkna) shared.TranslationMemoryPolicy {
 	return shared.TranslationMemoryPolicy{
 		WindowId:     oknoKod,
@@ -539,7 +527,8 @@ func zlozPolitykePamieci(oknoKod string, polityka dane.PolitykaPamieciOkna) shar
 	}
 }
 
-// zlozWpisyPamieci przekłada wiersze pamięci na byty kontraktu.
+// zlozWpisyPamieci przekłada wiersze pamięci tłumaczeń całej bazy danych
+// rdzenia na byty kontraktu okna.
 func zlozWpisyPamieci(wpisy []dane.WpisPamieciTlumaczenPelny) []shared.TranslationMemoryEntry {
 	lista := make([]shared.TranslationMemoryEntry, 0, len(wpisy))
 	for _, wpis := range wpisy {
@@ -548,7 +537,8 @@ func zlozWpisyPamieci(wpisy []dane.WpisPamieciTlumaczenPelny) []shared.Translati
 	return lista
 }
 
-// zlozWpisPamieci przekłada jeden wiersz pamięci na byt kontraktu.
+// zlozWpisPamieci przekłada jeden wiersz pamięci tłumaczeń z bazy danych
+// rdzenia na byt kontraktu okna.
 func zlozWpisPamieci(wpis dane.WpisPamieciTlumaczenPelny) shared.TranslationMemoryEntry {
 	return shared.TranslationMemoryEntry{
 		Id:              wpis.Kod,
@@ -568,8 +558,7 @@ func zlozWpisPamieci(wpis dane.WpisPamieciTlumaczenPelny) shared.TranslationMemo
 
 // tmxDokument, tmxCialo, tmxJednostka i tmxWariant odwzorowują tyle standardu
 // TMX, ile niesie para pamięci: jednostkę tłumaczeniową z dwoma wariantami
-// językowymi. Pełny TMX ma nadto nagłówek z metrykami narzędzia i noty — rdzeń
-// wypisuje nagłówek minimalny i czyta plik, nie wymagając niczego ponad `<tu>`.
+// językowymi.
 type tmxDokument struct {
 	XMLName xml.Name  `xml:"tmx"`
 	Wersja  string    `xml:"version,attr"`
@@ -662,7 +651,8 @@ func (d tmxDokument) Jednostki() []dane.WpisPamieciTlumaczenPelny {
 	return pary
 }
 
-// zapiszParyWymiany wypisuje pary do pliku TMX albo CSV.
+// zapiszParyWymiany wypisuje wszystkie pary pamięci tłumaczeń do wskazanego
+// pliku TMX albo do pliku CSV.
 func zapiszParyWymiany(sciezka string, wpisy []dane.WpisPamieciTlumaczenPelny) error {
 	if err := os.MkdirAll(filepath.Dir(sciezka), 0o700); err != nil {
 		return bladPlikuTlumaczenia(sciezka, err)

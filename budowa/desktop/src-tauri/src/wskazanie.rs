@@ -1,46 +1,27 @@
-//! Wskazanie rdzenia — czynność Operatora „na którym serwerze stoi mój rdzeń".
-//!
-//! Po co ta czynność istnieje. Rdzeń stoi na serwerze wdrożenia, a instalator
-//! adresu tego serwera nie zna i znać go nie może: w chwili rozpakowania plików
-//! nikt jeszcze nie wie, pod jaką nazwą stoi rdzeń tego Operatora. Wie to sam
-//! Operator i mówi to przy pierwszym uruchomieniu okna. Drugą drogą wskazania
-//! jest zmienna środowiska — droga wykonawcy i jednostki usługi, nie Operatora.
-//!
-//! Dwie rzeczy dzieją się tutaj i tylko tutaj:
-//!
-//!   1. rozbiór wskazania na host i port (jedno pole w oknie, jedno rozumienie
-//!      po obu stronach granicy procesu),
-//!   2. próba połączenia PRZED zapisem — wskazanie nieosiągalne nie zostaje
-//!      przyjęte, bo zapisane zamieniłoby okno w ekran milczący po każdym starcie.
-//!
-//! Czego tu nie ma: wyboru „rdzeń na tym urządzeniu". Produkt występuje wyłącznie
-//! jako hybryda, więc rdzenia na urządzeniu Operatora nie ma, a powłoka nie ma
-//! czym go postawić.
+//! Wskazanie rdzenia to czynność Operatora ustalająca serwer wdrożenia, na
+//! którym stoi jego rdzeń, przyjmowana dopiero po udanej próbie połączenia.
 
 use serde::Serialize;
 
 use crate::rdzen::nasluch;
 use crate::ustawienia::Ustawienia;
 
-/// Stan wskazania oddawany interfejsowi.
+/// Stan wskazania oddawany interfejsowi, złożony z hosta, portu, gotowego
+/// adresu HTTP i warstwy pochodzenia.
 #[derive(Clone, Debug, Serialize)]
 pub struct Wskazanie {
     /// Serwer wdrożenia, na którym stoi rdzeń; brak, dopóki nie wskazano.
-    /// Okno wstawia go z powrotem do pola, żeby Operator poprawiał to, co napisał.
     pub host: Option<String>,
     /// Port nasłuchu rdzenia obowiązujący.
     pub port: u16,
-    /// Adres HTTP złożony z hosta i portu — gotowa postać dla warstwy połączenia
-    /// (`klient/src/polaczenie/adres-rdzenia.ts`), która sama adresu nie składa.
+    /// Adres HTTP złożony z hosta i portu, gotowy dla warstwy połączenia.
     pub adres: Option<String>,
-    /// Warstwa, z której pochodzi wskazanie: `brak`, `nastawy`, `srodowisko`.
-    /// `brak` znaczy pierwsze uruchomienie i jest dla okna sygnałem, że ma
-    /// zapytać. Wskazania ze zmiennej środowiska okno nie nadpisze — ma o tym
-    /// powiedzieć, zamiast przyjmować zapis bez skutku.
+    /// Warstwa pochodzenia wskazania: brak, nastawy albo środowisko.
     pub warstwa: String,
 }
 
-/// Odmowa wskazania — powód do rozgałęzienia i gotowe zdanie do okna.
+/// Odmowa wskazania niesie kod powodu do rozgałęzienia logiki oraz gotowe
+/// zdanie do wyświetlenia w oknie.
 #[derive(Clone, Debug, Serialize)]
 pub struct Odmowa {
     /// Kod powodu: `wskazanie-puste`, `port-niepoprawny`, `rdzen-nieosiagalny`,
@@ -60,7 +41,8 @@ impl Odmowa {
     }
 }
 
-/// Zwraca wskazanie obowiązujące w tej chwili.
+/// Zwraca wskazanie rdzenia obowiązujące w tej chwili, złożone z ustawień
+/// zapisanych trwale albo ze zmiennej środowiska.
 pub fn biezace(ustawienia: &Ustawienia) -> Wskazanie {
     let wskazane = ustawienia.wskazanie();
     Wskazanie {
@@ -71,14 +53,9 @@ pub fn biezace(ustawienia: &Ustawienia) -> Wskazanie {
     }
 }
 
-/// Przyjmuje wskazanie Operatora: sprawdza łączność i zapisuje je trwale.
-///
-/// `adres` przychodzi z okna w postaci, w jakiej Operator go napisał: nazwa
-/// serwera albo `serwer:port`, z przedrostkiem `http://` albo bez.
-///
-/// Kolejność jest wiążąca: najpierw próba połączenia, potem zapis. Zapis przed
-/// próbą utrwalałby wskazanie, które nie działa, a Operator zobaczyłby skutek
-/// dopiero przy następnym starcie.
+/// Przyjmuje wskazanie Operatora podane w dowolnej z obsługiwanych postaci
+/// i sprawdza łączność przed trwałym zapisem, bo zapis przed próbą utrwaliłby
+/// wskazanie, które nie działa.
 pub fn wskaz(ustawienia: &Ustawienia, adres: &str) -> Result<Wskazanie, Odmowa> {
     let (host, port) = rozbierz(adres, ustawienia.port())?;
 
@@ -99,12 +76,8 @@ pub fn wskaz(ustawienia: &Ustawienia, adres: &str) -> Result<Wskazanie, Odmowa> 
     Ok(biezace(ustawienia))
 }
 
-/// Rozbiera wskazanie Operatora na host i port.
-///
-/// Przyjmuje `serwer`, `serwer:17870`, `http://serwer:17870` oraz adres IPv6
-/// w nawiasach (`[::1]:17870`), bo Operator wpisuje to, co ma zapisane, a nie to,
-/// co wygodne dla rozbioru. Brak portu znaczy port obowiązujący — ten sam, na
-/// którym rdzeń nasłuchuje domyślnie.
+/// Rozbiera wskazanie Operatora na host i port, przyjmując też adres IPv6
+/// w nawiasach; brak podanego portu znaczy port obowiązujący rdzenia.
 fn rozbierz(adres: &str, port_obowiazujacy: u16) -> Result<(String, u16), Odmowa> {
     let bez_przedrostka = adres
         .trim()
@@ -137,8 +110,7 @@ fn rozbierz(adres: &str, port_obowiazujacy: u16) -> Result<(String, u16), Odmowa
 
     match bez_przedrostka.rsplit_once(':') {
         Some((host, tekst)) if !host.contains(':') => Ok((host.to_string(), port_z_tekstu(tekst)?)),
-        // Więcej niż jeden dwukropek bez nawiasów to adres IPv6 podany bez nich —
-        // portu w nim nie ma, cała treść jest hostem.
+        // Więcej niż jeden dwukropek bez nawiasów jest adresem IPv6 bez portu.
         Some(_) => Ok((bez_przedrostka.to_string(), port_obowiazujacy)),
         None => Ok((bez_przedrostka.to_string(), port_obowiazujacy)),
     }

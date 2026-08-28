@@ -6,16 +6,7 @@ import (
 	"danacoconsole/server/internal/wiedza"
 )
 
-// Nastawy wskaźnika znaczenia stoją w dwóch miejscach i muszą znaczyć to samo.
-//
-// Wartość domyślną Operator dostaje z bazy: rozstrzygacz zasięgu oddaje
-// `definicja_ustawienia.wartosc_domyslna` jako rozstrzygnięcie o pochodzeniu
-// „domyślna", a adapter wiedzy nanosi je na komplet nastaw. Stałe pakietu
-// `wiedza` wchodzą tam, gdzie rozstrzygacza nie ma. Rozjazd między jednym
-// a drugim nie wywraca niczego przy starcie — daje dwie różne odpowiedzi na
-// pytanie „czym rdzeń liczy", zależne od drogi wywołania, a rozpoznać to można
-// dopiero po pustym wyniku wyszukiwania. Sprawdzian wiąże więc obie prawdy
-// w jedną.
+// TestNastawyWiedzyWskazujaWagiStojace sprawdza, że nastawy wskaźnika znaczenia i stałe pakietu wskazują te same wagi.
 func TestNastawyWiedzyWskazujaWagiStojace(t *testing.T) {
 	baza := swiezaBaza(t)
 
@@ -37,9 +28,7 @@ func TestNastawyWiedzyWskazujaWagiStojace(t *testing.T) {
 		}
 	}
 
-	// Sonda dodatnia dla samego odczytu: klucz, którego w katalogu nie ma,
-	// musi się nie odczytać. Bez niej sprawdzian przechodziłby także wtedy,
-	// gdyby zapytanie milczało o każdym kluczu.
+	// Sonda dodatnia dla samego odczytu: klucz, którego w katalogu nie ma, musi się nie odczytać.
 	var nic string
 	if err := baza.DB.QueryRow(
 		`SELECT wartosc_domyslna FROM definicja_ustawienia WHERE klucz = ?`,
@@ -47,10 +36,7 @@ func TestNastawyWiedzyWskazujaWagiStojace(t *testing.T) {
 		t.Fatal("odczyt oddał wartość dla klucza spoza katalogu — mierzy co innego, niż sądzi")
 	}
 
-	// Katalog wag pusty znaczy „pobierz wagi od nowa do katalogu danych rdzenia"
-	// (`wiedza/pomocnik.go`, `katalogWag`). Świeże wdrożenie ma wystartować na
-	// wagach rozłożonych na maszynie, więc wartość pusta jest tu regresją, a nie
-	// wyborem.
+	// Katalog wag pusty znaczy pobranie wag od nowa do katalogu danych rdzenia przy starcie.
 	if wiedza.KatalogModeliDomyslny == "" {
 		t.Error("domyślny katalog wag jest pusty — świeże wdrożenie pobierze model z sieci")
 	}

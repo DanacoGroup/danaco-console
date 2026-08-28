@@ -17,22 +17,7 @@ import type { Kanal } from '../../protokol/kanal';
 import type { RejestrKanalow } from '../../sterowanie/rejestr-kanalow';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
-/**
- * Zastawy debaty dla sprawdzianów modułu — jedno miejsce, w którym powstają
- * kształty kontraktu i podstawione zależności.
- *
- * Plik sam sprawdzianem nie jest i nie ma w nazwie `.test`: sprawdziany modułu
- * sięgają po te same kształty kontraktu (`RoundtableTurn`, `RoundtableStatement`,
- * `RoundtableParticipant`, `StreamChunkEvent`) i te same podstawienia
- * (`ZrodloRoundtable`, `RejestrKanalow`), a kopia zastawu w każdym z nich by się
- * rozjechała.
- *
- * Każda wytwórnia zwraca typ kontraktu w całości, więc dopisanie pola
- * obowiązkowego do `contract.ts` przerywa kompilację tutaj, a nie w każdym
- * sprawdzianie z osobna.
- */
-
-/** Tura debaty; pola nadpisywalne, reszta wypełniona wartością sensowną. */
+/** Zastawy debaty dla sprawdzianów modułu, jedno miejsce, w którym powstają kształty kontraktu: tura debaty, pola nadpisywalne, reszta sensowna. */
 export function probnaTura(nadpisania: Partial<RoundtableTurn> = {}): RoundtableTurn {
   return {
     id: 'tura-1',
@@ -60,7 +45,7 @@ export function probnaWypowiedz(
   };
 }
 
-/** Uczestnik debaty. */
+/** Uczestnik debaty w kształcie kontraktu, z polami nadpisywalnymi i resztą wypełnioną wartością sensowną domyślnie. */
 export function probnyUczestnik(
   nadpisania: Partial<RoundtableParticipant> = {},
 ): RoundtableParticipant {
@@ -72,7 +57,7 @@ export function probnyUczestnik(
   };
 }
 
-/** Kanał modelu w rejestrze rdzenia. */
+/** Kanał modelu w rejestrze rdzenia, w kształcie kontraktu, z polami nadpisywalnymi dla potrzeb sprawdzianu. */
 export function probnyKanal(nadpisania: Partial<Channel> = {}): Channel {
   return {
     id: 'kan-1',
@@ -83,7 +68,7 @@ export function probnyKanal(nadpisania: Partial<Channel> = {}): Channel {
   } as Channel;
 }
 
-/** Źródło komend obszaru z ręcznie sterowanym zdarzeniem `debate.changed`. */
+/** Źródło komend obszaru z ręcznie sterowanym zdarzeniem zmiany debaty, podstawione na potrzeby sprawdzianu modułu. */
 export interface ProbneZrodlo {
   zrodlo: ZrodloRoundtable;
   /** Rozgłasza przyrost debaty do wszystkich subskrybentów. */
@@ -116,7 +101,7 @@ export function probneZrodlo(): ProbneZrodlo {
   };
 }
 
-/** Przyrost debaty w kształcie, w jakim nadaje go rdzeń. */
+/** Przyrost debaty w kształcie, w jakim nadaje go rdzeń, z wypowiedzią opcjonalną i rodzajem zmiany domyślnym. */
 export function przyrost(
   tura: RoundtableTurn,
   wypowiedz?: RoundtableStatement,
@@ -127,7 +112,7 @@ export function przyrost(
     : { change: rodzaj, turn: tura, statement: wypowiedz };
 }
 
-/** Rejestr kanałów podstawiony — bez rdzenia, z ręcznie ustawianym wykazem. */
+/** Rejestr kanałów podstawiony — bez rdzenia, z ręcznie ustawianym wykazem i liczeniem zamówionych odczytów. */
 export interface ProbnyRejestr {
   rejestr: RejestrKanalow;
   /** Podstawia wykaz i powiadamia subskrybentów, tak jak zrobiłby to rdzeń. */
@@ -163,7 +148,7 @@ export function probnyRejestr(kanaly: Channel[] = []): ProbnyRejestr {
   };
 }
 
-/** Kanał podstawiony — obsługuje wyłącznie subskrypcję zdarzeń i nadanie ramki. */
+/** Kanał podstawiony — obsługuje wyłącznie subskrypcję zdarzeń kontraktu i nadanie ramki fragmentu strumienia. */
 export interface ProbnyKanalZdarzen {
   kanal: Kanal;
   /** Nadaje fragment strumienia tak, jak zrobiłby to rdzeń. */
@@ -229,7 +214,7 @@ export function probnyKanalZdarzen(
   };
 }
 
-/** Fragment strumienia w kształcie kontraktu. */
+/** Fragment strumienia w kształcie kontraktu, z polami nadpisywalnymi i treścią pustą wypełnioną domyślnie. */
 export function probnyFragment(nadpisania: Partial<StreamChunkEvent> = {}): StreamChunkEvent {
   return {
     windowId: 'okno-debaty',

@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: odczyt i kasowanie ustawień pod adresem złożonym —
-// poziom zasięgu razem z osią rozstrzygania.
-//
-// Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość,
-// oś mówi, dla czego — dla platformy, dla modelu albo dla konta. Wersje metod
-// bez osi z pliku `konfiguracja.go` opisują oś platformy i wywołują dokładnie
-// ten sam kod, więc rozstrzyganie ma jedną implementację, nie dwie.
+// Plik odczytuje i kasuje ustawienia pod adresem złożonym: poziom zasięgu
+// razem z osią rozstrzygania, dla platformy, modelu albo konta.
 package dane
 
 import (
@@ -16,12 +11,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// RepozytoriumKonfiguracjiOsi rozszerza obszar konfiguracji o oś rozstrzygania.
-// Rozszerza, a nie zastępuje: każda implementacja obsługuje obie postaci.
-//
-// Słownika osi tu nie ma: kolejność osi i ich pierwszeństwo trzyma pakiet
-// `internal/konfig` (`osieOdNajwezszej`) i to on rozstrzyga. Tabela
-// `os_zasiegu` jest wyłącznie więzem klucza obcego dla kolumny `ustawienie.os`.
+// RepozytoriumKonfiguracjiOsi rozszerza obszar konfiguracji o oś rozstrzygania,
+// nie zastępując wersji bez osi — każda implementacja obsługuje obie postacie
+// adresu.
 type RepozytoriumKonfiguracjiOsi interface {
 	RepozytoriumKonfiguracji
 	OdczytajOsi(ctx context.Context, poziom shared.ConfigScope, kluczZasiegu string,
@@ -56,7 +48,8 @@ func (r *repozytoriumKonfiguracji) OdczytajOsi(ctx context.Context, poziom share
 	return ustawienie, true, nil
 }
 
-// ListaOsi zwraca ustawienia jednego bytu poziomu na jednej osi.
+// ListaOsi zwraca ustawienia jednego bytu poziomu na jednej osi rozstrzygania,
+// w kolejności zapisu w tabeli ustawienie.
 func (r *repozytoriumKonfiguracji) ListaOsi(ctx context.Context, poziom shared.ConfigScope,
 	kluczZasiegu string, os shared.ConfigAxis, kluczOsi string) ([]Ustawienie, error) {
 
@@ -110,7 +103,8 @@ func (r *repozytoriumKonfiguracji) UsunOsi(ctx context.Context, poziom shared.Co
 	return nil
 }
 
-// adresZlozony przekłada parę poziom + oś na wartości kolumn.
+// adresZlozony przekłada parę poziom i oś rozstrzygania na wartości kolumn
+// tabeli ustawienie, gotowe do zapytania.
 func adresZlozony(poziom shared.ConfigScope, os shared.ConfigAxis) (string, string, error) {
 	kod, err := poziomZasieguNaBaze(poziom)
 	if err != nil {

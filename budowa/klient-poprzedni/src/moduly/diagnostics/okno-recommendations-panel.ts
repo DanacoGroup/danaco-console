@@ -23,19 +23,8 @@ import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 
 /**
  * Recommendations Panel — okno pomocnicze modułu Diagnostics: przegląd
- * rekomendacji powstałych z analizy; wdrożenie poprawki idzie przez Code Editor.
- *
- * Okno nie trzyma własnego wskazania analizy. Diagnostics Center ustawia
- * `stan.ustawAnalize(id, migawka)` po udanym przebiegu, a to okno czyta
- * `stan.analiza()` jako `analysisId` żądania i przelicza wykaz przy
- * `stan.naZmiane(...)`. Analiza pusta jest stanem poprawnym, nie usterką —
- * żądanie bez `analysisId` nie wychodzi.
- *
- * Kontrakt `diagnostics.recommendation.list` jest wyłącznie odczytem. Panel
- * pokazuje proponowaną poprawkę (`DiagnosticRecommendation.patch`, klasa
- * `dg-poprawka`), lecz jej nie stosuje — „Zastosuj poprawkę”, „Odrzuć”
- * i „Inna propozycja” stoją jako `przyciskBezKomendy` z podanym powodem.
- * Pole `status` rekomendacji wyświetla się przy każdej pozycji.
+ * rekomendacji powstałych z analizy; wdrożenie poprawki idzie przez Code
+ * Editor.
  */
 export interface OknoRecommendationsPanel {
   element: HTMLElement;
@@ -58,18 +47,14 @@ export function utworzOknoRecommendationsPanel(
   });
   const tresc = utworzStanTresci();
   const powierzchnia = zlozPowierzchnieRekomendacji(rama, tresc.element);
-  // Rekomendacje wraz z id analizy, do której należą. Oba pola zmieniają się
-  // tylko razem, przy udanym odczycie — inaczej eksport mieszałby nazwę pliku
-  // jednej analizy z treścią innej.
+  // Rekomendacje wraz z id analizy, do której należą — oba pola zmieniają się tylko razem.
   let rekomendacje: readonly DiagnosticRecommendation[] = [];
   let analizaWykazu = '';
 
   function odczytaj(): void {
     const idAnalizy = stan.analiza();
     if (idAnalizy === '') {
-      // Bez analizy nie ma czyjego wykazu trzymać. Gdyby stary wykaz tu został,
-      // „Eksportuj raport" oddałby plik rekomendacji analizy, o której okno
-      // właśnie mówi, że jej nie ma.
+      // Bez analizy nie ma czyjego wykazu trzymać, więc stary wykaz tu nie zostaje.
       rekomendacje = [];
       analizaWykazu = '';
       tresc.pusto('Nie uruchomiono jeszcze analizy — uruchom ją w Diagnostics Center.');
@@ -79,8 +64,7 @@ export function utworzOknoRecommendationsPanel(
     const zadanie = zadanieRekomendacji(idAnalizy, powierzchnia);
     void zrodlo.wykazRekomendacji(zadanie).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Odczyt nieudany — nie ma prawdziwego wykazu tej analizy, więc stary
-        // wykaz (innej analizy) nie zostaje do eksportu pod nową nazwą.
+        // Odczyt nieudany — stary wykaz innej analizy nie zostaje do eksportu pod nową nazwą.
         rekomendacje = [];
         analizaWykazu = '';
         tresc.blad(zdanieNiepowodzenia(`odczytu rekomendacji analizy ${idAnalizy}`, wynik.powod), wynik.blad);
@@ -103,14 +87,13 @@ export function utworzOknoRecommendationsPanel(
 
   podepnijAkcjeRekomendacji(powierzchnia, { odczytaj, raportuj });
 
-  // Jeden punkt wejścia to `odswiez()` — wytwórnia okna nie czyta sama;
-  // złożenie modułu woła go raz po zmontowaniu (wzorzec `automations/indeks.ts`).
+  // Jeden punkt wejścia to odswiez — wytwórnia okna nie czyta sama, woła ją złożenie modułu.
   const odsubskrybuj = stan.naZmiane(odczytaj);
 
   return { element: rama.element, odswiez: odczytaj, zamknij: odsubskrybuj };
 }
 
-/** Filtry i pasek akcji okna. */
+/** Filtry i pasek akcji okna panelu rekomendacji modułu Diagnostics, osadzane w ramie tego całego okna. */
 interface PowierzchniaRekomendacji {
   status: WyborZMenu;
   priorytet: WyborZMenu;
@@ -119,7 +102,7 @@ interface PowierzchniaRekomendacji {
   raport: HTMLButtonElement;
 }
 
-/** Opcje filtra złożone z wyliczenia kontraktu wraz z pozycją „wszystkie”. */
+/** Opcje filtra złożone z wyliczenia kontraktu wraz z pozycją „wszystkie”, dla kontrolki wyboru w oknie. */
 function opcjeFiltra(
   etykietaWszystkich: string,
   wyliczenie: Record<string, string>,
@@ -130,13 +113,12 @@ function opcjeFiltra(
   ];
 }
 
-/** Składa filtry (status, priorytet, granica) i panel akcji ramy. */
+/** Składa filtry (status, priorytet, granica) i panel akcji ramy okna panelu rekomendacji tego całego modułu. */
 function zlozPowierzchnieRekomendacji(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
 ): PowierzchniaRekomendacji {
-  // Rozwijanie z biblioteki, nie natywny `<select>`: `komponenty/menu-drzewo.ts`
-  // przez obsadę `moduly/apps/wybor-z-menu.ts`.
+  // Rozwijanie z biblioteki, nie natywny select, przez wspólną obsadę wyboru z menu.
   const status = utworzWyborZMenu(
     'Stan rekomendacji',
     opcjeFiltra('Wszystkie stany', RecommendationStatus),
@@ -178,21 +160,19 @@ function zlozPowierzchnieRekomendacji(
   return { status, priorytet, granica, odswiezPrzycisk, raport };
 }
 
-/** Podpina pasek akcji do czynności okna. */
+/** Podpina pasek akcji do czynności okna panelu rekomendacji modułu Diagnostics w oknie całej tej sesji. */
 function podepnijAkcjeRekomendacji(
   powierzchnia: PowierzchniaRekomendacji,
   obsluga: { odczytaj: () => void; raportuj: () => void },
 ): void {
   powierzchnia.odswiezPrzycisk.addEventListener('click', obsluga.odczytaj);
   powierzchnia.raport.addEventListener('click', obsluga.raportuj);
-  // Zmiana filtra odczytuje od razu, tak samo jak w Errors Panel — inaczej wykaz
-  // pod spodem pokazywałby wynik poprzedniego filtra przy nowym ustawieniu
-  // kontrolki, aż do naciśnięcia „Odśwież".
+  // Zmiana filtra odczytuje od razu, tak samo jak w Errors Panel, inaczej wykaz byłby nieaktualny.
   powierzchnia.status.naZmiane(obsluga.odczytaj);
   powierzchnia.priorytet.naZmiane(obsluga.odczytaj);
 }
 
-/** Zadanie odczytu rekomendacji z `analysisId` bieżącej analizy i filtrów Operatora. */
+/** Zadanie odczytu rekomendacji z `analysisId` bieżącej analizy i filtrów operatora ustawionych w oknie. */
 function zadanieRekomendacji(
   idAnalizy: string,
   powierzchnia: PowierzchniaRekomendacji,
@@ -232,7 +212,7 @@ function rysujRekomendacje(
   tresc.tresc().append(naglowek, lista);
 }
 
-/** Pojedyncza pozycja wykazu: opis, priorytet, znacznik skuteczności i poprawka. */
+/** Pojedyncza pozycja wykazu: opis, priorytet, znacznik skuteczności i poprawka proponowana operatorowi. */
 function rysujRekomendacje1(rekomendacja: DiagnosticRecommendation): HTMLElement {
   const pozycja = pozycjaWykazu(
     rekomendacja.title,
@@ -265,7 +245,7 @@ function rysujRekomendacje1(rekomendacja: DiagnosticRecommendation): HTMLElement
   return pozycja.element;
 }
 
-/** Raport rekomendacji w Markdown — treść pliku eksportu. */
+/** Raport rekomendacji w Markdown — treść pliku eksportu pobieranego przez operatora z tego panelu okna. */
 function raportRekomendacji(rekomendacje: readonly DiagnosticRecommendation[]): string {
   const wiersze = ['# Raport rekomendacji diagnostycznych', ''];
   for (const rekomendacja of rekomendacje) {

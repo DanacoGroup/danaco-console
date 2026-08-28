@@ -24,26 +24,13 @@ import type { CzynnosciWiedzy } from './czynnosci-wiedzy';
 import type { StanProjektu } from './stan-projektu';
 import { utworzStanTresci } from './stany-okna';
 
-/**
- * Hub planowania — okno zadań projektu w czterech widokach: lista, tablica
- * kanban, oś czasu i kalendarz.
- *
- * Cztery widoki, jeden zbiór zadań. Przełącznik widoku nie zmienia danych, tylko
- * pytanie zadawane rdzeniowi: lista pyta `workspace.task.list`, tablica
- * `workspace.board.get`, oś czasu `workspace.schedule.get`, kalendarz
- * `workspace.calendar.get`. Dlatego zadanie zmienione w jednym widoku jest tym
- * samym zadaniem w pozostałych trzech — drugiego zapisu zadania w module nie ma.
- *
- * Zadanie wskazane w wykazie staje się przedmiotem czynności paska akcji.
- * Wskazanie idzie polem, a nie stanem ukrytym: Operator ma widzieć, czego
- * dotyczy „Usuń", zanim naciśnie.
- */
+/** Hub planowania jest oknem zadań projektu w czterech widokach współdzielących jeden zbiór danych: liście, tablicy kanban, osi czasu i kalendarzu. */
 export interface OknoHubuPlanowania {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Widoki huba w kolejności zakładek opracowania: Lista · Kanban · Gantt · Kalendarz. */
+/** Widoki huba w kolejności zakładek opracowania obejmują listę, tablicę kanban, oś czasu Gantt oraz kalendarz zadań. */
 const WIDOKI: ReadonlyArray<readonly [string, string]> = [
   ['lista', 'widok: Lista'],
   ['tablica', 'widok: Tablica kanban'],
@@ -51,12 +38,12 @@ const WIDOKI: ReadonlyArray<readonly [string, string]> = [
   ['kalendarz', 'widok: Kalendarz'],
 ];
 
-/** Stany zadania z kontraktu — wykaz nie jest przepisany, tylko wyliczony. */
+/** Stany zadania pochodzą wprost z kontraktu — wykaz w widoku nie jest przepisany ręcznie, tylko wyliczony z ich wartości. */
 const STANY_ZADANIA: ReadonlyArray<readonly [string, string]> = Object.values(
   WorkspaceTaskStatus,
 ).map((stan) => [stan, `stan: ${stan}`]);
 
-/** Stany projektu z kontraktu — plakietka Project Dashboard ma trzy wartości. */
+/** Stany projektu pochodzą wprost z kontraktu, a plakietka panelu projektu przyjmuje dokładnie trzy takie wartości. */
 const STANY_PROJEKTU: ReadonlyArray<readonly [string, string]> = Object.values(
   WorkspaceProjectStatus,
 ).map((stan) => [stan, `projekt: ${stan}`]);

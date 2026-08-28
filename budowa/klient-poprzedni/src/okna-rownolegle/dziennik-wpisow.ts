@@ -1,7 +1,7 @@
 import type { OknoKomunikacji } from '../okno-komunikacji/okno';
 import { wpisModelu, type Wpis } from '../okno-komunikacji/wpis';
 
-/** Zapis historii gniazda, prowadzony równolegle z widokiem okna. */
+/** Zapis historii gniazda, prowadzony równolegle z widokiem okna, zapisujący wpisy i fragmenty wypowiedzi wraz z odtwarzaniem ich w nowym widoku. */
 export interface DziennikWpisow {
   /** Odnotowuje wpis dołożony do historii. */
   zapisz(wpis: Wpis): void;
@@ -14,16 +14,7 @@ export interface DziennikWpisow {
 }
 
 /**
- * Dziennik wpisów gniazda.
- *
- * Zmiana roli okna przebudowuje widok okna komunikacji, bo rola jest częścią
- * jego opisu i widnieje w jego własnym nagłówku. Przebudowa nie może kasować
- * rozmowy — dziennik trzyma zapis historii i odtwarza go w nowym widoku.
- *
- * Sposób dokładania fragmentu odpowiada zachowaniu historii okna: fragment
- * dołącza się do ostatniego wpisu tej samej persony, a przy zmianie persony
- * zaczyna wpis nowy. Rozjazd tych dwóch reguł dałby po przebudowie inną
- * historię niż przed nią.
+ * Dziennik wpisów gniazda trzyma zapis historii, żeby przebudowa widoku okna komunikacji po zmianie roli mogła odtworzyć rozmowę, zamiast ją skasować.
  */
 export function utworzDziennikWpisow(): DziennikWpisow {
   const wpisy: Wpis[] = [];

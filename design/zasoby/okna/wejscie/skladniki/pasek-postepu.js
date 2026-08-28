@@ -1,10 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — PASEK POSTĘPU Z GŁOWĄ
-
-   Nazwa tego, co trwa, wartość liczbą i tor. Wartość stoi w danej na
-   znaczniku, nie w atrybucie `style` — miara jest daną, a wygląd należy do
-   arkusza. Rolę `progressbar` niesie tor, bo to on wyraża postęp; nazwa toru
-   opisuje rzecz, a nie powtarza etykietę nad nim.
+/* Pasek postępu z głową przedstawia nazwę czynności trwającej, jej wartość liczbową oraz tor, którego rolę progressbar niesie sam tor, nie nazwa nad nim.
+   Wartość stoi w danej na znaczniku, nie w atrybucie `style` — miara jest
+   daną, a wygląd należy do arkusza.
 
    Właściwości:
      etykieta   klucz katalogu — co się dzieje

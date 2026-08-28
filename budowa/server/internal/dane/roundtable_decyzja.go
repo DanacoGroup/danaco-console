@@ -1,9 +1,4 @@
-// Odpowiedzialność pliku: macierz decyzyjna wariantów i kryteriów
-// (`store/migracja_197_roundtable_macierz.sql`).
-//
-// Wyniku ważonego tu nie ma: liczy go rdzeń przy odczycie. Zmiana wagi jednego
-// kryterium przestawia wynik każdego wariantu naraz, więc kolumna z wynikiem
-// rozjechałaby się z ocenami przy pierwszym pominięciu przeliczenia.
+// Odpowiedzialność pliku: macierz decyzyjna wariantów i kryteriów; wyniku ważonego tu nie ma, liczy go rdzeń przy odczycie.
 package dane
 
 import (
@@ -13,7 +8,7 @@ import (
 	"fmt"
 )
 
-// MacierzDebaty to macierz decyzyjna okna wraz z kryteriami i wariantami.
+// MacierzDebaty to macierz decyzyjna okna wraz z kryteriami i wariantami wprowadzonymi do oceny wyboru.
 type MacierzDebaty struct {
 	Kod            string
 	Okno           string
@@ -23,7 +18,7 @@ type MacierzDebaty struct {
 	Warianty       []WariantMacierzyDebaty
 }
 
-// KryteriumMacierzyDebaty to jedno kryterium wraz z wagą.
+// KryteriumMacierzyDebaty to jedno kryterium macierzy decyzyjnej wraz z jego wagą liczbową w całej ocenie.
 type KryteriumMacierzyDebaty struct {
 	Kod       string
 	Macierz   string
@@ -42,8 +37,7 @@ type WariantMacierzyDebaty struct {
 	Kolejnosc int
 }
 
-// RepozytoriumDebatyDecyzji jest częścią kontraktu obszaru odpowiadającą za
-// macierz decyzyjną.
+// RepozytoriumDebatyDecyzji jest częścią kontraktu obszaru Roundtable odpowiadającą za macierz decyzyjną.
 type RepozytoriumDebatyDecyzji interface {
 	ZapiszMacierzDebaty(ctx context.Context, macierz MacierzDebaty) (MacierzDebaty, error)
 	MacierzDebatyPoKodzie(ctx context.Context, kod string) (MacierzDebaty, error)
@@ -137,7 +131,7 @@ func (r *repozytoriumRoundtable) ZapiszMacierzDebaty(ctx context.Context,
 	return r.MacierzDebatyPoKodzie(ctx, macierz.Kod)
 }
 
-// MacierzDebatyPoKodzie zwraca macierz wraz z kryteriami i wariantami.
+// MacierzDebatyPoKodzie zwraca macierz decyzyjną wraz z jej kryteriami i wariantami po kodzie zewnętrznym.
 func (r *repozytoriumRoundtable) MacierzDebatyPoKodzie(ctx context.Context,
 	kod string) (MacierzDebaty, error) {
 
@@ -148,7 +142,7 @@ func (r *repozytoriumRoundtable) MacierzDebatyPoKodzie(ctx context.Context,
 	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, kod))
 }
 
-// OstatniaMacierzDebaty zwraca ostatnio założoną macierz okna.
+// OstatniaMacierzDebaty zwraca ostatnio założoną macierz decyzyjną danego okna operacyjnego tej debaty.
 func (r *repozytoriumRoundtable) OstatniaMacierzDebaty(ctx context.Context,
 	okno string) (MacierzDebaty, error) {
 
@@ -159,7 +153,7 @@ func (r *repozytoriumRoundtable) OstatniaMacierzDebaty(ctx context.Context,
 	return r.zlozMacierzDebaty(ctx, polecenie.QueryRowContext(ctx, okno))
 }
 
-// zlozMacierzDebaty czyta nagłówek macierzy i dobiera do niego zawartość.
+// zlozMacierzDebaty czyta nagłówek macierzy decyzyjnej i dobiera do niego pełną zawartość jej kryteriów.
 func (r *repozytoriumRoundtable) zlozMacierzDebaty(ctx context.Context,
 	wiersz *sql.Row) (MacierzDebaty, error) {
 

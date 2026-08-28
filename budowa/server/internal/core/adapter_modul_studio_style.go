@@ -1,23 +1,6 @@
 // Odpowiedzialność pliku: arkusz stylów nazwanych dokumentu — wykaz,
 // zakładanie i zmiana, stosowanie do zakresu, usunięcie z przeniesieniem miejsc
 // użycia, dziedziczenie po stylu nadrzędnym i postać skuteczna.
-//
-// ── Sens stylu nazwanego ─────────────────────────────────────────────────────
-// Zmiana stylu nazwanego przestawia WSZYSTKIE miejsca, które go używają. To nie
-// jest wygoda, to jest cała jego treść: gdyby stosowanie stylu kopiowało jego
-// postać na fragment, dokument o dwustu nagłówkach wymagałby dwustu poprawek.
-//
-// Dlatego fragment i akapit trzymają NAZWĘ stylu, a nie jego postać, a postać
-// skuteczna liczy się przy odczycie: styl → jego styl nadrzędny → i dalej po
-// łańcuchu dziedziczenia, a na końcu postać własna fragmentu, która ma
-// pierwszeństwo. Sprawdzian odbioru mierzy to wprost i ma prawo mierzyć: po
-// `style.save` postać skuteczna każdego miejsca użycia jest nowa, choć w drzewie
-// nie zmienił się ani jeden fragment.
-//
-// ── Dlaczego bilans liczy miejsca użycia ─────────────────────────────────────
-// `style.save` oddaje w bilansie, ILE miejsc przestawił. Bez tej liczby zmiana
-// stylu byłaby czynnością, po której nie wiadomo, czy coś się stało — a to jest
-// dokładnie ta cisza, której to zlecenie zakazuje.
 package core
 
 import (
@@ -29,13 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// postacGlebokoscDziedziczenia zatrzymuje łańcuch stylów nadrzędnych.
-//
-// Arkusz stylów przejęty z szablonu Operatora może nieść cykl („A dziedziczy po
-// B, B po A") — plik z pakietu biurowego bywa taki po ręcznej edycji. Rachunek
-// z pętlą bez ogranicznika zawiesiłby wtedy rdzeń na jednym wywołaniu, więc
-// łańcuch ma kres. Dziesięć poziomów jest dwa razy więcej, niż niesie
-// najbogatszy arkusz pakietu biurowego.
+// postacGlebokoscDziedziczenia zatrzymuje łańcuch stylów nadrzędnych, żeby
+// arkusz z cyklem dziedziczenia nie zawiesił rachunku w pętli bez ogranicznika.
 const postacGlebokoscDziedziczenia = 10
 
 // postacStyleFabryczne oddaje arkusz stylów, który dostaje każdy dokument:
@@ -152,7 +130,8 @@ func postacWskaznikInterlinii(wartosc shared.StudioLineSpacingRule) *shared.Stud
 	return &kopia
 }
 
-// postacStylDoWiersza przekłada styl kontraktu na wiersz warstwy danych.
+// postacStylDoWiersza przekłada styl kontraktu na wiersz warstwy danych,
+// serializując postać znaku i akapitu do zapisu JSON kolumny.
 func postacStylDoWiersza(dokumentID int64,
 	styl shared.StudioNamedStyle) (dane.StylNazwanyStudia, error) {
 
@@ -187,7 +166,8 @@ func postacStylDoWiersza(dokumentID int64,
 	return wiersz, nil
 }
 
-// postacZlozStyle składa arkusz stylów z wierszy.
+// postacZlozStyle składa arkusz stylów z wierszy warstwy danych, odczytując
+// z powrotem to, co postacStylDoWiersza zapisał.
 func postacZlozStyle(wiersze []dane.StylNazwanyStudia) []shared.StudioNamedStyle {
 	style := make([]shared.StudioNamedStyle, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -217,7 +197,8 @@ func postacZlozStyle(wiersze []dane.StylNazwanyStudia) []shared.StudioNamedStyle
 	return style
 }
 
-// postacStyl znajduje styl w arkuszu po nazwie.
+// postacStyl znajduje styl w arkuszu po dokładnej nazwie, albo oddaje
+// wskaźnik pusty, gdy arkusz stylu o takiej nazwie nie niesie.
 func postacStyl(forma *shared.StudioDocumentForm, nazwa string) *shared.StudioNamedStyle {
 	for i := range forma.Styles {
 		if forma.Styles[i].Name == nazwa {
@@ -227,7 +208,8 @@ func postacStyl(forma *shared.StudioDocumentForm, nazwa string) *shared.StudioNa
 	return nil
 }
 
-// postacStylFabryczny mówi, czy styl o tej nazwie jest fabryczny.
+// postacStylFabryczny mówi, czy styl o tej nazwie jest fabryczny, oddając
+// fałsz, gdy arkusz stylu o takiej nazwie nie niesie.
 func postacStylFabryczny(style []shared.StudioNamedStyle, nazwa string) bool {
 	for _, styl := range style {
 		if styl.Name == nazwa {
@@ -250,7 +232,8 @@ func postacZnakStylu(forma *shared.StudioDocumentForm, nazwa string) *shared.Stu
 	return wynik
 }
 
-// postacAkapitStylu liczy postać akapitu stylu wraz z dziedziczeniem.
+// postacAkapitStylu liczy postać akapitu stylu wraz z dziedziczeniem po
+// łańcuchu stylów nadrzędnych, stylem własnym dokładanym do nadrzędnego.
 func postacAkapitStylu(forma *shared.StudioDocumentForm, nazwa string) *shared.StudioParagraphFormat {
 	lancuch := postacLancuchStylow(forma, nazwa)
 	var wynik *shared.StudioParagraphFormat
@@ -295,22 +278,9 @@ func postacZnakSkuteczny(forma *shared.StudioDocumentForm,
 	return postacZnakSkutecznyWBloku(forma, nil, wlasna)
 }
 
-// postacZnakSkutecznyWBloku liczy postać znaku fragmentu wraz z postacią znaku
-// PŁYNĄCĄ ZE STYLU AKAPITU, w którym fragment stoi.
-//
-// ── Dlaczego styl akapitu niesie postać znaku ────────────────────────────────
-// „Nagłówek poziomu 1" jest stylem AKAPITU, a mówi o stopniu pisma i pogrubieniu
-// — tak jest w każdym pakiecie biurowym i tak stanowi arkusz fabryczny tego
-// modułu. Gdyby postać znaku płynęła wyłącznie ze stylu ZNAKU, nagłówek
-// dostawałby stopień tekstu zasadniczego, a zmiana stylu nagłówkowego nie
-// ruszałaby ani jednej litery. Dlatego warstwy są trzy, w tej kolejności:
-//
-//  1. postać znaku stylu AKAPITU (wraz z jego łańcuchem dziedziczenia),
-//  2. postać znaku stylu ZNAKU nałożonego na fragment („Wyróżnienie"),
-//  3. postać własna fragmentu — nałożona ręcznie i dlatego rozstrzygająca.
-//
-// Warstwa bliższa fragmentowi ma pierwszeństwo: pogrubienie zdjęte ręcznie
-// z jednego słowa nagłówka zostaje zdjęte, choć styl nagłówka pogrubia.
+// postacZnakSkutecznyWBloku liczy postać znaku fragmentu, scalając trzy
+// warstwy w kolejności pierwszeństwa: postać znaku stylu akapitu, postać
+// znaku stylu znaku nałożonego na fragment i postać własną fragmentu.
 func postacZnakSkutecznyWBloku(forma *shared.StudioDocumentForm,
 	blok *shared.StudioDocumentBlock,
 	wlasna *shared.StudioCharacterFormat) shared.StudioCharacterFormat {
@@ -336,7 +306,8 @@ func postacZnakSkutecznyWBloku(forma *shared.StudioDocumentForm,
 	return *wynik
 }
 
-// postacAkapitSkuteczny liczy postać akapitu, którą Operator naprawdę widzi.
+// postacAkapitSkuteczny liczy postać akapitu, którą Operator naprawdę widzi,
+// scalając styl nazwany bloku z postacią akapitu ustawioną na samym bloku.
 func postacAkapitSkuteczny(forma *shared.StudioDocumentForm,
 	blok shared.StudioDocumentBlock) shared.StudioParagraphFormat {
 
@@ -411,7 +382,8 @@ func postacMiejscaUzyciaStylu(forma *shared.StudioDocumentForm, nazwa string) in
 
 // ── Czynności ───────────────────────────────────────────────────────────────
 
-// StyleDokumentu oddaje arkusz stylów (`studio.style.list`).
+// StyleDokumentu oddaje arkusz stylów dokumentu (`studio.style.list`),
+// zawężony rodzajem stylu albo wyłączeniem stylów fabrycznych.
 func (a *adapterStudia) StyleDokumentu(ctx context.Context,
 	z shared.StudioStyleListRequest) (shared.StudioStyleListResponse, error) {
 
@@ -433,12 +405,9 @@ func (a *adapterStudia) StyleDokumentu(ctx context.Context,
 	return shared.StudioStyleListResponse{Styles: wybrane}, nil
 }
 
-// ZapiszStyl zakłada styl własny albo zmienia zastany (`studio.style.save`).
-//
-// Zmiana przestawia wszystkie miejsca użycia — nie kopiując postaci na
-// fragmenty, a przez to, że fragmenty trzymają nazwę stylu, a postać skuteczna
-// liczy się z arkusza. Bilans oddaje liczbę tych miejsc, żeby Operator wiedział,
-// czego zmiana dotknęła.
+// ZapiszStyl zakłada styl własny albo zmienia zastany (`studio.style.save`),
+// odmawiając nadpisania stylu fabrycznego. Bilans oddaje liczbę miejsc
+// dokumentu, które zmiana stylu dotknęła.
 func (a *adapterStudia) ZapiszStyl(ctx context.Context,
 	z shared.StudioStyleSaveRequest) (shared.StudioStyleSaveResponse, error) {
 
@@ -543,11 +512,9 @@ func (a *adapterStudia) ZapiszStyl(ctx context.Context,
 	}, nil
 }
 
-// ZastosujStyl przypisuje styl nazwany do zakresu (`studio.style.apply`).
-//
-// Styl akapitu idzie na CAŁE akapity, które zaznaczenie obejmuje; styl znaku —
-// dokładnie na zaznaczone fragmenty. To jest ta sama różnica, którą Operator zna
-// z pakietu biurowego, i tu nie wolno jej zatarć.
+// ZastosujStyl przypisuje styl nazwany do zakresu (`studio.style.apply`):
+// styl akapitu idzie na całe akapity, które zaznaczenie obejmuje, a styl
+// znaku dokładnie na zaznaczone fragmenty.
 func (a *adapterStudia) ZastosujStyl(ctx context.Context,
 	z shared.StudioStyleApplyRequest) (shared.StudioStyleApplyResponse, error) {
 
@@ -585,9 +552,7 @@ func (a *adapterStudia) ZastosujStyl(ctx context.Context,
 				blok := &stan.forma.Blocks[wskazanie]
 				blok.Paragraph = postacScalAkapit(blok.Paragraph,
 					shared.StudioParagraphFormat{StyleName: postacWskaznikTekstu(nazwa)})
-				// Nagłówek jest blokiem innego rodzaju niż akapit — spis treści
-				// zbiera się z rodzaju bloku i poziomu konspektu, więc styl
-				// nagłówkowy musi ten rodzaj przestawić, nie tylko postać.
+				// Styl nagłówkowy przestawia rodzaj bloku, nie tylko postać.
 				poziom := 0
 				if skuteczna := postacAkapitSkuteczny(&stan.forma, *blok); skuteczna.OutlineLevel != nil {
 					poziom = *skuteczna.OutlineLevel
@@ -619,13 +584,9 @@ func (a *adapterStudia) ZastosujStyl(ctx context.Context,
 }
 
 // UsunStyl usuwa styl własny i przenosi jego miejsca użycia
-// (`studio.style.delete`).
-//
-// Stylu fabrycznego nie usuwa — odpowiada odmową nazywającą powód, wzorem
-// `studio.operation.delete`. Miejsca użycia idą na styl wskazany polem
-// `replaceWith`, a gdy go nie ma — na tekst zasadniczy; zostawienie ich przy
-// nazwie nieistniejącej dałoby dokument, którego postać skuteczna liczy się
-// z niczego.
+// (`studio.style.delete`), odmawiając usunięcia stylu fabrycznego. Miejsca
+// użycia idą na styl wskazany polem `replaceWith`, a bez niego na tekst
+// zasadniczy.
 func (a *adapterStudia) UsunStyl(ctx context.Context,
 	z shared.StudioStyleDeleteRequest) (shared.StudioStyleDeleteResponse, error) {
 

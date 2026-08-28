@@ -11,8 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// zrodloTozsamosci wypełnia port danymi z tabel `kategoria_tozsamosci`
-// i `dokument_tozsamosci`.
+// zrodloTozsamosci wypełnia port danymi z tabel kategoria_tozsamosci i dokument_tozsamosci warstwy danych.
 type zrodloTozsamosci struct {
 	repozytorium dane.RepozytoriumTozsamosci
 }
@@ -23,7 +22,7 @@ func NoweZrodloTozsamosci(repozytorium dane.RepozytoriumTozsamosci) KatalogTozsa
 	return &zrodloTozsamosci{repozytorium: repozytorium}
 }
 
-// Kategorie zwraca katalog kategorii przełożony na struktury kontraktu.
+// Kategorie zwraca katalog kategorii przełożony na struktury kontraktu, w kolejności zwróconej przez repozytorium.
 func (z *zrodloTozsamosci) Kategorie(ctx context.Context, tylkoAktywne bool) ([]shared.IdentityCategory, error) {
 	if z == nil || z.repozytorium == nil {
 		return []shared.IdentityCategory{}, nil
@@ -80,7 +79,7 @@ func kategoriaKontraktu(wiersz dane.KategoriaTozsamosci) shared.IdentityCategory
 	return kategoria
 }
 
-// dokumentKontraktu przekłada wiersz treści na strukturę kontraktu.
+// dokumentKontraktu przekłada wiersz treści na strukturę kontraktu, formatując identyfikator liczbowy jako tekst.
 func dokumentKontraktu(wiersz dane.DokumentTozsamosci) shared.IdentityDocument {
 	dokument := shared.IdentityDocument{
 		Id:         strconv.FormatInt(wiersz.ID, 10),

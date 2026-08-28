@@ -1,19 +1,5 @@
-// Odpowiedzialność pliku: zapis iCalendar (RFC 5545) w zakresie, którego
-// używa kalendarz projektu — czytanie i składanie wydarzeń `VEVENT`.
-//
-// ── Dlaczego własny czytnik, a nie biblioteka z sieci ──────────────────────
-// Instalka produktu niesie jedno binarium i nie wolno jej rozszerzać
-// o zależność, której nie ma na maszynie budującej. Zakres potrzebny
-// kalendarzowi projektu to sześć pól jednego składnika (`UID`, `SUMMARY`,
-// `DTSTART`, `DTEND`, `RRULE`, `DTSTAMP`) wraz z rozwijaniem złamanych wierszy.
-// To jest czytnik na dwieście wierszy, a nie warstwa kalendarza — i jest
-// wkompilowany w rdzeń, więc wciągnięcie pliku `.ics` działa na maszynie
-// Operatora tak samo jak na serwerze.
-//
-// ── Pominięcie mówi, dlaczego ──────────────────────────────────────────────
-// Wydarzenie bez tytułu albo bez czytelnego początku nie wchodzi do projektu,
-// ale wraca powodem w polu `skippedReasons`. Milczące pomijanie zostawiłoby
-// Operatora z kalendarzem niepełnym i bez śladu, czego w nim brakuje.
+// Odpowiedzialność pliku: zapis iCalendar (RFC 5545) w zakresie, którego używa kalendarz
+// projektu — własny czytnik i składacz wydarzeń `VEVENT`, wkompilowany w rdzeń.
 package core
 
 import (
@@ -23,7 +9,7 @@ import (
 	"time"
 )
 
-// wydarzenieIcalWorkspace to jedno wydarzenie odczytane z pliku `.ics`.
+// wydarzenieIcalWorkspace to jedno wydarzenie odczytane z pliku `.ics` przed przełożeniem na kalendarz.
 type wydarzenieIcalWorkspace struct {
 	Uid        string
 	Tytul      string
@@ -33,8 +19,7 @@ type wydarzenieIcalWorkspace struct {
 	Regula     string
 }
 
-// rozbierzIcalWorkspace czyta wydarzenia z treści pliku iCal. Drugi wynik
-// niesie powody pominięcia wydarzeń, których nie dało się przyjąć.
+// rozbierzIcalWorkspace czyta wydarzenia z treści pliku iCal, a drugi wynik niesie powody pominięcia wydarzeń.
 func rozbierzIcalWorkspace(tresc string) ([]wydarzenieIcalWorkspace, []string) {
 	wiersze := rozwinWierszeIcalWorkspace(tresc)
 	wydarzenia := []wydarzenieIcalWorkspace{}
@@ -90,7 +75,7 @@ func rozbierzIcalWorkspace(tresc string) ([]wydarzenieIcalWorkspace, []string) {
 	return wydarzenia, powody
 }
 
-// zlozIcalWorkspace składa plik iCal z wydarzeń projektu.
+// zlozIcalWorkspace składa plik iCal z wydarzeń projektu, gotowy do wydania Operatorowi na eksport z rdzenia.
 func zlozIcalWorkspace(nazwaKalendarza string, wydarzenia []wydarzenieIcalWorkspace) string {
 	var zapis strings.Builder
 	zapis.WriteString("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")
@@ -123,8 +108,7 @@ func zlozIcalWorkspace(nazwaKalendarza string, wydarzenia []wydarzenieIcalWorksp
 	return zapis.String()
 }
 
-// rozwinWierszeIcalWorkspace skleja wiersze złamane zapisem RFC 5545: wiersz
-// zaczynający się od spacji albo tabulatora jest dalszym ciągiem poprzedniego.
+// rozwinWierszeIcalWorkspace skleja wiersze złamane zapisem RFC 5545, gdzie ciąg dalszy zaczyna spacja.
 func rozwinWierszeIcalWorkspace(tresc string) []string {
 	surowe := strings.Split(strings.ReplaceAll(tresc, "\r\n", "\n"), "\n")
 	rozwiniete := []string{}
@@ -143,8 +127,7 @@ func rozwinWierszeIcalWorkspace(tresc string) []string {
 	return rozwiniete
 }
 
-// rozbierzWierszIcalWorkspace rozdziela wiersz na nazwę pola, jego parametry
-// i wartość.
+// rozbierzWierszIcalWorkspace rozdziela wiersz na nazwę pola, jego parametry i wartość zapisu pliku iCal.
 func rozbierzWierszIcalWorkspace(wiersz string) (string, map[string]string, string) {
 	dwukropek := strings.Index(wiersz, ":")
 	if dwukropek < 0 {
@@ -161,10 +144,7 @@ func rozbierzWierszIcalWorkspace(wiersz string) (string, map[string]string, stri
 	return strings.ToUpper(strings.TrimSpace(czesci[0])), parametry, wartosc
 }
 
-// chwilaIcalWorkspace czyta wartość czasu wraz z rozpoznaniem pozycji
-// całodniowej. Strefa nazwana parametrem TZID czytana jest jako czas UTC —
-// rdzeń nie prowadzi bazy stref, a przesunięcie zgadywane byłoby gorsze niż
-// przesunięcie nazwane wprost.
+// chwilaIcalWorkspace czyta wartość czasu wraz z rozpoznaniem pozycji całodniowej, w strefie czasu UTC.
 func chwilaIcalWorkspace(parametry map[string]string, wartosc string) (int64, bool, error) {
 	wartosc = strings.TrimSpace(wartosc)
 	if parametry["VALUE"] == "DATE" || len(wartosc) == 8 {
@@ -182,30 +162,29 @@ func chwilaIcalWorkspace(parametry map[string]string, wartosc string) (int64, bo
 	return 0, false, fmt.Errorf("nieczytelna chwila iCal %q", wartosc)
 }
 
-// odkodujTekstIcalWorkspace zdejmuje znaki chronione zapisu iCal.
+// odkodujTekstIcalWorkspace zdejmuje znaki chronione zapisu iCal, przywracając tekst pierwotny treści wydarzenia.
 func odkodujTekstIcalWorkspace(wartosc string) string {
 	zamiennik := strings.NewReplacer(`\n`, "\n", `\N`, "\n", `\,`, ",", `\;`, ";", `\\`, `\`)
 	return zamiennik.Replace(wartosc)
 }
 
-// zakodujTekstIcalWorkspace chroni znaki, które w zapisie iCal mają znaczenie.
+// zakodujTekstIcalWorkspace chroni znaki, które w zapisie iCal mają znaczenie składniowe całego pliku.
 func zakodujTekstIcalWorkspace(wartosc string) string {
 	zamiennik := strings.NewReplacer(`\`, `\\`, ";", `\;`, ",", `\,`, "\n", `\n`)
 	return zamiennik.Replace(wartosc)
 }
 
-// znacznikIcalWorkspace zapisuje chwilę w mierze kontraktu jako znacznik UTC.
+// znacznikIcalWorkspace zapisuje chwilę w mierze kontraktu jako znacznik czasu UTC formatu zapisu iCal.
 func znacznikIcalWorkspace(milisekundy int64) string {
 	return time.UnixMilli(milisekundy).UTC().Format("20060102T150405Z")
 }
 
-// dataIcalWorkspace zapisuje chwilę jako samą datę — zapis pozycji całodniowej.
+// dataIcalWorkspace zapisuje chwilę jako samą datę, właściwą dla pozycji całodniowej zapisu pliku iCal.
 func dataIcalWorkspace(milisekundy int64) string {
 	return time.UnixMilli(milisekundy).UTC().Format("20060102")
 }
 
-// uidIcalWorkspace nadaje identyfikator wydarzeniu, które przyszło bez UID.
-// Bez niego powtórne wciągnięcie tego samego pliku podwoiłoby kalendarz.
+// uidIcalWorkspace nadaje identyfikator wydarzeniu bez UID, żeby powtórne wciągnięcie nie podwoiło kalendarza.
 func uidIcalWorkspace(tytul string, poczatek int64) string {
 	odcisk := odciskTresci(pierwszaNiepustaWorkspace(tytul, "bez tytulu"))
 	return "danaco-" + strconv.FormatInt(poczatek, 36) + "-" + odcisk[:12]

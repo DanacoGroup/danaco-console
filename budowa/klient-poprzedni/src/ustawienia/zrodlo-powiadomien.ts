@@ -9,29 +9,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import { wywolaj } from '../protokol/wywolanie';
 import { naZmianeKlucza, zapiszNastawe } from './zrodlo-nastaw';
 
-/**
- * Źródło sekcji „Powiadomienia" — piętnaście nastaw czytanych dwoma pytaniami.
- *
- * Sekcja nie ma własnej rodziny kontraktu i mieć jej nie powinna. Model danych
- * mówi wprost (rozdz. 18.4, uwaga projektowa), że zakres klas zdarzeń i kanał
- * dostarczenia SĄ ustawieniami konfiguracyjnymi; katalog wnosi je migracją 377,
- * a droga do nich jest tą samą drogą, co do każdej innej nastawy platformy:
- * `settings.definition.list`, `config.get`, `config.set`, zdarzenie
- * `config.changed`.
- *
- * Dwa pytania, nie piętnaście. Katalog przychodzi jednym wywołaniem po
- * kategorii, wartości jednym wywołaniem po poziomie — `config.get` bez klucza
- * oddaje komplet zapisów zasięgu. Piętnaście par pytań na otwarcie sekcji byłoby
- * trzydziestoma kopertami po treść, którą rdzeń oddaje w dwóch.
- *
- * Poziom zapisu jest jeden — `globalny`. Katalog dopuszcza trzy (globalny,
- * środowisko, karta sesji), bo tak stoi w dwóch dokumentach dostawy, ale okno
- * Ustawień jest oknem poziomu aplikacji i nie ma w nim ani selektora
- * środowiska, ani karty sesji. Zawężenie środowiskiem należy do okna
- * Konfiguracji, gdzie łańcuch zasięgów jest widoczny i wybieralny.
- */
-
-/** Kod klasy zdarzenia — wprost z `powiadomienie.klasa` modelu danych. */
+/** Źródło sekcji powiadomień pyta katalog rdzenia dwoma pytaniami, po katalogu i po wartościach, zamiast piętnastu osobnymi zapytaniami o każdą nastawę z osobna. */
 export type KlasaZdarzenia =
   | 'zakonczenie'
   | 'decyzja'
@@ -41,7 +19,7 @@ export type KlasaZdarzenia =
   | 'automatyka'
   | 'system';
 
-/** Klasy w kolejności prezentacji z rozdz. 7.2 opracowania Ustawień. */
+/** Klasy zdarzeń w kolejności prezentacji na ekranie sekcji powiadomień, ustalonej w warstwie projektowej. */
 export const KLASY_ZDARZEN: readonly KlasaZdarzenia[] = [
   'zakonczenie',
   'decyzja',
@@ -52,20 +30,20 @@ export const KLASY_ZDARZEN: readonly KlasaZdarzenia[] = [
   'system',
 ];
 
-/** Klucz przełącznika głównego. */
+/** Klucz przełącznika głównego powiadomień w katalogu ustawień rdzenia, wspólny dla wszystkich klas zdarzeń. */
 export const KLUCZ_GLOWNY = 'powiadomienia.wlaczone';
 
-/** Klucz czynności klasy zdarzenia. */
+/** Klucz czynności klasy zdarzenia w katalogu ustawień rdzenia, budowany z kodu klasy przekazanego wywołaniu. */
 export function kluczKlasy(klasa: KlasaZdarzenia): string {
   return `powiadomienia.klasa.${klasa}`;
 }
 
-/** Klucz kanałów dodatkowych klasy zdarzenia. */
+/** Klucz kanałów dodatkowych klasy zdarzenia w katalogu ustawień rdzenia, pochodny od klucza samej klasy. */
 export function kluczKanalow(klasa: KlasaZdarzenia): string {
   return `${kluczKlasy(klasa)}.kanaly`;
 }
 
-/** Stan jednej klasy zdarzenia po odczycie. */
+/** Stan jednej klasy zdarzenia po odczycie: definicja z katalogu, czynność i wybrane kanały dodatkowe rdzenia. */
 export interface StanKlasy {
   klasa: KlasaZdarzenia;
   /** Nazwa i opis z katalogu rdzenia; `undefined` znaczy „katalog jej nie zna". */
@@ -76,7 +54,7 @@ export interface StanKlasy {
   kanaly: string[];
 }
 
-/** Stan całej sekcji po odczycie. */
+/** Stan całej sekcji po odczycie: przełącznik główny, wykaz klas, dostępne kanały i ewentualna odmowa rdzenia. */
 export interface StanPowiadomien {
   /** Przełącznik główny. */
   wlaczone: boolean;
@@ -97,10 +75,10 @@ export interface ZrodloPowiadomien {
   naZmiane(sluchacz: () => void): Odsubskrybuj;
 }
 
-/** Poziom zapisu sekcji; powód wyboru stoi w nagłówku pliku. */
+/** Poziom zapisu sekcji jest zawsze globalny, bo okno ustawień nie ma w sobie selektora środowiska ani karty sesji. */
 const POZIOM = ConfigScope.Global;
 
-/** Kategoria katalogu wniesiona migracją 377. */
+/** Kategoria katalogu wniesiona migracją bazy danych, pod którą stoją wszystkie nastawy tej sekcji powiadomień. */
 const KATEGORIA = 'powiadomienia';
 
 export function utworzZrodloPowiadomien(kanal: Kanal): ZrodloPowiadomien {
@@ -180,8 +158,7 @@ export function utworzZrodloPowiadomien(kanal: Kanal): ZrodloPowiadomien {
     },
 
     naZmiane(sluchacz) {
-      // Jeden nasłuch na piętnaście kluczy, nie piętnaście nasłuchów: zdarzenie
-      // niesie klucz, więc rozpoznanie jest sprawdzeniem przynależności.
+      // Jeden nasłuch na piętnaście kluczy: zdarzenie niesie klucz, rozpoznanie sprawdza przynależność.
       const odsubskrybuj = [...klucze].map((klucz) =>
         naZmianeKlucza(kanal, klucz, () => sluchacz()),
       );
@@ -190,13 +167,7 @@ export function utworzZrodloPowiadomien(kanal: Kanal): ZrodloPowiadomien {
   };
 }
 
-/**
- * Wartość logiczna nastawy: zapis, a przy jego braku wartość domyślna katalogu.
- *
- * Zapisu nie ma znaczy „obowiązuje domyślna", nie „fałsz" — inaczej sekcja
- * pokazywałaby wszystko wyłączone na świeżej bazie, choć katalog mówi
- * „aktywne".
- */
+/** Wartość logiczna nastawy: zapis, a przy jego braku wartość domyślna katalogu, nigdy fałsz przyjęty z domysłu. */
 function logiczna(
   wpis: ConfigEntry | undefined,
   definicja: SettingDefinition | undefined,
@@ -208,7 +179,7 @@ function logiczna(
   return gdyBrak;
 }
 
-/** Wykaz napisów z wartości kontraktu; kształt obcy daje wykaz pusty. */
+/** Wykaz napisów z wartości kontraktu o kształcie obcym oddaje wykaz pusty, zamiast rzucać wyjątkiem dalej. */
 function wykazTekstow(wartosc: unknown): string[] {
   if (Array.isArray(wartosc)) return wartosc.filter((p): p is string => typeof p === 'string');
   if (typeof wartosc === 'string' && wartosc.trim() !== '') {
@@ -224,7 +195,7 @@ function wykazTekstow(wartosc: unknown): string[] {
   return [];
 }
 
-/** Zdanie odmowy rdzenia albo nazwanie milczenia; nigdy pustka. */
+/** Zdanie odmowy rdzenia albo nazwanie milczenia rdzenia jednym stałym zdaniem zastępczym, nigdy pustym napisem. */
 function zdanieOdmowy(wiadomosc: string | undefined): string {
   return wiadomosc === undefined || wiadomosc === ''
     ? 'Rdzeń odmówił bez podania powodu.'

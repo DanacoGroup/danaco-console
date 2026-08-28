@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: faseta kontroli modułu Translate — wykaz terminów
-// zawężony (`translate.glossary.list`), profile kontroli jakości
-// (`profil_qa`, `profil_qa_kontrola`), obieg zatwierdzeń panelu
-// (`zatwierdzenie_panelu`) i ustalenia korekty językowej
-// (`ustalenie_korekty`). Migracje 162 i 163.
-//
-// Trzy byty w jednym pliku, bo wszystkie trzy odpowiadają na jedno pytanie:
-// „czy ten przekład wolno wypuścić". Rozbicie ich na trzy pliki dałoby trzy
-// nagłówki mówiące to samo.
+// Faseta kontroli modułu Translate: wykaz terminów zawężony, profile
+// kontroli jakości, obieg zatwierdzeń panelu i ustalenia korekty językowej —
+// trzy byty odpowiadające na pytanie, czy przekład wolno wypuścić.
 package dane
 
 import (
@@ -18,7 +12,8 @@ import (
 	"time"
 )
 
-// FiltrTerminow zawęża wykaz terminów słownika. Pola puste nie zawężają.
+// FiltrTerminow zawęża wykaz terminów słownika po języku, dziedzinie,
+// stanie i frazie; pola puste nie zawężają wyniku.
 type FiltrTerminow struct {
 	Jezyk     string
 	Dziedzina string
@@ -28,7 +23,8 @@ type FiltrTerminow struct {
 	Offset    int
 }
 
-// TerminyZawezone oddaje wykaz terminów wraz z liczbą wszystkich pasujących.
+// TerminyZawezone oddaje wykaz terminów słownika dopasowanych filtrem wraz
+// z liczbą wszystkich pasujących wierszy.
 func (r *repozytoriumTlumaczen) TerminyZawezone(ctx context.Context,
 	filtr FiltrTerminow) ([]TerminSlownika, int, error) {
 
@@ -101,14 +97,16 @@ type ProfilQa struct {
 	Zaktualizowano int64
 }
 
-// KontrolaProfiluQa to wiersz `profil_qa_kontrola`.
+// KontrolaProfiluQa to wiersz tabeli `profil_qa_kontrola`: pojedyncza
+// kontrola jakości wchodząca w skład profilu, wraz z wagą i stanem włączenia.
 type KontrolaProfiluQa struct {
 	Rodzaj   string
 	Waga     string
 	Wlaczona bool
 }
 
-// ProfileQa oddaje profile zawężone zasięgiem. Pusty zasięg oddaje komplet.
+// ProfileQa oddaje profile kontroli jakości zawężone zasięgiem wraz z ich
+// kontrolami; pusty zasięg oddaje komplet profili.
 func (r *repozytoriumTlumaczen) ProfileQa(ctx context.Context,
 	zasieg, zasiegID string) ([]ProfilQa, error) {
 
@@ -160,7 +158,8 @@ func (r *repozytoriumTlumaczen) ProfileQa(ctx context.Context,
 	return profile, nil
 }
 
-// kontroleProfiluQa doczytuje kontrole jednego profilu.
+// kontroleProfiluQa doczytuje kontrole jednego profilu kontroli jakości,
+// uporządkowane według rodzaju kontroli.
 func (r *repozytoriumTlumaczen) kontroleProfiluQa(ctx context.Context,
 	profilID int64) ([]KontrolaProfiluQa, error) {
 
@@ -185,7 +184,8 @@ func (r *repozytoriumTlumaczen) kontroleProfiluQa(ctx context.Context,
 	return kontrole, wiersze.Err()
 }
 
-// ProfilQaPoKodzie oddaje jeden profil wraz z kontrolami.
+// ProfilQaPoKodzie oddaje jeden profil kontroli jakości po kodzie
+// zewnętrznym, wraz z pełnym wykazem jego kontroli.
 func (r *repozytoriumTlumaczen) ProfilQaPoKodzie(ctx context.Context, kod string) (ProfilQa, error) {
 	var profil ProfilQa
 	var opis, zasiegID sql.NullString
@@ -254,7 +254,8 @@ func (r *repozytoriumTlumaczen) ZapiszProfilQa(ctx context.Context, profil Profi
 	return r.ProfilQaPoKodzie(ctx, profil.Kod)
 }
 
-// UsunProfilQa kasuje profil wraz z kontrolami (klucz obcy kaskadowy).
+// UsunProfilQa kasuje profil kontroli jakości wraz z jego kontrolami; klucz
+// obcy kaskadowy zdejmuje wiersze zależne.
 func (r *repozytoriumTlumaczen) UsunProfilQa(ctx context.Context, kod string) (bool, error) {
 	wynik, err := r.db.ExecContext(ctx,
 		`DELETE FROM profil_qa WHERE identyfikator_zewnetrzny = ?`, kod)
@@ -268,7 +269,8 @@ func (r *repozytoriumTlumaczen) UsunProfilQa(ctx context.Context, kod string) (b
 	return zeszlo > 0, nil
 }
 
-// ZatwierdzeniePanelu to wiersz `zatwierdzenie_panelu` — jeden krok obiegu.
+// ZatwierdzeniePanelu to wiersz tabeli `zatwierdzenie_panelu`: jeden krok
+// obiegu zatwierdzeń panelu tłumaczenia.
 type ZatwierdzeniePanelu struct {
 	Kod       string
 	PanelID   int64
@@ -310,8 +312,8 @@ func (r *repozytoriumTlumaczen) ZapiszZatwierdzenie(ctx context.Context,
 	return zapis, nil
 }
 
-// Zatwierdzenia oddaje obieg panelu albo — gdy `panelID` jest zerem — obieg
-// wszystkich paneli okna.
+// Zatwierdzenia oddaje obieg zatwierdzeń panelu albo, gdy `panelID` jest
+// zerem, obieg zatwierdzeń wszystkich paneli okna.
 func (r *repozytoriumTlumaczen) Zatwierdzenia(ctx context.Context,
 	panelID, oknoID int64) ([]ZatwierdzeniePanelu, error) {
 
@@ -392,7 +394,8 @@ func (r *repozytoriumTlumaczen) ZapiszUstaleniaKorekty(ctx context.Context,
 	})
 }
 
-// UstaleniaKorekty oddaje wszystkie ustalenia panelu, rozstrzygnięte i otwarte.
+// UstaleniaKorekty oddaje wszystkie ustalenia korekty panelu, rozstrzygnięte
+// i otwarte, w kolejności od najnowszego.
 func (r *repozytoriumTlumaczen) UstaleniaKorekty(ctx context.Context,
 	panelID int64) ([]UstalenieKorekty, error) {
 
@@ -416,7 +419,8 @@ func (r *repozytoriumTlumaczen) UstaleniaKorekty(ctx context.Context,
 	return ustalenia, wiersze.Err()
 }
 
-// UstalenieKorektyPoKodzie oddaje jedno ustalenie po kodzie zewnętrznym.
+// UstalenieKorektyPoKodzie oddaje jedno ustalenie korekty po kodzie
+// zewnętrznym, jednoznacznie identyfikującym wiersz.
 func (r *repozytoriumTlumaczen) UstalenieKorektyPoKodzie(ctx context.Context,
 	kod string) (UstalenieKorekty, error) {
 
@@ -431,7 +435,8 @@ func (r *repozytoriumTlumaczen) UstalenieKorektyPoKodzie(ctx context.Context,
 	return ustalenie, err
 }
 
-// odczytajUstalenieKorekty składa strukturę z jednego wiersza wyniku.
+// odczytajUstalenieKorekty odczytuje pojedynczą strukturę UstalenieKorekty
+// z jednego wiersza wyniku zapytania SQL.
 func odczytajUstalenieKorekty(wiersz skaner) (UstalenieKorekty, error) {
 	var ustalenie UstalenieKorekty
 	var segment, propozycja sql.NullString

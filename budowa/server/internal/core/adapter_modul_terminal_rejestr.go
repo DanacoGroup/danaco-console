@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: stan żywy modułu Terminal — karty powłok i procesy
-// biegnące w tej chwili wraz z uchwytami do ich drzew potomstwa.
-//
-// Rejestr nie uruchamia procesów: startuje je port session.Uruchamiacz
-// wypełniony przez warstwę kanału, a drzewem potomstwa zarządza
-// session.PrzejmijDrzewo. Tutaj leży wyłącznie ewidencja: co biegnie, w której
-// karcie, z czyjego polecenia i pod jakim uchwytem.
-//
-// Rejestr sesyjny okien (session.RejestrProcesow) obsługuje inny byt — proces
-// kanału modelu jednego okna, jeden na okno. Karta terminala prowadzi wiele
-// procesów naraz i żaden z nich nie jest procesem modelu, więc wpisanie ich do
-// tamtego rejestru zerwałoby jego niezmiennik „jedno okno, jeden proces”.
+// Odpowiedzialność pliku: stan żywy modułu Terminal — karty powłok i procesy biegnące
+// w tej chwili wraz z uchwytami do ich drzew potomstwa, jako ewidencja, nie uruchamianie.
 package core
 
 import (
@@ -21,7 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// kartaTerminala jest profilem powłoki jednej karty okna Terminal Tabs.
+// kartaTerminala jest profilem powłoki jednej karty okna Terminal Tabs, wraz z celem zdalnym powłoki karty.
 type kartaTerminala struct {
 	kod        string
 	oknoKod    string
@@ -32,22 +22,15 @@ type kartaTerminala struct {
 	srodowisko map[string]string
 	stan       shared.TerminalSessionStatus
 	utworzono  time.Time
-	// celZdalny to adres powłoki zdalnej karty. Stoi w polu, a nie wyłącznie
-	// w zmiennej środowiska `SSH_TARGET`, bo zmienne środowiska karty z zamysłu
-	// nie mają kolumny w bazie i karta zdalna odtworzona po restarcie traciłaby
-	// adres (migracja 251).
+	// celZdalny to adres powłoki zdalnej karty, trwały w polu, a nie w zmiennej środowiska.
 	celZdalny string
 	// portZdalny bierze port domyślny protokołu, gdy jest zerowy.
 	portZdalny int
 	// hostKod wskazuje wpis książki hostów, z którego karta wzięła adres.
 	hostKod string
-	// kluczSciezka to ścieżka klucza prywatnego wskazanego przez wpis książki
-	// hostów. Pusta znaczy klucz domyślny konfiguracji maszyny rdzenia. Sama
-	// ścieżka, nigdy materiał klucza — ten nie opuszcza dysku.
+	// kluczSciezka to ścieżka klucza prywatnego; pusta znaczy klucz domyślny maszyny rdzenia.
 	kluczSciezka string
-	// Wskazanie celu powłok urządzeniowych: kontenera, poda, klastra i portu
-	// szeregowego (`adapter_modul_terminal_powloki_urzadzen.go`). Pola żyją
-	// w pamięci rdzenia tak samo jak zmienne środowiska karty.
+	// Wskazanie celu powłok urządzeniowych: kontenera, poda, klastra i portu szeregowego.
 	kontener        string
 	pod             string
 	przestrzenNazw  string
@@ -56,8 +39,7 @@ type kartaTerminala struct {
 	predkoscPortu   int
 }
 
-// procesTerminala jest jednym przebiegiem polecenia wraz z uchwytami, bez
-// których nie da się go zakończyć.
+// procesTerminala jest jednym przebiegiem polecenia wraz z uchwytami, bez których nie da się go zakończyć.
 type procesTerminala struct {
 	kod          string
 	kartaKod     string
@@ -69,10 +51,7 @@ type procesTerminala struct {
 	pidNadrzedny int
 
 	mu sync.Mutex
-	// wstrzymany mówi, czy drzewo procesu stoi wstrzymane. Nie jest stanem
-	// kontraktu — proces wstrzymany wciąż jest `running` — lecz rdzeń musi
-	// wiedzieć, w jakim biegu proces zostawił, żeby nie mylić wstrzymania
-	// z zakończeniem przy zamykaniu karty.
+	// wstrzymany mówi, czy drzewo procesu stoi wstrzymane, choć stan kontraktu wciąż jest "running".
 	wstrzymany  bool
 	stan        shared.TerminalProcessStatus
 	kodWyjscia  *int
@@ -83,13 +62,11 @@ type procesTerminala struct {
 	drzewo *session.DrzewoProcesu
 	koniec chan struct{}
 
-	// numerFragmentu numeruje fragmenty strumienia wyjścia tego procesu. Numer
-	// żyje przy procesie, bo wyjście zwykłe i diagnostyczne czytają dwie
-	// gorutyny naraz, a kontrakt wymaga jednego ciągu numerów na strumień.
+	// numerFragmentu numeruje fragmenty strumienia wyjścia, bo dwie gorutyny czytają je naraz.
 	numerFragmentu atomic.Int64
 }
 
-// rejestrTerminala trzyma karty i procesy czynne jednego biegu rdzenia.
+// rejestrTerminala trzyma karty i procesy czynne jednego biegu rdzenia, w pamięci procesu serwera produktu.
 type rejestrTerminala struct {
 	mu      sync.Mutex
 	karty   map[string]*kartaTerminala
@@ -103,14 +80,14 @@ func nowyRejestrTerminala() *rejestrTerminala {
 	}
 }
 
-// ZapiszKarte wstawia albo podmienia kartę.
+// ZapiszKarte wstawia albo podmienia kartę w ewidencji rejestru terminala rdzenia produktu Danaco Console.
 func (r *rejestrTerminala) ZapiszKarte(karta *kartaTerminala) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.karty[karta.kod] = karta
 }
 
-// Karta zwraca kartę o wskazanym kodzie.
+// Karta zwraca kartę o wskazanym kodzie, jeśli jest w ewidencji rejestru terminala rdzenia tego serwera.
 func (r *rejestrTerminala) Karta(kod string) (*kartaTerminala, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -118,7 +95,7 @@ func (r *rejestrTerminala) Karta(kod string) (*kartaTerminala, bool) {
 	return karta, jest
 }
 
-// Karty zwraca wszystkie karty ewidencji. Na tym stoi `terminal.session.list`.
+// Karty zwraca wszystkie karty ewidencji, na czym stoi żądanie `terminal.session.list` z kontraktu terminala.
 func (r *rejestrTerminala) Karty() []*kartaTerminala {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -129,14 +106,14 @@ func (r *rejestrTerminala) Karty() []*kartaTerminala {
 	return wykaz
 }
 
-// ZapiszProces wstawia proces do ewidencji procesów czynnych.
+// ZapiszProces wstawia proces do ewidencji procesów czynnych rejestru terminala rdzenia produktu Danaco.
 func (r *rejestrTerminala) ZapiszProces(proces *procesTerminala) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.procesy[proces.kod] = proces
 }
 
-// Proces zwraca proces o wskazanym kodzie.
+// Proces zwraca proces o wskazanym kodzie, jeśli jest w ewidencji rejestru terminala rdzenia tego serwera.
 func (r *rejestrTerminala) Proces(kod string) (*procesTerminala, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -144,7 +121,7 @@ func (r *rejestrTerminala) Proces(kod string) (*procesTerminala, bool) {
 	return proces, jest
 }
 
-// Procesy zwraca wszystkie procesy ewidencji.
+// Procesy zwraca wszystkie procesy ewidencji rejestru terminala, czynne i zakończone naraz, bez rozróżnienia.
 func (r *rejestrTerminala) Procesy() []*procesTerminala {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -155,13 +132,8 @@ func (r *rejestrTerminala) Procesy() []*procesTerminala {
 	return wykaz
 }
 
-// Przytnij usuwa najstarszy przebieg zakończony, gdy ewidencja przekracza
-// pojemność.
-//
-// Proces zakończony zostaje w rejestrze, bo Process Monitor filtruje wprost po
-// stanach `finished`, `failed` i `stopped`. Dziennik w bazie daje trwałość
-// między uruchomieniami serwera, lecz serwer bez bazy ma odpowiedzieć tak
-// samo — stąd druga, pamięciowa warstwa.
+// Przytnij usuwa najstarszy przebieg zakończony, gdy ewidencja przekracza pojemność, tak
+// by Process Monitor mógł odpowiedzieć tak samo, jak z trwałym dziennikiem w bazie.
 func (r *rejestrTerminala) Przytnij() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -178,8 +150,7 @@ func (r *rejestrTerminala) Przytnij() {
 			najstarszy, chwila = kodWpisu, proces.uruchomiono
 		}
 	}
-	// Gdy wszystkie wpisy są czynne, nie ma czego przyciąć: wykreślenie procesu
-	// biegnącego odebrałoby jedyną drogę do jego zakończenia.
+	// Gdy wszystkie wpisy są czynne, nie ma czego przyciąć.
 	if najstarszy != "" {
 		delete(r.procesy, najstarszy)
 	}

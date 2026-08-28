@@ -13,15 +13,7 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { KOD_MODULU } from './wynik-czastkowy';
 
 /**
- * Czynności okien Workspace sięgające poza obszar `workspace.*`.
- *
- * Wgranie pliku, jego wersje i etykieta należą do modułu Library, uprawnienie
- * eksperta do modułu Agents, a udostępnienie materiału — do przenoszenia
- * kontekstu. Okna Workspace wołają te komendy wprost, zamiast trzymać własne
- * odpowiedniki.
- *
- * Osobny plik od `zrodlo-workspace.ts`, bo to inna odpowiedzialność: tam leży
- * obszar własny modułu, tu — jego sąsiedztwo.
+ * Plik gromadzi czynności okien Workspace sięgające poza własny obszar modułu — wgranie pliku i jego wersje z modułu Library, uprawnienie eksperta z modułu Agents oraz udostępnienie materiału przy przenoszeniu kontekstu.
  */
 export interface CzynnosciSasiednie {
   wgrajPlik(idProjektu: string, nazwa: string, tresc: string): Promise<Wynik<LibraryFile>>;

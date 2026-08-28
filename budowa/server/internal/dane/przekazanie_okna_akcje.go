@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: dziennik wykonanych akcji okna (tabela
-// `log_akcji_okna`, migracja 052) — treść komendy `window.action`. Katalog
-// akcji (`core/akcje.go`) mówi, jakie akcje istnieją; ten plik mówi, kiedy
-// i z jakim skutkiem konkretne okno je wykonało, wzorem `log_akcji_kolejki`
-// (migracja 003): przejrzystość zamiast bramy. Typ repozytorium i konstruktor
-// deklaruje `przekazanie_okna.go`; ten plik dokłada wyłącznie metody dziennika
-// akcji.
-//
-// Parametry i wynik są surowym zapisem, nierozbieranym. Kształt obu pól
-// zależy od konkretnej akcji z katalogu, którego warstwa danych akcji nie
-// zna — tak samo jak `komplet_kontekstu` w `przekazanie_okna.go` niesie
-// `ContextBundle` bez rozbioru w SQL. Tu obie kolumny to zwykły TEXT,
-// przenoszony i oddawany jako wskaźnik na napis.
+// Odpowiedzialność pliku: dziennik wykonanych akcji okna, wiersze tabeli log_akcji_okna, niosące treść komendy window.action wraz z wynikiem.
 package dane
 
 import (
@@ -20,11 +8,7 @@ import (
 	"fmt"
 )
 
-// AkcjaOkna to wiersz tabeli `log_akcji_okna` — jedno wykonanie akcji z
-// katalogu przez konkretne okno. `Okno` niesie identyfikator zewnętrzny
-// (`okno_komunikacji.identyfikator_zewnetrzny`), ten sam, którym okno
-// wychodzi kontraktem jako `Window.Id` / `WindowActionRequest.WindowId` —
-// warstwa wyższa nie zna wewnętrznych kluczy liczbowych.
+// AkcjaOkna to wiersz tabeli log_akcji_okna, niosący jedno wykonanie akcji z katalogu przez konkretne okno, z parametrami i wynikiem.
 type AkcjaOkna struct {
 	ID        int64
 	Okno      string

@@ -1,24 +1,9 @@
 import { elementIkony } from '../ikony/ikony';
 import type { KodSrodowiska, PozycjaSrodowiska } from './pozycje-srodowisk';
 
-/**
- * Karta środowiska — element strefy pierwszej, środek ciężkości strony.
- *
- * Buduje jedną kartę i zgłasza jej wybór. Układ treści: godło → tytuł krojem
- * nagłówkowym 24/30 px → motto → jednozdaniowy opis trybu pracy krojem bazowym.
- *
- * Stany: w spoczynku powierzchnia neutralna, bez akcentu; przy najechaniu i w
- * stanie czynnym wstęga górna 2 px w błękicie sygnałowym, cień sygnału
- * i uniesienie o 2 px — całość z wariantu `.dn-karta--akcent` biblioteki
- * komponentów. Arkusz strony wygasza wstęgę w spoczynku, bo biblioteka pokazuje
- * ją stale. Sygnał jest jedyną barwą akcentu systemu wizualnego v2.0.
- *
- * Nośnikiem jest `<button>`, nie `<div role="button">`: karta ma być celem
- * nawigacji klawiaturą z pierwszeństwem natywnym, a pierścień fokusu wnosi
- * `.dn-karta--klikalna:focus-visible`.
- */
+/** Karta środowiska jest elementem strefy pierwszej, będącym środkiem ciężkości strony głównej klienta. */
 
-/** Godło środowiska w największej skali renderowania zestawu ikon. */
+/** Godło środowiska renderowane jest w największej skali dostępnej w zestawie ikon całego systemu wizualnego. */
 const ROZMIAR_GODLA = 24;
 
 export interface KartaSrodowiska {
@@ -67,8 +52,7 @@ export function utworzKarteSrodowiska(
     kod: pozycja.kod,
     oznaczCzynna(czynna) {
       element.classList.toggle('dn-karta--wybrana', czynna);
-      // Stan czynny nie opiera się na samym kolorze — niesie go także
-      // oznaczenie odczytywane przez czytnik ekranu.
+      // Stan czynny niesie też oznaczenie odczytywane przez czytnik ekranu, nie tylko kolor.
       if (czynna) {
         element.setAttribute('aria-current', 'true');
       } else {

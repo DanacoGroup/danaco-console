@@ -1,7 +1,6 @@
 // Odpowiedzialność pliku: dostęp do słownika modułów (tabele `modul`
-// i `srodowisko_modul`). Moduł jest jednostką funkcjonalną osadzaną
-// w środowiskach i należy do okna komunikacji, nie do sesji. Wiersze wnosi
-// zaczyn schematu — repozytorium ich nie zakłada.
+// i `srodowisko_modul`). Moduł jest jednostką funkcjonalną osadzaną w środowiskach i należy do okna
+// komunikacji, nie do sesji.
 package dane
 
 import (
@@ -11,35 +10,22 @@ import (
 	"fmt"
 )
 
-// Modul to wiersz tabeli `modul`.
+// Modul to wiersz tabeli `modul`, niosący nazwę, opis, ikonę i rodzaj modułu platformy w całym systemie.
 type Modul struct {
 	ID    int64
 	Kod   string
 	Nazwa string
 	Opis  *string
-	// Ikona to nazwa ikony z zestawu interfejsu. Pusta wartość znaczy ikonę
-	// zastępczą dobieraną po stronie klienta.
+	// Ikona to nazwa ikony interfejsu; pusta wartość znaczy ikonę zastępczą dobieraną przez klienta.
 	Ikona *string
-	// Rodzaj rozstrzyga, czym moduł jest: `srodowisko_robocze` (czat, narzędzia,
-	// okna pomocnicze), `kompozytor` (wytwórnia elementów używanych w innych
-	// modułach), `repozytorium_plikow` (menedżer zasobów bez AI) albo
-	// `sekcja_konfiguracyjna`.
-	//
-	// Wskaźnik, nie napis: NULL znaczy „rodzaju nie ustalono" i jest
-	// odróżnialny od każdej z czterech wartości. Kolumna nie ma warunku CHECK —
-	// SQLite nie umie go dołożyć przez ALTER TABLE — więc zbioru wartości
-	// pilnuje treść migracji, nie schemat.
+	// Rodzaj rozstrzyga, czym moduł jest — wartość ustalana treścią migracji, nie warunkiem schematu.
 	Rodzaj *string
-	// KonfigurowanyNaStronieGlownej mówi, czy moduł nastawia się w Strefie 2
-	// Strony głównej. Fakt jest niezależny od `Rodzaj`: modułów, które go niosą,
-	// nie łączy jeden rodzaj i nie dałoby się ich z rodzaju wyprowadzić.
-	// Na zewnątrz wychodzi jako `Module.configuredOnHome`, przekładany przez
-	// `modulKontraktu` w `core/przeklad_nawigacja.go`.
+	// KonfigurowanyNaStronieGlownej mówi, czy moduł nastawia się w Strefie 2 Strony głównej.
 	KonfigurowanyNaStronieGlownej bool
 	Aktywny                       bool
 }
 
-// RepozytoriumModulow jest kontraktem słownika modułów.
+// RepozytoriumModulow jest kontraktem słownika modułów, określającym operacje dostępne na całym wykazie.
 type RepozytoriumModulow interface {
 	Lista(ctx context.Context) ([]Modul, error)
 	PoKodzie(ctx context.Context, kod string) (Modul, error)
@@ -70,17 +56,17 @@ func noweRepozytoriumModulow(z *zapytania) *repozytoriumModulow {
 	return &repozytoriumModulow{zapytania: z}
 }
 
-// Lista zwraca wszystkie moduły platformy.
+// Lista zwraca wszystkie moduły platformy zapisane w słowniku modułów systemu rdzenia całej tej aplikacji.
 func (r *repozytoriumModulow) Lista(ctx context.Context) ([]Modul, error) {
 	return r.wykaz(ctx, listaModulow, "modułów")
 }
 
-// ListaSrodowiska zwraca moduły widoczne w środowisku, w kolejności nawigacji.
+// ListaSrodowiska zwraca moduły widoczne w środowisku, w kolejności ustalonej nawigacją boczną interfejsu.
 func (r *repozytoriumModulow) ListaSrodowiska(ctx context.Context, srodowiskoID int64) ([]Modul, error) {
 	return r.wykaz(ctx, listaModulowSrodowiska, "modułów środowiska", srodowiskoID)
 }
 
-// PoKodzie zwraca moduł o wskazanym kodzie.
+// PoKodzie zwraca moduł ze słownika modułów wskazany jego unikalnym kodem tekstowym zapisanym w bazie.
 func (r *repozytoriumModulow) PoKodzie(ctx context.Context, kod string) (Modul, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, modulPoKodzie)
 	if err != nil {
@@ -93,7 +79,7 @@ func (r *repozytoriumModulow) PoKodzie(ctx context.Context, kod string) (Modul, 
 	return modul, err
 }
 
-// wykaz wykonuje zapytanie zwracające wiele wierszy modułu.
+// wykaz wykonuje zapytanie do bazy danych zwracające wiele wierszy słownika modułów całej tej platformy.
 func (r *repozytoriumModulow) wykaz(ctx context.Context, zapytanie, opis string, argumenty ...any) ([]Modul, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -119,7 +105,7 @@ func (r *repozytoriumModulow) wykaz(ctx context.Context, zapytanie, opis string,
 	return lista, nil
 }
 
-// odczytajModul składa strukturę z jednego wiersza wyniku.
+// odczytajModul składa pełną strukturę modułu z jednego wiersza wyniku zapytania do bazy danych rdzenia.
 func odczytajModul(wiersz skaner) (Modul, error) {
 	var modul Modul
 	var opis, ikona, rodzaj sql.NullString

@@ -1,49 +1,14 @@
 import { LICZBA_MAX } from '../../okna-rownolegle/identyfikatory';
 
-/**
- * Sufit instancji Translation Panels — opis stanu, nie bramka.
- *
- * Górnej granicy liczby paneli nie stawia nikt i plik tego nie zmienia:
- * wpisanie progu z palca byłoby prawem wymyślonym po stronie klienta, a rdzeń
- * i tak przyjąłby panel ponad nim.
- *
- * Skąd wiadomo, że granicy nie ma:
- *  1. `store/migracja_053_tlumaczenie.sql` nie ma więzu na liczbę wierszy —
- *     `UNIQUE` stoi tylko na `identyfikator_zewnetrzny`, a `CHECK` tylko na
- *     kolumnie `stan`;
- *  2. `TranslateTargetAddRequest` niesie `windowId`, `language`, `tone`
- *     i `channelId` — ani jednego licznika, a `maxItems` nie pada w całym
- *     `shared/contract.ts`;
- *  3. `DodajPanel` (`adapter_modul_tlumaczenie_panele.go`) sprawdza `WindowId`,
- *     `Language` i istnienie okna, po czym woła model i zapisuje panel — bez
- *     licznika i bez odmowy przy jakiejkolwiek liczbie paneli okna;
- *  4. `.mt-panele` układa się jako
- *     `grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))`, więc
- *     panele dokładają się bez końca.
- * Każdy panel kosztuje przy tym jedno wywołanie modelu: `DodajPanel` liczy
- * przekład przed zapisem, żeby odmowa modelu nie zostawiła pustego wiersza
- * w bazie. Rachunek rośnie więc liniowo z liczbą paneli.
- *
- * Dwie liczby z tego drzewa, które odpowiedzią na to pytanie nie są, i nota ma
- * je rozróżnić:
- *  — `LICZBA_MAX` (`okna-rownolegle/identyfikatory.ts`) to sufit gniazd sceny
- *    okien równoległych. Cały moduł Translate mieści się w jednym oknie,
- *    a panele stoją w jego siatce, więc gniazd sceny nie zużywają;
- *  — `granicaOkien` z profilu Translate (`okno-komunikacji/profile-wiedza.ts`)
- *    to granica okien komunikacji tego profilu. Okno komunikacji a panel języka
- *    to dwa różne byty.
- *
- * Forma idzie za `roundtable/sufit-uczestnikow.ts`. Sufit sceny jest
- * importowany, nie przepisywany: liczba jedzie z pliku, w którym stoi.
- */
+/** Górnej granicy liczby paneli nie stawia nikt: kontrakt, migracja bazy i uchwyt zapisu jej nie mają. */
 
-/** Liczba gniazd sceny okien równoległych — sufit sceny, nie liczby paneli. */
+/** Liczba gniazd sceny okien równoległych jest sufitem sceny, nie sufitem liczby paneli tego modułu tłumaczeń. */
 export const GNIAZD_SCENY = LICZBA_MAX;
 
-/** Granica okien komunikacji profilu Translate — także nie jest limitem paneli. */
+/** Granica okien komunikacji profilu Translate także nie jest limitem liczby paneli języków otwartych w oknie. */
 export const OKIEN_KOMUNIKACJI_PROFILU = 2;
 
-/** Stan sufitu widziany z liczby paneli, które okno zna w tej chwili. */
+/** Stan sufitu widziany z liczby paneli, które okno zna w tej chwili, niesie liczbę paneli oraz zdania opisu stanu. */
 export interface StanSufituPaneli {
   /** Panele znane oknu w tej chwili. */
   panele: number;
@@ -92,7 +57,7 @@ export function utworzNoteSufituPaneli(ilePaneli: number): HTMLElement {
   return nota;
 }
 
-/** Przepisuje notę bez wymiany elementu — liczba paneli zmienia się co dodanie. */
+/** Przepisuje notę bez wymiany elementu, bo liczba paneli zmienia się przy każdym dodaniu kolejnego języka. */
 export function odswiezNoteSufituPaneli(nota: HTMLElement, ilePaneli: number): void {
   const stan = stanSufituPaneli(ilePaneli);
   nota.dataset['panele'] = String(stan.panele);

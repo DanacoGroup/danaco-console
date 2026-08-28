@@ -1,15 +1,6 @@
-// Wpięcie dwunastu komend zakresu działania eksperta wraz z portem
-// ZakresEksperta, który je wypełnia.
-//
-// Port osobny, a nie kolejne czynności portu Agenci: tamten opisuje bibliotekę
-// ekspertów — założenie, wykaz, zmianę, usunięcie — i wtopienie w niego
-// dwunastu czynności zakresu rozdęłoby go ponad czytelność. Osobny port kosztuje
-// jedno pole w Portach i jedną linię w kompozycji.
-//
-// Kontrakt daje modułowi Agents wyłącznie zdarzenie `agent.changed`, więc każda
-// komenda zmieniająca rozgłasza się rodzajem `updated` wraz z ekspertem po
-// zmianie — tym samym wzorcem co `handlers_agenci.go`. Komendy odczytujące
-// milczą: wykaz niczego nie zmienia, więc nie ma czego rozgłaszać.
+// Plik wpina dwanaście komend zakresu działania eksperta wraz z portem ZakresEksperta,
+// który je wypełnia. Port jest osobny, bo wtopienie w port Agenci rozdęłoby go ponad
+// czytelność.
 package core
 
 import (
@@ -33,12 +24,13 @@ type ZakresEksperta interface {
 	UstawPodagentow(ctx context.Context, z shared.AgentSubagentSetRequest) (shared.AgentSubagentSetResponse, error)
 	UsunUprawnienie(ctx context.Context, z shared.AgentPermissionRemoveRequest) (shared.AgentPermissionRemoveResponse, error)
 	PolitykaEksperta(ctx context.Context, z shared.AgentPolicyGetRequest) (shared.AgentPolicyGetResponse, error)
-	// EkspertPoZmianie oddaje eksperta rozgłoszeniu po komendach, których wynik
-	// eksperta nie niesie (izolacja, uprawnienia, konektory).
+	// EkspertPoZmianie oddaje eksperta rozgłoszeniu po komendach, których wynik eksperta nie
+	// niesie.
 	EkspertPoZmianie(ctx context.Context, idEksperta string) (shared.Agent, error)
 }
 
-// zarejestrujZakresEksperta wpina dwanaście komend zakresu działania.
+// zarejestrujZakresEksperta wpina dwanaście komend zakresu działania eksperta w rejestr
+// komend rdzenia.
 func zarejestrujZakresEksperta(r *Rejestr, zakres ZakresEksperta, e *emiter) {
 	if r == nil || zakres == nil {
 		return

@@ -3,24 +3,10 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { Kanal, Wynik } from '../../protokol/kanal';
 
 /**
- * Wywołanie komendy modułu Apps, które kończy się także wtedy, gdy rdzeń
- * odmówi zdarzeniem `<obszar>.unknown`.
- *
- * Powód jest mechaniczny. Komenda bez uchwytu w rdzeniu wraca kopertą typu
- * `<obszar>.unknown` z polem `requestedType`. Ta koperta nie niesie pola
- * `status`, a korelacja żądań rozstrzyga wyłącznie koperty ze statusem
- * (`protokol/koperta.ts`). Obietnica zwykłego `wywolaj()` zostałaby więc
- * nierozstrzygnięta na zawsze, a okno stałoby w stanie ładowania bez końca.
- * Dlatego czytamy też dziennik nierozpoznanych.
- *
- * Rozwiązanie nie buduje drugiej drogi do rdzenia: żądanie idzie tym
- * samym `kanal.wyslij`, a odmowę odczytujemy z dziennika komunikatów
- * nierozpoznanych, który kanał prowadzi dla wszystkich obszarów kontraktu
- * (`polaczenie/dziennik-nieznanych.ts`). Moduł nie zna literału `apps.unknown`
- * i nie zakłada własnej subskrypcji zdarzenia odmowy.
- *
- * Wynik odmowy jest zwykłym `Wynik` z polem `blad` — okno pokazuje go tak samo
- * jak każdą inną odmowę rdzenia i nie potrzebuje osobnej gałęzi widoku.
+ * Wywołanie komendy modułu Apps, które rozstrzyga się także wtedy, gdy rdzeń
+ * odmawia kopertą bez pola `status`, pomijaną przez korelację żądań. Odmowę
+ * czyta z dziennika nierozpoznanych i zwraca jako zwykły `Wynik` z polem
+ * `blad`.
  */
 export type WywolanieApps = <K extends Command>(
   komenda: K,
@@ -41,9 +27,8 @@ export function utworzWywolanieApps(kanal: Kanal): WywolanieApps {
         rozstrzygnij(wynik);
       }
 
-      // Subskrypcja przed wysyłką: wpis dziennika może paść w tej samej pętli
-      // zdarzeń co odpowiedź, a kolejność ich nadejścia nie jest niczym
-      // zagwarantowana.
+      // Subskrypcja przed wysyłką, bo kolejność wpisu dziennika i odpowiedzi
+      // nie jest zagwarantowana.
       odsubskrybuj = kanal.dziennikNieznanych().naWpis((wpis) => {
         if (wpis.idZadania !== idZadania || idZadania === '') return;
         zakoncz({ udany: false, blad: bladOdmowy(wpis.zadanyTyp, wpis.powod) });

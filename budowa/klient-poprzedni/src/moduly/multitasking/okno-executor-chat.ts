@@ -13,29 +13,15 @@ import type { ZrodloOkien } from './zrodlo-okien';
 import type { ZrodloPodagentow } from './zrodlo-podagentow';
 
 /**
- * Executor Chat — okno wiodące wykonawcy; na scenie stoją dwa wystąpienia.
- *
- * Wykonawca wykonuje, nie zarządza: okno nie ma sterowania kolejką ani planu
- * etapów. Ma polecenie, przerwanie tury, panel Subagent Network i wgląd we
- * własny wynik.
- *
- * Przynależność do koordynatora pochodzi z kontraktu. `coordinatorWindowId`
- * okna wykonawczego jest jedynym oznaczeniem więzi, więc okno wypisuje je
- * wprost — inaczej wykonawca własnej pary jest nie do odróżnienia od cudzego.
- *
- * Tryb współpracy jest wspólny obu wykonawcom. Rozstrzyga, kto dostaje zlecenie
- * przy przekazaniu, więc zapisuje się na oknie koordynatora, a nie osobno
- * w każdym wykonawcy — dwa zapisy tej samej rzeczy rozjeżdżałyby się przy
- * pierwszej zmianie.
+ * Executor Chat jest oknem wiodącym wykonawcy: wykonuje, nie zarządza, ma
+ * polecenie, przerwanie tury, panel podagentów i wgląd we własny wynik;
+ * przynależność do koordynatora i tryb współpracy pochodzą z kontraktu.
  */
 export interface OknoWykonawcy {
   element: HTMLElement;
   /** Przerysowuje okno po zmianie stanu wspólnego. */
   odswiez(): void;
-  /**
-   * Odpina nasłuchy okna. Woła je zamknięcie modułu — bez tego nasłuch
-   * `subagent.changed` przeżywałby scenę i odświeżał widok zdjęty z ekranu.
-   */
+  // Odpina nasłuchy okna, wołane przez zamknięcie modułu, żeby nasłuch nie przeżywał zdjętej sceny.
   rozlacz(): void;
 }
 
@@ -51,7 +37,7 @@ export interface OpcjeWykonawcy {
   numer: number;
 }
 
-/** Co w ramie obu wykonawców jest wspólne — różni je wyłącznie kod i tytuł. */
+/** Co w ramie obu wykonawców jest wspólne — różni je wyłącznie kod okna oraz jego tytuł widoczny w nagłówku. */
 const RAMA_WYKONAWCY = {
   rola: 'wiodące',
   przeznaczenie: 'Wykonanie zadania z kolejki, uruchomienie podagentów i zwrot wyniku.',
@@ -61,10 +47,7 @@ const RAMA_WYKONAWCY = {
 export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
   const { stan, numer } = opcje;
 
-  // Kod okna stoi wprost, osobno na każde wystąpienie. Kodu składanego z numeru
-  // nie da się ani wyszukać w drzewie, ani zestawić z katalogiem rdzenia,
-  // a numer spoza zakresu dawałby kod pusty — okno zbudowane bez wiersza
-  // katalogu, o czym nikt by nie zameldował.
+  // Kod okna stoi wprost, osobno na każde wystąpienie, bo kodu składanego z numeru nie da się wyszukać.
   const rama =
     numer === 1
       ? utworzRameOkna({
@@ -85,8 +68,7 @@ export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
     komendy: opcje.komendy,
     sesja: () => stan.sesja(),
     potwierdz: (zdanie, udane) => tresci.potwierdzenie(zdanie, udane),
-    // Żywy wykaz powołanych: okno bierze się z obsady TEGO wykonawcy,
-    // odczytywanej w chwili pytania — obsada bywa późniejsza niż panel.
+    // Żywy wykaz powołanych bierze się z obsady tego wykonawcy, odczytywanej w chwili pytania.
     zywi: {
       podagenci: opcje.podagenci,
       okno: () => moje()?.id ?? '',
@@ -113,13 +95,7 @@ export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
     return stan.obsada().wykonawcy[numer - 1] ?? null;
   }
 
-  /**
-   * Wydanie polecenia wykonawcy.
-   *
-   * Zdanie potwierdzenia mówi o tym, co oddał rdzeń: `message.send` zwraca
-   * zapisaną wiadomość Operatora i nic nie orzeka o turze modelu. O otwarciu
-   * tury okno pisze tylko wtedy, gdy stan wiadomości jest strumieniowy.
-   */
+  // Zdanie potwierdzenia mówi o tym, co oddał rdzeń; o otwarciu tury pisze tylko przy stanie streamingu.
   async function wyslijPolecenie(): Promise<void> {
     const okno = moje();
     if (okno === null) {
@@ -142,14 +118,7 @@ export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
     tresci.potwierdzenie(zdanieOPoleceniu(zapisana, okno.id), zapisana.windowId === okno.id);
   }
 
-  /**
-   * Identyfikator okna, przy którym panel podagentów odczytano ostatnio.
-   *
-   * Żywy wykaz podagentów odczytuje się przy zmianie okna wykonawcy, a nie przy
-   * każdym powiadomieniu: `stan.naZmiane` woła się także na fragment strumienia,
-   * więc odczyt bezwarunkowy zasypałby rdzeń wywołaniami `subagent.list`
-   * w tempie strumienia.
-   */
+  // Żywy wykaz podagentów odczytuje się przy zmianie okna wykonawcy, a nie przy każdym powiadomieniu.
   let oknoPanelu = '';
 
   function odswiez(): void {
@@ -163,17 +132,12 @@ export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
     opis.replaceChildren(
       ...wieziWykonawcy(okno, okno === null ? 0 : stan.strumien().liczbaWywolan(okno.id)),
     );
-    // „Wyślij polecenie" pozostaje czynne także bez okna wykonawcy: czynność
-    // zaczyna się od sprawdzenia tej samej przesłanki i mówi o niej pełnym
-    // zdaniem („Executor N nie istnieje — załóż okno wykonawcy w obsadzie"),
-    // a wygaszenie odebrałoby wyłącznie powód.
+    // Wyślij polecenie pozostaje czynne bez okna wykonawcy: czynność mówi o przesłance pełnym zdaniem.
     const brakOkna = okno === null;
     wyslij.title = brakOkna ? `Executor ${numer} nie ma jeszcze okna — naciśnięcie powie to wprost.` : '';
     if (brakOkna) wyslij.dataset['przeslanka'] = 'brak okna wykonawcy';
     else delete wyslij.dataset['przeslanka'];
-    // Rachunek plakietki stoi w `stany-relacji.ts` razem ze znacznikiem
-    // koordynatora — oba są jednym zagadnieniem („czyja jest teraz kolej")
-    // i jednym sprawdzianem.
+    // Rachunek plakietki stoi w osobnym pliku razem ze znacznikiem koordynatora, jednym sprawdzianem.
     powiesStanRelacji(
       rama,
       znacznikWykonawcy(
@@ -200,7 +164,7 @@ export function utworzOknoWykonawcy(opcje: OpcjeWykonawcy): OknoWykonawcy {
   };
 }
 
-/** Kontrolki własne okna wykonawcy wraz z miejscem na opis więzi. */
+/** Kontrolki własne okna wykonawcy wraz z miejscem na opis więzi i stan relacji z jego koordynatorem pracy. */
 interface PowierzchniaWykonawcy {
   polecenie: HTMLTextAreaElement;
   wyslij: HTMLButtonElement;
@@ -212,11 +176,9 @@ interface PowierzchniaWykonawcy {
 }
 
 /**
- * Składa kontrolki, pasek akcji, narzędzia i ciało okna wykonawcy.
- *
- * Czysta konstrukcja: nie domyka się ani na stanie wspólnym, ani na źródłach
- * rdzenia — panel podagentów bierze gotowy, a nasłuchy przycisków zakłada
- * wytwórnia, więc fragment wyszedł bez przenoszenia zależności.
+ * Składa kontrolki, pasek akcji, narzędzia i ciało okna wykonawcy; czysta
+ * konstrukcja, bo panel podagentów bierze gotowy, a nasłuchy przycisków
+ * zakłada wytwórnia.
  */
 function zlozPowierzchnieWykonawcy(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -231,8 +193,7 @@ function zlozPowierzchnieWykonawcy(
   );
   const wyslij = przycisk('Wyślij polecenie', 'dn-btn dn-btn--atrament');
 
-  // Zatrzymanie czynne zawsze, także gdy okno nie prowadzi tury:
-  // odpowiedź `stopped=false` jest informacją, nie usterką.
+  // Zatrzymanie czynne zawsze, także gdy okno nie prowadzi tury: brak zatrzymania jest informacją.
   const zatrzymaj = przycisk('Zatrzymaj turę', 'dn-btn dn-btn--niebezpieczny');
   const trybPracy = wybor('Tryb współpracy wykonawców', NAZWY_TRYBOW);
 

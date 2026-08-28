@@ -6,15 +6,9 @@ import {
 } from './kontrolka';
 
 /**
- * Kontrolki wartości liczbowych: całkowitej i zmiennoprzecinkowej.
- *
- * Granice i skok pochodzą z katalogu (`minimum`, `maximum`, `step`), nie
- * z kodu klienta. Katalog, który granic nie podaje, daje pole bez granic —
- * brak metadanej nie jest błędem i niczego nie blokuje.
- *
- * Pole puste znaczy „bez wartości", a nie zero: `odczytaj` oddaje wtedy
- * `null`, więc zapis czyści wartość zamiast wpisywać liczbę, której Operator
- * nie podał.
+ * Kontrolki wartości liczbowych, całkowitej i zmiennoprzecinkowej, biorą granice
+ * oraz skok z katalogu ustawień (`minimum`, `maximum`, `step`), a nie z kodu
+ * klienta; katalog bez granic daje pole bez granic.
  */
 export function utworzKontrolkeLiczby(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const { definicja, identyfikator } = zaleznosci;
@@ -51,14 +45,22 @@ export function utworzKontrolkeLiczby(zaleznosci: ZaleznosciKontrolki): Kontrolk
   };
 }
 
-/** Liczba w postaci tekstu pola; wartość nieliczbowa daje pole puste. */
+/**
+ * Liczba w postaci tekstu pola: wartość pusta oraz nieliczbowa dają pole puste,
+ * a wartość skończoną funkcja zapisuje jej postacią dziesiętną, więc pole nigdy
+ * nie pokazuje zapisu, którego nie da się odczytać z powrotem jako liczby.
+ */
 function tekstLiczby(wartosc: unknown): string {
   if (wartosc === null || wartosc === undefined || wartosc === '') return '';
   const liczba = typeof wartosc === 'number' ? wartosc : Number(wartosc);
   return Number.isFinite(liczba) ? String(liczba) : '';
 }
 
-/** Zdanie o granicach drukowane pod polem; brak granic daje brak zdania. */
+/**
+ * Zdanie o granicach drukowane pod polem powstaje z metadanych katalogu: obie
+ * granice dają zakres, jedna — warunek jednostronny, a brak obu daje brak
+ * zdania, ponieważ pole bez granic niczego czytającemu nie obiecuje.
+ */
 function opisGranic(dolna: number | undefined, gorna: number | undefined): string | undefined {
   if (dolna !== undefined && gorna !== undefined) return `Zakres od ${dolna} do ${gorna}.`;
   if (dolna !== undefined) return `Wartość nie mniejsza niż ${dolna}.`;

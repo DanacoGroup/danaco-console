@@ -1,19 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA MODELI, KONT I TOŻSAMOŚCI · RAMA I CZTERY OBSZARY
-   ----------------------------------------------------------------------------
-   Arkusz opisuje ramę sekcji, pasek osi, zakładki oraz formularz konta. Układ
-   panelu dwukolumnowego i obu kolumn wykazu prowadzi arkusz `wykazy.css`,
-   a wnętrze edytora tożsamości wraz z podglądem złożonego promptu — arkusz
-   `tozsamosc.css`; oba wciągane na początku tego pliku.
-
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`. Błękit oznacza pozycję
-   czynną wykazu oraz plakietkę konta domyślnego; bursztyn zarezerwowany jest dla
-   ostrzeżenia, że tryb ZASTĄP zdejmuje prompt fabryczny.
-
-   Pole bez zastosowania — katalog konfiguracji przy koncie API, byt osi przy osi
-   platformy — znika w całości, zamiast stać wygaszone; arkusz nie ma reguły
-   wygaszającej kontrolkę.
-   ============================================================================ */
+/* Arkusz opisuje ramę sekcji modeli, kont i tożsamości oraz cztery obszary: pasek osi, zakładki, formularz konta i wykazy poboczne. */
 
 @import './wykazy.css';
 @import './tozsamosc.css';

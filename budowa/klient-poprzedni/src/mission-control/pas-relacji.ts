@@ -6,26 +6,20 @@ import {
 import type { RelacjaSesji } from './model-danych';
 
 /**
- * Pas relacji pod matrycą sesji.
- *
- * Jedna odpowiedzialność: pokazanie powiązań między sesjami, także sesjami
+ * Pas relacji pod matrycą sesji: powiązania między sesjami, także sesjami
  * z różnych środowisk. Kolumny matrycy pokazują sesje obok siebie, a dopiero pas
- * pokazuje, że procesy biegną razem (`Orchestrator ⇄ CRM`,
- * `Research OZE → Raport Finansowy`).
- *
- * Kontrakt nie niesie odczytu powiązań między sesjami: komplet podaje wtedy
- * `null`, a pas mówi o braku źródła. To co innego niż pusty wykaz — „brak
- * powiązań" byłby twierdzeniem, którego nie da się odczytać z rdzenia.
- *
- * Znak relacji jest podwójny: strzałka (⇄ albo →) oraz słowo w podpowiedzi
- * i w treści czytanej, żeby kierunek nie zależał od samego kształtu.
+ * pokazuje, że procesy biegną razem.
  */
 export interface PasRelacji {
   element: HTMLElement;
   odswiez(relacje: RelacjaSesji[] | null): void;
 }
 
-/** Buduje pas relacji. */
+/**
+ * Buduje pas relacji wraz z jego wykazem i zwraca odświeżenie. Odświeżenie
+ * przyjmuje wykaz powiązań albo `null`, więc pas obsługuje zarówno brak powiązań,
+ * jak i brak odczytu, bez dwóch osobnych dróg wywołania.
+ */
 export function utworzPasRelacji(relacje: RelacjaSesji[] | null): PasRelacji {
   const element = document.createElement('div');
   element.className = 'mc-relacje';
@@ -52,7 +46,11 @@ export function utworzPasRelacji(relacje: RelacjaSesji[] | null): PasRelacji {
   return { element, odswiez };
 }
 
-/** Jedno powiązanie: źródło, znak kierunku, cel i przedmiot wymiany. */
+/**
+ * Jedno powiązanie: źródło, znak kierunku, cel i przedmiot wymiany. Znak jest
+ * podwójny — strzałka oraz słowo w podpowiedzi i w treści czytanej — żeby kierunek
+ * nie zależał od samego kształtu.
+ */
 function wiersz(relacja: RelacjaSesji): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-relacja';
@@ -83,7 +81,11 @@ function wiersz(relacja: RelacjaSesji): HTMLLIElement {
   return element;
 }
 
-/** Pas nie znika przy braku powiązań — mówi wprost, że ich nie ma. */
+/**
+ * Pas nie znika przy braku powiązań — mówi wprost, że żadna sesja nie jest
+ * powiązana z inną. Zniknięcie pasa byłoby nierozróżnialne od braku odczytu,
+ * a to dwa różne stany.
+ */
 function brakRelacji(): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-relacja mc-relacja--brak';
@@ -91,7 +93,11 @@ function brakRelacji(): HTMLLIElement {
   return element;
 }
 
-/** Pas nie znika też przy braku źródła — mówi, że odczytu dziś nie ma. */
+/**
+ * Pas nie znika też przy braku źródła — mówi, że odczytu dziś nie ma. Podpowiedź
+ * nazywa przyczynę: kontrakt nie niesie komendy pytającej o powiązania między
+ * sesjami, a brakujący odczyt jest zgłoszony.
+ */
 function brakZrodla(): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-relacja mc-relacja--brak';

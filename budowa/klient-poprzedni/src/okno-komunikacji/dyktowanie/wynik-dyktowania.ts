@@ -1,30 +1,11 @@
 import type { SpeechTranscribeResponse } from '../../../../shared/contract';
 
-/**
- * Wynik dyktowania — trzy stany, nie dwa.
- *
- * Kontrakt rozdziela w `SpeechTranscribeResponse` dwa niezależne pola:
- * `processed` (czy nagranie przeszło przez silnik) i `transcript` (co silnik
- * w nim usłyszał). Z tej pary wychodzą trzy stany:
- *
- *   processed=true  + transcript niepusty → `rozpoznano`
- *   processed=true  + transcript pusty    → `bez_mowy`
- *   odmowa komendy albo processed=false   → `nieprzetworzone`
- *
- * Cisza jest prawidłowym wynikiem pomiaru: nagranie, w którym nie padło słowo,
- * przeszło przez silnik tak samo jak nagranie z całym zdaniem. Zlanie tego stanu
- * z odmową pokazywałoby awarię tam, gdzie jej nie ma, i rozmywałoby odmowę
- * prawdziwą (brak Pythona, brak modelu, brak drogi dostarczenia). Dlatego
- * `bez_mowy` ma własny stan i własne zdanie.
- *
- * Pole `powod` wypełnia się tylko przy `nieprzetworzone`; przy dwóch pozostałych
- * stanach pomiar się odbył i nie ma czego uzasadniać.
- */
+/** Wynik dyktowania różnicuje trzy stany kontraktu: rozpoznano, bez_mowy oraz nieprzetworzone nagranie. */
 
-/** Stan wyniku dyktowania — rozstrzyga, co Operator właśnie zobaczył. */
+/** Stan wyniku dyktowania rozstrzyga, co użytkownik właśnie zobaczył na ekranie po zakończeniu nagrywania i próbie rozpoznania mowy. */
 export type StanWyniku = 'rozpoznano' | 'bez_mowy' | 'nieprzetworzone';
 
-/** Wynik jednego dyktowania w kształcie, którym posługuje się widok. */
+/** Wynik jednego dyktowania w kształcie, którym posługuje się widok, niosący stan, tekst, długość nagrania oraz dane modelu. */
 export interface WynikDyktowania {
   /** Który z trzech stanów zaszedł. */
   stan: StanWyniku;
@@ -43,11 +24,7 @@ export interface WynikDyktowania {
 }
 
 /**
- * Składa wynik z odpowiedzi kontraktu.
- *
- * Jedyne miejsce, w którym pola `processed` i `transcript` zamieniają się
- * w stan. Gdyby każdy widok czytał `processed` sam, cisza prędzej czy później
- * stałaby się w którymś z nich awarią.
+ * Składanie wyniku z odpowiedzi kontraktu jest jedynym miejscem zamiany pól `processed` i `transcript` w jeden z trzech stanów wyniku.
  */
 export function zlozWynik(odpowiedz: SpeechTranscribeResponse): WynikDyktowania {
   const tekst = odpowiedz.transcript;
@@ -58,9 +35,7 @@ export function zlozWynik(odpowiedz: SpeechTranscribeResponse): WynikDyktowania 
     jezyk: odpowiedz.language ?? '',
   };
 
-  // `processed=false` przy udanej odpowiedzi znaczy: rdzeń odpowiedział, ale
-  // nagrania nie przetworzył. To wciąż stan trzeci, tylko bez zdania odmowy
-  // z warstwy transportu — powód nazywamy sami, żeby pole nie zostało puste.
+  // `processed=false` przy udanej odpowiedzi to wciąż stan nieprzetworzony z dopisanym powodem.
   if (!odpowiedz.processed) {
     return {
       stan: 'nieprzetworzone',
@@ -74,8 +49,7 @@ export function zlozWynik(odpowiedz: SpeechTranscribeResponse): WynikDyktowania 
   }
 
   if (tekst === '') {
-    // Cisza: ani tekstu, ani powodu — powód jest polem stanu `nieprzetworzone`,
-    // a tu nic nie zawiodło.
+    // Cisza: ani tekstu, ani powodu — pole powodu należy do stanu nieprzetworzonego, tu nic nie zawiodło.
     return { stan: 'bez_mowy', tekst: '', ...wspolne, powod: '' };
   }
 
@@ -83,23 +57,14 @@ export function zlozWynik(odpowiedz: SpeechTranscribeResponse): WynikDyktowania 
 }
 
 /**
- * Wynik stanu `nieprzetworzone` złożony z samego zdania odmowy.
- *
- * Używany przez ogniwa, które zatrzymały się przed silnikiem — dostarczenie
- * nagrania albo odmowa komendy. Liczby są zerami, bo pomiaru nie było; wzięcie
- * `trwanieMs` z długości nagrania podstawiałoby wartość, której silnik nie
- * zmierzył.
+ * Wynik stanu nieprzetworzonego składa się z samego zdania odmowy dla ogniw zatrzymanych przed silnikiem, z licznikami wyzerowanymi wobec braku pomiaru.
  */
 export function wynikNieprzetworzony(powod: string): WynikDyktowania {
   return { stan: 'nieprzetworzone', tekst: '', znakow: 0, trwanieMs: 0, model: '', jezyk: '', powod };
 }
 
 /**
- * Zdanie opisujące wynik — po polsku, jedno na każdy z trzech stanów.
- *
- * Zdanie dla `bez_mowy` mówi, co się stało (nagranie przetworzono) i czego
- * w nagraniu nie było (mowy). Nie zawiera słowa „błąd" ani wezwania do
- * ponownego nagrania — cisza nie jest usterką.
+ * Zdanie opisujące wynik po polsku obejmuje jeden komunikat na każdy z trzech stanów, a dla braku mowy nazywa fakt bez słowa błąd.
  */
 export function zdanieWyniku(wynik: WynikDyktowania): string {
   switch (wynik.stan) {
@@ -112,14 +77,14 @@ export function zdanieWyniku(wynik: WynikDyktowania): string {
   }
 }
 
-/** Długość nagrania po polsku — sekundy z jednym miejscem po przecinku. */
+/** Długość nagrania podana po polsku jako liczba sekund z jednym miejscem po przecinku, czytelna dla użytkownika interfejsu. */
 function opisTrwania(trwanieMs: number): string {
   if (trwanieMs <= 0) return 'o nieznanej długości';
   const sekundy = (trwanieMs / 1000).toFixed(1).replace('.', ',');
   return `trwającego ${sekundy} s`;
 }
 
-/** Dopisek o modelu i języku; pusty, gdy silnik ich nie podał. */
+/** Dopisek o modelu rozpoznawania i wykrytym języku pozostaje pusty, gdy silnik transkrypcji ich nie podał w odpowiedzi. */
 function opisSilnika(wynik: WynikDyktowania): string {
   const czesci: string[] = [];
   if (wynik.model !== '') czesci.push(`model ${wynik.model}`);
@@ -127,7 +92,7 @@ function opisSilnika(wynik: WynikDyktowania): string {
   return czesci.length === 0 ? '' : ` (${czesci.join(', ')})`;
 }
 
-/** Odmiana rzeczownika „znak" przy liczbie — zdanie ma brzmieć po polsku. */
+/** Odmiana rzeczownika „znak” dobierana jest do liczby, aby zdanie o długości transkrypcji brzmiało poprawnie po polsku. */
 function odmianaZnakow(liczba: number): string {
   if (liczba === 1) return 'znak';
   const dziesiatki = liczba % 100;

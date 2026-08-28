@@ -1,24 +1,9 @@
 /**
- * Kanwa grafu kroków — rysunek układu zależności w oknie Orchestratora.
- *
- * Opracowanie modułu opisuje graf zależności jako widok własny, oddzielny od
- * wykazu: węzły krokami, krawędzie zależnościami, podświetlona ścieżka
- * krytyczna, powiększanie i przewijanie. Wykaz mówi, co z czym jest związane;
- * rysunek mówi, jak długi jest łańcuch i gdzie tory się rozchodzą — a tego
- * z wykazu wierszy nie widać.
- *
- * Rysunek nie jest edytorem. Zapis układu idzie komendami kontraktu z panelu
- * akcji i z wykazu; kanwa pokazuje stan po zapisie. Układ węzłów liczy się tu
- * z samych zależności, więc jest powtarzalny, lecz nie jest układem, który
- * Operator mógłby ułożyć myszą: przenoszenie węzłów wymaga zapisania ich
- * położenia osobną komendą, a tej rdzeń jeszcze nie obsługuje. Do tego czasu
- * kanwa układa graf sama i nie obiecuje, że zapamięta cudze ułożenie.
- *
- * Barwy i grubości nie stoją tutaj: węzły i krawędzie noszą klasy rodziny
- * modułu, a wygląd niesie `automations.css` na żetonach `--dn-*`.
+ * Kanwa grafu kroków rysuje układ zależności w oknie Orchestratora: węzły krokami, krawędzie
+ * zależnościami, ścieżkę krytyczną, powiększanie i przewijanie.
  */
 
-/** Węzeł grafu — jeden krok automatyki. */
+/** Węzeł grafu reprezentuje jeden krok automatyki, niosący identyfikator kroku i jego nazwę widoczną na rysunku. */
 export interface WezelGrafu {
   /** Identyfikator kroku; po nim idą krawędzie i ścieżka krytyczna. */
   kod: string;
@@ -26,7 +11,7 @@ export interface WezelGrafu {
   nazwa: string;
 }
 
-/** Krawędź grafu — jedna zależność między krokami. */
+/** Krawędź grafu jest jedną zależnością między krokami, niosącą kody obu krokow i podpis rodzaju zależności. */
 export interface KrawedzGrafu {
   odKroku: string;
   doKroku: string;
@@ -34,7 +19,7 @@ export interface KrawedzGrafu {
   podpis: string;
 }
 
-/** Układ podany kanwie do narysowania. */
+/** Układ podany kanwie do narysowania niesie węzły, krawędzie i zbiór kroków ścieżki krytycznej wyliczonej przez rdzeń. */
 export interface OpisGrafu {
   wezly: readonly WezelGrafu[];
   krawedzie: readonly KrawedzGrafu[];
@@ -42,19 +27,19 @@ export interface OpisGrafu {
   sciezkaKrytyczna: ReadonlySet<string>;
 }
 
-/** Wymiary rysunku w jednostkach kanwy; wygląd bierze je przez `viewBox`. */
+/** Wymiary rysunku w jednostkach kanwy; wygląd bierze je przez viewBox rysunku wektorowego tej kanwy SVG. */
 const SZEROKOSC_WEZLA = 176;
 const WYSOKOSC_WEZLA = 40;
 const ODSTEP_POZIOMY = 72;
 const ODSTEP_PIONOWY = 24;
 const MARGINES = 16;
 
-/** Granice powiększenia — poniżej dolnej podpis znika, powyżej górnej graf ucieka z ekranu. */
+/** Granice powiększenia — poniżej dolnej podpis znika, powyżej górnej graf ucieka poza widoczny obszar ekranu. */
 const POWIEKSZENIE_NAJMNIEJSZE = 0.5;
 const POWIEKSZENIE_NAJWIEKSZE = 2;
 const KROK_POWIEKSZENIA = 0.25;
 
-/** Przestrzeń nazw rysunku wektorowego; `createElement` nie zna tych znaczników. */
+/** Przestrzeń nazw rysunku wektorowego SVG; metoda tworzenia elementu HTML nie zna tych znaczników wcale. */
 const PRZESTRZEN_SVG = 'http://www.w3.org/2000/svg';
 
 export interface GrafKrokow {
@@ -69,15 +54,8 @@ export interface GrafKrokow {
 }
 
 /**
- * Rozkłada węzły na warstwy według najdłuższej drogi od kroku bez poprzednika.
- *
- * Warstwa mówi, ile zależności trzeba przejść, zanim krok może ruszyć, więc
- * układ warstwowy pokazuje kolejność wykonania wprost. Węzeł stojący w cyklu
- * nie ma najdłuższej drogi — rachunek zatrzymuje się wtedy na węźle już
- * odwiedzonym i węzeł zostaje na warstwie, do której doszedł. Cykl jest
- * zastrzeżeniem układu, nie powodem, żeby nie narysować niczego.
- *
- * Funkcja jest czysta i nie dotyka dokumentu — sprawdzian czyta ją wprost.
+ * Rozkłada węzły na warstwy według najdłuższej drogi od kroku bez poprzednika; funkcja jest
+ * czysta i prosta.
  */
 export function warstwyGrafu(opis: OpisGrafu): string[][] {
   const poprzednicy = new Map<string, string[]>();
@@ -126,7 +104,7 @@ export function utworzGrafKrokow(): GrafKrokow {
   element.className = 'da-graf';
   element.append(rysunek);
 
-  /** Ustawia rozmiar rysunku na ekranie — przewijanie należy do gospodarza. */
+  /** Ustawia rozmiar rysunku na ekranie; przewijanie należy do gospodarza, nie do samej kanwy. */
   function zastosujPowiekszenie(): void {
     rysunek.setAttribute('width', String(Math.round(szerokosc * powiekszenie)));
     rysunek.setAttribute('height', String(Math.round(wysokosc * powiekszenie)));
@@ -172,13 +150,13 @@ export function utworzGrafKrokow(): GrafKrokow {
   };
 }
 
-/** Środek węzła w jednostkach kanwy. */
+/** Środek węzła w jednostkach kanwy, złożony ze współrzędnej poziomej i pionowej tego rysunku wektorowego. */
 interface Polozenie {
   x: number;
   y: number;
 }
 
-/** Rozkłada węzły warstw na współrzędne; warstwa idzie kolumną, węzeł wierszem. */
+/** Rozkłada węzły warstw na współrzędne; warstwa idzie kolumną, węzeł wierszem w obrębie tej samej kolumny. */
 function polozeniaWezlow(warstwy: readonly (readonly string[])[]): Map<string, Polozenie> {
   const polozenia = new Map<string, Polozenie>();
   warstwy.forEach((warstwa, kolumna) => {
@@ -192,10 +170,7 @@ function polozeniaWezlow(warstwy: readonly (readonly string[])[]): Map<string, P
   return polozenia;
 }
 
-/**
- * Grot strzałki dla krawędzi. Jeden na rysunek, przywoływany znacznikiem —
- * powielanie kształtu przy każdej krawędzi rozdęłoby plik eksportu.
- */
+/** Grot strzałki dla krawędzi jest jeden na rysunek, przywoływany znacznikiem, nie powielany przy każdej krawędzi. */
 function grotStrzalki(): SVGElement {
   const grot = document.createElementNS(PRZESTRZEN_SVG, 'marker');
   grot.setAttribute('id', 'da-graf-grot');
@@ -214,7 +189,7 @@ function grotStrzalki(): SVGElement {
   return zbior;
 }
 
-/** Węzeł kroku: prostokąt z podpisem; krok ścieżki krytycznej dostaje znacznik. */
+/** Węzeł kroku: prostokąt z podpisem; krok ścieżki krytycznej dostaje osobny znacznik wyróżnienia wizualnego. */
 function narysujWezel(
   wezel: WezelGrafu,
   polozenia: ReadonlyMap<string, Polozenie>,
@@ -247,7 +222,7 @@ function narysujWezel(
   return grupa;
 }
 
-/** Krawędź zależności: odcinek od prawej krawędzi poprzednika do lewej następnika. */
+/** Krawędź zależności biegnie odcinkiem od prawej krawędzi poprzednika do lewej krawędzi następnika kroku. */
 function narysujKrawedz(
   krawedz: KrawedzGrafu,
   polozenia: ReadonlyMap<string, Polozenie>,
@@ -276,7 +251,7 @@ function narysujKrawedz(
   return grupa;
 }
 
-/** Podpis węzła przycięty do szerokości prostokąta; pełna nazwa idzie w dymku. */
+/** Podpis węzła przycięty do szerokości prostokąta; pełna nazwa kroku idzie w dymku widocznym po najechaniu. */
 function skroc(nazwa: string): string {
   const granica = 22;
   return nazwa.length <= granica ? nazwa : `${nazwa.slice(0, granica - 1)}…`;

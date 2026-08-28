@@ -1,26 +1,8 @@
 import { PermissionMode } from '../../../shared/contract';
 
-/**
- * Nazwy prezentacyjne wartości używanych wyłącznie przez komplet sterowania.
- *
- * Nazwy roli okna i środowiska wykonania są już nazwane w `etykiety-okna.ts`
- * okna komunikacji — komplet czyta je stamtąd, zamiast zakładać drugi słownik
- * tych samych wartości.
- *
- * Ta sama wartość jest pokazywana w trzech miejscach o trzech różnych
- * szerokościach, więc każda ma trzy postacie w jednym wykazie:
- *   — postać pełna (`nazwa…`) — wiersz listy wyboru w kolumnie sterowania
- *     i podsumowanie szuflady; miejsca jest tam na całe zdanie,
- *   — postać krótka (`nazwaKrotka…`) — uchwyt steru w pasku zlecenia, gdzie
- *     etykieta jest bieżącą wartością, a pasek ma zostać jednym rzędem:
- *     „Ręczny", nie „Ręczny — pytanie przed każdą zmianą",
- *   — opis (`opis…`) — zdanie przy pozycji menu; mówi o skutku wyboru,
- *     nie powtarza nazwy.
- * Postać pełna nie jest osobnym napisem, tylko złożeniem krótkiej z dopiskiem
- * — inaczej pasek i szuflada rozjechałyby się przy pierwszej zmianie słownika.
- */
+// Nazwy prezentacyjne wartości sterowania: postać pełna, krótka i opis budowane z jednego słownika.
 
-/** Trzy postacie nazwy jednej wartości nastawy. */
+/** Trzy postacie nazwy jednej wartości nastawy: krótka na uchwyt steru, pełna ze złożonym dopiskiem i opis skutku wyboru na pozycję menu. */
 interface PostacieNazwy {
   /** Nazwa krótka — uchwyt steru w pasku zlecenia. */
   krotka: string;
@@ -30,7 +12,7 @@ interface PostacieNazwy {
   opis: string;
 }
 
-/** Postać pełna: nazwa krótka złożona z dopiskiem. */
+/** Postać pełna nazwy: krótka złożona z dopiskiem myślnikiem, albo sama krótka, gdy dopisek pozostaje pusty. */
 function pelna(postacie: PostacieNazwy): string {
   return postacie.dopisek === ''
     ? postacie.krotka
@@ -74,23 +56,17 @@ export function nazwaTrybuUprawnien(tryb: PermissionMode): string {
   return pelna(TRYBY_UPRAWNIEN[tryb]);
 }
 
-/** Nazwa trybu uprawnień na uchwyt steru — bez dopisku. */
+/** Nazwa trybu uprawnień na uchwyt steru w pasku zlecenia, bez dopisku, bo pasek ma zostać jednym rzędem. */
 export function nazwaKrotkaTrybuUprawnien(tryb: PermissionMode): string {
   return TRYBY_UPRAWNIEN[tryb].krotka;
 }
 
-/** Zdanie o skutku wyboru trybu uprawnień — pozycja menu. */
+/** Zdanie o skutku wyboru trybu uprawnień, pokazywane jako pozycja menu zamiast powtórzenia nazwy trybu. */
 export function opisTrybuUprawnien(tryb: PermissionMode): string {
   return TRYBY_UPRAWNIEN[tryb].opis;
 }
 
-/**
- * Stopnie nakładu rozumowania: od odpowiedzi szybkiej po najstaranniejszą.
- *
- * Etykiety przepisane z kolumny `opcja_ustawienia.etykieta` katalogu rdzenia dla
- * klucza `naklad_rozumowania`. Stopień jest napisem wyliczenia, nie liczbą,
- * a napis pusty jest pełnoprawnym stopniem katalogu.
- */
+/** Stopnie nakładu rozumowania, od odpowiedzi szybkiej po najstaranniejszą, jako napisy wyliczenia katalogu rdzenia. */
 const NAKLADY: Record<string, PostacieNazwy> = {
   '': {
     krotka: 'Bez wskazania',
@@ -124,16 +100,7 @@ const NAKLADY: Record<string, PostacieNazwy> = {
   },
 };
 
-/**
- * Nazwa stopnia nakładu.
- *
- * Brak wartości schodzi na napis pusty, bo to pełnoprawny stopień katalogu
- * o nazwie „Bez wskazania" — nie na etykietę wymyśloną w tym pliku.
- *
- * Stopień spoza wykazu, ale niepusty, zostaje pokazany dosłownie: rdzeń może
- * znać stopień, którego ten słownik jeszcze nie zna, a jego kod jest prawdą
- * o oknie.
- */
+/** Nazwa stopnia nakładu: brak wartości schodzi na napis pusty jako pełnoprawny stopień, a stopień spoza wykazu pokazuje się dosłownie. */
 export function nazwaNakladu(stopien: string | undefined | null): string {
   const kod = typeof stopien === 'string' ? stopien : '';
   const postacie = NAKLADY[kod];
@@ -141,24 +108,17 @@ export function nazwaNakladu(stopien: string | undefined | null): string {
   return kod === '' ? pelna(NAKLADY['']) : kod;
 }
 
-/** Nazwa stopnia nakładu na uchwyt steru — bez dopisku. */
+/** Nazwa stopnia nakładu na uchwyt steru w pasku zlecenia, bez dopisku, tak samo jak dla trybu uprawnień. */
 export function nazwaKrotkaNakladu(stopien: string): string {
   return NAKLADY[stopien]?.krotka ?? nazwaNakladu(stopien);
 }
 
-/** Zdanie o skutku wyboru stopnia nakładu — pozycja menu. */
+/** Zdanie o skutku wyboru stopnia nakładu, pokazywane jako pozycja menu, tak samo jak dla trybu uprawnień. */
 export function opisNakladu(stopien: string): string {
   return NAKLADY[stopien]?.opis ?? '';
 }
 
-/**
- * Nazwa modułu okna — zapasowa, gdy nazwa rdzenia jeszcze nie jest znana.
- *
- * Rdzeń przysyła moduły komendą `module.list` z gotową nazwą (`Module.name`);
- * ta funkcja jest wyłącznie zapasem na kod, dopóki katalog rdzenia się nie
- * naładuje. Oddaje identyfikator bez zmiany, bo moduł spoza wykazu ma zachować
- * swój kod zamiast zniknąć z widoku pod nazwą zmyśloną po stronie klienta.
- */
+/** Nazwa modułu okna, zapasowa do chwili, aż rdzeń przyśle nazwę własną; do tej pory oddaje sam identyfikator bez zmiany. */
 export function nazwaModulu(identyfikator: string): string {
   return identyfikator;
 }

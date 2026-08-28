@@ -1,10 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — FUNDAMENT
-   ----------------------------------------------------------------------------
-   Warstwa zerowa nad żetonami: wyzerowanie, podłoże dokumentu, typografia
-   bazowa, fokus, zaznaczenie, paski przewijania, drobne wzorce tekstowe.
-   Wymaga: 03-zetony/fonty.css oraz 03-zetony/zetony.css.
-   ============================================================================ */
+/* Arkusz jest warstwą zerową nad żetonami: wyzerowanie, podłoże dokumentu, typografia bazowa, fokus, zaznaczenie i paski przewijania. */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -39,7 +33,7 @@ input, button, textarea, select { font: inherit; color: inherit; }
 
 p, h1, h2, h3, h4 { overflow-wrap: break-word; }
 
-/* --- Nagłówki — Space Grotesk niesie znaczenie: wejście i tożsamość ------- */
+/* Nagłówki korzystają z kroju Space Grotesk, który niesie znaczenie wejścia i tożsamości w interfejsie. */
 h1, h2, h3, .dn-naglowek {
   font-family: var(--dn-ff-naglowek);
   font-weight: var(--dn-fw-polgruba);
@@ -47,18 +41,18 @@ h1, h2, h3, .dn-naglowek {
   line-height: var(--dn-lh-ciasny);
 }
 
-/* --- Fokus — pierścień sygnałowy 2 px, wyłącznie nawigacja klawiaturą ----- */
+/* Fokus klawiaturowy oznacza pierścień sygnałowy o grubości 2 pikseli, widoczny wyłącznie przy nawigacji klawiaturą. */
 :focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
   border-radius: var(--dn-r-xs);
 }
 
-/* --- Zaznaczenie tekstu --------------------------------------------------- */
+/* Zaznaczenie tekstu przejmuje barwę tła i tekstu sygnału, zamiast domyślnego zaznaczenia przeglądarki. */
 ::selection { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
 :root[data-theme='dark'] ::selection { background: var(--dn-sygnal-obrys); }
 
-/* --- Paski przewijania — instrument, nie ozdoba --------------------------- */
+/* Paski przewijania są instrumentem interfejsu, nie ozdobą, więc mają cienką szerokość i barwę obrysu. */
 * { scrollbar-width: thin; scrollbar-color: var(--dn-obrys-mocny) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
@@ -69,11 +63,11 @@ h1, h2, h3, .dn-naglowek {
 }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* --- Odnośniki ------------------------------------------------------------ */
+/* Odnośniki korzystają wyłącznie z barwy sygnału i nigdy nie noszą podkreślenia w stanie spoczynku interfejsu. */
 a { color: var(--dn-sygnal); text-decoration: none; }
 a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underline-offset: 2px; }
 
-/* --- Etykieta wersalikowa — podstawowy wzorzec metadanych kokpitu --------- */
+/* Etykieta wersalikowa jest podstawowym wzorcem metadanych kokpitu: mały krój, wersaliki, rozstrzelenie liter. */
 .dn-etykieta-wersalikowa {
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-xs);
@@ -84,7 +78,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-3);
 }
 
-/* Wariant maszynowy — nagłówki kolumn, identyfikatory stref */
+/* Wariant maszynowy etykiety obsługuje nagłówki kolumn oraz identyfikatory stref w kroju o stałej szerokości. */
 .dn-etykieta-mono {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
@@ -94,13 +88,13 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-3);
 }
 
-/* --- Dane liczbowe — zawsze tabelarycznie --------------------------------- */
+/* Dane liczbowe zawsze wyświetlają się tabelarycznie, żeby cyfry zajmowały jednakową szerokość w kolumnie. */
 .dn-dane, .dn-liczba {
   font-family: var(--dn-ff-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Kod ------------------------------------------------------------------ */
+/* Blok kodu korzysta z kroju o stałej szerokości znaku, wyraźnie odróżnionego od reszty treści interfejsu. */
 .dn-kod {
   display: block;
   padding: var(--dn-od-3) var(--dn-od-4);
@@ -130,7 +124,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   white-space: nowrap;
 }
 
-/* --- Klawisz -------------------------------------------------------------- */
+/* Klawisz przedstawia skrót klawiaturowy jako osobny znacznik wizualny, odróżniony od zwykłego tekstu. */
 .dn-kbd {
   display: inline-block;
   min-width: 20px;
@@ -146,7 +140,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   color: var(--dn-tekst-2);
 }
 
-/* --- Separator ------------------------------------------------------------ */
+/* Separator rysuje cienką kreskę oddzielającą sąsiednie grupy treści w tym samym wierszu lub kolumnie. */
 .dn-separator {
   height: 1px;
   margin: var(--dn-od-4) 0;
@@ -175,7 +169,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
    mocny daje 24,4 na 17,0 w ciemnym i 77,6 na 100 w jasnym: widać w obu. */
 .dn-separator--na-plotnie { background: var(--dn-obrys-mocny); }
 
-/* --- Ukrycie dostępne ----------------------------------------------------- */
+/* Ukrycie dostępne chowa treść wzrokowo, pozostawiając ją czytelną dla czytnika ekranu i technologii wspomagających. */
 .dn-sr-only {
   position: absolute;
   width: 1px; height: 1px;

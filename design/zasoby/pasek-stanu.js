@@ -1,6 +1,4 @@
-/* PASEK STANU — miary
-   Udział toru wchodzi żetonem `--dn-stan-udzial` z atrybutu `data-udzial`,
-   więc znacznik nie nosi wstawek stylu. */
+/* Pasek stanu wylicza udział toru z atrybutu data-udzial i nakłada go żetonem --dn-stan-udzial, dzięki czemu znacznik nie nosi wstawek stylu. */
 (function () {
   'use strict';
 

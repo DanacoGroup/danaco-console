@@ -1,30 +1,10 @@
 import { przestawWTablicy } from './przeciaganie-kolejnosci';
 
 /**
- * Kolejność ustawiona ręką — nakładka na kolejność przychodzącą z rdzenia.
- *
- * Kontrakt (`shared/contract.json`) nie ma w obszarze `session.*` komendy
- * porządku, a struktura `Session` nie ma pola kolejności. Kolejność ustawiona
- * przeciągnięciem jest więc miejscowa: nie jedzie do rdzenia, nie widzi jej
- * drugie urządzenie i nie przeżyje wyczyszczenia magazynu przeglądarki.
- * `zdanie()` niesie tę informację do widoku, żeby interfejs nie obiecywał
- * trwałości, której nie ma.
- *
- * Porządek trzyma nakładka, a nie zapis w miejscu, bo `ustawMigawke`
- * w `powloka/karty-sesji.ts` przy każdym zdarzeniu `session.changed`
- * bezwarunkowo przepisuje kolejność z rdzenia — przestawienie zapisane
- * w miejscu żyłoby do pierwszego takiego zdarzenia.
+ * Kolejność ustawiona ręką jest nakładką miejscową na kolejność przychodzącą z rdzenia, bo kontrakt nie ma komendy porządku ani pola kolejności, więc przeciągnięcie nie jedzie do rdzenia i nie przeżywa czyszczenia magazynu przeglądarki.
  */
-
-/** Nakładka kolejności dla pasa pozycji rozpoznawanych po identyfikatorze. */
 export interface KolejnoscMiejscowa<T> {
-  /**
-   * Ustawia wpisy w kolejności zapamiętanej ręką.
-   *
-   * Wpis spoza nakładki (nowa sesja) idzie na koniec, żeby nie przeskakiwał
-   * pozycji już poukładanych ręką. Wpis, którego rdzeń już nie podaje, wypada —
-   * nakładka nie wskrzesza sesji, których nie ma.
-   */
+  /** Ustawia wpisy w kolejności zapamiętanej ręką; wpis spoza nakładki idzie na koniec. */
   uporzadkuj(wpisy: readonly T[]): T[];
   /** Zapamiętuje przestawienie pozycji `z` na miejsce `na` w podanym porządku. */
   przestaw(wpisy: readonly T[], z: number, na: number): T[];
@@ -36,30 +16,27 @@ export interface KolejnoscMiejscowa<T> {
   zdanie(): string;
 }
 
-/** Ustawienia nakładki; `klucz` i `identyfikator` są wymagane. */
+/** Ustawienia nakładki kolejności miejscowej; pola klucz oraz identyfikator wpisu są wymagane do jej działania. */
 export interface OpcjeKolejnosci<T> {
   /** Klucz zapisu — nazwa własna pasa, żeby dwa pasy się nie mieszały. */
   klucz: string;
   /** Identyfikator wpisu; po nim nakładka rozpoznaje pozycje między migawkami. */
   identyfikator(wpis: T): string;
-  /**
-   * Magazyn trwały. Pominięty znaczy `localStorage`, a `null` — brak zapisu:
-   * kolejność żyje wtedy do przeładowania strony i mówi to zdaniem.
-   */
+  /** Magazyn trwały; pominięty znaczy pamięć lokalną przeglądarki, wartość pusta brak zapisu. */
   magazyn?: Storage | null;
 }
 
-/** Zdanie o kolejności wziętej wprost z rdzenia. */
+/** Zdanie o kolejności wziętej wprost z rdzenia, pokazywane wtedy, gdy nakładka ręczna nie jest jeszcze czynna. */
 export const ZDANIE_KOLEJNOSCI_RDZENIA =
   'Kolejność kart jest ta, którą podaje rdzeń.';
 
-/** Zdanie o kolejności ustawionej ręką — mówi, dokąd ona nie sięga. */
+/** Zdanie o kolejności ustawionej ręką — mówi wprost, dokąd nakładka miejscowa sięga, a dokąd już nie sięga. */
 export const ZDANIE_KOLEJNOSCI_MIEJSCOWEJ =
   'Kolejność kart ustawiona ręcznie jest MIEJSCOWA: zostaje na tym '
   + 'urządzeniu i w tej przeglądarce. Rdzeń jej nie zna — kontrakt nie ma '
   + 'komendy porządku sesji, a session.list nie zwraca pola kolejności.';
 
-/** Zdanie o kolejności ręcznej bez magazynu — znika przy przeładowaniu. */
+/** Zdanie o kolejności ręcznej bez magazynu trwałego — znika przy najbliższym przeładowaniu całej strony. */
 export const ZDANIE_KOLEJNOSCI_ULOTNEJ =
   'Kolejność kart ustawiona ręcznie znika przy przeładowaniu okna: magazyn '
   + 'trwały jest niedostępny, a rdzeń kolejności nie przechowuje.';
@@ -81,8 +58,7 @@ export function utworzKolejnoscMiejscowa<T>(
       if (!Array.isArray(odczytane)) return [];
       return odczytane.filter((wpis): wpis is string => typeof wpis === 'string');
     } catch {
-      // Zapis uszkodzony nie wywraca pasa: kolejność wraca do
-      // porządku rdzenia, a to jest stan poprawny, nie awaria.
+      // Zapis uszkodzony nie wywraca pasa: kolejność wraca do porządku rdzenia, co jest stanem poprawnym.
       return [];
     }
   }
@@ -93,8 +69,7 @@ export function utworzKolejnoscMiejscowa<T>(
       if (porzadek.length === 0) magazyn.removeItem(klucz);
       else magazyn.setItem(klucz, JSON.stringify(porzadek));
     } catch {
-      // Magazyn pełny albo zablokowany. Kolejność zostaje w pamięci strony
-      // i przestaje być trwała; zdanie dla widoku i tak mówi, że jest miejscowa.
+      // Magazyn pełny albo zablokowany zostawia kolejność w pamięci strony, przestając być trwały.
     }
   }
 

@@ -9,13 +9,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Definicja jest wierszem rejestru kanałów — odwzorowaniem rekordu tabeli
-// kanal_modelu. Rejestr powstaje z takich wierszy w czasie działania, więc nowy
-// kanał znaczy nowy wiersz danych, nie nowy typ w kodzie.
-//
-// PoswiadczenieOdwolanie jest odwołaniem do danych dostępowych — nazwą zmiennej
-// środowiskowej albo pozycji magazynu. Sekret nie żyje ani w bazie, ani
-// w repozytorium.
+// Definicja jest wierszem rejestru kanałów, odwzorowaniem rekordu tabeli kanal_modelu; nowy kanał
+// powstaje wpisem danych, nie nowym typem w kodzie. Pole PoswiadczenieOdwolanie niesie odwołanie
+// do danych dostępowych, nie sam sekret.
 type Definicja struct {
 	Id                     int64
 	Kod                    string
@@ -77,7 +73,7 @@ func (d Definicja) ParametrJest(klucz string) (string, bool) {
 	return d.Parametr(klucz), true
 }
 
-// ParametrLub odczytuje parametr, a przy jego braku zwraca wartość domyślną.
+// ParametrLub odczytuje parametr kanału, a przy jego braku zwraca podaną wartość domyślną zamiast pustego napisu.
 func (d Definicja) ParametrLub(klucz, domyslna string) string {
 	if wartosc := strings.TrimSpace(d.Parametr(klucz)); wartosc != "" {
 		return wartosc
@@ -85,20 +81,13 @@ func (d Definicja) ParametrLub(klucz, domyslna string) string {
 	return domyslna
 }
 
-// Identyfikator zwraca identyfikator kanału w postaci używanej przez kontrakt.
+// Identyfikator zwraca identyfikator kanału w postaci tekstowej, używanej przez kontrakt w komunikacji z klientem.
 func (d Definicja) Identyfikator() string {
 	return strconv.FormatInt(d.Id, 10)
 }
 
-// identyfikatorKontraktu zwraca identyfikator, którym klient posługuje się w
-// kolejnych komendach (channel.update, channel.remove, window.create).
-//
-// Musi to być kod kanału, nie numer wiersza. Rejestr indeksuje kanał pod
-// obydwoma kluczami (kluczeKanalu), więc odczyt działa tak czy inaczej — ale
-// warstwa danych zna wyłącznie kod, więc numer wiersza dałby klientowi
-// identyfikator, którym nie da się nic zrobić.
-//
-// Numer wiersza zostaje wartością zapasową dla wiersza bez kodu.
+// identyfikatorKontraktu zwraca kod kanału, którym klient posługuje się w komendach channel.update,
+// channel.remove i window.create, a przy jego braku zwraca numer wiersza jako wartość zapasową.
 func (d Definicja) identyfikatorKontraktu() string {
 	if kod := strings.TrimSpace(d.Kod); kod != "" {
 		return kod

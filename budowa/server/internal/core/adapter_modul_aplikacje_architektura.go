@@ -1,37 +1,6 @@
-// Moduł Apps — Architecture Designer poza samą definicją układu: walidacja
-// architektury, historia wersji, adnotacje projektowe i eksport diagramu.
-//
-// Obsługiwane komendy: `apps.architecture.validate`,
-// `apps.architecture.version.list`, `apps.architecture.annotation.save`,
-// `apps.architecture.export`.
-//
-// WALIDACJA LICZY, NIE PRZECHOWUJE. Migracja 051 zostawiła w architekturze
-// kolumnę `zastrzezenia_walidacji`, a `apps.architecture.define` przepisywał ją
-// bez zmiany, bo nie miał z czego liczyć nowych. `apps.architecture.validate`
-// jest tym miejscem, które liczy: przechodzi komponenty i graf zależności
-// i wykrywa cztery rzeczy, o których mówi opracowanie („komponenty bez połączeń
-// i brakujące zależności"):
-//   - komponent bez ani jednej krawędzi (ostrzeżenie — jest na kanwie, a nic go
-//     nie dotyczy),
-//   - krawędź wskazującą komponent spoza układu (zastrzeżenie poważne — układ
-//     odwołuje się do czegoś, czego nie ma),
-//   - cykl w grafie zależności (zastrzeżenie poważne),
-//   - układ bez ani jednego komponentu (spostrzeżenie).
-//
-// Policzone zastrzeżenia wracają do kolumny, więc kolejny `apps.architecture.get`
-// pokazuje je bez powtarzania rachunku, a `apps.architecture.define` — który je
-// przepisuje bez zmiany — nie kasuje pracy walidatora.
-//
-// ŻADNE ZASTRZEŻENIE NICZEGO NIE BLOKUJE. Kontrakt mówi to wprost przy
-// `AppValidationIssue` („OSTRZEZENIE, nie brama"), a opracowanie powtarza przy
-// narzędziu walidacji („nieblokujące dalszej pracy”). Walidacja jest komendą
-// odczytu z zapisem wyniku, nie warunkiem zapisu układu.
-//
-// EKSPORT WYTWARZA PLIK, NIE OPIS PLIKU. Cztery formaty kontraktu powstają
-// bibliotekami wkompilowanymi w binarium — SVG, Mermaid i Markdown są tekstem
-// składanym tutaj, PNG rysuje `image/png` ze stdlib wraz z czcionką rastrową
-// `x/image/font/basicfont`. Żaden nie woła programu z zewnątrz, więc eksport
-// działa na instalce, która niesie sam rdzeń.
+// Plik rozszerza moduł Apps poza definicję układu o walidację architektury,
+// historię wersji, adnotacje projektowe i eksport diagramu w formatach svg,
+// png, mermaid oraz markdown.
 package core
 
 import (
@@ -55,7 +24,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekAdnotacjiApp znakuje identyfikatory notatek projektowych.
+// przedrostekAdnotacjiApp znakuje identyfikatory notatek projektowych
+// przypinanych do komponentu albo do zależności układu architektury aplikacji.
 const przedrostekAdnotacjiApp = "adn-"
 
 // Kody zastrzeżeń walidacji układu. Kody są nazwami własnymi walidatora, nie
@@ -68,7 +38,9 @@ const (
 	kodZastrzezeniaPustyApp       = "architectureWithoutComponents"
 )
 
-// SprawdzArchitekture obsługuje `apps.architecture.validate`.
+// SprawdzArchitekture obsługuje komendę `apps.architecture.validate`: liczy
+// zastrzeżenia układu i zapisuje je do kolumny architektury, nie blokując
+// dalszej pracy.
 func (a *adapterAplikacji) SprawdzArchitekture(ctx context.Context,
 	z shared.AppsArchitectureValidateRequest) (shared.AppsArchitectureValidateResponse, error) {
 
@@ -92,9 +64,7 @@ func (a *adapterAplikacji) SprawdzArchitekture(ctx context.Context,
 
 	zastrzezenia := policzZastrzezeniaUkladuApp(komponenty, zaleznosci)
 
-	// Wynik wraca do kolumny, żeby `apps.architecture.get` pokazywał go bez
-	// powtarzania rachunku. Nieudany zapis nie gubi wyniku: zastrzeżenia i tak
-	// jadą w odpowiedzi, bo to one są odpowiedzią na tę komendę.
+	// Wynik wraca do kolumny, żeby kolejny odczyt pokazywał go bez powtarzania rachunku.
 	tresci := make([]string, 0, len(zastrzezenia))
 	for _, zastrzezenie := range zastrzezenia {
 		tresci = append(tresci, zastrzezenie.Code+": "+zastrzezenie.Message)
@@ -115,7 +85,8 @@ func (a *adapterAplikacji) SprawdzArchitekture(ctx context.Context,
 	}, nil
 }
 
-// WypiszWersjeArchitektury obsługuje `apps.architecture.version.list`.
+// WypiszWersjeArchitektury obsługuje komendę `apps.architecture.version.list`:
+// zwraca stronę historii wersji architektury malejąco po numerze.
 func (a *adapterAplikacji) WypiszWersjeArchitektury(ctx context.Context,
 	z shared.AppsArchitectureVersionListRequest) (shared.AppsArchitectureVersionListResponse, error) {
 
@@ -149,10 +120,9 @@ func (a *adapterAplikacji) WypiszWersjeArchitektury(ctx context.Context,
 	return shared.AppsArchitectureVersionListResponse{Versions: wersje, Total: razem}, nil
 }
 
-// ZapiszAdnotacje obsługuje `apps.architecture.annotation.save`. Notatka
-// przypina się do komponentu albo do zależności — obu naraz nie, bo wskazywałaby
-// dwa różne miejsca kanwy. Pół krawędzi (jeden koniec zależności) też jest
-// odmową: nie ma czego podświetlić.
+// ZapiszAdnotacje obsługuje komendę `apps.architecture.annotation.save`:
+// zapisuje notatkę przypiętą do komponentu albo do pełnej zależności układu,
+// nigdy do obu naraz.
 func (a *adapterAplikacji) ZapiszAdnotacje(ctx context.Context,
 	z shared.AppsArchitectureAnnotationSaveRequest) (shared.AppsArchitectureAnnotationSaveResponse, error) {
 
@@ -250,10 +220,8 @@ func (a *adapterAplikacji) WyeksportujArchitekture(ctx context.Context,
 }
 
 // architekturaZadania rozwiązuje architekturę żądania: wskazaną wprost albo
-// bieżącą architekturę okna. Brak architektury jest odmową `not_found`, bo
-// wszystkie cztery komendy tego pliku pracują NA układzie — walidacja układu,
-// którego nie ma, nie miałaby czego zwalidować, a pusta odpowiedź udana
-// kazałaby oknu zgadywać, czy układ jest bez zastrzeżeń, czy go nie ma.
+// bieżącą architekturę okna, oddając odmowę `not_found`, gdy żądanego układu
+// nie ma.
 func (a *adapterAplikacji) architekturaZadania(ctx context.Context, okno string,
 	wskazanie *string) (dane.ArchitekturaApp, error) {
 
@@ -293,7 +261,9 @@ func (a *adapterAplikacji) wniesDoMagazynuApp(bajty []byte) (string, int64, erro
 	return odwolanieWytworuApp(sciezka), int64(len(bajty)), nil
 }
 
-// policzZastrzezeniaUkladuApp jest walidatorem układu — patrz czoło pliku.
+// policzZastrzezeniaUkladuApp liczy cztery rodzaje zastrzeżeń układu: komponent
+// bez zależności, zależność do nieznanego komponentu, cykl zależności i układ
+// pusty.
 func policzZastrzezeniaUkladuApp(komponenty []dane.KomponentArchitektury,
 	zaleznosci []dane.ZaleznoscKomponentu) []shared.AppValidationIssue {
 
@@ -407,9 +377,8 @@ func cykleUkladuApp(znane map[string]struct{}, nastepnicy map[string][]string) [
 }
 
 // rozlozKomponentyWierszy oddaje wiersze komponentów i zależności w kształcie,
-// którego oczekuje zapis architektury. Walidacja przepisuje układ bez zmiany —
-// zmienia wyłącznie kolumnę zastrzeżeń — więc musi podać go z powrotem
-// w komplecie, bo zapis jest wymianą („usuń, wstaw od nowa").
+// którego oczekuje zapis architektury, powtarzający cały układ przy każdym
+// zapisie.
 func rozlozKomponentyWierszy(komponenty []dane.KomponentArchitektury,
 	zaleznosci []dane.ZaleznoscKomponentu) ([]dane.KomponentArchitektury, []dane.ZaleznoscKomponentu) {
 
@@ -424,7 +393,8 @@ func rozlozKomponentyWierszy(komponenty []dane.KomponentArchitektury,
 	return wiersze, zaleznosci
 }
 
-// zlozEksportUkladuApp składa bajty wytworu w żądanym formacie.
+// zlozEksportUkladuApp składa bajty wytworu w jednym z czterech żądanych
+// formatów eksportu układu architektury.
 func zlozEksportUkladuApp(format shared.AppExportFormat, architektura dane.ArchitekturaApp,
 	komponenty []dane.KomponentArchitektury, zaleznosci []dane.ZaleznoscKomponentu) ([]byte, error) {
 
@@ -441,7 +411,8 @@ func zlozEksportUkladuApp(format shared.AppExportFormat, architektura dane.Archi
 	return nil, fmt.Errorf("moduł Apps: nieobsłużony format eksportu %q", format)
 }
 
-// eksportMermaidApp składa diagram w notacji Mermaid.
+// eksportMermaidApp składa diagram układu architektury w notacji Mermaid
+// z węzłami komponentów i krawędziami zależności.
 func eksportMermaidApp(komponenty []dane.KomponentArchitektury,
 	zaleznosci []dane.ZaleznoscKomponentu) string {
 
@@ -477,7 +448,8 @@ func identyfikatorMermaidApp(kod string) string {
 	return "w_" + zapis.String()
 }
 
-// eksportMarkdownApp składa dokument opisujący komponenty i zależności.
+// eksportMarkdownApp składa dokument opisujący komponenty i zależności
+// układu architektury w postaci tabel.
 func eksportMarkdownApp(architektura dane.ArchitekturaApp,
 	komponenty []dane.KomponentArchitektury, zaleznosci []dane.ZaleznoscKomponentu) string {
 
@@ -521,7 +493,8 @@ const (
 	szerokoscWezlaApp = szerokoscKanwyApp - 2*marginesKanwyApp
 )
 
-// wysokoscKanwyApp liczy wysokość rysunku dla danej liczby węzłów.
+// wysokoscKanwyApp liczy wysokość rysunku eksportu układu architektury dla
+// podanej liczby węzłów komponentów.
 func wysokoscKanwyApp(ile int) int {
 	if ile == 0 {
 		ile = 1
@@ -529,7 +502,8 @@ func wysokoscKanwyApp(ile int) int {
 	return 2*marginesKanwyApp + ile*wysokoscWezlaApp + (ile-1)*odstepWezlaApp
 }
 
-// eksportSvgApp rysuje układ jako dokument wektorowy.
+// eksportSvgApp rysuje układ architektury jako dokument wektorowy z węzłami
+// komponentów i liniami zależności.
 func eksportSvgApp(komponenty []dane.KomponentArchitektury,
 	zaleznosci []dane.ZaleznoscKomponentu) string {
 
@@ -567,7 +541,8 @@ func eksportSvgApp(komponenty []dane.KomponentArchitektury,
 	return zapis.String()
 }
 
-// tekstSvgApp zabezpiecza znaki, które w dokumencie XML mają własne znaczenie.
+// tekstSvgApp zabezpiecza znaki, które w dokumencie XML notacji SVG mają
+// własne znaczenie składniowe i wymagają zamiany.
 func tekstSvgApp(tekst string) string {
 	zamiana := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;",
 		`"`, "&quot;", "'", "&apos;")
@@ -626,7 +601,8 @@ func eksportPngApp(komponenty []dane.KomponentArchitektury,
 	return bufor.Bytes(), nil
 }
 
-// obrysujProstokatApp rysuje ramkę węzła jednym pikselem grubości.
+// obrysujProstokatApp rysuje ramkę węzła komponentu jednym pikselem grubości
+// na płótnie rastrowym eksportu.
 func obrysujProstokatApp(plotno *image.RGBA, prostokat image.Rectangle, barwa color.RGBA) {
 	for x := prostokat.Min.X; x < prostokat.Max.X; x++ {
 		plotno.Set(x, prostokat.Min.Y, barwa)
@@ -638,7 +614,8 @@ func obrysujProstokatApp(plotno *image.RGBA, prostokat image.Rectangle, barwa co
 	}
 }
 
-// sprawdzFormatEksportuApp dopuszcza wyłącznie formaty kontraktu.
+// sprawdzFormatEksportuApp dopuszcza wyłącznie cztery formaty eksportu
+// wymienione w kontrakcie modułu Apps.
 func sprawdzFormatEksportuApp(format shared.AppExportFormat) error {
 	switch format {
 	case shared.AppExportFormatSvg, shared.AppExportFormatPng,

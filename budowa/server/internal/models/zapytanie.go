@@ -8,10 +8,8 @@ import (
 )
 
 // Zasiegi niosą kontekst, w którym powstało zapytanie: środowisko platformy,
-// projekt, sesja oraz okno komunikacji. Okno jest zasięgiem najwęższym i to ono
-// rozstrzyga parametry wykonania. Kanał nie rozstrzyga
-// konfiguracji sam — dostaje zasięgi po to, by móc je przekazać dalej
-// i odnotować w prowenancji.
+// projekt, sesja oraz okno komunikacji. Okno jest zasięgiem najwęższym i
+// rozstrzyga parametry wykonania.
 type Zasiegi struct {
 	Srodowisko string `json:"environmentId,omitempty"`
 	Projekt    string `json:"projectId,omitempty"`
@@ -26,9 +24,8 @@ type Nakladka struct {
 	Konstytucja string `json:"constitution,omitempty"`
 	ProfilRoli  string `json:"roleProfile,omitempty"`
 	Ekspertyza  string `json:"expertise,omitempty"`
-	// Tryb rozstrzyga, czy nakładka zastępuje prompt fabryczny w całości, czy
-	// dopisuje się do niego. Wartości: injection.TrybZastap / injection.TrybDopisz;
-	// pusty znaczy tryb dopisania.
+	// Tryb rozstrzyga, czy nakładka zastępuje prompt fabryczny, czy się dopisuje;
+	// pusty znaczy dopisanie.
 	Tryb string `json:"overlayMode,omitempty"`
 }
 
@@ -45,7 +42,8 @@ func (n Nakladka) PromptSystemowy() string {
 	return strings.Join(warstwy, "\n\n")
 }
 
-// Skrot zwraca skrót diagnostyczny nakładki.
+// Skrot zwraca skrót diagnostyczny nakładki, złożony ze wszystkich jej warstw
+// treści systemowej, do celów dziennika.
 func (n Nakladka) Skrot() string {
 	return SkrotTresci(n.Konstytucja, n.ProfilRoli, n.Ekspertyza)
 }
@@ -59,16 +57,15 @@ const (
 )
 
 // WiadomoscHistorii jest jedną wypowiedzią wcześniejszej tury tej samej rozmowy.
-// Historia jest strukturą wewnętrzną pakietu, nie kontraktem: adapter kanału
-// składa z niej pamięć wywołania, a wypełnia ją warstwa rozmowy z dziennika
-// tury. Rola pusta znaczy wypowiedź pytającego — pamięć bez roli nie może
-// wywrócić wywołania.
+// Rola pusta znaczy wypowiedź pytającego — pamięć bez roli nie może wywrócić
+// wywołania.
 type WiadomoscHistorii struct {
 	Rola  string `json:"role,omitempty"`
 	Tresc string `json:"content"`
 }
 
-// RolaLub zwraca rolę wypowiedzi, a przy jej braku rolę pytającego.
+// RolaLub zwraca rolę wypowiedzi historii rozmowy, a przy jej braku zwraca rolę
+// pytającego jako wartość domyślną.
 func (w WiadomoscHistorii) RolaLub() string {
 	if strings.TrimSpace(w.Rola) != "" {
 		return w.Rola
@@ -78,29 +75,15 @@ func (w WiadomoscHistorii) RolaLub() string {
 
 // Role obrazu wejściowego. Rola rozstrzyga, czym obraz jest dla wywołania:
 // materiałem, na którym model pracuje, czy maską wskazującą obszar pracy.
-// Rozdzielenie jest konieczne, bo dwie czynności warsztatu fotografii
-// (uzupełnienie ubytku i rozszerzenie kadru) wysyłają OBA naraz, a punkty
-// końcowe przyjmują je osobnymi polami. Rola pusta znaczy materiał — obraz bez
-// roli nie może wywrócić wywołania.
+// Rola pusta znaczy materiał.
 const (
 	RolaObrazuMaterial = "obraz"
 	RolaObrazuMaska    = "maska"
 )
 
-// ObrazWejsciowy jest obrazem WEJŚCIOWYM wywołania kanału — materiałem, który
-// jedzie DO modelu, nie wynikiem, który z niego wraca.
-//
-// Bez tego pola kanał obrazowy umiał wyłącznie wygenerować obraz z samego
-// polecenia tekstowego, więc cztery czynności warsztatu fotografii modułu Design
-// (powiększenie, odcięcie tła, uzupełnienie ubytku i rozszerzenie kadru) nie
-// miały jak dojść do wariantu neuronowego, choć mają go lepszy od rachunku na
-// pikselach.
-//
-// Bajty jadą WYŁĄCZNIE wprost, zapisem base64 — bez wariantu adresowego, jaki
-// ma TrescObrazu w drugą stronę. Powód jest jednostronny: odpowiedź dostawcy
-// bywa odsyłaczem, bo to dostawca trzyma plik; materiał wejściowy leży
-// w magazynie rdzenia i punkt końcowy nie ma jak po niego sięgnąć. Adres
-// przyjęty tutaj byłby adresem, którego druga strona nie odczyta.
+// ObrazWejsciowy jest obrazem wejściowym wywołania kanału — materiałem, który
+// jedzie do modelu, nie wynikiem, który z niego wraca. Bajty jadą wyłącznie
+// wprost, zapisem base64.
 type ObrazWejsciowy struct {
 	// Rola nazywa przeznaczenie obrazu — RolaObrazuMaterial albo RolaObrazuMaska.
 	Rola string `json:"role,omitempty"`
@@ -108,13 +91,13 @@ type ObrazWejsciowy struct {
 	TypTresci string `json:"mimeType,omitempty"`
 	// Base64 niesie bajty obrazu w zapisie base64.
 	Base64 string `json:"contentBase64"`
-	// Nazwa jest nazwą pliku podawaną przy wysyłce wieloczęściowej. Punkty
-	// końcowe rozpoznają po niej format, gdy nie dostaną typu treści, więc pusta
-	// nazwa nie jest brakiem — adapter dokłada wtedy własną.
+	// Nazwa jest nazwą pliku wysyłki wieloczęściowej; pusta nie jest brakiem,
+	// adapter dokłada własną.
 	Nazwa string `json:"fileName,omitempty"`
 }
 
-// RolaLub zwraca rolę obrazu, a przy jej braku rolę materiału.
+// RolaLub zwraca rolę obrazu wejściowego, a przy jej braku zwraca rolę
+// materiału jako wartość domyślną.
 func (o ObrazWejsciowy) RolaLub() string {
 	if strings.TrimSpace(o.Rola) != "" {
 		return o.Rola
@@ -130,17 +113,12 @@ type Zapytanie struct {
 	Wiadomosc string  `json:"messageId"`
 	Tresc     string  `json:"content"`
 
-	// Historia niesie wcześniejsze wypowiedzi tej samej rozmowy w kolejności
-	// nadania, bez bieżącej wypowiedzi (ta jedzie w Tresc). Kanał bezstanowy
-	// (api) składa z niej pamięć wywołania; kanał z własną pamięcią (cli
-	// przez Wznowienie) może ją pominąć. Puste znaczy turę bez pamięci.
+	// Historia niesie wcześniejsze wypowiedzi rozmowy w kolejności nadania; puste
+	// znaczy turę bez pamięci.
 	Historia []WiadomoscHistorii `json:"history,omitempty"`
 
-	// ObrazyWejsciowe niosą materiał wizualny wywołania. Puste znaczy wywołanie
-	// z samego polecenia — tak pracuje generowanie obrazu od zera i tak pracują
-	// wszystkie kanały tekstowe, które to pole po prostu pomijają. Kolejność jest
-	// kolejnością nadania: kanał obrazowy bierze pierwszy materiał i pierwszą
-	// maskę, bo punkty końcowe edycji przyjmują po jednym z każdej roli.
+	// ObrazyWejsciowe niosą materiał wizualny w kolejności nadania; puste znaczy
+	// wywołanie z polecenia.
 	ObrazyWejsciowe []ObrazWejsciowy `json:"inputImages,omitempty"`
 
 	Kanal             string `json:"channelId,omitempty"`
@@ -149,30 +127,24 @@ type Zapytanie struct {
 	NakladRozumowania string `json:"effort,omitempty"`
 	Konto             string `json:"account,omitempty"`
 	Wznowienie        string `json:"resume,omitempty"`
-	// PulapKosztuUSD jest górną granicą kosztu tej tury w dolarach; pochodzi
-	// z nastawy `pulap_kosztu_usd`. Zero znaczy brak pułapu — kanał nie
-	// dopisze wtedy przełącznika --max-budget-usd.
+	// PulapKosztuUSD jest górną granicą kosztu tej tury w dolarach; zero znaczy
+	// brak pułapu.
 	PulapKosztuUSD float64 `json:"maxBudgetUsd,omitempty"`
 
-	// KatalogSesji jest katalogiem roboczym sesji ustalonym z konfiguracji
-	// Operatora (klucze `katalog.roboczy.*`). Nie jest nadaniem dostępu — mówi,
-	// gdzie model zostawia własne pliki, a nie do czego sięga.
+	// KatalogSesji jest katalogiem roboczym sesji; nie nadaje dostępu, wskazuje
+	// miejsce zapisu plików.
 	KatalogSesji string `json:"sessionDir,omitempty"`
 	// KonfiguracjaMCP niesie tekst konfiguracji mostów MCP okna albo ścieżkę do
-	// pliku z nią. Pusty znaczy: okno nie ma nadanych mostów.
+	// pliku z nią.
 	KonfiguracjaMCP string `json:"mcpConfig,omitempty"`
-	// DodatkoweMCP niesie konfiguracje mostów MCP wyliczone z obszaru mcp
-	// konfiguracji sesji. Jadą osobnymi przełącznikami --mcp-config obok
-	// KonfiguracjaMCP okna, więc nadania okna i wiązania sesji nie przykrywają
-	// się nawzajem. Puste znaczy: obszar mcp nie dał żadnego serwera.
+	// DodatkoweMCP niesie konfiguracje mostów MCP sesji, osobno od
+	// KonfiguracjaMCP okna.
 	DodatkoweMCP []string `json:"sessionMcpConfigs,omitempty"`
-	// PlikUstawien niesie napis JSON pliku ustawień sesji (--settings) złożony
-	// z obszarów tools i permissions konfiguracji sesji. Pusty znaczy: obszary
-	// nie dały żadnej reguły, więc przełącznika nie ma.
+	// PlikUstawien niesie napis JSON pliku ustawień sesji złożony z reguł
+	// narzędzi i uprawnień sesji.
 	PlikUstawien string `json:"settingsFile,omitempty"`
-	// Srodowisko niesie zmienne środowiskowe wyliczone z obszaru environment
-	// (oraz provider) konfiguracji sesji. Dokładają się do środowiska procesu
-	// kanału. Puste znaczy: obszar nie dał żadnej zmiennej.
+	// Srodowisko niesie zmienne środowiskowe sesji dokładane do środowiska
+	// procesu kanału.
 	Srodowisko map[string]string `json:"sessionEnv,omitempty"`
 
 	KatalogiRobocze     []string              `json:"workingDirs,omitempty"`
@@ -184,7 +156,8 @@ type Zapytanie struct {
 	Ustawienia map[string]string `json:"settings,omitempty"`
 }
 
-// Okno zwraca identyfikator okna, do którego należy zapytanie.
+// Okno zwraca identyfikator okna komunikacji, do którego to zapytanie należy
+// w obrębie bieżącej sesji roboczej.
 func (z Zapytanie) Okno() string {
 	return z.Zasiegi.Okno
 }
@@ -220,12 +193,9 @@ func (z Zapytanie) WybranyModel(d Definicja) string {
 	return d.Model
 }
 
-// WybraneKonto rozstrzyga konto wywołania: wygrywa wskazanie zapytania (obszar
-// account konfiguracji sesji), a w jego braku obowiązuje konto powiązane
-// z wierszem kanału kolumną kanal_modelu.konto_id. Powiązanie kanału z
-// kontem staje się dzięki temu widoczne w wywołaniu nawet bez konfiguracji
-// sesji. Brak obu daje pusty napis — tożsamość bierze się wtedy z otoczenia
-// procesu, a kanał nie odmawia pracy.
+// WybraneKonto rozstrzyga konto wywołania: wygrywa wskazanie zapytania, w jego
+// braku obowiązuje konto powiązane z wierszem kanału. Brak obu daje pusty
+// napis — kanał nie odmawia pracy.
 func (z Zapytanie) WybraneKonto(d Definicja) string {
 	if strings.TrimSpace(z.Konto) != "" {
 		return z.Konto

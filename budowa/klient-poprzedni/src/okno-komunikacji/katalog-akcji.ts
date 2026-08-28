@@ -14,12 +14,7 @@ export type ZrodloAkcjiModulu = (
 ) => void;
 
 /**
- * Katalog akcji modułu z rejestru rdzenia.
- *
- * Panel akcji nie ma własnej listy pozycji: bierze je komendą `action.list`
- * o zasięgu `module` i kluczu równym kodowi modułu. Nowa akcja modułu to nowy
- * wiersz rejestru, nie zmiana kodu klienta — dlatego przestawienie okna na
- * inny moduł jest tu jednym zapytaniem, a nie inną gałęzią widoku.
+ * Katalog akcji modułu pochodzi z rejestru rdzenia komendą `action.list` o zasięgu `module` i kluczu równym kodowi modułu, więc przestawienie okna na inny moduł jest jednym zapytaniem, nie inną gałęzią widoku.
  */
 export function zrodloAkcjiKanalu(kanal: Kanal): ZrodloAkcjiModulu {
   return (kodModulu, oddaj) => {
@@ -45,7 +40,7 @@ export function zrodloAkcjiKanalu(kanal: Kanal): ZrodloAkcjiModulu {
   };
 }
 
-/** Opis błędu kontraktu dla Operatora. */
+/** Opis błędu kontraktu przedstawiany operatorowi, gdy katalog akcji modułu nie daje się odczytać z rejestru rdzenia. */
 function opisBledu(blad: { message: string; code: string } | undefined): string {
   if (blad === undefined) return 'rdzeń nie podał przyczyny';
   return `${blad.message} (${blad.code})`;

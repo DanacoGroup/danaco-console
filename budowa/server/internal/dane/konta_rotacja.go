@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: stan konta w rotacji i odczyt puli rotacji.
-//
-// Algorytm rotacji — które konto jest bieżące, kiedy przejść na następne, jak
-// długo pamiętać wyczerpanie — mieszka wyłącznie w `injection.PulaKont`, żeby
-// nie powstały dwie implementacje. Ten plik daje katalogowi dwie rzeczy:
-//  1. `KontaRotacji` — uporządkowaną listę kont, które w ogóle wolno wziąć;
-//  2. `OznaczStan` — trwały ślad tego, co pula już rozpoznała, oraz miejsce na
-//     decyzję Operatora o zawieszeniu konta.
-//
-// Repozytorium nie wygasza wyczerpania po czasie i nie wybiera konta bieżącego —
-// robi to pula, która jedyna zna chwilę wywołania.
+// Odpowiedzialność pliku: stan konta w rotacji i odczyt puli rotacji. Algorytm rotacji mieszka wyłącznie
+// w warstwie iniekcji, żeby nie powstały dwie implementacje.
 package dane
 
 import (
@@ -25,13 +16,13 @@ import (
 type StanKonta string
 
 const (
-	// StanKontaAktywne — konto zdatne do wzięcia przez pulę.
+	// StanKontaAktywne oznacza konto zdatne do wzięcia przez pulę rotacji w bieżącym cyklu jej obsługi kont.
 	StanKontaAktywne StanKonta = "aktywne"
 	// StanKontaWyczerpane — pula rozpoznała wyczerpanie limitu; konto zostaje
 	// w rotacji, bo limit sam się odnawia, a chwilę odnowienia niesie
 	// `wyczerpane_do`.
 	StanKontaWyczerpane StanKonta = "wyczerpane"
-	// StanKontaZawieszone — Operator wyłączył konto z rotacji do odwołania.
+	// StanKontaZawieszone oznacza, że operator wyłączył dane konto z rotacji do odwołania własną decyzją ręczną.
 	StanKontaZawieszone StanKonta = "zawieszone"
 )
 
@@ -50,7 +41,7 @@ var wartosciKontraktuStanKonta = map[string]StanKonta{
 	"zawieszone": StanKontaZawieszone,
 }
 
-// stanKontaNaBaze przekłada stan na wartość kolumny; pusty stan znaczy „aktywne".
+// stanKontaNaBaze przekłada stan konta na wartość kolumny bazy; pusty stan znaczy „aktywne" domyślnie.
 func stanKontaNaBaze(stan StanKonta) (string, error) {
 	return naBaze(wartosciBazyStanKonta, stan, StanKontaAktywne, "konto.stan")
 }
@@ -70,10 +61,8 @@ func rodzajKontaZBazy(kolumna string) (shared.AccountKind, error) {
 	return zBazy(shared.WartosciKontraktuAccountKind, kolumna, "konto.rodzaj")
 }
 
-// listaKontRotacji zwraca konta zdatne do rotacji jednego rodzaju. Konto
-// domyślne idzie pierwsze, dalej rozstrzyga kolejność nadana przez Operatora.
-// Konta wyczerpane zostają na liście — o ich pominięciu rozstrzyga pula, która
-// zna chwilę wywołania i chwilę odnowienia limitu.
+// listaKontRotacji zwraca konta zdatne do rotacji jednego rodzaju; konto domyślne idzie pierwsze, dalej
+// kolejność nadana przez operatora.
 const listaKontRotacji = `SELECT ` + kolumnyKonta + ` FROM konto
 	WHERE rodzaj = ? AND aktywne = 1 AND stan <> '` + string(StanKontaZawieszone) + `'
 	ORDER BY domyslne DESC, kolejnosc, id`

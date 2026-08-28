@@ -1,18 +1,4 @@
-// Odpowiedzialność pliku: czynności kosza sesji na utrwalaczu stanów —
-// przeniesienie do kosza po `session.delete`, przywrócenie po `session.restore`
-// i czyszczenie po terminie przy starcie rdzenia.
-//
-// Usunięcie sesji jest odwracalne zamiast poprzedzone pytaniem potwierdzającym:
-// `session.delete` nie kasuje wiersza od ręki, tylko stawia znacznik kosza.
-// Sesja znika z historii bieżącej natychmiast, bo wykaz sesji żywych kosza nie
-// widzi (`dane/sesje.go`), a wraca w całości komendą `session.restore`. Utrata
-// danych następuje wyłącznie wskutek `session.delete`; czyszczenie po terminie
-// jest drugą fazą tej samej czynności, nie osobną drogą utraty.
-//
-// Czyszczenie wykonuje się przy starcie rdzenia — jedynym momencie, w którym
-// rdzeń i tak czyta całą tabelę sesji (`odtworzenie_stanu.go`) — więc nie
-// potrzeba budzika ani wątku. Trzydzieści dni daje okno dłuższe niż urlop:
-// sesja usunięta i nieprzywrócona przez miesiąc jest decyzją, nie pomyłką.
+// Plik obsługuje kosz sesji na utrwalaczu stanów: przeniesienie do kosza po session.delete, przywrócenie po session.restore i czyszczenie po terminie przy starcie rdzenia. Usunięcie sesji jest odwracalne, nie kasuje wiersza od ręki.
 package core
 
 import (
@@ -27,7 +13,7 @@ import (
 // skasuje ją trwale wraz z całym zapisem.
 const terminKoszaDni = 30
 
-// formatChwiliKosza odpowiada wyrażeniu strftime schematu (kolumna usunieto_o).
+// formatChwiliKosza odpowiada wyrażeniu strftime schematu bazy dla kolumny usunieto_o wiersza kosza sesji.
 const formatChwiliKosza = "2006-01-02T15:04:05.999Z"
 
 // PrzeniesSesjeDoKosza stawia znacznik kosza na wierszu sesji. Brak wiersza
@@ -71,7 +57,7 @@ func (u *utrwalaczStanow) PrzywrocSesjeZKosza(ctx context.Context, identyfikator
 	return przywrocona, nil
 }
 
-// usunSesjePoTerminie kasuje trwale sesje leżące w koszu dłużej niż termin.
+// usunSesjePoTerminie kasuje trwale sesje leżące w koszu dłużej niż termin, wraz z całym ich zapisem danych.
 func usunSesjePoTerminie(kontekst context.Context, repozytoria *dane.Zestaw, dziennik *log.Logger) {
 	if repozytoria == nil || repozytoria.KoszSesji == nil {
 		return

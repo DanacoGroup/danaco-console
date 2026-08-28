@@ -1,17 +1,7 @@
 /**
  * Kreator wyrażenia cyklicznego okna Scheduler — wzorce cykliczności i ich
- * przełożenie na notację cron.
- *
- * Operator ustala cykliczność wzorcem („co tydzień, poniedziałek, 07:00”),
- * a kontrakt niesie ją jednym polem `AutomationSchedule.cron`. Ten plik jest
- * przekładem w obie strony: składa zapis z nastaw i rozpoznaje wzorzec
- * w zapisie odczytanym z rdzenia, żeby okno otwarte na harmonogramie zastanym
- * pokazywało wzorzec, a nie samą składnię.
- *
- * Przekład jest zawężony do wzorców, które da się zapisać pięcioma polami
- * notacji: zapis odczytany z rdzenia i niepasujący do żadnego wzorca zostaje
- * wzorcem własnym, a jego treść idzie do pola zapisu bez zmiany. Rachunek
- * kolejnych terminów należy do `nastepne-uruchomienia.ts`.
+ * przełożenie na notację cron w obie strony, między zapisem
+ * `AutomationSchedule.cron` a nastawami wzorca pokazywanymi w oknie.
  */
 
 /**
@@ -36,7 +26,7 @@ export const WZORCE_CYKLICZNOSCI = {
 export type WzorzecCyklicznosci =
   (typeof WZORCE_CYKLICZNOSCI)[keyof typeof WZORCE_CYKLICZNOSCI];
 
-/** Wzorce w kolejności wykazu rozwijanego wraz z ich nazwami na ekranie. */
+/** Wzorce w kolejności wykazu rozwijanego wraz z ich nazwami widocznymi na ekranie okna kreatora harmonogramu. */
 export const NAZWY_WZORCOW: ReadonlyArray<[WzorzecCyklicznosci, string]> = [
   [WZORCE_CYKLICZNOSCI.coMinute, 'co minutę'],
   [WZORCE_CYKLICZNOSCI.godzinnie, 'godzinnie'],
@@ -49,7 +39,7 @@ export const NAZWY_WZORCOW: ReadonlyArray<[WzorzecCyklicznosci, string]> = [
   [WZORCE_CYKLICZNOSCI.wlasny, 'niestandardowo'],
 ];
 
-/** Dni tygodnia w numeracji notacji cron: niedziela ma numer zero. */
+/** Dni tygodnia w numeracji notacji cron, gdzie niedziela nosi numer zero, a nie siedem jak w kalendarzu. */
 export const DNI_TYGODNIA: ReadonlyArray<[string, string]> = [
   ['1', 'poniedziałek'],
   ['2', 'wtorek'],
@@ -66,7 +56,7 @@ export const DNI_TYGODNIA: ReadonlyArray<[string, string]> = [
  */
 const MIESIACE_KWARTALOW = '1,4,7,10';
 
-/** Nastawy wzorca; pola nieużywane przez dany wzorzec zostają nietknięte. */
+/** Nastawy wzorca cykliczności; pola nieużywane przez aktualnie wybrany wzorzec zostają w stanie nietkniętym. */
 export interface NastawyWzorca {
   /** Minuta godziny, zakres 0–59. */
   minuta: number;
@@ -80,7 +70,7 @@ export interface NastawyWzorca {
   krok: number;
 }
 
-/** Nastawy wyjściowe okna: codziennie o siódmej, w poniedziałek, pierwszego. */
+/** Nastawy wyjściowe okna kreatora: uruchomienie codziennie o siódmej rano, w poniedziałek, pierwszego dnia miesiąca. */
 export const NASTAWY_WYJSCIOWE: NastawyWzorca = {
   minuta: 0,
   godzina: 7,
@@ -89,7 +79,7 @@ export const NASTAWY_WYJSCIOWE: NastawyWzorca = {
   krok: 15,
 };
 
-/** Wzorzec rozpoznany w zapisie wraz z nastawami odczytanymi z jego pól. */
+/** Wzorzec cykliczności rozpoznany w zapisie cron wraz z nastawami odczytanymi z jego poszczególnych pól. */
 export interface RozpoznanyWzorzec {
   wzorzec: WzorzecCyklicznosci;
   nastawy: NastawyWzorca;
@@ -178,7 +168,7 @@ export function rozpoznajWzorzec(zapis: string): RozpoznanyWzorzec {
   return { wzorzec: WZORCE_CYKLICZNOSCI.wlasny, nastawy };
 }
 
-/** Zdanie o cykliczności w mowie Operatora — pod polem zapisu w oknie. */
+/** Zdanie opisujące cykliczność w mowie naturalnej Operatora, wyświetlane pod polem zapisu w oknie kreatora. */
 export function opisCyklicznosci(zapis: string): string {
   const { wzorzec, nastawy } = rozpoznajWzorzec(zapis);
   const godzina = `${dwucyfrowo(nastawy.godzina)}:${dwucyfrowo(nastawy.minuta)}`;
@@ -206,17 +196,17 @@ export function opisCyklicznosci(zapis: string): string {
   }
 }
 
-/** Nazwa dnia tygodnia w numeracji cron; numer spoza zakresu daje sam numer. */
+/** Nazwa dnia tygodnia w numeracji notacji cron; numer spoza dopuszczalnego zakresu oddaje sam ten numer. */
 function nazwaDnia(numer: number): string {
   return DNI_TYGODNIA.find(([wartosc]) => wartosc === String(numer))?.[1] ?? String(numer);
 }
 
-/** Czy pole niesie pojedynczą liczbę, a nie gwiazdkę, wykaz albo zakres. */
+/** Czy pole zapisu cron niesie pojedynczą liczbę, a nie gwiazdkę, wykaz wartości czy zakres liczbowy dat. */
 function liczbowe(pole: string): boolean {
   return /^\d+$/.test(pole);
 }
 
-/** Krok pola zapisanego gwiazdką z ukośnikiem; pole innego kształtu daje `null`. */
+/** Krok pola zapisanego gwiazdką z ukośnikiem; pole innego kształtu zwraca wartość pustą zamiast kroku. */
 function krokPola(pole: string): number | null {
   const dopasowanie = /^\*\/(\d+)$/.exec(pole);
   if (dopasowanie === null) return null;
@@ -224,18 +214,18 @@ function krokPola(pole: string): number | null {
   return Number.isInteger(krok) && krok > 0 ? krok : null;
 }
 
-/** Liczba z pola zapisu; pole nieliczbowe oddaje wartość zastępczą. */
+/** Liczba odczytana z pola zapisu cron; pole nieliczbowe oddaje ustaloną wartość zastępczą zamiast liczby. */
 function liczbaPola(pole: string, zastepcza: number): number {
   return liczbowe(pole) ? Number.parseInt(pole, 10) : zastepcza;
 }
 
-/** Wartość wtłoczona w zakres pola zapisu — okno nie wysyła pola spoza niego. */
+/** Wartość wtłoczona w dopuszczalny zakres pola zapisu — okno nie wysyła do rdzenia wartości spoza niego. */
 function ogranicz(wartosc: number, dolna: number, gorna: number): number {
   if (!Number.isInteger(wartosc)) return dolna;
   return Math.min(gorna, Math.max(dolna, wartosc));
 }
 
-/** Zapis dwucyfrowy godziny i minuty — postać przyjęta w zdaniach okna. */
+/** Zapis dwucyfrowy godziny i minuty — postać przyjęta w zdaniach opisujących harmonogram wewnątrz okna. */
 function dwucyfrowo(wartosc: number): string {
   return String(wartosc).padStart(2, '0');
 }

@@ -1,11 +1,6 @@
 // Układanie zlecenia w kolejce: priorytet i skierowanie do innej kolejki (pola
-// `priority` i `targetQueueId` komendy `automation.queue.action`) oraz odmowy
+// priority i targetQueueId komendy automation.queue.action) oraz odmowy
 // Queue Managera.
-//
-// Układanie nie jest wykonaniem: żadna z tych czynności nie zmienia stanu
-// zlecenia ani go nie posuwa. Stan prowadzi wyłącznie silnik kolejek
-// (`kolejka_silnik.go`); tu rozstrzyga się, które zlecenie jest wcześniej
-// i w której kolejce stoi.
 package core
 
 import (
@@ -73,10 +68,8 @@ var (
 		"kolejka docelowa o nieznanym identyfikatorze")
 )
 
-// bladNiedostepnegoSilnika nazywa brak wykonawcy. Kontrakt nie ma kodu
-// „domena niewpięta”, więc odmowa idzie kodem `channel_unavailable` — jedynym,
-// który mówi „nie ma przez co wykonać” i jest ponawialny: wpięcie silnika czyni
-// żądanie wykonalnym bez zmiany treści.
+// bladNiedostepnegoSilnika nazywa brak wykonawcy. Kontrakt nie ma kodu domena
+// niewpięta, więc odmowa idzie kodem channel_unavailable, jedynym ponawialnym.
 func bladNiedostepnegoSilnika(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 		"moduł Automations: "+powod))

@@ -1,17 +1,12 @@
 /**
- * Stan treści okien modułu Roundtable — wiązanie wspólnego nośnika
- * z `komponenty/stan-tresci.ts` z przedrostkiem klas `dr-`.
- *
- * Stan błędu jest tu konieczny: debata odmawia z powodów zwyczajnych — kanał
- * uczestnika nieczynny, tura zamknięta, stanowiska jeszcze nie ma — a okno
- * pokazujące wtedy pustą listę wypowiedzi mówiłoby „nikt nic nie powiedział"
- * zamiast „nie udało się zapytać".
+ * Stan treści okien modułu Roundtable — wiązanie wspólnego nośnika z przedrostkiem klas dr,
+ * ze stanem błędu koniecznym przy odmowie debaty.
  */
 import { utworzStanTresci as utworzWspolny, type StanTresci } from '../../komponenty/stan-tresci';
 
 export type { StanTresci };
 
-/** Nośnik stanu treści okna Roundtable. */
+/** Nośnik stanu treści okna Roundtable, złożony z nośnika wspólnego przy pomocy przedrostka klas modułu. */
 export function utworzStanTresci(): StanTresci {
   return utworzWspolny('dr');
 }

@@ -1,10 +1,7 @@
-/* ============================================================================
-   SKŁADNIK — BANER KOMUNIKATU
-
-   Głowa nazywa rzecz, treść mówi, co z niej wynika albo co zrobić. Wygląd
-   wnosi składnik biblioteki `.dn-alert` w wariancie ze wstęgą: barwa stanu
-   obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan kształtem —
-   barwa jako jedyna różnica nie wystarcza (WCAG 1.4.1).
+/* Baner komunikatu przedstawia stan komunikatu — informację, ostrzeżenie, błąd albo potwierdzenie sukcesu — łącząc głowę nazywającą rzecz z treścią opisującą skutek albo zalecane działanie.
+   Wygląd wnosi składnik biblioteki `.dn-alert` w wariancie ze wstęgą: barwa
+   stanu obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan
+   kształtem, bo barwa jako jedyna różnica nie wystarcza (norma WCAG 1.4.1).
 
    Właściwości:
      rodzaj  'informacja' | 'ostrzezenie' | 'blad' | 'sukces'

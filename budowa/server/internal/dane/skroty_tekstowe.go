@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: słownik skrótów tekstowych (tabela `skrot_tekstowy`,
-// migracja 293) — rodzina `snippet.*`.
-//
-// Skrót rozwija się we wszystkich polach tekstowych platformy, więc słownik
-// należy do rdzenia. Profil pusty znaczy skrót wspólny; zapisuje się pustym
-// napisem, nie NULL, bo warunek UNIQUE nad kolumną dopuszczającą NULL nie
-// pilnowałby niczego.
+// Odpowiedzialność pliku: słownik skrótów tekstowych, rodzina komend snippet.*; skrót rozwija się we wszystkich polach tekstowych platformy.
 package dane
 
 import (
@@ -15,7 +9,7 @@ import (
 	"strings"
 )
 
-// SkrotTekstowy to wiersz tabeli `skrot_tekstowy`.
+// SkrotTekstowy to wiersz tabeli skrot_tekstowy, niosący kod, treść rozwinięcia i profil tego samego skrótu.
 type SkrotTekstowy struct {
 	Kod            string
 	ProfilKod      string
@@ -28,7 +22,7 @@ type SkrotTekstowy struct {
 	Zaktualizowano int64
 }
 
-// RepozytoriumSkrotow jest kontraktem słownika skrótów tekstowych.
+// RepozytoriumSkrotow jest kontraktem słownika skrótów tekstowych dla wszystkich warstw wyższych rdzenia.
 type RepozytoriumSkrotow interface {
 	ZapiszSkrotTekstowy(ctx context.Context, skrot SkrotTekstowy) (SkrotTekstowy, error)
 	SkrotTekstowyPoKodzie(ctx context.Context, kod string) (SkrotTekstowy, error)
@@ -62,12 +56,12 @@ type repozytoriumSkrotow struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumSkrotow zakłada słownik skrótów nad bazą zestawu.
+// noweRepozytoriumSkrotow zakłada słownik skrótów nad wspólną bazą tego samego zestawu, gotowy do użycia.
 func noweRepozytoriumSkrotow(z *zapytania, db *sql.DB) *repozytoriumSkrotow {
 	return &repozytoriumSkrotow{zapytania: z, db: db}
 }
 
-// ZapiszSkrotTekstowy zakłada skrót albo nadpisuje zastany po kodzie.
+// ZapiszSkrotTekstowy zakłada skrót albo nadpisuje zastany po kodzie, zwracając jego pełny stan po zapisie.
 func (r *repozytoriumSkrotow) ZapiszSkrotTekstowy(ctx context.Context,
 	skrot SkrotTekstowy) (SkrotTekstowy, error) {
 
@@ -88,7 +82,7 @@ func (r *repozytoriumSkrotow) ZapiszSkrotTekstowy(ctx context.Context,
 	return r.SkrotTekstowyPoKodzie(ctx, skrot.Kod)
 }
 
-// SkrotTekstowyPoKodzie zwraca jedną pozycję słownika.
+// SkrotTekstowyPoKodzie zwraca jedną pozycję słownika po jej kodzie zewnętrznym, wraz z jej pełną treścią.
 func (r *repozytoriumSkrotow) SkrotTekstowyPoKodzie(ctx context.Context,
 	kod string) (SkrotTekstowy, error) {
 
@@ -170,7 +164,7 @@ func (r *repozytoriumSkrotow) UsunSkrotTekstowy(ctx context.Context, kod string)
 	return usuniete > 0, nil
 }
 
-// odczytajSkrotTekstowy przekłada wiersz na pozycję słownika.
+// odczytajSkrotTekstowy przekłada wiersz tabeli na pozycję słownika, kolumna po kolumnie tego zapytania.
 func odczytajSkrotTekstowy(s skaner) (SkrotTekstowy, error) {
 	var skrot SkrotTekstowy
 	var opis sql.NullString

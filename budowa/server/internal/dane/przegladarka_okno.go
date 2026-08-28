@@ -1,22 +1,5 @@
-// Odpowiedzialność pliku: jedno pytanie, na które musi umieć odpowiedzieć cały
-// obszar Browser — czy moduł w ogóle zna wskazane okno operacyjne.
-//
-// Wykazy `browser.source.list` i `browser.note.list` rozróżniają dzięki temu
-// pytaniu dwie sytuacje, które bez niego wyglądałyby identycznie: „okno
-// przeglądania jest, tylko nic w nim jeszcze nie zebrano" (wykaz pusty,
-// odpowiedź udana) oraz „takiego okna moduł nigdy nie widział" (odmowa
-// `not_found`). Bez osobnego sprawdzenia obie drogi kończyłyby się tą samą
-// pustą tablicą.
-//
-// Śladem jest każda z trzech tabel modułu, nie sama migawka. Okno staje się
-// znane pierwszą nawigacją, ale równie dobrze pierwszym `browser.source.add`
-// albo `browser.note.add` — żadna z tych komend nie wymaga poprzedniczki.
-// Pytanie patrzące wyłącznie na `migawka_strony` odrzuciłoby jako nieznane
-// okno zasilone samym źródłem.
-//
-// Pytanie nie sięga katalogu okien operacyjnych. Adapter modułu Browser ma
-// jedną zależność — własne repozytorium — więc „znane" znaczy „znane modułowi
-// Browser", nie „istniejące w tabeli okien".
+// Plik sprawdza, czy moduł przeglądania stron zna wskazane okno operacyjne,
+// przez jedno zapytanie o ślad w trzech tabelach: migawek, źródeł i notatek.
 package dane
 
 import (

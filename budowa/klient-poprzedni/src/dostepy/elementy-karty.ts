@@ -1,16 +1,13 @@
 /**
  * Powtarzalne elementy kart sekcji dostępów: przycisk czynności, plakietka
- * znaku i rozpychacz nagłówka.
- *
- * Jedno miejsce budowy tych elementów utrzymuje spójny wygląd karty punktu,
- * wiersza nadania i obszaru dodawania katalogu.
- *
- * Wygląd pochodzi wyłącznie z klas biblioteki `komponenty/` i z klas
- * modyfikujących podanych przez wywołującego — plik nie zna barw, odstępów
- * ani reguł widoku.
+ * znaku i rozpychacz nagłówka. Wygląd pochodzi wyłącznie z klas biblioteki
+ * `komponenty/` oraz z klas modyfikujących podanych przez wywołującego.
  */
 
-/** Przycisk czynności karty; klasy wyglądu podaje wywołujący. */
+/**
+ * Przycisk czynności karty. Element ma ustawiony `type`, więc naciśnięcie nie
+ * wysyła formularza, a komplet klas wyglądu podaje wywołujący.
+ */
 export function przyciskKarty(tresc: string, klasa: string): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';
@@ -30,7 +27,10 @@ export function plakietkaZnaku(tresc: string, klasa: string, klasaMiejsca: strin
   return element;
 }
 
-/** Rozpychacz nagłówka: odsuwa czynności na prawą krawędź wiersza. */
+/**
+ * Rozpychacz nagłówka karty: pusty element rozciągliwy, który odsuwa czynności
+ * na prawą krawędź wiersza. Szerokość wynika z klasy podanej przez wywołującego.
+ */
 export function rozpychaczNaglowka(klasa: string): HTMLElement {
   const element = document.createElement('span');
   element.className = klasa;

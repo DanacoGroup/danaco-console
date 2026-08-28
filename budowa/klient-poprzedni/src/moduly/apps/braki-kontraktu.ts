@@ -2,51 +2,24 @@ import { KOMENDY } from '../../../../shared/contract';
 import { pokazKomunikat } from '../../aplikacja/komunikaty';
 
 /**
- * Funkcje panelu akcji, dla których kontrakt nie ma komendy — z powodem
- * składanym z kontraktu w czasie działania, nie wpisanym na stałe.
- *
- * Panele akcji okien Apps wymieniają więcej czynności, niż obszar `apps` niesie
- * komend. Czynność bez komendy zostaje widoczna i klikalna, a naciśnięcie mówi,
- * czego brakuje.
- *
- * Powód składa się z `KOMENDY` w `shared/contract.ts` przy składaniu okna, więc
- * dopisanie komendy do kontraktu przepisuje zdanie samo. Wobec bliźniaczego
- * pliku modułu Diagnostics (`moduly/diagnostics/braki-kontraktu.ts`) dochodzą
- * tu dwie rzeczy:
- *   — pozycja znika sama, gdy wskazana komenda wejdzie do kontraktu
- *     (`komendaZnoszaca`),
- *   — wskazanie cudzej drogi jest sprawdzane (`komendyCudze`): zdanie o komendzie
- *     z innego obszaru pada wyłącznie wtedy, gdy ta komenda stoi w wykazie;
- *     w przeciwnym razie zdanie mówi o jej zniknięciu.
- *
- * Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje — brak jest po
- * stronie kontraktu i tylko o kontrakcie zdanie mówi.
+ * Funkcje panelu akcji, dla których kontrakt nie ma komendy, niosą powód składany z kontraktu
+ * w czasie działania, więc dopisanie komendy przepisuje zdanie samo.
  */
 export interface BrakFunkcji {
   /** Nazwa czynności tak, jak wymienia ją panel akcji okna. */
   etykieta: string;
-  /**
-   * Czego by trzeba — zdanie własne okna, mówiące o czynności i o bytach
-   * kontraktu, których dotyczy. O stanie kontraktu nie orzeka niczego; to
-   * dokłada się niżej z wykazu komend.
-   */
+  /** Czego by trzeba — zdanie własne okna o czynności i bytach kontraktu, których dotyczy. */
   czego: string;
-  /**
-   * Nazwa komendy, której wejście do kontraktu znosi ten brak. Pozycja z taką
-   * komendą już obecną w `KOMENDY` nie trafia do wykazu wcale.
-   *
-   * Pominięta znaczy „nie wiadomo, jak taka komenda miałaby się nazywać".
-   */
+  /** Nazwa komendy znoszącej ten brak; pominięta znaczy, że nie wiadomo, jak by się nazywała. */
   komendaZnoszaca?: string;
-  /**
-   * Komendy z innych obszarów, które tę czynność prowadzą. Sprawdzane w wykazie
-   * przy składaniu okna: obecne wchodzą do zdania jako droga istniejąca, ale
-   * cudza; nieobecne wchodzą jako wskazanie, które przestało być prawdziwe.
-   */
+  /** Komendy z innych obszarów prowadzące tę czynność, sprawdzane w wykazie przy składaniu okna. */
   komendyCudze?: readonly string[];
 }
 
-/** Komendy obszaru odczytane z kontraktu w czasie działania, uporządkowane. */
+/**
+ * Komendy obszaru odczytane z kontraktu w czasie działania aplikacji, posortowane w kolejności
+ * alfabetycznej dla czytelności wykazu.
+ */
 function komendyObszaru(obszar: string): readonly string[] {
   const przedrostek = `${obszar}.`;
   return [...(KOMENDY as readonly string[])]
@@ -54,12 +27,15 @@ function komendyObszaru(obszar: string): readonly string[] {
     .sort();
 }
 
-/** Czy kontrakt niesie dziś tę komendę. */
+/**
+ * Czy kontrakt niesie dziś tę komendę, sprawdzane wprost w wykazie komend odczytanym z kontraktu
+ * w czasie działania.
+ */
 function czyWKontrakcie(komenda: string): boolean {
   return (KOMENDY as readonly string[]).includes(komenda);
 }
 
-/** Obszar komendy — człon przed pierwszą kropką. */
+/** Obszar komendy — człon przed pierwszą kropką w pełnej nazwie komendy zapisanej dziś w kontrakcie obszaru. */
 function obszarKomendy(komenda: string): string {
   const kropka = komenda.indexOf('.');
   return kropka < 0 ? komenda : komenda.slice(0, kropka);
@@ -116,11 +92,8 @@ export function brakiCzynne(braki: readonly BrakFunkcji[]): readonly BrakFunkcji
 }
 
 /**
- * Wykaz czynności bez drogi w kontrakcie, osadzany w przyborniku okna.
- *
- * Każda pozycja jest przyciskiem. Naciśnięcie nie wysyła nic — pokazuje dymek
- * nazywający brakującą komendę. Wykaz bez czynnych pozycji nie stawia nagłówka:
- * „Bez drogi w kontrakcie" nad niczym byłoby zdaniem o braku, którego nie ma.
+ * Wykaz czynności bez drogi w kontrakcie, osadzany w przyborniku okna, nie stawia nagłówka nad
+ * pustym zbiorem pozycji czynnych.
  */
 export function utworzWykazBrakow(
   tytul: string,
@@ -147,7 +120,7 @@ export function utworzWykazBrakow(
   return element;
 }
 
-/** Jedna czynność bez komendy: przycisk odpowiadający dymkiem. */
+/** Jedna czynność bez komendy w kontrakcie tworzy przycisk odpowiadający dymkiem, tytułem i opisem dla czytnika ekranu. */
 function pozycja(brak: BrakFunkcji, obszar: string): HTMLElement {
   const powod = powodBraku(brak, obszar);
 
@@ -156,8 +129,7 @@ function pozycja(brak: BrakFunkcji, obszar: string): HTMLElement {
   przycisk.className = 'dn-btn dn-btn--duch dn-btn--sm';
   przycisk.textContent = brak.etykieta;
   przycisk.dataset['brak'] = brak.etykieta;
-  // Powód idzie równolegle trzema drogami — dymek, podpowiedź i opis dla
-  // czytnika ekranu — bo dymek widzi wyłącznie ten, kto naciśnie.
+  // Powód idzie równolegle trzema drogami: dymek, podpowiedź i opis dla czytnika ekranu.
   przycisk.title = powod;
   przycisk.setAttribute('aria-description', powod);
   przycisk.addEventListener('click', () => {

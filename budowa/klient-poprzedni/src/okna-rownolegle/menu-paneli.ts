@@ -3,41 +3,15 @@ import { BRAK_KANALU, WYKAZ_NAGLOWEK, etykietaPozycji, zdanieOBrakach } from './
 import './menu.css';
 
 /**
- * Treść menu `⋮` w nagłówku okna rozmowy — sekcja „Panele".
- *
- * Wiersz wykazu ma stały układ: znacznik otwarcia, ikona pozycji, nazwa
- * z przeznaczeniem, skrót klawiaturowy po prawej. Same pozycje przychodzą
- * z zewnątrz przez `OpcjeMenuPaneli.pozycje`, więc zmiana spisu paneli nie
- * dotyka tego pliku.
- *
- * W menu stoją wyłącznie pozycje, które realnie się otworzą, i każda jest
- * klikalna — brak dostępnej pozycji skraca wykaz, zamiast stawiać w nim wiersz
- * nieczynny. Żeby brak nie zniknął po cichu, pod wykazem stoi jedno zdanie
- * mówiące, ilu pozycji spisu nie da się otworzyć; przy `nieotwieralne === 0`
- * zdania nie ma wcale.
- *
- * Miejsce na znacznik otwarcia jest zajęte zawsze — przełączenie panelu zmienia
- * jego widoczność, nie szerokość wiersza, więc nazwy nie skaczą w poziomie.
- *
- * Skrót klawiaturowy jest tu wyłącznie napisem: ten plik niczego nie nasłuchuje
- * i nie rejestruje żadnego klawisza globalnie.
- *
- * Działania sesji nie są panelami i nie powstają tutaj. `sekcjeDalsze` doklejają
- * się za kreską, a kreska rysuje się tylko wtedy, gdy jest co za nią postawić.
- *
- * `PozycjaMenu` jest typem własnym, zgodnym strukturalnie
- * z `okna-pomocnicze/panele-otwieralne.ts`; rozjazd obu kształtów zatrzyma
- * kompilator na przypisaniu u odbiorcy.
+ * Treść menu w nagłówku okna rozmowy dla sekcji Panele pokazuje wyłącznie pozycje, które realnie się otworzą, każda klikalna, ze skrótem klawiaturowym wyłącznie jako napisem, a typ pozycji jest zgodny strukturalnie z rejestrem paneli otwieralnych.
  */
-
-/** Pozycja, którą menu potrafi otworzyć. Zgodna strukturalnie z `okna-pomocnicze/panele-otwieralne.ts`. */
 export interface PozycjaMenu {
   kod: string;
   nazwa: string;
   przeznaczenie: string;
   /** Ikona własna pozycji, po lewej przy nazwie. */
   ikona?: NazwaIkony;
-  /** Skrót klawiaturowy do pokazania, np. `Ctrl+⇧+F`. Nic go tu nie podpina. */
+  /** Skrót klawiaturowy pokazywany jako napis obok pozycji menu; ten plik go w ogóle nie podpina. */
   skrot?: string;
 }
 
@@ -104,8 +78,7 @@ export function utworzMenuPaneli(opcje: OpcjeMenuPaneli): MenuPaneli {
       wiersz.setAttribute('aria-label', etykietaPozycji(nazwa, otwarty));
     }
 
-    // Trzy różne prawdy, trzy różne zdania: nie ma czego otworzyć w ogóle,
-    // część spisu czeka na kanał, albo spis jest domknięty i zdania nie ma.
+    // Trzy różne prawdy, trzy zdania: nic czego otworzyć, część czeka na kanał, spis jest zamknięty.
     if (opcje.pozycje.length === 0) {
       braki.hidden = false;
       braki.textContent = BRAK_KANALU;
@@ -132,7 +105,7 @@ export function utworzMenuPaneli(opcje: OpcjeMenuPaneli): MenuPaneli {
   };
 }
 
-/** Jeden wiersz wykazu: ptaszek · ikona · nazwa i przeznaczenie · skrót. */
+/** Jeden wiersz wykazu menu: znacznik otwarcia, ikona, nazwa z przeznaczeniem oraz skrót klawiaturowy po prawej. */
 function zbudujWiersz(pozycja: PozycjaMenu, naWybor: () => void): HTMLElement {
   const wiersz = document.createElement('button');
   wiersz.type = 'button';
@@ -142,8 +115,7 @@ function zbudujWiersz(pozycja: PozycjaMenu, naWybor: () => void): HTMLElement {
   wiersz.dataset.nazwa = pozycja.nazwa;
   wiersz.title = pozycja.przeznaczenie;
 
-  // Miejsce znacznika zajęte zawsze — inaczej wiersze skakałyby w poziomie
-  // przy każdym przełączeniu panelu.
+  // Miejsce znacznika jest zajęte zawsze, inaczej wiersze skakałyby w poziomie przy każdym przełączeniu.
   const znacznik = document.createElement('span');
   znacznik.className = 'dn-menu-paneli__ptaszek';
   znacznik.append(elementIkony('ptaszek', { rozmiar: 14 }));

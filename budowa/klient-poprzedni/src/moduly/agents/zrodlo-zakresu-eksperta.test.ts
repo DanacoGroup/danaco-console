@@ -9,21 +9,10 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { utworzZrodloZakresuEksperta } from './zrodlo-zakresu-eksperta';
 
 /**
- * Sprawdziany warstwy klienckiej zakresu działania eksperta.
- *
- * Główny pilnuje jednej rzeczy: czy KAŻDA komenda dołożona rdzeniowi ma drogę
- * z okna. Wykaz nie jest tu przepisany z pamięci — powstaje z wywołań źródła,
- * a porównywany jest ze stałymi kontraktu, więc komenda, którą ktoś kiedyś
- * z okna wyjmie, zostanie tu nazwana.
- *
- * Pozostałe dotyczą rozstrzygnięć, które warstwa kliencka podejmuje sama
- * i które łatwo cofnąć nieuważną poprawką. Wszystkie sprowadzają się do jednej
- * zasady: ZBIÓR PUSTY BYWA ŻĄDANIEM, a pole pominięte znaczy „bez zmiany".
- * Pomylenie tych dwóch rzeczy w tę stronę odbiera ekspertowi wszystko, w tamtą
- * — nie zdejmuje niczego.
+ * Kanał próbny sprawdzianów zakresu działania eksperta: zapamiętuje wysłane
+ * komendy wraz z żądaniami i oddaje odpowiedź pustą albo tę, którą wskazano
+ * przy zakładaniu kanału.
  */
-
-/** Kanał próbny: zapamiętuje komendy wraz z żądaniami i oddaje odpowiedź pustą. */
 function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   kanal: Kanal;
   wyslane: string[];
@@ -46,7 +35,10 @@ function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   return { kanal, wyslane, zadania };
 }
 
-/** Wywołuje każdą czynność źródła raz — pełny przelot obszaru. */
+/**
+ * Wywołuje każdą czynność źródła zakresu jeden raz, składając pełny przelot
+ * obszaru; wykaz komend wysłanych powstaje z tego przelotu, a nie z pamięci.
+ */
 async function przelotZakresu(kanal: Kanal): Promise<void> {
   const zrodlo = utworzZrodloZakresuEksperta(kanal);
 

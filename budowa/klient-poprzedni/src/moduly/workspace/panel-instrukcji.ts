@@ -17,20 +17,8 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Instructions Panel — okno pomocnicze modułu Workspace: edycja instrukcji
- * systemowych i przypisanie ich do projektu.
- *
- * Instrukcje obowiązują domyślnie w zakresie projektu, a współdzieleniem jest
- * poziom zasięgu: zapis na poziomie szerszym niż projekt obowiązuje w każdym
- * projekcie tego zasięgu.
- *
- * Dziedziczenie warstwowe panel pokazuje, ale go nie przelicza. Warstwę
- * obowiązującą rozstrzyga rdzeń i oddaje ją w wyniku zapisu wraz ze wskazaniem
- * poziomu, z którego pochodzi; drugi rozstrzygacz po stronie okna rozjechałby
- * się z rdzeniem przy pierwszej zmianie reguł.
- *
- * „Podgląd warstwy” pyta `config.get` o zapis jednego poziomu. To odczyt, nie
- * rozstrzyganie: odpowiada na pytanie, czy ta warstwa ma własną treść.
+ * Instructions Panel to okno pomocnicze modułu Workspace: edycja instrukcji systemowych
+ * i przypisanie ich do projektu na poziomie zasięgu.
  */
 export interface OknoInstrukcji {
   element: HTMLElement;
@@ -51,8 +39,7 @@ export function utworzOknoInstrukcji(
   });
   const tresc = utworzStanTresci();
 
-  // Wykaz poziomów bierze się z jednej prawdy modułu (`poziomy-zasiegu.ts`),
-  // więc ta sama nastawa nazywa się tu tak samo jak w obu panelach pamięci.
+  // Wykaz poziomów bierze się z jednej prawdy modułu, nastawa nazywa się jak w panelach pamięci.
   const poziom = wybor(
     'Poziom zasięgu instrukcji',
     POZIOMY_ZASIEGU.map(([wartosc, opis]) => [wartosc, opis]),
@@ -82,8 +69,7 @@ export function utworzOknoInstrukcji(
       Command.WorkspaceInstructionsVersionList,
       Command.WorkspaceInstructionsVersionRestore,
     ),
-    // Bez nazwy komendy, bo żadna jej nie nosi. Nazwa wpisana „na zapas”
-    // przedstawiałaby Operatorowi wymyślony identyfikator jako kandydata.
+    // Bez nazwy komendy, bo żadna jej nie nosi — nazwa na zapas przedstawiałaby wymyślony identyfikator.
     braki.przyciskBraku('Test w Chat', 'Próbne przekazanie instrukcji do okna rozmowy'),
     plik,
   );
@@ -95,11 +81,7 @@ export function utworzOknoInstrukcji(
     tresc.element,
   );
 
-  /**
-   * Licznik długości instrukcji. Opracowanie wymienia obok liczby znaków także
-   * przybliżoną liczbę tokenów — tej okno nie pokazuje, bo nie ma tokenizatora
-   * modelu, a liczba oszacowana regułą własną byłaby miarą wymyśloną, nie zmierzoną.
-   */
+  /** Licznik długości instrukcji nie pokazuje liczby tokenów, bo nie ma tokenizatora modelu. */
   function pokazDlugosc(): void {
     rama.ustawZnacznik(`znaki: ${edytor.value.length}`);
   }
@@ -137,8 +119,7 @@ export function utworzOknoInstrukcji(
         }
         const zapisane = wynik.wynik.instructions;
         pokazWarstwe(zapisane);
-        // Potwierdzenie mówi to, co oddał rdzeń: samo przyjęcie wywołania nie
-        // dowodzi, że zapisana treść jest tą, którą wysłał edytor.
+        // Potwierdzenie mówi to, co oddał rdzeń: przyjęcie wywołania nie dowodzi, że zapisano wysłaną treść.
         const rozjazd =
           zapisane.scope === (poziom.value as ConfigScope) && zapisane.content !== edytor.value;
         tresc.potwierdzenie(
@@ -159,14 +140,10 @@ export function utworzOknoInstrukcji(
         tresc.blad('Rdzeń nie oddał zapisu tej warstwy.', wynik.blad);
         return;
       }
-      // Klucz brany ze stałej, którą wysłano w zapytaniu — napis przepisany
-      // ręcznie rozjechałby się z nią przy pierwszej zmianie i okno meldowałoby
-      // brak zapisu na warstwie, która zapis ma.
+      // Klucz brany ze stałej, którą wysłano w zapytaniu — napis ręczny rozjechałby się z nią przy zmianie.
       const wpis = wynik.wynik.find((pozycja) => pozycja.key === KLUCZ_INSTRUKCJI);
       if (wpis === undefined) {
-        // Rdzeń oddał wykaz bez tego klucza — i tylko to wynika z odpowiedzi.
-        // Reguły rozstrzygania warstw ta odpowiedź nie niesie, więc okno o niej
-        // nie orzeka.
+        // Rdzeń oddał wykaz bez tego klucza, i tylko to wynika z odpowiedzi; reguł warstw okno nie orzeka.
         tresc.pusto(
           `Rdzeń nie oddał na tej warstwie zapisu klucza ${KLUCZ_INSTRUKCJI} ` +
             `(config.get, poziom ${poziom.value}). Warstwę obowiązującą rozstrzyga rdzeń ` +
@@ -175,8 +152,7 @@ export function utworzOknoInstrukcji(
         return;
       }
       edytor.value = typeof wpis.value === 'string' ? wpis.value : JSON.stringify(wpis.value);
-      // Zapis z kodu nie wywołuje zdarzenia `input`, więc licznik trzeba
-      // przeliczyć wprost — inaczej pokazywałby długość treści poprzedniej.
+      // Zapis z kodu nie wywołuje zdarzenia wejścia, licznik trzeba przeliczyć wprost, inaczej pokaże stare.
       pokazDlugosc();
       tresc.potwierdzenie('Treść tej warstwy wczytana do edytora.', true);
     });
@@ -190,8 +166,7 @@ export function utworzOknoInstrukcji(
   });
 
   eksport.addEventListener('click', () => {
-    // Pusty edytor daje pusty plik, więc eksport odmawia zamiast potwierdzać
-    // czynność, która nie ma czego wykonać.
+    // Pusty edytor daje pusty plik, więc eksport odmawia zamiast potwierdzać czynność bez treści.
     if (edytor.value === '') {
       tresc.potwierdzenie('Edytor jest pusty — nie ma czego wyeksportować.', false);
       return;
@@ -210,8 +185,7 @@ export function utworzOknoInstrukcji(
     void wybrany.text().then((zawartosc) => {
       edytor.value = zawartosc;
       pokazDlugosc();
-      // Wskazanie kontrolki plikowej trzeba wyczyścić, inaczej ponowny wybór
-      // tego samego pliku nie wywoła zdarzenia `change` i import przejdzie bez śladu.
+      // Wskazanie kontrolki plikowej trzeba wyczyścić, inaczej wybór tego samego pliku przejdzie bez śladu.
       plik.value = '';
       tresc.potwierdzenie(`Wczytano ${wybrany.name}; zapis pozostaje osobną decyzją.`, true);
     });

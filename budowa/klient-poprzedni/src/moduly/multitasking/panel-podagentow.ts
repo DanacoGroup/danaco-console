@@ -5,17 +5,10 @@ import { PRZEDROSTEK } from './kontrolki';
 import type { ZrodloPodagentow } from './zrodlo-podagentow';
 
 /**
- * Treść panelu Subagent Network — żywy wykaz podagentów okna wykonawcy.
- *
- * Dokłada się do wytwórni panelu (`panel-subagent-network.ts:
- * utworzPanelPodagentow`) jako sekcja domyślnie zamknięta (`<details>`), żeby
- * nie przykrywać definicji podagentów i kontrolek, które panel niesie wyżej.
- *
- * Zatrzymanie idzie komendą `subagent.stop` na wskazanym podagencie: tura okna
- * i podagenci niewskazani zostają nietknięci.
- *
- * Odmowa mówi, co się nie stało i czym to zmienić; wykaz pusty jest krótszą
- * listą, nie bramką.
+ * Treść panelu Subagent Network jest żywym wykazem podagentów okna wykonawcy,
+ * domyślnie zamkniętym, żeby nie przykrywać definicji i kontrolek panelu
+ * wyżej; zatrzymanie działa na wskazanym podagencie, a wykaz pusty jest
+ * krótszą listą, nie bramką.
  */
 export interface TrescPodagentow {
   /** Odpina nasłuch `subagent.changed`; woła je zamknięcie okna wykonawcy. */
@@ -33,7 +26,7 @@ export interface OpcjeTresciPodagentow {
   potwierdz(zdanie: string, udane: boolean): void;
 }
 
-/** Stan podagenta po polsku — słownik `SubagentStatus` kontraktu. */
+/** Stan podagenta wyrażony po polsku — słownik stanów kontraktu, jeden wpis na każdy możliwy stan podagenta. */
 const NAZWY_STANOW: Readonly<Record<SubagentStatus, string>> = {
   [SubagentStatus.Pending]: 'oczekuje',
   [SubagentStatus.Running]: 'w toku',
@@ -42,7 +35,7 @@ const NAZWY_STANOW: Readonly<Record<SubagentStatus, string>> = {
   [SubagentStatus.Stopped]: 'zatrzymany',
 };
 
-/** Górna długość wyniku pokazywanego w wierszu; całość niesie `title`. */
+/** Górna długość wyniku pokazywanego w wierszu wykazu; całość niesie atrybut tytułu tego elementu wiersza. */
 const SKROT_WYNIKU = 160;
 
 export function utworzTrescPodagentow(opcje: OpcjeTresciPodagentow): TrescPodagentow {
@@ -69,13 +62,7 @@ export function utworzTrescPodagentow(opcje: OpcjeTresciPodagentow): TrescPodage
   pasek.className = 'dm-podagenci-zywi__pasek';
   pasek.append(odswiezenie, zbieranie);
 
-  // Wykaz słucha, zamiast odpytywać: rdzeń rozgłasza `subagent.changed` przy
-  // powołaniu, wejściu w bieg, zakończeniu i zatrzymaniu. Przycisk „Odśwież
-  // wykaz" zostaje, bo zdarzenie mówi o zmianie, a nie o stanie zastanym,
-  // i po ponownym nawiązaniu łącza wykaz trzeba odczytać raz od nowa.
-  //
-  // Sito po oknie stoi tutaj, bo zdarzenie idzie do wszystkich słuchaczy:
-  // panel wykonawcy nie ma odświeżać się na cudzym podagencie.
+  // Wykaz słucha, zamiast odpytywać; sito po oknie stoi tu, bo zdarzenie idzie do wszystkich słuchaczy.
   const odsubskrybuj = opcje.podagenci.naPodagenta((tresc) => {
     const okno = opcje.okno();
     if (okno === '' || tresc.subagent.windowId !== okno) return;
@@ -89,8 +76,7 @@ export function utworzTrescPodagentow(opcje: OpcjeTresciPodagentow): TrescPodage
     'Tura okna i podagenci niewskazani zostają nietknięci; podagent już zakończony ' +
     'nie jest błędem — rdzeń zwraca go w wykazie nieczynnych.';
 
-  // Sekcja jest domyślnie zamknięta: panel niesie wyżej definicje podagentów
-  // i kontrolki wytwórni, a żywy wykaz otwiera Operator, gdy praca w tle biegnie.
+  // Sekcja jest domyślnie zamknięta, a żywy wykaz otwiera się, gdy praca w tle biegnie.
   const element = document.createElement('details');
   element.className = 'dm-podagenci-zywi';
   element.append(tytul, pasek, lista, oDrodze);
@@ -140,14 +126,7 @@ export function utworzTrescPodagentow(opcje: OpcjeTresciPodagentow): TrescPodage
     pokaz(wynik.wynik.subagents, 'Zbieranie nie zastało ani jednego podagenta.');
   }
 
-  /**
-   * Zatrzymanie wskazanego podagenta komendą `subagent.stop`.
-   *
-   * Zdanie powstaje z odpowiedzi rdzenia, a nie z żądania: rdzeń oddaje osobno
-   * tych, których zatrzymał (`stopped`), i tych, którzy w chwili wywołania nie
-   * pracowali (`notRunning`) — drugi przypadek nie jest błędem i panel go tak
-   * nie nazywa.
-   */
+  // Zdanie powstaje z odpowiedzi rdzenia, nie z żądania; podagent niepracujący nie jest błędem.
   async function zatrzymaj(podagent: Subagent): Promise<void> {
     const okno = opcje.okno();
     if (okno === '') {
@@ -214,7 +193,7 @@ export function utworzTrescPodagentow(opcje: OpcjeTresciPodagentow): TrescPodage
   };
 }
 
-/** Jeden wiersz wykazu: nazwa, stan z czasem i wynikiem, przycisk zatrzymania. */
+/** Jeden wiersz wykazu: nazwa, stan z czasem i wynikiem, wraz z przyciskiem zatrzymania tego podagenta. */
 function wierszPodagenta(
   podagent: Subagent,
   teraz: number,
@@ -237,7 +216,7 @@ function wierszPodagenta(
   return element;
 }
 
-/** Zdanie opisu wiersza: stan · czas · wynik (skrócony). */
+/** Zdanie opisu wiersza: stan, czas trwania i skrócony wynik pracy tego konkretnego podagenta wykonawcy. */
 function opisPodagenta(podagent: Subagent, teraz: number): string {
   const czesci = [
     NAZWY_STANOW[podagent.status] ?? podagent.status,

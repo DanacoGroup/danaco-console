@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: `speech.audio.upload` i `speech.audio.fetch` —
-// przyjęcie bajtów nagrania i oddanie ich z powrotem.
-//
-// ── Jaki brak to zamyka ─────────────────────────────────────────────────────
-// `speech.transcribe` bierze `audioRef`, czyli ŚCIEŻKĘ PLIKU na maszynie
-// silnika. Nagranie z mikrofonu istnieje wyłącznie jako bajty w pamięci karty.
-// Bez drogi z bajtów na ścieżkę ani dyktowanie w oknie komunikacji, ani
-// mikrofon Voice Console nie mają czym dojechać do silnika — jedna komenda
-// otwiera obie drogi naraz.
-//
-// Odnośnikiem nagrania jest ścieżka pliku, a nie własny identyfikator. To
-// rozstrzygnięcie, nie wygoda: taką postać przyjmuje `speech.transcribe`
-// i taką oddaje `translate.speech.synthesize`, więc drugi rodzaj odnośnika
-// wymagałby przekładu w każdym miejscu styku i pierwszej pomyłki przy okazji.
-//
-// ── Dźwięk nie opuszcza maszyny rdzenia ─────────────────────────────────────
-// Bajty idą do magazynu pod katalogiem danych rdzenia i nigdzie indziej.
-// `speech.audio.fetch` oddaje je z powrotem tej samej karcie — po to jest
-// odsłuch. Poza tą drogą tam i z powrotem nagranie nie rusza się nigdzie.
-//
-// ── Odsłuch nie jest drogą do czytania dowolnego pliku ──────────────────────
-// `speech.audio.fetch` oddaje wyłącznie to, co rdzeń sam wystawił: nagranie
-// z rejestru (`nagranie_mowy`) albo plik leżący pod katalogiem danych rdzenia
-// — tam wpada też synteza mowy. Ścieżka spoza tych dwóch jest odmową
-// nazywającą powód. Bez tej granicy komenda odsłuchu byłaby komendą odczytu
-// dowolnego pliku serwera podaną pod inną nazwą.
+// Wypełnia `speech.audio.upload` i `speech.audio.fetch`: przyjmuje bajty
+// nagrania mowy, utrwala je w magazynie rdzenia pod katalogiem danych
+// i oddaje z powrotem wyłącznie nagrania, które rdzeń sam wystawił.
 package core
 
 import (
@@ -66,7 +43,9 @@ const (
 	kluczZapisuNagran = "mowa_zapis_nagran"
 )
 
-// PrzyjmijNagranie obsługuje `speech.audio.upload`.
+// PrzyjmijNagranie obsługuje `speech.audio.upload`: przyjmuje bajty nagrania
+// zakodowane base64, utrwala je w magazynie i zakłada wiersz rejestru
+// nagrań mowy.
 func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	z shared.SpeechAudioUploadRequest) (shared.SpeechAudioUploadResponse, error) {
 
@@ -132,15 +111,10 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 		return shared.SpeechAudioUploadResponse{}, bladZapleczaNagran(err.Error())
 	}
 
-	// Sprzątanie idzie przy okazji przyjęcia, a nie osobnym zegarem: nagrania
-	// przybywa wyłącznie wtedy, gdy ktoś mówi, więc to jedyna chwila, w której
-	// warto sprawdzić, czy coś już wygasło.
+	// Sprzątanie idzie przy okazji przyjęcia — jedyna pewna chwila na to.
 	a.posprzatajNagrania(ctx, teraz.UnixMilli())
 
-	// Odcinek przysłany przez okno z czynnym nasłuchem idzie od razu do
-	// rozpoznania i ogłoszenia. To jest właśnie „nasłuch ciągły rdzenia":
-	// strumień przychodzi odcinkami tą samą komendą, którą przychodzi
-	// pojedyncze polecenie głosowe, a rdzeń ogłasza, co w nim usłyszał.
+	// Odcinek nasłuchu idzie od razu do rozpoznania tą samą komendą.
 	if z.WindowId != nil {
 		a.ogloszOdcinekNasluchu(ctx, *z.WindowId, zapisane.Sciezka)
 	}
@@ -153,14 +127,9 @@ func (a *adapterMowy) PrzyjmijNagranie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// OddajNagranie obsługuje `speech.audio.fetch`.
-//
-// Wycinka czasowego rdzeń NIE wykonuje i nie udaje, że wykonuje. Wycięcie
-// fragmentu z zapisu skompresowanego (Opus w kontenerze WebM) wymaga
-// przekodowania, a przekodowanie to inny dźwięk niż ten, który przyszedł.
-// Pola `rangeStartMs` i `rangeEndMs` niesie kontrakt, więc żądanie z nimi jest
-// poprawne — odpowiada na nie odmowa nazywająca powód, a nie całe nagranie
-// podane jako żądany wycinek.
+// OddajNagranie obsługuje `speech.audio.fetch`. Wycinka czasowego rdzeń nie
+// wykonuje: żądanie z polami `rangeStartMs` i `rangeEndMs` kończy się odmową
+// nazywającą powód, nie całym nagraniem podanym jako wycinek.
 func (a *adapterMowy) OddajNagranie(ctx context.Context,
 	z shared.SpeechAudioFetchRequest) (shared.SpeechAudioFetchResponse, error) {
 
@@ -191,12 +160,9 @@ func (a *adapterMowy) OddajNagranie(ctx context.Context,
 }
 
 // rozstrzygnijOdnosnikNagrania sprawdza, czy odnośnik wolno odsłuchać, i oddaje
-// ścieżkę wraz z typem treści.
-//
-// Dwie drogi, obie zamknięte: wiersz rejestru nagrań przyjętych od okna albo
-// plik leżący pod katalogiem danych rdzenia (tam wpada synteza mowy). Ścieżka
-// spoza obu jest odmową uprawnienia, a nie brakiem zasobu: plik bywa na dysku
-// i właśnie dlatego odpowiedź ma powiedzieć, że rdzeń go nie wyda.
+// ścieżkę wraz z typem treści. Dwie drogi są zamknięte: wiersz rejestru nagrań
+// albo plik pod katalogiem danych rdzenia; ścieżka spoza obu jest odmową
+// uprawnienia.
 func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	odnosnik string) (string, string, error) {
 
@@ -234,12 +200,9 @@ func (a *adapterMowy) rozstrzygnijOdnosnikNagrania(ctx context.Context,
 	return sciezka, typTresciZeSciezki(sciezka), nil
 }
 
-// katalogNagran zakłada (gdy trzeba) katalog na przyjęte nagrania.
-//
-// Pusty katalog danych jest odmową, a nie powodem do wybrania czegoś z własnej
-// głowy: nagranie zapisane w katalogu bieżącym procesu wylądowałoby w miejscu
-// zależnym od tego, skąd rdzeń wystartowano. Ta sama zasada, co przy syntezie
-// mowy.
+// katalogNagran zakłada, gdy trzeba, katalog na przyjęte nagrania. Pusty
+// katalog danych jest odmową, a nie powodem do wybrania czegoś z własnej
+// głowy, tak samo jak przy syntezie mowy.
 func (a *adapterMowy) katalogNagran() (string, error) {
 	podstawa := strings.TrimSpace(a.katalogDanych)
 	if podstawa == "" {
@@ -293,12 +256,9 @@ func (a *adapterMowy) posprzatajNagrania(ctx context.Context, teraz int64) {
 	}
 }
 
-// typyTresciNagran wiąże typ treści przysłany przez okno z rozszerzeniem pliku,
-// które przyjmuje silnik mowy.
-//
-// Zbiór jest zamknięty i pokrywa się z `mowa.FormatyNagran`. Przepuszczenie
-// dowolnego typu dałoby okna wpływ na rozszerzenie pliku zakładanego przez
-// rdzeń, a rozszerzenie rozstrzyga o tym, czy silnik plik w ogóle otworzy.
+// typyTresciNagran wiąże typ treści przysłany przez okno z rozszerzeniem
+// pliku, które przyjmuje silnik mowy. Zbiór jest zamknięty i pokrywa się
+// z `mowa.FormatyNagran`.
 var typyTresciNagran = map[string]string{
 	"audio/wav":              ".wav",
 	"audio/x-wav":            ".wav",
@@ -315,7 +275,7 @@ var typyTresciNagran = map[string]string{
 
 // rozszerzenieNagrania przekłada typ treści na rozszerzenie pliku.
 //
-// Parametry typu (`;codecs=opus`) odcinamy przed dopasowaniem: przeglądarka
+// Parametry typu (`;codecs=opus`) odcina się przed dopasowaniem: przeglądarka
 // dokłada je sama, a rodzaj kontenera rozstrzyga człon przed średnikiem.
 func rozszerzenieNagrania(typTresci string) (string, error) {
 	klucz := strings.ToLower(strings.TrimSpace(typTresci))
@@ -352,19 +312,22 @@ func typTresciZeSciezki(sciezka string) string {
 	}
 }
 
-// bladWskazaniaNagrania nazywa niepoprawne żądanie rodziny nagrań.
+// bladWskazaniaNagrania nazywa niepoprawne żądanie rodziny nagrań: brak
+// bajtów, zły format albo odnośnik, którego rdzeń nie rozpoznaje.
 func bladWskazaniaNagrania(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nagrania mowy: "+powod))
 }
 
-// bladZapleczaNagran nazywa brak po stronie rdzenia.
+// bladZapleczaNagran nazywa brak po stronie rdzenia: nie wpięty rejestr
+// nagrań, brak katalogu danych albo usterka zapisu na dysku.
 func bladZapleczaNagran(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"nagrania mowy: "+powod))
 }
 
-// bladWycinkaNagrania nazywa odmowę wycięcia fragmentu.
+// bladWycinkaNagrania nazywa odmowę wycięcia fragmentu — rdzeń oddaje
+// wyłącznie nagranie w całości, nigdy zakresu czasowego.
 func bladWycinkaNagrania() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nagrania mowy: rdzeń nie wycina fragmentu nagrania — wycięcie z zapisu "+

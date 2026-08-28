@@ -1,13 +1,4 @@
-// Odpowiedzialność pliku: dwa obszary modułu Studio, w których zapisuje się to,
-// co ktoś o dokumencie POWIEDZIAŁ albo w nim ZMIENIŁ — komentarze redakcyjne
-// wraz z adnotacjami przy różnicach (tabela `komentarz_studio`) oraz zmiany
-// zarejestrowane przez śledzenie zmian (tabela `zmiana_sledzona_studio`).
-//
-// Komentarz i adnotacja dzielą tabelę, bo dzielą wszystkie kolumny poza jedną:
-// komentarz wisi przy zakresie znaków treści, adnotacja przy numerze fragmentu
-// porównania. Rozdzielenie ich na dwie tabele dałoby sześć kolumn powtórzonych
-// i zmusiłoby pytanie „co ktoś napisał przy tym dokumencie" do sumy dwóch
-// zapytań. Rodzaj wiersza rozstrzyga kolumna `rodzaj`.
+// Odpowiedzialność pliku: dwa obszary modułu Studio, komentarze redakcyjne z adnotacjami przy różnicach oraz zmiany śledzone dokumentu.
 package dane
 
 import (
@@ -17,8 +8,7 @@ import (
 	"fmt"
 )
 
-// KomentarzStudia to wiersz tabeli `komentarz_studio` — komentarz redakcyjny
-// albo adnotacja przy fragmencie różnicy.
+// KomentarzStudia to wiersz tabeli komentarz_studio, komentarz redakcyjny albo adnotacja przy fragmencie różnicy dokumentu.
 type KomentarzStudia struct {
 	ID                  int64
 	Kod                 string
@@ -38,7 +28,7 @@ type KomentarzStudia struct {
 	Utworzono           string
 }
 
-// ZmianaSledzona to wiersz tabeli `zmiana_sledzona_studio`.
+// ZmianaSledzona to wiersz tabeli zmiana_sledzona_studio, niosący rodzaj, zakres i decyzję o tej zmianie.
 type ZmianaSledzona struct {
 	ID          int64
 	Kod         string
@@ -105,7 +95,7 @@ const (
 	                            WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszKomentarz zakłada komentarz redakcyjny albo adnotację różnicy.
+// ZapiszKomentarz zakłada komentarz redakcyjny albo adnotację różnicy i zwraca jego pełny stan po zapisie.
 func (r *repozytoriumStudia) ZapiszKomentarz(ctx context.Context,
 	dokumentID int64, komentarz KomentarzStudia) (KomentarzStudia, error) {
 
@@ -129,7 +119,7 @@ func (r *repozytoriumStudia) ZapiszKomentarz(ctx context.Context,
 	return r.Komentarz(ctx, komentarz.Kod)
 }
 
-// Komentarz zwraca komentarz o wskazanym kodzie.
+// Komentarz zwraca jeden komentarz o wskazanym kodzie zewnętrznym, wraz z jego pełną zapisaną treścią.
 func (r *repozytoriumStudia) Komentarz(ctx context.Context, kod string) (KomentarzStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKomentarzStudia)
 	if err != nil {
@@ -145,7 +135,7 @@ func (r *repozytoriumStudia) Komentarz(ctx context.Context, kod string) (Komenta
 	return komentarz, nil
 }
 
-// Komentarze zwraca komentarze albo adnotacje dokumentu, w kolejności położenia.
+// Komentarze zwraca komentarze albo adnotacje dokumentu, w kolejności ich położenia w treści dokumentu.
 func (r *repozytoriumStudia) Komentarze(ctx context.Context,
 	dokumentID int64, rodzaj string) ([]KomentarzStudia, error) {
 
@@ -173,7 +163,7 @@ func (r *repozytoriumStudia) Komentarze(ctx context.Context,
 	return lista, nil
 }
 
-// RozstrzygnijKomentarz oznacza wątek jako rozwiązany albo cofa oznaczenie.
+// RozstrzygnijKomentarz oznacza wątek komentarza jako rozwiązany albo cofa wcześniejsze jego oznaczenie.
 func (r *repozytoriumStudia) RozstrzygnijKomentarz(ctx context.Context,
 	kod string, rozwiazany bool) (KomentarzStudia, error) {
 
@@ -185,16 +175,14 @@ func (r *repozytoriumStudia) RozstrzygnijKomentarz(ctx context.Context,
 	if err != nil {
 		return KomentarzStudia{}, fmt.Errorf("dane: nie można rozstrzygnąć komentarza studio %q: %w", kod, err)
 	}
-	// Brak wiersza zmienionego znaczy komentarz nieistniejący — a nie
-	// „rozstrzygnięcie bez skutku". Bez tego sprawdzenia rdzeń meldowałby
-	// powodzenie na kodzie, którego nigdy nie było.
+	// Brak wiersza zmienionego znaczy komentarz nieistniejący, nie rozstrzygnięcie bez skutku.
 	if zmienione, err := wynik.RowsAffected(); err == nil && zmienione == 0 {
 		return KomentarzStudia{}, ErrBrakWiersza
 	}
 	return r.Komentarz(ctx, kod)
 }
 
-// ZapiszZmianeSledzona rejestruje jedną zmianę śledzoną.
+// ZapiszZmianeSledzona rejestruje jedną zmianę śledzoną tego samego dokumentu wraz z jej pełnym zakresem.
 func (r *repozytoriumStudia) ZapiszZmianeSledzona(ctx context.Context,
 	dokumentID int64, zmiana ZmianaSledzona) (ZmianaSledzona, error) {
 
@@ -218,7 +206,7 @@ func (r *repozytoriumStudia) ZapiszZmianeSledzona(ctx context.Context,
 	return zmiana, nil
 }
 
-// ZmianySledzone zwraca zmiany zarejestrowane dla dokumentu.
+// ZmianySledzone zwraca wszystkie zmiany zarejestrowane dla wskazanego dokumentu tego całego modułu Studio.
 func (r *repozytoriumStudia) ZmianySledzone(ctx context.Context,
 	dokumentID int64) ([]ZmianaSledzona, error) {
 
@@ -252,11 +240,7 @@ func (r *repozytoriumStudia) ZmianySledzone(ctx context.Context,
 	return lista, nil
 }
 
-// RozstrzygnijZmianeSledzona zapisuje decyzję o zmianie i mówi, czy zapadła.
-//
-// Warunek `decyzja = 'oczekuje'` w poleceniu jest zamierzony: decyzja raz
-// podjęta nie zmienia się drugim wywołaniem, więc powtórzone przyjęcie tej samej
-// zmiany oddaje `false` zamiast cicho nadpisywać odrzucenie przyjęciem.
+// RozstrzygnijZmianeSledzona zapisuje decyzję o zmianie i mówi, czy ta decyzja rzeczywiście zapadła przy tym wywołaniu.
 func (r *repozytoriumStudia) RozstrzygnijZmianeSledzona(ctx context.Context,
 	kod, decyzja string) (bool, error) {
 
@@ -275,7 +259,7 @@ func (r *repozytoriumStudia) RozstrzygnijZmianeSledzona(ctx context.Context,
 	return zmienione > 0, nil
 }
 
-// UstawSledzenie przestawia stan śledzenia zmian dokumentu.
+// UstawSledzenie przestawia stan śledzenia zmian dla wskazanego dokumentu w tym module Studio operacyjnie.
 func (r *repozytoriumStudia) UstawSledzenie(ctx context.Context, kodDokumentu string, czynne bool) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, ustawSledzenieDokumentu)
 	if err != nil {
@@ -291,7 +275,7 @@ func (r *repozytoriumStudia) UstawSledzenie(ctx context.Context, kodDokumentu st
 	return nil
 }
 
-// Sledzenie zwraca stan śledzenia zmian dokumentu.
+// Sledzenie zwraca bieżący stan śledzenia zmian dla wskazanego dokumentu w tym module Studio operacyjnie.
 func (r *repozytoriumStudia) Sledzenie(ctx context.Context, kodDokumentu string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, czytajSledzenieDokumentu)
 	if err != nil {
@@ -308,7 +292,7 @@ func (r *repozytoriumStudia) Sledzenie(ctx context.Context, kodDokumentu string)
 	return czynne == 1, nil
 }
 
-// odczytajKomentarzStudia składa strukturę z jednego wiersza wyniku.
+// odczytajKomentarzStudia składa strukturę komentarza z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajKomentarzStudia(wiersz skaner) (KomentarzStudia, error) {
 	var komentarz KomentarzStudia
 	var wersja, watek, odniesienie, porownywana, propozycja sql.NullString

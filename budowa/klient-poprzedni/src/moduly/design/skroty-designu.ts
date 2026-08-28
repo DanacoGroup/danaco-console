@@ -1,32 +1,8 @@
 import { utworzRozwiniecie } from './warstwy-designu';
 
-/**
- * Skróty klawiszowe modułu Design wraz z tym, które z nich moduł faktycznie
- * wiąże.
- *
- * Skąd biorą się kombinacje. Opracowanie modułu wymienia skrót klawiszowy jako
- * drogę równorzędną kliknięciu — przy adnotacjach na kanwie, przy powiększeniu
- * podglądu i przy całej warstwie czwartej — ale **konkretnych kombinacji nie
- * podaje**. Kombinacje są więc rozstrzygnięciem projektowym tej budowy, podjętym
- * wedle jednej reguły: bierzemy to, co ten produkt już związał w module
- * Translate, żeby Operator przechodzący między modułami nie uczył się dwóch
- * układów klawiatury. Czynności, których opracowanie skrótem nie opatruje,
- * skrótu tu nie dostają — wymyślanie ich byłoby dokładaniem funkcji.
- *
- * Nasłuch wisi na elemencie modułu, nie na dokumencie. Moduł znika z drzewa
- * przy zejściu ze sceny i nasłuch znika razem z nim; nasłuch dokumentu trzeba by
- * odpinać osobno, a pierwszy przeoczony byłby wyciekiem.
- *
- * Skutek uboczny tej decyzji jest nazwany, nie przemilczany: skrót działa, gdy
- * ognisko stoi wewnątrz modułu. Poza modułem klawisze należą do powłoki.
- *
- * Dwa skróty stoją w wykazie, a moduł ich nie wiąże. Powiększenie podglądu
- * należy do Preview Window, którego wytwórnia leży poza katalogiem tego modułu;
- * sterowanie pętlą należy do Execution Loop Window, okna wspólnego platformy.
- * Wykaz mówi to wprost, zamiast pomijać pozycje i sugerować, że skrótów nie ma.
- */
+// Skróty klawiszowe modułu Design wraz z tym, które z nich moduł wiąże, wzięte z modułu Translate.
 
-/** Jedna pozycja wykazu skrótów. */
+/** Jedna pozycja wykazu skrótów wraz z zapisem klawiszy, działaniem, oknem docelowym i uwagą o wiązaniu. */
 export interface Skrot {
   /** Zapis klawiszy w notacji opracowania. */
   readonly klawisze: string;
@@ -89,7 +65,7 @@ export const SKROTY: readonly Skrot[] = [
   },
 ];
 
-/** Czynności wyzwalane skrótami — okna dostarczają je przy montażu modułu. */
+/** Czynności wyzwalane skrótami klawiszowymi — okna dostarczają je przy montażu modułu Design do skrótów. */
 export interface CzynnosciSkrotow {
   /** `Ctrl/Cmd + K`. */
   otworzWyszukiwarke(): void;
@@ -99,13 +75,12 @@ export interface CzynnosciSkrotow {
   otworzZetony(): void;
 }
 
-/** Podpina skróty do elementu modułu; zwraca odpięcie wołane przy rozłączeniu. */
+/** Podpina skróty klawiszowe do elementu modułu; zwraca funkcję odpięcia, wołaną przy rozłączeniu modułu. */
 export function podepnijSkroty(element: HTMLElement, czynnosci: CzynnosciSkrotow): () => void {
   function przyKlawiszu(zdarzenie: KeyboardEvent): void {
     const czynnosc = dopasuj(zdarzenie, czynnosci);
     if (czynnosc === null) return;
-    // Zdarzenie zatrzymuje się na module, bo skrót został tu obsłużony. Bez tego
-    // ta sama kombinacja wykonałaby się drugi raz na poziomie powłoki.
+    // Zdarzenie zatrzymuje się na module, bo skrót został tu obsłużony, inaczej wykona się drugi raz.
     zdarzenie.preventDefault();
     zdarzenie.stopPropagation();
     czynnosc();
@@ -135,7 +110,7 @@ function dopasuj(zdarzenie: KeyboardEvent, czynnosci: CzynnosciSkrotow): (() => 
   return null;
 }
 
-/** Wykaz skrótów jako element warstwy czwartej — droga bez klawiatury. */
+/** Wykaz skrótów jako element warstwy czwartej modułu Design — droga poznania skrótów bez klawiatury wcale. */
 export function utworzWykazSkrotow(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 4,

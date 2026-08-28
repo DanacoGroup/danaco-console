@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: wpięcie dwóch komend rodziny `config.*`:
-// `config.explain.get` i `config.window.open`.
-//
-// Kontrakt niesie w tej rodzinie dziewięć komend. Pozostałe siedem wpina
-// `handlers_config.go` (`config.get`, `config.set`, `config.reset`) oraz
-// `handlers_sesja_konfiguracja.go` (cztery komendy jednolitego modelu
-// konfiguracji sesji).
-//
-// PORT JEST ROZSZERZENIEM, NIE DRUGIM PORTEM. Konfiguracja
-// ma w rdzeniu jedną bramę; gdyby prowenancja weszła osobnym polem `Porty`,
-// rodzina `config.*` miałaby dwa źródła prawdy i dwa miejsca montażu. Dlatego
-// ProwenancjaKonfiguracji osadza port Ustawienia — tak samo, jak port pamięci
-// osadza port przestrzeni roboczej.
-//
-// ZDARZENIA TU NIE MA I NIE UDAJEMY GO. `config.changed` opisuje ZMIANĘ wartości
-// ustawienia. Żadna z tych dwóch komend nic nie zapisuje: pierwsza liczy
-// prowenancję na świeżo, druga rozstrzyga zakres. Rozgłaszanie zmiany, której
-// nie było, wprowadziłoby w błąd każde otwarte okno konfiguracji.
+// Plik wpina komendy config.explain.get oraz config.window.open rodziny
+// config.*, rozszerzając port ustawień o prowenancję wywołania i otwarcie
+// okna konfiguracji.
 package core
 
 import (
@@ -29,14 +14,13 @@ import (
 type ProwenancjaKonfiguracji interface {
 	Ustawienia
 
-	// ProwenancjaWywolania obsługuje `config.explain.get`: oddaje wiersz
-	// wywołania, prompt systemowy, ustawienia procesu i sumę kontrolną
-	// konstytucji dla najbliższej tury wskazanego okna.
+	// ProwenancjaWywolania obsługuje config.explain.get, zwracając wiersz
+	// wywołania i sumę kontrolną.
 	ProwenancjaWywolania(ctx context.Context,
 		z shared.ConfigExplainGetRequest) (shared.ConfigExplainGetResponse, error)
 
-	// OtworzOknoKonfiguracji obsługuje `config.window.open`: rozstrzyga zakres,
-	// na którym okno konfiguracji staje na wejściu.
+	// OtworzOknoKonfiguracji obsługuje config.window.open, rozstrzygając
+	// zakres startowy okna.
 	OtworzOknoKonfiguracji(ctx context.Context,
 		z shared.ConfigWindowOpenRequest) (shared.ConfigWindowOpenResponse, error)
 }

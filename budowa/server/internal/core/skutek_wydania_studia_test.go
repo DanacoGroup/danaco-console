@@ -1,3 +1,6 @@
+// Sprawdziany tego pliku mierzą skutek piętnastu czynności dobudowanych do
+// modułu Studio: nie czy odpowiedź jest zgodna z kontraktem, lecz czy za nią
+// coś zostało.
 package core
 
 import (
@@ -20,29 +23,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek piętnastu czynności dobudowanych do modułu Studio.
-//
-// Sprawdzian zgodności z kontraktem pyta, czy odpowiedź jest odpowiedzią.
-// Ten plik pyta o co innego i tylko o to: czy za odpowiedzią COŚ ZOSTAŁO.
-// Dlatego:
-//   - archiwum jest tu rozpakowywane i czytane wpis po wpisie, a nie liczone
-//     z pola `entries`, które komenda wypełnia sama;
-//   - wyrys strony jest dekodowany z powrotem jako obraz, bo plik nazwany
-//     „png" i plik będący obrazem to dwie różne rzeczy;
-//   - gałąź i odwołanie do wersji są odczytywane DRUGIM, niezależnym
-//     połączeniem do pliku bazy — rdzeń, który melduje zapis, a wiersza nie
-//     zakłada, przechodzi każdy sprawdzian pytający sam siebie.
-
 // oknoSprawdzianuStudia jest oknem, w którego imieniu idą wszystkie żądania
 // tego pliku. Ta sama nazwa, którą bierze `sciezkaZasobuSprawdzianu`: zasób
 // odłożony do jednego okna, a szukany w drugim, nie znalazłby się nigdy.
 const oknoSprawdzianuStudia = "okno-sprawdzianu"
 
-// polaczenieOboczneStudia otwiera drugie połączenie do pliku bazy sprawdzianu.
-//
-// Drugie połączenie, a nie repozytorium rdzenia: pytanie brzmi „czy wiersz
-// naprawdę leży w bazie", a repozytorium rdzenia odpowiedziałoby na nie tym
-// samym kodem, który wiersz zapisywał.
+// polaczenieOboczneStudia otwiera drugie połączenie do pliku bazy sprawdzianu,
+// drogą, której mierzony kod nie kontroluje.
 func polaczenieOboczneStudia(t *testing.T, katalog string) *sql.DB {
 	t.Helper()
 
@@ -55,7 +42,8 @@ func polaczenieOboczneStudia(t *testing.T, katalog string) *sql.DB {
 	return baza
 }
 
-// dokumentSprawdzianuStudia zakłada dokument i oddaje jego identyfikator.
+// dokumentSprawdzianuStudia zakłada dokument komendami warsztatu i oddaje jego
+// identyfikator do dalszej pracy sprawdzianu.
 func dokumentSprawdzianuStudia(t *testing.T, zmontowany *Zmontowany,
 	zycie context.Context, tresc string) string {
 	t.Helper()
@@ -74,7 +62,8 @@ func dokumentSprawdzianuStudia(t *testing.T, zmontowany *Zmontowany,
 	return zapis.Document.Id
 }
 
-// wersjaSprawdzianuStudia zapisuje treść jako nową wersję i oddaje jej kod.
+// wersjaSprawdzianuStudia zapisuje treść jako nową wersję dokumentu i oddaje
+// jej kod do dalszej pracy sprawdzianu.
 func wersjaSprawdzianuStudia(t *testing.T, zmontowany *Zmontowany,
 	zycie context.Context, kodDokumentu, tresc string) string {
 	t.Helper()
@@ -90,7 +79,8 @@ func wersjaSprawdzianuStudia(t *testing.T, zmontowany *Zmontowany,
 	return zapis.Version.Id
 }
 
-// wpisyArchiwumSprawdzianu rozpakowuje archiwum ZIP i oddaje jego zawartość.
+// wpisyArchiwumSprawdzianu rozpakowuje archiwum ZIP i oddaje jego zawartość
+// jako mapę nazwy pliku na jego bajty.
 func wpisyArchiwumSprawdzianu(t *testing.T, bajty []byte) map[string][]byte {
 	t.Helper()
 
@@ -422,7 +412,7 @@ func TestScalenieGalezinOddajeKonfliktZamiastRozstrzygacGo(t *testing.T) {
 		}, &druga)
 
 	// Obie gałęzie ruszają ten sam wiersz, i to inaczej — to jest konflikt
-	// z definicji, więc rdzeń ma go oddać, a nie wybrać za Operatora.
+	// z definicji.
 	przestawCzoloGalezi(t, zmontowany, zycie, kodDokumentu, pierwsza.Branch.Id,
 		"wiersz A\nwiersz B od pierwszej\nwiersz C")
 	przestawCzoloGalezi(t, zmontowany, zycie, kodDokumentu, druga.Branch.Id,
@@ -461,13 +451,9 @@ func TestScalenieGalezinOddajeKonfliktZamiastRozstrzygacGo(t *testing.T) {
 	}
 }
 
-// przestawCzoloGalezi dopisuje wersję na gałęzi i przestawia na nią jej czoło.
-//
-// Idzie warstwą danych, nie komendą: kontrakt Studia nie ma dziś polecenia
-// „zapisz na gałęzi" — `document.save` prowadzi pień dokumentu. Sprawdzian
-// scalania potrzebuje dwóch gałęzi rozchodzących się treścią, więc rozchodzi je
-// tak, jak zrobiłby to zapis prowadzony na gałęzi, i mierzy TO, co ma mierzyć:
-// zachowanie scalania wobec dwóch różnych czół.
+// przestawCzoloGalezi dopisuje wersję na gałęzi i przestawia na nią jej czoło,
+// drogą warstwy danych, bo kontrakt Studia nie ma dziś polecenia zapisu na
+// gałęzi.
 func przestawCzoloGalezi(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	kodDokumentu, kodGalezi, tresc string) {
 	t.Helper()
@@ -493,8 +479,8 @@ func przestawCzoloGalezi(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 	}
 }
 
-// TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych pilnuje reguły
-// z rozdz. 4.5: odmowa jednego dokumentu nie przerywa wsadu.
+// TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych sprawdza, że
+// odmowa jednego dokumentu w wsadzie nie przerywa przetwarzania pozostałych.
 func TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -556,18 +542,8 @@ func TestWyszukiwanieZnaczenioweMowiKtoraDrogaPoszlo(t *testing.T) {
 }
 
 // TestSkanowanieZUrzadzeniaOdmawiaNazwanie pilnuje zasady bezwzględnej:
-// czynność bez drogi ma ODMÓWIĆ, nazywając brak, a nie oddać pusty wykaz
-// pozycji, który czyta się jako „skanowałem i nic nie przyszło".
-//
-// Nazwanie braku to trzy rzeczy naraz: czym rdzeń szukał (`scanimage`), po
-// czyjej stronie leży brak (maszyna Operatora, nie usterka rdzenia) i jaka droga
-// działa mimo niego (`studio.ingest.queue.add`). Odmowa bez tych trzech członów
-// zostawia Operatora tam, gdzie zostawiał go pusty wykaz.
-//
-// Mierzony jest jeden stan maszyny: warstwa skanera JEST, a urządzenia nie ma.
-// Oba warunki sprawdzają się przed pomiarem, bo maszyna bez `scanimage` i maszyna
-// z podłączonym skanerem prowadzą tę czynność innymi drogami — pomiar wykonany
-// tam mierzyłby coś innego i meldował to jako wynik.
+// czynność bez drogi ma odmówić, nazywając brak, a nie oddać pusty wykaz
+// pozycji.
 func TestSkanowanieZUrzadzeniaOdmawiaNazwanie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -587,9 +563,8 @@ func TestSkanowanieZUrzadzeniaOdmawiaNazwanie(t *testing.T) {
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioIngestDeviceScan,
 		shared.StudioIngestDeviceScanRequest{WindowId: oknoSprawdzianuStudia})
 
-	// Brak urządzenia jest stanem maszyny, nie usterką rdzenia. Kod `internal_error`
-	// kazałby Operatorowi zgłosić usterkę i ponowić żądanie, które nie ma prawa
-	// się udać, dopóki skanera nie ma.
+	// Brak urządzenia jest stanem maszyny, nie usterką rdzenia — kod odmowy ma
+	// to odzwierciedlać.
 	if odmowa.Code != shared.ErrorCodeNotFound {
 		t.Errorf("odmowa niesie kod %q, oczekiwany %q — brak urządzenia nie jest usterką"+
 			" rdzenia; treść: %s", odmowa.Code, shared.ErrorCodeNotFound, odmowa.Message)

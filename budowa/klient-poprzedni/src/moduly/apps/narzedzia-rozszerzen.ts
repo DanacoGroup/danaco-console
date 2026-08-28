@@ -20,31 +20,9 @@ import {
 } from './przybornik-apps';
 import type { StanRozszerzen } from './stan-rozszerzen';
 
-/**
- * Narzędzia przyborników strony dystrybucji i konsumpcji — po jednym na każdą
- * z trzydziestu dwóch komend `extension.*` dobudowanych do pięciu, od których
- * katalog zaczynał.
- *
- * Wykazy są pogrupowane wedle okna, w którym opracowanie umieszcza czynność:
- * App Catalog prowadzi wyszukiwarkę, kartę szczegółów, kolekcje i rejestr
- * organizacji; Installed Apps Manager — aktualizacje, przesyłkę paczki,
- * wersjonowanie, instalację zestawu, dziennik cyklu życia i tryb administracyjny;
- * Integrations Hub i MCP & Connector Console — transport, poświadczenie,
- * odkrywanie narzędzi, próbne wywołanie, log protokołu, piaskownicę, import
- * definicji, webhooki, odwzorowania, metryki i kondycję; Permissions & Trust
- * Center — uprawnienia, podpis, skaner i sekrety.
- *
- * ŻADNE POLE NIE NIESIE TREŚCI POŚWIADCZENIA. Pola sekretów przyjmują wyłącznie
- * klucz jawny warstwy sekretów — nazwę, po której rdzeń wydaje wartość.
- * Wprowadzenie hasła, tokenu czy klucza API zostaje po stronie Operatora, poza
- * tą drogą i poza kontraktem.
- *
- * Pozycja, na której narzędzie ma pracować, bierze się ze WSKAZANIA w oknie
- * (`stan.wybrane()`), a nie z pola wpisywanego przy każdym przycisku. Wskazania
- * nie ma znaczy odmowę z powodem — Operator ma najpierw wybrać pozycję z listy.
- */
+// Narzędzia przyborników strony rozszerzeń: po jednym na każdą komendę extension.*.
 
-/** Pozycja wskazana w oknie; brak wskazania jest odmową z powodem. */
+/** Pozycja wskazana w oknie stanu rozszerzeń, pobrana funkcją stan.wybrane(); brak wskazania kończy się odmową z podanym powodem. */
 function wskazana(stan: StanRozszerzen): string {
   const pozycja = stan.wybrane();
   if (pozycja !== null) return pozycja.id;
@@ -54,7 +32,7 @@ function wskazana(stan: StanRozszerzen): string {
   );
 }
 
-/** Narzędzia App Catalog: wyszukiwarka, szczegóły, kolekcje, rejestr. */
+/** Narzędzia App Catalog modułu Apps: wyszukiwarka, karta szczegółów, kolekcje oraz rejestr organizacji. */
 export function narzedziaAppCatalog(stan: StanRozszerzen): readonly NarzedzieApps[] {
   return [
     {
@@ -189,7 +167,7 @@ export function narzedziaAppCatalog(stan: StanRozszerzen): readonly NarzedzieApp
   ];
 }
 
-/** Narzędzia Installed Apps Managera: wersje, paczki, zestawy, dziennik. */
+/** Narzędzia Installed Apps Managera: aktualizacje, przesyłka paczki, wersjonowanie i dziennik cyklu życia. */
 export function narzedziaInstalledApps(stan: StanRozszerzen): readonly NarzedzieApps[] {
   return [
     {
@@ -353,7 +331,7 @@ export function narzedziaInstalledApps(stan: StanRozszerzen): readonly Narzedzie
   ];
 }
 
-/** Narzędzia Integrations Hub i MCP & Connector Console. */
+/** Narzędzia Integrations Hub oraz MCP i Connector Console modułu Apps: transport, poświadczenia i protokół. */
 export function narzedziaIntegracji(stan: StanRozszerzen): readonly NarzedzieApps[] {
   return [
     {
@@ -408,8 +386,7 @@ export function narzedziaIntegracji(stan: StanRozszerzen): readonly NarzedzieApp
         const wynik = await stan.dobudowa.powiazPoswiadczenie({
           idRozszerzenia: wskazana(stan),
           sposob,
-          // To pole przyjmuje KLUCZ JAWNY, nie treść poświadczenia — patrz
-          // czoło pliku.
+          // To pole przyjmuje wyłącznie klucz jawny, nigdy treść poświadczenia.
           odwolanie: wymagajPola(wartosci['odwolanie'] ?? '', 'Odwołanie do sekretu'),
           zakresy: rozdzielPrzecinkamiRozszerzen(wartosci['zakresy'] ?? ''),
         });
@@ -699,7 +676,7 @@ export function narzedziaIntegracji(stan: StanRozszerzen): readonly NarzedzieApp
   ];
 }
 
-/** Narzędzia Permissions & Trust Center: uprawnienia, podpis, skaner, sekrety. */
+/** Narzędzia Permissions and Trust Center modułu Apps: uprawnienia, podpis, skaner bezpieczeństwa i sekrety. */
 export function narzedziaZaufania(stan: StanRozszerzen): readonly NarzedzieApps[] {
   return [
     {
@@ -820,7 +797,7 @@ export function narzedziaZaufania(stan: StanRozszerzen): readonly NarzedzieApps[
 
 // ── Przekłady wartości pól ───────────────────────────────────────────────────
 
-/** Rozdziela wartości wpisane po przecinku, pomijając puste. */
+/** Rozdziela wartości pola wpisane po przecinku na wykaz pozycji, pomijając pozycje puste powstałe z odstępów. */
 function rozdzielPrzecinkamiRozszerzen(wartosc: string): readonly string[] {
   return wartosc
     .split(',')

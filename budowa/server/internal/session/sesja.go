@@ -51,12 +51,12 @@ func (s Sesja) Kopia() Sesja {
 	return odpis
 }
 
-// CzyCzynna mówi, czy sesja przyjmuje pracę.
+// Metoda CzyCzynna mówi, czy sesja przyjmuje pracę i pozostaje aktywna w tym bieżącym rejestrze sesji rdzenia.
 func (s Sesja) CzyCzynna() bool {
 	return s.Stan == shared.SessionStatusActive
 }
 
-// dopiszOkno dokłada okno do wykazu sesji, pilnując braku powtórzeń.
+// Metoda dopiszOkno dokłada okno do wykazu sesji, pilnując braku powtórzeń identyfikatora tego samego okna.
 func (s *Sesja) dopiszOkno(idOkna string) {
 	for _, istniejace := range s.IdOkien {
 		if istniejace == idOkna {

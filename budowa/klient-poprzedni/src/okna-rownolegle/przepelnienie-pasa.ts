@@ -3,31 +3,18 @@ import './przepelnienie.css';
 import { elementIkony } from '../ikony/ikony';
 
 /**
- * Przepełnienie pasa poziomego: przewijanie zamiast zwężania pozycji.
- *
- * Zwężanie odbiera czytelność wszystkim pozycjom naraz — przy kilkunastu
- * kartach każda ma tytuł ścięty do zera i żadnej nie da się rozpoznać, a wraz
- * z tytułem znika plakietka stanu, czyli informacja o awarii. Przewijanie
- * odbiera czytelność wyłącznie temu, co wyszło poza kadr. Warunkiem jest
- * podłoga szerokości pozycji w arkuszu pasa (`flex: 0 0 auto` z `min-width`);
- * bez niej pozycje kurczą się, zanim przewijak w ogóle ruszy.
- *
- * Wiązanie dokłada to, czego arkusz nie umie: utrzymanie pozycji czynnej
- * w kadrze i uchwyty krawędziowe. Uchwyty nie są bramą, tylko skrótem do tego,
- * co i tak zrobi kółko myszy albo klawiatura, i pokazują się wyłącznie wtedy,
- * gdy jest dokąd przewijać.
+ * Przepełnienie pasa: przewijanie zamiast zwężania.
  */
 
-/** Strona pasa, po której coś zostało poza kadrem. */
+/** Strona pasa poziomego, po której coś zostało poza widocznym kadrem tego przewijanego paska z treścią. */
 export type StronaPrzepelnienia = 'nie' | 'lewo' | 'prawo' | 'oba';
 
-/** Wiązanie przepełnienia — trzyma nasłuchy, więc trzeba je odłączyć. */
+/**
+ * Wiązanie przepełnienia tego pasa trzyma nasłuchy zdarzeń, więc trzeba je jawnie odłączyć po ich użyciu.
+ */
 export interface WiezPrzepelnienia {
   /**
-   * Przelicza przepełnienie i przywraca pozycję czynną do kadru.
-   *
-   * Widok woła to po każdej migawce rdzenia, bo zmiana stanu potrafi uczynić
-   * czynną pozycję stojącą poza kadrem.
+   * Przelicza przepełnienie i przywraca pozycję czynną do kadru po migawce rdzenia.
    */
   odswiez(): void;
   /** Która strona jest dziś poza kadrem. */
@@ -36,26 +23,27 @@ export interface WiezPrzepelnienia {
   rozlacz(): void;
 }
 
-/** Ustawienia wiązania; wszystkie poza `przewijak` mają wartość domyślną. */
+/**
+ * Ustawienia wiązania przepełnienia tego pasa; wszystkie poza elementem przewijaka mają wartość domyślną.
+ */
 export interface OpcjePrzepelnienia {
   /** Element z `overflow-x: auto` — pas, który przewija swoją zawartość. */
   przewijak: HTMLElement;
   /**
-   * Element, który ma zostać w kadrze — zwykle karta czynna.
-   *
-   * `null` znaczy „nic nie trzeba pilnować"; pas pusty albo bez wskazania.
+   * Element, który ma zostać w kadrze; null znaczy, że nic nie trzeba pilnować.
    */
   wKadrze?: () => HTMLElement | null;
   /**
-   * Gdzie stawiać uchwyty krawędziowe. Domyślnie rodzic przewijaka, bo uchwyt
-   * przyklejony do przewijanej treści jechałby razem z nią.
+   * Gdzie stawiać uchwyty krawędziowe; domyślnie rodzic przewijaka.
    */
   gospodarz?: HTMLElement;
   /** Nazwa pasa w etykietach uchwytów — „Karty sesji" daje „…kart sesji". */
   nazwaPasa?: string;
 }
 
-/** Ile procent kadru przesuwa jedno naciśnięcie uchwytu. */
+/**
+ * Ile procent szerokości kadru przesuwa jedno naciśnięcie uchwytu krawędziowego tego pasa przewijania.
+ */
 const KROK_UCHWYTU = 0.8;
 
 export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelnienia {
@@ -64,16 +52,13 @@ export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelni
   const nazwa = opcje.nazwaPasa ?? 'pasa';
   const wKadrze = opcje.wKadrze ?? (() => null);
 
-  // Klasa własna zamiast gołego atrybutu: reguły cienia krawędzi mają
-  // obowiązywać pasy prowadzone tym wiązaniem, a nie każdy element z podobnym
-  // atrybutem.
+  // Klasa własna zamiast atrybutu: cień krawędzi ma dotyczyć tylko pasów tego wiązania.
   przewijak.classList.add('dnp-przepelnienie__przewijak');
 
   const wLewo = utworzUchwyt('lewo', nazwa, () => przesun(-1));
   const wPrawo = utworzUchwyt('prawo', nazwa, () => przesun(1));
 
-  // Uchwyty obejmują przewijak z obu stron, żeby kolejność czytania zgadzała
-  // się z kierunkiem, który wskazują.
+  // Uchwyty obejmują przewijak z obu stron zgodnie z kierunkiem, który wskazują.
   gospodarz.insertBefore(wLewo, przewijak);
   if (przewijak.nextSibling === null) gospodarz.append(wPrawo);
   else gospodarz.insertBefore(wPrawo, przewijak.nextSibling);
@@ -82,8 +67,7 @@ export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelni
 
   function przesun(kierunek: 1 | -1): void {
     const krok = Math.max(1, Math.round(przewijak.clientWidth * KROK_UCHWYTU));
-    // `scrollBy` bywa nieobecne w środowiskach bez rozkładu — wtedy przewijamy
-    // wprost właściwością, zamiast wywracać widok.
+    // scrollBy bywa nieobecne bez rozkładu; wtedy przewijamy wprost właściwością.
     if (typeof przewijak.scrollBy === 'function') {
       przewijak.scrollBy({ left: kierunek * krok, behavior: 'smooth' });
     } else {
@@ -94,8 +78,7 @@ export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelni
 
   /** Która strona pasa została poza kadrem. */
   function policzStrone(): StronaPrzepelnienia {
-    // Zaokrąglenia przeglądarki potrafią zostawić ułamek piksela; jeden piksel
-    // luzu oszczędza uchwyt migoczący na pasie, który mieści się dokładnie.
+    // Zaokrąglenia przeglądarki zostawiają ułamek piksela; luz chroni przed migotaniem.
     const zapas = przewijak.scrollWidth - przewijak.clientWidth;
     if (zapas <= 1) return 'nie';
     const lewo = przewijak.scrollLeft > 1;
@@ -119,16 +102,14 @@ export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelni
     // Środowisko bez rozkładu nie ma `scrollIntoView`; brak metody nie ma
     // wywracać widoku.
     if (typeof cel.scrollIntoView !== 'function') return;
-    // `nearest` w obu osiach: pozycja wjeżdża do kadru najkrótszą drogą i nie
-    // rusza przewijania pionowego całej powłoki.
+    // Tryb nearest w obu osiach: pozycja wjeżdża do kadru, nie rusza przewijania pionowego.
     cel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
   const naPrzewiniecie = (): void => przelicz();
   przewijak.addEventListener('scroll', naPrzewiniecie, { passive: true });
 
-  // Zmiana szerokości okna zmienia kadr, a nie treść — bez tego uchwyty
-  // zostałyby widoczne na pasie, który już się mieści.
+  // Zmiana szerokości okna zmienia kadr, nie treść; bez tego uchwyty byłyby zbędne.
   const obserwator =
     typeof ResizeObserver === 'function' ? new ResizeObserver(() => przelicz()) : null;
   obserwator?.observe(przewijak);
@@ -152,7 +133,9 @@ export function zwiazPrzepelnieniePasa(opcje: OpcjePrzepelnienia): WiezPrzepelni
   };
 }
 
-/** Uchwyt krawędziowy — skrót do przewinięcia, nie brama. */
+/**
+ * Uchwyt krawędziowy pasa jest skrótem do przewinięcia treści, a nie osobną bramą sterującą tym pasem.
+ */
 function utworzUchwyt(
   strona: 'lewo' | 'prawo',
   nazwaPasa: string,
@@ -165,9 +148,7 @@ function utworzUchwyt(
   const opis = strona === 'lewo' ? `Przewiń ${nazwaPasa} w lewo` : `Przewiń ${nazwaPasa} w prawo`;
   przycisk.setAttribute('aria-label', opis);
   przycisk.title = opis;
-  // Uchwyt jest skrótem dla myszy; wędrówka klawiaturowa pasa i tak dowozi
-  // ognisko do pozycji poza kadrem, więc drugi przystanek w kolejności
-  // tabulacji byłby przeszkodą, nie ułatwieniem.
+  // Uchwyt jest skrótem dla myszy; wędrówka klawiaturowa i tak dowozi ognisko poza kadr.
   przycisk.tabIndex = -1;
   przycisk.append(elementIkony(strona === 'lewo' ? 'strzalka-lewo' : 'strzalka-prawo', {
     rozmiar: 16,

@@ -7,26 +7,17 @@ import (
 	"syscall"
 )
 
-// wstrzymaj zatrzymuje całą grupę procesów sygnałem SIGSTOP.
-//
-// Sygnał idzie do UJEMNEGO identyfikatora grupy, tak samo jak ubicie: proces
-// okna dostaje własną grupę już przy starcie (atrybutyProcesu → Setpgid), więc
-// jedno wywołanie obejmuje całe drzewo. Wstrzymanie samego korzenia zostawiłoby
-// biegnące potomstwo, czyli tę część pracy, która zwykle zajmuje maszynę.
-//
-// Straż `pid > 1` pilnuje tego samego, co przy ubiciu: sygnał do -1 byłby
-// rozgłoszeniem do wszystkich procesów systemu, a do 1 — sygnałem do init.
-// ESRCH znaczy, że nie ma już czego wstrzymywać, i nie jest błędem.
+// wstrzymaj zatrzymuje całą grupę procesów sygnałem SIGSTOP wysyłanym do ujemnego identyfikatora grupy, obejmując tym samym wywołaniem całe drzewo potomstwa procesu okna.
 func (d *drzewoProcesow) wstrzymaj() (bool, error) {
 	return d.sygnalDrzewa(syscall.SIGSTOP, "wstrzymać")
 }
 
-// wznow podejmuje pracę wstrzymanej grupy sygnałem SIGCONT.
+// wznow podejmuje pracę wstrzymanej grupy procesów sygnałem SIGCONT, przywracając jej dostęp do czasu procesora dokładnie tam, gdzie została zatrzymana.
 func (d *drzewoProcesow) wznow() (bool, error) {
 	return d.sygnalDrzewa(syscall.SIGCONT, "wznowić")
 }
 
-// sygnalDrzewa wysyła sygnał całej grupie, a przy jej braku samemu procesowi.
+// sygnalDrzewa wysyła podany sygnał całej grupie procesów, a przy jej braku kieruje ten sam sygnał bezpośrednio do samego procesu.
 func (d *drzewoProcesow) sygnalDrzewa(sygnal syscall.Signal, czynnosc string) (bool, error) {
 	pid := d.pid
 	if pid <= 1 {

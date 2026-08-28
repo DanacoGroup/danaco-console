@@ -16,25 +16,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLiczba, czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Nazwane konteksty pamięci, zasady retencji i pomiar zajętości okna kontekstu
- * — siedem komend Memory & Context Managera.
- *
- * Kontekst jest ZESTAWEM WSKAZAŃ, nie właścicielem treści: usunięcie kontekstu
- * kasuje wskazanie, a wpisy pamięci zostają. Okno mówi to wprost przy
- * kasowaniu, żeby Operator nie bał się posprzątać zestawów roboczych.
- *
- * Zasada retencji obejmuje zapisy KOLEJNE i nie rusza wstecz wpisów zastanych.
- * Odpowiedź niesie policzoną liczbę wpisów, których zasada dotknie przy
- * najbliższym wygaszaniu — liczbę wierszy, nie oszacowanie.
- *
- * Pomiar zajętości okna kontekstu bywa niewykonalny (kanał bez zadeklarowanej
- * wielkości okna). To jest odpowiedź, nie awaria: pole `available` niesie fałsz
- * wraz z powodem, a okno pokazuje powód zamiast paska wobec granicy, której
- * nikt nie ustalił.
- */
+/** Nazwane konteksty pamięci, zasady retencji i pomiar zajętości okna kontekstu — siedem komend. */
 
-/** Kontekst zapisywany z okna; puste `id` zakłada nowy. */
+/** Kontekst zapisywany z okna niesie nazwę, opis, poziomy pamięci, wpisy, prompt systemowy i stan czynności; puste id zakłada nowy. */
 export interface KontekstDoZapisu {
   id: string;
   nazwa: string;
@@ -45,7 +29,7 @@ export interface KontekstDoZapisu {
   czynny: boolean;
 }
 
-/** Zasada retencji zapisywana z okna. */
+/** Zasada retencji zapisywana z okna niesie zasięg, dni do wygasania, domyślną wrażliwość i wzorce chronione. */
 export interface ZasadaDoZapisu {
   zasieg?: ConfigScope;
   dniWygasania: number;

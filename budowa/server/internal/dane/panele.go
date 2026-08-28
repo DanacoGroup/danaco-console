@@ -1,23 +1,6 @@
-// Odpowiedzialność pliku: układ sekcji panelu okna — kolejność, zwinięcie
-// i zdjęcie z widoku — zapisany i odczytany po parze (okno, panel). Nośnikiem
-// jest tabela `sekcja_panelu`; drugiego miejsca ten układ nie ma.
-//
-// Zapis jest całościowy, nie różnicowy: podane sekcje wyznaczają układ panelu,
-// a czego w żądaniu nie ma, tego po zapisie nie ma w bazie. Wynika to wprost
-// z kontraktu — `panel.sections.set` niesie samo pole `sections`, bez znacznika
-// czynności, więc jedynym czytelnym znaczeniem listy jest układ docelowy. Zapis
-// różnicowy wymagałby, żeby klient wiedział, co w bazie leży teraz; wtedy dwa
-// okna przestawiające ten sam panel rozjechałyby układ, bo każde dopisywałoby
-// swoje do cudzego stanu.
-//
-// Skasowanie starego układu i wpisanie nowego idzie jedną transakcją: przerwane
-// w połowie zostawiłyby panel bez sekcji, nieodróżnialny od panelu nigdy
-// nieustawianego.
-//
-// Kolejność nadaje ten plik, nie wołający. Baza pilnuje wyłącznie dolnej granicy
-// (CHECK kolejnosc >= 1), bo liczba sekcji panelu jest znana dopiero w chwili
-// zapisu. Numery 1..N nanosi `ZapiszSekcje`, żeby wykaz czytany po `kolejnosc`
-// był tym samym, co wykaz czytany po miejscu na liście.
+// Odpowiedzialność pliku: układ sekcji panelu okna, czyli kolejność, zwinięcie
+// i zdjęcie z widoku, jest zapisywany i odczytywany całościowo w tabeli
+// sekcja_panelu dla pary okno i panel.
 package dane
 
 import (
@@ -38,19 +21,18 @@ type SekcjaPanelu struct {
 	Kolejnosc int
 	// Zwinieta znaczy „sekcja jest na widoku, zawinięta do nagłówka”.
 	Zwinieta bool
-	// Zdjeta znaczy „sekcji na widoku nie ma wcale”. Stan niezależny od zwinięcia:
-	// sekcja zdjęta rozwinięta wraca na widok rozwinięta.
+	// Zdjeta znaczy „sekcji na widoku nie ma wcale”, niezależnie od zwinięcia.
 	Zdjeta bool
 }
 
 // RepozytoriumSekcjiPaneli jest kontraktem odczytu i zapisu układu sekcji
 // jednego panelu jednego okna.
 type RepozytoriumSekcjiPaneli interface {
-	// SekcjePanelu oddaje układ w kolejności widoku. Panel nigdy nieustawiany
-	// oddaje wykaz pusty; układ domyślny należy do widoku, a nie do bazy.
+	// SekcjePanelu oddaje układ w kolejności widoku; panel nigdy nieustawiany
+	// oddaje wykaz pusty.
 	SekcjePanelu(ctx context.Context, okno, panel string) ([]SekcjaPanelu, error)
 	// ZapiszSekcje zastępuje układ panelu w całości i oddaje układ obowiązujący
-	// wraz z nadaną numeracją 1..N.
+	// z numeracją 1..N.
 	ZapiszSekcje(ctx context.Context, okno, panel string, sekcje []SekcjaPanelu) ([]SekcjaPanelu, error)
 }
 
@@ -87,7 +69,7 @@ func (z *Zestaw) SekcjePaneli() RepozytoriumSekcjiPaneli {
 	return noweRepozytoriumSekcjiPaneli(z.zapytania, z.zapytania.db)
 }
 
-// SekcjePanelu czyta układ jednego panelu jednego okna.
+// SekcjePanelu czyta bieżący układ sekcji jednego panelu wskazanego okna z tabeli sekcja_panelu, w kolejności widoku.
 func (r *repozytoriumSekcjiPaneli) SekcjePanelu(ctx context.Context,
 	okno, panel string) ([]SekcjaPanelu, error) {
 
@@ -130,10 +112,7 @@ func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel
 	adres := okno + "\x00" + panel
 	zapisyPaneli.wejdz(adres)
 
-	// Układ oddawany czyta się z bazy, nie z żądania. Tablica `uklad` opisuje
-	// wyłącznie treść żądania, a klient bierze odpowiedź za dowód skutku
-	// (`client/src/powloka/zrodlo-sekcji-paneli.ts`), więc dowód musi pochodzić
-	// z nośnika.
+	// Układ oddawany czyta się z bazy, nie z żądania, bo klient bierze odpowiedź za dowód skutku zapisu.
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		czyszczenie, err := r.zapytania.wTransakcji(ctx, transakcja, sekcjePaneluCzyszczenie)
 		if err != nil {
@@ -163,27 +142,19 @@ func (r *repozytoriumSekcjiPaneli) ZapiszSekcje(ctx context.Context, okno, panel
 	if err != nil {
 		return nil, err
 	}
-	// Odczyt idzie po zamknięciu transakcji i po opadnięciu zapisów zbiegłych
-	// w czasie: układ obowiązujący to stan, który zastanie następny czytelnik.
-	// Dwa okna przestawiające ten sam panel dostają dzięki temu tę samą treść,
-	// więc odpowiedź niepodobna do żądania znaczy tyle, że cudzy zapis wszedł
-	// po naszym.
+	// Odczyt idzie po zamknięciu transakcji i opadnięciu zapisów zbiegłych, by oddać stan już ustalony.
 	zapisyPaneli.poczekaj(adres)
 	return r.SekcjePanelu(ctx, okno, panel)
 }
 
 // ── zbieg zapisów jednego panelu ─────────────────────────────────────────────
 
-// zapisyPaneli liczy zapisy będące w toku dla każdego adresu (okno, panel).
-//
-// Transakcja pilnuje całościowości zapisu, ale nie tego, by odczyt kontrolny
-// zastał stan już ustalony. Licznik pozwala odczytać układ dopiero wtedy, gdy
-// zapisy zbiegłe w czasie opadły. Czekanie ma kres `kresCzekaniaPaneli`: panel
-// przestawiany bez ustanku nie może wstrzymać odpowiedzi w nieskończoność,
-// a odczyt po upływie kresu jest nadal odczytem z nośnika.
+// zapisyPaneli liczy zapisy w toku dla każdego adresu okno i panel, aby odczyt
+// zaczekał na opadnięcie zapisów zbieżnych w czasie, do kresu
+// kresCzekaniaPaneli, i oddał układ już ustalony.
 var zapisyPaneli = licznikZapisowPaneli{wToku: map[string]int{}}
 
-// kresCzekaniaPaneli ogranicza czekanie na opadnięcie zapisów zbiegłych.
+// kresCzekaniaPaneli ogranicza czas oczekiwania odczytu na opadnięcie zapisów zbiegłych w czasie dla tego samego panelu.
 const kresCzekaniaPaneli = 250 * time.Millisecond
 
 type licznikZapisowPaneli struct {
@@ -207,7 +178,7 @@ func (l *licznikZapisowPaneli) wyjdz(adres string) {
 	l.zamek.Unlock()
 }
 
-// poczekaj wstrzymuje odczyt, dopóki trwa cudzy zapis tego samego panelu.
+// poczekaj wstrzymuje odczyt, dopóki trwa cudzy zapis tego samego panelu, najwyżej do upływu kresu kresCzekaniaPaneli.
 func (l *licznikZapisowPaneli) poczekaj(adres string) {
 	koniec := time.Now().Add(kresCzekaniaPaneli)
 	for {

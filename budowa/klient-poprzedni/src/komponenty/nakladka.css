@@ -1,9 +1,4 @@
-/* Modal (dialog) i nakładka tła.
-
-   Modal opiera się na natywnym `<dialog>`: warstwę tła daje `::backdrop`
-   (żeton `--dn-nakladka`), stos okien pozostaje w gestii przeglądarki.
-   Klatki `dn-wejscie` definiuje ten arkusz; korzysta z nich także
-   powiadomienie (`powiadomienie.css`). */
+/* Arkusz opisuje modal oparty na natywnym elemencie dialog oraz nakładkę tła, wraz z klatkami wejścia, z których korzysta też powiadomienie. */
 
 .dn-modal {
   width: min(var(--dn-wym-modal), calc(100vw - var(--dn-od-8)));

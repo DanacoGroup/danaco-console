@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: obszar window.* — deklaracja całego interfejsu
-// `RepozytoriumPrzekazan` wraz z typem repozytorium i konstruktorem,
-// oraz implementacja zlecenia przekazania (tabela `zlecenie_przekazania`),
-// które zasila komendę `window.handoff`. Więź koordynator–wykonawca leży
-// w `przekazanie_okna_wiez.go`, dziennik akcji w `przekazanie_okna_akcje.go`
-// — jedno repozytorium, trzy pliki wedle odpowiedzialności, tak jak
-// `dane/automations*.go` i `dane/library*.go`.
-//
-// Interfejs deklaruje wyłącznie ten plik, w całości — wraz z metodami, które
-// implementują pozostałe pliki obszaru. Interfejs rozdzielony na trzy pliki
-// byłby trzema prawdami o jednym kontrakcie.
+// Odpowiedzialność pliku: obszar window.*, deklaracja interfejsu RepozytoriumPrzekazan wraz z typem repozytorium, konstruktorem i zleceniem przekazania.
 package dane
 
 import (
@@ -18,13 +8,7 @@ import (
 	"fmt"
 )
 
-// ZleceniePrzekazania to wiersz tabeli `zlecenie_przekazania` — treść jednego
-// wywołania `window.handoff`. `PozycjaKolejkiID` nie jest zakładana tu własnym
-// zapisem SQL: pozycję kolejki zakłada jedyny silnik kolejek, a adapter rdzenia
-// wypełnia to pole gotowym identyfikatorem po założeniu pozycji, w tej samej
-// transakcji co `ZapiszZlecenie`. `KompletKontekstu` niesie `ContextBundle`
-// w całości jako surowy zapis JSON — warstwa danych go nie interpretuje, nie
-// rozbiera na pola, tylko przechowuje i oddaje.
+// ZleceniePrzekazania to wiersz tabeli zlecenie_przekazania, niosący treść jednego wywołania window.handoff wraz z kompletem kontekstu.
 type ZleceniePrzekazania struct {
 	ID               int64
 	SesjaID          int64
@@ -36,7 +20,7 @@ type ZleceniePrzekazania struct {
 	Utworzono        string
 }
 
-// RepozytoriumPrzekazan jest kontraktem obszaru window.*.
+// RepozytoriumPrzekazan jest kontraktem obszaru window.*, obejmującym zlecenie, więź koordynator-wykonawca oraz dziennik akcji.
 type RepozytoriumPrzekazan interface {
 	// --- zlecenie ---
 	ZapiszZlecenie(ctx context.Context, zlecenie ZleceniePrzekazania) (ZleceniePrzekazania, error)
@@ -81,9 +65,7 @@ func noweRepozytoriumPrzekazan(z *zapytania, db *sql.DB) *repozytoriumPrzekazan 
 	return &repozytoriumPrzekazan{zapytania: z, db: db}
 }
 
-// ZapiszZlecenie zakłada wiersz zlecenia przekazania i zwraca stan po zapisie.
-// Wymaga gotowej `PozycjaKolejkiID` — zakładanie pozycji kolejki leży poza tym
-// repozytorium (patrz komentarz typu).
+// ZapiszZlecenie zakłada wiersz zlecenia przekazania i zwraca stan po zapisie; wymaga gotowej pozycji kolejki założonej wcześniej.
 func (r *repozytoriumPrzekazan) ZapiszZlecenie(ctx context.Context,
 	zlecenie ZleceniePrzekazania) (ZleceniePrzekazania, error) {
 
@@ -161,7 +143,7 @@ func (r *repozytoriumPrzekazan) ZleceniaSesji(ctx context.Context, sesja string)
 	return lista, nil
 }
 
-// odczytajZlecenieRekord składa strukturę z jednego wiersza wyniku.
+// odczytajZlecenieRekord składa strukturę zlecenia przekazania z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajZlecenieRekord(wiersz skaner) (ZleceniePrzekazania, error) {
 	var zlecenie ZleceniePrzekazania
 	var kompletKontekstu sql.NullString

@@ -7,17 +7,8 @@ import type { ZmianaOkna } from './zmiana-okna';
 const NAZWA = 'Moduł';
 
 /**
- * Sterowanie modułem okna.
- *
- * Moduł jest parametrem okna, nie sesji, więc dwa okna jednej sesji mogą
- * pracować w dwóch różnych modułach.
- *
- * Wykaz pochodzi z katalogu modułów rdzenia, nie z `KnownModuleIds` — tamta
- * lista niesie środowiska (`talkin`, `workspace`, `codestudio`,
- * `multitaskingai`), a nie moduły.
- *
- * Moduł spoza katalogu pozostaje widoczny i wybieralny — katalog jest listą
- * informacyjną, nie bramą.
+ * Sterowanie modułem okna; moduł jest parametrem tego okna, nie całej sesji, więc dwa okna
+ * mogą pracować w różnych modułach.
  */
 export function utworzSterowanieModulu(
   stan: StanSterowania,
@@ -38,7 +29,10 @@ export function utworzSterowanieModulu(
   return lista.element;
 }
 
-/** Katalog modułów rdzenia; pusty, dopóki rdzeń nie odpowie. */
+/**
+ * Katalog modułów rdzenia, pusty dopóki rdzeń nie odpowie na zapytanie tego klienta o
+ * dostępne moduły pracy.
+ */
 function opcje(rejestr: RejestrModulow): OpcjaWyboru[] {
   return rejestr.moduly().map((modul) => ({
     wartosc: modul.code,

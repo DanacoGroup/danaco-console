@@ -14,16 +14,7 @@ import {
 } from './lacznosc-okna';
 
 /**
- * Plakietka łączności w nagłówku okna roboczego.
- *
- * Wygląd idzie rodziną klas `.dn-kropka--*` i `.dn-plakietka--*`, a obok kropki
- * stoi słowo — odczyt nie zależy od rozróżnienia barw. Przy połączeniu bez
- * kolejki plakietka jest schowana, żeby zielone kropki wielu okien nie
- * zagłuszyły jednej czerwonej.
- *
- * Numer próby i czas do następnej należą do transportu; plakietka odczytuje je
- * w chwili rysowania i odświeża, dopóki trwa ponawianie. Własny zegar
- * odliczający rozjechałby się z transportem przy próbie podjętej wcześniej.
+ * Plakietka łączności w nagłówku okna roboczego łączy kropkę z napisem, tak by odczyt nie zależał od barwy, i chowa się przy połączeniu bez kolejki, żeby nie zagłuszać czerwonej kropki wielu okien.
  */
 export interface PlakietkaLacznosci {
   /** Element montowany w nagłówku gniazda. */
@@ -36,21 +27,15 @@ export interface PlakietkaLacznosci {
   rozlacz(): void;
 }
 
-/** Ustawienia plakietki; każde ma wartość domyślną. */
+/** Ustawienia plakietki łączności; każde pole ma wartość domyślną stosowaną, gdy gospodarz go nie poda. */
 export interface OpcjePlakietkiLacznosci {
-  /**
-   * Dojście do przebiegu ponowienia.
-   *
-   * Pominięte znaczy „transport nie wystawia numeru próby ani czasu do
-   * następnej" — plakietka mówi to wtedy wprost w podpowiedzi i nie pokazuje
-   * czynności „Ponów teraz", bo nie miałaby czego wywołać.
-   */
+  /** Dojście do przebiegu ponowienia; pominięte znaczy, że transport nie wystawia numeru próby ani czasu. */
   ponowienie?: PortPonawiania;
   /** Krok odświeżania odliczania w milisekundach. */
   krokOdliczaniaMs?: number;
 }
 
-/** Odstęp odświeżania odliczania — poniżej sekundy, żeby napis nie skakał o dwa. */
+/** Odstęp odświeżania odliczania czasu do następnej próby — poniżej sekundy, żeby napis nie skakał o dwa. */
 const KROK_ODLICZANIA_MS = 250;
 
 export function utworzPlakietkeLacznosci(
@@ -67,9 +52,7 @@ export function utworzPlakietkeLacznosci(
   const kropka = document.createElement('span');
   kropka.className = 'dn-kropka';
 
-  // Spinner zastępuje kropkę w stanach w toku — tak samo jak w pasku górnym
-  // (`aplikacja/wskaznik-lacznosci.ts`). Dwa ruchy naraz w plakietce wielkości
-  // pigułki spierałyby się o uwagę, a znaczenie niesie i tak napis.
+  // Spinner zastępuje kropkę w stanach w toku jak w pasku górnym, bo dwa ruchy spierałyby się o uwagę.
   const wskaznik = document.createElement('span');
   wskaznik.className = 'dn-spinner dn-okna__lacznosc-wskaznik';
   wskaznik.setAttribute('aria-hidden', 'true');
@@ -80,17 +63,12 @@ export function utworzPlakietkeLacznosci(
 
   element.append(kropka, wskaznik, napis);
 
-  // Czynność „Ponów teraz" istnieje tylko z portem: przycisk bez wywołania za
-  // nim byłby atrapą. Nie ma portu — nie ma przycisku, a podpowiedź nazywa powód.
+  // Czynność ponowienia istnieje tylko z portem; bez portu nie ma przycisku, a podpowiedź nazywa powód.
   const ponow: HTMLButtonElement | null = port === null ? null : przyciskPonowienia(port);
   if (ponow !== null) element.append(ponow);
 
   let odczyt: OdczytLacznosci = { stan: 'rozlaczony', oczekujace: 0 };
-  /**
-   * Czy plakietka dostała już odczyt. Do pierwszego odczytu milczy, zamiast
-   * pokazywać „Rozłączony": scena bez transportu (podgląd układu) łącza nie
-   * zna, a „nie wiem" i „nie ma łącza" to dwie różne rzeczy.
-   */
+  /** Czy plakietka dostała już odczyt; do pierwszego odczytu milczy, bo nie wiem to nie brak łącza. */
   let znany = false;
   let pokazywanyStan: StanLacznosciOkna = zloz(odczyt);
   let uchwyt: ReturnType<typeof setInterval> | null = null;
@@ -122,23 +100,16 @@ export function utworzPlakietkeLacznosci(
     kropka.className = `dn-kropka ${wariantKropkiLacznosci(stan.stan)}`;
     kropka.hidden = wToku;
     wskaznik.hidden = !wToku;
-    // Do pierwszego odczytu napis jest pusty, nie schowany: element z rolą
-    // `status` czytnik ekranu ogłasza po treści, a treść „Rozłączony" ukryta
-    // atrybutem i tak bywa zapowiadana przy najbliższej zmianie.
+    // Do pierwszego odczytu napis jest pusty, nie schowany, bo czytnik ogłasza treść po jej zmianie.
     napis.textContent = znany ? napisLacznosci(stan) : '';
 
-    // Ponowić da się wyłącznie to, co nie jest połączone. Przy połączeniu cała
-    // plakietka i tak znika, więc przycisk nie zostaje sam na scenie.
+    // Ponowić da się wyłącznie to, co nie jest połączone; przy połączeniu cała plakietka i tak znika.
     if (ponow !== null) ponow.hidden = stan.stan === 'polaczony' || stan.stan === 'laczenie';
 
     zarzadzajOdliczaniem(stan);
   }
 
-  /**
-   * Odliczanie biegnie wyłącznie przy ponawianiu i wyłącznie z portem: bez
-   * portu nie ma czego odliczać, a przy każdym innym stanie liczba się nie
-   * zmienia i pętla byłaby pracą bez odbiorcy.
-   */
+  /** Odliczanie biegnie wyłącznie przy ponawianiu i z portem, bo bez portu nie ma czego odliczać. */
   function zarzadzajOdliczaniem(stan: StanLacznosciOkna): void {
     const potrzebne = czynna && znany && port !== null && stan.stan === 'ponawianie';
     if (potrzebne && uchwyt === null) {
@@ -175,7 +146,7 @@ export function utworzPlakietkeLacznosci(
   };
 }
 
-/** Przycisk „Ponów teraz" — skrót do przodu, nigdy rezygnacja z ponawiania. */
+/** Przycisk ponowienia natychmiastowego — skrót do przodu, nigdy rezygnacja z dalszego ponawiania połączenia. */
 function przyciskPonowienia(port: PortPonawiania): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -185,8 +156,7 @@ function przyciskPonowienia(port: PortPonawiania): HTMLButtonElement {
   przycisk.title = opis;
   przycisk.append(elementIkony('odswiez', { rozmiar: 14 }));
   przycisk.addEventListener('click', (zdarzenie) => {
-    // Plakietka stoi w nagłówku gniazda, a nagłówek bywa klikalny w całości —
-    // ponowienie nie jest wyborem okna.
+    // Plakietka stoi w nagłówku gniazda, a nagłówek bywa klikalny; ponowienie nie jest wyborem okna.
     zdarzenie.stopPropagation();
     port.ponowTeraz();
   });

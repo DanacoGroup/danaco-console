@@ -10,28 +10,8 @@ import { nazwaZasobu } from './karta-zasobu';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Wydania zasobu wskazanego w Assets Panel — trzy komendy, które wynoszą treść
- * poza rdzeń: `design.asset.content.get`, `design.asset.export`
- * i `design.asset.export.batch`.
- *
- * ── Po co osobna droga do treści ────────────────────────────────────────────
- * Pole `uri` zasobu jest ścieżką w systemie plików RDZENIA, a rdzeń biegnie na
- * innej maszynie niż przeglądarka Operatora — przeglądarka nie wczyta spod
- * niego niczego, także wtedy, gdy zasób powstał bez zarzutu. Kafelek
- * z odwołaniem, którego nie da się otworzyć, wygląda dokładnie tak samo jak
- * zasób bez bajtów; to jest szkoda, którą ten moduł ma w historii. Przycisk
- * „Sprawdź treść w magazynie" jest jedyną drogą, która na to pytanie odpowiada.
- *
- * ── Odpowiedź mówi o BAJTACH, nie o powodzeniu ──────────────────────────────
- * Sprawdzenie treści melduje zmierzoną wielkość i sumę kontrolną oddaną przez
- * rdzeń, a nie „udało się". Wydanie melduje wielkość pliku i jego typ treści.
- * Zdanie „gotowe" bez liczby nie odróżniłoby pliku od pustki.
- *
- * ── Formaty wymienia rdzeń, nie to okno ─────────────────────────────────────
- * Lista formatów niesie te, które rdzeń NAPRAWDĘ zapisuje biblioteką
- * wkompilowaną. Formatu, którego rdzeń odmawia (webp na wyjściu, avif),
- * w liście nie ma — a wpisany ręcznie wraca odmową wymieniającą formaty
- * obsługiwane, i to zdanie okno pokazuje bez skracania.
+ * Wydania zasobu wskazanego w Assets Panel — trzy komendy, które wynoszą treść poza rdzeń na
+ * maszynę Operatora.
  */
 export interface WydaniaZasobu {
   element: HTMLElement;
@@ -39,7 +19,7 @@ export interface WydaniaZasobu {
   odswiez(): void;
 }
 
-/** Formaty wydania, które rdzeń składa biblioteką wkompilowaną. */
+/** Formaty wydania, które rdzeń składa biblioteką wkompilowaną, bez zależności od usług zewnętrznych sieci. */
 const FORMATY_WYDANIA = [
   { wartosc: 'png', etykieta: 'PNG — bezstratny, z przezroczystością' },
   { wartosc: 'jpeg', etykieta: 'JPEG — stratny, z regulacją jakości' },
@@ -90,11 +70,7 @@ export function utworzWydaniaZasobu(stan: StanDesignu): WydaniaZasobu {
   wydaj.addEventListener('click', () => void wydajWskazany());
   wydajPartie.addEventListener('click', () => void wydajWykaz());
 
-  /**
-   * Rozkłada pole krotności na liczby. Wartości niedodatnie i nieliczby
-   * wypadają: skala zero nie jest krotnością, a wysłana do rdzenia wróciłaby
-   * odmową o żądaniu, którego Operator nie złożył świadomie.
-   */
+  /** Rozkłada pole krotności na liczby; wartości niedodatnie i nieliczby wypadają z wykazu. */
   function krotnosci(): readonly number[] {
     return skale.kontrolka.value
       .split(',')
@@ -117,9 +93,7 @@ export function utworzWydaniaZasobu(stan: StanDesignu): WydaniaZasobu {
     odpowiedz.pokaz(`Odczyt treści zasobu „${nazwaZasobu(zasob)}"…`, true);
     const wynik = await stan.czuwanie.prowadz(
       'odczyt treści zasobu',
-      // Granica zero znaczy „bez granicy": okno nie narzuca własnego limitu,
-      // bo nie wie, jak wielka jest treść, a odmowa za przekroczenie granicy,
-      // której Operator nie ustawił, byłaby odmową bez powodu.
+      // Granica zero znaczy „bez granicy": okno nie narzuca limitu, bo nie wie, jak wielka jest treść.
       stan.zrodlo.trescZasobu(zasob.id, 0),
       {
         wToku: (zdanie) => odpowiedz.pokaz(zdanie, true),
@@ -224,11 +198,8 @@ export function utworzWydaniaZasobu(stan: StanDesignu): WydaniaZasobu {
 }
 
 /**
- * Składa zdanie o bilansie partii.
- *
- * Odrzucenia wchodzą do zdania wraz z powodem, a nie samą liczbą: „dwa
- * odrzucono" nie mówi Operatorowi, czy poprawić żądanie, czy zasoby. Wykaz
- * krótszy bez słowa byłby ciszą, której kontrakt tej komendy wprost zabrania.
+ * Składa zdanie o bilansie partii. Odrzucenia wchodzą do zdania wraz z powodem, a nie samą liczbą:
+ * sama liczba nie mówi Operatorowi, czy poprawić żądanie, czy zasoby.
  */
 function opisBilansuPartii(
   wydanych: number,
@@ -241,7 +212,7 @@ function opisBilansuPartii(
   return `${rdzen} Odrzuconych: ${odrzucone.length} — ${powody}`;
 }
 
-/** Komendy wykonywane przez ten panel — czytelne dla katalogu funkcji. */
+/** Komendy wykonywane przez ten panel — czytelne dla katalogu funkcji obszaru modułu Design w kontrakcie. */
 export const KOMENDY_WYDAN = [
   Command.DesignAssetContentGet,
   Command.DesignAssetExport,

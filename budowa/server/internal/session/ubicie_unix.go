@@ -14,28 +14,17 @@ import (
 // jego zakończenie rozpoznaje się odpytywaniem sygnałem zerowym.
 const odstepDogladu = 200 * time.Millisecond
 
-// Drzewo procesów okna na systemach uniksowych opiera się na grupie procesów.
-// Proces okna zakłada własną grupę, potomstwo grupę dziedziczy, więc sygnał
-// wysłany do ujemnego identyfikatora grupy kończy całe drzewo naraz.
-//
-// pid to zapamiętany identyfikator grupy procesów (przez Setpgid równy pidowi
-// procesu okna) utrwalony w chwili przejęcia, kiedy jest znany i dodatni.
-// Ubicie posługuje się tym polem, a nie os.Process.Pid — to drugie zeruje
-// Release na wartość -1, co daje zarazem wyścig danych i policzenie
-// -p.Pid = 1 (init) albo Kill(-1) (rozgłoszenie do wszystkich procesów). Pole
-// zapisuje się raz, przed jakąkolwiek współbieżnością, i tylko czyta później,
-// więc Release go nie tyka.
+// drzewoProcesow reprezentuje drzewo procesu okna na systemach uniksowych, oparte na grupie procesów systemowych.
 type drzewoProcesow struct {
 	pid int
 }
 
-// atrybutyProcesu zakłada procesowi okna własną grupę procesów.
+// Funkcja atrybutyProcesu zakłada procesowi okna jego własną grupę procesów, oddzielną od procesu rdzenia.
 func atrybutyProcesu() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{Setpgid: true}
 }
 
-// przygotujDrzewo nie ma na tej platformie nic do przygotowania — grupa
-// powstaje wraz z procesem.
+// Funkcja przygotujDrzewo nie ma na tej platformie nic do przygotowania, ponieważ grupa powstaje wraz z procesem.
 func przygotujDrzewo() (*drzewoProcesow, error) {
 	return &drzewoProcesow{}, nil
 }
@@ -50,17 +39,7 @@ func (d *drzewoProcesow) przejmij(p *os.Process) error {
 	return nil
 }
 
-// ubij wysyła sygnał zakończenia całej grupie procesów okna. Proces okna dostaje
-// własną grupę już przy starcie (atrybutyProcesu → Setpgid), więc sygnał do
-// ujemnego identyfikatora obejmuje całe drzewo. Gdy grupy nie ma (proces zdążył
-// ją zmienić albo już jej nie ma), sygnał trafia wprost do samego procesu, żeby
-// nie zostawić go przy życiu. ESRCH oznacza, że nie ma już czego ubijać.
-//
-// Posługuje się zapamiętanym d.pid, nie os.Process.Pid (Release zeruje go na
-// -1). Wartość pid <= 1 znaczy brak prawidłowego procesu do ubicia i nie idzie
-// wtedy żaden sygnał. Straż pid > 1 pilnuje zarazem sygnału do grupy
-// (-pid < -1) i sygnału bezpośredniego (pid > 1), żeby żaden nie wyrodził się
-// w Kill(1) — init — ani w Kill(-1) — rozgłoszenie do wszystkich procesów.
+// Metoda ubij wysyła sygnał zakończenia całej grupie procesów okna, obejmując tym samym całe drzewo potomstwa.
 func (d *drzewoProcesow) ubij(_ *os.Process) error {
 	pid := d.pid
 	if pid <= 1 {
@@ -80,7 +59,7 @@ func (d *drzewoProcesow) ubij(_ *os.Process) error {
 	return nil
 }
 
-// zwolnij nie ma na tej platformie uchwytu do oddania.
+// Metoda zwolnij nie ma na tej platformie żadnego uchwytu systemowego do oddania po zakończeniu procesu.
 func (d *drzewoProcesow) zwolnij() {}
 
 // czekaj blokuje wywołującego do faktycznego zakończenia przejętego procesu.

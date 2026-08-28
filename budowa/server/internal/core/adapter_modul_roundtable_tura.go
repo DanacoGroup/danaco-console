@@ -1,15 +1,5 @@
 // Odpowiedzialność pliku: tura debaty — otwarcie tury komendą
-// `roundtable.debate.start` i poprowadzenie jej do końca (okno Debate Panel).
-//
-// Pytanie idzie do wszystkich naraz: uczestnicy mówią równocześnie, nie
-// sekwencyjnie, więc formaty swobodny i strukturalny rozsyłają je N gorutynami
-// nad jednym rejestrem kanałów.
-//
-// Dwa formaty mówią po kolei. Tura okrężna i debata oksfordzka są z definicji
-// sekwencyjne: kolejny uczestnik odnosi się do tego, co powiedziano przed nim.
-// Kolejność bierze się z pola `kolejnosc` ustawianego w Moderator Panelu,
-// a wypowiedzi wcześniejsze wchodzą do pytania jako tło. Bez tego „kolejność
-// głosu” byłaby ustawieniem bez skutku.
+// roundtable.debate.start i poprowadzenie jej do końca w oknie Debate Panel.
 package core
 
 import (
@@ -22,10 +12,8 @@ import (
 )
 
 // Uruchom otwiera turę debaty i rozsyła pytanie do uczestników niewyciszonych.
-//
-// Odpowiedź komendy wraca od razu, z turą świeżo otwartą i wykazem adresatów.
-// Wypowiedzi trwają dłużej niż wykonanie komendy, więc jadą osobno: strumieniem
-// `stream.chunk` i zdarzeniem `roundtable.debate.changed`.
+// Odpowiedź wraca od razu, z turą świeżo otwartą — wypowiedzi jadą osobno,
+// strumieniem stream.chunk i zdarzeniem roundtable.debate.changed.
 func (a *adapterDebaty) Uruchom(ctx context.Context,
 	z shared.RoundtableDebateStartRequest) (shared.RoundtableDebateStartResponse, error) {
 
@@ -50,9 +38,7 @@ func (a *adapterDebaty) Uruchom(ctx context.Context,
 			"wszyscy uczestnicy debaty są wyciszeni — zdejmij wyciszenie w Moderator Panelu")
 	}
 
-	// Zajęcie okna idzie przed założeniem tury. Odmowa nie ma prawa zostawić po
-	// sobie wiersza tury, której nikt nie poprowadzi, ani rozgłoszenia o jej
-	// otwarciu — panel pokazałby wtedy turę powstałą i martwą.
+	// Zajęcie okna idzie przed założeniem tury, żeby odmowa nie zostawiła martwej tury w bazie.
 	kontekst, anuluj := context.WithCancel(a.zycie)
 	if !a.zajmijBieg(okno, anuluj) {
 		anuluj()
@@ -105,9 +91,7 @@ func (a *adapterDebaty) prowadzTure(kontekst context.Context, tura dane.TuraDeba
 		a.prowadzRownolegle(kontekst, tura, uczestnicy, pytanie)
 	}
 
-	// Rozgłoszenie domykające niesie turę wraz z zapisem: Debate Panel poznaje
-	// po nim koniec zbierania wypowiedzi, a Consensus Panel — moment, w którym
-	// stanowisko ma sens.
+	// Rozgłoszenie domykające niesie turę wraz z zapisem, znak końca zbierania wypowiedzi.
 	po, err := a.repozytorium.Tura(kontekst, tura.Kod)
 	if err != nil {
 		a.rozglos(shared.ChangeKindUpdated, turaKontraktu(tura), nil)
@@ -154,7 +138,7 @@ func (a *adapterDebaty) prowadzPoKolei(kontekst context.Context, tura dane.TuraD
 	}
 }
 
-// czyPoKolei rozstrzyga, czy format debaty wymaga głosu sekwencyjnego.
+// czyPoKolei rozstrzyga, czy format debaty wymaga głosu sekwencyjnego, po kolei, a nie naraz, jak reszta.
 func czyPoKolei(format string) bool {
 	return format == shared.RoundtableFormatRoundRobin || format == shared.RoundtableFormatOxford
 }
@@ -180,11 +164,9 @@ func zagadnienieTury(wskazanie *string, tury []dane.TuraDebaty) string {
 	return *tury[0].Zagadnienie
 }
 
-// granicaTur rozstrzyga liczbę tur i odmawia otwarcia tury ponad nią.
-//
-// Granica dziedziczy się po turze poprzedniej: Operator ustawia „liczbę tur”
-// raz, przy uruchomieniu debaty, a nie przy każdym pytaniu. Zero znaczy debatę
-// bez granicy.
+// granicaTur rozstrzyga liczbę tur i odmawia otwarcia tury ponad nią. Granica
+// dziedziczy się po turze poprzedniej: Operator ustawia liczbę tur raz, przy
+// uruchomieniu debaty, nie przy każdym pytaniu. Zero znaczy debatę bez granicy.
 func granicaTur(wskazanie *int, tury []dane.TuraDebaty) (int, error) {
 	granica := wartoscLiczby(wskazanie)
 	if granica <= 0 && len(tury) > 0 {

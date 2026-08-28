@@ -1,3 +1,6 @@
+// Plik mierzy skutek wydania do formatu: czy plik naprawdę powstaje, czy
+// postać dochodzi tam, gdzie format ją niesie, i czy strata jest nazwana tam,
+// gdzie format jej nie niesie.
 package core
 
 import (
@@ -8,19 +11,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek WYDANIA do formatu: czy plik naprawdę powstaje, czy postać dochodzi tam,
-// gdzie format ją niesie, i czy STRATA JEST NAZWANA tam, gdzie format jej nie
-// niesie.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. wydanie do `txt` gubiące tabelę w milczeniu — zlecenie nazywa to wprost
-//     ciszą zakazaną;
-//  2. wykaz cech pominiętych oddawany jako zdanie ogólne, bez liczb, po którym
-//     Operator nie wie, ile stracił;
-//  3. wydanie wsadowe wstrzymane przez jeden uszkodzony dokument;
-//  4. wydanie oddane jako udane, a bez zasobu, po którym cienka instalka mogłaby
-//     sięgnąć po plik.
 
 // TestWydanieTekstemNazywaZgubionaTabele mierzy zasadę rozstrzygającą wydania:
 // format uboższy niż dokument jest normalny, przemilczenie straty — nie.
@@ -78,7 +68,8 @@ func TestWydanieTekstemNazywaZgubionaTabele(t *testing.T) {
 	}
 }
 
-// wydanieWniesDokument wnosi plik do edytora i oddaje kod dokumentu.
+// wydanieWniesDokument wnosi plik do edytora poleceniem otwarcia dokumentu
+// i oddaje kod dokumentu przydzielony przez edytor, gotowy do dalszych wydań.
 func wydanieWniesDokument(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	bajty []byte, okno string) string {
 	t.Helper()

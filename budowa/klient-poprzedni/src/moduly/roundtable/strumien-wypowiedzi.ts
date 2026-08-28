@@ -2,45 +2,7 @@ import { ChunkKind } from '../../../../shared/contract';
 import type { StanDebaty } from './stan-debaty';
 import type { FragmentDebaty } from './zrodlo-strumienia-debaty';
 
-/**
- * Wypowiedzi rosnące na żywo — gromadzenie fragmentów `stream.chunk`
- * i przypisanie ich uczestnikom debaty.
- *
- * `zrodlo-strumienia-debaty.ts` oddaje fragment z surowym `messageId`, bo
- * subskrypcja nie zna składu debaty. Przypisanie fragmentu do uczestnika wymaga
- * wiedzy o składzie i o wypowiedziach tury — czyli `StanDebaty` — więc stoi
- * tutaj, a nie w źródle.
- *
- * Rozpoznanie pyta stan, zamiast patrzeć na przedrostek identyfikatora. Rdzeń
- * nadaje identyfikatory z przedrostkami (`uczest-`, `wypow-`, `tura-` —
- * `adapter_modul_roundtable.go`), ale przedrostków tych nie ma w kontrakcie:
- * ani w `RoundtableParticipant`, ani w `RoundtableStatement`, ani
- * w `StreamChunkEvent`. Klient oparty na nich orzekałby o rdzeniu rzecz, której
- * kontrakt nie obiecuje, i zamilkłby przy ich zmianie bez błędu kompilacji.
- * Dlatego pytamy stan: identyfikator znany składowi jest uczestnikiem,
- * identyfikator znany wykazowi wypowiedzi tury oddaje swojego mówcę,
- * a identyfikator nieznany żadnemu z nich zostaje nieprzypisany i widoczny.
- *
- * W debacie `messageId` niesie kod wypowiedzi, nie kod uczestnika — tak mówi
- * opis `StreamChunkEvent.messageId` w kontrakcie, a mówcę klient bierze
- * z `RoundtableStatement.participantId`. Rozpoznanie po składzie zostaje mimo to
- * jako droga obronna: kosztuje jedno przeszukanie wykazu tury i odpowiada
- * poprawnie także wtedy, gdy fragment przyjdzie pod kodem uczestnika.
- *
- * Fragmenty nieprzypisane czekają, zamiast być porzucane. Rozpoznanie po kodzie
- * wypowiedzi wymaga, żeby stan tę wypowiedź już znał, a wykaz wypowiedzi tury
- * napełnia dopiero zdarzenie `roundtable.debate.changed`; dwa strumienie idą
- * osobnymi biegami, więc pierwszy fragment potrafi wyprzedzić zdarzenie, które
- * nazywa jego wypowiedź. Okno otwarte w trakcie debaty nie zna też jeszcze
- * całego składu: odczyt uczestników jest w kontrakcie (`roundtable.model.list`),
- * ale żadne okno modułu go dziś nie wywołuje. Taki fragment czeka pod własnym
- * identyfikatorem i przechodzi do uczestnika w chwili, gdy stan go pozna.
- *
- * Moduł nie rysuje niczego i nie zna klas CSS. Nie utrwala też wypowiedzi —
- * utrwala je rdzeń, a wykaz zamknięty niesie `StanDebaty`.
- */
-
-/** Głos jednego uczestnika w postaci, w jakiej dotąd przyszedł. */
+/** Wypowiedzi rosnące na żywo — gromadzenie fragmentów strumienia i przypisanie ich uczestnikom debaty: głos jednego uczestnika w postaci, w jakiej dotąd przyszedł. */
 export interface GlosNaZywo {
   /** Tekst narosły z fragmentów rodzaju `text`. */
   tekst: string;
@@ -52,7 +14,7 @@ export interface GlosNaZywo {
   przyczyna: string;
 }
 
-/** Głos, którego nie dało się przypisać uczestnikowi — wraz z surowym kluczem. */
+/** Głos, którego nie dało się przypisać uczestnikowi — wraz z surowym kluczem, identyfikatorem nieznanym ani składowi, ani wypowiedziom. */
 export interface GlosNieprzypisany {
   identyfikator: string;
   glos: GlosNaZywo;
@@ -116,21 +78,14 @@ function rozpoznaj(stan: StanDebaty, identyfikator: string): string {
   return wypowiedz === undefined ? '' : wypowiedz.participantId;
 }
 
-/** Pusty głos — jedno miejsce, żeby cztery pola nie rozjechały się przy dopisaniu. */
+/** Pusty głos — jedno miejsce, żeby cztery pola nie rozjechały się przy dopisaniu fragmentu strumienia. */
 function pustyGlos(): GlosNaZywo {
   return { tekst: '', rozumowanie: '', domkniety: false, przyczyna: '' };
 }
 
 /**
- * Dokłada fragment do głosu.
- *
- * Rozdzielenie rodzajów jest celowe. Tok rozumowania (`thinking`) nie jest
- * wypowiedzią uczestnika: rdzeń liczy do treści wypowiedzi wyłącznie fragmenty
- * rodzaju `text` (`adapter_modul_roundtable_glos.go`), więc doklejenie
- * rozumowania do tekstu dałoby na żywo zdanie inne niż to, które za chwilę
- * utrwali rdzeń. Rodzaje pozostałe — narzędzia, obraz, dźwięk, prowenancja,
- * konto — nie niosą słów wypowiedzi i nie są tu gromadzone; panel debaty ich
- * nie pokazuje.
+ * Dokłada fragment do głosu, rozdzielając rodzaje: tekst, rozumowanie i błąd nie mieszają się
+ * w jednym polu.
  */
 function dopisz(poprzedni: GlosNaZywo | undefined, fragment: FragmentDebaty): GlosNaZywo {
   const glos = poprzedni ?? pustyGlos();
@@ -144,7 +99,7 @@ function dopisz(poprzedni: GlosNaZywo | undefined, fragment: FragmentDebaty): Gl
   return nastepny;
 }
 
-/** Scala głos oczekujący z głosem już przypisanym — oczekujący dokleja się na koniec. */
+/** Scala głos oczekujący z głosem już przypisanym — oczekujący dokleja się na koniec treści i rozumowania. */
 function scal(przypisany: GlosNaZywo | undefined, oczekujacy: GlosNaZywo): GlosNaZywo {
   const glos = przypisany ?? pustyGlos();
   return {

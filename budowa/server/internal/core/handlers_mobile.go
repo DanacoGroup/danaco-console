@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: wpięcie trzech komend rodziny `mobile.*` — mobilnego
-// centrum dowodzenia.
-//
-// Port jest rozszerzeniem portu nawigacji, nie drugim portem. Warstwa mobilna
-// pyta o stan warstwy wspólnej (sesje, okna, procesy, kolejki), a tę obsługuje
-// Nawigacja; rejestr telemetrii postępu ma w rdzeniu jednego właściciela.
-// Wzorem jest `monitor.*`, które tą samą drogą rozszerza ten sam port, oraz
-// `memory.*`, które rozszerza port modułu Workspace.
-//
-// Brak portu nie jest ciszą — tak samo jak w monitorze. Obsługiwacze rejestrują
-// się zawsze, a port, który nie niesie warstwy mobilnej, odpowiada
-// `internal_error` z nazwą brakującego bytu. Operator ma zobaczyć „warstwa
-// mobilna nie jest wpięta", a nie „nie znam takiej komendy" ani — najgorsze —
-// pusty wykaz procesów i wyzerowany stan platformy.
-//
-// Ta rodzina nie rozgłasza zdarzeń, mimo że kontrakt je zna. Kontrakt niesie
-// `mobile.process.changed`, ale proces mobilny jest procesem telemetrii
-// postępu, a telemetria ma jednego producenta zdarzeń (`telemetria.go`,
-// `progress.changed`). Rozgłaszanie z tego pliku dałoby zdarzenie wyłącznie po
-// zmianie zleconej z telefonu, a milczałoby przy każdej zmianie zleconej
-// z pulpitu — czyli drugą prawdę o procesie, i to niepełną. Dlatego
-// `zarejestrujWarstweMobilna` nie bierze emitera.
+// Plik wpina trzy komendy rodziny mobile.* mobilnego centrum dowodzenia,
+// jako rozszerzenie portu nawigacji obsługujące stan warstwy wspólnej
+// i sterowanie procesami.
 package core
 
 import (
@@ -46,11 +27,8 @@ type mobilnosc interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ mobilnosc = (*adapterMobilny)(nil)
 
-// zarejestrujWarstweMobilna wpina trzy komendy rodziny `mobile.*`.
-//
-// Asercja jest miękka, a nie twarda, dokładnie z tego powodu, co w monitorze:
-// odmowa ma dojść do Operatora, a rdzeń, który padłby przy montażu, powiedziałby
-// ją wyłącznie temu, kto czyta dziennik startu.
+// zarejestrujWarstweMobilna wpina trzy komendy rodziny mobile.*, rejestrując
+// je zawsze; port bez warstwy mobilnej odpowiada odmową zamiast milczeć.
 func zarejestrujWarstweMobilna(r *Rejestr, n Nawigacja) {
 	if r == nil {
 		return
@@ -82,8 +60,8 @@ func zarejestrujWarstweMobilnaNiewpieta(r *Rejestr) {
 		}))
 }
 
-// bladWarstwyMobilnejNiewpietej składa odmowę portu, który nie niesie warstwy
-// mobilnej.
+// bladWarstwyMobilnejNiewpietej składa odmowę portu nawigacji, który nie
+// niesie mobilnego centrum dowodzenia, zamiast zwracać pustą odpowiedź.
 func bladWarstwyMobilnejNiewpietej() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"warstwa mobilna: port nawigacji nie niesie mobilnego centrum dowodzenia — "+

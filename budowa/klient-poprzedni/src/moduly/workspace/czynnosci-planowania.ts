@@ -31,19 +31,8 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Hub planowania projektu widziany przez klienta — dwanaście komend rodziny
- * `workspace.task.*`, `workspace.board.get`, `workspace.schedule.get`
- * i `workspace.calendar.*`.
- *
- * Czynności stoją osobno od `zrodlo-workspace.ts` z tego samego powodu, dla
- * którego rdzeń ma osobny port planowania: rodzina `workspace.*` liczy
- * czterdzieści komend i jedno źródło byłoby wykazem wszystkiego, co moduł umie,
- * zamiast wykazem jednego obszaru pracy.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść. Okno huba ma obowiązkowy stan
- * błędu, więc źródło nie połyka niepowodzenia i nie zwraca pustej listy w jego
- * miejsce — widok musi odróżnić „projekt nie ma zadań” od „nie udało się
- * zapytać”. Stąd brak `?? []` w całym pliku.
+ * Hub planowania projektu widziany przez klienta grupuje dwanaście komend rodziny zadań, tablicy,
+ * osi czasu i kalendarza; każda czynność oddaje wynik, nie samą treść.
  */
 export interface CzynnosciPlanowania {
   /** `workspace.task.create` — założenie zadania projektu. */
@@ -118,13 +107,8 @@ export function czynnosciPlanowania(kanal: Kanal): CzynnosciPlanowania {
 }
 
 /**
- * Karty jednej kolumny tablicy w kolejności kluczy porządkowych.
- *
- * Kolejność bierze się z klucza porządkowego karty, a nie z kolejności
- * odpowiedzi: klucz jest napisem układanym przez rdzeń przy przeciąganiu i to
- * on rozstrzyga, gdzie karta stoi. Karta bez klucza idzie na koniec kolumny —
- * lepiej niż na jej początek, bo świeżo dołożona karta nie ma prawa przeskoczyć
- * kart już ułożonych.
+ * Karty jednej kolumny tablicy w kolejności kluczy porządkowych: klucz jest napisem układanym
+ * przez rdzeń przy przeciąganiu, a karta bez klucza idzie na koniec kolumny.
  */
 export function kartyKolumny(tablica: WorkspaceBoard, idKolumny: string): WorkspaceTask[] {
   return tablica.tasks
@@ -133,11 +117,8 @@ export function kartyKolumny(tablica: WorkspaceBoard, idKolumny: string): Worksp
 }
 
 /**
- * Postęp projektu w procentach — udział zadań ukończonych w zadaniach ogółem.
- *
- * Projekt bez zadań ma postęp zerowy, a nie stuprocentowy: „nic do zrobienia”
- * nie jest tym samym co „wszystko zrobione”, a pasek pełny w pustym projekcie
- * byłby meldunkiem o pracy, której nie było.
+ * Postęp projektu w procentach to udział zadań ukończonych w zadaniach ogółem; projekt bez zadań
+ * ma postęp zerowy, nie stuprocentowy.
  */
 export function postepProjektu(zadania: readonly WorkspaceTask[]): number {
   if (zadania.length === 0) return 0;

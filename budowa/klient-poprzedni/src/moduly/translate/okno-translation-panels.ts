@@ -30,36 +30,15 @@ import { utworzRozwiniecie } from './warstwy-translate';
 import { rozbieznoscOdpowiedzi } from './zgodnosc-odpowiedzi';
 
 /**
- * Translation Panels — okno **wiodące** o instancji wielokrotnej
- * (`translate.translation-panels`, N = liczba języków docelowych).
- *
- * Okno zbiorcze jest zarządcą instancji, nie ich treścią: tutaj wybiera się
- * języki docelowe formularzem „+ Dodaj język", a przegląd wraz z korektą
- * tłumaczenia dzieje się w każdym panelu osobno (`panel-jezyka.ts`).
- *
- * Formularz niesie ster kanału, bo `TranslateTargetAddRequest.channelId` wskazuje
- * model wykonujący przekład, a decyzja o nim zapada właśnie tutaj. Nota
- * `sufit-paneli.ts` mówi obok, ile paneli okno zna — każdy kosztuje jedno
- * wywołanie modelu — nie odbierając dodania kolejnego.
- *
- * Okno nie prowadzi własnego wykazu paneli. Prawdą jest wykaz w stanie modułu,
- * bo napełniają go trzy drogi naraz: odpowiedź `translate.target.add`,
- * odpowiedź `translate.source.set` (komplet paneli po zmianie źródła)
- * i zdarzenie `translate.translation.changed`. Druga kopia rozjechałaby się
- * przy pierwszej z nich.
+ * Translation Panels to okno wiodące o instancji wielokrotnej modułu Translate; okno zbiorcze jest
+ * zarządcą instancji, języki docelowe wybiera formularz, a przegląd dzieje się w każdym panelu osobno.
  */
 export interface OknoTranslationPanels {
   element: HTMLElement;
   odswiez(): void;
   /** Prowadzi ognisko do pola języka docelowego — droga skrótu klawiszowego. */
   ogniskujDodanieJezyka(): void;
-  /**
-   * Przewija do panelu wymagającego uwagi — poprzedniego albo następnego.
-   *
-   * Opracowanie mówi o segmencie wymagającym rewizji. Kontrakt stanu segmentu
-   * nie zna — stan niesie cały panel — więc przejście prowadzi między panelami,
-   * których stan nie jest „gotowe". Zdanie o tej różnicy stoi w wykazie skrótów.
-   */
+  /** Przewija do panelu wymagającego uwagi, poprzedniego albo następnego, ze stanem różnym od gotowego. */
   przejdzDoUwagi(wstecz: boolean): void;
   /** Zwija stery okna i wszystkich instancji — wołane przy rozłączeniu modułu. */
   rozlacz(): void;
@@ -109,10 +88,7 @@ export function utworzOknoTranslationPanels(stan: StanTranslate): OknoTranslatio
   formularz.className = 'mt-dodaj-jezyk';
   formularz.append(jezyk.element, podpowiedzi, ton.element, sterKanalu.element, dodaj);
 
-  // Nota sufitu stoi przy formularzu, który dokłada panele — tam, gdzie zapada
-  // decyzja o kolejnym wywołaniu modelu, a nie na końcu okna. Nie jest bramką
-  // i nie odbiera przycisku obok: progu liczby paneli nie ustala ani kontrakt,
-  // ani rdzeń, a próg wpisany po stronie klienta byłby wymyślony.
+  // Nota sufitu stoi przy formularzu dodania panelu i nie jest bramką liczby paneli okna.
   const sufit = utworzNoteSufituPaneli(0);
 
   const siatka = document.createElement('div');
@@ -135,16 +111,7 @@ export function utworzOknoTranslationPanels(stan: StanTranslate): OknoTranslatio
   element.dataset['okno'] = 'translation-panels';
   element.append(naglowekOkna('Translation Panels', 'wiodące'), okno.element);
 
-  /**
-   * Przerysowanie zawsze odświeża siatkę paneli i nigdy nie zdejmuje fazy
-   * trwającej ani fazy błędu.
-   *
-   * Panele odrysowują się także wtedy, gdy okno stoi w ładowaniu: panel
-   * przeliczony przez rdzeń przychodzi zdarzeniem `translate.translation.changed`
-   * w środku innego wywołania i ma być widoczny od razu. Komunikatu skasować
-   * natomiast nie wolno — zapowiedź trwającego dodania języka i powód odmowy
-   * zdejmuje czynność, która je postawiła (`dodajJezyk`).
-   */
+  /** Przerysowanie zawsze odświeża siatkę paneli i nigdy nie zdejmuje fazy trwającej ani fazy błędu. */
   function odswiez(): void {
     const wykaz = stan.panelJezykow();
     siatka.replaceChildren(
@@ -152,9 +119,7 @@ export function utworzOknoTranslationPanels(stan: StanTranslate): OknoTranslatio
         utworzPanelJezyka(stan, panel, odswiezPorownanie),
       ),
     );
-    // Nota liczy panele, które okno zna w tej chwili. Liczba jedzie z tego
-    // samego wykazu, z którego powstaje siatka, więc druga prawda o liczbie
-    // paneli nie ma gdzie powstać.
+    // Nota liczy panele, które okno zna w tej chwili, z tego samego wykazu, z którego powstaje siatka.
     odswiezNoteSufituPaneli(sufit, wykaz.length);
     sterKanalu.odswiez();
     odswiezPorownanie();
@@ -181,13 +146,7 @@ export function utworzOknoTranslationPanels(stan: StanTranslate): OknoTranslatio
       jezyk.kontrolka.select();
     },
 
-    /**
-     * Przejście między panelami wymagającymi uwagi.
-     *
-     * Punktem wyjścia jest panel, na którym stoi ognisko; gdy ognisko jest poza
-     * siatką, przejście zaczyna od jej krańca. Wykaz pusty nie jest ciszą —
-     * wiersz odpowiedzi mówi, że wszystkie panele są gotowe.
-     */
+    /** Przejście między panelami wymagającymi uwagi zaczyna od panelu z ogniskiem albo od krańca siatki. */
     przejdzDoUwagi(wstecz) {
       const doUwagi = stan
         .panelJezykow()
@@ -243,7 +202,7 @@ function silnikiIPivot(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Pola formularza „+ Dodaj język" widziane przez ścieżkę zapisu. */
+/** Pola formularza Dodaj język widziane przez ścieżkę zapisu: kod języka docelowego, ton tłumaczenia oraz ster kanału modelu wykonującego przekład. */
 interface PolaJezyka {
   jezyk: HTMLInputElement;
   ton: HTMLInputElement;
@@ -252,16 +211,8 @@ interface PolaJezyka {
 }
 
 /**
- * `translate.target.add` — dodanie języka docelowego zakłada nowy panel.
- *
- * Komenda idzie modelem: rdzeń przekłada tekst źródłowy okna na język panelu
- * czynnym kanałem modelu, a bez takiego kanału odmawia kodem
- * `channel_unavailable`. Brzmienie tej odmowy nie mówi Operatorowi, czego
- * brakuje — to zdanie dokłada `zdanieOdmowyModelu`.
- *
- * Nieudane dodanie stawia okno w fazie błędu, której `odswiez` nie zdejmuje, bo
- * pierwsze przerysowanie skasowałoby komunikat przed przeczytaniem. Fazę zdejmuje
- * dopiero dodanie udane.
+ * Dodanie języka docelowego zakłada nowy panel komendą modelu; nieudane dodanie stawia okno
+ * w fazie błędu, którą zdejmuje dopiero dodanie udane.
  */
 async function dodajJezyk(
   stan: StanTranslate,
@@ -270,8 +221,7 @@ async function dodajJezyk(
   odpowiedz: WierszOdpowiedzi,
 ): Promise<void> {
   if (stan.idOkna() === '') {
-    // Odmowa, nie pustka: brak okna sesji jest powodem niewykonania czynności,
-    // więc idzie do wiersza odpowiedzi i w stan błędu okna — nie w jego pustkę.
+    // Odmowa, nie pustka: brak okna sesji jest powodem niewykonania, idzie do odpowiedzi i w stan błędu.
     odpowiedz.pokaz(BRAK_OKNA, false);
     okno.blad(BRAK_OKNA);
     return;
@@ -285,14 +235,11 @@ async function dodajJezyk(
   const wybranyTon = pola.ton.value.trim();
   if (wybranyTon !== '') zadanie.tone = wybranyTon;
 
-  // Kanał wchodzi do żądania wyłącznie wskazany. Pusty wybór nie jedzie jako
-  // pusty napis: kontrakt bierze przy braku pola kanał czynny okna, więc brakiem
-  // ma być brak pola, a nie pole z niczym w środku.
+  // Kanał wchodzi do żądania wyłącznie wskazany; kontrakt bierze przy braku pola kanał czynny okna.
   const wybranyKanal = pola.kanal.wybrany();
   if (wybranyKanal !== '') zadanie.channelId = wybranyKanal;
 
-  // Dodanie języka idzie modelem i trwa — okno mówi to własnym stanem ładowania,
-  // nie tylko wierszem odpowiedzi. Formularz zostaje widoczny i edytowalny.
+  // Dodanie języka idzie modelem i trwa — okno mówi to stanem ładowania, nie tylko wierszem odpowiedzi.
   okno.ladowanie(`Rdzeń zakłada panel języka ${kod} i przekłada tekst źródłowy modelem.`);
   odpowiedz.pokaz(`Zakładanie panelu języka ${kod}…`, true);
   const wynik = await stan.panele.dodajJezyk(zadanie);
@@ -306,9 +253,7 @@ async function dodajJezyk(
   stan.wchlonPanel(panel);
   pola.jezyk.value = '';
 
-  // Żądanie niosło kod języka i (bywa) ton, a odpowiedź niesie cały panel, więc
-  // oba pola da się sprawdzić bez dodatkowego wywołania. Sprawdzenie milczy
-  // z konstrukcji, a nie przez zaufanie do rdzenia.
+  // Żądanie niosło kod języka i ton, odpowiedź niesie cały panel, więc pola sprawdza się bez wywołania.
   const rozbiezne = rozbieznoscOdpowiedzi('Dodanie języka docelowego', [
     { nazwa: 'język panelu', zamowione: kod, oddane: panel.language },
     ...(wybranyTon === ''
@@ -325,12 +270,8 @@ async function dodajJezyk(
 }
 
 /**
- * Zestrojenie instancji z wykazem rdzenia.
- *
- * Panel, którego rdzeń już nie oddaje, znika wraz z instancją; panel nowy
- * dostaje instancję świeżą. Kolejność bierzemy z rdzenia, nie z chwili
- * dodania — inaczej dwa klienty tego samego konta pokazałyby panele w innym
- * porządku.
+ * Zestrojenie instancji z wykazem rdzenia usuwa panel, którego rdzeń już nie oddaje, i dodaje
+ * instancję nowemu panelowi w kolejności wykazu rdzenia.
  */
 function zestroj(
   wykaz: readonly TranslationPanel[],
@@ -339,10 +280,7 @@ function zestroj(
 ): HTMLElement[] {
   for (const [id, instancja] of [...instancje]) {
     if (wykaz.some((panel) => panel.id === id)) continue;
-    // Zdjęcie nasłuchów przed usunięciem, nie po nim: ster kanału instancji
-    // rozwinięty w chwili, w której panel znika z wykazu rdzenia, zostawiłby na
-    // dokumencie nasłuch `pointerdown` wołający do elementu, którego już nie ma.
-    // `element.remove()` sam takiego nasłuchu nie zdejmuje.
+    // Zdjęcie nasłuchów przed usunięciem, bo ster kanału zostawiłby nasłuch po usunięciu elementu.
     instancja.rozlacz();
     instancja.element.remove();
     instancje.delete(id);

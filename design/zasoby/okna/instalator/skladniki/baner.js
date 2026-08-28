@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — BANER INFORMACYJNY
-   ----------------------------------------------------------------------------
+/* Składnik banera informacyjnego przedstawia komunikat wymogu, ostrzeżenia, błędu albo wyniku, niezwiązany z żadną pojedynczą kontrolką ekranu.
+
    Komunikat, który nie należy do żadnej kontrolki: wymóg, ostrzeżenie, wynik.
    Głowa niesie komunikat, treść pod nią go uzasadnia — rozdziela je stopień
    i waga, a barwa zostaje barwą rodzaju komunikatu.
@@ -13,8 +12,7 @@
      glowa      klucz katalogu — głowa komunikatu (opcjonalna)
      tresc      klucz katalogu — uzasadnienie
      dane       atrybuty `data-*`
-     ukryty     true — baner czeka na swój stan
-   ============================================================================ */
+     ukryty     true — baner czeka na swój stan */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

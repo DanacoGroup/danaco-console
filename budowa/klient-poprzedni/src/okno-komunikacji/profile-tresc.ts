@@ -1,15 +1,7 @@
 import { GRANICA_NIEPODANA, narzedzie, profil, type ProfilModulu } from './profil-modulu';
 
 /**
- * Profile pięciu modułów pracy z treścią: Studio, Workspace, Automations,
- * Browser, Research.
- *
- * Podział na trzy pliki idzie wzdłuż rodzajów pracy, a nie wzdłuż długości
- * pliku.
- *
- * Granica okien jest ustalona tylko dla Automations (dwa okna: wykonawca
- * i koordynator). Studio, Workspace, Browser i Research stoją na
- * `GRANICA_NIEPODANA`.
+ * Profile pięciu modułów pracy z treścią — Studio, Workspace, Automations, Browser i Research — z granicą okien ustaloną tylko dla modułu Automations.
  */
 export const PROFILE_TRESCI: readonly ProfilModulu[] = [
   profil(
@@ -45,11 +37,7 @@ export const PROFILE_TRESCI: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Moduł składa się z okna komunikacji i czterech okien operacyjnych.
-      // Powierzchnia tekstowa jest JEDNA: okno pracy z dokumentem niesie treść,
-      // podgląd wydania i różnicę jako tryby jednego widoku — Studio Editor,
-      // kanwa tekstowa, Preview Window i Diff/Grep Panel zeszły się w nie.
-      // Pozostałe trzy okna powierzchni tekstowej nie mają.
+      // Moduł Studio łączy okno komunikacji z czterema oknami, gdzie powierzchnia tekstowa jest jedna.
       postacRozmowy: 'okno',
       granicaOkien: GRANICA_NIEPODANA,
       pamiecSesyjna: true,
@@ -132,8 +120,7 @@ export const PROFILE_TRESCI: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Dwa okna, nie cztery: koordynator zarządza procesem, wykonawca
-      // realizuje zadania. To uproszczona odmiana środowiska multitaskingu.
+      // Dwa okna, nie cztery: koordynator zarządza procesem, wykonawca realizuje zadania.
       postacRozmowy: 'okno',
       granicaOkien: 2,
       pamiecSesyjna: true,

@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: przełożenie schematu wejścia z kontraktu na schemat
-// wejścia protokołu MCP (JSON Schema).
-//
-// Przekład jest płytki z zamysłem: kontrakt niesie już gotowy typ schematu
-// (`string`, `integer`, `number`, `boolean`, `object`, `array`), typ elementu
-// tablicy i komplet wartości wyliczenia — generator `shared/gen/narzedzia.mjs`
-// wyliczył to raz przy budowie kontraktu. Powtórzenie tamtego rozstrzygania
-// tutaj byłoby drugim odwzorowaniem tych samych typów.
+// Plik przekłada schemat wejścia z kontraktu na schemat wejścia protokołu MCP
+// w postaci JSON Schema, płytko, bez powtarzania rozstrzygnięć typów.
 package narzedzia
 
 import "danacoconsole/shared"
@@ -39,8 +33,8 @@ func schematWejscia(parametry []shared.ToolParameter) map[string]any {
 		poleTypu:        typObiektu,
 		poleWlasciwosci: wlasciwosci,
 	}
-	// Puste `required` jest czym innym niż brak `required` dla części klientów
-	// MCP, więc pole pojawia się wyłącznie z treścią.
+	// Puste required różni się od jego braku dla części klientów MCP, więc pole
+	// idzie tylko z treścią.
 	if len(wymagane) > 0 {
 		schemat[poleWymaganych] = wymagane
 	}

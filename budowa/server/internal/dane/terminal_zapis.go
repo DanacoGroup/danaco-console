@@ -49,7 +49,9 @@ const (
 	                           WHERE stan = 'running'`
 )
 
-// ZapiszKarte zakłada kartę powłoki albo odświeża jej profil.
+// ZapiszKarte zakłada wiersz karty powłoki terminala w tabeli terminal_karta i przy
+// istniejącym kodzie odświeża jej profil, katalog roboczy oraz stan zamiast wstawiać
+// zduplikowany wiersz.
 func (r *repozytoriumTerminala) ZapiszKarte(ctx context.Context, karta KartaTerminala) error {
 	if karta.Kod == "" || karta.OknoKod == "" {
 		return fmt.Errorf("dane: karta terminala bez identyfikatora karty albo okna")
@@ -70,7 +72,9 @@ func (r *repozytoriumTerminala) ZapiszKarte(ctx context.Context, karta KartaTerm
 	return nil
 }
 
-// ZapiszProces wpisuje proces do dziennika albo odświeża jego stan.
+// ZapiszProces wpisuje proces terminala do dziennika procesów i przy istniejącym
+// kodzie procesu odświeża jego stan, kod wyjścia oraz chwilę zakończenia zamiast
+// zakładać nowy wiersz.
 func (r *repozytoriumTerminala) ZapiszProces(ctx context.Context, proces ProcesTerminala) error {
 	if proces.Kod == "" || proces.OknoKod == "" {
 		return fmt.Errorf("dane: proces terminala bez identyfikatora procesu albo okna")
@@ -95,7 +99,8 @@ func (r *repozytoriumTerminala) ZapiszProces(ctx context.Context, proces ProcesT
 	return nil
 }
 
-// ZakonczProces domyka wiersz dziennika stanem końcowym i kodem wyjścia.
+// ZakonczProces domyka wiersz dziennika procesu terminala stanem końcowym i kodem
+// wyjścia, wskazując proces po jego identyfikatorze przekazanym w wywołaniu.
 func (r *repozytoriumTerminala) ZakonczProces(ctx context.Context, kod string,
 	stan shared.TerminalProcessStatus, kodWyjscia *int64) error {
 
@@ -112,7 +117,9 @@ func (r *repozytoriumTerminala) ZakonczProces(ctx context.Context, kod string,
 	return nil
 }
 
-// OsierociProcesy przestawia procesy poprzedniego biegu rdzenia na `stopped`.
+// OsierociProcesy przestawia na stan zatrzymany wszystkie procesy terminala pozostałe
+// z poprzedniego uruchomienia rdzenia i zwraca liczbę wierszy zmienionych tym
+// poleceniem.
 func (r *repozytoriumTerminala) OsierociProcesy(ctx context.Context) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, osierocProcesyTerminala)
 	if err != nil {

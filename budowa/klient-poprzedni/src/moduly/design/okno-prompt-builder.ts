@@ -13,29 +13,8 @@ import { powodZTorem } from './tor-komendy';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Prompt Builder — okno **kreator** modułu Design (kod katalogu rdzenia
- * `prompt-builder`): złożenie promptu strukturalnego i wydanie zlecenia
- * generowania.
- *
- * Pola strukturalne mieszkają w modalu, bo klasa okna „Kreator" żąda nośnika
- * modalnego w stanie zamkniętym; sekcja okna zostaje widoczna zawsze, bo jest
- * jednym z okien operacyjnych modułu. Przycisk `⚡ Generuj` stoi w obu miejscach
- * i prowadzi do tej samej czynności.
- *
- * Generowanie kończy się jedną z dwóch dróg i okno obsługuje obie.
- * `adapter_modul_design_generowanie.go` wysyła polecenie kanałem obrazowym,
- * odbiera fragment `image`, odkłada bajty w magazynie pod sumą sha256, mierzy
- * format i wymiary z nagłówka utrwalonego pliku i zakłada wiersz zasobu z `uri`
- * — odpowiedź udana niesie zasoby z treścią. Odmowa przychodzi przy braku
- * kanału obrazowego w rejestrze, kanale nieczynnym, kanale tekstowym, braku
- * poświadczenia albo odpowiedzi bez obrazu; niesie wtedy
- * `error.details.polecenie` z gotową treścią polecenia, więc okno pokazuje
- * odmowę wraz z oddanym tekstem — złożenie promptu odbyło się także wtedy.
- *
- * Odpowiedź udanego generowania ma w kontrakcie pole `processId`, którego rdzeń
- * nie wypełnia, a zdarzenia `progress.changed` nie przychodzą. Bez `processId`
- * pasek postępu jest więc wyciszany, zamiast stać na „zlecenie przyjęte" po
- * pracy już zakończonej.
+ * Prompt Builder — okno kreator modułu Design: złożenie promptu strukturalnego i wydanie zlecenia
+ * generowania, obsługujące zarówno odpowiedź udaną, jak i obie drogi odmowy rdzenia.
  */
 export interface OknoPromptBuilder {
   element: HTMLElement;
@@ -54,9 +33,7 @@ export function utworzOknoPromptBuilder(stan: StanDesignu): OknoPromptBuilder {
     modal.otworz();
   });
 
-  // Szablony i historia promptów trwałej: obie żyły dotąd w oknie do zamknięcia
-  // karty przeglądarki. Panel oddaje prompt z powrotem w pola kreatora, więc
-  // szablon da się użyć, a nie tylko obejrzeć.
+  // Szablony i historia promptów trwają: obie żyły dotąd w oknie tylko do zamknięcia karty przeglądarki.
   const szablony: SzablonyPromptu = utworzSzablonyPromptu(stan, {
     prompt: () => pola.prompt(),
     naSzablon: (prompt) => {
@@ -98,8 +75,7 @@ export function utworzOknoPromptBuilder(stan: StanDesignu): OknoPromptBuilder {
 
   async function generujZasob(): Promise<void> {
     const prompt = pola.prompt();
-    // Próba z brakami: przycisk był czynny od otwarcia, więc naciśnięcie ma
-    // ujawnić brak, a kreator ma zostać otwarty.
+    // Próba z brakami: przycisk był czynny od otwarcia, więc naciśnięcie ma ujawnić brak, nie zniknąć.
     if (prompt.subject === '') {
       powiedz('Temat jest jedynym polem wymaganym promptu — bez niego rdzeń odmówi zlecenia.', false);
       modal.otworz();
@@ -112,10 +88,7 @@ export function utworzOknoPromptBuilder(stan: StanDesignu): OknoPromptBuilder {
     okno.ladowanie('Zlecenie generowania w toku…');
     powiedz('Zlecenie generowania wysłane — czekam na odpowiedź rdzenia.', true);
     postep.oczekuj('', stan.idOkna());
-    // Czuwanie pilnuje, żeby okno nie kręciło wskaźnika po zerwanym gnieździe.
-    // Cisza kanału nie jest odmową generowania: rdzeń mógł zlecenie odebrać
-    // i wykonać, więc pasek postępu milknie, a zdanie mówi o skutku nieznanym,
-    // nie o niepowodzeniu.
+    // Czuwanie pilnuje, żeby okno nie kręciło wskaźnika po zerwanym gnieździe; cisza nie jest odmową.
     const wynik = await stan.czuwanie.prowadz(
       'generowanie zasobu',
       stan.zrodlo.generuj({
@@ -141,15 +114,12 @@ export function utworzOknoPromptBuilder(stan: StanDesignu): OknoPromptBuilder {
         spozniona: (zdanie) => powiedz(zdanie, false),
       },
     );
-    // `null` znaczy „bez rozstrzygnięcia" — zdanie stoi już w oknie i w modalu,
-    // a rdzeń mógł zlecenie wykonać, więc odmowy się tu nie dopisuje.
+    // Brak rozstrzygnięcia: zdanie stoi już w oknie i w modalu, a rdzeń mógł zlecenie wykonać.
     if (wynik === null) return;
     if (!wynik.udany || wynik.wynik === undefined) {
       const powod = opisOdmowyBledu('Generowanie zasobu', wynik.blad);
       okno.blad(powodZTorem(powod, Command.DesignAssetGenerate));
-      // Odmowa braku silnika niesie w `details` gotową treść polecenia. Prompt
-      // trafia wtedy do historii, bo złożenie promptu się odbyło — inaczej niż
-      // przy odmowie wskazania (bez okna, bez tematu), gdzie składać nie było co.
+      // Odmowa braku silnika niesie gotową treść polecenia; prompt trafia wtedy do historii, bo się złożył.
       const polecenie = polecenieZOdmowy(wynik.blad);
       if (polecenie !== '') {
         historia.dopisz(prompt);
@@ -162,8 +132,7 @@ export function utworzOknoPromptBuilder(stan: StanDesignu): OknoPromptBuilder {
     }
     historia.dopisz(prompt);
     for (const zasob of wynik.wynik.assets) stan.wchlon(zasob);
-    // Bez identyfikatora procesu nie ma czego śledzić, więc pasek milknie
-    // zamiast zostawać na „czekam" po zakończonej turze.
+    // Bez identyfikatora procesu nie ma czego śledzić, więc pasek milknie zamiast czekać w nieskończoność.
     const idProcesu = (wynik.wynik.processId ?? '').trim();
     if (idProcesu === '') postep.wycisz();
     else postep.oczekuj(idProcesu, stan.idOkna());

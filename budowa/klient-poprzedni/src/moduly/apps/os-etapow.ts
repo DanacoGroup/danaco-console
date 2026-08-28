@@ -1,15 +1,7 @@
 /**
- * Oś etapów budowy produktu — „Nawigacja między etapami budowy produktu od
- * architektury po wdrożenie”, jedyna funkcja operatora okna Product Builder.
- *
- * Oś prowadzi wyłącznie do okien, które moduł zbudował: pozycje przychodzą
- * z pliku składającego moduł, a nie z wykazu zapisanego tutaj, więc dopisanie
- * okna nie wymaga poprawki w drugim miejscu. Kolejność etapów — architektura,
- * warsztaty, wdrożenie — jest kolejnością procesu, nie bramą: naciśnięcie
- * etapu późniejszego jest dozwolone i prowadzi ognisko do jego okna.
- *
- * Oś nie udaje stanu etapu. Stan przychodzi zdarzeniem `apps.build.changed`
- * i rysuje go osobny wykaz okna.
+ * Oś etapów budowy produktu — nawigacja między etapami od architektury po
+ * wdrożenie, jedyna funkcja operatora okna Product Builder. Pozycje przychodzą
+ * z pliku składającego moduł, a nie z wykazu zapisanego tutaj.
  */
 export interface PozycjaOsi {
   /** Kod okna w katalogu rdzenia (`okno_operacyjne.kod`). */
@@ -39,7 +31,10 @@ export function utworzOsEtapow(
   return { element };
 }
 
-/** Jeden etap osi: numer, nazwa okna i zdanie o tym, co się w nim robi. */
+/**
+ * Jeden etap osi: numer porządkowy, nazwa okna oraz zdanie o tym, co się w nim
+ * robi, złożone w przycisk prowadzący do okna etapu.
+ */
 function krok(pozycja: PozycjaOsi, numer: number, przejdz: (kodOkna: string) => void): HTMLElement {
   const znak = document.createElement('span');
   znak.className = 'mp-os__znak';

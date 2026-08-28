@@ -1,21 +1,10 @@
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
 
 /**
- * Powłoka komunikatu stanu okien modułu Assistant.
- *
- * Plik odpowiada wyłącznie za nośnik komunikatu stanu wraz z miejscem na treść.
- * Nazwę fazy i znakowanie DOM wnosi `komponenty/faza-okna`; tutaj zostaje
- * wyłącznie to, czym moduł różni się od reszty drzewa: wskaźnik odczytu stoi
- * obok treści, a treść zostaje widoczna także w ładowaniu, więc kontrolki
- * pozostają klikalne przez cały czas wywołania.
- *
- * „Jeszcze nie pytałem rdzenia" nie jest fazą okna, tylko fazą źródła danych
- * (`zapis-modulu.ts`, pola `pytanoO…`). Okno pokazuje ją jako `puste` z własnym
- * zdaniem.
- *
- * Stan nie zastępuje treści, tylko ją przesłania: po powrocie do fazy `gotowe`
- * wcześniejsza treść jest nietknięta, więc nieudane odświeżenie nie kasuje
- * tego, co było już na ekranie.
+ * Powłoka komunikatu stanu okien modułu Assistant, czyli nośnik zdania
+ * o fazie wraz z miejscem na treść okna. Wskaźnik odczytu stoi obok treści,
+ * a treść pozostaje widoczna także w trakcie wywołania rdzenia, więc
+ * kontrolki pozostają klikalne.
  */
 export interface StanOkna {
   /** Element osadzany w oknie; niesie komunikat i treść. */

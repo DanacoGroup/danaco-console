@@ -19,18 +19,8 @@ import {
 import { utworzZrodloZrodla, type ZrodloZrodla } from './zrodlo-zrodla';
 
 /**
- * Stan modułu Translate — źródła kontraktu nad jednym zbiorem danych.
- *
- * Tekst źródłowy i panele są jednym bytem: zmiana źródła aktualizuje wszystkie
- * panele naraz, więc odpowiedź `translate.source.set` niesie od razu komplet
- * paneli. Gdyby Source Panel prowadził własną kopię tekstu, a Translation
- * Panels własną kopię paneli, ta jednoczesność musiałaby być odtwarzana ręcznie
- * w dwóch miejscach i rozjeżdżałaby się przy pierwszej odmowie.
- *
- * Identyfikator okna jest warunkiem wstępnym: bez niego moduł nie wysyła
- * `translate.source.set` ani `translate.target.add` — mówi o tym wprost zamiast
- * wysyłać żądanie z pustym polem i pokazywać odmowę walidacji jako własną
- * usterkę.
+ * Stan modułu Translate jest jednym źródłem kontraktu nad jednym zbiorem danych; tekst źródłowy
+ * i panele są jednym bytem, więc zmiana źródła aktualizuje wszystkie panele naraz.
  */
 export type { FazaKontekstu } from './magazyn-translate';
 
@@ -39,28 +29,11 @@ export interface StanTranslate {
   panele: ZrodloPaneli;
   glosariusz: ZrodloGlosariusza;
   okna: ZrodloOknaTranslate;
-  /**
-   * Dokument wejściowy i jego zamiana formatu — cudzy obszar kontraktu,
-   * z którego korzysta Format Studio.
-   *
-   * Obszar `translate` nie ma ani jednej komendy przyjmującej plik, więc bez
-   * tego źródła moduł nie miałby wejścia od strony dokumentu wcale.
-   */
+  /** Dokument wejściowy i jego zamiana formatu to obszar kontraktu, z którego korzysta Format Studio. */
   dokument: ZrodloDokumentuTranslate;
-  /**
-   * Rejestr kanałów modelu — cudzy obszar, z którego biorą wartość stery
-   * `channelId` przy dodaniu języka i przy tłumaczeniu zwrotnym.
-   *
-   * Jeden rejestr na moduł, nie jeden na ster. Sterów jest 1 + N (formularz
-   * „+ Dodaj język" i po jednym w każdej instancji panelu); rejestr zakładany
-   * osobno przez każdy z nich pytałby rdzeń N razy o ten sam wykaz.
-   */
+  /** Rejestr kanałów jest wspólny dla wszystkich sterów, żeby moduł nie pytał rdzenia wielokrotnie. */
   kanaly: ZrodloKanalowTranslate;
-  /**
-   * Warsztat — wszystkie rodziny komend spoza czterech okien pierwotnych:
-   * pamięć jako byt Operatora, segmentacja, terminologia, korekta, obieg,
-   * dokumenty, lokalizacja, napisy, silniki i wymiana zewnętrzna.
-   */
+  /** Warsztat obejmuje rodziny komend spoza czterech okien: pamięć, segmentację, terminologię, korektę. */
   warsztat: ZrodloWarsztatuTranslate;
   /** Okno modułu wskazane przez rdzeń; pusty napis znaczy brak. */
   idOkna(): string;
@@ -97,12 +70,10 @@ export function utworzStanTranslate(kanal: Kanal): StanTranslate {
   const dokument = utworzZrodloDokumentuTranslate(kanal);
   const warsztat = utworzZrodloWarsztatuTranslate(kanal);
 
-  // Powrót rejestru kanałów przerysowuje moduł tą samą drogą, co każda inna
-  // zmiana — stery obsadzają się same, bez własnego nasłuchu w N instancjach.
+  // Powrót rejestru kanałów przerysowuje moduł tą samą drogą, co każda inna zmiana stanu modułu.
   const odsubskrybujKanaly = kanaly.obserwuj(() => magazyn.ogloszZmiane());
 
-  // Zdarzenie jest jedynym źródłem odświeżenia poza własnym działaniem: panel
-  // przeliczony przez rdzeń dociera tą samą drogą co panel zmieniony ręcznie.
+  // Zdarzenie jest jedynym źródłem odświeżenia poza własnym działaniem modułu na panelach języków.
   const odsubskrybuj = panele.naZmiane((tresc) => {
     if (tresc.change === ChangeKind.Deleted) magazyn.usunPanel(tresc.panel.id);
     else magazyn.wchlonPanel(tresc.panel);
@@ -141,18 +112,8 @@ export function utworzStanTranslate(kanal: Kanal): StanTranslate {
 }
 
 /**
- * Odczyt okna modułu z rdzenia — dwie komendy zbudowane, jedna po drugiej.
- *
- * Niepowodzenie `window.state.get` nie unieważnia wybranego okna: identyfikator
- * wystarcza modułowi do pracy, a parametry wykonania są dodatkiem
- * informacyjnym (fail-open).
- *
- * Rejestr kanałów idzie obok kolejki komend. Wykaz kanałów modelu nie zależy
- * od okna i nie jest warunkiem żadnej czynności — obsadza wyłącznie ster
- * `channelId`, którego pusty wybór jest poprawną wartością. Czekanie na niego
- * opóźniałoby pas kontekstu, a jego odmowa nie zatrzymuje modułu, więc obietnica
- * jest tu świadomie nieoczekiwana. Powód niepowodzenia zapisuje sam rejestr
- * i mówi go ster.
+ * Odczyt okna modułu z rdzenia buduje dwie komendy jedna po drugiej; niepowodzenie odczytu stanu
+ * nie unieważnia wybranego okna, bo identyfikator wystarcza modułowi do pracy.
  */
 async function wczytajKontekst(
   magazyn: MagazynTranslate,
@@ -181,12 +142,8 @@ async function wczytajKontekst(
 }
 
 /**
- * Okno modułu Translate spośród okien sesji.
- *
- * Pierwszeństwo ma okno, które rdzeń przypisał do modułu `translate`. Gdy
- * takiego nie ma, bierzemy pierwsze okno sesji: moduł okna zmienia się komendą
- * `workspace.enter`, więc okno sesji bez modułu Translate i tak jest tym oknem,
- * w którym Operator właśnie pracuje.
+ * Okno modułu Translate spośród okien sesji ma pierwszeństwo przypisane do modułu translate przez
+ * rdzeń, a bez takiego okna bierze się pierwsze okno sesji.
  */
 function wybierzOkno(okna: readonly Window[]): Window | null {
   return okna.find((okno) => okno.moduleId === 'translate') ?? okna[0] ?? null;

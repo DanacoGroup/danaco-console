@@ -1,25 +1,7 @@
-// Komenda `terminal.output.read` — jednorazowy odczyt wyjścia jednego procesu
-// terminala wraz z jego stanem i kodem wyjścia.
-//
-// Czynność jest osobną komendą, a nie polami w `terminal.command.exec`, bo
-// tamta kończy się w chwili, gdy proces ruszy, a nie gdy się skończy
-// (`adapter_modul_terminal_bieg.go`). Dołożenie do jej wyniku pól
-// `stdout`/`stderr`/`exitCode` znaczyłoby jedno z dwojga:
-//
-//   - odpowiedź czeka na koniec procesu — wtedy `go build ./...` trzyma żądanie
-//     gniazda kilka minut, a zerwane gniazdo zabiera wynik wykonanej pracy;
-//   - odpowiedź wraca od razu z polami pustymi — czyli rdzeń zgłasza brak
-//     wyjścia dla polecenia, które dopiero zaczęło pisać.
-//
-// Rozdzielenie czynności rozdziela też ich czasy: uruchomienie jest
-// natychmiastowe, odczyt następuje wtedy, kiedy jest co czytać.
-//
-// Źródłem jest ten sam dziennik zbiorczego wyjścia, na którym stoi
-// `terminal.output.stream` (`adapter_modul_terminal_wyjscie_dziennik.go`); ta
-// komenda zawęża go do jednego procesu i składa wiersze z powrotem w tekst.
-// Dziennik jest pierścieniem w pamięci, bo schemat bazy nie ma tabeli wyjścia —
-// po ponownym uruchomieniu rdzenia proces nie występuje już w rejestrze
-// i odczyt kończy się odmową `not_found`.
+// Komenda `terminal.output.read` — jednorazowy odczyt wyjścia procesu
+// terminala wraz z jego stanem i kodem. Czynność jest osobną komendą, a nie
+// polami w `terminal.command.exec`, bo tamta kończy się, gdy proces ruszy, nie
+// gdy się skończy.
 package core
 
 import (
@@ -32,23 +14,17 @@ import (
 )
 
 // granicaWyjsciaKomendy jest górną granicą jednego strumienia (osobno stdout,
-// osobno stderr) oddawanego w odpowiedzi na `terminal.output.read`.
-//
-// 65 536 bajtów to około 16 000 znaczników — ułamek okna kontekstu modelu,
-// a zarazem wielokrotność wyników, dla których ta komenda powstała: pełny
-// przebieg `go build ./...` z błędami mieści się w kilku kilobajtach, `go test
-// ./...` całego drzewa w kilkudziesięciu.
-//
-// Przycięcie nie jest ciche: wychodzi w polach `truncated` i `truncatedBytes`.
+// osobno stderr) oddawanego w odpowiedzi na `terminal.output.read`. Przycięcie
+// nie jest ciche: wychodzi w polach `truncated` i `truncatedBytes`.
 const granicaWyjsciaKomendy = 64 * 1024
 
 // granicaCzekaniaOdczytu jest górną granicą pola `waitMs`. Ogranicza żądanie,
-// nie proces: po upływie czekania proces biegnie dalej, a odczyt oddaje wyjście
-// dotychczasowe wraz ze stanem `running`. Wskazanie większe schodzi do tej
-// wartości zamiast kończyć się odmową.
+// nie proces: po upływie czekania proces biegnie dalej, a odczyt oddaje
+// wyjście dotychczasowe.
 const granicaCzekaniaOdczytu = 60 * time.Second
 
-// OdczytajWyjscie obsługuje `terminal.output.read`.
+// OdczytajWyjscie obsługuje `terminal.output.read`, oddając jednorazowy odczyt
+// wyjścia procesu wraz z jego stanem i kodem wyjścia.
 func (a *adapterWyjsciaTerminala) OdczytajWyjscie(ctx context.Context,
 	z shared.TerminalOutputReadRequest) (shared.TerminalOutputReadResponse, error) {
 
@@ -83,9 +59,7 @@ func (a *adapterWyjsciaTerminala) OdczytajWyjscie(ctx context.Context,
 	odpowiedz := shared.TerminalOutputReadResponse{Status: stan}
 	odpowiedz.Stdout, odpowiedz.Stderr, odpowiedz.Truncated, odpowiedz.TruncatedBytes =
 		zlozStrumienie(zwykle, diagnostyka)
-	// Kod wyjścia wchodzi do odpowiedzi wyłącznie wtedy, gdy proces go ma. Zero
-	// wpisane przy procesie biegnącym albo ubitym sygnałem oznaczałoby udane
-	// zakończenie polecenia, które się jeszcze nie skończyło.
+	// Kod wyjścia wchodzi do odpowiedzi wyłącznie wtedy, gdy proces go ma.
 	if kodWyjscia != nil {
 		odpowiedz.ExitCode = kodWyjscia
 	}
@@ -93,11 +67,8 @@ func (a *adapterWyjsciaTerminala) OdczytajWyjscie(ctx context.Context,
 }
 
 // zlozStrumienie skleja wiersze obu strumieni w tekst i przycina każdy z nich
-// do granicy rozmiaru.
-//
-// Przycięcie idzie od początku tekstu, bo ostatnie bajty niosą podsumowanie
-// budowania, ostatni błąd i wiersz zamykający. Tak samo działa sam dziennik,
-// z którego wiersze pochodzą — pierścień wypycha najstarsze.
+// do granicy rozmiaru, licząc od początku tekstu, bo ostatnie bajty niosą
+// podsumowanie.
 func zlozStrumienie(zwykle, diagnostyka []string) (string, string, bool, *int) {
 	stdout, uciete1 := przytnijDoGranicy(strings.Join(zwykle, "\n"))
 	stderr, uciete2 := przytnijDoGranicy(strings.Join(diagnostyka, "\n"))
@@ -120,9 +91,8 @@ func przytnijDoGranicy(tekst string) (string, int) {
 }
 
 // ogonOdczytu czyta liczbę wierszy z żądania. Brak wskazania znaczy komplet
-// zapamiętanych wierszy — inaczej niż w `terminal.output.stream`, bo odczyt
-// dotyczy wyniku polecenia, a nie podglądu na żywo. Zero daje sam stan procesu
-// bez treści, czyli tanie zapytanie o zakończenie.
+// zapamiętanych wierszy; zero daje sam stan procesu bez treści, czyli tanie
+// zapytanie o zakończenie.
 func ogonOdczytu(ile *int) int {
 	if ile == nil {
 		return pojemnoscDziennikaWyjscia
@@ -150,16 +120,8 @@ func czekanieOdczytu(milisekundy *int) time.Duration {
 }
 
 // WyjscieProcesu zwraca ostatnie `ile` wierszy jednego procesu, rozdzielone na
-// wyjście zwykłe i diagnostyczne, w kolejności wypisania. Na tym stoi komenda
-// `terminal.output.read`.
-//
-// Zawężenie idzie po procesie, nie po karcie: karta prowadzi wiele poleceń po
-// kolei, a pytanie dotyczy wyniku jednego z nich. Pole `processId` wiersza jest
-// w kontrakcie opcjonalne, więc wiersz bez procesu nie pasuje do żadnego
-// zawężenia i nie wchodzi do wyniku.
-//
-// Liczba `ile` dotyczy każdego strumienia z osobna. Wspólny licznik pozwoliłby
-// wyjściu zwykłemu wypchnąć z wyniku komunikaty błędów.
+// wyjście zwykłe i diagnostyczne, w kolejności wypisania. Zawężenie idzie po
+// procesie, nie po karcie.
 func (d *dziennikWyjscia) WyjscieProcesu(kodProcesu string, ile int) ([]string, []string) {
 	zwykle := make([]string, 0, 16)
 	diagnostyka := make([]string, 0, 16)
@@ -188,7 +150,8 @@ func (d *dziennikWyjscia) WyjscieProcesu(kodProcesu string, ile int) ([]string, 
 	return odwroc(zwykle), odwroc(diagnostyka)
 }
 
-// odwroc odwraca wykaz wierszy w miejscu i oddaje go z powrotem.
+// odwroc odwraca wykaz wierszy w miejscu i oddaje go z powrotem, przywracając
+// kolejność wypisania po odczycie od końca.
 func odwroc(wiersze []string) []string {
 	for lewy, prawy := 0, len(wiersze)-1; lewy < prawy; lewy, prawy = lewy+1, prawy-1 {
 		wiersze[lewy], wiersze[prawy] = wiersze[prawy], wiersze[lewy]

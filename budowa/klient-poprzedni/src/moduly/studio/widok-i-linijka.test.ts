@@ -57,16 +57,10 @@ import { GRUPY_WSTAZKI_PDF } from './okno-warsztatu-dokumentu';
 import { CZYNNOSCI_WARSZTATU } from './czynnosci-warsztatu';
 
 /**
- * Sprawdziany odcinka „powierzchnia, wstążka, widok".
- *
- * Mierzą SKUTEK, nie kopertę: podziałka oddaje kreski w milimetrach, chwyt
- * marginesu przycina się do kartki, rozkładówka stawia stronę pierwszą po prawej,
- * zakres druku wycina strony, a przełączenie trybu dwóch dokumentów nie rozbiera
- * pola drugiego. Tam, gdzie rachunek jest czysty, sprawdzian nie dotyka DOM —
- * i dzięki temu mierzy rachunek, a nie przeglądarkę.
+ * Sprawdziany mierzą skutek działania, nie kształt wejścia, i pomijają DOM przy czystym rachunku.
  */
 
-/** Magazyn zapasowy nastaw — sprawdzian nie sięga do magazynu przeglądarki. */
+/** Magazyn zapasowy nastaw działa jako atrapa w sprawdzianach, dzięki czemu sprawdzian nie sięga do rzeczywistego magazynu przeglądarki. */
 function magazynAtrapa(początek: Record<string, string> = {}): MagazynNastawWidoku {
   const wpisy = new Map<string, string>(Object.entries(początek));
   return {
@@ -96,22 +90,19 @@ describe('nastawy strony: nośniki, oprawa i marginesy odbicia', () => {
     ]);
     expect(nosnikPoOznaczeniu('A4')?.szerokoscMm).toBe(211);
     expect(po.map((nosnik) => nosnik.oznaczenie)).toContain('SRA3');
-    // Koperty, których rdzeń nie zna, zostają: ich brak w rdzeniu jest luką
-    // zgłoszoną, nie powodem, żeby koperta zniknęła z okna.
+    // Koperta nieznana rdzeniowi zostaje w wykazie: jej brak jest luką zgłoszoną, nie powodem usunięcia.
     expect(nosnikPoOznaczeniu('C5')).not.toBeNull();
     // Przywrócenie wymiaru wzorcowego, żeby dalsze sprawdziany liczyły na A4.
     wchlonNosnikiRdzenia([{ oznaczenie: 'A4', szerokoscMm: 210, wysokoscMm: 297 }]);
   });
 
   it('wchłania odpowiedź studio.page.paper.list wraz z rodzajem nośnika', () => {
-    // Kształt wprost z kontraktu: `name`, `widthMm`, `heightMm`, `kind`. Przekład
-    // stoi w `nastawy-strony.ts`, żeby nie było go w dwóch miejscach.
+    // Kształt pochodzi z kontraktu: name, widthMm, heightMm, kind; przekład mieszka w jednym miejscu.
     wchlonNosnikiKontraktu([
       { name: 'A4', widthMm: 210, heightMm: 297, kind: 'sheet' },
       { name: 'C4', widthMm: 229, heightMm: 324, kind: 'envelope' },
       { name: 'B5', widthMm: 176, heightMm: 250, kind: 'sheet' },
-      // Nośnik, którego okno nie znało: rodzaj bierze się z odpowiedzi rdzenia,
-      // inaczej koperta dołożona w rdzeniu weszłaby do okna jako arkusz.
+      // Nośnik nieznany oknu bierze rodzaj z odpowiedzi rdzenia, inaczej trafiłby do okna jako arkusz.
       { name: 'C65', widthMm: 114, heightMm: 229, kind: 'envelope' },
     ]);
     expect(nosnikPoOznaczeniu('C4')?.rodzaj).toBe('koperta');
@@ -450,8 +441,7 @@ describe('skala widoku', () => {
     zapamietajSkaleDokumentu('pismo-2', 60, magazyn);
     expect(skalaDokumentu('pismo-1', magazyn)).toBe(140);
     expect(skalaDokumentu('pismo-2', magazyn)).toBe(60);
-    // Dokument bez zapisu oddaje brak, a nie sto procent: wołający ma wtedy
-    // zostawić skalę ostatnią Operatora.
+    // Dokument bez zapisu oddaje brak, nie sto procent: wołający zostawia wtedy ostatnią skalę Operatora.
     expect(skalaDokumentu('pismo-3', magazyn)).toBeNull();
   });
 });
@@ -521,8 +511,7 @@ describe('podział powierzchni jako drugi równorzędny tryb', () => {
     expect(podzial.tryb()).toBe('zakladki');
     const polePole = podzial.element.querySelector<HTMLElement>("[data-pole='2']");
     expect(polePole?.hidden).toBe(true);
-    // Niewidoczny nie znaczy niedostępny: element drugiego dokumentu stoi dalej
-    // w drzewie i model ma do niego dostęp.
+    // Niewidoczny nie znaczy niedostępny: element drugiego dokumentu zostaje w drzewie, dostępny modelowi.
     expect(podzial.element.textContent).toContain('drugi dokument');
   });
 
@@ -604,8 +593,7 @@ describe('drukowanie jako czynność Operatora', () => {
       kartkaBiezaca: () => 1,
       przygotuj: () => () => undefined,
     });
-    // W środowisku sprawdzianu droga druku może być niedostępna; wtedy odmowa jest
-    // nazwana PRZED próbą, a nie po niej.
+    // W środowisku sprawdzianu droga druku bywa niedostępna; odmowa jest wtedy nazwana przed próbą druku.
     if (!wynik.udany) {
       expect(wynik.zdanie).toContain('okna drukarki');
       return;
@@ -676,7 +664,7 @@ describe('historia wersji: szereg autozapisu, filtry i czynności', () => {
     expect(wiersz.element.querySelector("[data-czynnosc='porownaj']")).not.toBeNull();
     expect(wiersz.element.querySelector("[data-czynnosc='etykieta']")).not.toBeNull();
     expect(wiersz.element.querySelector("[data-czynnosc='usun']")).not.toBeNull();
-    // Gałęzie są poza zakresem decyzją Właściciela: czynności „Rozgałęź" nie ma.
+    // Gałęzie pozostają poza zakresem tej wersji: czynności rozgałęzienia nie ma.
     expect(wiersz.element.querySelector("[data-czynnosc='rozgalez']")).toBeNull();
     // Autor jest pokazany słowem, nie samym kodem kontraktu.
     expect(wiersz.element.textContent).toContain('model');
@@ -753,13 +741,11 @@ describe('powierzchnia: linijki, pasek widoku i kartki', () => {
     document.body.append(powierzchnia.element);
     powierzchnia.pokaz('Pierwszy akapit pisma.', true);
 
-    // Zapis `data:` jest tu jedyną drogą — pole `uri` zasobu jest ścieżką
-    // w systemie plików rdzenia, więc przeglądarka nie wczyta spod niego niczego.
+    // Zapis data: jest jedyną drogą: uri wskazuje ścieżkę w systemie rdzenia, niedostępną przeglądarce.
     const obraz = 'data:image/png;base64,AAAA';
     powierzchnia.ustawTryb('wydanie');
     expect(powierzchnia.kartekZRdzenia()).toBe(0);
-    // Bez kartek rdzenia podgląd wydania rysuje kartki liczone w oknie i to jest
-    // droga poprawna, nie brak: render rdzenia dojeżdża osobnym wywołaniem.
+    // Bez kartek rdzenia podgląd wydania rysuje kartki liczone w oknie; render dojeżdża osobno.
     expect(powierzchnia.element.querySelector('.ms-strona--rdzen')).toBeNull();
 
     powierzchnia.ustawKartkiRdzenia([
@@ -770,13 +756,10 @@ describe('powierzchnia: linijki, pasek widoku i kartki', () => {
     const kartki = powierzchnia.element.querySelectorAll('.ms-strona--rdzen');
     expect(kartki.length).toBe(2);
     expect(kartki[0]?.querySelector('img')?.getAttribute('src')).toBe(obraz);
-    // Liczba stron jest liczbą kartek RDZENIA — pasek stanu ma pokazywać skład
-    // wydania, a nie podział liczony w oknie.
+    // Liczba stron jest liczbą kartek rdzenia: pasek stanu pokazuje skład wydania, nie podział z okna.
     expect(powierzchnia.liczbaStron()).toBe(2);
 
-    // Wykaz pusty zdejmuje wyrys rdzenia: treść zmieniona po renderze czyni obrazy
-    // nieaktualnymi, a stara kartka pokazana jako podgląd bieżącej treści byłaby
-    // kłamstwem o dokumencie.
+    // Wykaz pusty zdejmuje wyrys rdzenia: stara kartka jako podgląd bieżącej treści byłaby fałszywa.
     powierzchnia.ustawKartkiRdzenia([]);
     expect(powierzchnia.kartekZRdzenia()).toBe(0);
     expect(powierzchnia.element.querySelector('.ms-strona--rdzen')).toBeNull();
@@ -796,8 +779,7 @@ describe('powierzchnia: linijki, pasek widoku i kartki', () => {
     powierzchnia.pokaz('Pierwszy akapit pisma.', true);
     powierzchnia.ustawKartkiRdzenia([{ numer: 1, zrodlo: 'data:image/png;base64,AAAA' }]);
 
-    // W widoku pracy pisze się w treści, a obraz strony nie jest treścią. Kartka
-    // rdzenia w tym trybie zabrałaby Operatorowi możliwość pisania.
+    // W widoku pracy pisze się w treści, więc obraz strony rdzenia zabrałby Operatorowi możliwość pisania.
     expect(powierzchnia.tryb()).toBe('formatowany');
     expect(powierzchnia.element.querySelector('.ms-strona--rdzen')).toBeNull();
     powierzchnia.ustawTryb('wydanie');

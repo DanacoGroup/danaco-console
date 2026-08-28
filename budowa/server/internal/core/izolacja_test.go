@@ -1,3 +1,6 @@
+// Rozstrzyga dostęp okna do plików i do sieci: własny katalog okna jest
+// dozwolony zawsze, poza nim wymaga aktywnego nadania w trybie zgodnym
+// z wykonywaną operacją, a wyłączony zakres przepuszcza wszystko.
 package core
 
 import (
@@ -11,19 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Granica dostępu okna do plików i do sieci.
-//
-// Straż bramki transportu pilnuje, czy gniazdo w ogóle weszło. To jest granica
-// druga i zupełnie inna: co wolno oknu, które już weszło. Nadanie żyje per okno,
-// niesie tryb i zawęża się do korzeni punktu — pomyłka w którymkolwiek z tych
-// trzech miejsc oddaje procesowi modelu katalog albo maszynę, których Operator
-// mu nie dał.
-//
-// Zakres wyłączony przepuszcza wszystko i tak ma być: pełny dostęp w ramach
-// uprawnień Operatora jest stanem wyjściowym platformy. Dlatego każdy sprawdzian
-// niżej włącza zakres wprost — sprawdzian zapomniany o tym mierzyłby ciszę.
-
-// nadanieSprawdzianu składa parę punkt + nadanie dla katalogu lokalnego.
+// nadanieSprawdzianu składa parę punkt + nadanie dla katalogu lokalnego,
+// gotową do użycia w przypadkach sprawdzających granicę dostępu plikowego.
 func nadanieSprawdzianu(korzenie []string, tryb shared.AccessMode,
 	punktCzynny, nadanieCzynne bool) NadanieMostu {
 
@@ -66,9 +58,8 @@ func TestStrazPlikowPrzepuszczaWlasnyKatalogOkna(t *testing.T) {
 }
 
 // TestStrazPlikowOdrzucaSciezkeSpozaObszaru mierzy odmowę zwykłą oraz odmowę
-// przy wyjściu w górę drzewa. Wyjście w górę jest tu przypadkiem właściwym, nie
-// egzotycznym: ścieżka składana z członów podanych przez model dochodzi do straży
-// dokładnie w takiej postaci.
+// przy wyjściu w górę drzewa. Wyjście w górę jest przypadkiem właściwym: ścieżka
+// złożona z członów modelu dochodzi do straży dokładnie w tej postaci.
 func TestStrazPlikowOdrzucaSciezkeSpozaObszaru(t *testing.T) {
 	wlasny := t.TempDir()
 	straz := nowaStrazPlikow(session.Zasady{Pliki: true}, wlasny, nil)
@@ -254,7 +245,8 @@ func TestWykazKatalogowNieJestObcinanyPoCichu(t *testing.T) {
 	}
 }
 
-// mostSprawdzianu składa parę punkt + nadanie dla mostu MCP.
+// mostSprawdzianu składa parę punkt + nadanie dla mostu MCP, gotową do
+// użycia w przypadkach sprawdzających granicę dostępu sieciowego.
 func mostSprawdzianu(host string, czynne bool) NadanieMostu {
 	return NadanieMostu{
 		Punkt: shared.AccessPoint{

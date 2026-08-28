@@ -1,24 +1,4 @@
-// Powołanie podagentów (`subagent.spawn`): założenie wierszy podagentów,
-// zasilenie silnika kolejek ich pracą i puszczenie jej w tle.
-//
-// Podagent jest zadaniem w tle, którego tożsamością jest pozycja kolejki.
-// Wynikają z tego trzy rzeczy widoczne w tym pliku:
-//
-//   - powołanie nie uruchamia drugiego silnika — praca idzie przez
-//     `adapterKolejek.Wykonaj`, czyli ten sam silnik, którym jedzie pętla sesyjna
-//     i Automations;
-//   - powołanie nie czeka na wynik — `subagent.spawn` ma oddać podagentów
-//     powołanych, nie zakończonych; stąd goroutine;
-//   - stan przeżywa restart rdzenia, bo stanem podagenta jest wiersz, nie pole
-//     struktury w pamięci.
-//
-// Każdy podagent dostaje własną kolejkę, nie jedną wspólną na powołanie. Silnik
-// posuwa pierwszą czynną pozycję kolejki, więc piętnastu podagentów w jednej
-// kolejce jechałoby gęsiego. Podagenci mają pracować równolegle, więc każdy ma
-// własną kolejkę i własną pozycję; grupuje ich bieg i okno.
-//
-// Granica piętnastu przycina, nie odmawia: żądanie o dwudziestu wykonuje się na
-// piętnastu.
+// Plik obsługuje powołanie podagentów (`subagent.spawn`): zakładanie wierszy podagentów, zasilenie silnika kolejek ich pracą i puszczenie jej w tle, każdego na własnej kolejce.
 package core
 
 import (
@@ -32,32 +12,17 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaPodagentow to górna granica jednego powołania, wprost z kontraktu.
+// granicaPodagentow to górna granica jednego powołania, wprost z kontraktu — żądanie ponad nią przycina się do niej.
 const granicaPodagentow = 15
 
 // przedrostekPodagenta znakuje identyfikator nadany przez rdzeń — podagent
 // wychodzi kontraktem pod nim, a nie pod kluczem wiersza.
 const przedrostekPodagenta = "podagent-"
 
-// rodzajKolejkiPodagenta jest rodzajem kolejki niosącej pracę podagenta.
-//
-// Więz CHECK kolumny `kolejka.rodzaj` (`store/migracja_003_kolejki.sql`
-// i `store/migracja_016_stan_kolejki_wyczerpana.sql`) dopuszcza wyłącznie
-// 'sesyjna' i 'multitasking'; wartość spoza tego słownika kończyłaby każde
-// powołanie odmową bazy. Podagent jest zadaniem w tle pod oknem wykonawcy, więc
-// jego kolejka nosi rodzaj `multitasking`. Od kolejki etapu odróżnia ją nazwa
-// równa identyfikatorowi podagenta oraz okno koordynatora — po nazwie odnajduje
-// ją panel przy zatrzymaniu (`queue.list` → `queue.action` stop).
+// rodzajKolejkiPodagenta jest rodzajem kolejki niosącej pracę podagenta. Podagent jest zadaniem w tle pod oknem wykonawcy, więc jego kolejka nosi rodzaj `multitasking`, odróżniający ją od kolejki etapu.
 const rodzajKolejkiPodagenta = "multitasking"
 
-// Powolaj zakłada podagentów okna wykonawcy i puszcza ich pracę w tle.
-//
-// Powołuje model, nie okno. Żądanie przychodzi tą samą kopertą niezależnie od
-// nadawcy, ale drogą przewidzianą jest wywołanie narzędzia
-// `danaco_subagent_spawn` w trakcie tury: serwer narzędzi
-// (`server/internal/narzedzia`) uzupełnia wtedy `windowId` oknem rozmowy,
-// z którego wywołanie przyszło. Wpis dziennika niżej mówi raz na proces, czy ta
-// droga jest w kontrakcie wpięta (`podagenci/narzedzia_modelu.go`).
+// Powolaj zakłada podagentów okna wykonawcy i puszcza ich pracę w tle. Powołuje model, nie okno — żądanie przychodzi tą samą kopertą niezależnie od nadawcy wywołania.
 func (a *adapterPodagentow) Powolaj(ctx context.Context,
 	z shared.SubagentSpawnRequest) (shared.SubagentSpawnResponse, error) {
 
@@ -70,10 +35,7 @@ func (a *adapterPodagentow) Powolaj(ctx context.Context,
 	if err != nil {
 		return shared.SubagentSpawnResponse{}, bladNieznanegoOknaPodagenta(z.WindowId, err)
 	}
-	// Zakres eksperta czytany przed powołaniem. Ekspert z wyłączonym Subagent
-	// Network nie powołuje ani jednego podagenta, a jego granica przycina
-	// żądanie mocniej niż granica platformy — zapis, którego nikt by tu nie
-	// przeczytał, byłby suwakiem bez skutku (`straz_eksperta.go`).
+	// Zakres eksperta czytany przed powołaniem: bez Subagent Network powołanie nie idzie dalej.
 	ile := a.liczbaPowolania(z.Count)
 	if a.straz != nil {
 		kod := wartoscTekstu(okno.AgentKod)
@@ -93,16 +55,11 @@ func (a *adapterPodagentow) Powolaj(ctx context.Context,
 	if err != nil {
 		return shared.SubagentSpawnResponse{}, bladPodagentow(err)
 	}
-	// Oznaczenie prowadzenia idzie przed puszczeniem pracy w tle: podagent
-	// nieoznaczony, a już pracujący, zostałby zamknięty jako sierota przy
-	// najbliższym starcie. Błąd oznaczenia nie przerywa powołania, zostawia
-	// jedynie ślad w dzienniku.
+	// Oznaczenie prowadzenia idzie przed puszczeniem pracy w tle, inaczej podagent zostałby sierotą.
 	if err := a.repozytorium.OznaczProwadzenie(ctx, kodyPodagentow(powolani), a.uruchomienie); err != nil {
 		a.zapisz("podagenci: prowadzenie powołania nie zostało oznaczone: %v", err)
 	}
-	// Rozgłoszenie idzie przed puszczeniem pracy w tle, żeby panel zobaczył
-	// podagenta `pending`, zanim praca przestawi go na `running` — inaczej dwa
-	// zdarzenia mogłyby dojść w kolejności odwrotnej do faktów.
+	// Rozgłoszenie idzie przed pracą w tle, żeby panel widział kolejność zgodną z faktami.
 	a.rozglosPowolanie(powolani)
 	for _, podagent := range powolani {
 		a.puscWTle(podagent, okno)
@@ -110,10 +67,7 @@ func (a *adapterPodagentow) Powolaj(ctx context.Context,
 	return shared.SubagentSpawnResponse{Subagents: podagenciKontraktu(powolani)}, nil
 }
 
-// liczbaPowolania rozstrzyga, ilu podagentów powołać. Brak wskazania znaczy
-// jednego; wskazanie poniżej jedynki znaczy również jednego, bo powołanie zerowe
-// jest pomyłką klienta, a nie żądaniem. Wskazanie ponad granicę przycina się
-// i zostawia ślad w dzienniku.
+// liczbaPowolania rozstrzyga, ilu podagentów powołać. Brak wskazania i wskazanie poniżej jedynki znaczą jednego; ponad granicę przycina się i zostawia ślad w dzienniku.
 func (a *adapterPodagentow) liczbaPowolania(wskazanie *int) int {
 	if wskazanie == nil || *wskazanie < 1 {
 		return 1
@@ -195,9 +149,7 @@ func (a *adapterPodagentow) puscWTle(podagent dane.Podagent, okno dane.Okno) {
 			podagent.Kod, dane.StanPodagentaOczekuje)
 		return
 	}
-	// Nadzór mówi o procesie orkiestratora, czyli okna, które powołało. Proces
-	// samej pozycji podagenta nie ma wpisu w rejestrze procesów
-	// (`podagenci/zywotnosc.go`).
+	// Nadzór mówi o procesie orkiestratora, nie samej pozycji podagenta.
 	if a.nadzor != nil {
 		a.zapisz("subagent.spawn: podagent %s pod oknem %s — orkiestrator: %s",
 			podagent.Kod, wartoscTekstu(okno.IdentyfikatorZewnetrzny),
@@ -208,14 +160,10 @@ func (a *adapterPodagentow) puscWTle(podagent dane.Podagent, okno dane.Okno) {
 		zycie = context.Background()
 	}
 	// Kontekst własny na podagenta daje `subagent.stop` uchwyt do jednej pracy.
-	// Wisi na życiu rdzenia, więc zatrzymanie rdzenia nadal zabiera wszystkich,
-	// a odwołanie pojedyncze zabiera wyłącznie tego jednego
-	// (`adapter_modul_orkiestracja_zatrzymanie.go`).
 	zycie, odwolaj := context.WithCancel(zycie)
 	a.zapamietajPrace(podagent.Kod, odwolaj)
 	go func() {
-		// Odwołanie zwalnia się zawsze: inaczej praca zakończona zostawiałaby po
-		// sobie kontekst bez odbiorcy, a wykaz prac rósłby z każdym powołaniem.
+		// Odwołanie zwalnia się zawsze, inaczej wykaz prac rósłby z każdym powołaniem.
 		defer odwolaj()
 		defer a.zapomnijPrace(podagent.Kod)
 		if err := a.wykonaj(zycie, podagent, okno); err != nil {
@@ -230,13 +178,7 @@ func (a *adapterPodagentow) puscWTle(podagent dane.Podagent, okno dane.Okno) {
 	}()
 }
 
-// wykonaj zakłada kolejkę podagenta, wiąże ją z jego wierszem i prowadzi pracę
-// przez silnik — a po jej zakończeniu przepisuje stan pozycji na stan podagenta.
-//
-// Pozycja i wiązanie idą przed wejściem w stan `running`. Gdyby rdzeń padł
-// pomiędzy, zostaje podagent `pending` z gotową pozycją, czyli praca do
-// podjęcia; odwrotna kolejność zostawiałaby podagenta „w biegu" bez pozycji,
-// która ten bieg niesie.
+// wykonaj zakłada kolejkę podagenta, wiąże ją z jego wierszem i prowadzi pracę przez silnik, a po jej zakończeniu przepisuje stan pozycji na stan podagenta. Pozycja i wiązanie idą przed wejściem w stan `running`.
 func (a *adapterPodagentow) wykonaj(ctx context.Context, podagent dane.Podagent, okno dane.Okno) error {
 	kolejkaID, err := a.kolejki.repozytorium.UtworzKolejke(ctx, dane.Kolejka{
 		Nazwa: podagent.Kod, Rodzaj: rodzajKolejkiPodagenta, Stan: shared.QueueStatusIdle,
@@ -267,11 +209,7 @@ func (a *adapterPodagentow) wykonaj(ctx context.Context, podagent dane.Podagent,
 	return a.przepiszStanPozycji(ctx, podagent.Kod, kolejkaID, pozycjaID)
 }
 
-// przepiszStanPozycji przenosi stan pozycji kolejki na stan podagenta.
-//
-// Automat stanu jest jeden, nie dwa. Cyklem życia zlecenia rządzi silnik
-// kolejek; wiersz podagenta jest jego odwzorowaniem dla panelu, a nie drugą
-// prawdą. Dlatego stan bierze się stąd, gdzie naprawdę powstał.
+// przepiszStanPozycji przenosi stan pozycji kolejki na stan podagenta. Automat stanu jest jeden: cyklem życia zlecenia rządzi silnik kolejek, a wiersz podagenta jest jego odwzorowaniem dla panelu.
 func (a *adapterPodagentow) przepiszStanPozycji(ctx context.Context,
 	kod string, kolejkaID, pozycjaID int64) error {
 

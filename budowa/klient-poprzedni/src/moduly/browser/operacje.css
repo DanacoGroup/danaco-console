@@ -1,15 +1,6 @@
-/*
- * Warstwa wizualna modułu Browser, część czwarta: pasek kontekstu warstw
- * widoczności, Automation Studio, Capture & Monitor Panel oraz panele warstwy
- * czwartej (narzędzia inspekcyjne, macierz izolacji).
- *
- * Wciągana importem z `browser.css` — moduł wciąga jeden arkusz, a podział na
- * pliki wynika z progu 300 wierszy na arkusz. Barwy wyłącznie z żetonów motywu,
- * bez wartości zapisanych wprost.
- */
+/* Arkusz opisuje czwartą część warstwy wizualnej modułu Browser: pasek kontekstu, Automation Studio, Capture and Monitor Panel oraz panele warstwy czwartej. */
 
-/* ── Pasek kontekstu modułu ───────────────────────────────────────────────── */
-
+/* Sekcja opisuje pasek kontekstu modułu: znacznik warstwy widoczności oraz wyzwalacze rozszerzeń widoczne w jednym wierszu nad treścią. */
 .mb-kontekst {
   display: flex;
   align-items: center;
@@ -37,17 +28,12 @@
   flex: 1 1 auto;
 }
 
-/*
- * Wyzwalacz odsłoniętego rozszerzenia niesie stan w `aria-pressed`; obwódka
- * jest dopowiedzeniem, nie jedynym nośnikiem — stan mówi także napis przycisku
- * i sama obecność panelu na scenie.
- */
+/* Wyzwalacz odsłoniętego rozszerzenia niesie stan przez atrybut aria-pressed, dopowiedziany obwódką, napisem przycisku i obecnością panelu na scenie. */
 .mb-kontekst__wyzwalacze [aria-pressed='true'] {
   border-color: var(--dn-sygnal-obrys);
 }
 
-/* ── Automation Studio ────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje Automation Studio: wykaz automatyzacji, materiałów, monitorów, izolacji i kroków scenariusza w jednej kolumnie wykazu. */
 .mb-automatyki__lista,
 .mb-material__lista,
 .mb-material__monitory,
@@ -105,34 +91,26 @@
   overflow: auto;
 }
 
-/* ── Capture & Monitor Panel ──────────────────────────────────────────────── */
-
+/* Sekcja opisuje Capture and Monitor Panel: sterowanie materiałem oraz wiersze wykazu monitorowanych zmian w obserwowanym materiale. */
 .mb-material__ster {
   display: flex;
   align-items: center;
   min-width: 12rem;
 }
 
-/*
- * Monitor po wykrytej zmianie zostaje wyróżniony kreską, ale stan niesie także
- * słowo w opisie pozycji („ZMIANA") — barwa nigdy nie jest jedynym nośnikiem.
- */
+/* Monitor po wykrytej zmianie zostaje wyróżniony kreską, a stan niesie także słowo zmiana w opisie pozycji, więc barwa nigdy nie jest jedynym nośnikiem. */
 .mb-material__wiersz[data-wynik='zmiana'] {
   border-left: 2px solid var(--dn-ostrzezenie-obrys);
 }
 
-/* ── Filtry i porządki wykazów ────────────────────────────────────────────── */
-
+/* Sekcja opisuje filtry i porządki wykazów: sterowanie źródłami notatek oraz grupowanie pozycji wykazu według kryterium porządku. */
 .mb-zrodla__ster {
   display: flex;
   align-items: center;
   min-width: 10rem;
 }
 
-/*
- * Nagłówek grupy wykazu notatek. Nie jest pozycją do naciśnięcia, więc różni
- * się krojem i wersalikami, a nie samą barwą.
- */
+/* Nagłówek grupy wykazu notatek nie jest pozycją do naciśnięcia, więc różni się krojem i wersalikami pisma, a nie samą barwą tekstu. */
 .mb-notatki__grupa {
   padding-top: var(--dn-od-2);
   font-size: var(--dn-fs-xs);
@@ -142,13 +120,12 @@
   list-style: none;
 }
 
-/* Wskaźnik obecności Wykonawcy stoi w pasie nagłówka Browser Window. */
+/* Wskaźnik obecności Wykonawcy stoi w pasie nagłówka Browser Window, pokazując, czy Wykonawca pracuje aktualnie w tym oknie. */
 .mb-obecnosc {
   font-size: var(--dn-fs-xs);
 }
 
-/* ── Panele warstwy czwartej ──────────────────────────────────────────────── */
-
+/* Sekcja opisuje panele warstwy czwartej: izolację, inspekcję, scenariusz i limity, każdy w osobnej ramce z obrysem kreskowanym. */
 .mb-izolacja,
 .mb-inspekcja,
 .mb-scenariusz,

@@ -8,25 +8,7 @@ import {
 } from '../../../../shared/contract';
 import type { Kanal, Wynik } from '../../protokol/kanal';
 
-/**
- * Wywołanie komendy odporne na odmowę `<obszar>.unknown`.
- *
- * Rdzeń odmawia komendy bez uchwytu kopertą typu `<obszar>.unknown`, która nie
- * niesie pola `status` (`server/internal/protocol/zadanie.go`). Korelacja klienta
- * rozstrzyga wyłącznie koperty ze statusem (`protokol/koperta.ts`, `czyOdpowiedz`),
- * więc zwykłe `wywolaj` na komendzie bez uchwytu zostałoby obietnicą
- * nierozstrzygniętą, a okno stałoby w stanie ładowania bez końca.
- *
- * Wywołanie łączy więc dwie drogi w jeden wynik: odpowiedź skorelowaną oraz
- * zdarzenie odmowy o tym samym `requestId`. Odmowa wraca jako zwykłe
- * niepowodzenie `Wynik.blad`, więc okno obsługuje ją tą samą ścieżką co każdy
- * inny błąd i nie buduje drugiego mechanizmu.
- *
- * Nazwa zdarzenia pochodzi z kontraktu: `zdarzenieNieznanej` tnie typ po
- * separatorze obszaru i sięga do mapy `ZDARZENIA_NIEZNANEJ`, w której stoją
- * obszary `studio` i `window`. Obie drogi odmowy modułu są więc rozpoznawalne
- * bez literału nazwy.
- */
+/** Wywołanie komendy odporne na odmowę rdzenia bez uchwytu, łączące odpowiedź skorelowaną i zdarzenie odmowy w jeden wynik. */
 export function wywolajUczciwie<K extends Command>(
   kanal: Kanal,
   komenda: K,
@@ -43,8 +25,7 @@ export function wywolajUczciwie<K extends Command>(
       rozstrzygnij(wynik);
     }
 
-    // Subskrypcja przed wysyłką: rdzeń może odmówić natychmiast, a odmowa
-    // wyprzedziłaby założenie nasłuchu.
+    // Subskrypcja przed wysyłką, inaczej natychmiastowa odmowa rdzenia wyprzedziłaby założenie nasłuchu.
     const odsubskrybuj = kanal.naZdarzenie(zdarzenieNieznanej(komenda), (tresc: unknown) => {
       const odmowa = odczytajOdmowe(tresc);
       if (odmowa === null) return;
@@ -56,7 +37,7 @@ export function wywolajUczciwie<K extends Command>(
   });
 }
 
-/** Odmowa rdzenia odczytana z ładunku zdarzenia `<obszar>.unknown`. */
+/** Odmowa rdzenia odczytana z ładunku zdarzenia odmowy komendy bez uchwytu, wraz z żądanym typem i powodem. */
 interface OdmowaRdzenia {
   /** Typ, którego rdzeń nie rozpoznał; pusty, gdy rdzeń go nie podał. */
   zadanyTyp: string;
@@ -66,13 +47,7 @@ interface OdmowaRdzenia {
   powod: string;
 }
 
-/**
- * Zdanie odmowy nazywające żądany typ.
- *
- * Treść nazywa komendę, której rdzeń nie zna. Kod `not_found` jest tu adekwatny,
- * bo brakuje uchwytu, a nie treści żądania; `retryable: false` powstrzymuje widok
- * przed ponawianiem czegoś, czego rdzeń nie nabędzie przed wdrożeniem nowej wersji.
- */
+/** Zdanie odmowy nazywające żądany typ komendy, której rdzeń nie zna, z kodem odmowy niepowtarzalnej przez okno. */
 function bladOdmowy(komenda: string, odmowa: OdmowaRdzenia): ErrorInfo {
   const typ = odmowa.zadanyTyp === '' ? komenda : odmowa.zadanyTyp;
   const powod = odmowa.powod === '' ? '' : ` (${odmowa.powod})`;
@@ -85,7 +60,7 @@ function bladOdmowy(komenda: string, odmowa: OdmowaRdzenia): ErrorInfo {
   };
 }
 
-/** Odczyt ładunku odmowy odporny na jego brak i na inny kształt. */
+/** Odczytuje treść odmowy z ładunku zdarzenia, odporny na jego brak albo na kształt inny niż oczekiwany. */
 function odczytajOdmowe(ladunek: unknown): OdmowaRdzenia | null {
   if (typeof ladunek !== 'object' || ladunek === null) return null;
   const pola = ladunek as Record<string, unknown>;
@@ -97,7 +72,7 @@ function odczytajOdmowe(ladunek: unknown): OdmowaRdzenia | null {
   };
 }
 
-/** Napis albo pusty łańcuch — pole opcjonalne kontraktu bywa nieobecne. */
+/** Zwraca napis albo pusty łańcuch znaków, bo pole opcjonalne kontraktu bywa w odpowiedzi rdzenia nieobecne. */
 function tekst(wartosc: unknown): string {
   return typeof wartosc === 'string' ? wartosc : '';
 }

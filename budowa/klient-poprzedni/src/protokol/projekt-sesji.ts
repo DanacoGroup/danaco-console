@@ -9,21 +9,9 @@ import type { Kanal, Wynik } from './kanal';
 import { czyTablica, czyTekst, sprawdzKsztalt } from './ksztalt-odpowiedzi';
 import { wywolaj } from './wywolanie';
 
-/**
- * Przynależność sesji do projektu — nadanie i wyjęcie.
- *
- * Wyjęcie z projektu nie jest archiwizacją ani usunięciem: sesja zostaje
- * w historii bieżącej i traci wyłącznie przypisanie.
- *
- * Żądanie przypisania niesie albo `projectId`, albo `projectName`; przy pustym
- * identyfikatorze rdzeń zakłada projekt o podanej nazwie i oddaje jego
- * identyfikator, więc klient nie zakłada projektu osobną komendą.
- *
- * `movedIds` może być krótsze od żądania — rdzeń oddaje sesje faktycznie
- * przeniesione, więc widok melduje z wyniku, nie z treści żądania.
- */
+// Przynależność sesji do projektu — nadanie i wyjęcie, bez wpływu na archiwizację ani usunięcie sesji.
 
-/** `session.project.set` — przeniesienie sesji do projektu istniejącego lub nowego. */
+/** `session.project.set` — przeniesienie wskazanych sesji do projektu istniejącego albo nowo zakładanego. */
 export function zadajPrzypisanieProjektu(
   kanal: Kanal,
   zadanie: SessionProjectSetRequest,
@@ -37,7 +25,7 @@ export function zadajPrzypisanieProjektu(
   );
 }
 
-/** `session.project.clear` — wyjęcie sesji z projektu; sesja zostaje w historii. */
+/** `session.project.clear` — wyjęcie wskazanych sesji z projektu; sesja zostaje nadal w historii bieżącej. */
 export function zadajWyjecieZProjektu(
   kanal: Kanal,
   zadanie: SessionProjectClearRequest,

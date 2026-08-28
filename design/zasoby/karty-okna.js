@@ -1,6 +1,5 @@
-/* ============================================================================
-   DANACO CONSOLE — PASMO KART OKNA ROBOCZEGO
-   ----------------------------------------------------------------------------
+/* Moduł pasma kart okna roboczego obsługuje przełączanie kart, ich przypinanie, zmianę nazwy, zamykanie oraz grupowanie kart.
+
    Kompetencja: przełączanie kart, karta przypięta, zmiana nazwy karty,
    zamykanie, grupy kart, menu powłok, grot, „+" i ustawienia widoku.
 
@@ -15,8 +14,7 @@
      [data-okno-akcja="przelacz|zamknij|nowe|incognito|galaz"] menu powłok
      [data-karta-przelacz="…"]                                 grot
      [data-nowa-karta-modul="…"]                                „+"
-     [data-widok="grupowanie|rozgrupuj|gestosc|archiwalne"]     ustawienia widoku
-   ============================================================================ */
+     [data-widok="grupowanie|rozgrupuj|gestosc|archiwalne"]     ustawienia widoku */
 (function () {
   'use strict';
 

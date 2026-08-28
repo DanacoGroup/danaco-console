@@ -3,46 +3,30 @@ import './pas-posuniec.css';
 import type { Posuniecie, PracaAsystenta, ZrodloPosuniec } from './zrodlo-posuniec';
 
 /**
- * Pas posunięć asystenta — wskaźnik pracy i wykaz ruchów na jednym pasku przy
- * dolnej krawędzi.
- *
- * Pas mieści wiersz stanu i wiersz ostatniego posunięcia, stoi poza torem pracy
- * (scena i kolumna sterowania są wyżej), nie przechwytuje wskaźnika poza
- * własnym przyciskiem i nie zabiera ogniska.
- *
- * Lewa strona mówi, że asystent pracuje i nad czym (zlecenia modułu Assistant).
- * Prawa wymienia posunięcia — nawigację, okna, prompty. Praca modelu
- * docelowego, czyli odpowiedź i strumień, na pas nie wchodzi: dzieje się
- * w oknie i tam jej miejsce. Zlanie obu warstw odebrałoby rozeznanie, kto co
- * zrobił.
- *
- * Pas nie jest bramką — nie ma w nim przycisku zgody, odmowy ani wstrzymania.
- * Jedyny przycisk, „Idź za nim", przesuwa widok, gdy podążanie zostało
- * wstrzymane, bo Operator pisał. Posunięcie asystenta dokonało się przed
- * pojawieniem się przycisku i nic na niego nie czeka.
+ * Pas posunięć asystenta — wskaźnik pracy i wykaz ruchów na jednym pasku przy dolnej
+ * krawędzi. Pas mieści wiersz stanu i wiersz ostatniego posunięcia, stoi poza torem
+ * pracy, nie przechwytuje wskaźnika poza własnym przyciskiem i nie zabiera ogniska.
  */
 export interface PasPosuniec {
   /** Element montowany w korzeniu powłoki środowiska. */
   element: HTMLElement;
-  /**
-   * Stawia na pasie zaproszenie do przejścia, którego widok nie wykonał sam.
-   *
-   * Wołane wtedy, gdy Operator pisał i podążanie zostało wstrzymane — pas
-   * zamienia wstrzymane przejście w jedno kliknięcie zamiast je zgubić.
-   */
+  /** Stawia na pasie zaproszenie do przejścia, którego widok nie wykonał sam. */
   zaproponujPrzejscie(opis: string, wykonaj: () => void): void;
   rozlacz(): void;
 }
 
-/** Ile posunięć pas trzyma w pamięci rozwiniętego wykazu. */
+/**
+ * Ile posunięć pas trzyma w pamięci rozwiniętego wykazu. Wykaz jest podręczny, a nie
+ * archiwalny, więc pojemność jest skończona i najstarsze wpisy schodzą, zamiast rosnąć
+ * przez cały czas pracy okna.
+ */
 const POJEMNOSC_WYKAZU = 8;
 
 export function utworzPasPosuniec(zrodlo: ZrodloPosuniec): PasPosuniec {
   const element = document.createElement('aside');
   element.className = 'dc-pas-asystenta';
   element.dataset['pasAsystenta'] = 'tak';
-  // `aria-label`, nie nagłówek: pas jest obszarem uzupełniającym, a nie sekcją
-  // pracy. `aria-live` w wierszach niżej niesie zmiany bez zabierania ogniska.
+  // Nazwa idzie atrybutem `aria-label`; pas jest obszarem uzupełniającym, nie sekcją.
   element.setAttribute('aria-label', 'Posunięcia asystenta');
 
   const kropka = document.createElement('span');
@@ -81,8 +65,6 @@ export function utworzPasPosuniec(zrodlo: ZrodloPosuniec): PasPosuniec {
 
   function dopisz(posuniecie: Posuniecie): void {
     // Pewność jedzie razem z opisem, bo bez niej domysł czytałoby się jak fakt.
-    // „Spoza tego połączenia" to najwięcej, ile niesie kontrakt — szczegóły
-    // opisuje nagłówek `zrodlo-posuniec.ts`.
     const zrodloRuchu =
       posuniecie.pewnosc === 'pewne'
         ? 'inne połączenie tego konta'

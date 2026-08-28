@@ -6,19 +6,9 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// Źródła żywego stanu sesji, których nie zna ani rejestr nadzorcy, ani pętla:
-// osadzenie sesji w środowisku platformy oraz nadania dostępu okien rozmowy.
-//
-// Oba są wąskimi portami, a nie całym zestawem repozytoriów. Kontrolka powrotu
-// do sesji potrzebuje dwóch odpowiedzi — „w którym środowisku ta sesja stoi"
-// i „co to okno widzi" — a nie dostępu do bazy. Dzięki temu składacz obecności
-// da się sprawdzić bez SQL, a warstwa danych pozostaje po swojej stronie
-// granicy.
-//
-// Brak źródła nie unieważnia odpisu: sesja bez rozpoznanego środowiska i okno
-// bez nadań są poprawnym stanem, w którym kontrolka pokazuje mniej.
+// Źródła żywego stanu sesji: osadzenie sesji w środowisku platformy i nadania dostępu okien rozmowy.
 
-// zrodloOsadzenia mówi, w którym środowisku platformy stoi karta sesji.
+// zrodloOsadzenia mówi, w którym środowisku platformy stoi karta sesji, jako wąski port bez dostępu do bazy.
 type zrodloOsadzenia interface {
 	KodSrodowiska(ctx context.Context, idSesji string) string
 }
@@ -30,7 +20,7 @@ type zrodloNadan interface {
 	NadaniaOkna(ctx context.Context, idOkna string) []string
 }
 
-// zrodlaObecnosciZBazy wypełnia oba porty repozytoriami warstwy danych.
+// zrodlaObecnosciZBazy wypełnia oba porty repozytoriami warstwy danych, albo zwraca porty puste dla zestawu pustego.
 func zrodlaObecnosciZBazy(zestaw *dane.Zestaw) (zrodloOsadzenia, zrodloNadan) {
 	if zestaw == nil {
 		return nil, nil
@@ -38,18 +28,12 @@ func zrodlaObecnosciZBazy(zestaw *dane.Zestaw) (zrodloOsadzenia, zrodloNadan) {
 	return osadzenieZBazy{zestaw: zestaw}, nadaniaZBazy{zestaw: zestaw}
 }
 
-// osadzenieZBazy czyta łańcuch `srodowisko → karta_sesji → sesja`.
+// osadzenieZBazy czyta łańcuch srodowisko-karta_sesji-sesja, implementując port zrodloOsadzenia bazą danych.
 type osadzenieZBazy struct {
 	zestaw *dane.Zestaw
 }
 
-// KodSrodowiska idzie od wiersza sesji do karty, a od karty do środowiska.
-// Karta sesji nie ma odczytu po identyfikatorze, więc przejście prowadzi przez
-// słownik środowisk — jest ich tyle, ile profili widoczności modułów, czyli
-// garść wierszy zasianych migracją, a nie zbiór rosnący z pracą Operatora.
-//
-// Niepowodzenie odczytu daje kod pusty. Sesja trwa niezależnie od tego, czy
-// rdzeń umie ją w tej chwili osadzić w nawigacji.
+// KodSrodowiska idzie od wiersza sesji do karty, a od karty do środowiska, bo karta sesji nie ma odczytu po identyfikatorze. Niepowodzenie odczytu daje kod pusty — sesja trwa niezależnie od tego, czy rdzeń umie ją w tej chwili osadzić w nawigacji.
 func (o osadzenieZBazy) KodSrodowiska(ctx context.Context, idSesji string) string {
 	wiersz, err := o.zestaw.Sesje.PoIdentyfikatorze(ctx, idSesji)
 	if err != nil {
@@ -73,7 +57,7 @@ func (o osadzenieZBazy) KodSrodowiska(ctx context.Context, idSesji string) strin
 	return ""
 }
 
-// nadaniaZBazy czyta nadania dostępu jednego okna rozmowy.
+// nadaniaZBazy czyta nadania dostępu jednego okna rozmowy, implementując port zrodloNadan bazą danych.
 type nadaniaZBazy struct {
 	zestaw *dane.Zestaw
 }

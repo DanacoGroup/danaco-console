@@ -1,3 +1,4 @@
+// Plik prowadzi typ Proces — uchwyt jednego procesu okna komunikacji w pakiecie session, z ubiciem procesu, doglądaniem jego stanu i sprawdzeniem, czy nadal żyje.
 package session
 
 import (
@@ -5,16 +6,7 @@ import (
 	"time"
 )
 
-// Proces jest procesem JEDNEGO okna komunikacji. Sesja prowadzi tyle
-// procesów, ile ma otwartych okien, i wszystkie biegną równolegle.
-//
-// Proces NIE powstaje w tym pakiecie ANI NIE JEST STĄD URUCHAMIANY. Startuje go
-// warstwa kanału własną drogą (injection), a sesja obejmuje proces już biegnący
-// przez RejestrProcesow.Przejmij. Do sesji należy wyłącznie to, czego
-// kanał nie umie: objęcie całego drzewa potomstwa jednym uchwytem systemowym —
-// Job Object na Windows, grupa procesów na systemach uniksowych. Ubicie okna
-// kończy zatem także wnuki, bez `taskkill` i bez innej zależności od narzędzi
-// systemu.
+// Proces jest procesem jednego okna komunikacji, a sesja prowadzi tyle procesów, ile ma otwartych okien, i wszystkie biegną równolegle.
 type Proces struct {
 	// IdOkna — klucz procesu w rejestrze procesów.
 	IdOkna string
@@ -42,30 +34,12 @@ func (p *Proces) Ubij() error {
 	p.mu.Unlock()
 
 	err := p.drzewo.Ubij()
-	// Uchwyt zadania i uchwyt procesu oddajemy zaraz po ubiciu. Bez tego każde
-	// zamknięte okno zostawiałoby w rdzeniu uchwyt systemowy aż do końca pracy
-	// procesu rdzenia.
+	// Uchwyt zadania i uchwyt procesu zwalniają się zaraz po ubiciu, by nie zalegały w rdzeniu.
 	p.drzewo.Zwolnij()
 	return err
 }
 
-// dogladaj czeka na faktyczne zakończenie procesu okna i domyka jego cykl
-// życia: oznacza proces jako zakończony i oddaje uchwyty systemowe.
-//
-// Bez tego doglądu `zakonczony` miałby jednego pisarza — Ubij — a do Ubij
-// prowadzą wyłącznie dwie drogi: zatrzymanie okna i przejęcie procesu następnej
-// tury. Proces, który kończy się SAM, nie wyzwala żadnej z nich. Okno meldowało
-// więc „Running" (stanProcesu → ProgressStatusRunning, Biegnace) od samoistnego
-// wyjścia aż do najbliższej tury albo zamknięcia okna, a przez ten sam czas
-// wisiał uchwyt Job Object i uchwyt os.Process.
-//
-// BRAMKA. Zwolnij ma teraz dwóch wołających — Ubij i ten dogląd — a
-// drzewoProcesow.zwolnij NIE jest współbieżnie idempotentne: dwa CloseHandle na
-// tym samym uchwycie zamykają uchwyt, który Windows zdążył już nadać ponownie
-// czemu innemu. Bezpieczeństwo stoi WYŁĄCZNIE na odczycie-i-zapisie
-// `zakonczony` pod tym samym p.mu, co w Ubij: kto zastanie false, ten jeden
-// przechodzi dalej. Tego NIE WOLNO uprościć do `if p.Zyje() { ... }` — to byłoby
-// check-then-act i obaj wołający mogliby wejść.
+// Metoda dogladaj czeka na faktyczne zakończenie procesu okna i domyka jego cykl życia, oznaczając proces jako zakończony oraz oddając uchwyty systemowe.
 func (p *Proces) dogladaj() {
 	p.drzewo.Czekaj()
 
@@ -74,14 +48,13 @@ func (p *Proces) dogladaj() {
 	p.zakonczony = true
 	p.mu.Unlock()
 	if juz {
-		// Ubicie przeszło bramkę pierwsze i uchwyty już oddało. Tak wychodzi
-		// obserwator poprzedniej tury, obudzony przez Przejmij.
+		// Ubicie przeszło bramkę pierwsze i uchwyty już oddało; wychodzi obserwator poprzedniej tury.
 		return
 	}
 	p.drzewo.Zwolnij()
 }
 
-// Zyje mówi, czy proces okna nadal pracuje.
+// Metoda Zyje mówi, czy proces okna nadal pracuje, sprawdzając bieżący stan uchwytu systemowego procesu.
 func (p *Proces) Zyje() bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()

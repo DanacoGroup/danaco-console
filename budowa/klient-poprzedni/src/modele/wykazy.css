@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SEKCJA MODELI · PANEL DWUKOLUMNOWY I KOLUMNY WYKAZU
-   ----------------------------------------------------------------------------
-   Arkusz opisuje układ wspólny dwóch paneli sekcji — kont oraz zasad
-   i tożsamości. Oba mają ten sam kształt: pasek działań u góry, kolumna wykazu
-   po lewej, treść po prawej.
-
-   Ramę sekcji i formularz konta prowadzi `modele.css`, który ten plik wciąga.
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
-
-   Pozycja wykazu opisująca byt nieczynny nie jest wygaszona ani nieklikalna:
-   nieczynność jest stanem danych, nie blokadą interfejsu.
-   ============================================================================ */
+/* Arkusz opisuje układ wspólny dwóch paneli sekcji modeli: pasek działań u góry, kolumnę wykazu po lewej i treść po prawej stronie. */
 
 /* --- Panel dwukolumnowy: pasek nad wykazem i treścią --------------------- */
 

@@ -19,18 +19,9 @@ import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../protokol/ks
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Rejestr kont modeli i kont programów code CLI widziany przez klienta —
- * pięć komend obszaru `account.*` oraz zdarzenie `account.changed`.
- *
- * Poświadczenie idzie w jedną stronę: kontrakt przyjmuje `credential` w treści
- * żądania i nie zwraca go nigdy, a odpowiedź niesie wyłącznie znacznik
- * `hasCredential`. Moduł nie ma ścieżki odczytu poświadczenia, bo nie istnieje
- * komenda, którą mógłby o nie spytać.
- *
- * Odczyt jest fail-open: wykaz, który nie dotarł, wraca pusty i zostawia wpis
- * w dzienniku, a widok podaje, że rdzeń nie odpowiedział, i pozostaje czynny.
- * Zapisy oddają pełny `Wynik`, bo ich niepowodzenie musi stanąć przy formularzu,
- * a nie zniknąć w konsoli.
+ * Rejestr kont modeli oraz kont programów code CLI widziany przez klienta.
+ * Obejmuje pięć komend obszaru kont wraz z subskrypcją zdarzenia zmiany.
+ * Nieudany odczyt wykazu nie zatrzymuje widoku, a zapisy oddają pełny wynik.
  */
 export interface ZrodloKont {
   /** `account.list` — wykaz kont w kolejności katalogu. */
@@ -50,11 +41,9 @@ export interface ZrodloKont {
 }
 
 /**
- * Powiadomienie o niepowodzeniu odczytu rejestru.
- *
- * Odczyt pozostaje fail-open — wykaz wraca pusty, a sekcja jest czynna — lecz
- * o niepowodzeniu dowiaduje się także widok: rejestr pusty po odmowie rdzenia
- * i rejestr pusty na świeżej instalacji to dwa różne stany.
+ * Powiadomienie o niepowodzeniu odczytu rejestru. Wykaz wraca wtedy pusty,
+ * a sekcja pozostaje czynna, lecz powód dociera do widoku: rejestr pusty po
+ * odmowie rdzenia i rejestr pusty na świeżej instalacji to dwa różne stany.
  */
 export type NaNiepowodzenie = (powod: string) => void;
 
@@ -101,7 +90,7 @@ export function utworzZrodloKont(
 }
 
 /**
- * Porządek wykazu bierzemy z kolejności nadanej przez rdzeń, a przy jej braku
+ * Porządek wykazu pochodzi z kolejności nadanej przez rdzeń, a przy jej braku
  * z nazwy. Konto bez kolejności nie znika — trafia na koniec.
  */
 export function uporzadkujKonta(konta: readonly Account[]): Account[] {

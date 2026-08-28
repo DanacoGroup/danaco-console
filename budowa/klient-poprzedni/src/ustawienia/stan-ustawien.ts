@@ -1,16 +1,7 @@
 import type { KodSekcjiUstawien } from './sekcje';
 import { REJESTR_SEKCJI_USTAWIEN } from './sekcje';
 
-/**
- * Stan ramy Okna Ustawień: wyłącznie sekcja czynna.
- *
- * Wykaz sekcji jest stały (rejestr w `sekcje.ts`, nie katalog rdzenia), więc
- * rama nie potrzebuje odczytu ani fazy ładowania na swoim poziomie — każda
- * sekcja niesie własny stan odczytu wewnątrz siebie. Jedyna rzecz, którą okno
- * pamięta między otwarciami, to sekcja, na której Operator skończył: tak samo
- * jak okno konfiguracji, które nie wraca do pierwszej kategorii przy każdym
- * otwarciu.
- */
+/** Stan ramy okna ustawień niesie wyłącznie sekcję czynną, bo wykaz sekcji jest stały, a odczyt niesie każda sekcja osobno. */
 export interface StanUstawien {
   /** Kod sekcji czynnej. */
   czynna(): KodSekcjiUstawien;

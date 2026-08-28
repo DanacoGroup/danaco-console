@@ -1,16 +1,4 @@
-// Plik wpina sześć komend rodziny `auth.*` — bramki Operatora. Tyle właśnie
-// komend niesie kontrakt w tej rodzinie i każda ma tu swój uchwyt.
-//
-// Cała bramka stoi na jednym porcie. Sześć komend dotyka dwóch tabel i jednego
-// sejfu; osobne porty wejścia, metod i sesji byłyby trzema prawdami o jednej
-// bramce.
-//
-// Zdarzenie `auth.changed` rozgłaszają trzy komendy, każda swoim powodem:
-// założenie metody, jej zdjęcie i zmiana hasła. `auth.login` nie rozgłasza —
-// wejście nie zmienia ani składu metod, ani hasła, a sekcja Uwierzytelnianie
-// dostaje wykaz metod wprost w odpowiedzi. `auth.register` też nie: przy
-// pierwszym uruchomieniu nie ma komu rozgłosić zmiany. `auth.token.refresh` nie
-// zmienia stanu uwierzytelnienia w ogóle.
+// Plik wpina sześć komend rodziny auth.* — bramki Operatora; cała bramka stoi na jednym porcie, bo sześć komend dotyka dwóch tabel i jednego sejfu.
 package core
 
 import (
@@ -43,20 +31,13 @@ type Uwierzytelnianie interface {
 	// PrzedluzSesjeBramki obsługuje `auth.token.refresh`.
 	PrzedluzSesjeBramki(ctx context.Context, z shared.AuthTokenRefreshRequest) (shared.AuthTokenRefreshResponse, error)
 
-	// MetodyWejscia oddaje wykaz metod po zmianie. Potrzebuje go ładunek
-	// zdarzenia `auth.changed` po zmianie hasła — odpowiedź tej komendy wykazu
-	// nie niesie, a sekcja Uwierzytelnianie ma się odświeżyć bez odpytywania.
+	// MetodyWejscia oddaje wykaz metod po zmianie, potrzebny ładunkowi zdarzenia auth.changed.
 	MetodyWejscia(ctx context.Context) ([]shared.AuthMethod, error)
 
-	// BramkaZalozona mówi, czy sekret bramki w ogóle istnieje. Potrzebuje tego
-	// powitanie, żeby klient odróżnił „zaloguj się" od „ustaw hasło po raz
-	// pierwszy" bez wyprowadzania stanu z odmowy.
+	// BramkaZalozona mówi, czy sekret bramki istnieje, by klient odróżnił zaloguj się od ustaw hasło.
 	BramkaZalozona(ctx context.Context) (bool, error)
 
-	// RozpoznajSesjeBramki sprawdza token przedstawiony w powitaniu i oddaje
-	// skrót rozpoznanej sesji — skrót, nie token, bo więź trzyma w pamięci
-	// wyłącznie to, co i tak leży w bazie. Fałsz bez błędu znaczy „token
-	// nieznany, unieważniony albo wygasły" — to odpowiedź, nie awaria.
+	// RozpoznajSesjeBramki sprawdza token z powitania i oddaje skrót sesji; fałsz znaczy token nieznany.
 	RozpoznajSesjeBramki(ctx context.Context, token string) (string, bool, error)
 }
 
@@ -72,16 +53,13 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 		return
 	}
 
-	// Rejestracja połączenia NIE wiąże i sesji nie zakłada: konto powstaje
-	// niepotwierdzone, a token dostępu wydaje dopiero potwierdzenie adresu.
+	// Rejestracja połączenia nie wiąże i sesji nie zakłada: konto powstaje niepotwierdzone.
 	r.Zarejestruj(shared.CommandAuthRegister,
 		obsluz(func(ctx context.Context, z shared.AuthRegisterRequest) (shared.AuthRegisterResponse, error) {
 			return u.ZalozBramke(ctx, z)
 		}))
 
-	// Potwierdzenie adresu wiąże połączenie od razu — to jest pierwsze wejście
-	// Operatora do platformy. Bez związania byłby dla rdzenia nierozpoznany aż
-	// do następnego powitania, a powitanie idzie raz, przy nawiązaniu gniazda.
+	// Potwierdzenie adresu wiąże połączenie od razu — pierwsze wejście Operatora do platformy.
 	r.Zarejestruj(shared.CommandAuthVerify,
 		obsluz(func(ctx context.Context, z shared.AuthVerifyRequest) (shared.AuthVerifyResponse, error) {
 			odpowiedz, err := u.PotwierdzAdres(ctx, z)
@@ -96,9 +74,7 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 			return u.RozpocznijOdzyskanie(ctx, z)
 		}))
 
-	// Odzyskanie unieważnia tokeny wydane wcześniej, więc rozgłasza zmianę —
-	// pozostałe urządzenia mają się dowiedzieć, że wylatują, a nie odkryć tego
-	// przy następnej komendzie.
+	// Odzyskanie unieważnia tokeny wydane wcześniej, więc rozgłasza zmianę pozostałym urządzeniom.
 	r.Zarejestruj(shared.CommandAuthReset,
 		obsluz(func(ctx context.Context, z shared.AuthResetRequest) (shared.AuthResetResponse, error) {
 			odpowiedz, err := u.UstawNoweHaslo(ctx, z)
@@ -142,14 +118,10 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 
 	r.Zarejestruj(shared.CommandAuthPasswordReset,
 		obsluz(func(ctx context.Context, z shared.AuthPasswordResetRequest) (shared.AuthPasswordResetResponse, error) {
-			// Sesja wołającego wchodzi kontekstem, żeby zmiana hasła nie wyrzuciła
-			// za drzwi tego, kto ją właśnie wykonał. Połączenie niezwiązane daje
-			// skrót pusty, a wtedy unieważniane są wszystkie sesje.
+			// Sesja wołającego wchodzi kontekstem, żeby zmiana hasła nie wyrzuciła tego, kto ją wykonał, za drzwi.
 			odpowiedz, err := u.ZmienHasloBramki(zSesjaBiezaca(ctx, wiez.SkrotKontekstu(ctx)), z)
 			if err == nil && odpowiedz.Changed {
-				// Wykaz metod bierzemy osobno — odpowiedź tej komendy go nie
-				// niesie. Nieudany odczyt kończy wyłącznie ładunek zdarzenia,
-				// nie komendę: hasło jest już zmienione.
+				// Wykaz metod jest brany osobno — odpowiedź tej komendy go nie niesie, hasło już jest zmienione.
 				metody, _ := u.MetodyWejscia(ctx)
 				rozglosZmianeBramki(e, shared.AuthChangeReasonPasswordChanged, metody, nil)
 			}
@@ -158,10 +130,7 @@ func zarejestrujUwierzytelnianie(r *Rejestr, u Uwierzytelnianie, e *emiter, wiez
 
 	r.Zarejestruj(shared.CommandAuthTokenRefresh,
 		obsluz(func(ctx context.Context, z shared.AuthTokenRefreshRequest) (shared.AuthTokenRefreshResponse, error) {
-			// Więź połączenia wchodzi kontekstem tak samo jak przy zmianie
-			// hasła: kontrakt mówi przy `AuthTokenRefreshRequest.Token`, że
-			// puste znaczy sesję bieżącego połączenia, a wskazać ją da się
-			// wyłącznie stąd — żądanie tokenu wtedy nie niesie.
+			// Więź połączenia wchodzi kontekstem tak samo jak przy zmianie hasła: puste Token znaczy bieżącą.
 			return u.PrzedluzSesjeBramki(zSesjaBiezaca(ctx, wiez.SkrotKontekstu(ctx)), z)
 		}))
 }

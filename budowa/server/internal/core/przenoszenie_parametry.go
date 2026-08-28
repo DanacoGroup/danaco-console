@@ -7,27 +7,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// parametryWykonania są kształtem pola executionParams kompletu kontekstu.
-// Kontrakt zostawia to pole surowym JSON-em, bo nie każdy moduł
-// wykonuje pracę tak samo; okno komunikacji ma jednak ustalony zestaw
-// parametrów wykonania i to on tędy jedzie.
-//
-// Nazwy pól JSON są nazwami z okna kontraktu, więc parametry odczytane
-// z przeniesienia dają się nałożyć na okno bez drugiego słownika.
+// parametryWykonania są kształtem pola executionParams kompletu kontekstu, z nazwami pól zgodnymi z oknem kontraktu, żeby dały się nałożyć na okno bez drugiego słownika.
 type parametryWykonania struct {
 	KanalModelu         string                `json:"modelChannelId,omitempty"`
 	KatalogiRobocze     []string              `json:"workingDirs,omitempty"`
 	SrodowiskoWykonania shared.ExecutionEnv   `json:"executionEnv,omitempty"`
 	TrybUprawnien       shared.PermissionMode `json:"permissionMode,omitempty"`
 	RolaOkna            shared.WindowRole     `json:"windowRole,omitempty"`
-	// Agent jedzie razem z kanałem, bo przekazanie kontekstu przenosi całe
-	// stanowisko, nie samą pracę. Okno docelowe ma pracować tą samą
-	// tożsamością — inaczej ta sama wypowiedź trafiłaby
-	// do modelu z innym promptem systemowym i innym modelem bazowym, a Operator
-	// zobaczyłby rozjazd bez przyczyny.
-	//
-	// Nazwa pola jest nazwą z okna kontraktu, tak jak reszta — parametry
-	// odczytane z przeniesienia nakładają się na okno bez drugiego słownika.
+	// Agent jedzie razem z kanałem, żeby okno docelowe pracowało tą samą tożsamością co źródłowe.
 	Agent string `json:"agentId,omitempty"`
 }
 
@@ -86,12 +73,7 @@ func nalozParametry(u session.Ustawienia, komplet shared.ContextBundle) session.
 	return u
 }
 
-// zmianaCelu składa wybiórczą zmianę okna docelowego wskazanego w żądaniu:
-// moduł docelowy oraz te parametry wykonania, które komplet naprawdę niesie.
-// Parametr nieprzeniesiony zostaje w oknie docelowym bez zmiany.
-//
-// Roli okna przeniesienie nie rusza: rola wiąże okno z koordynatorem pętli,
-// a przekazanie kontekstu nie jest zmianą układu pętli.
+// zmianaCelu składa wybiórczą zmianę okna docelowego: moduł oraz przeniesione parametry wykonania. Roli okna przeniesienie nie rusza, bo wiąże ją z koordynatorem pętli.
 func zmianaCelu(modul string, komplet shared.ContextBundle) session.Zmiana {
 	parametry := parametryKompletu(komplet)
 	zmiana := session.Zmiana{Modul: &modul}

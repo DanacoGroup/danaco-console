@@ -4,20 +4,12 @@ import type { StanTerminala } from './stan-terminala';
 import type { PozycjaWyboru } from './wybor-drzewem';
 
 /**
- * Profil karty powłoki: wykaz powłok kontraktu, schematy barw i opis karty
- * bieżącej.
- *
- * Wykaz powłok jest danymi, nie łańcuchem warunków: nowa wartość
- * `TerminalShell` w kontrakcie wchodzi tu jedną pozycją, a rdzeń dokłada jej
- * wiersz polecenia po swojej stronie.
- *
- * Nazwy pozycji są wartościami, nie podpisami nastawy. Wykazy karmią menu
- * z biblioteki (`wybor-drzewem.ts` → `komponenty/menu-drzewo.ts`), a tam na
- * uchwycie stoi wybrana wartość — „Atrament", nie „Schemat: atrament";
- * przedrostek rodzajowy powtarzałby na uchwycie nazwę nastawy.
+ * Profil karty powłoki: wykaz powłok kontraktu, schematy barw i opis karty bieżącej.
  */
 
-/** Powłoki karty w kolejności wykazu modułów. */
+/**
+ * Powłoki karty terminala w kolejności zgodnej z wykazem modułów uruchomieniowych dostępnych w tej budowie.
+ */
 export const POWLOKI: readonly PozycjaWyboru[] = [
   [Powloka.Powershell, 'PowerShell', 'Powłoka Windows z poleceniami cmdlet.'],
   [Powloka.Cmd, 'CMD', 'Wiersz poleceń Windows — składnia wsadowa.'],
@@ -47,7 +39,9 @@ export const POWLOKI: readonly PozycjaWyboru[] = [
   ],
 ];
 
-/** Schematy barw karty — żetony motywu, nie własne barwy. */
+/**
+ * Schematy barw karty pochodzą z żetonów motywu aplikacji, nie z własnych, niezależnych wartości barw.
+ */
 export const SCHEMATY: readonly PozycjaWyboru[] = [
   ['atrament', 'Atrament', 'Ciemne tło karty. Czynność widoku — rdzeń o niej nie wie.'],
   ['pergamin', 'Pergamin', 'Jasne tło karty. Czynność widoku — rdzeń o niej nie wie.'],
@@ -55,12 +49,7 @@ export const SCHEMATY: readonly PozycjaWyboru[] = [
 ];
 
 /**
- * Inicjator uruchomienia — kto odpowiada za polecenie.
- *
- * Pozycja „AI" zostaje klikalna: `terminal.command.exec` z `initiator: "model"`
- * w oknie o trybie `manual` wraca odmową `permission_denied`, bo kontrakt nie ma
- * dla terminala rundy zgody. Odmowę wydaje rdzeń, a nie okno zgadujące tryb
- * uprawnień z góry.
+ * Inicjator uruchomienia rozstrzyga, kto odpowiada za polecenie; odmowę uprawnień wydaje zawsze rdzeń.
  */
 export const INICJATORZY_KARTY: readonly PozycjaWyboru[] = [
   ['operator', 'Operator', 'Polecenie idzie na odpowiedzialność Operatora tego okna.'],
@@ -71,7 +60,9 @@ export const INICJATORZY_KARTY: readonly PozycjaWyboru[] = [
   ],
 ];
 
-/** Opis karty bieżącej: powłoka, katalog, stan i ostatnie polecenie. */
+/**
+ * Opis karty bieżącej: powłoka, katalog roboczy, stan bieżącej sesji i ostatnie wykonane polecenie terminala.
+ */
 export function opisKarty(karta: TerminalSession, stan: StanTerminala): HTMLElement {
   const opis = document.createElement('dl');
   opis.className = 'dt-opis-karty';

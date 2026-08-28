@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: profile kontroli jakości (`translate.qa.profile.list`,
-// `.set`, `.delete`) i obieg zatwierdzeń panelu (`translate.approval.set`,
-// `.list`) modułu Translate.
-//
-// Zatwierdzenie zostawia dwa ślady naraz i to jest zamierzone: wiersz obiegu
-// (kto, kiedy, na jakim etapie, z jaką uwagą) oraz migawkę na panelu, którą
-// widzi każdy odczyt panelu bez dociągania historii. Oba zapisy idą jedną
-// transakcją (`dane/tlumaczenie_kontrola.go`).
-//
-// Autor zatwierdzenia bierze się z sesji wywołującego, nie z żądania. Gdyby
-// przychodził żądaniem, obieg zatwierdzeń byłby polem tekstowym, w które można
-// wpisać dowolne nazwisko — a wtedy nie jest obiegiem, tylko notatką.
+// Odpowiedzialność pliku: profile kontroli jakości translate.qa.profile.* i obieg zatwierdzeń panelu translate.approval.* modułu Translate.
 package core
 
 import (
@@ -21,17 +10,15 @@ import (
 )
 
 const (
-	// przedrostekProfiluQa znakuje identyfikator profilu kontroli jakości.
+	// przedrostekProfiluQa znakuje identyfikator profilu kontroli jakości, przypisywany przy zapisie w bazie.
 	przedrostekProfiluQa = "qap-"
-	// przedrostekZatwierdzenia znakuje identyfikator kroku obiegu.
+	// przedrostekZatwierdzenia znakuje identyfikator kroku obiegu zatwierdzeń panelu tłumaczenia, przypisywany przy zapisie.
 	przedrostekZatwierdzenia = "zat-"
-	// autorNieznanyObiegu wchodzi, gdy wywołanie nie niesie tożsamości: obieg
-	// ma powiedzieć wprost, że kroku nie da się przypisać, zamiast wpisać
-	// pierwsze lepsze konto.
+	// autorNieznanyObiegu wchodzi, gdy wywołanie nie niesie tożsamości, zamiast wpisu konta z żądania klienta.
 	autorNieznanyObiegu = "operator nieustalony"
 )
 
-// WykazProfiliQa obsługuje `translate.qa.profile.list`.
+// WykazProfiliQa obsługuje translate.qa.profile.list, zwracając profile kontroli jakości zapisane dla panelu.
 func (a *adapterTlumaczenia) WykazProfiliQa(ctx context.Context,
 	z shared.TranslateQaProfileListRequest) (shared.TranslateQaProfileListResponse, error) {
 
@@ -50,7 +37,7 @@ func (a *adapterTlumaczenia) WykazProfiliQa(ctx context.Context,
 	return shared.TranslateQaProfileListResponse{Profiles: wykaz}, nil
 }
 
-// UstawProfilQa obsługuje `translate.qa.profile.set`.
+// UstawProfilQa obsługuje translate.qa.profile.set, zapisując albo zmieniając profil kontroli jakości panelu.
 func (a *adapterTlumaczenia) UstawProfilQa(ctx context.Context,
 	z shared.TranslateQaProfileSetRequest) (shared.TranslateQaProfileSetResponse, error) {
 
@@ -90,7 +77,7 @@ func (a *adapterTlumaczenia) UstawProfilQa(ctx context.Context,
 	return shared.TranslateQaProfileSetResponse{Profile: zlozProfilQa(zapisany)}, nil
 }
 
-// UsunProfilQa obsługuje `translate.qa.profile.delete`.
+// UsunProfilQa obsługuje translate.qa.profile.delete, usuwając zapisany profil kontroli jakości panelu.
 func (a *adapterTlumaczenia) UsunProfilQa(ctx context.Context,
 	z shared.TranslateQaProfileDeleteRequest) (shared.TranslateQaProfileDeleteResponse, error) {
 
@@ -105,7 +92,7 @@ func (a *adapterTlumaczenia) UsunProfilQa(ctx context.Context,
 	return shared.TranslateQaProfileDeleteResponse{Deleted: zeszlo}, nil
 }
 
-// zlozProfilQa przekłada wiersze profilu na byt kontraktu.
+// zlozProfilQa przekłada wiersze profilu kontroli jakości na byt kontraktu wymiany z klientem Operatora.
 func zlozProfilQa(profil dane.ProfilQa) shared.QaProfile {
 	kontrole := make([]shared.QaProfileCheck, 0, len(profil.Kontrole))
 	for _, kontrola := range profil.Kontrole {
@@ -126,7 +113,7 @@ func zlozProfilQa(profil dane.ProfilQa) shared.QaProfile {
 	}
 }
 
-// UstawZatwierdzenie obsługuje `translate.approval.set`.
+// UstawZatwierdzenie obsługuje translate.approval.set, zapisując krok obiegu zatwierdzeń wraz z migawką na panelu.
 func (a *adapterTlumaczenia) UstawZatwierdzenie(ctx context.Context,
 	z shared.TranslateApprovalSetRequest) (shared.TranslateApprovalSetResponse, error) {
 
@@ -207,7 +194,7 @@ func autorObiegu(ctx context.Context) string {
 	return autorNieznanyObiegu
 }
 
-// zlozZatwierdzenie przekłada wiersz obiegu na byt kontraktu.
+// zlozZatwierdzenie przekłada wiersz obiegu zatwierdzeń na byt kontraktu wymiany z klientem Operatora.
 func zlozZatwierdzenie(zapis dane.ZatwierdzeniePanelu) shared.ApprovalRecord {
 	return shared.ApprovalRecord{
 		Id:        zapis.Kod,

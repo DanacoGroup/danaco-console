@@ -10,43 +10,14 @@ import { spisCzynnosciSesji } from './spis-czynnosci-sesji';
 import { zbudujWierszCzynnosci, type PozycjaCzynnosciMenu } from './wiersz-czynnosci';
 import { sledzWpisSesji, type ZrodloWpisuSesji } from './wpis-sesji-okna';
 
-/**
- * Sekcja czynności sesji — druga sekcja menu `⋮` nagłówka okna rozmowy.
- *
- * Doklejana przez `OpcjeMenuPaneli.sekcjeDalsze`; kreska nad sekcją rysuje się
- * po stronie `menu-paneli.ts` i tylko wtedy, gdy sekcja niepusta. Kolejność
- * wierszy: `Otwórz w nowym oknie`, `Zmień nazwę`, `Widok transkryptu ›`,
- * `Archiwizuj`, `Usuń`. Pozycja bez pokrycia w rdzeniu nie powstaje w ogóle —
- * nie ma tu wiersza wygaszonego.
- *
- * Identyfikator sesji czytamy z kanału (`kanal.sesja().id()`) przy każdym
- * pytaniu, nie raz przy montażu: gniazdo powstaje przed uzgodnieniem z rdzeniem
- * i sesji wtedy jeszcze nie ma. Dopóki identyfikator jest pusty albo rdzeń nie
- * oddał wpisu, sekcja jest pusta.
- *
- * Skróty `R`, `A`, `D` łapie nasłuch tej sekcji i działają, dopóki menu jest
- * rozwinięte. Skrótu globalnego nie rejestrujemy: te same litery wpisane w polu
- * wypowiedzi mają pisać litery.
- */
+// Sekcja czynności sesji to druga sekcja menu nagłówka okna rozmowy, doklejana tylko gdy niepusta.
 
 export interface OpcjeSekcjiCzynnosci {
   /** Droga do rdzenia; bez niej sekcja nie ma czym wykonać ani jednej czynności. */
   kanal: Kanal;
-  /**
-   * Tryby widoku transkryptu podane przez potok `rozmowa/`.
-   *
-   * Pominięty znaczy „powłoka nie związała jeszcze gniazda z oknem" — wiersza
-   * `Widok transkryptu ›` wtedy nie ma. Port dochodzi zwykle później, przez
-   * `ustawWidokZapisu`: gniazdo powstaje przed uzgodnieniem, a rozmowę osadza
-   * dopiero `aplikacja/wiazanie-gniazda.ts`.
-   */
+  /** Tryby widoku transkryptu z potoku rozmowy; pominięty znaczy, że gniazdo jeszcze nie ma okna. */
   widokZapisu?: PortWidokuZapisu;
-  /**
-   * Dojście do liczby gniazd sceny — pod pozycję `Otwórz w nowym oknie`.
-   *
-   * Pominięte znaczy „nie ma sceny, na którą dałoby się dostawić okno" —
-   * pozycji wtedy nie ma.
-   */
+  /** Dojście do liczby gniazd sceny pod pozycję otwarcia w nowym oknie; pominięte znaczy brak sceny. */
   noweOkno?: PortNowegoOkna;
 }
 
@@ -55,14 +26,7 @@ export interface SekcjaCzynnosciSesji {
   element: HTMLElement;
   /** Przerysowuje wiersze — po zmianie stanu sesji, trybu zapisu albo liczby gniazd. */
   odswiez(): void;
-  /**
-   * Podaje port trybów widoku transkryptu — albo go zabiera (`null`).
-   *
-   * Osobne wejście, bo port przychodzi później niż gniazdo: rozmowę osadza
-   * `aplikacja/wiazanie-gniazda.ts` po uzgodnieniu z rdzeniem, a sekcja montuje
-   * się razem z gniazdem. `null` przy rozłączeniu zabiera wiersz z powrotem,
-   * żeby podmenu nie wołało trybów rozmowy, której już nie ma.
-   */
+  /** Port trybów widoku transkryptu przychodzi później niż gniazdo; pustka zabiera wiersz z powrotem. */
   ustawWidokZapisu(port: PortWidokuZapisu | null): void;
   /** Zdejmuje subskrypcję rdzenia; wołane przy zejściu gniazda. */
   zamknij(): void;
@@ -102,24 +66,16 @@ export function utworzSekcjeCzynnosciSesji(
       odswiez: () => zrodlo.odswiez(),
     });
 
-    // `Otwórz w nowym oknie` nie zależy od wpisu sesji, w odróżnieniu od
-    // czterech pozostałych: nie pyta rdzenia o stan sesji, tylko dostawia
-    // gniazdo na scenie. Pytanie o sufit idzie przy każdym rysowaniu, bo
-    // figura modułu sceny przestawia się z rdzenia.
+    // Otwarcie w nowym oknie nie pyta rdzenia o stan sesji, tylko dostawia gniazdo na scenie.
     const noweOkno =
       opcje.noweOkno === undefined
         ? null
         : pozycjaNowegoOkna(opcje.noweOkno, () => przerysuj());
 
-    // Nagłówek znika razem z pustym wykazem: napis „Sesja" nad pustką mówiłby,
-    // że coś tu jest, a nie ma. Kreski nad sekcją i tak wtedy nie ma, bo
-    // `menu-paneli.ts` stawia ją wyłącznie przy niepustym `sekcjeDalsze`.
+    // Nagłówek znika razem z pustym wykazem, bo napis nad pustką mówiłby, że coś tu jest, a nie ma.
     naglowek.hidden = pozycje.length === 0 && podmenu === null && noweOkno === null;
 
-    // Kolejność wzorca: `Otwórz w`, `Zmień nazwę`, `Widok transkryptu ›`,
-    // `Archiwizuj`, `Usuń`. Podmenu wstawiamy po pierwszej czynności wpisu,
-    // a przy jej braku na początek tamtego wykazu — dopiero potem na czoło
-    // wchodzi „Otwórz w nowym oknie", którego wpis sesji nie dotyczy.
+    // Kolejność wzorca ustala pozycje menu; podmenu wstawiamy po pierwszej czynności wpisu sesji.
     const wiersze: HTMLElement[] = pozycje.map((pozycja) => zbudujWierszCzynnosci(pozycja));
     if (podmenu !== null) {
       podmenu.odswiez();
@@ -129,13 +85,7 @@ export function utworzSekcjeCzynnosciSesji(
     wykaz.replaceChildren(...wiersze);
   }
 
-  /**
-   * Skrót klawiaturowy sekcji.
-   *
-   * Litera bez modyfikatorów i tylko wtedy, gdy ognisko siedzi w menu — nasłuch
-   * stoi na sekcji, więc zdarzenie musi do niej dojść. `Ctrl`/`Alt`/`Meta`
-   * odpuszczamy, żeby nie odbierać przeglądarce jej własnych skrótów.
-   */
+  /** Skrót klawiaturowy sekcji działa bez modyfikatorów tylko wtedy, gdy ognisko siedzi w menu. */
   element.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.ctrlKey || zdarzenie.altKey || zdarzenie.metaKey) return;
     if (zdarzenie.key.length !== 1) return;
@@ -155,10 +105,7 @@ export function utworzSekcjeCzynnosciSesji(
     odswiez: przerysuj,
 
     ustawWidokZapisu(port) {
-      // Podmenu poprzedniego portu trzeba zwinąć przed porzuceniem: jego
-      // wiersze trybów są ukrywane atrybutem `hidden`, po którym `menu-rozwijane.ts`
-      // rozstrzyga o wędrówce ogniska. Element i tak wypada z drzewa przy
-      // najbliższym `replaceChildren`, ale zwinięcie jest tu tanie i jawne.
+      // Podmenu poprzedniego portu trzeba zwinąć przed porzuceniem, bo zwinięcie jest tanie i jawne.
       podmenu?.zwin();
       podmenu = port === null ? null : utworzPodmenuWidokuZapisu(port);
       przerysuj();
@@ -172,5 +119,5 @@ export function utworzSekcjeCzynnosciSesji(
   };
 }
 
-/** Nagłówek sekcji — drobny, nie wersalikami, jak nagłówek sekcji paneli. */
+/** Nagłówek sekcji czynności sesji — drobny, nie wersalikami, tak jak nagłówek sekcji paneli — pokazuje sekcję menu okna rozmowy. */
 const NAGLOWEK = 'Sesja';

@@ -1,26 +1,6 @@
-//! Droga systemowa założenia wydania — czym różni się podmiana na każdym systemie.
-//!
-//! Rozpoznawane są trzy sytuacje i każda kończy się inaczej:
-//!
-//! 1. Linux, aplikacja biegnie jako AppImage — plik wskazany zmienną `APPIMAGE`
-//!    zostaje podmieniony, a powłoka wstaje ponownie sama.
-//!
-//! 2. Linux, aplikacja pochodzi z pakietu `.deb` — podmiana jest niemożliwa,
-//!    bo binarka leży w `/usr/bin`, gdzie proces Operatora nie ma prawa zapisu,
-//!    a powłoka nie będzie sobie tych praw podnosiła. Ta gałąź zwraca odmowę
-//!    opisującą brak i mówiącą Operatorowi, co zrobić samemu; treści odmowy
-//!    pilnuje test `bez_appimage_odmowa_nazywa_droge_wyjscia`.
-//!
-//! 3. Windows — wydanie przychodzi jako instalka NSIS, którą powłoka uruchamia
-//!    jako osobny program i schodzi jej z drogi.
-//!
-//! Dlaczego podmiana przez `rename`, a nie przez zapis w miejsce: na Linuksie
-//! nie wolno nadpisać pliku wykonywalnego, który właśnie biegnie — jądro zwraca
-//! `ETXTBSY`. `rename` w obrębie tego samego katalogu tego zakazu nie łamie:
-//! podstawia nowy i-węzeł pod starą nazwę, a proces już uruchomiony spokojnie
-//! dopracowuje na starym, który znika dopiero po jego zakończeniu. Stąd plik
-//! roboczy pobieramy obok celu, a nie do katalogu tymczasowego — `rename`
-//! działa wyłącznie w obrębie jednego systemu plików.
+//! Droga systemowa założenia wydania: AppImage na Linuksie podmienia się przez
+//! `rename`, pakiet `.deb` zwraca odmowę nazywającą brak, a Windows uruchamia
+//! instalkę NSIS jako osobny program. Uzasadnienie pełne stoi w dokumentacji.
 
 use std::path::PathBuf;
 
@@ -47,11 +27,9 @@ pub enum Droga {
     },
 }
 
-/// Nazwa zmiennej, którą uruchamiacz AppImage wskazuje sam siebie.
-///
-/// To jedyne wiarygodne rozpoznanie: `current_exe()` pokazuje wtedy ścieżkę
-/// wewnątrz chwilowo podmontowanego obrazu (`/tmp/.mount_*`), a nie plik,
-/// który Operator ma na dysku i który należy podmienić.
+/// Nazwa zmiennej, którą uruchamiacz AppImage wskazuje sam siebie — jedyne
+/// wiarygodne rozpoznanie, bo `current_exe()` wskazuje wtedy ścieżkę wewnątrz
+/// chwilowo podmontowanego obrazu, a nie plik na dysku operatora.
 #[cfg(not(windows))]
 const ZMIENNA_APPIMAGE: &str = "APPIMAGE";
 
@@ -62,8 +40,7 @@ const ZMIENNA_APPIMAGE: &str = "APPIMAGE";
 pub fn rozpoznaj() -> Result<Droga, Odmowa> {
     #[cfg(windows)]
     {
-        // Instalka NSIS nie podmienia pliku w miejscu — uruchamia się jako
-        // osobny program, więc pobieramy ją do katalogu tymczasowego systemu.
+        // Instalka NSIS uruchamia się jako osobny program poza katalogiem aplikacji.
         Ok(Droga::InstalkaNsis {
             katalog_roboczy: std::env::temp_dir(),
         })
@@ -75,11 +52,7 @@ pub fn rozpoznaj() -> Result<Droga, Odmowa> {
             Ok(sciezka) if !sciezka.trim().is_empty() => Ok(Droga::AppImage {
                 cel: PathBuf::from(sciezka.trim()),
             }),
-            // Brak `APPIMAGE` na Linuksie znaczy, że aplikacja pochodzi
-            // z pakietu systemowego (`.deb` → `/usr/bin`) albo z budowy
-            // deweloperskiej (`target/release`). W obu wypadkach podmiana
-            // z wnętrza aplikacji jest niewłaściwa: pakietem zarządza `dpkg`,
-            // a budowę deweloperską nadpisuje `cargo`.
+            // Brak APPIMAGE znaczy pakiet .deb albo budowę deweloperską, obie z zewnątrz.
             _ => Err(Odmowa::nowa(
                 "droga-niedostepna",
                 format!(
@@ -96,11 +69,7 @@ pub fn rozpoznaj() -> Result<Droga, Odmowa> {
 }
 
 impl Droga {
-    /// Ścieżka pliku roboczego, do którego wolno pobierać.
-    ///
-    /// Dla AppImage leży obok celu (warunek działania `rename`, zob. nagłówek).
-    /// Nazwa jest jawnie robocza, żeby nikt nie wziął niesprawdzonego jeszcze
-    /// pliku za gotową aplikację.
+    /// Ścieżka pliku roboczego: dla AppImage leży obok celu, nazwa jest jawnie robocza.
     pub fn plik_roboczy(&self) -> PathBuf {
         match self {
             #[cfg(not(windows))]
@@ -126,26 +95,15 @@ impl Droga {
         }
     }
 
-    /// Zakłada sprawdzone już wydanie. Wołać wyłącznie po zgodnej sumie.
-    ///
-    /// Zwraca zdanie opisujące, co się stało, oraz informację, czy powłoka ma
-    /// wstać sama (`restartuje_powloka`), czy oddaje pole instalatorowi.
+    /// Zakłada sprawdzone już wydanie i zwraca zdanie o skutku; wołać wyłącznie po zgodnej sumie.
     pub fn zaloz(&self, plik_roboczy: &std::path::Path) -> Result<Zalozenie, Odmowa> {
         match self {
             #[cfg(not(windows))]
             Droga::AppImage { cel } => {
-                // Ostatnie spojrzenie na to, co naprawdę leży na dysku.
-                // `zaloz` podmienia plik aplikacji nieodwracalnie, więc pyta
-                // o zawartość pliku roboczego sam, zamiast wierzyć, że ktoś
-                // wcześniej sprawdził właściwą rzecz. Zgodna suma SHA-256 tego
-                // nie zastąpi: plik zerowej długości i plik `.exe` z wydania
-                // windowsowego mają sumy poprawne co do znaku, a żaden z nich
-                // nie jest aplikacją, którą da się tu uruchomić.
+                // Ostatnie spojrzenie na zawartość — zgodna suma nie zastępuje tego sprawdzenia.
                 sprawdz_zawartosc(plik_roboczy)?;
 
-                // Bit wykonywalny nadajemy dopiero teraz — po sprawdzeniu sumy.
-                // Plik pobrany, a jeszcze niesprawdzony, nie ma prawa być
-                // uruchamialny nawet przez pomyłkę.
+                // Bit wykonywalny nadajemy dopiero po sprawdzeniu sumy, nie wcześniej.
                 use std::os::unix::fs::PermissionsExt;
                 let prawa = std::fs::Permissions::from_mode(0o755);
                 std::fs::set_permissions(plik_roboczy, prawa).map_err(|blad| {
@@ -158,8 +116,7 @@ impl Droga {
                     )
                 })?;
 
-                // Podmiana właściwa. Do tej chwili wszystko dało się cofnąć;
-                // po niej aplikacją jest już nowy plik.
+                // Podmiana właściwa: do tej chwili dało się cofnąć, po niej już nie.
                 std::fs::rename(plik_roboczy, cel).map_err(|blad| {
                     let _ = std::fs::remove_file(plik_roboczy);
                     Odmowa::nowa(
@@ -182,10 +139,7 @@ impl Droga {
                 })
             }
 
-            // Instalka NSIS budowana przez Tauri przyjmuje `/S` (przebieg cichy).
-            // Powłoka musi zejść z drogi, bo instalator nie podmieni pliku
-            // trzymanego przez biegnący proces — dlatego `restartuje_powloka`
-            // jest tu fałszem: aplikację z powrotem stawia instalator, nie my.
+            // Instalka NSIS przyjmuje /S; restartuje_powloka jest tu fałszem, bo aplikację stawia instalator.
             #[cfg(windows)]
             Droga::InstalkaNsis { .. } => {
                 use std::process::Command;
@@ -214,17 +168,13 @@ impl Droga {
     }
 }
 
-/// Pierwsze bajty pliku wykonywalnego ELF — tym zaczyna się każdy AppImage.
+/// Pierwsze bajty pliku wykonywalnego ELF, tym zaczyna się każdy plik AppImage na Linuksie, niezależnie od dystrybucji.
 #[cfg(not(windows))]
 const ZNAK_ELF: [u8; 4] = [0x7f, b'E', b'L', b'F'];
 
-/// Sprawdza, czy plik roboczy może być aplikacją tego systemu.
-///
-/// Dwa pytania, oba o brak, żadne o zgodę: czy jest w nim cokolwiek i czy
-/// wygląda na plik wykonywalny Linuksa. Sprawdzenie sumy odpowiada wyłącznie
-/// na pytanie „czy to ten plik, co w wykazie" — nie na pytanie „czy to w ogóle
-/// aplikacja". Wykaz może wskazywać wydanie na inny system albo plik pusty
-/// i suma będzie się wtedy zgadzać co do znaku.
+/// Sprawdza, czy plik roboczy może być aplikacją tego systemu: czy jest w nim
+/// cokolwiek i czy wygląda na plik wykonywalny Linuksa. Zgodna suma nie
+/// odpowiada na pytanie, czy to w ogóle aplikacja — uzasadnienie w dokumentacji.
 #[cfg(not(windows))]
 fn sprawdz_zawartosc(plik_roboczy: &std::path::Path) -> Result<(), Odmowa> {
     use std::io::Read;
@@ -267,13 +217,12 @@ fn sprawdz_zawartosc(plik_roboczy: &std::path::Path) -> Result<(), Odmowa> {
     Ok(())
 }
 
-/// Skutek założenia wydania.
+/// Skutek założenia wydania: co dokładnie powstało oraz czy powłoka ma się uruchomić ponownie sama, czy nie.
 #[derive(Debug)]
 pub struct Zalozenie {
     /// Co dokładnie powstało lub zostało podmienione.
     pub zalozone: String,
-    /// Czy to powłoka ma się uruchomić ponownie (AppImage), czy oddaje
-    /// pole zewnętrznemu instalatorowi (NSIS).
+    /// Czy to powłoka ma się uruchomić ponownie, czy oddaje pole instalatorowi.
     pub restartuje_powloka: bool,
     /// Zdanie dla Operatora.
     pub zdanie: String,
@@ -281,28 +230,21 @@ pub struct Zalozenie {
 
 #[cfg(all(test, not(windows)))]
 mod testy {
-    //! Testy drogi założenia na Linuksie. Cały moduł jest pod
-    //! `#[cfg(not(windows))]`, bo sprawdza wariant `AppImage` i funkcję
-    //! `sprawdz_zawartosc`, których pod Windowsem po prostu nie ma.
-    //!
-    //! Gałąź windowsowa nie ma tu testów i mieć ich nie będzie: sprawdzenie
-    //! jej wymaga uruchomienia instalatora NSIS na Windowsie, a test udający,
-    //! że to robi, byłby atrapą.
+    //! Testy drogi na Linuksie; gałąź windowsowa wymaga instalatora NSIS i testu tu nie ma.
 
     use super::*;
     use crate::aktualizacja::probne::KatalogProbny;
     use std::os::unix::fs::PermissionsExt;
     use std::sync::{Mutex, MutexGuard, PoisonError};
 
-    /// `rozpoznaj()` czyta zmienną środowiska, a zmienne są wspólne dla całego
-    /// procesu testowego — bez zamka testy mrugałyby przy równoległym biegu.
+    /// Zmienne środowiska są wspólne procesowi testowemu, więc dostęp zamyka ten zamek.
     static ZAMEK: Mutex<()> = Mutex::new(());
 
     fn szereg() -> MutexGuard<'static, ()> {
         ZAMEK.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Najkrótsza treść, która przechodzi kontrolę nagłówka — cztery bajty ELF.
+    /// Najkrótsza treść przechodząca kontrolę nagłówka ELF: cztery bajty.
     const NAGLOWEK_ELF: &[u8] = &[0x7f, b'E', b'L', b'F'];
 
     // ── DOLNA GRANICA PRZY ZAKŁADANIU ──────────────────────────────────────
@@ -324,8 +266,7 @@ mod testy {
 
     #[test]
     fn plik_windowsowy_odrzucony_jako_nie_aplikacja() {
-        // Wykaz wydań wskazał `.exe` zamiast AppImage. Suma by się zgadzała —
-        // to przecież suma tego `.exe`. Na Linuksie to nie jest aplikacja.
+        // Wykaz wskazał .exe zamiast AppImage; suma się zgadza, ale to nie jest aplikacja Linuksa.
         let katalog = KatalogProbny::nowy("windowsowy");
         let plik = katalog.plik_z_trescia("wydanie.pobierane", b"MZ\x90\x00podszywka");
 
@@ -343,8 +284,7 @@ mod testy {
 
     #[test]
     fn plik_krotszy_niz_naglowek_odrzucony() {
-        // Jeden bajt to już nie pustka, ale wciąż nie ELF. Granica ma odciąć
-        // także ten przypadek, a nie tylko dokładne zero.
+        // Jeden bajt to już nie pustka, ale wciąż nie ELF — granica ma odciąć też ten przypadek.
         let katalog = KatalogProbny::nowy("okruch");
         let plik = katalog.plik_z_trescia("wydanie.pobierane", b"\x7f");
 
@@ -376,7 +316,7 @@ mod testy {
 
     #[test]
     fn zaloz_pustym_plikiem_nie_tyka_aplikacji() {
-        //! Aplikacja ma przeżyć próbę podmiany na pustkę.
+        //! Aplikacja ma przeżyć próbę podmiany na plik pusty.
         let katalog = KatalogProbny::nowy("zaloz-pustka");
         let cel = katalog.plik_z_trescia("Danaco.AppImage", b"\x7fELF stara, dzialajaca wersja");
         let droga = Droga::AppImage { cel: cel.clone() };
@@ -431,9 +371,7 @@ mod testy {
 
     #[test]
     fn plik_roboczy_lezy_obok_celu_z_przyrostkiem_pobierane() {
-        // Warunek działania `rename`: ten sam katalog, czyli ten sam system
-        // plików. Pobieranie do /tmp zabiłoby podmianę na maszynach, gdzie
-        // /tmp jest osobnym systemem plików (EXDEV).
+        // Rename wymaga tego samego systemu plików; /tmp bywa osobnym systemem (EXDEV).
         let cel = PathBuf::from("/opt/danaco/Danaco Console_1.0.0_amd64.AppImage");
         let droga = Droga::AppImage { cel: cel.clone() };
         let roboczy = droga.plik_roboczy();
@@ -463,9 +401,7 @@ mod testy {
 
     #[test]
     fn bez_appimage_odmowa_nazywa_droge_wyjscia() {
-        //! Droga `.deb` jest niemożliwa. Test pilnuje nie kodu, lecz treści
-        //! komunikatu: odmowa ma nazwać drogę wyjścia, a nie zamienić się
-        //! w ciche niepowodzenie ani w pustą odmowę.
+        //! Droga .deb jest niemożliwa; test pilnuje treści komunikatu odmowy.
         let _szereg = szereg();
         let poprzednia = std::env::var(ZMIENNA_APPIMAGE).ok();
         std::env::remove_var(ZMIENNA_APPIMAGE);
@@ -501,8 +437,7 @@ mod testy {
 
     #[test]
     fn pusta_zmienna_appimage_to_tez_brak_drogi() {
-        // `APPIMAGE=` albo same spacje nie są ścieżką. Bez tego powłoka
-        // próbowałaby podmienić plik o nazwie pustej.
+        // Wartość pusta albo same spacje nie są ścieżką pliku.
         let _szereg = szereg();
         let poprzednia = std::env::var(ZMIENNA_APPIMAGE).ok();
         std::env::set_var(ZMIENNA_APPIMAGE, "   ");

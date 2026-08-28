@@ -59,32 +59,7 @@ import { czyObiekt, czyTablica, czyTekst, sprawdzKsztalt } from '../../protokol/
 import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Moduł Terminal widziany przez klienta — pięć komend obszaru `terminal.*`,
- * pięć komend harmonogramu, automatyk i kolejek, po które sięga okno
- * Task & Schedule, oraz dwie subskrypcje, z których żyją okna monitorujące.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść. W terminalu odmowa jest
- * zjawiskiem zwykłym, nie wyjątkiem: tryb uprawnień okna albo punkt izolacji
- * zatrzymuje polecenie kodem `permission_denied`, a źródło nie zamienia takiej
- * odmowy w pustą listę.
- *
- * Wyjście procesu przychodzi zdarzeniem `stream.chunk` — wspólnym strumieniem
- * fragmentów, w którym `messageId` niesie identyfikator procesu z rejestru rdzenia.
- *
- * `terminal.output.stream` zostaje niewpięta, choć rdzeń ją obsługuje: ogon
- * historii, który ta komenda oddaje, to co do wiersza ta sama treść, która płynie
- * do wspólnego bufora okna przez `stream.chunk` (`stan-terminala.ts` →
- * `naFragmentWyjscia`), a w buforze nie ma klucza, po którym dałoby się odsiać
- * wiersz przyjęty drugi raz. `terminal.output.read` jest wpięta, bo zawęża się do
- * jednego procesu, a jej odpowiedź trafia do własnego widoku pozycji
- * (`podglad-wyjscia.ts`), którego bufor nie widzi wcale.
- *
- * Odczyt sięga dalej niż strumień: bufor żyje jedno połączenie, a rejestr rdzenia
- * — jeden bieg rdzenia. Po ponownym podłączeniu gniazda bufor okna jest pusty,
- * a `terminal.process.list` i `terminal.output.read` wciąż oddają proces wraz
- * z jego pełnym wyjściem.
- */
+/** Moduł Terminal widziany przez klienta: pięć komend obszaru terminal.*, pięć komend harmonogramu i kolejek oraz dwie subskrypcje zdarzeń na żywo. */
 export interface ZrodloTerminala {
   /** `terminal.session.open` — otwarcie karty powłoki. */
   otworzKarte(zadanie: TerminalSessionOpenRequest): Promise<Wynik<TerminalSession>>;
@@ -96,52 +71,19 @@ export interface ZrodloTerminala {
   zakoncz(zadanie: TerminalProcessKillRequest): Promise<Wynik<TerminalProcess>>;
   /** `terminal.output.read` — wyjście jednego procesu z rejestru rdzenia. */
   odczytajWyjscie(zadanie: TerminalOutputReadRequest): Promise<Wynik<TerminalOutputReadResponse>>;
-  /**
-   * `schedule.get` — odczyt harmonogramów.
-   *
-   * Do pary z zapisem niżej: okno Task & Schedule czyta tą komendą, na kiedy
-   * praca jest zaplanowana, i zakłada plan dwiema komendami rodziny automatyk.
-   */
+  // Odczyt harmonogramów — do pary z zapisem niżej, którym okno zakłada plan.
   harmonogramy(zadanie: ScheduleGetRequest): Promise<Wynik<AutomationSchedule[]>>;
-  /**
-   * `automation.workflow.save` — zapis automatyki, w której mieszka zadanie
-   * powłoki objęte harmonogramem.
-   *
-   * Terminal woła TĘ SAMĄ rodzinę, którą prowadzi moduł Automations, i nie ma
-   * własnej rodziny harmonogramu. Kontrakt wiąże cykliczność z automatyką, więc
-   * zaplanowanie zadania powłoki jest zapisem automatyki o jednym kroku rodzaju
-   * `command` wołającym `terminal.command.exec`. Druga rodzina komend po tej
-   * stronie dałaby dwie prawdy o jednym harmonogramie — i to jest jedyny powód,
-   * dla którego okno składa plan z komend cudzego modułu, a nie ze swoich.
-   */
+  // Zapis automatyki z zadaniem powłoki objętym harmonogramem — terminal nie ma rodziny harmonogramu.
   zapiszAutomatyke(zadanie: AutomationWorkflowSaveRequest): Promise<Wynik<AutomationWorkflow>>;
-  /**
-   * `automation.schedule.set` — cykliczność zapisanej automatyki.
-   *
-   * Zapis jest planem, nie budzikiem: rdzeń wylicza chwilę najbliższego
-   * uruchomienia, ale nie ma czym odpalić automatyki samodzielnie. Okno mówi to
-   * wprost — plan bez tej wiedzy byłby obietnicą uruchomienia, którego nikt nie
-   * wykona.
-   */
+  // Cykliczność zapisanej automatyki — zapis jest planem, nie budzikiem odpalającym go samodzielnie.
   ustawHarmonogram(zadanie: AutomationScheduleSetRequest): Promise<Wynik<AutomationSchedule>>;
-  /**
-   * `queue.list` — kolejki silnika pętli obsługujące okno modułu.
-   *
-   * Zawężenie idzie oknem, bo identyfikatora karty sesji moduł nie zna: karty
-   * sesji nie ma w żadnej odpowiedzi rodziny `terminal.*`.
-   */
+  // Kolejki silnika pętli obsługujące okno modułu — zawężenie idzie oknem, nie identyfikatorem karty.
   kolejki(zadanie: QueueListRequest): Promise<Wynik<Queue[]>>;
   /** `queue.action` — sześć działań silnika kolejek na kolejce okna. */
   dzialanieKolejki(zadanie: QueueActionRequest): Promise<Wynik<Queue>>;
   /** `terminal.session.close` — zamknięcie karty powłoki w rdzeniu. */
   zamknijKarte(zadanie: TerminalSessionCloseRequest): Promise<Wynik<TerminalSessionCloseResponse>>;
-  /**
-   * `terminal.session.list` — karty powłoki znane RDZENIOWI.
-   *
-   * Wykaz sięga dalej niż pamięć widoku: rdzeń odtwarza karty przy starcie,
-   * więc po ponownym podłączeniu gniazda okno ma skąd wziąć karty, które
-   * istnieją, choć to połączenie ich nie otwierało.
-   */
+  // Karty powłoki znane rdzeniowi — wykaz sięga dalej niż pamięć widoku po ponownym podłączeniu.
   karty(zadanie: TerminalSessionListRequest): Promise<Wynik<TerminalSession[]>>;
   /** `terminal.file.read` — treść pliku z katalogu roboczego karty. */
   odczytajPlik(zadanie: TerminalFileReadRequest): Promise<Wynik<TerminalFileReadResponse>>;
@@ -161,13 +103,7 @@ export interface ZrodloTerminala {
   skrypty(zadanie: TerminalScriptListRequest): Promise<Wynik<TerminalScript[]>>;
   /** `terminal.script.remove` — usunięcie pozycji wraz z jej wersjami. */
   usunSkrypt(zadanie: TerminalScriptRemoveRequest): Promise<Wynik<boolean>>;
-  /**
-   * `terminal.script.lint` — analiza statyczna i formatowanie treści.
-   *
-   * Odpowiedź jest całą treścią, nie opakowaniem: pole `analyzerAvailable`
-   * rozstrzyga, czy pusty wykaz uwag znaczy „treść bez zastrzeżeń”, czy „nie
-   * było czym sprawdzić”. Widok, który by je pominął, mówiłby nieprawdę.
-   */
+  // Analiza statyczna i formatowanie treści — pole analyzerAvailable mówi, czy sprawdzenie się odbyło.
   sprawdzSkrypt(zadanie: TerminalScriptLintRequest): Promise<Wynik<TerminalScriptLintResponse>>;
 
   /** `terminal.tunnel.open` — założenie przekierowania portu. */
@@ -237,11 +173,7 @@ export function utworzZrodloTerminala(kanal: Kanal): ZrodloTerminala {
       return przenies(wynik, (tresc) => tresc.process);
     },
 
-    // Odpowiedź jest całą treścią, nie opakowaniem wokół jednego pola, więc nie
-    // ma tu `przenies`. Sprawdzane są oba strumienie, bo są obowiązkowe: puste
-    // znaczy „nic nie wypisał", brak pola znaczy „to nie jest odpowiedź tej
-    // komendy". `status` bywa napisem spoza wyliczenia i wtedy widok go tylko
-    // pokazuje.
+    // Odpowiedź jest całą treścią, nie opakowaniem — oba strumienie są sprawdzane, bo są obowiązkowe.
     async odczytajWyjscie(zadanie) {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.TerminalOutputRead, zadanie),
@@ -345,9 +277,7 @@ export function utworzZrodloTerminala(kanal: Kanal): ZrodloTerminala {
       return przenies(wynik, (tresc) => tresc.hosts);
     },
 
-    // Pole `removed` jest w kontrakcie obowiązkowe i niesie prawdę o skutku:
-    // fałsz znaczy „wpisu nie było" i nie jest błędem. Widok ma je pokazać,
-    // a nie zamieniać na ciche powodzenie.
+    // Pole removed jest obowiązkowe i niesie prawdę o skutku — fałsz nie jest błędem.
     async usunHosta(zadanie) {
       const wynik = sprawdzKsztalt(
         await wywolaj(kanal, Command.TerminalHostRemove, zadanie),

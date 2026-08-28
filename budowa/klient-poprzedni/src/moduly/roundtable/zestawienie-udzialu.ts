@@ -3,24 +3,7 @@ import { ostatniaWypowiedz, wyciszony, zlozGlosBiezacy } from './glos-biezacy';
 import { nazwaUczestnika, type StanDebaty } from './stan-debaty';
 import type { StrumienWypowiedzi } from './strumien-wypowiedzi';
 
-/**
- * Zestawienie udziału uczestników w turze — jedyna ocena, którą da się w tym
- * module zmierzyć.
- *
- * Opracowanie modułu opisuje w oknie Voting & Evaluation Center głosowania,
- * rubryki, ocenę modelami-sędziami i ranking akumulowany między sesjami.
- * Wszystkie cztery są dziś w kontrakcie — `roundtable.vote.start`, `.cast`,
- * `.get`, `roundtable.rubric.set`, `roundtable.judge.run`,
- * `roundtable.leaderboard.get` — i żadnej z tych komend moduł jeszcze nie
- * wywołuje. Głosowanie zbudowane bez obsługi byłoby czynnością, której wynik
- * nie dociera nigdzie — czyli pozorem oceny.
- *
- * Zmierzyć da się udział: ilu uczestników składu zabrało głos w turze, ile razy
- * i jak obszernie. To nie jest ocena jakości wypowiedzi i tak jest nazwane
- * w oknie — udział, nie ranking, i nie quorum.
- */
-
-/** Udział jednego uczestnika w turze bieżącej. */
+/** Zestawia udział uczestników debaty w turze bieżącej na podstawie liczby i objętości wypowiedzi widocznych przez okno, jedną pozycją na uczestnika. */
 export interface UdzialUczestnika {
   idUczestnika: string;
   znacznik: string;
@@ -59,10 +42,7 @@ export function zlozZestawienieUdzialu(
     const cisza = wyciszony(uczestnik);
     const ostatnia = ostatniaWypowiedz(wypowiedziTury, uczestnik.id);
     const biezacy = zlozGlosBiezacy(strumien.glos(uczestnik.id), ostatnia, cisza);
-    // Wypowiedź otwarta ostatnio liczy się z treści widocznej w oknie, a nie
-    // z pola `content`: rdzeń rozgłasza ją najpierw pustą i dopisuje słowa
-    // strumieniem, więc sam zapis dawałby zero przez cały czas mówienia modelu.
-    // Wypowiedzi wcześniejsze są już utrwalone, więc liczą się z zapisu.
+    // Wypowiedź otwarta liczy się z widocznej treści, nie z content, bo rdzeń dopisuje ją strumieniem.
     const znakow = swoje.reduce(
       (suma, wypowiedz) =>
         suma +
@@ -94,10 +74,8 @@ export function zlozZestawienieUdzialu(
 }
 
 /**
- * Zdanie o udziale zmierzonym — jawnie odróżnione od progu quorum.
- *
- * Progu zgody nie niesie żadne pole kontraktu, więc zdanie nie orzeka
- * o osiągnięciu czegokolwiek; podaje stosunek i mówi, czego w nim nie ma.
+ * Zdanie opisowe o zmierzonym udziale w turze, jawnie odróżnione od progu quorum przyjmowanego
+ * przy głosowaniu.
  */
 export function zdanieUdzialu(zestawienie: ZestawienieUdzialu): string {
   if (zestawienie.skladu === 0) {
@@ -110,7 +88,7 @@ export function zdanieUdzialu(zestawienie: ZestawienieUdzialu): string {
   );
 }
 
-/** Zestawienie udziału w Markdown — jedyny raport, który ma pokrycie w danych. */
+/** Zestawienie udziału w formacie Markdown, jedyny raport tego modułu mający pokrycie w dostępnych danych źródłowych. */
 export function zestawienieMarkdown(
   zestawienie: ZestawienieUdzialu,
   opisZakresu: string,

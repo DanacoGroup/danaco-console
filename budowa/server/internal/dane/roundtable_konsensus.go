@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: wersje stanowiska, zdania odrębne i przekazanie
-// stanowiska do modułu docelowego
-// (`store/migracja_198_roundtable_konsensus.sql`).
-//
-// Wersja jest wpisem, nie licznikiem. Licznik w kolumnie `wersja` tabeli
-// `debata_stanowisko` mówi, ile redakcji było; porównać dwie redakcje da się
-// dopiero wtedy, gdy każda z nich została zapisana osobno.
+// Odpowiedzialność pliku: wersje stanowiska, zdania odrębne i przekazanie stanowiska do modułu docelowego; wersja jest wpisem, nie licznikiem.
 package dane
 
 import (
@@ -12,7 +6,7 @@ import (
 	"fmt"
 )
 
-// WersjaStanowiskaDebaty to jedna redakcja stanowiska końcowego.
+// WersjaStanowiskaDebaty to jedna redakcja stanowiska końcowego, zapisana osobno od poprzednich redakcji.
 type WersjaStanowiskaDebaty struct {
 	Kod        string
 	Stanowisko string
@@ -21,7 +15,7 @@ type WersjaStanowiskaDebaty struct {
 	Utworzono  string
 }
 
-// ZdanieOdrebneDebaty to zdanie uczestnika, który nie dołączył do konsensusu.
+// ZdanieOdrebneDebaty to zdanie uczestnika, który nie dołączył do wypracowanego konsensusu tej debaty.
 type ZdanieOdrebneDebaty struct {
 	Kod        string
 	Okno       string
@@ -31,7 +25,7 @@ type ZdanieOdrebneDebaty struct {
 	Utworzono  string
 }
 
-// PrzekazanieDebaty to ślad przekazania stanowiska do modułu docelowego.
+// PrzekazanieDebaty to ślad przekazania stanowiska do modułu docelowego, wraz z chwilą tego przekazania.
 type PrzekazanieDebaty struct {
 	Kod        string
 	Okno       string
@@ -92,7 +86,7 @@ const (
 	                           VALUES (?, ?, ?, ?, ?)`
 )
 
-// ZapiszWersjeStanowiskaDebaty utrwala jedną redakcję stanowiska.
+// ZapiszWersjeStanowiskaDebaty utrwala jedną redakcję stanowiska jako osobny wpis w dzienniku redakcji.
 func (r *repozytoriumRoundtable) ZapiszWersjeStanowiskaDebaty(ctx context.Context,
 	wersja WersjaStanowiskaDebaty) error {
 
@@ -107,7 +101,7 @@ func (r *repozytoriumRoundtable) ZapiszWersjeStanowiskaDebaty(ctx context.Contex
 	return nil
 }
 
-// WersjeStanowiskaDebaty zwraca redakcje stanowiska od najstarszej.
+// WersjeStanowiskaDebaty zwraca wszystkie redakcje stanowiska od najstarszej do najnowszej jej wersji.
 func (r *repozytoriumRoundtable) WersjeStanowiskaDebaty(ctx context.Context,
 	stanowisko string) ([]WersjaStanowiskaDebaty, error) {
 
@@ -133,7 +127,7 @@ func (r *repozytoriumRoundtable) WersjeStanowiskaDebaty(ctx context.Context,
 	return wersje, wiersze.Err()
 }
 
-// ZapiszZdanieOdrebneDebaty utrwala zdanie odrębne uczestnika.
+// ZapiszZdanieOdrebneDebaty utrwala zdanie odrębne uczestnika, który nie dołączył do tego konsensusu debaty.
 func (r *repozytoriumRoundtable) ZapiszZdanieOdrebneDebaty(ctx context.Context,
 	zdanie ZdanieOdrebneDebaty) (ZdanieOdrebneDebaty, error) {
 
@@ -159,7 +153,7 @@ func (r *repozytoriumRoundtable) ZapiszZdanieOdrebneDebaty(ctx context.Context,
 	return zapisane, nil
 }
 
-// ZdaniaOdrebneDebaty zwraca zdania odrębne podpisane wobec stanowiska.
+// ZdaniaOdrebneDebaty zwraca zdania odrębne podpisane wobec stanowiska, w kolejności ich zapisania w bazie.
 func (r *repozytoriumRoundtable) ZdaniaOdrebneDebaty(ctx context.Context,
 	stanowisko string) ([]ZdanieOdrebneDebaty, error) {
 
@@ -185,7 +179,7 @@ func (r *repozytoriumRoundtable) ZdaniaOdrebneDebaty(ctx context.Context,
 	return zdania, wiersze.Err()
 }
 
-// ZapiszPrzekazanieDebaty odnotowuje przekazanie stanowiska do modułu docelowego.
+// ZapiszPrzekazanieDebaty odnotowuje przekazanie stanowiska do wskazanego modułu docelowego tej debaty.
 func (r *repozytoriumRoundtable) ZapiszPrzekazanieDebaty(ctx context.Context,
 	przekazanie PrzekazanieDebaty) error {
 

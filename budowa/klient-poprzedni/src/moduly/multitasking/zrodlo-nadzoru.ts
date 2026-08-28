@@ -30,23 +30,9 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Źródło trzech ostatnich sekcji panelu orkiestracji — orkiestracji,
- * harmonogramu i nadzoru. Jedyne miejsce modułu znające nazwy `orchestration.*`,
- * `schedule.get`, `automation.*` oraz `aod.*`.
- *
- * Trzy sekcje mają jedno źródło, bo pracują na tym samym bycie —
- * `AutomationWorkflow`. Zależność zapisuje się na układzie, harmonogram ustawia
- * się na układzie, a monitor pokazuje jego przebieg; osobne źródła pytałyby
- * trzy razy o ten sam wykaz automatyk.
- *
- * Komendy `aod.*` leżą tutaj, bo przełącznik trybu nakładki należy do sekcji
- * Monitor procesu. Samego trybu kontrakt nie niesie: `AodStatus` ma urządzenie,
- * sesję, okno i licznik procesów, ale nie ma wartości „obserwator/operator".
- * Sekcja utrwala go ustawieniem sesji — patrz `hierarchia-decyzji.ts`.
- *
- * `queue.link` należy do panelu, nie do źródła biegu: wiązanie kolejki
- * z ekspertem, projektem albo automatyką jest czynnością panelu, a bieg pętli
- * koordynator–wykonawca porusza rolami i nie zna projektów.
+ * Źródło trzech sekcji panelu orkiestracji — orkiestracji, harmonogramu
+ * i nadzoru — dzieli jeden wykaz automatyk i przełącznik trybu nakładki,
+ * którego kontrakt nie niesie, więc sekcja utrwala go ustawieniem sesji.
  */
 export interface ZrodloNadzoru {
   /** `orchestration.dependency.list` — zależności kroków układu. */

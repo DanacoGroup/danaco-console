@@ -4,20 +4,12 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Podgląd wyjścia jednego procesu — widok odpowiedzi `terminal.output.read`.
- *
- * Wyjście na żywo przychodzi w `stream.chunk` i żyje w buforze okna, który ginie
- * wraz z połączeniem; ten widok sięga po treść przechowywaną w rdzeniu. Treść
- * trafia wyłącznie do węzła jednej pozycji wykazu, a nie do wspólnego bufora
- * `stan-terminala`, więc żaden wiersz nie wchodzi do konsoli dwa razy.
- *
- * Pole `exitCode` jest w kontrakcie opcjonalne i nie przychodzi dla procesu
- * biegnącego ani ubitego sygnałem; widok nie podstawia w to miejsce zera, bo
- * czytałoby się jako powodzenie. Pusty strumień i treść przycięta (`truncated`)
- * dostają własne zdanie, zamiast wyglądać jak komplet.
+ * Podgląd wyjścia procesu czyta treść przechowywaną w rdzeniu, osobno dla każdej pozycji wykazu.
  */
 
-/** Zdanie o stanie procesu; czasownik wynika ze stanu w odpowiedzi, nie z powodzenia odczytu. */
+/**
+ * Zdanie o stanie procesu w podglądzie; czasownik dobiera się ze stanu odpowiedzi rdzenia, nie z samego powodzenia odczytu.
+ */
 export function zdanieStanuWyjscia(odpowiedz: TerminalOutputReadResponse, idProcesu: string): string {
   const kod =
     odpowiedz.exitCode === undefined
@@ -25,8 +17,7 @@ export function zdanieStanuWyjscia(odpowiedz: TerminalOutputReadResponse, idProc
       : `kod wyjścia ${odpowiedz.exitCode}`;
   switch (odpowiedz.status) {
     case TerminalProcessStatus.Running:
-      // Proces biegnący nie ma kodu wyjścia i mieć go nie może, więc zdanie
-      // o jego braku wprowadzałoby w błąd.
+      // Proces biegnący nie ma kodu wyjścia, więc zdanie o jego braku wprowadzałoby w błąd.
       return `Proces ${idProcesu} wciąż biegnie — to, co niżej, jest wyjściem dotychczasowym, nie całością.`;
     case TerminalProcessStatus.Finished:
       return `Proces ${idProcesu} zakończył się — ${kod}.`;
@@ -35,13 +26,14 @@ export function zdanieStanuWyjscia(odpowiedz: TerminalOutputReadResponse, idProc
     case TerminalProcessStatus.Stopped:
       return `Proces ${idProcesu} został zatrzymany — ${kod}.`;
     default:
-      // Stan spoza wyliczenia kontraktu: widok pokazuje go dosłownie, zamiast
-      // zgadywać jego znaczenie i dobierać czasownik.
+      // Stan spoza wyliczenia kontraktu: widok pokazuje go dosłownie, zamiast zgadywać znaczenie.
       return `Proces ${idProcesu} — rdzeń oddał stan „${String(odpowiedz.status)}", którego kontrakt nie wymienia (${kod}).`;
   }
 }
 
-/** Zdanie o przycięciu; puste, gdy rdzeń oddał komplet. */
+/**
+ * Zdanie o przycięciu treści w podglądzie wyjścia; pozostaje puste, gdy rdzeń oddał komplet strumienia.
+ */
 export function zdaniePrzyciecia(odpowiedz: TerminalOutputReadResponse): string {
   if (!odpowiedz.truncated) return '';
   const ile =

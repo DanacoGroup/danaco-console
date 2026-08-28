@@ -1,21 +1,10 @@
 import { ExtensionKind, ExtensionOrigin, type Extension } from '../../../../shared/contract';
 
 /**
- * Zawężenie katalogu rozszerzeń po stronie klienta — fasety i szukanie
- * App Catalogu.
- *
- * Filtrowanie idzie tutaj, a nie w żądaniu, bo `extension.list` zawęża
- * wyłącznie rodzajem i stanem zainstalowania. Pozostałych faset opracowania —
- * źródła, stanu włączenia, tekstu — kontrakt w żądaniu nie ma, a cztery odczyty
- * po jednym na fasetę dałyby cztery migawki z czterech różnych chwil.
- *
- * Zakres szukania jest ograniczony i okno musi to powiedzieć: przeszukujemy
- * nazwę, kod i opis, bo tyle niesie pozycja katalogu. Szukanie po udostępnianych
- * narzędziach i znacznikach stoi w wykazie braków, zamiast udawać, że pusty
- * wynik znaczy „nie ma takiego rozszerzenia".
- *
- * Filtr jest czynnością czystą — bez elementu i bez kanału — więc daje się
- * sprawdzić bez budowania dokumentu.
+ * Zawęża katalog rozszerzeń po stronie klienta fasetami rodzaju, pochodzenia
+ * i stanu oraz tekstem szukanym w nazwie, kodzie i opisie pozycji. Filtr jest
+ * czynnością czystą — bez elementu i bez kanału — więc daje się sprawdzić bez
+ * budowania dokumentu.
  */
 export interface ZawezenieWidoku {
   /** Rodzaj pozycji; pusty łańcuch znaczy „wszystkie rodzaje". */
@@ -28,7 +17,11 @@ export interface ZawezenieWidoku {
   tekst: string;
 }
 
-/** Zawężenie puste — punkt wyjścia okna, w którym widać cały katalog. */
+/**
+ * Zawężenie puste, czyli punkt wyjścia okna, w którym widać cały katalog. Każda
+ * faseta stoi tu na wartości pustej, a wartość pusta w każdej z nich znaczy „bez
+ * zawężenia tą fasetą".
+ */
 export const BEZ_ZAWEZENIA: ZawezenieWidoku = {
   rodzaj: '',
   pochodzenie: '',
@@ -36,7 +29,11 @@ export const BEZ_ZAWEZENIA: ZawezenieWidoku = {
   tekst: '',
 };
 
-/** Wartości fasety stanu; klucz jedzie do zawężenia, napis na ekran. */
+/**
+ * Wartości fasety stanu wraz z etykietami: wartość jedzie do zawężenia, etykieta
+ * na ekran. Stan pozycji składa się z pól zainstalowania i włączenia, więc fasety
+ * nie da się wziąć wprost z wyliczenia kontraktu.
+ */
 export const STANY_WIDOKU: ReadonlyArray<{ wartosc: string; etykieta: string }> = [
   { wartosc: '', etykieta: 'każdy stan' },
   { wartosc: 'dostepne', etykieta: 'dostępne, niezainstalowane' },
@@ -44,7 +41,11 @@ export const STANY_WIDOKU: ReadonlyArray<{ wartosc: string; etykieta: string }> 
   { wartosc: 'wlaczone', etykieta: 'włączone' },
 ];
 
-/** Wartości fasety rodzaju, wprost z wyliczenia kontraktu. */
+/**
+ * Wartości fasety rodzaju wzięte wprost z wyliczenia `ExtensionKind` kontraktu,
+ * uzupełnione o wartość pustą oznaczającą każdy rodzaj. Etykiety są zdaniem
+ * Operatora i z nazwami kontraktu się nie pokrywają.
+ */
 export const RODZAJE_WIDOKU: ReadonlyArray<{ wartosc: string; etykieta: string }> = [
   { wartosc: '', etykieta: 'każdy rodzaj' },
   { wartosc: ExtensionKind.Mcp, etykieta: 'serwer MCP' },
@@ -53,14 +54,22 @@ export const RODZAJE_WIDOKU: ReadonlyArray<{ wartosc: string; etykieta: string }
   { wartosc: ExtensionKind.Skill, etykieta: 'umiejętność' },
 ];
 
-/** Wartości fasety pochodzenia, wprost z wyliczenia kontraktu. */
+/**
+ * Wartości fasety pochodzenia wzięte wprost z wyliczenia `ExtensionOrigin`
+ * kontraktu, uzupełnione o wartość pustą oznaczającą oba źródła katalogu
+ * rozszerzeń.
+ */
 export const POCHODZENIA_WIDOKU: ReadonlyArray<{ wartosc: string; etykieta: string }> = [
   { wartosc: '', etykieta: 'oba źródła' },
   { wartosc: ExtensionOrigin.Danaco, etykieta: 'Danaco Plugin' },
   { wartosc: ExtensionOrigin.Personal, etykieta: 'Personal' },
 ];
 
-/** Czy pozycja przechodzi fasetę stanu. */
+/**
+ * Rozstrzyga, czy pozycja przechodzi fasetę stanu. Stan składa się z pól
+ * `installed` oraz `enabled` pozycji katalogu, a wartość pusta fasety przepuszcza
+ * każdą pozycję.
+ */
 function zgodnyStan(pozycja: Extension, stan: string): boolean {
   if (stan === '') return true;
   if (stan === 'dostepne') return !pozycja.installed;
@@ -69,12 +78,9 @@ function zgodnyStan(pozycja: Extension, stan: string): boolean {
 }
 
 /**
- * Czy tekst szukany występuje w polach, które pozycja niesie.
- *
+ * Rozstrzyga, czy tekst szukany występuje w nazwie, kodzie albo opisie pozycji.
  * Porównanie idzie bez rozróżnienia wielkości liter, ale bez normalizacji
- * diakrytyków: „Umiejętność" i „Umiejetnosc" zostają dwoma różnymi napisami,
- * bo zrównanie ich w kliencie kazałoby oknu twierdzić coś o dopasowaniu, czego
- * rdzeń przy własnym szukaniu nie potwierdzi.
+ * znaków diakrytycznych.
  */
 function zgodnyTekst(pozycja: Extension, tekst: string): boolean {
   if (tekst === '') return true;
@@ -84,7 +90,11 @@ function zgodnyTekst(pozycja: Extension, tekst: string): boolean {
   );
 }
 
-/** Pozycje katalogu spełniające zawężenie, w kolejności oddanej przez rdzeń. */
+/**
+ * Oddaje pozycje katalogu spełniające wszystkie cztery fasety zawężenia,
+ * w kolejności oddanej przez rdzeń. Kolejność zostaje nietknięta, bo porządek
+ * wykazu należy do rdzenia, a nie do okna.
+ */
 export function zawez(
   pozycje: readonly Extension[],
   zawezenie: ZawezenieWidoku,
@@ -99,11 +109,9 @@ export function zawez(
 }
 
 /**
- * Zdanie o wyniku zawężenia — ile pokazano z ilu i czym zawężono.
- *
- * Bez tego zdania pusty wykaz przy czynnym filtrze czyta się jak pusty rejestr.
- * Zdanie wymienia zakres szukania, bo tekst nieznaleziony w opisie bywa nazwą
- * narzędzia, której pozycja katalogu nie niesie.
+ * Składa zdanie o wyniku zawężenia: ile pozycji pokazano z ilu, a przy czynnym
+ * szukaniu również jaki jest jego zakres. Katalog niezawężony dostaje samą liczbę
+ * pozycji, a katalog pusty — zdanie puste.
  */
 export function zdanieZawezenia(
   pokazane: number,
@@ -121,7 +129,11 @@ export function zdanieZawezenia(
   return `Pokazano ${pokazane} z ${wszystkie} pozycji katalogu.${oTekscie}`;
 }
 
-/** Czy zawężenie cokolwiek zawęża. */
+/**
+ * Rozstrzyga, czy zawężenie cokolwiek zawęża, czyli czy którakolwiek z czterech
+ * faset stoi na wartości innej niż pusta. Okno bierze stąd rozstrzygnięcie
+ * o brzmieniu zdania podsumowującego wykaz.
+ */
 export function czyZawezone(zawezenie: ZawezenieWidoku): boolean {
   return (
     zawezenie.rodzaj !== '' ||

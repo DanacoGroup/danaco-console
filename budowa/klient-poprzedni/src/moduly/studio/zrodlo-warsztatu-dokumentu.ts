@@ -9,17 +9,8 @@ import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Droga okna warsztatu do rdzenia: wykaz materiału i wykonanie czynności.
- *
- * Materiał bierze się z magazynu zasobów (`design.asset.list`), a nie z obszaru
- * `studio`: warsztat pracuje na dokumentach wniesionych do okna, a te leżą
- * w jednym magazynie całego produktu. Drugi magazyn dokumentów byłby drugim
- * miejscem, w którym ta sama treść żyje.
- *
- * `wykonaj` jest jedną drogą na piętnaście komend, bo wszystkie idą tak samo:
- * nazwa komendy ze stałych kontraktu, treść żądania złożona z formularza. Nazwa
- * nie jest tu nigdy napisem wpisanym z pamięci — przychodzi z katalogu czynności,
- * a ten bierze ją ze stałych.
+ * Droga okna warsztatu do rdzenia: wykaz materiału i wykonanie czynności; materiał bierze się
+ * z magazynu zasobów, nie z obszaru `studio`.
  */
 export interface ZrodloWarsztatuDokumentu {
   /** Dokumenty leżące w magazynie okna — materiał czynności warsztatu. */
@@ -30,7 +21,7 @@ export interface ZrodloWarsztatuDokumentu {
   wykonaj(komenda: Command, zadanie: Record<string, unknown>): Promise<Wynik<unknown>>;
 }
 
-/** Odczyt wykazu zasobów okna z zawężeniem rodzaju albo bez niego. */
+/** Odczyt wykazu zasobów okna warsztatu z zawężeniem rodzaju zasobu albo bez takiego zawężenia rodzaju. */
 async function wykazZasobow(
   kanal: Kanal,
   idOkna: string,
@@ -61,10 +52,7 @@ export function utworzZrodloWarsztatuDokumentu(kanal: Kanal): ZrodloWarsztatuDok
     },
 
     wykonaj(komenda, zadanie) {
-      // Treść żądania powstaje z formularza, więc jej kształt znany jest dopiero
-      // w czasie działania. Sprawdzenie kształtu robi rdzeń i odsyła odmowę
-      // walidacji z nazwą pola — a to jest sprawdzenie, którego klient i tak nie
-      // zastąpi, bo kontrakt rozstrzyga po stronie rdzenia.
+      // Kształt treści żądania jest znany dopiero w czasie działania; sprawdzenie robi rdzeń.
       return wywolaj(kanal, komenda, zadanie as never) as Promise<Wynik<unknown>>;
     },
   };

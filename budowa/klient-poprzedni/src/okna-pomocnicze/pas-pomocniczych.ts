@@ -7,49 +7,20 @@ import { oknaPomocnicze, type OpisPomocniczego, type StanPomocniczego } from './
 import { wytworniaPanelu } from './wytwornia-paneli';
 
 /**
- * Pas okien pomocniczych modułu — Developer i Diagnostics.
- *
- * Moduły inżynierskie pracują na oknach obok rozmowy: terminal, przeglądarka,
- * artefakty, pliki, podgląd w tle bash, pliki środowiska. Pas jest miejscem,
- * w którym te okna stoją.
- *
- * Pozycja niezbudowana nie znika ze sceny: dostaje wiersz z nazwą,
- * przeznaczeniem i powodem braku. Pas z samymi oknami gotowymi wyglądałby
- * na kompletny, a brak przestałby być widoczny.
- *
- * Pas nie jest drugim złożeniem modułu: nie tworzy stanu modułu, nie zna komend
- * obszaru `developer.*` ani `diagnostics.*` i nie dotyka okien operacyjnych.
- * Składa gotowe okna pomocnicze oraz spis pozostałych pozycji.
- *
- * `zamknij()` jest obowiązkowe: okno podglądu trzyma subskrypcję `stream.chunk`
- * i bez tego wywołania zostaje ona żywa po zejściu pasa ze sceny.
+ * Pas okien pomocniczych modułu Developer i Diagnostics składa gotowe okna obok rozmowy — terminal, przeglądarkę, artefakty, pliki i podgląd w tle — wraz ze spisem pozycji, które jeszcze nie stanęły.
  */
 export interface PasPomocniczych {
   /** Element osadzany w złożeniu modułu. */
   element: HTMLElement;
   /** Odświeża okna zbudowane; spis pozycji się nie zmienia. */
   odswiez(): void;
-  /**
-   * Podaje pasowi okno wykonania nadane przez rdzeń.
-   *
-   * Nie każdy moduł zna swoje okno przy montażu: Developer i Diagnostics
-   * montują się przez `widokZOknaSesji`, więc okno mają od razu, a Apps montuje
-   * się z samym kanałem i poznaje okno dopiero z `window.list` w `wczytaj`.
-   *
-   * Panele powstają na nowo, bo okno biorą przy powołaniu — tą samą drogą, co
-   * `okna-rownolegle/panele-gniazda.ts`: stare panele są zamykane wraz
-   * z subskrypcjami rdzenia, nowe budowane z oknem właściwym. Podmiana okna
-   * bez zamknięcia zostawiłaby subskrypcję pytającą o okno poprzednie.
-   *
-   * To samo okno podane drugi raz nie robi nic — przebudowa panelu, który już
-   * pyta o właściwe okno, byłaby zerwaniem strumienia bez powodu.
-   */
+  /** Podaje pasowi okno wykonania nadane przez rdzeń; panele powstają od nowa przy zmianie okna. */
   ustawOkno(okno: string): void;
   /** Zamyka subskrypcje okien zbudowanych. */
   zamknij(): void;
 }
 
-/** Zależności pasa. */
+/** Zależności pasa okien pomocniczych — moduł, jego nazwa, przedrostek klas oraz okno wykonania nadane przez rdzeń. */
 export interface OpcjePasa {
   kanal: Kanal;
   /** Kod modułu — po nim idzie spis pozycji i profil rozmowy. */
@@ -62,7 +33,7 @@ export interface OpcjePasa {
   przedrostek: string;
 }
 
-/** Zdanie wiersza spisu — po jednym na każdy stan pozycji. */
+/** Zdanie wiersza spisu pozycji niezbudowanych — jedno na każdy możliwy stan pomocniczej pozycji modułu. */
 const ZAPOWIEDZ_STANU: Record<StanPomocniczego, string> = {
   'zbudowane': 'stoi w pasie',
   'stoi-w-module': 'niesie je złożenie modułu',
@@ -86,13 +57,7 @@ export function utworzPasPomocniczych(opcje: OpcjePasa): PasPomocniczych {
 
   element.append(naglowekPasa(opcje, spis.length), tor, spisPozostalych(spis, opcje.nazwaModulu));
 
-  /**
-   * Powołanie paneli pozycji zbudowanych dla okna bieżącego.
-   *
-   * Tor bez ani jednego panelu zostaje w drzewie, ale pusty — `:empty` nie
-   * zabiera miejsca, a stały element pozwala podmienić zawartość bez ruszania
-   * nagłówka i spisu braków.
-   */
+  /** Powołanie paneli pozycji zbudowanych dla okna bieżącego; tor bez paneli zostaje w drzewie pusty. */
   function zloz(): void {
     zbudowane = [];
     const panele: HTMLElement[] = [];
@@ -116,8 +81,7 @@ export function utworzPasPomocniczych(opcje: OpcjePasa): PasPomocniczych {
 
     ustawOkno(nowe) {
       if (nowe === okno) return;
-      // Zamknięcie przed przebudową: panel zdjęty z drzewa bez `zamknij()`
-      // zostawia subskrypcję rdzenia pytającą o okno, którego już nie ma.
+      // Zamknięcie przed przebudową zapobiega subskrypcji rdzenia pytającej o okno, którego już nie ma.
       for (const panel of zbudowane) panel.zamknij();
       okno = nowe;
       zloz();
@@ -130,16 +94,7 @@ export function utworzPasPomocniczych(opcje: OpcjePasa): PasPomocniczych {
 }
 
 /**
- * Buduje panel pozycji zbudowanej; dla pozostałych stanów oddaje `null` —
- * ich miejsce jest w spisie poniżej toru, nie w torze.
- *
- * Mapowanie kodu pozycji na wytwórnię stoi poza pasem (`wytwornia-paneli.ts`),
- * więc pas nie zna ani jednego kodu, a dołożenie panelu nie wymaga jego edycji.
- * Tego samego mapowania używa kolumna paneli sceny okien równoległych.
- *
- * Pozycja nazwana w rejestrze zbudowaną, dla której nie ma wytwórni, jest
- * rozjazdem między spisem a kodem — stąd wpis w dzienniku zdarzeń zamiast
- * cichego `null`, który udawałby, że pozycji w spisie nie ma.
+ * Buduje panel pozycji zbudowanej, dla pozostałych stanów oddając wartość pustą, bo ich miejsce jest w spisie braków, a nie w samym torze pasa.
  */
 function zbudujPozycje(pozycja: OpisPomocniczego, opcje: OpcjePasa): PanelPomocniczy | null {
   if (pozycja.stan !== 'zbudowane') return null;
@@ -156,7 +111,7 @@ function zbudujPozycje(pozycja: OpisPomocniczego, opcje: OpcjePasa): PanelPomocn
   });
 }
 
-/** Nagłówek pasa: budżet okien rozmowy i liczba pozycji spisu. */
+/** Nagłówek pasa pokazujący budżet okien rozmowy modułu oraz liczbę pozycji spisu braków pasa pomocniczego. */
 function naglowekPasa(opcje: OpcjePasa, ile: number): HTMLElement {
   const naglowek = document.createElement('header');
   naglowek.className = 'dnp-pas__naglowek';
@@ -189,7 +144,7 @@ function zdanieBezSpisu(nazwaModulu: string): HTMLElement {
   return element;
 }
 
-/** Spis pozycji, które w torze nie stanęły — wraz z powodem każdej. */
+/** Spis pozycji, które w torze nie stanęły, wraz z powodem braku każdej z nich wprost z całego rejestru. */
 function spisPozostalych(
   spis: readonly OpisPomocniczego[],
   nazwaModulu: string,
@@ -203,7 +158,7 @@ function spisPozostalych(
   return wykaz;
 }
 
-/** Jeden wiersz spisu braków: nazwa ze stanem oraz zdanie wprost. */
+/** Jeden wiersz spisu braków: nazwa pozycji wraz ze stanem pomocniczym oraz zdanie powodu wypisane wprost. */
 function wierszBraku(pozycja: OpisPomocniczego): [HTMLElement, HTMLElement] {
   const nazwa = document.createElement('dt');
   nazwa.className = 'dnp-braki__nazwa';

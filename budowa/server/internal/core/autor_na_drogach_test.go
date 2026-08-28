@@ -6,19 +6,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdzian pokrycia ZAPISU AUTORA na wielu drogach zmiany dokumentu.
-//
-// ── Dlaczego wykaz dróg, a nie jedna droga ──────────────────────────────────
-// Przełącznik „pokaż wszystko, co zrobił model" stoi na założeniu, że KAŻDA
-// droga zmiany zostawia ślad podpisany wykonawcą. Sprawdzian jednej drogi
-// dowodzi jednej drogi. Ten wykaz zmierzył pięć i na jednej znalazł dziurę:
-// `studio.document.save` zawołane przez wykonawcę zmieniało treść i NIE
-// odkładało ani zmiany śledzonej, ani wpisu dziennika. Dziura została zamknięta
-// siatką `sladWykonawcyStudia`; sprawdzian zostaje, żeby nie wróciła i żeby
-// każda nowa droga trafiła tu przed odbiorem.
-//
-// Ręka modelu bierze się z GNIAZDA serwera narzędzi, a pola `author` sprawdzian
-// celowo NIE podaje — mierzy to, czego model nie może o sobie zataić.
+// Sprawdzian pokrywa zapis autora na wielu drogach zmiany dokumentu, mierząc ślad wykonawcy
+// niezależnie od pola author, którego żądanie celowo nie podaje.
 func TestProbaAutorNaWieluDrogach(t *testing.T) {
 	drogi := []struct {
 		nazwa   shared.MessageType

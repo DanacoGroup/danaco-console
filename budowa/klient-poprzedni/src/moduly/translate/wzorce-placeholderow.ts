@@ -1,26 +1,9 @@
 /**
- * Symbole zastępcze i znaczniki formatu — rozpoznanie w tekście źródłowym oraz
- * przekład ich stylu między platformami.
- *
- * Obie czynności liczy okno, nie rdzeń, i jest to rozstrzygnięcie wymuszone
- * kontraktem: kontrola jakości rdzenia zgłasza niezgodność symbolu zastępczego
- * dopiero w gotowym panelu, a komendy zamieniającej styl zmiennych nie ma
- * w ogóle. Okno liczy więc to, co da się policzyć z samego tekstu, i nie
- * przypisuje wyniku rdzeniowi.
- *
- * Wykaz stylów jest zamknięty i wzięty z opracowania modułu: `%s`, `{0}`,
- * `{name}`, `{{name}}`, `${name}` oraz znacznik formatu `<b>`. Styl spoza
- * wykazu nie jest rozpoznawany i okno tego nie ukrywa — wynik mówi, ile
- * wystąpień znalazło, a nie że znalazło wszystkie.
- *
- * Przekład stylu zachowuje kolejność wystąpień i nazwy, gdy styl źródłowy je
- * niesie. Gdy styl źródłowy nazwy nie ma (`%s`, `{0}`), a docelowy jej wymaga,
- * nazwą zostaje numer kolejny wystąpienia — reguła jest jedna, jawna
- * i wypowiedziana w sprawozdaniu, bo nazwa zmiennej nie jest czymś, co wolno
- * zgadnąć.
+ * Symbole zastępcze i znaczniki formatu — rozpoznanie w tekście źródłowym oraz przekład ich stylu
+ * między platformami — liczy okno, nie rdzeń, bo kontrakt takiej komendy nie ma.
  */
 
-/** Styl symbolu zastępczego rozpoznawany w tekście. */
+/** Styl symbolu zastępczego rozpoznawany w tekście niesie nazwę, przykład zapisu, wzorzec dopasowania oraz informację o nazwie zmiennej. */
 export interface StylWzorca {
   /** Nazwa stylu widoczna dla Operatora. */
   readonly nazwa: string;
@@ -71,7 +54,7 @@ export const STYLE_WZORCOW: readonly StylWzorca[] = [
   },
 ];
 
-/** Jedno wystąpienie symbolu zastępczego w tekście. */
+/** Jedno wystąpienie symbolu zastępczego w tekście niesie dosłowny zapis, nazwę rozpoznającego stylu oraz pozycję początku i końca w tekście. */
 export interface Wystapienie {
   /** Dosłowny zapis wystąpienia. */
   readonly zapis: string;
@@ -86,20 +69,15 @@ export interface Wystapienie {
 }
 
 /**
- * Wystąpienia symboli zastępczych w tekście, w kolejności występowania.
- *
- * Style sprawdzane są w kolejności wykazu, a odcinek już zajęty nie jest
- * rozpatrywany drugi raz: `{{nazwa}}` pasuje także do wzorca nazwy w pojedynczych
- * nawiasach, więc bez tego jedno wystąpienie policzyłoby się dwa razy pod dwiema
- * nazwami stylu.
+ * Wystąpienia symboli zastępczych w tekście, w kolejności występowania, sprawdzają style po
+ * kolei, a odcinek już zajęty nie jest rozpatrywany drugi raz.
  */
 export function znajdzWzorce(tekst: string): readonly Wystapienie[] {
   const zajete: { poczatek: number; koniec: number }[] = [];
   const znalezione: Wystapienie[] = [];
 
   for (const styl of STYLE_WZORCOW) {
-    // Kopia wyrażenia na każde przejście: `lastIndex` wzorca globalnego jest
-    // stanem, a wzorce stoją w stałej modułowej wspólnej wszystkim wywołaniom.
+    // Kopia wyrażenia na każde przejście: stan dopasowania wzorca globalnego jest wspólny wywołaniom.
     const wzorzec = new RegExp(styl.wzorzec.source, styl.wzorzec.flags);
     let dopasowanie = wzorzec.exec(tekst);
     while (dopasowanie !== null) {
@@ -130,7 +108,7 @@ function nachodzi(
   return zajete.some((odcinek) => poczatek < odcinek.koniec && koniec > odcinek.poczatek);
 }
 
-/** Styl docelowy przekładu — trzy zapisy wymienione w opracowaniu modułu. */
+/** Styl docelowy przekładu ma trzy zapisy wymienione w opracowaniu modułu: wzorzec printf, indeks i podwójne nawiasy. */
 export const STYLE_DOCELOWE = {
   printf: 'wzorzec printf',
   indeks: 'indeks w nawiasach klamrowych',
@@ -139,7 +117,7 @@ export const STYLE_DOCELOWE = {
 
 export type StylDocelowy = (typeof STYLE_DOCELOWE)[keyof typeof STYLE_DOCELOWE];
 
-/** Wynik przekładu stylu: tekst po zamianie i zapis każdej zamiany. */
+/** Wynik przekładu stylu niesie tekst po zamianie symboli zastępczych oraz zapis każdej wykonanej zamiany z osobna. */
 export interface PrzekladStylu {
   /** Tekst po zamianie symboli zastępczych. */
   readonly tekst: string;

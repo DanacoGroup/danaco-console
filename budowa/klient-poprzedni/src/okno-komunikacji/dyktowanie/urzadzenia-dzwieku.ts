@@ -1,43 +1,30 @@
 /**
- * Wykaz mikrofonów widocznych dla przeglądarki.
- *
- * Jedna odpowiedzialność: odczyt `navigator.mediaDevices.enumerateDevices()`
- * i podanie samych wejść dźwięku w kształcie nadającym się na listę wyboru.
- * Plik nie prosi o zgodę, nie otwiera strumienia i nie tworzy DOM-u — pytanie
- * „czym nagrywać” jest osobne od pytania „nagrywaj”.
+ * Wykaz mikrofonów widocznych dla przeglądarki odczytuje `navigator.mediaDevices.enumerateDevices()` i podaje same wejścia dźwięku, bez proszenia o zgodę i bez otwierania strumienia.
  */
 
-/** Pojedyncze wejście dźwięku widziane przez przeglądarkę. */
+/** Pojedyncze wejście dźwięku widziane przez przeglądarkę, niosące identyfikator urządzenia oraz nazwę gotową na listę wyboru. */
 export interface UrzadzenieDzwieku {
   /** `deviceId` z przeglądarki — to samo, co przyjmuje `getUserMedia`. */
   id: string;
-  /** Nazwa na listę wyboru; nigdy pusta (patrz `NAZWA_ZASTEPCZA`). */
+  /** Nazwa na listę wyboru — nigdy pusta, w razie braku zastąpiona przedrostkiem `NAZWA_ZASTEPCZA`. */
   nazwa: string;
   /** Wejście, którego przeglądarka użyje bez wskazania wprost. */
   domyslne: boolean;
 }
 
 /**
- * Wynik odczytu wykazu.
- *
- * Pusty wykaz nie tłumaczy się sam. Lista bez pozycji znaczy „nie ma
- * mikrofonu” albo „przeglądarka nie chce ich pokazać” — dla Operatora to dwie
- * różne sytuacje z dwoma różnymi wyjściami. Dlatego `powod` idzie obok wykazu
- * i bywa niepusty także wtedy, gdy urządzenia są (bo mają nazwy zastępcze).
- * Pusty `powod` znaczy: wykaz jest kompletny i nie ma czego dopowiadać.
+ * Wynik odczytu wykazu niesie obok listy urządzeń pole `powod`, rozróżniające brak mikrofonu od odmowy przeglądarki i wyjaśniające nazwy zastępcze.
  */
 export interface WykazUrzadzen {
   urzadzenia: readonly UrzadzenieDzwieku[];
   powod: string;
 }
 
-/** Przedrostek nazwy zastępczej dla urządzeń o ukrytej etykiecie. */
+/** Przedrostek nazwy zastępczej stosowanej dla urządzeń dźwiękowych o ukrytej etykiecie przed pierwszą udzieloną zgodą. */
 const NAZWA_ZASTEPCZA = 'Mikrofon';
 
 /**
- * Zdanie na brak `navigator.mediaDevices` — trzyczęściowe: co (nie ma wykazu),
- * dlaczego (przeglądarka nie udostępnia dostępu do sprzętu) i czym Operator to
- * zmieni (adres `https` albo nowsze okno).
+ * Zdanie na brak `navigator.mediaDevices` wskazuje, że wykazu nie ma, że przeglądarka nie udostępnia dostępu do sprzętu, oraz jak to zmienić.
  */
 const POWOD_BRAK_DOSTEPU =
   'Wykaz mikrofonów jest niedostępny. Ta przeglądarka nie udostępnia dostępu do ' +
@@ -45,48 +32,35 @@ const POWOD_BRAK_DOSTEPU =
   'bez szyfrowania. Otwórz konsolę pod adresem „https” albo w nowszym oknie przeglądarki.';
 
 /**
- * Zdanie na ukryte etykiety. Też trzyczęściowe: nazwy są zastępcze, bo
- * przeglądarka ukrywa je do pierwszej zgody, a Operator odsłoni je nagrywając
- * raz i przyznając dostęp do mikrofonu.
+ * Zdanie na ukryte etykiety wyjaśnia, że nazwy urządzeń są zastępcze, dopóki przeglądarka nie otrzyma pierwszej zgody na nagrywanie.
  */
 const POWOD_UKRYTE_NAZWY =
   'Nazwy mikrofonów są zastępcze. Przeglądarka ukrywa etykiety sprzętu, dopóki nie ' +
   'przyznasz dostępu do mikrofonu. Nagraj raz i zgódź się na dostęp — po tym wykaz ' +
   'pokaże prawdziwe nazwy urządzeń.';
 
-/** Zdanie na wykaz pusty mimo działającego odczytu. */
+/** Zdanie zwracane, gdy wykaz wejść dźwięku jest pusty mimo poprawnie wykonanego odczytu przez przeglądarkę. */
 const POWOD_BRAK_URZADZEN =
   'Nie widać żadnego mikrofonu. System nie zgłasza podłączonego wejścia dźwięku — ' +
   'sprzęt bywa odłączony albo zajęty przez inny program. Wepnij mikrofon lub zamknij ' +
   'program, który go trzyma, a wykaz odświeży się sam.';
 
-/** Dostęp do sprzętu dźwiękowego; `null` gdy przeglądarka go nie ma. */
+/** Dostęp do interfejsu sprzętu dźwiękowego przeglądarki, równy `null`, gdy przeglądarka go nie udostępnia. */
 function sprzet(): MediaDevices | null {
-  // Sięgamy przez `globalThis`, a nie przez `navigator` wprost, bo w starym
-  // oknie osadzonym `navigator.mediaDevices` bywa `undefined` mimo typu, który
-  // obiecuje obiekt. Typ tego nie wyłapie — sprawdzenie musi być na wykonaniu.
+  // Dostęp sięga przez `globalThis`, nie `navigator`, bo `mediaDevices` bywa `undefined` w starym oknie.
   const nawigator = (globalThis as { navigator?: Navigator }).navigator;
   return nawigator?.mediaDevices ?? null;
 }
 
 /**
- * Składa wykaz z surowej odpowiedzi przeglądarki.
- *
- * Przed pierwszą zgodą `label` każdego urządzenia jest pustym napisem —
- * przeglądarka nie zdradza, jaki sprzęt stoi przy maszynie. Wykaz pustych
- * wierszy jest gorszy niż brak wykazu, więc pustą etykietę zastępuje numer
- * porządkowy, a `powod` mówi, skąd te nazwy się wzięły. Sprzętu nie zgadujemy:
- * „Mikrofon 2” jest przyznaniem się do niewiedzy, nie nazwą.
+ * Składanie wykazu z surowej odpowiedzi przeglądarki zastępuje pustą etykietę numerem porządkowym, gdy zgoda na mikrofon nie została jeszcze udzielona.
  */
 function zlozWykaz(wejscia: readonly MediaDeviceInfo[]): WykazUrzadzen {
   if (wejscia.length === 0) {
     return { urzadzenia: [], powod: POWOD_BRAK_URZADZEN };
   }
 
-  // Wpis o identyfikatorze `default` jest umową przeglądarek na „wejście
-  // wybrane w systemie”. Gdy go nie ma, domyślnym zostaje pierwszy z wykazu —
-  // bo taką kolejnością przeglądarka odpowiada i taką przyjmie `getUserMedia`
-  // bez wskazania urządzenia.
+  // Wpis `default` to umowa na wejście systemowe — bez niego domyślnym zostaje pierwszy wpis wykazu.
   const maWpisDomyslny = wejscia.some((wejscie) => wejscie.deviceId === 'default');
   let ukryte = 0;
 
@@ -104,11 +78,7 @@ function zlozWykaz(wejscia: readonly MediaDeviceInfo[]): WykazUrzadzen {
 }
 
 /**
- * Odczyt wykazu wejść dźwięku.
- *
- * Odmowa odczytu nie wychodzi wyjątkiem — wychodzi pustym wykazem ze zdaniem
- * w `powod`. Wywołujący rysuje listę wyboru i nie ma dokąd rzucić błędu, a
- * zdanie i tak musi trafić przed oczy Operatora.
+ * Odczyt wykazu wejść dźwięku nie kończy się wyjątkiem przy odmowie — zwraca pusty wykaz wraz ze zdaniem wyjaśniającym w polu `powod`.
  */
 export async function odczytajUrzadzenia(): Promise<WykazUrzadzen> {
   const urzadzeniaMediow = sprzet();
@@ -120,22 +90,14 @@ export async function odczytajUrzadzenia(): Promise<WykazUrzadzen> {
     const wszystkie = await urzadzeniaMediow.enumerateDevices();
     return zlozWykaz(wszystkie.filter((wejscie) => wejscie.kind === 'audioinput'));
   } catch (blad) {
-    // Przeglądarki potrafią odmówić samego wyliczenia (polityka uprawnień
-    // ramki). Zdanie nazywa i to, i drogę wyjścia — pusty wykaz bez słowa
-    // czytałby się jako „nie masz mikrofonu”.
+    // Odmowa wyliczenia urządzeń przez politykę ramki zwraca pusty wykaz ze zdaniem wyjaśniającym.
     console.error('[dyktowanie] odczyt urządzeń odmówiony', blad);
     return { urzadzenia: [], powod: POWOD_BRAK_DOSTEPU };
   }
 }
 
 /**
- * Subskrypcja zmian sprzętu.
- *
- * Operator wpina słuchawki w połowie dnia i wykaz sprzed godziny przestaje być
- * prawdą. Subskrypcja nie odczytuje wykazu sama — tylko budzi wywołującego,
- * bo to on wie, czy lista wyboru w ogóle stoi na ekranie. Gdy przeglądarka nie
- * ma `mediaDevices`, zwracamy odwołanie, które nic nie robi: brak zdarzeń jest
- * stanem, nie błędem wywołania.
+ * Subskrypcja zmian sprzętu budzi wywołującego przy zmianie urządzeń audio, nie odczytując wykazu samodzielnie, a przy braku wsparcia zwraca odwołanie bez działania.
  */
 export function naZmianeUrzadzen(sluchacz: () => void): () => void {
   const urzadzeniaMediow = sprzet();

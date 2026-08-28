@@ -9,19 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek aparatu dokumentu: czy spis treści zgadza się z nagłówkami, czy przypis
-// przenumerowuje się po wstawieniu przypisu przed nim i czy znacznik
-// nieświeżości mówi prawdę.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. spis treści oddany jako odświeżony, a niosący nagłówki sprzed zmiany;
-//  2. numeracja przypisów nadawana w kolejności ZAPISU, po której przypis
-//     wstawiony w środek dokumentu kłamie do końca życia pisma;
-//  3. znacznik nieświeżości trzymany w drzewie postaci — drzewo zapisuje się bez
-//     aparatu, więc znacznik ginąłby przy pierwszym zapisie;
-//  4. odwołanie do elementu, którego dokument nie ma, przyjęte jako założone.
-
-// aparatUprzazSprawdzianu składa adapter modułu i dokument z nagłówkami.
+// aparatUprzazSprawdzianu składa adapter modułu i dokument z dwoma nagłówkami
+// rozdziałów, gotowy do sprawdzianów spisu treści, przypisów i bibliografii.
 func aparatUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, string) {
 	t.Helper()
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
@@ -35,11 +24,9 @@ func aparatUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, str
 	return nowyAdapterStudia(zmontowany.dane.Studio), zycie, dokument.Id
 }
 
-// aparatNadajNaglowki oznacza wskazane akapity jako nagłówki wskazanego poziomu.
-//
-// Idzie to drogą zapisu postaci dokumentu, czyli tą samą, którą przestawia
-// nagłówki okno — sprawdzian nie ma prawa wpisywać tego do bazy z boku, bo
-// mierzyłby wtedy własny zapis, nie zachowanie rdzenia.
+// aparatNadajNaglowki oznacza wskazane akapity jako nagłówki wskazanego
+// poziomu, drogą zapisu postaci dokumentu — tą samą, którą przestawia
+// nagłówki okno, żeby sprawdzian mierzył zachowanie rdzenia, nie własny zapis.
 func aparatNadajNaglowki(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	dokument string, poziomy map[int]int) {
 	t.Helper()
@@ -77,7 +64,8 @@ func aparatNadajNaglowki(t *testing.T, adapter *adapterStudia, zycie context.Con
 	}
 }
 
-// aparatElementSprawdzianu odczytuje element aparatu osobnym wywołaniem wykazu.
+// aparatElementSprawdzianu odczytuje jeden element aparatu dokumentu osobnym
+// wywołaniem wykazu, kończąc sprawdzian odmową, gdy elementu nie ma w wykazie.
 func aparatElementSprawdzianu(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	dokument, element string) shared.StudioApparatusItem {
 	t.Helper()
@@ -109,8 +97,7 @@ func TestSpisTresciZgadzaSieZNaglowkami(t *testing.T) {
 	if err != nil {
 		t.Fatalf("założenie spisu treści odmówiło: %v", err)
 	}
-	// Spis świeżo założony jest NIEŚWIEŻY: nie zbierał jeszcze niczego i mówi to
-	// o sobie, zamiast udawać gotowy.
+	// Spis świeżo założony jest NIEŚWIEŻY: mówi to o sobie, zamiast udawać gotowy.
 	if spis.Item.Stale == nil || !*spis.Item.Stale {
 		t.Error("spis treści świeżo założony nie jest oznaczony jako wymagający odświeżenia")
 	}
@@ -346,7 +333,7 @@ func TestBibliografiaSkladaSieZPowolan(t *testing.T) {
 }
 
 // TestOdwolanieDoNieistniejacegoCeluOdmawia pilnuje, żeby odsyłacz w nikąd nie
-// wchodził do pisma.
+// wchodził do pisma, a odmowa nazywała wprost brakujący identyfikator celu.
 func TestOdwolanieDoNieistniejacegoCeluOdmawia(t *testing.T) {
 	adapter, zycie, dokument := aparatUprzazSprawdzianu(t)
 
@@ -363,7 +350,7 @@ func TestOdwolanieDoNieistniejacegoCeluOdmawia(t *testing.T) {
 }
 
 // TestPrzypisBezBrzmieniaOdmawia pilnuje zakazu odpowiedzi „ok" z pustym
-// wynikiem.
+// wynikiem: przypis bez treści i zakładka bez nazwy kończą się odmową.
 func TestPrzypisBezBrzmieniaOdmawia(t *testing.T) {
 	adapter, zycie, dokument := aparatUprzazSprawdzianu(t)
 
@@ -379,8 +366,8 @@ func TestPrzypisBezBrzmieniaOdmawia(t *testing.T) {
 	}
 }
 
-// TestOdswiezenieAparatuBezElementowOdmawia pilnuje, że odświeżenie niczego nie
-// wraca jako wykonane.
+// TestOdswiezenieAparatuBezElementowOdmawia pilnuje, że odświeżenie aparatu
+// bez ani jednego elementu wraca jako odmowa, nie jako czynność wykonana.
 func TestOdswiezenieAparatuBezElementowOdmawia(t *testing.T) {
 	adapter, zycie, dokument := aparatUprzazSprawdzianu(t)
 

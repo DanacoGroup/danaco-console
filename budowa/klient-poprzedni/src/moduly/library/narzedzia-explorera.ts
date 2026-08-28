@@ -4,17 +4,8 @@ import { WIDOKI } from './widoki-wykazu';
 
 /**
  * Pasek narzędzi kontekstowych Library Explorera: przełącznik widoku, tryb
- * wyszukiwania i zdjęcie zawężenia wykazu.
- *
- * Trzy kontrolki stoją razem, bo wszystkie odpowiadają na jedno pytanie — „co
- * i w jakiej postaci widzę" — i żadna z nich nie zmienia zawartości
- * repozytorium. Przełącznik widoku i zawężenie są w całości kliencke; tryb
- * wyszukiwania rozstrzyga, którą komendą pójdzie następne szukanie
- * (`library.file.search`, `knowledge.search` albo obie).
- *
- * Widok mapy zostaje w przełączniku mimo braku źródła współrzędnych: pozycja
- * usunięta wyglądałaby na widok, którego dokumentacja nigdy nie przewidywała,
- * a wybrana mówi wprost, czego kontrakt nie niesie (`widoki-wykazu.ts`).
+ * wyszukiwania i zdjęcie zawężenia wykazu. Trzy kontrolki stoją razem, ponieważ
+ * odpowiadają na jedno pytanie i żadna nie zmienia zawartości repozytorium.
  */
 export interface NarzedziaExplorera {
   element: HTMLElement;
@@ -22,7 +13,11 @@ export interface NarzedziaExplorera {
   odswiez(): void;
 }
 
-/** Pozycje trybu wyszukiwania wraz z komendą, którą każdy z nich idzie. */
+/**
+ * Pozycje trybu wyszukiwania wraz z komendą, którą każda z nich idzie. Nazwa komendy
+ * stoi w etykiecie, ponieważ tryb rozstrzyga, czym rdzeń szuka, a to Operator ma
+ * widzieć przed wysłaniem zapytania.
+ */
 const TRYBY: ReadonlyArray<{ kod: TrybWyszukiwania; etykieta: string }> = [
   { kod: 'pelnotekstowy', etykieta: 'Pełnotekstowy (library.file.search)' },
   { kod: 'semantyczny', etykieta: 'Semantyczny (knowledge.search)' },
@@ -89,9 +84,7 @@ export function utworzNarzedziaExplorera(stan: StanBiblioteki): NarzedziaExplore
       const wskazane = stan.zawezenie();
       zawezenie.hidden = wskazane === null;
       if (wskazane !== null) {
-        // Liczba widocznych bierze się z wykazu, nie z długości zbioru
-        // wskazanego: raport potrafi wskazać plik, którego świeży odczyt już
-        // nie zawiera, a katalog struktury zawęża wynik dodatkowo.
+        // Liczba widocznych bierze się z wykazu, nie z długości zbioru wskazanego.
         zdanieZawezenia.textContent =
           `Wykaz zawężony: ${wskazane.opis} — widocznych pozycji ${stan.widoczne().length} ` +
           `z ${wskazane.kody.length} wskazanych.`;
@@ -100,7 +93,11 @@ export function utworzNarzedziaExplorera(stan: StanBiblioteki): NarzedziaExplore
   };
 }
 
-/** Przekład wartości kontrolki na tryb; wartość spoza wykazu bierze pełnotekstowy. */
+/**
+ * Przekład wartości kontrolki na tryb wyszukiwania. Wartość spoza wykazu bierze tryb
+ * pełnotekstowy, ponieważ jest on jedynym, którego komenda stoi w kontrakcie bez
+ * warunku, więc zapytanie zawsze ma czym pójść.
+ */
 function odczytajTryb(wartosc: string): TrybWyszukiwania {
   const pozycja = TRYBY.find((wpis) => wpis.kod === wartosc);
   return pozycja === undefined ? 'pelnotekstowy' : pozycja.kod;

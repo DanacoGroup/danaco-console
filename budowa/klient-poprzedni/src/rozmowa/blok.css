@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — BLOKI PRZEJRZYSTOŚCI WPISU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd bloków zwijanych wpisu — prowenancji
-   („co poszło do modelu"), podglądu pracy modelu i wywołań narzędzi —
-   wraz z blokiem kodu i wierszem danych.
-
-   Blok prowenancji jest jedynym miejscem, w którym warstwa rozmowy sięga po
-   tło akcentu — powierzchnia drobna i zwinięta domyślnie.
-   ============================================================================ */
+/* Bloki przejrzystości wpisu obejmują wygląd prowenancji, podglądu pracy modelu i wywołań narzędzi wraz z blokiem kodu i wierszem danych, zwijanych domyślnie. */
 
 .dc-blok {
   border: 1px solid var(--dn-obrys-subtelny);
@@ -20,17 +11,13 @@
   background-color: var(--dn-sygnal-tlo);
 }
 
-/* Odmiana dla `NastawyBloku.odmiana === 'blad'`. Błędne wywołanie narzędzia
-   znaczy plakietka `.dn-plakietka--blad` w środku bloku (`blok-narzedzi.ts`),
-   a sam blok zostaje neutralny — ta odmiana czeka na wywołującego. */
+/* Odmiana błędu bloku znaczy plakietkę błędu w środku bloku wywołania narzędzia, a sam blok zostaje neutralny — ta odmiana czeka na wywołującego. */
 .dc-blok--blad {
   border-color: var(--dn-blad-obrys);
   background-color: var(--dn-blad-tlo);
 }
 
-/* ---------------------------------------------------------------- *
- * NAGŁÓWEK ZWIJANY                                                  *
- * ---------------------------------------------------------------- */
+/* Nagłówek zwijany bloku mieści ikonę, tytuł i podtytuł w jednym wierszu klikalnym. */
 
 .dc-blok__naglowek {
   display: flex;
@@ -50,7 +37,7 @@
   background-color: var(--dn-hover);
 }
 
-/* Pierścień ogniska jest obowiązkowy dla każdej kontrolki. */
+/* Pierścień ogniska jest obowiązkowy dla każdej kontrolki klawiaturowej, niezależnie od tego, czy kontrolka ma też własny hover. */
 .dc-blok__naglowek:focus-visible {
   outline: 2px solid var(--dn-fokus);
   outline-offset: 2px;
@@ -74,9 +61,7 @@
   text-align: right;
 }
 
-/* ---------------------------------------------------------------- *
- * TREŚĆ BLOKU                                                       *
- * ---------------------------------------------------------------- */
+/* Treść bloku mieści podnagłówek, blok kodu o stałej szerokości znaku i wiersze danych. */
 
 .dc-blok__tresc {
   display: flex;

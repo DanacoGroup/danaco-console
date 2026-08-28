@@ -2,29 +2,12 @@ import { TerminalShell } from '../../../../shared/contract';
 import type { PozycjaWyboru } from './wybor-drzewem';
 
 /**
- * Zadania projektu wyczytane z manifestu leżącego w katalogu roboczym karty.
- *
- * Treść manifestu czyta rdzeń komendą `terminal.file.read`, a nie polecenie
- * powłoki: dzięki temu wykrycie zadań nie zależy ani od programu wypisującego
- * plik, ani od składni powłoki karty, i działa jednakowo w każdej z nich.
- * Przeglądania katalogu kontrakt nie ma wcale, więc nazwa manifestu pochodzi
- * z zamkniętego wykazu poniżej — okno nie zgaduje, co leży w katalogu.
- * Gdy manifestu nie ma, rdzeń odmawia kodem `not_found`, a okno pokazuje tę
- * odmowę dosłownie zamiast pustego wykazu zadań.
- *
- * Rozbiór jest czytaniem, nie wykonaniem: treść manifestu nigdy nie trafia do
- * powłoki z powrotem. Do powłoki idzie wyłącznie polecenie złożone z nazwy
- * programu i nazwy zadania odczytanej z manifestu.
- *
- * Nazwy plików pochodzą z zamkniętego wykazu poniżej, nie z pola wpisywania —
- * dlatego wchodzą w treść polecenia bez cudzysłowu obliczanego w czasie
- * działania.
+ * Zadania projektu wyczytane z manifestu leżącego w katalogu roboczym karty; treść czyta rdzeń
+ * komendą `terminal.file.read`, nie polecenie powłoki.
  */
-
-/** Manifest, z którego czytane są zadania projektu. */
 export type RodzajManifestu = 'package.json' | 'Makefile' | 'Taskfile.yml' | 'justfile';
 
-/** Wykaz manifestów wraz z programem, który uruchamia ich zadania. */
+/** Wykaz manifestów projektu wraz z nazwą programu, który uruchamia ich zadania w powłoce karty Terminala. */
 export const MANIFESTY: readonly PozycjaWyboru[] = [
   ['package.json', 'package.json', 'Pole scripts manifestu Node.js; zadania uruchamia program npm.'],
   ['Makefile', 'Makefile', 'Cele pliku Makefile; zadania uruchamia program make.'],
@@ -32,7 +15,7 @@ export const MANIFESTY: readonly PozycjaWyboru[] = [
   ['justfile', 'justfile', 'Przepisy pliku justfile; zadania uruchamia program just.'],
 ];
 
-/** Jedno zadanie odczytane z manifestu. */
+/** Jedno zadanie odczytane z manifestu projektu wraz z poleceniem uruchamiającym je w powłoce karty terminala. */
 export interface ZadanieManifestu {
   /** Nazwa zadania w manifeście. */
   nazwa: string;
@@ -42,12 +25,8 @@ export interface ZadanieManifestu {
 }
 
 /**
- * Polecenie wypisujące treść manifestu w danej powłoce.
- *
- * Każda powłoka wykazu kontraktu ma swoją drogę, także obie pętle wyliczające:
- * Node.js i Python czytają plik własną biblioteką standardową, więc nie
- * potrzebują do tego żadnego programu zewnętrznego. Powłoki systemowe sięgają
- * po program wypisujący plik i to jest ich zależność zewnętrzna.
+ * Polecenie wypisujące treść manifestu w danej powłoce; każda powłoka wykazu kontraktu ma
+ * swoją drogę wypisania pliku.
  */
 export function poleceniePodgladuManifestu(powloka: TerminalShell, plik: RodzajManifestu): string {
   switch (powloka) {
@@ -63,13 +42,12 @@ export function poleceniePodgladuManifestu(powloka: TerminalShell, plik: RodzajM
     case TerminalShell.Python:
       return `import sys; sys.stdout.write(open('${plik}', encoding='utf-8').read())`;
     default:
-      // Powłoka spoza wykazu kontraktu: okno powie o braku drogi zamiast wysłać
-      // polecenie złożone dla innej składni.
+      // Powłoka spoza wykazu kontraktu: okno powie o braku drogi, nie wyśle złego polecenia.
       return '';
   }
 }
 
-/** Rozbiór treści manifestu na zadania; treść nierozpoznana daje pusty wykaz. */
+/** Rozbiór treści manifestu na wykaz zadań projektu karty terminala; treść nierozpoznana daje pusty wykaz. */
 export function czytajZadania(rodzaj: RodzajManifestu, tresc: string): ZadanieManifestu[] {
   switch (rodzaj) {
     case 'package.json':
@@ -84,11 +62,8 @@ export function czytajZadania(rodzaj: RodzajManifestu, tresc: string): ZadanieMa
 }
 
 /**
- * Pole `scripts` manifestu Node.js.
- *
- * Treść niebędąca poprawnym JSON-em nie jest błędem programu, tylko odpowiedzią
- * powłoki — plik bywa nieobecny, a wtedy w wyjściu stoi komunikat błędu. Rozbiór
- * oddaje wtedy pusty wykaz, a zdanie o powodzie składa okno z treści wyjścia.
+ * Pole `scripts` manifestu Node.js; treść niebędąca poprawnym JSON-em nie jest błędem
+ * programu, tylko odpowiedzią powłoki.
  */
 function zadaniaManifestuNode(tresc: string): ZadanieManifestu[] {
   let odczytane: unknown;
@@ -108,12 +83,8 @@ function zadaniaManifestuNode(tresc: string): ZadanieManifestu[] {
 }
 
 /**
- * Cele pliku Makefile.
- *
- * Brany jest wyłącznie wiersz zaczynający się od nazwy celu w pierwszej
- * kolumnie. Wiersz wcięty jest przepisem celu, a nie celem; nazwa zaczynająca
- * się kropką (`.PHONY`, `.SUFFIXES`) jest dyrektywą programu make; zapis
- * `nazwa :=` jest przypisaniem zmiennej.
+ * Cele pliku Makefile; brany jest wyłącznie wiersz zaczynający się od nazwy celu w pierwszej
+ * kolumnie.
  */
 function celeMakefile(tresc: string): ZadanieManifestu[] {
   const zadania: ZadanieManifestu[] = [];
@@ -129,11 +100,8 @@ function celeMakefile(tresc: string): ZadanieManifestu[] {
 }
 
 /**
- * Zadania bloku `tasks:` pliku Taskfile.
- *
- * Czytany jest jeden poziom zagnieżdżenia: klucze wcięte bezpośrednio pod
- * `tasks:`. Głębsze klucze są polami zadania (`cmds`, `desc`), a nie zadaniami,
- * więc wejście na nie dawałoby wykaz nazw, których program task nie zna.
+ * Zadania bloku `tasks:` pliku Taskfile; czytany jest jeden poziom zagnieżdżenia, klucze
+ * wcięte bezpośrednio pod `tasks:`.
  */
 function zadaniaTaskfile(tresc: string): ZadanieManifestu[] {
   const zadania: ZadanieManifestu[] = [];

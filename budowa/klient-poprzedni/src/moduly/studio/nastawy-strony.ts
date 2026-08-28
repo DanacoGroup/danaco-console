@@ -1,27 +1,11 @@
 import { StudioPageOrientation, type StudioPageSetup } from '../../../../shared/contract';
 
-/**
- * Nastawy strony okna pracy z dokumentem — kartka, marginesy, nagłówek, stopka,
- * numeracja i skala.
- *
- * Kształt nastaw NIE jest wymyślony: to `StudioPageSetup` z kontraktu, ten sam,
- * który jedzie w profilu wydania (`studio.export.profile.save`) i w renderze
- * podglądu (`studio.preview.render`). Okno pracy pokazuje więc kartkę o tych
- * samych nastawach, którymi rdzeń wyda dokument — inaczej „widzisz to, co
- * dostaniesz" byłoby obietnicą bez pokrycia.
- *
- * Rozmiar nośnika w milimetrach stoi tutaj, bo kontrakt niesie samo oznaczenie
- * („A4"), a nie jego wymiary. Wykaz jest zamknięty i nazwany — nośnik spoza
- * wykazu bierze wymiary A4 i okno mówi o tym wprost, zamiast rysować kartkę
- * o zgadniętym rozmiarze.
- *
- * Plik nie zna DOM: wejściem są nastawy, wyjściem liczby i zdania.
- */
+/** Nastawy strony okna pracy z dokumentem: kartka, marginesy, nagłówek, stopka, numeracja i skala. */
 
-/** Rodzaj nośnika — arkusz do pisania albo koperta do nadruku. */
+/** Rodzaj nośnika: arkusz przeznaczony do pisania, koperta przeznaczona do nadruku albo nośnik własny podany wymiarami wprost przez Operatora. */
 export type RodzajNosnika = 'arkusz' | 'koperta' | 'wlasny';
 
-/** Wymiary nośnika w milimetrach. */
+/** Wymiary nośnika w milimetrach wraz z jego oznaczeniem i rodzajem — arkuszem, kopertą albo nośnikiem własnym podanym wprost. */
 export interface WymiaryNosnika {
   oznaczenie: string;
   szerokoscMm: number;
@@ -29,22 +13,7 @@ export interface WymiaryNosnika {
   rodzaj: RodzajNosnika;
 }
 
-/**
- * Nośniki wbudowane — wykaz ZAPASOWY, nie źródło prawdy.
- *
- * Źródłem prawdy jest rdzeń: `studio.page.paper.list` oddaje szereg A, szereg B,
- * Letter, Legal, Tabloid oraz koperty DL, C4, C5 i C6 wraz z wymiarami, czytając
- * je z JEDNEGO wspólnego wykazu rdzenia (`nosniki_druku_wspolne.go`). Okno pracy
- * woła tę komendę przy wczytaniu dokumentu i wchłania odpowiedź
- * (`wchlonNosnikiRdzenia`), więc kartka rysuje się wymiarami rdzenia, a nie
- * wymiarami stąd.
- *
- * Ten wykaz stoi tutaj wyłącznie dlatego, że kartkę trzeba narysować, ZANIM
- * odpowiedź rdzenia dojedzie — rysowanie w rozmiarze zgadniętym byłoby kłamstwem
- * o nośniku. Poprawki wymiarów wnosi się do wykazu rdzenia; wpis tutaj ma się do
- * niego równać, a nie odwrotnie. Sprawdzian `nastawy-strony.test.ts` pilnuje, żeby
- * wchłonięcie naprawdę nadpisywało wymiary wbudowane.
- */
+/** Nośniki wbudowane — wykaz zapasowy używany do pierwszego rysowania kartki, zanim komenda rdzenia odda własny wykaz nośników z dokładnymi wymiarami. */
 const NOSNIKI_WBUDOWANE: readonly WymiaryNosnika[] = [
   { oznaczenie: 'A0', szerokoscMm: 841, wysokoscMm: 1189, rodzaj: 'arkusz' },
   { oznaczenie: 'A1', szerokoscMm: 594, wysokoscMm: 841, rodzaj: 'arkusz' },
@@ -75,24 +44,12 @@ const NOSNIKI_WBUDOWANE: readonly WymiaryNosnika[] = [
  */
 let nosnikiBiezace: readonly WymiaryNosnika[] = NOSNIKI_WBUDOWANE;
 
-/** Wykaz nośników obowiązujący teraz. */
+/** Wykaz nośników obowiązujący teraz — wbudowany, dopóki rdzeń nie odpowie własnym wykazem komendą właściwą temu obszarowi. */
 export function nosniki(): readonly WymiaryNosnika[] {
   return nosnikiBiezace;
 }
 
-/**
- * Wchłania wykaz nośników rdzenia (`studio.page.paper.list`).
- *
- * Wpis rdzenia o oznaczeniu znanym NADPISUJE wymiary wbudowane — rdzeń jest
- * źródłem prawdy. Wpis o oznaczeniu nieznanym dochodzi na koniec. Wpisy
- * wbudowane, których rdzeń nie zna, zostają: wykaz widoczny ma być zawsze pełny,
- * a pozycja zniknięta z okna wyglądałaby na usterkę.
- *
- * Rodzaj nośnika bierze się z odpowiedzi rdzenia, gdy ta go niesie (pole `kind`
- * kontraktu: `sheet` albo `envelope`), a nie z wpisu wbudowanego. Inaczej koperta
- * dołożona kiedyś do wykazu rdzenia wchodziłaby do okna jako arkusz i nadruk
- * koperty nie miałby się na czym wykonać.
- */
+/** Wchłania wykaz nośników rdzenia: wpis o oznaczeniu znanym nadpisuje wymiary wbudowane, wpis nieznany dochodzi na koniec, a wpisy nieznane rdzeniowi zostają widoczne. */
 export function wchlonNosnikiRdzenia(
   wykaz: readonly {
     oznaczenie: string;
@@ -119,14 +76,7 @@ export function wchlonNosnikiRdzenia(
   return nosnikiBiezace;
 }
 
-/**
- * Wchłania odpowiedź komendy `studio.page.paper.list` wprost.
- *
- * Przekład stoi tutaj, a nie u wołacza, bo tu leży wiedza o kształcie wykazu:
- * kontrakt nazywa pola po angielsku (`name`, `widthMm`, `heightMm`, `kind`),
- * a rysowanie kartki liczy w polach polskich. Dwa przekłady tego samego kształtu
- * rozjechałyby się przy pierwszym dołożonym polu.
- */
+/** Wchłania odpowiedź komendy studio.page.paper.list wprost, przekładając nazwy pól kontraktu na pola polskie używane przy rysowaniu kartki. */
 export function wchlonNosnikiKontraktu(
   papiery: readonly { name: string; widthMm: number; heightMm: number; kind?: string }[],
 ): readonly WymiaryNosnika[] {
@@ -160,7 +110,7 @@ export function nosnikWlasny(
   };
 }
 
-/** Nośnik domyślny — pismo urzędowe w tym kraju idzie na A4. */
+/** Nośnik domyślny nastaw strony: arkusz A4 pionowo, zgodny z postacią pisma urzędowego przyjętą w tym kraju. */
 const NOSNIK_DOMYSLNY: WymiaryNosnika = {
   oznaczenie: 'A4',
   szerokoscMm: 210,
@@ -185,10 +135,10 @@ export const NOSNIKI: readonly WymiaryNosnika[] = NOSNIKI_WBUDOWANE;
  */
 const PUNKTOW_NA_MM = 96 / 25.4;
 
-/** Jednostka podziałki linijek — wybór Operatora, nie rozstrzygnięcie kodu. */
+/** Jednostka podziałki linijki i pól wymiarowych — milimetry albo cale, wybór należy do Operatora, nie do rozstrzygnięcia kodu. */
 export type JednostkaMiary = 'mm' | 'cal';
 
-/** Nastawy strony wraz z wartościami domyślnymi wypełnionymi. */
+/** Nastawy strony wraz z wartościami domyślnymi wypełnionymi: nośnik, orientacja, marginesy, nagłówek, stopka, numeracja i skala widoku. */
 export interface StronaPracy {
   nosnik: WymiaryNosnika;
   orientacja: StudioPageOrientation;
@@ -201,23 +151,11 @@ export interface StronaPracy {
   numeracja: boolean;
   /** Skala widoku w procentach — nastawa `scale` kontraktu. */
   skala: number;
-  /**
-   * Margines na oprawę w milimetrach — pas doliczany do marginesu wewnętrznego.
-   *
-   * Kontrakt tego pola nie ma (`StudioPageSetup` niesie cztery marginesy i nic
-   * poza nimi), więc oprawa żyje przez sesję okna i jest zgłoszona jako brak
-   * pozycji kontraktu. Rysowana jest prawdziwie: pas oprawy zabiera pole pisania.
-   */
+  /** Margines na oprawę w milimetrach — pas doliczany do marginesu wewnętrznego przy rysowaniu kartki. */
   marginesOprawyMm: number;
   /** Strona, przy której stoi oprawa. */
   stronaOprawy: 'wewnatrz' | 'gora';
-  /**
-   * Marginesy odbicia dla druku dwustronnego.
-   *
-   * Włączone znaczy, że margines „lewy" jest marginesem WEWNĘTRZNYM: na stronie
-   * nieparzystej stoi po lewej, na parzystej po prawej. Bez tego oprawa wypadałaby
-   * raz w rowku, raz na krawędzi.
-   */
+  /** Marginesy odbicia dla druku dwustronnego — margines lewy staje się marginesem wewnętrznym strony. */
   marginesyOdbicia: boolean;
   /** Jednostka podziałki linijek i pól wymiarowych. */
   jednostka: JednostkaMiary;
@@ -225,7 +163,7 @@ export interface StronaPracy {
   graniceMarginesow: boolean;
 }
 
-/** Nastawy domyślne: A4 pionowo, marginesy po 20 mm, numeracja stron. */
+/** Nastawy domyślne nowego dokumentu: nośnik A4 pionowo, marginesy po dwadzieścia milimetrów z każdej strony i włączona numeracja stron. */
 export function domyslnaStrona(): StronaPracy {
   return {
     nosnik: NOSNIK_DOMYSLNY,
@@ -246,7 +184,7 @@ export function domyslnaStrona(): StronaPracy {
   };
 }
 
-/** Nastawa gotowa marginesów — cztery liczby pod jedną nazwą. */
+/** Nastawa gotowa marginesów — cztery liczby marginesu oraz margines oprawy zebrane pod jedną nazwaną pozycją wykazu. */
 export interface NastawaMarginesow {
   kod: string;
   nazwa: string;
@@ -310,7 +248,7 @@ export const NASTAWY_MARGINESOW: readonly NastawaMarginesow[] = [
   },
 ];
 
-/** Nakłada nastawę gotową na nastawy strony. */
+/** Nakłada nastawę gotową marginesów na nastawy strony, zastępując cztery marginesy i margines oprawy wartościami nastawy wskazanej. */
 export function zastosujNastaweMarginesow(
   strona: StronaPracy,
   nastawa: NastawaMarginesow,
@@ -326,7 +264,7 @@ export function zastosujNastaweMarginesow(
   };
 }
 
-/** Marginesy poziome kartki po doliczeniu oprawy i odbicia. */
+/** Marginesy poziome kartki po doliczeniu oprawy i uwzględnieniu odbicia — wartości gotowe do narysowania pola pisania strony. */
 export interface MarginesyKartki {
   goraMm: number;
   dolMm: number;
@@ -335,11 +273,9 @@ export interface MarginesyKartki {
 }
 
 /**
- * Marginesy kartki o wskazanym numerze.
- *
- * Numer strony rozstrzyga wyłącznie przy marginesach odbicia: strona nieparzysta
- * jest stroną prawą rozkładówki, więc jej margines wewnętrzny stoi po lewej.
- * Oprawa dochodzi do marginesu wewnętrznego, a przy oprawie u góry — do górnego.
+ * Marginesy kartki o wskazanym numerze strony. Numer rozstrzyga wyłącznie przy
+ * marginesach odbicia: strona nieparzysta ma margines wewnętrzny po lewej.
+ * Oprawa dochodzi do marginesu wewnętrznego, a przy oprawie u góry do górnego.
  */
 export function marginesyKartki(strona: StronaPracy, numerStrony: number): MarginesyKartki {
   const oprawa = Math.max(0, strona.marginesOprawyMm);
@@ -362,28 +298,28 @@ export function marginesyKartki(strona: StronaPracy, numerStrony: number): Margi
   };
 }
 
-/** Odnajduje nośnik po oznaczeniu; oznaczenie nieznane oddaje `null`. */
+/** Odnajduje nośnik w wykazie bieżącym po jego oznaczeniu; oznaczenie nieznane w wykazie oddaje wartość pustą zamiast nośnika zgadniętego. */
 export function nosnikPoOznaczeniu(oznaczenie: string): WymiaryNosnika | null {
   const szukane = oznaczenie.trim().toLowerCase();
   return nosnikiBiezace.find((nosnik) => nosnik.oznaczenie.toLowerCase() === szukane) ?? null;
 }
 
-/** Milimetry na cale — jednostka linijki jest wyborem Operatora. */
+/** Przelicza milimetry na cale — jednostka podziałki linijki jest wyborem Operatora, nie rozstrzygnięciem kodu rysującego kartkę. */
 export function naCale(milimetry: number): number {
   return milimetry / 25.4;
 }
 
-/** Cale na milimetry. */
+/** Przelicza cale na milimetry — odwrotność przeliczenia stosowanego przy jednostce podziałki linijki wybranej przez Operatora. */
 export function zCali(cale: number): number {
   return cale * 25.4;
 }
 
-/** Punkty ekranu na milimetry — droga powrotna chwytu linijki. */
+/** Przelicza punkty ekranu na milimetry — droga powrotna chwytu linijki przy odczycie położenia wskazanego na kartce. */
 export function zPunktow(punkty: number): number {
   return punkty / PUNKTOW_NA_MM;
 }
 
-/** Długość w jednostce wybranej, zapisana zwięźle. */
+/** Zapisuje długość w jednostce wybranej przez Operatora zwięzłym zdaniem: milimetrami zaokrąglonymi albo calami z dwoma miejscami. */
 export function opiszDlugosc(milimetry: number, jednostka: JednostkaMiary): string {
   return jednostka === 'cal'
     ? `${naCale(milimetry).toFixed(2)}″`
@@ -415,7 +351,7 @@ export function stronaZProfilu(nastawy: StudioPageSetup | undefined): StronaPrac
   return strona;
 }
 
-/** Składa nastawy kontraktu z nastaw okna — droga do profilu wydania. */
+/** Składa nastawy kontraktu z nastaw okna — droga do profilu wydania, którym rdzeń wyda dokument w postaci zgodnej z widokiem. */
 export function profilZeStrony(strona: StronaPracy): StudioPageSetup {
   return {
     pageSize: strona.nosnik.oznaczenie,
@@ -431,21 +367,21 @@ export function profilZeStrony(strona: StronaPracy): StudioPageSetup {
   };
 }
 
-/** Szerokość kartki w milimetrach z uwzględnieniem orientacji. */
+/** Szerokość kartki w milimetrach z uwzględnieniem orientacji — strona pozioma zamienia szerokość nośnika z jego wysokością. */
 export function szerokoscKartkiMm(strona: StronaPracy): number {
   return strona.orientacja === StudioPageOrientation.Pozioma
     ? strona.nosnik.wysokoscMm
     : strona.nosnik.szerokoscMm;
 }
 
-/** Wysokość kartki w milimetrach z uwzględnieniem orientacji. */
+/** Wysokość kartki w milimetrach z uwzględnieniem orientacji — strona pozioma zamienia wysokość nośnika z jego szerokością. */
 export function wysokoscKartkiMm(strona: StronaPracy): number {
   return strona.orientacja === StudioPageOrientation.Pozioma
     ? strona.nosnik.szerokoscMm
     : strona.nosnik.wysokoscMm;
 }
 
-/** Milimetry na punkty ekranu. */
+/** Przelicza milimetry na punkty ekranu przy dziewięćdziesięciu sześciu punktach na cal, zaokrąglając wynik do liczby całkowitej. */
 export function naPunkty(milimetry: number): number {
   return Math.round(milimetry * PUNKTOW_NA_MM);
 }
@@ -461,13 +397,13 @@ export function wysokoscPolaPunkty(strona: StronaPracy, numerStrony = 1): number
   return naPunkty(wysokoscKartkiMm(strona) - marginesy.goraMm - marginesy.dolMm);
 }
 
-/** Szerokość pola pisania w punktach. */
+/** Szerokość pola pisania w punktach ekranu — kartka pomniejszona o marginesy lewy i prawy strony wskazanego numeru. */
 export function szerokoscPolaPunkty(strona: StronaPracy, numerStrony = 1): number {
   const marginesy = marginesyKartki(strona, numerStrony);
   return naPunkty(szerokoscKartkiMm(strona) - marginesy.lewyMm - marginesy.prawyMm);
 }
 
-/** Szerokość pola pisania w milimetrach — miara linijki poziomej. */
+/** Szerokość pola pisania w milimetrach — miara linijki poziomej, kartka pomniejszona o marginesy lewy i prawy. */
 export function szerokoscPolaMm(strona: StronaPracy, numerStrony = 1): number {
   const marginesy = marginesyKartki(strona, numerStrony);
   return szerokoscKartkiMm(strona) - marginesy.lewyMm - marginesy.prawyMm;
@@ -495,20 +431,7 @@ export function opiszStrone(strona: StronaPracy): string {
   );
 }
 
-/**
- * Co z nastaw strony dojeżdża do rdzenia, a co zostaje w oknie.
- *
- * Zdanie stoi przy nastawach, a nie w sprawozdaniu, bo Operator ma wiedzieć, co
- * przeżyje zamknięcie okna, ZANIM to zamknie.
- *
- * Zdanie zmieniło treść wraz z odcinkiem postaci dokumentu: droga trwałości nie
- * jest już profilem wydania, a `studio.page.setup.set` wraz z rodziną
- * `studio.page.*` i `studio.section.*`. Oprawa, marginesy odbicia, format własny
- * w milimetrach, kolumny, sekcje, znak wodny oraz nagłówek i stopka osobne dla
- * pierwszej strony i stron parzystych mają w kontrakcie własne pola i dojeżdżają.
- * Jednostka linijki i granice marginesów idą osobno — nastawami widoku
- * (`studio.view.set`), bo dotyczą patrzenia, nie dokumentu.
- */
+/** Co z nastaw strony dojeżdża do rdzenia, a co zostaje w oknie: zdanie stoi przy nastawach, by Operator wiedział to przed zamknięciem okna. */
 export const POWOD_NIETRWALOSCI_STRONY =
   'Nastawy strony jadą do rdzenia komendą studio.page.setup.set: nośnik z wykazu albo format ' +
   'własny w milimetrach, orientacja, cztery marginesy, margines na oprawę, marginesy odbicia, ' +
@@ -518,17 +441,7 @@ export const POWOD_NIETRWALOSCI_STRONY =
   'dokumentu: opisują, jak Operator patrzy, a nie jak dokument wyjdzie z drukarki. Skala widoku ' +
   'jedzie oboma polami — profil wydania niesie skalę WYDRUKU, nastawy widoku skalę PATRZENIA.';
 
-/**
- * Rozdziela bloki na strony wedle ich wysokości.
- *
- * Wysokość bloku podaje wołający (`zmierz`), bo zmierzyć ją potrafi wyłącznie
- * przeglądarka — a rachunek podziału ma dać się sprawdzić bez niej. Blok wyższy
- * od całej strony zostaje na stronie własnej: dzielenie go w środku wymagałoby
- * łamania wiersza wewnątrz akapitu, czego ta warstwa nie umie i czego nie udaje.
- *
- * Podział jawny (`podzial-strony`) kończy stronę niezależnie od miejsca, jakie
- * na niej zostało — to nastawa Operatora, a nie skutek rachunku.
- */
+/** Rozdziela bloki na strony wedle ich wysokości, mierzonej przez wołającego; blok wyższy od strony zostaje na stronie własnej, a podział jawny kończy stronę niezależnie od miejsca. */
 export function rozdzielNaStrony(
   liczba: number,
   wysokoscPola: number,
@@ -558,8 +471,7 @@ export function rozdzielNaStrony(
     zajete += wysokosc;
   }
 
-  // Strona pusta na końcu jest stroną prawdziwą wyłącznie po podziale jawnym:
-  // dokument kończący się podziałem ma stronę następną, choćby jeszcze pustą.
+  // Strona pusta na końcu jest prawdziwa wyłącznie po podziale jawnym kończącym dokument.
   if (biezaca.length > 0 || strony.length === 0) strony.push(biezaca);
   return strony;
 }

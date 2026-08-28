@@ -12,14 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdzian skutku wstrzymania procesu.
-//
-// Osobny plik, bo osobna jest jego platforma: wstrzymanie drzewa procesów mają
-// systemy uniksowe, a Windows nie ma dla obcego procesu odpowiednika
-// (`session/wstrzymanie_windows.go`). Sprawdzian pyta o skutek SYSTEM, nie
-// rdzeń — czyta stan procesu z `/proc/<pid>/stat`, gdzie litera `T` znaczy
-// „zatrzymany sygnałem”. Uwierzenie polu `supported` w odpowiedzi byłoby
-// uwierzeniem mierzonemu, że zrobił to, co miał zrobić.
+// Sprawdzian skutku wstrzymania procesu czyta stan procesu z /proc/<pid>/stat na systemach uniksowych.
 
 // TestWstrzymanieProcesuZatrzymujeGoWSystemie uruchamia proces długi, wstrzymuje
 // go i sprawdza u systemu, że naprawdę stanął; potem wznawia i sprawdza, że
@@ -34,9 +27,7 @@ func TestWstrzymanieProcesuZatrzymujeGoWSystemie(t *testing.T) {
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalCommandExec,
 		shared.TerminalCommandExecRequest{
 			SessionId: kartaKod,
-			// Pętla zajmuje procesor, więc proces biegnący jest w stanie `R`
-			// albo `S`, a nie w żadnym stanie granicznym, który dałoby się
-			// pomylić z zatrzymaniem.
+			// Pętla zajmuje procesor, więc proces biegnący jest w stanie R albo S, nie granicznym.
 			Command: "while true; do :; done",
 		}, &uruchomiony)
 
@@ -74,8 +65,7 @@ func TestWstrzymanieProcesuZatrzymujeGoWSystemie(t *testing.T) {
 			pid, stanProcesu(pid))
 	}
 
-	// Proces zakończony nie ma czego wstrzymywać — odmowa ma to nazwać zamiast
-	// meldować powodzenie na procesie, którego już nie ma.
+	// Proces zakończony nie ma czego wstrzymywać — odmowa ma to nazwać, nie meldować powodzenie.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalProcessKill,
 		shared.TerminalProcessKillRequest{ProcessId: uruchomiony.Process.Id, Force: &prawda},
 		&shared.TerminalProcessKillResponse{})
@@ -107,8 +97,7 @@ func stanProcesu(pid int) string {
 	return pola[0]
 }
 
-// doczekajStanuProcesu czeka, aż proces wejdzie w jeden ze stanów wskazanych
-// zbiorem liter.
+// doczekajStanuProcesu czeka, aż proces wejdzie w jeden ze stanów wskazanych zbiorem liter, albo upłynie limit czasu oczekiwania.
 func doczekajStanuProcesu(pid int, stany string, najdluzej time.Duration) bool {
 	koniec := time.Now().Add(najdluzej)
 	for time.Now().Before(koniec) {

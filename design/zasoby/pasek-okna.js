@@ -1,8 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PASEK NARZĘDZI OKNA ROBOCZEGO
-   ----------------------------------------------------------------------------
-   Kompetencja: obecność paska (tylko dla kart modułowych), zestaw narzędzi
-   właściwy karcie bieżącej, zwijanie nadmiaru pod „…" przy zwężeniu okna.
+/* Pasek narzędzi okna roboczego pokazuje zestaw narzędzi właściwy karcie bieżącej wyłącznie dla kart modułowych i zwija nadmiar pozycji przy zwężeniu okna.
 
    Odpowiedniki pozycji w menu nadmiaru powstają z pozycji paska — znacznik
    prototypu nie powtarza ich ręcznie. Kolejny prototyp wpina ten plik i podaje

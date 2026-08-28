@@ -4,18 +4,9 @@ import { poleTekstowe, przycisk, utworzWierszOdpowiedzi } from '../../modele/kon
 import type { StanBiblioteki } from './stan-biblioteki';
 
 /**
- * Warstwa czwarta modułu Library — zdolności eksperckie repozytorium, których
- * użytkownik podstawowy nie widzi: reguły napływu i kolekcji inteligentnych,
- * schemat metadanych, polityki retencji, udostępnienia, nasłuchy zewnętrzne,
- * klasyfikacja wsadowa i sugestie porządkujące oraz porównanie dwóch zasobów.
- *
- * Jeden panel na siedem rodzin, bo wszystkie są sterowaniem repozytorium jako
- * całością, a nie pracą nad wskazanym plikiem. Rozbicie ich na siedem paneli
- * dałoby siedem miejsc, w których Operator szuka tego samego: „gdzie ustawia się
- * zachowanie biblioteki".
- *
- * Każda czynność mówi wynikiem, co zaszło. Wykazy odczytują się po wykonaniu
- * czynności, a nie w pętli — repozytorium nie odpytuje się samo.
+ * Warstwa czwarta modułu Library: zdolności eksperckie repozytorium niewidoczne dla użytkownika
+ * podstawowego — reguły, schemat metadanych, retencja, udostępnienia, nasłuchy, klasyfikacja
+ * i porównanie zasobów.
  */
 export interface AdministracjaRepozytorium {
   element: HTMLElement;

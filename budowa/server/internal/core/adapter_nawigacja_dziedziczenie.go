@@ -7,18 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// parametryOknaModulu składa ustawienia okna zakładanego przez `workspace.enter`.
-//
-// Powód istnienia tej funkcji: wejście do modułu niesie w kontrakcie wyłącznie
-// sesję, moduł i ewentualne okno do ponownego użycia. Gdyby okno powstawało
-// z samego modułu, rodziłoby się bez kanału modelu — a więc jako okno, które
-// się rysuje i nie umie rozmawiać.
-//
-// Kanał bierzemy stąd, skąd Operator by go oczekiwał — z tego, czym ta sesja
-// już rozmawia. Dopiero gdy sesja nie rozmawiała jeszcze niczym, sięgamy po
-// pierwszy czynny kanał rejestru. Brak obu daje okno bez kanału: rdzeń nie
-// odmawia wejścia do modułu z powodu nieskonfigurowanego kanału,
-// a okno zgłosi brak dopiero przy próbie tury.
+// parametryOknaModulu składa ustawienia okna zakładanego przez workspace.enter,
+// dobierając kanał modelu z okna, którym sesja już rozmawia, a bez takiego
+// okna sięgając po pierwszy czynny kanał rejestru.
 func (a *adapterNawigacji) parametryOknaModulu(ctx context.Context, idSesji, kodModulu string) session.Ustawienia {
 	u := session.Ustawienia{Modul: kodModulu, RolaOkna: shared.WindowRoleStandalone}
 	a.dziedziczPoOknachSesji(idSesji, &u)
@@ -28,14 +19,9 @@ func (a *adapterNawigacji) parametryOknaModulu(ctx context.Context, idSesji, kod
 	return u
 }
 
-// dziedziczPoOknachSesji przepisuje parametry wykonania z okna, które w tej
-// sesji już rozmawia. Bierzemy okno ostatnie z niepustym kanałem — jest nim
-// okno najświeższe, a więc to, którego ustawienia Operator widział ostatnio.
-//
-// Dziedziczy się komplet parametrów wykonania, nie sam kanał: nowe okno modułu
-// ma pracować w tych samych katalogach, w tym samym środowisku i na tym samym
-// trybie uprawnień co reszta sesji. Rola zostaje samodzielna — okno modułu nie
-// wchodzi do cudzej pętli koordynator–wykonawca.
+// dziedziczPoOknachSesji przepisuje komplet parametrów wykonania z najświeższego
+// okna sesji z niepustym kanałem, tak aby nowe okno modułu pracowało w tych
+// samych katalogach, środowisku i trybie uprawnień co reszta sesji.
 func (a *adapterNawigacji) dziedziczPoOknachSesji(idSesji string, u *session.Ustawienia) {
 	if a.nadzorca == nil {
 		return

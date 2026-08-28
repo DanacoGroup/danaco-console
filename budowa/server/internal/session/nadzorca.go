@@ -24,21 +24,26 @@ func NowyNadzorca() *Nadzorca {
 	}
 }
 
-// Rejestr zwraca rejestr sesji i okien.
+// Rejestr zwraca rejestr sesji i okien, przez który nadzorca prowadzi ich
+// stan, przydział i wyszukiwanie.
 func (n *Nadzorca) Rejestr() *Rejestr { return n.rejestr }
 
-// Procesy zwraca rejestr procesów okien.
+// Procesy zwraca rejestr procesów okien, którymi zarządza nadzorca
+// w imieniu rdzenia i całej platformy.
 func (n *Nadzorca) Procesy() *RejestrProcesow { return n.procesy }
 
-// Wybudzacz zwraca kierownicę pętli koordynator–wykonawca.
+// Wybudzacz zwraca kierownicę pętli koordynator–wykonawca obsługującej
+// sesję komunikacji z modelem językowym.
 func (n *Nadzorca) Wybudzacz() *Wybudzacz { return n.wybudzacz }
 
-// ZalozSesje zakłada sesję wspólną dla plików, pamięci, projektu i agentów.
+// ZalozSesje zakłada sesję wspólną dla plików, pamięci, projektu i agentów,
+// zwracając jej pełny opis startowy.
 func (n *Nadzorca) ZalozSesje(tytul, idProjektu string) Sesja {
 	return n.rejestr.ZalozSesje(tytul, idProjektu)
 }
 
-// OtworzOkno zakłada okno komunikacji w sesji.
+// OtworzOkno zakłada okno komunikacji w sesji i zwraca jego opis wraz
+// z identyfikatorem oraz ustawieniami.
 func (n *Nadzorca) OtworzOkno(idSesji string, u Ustawienia) (Okno, error) {
 	return n.rejestr.OtworzOkno(idSesji, u)
 }
@@ -54,7 +59,8 @@ func (n *Nadzorca) ZamknijOkno(idOkna string) (Okno, error) {
 	return n.rejestr.ZamknijOkno(idOkna)
 }
 
-// ZamknijSesje zamyka wszystkie okna sesji i ubija ich procesy.
+// ZamknijSesje zamyka wszystkie okna sesji i ubija ich procesy wraz z całym
+// drzewem procesów potomnych.
 func (n *Nadzorca) ZamknijSesje(idSesji string) ([]Okno, error) {
 	zamkniete, err := n.rejestr.ZamknijSesje(idSesji)
 	if err != nil {
@@ -67,8 +73,8 @@ func (n *Nadzorca) ZamknijSesje(idSesji string) ([]Okno, error) {
 	return zamkniete, n.procesy.ZatrzymajOkna(idOkien)
 }
 
-// Zamknij kończy wszystkie procesy okien — zamknięcie rdzenia nie zostawia
-// sierot.
+// Zamknij kończy wszystkie procesy okien wszystkich sesji rdzenia;
+// zamknięcie rdzenia nie zostawia sierot.
 func (n *Nadzorca) Zamknij() error {
 	return n.procesy.ZatrzymajWszystkie()
 }

@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: dołożenia narzędzi żyjące w stanie sesji — zapis,
-// odczyt i zdjęcie (tabela `narzedzie_sesji`).
-//
-// Narzędzie dołożone komendą po ukośniku trwa do końca sesji: nie wchodzi na
-// stałe do definicji eksperta i nie znika po jednej turze. Czas życia niesie
-// klucz obcy z kasowaniem kaskadowym, nie kod — dlatego nie ma tu metody
-// sprzątającej wygasłe wiersze; koniec życia dołożenia to koniec życia wiersza
-// `sesja`.
-//
-// Plik prowadzi dołożenia jednej sesji, a nie katalog, z którego się je wybiera.
-// Wykaz pozycji po ukośniku nie jest tabelą: składa go rdzeń na bieżąco z komend
-// kontraktu, katalogu akcji (tabela `akcja`) i katalogu rozszerzeń (tabela
-// `rozszerzenie`) — `core/adapter_narzedzia_sesji.go`. Odpisanie go do trzeciej
-// tabeli byłoby drugą prawdą o tym, co platforma umie, i rozjechałoby się
-// z pierwszą przy pierwszej instalacji rozszerzenia.
+// Odpowiedzialność pliku: dołożenia narzędzi żyjące w stanie sesji — zapis, odczyt i zdjęcie
+// (tabela `narzedzie_sesji`).
 package dane
 
 import (
@@ -22,16 +9,10 @@ import (
 	"fmt"
 )
 
-// NarzedzieSesji to jedno dołożenie: pozycja wykazu odpisana w chwili dołożenia.
-//
-// Wiersz niesie odpis, nie odwołanie: trzy pola nazewnicze i grupę, a nie klucz
-// obcy do pozycji wykazu — wykaz nie jest tabelą i nie ma czego wskazać. Dzięki
-// temu odinstalowanie rozszerzenia nie zamienia dołożenia w nazwę bez opisu
-// i do końca sesji widać, co model dostał.
+// NarzedzieSesji to jedno dołożenie: pozycja wykazu odpisana w chwili dołożenia, niesiona jako odpis, nie odwołanie.
 type NarzedzieSesji struct {
 	ID int64
-	// NazwaPelna niesie przedrostek źródła, np. `anthropic-skills:skill-creator`.
-	// To ona jest tożsamością dołożenia w obrębie sesji.
+	// NazwaPelna niesie przedrostek źródła narzędzia; jest tożsamością dołożenia w obrębie sesji.
 	NazwaPelna string
 	// NazwaSkrocona to nazwa bez przedrostka źródła — ta, którą się wpisuje.
 	NazwaSkrocona string
@@ -50,27 +31,16 @@ type NarzedzieSesji struct {
 	Dolozono int64
 }
 
-// RepozytoriumNarzedziSesji jest kontraktem dołożeń jednej sesji.
-//
-// Identyfikator sesji jest tu kluczem wiersza `sesja`, nie identyfikatorem
-// kontraktowym: przekład jednego na drugi należy do adaptera rdzenia, tak samo
-// jak przy każdym innym repozytorium tego pakietu.
+// RepozytoriumNarzedziSesji jest kontraktem dołożeń jednej sesji; identyfikator sesji jest tu kluczem
+// wiersza sesji.
 type RepozytoriumNarzedziSesji interface {
-	// Narzedzia oddaje dołożenia sesji w kolejności dokładania. Sesja bez
-	// dołożeń oddaje wykaz pusty i jest to stan poprawny, nie brak wiersza —
-	// zestaw narzędzi tury jest wtedy samą definicją eksperta.
+	// Narzedzia oddaje dołożenia sesji w kolejności dokładania; sesja bez dołożeń oddaje wykaz pusty.
 	Narzedzia(ctx context.Context, sesjaID int64) ([]NarzedzieSesji, error)
-	// Doloz zapisuje dołożenie i oddaje je wraz z nadanym identyfikatorem oraz
-	// znacznikiem, czy narzędzie było już dołożone wcześniej. Powtórzenie nie
-	// jest błędem i nie mnoży wierszy.
+	// Doloz zapisuje dołożenie i oddaje je wraz z nadanym identyfikatorem oraz znacznikiem powtórzenia.
 	Doloz(ctx context.Context, sesjaID int64, narzedzie NarzedzieSesji) (NarzedzieSesji, bool, error)
-	// Zdejmij kasuje dołożenie po nazwie pełnej. Falsz znaczy „nie było czego
-	// zdejmować" i też nie jest błędem.
+	// Zdejmij kasuje dołożenie po nazwie pełnej; fałsz znaczy „nie było czego zdejmować".
 	Zdejmij(ctx context.Context, sesjaID int64, nazwaPelna string) (bool, error)
-	// ZdejmijWszystkie kasuje wszystkie dołożenia sesji i oddaje ich liczbę.
-	// Usunięcie sesji zdejmuje dołożenia kaskadą klucza obcego; ta czynność
-	// obsługuje przypadek, w którym sesja zostaje, a zestaw ma wrócić do
-	// podstawy.
+	// ZdejmijWszystkie kasuje wszystkie dołożenia sesji i oddaje ich liczbę usuniętych wierszy.
 	ZdejmijWszystkie(ctx context.Context, sesjaID int64) (int, error)
 }
 
@@ -107,12 +77,7 @@ func noweRepozytoriumNarzedziSesji(z *zapytania, db *sql.DB) *repozytoriumNarzed
 	return &repozytoriumNarzedziSesji{zapytania: z, db: db}
 }
 
-// NarzedziaSesji oddaje repozytorium dołożeń nad tą samą bazą, co reszta
-// zestawu.
-//
-// Metoda, a nie pole struktury — z tego samego powodu, co `SekcjePaneli`
-// (`panele.go`) i `Rozszerzenia` (`extension.go`): repozytorium nie trzyma stanu
-// poza wskaźnikiem na wspólną pamięć zapytań.
+// NarzedziaSesji oddaje repozytorium dołożeń narzędzi nad tą samą bazą danych, co reszta zestawu repozytoriów.
 func (z *Zestaw) NarzedziaSesji() RepozytoriumNarzedziSesji {
 	if z == nil || z.zapytania == nil || z.zapytania.db == nil {
 		return nil
@@ -120,7 +85,7 @@ func (z *Zestaw) NarzedziaSesji() RepozytoriumNarzedziSesji {
 	return noweRepozytoriumNarzedziSesji(z.zapytania, z.zapytania.db)
 }
 
-// Narzedzia czyta dołożenia jednej sesji w kolejności dokładania.
+// Narzedzia czyta wszystkie dołożenia jednej sesji w kolejności ich dokładania do stanu tej sesji rozmowy.
 func (r *repozytoriumNarzedziSesji) Narzedzia(ctx context.Context,
 	sesjaID int64) ([]NarzedzieSesji, error) {
 
@@ -148,11 +113,8 @@ func (r *repozytoriumNarzedziSesji) Narzedzia(ctx context.Context,
 	return wykaz, nil
 }
 
-// Doloz zapisuje dołożenie. Odczyt i zapis idą jedną transakcją, bo razem
-// odpowiadają na jedno pytanie: „czy to już jest, a jeśli nie — wpisz". Bez
-// wspólnej transakcji dwie komendy po ukośniku wydane w tej samej chwili obie
-// zastałyby pustą tabelę i obie próbowałyby wpisać wiersz; druga odbiłaby się
-// o warunek UNIQUE i dostałaby odmowę za czynność, która była poprawna.
+// Doloz zapisuje dołożenie; odczyt i zapis idą jedną transakcją, bo razem odpowiadają na jedno pytanie
+// o istnienie wiersza.
 func (r *repozytoriumNarzedziSesji) Doloz(ctx context.Context, sesjaID int64,
 	narzedzie NarzedzieSesji) (NarzedzieSesji, bool, error) {
 
@@ -166,9 +128,7 @@ func (r *repozytoriumNarzedziSesji) Doloz(ctx context.Context, sesjaID int64,
 		zastane, err := odczytajNarzedzieSesji(
 			odczyt.QueryRowContext(ctx, sesjaID, narzedzie.NazwaPelna).Scan)
 		if err == nil {
-			// Powtórzenie nie jest błędem i nie nadpisuje zastanego wiersza.
-			// Czas dołożenia ma mówić, kiedy model dostał narzędzie — odświeżony
-			// przy każdym powtórzeniu kłamałby o chwili, od której je ma.
+			// Powtórzenie nie jest błędem i nie nadpisuje zastanego wiersza ani czasu jego dołożenia.
 			zapisane, juzBylo = zastane, true
 			return nil
 		}
@@ -202,7 +162,7 @@ func (r *repozytoriumNarzedziSesji) Doloz(ctx context.Context, sesjaID int64,
 	return zapisane, juzBylo, nil
 }
 
-// Zdejmij kasuje dołożenie po nazwie pełnej.
+// Zdejmij kasuje jedno dołożenie narzędzia po jego pełnej nazwie w obrębie tej wskazanej sesji rozmowy.
 func (r *repozytoriumNarzedziSesji) Zdejmij(ctx context.Context, sesjaID int64,
 	nazwaPelna string) (bool, error) {
 
@@ -223,7 +183,7 @@ func (r *repozytoriumNarzedziSesji) Zdejmij(ctx context.Context, sesjaID int64,
 	return zmienione > 0, nil
 }
 
-// ZdejmijWszystkie kasuje wszystkie dołożenia sesji.
+// ZdejmijWszystkie kasuje wszystkie dołożenia narzędzi danej sesji rozmowy naraz, jednym poleceniem zapisu.
 func (r *repozytoriumNarzedziSesji) ZdejmijWszystkie(ctx context.Context,
 	sesjaID int64) (int, error) {
 

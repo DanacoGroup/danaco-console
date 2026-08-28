@@ -10,14 +10,9 @@ import type { PozycjaUstawienia } from '../strona-glowna/indeks';
 import { pokazKomunikat } from './komunikaty';
 
 /**
- * Skutek wyboru pozycji listwy ustawień Centrum dowodzenia.
- *
- * Listwa sama niczego nie otwiera — zgłasza wybór, a rozdział wyboru na
- * czynności należy do tej warstwy. Dzięki temu dopisanie kolejnego ekranu
- * ustawień zmienia wyłącznie ten plik.
- *
- * Pozycja bez własnego widoku pozostaje klikalna, a naciśnięcie mówi wprost,
- * że ekran jeszcze nie powstał, zamiast otwierać atrapę.
+ * Skutek wyboru pozycji listwy ustawień Centrum dowodzenia. Listwa sama niczego
+ * nie otwiera, a rozdział zgłoszonego wyboru na czynności należy do tej
+ * warstwy, więc dopisanie kolejnego ekranu ustawień zmienia wyłącznie ten plik.
  */
 export function wykonajZamiarUstawien(pozycja: PozycjaUstawienia, kanal: Kanal): void {
   if (pozycja.kod === 'konfiguracja') {
@@ -51,9 +46,8 @@ export function wykonajZamiarUstawien(pozycja: PozycjaUstawienia, kanal: Kanal):
   }
 
   if (pozycja.kod === 'aod') {
-    // Always On Display nie ma własnego okna: pozycja listwy otwiera
-    // powierzchnię interakcji jako rozszerzenie boczne (opracowanie funkcji
-    // globalnej, rozdz. 2.1 i 8.2).
+    // Always On Display nie ma okna: pozycja otwiera powierzchnię interakcji
+    // jako rozszerzenie boczne.
     otworzPowierzchnieAod(kanal);
     return;
   }

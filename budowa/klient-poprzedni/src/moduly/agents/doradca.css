@@ -1,12 +1,4 @@
-/*
- * Panel „Doradca” Agent Buildera. Osobny arkusz obok `agents.css`, bo podział
- * stylów modułu idzie wzdłuż komponentu.
- *
- * Barwy biorą się z żetonów, nie z literałów. Etykieta rady i ostrzeżenie
- * o urwanej turze sięgają po żetony ostrzeżenia — te same, którymi mówi
- * odstępstwo promptu w `agents.css`. Rada ma być rozpoznawalna kolorem, bez
- * czytania nagłówka.
- */
+/* Arkusz opisuje panel Doradca Agent Buildera, w którym etykieta rady i ostrzeżenie o urwanej turze sięgają po żetony barwy ostrzeżenia. */
 
 .da-doradca {
   display: flex;
@@ -33,7 +25,7 @@
   background: var(--dn-panel);
 }
 
-/* Etykieta pochodzenia — pierwsza rzecz w wierszu i najgłośniejsza w nim. */
+/* Etykieta pochodzenia stoi jako pierwsza rzecz w wierszu i jest w nim najgłośniejsza wizualnie spośród wszystkich elementów. */
 .da-doradca__etykieta {
   align-self: flex-start;
   padding: 0 var(--dn-od-1);
@@ -56,7 +48,7 @@
   margin: 0;
 }
 
-/* Pytanie jest cytatem Operatora — wcięcie odróżnia je od rady doradcy. */
+/* Pytanie jest cytatem operatora w wierszu doradcy, a wcięcie odróżnia je wizualnie od rady, którą doradca na nie odpowiada. */
 .da-doradca__pytanie {
   margin: 0;
   padding: 0 0 0 var(--dn-od-2);
@@ -77,7 +69,7 @@
   white-space: pre-wrap;
 }
 
-/* Tura urwana albo zakończona błędem — powód stoi nad treścią częściową. */
+/* Tura urwana albo zakończona błędem pokazuje powód nad treścią częściową, zanim operator przeczyta to, co doradca zdążył powiedzieć. */
 .da-doradca__stan {
   margin: 0;
   padding: var(--dn-od-1) var(--dn-od-2);

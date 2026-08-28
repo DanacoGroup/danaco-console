@@ -1,3 +1,8 @@
+/**
+ * Przekład wartości kontraktu na polskie nazwy stanów i działań pulpitu. Plik
+ * trzyma zupełne rekordy etykiet stanu sesji, roli okna, stanu kolejki, stanu
+ * procesu, działania kolejki oraz rodzaju relacji i jej utworzenia.
+ */
 import {
   ProgressStatus,
   QueueAction,
@@ -8,23 +13,16 @@ import {
 import { RodzajRelacji, RodzajUtworzenia } from './model-danych';
 
 /**
- * Polskie nazwy stanów i działań pulpitu.
- *
- * Jedna odpowiedzialność: przekład wartości kontraktu na słowo widoczne dla
- * operatora. Widok nie zna literałów kontraktu — pyta o etykietę tutaj.
- *
- * Rekordy są kompletne (`Record<T, string>`), więc dopisanie wartości do
- * kontraktu przerywa kompilację tego pliku. To zamierzone: nowy stan ma dostać
- * polską nazwę, a nie wypaść z widoku po cichu.
- */
-
-/**
  * Etykieta miary, której kontrakt dziś nie niesie. Widok wypisuje
  * ją zamiast liczby — pulpit nigdy nie pokazuje wartości wymyślonej.
  */
 export const ETYKIETA_BRAKU_ZRODLA = 'brak źródła danych w kontrakcie';
 
-/** Stan sesji. */
+/**
+ * Polska nazwa stanu sesji dla każdej wartości kontraktu: czynna, wstrzymana,
+ * zakończona oraz zarchiwizowana. Rekord jest zupełny, więc nowa wartość
+ * w kontrakcie przerywa kompilację zamiast wypaść z widoku.
+ */
 export const ETYKIETA_STANU_SESJI: Readonly<Record<SessionStatus, string>> = {
   [SessionStatus.Active]: 'czynna',
   [SessionStatus.Paused]: 'wstrzymana',
@@ -32,14 +30,22 @@ export const ETYKIETA_STANU_SESJI: Readonly<Record<SessionStatus, string>> = {
   [SessionStatus.Archived]: 'zarchiwizowana',
 };
 
-/** Rola okna w pętli koordynator–wykonawca. */
+/**
+ * Polska nazwa roli okna w pętli koordynator–wykonawca. Kontrakt niesie trzy
+ * role: koordynatora, wykonawcę oraz okno samodzielne, czyli stojące poza tą
+ * pętlą.
+ */
 export const ETYKIETA_ROLI_OKNA: Readonly<Record<WindowRole, string>> = {
   [WindowRole.Coordinator]: 'koordynator',
   [WindowRole.Executor]: 'wykonawca',
   [WindowRole.Standalone]: 'samodzielne',
 };
 
-/** Stan kolejki. */
+/**
+ * Polska nazwa stanu kolejki zleceń dla pięciu wartości kontraktu: gotowa,
+ * w biegu, wstrzymana, zatrzymana oraz wyczerpana. Widok nie zna literałów
+ * kontraktu i pyta o nazwę tutaj.
+ */
 export const ETYKIETA_STANU_KOLEJKI: Readonly<Record<QueueStatus, string>> = {
   [QueueStatus.Idle]: 'gotowa',
   [QueueStatus.Running]: 'w biegu',
@@ -48,7 +54,11 @@ export const ETYKIETA_STANU_KOLEJKI: Readonly<Record<QueueStatus, string>> = {
   [QueueStatus.Done]: 'wyczerpana',
 };
 
-/** Stan procesu w telemetrii postępu. */
+/**
+ * Polska nazwa stanu procesu w telemetrii postępu. Wykaz odróżnia zakończenie
+ * pomyślne od zakończenia błędem, ponieważ pulpit pokazuje je jako dwa różne
+ * stany procesu.
+ */
 export const ETYKIETA_STANU_PROCESU: Readonly<Record<ProgressStatus, string>> = {
   [ProgressStatus.Pending]: 'oczekuje',
   [ProgressStatus.Running]: 'w biegu',
@@ -58,7 +68,11 @@ export const ETYKIETA_STANU_PROCESU: Readonly<Record<ProgressStatus, string>> = 
   [ProgressStatus.Failed]: 'zakończony błędem',
 };
 
-/** Działanie transportu kolejki. */
+/**
+ * Podpis przycisku działania transportu kolejki. Podpisy zapisane są wielką
+ * literą początkową, ponieważ trafiają wprost na kontrolkę, a nie w zdanie
+ * opisujące stan.
+ */
 export const ETYKIETA_DZIALANIA_KOLEJKI: Readonly<Record<QueueAction, string>> = {
   [QueueAction.Start]: 'Uruchom',
   [QueueAction.Pause]: 'Wstrzymaj',
@@ -76,19 +90,30 @@ export const ETYKIETA_DZIALANIA_KOLEJKI: Readonly<Record<QueueAction, string>> =
   [QueueAction.Condition]: 'Warunek',
 };
 
-/** Rodzaj powiązania sesji w pasie „Relacje". */
+/**
+ * Nazwa rodzaju powiązania sesji w pasie relacji. Wymiana jest dwustronna,
+ * przekazanie jednostronne, a kierunek niesie osobno znak wiodący stojący obok
+ * nazwy.
+ */
 export const ETYKIETA_RODZAJU_RELACJI: Readonly<Record<RodzajRelacji, string>> = {
   [RodzajRelacji.Wymiana]: 'wymiana dwustronna',
   [RodzajRelacji.Przekazanie]: 'przekazanie jednostronne',
 };
 
-/** Znak wiodący relacji: dwustronny lub jednostronny. */
+/**
+ * Znak wiodący relacji: strzałka dwustronna dla wymiany i jednostronna dla
+ * przekazania. Znak towarzyszy nazwie rodzaju i sam jej nie zastępuje.
+ */
 export const STRZALKA_RELACJI: Readonly<Record<RodzajRelacji, string>> = {
   [RodzajRelacji.Wymiana]: '⇄',
   [RodzajRelacji.Przekazanie]: '→',
 };
 
-/** Podpis kafla w rzędzie „Utwórz". */
+/**
+ * Podpis kafla w rzędzie tworzenia. Każdy rodzaj utworzenia niesie własne zdanie
+ * w trybie rozkazującym, ponieważ kafel jest wezwaniem do czynności, a nie nazwą
+ * stanu.
+ */
 export const ETYKIETA_UTWORZENIA: Readonly<Record<RodzajUtworzenia, string>> = {
   [RodzajUtworzenia.Sesja]: 'Nowa sesja',
   [RodzajUtworzenia.Projekt]: 'Załóż projekt',

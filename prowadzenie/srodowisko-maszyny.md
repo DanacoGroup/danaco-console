@@ -129,3 +129,21 @@ Procesy uruchomione przez sesję są przez tę sesję wygaszane przed jej
 zamknięciem. Pliki robocze powstają w katalogu tymczasowym sesji i giną wraz
 z nią. Drzewo robocze zamkniętego terenu jest usuwane. Sesja, która zostawia po
 sobie działający proces albo katalog roboczy, nie zamknęła pracy.
+
+## Postawione 28.08 przy odtwarzaniu drogi budowania instalatora
+
+Toolchain Rusta zniknął z maszyny (`~/.cargo/bin` nie istniał, `~/.rustup` był
+pusty), przez co powłoki Tauri ani instalatora Windows nie dało się złożyć.
+Postawione na polecenie Właściciela:
+
+| Narzędzie | Wydanie | Waga | Po co |
+|---|---|---|---|
+| rustup wraz z rustc i cargo | 1.98.0, profil minimalny | ~1,4 GB z celami | budowa powłoki Tauri |
+| cel `x86_64-pc-windows-gnu` | — | w powyższym | wariant x64 instalatora |
+| cel `aarch64-pc-windows-msvc` | — | w powyższym | wariant ARM64 instalatora |
+| `cargo-tauri` | 2.11.4 | ~40 MB | złożenie pakietu NSIS |
+| `cargo-xwin` | 0.23.1 | ~25 MB | biblioteki Windows SDK dla celu MSVC na Linuksie |
+
+Nie instalowano niczego poza tym. Vite 8.2.2, TypeScript 7.0.2, `mingw-w64`,
+`makensis` oraz llvm-mingw w `/opt/llvm-mingw` stały już na maszynie.
+

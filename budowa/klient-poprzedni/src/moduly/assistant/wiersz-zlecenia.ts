@@ -4,30 +4,31 @@ import {
 } from '../../../../shared/contract';
 import { NAZWY_DROG, NAZWY_STANOW, PLAKIETKI_STANOW } from './etykiety-assistant';
 
-/**
- * Jeden wiersz tabeli zleceń Actions Monitora.
- *
- * Plik odpowiada wyłącznie za zamianę zlecenia w wiersz wraz z jego panelem
- * akcji. Wiersz niczego nie wywołuje — zamiar oddaje oknu, które prowadzi jedno
- * wywołanie `assistant.action.status`.
- *
- * Wszystkie sterowania zostają klikalne niezależnie od stanu zlecenia.
- * Wstrzymania zlecenia już wykonanego widok nie blokuje — odpowiada na nie
- * rdzeń, a odpowiedź trafia do wiersza odpowiedzi okna. Wygaszona kontrolka
- * kazałaby zgadywać, czy przycisk nie działa, czy tylko nie odpowiada.
- */
+// Wiersz tabeli zleceń Actions Monitora wraz z panelem akcji; sam niczego nie wywołuje.
 
-/** Zamiar wydany z wiersza: sterowanie albo zmiana priorytetu. */
+/**
+ * Zamiar wydany z wiersza: sterowanie zleceniem albo zmiana jego priorytetu.
+ * Wiersz oddaje zamiar oknu, a okno prowadzi jedno wywołanie komendy
+ * `assistant.action.status`.
+ */
 export type NaSterowanie = (
   idZlecenia: string,
   sterowanie: AssistantActionControl,
   priorytet?: number,
 ) => void;
 
-/** Podgląd szczegółów i wyniku zlecenia — obsługiwany po stronie okna. */
+/**
+ * Podgląd szczegółów albo wyniku zlecenia, obsługiwany po stronie okna. Wartość
+ * logiczna rozstrzyga, który z dwóch podglądów ma się otworzyć; oba są czynnością
+ * lokalną i na drut do rdzenia nie idą.
+ */
 export type NaPodglad = (zlecenie: AssistantAction, wynik: boolean) => void;
 
-/** Sterowania panelu akcji wiersza w kolejności pokazywanej na ekranie. */
+/**
+ * Sterowania panelu akcji wiersza w kolejności pokazywanej na ekranie: napis
+ * przycisku wraz z wartością wyliczenia `AssistantActionControl`, która pojedzie
+ * do rdzenia po naciśnięciu.
+ */
 const STEROWANIA: readonly (readonly [string, AssistantActionControl])[] = [
   ['Wstrzymaj', AssistantActionControl.Pause],
   ['Wznów', AssistantActionControl.Resume],
@@ -59,7 +60,11 @@ function komorka(tresc: string): HTMLTableCellElement {
   return element;
 }
 
-/** Stan zlecenia jako plakietka — barwa nigdy nie niesie znaczenia sama. */
+/**
+ * Składa komórkę stanu: plakietkę z nazwą stanu zlecenia oraz nazwę drogi, którą
+ * zlecenie przyszło. Stan stoi w plakietce napisem, więc barwa nigdy nie niesie
+ * znaczenia sama.
+ */
 function komorkaStanu(zlecenie: AssistantAction): HTMLTableCellElement {
   const plakietka = document.createElement('span');
   plakietka.className = PLAKIETKI_STANOW[zlecenie.status];
@@ -71,7 +76,11 @@ function komorkaStanu(zlecenie: AssistantAction): HTMLTableCellElement {
   return element;
 }
 
-/** Etap bieżący zlecenia wieloetapowego; bez etapów — zdanie o ich braku. */
+/**
+ * Składa opis etapu zlecenia wieloetapowego z pól `currentStep` oraz `totalSteps`.
+ * Zlecenie bez podanej liczby etapów dostaje zdanie o tym, że rdzeń etapów nie
+ * podał, zamiast pustej komórki.
+ */
 function opisEtapu(zlecenie: AssistantAction): string {
   if (zlecenie.totalSteps === undefined || zlecenie.totalSteps === 0) {
     return 'rdzeń nie podał etapów';
@@ -80,18 +89,9 @@ function opisEtapu(zlecenie: AssistantAction): string {
 }
 
 /**
- * Priorytet zlecenia — pole liczbowe zapisywane komendą sterowania.
- *
- * Pole wysyła sterowanie `none`, choć rdzeń zapisuje priorytet wyłącznie przy
- * sterowaniu innym niż `none`. Zmiana kolejności obsługi nie jest zmianą stanu
- * zlecenia, a kontrakt nie zna wartości `AssistantActionControl` znaczącej
- * „zapisz sam priorytet" — są tylko `none`, `pause`, `resume`, `cancel`
- * i `retry`, a `assistant.action.status` jest jedyną komendą obszaru niosącą
- * pole `priority`.
- *
- * Podszycie się pod `pause` albo `retry` po to, żeby przemycić priorytet,
- * przestawiłoby stan zlecenia, o który nikt nie prosił. Pole zostaje więc przy
- * `none`, a rozbieżność nazywa wiersz odpowiedzi okna (`skutek-sterowania.ts`).
+ * Składa komórkę priorytetu: pole liczbowe, którego zmiana wydaje zamiar
+ * sterowania `none` wraz z nową wartością pola `priority`. Kontrakt nie zna
+ * sterowania znaczącego wyłącznie zapis priorytetu.
  */
 function komorkaPriorytetu(
   zlecenie: AssistantAction,
@@ -111,7 +111,11 @@ function komorkaPriorytetu(
   return element;
 }
 
-/** Panel akcji wiersza: cztery sterowania rdzenia oraz dwa podglądy lokalne. */
+/**
+ * Składa komórkę akcji: cztery sterowania rdzenia z wykazu `STEROWANIA` oraz dwa
+ * podglądy prowadzone lokalnie przez okno. Wszystkie przyciski zostają klikalne
+ * niezależnie od stanu zlecenia.
+ */
 function komorkaAkcji(
   zlecenie: AssistantAction,
   naSterowanie: NaSterowanie,

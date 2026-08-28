@@ -6,32 +6,9 @@ import { CZYNNOSCI_WARSZTATOW_DESIGNU } from './czynnosci-warsztatow-designu';
 import { utworzZrodloDesignu } from './zrodlo-designu';
 import { utworzZrodloWarsztatowDesignu } from './zrodlo-warsztatow-designu';
 
-/**
- * Sprawdziany warstwy klienckiej obszaru `design.*`.
- *
- * Główny z nich pilnuje jednej rzeczy: czy KAŻDA komenda rodziny `design.*`
- * z kontraktu ma drogę z okna do rdzenia. Wykaz nie jest tu przepisany —
- * powstaje z wywołań źródła, a porównywany jest ze stałymi kontraktu, więc
- * komenda dołożona do kontraktu i pominięta w oknie zostanie tu nazwana.
- *
- * Dróg z okna do rdzenia są DWIE i sprawdzian przechodzi obie. Pierwsza to
- * źródło obszaru (`zrodlo-designu.ts`) — metoda na komendę, typowana kontraktem;
- * tą drogą jadą okna warstwy pierwszej. Druga to warsztaty
- * (`zrodlo-warsztatow-designu.ts`) — jedna droga na komendę wskazaną KATALOGIEM
- * czynności; tą jadą sześć okien warsztatowych, bo siedemdziesiąt pięć metod
- * w jednym źródle byłoby siedemdziesięcioma pięcioma miejscami na tę samą
- * pomyłkę. Wymaganie sprawdzianu jest w obu przypadkach to samo: komenda bez
- * drogi z okna jest funkcją, której Operator nie ma.
- *
- * Pozostałe sprawdziany dotyczą rozstrzygnięć, które warstwa kliencka
- * podejmuje sama i które łatwo cofnąć nieuważną poprawką: pola opcjonalne idą
- * do rdzenia WYŁĄCZNIE wskazane. Skala zero nie jest krotnością, granica zero
- * nie jest granicą, a `resolved: false` wysłane przy zapisie treści otwierałoby
- * wątek, którego nikt nie kazał otwierać. Każde z tych pól wysłane „na wszelki
- * wypadek" jest zdaniem o woli Operatora, którego Operator nie wypowiedział.
- */
+/** Sprawdziany warstwy klienckiej obszaru `design.*`: każda komenda rodziny ma drogę z okna do rdzenia. */
 
-/** Kanał próbny: zapamiętuje komendy wraz z żądaniami i oddaje odpowiedź pustą. */
+/** Kanał próbny: zapamiętuje komendy wraz z żądaniami i oddaje odpowiedź pustą, gotową do porównania w teście. */
 function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   kanal: Kanal;
   wyslane: string[];
@@ -54,7 +31,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   return { kanal, wyslane, zadania };
 }
 
-/** Wywołuje każdą czynność źródła raz — pełny przelot rodziny. */
+/** Wywołuje każdą czynność źródła raz — pełny przelot rodziny komend obszaru design w tym sprawdzianie. */
 async function przelotZrodla(kanal: Kanal): Promise<void> {
   const zrodlo = utworzZrodloDesignu(kanal);
   const prompt = { subject: 'ilustracja bohatera strony' };
@@ -146,12 +123,7 @@ async function przelotZrodla(kanal: Kanal): Promise<void> {
 
 /**
  * Przelot drugą drogą: każda czynność katalogu warsztatów woła rdzeń swoją
- * komendą.
- *
- * Żądanie jest tu puste, bo sprawdzian pyta o DROGĘ, nie o kształt żądania.
- * Kształt składa `zloz` czynności z formularza i sprawdza go rdzeń — a odmowa
- * walidacji z nazwą pola jest odpowiedzią, którą kanał próbny i tak zwraca jako
- * powodzenie. Ten sprawdzian ma wyłapać komendę, której NIKT nie woła.
+ * komendą, z żądaniem pustym, bo sprawdzian pyta o drogę, nie o jego kształt.
  */
 async function przelotWarsztatow(kanal: Kanal): Promise<void> {
   const zrodlo = utworzZrodloWarsztatowDesignu(kanal);
@@ -166,9 +138,7 @@ describe('źródło modułu Design', () => {
     await przelotZrodla(kanal);
     await przelotWarsztatow(kanal);
 
-    // Wykaz oczekiwany bierze się z KONTRAKTU, nie z tego pliku: komenda
-    // dołożona do rodziny i pominięta w źródle wypadnie tu jako brak, bez
-    // dopisywania czegokolwiek w sprawdzianie.
+    // Wykaz oczekiwany bierze się z kontraktu, więc komenda dołożona i pominięta wypadnie tu jako brak.
     const zRodziny = Object.values(Command).filter((nazwa) => nazwa.startsWith('design.'));
     const bezDrogi = zRodziny.filter((nazwa) => !wyslane.includes(nazwa));
 
@@ -202,9 +172,7 @@ describe('źródło modułu Design', () => {
     const { kanal, zadania } = kanalProbny();
     await przelotZrodla(kanal);
 
-    // Zero jest tu prawdziwym położeniem (lewy górny róg), więc rozstrzyga
-    // skończoność liczby, nie jej wartość — inaczej kursor w rogu znikałby
-    // z widoku pozostałych.
+    // Zero jest tu prawdziwym położeniem, więc rozstrzyga skończoność liczby, nie jej wartość.
     expect(zadania[Command.DesignPresenceReport]).toMatchObject({ x: 0, y: 0 });
   });
 
@@ -216,8 +184,7 @@ describe('źródło modułu Design', () => {
   });
 
   it('uznaje wydanie bez treści za odpowiedź niepełną', async () => {
-    // Koperta udana z pustym `contentBase64` jest kopertą kłamiącą: plik
-    // zerowej długości zapisze się u Operatora tak samo jak plik prawdziwy.
+    // Koperta udana z pustym `contentBase64` jest kopertą kłamiącą — wygląda jak plik prawdziwy.
     const { kanal } = kanalProbny({
       [Command.DesignAssetExport]: { contentBase64: '', fileName: 'a.png', mediaType: 'image/png', sizeBytes: 0 },
     });
@@ -247,8 +214,7 @@ describe('źródło modułu Design', () => {
   });
 
   it('przyjmuje treść zasobu w postaci odsyłania, bez bajtów', async () => {
-    // Postać odsyłania oddaje miarę i sumę bez bajtów — to jest odpowiedź
-    // PEŁNA, a sprawdzenie kształtu nie ma prawa uznać jej za ubytek.
+    // Postać odsyłania oddaje miarę i sumę bez bajtów — to odpowiedź pełna, nie ubytek.
     const { kanal } = kanalProbny({
       [Command.DesignAssetContentGet]: {
         assetId: 'zasob-1',

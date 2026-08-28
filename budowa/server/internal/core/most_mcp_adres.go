@@ -17,11 +17,8 @@ type AdresPolaczeniaMostu struct {
 	Klucz      string
 }
 
-// AdresMostu wyprowadza adres połączenia z punktu dostępu.
-//
-// Pierwszeństwo ma pole endpoint, bo tylko ono niesie konto i port; pole host
-// uzupełnia nazwę maszyny, gdy endpoint jej nie podał. Brak konta i brak portu
-// schodzą na wartości domyślne mostu, nie na odmowę złożenia wpisu.
+// AdresMostu wyprowadza adres połączenia z punktu dostępu. Pierwszeństwo ma pole endpoint, bo
+// tylko ono niesie konto i port; pole host uzupełnia nazwę maszyny, gdy endpoint jej nie podał.
 func AdresMostu(punkt shared.AccessPoint) AdresPolaczeniaMostu {
 	adres := AdresPolaczeniaMostu{
 		Uzytkownik: UzytkownikMostuDomyslny,
@@ -77,13 +74,8 @@ func KluczWpisuMostu(punkt shared.AccessPoint) string {
 	return PrefiksMostuKonsoli + identyfikatorMaszyny(punkt)
 }
 
-// identyfikatorMaszyny wyprowadza człon rozróżniający klucz wpisu. Pierwszeństwo
-// ma nazwa mostu po stronie klienta, bo to ona jest nazwą własną maszyny
-// w konfiguracji Operatora; dalej idzie nazwa hosta, a na końcu identyfikator
-// wiersza punktu dostępu — zawsze niepusty.
-//
-// Nazwa mostu bywa podana w całości, razem z prefiksem; prefiks jest wtedy
-// obcinany, żeby klucz nie urósł do postaci powtórzonej.
+// identyfikatorMaszyny wyprowadza człon rozróżniający klucz wpisu. Pierwszeństwo ma nazwa mostu
+// po stronie klienta, dalej nazwa hosta, a na końcu identyfikator wiersza punktu — zawsze niepusty.
 func identyfikatorMaszyny(punkt shared.AccessPoint) string {
 	kandydaci := []string{
 		strings.TrimPrefix(tekstPunktu(punkt.BridgeName), PrefiksMostuKonsoli),
@@ -98,10 +90,8 @@ func identyfikatorMaszyny(punkt shared.AccessPoint) string {
 	return NazwaMaszynyZastepcza
 }
 
-// nazwaKluczaMostu sprowadza tekst do postaci bezpiecznej dla klucza wpisu:
-// małe litery, cyfry i kreska. Klucz trafia do konfiguracji MCP i do nazw
-// narzędzi widocznych dla modelu, więc znak spoza tego zbioru jest zamieniany
-// na kreskę, a nie przenoszony.
+// nazwaKluczaMostu sprowadza tekst do postaci bezpiecznej dla klucza wpisu: małe litery, cyfry
+// i kreska. Znak spoza tego zbioru jest zamieniany na kreskę, a nie przenoszony.
 func nazwaKluczaMostu(tekst string) string {
 	budowana := strings.Builder{}
 	for _, znak := range strings.ToLower(strings.TrimSpace(tekst)) {
@@ -115,7 +105,7 @@ func nazwaKluczaMostu(tekst string) string {
 	return strings.Trim(scalKreski(budowana.String()), "-")
 }
 
-// scalKreski zamienia ciąg kresek na jedną kreskę.
+// scalKreski zamienia ciąg kilku kolejnych kresek w kluczu wpisu na jedną kreskę bez powtórzeń tego znaku.
 func scalKreski(tekst string) string {
 	for strings.Contains(tekst, "--") {
 		tekst = strings.ReplaceAll(tekst, "--", "-")

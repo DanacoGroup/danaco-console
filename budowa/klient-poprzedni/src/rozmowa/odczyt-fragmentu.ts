@@ -1,36 +1,47 @@
 /**
- * Odczyt treści nietekstowej fragmentu strumienia.
- *
- * Pole `data` kontraktu jest typu `unknown` — rdzeń pakuje w nie strukturę
- * właściwą rodzajowi fragmentu. Odczyt jest w całości tolerancyjny: pole
- * brakujące, pole innego typu ani ładunek nieznanego kształtu nie przerywają
- * strumienia. Brak wartości znaczy „nie wiem", nie „błąd".
+ * Odczyt treści nietekstowej fragmentu strumienia, tolerancyjny wobec pola brakującego,
+ * innego typu albo nieznanego kształtu.
  */
 
-/** Ładunek fragmentu sprowadzony do zbioru pól albo `null`. */
+/**
+ * Ładunek fragmentu strumienia sprowadzony do zbioru odczytanych pól o znanym kształcie
+ * albo do wartości `null`.
+ */
 export function obiekt(dane: unknown): Record<string, unknown> | null {
   if (typeof dane !== 'object' || dane === null || Array.isArray(dane)) return null;
   return dane as Record<string, unknown>;
 }
 
-/** Pole tekstowe ładunku; brak albo inny typ daje pusty napis. */
+/**
+ * Pole tekstowe ładunku fragmentu strumienia; brak pola albo wartość innego typu daje w
+ * wyniku pusty napis.
+ */
 export function tekst(zrodlo: Record<string, unknown> | null, klucz: string): string {
   const wartosc = zrodlo?.[klucz];
   return typeof wartosc === 'string' ? wartosc : '';
 }
 
-/** Pole liczbowe ładunku; brak albo inny typ daje zero. */
+/**
+ * Pole liczbowe ładunku fragmentu strumienia; brak pola albo wartość innego typu daje w
+ * wyniku zero.
+ */
 export function liczba(zrodlo: Record<string, unknown> | null, klucz: string): number {
   const wartosc = zrodlo?.[klucz];
   return typeof wartosc === 'number' && Number.isFinite(wartosc) ? wartosc : 0;
 }
 
-/** Pole logiczne ładunku; brak albo inny typ daje fałsz. */
+/**
+ * Pole logiczne ładunku fragmentu strumienia; brak pola albo wartość innego typu daje w
+ * wyniku fałsz.
+ */
 export function prawda(zrodlo: Record<string, unknown> | null, klucz: string): boolean {
   return zrodlo?.[klucz] === true;
 }
 
-/** Pole listy napisów; pozycje innego typu są pomijane. */
+/**
+ * Pole listy napisów w ładunku fragmentu strumienia — pozycje o innym typie są z tej listy
+ * pomijane.
+ */
 export function listaTekstow(zrodlo: Record<string, unknown> | null, klucz: string): string[] {
   const wartosc = zrodlo?.[klucz];
   if (!Array.isArray(wartosc)) return [];

@@ -1,21 +1,18 @@
 /**
  * Stan treści okien modułu Automations — wiązanie wspólnego nośnika
- * (`komponenty/stan-tresci.ts`) z przedrostkiem klas `da`, bo klasy stanu należą
- * do arkusza modułu (`automations.css`).
- *
- * Różnica wobec nośnika wspólnego: `blad()` i `pusto()` zdejmują tu wcześniejsze
- * potwierdzenie. Wspólny nośnik przestawia wyłącznie pas komunikatu, przez co
- * odmowa rdzenia stawała obok potwierdzenia czynności poprzedniej — a zielone
- * zdanie nad odmową potwierdza czynność, która się nie odbyła.
- *
- * Zmiana siedzi w module, a nie w nośniku wspólnym, bo ten sam nośnik obsługuje
- * okna pozostałych modułów.
+ * (`komponenty/stan-tresci.ts`) z przedrostkiem klas `da` arkusza
+ * `automations.css`. Metody `blad()` i `pusto()` zdejmują tu wcześniejsze
+ * potwierdzenie.
  */
 import { utworzStanTresci as utworzWspolny, type StanTresci } from '../../komponenty/stan-tresci';
 
 export type { StanTresci };
 
-/** Nośnik stanu treści okna Automations. */
+/**
+ * Nośnik stanu treści okna Automations. Zwraca nośnik wspólny z przedrostkiem
+ * `da`, w którym `blad()` i `pusto()` najpierw gaszą pas potwierdzenia,
+ * a dopiero potem stawiają własny komunikat.
+ */
 export function utworzStanTresci(): StanTresci {
   const wspolny = utworzWspolny('da');
   return {

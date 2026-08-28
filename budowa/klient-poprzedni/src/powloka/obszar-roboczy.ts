@@ -4,41 +4,15 @@ import { elementIkony } from '../ikony/ikony';
 import type { PozycjaModulu, Srodowisko } from './srodowiska';
 
 /**
- * Pas 4 powłoki — obszar roboczy.
- *
- * Jedna odpowiedzialność: kontener na treść wybranej pozycji nawigacji wraz
- * z uczciwym stanem pustym dla pozycji, która zbudowanego widoku nie ma.
- * Obszar nie zna żadnego widoku i żadnego rdzenia — przyjmuje gotowy element
- * od warstwy, która go składa.
- *
- * Plansza obszaru niesie dwie warstwy naraz: widok modułu w wierszu górnym
- * i scenę okien komunikacji pod nim. Okno rozmowy jest oknem wiodącym każdego
- * modułu, więc obszar pokazujący jedną warstwę naraz odbierałby rozmowę
- * każdemu modułowi, który doczekał się własnego widoku.
- *
- * Widok raz osadzony nie jest niszczony: `pokaz` dokłada go przy pierwszym
- * użyciu i dalej wyłącznie przestawia widoczność atrybutem `hidden`. W obszarze
- * stoi scena z żywym oknem rozmowy — gniazdem WebSocket, strumieniem odpowiedzi
- * modelu, historią wpisów i obserwatorami układu okien równoległych.
- * Odmontowanie sceny przy każdym przełączeniu modułu zrywałoby rozmowę
- * w połowie zdania; ukrycie zostawia ją nietkniętą.
- *
- * Stan pusty nie zapowiada modułu, którego nie ma — nazywa go i pisze wprost,
- * że jego okna operacyjne nie zostały zbudowane, wymieniając katalog kodów
- * wzięty z rdzenia.
+ * Pas 4 powłoki — obszar roboczy: kontener treści wybranej pozycji nawigacji, ze sceną rozmowy
+ * i uczciwym stanem pustym.
  */
 export interface ObszarRoboczy {
   /** Kontener montowany w korpusie powłoki, obok nawigacji. */
   element: HTMLElement;
-  /**
-   * Osadza scenę okien komunikacji — warstwę wspólną wszystkim modułom.
-   * Wywoływana raz; scena zostaje w drzewie do końca życia powłoki.
-   */
+  /** Osadza scenę okien komunikacji — warstwę wspólną wszystkim modułom, montowaną raz na stałe. */
   osadzCzat(scena: HTMLElement): void;
-  /**
-   * Odsłania widok modułu nad sceną czatu; `null` zostawia sam czat.
-   * Przy pierwszym użyciu dokłada widok i już go nie zdejmuje.
-   */
+  /** Odsłania widok modułu nad sceną czatu; `null` zostawia sam czat, widok osadzony raz nie znika. */
   pokaz(widok: HTMLElement | null): void;
   /** Chowa planszę w całości i odsłania stan pusty. */
   oproznij(): void;
@@ -81,9 +55,7 @@ export function utworzObszarRoboczy(): ObszarRoboczy {
 
   zapowiedzElement.append(znak, tytul, opis, wykaz);
 
-  // Plansza — dwa wiersze. Widok modułu na górze, scena okien komunikacji pod
-  // nim: rozmowa jest oknem wiodącym każdego modułu, więc bierze dolny wiersz
-  // i nigdy nie schodzi z planszy przez wybór modułu.
+  // Plansza ma dwa wiersze: widok modułu na górze, scenę rozmowy — okno wiodące modułu — na dole.
   const plansza = document.createElement('div');
   plansza.className = 'dn-obszar__plansza';
   plansza.hidden = true;
@@ -95,9 +67,7 @@ export function utworzObszarRoboczy(): ObszarRoboczy {
   const strefaCzatu = document.createElement('div');
   strefaCzatu.className = 'dn-obszar__czat';
 
-  // Zapowiedź stoi w strefie modułu, nie zamiast planszy: gdyby gasiła całą
-  // planszę, gasiłaby razem z nią scenę rozmowy, a rozmowa jest oknem wiodącym
-  // każdej pozycji i nie schodzi z planszy przez brak widoku modułu.
+  // Zapowiedź stoi w strefie modułu, nie zamiast planszy, bo plansza niesie też scenę rozmowy.
   strefaModulu.append(zapowiedzElement);
   plansza.append(strefaModulu, strefaCzatu);
   element.append(notaElement, plansza);
@@ -114,8 +84,7 @@ export function utworzObszarRoboczy(): ObszarRoboczy {
         widoki.add(widok);
         strefaModulu.append(widok);
       }
-      // Widok modułu bywa jeden z wielu osadzonych — odsłaniamy wskazany,
-      // resztę chowamy. Scena czatu nie jest jedną z tych warstw i zostaje.
+      // Widok modułu bywa jeden z wielu osadzonych — odsłaniamy wskazany, resztę chowamy; czat zostaje.
       for (const osadzony of widoki) osadzony.hidden = osadzony !== widok;
       strefaModulu.hidden = false;
       plansza.hidden = false;
@@ -123,8 +92,7 @@ export function utworzObszarRoboczy(): ObszarRoboczy {
     },
 
     oproznij() {
-      // Widok modułu schodzi, plansza zostaje: pozycja bez widoku mówi o tym
-      // wprost w strefie modułu, a rozmowa pracuje dalej obok niej.
+      // Widok modułu schodzi, plansza zostaje: brak widoku mówi o tym w strefie, rozmowa pracuje dalej.
       for (const osadzony of widoki) osadzony.hidden = true;
       strefaModulu.hidden = false;
       plansza.hidden = false;
@@ -146,14 +114,14 @@ export function utworzObszarRoboczy(): ObszarRoboczy {
   };
 }
 
-/** Kod okna operacyjnego z katalogu rdzenia jako wiersz wykazu braków. */
+/** Kod okna operacyjnego z katalogu rdzenia, wypisywany jako pojedynczy wiersz wykazu brakujących okien. */
 function wpisOkna(kod: string): HTMLLIElement {
   const punkt = document.createElement('li');
   punkt.textContent = kod;
   return punkt;
 }
 
-/** Zdanie stanu pustego: rola pozycji plus prawda o braku okien. */
+/** Zdanie stanu pustego pozycji nawigacji, złożone z roli pozycji oraz prawdy o braku zbudowanych okien. */
 function zdanieStanu(pozycja: PozycjaModulu, okna: readonly string[]): string {
   const rola = pozycja.opis === '' ? '' : `${wielkaLitera(pozycja.opis)}. `;
   if (okna.length === 0) {
@@ -162,7 +130,7 @@ function zdanieStanu(pozycja: PozycjaModulu, okna: readonly string[]): string {
   return `${rola}Okna operacyjne tego modułu nie zostały jeszcze zbudowane. Rdzeń podaje ich katalog:`;
 }
 
-/** Opis modułu z rdzenia zaczyna się małą literą — stan pusty jest zdaniem. */
+/** Zamienia pierwszą literę opisu modułu z rdzenia na wielką, bo stan pusty składa opis jako pełne zdanie. */
 function wielkaLitera(tekst: string): string {
   return tekst.charAt(0).toUpperCase() + tekst.slice(1);
 }

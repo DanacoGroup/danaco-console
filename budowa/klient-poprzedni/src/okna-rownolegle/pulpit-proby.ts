@@ -8,12 +8,7 @@ import type { StanPary } from './stan-pary';
 import type { UkladOkien } from './uklad-okien';
 
 /**
- * Pulpit strony podglądu układu.
- *
- * Wyłącznie na potrzeby podglądu wizualnego: wywołuje publiczne metody układu,
- * żeby dało się obejrzeć każdy stan sceny bez rdzenia. Punkt wejścia aplikacji
- * tego pliku nie importuje — w aplikacji te same wywołania pochodzą od modelu
- * przez narzędzia kontraktu i od pętli kolejek.
+ * Pulpit strony podglądu układu wywołuje publiczne metody układu wyłącznie na potrzeby podglądu wizualnego, żeby dało się obejrzeć każdy stan sceny bez rdzenia.
  */
 export function utworzPulpitProby(uklad: UkladOkien): HTMLElement {
   const element = document.createElement('div');
@@ -46,12 +41,12 @@ export function utworzPulpitProby(uklad: UkladOkien): HTMLElement {
   return element;
 }
 
-/** Stany pętli osiągalne z pulpitu, wraz z gotowością. */
+/** Stany pętli osiągalne z pulpitu prób, wraz z gotowością każdego stanu do natychmiastowego wywołania. */
 function stany(): StanPary[] {
   return ['gotowa', 'wykonawca-pracuje', 'koordynator-wybudzony', 'kolejka-wstrzymana'];
 }
 
-/** Komplet przycisków ról dla jednego gniazda. */
+/** Komplet przycisków ról dostępnych dla jednego wskazanego gniazda sceny na pulpicie prób deweloperskich. */
 function przyciskiRol(uklad: UkladOkien, id: IdGniazda): HTMLElement[] {
   const numer = numerGniazda(id);
   return Object.values(WindowRole).map((rola) =>
@@ -59,7 +54,7 @@ function przyciskiRol(uklad: UkladOkien, id: IdGniazda): HTMLElement[] {
   );
 }
 
-/** Grupa pulpitu: etykieta wersalikowa i przyciski pod nią. */
+/** Grupa pulpitu prób: etykieta wersalikowa oraz przyciski ustawione pod nią w jednym poziomym rzędzie. */
 function grupa(etykieta: string, ...dzieci: HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dn-proba__grupa';
@@ -76,7 +71,7 @@ function grupa(etykieta: string, ...dzieci: HTMLElement[]): HTMLElement {
   return element;
 }
 
-/** Przycisk pulpitu — zawsze czynny, bez blokad. */
+/** Przycisk pulpitu prób — zawsze czynny i nigdy niezablokowany, niezależnie od aktualnego stanu całej sceny. */
 function przycisk(napis: string, dzialanie: () => void, wariant = 'dn-btn--zarys'): HTMLElement {
   const element = document.createElement('button');
   element.type = 'button';
@@ -86,7 +81,7 @@ function przycisk(napis: string, dzialanie: () => void, wariant = 'dn-btn--zarys
   return element;
 }
 
-/** Przełącznik motywu — oba motywy są równoprawne. */
+/** Przełącznik motywu na pulpicie prób deweloperskich — oba motywy są równoprawne, żaden nie jest domyślny. */
 function przyciskMotywu(): HTMLElement {
   const element = document.createElement('button');
   element.type = 'button';

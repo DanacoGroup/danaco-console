@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: zapis zdarzeń osi czasu projektu (tabela
-// `zdarzenie_projektu`), komentarze przy bytach projektu (tabela
-// `komentarz_projektu`) oraz historia instrukcji systemowych (tabela
-// `wersja_instrukcji_projektu`).
-//
-// Trzy tabele, jeden plik, bo wszystkie trzy są ZAPISEM TEGO, CO SIĘ WYDARZYŁO,
-// a nie stanem bieżącym. Stan bieżący instrukcji leży w tabeli `ustawienie`,
-// stan bieżący zadania w `zadanie_projektu` — tutaj leży ślad.
+// Repozytorium zapisuje zdarzenia osi czasu projektu w tabeli `zdarzenie_projektu`,
+// komentarze przy bytach projektu w tabeli `komentarz_projektu` oraz historię
+// instrukcji systemowych w tabeli `wersja_instrukcji_projektu`.
 package dane
 
 import (
@@ -18,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZdarzenieWorkspace to wiersz osi czasu projektu.
+// ZdarzenieWorkspace to wiersz tabeli `zdarzenie_projektu`, reprezentujący
+// jedno zdarzenie osi czasu projektu.
 type ZdarzenieWorkspace struct {
 	ProjektID     int64
 	Identyfikator string
@@ -32,7 +28,8 @@ type ZdarzenieWorkspace struct {
 	Zaszlo        string
 }
 
-// KomentarzWorkspace to wiersz komentarza przy bycie projektu.
+// KomentarzWorkspace to wiersz tabeli `komentarz_projektu`, reprezentujący
+// jeden komentarz przy bycie projektu.
 type KomentarzWorkspace struct {
 	ProjektID          int64
 	ProjektKod         string
@@ -48,7 +45,8 @@ type KomentarzWorkspace struct {
 	Zaktualizowano     string
 }
 
-// WersjaInstrukcjiWorkspace to wiersz historii instrukcji systemowych projektu.
+// WersjaInstrukcjiWorkspace to wiersz tabeli `wersja_instrukcji_projektu`,
+// reprezentujący jedną wersję instrukcji systemowej.
 type WersjaInstrukcjiWorkspace struct {
 	ProjektID     int64
 	ProjektKod    string
@@ -111,7 +109,8 @@ const (
 		zrodloWersjiInstrukcjiWorkspace + ` WHERE w.projekt_id = ? ORDER BY w.id DESC`
 )
 
-// ZapiszZdarzenieWorkspace odkłada zdarzenie osi czasu projektu.
+// ZapiszZdarzenieWorkspace odkłada w tabeli `zdarzenie_projektu` zdarzenie
+// osi czasu projektu i oddaje je zapisane.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszZdarzenieWorkspace(ctx context.Context,
 	zdarzenie ZdarzenieWorkspace) error {
 
@@ -130,7 +129,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszZdarzenieWorkspace(ctx context.C
 	return nil
 }
 
-// ZdarzeniaWorkspace zwraca oś czasu projektu od zdarzenia najnowszego.
+// ZdarzeniaWorkspace zwraca oś czasu projektu z tabeli `zdarzenie_projektu`,
+// od zdarzenia najnowszego.
 func (r *repozytoriumPrzestrzeniRoboczej) ZdarzeniaWorkspace(ctx context.Context,
 	projektID int64) ([]ZdarzenieWorkspace, error) {
 
@@ -166,7 +166,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZdarzeniaWorkspace(ctx context.Context
 	return lista, nil
 }
 
-// ZapiszKomentarzWorkspace zakłada komentarz i oddaje jego stan po zapisie.
+// ZapiszKomentarzWorkspace zakłada komentarz w tabeli `komentarz_projektu`
+// i oddaje jego stan po zapisie.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszKomentarzWorkspace(ctx context.Context,
 	komentarz KomentarzWorkspace) (KomentarzWorkspace, error) {
 
@@ -185,7 +186,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszKomentarzWorkspace(ctx context.C
 	return r.KomentarzWorkspace(ctx, komentarz.Identyfikator)
 }
 
-// KomentarzWorkspace zwraca jeden komentarz po identyfikatorze.
+// KomentarzWorkspace zwraca z tabeli `komentarz_projektu` jeden komentarz
+// po jego identyfikatorze wewnętrznym.
 func (r *repozytoriumPrzestrzeniRoboczej) KomentarzWorkspace(ctx context.Context,
 	identyfikator string) (KomentarzWorkspace, error) {
 
@@ -204,7 +206,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) KomentarzWorkspace(ctx context.Context
 	return komentarz, nil
 }
 
-// KomentarzeWorkspace zwraca komplet komentarzy projektu w kolejności zapisu.
+// KomentarzeWorkspace zwraca komplet komentarzy projektu z tabeli
+// `komentarz_projektu`, w kolejności zapisu.
 func (r *repozytoriumPrzestrzeniRoboczej) KomentarzeWorkspace(ctx context.Context,
 	projektID int64) ([]KomentarzWorkspace, error) {
 
@@ -232,8 +235,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) KomentarzeWorkspace(ctx context.Contex
 	return lista, nil
 }
 
-// UsunKomentarzeWorkspace usuwa wskazane komentarze i oddaje liczbę naprawdę
-// usuniętych.
+// UsunKomentarzeWorkspace usuwa wskazane komentarze z tabeli `komentarz_projektu`
+// i oddaje liczbę naprawdę usuniętych.
 func (r *repozytoriumPrzestrzeniRoboczej) UsunKomentarzeWorkspace(ctx context.Context,
 	identyfikatory []string) (int, error) {
 
@@ -259,7 +262,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) UsunKomentarzeWorkspace(ctx context.Co
 	return usuniete, nil
 }
 
-// ZapiszWersjeInstrukcjiWorkspace odkłada wersję instrukcji systemowych.
+// ZapiszWersjeInstrukcjiWorkspace odkłada w tabeli `wersja_instrukcji_projektu`
+// wersję instrukcji systemowej.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszWersjeInstrukcjiWorkspace(ctx context.Context,
 	wersja WersjaInstrukcjiWorkspace) (WersjaInstrukcjiWorkspace, error) {
 
@@ -281,7 +285,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszWersjeInstrukcjiWorkspace(ctx co
 	return r.WersjaInstrukcjiWorkspace(ctx, wersja.Identyfikator)
 }
 
-// WersjaInstrukcjiWorkspace zwraca jedną wersję instrukcji po identyfikatorze.
+// WersjaInstrukcjiWorkspace zwraca z tabeli `wersja_instrukcji_projektu`
+// jedną wersję instrukcji po identyfikatorze.
 func (r *repozytoriumPrzestrzeniRoboczej) WersjaInstrukcjiWorkspace(ctx context.Context,
 	identyfikator string) (WersjaInstrukcjiWorkspace, error) {
 
@@ -300,7 +305,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) WersjaInstrukcjiWorkspace(ctx context.
 	return wersja, nil
 }
 
-// WersjeInstrukcjiWorkspace zwraca historię instrukcji projektu od najnowszej.
+// WersjeInstrukcjiWorkspace zwraca historię instrukcji projektu z tabeli
+// `wersja_instrukcji_projektu`, od najnowszej.
 func (r *repozytoriumPrzestrzeniRoboczej) WersjeInstrukcjiWorkspace(ctx context.Context,
 	projektID int64) ([]WersjaInstrukcjiWorkspace, error) {
 
@@ -330,7 +336,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) WersjeInstrukcjiWorkspace(ctx context.
 	return lista, nil
 }
 
-// odczytajKomentarzWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajKomentarzWorkspace składa strukturę KomentarzWorkspace z jednego
+// wiersza wyniku zapytania SQL.
 func odczytajKomentarzWorkspace(wiersz skaner) (KomentarzWorkspace, error) {
 	var komentarz KomentarzWorkspace
 	var rodzajBytu, rodzajAutora, przywolania string
@@ -347,7 +354,8 @@ func odczytajKomentarzWorkspace(wiersz skaner) (KomentarzWorkspace, error) {
 	return komentarz, nil
 }
 
-// odczytajWersjeInstrukcjiWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajWersjeInstrukcjiWorkspace składa strukturę WersjaInstrukcjiWorkspace
+// z jednego wiersza wyniku zapytania SQL.
 func odczytajWersjeInstrukcjiWorkspace(wiersz skaner) (WersjaInstrukcjiWorkspace, error) {
 	var wersja WersjaInstrukcjiWorkspace
 	var poziom, rodzajAutora string

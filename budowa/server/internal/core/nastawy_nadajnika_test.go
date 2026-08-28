@@ -8,7 +8,7 @@ import (
 	"danacoconsole/server/internal/nadajnik"
 )
 
-// nastawyPodstawione oddaje wartości z mapy — bez bazy, bez rozstrzygacza.
+// nastawyPodstawione oddaje wartości z mapy w pamięci — bez bazy danych, bez rozstrzygacza zasięgów sesji.
 type nastawyPodstawione map[string]string
 
 func (n nastawyPodstawione) Nastawa(_ context.Context, klucz string) string { return n[klucz] }

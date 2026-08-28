@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: obiekty osadzone w dokumencie Studia
-// (`obiekt_dokumentu_studio`), aparat dokumentu (`element_aparatu_studio`)
-// i pola (`pole_dokumentu_studio`).
-//
-// Kontrakt obszaru deklaruje `studio_postac_dokumentu.go` — ten plik dokłada
-// wyłącznie metody. Nazwy pomocnicze niosą przedrostek `postac`.
-//
-// ── Dlaczego aparat i pola są tu razem, a nie osobno ────────────────────────
-// Pracuje się nimi tą samą drogą: oba są przypięte do miejsca w treści, oba
-// bywają nieświeże i oba odświeża się wykazem, nie po jednym. Rozdział byłby
-// rozdziałem na papierze — kod odczytu i zapisu byłby ten sam dwa razy.
+// Plik definiuje obiekty osadzone w dokumencie Studia, aparat dokumentu i
+// pola. Kontrakt obszaru deklaruje studio_postac_dokumentu.go; ten plik
+// dokłada metody.
 package dane
 
 import (
@@ -18,12 +10,9 @@ import (
 	"fmt"
 )
 
-// ObiektDokumentuStudia to wiersz tabeli `obiekt_dokumentu_studio`.
-//
-// `PostacJSON` niesie to, co swoiste dla rodzaju obiektu — rozmiar, przycięcie,
-// opływanie, wypełnienie, obrót — w kształcie kontraktowego
-// `StudioDocumentObject`. Kolumny osobne mają tylko te cechy, po których się
-// PYTA: rodzaj, źródło, zakotwiczenie i warstwa.
+// ObiektDokumentuStudia to wiersz tabeli obiekt_dokumentu_studio. PostacJSON
+// niesie cechy swoiste dla rodzaju obiektu; kolumny osobne mają tylko cechy,
+// po których się pyta.
 type ObiektDokumentuStudia struct {
 	ID                   int64
 	Kod                  string
@@ -45,7 +34,8 @@ type ObiektDokumentuStudia struct {
 	Zaktualizowano       string
 }
 
-// ElementAparatuStudia to wiersz tabeli `element_aparatu_studio`.
+// ElementAparatuStudia to wiersz tabeli element_aparatu_studio: przypis,
+// odnośnik albo inny element aparatu przypięty do miejsca w treści dokumentu.
 type ElementAparatuStudia struct {
 	ID             int64
 	Kod            string
@@ -65,7 +55,8 @@ type ElementAparatuStudia struct {
 	Zaktualizowano string
 }
 
-// PoleDokumentuStudia to wiersz tabeli `pole_dokumentu_studio`.
+// PoleDokumentuStudia to wiersz tabeli pole_dokumentu_studio: pole
+// obliczane, przypięte do miejsca w treści dokumentu i odświeżane wykazem.
 type PoleDokumentuStudia struct {
 	ID               int64
 	Kod              string
@@ -187,7 +178,8 @@ const (
 	postacUsunPole = `DELETE FROM pole_dokumentu_studio WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszObiektDokumentu zakłada obiekt osadzony albo nadpisuje zastany.
+// ZapiszObiektDokumentu zakłada obiekt osadzony albo nadpisuje zastany po
+// identyfikatorze zewnętrznym, zwracając stan po zapisie.
 func (r *repozytoriumStudia) ZapiszObiektDokumentu(ctx context.Context,
 	obiekt ObiektDokumentuStudia) (ObiektDokumentuStudia, error) {
 
@@ -217,7 +209,8 @@ func (r *repozytoriumStudia) ZapiszObiektDokumentu(ctx context.Context,
 	return r.ObiektDokumentu(ctx, obiekt.Kod)
 }
 
-// ObiektDokumentu zwraca obiekt o wskazanym kodzie.
+// ObiektDokumentu zwraca obiekt osadzony o wskazanym kodzie, zwracając błąd
+// ErrBrakWiersza, gdy obiekt nie istnieje.
 func (r *repozytoriumStudia) ObiektDokumentu(ctx context.Context, kod string) (ObiektDokumentuStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, postacPobierzObiekt)
 	if err != nil {
@@ -233,7 +226,8 @@ func (r *repozytoriumStudia) ObiektDokumentu(ctx context.Context, kod string) (O
 	return obiekt, nil
 }
 
-// ObiektyDokumentu zwraca obiekty dokumentu; puste `rodzaj` znaczy wszystkie.
+// ObiektyDokumentu zwraca obiekty dokumentu w kolejności zakotwiczenia w
+// treści; puste rodzaj znaczy wszystkie rodzaje.
 func (r *repozytoriumStudia) ObiektyDokumentu(ctx context.Context, dokumentID int64,
 	rodzaj string) ([]ObiektDokumentuStudia, error) {
 
@@ -265,12 +259,14 @@ func (r *repozytoriumStudia) ObiektyDokumentu(ctx context.Context, dokumentID in
 	return lista, nil
 }
 
-// UsunObiektDokumentu usuwa obiekt osadzony.
+// UsunObiektDokumentu usuwa obiekt osadzony o wskazanym kodzie, oddając
+// informację, czy wiersz istniał.
 func (r *repozytoriumStudia) UsunObiektDokumentu(ctx context.Context, kod string) (bool, error) {
 	return r.postacUsunWiersz(ctx, postacUsunObiekt, kod, "obiektu")
 }
 
-// ZapiszElementAparatu zakłada element aparatu albo nadpisuje zastany.
+// ZapiszElementAparatu zakłada element aparatu albo nadpisuje zastany po
+// identyfikatorze zewnętrznym, zwracając stan po zapisie.
 func (r *repozytoriumStudia) ZapiszElementAparatu(ctx context.Context,
 	element ElementAparatuStudia) (ElementAparatuStudia, error) {
 
@@ -295,7 +291,8 @@ func (r *repozytoriumStudia) ZapiszElementAparatu(ctx context.Context,
 	return r.ElementAparatu(ctx, element.Kod)
 }
 
-// ElementAparatu zwraca element aparatu o wskazanym kodzie.
+// ElementAparatu zwraca element aparatu o wskazanym kodzie, zwracając błąd
+// ErrBrakWiersza, gdy element nie istnieje.
 func (r *repozytoriumStudia) ElementAparatu(ctx context.Context, kod string) (ElementAparatuStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, postacPobierzAparat)
 	if err != nil {
@@ -311,7 +308,8 @@ func (r *repozytoriumStudia) ElementAparatu(ctx context.Context, kod string) (El
 	return element, nil
 }
 
-// ElementyAparatu zwraca aparat dokumentu; puste `rodzaj` znaczy cały aparat.
+// ElementyAparatu zwraca aparat dokumentu w kolejności numeracji; puste
+// rodzaj znaczy cały aparat dokumentu.
 func (r *repozytoriumStudia) ElementyAparatu(ctx context.Context, dokumentID int64,
 	rodzaj string) ([]ElementAparatuStudia, error) {
 
@@ -349,7 +347,8 @@ func (r *repozytoriumStudia) UsunElementAparatu(ctx context.Context, kod string)
 	return r.postacUsunWiersz(ctx, postacUsunAparat, kod, "elementu aparatu")
 }
 
-// ZapiszPoleDokumentu zakłada pole albo nadpisuje zastane.
+// ZapiszPoleDokumentu zakłada pole obliczane albo nadpisuje zastane po
+// identyfikatorze zewnętrznym, zwracając stan po zapisie.
 func (r *repozytoriumStudia) ZapiszPoleDokumentu(ctx context.Context,
 	pole PoleDokumentuStudia) (PoleDokumentuStudia, error) {
 
@@ -382,7 +381,8 @@ func (r *repozytoriumStudia) ZapiszPoleDokumentu(ctx context.Context,
 	return PoleDokumentuStudia{}, ErrBrakWiersza
 }
 
-// PolaDokumentu zwraca pola dokumentu; puste `rodzaj` znaczy wszystkie.
+// PolaDokumentu zwraca pola dokumentu w kolejności zakotwiczenia w treści;
+// puste rodzaj znaczy wszystkie rodzaje.
 func (r *repozytoriumStudia) PolaDokumentu(ctx context.Context, dokumentID int64,
 	rodzaj string) ([]PoleDokumentuStudia, error) {
 
@@ -414,12 +414,14 @@ func (r *repozytoriumStudia) PolaDokumentu(ctx context.Context, dokumentID int64
 	return lista, nil
 }
 
-// UsunPoleDokumentu usuwa pole dokumentu.
+// UsunPoleDokumentu usuwa pole dokumentu o wskazanym kodzie zewnętrznym,
+// oddając informację, czy wiersz istniał.
 func (r *repozytoriumStudia) UsunPoleDokumentu(ctx context.Context, kod string) (bool, error) {
 	return r.postacUsunWiersz(ctx, postacUsunPole, kod, "pola dokumentu")
 }
 
-// postacOdczytajObiekt składa obiekt osadzony z jednego wiersza wyniku.
+// postacOdczytajObiekt składa obiekt osadzony z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func postacOdczytajObiekt(wiersz skaner) (ObiektDokumentuStudia, error) {
 	var obiekt ObiektDokumentuStudia
 	var zrodlo, zasob, wezel, plik, adres, zastepczy, wewnetrzny, podpis, postac sql.NullString
@@ -442,7 +444,8 @@ func postacOdczytajObiekt(wiersz skaner) (ObiektDokumentuStudia, error) {
 	return obiekt, nil
 }
 
-// postacOdczytajAparat składa element aparatu z jednego wiersza wyniku.
+// postacOdczytajAparat składa element aparatu z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func postacOdczytajAparat(wiersz skaner) (ElementAparatuStudia, error) {
 	var element ElementAparatuStudia
 	var numer, etykieta, tresc, cel, adres, dane sql.NullString
@@ -463,7 +466,8 @@ func postacOdczytajAparat(wiersz skaner) (ElementAparatuStudia, error) {
 	return element, nil
 }
 
-// postacOdczytajPole składa pole dokumentu z jednego wiersza wyniku.
+// postacOdczytajPole składa pole dokumentu z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func postacOdczytajPole(wiersz skaner) (PoleDokumentuStudia, error) {
 	var pole PoleDokumentuStudia
 	var format, wyrazenie, wlasciwosc, wartosc sql.NullString

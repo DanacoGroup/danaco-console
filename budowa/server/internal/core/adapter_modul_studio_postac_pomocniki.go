@@ -1,13 +1,6 @@
 // Odpowiedzialność pliku: drobne rachunki wspólne dla wszystkich obszarów
 // postaci dokumentu — kopie struktur postaci, ich scalanie, porównanie,
 // wskaźniki na wartości i zapis zakresu w treści odmowy.
-//
-// ── Dlaczego postać scala się, a nie nadpisuje ───────────────────────────────
-// Czynność na postaci podaje TYLKO te pola, które zmienia: `bold=true` nie ma
-// prawa zdjąć kursywy, a wcięcie lewe nie ma prawa zdjąć wyrównania. Dlatego
-// każde scalenie bierze pole ze żądania, gdy jest, a zastane, gdy nie ma —
-// i nigdzie nie podmienia całej struktury. Podmiana całości byłaby tą samą
-// szkodą, którą w oknie widać jako „poprawiłem stopień, a zniknęło pogrubienie".
 package core
 
 import (
@@ -36,31 +29,35 @@ func postacWskaznikTekstu(wartosc string) *string {
 	return &kopia
 }
 
-// postacWskaznikLiczby oddaje wskaźnik na liczbę całkowitą.
+// postacWskaznikLiczby oddaje wskaźnik na kopię liczby całkowitej, tą samą
+// zasadą co `postacWskaznikTekstu`: pole nieobowiązkowe kontraktu.
 func postacWskaznikLiczby(wartosc int) *int {
 	kopia := wartosc
 	return &kopia
 }
 
-// postacWskaznikMiary oddaje wskaźnik na liczbę zmiennoprzecinkową.
+// postacWskaznikMiary oddaje wskaźnik na kopię liczby zmiennoprzecinkowej,
+// tą samą zasadą co `postacWskaznikLiczby`.
 func postacWskaznikMiary(wartosc float64) *float64 {
 	kopia := wartosc
 	return &kopia
 }
 
-// postacWskaznikPrawdy oddaje wskaźnik na wartość logiczną.
+// postacWskaznikPrawdy oddaje wskaźnik na kopię wartości logicznej, tą samą
+// zasadą co `postacWskaznikLiczby`.
 func postacWskaznikPrawdy(wartosc bool) *bool {
 	kopia := wartosc
 	return &kopia
 }
 
-// postacZapisLiczby zapisuje liczbę całkowitą napisem.
+// postacZapisLiczby zapisuje liczbę całkowitą napisem, do zdań odmowy i not
+// bilansu czytelnych bez zaglądania do kodu.
 func postacZapisLiczby(wartosc int) string {
 	return strconv.Itoa(wartosc)
 }
 
 // postacZapisZakresu opisuje zakres w znakach zdaniem, które Operator rozumie
-// bez zaglądania do kodu.
+// bez zaglądania do kodu źródłowego.
 func postacZapisZakresu(od, do int) string {
 	if od == do {
 		return "w miejscu znaku " + strconv.Itoa(od)
@@ -105,7 +102,8 @@ func postacTaSamaPostacZnaku(pierwsza, druga *shared.StudioCharacterFormat) bool
 	return *pierwsza == *druga
 }
 
-// postacTenSamAutor porównuje autorów fragmentu.
+// postacTenSamAutor porównuje autorów fragmentu, wskaźniki puste licząc
+// jako autora tego samego, a nie jako autorów różnych.
 func postacTenSamAutor(pierwszy, drugi *shared.StudioAuthor) bool {
 	if pierwszy == nil || drugi == nil {
 		return pierwszy == nil && drugi == nil
@@ -113,7 +111,8 @@ func postacTenSamAutor(pierwszy, drugi *shared.StudioAuthor) bool {
 	return *pierwszy == *drugi
 }
 
-// postacScalZnak wnosi do postaci znaku wyłącznie pola podane w żądaniu.
+// postacScalZnak wnosi do postaci znaku wyłącznie pola podane w żądaniu,
+// pozostałe biorąc z postaci zastanej.
 func postacScalZnak(zastana *shared.StudioCharacterFormat,
 	zmiana shared.StudioCharacterFormat) *shared.StudioCharacterFormat {
 
@@ -141,8 +140,7 @@ func postacScalZnak(zastana *shared.StudioCharacterFormat,
 	}
 	if zmiana.Superscript != nil {
 		wynik.Superscript = zmiana.Superscript
-		// Indeks górny i dolny wykluczają się wzajemnie — litera nie stoi
-		// jednocześnie nad i pod wierszem.
+		// Indeks górny i dolny wykluczają się wzajemnie.
 		if *zmiana.Superscript {
 			wynik.Subscript = postacWskaznikPrawdy(false)
 		}
@@ -185,7 +183,8 @@ func postacScalZnak(zastana *shared.StudioCharacterFormat,
 	return &wynik
 }
 
-// postacScalAkapit wnosi do postaci akapitu wyłącznie pola podane w żądaniu.
+// postacScalAkapit wnosi do postaci akapitu wyłącznie pola podane w żądaniu,
+// tą samą zasadą co `postacScalZnak`.
 func postacScalAkapit(zastana *shared.StudioParagraphFormat,
 	zmiana shared.StudioParagraphFormat) *shared.StudioParagraphFormat {
 
@@ -337,14 +336,9 @@ func postacWskaznikLiczby64(wartosc int64) *int64 {
 	return &kopia
 }
 
-// ── Dostęp do warstwy danych ────────────────────────────────────────────────
-
-// postacSkladnica oddaje tabele obszaru postaci dokumentu.
-//
-// Repozytorium modułu ogłasza je osobnym kontraktem
-// (`dane.RepozytoriumPostaciStudia`), więc obszar postaci sięga po nie przez ten
-// kontrakt, a nie po całe repozytorium. Brak repozytorium jest brakiem montażu
-// rdzenia i mówi to wprost — nie udaje pustego dokumentu.
+// Dostęp do warstwy danych
+// postacSkladnica oddaje tabele obszaru postaci dokumentu przez kontrakt
+// `dane.RepozytoriumPostaciStudia`, a nie przez całe repozytorium.
 func (a *adapterStudia) postacSkladnica() (dane.RepozytoriumPostaciStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, postacBladZaplecza("repozytorium Studia nie zostało podane przy montażu rdzenia")
@@ -352,27 +346,18 @@ func (a *adapterStudia) postacSkladnica() (dane.RepozytoriumPostaciStudia, error
 	return a.repozytorium, nil
 }
 
-// ── Nastawy strony domyślne ─────────────────────────────────────────────────
-
+// Nastawy strony domyślne
 // postacNastawyDomyslne oddaje nastawy strony dokumentu, który swoich nie ma.
-//
-// Nastawa jedzie z jednego miejsca — `wejscieDomyslneNastawyStrony` — bo A4
-// z marginesami 25 mm jest nastawą pisma urzędowego dla całego modułu. Dwa
-// wykazy domyślnych rozjechałyby się przy pierwszej poprawce i dokument
-// wczytany wyglądałby inaczej niż założony.
+// Nastawa jedzie z jednego miejsca — `wejscieDomyslneNastawyStrony`.
 func postacNastawyDomyslne() *shared.StudioPageSetup {
 	nastawy := wejscieDomyslneNastawyStrony("A4", nil)
 	return &nastawy
 }
 
-// ── Składanie postaci z wierszy warstwy danych ──────────────────────────────
-//
-// Wszystkie cztery składacze trzymają jedną zasadę: kolumna jest prawdą, a pole
-// JSON niesie tylko to, na co kolumny nie ma. Dlatego najpierw odczytywany jest
-// zapis JSON, a POTEM nadpisywane są pola kolumnowe — inaczej nieświeży zapis
-// w JSON-ie przebiłby to, co warstwa danych wie na pewno.
-
-// postacZlozSekcje składa sekcje dokumentu z wierszy.
+// Składanie postaci z wierszy warstwy danych
+// postacZlozSekcje składa sekcje dokumentu z wierszy, kolumną nadpisując pole
+// JSON, gdy obie niosą tę samą wartość — kolumna jest prawdą, pole JSON tylko
+// tym, na co kolumny nie ma.
 func postacZlozSekcje(wiersze []dane.SekcjaDokumentuStudia) []shared.StudioSection {
 	sekcje := make([]shared.StudioSection, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -416,7 +401,8 @@ func postacZlozSekcje(wiersze []dane.SekcjaDokumentuStudia) []shared.StudioSecti
 	return sekcje
 }
 
-// postacZlozObiekty składa obiekty osadzone z wierszy.
+// postacZlozObiekty składa obiekty osadzone z wierszy, tą samą zasadą co
+// `postacZlozSekcje`: kolumna nadpisuje pole JSON.
 func postacZlozObiekty(wiersze []dane.ObiektDokumentuStudia) []shared.StudioDocumentObject {
 	obiekty := make([]shared.StudioDocumentObject, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -446,7 +432,8 @@ func postacZlozObiekty(wiersze []dane.ObiektDokumentuStudia) []shared.StudioDocu
 	return obiekty
 }
 
-// postacZlozAparat składa aparat dokumentu z wierszy.
+// postacZlozAparat składa aparat dokumentu z wierszy, tą samą zasadą co
+// `postacZlozSekcje`: kolumna nadpisuje pole JSON.
 func postacZlozAparat(wiersze []dane.ElementAparatuStudia) []shared.StudioApparatusItem {
 	aparat := make([]shared.StudioApparatusItem, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -469,7 +456,8 @@ func postacZlozAparat(wiersze []dane.ElementAparatuStudia) []shared.StudioAppara
 	return aparat
 }
 
-// postacZlozPola składa pola dokumentu z wierszy.
+// postacZlozPola składa pola dokumentu z wierszy, tą samą zasadą co
+// `postacZlozSekcje`: kolumna nadpisuje pole JSON.
 func postacZlozPola(wiersze []dane.PoleDokumentuStudia) []shared.StudioDocumentField {
 	pola := make([]shared.StudioDocumentField, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -487,11 +475,8 @@ func postacZlozPola(wiersze []dane.PoleDokumentuStudia) []shared.StudioDocumentF
 	return pola
 }
 
-// postacZlozBlokady składa blokady fragmentów widziane przez postać dokumentu.
-//
-// Składanie idzie przez `blokadaZlozKontrakt` — tabela blokad należy do obszaru
-// kontroli pracy i to on wie, jak wiersz przełożyć na kontrakt. Drugie
-// przełożenie tej samej tabeli byłoby drugą prawdą o jednym wierszu.
+// postacZlozBlokady składa blokady fragmentów widziane przez postać dokumentu,
+// przez `blokadaZlozKontrakt` z obszaru kontroli pracy.
 func postacZlozBlokady(dokumentKod string,
 	wiersze []dane.BlokadaFragmentuStudia) []shared.StudioFragmentLock {
 

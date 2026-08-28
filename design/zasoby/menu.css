@@ -1,4 +1,4 @@
-/* MENU ROZWIJANE — komponent
+/* Arkusz stylów menu rozwijanego określa bryłę panelu, jego szerokość, wysokość oraz przewijanie, niezależnie od jego położenia.
    Jedno miejsce, w którym opisany jest panel menu: bryła, szerokość, wysokość
    i przewijanie. Położenie panelu liczy `menu.js` — arkusze miejsc (rama,
    stanowisko, okna) nie ustawiają już `top/left/right/bottom` menu.

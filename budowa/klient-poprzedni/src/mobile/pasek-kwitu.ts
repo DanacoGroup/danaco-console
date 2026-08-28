@@ -1,15 +1,10 @@
 import { zdanieKwitu, type Kwit, type MagazynKwitow } from './kwit-decyzji';
 
 /**
- * Pasek kwitu — wykaz decyzji wysłanych z tego urządzenia, u dołu ekranu,
- * w zasięgu kciuka.
- *
- * Wiersz niesie zdanie rdzenia, nie zdanie klienta: godzinę, treść decyzji
- * i stan, który rdzeń potwierdził. Kwit nieudany trafia na ten sam pasek wraz
- * z treścią odmowy.
- *
- * Pasek czyta z pamięci trwałej, nie ze stanu okna — potwierdzenie ginie razem
- * z oknem, kwit przeżywa zamknięcie telefonu.
+ * Pasek kwitu — wykaz decyzji wysłanych z tego urządzenia, umieszczony u dołu
+ * ekranu w zasięgu kciuka. Wiersz niesie zdanie rdzenia: godzinę, treść decyzji
+ * i potwierdzony stan. Kwit nieudany trafia na ten sam pasek wraz z treścią
+ * odmowy.
  */
 export interface PasekKwitu {
   element: HTMLElement;
@@ -19,7 +14,10 @@ export interface PasekKwitu {
   odswiez(): void;
 }
 
-/** Ile kwitów widać naraz; reszta zostaje w pamięci. */
+/**
+ * Ile kwitów widać naraz na pasku; wykaz wypisuje tylko tyle najnowszych
+ * wierszy, a pozostałe zostają w pamięci trwałej urządzenia.
+ */
 const ILE_WIDOCZNYCH = 3;
 
 export function utworzPasekKwitu(magazyn: MagazynKwitow): PasekKwitu {

@@ -1,3 +1,9 @@
+/**
+ * Przełożenie ładunku zdarzenia pulpitu na zdanie widoczne w pasku ostatniego
+ * działania. Zdanie podaje nazwę komendy kontraktu, gdy zamiar ją ma; zamiar
+ * bez odpowiednika w kontrakcie mówi o tym wprost.
+ */
+
 import { ETYKIETA_DZIALANIA_KOLEJKI } from './etykiety-pulpitu';
 import type {
   WejscieDoSesji,
@@ -7,19 +13,18 @@ import type {
 } from './zdarzenia-pulpitu';
 
 /**
- * Przełożenie ładunku zdarzenia pulpitu na zdanie widoczne w pasku ostatniego
- * działania.
- *
- * Zdanie podaje nazwę komendy kontraktu, gdy zamiar ją ma; zamiar bez
- * odpowiednika w kontrakcie („podnieś priorytet") mówi o tym wprost.
+ * Składa zdanie o wejściu do sesji: podaje tytuł sesji, jej środowisko oraz
+ * nazwę komendy kontraktu, która wejście realizuje.
  */
-
-/** Zdanie o wejściu do sesji. */
 export function opiszWejscie(wejscie: WejscieDoSesji): string {
   return `wejście do sesji „${wejscie.tytul}" (${wejscie.srodowisko}) — ${wejscie.komenda}`;
 }
 
-/** Zdanie o działaniu na kolejce. */
+/**
+ * Składa zdanie o działaniu na kolejce roli. Rodzaj zamiaru rozstrzyga treść:
+ * działanie kolejki oraz przekazanie kontekstu podają komendę kontraktu,
+ * natomiast podniesienie priorytetu odpowiednika w kontrakcie nie ma.
+ */
 export function opiszZamiarKolejki(zamiar: ZamiarKolejki): string {
   const rola = zamiar.rola;
 
@@ -33,12 +38,19 @@ export function opiszZamiarKolejki(zamiar: ZamiarKolejki): string {
   }
 }
 
-/** Zdanie o utworzeniu bytu. */
+/**
+ * Składa zdanie o utworzeniu bytu z etykiety zamiaru oraz nazwy jego rodzaju.
+ * Ładunek zdarzenia nie niesie tu komendy kontraktu, więc zdanie jej nie podaje.
+ */
 export function opiszZamiarUtworzenia(zamiar: ZamiarUtworzenia): string {
   return `${zamiar.etykieta} — rodzaj „${zamiar.rodzaj}"`;
 }
 
-/** Zdanie o wezwaniu do decyzji. */
+/**
+ * Składa zdanie o wezwaniu do decyzji. Przy niezerowej liczbie wstrzymanych
+ * przepływów podaje ją wraz z nazwą najstarszego, a przy zerowej stwierdza,
+ * że żaden przepływ na decyzję nie czeka.
+ */
 export function opiszZamiarDecyzji(zamiar: ZamiarDecyzji): string {
   return zamiar.przeplywy > 0
     ? `rozstrzygnięcie ${zamiar.przeplywy} wstrzymanych przepływów, począwszy od „${zamiar.najstarszy}"`

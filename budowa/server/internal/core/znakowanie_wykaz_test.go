@@ -8,17 +8,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany znakowania fragmentów.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. znakowanie o rodzaju spoza słownika tabeli (migracja 365), które przechodzi
-//     kompilację i wywraca się dopiero na ograniczeniu — po zapisaniu zmiany;
-//  2. autor znakowania zaszyty jako Operator, przez co znakowanie modelu ginie
-//     w przełączniku „pokaż wszystko, co zrobił model";
-//  3. brzmienie zastane fragmentu liczone w BAJTACH — dokument polski ma litery
-//     dwubajtowe i wycinek rozciąłby „ą" w środku.
+// Sprawdziany znakowania: słownik rodzajów, autor znakowania i liczenie brzmienia w znakach.
 
-// TestZnakowanieRodzajPozaSlownikiemOdmawia pilnuje słownika tabeli.
+// TestZnakowanieRodzajPozaSlownikiemOdmawia pilnuje słownika tabeli rodzajów znakowania zgodnego z kontraktem.
 func TestZnakowanieRodzajPozaSlownikiemOdmawia(t *testing.T) {
 	if err := znakowanieSprawdzRodzaj("wyroznienie"); err == nil {
 		t.Errorf("rodzaj spoza wyliczenia kontraktu przeszedł — tabela odrzuci go " +

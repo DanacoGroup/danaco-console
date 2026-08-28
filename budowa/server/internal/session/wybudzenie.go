@@ -5,17 +5,14 @@ import (
 	"time"
 )
 
-// Zakończenie tury wykonawcy wybudza koordynatora. Wybudzacz jest jedynym
-// miejscem, w którym ta reguła żyje: proces okna zgłasza koniec tury, wybudzacz
-// odczytuje z rejestru rolę okna i — gdy okno jest wykonawcą — przekazuje
-// wybudzenie oknu koordynatora.
+// Zakończenie tury wykonawcy wybudza koordynatora; to jedyne miejsce, w którym reguła ta żyje.
 
 // PowodWynik — tura zamknęła się wynikiem kanału. Powód zakończenia tury nazywa
 // warstwa rozmowy, bo to ona prowadzi turę; sesja podaje wspólną nazwę, żeby
 // koordynator i dziennik czytały tę samą wartość.
 const PowodWynik = "wynik tury"
 
-// Wybudzenie opisuje zdarzenie zakończenia tury wykonawcy.
+// Wybudzenie opisuje zdarzenie zakończenia tury wykonawcy, niosące powód, oba okna oraz czas zgłoszenia.
 type Wybudzenie struct {
 	// OknoWykonawcy — okno, którego tura się zakończyła.
 	OknoWykonawcy string
@@ -33,25 +30,25 @@ type OdbiorcaWybudzenia interface {
 	Wybudz(w Wybudzenie)
 }
 
-// OdbiorcaFunkcja pozwala podać odbiorcę wybudzeń zwykłą funkcją.
+// OdbiorcaFunkcja pozwala podać odbiorcę wybudzeń zwykłą funkcją zamiast osobnej struktury implementującej interfejs.
 type OdbiorcaFunkcja func(w Wybudzenie)
 
-// Wybudz wypełnia interfejs OdbiorcaWybudzenia.
+// Metoda Wybudz wypełnia interfejs OdbiorcaWybudzenia, przekazując wybudzenie owiniętej funkcji odbiorcy.
 func (f OdbiorcaFunkcja) Wybudz(w Wybudzenie) { f(w) }
 
-// Wybudzacz kieruje zgłoszenia końca tury do koordynatorów.
+// Wybudzacz kieruje zgłoszenia końca tury do właściwych koordynatorów, korzystając z rejestru okien tej sesji.
 type Wybudzacz struct {
 	rejestr  *Rejestr
 	mu       sync.RWMutex
 	odbiorcy []OdbiorcaWybudzenia
 }
 
-// NowyWybudzacz składa wybudzacz nad rejestrem okien.
+// Funkcja NowyWybudzacz składa nowy wybudzacz nad podanym rejestrem okien, gotowy do przyjmowania zgłoszeń.
 func NowyWybudzacz(rejestr *Rejestr) *Wybudzacz {
 	return &Wybudzacz{rejestr: rejestr}
 }
 
-// Zarejestruj dokłada odbiorcę wybudzeń.
+// Metoda Zarejestruj dokłada do wybudzacza odbiorcę wybudzeń, który otrzyma kolejne zdarzenia końca tury.
 func (w *Wybudzacz) Zarejestruj(o OdbiorcaWybudzenia) {
 	if o == nil {
 		return

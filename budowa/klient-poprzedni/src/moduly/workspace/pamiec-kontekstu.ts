@@ -23,16 +23,8 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Context Memory — okno zarządcy modułu Workspace: zapis ustalenia, przegląd
- * pamięci i edycja wpisu.
- *
- * Pamięć jest odrębna dla projektu, a zakresem współdzielenia jest poziom
- * zasięgu wpisu: zapis szerszy niż projekt wchodzi do pamięci innych projektów
- * po włączeniu „ustalenia wspólne”.
- *
- * Wpis o pochodzeniu `model` jest propozycją czekającą na decyzję: przyjęcie
- * zapisuje ten sam wpis z pochodzeniem `operator`, a odrzucenie usuwa go
- * komendą `memory.delete` (patrz `pamiec-pozycja.ts`).
+ * Context Memory to okno zarządcy modułu Workspace: zapis ustalenia, przegląd pamięci i edycja
+ * wpisu odrębnej dla każdego projektu.
  */
 export interface OknoPamieci {
   element: HTMLElement;
@@ -40,10 +32,8 @@ export interface OknoPamieci {
 }
 
 /**
- * Zasięgi współdzielenia wpisu — ten sam wykaz, co w Instructions Panel
- * i w panelu pamięci karty sesji (`poziomy-zasiegu.ts`), z projektem na czele,
- * bo taki jest domyślny zasięg pamięci projektu. Zmienia się kolejność
- * prezentacji, nie nastawa: nazwy poziomów są w całym module jedne.
+ * Zasięgi współdzielenia wpisu tworzą ten sam wykaz, co w Instructions Panel i w panelu pamięci
+ * karty sesji, z projektem na czele jako domyślnym zasięgiem.
  */
 const ZASIEGI: readonly ParaPoziomu[] = poziomyZPierwszym(ConfigScope.Project);
 
@@ -87,9 +77,7 @@ export function utworzOknoPamieci(
 
   rama.akcje.append(dodaj, odswiez, eksport, usunEdytowany);
 
-  // Filtr zawęża wykaz już odczytany, więc stoi w pasku narzędzi kontekstowych,
-  // a nie w panelu akcji: żadna z tych trzech kontrolek nie wysyła nic do rdzenia
-  // i żadna nie zmienia pamięci projektu.
+  // Filtr zawęża wykaz już odczytany, stoi w pasku narzędzi, nie w panelu, i nic nie wysyła rdzeniowi.
   const fraza = pole('Fraza w treści wpisu', 'fragment ustalenia');
   const pochodzenie = wybor('Pochodzenie wpisu', POCHODZENIA);
   const tylkoPrzypiete = przelacznikWidoku('Tylko przypięte', false);
@@ -103,10 +91,7 @@ export function utworzOknoPamieci(
     tresc.element,
   );
 
-  // Pamięć karty sesji stoi w tym samym oknie, ale prowadzi ją osobny panel
-  // i osobna rodzina komend (`memory.*`). Wykaz wyżej pokazuje pamięć projektu
-  // (`workspace.context.*`) — mieszanie obu w jednym wykazie zatarłoby, który
-  // wpis czyją własnością jest.
+  // Pamięć karty sesji stoi w tym oknie, ale prowadzi ją osobny panel i osobna rodzina komend.
   const pamiecKarty = utworzPanelPamieciSesji(zrodlo, stan);
   rama.cialo.append(pamiecKarty.element);
 
@@ -149,10 +134,7 @@ export function utworzOknoPamieci(
         edytor.value = '';
         zmieniany = null;
         odczytaj();
-        // Potwierdzenie mówi to, co zapisał rdzeń, nie to, co wysłało okno.
-        // Wpis zapisany w zasięgu szerszym niż projekt bywa niewidoczny
-        // w wykazie poniżej (wykaz pokazuje wspólne dopiero po włączeniu
-        // przełącznika), więc samo odświeżenie listy nie potwierdza zapisu.
+        // Potwierdzenie mówi to, co zapisał rdzeń, nie to, co wysłało okno; odświeżenie samo nie potwierdza.
         const zapisany = wynik.wynik?.entry;
         if (zapisany === undefined) {
           tresc.potwierdzenie(
@@ -169,11 +151,7 @@ export function utworzOknoPamieci(
       });
   }
 
-  /**
-   * Usuwa wpis komendą `memory.delete`. Potwierdzenie mówi to, co oddał rdzeń
-   * w polu `deleted`, nie to, co wysłało okno: rdzeń odmawia usunięcia wpisu,
-   * którego nie ma, i okno pokazuje tę odmowę wprost.
-   */
+  /** Usuwa wpis komendą usunięcia; potwierdzenie mówi to, co oddał rdzeń, nie to, co wysłało okno. */
   function usun(wpis: WorkspaceMemoryEntry): void {
     void zrodlo.usunWpisPamieci({ entryId: wpis.id }).then((wynik) => {
       if (!wynik.udany) {
@@ -223,9 +201,7 @@ export function utworzOknoPamieci(
           edytor.value =
             edytor.value === '' ? zrodlowy.content : `${edytor.value}
 ${zrodlowy.content}`;
-          // Zdanie mówi o skutku scalenia; powodu, dla którego wpis źródłowy
-          // zostaje, nie powtarza — niesie go przycisk „Usuń wpis” i bierze
-          // z rdzenia, więc kopia w tym miejscu mogłaby się rozjechać.
+          // Zdanie mówi o skutku scalenia, a powodu, dla którego wpis źródłowy zostaje, nie powtarza.
           tresc.potwierdzenie(
             'Treść dołączona do edytora. Zapis scali ją w jeden wpis; wpis źródłowy zostaje ' +
               'w pamięci projektu, dopóki nie usuniesz go przyciskiem „Usuń”.',
@@ -244,15 +220,7 @@ ${zrodlowy.content}`;
     return !(filtrPrzypiete && wpis.pinned !== true);
   }
 
-  /**
-   * Rysuje wykaz z ostatniego odczytu wedle nastawy filtra. Odczyt i rysowanie
-   * są rozdzielone, bo filtr zawęża materiał już posiadany — pytanie rdzenia po
-   * każdym naciśnięciu klawisza byłoby ruchem bez potrzeby, a przy zapytaniu
-   * w drodze pokazywałoby wykaz sprzed zmiany.
-   *
-   * Plakietka mówi, ile wpisów rdzeń oddał i ile z nich przeszło przez filtr;
-   * bez drugiej liczby wykaz zawężony wyglądałby jak pamięć uboższa, niż jest.
-   */
+  /** Odczyt i rysowanie są rozdzielone, bo filtr zawęża materiał już posiadany bez pytania rdzenia. */
   function rysuj(): void {
     if (ostatnie.length === 0) {
       rama.ustawZnacznik('');
@@ -287,8 +255,7 @@ ${zrodlowy.content}`;
       .wpisyPamieci({ projectId: projekt, includeShared: wspolne.checked })
       .then((wynik) => {
         if (!wynik.udany || wynik.wynik === undefined) {
-          // Plakietka gaśnie razem z wykazem: licznik sprzed odmowy mówiłby
-          // o pamięci, której to okno właśnie nie zdołało odczytać.
+          // Plakietka gaśnie razem z wykazem: licznik sprzed odmowy mówiłby o pamięci, której nie odczytano.
           ostatnie = [];
           rama.ustawZnacznik('');
           tresc.blad('Rdzeń nie oddał pamięci projektu.', wynik.blad);
@@ -309,8 +276,7 @@ ${zrodlowy.content}`;
     }),
   );
   odswiez.addEventListener('click', odczytaj);
-  // Zasięg wchodzi do zapytania (`includeShared`), więc jego zmiana wymaga
-  // odczytu; filtr zawęża to, co już przyszło, i wystarcza mu przerysowanie.
+  // Zasięg wchodzi do zapytania, więc jego zmiana wymaga odczytu; filtr wystarcza mu przerysowanie.
   wspolne.addEventListener('change', odczytaj);
   fraza.addEventListener('input', rysuj);
   pochodzenie.addEventListener('change', rysuj);
@@ -327,9 +293,7 @@ ${zrodlowy.content}`;
     tresc.potwierdzenie('Pamięć projektu pobrana jako plik Markdown.', true);
   });
 
-  // Zmiana projektu — także ta przyszła zdarzeniem `workspace.project.changed`
-  // z innego okna albo urządzenia — przeładowuje wykaz. Pamięć pokazana obok
-  // cudzej zmiany byłaby pamięcią nieaktualną.
+  // Zmiana projektu, także zdarzeniem z innego okna, przeładowuje wykaz, by pamięć nie była nieaktualna.
   stan.naZmiane(odczytaj);
 
   return { element: rama.element, odswiez: odczytaj };

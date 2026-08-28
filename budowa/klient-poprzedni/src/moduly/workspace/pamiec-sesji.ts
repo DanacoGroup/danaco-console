@@ -17,22 +17,8 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Pamięć karty sesji — poziomy włączone, zapis pamięci i wpisy widoczne w sesji.
- *
- * Odpowiedzialność odrębna od pamięci projektu. `pamiec-kontekstu.ts` prowadzi
- * pamięć projektu rodziną `workspace.context.*`: wpisy jednego projektu, wspólne
- * wszystkim jego kartom. Ten panel prowadzi to, co widzi karta — rodziną
- * `memory.*`, w której zasięg jest polem żądania, a nie założeniem. Dwie rodziny
- * komend, dwa byty, dwa pliki.
- *
- * Panel woła `memory.list`, `memory.set` i `memory.toggle`. `memory.detach`
- * zostaje bez wołacza: znaczenie odpięcia nie jest w kontrakcie ustalone, więc
- * kontrolka wołająca tę komendę zmieniałaby zawartość bazy w sposób, którego
- * okno nie potrafi nazwać.
- *
- * Każde zdanie mówi to, co oddał rdzeń: poziomy po przestawieniu biorą się
- * z odpowiedzi `memory.toggle`, nie ze stanu przełączników — rdzeń, który
- * przyjmie wywołanie i odda inny zestaw poziomów, nie zrobił tego, o co proszono.
+ * Pamięć karty sesji obejmuje poziomy włączone, zapis pamięci i wpisy widoczne w sesji, odrębna
+ * od pamięci projektu.
  */
 export interface PanelPamieciSesji {
   element: HTMLElement;
@@ -85,10 +71,7 @@ export function utworzPanelPamieciSesji(
     tresc.element,
   );
 
-  /**
-   * Warunek wstępny wszystkich trzech komend panelu: bez karty sesji nie ma
-   * czego wysłać. Zwraca `true` i wypisuje powód, gdy karty jeszcze nie ma.
-   */
+  /** Warunek wstępny wszystkich trzech komend panelu: bez karty sesji nie ma czego wysłać. */
   function bezKarty(): boolean {
     if (stan.sesja() !== '') return false;
     tresc.pusto(
@@ -108,8 +91,7 @@ export function utworzPanelPamieciSesji(
     if (bezKarty()) return;
     const poziomy = zaznaczone();
     if (poziomy.length === 0) {
-      // Pusta lista poziomów zostawia stan bez zmian, więc jej wysłanie dałoby
-      // potwierdzenie udanego wywołania, po którym nic się nie zmieniło.
+      // Pusta lista poziomów zostawia stan bez zmian, dając potwierdzenie, po którym nic się nie zmieniło.
       tresc.potwierdzenie(
         'Pusty zestaw poziomów zostawia stan bez zmian — zaznacz przynajmniej jeden poziom.',
         false,
@@ -206,7 +188,7 @@ export function utworzPanelPamieciSesji(
   return { element, odswiez: odczytaj };
 }
 
-/** Pozycja wykazu: treść wpisu wraz z jego zasięgiem i pochodzeniem. */
+/** Pozycja wykazu: treść wpisu wraz z jego zasięgiem i pochodzeniem, pokazana wraz ze znacznikiem przypięcia, gdy wpis jest przypięty. */
 function pozycja(wpis: WorkspaceMemoryEntry): HTMLElement {
   const { element } = pozycjaWykazu(
     wpis.content,
@@ -216,7 +198,7 @@ function pozycja(wpis: WorkspaceMemoryEntry): HTMLElement {
   return element;
 }
 
-/** Pasek kontrolek panelu — samo złożenie, bez reguły w środku. */
+/** Pasek kontrolek panelu — samo złożenie kontrolek w jeden element, bez reguły widoczności ani kolejności w środku. */
 function paskiem(...kontrolki: readonly HTMLElement[]): HTMLElement {
   const pasek = document.createElement('div');
   pasek.className = 'dw-pasek';

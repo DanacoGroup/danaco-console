@@ -1,13 +1,6 @@
 // Pakiet stdio prowadzi protokół MCP po strumieniach procesu: jedno wywołanie
-// JSON-RPC 2.0 w wierszu wejścia, jedna odpowiedź w wierszu wyjścia.
-//
-// Kształt uruchomienia odpowiada wpisowi `mcpServers` składanemu przez
-// `core/most_mcp.go` — {type: "stdio", command, args} — więc proces modelu
-// uruchamia ten serwer dokładnie tak, jak uruchamia most konsoli.
-//
-// Pakiet nie zna ani jednej komendy kontraktu i ani jednej nazwy narzędzia:
-// pyta o nie katalog. Dzięki temu warstwa protokołu nie ma jak rozjechać się
-// z wykazem, którego nie prowadzi.
+// JSON-RPC 2.0 w wierszu wejścia, jedna odpowiedź w wierszu wyjścia. Pakiet nie
+// zna komend kontraktu ani nazw narzędzi, pyta o nie katalog.
 package stdio
 
 import (
@@ -18,15 +11,18 @@ import (
 )
 
 const (
-	// wersjaJsonRpc jest wersją protokołu przenoszącego wywołania.
+	// wersjaJsonRpc jest wersją protokołu JSON-RPC przenoszącego wywołania między
+	// procesem modelu a serwerem.
 	wersjaJsonRpc = "2.0"
-	// wersjaMcp jest wersją protokołu MCP, którą serwer ogłasza przy powitaniu.
+	// wersjaMcp jest wersją protokołu MCP, którą serwer ogłasza procesowi modelu
+	// w treści odpowiedzi powitalnej.
 	wersjaMcp = "2025-06-18"
-	// wersjaSerwera odpowiada wersji produktu (core.WersjaRdzenia). Pakiet nie
-	// sięga po tamtą stałą, bo import rdzenia wciągnąłby do binarium serwera
-	// narzędzi całą trwałość wraz z bazą.
+	// wersjaSerwera odpowiada wersji produktu. Pakiet nie sięga po tamtą stałą,
+	// bo import rdzenia wciągnąłby do binarium serwera narzędzi całą trwałość
+	// wraz z bazą.
 	wersjaSerwera = "1.0"
-	// nazwaSerwera jest nazwą serwera widzianą przez proces modelu.
+	// nazwaSerwera jest nazwą serwera narzędzi widzianą przez proces modelu
+	// w odpowiedzi powitalnej protokołu.
 	nazwaSerwera = narzedzia.KluczWpisu
 )
 
@@ -43,12 +39,8 @@ const (
 // Interfejs stoi po stronie odbiorcy, więc pakiet nie narzuca rozdzielni
 // żadnego kształtu poza tymi dwiema czynnościami.
 type Katalog interface {
-	// Narzedzia zwraca wykaz narzędzi podawany modelowi.
-	//
-	// Kontekst wchodzi parametrem, bo w zasięgu eksperta złożenie wykazu pyta
-	// rdzeń o jego definicję (`narzedzia/rozdzielnia_ekspert.go`). Wykaz nie jest
-	// więc czynnością czysto obliczeniową i nie ma prawa przeżyć zatrzymania
-	// procesu.
+	// Narzedzia zwraca wykaz narzędzi podawany modelowi; kontekst pozwala
+	// złożeniu wykazu pytać rdzeń.
 	Narzedzia(kontekst context.Context) []narzedzia.Narzedzie
 	// Wywolaj wykonuje jedno narzędzie; zwrócony błąd jest treścią dla modelu.
 	Wywolaj(kontekst context.Context, nazwa string, argumenty map[string]any) (string, error)
@@ -64,7 +56,8 @@ type zadanie struct {
 	Params  json.RawMessage `json:"params,omitempty"`
 }
 
-// odpowiedz jest wynikiem JSON-RPC.
+// odpowiedz jest wynikiem wywołania JSON-RPC zwracanym procesowi modelu
+// w jednym wierszu wyjścia serwera.
 type odpowiedz struct {
 	JsonRpc string          `json:"jsonrpc"`
 	Id      json.RawMessage `json:"id"`
@@ -79,12 +72,14 @@ type bladProtokolu struct {
 	Komunikat string `json:"message"`
 }
 
-// wynikiem pakuje wynik metody w odpowiedź.
+// wynikiem pakuje wynik wykonanej metody w odpowiedź JSON-RPC gotową do
+// zapisania w wierszu wyjścia serwera.
 func wynikiem(id json.RawMessage, wynik any) odpowiedz {
 	return odpowiedz{JsonRpc: wersjaJsonRpc, Id: id, Wynik: wynik}
 }
 
-// bledem pakuje usterkę wywołania w odpowiedź.
+// bledem pakuje usterkę wywołania w odpowiedź JSON-RPC gotową do zapisania
+// procesowi modelu jednym wierszem.
 func bledem(id json.RawMessage, kod int, komunikat string) odpowiedz {
 	return odpowiedz{JsonRpc: wersjaJsonRpc, Id: id, Blad: &bladProtokolu{Kod: kod, Komunikat: komunikat}}
 }

@@ -22,27 +22,8 @@ import { wierszPamieci } from './wiersz-pamieci';
 import type { ZrodloPamieci } from './zrodlo-pamieci';
 
 /**
- * Zakładka faktów Memory & Context Manager — jawny edytor pamięci asystenta.
- *
- * Realizuje zasadę jawności modułu: pamięć jest w całości widoczna, edytowalna
- * i usuwalna. Cztery czynności kontraktu wystarczają: `memory.list` czyta,
- * `memory.set` zakłada i zmienia (także przypięcie i pochodzenie),
- * `memory.delete` kasuje.
- *
- * Zasięgiem odczytu jest karta sesji, nie projekt. Moduł Assistant pracuje
- * w karcie sesji środowiska TalkIn i nie ma pojęcia projektu — `memory.list`
- * przyjmuje `sessionId` właśnie na taki przypadek („karta sesji, gdy projekt
- * nie został wskazany"). Zapis idzie tą samą drogą, z zasięgiem wskazanym
- * jawnie przez Operatora.
- *
- * Potwierdzenie mówi to, co zapisał rdzeń, a nie to, co wysłało okno: wpis
- * zapisany na poziomie szerszym niż karta sesji bywa niewidoczny w wykazie
- * poniżej, więc samo odświeżenie listy niczego by nie potwierdzało.
- *
- * Reguł retencji, wygaszania (TTL) i znaczników wrażliwości okno nie udaje.
- * `WorkspaceMemoryEntry` ma osiem pól i żadne z nich nie niesie czasu życia ani
- * wrażliwości; brak nazywa przycisk, zamiast stawiać formularz, którego rdzeń
- * nie zapisze.
+ * Zakładka faktów w Memory & Context Manager jest jawnym edytorem pamięci asystenta, w pełni
+ * widocznej, edytowalnej i usuwalnej w zasięgu karty sesji.
  */
 export interface PanelFaktow {
   element: HTMLElement;
@@ -129,8 +110,7 @@ export function utworzPanelFaktow(stan: StanAssistant, zrodlo: ZrodloPamieci): P
     wpis: string;
   }): void {
     if (zamowienie.tresc.trim() === '') {
-      // Pusta treść jest brakiem w polu formularza, nie odmową rdzenia: wykaz
-      // zostaje nietknięty, a zdanie stoi przy formularzu.
+      // Pusta treść jest brakiem w polu formularza, nie odmową rdzenia — wykaz zostaje nietknięty.
       odpowiedz.pokaz('Wpisz treść ustalenia — rdzeń odmówi zapisu pustego.', false);
       return;
     }
@@ -172,8 +152,7 @@ export function utworzPanelFaktow(stan: StanAssistant, zrodlo: ZrodloPamieci): P
         return;
       }
       if (!wynik.wynik.deleted) {
-        // Rdzeń przyjął wywołanie i odpowiedział „nie usunąłem". Zdanie mówi to,
-        // co oddał, a nie to, o co okno prosiło.
+        // Rdzeń przyjął wywołanie i odpowiedział, że nie usunął; zdanie mówi to, co oddał rdzeń.
         odpowiedz.pokaz('Rdzeń przyjął wywołanie, ale nie potwierdził usunięcia wpisu.', false);
         return;
       }

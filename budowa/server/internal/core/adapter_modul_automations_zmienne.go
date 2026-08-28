@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: panel „Zmienne ▼” Workflow Buildera (zmienne
-// przepływu i mapowanie danych między krokami), notatka przy kroku i układ
-// węzłów na kanwie.
-//
-// Układ kanwy jest zapisem, nie wyliczeniem. Bez niego położenie węzłów
-// liczyłoby się z układu zależności przy każdym otwarciu okna, a Operator
-// zastawałby kanwę ułożoną od nowa — praca nad rozmieszczeniem procesu
-// nie przeżyłaby zamknięcia karty.
-//
-// Zapis zmiennych oddaje zastrzeżenia, lecz niczego nie odmawia. Zmienna
-// nieużywana i mapowanie do kroku nieistniejącego są ostrzeżeniem na kanwie,
-// tak samo jak reszta walidacji definicji: zapis pozostaje możliwy, bo Operator
-// buduje proces etapami i połowa definicji jest stanem poprawnym.
+// Plik obsługuje panel „Zmienne” Workflow Buildera: zmienne przepływu i mapowanie danych między krokami, notatkę przy kroku i układ węzłów na kanwie.
 package core
 
 import (
@@ -20,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// UstawZmienne zapisuje zmienne przepływu i mapowanie danych między krokami.
+// UstawZmienne zapisuje zmienne przepływu i mapowanie danych między krokami, oddając zastrzeżenia definicji bez odmowy zapisu.
 func (a *adapterAutomatyk) UstawZmienne(ctx context.Context,
 	z shared.AutomationWorkflowVariablesSetRequest) (shared.AutomationWorkflowVariablesSetResponse, error) {
 
@@ -32,9 +20,7 @@ func (a *adapterAutomatyk) UstawZmienne(ctx context.Context,
 		wierszeZmiennych(z.Variables)); err != nil {
 		return shared.AutomationWorkflowVariablesSetResponse{}, bladAutomatyki(err)
 	}
-	// Pole `mappings` nieobecne zostawia mapowania zastane. Zapis samych
-	// zmiennych nie ma kasować pracy nad przepływem danych — tak samo jak zapis
-	// definicji bez pola `steps` nie kasuje kroków.
+	// Pole `mappings` nieobecne zostawia mapowania zastane, tak jak zapis definicji bez pola `steps`.
 	if z.Mappings != nil {
 		if err := a.repozytorium.ZapiszMapowaniaAutomatyki(ctx, wiersz.ID,
 			wierszeMapowan(z.Mappings)); err != nil {
@@ -61,7 +47,7 @@ func (a *adapterAutomatyk) UstawZmienne(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// zmienneIMapowania odczytuje oba zbiory po zapisie i przekłada je na kontrakt.
+// zmienneIMapowania odczytuje oba zbiory po zapisie i przekłada je na kontrakt wraz z liczonymi zastrzeżeniami przepływu.
 func (a *adapterAutomatyk) zmienneIMapowania(ctx context.Context,
 	automatykaID int64) ([]shared.AutomationVariable, []shared.AutomationDataMapping, error) {
 
@@ -145,7 +131,7 @@ func czyZmiennaUzywana(nazwa string, mapowania []shared.AutomationDataMapping,
 	return false
 }
 
-// zawieraNazwe mówi, czy tekst przywołuje nazwę zmiennej.
+// zawieraNazwe mówi, czy tekst przywołuje nazwę zmiennej w szablonie pola albo w ładunku kroku definicji.
 func zawieraNazwe(tekst, nazwa string) bool {
 	if tekst == "" {
 		return false
@@ -158,7 +144,7 @@ func zawieraNazwe(tekst, nazwa string) bool {
 	return false
 }
 
-// wierszeZmiennych przekłada zmienne kontraktu na wiersze.
+// wierszeZmiennych przekłada zmienne kontraktu na wiersze zapisywane w repozytorium definicji automatyki.
 func wierszeZmiennych(zmienne []shared.AutomationVariable) []dane.ZmiennaAutomatyki {
 	wiersze := make([]dane.ZmiennaAutomatyki, 0, len(zmienne))
 	for _, zmienna := range zmienne {
@@ -174,7 +160,7 @@ func wierszeZmiennych(zmienne []shared.AutomationVariable) []dane.ZmiennaAutomat
 	return wiersze
 }
 
-// wierszeMapowan przekłada mapowania kontraktu na wiersze.
+// wierszeMapowan przekłada mapowania kontraktu na wiersze zapisywane w repozytorium definicji automatyki.
 func wierszeMapowan(mapowania []shared.AutomationDataMapping) []dane.MapowanieDanych {
 	wiersze := make([]dane.MapowanieDanych, 0, len(mapowania))
 	for _, mapowanie := range mapowania {
@@ -186,7 +172,7 @@ func wierszeMapowan(mapowania []shared.AutomationDataMapping) []dane.MapowanieDa
 	return wiersze
 }
 
-// UstawNotatkeKroku zapisuje notatkę opisową przy kroku; treść pusta ją zdejmuje.
+// UstawNotatkeKroku zapisuje notatkę opisową przy kroku definicji; treść pusta zdejmuje ją z bazy danych.
 func (a *adapterAutomatyk) UstawNotatkeKroku(ctx context.Context,
 	z shared.AutomationStepNoteSetRequest) (shared.AutomationStepNoteSetResponse, error) {
 
@@ -215,14 +201,12 @@ func (a *adapterAutomatyk) UstawNotatkeKroku(ctx context.Context,
 			return shared.AutomationStepNoteSetResponse{Step: krok}, nil
 		}
 	}
-	// Notatka przy kroku, którego w definicji nie ma, zostaje zapisana — krok
-	// przywrócony z wersji wcześniejszej zastanie ją na miejscu. Odpowiedź musi
-	// jednak nieść krok, więc brak kroku nazywa się wprost.
+	// Notatka przy kroku, którego w definicji nie ma, zostaje zapisana; brak kroku nazywa się wprost.
 	return shared.AutomationStepNoteSetResponse{},
 		bladNieznanegoBytuAutomatyki(dane.ErrBrakWiersza, "krok nie istnieje w definicji: ", z.StepId)
 }
 
-// UstawUkladKanwy zapisuje położenia węzłów kroków na kanwie.
+// UstawUkladKanwy zapisuje położenia węzłów kroków na kanwie Workflow Buildera, żeby przeżyły zamknięcie karty.
 func (a *adapterAutomatyk) UstawUkladKanwy(ctx context.Context,
 	z shared.AutomationStepLayoutSetRequest) (shared.AutomationStepLayoutSetResponse, error) {
 

@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: wpięcie dwóch komend rodziny `document.*` — zamiany
-// formatu dokumentu i odczytu jego treści. Adapter wraz z rozstrzygnięciami
-// (skąd biorą się zasady i obszar uruchomienia, którym binarium jedzie która
-// droga, dlaczego `usedOcr` mówi prawdę) leży w plikach
-// `adapter_narzedzia_dokument*.go`.
-//
-// Kontrakt niesie w tej rodzinie dwie komendy: `document.convert`
-// i `document.text.extract`.
-//
-// Są to narzędzia modelu, nie panel Operatora — model wykonuje je sam w trakcie
-// tury, dlatego żadna nie niesie okna i żadna niczego nie rozgłasza.
-//
-// Zdarzeń rodzina nie ma: kontrakt nie zna `document.changed`, więc port nie
-// bierze nadajnika. Zdarzenie spoza kontraktu dałoby klientowi nazwę, której
-// nie zna nikt poza rdzeniem.
-//
-// Port niewypełniony nie rejestruje niczego: obie komendy odpowiedzą wtedy
-// `document.unknown`, a pozostałe domeny pracują bez zmian.
+// Plik wpina dwie komendy rodziny document.* — zamianę formatu dokumentu
+// i odczyt jego treści, jako narzędzia modelu wykonywane samodzielnie
+// w trakcie tury.
 package core
 
 import (
@@ -38,7 +23,8 @@ type Dokumenty interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u modelu.
 var _ Dokumenty = (*adapterNarzedziDokumentu)(nil)
 
-// zarejestrujDokumenty wpina dwie komendy rodziny `document.*`.
+// zarejestrujDokumenty wpina dwie komendy rodziny document.* na porcie
+// Dokumenty, pomijając rejestrację, gdy port jest pusty.
 func zarejestrujDokumenty(r *Rejestr, d Dokumenty) {
 	if r == nil || d == nil {
 		return

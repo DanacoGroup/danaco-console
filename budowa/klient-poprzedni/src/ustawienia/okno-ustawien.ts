@@ -6,34 +6,7 @@ import type { Kanal } from '../protokol/kanal';
 import { REJESTR_SEKCJI_USTAWIEN, type SekcjaUstawien, type KodSekcjiUstawien } from './sekcje';
 import { utworzStanUstawien, type StanUstawien } from './stan-ustawien';
 
-/**
- * Okno Ustawień — rama: nawigacja sekcji i montaż sekcji czynnej.
- *
- * Okno stoi na natywnym `<dialog>`, tak jak okno konfiguracji i okno modeli:
- * warstwę tła, stos okien i zamknięcie klawiszem Esc daje przeglądarka, a nie
- * własna nakładka. Wygląd bierze z biblioteki (`dn-modal`, `dn-boczna`) —
- * plik nie zna ani jednej barwy.
- *
- * Rama nie niesie treści sekcji. Zna wyłącznie rejestr z `sekcje.ts` (kod,
- * nazwa, ikona, fabryka) i kontrakt `SekcjaUstawien` — co sekcja niesie
- * w środku, jest sprawą pliku sekcji, nie ramy.
- *
- * Rejestr niesie dziś jedną sekcję („uwierzytelnianie"); powód zwężenia
- * i warunek przywrócenia stoją w nagłówku `sekcje.ts`, a ta rama tylko na
- * niego wskazuje.
- *
- * Sekcje budują się razem, przy otwarciu okna. Rejestr sekcji jest stały (nie
- * przychodzi katalogiem rdzenia jak kategorie konfiguracji), więc nie ma
- * powodu budować ich leniwie przy pierwszym kliknięciu — a budowa od razu
- * utrzymuje stan każdej sekcji, na przykład wpisany, jeszcze niezapisany
- * formularz, przy przełączaniu zakładek, zamiast go gubić. Kod poniżej działa
- * dla jednej sekcji identycznie jak dla wielu: dołożenie drugiej pozycji do
- * `REJESTR_SEKCJI_USTAWIEN` nie wymaga zmiany tego pliku.
- *
- * Okno otwiera się natychmiast; każda sekcja sama rozstrzyga swój odczyt i swój
- * stan błędu. „Odczytaj ponownie" w stopce odświeża wyłącznie sekcję czynną —
- * sekcje niewidoczne nie ciągną rdzenia w tle bez powodu.
- */
+/** Okno ustawień jest ramą: nawigacją sekcji i montażem sekcji czynnej, zbudowaną na natywnym oknie dialogowym tak jak okno konfiguracji i okno modeli. */
 export interface OknoUstawien {
   /** Element `<dialog>` osadzany w dokumencie. */
   element: HTMLDialogElement;
@@ -67,19 +40,7 @@ export function utworzOknoUstawien(kanal: Kanal): OknoUstawien {
   const wnetrzeCiala = document.createElement('div');
   wnetrzeCiala.className = 'du-okno__tresc';
 
-  /**
-   * Kolumna nawigacji jest budowana zawsze, ale osadzana w dokumencie tylko
-   * wtedy, gdy rejestr niesie więcej niż jedną sekcję.
-   *
-   * Nawigacja do jednego miejsca jest nawigacją donikąd: kolumna
-   * z pojedynczym, zawsze czynnym przyciskiem sugerowałaby Operatorowi wybór,
-   * którego nie ma, i byłaby kłamstwem o kształcie okna.
-   *
-   * Próg jest samoczynny, a nie ręcznym przełącznikiem — warunek czyta długość
-   * `REJESTR_SEKCJI_USTAWIEN` przy każdej budowie okna, więc po dołożeniu
-   * drugiej sekcji kolumna wraca sama, bez zmiany w tym pliku. Gałąź „więcej
-   * niż jedna" jest mechanizmem wzrostu okna, a nie martwym kodem.
-   */
+  // Kolumna nawigacji, budowana zawsze, jest osadzana tylko, gdy rejestr niesie więcej niż jedną sekcję.
   if (REJESTR_SEKCJI_USTAWIEN.length > 1) {
     cialo.append(nawigacja.element, wnetrzeCiala);
   } else {
@@ -135,7 +96,7 @@ export function utworzOknoUstawien(kanal: Kanal): OknoUstawien {
   };
 }
 
-/** Nawigacja sekcji: kolumna boczna zbudowana z rejestru stałego. */
+/** Nawigacja sekcji: kolumna boczna zbudowana z rejestru stałego, z metodami odświeżenia wykazu i oznaczenia pozycji czynnej. */
 interface NawigacjaSekcji {
   element: HTMLElement;
   odswiez(rejestr: readonly (typeof REJESTR_SEKCJI_USTAWIEN)[number][], czynna: KodSekcjiUstawien): void;
@@ -181,7 +142,7 @@ function utworzNawigacjeSekcji(naWybor: (kod: KodSekcjiUstawien) => void): Nawig
   };
 }
 
-/** Nagłówek okna: ikona, tytuł, przycisk zamknięcia. */
+/** Nagłówek okna niesie ikonę, tytuł i przycisk zamknięcia, budując górny pasek ramy okna dialogowego ustawień. */
 function naglowek(naZamkniecie: () => void): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dn-modal-naglowek du-okno__naglowek';

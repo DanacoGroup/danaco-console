@@ -30,33 +30,9 @@ import {
 } from './zdania-wdrozen';
 
 /**
- * Deployment Panel — okno zarządcy modułu Apps.
- *
- * Uruchomienie wdrożenia stoi na `apps.deployment.run`; cofnięcie do wersji
- * wcześniejszej jest tą samą komendą z polem `rollbackToDeploymentId`, nie
- * osobną drogą. Przegląd statusu publikacji stoi na własnej komendzie odczytu,
- * a nie wyłącznie na zdarzeniu `apps.build.changed`: wykaz zasilany samymi
- * ramkami zdarzeń zerowałby się przy każdym odświeżeniu okna przeglądarki,
- * choć rdzeń trzyma historię dalej. Przycisk „Odczytaj wdrożenia z rdzenia”
- * jest drogą po nią, a zdanie o pustym wykazie odróżnia pustkę potwierdzoną
- * odczytem od pustki, której nikt nie sprawdził (`zdania-wdrozen.ts`).
- *
- * Przycisk „Wdróż” jest zawsze klikalny. Naciśnięcie przed zakończeniem prac
- * w warsztatach wyświetla komunikat o brakującym warunku i mimo to idzie do
- * rdzenia, bo o dopuszczalności wdrożenia rozstrzyga rdzeń, a nie wygaszona
- * kontrolka.
- *
- * Odpowiedź komendy nie jest wynikiem wdrożenia: `apps.deployment.run` wraca,
- * gdy przebieg ruszy — ze stanem `pending`. Okno zapamiętuje identyfikator
- * przebiegu, który sam zlecił, i dopisuje jego stan końcowy, gdy przyniesie go
- * zdarzenie `apps.build.changed`, wraz z powodem z pola `logRef`, jeśli rdzeń
- * go podał.
- *
- * Potwierdzenie bierze treść z odpowiedzi, a rozbieżność jest odmową: zdanie
- * o przyjęciu zlecenia wymienia środowisko, strategię, wersję i stan tak, jak
- * oddał je rdzeń, nie tak, jak stoją w kontrolkach okna. Rozbieżność zamówienia
- * z odpowiedzią jedzie w zdaniu i towarzyszy każdej dalszej wiadomości o tym
- * przebiegu.
+ * Deployment Panel jest oknem zarządcą modułu Apps: uruchamia wdrożenie oraz
+ * cofnięcie do wersji wcześniejszej, a przegląd statusu publikacji czyta
+ * z własnej komendy odczytu, nie wyłącznie ze zdarzeń przejścia.
  */
 export interface OknoDeploymentPanel {
   element: HTMLElement;
@@ -67,9 +43,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
   const kod = KODY_OKIEN.DeploymentPanel;
   const rama = utworzRameApps(kod, NAZWY_OKIEN[kod] ?? kod, 'zarządca');
 
-  // Rozwijanie z biblioteki kontrolek, nie natywny `<select>`. Opis pozycji
-  // niesie mechanizm menu, więc rozwinięcie treści („środowisko deweloperskie")
-  // wraca do pola `opis` zamiast doklejać się do nazwy.
+  // Rozwijanie z biblioteki kontrolek: rozwinięcie treści wraca do pola opisu, nie do nazwy pozycji.
   const srodowisko = utworzWyborZMenu('Środowisko wdrożenia', [
     { wartosc: AppDeployEnvironment.Dev, etykieta: 'dev', opis: 'środowisko deweloperskie' },
     { wartosc: AppDeployEnvironment.Staging, etykieta: 'staging', opis: 'przedprodukcyjne' },
@@ -84,9 +58,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
   const notatki = poleWielowierszowe({ etykieta: 'Notatki wydania' }, 4);
 
   const wdroz = przycisk('Wdróż', 'dn-btn dn-btn--sygnal dn-btn--sm');
-  // Jedyna droga po historię trzymaną w rdzeniu — wykaz zasilany samymi ramkami
-  // bieżącej sesji gniazda kończy się przy odświeżeniu okna przeglądarki.
-  // Przycisk stoi tuż nad tabelą, której dotyczy.
+  // Jedyna droga po historię trzymaną w rdzeniu; przycisk stoi tuż nad tabelą, której dotyczy.
   const odczytaj = przycisk('Odczytaj wdrożenia z rdzenia', 'dn-btn dn-btn--zarys dn-btn--sm');
   const odpowiedz = utworzWierszOdpowiedzi();
   const tabela = utworzTabeleWdrozen((identyfikator) => void wyslij(identyfikator));
@@ -117,12 +89,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
   odczytaj.addEventListener('click', () => void odczytajWdrozenia());
 
   /**
-   * Odczyt historii wdrożeń okna.
-   *
-   * Zawężenia nie podstawiamy: kontrakt ma pola środowiska i granicy jako
-   * opcjonalne, a okno nie ma ich skąd wziąć inaczej niż zgadując — zgadnięta
-   * granica ucinałaby historię bez powiedzenia o tym. Pytamy o wszystko
-   * i o granicy rozstrzyga rdzeń.
+   * Odczyt historii wdrożeń okna; zawężenia nie podstawiamy, o granicy rozstrzyga rdzeń.
    */
   async function odczytajWdrozenia(): Promise<void> {
     rama.ladowanie('Odczyt wdrożeń z rdzenia…');
@@ -134,9 +101,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
       odpowiedz.pokaz(powod, false);
       return;
     }
-    // Liczba pochodzi ze zbioru po wchłonięciu, więc mówi o tym, co stoi
-    // w tabeli — a nie o długości odpowiedzi, z której część mogła zostać
-    // pominięta jako starsza od stanu przyniesionego zdarzeniem.
+    // Liczba pochodzi ze zbioru po wchłonięciu, więc mówi o tym, co stoi w tabeli.
     odpowiedz.pokaz(`Odczyt wdrożeń: wykaz liczy ${stan.wdrozenia().length} pozycji.`, true);
     rama.gotowe();
     odswiez();
@@ -184,17 +149,12 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
       odpowiedz.pokaz(zdanie, false);
       return;
     }
-    // Kolejność tych trzech kroków jest wiążąca: zdanie o przyjęciu zlecenia
-    // musi paść przed wchłonięciem migawki, bo wchłonięcie ogłasza zmianę stanu
-    // i to ono zaraz dopisze stan końcowy przyniesiony zdarzeniem. Odwrotna
-    // kolejność zamazuje gotowe zdanie o stanie końcowym zdaniem o samym
-    // przyjęciu.
+    // Kolejność tych trzech kroków jest wiążąca: zdanie o przyjęciu musi paść przed wchłonięciem migawki.
     const przebieg = wynik.wynik.deployment;
     zleconyPrzebieg = przebieg.id;
     rozbieznoscOdpowiedzi = rozbieznoscZlecenia(zamowienie, przebieg);
     if (rozbieznoscOdpowiedzi === '') {
-      // Wszystkie wartości tego zdania pochodzą z odpowiedzi rdzenia, nie
-      // z kontrolek okna.
+      // Wszystkie wartości tego zdania pochodzą z odpowiedzi rdzenia, nie z kontrolek okna.
       odpowiedz.pokaz(
         `${czynnosc}: rdzeń przyjął zlecenie i uruchomił przebieg ${przebieg.id} — ` +
           `środowisko ${przebieg.environment}, strategia ${przebieg.strategy}, ` +
@@ -211,29 +171,17 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
       rama.blad(zdanie);
     }
     stan.wchlonOdpowiedzWdrozenia(przebieg);
-    // Zdarzenia przejścia potrafią wyprzedzić ten ciąg dalszy — stany `running`
-    // i `failed` bywają obsłużone przed mikrozadaniem odpowiedzi — więc stan
-    // końcowy opowiadamy tu jeszcze raz, na wypadek gdyby wchłonięcie migawki
-    // nie miało czego ogłosić.
+    // Zdarzenia przejścia potrafią wyprzedzić ten ciąg dalszy, więc stan końcowy opowiadamy tu ponownie.
     opowiedzStanPrzebiegu();
   }
 
-  /**
-   * Dopisuje do wiersza odpowiedzi stan przebiegu zleconego z tego okna.
-   *
-   * Zdanie powstaje wyłącznie z pól, które przysłał rdzeń — stan i `logRef`.
-   * Gdy rdzeń powodu nie podał, zdanie mówi o tym wprost zamiast dopowiadać
-   * powód własny.
-   */
+  /** Dopisuje do wiersza odpowiedzi stan przebiegu zleconego z tego okna, z pól przysłanych przez rdzeń. */
   function opowiedzStanPrzebiegu(): void {
     if (zleconyPrzebieg === '') return;
     const przebieg = stan.wdrozenia().find((wdrozenie) => wdrozenie.id === zleconyPrzebieg);
     if (przebieg === undefined || przebieg.status === opowiedzianyStan) return;
     opowiedzianyStan = przebieg.status;
-    // Rozbieżność raz zauważona jedzie z każdą dalszą wiadomością o tym
-    // przebiegu. Bez tego zdanie o stanie końcowym zamazałoby ją po ułamku
-    // sekundy i nad przebiegiem, który wykonał co innego, niż zamówiono,
-    // stałoby samo „succeeded".
+    // Rozbieżność raz zauważona jedzie z każdą dalszą wiadomością o tym przebiegu.
     const dopisek =
       rozbieznoscOdpowiedzi === ''
         ? ''
@@ -245,9 +193,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
       );
       return;
     }
-    // Powód dopisujemy, gdy rdzeń go przysłał. Przy stanie innym niż `succeeded`
-    // jego brak też jest wiadomością — wyjaśnienia nie ma w ramce, więc nie ma
-    // go czego szukać w oknie.
+    // Powód dopisujemy, gdy rdzeń go przysłał; jego brak przy niepowodzeniu też jest wiadomością.
     const udany = przebieg.status === AppDeployStatus.Succeeded;
     const maPowod = przebieg.logRef !== undefined && przebieg.logRef !== '';
     const powod = maPowod
@@ -255,12 +201,7 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
       : udany
         ? ''
         : ' Rdzeń nie podał powodu (pole logRef puste).';
-    // Środowisko i wersja jadą także tutaj: rdzeń domyka przebieg w milisekundach,
-    // więc zdanie o przyjęciu zlecenia bywa zamazane w tej samej turze pętli
-    // zdarzeń i nie da się go przeczytać. Wartości są z odpowiedzi rdzenia,
-    // bo cofnięcie z pustym polem wersji dziedziczy wersję wdrożenia docelowego
-    // — zdanie zbudowane z zamówienia mówiłoby „nienadana" o wersji, którą rdzeń
-    // właśnie zapisał.
+    // Środowisko i wersja jadą także tutaj z odpowiedzi rdzenia, nie z zamówienia — z powodu cofnięcia.
     odpowiedz.pokaz(
       `${zleconaCzynnosc} ${zleconyPrzebieg}: stan końcowy ${przebieg.status} — ` +
         `środowisko ${przebieg.environment}, wersja ${przebieg.version ?? 'nienadana'}.` +
@@ -276,8 +217,6 @@ export function utworzOknoDeploymentPanel(stan: StanProduktu): OknoDeploymentPan
     if (rama.faza() === 'blad' || rama.faza() === 'ladowanie') return;
     if (wdrozenia.length === 0) {
       // Zdanie składamy przy każdym odświeżeniu, a nie raz przy budowie okna:
-      // stan „jeszcze nic nie przyszło" przechodzi w „przyszło, ale wdrożeń nie
-      // było" dokładnie wtedy, gdy padnie pierwsza ramka.
       rama.puste(zdaniePustkiWdrozen(stan.ramki(), stan.czyWdrozeniaCzytane()));
       return;
     }

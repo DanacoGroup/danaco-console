@@ -8,27 +8,7 @@ import { utworzOknoStudio } from './okno-studio';
 import type { StanStudio } from './stan-studio';
 import type { ZrodloWarsztatuDokumentu } from './zrodlo-warsztatu-dokumentu';
 
-/**
- * Redakcja dokumentu — okno piętnastu czynności prowadzących dokument Studia
- * poza edytor: gałęzie i ich scalanie, wydanie historii i paczki redakcyjnej,
- * raport zmian, podgląd układu, różnica wizualna, porównanie ze źródłem,
- * wyszukiwanie znaczeniowe, osadzenie zasobu, wsad, wczytanie strony
- * i skanowanie z urządzenia.
- *
- * ── Dlaczego osobne okno, a nie druga zakładka warsztatu ────────────────────
- * Warsztat pracuje na dokumencie PDF z magazynu okna; redakcja pracuje na
- * dokumencie Studia wczytanym w edytorze. To dwa różne materiały, więc jeden
- * wspólny wykaz kazałby Operatorowi wybierać czynność, która nie ma na czym
- * pracować. Formularz jest jednak ten sam mechanizm — pola pochodzą z katalogu
- * i buduje je ta sama funkcja, co w warsztacie.
- *
- * ── Okno nie gaśnie przy braku materiału ────────────────────────────────────
- * Warsztat bez dokumentu PDF pokazuje stan pusty, bo bez materiału nie ma ani
- * jednej czynności do wykonania. Tutaj jest inaczej: cztery czynności —
- * wczytanie strony, skanowanie, wsad i odwołanie do wersji — nie potrzebują
- * dokumentu w edytorze. Okno zostaje więc czynne, a czynności wymagające
- * dokumentu mówią o tym własnym zdaniem w chwili wykonania.
- */
+/** Redakcja dokumentu, okno piętnastu czynności prowadzących dokument Studia poza edytor, na osobnym materiale niż warsztat. */
 export interface OknoRedakcjiDokumentu {
   element: HTMLElement;
   /** Wczytuje wykaz zasobów okna — potrzebny polom osadzenia i porównania. */
@@ -120,17 +100,14 @@ export function utworzOknoRedakcjiDokumentu(
     rama.stan.ladowanie(`${czynnosc.nazwa} — czynność w toku…`);
     const wynik = await zrodlo.wykonaj(czynnosc.komenda, zlozenie.zadanie);
     if (!wynik.udany) {
-      // Odmowa rdzenia jest tu wynikiem pełnoprawnym, nie usterką okna:
-      // skanowanie z urządzenia ODMAWIA z zasady i Operator ma przeczytać jej
-      // treść, a nie zobaczyć okno w stanie błędu.
+      // Odmowa rdzenia jest tu wynikiem pełnoprawnym: skanowanie odmawia z zasady, ma to być przeczytane.
       odpowiedz.pokaz(opisOdmowy(czynnosc.nazwa, wynik.blad?.code, wynik.blad?.message), false);
       rama.stan.gotowe();
       return;
     }
     odpowiedz.pokaz(`${czynnosc.nazwa}: ${opiszSkutekRedakcji(wynik.wynik)}`, true);
     rama.stan.gotowe();
-    // Wydanie, wyrys i wczytanie strony zakładają nowe zasoby magazynu, więc
-    // wykaz zestarzał się dokładnie w tej chwili.
+    // Wydanie, wyrys i wczytanie strony zakładają nowe zasoby, więc wykaz zestarzał się w tej chwili.
     await wczytaj();
   }
 
@@ -138,8 +115,7 @@ export function utworzOknoRedakcjiDokumentu(
     const idOkna = stan.idOkna();
     if (idOkna === '') return;
     const wynik = await zrodlo.zasoby(idOkna);
-    // Odmowa odczytu zasobów NIE gasi okna: zasoby wypełniają dwa pola
-    // z kilkudziesięciu, a pozostałe trzynaście czynności działa bez nich.
+    // Odmowa odczytu zasobów nie gasi okna: zasoby wypełniają dwa pola, reszta czynności działa bez nich.
     zasoby = wynik.udany && wynik.wynik !== undefined ? wynik.wynik : [];
     przestawFormularz();
     odswiez();

@@ -1,31 +1,6 @@
 // Odpowiedzialność pliku: dwa wejścia do kolejki wczytywania, których nie ma
 // w `adapter_modul_studio_cyfryzacja.go` — `studio.ingest.url` (strona sieciowa)
 // i `studio.ingest.device.scan` (obraz z urządzenia).
-//
-// ── Strona sieciowa idzie `net/http`, nie przeglądarką ──────────────────────
-// Pobranie strony to żądanie HTTP i odczyt odpowiedzi. Silnik przeglądarki
-// wykonałby jeszcze skrypty strony — i byłby zależnością spoza instalki,
-// a więc odmową u Operatora. Strona zbudowana wyłącznie skryptem zwróci tu
-// mało treści; to jest cena znana i wybrana, a nie przeoczenie. Migawkę strony
-// wykonanej skryptem oddaje `browser.snapshot.get`, co kontrakt mówi wprost
-// w opisie tej komendy.
-//
-// ── Skaner idzie warstwą urządzeń systemu ───────────────────────────────────
-// Skanowanie prowadzi warstwa urządzeń rozdzielona po systemie
-// (`urzadzenia_skaner.go`): SANE na Linuksie, WIA przez PowerShell na Windowsie.
-// Ta komenda nie ma własnej drogi do urządzenia i nie ma własnej odmowy —
-// obie rzeczy należą do warstwy, bo inaczej rozjechałyby się z wykazem
-// (`studio.ingest.device.list`), który pyta tę samą warstwę.
-//
-// Wersja natywna Windows jest tu rzeczą rozstrzygającą: instalka natywna nie
-// niesie SANE i nigdy nie poniesie, więc odmowa „brak `scanimage`" byłaby na
-// Windowsie odmową na zawsze. Dlatego rozstrzygnięcie po systemie stoi w
-// warstwie, a nie w tej komendzie.
-//
-// Rdzeń NIE oddaje tu pustej kolejki pozycji, gdy czegoś brakuje: pusta
-// kolejka jest twierdzeniem „skanowałem i nic nie przyszło", którego rdzeń bez
-// odpowiedzi urządzenia nie ma prawa postawić. Każdy brak — warstwy, programu,
-// urządzenia, sterownika — jest odmową nazywającą, czego brakuje.
 package core
 
 import (
@@ -56,7 +31,8 @@ const (
 	granicaObrazowStrony = 20
 )
 
-// WczytajZAdresu obsługuje `studio.ingest.url`.
+// WczytajZAdresu obsługuje `studio.ingest.url` — wciąga stronę sieciową jako
+// tekst gotowy do redakcji.
 func (a *adapterStudia) WczytajZAdresu(ctx context.Context,
 	z shared.StudioIngestUrlRequest) (shared.StudioIngestUrlResponse, error) {
 
@@ -99,9 +75,7 @@ func (a *adapterStudia) WczytajZAdresu(ctx context.Context,
 		Kod:             nowyIdentyfikator(przedrostekPozycjiWczytywania),
 		Okno:            z.WindowId,
 		SciezkaZrodlowa: &zrodlo,
-		// Pozycja wchodzi od razu jako gotowa: treść jest już wydobyta, więc
-		// stan „oczekuje" kazałby Operatorowi puścić rozpoznanie pisma na
-		// tekście, który tekstem już jest.
+		// Pozycja wchodzi od razu jako gotowa: treść jest już wydobyta.
 		Stan:  "gotowa",
 		Tekst: &tresc,
 	})
@@ -111,11 +85,8 @@ func (a *adapterStudia) WczytajZAdresu(ctx context.Context,
 	return shared.StudioIngestUrlResponse{Item: złóżPozycjeWczytywania(pozycja)}, nil
 }
 
-// SkanujUrzadzenie obsługuje `studio.ingest.device.scan`.
-//
-// Pobrane strony wchodzą do kolejki jako pozycje w stanie „oczekuje" — tak samo,
-// jak materiał dołożony ścieżką. Skan jest obrazem, więc tekstu jeszcze nie ma;
-// wpisanie stanu „gotowa" kazałoby Operatorowi przyjąć pustą treść jako wynik.
+// SkanujUrzadzenie obsługuje `studio.ingest.device.scan`. Skan wchodzi do
+// kolejki jako pozycja w stanie „oczekuje", bo tekstu jeszcze nie ma.
 func (a *adapterStudia) SkanujUrzadzenie(ctx context.Context,
 	z shared.StudioIngestDeviceScanRequest) (shared.StudioIngestDeviceScanResponse, error) {
 
@@ -139,9 +110,7 @@ func (a *adapterStudia) SkanujUrzadzenie(ctx context.Context,
 		return shared.StudioIngestDeviceScanResponse{}, err
 	}
 	if len(sciezki) == 0 {
-		// Warstwa oddała powodzenie bez ani jednego pliku. To nie jest pusta
-		// kolejka do przekazania dalej, a usterka warstwy — i jako usterka ma
-		// zostać nazwana, zamiast wyglądać na „skaner nic nie podał".
+		// Warstwa oddała powodzenie bez ani jednego pliku — to jest usterka warstwy.
 		return shared.StudioIngestDeviceScanResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError,
 			"moduł Studio: warstwa urządzeń zgłosiła udane skanowanie, ale nie wskazała "+
@@ -166,7 +135,8 @@ func (a *adapterStudia) SkanujUrzadzenie(ctx context.Context,
 	return shared.StudioIngestDeviceScanResponse{Items: pozycje}, nil
 }
 
-// pobierzStroneStudia wykonuje żądanie i oddaje treść wraz z jej typem.
+// pobierzStroneStudia wykonuje żądanie HTTP GET pod wskazany adres i oddaje
+// treść strony wraz z jej typem.
 func pobierzStroneStudia(ctx context.Context, adres string) ([]byte, string, error) {
 	kontekst, zamknij := context.WithTimeout(ctx, granicaPobraniaStrony)
 	defer zamknij()
@@ -196,13 +166,8 @@ func pobierzStroneStudia(ctx context.Context, adres string) ([]byte, string, err
 }
 
 // tekstZeStronyStudia sprowadza stronę do postaci czytelnej: zdejmuje skrypty,
-// style i znaczniki, zostawia tekst i akapity.
-//
-// Czyszczenie jest własne i proste, bez biblioteki czytelności: te biblioteki
-// rozstrzygają, KTÓRA część strony jest treścią główną, a rozstrzygnięcie
-// błędne wycina Operatorowi połowę artykułu bez ostrzeżenia. Tutaj nic nie
-// znika poza nawigacją i reklamą, które i tak nie mają tekstu własnego —
-// Operator dostaje więcej, niż prosił, a nie mniej.
+// style i znaczniki, zostawia tekst i akapity. Czyszczenie jest własne i
+// proste, bez biblioteki czytelności.
 func tekstZeStronyStudia(strona string) string {
 	bez := usunElementStudia(strona, "script")
 	bez = usunElementStudia(bez, "style")
@@ -237,7 +202,8 @@ func tekstZeStronyStudia(strona string) string {
 	return strings.Join(wiersze, "\n")
 }
 
-// usunElementStudia wycina element wraz z jego zawartością.
+// usunElementStudia wycina element wraz z jego zawartością, po nazwie
+// znacznika, bez rozbioru składniowego.
 func usunElementStudia(strona, nazwa string) string {
 	male := strings.ToLower(strona)
 	otwarcie := "<" + nazwa
@@ -258,8 +224,6 @@ func usunElementStudia(strona, nazwa string) string {
 
 // wciagnijObrazyStronyStudia pobiera obrazy strony do magazynu i oddaje ich
 // wykaz zapisem osadzenia — tym samym, którym posługuje się `studio.asset.embed`.
-// Dzięki temu obraz wciągnięty ze strony wstawia się do dokumentu tak samo jak
-// grafika z Design, a nie drugim sposobem zapisu.
 func (a *adapterStudia) wciagnijObrazyStronyStudia(ctx context.Context, strona []byte,
 	adres *url.URL, okno string) (string, error) {
 
@@ -275,9 +239,7 @@ func (a *adapterStudia) wciagnijObrazyStronyStudia(ctx context.Context, strona [
 		}
 		bajty, typTresci, err := pobierzStroneStudia(ctx, pelny.String())
 		if err != nil || len(bajty) == 0 {
-			// Obraz niepobrany nie unieważnia strony: Operator prosił o tekst,
-			// a obrazy są dodatkiem. Odmowa całości z powodu jednego martwego
-			// odnośnika byłaby odmową wczytania artykułu.
+			// Obraz niepobrany nie unieważnia strony: Operator prosił o tekst.
 			continue
 		}
 		zasob, err := a.odlozTrescStudia(ctx, bajty, nazwaObrazuStudia(pelny),
@@ -294,7 +256,8 @@ func (a *adapterStudia) wciagnijObrazyStronyStudia(ctx context.Context, strona [
 	return "Obrazy strony:\n\n" + strings.Join(wykaz, "\n"), nil
 }
 
-// odnosnikiObrazowStudia wyjmuje wartości `src` ze znaczników obrazu.
+// odnosnikiObrazowStudia wyjmuje wartości `src` ze znaczników obrazu strony,
+// w kolejności ich wystąpienia.
 func odnosnikiObrazowStudia(strona string) []string {
 	odnosniki := []string{}
 	male := strings.ToLower(strona)
@@ -317,8 +280,8 @@ func odnosnikiObrazowStudia(strona string) []string {
 	}
 }
 
-// wartoscCechyStudia wyjmuje wartość cechy znacznika w cudzysłowie prostym albo
-// podwójnym.
+// wartoscCechyStudia wyjmuje wartość cechy znacznika w cudzysłowie prostym,
+// podwójnym albo bez cudzysłowu.
 func wartoscCechyStudia(znacznik, cecha string) string {
 	male := strings.ToLower(znacznik)
 	od := strings.Index(male, cecha+"=")
@@ -343,7 +306,8 @@ func wartoscCechyStudia(znacznik, cecha string) string {
 	return reszta[1 : 1+koniec]
 }
 
-// nazwaObrazuStudia nadaje obrazowi nazwę czytelną w Assets Panelu.
+// nazwaObrazuStudia nadaje obrazowi nazwę czytelną w Assets Panelu,
+// wyprowadzoną z ostatniego członu adresu.
 func nazwaObrazuStudia(adres *url.URL) string {
 	czesci := strings.Split(strings.Trim(adres.Path, "/"), "/")
 	nazwa := czesci[len(czesci)-1]

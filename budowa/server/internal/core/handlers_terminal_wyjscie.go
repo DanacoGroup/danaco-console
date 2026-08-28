@@ -1,16 +1,5 @@
-// Wpięcie dwóch komend wyjścia obszaru `terminal.*` —
-// `terminal.output.stream` (podgląd na żywo) i `terminal.output.read` (odczyt
-// wyjścia jednego procesu).
-//
-// Port jest rozszerzeniem, nie drugim portem: `WyjscieTerminala` osadza
-// `Terminal`, bo wyjście modułu ma tego samego właściciela co karty i procesy.
-// Adapter wypełniający jeden wypełnia oba.
-//
-// Żadna z tych komend nie rozgłasza zdarzenia. Kontrakt daje modułowi jedno
-// zdarzenie — `terminal.process.changed` — i dotyczy ono procesu, nie zapisu na
-// strumień. Wiersze wyjścia jadą `stream.chunk` prosto z dziennika zbiorczego,
-// a nie z obsługiwacza żądania: proces pisze długo po tym, jak odpowiedź na
-// komendę już wróciła.
+// Plik wpina dwie komendy wyjścia obszaru terminal.*: podgląd na żywo i odczyt wyjścia jednego
+// procesu, jako rozszerzenie portu Terminal, bo wyjście ma tego samego właściciela co karty i procesy.
 package core
 
 import (
@@ -28,14 +17,12 @@ type WyjscieTerminala interface {
 	StrumienWyjscia(ctx context.Context,
 		z shared.TerminalOutputStreamRequest) (shared.TerminalOutputStreamResponse, error)
 
-	// OdczytajWyjscie obsługuje `terminal.output.read`. Osobna czynność, bo
-	// `terminal.command.exec` kończy się przy STARCIE procesu i wyniku nieść nie
-	// może (adapter_modul_terminal_wyjscie_odczyt.go).
+	// OdczytajWyjscie jest osobną czynnością, bo wykonanie komendy kończy się przy starcie procesu.
 	OdczytajWyjscie(ctx context.Context,
 		z shared.TerminalOutputReadRequest) (shared.TerminalOutputReadResponse, error)
 }
 
-// zarejestrujWyjscieTerminala wpina obie komendy wyjścia modułu.
+// zarejestrujWyjscieTerminala wpina obie komendy wyjścia modułu Terminal w rejestrze rdzenia platformy.
 func zarejestrujWyjscieTerminala(r *Rejestr, w WyjscieTerminala) {
 	if r == nil || w == nil {
 		return

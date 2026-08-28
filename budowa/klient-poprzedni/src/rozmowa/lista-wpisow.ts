@@ -7,7 +7,7 @@ import {
 } from './widok-zapisu';
 import type { WpisRozmowy } from './wpis-rozmowy';
 
-/** Lista wpisów historii okna. */
+/** Interfejs listy wpisów historii okna udostępnia element montowany w widoku, zarządzanie wpisami oraz przełączanie trybu widoku transkryptu. */
 export interface ListaWpisow {
   /** Element montowany w widoku rozmowy. */
   element: HTMLElement;
@@ -19,38 +19,14 @@ export interface ListaWpisow {
   ustawWidokZapisu(widok: WidokZapisu): void;
   /** Tryb widoku transkryptu, w którym lista pracuje w tej chwili. */
   widokZapisu(): WidokZapisu;
-  /**
-   * Zdejmuje wszystkie wpisy z listy — czyszczenie rozmowy ulotnej.
-   *
-   * Stan pusty wraca na wierzch, ale nie zostaje sam: wołający zaraz po
-   * wyczyszczeniu dopisuje zdanie o powodzie, żeby w miejscu zniknięcia rozmowy
-   * nie stał napis „Rozmowa jeszcze się nie zaczęła".
-   */
+  /** Zdejmuje wszystkie wpisy z listy przy czyszczeniu rozmowy ulotnej. */
   wyczysc(): void;
 }
 
-/**
- * Historia rozmowy — największy element okna komunikacji.
- *
- * Wpis rozpoznajemy po kluczu, nie po pozycji: fragment strumienia odświeża tę
- * samą pozycję, zamiast dokładać kolejną. Dzięki temu tura, która przyniosła
- * prowenancję, dziesiątki fragmentów tekstu, wywołania narzędzi i podsumowanie,
- * pozostaje w historii jednym wpisem.
- *
- * Przewijanie do końca następuje tylko wtedy, gdy lista już stała na końcu —
- * czytanie starszej wypowiedzi nie jest przerywane przez nadchodzący strumień.
- *
- * Tryb widoku transkryptu jest stanem listy, nie pojedynczego wpisu: lista
- * trzyma jeden tryb i rozsyła go do widoków, więc wpis założony po przełączeniu
- * rodzi się już w trybie bieżącym. Pamięć wpisów jest od trybu niezależna —
- * przełączenie niczego nie usuwa, a powrót do trybu zwykłego przywraca wątek
- * w całości.
- */
+/** Funkcja tworzy historię rozmowy jako największy element okna komunikacji, rozpoznając wpisy po kluczu i utrzymując wybrany tryb widoku transkryptu niezależnie od pamięci wpisów. */
 export function utworzListeWpisow(): ListaWpisow {
   const element = document.createElement('section');
-  // Budowę obszaru — odstęp między wpisami, wyściółkę i tło `--dn-tlo` — niesie
-  // klasa `.dn-rozmowa-historia` z biblioteki. `dc-historia` jest uchwytem
-  // miejscowym warstwy rozmowy.
+  // Odstęp, wyściółkę i tło obszaru niesie klasa z biblioteki wspólnej.
   element.className = 'dn-rozmowa-historia dc-historia';
   element.setAttribute('aria-label', NAPISY.historia);
   element.setAttribute('aria-live', 'polite');
@@ -85,13 +61,7 @@ export function utworzListeWpisow(): ListaWpisow {
     if (bylNaKoncu) element.scrollTop = element.scrollHeight;
   }
 
-  /**
-   * Przestawia widoki na tryb bieżący i rozstrzyga, co widać na wierzchu.
-   *
-   * Wpis odrzucony przez tryb jest ukrywany, nie usuwany: zostaje w mapie
-   * widoków ze swoim stanem, więc powrót do innego trybu nie wymaga budowania
-   * go od nowa ani pytania rdzenia.
-   */
+  /** Przestawia widoki na tryb bieżący, ukrywając wpisy odrzucone przez tryb zamiast ich usuwać. */
   function odswiezZapis(): void {
     let widoczne = 0;
     for (const [id, wpisu] of widoki) {
@@ -127,7 +97,7 @@ export function utworzListeWpisow(): ListaWpisow {
   };
 }
 
-/** Stan pustej historii — komunikat, nie pusta powierzchnia. */
+/** Interfejs stanu pustej historii opisuje komunikat wyświetlany zamiast pustej powierzchni listy wpisów. */
 interface PustyStan {
   /** Element montowany na wierzchu listy. */
   element: HTMLElement;
@@ -135,13 +105,7 @@ interface PustyStan {
   ustaw(widok: WidokZapisu, wpisow: number): void;
 }
 
-/**
- * Stan pusty historii — komunikat, nie pusta powierzchnia.
- *
- * Dwie różne pustki dostają dwa różne zdania: „wątek się nie zaczął" i „tryb
- * Streszczenie nie ma jeszcze czego streścić" to nie ten sam fakt. Drugi
- * wariant tłumaczy, czym streszczenie jest i skąd się bierze.
- */
+/** Funkcja tworzy stan pusty historii z osobnym zdaniem dla wątku, który się nie zaczął, i dla trybu Streszczenie bez zamkniętych tur. */
 function utworzPustyStan(): PustyStan {
   const element = document.createElement('div');
   element.className = 'dn-pusty-stan dc-historia__pusto';

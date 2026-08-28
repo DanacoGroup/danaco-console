@@ -1,28 +1,6 @@
-// Odpowiedzialność pliku: wpięcie dwunastu komend rodziny `isolation.*` — okna
-// konfiguracji punktów izolacji.
-//
-// Jeden port na całe okno. Dwanaście komend obsługuje jedno okno i jedną
-// maszynerię: te same jedenaście punktów izolacji, ten sam adres zapisu i ten
-// sam rozstrzygacz ośmiu poziomów. Trzy porty (macierz, profile, podgląd) byłyby
-// trzema prawdami o jednym module.
-//
-// Rodzina ma trzy zdarzenia i żadne nie leci stąd. Rozgłasza je adapter, bo
-// tylko on wie, co naprawdę poszło do bazy i pod jaki adres:
-//
-//   - `config.changed` — zapis punktu izolacji zmienia wiersz tabeli
-//     `ustawienie`, więc idzie tym samym zdarzeniem, co zapis rodziny `config.*`;
-//   - `isolation.profile.changed` — założenie, zmiana i skasowanie profilu
-//     (`adapter_modul_isolation_rozgloszenie.go`);
-//   - `isolation.policy.changed` — okno, którego polityka obowiązująca stała się
-//     inna: po zapisie punktu pod adresem okna, po przypisaniu profilu do okna
-//     i po przełączeniu warstwy okna.
-//
-// Zapis samego profilu polityki nie zmienia (profil jest szablonem), więc
-// `isolation.profile.changed` i `isolation.policy.changed` nie chodzą parami.
-// Uchwyty poniżej nie biorą nadajnika: brałyby go po to, żeby go nie użyć.
-//
-// Port niewypełniony nie rejestruje niczego: komendy odpowiedzą wtedy
-// `isolation.unknown`, a pozostałe domeny pracują bez zmian.
+// Plik wpina dwanaście komend rodziny `isolation.*`, jeden port okna
+// konfiguracji punktów izolacji, którego zdarzenia rozgłasza wyłącznie
+// adapter.
 package core
 
 import (
@@ -65,7 +43,8 @@ type Izolacja interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ Izolacja = (*adapterIzolacji)(nil)
 
-// zarejestrujIzolacje wpina dwanaście komend rodziny `isolation.*`.
+// zarejestrujIzolacje wpina dwanaście komend rodziny `isolation.*`,
+// obsługujących jedno okno konfiguracji punktów izolacji.
 func zarejestrujIzolacje(r *Rejestr, i Izolacja) {
 	if r == nil || i == nil {
 		return

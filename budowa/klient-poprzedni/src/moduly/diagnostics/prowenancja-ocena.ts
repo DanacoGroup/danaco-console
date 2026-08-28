@@ -5,30 +5,19 @@ import { OCENA_WYWOLANIA } from './prowenancja-slowa';
 import type { ZrodloProwenancji } from './prowenancja-zrodlo';
 
 /**
- * Ocena wywołania modelu — czynność Operatora, nie odczyt.
- *
- * Rodzina prowenancji ma cztery komendy odczytu i jedną, która zapisuje sąd
- * człowieka o pracy modelu: `provenance.call.rate`. Dlatego ocena ma w oknie
- * własny, jawny chwyt — pole wyboru trafności, pole uzasadnienia i przycisk
- * zapisu — a nie skrót klawiszowy ani kliknięcie w wiersz. Czynność, która
- * zapisuje ocenę po naciśnięciu czegoś, co wygląda jak odczyt, jest czynnością
- * ukrytą.
- *
- * Opracowanie modułu mówi „pole oceny” i „adnotacja jakości”, ale skali nie
- * ustala. Skala pochodzi więc z kontraktu (`ModelCallQuality`) i to jest jedyne
- * miejsce, w którym wolno ją wziąć: skala wymyślona w oknie nie miałaby gdzie
- * się zapisać. Wartość „bez oceny” zostaje w wyborze celowo — Operator, który
- * ocenił omyłkowo, musi mieć drogę zdjęcia oceny, a kontrakt tę wartość niesie.
- *
- * Uzasadnienie jest nieobowiązkowe w kontrakcie (`note`) i takie zostaje tutaj:
- * wymuszenie go w oknie byłoby zaporą, której rdzeń nie stawia, a ocena bez
- * słowa nadal jest oceną.
+ * Ocena wywołania modelu jest czynnością zapisu, a nie odczytem: komenda
+ * `provenance.call.rate` zapisuje sąd człowieka o pracy modelu. Okno daje jej
+ * jawny chwyt złożony z wyboru trafności, pola uzasadnienia i przycisku zapisu.
  */
 export interface OcenaWywolania {
   element: HTMLElement;
 }
 
-/** Trafności w kolejności od najlepszej; „bez oceny” stoi na końcu jako zdjęcie oceny. */
+/**
+ * Trafności w kolejności od najlepszej, wzięte z wyliczenia ModelCallQuality
+ * kontraktu; wartość „bez oceny” stoi na końcu, ponieważ służy zdjęciu oceny
+ * nadanej wcześniej.
+ */
 const SKALA: readonly ModelCallQuality[] = [
   ModelCallQuality.Accurate,
   ModelCallQuality.Partial,
@@ -107,11 +96,9 @@ export function utworzOceneWywolania(
 }
 
 /**
- * Zdanie o skutku zapisu — porównanie zamówienia z tym, co rdzeń oddał.
- *
+ * Zdanie o skutku zapisu oceny: zestawia zamówienie z tym, co rdzeń oddał.
  * Rdzeń oddaje wywołanie po zapisie, więc podmiana oceny albo pominięcie
- * uzasadnienia są tu widoczne. Samo „ocena zapisana" byłoby zdaniem, po którym
- * Operator nadal nie wie, co w rdzeniu stoi.
+ * uzasadnienia są w tym zdaniu widoczne.
  */
 function zdanieZapisu(
   oddane: ModelCallTrace,

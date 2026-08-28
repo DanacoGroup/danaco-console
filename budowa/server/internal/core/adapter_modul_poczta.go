@@ -1,31 +1,7 @@
-// Odpowiedzialność pliku: RDZEŃ JAKO KLIENT SKRZYNKI OPERATORA — typ adaptera,
+// Odpowiedzialność pliku: klient skrzynki poczty Operatora — typ adaptera,
 // jego montaż, wybór skrzynki, otwieranie połączenia i wykaz skrzynek
-// (`mail.account.list`). Podpięcie, odpięcie i rozpoznanie z urządzenia leżą
-// w `adapter_modul_poczta_skrzynki.go`, odczyt wiadomości w `_wiadomosci.go`,
-// szkic i wysyłka w `_wysylka.go`, przekład na kontrakt w `_przeklad.go` —
-// plik wedle odpowiedzialności.
-//
-// ── CZYM TEN MODUŁ JEST, A CZYM NIE JEST ────────────────────────────────────
-// Aplikacja nie ma własnego serwera poczty — używa skrzynki, którą Operator już
-// ma skonfigurowaną na urządzeniu albo w chmurze. Rdzeń jest więc klientem
-// cudzej skrzynki i nikim
-// więcej: nie stawia serwera, nie zakłada kont pocztowych, nie pośredniczy
-// przez żadną infrastrukturę Danaco i nie trzyma cudzej poczty u siebie.
-// Podpina skrzynkę, którą Operator już ma, i rozmawia z nią jej protokołem.
-//
-// ── POŚWIADCZENIE IDZIE WYŁĄCZNIE DO SEJFU ────────────────────────
-// Hasło albo token przychodzi polem `secret` żądania `mail.account.add`
-// i natychmiast ląduje w sejfie poświadczeń — tym samym, którym jadą konta
-// i punkty dostępu. Baza dostaje odwołanie („sejf:poczta:<kod>"), nigdy sekret;
-// kolumny na sekret nie ma w schemacie w ogóle. Do dziennika sekret nie trafia,
-// bo ten moduł nie loguje niczego. Do odpowiedzi komendy nie trafia, bo
-// `MailAccount` w kontrakcie nie ma pola, w które dałoby się go włożyć.
-//
-// ── ODMOWA NAZYWA BRAK, KAŻDY INNYM ZDANIEM ──────────────
-// Brak skrzynki, brak poświadczenia i brak łączności to trzy różne rzeczy,
-// z których każdą Operator naprawia inaczej: pierwszą podpięciem skrzynki,
-// drugą podaniem hasła, trzecią zajrzeniem do sieci albo do dostawcy. Jedno
-// wspólne „poczta niedostępna" kazałoby mu zgadywać, którą.
+// (`mail.account.list`). Podpięcie i odczyt wiadomości leżą w plikach
+// sąsiednich wedle odpowiedzialności.
 package core
 
 import (
@@ -60,28 +36,24 @@ const (
 	podkatalogZalacznikow = "zalaczniki"
 )
 
-// adapterPoczty wypełnia port Poczta. Cztery zależności, bo pełny łańcuch
-// „przeczytaj list, przeanalizuj załącznik, odpisz" potrzebuje wszystkich:
-// wiersza skrzynki, sekretu z sejfu, miejsca na bajty załączników i wiersza
-// zasobu, po którym model sięgnie po nie arsenałem obrazu i dokumentów.
+// adapterPoczty wypełnia port Poczta. Cztery zależności niesie łańcuch
+// przeczytania listu, analizy załącznika i odpisu: wiersz skrzynki, sekret z
+// sejfu, miejsce na bajty załączników i wiersz zasobu dla arsenału obrazu i
+// dokumentów.
 type adapterPoczty struct {
 	skrzynki dane.RepozytoriumSkrzynek
 	sejf     SejfPoswiadczen
-	// zasoby jest repozytorium Designu — TYM SAMYM, do którego pisze
-	// `design.asset.upload`. Drugiego magazynu zasobów rdzeń nie ma i mieć nie
-	// będzie: załącznik listu wciągnięty osobną drogą byłby zasobem,
-	// którego narzędzia obrazu i dokumentów nie widzą.
+	// zasoby jest repozytorium Designu, tym samym do którego pisze
+	// `design.asset.upload`.
 	zasoby dane.RepozytoriumDesignu
-	// magazyn jest miejscem na BAJTY załączników. Ten sam typ, co w Designie
-	// i Bibliotece — blob pod sumą sha256, zapis atomowy.
+	// magazyn jest miejscem na bajty załączników, tym samym typem blobu co
+	// w Designie i Bibliotece.
 	magazyn *magazynTresciBiblioteki
 }
 
 // nowyAdapterPoczty wiąże port z repozytorium skrzynek i wpina magazyn
-// załączników oparty o katalog danych rdzenia — wzorem `nowyAdapterDesignu`.
-// Katalog obowiązujący wchodzi montażem (`ZKatalogiemDanych`); domyślny zostaje
-// dla wywołania bez montażu, żeby konstruktor nigdy nie oddał adaptera bez
-// magazynu.
+// załączników oparty o katalog danych rdzenia. Katalog obowiązujący wchodzi
+// montażem (`ZKatalogiemDanych`); domyślny zostaje dla wywołania bez montażu.
 func nowyAdapterPoczty(skrzynki dane.RepozytoriumSkrzynek) *adapterPoczty {
 	return &adapterPoczty{
 		skrzynki: skrzynki,
@@ -115,7 +87,8 @@ func (a *adapterPoczty) ZZasobami(zasoby dane.RepozytoriumDesignu) *adapterPoczt
 	return a
 }
 
-// magazynZalacznikowPoczty składa magazyn bajtów nad katalogiem danych.
+// magazynZalacznikowPoczty składa magazyn bajtów załączników nad katalogiem
+// danych, tym samym mechanizmem blobów pod sumą sha256 co magazyn biblioteki.
 func magazynZalacznikowPoczty(katalogDanych string) *magazynTresciBiblioteki {
 	if strings.TrimSpace(katalogDanych) == "" {
 		return nil
@@ -127,14 +100,9 @@ func magazynZalacznikowPoczty(katalogDanych string) *magazynTresciBiblioteki {
 }
 
 // Skrzynki oddaje podpięte skrzynki wraz ze stanem łączności — obsługuje
-// `mail.account.list`.
-//
-// Łączność mierzymy, a nie deklarujemy. Pole `connected` znaczy „rdzeń ma z nią
-// łączność", więc wypełnienie go na stałe prawdą byłoby powodzeniem czynności,
-// której nikt nie wykonał. Otwieramy więc połączenie do każdej
-// skrzynki i natychmiast je zamykamy. Cena jest widoczna: wykaz trwa tyle, co
-// suma uścisków dłoni. Płacimy ją, bo pytanie „czy moja poczta działa" bez
-// sprawdzenia nie ma sensu.
+// `mail.account.list`. Łączność jest mierzona, a nie deklarowana: połączenie
+// do każdej skrzynki zostaje otwarte i natychmiast zamknięte, zamiast
+// wpisywać stałą wartość.
 func (a *adapterPoczty) Skrzynki(ctx context.Context,
 	_ shared.MailAccountListRequest) (shared.MailAccountListResponse, error) {
 
@@ -163,17 +131,16 @@ func (a *adapterPoczty) polacz(ctx context.Context, wskazana *string) (*poczta.K
 	}
 	klient, err := poczta.Polacz(a.nastawy(ctx, wiersz))
 	if err != nil {
-		// Kod `channel_unavailable`, nie `internal_error`: skrzynka jest po
-		// drugiej stronie sieci i jej niedostępność bywa chwilowa, więc odmowa
-		// jest PONAWIALNA (`shared.KodyPonawialne`). Rdzeń nie zawinił i nic tu
-		// nie naprawi — a klient, który ponowi za minutę, ma szansę trafić.
+		// Kod `channel_unavailable`: niedostępność skrzynki bywa chwilowa,
+		// odmowa jest ponawialna.
 		return nil, wiersz, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeChannelUnavailable, "moduł poczty: "+err.Error()))
 	}
 	return klient, wiersz, nil
 }
 
-// wybierzSkrzynke odnajduje skrzynkę wskazaną albo domyślną.
+// wybierzSkrzynke odnajduje skrzynkę wskazaną żądaniem albo, gdy żądanie jej
+// nie wskazuje, skrzynkę domyślną Operatora.
 func (a *adapterPoczty) wybierzSkrzynke(ctx context.Context, wskazana *string) (dane.SkrzynkaOperatora, error) {
 	if a.skrzynki == nil {
 		return dane.SkrzynkaOperatora{}, bladPoczty(errors.New("repozytorium skrzynek nie jest wpięte"))
@@ -206,13 +173,9 @@ func (a *adapterPoczty) wybierzSkrzynke(ctx context.Context, wskazana *string) (
 	return wiersz, nil
 }
 
-// nastawy składa nastawy połączenia, dobierając sekret z sejfu.
-//
-// Sekret żyje tylko w tej strukturze i tylko do końca komendy. Nie wraca do
-// bazy (kolumny nie ma), nie wraca do odpowiedzi (pola w kontrakcie nie ma),
-// nie idzie do dziennika (ten moduł nie loguje). Brak sekretu nie jest tu
-// błędem: `poczta.Polacz` nazwie go drugą z trzech odmów — brakiem
-// poświadczenia, odróżnionym od braku skrzynki i braku łączności.
+// nastawy składa nastawy połączenia, dobierając sekret z sejfu. Sekret żyje
+// tylko w tej strukturze i tylko do końca komendy; nie wraca do bazy, do
+// odpowiedzi ani do dziennika.
 func (a *adapterPoczty) nastawy(ctx context.Context, w dane.SkrzynkaOperatora) poczta.Nastawy {
 	sekret := ""
 	if a.sejf != nil && w.HasloOdwolanie != nil {
@@ -234,10 +197,9 @@ func (a *adapterPoczty) nastawy(ctx context.Context, w dane.SkrzynkaOperatora) p
 	}
 }
 
-// czyLacznosc sprawdza, czy rdzeń NAPRAWDĘ dosięga skrzynki — patrz komentarz
-// przy `Skrzynki`. Nieudane połączenie nie jest tu błędem komendy: brak
-// łączności jest FAKTEM o skrzynce, który wykaz ma pokazać, a nie powodem, dla
-// którego wykaz miałby nie powstać.
+// czyLacznosc sprawdza, czy rdzeń rzeczywiście dosięga skrzynki. Nieudane
+// połączenie nie jest tu błędem komendy: brak łączności jest faktem o
+// skrzynce, który wykaz ma pokazać.
 func (a *adapterPoczty) czyLacznosc(ctx context.Context, w dane.SkrzynkaOperatora) bool {
 	klient, err := poczta.Polacz(a.nastawy(ctx, w))
 	if err != nil {
@@ -247,7 +209,8 @@ func (a *adapterPoczty) czyLacznosc(ctx context.Context, w dane.SkrzynkaOperator
 	return true
 }
 
-// bladPoczty nazywa awarię po stronie rdzenia — bazy, sejfu, magazynu.
+// bladPoczty nazywa awarię po stronie rdzenia — bazy, sejfu albo magazynu
+// załączników, odróżnioną od winy żądania Operatora.
 func bladPoczty(przyczyna error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError,
 		fmt.Errorf("moduł poczty: %w", przyczyna)))

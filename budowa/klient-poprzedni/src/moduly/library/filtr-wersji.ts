@@ -2,18 +2,9 @@ import type { LibraryVersion } from '../../../../shared/contract';
 import { poleWyboru } from '../../modele/kontrolki-formularza';
 
 /**
- * Filtr historii wersji — zawężenie wykazu po sprawcy zmiany i po oznaczeniu.
- *
- * Filtr działa w całości po stronie okna: `library.version.list` nie przyjmuje
- * pola zawężającego, a odpowiedź niesie komplet pól, po których dokumentacja
- * każe zawężać (`author`, `label`). Wysyłanie w tym celu drugiego odczytu
- * byłoby pytaniem o to, co okno już ma.
- *
- * Sprawca jest napisem, nie wyliczeniem kontraktu: rdzeń zapisuje w polu
- * `author` to, co poda wołający (`Operator albo modul`). Pozycje „zmiany
- * Operatora" i „zmiany modelu" dopasowują więc po zawartości napisu, a wersja
- * o sprawcy nienazwanym wchodzi wyłącznie do pozycji „wszystkie" — zgadywanie
- * po stronie okna kazałoby jej trafić do jednej z dwóch grup bez podstawy.
+ * Filtr historii wersji zawęża wykaz po sprawcy zmiany i po oznaczeniu, licząc
+ * zawężenie w całości po stronie okna z pól odpowiedzi wykazu wersji, ponieważ
+ * komenda odczytu nie przyjmuje pola zawężającego.
  */
 export type ZakresHistorii = 'wszystkie' | 'operator' | 'model' | 'oznaczone';
 
@@ -32,10 +23,18 @@ const ZAKRESY: ReadonlyArray<{ kod: ZakresHistorii; etykieta: string }> = [
   { kod: 'oznaczone', etykieta: 'Tylko wersje z etykietą' },
 ];
 
-/** Napisy, po których poznaje się sprawcę będącego Operatorem. */
+/**
+ * Napisy rozpoznające sprawcę będącego Operatorem: pole sprawcy sprowadzone do
+ * małych liter musi zawierać jeden z nich, bo rdzeń zapisuje tam napis
+ * swobodny, a nie wartość wyliczenia kontraktu.
+ */
 const SPRAWCA_OPERATOR = ['operator', 'uzytkownik', 'użytkownik'];
 
-/** Napisy, po których poznaje się sprawcę będącego modelem albo modułem. */
+/**
+ * Napisy rozpoznające sprawcę będącego modelem albo modułem: dopasowanie idzie
+ * tak samo po zawartości pola sprawcy, więc oznaczenie modelu wystarczy podać
+ * w dowolnym otoczeniu wyrazowym.
+ */
 const SPRAWCA_MODEL = ['model', 'agent', 'modul', 'moduł'];
 
 export function utworzFiltrWersji(naZmiane: () => void): FiltrWersji {
@@ -75,7 +74,11 @@ export function utworzFiltrWersji(naZmiane: () => void): FiltrWersji {
   };
 }
 
-/** Nazwa zakresu do zdania o pustym wyniku zawężenia. */
+/**
+ * Nazwa zakresu do zdania o pustym wyniku zawężenia: oddaje etykietę pozycji
+ * wykazu zakresów, a dla kodu spoza wykazu oddaje sam kod, żeby zdanie miało
+ * czym nazwać zawężenie.
+ */
 export function nazwaZakresu(zakres: ZakresHistorii): string {
   return ZAKRESY.find((pozycja) => pozycja.kod === zakres)?.etykieta ?? zakres;
 }

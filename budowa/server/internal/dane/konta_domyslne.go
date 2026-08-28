@@ -1,8 +1,5 @@
 // Odpowiedzialność pliku: wskazanie konta domyślnego. Domyślne jest dokładnie
-// jedno na rodzaj — pilnuje tego indeks częściowy `idx_konto_domyslne_rodzaj`
-// w schemacie, a nie warunek w kodzie. Repozytorium ma jedynie zdjąć
-// oznaczenie z poprzedniego i nadać je nowemu w jednej transakcji, żeby indeks
-// nigdy nie zobaczył dwóch kont domyślnych naraz.
+// jedno na rodzaj — pilnuje tego indeks częściowy w schemacie, a nie warunek w kodzie.
 package dane
 
 import (
@@ -61,7 +58,7 @@ func (r *repozytoriumKont) UstawDomyslne(ctx context.Context, id int64) (*int64,
 	return poprzednie, nil
 }
 
-// rodzajKontaWTransakcji odczytuje rodzaj konta w toczącej się transakcji.
+// rodzajKontaWTransakcji odczytuje rodzaj konta wskazanego identyfikatorem w toczącej się transakcji zapisu.
 func rodzajKontaWTransakcji(ctx context.Context, r *repozytoriumKont, transakcja *sql.Tx,
 	id int64) (string, error) {
 	polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, rodzajKontaPoId)
@@ -79,7 +76,7 @@ func rodzajKontaWTransakcji(ctx context.Context, r *repozytoriumKont, transakcja
 	return rodzaj, nil
 }
 
-// poprzednieDomyslneWTransakcji zwraca konto domyślne rodzaju albo nil.
+// poprzednieDomyslneWTransakcji zwraca identyfikator konta domyślnego danego rodzaju albo brak, jeśli go nie ma.
 func poprzednieDomyslneWTransakcji(ctx context.Context, r *repozytoriumKont, transakcja *sql.Tx,
 	rodzaj string) (*int64, error) {
 	polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, poprzednieKontoDomyslne)

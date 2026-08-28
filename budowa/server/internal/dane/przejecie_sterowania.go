@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: trwały ślad przejęć i oddań bezpośredniego
-// sterowania zleceniem przez Operatora.
-//
-// Ślad leży w istniejącym dzienniku akcji okna, bez osobnej tabeli: przejęcie
-// sterowania jest akcją wykonaną na oknie, a te mają jeden dziennik
-// `log_akcji_okna`, pisany metodą `RepozytoriumPrzekazan.ZapiszAkcje` przez
-// komendę `window.action`. Kolumna `akcja_id` jest w tej tabeli wolnym tekstem
-// — bez ograniczenia CHECK i bez klucza obcego do katalogu akcji — więc oba
-// rodzaje wpisu mieszczą się w niej bez zmiany schematu. Druga tabela na to
-// samo zdarzenie byłaby drugą prawdą o jednym fakcie.
-//
-// Plik dokłada wyłącznie odczyt zawężony do tych dwóch rodzajów wpisu; zapis
-// idzie istniejącą `ZapiszAkcje`. Odczyt musi być osobny, bo `AkcjeOkna` oddaje
-// dziennik okna w całości i z limitem: okno z setką zwykłych akcji zepchnęłoby
-// przejęcia poza limit, czyli historia sterowania milczałaby dokładnie tam,
-// gdzie jest najbardziej potrzebna.
-//
-// Parametry i wynik zostają surowe, tak samo jak w `przekazanie_okna_akcje.go`:
-// kształt obu kolumn zależy od rodzaju akcji, którego warstwa danych nie zna.
-// Ten plik ich nie rozbiera — oddaje `AkcjaOkna` w tej samej postaci, co
-// dziennik akcji, a rozbiór robi rdzeń
-// (`core/adapter_przejecie_sterowania.go`).
+// Plik utrwala trwały ślad przejęć i oddań bezpośredniego sterowania
+// zleceniem, zapisywany jako akcja w istniejącym dzienniku akcji okna, bez
+// osobnej tabeli.
 package dane
 
 import (
@@ -27,31 +8,23 @@ import (
 	"fmt"
 )
 
-// Rodzaje wpisu dziennika akcji, którymi znaczy się przejęcie sterowania.
-//
-// Wartości są nazwami śladu w kolumnie `akcja_id`, a nie katalogiem kontraktu:
-// `log_akcji_okna` przyjmuje wolny tekst, tak samo jak przy `window.action`,
-// gdzie wpisem jest identyfikator akcji katalogu. Brzmią jak komendy, które ten
-// ślad wytwarzają, żeby dziennik nazywał zdarzenie tym samym słowem, którym
-// Operator go zażądał.
+// Stałe nazywają rodzaje wpisu dziennika akcji, którymi znaczy się przejęcie
+// sterowania zleceniem, i brzmią jak komendy, które ten ślad wytwarzają.
 const (
-	// AkcjaPrzejeciaSterowania — Operator przejął prowadzenie zlecenia.
+	// AkcjaPrzejeciaSterowania nazywa wpis dziennika zakładany, gdy sterowanie
+	// zleceniem przejmuje osoba obsługująca sesję.
 	AkcjaPrzejeciaSterowania = "control.takeover"
-	// AkcjaOddaniaSterowania — Operator oddał prowadzenie Koordynatorowi.
+	// AkcjaOddaniaSterowania nazywa wpis dziennika zakładany, gdy sterowanie
+	// zleceniem wraca do automatycznego prowadzenia.
 	AkcjaOddaniaSterowania = "control.release"
 )
 
-// RepozytoriumSteru jest wąskim kontraktem odczytu śladu sterowania.
-//
-// Jest osobny od `RepozytoriumPrzekazan`, choć stoi na tym samym typie:
-// interfejs obszaru window.* deklaruje w całości `przekazanie_okna.go`, a wąski
-// interfejs pozwala rdzeniowi sięgnąć po tę jedną metodę asercją typu, bez
-// dopisywania linii do szerokiego kontraktu. Wzorem jest `wiazaneKolejki` —
-// rdzeń sięga tak po zdolność, której szeroki port nie ogłasza.
+// RepozytoriumSteru jest wąskim kontraktem odczytu śladu sterowania, osobnym
+// od szerokiego kontraktu obszaru okien, choć stoi na tym samym typie
+// repozytorium.
 type RepozytoriumSteru interface {
-	// SladySterowania zwraca przejęcia i oddania sterowania nad wskazanym
-	// oknem, od najnowszego. Okno bez ani jednego przejęcia oddaje wykaz pusty,
-	// nie błąd.
+	// SladySterowania zwraca przejęcia i oddania sterowania oknem, od
+	// najnowszego, wykaz pusty bez błędu.
 	SladySterowania(ctx context.Context, okno string, limit int) ([]AkcjaOkna, error)
 }
 

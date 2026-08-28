@@ -2,37 +2,32 @@ package transport
 
 import "sync"
 
-// rejestrPolaczen zna wszystkie czynne połączenia rdzenia. Jedno konto ma wiele
-// urządzeń równocześnie, więc rejestr nie jest odwzorowaniem konto→połączenie,
-// lecz zbiorem połączeń przeszukiwanym po koncie.
-//
-// Konto połączenia zmienia się w czasie życia (PrzypiszKonto), dlatego rejestr
-// nie kopiuje go do własnego indeksu — odczytuje wprost z połączenia.
+// rejestrPolaczen zna wszystkie czynne połączenia rdzenia i przeszukuje je po koncie, nie po pojedynczym połączeniu.
 type rejestrPolaczen struct {
 	zamek      sync.RWMutex
 	polaczenia map[string]*Polaczenie
 }
 
-// nowyRejestrPolaczen tworzy pusty rejestr.
+// Funkcja nowyRejestrPolaczen tworzy pusty rejestr połączeń, gotowy do przyjmowania kolejnych wpisów rdzenia.
 func nowyRejestrPolaczen() *rejestrPolaczen {
 	return &rejestrPolaczen{polaczenia: make(map[string]*Polaczenie)}
 }
 
-// dodaj wpisuje połączenie do rejestru.
+// Metoda dodaj wpisuje nowo nawiązane połączenie urządzenia do tego rejestru czynnych połączeń rdzenia.
 func (r *rejestrPolaczen) dodaj(p *Polaczenie) {
 	r.zamek.Lock()
 	r.polaczenia[p.Id()] = p
 	r.zamek.Unlock()
 }
 
-// usun wykreśla połączenie po rozłączeniu urządzenia.
+// Metoda usun wykreśla z rejestru połączenie po rozłączeniu urządzenia, które z tego połączenia korzystało.
 func (r *rejestrPolaczen) usun(id string) {
 	r.zamek.Lock()
 	delete(r.polaczenia, id)
 	r.zamek.Unlock()
 }
 
-// liczba zwraca liczbę czynnych połączeń.
+// Metoda liczba zwraca liczbę czynnych połączeń zapisanych obecnie w tym rejestrze połączeń tego rdzenia.
 func (r *rejestrPolaczen) liczba() int {
 	r.zamek.RLock()
 	defer r.zamek.RUnlock()
@@ -51,8 +46,7 @@ func (r *rejestrPolaczen) wszystkie() []*Polaczenie {
 	return lista
 }
 
-// konta zwraca połączenia wskazanego konta. Puste konto oznacza wszystkie
-// połączenia rdzenia.
+// Metoda konta zwraca połączenia wskazanego konta; puste konto oznacza wszystkie połączenia tego rdzenia.
 func (r *rejestrPolaczen) konta(konto string) []*Polaczenie {
 	wszystkie := r.wszystkie()
 	if konto == "" {
@@ -67,7 +61,7 @@ func (r *rejestrPolaczen) konta(konto string) []*Polaczenie {
 	return lista
 }
 
-// zamknijWszystkie kończy wszystkie połączenia — używane przy zatrzymaniu rdzenia.
+// Metoda zamknijWszystkie kończy wszystkie połączenia rejestru; używana przy zatrzymaniu całego rdzenia.
 func (r *rejestrPolaczen) zamknijWszystkie(powod string) {
 	for _, p := range r.wszystkie() {
 		p.Zamknij(powod)

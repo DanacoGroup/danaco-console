@@ -1,27 +1,10 @@
 import type { BrowserNote, BrowserSource } from '../../../../shared/contract';
 
 /**
- * Zbiór zebrany w toku tej sesji przeglądania: źródła, notatki i fragmenty
- * wyodrębnione z migawki.
- *
- * Jedna odpowiedzialność: pamięć tego, co Operator zgromadził. Bez odczytu
- * z rdzenia i bez ani jednego elementu widoku.
- *
- * Zbiór jest odbiciem rdzenia, nie drugą prawdą. Wykaz przychodzi komendami
- * `browser.source.list` i `browser.note.list` i podmienia zawartość w całości
- * (`zastapZrodla`, `zastapNotatki`), a nie doszywa się do zastanej: rdzeń wie,
- * co w oknie jest, i to jego odpowiedź rozstrzyga. Dopisanie po
- * udanym `add` zostaje obok — nowa pozycja ma być widoczna od razu, bez
- * czekania na ponowny odczyt, ale to ten sam wiersz, który przyjdzie w wykazie.
- *
- * Przypięcie i klasyfikacja są własnością widoku, nie rdzenia. Kontrakt nie
- * niesie ani pola przypięcia, ani pola rodzaju notatki, więc jedno i drugie
- * zapamiętane tutaj nie udaje zapisu — Notes Panel mówi o tym w swoim opisie.
- *
- * Każda zmiana zbioru jest ogłaszana. Źródło dodane w Sources Panel ma się
- * pojawić w wyborze powiązania notatki w tej samej chwili; bez ogłoszenia
- * drugie okno zobaczyłoby je dopiero przy własnym odświeżeniu, a Operator
- * dostałby wybór bez pozycji, którą właśnie zapisał.
+ * Zbiór zebrany w toku sesji przeglądania: źródła, notatki i fragmenty
+ * wyodrębnione z migawki. Jest pamięcią tego, co Operator zgromadził — bez
+ * odczytu z rdzenia i bez ani jednego elementu widoku. Każda jego zmiana jest
+ * ogłaszana oknom modułu.
  */
 export interface ZebraneWSesji {
   /** Źródła okna, najnowsze na początku — w kolejności, w której daje je rdzeń. */
@@ -36,11 +19,7 @@ export interface ZebraneWSesji {
   zastapZrodla(wykaz: readonly BrowserSource[]): void;
   /** Podmienia wykaz notatek tym, co oddał rdzeń — w całości, nie doszywając. */
   zastapNotatki(wykaz: readonly BrowserNote[]): void;
-  /**
-   * Dopisuje fragment do wyodrębnionych i mówi, czy się dopisał. Pusty i taki
-   * sam jak zastany nie wchodzą — a okno ma o tym powiedzieć zamiast meldować
-   * dopisanie, którego nie było.
-   */
+  /** Dopisuje fragment do wyodrębnionych i mówi, czy się dopisał. */
   dopiszWyodrebniony(fragment: string): boolean;
   /** Czy notatka jest przypięta na górze wykazu. */
   czyPrzypieta(idNotatki: string): boolean;
@@ -92,9 +71,7 @@ export function utworzZebraneWSesji(oglos: () => void): ZebraneWSesji {
       oglos();
     },
 
-    // Przypięcia zostają nietknięte: są własnością widoku, nie rdzenia, więc
-    // podmiana wykazu nie ma prawa ich zgubić. Przypięcie pozycji, której
-    // rdzeń już nie oddaje, po prostu nic nie porządkuje.
+    // Przypięcia zostają nietknięte: są własnością widoku, a nie rdzenia.
     zastapNotatki(wykaz) {
       notatki.splice(0, notatki.length, ...wykaz);
       oglos();

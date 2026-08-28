@@ -1,12 +1,4 @@
-// Silnik kolejki powiadomień. Cztery wejścia — Zglos, Odwolaj, Wyslij i Wygas —
-// prowadzą od faktu, o którym Operator ma wiedzieć, do doręczenia na urządzenie
-// albo do nazwanego powodu, dla którego doręczenia nie było.
-//
-// Silnik doręcza po łączu, które Operator już otworzył; wygaszonego telefonu nie
-// budzi — wymagałoby to usługi wypychania powiadomień spoza tego systemu. Przy
-// telefonie wygaszonym powiadomienie czeka w kolejce i doleci przy najbliższym
-// otwarciu; interfejs musi to pokazywać, bo inaczej Operator liczyłby na
-// dzwonek, którego nie ma.
+// Silnik kolejki powiadomień prowadzi cztery wejścia od faktu, o którym operator ma wiedzieć, do doręczenia.
 package zdalne
 
 import (
@@ -18,21 +10,10 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// FormatZnacznika jest formatem znacznika czasu bazy — trzy cyfry części
-// ułamkowej, dokładnie tak, jak zapisuje je `strftime('%Y-%m-%dT%H:%M:%fZ')`
-// w wartościach domyślnych tabel powiadomień.
-//
-// Nie „.999Z": Go przy `.999` obcina zera końcowe, więc chwila równa co do
-// milisekundy wypadłaby raz jako „…03.120Z" (z bazy), a raz jako „…03.12Z"
-// (z Go) — a terminy w tej kolejce porównuje się jako napisy. Porównanie
-// leksykalne tych dwóch daje odpowiedź odwrotną do prawdziwej, więc próba
-// wypadałaby o milisekundę za wcześnie albo za późno bez żadnego śladu.
+// FormatZnacznika jest formatem znacznika czasu bazy — trzy cyfry części ułamkowej, zgodnie z zapisem bazy.
 const FormatZnacznika = "2006-01-02T15:04:05.000Z"
 
-// odstepyPonowien to rosnące odstępy między podejściami, liczone od numeru
-// próby już odbytej. Po wyczerpaniu wykazu obowiązuje ostatni odstęp: kolejka
-// nie dobija urządzenia częściej, ale też nie przestaje próbować przed terminem
-// ważności. O tym, kiedy przestać, rozstrzyga termin `wygasa`, a nie licznik prób.
+// odstepyPonowien to rosnące odstępy między podejściami, liczone od numeru próby już odbytej danego powiadomienia.
 var odstepyPonowien = []time.Duration{
 	30 * time.Second,
 	time.Minute,
@@ -57,7 +38,7 @@ func ZasilNadajnik(n Nadajnik) {
 	nadawanie.nadajnik = n
 }
 
-// OdetnijNadajnik zdejmuje nadajnik — dla porządku sprawdzianów.
+// Funkcja OdetnijNadajnik zdejmuje nadajnik zasilony wcześniej — dla porządku sprawdzianów jednostkowych.
 func OdetnijNadajnik() {
 	ZasilNadajnik(nil)
 }
@@ -78,7 +59,7 @@ func powiadomienia() (dane.RepozytoriumPowiadomien, error) {
 	return dane.NowePowiadomienia(db), nil
 }
 
-// Zgloszenie jest tym, co wołający wnosi do kolejki.
+// Zgloszenie jest tym, co wołający wnosi do kolejki powiadomień przy jego pierwotnym pełnym zakładaniu.
 type Zgloszenie struct {
 	// Tytul jest zdaniem, które Operator zobaczy pierwsze.
 	Tytul string
@@ -86,18 +67,12 @@ type Zgloszenie struct {
 	Tresc string
 	// Priorytet: `zwykly` albo `pilny`. Puste bierze `zwykly`.
 	Priorytet string
-	// Powod mówi, PO CO dzwonimy. Powiadomienie bez powodu jest budzikiem,
-	// którego Operator nie ma jak ocenić.
+	// Powod mówi, po co dzwonimy; powiadomienie bez powodu jest budzikiem bez oceny operatora.
 	Powod string
-	// BytRodzaj i BytID wskazują, czego powiadomienie dotyczy — i po nich
-	// idzie późniejsze odwołanie. Kotwica jest miękka, bez klucza obcego,
-	// bo wskazywanym bytem bywa wiersz różnych tabel (np. `wstrzymanie_kroku`).
+	// BytRodzaj i BytID wskazują, czego dotyczy powiadomienie; kotwica jest miękka, bez klucza obcego.
 	BytRodzaj string
 	BytID     string
-	// Waznosc jest czasem, po którym powiadomienie przestaje mieć sens.
-	// Pole obowiązkowe: bez terminu powiadomienia wiszą w kolejce bez końca
-	// i po dłuższym postoju rdzenia Operator dostaje lawinę wołań o sprawach
-	// dawno nieaktualnych.
+	// Waznosc jest czasem, po którym powiadomienie przestaje mieć sens; pole jest obowiązkowe.
 	Waznosc time.Duration
 }
 
@@ -136,13 +111,7 @@ func Zglos(ctx context.Context, z Zgloszenie) (int64, error) {
 	return repozytorium.Wstaw(ctx, p)
 }
 
-// ZarejestrujUrzadzenie zapisuje zgodę urządzenia na wołanie kanałem
-// `polaczenie` i oddaje klucz rejestracji.
-//
-// `kluczKanalu` jest identyfikatorem klienta — tym samym napisem, który
-// transport niesie jako `Tozsamosc.IdKlienta`. Rejestracja powtórzona odświeża
-// wiersz zamiast zakładać drugi, więc powrót urządzenia na łącze może ją wołać
-// bez sprawdzania, czy już było.
+// Funkcja ZarejestrujUrzadzenie zapisuje zgodę urządzenia na wołanie kanałem połączenia i oddaje klucz rejestracji.
 func ZarejestrujUrzadzenie(ctx context.Context, urzadzenieID int64, kluczKanalu, etykieta string) (int64, error) {
 	if urzadzenieID <= 0 {
 		return 0, fmt.Errorf("zdalne: rejestracja powiadomień bez wskazania urządzenia — " +
@@ -170,8 +139,7 @@ func ZarejestrujUrzadzenie(ctx context.Context, urzadzenieID int64, kluczKanalu,
 	return repozytorium.Zarejestruj(ctx, rejestracja)
 }
 
-// WyrejestrujUrzadzenie cofa zgodę, zostawiając ślad po tym, że urządzenie
-// kiedyś było wołane.
+// Funkcja WyrejestrujUrzadzenie cofa zgodę urządzenia, zostawiając ślad po tym, że było ono kiedyś wołane.
 func WyrejestrujUrzadzenie(ctx context.Context, kluczKanalu string) error {
 	if kluczKanalu == "" {
 		return fmt.Errorf("zdalne: wyrejestrowanie powiadomień bez wskazania adresu")
@@ -184,13 +152,7 @@ func WyrejestrujUrzadzenie(ctx context.Context, kluczKanalu string) error {
 		time.Now().UTC().Format(FormatZnacznika))
 }
 
-// Odwolaj gasi wszystkie oczekujące powiadomienia o wskazanym bycie i oddaje
-// ich liczbę.
-//
-// Sama ta droga nie wystarcza, by nie zawołać po fakcie: brak odstępu, w którym
-// dałoby się coś przegapić między odwołaniem a taktem, bierze się stąd, że
-// dane.Takt sprawdza stan pod zamkiem zapisu na tym samym wierszu. Bez tamtego
-// zamka to wywołanie byłoby wyścigiem.
+// Funkcja Odwolaj gasi wszystkie oczekujące powiadomienia o wskazanym bycie i oddaje ich łączną liczbę.
 func Odwolaj(ctx context.Context, bytRodzaj, bytID, powod string) (int, error) {
 	if bytRodzaj == "" || bytID == "" {
 		return 0, fmt.Errorf("zdalne: odwołanie powiadomień bez wskazania bytu nie ma " +
@@ -215,15 +177,13 @@ func Wygas(ctx context.Context) (int, error) {
 	return repozytorium.Wygas(ctx, time.Now().UTC().Format(FormatZnacznika))
 }
 
-// PodsumowanieWysylki zbiera wynik jednego przebiegu kolejki.
+// PodsumowanieWysylki zbiera wynik jednego przebiegu kolejki powiadomień, wykonanego przez takt rdzenia.
 type PodsumowanieWysylki struct {
 	// Rozpatrzonych to liczba powiadomień, które takt wziął pod zamek.
 	Rozpatrzonych int
 	// Doreczonych to liczba powiadomień zamkniętych doręczeniem.
 	Doreczonych int
-	// Pominietych to liczba powiadomień, które w chwili zamka nie czekały już
-	// na wysyłkę — najczęściej dlatego, że decyzja zapadła wcześniej. Liczba ta
-	// jest miarą zdrowia kanału, nie usterki.
+	// Pominietych to liczba powiadomień, które w chwili zamka nie czekały już na wysyłkę.
 	Pominietych int
 	// Przelozonych to liczba powiadomień bez odbiorcy, odłożonych na później.
 	Przelozonych int
@@ -231,14 +191,7 @@ type PodsumowanieWysylki struct {
 	Wygaslych int
 }
 
-// Wyslij wykonuje jeden przebieg kolejki na chwilę `teraz`.
-//
-// Brak nadajnika nie jest ciszą ani zerem. Gdyby przebieg bez nadajnika po
-// prostu nikomu nie doręczył, każde powiadomienie podbijałoby licznik prób i po
-// kilkunastu taktach wygasłoby, nigdy nie mając odbiorcy, a kolejka
-// twierdziłaby, że próbowała. Dlatego przebieg bez nadajnika odmawia całością
-// i nie tyka ani jednego wiersza: powiadomienia zostają z pełnym budżetem prób
-// na chwilę wpięcia nadajnika.
+// Funkcja Wyslij wykonuje jeden przebieg kolejki na wskazaną chwilę, doręczając powiadomienia przez nadajnik.
 func Wyslij(ctx context.Context, teraz time.Time) (PodsumowanieWysylki, error) {
 	nad := nadajnik()
 	if nad == nil {
@@ -295,10 +248,7 @@ func Wyslij(ctx context.Context, teraz time.Time) (PodsumowanieWysylki, error) {
 	return podsumowanie, nil
 }
 
-// celeWolania składa wykaz adresów z czynnych rejestracji. Odczyt idzie RAZ na
-// przebieg, a nie raz na powiadomienie: wykaz urządzeń Operatora nie zmienia
-// się w trakcie jednego taktu na tyle, żeby warto było płacić za nie odczytem
-// na każdy wiersz kolejki.
+// Funkcja celeWolania składa wykaz adresów z czynnych rejestracji, odczytywany raz na cały przebieg kolejki.
 func celeWolania(ctx context.Context, repozytorium dane.RepozytoriumPowiadomien) ([]Cel, error) {
 	rejestracje, err := repozytorium.AktywneRejestracje(ctx)
 	if err != nil {
@@ -328,7 +278,7 @@ func rozeslij(ctx context.Context, nad Nadajnik, cele []Cel, p dane.Powiadomieni
 	return przyjeli
 }
 
-// nastepnaProba wylicza termin kolejnego podejścia z liczby prób już odbytych.
+// Funkcja nastepnaProba wylicza termin kolejnego podejścia z liczby prób już odbytych przez to powiadomienie.
 func nastepnaProba(teraz time.Time, probIle int) string {
 	odstep := odstepyPonowien[len(odstepyPonowien)-1]
 	if probIle >= 1 && probIle <= len(odstepyPonowien) {

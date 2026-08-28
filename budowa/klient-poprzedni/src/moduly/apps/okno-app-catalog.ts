@@ -28,25 +28,8 @@ import type { StanRozszerzen } from './stan-rozszerzen';
 import { utworzWyborZMenu, wierszWyboru } from './wybor-z-menu';
 
 /**
- * App Catalog — okno wiodące strony dystrybucji i konsumpcji modułu Apps.
- *
- * Katalog rozszerzeń stoi poziom wyżej niż okno modułu: żadna komenda obszaru
- * `extension` nie niesie `windowId`, więc okno działa także wtedy, gdy rdzeń nie
- * wskazał jeszcze okna modułu — i nie powtarza zdania o brakującym oknie, które
- * jego nie dotyczy.
- *
- * Instalacja niesie pochodzenie, bo pochodzenie rozstrzyga stan wyjściowy:
- * pozycja `danaco` staje włączona, pozycja `personal` wyłączona. Jest to jedyne
- * miejsce, w którym źródło zmienia zachowanie rdzenia — poza nim jest faktem do
- * pokazania Operatorowi. Okno mówi o tym skutku PRZED instalacją, zamiast
- * zostawiać Operatora ze zdziwieniem, że pozycja nie działa po zainstalowaniu.
- *
- * Zawężenie idzie po stronie klienta nad tym, co rdzeń oddał, bo `extension.list`
- * zawęża wyłącznie rodzajem i stanem zainstalowania. Pusty wykaz przy czynnym
- * filtrze niesie zdanie o zawężeniu — inaczej czytałby się jak pusty rejestr.
- *
- * Przełącznik widoku siatka/lista jest czynnością wyłącznie okienną: nic nie
- * jedzie do rdzenia, więc nośnikiem stanu jest `aria-pressed`, nie komenda.
+ * App Catalog jest oknem wiodącym strony dystrybucji i konsumpcji modułu Apps, niezależnym od
+ * okna modułu, bo komendy obszaru extension nie niosą identyfikatora okna.
  */
 export interface OknoAppCatalog {
   element: HTMLElement;
@@ -163,14 +146,7 @@ export function utworzOknoAppCatalog(stan: StanRozszerzen): OknoAppCatalog {
     odswiez();
   }
 
-  /**
-   * Instalacja pozycji katalogu.
-   *
-   * Pochodzenie jedzie wprost z pozycji, a nie z domyślnej wartości żądania:
-   * pominięte pole znaczy w kontrakcie `personal`, więc instalacja pozycji
-   * Danaco Plugin bez tego pola zarejestrowałaby ją jako wyłączoną — czyli
-   * inaczej, niż mówi jej własne pochodzenie.
-   */
+  /** Instalacja pozycji wysyła pochodzenie wprost, bo pominięte pole w kontrakcie znaczy personal. */
   async function zainstaluj(pozycja: Extension): Promise<void> {
     rama.ladowanie(`Instalacja pozycji ${pozycja.name} w toku…`);
     odpowiedz.pokaz(`Instalacja ${pozycja.name}: żądanie wysłane do rdzenia…`, true);
@@ -191,9 +167,7 @@ export function utworzOknoAppCatalog(stan: StanRozszerzen): OknoAppCatalog {
     stan.wchlonPozycje(oddana);
     rama.gotowe();
     odswiez();
-    // Zdanie o stanie wyjściowym pada od razu, bo to jedyne miejsce, w którym
-    // pochodzenie zmienia zachowanie rdzenia — a Operator zobaczyłby skutek
-    // dopiero szukając, czemu świeżo zainstalowana pozycja nie działa.
+    // Zdanie o stanie wyjściowym pada od razu, zanim Operator zauważy skutek instalacji.
     const oStanie = oddana.enabled
       ? 'Pozycja jest włączona.'
       : `Pozycja pozostaje WYŁĄCZONA — taki jest stan wyjściowy źródła ` +
@@ -220,8 +194,7 @@ export function utworzOknoAppCatalog(stan: StanRozszerzen): OknoAppCatalog {
     stan.wchlonPozycje(oddana);
     rama.gotowe();
     odswiez();
-    // Stan bierzemy z odpowiedzi, nie z zamówienia: rdzeń bywa jedyną władzą
-    // nad tym, czy przełączenie doszło do skutku.
+    // Stan pochodzi z odpowiedzi rdzenia, nie z zamówienia — rdzeń rozstrzyga przełączenie.
     odpowiedz.pokaz(
       `${czynnosc} pozycji ${oddana.name}: rdzeń oddał stan ` +
         `${oddana.enabled ? 'włączona' : 'wyłączona'}.`,
@@ -248,8 +221,7 @@ export function utworzOknoAppCatalog(stan: StanRozszerzen): OknoAppCatalog {
       rama.gotowe();
       return;
     }
-    // Trzy pustki znaczą co innego i mają trzy różne zdania: nikt nie pytał,
-    // rdzeń nie ma nic, filtr nic nie przepuścił.
+    // Trzy pustki znaczą co innego: nikt nie pytał, rdzeń nie ma nic, filtr nic nie przepuścił.
     if (!stan.czyKatalogCzytany()) {
       rama.puste(BEZ_ODCZYTU_KATALOGU);
       return;

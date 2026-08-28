@@ -16,25 +16,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek DROGI NEURONOWEJ czterech czynności warsztatu fotografii —
-// `design.photo.upscale`, `.background.remove`, `.inpaint`, `.expand`.
-//
-// ── Co było, a co jest ──────────────────────────────────────────────────────
-// Przez jedną turę te cztery czynności miały wariant neuronowy tylko na papierze:
-// kanał obrazowy przyjmował samo polecenie tekstowe, więc wskazany `channelId`
-// był SPRAWDZANY i pomijany, a odpowiedź oddawała `computedBy: rachunekRdzenia`.
-// Po dołożeniu obrazu wejściowego do warstwy modeli droga stoi i ten plik mierzy
-// ją tak, jak trzeba mierzyć wywołanie cudzego silnika: sprawdzianem, który
-// SPRAWDZA ŻĄDANIE WYCHODZĄCE, a nie tylko odpowiedź.
-//
-// Trzy rzeczy są mierzone przy każdej czynności:
-//
-//  1. żądanie do kanału NIESIE zdjęcie Operatora (materiał), a przy domalowaniu
-//     i rozszerzeniu kadru także maskę. Wywołanie bez materiału kazałoby silnikowi
-//     wygenerować obraz NOWY i Operator dostałby cudzą treść pod swoim zdjęciem;
-//  2. plik wyniku ma wymiar, który czynność OBIECAŁA — nie ten, który kanał
-//     akurat oddał;
-//  3. `computedBy` mówi `kanalModelu`, a łańcuch edycji zapisuje tę samą drogę.
+// Sprawdziany mierzą drogę neuronową czterech czynności fotografii żądaniem, nie odpowiedzią.
 
 // zadanieKanaluSprawdzianu jest jednym żądaniem przechwyconym przez serwer
 // próbny — rozłożonym na pola, żeby sprawdzian pytał o materiał i maskę, a nie
@@ -47,11 +29,8 @@ type zadanieKanaluSprawdzianu struct {
 }
 
 // serwerKanaluEdycjiSprawdzianu stawia kanał obrazowy, który zapisuje żądania
-// i odpowiada wskazanym obrazem.
-//
-// Serwer przyjmuje OBA kształty żądania warstwy modeli (wieloczęściowy
-// i base64), bo sprawdzian nie ma prawa zakładać, którym wiersz rejestru
-// pojedzie — a oba niosą materiał w tym samym polu.
+// i odpowiada wskazanym obrazem; przyjmuje oba kształty żądania warstwy
+// modeli, wieloczęściowy i base64, bo oba niosą materiał w tym samym polu.
 func serwerKanaluEdycjiSprawdzianu(t *testing.T, odpowiedz []byte) (*[]zadanieKanaluSprawdzianu,
 	http.HandlerFunc) {
 
@@ -126,7 +105,8 @@ func obrazZKryciemPNG(t *testing.T, bok int) []byte {
 	return bufor.Bytes()
 }
 
-// wymiaryObrazuSprawdzianu odczytuje wymiary z bajtów obrazu.
+// wymiaryObrazuSprawdzianu odczytuje szerokość i wysokość obrazu z jego
+// zakodowanych bajtów, niezależnie od tego, co o wymiarze mówi odpowiedź.
 func wymiaryObrazuSprawdzianu(t *testing.T, bajty []byte) (int, int) {
 	t.Helper()
 
@@ -145,8 +125,7 @@ func wymiaryObrazuSprawdzianu(t *testing.T, bajty []byte) (int, int) {
 func TestPowiekszenieKanalemNiesieZdjecieOperatoraIWymiarZamowiony(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
-	// Kanał oddaje obraz o wymiarze WŁASNYM (kwadrat 64×64), różnym od
-	// zamówionego 80×60 — tak zachowuje się punkt końcowy z nastawą `size`.
+	// Kanał oddaje kwadrat 64×64, różny od zamówionego 80×60.
 	zadania, obsluga := serwerKanaluEdycjiSprawdzianu(t, obrazPNG(t, 64, 64))
 	serwer := serwerObrazow(t, obsluga)
 	kanal := wpiszKanalObrazowy(t, zmontowany, zycie, serwer.URL)
@@ -171,8 +150,7 @@ func TestPowiekszenieKanalemNiesieZdjecieOperatoraIWymiarZamowiony(t *testing.T)
 		t.Fatal("żądanie do kanału nie niosło ani jednego bajtu materiału — silnik dostałby " +
 			"samo polecenie i oddał obraz NOWY, nie powiększone zdjęcie Operatora")
 	}
-	// Materiał ma być zdjęciem Operatora, nie czymkolwiek: wymiary z pliku, który
-	// pojechał, muszą być wymiarami źródła.
+	// Wymiary wysłanego pliku muszą być wymiarami zdjęcia Operatora.
 	szerokosc, wysokosc := wymiaryObrazuSprawdzianu(t, zadanie.Material)
 	if szerokosc != 20 || wysokosc != 15 {
 		t.Errorf("do kanału pojechał obraz %d×%d, a zdjęcie Operatora ma 20×15",
@@ -198,8 +176,7 @@ func TestPowiekszenieKanalemNiesieZdjecieOperatoraIWymiarZamowiony(t *testing.T)
 			wynik.Width, wynik.Height, granice.Dx(), granice.Dy())
 	}
 
-	// Łańcuch edycji zapisuje DROGĘ — bez tego po tygodniu nie da się powiedzieć,
-	// którym rachunkiem powstał wariant.
+	// Łańcuch edycji ma zapisać, którym rachunkiem powstał wariant.
 	var historia shared.DesignPhotoHistoryGetResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignPhotoHistoryGet,
 		shared.DesignPhotoHistoryGetRequest{AssetId: wynik.Asset.Id}, &historia)
@@ -218,10 +195,9 @@ func TestPowiekszenieKanalemNiesieZdjecieOperatoraIWymiarZamowiony(t *testing.T)
 	}
 }
 
-// TestOdcieciecieTlaKanalemZadaKanaluKryciaWPliku mierzy warunek, bez którego
-// odcięcie tła nie jest odcięciem tła: plik oddany przez kanał MUSI mieć punkty
-// przezroczyste. Kanał oddający obraz kryjący dostaje odmowę nazwaną, a nie
-// odpowiedź `hasAlpha: true` nad plikiem bez przezroczystości.
+// TestOdcieciecieTlaKanalemZadaKanaluKryciaWPliku mierzy, że plik oddany przez
+// kanał musi mieć punkty przezroczyste; kanał oddający obraz kryjący dostaje
+// odmowę nazwaną, nie odpowiedź „hasAlpha: true" nad plikiem bez przezroczystości.
 func TestOdcieciecieTlaKanalemZadaKanaluKryciaWPliku(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -309,17 +285,12 @@ func TestDomalowanieIRozszerzenieKanalemWysylajaMaske(t *testing.T) {
 	if szerokoscMaski != 40 || wysokoscMaski != 30 {
 		t.Errorf("maska ma %d×%d, a zdjęcie 40×30", szerokoscMaski, wysokoscMaski)
 	}
-	// Obszar objęty jest w masce PRZEZROCZYSTY i biały naraz — powód stoi przy
-	// `obrazMaskiDesignu`. Sprawdzian mierzy oba warunki, bo punkty końcowe czytają
-	// raz jedno, raz drugie.
+	// Obszar objęty jest w masce przezroczysty i biały naraz — czytany jest raz jedno, raz drugie.
 	maska, _, err := image.Decode(bytes.NewReader(zadanie.Maska))
 	if err != nil {
 		t.Fatalf("maska nie jest obrazem: %v", err)
 	}
-	// Odczyt idzie po składowych BEZ wmnożonego krycia. Zwykłe `At().RGBA()`
-	// wmnaża krycie, więc punkt biały o kryciu zerowym pokazywałby się jako
-	// czarny — a w pliku PNG, który pojechał do kanału, stoi biały. Sprawdzian
-	// mierzy PLIK, nie sposób, w jaki biblioteka go pokazuje.
+	// Odczyt idzie po składowych bez wmnożonego krycia — inaczej biały punkt wyszedłby czarny.
 	bezKrycia, jest := maska.(*image.NRGBA)
 	if !jest {
 		t.Fatalf("maska rozłożyła się jako %T, a nie jako obraz bez wmnożonego krycia — "+
@@ -394,10 +365,9 @@ func TestDomalowanieIRozszerzenieKanalemWysylajaMaske(t *testing.T) {
 	}
 }
 
-// TestCzynnoscBezWskazanegoKanaluIdzieRachunkiemRdzenia pilnuje drugiej połowy
-// rozstrzygnięcia kontraktu: pominięty `channelId` znaczy rachunek wkompilowany.
-// Zejście na „pierwszy czynny kanał obrazowy" wysyłałoby zdjęcie Operatora do
-// dostawcy, o którego nie prosił, i kosztowało go pieniądze bez słowa.
+// TestCzynnoscBezWskazanegoKanaluIdzieRachunkiemRdzenia pilnuje, że pominięty
+// `channelId` znaczy rachunek wkompilowany, nie zejście na pierwszy czynny
+// kanał obrazowy, który wysłałby zdjęcie Operatora do dostawcy bez jego zgody.
 func TestCzynnoscBezWskazanegoKanaluIdzieRachunkiemRdzenia(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -442,8 +412,7 @@ func TestKanalNieoddajacyObrazuJestOdmowaNieRachunkiem(t *testing.T) {
 		t.Errorf("niepowodzenie kanału dało kod %s, a jest zapleczem niedostępnym", odmowa.Code)
 	}
 
-	// Wariant nie ma prawa powstać: zasób oddany po cichu rachunkiem wkompilowanym
-	// leżałby w magazynie jako wynik drogi, którą nie poszedł.
+	// Wariant nie ma prawa powstać drogą, którą odmówiono.
 	var wykaz shared.DesignAssetListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignAssetList,
 		shared.DesignAssetListRequest{WindowId: wskaznik("okno-neuronowe")}, &wykaz)

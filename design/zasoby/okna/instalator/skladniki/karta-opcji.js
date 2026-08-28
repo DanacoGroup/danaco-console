@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — KARTA OPCJI WYBORU
-   ----------------------------------------------------------------------------
+/* Składnik karty opcji wyboru przedstawia jedną z równorzędnych dróg instalacji, między którymi operator rozstrzyga raz na całą instalację.
+
    Jedna z dróg równorzędnych, między którymi trzeba rozstrzygnąć raz na całą
    instalację. Cała karta jest celem wskazania, a stan wybrania niesie wstęga
    przy krawędzi i zaznaczona kontrolka — nie sama barwa tła.
@@ -15,8 +14,7 @@
      grupa      nazwa grupy radiowej
      plakietka  klucz katalogu — napis plakietki (opcjonalna)
      zaznaczona true | false
-     fokus      true — kontrolka bierze fokus przy wejściu w krok
-   ============================================================================ */
+     fokus      true — kontrolka bierze fokus przy wejściu w krok */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: trzy dopełnienia układu zależności — bramka
-// dołączenia, grupa kroków i krok wycofujący — oraz spięcie kolejek automatyki
-// z silnikiem kolejek środowiska MultitaskingAI (tabele `orkiestracja_bramka`,
-// `orkiestracja_grupa`, `orkiestracja_grupa_krok`, `orkiestracja_kompensacja`
-// i `orkiestracja_spiecie_multitasking` z migracji 279–280).
-//
-// Plik osobny od `orchestration.go`: tamten prowadzi łuki układu
-// (`zaleznosc_kroku_automatyki`), tutaj mieszkają byty, których łuk nie wyraża.
-// Bramka mówi, KIEDY tory scalają się w jednym kroku; grupa mówi, że zbiór
-// kroków biegnie razem; kompensacja mówi, co zrobić, gdy przebieg pękł w pół.
-//
-// Wszystkie posługują się identyfikatorem ZEWNĘTRZNYM kroku, tak jak łuki —
-// układ przepisuje się w całości, więc klucz wiersza kroku nie przeżywa
-// przepisania, a napis Operatora przeżywa.
+// Plik gromadzi trzy dopełnienia układu zależności — bramkę dołączenia, grupę
+// kroków i krok wycofujący — oraz spięcie kolejek automatyki z silnikiem
+// środowiska MultitaskingAI, zapisane w tabelach rodziny orkiestracja.
 package dane
 
 import (
@@ -21,14 +10,16 @@ import (
 	"strings"
 )
 
-// BramkaUkladu to reguła scalenia torów równoległych na jednym kroku.
+// BramkaUkladu to reguła scalenia torów równoległych na jednym kroku: pole
+// Licznik podaje, ile torów musi dojść do kroku, zanim wykonanie ruszy dalej.
 type BramkaUkladu struct {
 	Krok    string
 	Regula  string
 	Licznik int
 }
 
-// GrupaUkladu to zbiór kroków wykonywanych równolegle albo w ścisłej kolejności.
+// GrupaUkladu to zbiór kroków wykonywanych równolegle albo w ścisłej
+// kolejności, zależnie od pola Rodzaj, wraz z pełnym składem kroków grupy.
 type GrupaUkladu struct {
 	Kod    string
 	Nazwa  string
@@ -36,7 +27,8 @@ type GrupaUkladu struct {
 	Kroki  []string
 }
 
-// KompensacjaUkladu to krok wycofujący skutki kroku głównego.
+// KompensacjaUkladu to krok wycofujący skutki kroku głównego: pole
+// KrokWycofu wskazuje krok, który uruchamia się, gdy krok główny zawiedzie.
 type KompensacjaUkladu struct {
 	Krok       string
 	KrokWycofu string
@@ -51,13 +43,14 @@ type SpiecieMultitaskingu struct {
 }
 
 // RepozytoriumUkladuOrkiestracji jest kontraktem trzech dopełnień układu
-// i spięcia kolejek.
+// zależności — bramek, grup i kompensacji — oraz spięcia kolejek automatyki
+// z silnikiem MultitaskingAI.
 type RepozytoriumUkladuOrkiestracji interface {
 	BramkiUkladu(ctx context.Context, automatykaID int64) ([]BramkaUkladu, error)
 	ZapiszBramkeUkladu(ctx context.Context, automatykaID int64, bramka BramkaUkladu) error
 	GrupyUkladu(ctx context.Context, automatykaID int64) ([]GrupaUkladu, error)
-	// ZapiszGrupeUkladu zakłada grupę o pustym kodzie albo zmienia wskazaną.
-	// Wykaz kroków pusty USUWA grupę — tak stanowi kontrakt komendy.
+	// ZapiszGrupeUkladu zakłada, zmienia albo usuwa grupę; wykaz kroków pusty
+	// usuwa grupę wskazaną kodem.
 	ZapiszGrupeUkladu(ctx context.Context, automatykaID int64, grupa GrupaUkladu) error
 	KompensacjeUkladu(ctx context.Context, automatykaID int64) ([]KompensacjaUkladu, error)
 	// ZapiszKompensacjeUkladu zapisuje kompensację; krok wycofujący pusty ją
@@ -65,8 +58,8 @@ type RepozytoriumUkladuOrkiestracji interface {
 	ZapiszKompensacjeUkladu(ctx context.Context, automatykaID int64, kompensacja KompensacjaUkladu) error
 	// SpiecieAutomatyki oddaje stan spięcia wraz z kolejkami objętymi.
 	SpiecieAutomatyki(ctx context.Context, automatykaID int64, kodAutomatyki string) (SpiecieMultitaskingu, error)
-	// ZapiszSpiecieAutomatyki spina albo rozłącza kolejki automatyki z silnikiem
-	// kolejek środowiska MultitaskingAI i oddaje kolejki objęte zmianą.
+	// ZapiszSpiecieAutomatyki spina albo rozłącza kolejki automatyki i oddaje
+	// kolejki objęte zmianą.
 	ZapiszSpiecieAutomatyki(ctx context.Context, automatykaID int64, kodAutomatyki string,
 		spiete bool, oknoRoliID *int64) ([]int64, error)
 }
@@ -102,7 +95,9 @@ const (
 	kolejkiAutomatykiUkladu = `SELECT id FROM kolejka WHERE nazwa = ? ORDER BY id`
 )
 
-// repozytoriumUkladuOrkiestracji obsługuje dopełnienia układu zależności.
+// repozytoriumUkladuOrkiestracji obsługuje dopełnienia układu zależności —
+// bramki, grupy i kompensacje — poprzez przygotowane zapytania oraz
+// bezpośrednie połączenie z bazą.
 type repozytoriumUkladuOrkiestracji struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -110,12 +105,14 @@ type repozytoriumUkladuOrkiestracji struct {
 
 var _ RepozytoriumUkladuOrkiestracji = (*repozytoriumUkladuOrkiestracji)(nil)
 
-// noweRepozytoriumUkladuOrkiestracji wiąże dopełnienia układu z bazą.
+// noweRepozytoriumUkladuOrkiestracji wiąże dopełnienia układu zależności
+// z bazą danych i zwraca gotowe do użycia repozytorium.
 func noweRepozytoriumUkladuOrkiestracji(z *zapytania, db *sql.DB) *repozytoriumUkladuOrkiestracji {
 	return &repozytoriumUkladuOrkiestracji{zapytania: z, db: db}
 }
 
-// BramkiUkladu oddaje bramki dołączenia automatyki.
+// BramkiUkladu oddaje bramki dołączenia zapisane dla automatyki,
+// uporządkowane według kroku, do którego bramka się odnosi.
 func (r *repozytoriumUkladuOrkiestracji) BramkiUkladu(ctx context.Context,
 	automatykaID int64) ([]BramkaUkladu, error) {
 
@@ -139,7 +136,8 @@ func (r *repozytoriumUkladuOrkiestracji) BramkiUkladu(ctx context.Context,
 	return bramki, wiersze.Err()
 }
 
-// ZapiszBramkeUkladu zakłada albo zmienia bramkę dołączenia.
+// ZapiszBramkeUkladu zakłada albo zmienia bramkę dołączenia dla wskazanego
+// kroku automatyki, zgodnie z przekazaną regułą i licznikiem.
 func (r *repozytoriumUkladuOrkiestracji) ZapiszBramkeUkladu(ctx context.Context,
 	automatykaID int64, bramka BramkaUkladu) error {
 
@@ -154,7 +152,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszBramkeUkladu(ctx context.Context,
 	return nil
 }
 
-// GrupyUkladu oddaje grupy kroków wraz z ich składem.
+// GrupyUkladu oddaje grupy kroków zapisane dla automatyki wraz z pełnym
+// składem kroków należących do każdej z nich.
 func (r *repozytoriumUkladuOrkiestracji) GrupyUkladu(ctx context.Context,
 	automatykaID int64) ([]GrupaUkladu, error) {
 
@@ -191,7 +190,8 @@ func (r *repozytoriumUkladuOrkiestracji) GrupyUkladu(ctx context.Context,
 	return grupy, nil
 }
 
-// krokiGrupy oddaje skład jednej grupy w zapisanej kolejności.
+// krokiGrupy oddaje skład jednej grupy w zapisanej kolejności wykonania,
+// odczytany z tabeli orkiestracja_grupa_krok.
 func (r *repozytoriumUkladuOrkiestracji) krokiGrupy(ctx context.Context, grupaID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, krokiGrupyUkladu)
 	if err != nil {
@@ -213,7 +213,8 @@ func (r *repozytoriumUkladuOrkiestracji) krokiGrupy(ctx context.Context, grupaID
 	return kroki, wiersze.Err()
 }
 
-// ZapiszGrupeUkladu zakłada, zmienia albo usuwa grupę kroków.
+// ZapiszGrupeUkladu zakłada, zmienia albo usuwa grupę kroków automatyki,
+// zależnie od przekazanego kodu i składu kroków.
 func (r *repozytoriumUkladuOrkiestracji) ZapiszGrupeUkladu(ctx context.Context,
 	automatykaID int64, grupa GrupaUkladu) error {
 
@@ -223,9 +224,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszGrupeUkladu(ctx context.Context,
 	}
 	defer func() { _ = transakcja.Rollback() }()
 
-	// Wykaz kroków pusty usuwa grupę — tak stanowi kontrakt komendy. Grupa bez
-	// ani jednego kroku nie mówi o niczym, a zostawiona w wykazie byłaby
-	// wpisem, którego Operator nie umie ani wypełnić, ani skasować.
+	// Grupa bez kroków jest niemożliwa do wypełnienia ani skasować przez
+	// Operatora, więc znika.
 	if len(grupa.Kroki) == 0 {
 		if grupa.Kod == "" {
 			return nil
@@ -275,7 +275,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszGrupeUkladu(ctx context.Context,
 	return transakcja.Commit()
 }
 
-// KompensacjeUkladu oddaje kroki wycofujące automatyki.
+// KompensacjeUkladu oddaje kroki wycofujące zapisane dla automatyki,
+// uporządkowane według kroku głównego.
 func (r *repozytoriumUkladuOrkiestracji) KompensacjeUkladu(ctx context.Context,
 	automatykaID int64) ([]KompensacjaUkladu, error) {
 
@@ -299,7 +300,8 @@ func (r *repozytoriumUkladuOrkiestracji) KompensacjeUkladu(ctx context.Context,
 	return kompensacje, wiersze.Err()
 }
 
-// ZapiszKompensacjeUkladu zapisuje albo zdejmuje krok wycofujący.
+// ZapiszKompensacjeUkladu zapisuje krok wycofujący dla wskazanego kroku
+// głównego; pusty krok wycofujący zdejmuje kompensację.
 func (r *repozytoriumUkladuOrkiestracji) ZapiszKompensacjeUkladu(ctx context.Context,
 	automatykaID int64, kompensacja KompensacjaUkladu) error {
 
@@ -324,7 +326,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszKompensacjeUkladu(ctx context.Con
 	return nil
 }
 
-// SpiecieAutomatyki oddaje stan spięcia wraz z kolejkami objętymi.
+// SpiecieAutomatyki oddaje stan spięcia automatyki z silnikiem kolejek
+// środowiska MultitaskingAI wraz z kolejkami objętymi spięciem.
 func (r *repozytoriumUkladuOrkiestracji) SpiecieAutomatyki(ctx context.Context,
 	automatykaID int64, kodAutomatyki string) (SpiecieMultitaskingu, error) {
 
@@ -353,12 +356,9 @@ func (r *repozytoriumUkladuOrkiestracji) SpiecieAutomatyki(ctx context.Context,
 	return stan, nil
 }
 
-// ZapiszSpiecieAutomatyki spina albo rozłącza kolejki automatyki.
-//
-// Skutek leży w tabeli `kolejka`, nie w samym znaczniku: spięcie przestawia
-// kolejki automatyki na rodzaj `multitasking` i wiąże je z oknem roli, a
-// rozłączenie zdejmuje wiązanie. Znacznik bez tego byłby zapisem, którego nikt
-// nie czyta.
+// ZapiszSpiecieAutomatyki spina albo rozłącza kolejki automatyki z silnikiem
+// kolejek środowiska MultitaskingAI: przestawia rodzaj kolejek i wiąże je
+// z oknem roli, a rozłączenie zdejmuje to wiązanie.
 func (r *repozytoriumUkladuOrkiestracji) ZapiszSpiecieAutomatyki(ctx context.Context,
 	automatykaID int64, kodAutomatyki string, spiete bool, oknoRoliID *int64) ([]int64, error) {
 
@@ -401,7 +401,8 @@ func (r *repozytoriumUkladuOrkiestracji) ZapiszSpiecieAutomatyki(ctx context.Con
 	return r.kolejkiAutomatyki(ctx, kodAutomatyki)
 }
 
-// kolejkiAutomatyki oddaje klucze kolejek noszących pracę automatyki.
+// kolejkiAutomatyki oddaje klucze kolejek noszących pracę automatyki,
+// dopasowane po nazwie kolejki równej kodowi automatyki.
 func (r *repozytoriumUkladuOrkiestracji) kolejkiAutomatyki(ctx context.Context,
 	kodAutomatyki string) ([]int64, error) {
 

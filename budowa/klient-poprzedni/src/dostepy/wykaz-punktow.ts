@@ -5,17 +5,9 @@ import { nazwaGrupy, RODZAJE } from './nazwy-dostepow';
 import type { StanDostepow } from './stan-dostepow';
 
 /**
- * Wykaz punktów dostępu rozdzielony rodzajem: maszyny osobno, katalogi
- * lokalne osobno.
- *
- * Maszyna za mostem MCP i katalog na dysku urządzenia to dwa różne ryzyka
- * i dwie różne drogi sprawdzenia; zlanie ich w jedną listę kazałoby czytać
- * rodzaj z każdego wiersza z osobna.
- *
- * Karty przeżywają przeliczenie: zmiana stanu nanosi wartości na karty już
- * zbudowane, a przebudowa następuje wyłącznie wtedy, gdy zmienił się skład
- * wykazu. Inaczej wybór trybu i zaznaczenie korzeni ginęłyby przy każdym
- * zdarzeniu z rdzenia.
+ * Wykaz punktów dostępu rozdzielony rodzajem: maszyny osobno, katalogi lokalne
+ * osobno. Karty przeżywają przeliczenie, bo zmiana stanu nanosi wartości na
+ * karty już zbudowane, a przebudowa idzie po zmianie składu wykazu.
  */
 export interface WykazPunktow {
   /** Element osadzany w sekcji dostępów. */
@@ -69,10 +61,7 @@ export function utworzWykazPunktow(stan: StanDostepow): WykazPunktow {
 
     odswiez() {
       const punkty = stan.punkty();
-      // Skład obejmuje korzenie, bo z nich powstaje wybór korzeni w karcie.
-      // Stan punktu i czas sprawdzenia do składu nie wchodzą: zmieniają się
-      // przy każdym sprawdzeniu, a przebudowa zabrałaby wybór trybu wpisany
-      // chwilę wcześniej.
+      // Sklad obejmuje korzenie; stan punktu i czas sprawdzenia do niego nie wchodza.
       const sklad = punkty
         .map((punkt) => `${punkt.kind}:${punkt.id}:${punkt.roots.join(',')}`)
         .join('|');
@@ -81,9 +70,7 @@ export function utworzWykazPunktow(stan: StanDostepow): WykazPunktow {
         przebuduj(punkty);
       }
 
-      // Stan pusty należy się wyłącznie zakończonemu odczytowi: w trakcie
-      // pytania rdzenia zdanie „nie ma ani jednego punktu" byłoby nieprawdą,
-      // a po niepowodzeniu odczytu — pomyłką co do przyczyny.
+      // Stan pusty nalezy sie wylacznie odczytowi zakonczonemu powodzeniem.
       pusty.hidden = punkty.length > 0 || stan.faza() !== 'gotowe';
 
       const nadane = new Set(stan.nadania().map((nadanie) => nadanie.accessPointId));

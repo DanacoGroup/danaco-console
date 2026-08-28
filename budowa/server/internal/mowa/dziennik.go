@@ -1,22 +1,5 @@
-// Odpowiedzialność pliku: trwałość dziennika transkrypcji — tabela
-// `transkrypcja` z migracji `store/migracja_075_mowa.sql`.
-//
-// Plik powiela kształt repozytoriów pakietu `dane` (blok stałych ze składanym
-// SQL, typ wiersza, filtr, interfejs repozytorium, asercja `var _`, odczyt
-// wiersza przez interfejs skanera), ale stoi w pakiecie `mowa` i bierze
-// `*sql.DB` wprost. Stąd własny interfejs skanera: odpowiednik `dane.skaner`
-// jest nieeksportowany i nie da się go użyć spoza pakietu `dane`.
-//
-// Dziennik nie ma własnego zegara — czas przychodzi z góry w polu `Utworzono`
-// wpisu, a baza go nie wstawia (kolumna nie ma wyrażenia domyślnego). Jeden
-// zegar na jedno zdarzenie: drugi rozjeżdżałby ślad z chwilą zapisu.
-//
-// Dziennik zapisuje także odmowy: `Zapisz` przyjmuje wpis o stanie `odmowa`
-// i jest to jego zwykłe użycie, bo powód odmowy jest pierwszą informacją
-// potrzebną, gdy nic się nie przepisało. Więz spójności stanu z powodem
-// pilnuje CHECK tabeli `transkrypcja`, a sprawdzenia niżej odrzucają niespójny
-// wpis wcześniej, żeby wołający dostał zdanie po polsku zamiast komunikatu
-// sterownika SQLite.
+// Plik utrwala dziennik transkrypcji mowy: wpisy tabeli `transkrypcja` w stanach
+// gotowa, bez_mowy i odmowa, każdy z czasem zapisu podanym przez wołającego.
 package mowa
 
 import (
@@ -43,26 +26,23 @@ const (
 // „co ostatnio przepisano", nie „co kiedykolwiek".
 const LimitWykazuDomyslny = 50
 
-// WpisTranskrypcji to wiersz tabeli `transkrypcja`.
+// WpisTranskrypcji to wiersz tabeli `transkrypcja`: jedno zlecenie rozpoznania
+// mowy, jego wynik albo powód odmowy, wraz z czasem zapisu.
 type WpisTranskrypcji struct {
 	// ID jest kluczem sztucznym bazy; na zewnątrz idzie Identyfikator.
 	ID int64
 	// Identyfikator odpowiada kolumnie `identyfikator_zewnetrzny` — tożsamość
 	// wpisu widoczna poza bazą.
 	Identyfikator string
-	// OknoId bywa pusty: transkrypcję wołają także ścieżki spoza okna
-	// komunikacji. Pustka jest tu prawdą o zdarzeniu, nie brakiem danych, więc
-	// w bazie odpowiada jej NULL.
+	// OknoId bywa pusty dla transkrypcji spoza okna komunikacji; w bazie
+	// odpowiada mu NULL.
 	OknoId string
-	// NagranieOdnosnik to ścieżka pliku na dysku Operatora, nie bajty dźwięku
-	// — rdzeń otwiera plik w miejscu i niczego nie kopiuje.
+	// NagranieOdnosnik to ścieżka pliku na dysku, nie bajty dźwięku.
 	NagranieOdnosnik string
-	// Model i Jezyk zapisane tak, jak obowiązywały w chwili zlecenia, a nie
-	// odczytane z ustawień przy odczycie dziennika.
+	// Model i Jezyk niosą wartości obowiązujące w chwili zlecenia.
 	Model string
 	Jezyk string
-	// Znakow to długość rozpoznanego tekstu. Samego tekstu dziennik nie trzyma:
-	// idzie on do wołającego, a jego kopia obok byłaby drugą prawdą.
+	// Znakow to długość rozpoznanego tekstu; samego tekstu dziennik nie trzyma.
 	Znakow int64
 	// TrwanieMs to długość nagrania w milisekundach, nie czas przetwarzania.
 	TrwanieMs int64
@@ -75,12 +55,12 @@ type WpisTranskrypcji struct {
 	Utworzono int64
 }
 
-// FiltrTranskrypcji zawęża wykaz dziennika.
+// FiltrTranskrypcji zawęża wykaz dziennika transkrypcji do jednego okna
+// komunikacji i do zadanej liczby najnowszych wpisów.
 type FiltrTranskrypcji struct {
 	// OknoId pusty znaczy „wszystkie okna, także wpisy spoza okna".
 	OknoId string
-	// Limit niedodatni znaczy LimitWykazuDomyslny — brak wskazania jest
-	// wskazaniem wartości domyślnej, a nie prośbą o całość dziennika.
+	// Limit niedodatni znaczy LimitWykazuDomyslny, nie całość dziennika.
 	Limit int
 }
 
@@ -103,15 +83,9 @@ const (
 	pobierzTranskrypcje = `SELECT ` + kolumnyTranskrypcji + zrodloTranskrypcji +
 		` WHERE t.identyfikator_zewnetrzny = ?`
 
-	// Jedno zapytanie na oba warianty żądania: puste zawężenie okna wyłącza
-	// pierwszy warunek. Ze wskazanym oknem porządek biegnie indeksem
-	// idx_transkrypcja_wykaz (okno_id, utworzono, id) czytanym wstecz, więc
-	// „najnowsze najpierw" nie kosztuje sortowania wyniku (EXPLAIN QUERY PLAN:
-	// SEARCH ... USING COVERING INDEX, bez kroku ORDER BY). Bez wskazania okna
-	// sortowanie zostaje — i tak ma być: to zapytanie diagnostyczne przez cały
-	// dziennik, a nie widok otwierany przy każdym zleceniu. Kolumna `id`
-	// w porządku rozstrzyga wpisy z tej samej milisekundy, żeby kolejność była
-	// stała między wywołaniami.
+	// Zapytanie obsługuje oba warianty żądania: puste zawężenie okna wyłącza
+	// pierwszy warunek, a wskazane oddaje wpisy tylko z tego okna, obie
+	// gałęzie od najnowszego wpisu.
 	listaTranskrypcji = `SELECT ` + kolumnyTranskrypcji + zrodloTranskrypcji +
 		` WHERE (? = '' OR t.okno_id = ?)
 		  ORDER BY t.utworzono DESC, t.id DESC
@@ -123,7 +97,8 @@ const (
 	                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
-// dziennikTranskrypcji jest jedyną implementacją Dziennika.
+// dziennikTranskrypcji jest jedyną implementacją Dziennika, opartą wprost
+// na puli połączeń bazy danych.
 type dziennikTranskrypcji struct {
 	db *sql.DB
 }
@@ -141,7 +116,8 @@ func NowyDziennik(db *sql.DB) Dziennik {
 	return &dziennikTranskrypcji{db: db}
 }
 
-// Zapisz wstawia wpis dziennika i oddaje go odczytany z bazy.
+// Zapisz wstawia wpis dziennika i oddaje go odczytany z bazy, razem
+// z nadanym identyfikatorem sztucznym.
 func (d *dziennikTranskrypcji) Zapisz(ctx context.Context,
 	wpis WpisTranskrypcji) (WpisTranskrypcji, error) {
 
@@ -159,7 +135,8 @@ func (d *dziennikTranskrypcji) Zapisz(ctx context.Context,
 	return d.wpisPoIdentyfikatorze(ctx, wpis.Identyfikator)
 }
 
-// Wykaz oddaje wpisy dziennika od najnowszego.
+// Wykaz oddaje wpisy dziennika od najnowszego, zawężone filtrem okna
+// komunikacji i liczbą zwracanych wpisów.
 func (d *dziennikTranskrypcji) Wykaz(ctx context.Context,
 	filtr FiltrTranskrypcji) ([]WpisTranskrypcji, error) {
 
@@ -210,10 +187,8 @@ func (d *dziennikTranskrypcji) wpisPoIdentyfikatorze(ctx context.Context,
 // czy zerowy wpis znaczy „nie ma", czy „coś się popsuło".
 var ErrBrakWpisu = errors.New("mowa: brak wpisu dziennika")
 
-// sprawdzWpis odrzuca wpisy, których baza i tak by nie przyjęła — po to, żeby
-// wołający dostał zdanie po polsku zamiast komunikatu o naruszonym CHECK-u.
-// Zdublowaniem więzu to nie jest: baza pozostaje ostatecznym strażnikiem,
-// bo pisać do niej może też przyszła ścieżka, która tej funkcji nie wywoła.
+// sprawdzWpis odrzuca wpisy, których baza i tak by nie przyjęła, żeby
+// wołający dostał zdanie po polsku zamiast komunikatu o naruszonym więzie.
 func sprawdzWpis(wpis WpisTranskrypcji) error {
 	if wpis.Identyfikator == "" {
 		return fmt.Errorf("mowa: transkrypcja bez identyfikatora")
@@ -249,7 +224,8 @@ type skaner interface {
 	Scan(cele ...any) error
 }
 
-// odczytajTranskrypcje składa wpis z jednego wiersza wyniku.
+// odczytajTranskrypcje składa wpis dziennika z jednego wiersza wyniku
+// zapytania o transkrypcję, niezależnie od liczby zwróconych wierszy.
 func odczytajTranskrypcje(wiersz skaner) (WpisTranskrypcji, error) {
 	var wpis WpisTranskrypcji
 	var oknoId, powod sql.NullString
@@ -264,10 +240,8 @@ func odczytajTranskrypcje(wiersz skaner) (WpisTranskrypcji, error) {
 	return wpis, nil
 }
 
-// napisDoKolumny przekłada napis pusty na NULL. Kolumny `okno_id` i `powod`
-// dopuszczają pustkę, a pustka ta coś znaczy — „zlecenie spoza okna" oraz „nie
-// było odmowy". Napis pusty zapisany wprost udawałby wartość podaną, a przy
-// `powod` naruszałby CHECK tabeli `transkrypcja`.
+// napisDoKolumny przekłada napis pusty na NULL, bo w kolumnach `okno_id`
+// i `powod` pustka niesie odrębne znaczenie od wartości podanej wprost.
 func napisDoKolumny(wartosc string) any {
 	if wartosc == "" {
 		return nil

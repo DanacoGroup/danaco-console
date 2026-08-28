@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: kalendarz projektu — `workspace.calendar.get`,
-// `workspace.calendar.import` i `workspace.calendar.export`.
-//
-// Kalendarz projektu ma DWA źródła i oba wchodzą do jednego wykazu: zadania
-// z terminem (byt planowania) oraz wydarzenia wciągnięte z pliku `.ics` bez
-// zakładania zadań (byt kalendarza). Drugie źródło istnieje, bo wciągnięcie
-// z `asTasks: false` musi mieć gdzie osiąść — inaczej udane wciągnięcie
-// oddawałoby pusty kalendarz.
+// Odpowiedzialność pliku: kalendarz projektu ze zadań i wciągniętych plików iCal —
+// `workspace.calendar.get`, `workspace.calendar.import` i `workspace.calendar.export`.
 package core
 
 import (
@@ -18,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Kalendarz obsługuje `workspace.calendar.get`.
+// Kalendarz obsługuje `workspace.calendar.get` i zwraca pozycje z obu źródeł projektu naraz, posortowane.
 func (a *adapterPrzestrzeniRoboczej) Kalendarz(ctx context.Context,
 	z shared.WorkspaceCalendarGetRequest) (shared.WorkspaceCalendarGetResponse, error) {
 
@@ -45,7 +39,7 @@ func (a *adapterPrzestrzeniRoboczej) Kalendarz(ctx context.Context,
 	return shared.WorkspaceCalendarGetResponse{Entries: wOkresie, From: od, To: do}, nil
 }
 
-// WciagnijKalendarz obsługuje `workspace.calendar.import`.
+// WciagnijKalendarz obsługuje `workspace.calendar.import` i wciąga pozycje z przesłanego pliku iCal do projektu.
 func (a *adapterPrzestrzeniRoboczej) WciagnijKalendarz(ctx context.Context,
 	z shared.WorkspaceCalendarImportRequest) (shared.WorkspaceCalendarImportResponse, error) {
 
@@ -110,7 +104,7 @@ func (a *adapterPrzestrzeniRoboczej) WciagnijKalendarz(ctx context.Context,
 	}, nil
 }
 
-// ZapiszKalendarz obsługuje `workspace.calendar.export`.
+// ZapiszKalendarz obsługuje `workspace.calendar.export` i składa kalendarz projektu w postaci pliku iCal.
 func (a *adapterPrzestrzeniRoboczej) ZapiszKalendarz(ctx context.Context,
 	z shared.WorkspaceCalendarExportRequest) (shared.WorkspaceCalendarExportResponse, error) {
 
@@ -220,8 +214,7 @@ func okresSiatkiWorkspace(siatka shared.WorkspaceCalendarSpan, kotwica int64) (i
 	case shared.WorkspaceCalendarSpanDay:
 		return dzien.UnixMilli(), dzien.AddDate(0, 0, 1).Add(-time.Millisecond).UnixMilli()
 	case shared.WorkspaceCalendarSpanWeek:
-		// Tydzień zaczyna się w poniedziałek — tak liczy kalendarz, w którym
-		// pracuje Operator tego produktu.
+		// Tydzień zaczyna się w poniedziałek, tak liczy kalendarz tego produktu.
 		przesuniecie := (int(dzien.Weekday()) + 6) % 7
 		poczatek := dzien.AddDate(0, 0, -przesuniecie)
 		return poczatek.UnixMilli(), poczatek.AddDate(0, 0, 7).Add(-time.Millisecond).UnixMilli()
@@ -231,7 +224,7 @@ func okresSiatkiWorkspace(siatka shared.WorkspaceCalendarSpan, kotwica int64) (i
 	}
 }
 
-// tekstOpcjonalnyWorkspace zwija pusty napis do braku pola kontraktu.
+// tekstOpcjonalnyWorkspace zwija pusty napis do braku pola kontraktu, zamiast oddawać pusty łańcuch znaków.
 func tekstOpcjonalnyWorkspace(wartosc string) *string {
 	if strings.TrimSpace(wartosc) == "" {
 		return nil

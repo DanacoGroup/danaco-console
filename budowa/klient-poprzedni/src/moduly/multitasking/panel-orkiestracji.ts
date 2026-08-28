@@ -16,49 +16,20 @@ import { utworzZrodloNadzoru } from './zrodlo-nadzoru';
 import { utworzZrodloOkien } from './zrodlo-okien';
 import { utworzZrodloZespolow } from './zrodlo-zespolow';
 
-/**
- * Panel orkiestracji — boczna nawigacja środowiska MultitaskingAI.
- *
- * Środowisko nie udostępnia modułów w bocznej nawigacji: nawiguje po tym, czym
- * się w nim steruje — po rolach, kolejkach i orkiestracji. Okien do modułu
- * nie przypinamy.
- *
- * Sekcja Role montuje istniejącą scenę czterech okien roboczych: Coordinator
- * Chat, dwa niezależne wystąpienia Executor Chat oraz Results Analyzer, wraz
- * z panelem Subagent Network w oknie wykonawcy. Executor 1 i 2 to jeden typ
- * okna w dwóch wystąpieniach, nie dwa osobne okna.
- *
- * Pozostałe cztery sekcje — Kolejki, Orkiestracja, Harmonogram i Monitor —
- * pracują na oknach modułu Automations, bo własnych okien nie mają. Każda
- * niesie podsekcję powiązania, która mówi, czy powiązanie jest skonfigurowane
- * i jak je założyć, zamiast rysować pustkę albo udawać własne okno.
- *
- * Sekcja nieznana temu plikowi nie gaśnie i nie znika: oddajemy `undefined`,
- * a przestrzeń robocza pokazuje stan pusty z nazwą sekcji. Brak ustawienia
- * układu podsekcji znaczy układ domyślny, nigdy niedostępność.
- *
- * Adresem układu jest okno: `panel.sections.*` adresuje parę (okno, panel),
- * a panel orkiestracji należy do środowiska. Adresem zostaje okno koordynatora,
- * a gdy obsady jeszcze nie ma — pierwsze okno karty sesji. Sesja bez ani
- * jednego okna zostawia układ miejscowy, o czym powłoka mówi przy pierwszej
- * zmianie.
- */
+// Panel orkiestracji jest boczną nawigacją środowiska: nawiguje po rolach, kolejkach i orkiestracji.
 
-/** Klucz sekcji panelu — ten sam, którym wskazuje ją boczna nawigacja. */
+/** Klucz sekcji panelu — ten sam, którym wskazuje ją boczna nawigacja całego środowiska orkiestracji zadań. */
 export type KluczSekcji = (typeof KLUCZE_SEKCJI_ORKIESTRACJI)[number];
 
-/** Czy klucz pozycji nawigacji jest jedną z sześciu sekcji panelu. */
+/** Czy klucz pozycji nawigacji jest jedną z sześciu sekcji panelu orkiestracji rozpoznawanych przez ten plik. */
 export function czySekcjaOrkiestracji(klucz: string): klucz is KluczSekcji {
   return (KLUCZE_SEKCJI_ORKIESTRACJI as readonly string[]).includes(klucz);
 }
 
 /**
- * Widok jednej sekcji panelu orkiestracji.
- *
- * Oddaje `WidokModulu`, bo przestrzeń robocza umie osadzić dokładnie taki
- * kształt — sekcja nie jest modułem, ale zajmuje to samo miejsce na planszy
- * i ma ten sam cykl życia (element powstaje raz, treść dociąga się z sesją).
- * Drugiego kształtu widoku nie wprowadzamy.
+ * Widok jednej sekcji panelu orkiestracji oddaje kształt modułu, bo przestrzeń
+ * robocza umie osadzić dokładnie taki kształt, a sekcja zajmuje to samo miejsce
+ * na planszy i ma ten sam cykl życia.
  */
 export function utworzWidokSekcji(klucz: KluczSekcji, kanal: Kanal): WidokModulu {
   if (klucz === 'role') return widokRol(kanal);
@@ -87,7 +58,7 @@ function widokRol(kanal: Kanal): WidokModulu {
   };
 }
 
-/** Jedna z pięciu sekcji sterowania wraz z jej cyklem życia. */
+/** Jedna z pięciu sekcji sterowania wraz z jej cyklem życia: element, odświeżenie, adres okna i rozłączenie. */
 interface SekcjaSterowania {
   element: HTMLElement;
   odswiez(): void;
@@ -96,11 +67,9 @@ interface SekcjaSterowania {
 }
 
 /**
- * Pięć sekcji sterowania — wspólny montaż, bo różnią się wyłącznie treścią.
- *
- * Źródła powstają dopiero przy wczytaniu, a nie przy tworzeniu widoku: gdyby
- * powstawały wcześniej, subskrypcje zdarzeń stanęłyby dla sekcji, której
- * Operator jeszcze nie otworzył.
+ * Pięć sekcji sterowania dzieli wspólny montaż, bo różnią się wyłącznie
+ * treścią, a źródła powstają dopiero przy wczytaniu, nie przy tworzeniu
+ * widoku.
  */
 function widokSterowania(klucz: KluczSekcji, kanal: Kanal): WidokModulu {
   const gospodarz = document.createElement('div');
@@ -113,9 +82,7 @@ function widokSterowania(klucz: KluczSekcji, kanal: Kanal): WidokModulu {
       const zbudowana = zbuduj(klucz, kanal, () => idSesji);
       sekcja = zbudowana;
       gospodarz.replaceChildren(zbudowana.element);
-      // Adres układu podsekcji ustala się przed pierwszym odczytem: inaczej
-      // sekcja przeczytałaby układ domyślny i zaraz po nim ten sam układ
-      // z rdzenia — dwa odczyty o to samo.
+      // Adres układu podsekcji ustala się przed pierwszym odczytem, inaczej sekcja czytałaby układ dwa razy.
       await ustawAdres(kanal, idSesji, zbudowana);
       zbudowana.odswiez();
     },
@@ -123,7 +90,7 @@ function widokSterowania(klucz: KluczSekcji, kanal: Kanal): WidokModulu {
   };
 }
 
-/** Wytwórnia sekcji według klucza; źródła współdzielą jeden kanał. */
+/** Wytwórnia sekcji według klucza; źródła współdzielą jeden wspólny kanał połączenia z uruchomionym rdzeniem. */
 function zbuduj(klucz: KluczSekcji, kanal: Kanal, sesja: () => string): SekcjaSterowania {
   const sekcje = utworzZrodloSekcjiPaneli(kanal);
   switch (klucz) {
@@ -152,12 +119,9 @@ function zbuduj(klucz: KluczSekcji, kanal: Kanal, sesja: () => string): SekcjaSt
 }
 
 /**
- * Wskazuje sekcji okno, do którego przypięty jest układ jej podsekcji.
- *
- * Koordynator ma pierwszeństwo, bo z jego okna steruje się całym środowiskiem.
- * Sesja bez koordynatora oddaje okno najstarsze — układ ma gdzie zamieszkać
- * także przed obsadzeniem ról. Sesja bez ani jednego okna zostawia adres pusty,
- * a powłoka mówi to przy pierwszej zmianie układu.
+ * Wskazuje sekcji okno, do którego przypięty jest układ jej podsekcji:
+ * koordynator ma pierwszeństwo, a sesja bez koordynatora oddaje okno
+ * najstarsze.
  */
 async function ustawAdres(kanal: Kanal, sesja: string, sekcja: SekcjaSterowania): Promise<void> {
   const wynik = await utworzZrodloOkien(kanal).okna({ sessionId: sesja });

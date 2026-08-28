@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: obszar Apps — strona budowy produktu. Produkt okna
-// (tabela `produkt_apps`), etapy budowy (`etap_apps`) oraz kamienie milowe
-// wraz ze związkiem z etapami (`kamien_milowy_apps`,
-// `kamien_milowy_etap_apps`) — `store/migracja_200_apps_produkt.sql`.
-//
-// Interfejs `RepozytoriumAplikacji` oraz typ `*repozytoriumAplikacji` deklaruje
-// `aplikacje.go`; ten plik dokłada mu metody, nie drugi kontrakt.
-//
-// Produkt jest jeden na okno, więc zapis jest UPSERT-em po kolumnie `okno`
-// (rozstrzygnięcie na czole migracji). Etap i kamień milowy mają własne
-// identyfikatory zewnętrzne, bo obie komendy zapisu potrafią wskazać byt
-// zmieniany — zapis jest tam UPSERT-em po identyfikatorze.
+// Obszar Apps — strona budowy produktu. Produkt okna (tabela `produkt_apps`),
+// etapy budowy (`etap_apps`) oraz kamienie milowe wraz ze związkiem z etapami
+// (`kamien_milowy_apps`, `kamien_milowy_etap_apps`).
 package dane
 
 import (
@@ -18,7 +9,8 @@ import (
 	"fmt"
 )
 
-// ProduktApp to wiersz tabeli `produkt_apps`.
+// ProduktApp to wiersz tabeli `produkt_apps`: metadane produktu jednego
+// okna wraz z listą platform docelowych.
 type ProduktApp struct {
 	ID             int64
 	Kod            string
@@ -31,7 +23,8 @@ type ProduktApp struct {
 	Zaktualizowano string
 }
 
-// EtapApp to wiersz tabeli `etap_apps` — etap trackera Product Buildera.
+// EtapApp to wiersz tabeli `etap_apps` — etap trackera Product Buildera,
+// wraz z kolejnością i wykonawcą.
 type EtapApp struct {
 	ID             int64
 	Kod            string
@@ -128,9 +121,9 @@ const (
 	                         WHERE k.okno = ? ORDER BY z.etap_kod`
 )
 
-// ZapiszProduktApp zapisuje produkt okna. Kod zewnętrzny podany w strukturze
-// obowiązuje wyłącznie przy pierwszym zapisie — przy kolejnych wiersz zostaje
-// pod kodem nadanym wcześniej (patrz komentarz przy UPSERT-cie).
+// ZapiszProduktApp zapisuje produkt okna, UPSERT po kolumnie okna. Kod
+// zewnętrzny podany w strukturze obowiązuje wyłącznie przy pierwszym
+// zapisie — przy kolejnych wiersz zostaje pod kodem nadanym wcześniej.
 func (r *repozytoriumAplikacji) ZapiszProduktApp(ctx context.Context, produkt ProduktApp) (ProduktApp, error) {
 	if produkt.Okno == "" {
 		return ProduktApp{}, fmt.Errorf("dane: produkt aplikacji bez okna")
@@ -151,7 +144,8 @@ func (r *repozytoriumAplikacji) ZapiszProduktApp(ctx context.Context, produkt Pr
 	return r.ProduktApp(ctx, produkt.Okno)
 }
 
-// ProduktApp zwraca produkt okna; brak wiersza wraca jako ErrBrakWiersza.
+// ProduktApp zwraca produkt zapisany dla wskazanego okna aplikacji; brak
+// wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAplikacji) ProduktApp(ctx context.Context, okno string) (ProduktApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzProduktApp)
 	if err != nil {
@@ -167,7 +161,8 @@ func (r *repozytoriumAplikacji) ProduktApp(ctx context.Context, okno string) (Pr
 	return produkt, nil
 }
 
-// ZapiszEtapApp zapisuje etap budowy (UPSERT po identyfikatorze zewnętrznym).
+// ZapiszEtapApp zapisuje jeden etap budowy produktu, UPSERT po
+// identyfikatorze zewnętrznym etapu w oknie.
 func (r *repozytoriumAplikacji) ZapiszEtapApp(ctx context.Context, etap EtapApp) (EtapApp, error) {
 	if etap.Kod == "" || etap.Okno == "" {
 		return EtapApp{}, fmt.Errorf("dane: etap aplikacji bez identyfikatora albo bez okna")
@@ -187,7 +182,8 @@ func (r *repozytoriumAplikacji) ZapiszEtapApp(ctx context.Context, etap EtapApp)
 	return r.EtapApp(ctx, etap.Kod)
 }
 
-// EtapApp zwraca jeden etap po kodzie zewnętrznym.
+// EtapApp zwraca jeden etap trackera Product Buildera po jego kodzie
+// zewnętrznym, niezależnie od okna.
 func (r *repozytoriumAplikacji) EtapApp(ctx context.Context, kod string) (EtapApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzEtapApp)
 	if err != nil {
@@ -203,7 +199,8 @@ func (r *repozytoriumAplikacji) EtapApp(ctx context.Context, kod string) (EtapAp
 	return etap, nil
 }
 
-// EtapyApp zwraca etapy okna w kolejności trackera.
+// EtapyApp zwraca wszystkie etapy budowy produktu okna w kolejności
+// trackera, tej ustawionej polem Kolejnosc.
 func (r *repozytoriumAplikacji) EtapyApp(ctx context.Context, okno string) ([]EtapApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtapowApp)
 	if err != nil {
@@ -287,7 +284,8 @@ func (r *repozytoriumAplikacji) ZapiszKamienMilowyApp(ctx context.Context,
 	return r.KamienMilowyApp(ctx, kamien.Kod)
 }
 
-// KamienMilowyApp zwraca jeden kamień milowy wraz z kodami jego etapów.
+// KamienMilowyApp zwraca jeden kamień milowy budowy produktu wraz z kodami
+// wszystkich jego etapów składowych.
 func (r *repozytoriumAplikacji) KamienMilowyApp(ctx context.Context, kod string) (KamienMilowyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKamienApp)
 	if err != nil {
@@ -308,7 +306,8 @@ func (r *repozytoriumAplikacji) KamienMilowyApp(ctx context.Context, kod string)
 	return kamien, nil
 }
 
-// KamienieMiloweApp zwraca kamienie milowe okna wraz z kodami ich etapów.
+// KamienieMiloweApp zwraca wszystkie kamienie milowe budowy produktu okna
+// wraz z kodami etapów każdego z nich.
 func (r *repozytoriumAplikacji) KamienieMiloweApp(ctx context.Context, okno string) ([]KamienMilowyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKamieniApp)
 	if err != nil {
@@ -389,7 +388,8 @@ func (r *repozytoriumAplikacji) etapyKamieniOkna(ctx context.Context, okno strin
 	return mapa, nil
 }
 
-// odczytajProduktApp składa produkt z jednego wiersza wyniku.
+// odczytajProduktApp składa pełną strukturę ProduktApp z jednego wiersza
+// wyniku zapytania SQL bazy danych.
 func odczytajProduktApp(wiersz skaner) (ProduktApp, error) {
 	var produkt ProduktApp
 	var opis, platformy, repozytorium sql.NullString
@@ -404,7 +404,8 @@ func odczytajProduktApp(wiersz skaner) (ProduktApp, error) {
 	return produkt, nil
 }
 
-// odczytajEtapApp składa etap z jednego wiersza wyniku.
+// odczytajEtapApp składa pełną strukturę EtapApp z jednego wiersza wyniku
+// wykonanego zapytania SQL bazy danych.
 func odczytajEtapApp(wiersz skaner) (EtapApp, error) {
 	var etap EtapApp
 	var wykonawca sql.NullString

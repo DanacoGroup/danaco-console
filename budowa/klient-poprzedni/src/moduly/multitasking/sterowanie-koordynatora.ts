@@ -4,35 +4,16 @@ import { rozdziel, type Zlecenie } from './tryby-wspolpracy';
 import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloBiegu } from './zrodlo-biegu';
 
-/**
- * Siedem przycisków sterowania Coordinator Chat: Start · Stop · Pauza · Wznów ·
- * Przekaż · Powtórz · Waliduj.
- *
- * Pięć z nich to jeden silnik kolejek: Start, Stop, Pauza, Wznów i Powtórz idą
- * `queue.action` na kolejce etapu — tej samej, którą obsługuje pętla sesyjna
- * i moduł Automations. Koordynator nie ma własnego wykonawcy zleceń i nie
- * prowadzi biegu naprawczego: bieg prowadzi rdzeń, a licznik obiegów przychodzi
- * z `window.state.get`.
- *
- * „Przekaż" wydaje zlecenie wykonawcy. Adresata i treść rozstrzyga tryb
- * współpracy; nośnikiem jest `message.send`, bo okno wykonawcy jest oknem
- * komunikacji. Droga modelu — wywołanie narzędzia platformy — biegnie obok
- * i tej kontrolki nie zastępuje.
- *
- * „Waliduj" sprawdza przebieg, a nie ocenia wynik: kontrakt nie ma komendy
- * oceny, więc przycisk odczytuje `window.state.get` koordynatora i wykonawców
- * i mówi, czy tura trwa, ile obiegów zliczono i czy bieg stoi wraz z powodem.
- * Ocena treści wyniku należy do Results Analyzer.
- */
+// Siedem przycisków sterowania koordynatora: Start, Stop, Pauza, Wznów, Przekaż, Powtórz, Waliduj.
 
-/** Zestaw sterowania wraz z przyciskami, które da się wygasić. */
+/** Interfejs zestawia element sterowania koordynatora wraz z funkcją odświeżania, która przestawia dostępność przycisków wedle obsady i kolejki. */
 export interface SterowanieKoordynatora {
   element: HTMLElement;
   /** Przestawia dostępność przycisków wedle obsady i kolejki. */
   odswiez(): void;
 }
 
-/** Zależności sterowania. */
+/** Interfejs zestawia zależności sterowania koordynatora: źródło biegu, stan multitaskingu oraz funkcje odczytu treści zlecenia, walidacji i potwierdzenia. */
 export interface OpcjeSterowania {
   zrodlo: ZrodloBiegu;
   stan: StanMultitaskingu;
@@ -60,13 +41,7 @@ export function utworzSterowanie(opcje: OpcjeSterowania): SterowanieKoordynatora
     walidacja: () => opcje.zwaliduj(),
   });
 
-  /**
-   * Sterowanie kolejką etapu — jedno wywołanie, jeden komunikat zwrotny.
-   *
-   * Potwierdzenie mówi, co zrobił rdzeń, a nie co zażądano: odpowiedź
-   * `queue.action` niesie całą kolejkę wraz z jej stanem po działaniu, więc
-   * zdanie zestawia stan sprzed wywołania ze stanem oddanym.
-   */
+  // Sterowanie kolejką jednym wywołaniem: zdanie zestawia stan sprzed wywołania ze stanem oddanym.
   async function steruj(dzialanie: QueueAction): Promise<void> {
     const kolejka = stan.kolejkaBiezaca();
     if (kolejka === null) {
@@ -89,12 +64,7 @@ export function utworzSterowanie(opcje: OpcjeSterowania): SterowanieKoordynatora
     );
   }
 
-  /**
-   * Przekazanie zlecenia wykonawcom wedle trybu współpracy.
-   *
-   * Doręczenie treści i utrwalenie więzi to dwa osobne niepowodzenia, więc
-   * wracają osobnymi wykazami i liczone są w oknach, nie w powodach.
-   */
+  // Doręczenie treści i utrwalenie więzi to dwa osobne niepowodzenia; wracają osobnymi wykazami.
   async function przekazZlecenie(): Promise<void> {
     const tresc = opcje.trescZlecenia().trim();
     if (tresc === '') {
@@ -118,9 +88,7 @@ export function utworzSterowanie(opcje: OpcjeSterowania): SterowanieKoordynatora
   }
 
   function odswiez(): void {
-    // Przyciski zostają czynne także bez przesłanki: każda z tych czynności ma
-    // własną odmowę z powodem, a naciśnięcie nie dociera do rdzenia. Brakująca
-    // przesłanka idzie więc znacznikiem, nie wygaszeniem.
+    // Przyciski zostają czynne bez przesłanki: każda czynność ma własną odmowę z powodem.
     const brakEtapu = stan.kolejkaBiezaca() === null;
     for (const kontrolka of naKolejce) {
       oznaczCzynnosc(kontrolka, brakEtapu ? 'plan nie ma jeszcze etapu' : '');
@@ -136,7 +104,7 @@ export function utworzSterowanie(opcje: OpcjeSterowania): SterowanieKoordynatora
   return { element, odswiez };
 }
 
-/** Pas sterowania wraz z przyciskami, które wytwórnia gasi wedle stanu. */
+/** Interfejs zestawia pas sterowania koordynatora wraz z przyciskami, które wytwórnia gasi albo znakuje wedle stanu obsady i kolejki. */
 interface PasSterowaniaKoordynatora {
   element: HTMLElement;
   /** Cztery przyciski jednego silnika kolejek — gasną, gdy nie ma etapu. */
@@ -145,7 +113,7 @@ interface PasSterowaniaKoordynatora {
   waliduj: HTMLButtonElement;
 }
 
-/** Czynności pasa; pas ich nie wykonuje, tylko o nie prosi. */
+/** Interfejs nazywa cztery czynności pasa sterowania: pas ich nie wykonuje, tylko o nie prosi wywołanie zwrotne, które je zna. */
 interface CzynnosciSterowania {
   kolejka(dzialanie: QueueAction): void;
   stop(): void;
@@ -153,12 +121,7 @@ interface CzynnosciSterowania {
   walidacja(): void;
 }
 
-/**
- * Składa siedem kontrolek pasa sterowania.
- *
- * Pas jest czystą konstrukcją: nie zna ani źródła biegu, ani stanu wspólnego —
- * każde kliknięcie oddaje wywołaniu zwrotnemu, które te dwa zna.
- */
+/** Funkcja składa siedem kontrolek pasa sterowania. Pas jest czystą konstrukcją: nie zna źródła biegu ani stanu wspólnego, każde kliknięcie oddaje wywołaniu zwrotnemu. */
 function zlozPasSterowaniaKoordynatora(
   czynnosci: CzynnosciSterowania,
 ): PasSterowaniaKoordynatora {
@@ -183,9 +146,7 @@ function zlozPasSterowaniaKoordynatora(
     return kontrolka;
   });
 
-  // Zatrzymanie jest czynne także bez etapu i przed pierwszym obiegiem, dlatego
-  // stoi poza wykazem sterowania kolejką: gasi turę wykonawcy przez
-  // `message.stop` nawet wtedy, gdy żadna kolejka nie powstała.
+  // Zatrzymanie jest czynne bez etapu i przed pierwszym obiegiem, gasi turę bez powstałej kolejki.
   const stop = przycisk('Stop', 'dn-btn dn-btn--niebezpieczny');
   stop.dataset['dzialanie'] = QueueAction.Stop;
   stop.addEventListener('click', () => {
@@ -210,15 +171,7 @@ function zlozPasSterowaniaKoordynatora(
   return { element, naKolejce, przekaz, waliduj };
 }
 
-/**
- * Zatrzymanie biegu: kolejka etapu i tury wykonawców naraz.
- *
- * Kolejność ma znaczenie — najpierw gaśnie tura, która właśnie zużywa czas
- * modelu, a dopiero potem kolejka, która mogłaby ją wznowić.
- *
- * Źródło biegu, stan wspólny i potwierdzenie przychodzą parametrami; poza tą
- * trójką funkcja nie sięga do wnętrza sterowania po nic.
- */
+/** Funkcja zatrzymuje bieg koordynatora: naraz kolejkę etapu i tury wykonawców, najpierw turę, która zużywa czas modelu, a dopiero potem kolejkę mogącą ją wznowić. */
 async function zatrzymajBiegKoordynatora(
   zrodlo: ZrodloBiegu,
   stan: StanMultitaskingu,
@@ -228,8 +181,7 @@ async function zatrzymajBiegKoordynatora(
   const odmowy: string[] = [];
   for (const okno of stan.obsada().wykonawcy) {
     const wynik = await zrodlo.zatrzymaj({ windowId: okno.id });
-    // Odmowa gaszenia idzie do osobnego wykazu, żeby zdanie „nic nie biegło"
-    // nie zakryło tury, której rdzeń zatrzymać odmówił.
+    // Odmowa gaszenia idzie do osobnego wykazu, by zdanie o niczym niebiegnącym nie zakryło tury.
     if (!wynik.udany) odmowy.push(`okno ${okno.id}: ${powod(wynik.blad)}`);
     else if (wynik.wynik?.stopped === true) zgaszone.push(`tura okna ${okno.id}`);
   }
@@ -254,7 +206,7 @@ async function zatrzymajBiegKoordynatora(
   );
 }
 
-/** Przebieg przekazania rozdzielony na doręczenie i utrwalenie. */
+/** Interfejs rozdziela przebieg przekazania zlecenia na trzy wykazy okien: doręczone, niedoręczone oraz doręczone bez utrwalenia więzi. */
 interface PrzebiegPrzekazania {
   /** Okna, do których treść dotarła — wedle odpowiedzi `message.send`. */
   doreczone: string[];
@@ -264,25 +216,7 @@ interface PrzebiegPrzekazania {
   nieutrwalone: string[];
 }
 
-/**
- * Przekazanie zlecenia to dwie czynności i obie muszą się odbyć.
- *
- * `message.send` doręcza treść oknu wykonawcy — bez tego wykonawca nie rusza do
- * pracy. `window.handoff` utrwala w bazie rdzenia, kto komu co zlecił, i zakłada
- * pozycję kolejki; bez niego więź ginie z zamknięciem przeglądarki, a Mission
- * Control nie ma czego pokazać po ponownym uruchomieniu.
- *
- * Kolejność ma znaczenie: najpierw zapis, potem doręczenie. Odwrotna zostawiałaby
- * wykonawcę pracującego nad zleceniem, którego nikt nie odnotował.
- *
- * Nieudany zapis nie wstrzymuje doręczenia i nie liczy się jako niedoręczenie.
- * Dwa rodzaje niepowodzenia wracają osobnymi wykazami, bo znaczą co innego:
- * pierwszy mówi „wykonawca nie dostał pracy", drugi „dostał, ale po ponownym
- * uruchomieniu nikt tego nie odtworzy".
- *
- * Źródło biegu przychodzi parametrem — o trybie współpracy, obsadzie i stanie
- * okna funkcja nie wie nic.
- */
+/** Funkcja przekazuje zlecenie wykonawcom: doręcza treść oknu wykonawcy i utrwala w rdzeniu więź zlecenia, dwiema osobnymi czynnościami liczonymi osobno. */
 async function wyslijZleceniaWykonawcom(
   zrodlo: ZrodloBiegu,
   zlecenia: readonly Zlecenie[],
@@ -299,8 +233,7 @@ async function wyslijZleceniaWykonawcom(
       if (!zapis.udany) przebieg.nieutrwalone.push(`${zlecenie.okno}: ${powod(zapis.blad)}`);
     }
     const wynik = await zrodlo.wyslij({ windowId: zlecenie.okno, content: zlecenie.tresc });
-    // Dowodem doręczenia jest wiadomość, która wróciła, a nie sama zgoda:
-    // odpowiedź bez treści znaczy, że rdzeń nie powiedział, co przyjął.
+    // Dowodem doręczenia jest wiadomość, która wróciła, nie sama zgoda bez treści odpowiedzi.
     if (wynik.udany && wynik.wynik !== undefined) przebieg.doreczone.push(zlecenie.okno);
     else przebieg.niedoreczone.push(`${zlecenie.okno}: ${powod(wynik.blad)}`);
   }
@@ -330,14 +263,7 @@ function zdanieOPrzekazaniu(przebieg: PrzebiegPrzekazania, zleconych: number): s
   return czesci.join(' ');
 }
 
-/**
- * Znakuje czynność, której przesłanka jeszcze nie zaszła, bez wygaszania.
- *
- * Przycisk zostaje klikalny, bo jego własna odmowa niesie powód pełniejszy niż
- * jakikolwiek dymek. Znacznik pokazuje przesłankę przed naciśnięciem: `title`
- * dla wskaźnika, `aria-description` dla czytnika ekranu, `data-przeslanka` dla
- * odczytu automatycznego.
- */
+/** Funkcja znakuje czynność, której przesłanka jeszcze nie zaszła, bez wygaszania przycisku: znacznik pokazuje powód przed naciśnięciem, zamiast blokować kliknięcie. */
 function oznaczCzynnosc(kontrolka: HTMLButtonElement, brakujacaPrzeslanka: string): void {
   if (brakujacaPrzeslanka === '') {
     kontrolka.removeAttribute('title');
@@ -351,7 +277,7 @@ function oznaczCzynnosc(kontrolka: HTMLButtonElement, brakujacaPrzeslanka: strin
   kontrolka.dataset['przeslanka'] = brakujacaPrzeslanka;
 }
 
-/** Treść odmowy wraz z kodem kontraktu — po nim odróżnia się rodzaj odmowy. */
+/** Funkcja składa treść odmowy z komunikatu i kodu kontraktu, po którym odróżnia się rodzaj odmowy zgłoszonej przez rdzeń. */
 function powod(blad?: ErrorInfo): string {
   if (blad === undefined) return 'Rdzeń nie podał przyczyny.';
   return `Powód: ${blad.message} (kod ${blad.code}).`;

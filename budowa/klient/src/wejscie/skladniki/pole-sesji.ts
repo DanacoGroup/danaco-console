@@ -1,12 +1,6 @@
 /**
- * SKŁADNIK — ZGODA NA TRWAŁĄ SESJĘ.
- *
- * Pole wyboru z opisem skutku. Opis mówi, co ta zgoda daje i kiedy jej nie
- * zaznaczać — samo „pozostań zalogowany” nie niesie ani jednego, ani drugiego.
- *
- * Zgoda idzie do rdzenia polem `keepSignedIn`: sesja bramki dostaje trwanie
- * długie zamiast doby roboczej. Bramką nie jest — znosi powtarzanie logowania,
- * niczego nie blokuje.
+ * Składnik — zgoda na trwałą sesję. Pole wyboru z opisem skutku: co ta
+ * zgoda daje i kiedy jej nie zaznaczać.
  */
 
 import { el, tekst } from '../narzedzia.ts';

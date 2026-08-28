@@ -6,17 +6,7 @@ import type { ZmianaOkna } from './zmiana-okna';
 
 const NAZWA = 'Środowisko wykonania';
 
-/**
- * Sterowanie zasięgiem wykonania modelu.
- *
- * Wyliczenie ma trzy rodzaje: urządzenie operatora, host rdzenia, host zdalny.
- * Nazwa konkretnego serwera nie jest wartością wyliczenia — wskazuje ją
- * sterowanie hostem, jako ustawienie poziomu okna. Dzięki temu dopisanie
- * kolejnego serwera nie wymaga zmiany kontraktu ani schematu bazy.
- *
- * Zasięg wykonania jest parametrem okna, nie właściwością wdrożenia: dwa okna
- * jednej sesji mogą pracować w dwóch różnych zasięgach równocześnie.
- */
+/** Sterowanie zasięgiem wykonania modelu: urządzenie operatora, host rdzenia albo host zdalny, jako parametr okna. */
 export function utworzSterowanieSrodowiska(
   stan: StanSterowania,
   zmiana: ZmianaOkna,
@@ -31,7 +21,7 @@ export function utworzSterowanieSrodowiska(
   return lista.element;
 }
 
-/** Katalog zasięgów wykonania wprost z wyliczenia kontraktu. */
+/** Katalog zasięgów wykonania zbudowany wprost z wyliczenia kontraktu, bez ręcznego dopisywania nazw serwerów. */
 function opcje(): OpcjaWyboru[] {
   return Object.values(ExecutionEnv).map((wartosc) => ({
     wartosc,
@@ -39,7 +29,7 @@ function opcje(): OpcjaWyboru[] {
   }));
 }
 
-/** Wartość listy sprowadzona do rodzaju kontraktu; nierozpoznana zostawia stan bez zmiany. */
+/** Wartość listy sprowadzona do rodzaju wyliczenia kontraktu; wartość nierozpoznana zostawia stan okna bez zmiany. */
 function rodzaj(wartosc: string, stan: StanSterowania): ExecutionEnv {
   const znaleziona = Object.values(ExecutionEnv).find((rodzaj) => rodzaj === wartosc);
   return znaleziona ?? stan.migawka().okno.executionEnv;

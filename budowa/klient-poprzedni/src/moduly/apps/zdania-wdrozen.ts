@@ -2,32 +2,21 @@ import { AppDeployStatus, type AppDeployment } from '../../../../shared/contract
 import type { RachunekRamek } from './zbior-budowy';
 
 /**
- * Zdania Deployment Panelu o wdrożeniu — rozbieżność zamówienia z odpowiedzią
- * i powód pustego wykazu.
- *
- * Stoi osobno od okna. Okno prowadzi rozmowę z rdzeniem: zbiera pola, wysyła,
- * przyjmuje odpowiedź, nazywa stan. Składanie zdań z liczb i pól to inna
- * czynność — czysta, bez kanału i bez elementu — i dzięki rozdziałowi da się ją
- * przeczytać w całości bez czytania okna.
+ * Zamówienie wdrożenia wysłane z okna Deployment Panelu, zestawiane potem
+ * z odpowiedzią rdzenia. Plik składa zdania panelu z liczb i pól, bez kanału
+ * i bez elementu, więc czyta się go w całości bez czytania okna.
  */
-
-/** Zamówienie wysłane z okna — do zestawienia z odpowiedzią rdzenia. */
 export interface Zamowienie {
   srodowisko: string;
   strategia: string;
-  /** Wdrożenie, do którego cofamy; pusty łańcuch znaczy „wdrożenie w przód". */
+  /** Wdrożenie, do którego sięga cofnięcie; pusty łańcuch znaczy „wdrożenie w przód". */
   cofnijDo: string;
 }
 
 /**
- * Czym odpowiedź rdzenia różni się od zamówienia — pusty łańcuch, gdy niczym.
- *
- * Zdanie potwierdzające mówi o tym, co rdzeń oddał, a nie o tym, co okno
- * wysłało. Samo wypisanie pól odpowiedzi to za mało: zamówiono konkretne
- * środowisko i konkretną czynność, więc gdy rdzeń odda co innego, rozejście
- * pada wprost, a nie w drobnym druku. Cofnięcie sprawdzamy osobno, bo słowo
- * „Cofnięcie wdrożenia" w zdaniu bierze się z zamówienia — potwierdza je
- * dopiero pole `rolledBackFromId` w odpowiedzi.
+ * Wylicza, czym przebieg oddany przez rdzeń różni się od zamówienia; zgodność
+ * daje pusty łańcuch. Cofnięcie potwierdza osobne pole `rolledBackFromId`
+ * odpowiedzi, a nie samo zamówienie wysłane z okna.
  */
 export function rozbieznoscZlecenia(zamowienie: Zamowienie, przebieg: AppDeployment): string {
   const rozejscia: string[] = [];
@@ -52,20 +41,9 @@ export function rozbieznoscZlecenia(zamowienie: Zamowienie, przebieg: AppDeploym
 }
 
 /**
- * Zdanie o powodzie pustego wykazu wdrożeń.
- *
- * Odczyt rozstrzyga pierwszy: pustka po udanym `apps.deployment.list` znaczy
- * rzecz ostateczną — rdzeń przejrzał bazę i wdrożeń tego okna nie ma. To zdanie
- * innej wagi niż „jeszcze nic nie przyszło" i te dwa stany nie są zlewane.
- *
- * Pozostałe trzy gałęzie dotyczą chwili, gdy nikt jeszcze nie pytał. Zero ramek
- * znaczy „nic nie przyszło i nie pytano". Ramki bez pola wdrożenia znaczą
- * „przyszło, ale wdrożeń w tym nie było". Ramki z wdrożeniem przy pustym
- * wykazie są sprzecznością wewnątrz okna, bo wykaz niczego nie zdejmuje; zdanie
- * nazywa ją wprost, zamiast zaokrąglić do jednej z pozostałych.
- *
- * Żadna gałąź nie orzeka o tym, czego rdzeń nie robi — zdanie mówi wyłącznie
- * o tym, co padło albo nie padło w tym oknie.
+ * Składa zdanie o powodzie pustego wykazu wdrożeń. Pustkę po udanym odczycie
+ * komendą `apps.deployment.list` oddziela od chwili przed odczytem, a tę
+ * rozstrzyga rachunkiem ramek przyjętych przez okno.
  */
 export function zdaniePustkiWdrozen(ramki: RachunekRamek, czytane: boolean): string {
   if (czytane) {
@@ -97,11 +75,9 @@ export function zdaniePustkiWdrozen(ramki: RachunekRamek, czytane: boolean): str
 }
 
 /**
- * Czy przebieg wdrożenia się domknął.
- *
- * Wyliczenie stanów bierzemy z kontraktu, a nie z literałów — nowy stan
- * dopisany do `AppDeployStatus` przerwie kompilację tutaj, zamiast po cichu
- * wypaść z rozpoznania.
+ * Rozstrzyga, czy przebieg wdrożenia się domknął. Stany końcowe bierze
+ * z wyliczenia kontraktu `AppDeployStatus`, a nie z literałów, więc nowy stan
+ * przerwie kompilację, zamiast po cichu wypaść z rozpoznania.
  */
 export function czyStanKoncowy(stan: string): boolean {
   return (
@@ -112,11 +88,9 @@ export function czyStanKoncowy(stan: string): boolean {
 }
 
 /**
- * Zdanie o brakującym warunku merytorycznym — prace w warsztatach.
- *
- * Warunek sprawdzamy, a nie zakładamy: moduł wie o pracach w warsztatach tyle,
- * ile potwierdził rdzeń — czyli tyle, ile widać w architekturze, którą oddał
- * zapis albo odczyt. Brak potwierdzenia daje ostrzeżenie, nie blokadę.
+ * Składa zdanie o niespełnionym warunku prac w warsztatach. Moduł wie o nich
+ * tyle, ile potwierdził rdzeń zapisem albo odczytem architektury, a brak
+ * potwierdzenia daje ostrzeżenie, nie blokadę wdrożenia.
  */
 export function warunekWarsztatow(maArchitekture: boolean): string {
   if (maArchitekture) return '';

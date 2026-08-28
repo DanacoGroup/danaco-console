@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
-# Przygotowanie drzewa roboczego do pracy: dowiązanie zależności zamiast kopii.
-#
-# Instalacja zależności osobno w każdym drzewie roboczym zajmowałaby setki
-# megabajtów i minuty na teren. Drzewa dzielą jeden katalog node_modules przez
-# dowiązanie symboliczne do drzewa głównego; pamięci podręczne Go i Rust są
-# wspólne z ustawienia środowiska, więc nie wymagają tu niczego.
-#
-# Wywoływany przez narzedzia/nowy-teren.sh; wolno uruchomić samodzielnie.
-# Użycie: bash narzedzia/przygotuj-drzewo.sh [katalog-drzewa]
+# Przygotowanie drzewa roboczego wiąże zależności symbolicznie z drzewa głównego zamiast kopiować je osobno, a wywołuje je narzedzia/nowy-teren.sh.
 
 set -euo pipefail
 
@@ -20,7 +12,7 @@ if [ "$katalog_drzewa" = "$katalog_glowny" ]; then
   exit 0
 fi
 
-# Katalogi z zależnościami Node dowiązywane są tam, gdzie stoi package.json.
+# Katalogi z zależnościami Node dowiązywane są tam, gdzie stoi manifest package.json, oddzielnie dla każdego pakietu wewnątrz drzewa roboczego.
 podpiete=0
 while IFS= read -r manifest; do
   katalog_pakietu=$(dirname "$manifest")

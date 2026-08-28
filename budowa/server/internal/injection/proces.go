@@ -19,12 +19,8 @@ const zapasNaZamkniecie = 5 * time.Second
 // rozpoznaniu przyczyny, nie archiwum.
 const limitBledow = 64 << 10
 
-// Proces jest jednym uruchomieniem programu `claude` w trybie stream-json.
-// Ubijanie drzewa procesów nie należy do tego pakietu — robi to warstwa sesji,
-// dlatego Proces udostępnia identyfikator procesu i honoruje odwołanie kontekstu.
-//
-// Sam start procesu leży w rozruch.go i jest jedyny w drzewie; tutaj
-// zostaje wyłącznie to, co swoiste dla tury: kształt wejścia JSON-lines.
+// Proces jest jednym uruchomieniem programu `claude` w trybie stream-json,
+// udostępniającym identyfikator procesu i honorującym odwołanie kontekstu.
 type Proces struct {
 	start *Start
 }
@@ -68,18 +64,20 @@ func (p *Proces) Wyslij(tekst string) error {
 	return nil
 }
 
-// ZamknijWejscie domyka strumień wejściowy — program kończy turę dopiero po
-// zobaczeniu końca wejścia.
+// ZamknijWejscie domyka strumień wejściowy procesu — program kończy turę
+// dopiero po zobaczeniu końca wejścia.
 func (p *Proces) ZamknijWejscie() error {
 	return p.start.Wejscie().Close()
 }
 
-// Wyjscie daje strumień wyjściowy do odczytu linia po linii.
+// Wyjscie daje strumień wyjściowy procesu do odczytu linia po linii,
+// w kształcie strumienia JSON-lines.
 func (p *Proces) Wyjscie() io.Reader {
 	return p.start.Wyjscie()
 }
 
-// Bledy zwraca zapamiętane wyjście diagnostyczne procesu.
+// Bledy zwraca zapamiętane wyjście diagnostyczne procesu, ograniczone
+// limitem pojemności zapisanego bufora.
 func (p *Proces) Bledy() string {
 	return p.start.Bledy()
 }
@@ -119,7 +117,8 @@ func srodowisko(dodatkowe map[string]string, katalogKonfiguracji string) []strin
 	return wynik
 }
 
-// buforBledow zbiera wyjście diagnostyczne procesu z górnym ograniczeniem.
+// buforBledow zbiera wyjście diagnostyczne procesu z górnym ograniczeniem
+// pojemności zapamiętanego bufora.
 type buforBledow struct {
 	mu    sync.Mutex
 	tresc []byte

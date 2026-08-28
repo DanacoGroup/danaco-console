@@ -1,35 +1,6 @@
-// Komenda `terminal.script.lint` — analiza statyczna i formatowanie treści
-// skryptu, osobno dla każdej powłoki.
-//
-// ── Dlaczego tu stoi mapa programów i dlaczego jest NIEPEŁNA ────────────────
-// Analizy nie da się zrobić biblioteką wkompilowaną: rozpoznanie składni Basha,
-// PowerShella i Pythona to trzy odrębne, dojrzałe programy, których nikt nie
-// przepisze do Go w rozsądnym nakładzie. Mapa jest więc nieunikniona — ale jest
-// mapą POMIERZONĄ, nie zgadniętą, i jawnie niepełną:
-//
-//   - bash → ShellCheck (analiza) i shfmt (formatowanie): oba zmierzone i
-//     zainstalowane na maszynie rdzenia;
-//   - powershell → PSScriptAnalyzer w PowerShellu (`Invoke-ScriptAnalyzer`,
-//     `Invoke-Formatter`): zmierzone i zainstalowane;
-//   - node → `node --check`, czyli sam interpreter, którego karta `node` i tak
-//     wymaga; formatowania nie ma i odpowiedź go nie obiecuje;
-//   - python → Ruff (`ruff check`, `ruff format`): zmierzony i zainstalowany.
-//     Gdy go nie ma, zostaje `python -m py_compile`, czyli sam interpreter —
-//     orzeka wtedy o składni, a nie o regułach, i odpowiedź nazywa interpreter;
-//   - cmd i ssh → NIE MA POZYCJI. Dla wsadu `cmd` nie istnieje powszechnie
-//     przyjęty analizator, a `ssh` nie jest językiem, tylko transportem.
-//
-// Wykaz zawiera to, co zmierzono, i nie zawiera niczego więcej. Powłoka spoza
-// wykazu dostaje odpowiedź mówiącą wprost, że analizatora dla niej nie ma —
-// pusty wykaz uwag znaczyłby fałszywie „treść bez zastrzeżeń".
-//
-// ── Dlaczego treść idzie plikiem, a nie strumieniem wejścia ─────────────────
-// Każdy z tych programów czyta plik; ShellCheck czyta i strumień, ale wtedy
-// gubi nazwę pliku w uwagach. Jedna droga uruchomienia rdzenia
-// (`zewnetrzne.Wolaj`) nie pisze na wejście procesu z zamysłu — pisanie na
-// wejście i czytanie wyjścia naraz jest tą klasą zakleszczeń, której ten pakiet
-// ma nie mieć. Plik tymczasowy powstaje w katalogu tymczasowym maszyny rdzenia
-// i znika po analizie.
+// Plik obsługuje `terminal.script.lint`: analiza statyczna i formatowanie
+// treści skryptu, osobno dla każdej powłoki, programami zewnętrznymi
+// zmierzonymi na maszynie rdzenia.
 package core
 
 import (
@@ -52,7 +23,8 @@ import (
 // który utknął, nie ma prawa trzymać żądania gniazda.
 const granicaCzasuAnalizy = 20 * time.Second
 
-// analizatorPowloki opisuje program analizy jednej powłoki.
+// analizatorPowloki opisuje program analizy jednej powłoki: narzędzie,
+// rozszerzenie pliku, argumenty i sposób odczytu wyniku.
 type analizatorPowloki struct {
 	// narzedzie jest programem uruchamianym; jego nazwa wchodzi do odpowiedzi.
 	narzedzie zewnetrzne.Narzedzie
@@ -60,16 +32,14 @@ type analizatorPowloki struct {
 	rozszerzenie string
 	// argumenty składa wiersz analizy dla wskazanego pliku.
 	argumenty func(sciezka string) []string
-	// czytaj przekłada wyjście programu na uwagi kontraktu. Dostaje oba
-	// strumienie, bo jedne programy piszą wynik na wyjście, inne na diagnostykę.
+	// czytaj przekłada wyjście programu na uwagi kontraktu, biorąc oba
+	// strumienie: wyjście i diagnostykę.
 	czytaj func(wyjscie, diagnostyka string) []shared.TerminalLintFinding
 	// formatowanie składa wiersz formatowania; brak znaczy, że program tej
-	// powłoki formatowania nie umie, i odpowiedź nie obiecuje go wtedy wcale.
+	// powłoki formatowania nie umie.
 	formatowanie func(sciezka string) (zewnetrzne.Narzedzie, []string)
-	// formatZPliku mówi, że program formatujący poprawia PLIK, zamiast pisać
-	// wynik na wyjście — treść odczytuje się wtedy z pliku po jego zakończeniu.
-	// Plik jest tymczasowy i należy do rdzenia, więc poprawka w miejscu nie
-	// dotyka niczego, co należy do Operatora.
+	// formatZPliku mówi, że program formatujący poprawia plik zamiast pisać
+	// wynik na wyjście.
 	formatZPliku bool
 }
 
@@ -146,12 +116,8 @@ var analizatory = map[shared.TerminalShell]analizatorPowloki{
 	},
 }
 
-// analizatorRuffa jest analizą Pythona pełną — składnią ORAZ regułami.
-//
-// Ruff formatuje PLIK, a nie strumień: treść sformatowaną oddaje jako poprawiony
-// plik, więc odczyt idzie z pliku (`formatZPliku`). Wywołanie ze strumienia
-// wejścia (`ruff format -`) dałoby to samo, ale jedyna droga rdzenia do procesu
-// z zamysłu na wejście procesu nie pisze.
+// analizatorRuffa jest analizą Pythona pełną — składnią oraz regułami —
+// i formatuje plik zamiast strumienia, więc odczyt wyniku idzie z pliku.
 var analizatorRuffa = analizatorPowloki{
 	narzedzie:    narzedzieRuff,
 	rozszerzenie: ".py",
@@ -168,17 +134,9 @@ var analizatorRuffa = analizatorPowloki{
 	formatZPliku: true,
 }
 
-// analizatorDlaPowloki dobiera program analizy dla powłoki.
-//
-// Python ma dwa programy i pierwszeństwo ma Ruff: `python -m py_compile` orzeka
-// WYŁĄCZNIE o składni, a analiza tej komendy jest tym, czym ShellCheck jest dla
-// basha i PSScriptAnalyzer dla PowerShella — orzeczeniem o składni oraz
-// o regułach. Ruff obejmuje jedno i drugie: błąd składni wraca z niego jako
-// uwaga `invalid-syntax`, więc pierwszeństwo niczego nie odbiera.
-//
-// Gdy Ruffa na maszynie nie ma, zostaje interpreter — i wtedy odpowiedź nazywa
-// interpreter, bo to on sprawdzał. Nazwa programu w odpowiedzi ma zgadzać się
-// z tym, co naprawdę pracowało.
+// analizatorDlaPowloki dobiera program analizy dla powłoki: Python ma
+// pierwszeństwo Ruffa nad samym interpreterem, gdy Ruff jest zainstalowany
+// na maszynie.
 func analizatorDlaPowloki(powloka shared.TerminalShell) (analizatorPowloki, bool) {
 	if powloka == shared.TerminalShellPython && zewnetrzne.Stoi(narzedzieRuff) {
 		return analizatorRuffa, true
@@ -187,7 +145,8 @@ func analizatorDlaPowloki(powloka shared.TerminalShell) (analizatorPowloki, bool
 	return analizator, jest
 }
 
-// uwagiRuffa czyta wynik `ruff check --output-format json`.
+// uwagiRuffa czyta wynik `ruff check --output-format json` i przekłada
+// każdy zapis na uwagę kontraktu.
 func uwagiRuffa(wyjscie string) []shared.TerminalLintFinding {
 	uwagi := make([]shared.TerminalLintFinding, 0, 8)
 	var zapisy []wyjscieRuff
@@ -211,20 +170,15 @@ func uwagiRuffa(wyjscie string) []shared.TerminalLintFinding {
 	return uwagi
 }
 
-// SprawdzSkrypt obsługuje `terminal.script.lint`.
-//
-// Analiza nie ma okna w żądaniu, a każdy proces rdzenia musi mieć obszar
-// i zasady izolacji. Bierze więc obszar PUSTY i zasady puste, i jest to
-// rozstrzygnięcie, nie przeoczenie: program analizy czyta wyłącznie plik
-// tymczasowy założony przez rdzeń, nie sięga do obszaru żadnego okna i nie ma
-// czego z niego wynieść.
+// SprawdzSkrypt obsługuje `terminal.script.lint`: uruchamia program analizy
+// nad plikiem tymczasowym, z obszarem i zasadami izolacji pustymi celowo.
 func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 	z shared.TerminalScriptLintRequest) (shared.TerminalScriptLintResponse, error) {
 
 	analizator, jest := analizatorDlaPowloki(z.Shell)
 	if !jest {
-		// Odpowiedź nazywa brak, zamiast oddać pusty wykaz uwag: „nie ma czym
-		// sprawdzić” to co innego niż „treść bez zastrzeżeń”.
+		// Odpowiedź nazywa brak analizatora, zamiast oddać pusty wykaz uwag
+		// udający treść bez zastrzeżeń.
 		return shared.TerminalScriptLintResponse{
 			Findings:          []shared.TerminalLintFinding{},
 			AnalyzerAvailable: false,
@@ -257,9 +211,7 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, session.Okno{}, session.Zasady{},
 		session.Obszar{}, analizator.narzedzie, analizator.argumenty(sciezka),
 		filepath.Dir(sciezka), granicaCzasuAnalizy)
-	// Kod wyjścia różny od zera jest tu WYNIKIEM analizy, nie usterką: ShellCheck
-	// i `node --check` kończą się niezerowo dokładnie wtedy, gdy mają co zgłosić.
-	// Odmowę składamy wyłącznie wtedy, gdy programu nie ma czym uruchomić.
+	// Kod wyjścia różny od zera jest wynikiem analizy, nie usterką rdzenia.
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
 		odpowiedz.AnalyzerAvailable = false
@@ -277,9 +229,8 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 			sformatowane, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, session.Okno{},
 				session.Zasady{}, session.Obszar{}, narzedzie, argumenty,
 				filepath.Dir(sciezka), granicaCzasuAnalizy)
-			// Formatowanie nieudane nie unieważnia analizy: uwagi są tym, po co
-			// komenda powstała, a treść sformatowana — dodatkiem. Pole zostaje
-			// wtedy nieobecne, zgodnie z kontraktem.
+			// Formatowanie nieudane nie unieważnia analizy; pole treści
+			// sformatowanej zostaje wtedy nieobecne.
 			switch {
 			case err != nil:
 			case analizator.formatZPliku:
@@ -296,8 +247,8 @@ func (a *adapterTerminala) SprawdzSkrypt(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// plikDoAnalizy odkłada treść do pliku tymczasowego i oddaje drogę jego
-// sprzątnięcia.
+// plikDoAnalizy odkłada treść do pliku tymczasowego z właściwym
+// rozszerzeniem i oddaje drogę jego sprzątnięcia.
 func plikDoAnalizy(tresc, rozszerzenie string) (string, func(), error) {
 	plik, err := os.CreateTemp("", "danaco-analiza-*"+rozszerzenie)
 	if err != nil {
@@ -320,7 +271,8 @@ func plikDoAnalizy(tresc, rozszerzenie string) (string, func(), error) {
 	return sciezka, sprzataj, nil
 }
 
-// uwagiShellCheck czyta wynik ShellChecka w postaci `json1`.
+// uwagiShellCheck czyta wynik ShellChecka w postaci `json1` i przekłada
+// każdy komentarz na uwagę kontraktu.
 func uwagiShellCheck(wyjscie string) []shared.TerminalLintFinding {
 	var odczyt struct {
 		Comments []struct {
@@ -394,10 +346,8 @@ func uwagiPowerShell(wyjscie string) []shared.TerminalLintFinding {
 	return uwagi
 }
 
-// uwagiInterpretera czyta diagnostykę interpretera sprawdzającego samą składnię
-// (`node --check`, `python -m py_compile`). Taki program zgłasza PIERWSZY błąd
-// i kończy pracę, więc uwaga jest co najwyżej jedna — i zawsze jest błędem,
-// bo treść, która się nie kompiluje, nie wykona się wcale.
+// uwagiInterpretera czyta diagnostykę interpretera sprawdzającego samą
+// składnię, dającą co najwyżej jedną uwagę, zawsze błędu.
 func uwagiInterpretera(diagnostyka string) []shared.TerminalLintFinding {
 	tresc := strings.TrimSpace(diagnostyka)
 	if tresc == "" {
@@ -443,7 +393,7 @@ func numerWierszaBledu(wiersz string) (int, bool) {
 }
 
 // wagaUwagi przekłada wagę ShellChecka na słownik kontraktu. Wartość
-// nierozpoznana schodzi na ostrzeżenie: uwaga, której wagi nie znamy, ma być
+// nierozpoznana schodzi na ostrzeżenie: uwaga o nieznanej wadze ma być
 // widoczna, a nie przemilczana ani podniesiona do błędu.
 func wagaUwagi(poziom string) shared.TerminalLintSeverity {
 	switch strings.ToLower(strings.TrimSpace(poziom)) {
@@ -456,7 +406,8 @@ func wagaUwagi(poziom string) shared.TerminalLintSeverity {
 	}
 }
 
-// bladWykonaniaTerminala znakuje niepowodzenie czynności rdzenia.
+// bladWykonaniaTerminala znakuje niepowodzenie czynności rdzenia przy
+// uruchamianiu albo obsłudze programu analizy.
 func bladWykonaniaTerminala(powod string) error {
 	return protocolBladTerminala(shared.ErrorCodeInternalError, powod)
 }

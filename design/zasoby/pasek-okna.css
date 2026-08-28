@@ -1,8 +1,6 @@
-/* PASEK NARZĘDZI OKNA ROBOCZEGO
-   Narzędzia karty bieżącej, na pełną szerokość okna, pod pasmem kart. Istnieje
-   tylko dla kart modułowych — na karcie Centrum dowodzenia nie ma go wcale.
-   Nadmiar pozycji schodzi pod „…" (`[data-nadmiar]`), pasek nigdy nie łamie się
-   do drugiego wiersza. Mechanizm: `pasek-okna.js`. */
+/* Pasek narzędzi okna roboczego niesie narzędzia karty bieżącej na pełną szerokość okna pod pasmem kart, wyłącznie dla kart modułowych, nigdy dla centrum dowodzenia.
+   Nadmiar pozycji schodzi pod znak „…" (`[data-nadmiar]`), pasek nigdy nie
+   łamie się do drugiego wiersza. Mechanizm zapisuje plik `pasek-okna.js`. */
 .dn-pasek-okna {
   display: flex;
   align-items: center;

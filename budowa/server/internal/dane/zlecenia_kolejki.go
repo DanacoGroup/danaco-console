@@ -1,19 +1,6 @@
-// Odpowiedzialność pliku: zlecenia kolejki widziane przez Queue Managera
-// (tabela `zlecenie_kolejki`, migracja 268) oraz polityka kolejki (kolumny
-// tabeli `kolejka`, migracja 269).
-//
-// To NIE jest drugi silnik kolejek ani druga tabela pozycji. `pozycja_kolejki`
-// (migracja 003) opisuje etap pętli koordynator–wykonawca: tytuł, treść
-// zlecenia, werdykt weryfikacji, licznik obiegów. Kontraktowy `QueueItem` jest
-// czym innym — niesie ładunek strukturalny, priorytet, termin wykonania, klucz
-// idempotencji i warunek przetworzenia. Wtłoczenie jednego w drugie kazałoby
-// kolumnie `tytul` nieść ładunek, a `werdykt_weryfikacji` — stan o zupełnie
-// innym słowniku.
-//
-// Zlecenie martwe zostaje w tej samej tabeli, ze stanem `martwe`. Kolejka zadań
-// martwych jest widokiem, nie osobnym magazynem: `queue.dead.list` bez
-// wskazania kolejki oddaje zadania martwe wszystkich kolejek, więc przeniesienie
-// ich gdzie indziej odebrałoby im pochodzenie.
+// Zlecenia kolejki widziane przez Queue Managera (tabela `zlecenie_kolejki`)
+// oraz polityka kolejki (kolumny tabeli `kolejka`). To nie jest drugi silnik
+// kolejek ani druga tabela pozycji obok `pozycja_kolejki`.
 package dane
 
 import (
@@ -44,7 +31,8 @@ type Zlecenie struct {
 	Zaktualizowano     string
 }
 
-// PolitykaKolejki to komplet kolumn polityki tabeli `kolejka`.
+// PolitykaKolejki to komplet kolumn polityki tabeli `kolejka`: limity,
+// wycofanie, rozproszenie i zadania martwe.
 type PolitykaKolejki struct {
 	Zasieg            string
 	ZasiegID          *string
@@ -58,7 +46,8 @@ type PolitykaKolejki struct {
 	IdempotencjaZycie int
 }
 
-// PunktGlebokosci to jeden odcinek wykresu głębokości kolejki.
+// PunktGlebokosci to jeden odcinek wykresu głębokości kolejki: chwila,
+// liczba oczekujących i pracujących.
 type PunktGlebokosci struct {
 	Chwila       string
 	Oczekujacych int
@@ -95,7 +84,8 @@ const (
 
 	liczbaZlecenKolejki = `SELECT COUNT(*) FROM zlecenie_kolejki WHERE kolejka_id = ?`
 
-	// Zero w miejscu kolejki znaczy „zadania martwe wszystkich kolejek”.
+	// Zero w miejscu kolejki znaczy zadania martwe wszystkich kolejek, nie
+	// kolejkę o identyfikatorze zero.
 	listaZlecenMartwych = `SELECT ` + kolumnyZlecenia + zrodloZlecenia +
 		` WHERE z.stan = 'martwe' AND (? = 0 OR z.kolejka_id = ?)
 		  ORDER BY z.zaktualizowano DESC, z.id DESC LIMIT ?`
@@ -118,13 +108,9 @@ const (
 	                       zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                   WHERE id = ?`
 
-	// Głębokość liczy się z bazy, nie z pętli w Go: odcinków bywa wiele,
-	// a wożenie do rdzenia wszystkich zleceń po to, by je policzyć, byłoby
-	// przenoszeniem rachunku tam, gdzie nie ma po temu powodu.
-	//
-	// Odcinek wyznacza podłoga z liczby sekund epoki podzielonej przez długość
-	// odcinka. Zlecenie liczy się do odcinka swojego założenia — tak powstaje
-	// obraz obciążenia w czasie, o który pyta wykres Queue Managera.
+	// Głębokość liczy się z bazy, nie z pętli w Go: odcinek wyznacza podłoga
+	// z liczby sekund epoki podzielonej przez długość odcinka, a zlecenie
+	// liczy się do odcinka swojego założenia.
 	glebokoscKolejki = `SELECT CAST(strftime('%s', utworzono) AS INTEGER) / ? AS odcinek,
 	                           SUM(CASE WHEN stan IN ('oczekuje','odlozone') THEN 1 ELSE 0 END),
 	                           SUM(CASE WHEN stan = 'przetwarzane' THEN 1 ELSE 0 END)
@@ -147,7 +133,8 @@ const (
 	                         WHERE id = ?`
 )
 
-// DodajZlecenie zakłada zlecenie w kolejce.
+// DodajZlecenie zakłada nowe zlecenie w kolejce, nadając mu stan oczekuje,
+// gdy stan nie został wskazany.
 func (r *repozytoriumKolejek) DodajZlecenie(ctx context.Context, zlecenie Zlecenie) (Zlecenie, error) {
 	if zlecenie.Kod == "" {
 		return Zlecenie{}, fmt.Errorf("dane: zlecenie kolejki bez identyfikatora")
@@ -172,7 +159,8 @@ func (r *repozytoriumKolejek) DodajZlecenie(ctx context.Context, zlecenie Zlecen
 	return r.Zlecenie(ctx, zlecenie.Kod)
 }
 
-// Zlecenie zwraca zlecenie po kodzie. Brak wiersza wraca jako ErrBrakWiersza.
+// Zlecenie zwraca jedno zlecenie kolejki po kodzie zewnętrznym. Brak wiersza
+// wraca jako ErrBrakWiersza.
 func (r *repozytoriumKolejek) Zlecenie(ctx context.Context, kod string) (Zlecenie, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZlecenieKolejki)
 	if err != nil {
@@ -236,8 +224,8 @@ func (r *repozytoriumKolejek) ZleceniaKolejki(ctx context.Context, kolejkaID int
 	return lista, wszystkich, nil
 }
 
-// ZleceniaMartwe zwraca zlecenia trwale nieudane — jednej kolejki albo
-// wszystkich.
+// ZleceniaMartwe zwraca zlecenia trwale nieudane, jednej wskazanej kolejki
+// albo wszystkich kolejek naraz.
 func (r *repozytoriumKolejek) ZleceniaMartwe(ctx context.Context, kolejkaID int64,
 	limit int) ([]Zlecenie, error) {
 
@@ -252,21 +240,24 @@ func (r *repozytoriumKolejek) ZleceniaMartwe(ctx context.Context, kolejkaID int6
 	return zbierzZleceniaKolejki(wiersze)
 }
 
-// ZmienStanZlecenia zapisuje nowy stan zlecenia.
+// ZmienStanZlecenia zapisuje nowy stan wskazanego zlecenia i odświeża
+// znacznik ostatniej aktualizacji.
 func (r *repozytoriumKolejek) ZmienStanZlecenia(ctx context.Context, zlecenieID int64,
 	stan string) error {
 
 	return wykonajZapisZlecenia(ctx, r.zapytania, zmienStanZlecenia, stan, zlecenieID)
 }
 
-// OdlozZlecenie przenosi zlecenie w stan odłożony wraz z terminem wykonania.
+// OdlozZlecenie przenosi wskazane zlecenie w stan odłożony wraz z terminem
+// wykonania, do którego czeka.
 func (r *repozytoriumKolejek) OdlozZlecenie(ctx context.Context, zlecenieID int64,
 	termin string) error {
 
 	return wykonajZapisZlecenia(ctx, r.zapytania, zmienTerminZlecenia, termin, zlecenieID)
 }
 
-// UstawWarunekZlecenia zapisuje warunek przetworzenia; pusty zdejmuje warunek.
+// UstawWarunekZlecenia zapisuje warunek przetworzenia zlecenia; pusty
+// warunek zdejmuje go całkowicie z wiersza.
 func (r *repozytoriumKolejek) UstawWarunekZlecenia(ctx context.Context, zlecenieID int64,
 	warunek *string) error {
 
@@ -274,7 +265,8 @@ func (r *repozytoriumKolejek) UstawWarunekZlecenia(ctx context.Context, zlecenie
 		tekstDoKolumny(warunek), zlecenieID)
 }
 
-// SkierujZlecenie zmienia kolejkę zlecenia albo jego eksperta docelowego.
+// SkierujZlecenie zmienia kolejkę zlecenia albo jego eksperta docelowego,
+// nie ruszając reszty wiersza.
 func (r *repozytoriumKolejek) SkierujZlecenie(ctx context.Context, zlecenieID, kolejkaID int64,
 	ekspert *string) error {
 
@@ -289,7 +281,7 @@ func (r *repozytoriumKolejek) SkierujZlecenie(ctx context.Context, zlecenieID, k
 }
 
 // GlebokoscKolejki liczy zlecenia oczekujące i przetwarzane w kolejnych
-// odcinkach czasu.
+// odcinkach czasu zadanej długości.
 func (r *repozytoriumKolejek) GlebokoscKolejki(ctx context.Context, kolejkaID int64,
 	odcinekSekundy int, od string) ([]PunktGlebokosci, error) {
 
@@ -349,7 +341,8 @@ func (r *repozytoriumKolejek) PolitykaKolejki(ctx context.Context,
 	return polityka, nil
 }
 
-// ZapiszPolitykeKolejki zapisuje politykę kolejki.
+// ZapiszPolitykeKolejki zapisuje politykę kolejki: limity, zasady
+// wycofania, rozproszenie i zadania martwe.
 func (r *repozytoriumKolejek) ZapiszPolitykeKolejki(ctx context.Context, kolejkaID int64,
 	polityka PolitykaKolejki) error {
 
@@ -367,7 +360,8 @@ func (r *repozytoriumKolejek) ZapiszPolitykeKolejki(ctx context.Context, kolejka
 	return nil
 }
 
-// wykonajZapisZlecenia wykonuje jedno polecenie zmieniające zlecenie.
+// wykonajZapisZlecenia wykonuje jedno polecenie zmieniające zlecenie,
+// wspólne dla kilku funkcji zapisu.
 func wykonajZapisZlecenia(ctx context.Context, z *zapytania, tekst string,
 	wartosc any, zlecenieID int64) error {
 
@@ -381,7 +375,8 @@ func wykonajZapisZlecenia(ctx context.Context, z *zapytania, tekst string,
 	return nil
 }
 
-// zbierzZleceniaKolejki składa wykaz zleceń z wyniku zapytania.
+// zbierzZleceniaKolejki składa wykaz zleceń kolejki z wyniku zapytania,
+// zamykając wiersze po odczycie.
 func zbierzZleceniaKolejki(wiersze *sql.Rows) ([]Zlecenie, error) {
 	defer wiersze.Close()
 
@@ -399,7 +394,8 @@ func zbierzZleceniaKolejki(wiersze *sql.Rows) ([]Zlecenie, error) {
 	return lista, nil
 }
 
-// odczytajZlecenieKolejki składa zlecenie z jednego wiersza wyniku.
+// odczytajZlecenieKolejki składa strukturę Zlecenie z jednego wiersza
+// wyniku zapytania SQL bazy danych.
 func odczytajZlecenieKolejki(wiersz skaner) (Zlecenie, error) {
 	var zlecenie Zlecenie
 	var ladunek, warunek, klucz, kodPrzebiegu, ekspert, termin sql.NullString

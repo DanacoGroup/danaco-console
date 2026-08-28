@@ -1,32 +1,5 @@
-// Pakiet podagenci mierzy drogę narzędzia modelu dla rodziny `subagent.*`
-// oraz ocenia żywotność procesu z rejestru procesów sesji.
-//
-// Odpowiedzialność tego pliku: droga narzędzia modelu — czy powołanie podagenta
-// jest dziś dostępne modelowi jako wywołanie narzędzia w trakcie tury.
-//
-// Jak narzędzia docierają do rdzenia. Wykaz narzędzi
-// modelu powstaje WYŁĄCZNIE z sekcji `narzedzia.pozycje` kontraktu
-// (`shared/contract.json`), z której generator (`shared/gen/narzedzia.mjs`)
-// wytwarza `shared.NarzedziaModelu()` i `shared.KomendyNarzedzi`. Serwer
-// narzędzi (`server/internal/narzedzia`, binarium `danaco-narzedzia`) czyta ten
-// jeden wykaz i mówi wprost: „dopisanie komendy do sekcji narzedzia kontraktu
-// powiększa ten serwer bez zmiany choćby jednej linii kodu". Wpis `danaco`
-// w konfiguracji MCP okna składa `core/most_narzedzi.go` — osobno dla każdego
-// okna, z jego identyfikatorem.
-//
-// Wynikają z tego dwie rzeczy:
-//
-//  1. NIE MA drugiego miejsca rejestracji narzędzia. Jedyną drogą jest pozycja
-//     w `narzedzia.pozycje` kontraktu — a `contract.*` jest plikiem zakazanym
-//     dla tego pakietu, więc dopisanie pozycji idzie zgłoszeniem wpięcia
-//     z kotwicą (PozycjeWpiecia niżej niesie dokładną treść zgłoszenia).
-//  2. Budowanie tu własnego wykazu narzędzi byłoby drugą prawdą o wykazie
-//     — dlatego ten plik wyłącznie CZYTA `shared.KomendyNarzedzi`
-//     i odpowiada, czy komendy rodziny `subagent.*` już w nim są.
-//
-// Nazwa spoza wykazu nie znika po cichu: `narzedzia/zastrzezenia.go` oddaje
-// modelowi czytelną odmowę „komenda stoi poza wykazem narzędzi" — granica
-// przesuwa się w chwili, w której przesunie ją kontrakt.
+// Pakiet podagenci mierzy drogę narzędzia modelu dla rodziny subagent.* oraz
+// ocenia żywotność procesu z rejestru procesów sesji.
 package podagenci
 
 import (
@@ -51,18 +24,14 @@ func komendyPowolania() []shared.MessageType {
 // modelowi jako narzędzie — i pod jaką nazwą.
 type drogaNarzedzia struct {
 	Komenda shared.MessageType
-	// Narzedzie jest nazwą z wykazu kontraktu (np. `danaco_subagent_spawn`).
-	// Puste dokładnie wtedy, gdy komenda stoi poza wykazem narzędzi.
+	// Narzedzie jest nazwą z wykazu kontraktu, pustą dokładnie wtedy, gdy
+	// komenda stoi poza wykazem.
 	Narzedzie string
 	Wpieta    bool
 }
 
-// drogiNarzedzi mierzy drogę narzędzia modelu dla całej rodziny `subagent.*`.
-//
-// Sprawdzenie idzie po `shared.KomendyNarzedzi` — jedynym odwzorowaniu nazwa
-// narzędzia → komenda, wytworzonym z kontraktu. Nazwy narzędzia ten pakiet nie
-// składa sam (przedrostek i separator należą do kontraktu); odnajduje ją po
-// wartości komendy, więc zmiana konwencji nazw niczego tu nie psuje.
+// drogiNarzedzi mierzy drogę narzędzia modelu dla całej rodziny subagent.*,
+// sprawdzając odwzorowanie wytworzone z kontraktu.
 func drogiNarzedzi() []drogaNarzedzia {
 	drogi := make([]drogaNarzedzia, 0, len(komendyPowolania()))
 	for _, komenda := range komendyPowolania() {
@@ -111,12 +80,7 @@ type pozycjaWpiecia struct {
 }
 
 // PozycjeWpiecia niesie komplet pozycji zgłaszanych integratorowi do wpięcia
-// w `narzedzia.pozycje`. Treść stoi w kodzie, a nie w meldunku, żeby dowód
-// z uruchomienia i zgłoszenie wpięcia czytały JEDNO źródło.
-//
-// Zdania zastosowania mówią modelowi, KIEDY sięgnąć po narzędzie — wzorem
-// pozycji istniejących. Powołanie: podagent to zadanie w tle pod oknem
-// wykonawcy, powoływane w trakcie tury.
+// w wykaz kontraktu, treścią stojącą w kodzie, nie w meldunku.
 func PozycjeWpiecia() []pozycjaWpiecia {
 	return []pozycjaWpiecia{
 		{Komenda: string(shared.CommandSubagentSpawn),

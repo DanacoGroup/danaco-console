@@ -14,26 +14,7 @@ import { utworzStrefeSrodowisk, type StrefaSrodowisk } from './strefa-srodowisk'
 import type { SluchaczWyboru } from './sygnal-wyboru';
 import { utworzWykazSrodowisk, type WykazSrodowisk } from './wykaz-srodowisk';
 
-/**
- * Strona główna — centrum dowodzenia.
- *
- * Jedna odpowiedzialność: złożenie stref w jeden widok i wystawienie ich
- * zdarzeń na zewnątrz. Plik nie buduje żadnej karty ani kafla — jest
- * kompozycją, nie logiką widoku.
- *
- * Strefy stoją w kolejności malejącej masy wizualnej:
- *   karty środowisk    — środek ciężkości, krój nagłówkowy 24/30
- *   kafle komponentów  — ta sama karta, krój bazowy półgruby
- *   kafle modułów spoza nawigacji — ta sama forma; strefa ukryta, dopóki rdzeń
- *                        nie poda modułu stojącego poza nawigacją
- *   listwa ustawień    — masa najniższa, tło `--dn-powierzchnia-2`
- *   sesje w tle        — wykaz z danych rdzenia, zasilany z zewnątrz przez
- *                        `wpiecie-sesji`; sama strona danych nie pobiera
- *
- * Strona nie otwiera środowiska samodzielnie. Zgłasza wybór, a skutek należy do
- * warstwy, która stronę zamontowała — przejście przez stronę główną ma być
- * świadome i widoczne.
- */
+/** Strona główna, centrum dowodzenia, składa strefy w jeden widok i wystawia ich zdarzenia na zewnątrz, nie otwierając środowiska samodzielnie ani nie budując żadnej karty czy kafla. */
 export interface StronaGlowna {
   /** Element widoku gotowy do osadzenia w powłoce aplikacji. */
   element: HTMLElement;
@@ -49,24 +30,11 @@ export interface StronaGlowna {
   sesje: StrefaSesji;
   /** Strefa środowisk — zasilana wykazem rdzenia przez `wpiecie-srodowisk`. */
   srodowiska: StrefaSrodowisk;
-  /**
-   * Wykaz środowisk strony — jedno źródło nazwy środowiska na tym ekranie.
-   *
-   * Aktualizuje się przy każdym `srodowiska.ustawWykaz`, którąkolwiek drogą
-   * wykaz przyszedł: `home.enter` albo `environment.list`. Zasilenia kart bez
-   * zasilenia wykazu nie da się tu napisać.
-   */
+  /** Wykaz środowisk strony aktualizuje się przy każdym ustawieniu wykazu strefy. */
   wykazSrodowisk: WykazSrodowisk;
-  /**
-   * Strefa komponentów własnych — czwórka rodzajów stoi od razu z kontraktu,
-   * kafle personalizowane dokłada `wpiecie-komponentow` z `component.list`.
-   */
+  /** Strefa komponentów: czwórka rodzajów stoi od razu z kontraktu, personalizowane dokłada wpięcie. */
   komponenty: StrefaKomponentow;
-  /**
-   * Kafle modułów, których rdzeń nie pokazuje w bocznej nawigacji żadnego
-   * środowiska — jedyna droga do ich okien. Wykaz dokłada `wpiecie-modulow`
-   * z `module.list`; bez niego strefa zostaje ukryta.
-   */
+  /** Kafle modułów bez pozycji w bocznej nawigacji; bez wykazu strefa zostaje ukryta. */
   moduly: StrefaModulow;
   /** Listwa ustawień — niesie przybornik i segment „Dodaj nowy". */
   ustawienia: ListwaUstawien;
@@ -75,10 +43,7 @@ export interface StronaGlowna {
 export function utworzStroneGlowna(): StronaGlowna {
   const wykazSrodowisk = utworzWykazSrodowisk();
 
-  // Karty środowisk i wiersze sesji w tle czytają tę samą listę, bo
-  // `ustawWykaz` jest opakowane: nie ma drogi, którą karty dostałyby nowe nazwy,
-  // a wiersze sesji zostały przy starych. Wpięcia wołają dalej
-  // `strona.srodowiska.ustawWykaz` i o wykazie nie muszą wiedzieć.
+  // Karty środowisk i wiersze sesji w tle czytają tę samą listę, bo ustawienie wykazu jest opakowane.
   const strefaSrodowisk = utworzStrefeSrodowisk();
   const srodowiska: StrefaSrodowisk = {
     ...strefaSrodowisk,
@@ -98,9 +63,7 @@ export function utworzStroneGlowna(): StronaGlowna {
 
   const tresc = document.createElement('div');
   tresc.className = 'dn-strona__tresc';
-  // Linie kafli idą razem, sesje w tle za nimi: strefy działania mają być
-  // widoczne naraz, bez przewijania, a sesje w tle są wglądem w to, co już
-  // biegnie, i należą do drugiego planu.
+  // Linie kafli idą razem, sesje w tle za nimi: strefy działania widoczne naraz, bez przewijania.
   tresc.append(
     utworzNaglowekStrony(),
     srodowiska.element,

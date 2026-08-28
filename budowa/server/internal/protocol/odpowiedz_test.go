@@ -95,7 +95,8 @@ func TestKopertaOdpowiedziWiazeOdpowiedzZWywolaniem(t *testing.T) {
 	}
 }
 
-// TestKopertaBleduNiesieStanIError sprawdza drugą drogę pakowania.
+// TestKopertaBleduNiesieStanIError sprawdza drugą drogę pakowania błędu w tę
+// kopertę zwrotną odpowiedzi.
 func TestKopertaBleduNiesieStanIError(t *testing.T) {
 	zadanie := Koperta{Type: shared.CommandSessionCreate, Id: "jeden"}
 	odpowiedz := KopertaBledu(zadanie, NowyBlad(shared.ErrorCodeValidationFailed, "brak tytułu"))
@@ -152,7 +153,8 @@ func TestBladObcyDostajeKodWskazany(t *testing.T) {
 	}
 }
 
-// TestBrakBleduDajeBladZerowy pilnuje, by nil nie zamienił się w odmowę.
+// TestBrakBleduDajeBladZerowy pilnuje, by błąd nil nie zamienił się nigdy
+// w odmowę przy przenoszeniu błędu.
 func TestBrakBleduDajeBladZerowy(t *testing.T) {
 	odczytany := BladZeZrodla(shared.ErrorCodeInternalError, nil)
 	if odczytany.Code != "" || odczytany.Message != "" || odczytany.Retryable {
@@ -160,7 +162,8 @@ func TestBrakBleduDajeBladZerowy(t *testing.T) {
 	}
 }
 
-// TestOpisSkladaKodZTrescia sprawdza tekst, który idzie do dziennika.
+// TestOpisSkladaKodZTrescia sprawdza tekst opisu błędu, który trafia do
+// dziennika oraz do meldunku Operatora.
 func TestOpisSkladaKodZTrescia(t *testing.T) {
 	opis := Opis(NowyBlad(shared.ErrorCodeNotFound, "sesji nie ma"))
 	if opis != "not_found: sesji nie ma" {

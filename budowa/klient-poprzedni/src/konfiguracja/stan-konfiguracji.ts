@@ -13,27 +13,13 @@ import { utworzZrodloWartosci, wpisSpodAdresu } from './zrodlo-wartosci';
 
 /**
  * Stan okna konfiguracji — jedno źródło prawdy dla nawigacji kategorii,
- * formularzy i wskaźników zasięgu.
- *
- * Katalog (kategorie i definicje) oraz wpisy konfiguracji trzymamy razem,
- * ponieważ pole formularza potrzebuje obu naraz: definicja mówi, jaką ma być
- * kontrolką, wpisy mówią, skąd bierze się jej wartość. Dwa równoległe stany
- * dałyby dwie prawdy o tej samej wartości.
- *
- * Żadna ścieżka nie zatrzymuje okna. Rdzeń, który nie odda katalogu, zostawia
- * wykazy puste; okno pokazuje wtedy komunikat i pozostaje otwarte.
- * Zapis, który się nie powiedzie, wraca jako `Wynik` z błędem — bez wyjątku.
+ * formularzy i wskaźników zasięgu. Żadna ścieżka nie zatrzymuje okna; zapis,
+ * który się nie powiedzie, wraca jako `Wynik` z błędem.
  */
 export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 export interface StanKonfiguracji {
-  /**
-   * Faza odczytu katalogu i wpisów.
-   *
-   * Bez niej pusty katalog znaczy trzy rzeczy naraz: „jeszcze nie pytałem",
-   * „pytam" i „rdzeń nie zna ani jednej kategorii". Każdej należy się inny
-   * stan okna: nic, wskaźnik odczytu, stan pusty.
-   */
+  /** Faza odczytu katalogu i wpisów; rozróżnia spoczynek, trwający odczyt i pusty wynik od rdzenia. */
   faza(): FazaOdczytu;
   /** Powód ostatniego niepowodzenia odczytu; pusty, gdy odczyt się powiódł. */
   powodNiepowodzenia(): string;
@@ -62,9 +48,7 @@ export interface StanKonfiguracji {
 }
 
 export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
-  // Powody zbierają się z trzech odczytów jednego odświeżenia (kategorie,
-  // definicje, wpisy) — Operatorowi należy się zdanie o każdym, który nie
-  // dojechał, a nie tylko o pierwszym.
+  // Powody zbierają się z trzech odczytów odświeżenia — Operator ma poznać każdy, który nie dojechał.
   let powody: string[] = [];
   const zapiszPowod = (powod: string): void => void powody.push(powod);
 
@@ -77,8 +61,7 @@ export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
   let punkt: PunktWidzenia = adresPoczatkowy();
   let faza: FazaOdczytu = 'spoczynek';
 
-  // Każdy odczyt wpisów dostaje swój numer pokolenia; wolniejszy, wyprzedzony
-  // zmianą punktu widzenia, nie nadpisuje świeższego.
+  // Każdy odczyt wpisów dostaje numer pokolenia; wolniejszy nie nadpisuje świeższego.
   let pokolenie = 0;
 
   const sluchacze: Array<() => void> = [];
@@ -86,23 +69,11 @@ export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
     for (const sluchacz of [...sluchacze]) sluchacz();
   };
 
-  /**
-   * Wykaz bez zapisu o wskazanym kluczu i adresie.
-   *
-   * Jeden przepis na dwie drogi: przywrócenie własne (przycisk „Przywróć" tego
-   * okna) i przywrócenie cudze (zdarzenie `config.changed` z innego okna albo
-   * urządzenia) zdejmują zapis dokładnie tak samo. Dwa przepisy rozeszłyby się
-   * na wskaźniku pochodzenia: jeden egzemplarz stanu pokazywałby wartość
-   * przywróconą, drugi wartość zapisaną i widmowy wiersz łańcucha dziedziczenia.
-   */
+  /** Wykaz bez zapisu o wskazanym kluczu i adresie; wspólny przepis dla przywrócenia własnego i cudzego. */
   const bezZapisu = (klucz: string, adres: AdresUstawienia): ConfigEntry[] =>
     wpisy.filter((istniejacy) => !wpisSpodAdresu(istniejacy, klucz, adres));
 
-  /**
-   * Zmiana potwierdzona przez rdzeń: zapis zastępuje wpis o tym samym adresie,
-   * usunięcie zdejmuje go z wykazu. Rodzaj pominięty znaczy zapis — tak wchodzi
-   * odpowiedź na własną komendę `config.set`.
-   */
+  /** Zmiana potwierdzona przez rdzeń: zapis zastępuje wpis o adresie, usunięcie zdejmuje go z wykazu. */
   const przyjmij = (wpis: ConfigEntry, rodzaj: ChangeKind = ChangeKind.Updated): void => {
     const adres = adresWpisu(wpis);
     const pozostale = bezZapisu(wpis.key, adres);
@@ -112,9 +83,7 @@ export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
 
   const odsubskrybuj: Odsubskrybuj = wartosci.naZmiane(przyjmij);
 
-  // Surowe wpisy łańcucha punktu widzenia. Zmiana punktu dociąga poziom, który
-  // do tej pory nie był czytany; bez tego wartość spod okna, sesji czy projektu
-  // nie ma pokrycia w stanie, a pochodzenie wskazuje poziom globalny.
+  // Surowe wpisy łańcucha punktu widzenia; zmiana punktu dociąga poziom dotąd nieczytany.
   const przeczytajWpisy = async (): Promise<void> => {
     const moje = ++pokolenie;
     powody = [];
@@ -146,9 +115,7 @@ export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
 
     ustawPunkt(nowy) {
       punkt = nowy;
-      // Nowy punkt liczy dziedziczenie z innego poziomu, więc jego surowe wpisy
-      // trzeba dociągnąć; przeczytajWpisy ogłasza od razu (nowy punkt względem
-      // wpisów już znanych) i ponownie, gdy poziom dojedzie.
+      // Nowy punkt liczy dziedziczenie z innego poziomu, więc surowe wpisy trzeba dociągnąć ponownie.
       void przeczytajWpisy();
     },
 
@@ -191,7 +158,7 @@ export function utworzStanKonfiguracji(kanal: Kanal): StanKonfiguracji {
   };
 }
 
-/** Wpis z odpowiedzi `config.set`; kształt niespodziewany daje `null`. */
+/** Wpis z odpowiedzi komendy `config.set`; kształt odpowiedzi niespodziewany dla kontraktu daje wartość `null`. */
 function wpisOdpowiedzi(tresc: unknown): ConfigEntry | null {
   if (typeof tresc !== 'object' || tresc === null) return null;
   const wpis = (tresc as { entry?: unknown }).entry;

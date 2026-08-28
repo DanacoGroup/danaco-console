@@ -42,7 +42,7 @@ kropka.data.materials.append(mk)
 pref=bpy.context.preferences.edit
 pref.keyframe_new_interpolation_type='LINEAR'
 
-# ruch liczony klatka po klatce wlasna krzywa — rowny rozklad, bez martwych stref
+# Ruch liczony klatka po klatce według własnej krzywej: rozkład narastania jest równomierny, funkcja nie zawiera odcinków o zerowej prędkości zmiany.
 def ease(t):            # wyjscie czwartego stopnia: rusza od razu, osiada lagodnie
     return 1-(1-t)**3
 def lerp(a,b,u): return a+(b-a)*u

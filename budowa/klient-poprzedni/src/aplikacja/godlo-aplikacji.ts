@@ -1,23 +1,10 @@
 import { elementGodla } from '../ikony/ikony';
 
 /**
- * Godło marki i tożsamość projektu pokazywane na pasku aplikacji.
- *
- * Godło buduje warstwa znaku marki (`ikony/ikony.ts` → `ikony/marka.ts`).
- * Znak ma barwy własne, więc nie dziedziczy barwy tekstu i nie zmienia się
- * z motywem; odmianę dobiera podłoże, a pasek aplikacji jest atramentowy
- * w obu motywach — stąd podłoże ciemne. Droga przez `elementGodla` niesie
- * ponadto próg odmiany uproszczonej: od 16 px w dół znak przechodzi na jeden grot.
- *
- * Nazwa produktu jest stała, nazwa projektu przychodzi z opisu okna, czyli
- * z konfiguracji budowania (`okno-komunikacji/opis-okna.ts`). Gdy nazwa
- * projektu równa się nazwie produktu, na pasek nie wchodzi wcale —
- * powtórzenie tej samej nazwy nic nie wnosi, a zajmuje miejsce.
- *
- * Blok nie jest kontrolką i nią nie udaje — nie prowadzi nigdzie i nie ma
- * kursora wskazującego.
+ * Godło marki i tożsamość projektu pokazywane na pasku aplikacji. Znak stawia
+ * warstwa marki wołana przez `ikony/ikony.ts`, a nazwa produktu pada tutaj raz
+ * i tylko stąd trafia na pasek.
  */
-/** Nazwa produktu — jedno miejsce, w którym pada na pasku. */
 const NAZWA_PRODUKTU = 'Danaco Console';
 
 export function utworzGodlo(projekt: string): HTMLElement {
@@ -38,7 +25,11 @@ export function utworzGodlo(projekt: string): HTMLElement {
   return element;
 }
 
-/** Nazwa projektu jako wykaz — pusty, gdy powtarzałaby nazwę produktu. */
+/**
+ * Nazwa projektu oddana jako wykaz elementów: pozostaje pusty, gdy nazwa nie
+ * została podana albo powtarza nazwę produktu, ponieważ powtórzenie zajmuje
+ * miejsce na pasku i niczego nie wnosi.
+ */
 function nazwaProjektu(projekt: string): HTMLElement[] {
   const tresc = projekt.trim();
   if (tresc === '' || tresc.toLocaleLowerCase('pl') === NAZWA_PRODUKTU.toLocaleLowerCase('pl')) {

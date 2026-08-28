@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: standard wymiany XLIFF w module Translate —
-// `translate.xliff.import` oraz składanie pliku XLIFF na potrzeby pakietu
-// przekazania (`handoff.build`, `*_wymiana_zewnetrzna.go`).
-//
-// Obie wersje standardu wchodzą tą samą drogą, bo różnią się w tym miejscu
-// wyłącznie nazwami węzłów: XLIFF 1.2 trzyma jednostki w `trans-unit`
-// z węzłami `source` i `target`, XLIFF 2.1 — w `unit`/`segment` z tymi samymi
-// dwoma. Rozbiór idzie strumieniem `encoding/xml`, więc plik nieznanej wersji
-// nie wywraca odczytu: jednostki, których nie ma, po prostu nie ma.
-//
-// Import zakłada panel dla każdego języka docelowego pliku i wpisuje w niego
-// treść jednostek. To jest skutek, dla którego Operator import uruchamia —
-// bez zapisu paneli komenda meldowałaby liczbę jednostek i nie zostawiała nic.
+// Plik obsługuje standard wymiany XLIFF w module Translate: `translate.xliff.import` oraz skład pliku XLIFF na potrzeby pakietu przekazania (`handoff.build`).
 package core
 
 import (
@@ -25,21 +13,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// jednostkaXliff to jedna para źródło–przekład niezależna od wersji standardu.
+// jednostkaXliff to jedna para źródło-przekład niezależna od wersji standardu XLIFF, wspólna dla obu formatów odczytu.
 type jednostkaXliff struct {
 	Klucz  string
 	Zrodlo string
 	Cel    string
 }
 
-// plikXliff niesie wynik odczytu: język docelowy i jednostki.
+// plikXliff niesie wynik odczytu pliku XLIFF: język docelowy oraz wykaz jego jednostek źródło-przekład.
 type plikXliff struct {
 	JezykZrodlowy string
 	JezykDocelowy string
 	Jednostki     []jednostkaXliff
 }
 
-// WczytajXliff obsługuje `translate.xliff.import`.
+// WczytajXliff obsługuje `translate.xliff.import`, zakładając panel języka docelowego dla każdej jednostki pliku.
 func (a *adapterTlumaczenia) WczytajXliff(ctx context.Context,
 	z shared.TranslateXliffImportRequest) (shared.TranslateXliffImportResponse, error) {
 
@@ -68,8 +56,7 @@ func (a *adapterTlumaczenia) WczytajXliff(ctx context.Context,
 			"plik nie wskazuje języka docelowego — rdzeń nie zgaduje, do którego panelu wnieść przekład")
 	}
 
-	// Tekst źródłowy okna bierze się z jednostek: bez niego panel miałby
-	// przekład, którego nie ma z czym zestawić.
+	// Tekst źródłowy okna bierze się z jednostek: bez niego panel nie ma z czym zestawić przekładu.
 	zrodlowe := make([]string, 0, len(odczytany.Jednostki))
 	docelowe := make([]string, 0, len(odczytany.Jednostki))
 	pustych := 0
@@ -163,7 +150,7 @@ func (a *adapterTlumaczenia) panelJezyka(ctx context.Context, okno dane.OknoTlum
 	return &zalozony, nil
 }
 
-// rozbierzXliff czyta plik obu wersji standardu jednym przejściem strumienia.
+// rozbierzXliff czyta plik obu wersji standardu XLIFF jednym przejściem strumienia pakietu encoding/xml.
 func rozbierzXliff(bajty []byte) plikXliff {
 	czytnik := xml.NewDecoder(strings.NewReader(string(bajty)))
 	wynik := plikXliff{}

@@ -1,19 +1,5 @@
 /**
- * Dymek objaśnienia [?] przy elemencie konfiguracji sceny.
- *
- * Nośnik zasady „każdy element konfiguracji zawiera objaśnienie kontekstowe":
- * mały znak zapytania, nad którym komponent `.dn-tooltip` biblioteki
- * (`komponenty/drobne.css`) pokazuje treść przy najechaniu albo przy ognisku —
- * bez kliknięcia i bez zamykania.
- *
- * Znak jest przyciskiem, nie ozdobą: naciśnięcie prowadzi do niego ognisko,
- * a ognisko pokazuje objaśnienie — każde naciśnięcie daje odpowiedź.
- * Treść czytają technologie wspomagające z `aria-label` znaku, więc dymek nie
- * potrzebuje identyfikatora i nie zderza się między oknami sceny.
- *
- * Biblioteka niesie samą chmurkę (`.dn-tooltip` + `.dn-tooltip-tresc`), ale nie
- * niesie znaku [?] — każdy widok rysuje go u siebie. Klasy znaku są tu więc
- * widokowe.
+ * Moduł tworzy przycisk objaśnienia przy elemencie konfiguracji sceny, pokazujący treść pomocniczą w chmurce po najechaniu albo ustawieniu ogniska.
  */
 export function utworzObjasnienie(objasnienie: string): HTMLElement {
   const dymek = document.createElement('span');

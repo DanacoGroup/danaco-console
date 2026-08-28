@@ -6,24 +6,6 @@ import { utworzStanStudio } from './stan-studio';
 import { utworzTabelaPanel } from './tabela-panel';
 import { utworzTabeleZrodlo } from './tabela-zrodlo';
 
-/**
- * Warsztat tabel — czynność i BILANS, nie kształt pliku.
- *
- * Pilnowane jest to, co przy poprawce najłatwiej zepsuć po cichu:
- *
- *   1. wskazanie rozmiaru siatką prowadzi do `studio.table.insert` z rozmiarem
- *      wskazanym, a nie z rozmiarem domyślnym okna;
- *   2. bilans czynności jest wypisywany ZAWSZE — także przy pełnym powodzeniu.
- *      Wypisywanie go tylko przy pominięciu uczyłoby Operatora, że brak bilansu
- *      znaczy „wszystko weszło", a to jest ta cisza, której zlecenie zakazuje;
- *   3. pominięcie z powodu blokady fragmentu NAZYWA blokadę i czynność nie mieni
- *      się udaną — scalenie komórek, które blokada zatrzymała, nie może wyglądać
- *      na wykonane;
- *   4. szerokości kolumn są wypisywane liczbami, a szerokość zerowa jest nazwana
- *      wprost: sprawdzian skutku zlecenia mierzy właśnie to, że tabela po
- *      scaleniu ma szerokości POLICZONE.
- */
-
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
@@ -52,7 +34,7 @@ function atrapaKanalu(zapisy: Zapis[], odpowiedzi: Record<string, unknown> = {})
   } as unknown as Kanal;
 }
 
-/** Dokument czynny w stanie modułu — tabela bez dokumentu nie ma gdzie stanąć. */
+/** Funkcja stanZDokumentem tworzy stan modułu studio wraz z dokumentem czynnym, ponieważ tabela nie może istnieć bez otwartego dokumentu. */
 function stanZDokumentem(kanal: Kanal) {
   const stan = utworzStanStudio(kanal);
   stan.ustawOkno('okno-1');
@@ -65,7 +47,7 @@ function stanZDokumentem(kanal: Kanal) {
   return stan;
 }
 
-/** Zdania wypisane w panelu — wiersz odpowiedzi i opisy pozycji. */
+/** Funkcja zdania zwraca zdania wypisane w panelu tabeli: wiersz odpowiedzi oraz opisy poszczególnych pozycji tabeli. */
 function zdania(element: HTMLElement): string {
   return [...element.querySelectorAll('p')].map((akapit) => akapit.textContent ?? '').join(' ');
 }

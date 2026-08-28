@@ -1,22 +1,6 @@
 // Rozpoznanie skrzynek na urządzeniu — obsługa `mail.account.discover`.
-//
-// Operator ma na urządzeniu skonfigurowanego klienta poczty, a nastawy tej
-// skrzynki leżą w jego plikach. Rdzeń je czyta, żeby nie kazać mu przepisywać
-// ręcznie hosta, portu i nazwy użytkownika.
-//
-// Haseł stąd nie bierzemy. Thunderbird trzyma je w `logins.json` zaszyfrowane
-// kluczem z `key4.db`, Evolution w pęku kluczy GNOME, mutt bywa, że jawnie
-// w `.muttrc`. Rdzeń nie sięga do żadnego z tych miejsc i nie próbuje ich
-// odszyfrować: odczytanie pęku kluczy jest czynnością innego rodzaju niż
-// odczytanie pliku nastaw. Poświadczenie podaje Operator komendą
-// `mail.account.add` i idzie ono wyłącznie do sejfu rdzenia.
-//
-// Outlook (Windows) trzyma nastawy w rejestrze pod
-// `HKCU\Software\Microsoft\Office\*\Outlook\Profiles`, w postaci binarnej
-// i innej w każdym wydaniu pakietu. Apple Mail — w `~/Library/Mail/V*/MailData`,
-// w plistach binarnych. Obu tu nie ma: rdzeń nie czyta formatów, których nie
-// umie przeczytać wiarygodnie, i nie zgaduje ich zawartości. Mówi wtedy, że nic
-// nie znalazł, a nie że nic nie ma.
+// Rdzeń czyta nastawy skonfigurowanego klienta poczty, żeby nie kazać
+// Operatorowi przepisywać ręcznie hosta, portu i nazwy użytkownika.
 package poczta
 
 import (
@@ -60,17 +44,12 @@ func Rozpoznaj(katalogDomowy string) []Rozpoznana {
 
 // wzorzecPrefsThunderbird wyłuskuje pary z `user_pref("klucz", wartość);`.
 // Plik `prefs.js` jest kodem JavaScript, ale jego treść to w praktyce sam
-// wykaz takich wywołań — czytamy go więc wyrażeniem, a nie interpreterem.
+// wykaz takich wywołań, czytany wyrażeniem, a nie interpreterem.
 var wzorzecPrefsThunderbird = regexp.MustCompile(`user_pref\("([^"]+)",\s*(.*?)\);`)
 
-// zThunderbirda czyta `prefs.js` każdego profilu Thunderbirda.
-//
-// Składanie konta jest dwustopniowe, bo Thunderbird tak je zapisuje: konto
-// (`mail.account.accountN.identities`, `.server`) wskazuje serwer
-// (`mail.server.serverM.hostname`) i tożsamość (`mail.identity.idK.useremail`).
-// Odczyt idzie więc po numerach serwerów i dokleja do nich tożsamość profilu.
-// Serwer bez tożsamości też wchodzi do wyniku — host i port są tym, czego
-// Operator najbardziej nie chce przepisywać.
+// zThunderbirda czyta `prefs.js` każdego profilu Thunderbirda. Składanie
+// konta jest dwustopniowe: konto wskazuje serwer i tożsamość osobnymi
+// kluczami, odczyt idzie po numerach serwerów.
 func zThunderbirda(katalogDomowy string) []Rozpoznana {
 	var wynik []Rozpoznana
 	for _, korzen := range []string{
@@ -96,7 +75,8 @@ func zThunderbirda(katalogDomowy string) []Rozpoznana {
 	return wynik
 }
 
-// wczytajPrefs zamienia `prefs.js` na mapę klucz→wartość bez cudzysłowów.
+// wczytajPrefs zamienia `prefs.js` na mapę klucz-wartość bez cudzysłowów,
+// czytając linie postaci user_pref("klucz", "wartość").
 func wczytajPrefs(sciezka string) map[string]string {
 	plik, err := os.Open(sciezka)
 	if err != nil {
@@ -149,13 +129,9 @@ func kontaThunderbirda(nastawy map[string]string) []Rozpoznana {
 }
 
 // dopiszTozsamoscThunderbirda dokłada adres, nazwę wyświetlaną i serwer
-// wychodzący — z pierwszej tożsamości, jaką profil niesie. Profil z wieloma
-// tożsamościami jest rzadki, a wybór między nimi należy do Operatora, nie do
-// rdzenia: podpowiedź ma mu skrócić pisanie, nie podjąć za niego decyzji.
-//
-// „Pierwsza" znaczy pierwsza po posortowaniu kluczy. Przechodzenie mapy w Go ma
-// kolejność losową, więc bez sortowania wybór wypadałby przy każdym wywołaniu
-// na inną tożsamość.
+// wychodzący z pierwszej tożsamości, jaką profil niesie — "pierwsza" znaczy
+// pierwsza po posortowaniu kluczy, bo przechodzenie mapy w Go ma kolejność
+// losową.
 func dopiszTozsamoscThunderbirda(konto *Rozpoznana, nastawy map[string]string) {
 	klucze := posortowaneKlucze(nastawy)
 	for _, klucz := range klucze {
@@ -177,7 +153,8 @@ func dopiszTozsamoscThunderbirda(konto *Rozpoznana, nastawy map[string]string) {
 	}
 }
 
-// posortowaneKlucze oddaje klucze mapy w porządku rosnącym.
+// posortowaneKlucze oddaje klucze mapy w porządku rosnącym, do powtarzalnego
+// przejścia po numerach serwerów i tożsamości.
 func posortowaneKlucze(nastawy map[string]string) []string {
 	klucze := make([]string, 0, len(nastawy))
 	for klucz := range nastawy {
@@ -224,11 +201,8 @@ func zEvolution(katalogDomowy string) []Rozpoznana {
 }
 
 // zMutta czyta `.muttrc` i `.config/(neo)mutt/*rc`, biorąc `set folder`
-// (skrzynka IMAP), `set smtp_url` i `set from`.
-//
-// Hasła w `.muttrc` bywają jawne (`set imap_pass=`) i odczyt je pomija: sekret
-// leżący w pliku możliwym do odczytania nadal nie jest czymś, co rdzeń zabiera
-// do siebie.
+// (skrzynka IMAP), `set smtp_url` i `set from`. Hasła jawne (`set imap_pass=`)
+// odczyt pomija.
 func zMutta(katalogDomowy string) []Rozpoznana {
 	sciezki := []string{filepath.Join(katalogDomowy, ".muttrc"), filepath.Join(katalogDomowy, ".mutt", "muttrc")}
 	for _, wzorzec := range []string{"mutt", "neomutt"} {
@@ -315,7 +289,8 @@ func wczytajIni(sciezka string) map[string]string {
 	return nastawy
 }
 
-// zAdresuURL wyłuskuje host i port z zapisu w rodzaju `imaps://kto@host:993/`.
+// zAdresuURL wyłuskuje host i port z zapisu w rodzaju `imaps://kto@host:993/`,
+// tak jak zapisuje go mutt w kluczu `folder`.
 func zAdresuURL(wartosc string, domyslnyPort int) (string, int) {
 	if _, reszta, jest := strings.Cut(wartosc, "://"); jest {
 		wartosc = reszta

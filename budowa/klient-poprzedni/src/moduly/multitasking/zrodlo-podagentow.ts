@@ -17,65 +17,20 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Podagenci widziani przez klienta — jedno z trzech źródeł modułu, obok
- * `zrodlo-biegu.ts` (bieg pracy) i `zrodlo-okien.ts` (obsada ról).
- *
- * Okno nie zna nazw komend. Panel „Zadania w tle" woła `wykaz()` i `zbierz()`,
- * a nie `Command.SubagentList` — literał komendy stoi wyłącznie tutaj, więc gdy
- * kontrakt przemianuje komendę, kompilacja pęka w jednym pliku, a nie w każdym
- * widoku, który ją wołał.
- *
- * Źródło stoi osobno od `zrodlo-biegu.ts`, bo bieg pracy porusza oknami ról —
- * tura, przekazanie, kolejka etapu, telemetria — a podagent jest bytem pod
- * oknem wykonawcy, o którym kontrakt nie rozstrzyga, czym jest: oknem, procesem
- * czy pozycją kolejki.
- *
- * Telemetria zostaje w biegu: panel bierze `monitor.status` z `ZrodloBiegu`,
- * które tę komendę już niesie — drugie wywołanie tej samej komendy w drugim
- * źródle byłoby kopią bez powodu.
+ * Źródło podagentów udostępnia klientowi komendy obszaru `subagent.*` wraz ze
+ * zdarzeniem zmiany stanu. Literały nazw komend stoją wyłącznie tutaj, więc
+ * przemianowanie komendy w kontrakcie zatrzymuje kompilację w jednym pliku.
  */
 export interface ZrodloPodagentow {
-  /**
-   * `subagent.spawn` — powołanie podagentów pod oknem wykonawcy.
-   *
-   * Oddaje podagentów tak, jak założył je rdzeń, a nie tak, jak prosił
-   * formularz: liczba powołanych bierze się z odpowiedzi, bo rdzeń ma prawo
-   * powołać ich mniej (górna granica piętnastu należy do niego, nie do widoku).
-   */
+  /** `subagent.spawn` — powołanie podagentów; liczbę powołanych podaje rdzeń. */
   powolaj(zadanie: SubagentSpawnRequest): Promise<Wynik<Subagent[]>>;
-  /**
-   * `subagent.list` — podagenci okna wykonawcy albo całej karty sesji.
-   *
-   * Zawężenie po stanie robi rdzeń, nie widok: żądanie niesie pole `status`,
-   * więc sito po stronie klienta byłoby drugim, rozjeżdżającym się sitem.
-   */
+  /** `subagent.list` — podagenci okna wykonawcy albo całej karty sesji. */
   wykaz(zadanie: SubagentListRequest): Promise<Wynik<Subagent[]>>;
-  /**
-   * `subagent.result.collect` — zebranie wyników pracy podagentów.
-   *
-   * Oddaje komplet podagentów wraz z polem `complete`, które mówi, czy wszyscy
-   * objęci zbieraniem domknęli pracę. Panel tego pola nie zgaduje ze stanów:
-   * bierze je z odpowiedzi.
-   */
+  /** `subagent.result.collect` — zebranie wyników wraz z polem `complete`. */
   zbierz(zadanie: SubagentResultCollectRequest): Promise<Wynik<SubagentResultCollectResponse>>;
-  /**
-   * `subagent.changed` — podagent zmienił stan.
-   *
-   * Panel ma słuchać, nie odpytywać: rdzeń rozgłasza to zdarzenie przy
-   * powołaniu, wejściu w bieg, zakończeniu i zatrzymaniu, więc żywy wykaz
-   * nadąża za wykonawcą pracującym w tle bez ręcznego `subagent.list`.
-   */
+  /** `subagent.changed` — rdzeń rozgłasza każdą zmianę stanu podagenta. */
   naPodagenta(sluchacz: (tresc: SubagentChangedEvent) => void): Odsubskrybuj;
-  /**
-   * `subagent.stop` — zatrzymanie wskazanych podagentów okna wykonawcy.
-   *
-   * Zatrzymanie idzie tą komendą wprost, a nie obejściem przez `queue.action`
-   * na kolejce o nazwie podagenta: podagent powołany bez wpiętej kolejki nie
-   * miałby wtedy czego zatrzymać.
-   *
-   * Odpowiedź rozróżnia `stopped` od `notRunning`: podagent już zakończony nie
-   * jest błędem, tylko innym stanem, więc panel mówi o nim osobno.
-   */
+  /** `subagent.stop` — zatrzymanie podagentów; odpowiedź dzieli dwa stany. */
   zatrzymaj(zadanie: SubagentStopRequest): Promise<Wynik<SubagentStopResponse>>;
 }
 

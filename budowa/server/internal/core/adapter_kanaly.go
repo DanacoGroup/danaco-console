@@ -11,30 +11,23 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterKanalow wypełnia port Kanaly rejestrem sterowanym danymi.
-//
-// Zapis idzie do tabeli rejestru, odczyt do rejestru kanałów zbudowanego z tej
-// samej tabeli. Po każdej zmianie rejestr jest odświeżany, więc dopisanie
-// wiersza natychmiast daje działający kanał — bez zmiany w kodzie i bez restartu.
-//
-// Identyfikatorem kanału w kontrakcie jest kod wiersza, nie numer wiersza:
-// kod przeżywa przeniesienie bazy i jest tym, co widzi okno komunikacji.
+// adapterKanalow wypełnia port Kanaly rejestrem sterowanym danymi: dopisanie
+// wiersza rejestru natychmiast daje działający kanał, bez zmiany w kodzie.
 type adapterKanalow struct {
 	repozytorium dane.RepozytoriumKanalow
 	rejestr      *models.Rejestr
-	// sejf obsługuje wyłącznie `channel.credential.status`
-	// (`adapter_kanaly_sprawdzenie.go`) i widzi z sejfu tylko odczyt. Zależność
-	// opcjonalna: bez niej stan poświadczenia mówi „nieustawione" wraz
-	// z odwołaniem, pod którym rdzeń szukał.
+	// sejf obsługuje wyłącznie status poświadczenia, opcjonalnie.
 	sejf sejfPoswiadczen
 }
 
-// nowyAdapterKanalow wiąże port z repozytorium i rejestrem kanałów.
+// nowyAdapterKanalow wiąże port z repozytorium i rejestrem kanałów, gotowy do
+// obsługi całej rodziny komend `channel.*`.
 func nowyAdapterKanalow(repozytorium dane.RepozytoriumKanalow, rejestr *models.Rejestr) *adapterKanalow {
 	return &adapterKanalow{repozytorium: repozytorium, rejestr: rejestr}
 }
 
-// Dodaj dopisuje wiersz rejestru kanałów.
+// Dodaj dopisuje wiersz rejestru kanałów i odświeża rejestr sterowany danymi,
+// żeby nowy kanał zaczął działać bez restartu rdzenia.
 func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) (shared.ChannelAddResponse, error) {
 	if brak := brakiWierszaKanalu(z); brak != "" {
 		return shared.ChannelAddResponse{}, bladWskazaniaKanalu(brak)
@@ -57,7 +50,8 @@ func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) 
 	return shared.ChannelAddResponse{Channel: kanalKontraktu(kanal)}, nil
 }
 
-// Zmien zmienia wiersz rejestru kanałów wybiórczo.
+// Zmien zmienia wiersz rejestru kanałów wybiórczo, dotykając wyłącznie pól
+// obecnych w żądaniu, i odświeża rejestr sterowany danymi.
 func (a *adapterKanalow) Zmien(ctx context.Context, z shared.ChannelUpdateRequest) (shared.ChannelUpdateResponse, error) {
 	if strings.TrimSpace(z.ChannelId) == "" {
 		return shared.ChannelUpdateResponse{},
@@ -88,7 +82,8 @@ func (a *adapterKanalow) Zmien(ctx context.Context, z shared.ChannelUpdateReques
 	return shared.ChannelUpdateResponse{Channel: kanalKontraktu(kanal)}, nil
 }
 
-// Usun wykreśla wiersz rejestru kanałów.
+// Usun wykreśla wiersz rejestru kanałów i odświeża rejestr sterowany danymi,
+// żeby kanał usunięty przestał być widoczny bez restartu.
 func (a *adapterKanalow) Usun(ctx context.Context, z shared.ChannelRemoveRequest) (shared.ChannelRemoveResponse, error) {
 	kanal, err := a.repozytorium.PobierzPoKodzie(ctx, z.ChannelId)
 	if err != nil {
@@ -119,7 +114,8 @@ func (a *adapterKanalow) odswiez(ctx context.Context) {
 	_ = a.rejestr.Odswiez(ctx)
 }
 
-// przedrostekKanalu znakuje kod wiersza rejestru nadany przez rdzeń.
+// przedrostekKanalu znakuje kod wiersza rejestru nadany przez rdzeń, użyty
+// przy tworzeniu nowego identyfikatora kanału.
 const przedrostekKanalu = "kanal-"
 
 // dostawcaKanalu wybiera dostawcę: parametr „provider" wiersza, a w jego braku
@@ -144,20 +140,13 @@ func parametryKanalu(config json.RawMessage) string {
 	return string(config)
 }
 
-// kluczOdwolaniaKanalu to nazwa parametru konfiguracji kanału niosącego odwołanie
-// do danych dostępowych — nazwę zmiennej środowiskowej, pod którą Operator trzyma
-// klucz kanału API. Sama nazwa nie jest sekretem, więc jedzie w parametrach;
-// wartość mieszka poza bazą, a kanał API czyta ją przy wysyłce.
+// kluczOdwolaniaKanalu to nazwa parametru konfiguracji kanału niosącego
+// odwołanie do danych dostępowych, nie samą wartość sekretu.
 const kluczOdwolaniaKanalu = "credentialRef"
 
 // odwolaniePoswiadczeniaKanalu wyjmuje z konfiguracji kanału odwołanie do jego
-// poświadczenia i podaje je do kolumny poswiadczenie_odwolanie. Bez tej drogi
-// kolumna zostaje pusta i kanał API nie ma skąd wziąć nazwy zmiennej z kluczem.
-// Brak parametru albo pusta wartość znaczy kanał bez uwierzytelnienia i daje
-// brak odwołania.
-//
-// Kontrakt nie ma osobnego pola na to odwołanie, więc jedzie ono parametrem
-// konfiguracji.
+// poświadczenia. Brak parametru albo pusta wartość znaczy kanał bez
+// uwierzytelnienia.
 func odwolaniePoswiadczeniaKanalu(config json.RawMessage) *string {
 	if len(config) == 0 {
 		return nil
@@ -177,16 +166,11 @@ func odwolaniePoswiadczeniaKanalu(config json.RawMessage) *string {
 }
 
 // kluczKontaKanalu to nazwa parametru konfiguracji kanału niosącego powiązanie
-// z kontem — identyfikator wiersza rejestru kont (kanal_modelu.konto_id).
-// Kontrakt ChannelAdd/Update nie ma pola accountId, więc powiązanie jedzie
-// parametrem konfiguracji, tą samą drogą co credentialRef.
+// z kontem, tą samą drogą co credentialRef, bo kontrakt nie ma pola accountId.
 const kluczKontaKanalu = "accountId"
 
-// kontoKanalu wyjmuje z konfiguracji kanału powiązanie z kontem i podaje je do
-// kolumny konto_id. Wartość jest identyfikatorem wiersza rejestru kont; przyjmuje
-// postać liczby albo napisu liczbowego (JSON koduje liczby jako float64). Brak
-// parametru, wartość pusta albo nieliczbowa znaczy kanał bez powiązania i daje
-// brak konta — dana pomocnicza nie może wywrócić zapisu.
+// kontoKanalu wyjmuje z konfiguracji kanału powiązanie z kontem, w postaci
+// liczby albo napisu liczbowego. Wartość nieliczbowa znaczy brak powiązania.
 func kontoKanalu(config json.RawMessage) *int64 {
 	if len(config) == 0 {
 		return nil
@@ -214,12 +198,8 @@ func kontoKanalu(config json.RawMessage) *int64 {
 	}
 }
 
-// brakiWierszaKanalu nazywa pola wiersza kanału, które przyszły puste. Wiersz
-// bez rodzaju kanału nie przechodził dotąd więzu schematu i wracał jako usterka
-// wewnętrzna z treścią zapytania SQL — Operator dostawał nazwę kolumny bazy
-// zamiast nazwy pola, którego nie wypełnił. Brak samego pola w treści żądania
-// odsiewa brama kontraktu (`brama_kontraktu.go`); tutaj rozstrzyga się wartość
-// pusta.
+// brakiWierszaKanalu nazywa pola wiersza kanału, które przyszły puste, zamiast
+// zostawiać rozstrzygnięcie usterce wewnętrznej z treścią zapytania SQL.
 func brakiWierszaKanalu(z shared.ChannelAddRequest) string {
 	var puste []string
 	if strings.TrimSpace(z.Name) == "" {
@@ -234,7 +214,8 @@ func brakiWierszaKanalu(z shared.ChannelAddRequest) string {
 	return "wiersz rejestru kanałów z pustymi polami: " + strings.Join(puste, ", ")
 }
 
-// kanalKontraktu przekłada wiersz repozytorium na kanał kontraktu.
+// kanalKontraktu przekłada wiersz repozytorium na kanał kontraktu, wypełniając
+// pole modelu tylko wtedy, gdy wiersz niesie identyfikator modelu.
 func kanalKontraktu(k dane.Kanal) shared.Channel {
 	kanal := shared.Channel{
 		Id: k.Kod, Name: k.Nazwa, Kind: k.RodzajKanalu, Enabled: k.Aktywny,

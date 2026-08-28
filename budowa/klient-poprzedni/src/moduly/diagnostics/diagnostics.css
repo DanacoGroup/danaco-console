@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MODUŁ DIAGNOSTICS (pięć okien operacyjnych)
-   ----------------------------------------------------------------------------
-   Plik nie zawiera ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
-   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
-   Tutaj leży wyłącznie rozkład okien modułu, odróżnienie stanów obowiązkowych
-   oraz oznaczenie poziomu wpisu dziennika i priorytetu błędu.
-
-   Poziomy i priorytety wyróżniają plakietki biblioteki
-   (`dn-plakietka--sukces|ostrzezenie|blad|informacja`) — własnej skali barw
-   ten moduł nie zakłada. Zostaje tu jedynie wstęga na krawędzi pozycji, bo
-   wykaz błędów czyta się wzrokiem po lewej krawędzi, nie po plakietce.
-   ============================================================================ */
+/* Arkusz opisuje rozkład pięciu okien modułu Diagnostics, odróżnienie stanów obowiązkowych oraz oznaczenie poziomu wpisu i priorytetu błędu. */
 
 .dg-modul {
   display: flex;
@@ -20,14 +8,14 @@
   min-height: 0;
 }
 
-/* Góra: okno wiodące (Diagnostics Center) obok monitora dziennika. */
+/* Góra widoku niesie okno wiodące Diagnostics Center obok okna monitora dziennika, ułożone w dwóch kolumnach jednej wysokości. */
 .dg-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: var(--dn-od-4);
 }
 
-/* Dół: dwa okna pomocnicze — błędy i rekomendacje — po równo. */
+/* Dół widoku niesie dwa okna pomocnicze o równej szerokości: błędy po lewej stronie i rekomendacje po prawej stronie. */
 .dg-modul__dol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -61,22 +49,21 @@
   gap: var(--dn-od-1);
 }
 
-/* Zakres czasu wspólny oknom modułu — pola obok siebie, dopóki się mieszczą. */
+/* Zakres czasu jest wspólny wszystkim oknom modułu: pola dobierania dat stoją obok siebie w jednym rzędzie, dopóki się mieszczą. */
 .dg-zakres {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: var(--dn-od-2);
 }
 
-/* Skróty zakresu czasu — jeden rząd, zawijany, bez własnego wyglądu przycisku. */
+/* Skróty zakresu czasu stoją w jednym zawijanym rzędzie, bez własnego wyglądu przycisku, jako proste odnośniki tekstowe. */
 .dg-skroty {
   display: flex;
   flex-wrap: wrap;
   gap: var(--dn-od-1);
 }
 
-/* ── Stany obowiązkowe ─────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje stany obowiązkowe modułu Diagnostics, wspólne dla okna wiodącego, wykazu pozycji, błędów i analizy z rekomendacjami. */
 .dg-stany {
   display: flex;
   flex-direction: column;
@@ -113,8 +100,7 @@
   overflow: auto;
 }
 
-/* ── Wykaz pozycji ─────────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje wykaz pozycji modułu Diagnostics: wiersze dziennika, błędów i rekomendacji, każdy z własnym poziomem lub priorytetem. */
 .dg-wykaz {
   display: flex;
   flex-direction: column;
@@ -160,10 +146,7 @@
   color: var(--dn-tekst-2);
 }
 
-/* ── Dziennik: poziom wpisu ────────────────────────────────────────────────── */
-
-/* Wpis dziennika jest zwarty, bo Logs Viewer jest oknem monitorującym: liczy
-   się liczba wierszy widocznych naraz, nie ich ozdobność. */
+/* Sekcja opisuje dziennik na poziomie wpisu: wpis jest zwarty, bo okno monitorujące liczy wiersze widoczne naraz, nie ich ozdobność. */
 .dg-wpis {
   display: flex;
   flex-wrap: wrap;
@@ -197,15 +180,14 @@
   padding-left: var(--dn-od-2);
 }
 
-/* Licznik deduplikacji — wpis powtórzony niesie krotność, nie N wierszy. */
+/* Licznik deduplikacji pokazuje, że wpis powtórzony niesie liczbę powtórzeń, zamiast powielać ten sam wiersz N razy w dzienniku. */
 .dg-wpis__licznik {
   flex: 0 0 auto;
   font-size: var(--dn-fs-xs);
   color: var(--dn-tekst-2);
 }
 
-/* ── Błędy: priorytet i stan ───────────────────────────────────────────────── */
-
+/* Sekcja opisuje błędy modułu Diagnostics w podziale na priorytet i stan, wyróżnione wstęgą na lewej krawędzi wiersza wykazu. */
 .dg-pozycja[data-priorytet='critical'],
 .dg-pozycja[data-priorytet='high'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
@@ -229,8 +211,7 @@
   opacity: 0.7;
 }
 
-/* ── Analiza i rekomendacje ────────────────────────────────────────────────── */
-
+/* Sekcja opisuje analizę i rekomendacje modułu Diagnostics, pokazujące operatorowi proponowaną poprawkę wprost przed jej zastosowaniem. */
 .dg-analiza {
   display: flex;
   flex-direction: column;
@@ -268,11 +249,7 @@
   overflow-x: auto;
 }
 
-/* ── Observability Tools: kontener zakładek ────────────────────────────────── */
-
-/* Pas zakładek i obszary pod nim. Wygląd samego pasa niesie biblioteka
-   (`komponenty/zakladki.css`, klasy `dn-zakladki` i `dn-zakladka`); tutaj leży
-   wyłącznie rozkład kontenera. */
+/* Sekcja opisuje kontener zakładek Observability Tools: pas zakładek niesie biblioteka, a tutaj leży wyłącznie rozkład obszarów pod nim. */
 .dg-narzedzia {
   display: flex;
   flex-direction: column;

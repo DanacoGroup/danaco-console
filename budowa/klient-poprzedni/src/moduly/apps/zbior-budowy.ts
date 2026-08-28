@@ -6,55 +6,10 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Zbiór etapów budowy i wdrożeń produktu — wszystko, co moduł wie o przebiegu
- * pracy.
+ * Zbiór etapów budowy i wdrożeń produktu: gromadzi wszystko, co moduł wie
+ * o przebiegu, składając odpowiedzi komend ze strumieniem zdarzeń rdzenia.
  *
- * Stoi osobno od stanu modułu, bo to inna odpowiedzialność: stan modułu
- * prowadzi okno rdzenia i architekturę oraz ogłasza zmiany oknom, a ten zbiór
- * wyłącznie gromadzi to, co przynoszą zdarzenia i odpowiedzi. Rozdział pozwala
- * sprawdzić gromadzenie bez dotykania kanału.
- *
- * Wdrożenia mają trzy źródła, etapy jedno. Wdrożenie wchodzi tu zdarzeniem
- * `apps.build.changed`, odpowiedzią na `apps.deployment.run` albo wykazem
- * z `apps.deployment.list`. Etapów budowy żadna komenda odczytu nie zwraca,
- * więc ich pusty zbiór na starcie jest stanem prawdziwym, a nie brakiem
- * odczytu. `czyWdrozeniaCzytane()` odróżnia „rdzeń powiedział, że nie ma nic"
- * od „nikt jeszcze nie pytał".
- *
- * Odpowiedź komendy jest starsza niż zdarzenie. `apps.deployment.run` kończy
- * się, gdy przebieg ruszy, a nie gdy się skończy, więc jej odpowiedź niesie
- * migawkę ze stanem `pending`; przejścia `running` → `succeeded`/`failed`
- * przychodzą wyłącznie zdarzeniem. Ciąg dalszy obietnicy `await` biegnie
- * mikrozadaniem, czyli po obsłużeniu ramek, które padły w tej samej turze pętli
- * zdarzeń — zapis z odpowiedzi trafiłby na koniec i cofnął stan końcowy
- * z powrotem do `pending`.
- *
- * Dlatego źródła są rozróżnione, a nie uporządkowane po stanie: ustawianie
- * stanów w drabinkę „który jest dalszy" byłoby zgadywaniem cyklu życia po
- * stronie klienta. Rozstrzyga pochodzenie — strumień zdarzeń jest jedynym
- * źródłem postępu przebiegu, a odpowiedź komendy wyłącznie zasiewa pozycję,
- * której strumień jeszcze nie zgłosił, żeby wiersz pojawił się natychmiast po
- * naciśnięciu. Wdrożenia znanego ze zdarzenia odpowiedź już nie cofnie.
- *
- * Etap bez identyfikatora nie jest etapem. Zdarzenie niesie pole `stage` jako
- * wymagane, więc przy zmianie dotyczącej samego wdrożenia rdzeń wypełnia je
- * zaślepką `{ id: "", name: "", status: "", windowId: <okno> }`. Wpisana do
- * wykazu dawałaby bezimienny wiersz etapu i zdanie „etapów 1" przy zerze etapów
- * prawdziwych. Zaślepkę mijamy; wdrożenie z tej samej ramki bierzemy normalnie.
- *
- * Zbiór liczy też ramki, które minął. Sam pusty wykaz nie odróżnia „nie
- * przyszło jeszcze nic" od „przyszło, ale etapów w tym nie było". Rachunek
- * ramek daje oknu liczby z ramek, które padły, więc zdanie o pustce składa się
- * z nich albo nie pada wcale, zamiast być wpisanym na stałe w napis
- * o zachowaniu rdzenia (wzorzec: `moduly/katalog-okien.ts`).
- */
-
-/**
- * Ile ramek `apps.build.changed` przyszło i co niosły.
- *
- * Liczby dotyczą wyłącznie ramek wchłoniętych przez ten zbiór, więc mówią
- * o tym, co zobaczył ten egzemplarz modułu. Żadna z nich nie orzeka, co rdzeń
- * rozgłasza, a czego nie.
+ * Rachunek ramek poniżej liczy ramki zmiany budowy wchłonięte przez ten zbiór.
  */
 export interface RachunekRamek {
   /** Wszystkie wchłonięte ramki zdarzenia. */
@@ -75,17 +30,11 @@ export interface ZbiorBudowy {
   /** Wchłania zdarzenie zmiany budowy; usunięcie zdejmuje etap ze zbioru. */
   wchlonZdarzenie(tresc: AppsBuildChangedEvent): void;
   /**
-   * Zasiewa wdrożenie migawką z odpowiedzi na `apps.deployment.run`.
-   * Pozycja znana już ze strumienia zdarzeń zostaje nietknięta (patrz nagłówek).
+   * Zasiewa wdrożenie migawką z odpowiedzi komendy uruchomienia.
    */
   wchlonOdpowiedzWdrozenia(wdrozenie: AppDeployment): void;
   /**
-   * Wchłania wykaz z odpowiedzi `apps.deployment.list` — historia z bazy.
-   *
-   * Obowiązuje ta sama reguła pierwszeństwa co przy odpowiedzi komendy:
-   * wdrożenie, o którym mówił już strumień zdarzeń, zostaje nietknięte. Odczyt
-   * jest migawką z chwili zapytania, a zdarzenie niesie stan z chwili zmiany —
-   * wpuszczenie odczytu na wierzch cofałoby `succeeded` do `running`.
+   * Wchłania wykaz wdrożeń z odpowiedzi komendy wykazu.
    */
   wchlonWykazWdrozen(wdrozenia: readonly AppDeployment[]): void;
   /** Czy wykaz wdrożeń był już czytany z rdzenia — odróżnia „pusto" od „nie pytano". */
@@ -102,8 +51,7 @@ export function utworzZbiorBudowy(): ZbiorBudowy {
   const rachunek: RachunekRamek = { wszystkie: 0, zEtapem: 0, zWdrozeniem: 0, zdjeteEtapy: 0 };
 
   function zapiszWdrozenie(wdrozenie: AppDeployment): void {
-    // Najnowsze na przedzie: dziennik wydań i tabela wdrożeń czytają go od
-    // góry, a rdzeń nie podaje porządku wykazu.
+    // Najnowsze na przedzie, bo dziennik i tabela czytają wykaz od góry.
     wdrozenia = [wdrozenie, ...wdrozenia.filter((inne) => inne.id !== wdrozenie.id)];
   }
 
@@ -141,10 +89,7 @@ export function utworzZbiorBudowy(): ZbiorBudowy {
 
     wchlonWykazWdrozen(wykaz) {
       czytane = true;
-      // Wykaz idzie od najstarszego do przodu, bo `zapiszWdrozenie` kładzie
-      // każdą pozycję NA CZELE. Rdzeń oddaje wdrożenia „od najnowszego"
-      // (kontrakt, `AppsDeploymentListResponse.deployments`), więc odwrócenie
-      // zachowuje ten porządek zamiast wywracać go na drugą stronę.
+      // Wykaz idzie od najstarszego, bo zapis kładzie każdą pozycję na czele.
       for (const wdrozenie of [...wykaz].reverse()) {
         if (zgloszoneZdarzeniem.has(wdrozenie.id)) continue;
         zapiszWdrozenie(wdrozenie);

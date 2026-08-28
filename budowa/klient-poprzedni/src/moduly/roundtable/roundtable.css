@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Moduł Roundtable rozkłada sześć okien operacyjnych debaty, rozróżniając trzy stany obowiązkowe oraz oznaczenie uczestnika, tury i wypowiedzi. ================
    DANACO CONSOLE — MODUŁ ROUNDTABLE (sześć okien operacyjnych)
    ----------------------------------------------------------------------------
    Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu (`--dn-*`)
@@ -21,7 +21,7 @@
   min-height: 0;
 }
 
-/* Pas wiodący: skład debaty obok jej przebiegu. */
+/* Pas wiodący ustawia skład debaty obok jej przebiegu w dwukolumnowym układzie o proporcjach dwa do trzech. */
 .dr-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);

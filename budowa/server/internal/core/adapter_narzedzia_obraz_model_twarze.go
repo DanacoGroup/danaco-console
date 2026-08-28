@@ -1,30 +1,6 @@
 // Osobny przebieg poprawiania twarzy w `image.upscale` — pole `faces`
-// kontraktu. Powiększanie samo stoi
-// w `adapter_narzedzia_obraz_model_silniki.go` i to ono woła ten plik; wspólne
-// zaplecze (pracownia, wołanie binarium, odmowy) — w
-// `adapter_narzedzia_obraz_model.go`.
-//
-// ── Dlaczego pomocnik pythonowy, a nie wydanie ncnn ─────────────────────────
-// Reszta tej rodziny to binaria `ncnn` bez Pythona i bez Torcha, więc pomocnik
-// pythonowy jest tu wyłomem i wymaga powodu. Powód jest taki: sieć twarzowa
-// wydana jest jako wagi PyTorcha (`GFPGANv1.4.pth`), a wydania `ncnn` tej sieci
-// nie publikuje jej autor — chodzące po sieci przeróbki niosą wagi przeliczone
-// przez osoby trzecie, więc rdzeń liczyłby nie tym modelem, który leży na
-// dysku, tylko czyjąś kopią o nieustalonym pochodzeniu. Pomocnik na wagach
-// stojących liczy dokładnie tym, co Operator ma u siebie, i tą samą drogą, co
-// wektory znaczenia (`internal/wiedza/pomocnik_osadzen.py`).
-//
-// ── Dlaczego przebieg jest drugi, a nie jeden wspólny ───────────────────────
-// Kolejność jest zamierzona: najpierw Real-ESRGAN powiększa CAŁY obraz, potem
-// pomocnik odnajduje twarze w wyniku i podmienia same wycinki. Dzięki temu
-// wymiary odpowiedzi pochodzą wyłącznie z powiększenia, a `faces: false`
-// i `faces: true` różnią się dokładnie tym, co obiecuje opis pola — twarzami,
-// nie rozmiarem.
-//
-// ── Czego tu celowo nie ma ──────────────────────────────────────────────────
-// Gałęzi „gdy pomocnika nie ma, oddaj samo powiększenie". Obraz bez poprawki
-// twarzy podany jako poprawiony jest tą samą atrapą, co rozciągnięcie podane
-// jako powiększenie — rdzeń odmawia, nazywając brak i drogę naprawy.
+// kontraktu. Pomocnik pythonowy liczy na wagach PyTorcha, których wydanie
+// ncnn nie publikuje, i pracuje jako drugi przebieg nad wynikiem powiększenia.
 package core
 
 import (
@@ -40,57 +16,45 @@ import (
 	"danacoconsole/server/internal/zewnetrzne"
 )
 
-// skryptPomocnikaTwarzy — treść pomocnika wkompilowana w binarium.
-//
-// Skrypt jedzie w binarium, a nie leży obok niego, z tego samego powodu, co
-// pomocnik osadzeń: wdrożenie, w którym ktoś przeniósł samo binarium, ma
-// działać. Wykładany jest do katalogu jednego przebiegu (`pracowniaObrazu`),
-// bo znika razem z nim — pomocnik jest bytem wtórnym wobec binarium i nie ma
-// powodu przeżywać żądania, które go potrzebowało.
+// skryptPomocnikaTwarzy — treść pomocnika wkompilowana w binarium, żeby
+// wdrożenie, w którym ktoś przeniósł samo binarium, nadal działało.
 //
 //go:embed adapter_narzedzia_obraz_pomocnik_twarzy.py
 var skryptPomocnikaTwarzy string
 
 const (
-	// granicaOdtwarzaniaTwarzy to granica czasu jednego przebiegu twarzowego.
-	// Bez karty graficznej jedna twarz liczy się na procesorze kilka sekund,
-	// a zdjęcie grupowe niesie ich kilkanaście; do tego dochodzi start
-	// interpretera i wczytanie trzech zestawów wag. Dziesięć minut znaczy „coś
-	// stanęło", a nie „to długo trwa".
+	// granicaOdtwarzaniaTwarzy to granica czasu jednego przebiegu twarzowego:
+	// bez karty graficznej jedna twarz liczy się kilka sekund, a start
+	// interpretera i wczytanie wag dokładają swoje.
 	granicaOdtwarzaniaTwarzy = 10 * time.Minute
 
-	// katalogWagTwarzyLinux to miejsce wag sieci twarzowej na serwerze.
-	// Odbiega od `/usr/local/share/<silnik>`, którym idą wagi powiększania
-	// i wycinania tła, bo te wagi nie są składnikiem pakietu żadnego programu —
-	// są wydaniem modelu pobieranym osobno i leżą we wspólnym drzewie modeli
-	// rdzenia.
+	// katalogWagTwarzyLinux to miejsce wag sieci twarzowej na serwerze, poza
+	// `/usr/local/share/<silnik>`, bo wagi nie są składnikiem pakietu programu.
 	katalogWagTwarzyLinux = "/opt/danaco-modele/twarze"
 
-	// wagiOdtwarzaniaTwarzy to plik wag samej sieci odtwarzającej twarz.
+	// wagiOdtwarzaniaTwarzy to plik wag samej sieci odtwarzającej twarz,
+	// wydany jako format PyTorcha, którego ncnn nie publikuje.
 	wagiOdtwarzaniaTwarzy = "GFPGANv1.4.pth"
-	// wagiWykrywaniaTwarzy to wagi wykrywacza twarzy (RetinaFace). Bez niego
-	// nie ma czego odtwarzać: sieć twarzowa pracuje na wycinku wyrównanym do
-	// pięciu punktów charakterystycznych, a te punkty wskazuje właśnie ten
-	// model.
+
+	// wagiWykrywaniaTwarzy to wagi wykrywacza twarzy (RetinaFace), bez których
+	// nie ma czego odtwarzać: wskazują wycinek wyrównany do twarzy.
 	wagiWykrywaniaTwarzy = "detection_Resnet50_Final.pth"
-	// wagiPodzialuTwarzy to wagi sieci dzielącej twarz na obszary
-	// (ParseNet). Z niej powstaje maska wklejenia — bez maski wycinek wraca do
-	// obrazu prostokątem o widocznej krawędzi.
+
+	// wagiPodzialuTwarzy to wagi sieci dzielącej twarz na obszary (ParseNet),
+	// z których powstaje maska wklejenia wycinka.
 	wagiPodzialuTwarzy = "parsing_parsenet.pth"
 
-	// nazwaSkryptuTwarzy jest nazwą pliku wyłożonego w katalogu przebiegu.
+	// nazwaSkryptuTwarzy jest nazwą pliku wyłożonego w katalogu przebiegu,
+	// pod którą przebieg twarzowy odnajduje własny pomocnik.
 	nazwaSkryptuTwarzy = "pomocnik_twarzy.py"
-	// prawaSkryptuTwarzy: skrypt czyta wyłącznie proces, który go wyłożył.
+	// prawaSkryptuTwarzy: skrypt czyta wyłącznie proces, który go wyłożył,
+	// żaden inny użytkownik systemu nie ma do niego dostępu.
 	prawaSkryptuTwarzy = 0o600
 )
 
-// narzedzieOdtwarzaniaTwarzy opisuje interpreter pomocnika twarzowego.
-//
-// Wołamy opakowanie `/usr/local/bin/danaco-twarze`, a nie plik z wnętrza
-// środowiska pythonowego — tak samo jak przy `rembg`. `zewnetrzne.Wolaj` nie
-// dziedziczy środowiska rdzenia, a biblioteki pomocnika szukają katalogu pamięci
-// podręcznej i katalogu domowego; opakowanie ustawia je samo, więc pomocnik jest
-// samowystarczalny niezależnie od tego, kto go woła.
+// narzedzieOdtwarzaniaTwarzy opisuje interpreter pomocnika twarzowego: idzie
+// opakowaniem `/usr/local/bin/danaco-twarze`, a nie plikiem środowiska
+// pythonowego, tak samo jak przy `rembg`.
 func narzedzieOdtwarzaniaTwarzy() zewnetrzne.Narzedzie {
 	return zewnetrzne.Narzedzie{
 		Nazwa:   "GFPGAN (pomocnik pythonowy)",
@@ -102,10 +66,8 @@ func narzedzieOdtwarzaniaTwarzy() zewnetrzne.Narzedzie {
 	}
 }
 
-// katalogWagTwarzy oddaje miejsce, w którym leżą trzy zestawy wag przebiegu
-// twarzowego. Zależy od systemu z tego samego powodu, co katalogi wag
-// powiększania i wycinania tła: na Linuksie drzewo modeli stoi pod `/opt`,
-// a w wydaniu natywnym Windows jedzie obok rdzenia w `pomocniki/`.
+// katalogWagTwarzy oddaje miejsce trzech zestawów wag przebiegu twarzowego:
+// na Linuksie drzewo modeli stoi pod `/opt`, w wydaniu Windows obok rdzenia.
 func katalogWagTwarzy() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(katalogWagWindows(), "twarze", "modele")
@@ -124,13 +86,7 @@ type odpowiedzPomocnikaTwarzy struct {
 }
 
 // sprawdzWagiTwarzy upewnia się, że wszystkie trzy zestawy wag leżą na dysku,
-// zanim ruszy pomocnik. Sprawdzane są wszystkie naraz, bo przebieg potrzebuje
-// każdego z nich, a odmowa po dwóch minutach startu interpretera z powodu
-// trzeciego pliku byłaby czasem straconym.
-//
-// Katalog przychodzi argumentem, a nie jest brany ze stałej, żeby sprawdzian
-// mógł zmierzyć samą odmowę na katalogu bez wag — reguła, której nie da się
-// uruchomić na pustym miejscu, nie jest zmierzona.
+// zanim ruszy pomocnik, żeby odmowa nie przyszła po minutach startu.
 func sprawdzWagiTwarzy(katalog string) error {
 	wykaz := []struct {
 		plik string
@@ -154,9 +110,8 @@ func sprawdzWagiTwarzy(katalog string) error {
 }
 
 // wylozPomocnikaTwarzy zapisuje skrypt w katalogu przebiegu i oddaje jego
-// ścieżkę. Zapis idzie przez plik tymczasowy i przemianowanie, bo skrypt obcięty
-// w połowie wystartowałby i wywrócił się komunikatem o składni, którego nikt nie
-// powiąże z przerwanym zapisem.
+// ścieżkę, przez plik tymczasowy i przemianowanie, żeby skrypt obcięty
+// w połowie nie wywrócił się niepowiązanym błędem składni.
 func wylozPomocnikaTwarzy(katalog string) (string, error) {
 	czesciowy, err := os.CreateTemp(katalog, nazwaSkryptuTwarzy+".*.czesciowy")
 	if err != nil {
@@ -186,13 +141,8 @@ func wylozPomocnikaTwarzy(katalog string) (string, error) {
 }
 
 // poprawTwarze przeprowadza drugi przebieg nad wynikiem powiększenia i oddaje
-// bajty obrazu z odtworzonymi twarzami.
-//
-// Wejściem jest plik wyniku Real-ESRGAN-a, a nie źródło żądania: przebieg
-// twarzowy pracuje na tym, co powiększenie już wytworzyło. Wyjście idzie do
-// osobnego pliku w tej samej pracowni, żeby wynik powiększenia został nietknięty
-// na wypadek odmowy pomocnika — nadpisanie go w miejscu zostawiłoby przy
-// przerwanym zapisie plik, który nie jest już ani jednym, ani drugim.
+// bajty obrazu z odtworzonymi twarzami, do osobnego pliku w tej samej
+// pracowni, żeby wynik powiększenia został nietknięty na wypadek odmowy.
 func (a *adapterNarzedziObrazuModelu) poprawTwarze(ctx context.Context,
 	pracownia pracowniaObrazu) ([]byte, int, error) {
 
@@ -221,10 +171,9 @@ func (a *adapterNarzedziObrazuModelu) poprawTwarze(ctx context.Context,
 		return nil, 0, bladArsenaluModeluObrazu(err)
 	}
 
-	// Pomocnik kończy pracę kodem zerowym także wtedy, gdy nazywa brak, więc
-	// rozstrzyga treść odpowiedzi, a nie kod wyjścia. Odpowiedź nieczytelna
-	// jest odmową: proces, który wypisał coś innego niż umówiony obiekt, nie
-	// zrobił tego, po co go zawołano.
+	// Pomocnik kończy pracę kodem zerowym także wtedy, gdy nazywa brak.
+
+	// Rozstrzyga więc treść odpowiedzi, a nie kod wyjścia procesu.
 	var odpowiedz odpowiedzPomocnikaTwarzy
 	if err := json.Unmarshal(wynik.Wyjscie, &odpowiedz); err != nil {
 		return nil, 0, bladPrzetwarzaniaModeluObrazu(
@@ -242,9 +191,7 @@ func (a *adapterNarzedziObrazuModelu) poprawTwarze(ctx context.Context,
 }
 
 // opisPrzebieguTwarzy składa dopisek do opisu zasobu, żeby w magazynie było
-// widać, ile twarzy przebieg poprawił. Liczba jest ZMIERZONA przez pomocnika,
-// a nie założona — zdjęcie bez rozpoznanej twarzy przechodzi przebieg
-// nietknięte i opis ma to mówić wprost.
+// widać, ile twarzy przebieg poprawił — liczbę zmierzoną, nie założoną.
 func opisPrzebieguTwarzy(twarze int) string {
 	return ", twarze poprawione: " + strconv.Itoa(twarze)
 }

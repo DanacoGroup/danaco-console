@@ -1,28 +1,5 @@
-// Odpowiedzialność pliku: licznik wykazu — ile pozycji i ile bajtów ładuje ten
-// zasięg, zanim padnie pierwsze słowo zadania.
-//
-// ── DLACZEGO NIE SAM LICZNIK POZYCJI ────────────────────────────────────────
-// Operatorowi sama liczba pozycji nie mówi nic; liczba bajtów i rząd żetonów
-// okna kontekstu mówi wszystko. Limit, w który się uderza,
-// jest limitem okna kontekstu, a okno kontekstu liczy się w żetonach, nie
-// w narzędziach. Licznik podający wyłącznie pozycje kazałby Operatorowi
-// przeliczać je w głowie na koszt — czyli dowiedziałby się o przekroczeniu
-// dopiero z cichej degradacji, przed którą ten cały zasięg powstał.
-//
-// ── DLACZEGO KSZTAŁT PROTOKOŁU MIESZKA TUTAJ ────────────────────────────────
-// Bajty mają być bajtami tej samej odpowiedzi, którą dostanie model — inaczej
-// pomiar jest oszacowaniem podanym jako pomiar. Dlatego trzy pola,
-// z których protokół składa `tools/list`, stoją w jednym miejscu: tutaj.
-// Warstwa protokołu (`cmd/danaco-narzedzia/stdio`) bierze je stąd, zamiast
-// składać drugi raz po swojemu. Pakiet nadal nie zna ramki JSON-RPC ani metod —
-// zna wyłącznie kształt danych jednej pozycji, i to jest cena za to, że pomiar
-// nie kłamie.
-//
-// ── ŻETONY SĄ PRZELICZENIEM, NIE POMIAREM — I TAK SĄ NAZWANE ────────────────
-// Licznik oddaje bajty, bo bajty umie policzyć dokładnie. Przelicznika na żetony
-// tu nie ma: zależy od tokenizatora kanału modelu, którego ten proces nie zna,
-// a liczba podana jako dokładna, a wyprowadzona z założenia, byłaby drugą prawdą.
-// Rząd wielkości podaje się w zdaniu dziennika, nie w polu struktury.
+// Licznik wykazu mierzy, ile pozycji i ile bajtów kształtu protokołu
+// tools/list ładuje dany zasięg, zanim padnie pierwsze słowo zadania.
 package narzedzia
 
 import (
@@ -39,7 +16,8 @@ const (
 	polePozycjiSchemat = "inputSchema"
 )
 
-// PomiarGrupy jest udziałem jednej grupy w wykazie.
+// PomiarGrupy jest udziałem jednej grupy narzędzi w wykazie, wyrażonym liczbą
+// pozycji i wagą w bajtach.
 type PomiarGrupy struct {
 	// Nazwa jest nazwą grupy (`grupa.go`).
 	Nazwa string
@@ -49,16 +27,16 @@ type PomiarGrupy struct {
 	Bajtow int
 }
 
-// PomiarWykazu jest odpowiedzią na pytanie „ile ten zasięg ładuje".
+// PomiarWykazu jest odpowiedzią na pytanie, ile dany zasięg ładuje: liczbą
+// pozycji, bajtów i rozbiciem na grupy.
 type PomiarWykazu struct {
 	// Pozycji liczy narzędzia w wykazie.
 	Pozycji int
 	// Bajtow jest wagą złożonej odpowiedzi `tools/list` — dokładnie tej, którą
 	// dostanie model.
 	Bajtow int
-	// Grupy niesie rozbicie na grupy, w porządku alfabetycznym nazw. Suma pozycji
-	// grup równa się `Pozycji`; suma bajtów grup jest mniejsza od `Bajtow`
-	// o narzut listy (nawiasy i przecinki), i to jest powiedziane, a nie ukryte.
+	// Grupy niesie rozbicie na grupy, alfabetycznie; suma bajtów grup jest
+	// mniejsza o narzut listy.
 	Grupy []PomiarGrupy
 }
 
@@ -78,12 +56,8 @@ func PozycjeWykazu(wykaz []Narzedzie) []map[string]any {
 	return pozycje
 }
 
-// Zmierz liczy pozycje i bajty wykazu wraz z rozbiciem na grupy.
-//
-// Wykaz, którego nie da się zakodować, daje bajty zerowe przy prawdziwej liczbie
-// pozycji. Kłamstwem byłoby oddanie liczby zmyślonej; zerem jest tu widoczne,
-// że wagi nie zmierzono. Przypadek jest teoretyczny — schemat powstaje
-// z kontraktu i koduje się zawsze — więc nie rozrasta się w osobną drogę błędu.
+// Zmierz liczy pozycje i bajty wykazu wraz z rozbiciem na grupy; wykaz nie do
+// zakodowania daje bajty zerowe przy liczbie pozycji prawdziwej.
 func Zmierz(wykaz []Narzedzie) PomiarWykazu {
 	pomiar := PomiarWykazu{Pozycji: len(wykaz), Bajtow: wagaWykazu(wykaz)}
 	pozycji := map[string]int{}
@@ -108,7 +82,8 @@ func Zmierz(wykaz []Narzedzie) PomiarWykazu {
 	return pomiar
 }
 
-// wagaWykazu koduje wykaz w kształcie protokołu i zwraca liczbę bajtów.
+// wagaWykazu koduje wykaz w kształcie protokołu tools/list i zwraca liczbę
+// bajtów zakodowanej odpowiedzi.
 func wagaWykazu(wykaz []Narzedzie) int {
 	bajty, err := json.Marshal(PozycjeWykazu(wykaz))
 	if err != nil {

@@ -7,33 +7,15 @@ import type { StanAgentow } from './stan-agentow';
 import { utworzStanOkna, type StanOkna } from './stan-okna';
 
 /**
- * Widok „Biblioteka ekspertów” Agent Buildera — przegląd, utworzenie,
- * duplikowanie i usunięcie eksperta.
- *
- * Kontrakt nie ma komendy kopiującej eksperta, więc duplikat powstaje
- * z komendy zakładającej treścią oryginału i z komendy przypisującej skill dla
- * każdej jego umiejętności. Konektory nie idą do kopii: ich definicję odczytuje
- * dziś komenda, dla której rdzeń nie ma jeszcze uchwytu, a przepisanie samych
- * identyfikatorów dałoby wpisy bez treści. Widok mówi o tym wprost po każdym
- * duplikowaniu — i o tym, że jest to stan przejściowy, nie granica projektu.
- *
- * Zawężanie jest podzielone między rdzeń a przeglądarkę, bo kontrakt dzieli je
- * tak samo: frazę wyszukiwania przyjmuje komenda odczytu biblioteki, więc jedzie
- * do rdzenia i wraca węższym wykazem. Zasięg widoczności i stan czynności są
- * polami bytu, który już przyszedł — zawężenie po nich w przeglądarce nie pyta
- * rdzenia po raz drugi o to, co klient trzyma w ręku.
+ * Widok „Biblioteka ekspertów” Agent Buildera obsługuje przegląd, utworzenie,
+ * duplikowanie oraz usunięcie eksperta, z zawężeniem wykazu po wprowadzonych
+ * kryteriach.
  */
 export interface BibliotekaEkspertow {
   element: HTMLElement;
   /** Nanosi stan modułu na wykaz. */
   odswiez(): void;
-  /**
-   * Nanosi liczby przypisań odczytane komendą `agent.assignment.list`.
-   *
-   * Mapa pusta i mapa nieustawiona to dwie różne rzeczy: dopóki odczyt nie
-   * wrócił, karty nie pokazują plakietki wcale — zero wpisane z ciszy byłoby
-   * orzeczeniem, którego nikt nie wydał.
-   */
+  /** Nanosi liczby przypisań odczytane komendą przypisań eksperta; mapa nieustawiona różni się od pustej. */
   ustawPrzypisania(liczby: ReadonlyMap<string, number>): void;
 }
 
@@ -93,20 +75,12 @@ export function utworzBiblioteke(stan: StanAgentow): BibliotekaEkspertow {
       instrukcje: zrodlowy.systemPrompt ?? '',
       kanal: zrodlowy.channelId ?? '',
       model: zrodlowy.model ?? '',
-      // Imię własne i favikon idą do kopii razem z resztą tożsamości: bez nich
-      // duplikat wracałby w wykazie modeli bez znaku i bez imienia, choć
-      // powielany ekspert oba miał.
+      // Imię własne i favikon idą do kopii razem z resztą tożsamości eksperta źródłowego.
       imie: zrodlowy.displayName === undefined ? '' : `${zrodlowy.displayName} (kopia)`,
       favikon: zrodlowy.favicon ?? '',
-      // Odstępstwo jedzie do kopii razem z tożsamością. Kopia eksperta
-      // zastępującego, która wróciłaby do dopisywania, pracowałaby na innym
-      // prompcie systemowym niż powielany oryginał — a widać to dopiero po
-      // treści odpowiedzi modelu.
+      // Odstępstwo jedzie do kopii razem z tożsamością, zgodnie z promptem systemowym eksperta źródłowego.
       zastepuje: czyZastepuje(zrodlowy),
-      // Zasięg i pamięć idą do kopii razem z resztą tożsamości. Duplikat, który
-      // wróciłby do stanu wyjściowego, byłby ekspertem widzianym szerzej niż
-      // powielany i czytającym pamięć, której tamten nie czyta — a widać to
-      // dopiero po treści odpowiedzi modelu.
+      // Zasięg i pamięć idą do kopii razem z resztą tożsamości eksperta źródłowego.
       widocznosc: zrodlowy.visibility,
       poziomyPamieci: zrodlowy.memoryLevels,
     });
@@ -119,9 +93,7 @@ export function utworzBiblioteke(stan: StanAgentow): BibliotekaEkspertow {
     for (const umiejetnosc of umiejetnosci) {
       const przypisanie = await stan.zrodlo.dodajUmiejetnosc(kopia.id, umiejetnosc);
       if (!przypisanie.udany) {
-        // Kopia już jest w rdzeniu, więc wykaz trzeba odświeżyć tak samo jak po
-        // duplikowaniu udanym; odmowa idzie po odświeżeniu, żeby jej nie
-        // przykryło zdanie o powodzeniu.
+        // Kopia już jest w rdzeniu; wykaz odświeżamy przed komunikatem o odmowie przypisania.
         stan.wybierz(kopia.id);
         await stan.odswiez();
         powiedz(
@@ -172,7 +144,7 @@ export function utworzBiblioteke(stan: StanAgentow): BibliotekaEkspertow {
     );
   }
 
-  /** Zawężenie po polach bytu, który już przyszedł — bez pytania rdzenia. */
+  /** Zawężenie po polach bytu, który już przyszedł — bez pytania rdzenia ponownie. */
   function przesiej(eksperci: readonly Agent[]): readonly Agent[] {
     const zasieg = filtrWidocznosci.kontrolka.value;
     const stanCzynnosci = filtrStanu.kontrolka.value;
@@ -209,9 +181,7 @@ export function utworzBiblioteke(stan: StanAgentow): BibliotekaEkspertow {
       okno.puste('Biblioteka jest pusta. Załóż pierwszego eksperta przyciskiem „Nowy ekspert”.');
       return;
     }
-    // Pustka po zawężeniu znaczy co innego niż pusta biblioteka i mówi to
-    // wprost: Operator ma wiedzieć, że eksperci są, tylko filtr ich nie
-    // przepuścił — inaczej sięgnąłby po „Nowy ekspert” zamiast po filtr.
+    // Pustka po zawężeniu różni się od pustej biblioteki i jest komunikowana wprost Operatorowi.
     if (widoczni.length === 0) {
       okno.puste(
         `Filtr nie przepuścił ani jednego z ${eksperci.length} ekspertów biblioteki. ` +
@@ -232,7 +202,7 @@ export function utworzBiblioteke(stan: StanAgentow): BibliotekaEkspertow {
   };
 }
 
-/** Nagłówek okna operacyjnego — nazwa okna zgodna z wykazem inwentarza. */
+/** Nagłówek okna operacyjnego niesie nazwę okna zgodną z wykazem inwentarza modułów budowanych w tej sekcji aplikacji. */
 export function naglowek(nazwa: string): HTMLElement {
   const element = document.createElement('h3');
   element.className = 'da-okno__tytul';

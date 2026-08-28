@@ -14,7 +14,7 @@ import type { OpisOkna } from './opis-okna';
 import { nazwaNadawcy, wpisOperatora, wpisSystemowy } from './wpis';
 import { personaRoli, pokazFragment } from './wpisy-strumienia';
 
-/** Elementy, które przepływ komunikatów spina w jedną całość. */
+/** Elementy, które przepływ komunikatów spina w jedną całość: transport, kontrakt, warstwę dyktowania oraz widok okna. */
 export interface CzesciPrzeplywu {
   okno: OknoKomunikacji;
   kanal: Kanal;
@@ -24,22 +24,12 @@ export interface CzesciPrzeplywu {
 }
 
 /**
- * Przepływ komunikatów okna: transport i kontrakt po jednej stronie, widok
- * po drugiej.
- *
- * Treść wpisana przed otwarciem okna nie jest odrzucana — czeka i zostaje
- * wysłana po uzgodnieniu (brak blokad w interfejsie). Niepowodzenie
- * pojedynczej komendy zostaje pokazane operatorowi i nie kończy pracy okna.
+ * Przepływ komunikatów okna łączy transport i kontrakt po jednej stronie z widokiem po drugiej; treść wpisana przed otwarciem okna czeka i wysyła się po uzgodnieniu, bez blokad interfejsu.
  */
 export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
   const { okno, kanal, transport, uzgodnienie, opis } = czesci;
 
-  // Dyktowanie powstaje tutaj, bo tutaj jest kanał: warstwa pyta rdzeń
-  // o dostępność silnika mowy i wysyła nagranie, a `okno.ts` kanału nie zna.
-  // Przepływ zna oba końce, więc składa warstwę i oddaje ją oknu; pasek
-  // polecenia bierze ją stamtąd i rysuje mikrofon — albo go nie rysuje, gdy
-  // warstwa mówi, że nie ma czym nagrać (krótszy pasek zamiast wyszarzonego
-  // przycisku).
+  // Dyktowanie powstaje w przepływie, bo tu jest kanał — przepływ składa warstwę i oddaje ją oknu.
   okno.podlaczDyktowanie(utworzDyktowanie(kanal));
   const oczekujace: string[] = [];
   const zestrumieniowane = new Set<string>();
@@ -50,15 +40,7 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
     return uzgodnienie.okno()?.id ?? '';
   }
 
-  /**
-   * Czy okno prowadzi turę. Ustawia się przy nadaniu wiadomości, gaśnie ze
-   * zdarzeniem domykającym strumień (koperta z `done`).
-   *
-   * Znacznik jest przybliżeniem: rozstrzyga wyłącznie o tym, czy poprzedzić
-   * wysłanie zatrzymaniem. Prawdę o stanie okna zna rdzeń i to on odmawia —
-   * znacznik nieaktualny kosztuje jedno zbędne `message.stop`, które zawsze
-   * odpowiada, a nie utratę wiadomości.
-   */
+  /** Znacznik tury jest przybliżeniem: rozstrzyga tylko, czy poprzedzić wysłanie zatrzymaniem tury. */
   let turaWBiegu = false;
 
   function nadajTresc(tresc: string): void {
@@ -76,22 +58,7 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
     );
   }
 
-  /**
-   * Wysyła wiadomość, a gdy okno prowadzi turę — poprzedza ją zatrzymaniem.
-   *
-   * Przerwanie jest jawne: `message.send` skierowany do okna, które odpowiada,
-   * odmawia kodem `conflict` zamiast skasować odpowiedź w połowie zdania.
-   * Klient wysyła więc parę — najpierw `message.stop`, po jego odpowiedzi
-   * `message.send`.
-   *
-   * Kolejność jest sekwencyjna, nie równoległa: obie komendy nadane naraz
-   * dotarłyby w kolejności niegwarantowanej i wysłanie mogłoby wyprzedzić
-   * zatrzymanie, czyli trafić na okno nadal zajęte i odmówić.
-   *
-   * Nieudane zatrzymanie nie wstrzymuje wysłania. Jeżeli tura zdążyła
-   * tymczasem dobiec końca sama, wysłanie przejdzie; jeżeli nie — odmowa
-   * przyjdzie z rdzenia.
-   */
+  /** Przerwanie jest jawne: wysyłka do zajętego okna odmawia konfliktem zamiast skasować odpowiedź. */
   function wyslijTresc(tresc: string): void {
     if (!turaWBiegu) {
       nadajTresc(tresc);
@@ -103,9 +70,7 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
     });
   }
 
-  // Stan transportu trafia do nagłówka, a nawiązanie połączenia rozpoczyna
-  // uzgodnienie. Ponowne połączenie nie zakłada drugiego okna, jeżeli rdzeń
-  // otworzył je już wcześniej.
+  // Ponowne połączenie nie zakłada drugiego okna, jeżeli rdzeń otworzył już wcześniej to samo okno.
   transport.naStan((stan) => {
     okno.pokazStan(stan, transport.oczekujace());
     if (stan === 'polaczony' && uzgodnienie.okno() === null) uzgodnienie.rozpocznij();
@@ -129,8 +94,7 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
   kanal.naZdarzenie(EventType.StreamChunk, (fragment, koperta) => {
     if (fragment.windowId !== idOkna()) return;
     zestrumieniowane.add(fragment.messageId);
-    // Zdarzenie domykające gasi znacznik tury — jedno na turę, także po błędzie
-    // i po przerwaniu (server/internal/core/strumien_odpowiedzi.go).
+    // Zdarzenie domykające gasi znacznik tury raz na turę, także po błędzie i po przerwaniu strumienia.
     if (koperta.done === true) turaWBiegu = false;
     pokazFragment(okno, persona, fragment);
   });
@@ -146,9 +110,7 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
     });
   });
 
-  // Zmiana okna niesie także jego moduł. `workspace.enter` przestawia moduł
-  // tego okna zamiast zakładać drugie, więc okno rekonfiguruje pasek narzędzi,
-  // panel akcji i kontekst, a wątek zostaje nietknięty.
+  // Zmiana okna niesie też jego moduł: okno rekonfiguruje pasek narzędzi, panel akcji i kontekst.
   kanal.naZdarzenie(EventType.WindowChanged, ({ change, window }) => {
     if (window.id !== idOkna()) return;
     okno.ustawModul(window.moduleId);
@@ -156,13 +118,13 @@ export function polaczPrzeplyw(czesci: CzesciPrzeplywu): void {
   });
 }
 
-/** Komunikat o etapie uzgodnienia z rdzeniem. */
+/** Komunikat o etapie uzgodnienia z rdzeniem, pokazywany operatorowi w trakcie zakładania okna komunikacji. */
 function opisPostepu(postep: PostepUzgodnienia): string {
   const etap = nazwaEtapu(postep.etap);
   return postep.udany ? etap : `${etap} — ${opisBledu(postep.blad)}`;
 }
 
-/** Opis błędu kontraktu dla operatora. */
+/** Opis błędu kontraktu przedstawiany operatorowi, gdy uzgodnienie okna z rdzeniem całkiem się nie powiedzie. */
 function opisBledu(blad: ErrorInfo | undefined): string {
   if (blad === undefined) return 'rdzeń nie podał przyczyny';
   return `${blad.message} (${blad.code})`;

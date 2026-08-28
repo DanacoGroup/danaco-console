@@ -12,31 +12,7 @@ import { utworzWykazHistorii } from './wykaz-historii';
 import { utworzZrodloHistorii } from './zrodlo-historii';
 
 /**
- * Historia rozmowy — okno pomocnicze stojące obok rozmowy każdego gospodarza.
- *
- * Panel jest drogą Operatora do `history.load`, `history.delete`
- * i `retention.set`: rdzeń trzyma wypowiedzi okna trwale i umie je oddać od
- * najnowszej, skasować oraz przyciąć zasadą przechowywania.
- *
- * To nie jest drugi widok rozmowy. Kolumna rozmowy pokazuje turę bieżącą,
- * rosnącą na żywo strumieniem fragmentów; panel pokazuje zapis trwały tego
- * samego okna od pozycji najnowszej wstecz, stronicowany kursorem czasu —
- * czyli to, czego rozmowa nie pokazuje, bo nie sięga poza swoją sesję. Panel
- * nie nadaje wiadomości i nie zna komendy nadania.
- *
- * Zamiast pytania „czy na pewno" przed czynnością stoi odpowiedź po niej:
- * rdzeń oddaje liczbę usuniętych pozycji, a panel mówi ją wprost, żeby nic nie
- * znikało po cichu. Wyjątkiem jest wyczyszczenie całej historii okna — ten sam
- * wyjątek, który ma kasowanie sesji, o tym samym zasięgu, czyli czynność
- * nieodwracalna obejmująca całość. Usunięcie pozycji wskazanych potwierdzenia
- * nie ma: Operator wskazał je własną ręką.
- *
- * Wszystkie przyciski są czynne zawsze; brak wskazanych pozycji nie
- * wyszarza przycisku, tylko wraca zdaniem, co się stało.
- *
- * Gospodarz bywa bez okna nadanego przez rdzeń; `history.load` wymaga wtedy
- * czegoś, czego nie ma, i panel mówi to wprost zamiast pokazać pustą listę.
- * Nastawa retencji zostaje czynna, bo zakres `global` okna nie potrzebuje.
+ * Historia rozmowy to okno pomocnicze stojące obok rozmowy każdego gospodarza, dające Operatorowi drogę do odczytu, usuwania i przycinania trwale zapisanych wypowiedzi zasadą przechowywania.
  */
 export interface OknoHistoriiRozmowy extends PanelPomocniczy {
   element: HTMLElement;
@@ -44,10 +20,10 @@ export interface OknoHistoriiRozmowy extends PanelPomocniczy {
   zamknij(): void;
 }
 
-/** Ile pozycji panel prosi jedną stroną wykazu. */
+/** Ile pozycji panel prosi jedną stroną wykazu przy każdym kolejnym odczycie historii rozmowy z rdzenia. */
 const STRONA_DOMYSLNA = 50;
 
-/** Stan zmienny panelu — jednym obiektem, bo obsługa stoi poza wytwórnią. */
+/** Stan zmienny panelu historii trzymany jednym obiektem, bo obsługa zdarzeń stoi poza wytwórnią panelu. */
 interface KontekstHistorii {
   pozycje: HistoryEntry[];
   /** Ile pozycji rdzeń naliczył przy ostatnim odczycie — może być więcej niż widać. */
@@ -85,9 +61,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
           return;
         }
         nastawa.pokazZasade(wynik.wynik.policy);
-        // Rdzeń egzekwuje zasadę zaraz po zapisie, więc wykaz sprzed zapisu
-        // jest już nieprawdziwy — bez ponownego odczytu panel pokazywałby
-        // pozycje, których w bazie nie ma.
+        // Rdzeń egzekwuje zasadę zaraz po zapisie, więc panel odczytuje wykaz zamiast pokazać stare pozycje.
         odswiez();
       });
     },
@@ -127,10 +101,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
       .then((wynik) => przyjmij(kontekst, tresc, wynik, true, () => { odczytanoSesje(); rysuj(); }));
   }
 
-  /**
-   * Sesja odczytana z pozycji — jedyne miejsce, w którym panel ją widzi.
-   * Bez niej nastawa retencji nie ma czym wypełnić zakresu `session`.
-   */
+  /** Sesja odczytana z pozycji jest jedynym miejscem, gdzie panel ją widzi; wypełnia nią zakres retencji. */
   function odczytanoSesje(): void {
     const zSesja = kontekst.pozycje.find((pozycja) => (pozycja.sessionId ?? '') !== '');
     nastawa.ustawSesje(zSesja?.sessionId ?? '');
@@ -139,9 +110,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
   function usunWskazane(): void {
     const wskazane = wykaz.zaznaczone();
     if (wskazane.length === 0) {
-      // Czynność się wykonała i odpowiedziała. Gdyby żądanie poszło bez
-      // pozycji, rdzeń wyczyściłby całą historię okna — a to jest druga
-      // czynność, nie ta sama (`handlers_historia.go`).
+      // Żądanie bez pozycji czyściłoby całą historię okna — to inna czynność niż usunięcie wskazanych.
       tresc.potwierdzenie(
         'Nie wskazano ani jednej pozycji, więc nic nie usunięto. Do wyczyszczenia całej ' +
           'historii tego okna służy osobna czynność obok.',
@@ -152,17 +121,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
     kasuj({ windowId: opcje.okno, entryIds: wskazane }, `wskazane pozycje (${wskazane.length})`);
   }
 
-  /**
-   * Czyszczenie całej historii okna — jedyna czynność panelu z potwierdzeniem.
-   *
-   * Wyjątek jest wąski i taki sam jak przy kasowaniu sesji: obejmuje czynność
-   * nieodwracalną sięgającą całości, a nie każde kasowanie. „Usuń wskazane"
-   * zostaje bez potwierdzenia, bo wskazanie pozycji jest zgodą.
-   *
-   * Modal woła rdzeń sam (dostaje wysyłkę), bo to on ma pokazać odpowiedź —
-   * odmowa i liczba usuniętych padają tam, gdzie Operator patrzy w chwili
-   * czynności. Panel powtarza je u siebie i przeładowuje wykaz.
-   */
+  /** Czyszczenie całej historii okna to jedyna czynność panelu z potwierdzeniem, bo jest nieodwracalna. */
   function wyczysc(): void {
     if (opcje.okno.trim() === '') {
       tresc.potwierdzenie(ZDANIE_BEZ_OKNA, false);
@@ -177,9 +136,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
       },
       () => zrodlo.usun({ windowId: opcje.okno }),
     ).then((odpowiedz) => {
-      // `null` znaczy „Operator zostawił historię" albo „rdzeń odmówił" —
-      // w obu razach modal już powiedział, co się stało, a wykaz jest
-      // nietknięty i nie ma czego odświeżać.
+      // Wynik null znaczy, że Operator zostawił historię albo rdzeń odmówił; modal już to pokazał.
       if (odpowiedz === null) return;
       tresc.potwierdzenie(
         `Usunięto ${odpowiedz.deleted} pozycji historii (całą historię tego okna).`,
@@ -201,9 +158,7 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
         tresc.potwierdzenie(`Rdzeń odmówił usunięcia. ${powod(wynik)}`, false);
         return;
       }
-      // Liczba idzie do Operatora także wtedy, gdy wynosi zero: „usunięto 0"
-      // to prawda o czynności, a milczenie na tym miejscu byłoby zniknięciem
-      // po cichu.
+      // Liczba usuniętych idzie do Operatora nawet gdy wynosi zero — milczenie byłoby zniknięciem po cichu.
       tresc.potwierdzenie(`Usunięto ${wynik.wynik.deleted} pozycji historii (${co}).`, true);
       odswiez();
     });
@@ -223,29 +178,21 @@ export function utworzOknoHistoriiRozmowy(opcje: OpcjePanelu): OknoHistoriiRozmo
   rama.narzedzia.append(strona);
   rama.cialo.append(tresc.element, nastawa.element);
 
-  // Przerysowanie po każdej zmianie progów: zapowiedź „co zasada zrobi" ma iść
-  // za ręką Operatora, a nie za zapisem. Po zapisie byłaby już nie zapowiedzią,
-  // tylko sprawozdaniem ze straty.
+  // Przerysowanie idzie za ręką Operatora, nie za zapisem — inaczej byłoby już sprawozdaniem ze straty.
   const odsubskrybujProgi = nastawa.naZmiane(rysuj);
-  // Zaznaczenie zmienia wyłącznie podpis czynności, a nie wykaz — przerysowanie
-  // wykazu przy każdym kliknięciu odznaczałoby to, co Operator właśnie wskazał.
+  // Zaznaczenie zmienia tylko podpis czynności; przerysowanie wykazu odznaczałoby wskazanie Operatora.
   const odsubskrybujWybor = wykaz.naZmianeZaznaczenia(() => {
     const ile = wykaz.zaznaczone().length;
     usunPrzycisk.textContent = ile === 0 ? 'Usuń wskazane' : `Usuń wskazane (${ile})`;
   });
 
-  // Historia zmienia się także cudzą ręką: inne okno kasuje pozycje, zasada
-  // zakresu globalnego tnie wiele okien naraz, przemiatanie przy starcie
-  // rdzenia zabiera stare wypowiedzi. Bez tej subskrypcji panel pokazywałby
-  // wykaz, który przestał być prawdziwy — i nic by o tym nie powiedział.
+  // Historia zmienia się też cudzą ręką, więc bez subskrypcji panel pokazywałby nieprawdziwy już wykaz.
   const odsubskrybujZmiane = zrodlo.naZmianeHistorii((zdarzenie) => {
     if (opcje.okno.trim() === '' || zdarzenie.windowId !== opcje.okno) return;
     odswiez();
   });
 
-  // Pierwszego odczytu panel nie robi sam — robi go gospodarz przez `odswiez()`,
-  // tak jak przy podglądzie w tle. Inaczej otwarcie panelu wołałoby
-  // `history.load` dwa razy pod rząd.
+  // Pierwszego odczytu panel nie robi sam — robi go gospodarz, inaczej odczyt poszedłby dwukrotnie.
   rysuj();
 
   return {
@@ -270,7 +217,7 @@ function zadanieOdczytu(okno: string, stronaTekst: string, kursor: number | null
   return zadanie;
 }
 
-/** Wielkość strony z pola Operatora; wartość nieczytelna wraca do domyślnej. */
+/** Wielkość strony żądania z pola formularza Operatora; wartość nieczytelna wraca do domyślnej liczby pozycji strony. */
 function stronaZTekstu(tekst: string): number {
   const liczba = Number.parseInt(tekst, 10);
   if (!Number.isFinite(liczba) || liczba <= 0) return STRONA_DOMYSLNA;
@@ -278,11 +225,7 @@ function stronaZTekstu(tekst: string): number {
 }
 
 /**
- * Odpowiedź `history.load` — poza wytwórnią, bierze kontekst wprost.
- *
- * @param dolaczaj `true` przy dociąganiu strony starszej: pozycje dochodzą na
- *   koniec wykazu zamiast go zastąpić. Zastąpienie przy dociąganiu skróciłoby
- *   widok do jednej strony i wyglądało jak utrata pozycji.
+ * Odpowiedź żądania odczytu historii poza wytwórnią bierze kontekst wprost, a flaga dociągania rozstrzyga, czy pozycje zastępują wykaz, czy dochodzą na jego koniec.
  */
 function przyjmij(
   kontekst: KontekstHistorii,
@@ -292,8 +235,7 @@ function przyjmij(
   rysuj: () => void,
 ): void {
   if (!wynik.udany || wynik.wynik === undefined) {
-    // Odmowa nie może wyglądać jak pusta historia: „nie udało się zapytać" to
-    // nie to samo co „nic nie zapisano".
+    // Odmowa nie może wyglądać jak pusta historia — brak odpowiedzi to nie to samo co brak pozycji.
     tresc.blad('Rdzeń odmówił odczytu historii rozmowy tego okna.', wynik.blad);
     return;
   }
@@ -306,7 +248,7 @@ function przyjmij(
   tresc.potwierdzenie(zdanieOdczytu(kontekst, wynik.wynik.entries.length, dolaczaj), true);
 }
 
-/** Zdanie po odczycie — mówi, ile widać i ile jeszcze zostało w rdzeniu. */
+/** Zdanie pokazywane po odczycie historii — mówi, ile pozycji widać i ile jeszcze zostało w samym rdzeniu. */
 function zdanieOdczytu(kontekst: KontekstHistorii, doszlo: number, dolaczaj: boolean): string {
   const wstep = dolaczaj
     ? `Doszło ${doszlo} pozycji starszych.`
@@ -331,13 +273,13 @@ function zdaniePustego(kontekst: KontekstHistorii, okno: string): string {
   );
 }
 
-/** Brak okna nadanego przez rdzeń — powód wypisany, bo pustka sama go nie niesie. */
+/** Brak okna nadanego przez rdzeń — powód niedostępności wypisany wprost, bo sama pustka go nie niesie. */
 const ZDANIE_BEZ_OKNA =
   'Gospodarz nie ma okna nadanego przez rdzeń, a historia jest własnością OKNA — nie ma więc ' +
   'czego odczytać ani czego usunąć. Zasadę przechowywania w zakresie całej instalacji nadal ' +
   'da się stąd ustawić: ona okna nie potrzebuje.';
 
-/** Treść odmowy rdzenia w jednym zdaniu — kod błędu wprost, bez tłumaczenia. */
+/** Treść odmowy rdzenia podana jednym zdaniem wprost Operatorowi — sam kod błędu, bez dodatkowego tłumaczenia. */
 function powod(wynik: Wynik<unknown>): string {
   return wynik.blad === undefined ? '' : `Powód: ${wynik.blad.message} (${wynik.blad.code}).`;
 }

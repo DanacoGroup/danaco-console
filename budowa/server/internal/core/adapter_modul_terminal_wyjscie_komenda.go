@@ -1,16 +1,7 @@
 // Komenda `terminal.output.stream` — zapis okna na zbiorcze wyjście wszystkich
-// otwartych kart terminala wraz z ogonem historii.
-//
-// Typ poniżej rozszerza port zamiast zakładać drugi adapter: osadza adapter
-// modułu Terminal, więc niesie komplet jego komend i jest tym samym bytem,
-// którym idą karty i procesy. Dziennik zbiorczy podpina się przy montażu,
-// owijając nadajnik istniejącej pompy (`ZDziennikiemWyjscia`), a nie zakładając
-// drugiej pompy.
-//
-// Odpowiedź niesie dwa niezależne pola: `subscribed` mówi o zapisie okna na
-// strumień, `lines` o ogonie historii. Żądanie bez `windowId` jest w kontrakcie
-// dopuszczone i znaczy sam odczyt ogona — odpowiedź niesie wtedy
-// `subscribed: false` wraz z wierszami.
+// otwartych kart terminala wraz z ogonem historii. Odpowiedź niesie dwa
+// niezależne pola: `subscribed` mówi o zapisie okna na strumień, `lines` o
+// ogonie historii.
 package core
 
 import (
@@ -23,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność rozszerzonego adaptera z rozszerzonym portem sprawdza kompilator.
+// Zgodność rozszerzonego adaptera z rozszerzonym portem sprawdza kompilator w
+// chwili budowania modułu.
 var _ WyjscieTerminala = (*adapterWyjsciaTerminala)(nil)
 
 // adapterWyjsciaTerminala wypełnia port WyjscieTerminala: adapter modułu
@@ -31,24 +23,20 @@ var _ WyjscieTerminala = (*adapterWyjsciaTerminala)(nil)
 type adapterWyjsciaTerminala struct {
 	*adapterTerminala
 	// dziennik jest niezerowy, gdy pompa wyjścia ma nadajnik, który dało się
-	// owinąć. Zerowy powoduje odmowę komendy z kodem `internal_error`.
+	// owinąć.
 	dziennik *dziennikWyjscia
 }
 
 // ZDziennikiemWyjscia rozszerza adapter modułu Terminal o rodzinę zbiorczego
 // wyjścia. Owija nadajnik pompy, więc dotychczasowa droga fragmentów zostaje
 // nietknięta, a dziennik dostaje ich kopię.
-//
-// Wywołanie jest bezpieczne przy powtórzeniu: nadajnik owinięty raz nie owija
-// się drugi raz, bo każde owinięcie dokładałoby kolejną kopię tych samych
-// wierszy do tego samego dziennika.
 func (a *adapterTerminala) ZDziennikiemWyjscia() *adapterWyjsciaTerminala {
 	if a == nil {
 		return nil
 	}
 	if a.wyjscie == nil || a.wyjscie.nadajnik == nil {
-		// Moduł bez nadajnika pracuje dalej — karty i procesy działają — lecz
-		// zbiorczego wyjścia nie ma z czego złożyć. Komenda powie to wprost.
+		// Moduł bez nadajnika pracuje dalej, lecz zbiorczego wyjścia nie ma z czego
+		// złożyć.
 		return &adapterWyjsciaTerminala{adapterTerminala: a}
 	}
 	if opakowany, juz := a.wyjscie.nadajnik.(*nadajnikZDziennikiem); juz {
@@ -60,7 +48,8 @@ func (a *adapterTerminala) ZDziennikiemWyjscia() *adapterWyjsciaTerminala {
 	return &adapterWyjsciaTerminala{adapterTerminala: a, dziennik: dziennik}
 }
 
-// StrumienWyjscia obsługuje `terminal.output.stream`.
+// StrumienWyjscia obsługuje `terminal.output.stream`, zapisując okno na
+// zbiorcze wyjście kart wraz z ogonem historii.
 func (a *adapterWyjsciaTerminala) StrumienWyjscia(ctx context.Context,
 	z shared.TerminalOutputStreamRequest) (shared.TerminalOutputStreamResponse, error) {
 
@@ -81,8 +70,7 @@ func (a *adapterWyjsciaTerminala) StrumienWyjscia(ctx context.Context,
 
 	zapisane := false
 	if oknoKod := strings.TrimSpace(wartoscTekstu(z.WindowId)); oknoKod != "" {
-		// Okno zamknięte nie odbierze niczego, więc zapis na strumień kończy
-		// się odmową zamiast milczącego przyjęcia.
+		// Okno zamknięte nie odbierze niczego, zapis na strumień kończy się odmową.
 		okno, err := a.oknoWykonania(oknoKod)
 		if err != nil {
 			return shared.TerminalOutputStreamResponse{}, err
@@ -155,10 +143,8 @@ func (a *adapterWyjsciaTerminala) sprawdzKarte(ctx context.Context, kod string) 
 		"moduł Terminal: karta "+kod+" nie występuje ani w rejestrze rdzenia, ani w dzienniku kart"))
 }
 
-// odsiejZamknieteOkna wykreśla obserwacje okien, których rejestr już nie zna.
-// Kontrakt nie ma komendy wypisania się ze strumienia, a okno zamknięte nie
-// przestaje być obserwatorem samo z siebie, więc porządkowanie odbywa się przy
-// każdym kolejnym żądaniu tej komendy.
+// odsiejZamknieteOkna wykreśla obserwacje okien, których rejestr już nie zna,
+// bo kontrakt nie ma komendy wypisania się ze strumienia.
 func (a *adapterWyjsciaTerminala) odsiejZamknieteOkna() {
 	if a.okna == nil {
 		return

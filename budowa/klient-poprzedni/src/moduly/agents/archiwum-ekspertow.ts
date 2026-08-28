@@ -15,29 +15,10 @@ import { imie, odmowaRdzenia, wierszWykazu } from './archiwum-kontrolki';
 import { utworzZrodloWersjiEksperta } from './zrodlo-wersji-eksperta';
 
 /**
- * Panel „Archiwum ekspertów” Agent Buildera — archiwizacja zamiast usunięcia,
- * wykaz zarchiwizowanych i przywrócenie z archiwum.
- *
- * Historia wersji ma własny panel (`historia-wersji.ts`) i tu jej nie ma:
- * archiwum odpowiada na pytanie, gdzie ekspert poszedł, a historia — co się
- * z jego tożsamością działo. Dwa wykazy wersji w jednym oknie byłyby dwiema
- * prawdami o tym samym.
- *
- * Kontrolka pyta rdzeń, a nie stałą: wywołanie dostaje wyłącznie czynność,
- * którą rdzeń melduje w `connection.hello`; pozostałe zostają kontrolką
- * nazywającą brak. Dzięki temu panel mówi prawdę także przed rdzeniem starszym
- * niż on sam — przy wdrożeniach on-premise to stan normalny.
- *
- * Archiwizacja nie jest wyłączeniem, choć `agent.update { enabled: false }`
- * z `agent.list { enabledOnly: true }` wyglądałyby podobnie. Wyłączony ekspert
- * zostaje w bibliotece i da się go edytować, a wyłączenie znaczy „nie obsługuje
- * okien”, nie „zeszedł z drogi”. Archiwum ma własne komendy.
- *
- * `agent.restore` dotyczy pozycji, nie panelu — stoi przy każdym wierszu wykazu
- * niżej, bez kontrolki zbiorczej, która musiałaby pytać „którego?”.
+ * Panel „Archiwum ekspertów” Agent Buildera obsługuje archiwizację, wykaz
+ * zarchiwizowanych oraz przywrócenie eksperta.
  */
-
-/** Czynność panelu wraz z nazwą komendy, która ma ją unieść. */
+/** Czynność panelu opisana wraz z nazwą komendy kontraktu, która ma tę czynność wykonać po stronie rdzenia. */
 export interface CzynnoscArchiwum {
   /** Nazwa komendy w konwencji kontraktu — po angielsku, `obszar.zasob.akcja`. */
   komenda: string;
@@ -49,7 +30,7 @@ export interface CzynnoscArchiwum {
   wymagaEksperta: boolean;
 }
 
-/** Czynności wywoływane wprost z panelu. */
+/** Czynności wywoływane wprost z panelu, niezależnie od wybranej pozycji w wykazie całego archiwum ekspertów. */
 export const CZYNNOSCI_ARCHIWUM: readonly CzynnoscArchiwum[] = [
   {
     komenda: 'agent.archive',
@@ -92,12 +73,7 @@ export interface PanelArchiwum {
   rozlacz(): void;
 }
 
-/**
- * @param przeladuj wołane po zmianie, która rusza bibliotekę czynną
- *        (archiwizacja, powrót z archiwum). Pominięte
- *        znosi się samo: panel działa, a biblioteka odświeży się przy
- *        najbliższym odczycie.
- */
+/** @param przeladuj wołany po zmianie stanu biblioteki czynnej: archiwizacji eksperta albo jego przywróceniu z archiwum. */
 export function utworzPanelArchiwum(kanal: Kanal, przeladuj?: () => void): PanelArchiwum {
   const zrodlo = utworzZrodloWersjiEksperta(kanal);
   const nazwyKomend = WSZYSTKIE.map((czynnosc) => czynnosc.komenda);
@@ -248,14 +224,7 @@ export function utworzPanelArchiwum(kanal: Kanal, przeladuj?: () => void): Panel
 
 
 
-/**
- * Jeden wiersz czynności: nazwa, przeznaczenie i kontrolka.
- *
- * Czynność, którą rdzeń melduje, dostaje kontrolkę wywołującą. Czynność bez
- * drogi zostaje kontrolką klikalną, która naciśnięta nazywa brak dymkiem,
- * zamiast milczeć albo być wygaszona. Czynność pozycji nie ma kontrolki
- * zbiorczej — jej miejsce jest przy wierszu wykazu.
- */
+/** Jeden wiersz czynności: nazwa, przeznaczenie oraz kontrolka wywołująca daną czynność albo nazywająca jej brak w kontrakcie. */
 function wierszCzynnosci(
   kanal: Kanal,
   czynnosc: CzynnoscArchiwum,

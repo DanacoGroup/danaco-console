@@ -8,22 +8,9 @@ import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Droga okien warsztatowych modułu Design do rdzenia: wykaz materiału i
- * wykonanie czynności.
- *
- * `wykonaj` jest jedną drogą na siedemdziesiąt pięć komend, bo wszystkie idą tak
- * samo: nazwa komendy ze stałych kontraktu, treść żądania złożona z formularza.
- * Nazwa nie jest tu nigdy napisem wpisanym z pamięci — przychodzi z katalogu
- * czynności (`czynnosci-warsztatow-designu.ts`), a ten bierze ją ze stałych.
- *
- * Kształt odpowiedzi sprawdza RDZEŃ i odsyła odmowę walidacji z nazwą pola.
- * Klient tego nie zastąpi: kontrakt rozstrzyga po stronie rdzenia, a drugie
- * sprawdzenie tutaj byłoby drugą prawdą o tym, co wolno wysłać — i rozjechałoby
- * się z pierwszą przy pierwszej zmianie kontraktu.
- *
- * Materiał bierze się z jednego magazynu zasobów (`design.asset.list`) — tego
- * samego, z którego czyta Assets Panel. Drugi wykaz materiału byłby drugim
- * miejscem, w którym ta sama treść żyje.
+ * Droga okien warsztatowych modułu Design do rdzenia: wykaz materiału komendą
+ * `design.asset.list` oraz wykonanie czynności komendą podaną przez katalog
+ * czynności warsztatów. Kształt odpowiedzi sprawdza rdzeń.
  */
 export interface ZrodloWarsztatowDesignu {
   /** Zasoby leżące w magazynie okna — materiał czynności warsztatów. */

@@ -2,19 +2,8 @@ package core
 
 import "danacoconsole/server/internal/konfig"
 
-// DefinicjeKataloguRoboczego zwraca definicje dwóch ustawień katalogu roboczego
-// gotowe do dołożenia do rejestru definicji rezolwera.
-//
-// Definicje powstają tutaj, nie w pakiecie konfig, z powodu kierunku zależności:
-// konfig nie zna pakietu core, a klucze i wartości domyślne należą do modułu
-// katalogu roboczego. Dołożenie ich do rejestru jest jednym wywołaniem
-// konfig.Rejestr.Dodaj przy montażu — rejestr jest zbiorem otwartym, więc nowa
-// pozycja okna konfiguracji nie zmienia rozstrzygania.
-//
-// Wartość domyślna podstawy jest pusta z zamysłem: miejsce instalacji aplikacji
-// głównej ustala się w chwili startu procesu i nie da się go zapisać stałą
-// tekstową. Pustkę czyta PodstawaLubInstalacja i zamienia na miejsce
-// instalacji.
+// DefinicjeKataloguRoboczego zwraca definicje dwóch ustawień katalogu roboczego gotowe do dołożenia
+// do rejestru definicji rezolwera, bo klucze i wartości domyślne należą do tego modułu.
 func DefinicjeKataloguRoboczego() []konfig.Definicja {
 	return []konfig.Definicja{
 		{

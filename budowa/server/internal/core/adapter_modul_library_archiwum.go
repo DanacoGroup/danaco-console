@@ -1,27 +1,6 @@
-// Moduł Library — utrwalenie archiwalne i przechowywanie:
-// `library.preservation.run`, `library.retention.set`, `library.retention.list`,
-// `library.package.export`.
-//
-// Trzy postacie utrwalenia to trzy odrębne standardy branżowe, nie warianty
-// jednego zapisu, więc każda ma tu własną drogę:
-//
-//   - **PDF/A** — dokument przechodzi przez `pdfcpu`: struktura zostaje
-//     uporządkowana, a wynik zwalidowany tą samą biblioteką. Zapis walidacji
-//     mówi WPROST, co sprawdzono: rdzeń nie ma walidatora profilu PDF/A-2b
-//     i nie orzeka zgodności z profilem, bo orzeczenie bez sprawdzenia jest
-//     pieczątką, nie utrwaleniem.
-//   - **BagIt** — pakiet w postaci Biblioteki Kongresu: `bagit.txt`,
-//     `bag-info.txt`, `manifest-sha256.txt` i katalog `data/`. Walidacja polega
-//     na przeliczeniu manifestu z bajtów spakowanych — pakiet, którego manifest
-//     się nie zgadza, jest wynikiem niepoprawnym i tak wchodzi do odpowiedzi.
-//   - **PREMIS/METS** — dokument XML opisujący obiekt, jego sumę kontrolną
-//     i zdarzenie utrwalenia. Wynikiem jest opis, nie kopia zasobu, więc pole
-//     zasobu wytworzonego wskazuje osobny plik opisu.
-//
-// Wszystko powstaje w kodzie wkompilowanym: `archive/zip`, `archive/tar`,
-// `compress/gzip`, `crypto/sha256`, `encoding/xml` i `pdfcpu`. Format 7z jest
-// jedynym, który sięga po arsenał serwerowy (`7z`), bo stdlib go nie zapisuje —
-// i tylko wtedy, gdy Operator wprost o ten format poprosi.
+// Pakiet obsługuje rodzinę komend `library.*`: utrwalenie archiwalne zasobu
+// w postaci PDF/A, BagIt albo PREMIS/METS, politykę retencji zasobów wraz
+// z jej rejestrem oraz wywóz paczki archiwum z repozytorium biblioteki.
 package core
 
 import (
@@ -52,20 +31,22 @@ import (
 	"danacoconsole/shared"
 )
 
-// profilPdfaDomyslny — odmiana profilu przyjmowana, gdy żądanie jej nie podaje.
+// profilPdfaDomyslny jest odmianą profilu PDF/A przyjmowaną do utrwalenia
+// archiwalnego, gdy żądanie nie podaje własnej odmiany profilu wprost.
 const profilPdfaDomyslny = "PDF/A-2b"
 
-// granicaPakowaniaArsenalem — pakowanie formatem 7z idzie procesem zewnętrznym
-// i musi mieć granicę czasu.
+// granicaPakowaniaArsenalem jest granicą czasu pakowania formatem 7z, które
+// idzie procesem zewnętrznym arsenału serwerowego, nie kodem wkompilowanym.
 const granicaPakowaniaArsenalem = 5 * time.Minute
 
-// narzedziePakowaniaBiblioteki opisuje binarium arsenału używane wyłącznie do
-// formatu 7z.
+// narzedziePakowaniaBiblioteki opisuje binarium arsenału serwerowego, którego
+// wywołanie moduł Library zleca wyłącznie przy pakowaniu formatem 7z.
 var narzedziePakowaniaBiblioteki = zewnetrzne.Narzedzie{
 	Nazwa: "7-Zip", Program: "7z", Pakiet: "p7zip-full",
 }
 
-// UtrwalArchiwalnie obsługuje `library.preservation.run`.
+// UtrwalArchiwalnie obsługuje `library.preservation.run`: utrwala wskazane
+// zasoby jedną z trzech postaci archiwalnych i oddaje wynik każdego z nich.
 func (a *adapterBiblioteki) UtrwalArchiwalnie(ctx context.Context,
 	z shared.LibraryPreservationRunRequest) (shared.LibraryPreservationRunResponse, error) {
 
@@ -99,7 +80,8 @@ func (a *adapterBiblioteki) UtrwalArchiwalnie(ctx context.Context,
 	}, nil
 }
 
-// utrwalZasob wykonuje jedno utrwalenie i odkłada po nim ślad w bazie.
+// utrwalZasob wykonuje jedno utrwalenie wskazaną postacią i odkłada po nim
+// ślad w bazie danych, wraz z zapisem albo nową wersją wytworu.
 func (a *adapterBiblioteki) utrwalZasob(ctx context.Context, zasob dane.PlikBiblioteki,
 	rodzaj shared.LibraryPreservationKind, profil string,
 	nowaWersja bool) (shared.LibraryPreservationResult, error) {
@@ -146,9 +128,7 @@ func (a *adapterBiblioteki) utrwalZasob(ctx context.Context, zasob dane.PlikBibl
 	}
 
 	if nowaWersja && rodzaj == shared.LibraryPreservationKindPdfa {
-		// Utrwalenie „w miejsce oryginału" jest dołożeniem wersji, nie
-		// nadpisaniem: poprzednia treść zostaje w historii, więc Operator ma
-		// dokąd wrócić, gdy normalizacja coś w dokumencie przestawi.
+		// Utrwalenie „w miejsce oryginału" jest dołożeniem wersji, nie nadpisaniem.
 		if err := a.dolozWersjeUtrwalenia(ctx, zasob, wytworzone, profil); err != nil {
 			return shared.LibraryPreservationResult{}, err
 		}
@@ -171,7 +151,8 @@ func (a *adapterBiblioteki) utrwalZasob(ctx context.Context, zasob dane.PlikBibl
 	return wynik, nil
 }
 
-// normalizujDokumentArchiwalnie porządkuje strukturę dokumentu i waliduje wynik.
+// normalizujDokumentArchiwalnie porządkuje strukturę dokumentu PDF i waliduje
+// wynik strukturalnie, bez orzekania zgodności z profilem PDF/A.
 func normalizujDokumentArchiwalnie(bajty []byte, profil string) ([]byte, bool, string) {
 	if !bytes.HasPrefix(bajty, []byte("%PDF-")) {
 		return nil, false, "materiał nie jest dokumentem PDF — normalizacja archiwalna " +
@@ -199,7 +180,8 @@ func normalizujDokumentArchiwalnie(bajty []byte, profil string) ([]byte, bool, s
 	return wynik.Bytes(), true, raport + ". Walidacja struktury: pomyślna"
 }
 
-// pakietBagIt składa pakiet archiwalny BagIt i sprawdza jego manifest.
+// pakietBagIt składa pakiet archiwalny w postaci BagIt i sprawdza jego
+// manifest przeliczeniem sumy kontrolnej bajtów już spakowanych.
 func pakietBagIt(zasob dane.PlikBiblioteki, bajty []byte) ([]byte, bool, string, error) {
 	skrot := sha256.Sum256(bajty)
 	suma := hex.EncodeToString(skrot[:])
@@ -219,16 +201,15 @@ func pakietBagIt(zasob dane.PlikBiblioteki, bajty []byte) ([]byte, bool, string,
 	if err != nil {
 		return nil, false, "", bladBiblioteki(err)
 	}
-	// Walidacja idzie po spakowanych bajtach, nie po tych, z których pakiet
-	// powstał: pakiet, którego się nie da odczytać, jest pakietem nieważnym,
-	// choćby materiał był w porządku.
+	// Walidacja idzie po bajtach już spakowanych, nie po tych źródłowych.
 	zgodny, powod := sprawdzManifestBagIt(pakiet, sciezkaWPakiecie, suma)
 	raport := "sprawdzono: odczyt pakietu, obecność bagit.txt, bag-info.txt " +
 		"i manifest-sha256.txt oraz zgodność sumy sha256 pozycji data/ z manifestem. " + powod
 	return pakiet, zgodny, raport, nil
 }
 
-// sprawdzManifestBagIt odczytuje pakiet i porównuje sumę treści z manifestem.
+// sprawdzManifestBagIt odczytuje pakiet i porównuje sumę kontrolną treści
+// pozycji `data/` z sumą zapisaną w manifeście pakietu.
 func sprawdzManifestBagIt(pakiet []byte, sciezka, suma string) (bool, string) {
 	czytnik, err := zip.NewReader(bytes.NewReader(pakiet), int64(len(pakiet)))
 	if err != nil {
@@ -255,7 +236,8 @@ func sprawdzManifestBagIt(pakiet []byte, sciezka, suma string) (bool, string) {
 	return false, "Wynik: pakiet nie niesie pozycji " + sciezka
 }
 
-// opisPremisMets składa dokument METS z sekcją PREMIS opisującą utrwalenie.
+// opisPremisMets składa dokument METS z sekcją PREMIS opisującą obiekt, jego
+// sumę kontrolną i zdarzenie utrwalenia — wynikiem jest opis, nie kopia zasobu.
 func opisPremisMets(zasob dane.PlikBiblioteki, bajty []byte) ([]byte, bool, string, error) {
 	skrot := sha256.Sum256(bajty)
 	suma := hex.EncodeToString(skrot[:])
@@ -303,8 +285,7 @@ func opisPremisMets(zasob dane.PlikBiblioteki, bajty []byte) ([]byte, bool, stri
 	zapis.WriteString("</mets>\n")
 
 	tresc := []byte(zapis.String())
-	// Walidacja opisu: dokument musi dać się odczytać jako XML. Zapis niepoprawny
-	// składniowo byłby metadanymi utrwalenia, których żadne archiwum nie wciągnie.
+	// Walidacja opisu sprawdza, że dokument daje się odczytać jako XML.
 	poprawny := true
 	powod := "Wynik: zgodny"
 	if err := xml.Unmarshal(tresc, new(any)); err != nil {
@@ -315,7 +296,8 @@ func opisPremisMets(zasob dane.PlikBiblioteki, bajty []byte) ([]byte, bool, stri
 	return tresc, poprawny, raport, nil
 }
 
-// UstawRetencje obsługuje `library.retention.set`.
+// UstawRetencje obsługuje `library.retention.set`: zapisuje albo usuwa
+// politykę retencji i oddaje liczbę zasobów, których polityka dotyczy.
 func (a *adapterBiblioteki) UstawRetencje(ctx context.Context,
 	z shared.LibraryRetentionSetRequest) (shared.LibraryRetentionSetResponse, error) {
 
@@ -346,9 +328,7 @@ func (a *adapterBiblioteki) UstawRetencje(ctx context.Context,
 	if err != nil {
 		return shared.LibraryRetentionSetResponse{}, bladBiblioteki(err)
 	}
-	// Liczba objętych zasobów jest liczbą rzeczywistą, nie zapowiedzią: polityka
-	// zasięgu projektowego obejmuje zasoby tego projektu, globalna — wszystkie
-	// czynne.
+	// Liczba objętych zasobów jest liczbą rzeczywistą, przeliczoną, nie zapowiedzią.
 	objete, err := a.zasobyObjetePolityka(ctx, zapisana)
 	if err != nil {
 		return shared.LibraryRetentionSetResponse{}, err
@@ -429,8 +409,7 @@ func (a *adapterBiblioteki) zasobyObjetePolityka(ctx context.Context,
 		case "projekt":
 			filtr.ProjektID = polityka.ZasiegID
 		case "modul", "para_modulow", "srodowisko", "aplikacja", "okno", "rola", "karta_sesji":
-			// Poziomy, które nie zawężają zbioru zasobów: polityka obowiązuje
-			// całe repozytorium, a byt zasięgu mówi, GDZIE ją ustanowiono.
+			// Te poziomy nie zawężają zbioru zasobów: polityka obowiązuje całe repozytorium.
 		default:
 			filtr.KolekcjaKod = polityka.ZasiegID
 		}
@@ -442,15 +421,15 @@ func (a *adapterBiblioteki) zasobyObjetePolityka(ctx context.Context,
 	return wiersze, nil
 }
 
-// WywiezPaczke obsługuje `library.package.export`.
+// WywiezPaczke obsługuje `library.package.export`: składa z zasobów paczkę
+// archiwum wraz z manifestem sum kontrolnych i indeksem opisującym zawartość.
 func (a *adapterBiblioteki) WywiezPaczke(ctx context.Context,
 	z shared.LibraryPackageExportRequest) (shared.LibraryPackageExportResponse, error) {
 
 	kody := z.FileIds
 	kolekcja := z.CollectionId
 	if z.Kind == shared.LibraryPackageKindSnapshot {
-		// Migawka jest zapisem stanu CAŁEGO repozytorium — zawężenia żądania
-		// przestają wtedy obowiązywać, bo migawka części nie jest migawką.
+		// Migawka jest zapisem stanu całego repozytorium — zawężenia żądania nie obowiązują.
 		kody, kolekcja = nil, nil
 	}
 	zasoby, err := a.zasobyZbioru(ctx, kody, kolekcja)
@@ -470,8 +449,7 @@ func (a *adapterBiblioteki) WywiezPaczke(ctx context.Context,
 	for _, zasob := range zasoby {
 		bajty, err := a.bajtyZasobuBiblioteki(zasob)
 		if err != nil {
-			// Zasób bez treści nie wywraca paczki: wchodzi do indeksu jako
-			// pozycja bez bajtów, żeby paczka mówiła prawdę o repozytorium.
+			// Zasób bez treści nie wywraca paczki: wchodzi do indeksu jako pozycja bez bajtów.
 			indeks = append(indeks, opisZasobuWPaczce(zasob, "", false))
 			continue
 		}
@@ -545,7 +523,8 @@ func (a *adapterBiblioteki) WywiezPaczke(ctx context.Context,
 	}, nil
 }
 
-// opisZasobuWPaczce składa pozycję indeksu paczki.
+// opisZasobuWPaczce składa pozycję indeksu paczki: tożsamość zasobu, jego
+// ścieżkę w archiwum, gdy zapisano treść, oraz typ i sumę kontrolną.
 func opisZasobuWPaczce(zasob dane.PlikBiblioteki, sciezka string, zTrescia bool) map[string]any {
 	wpis := map[string]any{
 		"id": zasob.Kod, "name": zasob.Nazwa, "hasContent": zTrescia,
@@ -562,13 +541,15 @@ func opisZasobuWPaczce(zasob dane.PlikBiblioteki, sciezka string, zTrescia bool)
 	return wpis
 }
 
-// pozycjaArchiwumBiblioteki to jeden wpis składanego archiwum.
+// pozycjaArchiwumBiblioteki to jeden wpis składanego archiwum: nazwa jego
+// ścieżki wewnątrz archiwum wraz z treścią bajtową tego wpisu.
 type pozycjaArchiwumBiblioteki struct {
 	nazwa string
 	tresc []byte
 }
 
-// spakuj składa archiwum we wskazanym formacie.
+// spakuj składa archiwum we wskazanym formacie: zip, tar.gz albo 7z przez
+// arsenał serwerowy, gdy wdrożenie ma program 7z wpięty.
 func (a *adapterBiblioteki) spakuj(ctx context.Context, pozycje []pozycjaArchiwumBiblioteki,
 	format string) ([]byte, error) {
 
@@ -593,7 +574,8 @@ func (a *adapterBiblioteki) spakuj(ctx context.Context, pozycje []pozycjaArchiwu
 	}
 }
 
-// archiwumZipBiblioteki składa archiwum ZIP w pamięci.
+// archiwumZipBiblioteki składa archiwum ZIP w pamięci z podanej listy wpisów,
+// bez zapisu na dysk pośredniego.
 func archiwumZipBiblioteki(pozycje []pozycjaArchiwumBiblioteki) ([]byte, error) {
 	var bufor bytes.Buffer
 	zapis := zip.NewWriter(&bufor)
@@ -612,7 +594,8 @@ func archiwumZipBiblioteki(pozycje []pozycjaArchiwumBiblioteki) ([]byte, error) 
 	return bufor.Bytes(), nil
 }
 
-// archiwumTarGzBiblioteki składa archiwum tar spakowane gzipem.
+// archiwumTarGzBiblioteki składa archiwum tar spakowane gzipem z podanej
+// listy wpisów, bez zapisu na dysk pośredniego.
 func archiwumTarGzBiblioteki(pozycje []pozycjaArchiwumBiblioteki) ([]byte, error) {
 	var bufor bytes.Buffer
 	spakowanie := gzip.NewWriter(&bufor)
@@ -638,12 +621,9 @@ func archiwumTarGzBiblioteki(pozycje []pozycjaArchiwumBiblioteki) ([]byte, error
 	return bufor.Bytes(), nil
 }
 
-// archiwum7z składa archiwum formatem 7z — jedyną drogą przez arsenał serwerowy.
-//
-// Standardowa biblioteka Go nie zapisuje tego formatu, a Operator prosi o niego
-// wprost. Program `7z` stoi na serwerze razem z rdzeniem, więc wywołanie idzie
-// jedyną dozwoloną drogą; jego brak jest odmową NAZWANĄ, z podaniem formatów,
-// które rdzeń składa sam.
+// archiwum7z składa archiwum formatem 7z jedyną drogą, którą rdzeń zna:
+// wywołaniem programu `7z` arsenału serwerowego, bo biblioteka standardowa
+// Go tego formatu nie zapisuje.
 func (a *adapterBiblioteki) archiwum7z(ctx context.Context,
 	pozycje []pozycjaArchiwumBiblioteki) ([]byte, error) {
 
@@ -696,7 +676,8 @@ func (a *adapterBiblioteki) archiwum7z(ctx context.Context,
 	return bajty, nil
 }
 
-// bajtyZasobuBiblioteki oddaje treść zasobu spod odwołania.
+// bajtyZasobuBiblioteki oddaje treść zasobu spod odwołania magazynu treści,
+// zapisanego przy jego wersji bieżącej.
 func (a *adapterBiblioteki) bajtyZasobuBiblioteki(zasob dane.PlikBiblioteki) ([]byte, error) {
 	if zasob.TrescOdwolanie == nil || *zasob.TrescOdwolanie == "" {
 		return nil, bladBrakuTresciBiblioteki(zasob.Kod)
@@ -747,7 +728,8 @@ func (a *adapterBiblioteki) odlozZasobBiblioteki(ctx context.Context, bajty []by
 	return plik.Kod, nil
 }
 
-// dolozWersjeUtrwalenia dokłada wynik utrwalenia jako nową wersję zasobu.
+// dolozWersjeUtrwalenia dokłada wynik utrwalenia jako nową wersję zasobu,
+// zamiast zakładać zasób osobny — poprzednia treść zostaje w historii.
 func (a *adapterBiblioteki) dolozWersjeUtrwalenia(ctx context.Context, zasob dane.PlikBiblioteki,
 	bajty []byte, profil string) error {
 
@@ -772,13 +754,15 @@ func (a *adapterBiblioteki) dolozWersjeUtrwalenia(ctx context.Context, zasob dan
 	return nil
 }
 
-// nazwaZUtrwaleniaBiblioteki składa nazwę wytworu utrwalenia.
+// nazwaZUtrwaleniaBiblioteki składa nazwę wytworu utrwalenia z trzonu nazwy
+// zasobu źródłowego i rozszerzenia właściwego postaci utrwalenia.
 func nazwaZUtrwaleniaBiblioteki(nazwa, rozszerzenie string) string {
 	trzon, _ := trzonIRozszerzenieBiblioteki(nazwa)
 	return trzon + "-utrwalony." + rozszerzenie
 }
 
-// politykaKontraktuBiblioteki przenosi wiersz polityki na kontrakt.
+// politykaKontraktuBiblioteki przenosi wiersz polityki retencji z bazy danych
+// na kształt polityki zwracany kontraktem komunikacji.
 func politykaKontraktuBiblioteki(wiersz dane.PolitykaRetencjiBiblioteki) shared.LibraryRetentionPolicy {
 	return shared.LibraryRetentionPolicy{
 		Id: wiersz.Kod, Scope: zasiegRetencjiKontraktu(wiersz.Zasieg), ScopeId: wiersz.ZasiegID,

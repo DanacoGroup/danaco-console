@@ -1,35 +1,15 @@
 import type { PozycjaMenu } from '../komponenty/menu-drzewo';
 import { utworzSterNastawy, type SterPaska } from './ster-nastawy';
 
-/**
- * Katalog roboczy — ster paska zlecenia. Rozstrzyga, na jakich plikach
- * zlecenie się wykona.
- *
- * Katalogi są listą, nie pojedynczą wartością, więc pozycje wykazu są
- * przełącznikami, a nie wyborem jednokrotnym: okno pracuje na wszystkich
- * naraz, a zdjęcie jednego z nich nie jest wyborem innego. Każda zmiana idzie
- * komendą `window.update` z pełną listą po zmianie — kontrakt niesie
- * `workingDirs` jako całość.
- *
- * W menu nie ma dodawania, bo nowy katalog wskazuje się wpisaniem ścieżki,
- * a drzewo oddaje klucz istniejącej pozycji i pola tekstowego nie ma. Rdzeń
- * nie ma też komendy dającej wykaz katalogów do wyboru, więc gałąź „dostępne
- * katalogi” byłaby atrapą. Zamiast niej stoi stopka otwierająca kolumnę
- * sterowania, gdzie pole ścieżki stoi i działa: menu obsługuje podłączenie,
- * stopka prowadzi do rejestracji.
- *
- * Na uchwycie stoi nazwa ostatniego odcinka ścieżki, nie cała ścieżka: pasek
- * ma zostać jednym rzędem, a wielokropek ucinałby ścieżkę od końca, czyli od
- * jedynej części, która ją rozróżnia. Cała ścieżka stoi w opisie pozycji.
- */
+// Katalog roboczy to ster paska zlecenia rozstrzygający, na jakich plikach zlecenie się wykona.
 
-/** Nazwa zmiany w komunikacie — ta sama, którą wysyła lista w kolumnie. */
+/** Nazwa zmiany w komunikacie do rdzenia — ta sama, którą wysyła lista katalogów w kolumnie sterowania. */
 const NAZWA = 'Katalogi robocze';
 
-/** Etykieta uchwytu przy pustej liście — mówi o braku, niczego nie udaje. */
+/** Etykieta uchwytu przy pustej liście katalogów — mówi wprost o braku, niczego nie udaje operatorowi wcale. */
 export const BRAK_KATALOGU = 'Bez katalogu';
 
-/** Zależności steru — wąskie i wstrzykiwane. */
+/** Zależności steru katalogów — wąskie i wstrzykiwane, obejmujące migawkę stanu, wysyłkę zmiany i otwarcie kolumny. */
 export interface ZaleznosciSteruKatalogow {
   /** Katalogi robocze okna ze stanu potwierdzonego przez rdzeń. */
   migawka(): { katalogi: readonly string[] };
@@ -55,9 +35,7 @@ export function utworzSterKatalogow(
     },
     wykonaj: (klucz) => {
       const katalogi = [...zaleznosci.migawka().katalogi];
-      // Zgaszony przełącznik zdejmuje katalog z okna. Katalogu, którego na
-      // liście nie ma, nie da się tu dołożyć — ścieżkę trzeba wpisać, a od tego
-      // jest stopka; wysyłka listy niezmienionej byłaby ruchem bez skutku.
+      // Zgaszony przełącznik zdejmuje katalog; dołożyć nowy można tylko wpisaniem ścieżki w stopce.
       return zaleznosci.zastosuj(NAZWA, {
         workingDirs: katalogi.filter((katalog) => katalog !== klucz),
       });

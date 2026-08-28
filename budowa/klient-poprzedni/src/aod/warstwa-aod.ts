@@ -16,26 +16,7 @@ import { KLASA_POWODU, type MagazynWyciszen } from './wyciszenie-aod';
 import { utworzKontekstWyciszenia, type KontekstWyciszenia } from './wyciszenie-kontekst';
 import { utworzMenuWyciszenia } from './wyciszenie-menu';
 
-/**
- * Warstwa Always On Display — trzy elementy funkcji globalnej złożone w jedną
- * powierzchnię: pływający awatar (warstwa 1), dymek kontekstowy sugestii
- * i kolumna boczna powierzchni interakcji (warstwa 2).
- *
- * Warstwa leży na `--dn-z-aod` (1200 wg `design/KANON.md`) i osadza się poza
- * obszarem podmienianym przez moduł, więc przełączenie środowiska ani modułu
- * nie zabiera awatara i nie przeładowuje kolumny (rozdz. 2.4 opracowania).
- *
- * To jedyne miejsce, które zna naraz cztery rzeczy i wiąże je regułą
- * opracowania:
- *   • kolejkę decyzji — ile sugestii czeka i o jakiej wadze;
- *   • stan obecności — tryb pełny/cichy/ukryty i trwające wyciszenie;
- *   • progi ujawniania — waga, limit godzinowy, odstęp między dymkami;
- *   • układ — szerokość otwartej kolumny, o którą odsuwa się awatar i dymek.
- *
- * Skróty klawiszowe załącznika A.1 są zaczepione tutaj, bo tylko tutaj widać
- * wszystkie trzy elementy naraz.
- */
-
+/** Warstwa Always On Display łączy pływający awatar, dymek kontekstowy sugestii i kolumnę boczną powierzchni interakcji w jedną powierzchnię osadzoną poza obszarem modułu, poza jego przełączeniami. */
 export interface WarstwaAod {
   /** Element do osadzenia w powłoce, poza obszarem roboczym modułu. */
   element: HTMLElement;
@@ -48,22 +29,10 @@ export interface WarstwaAod {
   rozlacz(): void;
 }
 
-/**
- * Szerokość obszaru roboczego, poniżej której kolumna nie mieści się obok pracy.
- *
- * Rozdz. 2.5 opracowania: przy kolumnach zwężonych poniżej progu czytelności
- * powierzchnia interakcji zwija się do dymka kontekstowego, a dymek skraca
- * treść do jednego zdania z działaniem „Rozwiń".
- */
+/** Stała podaje szerokość obszaru roboczego, poniżej której kolumna nie mieści się obok pracy i powierzchnia interakcji zwija się do dymka kontekstowego ze skróconą treścią. */
 const PROG_CZYTELNOSCI = 640;
 
-/**
- * @param magazyn magazyn stanu wyciszeń i trybu obecności — PODAWANY, nie brany
- *   na sztywno. Pominięty znaczy zapis miejscowy przeglądarki, `null` znaczy
- *   „bez zapisu". Gdy kontrakt poniesie wyciszenie nakładki jako byt rdzenia,
- *   podmiana magazynu w tym jednym wywołaniu przełoży zapis na rdzeń bez zmiany
- *   ani jednego wołacza.
- */
+/** Funkcja przyjmuje magazyn stanu wyciszeń i trybu obecności jako parametr: pominięty oznacza zapis miejscowy przeglądarki, wartość null oznacza pracę bez zapisu trwałego. */
 export function utworzWarstweAod(
   kanal: Kanal,
   opis: OpisKolumnyAod = {},
@@ -75,13 +44,7 @@ export function utworzWarstweAod(
   const element = document.createElement('div');
   element.className = 'ao-warstwa';
 
-  /**
-   * Kontekst wyciszenia kontekstowego — jedna kopia na warstwę.
-   *
-   * Czyta bieżący moduł i bieżącą kartę sesji z rdzenia. Menu przy awatarze
-   * i menu w nagłówku powierzchni sięgają po ten sam odczyt, więc obie kopie
-   * menu nazywają ten sam byt tą samą nazwą.
-   */
+  // Kontekst wyciszenia jest jedną kopią: menu przy awatarze i w kolumnie czytają ten sam odczyt.
   const kontekstWyciszenia: KontekstWyciszenia = utworzKontekstWyciszenia(kanal);
 
   const kolumna = utworzKolumneAod(kanal, obecnosc, opis, kontekstWyciszenia);
@@ -119,19 +82,7 @@ export function utworzWarstweAod(
     },
   });
 
-  /**
-   * Menu kebab NA POWIERZCHNI INTERAKCJI AWATARA — wyciszenie od ręki.
-   *
-   * Rozstrzygnięcie Właściciela z 17.08.2026: „dodatkowa akcja wyciszenia
-   * bezpośrednio z pozycji awatara". Opracowanie wskazuje tę samą drogę —
-   * rozdz. 2.6 i 8.3 nazywają menu kebab (⋮) miejscem wyciszania — więc menu
-   * jest tym samym komponentem, który stoi w nagłówku kolumny, a nie wzorem
-   * nowym.
-   *
-   * Kebab jest OSOBNYM wyzwalaczem: kliknięcie pojedyncze awatara nadal otwiera
-   * dymek, podwójne nadal otwiera powierzchnię interakcji. Wyciszenie nie
-   * wymaga przejścia do kolumny.
-   */
+  // Menu kebab na awatarze to ten sam komponent co w kolumnie — osobny wyzwalacz wyciszenia od ręki.
   const menuAwatara = utworzMenuWyciszenia({
     stan: obecnosc,
     teraz,
@@ -145,20 +96,14 @@ export function utworzWarstweAod(
 
   element.append(kolumna.element, dymek.element, awatar.element, menuAwatara.element);
 
-  /**
-   * Klucz decyzji, którą ostatnio ujawniono samoczynnie.
-   *
-   * Bez tego ta sama sugestia otwierałaby dymek przy każdym zdarzeniu telemetrii
-   * dotyczącym tego samego procesu — a rozdz. 3.1 mówi, że funkcja nie komentuje
-   * pracy w sposób ciągły.
-   */
+  // Klucz ostatnio ujawnionej decyzji chroni przed powtórnym otwarciem dymka przy tej samej sugestii.
   let ostatnioUjawniona: string | null = null;
 
   /** Najpilniejszy wpis kolejki albo `null`, gdy nic nie czeka. */
   function najpilniejszy(): WpisKolejkiDecyzji | null {
     const wpisy = kolumna.kolejka.wykaz(teraz());
     if (wpisy.length === 0) return null;
-    // Wykaz idzie od najdłużej czekającego; wagę wysoką przepuszczamy przed nią.
+    // Wykaz idzie od najdłużej czekającego; wagę wysoką przepuszcza się przed nią.
     const wysoka = wpisy.find((wpis) => wpis.decyzja.wagaUjawnienia === WagaUjawnienia.Wysoka);
     return wysoka ?? wpisy[0] ?? null;
   }
@@ -178,9 +123,7 @@ export function utworzWarstweAod(
 
     const wpis = najpilniejszy();
     if (wpis === null) {
-      // Rozdz. 3.6: przy braku istotnych zdarzeń funkcja nie wypełnia ciszy
-      // treścią zastępczą. Kliknięcie awatara przy pustej kolejce prowadzi więc
-      // wprost do powierzchni interakcji, a nie do pustego dymka.
+      // Przy pustej kolejce kliknięcie awatara otwiera powierzchnię interakcji, nie pusty dymek.
       kolumna.otworz();
       odswiezWyglad();
       return;
@@ -189,14 +132,7 @@ export function utworzWarstweAod(
     pokazDymek(wpis);
   }
 
-  /**
-   * Reguła samoczynnego ujawnienia — rozdz. 3.4 i 3.5 razem.
-   *
-   * Dymek otwiera się sam wyłącznie przy wadze wysokiej, przy nienaruszonym
-   * limicie godzinowym i odstępie, poza trybem cichym i poza wyciszeniem.
-   * Sugestia krytyczna wyciszona ujawnia się plakietką, bez dymka — i to robi
-   * `odswiezWyglad`, nie ta funkcja.
-   */
+  // Dymek otwiera się sam tylko przy wadze wysokiej, w progu godzinowym, poza trybem cichym.
   function rozwazUjawnienie(): void {
     const wpis = najpilniejszy();
     if (wpis === null) return;
@@ -213,14 +149,7 @@ export function utworzWarstweAod(
     pokazDymek(wpis);
   }
 
-  /**
-   * Decyzja opisana tym, co reguła wyciszenia musi o niej wiedzieć.
-   *
-   * Klasa zdarzenia wychodzi z powodu rozpoznania (rozdz. 3.2), karta sesji —
-   * z telemetrii, moduł — z okrężnego odczytu `window.list` w kontekście
-   * wyciszenia. Modułu, którego nakładka nie rozpoznaje, nie podstawiamy:
-   * sugestia bez modułu nie wpada w wyciszenie modułu.
-   */
+  // Klasa zdarzenia, sesja i moduł opisują decyzję regule wyciszenia; moduł nieznany jest pomijany.
   function opisUjawnienia(wpis: WpisKolejkiDecyzji): OpisUjawnienia {
     const idModulu = kontekstWyciszenia.modulOkna(wpis.decyzja.idOkna);
     return {
@@ -232,11 +161,10 @@ export function utworzWarstweAod(
     };
   }
 
-  /** Stan awatara wyliczony ze stanu obecności i z kolejki — rozdz. 2.4 i 9.1. */
+  // Stan awatara wynika ze stanu obecności i z kolejki oczekujących decyzji.
   function stanAwatara(liczba: number, wysoka: boolean, chwila: number): StanAwatara {
     if (obecnosc.tryb() === TrybObecnosci.Ukryty) return StanAwatara.Ukryty;
-    // Rozdz. 9.1: stan „Wyciszony" zachodzi przy wyciszeniu czasowym,
-    // kontekstowym ALBO klasy zdarzeń — nie tylko przy czasowym.
+    // Stan „Wyciszony” obejmuje wyciszenie czasowe, kontekstowe i wyciszenie klasy zdarzeń.
     if (obecnosc.czyJakiekolwiekWyciszenie(chwila)) return StanAwatara.Wyciszony;
     if (liczba === 0) return StanAwatara.Spoczynek;
     return wysoka ? StanAwatara.WagaWysoka : StanAwatara.SugestiaOczekujaca;
@@ -246,23 +174,13 @@ export function utworzWarstweAod(
     const chwila = teraz();
     const wpisy = kolumna.kolejka.wykaz(chwila);
 
-    /**
-     * Sugestie, które wyciszenie wybiórcze wstrzymuje — kontekstowe i klasy
-     * zdarzeń (rozdz. 3.5: „pozostałe zachowują pełne działanie").
-     *
-     * Plakietka liczy więc sugestie ujawniane, a nie wszystkie: liczba
-     * obejmująca wstrzymane obiecywałaby Operatorowi coś, czego wyciszenie mu
-     * nie pokaże. Że coś milczy, mówi stan awatara i menu wyciszania.
-     */
+    // Plakietka liczy sugestie ujawniane, nie wstrzymane wyciszeniem wybiórczym; wyciszenie znaczy awatar.
     const ujawniane = wpisy.filter((wpis) => !obecnosc.czySugestiaWstrzymana(opisUjawnienia(wpis), chwila));
     const wysoka = ujawniane.some((wpis) => wpis.decyzja.wagaUjawnienia === WagaUjawnienia.Wysoka);
 
     awatar.ustawStan(stanAwatara(ujawniane.length, wysoka, chwila));
 
-    // Wyciszenie czasowe chowa plakietkę (rozdz. 3.5) — z wyjątkiem sugestii
-    // krytycznej, która ujawnia się plakietką mimo KAŻDEGO wyciszenia. Wtedy
-    // plakietka liczy same sugestie krytyczne: liczba obejmująca wyciszone
-    // obiecywałaby Operatorowi coś, czego wyciszenie mu nie pokaże.
+    // Wyciszenie czasowe chowa plakietkę, poza sugestią krytyczną, ujawnianą mimo każdego wyciszenia.
     const krytyczne = wpisy.filter((wpis) => wpis.decyzja.krytyczna);
     const plakietkaOgolna = obecnosc.czyPlakietkaWidoczna(chwila);
     awatar.ustawLiczbe(plakietkaOgolna ? ujawniane.length : krytyczne.length);
@@ -280,19 +198,7 @@ export function utworzWarstweAod(
     zwezObszarRoboczy(odsuniecie);
   }
 
-  /**
-   * Zwężenie obszaru roboczego o szerokość otwartej kolumny.
-   *
-   * Rozdz. 2.1 opracowania: „Otwarcie powierzchni interakcji ZWĘŻA kolumny
-   * obszaru roboczego, NIE PRZESŁANIA ich". Sama kolumna leży w warstwie
-   * pozycjonowanej stale, więc bez tego kroku kładłaby się na pracy zamiast
-   * ustąpić jej miejsca.
-   *
-   * Zwężenie idzie wyściółką rodzica warstwy — powłoki, w której warstwa
-   * siedzi — a nie zmianą w katalogu powłoki: funkcja globalna dokłada się do
-   * układu, a nie przepisuje go. Klasa `ao-zwezenie` i szerokość jadą razem,
-   * więc powłoka bez otwartej kolumny nie nosi po niej śladu.
-   */
+  // Zwężenie obszaru roboczego idzie stylem rodzica warstwy, nie zmianą powłoki, więc znika bez śladu.
   function zwezObszarRoboczy(szerokosc: number): void {
     const gospodarz = element.parentElement;
     if (gospodarz === null) return;
@@ -307,7 +213,7 @@ export function utworzWarstweAod(
     gospodarz.style.setProperty('--ao-zwezenie', `${szerokosc}px`);
   }
 
-  // --- skróty klawiszowe załącznika A.1 -----------------------------------
+  // --- skróty klawiszowe ---------------------------------------------------
 
   function naKlawisz(zdarzenie: KeyboardEvent): void {
     const modyfikator = (zdarzenie.ctrlKey || zdarzenie.metaKey) && zdarzenie.shiftKey;
@@ -351,17 +257,13 @@ export function utworzWarstweAod(
 
   odswiezWyglad();
 
-  // Odczyt nadrabiający idzie od razu, bez otwierania kolumny: plakietka ma
-  // mówić prawdę, zanim Operator cokolwiek kliknie.
+  // Odczyt nadrabiający rusza od razu, bez otwierania kolumny, aby plakietka mówiła prawdę wcześniej.
   void kolumna.odswiezDecyzje().then(() => {
     odswiezWyglad();
     rozwazUjawnienie();
   });
 
-  // Kontekst wyciszenia idzie tym samym torem: menu przy awatarze ma nazywać
-  // bieżący moduł i bieżącą kartę sesji pełną nazwą, zanim Operator je kliknie.
-  // Odmowa odczytu nie wywraca warstwy — pozycje kontekstowe mówią wtedy, czego
-  // brakuje i po czyjej stronie.
+  // Kontekst wyciszenia odświeża się tym torem, by menu nazywało moduł i sesję zanim ktoś je otworzy.
   void kontekstWyciszenia.odswiez().then(() => odswiezWyglad());
 
   return {

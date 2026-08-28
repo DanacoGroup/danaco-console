@@ -22,66 +22,42 @@ type Montaz struct {
 	Dziennik     *log.Logger
 	// KatalogKlienta wskazuje pakiet interfejsu serwowany obok gniazda.
 	KatalogKlienta string
-	// KatalogProfili wskazuje katalog profili kanału głównego. Poświadczenia
-	// zostają w profilach na dysku i nigdy nie wchodzą do repozytorium ani do
-	// bazy — rdzeń zna wyłącznie odwołanie.
+	// KatalogProfili wskazuje katalog profili kanału głównego przechowywany poza bazą i repozytorium.
 	KatalogProfili string
 }
 
-// Zmontowany niesie rdzeń wraz z zasobami, które trzeba zwolnić po zatrzymaniu.
+// Zmontowany niesie rdzeń złożonego procesu wraz z zasobami, które wymagają osobnego zwolnienia po zatrzymaniu, bo przeżyłyby samo zamknięcie rdzenia jako sieroty.
 type Zmontowany struct {
 	Rdzen *Rdzen
 
-	// Pola katalogu roboczego tu nie ma z zamysłem. Katalog sesji dojeżdża do
-	// procesu modelu drogą tury — adapter rozmowy ustala go i wkłada do
-	// zapytania kanału — więc wystawianie go drugi raz na Zmontowanym byłoby
-	// eksportem bez odbiorcy.
+	// Katalog roboczy sesji nie jest polem: ustala go adapter rozmowy i wkłada do zapytania kanału.
 
 	dane     *dane.Zestaw
 	kanaly   *models.Rejestr
 	nadzorca *session.Nadzorca
 	terminal *adapterTerminala
-	// developer trzeba zwolnić osobno: przebieg budowania biegnie poza żądaniem
-	// i bez tego przeżyłby zatrzymanie rdzenia jako sierota.
+	// developer wymaga osobnego zwolnienia, bo przebieg budowania przeżyłby zatrzymanie rdzenia.
 	developer *adapterDevelopera
-	// ustawienia to ten sam adapter nastaw, który idzie do portów. Trzymany tu,
-	// bo drogi wewnętrzne rdzenia (np. zgłoszenie do centrum powiadomień) czytają
-	// nim nastawy Operatora poza obsługą komendy.
+	// ustawienia to adapter nastaw współdzielony z portami; czytają go też drogi wewnętrzne rdzenia.
 	ustawienia *adapterUstawienOsi
-	// aplikacje trzeba zwolnić osobno: `apps.preview.start` podnosi nasłuch HTTP
-	// serwera podglądu, który bez zamknięcia przeżyłby zatrzymanie rdzenia
-	// i zostawił zajęty port.
+	// aplikacje wymaga osobnego zwolnienia: nasłuch podglądu żyje poza żądaniem i poza rdzeniem.
 	aplikacje *adapterAplikacji
 }
 
-// Zmontuj składa cały rdzeń: repozytoria nad bazą, rozstrzygacz ośmiu poziomów
-// zasięgu, rejestr kanałów modelu z wierszy bazy, nadzorcę sesji i okien,
-// serwer transportu oraz rejestr obsługiwaczy komend.
-//
-// Kolejność jest wymuszona zależnościami, nie upodobaniem: repozytoria dają
-// źródła konfiguracji i kanałów, transport daje nadajnik zdarzeń, a rdzeń
-// powstaje na końcu, bo dopiero wtedy ma czym wypełnić porty.
-//
-// Brak elementu opcjonalnego nie przerywa montażu: pusty rejestr
-// kanałów, brak profili kanału głównego i brak pakietu klienta zostawiają rdzeń
-// zdolny do pracy w pozostałym zakresie.
+// Zmontuj składa rdzeń z repozytoriów nad bazą, rozstrzygacza zasięgu, rejestru kanałów modelu, nadzorcy sesji, transportu i rejestru obsługiwaczy komend, w kolejności wymuszonej zależnościami między nimi.
 func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	repozytoria, err := dane.Otworz(kontekst, m.Baza)
 	if err != nil {
 		return nil, err
 	}
 
-	// Rozpoznanie maszyny bieżącej: zakłada wiersz urządzenia, na którym stoi
-	// rdzeń, tak by punkt dostępu localDirectory miał na co wskazać. Nieudane
-	// rozpoznanie idzie do dziennika i nie przerywa montażu.
+	// Rozpoznanie maszyny bieżącej zakłada wiersz urządzenia dla punktu dostępu localDirectory.
 	odnotujUrzadzenieBiezace(kontekst, repozytoria.Urzadzenia, m.Dziennik)
 
 	rozstrzygacz := konfig.Nowy(zrodloUstawienOsiZBazy(kontekst, repozytoria.KonfiguracjaOsi),
 		rejestrUstawien(kontekst, repozytoria, m.Dziennik))
 
-	// Katalog roboczy sesji. Degradacja do lokalizacji
-	// zastępczej idzie do dziennika, bo Operator ma wiedzieć, że pracuje gdzie
-	// indziej, niż ustawił.
+	// Katalog roboczy sesji; degradacja do lokalizacji zastępczej trafia do dziennika.
 	katalogRoboczy := NowyKatalogRoboczy(rozstrzygacz,
 		ZObserwatoremKatalogu(ObserwatorKataloguFunkcja(func(d DegradacjaKatalogu) {
 			if m.Dziennik == nil {
@@ -91,26 +67,14 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 				d.Zadana, d.Powod, d.Zastepcza, d.Skuteczna)
 		})))
 
-	// Przejmowanie procesów powstaje przed kanałami, bo kanał wkłada
-	// haczyk do każdej tury, a wiązane jest po nadzorcy, bo to on ma rejestr
-	// procesów. Ta jedna pośredniczka domyka różnicę kolejności.
-	//
-	// Nadzorca nie dostaje tu żadnego wypełnienia: proces tury startuje kanał
-	// modelu własną drogą, a sesja obejmuje go uchwytem przez Przejmij. Drugiej
-	// drogi startu procesu nie ma.
+	// Przejmowanie procesów powstaje przed kanałami i wiąże się z nadzorcą po jego złożeniu.
 	przejmowanie := &przejmowanieProcesow{}
-	// Odbiornik zdarzeń wykonawczych powstaje przed rejestrem kanałów,
-	// bo fabryka kanału głównego dostaje go do ręki; diagnostyka dopina się
-	// niżej, po złożeniu modułów — taka jest kolejność montażu.
+	// Odbiornik zdarzeń wykonawczych powstaje przed rejestrem kanałów, bo fabryka go potrzebuje.
 	zdarzeniaWykonawcze := nowyOdbiorZdarzenWykonawczych(kontekst, repozytoria, m.Dziennik)
 	kanaly := rejestrKanalow(kontekst, m, repozytoria, przejmowanie, zdarzeniaWykonawcze)
 	nadzorca := session.NowyNadzorca()
 	przejmowanie.Zwiaz(nadzorca.Procesy().Przejmij)
-	// Sprzątanie startowe stanu trwałego idzie przed odtworzeniem rejestru: start
-	// jest jedynym momentem, w którym rdzeń i tak czyta stan trwały. Opróżnienie
-	// kosza sesji po terminie i przemiecenie retencji historii to dwie czynności
-	// jednej drogi sprzątania; kolejność jest istotna, bo sesja skasowana z kosza
-	// zabiera swoje okna wraz z wypowiedziami.
+	// Sprzątanie stanu trwałego biegnie przed odtworzeniem rejestru, w ustalonej kolejności.
 	usunSesjePoTerminie(kontekst, repozytoria, m.Dziennik)
 	przemiecRetencjeHistorii(kontekst, repozytoria, m.Dziennik)
 	odtworzStanZBazy(kontekst, repozytoria, nadzorca, m.Dziennik)
@@ -119,13 +83,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	utrwalacz := utrwalaczRozmow(repozytoria, nadzorca)
 	dziennikRozmow := nowyDziennikRozmowy(kontekst, utrwalacz, m.Dziennik)
 
-	// Telemetria postępu czyta szynę zdarzeń i port rozmowy, więc
-	// powstaje przed rdzeniem i owija nadajnik transportu.
-	//
-	// Żywy stan sesji stoi pod telemetrią: producent telemetrii rozgłasza
-	// `progress.changed` wprost tym nadajnikiem, który dostał, więc nasłuch
-	// obecności musi być tym nadajnikiem. Tak domyka się łańcuch producent →
-	// szyna → odbiorca kontrolki powrotu do sesji.
+	// Telemetria postępu czyta szynę zdarzeń i port rozmowy, więc powstaje przed rdzeniem.
 	biegi := nowyRejestrBiegow()
 	obecnosc := nowyRejestrObecnosci(kontekst, nadzorca, biegi).
 		ZeZrodlami(zrodlaObecnosciZBazy(repozytoria))
@@ -135,12 +93,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	ustawienia := nowyAdapterUstawienOsi(repozytoria.KonfiguracjaOsi, rozstrzygacz)
 	tozsamosc := nowyAdapterTozsamosci(repozytoria.Tozsamosc, rozstrzygacz).
 		ZOknami(repozytoria.Okna, repozytoria.Kanaly)
-	// Doraźne dołożenia narzędzi mają dwóch czytelników: port `NarzedziaSesji`
-	// rdzenia (rodzina `session.tool.*` i `tools.catalog.list`) oraz składacz
-	// zestawu narzędzi tury, który dokłada je do wykazu eksperta
-	// (`adapter_rozmowa_zestaw.go`). Instancja powstaje tu, bo składanie rozmowy
-	// biegnie przed składaniem portów, a oba mają dostać ten sam adapter —
-	// drugi byłby drugą prawdą o tym, czym model w sesji dysponuje.
+	// Doraźne dołożenia narzędzi czyta port NarzedziaSesji rdzenia i składacz zestawu tury.
 	dolozeniaNarzedzi := nowyAdapterNarzedziSesji(repozytoria.NarzedziaSesji(),
 		repozytoria.Sesje, repozytoria.Rozszerzenia())
 	rozmowa, petla := zlozRozmowe(skladRozmowy{
@@ -157,21 +110,14 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 		rozstrzygacz, katalogRoboczy, telemetria, szynaZdarzen, kanaly)
 	terminal, developer := moduly.terminal, moduly.developer
 	kolejki, diagnostyka := moduly.kolejki, moduly.diagnostyka
-	// Apps składa się tu, a nie w `zlozPorty`, bo montaż musi go potem zamknąć:
-	// serwer podglądu żyje poza żądaniem, tak samo jak przebieg budowania
-	// Developera.
+	// Apps składa się tu, nie w zlozPorty, bo montaż musi zamknąć jego nasłuch po zatrzymaniu.
 	aplikacje := nowyAdapterAplikacji(repozytoria.Aplikacje).ZOknami(nadzorca.Rejestr()).
 		ZMagazynem(m.Konfiguracja.KatalogDanych).ZKatalogiemRozszerzen(repozytoria.Rozszerzenia()).
 		ZUruchamiaczem(injection.UruchamiaczOkien(), rozstrzygacz, katalogRoboczy)
 
-	// Zakresy narzędzi mają dwóch czytelników: port `ZakresyNarzedzi` rdzenia
-	// (rodzina `tools.scope.*`) oraz straż, którą rdzeń pyta przed skierowaniem
-	// komendy ręki modelu. Jedna instancja na obie drogi — druga byłaby drugą
-	// prawdą o tym, co profilowi wolno.
+	// Zakresy narzędzi ma dwóch czytelników: port ZakresyNarzedzi rdzenia i straż komend modelu.
 	zakresyNarzedzi := NowyPortZakresowNarzedzi(repozytoria.ZakresyNarzedzi, repozytoria.Asystent)
-	// Straż zakresu eksperta czyta bibliotekę i katalog modułów. Wpina się
-	// w dwa miejsca odmowy: nałożenie eksperta na okno i powołanie podagentów
-	// (`straz_eksperta.go`).
+	// Straż zakresu eksperta czyta bibliotekę i katalog modułów przy nakładaniu eksperta na okno.
 	strazEkspertow := NowaStrazEksperta(repozytoria.Agenci, repozytoria.Moduly)
 
 	rdzen := Zloz(zlozPorty(skladPortow{
@@ -198,9 +144,7 @@ func Zmontuj(kontekst context.Context, m Montaz) (*Zmontowany, error) {
 	zdarzeniaWykonawcze.PodepnijDiagnostyke(diagnostyka)
 	serwer.PodlaczRdzen(wejscieTransportu{rdzen: rdzen})
 
-	// Budzik harmonogramu startuje razem z rdzeniem: cyklicznie odpala
-	// automatyki, których termin minął, tą samą drogą co Operator z Queue
-	// Managera. Wątek żyje aż do zamknięcia kontekstu życia.
+	// Budzik harmonogramu odpala automatyki po terminie i żyje aż do zamknięcia kontekstu życia.
 	nowyBudzikHarmonogramu(moduly.automatyki, m.Dziennik).Uruchom(kontekst)
 
 	return &Zmontowany{Rdzen: rdzen, dane: repozytoria, kanaly: kanaly,
@@ -223,16 +167,7 @@ func (z *Zmontowany) Zamknij() {
 	_ = z.dane.Zamknij()
 }
 
-// ustawieniaTransportu przenosi nastawy rdzenia do warstwy nasłuchu. Tędy idzie
-// cały brzeg, nie sam port: montaż jest jedynym miejscem, przez które
-// konfiguracja startu — port, TLS, wykaz pochodzeń, adres nasłuchu — dochodzi
-// do transportu.
-//
-// Wymóg logowania ma dwa źródła i jedno pierwszeństwo. Wskazanie ze startu
-// (przełącznik wiersza poleceń, zmienna środowiska) wygrywa zawsze. Dopiero
-// jego brak oddaje głos nastawie poziomu `aplikacja` z tabeli `ustawienie`,
-// a brak i jej — adresowi nasłuchu. To ten sam rozstrzygacz i ta sama tabela,
-// którą widzi `config.get`.
+// ustawieniaTransportu przenosi nastawy rdzenia do warstwy nasłuchu transportu: port, TLS, wykaz pochodzeń i adres, a wymóg logowania rozstrzyga według pierwszeństwa startu, nastawy osi i adresu nasłuchu.
 func ustawieniaTransportu(m Montaz, rozstrzygacz *konfig.Rozstrzygacz) transport.Ustawienia {
 	u := transport.Domyslne()
 	u.Port = m.Konfiguracja.Port

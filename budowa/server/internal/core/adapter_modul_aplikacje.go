@@ -1,14 +1,7 @@
 // Moduł Apps: typ adaptera, konstruktor i komenda `apps.architecture.define`.
-// Warsztat frontendu i backendu (`apps.workspace.update`) oraz przebiegi
-// wdrożenia (`apps.deployment.run`) stoją w `adapter_modul_aplikacje_wdrozenie.go`
-// i `adapter_modul_aplikacje_uchwyty.go`; tam też deklarowany jest port
-// `Aplikacje` i `zarejestrujAplikacje`.
-//
-// Zastrzeżenia walidacji są przechowywane, nie wyliczane. Kontrakt niesie
-// `AppArchitecture.ValidationIssues` jako wynik, ale `AppsArchitectureDefineRequest`
-// nie niesie żadnej reguły ani listy naruszeń do sprawdzenia. Adapter zapisuje
-// więc to pole tak, jak zastał je w bazie przy poprzednim zapisie
-// (`dane/aplikacje.go` utrzymuje je w UPSERT-cie), i nie liczy niczego nowego.
+// Warsztat i wdrożenia stoją w adapter_modul_aplikacje_wdrozenie.go i
+// adapter_modul_aplikacje_uchwyty.go. Zastrzeżenia walidacji są przechowywane,
+// nie wyliczane.
 package core
 
 import (
@@ -36,54 +29,38 @@ const (
 // odpowiedzialności, ale niosące jeden typ.
 type adapterAplikacji struct {
 	repozytorium dane.RepozytoriumAplikacji
-	// przyrostWdrozenia rozgłasza `apps.build.changed`. Podpina go obsługiwacz
-	// (`adapter_modul_aplikacje_uchwyty.go`). Silnik wykonania wdrożenia
-	// przesuwa stan przebiegu poza wykonaniem komendy
-	// (`adapter_modul_aplikacje_wdrozenie_bieg.go`), więc rozgłoszenie nie może
-	// iść wyłącznie z obsługiwacza żądania — tak jak `przyrost` w module
-	// Developer.
+	// przyrostWdrozenia rozgłasza apps.build.changed; podpina go obsługiwacz
+	// zmian modułu.
 	przyrostWdrozenia func(shared.ChangeKind, shared.AppDeployment)
-	// przyrostWarsztatu rozgłasza `apps.workspace.changed`. Bez niego drugie okno
-	// tej samej przestrzeni nie dowiaduje się o zmianie pliku warsztatu.
+	// przyrostWarsztatu rozgłasza apps.workspace.changed drugiemu oknu tej
+	// samej przestrzeni.
 	przyrostWarsztatu func(shared.ChangeKind, string, shared.AppWorkspaceLayer, shared.DeveloperFile)
-	// okna są rejestrem okien sesji. Wdrożenie dzieje się w oknie — z jego
-	// przestrzeni roboczej bierze się to, co ma pojechać — więc okno musi
-	// istnieć, zanim powstanie wiersz przebiegu. Zależność opcjonalna: bez niej
-	// moduł pracuje, ale montaż ją wpina.
+	// okna to rejestr okien sesji; wdrożenie bierze z okna przestrzeń roboczą
+	// do wysłania.
 	okna *session.Rejestr
-	// przyrostEtapu rozgłasza `apps.build.changed` przy zmianie etapu budowy.
-	// Osobna droga od wdrożeniowej, bo zdarzenie niesie inny byt: etap Product
-	// Buildera, nie przebieg wdrożenia.
+	// przyrostEtapu rozgłasza apps.build.changed przy zmianie etapu budowy
+	// Product Buildera.
 	przyrostEtapu func(shared.ChangeKind, shared.AppStage)
-	// magazyn trzyma bajty wytworów modułu — eksport diagramu, artefakt
-	// budowania, archiwum pakietu. To ten sam magazyn treści, którym jadą
-	// zasoby modułu Design i pliki biblioteki: wiersz w bazie wskazuje plik na
-	// dysku, a nie udaje, że go ma.
+	// magazyn trzyma bajty wytworów modułu: eksport diagramu, artefakt
+	// budowania, archiwum pakietu.
 	magazyn *magazynTresciBiblioteki
 	// katalogDanych jest korzeniem, względem którego liczone są odwołania
-	// magazynu — bez niego odwołanie wypuszczone z rdzenia wynosiłoby układ
-	// katalogów maszyny.
+	// magazynu.
 	katalogDanych string
-	// sejf wydaje klucz wydawcy po jego kluczu jawnym. `apps.package.sign`
-	// dostaje w żądaniu WYŁĄCZNIE odwołanie (`signingKeyRef`), nigdy treść —
-	// materiał klucza nie przechodzi przez kontrakt ani przez bazę modułu.
+	// sejf wydaje klucz wydawcy po kluczu jawnym signingKeyRef; materiał nie
+	// przechodzi przez kontrakt.
 	sejf sejfKluczaWydawcy
-	// katalogRozszerzen jest rejestrem pozycji katalogu. `apps.package.publish`
-	// zakłada w nim pozycję z manifestu pakietu — prywatny rejestr organizacji
-	// nie jest drugim rejestrem obok `extension.*`, tylko tym samym.
+	// katalogRozszerzen jest rejestrem pozycji katalogu dla
+	// apps.package.publish.
 	katalogRozszerzen dane.RepozytoriumRozszerzen
-	// podglady trzymają stojące serwery podglądu warstw. Rejestr żyje wyłącznie
-	// w pamięci: serwer nie przeżywa restartu rdzenia, więc wiersz w bazie
-	// mówiłby po restarcie o nasłuchu, którego nie ma.
+	// podglady trzymają stojące serwery podglądu warstw; rejestr żyje
+	// wyłącznie w pamięci.
 	podglady *rejestrPodgladowApp
-	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu.
-	// Moduł sięga po nią w jednym miejscu: audyt wydajności strony mierzy to,
-	// co dzieje się w przeglądarce, więc idzie programem pomiarowym
-	// (`adapter_modul_aplikacje_wydajnosc.go`). Zależność opcjonalna — bez niej
-	// audyt odmawia zdaniem nazywającym brak, a reszta modułu pracuje dalej.
+	// uruchamiacz jest portem startu procesu; moduł sięga po niego w audycie
+	// wydajności strony.
 	uruchamiacz session.Uruchamiacz
-	// rozstrzygacz i katalog składają zasady izolacji obowiązujące w oknie oraz
-	// katalog, w którym wolno wystartować proces.
+	// rozstrzygacz i katalog składają zasady izolacji okna oraz katalog
+	// startu procesu.
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
 }
@@ -115,7 +92,7 @@ func (a *adapterAplikacji) ZKatalogiemRozszerzen(rejestr dane.RepozytoriumRozsze
 }
 
 // PodepnijPrzyrostEtapu oddaje adapterowi drogę do `apps.build.changed` przy
-// zmianie etapu budowy.
+// zmianie etapu budowy Product Buildera, oddzielną od wdrożenia.
 func (a *adapterAplikacji) PodepnijPrzyrostEtapu(rozglos func(shared.ChangeKind, shared.AppStage)) {
 	a.przyrostEtapu = rozglos
 }
@@ -160,11 +137,8 @@ func (a *adapterAplikacji) rozglosWarsztat(zmiana shared.ChangeKind, okno string
 }
 
 // PodepnijPrzyrostWdrozenia oddaje adapterowi drogę do zdarzenia zmiany
-// wdrożenia. Wdrożenie kończy się poza wykonaniem komendy: przebieg zakładany
-// jest w stanie `pending`, a silnik przesuwa go przez `running` do
-// `succeeded`/`failed` już po odesłaniu odpowiedzi, więc rozgłoszenie tych
-// przejść nie może wychodzić z obsługiwacza żądania (wzorzec
-// `PodepnijPrzyrostBudowania` modułu Developer).
+// wdrożenia. Przebieg zakładany jest w stanie `pending`, a silnik przesuwa go
+// przez `running` do końcowego stanu już po odesłaniu odpowiedzi.
 func (a *adapterAplikacji) PodepnijPrzyrostWdrozenia(
 	rozglos func(shared.ChangeKind, shared.AppDeployment)) {
 
@@ -189,12 +163,9 @@ func (a *adapterAplikacji) Zamknij() {
 }
 
 // ZdefiniujArchitekture obsługuje `apps.architecture.define`. Brak
-// `architectureId` zakłada architekturę nową; wskazanie zmienia zastaną i
-// podnosi numer wersji — tak jak `automatyka.wersja` w module Automations.
-// Komponenty i ich zależności wychodzą kontraktem w komplecie przy każdym
-// zapisie (Architecture Designer nadsyła cały układ na nowo), więc warstwa
-// danych wymienia je w jednej transakcji („usuń, wstaw od nowa") — jedna
-// droga zapisu, nie dwie.
+// `architectureId` zakłada architekturę nową; wskazanie zmienia zastaną
+// i podnosi numer wersji. Komponenty i zależności wychodzą kontraktem
+// w komplecie i zastępują poprzedni zapis.
 func (a *adapterAplikacji) ZdefiniujArchitekture(ctx context.Context,
 	z shared.AppsArchitectureDefineRequest) (shared.AppsArchitectureDefineResponse, error) {
 
@@ -231,10 +202,10 @@ func (a *adapterAplikacji) ZdefiniujArchitekture(ctx context.Context,
 	return shared.AppsArchitectureDefineResponse{Architecture: architektura}, nil
 }
 
-// zastaneZastrzezenia odczytuje zastrzeżenia walidacji już zapisane przy
-// architekturze, żeby zapis definicji ich nie skasował — adapter nie ma z
-// czego wyliczyć nowych (patrz nagłówek pliku), więc jedyna uczciwa wartość
-// to ta, która tam już była. Nowa architektura startuje z pustą listą.
+// zastaneZastrzezenia odczytuje zastrzeżenia walidacji zapisane przy
+// architekturze, żeby zapis definicji ich nie skasował — adapter nowych nie
+// wylicza, więc jedyna uczciwa wartość to ta zapisana wcześniej. Nowa
+// architektura startuje z pustą listą.
 func (a *adapterAplikacji) zastaneZastrzezenia(ctx context.Context, kod string, nowaArchitektura bool) ([]string, error) {
 	if nowaArchitektura {
 		return nil, nil
@@ -304,9 +275,8 @@ func rozlozKomponenty(komponenty []shared.AppComponent) ([]dane.KomponentArchite
 }
 
 // szablonArchitektury rozstrzyga brak wskazania szablonu. Repozytorium ma
-// własną wartość domyślną w UPSERT-cie („monolith"), ale adapter podaje ją
-// jawnie, żeby złożona odpowiedź nie pokazywała pustego szablonu przy
-// pierwszym zapisie zanim wiersz wróci z bazy.
+// własną wartość domyślną („monolith"), ale adapter podaje ją jawnie, żeby
+// odpowiedź nie pokazywała pustego szablonu przed powrotem wiersza z bazy.
 func szablonArchitektury(wskazanie *shared.AppArchitectureTemplate) string {
 	if wskazanie == nil {
 		return "monolith"
@@ -315,9 +285,8 @@ func szablonArchitektury(wskazanie *shared.AppArchitectureTemplate) string {
 }
 
 // bladAplikacji znakuje usterkę kodem kontraktu, żeby okno modułu pokazało
-// powód, a nie samo „nie udało się". Błąd, któremu kod już nadano — odmowa
-// wskazania, brak bytu — przechodzi tędy bez zmiany kodu; dopiero usterka bez
-// kodu staje się usterką wewnętrzną rdzenia.
+// powód, a nie samo „nie udało się". Błąd z kodem już nadanym przechodzi bez
+// zmiany; dopiero usterka bez kodu staje się usterką wewnętrzną rdzenia.
 func bladAplikacji(err error) error {
 	if err == nil {
 		return nil

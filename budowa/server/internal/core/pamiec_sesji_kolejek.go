@@ -2,26 +2,19 @@ package core
 
 import "sync"
 
-// pamiecSesjiKolejek trzyma powiązanie kolejki z sesją i oknami kontraktu.
-//
-// Powód istnienia jest jeden i tymczasowy: kolumna `kolejka.sesja_id` wskazuje
-// wiersz sesji, a sesja żyje w pamięci pakietu sesji pod identyfikatorem
-// tekstowym i wiersza nie ma. Dopóki tak jest, powiązanie mieszka tutaj — nie
-// w bazie, bo klucza obcego nie da się wypełnić, i nie w kontrakcie, bo kontrakt
-// jest w porządku. Trwałość sesji zdejmie ten plik w całości: powiązanie wróci
-// wtedy do kolumny.
+// pamiecSesjiKolejek trzyma tymczasowe powiązanie kolejki z sesją i oknami kontraktu, dopóki sesja nie ma własnego wiersza w bazie i klucza obcego nie da się wypełnić.
 type pamiecSesjiKolejek struct {
 	mu    sync.RWMutex
 	sesje map[int64]string
 	okna  map[int64][]string
 }
 
-// nowaPamiecSesjiKolejek zakłada pustą pamięć powiązań.
+// nowaPamiecSesjiKolejek zakłada pustą pamięć powiązań kolejki z sesją i oknami, gotową do zapisywania i odczytu.
 func nowaPamiecSesjiKolejek() *pamiecSesjiKolejek {
 	return &pamiecSesjiKolejek{sesje: map[int64]string{}, okna: map[int64][]string{}}
 }
 
-// Zapamietaj zapisuje sesję i okna kolejki.
+// Zapamietaj zapisuje w pamięci powiązanie kolejki z sesją oraz z listą okien wskazanych przez klienta.
 func (p *pamiecSesjiKolejek) Zapamietaj(idKolejki int64, idSesji string, idOkien []string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

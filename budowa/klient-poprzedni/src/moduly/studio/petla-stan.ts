@@ -7,24 +7,7 @@ import type {
   StudioTaskPlan,
 } from '../../../../shared/contract';
 
-/**
- * Stan okna pętli wykonawczej — jeden na okno, nie jeden na widok.
- *
- * Okno składa się z czterech widoków patrzących na te same byty: kolejka zadań,
- * obsada wykonawców, warsztat łańcucha i tryb wsadowy. Gdyby każdy prowadził
- * własną kopię rozkładu, zatrzymanie w kolejce nie przestawiłoby wskaźnika
- * przebiegu, a bilans wsadu pokazywałby stan sprzed ostatniego dokumentu.
- *
- * ── Czego tu NIE ma ─────────────────────────────────────────────────────────
- * Nastawy pętli (`executionLoopEnabled`, `multiAgentEnabled`, granice obiegów,
- * zachowanie przy spięciu) NIE są stanem tego okna. Mieszkają w zasięgach
- * rodziny `config.*` i idą komendami `studio.agents.settings.get/set`. Okno je
- * czyta i pamięta ODCZYT — po to, żeby nie pytać rdzenia przy każdym
- * przerysowaniu — ale nigdy ich nie zapisuje po swojemu i nie zgaduje wartości
- * domyślnych: brak odczytu znaczy „nie wiem", a nie „wyłączone".
- */
-
-/** Wynik wsadu dla JEDNEGO dokumentu — bilans, nie zbiorcze „gotowe". */
+/** Stan okna pętli wykonawczej, jeden na okno: wynik wsadu dla jednego dokumentu jest bilansem tej pozycji, nie zbiorczym potwierdzeniem gotowości. */
 export interface PozycjaWsadu {
   /** Dokument objęty wsadem. */
   idDokumentu: string;
@@ -34,7 +17,7 @@ export interface PozycjaWsadu {
   powod: string;
 }
 
-/** Nastawy odczytane z rdzenia albo `null`, gdy odczytu jeszcze nie było. */
+/** Nastawy pętli odczytane z rdzenia jako pełny obiekt, albo null, gdy odczytu jeszcze wcale nie wykonano. */
 export type OdczytNastaw = StudioAgentSettings | null;
 
 export interface StanPetli {
@@ -106,10 +89,7 @@ export function utworzStanPetli(): StanPetli {
   let idZmienianego = '';
   let pozycjeWsadu: readonly PozycjaWsadu[] = [];
   let przerwanie = false;
-  // Okno pętli wchodzi NA ŻĄDANIE i schodzi, gdy nie jest używane. Stan
-  // początkowy „zamknięte" jest rozstrzygnięciem Właściciela o powierzchni, nie
-  // wygodą wykonawcy — dokument ma mieć całą szerokość, dopóki Operator nie
-  // poprosi o pętlę.
+  // Okno pętli wchodzi na żądanie i schodzi, gdy nie jest używane, bo powierzchnia należy do dokumentu.
   let oknoOtwarte = false;
   let trybStalejKolumny = false;
 

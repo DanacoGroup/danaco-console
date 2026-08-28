@@ -1,20 +1,6 @@
-// Egzekutor izolacji: jedenaście punktów izolacji w postaci wykonawczej oraz
-// wspólne dla całego egzekutora pojęcia — naruszenie i przynależność ścieżki
-// do obszaru.
-//
-// Rozstrzyganie zasięgu (pakiet konfig) mówi, jaka wartość izolacji obowiązuje
-// w danym oknie, ale samo z siebie nie zmienia niczego w wykonaniu. Egzekutor
-// bierze tę wartość i odrzuca uruchomienie, które by ją naruszyło; wartość
-// wyłączona nie ogranicza niczego — stanem wyjściowym platformy jest pełna
-// swoboda operacyjna.
-//
-// Egzekutor nie zamyka procesu modelu w piaskownicy systemu operacyjnego. Panuje
-// wyłącznie nad tym, co procesowi podaje: katalogiem startowym, środowiskiem,
-// katalogiem danych kanału, wykazem korzeni, adresami i treścią tury. Gniazd
-// sieciowych ani wywołań systemowych uruchomionego już procesu potomnego nie
-// ogranicza — do tego potrzebne są środki systemu operacyjnego.
-//
-// Nazwy punktów izolacji pochodzą z pakietu konfig.
+// Egzekutor izolacji obejmuje jedenaście punktów izolacji w postaci
+// wykonawczej oraz wspólne pojęcia: naruszenie i przynależność ścieżki do
+// obszaru.
 package session
 
 import (
@@ -30,7 +16,8 @@ import (
 // rozpoznaje przyczynę przez errors.Is, nie przez treść komunikatu.
 var ErrIzolacja = errors.New("session: naruszenie izolacji")
 
-// naruszenie mówi, który punkt izolacji został naruszony i czym.
+// naruszenie mówi, który punkt izolacji został naruszony i czym dokładnie,
+// treścią gotową dla Operatora.
 type naruszenie struct {
 	// Klucz punktu izolacji ze stałych pakietu konfig.
 	Klucz string
@@ -38,12 +25,14 @@ type naruszenie struct {
 	Powod string
 }
 
-// Error składa komunikat naruszenia.
+// Error składa czytelny komunikat tego naruszenia z klucza punktu izolacji
+// oraz z powodu tego naruszenia.
 func (n naruszenie) Error() string {
 	return "session: izolacja " + n.Klucz + ": " + n.Powod
 }
 
-// Unwrap wiąże naruszenie ze wspólnym korzeniem.
+// Unwrap wiąże to naruszenie ze wspólnym korzeniem błędów izolacji całego
+// tego egzekutora tej platformy.
 func (n naruszenie) Unwrap() error { return ErrIzolacja }
 
 // NoweNaruszenie składa naruszenie punktu izolacji. Egzekutor plików, sieci
@@ -118,10 +107,7 @@ func odrebna(polityka konfig.Polityka, klucz string) bool {
 }
 
 // SciezkaWewnatrz odpowiada, czy ścieżka leży w korzeniu albo jest samym
-// korzeniem. Porównanie idzie po członach ścieżki, nie po prefiksie napisu:
-// katalog `projekt-2` nie leży w katalogu `projekt`. Na systemie plików
-// nierozróżniającym wielkości liter porównanie też jej nie rozróżnia — inaczej
-// ta sama ścieżka zapisana inną wielkością omijałaby obszar.
+// korzeniem, porównaniem po członach ścieżki.
 func SciezkaWewnatrz(korzen, sciezka string) bool {
 	korzenNorm := normalizujSciezke(korzen)
 	sciezkaNorm := normalizujSciezke(sciezka)

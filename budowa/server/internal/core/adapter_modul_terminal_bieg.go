@@ -1,11 +1,6 @@
 // Odpowiedzialność pliku: bieg procesu terminala od startu do domknięcia —
-// uruchomienie przez port warstwy kanału, przejęcie drzewa potomstwa, pompa
-// wyjścia, granica czasu i zapis wyniku.
-//
-// Obserwator zakończenia pracuje poza żądaniem: komenda `terminal.command.exec`
-// kończy się, gdy proces ruszy, nie gdy się skończy — kompilacja trwa dłużej niż
-// każde sensowne oczekiwanie na odpowiedź, a rozłączenie klienta nie ma prawa
-// przerwać pracy rdzenia. Stan końcowy dochodzi zdarzeniem.
+// uruchomienie, przejęcie drzewa potomstwa, pompa wyjścia, granica czasu
+// i zapis wyniku. Obserwator zakończenia pracuje poza żądaniem, zdarzeniem.
 package core
 
 import (
@@ -37,8 +32,7 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 	}
 	drzewo, err := session.PrzejmijDrzewo(uchwyt.Pid())
 	if err != nil {
-		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie go tak
-		// znaczyłoby sierotę poza rejestrem rdzenia.
+		// Proces już biegnie, a uchwytu drzewa nie ma — zostawienie znaczyłoby sierotę.
 		_ = uchwyt.Ubij()
 		_ = uchwyt.Czekaj()
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -63,10 +57,7 @@ func (a *adapterTerminala) uruchom(ctx context.Context, karta *kartaTerminala, o
 	a.rejestr.ZapiszProces(proces)
 	a.zapiszProces(ctx, proces)
 
-	// Rozgłoszenie idzie przed pompą wyjścia, a nie po niej. Klient rozpoznaje
-	// fragment strumienia po identyfikatorze procesu, więc gdyby pierwszy
-	// fragment wyprzedził zdarzenie `created`, Output Console odrzuciłaby
-	// początek wyjścia jako cudzy — i nikt by tych wierszy nie zobaczył.
+	// Rozgłoszenie idzie przed pompą wyjścia, przed odrzuceniem fragmentu jako cudzego.
 	a.rozglos(shared.ChangeKindCreated, proces)
 
 	go a.wyjscie.Pompuj(proces, uchwyt.Wyjscie(), shared.ChunkKindText)
@@ -130,8 +121,7 @@ func wynikZakonczenia(blad error) (shared.TerminalProcessStatus, *int) {
 	if errors.As(blad, &zakonczenie) {
 		kod := zakonczenie.ExitCode()
 		if kod < 0 {
-			// Kod ujemny znaczy zakończenie sygnałem — proces został zatrzymany
-			// z zewnątrz, a nie zawiódł na własnym wyniku.
+			// Kod ujemny znaczy zakończenie sygnałem, nie zawodem własnego wyniku.
 			return shared.TerminalProcessStatusStopped, nil
 		}
 		return shared.TerminalProcessStatusFailed, &kod
@@ -167,7 +157,8 @@ func (a *adapterTerminala) rozglos(zmiana shared.ChangeKind, proces *procesTermi
 	a.zmiana(zmiana, procesKontraktu(proces))
 }
 
-// CzekajNaKoniec czeka na domknięcie procesu nie dłużej niż podany czas.
+// CzekajNaKoniec czeka na domknięcie procesu nie dłużej niż podany czas,
+// po jego upływie oddając ostatni znany stan.
 func (p *procesTerminala) CzekajNaKoniec(najdluzej time.Duration) {
 	select {
 	case <-p.koniec:
@@ -184,7 +175,8 @@ func granicaCzasu(milisekundy *int) time.Duration {
 	return time.Duration(*milisekundy) * time.Millisecond
 }
 
-// inicjatorZadania czyta inicjatora z żądania; brak wskazania znaczy Operatora.
+// inicjatorZadania czyta inicjatora z żądania; brak wskazania znaczy Operatora,
+// wartość domyślną inicjatora poleceń terminala.
 func inicjatorZadania(inicjator *shared.ProcessInitiator) shared.ProcessInitiator {
 	if inicjator == nil || *inicjator == "" {
 		return shared.ProcessInitiatorOperator

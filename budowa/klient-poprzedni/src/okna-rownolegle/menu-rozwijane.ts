@@ -2,35 +2,7 @@ import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 import './menu.css';
 
 /**
- * Menu rozwijane — przycisk i lista, która wychodzi spod niego.
- *
- * Jedyny byt rozwijany w kliencie: `strona-glowna/menu-sesji.ts` mimo nazwy jest
- * zwykłym rzędem przycisków. Najbliższym wzorcem zwijania jest
- * `widok-sterowania/szuflada.ts` i stąd wzięte są trzy rzeczy: `aria-expanded`
- * na uchwycie, `Escape` zwijający z powrotem ogniska na uchwyt oraz zasada, że
- * zwinięcie nie jest blokadą.
- *
- * Menu nie zna treści listy. Dostaje gotowe elementy przez `ustawTresc` i nie
- * rozstrzyga, czy stoją w niej panele, czy działania sesji, więc ten sam byt
- * obsłuży menu `⋮` nagłówka rozmowy i menu `⋮` wewnątrz nagłówka panelu.
- *
- * Nie zakłada, że jest jedyny na scenie — cztery gniazda razy kilka paneli to
- * wiele menu naraz. Dlatego: (1) żaden identyfikator nie powstaje, bo powiązanie
- * uchwytu z listą niesie `aria-haspopup`, a nie `aria-controls` z `id`, którego
- * nie da się uczynić unikatowym bez licznika na poziomie modułu; (2) nasłuchy
- * dokumentu istnieją wyłącznie w czasie rozwinięcia, inaczej cztery gniazda
- * zostawiłyby cztery żywe nasłuchy; (3) warstwa jest żetonem `--dn-z-przybornik`,
- * jednakowym dla wszystkich egzemplarzy.
- *
- * Podmenu nie jest tu budowane, ale nie jest wykluczone: wędrówka ogniska
- * strzałkami chodzi po każdym elemencie `role="menuitem"` bez pytania, co on
- * otwiera, więc dołożenie podmenu nie wymaga przebudowy tego pliku.
- *
- * Ikoną jest `wiecej` — trzy kropki poziome; zestaw nie ma kropek pionowych.
- * Ikona idzie za czynnością, a ta brzmi „pokaż więcej".
- *
- * Znacznik „jest tu coś nowego" ma mechanizm (`ustawZnacznik`), ale nic go tu
- * nie zapala samo z siebie — źródło sygnału ustala wołający.
+ * Menu rozwijane to przycisk i lista, która wychodzi spod niego; nie zna treści listy ani nie zakłada bycia jedynym na scenie.
  */
 export interface MenuRozwijane {
   element: HTMLElement;
@@ -92,9 +64,7 @@ export function utworzMenuRozwijane(opcje: OpcjeMenuRozwijanego): MenuRozwijane 
     }
   });
 
-  // Klawisz wyjścia zwija i wraca ogniskiem na uchwyt — jak w szufladzie
-  // sterowania. Nasłuch stoi na całym menu, żeby zadziałał również wtedy, gdy
-  // ognisko siedzi na pozycji listy.
+  // Klawisz wyjścia zwija menu i wraca ogniskiem na uchwyt, jak w szufladzie sterowania.
   element.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.key !== 'Escape' || !otwarte) return;
     zdarzenie.stopPropagation();
@@ -103,9 +73,7 @@ export function utworzMenuRozwijane(opcje: OpcjeMenuRozwijanego): MenuRozwijane 
   });
 
   function pozycje(): HTMLElement[] {
-    // Trzy role naraz, choć stawiana jest dziś tylko `menuitem`: wędrówka
-    // ogniska ma objąć również pozycje przełącznikowe i wybór jednokrotny,
-    // gdy dołożą je działania sesji — bez ruszania tego pliku.
+    // Trzy role naraz, choć stawiana jest dziś tylko rola menuitem w tym pliku.
     const wybor = '[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]';
     return [...lista.querySelectorAll<HTMLElement>(wybor)].filter((poz) => !poz.hidden);
   }

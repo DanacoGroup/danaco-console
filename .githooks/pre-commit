@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Bramka przed zapisem rewizji. Uruchamia szybką drabinę weryfikacji; rewizja
+# nie wchodzi, dopóki drabina nie przejdzie. Obejście: git commit --no-verify,
+# dopuszczalne wyłącznie dla rewizji nietykającej kodu.
+exec bash "$(git rev-parse --show-toplevel)/narzedzia/drabina.sh" szybka

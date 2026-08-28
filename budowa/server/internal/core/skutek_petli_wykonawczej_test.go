@@ -8,31 +8,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany SKUTKU pętli wykonawczej modułu Studio.
-//
-// Mierzą to, co po komendzie ZOSTAJE — stan zadań odczytany osobnym wywołaniem,
-// bilans przebiegu, powód odmowy — a nie kopertę odpowiedzi. Każdy z nich
-// wyklucza jedną konkretną szkodę, którą ten produkt już raz poniósł:
-//
-//  1. plan „uruchomiony", który nie wykonał ani jednego zadania i nie powiedział
-//     o tym ani słowa — `status: ok` z pustym skutkiem;
-//  2. pętla puszczona przy WYŁĄCZONEJ nastawie: albo cicho nic nie robi, albo
-//     melduje powodzenie, którego nie ma;
-//  3. wsad na wielu dokumentach meldujący „przyjęto 10" i milczący o tym, co się
-//     stało z każdym z nich osobno;
-//  4. zadanie pominięte przez blokadę fragmentu, o którym Operator nie dowiaduje
-//     się z kolejki, bo powód został przemilczany;
-//  5. zatrzymanie, po którym zadanie w biegu ZNIKA, zamiast powiedzieć, że
-//     zostało przerwane.
-
-// petlaOknoSprawdzianu jest oknem, w którym stoją dokumenty tych sprawdzianów.
+// petlaOknoSprawdzianu nazywa okno dokumentu wspólne dla sprawdzianów pętli
+// wykonawczej w tym pliku; każdy dokument i rozkład zakłada się w tym samym
+// oknie, aby odczyt stanu obejmował wyłącznie dane danego sprawdzianu.
 const petlaOknoSprawdzianu = "okno-petli-wykonawczej"
 
-// petlaWlaczNastawe włącza pętlę wykonawczą na zasięgu okna dokumentu.
-//
-// Nastawa idzie drogą Operatora — komendą `studio.agents.settings.set` — a nie
-// zapisem do magazynu na skróty. Sprawdzian, który włączałby pętlę inaczej niż
-// Operator, mierzyłby drogę, której w produkcie nie ma.
+// petlaWlaczNastawe włącza pętlę wykonawczą na zasięgu okna dokumentu komendą
+// `studio.agents.settings.set`, drogą dostępną Operatorowi, a nie zapisem
+// wprost do magazynu, aby sprawdzian mierzył drogę, która istnieje w produkcie.
 func petlaWlaczNastawe(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno string, wieluAgentow bool) {
 	t.Helper()
@@ -64,7 +47,8 @@ func petlaRozkladDokumentu(t *testing.T, zmontowany *Zmontowany, zycie context.C
 	return odpowiedz.Plan
 }
 
-// petlaZadaniePoNazwie wyszukuje zadanie rozkładu po jego nazwie.
+// petlaZadaniePoNazwie wyszukuje w rozkładzie zadanie o podanej nazwie
+// i zwraca je wraz z informacją, czy takie zadanie w ogóle w rozkładzie istnieje.
 func petlaZadaniePoNazwie(rozklad shared.StudioTaskPlan,
 	nazwa string) (shared.StudioDocumentTask, bool) {
 
@@ -79,13 +63,8 @@ func petlaZadaniePoNazwie(rozklad shared.StudioTaskPlan,
 // ── Szkoda pierwsza i druga: pętla wyłączona nastawą ────────────────────────
 
 // TestPetlaPrzyWylaczonejNastawieOdmawiaNazywajacBrak wykazuje, że uruchomienie
-// pętli przy wyłączonej nastawie wraca ODMOWĄ NAZYWAJĄCĄ BRAK NASTAWY — i że
-// przy tym NIC nie robi.
-//
-// Dwie miary naraz, bo pojedyncza dałaby się obejść. Powód odmowy sprawdza, że
-// Operator dowiaduje się, czego brakuje; stan zadań odczytany osobnym wywołaniem
-// sprawdza, że pętla naprawdę nie tknęła kolejki. Odpowiedź „started: false"
-// przy zadaniach przestawionych na „done" byłaby kłamstwem w drugą stronę.
+// pętli przy wyłączonej nastawie zwraca odmowę nazywającą brakującą nastawę
+// i nie zmienia stanu żadnego zadania w kolejce.
 func TestPetlaPrzyWylaczonejNastawieOdmawiaNazywajacBrak(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -139,13 +118,8 @@ func TestPetlaPrzyWylaczonejNastawieOdmawiaNazywajacBrak(t *testing.T) {
 // ── Szkoda pierwsza: plan uruchomiony bez pracy ─────────────────────────────
 
 // TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak wykazuje, że pętla puszczona
-// przy WŁĄCZONEJ nastawie kończy każde zadanie stanem rozstrzygniętym — nigdy nie
-// zostawia zadania w czekaniu i nie melduje powodzenia bez pracy.
-//
-// Zadanie rodzaju `export` jedzie rodziną wydania i wykonuje się do skutku.
-// Zadania treści jadą kanałem modelu, którego stanowisko sprawdzianu nie ma —
-// i właśnie dlatego są tu miarą najostrzejszą: pętla ma je zamknąć stanem
-// `failed` z powodem NAZYWAJĄCYM brak, a nie zameldować „gotowe".
+// przy włączonej nastawie kończy każde zadanie stanem rozstrzygniętym, nigdy nie
+// zostawiając zadania w oczekiwaniu i nie melduje powodzenia bez pracy.
 func TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -178,8 +152,7 @@ func TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak(t *testing.T) {
 
 	po := petlaRozkladDokumentu(t, zmontowany, zycie, rozlozony.Plan.Id)
 
-	// Miara pierwsza: ŻADNE zadanie nie zostało w czekaniu. Plan „uruchomiony"
-	// z zadaniami nadal czekającymi to plan, który nie wykonał niczego.
+	// Miara pierwsza: żadne zadanie nie zostało w oczekiwaniu po przebiegu.
 	for _, zadanie := range po.Tasks {
 		if zadanie.State == shared.StudioTaskStatePending ||
 			zadanie.State == shared.StudioTaskStateRunning {
@@ -189,8 +162,7 @@ func TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak(t *testing.T) {
 		}
 	}
 
-	// Miara druga: każde zadanie NIEUDANE ma powód. Stan `failed` bez powodu jest
-	// tym samym co cisza — Operator nie wie, czego brakuje.
+	// Miara druga: każde zadanie w stanie `failed` ma zapisany powód niepowodzenia.
 	for _, zadanie := range po.Tasks {
 		if zadanie.State != shared.StudioTaskStateFailed {
 			continue
@@ -213,11 +185,9 @@ func TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak(t *testing.T) {
 }
 
 // TestPetlaWydajeDokumentDoFormatuJakoZadanie wykazuje, że zadanie rodzaju
-// `export` naprawdę wydaje dokument — a nie jest odkładane jako brak.
-//
-// Miara jest skutkiem: po przebiegu wydanie musi istnieć jako wynik zadania albo
-// jako zasób w magazynie rdzenia. Zadanie zamknięte stanem `done` bez ani jednego
-// śladu wydania byłoby meldunkiem bez pracy.
+// `export` rzeczywiście wydaje dokument: po przebiegu wydanie istnieje jako
+// wynik zadania albo jako zasób w magazynie rdzenia, a nie tylko jako stan
+// `done` bez śladu wydania.
 func TestPetlaWydajeDokumentDoFormatuJakoZadanie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -261,13 +231,9 @@ func TestPetlaWydajeDokumentDoFormatuJakoZadanie(t *testing.T) {
 
 // ── Szkoda piąta: zatrzymanie, po którym zadanie znika ──────────────────────
 
-// TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy wykazuje trzy rzeczy
-// naraz: rozkład wchodzi w stan zatrzymany, powód zatrzymania jest zapisany,
-// a zadania już domknięte ZOSTAJĄ domknięte.
-//
-// Zatrzymanie, które kasuje pracę wykonaną przed nim, byłoby gorsze niż brak
-// zatrzymania — Operator naciskający „przerwij" traciłby to, co pętla zrobiła
-// dobrze.
+// TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy wykazuje, że po
+// zatrzymaniu rozkład wchodzi w stan zatrzymany z zapisanym powodem, a zadania
+// już domknięte pozostają domknięte, nie tracąc wcześniej wykonanej pracy.
 func TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -311,8 +277,7 @@ func TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy(t *testing.T) {
 	if po.StopReason == nil || !strings.Contains(*po.StopReason, "przerwał") {
 		t.Errorf("rozkład po zatrzymaniu nie niesie powodu Operatora: %v", po.StopReason)
 	}
-	// Praca sprzed zatrzymania ZOSTAJE. Miara jest wprost: stan zadania wydania
-	// nie może się po zatrzymaniu pogorszyć.
+	// Stan zadania domkniętego przed zatrzymaniem nie może się po nim pogorszyć.
 	poZatrzymaniu, _ := petlaZadaniePoNazwie(po, "Wydanie przed zatrzymaniem")
 	if stanPrzed == shared.StudioTaskStateDone &&
 		poZatrzymaniu.State != shared.StudioTaskStateDone {
@@ -330,12 +295,9 @@ func TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy(t *testing.T) {
 // ── Szkoda czwarta: blokada fragmentu przemilczana w kolejce ────────────────
 
 // TestBlokadaFragmentuWidocznaWKolejceZadan wykazuje, że zadanie zatrzymane
-// blokadą fragmentu jest WIDOCZNE w kolejce wraz z powodem, a nie przemilczane.
-//
-// Sprawdzian mierzy przy okazji rzecz nośną: pętla jedzie REJESTREM, nie
-// wywołaniem adaptera wprost. Zapora blokad stoi w rejestrze — pętla omijająca
-// rejestr przepisałaby zablokowany fragment i sprawdzian by tego nie zobaczył,
-// bo zadanie skończyłoby się „gotowe".
+// blokadą fragmentu pozostaje widoczne w kolejce wraz z powodem zatrzymania,
+// ponieważ pętla wykonawcza sprawdza zaporę blokad przez rejestr, a nie
+// wywołaniem adaptera wprost.
 func TestBlokadaFragmentuWidocznaWKolejceZadan(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -385,8 +347,7 @@ func TestBlokadaFragmentuWidocznaWKolejceZadan(t *testing.T) {
 		t.Errorf("powód przy zadaniu nie nazywa blokady, która je zatrzymała: %q", powod)
 	}
 
-	// Bilans przebiegu też o tym mówi — bo pominięcie dotyczy przebiegu, nie
-	// tylko jednego wiersza kolejki.
+	// Bilans przebiegu też liczy to pominięcie, nie tylko wiersz kolejki.
 	if puszczony.Balance == nil || puszczony.Balance.SkippedCount == 0 {
 		t.Fatal("bilans przebiegu nie liczy pominięcia — zapora zatrzymała zadanie, " +
 			"a przebieg tego nie zgłosił")
@@ -401,8 +362,7 @@ func TestBlokadaFragmentuWidocznaWKolejceZadan(t *testing.T) {
 		t.Errorf("bilans przebiegu nie nazywa blokady: %+v", puszczony.Balance.Skipped)
 	}
 
-	// Skutek na TREŚCI: zablokowany fragment został dosłownie taki, jaki był.
-	// To jest miara ostateczna — reszta mówi o meldunkach, ta o dokumencie.
+	// Skutek na treści dokumentu: zablokowany fragment pozostaje taki, jaki był.
 	tresc := trescDokumentu(t, zmontowany, zycie, petlaOknoSprawdzianu, dokument.Id)
 	if !strings.HasPrefix(tresc, "Podstawa prawna: art. 5 ustawy.") {
 		t.Errorf("zablokowany fragment został zmieniony przez pętlę; treść po przebiegu: %q",
@@ -413,12 +373,8 @@ func TestBlokadaFragmentuWidocznaWKolejceZadan(t *testing.T) {
 // ── Szkoda trzecia: wsad milczący o poszczególnych dokumentach ──────────────
 
 // TestWsadOddajeWynikKazdegoDokumentuOsobno wykazuje, że wsad na wielu
-// dokumentach rozlicza się z KAŻDEGO osobno — a nie jedną liczbą „przyjęto".
-//
-// Miara jest zupełna: każdy dokument z żądania musi się znaleźć dokładnie raz
-// po stronie przyjętych albo odrzuconych, a każde odrzucenie musi mieć powód.
-// Dokument nieistniejący musi dostać powód INNY niż dokumenty istniejące —
-// inaczej „odrzucono" byłoby jednym workiem na wszystko.
+// dokumentach rozlicza się z każdego osobno: każdy dokument trafia dokładnie
+// raz do przyjętych albo do odrzuconych, każde odrzucenie ma własny powód.
 func TestWsadOddajeWynikKazdegoDokumentuOsobno(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	pierwszy := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -464,8 +420,7 @@ func TestWsadOddajeWynikKazdegoDokumentuOsobno(t *testing.T) {
 		t.Errorf("powód odrzucenia dokumentu nieistniejącego nie nazywa braku: %q",
 			powodNieistniejacego)
 	}
-	// Dokumenty istniejące, gdy odmówiły, odmówiły z INNEGO powodu niż brak
-	// dokumentu. Jeden powód dla wszystkiego znaczyłby bilans pozorny.
+	// Dokument istniejący, gdy odrzucony, ma powód inny niż dokument nieistniejący.
 	for _, kod := range []string{pierwszy.Id, drugi.Id} {
 		powod, odrzucony := rozliczone[kod]
 		if !odrzucony {
@@ -481,11 +436,8 @@ func TestWsadOddajeWynikKazdegoDokumentuOsobno(t *testing.T) {
 // ── Rozkład zlecenia: rozpoznanie czynności ze słów Operatora ───────────────
 
 // TestRozkladZleceniaRozpoznajeCzynnosciZeSlowOperatora wykazuje, że rozkład
-// jest rachunkiem, a nie jednym zadaniem z całym zleceniem w środku.
-//
-// Miara jest podwójna: liczba zadań i ICH RODZAJE. Rozkład oddający cztery
-// zadania rodzaju `custom` byłby rozkładem pozornym — nazwałby czynności, których
-// nie rozpoznał.
+// rozbija zlecenie na osobne zadania rozpoznanych rodzajów, a nie na jedno
+// zadanie z całym zleceniem w treści; miara obejmuje liczbę zadań i ich rodzaje.
 func TestRozkladZleceniaRozpoznajeCzynnosciZeSlowOperatora(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -515,9 +467,7 @@ func TestRozkladZleceniaRozpoznajeCzynnosciZeSlowOperatora(t *testing.T) {
 		}
 	}
 
-	// Zależności: rozkład zlecenia dokumentowego jest szeregowy — nie da się
-	// poprawić języka pisma, którego jeszcze nie ma. Pierwsze zadanie na niczym
-	// nie stoi, każde następne stoi na poprzednim.
+	// Rozkład zlecenia dokumentowego jest szeregowy: każde zadanie zależy od poprzedniego.
 	for numer, zadanie := range rozlozony.Plan.Tasks {
 		if numer == 0 {
 			if len(zadanie.DependsOn) != 0 {
@@ -539,12 +489,9 @@ func TestRozkladZleceniaRozpoznajeCzynnosciZeSlowOperatora(t *testing.T) {
 	}
 }
 
-// TestZadanieRozkladuPrzestawiaSieTylkoDrogaDozwolona wykazuje, że przejścia
-// stanów są sprawdzane, a nie przyjmowane na słowo.
-//
-// Zadanie domknięte, które wraca do biegu bez decyzji o ponowieniu, zgubiłoby
-// wynik swojej pracy — dlatego to przejście musi wracać odmową NAZYWAJĄCĄ oba
-// stany, a nie cichym przyjęciem.
+// TestZadanieRozkladuPrzestawiaSieTylkoDrogaDozwolona wykazuje, że przejście
+// zadania między stanami jest sprawdzane: przejście niedozwolone wraca odmową
+// nazywającą oba stany, a stan zadania po odmowie pozostaje nietknięty.
 func TestZadanieRozkladuPrzestawiaSieTylkoDrogaDozwolona(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, petlaOknoSprawdzianu,
@@ -569,8 +516,8 @@ func TestZadanieRozkladuPrzestawiaSieTylkoDrogaDozwolona(t *testing.T) {
 		t.Fatalf("zadanie nie przeszło w stan pominięty: %q", przestawione.Task.State)
 	}
 
-	// Droga niedozwolona: pominięte → domknięte. Zadanie, którego nikt nie
-	// wykonał, nie ma prawa stać się wykonanym.
+	// Droga niedozwolona: pominięte → domknięte, bo niewykonane zadanie nie
+	// staje się wykonanym.
 	domkniete := shared.StudioTaskState(shared.StudioTaskStateDone)
 	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioPlanTaskUpdate,
 		shared.StudioPlanTaskUpdateRequest{TaskId: pierwsze.Id, State: &domkniete})

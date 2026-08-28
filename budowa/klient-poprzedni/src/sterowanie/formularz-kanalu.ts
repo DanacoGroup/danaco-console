@@ -6,30 +6,9 @@ import {
   wiersz,
 } from '../modele/kontrolki-formularza-braki';
 
-/**
- * Formularz wiersza rejestru kanałów — jedna powierzchnia dla założenia
- * i dla zmiany.
- *
- * Jeden formularz obsługuje oba żądania, bo `ChannelAddRequest`
- * i `ChannelUpdateRequest` różnią się dwoma polami: żądanie zmiany ma
- * `channelId`, a nie ma `kind`. Nazwa, model, czynność i parametry są wspólne.
- *
- * Rodzaj kanału jest polem wpisu, nie listą wyboru: `KnownChannelKinds` to lista
- * informacyjna, nie brama — nowy rodzaj kanału to nowy wiersz rejestru, a nie
- * zmiana kodu. Znane rodzaje idą podpowiedzią i objaśnieniem pod polem, wpis
- * pozostaje otwarty.
- *
- * Rodzaju nie da się zmienić po założeniu. Pole nie jest wyłączane; obok niego
- * stoi zdanie ostrzegające, że wpis nie dojdzie do rdzenia.
- *
- * Parametry idą jako JSON, bo kontrakt ma tu `unknown` i żadnej struktury.
- * Wpis nieczytelny kończy się odmową z komunikatem, a nie wysyłką pustych
- * parametrów: ciche `{}` skasowałoby dotychczasowe parametry kanału.
- *
- * Wygląd w całości z biblioteki (`dn-pole-*`) i z arkusza panelu.
- */
+// Formularz wiersza rejestru kanałów: jedna powierzchnia obsługująca założenie i zmianę.
 
-/** Odczyt pól formularza. Niepusty `blad` znaczy: nie wysyłamy niczego. */
+/** Odczyt pól formularza wraz z rozstrzygnięciem ich poprawności: niepusty błąd znaczy, że żądania do rdzenia nie wysyłamy. */
 export interface OdczytKanalu {
   /** Przeszkoda po stronie klienta; pusty napis znaczy „pola w porządku". */
   blad: string;
@@ -53,7 +32,7 @@ export interface FormularzKanalu {
   ostrzezRodzaj(widoczne: boolean): void;
 }
 
-/** Podpowiedź rodzaju: rodzaje znane w chwili wydania kontraktu. */
+/** Podpowiedź rodzaju kanału: rodzaje znane w chwili wydania kontraktu, pokazywane pod polem jako informacja, nie jako brama wpisu. */
 const PODPOWIEDZ_RODZAJU = KnownChannelKinds.join(' · ');
 
 const ZDANIE_RODZAJU =
@@ -95,7 +74,7 @@ export function utworzFormularzKanalu(): FormularzKanalu {
   };
 }
 
-/** Wiersze formularza — czysty fragment konstrukcyjny bez domknięcia na stanie. */
+/** Buduje wiersze formularza jako czysty fragment konstrukcyjny, bez domknięcia nad stanem panelu ani nasłuchu zdarzeń. */
 function zlozWiersze(kontrolki: {
   nazwa: HTMLInputElement;
   rodzaj: HTMLInputElement;
@@ -128,7 +107,7 @@ function zlozWiersze(kontrolki: {
   ];
 }
 
-/** Odczyt pól wraz z rozbiorem parametrów. */
+/** Odczytuje pola formularza wraz z rozbiorem parametrów z tekstu pola na wartość struktury żądania do rdzenia. */
 function odczyt(
   nazwa: HTMLInputElement,
   rodzaj: HTMLInputElement,
@@ -154,7 +133,7 @@ function odczyt(
   }
 }
 
-/** Parametry wiersza jako tekst pola. Brak parametrów daje pole puste. */
+/** Zapisuje parametry wiersza jako tekst pola formularza do edycji; brak parametrów w wierszu daje pole puste. */
 function zapisParametrow(config: unknown): string {
   if (config === undefined || config === null) return '';
   if (typeof config === 'string') return config;

@@ -1,18 +1,7 @@
 import { StudioIngestState, type StudioIngestItem } from '../../../../shared/contract';
 
 /**
- * Jeden wiersz kolejki wczytywania narzędziowni cyfryzacji.
- *
- * Wiersz nie wywołuje niczego sam: oddaje przyciski, a czynności podpina okno.
- * Dzięki temu rozmowa z rdzeniem zostaje w jednym miejscu, a wiersz odpowiada
- * wyłącznie za to, co widać.
- *
- * ── Stan jest treścią, nie barwą ────────────────────────────────────────────
- * Nazwa stanu idzie do `data-stan` i do plakietki słownej naraz, więc pozycja
- * odmówiona jest rozpoznawalna także bez odczytu barwy. Stan przychodzi z rdzenia
- * jako `StudioIngestState` i ma PIĘĆ wartości, nie cztery: „ponowienie" jest
- * stanem osobnym i nazywa rzecz, której ani „gotowa", ani „odmowa" nie opisuje —
- * rozpoznanie wypadło poniżej progu pewności i pozycja wraca do rozpoznania.
+ * Interfejs WierszCyfryzacji reprezentuje jeden wiersz kolejki wczytywania narzędziowni cyfryzacji i udostępnia jego elementy oraz przyciski, którymi okno steruje rozpoznaniem, wskazaniem i przyjęciem pozycji.
  */
 export interface WierszCyfryzacji {
   element: HTMLElement;
@@ -21,7 +10,7 @@ export interface WierszCyfryzacji {
   przyjmij: HTMLButtonElement;
 }
 
-/** Plakietka stanu: napis dla Operatora i odmiana biblioteczna. */
+/** Stała PLAKIETKA_STANU mapuje każdy stan pozycji kolejki cyfryzacji na napis widoczny dla Operatora i odmianę klasy biblioteki plakietek. */
 const PLAKIETKA_STANU: Record<StudioIngestState, { napis: string; odmiana: string }> = {
   [StudioIngestState.Oczekuje]: { napis: 'oczekuje', odmiana: '' },
   [StudioIngestState.Przetwarzanie]: {
@@ -36,7 +25,7 @@ const PLAKIETKA_STANU: Record<StudioIngestState, { napis: string; odmiana: strin
   [StudioIngestState.Odmowa]: { napis: 'odmowa rdzenia', odmiana: 'dn-plakietka--blad' },
 };
 
-/** Zdanie o wyniku pozycji — skąd wziął się tekst, ile go jest i jak pewny. */
+/** Funkcja opiszWynik zwraca zdanie o wyniku pozycji: skąd pochodzi rozpoznany tekst, ile ma znaków i z jaką pewnością rozpoznania. */
 function opiszWynik(pozycja: StudioIngestItem): string {
   if (pozycja.state === StudioIngestState.Odmowa) {
     return pozycja.failureReason ?? 'Rdzeń odmówił, ale powodu nie podał.';
@@ -57,7 +46,7 @@ function opiszWynik(pozycja: StudioIngestItem): string {
   return `${zrodloTekstu} · ${tekst.length} znaków${strony}${pewnosc}`;
 }
 
-/** Wskazanie materiału widziane przez rdzeń — ścieżka albo zasób magazynu. */
+/** Funkcja opiszWskazanie zwraca wskazanie materiału widziane przez rdzeń: zasób magazynu, ścieżkę na dysku rdzenia albo pozycję bez wskazania. */
 function opiszWskazanie(pozycja: StudioIngestItem): { tresc: string; rodzaj: string; opis: string } {
   if (pozycja.assetId !== undefined && pozycja.assetId !== '') {
     return {

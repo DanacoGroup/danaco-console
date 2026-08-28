@@ -1,18 +1,8 @@
 import type { KartaSesji } from './karta-sesji';
 
-/**
- * Wędrujący fokus pasa zakładek — obsługa klawiatury według wzorca ARIA.
- *
- * Jedna odpowiedzialność: przełożenie klawisza na czynność pasa. Strzałki
- * przenoszą wybór z zawijaniem, Home i End skaczą na krańce, Enter i spacja
- * wybierają kartę pod fokusem, Delete ją zamyka.
- *
- * Plik nie wie, co wybór i zamknięcie znaczą: w pasie związanym z rdzeniem
- * obie czynności są komendami kontraktu, w pasie samego widoku — zmianą
- * miejscową. Rozstrzyga to `karty-sesji.ts`, który podaje tu czynności.
- */
+// Wędrujący fokus pasa zakładek — obsługa klawiatury pasa kart sesji, wzorzec ARIA.
 
-/** Czynności pasa wywoływane klawiszem. */
+/** Czynności pasa wywoływane klawiszem: wybór karty pod ogniskiem albo jej zamknięcie klawiszem Delete. */
 export interface CzynnosciPasa {
   wybierz(id: string): void;
   zamknij(id: string): void;
@@ -47,7 +37,7 @@ export function przeniesWedrowke(
   }
 }
 
-/** Karta wskazana klawiszem przenoszącym wybór; `null` przy innym klawiszu. */
+/** Karta wskazana klawiszem przenoszącym wybór ogniska; wartość pusta oznacza naciśnięcie innego klawisza. */
 function celKlawisza(
   karty: readonly KartaSesji[],
   miejsce: number,
@@ -61,7 +51,7 @@ function celKlawisza(
   return karty[(miejsce + krok + karty.length) % karty.length] ?? null;
 }
 
-/** Przesunięcie wyboru wynikające z klawisza strzałki; 0 znaczy inny klawisz. */
+/** Przesunięcie wyboru wynikające z klawisza strzałki; zero oznacza naciśnięcie zupełnie innego klawisza. */
 function przesuniecie(klawisz: string): number {
   if (klawisz === 'ArrowRight' || klawisz === 'ArrowDown') return 1;
   if (klawisz === 'ArrowLeft' || klawisz === 'ArrowUp') return -1;

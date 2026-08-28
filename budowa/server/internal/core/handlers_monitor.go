@@ -1,21 +1,5 @@
-// Odpowiedzialność pliku: wpięcie dwóch komend rodziny `monitor.*`.
-//
-// Port jest rozszerzeniem portu nawigacji, a nie drugim portem: monitor
-// procesów jest oknem warstwy wspólnej, którą obsługuje Nawigacja, więc
-// telemetria ma w rdzeniu jednego właściciela. Wpięcie idzie osobno, bo rodzina
-// `monitor.*` weszła do kontraktu osobno — tak samo jak `memory.*` rozszerza
-// port modułu Workspace.
-//
-// Brak portu nie jest tu ciszą. Pozostałe rodziny przy porcie niewypełnionym
-// nie rejestrują niczego i rdzeń odpowiada `*.unknown`; komendy monitora
-// rejestrują się zawsze, a port bez telemetrii odpowiada `internal_error`
-// z nazwą brakującego bytu. Odpowiedź ma brzmieć „monitor nie jest wpięty",
-// a nie „nie znam takiej komendy" ani, najgorzej, pusty wykaz procesów.
-//
-// Zdarzeń ta rodzina nie rozgłasza: telemetria postępu ma w rdzeniu jednego
-// producenta (`telemetria.go`, zdarzenie `progress.changed`). Odczyt stanu
-// niczego nie zmienia, a zapis obserwacji zmienia pamięć rdzenia, dla której
-// kontrakt zdarzenia nie ma. Dlatego `zarejestrujMonitor` nie bierze emitera.
+// Plik wpina dwie komendy rodziny monitor.* jako rozszerzenie portu
+// nawigacji; port bez telemetrii odpowiada odmową zamiast milczeć.
 package core
 
 import (
@@ -67,7 +51,8 @@ func zarejestrujMonitorNiewpiety(r *Rejestr) {
 		}))
 }
 
-// bladMonitoraNiewpietego składa odmowę portu, który nie niesie monitora.
+// bladMonitoraNiewpietego składa odmowę portu nawigacji, który nie niesie
+// monitora procesów, zamiast zwracać pustą odpowiedź.
 func bladMonitoraNiewpietego() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"monitor procesów: port nawigacji nie niesie telemetrii postępu — "+

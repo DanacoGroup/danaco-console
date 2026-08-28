@@ -1,34 +1,11 @@
 /**
- * Książka hostów okna Session Manager — wpisy połączeń zdalnych wraz z czytaniem
- * i zapisem pliku konfiguracyjnego OpenSSH.
- *
- * Książka jest tu WIDOKIEM na dziennik rdzenia, nie jego zamiennikiem. Prawdą
- * o wpisach jest tabela `terminal_host`, a okno czyta ją komendą
- * `terminal.host.list` i zmienia komendami `terminal.host.save`
- * i `terminal.host.remove`. Ten byt trzyma wpisy w pamięci wyłącznie po to, żeby
- * je pogrupować i pokazać — po odświeżeniu strony wykaz wraca z rdzenia.
- *
- * Czytanie i pisanie pliku konfiguracyjnego OpenSSH zostaje, bo służy czemu
- * innemu niż trwałość: wnosi do książki wpisy z maszyny OPERATORA i wynosi je
- * z powrotem, a rdzeń stoi gdzie indziej.
- *
- * Adres celu ma znaczenie dosłowne: idzie do rdzenia polem `remoteTarget`
- * otwarcia karty, a rdzeń podaje go programowi `ssh` jako pojedynczy argument
- * (`adapter_modul_terminal_powloki.go`). Port jedzie osobnym polem, więc alias
- * konfiguracji nie jest już jedyną drogą do portu innego niż domyślny. Alias
- * rozwiązuje wciąż program `ssh` uruchomiony NA SERWERZE, więc alias wczytany
- * z pliku Operatora zadziała tylko wtedy, gdy serwer zna go również u siebie —
- * dlatego czytanie pliku woli jawne `użytkownik@host` złożone z pól `User`
- * i `HostName`, a po alias sięga dopiero wtedy, gdy wpis tych pól nie ma.
+ * Książka hostów okna Session Manager — wpisy połączeń zdalnych wraz z czytaniem i zapisem
+ * pliku konfiguracyjnego OpenSSH; jest widokiem na dziennik rdzenia, nie jego zamiennikiem.
  */
 
-/** Jeden wpis książki hostów. */
+/** Jeden wpis książki hostów okna Session Manager, z adresem, portem, folderem i notatką pochodzenia wpisu. */
 export interface WpisHosta {
-  /**
-   * Identyfikator wpisu nadany przez rdzeń. Pusty znaczy wpis, który jeszcze
-   * nie ma wiersza w dzienniku — tak wchodzi wpis wczytany z pliku
-   * konfiguracyjnego Operatora, zanim zostanie zapisany.
-   */
+  /** Identyfikator wpisu nadany przez rdzeń; pusty przed pierwszym zapisem w dzienniku. */
   id?: string;
   /** Port połączenia; brak bierze port domyślny protokołu. */
   port?: number;
@@ -49,23 +26,13 @@ export interface KsiazkaHostow {
   wpisy(): readonly WpisHosta[];
   /** Wpisy pogrupowane po folderze, foldery w porządku alfabetycznym. */
   grupy(): Array<[string, WpisHosta[]]>;
-  /**
-   * Dokłada wpis. Nazwa jest kluczem: wpis o nazwie już zajętej podmienia
-   * poprzedni, bo dwa wpisy o jednej nazwie są nie do rozróżnienia w wykazie.
-   * Oddaje prawdę, gdy wpis był nowy.
-   */
+  /** Dokłada wpis; nazwa jest kluczem, więc wpis o nazwie już zajętej podmienia poprzedni. */
   dodaj(wpis: WpisHosta): boolean;
   /** Usuwa wpis o tej nazwie; fałsz znaczy „takiego wpisu nie ma”. */
   usun(nazwa: string): boolean;
   /** Dokłada wiele wpisów naraz; oddaje liczbę wpisów nowych i podmienionych. */
   scal(wpisy: readonly WpisHosta[]): { nowe: number; podmienione: number };
-  /**
-   * Zastępuje całą zawartość wykazem z rdzenia.
-   *
-   * Zastąpienie, nie scalenie: prawdą o książce jest dziennik rdzenia, więc
-   * wpis, którego rdzeń nie oddał, przestaje istnieć także na ekranie. Scalenie
-   * zostawiałoby na ekranie wpisy zdjęte przez kogoś innego.
-   */
+  /** Zastępuje całą zawartość wykazem z rdzenia; prawdą o książce jest dziennik rdzenia. */
   zastap(wpisy: readonly WpisHosta[]): void;
 }
 
@@ -130,14 +97,8 @@ export function utworzKsiazkeHostow(): KsiazkaHostow {
 }
 
 /**
- * Czyta plik konfiguracyjny OpenSSH i składa z niego wpisy książki.
- *
- * Czytany jest podzbiór składni, który niesie adres: `Host`, `HostName`, `User`,
- * `Port`. Reszta słów kluczowych zostaje nietknięta i nieodwzorowana — wpis
- * książki nie jest kopią bloku konfiguracji, tylko adresem do otwarcia karty.
- *
- * Wzorce (`Host *`, `Host web-*`) są pomijane: nie są adresem żadnej maszyny,
- * a otwarcie karty do wzorca skończyłoby się odmową programu ssh.
+ * Czyta plik konfiguracyjny OpenSSH i składa z niego wpisy książki; czytany jest podzbiór
+ * składni, który niesie adres.
  */
 export function czytajKonfiguracjeSsh(tresc: string): WpisHosta[] {
   const wpisy: WpisHosta[] = [];
@@ -158,9 +119,7 @@ export function czytajKonfiguracjeSsh(tresc: string): WpisHosta[] {
       katalog: '',
       notatka: czesci.join('; '),
     };
-    // Port wchodzi do wpisu, bo rdzeń czyta go polem `remotePort` otwarcia karty
-    // i dokłada przełącznik `-p`. Wartość niepoprawna nie wchodzi wcale — port
-    // zmyślony byłby gorszy niż port domyślny.
+    // Port wchodzi do wpisu polem `remotePort`; wartość niepoprawna nie wchodzi wcale.
     if (Number.isFinite(numerPortu) && numerPortu > 0 && numerPortu <= 65535) {
       wpis.port = numerPortu;
     }
@@ -175,9 +134,7 @@ export function czytajKonfiguracjeSsh(tresc: string): WpisHosta[] {
     const wartosc = rozbite.slice(1).join(' ').trim();
     if (slowo === 'host') {
       domknij();
-      // Blok `Host` bywa wielokrotny (`Host web-01 web-02`); książka bierze
-      // pierwszy alias, bo to on jest nazwą wpisu, a pozostałe są jego
-      // synonimami po stronie serwera.
+      // Blok Host bywa wielokrotny; książka bierze pierwszy alias jako nazwę wpisu.
       const alias = wartosc.split(/\s+/)[0] ?? '';
       if (alias === '' || alias.includes('*') || alias.includes('?')) continue;
       biezacy = { alias, host: '', uzytkownik: '', port: '' };
@@ -193,11 +150,8 @@ export function czytajKonfiguracjeSsh(tresc: string): WpisHosta[] {
 }
 
 /**
- * Składa treść pliku konfiguracyjnego OpenSSH z wpisów książki.
- *
- * Zapisywane jest wyłącznie to, co książka naprawdę wie: alias, maszyna,
- * użytkownik i — gdy wpis go niesie — port. Portu domyślnego nie dopisujemy:
- * byłby wymyśleniem danych, których Operator nie podał.
+ * Składa treść pliku konfiguracyjnego OpenSSH z wpisów książki; zapisywane jest wyłącznie to,
+ * co książka naprawdę wie.
  */
 export function zapiszKonfiguracjeSsh(wpisy: readonly WpisHosta[]): string {
   const wiersze: string[] = [

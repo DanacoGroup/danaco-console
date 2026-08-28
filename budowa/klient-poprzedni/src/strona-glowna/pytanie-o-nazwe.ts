@@ -1,19 +1,4 @@
-/**
- * Pytanie o jedną nazwę — modal z jednym polem tekstowym. Pobiera od Operatora
- * jeden napis albo odmowę; korzystają z niego komendy `session.rename`,
- * `session.copy` i `session.project.set`.
- *
- * Natywny `<dialog>`, nie własna nakładka: warstwę tła daje `::backdrop`
- * z `komponenty/nakladka.css`, a stos okien, pułapkę ogniska i zamknięcie
- * klawiszem Escape zapewnia przeglądarka.
- *
- * Zamknięcie oznacza odmowę, nie nazwę pustą: Escape i przycisk „Anuluj” dają
- * `null`, więc wywołujący odróżnia odmowę od świadomie pustego napisu.
- *
- * Modal jest doklejany na czas pytania i usuwany po odpowiedzi, żeby pytania
- * nie nawarstwiały się w drzewie przy każdym wierszu wykazu.
- */
-
+/** Pytanie o jedną nazwę otwiera modal z polem tekstowym i zwraca albo wpisany napis, albo brak przy odmowie, korzystając z natywnego okna dialogowego przeglądarki. */
 export interface PytanieONazwe {
   /** Nagłówek modalu — czego dotyczy pytanie. */
   tytul: string;
@@ -27,7 +12,7 @@ export interface PytanieONazwe {
   napisZatwierdzenia: string;
 }
 
-/** Zwraca podany napis albo `null`, gdy Operator odmówił. */
+/** Zwraca podany napis albo brak wartości, gdy operator zamknął okno klawiszem Escape lub przyciskiem odmowy. */
 export function zapytajONazwe(pytanie: PytanieONazwe): Promise<string | null> {
   const modal = document.createElement('dialog');
   modal.className = 'dn-modal';
@@ -80,8 +65,7 @@ export function zapytajONazwe(pytanie: PytanieONazwe): Promise<string | null> {
   return new Promise<string | null>((rozwiaz) => {
     let odpowiedz: string | null = null;
 
-    // Jedno miejsce sprzątające: `close` przychodzi zarówno od przycisków,
-    // jak i od Escape, więc usunięcie z drzewa nie ma dwóch dróg.
+    // Jedno miejsce sprzątające: zamknięcie przychodzi zarówno od przycisków, jak i od klawisza Escape.
     modal.addEventListener('close', () => {
       modal.remove();
       rozwiaz(odpowiedz);

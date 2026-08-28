@@ -1,12 +1,5 @@
 #!/bin/sh
-# Pokazuje, że wpięcie nałożone na dwa pliki pakietu models przechodzi test
-# pakietu zewnetrzne, nie dotykając samych plików models.
-#
-# Jak to działa: kopie dwóch plików models dostają wpięcie, a kompilator widzi
-# je wyłącznie przez `go test -overlay`. Oryginały zostają bit w bit takie same
-# (skrypt sprawdza to na końcu i głośno krzyczy, gdyby było inaczej).
-#
-# Uruchamiać z katalogu `budowa`:  sh server/internal/zewnetrzne/.dowod-wpiecia/uruchom.sh
+# Skrypt dowodzi, że wpięcie nałożone na kopie dwóch plików pakietu models przechodzi test pakietu zewnetrzne, a oryginalne pliki models pozostają nietknięte, co skrypt sprawdza sumą kontrolną na końcu.
 set -e
 
 KAT=server/internal/zewnetrzne/.dowod-wpiecia

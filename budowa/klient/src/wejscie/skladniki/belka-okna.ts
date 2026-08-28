@@ -1,10 +1,6 @@
 /**
- * SKŁADNIK — BELKA OKNA SYSTEMOWEGO.
- *
- * Okno przed uwierzytelnieniem nie ma ramy aplikacji: ani szyny nawigacji, ani
- * wstążki, ani paska stanu. Ma wyłącznie belkę — znak, tytuł i trzy kontrolki
- * okna. Znak w belce dorównuje wielkością kontrolkom, więc niesie kropkę
- * w barwie sygnału: przygaszony monochromat czyta się jak brakująca ikona.
+ * Składnik — belka okna systemowego. Okno przed uwierzytelnieniem nie ma
+ * ramy aplikacji: ma wyłącznie belkę — znak, tytuł i trzy kontrolki okna.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';

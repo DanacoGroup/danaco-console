@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: repozytorium poczty — konfiguracja skrzynek
-// pocztowych, dziennik listów odebranych i ślad listów wysłanych.
-//
-// Repozytorium nie mówi żadnym protokołem: odbiór i wysyłka należą do pakietu
-// `internal/poczta`. Tu leży wyłącznie trwałość.
-//
-// Hasła tu nie ma: kolumna `haslo_odwolanie` niesie odwołanie do sejfu
-// poświadczeń, a repozytorium nigdy nie widzi sekretu.
+// Odpowiedzialność pliku: repozytorium poczty prowadzi trwałość konfiguracji skrzynek pocztowych, dziennika listów odebranych i śladu listów wysłanych.
 package dane
 
 import (
@@ -15,7 +8,7 @@ import (
 	"fmt"
 )
 
-// SkrzynkaPocztowa to wiersz tabeli `skrzynka_pocztowa`.
+// SkrzynkaPocztowa to wiersz tabeli skrzynka_pocztowa, niosący konfigurację połączenia odbiorczego i wysyłkowego jednej skrzynki.
 type SkrzynkaPocztowa struct {
 	ID             int64
 	Kod            string
@@ -31,7 +24,7 @@ type SkrzynkaPocztowa struct {
 	Aktywna        bool
 }
 
-// ListOdebrany to wiersz tabeli `list_odebrany`.
+// ListOdebrany to wiersz tabeli list_odebrany, niosący treść i stan przetworzenia jednego listu odebranego przez skrzynkę.
 type ListOdebrany struct {
 	ID                 int64
 	SkrzynkaID         int64
@@ -57,19 +50,16 @@ type ListWyslany struct {
 	Blad          *string
 }
 
-// RepozytoriumPoczty jest kontraktem obszaru poczty.
+// RepozytoriumPoczty jest kontraktem odczytu i zapisu skrzynek pocztowych, listów odebranych oraz śladu listów wysłanych.
 type RepozytoriumPoczty interface {
 	SkrzynkiCzynne(ctx context.Context) ([]SkrzynkaPocztowa, error)
 	SkrzynkaPoKodzie(ctx context.Context, kod string) (SkrzynkaPocztowa, error)
 
-	// DodajList zapisuje list odebrany. Zwraca false, gdy list o tym samym
-	// identyfikatorze już leży w dzienniku — powtórny odbiór tego samego listu
-	// jest zwykłym stanem taktowania, nie błędem (idempotencja).
+	// DodajList zapisuje list odebrany; powtórny odbiór jest stanem taktowania, nie błędem.
 	DodajList(ctx context.Context, list ListOdebrany) (bool, error)
 	ListyNieprzetworzone(ctx context.Context, skrzynkaID int64) ([]ListOdebrany, error)
 	OznaczPrzetworzony(ctx context.Context, id int64) error
-	// OstatniList zwraca najświeższy list odebrany skrzynki (ErrBrakWiersza,
-	// gdy dziennik pusty) — na nim stoi `poczta.wyslij` z `odpowiedz_na: ostatni`.
+	// OstatniList zwraca najświeższy list odebrany skrzynki, z ErrBrakWiersza, gdy dziennik jest pusty.
 	OstatniList(ctx context.Context, skrzynkaID int64) (ListOdebrany, error)
 	ListPoIdentyfikatorze(ctx context.Context, skrzynkaID int64, identyfikator string) (ListOdebrany, error)
 
@@ -90,8 +80,7 @@ const (
 	kolumnyListu = `id, skrzynka_id, identyfikator_listu, nadawca, temat, chwila,
 	                tresc, odebrano, przetworzony`
 
-	// INSERT OR IGNORE stoi na UNIQUE(skrzynka_id, identyfikator_listu):
-	// zero zmienionych wierszy znaczy list już znany.
+	// Zero zmienionych wierszy przy tym zapisie znaczy, że list o podanym identyfikatorze już jest zapisany w dzienniku listów.
 	dodajListSQL = `INSERT OR IGNORE INTO list_odebrany
 	                (skrzynka_id, identyfikator_listu, nadawca, temat, chwila, tresc)
 	                VALUES (?, ?, ?, ?, ?, ?)`
@@ -233,7 +222,7 @@ func (r *repozytoriumPoczty) ZapiszWyslany(ctx context.Context, list ListWyslany
 	return nil
 }
 
-// jedenList wykonuje zapytanie o pojedynczy wiersz listu.
+// jedenList wykonuje zapytanie o pojedynczy wiersz listu i oddaje ErrBrakWiersza, gdy zapytanie nie trafia w żaden wiersz.
 func (r *repozytoriumPoczty) jedenList(ctx context.Context, sqlText string, argumenty ...any) (ListOdebrany, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, sqlText)
 	if err != nil {
@@ -246,7 +235,7 @@ func (r *repozytoriumPoczty) jedenList(ctx context.Context, sqlText string, argu
 	return list, err
 }
 
-// odczytajSkrzynke składa strukturę z jednego wiersza wyniku.
+// odczytajSkrzynke składa strukturę skrzynki pocztowej z jednego wiersza wyniku zapytania, odczytując kolumny w ustalonej kolejności.
 func odczytajSkrzynke(wiersz skaner) (SkrzynkaPocztowa, error) {
 	var skrzynka SkrzynkaPocztowa
 	var odwolanie sql.NullString
@@ -266,7 +255,7 @@ func odczytajSkrzynke(wiersz skaner) (SkrzynkaPocztowa, error) {
 	return skrzynka, nil
 }
 
-// odczytajList składa strukturę z jednego wiersza wyniku.
+// odczytajList składa strukturę listu odebranego z jednego wiersza wyniku zapytania, odczytując kolumny w ustalonej kolejności.
 func odczytajList(wiersz skaner) (ListOdebrany, error) {
 	var list ListOdebrany
 	var chwila sql.NullString

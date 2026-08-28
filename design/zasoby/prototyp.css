@@ -1,12 +1,7 @@
-/* ============================================================================
-   DANACO CONSOLE — WARSTWA PROTOTYPU · v2.0
-   ----------------------------------------------------------------------------
-   Wspólny szkielet klikalnych prototypów okien. Nie zastępuje komponenty.css —
-   dokłada wyłącznie układ powłoki, kontener okna operacyjnego i drobne wzorce
-   swoiste dla prototypów (pasek prototypu, panel „O tym opracowaniu").
-
-   ZASADA: wyłącznie żetony var(--dn-*). Zero wartości wprost.
-   ============================================================================ */
+/* Warstwa prototypu tworzy wspólny szkielet klikalnych prototypów okien, dokładając wyłącznie układ powłoki, kontener okna operacyjnego i drobne wzorce.
+   Nie zastępuje pliku `komponenty.css`. Wzorce swoiste dla prototypów
+   obejmują pasek prototypu i panel „O tym opracowaniu". Zasada: wyłącznie
+   żetony `var(--dn-*)`, zero wartości zapisanych wprost. */
 
 /* ── 1 · POWŁOKA OKNA APLIKACJI ─────────────────────────────────────────── */
 
@@ -36,7 +31,7 @@ body.pt-pelny-ekran { overflow: hidden; }
   min-width: 0; min-height: 0;
   overflow: hidden;
 }
-/* obszar roboczy z pasem komunikacji (Chat Window) */
+/* Obszar roboczy z pasem komunikacji dzieli przestrzeń na dwa wiersze siatki: wyższy wiersz treści oraz niższy pas przeznaczony na okno komunikacji. */
 .pt-obszar--z-komunikacja {
   grid-template-rows: minmax(0, 1fr) minmax(var(--dn-wym-pas-komunikacji), 46%);
 }
@@ -192,7 +187,7 @@ body.pt-pelny-ekran { overflow: hidden; }
 
 /* ── 6 · WZORCE POMOCNICZE ──────────────────────────────────────────────── */
 
-/* etykieta wersalikowa sekcji */
+/* Etykieta wersalikowa sekcji nazywa grupę treści krojem wersalikowym o zwiększonych odstępach liter, w drugorzędnej barwie tekstu. */
 .pt-etykieta {
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-xs);
@@ -201,14 +196,14 @@ body.pt-pelny-ekran { overflow: hidden; }
   text-transform: uppercase;
   color: var(--dn-tekst-2);
 }
-/* dane techniczne krojem mono */
+/* Dane techniczne krojem mono pokazują wartości liczbowe i identyfikatory pismem o stałej szerokości znaku, w drugorzędnej barwie tekstu. */
 .pt-mono {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-sm);
   font-variant-numeric: tabular-nums;
   color: var(--dn-tekst-2);
 }
-/* listy pozycji */
+/* Listy pozycji układają wiersze w kolumnę, każdy ze znakiem, tytułem obcinanym wielokropkiem oraz metadaną wyrównaną do prawej krawędzi wiersza. */
 .pt-lista { display: flex; flex-direction: column; }
 .pt-pozycja {
   display: flex; align-items: center; gap: var(--dn-od-2);
@@ -234,20 +229,20 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-pozycja-tytul { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-pozycja-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); flex: none; }
 
-/* siatka kart */
+/* Siatka kart rozkłada karty w automatycznie wypełnianych kolumnach, z trzema wariantami minimalnej szerokości karty dla różnej gęstości treści. */
 .pt-siatka { display: grid; gap: var(--dn-od-3); }
 .pt-siatka--2 { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .pt-siatka--3 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .pt-siatka--4 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 
-/* pole treści dokumentowej */
+/* Pole treści dokumentowej ogranicza szerokość wiersza czytelnego tekstu i nadaje własną skalę nagłówkom, akapitom oraz wyróżnieniom tekstu. */
 .pt-dokument { padding: var(--dn-od-6) var(--dn-od-8); max-width: 76ch; }
 .pt-dokument h2 { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); margin-bottom: var(--dn-od-3); color: var(--dn-tekst); }
 .pt-dokument h3 { font-size: var(--dn-fs-lg); margin: var(--dn-od-5) 0 var(--dn-od-2); color: var(--dn-tekst); }
 .pt-dokument p { margin-bottom: var(--dn-od-3); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); font-size: var(--dn-fs-md); }
 .pt-dokument mark { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); border-bottom: 1px solid var(--dn-sygnal-obrys); }
 
-/* konsola / terminal */
+/* Konsola i terminal pokazują dane pismem o stałej szerokości znaku na ciemnym tle, z osobną barwą znaku zachęty, wyniku, uwagi i komentarza. */
 .pt-konsola {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-sm);
@@ -264,7 +259,7 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-konsola .pt-wynik-uwaga { color: var(--dn-bursztyn-400); }
 .pt-konsola .pt-komentarz { color: var(--dn-szary-500); }
 
-/* edytor kodu */
+/* Edytor kodu układa numery wierszy i treść kodu w dwóch kolumnach siatki, z osobną barwą składni słów kluczowych, tekstu, liczb i funkcji. */
 .pt-edytor { display: grid; grid-template-columns: auto minmax(0, 1fr); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); min-height: 0; overflow: auto; }
 .pt-edytor-numery { padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-2) var(--dn-od-3); text-align: right; color: var(--dn-tekst-3); background: var(--dn-powierzchnia-2); user-select: none; font-variant-numeric: tabular-nums; }
 .pt-edytor-kod { padding: var(--dn-od-2) var(--dn-od-3); white-space: pre; color: var(--dn-tekst); }
@@ -279,7 +274,7 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-wiersz-dodany { background: var(--dn-sukces-tlo); }
 .pt-wiersz-usuniety { background: var(--dn-blad-tlo); }
 
-/* pasek narzędzi wewnątrz panelu */
+/* Pasek narzędzi wewnątrz panelu zbiera kontrolki lokalne panelu w jednym wierszu, z rozdzielaczem oddzielającym grupy kontrolek od siebie. */
 .pt-przybornik-lokalny {
   display: flex; align-items: center; gap: var(--dn-od-1);
   padding: var(--dn-od-2) var(--dn-od-3);
@@ -289,16 +284,16 @@ body.pt-pelny-ekran { overflow: hidden; }
 }
 .pt-rozdzielacz { width: 1px; height: var(--dn-od-5); background: var(--dn-obrys); margin-inline: var(--dn-od-1); flex: none; }
 
-/* okruszki nawigacji */
+/* Okruszki nawigacji pokazują ścieżkę położenia w hierarchii widoków, wyróżniając barwą i grubością pisma pozycję odpowiadającą stronie bieżącej. */
 .pt-okruszki { display: flex; align-items: center; gap: var(--dn-od-1); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); flex-wrap: wrap; }
 .pt-okruszki svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
 .pt-okruszki [aria-current='page'] { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
-/* Okruszki na pasku atramentowym czerpią barwy z rodziny ramy, nie z treści. */
+/* Okruszki na pasku atramentowym czerpią barwy z rodziny ramy, nie z treści, ponieważ stoją na ciemnym tle wspólnym dla całej powłoki aplikacji. */
 .dn-pasek .pt-okruszki { color: var(--dn-rama-tekst-2); }
 .dn-pasek .pt-okruszki svg { color: var(--dn-rama-tekst-2); }
 .dn-pasek .pt-okruszki [aria-current='page'] { color: var(--dn-rama-tekst); }
 
-/* wskaźnik pracy w tle — tętno */
+/* Wskaźnik pracy w tle pulsuje jednym ciągłym tętnem, sygnalizując użytkownikowi trwającą czynność bez przerywania pracy w innej części okna. */
 .pt-tetno {
   display: inline-block; flex: none;
   width: var(--dn-wym-kropka); height: var(--dn-wym-kropka);
@@ -314,14 +309,14 @@ body.pt-pelny-ekran { overflow: hidden; }
   .pt-tetno { animation: none; box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
 }
 
-/* wejście widoku */
+/* Wejście widoku animuje pojawienie się treści przesunięciem i przenikaniem, uruchamiane raz przy pierwszym pokazaniu widoku w oknie. */
 .pt-wejscie { animation: pt-wejscie var(--dn-czas-3) var(--dn-ease) both; }
 @keyframes pt-wejscie {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* ukrycie widoków przełączanych */
+/* Ukrycie widoków przełączanych chowa każdy widok, który nie jest aktualnie aktywnym widokiem wskazanym atrybutem danych na znaczniku. */
 [data-widok]:not([data-widok-aktywny='tak']) { display: none; }
 
 /* ── 7 · RESPONSYWNOŚĆ POWŁOKI ──────────────────────────────────────────── */
@@ -398,6 +393,7 @@ body.pt-pelny-ekran { overflow: hidden; }
   }
 
   /* ── panel demonstracyjny: uzgodnienie protokołu (etap 1) ───────────────── */
+
   /* Okno startowe, okno rejestracji i logowania oraz okno przygotowania
      środowiska mają tę samą szerokość i wysokość. Panel uzgodnienia protokołu
      leży więc pod oknem, a nie obok niego — kolumna obok zwężałaby okno
@@ -428,6 +424,7 @@ body.pt-pelny-ekran { overflow: hidden; }
   .pt-pas-postepu-glowa [data-postep-licznik] { margin-left: auto; font-variant-numeric: tabular-nums; }
 
   /* zestawienie faz cyklu połączenia */
+
   /* Kolumna przebiegu: fazy u góry, dziennik w środku na całej wolnej wysokości,
    pas postępu u dołu. */
 .pt-przebieg { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }

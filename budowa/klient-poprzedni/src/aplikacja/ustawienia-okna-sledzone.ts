@@ -1,25 +1,10 @@
 import type { Window } from '../../../shared/contract';
 
 /**
- * Śledzenie ustawień okna między zdarzeniami.
- *
- * Zdarzenie `window.changed` niesie okno po zmianie, bez pola „co zmieniono"
- * i bez pola „kto zmienił". Ten plik odtwarza jedno i drugie porównaniem
- * stanów, nie dopisując niczego do kontraktu:
- *
- *  • {@link migawka} i {@link roznice} mówią, co się zmieniło. Bez nich pas
- *    meldowałby „okno zmienione" przy każdym dotknięciu, zamiast nazwać dobrany
- *    model, rolę albo zasięg.
- *
- *  • {@link odciskOkna} mówi, czy zmiana jest własna: zdarzenie przynoszące
- *    dokładnie ten stan okna, co świeża odpowiedź na własną komendę, jest
- *    skutkiem tej komendy. Droga jest opisana w nagłówku `zrodlo-posuniec.ts`.
- *
- * Plik nie zna ani widoku, ani kanału — sam przekład pól okna na wartości
- * porównywalne i na zdania dla czytającego.
+ * Śledzenie ustawień okna między zdarzeniami: zdarzenie `window.changed` niesie
+ * okno po zmianie, bez pola nazywającego zmianę i bez pola nazywającego jej
+ * sprawcę, więc plik odtwarza jedno i drugie porównaniem migawek pól `Window`.
  */
-
-/** Ustawienia okna śledzone między zdarzeniami — wprost z pól `Window`. */
 export interface MigawkaUstawien {
   modul: string;
   kanal: string;
@@ -41,12 +26,9 @@ export function migawka(okno: Window): MigawkaUstawien {
 }
 
 /**
- * Odcisk stanu okna — klucz porównania zdarzenia z własną odpowiedzią.
- *
- * Wchodzą tu wyłącznie pola, którymi da się sterować komendą: identyfikator
- * i ustawienia. Czasu zmiany (`updatedAt`) tu nie ma — rdzeń nadaje go osobno
- * w zdarzeniu i w odpowiedzi, więc doklejenie go sprawiłoby, że własna czynność
- * nigdy nie zrównałaby się sama ze sobą.
+ * Odcisk stanu okna jest kluczem porównania zdarzenia z własną odpowiedzią,
+ * więc wchodzą do niego wyłącznie pola, którymi da się sterować komendą:
+ * identyfikator okna oraz jego ustawienia.
  */
 export function odciskOkna(okno: Window): string {
   const u = migawka(okno);

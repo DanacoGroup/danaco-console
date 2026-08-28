@@ -1,30 +1,5 @@
-// Odpowiedzialność pliku: droga odczytu konta nadawczego platformy — skrzynki,
-// z której rdzeń pisze dwa listy systemowe (potwierdzenie adresu przy
-// rejestracji i droga odzyskania konta).
-//
-// ── dlaczego nie wystarczy start ───────────────────────────────────────────
-// Do tej pory konto nadawcze wchodziło wyłącznie przy starcie rdzenia
-// (`DANACO_NADAWCA_*`, `konfiguracja/srodowisko.go`). Skutek: pomyłka w adresie
-// serwera poczty zamykała rejestrację, a naprawa wymagała zatrzymania rdzenia
-// i wiedzy spoza produktu. Nastawy z katalogu (`migracja_372`) dają drogę
-// wewnątrz okna Konfiguracji i nie odbierają tamtej: start nadal zasila
-// wartości, a zapis w tabeli `ustawienie` je przesłania.
-//
-// ── nakładka, nie druga prawda ─────────────────────────────────────────────
-// Nastawa pusta niczego nie kasuje — pusta znaczy „nie wskazałem”, więc zostaje
-// wartość ze startu. Inaczej pierwsze wejście do okna Konfiguracji kasowałoby
-// konto nadawcze podane środowiskiem samym faktem, że pola stoją puste.
-//
-// Wyjątkiem jest szyfrowanie: tam nastawa ma trzy stany tak samo jak wymóg
-// logowania (`nastawy_aplikacji.go`) — brak wskazania oddaje głos startowi,
-// a wskazanie wygrywa w obie strony, bo zejście do rozmowy otwartym tekstem ma
-// być zapisem jawnym.
-//
-// ── drugiego mechanizmu nastaw tu nie ma ───────────────────────────────────
-// Jedno wywołanie tego samego rozstrzygacza, którym idzie każde inne ustawienie
-// platformy, po klucze z tego samego rejestru definicji. Bez pamięci podręcznej:
-// list idzie rzadko, a nastawa poprawiona po nieudanej próbie ma obowiązywać
-// przy próbie następnej, nie po restarcie.
+// Plik składa drogę odczytu konta nadawczego platformy — skrzynki, z której rdzeń pisze listy
+// systemowe potwierdzenia adresu i odzyskania konta, nakładając nastawy Operatora na start.
 package core
 
 import (
@@ -49,9 +24,7 @@ const dwieDrogiKontaNadawczego = "konto nadawcze ustawia się na dwa sposoby: " 
 // Rozszerzenie nieobowiązkowe portu Ustawienia — tą samą drogą, którą rdzeń pyta
 // ten sam adapter o wymóg logowania (`NastawyAplikacji`).
 type NastawyPlatformy interface {
-	// Nastawa zwraca wartość zapisaną pod kluczem; napis pusty znaczy „brak
-	// wskazania”, a nie „wartość pusta” — kasowania wartości ze startu ta droga
-	// nie zna.
+	// Nastawa zwraca wartość zapisaną pod kluczem; napis pusty znaczy brak wskazania, nie wartość pustą.
 	Nastawa(ctx context.Context, klucz string) string
 }
 
@@ -86,16 +59,14 @@ func kontoNadawcze(ctx context.Context, startu nadajnik.Nastawy,
 	if port, err := strconv.Atoi(zrodlo.Nastawa(ctx, konfig.KluczNadawcaPort)); err == nil && port > 0 {
 		wynik.Port = port
 	}
-	// Odczyt trójstanowy jest jeden na cały rdzeń (`nastawy_aplikacji.go`):
-	// „tak”, „nie” i „nie wskazałem”. Druga jego kopia rozjechałaby się przy
-	// pierwszym dopisaniu formy zapisu.
+	// Odczyt trójstanowy jest jeden na cały rdzeń: tak, nie i nie wskazałem.
 	if szyfruj, wskazane := wartoscWymoguLogowania(zrodlo.Nastawa(ctx, konfig.KluczNadawcaStartTLS)); wskazane {
 		wynik.SzyfrujStartTLS = szyfruj
 	}
 	return wynik
 }
 
-// nadpisz podmienia wartość wyłącznie wtedy, gdy nastawa cokolwiek mówi.
+// nadpisz podmienia wartość docelową wyłącznie wtedy, gdy nastawa Operatora coś wprost oznajmia o niej.
 func nadpisz(cel *string, nastawa string) {
 	if strings.TrimSpace(nastawa) != "" {
 		*cel = strings.TrimSpace(nastawa)

@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: usunięcie punktu dostępu oraz sprawdzenie, czy punkt
-// odpowiada i jakie korzenie potwierdza.
-//
-// Co naprawdę da się sprawdzić. Katalog leżący na tej maszynie sprawdza się
-// wprost — istnieniem i otwieralnością ścieżki. Maszyny za mostem MCP rdzeń
-// sam nie odpyta: most jest procesem klienta modelu, nie klientem rdzenia.
-// Dlatego punkt mostowy bez wpiętej próby wraca stanem `unknown` wraz z powodem,
-// a nie stanem `unreachable`. Stan nierozpoznany nie wygasza kontrolki
-// , a zgadywanie niedostępności wyłączałoby Operatorowi sprawny most.
+// Plik usuwa punkt dostępu i sprawdza, czy punkt odpowiada oraz jakie
+// korzenie potwierdza, korzystając z próby właściwej rodzajowi punktu.
 package core
 
 import (
@@ -74,8 +67,8 @@ func (a *adapterPunktowDostepu) Sprawdz(ctx context.Context,
 	return wynikSprawdzenia(stan, chwila, korzenie, szczegol), nil
 }
 
-// proba zwraca badanie wpięte w adapter albo badanie wbudowane. Brak wpięcia
-// nie wyłącza komendy.
+// proba zwraca badanie wpięte w adapter albo badanie wbudowane, bo brak
+// wpięcia nie wyłącza komendy sprawdzenia.
 func (a *adapterPunktowDostepu) proba() ProbaPunktu {
 	if a.sprawdzenie != nil {
 		return a.sprawdzenie
@@ -83,17 +76,9 @@ func (a *adapterPunktowDostepu) proba() ProbaPunktu {
 	return probaKorzeniLokalnych
 }
 
-// probaKorzeniLokalnych sprawdza korzenie katalogu na systemie plików widzianym
-// przez rdzeń.
-//
-// Co potwierdza, a czego nie. Katalog widoczny stąd jest katalogiem osiągalnym
-// i tak wraca. Katalog niewidoczny stąd nie jest jeszcze katalogiem
-// nieosiągalnym: punkt rodzaju localDirectory należy do wskazanego urządzenia
-// , a rdzeń nie musi pracować na tym samym. Dlatego brak ścieżki wraca
-// stanem nierozpoznanym wraz z powodem, nie stanem `unreachable` — stan
-// nierozpoznany nie wygasza kontrolki, a fałszywa niedostępność
-// wyłączyłaby Operatorowi sprawny katalog. Rozstrzygnięcie należy do agenta
-// urządzenia; do czasu jego wpięcia rdzeń mówi wprost, czego nie wie.
+// probaKorzeniLokalnych sprawdza korzenie katalogu na systemie plików
+// widzianym przez rdzeń, zwracając stan nierozpoznany zamiast fałszywej
+// niedostępności.
 func probaKorzeniLokalnych(_ context.Context, punkt dane.PunktDostepu) (shared.AccessPointStatus, []string, string) {
 	if punkt.Rodzaj != shared.AccessPointKindLocalDirectory {
 		return shared.AccessPointStatusUnknown, nil,
@@ -122,7 +107,8 @@ func probaKorzeniLokalnych(_ context.Context, punkt dane.PunktDostepu) (shared.A
 	return shared.AccessPointStatusReachable, potwierdzone, ""
 }
 
-// wynikSprawdzenia składa odpowiedź kontraktu na sprawdzenie punktu.
+// wynikSprawdzenia składa odpowiedź kontraktu na sprawdzenie punktu, niosącą
+// stan, korzenie potwierdzone i szczegół.
 func wynikSprawdzenia(stan shared.AccessPointStatus, chwila time.Time,
 	korzenie []string, szczegol string) shared.AccessPointCheckResponse {
 

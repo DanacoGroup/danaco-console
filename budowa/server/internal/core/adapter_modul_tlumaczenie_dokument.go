@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: dokument w tłumaczeniu — `translate.document.load`,
-// `translate.document.render` i `translate.document.layout.compare`.
-//
-// Wczytanie dokumentu robi trzy rzeczy naraz i wszystkie trzy są trwałe:
-// zakłada wiersz dokumentu, zapisuje jego segmenty i wstawia treść dokumentu
-// jako tekst źródłowy okna. Trzecia jest tą, dla której Operator w ogóle
-// wczytuje dokument: bez niej `target.add` nie miałby czego przetłumaczyć,
-// a moduł meldowałby wczytanie dokumentu, po którym okno zostaje puste.
+// Plik obsługuje dokument w tłumaczeniu: wczytanie, które zakłada wiersz dokumentu, zapisuje segmenty i wstawia treść jako tekst źródłowy okna, skład wyniku oraz porównanie układu.
 package core
 
 import (
@@ -19,13 +12,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekDokumentuTlumaczenia znakuje identyfikator dokumentu.
+// przedrostekDokumentuTlumaczenia znakuje identyfikator dokumentu, odróżniając go od identyfikatorów innych bytów modułu Translate.
 const przedrostekDokumentuTlumaczenia = "dok-"
 
-// zapasDlugosciUkladu mówi, o ile procent przekład może być dłuższy od źródła,
-// zanim uznamy, że pole go nie pomieści. Piętnaście procent to zapas, który
-// mieści zwykłą różnicę między językami; powyżej tekst realnie wychodzi poza
-// ramkę, w której stał oryginał.
+// zapasDlugosciUkladu mówi, o ile procent przekład może być dłuższy od źródła, zanim pole go nie pomieści. Piętnaście procent to zapas mieszczący zwykłą różnicę między językami.
 const zapasDlugosciUkladu = 115
 
 // granicaRozpoznaniaPisma jest granicą czasu jednego wywołania Tesseracta.
@@ -33,15 +23,13 @@ const zapasDlugosciUkladu = 115
 // prawa trzymać żądania bez końca (`zewnetrzne.Wolaj` granicy wymaga).
 const granicaRozpoznaniaPisma = 180 * time.Second
 
-// WczytajDokument obsługuje `translate.document.load`.
+// WczytajDokument obsługuje `translate.document.load`: zakłada wiersz dokumentu, zapisuje segmenty i wstawia treść jako tekst źródłowy okna.
 func (a *adapterTlumaczenia) WczytajDokument(ctx context.Context,
 	z shared.TranslateDocumentLoadRequest) (shared.TranslateDocumentLoadResponse, error) {
 
 	sciezka := strings.TrimSpace(napisZeWskaznika(z.Path))
 	if sciezka == "" {
-		// Kontrakt dopuszcza wskazanie zasobu zamiast ścieżki. Rdzeń modułu
-		// Translate nie ma dostępu do magazynu zasobów Designu, więc nazywa to
-		// wprost, zamiast oddać pusty dokument z identyfikatorem donikąd.
+		// Kontrakt dopuszcza wskazanie zasobu zamiast ścieżki materiału Designu.
 		if strings.TrimSpace(napisZeWskaznika(z.AssetId)) != "" {
 			return shared.TranslateDocumentLoadResponse{}, bladWskazaniaTlumaczenia(
 				"moduł Translate wczytuje dokument spod ścieżki; wskazanie zasobu wymaga " +
@@ -77,9 +65,7 @@ func (a *adapterTlumaczenia) WczytajDokument(ctx context.Context,
 
 	uzytoOcr := false
 	if len(segmenty) == 0 && z.Ocr != nil && *z.Ocr {
-		// Dokument bez warstwy tekstowej. Rozpoznanie pisma idzie Tesseraktem
-		// z arsenału serwerowego — jedyna droga do treści skanu, i droga wskazana
-		// zasadą produktu (nagłówek `*_dokument_formaty.go`).
+		// Dokument bez warstwy tekstowej: rozpoznanie idzie Tesseraktem z arsenału serwerowego.
 		rozpoznane, err := a.rozpoznajPismoDokumentu(ctx, sciezka)
 		if err != nil {
 			return shared.TranslateDocumentLoadResponse{}, err
@@ -123,8 +109,7 @@ func (a *adapterTlumaczenia) WczytajDokument(ctx context.Context,
 	}); err != nil {
 		return shared.TranslateDocumentLoadResponse{}, bladTlumaczenia(err)
 	}
-	// Podział okna idzie po segmentach dokumentu, nie po zdaniach: akapit
-	// dokumentu jest jednostką, którą Operator widzi w pliku źródłowym.
+	// Podział okna idzie po segmentach dokumentu, nie po zdaniach.
 	if err := a.repozytorium.UstawSegmentyOkna(ctx, okno.ID, tresci); err != nil {
 		return shared.TranslateDocumentLoadResponse{}, bladTlumaczenia(err)
 	}
@@ -136,7 +121,7 @@ func (a *adapterTlumaczenia) WczytajDokument(ctx context.Context,
 	}, nil
 }
 
-// rozpoznajPismoDokumentu woła Tesseracta na dokumencie bez warstwy tekstowej.
+// rozpoznajPismoDokumentu woła Tesseracta na dokumencie bez warstwy tekstowej, oddając rozpoznaną treść jako tekst źródłowy.
 func (a *adapterTlumaczenia) rozpoznajPismoDokumentu(ctx context.Context,
 	sciezka string) (string, error) {
 
@@ -204,7 +189,7 @@ func sciezkaWynikuDokumentu(material, jezyk string, format shared.TranslationDoc
 	return filepath.Join(katalog, nazwa+"."+jezyk+koncowkaFormatuDokumentu(format))
 }
 
-// koncowkaFormatuDokumentu daje końcówkę nazwy dla formatu wyniku.
+// koncowkaFormatuDokumentu daje końcówkę nazwy pliku wyniku dla wskazanego formatu składu dokumentu tłumaczenia.
 func koncowkaFormatuDokumentu(format shared.TranslationDocumentFormat) string {
 	switch format {
 	case shared.TranslationDocumentFormatMarkdown:
@@ -217,10 +202,7 @@ func koncowkaFormatuDokumentu(format shared.TranslationDocumentFormat) string {
 	return "." + string(format)
 }
 
-// PorownajUklad obsługuje `translate.document.layout.compare`. Zestawia segmenty
-// dokumentu z odpowiadającymi im akapitami przekładu i nazywa trzy rzeczy, które
-// da się z tego zestawienia stwierdzić: przepełnienie pola, przesunięcie treści
-// i element pominięty.
+// PorownajUklad obsługuje `translate.document.layout.compare`. Zestawia segmenty dokumentu z akapitami przekładu i nazywa: przepełnienie pola, przesunięcie treści, element pominięty.
 func (a *adapterTlumaczenia) PorownajUklad(ctx context.Context,
 	z shared.TranslateDocumentLayoutCompareRequest) (shared.TranslateDocumentLayoutCompareResponse, error) {
 
@@ -284,8 +266,7 @@ func (a *adapterTlumaczenia) PorownajUklad(ctx context.Context,
 			})
 		}
 	}
-	// Akapity nadmiarowe po stronie przekładu przesuwają treść dalej niż
-	// w oryginale — to jest przesunięcie strony, nie brak.
+	// Akapity nadmiarowe po stronie przekładu to przesunięcie strony, nie brak.
 	if len(akapity) > len(segmenty) {
 		roznice = append(roznice, shared.LayoutDifference{
 			Page:     len(segmenty),
@@ -305,7 +286,7 @@ func (a *adapterTlumaczenia) PorownajUklad(ctx context.Context,
 	}, nil
 }
 
-// zlozDokumentTlumaczenia przekłada wiersz dokumentu na byt kontraktu.
+// zlozDokumentTlumaczenia przekłada wiersz dokumentu odczytany z repozytorium na byt kontraktu odpowiedzi.
 func zlozDokumentTlumaczenia(dokument dane.DokumentTlumaczenia, segmentow int) shared.TranslationDocument {
 	byt := shared.TranslationDocument{
 		Id:           dokument.Kod,
@@ -323,7 +304,7 @@ func zlozDokumentTlumaczenia(dokument dane.DokumentTlumaczenia, segmentow int) s
 	return byt
 }
 
-// zlozSegmentyDokumentu przekłada wiersze segmentów na byty kontraktu.
+// zlozSegmentyDokumentu przekłada wiersze segmentów odczytane z repozytorium na byty kontraktu odpowiedzi.
 func zlozSegmentyDokumentu(segmenty []dane.SegmentDokumentu) []shared.DocumentSegment {
 	wykaz := make([]shared.DocumentSegment, 0, len(segmenty))
 	for _, segment := range segmenty {

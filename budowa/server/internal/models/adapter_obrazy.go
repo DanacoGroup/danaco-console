@@ -13,59 +13,18 @@ import (
 	"strings"
 )
 
-// kanalObrazow jest kanałem modelu oddającym bajty obrazu, a nie tekst. Jest
-// bliźniakiem KanalAPI i dzieli z nim całą warstwę dostępową (nagłówki, klucz
-// z sejfu albo ze zmiennej środowiskowej, dodatki ciała, limit czasu) — jedna
-// prawda o poświadczeniach, jedna o nagłówkach. Różni się tym jednym,
-// czym musi: kształtem żądania (prompt zamiast wiadomości) i tym, że wynik
-// nadaje fragmentem `image`, nie porcjami tekstu.
-//
-// Kształt żądania jest ten, który dostawcy powtarzają za OpenAI Images:
-// POST z ciałem {model, prompt, n, size} i odpowiedzią {"data":[{"b64_json"|"url"}]}.
-// Powtarzają go dziś także dostawcy niezależni i bramy lokalne, więc jest to
-// najczęstszy kształt, a nie jeden dostawca zaszyty w kodzie. Wszystko, co
-// w tym kształcie bywa inne, jest parametrem wiersza rejestru:
-//
-//	base_url          — pełny adres punktu końcowego (wymagany)
-//	rozmiar           — wartość pola `size`; domyślnie 1024x1024
-//	liczba            — wartość pola `n`; domyślnie 1
-//	format_odpowiedzi — wartość `response_format` (np. b64_json); pusty = nie wysyłamy
-//	sciezka_base64    — ścieżka do bajtów w odpowiedzi; domyślnie data.0.b64_json
-//	sciezka_adresu    — ścieżka do adresu obrazu;     domyślnie data.0.url
-//	typ_tresci        — rodzaj bajtów w meldunku fragmentu; domyślnie image/png
-//	sciezka_bledu, naglowki, naglowek_klucza, przedrostek_klucza,
-//	cialo_dodatkowe, limit_sekund — jak w kanale api
-//
-// Wiersz zakłada się `channel.add` z rodzajem `api` (CHECK schematu zna cztery
-// rodzaje i kontrakt jest zamrożony) oraz parametrem `adapter` równym „obrazy".
-// Rodzaj mówi, jak kanał rozmawia (HTTP), adapter mówi, co oddaje — dlatego
-// rodzaju kanału nie trzeba dokładać ani migracją, ani do kontraktu.
-//
-// ── Obraz WEJŚCIOWY: edycja obok generowania ────────────────────────────────
-// Wywołanie niosące `Zapytanie.ObrazyWejsciowe` jest EDYCJĄ materiału, nie
-// generowaniem od zera, i dostawcy dają na nią osobny punkt końcowy o osobnym
-// kształcie żądania (u OpenAI `images/edits`: multipart/form-data z plikiem
-// `image` i opcjonalną maską `mask`). Bramy lokalne częściej przyjmują ten sam
-// adres z bajtami w polu JSON. Adapter zna oba kształty, bo obu nie da się
-// pogodzić, a zgadywanie kończyłoby się odmową dostawcy zamiast obrazu:
-//
-//	adres_edycji   — adres punktu końcowego edycji; pusty = ten sam co base_url
-//	postac_obrazu  — „wieloczesciowa" (domyślnie) albo „base64"
-//	pole_obrazu    — nazwa pola materiału; domyślnie image
-//	pole_maski     — nazwa pola maski;     domyślnie mask
-//
-// Wywołanie BEZ obrazu wejściowego idzie dokładnie tą samą drogą co dotąd —
-// pole puste nie zmienia ani adresu, ani kształtu ciała, więc kanały już
-// założone pracują bez zmiany wiersza.
+// kanalObrazow to kanał modelu oddający bajty obrazu zamiast tekstu, oparty
+// o kształt żądania API generowania obrazów: adres, prompt, parametry
+// rozmiaru i liczby oraz ścieżki odczytu wyniku, wraz z obsługą materiału
+// wejściowego do edycji.
 type kanalObrazow struct {
 	def    Definicja
 	klient *http.Client
 }
 
-// NowyKanalObrazow buduje kanał obrazowy z wiersza rejestru. Brak adresu jest
-// jedynym powodem odmowy budowy — reszta ma wartości domyślne, a wiersz bez
-// poświadczenia buduje się celowo: odmowa ma paść w chwili wywołania, wymieniając
-// brak z nazwy, a nie zniknąć jako „kanał pominięty" w wykazie rejestru.
+// NowyKanalObrazow buduje kanał obrazowy z wiersza rejestru; brak parametru
+// base_url jest jedynym powodem odmowy budowy, reszta parametrów ma wartości
+// domyślne.
 func NowyKanalObrazow(d Definicja) (Kanal, error) {
 	if strings.TrimSpace(d.Parametr("base_url")) == "" {
 		return nil, fmt.Errorf("models: kanał %q (adapter %s) bez parametru base_url", d.Kod, AdapterObrazy)
@@ -73,12 +32,14 @@ func NowyKanalObrazow(d Definicja) (Kanal, error) {
 	return &kanalObrazow{def: d, klient: &http.Client{Timeout: limitCzasu(d)}}, nil
 }
 
-// Kod zwraca kod kanału z wiersza rejestru.
+// Kod zwraca kod kanału zapisany w wierszu rejestru, którym repozytorium
+// jednoznacznie identyfikuje ten kanał obrazowy.
 func (k *kanalObrazow) Kod() string {
 	return k.def.Kod
 }
 
-// Definicja zwraca wiersz rejestru, z którego kanał powstał.
+// Definicja zwraca pełny wiersz rejestru, z którego kanał powstał, wraz ze
+// wszystkimi jego parametrami.
 func (k *kanalObrazow) Definicja() Definicja {
 	return k.def
 }
@@ -88,9 +49,8 @@ func (k *kanalObrazow) Definicja() Definicja {
 // odbiorca poznaje warunki wywołania, zanim zobaczy wynik.
 func (k *kanalObrazow) Wyslij(ctx context.Context, z Zapytanie, u Ujscie) error {
 	prowenancja := ProwenancjaZapytania(z, k.def)
-	// Prowenancja niesie adres, który NAPRAWDĘ pojedzie: edycja materiału bywa
-	// innym punktem końcowym niż generowanie, a prowenancja wskazująca nie ten
-	// adres, którego użyto, jest gorsza od prowenancji bez adresu.
+	// Adres w prowenancji to adres, którego wywołanie faktycznie użyje, nie
+	// zawsze base_url.
 	prowenancja.Adres = k.adresWywolania(z)
 	if err := NadajProwenancje(ctx, u, z, prowenancja); err != nil {
 		return err
@@ -121,20 +81,9 @@ func (k *kanalObrazow) Wyslij(ctx context.Context, z Zapytanie, u Ujscie) error 
 	return k.nadajObraz(ctx, z, u, polecenie, odpowiedz.Body)
 }
 
-// sprawdzPoswiadczenie odmawia, nazywając brak, zanim poleci żądanie.
-//
-// Kanał tekstowy dopuszcza brak odwołania, bo punkt końcowy bez uwierzytelnienia
-// istnieje (Ollama pod adresem pętli zwrotnej). Punkt końcowy generujący obrazy
-// bez klucza nie istnieje — żądanie bez poświadczenia odbiłoby się o 401
-// i wróciło jako błąd dostawcy, czyli komunikat o czymś innym niż rzeczywisty
-// brak. Dlatego brak odwołania rozstrzygamy tutaj i mówimy wprost, czego nie ma
-// i gdzie się to wskazuje. Wywołanie nie wraca ani atrapą, ani pustym obrazem:
-// niczego nie było, więc nic nie jedzie w strumieniu poza tą odmową.
-//
-// To samo dotyczy odwołania, które jest, ale nie prowadzi do sekretu — sejf bez
-// wpisu, zmienna środowiskowa nieustawiona. Tu brak wychodzi już z rozwiązania
-// odwołania i różnica jest widoczna w treści: „bez odwołania" to inny stan niż
-// „odwołanie bez wartości", i Operator poprawia je w dwóch różnych miejscach.
+// sprawdzPoswiadczenie odmawia, nazywając brak, zanim poleci żądanie: punkt
+// końcowy generujący obrazy bez klucza nie istnieje, więc brak poświadczenia
+// rozstrzyga się tu, zamiast zwracać cudzy błąd 401.
 func (k *kanalObrazow) sprawdzPoswiadczenie(ctx context.Context) error {
 	odwolanie := strings.TrimSpace(k.def.PoswiadczenieOdwolanie)
 	if odwolanie == "" {
@@ -150,11 +99,9 @@ func (k *kanalObrazow) sprawdzPoswiadczenie(ctx context.Context) error {
 	return nil
 }
 
-// poleceniePromptu składa polecenie obrazu. Punkty końcowe obrazowe nie mają
-// roli systemowej ani historii rozmowy — przyjmują jedno pole `prompt` — więc
-// nakładka systemowa okna jedzie przed treścią, oddzielona pustą
-// linią. Gdyby ją pominąć, warstwy konstytucji i roli przestałyby obowiązywać
-// akurat na tym kanale, a nakładka ma obowiązywać wszędzie tak samo.
+// poleceniePromptu składa polecenie obrazu: punkty końcowe obrazowe
+// przyjmują jedno pole `prompt`, więc nakładka systemowa okna jedzie przed
+// treścią, oddzielona pustą linią.
 func poleceniePromptu(z Zapytanie) string {
 	czesci := make([]string, 0, 2)
 	if prompt := z.Nakladka.PromptSystemowy(); strings.TrimSpace(prompt) != "" {
@@ -166,19 +113,16 @@ func poleceniePromptu(z Zapytanie) string {
 	return strings.Join(czesci, "\n\n")
 }
 
-// Postacie wysyłki obrazu wejściowego — wartości parametru `postac_obrazu`.
+// Postacie wysyłki obrazu wejściowego — wartości parametru `postac_obrazu`
+// rozpoznawane przy budowie ciała żądania edycji materiału.
 const (
 	postacObrazuWieloczesciowa = "wieloczesciowa"
 	postacObrazuBase64         = "base64"
 )
 
-// zbudujZadanie składa żądanie HTTP kanału obrazowego. Warstwa dostępowa idzie
-// przez te same funkcje, co kanał api — nagłówki wiersza i klucz z odwołania.
-//
-// Rozgałęzienie jest jedno i pada tutaj: wywołanie z materiałem wejściowym
-// w postaci wieloczęściowej ma inne ciało i inny rodzaj treści, więc składa je
-// osobna funkcja. Wszystko poza ciałem — adres, nagłówki, klucz — jest wspólne
-// i wykonuje się raz.
+// zbudujZadanie składa żądanie HTTP kanału obrazowego: materiał wejściowy
+// w postaci wieloczęściowej dostaje osobne ciało, a nagłówki, adres i klucz
+// są wspólne dla obu kształtów żądania.
 func (k *kanalObrazow) zbudujZadanie(ctx context.Context, z Zapytanie, polecenie string) (*http.Request, error) {
 	var (
 		cialo     io.Reader
@@ -239,9 +183,8 @@ func (k *kanalObrazow) polaCiala(z Zapytanie, polecenie string) map[string]any {
 		"n":      k.liczbaObrazow(),
 		"size":   k.def.ParametrLub("rozmiar", "1024x1024"),
 	}
-	// `response_format` znają nie wszystkie bramy zgodne z OpenAI — pole
-	// nieznane bywa odrzucane, więc jedzie wyłącznie wtedy, gdy wiersz je
-	// wskazał. Milczenie parametru znaczy „zostaw dostawcy jego domyślne".
+	// Pole response_format jedzie tylko, gdy wiersz je wskazał; puste znaczy
+	// domyślne dostawcy.
 	if format := strings.TrimSpace(k.def.Parametr("format_odpowiedzi")); format != "" {
 		pola["response_format"] = format
 	}
@@ -269,14 +212,9 @@ func (k *kanalObrazow) cialoJSON(z Zapytanie, polecenie string) (io.Reader, stri
 	return bytes.NewReader(surowe), "application/json", nil
 }
 
-// cialoWieloczesciowe składa ciało jako multipart/form-data — kształt punktu
-// końcowego edycji obrazu. Bajty rozkodowuje się TUTAJ, bo pole niosło je
-// zapisem base64, a formularz oczekuje pliku; base64 wpisane w pole pliku
-// dostawca odrzuciłby jako obraz nieczytelny.
-//
-// Materiał nieczytelny jest odmową, nie wysyłką bez materiału: żądanie samego
-// polecenia wróciłoby obrazem wygenerowanym od zera, a Operator prosił o obróbkę
-// swojego zdjęcia i dostałby cudze bez ani jednego słowa o podmianie.
+// cialoWieloczesciowe składa ciało jako multipart/form-data, kształt punktu
+// końcowego edycji obrazu: bajty rozkodowuje z zapisu base64, bo formularz
+// oczekuje pliku, nie napisu.
 func (k *kanalObrazow) cialoWieloczesciowe(z Zapytanie, polecenie string) (io.Reader, string, error) {
 	bufor := &bytes.Buffer{}
 	formularz := multipart.NewWriter(bufor)
@@ -300,7 +238,8 @@ func (k *kanalObrazow) cialoWieloczesciowe(z Zapytanie, polecenie string) (io.Re
 	return bufor, formularz.FormDataContentType(), nil
 }
 
-// dolozPlikObrazu wkłada jeden obraz do formularza jako plik.
+// dolozPlikObrazu wkłada jeden obraz do formularza jako plik, rozkodowując
+// jego zawartość z zapisu base64 do bajtów.
 func (k *kanalObrazow) dolozPlikObrazu(formularz *multipart.Writer, pole string, obraz ObrazWejsciowy) error {
 	bajty, err := base64.StdEncoding.DecodeString(strings.TrimSpace(obraz.Base64))
 	if err != nil {
@@ -317,10 +256,9 @@ func (k *kanalObrazow) dolozPlikObrazu(formularz *multipart.Writer, pole string,
 	return nil
 }
 
-// nazwaPlikuObrazu ustala nazwę części formularza. Nazwa własna obrazu wygrywa;
-// bez niej nazwa bierze się z typu treści, bo część dostawców rozpoznaje format
-// po rozszerzeniu, a nie po nagłówku części. Brak obu daje PNG — format, w którym
-// warsztat fotografii oddaje wszystkie swoje wyniki.
+// nazwaPlikuObrazu ustala nazwę części formularza: nazwa własna obrazu
+// wygrywa, w przeciwnym razie nazwa bierze się z typu treści, a brak obu
+// daje rozszerzenie png.
 func nazwaPlikuObrazu(obraz ObrazWejsciowy) string {
 	if nazwa := strings.TrimSpace(obraz.Nazwa); nazwa != "" {
 		return nazwa
@@ -342,16 +280,9 @@ func (k *kanalObrazow) liczbaObrazow() int {
 	return liczba
 }
 
-// nadajObraz wyjmuje treść wizualną z odpowiedzi i nadaje ją jednym fragmentem.
-//
-// Odpowiedź czytamy w całości, nie strumieniem: punkty końcowe obrazowe oddają
-// jeden dokument JSON po zakończeniu generowania, a nie ciąg zdarzeń. Bajty mają
-// pierwszeństwo przed adresem — obraz, który już przyszedł, nie wymaga drugiego
-// pobrania i nie wygaśnie odbiorcy w ręku.
-//
-// Odpowiedź bez obrazu jest błędem, nie pustym wynikiem. Cisza w tym miejscu
-// dawałaby wołającemu strumień bez treści, nieodróżnialny od udanego wywołania,
-// które nic nie narysowało — dlatego mówimy, pod jakimi ścieżkami szukaliśmy.
+// nadajObraz wyjmuje treść wizualną z odpowiedzi i nadaje ją jednym
+// fragmentem: odpowiedź czyta w całości, nie strumieniem, a brak obrazu
+// w odpowiedzi traktuje jako błąd.
 func (k *kanalObrazow) nadajObraz(ctx context.Context, z Zapytanie, u Ujscie, polecenie string, tresc io.Reader) error {
 	surowe, err := io.ReadAll(tresc)
 	if err != nil {

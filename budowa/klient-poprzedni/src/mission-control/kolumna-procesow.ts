@@ -6,21 +6,21 @@ import { utworzPasekPostepu } from './pasek-postepu';
 import { utworzStanPusty } from './stan-pusty';
 
 /**
- * Kolumna procesów w tle: wykaz procesów telemetrii `progress.changed`
- * z paskiem postępu i napisem etapu.
- *
- * Kontrakt nie ma odczytu bieżących procesów — wykaz buduje się wyłącznie ze
- * zdarzeń, więc do pierwszego zdarzenia kolumna pokazuje stan pusty.
- *
- * Stan procesu jest wypisany słowem obok paska; barwa paska wspiera odczyt,
- * ale go nie zastępuje.
+ * Kolumna procesów w tle: wykaz procesów zgłaszanych telemetrią
+ * `progress.changed`, każdy z paskiem postępu, nazwą etapu i stanem wypisanym
+ * słowem. Kontrakt nie ma odczytu procesów bieżących, więc do pierwszego
+ * zdarzenia kolumna pokazuje stan pusty.
  */
 export interface KolumnaProcesow {
   element: HTMLElement;
   odswiez(procesy: ProcesWTle[]): void;
 }
 
-/** Buduje kolumnę procesów w tle. */
+/**
+ * Buduje kolumnę procesów w tle i nanosi na nią stan początkowy. Zwrócone
+ * odświeżenie podmienia całą zawartość wykazu, więc wywołujący nie prowadzi
+ * rachunku wierszy ani ich kolejności.
+ */
 export function utworzKolumneProcesow(procesy: ProcesWTle[]): KolumnaProcesow {
   const { element, cialo } = utworzSekcje(
     'mc-sekcja--procesy',
@@ -53,7 +53,11 @@ export function utworzKolumneProcesow(procesy: ProcesWTle[]): KolumnaProcesow {
   return { element, odswiez };
 }
 
-/** Jeden proces: nazwa, pasek postępu, etap i stan. */
+/**
+ * Jeden proces: nazwa, pasek postępu, etap i stan. Stan trafia zarówno do
+ * plakietki, jak i do atrybutu danych wiersza, dzięki czemu arkusz stylów
+ * rozróżnia wiersze bez czytania napisu.
+ */
 function wiersz(proces: ProcesWTle): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-proces';
@@ -73,7 +77,7 @@ function wiersz(proces: ProcesWTle): HTMLLIElement {
 
   const etap = document.createElement('span');
   etap.className = 'mc-proces__etap';
-  // Telemetria mogła nie podać nazwy etapu — wtedy mówimy to wprost.
+  // Telemetria mogła nie podać nazwy etapu — wiersz mówi to wprost.
   etap.textContent = proces.etykietaEtapu ?? 'etap bez nazwy w telemetrii';
 
   element.append(
@@ -89,7 +93,11 @@ function wiersz(proces: ProcesWTle): HTMLLIElement {
   return element;
 }
 
-/** Klasa plakietki stanu — słowo niesie treść, barwa jedynie ją wspiera. */
+/**
+ * Klasa plakietki stanu — słowo niesie treść, barwa jedynie ją wspiera.
+ * Zakończenie niepowodzeniem i zatrzymanie dzielą jedną klasę, ponieważ oba
+ * przerywają bieg procesu.
+ */
 function klasaStanu(status: ProgressStatus): string {
   switch (status) {
     case ProgressStatus.Done:

@@ -1,32 +1,6 @@
-/**
- * Pochodzenie wniesionego fragmentu — skąd to jest.
- *
- * ── Po co ───────────────────────────────────────────────────────────────────
- * Wymaganie Właściciela: fragment wciągnięty ze strony albo z Biblioteki niesie
- * zapis, skąd jest — adres, plik, wersja — bo inaczej za tydzień nikt nie
- * odtworzy, na czym pismo się opiera. To jest też podstawa pod „podobieństwa"
- * w panelu redaktora i pod bibliografię.
- *
- * ── Zapis trwały robi RDZEŃ; to, co tutaj, jest drogą drugą ─────────────────
- * Zdanie „rodzina studio.* nie ma komendy zapisującej pochodzenie fragmentu"
- * stało tu wcześniej i **przestało być prawdą**. Kontrakt niesie dziś zapis
- * pochodzenia jako byt (`StudioProvenance`): `studio.insert.from.library`
- * i `studio.insert.from.web` oddają go przy wniesieniu — wraz z zakresem znaków,
- * wersją źródła, tytułem i czasem sięgnięcia — a `studio.provenance.list` oddaje
- * pochodzenie fragmentów całego dokumentu. Zapis trwały idzie więc rdzeniem
- * i przeżywa zamknięcie okna.
- *
- * Dwa tory zostają, bo służą różnym rzeczom i oba są jawne:
- *   1. **wiersz pochodzenia wnoszony do treści** — jedyny, który przeżywa
- *      wydanie dokumentu do formatu nieniosącego zapisu pochodzenia (tekst
- *      czysty, markdown); jest częścią treści i da się go usunąć jak każdy inny
- *      wiersz;
- *   2. **wykaz pochodzeń sesji okna** — podręczny, wraz z czasem, długością
- *      i miejscem wstawienia; ginie z zamknięciem karty i nie jest źródłem
- *      prawdy, odkąd źródłem prawdy jest rdzeń.
- */
+/** Pochodzenie wniesionego fragmentu opisuje, skąd fragment jest: adres, plik, wersja i moment wniesienia, zapisywane trwale przez rdzeń. */
 
-/** Skąd fragment pochodzi. */
+/** Skąd fragment pochodzi: z pliku biblioteki, ze strony internetowej albo z migawki przeglądarki użytkownika. */
 export const ZrodloWniesienia = {
   Biblioteka: 'biblioteka',
   Strona: 'strona',
@@ -34,7 +8,7 @@ export const ZrodloWniesienia = {
 } as const;
 export type ZrodloWniesienia = (typeof ZrodloWniesienia)[keyof typeof ZrodloWniesienia];
 
-/** Jeden zapis pochodzenia wniesionego fragmentu. */
+/** Jeden zapis pochodzenia wniesionego fragmentu, wraz z jego źródłem, wskazaniem i miejscem wstawienia w treści. */
 export interface Pochodzenie {
   kod: string;
   zrodlo: ZrodloWniesienia;
@@ -55,7 +29,7 @@ export interface Pochodzenie {
   czas: number;
 }
 
-/** Zbiór pochodzeń sesji okna. */
+/** Zbiór pochodzeń fragmentów wniesionych w bieżącej sesji okna, podręczny wobec zapisu trwałego rdzenia. */
 export interface WykazPochodzen {
   wykaz(): readonly Pochodzenie[];
   /** Zapisuje pochodzenie i oddaje je. */
@@ -116,7 +90,7 @@ export function osadzenieWierszPochodzenia(pochodzenie: Pochodzenie): string {
   return `${czesci.join(', ')}.`;
 }
 
-/** Zdanie o wykazie pochodzeń — do paska stanu i panelu redaktora. */
+/** Zdanie opisujące wykaz pochodzeń fragmentów, wyświetlane w pasku stanu oraz w panelu redaktora tekstu. */
 export function osadzenieOpiszPochodzenia(zapisy: readonly Pochodzenie[]): string {
   if (zapisy.length === 0) {
     return 'Do tego dokumentu nie wniesiono jeszcze ani jednego fragmentu z Biblioteki ani ze ' +

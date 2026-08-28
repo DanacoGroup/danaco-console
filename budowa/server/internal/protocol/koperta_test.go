@@ -1,3 +1,6 @@
+// Koperta jest jedynym kształtem komunikatu w obie strony, więc jej
+// sprawdziany są sprawdzianami całej warstwy styku klienta z rdzeniem: pola
+// opcjonalne znikają, gdy są puste.
 package protocol
 
 import (
@@ -7,12 +10,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Koperta jest jedynym kształtem komunikatu w obie strony, więc jej sprawdziany
-// są sprawdzianami całej warstwy styku klienta z rdzeniem. Mierzone jest tu
-// dokładnie to, co kontrakt obiecuje klientowi: pola opcjonalne znikają, gdy są
-// puste; komunikat niepoprawny strukturalnie jest czymś innym niż komenda
-// nieznana; a to, co poszło na drut, wraca z drutu bez zmiany.
 
 // TestKopertaWracaZDrutuBezZmiany sprawdza obieg zamknięty: złożenie, zapis do
 // bajtów i odczyt z powrotem.
@@ -93,7 +90,7 @@ func TestKopertaBezTypuJestBledemStrukturalnym(t *testing.T) {
 }
 
 // TestOdkodowanieOdrzucaSmieci sprawdza wejście, którym idzie każdy bajt
-// z gniazda.
+// z gniazda WebSocket tego rdzenia.
 func TestOdkodowanieOdrzucaSmieci(t *testing.T) {
 	przypadki := map[string][]byte{
 		"pusty ciąg":              {},

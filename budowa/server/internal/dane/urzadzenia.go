@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: katalog urządzeń (tabela `urzadzenie`) — struktura,
-// kontrakt repozytorium i odczyt. Zapis leży w `urzadzenia_zapis.go`.
-//
-// Urządzenie to maszyna z klientem albo z katalogiem udostępnionym modelowi.
-// Punkt dostępu rodzaju `localDirectory` bez wskazania urządzenia nie przechodzi
-// więzu schematu, bo ścieżka lokalna ma znaczenie tylko na jednej maszynie.
+// Plik prowadzi katalog urządzeń w tabeli urzadzenie wraz z kontraktem
+// repozytorium i odczytem, podczas gdy zapis leży w pliku urzadzenia_zapis.go.
 package dane
 
 import (
@@ -13,13 +9,9 @@ import (
 	"fmt"
 )
 
-// Urzadzenie to wiersz tabeli `urzadzenie`.
-//
-// `Nazwa` jest napisem do pokazania i wolno ją zmienić; `NazwaHosta`
-// i `IdentyfikatorSprzetowy` są faktami maszyny ustalanymi przy rozpoznaniu.
-// `Biezace` oznacza maszynę, na której działa ten rdzeń — nadaje je wyłącznie
-// ZapewnijBiezace, bo tylko ono potrafi najpierw zdjąć oznaczenie z pozostałych
-// wierszy (baza dopuszcza jedno takie urządzenie).
+// Urzadzenie to wiersz tabeli urzadzenie: nazwa hosta i identyfikator
+// sprzętowy są faktami maszyny ustalanymi przy rozpoznaniu, a pole biezace
+// oznacza maszynę, na której działa rdzeń.
 type Urzadzenie struct {
 	ID                     int64
 	Nazwa                  string
@@ -33,7 +25,8 @@ type Urzadzenie struct {
 	Utworzono              string
 }
 
-// RepozytoriumUrzadzen jest kontraktem katalogu urządzeń.
+// RepozytoriumUrzadzen jest kontraktem katalogu urządzeń, wskazującym operacje
+// repozytorium dostępne warstwie wyższej rdzenia.
 type RepozytoriumUrzadzen interface {
 	Lista(ctx context.Context) ([]Urzadzenie, error)
 	Pobierz(ctx context.Context, id int64) (Urzadzenie, error)
@@ -41,9 +34,7 @@ type RepozytoriumUrzadzen interface {
 	Biezace(ctx context.Context) (Urzadzenie, error)
 	Dodaj(ctx context.Context, urzadzenie Urzadzenie) (int64, error)
 	Aktualizuj(ctx context.Context, urzadzenie Urzadzenie) error
-	// ZapewnijBiezace zakłada albo odświeża wiersz maszyny, na której działa
-	// rdzeń, i przenosi na nią oznaczenie maszyny bieżącej. Wywołanie powtórzone
-	// tymi samymi znamionami nie tworzy drugiego wiersza.
+	// ZapewnijBiezace zakłada albo odświeża wiersz maszyny bieżącej rdzenia.
 	ZapewnijBiezace(ctx context.Context, urzadzenie Urzadzenie) (Urzadzenie, error)
 }
 
@@ -66,10 +57,12 @@ type repozytoriumUrzadzen struct {
 	db        *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji.
+// Zgodność implementacji repozytoriumUrzadzen z kontraktem RepozytoriumUrzadzen
+// jest sprawdzana wskazaniem typu przy kompilacji pakietu.
 var _ RepozytoriumUrzadzen = (*repozytoriumUrzadzen)(nil)
 
-// noweRepozytoriumUrzadzen zakłada repozytorium katalogu urządzeń.
+// noweRepozytoriumUrzadzen zakłada repozytorium katalogu urządzeń nad pamięcią
+// przygotowanych zapytań i połączeniem bazy danych.
 func noweRepozytoriumUrzadzen(z *zapytania, db *sql.DB) *repozytoriumUrzadzen {
 	return &repozytoriumUrzadzen{zapytania: z, db: db}
 }
@@ -122,7 +115,8 @@ func (r *repozytoriumUrzadzen) Biezace(ctx context.Context) (Urzadzenie, error) 
 	return r.jedno(ctx, urzadzenieBiezace, "bieżące")
 }
 
-// jedno wykonuje zapytanie zwracające najwyżej jeden wiersz urządzenia.
+// jedno wykonuje zapytanie zwracające najwyżej jeden wiersz urządzenia
+// i tłumaczy brak wiersza na błąd ErrBrakWiersza.
 func (r *repozytoriumUrzadzen) jedno(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) (Urzadzenie, error) {
 
@@ -141,7 +135,7 @@ func (r *repozytoriumUrzadzen) jedno(ctx context.Context, zapytanie, opis string
 }
 
 // odczytajUrzadzenie składa strukturę z jednego wiersza wyniku. Kolumny
-// opcjonalne (`system_operacyjny`, `wersja_klienta`) czytamy jako napis pusty —
+// opcjonalne (`system_operacyjny`, `wersja_klienta`) są odczytywane jako napis pusty —
 // dla warstw wyższych brak rozpoznania i rozpoznanie puste znaczą to samo.
 func odczytajUrzadzenie(wiersz skaner) (Urzadzenie, error) {
 	var urzadzenie Urzadzenie

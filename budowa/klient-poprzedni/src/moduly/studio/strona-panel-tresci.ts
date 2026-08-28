@@ -7,30 +7,9 @@ import {
 } from '../../modele/kontrolki-formularza';
 
 /**
- * Panel treści fragmentu, postaci w całości i pochodzenia.
- *
- * ── Dlaczego te pięć czynności stoi razem ───────────────────────────────────
- * `studio.text.get`, `studio.text.edit`, `studio.document.form.get`,
- * `studio.document.form.save` i `studio.provenance.list` dotyczą jednego: treści
- * i postaci jako CAŁOŚCI, a nie pojedynczej cechy. Rozsypane po trzech panelach
- * nastaw byłyby nie do znalezienia.
- *
- * ── Dlaczego zapis postaci nie żąda treści ──────────────────────────────────
- * `studio.document.form.save` przyjmuje treść jako pole opcjonalne: brak znaczy
- * „bez zmiany treści". Ten przycisk odczytuje postać i zapisuje ją z powrotem,
- * zakładając wersję — czyli utrwala to, co nastawy strony i style zmieniły, bez
- * dotykania ani jednej litery. To jest droga, którą postać przestaje ginąć nawet
- * wtedy, gdy Operator nie pisał.
- *
- * ── Dlaczego brzmienie fragmentu ma pole wielowierszowe ─────────────────────
- * Bo poprawa fragmentu bez przepisywania całości jest osią zamówienia, a fragment
- * bywa akapitem, nie wyrazem. Pole jednowierszowe wymuszałoby wklejanie akapitu
- * w linijkę wysokości jednego wiersza.
- *
- * Panel nie woła rdzenia i nie zna dokumentu — zleca czynności warstwie wyżej.
+ * Czynności panelu treści fragmentu, postaci dokumentu w całości i pochodzenia;
+ * panel nie woła rdzenia i nie zna dokumentu, tylko zleca czynności warstwie wyżej.
  */
-
-/** Czynności panelu treści i postaci. */
 export interface CzynnosciTresciPanelu {
   /** Odczyt treści zaznaczonego fragmentu wraz z jego postacią i blokadami. */
   naOdczytFragmentu(): void;
@@ -44,7 +23,7 @@ export interface CzynnosciTresciPanelu {
   naPochodzenia(): void;
 }
 
-/** Panel treści i postaci wraz z jego sterowaniem. */
+/** Panel treści fragmentu i postaci dokumentu w całości wraz z jego sterowaniem, widocznością i polami wejściowymi. */
 export interface StronaPanelTresci {
   element: HTMLElement;
   przestawWidocznosc(): void;
@@ -191,7 +170,7 @@ export function utworzStronePanelTresci(
   };
 }
 
-/** Grupa pól panelu. */
+/** Grupa pól panelu złożona z nagłówka tytułowego sekcji oraz przekazanej listy elementów jej zawartości. */
 function grupa(tytul: string, zawartosc: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ms-postac__tytul';

@@ -13,8 +13,7 @@ import (
 // odpowiada session.Polecenie, ale pakiet nie importuje warstwy sesji —
 // zależność biegnie od kanału do toru, nigdy odwrotnie.
 type Polecenie struct {
-	// Program — plik wykonywalny na hoście zdalnym: ścieżka albo nazwa
-	// rozstrzygana tam, nie na maszynie rdzenia.
+	// Program to plik wykonywalny na hoście zdalnym: ścieżka albo nazwa rozstrzygana na miejscu.
 	Program string
 	// Argumenty wiersza poleceń, bez nazwy programu.
 	Argumenty []string
@@ -33,19 +32,14 @@ type Uruchomienie struct {
 	Host Host
 }
 
-// opcjeSSH obowiązują każde połączenie toru:
-//   - BatchMode wyklucza pytania interaktywne: zgoda jest w bazie, nie w
-//     terminalu, a proces okna nie ma przy sobie nikogo, kto by odpowiedział;
-//   - accept-new zapisuje klucz hosta przy pierwszym połączeniu i odmawia przy
-//     jego zmianie — podmieniona maszyna nie dostanie procesu po cichu;
-//   - ConnectTimeout zamienia wieczne wiszenie na odmowę z powodem.
+// opcjeSSH obowiązują każde połączenie toru: tryb wsadowy, przyjęcie nowego klucza i limit czasu połączenia.
 var opcjeSSH = []string{
 	"-o", "BatchMode=yes",
 	"-o", "StrictHostKeyChecking=accept-new",
 	"-o", "ConnectTimeout=10",
 }
 
-// zbudujUruchomienie składa wywołanie `ssh` prowadzące polecenie na host.
+// Funkcja zbudujUruchomienie składa wywołanie SSH prowadzące polecenie procesu na wskazany host zdalny.
 func zbudujUruchomienie(sciezkaSSH string, h Host, p Polecenie) Uruchomienie {
 	argumenty := append([]string{}, opcjeSSH...)
 	if h.Port != 0 && h.Port != 22 {
@@ -58,13 +52,7 @@ func zbudujUruchomienie(sciezkaSSH string, h Host, p Polecenie) Uruchomienie {
 	return Uruchomienie{Program: sciezkaSSH, Argumenty: argumenty, Host: h}
 }
 
-// komendaZdalna składa komendę wykonywaną przez powłokę logowania hosta:
-//
-//	cd <katalog> && exec env K=V… <program> <argumenty…>
-//
-// Każdy człon jest cytowany po POSIX-owemu, więc treść polecenia nie może
-// zmienić kształtu komendy. `exec` oddaje procesowi miejsce powłoki — sygnał
-// zerwania połączenia trafia wprost do niego, nie do pośrednika.
+// Funkcja komendaZdalna składa komendę wykonywaną przez powłokę logowania hosta, z katalogiem i środowiskiem.
 func komendaZdalna(p Polecenie) string {
 	czesci := make([]string, 0, 3+len(p.Srodowisko)+len(p.Argumenty))
 	czesci = append(czesci, "exec")

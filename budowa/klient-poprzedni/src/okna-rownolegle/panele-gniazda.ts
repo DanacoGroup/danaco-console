@@ -16,31 +16,7 @@ import { utworzUchwytSzerokosci } from './uchwyt-szerokosci';
 import { utworzWidokPelnoekranowy } from './widok-pelnoekranowy';
 
 /**
- * Panele jednego gniazda — od przycisku w nagłówku po kolumnę obok rozmowy.
- *
- * Panel jest własnością rozmowy, a nie ekranu: przy dwóch i czterech oknach
- * każde okno ma własny zestaw paneli. Dlatego powstaje jeden egzemplarz na
- * gniazdo i nie ma tu ani jednej zmiennej na poziomie modułu — inaczej dwa
- * gniazda podzieliłyby się stanem.
- *
- * Panele stoją osobno od `gniazdo-okna.ts`, bo gniazdo odpowiada za jedno
- * miejsce na scenie (opis, nagłówek, rolę, fasadę okna), a panele to siedem
- * współpracujących bytów: stan, wytwórnia, stos, uchwyt, pełny ekran, menu
- * i skróty.
- *
- * Wykaz pozycji przychodzi z rejestru okien pomocniczych po kodzie modułu
- * gniazda, ale do menu wchodzą tylko pozycje mające wytwórnię
- * (`panele-otwieralne.ts`). Pozycja bez wytwórni nie dostaje wiersza
- * nieczynnego — zamiast tego zdanie pod wykazem mówi, ilu pozycji brakuje
- * i dlaczego. Wiersz, w który nie da się kliknąć, byłby bramką.
- *
- * Każdy panel stoi na komendzie rdzenia, więc bez kanału żadna wytwórnia nie
- * ma czym zbudować okna. Wykaz jest wtedy pusty, a menu mówi wprost, czego
- * brakuje (`BRAK_KANALU`) — to brak środka, nie odmowa.
- *
- * Plik nie liczy szerokości (`szerokosci-gniazda.ts`), nie rysuje panelu
- * (`panel-w-stosie.ts`) i nie wie, gdzie na scenie stoi jego gniazdo. Oddaje
- * elementy i mówi, kiedy układ się zmienił — resztę robi gniazdo.
+ * Panele jednego gniazda obejmują siedem współpracujących bytów od przycisku w nagłówku po kolumnę obok rozmowy, stojąc na komendzie rdzenia i nie licząc szerokości ani nie rysując samego panelu.
  */
 export interface PaneleGniazda {
   /** Kolumna paneli osadzana obok kolumny rozmowy. */
@@ -74,13 +50,7 @@ export interface OpcjePaneliGniazda {
   przedrostek: string;
   /** Szerokość gniazda w chwili pytania — sufit uchwytu. */
   dostepnaSzerokosc(): number;
-  /**
-   * Sekcje doklejane w menu `⋮` za kreską — dziś czynności sesji.
-   *
-   * Przechodzą tędy nietknięte do sterowania panelami. Panele gniazda nie
-   * budują ich i nie zaglądają do środka: czynność sesji nie jest panelem,
-   * a ten plik odpowiada wyłącznie za panele.
-   */
+  /** Sekcje doklejane w menu za kreską przechodzą nietknięte do sterowania panelami. */
   sekcjeDalsze?: readonly HTMLElement[];
 }
 
@@ -112,14 +82,7 @@ export function utworzPaneleGniazda(opcje: OpcjePaneliGniazda): PaneleGniazda {
     ...(opcje.sekcjeDalsze === undefined ? {} : { sekcjeDalsze: opcje.sekcjeDalsze }),
   });
 
-  /**
-   * Pozycje wchodzące do menu i na skróty.
-   *
-   * Bez kanału wykaz jest pusty, a nie wygaszony: pozycja, której nie ma czym
-   * zbudować, nie dostaje wiersza. Żadnej pozycji nie podajemy skrótu
-   * klawiszowego, bo dla paneli nie jest zarejestrowany ani jeden skrót —
-   * napis obiecujący klawisz, który nic nie robi, byłby atrapą.
-   */
+  /** Pozycje wchodzące do menu i na skróty; bez kanału wykaz jest pusty, nie wygaszony. */
   function pozycjeMenu(): readonly PozycjaMenu[] {
     if (opcje.kanal === null) return [];
     return paneleOtwieralne(modul).map((pozycja) => ({
@@ -135,14 +98,7 @@ export function utworzPaneleGniazda(opcje: OpcjePaneliGniazda): PaneleGniazda {
     return paneleNieotwieralne(modul).length;
   }
 
-  /**
-   * Nazwa pozycji widziana przez Operatora.
-   *
-   * Kod pozycji jest nazwą dla kodu, nie dla człowieka: „podglad-bash" nie mówi
-   * nic komuś, kto patrzy na nagłówek panelu. Kod zostaje nazwą zapasową tylko
-   * wtedy, gdy pozycji nie ma już w spisie — a wtedy jest jedyną prawdą, jaką
-   * mamy o tym panelu.
-   */
+  /** Nazwa pozycji widziana przez Operatora; kod zostaje nazwą zapasową, gdy pozycji nie ma w spisie. */
   function nazwaPozycji(kod: string): string {
     return paneleOtwieralne(modul).find((pozycja) => pozycja.kod === kod)?.nazwa ?? kod;
   }
@@ -169,14 +125,7 @@ export function utworzPaneleGniazda(opcje: OpcjePaneliGniazda): PaneleGniazda {
     });
   }
 
-  /**
-   * Przeliczenie całego zestawu po każdej zmianie stanu.
-   *
-   * Kolejność ma znaczenie: najpierw zdejmujemy panele zamknięte (wraz z ich
-   * subskrypcjami), potem powołujemy nowe, a dopiero na końcu przenosimy treść
-   * na pełny ekran. Odwrotna kolejność zamknęłaby panel, którego treść wisi
-   * już na scenie, i zostawiła po nim pusty prostokąt.
-   */
+  /** Przeliczenie zestawu po zmianie stanu: zdjęcie zamkniętych, powołanie nowych, przeniesienie treści. */
   function przelicz(): void {
     const otwarte = stan.otwarte();
 
@@ -189,8 +138,7 @@ export function utworzPaneleGniazda(opcje: OpcjePaneliGniazda): PaneleGniazda {
     for (const kod of otwarte) {
       if (zbudowane.has(kod)) continue;
       const panel = powolaj(kod);
-      // Kod otwarty bez wytwórni znaczy rozjazd spisu z kodem. Cisza
-      // udawałaby, że pozycji nie było — a była, tylko nic z niej nie wyszło.
+      // Kod otwarty bez wytwórni znaczy rozjazd spisu z kodem; cisza udawałaby, że pozycji nie było.
       if (panel === null) {
         console.warn('[panele gniazda] pozycja otwarta nie ma czym stanąć', kod);
         continue;
@@ -224,25 +172,21 @@ export function utworzPaneleGniazda(opcje: OpcjePaneliGniazda): PaneleGniazda {
     pelnyEkran: pelny.element,
     sterowanie: sterowanie.element,
 
-    // Stos pusty nie zajmuje szerokości. Kolumna o zerowej szerokości i tak by
-    // się nie pokazała, ale kontrakt szerokości liczy się z tej liczby —
-    // niezerowa przy pustym stosie odebrałaby rozmowie miejsce bez powodu.
+    // Stos pusty nie zajmuje szerokości, bo niezerowa wartość odebrałaby rozmowie miejsce bez powodu.
     szerokosc: () => (kolumna.pusta() ? 0 : stan.szerokosc()),
 
     ustawModul(kod) {
       if (kod === modul) return;
       modul = kod;
       sterowanie.ustawPozycje(pozycjeMenu(), nieotwieralnych());
-      // Panele otwarte zostają: moduł zmienia spis pozycji, a nie to, co
-      // Operator już postawił obok rozmowy. Zdjęcie panelu jest jego decyzją.
+      // Panele otwarte zostają, bo moduł zmienia spis pozycji, nie postawienie obok rozmowy.
       przelicz();
     },
 
     ustawOkno(kod) {
       if (kod === okno) return;
       okno = kod;
-      // Panele już stojące wzięły okno przy powołaniu i nie umieją go zmienić
-      // w locie — powstają na nowo, żeby pytały rdzeń o okno właściwe.
+      // Panele stojące nie umieją zmienić okna w locie, więc powstają na nowo dla okna właściwego.
       for (const [, panel] of zbudowane) panel.zamknij();
       zbudowane.clear();
       przelicz();

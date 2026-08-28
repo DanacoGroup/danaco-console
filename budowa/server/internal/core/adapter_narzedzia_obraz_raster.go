@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: wspólne czytanie i liczenie na rastrze dla tych
-// czynności rodziny `image.*`, które pracują biblioteką wkompilowaną w rdzeń —
-// `image.compose`, `image.vectorize` i rozkład na warstwy.
-//
-// Dekodery rejestrujemy importem pobocznym: PNG, JPEG i GIF stoją w bibliotece
-// standardowej, a WEBP dokłada `golang.org/x/image`. To ten sam zestaw, którym
-// rdzeń mierzy wymiary wnoszonego zasobu — dwa różne zestawy dekoderów
-// oznaczałyby, że panel mierzy plik, którego złożenie odmawia.
+// Plik podaje wspólne czytanie i liczenie na rastrze dla czynności rodziny image, które pracują biblioteką wkompilowaną w rdzeń.
 package core
 
 import (
@@ -37,14 +30,7 @@ func odczytajObrazPliku(sciezka string) (image.Image, error) {
 	return obraz, nil
 }
 
-// skladoweNiePrzemnozone rozkłada kolor na cztery składowe z zakresu 0..1,
-// zdejmując wstępne przemnożenie przez alfę.
-//
-// Zdjęcie przemnożenia jest tu konieczne, nie kosmetyczne: `color.Color` oddaje
-// w Go składowe już przemnożone przez alfę, a tryby mieszania są zdefiniowane
-// na barwie własnej piksela. Mnożenie barw przemnożonych dałoby wynik ciemniejszy
-// przy każdej półprzezroczystości — błąd niewidoczny na krawędziach, a wyraźny
-// na dużej płaszczyźnie znaku wodnego.
+// skladoweNiePrzemnozone rozkłada kolor na cztery składowe z zakresu 0..1, zdejmując wstępne przemnożenie przez alfę koloru.
 func skladoweNiePrzemnozone(kolor color.Color) (r, g, b, a float64) {
 	czerwona, zielona, niebieska, alfa := kolor.RGBA()
 	if alfa == 0 {

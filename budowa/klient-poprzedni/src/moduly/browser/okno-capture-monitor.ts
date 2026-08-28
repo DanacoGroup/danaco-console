@@ -19,25 +19,15 @@ import { utworzSterWyboru } from './ster-wyboru';
 
 /**
  * Capture & Monitor Panel — okno przechwytywania i monitorowania modułu
- * Browser (warstwa trzecia, otwierane z menu `Operacje ▼`).
- *
- * Jedna odpowiedzialność: złożenie okna oraz wykazy materiału i monitorów.
- * Rozmowa z rdzeniem stoi w `czynnosci-materialu.ts`, pamięć zgromadzonego
- * materiału w `material-sesji.ts`.
- *
- * Panel mówi o trwałości prawdę: migawki zostają w rdzeniu, ale komendy odczytu
- * wykazu wytworów okna kontrakt nie niesie, więc po przeładowaniu karty lista
- * zaczyna się od nowa. Pobrania, kanały RSS, kolejka czytania i cykliczne
- * sprawdzanie monitora mają w kontrakcie własne komendy, których panel jeszcze
- * nie wywołuje — pytają rdzeń o ich pokrycie i mówią jego odpowiedź, zamiast
- * orzekać o braku z napisu w module.
+ * Browser, warstwa trzecia, otwierane z menu operacji. Jedna odpowiedzialność:
+ * złożenie okna oraz wykazy materiału i monitorów.
  */
 export interface OknoCaptureMonitor {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Nastawa widoku wykazu — podział z opracowania modułu. */
+/** Nastawa widoku wykazu materiału sesji — filtr rodzaju pozycji pokazywanych aktualnie w liście panelu. */
 const WIDOKI = [
   { wartosc: 'wszystko', etykieta: 'Cały materiał', opis: 'Zrzuty, archiwa i treści stron.' },
   { wartosc: 'zrzut', etykieta: 'Zrzuty', opis: 'Pozycje z odnośnikiem do zrzutu ekranu.' },
@@ -94,9 +84,7 @@ export function utworzOknoCaptureMonitor(stan: StanPrzegladania): OknoCaptureMon
     utworzDymekObjasnienia(OBJASNIENIA.przekazanie, KLASY_DYMKA),
   );
 
-  // Rodziny prowadzone przez rdzeń — monitory, kanały, kolejka czytania,
-  // pobrania i wytwory sesji. Bez tego panelu Operator nie miałby z okna
-  // drogi do komend, które rdzeń już obsługuje.
+  // Bez tego panelu operator nie miałby z okna drogi do komend, które rdzeń już obsługuje.
   const rodziny = utworzPanelRodzin(sekcjeMaterialu(stan));
 
   okno.tresc.append(lista, monitory, podglad, rodziny.element, odpowiedz.element);
@@ -112,7 +100,7 @@ export function utworzOknoCaptureMonitor(stan: StanPrzegladania): OknoCaptureMon
     okno.element,
   );
 
-  /** Pokazuje treść pozycji bez opuszczania panelu. */
+  /** Pokazuje treść wybranej pozycji materiału w podglądzie panelu, bez opuszczania widoku wykazu. */
   function pokaz(pozycja: Przechwycenie): void {
     const migawka = pozycja.migawka;
     podglad.hidden = false;
@@ -143,7 +131,7 @@ export function utworzOknoCaptureMonitor(stan: StanPrzegladania): OknoCaptureMon
   return { element, odswiez };
 }
 
-/** Jedna pozycja materiału wraz z czynnościami wykazu. */
+/** Jedna pozycja materiału sesji przeglądania wraz z czynnościami dostępnymi wprost z poziomu wykazu panelu. */
 function wierszPozycji(
   pozycja: Przechwycenie,
   czynnosci: CzynnosciMaterialu,
@@ -169,7 +157,7 @@ function wierszPozycji(
   return element;
 }
 
-/** Jeden monitor zmian wraz z wynikiem ostatniego sprawdzenia. */
+/** Jeden monitor zmian strony wraz z wynikiem ostatniego sprawdzenia wykonanego przez rdzeń w tej sesji. */
 function wierszMonitora(
   monitor: MonitorZmian,
   stan: StanPrzegladania,
@@ -194,14 +182,14 @@ function wierszMonitora(
   return element;
 }
 
-/** Stan monitora słowem — sam znacznik barwy nie mówi, co się stało. */
+/** Stan monitora zmian wyrażony słowem — sam znacznik barwy nie mówi operatorowi, co się faktycznie stało. */
 function opisWyniku(monitor: MonitorZmian): string {
   if (monitor.wynik === 'nietkniety') return 'jeszcze nie sprawdzany';
   if (monitor.wynik === 'bez-zmian') return `bez zmian, sprawdzony ${czasPozycji(monitor.sprawdzonyO)}`;
   return `ZMIANA (${monitor.roznicaZnakow > 0 ? '+' : ''}${monitor.roznicaZnakow} znaków)`;
 }
 
-/** Godzina zdarzenia w postaci lokalnej; czas rdzenia liczony w milisekundach epoki. */
+/** Godzina zdarzenia w postaci lokalnej dla operatora; czas rdzenia liczony jest w milisekundach epoki. */
 function czasPozycji(znacznik: number): string {
   if (znacznik <= 0) return 'bez znacznika czasu';
   return new Date(znacznik).toLocaleTimeString('pl-PL');

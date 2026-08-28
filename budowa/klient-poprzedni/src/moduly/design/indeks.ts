@@ -3,17 +3,9 @@ import { KOD_MODULU } from './etykiety-designu';
 import { utworzModulDesign } from './modul-design';
 
 /**
- * Moduł Design — punkt zbiorczy katalogu.
- *
- * Powłoka zna stąd jedną rzecz: opis modułu. Kod stoi wewnątrz opisu, więc
- * moduł sam mówi, którym modułem jest, a rozjazd między nazwą w rejestrze
- * a rzeczywistością jest niemożliwy.
- *
- * Moduł nie osadza się sam w dokumencie i nie zna powłoki — oddaje element,
- * a warstwa składająca decyduje, gdzie go postawić.
- *
- * Rozłączenie zostaje w module: `WidokModulu` powłoki nie ma czynności
- * odpięcia, a subskrypcje kanału odpina `rozlacz()` widoku modułu.
+ * Punkt zbiorczy katalogu modułu Design. Powłoka zna stąd jedną rzecz: opis
+ * modułu, w którym kod stoi wewnątrz opisu, więc moduł sam mówi, którym modułem
+ * jest, a rozjazd z nazwą w rejestrze jest niemożliwy.
  */
 export const MODUL: OpisModulu = {
   kod: KOD_MODULU,

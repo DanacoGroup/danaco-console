@@ -7,17 +7,13 @@ import {
   type ZaleznosciKontrolki,
 } from './kontrolka';
 
-/**
- * Kontrolki wyboru: przełącznik wartości logicznej, lista jednokrotna
- * i lista wielokrotna.
- *
- * Dopuszczalne wartości pochodzą wyłącznie z pola `options` katalogu.
- * Definicja bez opcji nie daje pustego ekranu bez wyjaśnienia: obie listy
- * niosą wtedy ostrzeżenie przy polu, a lista jednokrotna zostaje przy samej
- * pozycji pustej.
- */
+// Kontrolki wyboru nastawy: przełącznik logiczny, lista jednokrotna i lista wielokrotna.
 
-/** Przełącznik wartości logicznej — stan, nie działanie. */
+/**
+ * Składa przełącznik wartości logicznej wraz z opisem stanu przy polu. Kontrolka
+ * niesie stan nastawy, a nie działanie: przestawienie zgłasza zamiar zmiany
+ * i czeka na zatwierdzenie, zamiast wysyłać żądanie od razu.
+ */
 export function utworzKontrolkePrzelacznika(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const zbiornik = utworzZbiornikZamiarow();
 
@@ -52,7 +48,11 @@ export function utworzKontrolkePrzelacznika(zaleznosci: ZaleznosciKontrolki): Ko
   };
 }
 
-/** Lista jednokrotna — jedna wartość z katalogu opcji. */
+/**
+ * Składa listę jednokrotną, w której Operator wybiera jedną wartość z pola
+ * `options` definicji. Pozycja pusta stoi na początku i brzmi inaczej dla
+ * nastawy wymaganej niż dla nastawy pomijalnej.
+ */
 export function utworzKontrolkeListy(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const { definicja, identyfikator } = zaleznosci;
   const opcje = uporzadkujOpcje(definicja.options);
@@ -81,7 +81,11 @@ export function utworzKontrolkeListy(zaleznosci: ZaleznosciKontrolki): Kontrolka
   };
 }
 
-/** Lista wielokrotna — podzbiór wartości z katalogu opcji. */
+/**
+ * Składa listę wielokrotną, w której Operator zaznacza podzbiór wartości z pola
+ * `options` definicji. Każda opcja dostaje własne pole wyboru, a całość stoi
+ * w grupie niosącej wspólną etykietę nastawy.
+ */
 export function utworzKontrolkeListyWielokrotnej(
   zaleznosci: ZaleznosciKontrolki,
 ): Kontrolka {
@@ -130,7 +134,11 @@ export function utworzKontrolkeListyWielokrotnej(
 const OSTRZEZENIE_BEZ_OPCJI =
   'Katalog nie podał dopuszczalnych wartości tej pozycji — lista pozostaje pusta.';
 
-/** Opcje w kolejności z katalogu; wiersz bez kolejności trafia na koniec. */
+/**
+ * Porządkuje opcje definicji według pola `order`. Opcja bez podanej kolejności
+ * trafia na koniec zamiast wypadać z wykazu, a definicja bez opcji daje wykaz
+ * pusty, nie błąd.
+ */
 function uporzadkujOpcje(opcje: readonly SettingOption[] | undefined): SettingOption[] {
   return [...(opcje ?? [])].sort((pierwsza, druga) => miejsce(pierwsza) - miejsce(druga));
 }
@@ -147,7 +155,11 @@ function elementOpcji(opcja: SettingOption): HTMLOptionElement {
   return element;
 }
 
-/** Wartość logiczna odczytana z kształtu nieznanego; napis „true" też liczy się jako prawda. */
+/**
+ * Odczytuje wartość logiczną z nastawy o kształcie nieznanym. Rdzeń oddaje ją
+ * jako wartość logiczną, liczbę albo napis, więc jedynka i napis prawdy również
+ * liczą się jako prawda, a kształt spoza tych trzech daje fałsz.
+ */
 function prawda(wartosc: unknown): boolean {
   if (typeof wartosc === 'boolean') return wartosc;
   if (typeof wartosc === 'number') return wartosc !== 0;

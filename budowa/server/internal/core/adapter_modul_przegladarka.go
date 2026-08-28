@@ -1,15 +1,7 @@
 // Odpowiedzialność pliku: moduł Browser — typ adaptera, konstruktor i dwie
 // komendy migawki strony (`browser.navigate`, `browser.snapshot.get`). Źródła
-// i notatki zebrane w toku przeglądania mają własny plik adaptera i własny port.
-//
-// Przeglądarka jest częścią każdego środowiska. `Nawiguj` sięga po stronę
-// realnym HTTP GET-em (`przegladarka_pobieranie.go`, biblioteka standardowa)
-// i wypełnia migawkę tytułem, tekstem renderowanym i HTML-em pobranej strony.
-// Kontrakt `BrowserSnapshot` niesie te pola (`title`, `text`, `html`), więc
-// adapter je wypełnia; puste zostaje tylko `screenshotRef`, bo zrzut ekranu
-// wymaga silnika przeglądarki spoza `net/http`. Flagi
-// `IncludeHtml`/`IncludeScreenshot` w `browser.snapshot.get` sterują tym, co
-// migawka oddaje z tego, co ma — HTML bywa ciężki, więc wychodzi na żądanie.
+// i notatki zebrane w toku przeglądania mają własny plik adaptera i własny
+// port.
 package core
 
 import (
@@ -30,34 +22,30 @@ const (
 	przedrostekNotatki = "notatkaprz-"
 )
 
-// adapterPrzegladarki wypełnia port Przegladarka. Jedna zależność: repozytorium
-// modułu, wspólne dla migawek, źródeł i notatek (jedno repozytorium, trzy pliki
-// — patrz `dane/przegladarka.go`).
+// adapterPrzegladarki wypełnia port Przegladarka. Jedna zależność:
+// repozytorium modułu, wspólne dla migawek, źródeł i notatek — jedno
+// repozytorium, trzy pliki.
 type adapterPrzegladarki struct {
 	repozytorium dane.RepozytoriumPrzegladania
-	// magazyn trzyma bajty materiału sesji: zrzutów, archiwów, odniesień
-	// monitorów i rejestrów sieciowych. Wiersz w bazie jest wskazaniem na nie,
-	// nie ich kopią (`adapter_modul_przegladarka_zaplecze.go`).
+	// magazyn trzyma bajty materiału sesji: zrzutów, archiwów i odniesień
+	// monitorów, nie ich kopię.
 	magazyn *magazynTresciBiblioteki
-	// katalogDanych jest korzeniem, względem którego liczone są odwołania
-	// magazynu wychodzące kontraktem.
+	// katalogDanych jest korzeniem, względem którego liczone są odwołania.
 	katalogDanych string
-	// silnik uruchamia stronę, gdy czynność wymaga strony wykonanej, a nie
-	// samego jej źródła: zrzutu, drzewa DOM, konsoli, rejestru sieciowego,
-	// emulacji urządzenia i przewinięcia.
+	// silnik uruchamia stronę, gdy czynność wymaga strony wykonanej, a nie jej
+	// źródła.
 	silnik *silnikPrzegladarki
 }
 
-// nowyAdapterPrzegladarki wiąże port z repozytorium modułu.
+// nowyAdapterPrzegladarki wiąże port z repozytorium modułu przeglądania, bez
+// którego adapter nie ma skąd czytać ani gdzie zapisać migawki.
 func nowyAdapterPrzegladarki(repozytorium dane.RepozytoriumPrzegladania) *adapterPrzegladarki {
 	return &adapterPrzegladarki{repozytorium: repozytorium}
 }
 
 // Nawiguj pobiera stronę spod adresu wskazanego przez Operatora i zapisuje
-// migawkę jej treści. Pobranie idzie realnym HTTP GET-em (`pobierzStrone`);
-// gdy strona milczy, odpowiada błędem albo nie jest do odczytu, Nawiguj wraca
-// uczciwym błędem, a migawki nie tworzy — historia nawigacji nie zapisuje
-// przejść, które się nie odbyły.
+// migawkę jej treści realnym HTTP GET-em; nieudane pobranie zwraca błąd bez
+// migawki.
 func (a *adapterPrzegladarki) Nawiguj(ctx context.Context,
 	z shared.BrowserNavigateRequest) (shared.BrowserNavigateResponse, error) {
 
@@ -66,17 +54,13 @@ func (a *adapterPrzegladarki) Nawiguj(ctx context.Context,
 		return shared.BrowserNavigateResponse{}, bladWskazaniaPrzegladarki(
 			"komenda navigate bez okna lub adresu")
 	}
-	// Adres obcinamy tutaj, przed pobraniem, żeby w migawce wylądował dokładnie
-	// ten łańcuch, którym rdzeń pobierał stronę. Obcięcie zostawione samemu
-	// sprawdzianowi protokołu dałoby dwie prawdy o jednym adresie.
+	// Adres jest obcinany przed pobraniem, żeby w migawce wylądował ten sam
+	// łańcuch pobrania.
 	adres := strings.TrimSpace(z.Url)
 	tresc, err := pobierzStrone(ctx, adres)
 	if err != nil {
-		// Zasób, którego nie da się pokazać jako strony (dokument, obraz,
-		// archiwum), nie kończy drogi odmową „to nie strona": przeglądarka
-		// w takiej sytuacji POBIERA plik i tak samo robi moduł. Odmowa zostaje —
-		// migawki z tego nie ma — ale niesie identyfikator pobrania, które
-		// naprawdę powstało i którego bajty leżą w magazynie.
+		// Zasób, którego nie da się pokazać jako strony, nie kończy drogi odmową:
+		// przeglądarka pobiera plik.
 		if errors.Is(err, errZasobNieJestStrona) {
 			return shared.BrowserNavigateResponse{}, a.odlozPobranie(ctx, okno, adres, err)
 		}
@@ -94,10 +78,8 @@ func (a *adapterPrzegladarki) Nawiguj(ctx context.Context,
 	return shared.BrowserNavigateResponse{Snapshot: migawkaKontraktu(zapisana, true, true)}, nil
 }
 
-// Migawka oddaje bieżącą treść strony widoczną Operatorowi i modelowi.
-// `BrowserSnapshotGetRequest` nie wskazuje kodu migawki — pyta o okno, więc
-// adapter sięga po jej najświeższy wiersz (`OstatniaMigawka`), zgodnie z tym,
-// że historia nawigacji to kolejne wiersze `migawka_strony`.
+// Migawka oddaje bieżącą treść strony widoczną Operatorowi i modelowi,
+// sięgając po najświeższy wiersz historii nawigacji okna wskazanego żądaniem.
 func (a *adapterPrzegladarki) Migawka(ctx context.Context,
 	z shared.BrowserSnapshotGetRequest) (shared.BrowserSnapshotGetResponse, error) {
 
@@ -116,9 +98,8 @@ func (a *adapterPrzegladarki) Migawka(ctx context.Context,
 }
 
 // migawkaKontraktu składa `BrowserSnapshot` z wiersza repozytorium. Tekst
-// renderowany wychodzi zawsze — to podstawowa treść widoczna modelowi; HTML i
-// zrzut ekranu wychodzą tylko na żądanie flag żądania, bo bywają ciężkie, a
-// domyślnie nikt o nie nie prosił.
+// renderowany wychodzi zawsze; HTML i zrzut ekranu wychodzą tylko na żądanie
+// flag.
 func migawkaKontraktu(wiersz dane.MigawkaStrony, dolaczHtml, dolaczZrzut bool) shared.BrowserSnapshot {
 	migawka := shared.BrowserSnapshot{
 		Id: wiersz.Kod, WindowId: wiersz.Okno, Url: wiersz.Url,
@@ -134,7 +115,8 @@ func migawkaKontraktu(wiersz dane.MigawkaStrony, dolaczHtml, dolaczZrzut bool) s
 	return migawka
 }
 
-// bladPrzegladarki znakuje usterkę wewnętrzną kodem kontraktu (wzór: automations).
+// bladPrzegladarki znakuje usterkę wewnętrzną modułu kodem kontraktu
+// `internal_error`, odróżnioną od winy żądania Operatora.
 func bladPrzegladarki(err error) error {
 	if err == nil {
 		return nil
@@ -143,30 +125,16 @@ func bladPrzegladarki(err error) error {
 }
 
 // bladPobraniaStrony nazywa nieudane pobranie strony — Operator dostaje wprost
-// powód (strona milczy, odpowiedziała błędem, nie jest do odczytu), a nie pustą
-// migawkę podszytą pod sukces. Kod odmowy dobiera `kodOdmowyPobrania`
-// — bo powód rozstrzyga, czy ponowienie ma sens.
-//
-// Jeden kod na wszystkie nieszczęścia nie wystarcza: `validation_failed`
-// z `retryable:false` mówiłby o niezgodności żądania także wtedy, gdy żądanie
-// było zgodne z kontraktem, a gospodarz milczał albo witryna oddała 503.
-// Klient z pętlą ponowień dostawałby wtedy „nie ponawiaj" przy usterce z natury
-// przemijającej.
+// powód, a nie pustą migawkę podszytą pod sukces. Kod odmowy dobiera
+// `kodOdmowyPobrania`, bo powód rozstrzyga, czy ponowienie ma sens.
 func bladPobraniaStrony(url string, err error) error {
 	kod, zdanie := kodOdmowyPobrania(err)
 	return protocol.JakoError(protocol.NowyBlad(kod,
 		"moduł Browser: nie udało się pobrać strony "+url+": "+zdanie))
 }
 
-// kodOdmowyPobrania przekłada powód nieudanego pobrania na kod kontraktu.
-// Rozstrzyga, czyj to brak: wołającego (zły adres, żądanie odrzucone przez
-// witrynę), strony (nie ma jej pod tym adresem) czy drogi (transport zerwany,
-// witryna chwilowo padła, tempo ograniczone).
-//
-// Kontrakt nie ma kodu „zasób zewnętrzny chwilowo niedostępny"; jedynym kodem
-// ponawialnym, który nie kłamie o usterce rdzenia (`internal_error`), jest
-// `channel_unavailable` — droga na zewnątrz jest niedostępna dla tego jednego
-// wywołania.
+// kodOdmowyPobrania przekłada powód nieudanego pobrania na kod kontraktu,
+// rozstrzygając, czyj to brak: wołającego, strony, czy drogi między nimi.
 func kodOdmowyPobrania(err error) (protocol.KodBledu, string) {
 	var bladAdresu bladAdresuStrony
 	if errors.As(err, &bladAdresu) {
@@ -188,12 +156,12 @@ func kodOdmowyPobrania(err error) (protocol.KodBledu, string) {
 			return shared.ErrorCodeChannelUnavailable, err.Error()
 		}
 	}
-	// Reszta — treść nie do odczytu, strona ponad granicą rozmiaru, czytanie
-	// przerwane — jest własnością wskazanego zasobu: ponowienie nic nie zmieni.
+	// Reszta jest własnością wskazanego zasobu: ponowienie nic nie zmieni.
 	return shared.ErrorCodeValidationFailed, err.Error()
 }
 
-// bladWskazaniaPrzegladarki nazywa brak danych w żądaniu — błąd Operatora, nie rdzenia.
+// bladWskazaniaPrzegladarki nazywa brak danych wymaganych w żądaniu — to błąd
+// wołającego, nie usterka rdzenia.
 func bladWskazaniaPrzegladarki(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"moduł Browser: "+powod))

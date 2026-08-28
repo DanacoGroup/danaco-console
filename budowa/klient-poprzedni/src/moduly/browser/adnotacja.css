@@ -1,19 +1,6 @@
-/*
- * Warstwa wizualna trybu adnotacji: scena podglądu, płótno nad nią i pływający
- * pasek narzędzi.
- *
- * Wciągana importem z `browser.css`. Barwy wyłącznie z żetonów motywu.
- *
- * Pasek pływa na warstwie płótna, przy dolnej krawędzi — robi to ten arkusz,
- * a nie układ okna. Rząd narzędzi nie ma zabierać stronie wysokości, więc pasek
- * leży w warstwie pozycjonowanej bezwzględnie nad sceną i nie zajmuje żadnego
- * piksela toku dokumentu.
- */
+/* Arkusz opisuje warstwę wizualną trybu adnotacji: scenę podglądu, płótno nad nią oraz pływający pasek narzędzi przy dolnej krawędzi płótna. */
 
-/*
- * Scena — jedyny kontener pozycjonujący warstwy. Podgląd strony zostaje w toku
- * dokumentu nietknięty; warstwa adnotacji kładzie się na nim bezwzględnie.
- */
+/* Scena jest jedynym kontenerem pozycjonującym warstwy: podgląd strony zostaje w toku dokumentu, a warstwa adnotacji kładzie się na nim bezwzględnie. */
 .mb-scena {
   position: relative;
   min-width: 0;
@@ -29,20 +16,12 @@
   padding: var(--dn-od-2);
 }
 
-/*
- * Tryb wyłączony znika całkowicie, a nie blednie: warstwa z `display: flex`
- * łapałaby wskaźnik nad podglądem i odebrała zaznaczanie tekstu mimo atrybutu
- * `hidden`.
- */
+/* Tryb wyłączony znika całkowicie, a nie blednie, ponieważ warstwa z wyświetlaniem flex łapałaby wskaźnik nad podglądem mimo atrybutu hidden. */
 .mb-adnotacja[hidden] {
   display: none;
 }
 
-/*
- * Płótno leży nad sceną, a nie w niej: `inset: 0` rozpina je na całą scenę,
- * a tło zostaje przezroczyste, bo zrzutu strony rdzeń nie oddaje. `touch-action`
- * zdejmuje przewijanie gestem — na płótnie gest znaczy rysowanie.
- */
+/* Płótno leży nad sceną z przezroczystym tłem, ponieważ zrzutu strony rdzeń nie oddaje, a zdjęte przewijanie gestem oznacza na nim rysowanie. */
 .mb-adnotacja__plotno {
   position: absolute;
   inset: 0;
@@ -54,10 +33,7 @@
   touch-action: none;
 }
 
-/*
- * Zdanie o braku tła stoi nad paskiem i pod płótnem w kolejności czytania —
- * ma być przeczytane przed naciśnięciem „Dodaj do rozmowy", nie po nim.
- */
+/* Zdanie o braku tła stoi nad paskiem i pod płótnem w kolejności czytania, żeby zostało przeczytane przed naciśnięciem przycisku dodania do rozmowy. */
 .mb-adnotacja__bez-tla {
   position: relative;
   margin: 0;
@@ -89,7 +65,7 @@
   flex-wrap: wrap;
 }
 
-/* Wybór narzędzia niesie `aria-pressed`, więc arkusz sięga po ten sam atrybut. */
+/* Wybór narzędzia niesie atrybut aria-pressed, więc arkusz sięga po ten sam atrybut przy stylowaniu wciśniętego przycisku paska. */
 .mb-adnotacja__pasek .dn-btn[aria-pressed='true'] {
   border-color: var(--dn-sygnal-obrys);
   background: var(--dn-wcisniecie);
@@ -99,19 +75,12 @@
   max-width: 12rem;
 }
 
-/*
- * Przy narzędziu „tekst" to pole stawia ślad — sygnalizuje to obrys sygnału.
- * Pole zostaje widoczne i edytowalne przy każdym narzędziu.
- */
+/* Przy narzędziu tekst pole stawia ślad sygnalizowany obrysem sygnału, a samo pole pozostaje widoczne i edytowalne przy każdym narzędziu. */
 .mb-adnotacja__pasek[data-narzedzie='tekst'] .mb-adnotacja__napis {
   border-color: var(--dn-sygnal-obrys);
 }
 
-/*
- * Próbka barwy: krążek wypełniony tuszem adnotacji. Wybór sygnalizuje obrys,
- * nie samo wypełnienie — stan nie jest przekazywany wyłącznie kolorem
- * (`motyw/stany.css`).
- */
+/* Próbka barwy jest krążkiem wypełnionym tuszem adnotacji, którego wybór sygnalizuje obrys, nie samo wypełnienie, zgodnie z regułą stanu. */
 .mb-adnotacja__barwa {
   width: var(--dn-wym-check);
   height: var(--dn-wym-check);
@@ -125,10 +94,7 @@
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 
-/*
- * Tusz bierze się z prymitywów palety, nie z żetonów stanu: załącznik ogląda
- * się poza motywem, więc barwa nie ma prawa przełączać się razem z nim.
- */
+/* Tusz bierze się z prymitywów palety, nie z żetonów stanu, ponieważ załącznik ogląda się poza motywem, więc barwa nie przełącza się razem z nim. */
 .mb-adnotacja__barwa--czerwien {
   background: var(--dn-czerwien-400);
 }

@@ -4,28 +4,20 @@ import type { PasDecyzji } from './model-danych';
 import type { ZamiarDecyzji } from './zdarzenia-pulpitu';
 
 /**
- * Pas eskalacji koordynatora.
- *
- * Jedna odpowiedzialność: pokazanie, że pętla zatrzymała się na człowieku,
- * i podanie drogi wyjścia — zdarzenie nieoczekiwane wstrzymuje kolejkę,
- * a praca czeka na decyzję użytkownika.
- *
- * Pas jest jedynym miejscem pulpitu, w którym praca stoi, dlatego jako jedyny
- * nosi akcent: wstęgę 3 px u góry, tło `--dn-akcent-tlo` i wezwanie z cieniem
- * akcentu. Akcent obejmuje wstęgę i przycisk, nie całą powierzchnię.
- *
- * Kontrakt nie niesie odczytu przepływów wstrzymanych do decyzji: komplet podaje
- * wtedy `null`, pas mówi o braku źródła i chowa wezwanie, bo przycisk wzywający
- * do rozstrzygnięcia nieodczytanego wykazu byłby atrapą. Gdy źródło jest, a nic
- * nie czeka, pas zmienia treść na „żaden przepływ nie czeka", a wezwanie
- * pozostaje czynne.
+ * Pas eskalacji koordynatora ma jedną odpowiedzialność: pokazuje, że pętla
+ * zatrzymała się na człowieku, i podaje drogę wyjścia. Zdarzenie nieoczekiwane
+ * wstrzymuje kolejkę, a praca czeka na decyzję użytkownika.
  */
 export interface PasDecyzjiWidok {
   element: HTMLElement;
   odswiez(decyzje: PasDecyzji | null): void;
 }
 
-/** Buduje pas decyzji wraz z wezwaniem „Podejmij decyzję". */
+/**
+ * Buduje pas decyzji wraz z wezwaniem „Podejmij decyzję": znak ostrzegawczy,
+ * nagłówek z liczbą przepływów, szczegół z czasem oczekiwania oraz przycisk
+ * nadający zamiar rozstrzygnięcia.
+ */
 export function utworzPasDecyzji(
   decyzje: PasDecyzji | null,
   nadaj: (zamiar: ZamiarDecyzji) => void,

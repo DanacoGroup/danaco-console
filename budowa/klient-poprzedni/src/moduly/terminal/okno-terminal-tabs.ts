@@ -29,26 +29,8 @@ import type { ZrodloTerminala } from './zrodlo-terminala';
 import { notaZaleznosci, PROGRAMY_POWLOK } from './zaleznosci-zewnetrzne';
 
 /**
- * Terminal Tabs — okno wiodące modułu Terminal. Otwiera nowe karty i przełącza
- * między powłokami; każda karta jest odrębną sesją powłoki o własnym rodzaju,
- * katalogu i środowisku.
- *
- * Do rdzenia idą dwie komendy: `terminal.session.open` (nowa karta, duplikat)
- * i `terminal.command.exec` (wysłanie polecenia). Podział widoku, rozmiar pisma,
- * schemat barw, przypięcie, nazwa karty i eksport transkryptu są czynnościami
- * widoku — kontrakt nie ma dla nich komend, bo nie zmieniają niczego po stronie
- * serwera. Zamknięcie karty jest wyjątkiem opisanym niżej.
- *
- * Zdanie potwierdzenia składa się wyłącznie z pól odpowiedzi — stan karty,
- * katalog roboczy, stan procesu, polecenie — i rozstrzyga o powodzeniu tym, co
- * rdzeń oddał, a nie tym, że żądanie poszło. Czynności czysto widokowe mówią
- * wprost, że rdzeń o nich nie wie.
- *
- * Zamknięcie karty w rdzeniu ma dziś komendę kontraktu, ale okno jej jeszcze nie
- * wywołuje. Pozycja mówi o tym zdaniem liczonym z odczytu wykazu komend rdzenia
- * (`moduly/pokrycie-komend.ts`), a nie napisem: napis orzekałby o stanie rdzenia
- * z chwili pisania kodu i nie przestałby go orzekać w dniu, w którym rdzeń
- * dostanie uchwyt.
+ * Terminal Tabs to okno wiodące modułu Terminal: otwiera karty powłok i przełącza między nimi,
+ * każda karta jest odrębną sesją własnego rodzaju, katalogu i środowiska.
  */
 export interface OknoKart {
   element: HTMLElement;
@@ -100,21 +82,7 @@ export function utworzOknoKart(
     otworzKarteRdzenia(zrodlo, stan, tresc, zadanie);
   }
 
-  /**
-   * Zamknięcie karty — w RDZENIU i w widoku, w tej kolejności.
-   *
-   * Kolejność jest rozstrzygnięciem: karta zdjęta z ekranu przed odpowiedzią
-   * rdzenia znikałaby Operatorowi także wtedy, gdy rdzeń zamknięcia odmówił,
-   * a wtedy powłoka biegłaby dalej bez żadnego widoku na siebie.
-   *
-   * Przypięcie jest bramą, nie ozdobą: pasek kart zapowiada, że karty przypiętej
-   * nie zamyka się jednym kliknięciem, więc panel akcji odmawia tak samo jak
-   * krzyżyk na pasku.
-   *
-   * Procesy karty zostają BIEGNĄCE. Zamknięcie zakładki nie ma prawa przerwać
-   * budowania, które trwa trzecią minutę; zakończenie procesów jest osobną
-   * czynnością („Zamknij kartę wraz z procesami”).
-   */
+  // Zamknięcie karty najpierw w rdzeniu, potem w widoku; procesy karty zostają biegnące.
   function zamknijKarte(idKarty: string, zProcesami = false): void {
     if (stan.czyPrzypieta(idKarty)) {
       tresc.potwierdzenie('Karta jest przypięta — najpierw ją odepnij. Nic nie zamknięto.', false);
@@ -191,9 +159,7 @@ export function utworzOknoKart(
 
   kontrolki.nowa.addEventListener('click', () => otworz(null));
   kontrolki.duplikuj.addEventListener('click', () => {
-    // Duplikat bez oryginału byłby nową kartą, a nie duplikatem: bez karty
-    // bieżącej otwarcie karty z pól formularza potwierdzałoby czynność, o którą
-    // nikt nie prosił.
+    // Duplikat bez karty źródłowej byłby zwykłą nową kartą, nie duplikatem.
     const biezaca = stan.kartaBiezaca();
     if (biezaca === null) {
       tresc.potwierdzenie('Nie ma karty bieżącej — nie ma czego duplikować.', false);
@@ -204,9 +170,7 @@ export function utworzOknoKart(
   kontrolki.uruchom.addEventListener('click', () =>
     wyslijPolecenieKarty(zrodlo, stan, tresc, kontrolki, pokaz),
   );
-  // Enter uruchamia polecenie tą samą drogą co przycisk, żeby odmowy i zdanie
-  // potwierdzenia były identyczne bez względu na sposób uruchomienia. Klawisze
-  // z modyfikatorem zostają przeglądarce — to nie jest ta czynność.
+  // Enter uruchamia polecenie tą samą drogą co przycisk, dla identycznej odpowiedzi.
   kontrolki.polecenie.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.key !== 'Enter') return;
     if (zdarzenie.shiftKey || zdarzenie.ctrlKey || zdarzenie.altKey || zdarzenie.metaKey) return;
@@ -217,12 +181,7 @@ export function utworzOknoKart(
   zwiazCzynnosciKarty(kontrolki, stan, tresc, zamknijKarte, odczytajPlikKarty);
   zwiazCzynnosciWidokuKart(rama.element, kontrolki);
 
-  /**
-   * Ognisko na kolejną kartę paska — nośnik skrótu klawiszowego.
-   *
-   * Wędrówka zawija się na końcu wykazu: przy jednej karcie skrót nie ma dokąd
-   * pójść i mówi to wprost, zamiast wyglądać na kliknięcie, które przepadło.
-   */
+  // Wędrówka po kartach zawija się na końcu wykazu, przy jednej karcie zostaje na miejscu.
   function nastepnaKarta(): void {
     const karty = stan.karty();
     if (karty.length === 0) {
@@ -341,13 +300,7 @@ export function utworzOknoKart(
     },
   ];
 
-  /**
-   * Odświeżenie okna czyta karty z RDZENIA, a potem przerysowuje widok.
-   *
-   * Kolejność ma znaczenie po ponownym podłączeniu gniazda: bufor widoku jest
-   * wtedy pusty, a rdzeń wciąż prowadzi karty otwarte wcześniej i odtwarza je
-   * przy własnym starcie.
-   */
+  // Odświeżenie czyta karty z rdzenia przed przerysowaniem, ważne po ponownym podłączeniu gniazda.
   function odswiez(): void {
     odczytajKarty();
     pokaz();
@@ -356,20 +309,12 @@ export function utworzOknoKart(
   return { element: rama.element, odswiez, czynnosci };
 }
 
-/** Ile wierszy ogona wchodzi pod opis karty — podgląd, nie druga konsola. */
+/** Ile wierszy ogona bufora wchodzi pod opis karty w widoku — to podgląd wyjścia, nie druga konsola modułu. */
 const OGON_KARTY = 120;
 
 /**
- * Ogon wyjścia karty bieżącej, żeby karta pokazywała to, co polecenie wypisało,
- * a nie same metadane.
- *
- * Wiersze biorą się z `stan.bufor()` — tego samego, który karmi konsolę —
- * zawężone do tej karty. Drugi bufor ani drugi nasłuch `stream.chunk` tu nie
- * wchodzi: przerysowanie budzi to samo `stan.naZmiane`, które budzi konsolę,
- * a druga subskrypcja dublowałaby wiersze.
- *
- * Karta bez wyjścia i karta po rozłączeniu wyglądają tak samo, więc zdanie
- * o pustce nazywa bufor widoku wprost.
+ * Ogon wyjścia karty bieżącej pokazuje to, co polecenie wypisało, korzystając z tego samego
+ * bufora widoku co konsola, zawężonego do tej karty.
  */
 function ogonWyjsciaKarty(karta: TerminalSession, stan: StanTerminala): HTMLElement {
   const blok = document.createElement('section');
@@ -394,8 +339,7 @@ function ogonWyjsciaKarty(karta: TerminalSession, stan: StanTerminala): HTMLElem
     return blok;
   }
 
-  // Wzorzec jest pusty, więc `rysujWiersze` nie buduje wyrażenia regularnego
-  // i nie ma jak oddać treści błędu — grep należy do konsoli, nie do karty.
+  // Wzorzec pusty: rysujWiersze nie buduje wyrażenia regularnego, grep należy do konsoli.
   const wynik = rysujWiersze(wiersze, {
     wzorzec: '',
     regularne: false,
@@ -419,7 +363,7 @@ function ogonWyjsciaKarty(karta: TerminalSession, stan: StanTerminala): HTMLElem
   return blok;
 }
 
-/** Ładunek `terminal.session.open`; puste pole znaczy „bez wskazania”, więc klucza nie ma wcale. */
+/** Ładunek żądania otwarcia karty; puste pole znaczy brak wskazania, więc odpowiedni klucz nie wchodzi wcale do żądania. */
 function zadanieOtwarciaKarty(
   okno: string,
   zrodlowa: TerminalSession | null,
@@ -429,9 +373,7 @@ function zadanieOtwarciaKarty(
   const wybranyKatalog = zrodlowa?.workingDir ?? kontrolki.katalog.value.trim();
   const wybranaNazwa =
     zrodlowa === null ? kontrolki.nazwa.value.trim() : `${zrodlowa.title ?? zrodlowa.shell} (kopia)`;
-  // Wskazanie celu wchodzi WYŁĄCZNIE dla powłoki, która go używa. Pole
-  // kontenera wysłane przy karcie Bash byłoby wskazaniem bez znaczenia — rdzeń
-  // by je zapamiętał i nikt nigdy nie zobaczył, że nic nie robi.
+  // Wskazanie celu wchodzi wyłącznie dla powłoki, która go używa, inaczej byłoby bez znaczenia.
   const cel = wskazanieCeluKarty(wybranaPowloka, zrodlowa, kontrolki);
   return {
     windowId: okno,
@@ -443,13 +385,8 @@ function zadanieOtwarciaKarty(
 }
 
 /**
- * Wskazanie celu karty właściwe jej powłoce: kontener, pod, urządzenie albo
- * adres sieciowy.
- *
- * Karta duplikowana bierze cel z karty źródłowej tam, gdzie kontrakt go oddaje
- * (`remoteTarget`); wskazania kontenera i urządzenia kontrakt w karcie nie
- * niesie, więc duplikat karty kontenerowej bierze je z formularza — i tak ma
- * być, bo alternatywą byłoby wskazanie zgadnięte.
+ * Wskazanie celu karty właściwe jej powłoce: kontener, pod, urządzenie albo adres sieciowy,
+ * brane z karty źródłowej przy duplikowaniu.
  */
 function wskazanieCeluKarty(
   powloka: TerminalShell,
@@ -481,7 +418,7 @@ function wskazanieCeluKarty(
   }
 }
 
-/** Otwarcie karty w rdzeniu; źródło i stan treści wchodzą parametrem. */
+/** Otwarcie karty powłoki w rdzeniu na podstawie złożonego żądania; źródło danych i stan treści wchodzą parametrem. */
 function otworzKarteRdzenia(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -501,13 +438,8 @@ function otworzKarteRdzenia(
 }
 
 /**
- * Zdanie o otwarciu karty złożone z odpowiedzi rdzenia, nie z żądania.
- *
- * Rdzeń potrafi oddać kartę o stanie `running` z katalogiem, którego nie ma —
- * i wtedy każde polecenie w tej karcie kończy się odmową. Dlatego zdanie podaje
- * stan karty oraz katalog roboczy wzięte z odpowiedzi, a rozjazd między tym,
- * o co poszło żądanie, a tym, co rdzeń oddał, wypowiada wprost. Stan karty,
- * nie fakt wysłania żądania, rozstrzyga o powodzeniu.
+ * Zdanie o otwarciu karty złożone z odpowiedzi rdzenia, nie z żądania, bo to stan karty
+ * rozstrzyga o powodzeniu otwarcia.
  */
 function zdanieOtwarcia(zadanie: TerminalSessionOpenRequest, karta: TerminalSession): string {
   const oddany = karta.workingDir ?? '';
@@ -527,7 +459,7 @@ function zdanieOtwarcia(zadanie: TerminalSessionOpenRequest, karta: TerminalSess
   return czesci.join(' ');
 }
 
-/** Uruchomienie polecenia w karcie bieżącej; odświeżenie widoku wchodzi wywołaniem zwrotnym. */
+/** Uruchomienie polecenia w karcie bieżącej okna; odświeżenie widoku po wykonaniu wchodzi wywołaniem zwrotnym. */
 function wyslijPolecenieKarty(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -559,9 +491,7 @@ function wyslijPolecenieKarty(
       }
       const proces = wynik.wynik;
       stan.zapiszProces(proces);
-      // Polecenie do powtórzenia bierze się z odpowiedzi rdzenia, nie z pola
-      // formularza: „uruchom ponownie" ma powtórzyć to, co rdzeń naprawdę
-      // uruchomił, a nie to, co okno wysłało.
+      // Polecenie do powtórzenia bierze się z odpowiedzi rdzenia, nie z pola formularza.
       stan.zapamietajPolecenie(karta.id, proces.command);
       kontrolki.polecenie.value = '';
       poWykonaniu();
@@ -614,11 +544,8 @@ function wstawDoPolaKarty(
 }
 
 /**
- * Czynności karty bieżącej: nazwa, przypięcie, zamknięcie i eksport transkryptu.
- * Każde kliknięcie odpowiada, także odmową, bo bez karty bieżącej albo z pustym
- * polem nazwy czynność wykonana i kliknięcie, które przepadło, wyglądałyby tak
- * samo. Stan treści wchodzi parametrem — to jedyne miejsce, w którym odpowiedź
- * widać.
+ * Czynności karty bieżącej: nazwa, przypięcie, zamknięcie i eksport transkryptu; każde
+ * kliknięcie odpowiada, także odmową bez karty bieżącej.
  */
 function zwiazCzynnosciKarty(
   kontrolki: PowierzchniaKart,
@@ -645,8 +572,7 @@ function zwiazCzynnosciKarty(
       return;
     }
     stan.przemianujKarte(biezaca.id, nazwa);
-    // Nazwa karty żyje wyłącznie w widoku: kontrakt nie ma komendy zmiany nazwy
-    // karty powłoki, a `terminal.session.open` przyjmuje ją tylko przy otwarciu.
+    // Nazwa karty żyje wyłącznie w widoku: kontrakt nie ma komendy zmiany nazwy karty powłoki.
     tresc.potwierdzenie(`Nazwa karty w widoku to teraz „${nazwa}". Rdzeń o zmianie nie wie.`, true);
   });
 
@@ -691,15 +617,8 @@ function zwiazCzynnosciKarty(
 }
 
 /**
- * Czynności wyłącznie widokowe: schemat barw, podział widoku i rozmiar pisma.
- * Kontrakt nie ma dla nich komend, więc nie sięgają ani po rdzeń, ani po stan
- * modułu — rozmiar pisma żyje wyłącznie tutaj.
- *
- * Rozmiar pisma i schemat barw stawiane są na węźle modułu, a nie na węźle
- * okna: pismo konsoli ma być jedno w całym module, bo Output Console i podgląd
- * wyjścia w Process Monitorze niosą ten sam strumień co ogon karty. Węzeł
- * modułu bierze się z drzewa, bo okno nie zna swojego gospodarza w chwili
- * budowy.
+ * Czynności wyłącznie widokowe: schemat barw, podział widoku i rozmiar pisma; kontrakt nie ma
+ * dla nich komend, więc nie sięgają po rdzeń ani stan modułu.
  */
 function zwiazCzynnosciWidokuKart(element: HTMLElement, kontrolki: PowierzchniaKart): void {
   let rozmiarPisma = 100;
@@ -724,7 +643,7 @@ function zwiazCzynnosciWidokuKart(element: HTMLElement, kontrolki: PowierzchniaK
   kontrolki.wieksze.addEventListener('click', () => ustawPismo(10));
 }
 
-/** Kontrolki okna Terminal Tabs. */
+/** Kontrolki formularza i przycisków okna Terminal Tabs: wybór powłoki, katalog, polecenie, karty i widok. */
 interface PowierzchniaKart {
   rodzaj: WyborDrzewem;
   katalog: HTMLInputElement;
@@ -752,12 +671,8 @@ interface PowierzchniaKart {
 }
 
 /**
- * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna.
- *
- * Nie domyka się na stanie okna ani na rdzeniu. Pasek kart i stan treści
- * wchodzą gotowymi węzłami, bo oba znają stan modułu. Pozycje, których okno nie
- * wykonuje, są jawnie nieczynne wraz z powodem liczonym z odczytu wykazu komend
- * rdzenia.
+ * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna; pozycje niewykonywane są
+ * nieczynne z powodem liczonym z wykazu komend rdzenia.
  */
 function zlozPowierzchnieKart(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -813,10 +728,7 @@ function zlozPowierzchnieKart(
   odczytajPlik.title =
     'Czyta plik na maszynie karty i pokazuje jego treść. Odczyt idzie rdzeniem, nie poleceniem ' +
     'powłoki — nie zależy więc ani od programu wypisującego plik, ani od składni powłoki karty.';
-  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu: mechanizm
-  // pokrycia rozstrzyga po wykazie, więc powie wprost, że takiej komendy nie ma
-  // ani w kontrakcie, ani w rdzeniu. Karta jest najmniejszą jednostką, jaką
-  // rdzeń zakłada — druga powłoka to druga karta.
+  // Nazwa spoza kontraktu jest wskazaniem, nie zapisem stanu; karta to najmniejsza jednostka rdzenia.
   const podzialPaneli = pokrycie.przycisk(
     'Podziel kartę na panele powłoki',
     'terminal.pane.split',

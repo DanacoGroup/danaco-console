@@ -15,23 +15,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Zaplecze modułu Agents — rejestry, z których moduł korzysta, a których nie
- * prowadzi. Każde wywołanie sięga do cudzego obszaru kontraktu:
- *
- *   `channel.list`             — rejestr kanałów modelu dla Model Configuration.
- *                                Moduł Agents nie zakłada kanałów; wybiera
- *                                spośród wierszy rejestru rdzenia.
- *   `config.capabilities.get`  — deklaracja zdolności adaptera dostawcy dla
- *                                pól konfiguracji sesji. Okno pokazuje wprost,
- *                                którego parametru wybrany kanał nie obsłuży,
- *                                zanim Operator go wypełni.
- *   `access.point.list`        — katalog mostów MCP dla Connectors Manager.
- *                                To ten sam katalog, z którego rdzeń składa
- *                                `mcpServers` procesu modelu.
- *   `identity.category.list`   — słownik kategorii tożsamości dla Agent Buildera.
- *   `window.list` / `window.update`
- *                              — tryb uprawnień per okno komunikacji dla
- *                                Permissions Center.
+ * Zaplecze modułu Agents, czyli rejestry, z których moduł korzysta, a których
+ * nie prowadzi. Każde wywołanie sięga do cudzego obszaru kontraktu: rejestru
+ * kanałów, zdolności adaptera, katalogu mostów, kategorii tożsamości oraz okien.
  */
 export interface ZrodloZaplecza {
   kanaly(): Promise<Wynik<{ channels: Channel[] }>>;
@@ -56,9 +42,7 @@ export function utworzZrodloZaplecza(kanal: Kanal): ZrodloZaplecza {
     },
 
     async zdolnosci(idKanalu, transport) {
-      // Obszar `model` wystarcza: Model Configuration wypełnia wyłącznie pola
-      // modelu prowadzącego i parametrów jego wywołania. Pytanie o komplet
-      // obszarów przyniosłoby deklarację, której okno nie pokaże.
+      // Obszar `model` wystarcza: okno wypełnia wyłącznie pola modelu.
       const zadanie = {
         area: SessionConfigArea.Model,
         ...(idKanalu === '' ? {} : { channelId: idKanalu }),

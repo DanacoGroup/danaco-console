@@ -8,32 +8,19 @@ import {
 import { nazwaWyniku, type NarzedziaMaterialu } from './material-narzedzia';
 
 /**
- * Spakowanie archiwum (`archive.pack`) — wydanie pracy Operatorowi jednym
- * plikiem.
- *
- * Czynność stoi w obszarze Archiwum panelu Metadata & Archive Panel, obok
- * utrwalenia i paczki migracyjnej, i jest od nich rozdzielona zdaniem, bo
- * pracuje na innym zbiorze:
- *
- *   — `library.preservation.run` i `library.package.export` obejmują zasoby
- *     REPOZYTORIUM biblioteki i oddają wynik jako zasób biblioteki,
- *   — `archive.pack` pakuje katalog albo plik z dysku Operatora i oddaje wynik
- *     jako zasób magazynu Designu.
- *
- * Nazwanie jednego drugim byłoby obietnicą, że spakowana została biblioteka.
- * Wykaz zasobów (`assetIds`) tą drogą nie jedzie z tego samego powodu, z jakiego
- * nie jedzie w `media.*`: identyfikator pliku biblioteki wraca z magazynu
- * Designu odmową `not_found`, a przycisk pewnej odmowy nie jest funkcją.
- *
- * Formatu archiwum kontrakt nie zamyka wyliczeniem — pole jest napisem, a brak
- * bierze zip. Wykaz trzech postaci pochodzi z opisu komendy w kontrakcie
- * („zip, 7z, tar.gz"), nie z domysłu.
+ * Panel spakowania archiwum komendą `archive.pack` wydaje pracę jednym plikiem:
+ * pakuje wskazany katalog albo plik ze stanowiska operatora i oddaje wynik jako
+ * zasób magazynu Designu wraz z jego rozmiarem oraz liczbą pozycji.
  */
 export interface PanelPakowania {
   element: HTMLElement;
 }
 
-/** Postaci archiwum wymienione w opisie komendy; brak wartości bierze zip. */
+/**
+ * Postaci archiwum wymienione w opisie komendy kontraktu. Pole postaci jest
+ * napisem, a nie wyliczeniem zamkniętym, więc wartość pusta pozostawia
+ * rozstrzygnięcie postaci domyślnej rdzeniowi.
+ */
 const POSTACI: readonly { wartosc: string; etykieta: string }[] = [
   { wartosc: '', etykieta: 'zip — postać domyślna rdzenia' },
   { wartosc: '7z', etykieta: '7z' },
@@ -94,9 +81,7 @@ export function utworzPanelPakowania(narzedzia: NarzedziaMaterialu): PanelPakowa
       return;
     }
     const tresc = wynik.wynik;
-    // Archiwum o zerowej liczbie pozycji jest odpowiedzią, nie awarią: tak
-    // wraca spakowany katalog pusty. Zdanie nazywa to wprost, bo plik istnieje
-    // i Operator ma prawo wiedzieć, że nic w nim nie ma.
+    // Archiwum o zerowej liczbie pozycji jest odpowiedzią, nie awarią.
     const zawartosc =
       tresc.entries === 0
         ? 'Archiwum nie ma ani jednej pozycji — wskazany katalog był pusty.'

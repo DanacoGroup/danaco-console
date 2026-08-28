@@ -1,10 +1,7 @@
 // Odpowiedzialność pliku: stan repozytorium okna Git Panel — gałąź, ostatnie
-// zatwierdzenie, ścieżki zmienione i ścieżki z konfliktem.
-//
-// Stan doczytuje się po każdej czynności, bo kontrakt daje Git Panelowi jedną
-// komendę — `developer.git.action` — i nie ma w nim osobnej komendy odczytu
-// stanu repozytorium, historii ani różnicy. Bez stanu dołączonego do wyniku
-// czynności okno po zatwierdzeniu zmian dalej pokazywałoby wykaz sprzed niego.
+// zatwierdzenie, ścieżki zmienione i ścieżki z konfliktem. Stan doczytuje się
+// po każdej czynności, bo kontrakt daje jedną komendę bez osobnego odczytu
+// stanu.
 package core
 
 import (
@@ -23,7 +20,8 @@ import (
 // czeka na niego razem z wynikiem czynności.
 const granicaOdczytuStanu = 20 * time.Second
 
-// stanGita niesie migawkę repozytorium po czynności.
+// stanGita niesie migawkę pełnego stanu repozytorium Git po zakończeniu każdej
+// czynności komendy okna Git Panel modułu Developer.
 type stanGita struct {
 	galaz         string
 	zatwierdzenie string
@@ -50,7 +48,8 @@ func (a *adapterDevelopera) stanRepozytorium(ctx context.Context, okno session.O
 	return stan
 }
 
-// odczytGita uruchamia odczytowe polecenie gita i oddaje jego wyjście.
+// odczytGita uruchamia odczytowe polecenie gita w repozytorium wskazanym oknem
+// i oddaje jego wyjście tekstowe bez zmian.
 func (a *adapterDevelopera) odczytGita(ctx context.Context, okno session.Okno,
 	argumenty ...string) (string, bool) {
 
@@ -62,11 +61,8 @@ func (a *adapterDevelopera) odczytGita(ctx context.Context, okno session.Okno,
 }
 
 // rozbierzStatus czyta wyjście `git status --porcelain` na dwa wykazy.
-//
-// Konflikt rozpoznajemy po kodach obu stron indeksu — `UU`, `AA`, `DD` oraz
-// wszystkich parach z literą `U`. Bez tego rozróżnienia Git Panel pokazywałby
-// plik z konfliktem jako zwykłą zmianę, a znaczniki scalenia trafiłyby do
-// zatwierdzenia razem z kodem.
+// Konflikt jest rozpoznawany po kodach obu stron indeksu — `UU`, `AA`, `DD`
+// oraz wszystkich parach z literą `U`.
 func rozbierzStatus(wyjscie string) (zmienione, konflikty []string) {
 	zmienione = make([]string, 0, 16)
 	konflikty = make([]string, 0, 4)
@@ -93,7 +89,8 @@ func rozbierzStatus(wyjscie string) (zmienione, konflikty []string) {
 	return zmienione, konflikty
 }
 
-// czyKonflikt rozpoznaje parę kodów statusu oznaczającą scalenie nierozstrzygnięte.
+// czyKonflikt rozpoznaje parę kodów statusu porcelanowego gita oznaczającą
+// scalenie nierozstrzygnięte, wymagające decyzji Operatora.
 func czyKonflikt(kod string) bool {
 	if len(kod) < 2 {
 		return false
@@ -121,7 +118,8 @@ func podsumowanieStanu(stan stanGita) string {
 	return "[stan repozytorium: " + strings.Join(czesci, ", ") + "]"
 }
 
-// pierwszyWiersz odcina wszystko po pierwszym końcu wiersza.
+// pierwszyWiersz odcina wszystko po pierwszym znaku końca wiersza tekstu
+// wyjścia polecenia odczytu gita, zwracając sam pierwszy wiersz.
 func pierwszyWiersz(tresc string) string {
 	tresc = strings.TrimSpace(tresc)
 	if miejsce := strings.IndexAny(tresc, "\r\n"); miejsce >= 0 {
@@ -130,7 +128,8 @@ func pierwszyWiersz(tresc string) string {
 	return tresc
 }
 
-// konfigKontekstOkna składa kontekst rozstrzygania zasad izolacji dla okna.
+// konfigKontekstOkna składa kontekst rozstrzygania zasad izolacji dla okna
+// modułu Developer w rdzeniu, wraz z jego identyfikatorem.
 func konfigKontekstOkna(okno session.Okno) konfig.Kontekst {
 	return konfig.Kontekst{Okno: okno.Id}
 }

@@ -3,23 +3,7 @@ import { NAZWY_WARSTW, type CzynnoscOkna } from './czynnosci-okna';
 import { KATALOG_FUNKCJI, LICZBA_POZYCJI, type PozycjaKatalogu } from './katalog-funkcji';
 
 /**
- * Paleta poleceń modułu Terminal — jedno wskazanie do każdej czynności okien
- * i do każdej pozycji katalogu funkcji.
- *
- * Paleta jest drugą połową zasady warstw widoczności. Warstwy zdejmują
- * z ekranu to, czego bieżące zadanie nie wymaga; paleta pilnuje, żeby zdjęcie
- * z ekranu nie stało się schowaniem. Czynność warstwy eksperckiej, której
- * w panelu akcji nie widać, jest tu o jedno wskazanie i o jedno wpisane słowo.
- *
- * Wykaz ma dwie części, bo odpowiada na dwa różne pytania. Czynności okien
- * odpowiadają „co mogę teraz zrobić" i po wybraniu wykonują się od razu.
- * Katalog funkcji odpowiada „czy moduł to potrafi" i po wybraniu mówi, gdzie
- * funkcja stoi w tej budowie albo dlaczego jej nie ma oraz od jakiego programu
- * spoza instalki zależy. Pozycja katalogu niczego nie uruchamia i paleta tego
- * nie udaje.
- *
- * Mechanizm rozwijania, wędrówkę klawiaturą, pole szukania i znacznik wyboru
- * niesie `komponenty/menu-drzewo.ts`; tutaj powstają wyłącznie dane drzewa.
+ * Paleta poleceń modułu Terminal daje jedno wskazanie do każdej czynności okien i do każdej pozycji katalogu funkcji, uzupełniając warstwy widoczności o dostęp spoza panelu akcji.
  */
 export interface PaletaPolecen {
   /** Element osadzany w pasie modułu. */
@@ -32,10 +16,14 @@ export interface PaletaPolecen {
   zwin(): void;
 }
 
-/** Wartość uchwytu, dopóki Operator niczego nie wywołał. */
+/**
+ * Wartość uchwytu palety, dopóki operator jeszcze niczego z niej nie wywołał w bieżącej sesji terminala.
+ */
 const ZDANIE_BEZ_WYWOLANIA = 'Paleta poleceń — bez wywołania';
 
-/** Przedrostki kluczy; klucz ma być niepowtarzalny w obrębie całego drzewa. */
+/**
+ * Przedrostki kluczy pozycji palety; każdy klucz ma pozostać niepowtarzalny w obrębie całego drzewa wykazu.
+ */
 const KLUCZ_CZYNNOSCI = 'czynnosc:';
 const KLUCZ_FUNKCJI = 'funkcja:';
 
@@ -55,11 +43,9 @@ export function utworzPaletePolecen(): PaletaPolecen {
   const menu = utworzMenuDrzewo({
     nastawa: 'Paleta poleceń modułu Terminal',
     ikona: 'polecenie',
-    // Próg niższy od domyślnego: wykaz liczy kilkadziesiąt liści już przy
-    // samym katalogu funkcji, więc pole szukania jest tu potrzebne od razu.
+    // Próg wyszukiwania niższy od domyślnego: katalog funkcji liczy kilkadziesiąt pozycji.
     progSzukania: 8,
-    // Opis przy każdej z kilkudziesięciu pozycji byłby ścianą tekstu zamiast
-    // objaśnienia; należy się tej pozycji, na którą Operator właśnie patrzy.
+    // Opis przy każdej pozycji byłby ścianą tekstu; należy się tylko tej, na którą patrzy operator.
     opisTylkoPrzyWyroznionej: true,
     naWybor: (klucz) => wybierz(klucz),
   });
@@ -93,16 +79,7 @@ export function utworzPaletePolecen(): PaletaPolecen {
   return {
     element,
 
-    /**
-     * Otwarcie palety wraz z przeniesieniem ogniska w jej wnętrze.
-     *
-     * Mechanizm menu rozwija wykaz, nie ruszając ogniska — słusznie, bo jego
-     * drugim odbiorcą jest wykaz otwierany ukośnikiem w polu wpisywania, gdzie
-     * ognisko ma zostać u wołającego. Paleta wywoływana skrótem ma wymóg
-     * odwrotny: Operator naciska skrót po to, żeby zacząć pisać nazwę czynności.
-     * Ognisko idzie więc na pierwszą kontrolkę wnętrza — pole szukania, gdy stoi
-     * na ekranie, w przeciwnym razie uchwyt.
-     */
+    // Otwarcie palety z przeniesieniem ogniska w jej wnętrze; skrót stawia ognisko na polu szukania.
     otworz() {
       menu.rozwin();
       menu.element.querySelector<HTMLElement>('input, button')?.focus();
@@ -116,12 +93,16 @@ export function utworzPaletePolecen(): PaletaPolecen {
   };
 }
 
-/** Klucz pozycji czynności — okno i nazwa razem, bo nazwy powtarzają się między oknami. */
+/**
+ * Klucz pozycji czynności łączy nazwę okna i nazwę czynności, bo same nazwy czynności powtarzają się między oknami.
+ */
 function kluczCzynnosci(czynnosc: CzynnoscOkna): string {
   return `${KLUCZ_CZYNNOSCI}${czynnosc.okno}:${czynnosc.nazwa}`;
 }
 
-/** Drzewo palety: czynności okien w gałęziach po oknie, katalog funkcji po rodzinie. */
+/**
+ * Drzewo palety układa czynności okien w gałęziach według okna, a katalog funkcji w gałęziach według rodziny funkcji.
+ */
 function drzewoPalety(czynnosci: readonly CzynnoscOkna[]): PozycjaMenu[] {
   const okna = new Map<string, CzynnoscOkna[]>();
   for (const czynnosc of czynnosci) {
@@ -178,14 +159,18 @@ function drzewoPalety(czynnosci: readonly CzynnoscOkna[]): PozycjaMenu[] {
   ];
 }
 
-/** Objaśnienie czynności wraz z jej warstwą i skrótem. */
+/**
+ * Objaśnienie czynności palety wraz z nazwą jej warstwy widoczności oraz przypisanym skrótem klawiszowym.
+ */
 function opisCzynnosci(czynnosc: CzynnoscOkna): string {
   const czesci = [czynnosc.opis, `Warstwa: ${NAZWY_WARSTW[czynnosc.warstwa]}.`];
   if (czynnosc.skrot !== undefined) czesci.push(`Skrót: ${czynnosc.skrot}.`);
   return czesci.join(' ');
 }
 
-/** Zdanie o pozycji katalogu: co robi, gdzie stoi i od czego zależy. */
+/**
+ * Zdanie o pozycji katalogu funkcji: co funkcja robi, gdzie w budowie stoi i od jakiego programu zależy.
+ */
 function zdanieOFunkcji(pozycja: PozycjaKatalogu): string {
   const czesci = [pozycja.coRobi, pozycja.stan];
   if (pozycja.zaleznosc !== '') {

@@ -22,19 +22,7 @@ import type { StanPrzegladania } from './stan-przegladania';
 import { utworzSterWyboru } from './ster-wyboru';
 import { utworzWierszNotatki, type AkcjeNotatki } from './wiersz-notatki';
 
-/**
- * Notes Panel — okno **pomocnicze** modułu Browser. Notatka wiąże się
- * z konkretnym źródłem z Sources Panel i zasila Library Explorer.
- *
- * Jedna odpowiedzialność: złożenie okna i wykaz notatek. Formularz jest
- * w `formularz-notatki.ts`, rozmowa z rdzeniem w `czynnosci-notatek.ts`,
- * jeden wiersz w `wiersz-notatki.ts`.
- *
- * Edycja nie udaje zmiany: `browser.note.update` kontrakt niesie, ale to okno
- * jeszcze jej nie wywołuje. Pozycja „Edytuj" wypełnia formularz treścią notatki
- * i mówi wprost — powodem wziętym z odczytu wykazu komend rdzenia — że zapis
- * utworzy notatkę nową.
- */
+/** Interfejs opisuje okno pomocnicze Notes Panel modułu Browser: notatka wiąże się ze źródłem z Sources Panel i zasila Library Explorer. */
 export interface OknoNotesPanel {
   element: HTMLElement;
   odswiez(): void;
@@ -74,8 +62,7 @@ export function utworzOknoNotesPanel(stan: StanPrzegladania): OknoNotesPanel {
     odswiez: () => odswiez(),
   });
 
-  // Zestawy źródeł, wątki notatek i zmiana notatki — oznaczenia utrwalane
-  // w rdzeniu, więc przeżywają przeładowanie karty.
+  // Zestawy źródeł, wątki notatek i zmiana notatki są utrwalane w rdzeniu, przeżywają przeładowanie.
   const rodziny = utworzPanelRodzin(sekcjePorzadku(stan));
 
   okno.tresc.append(lista, rodziny.element, odpowiedz.element);
@@ -120,7 +107,7 @@ export function utworzOknoNotesPanel(stan: StanPrzegladania): OknoNotesPanel {
   };
 }
 
-/** Czynności Operatora w oknie notatek: panel akcji okna i pozycje wykazu. */
+/** Interfejs zestawia czynności Operatora w oknie notatek: panel akcji okna wraz z pozycjami dostępnymi przy każdym wierszu wykazu. */
 interface AkcjeOknaNotatek extends AkcjeNotatki {
   /** Zapis formularza w rdzeniu; pusta treść nie wychodzi z okna. */
   zapisz(): Promise<void>;
@@ -130,7 +117,7 @@ interface AkcjeOknaNotatek extends AkcjeNotatki {
   przekaz(): Promise<void>;
 }
 
-/** Wszystko, czego czynności potrzebują — bez sięgania do wnętrza okna. */
+/** Interfejs zestawia wszystko, czego czynności notatek potrzebują, bez sięgania do wnętrza okna: stan, formularz i zaplecze rozmowy z rdzeniem. */
 interface ZapleczeNotatek {
   stan: StanPrzegladania;
   formularz: FormularzNotatki;
@@ -163,9 +150,7 @@ function utworzAkcjeNotatek(zaplecze: ZapleczeNotatek): AkcjeOknaNotatek {
       const powiazanie = formularz.wypelnij(notatka);
       const oZmianie = zdanieOZmianie(stan);
       pokazKomunikat({ tytul: 'Edycja notatki', tresc: oZmianie, waga: 'ostrz' });
-      // Źródła notatki może już nie być w wykazie okna — ster wraca wtedy do
-      // „bez powiązania" i okno mówi to wprost, zamiast pozwolić zapisać
-      // notatkę o cicho zmienionym powiązaniu.
+      // Źródła notatki może już nie być w wykazie okna — ster wraca wtedy do stanu „bez powiązania”.
       const oPowiazaniu = powiazanie
         ? ''
         : ' Źródła tej notatki nie ma w wykazie okna — ster stanął na „bez powiązania".';
@@ -205,7 +190,7 @@ function utworzAkcjeNotatek(zaplecze: ZapleczeNotatek): AkcjeOknaNotatek {
   };
 }
 
-/** Panel akcji okna: trzy pozycje wykazu narzędzi Notes Panel. */
+/** Funkcja składa panel akcji okna: trzy pozycje wykazu narzędzi Notes Panel, każda z osobnym wywołaniem czynności. */
 function utworzPasekNotatek(akcje: AkcjeOknaNotatek): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mb-panel__pasek';
@@ -222,13 +207,7 @@ function utworzPasekNotatek(akcje: AkcjeOknaNotatek): HTMLElement {
   return element;
 }
 
-/**
- * Powód, dla którego zapis zakłada notatkę nową zamiast zmieniać zastaną.
- *
- * Zdanie bierze się z odczytu wykazu komend rdzenia, nie z napisu w module:
- * `browser.note.update` stoi w kontrakcie, więc od dnia, w którym rdzeń dostanie
- * jej uchwyt, powód ma brzmieć inaczej — i zabrzmi, bez wchodzenia w ten plik.
- */
+/** Funkcja składa powód, dla którego zapis zakłada notatkę nową zamiast zmieniać zastaną, biorąc go z odczytu wykazu komend rdzenia. */
 function zdanieOZmianie(stan: StanPrzegladania): string {
   return stan.pokrycie.zdanie(
     POZYCJE_BEZ_OBSLUGI.zmianaNotatki.komenda,
@@ -236,13 +215,7 @@ function zdanieOZmianie(stan: StanPrzegladania): string {
   );
 }
 
-/**
- * Trzy porządki wykazu z opracowania modułu.
- *
- * Grupowanie „według wątku" nie stoi w wykazie: wątków tematycznych własnych
- * nie niesie ani kontrakt, ani ten moduł, więc pozycja bez treści byłaby
- * obietnicą porządku, którego nie ma czym zbudować.
- */
+/** Stała wylicza trzy porządki wykazu notatek dostępne w sterze widoku: chronologię, źródło i klasyfikację. */
 const WIDOKI_NOTATEK = [
   {
     wartosc: 'chronologia',
@@ -261,7 +234,7 @@ const WIDOKI_NOTATEK = [
   },
 ];
 
-/** Zawężenie wykazu frazą szukaną w treści notatki i w cytacie. */
+/** Funkcja zawęża wykaz notatek do tych, których treść albo cytat zawiera frazę szukaną, wpisaną w polu wyszukiwania. */
 function przefiltruj(notatki: readonly BrowserNote[], fraza: string): BrowserNote[] {
   const szukana = fraza.trim().toLowerCase();
   if (szukana === '') return [...notatki];
@@ -297,7 +270,7 @@ function wykazNotatek(
   ]);
 }
 
-/** Nazwa źródła notatki albo zdanie o jego braku — klucz grupowania. */
+/** Funkcja zwraca nazwę źródła notatki albo zdanie o jego braku; wynik służy jako klucz grupowania wykazu. */
 function nazwaZrodla(stan: StanPrzegladania, notatka: BrowserNote): string {
   const zrodlo = stan.zebrane.zrodlo(notatka.sourceId ?? '');
   if (zrodlo === null) return 'bez powiązania ze źródłem';
@@ -312,7 +285,7 @@ function naglowekGrupy(napis: string): HTMLElement {
   return element;
 }
 
-/** Jedna notatka wraz z powiązanym źródłem, przypięciem i klasyfikacją. */
+/** Funkcja składa jedną pozycję wykazu: notatkę wraz z powiązanym źródłem, stanem przypięcia i klasyfikacją. */
 function wierszNotatki(
   stan: StanPrzegladania,
   notatka: BrowserNote,
@@ -339,14 +312,7 @@ function zdanieUwagi(stan: StanPrzegladania, wszystkich: number, widocznych: num
   return `${podstawa} Filtr pokazuje ${widocznych} z ${wszystkich} notatek.`;
 }
 
-/**
- * Trzy stany obowiązkowe wykazu notatek — ten sam zestaw reguł, co w panelu
- * źródeł, bo oba wykazy przychodzą jednym zaciągnięciem.
- *
- * Kolejność pytań: czekanie, odmowa, pustka. Odmowa wykazu jest błędem panelu
- * tylko przy pustym wykazie — z notatkami na ekranie wpisy zostają, a powód
- * idzie zdaniem przy wykazie.
- */
+/** Funkcja nanosi na okno jeden z trzech stanów obowiązkowych wykazu notatek w kolejności: czekanie, odmowa, pustka. */
 function nanieStan(okno: StanOkna, stan: StanPrzegladania, pozycji: number): void {
   if (stan.faza() === 'odczyt') {
     okno.ladowanie('Rdzeń ustala okno przeglądarki tej sesji…');

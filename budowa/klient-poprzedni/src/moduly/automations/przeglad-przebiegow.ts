@@ -1,27 +1,18 @@
+/**
+ * Przegląd przebiegów okna Execution Monitor: zawężenie wykazu i miary
+ * niezawodności liczone po stronie klienta z przebiegów już obecnych w oknie.
+ * Plik nie dotyka dokumentu i nie woła rdzenia.
+ */
+
 import {
   AutomationExecutionStatus,
   type AutomationExecution,
 } from '../../../../shared/contract';
 
 /**
- * Przegląd przebiegów okna Execution Monitor — zawężenie wykazu i miary
- * niezawodności.
- *
- * Obie czynności idą po stronie klienta i idą tam z tego samego powodu:
- * `automation.execution.subscribe` przyjmuje wyłącznie automatykę, pojedynczy
- * przebieg, okno i górną granicę, a oddaje przebiegi w całości. Nie ma pola
- * zapytania, zakresu dat ani zestawienia miar — a wykaz jest już w oknie, więc
- * pytanie rdzenia o to samo drugi raz nic by nie wniosło.
- *
- * Miary liczą się z pól, które kontrakt naprawdę niesie: stanu przebiegu oraz
- * znaczników czasu rozpoczęcia i zakończenia. Miary kosztu — tokeny i wywołania
- * modelu — składa widok, bo ich pola są nieobowiązkowe i suma wymaga podania
- * obok siebie liczby przebiegów, które je wypełniły (`widok-przebiegow.ts`).
- *
- * Plik jest czysty: nie dotyka dokumentu i nie woła rdzenia.
+ * Zawężenie wykazu przebiegów złożone z wartości pól paska narzędzi okna:
+ * stanu przebiegu, granic zakresu dni oraz napisu szukanego w wykazie.
  */
-
-/** Zawężenie wykazu przebiegów — wartości pól paska narzędzi okna. */
 export interface ZawezeniePrzebiegow {
   /** Stan przebiegu; pusty napis znaczy „wszystkie stany”. */
   stan: string;
@@ -33,7 +24,10 @@ export interface ZawezeniePrzebiegow {
   szukane: string;
 }
 
-/** Zawężenie puste — wykaz w całości. */
+/**
+ * Zawężenie puste, w którym wszystkie pola są pustymi napisami; jako stan
+ * wyjściowy paska narzędzi oddaje wykaz przebiegów w całości.
+ */
 export const BEZ_ZAWEZENIA: ZawezeniePrzebiegow = {
   stan: '',
   odDnia: '',
@@ -41,7 +35,11 @@ export const BEZ_ZAWEZENIA: ZawezeniePrzebiegow = {
   szukane: '',
 };
 
-/** Miary wykazu przebiegów; pole puste znaczy „nie ma z czego policzyć”. */
+/**
+ * Miary wykazu przebiegów: liczby przebiegów w poszczególnych stanach oraz
+ * wskaźnik powodzenia, średni czas trwania i opóźnienie kwantyla; pole puste
+ * znaczy, że nie ma z czego liczyć.
+ */
 export interface MiaryPrzebiegow {
   liczba: number;
   udane: number;
@@ -55,7 +53,11 @@ export interface MiaryPrzebiegow {
   opoznienieP95Ms: number | null;
 }
 
-/** Zawęża wykaz przebiegów; zawężenie puste oddaje wykaz w całości. */
+/**
+ * Zawęża wykaz przebiegów wartościami zawężenia: stanem, granicami dni oraz
+ * napisem szukanym w identyfikatorze i w powodzie niepowodzenia; zawężenie
+ * puste oddaje wykaz w całości.
+ */
 export function zawezonePrzebiegi(
   przebiegi: readonly AutomationExecution[],
   zawezenie: ZawezeniePrzebiegow,
@@ -73,7 +75,11 @@ export function zawezonePrzebiegi(
   });
 }
 
-/** Liczy miary wykazu; wykaz pusty daje same zera i pola puste. */
+/**
+ * Liczy miary wykazu przebiegów: liczby w stanach, wskaźnik powodzenia wśród
+ * zamkniętych, średni czas trwania oraz opóźnienie kwantyla; wykaz pusty daje
+ * same zera i pola puste.
+ */
 export function miaryPrzebiegow(przebiegi: readonly AutomationExecution[]): MiaryPrzebiegow {
   const udane = przebiegi.filter(
     (przebieg) => przebieg.status === AutomationExecutionStatus.Succeeded,
@@ -114,21 +120,30 @@ function kwantyl(dlugosc: number, procent: number): number {
   return Math.min(dlugosc - 1, Math.max(0, miejsce));
 }
 
-/** Czas trwania w mowie Operatora: minuty i sekundy albo same sekundy. */
+/**
+ * Zapisuje czas trwania przebiegu w postaci czytelnej w oknie: dla czasów od
+ * minuty wzwyż minuty wraz z sekundami, a poniżej minuty same sekundy.
+ */
 export function czasTrwania(milisekundy: number): string {
   const sekundy = Math.round(milisekundy / 1000);
   if (sekundy < 60) return `${sekundy} s`;
   return `${Math.floor(sekundy / 60)} min ${String(sekundy % 60).padStart(2, '0')} s`;
 }
 
-/** Początek dnia w czasie miejscowym; zapis nieczytelny daje `null`. */
+/**
+ * Początek podanego dnia w czasie miejscowym, w milisekundach epoki; napis
+ * pusty albo zapis nieczytelny dla konstruktora daty daje `null`.
+ */
 function poczatekDnia(dzien: string): number | null {
   if (dzien.trim() === '') return null;
   const czas = new Date(`${dzien.trim()}T00:00:00`).getTime();
   return Number.isNaN(czas) ? null : czas;
 }
 
-/** Koniec dnia w czasie miejscowym; zapis nieczytelny daje `null`. */
+/**
+ * Koniec podanego dnia w czasie miejscowym, w milisekundach epoki i z
+ * dokładnością do milisekundy; napis pusty albo zapis nieczytelny daje `null`.
+ */
 function koniecDnia(dzien: string): number | null {
   if (dzien.trim() === '') return null;
   const czas = new Date(`${dzien.trim()}T23:59:59.999`).getTime();

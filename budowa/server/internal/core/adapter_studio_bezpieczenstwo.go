@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: bezpieczeństwo dokumentu modułu Studio — szyfrowanie,
-// czyszczenie metadanych, redakcja poufności, podpis i jego weryfikacja oraz
-// rozpoznanie danych wrażliwych.
-//
-// ── Biblioteka wkompilowana, nigdy program zewnętrzny ───────────────────────
-// Ta rodzina pracuje wyłącznie na `pdfcpu` i na bibliotece standardowej Go
-// (`crypto/x509`, `crypto/rsa`, `crypto/sha256`). Nie ma tu ani jednego
-// uruchomienia procesu: funkcja zależna od programu, którego instalka nie
-// niesie, jest u Operatora odmową, a nie funkcją — a rodzina bezpieczeństwa jest
-// tym miejscem, w którym odmowa boli najbardziej, bo Operator dowiaduje się
-// o niej dopiero po wysłaniu dokumentu, którego nie oczyścił.
-//
-// ── Redakcja usuwa, a nie zasłania ─────────────────────────────────────────
-// Zamalowanie prostokąta zostawia tekst pod spodem: da się go zaznaczyć,
-// skopiować i odczytać wyszukiwarką. To jest redakcja pozorna i tutaj jej nie
-// ma. `Zredaguj` wycina z treści strony bloki tekstu leżące w obszarze, dopiero
-// potem kładzie prostokąt — i wynik nie zawiera już wyciętych znaków.
+// Plik niesie bezpieczeństwo dokumentu modułu Studio: szyfrowanie, czyszczenie
+// metadanych, redakcja poufności, podpis i jego weryfikacja oraz rozpoznanie
+// danych wrażliwych.
 package core
 
 import (
@@ -43,7 +29,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// wlasciwoscPodpisu jest nazwą właściwości dokumentu, pod którą leży podpis.
+// wlasciwoscPodpisu jest nazwą właściwości dokumentu, pod którą leży podpis
+// tego produktu, odróżnioną od nazw używanych przez cudze narzędzia.
 const wlasciwoscPodpisu = "DanacoPodpis"
 
 type adapterBezpieczenstwaStudia struct {
@@ -62,7 +49,8 @@ func (a *adapterBezpieczenstwaStudia) ZeStudiem(r dane.RepozytoriumStudia) *adap
 	return a
 }
 
-// odmowaBezpieczenstwa buduje odmowę rodziny.
+// odmowaBezpieczenstwa buduje odmowę rodziny `studio.security.*` z podanym
+// kodem błędu, poprzedzając powód wspólnym przedrostkiem tej rodziny.
 func odmowaBezpieczenstwa(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "bezpieczeństwo dokumentu: "+powod))
 }
@@ -96,8 +84,8 @@ func nazwyUprawnien() []string {
 // ZaszyfrujPdf nakłada albo zdejmuje szyfrowanie dokumentu.
 //
 // Puste hasło otwarcia zdejmuje zabezpieczenie — tak mówi kontrakt. Zdjęcie
-// wymaga hasła właściciela, bo bez niego dokument zaszyfrowany nie otwiera się
-// nikomu, także rdzeniowi.
+// wymaga hasła z pola `OwnerPassword`, bez którego dokument zaszyfrowany nie
+// otwiera się nikomu, także rdzeniowi.
 func (a *adapterBezpieczenstwaStudia) ZaszyfrujPdf(ctx context.Context,
 	z shared.StudioSecurityEncryptRequest) (shared.StudioSecurityEncryptResponse, error) {
 
@@ -160,12 +148,9 @@ func (a *adapterBezpieczenstwaStudia) ZaszyfrujPdf(ctx context.Context,
 
 // ── Metadane ────────────────────────────────────────────────────────────────
 
-// WyczyscMetadane zdejmuje z dokumentu opis, historię i dane ukryte.
-//
-// Czyszczenie idzie po samym drzewie dokumentu, a nie po jego przepisaniu:
-// usuwane są pola opisu, właściwości własne i strumień metadanych XMP, w którym
-// leży ta sama treść w postaci równoległej. Zdjęcie samego opisu z pozostawieniem
-// XMP byłoby czyszczeniem pozornym — narzędzia czytają XMP przed opisem.
+// WyczyscMetadane zdejmuje z dokumentu opis, historię i dane ukryte. Usuwane
+// są pola opisu, właściwości własne i strumień metadanych XMP — zdjęcie
+// samego opisu z pozostawieniem XMP byłoby czyszczeniem pozornym.
 func (a *adapterBezpieczenstwaStudia) WyczyscMetadane(ctx context.Context,
 	z shared.StudioSecurityMetadataStripRequest) (shared.StudioSecurityMetadataStripResponse, error) {
 
@@ -198,8 +183,8 @@ func (a *adapterBezpieczenstwaStudia) WyczyscMetadane(ctx context.Context,
 		}
 	}
 
-	// Katalog niesie strumień XMP oraz ślad historii narzędzi, którymi dokument
-	// szedł. Jedno i drugie schodzi razem z opisem, bo razem opisuje pochodzenie.
+	// Katalog niesie strumień XMP oraz ślad historii narzędzi — oba schodzą
+	// razem z opisem.
 	if katalog, err := drzewo.Catalog(); err == nil && katalog != nil {
 		for _, nazwa := range []string{"Metadata", "PieceInfo"} {
 			if zostawiane[strings.ToLower(nazwa)] {
@@ -229,11 +214,9 @@ func (a *adapterBezpieczenstwaStudia) WyczyscMetadane(ctx context.Context,
 // ── Redakcja ────────────────────────────────────────────────────────────────
 
 // obszarRedakcji jest prostokątem wskazanym przez Operatora, sprowadzonym do
-// współrzędnych dokumentu.
-//
-// Początek układu leży w LEWYM DOLNYM rogu strony, tak jak w samym dokumencie.
-// Wskazanie liczone od góry dawałoby zamazanie przesunięte o wysokość strony,
-// a Operator zobaczyłby, że zamazało nie to miejsce, dopiero po otwarciu wyniku.
+// współrzędnych dokumentu. Początek układu leży w lewym dolnym rogu strony,
+// jak w samym dokumencie — liczenie od góry przesunęłoby zamazanie o wysokość
+// strony.
 type obszarRedakcji struct {
 	x, y, szerokosc, wysokosc float64
 }
@@ -246,14 +229,10 @@ func (o obszarRedakcji) przecina(x1, y1, x2, y2 float64) bool {
 	return x1 <= o.x+o.szerokosc && x2 >= o.x && y1 <= o.y+o.wysokosc && y2 >= o.y
 }
 
-// Zredaguj trwale usuwa treść z obszarów wskazanych przez Operatora.
-//
-// Materiał zostaje nietknięty, bo czynność jest nieodwracalna dla wyniku: gdyby
-// szła w miejscu, pomyłka we współrzędnych kasowałaby treść bezpowrotnie.
-//
-// Ziarno wycięcia to blok tekstu (BT…ET), a nie pojedynczy znak. Wycięcie idzie
-// więc czasem szerzej, niż wskazał Operator, i nigdy węziej — a przy redakcji
-// tylko ten kierunek błędu jest dopuszczalny.
+// Zredaguj trwale usuwa treść z obszarów wskazanych przez Operatora. Materiał
+// zostaje nietknięty, więc pomyłka we współrzędnych nie kasuje treści
+// w miejscu. Ziarnem wycięcia jest blok tekstu (BT…ET) — wycięcie idzie
+// czasem szerzej, nigdy węziej.
 func (a *adapterBezpieczenstwaStudia) Zredaguj(ctx context.Context,
 	z shared.StudioSecurityRedactRequest) (shared.StudioSecurityRedactResponse, error) {
 
@@ -319,8 +298,8 @@ func (a *adapterBezpieczenstwaStudia) Zredaguj(ctx context.Context,
 		}
 		tresc, err := drzewo.PageContent(strona, numer)
 		if err != nil {
-			// Strona bez treści nie ma czego stracić; prostokąt i tak na nią idzie,
-			// żeby wynik wyglądał tak samo niezależnie od tego, czym stronę wypełniono.
+			// Strona bez treści nie ma czego stracić; prostokąt i tak na
+			// nią idzie.
 			tresc = nil
 		}
 
@@ -378,11 +357,8 @@ func prostokatyZamazania(obszary []obszarRedakcji) []byte {
 }
 
 // wytnijBlokiTekstu usuwa z treści strony te bloki tekstu, których położenie
-// wypada w którymkolwiek obszarze.
-//
-// Czytanie idzie po składni treści, a nie po prostym szukaniu napisów: napis
-// „BT" bywa treścią rysowanego tekstu, a wycięcie w niewłaściwym miejscu
-// rozsypałoby stronę.
+// wypada w którymkolwiek obszarze. Czytanie idzie po składni treści, nie po
+// szukaniu napisów: napis „BT” bywa treścią rysowanego tekstu.
 func wytnijBlokiTekstu(tresc []byte, obszary []obszarRedakcji) []byte {
 	if len(tresc) == 0 {
 		return nil
@@ -403,13 +379,15 @@ func wytnijBlokiTekstu(tresc []byte, obszary []obszarRedakcji) []byte {
 	return wynik.Bytes()
 }
 
-// blokTekstu jest zakresem bajtów jednego bloku BT…ET wraz z jego położeniem.
+// blokTekstu jest zakresem bajtów jednego bloku BT…ET operatorów rysowania
+// wraz z jego położeniem liczonym w przekształconym układzie współrzędnych.
 type blokTekstu struct {
 	poczatek, koniec int
 	x, y             float64
 }
 
-// czytnikTresci przechodzi treść strony operator po operatorze.
+// czytnikTresci przechodzi treść strumienia strony operator po operatorze,
+// śledząc po drodze bieżące przekształcenie układu współrzędnych.
 type czytnikTresci struct {
 	tresc []byte
 }
@@ -428,8 +406,8 @@ type przeksztalcenie struct {
 	skalaX, skalaY               float64
 }
 
-// blokiWObszarach oddaje bloki tekstu leżące w którymkolwiek z obszarów,
-// w kolejności występowania.
+// blokiWObszarach oddaje bloki tekstu leżące w którymkolwiek z podanych
+// obszarów redakcji, w kolejności ich występowania w treści strony.
 func (c *czytnikTresci) blokiWObszarach(obszary []obszarRedakcji) []blokTekstu {
 	bloki := make([]blokTekstu, 0)
 	stos := []przeksztalcenie{{skalaX: 1, skalaY: 1}}
@@ -586,7 +564,8 @@ func ogranicznik(znak byte) bool {
 
 // ── Podpis ──────────────────────────────────────────────────────────────────
 
-// podpisDanaco jest treścią podpisu odkładaną we właściwościach dokumentu.
+// podpisDanaco jest treścią podpisu odkładaną we właściwościach dokumentu,
+// obok podpisującego, czasu, powodu, miejsca, skrótu i certyfikatu.
 type podpisDanaco struct {
 	Podpisujacy string `json:"podpisujacy"`
 	Czas        int64  `json:"czas"`
@@ -597,12 +576,9 @@ type podpisDanaco struct {
 	Certyfikat  string `json:"certyfikat"`
 }
 
-// skrotTresciDokumentu liczy skrót po treści stron, nie po bajtach pliku.
-//
-// Bajty pliku zmieniają się przy każdym zapisie — także przy dołożeniu samego
-// podpisu — więc podpis liczony po nich nie dałby się zweryfikować ani razu.
-// Skrót po treści stron opisuje to, co Operator widzi, i przeżywa dołożenie
-// właściwości.
+// skrotTresciDokumentu liczy skrót po treści stron, nie po bajtach pliku,
+// które zmieniają się przy każdym zapisie — podpis liczony po nich nie dałby
+// się zweryfikować. Skrót po treści stron opisuje to, co Operator widzi.
 func skrotTresciDokumentu(drzewo *model.Context) (string, error) {
 	suma := sha256.New()
 	suma.Write([]byte(strconv.Itoa(drzewo.PageCount) + "\n"))
@@ -674,10 +650,8 @@ func kluczICertyfikat(bajty []byte) (*rsa.PrivateKey, *x509.Certificate, error) 
 }
 
 // PodpiszPdf podpisuje dokument certyfikatem wskazanym przez Operatora.
-//
-// Podpis leży we właściwości dokumentu i jest podpisem tego produktu: cudze
-// czytniki go nie pokażą. Nazwane wprost, bo podpis, o którym Operator myśli,
-// że jest podpisem kwalifikowanym, byłby gorszy niż brak podpisu.
+// Podpis leży we właściwości dokumentu i jest podpisem tego produktu,
+// nazwanym wprost: cudze czytniki go nie pokażą.
 func (a *adapterBezpieczenstwaStudia) PodpiszPdf(ctx context.Context,
 	z shared.StudioSecuritySignRequest) (shared.StudioSecuritySignResponse, error) {
 
@@ -882,12 +856,10 @@ type wzorzecWrazliwy struct {
 	sprawdz   func(string) bool
 }
 
-// wzorceWrazliwe wymienia rozpoznawane kategorie.
-//
-// Pewność jest różna, bo różna jest siła rozpoznania: adres poczty rozpoznaje
-// się z kształtu i nie bywa czymś innym, a jedenaście cyfr obok siebie bywa
-// numerem ewidencyjnym albo numerem zamówienia — i dlatego numer ewidencyjny
-// przechodzi jeszcze sprawdzenie cyfry kontrolnej.
+// wzorceWrazliwe wymienia rozpoznawane kategorie. Pewność jest różna: adres
+// poczty rozpoznaje się z kształtu, a jedenaście cyfr bywa numerem
+// ewidencyjnym albo zamówienia, więc przechodzi jeszcze sprawdzenie cyfry
+// kontrolnej.
 var wzorceWrazliwe = []wzorzecWrazliwy{
 	{
 		kategoria: "poczta",
@@ -924,7 +896,8 @@ var wzorceWrazliwe = []wzorzecWrazliwy{
 	},
 }
 
-// przechodziLuhna sprawdza cyfrę kontrolną numeru karty.
+// przechodziLuhna sprawdza cyfrę kontrolną numeru karty algorytmem Luhna,
+// bez sprawdzania, czy numer należy do działającego wystawcy.
 func przechodziLuhna(tekst string) bool {
 	cyfry := make([]int, 0, len(tekst))
 	for _, znak := range tekst {
@@ -951,7 +924,8 @@ func przechodziLuhna(tekst string) bool {
 	return suma%10 == 0
 }
 
-// przechodziPesel sprawdza cyfrę kontrolną numeru ewidencyjnego.
+// przechodziPesel sprawdza cyfrę kontrolną numeru ewidencyjnego wagami
+// właściwymi dla numeru PESEL, bez sprawdzania daty urodzenia.
 func przechodziPesel(tekst string) bool {
 	if len(tekst) != 11 {
 		return false
@@ -965,7 +939,8 @@ func przechodziPesel(tekst string) bool {
 	return kontrolna == int(tekst[10]-'0')
 }
 
-// przechodziNip sprawdza cyfrę kontrolną numeru podatkowego.
+// przechodziNip sprawdza cyfrę kontrolną numeru podatkowego wagami
+// właściwymi dla numeru NIP, bez odpytania rejestru podatników.
 func przechodziNip(tekst string) bool {
 	if len(tekst) != 10 {
 		return false
@@ -980,10 +955,8 @@ func przechodziNip(tekst string) bool {
 }
 
 // WykryjWrazliwe oznacza w treści dokumentu dane wymagające redakcji.
-//
-// Czynność CZYTA i niczego nie zmienia — tak mówi kontrakt. Położenie jest
-// liczone w znakach treści, więc wynik wchodzi wprost do żądania redakcji jako
-// zakres, bez przeliczania po drodze.
+// Czynność czyta i niczego nie zmienia. Położenie jest liczone w znakach
+// treści, więc wynik wchodzi wprost do żądania redakcji jako zakres.
 func (a *adapterBezpieczenstwaStudia) WykryjWrazliwe(ctx context.Context,
 	z shared.StudioSecuritySensitiveDetectRequest) (shared.StudioSecuritySensitiveDetectResponse, error) {
 
@@ -1074,7 +1047,8 @@ func (a *adapterBezpieczenstwaStudia) WykryjWrazliwe(ctx context.Context,
 
 // ── Rejestracja ─────────────────────────────────────────────────────────────
 
-// BezpieczenstwoDokumentu wypełnia rodzinę `studio.security.*`.
+// BezpieczenstwoDokumentu wypełnia rodzinę `studio.security.*`: szyfrowanie,
+// czyszczenie, redakcję, podpis, weryfikację i wykrycie danych wrażliwych.
 type BezpieczenstwoDokumentu interface {
 	ZaszyfrujPdf(ctx context.Context, z shared.StudioSecurityEncryptRequest) (shared.StudioSecurityEncryptResponse, error)
 	WyczyscMetadane(ctx context.Context, z shared.StudioSecurityMetadataStripRequest) (shared.StudioSecurityMetadataStripResponse, error)
@@ -1084,7 +1058,8 @@ type BezpieczenstwoDokumentu interface {
 	WykryjWrazliwe(ctx context.Context, z shared.StudioSecuritySensitiveDetectRequest) (shared.StudioSecuritySensitiveDetectResponse, error)
 }
 
-// zarejestrujBezpieczenstwoDokumentu wpina czynności rodziny bezpieczeństwa.
+// zarejestrujBezpieczenstwoDokumentu wpina czynności rodziny bezpieczeństwa
+// dokumentu w rejestr komend rdzenia pod ich pełnymi nazwami kontraktu.
 func zarejestrujBezpieczenstwoDokumentu(r *Rejestr, b BezpieczenstwoDokumentu) {
 	if r == nil || b == nil {
 		return

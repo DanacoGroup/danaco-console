@@ -1,21 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Ustalenie adresu gniazda.
- *
- * To jest miejsce, w którym klient albo trafia w rdzeń, albo szuka go tam,
- * gdzie nikt nie nasłuchuje — a wtedy ponawianie milczy bez końca i wygląda
- * jak awaria rdzenia, choć jest pomyłką adresu. Rozstrzygnięcie ma trzy
- * wejścia (wskazanie z budowania, adres z powłoki, lokalizacja dokumentu)
- * i jedno pierwszeństwo, więc sprawdzane są wszystkie drogi.
- *
- * Adres z powłoki jest stanem modułu, dlatego każdy przypadek wczytuje moduł
- * na nowo — inaczej mierzyłby ślad po przypadku poprzednim.
- */
+// Ustalenie adresu gniazda sprawdza trzy wejścia: budowanie, powłokę i lokalizację dokumentu.
 
 const PORT_DOMYSLNY = '17870';
 
-/** Podstawia lokalizację dokumentu widzianą przez moduł. */
+/** Podstawia lokalizację dokumentu widzianą przez moduł podczas testu ustalania adresu gniazda rdzenia. */
 function zLokalizacja(lokalizacja: Partial<Location> | undefined): void {
   if (lokalizacja === undefined) {
     vi.stubGlobal('location', undefined);
@@ -24,7 +13,7 @@ function zLokalizacja(lokalizacja: Partial<Location> | undefined): void {
   vi.stubGlobal('location', lokalizacja);
 }
 
-/** Wczytuje moduł od nowa, żeby stan adresu z powłoki startował pusty. */
+/** Wczytuje moduł adresu rdzenia od nowa, żeby stan adresu z powłoki startował pusty w każdym przypadku. */
 async function swiezyModul(): Promise<typeof import('./adres-rdzenia')> {
   vi.resetModules();
   return import('./adres-rdzenia');
@@ -52,8 +41,7 @@ describe('adres rdzenia wyliczony z lokalizacji dokumentu', () => {
   });
 
   it('bierze port domyślny rdzenia, gdy strona go nie ma', async () => {
-    // Strona bez portu stoi na 80 albo 443, a tam rdzeń nie nasłuchuje — port
-    // ze strony byłby wtedy adresem ślepym.
+    // Strona bez portu stoi na 80 albo 443, gdzie rdzeń nie nasłuchuje — port strony byłby adresem ślepym.
     zLokalizacja({ protocol: 'http:', hostname: 'konsola.example', port: '' });
     const { adresRdzenia } = await swiezyModul();
     expect(adresRdzenia()).toBe(`ws://konsola.example:${PORT_DOMYSLNY}/ws`);

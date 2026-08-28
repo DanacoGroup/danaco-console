@@ -1,18 +1,7 @@
 import { ErrorCode, type ErrorInfo } from '../../../shared/contract';
 import type { Wynik } from './kanal';
 
-/**
- * Sprawdzian kształtu odpowiedzi w warstwie protokołu.
- *
- * Kanał nie waliduje ładunku: rzutuje go na typ zapowiedziany przez kontrakt
- * i oddaje wywołującemu. Rzutowanie jest obietnicą kompilatora, nie rdzenia —
- * rdzeń starszej wersji albo pośrednik może przysłać treść bez pola
- * obowiązkowego, a widok dostałby `undefined` w miejscu, w którym typ obiecuje
- * tablicę.
- *
- * Sprawdzian zamienia taką odpowiedź w zwykłe niepowodzenie wywołania: wpis do
- * dziennika i `Wynik` z błędem `validation_failed`.
- */
+/** Sprawdzian kształtu odpowiedzi w warstwie protokołu, zamieniający odpowiedź niezgodną w zwykłe niepowodzenie. */
 export function sprawdzKsztalt<T>(
   wynik: Wynik<T>,
   komenda: string,
@@ -25,32 +14,32 @@ export function sprawdzKsztalt<T>(
   return { udany: false, blad: bladKsztaltu(komenda) };
 }
 
-/** Czy wartość jest tablicą; brak pola tablicowego jest niezgodny z kontraktem. */
+/** Czy wartość jest tablicą; brak pola tablicowego w odpowiedzi jest niezgodny z zapowiedzią kontraktu. */
 export function czyTablica(wartosc: unknown): wartosc is unknown[] {
   return Array.isArray(wartosc);
 }
 
-/** Czy wartość jest napisem. */
+/** Czy wartość jest napisem — dowolnym ciągiem znaków, obojętnie jak długim, bez dalszych warunków treści. */
 export function czyTekst(wartosc: unknown): wartosc is string {
   return typeof wartosc === 'string';
 }
 
-/** Czy wartość jest liczbą skończoną. */
+/** Czy wartość jest liczbą skończoną — nie jest wartością nieskończoną ani wynikiem błędnego działania. */
 export function czyLiczba(wartosc: unknown): wartosc is number {
   return typeof wartosc === 'number' && Number.isFinite(wartosc);
 }
 
-/** Czy wartość jest wartością logiczną. */
+/** Czy wartość jest wartością logiczną — jednym z dwóch stanów, prawda albo fałsz, bez wartości pustej. */
 export function czyLogiczna(wartosc: unknown): wartosc is boolean {
   return typeof wartosc === 'boolean';
 }
 
-/** Czy wartość jest obiektem — tablica i `null` obiektem nie są. */
+/** Czy wartość jest obiektem w rozumieniu tego sprawdzianu — tablica oraz wartość pusta obiektem nie są. */
 export function czyObiekt(wartosc: unknown): wartosc is Record<string, unknown> {
   return typeof wartosc === 'object' && wartosc !== null && !Array.isArray(wartosc);
 }
 
-/** Wykonanie sprawdzianu odporne na jego własny błąd. */
+/** Wykonanie sprawdzianu kształtu odporne na jego własny błąd, zgłaszane dziennikowi zamiast wywołującemu. */
 function bezpiecznieSprawdz<T>(tresc: T, sprawdzian: (tresc: T) => boolean): boolean {
   try {
     return sprawdzian(tresc);
@@ -60,7 +49,7 @@ function bezpiecznieSprawdz<T>(tresc: T, sprawdzian: (tresc: T) => boolean): boo
   }
 }
 
-/** Błąd zgłaszany wywołującemu, gdy odpowiedź nie ma kształtu z kontraktu. */
+/** Błąd zgłaszany wywołującemu, gdy odpowiedź rdzenia nie ma kształtu zapowiedzianego w tym kontrakcie. */
 function bladKsztaltu(komenda: string): ErrorInfo {
   return {
     code: ErrorCode.ValidationFailed,

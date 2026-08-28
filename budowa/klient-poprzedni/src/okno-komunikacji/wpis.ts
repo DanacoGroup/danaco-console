@@ -1,13 +1,7 @@
 import { MessageRole } from '../../../shared/contract';
 
 /**
- * Pojedynczy wpis historii okna komunikacji.
- *
- * `nadawca` jest rolą wiadomości wprost z kontraktu (`MessageRole`), dzięki
- * czemu wpis odebrany zdarzeniem `message.changed` nie wymaga przekładu.
- * `persona` jest tożsamością mówiącego wewnątrz tej roli — nazwą modelu,
- * agenta albo roli przypisanej oknu. Rozróżnienie jest konieczne, ponieważ
- * w jednym oknie wypowiada się wiele person po stronie modelu.
+ * Pojedynczy wpis historii okna komunikacji niesie rolę nadawcy wprost z kontraktu oraz personę — tożsamość mówiącego wewnątrz tej roli, bo w jednym oknie wypowiada się wiele person po stronie modelu.
  */
 export interface Wpis {
   nadawca: MessageRole;
@@ -16,10 +10,10 @@ export interface Wpis {
   znacznikCzasu: number;
 }
 
-/** Tożsamość, którą podpisuje się sama powłoka, gdy mówi do operatora. */
+/** Tożsamość, którą podpisuje się sama powłoka aplikacji, gdy zwraca się bezpośrednio do operatora okna. */
 export const PERSONA_POWLOKI = 'Danaco Console';
 
-/** Nazwa nadawcy w postaci prezentacyjnej. */
+/** Nazwa nadawcy w postaci prezentacyjnej, pokazywana operatorowi zamiast surowej wartości roli kontraktu. */
 export function nazwaNadawcy(nadawca: MessageRole): string {
   switch (nadawca) {
     case MessageRole.User:
@@ -33,22 +27,19 @@ export function nazwaNadawcy(nadawca: MessageRole): string {
   }
 }
 
-/* Przekład roli kontraktu na klasę biblioteki (`user → .dn-wpis--czlowiek`,
-   `assistant → .dn-wpis--inteligencja`, `system` i `tool` → `.dn-wpis--system`)
-   wystawia `historia.ts`, wraz z medalionem, którego wymaga dwukolumnowa siatka
-   `.dn-wpis`. */
+// Przekład roli kontraktu na klasę biblioteki wystawia historia.ts wraz z wymaganym medalionem.
 
-/** Wpis operatora z bieżącym znacznikiem czasu. */
+/** Wpis operatora z bieżącym znacznikiem czasu, tworzony w chwili wysłania treści z pola wypowiedzi okna. */
 export function wpisOperatora(tresc: string, persona: string): Wpis {
   return { nadawca: MessageRole.User, persona, tresc, znacznikCzasu: Date.now() };
 }
 
-/** Wpis modelu — treść odebrana z rdzenia albo złożona ze strumienia. */
+/** Wpis modelu — treść odebrana z rdzenia albo złożona ze strumienia kolejnych fragmentów jego odpowiedzi. */
 export function wpisModelu(tresc: string, persona: string): Wpis {
   return { nadawca: MessageRole.Assistant, persona, tresc, znacznikCzasu: Date.now() };
 }
 
-/** Wpis systemowy — zdarzenia transportu i komunikaty rdzenia. */
+/** Wpis systemowy obejmujący zdarzenia transportu oraz komunikaty pochodzące bezpośrednio od rdzenia platformy. */
 export function wpisSystemowy(tresc: string): Wpis {
   return {
     nadawca: MessageRole.System,
@@ -58,7 +49,7 @@ export function wpisSystemowy(tresc: string): Wpis {
   };
 }
 
-/** Godzina wpisu w formacie prezentacyjnym. */
+/** Godzina wpisu w formacie prezentacyjnym, czytelnym dla operatora przeglądającego historię tej rozmowy. */
 export function godzinaWpisu(wpis: Wpis): string {
   return new Date(wpis.znacznikCzasu).toLocaleTimeString('pl-PL', {
     hour: '2-digit',

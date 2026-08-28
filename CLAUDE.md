@@ -31,13 +31,14 @@ Jedno repozytorium: `~/budowa`. Poza nim nie ma drugiego drzewa z tą samą tre�
 | `budowa/desktop/` | powłoka Tauri |
 | `budowa/klient-poprzedni/` | klient wersji poprzedniej; **materiał do czytania i przeszczepu, nie do rozwoju** |
 | `design/` | system projektowy wraz z prototypami okien |
-| `docs/` | dokumentacja projektowa; uzasadnienia komentarzy rdzenia stoja w `docs/architektura/uzasadnienia-*.md`, sekcje nazwane sciezkami plikow |
+| `docs/` | dokumentacja projektowa |
 | `prowadzenie/` | prowadzenie budowy; **znika przed wydaniem** |
 | `narzedzia/` | skrypty budowy |
 
-**Design, nad którym pracuje Właściciel, stoi w `~/robocze/prototypy/design`.**
-Jest to drzewo robocze gałęzi `teren/prototypy` tego repozytorium — nie osobna
-kopia. Prototypy okien etapu 1 leżą w `05-okna/`: `platformowe/instalator.html`,
+**Design stoi w `design/` tego repozytorium.** Nie ma dla niego osobnego drzewa
+ani osobnej gałęzi; wcześniejszy warsztat `teren/prototypy` w `~/robocze/prototypy`
+został zwinięty i wskazywanie go kieruje sesję w nieistniejące miejsce.
+Prototypy okien etapu 1 leżą w `design/05-okna/`: `platformowe/instalator.html`,
 `przeplyw/przeplyw-wejscia.html`, `przeplyw/centrum-dowodzenia.html`,
 `srodowiska/talkin-przedsionek.html`, `moduly/studio.html`.
 
@@ -50,7 +51,6 @@ podejścia. **Nie jest źródłem prawdy i nie wchodzi do budowy.**
 | Gałąź | Zawiera | Wolno pisać |
 |---|---|---|
 | `main` | całość budowy | tylko Prowadzący budowę |
-| `teren/prototypy` | design i prototypy okien etapu 1 | **wyłącznie Właściciel** — warsztat etapu 1 |
 | `teren/<nazwa>` | praca jednej sesji | sesja prowadząca teren |
 | `refs/przeniesienie/*` | dorobek zamkniętego podejścia | nikt — materiał do czytania |
 

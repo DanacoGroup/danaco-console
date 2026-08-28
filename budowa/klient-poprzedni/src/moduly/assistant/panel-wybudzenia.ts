@@ -5,21 +5,8 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Wybudzanie i nasłuch ciągły w Voice Console — cztery komendy rodziny mowy
- * wraz z dwoma jej zdarzeniami.
- *
- * ── Czym naprawdę jest „nasłuch ciągły rdzenia" ─────────────────────────────
- * Rdzeń stoi na serwerze i mikrofonu tej maszyny nie widzi. Nasłuch jest umową
- * między oknem a rdzeniem: okno nagrywa u siebie, wysyła odcinki
- * (`speech.audio.upload` wraz z `windowId`), a rdzeń ogłasza, co w nich
- * usłyszał — `speech.listen.partial` z tekstem oraz `speech.wake.detected`,
- * gdy padła fraza wybudzająca. Panel mówi to wprost, zamiast rysować mikrofon
- * sugerujący, że rdzeń słucha sam.
- *
- * ── Uczciwy stan wykonalności ───────────────────────────────────────────────
- * `speech.wake.get` oddaje `available: false` wraz z powodem, gdy wybudzenia
- * nie da się wykonać. Panel powtarza powód i nie stawia przycisku obiecującego
- * czynność, której nie ma czym wykonać.
+ * Wybudzanie i nasłuch ciągły w Voice Console obsługuje cztery komendy rodziny mowy wraz z dwoma
+ * jej zdarzeniami, mówiąc wprost, że rdzeń nie słucha sam.
  */
 export interface PanelWybudzenia {
   element: HTMLElement;
@@ -31,7 +18,7 @@ export interface PanelWybudzenia {
   przelaczNasluch(): void;
 }
 
-/** Tryby nasłuchu wskazywane wprost — wartości wyliczenia kontraktu. */
+/** Tryby nasłuchu wskazywane wprost jako wartości wyliczenia kontraktu, bez osobnego słownika w kliencie. */
 const TRYBY: ReadonlyArray<readonly [string, string]> = [
   [ListenMode.PushToTalk, 'Tryb: przytrzymanie przycisku'],
   [ListenMode.WakeWord, 'Tryb: fraza wybudzająca'],
@@ -74,9 +61,7 @@ export function utworzPanelWybudzenia(
 
   let idNasluchu = '';
 
-  // Zdarzenia nasłuchu wpinamy raz, przy budowie panelu: rozpoznany odcinek
-  // wchodzi w pole polecenia tą samą drogą, którą wchodzi transkrypcja
-  // nagrania, a wykrycie frazy wybudzającej jest komunikatem, nie treścią.
+  // Zdarzenia nasłuchu wpinamy raz, przy budowie panelu, bo wykrycie frazy jest komunikatem.
   const odsubskrybujOdcinek = stan.mowa.naOdcinek((tresc) => {
     if (tresc.transcript.trim() === '') return;
     slyszane.textContent = `Usłyszano: ${tresc.transcript}`;
@@ -149,8 +134,7 @@ export function utworzPanelWybudzenia(
       return;
     }
     if (!wynik.wynik.listening) {
-      // Nieuruchomiony nasłuch jest odpowiedzią, nie odmową: rdzeń mówi, czego
-      // brakuje, a okno powtarza to zamiast przestawiać przycisk.
+      // Nieuruchomiony nasłuch jest odpowiedzią, nie odmową: rdzeń mówi, czego brakuje.
       okno.puste(
         wynik.wynik.reason !== undefined && wynik.wynik.reason !== ''
           ? `Nasłuch nie ruszył: ${wynik.wynik.reason}`

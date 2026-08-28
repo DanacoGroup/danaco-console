@@ -19,12 +19,7 @@ var bladPolaczenieZamkniete = errors.New("transport: połączenie zamknięte")
 // odrzucona, połączenie żyje dalej — nadawca decyduje, czy powtórzyć.
 var bladKolejkaPelna = errors.New("transport: kolejka wyjściowa pełna")
 
-// Polaczenie jest jednym kanałem WebSocket urządzenia. Realizuje interfejs
-// Ujscie, więc rdzeń widzi wyłącznie identyfikator, konto i wysyłkę koperty.
-//
-// Zapis do gniazda prowadzi jedna pętla (petla_wysylki.go), odczyt druga
-// (petla_odbioru.go). Dzięki temu wysyłka z wielu miejsc rdzenia równocześnie
-// nie wymaga blokady na gnieździe i nigdy nie miesza ramek.
+// Polaczenie jest jednym kanałem WebSocket urządzenia i realizuje interfejs Ujscie widziany przez rdzeń.
 type Polaczenie struct {
 	id       string
 	gniazdo  *websocket.Conn
@@ -39,7 +34,7 @@ type Polaczenie struct {
 	zamkniete bool
 }
 
-// nowePolaczenie owija świeżo przyjęte gniazdo.
+// Funkcja nowePolaczenie owija świeżo przyjęte gniazdo WebSocket w strukturę gotową do pracy z rdzeniem.
 func nowePolaczenie(rodzic context.Context, id, konto string, tozsamosc Tozsamosc, gniazdo *websocket.Conn, pojemnosc int, dziennik *log.Logger) *Polaczenie {
 	kontekst, zakoncz := context.WithCancel(rodzic)
 	return &Polaczenie{
@@ -54,12 +49,12 @@ func nowePolaczenie(rodzic context.Context, id, konto string, tozsamosc Tozsamos
 	}
 }
 
-// Id zwraca identyfikator połączenia.
+// Metoda Id zwraca identyfikator tego połączenia, nadany mu przy jego nawiązaniu z danym urządzeniem klienckim.
 func (p *Polaczenie) Id() string {
 	return p.id
 }
 
-// Konto zwraca konto urządzenia.
+// Metoda Konto zwraca konto urządzenia przypisane obecnie do tego konkretnego połączenia gniazda WebSocket.
 func (p *Polaczenie) Konto() string {
 	p.zamek.RLock()
 	defer p.zamek.RUnlock()
@@ -77,12 +72,7 @@ func (p *Polaczenie) PrzypiszKonto(konto string) {
 	p.zamek.Unlock()
 }
 
-// Tozsamosc zwraca to, co o drugiej stronie gniazda wiadomo w tej chwili.
-//
-// „W tej chwili" jest tu istotne: identyfikator klienta dochodzi dopiero
-// z powitaniem, więc żądanie wcześniejsze widzi tożsamość uboższą. To jest
-// prawda o stanie, a nie brak do naprawienia — rdzeń zamilknie wtedy o sprawcy
-// zamiast go zmyślić.
+// Metoda Tozsamosc zwraca to, co o drugiej stronie gniazda wiadomo w tej chwili, licząc od nawiązania połączenia.
 func (p *Polaczenie) Tozsamosc() Tozsamosc {
 	p.zamek.RLock()
 	defer p.zamek.RUnlock()
@@ -112,7 +102,7 @@ func (p *Polaczenie) Wyslij(k protocol.Koperta) error {
 	return p.wyslijBajty(dane)
 }
 
-// wyslijBajty stawia gotową ramkę w kolejce wyjściowej.
+// Metoda wyslijBajty stawia już gotową ramkę bajtów w kolejce wyjściowej tego samego połączenia gniazda.
 func (p *Polaczenie) wyslijBajty(dane []byte) error {
 	p.zamek.RLock()
 	zamkniete := p.zamkniete

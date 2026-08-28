@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: Discovery Panel — wyszukiwanie u dostawców, pomoc
-// w układaniu zapytań, snowballing cytowań, odrzucanie pozycji z uzasadnieniem,
-// monitory tematów i kanałów oraz import wsadowy adresów.
-//
-// ── Wynik zapamiętany, nie tylko pokazany ──────────────────────────────────
-// Każda pozycja zwrócona przez dostawcę ląduje w bazie pod swoim kluczem.
-// Bez tego `research.discovery.reject` nie miałby czego odrzucić, a liczniki
-// PRISMA byłyby liczbami wymyślonymi w chwili odpytania. Zapamiętanie znaczy też,
-// że pozycja już dodana do źródeł jest przy powtórnym wyszukaniu oznaczona
-// (`alreadySourceId`), zamiast wchodzić drugi raz jako nowa.
-//
-// ── Dostawca niedostępny nie kończy wyszukiwania ──────────────────────────
-// Wyszukiwanie chodzi po kilku dostawcach naraz. Milczenie jednego z nich
-// wchodzi do `providersFailed`, a pozostali oddają swoje trafienia — odmowa
-// całości przez jeden zerwany strumień byłaby karą za cudzą awarię.
+// Moduł Discovery Panel obsługuje wyszukiwanie u dostawców, pomoc w układaniu
+// zapytań, snowballing cytowań, odrzucanie pozycji, monitory tematów
+// i kanałów oraz import wsadowy adresów.
 package core
 
 import (
@@ -24,10 +12,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// limitOdkryciaBadania jest domyślną liczbą pozycji z jednego dostawcy.
+// limitOdkryciaBadania jest domyślną liczbą pozycji pobieranych z jednego
+// dostawcy, gdy żądanie nie wskazuje własnej granicy.
 const limitOdkryciaBadania = 20
 
-// SzukajZrodel obsługuje `research.discovery.search`.
+// SzukajZrodel obsługuje `research.discovery.search` i pyta wielu dostawców
+// naraz, zapamiętując każdą zwróconą pozycję w bazie pod jej kluczem.
 func (a *adapterBadan) SzukajZrodel(ctx context.Context,
 	z shared.ResearchDiscoverySearchRequest) (shared.ResearchDiscoverySearchResponse, error) {
 
@@ -174,7 +164,8 @@ func (a *adapterBadan) zapamietajWynikiBadania(ctx context.Context, okno string,
 	return wzbogacone, nil
 }
 
-// UlozZapytania obsługuje `research.discovery.assist` — Query Assistant.
+// UlozZapytania obsługuje `research.discovery.assist` i przekłada pytanie
+// badawcze na zestaw zapytań wyszukiwawczych wraz z uzasadnieniem doboru.
 func (a *adapterBadan) UlozZapytania(ctx context.Context,
 	z shared.ResearchDiscoveryAssistRequest) (shared.ResearchDiscoveryAssistResponse, error) {
 
@@ -203,8 +194,7 @@ func (a *adapterBadan) UlozZapytania(ctx context.Context,
 		Uzasadnienie string   `json:"uzasadnienie"`
 	}
 	if err := jsonModeluBadania(odpowiedz, &rozlozone); err != nil || len(rozlozone.Zapytania) == 0 {
-		// Odpowiedź niepoddająca się rozłożeniu nie przepada: każdy jej niepusty
-		// wiersz jest kandydatem na zapytanie, bo tym właśnie model odpowiadał.
+		// Odpowiedź nierozłożona nie przepada: każdy niepusty wiersz jest kandydatem.
 		rozlozone.Zapytania = nil
 		for _, wiersz := range strings.Split(odpowiedz, "\n") {
 			wiersz = strings.TrimSpace(strings.TrimLeft(wiersz, "-*0123456789. "))
@@ -221,7 +211,8 @@ func (a *adapterBadan) UlozZapytania(ctx context.Context,
 	return odpowiedzKontraktu, nil
 }
 
-// RozwinCytowania obsługuje `research.discovery.snowball`.
+// RozwinCytowania obsługuje `research.discovery.snowball` i rozwija sieć
+// cytowań pozycji wstecz, wprzód albo w obie strony naraz.
 func (a *adapterBadan) RozwinCytowania(ctx context.Context,
 	z shared.ResearchDiscoverySnowballRequest) (shared.ResearchDiscoverySnowballResponse, error) {
 
@@ -286,7 +277,8 @@ func (a *adapterBadan) RozwinCytowania(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// OdrzucWyniki obsługuje `research.discovery.reject`.
+// OdrzucWyniki obsługuje `research.discovery.reject` i odrzuca wskazane
+// pozycje z uzasadnieniem, aktualizując liczniki diagramu PRISMA.
 func (a *adapterBadan) OdrzucWyniki(ctx context.Context,
 	z shared.ResearchDiscoveryRejectRequest) (shared.ResearchDiscoveryRejectResponse, error) {
 
@@ -315,7 +307,8 @@ func (a *adapterBadan) OdrzucWyniki(ctx context.Context,
 
 // ── Monitory tematów i kanałów ─────────────────────────────────────────────
 
-// UstawMonitor obsługuje `research.monitor.set`.
+// UstawMonitor obsługuje `research.monitor.set` i zakłada monitor tematu
+// albo kanału nowy, albo zmienia zastany po wskazanym identyfikatorze.
 func (a *adapterBadan) UstawMonitor(ctx context.Context,
 	z shared.ResearchMonitorSetRequest) (shared.ResearchMonitorSetResponse, error) {
 
@@ -357,7 +350,8 @@ func (a *adapterBadan) UstawMonitor(ctx context.Context,
 	return shared.ResearchMonitorSetResponse{Monitor: zlozMonitorBadania(zapisany)}, nil
 }
 
-// WypiszMonitory obsługuje `research.monitor.list`.
+// WypiszMonitory obsługuje `research.monitor.list` i oddaje monitory okna,
+// z możliwością zawężenia do monitorów włączonych.
 func (a *adapterBadan) WypiszMonitory(ctx context.Context,
 	z shared.ResearchMonitorListRequest) (shared.ResearchMonitorListResponse, error) {
 
@@ -429,7 +423,8 @@ func (a *adapterBadan) OdswiezMonitory(ctx context.Context,
 	}, nil
 }
 
-// pozycjeMonitoraBadania pobiera nowe pozycje monitora wedle jego rodzaju.
+// pozycjeMonitoraBadania pobiera nowe pozycje monitora wedle jego rodzaju,
+// czytając kanał albo powtarzając zapytanie tematu.
 func (a *adapterBadan) pozycjeMonitoraBadania(ctx context.Context,
 	monitor dane.MonitorBadania) ([]shared.ResearchDiscoveryResult, error) {
 
@@ -446,7 +441,8 @@ func (a *adapterBadan) pozycjeMonitoraBadania(ctx context.Context,
 	return pozycje, err
 }
 
-// zlozMonitorBadania przekłada wiersz monitora na byt kontraktu.
+// zlozMonitorBadania przekłada wiersz monitora z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func zlozMonitorBadania(m dane.MonitorBadania) shared.ResearchMonitor {
 	monitor := shared.ResearchMonitor{
 		Id: m.Kod, WindowId: m.Okno, Kind: shared.ResearchMonitorKind(m.Rodzaj),
@@ -467,12 +463,8 @@ func zlozMonitorBadania(m dane.MonitorBadania) shared.ResearchMonitor {
 
 // ── Import wsadowy ─────────────────────────────────────────────────────────
 
-// WczytajPartieAdresow obsługuje `research.batch.import`.
-//
-// Partia dostaje własny identyfikator, który wchodzi w pole `pochodzenie`
-// każdego źródła z niej pozyskanego. Dzięki temu `queueItemId` odpowiedzi jest
-// wskazaniem, po którym da się odnaleźć skutek partii w bazie — a nie numerem
-// zadania, które nigdzie nie stoi.
+// WczytajPartieAdresow obsługuje `research.batch.import` i pozyskuje wiele
+// adresów naraz, znakując każde pozyskane źródło identyfikatorem partii.
 func (a *adapterBadan) WczytajPartieAdresow(ctx context.Context,
 	z shared.ResearchBatchImportRequest) (shared.ResearchBatchImportResponse, error) {
 

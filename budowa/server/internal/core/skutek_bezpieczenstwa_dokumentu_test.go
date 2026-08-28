@@ -1,3 +1,4 @@
+// Skutek bezpieczeństwa dokumentu: czy czynność naprawdę zmienia dokument; żaden sprawdzian tu nie kończy się na odpowiedzi komendy, każdy schodzi do bajtów wyniku.
 package core
 
 import (
@@ -18,16 +19,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek bezpieczeństwa dokumentu: czy czynność naprawdę zmienia dokument.
-//
-// Rodzina bezpieczeństwa jest tym miejscem, w którym meldunek `status: ok` bez
-// skutku kosztuje najwięcej: Operator wysyła dokument w przekonaniu, że został
-// oczyszczony albo zredagowany. Dlatego żaden sprawdzian tutaj nie kończy się na
-// odpowiedzi komendy — każdy schodzi do bajtów wyniku i pyta je wprost.
-//
-// Żaden sprawdzian nie pomija się przy braku programu, bo rodzina nie uruchamia
-// ani jednego procesu.
 
 // trescStronWyniku skleja treść wszystkich stron dokumentu leżącego pod
 // odwołaniem zasobu — to jest miara redakcji, bo tekst wycięty znika właśnie
@@ -92,7 +83,7 @@ func certyfikatProbny(t *testing.T, nazwa string) []byte {
 	return zapis.Bytes()
 }
 
-// wniesMaterial wnosi dowolną treść do magazynu zasobów okna.
+// wniesMaterial wnosi dowolną treść do magazynu zasobów okna, gotową do dalszego przetworzenia przez komendę.
 func wniesMaterial(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	bajty []byte, nazwa, format string, rodzaj shared.DesignAssetKind) string {
 	t.Helper()
@@ -134,9 +125,7 @@ func TestSzyfrowanieZamykaDokumentNaHaslo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("nie można odczytać wyniku: %v", err)
 	}
-	// Miara jest niezależna od odpowiedzi: dokument zaszyfrowany nie daje się
-	// otworzyć bez hasła i to jest jedyny dowód, że szyfrowanie naprawdę leży
-	// w bajtach.
+	// Miara jest niezależna od odpowiedzi: dokument zaszyfrowany nie daje się otworzyć bez hasła.
 	if _, err := api.PageCount(bytes.NewReader(bajty), nastawyPdf()); err == nil {
 		t.Fatal("wynik otwiera się bez hasła — szyfrowania w bajtach nie ma")
 	}
@@ -147,8 +136,7 @@ func TestSzyfrowanieZamykaDokumentNaHaslo(t *testing.T) {
 func TestCzyszczenieMetadanychUsuwaOpisZBajtow(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
-	// Opis wchodzi do materiału tą samą biblioteką, żeby sprawdzian mierzył
-	// usunięcie czegoś, co na pewno tam było.
+	// Opis wchodzi do materiału tą samą biblioteką, żeby sprawdzian mierzył usunięcie realnej treści.
 	var zOpisem bytes.Buffer
 	if err := api.AddProperties(bytes.NewReader(pdfProbny(t, 1)), &zOpisem,
 		map[string]string{"Sprawa": "poufna", "Autor": "Operator"}, nastawyPdf()); err != nil {
@@ -190,8 +178,7 @@ func TestRedakcjaWycinaTekstZTresciStrony(t *testing.T) {
 		shared.StudioSecurityRedactRequest{
 			AssetId:  kod,
 			WindowId: wskaznik("okno-sprawdzianu"),
-			// Obszar obejmuje całą stronę, bo materiał ma jeden napis i nie
-			// wiadomo z góry, w którym miejscu strony biblioteka go postawiła.
+			// Obszar obejmuje całą stronę, bo materiał ma jeden napis, a miejsce jego wpisania jest nieznane.
 			Regions: []shared.StudioRedactionRegion{{
 				Page:   wskaznik(1),
 				X:      wskaznik(0),
@@ -216,10 +203,7 @@ func TestRedakcjaWycinaTekstZTresciStrony(t *testing.T) {
 	}
 }
 
-// TestPodpisPrzezywaOdczytAZmianaTresciGoUniewaznia wykazuje obie strony
-// podpisu: dokument nietknięty przechodzi weryfikację, a dokument zmieniony ją
-// oblewa. Sam „podpis poprawny" niczego by nie dowiódł — podpis, który zawsze
-// mówi „tak", nie jest podpisem.
+// TestPodpisPrzezywaOdczytAZmianaTresciGoUniewaznia wykazuje obie strony podpisu: dokument nietknięty przechodzi weryfikację, a zmieniony ją oblewa.
 func TestPodpisPrzezywaOdczytAZmianaTresciGoUniewaznia(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -249,8 +233,7 @@ func TestPodpisPrzezywaOdczytAZmianaTresciGoUniewaznia(t *testing.T) {
 			sprawdzony.Signatures[0].Signer)
 	}
 
-	// Zmiana treści: usunięcie strony podpisanego dokumentu. Podpis ma po niej
-	// przestać być poprawny — po to on jest.
+	// Zmiana treści: usunięcie strony podpisanego dokumentu. Podpis ma po niej przestać być poprawny.
 	var pozmianie shared.StudioPdfPagesReorderResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioPdfPagesReorder,
 		shared.StudioPdfPagesReorderRequest{
@@ -271,10 +254,7 @@ func TestPodpisPrzezywaOdczytAZmianaTresciGoUniewaznia(t *testing.T) {
 	}
 }
 
-// TestRozpoznanieDanychWrazliwychOdrzucaLiczbyBezCyfryKontrolnej pilnuje, żeby
-// rozpoznanie nie meldowało każdego ciągu cyfr jako numeru: jedenaście cyfr obok
-// siebie bywa numerem zamówienia, a fałszywe znalezisko każe Operatorowi
-// redagować treść, której redagować nie trzeba.
+// TestRozpoznanieDanychWrazliwychOdrzucaLiczbyBezCyfryKontrolnej pilnuje, żeby rozpoznanie nie meldowało każdego ciągu cyfr jako numeru.
 func TestRozpoznanieDanychWrazliwychOdrzucaLiczbyBezCyfryKontrolnej(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

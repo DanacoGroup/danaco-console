@@ -1,20 +1,5 @@
 // Odpowiedzialność pliku: moduł Roundtable — skład debaty (okno Model Panels)
-// i wiązanie adaptera z rejestrem kanałów. Tura i jej wykonanie leżą
-// w `adapter_modul_roundtable_tura.go`, czynności moderatora
-// w `adapter_modul_roundtable_moderator.go`, stanowisko końcowe
-// w `adapter_modul_roundtable_stanowisko.go`, przekład bytów
-// w `adapter_modul_roundtable_przeklad.go`.
-//
-// To jedyny moduł, w którym jedno okno rozmawia z wieloma kanałami naraz.
-// Rdzeń to wspiera bez zmian: `models.Rejestr.Wyslij` jest bezpieczny do
-// równoległego wywołania (rejestr trzyma kanały pod RWMutex, a każdy adapter
-// dostaje własne zapytanie i własne ujście), więc N uczestników to N gorutyn
-// nad jednym rejestrem. Drugiego rejestru kanałów moduł nie zakłada.
-//
-// Ten sam kanał może wystąpić dwukrotnie pod odrębnymi tożsamościami. Tożsamość
-// uczestnika jedzie do kanału warstwą `models.Nakladka.ProfilRoli` — tą samą,
-// którą okno rozmowy niesie profil roli. Dzięki temu dwaj uczestnicy na kanale
-// `claude-cli` różnią się promptem systemowym, a nie kodem kanału.
+// i wiązanie adaptera z rejestrem kanałów, dla żądań obszaru `roundtable.*`.
 package core
 
 import (
@@ -29,15 +14,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów bytów modułu.
+// Przedrostki identyfikatorów bytów modułu, nadawanych przez rdzeń przy
+// zakładaniu nowego wiersza debaty albo tury.
 const (
 	przedrostekUczestnika = "uczest-"
 	przedrostekTury       = "tura-"
 	przedrostekWypowiedzi = "wypow-"
 	przedrostekStanowiska = "stanow-"
-	// kodModeratora znakuje wypowiedź moderatora w zapisie tury. Moderator nie
-	// jest uczestnikiem — nie ma kanału ani persony — więc kod jest stały
-	// i rozpoznawalny w transkrypcie.
+	// kodModeratora znakuje wypowiedź moderatora w zapisie tury, stałym kodem
+	// rozpoznawalnym w transkrypcie debaty, bo moderator nie jest uczestnikiem.
 	kodModeratora = "moderator"
 )
 
@@ -49,26 +34,22 @@ type adapterDebaty struct {
 	kanaly       *models.Rejestr
 	nadajnik     Nadajnik
 	zmiana       func(shared.ChangeKind, shared.RoundtableTurn, *shared.RoundtableStatement)
-	// zycie jest kontekstem rdzenia, nie połączenia: rozłączenie klienta nie
-	// przerywa rozpoczętej tury.
+	// zycie jest kontekstem rdzenia: rozłączenie klienta nie przerywa tury.
 	zycie context.Context
 
-	// katalogArtefaktow trzyma bajty wydanych transkryptów, grafów i nagrań
-	// (patrz `adapter_modul_roundtable_magazyn.go`).
+	// katalogArtefaktow trzyma bajty wydanych transkryptów, grafów i nagrań.
 	katalogArtefaktow string
-	// uruchamiacz jest jedyną drogą startu programu serwerowego: Pandoc przy
-	// dokumencie biurowym, silnik mowy przy odsłuchu. Bez niego obie czynności
-	// odmawiają, nazywając brak, zamiast milczeć.
+	// uruchamiacz jest jedyną drogą startu programu Pandoc i silnika mowy.
 	uruchamiacz session.Uruchamiacz
-	// rozstrzygacz składa zasady izolacji egzekwowane przy uruchomieniu — ten
-	// sam, którym jadą Terminal, Developer i rodzina narzędzi mediów.
+	// rozstrzygacz składa zasady izolacji egzekwowane przy uruchomieniu.
 	rozstrzygacz *konfig.Rozstrzygacz
 
 	mu       sync.Mutex
 	biegnace map[string]context.CancelFunc
 }
 
-// nowyAdapterDebaty wiąże port z repozytorium modułu.
+// nowyAdapterDebaty wiąże port Debata z repozytorium modułu, jedyną
+// zależnością wymaganą konstruktorem.
 func nowyAdapterDebaty(zycie context.Context, repozytorium dane.RepozytoriumRoundtable) *adapterDebaty {
 	return &adapterDebaty{
 		repozytorium: repozytorium, zycie: zycie,
@@ -84,10 +65,8 @@ func (a *adapterDebaty) ZKanalami(kanaly *models.Rejestr) *adapterDebaty {
 	return a
 }
 
-// ZArsenalem podpina uruchamiacz procesów i rozstrzygacz zasięgu — dwa
-// źródła, bez których nie ruszy ani zamiana transkryptu na dokument biurowy,
-// ani synteza mowy. Bez nich reszta modułu działa bez zmian: debata, analiza
-// i głosowanie nie wołają ani jednego programu.
+// ZArsenalem podpina uruchamiacz procesów i rozstrzygacz zasięgu, bez których
+// nie ruszy zamiana transkryptu na dokument biurowy ani synteza mowy.
 func (a *adapterDebaty) ZArsenalem(uruchamiacz session.Uruchamiacz,
 	rozstrzygacz *konfig.Rozstrzygacz) *adapterDebaty {
 
@@ -102,18 +81,16 @@ func (a *adapterDebaty) ZWyjsciem(nadajnik Nadajnik) *adapterDebaty {
 	return a
 }
 
-// PodepnijRozgloszenie wypełnia port: adapter zapamiętuje drogę do zdarzenia.
+// PodepnijRozgloszenie wypełnia port nadajnika: adapter zapamiętuje drogę
+// do rozgłoszenia wypowiedzi debaty w czasie rzeczywistym do zdarzenia.
 func (a *adapterDebaty) PodepnijRozgloszenie(
 	rozglos func(shared.ChangeKind, shared.RoundtableTurn, *shared.RoundtableStatement)) {
 
 	a.zmiana = rozglos
 }
 
-// DodajModel dopisuje uczestnika debaty.
-//
-// Kanał sprawdza się w rejestrze. Uczestnik na kanale, którego nie ma, milczałby
-// w każdej turze, a Operator dowiedziałby się o tym dopiero po zadaniu pytania.
-// Odmowa w chwili dodania mówi mu to od razu i wskazuje przyczynę.
+// DodajModel dopisuje uczestnika debaty, sprawdzając od razu kanał w rejestrze,
+// żeby odmówić w chwili dodania, a nie dopiero po zadaniu pytania.
 func (a *adapterDebaty) DodajModel(ctx context.Context,
 	z shared.RoundtableModelAddRequest) (shared.RoundtableModelAddResponse, error) {
 
@@ -177,15 +154,8 @@ func mowiacy(uczestnicy []dane.UczestnikDebaty) []dane.UczestnikDebaty {
 }
 
 // zajmijBieg zajmuje okno pod nową turę i oddaje prawdę, gdy się to udało.
-//
-// Sprawdzenie i zajęcie idą pod jednym zamkiem — odczyt osobny od zapisu
-// zostawiłby szczelinę, w której dwa otwarcia nadane w tej samej chwili obie
-// zobaczyłyby okno wolne.
-//
-// Okno zajęte nie jest przerywane: ciche odwołanie tury biegnącej kasowałoby
-// wypowiedzi uczestników w połowie zdania, bez odmowy i bez śladu w panelu.
-// Przerwanie należy do moderatora i idzie jego komendą (zamknięcie tury,
-// `PrzerwijBieg`), a nie przy okazji otwarcia następnej.
+// Sprawdzenie i zajęcie idą pod jednym zamkiem, żeby dwa otwarcia naraz nie
+// zobaczyły obie okna wolnego. Okno zajęte nie jest przerywane po cichu.
 func (a *adapterDebaty) zajmijBieg(okno string, anuluj context.CancelFunc) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -196,13 +166,9 @@ func (a *adapterDebaty) zajmijBieg(okno string, anuluj context.CancelFunc) bool 
 	return true
 }
 
-// przejmijBieg zajmuje okno pod turę moderatora, przerywając turę biegnącą.
-//
-// Przerwanie jest tu jawne i na tym polega różnica wobec `zajmijBieg`.
-// Ukierunkowanie dyskusji (`roundtable.moderator.direct`) jest aktem
-// przerwania: moderator wchodzi uczestnikom w słowo, żeby zawrócić rozmowę,
-// i po to tę komendę wywołuje. Nie jest to skutek uboczny wysłania czegoś
-// innego, tylko treść samej komendy — dlatego przejęcie zostaje, a nie odmawia.
+// przejmijBieg zajmuje okno pod turę moderatora, przerywając turę biegnącą —
+// jawnie, w odróżnieniu od `zajmijBieg`, bo ukierunkowanie dyskusji jest
+// aktem przerwania, a nie skutkiem ubocznym wysłania czegoś innego.
 func (a *adapterDebaty) przejmijBieg(okno string, anuluj context.CancelFunc) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -212,18 +178,9 @@ func (a *adapterDebaty) przejmijBieg(okno string, anuluj context.CancelFunc) {
 	a.biegnace[okno] = anuluj
 }
 
-// zwolnijBieg oddaje okno zajęte pod turę, która ostatecznie nie ruszyła.
-//
-// Istnieje, bo zajęcie idzie przed założeniem tury (adapter_modul_roundtable_tura.go):
-// każde wyjście błędem pomiędzy jednym a drugim musi okno oddać, inaczej Debate
-// Panel zostawałby zablokowany turą, której nigdy nie było. Odwołanie zwalnia
-// się przy okazji — kontekst bez odbiorcy nie ma po co żyć.
-//
-// Zdjęcie wpisu jest bezwarunkowe i takie być może: między zajęciem
-// a zwolnieniem nie startuje żadna gorutyna, a wpis w rejestrze każe kolejnemu
-// otwarciu odmówić, więc odwołanie zdejmowane tu jest zawsze tym samym, które
-// zajęło okno. Drogą tą wolno wołać wyłącznie przed startem tury; po starcie
-// okno zwalnia `zapomnijBieg` z `defer` w prowadzTure.
+// zwolnijBieg oddaje okno zajęte pod turę, która ostatecznie nie ruszyła —
+// każde wyjście błędem między zajęciem a założeniem tury musi okno oddać,
+// inaczej Debate Panel zostawałby zablokowany turą, której nigdy nie było.
 func (a *adapterDebaty) zwolnijBieg(okno string, anuluj context.CancelFunc) {
 	a.mu.Lock()
 	delete(a.biegnace, okno)
@@ -231,7 +188,8 @@ func (a *adapterDebaty) zwolnijBieg(okno string, anuluj context.CancelFunc) {
 	anuluj()
 }
 
-// zapomnijBieg zdejmuje turę z rejestru biegów po jej zakończeniu.
+// zapomnijBieg zdejmuje turę z rejestru biegów po jej zakończeniu, zwalniając
+// okno pod kolejne otwarcie.
 func (a *adapterDebaty) zapomnijBieg(okno string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()

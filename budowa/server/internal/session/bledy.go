@@ -6,20 +6,23 @@ import (
 	"danacoconsole/shared"
 )
 
-// Katalog błędów pakietu. Sytuacje wyjątkowe są nazwane wartościami, żeby
-// warstwa wyżej rozpoznawała przyczynę przez errors.Is, a nie przez treść
-// komunikatu. Odwzorowanie na kody kontraktu leży tutaj — pakiet session nie
-// zakłada własnego katalogu kodów.
+// Katalog błędów pakietu niesie sytuacje wyjątkowe jako nazwane wartości, żeby
+// warstwa wyżej rozpoznawała przyczynę przez porównanie błędów.
 var (
-	// ErrBrakSesji — wskazana sesja nie istnieje w rejestrze.
+	// ErrBrakSesji mówi, że wskazana sesja tej rozmowy w ogóle nie istnieje
+	// w rejestrze sesji tej platformy.
 	ErrBrakSesji = errors.New("session: sesja nie istnieje")
-	// ErrBrakOkna — wskazane okno komunikacji nie istnieje w rejestrze.
+	// ErrBrakOkna mówi, że wskazane okno tej komunikacji w ogóle nie istnieje
+	// dziś w rejestrze okien sesji.
 	ErrBrakOkna = errors.New("session: okno komunikacji nie istnieje")
-	// ErrBrakKoordynatora — okno wykonawcy wskazuje koordynatora, którego nie ma.
+	// ErrBrakKoordynatora mówi, że okno wykonawcy wskazuje koordynatora,
+	// którego dziś wcale nie ma w rejestrze.
 	ErrBrakKoordynatora = errors.New("session: wskazane okno koordynatora nie istnieje")
-	// errOknoZamkniete — czynność wymaga okna otwartego.
+	// errOknoZamkniete mówi, że dana czynność wymaga okna otwartego, a to
+	// konkretne okno jest już zamknięte.
 	errOknoZamkniete = errors.New("session: okno komunikacji jest zamknięte")
-	// ErrProcesNieBiegnie — okno nie ma uruchomionego procesu.
+	// ErrProcesNieBiegnie mówi, że dane okno nie ma dziś żadnego uruchomionego
+	// procesu wykonującego jego pracę.
 	ErrProcesNieBiegnie = errors.New("session: okno nie ma biegnącego procesu")
 )
 

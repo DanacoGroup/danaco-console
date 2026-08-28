@@ -9,14 +9,7 @@ import {
   utworzZrodloPowiadomien,
 } from './zrodlo-powiadomien';
 
-/**
- * Sprawdziany źródła sekcji Powiadomień. Mierzą trzy rzeczy, z których każda ma
- * cenę w oknie: świeżą bazę czytaną jako „wszystko wyłączone", zapis idący na
- * poziom, którego katalog nie dopuszcza, i piętnaście par pytań tam, gdzie
- * wystarczą dwa.
- */
-
-/** Kanał podstawiony: zapisuje wywołania i oddaje przygotowane odpowiedzi. */
+/** Sprawdziany źródła sekcji powiadomień, na kanale podstawionym zapisującym wywołania i oddającym przygotowane odpowiedzi, mierzą świeżą bazę, zapis na niedopuszczalny poziom i liczbę pytań do rdzenia. */
 function kanalPodstawiony(odpowiedzi: Record<string, unknown>) {
   const wywolania: { komenda: string; tresc: Record<string, unknown> }[] = [];
   const kanal = {
@@ -31,7 +24,7 @@ function kanalPodstawiony(odpowiedzi: Record<string, unknown>) {
   return { kanal: kanal as never, wywolania };
 }
 
-/** Definicja katalogu w kształcie kontraktu, w minimalnym wypełnieniu. */
+/** Definicja katalogu w kształcie kontraktu, w minimalnym wypełnieniu wystarczającym do tego sprawdzianu. */
 function definicja(klucz: string, domyslna: unknown, opcje: { value: string; label: string }[] = []) {
   return {
     key: klucz,
@@ -47,7 +40,7 @@ function definicja(klucz: string, domyslna: unknown, opcje: { value: string; lab
   };
 }
 
-/** Katalog wszystkich piętnastu kluczy sekcji. */
+/** Katalog wszystkich piętnastu kluczy tej sekcji, gotowy do podstawienia jako odpowiedź kanału próbnego. */
 function katalogPelny() {
   const kanaly = [
     { value: 'mobile', label: 'Mobile' },

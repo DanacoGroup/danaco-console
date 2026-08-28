@@ -23,21 +23,7 @@ import {
 } from './rozpoznanie-decyzji';
 import type { ZrodloDecyzji } from './zrodlo-decyzji';
 
-/**
- * Sekcja decyzji czekających — pierwsza w trzonie okna nakładki, bo to jedyna
- * sekcja mówiąca o tym, co stoi i czeka na człowieka.
- *
- * Pusta kolejka jest stanem poprawnym i tak jest opisana, zamiast ostrzeżeniem.
- *
- * Każdy wpis mówi cztery rzeczy: co czeka (proces, stan, etap), od kiedy
- * (z policzonym odstępem), czego dotyczy (okno, sesja, kolejka) i czym to
- * wykryto — odczyt nadrabiający i zdarzenie na żywo mają różną świeżość.
- * Wpis rozpoznany regułą sporną (`usterka`, `bez-ruchu`) jest oznaczony jako
- * ocena nakładki: rdzeń pojęcia decyzji nie ma.
- *
- * Kolejka jest magazynem w pamięci okna, zasilanym odpowiedzią rdzenia
- * i zdarzeniami; zamknięcie okna nic nie utrwala.
- */
+/** Sekcja decyzji czekających, pierwsza w trzonie okna nakładki — jedyna mówiąca, co stoi i czeka na człowieka. */
 export interface SekcjaDecyzji {
   element: HTMLElement;
   /** Kolejka, do której okno dosypuje sygnały na żywo. */
@@ -46,11 +32,7 @@ export interface SekcjaDecyzji {
   odswiez(): Promise<void>;
   /** Przerysowuje wykaz z tego, co w kolejce już jest — bez pytania rdzenia. */
   przerysuj(): void;
-  /**
-   * Opis sterów gotowy do użycia poza sekcją — dymek kontekstowy stawia te same
-   * cztery stery przy tej samej decyzji i ma je stawiać z tego samego opisu,
-   * żeby czynność z dymka i czynność z listy szły tą samą drogą.
-   */
+  // Opis sterów gotowy do użycia poza sekcją — dymek stawia te same cztery stery z tego samego opisu.
   stery: OpisCzterechSterow;
   /** Kolejka rdzenia dopasowana do decyzji; `undefined`, gdy dopasowania nie ma. */
   dopasujKolejke(idOkna?: string, idSesji?: string): Queue | undefined;
@@ -153,8 +135,7 @@ export function utworzSekcjeDecyzji(opis: OpisSekcjiDecyzji): SekcjaDecyzji {
     const kolejkaWpisu = dopasujKolejke(decyzja.idOkna, decyzja.idSesji);
 
     const pola = utworzWykazPol();
-    // Rodzaj i waga ujawnienia idą pierwsze: katalog rozdz. 4 opracowania nazywa
-    // sugestię, zanim Operator zacznie czytać jej pola techniczne.
+    // Rodzaj i waga idą pierwsze — nazywają sugestię, zanim Operator przejdzie do pól technicznych.
     dodajPole(pola, 'Rodzaj sugestii', NAZWY_RODZAJOW[decyzja.rodzaj]);
     dodajPole(
       pola,
@@ -183,14 +164,7 @@ export function utworzSekcjeDecyzji(opis: OpisSekcjiDecyzji): SekcjaDecyzji {
     return wiersz;
   }
 
-  /**
-   * Dopasowuje kolejkę do decyzji.
-   *
-   * `MonitorStatus` niesie proces, okno i sesję, ale nie nazywa kolejki. Dojście
-   * prowadzi więc przez `queue.list`: najpierw kolejka obsługująca to okno, potem
-   * kolejka tej sesji. Przy niejednoznaczności zwracamy `undefined`, a ster
-   * wstrzymania powie, że kolejki nie dopasowano.
-   */
+  // Dopasowuje kolejkę do decyzji przez `queue.list`: najpierw po oknie, potem po sesji.
   function dopasujKolejke(idOkna?: string, idSesji?: string): Queue | undefined {
     if (idOkna !== undefined && idOkna !== '') {
       const poOknie = kolejkiRdzenia.filter((kolejkaRdzenia) =>
@@ -210,8 +184,7 @@ export function utworzSekcjeDecyzji(opis: OpisSekcjiDecyzji): SekcjaDecyzji {
     const chwila = teraz();
 
     const wynikKolejek = await opis.zrodlo.kolejki();
-    // Odmowa `queue.list` nie przerywa odczytu decyzji: bez kolejek wykaz nadal
-    // mówi prawdę, ubywa jedynie jednej drogi wyjścia.
+    // Odmowa `queue.list` nie przerywa odczytu decyzji — ubywa jedynie jednej drogi wyjścia.
     kolejkiRdzenia = wynikKolejek.udany && wynikKolejek.wynik !== undefined ? wynikKolejek.wynik.queues : [];
 
     const wynikProcesow = await opis.zrodlo.procesy();
@@ -232,7 +205,7 @@ export function utworzSekcjeDecyzji(opis: OpisSekcjiDecyzji): SekcjaDecyzji {
   return { element, kolejka, odswiez, przerysuj, stery, dopasujKolejke };
 }
 
-/** Opisuje etap słowem: nazwa, numer i liczba etapów, każde tylko gdy jest. */
+/** Opisuje etap procesu słowem: nazwa, numer i liczba etapów procesu, każda część tylko wtedy, gdy jest znana. */
 function opiszEtap(etap?: string, numer?: number, liczba?: number): string {
   const czesci: string[] = [];
   if (etap !== undefined && etap !== '') czesci.push(etap);

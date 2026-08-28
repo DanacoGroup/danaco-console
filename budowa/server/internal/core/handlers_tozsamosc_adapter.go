@@ -12,11 +12,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem sprawdzana jest przy kompilacji, bez próby wykonania kodu rdzenia platformy.
 var _ Tozsamosc = (*adapterTozsamosci)(nil)
 
-// adapterTozsamosci wypełnia port Tozsamosc tabelami `kategoria_tozsamosci`
-// i `dokument_tozsamosci`.
+// adapterTozsamosci wypełnia port Tozsamosc tabelami kategorii tożsamości i dokumentu tożsamości modelu.
 type adapterTozsamosci struct {
 	repozytorium dane.RepozytoriumTozsamosci
 	skladacz     *SkladaczTozsamosci
@@ -46,7 +45,7 @@ func (a *adapterTozsamosci) ZOknami(okna dane.RepozytoriumOkien,
 	return a
 }
 
-// Kategorie zwraca katalog kategorii zasad, zawężony warstwą nakładki.
+// Kategorie zwraca katalog kategorii zasad tożsamości, zawężony warstwą nakładki modelu w tej rozmowie.
 func (a *adapterTozsamosci) Kategorie(ctx context.Context,
 	z shared.IdentityCategoryListRequest) (shared.IdentityCategoryListResponse, error) {
 
@@ -68,7 +67,7 @@ func (a *adapterTozsamosci) Kategorie(ctx context.Context,
 	return shared.IdentityCategoryListResponse{Categories: kategorie}, nil
 }
 
-// Dokumenty zwraca zapisy treści zawężone kategorią i osią.
+// Dokumenty zwraca zapisy treści tożsamości zawężone kategorią zasad i wskazaną osią modelu platformy.
 func (a *adapterTozsamosci) Dokumenty(ctx context.Context,
 	z shared.IdentityDocumentGetRequest) (shared.IdentityDocumentGetResponse, error) {
 

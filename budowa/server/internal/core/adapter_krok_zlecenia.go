@@ -1,23 +1,6 @@
-// Sterowanie pojedynczym krokiem zlecenia: wstrzymanie kroku, decyzja Operatora
-// i wznowienie procesu z zastosowaną decyzją. Operator zatwierdza albo odrzuca
-// jeden krok, a proces rusza dalej z tą decyzją, nie od początku.
-//
-// Krokiem jest pozycja kolejki — ten sam byt, którym operuje silnik kolejki
-// (kolejka_silnik.go), posuwany po tabeli przejść krokNaprzod (kolejka_stany.go).
-//
-// Działanie pause rodziny queue.action wstrzymuje całą kolejkę, a nie krok:
-// pozycja zostaje w stanie wykonywana, a najbliższe resume przesuwa ją do
-// do_weryfikacji, czyli traktuje pracę przerwaną jak skończoną. Tutaj decyzja
-// o kroku stojącym w wykonywana powoduje ponowne wykonanie pracy z decyzją
-// doklejoną do treści zlecenia.
-//
-// Krok w stanie końcowym jest odmawiany na wejściu — i przy wstrzymaniu, i przy
-// decyzji. Bez obu tych warunków wznowienie zostawiłoby zlecenie w stanie pracy
-// nad krokiem, który nie ma jak tego stanu opuścić.
-//
-// Metody siedzą na adapterKolejek, bo sterowanie krokiem musi widzieć te same
-// pozycje, ten sam silnik i tego samego wykonawcę, co queue.action. Rozszerzenie
-// jest widoczne przez port sterowanieKrokiem (handlers_krok_zlecenia.go).
+// Plik obsługuje sterowanie pojedynczym krokiem zlecenia: wstrzymanie kroku,
+// zapisanie decyzji Operatora oraz wznowienie procesu z tą decyzją zastosowaną,
+// zamiast wznowienia od początku pracy.
 package core
 
 import (
@@ -30,11 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Stany sterowania krokiem widziane przez Operatora. Trzy z nich zapisuje tabela
-// wstrzymanie_kroku; czeka i biegnie wyprowadza się z kolumny
-// pozycja_kolejki.stan, bo tam już są. Wartość zamkniety jest konieczna, bo bez
-// niej krok ukończony, błędny albo anulowany przedstawiałby się Operatorowi jako
-// czekający na decyzję.
+// Stany sterowania krokiem widziane przez Operatora: trzy zapisuje tabela
+// wstrzymanie_kroku, a czeka i biegnie wyprowadza się z kolumny pozycja_kolejki.stan.
 const (
 	stanKrokuCzeka        = "czeka"
 	stanKrokuBiegnie      = "biegnie"
@@ -51,16 +31,9 @@ const (
 	decyzjaOdrzuc    = "reject"
 )
 
-// Koperta kontraktu jest angielska, więc stan kroku ma dwa słowniki: wartość
-// kolumny po polsku i wartość wyliczenia na drucie. Wzorem jest QueueStatus:
-// na drucie running, w kolumnie pracuje, a wiąże je wygenerowana mapa
-// shared.WartosciKontraktuQueueStatus.
-//
-// Kontrakt nie niesie wyliczeń rodziny queue.step.*, więc przekład dla niej stoi
-// poniżej. Bez tych map kontrakt zapowiadałby pending, a rdzeń odpowiadałby
-// oczekuje.
-
-// Stan pracy kroku w kopercie — wartości wyliczenia QueueStepWorkStatus.
+// Stan pracy kroku w kopercie niesie wartości wyliczenia QueueStepWorkStatus;
+// koperta kontraktu jest angielska, a kolumna bazy polska, więc rdzeń trzyma
+// osobny słownik przekładu między nimi.
 const (
 	krokPracaOczekuje     = "pending"
 	krokPracaPrzydzielona = "assigned"
@@ -71,7 +44,8 @@ const (
 	krokPracaAnulowana    = "cancelled"
 )
 
-// Stan sterowania krokiem w kopercie — wartości wyliczenia QueueStepControlStatus.
+// Stan sterowania krokiem w kopercie niesie wartości wyliczenia QueueStepControlStatus,
+// widziane przez Operatora niezależnie od stanu pracy nad krokiem.
 const (
 	krokSterowanieCzeka        = "waiting"
 	krokSterowanieBiegnie      = "running"
@@ -147,9 +121,8 @@ func (a *adapterKolejek) wstrzymania() (dane.RepozytoriumWstrzymanKroku, bool) {
 }
 
 // WstrzymajKrok zatrzymuje jeden krok i zostawia go czekającego na decyzję
-// Operatora. Kolejka przechodzi w `paused` tylko wtedy, gdy wstrzymany krok
-// jest tym, na którym kolejka stoi; wstrzymanie kroku dalszego nie zatrzymuje
-// pracy, która trwa gdzie indziej.
+// Operatora; kolejka przechodzi w paused tylko wtedy, gdy wstrzymany krok jest
+// tym, na którym kolejka aktualnie stoi.
 func (a *adapterKolejek) WstrzymajKrok(ctx context.Context,
 	z zadanieWstrzymaniaKroku) (odpowiedzKroku, error) {
 
@@ -162,8 +135,7 @@ func (a *adapterKolejek) WstrzymajKrok(ctx context.Context,
 	if err != nil {
 		return odpowiedzKroku{}, err
 	}
-	// Krok zamknięty nie ma czego wstrzymać. Bez tej odmowy zlecenie zostałoby
-	// w stanie pracy nad krokiem, który już się nie ruszy.
+	// Krok zamknięty nie ma czego wstrzymać — nie ma jak opuścić stanu pracy nad nim.
 	if czyStanKoncowyPozycji(pozycja.Stan) {
 		return odpowiedzKroku{}, bladSterowaniaKrokiem(shared.ErrorCodeConflict,
 			"krok "+z.StepId+" jest zamknięty ("+pozycja.Stan+") — nie ma czego wstrzymać")
@@ -197,18 +169,10 @@ func (a *adapterKolejek) WstrzymajKrok(ctx context.Context,
 	return odpowiedzKroku{Step: krok, Queue: kolejka}, nil
 }
 
-// ZdecydujOKroku przyjmuje rozstrzygnięcie Operatora i wznawia proces
-// z zastosowaną decyzją. Decyzja zapisuje się przed zastosowaniem, więc
+// ZdecydujOKroku przyjmuje rozstrzygnięcie Operatora i wznawia proces z tą
+// decyzją zastosowaną; decyzja zapisuje się przed zastosowaniem, więc
 // przerwanie rdzenia między jednym a drugim zostawia ją widoczną i czekającą,
-// a nie zgubioną (kolumny `zdecydowano_o` i `zastosowano_o`).
-//
-// Zatwierdzenie prowadzi krok tam, gdzie poprowadziłby go silnik z miejsca,
-// w którym krok stał — tabelą przejść `krokNaprzod`. Krok przerwany w trakcie
-// pracy (`wykonywana`) jest wykonywany ponownie z decyzją doklejoną do treści
-// zlecenia; przerwanej tury modelu nie da się podjąć w połowie, a odhaczenie
-// jej jako gotowej byłoby nieprawdą.
-//
-// Odrzucenie zamyka krok stanem `anulowana` z werdyktem `odrzucone`.
+// nie zgubioną.
 func (a *adapterKolejek) ZdecydujOKroku(ctx context.Context,
 	z zadanieDecyzjiKroku) (odpowiedzDecyzjiKroku, error) {
 
@@ -225,9 +189,7 @@ func (a *adapterKolejek) ZdecydujOKroku(ctx context.Context,
 	if err != nil {
 		return odpowiedzDecyzjiKroku{}, err
 	}
-	// Krok zamknięty w międzyczasie (np. `queue.action stop` na całej kolejce)
-	// nie wraca do pracy przez decyzję. Bez tej odmowy decyzja podniosłaby
-	// kolejkę do „pracuje" nad krokiem, którego już nie ma.
+	// Krok zamknięty w międzyczasie nie wraca do pracy przez decyzję nad nim.
 	if czyStanKoncowyPozycji(pozycja.Stan) {
 		return odpowiedzDecyzjiKroku{}, bladSterowaniaKrokiem(shared.ErrorCodeConflict,
 			"krok "+z.StepId+" został zamknięty ("+pozycja.Stan+") — decyzji nie ma do czego zastosować")
@@ -240,8 +202,7 @@ func (a *adapterKolejek) ZdecydujOKroku(ctx context.Context,
 		return odpowiedzDecyzjiKroku{}, bladSterowaniaKrokiem(shared.ErrorCodeConflict,
 			"krok "+z.StepId+" nie jest wstrzymany — nie ma czego wznawiać")
 	}
-	// Decyzja zapada raz. Epizod już rozstrzygnięty, lecz niezastosowany, wraca
-	// tą samą drogą do ZASTOSOWANIA — bez wystawiania drugiego werdyktu.
+	// Decyzja zapada raz — rozstrzygnięty, lecz niezastosowany epizod wraca bez nowego werdyktu.
 	if !wstrzymanie.CzyZdecydowane() {
 		wstrzymanie, err = repozytorium.ZapiszDecyzje(ctx, wstrzymanie.ID, stanDecyzji,
 			tekstNiepusty(z.Note))
@@ -298,10 +259,7 @@ func (a *adapterKolejek) WykazKrokow(ctx context.Context,
 	if err != nil {
 		return odpowiedzWykazuKrokow{}, err
 	}
-	// Brak rozszerzenia repozytorium znaczy, że sterowanie krokiem jest nieczynne
-	// i żaden krok nie może być wstrzymany. Błąd odczytu to co innego: wykaz
-	// pokazałby wtedy kroki wstrzymane jako czekające, czyli ukryłby przed
-	// Operatorem decyzje, na które praca stoi.
+	// Brak rozszerzenia repozytorium znaczy nieczynne sterowanie krokiem, nie błąd odczytu.
 	wstrzymania := map[int64]dane.WstrzymanieKroku{}
 	if repozytorium, ok := a.wstrzymania(); ok {
 		wykaz, err := repozytorium.CzynneWstrzymaniaKolejki(ctx, kolejkaID)
@@ -335,15 +293,13 @@ func (a *adapterKolejek) zastosujDecyzje(ctx context.Context, pozycja dane.Pozyc
 		return false, doreczenieNiepotrzebne, nil
 	}
 
-	// Zatwierdzenie. Krok wraca tam, gdzie stał w chwili wstrzymania, i idzie
-	// dalej tabelą przejść silnika — nie zaczyna od nowa.
+	// Zatwierdzenie prowadzi krok dalej tabelą przejść, od stanu sprzed wstrzymania.
 	docelowy, jest := krokNaprzod[wstrzymanie.StanPozycjiPrzed]
 	if !jest {
 		return false, "", bladSterowaniaKrokiem(shared.ErrorCodeConflict,
 			"krok wstrzymany w stanie "+wstrzymanie.StanPozycjiPrzed+" nie ma dokąd pójść naprzód")
 	}
-	// Praca przerwana w locie nie jest pracą skończoną: krok stojący
-	// w `wykonywana` wykonuje się ponownie, zamiast przeskoczyć do weryfikacji.
+	// Praca przerwana w locie wykonuje się ponownie, zamiast przeskoczyć do weryfikacji.
 	if wstrzymanie.StanPozycjiPrzed == stanPozycjiWykonywana {
 		docelowy = stanPozycjiWykonywana
 	}
@@ -351,27 +307,21 @@ func (a *adapterKolejek) zastosujDecyzje(ctx context.Context, pozycja dane.Pozyc
 		return false, "", err
 	}
 	if docelowy != stanPozycjiWykonywana {
-		// Krok zatwierdzony po weryfikacji jest zamknięty przyjęciem wyniku —
-		// nie ma czego wykonywać i nie ma komu doręczać.
+		// Krok zatwierdzony po weryfikacji jest zamknięty przyjęciem wyniku, bez wykonawcy.
 		return false, doreczenieNiepotrzebne, nil
 	}
 	if a.silnik.wykonawca == nil {
 		return false, doreczenieBezWykonawcy, nil
 	}
-	// Decyzja dojeżdża do wykonawcy: treść zlecenia idzie do kanału modelu razem
-	// z rozstrzygnięciem Operatora, tą samą drogą, którą krok jedzie zawsze
-	// (`kolejka_wykonawca.go`).
+	// Treść zlecenia niesie rozstrzygnięcie Operatora do wykonawcy tą samą drogą co zawsze.
 	zPolecenia := pozycja
 	zPolecenia.Stan = stanPozycjiWykonywana
 	zPolecenia.TrescZlecenia = trescZDecyzja(pozycja.TrescZlecenia, wstrzymanie)
 	return true, "", a.silnik.wykonaj(ctx, zPolecenia)
 }
 
-// trescZDecyzja dokleja rozstrzygnięcie Operatora do treści zlecenia kroku.
-// Wiersz `pozycja_kolejki` zostaje nietknięty — decyzja mieszka w tabeli
-// `wstrzymanie_kroku`, a tutaj wchodzi wyłącznie do treści tej jednej tury.
-// Zapisanie jej w treści zlecenia byłoby przepisywaniem polecenia Operatora
-// przy każdym wznowieniu.
+// trescZDecyzja dokleja rozstrzygnięcie Operatora do treści zlecenia kroku, wyłącznie
+// do treści tej jednej tury; wiersz pozycja_kolejki zostaje przy tym nietknięty.
 func trescZDecyzja(tresc *string, wstrzymanie dane.WstrzymanieKroku) *string {
 	czesci := []string{strings.TrimSpace(wartoscTekstu(tresc))}
 	czesci = append(czesci, "Decyzja Operatora: krok zatwierdzony do dalszego wykonania.")
@@ -433,10 +383,9 @@ func (a *adapterKolejek) pozycjaPoID(pozycje []dane.Pozycja, id int64,
 	return &zapasowa
 }
 
-// krokZleceniaKontraktu składa krok zlecenia widziany z zewnątrz. Stan
-// sterowania jest wyprowadzany, nie zapisywany drugi raz: pozycja zamknięta
-// zawsze przedstawia się jako `zamkniety`, nawet gdyby został po niej wiersz
-// wstrzymania z czasu, gdy jeszcze żyła.
+// krokZleceniaKontraktu składa krok zlecenia widziany z zewnątrz; stan sterowania
+// jest wyprowadzany, nie zapisywany drugi raz, więc pozycja zamknięta zawsze
+// przedstawia się jako zamkniety.
 func krokZleceniaKontraktu(kolejkaID int64, pozycja dane.Pozycja,
 	wstrzymanie dane.WstrzymanieKroku, jestWstrzymanie bool) (krokZlecenia, error) {
 
@@ -444,11 +393,7 @@ func krokZleceniaKontraktu(kolejkaID int64, pozycja dane.Pozycja,
 	if err != nil {
 		return krokZlecenia{}, err
 	}
-	// Stan sterowania liczy się z wstrzymania CZYNNEGO. Epizod zastosowany
-	// jest już historią: krok wraca wtedy pod stan swojej pracy, a znaczniki
-	// decyzji zostają w odpowiedzi, żeby Operator zobaczył, co się właśnie
-	// stało. Bez tego rozróżnienia odpowiedź na decyzję mówiłaby co innego
-	// niż wykaz kroków odczytany chwilę później.
+	// Stan sterowania liczy się z wstrzymania czynnego — zastosowany epizod jest już historią.
 	stanSterowania, err := stanSterowaniaKontraktu(stanSterowaniaKrokiem(pozycja, wstrzymanie,
 		jestWstrzymanie && !wstrzymanie.CzyZastosowane()))
 	if err != nil {
@@ -468,9 +413,7 @@ func krokZleceniaKontraktu(kolejkaID int64, pozycja dane.Pozycja,
 	if !jestWstrzymanie {
 		return krok, nil
 	}
-	// `resumeFrom` jest wartością tego samego wyliczenia co `workStatus`, więc
-	// idzie przez ten sam przekład. Wypuszczona żywcem byłaby jedynym polskim
-	// słowem w całej odpowiedzi.
+	// resumeFrom niesie wartość tego samego wyliczenia co workStatus, więc idzie tym samym przekładem.
 	stanPowrotu, err := stanPracyKontraktu(wstrzymanie.StanPozycjiPrzed)
 	if err != nil {
 		return krokZlecenia{}, err
@@ -485,10 +428,8 @@ func krokZleceniaKontraktu(kolejkaID int64, pozycja dane.Pozycja,
 	return krok, nil
 }
 
-// stanSterowaniaKrokiem wyprowadza stan kroku widziany przez Operatora.
-// Kolejność pytań jest istotna: najpierw stan końcowy pozycji, dopiero potem
-// wstrzymanie. Krok zamknięty przedstawiony jako wstrzymany obiecywałby decyzję,
-// która niczego już nie zmieni.
+// stanSterowaniaKrokiem wyprowadza stan kroku widziany przez Operatora; sprawdza
+// najpierw stan końcowy pozycji, dopiero potem wstrzymanie.
 func stanSterowaniaKrokiem(pozycja dane.Pozycja, wstrzymanie dane.WstrzymanieKroku,
 	jestWstrzymanie bool) string {
 
@@ -518,7 +459,8 @@ func stanDecyzjiZLadunku(decyzja string) (string, error) {
 		"decyzja o kroku musi brzmieć „"+decyzjaZatwierdz+"” albo „"+decyzjaOdrzuc+"”, jest: "+decyzja)
 }
 
-// identyfikatorKolejki czyta numer kolejki ze wskazania kontraktu.
+// identyfikatorKolejki czyta numer kolejki ze wskazania kontraktu; wskazanie
+// nieliczbowe jest odmową, bo kontrakt niesie identyfikator kolejki jako tekst.
 func identyfikatorKolejki(id string) (int64, error) {
 	kolejkaID, err := strconv.ParseInt(strings.TrimSpace(id), 10, 64)
 	if err != nil {
@@ -537,7 +479,8 @@ func tekstNiepusty(wartosc string) *string {
 	return &przyciety
 }
 
-// bladSterowaniaKrokiem nazywa odmowę rodziny sterowania krokiem.
+// bladSterowaniaKrokiem nazywa odmowę rodziny sterowania krokiem, ze wspólnym
+// kodem i opisem dla wstrzymania, decyzji i wykazu kroków tego samego zlecenia.
 func bladSterowaniaKrokiem(kod protocol.KodBledu, opis string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, opis))
 }

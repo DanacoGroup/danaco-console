@@ -15,7 +15,10 @@ import {
 } from './widok-zapisu';
 import { godzinaWpisu, type WpisRozmowy } from './wpis-rozmowy';
 
-/** Widok jednego wpisu historii. */
+/**
+ * Widok jednego wpisu historii rozmowy, rysowany wewnątrz listy wpisów całego okna
+ * komunikacji z rdzeniem.
+ */
 export interface WidokWpisu {
   /** Element montowany w liście. */
   element: HTMLElement;
@@ -26,29 +29,8 @@ export interface WidokWpisu {
 }
 
 /**
- * Widok wpisu rozmowy.
- *
- * Wpis jest siatką dwukolumnową `24px 1fr` (`komponenty/wpis.css`):
- * w pierwszej kolumnie medalion nadawcy, w drugiej tożsamość i wszystko, co pod
- * nią idzie. Bez medalionu pasek tożsamości wpadłby w kolumnę awatara i został
- * zgnieciony do 24 px.
- *
- * Kolejność warstw odpowiada kolejności strumienia: prowenancja stoi przed
- * treścią, bo rdzeń nadaje ją przed jakimkolwiek tekstem i przed startem
- * procesu. Dalej idzie podgląd pracy modelu, potem odpowiedź, potem narzędzia,
- * błędy i podsumowanie tury.
- *
- * Rozróżnienie nadawcy niesie ikona medalionu, klasa semantyczna (trzy barwy,
- * nie dziewięć — `nadawca.ts`) i etykieta słowna — nigdy sama barwa tła.
- *
- * Klasy `dc-wpis` i `dc-wpis--<nadawca>` nie mają własnych reguł; stoją jako
- * uchwyty, po których wpis i jego nadawca dają się rozpoznać z zewnątrz.
- *
- * Widok transkryptu jest filtrem nad tym wpisem, nie drugim widokiem. Cztery
- * tryby (`widok-zapisu.ts`) sterują wyłącznie tym, które warstwy są rysowane;
- * wpis zostaje tym samym obiektem na tej samej pozycji listy. Przełączenie nie
- * kasuje niczego, nie woła rdzenia i nie blokuje — schowana warstwa wraca
- * w całości po powrocie do trybu, który ją pokazuje.
+ * Widok wpisu rozmowy, złożony z medalionu nadawcy oraz warstw ułożonych w kolejności
+ * strumienia odpowiedzi.
  */
 export function utworzWidokWpisu(
   wpis: WpisRozmowy,
@@ -56,8 +38,7 @@ export function utworzWidokWpisu(
 ): WidokWpisu {
   const znaki = znakiNadawcy(wpis.nadawca);
   let warstwy: WarstwyZapisu = warstwyZapisu(widok);
-  // Ostatni wpis trzymany miejscowo: zmiana trybu przerysowuje wpis z tego, co
-  // okno już ma, bez pytania rdzenia o powtórzenie tury.
+  // Ostatni wpis trzymany miejscowo: zmiana trybu przerysowuje go z tego, co okno już ma.
   let ostatni: WpisRozmowy = wpis;
 
   const element = document.createElement('article');
@@ -71,8 +52,7 @@ export function utworzWidokWpisu(
   const tozsamosc = document.createElement('header');
   tozsamosc.className = 'dn-wpis-tozsamosc';
 
-  // Persona mieszka w tekście nadawcy („Model · Redaktor”), a nie w osobnym
-  // elemencie o własnym stopniu i grubości.
+  // Persona mieszka w tekście nadawcy, nie w osobnym elemencie o własnym stopniu i grubości.
   const etykieta = document.createElement('span');
   etykieta.className = 'dn-wpis-nadawca';
 
@@ -85,8 +65,8 @@ export function utworzWidokWpisu(
   godzina.className = 'dn-wpis-godzina';
 
   const stan = document.createElement('span');
-  // Odmianę stanu niesie klasa widoku `dc-wpis__stan`; biblioteka nie ma dla
-  // niej osobnego wariantu plakietki.
+  // Odmianę stanu niesie klasa widoku; biblioteka nie ma dla niej osobnego wariantu
+  // plakietki.
   stan.className = 'dn-plakietka dc-wpis__stan';
 
   tozsamosc.append(etykieta, rola, godzina, stan);
@@ -124,9 +104,8 @@ export function utworzWidokWpisu(
     stan.textContent = opisStanuWpisu(nowy);
     ustawRoleNarzedzia(nowy);
 
-    // Warstwa wyłączona trybem dostaje puste dane, nie ukryty element z treścią:
-    // blok, który sam chowa się przy braku danych, po przełączeniu trybu nie
-    // zostawia w drzewie napisu, którego Operator nie prosił o pokazanie.
+    // Warstwa wyłączona trybem dostaje puste dane, nie ukryty element z treścią widoczną w
+    // drzewie.
     prowenancja.aktualizuj(warstwy.prowenancja ? nowy.prowenancja : null);
     aktualizujRozumowanie(nowy);
     tresc.textContent = warstwy.tresc ? nowy.tresc : '';
@@ -136,13 +115,8 @@ export function utworzWidokWpisu(
     stopka.replaceChildren(...czesciStopki(nowy, warstwy));
   }
 
-  /**
-   * Przestawienie trybu: nowy rozkład warstw i jedno przerysowanie.
-   *
-   * Rozwinięcie bloku narzędzi jest ustawiane tylko tutaj, a nie przy każdym
-   * odświeżeniu — inaczej w trybie `pelny` kolejny fragment strumienia
-   * rozwijałby z powrotem blok zwinięty ręką Operatora.
-   */
+  // Przestawienie trybu daje nowy rozkład warstw i jedno przerysowanie, nie ciągłe
+  // odświeżanie.
   function ustawWidokZapisu(nowyWidok: WidokZapisu): void {
     warstwy = warstwyZapisu(nowyWidok);
     element.dataset['widokZapisu'] = nowyWidok;
@@ -157,12 +131,7 @@ export function utworzWidokWpisu(
     rola.hidden = nazwa.length === 0;
   }
 
-  /**
-   * Podgląd pracy modelu — zwinięty, żeby nie zasłaniał odpowiedzi.
-   *
-   * W trybach `zwykly` i `streszczenie` blok nie powstaje wcale, bo tok
-   * rozumowania jest tym, co odróżnia tryb `rozumowanie` od `zwyklego`.
-   */
+  // Podgląd pracy modelu jest zwinięty, żeby nie zasłaniał odpowiedzi w trybie rozumowania.
   function aktualizujRozumowanie(nowy: WpisRozmowy): void {
     const jest = warstwy.rozumowanie && nowy.rozumowanie.length > 0;
     rozumowanie.pokaz(jest);
@@ -178,11 +147,8 @@ export function utworzWidokWpisu(
 }
 
 /**
- * Komplet klas wpisu: budowa z biblioteki, klasa semantyczna nadawcy, stan pracy
- * i dwie nazwy `dc-*` jako uchwyty rozpoznania nadawcy.
- *
- * `dn-wpis--pracuje` niesie kropkę tętna przy nadawcy (`komponenty/wpis.css`) —
- * wpis, w którym tura jeszcze biegnie.
+ * Komplet klas wpisu: budowa z biblioteki, klasa semantyczna nadawcy, stan pracy i dwa
+ * uchwyty rozpoznania.
  */
 function klasyWpisu(wpis: WpisRozmowy, klasa: KlasaNadawcy): string {
   const pracuje = wpis.stan === 'wysylanie' || wpis.stan === 'strumien';
@@ -195,14 +161,20 @@ function klasyWpisu(wpis: WpisRozmowy, klasa: KlasaNadawcy): string {
   ].join(' ');
 }
 
-/** Tożsamość mówiącego: rodzaj nadawcy i persona w jednym tekście. */
+/**
+ * Tożsamość mówiącego w jednym tekście złożonym z rodzaju nadawcy oraz jego przypisanej
+ * persony osobiście.
+ */
 function tekstTozsamosci(wpis: WpisRozmowy, etykieta: string): string {
   const persona = wpis.persona.trim();
   if (persona.length === 0 || persona === etykieta) return etykieta;
   return `${etykieta} · ${persona}`;
 }
 
-/** Stan wpisu wraz z licznikiem fragmentów strumienia. */
+/**
+ * Stan wpisu w toku bieżącej tury tego okna, wraz z licznikiem fragmentów odebranego dotąd
+ * strumienia.
+ */
 function opisStanuWpisu(wpis: WpisRozmowy): string {
   const nazwa = nazwaStanuWpisu(wpis.stan);
   if (wpis.fragmenty === 0) return nazwa;

@@ -4,14 +4,9 @@ import type { StrazOdmow } from './straz-odmow';
 import type { ZrodloBiblioteki } from './zrodlo-biblioteki';
 
 /**
- * Trzy wywołania historii dokumentu: odczyt wersji, dołożenie kolejnej
- * i powrót do wcześniejszej.
- *
- * Wydzielone ze `zrodlo-biblioteki.ts` wzdłuż odpowiedzialności: tutaj historia
- * dokumentu, tam plik, wyszukiwanie i kolekcje. Kształt pozostaje jeden —
- * `ZrodloBiblioteki` — żeby okna widziały jedno źródło, a nie dwa. Komendy stoją
- * razem, bo są jednym łańcuchem: bez dołożenia wersji odczyt historii zwraca
- * jeden wpis, a przywrócenie nie ma dokąd wracać.
+ * Trzy wywołania historii dokumentu: odczyt wersji, dołożenie kolejnej i powrót
+ * do wcześniejszej. Stoją razem, ponieważ są jednym łańcuchem: bez dołożenia
+ * wersji odczyt historii zwraca jeden wpis, a przywrócenie nie ma dokąd wracać.
  */
 export type WywolaniaWersji = Pick<ZrodloBiblioteki, 'wersje' | 'dolozWersje' | 'przywroc'>;
 

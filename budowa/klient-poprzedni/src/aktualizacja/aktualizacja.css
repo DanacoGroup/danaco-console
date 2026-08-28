@@ -1,20 +1,6 @@
-/* Baner „Aktualizuje" — pas na górze okna aplikacji, działający jak przycisk,
- * wraz z przywoływanym obok niego wykazem wydań.
- *
- * Barwy pochodzą wyłącznie z żetonów motywu; żadnej wartości barwnej wpisanej
- * wprost, żeby podmiana żetonu wystarczyła i pas nie wypadł z pomiaru kontrastu.
- *
- * Arkusz nie powtarza biblioteki: tor postępu to `.dn-postep` z
- * `komponenty/postep.css`, chronologia to `.dn-tabela` z `komponenty/tabela.css`,
- * przycisk przywołania to `.dn-btn` z `komponenty/przycisk.css`. Tutaj stoi
- * wyłącznie układ pasa i miejsca styku. */
+/* Arkusz stylu opisuje baner aktualizacji na górze okna aplikacji, działający jak przycisk, wraz z rozwijanym pod nim wykazem wydań aplikacji. */
 
-/* ── OBUDOWA PASA ────────────────────────────────────────────────────────────
-   Dwoje rodzeństwa w jednym wierszu (baner-przycisk i przywołanie wykazu),
-   a pod nimi, na całą szerokość, rozwijana chronologia. Tło i kreska dolna
-   należą do obudowy, nie do banera — inaczej przycisk „Wykaz wydań” stałby
-   na innym tle niż pas, w którym siedzi. */
-.da-pas {
+.da-pas { /* Obudowa mieści baner-przycisk i przywołanie wykazu w wierszu, a pod nimi rozwijaną chronologię. */
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: stretch;
@@ -24,9 +10,7 @@
   color: var(--dn-tekst);
 }
 
-/* `display: grid` bije domyślne `display: none` atrybutu `hidden` — bez tej
-   reguły ukryty pas nadal zajmowałby wiersz na górze okna. */
-.da-pas[hidden] { display: none; }
+.da-pas[hidden] { display: none; } /* Reguła bije domyślne ukrycie atrybutem `hidden`, więc pas nie zajmuje wiersza, gdy jest ukryty. */
 
 .da-baner {
   display: flex;
@@ -59,24 +43,18 @@
   font-size: 0.92rem;
 }
 
-/* Tor postępu zabiera to, co zostało po opisie. Powstaje wyłącznie wtedy, gdy
-   całość pobrania jest znana. */
-.da-baner__postep {
+.da-baner__postep { /* Tor postępu zabiera miejsce po opisie, widoczny tylko gdy znana jest cała wielkość pobrania. */
   flex: 1 1 12rem;
   min-width: 8rem;
 }
 
-/* Przywołanie wykazu stoi przy prawej krawędzi pasa i nie rozpycha go w pionie. */
-.da-pas__wykaz {
+.da-pas__wykaz { /* Przywołanie wykazu stoi przy prawej krawędzi pasa i nie rozpycha go w pionie. */
   align-self: center;
   margin-right: 1rem;
   white-space: nowrap;
 }
 
-/* ── WYKAZ WYDAŃ (rozwijany pod pasem) ───────────────────────────────────────
-   Zajmuje obie kolumny obudowy. Wysokość ograniczona, bo chronologia rośnie
-   z każdym wydaniem, a pas nie ma prawa zabrać całego okna pracy. */
-.da-wykaz {
+.da-wykaz { /* Wykaz wydań rozwijany pod pasem zajmuje obie kolumny obudowy, o ograniczonej wysokości. */
   grid-column: 1 / -1;
   padding: 0.75rem 1rem 1rem;
   border-top: 1px solid var(--dn-obrys-subtelny);
@@ -101,24 +79,18 @@
 
 .da-wykaz__zdanie--odmowa { color: var(--dn-tekst); }
 
-/* Siedem kolumn nie zmieści się w wąskim oknie. Przewija się wykaz, nie strona
-   — poziomy pasek na całym oknie pracy byłby usterką układu. */
-.da-wykaz__przewijak {
+.da-wykaz__przewijak { /* Wykaz przewija się w poziomie, aby uniknąć paska przewijania całego okna pracy. */
   max-height: 18rem;
   overflow: auto;
 }
 
-/* Suma SHA-256 to 64 znaki — bez łamania rozpycha tabelę ponad szerokość okna. */
-.da-wykaz__suma {
+.da-wykaz__suma { /* Suma SHA-256 to 64 znaki — bez łamania rozpycha tabelę ponad szerokość okna. */
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
   word-break: break-all;
 }
 
-/* Brak sumy jest przeszkodą, nie brakiem danych, więc czyta się mocniej niż
-   sama suma — zdanie w tym miejscu mówi wprost, że takiego wydania aplikacja
-   nie założy. */
-.da-wykaz__suma--brak {
+.da-wykaz__suma--brak { /* Brak sumy pokazuje zdanie wprost mówiące, że wydanie nie zostało założone. */
   color: var(--dn-tekst);
   font-family: inherit;
   font-weight: var(--dn-fw-polgruba, 600);

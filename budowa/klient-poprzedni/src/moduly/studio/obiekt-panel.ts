@@ -22,22 +22,9 @@ import type { StanStudio } from './stan-studio';
 import { wstawieniaOpiszBilans } from './zrodlo-wstawien-studio';
 
 /**
- * Warsztat obiektów — obrazy, kształty, ikony, pola tekstowe, logo.
- *
- * ── Kształt i ikona przychodzą z Designu ────────────────────────────────────
- * Panel nie rysuje ani jednego kształtu i nie prowadzi biblioteki ikon.
- * `studio.object.insert` przyjmuje `shapeKind` dla kształtu i `iconName` dla
- * ikony, a rachunek stoi w module Design (`design.vector.shape.add` zakłada
- * kształt od razu jako węzły ścieżki, `design.icon.library.search` szuka ikony).
- * Wskazanie węzła Designu idzie polem `designNodeId` — to jest droga osadzenia
- * kształtu złożonego w Designie i nie ma tu drugiej.
- *
- * ── Wykres: odmowa nazwana PRZED próbą ──────────────────────────────────────
- * Rodzaj „wykres" stoi w kontrakcie, ale rdzeń go odmawia: rachunku wykresu po
- * stronie Studia NIE MA. Odmowa jest tu widoczna zanim Operator naciśnie, i mówi,
- * co robić zamiast tego — złożyć wykres w module Design i osadzić go jako obiekt
- * wskazany węzłem. Kontrolka kończąca się odmową rdzenia byłaby obietnicą bez
- * pokrycia, a jej ukrycie zabrałoby Operatorowi wiedzę, że taka droga istnieje.
+ * Warsztat obiektów — obrazy, kształty, ikony, pola tekstowe, logo. Kształt
+ * i ikona przychodzą z modułu Design; wykres rdzeń odmawia i odmowa jest
+ * widoczna przed próbą wstawienia.
  */
 export interface ObiektPanel {
   element: HTMLElement;
@@ -45,7 +32,10 @@ export interface ObiektPanel {
   odswiez(): void;
 }
 
-/** Pięć rodzajów obiektu, które rdzeń naprawdę wstawia. */
+/**
+ * Pięć rodzajów obiektu, które rdzeń naprawdę wstawia, wraz z nazwą widoczną
+ * dla Operatora w wykazie obiektów dokumentu.
+ */
 const RODZAJE: readonly (readonly [string, string])[] = [
   [StudioObjectKind.Image, 'obraz'],
   [StudioObjectKind.Shape, 'kształt'],
@@ -54,7 +44,10 @@ const RODZAJE: readonly (readonly [string, string])[] = [
   [StudioObjectKind.Logo, 'logo'],
 ];
 
-/** Skąd obiekt pochodzi — siedem dróg z kontraktu. */
+/**
+ * Skąd obiekt pochodzi — siedem dróg z kontraktu, od pliku wskazanego przez
+ * Operatora po obiekt narysowany wprost w dokumencie.
+ */
 const ZRODLA: readonly (readonly [string, string])[] = [
   ['', 'bez wskazania źródła'],
   [StudioObjectSource.File, 'plik wskazany przez Operatora'],
@@ -66,7 +59,10 @@ const ZRODLA: readonly (readonly [string, string])[] = [
   [StudioObjectSource.Drawn, 'narysowany w dokumencie'],
 ];
 
-/** Osiem kształtów z kontraktu; rysuje je Design, Studio je wskazuje. */
+/**
+ * Osiem kształtów z kontraktu; rysuje je moduł Design, a Studio jedynie
+ * wskazuje który z nich osadzić w dokumencie.
+ */
 const KSZTALTY: readonly (readonly [string, string])[] = [
   ['', 'bez kształtu'],
   [StudioShapeKind.Rectangle, 'prostokąt'],
@@ -79,7 +75,10 @@ const KSZTALTY: readonly (readonly [string, string])[] = [
   [StudioShapeKind.Callout, 'dymek'],
 ];
 
-/** Siedem sposobów opływania tekstem. */
+/**
+ * Siedem sposobów opływania tekstem wokół obiektu, od wstawienia w wierszu
+ * tekstu po ukrycie obiektu za tekstem.
+ */
 const OPLYWANIE: readonly (readonly [string, string])[] = [
   ['', 'bez zmiany opływania'],
   [StudioTextWrap.Inline, 'w wierszu tekstu'],
@@ -363,8 +362,7 @@ export function utworzObiektPanel(stan: StanStudio, zrodlo: ObiektZrodlo): Obiek
     if (!przyjalSie('Usunięcie obiektu', wynik)) return;
     if (wynik.wynik === undefined) return;
     if (!wynik.wynik.removed) {
-      // Odpowiedź „nie usunąłem" jest wynikiem, nie awarią — najczęściej blokadą
-      // fragmentu. Bilans nazywa blokadę, a obiekt zostaje wskazany, bo nadal jest.
+      // Odpowiedź „nie usunąłem" to wynik, nie awaria; obiekt zostaje wskazany, bo nadal jest.
       odpowiedz.pokaz(
         `Rdzeń NIE usunął obiektu ${obiekt}. ${wstawieniaOpiszBilans(wynik.wynik.balance)}`,
         false,
@@ -537,13 +535,19 @@ export function utworzObiektPanel(stan: StanStudio, zrodlo: ObiektZrodlo): Obiek
   };
 }
 
-/** Nazwa rodzaju obiektu pełnym słowem — bez kodu i bez skrótu. */
+/**
+ * Nazwa rodzaju obiektu pełnym słowem — bez kodu i bez skrótu — widoczna dla
+ * Operatora w wykazie obiektów.
+ */
 function opiszRodzaj(rodzaj: StudioObjectKind): string {
   const znaleziony = RODZAJE.find((pozycja) => pozycja[0] === rodzaj);
   return znaleziony === undefined ? rodzaj : znaleziony[1];
 }
 
-/** Zdanie o obiekcie: miary, opływanie, warstwa i zapis pochodzenia. */
+/**
+ * Zdanie o obiekcie: miary w milimetrach, sposób opływania tekstem, warstwa
+ * dokumentu i zapis pochodzenia obiektu.
+ */
 function opiszObiekt(obiekt: StudioDocumentObject): string {
   const czesci: string[] = [];
   if (obiekt.widthMm !== undefined || obiekt.heightMm !== undefined) {

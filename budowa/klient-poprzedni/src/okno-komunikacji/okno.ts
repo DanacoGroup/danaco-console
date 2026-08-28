@@ -9,21 +9,7 @@ import { utworzPowierzchnieModulu } from './powierzchnia-modulu';
 import type { Wpis } from './wpis';
 
 /**
- * Okno komunikacji — złożenie nagłówka, powierzchni modułowej, historii i pola
- * wpisywania.
- *
- * Okno nie zna kontraktu ani transportu: wystawia treść wpisaną przez
- * operatora i przyjmuje treść przychodzącą. Powiązaniem z rdzeniem zajmuje się
- * przepływ komunikatów.
- *
- * Moduł jest właściwością okna, nie wdrożenia: `ustawModul`
- * przestawia wskaźnik modułu, pasek narzędzi promptu i panel kontekstu,
- * a historii wątku nie dotyka — okno zachowuje rozmowę przy zmianie modułu.
- *
- * Panelu akcji w tym złożeniu nie ma: pozycje panelu pochodzą z rejestru rdzenia
- * (`action.list`), a złożenie nie ma kanału — panel bez katalogu byłby atrapą.
- * Okno z kanałem składa warstwa rozmowy (`rozmowa/montaz-rozmowy`) i tam panel
- * akcji jest pełny.
+ * Okno komunikacji łączy nagłówek, powierzchnię modułową, historię wątku i pole wpisywania, nie znając kontraktu ani transportu — wystawia treść operatora i przyjmuje treść przychodzącą, a przełączenie modułu zachowuje rozmowę bez dotykania historii.
  */
 export interface OknoKomunikacji {
   /** Element montowany w dokumencie. */
@@ -42,14 +28,7 @@ export interface OknoKomunikacji {
   ustawModul(kod: string): void;
   /** Moduł, w którym okno pracuje w tej chwili. */
   modul(): string;
-  /**
-   * Warstwa dyktowania okna; pusta do chwili uzgodnienia kanału.
-   *
-   * Warstwa stoi na oknie, a nie w pasku, bo dyktowanie potrzebuje kanału, żeby
-   * zapytać rdzeń o dostępność silnika i wysłać nagranie — a pasek polecenia
-   * kanału nie widzi. Okno zna oba końce, więc to ono przechowuje warstwę
-   * i podaje ją temu, kto rysuje mikrofon.
-   */
+  /** Warstwa dyktowania stoi na oknie, bo potrzebuje kanału do sprawdzenia silnika i wysłania nagrania. */
   dyktowanie(): Dyktowanie | null;
   /** Podłącza warstwę dyktowania; robi to przepływ, gdy kanał jest już znany. */
   podlaczDyktowanie(warstwa: Dyktowanie | null): void;
@@ -92,9 +71,7 @@ export function utworzOkno(opis: OpisOkna): OknoKomunikacji {
 
     dyktowanie: () => dyktowanie,
 
-    // Poprzednia warstwa jest rozłączana, zanim wejdzie nowa. Bez tego zmiana
-    // kanału zostawiałaby żywy nasłuch sprzętu i — gdyby akurat nagrywał —
-    // zapaloną lampkę mikrofonu bez właściciela.
+    // Poprzednia warstwa dyktowania rozłącza się przed wejściem nowej, by nie zostawić zapalonej lampki.
     podlaczDyktowanie(warstwa) {
       dyktowanie?.rozlacz();
       dyktowanie = warstwa;

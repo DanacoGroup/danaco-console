@@ -20,20 +20,8 @@ import { czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protok
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
 /**
- * Siedem komend aparatu dokumentu i pól — dwie rodziny o jednej naturze.
- *
- * Aparat (`apparatus.*`) niesie trzynaście rodzajów elementów: spis treści, spis
- * ilustracji i tabel, przypis dolny i końcowy, podpis, zakładkę, odwołanie
- * wzajemne, odsyłacz, powołanie, bibliografię, hasło indeksu i indeks. Pola
- * (`field.*`) niosą numer strony, liczbę stron, datę, godzinę, tytuł i autora
- * dokumentu, właściwość i pole obliczane.
- *
- * ── Dlaczego razem ──────────────────────────────────────────────────────────
- * Obie rodziny mają tę samą oś: element WYLICZANY z dokumentu, który po zmianie
- * treści staje się nieświeży i wymaga odświeżenia. `StudioApparatusItem.stale`
- * i `StudioDocumentField.stale` są tym samym pojęciem, a panel prowadzi jeden
- * wykaz „do odświeżenia" dla obu. Rozdzielenie tego na dwa źródła kazałoby
- * pisać dwa razy to samo zdanie o nieświeżości.
+ * Interfejs aparatu dokumentu i pól: trzynaście rodzajów elementów wyliczanych z treści
+ * oraz sześć pól dokumentu, dzielących jedno pojęcie nieświeżości.
  */
 export interface AparatZrodlo {
   /* ── Aparat dokumentu ──────────────────────────────────────────────────── */

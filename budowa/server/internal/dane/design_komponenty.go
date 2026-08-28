@@ -1,16 +1,5 @@
-// Obszar komponentów makiety modułu Design (tabele `komponent_design`,
-// `instancja_komponentu_design`, migracja 318) — część `RepozytoriumDesignu`
-// zadeklarowanego w `design.go`.
-//
-// Komponent wisi na oknie, nie na kompozycji: biblioteka UI jest wspólna dla
-// wszystkich plansz stanowiska (powód w nagłówku migracji 318). Instancja wisi
-// na kompozycji, bo stoi na konkretnej planszy — i wskazuje warstwę
-// identyfikatorem zewnętrznym, który przeżywa zapis planszy.
-//
-// `Liczba` przy komponencie jest liczbą jego instancji policzoną w bazie,
-// a nie wartością przechowywaną obok. Licznik trzymany osobno rozjeżdża się
-// z rzeczywistością przy pierwszym usunięciu wiersza, o którym nikt licznika
-// nie powiadomił.
+// Plik prowadzi obszar komponentów makiety modułu Design, część RepozytoriumDesignu; komponent wisi na oknie,
+// biblioteka UI jest wspólna dla wszystkich plansz, a instancja wisi na kompozycji konkretnej planszy.
 package dane
 
 import (
@@ -83,8 +72,7 @@ const (
 	                                   WHERE komponent_id = ? ORDER BY id`
 )
 
-// ZapiszKomponentDesignu zakłada komponent albo nadpisuje zastany po
-// identyfikatorze zewnętrznym.
+// ZapiszKomponentDesignu zakłada komponent albo nadpisuje zastany po identyfikatorze zewnętrznym w bazie.
 func (r *repozytoriumDesignu) ZapiszKomponentDesignu(ctx context.Context,
 	komponent KomponentDesignu) (KomponentDesignu, error) {
 
@@ -166,7 +154,7 @@ func (r *repozytoriumDesignu) KomponentyDesignu(ctx context.Context, okno string
 	return lista, nil
 }
 
-// ZapiszInstancjeKomponentuDesignu utrwala wystąpienie komponentu na planszy.
+// ZapiszInstancjeKomponentuDesignu utrwala wystąpienie komponentu na planszy wraz z jego pełnym położeniem.
 func (r *repozytoriumDesignu) ZapiszInstancjeKomponentuDesignu(ctx context.Context,
 	instancja InstancjaKomponentuDesignu) error {
 
@@ -186,7 +174,7 @@ func (r *repozytoriumDesignu) ZapiszInstancjeKomponentuDesignu(ctx context.Conte
 	return nil
 }
 
-// InstancjeKomponentuDesignu zwraca wystąpienia komponentu.
+// InstancjeKomponentuDesignu zwraca wystąpienia komponentu na planszach wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) InstancjeKomponentuDesignu(ctx context.Context,
 	komponentID int64) ([]InstancjaKomponentuDesignu, error) {
 
@@ -220,7 +208,7 @@ func (r *repozytoriumDesignu) InstancjeKomponentuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajKomponentDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajKomponentDesignu składa strukturę komponentu wprost z jednego wiersza wyniku zapytania do SQL.
 func odczytajKomponentDesignu(wiersz skaner) (KomponentDesignu, error) {
 	var komponent KomponentDesignu
 	var warianty, zestaw sql.NullString

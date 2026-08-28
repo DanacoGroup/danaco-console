@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: notatki i strony wiki projektu — zapis, odczyt,
-// wykaz, usunięcie, drzewo stron oraz odnośniki wsteczne.
-//
-// ── Odnośniki liczy zapis, nie odczyt ──────────────────────────────────────
-// Przy każdym zapisie strony rdzeń wyjmuje z treści odnośniki `[[nazwa]]`
-// i zapisuje je wierszami. Panel „co linkuje tutaj" pyta wtedy jednym
-// zapytaniem, zamiast przeszukiwać treść wszystkich stron projektu przy każdym
-// otwarciu.
-//
-// Odnośnik do strony jeszcze niezałożonej jest stanem poprawnym wiki: nazwa
-// czeka na stronę i domyka się sama w chwili jej założenia. Dlatego zapis
-// oddaje `missingNames` — Operator ma widzieć, które nazwy jeszcze nie mają
-// strony, a nie odkrywać to po kliknięciu w martwy odnośnik.
+// Odpowiedzialność pliku: notatki i strony wiki projektu, ich zapis, odczyt,
+// wykaz, usunięcie, drzewo stron oraz odnośniki wsteczne liczone przy zapisie
+// strony, nie przy jej odczycie.
 package core
 
 import (
@@ -23,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZapiszNotatke obsługuje `workspace.note.save`.
+// ZapiszNotatke obsługuje `workspace.note.save`: zapisuje treść strony, jej
+// tytuł i miejsce w drzewie stron, a przy okazji przelicza odnośniki wsteczne.
 func (a *adapterPrzestrzeniRoboczej) ZapiszNotatke(ctx context.Context,
 	z shared.WorkspaceNoteSaveRequest) (shared.WorkspaceNoteSaveResponse, error) {
 
@@ -71,7 +62,8 @@ func (a *adapterPrzestrzeniRoboczej) ZapiszNotatke(ctx context.Context,
 	}, nil
 }
 
-// Notatka obsługuje `workspace.note.get`.
+// Notatka obsługuje `workspace.note.get`: oddaje jedną stronę wiki wraz z jej
+// nagłówkami i ścieżką w drzewie stron projektu.
 func (a *adapterPrzestrzeniRoboczej) Notatka(ctx context.Context,
 	z shared.WorkspaceNoteGetRequest) (shared.WorkspaceNoteGetResponse, error) {
 
@@ -86,7 +78,8 @@ func (a *adapterPrzestrzeniRoboczej) Notatka(ctx context.Context,
 	return shared.WorkspaceNoteGetResponse{Note: notatkaKontraktuWorkspace(notatka, rodzenstwo)}, nil
 }
 
-// Notatki obsługuje `workspace.note.list`.
+// Notatki obsługuje `workspace.note.list`: wykazuje strony wiki projektu bez
+// pełnej treści, do zbudowania listy albo panelu nawigacji.
 func (a *adapterPrzestrzeniRoboczej) Notatki(ctx context.Context,
 	z shared.WorkspaceNoteListRequest) (shared.WorkspaceNoteListResponse, error) {
 
@@ -166,7 +159,8 @@ func (a *adapterPrzestrzeniRoboczej) UsunNotatke(ctx context.Context,
 	}, nil
 }
 
-// DrzewoNotatek obsługuje `workspace.note.tree.get`.
+// DrzewoNotatek obsługuje `workspace.note.tree.get`: składa strony wiki
+// projektu w drzewo według relacji strona nadrzędna i strona podrzędna.
 func (a *adapterPrzestrzeniRoboczej) DrzewoNotatek(ctx context.Context,
 	z shared.WorkspaceNoteTreeGetRequest) (shared.WorkspaceNoteTreeGetResponse, error) {
 
@@ -185,8 +179,8 @@ func (a *adapterPrzestrzeniRoboczej) DrzewoNotatek(ctx context.Context,
 	}
 	for _, notatka := range notatki {
 		rodzic := notatka.NotatkaNadrzedna
-		// Strona wskazująca rodzica, którego już nie ma, wchodzi do korzenia —
-		// gałąź osierocona ma być widoczna, a nie zniknąć z drzewa.
+		// Strona bez istniejącego rodzica wchodzi do korzenia, gałąź osierocona
+		// pozostaje widoczna.
 		if rodzic != "" && !znane[rodzic] {
 			rodzic = ""
 		}
@@ -214,7 +208,8 @@ func (a *adapterPrzestrzeniRoboczej) DrzewoNotatek(ctx context.Context,
 	return shared.WorkspaceNoteTreeGetResponse{Nodes: wezly}, nil
 }
 
-// OdnosnikiWsteczne obsługuje `workspace.note.backlink.list`.
+// OdnosnikiWsteczne obsługuje `workspace.note.backlink.list`: wykazuje strony
+// wskazujące daną stronę odnośnikiem, wraz z fragmentem treści wokół odnośnika.
 func (a *adapterPrzestrzeniRoboczej) OdnosnikiWsteczne(ctx context.Context,
 	z shared.WorkspaceNoteBacklinkListRequest) (shared.WorkspaceNoteBacklinkListResponse, error) {
 
@@ -263,7 +258,8 @@ func (a *adapterPrzestrzeniRoboczej) OdnosnikiWsteczne(ctx context.Context,
 	}, nil
 }
 
-// notatkaWskazanaWorkspace odnajduje notatkę wskazaną żądaniem.
+// notatkaWskazanaWorkspace odnajduje notatkę wskazaną żądaniem, zgłaszając
+// odmowę, gdy identyfikator nie wskazuje istniejącej strony projektu.
 func (a *adapterPrzestrzeniRoboczej) notatkaWskazanaWorkspace(ctx context.Context,
 	identyfikator string) (dane.NotatkaWorkspace, error) {
 
@@ -278,7 +274,8 @@ func (a *adapterPrzestrzeniRoboczej) notatkaWskazanaWorkspace(ctx context.Contex
 	return notatka, err
 }
 
-// podrzedneNotatkiWorkspace zbiera poddrzewo stron podrzędnych.
+// podrzedneNotatkiWorkspace zbiera poddrzewo stron podrzędnych wskazanej
+// strony, przechodząc rekurencyjnie kolejne poziomy relacji rodzic i dziecko.
 func podrzedneNotatkiWorkspace(wszystkie []dane.NotatkaWorkspace, korzen string) []string {
 	podrzedne := []string{}
 	kolejka := []string{korzen}
@@ -417,7 +414,8 @@ func notatkaKontraktuWorkspace(n dane.NotatkaWorkspace,
 	return notatka
 }
 
-// sciezkaStronyWorkspace składa ścieżkę strony z tytułów jej przodków.
+// sciezkaStronyWorkspace składa ścieżkę strony z tytułów jej przodków, od
+// korzenia drzewa stron do samej strony.
 func sciezkaStronyWorkspace(n dane.NotatkaWorkspace, wszystkie []dane.NotatkaWorkspace) string {
 	wedlugKodu := map[string]dane.NotatkaWorkspace{}
 	for _, notatka := range wszystkie {

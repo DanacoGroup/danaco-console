@@ -1,15 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — MODUŁ ROUNDTABLE, PRZEBIEG DEBATY I STANOWISKO
-   ----------------------------------------------------------------------------
-   Drugi arkusz modułu obok `roundtable.css`. Podział idzie po oknach: tutaj
-   leżą dwa okna czytające przebieg debaty — Debate Panel (wypowiedzi
-   narastające w turze) i Consensus Panel (stanowisko końcowe) — a
-   w `roundtable.css` zostaje rozkład modułu, stany obowiązkowe, wykaz pozycji
-   i skład debaty (Model Panels, Moderator Panel).
-
-   Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu (`--dn-*`)
-   i z biblioteki `komponenty/`.
-   ============================================================================ */
+/* Arkusz zawiera dwa okna modułu Roundtable czytające przebieg debaty: panel przebiegu z wypowiedziami narastającymi w turze oraz panel stanowiska końcowego. */
 
 /* ── Przebieg debaty (Debate Panel) ───────────────────────────────────────── */
 
@@ -36,7 +25,8 @@
   overflow: auto;
 }
 
-/* Spis głosów tury — ilu mówców i ile od każdego, nad samym wykazem. */
+/* Spis głosów tury — ilu mówców i ile od każdego,
+   umieszczony nad samym wykazem wypowiedzi. */
 .dr-glosy-tury {
   margin: 0;
   font-size: var(--dn-fs-sm);

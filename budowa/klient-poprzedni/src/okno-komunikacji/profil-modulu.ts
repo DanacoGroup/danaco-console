@@ -1,21 +1,10 @@
 /**
- * Profil modułu — to, czym okno komunikacji różni się w każdym z 15 modułów.
- *
- * Chat Window jest jedynym oknem występującym we wszystkich modułach i przy
- * każdej zmianie modułu przestawia wygląd, możliwości, dostępne narzędzia
- * i kontekst. Profil niesie to, co się przestawia; historia wątku do profilu
- * nie należy, bo przy zmianie modułu zostaje nietknięta.
- *
- * Narzędzie paska promptu nie jest osobną komendą kontraktu — jest gotowym
- * poleceniem wstawianym do pola wypowiedzi, które model wykonuje wywołaniem
- * narzędzia platformy. Dzięki temu pasek nie zawiera ani jednego
- * przycisku bez działania: każda pozycja czymś kończy — treścią
- * w polu wypowiedzi, którą Operator zatwierdza albo poprawia.
+ * Profil modułu niesie to, czym okno komunikacji różni się w każdym module: wygląd, możliwości, narzędzia i kontekst, przestawiane przy zmianie modułu bez dotykania historii wątku rozmowy.
  */
 
 import { LICZBA_MAX } from '../okna-rownolegle/identyfikatory';
 
-/** Pojedyncza pozycja paska narzędzi promptu. */
+/** Pojedyncza pozycja paska narzędzi promptu, niosąca kod, etykietę, podpowiedź oraz treść wstawianą do pola wypowiedzi operatora. */
 export interface NarzedziePromptu {
   /** Kod pozycji; przedrostkiem jest kod modułu albo `wspolne`. */
   kod: string;
@@ -28,68 +17,37 @@ export interface NarzedziePromptu {
 }
 
 /**
- * Postać, w jakiej moduł prowadzi rozmowę.
- *
- * - `okno` — zwykłe okno czatu; większość modułów.
- * - `dymek-glosowy` — pływający awatar z oknem dymkowym, głos przed tekstem;
- *   dziś wyłącznie Assistant („Okno komunikacji: NIE. Zamiast niego: pływający
- *   awatar, okno dymkowe, komunikacja głosowa, komunikacja tekstowa").
- * - `brak` — moduł nie prowadzi rozmowy w ogóle; dziś wyłącznie Library
- *   („To nie jest środowisko pracy z AI, tylko menedżer zasobów").
- *
- * `brak` nie znaczy „pusto". Okno, które trafi na moduł bez rozmowy, ma
- * powiedzieć to Operatorowi wprost i pokazać, czym ten moduł jest zamiast
- * czatu — pusta lista czyta się jak „nic tu nie ma" i jest błędem.
+ * Postać, w jakiej moduł prowadzi rozmowę — zwykłe okno czatu, pływający awatar z dymkiem głosowym, albo brak rozmowy, gdy moduł nią nie dysponuje.
  */
 export type PostacRozmowy = 'okno' | 'dymek-glosowy' | 'brak';
 
 /**
- * Granica okien równoległych jednego modułu.
- *
- * Zawęża sufit platformy `okna-rownolegle/identyfikatory.ts` → `LICZBA_MAX`,
- * nigdy go nie rozszerza. Sufit zostaje twardy i obowiązuje niezależnie od
- * profilu; granica modułu mówi tylko, ile z niego moduł wykorzystuje.
+ * Granica okien równoległych jednego modułu zawęża sufit platformy, nigdy go nie rozszerza, bo sufit pozostaje twardy niezależnie od profilu.
  */
 export type GranicaOkien = 1 | 2 | 4;
 
-/** Granice dopuszczalne, rosnąco — jedyne wartości `GranicaOkien`. */
+/** Granice dopuszczalne, rosnąco — jedyne wartości, jakie może przyjąć pole granicy okien równoległych modułu. */
 export const GRANICE: readonly GranicaOkien[] = [1, 2, 4];
 
 /**
- * Granica modułu, dla którego liczby okien nie ustalono.
- *
- * Ustalona jest dla: Apps (4), MultitaskingAI (4), Developer (do 4),
- * Automations (2), Translate (2), Agents (1), Assistant (1 dymek). Browser,
- * Research, Roundtable, Workspace, Design i Studio dostają pełny sufit
- * platformy. Ta stała istnieje po to, żeby domysł nie udawał decyzji: gdzie
- * stoi `GRANICA_NIEPODANA`, tam nikt liczby nie ustalił.
+ * Granica modułu, dla którego liczby okien nie ustalono, istnieje po to, żeby domysł nie udawał podjętej decyzji o limicie.
  */
 export const GRANICA_NIEPODANA: GranicaOkien = 4;
 
-/** Właściwości rozmowy w module — bez pasków i narzędzi. */
+/** Właściwości rozmowy w module, obejmujące postać rozmowy, granicę okien i trwałość wątku, bez pasków i narzędzi. */
 export interface PostacModulu {
   /** Czy i w jakiej postaci moduł prowadzi rozmowę. */
   postacRozmowy: PostacRozmowy;
   /** Ile okien równoległych moduł wykorzystuje; nigdy ponad `LICZBA_MAX`. */
   granicaOkien: GranicaOkien;
-  /**
-   * Czy rozmowa przeżywa zamknięcie okna.
-   *
-   * Agents ma tu `false`: czat jest roboczy i testowy, ginie przy zamknięciu
-   * okna i przy zmianie testowanego agenta („To nie jest pełnoprawna sesja").
-   */
+  /** Rozmowa Agents nie przeżywa zamknięcia okna — ginie przy zmianie testowanego agenta. */
   pamiecSesyjna: boolean;
-  /**
-   * Okna towarzyszące, bez których moduł nie jest sobą — podzbiór
-   * `oknaKontekstu`. Reszta `oknaKontekstu` to okna możliwe.
-   */
+  /** Okna towarzyszące obowiązkowe są podzbiorem okien kontekstu; reszta okien kontekstu to okna możliwe. */
   oknaObowiazkowe?: readonly string[];
 }
 
 /**
- * Postać stanu zastanego: zwykłe okno, pełny sufit platformy, pamięć jest.
- *
- * Dostaje ją profil, który postaci nie podał, oraz moduł spoza rejestru.
+ * Postać stanu zastanego dla profilu bez własnej postaci: zwykłe okno, pełny sufit platformy, pamięć rozmowy zachowana.
  */
 export const POSTAC_DOMYSLNA: PostacModulu = {
   postacRozmowy: 'okno',
@@ -98,7 +56,7 @@ export const POSTAC_DOMYSLNA: PostacModulu = {
   oknaObowiazkowe: [],
 };
 
-/** Zestaw właściwości okna komunikacji w jednym module. */
+/** Zestaw właściwości okna komunikacji w jednym module, obejmujący nazwę, przeznaczenie, pasek narzędzi i okna operacyjne. */
 export interface ProfilModulu {
   /** Kod modułu; odpowiednik kolumny `modul.kod` i pola `moduleId` kontraktu. */
   kod: string;
@@ -121,9 +79,7 @@ export interface ProfilModulu {
 }
 
 /**
- * Największa granica mieszcząca się jednocześnie w żądaniu modułu i w suficie
- * platformy. Sufit zawęża; podniesienia granicy ponad `LICZBA_MAX` nie ma jak
- * wyrazić, bo wynik zawsze pochodzi z `GRANICE`.
+ * Największa granica mieszcząca się jednocześnie w żądaniu modułu i w suficie platformy, bo sufit zawęża i nigdy go nie podnosi.
  */
 export function granicaWSuficie(zadana: GranicaOkien): GranicaOkien {
   const mieszczace = GRANICE.filter((g) => g <= zadana && g <= LICZBA_MAX);
@@ -131,17 +87,13 @@ export function granicaWSuficie(zadana: GranicaOkien): GranicaOkien {
 }
 
 /**
- * Ile okien rozmowy Operator może otworzyć w tym module.
- *
- * Zero dla modułu bez rozmowy — i to jest odpowiedź, nie brak odpowiedzi.
- * Kto pyta o liczbę okien, pyta tą funkcją, a nie polem `granicaOkien`:
- * pole niesie granicę, funkcja niesie prawo do otwarcia.
+ * Ile okien rozmowy operator może otworzyć w tym module — zero dla modułu bez rozmowy jest odpowiedzią, nie brakiem odpowiedzi.
  */
 export function liczbaOkienRozmowy(p: ProfilModulu): number {
   return p.postacRozmowy === 'brak' ? 0 : p.granicaOkien;
 }
 
-/** Pozycja paska narzędzi promptu. */
+/** Pozycja paska narzędzi promptu złożona z pól profilu modułu, gotowa do narysowania w interfejsie okna. */
 export function narzedzie(
   kod: string,
   nazwa: string,
@@ -152,11 +104,7 @@ export function narzedzie(
 }
 
 /**
- * Arsenał wspólny Chat Window — pozycje obecne w każdym module.
- *
- * Trzy pozycje, trzy komendy kontraktu, które wywoła model: `action.list`,
- * `window.state.get`, `context.transfer`. Moduł nierozpoznany dostaje sam ten
- * arsenał, więc pasek nigdy nie jest pusty.
+ * Arsenał wspólny Chat Window to trzy pozycje obecne w każdym module, dostępne nawet modułowi nierozpoznanemu przez rejestr.
  */
 export const NARZEDZIA_WSPOLNE: readonly NarzedziePromptu[] = [
   narzedzie(
@@ -181,11 +129,7 @@ export const NARZEDZIA_WSPOLNE: readonly NarzedziePromptu[] = [
 ];
 
 /**
- * Profil modułu wraz z dołączonym arsenałem wspólnym.
- *
- * `postac` pominięta znaczy „postaci tego modułu nie ustalono" — profil dostaje
- * wtedy `POSTAC_DOMYSLNA`. Okna obowiązkowe spoza `oknaKontekstu` są odrzucane:
- * profil nie może wymagać okna, którego sam nie wymienia.
+ * Profil modułu wraz z dołączonym arsenałem wspólnym, gdzie pominięta postać rozmowy dostaje wartość domyślną.
  */
 export function profil(
   kod: string,

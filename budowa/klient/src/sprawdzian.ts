@@ -1,29 +1,22 @@
 /**
- * Bieg sprawdzianów klienta.
- *
- * Klient nie ma zależności zewnętrznych, a wbudowany biegacz `node:test` nie da
- * się przy tym użyć: jego deklaracje typów mieszkają w pakiecie `@types/node`,
- * którego nowy klient nie zaciąga, więc `tsc --noEmit` odmówiłby każdemu
- * plikowi sprawdzianu. Bieg poniżej korzysta wyłącznie z tego, co daje samo
- * środowisko uruchomieniowe.
- *
- * Zbiór pusty jest tu niepowodzeniem, nie wynikiem: sprawdzian, który niczego
- * nie zmierzył, milczałby dokładnie tak samo jak sprawdzian zdany.
+ * Bieg sprawdzianów klienta. Klient nie ma zależności zewnętrznych, a wbudowany
+ * biegacz `node:test` nie da się użyć, więc bieg poniżej korzysta wyłącznie
+ * z tego, co daje samo środowisko uruchomieniowe.
  */
 
-/** Przerywa sprawdzian, gdy warunek nie zachodzi. */
+/** Przerywa sprawdzian, gdy warunek nie zachodzi, zgłaszając wyjątek z podanym opisem niepowodzenia sprawdzianu. */
 export function sprawdz(warunek: boolean, opis: string): void {
   if (!warunek) throw new Error(opis);
 }
 
-/** Przerywa sprawdzian, gdy wartości różnią się zapisem JSON. */
+/** Przerywa sprawdzian, gdy wartości różnią się zapisem JSON, nazywając w komunikacie obie porównywane strony. */
 export function rowne(otrzymane: unknown, oczekiwane: unknown, opis: string): void {
   const a = JSON.stringify(otrzymane);
   const b = JSON.stringify(oczekiwane);
   if (a !== b) throw new Error(`${opis}: otrzymano ${a}, oczekiwano ${b}`);
 }
 
-/** Czeka, aż zaplanowane wywołania zwrotne zdążą się wykonać. */
+/** Czeka, aż zaplanowane wywołania zwrotne zdążą się wykonać, ustępując na wskazany czas w milisekundach. */
 export function poOdstepie(ms = 0): Promise<void> {
   return new Promise((rozstrzygnij) => setTimeout(rozstrzygnij, ms));
 }

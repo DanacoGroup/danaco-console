@@ -1,31 +1,7 @@
-// Odpowiedzialność pliku: nastawy strony i sekcje dokumentu — format nośnika
-// i orientacja (także dla pojedynczej sekcji), marginesy wraz z marginesem na
-// oprawę i marginesami odbicia, kolumny, nagłówek i stopka OSOBNO dla sekcji,
-// pierwszej strony i stron parzystych, numeracja stron, znak wodny, podziały
+// Nastawy strony i sekcje dokumentu: format nośnika, orientacja, marginesy,
+// kolumny, nagłówek i stopka, numeracja stron, znak wodny, podziały
 // wstawiane w treść, nadruk koperty, wykaz formatów nośnika oraz tabulatory
-// zakładane na linijce.
-//
-// ── Skąd bierze się skutek na dokumencie ─────────────────────────────────────
-// Każda czynność tego pliku idzie jedną drogą obszaru postaci: `postacWczytaj`,
-// zmiana postaci, `postacZakoncz`. Dzięki temu zmiana śledzona autora `model`
-// i wpis odwracalnego dziennika odkładają się SAME, tą samą drogą co zmiana
-// kroju czy wcięcia. Wymaganie Właściciela jest tu wprost: model, który
-// przestawił nośnik załącznika na poziomą A3, ma być widoczny w podświetleniu
-// zmian modelu tak samo jak model, który dopisał akapit.
-//
-// Rodzaj czynności dziennika jest dla całego tego pliku jeden —
-// `StudioActionKindPageChange` — bo Operator cofa „zmianę strony", a nie
-// „formatowanie". Rodzaj zmiany śledzonej jest osobnym słownikiem i idzie
-// osobnym polem; wstawienie podziału jest wstawieniem, wszystko inne
-// formatowaniem.
-//
-// ── Dlaczego nastawy sekcji nie kopiują nastaw dokumentu ─────────────────────
-// Sekcja bez własnych nastaw dziedziczy nastawy dokumentu — jej pole nastaw
-// zostaje puste. Skopiowanie nastaw dokumentu do każdej sekcji przy zakładaniu
-// dałoby dokument, w którym zmiana nośnika „dla całości" nie rusza ani jednej
-// strony, bo każda sekcja trzyma własną kopię sprzed zmiany. Dlatego nastawa
-// skuteczna liczy się przy odczycie: nastawy sekcji nałożone na nastawy
-// dokumentu.
+// linijki.
 package core
 
 import (
@@ -39,12 +15,9 @@ import (
 
 // ── Nastawy strony ──────────────────────────────────────────────────────────
 
-// NastawyStrony oddaje nastawy strony dokumentu albo sekcji
-// (`studio.page.setup.get`).
-//
-// Nastawy sekcji wychodzą już NAŁOŻONE na nastawy dokumentu, bo o to Operator
-// pyta: chce wiedzieć, na jakim nośniku wyjdzie załącznik, a nie które pola
-// sekcja nadpisuje.
+// NastawyStrony oddaje nastawy strony dokumentu albo sekcji — obsługuje
+// studio.page.setup.get. Nastawy sekcji wychodzą już nałożone na nastawy
+// dokumentu, bo Operator pyta o nośnik załącznika, nie o pola nadpisane.
 func (a *adapterStudia) NastawyStrony(ctx context.Context,
 	z shared.StudioPageSetupGetRequest) (shared.StudioPageSetupGetResponse, error) {
 
@@ -87,7 +60,7 @@ func stronaNastawySkuteczne(dokumentu, sekcji *shared.StudioPageSetup) shared.St
 	if sekcji.PageSize != nil {
 		wynik.PageSize = sekcji.PageSize
 		// Nazwa nośnika sekcji unieważnia wymiar własny odziedziczony po
-		// dokumencie — inaczej sekcja twierdziłaby, że jest A3 o wymiarach A4.
+		// dokumencie.
 		wynik.WidthMm, wynik.HeightMm = sekcji.WidthMm, sekcji.HeightMm
 	}
 	if sekcji.WidthMm != nil {
@@ -138,13 +111,9 @@ func stronaNastawySkuteczne(dokumentu, sekcji *shared.StudioPageSetup) shared.St
 	return wynik
 }
 
-// UstawNastawyStrony przestawia nośnik, orientację, marginesy i kolumny —
-// dokumentu albo pojedynczej sekcji (`studio.page.setup.set`).
-//
-// Pismo z załącznikiem w orientacji poziomej zostaje JEDNYM dokumentem: sekcja
-// dostaje własny nośnik, a reszta pisma zostaje bez zmian. Zmiana nośnika
-// przelicza układ i oddaje bilans tego, co się nie zmieściło — tabela szersza
-// niż nowa kolumna tekstu wraca nazwana, a nie obcięta w ciszy.
+// UstawNastawyStrony przestawia nośnik, orientację, marginesy i kolumny
+// dokumentu albo pojedynczej sekcji — obsługuje studio.page.setup.set i
+// oddaje bilans tego, co się nie zmieściło po zmianie nośnika.
 func (a *adapterStudia) UstawNastawyStrony(ctx context.Context,
 	z shared.StudioPageSetupSetRequest) (shared.StudioPageSetupSetResponse, error) {
 
@@ -174,8 +143,8 @@ func (a *adapterStudia) UstawNastawyStrony(ctx context.Context,
 				"nośnika, orientacji, marginesów ani kolumn")
 	}
 
-	// Bilans liczy się na nastawie SKUTECZNEJ, bo to ona rozstrzyga, ile miejsca
-	// treść naprawdę dostanie.
+	// Bilans liczy się na nastawie skutecznej, bo to ona rozstrzyga, ile
+	// miejsca treść dostanie.
 	skuteczne := nastawy
 	if naSekcji {
 		skuteczne = stronaNastawySkuteczne(stan.forma.PageSetup, &nastawy)
@@ -213,8 +182,9 @@ func (a *adapterStudia) UstawNastawyStrony(ctx context.Context,
 	}, nil
 }
 
-// stronaOpisNosnika opisuje nośnik zdaniem, które Operator czyta bez zaglądania
-// do pola po polu.
+// stronaOpisNosnika opisuje nośnik zdaniem, które Operator czyta bez
+// zaglądania do pola po polu, składając nazwę, kierunek, wymiary i
+// szerokość kolumny tekstu.
 func stronaOpisNosnika(nastawy *shared.StudioPageSetup) string {
 	nazwa := "własny"
 	if nastawy != nil && nastawy.PageSize != nil && strings.TrimSpace(*nastawy.PageSize) != "" {
@@ -230,14 +200,10 @@ func stronaOpisNosnika(nastawy *shared.StudioPageSetup) string {
 		stronaZapisMiary(stronaSzerokoscUzytkowa(nastawy)) + " mm"
 }
 
-// NosnikiStrony oddaje wykaz formatów nośnika (`studio.page.paper.list`).
-//
-// Wykaz jedzie ze WSPÓLNEGO miejsca rdzenia (`wykazNosnikowDruku`
-// w `nosniki_druku_wspolne.go`) — tego samego, z którego ma go brać wykaz
-// Designu. Koperty C4, C5 i C6 stoją w nim wraz z resztą, więc Studio nie
-// dokłada już niczego od siebie. Zawężenie rodzajem, którego w wykazie nie ma,
-// jest odmową nazwaną — pusty wykaz z odpowiedzią „ok" znaczyłby dla okna „nie
-// ma czego wybrać".
+// NosnikiStrony oddaje wykaz formatów nośnika — obsługuje
+// studio.page.paper.list, czerpiąc ze wspólnego miejsca rdzenia, z którego
+// bierze go też wykaz Designu. Zawężenie rodzajem nieznanym jest odmową
+// nazwaną.
 func (a *adapterStudia) NosnikiStrony(_ context.Context,
 	z shared.StudioPagePaperListRequest) (shared.StudioPagePaperListResponse, error) {
 
@@ -279,8 +245,9 @@ func (a *adapterStudia) NosnikiStrony(_ context.Context,
 
 // ── Nagłówek, stopka, numeracja, znak wodny ─────────────────────────────────
 
-// NaglowkiIStopki oddaje nagłówki i stopki wedle zasięgu
-// (`studio.page.headerfooter.get`).
+// NaglowkiIStopki oddaje nagłówki i stopki wedle zasięgu — obsługuje
+// studio.page.headerfooter.get, czytając je z sekcji wskazanej albo z
+// sekcji pierwszej dokumentu.
 func (a *adapterStudia) NaglowkiIStopki(ctx context.Context,
 	z shared.StudioPageHeaderfooterGetRequest) (shared.StudioPageHeaderfooterGetResponse, error) {
 
@@ -303,9 +270,8 @@ func (a *adapterStudia) NaglowkiIStopki(ctx context.Context,
 		})
 		wykaz = stan.forma.Sections[0].HeadersFooters
 	}
-	// Dokument sprzed tej dobudowy trzyma nagłówek w jednym polu nastaw strony.
-	// Pominięcie go znaczyłoby, że nagłówek Operatora znika z okna, choć stoi
-	// w bazie.
+	// Dokument sprzed tej dobudowy trzyma nagłówek w jednym polu nastaw
+	// strony.
 	if len(wykaz) == 0 {
 		wykaz = stronaNaglowkiZNastaw(stan.forma.PageSetup)
 	}
@@ -315,12 +281,9 @@ func (a *adapterStudia) NaglowkiIStopki(ctx context.Context,
 	return shared.StudioPageHeaderfooterGetResponse{HeadersFooters: wykaz}, nil
 }
 
-// UstawNaglowekIStopke ustawia nagłówek i stopkę zasięgu
-// (`studio.page.headerfooter.set`).
-//
-// Zasięg jest tu rzeczą rozstrzygającą: strony zwykłe, pierwsza strona i strony
-// parzyste są TRZEMA osobnymi nagłówkami jednej sekcji. Jedno pole na cały
-// dokument jest właśnie tym brakiem, który to zlecenie każe usunąć.
+// UstawNaglowekIStopke ustawia nagłówek i stopkę zasięgu — obsługuje
+// studio.page.headerfooter.set. Strony zwykłe, pierwsza strona i strony
+// parzyste są trzema osobnymi nagłówkami jednej sekcji.
 func (a *adapterStudia) UstawNaglowekIStopke(ctx context.Context,
 	z shared.StudioPageHeaderfooterSetRequest) (shared.StudioPageHeaderfooterSetResponse, error) {
 
@@ -372,7 +335,9 @@ func (a *adapterStudia) UstawNaglowekIStopke(ctx context.Context,
 	}, nil
 }
 
-// UstawNumeracjeStron ustawia numerację stron (`studio.page.numbering.set`).
+// UstawNumeracjeStron ustawia numerację stron sekcji — obsługuje
+// studio.page.numbering.set i przenosi przełącznik numeracji do nastaw
+// strony na potrzeby podglądu wydruku.
 func (a *adapterStudia) UstawNumeracjeStron(ctx context.Context,
 	z shared.StudioPageNumberingSetRequest) (shared.StudioPageNumberingSetResponse, error) {
 
@@ -393,9 +358,8 @@ func (a *adapterStudia) UstawNumeracjeStron(ctx context.Context,
 	if err := a.stronaZapiszSekcje(ctx, stan.dokument.ID, *sekcja); err != nil {
 		return shared.StudioPageNumberingSetResponse{}, err
 	}
-	// Nastawy strony niosą przełącznik numeracji od dawna i podgląd wydruku go
-	// czyta. Rozjazd między nim a numeracją sekcji dałby podgląd bez numerów przy
-	// numeracji włączonej, więc idą razem.
+	// Przełącznik numeracji w nastawach strony idzie razem z numeracją
+	// sekcji.
 	if stan.forma.PageSetup == nil {
 		stan.forma.PageSetup = postacNastawyDomyslne()
 	}
@@ -419,8 +383,9 @@ func (a *adapterStudia) UstawNumeracjeStron(ctx context.Context,
 	}, nil
 }
 
-// UstawZnakWodny ustawia znak wodny dokumentu albo sekcji
-// (`studio.page.watermark.set`).
+// UstawZnakWodny ustawia znak wodny dokumentu albo sekcji — obsługuje
+// studio.page.watermark.set, zapisując go w nastawach sekcji wskazanej
+// żądaniem.
 func (a *adapterStudia) UstawZnakWodny(ctx context.Context,
 	z shared.StudioPageWatermarkSetRequest) (shared.StudioPageWatermarkSetResponse, error) {
 
@@ -459,12 +424,10 @@ func (a *adapterStudia) UstawZnakWodny(ctx context.Context,
 	}, nil
 }
 
-// UstawNadrukKoperty ustawia nadruk koperty (`studio.page.envelope.set`).
-//
-// Koperta bez nastaw adresata i nadawcy jest samym rozmiarem, nie funkcją — tak
-// stanowi zlecenie. Nadruk na nośniku niekopertowym wraca odmową nazwaną: adres
-// nadrukowany na arkuszu A4 nie jest kopertą i cicha zgoda na to zostawiłaby
-// Operatora z pismem, w którym adresat stoi w środku strony.
+// UstawNadrukKoperty ustawia nadruk koperty — obsługuje
+// studio.page.envelope.set. Nadruk na nośniku niekopertowym wraca odmową
+// nazwaną, a koperta bez nastaw adresata i nadawcy jest samym rozmiarem,
+// nie funkcją.
 func (a *adapterStudia) UstawNadrukKoperty(ctx context.Context,
 	z shared.StudioPageEnvelopeSetRequest) (shared.StudioPageEnvelopeSetResponse, error) {
 
@@ -543,8 +506,7 @@ func (a *adapterStudia) UstawNadrukKoperty(ctx context.Context,
 	}
 
 	// Położenie niepodane dostaje nastawę z normy: adresat w prawej dolnej
-	// ćwiartce, nadawca w lewym górnym narożniku. Koperta bez położenia byłaby
-	// nadrukiem w punkcie zero, czyli na samej krawędzi.
+	// ćwiartce.
 	szerokosc, wysokosc := stronaWymiary(&skuteczne)
 	if koperta.RecipientXMm == nil {
 		koperta.RecipientXMm = postacWskaznikMiary(szerokosc * 0.45)
@@ -601,18 +563,10 @@ func (a *adapterStudia) UstawNadrukKoperty(ctx context.Context,
 
 // ── Podział wstawiany w treść ───────────────────────────────────────────────
 
-// WstawPodzial wstawia podział strony, kolumny, sekcji albo wiersza
-// (`studio.page.break.insert`).
-//
-// Podział jest BLOKIEM NIETEKSTOWYM: nie zajmuje ani jednego znaku treści, więc
-// jego wstawienie nie przesuwa żadnego zaznaczenia ani zakotwiczenia. Podział
-// wypadający w środku akapitu rozdziela ten akapit na dwa — i dopiero to
-// rozdzielenie dokłada jeden znak podziału wiersza, o który przesuwa się
-// wszystko, co za nim wisi.
-//
-// Podział sekcji zakłada NOWĄ sekcję od miejsca podziału do końca dokumentu
-// i skraca sekcję poprzednią. Bez tego „podział sekcji" byłby kreską w treści,
-// za którą nic się nie zmienia — a sensem sekcji są jej własne nastawy.
+// WstawPodzial wstawia podział strony, kolumny, sekcji albo wiersza —
+// obsługuje studio.page.break.insert. Podział jest blokiem nietekstowym;
+// podział sekcji zakłada nową sekcję od miejsca podziału do końca
+// dokumentu.
 func (a *adapterStudia) WstawPodzial(ctx context.Context,
 	z shared.StudioPageBreakInsertRequest) (shared.StudioPageBreakInsertResponse, error) {
 
@@ -640,8 +594,8 @@ func (a *adapterStudia) WstawPodzial(ctx context.Context,
 	dlugosc := postacDlugosc(&stan.forma)
 	miejsce, _ := postacZakres(&z.Offset, &z.Offset, dlugosc)
 
-	// Blokada obowiązuje także tu: podział wstawiony w środek cytatu pod blokadą
-	// rozerwałby fragment, który ma zostać dosłownie.
+	// Blokada obowiązuje także tu: podział pod blokadą rozerwałby chroniony
+	// fragment.
 	if blokady := postacBlokadyZakresu(&stan.forma, miejsce, miejsce); len(blokady) > 0 {
 		for _, blokada := range blokady {
 			if blokada.Scope == shared.StudioLockScopeEveryone || autor == shared.StudioAuthorModel {
@@ -694,13 +648,9 @@ func (a *adapterStudia) WstawPodzial(ctx context.Context,
 	}, nil
 }
 
-// stronaRozdzielAkapit rozdziela akapit w miejscu podziału i oddaje wskazanie
-// bloku, PRZED którym podział ma stanąć, oraz różnicę długości treści.
-//
-// Podział na granicy akapitu niczego nie rozdziela i różnica jest zerowa.
-// Podział w środku akapitu rozdziela go na dwa, co dokłada jeden znak podziału
-// wiersza — i ten jeden znak trzeba potem uwzględnić w zakotwiczeniach, inaczej
-// przypis za podziałem wskazywałby o literę wcześniej.
+// stronaRozdzielAkapit rozdziela akapit w miejscu podziału i oddaje
+// wskazanie bloku, przed którym podział ma stanąć, oraz różnicę długości
+// treści; podział na granicy akapitu niczego nie rozdziela.
 func stronaRozdzielAkapit(forma *shared.StudioDocumentForm, miejsce int) (int, int) {
 	postacRozetnij(forma, miejsce)
 	for i := range forma.Blocks {
@@ -725,8 +675,7 @@ func stronaRozdzielAkapit(forma *shared.StudioDocumentForm, miejsce int) (int, i
 			return i + 1, 0
 		}
 		// Rozdzielenie: fragmenty do miejsca zostają, dalsze idą do bloku
-		// nowego. Postać akapitu jedzie KOPIĄ — dwa akapity na jednej strukturze
-		// znaczyłyby, że wcięcie jednego zmienia drugi.
+		// nowego, kopią.
 		zostaja := make([]shared.StudioDocumentRun, 0, len(blok.Runs))
 		dalsze := make([]shared.StudioDocumentRun, 0, len(blok.Runs))
 		for _, run := range blok.Runs {
@@ -818,8 +767,7 @@ func (a *adapterStudia) stronaPodzielSekcje(ctx context.Context, stan *stanPosta
 	if err := a.stronaZapiszSekcje(ctx, stan.dokument.ID, *poprzednia); err != nil {
 		return "", err
 	}
-	// Sekcje stojące za miejscem podziału przesuwają się o jedno oczko, żeby
-	// kolejność w wykazie nie miała dwóch pozycji o tym samym numerze.
+	// Sekcje za miejscem podziału przesuwają się o jedno oczko numeracji.
 	for i := range stan.forma.Sections {
 		sekcja := &stan.forma.Sections[i]
 		if sekcja.Id == poprzednia.Id || sekcja.Index < nowa.Index {
@@ -841,13 +789,9 @@ func (a *adapterStudia) stronaPodzielSekcje(ctx context.Context, stan *stanPosta
 
 // ── Sekcje ──────────────────────────────────────────────────────────────────
 
-// SekcjeDokumentu oddaje sekcje wraz z nastawami, nagłówkami i numeracją
-// (`studio.section.list`).
-//
-// Dokument bez ani jednej sekcji zapisanej oddaje sekcję jedną, obejmującą całą
-// treść — bo taki dokument JEST jedną sekcją, a pusty wykaz kazałby oknu
-// twierdzić, że dokument nie ma strony. Sekcja ta nie jest przy tym zakładana
-// w bazie: odczyt nie ma prawa zapisywać.
+// SekcjeDokumentu oddaje sekcje wraz z nastawami, nagłówkami i numeracją —
+// obsługuje studio.section.list. Dokument bez ani jednej sekcji zapisanej
+// oddaje sekcję jedną, obejmującą całą treść, bez zakładania jej w bazie.
 func (a *adapterStudia) SekcjeDokumentu(ctx context.Context,
 	z shared.StudioSectionListRequest) (shared.StudioSectionListResponse, error) {
 
@@ -1029,12 +973,9 @@ func postacWskaznikNastaw(nastawy shared.StudioPageSetup) *shared.StudioPageSetu
 	return &kopia
 }
 
-// UsunSekcjeDokumentu usuwa sekcję (`studio.section.delete`).
-//
-// Treść sekcji NIE GINIE: przechodzi do sekcji poprzedniej wraz z jej nastawami,
-// tak jak mówi kontrakt tej komendy. Usunięcie sekcji jedynej jest odmową
-// nazwaną — dokument bez ani jednej sekcji nie miałby gdzie trzymać nagłówka
-// ani nośnika, a odmowa cicha zostawiłaby Operatora z pismem bez strony.
+// UsunSekcjeDokumentu usuwa sekcję — obsługuje studio.section.delete.
+// Treść sekcji nie ginie: przechodzi do sekcji poprzedniej wraz z jej
+// nastawami. Usunięcie sekcji jedynej jest odmową nazwaną.
 func (a *adapterStudia) UsunSekcjeDokumentu(ctx context.Context,
 	z shared.StudioSectionDeleteRequest) (shared.StudioSectionDeleteResponse, error) {
 
@@ -1088,7 +1029,7 @@ func (a *adapterStudia) UsunSekcjeDokumentu(ctx context.Context,
 		przejela = poprzednia.Id
 	case len(stan.forma.Sections) > 1:
 		// Sekcja pierwsza usuwana: treść przechodzi do sekcji następnej, bo
-		// poprzedniej nie ma, a treść musi gdzieś należeć.
+		// poprzedniej nie ma.
 		nastepna := &stan.forma.Sections[1]
 		if zakresOd < nastepna.RangeStart {
 			nastepna.RangeStart = zakresOd
@@ -1107,9 +1048,8 @@ func (a *adapterStudia) UsunSekcjeDokumentu(ctx context.Context,
 		return shared.StudioSectionDeleteResponse{}, postacBladZaplecza(
 			"sekcja " + kod + " nie dała się usunąć, choć stoi w postaci dokumentu")
 	}
-	// Blok, który należał do sekcji usuniętej, przechodzi do sekcji przejmującej.
-	// Zostawienie go przy kodzie nieistniejącym dałoby akapit bez sekcji, czyli
-	// bez nośnika.
+	// Blok sekcji usuniętej przechodzi do sekcji przejmującej, nie zostaje
+	// bez sekcji.
 	for i := range stan.forma.Blocks {
 		if stan.forma.Blocks[i].SectionId != nil && *stan.forma.Blocks[i].SectionId == kod {
 			if przejela == "" {
@@ -1147,13 +1087,9 @@ func (a *adapterStudia) UsunSekcjeDokumentu(ctx context.Context,
 
 // ── Tabulatory linijki ──────────────────────────────────────────────────────
 
-// UstawTabulatorLinijki zakłada, przestawia albo zdejmuje tabulator
-// (`studio.ruler.tabstop.set`).
-//
-// Tabulator jest cechą AKAPITU, więc czynność obejmuje wszystkie akapity, które
-// zaznaczenie dotyka — tak samo jak wyrównanie i wcięcie. Tabulator zakładany
-// kliknięciem na linijce trafia tu tą samą drogą, którą trafia tabulator
-// wpisany liczbą w oknie nastaw: okno ma jedno miejsce prawdy, nie dwa.
+// UstawTabulatorLinijki zakłada, przestawia albo zdejmuje tabulator —
+// obsługuje studio.ruler.tabstop.set. Tabulator jest cechą akapitu, więc
+// czynność obejmuje wszystkie akapity, które zaznaczenie dotyka.
 func (a *adapterStudia) UstawTabulatorLinijki(ctx context.Context,
 	z shared.StudioRulerTabstopSetRequest) (shared.StudioRulerTabstopSetResponse, error) {
 
@@ -1236,13 +1172,9 @@ func (a *adapterStudia) UstawTabulatorLinijki(ctx context.Context,
 	}, nil
 }
 
-// stronaTabulatory zakłada, przestawia albo zdejmuje tabulator w wykazie akapitu
-// i oddaje, czy wykaz się zmienił.
-//
-// Tabulator na tym samym położeniu jest tym samym tabulatorem — powtórne
-// kliknięcie linijki w tym miejscu ma go przestawić, nie postawić drugiego obok.
-// Zgodność położenia liczy się z tolerancją jednej dziesiątej milimetra, bo tyle
-// wynosi rozdzielczość ruchu myszką po linijce.
+// stronaTabulatory zakłada, przestawia albo zdejmuje tabulator w wykazie
+// akapitu i oddaje, czy wykaz się zmienił; tabulator na tym samym położeniu
+// jest tym samym tabulatorem w tolerancji jednej dziesiątej milimetra.
 func stronaTabulatory(zastane []shared.StudioTabStop, polozenie float64,
 	rodzaj shared.StudioTabKind, znak *shared.StudioTabLeader,
 	zdejmowanie bool) ([]shared.StudioTabStop, bool) {

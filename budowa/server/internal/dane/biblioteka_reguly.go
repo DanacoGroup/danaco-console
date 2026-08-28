@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: reguły repozytorium (`regula_biblioteki`, migracja
-// 182) oraz wykaz kolekcji w postaci pełnej — z hierarchią, regułą i licznikiem
-// zasobów (`library.collection.list`).
-//
-// Kolekcje mają tu drugie wejście obok `library_kolekcje.go` i to nie jest
-// powielenie: tamten plik odpowiada za założenie kolekcji i przypisanie zasobów,
-// ten — za odczyt kolekcji jako bytu opisanego (rodzic, reguła, licznik). Podział
-// idzie po pytaniu, nie po tabeli.
-//
-// Reguła nie wykonuje się sama. Warstwa danych przechowuje warunek i wskazuje
-// kolekcję docelową; przeliczenie — czyli zamiana warunku na wykaz zasobów —
-// należy do rdzenia, bo to on zna znaczenie członów warunku.
+// Odpowiedzialność pliku: reguły repozytorium (`regula_biblioteki`, migracja 182) oraz wykaz
+// kolekcji w postaci pełnej, z hierarchią, regułą i licznikiem zasobów (`library.collection.list`).
 package dane
 
 import (
@@ -20,7 +10,7 @@ import (
 	"strings"
 )
 
-// RegulaBiblioteki to wiersz tabeli `regula_biblioteki`.
+// RegulaBiblioteki to wiersz tabeli `regula_biblioteki`, warunek przeliczany przez rdzeń na wykaz zasobów.
 type RegulaBiblioteki struct {
 	ID                   int64
 	Kod                  string
@@ -77,7 +67,7 @@ const (
 	                             (SELECT id FROM kolekcja_biblioteki WHERE identyfikator_zewnetrzny = ?)`
 )
 
-// ZapiszRegule zakłada regułę albo nadpisuje zastaną.
+// ZapiszRegule zakłada regułę biblioteki albo nadpisuje zastaną tym samym identyfikatorem zewnętrznym.
 func (r *repozytoriumBiblioteki) ZapiszRegule(ctx context.Context,
 	regula RegulaBiblioteki) (RegulaBiblioteki, error) {
 
@@ -104,7 +94,7 @@ func (r *repozytoriumBiblioteki) ZapiszRegule(ctx context.Context,
 	return r.Regula(ctx, regula.Kod)
 }
 
-// Regula zwraca regułę o wskazanym kodzie; brak wiersza wraca jako ErrBrakWiersza.
+// Regula zwraca regułę biblioteki o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumBiblioteki) Regula(ctx context.Context, kod string) (RegulaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzReguleBiblioteki)
 	if err != nil {
@@ -120,7 +110,7 @@ func (r *repozytoriumBiblioteki) Regula(ctx context.Context, kod string) (Regula
 	return regula, nil
 }
 
-// Reguly zwraca reguły uporządkowane po nazwie, zawężone rodzajem i czynnością.
+// Reguly zwraca reguły biblioteki uporządkowane po nazwie, zawężone opcjonalnie rodzajem reguły i czynnością.
 func (r *repozytoriumBiblioteki) Reguly(ctx context.Context, rodzaj *string,
 	tylkoCzynne bool) ([]RegulaBiblioteki, error) {
 
@@ -174,7 +164,7 @@ func (r *repozytoriumBiblioteki) UsunRegule(ctx context.Context, kod string) (bo
 	return zdjete > 0, nil
 }
 
-// PrzypiszRegula wpisuje zasoby do kolekcji ze znacznikiem pochodzenia `regula`.
+// PrzypiszRegula wpisuje zasoby wskazane kodami do kolekcji ze znacznikiem pochodzenia `regula` w bazie.
 func (r *repozytoriumBiblioteki) PrzypiszRegula(ctx context.Context, kodKolekcji string,
 	kodyPlikow []string) (int, error) {
 
@@ -274,7 +264,7 @@ func (r *repozytoriumBiblioteki) KolekcjeWykaz(ctx context.Context, rodzicKod, f
 	return lista, lacznie, nil
 }
 
-// odczytajReguleBiblioteki składa regułę z jednego wiersza wyniku.
+// odczytajReguleBiblioteki składa regułę biblioteki z jednego wiersza wyniku zapytania SQL bazy danych.
 func odczytajReguleBiblioteki(wiersz skaner) (RegulaBiblioteki, error) {
 	var regula RegulaBiblioteki
 	var kolekcja, sciezka, przeliczenie sql.NullString
@@ -291,7 +281,7 @@ func odczytajReguleBiblioteki(wiersz skaner) (RegulaBiblioteki, error) {
 	return regula, nil
 }
 
-// odczytajKolekcjePelnaBiblioteki składa kolekcję wraz z rodzicem, regułą i licznikiem.
+// odczytajKolekcjePelnaBiblioteki składa kolekcję biblioteki wraz z rodzicem, regułą i licznikiem zasobów.
 func odczytajKolekcjePelnaBiblioteki(wiersz skaner) (KolekcjaBiblioteki, error) {
 	var kolekcja KolekcjaBiblioteki
 	var opis, rodzic, regula sql.NullString

@@ -13,25 +13,7 @@ import { opisNieczynnosci, wyjasnijNieczynnosc } from './nieczynne-w-pasku';
 import { wykonajZaczep, type ZaczepyPaska } from './zaczepy-paska';
 
 /**
- * Prawa strona paska górnego: powiadomienia, obecność globalna, motyw i profil.
- *
- * Jedna odpowiedzialność: kontrolki akcji paska. Barw ani wartości motywu ten
- * plik nie zna — przełączenie wykonuje warstwa `motyw/`. Okien nie
- * otwiera sam: dostaje czynności w `ZaczepyPaska` (`zaczepy-paska.ts`).
- *
- * Ikona `dzwonek` należy do powiadomień, nie do Always On Display: dzwonek nosi
- * plakietkę licznika (`dn-powiadomienia__licznik`), a AOD nie ma czego liczyć,
- * bo jest jednym pływającym podglądem, a nie zbiorem zdarzeń. AOD stoi przy
- * ikonie `oko`.
- *
- * Kontrolka, której ten pasek nie dostał w `ZaczepyPaska`, mówi wprost, że to
- * pasek nie ma drogi do okna — nie że okna nie ma w produkcie. Oba okna
- * obecności są zbudowane (`aod/kolumna-aod.ts`, `mobile/okno-mobile.ts`), a menu
- * Operatora stoi na drugim pasku (`aplikacja/menu-operatora.ts`).
- *
- * Dzwonek otwiera centrum powiadomień, gdy pasek dostał do niego zaczep
- * (`otworzPowiadomienia`). Bez zaczepu mówi wprost, że to ten pasek nie ma drogi
- * do kolumny — rodzina `notification.*` jest w kontrakcie, a rejestr w rdzeniu.
+ * Prawa strona paska górnego mieści kontrolki powiadomień, obecności globalnej, motywu i profilu, nie znając barw motywu i nie otwierając okien samodzielnie, tylko przez czynności dostarczone paskowi z zewnątrz.
  */
 export interface AkcjePaska {
   /** Grupa kontrolek montowana przy prawej krawędzi paska. */
@@ -42,7 +24,7 @@ export interface AkcjePaska {
   zamknij(): void;
 }
 
-/** Kody pozycji ustawień, które mają własną kontrolkę w pasku. */
+/** Kody pozycji ustawień, które mają własną kontrolkę w pasku górnym aplikacji, obok pozostałych elementów interfejsu. */
 const KODY_OBECNOSCI: readonly KodUstawienia[] = ['aod', 'mobile'];
 
 export function utworzAkcjePaska(operator: string, zaczepy: ZaczepyPaska = {}): AkcjePaska {
@@ -94,12 +76,7 @@ export function utworzAkcjePaska(operator: string, zaczepy: ZaczepyPaska = {}): 
 }
 
 /**
- * Kontrolki obecności globalnej — Always On Display i Mobile.
- *
- * Nazwa i ikona biorą się z `POZYCJE_USTAWIEN`, nie z literałów tego pliku. Ten
- * sam wykaz zasila listwę strony głównej, menu aplikacji, menu Operatora i menu
- * profilu — powtórzenie tu nazwy albo doboru ikony dałoby dwie prawdy o jednej
- * pozycji.
+ * Kontrolki obecności globalnej — Always On Display i Mobile — biorą nazwę i ikonę ze wspólnego wykazu pozycji ustawień, zasilającego też inne menu aplikacji.
  */
 function przyciskiObecnosci(zaczepy: ZaczepyPaska): HTMLButtonElement[] {
   const przyciski: HTMLButtonElement[] = [];
@@ -109,19 +86,19 @@ function przyciskiObecnosci(zaczepy: ZaczepyPaska): HTMLButtonElement[] {
 
     const przycisk = przyciskPaska(pozycja.ikona, `${pozycja.nazwa} — ${pozycja.wyjasnienie}`);
     przycisk.dataset['obecnosc'] = kod;
-    // Zaczep czytany dopiero tutaj — patrz `zaczepy-paska.ts`.
+    // Zaczep przypisany paskowi jest odczytywany dopiero w tym miejscu, nie przy montażu.
     przycisk.addEventListener('click', () => wykonajZaczep(zaczepy, pozycja, zglos));
     przyciski.push(przycisk);
   }
   return przyciski;
 }
 
-/** Jedyne wyjście zdań paska do Operatora; waga „ostrzeżenie" — nic się nie zepsuło. */
+/** Jedyne wyjście zdań paska do operatora; waga ostrzeżenie oznacza tu wyłącznie informację, nie że coś się zepsuło. */
 function zglos(tytul: string, tresc: string): void {
   pokazKomunikat({ tytul, tresc, waga: 'ostrz' });
 }
 
-/** Dzwonek z plakietką licznika osadzoną w jego prawym górnym rogu. */
+/** Dzwonek z plakietką licznika osadzoną w jego prawym górnym rogu, sygnalizującą liczbę nieprzeczytanych powiadomień. */
 function utworzPowiadomienia(zaczepy: ZaczepyPaska): {
   przycisk: HTMLButtonElement;
   licznik: HTMLElement;
@@ -131,9 +108,7 @@ function utworzPowiadomienia(zaczepy: ZaczepyPaska): {
   koszyk.className = 'dn-powiadomienia';
 
   const przycisk = przyciskPaska('dzwonek', 'Powiadomienia');
-  // Zaczep czytany dopiero w chwili naciśnięcia — powłoka powstaje bez kanału do
-  // rdzenia, więc odczyt przy montażu zastałby go pustym. Pasek bez zaczepu mówi
-  // wprost, że to on nie ma drogi do centrum — nie że centrum nie ma w produkcie.
+  // Zaczep czytany dopiero w chwili naciśnięcia — powłoka powstaje bez kanału do rdzenia.
   przycisk.addEventListener('click', () => {
     const otworz = zaczepy.otworzPowiadomienia;
     if (otworz === undefined) {
@@ -152,7 +127,7 @@ function utworzPowiadomienia(zaczepy: ZaczepyPaska): {
   return { przycisk, licznik, koszyk };
 }
 
-/** Przycisk ikonowy w wariancie przeznaczonym na ramę kokpitu. */
+/** Przycisk ikonowy w wariancie przeznaczonym na ramę kokpitu, różniącym się rozmiarem i marginesem od wariantu zwykłego. */
 function przyciskPaska(ikona: NazwaIkony, opis: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -164,12 +139,7 @@ function przyciskPaska(ikona: NazwaIkony, opis: string): HTMLButtonElement {
 }
 
 /**
- * Przełącznik pokazuje motyw, w który przejdzie po naciśnięciu — słońce przy
- * motywie ciemnym, księżyc przy jasnym. Oba motywy są równoprawne, więc
- * kontrolka żadnego nie wyróżnia.
- *
- * Ta sama nastawa stoi też w menu profilu; obie kontrolki czytają ją z `motyw/`
- * i żadna nie trzyma własnej kopii.
+ * Przełącznik pokazuje motyw, w który przejdzie po naciśnięciu, a ta sama nastawa stoi też w menu profilu, czytana z jednego wspólnego miejsca.
  */
 function ubierzMotyw(przycisk: HTMLButtonElement, obowiazujacy: Motyw): void {
   const ciemny = obowiazujacy === 'dark';

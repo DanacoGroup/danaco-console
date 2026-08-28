@@ -1,10 +1,4 @@
-/* ============================================================================
-   POWŁOKA — BOCZNA NAWIGACJA MODUŁÓW
-   ----------------------------------------------------------------------------
-   Kolumna nawigacji, jej nagłówek i pozycje wykazu. Nazwa środowiska idzie
-   krojem szeryfowym, bo jest nagłówkiem; pozycje wykazu — krojem bazowym.
-   Pozycja wybrana dostaje złoty pasek przy lewej krawędzi.
-   ============================================================================ */
+/* Boczna nawigacja modułów zestawia kolumnę z nagłówkiem środowiska, licznikiem modułów i wykazem pozycji; nazwa środowiska idzie krojem szeryfowym, pozycje krojem bazowym. */
 
 .dn-nawigacja {
   display: flex;
@@ -40,7 +34,7 @@
   font-size: var(--dn-fs-sm);
 }
 
-/* Liczba modułów — etykieta wersalikowa */
+/* Liczba modułów pokazuje się jako etykieta wersalikowa, krojem bazowym w rozstrzelonym trackingu, nad wykazem pozycji nawigacji. */
 .dn-nawigacja__licznik {
   margin: 0;
   color: var(--dn-tekst-3);
@@ -97,7 +91,7 @@
   outline-offset: 2px;
 }
 
-/* Pozycja wybrana — wstęga sygnału przy lewej krawędzi i tło sygnału */
+/* Pozycja wybrana dostaje wstęgę sygnału przy lewej krawędzi wraz z tłem sygnału, żeby aktualne miejsce w nawigacji było widoczne od razu. */
 .dn-nawigacja__pozycja[aria-current='page'] {
   background: var(--dn-sygnal-tlo);
   color: var(--dn-sygnal);
@@ -122,7 +116,7 @@
   white-space: nowrap;
 }
 
-/* Stan kolumny zamiast wykazu: wykaz w drodze albo treść odmowy */
+/* Stan kolumny zastępuje wykaz pozycji, gdy wykaz jest w drodze albo gdy jego wczytanie kończy się odmową, i pokazuje treść odmowy. */
 .dn-nawigacja__stan {
   margin: 0;
   padding: 0 var(--dn-od-3);

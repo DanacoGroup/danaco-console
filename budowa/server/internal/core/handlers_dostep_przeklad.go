@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: przekład wierszy obszaru dostępów na struktury
-// kontraktu i z powrotem. Jedno miejsce styku obu nazewnictw.
-//
-// IDENTYFIKATORY. Punkt wychodzi kontraktem pod swoim trwałym kodem, nie pod
-// numerem wiersza — kod jest tym, czym Operator posługuje się w konfiguracji
-// mostu i co przeżywa przeniesienie bazy. Nadanie wychodzi pod identyfikatorem
-// zewnętrznym nadanym przez rdzeń, a gdy wiersz powstał wprost w bazie — pod
-// numerem wiersza (identyfikatorWiersza, jak przy oknach i sesjach).
+// Plik przekłada wiersze obszaru dostępów na struktury kontraktu i z
+// powrotem, jednym miejscem styku obu nazewnictw identyfikatorów.
 package core
 
 import (
@@ -83,18 +77,9 @@ func chwilaOpcjonalna(znacznik *string) *int64 {
 	return &chwila
 }
 
-// urzadzenieWiersza przekłada identyfikator urządzenia z kontraktu na kolumnę.
-//
-// Identyfikatorem urządzenia w kontrakcie jest klucz wiersza katalogu — ten sam,
-// który wychodzi z powrotem polem `AccessPoint.deviceId` (patrz punktKontraktu).
-// Wartość nieliczbowa nie wskazuje żadnego urządzenia i wraca odmową. Ciche
-// `nil` rozbiłoby się dopiero o więz schematu
-// `CHECK(rodzaj <> 'localDirectory' OR urzadzenie_id IS NOT NULL)`, a Operator
-// dostałby awarię zapisu zamiast powodu.
-//
-// Brak pola to nie to samo co pole niezrozumiałe: pominięcie jest dopuszczone
-// kontraktem i znaczy „urządzenia nie wskazuję”, co dla katalogu lokalnego
-// rozstrzyga warstwa trwałości maszyną, na której działa rdzeń.
+// urzadzenieWiersza przekłada identyfikator urządzenia z kontraktu na
+// kolumnę, odmawiając zapisu wartości nieliczbowej zamiast rozbicia się
+// o więz schematu.
 func urzadzenieWiersza(urzadzenie *string) (*int64, error) {
 	if urzadzenie == nil || *urzadzenie == "" {
 		return nil, nil

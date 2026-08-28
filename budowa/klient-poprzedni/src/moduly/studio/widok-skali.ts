@@ -1,30 +1,14 @@
 import { naPunkty } from './nastawy-strony';
 import { SKALA_DOLNA, SKALA_GORNA, type MagazynNastawWidoku } from './widok-nastawy-operatora';
 
-/**
- * Skala widoku — procenty, nastawy gotowe i pamięć skali przy dokumencie.
- *
- * ── Dlaczego rachunek, a nie sam suwak ──────────────────────────────────────
- * „Do szerokości strony" nie jest wartością, jest RACHUNKIEM: zależy od
- * szerokości pola widoku, od nośnika, od orientacji i od liczby kartek w rzędzie.
- * Wpisana na sztywno rozjechałaby się przy pierwszej zmianie nośnika. Stoi więc
- * jako funkcja czysta, którą da się sprawdzić bez przeglądarki — wołający podaje
- * zmierzone pole widoku, a plik oddaje procenty.
- *
- * ── Skala jest pamiętana przy dokumencie ────────────────────────────────────
- * Wymóg zlecenia. Pamięć jest przy dokumencie, nie przy oknie: Operator wraca do
- * pisma po dwóch dniach i ma je zobaczyć w skali, w której nad nim pracował,
- * a drugie pismo w swojej.
- */
-
-/** Nastawa gotowa skali. */
+/** Interfejs NastawaSkali opisuje jedną nastawę gotową skali widoku: kod, nazwę widoczną w wykazie i opis jej znaczenia. */
 export interface NastawaSkali {
   kod: string;
   nazwa: string;
   opis: string;
 }
 
-/** Nastawy gotowe skali, wzorem pakietu biurowego. */
+/** Stała NASTAWY_SKALI zawiera nastawy gotowe skali widoku, wzorowane na wykazie skal pakietu biurowego stosowanego w kancelarii. */
 export const NASTAWY_SKALI: readonly NastawaSkali[] = [
   {
     kod: 'sto',
@@ -50,10 +34,10 @@ export const NASTAWY_SKALI: readonly NastawaSkali[] = [
   },
 ];
 
-/** Skale wpisane w wykaz — obok pola liczbowego i suwaka. */
+/** Stała SKALE_GOTOWE zawiera skale procentowe wpisane wprost w wykaz obok pola liczbowego i suwaka do wyboru skali widoku. */
 export const SKALE_GOTOWE: readonly number[] = [50, 75, 100, 125, 150, 200];
 
-/** Wymiary potrzebne do policzenia skali z nastawy gotowej. */
+/** Interfejs WymiaryPolaWidoku niesie wymiary pola widoku i kartki potrzebne do policzenia skali widoku z nastawy gotowej. */
 export interface WymiaryPolaWidoku {
   /** Szerokość pola widoku w punktach ekranu, bez pasków przewijania. */
   szerokoscWidokuPx: number;
@@ -72,12 +56,7 @@ export interface WymiaryPolaWidoku {
 }
 
 /**
- * Skala w procentach dla nastawy gotowej.
- *
- * Nastawa nieznana oddaje `null`, a nie 100 %: cicha podmiana nastawy na inną
- * byłaby kłamstwem o tym, co Operator wybrał. Pole widoku o zerowej szerokości
- * (okno jeszcze nieosadzone) też oddaje `null` — skala nieskończona nie jest
- * skalą.
+ * Funkcja policzSkaleWidoku zwraca skalę w procentach dla nastawy gotowej; nastawa nieznana albo pole widoku o zerowej szerokości oddają null zamiast stu procent.
  */
 export function policzSkaleWidoku(
   kod: string,
@@ -103,9 +82,7 @@ export function policzSkaleWidoku(
     const potrzebneSzerz = naPunkty(wymiary.szerokoscKartkiMm) * wRzedzie;
     const potrzebneWzwyz = naPunkty(wymiary.wysokoscKartkiMm);
     if (potrzebneSzerz <= 0 || potrzebneWzwyz <= 0 || wymiary.wysokoscWidokuPx <= 0) return null;
-    // Cała strona znaczy: mieści się i wszerz, i wzwyż — więc rozstrzyga wymiar
-    // ciaśniejszy. Wzięcie samej szerokości ucinałoby dół kartki i nazywałoby to
-    // „całą stroną".
+    // Cała strona mieści się i wszerz, i wzwyż, więc rozstrzyga wymiar ciaśniejszy z obu.
     const wszerz = doDyspozycji / potrzebneSzerz;
     const wzwyz = wymiary.wysokoscWidokuPx / potrzebneWzwyz;
     return przytnijSkale(Math.min(wszerz, wzwyz) * 100);
@@ -113,13 +90,13 @@ export function policzSkaleWidoku(
   return null;
 }
 
-/** Przycina skalę do granic i zaokrągla do pełnego procentu. */
+/** Funkcja przytnijSkale przycina wartość skali do granic dolnej i górnej oraz zaokrągla ją do pełnego procentu. */
 export function przytnijSkale(procent: number): number {
   if (!Number.isFinite(procent)) return 100;
   return Math.min(Math.max(Math.round(procent), SKALA_DOLNA), SKALA_GORNA);
 }
 
-/** Klucz zapisu skali dokumentu. */
+/** Stała PRZEDROSTEK_SKALI jest kluczem, pod którym magazyn przechowuje zapamiętaną skalę widoku danego dokumentu. */
 const PRZEDROSTEK_SKALI = 'dn.studio.skala.';
 
 function magazynDomyslny(): MagazynNastawWidoku | null {
@@ -151,7 +128,7 @@ export function skalaDokumentu(
   }
 }
 
-/** Zapamiętuje skalę przy dokumencie. */
+/** Funkcja zapamietajSkaleDokumentu zapisuje skalę widoku w magazynie, przypisaną do wskazanego dokumentu. */
 export function zapamietajSkaleDokumentu(
   idDokumentu: string,
   procent: number,

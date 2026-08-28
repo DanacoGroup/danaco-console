@@ -13,43 +13,16 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 import { utworzWysylkePolecenia, type WysylkaPolecenia } from './wysylka-polecenia';
 
-/** Kod okna w katalogu rdzenia (`okno_operacyjne.kod`). */
+/**
+ * Kod okna w katalogu okien operacyjnych rdzenia, pole `okno_operacyjne.kod`,
+ * po którym rdzeń rozpoznaje to okno w zleceniach i w zapisie czynności.
+ */
 export const KOD_OKNA = 'voice-console';
 
 /**
- * Voice Console — okno wiodące modułu Assistant.
- *
- * Trzy funkcje operatora: wydanie polecenia głosowego, odsłuch odpowiedzi
- * syntezowanej, przerwanie nagrania. Pasek narzędzi promptu niesie mikrofon,
- * pole poleceń, Wyślij, selektor profilu asystenta, przełącznik syntezy
- * i przeniesienie fragmentu odpowiedzi w zadanie Actions Monitora; siatka
- * szybkich akcji stoi pod nimi.
- *
- * Plik odpowiada wyłącznie za skład okna. Rozmowa z rdzeniem mieszka
- * w `wysylka-polecenia.ts`, kontrolki w `pasek-polecenia.ts`, katalog akcji
- * w `siatka-akcji.ts`, katalog profili w `selektor-profilu.ts`, a rozpoznawanie
- * mowy w `panel-mowy.ts` — okno nie buduje treści, dostaje ją gotową.
- *
- * Droga głosu prowadzi przez `panel-mowy.ts` i kończy się w tym samym polu
- * transkrypcji, w które Operator wpisuje polecenie ręcznie. Rozpoznanie mowy
- * jest warstwą wejścia, nie drugą drogą rozmowy: rdzeń dostaje zawsze jedno
- * `assistant.voice.command` z polem `transcript`.
- *
- * Historia poleceń głosowych i tekstowych jest jedna i mieszka w Activity
- * Feed: `assistant.activity.list` zwraca jeden chronologiczny zapis obu dróg
- * (pole `origin` zlecenia je rozróżnia). Voice Console odświeża ten zapis po
- * każdym poleceniu, zamiast prowadzić drugą kopię.
- *
- * Fazę okna nazywają dwa źródła, które nie mogą się pobić:
- *
- *   · wysyłka — gdy polecenie jedzie, wróciło albo zostało odrzucone
- *     (`wysylka-polecenia.ts` mówi fazę wprost);
- *   · spoczynek — gdy nie jedzie nic; liczy go `naniesSpoczynek` poniżej
- *     i rusza wyłącznie z fazy `puste`, więc komunikatu wysyłki nie zdejmie.
- *
- * Stan pusty nie zastępuje paska promptu, tylko stoi nad nim (`stan-okna.ts`),
- * więc Operator czyta go mając pole transkrypcji i „Wyślij polecenie"
- * na wyciągnięcie ręki.
+ * Voice Console to okno wiodące modułu Assistant: wydanie polecenia głosowego,
+ * odsłuch odpowiedzi syntezowanej oraz przerwanie nagrania. Plik odpowiada
+ * wyłącznie za skład okna i dostaje treść gotową z osobnych składników.
  */
 export interface OknoVoiceConsole {
   element: HTMLElement;
@@ -76,9 +49,7 @@ export function utworzOknoVoiceConsole(stan: StanAssistant): OknoVoiceConsole {
         true,
       );
     },
-    // Odsłuch odpowiedzi syntezowanej: bajty wracają do karty tą samą drogą,
-    // którą wychodzą nagrania — `speech.audio.fetch` oddaje wyłącznie to, co
-    // rdzeń sam wystawił.
+    // Odsłuch: `speech.audio.fetch` oddaje wyłącznie to, co rdzeń sam wystawił.
     (odnosnik) => {
       void (async () => {
         const wynik = await stan.mowa.pobierzNagranie(odnosnik);
@@ -114,9 +85,7 @@ export function utworzOknoVoiceConsole(stan: StanAssistant): OknoVoiceConsole {
           czytaj: pasek.czytaj(),
         }),
       naPrzerwij: () => void wysylka.przerwij(),
-      // Mikrofon i wybudzenie prowadzą do paneli tego samego okna. Uchwyty są
-      // leniwe, bo panele powstają po pasku: zestaw przycisków buduje się raz,
-      // a woła dopiero po naciśnięciu.
+      // Uchwyty są leniwe, ponieważ panele powstają po pasku przycisków.
       naMikrofon: () => mowa.przelaczMikrofon(),
       naWybudzenie: () => wybudzenie.przelaczNasluch(),
     },
@@ -158,10 +127,7 @@ export function utworzOknoVoiceConsole(stan: StanAssistant): OknoVoiceConsole {
   odswiez();
   return {
     element,
-    // Trzy odczyty idą równolegle: katalog akcji, katalog profili i stan silnika
-    // mowy dotyczą trzech różnych komend i żaden nie warunkuje pozostałych.
-    // Każdy nazywa swoje niepowodzenie w swoim miejscu, więc odmowa jednego nie
-    // zabiera treści dwóm pozostałym.
+    // Trzy odczyty idą równolegle i żaden nie warunkuje pozostałych.
     wczytaj: async () => {
       await Promise.all([
         siatka.wczytaj(),
@@ -176,7 +142,10 @@ export function utworzOknoVoiceConsole(stan: StanAssistant): OknoVoiceConsole {
   };
 }
 
-/** Wpuszcza fazę nazwaną przez wysyłkę w stan okna; słownik jest jeden. */
+/**
+ * Wpuszcza fazę nazwaną przez wysyłkę polecenia w stan okna, korzystając
+ * z jednego słownika faz wspólnego dla obu dróg wejścia.
+ */
 function naniesFaze(okno: StanOkna, faza: FazaOkna, opis: string): void {
   if (faza === 'ladowanie') okno.ladowanie(opis);
   else if (faza === 'blad') okno.blad(opis);
@@ -185,16 +154,8 @@ function naniesFaze(okno: StanOkna, faza: FazaOkna, opis: string): void {
 }
 
 /**
- * Faza okna, gdy nie jedzie żadne polecenie.
- *
- * Rusza wyłącznie ze stanu pustego. Gdy wysyłka postawiła okno w ładowaniu,
- * odmowie albo gotowości, jej komunikat należy do niej i zostaje — inaczej
- * zdarzenie `assistant.action.changed` z cudzego zlecenia zmiatałoby odmowę
- * sprzed sekundy.
- *
- * Brak okna modułu jest błędem, nie pustką: bez `windowId` komenda
- * `assistant.voice.command` nie ma dokąd pojechać i nie zmieni tego żadna treść
- * w polu.
+ * Faza okna w spoczynku, gdy nie jedzie żadne polecenie; rusza wyłącznie
+ * ze stanu pustego, więc komunikatu wysyłki nie zdejmuje.
  */
 function naniesSpoczynek(okno: StanOkna, stan: StanAssistant): void {
   if (okno.faza() !== 'puste') return;

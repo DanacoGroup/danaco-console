@@ -7,22 +7,9 @@ import {
 import { KluczUstawieniaOkna, STOPNIE_NAKLADU } from '../sterowanie/klucze-ustawien';
 import { utworzSterNastawy, type SterPaska } from './ster-nastawy';
 
-/**
- * Wysiłek — ster paska zlecenia. W pasku stoi menu, a nie suwak: etykieta
- * komponentu ma być bieżącą wartością, a suwak pokazuje położenie i wymaga
- * podpisu obok siebie. Suwak w kolumnie sterowania zostaje — to ta sama
- * nastawa w dwóch widokach, nie dwa stany.
- *
- * Stopień jest napisem wyliczenia, nie liczbą. Wykaz stopni pochodzi z katalogu
- * rdzenia (`sterowanie/klucze-ustawien.ts` → `STOPNIE_NAKLADU`, tabela
- * `opcja_ustawienia`), a wartość idzie ustawieniem poziomu okna (`config.set`,
- * `naklad_rozumowania`), bo treść `window.update` nie ma dla niej pola.
- *
- * Napis pusty jest pełnoprawnym stopniem — znaczy „rozstrzyga kanał modelu",
- * a nie brak ustawienia, więc stoi na wykazie jak każdy inny.
- */
+// Wysiłek to ster paska zlecenia. W pasku stoi menu, a nie suwak: etykieta ma być bieżącą wartością.
 
-/** Nazwa zmiany w komunikacie — ta sama, którą wysyła suwak w kolumnie. */
+/** Nazwa zmiany w komunikacie do rdzenia — ta sama, którą wysyła suwak wysiłku w kolumnie sterowania oknem. */
 const NAZWA = 'Nakład rozumowania';
 
 /**
@@ -34,7 +21,7 @@ const NAZWA = 'Nakład rozumowania';
  */
 const PRZEDROSTEK = 'naklad:';
 
-/** Zależności steru — wąskie i wstrzykiwane. */
+/** Zależności steru wysiłku — wąskie i wstrzykiwane, obejmujące stopień nakładu oraz zapis ustawienia okna. */
 export interface ZaleznosciSteruNakladu {
   /** Stopień nakładu ze stanu potwierdzonego przez rdzeń. */
   migawka(): { naklad: string };
@@ -60,8 +47,7 @@ export function utworzSterNakladu(zaleznosci: ZaleznosciSteruNakladu): SterPaska
     const drzewo: PozycjaMenu[] = STOPNIE_NAKLADU.map((pozycja) => ({
       rodzaj: 'wybor',
       klucz: `${PRZEDROSTEK}${pozycja}`,
-      // Nazwa pełna w wykazie, krótka na uchwycie: w menu jest miejsce na
-      // dopisek, w pasku go nie ma. Oba napisy z jednego słownika.
+      // Nazwa pełna w wykazie, krótka na uchwycie — oba napisy pochodzą z jednego słownika.
       nazwa: nazwaNakladu(pozycja),
       opis: opisNakladu(pozycja),
       wybrany: pozycja === stopien,

@@ -1,26 +1,7 @@
-// Odpowiedzialność pliku: podstawa odcinka wejścia, wyjścia i szablonów modułu
-// Studio — kontrakt warstwy danych (kolumny warsztatu szablonów z migracji 367
-// i tabela pochodzenia fragmentów z 368), JEDNA droga do bajtów materiału
-// wskazanego przez Operatora, rozpoznanie formatu pliku oraz utrwalenie POSTACI
-// dokumentu wraz z tym, co warstwa danych trzyma wierszami.
-//
-// ── Postać zapisuje obszar postaci, nie ten odcinek ─────────────────────────
-// Droga zapisu postaci stoi w `adapter_modul_studio_postac.go`
-// (`postacWczytaj`, `postacZapisz`, `postacZakoncz`) i ten odcinek ją WOŁA.
-// Dokłada do niej jedno: wiersze, których `postacZapisz` świadomie z drzewa
-// wycina — arkusz stylów, sekcje, obiekty i pola. Wycina je, bo dla dokumentu
-// już istniejącego one w bazie stoją i drzewo nie ma być ich drugą prawdą.
-// Dokument WNOSZONY z pliku albo KOPIOWANY jest przypadkiem odwrotnym: wierszy
-// jeszcze nie ma, a postać przyszła z zewnątrz. Gdyby ten odcinek zapisał samo
-// drzewo, Operator dostałby dokument, który po ponownym wczytaniu traci arkusz
-// stylów wniesiony z `.docx` — czyli dokładnie tę cichą stratę, której zlecenie
-// zakazuje.
-//
-// ── Dlaczego własny, węższy kontrakt danych ─────────────────────────────────
-// `dane.RepozytoriumStudia` deklaruje `dane/studio.go` w całości i dopisanie tam
-// metod byłoby wejściem w plik cudzego odcinka. Rdzeń bierze więc dokładnie te
-// metody, których używa, rzutowaniem DWUWARTOŚCIOWYM — brak nazywa się wprost,
-// zamiast wywracać montaż rdzenia. Ten sam wzór trzyma odcinek kontroli pracy.
+// Plik obsługuje podstawę odcinka wejścia, wyjścia i szablonów Studia:
+// kontrakt warstwy danych, jedną drogę do bajtów materiału wskazanego przez
+// wołającego, rozpoznanie formatu pliku oraz utrwalenie postaci dokumentu
+// wraz z wierszami warstwy danych.
 package core
 
 import (
@@ -46,7 +27,8 @@ type WarsztatWejsciaStudia interface {
 	dane.PochodzenieWejsciaStudia
 }
 
-// wejscieSkladnica zdejmuje kontrakt odcinka z repozytorium Studia.
+// wejscieSkladnica zdejmuje kontrakt odcinka z repozytorium Studia, odmawiając
+// wprost, gdy repozytorium go nie niesie.
 func (a *adapterStudia) wejscieSkladnica() (WarsztatWejsciaStudia, error) {
 	if a == nil || a.repozytorium == nil {
 		return nil, wejscieBladZaplecza("repozytorium Studia nie zostało podane przy montażu rdzenia")
@@ -68,7 +50,8 @@ func wejscieBladZaplecza(powod string) error {
 		"moduł Studio, wejście i wydanie: "+powod))
 }
 
-// wejscieBladBraku nazywa byt, którego nie ma.
+// wejscieBladBraku nazywa byt, którego nie ma, oddając kod błędu rozpoznawany
+// po stronie klienta interfejsu.
 func wejscieBladBraku(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Studio: "+powod))
@@ -94,12 +77,8 @@ type wejscieWskazanieZrodla struct {
 }
 
 // wejscieBajtyZrodla oddaje bajty materiału wraz z nazwą pliku, którą materiał
-// przyniósł. Nazwa służy rozpoznaniu formatu i nazwaniu dokumentu — plik
-// `umowa najmu.docx` ma zostać dokumentem „umowa najmu", nie dokumentem bez nazwy.
-//
-// Kolejność dróg jest rozstrzygnięciem, nie przypadkiem: bajty wprost są
-// najpewniejsze (Operator je właśnie wysłał), potem zasób rdzenia, potem plik
-// Biblioteki, a ścieżka NA KOŃCU, bo jest ścieżką na maszynie serwera.
+// przyniósł, idąc kolejnością dróg od najpewniejszej: bajty wprost, zasób
+// rdzenia, plik Biblioteki, a na końcu ścieżka na maszynie serwera.
 func (a *adapterStudia) wejscieBajtyZrodla(ctx context.Context,
 	wskazanie wejscieWskazanieZrodla) ([]byte, string, error) {
 
@@ -172,10 +151,9 @@ func (a *adapterStudia) wejscieBajtyZrodla(ctx context.Context,
 
 // ── Rozpoznanie formatu ─────────────────────────────────────────────────────
 
-// wejscieRozpoznajFormat rozstrzyga format pliku. Wskazanie Operatora ma
-// pierwszeństwo; bez niego rozstrzyga ZAWARTOŚĆ, a rozszerzenie nazwy dopiero
-// na końcu — plik przemianowany jest zwykłą rzeczą w archiwum Operatora,
-// a wniesienie go wedle rozszerzenia dałoby rozbiór na ślepo.
+// wejscieRozpoznajFormat rozstrzyga format pliku. Wskazanie w żądaniu ma
+// pierwszeństwo; bez niego rozstrzyga zawartość, a rozszerzenie nazwy dopiero
+// na końcu, bo rozbiór wedle rozszerzenia byłby rozbiorem na ślepo.
 func wejscieRozpoznajFormat(nazwa string, bajty []byte,
 	wskazanie *shared.StudioImportFormat) (shared.StudioImportFormat, error) {
 
@@ -223,7 +201,7 @@ func wejscieRozpoznajFormat(nazwa string, bajty []byte,
 		return shared.StudioImportFormatHtml, nil
 	case "txt", "text", "":
 		// Rozstrzygnięcie po treści: znacznik HTML na początku pliku bez
-		// rozszerzenia jest HTML-em, a nie tekstem ze znacznikami w środku.
+		// rozszerzenia jest HTML-em.
 		if wejscieWygladaNaHtml(bajty) {
 			return shared.StudioImportFormatHtml, nil
 		}
@@ -239,7 +217,8 @@ func wejscieRozpoznajFormat(nazwa string, bajty []byte,
 		"zawartości, ani po nazwie; naprawa: wskazać format polem żądania")
 }
 
-// wejscieFormatArchiwum rozstrzyga, którym archiwum biurowym jest plik ZIP.
+// wejscieFormatArchiwum rozstrzyga, którym archiwum biurowym jest plik ZIP,
+// czytając jego zawartość, nie samo rozszerzenie nazwy.
 func wejscieFormatArchiwum(bajty []byte,
 	rozszerzenie string) (shared.StudioImportFormat, error) {
 
@@ -258,9 +237,8 @@ func wejscieFormatArchiwum(bajty []byte,
 	case maOdf && rozszerzenie == "ott":
 		return shared.StudioImportFormatOtt, nil
 	case maOdf:
-		// Rodzaj dokumentu ODF stoi w `mimetype` — szablon niesie
-		// `…text-template`. Rozszerzenie nazwy tu nie rozstrzyga, bo plik
-		// szablonu bywa przemianowany.
+		// Rodzaj dokumentu ODF stoi w mimetype; rozszerzenie nazwy nie
+		// rozstrzyga, bo plik bywa przemianowany.
 		if rodzaj := strings.TrimSpace(string(skladniki[odfSkladnikRodzaju])); rodzaj != "" {
 			if strings.Contains(rodzaj, "text-template") {
 				return shared.StudioImportFormatOtt, nil
@@ -273,7 +251,8 @@ func wejscieFormatArchiwum(bajty []byte,
 		" (OpenDocument) — rdzeń nie ma czego z niego wnieść")
 }
 
-// wejscieWygladaNaHtml sprawdza, czy treść zaczyna się znacznikiem dokumentu.
+// wejscieWygladaNaHtml sprawdza, czy treść zaczyna się znacznikiem dokumentu
+// HTML, licząc tylko początkowy fragment bajtów.
 func wejscieWygladaNaHtml(bajty []byte) bool {
 	poczatek := bajty
 	if len(poczatek) > 512 {
@@ -284,20 +263,17 @@ func wejscieWygladaNaHtml(bajty []byte) bool {
 		strings.HasPrefix(nizej, "<?xml") && strings.Contains(nizej, "<html")
 }
 
-// wejscieCzyFormatSzablonu mówi, czy plik jest plikiem SZABLONU, a nie dokumentu.
+// wejscieCzyFormatSzablonu mówi, czy rozpoznany format pliku jest formatem
+// szablonu, a nie formatem dokumentu gotowego.
 func wejscieCzyFormatSzablonu(format shared.StudioImportFormat) bool {
 	return format == shared.StudioImportFormatDotx || format == shared.StudioImportFormatOtt
 }
 
 // ── Utrwalenie postaci wraz z wierszami ─────────────────────────────────────
 
-// wejscieUtrwalPostac zapisuje postać dokumentu WRAZ z tym, co warstwa danych
-// trzyma wierszami: arkuszem stylów, sekcjami, obiektami i polami. Drzewo
-// i treść idą drogą obszaru postaci (`postacZapisz`), a nie drugą własną.
-//
-// Styl fabryczny dokumentu zapisuje się jako fabryczny wtedy i tylko wtedy, gdy
-// tak przyszedł: arkusz wniesiony z `.docx` Operatora jest jego arkuszem, nie
-// arkuszem platformy, i ma dać się zmienić bez odmowy „styl fabryczny".
+// wejscieUtrwalPostac zapisuje postać dokumentu wraz z tym, co warstwa danych
+// trzyma wierszami: arkuszem stylów, sekcjami, obiektami i polami, idąc drogą
+// obszaru postaci, nie drogą własną.
 func (a *adapterStudia) wejscieUtrwalPostac(ctx context.Context, stan *stanPostaci) error {
 	skladnica, err := a.postacSkladnica()
 	if err != nil {
@@ -344,7 +320,8 @@ func (a *adapterStudia) wejscieUtrwalPostac(ctx context.Context, stan *stanPosta
 	return a.postacZapisz(ctx, stan)
 }
 
-// wejscieSekcjaDoWiersza składa wiersz sekcji z sekcji kontraktu.
+// wejscieSekcjaDoWiersza składa wiersz sekcji z sekcji kontraktu, zakładając
+// kod sekcji i rozpoczęcie ciągłe, gdy żądanie ich nie poda.
 func wejscieSekcjaDoWiersza(dokumentID int64, kolejnosc int,
 	sekcja shared.StudioSection) (dane.SekcjaDokumentuStudia, error) {
 
@@ -433,7 +410,8 @@ func wejscieObiektDoWiersza(dokumentID int64,
 	return wiersz, nil
 }
 
-// wejsciePoleDoWiersza składa wiersz pola dokumentu z pola kontraktu.
+// wejsciePoleDoWiersza składa wiersz pola dokumentu z pola kontraktu,
+// zakładając kod pola, gdy żądanie go nie poda.
 func wejsciePoleDoWiersza(dokumentID int64,
 	pole shared.StudioDocumentField) dane.PoleDokumentuStudia {
 
@@ -479,11 +457,8 @@ func wejscieZapisNieobowiazkowy(wartosc any, nazwa string) (*string, error) {
 // ── Pochodzenie wniesionego fragmentu ───────────────────────────────────────
 
 // wejscieOdlozPochodzenie utrwala zapis, skąd fragment przyszedł, i oddaje go
-// w kształcie kontraktu.
-//
-// Zapis pochodzenia jest obowiązkowy przy każdym wniesieniu z zewnątrz: bez
-// niego za tydzień nikt nie odtworzy, na czym pismo się opiera, a powołanie
-// bibliograficzne dopisywane z ręki po tygodniu jest zgadywaniem.
+// w kształcie kontraktu; zapis jest obowiązkowy przy każdym wniesieniu
+// z zewnątrz, inaczej pochodzenia pisma nie da się później odtworzyć.
 func (a *adapterStudia) wejscieOdlozPochodzenie(ctx context.Context,
 	dokument dane.DokumentStudia, rodzaj shared.StudioProvenanceKind, od, do int,
 	adres, plikBiblioteki, tytul *string, autor shared.StudioAuthor,
@@ -568,10 +543,9 @@ func (a *adapterStudia) wejscieDokumentAlboNowy(ctx context.Context, kodDokument
 	return nowy, nil
 }
 
-// wejscieFormatDokumentu przekłada format pliku wniesionego na format dokumentu
-// platformy. Wykaz formatów dokumentu jest krótszy niż wykaz formatów pliku —
-// `.docx` i `.dotx` są dokumentem `docx`, markdown i HTML są dokumentem
-// `markdown`, a reszta tekstem.
+// wejscieFormatDokumentu przekłada format pliku wniesionego na format
+// dokumentu platformy: docx i dotx są dokumentem docx, markdown i HTML są
+// dokumentem markdown, a reszta tekstem.
 func wejscieFormatDokumentu(format shared.StudioImportFormat) shared.StudioDocumentFormat {
 	switch format {
 	case shared.StudioImportFormatDocx, shared.StudioImportFormatDotx,
@@ -602,7 +576,8 @@ func wejscieNazwaZPliku(nazwa string) *string {
 	return &czysta
 }
 
-// wejscieBrakWiersza mówi, czy błąd warstwy danych jest brakiem wiersza.
+// wejscieBrakWiersza mówi, czy błąd zwrócony przez warstwę danych jest
+// błędem braku wiersza w tabeli bazy.
 func wejscieBrakWiersza(err error) bool {
 	return errors.Is(err, dane.ErrBrakWiersza)
 }

@@ -1,30 +1,4 @@
-// Odpowiedzialność pliku: wpięcie pięciu komend rodziny `extension.*` —
-// katalogu rozszerzeń. Adapter, wraz z pełnym rozstrzygnięciem, CZYM
-// rozszerzenie w tej platformie jest i dlaczego instalacja niczego nie pobiera,
-// leży w `adapter_modul_extension.go`; schemat katalogu —
-// w `store/migracja_070_katalog_rozszerzen.sql`.
-//
-// Rodzina niesie pięć komend: `extension.list`, `extension.install`,
-// `extension.configure`, `extension.toggle` i `extension.uninstall`. Pozycja
-// `extension.unknown` o tym przedrostku jest odpowiedzią na komendę nieznaną
-// obszaru, a nie komendą: nie ma pary żądanie/wynik i nie rejestruje się jej
-// w rejestrze komend.
-//
-// Rozgłoszenie `extension.changed` jest wpięte po stronie adaptera:
-// `adapter_modul_extension_rozgloszenie.go` niesie dokładkę `ZRozgloszeniem`,
-// a cztery komendy wołają ją po udanym zapisie — `extension.install`
-// (`created`, także przy przywróceniu pozycji odinstalowanej),
-// `extension.configure` i `extension.toggle` (`updated`), `extension.uninstall`
-// (`deleted`). `extension.list` nie rozgłasza niczego. Gdy port złożono bez
-// nadajnika (`montaz_porty.go`), `a.rozgloszenie` jest nilem i cztery wywołania
-// milkną.
-//
-// Port niewypełniony nie rejestruje niczego: komendy odpowiadają wtedy
-// `extension.unknown`, a pozostałe domeny pracują bez zmian.
-//
-// JEDEN PORT NA CAŁĄ RODZINĘ. Pięć komend obsługuje jeden byt — pozycję
-// katalogu — i jedną maszynerię. Osobny port „instalacji" obok portu „katalogu"
-// byłby dwiema prawdami o jednej tabeli.
+// Plik wpina pięć komend rodziny extension.* — katalogu rozszerzeń — na jeden port i jedną maszynerię; adapter i rozstrzygnięcie, czym rozszerzenie jest, leżą w adapter_modul_extension.go.
 package core
 
 import (

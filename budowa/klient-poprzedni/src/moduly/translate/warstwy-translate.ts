@@ -1,26 +1,12 @@
 /**
- * Cztery warstwy widoczności modułu Translate — jedno miejsce na regułę, która
- * rozstrzyga, co stoi na ekranie bez interakcji, a co dopiero po wywołaniu.
- *
- * Warstwa nie jest ozdobą opisu: rozstrzyga postać elementu przy wejściu do
- * modułu. Warstwa pierwsza jest rozwinięta i pozostaje taka; warstwy druga,
- * trzecia i czwarta stoją zwinięte, a zapowiedź nad nimi mówi, co jest pod
- * spodem — zwinięte nie znaczy ukryte.
- *
- * Nośnikiem rozwinięcia jest `<details>`: postać trzyma przeglądarka, więc
- * element działa klawiaturą i ma poprawną semantykę bez ani jednego nasłuchu.
- * Druga kopia stanu w klasie CSS mogłaby się z atrybutem `open` wyłącznie
- * rozminąć.
- *
- * Znacznik wywołania (`⋮`, `☰`, `▼`) idzie z wykazu ikonografii opracowania
- * i stoi przy nazwie, żeby droga do elementu była widoczna, zanim się go
- * otworzy.
+ * Cztery warstwy widoczności modułu Translate rozstrzygają, co stoi na ekranie bez interakcji,
+ * a co dopiero po wywołaniu; nośnikiem rozwinięcia jest element details.
  */
 
-/** Warstwa widoczności elementu — podział z rozdziału o warstwach modułu. */
+/** Warstwa widoczności elementu jest podziałem z rozdziału o warstwach modułu, przyjmującym cztery wartości liczbowe. */
 export type WarstwaWidocznosci = 1 | 2 | 3 | 4;
 
-/** Nazwa warstwy i sposób dostępu do jej elementów. */
+/** Nazwa warstwy i sposób dostępu do jej elementów opisują, jak operator dociera do funkcji tej warstwy w oknie. */
 export interface OpisWarstwy {
   /** Nazwa warstwy widoczna dla Operatora. */
   readonly nazwa: string;
@@ -49,12 +35,12 @@ export const WARSTWY: Record<WarstwaWidocznosci, OpisWarstwy> = {
   },
 };
 
-/** Znakuje element warstwą — arkusz i sprawdzian pytają o `data-warstwa`. */
+/** Znakuje element warstwą, żeby arkusz stylów i sprawdzian mogli pytać o warstwę elementu przez atrybut danych. */
 export function oznaczWarstwe(element: HTMLElement, warstwa: WarstwaWidocznosci): void {
   element.dataset['warstwa'] = String(warstwa);
 }
 
-/** Element warstwy 2–4: zapowiedź zawsze widoczna, treść na wywołanie. */
+/** Element warstwy od drugiej do czwartej ma zapowiedź zawsze widoczną, a treść pokazuje się dopiero na wywołanie. */
 export interface Rozwiniecie {
   /** Element osadzany w oknie. */
   element: HTMLDetailsElement;
@@ -85,8 +71,7 @@ export function utworzRozwiniecie(opis: OpisRozwiniecia): Rozwiniecie {
   const znacznik = document.createElement('span');
   znacznik.className = 'mt-rozwiniecie__znacznik';
   znacznik.textContent = opis.znacznik;
-  // Znacznik jest ozdobą uchwytu, nie jego nazwą: czytnik ekranu odczyta nazwę
-  // elementu, a nie pionowe trzy kropki.
+  // Znacznik jest ozdobą uchwytu, nie jego nazwą: czytnik ekranu odczyta nazwę elementu, nie kropki.
   znacznik.setAttribute('aria-hidden', 'true');
 
   const nazwa = document.createElement('span');

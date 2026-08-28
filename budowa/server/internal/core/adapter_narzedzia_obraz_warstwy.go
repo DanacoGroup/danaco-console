@@ -1,26 +1,4 @@
-// Odpowiedzialność pliku: `image.layers.split` — rozłożenie obrazu na obiekty,
-// z których każdy wychodzi osobnym zasobem z przezroczystością.
-//
-// ── Skąd bierze się podział ─────────────────────────────────────────────────
-// Segmentacji nie da się policzyć z samego rastra — „gdzie kończy się obiekt"
-// jest pytaniem o znaczenie, nie o piksele. Rozkład idzie więc dwoma krokami:
-//
-//  1. Sieć segmentująca (`rembg`, U²-Net) rozdziela obraz na plan pierwszy
-//     i tło, zapisując przynależność w kanale alfa. To krok, którego nie
-//     zastąpi żadna arytmetyka, i to on jest zależnością tej komendy.
-//  2. Plan pierwszy rozpada się na obszary spójne — każdy obszar jest jednym
-//     obiektem. Ten krok liczy rdzeń u siebie: to zwykłe przejście po tablicy
-//     pikseli, więc program zewnętrzny byłby tu zależnością bez powodu.
-//
-// ── Czego ta komenda NIE robi ───────────────────────────────────────────────
-// Bez silnika segmentacji ODMAWIA, nazywając brak. Nie oddaje całego obrazu
-// jako jednej warstwy: „rozkład", który zwraca to samo, co dostał, jest atrapą
-// nie do odróżnienia od rozkładu udanego, dopóki Operator nie policzy warstw.
-// Kontrakt mówi o tym wprost i ta droga jest tu jedyną.
-//
-// Obraz, na którym sieć znalazła jeden spójny obiekt, daje jedną warstwę i to
-// nie jest atrapa: ta warstwa niesie obiekt WYCIĘTY z tła, a więc coś, czego
-// w źródle nie było. Różnica jest sprawdzalna — tło zniknęło.
+// Plik obsługuje `image.layers.split`: rozkłada obraz na obiekty, z których każdy wychodzi osobnym zasobem PNG z przezroczystością, a bez silnika segmentacji odmawia zamiast zwracać atrapę rozkładu.
 package core
 
 import (
@@ -36,10 +14,9 @@ import (
 )
 
 const (
-	// progAlfyWarstwy rozstrzyga, który piksel należy do obiektu. Sieć oddaje
-	// alfę ciągłą, a krawędzie mają wartości pośrednie; połowa zakresu
-	// rozdziela obiekt od tła i zostawia miękką krawędź nietkniętą — do zasobu
-	// wchodzi alfa oryginalna, próg służy wyłącznie znalezieniu obszarów.
+	// progAlfyWarstwy rozstrzyga, który piksel należy do obiektu: alfa poniżej
+	// progu liczy się jako tło, powyżej jako obiekt, a próg służy wyłącznie
+	// wyznaczeniu obszarów spójnych.
 	progAlfyWarstwy = 128
 
 	// najmniejszaWarstwa odrzuca obszary mniejsze niż sto pikseli. Sieć zostawia
@@ -53,7 +30,9 @@ const (
 	domyslnaGranicaWarstw = 20
 )
 
-// RozlozNaWarstwy obsługuje `image.layers.split`.
+// RozlozNaWarstwy obsługuje `image.layers.split`, rozkładając obraz na warstwy
+// obiektów zapisywane jako osobne zasoby PNG z przezroczystością wokół
+// wyciętego kształtu.
 func (a *adapterNarzedziObrazuModelu) RozlozNaWarstwy(ctx context.Context,
 	z shared.ImageLayersSplitRequest) (shared.ImageLayersSplitResponse, error) {
 
@@ -124,24 +103,17 @@ func (a *adapterNarzedziObrazuModelu) RozlozNaWarstwy(ctx context.Context,
 }
 
 // obszarWarstwy jest jednym obiektem: prostokątem obejmującym i przynależnością
-// pikseli. Przynależność trzymamy osobno od prostokąta, bo obiekty bywają
-// wklęsłe i ich prostokąty się nachodzą — wycięcie samym prostokątem wniosłoby
-// do warstwy kawałek sąsiada.
+// pikseli, trzymaną osobno, bo obiekty bywają wklęsłe i ich prostokąty się
+// nachodzą.
 type obszarWarstwy struct {
 	prostokat image.Rectangle
 	nalezy    *maskaRastrowa
 	pole      int
 }
 
-// obszarySpojneWarstw dzieli plan pierwszy na obszary spójne, od największego.
-//
-// Spójność liczona jest w sąsiedztwie ośmiu pikseli: obiekt przewężony do linii
-// ukośnej rozpadłby się w sąsiedztwie czterech na dwie warstwy, choć jest
-// jednym kształtem.
-//
-// Przejście jest iteracyjne (własny stos), nie rekurencyjne: obszar
-// megapikselowy przy rekurencji przepełnia stos wywołań i przewraca proces
-// rdzenia, a nie jedno żądanie.
+// obszarySpojneWarstw dzieli plan pierwszy na obszary spójne, od największego,
+// licząc spójność w sąsiedztwie ośmiu pikseli, tak by obiekt przewężony do
+// linii ukośnej pozostał jednym kształtem.
 func obszarySpojneWarstw(obraz image.Image) []obszarWarstwy {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()

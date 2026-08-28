@@ -1,16 +1,4 @@
-/**
- * Sygnał wyboru — nośnik zdarzenia widoku strony głównej.
- *
- * Rozsyła wybór dokonany w widoku do warstwy, która wie, co z nim zrobić.
- * Strona główna nie otwiera środowiska i nie wysyła komendy — skutek wyboru
- * należy do odbiorcy sygnału.
- *
- * Dlaczego własny sygnał, a nie `CustomEvent` na elemencie: zdarzenie DOM
- * niesie ładunek typu `any` i gubi typ wyboru na granicy `detail`. Tu wybór
- * pozostaje w pełni typowany aż do słuchacza.
- */
-
-/** Odbiorca wyboru. */
+/** Sygnał wyboru rozsyła wybór dokonany w widoku do warstwy, która wie, co z nim zrobić, zamiast otwierać środowisko albo wysyłać komendę bezpośrednio. */
 export type SluchaczWyboru<T> = (wybor: T) => void;
 
 export interface SygnalWyboru<T> {
@@ -20,12 +8,7 @@ export interface SygnalWyboru<T> {
   nadaj(wybor: T): void;
 }
 
-/**
- * Buduje pusty sygnał.
- *
- * Brak odbiorcy nie jest błędem i niczego nie wstrzymuje: element pozostaje
- * klikalny, wybór po prostu nie ma jeszcze adresata.
- */
+/** Buduje pusty sygnał wyboru: brak odbiorcy nie jest błędem i niczego nie wstrzymuje, wybór po prostu nie ma jeszcze adresata. */
 export function utworzSygnalWyboru<T>(): SygnalWyboru<T> {
   const sluchacze: SluchaczWyboru<T>[] = [];
 
@@ -34,8 +17,7 @@ export function utworzSygnalWyboru<T>(): SygnalWyboru<T> {
       sluchacze.push(sluchacz);
     },
     nadaj(wybor) {
-      // Kopia wykazu: odbiorca dopisujący kolejnego odbiorcę nie zmienia
-      // przebiegu trwającego rozesłania.
+      // Kopia wykazu odbiorców, żeby dopisanie kolejnego w trakcie rozesłania nie zmieniło jego przebiegu.
       for (const sluchacz of [...sluchacze]) {
         sluchacz(wybor);
       }

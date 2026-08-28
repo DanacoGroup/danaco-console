@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: odczyt obszaru Terminal — karta powłoki po kodzie
-// i w komplecie oraz dziennik procesów zawężony filtrem.
-//
-// Filtr idzie parametrem, nie sklejaniem tekstu. Jedno przygotowane zapytanie
-// obsługuje cztery zawężenia naraz, bo pusty parametr znaczy „nie zawężaj”.
-// Dzięki temu pamięć podręczna zapytań ma jedną pozycję zamiast szesnastu,
-// a wartości nigdy nie wchodzą do treści SQL.
+// Odpowiedzialność pliku: odczyt obszaru Terminal — karta powłoki terminala po
+// kodzie i w komplecie oraz dziennik procesów zawężany parametrycznym filtrem SQL.
 package dane
 
 import (
@@ -41,13 +36,10 @@ const (
 	                           ORDER BY uruchomiono DESC, id DESC`
 )
 
-// repozytoriumTerminala obsługuje cały obszar modułu Terminal: dziennik kart
-// i procesów oraz wyposażenie (`terminal_wyposazenie_*.go`).
-//
-// Uchwyt bazy stoi obok przygotowanych zapytań, bo dwa zapisy tego obszaru
-// obejmują więcej niż jedno polecenie i muszą pójść jedną transakcją: nadanie
-// numeru wersji pozycji biblioteki wraz z wpisem tej wersji oraz odpięcie klucza
-// od wpisów hostów wraz z odczytaniem, których wpisów to dotyczyło.
+// repozytoriumTerminala obsługuje cały obszar modułu Terminal — dziennik kart
+// i procesów wraz z wyposażeniem — i trzyma uchwyt bazy obok przygotowanych
+// zapytań na potrzeby poleceń zapisu obejmujących więcej niż jedno zapytanie
+// w jednej transakcji.
 type repozytoriumTerminala struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -98,7 +90,8 @@ func (r *repozytoriumTerminala) Karty(ctx context.Context) ([]KartaTerminala, er
 	return karty, wiersze.Err()
 }
 
-// Proces zwraca wiersz dziennika o wskazanym kodzie.
+// Proces zwraca wiersz dziennika procesu terminala o wskazanym kodzie, odczytany
+// z tabeli terminal_proces wraz z jego bieżącym stanem i kodem wyjścia.
 func (r *repozytoriumTerminala) Proces(ctx context.Context, kod string) (ProcesTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzProcesTerminala)
 	if err != nil {
@@ -114,7 +107,8 @@ func (r *repozytoriumTerminala) Proces(ctx context.Context, kod string) (ProcesT
 	return proces, nil
 }
 
-// Procesy zwraca dziennik zawężony filtrem, od najnowszego przebiegu.
+// Procesy zwraca dziennik procesów terminala zawężony filtrem po oknie, karcie,
+// stanie i inicjatorze, w kolejności od najnowszego przebiegu.
 func (r *repozytoriumTerminala) Procesy(ctx context.Context, filtr FiltrProcesow) ([]ProcesTerminala, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzProcesyTerminala)
 	if err != nil {
@@ -142,7 +136,8 @@ func (r *repozytoriumTerminala) Procesy(ctx context.Context, filtr FiltrProcesow
 	return procesy, wiersze.Err()
 }
 
-// odczytajKarteTerminala składa kartę z jednego wiersza wyniku.
+// odczytajKarteTerminala składa wartość karty powłoki terminala z jednego wiersza
+// wyniku zapytania, przypisując kolumny tabeli terminal_karta do pól struktury.
 func odczytajKarteTerminala(wiersz interface{ Scan(...any) error }) (KartaTerminala, error) {
 	var karta KartaTerminala
 	err := wiersz.Scan(&karta.Kod, &karta.OknoKod, &karta.Powloka, &karta.Tytul,
@@ -151,7 +146,8 @@ func odczytajKarteTerminala(wiersz interface{ Scan(...any) error }) (KartaTermin
 	return karta, err
 }
 
-// odczytajProcesTerminala składa proces z jednego wiersza wyniku.
+// odczytajProcesTerminala składa wartość procesu terminala z jednego wiersza
+// wyniku zapytania, przypisując kolumny tabeli terminal_proces do pól struktury.
 func odczytajProcesTerminala(wiersz interface{ Scan(...any) error }) (ProcesTerminala, error) {
 	var proces ProcesTerminala
 	err := wiersz.Scan(&proces.Kod, &proces.KartaKod, &proces.OknoKod, &proces.Pid,

@@ -1,3 +1,5 @@
+// Skutek pól dokumentu: czy pole wchodzi policzone, czy pole obliczane liczy
+// naprawdę i czy pole bez czego policzyć mówi to wprost.
 package core
 
 import (
@@ -9,18 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek pól dokumentu: czy pole wchodzi POLICZONE, czy pole obliczane liczy
-// naprawdę i czy pole bez czego policzyć mówi to wprost.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. pole wstawione z pustą wartością i odpowiedzią „wstawiono" — Operator
-//     widziałby w dokumencie puste miejsce;
-//  2. pole obliczane liczone w kliencie, a w rdzeniu udawane;
-//  3. właściwość dokumentu, której rdzeń nie zna, przyjęta w ciszy;
-//  4. wzór daty przyjmowany układem odniesienia biblioteki, którego Operator nie
-//     wpisze.
-
-// poleUprzazSprawdzianu składa adapter modułu nad bazą sprawdzianu.
+// poleUprzazSprawdzianu składa adapter modułu nad bazą sprawdzianu, gotowy do
+// wywołania komend odczytu i wstawiania pól dokumentu.
 func poleUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, string) {
 	t.Helper()
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
@@ -29,7 +21,8 @@ func poleUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, strin
 	return nowyAdapterStudia(zmontowany.dane.Studio), zycie, dokument.Id
 }
 
-// poleZWykazu odczytuje pole osobnym wywołaniem wykazu.
+// poleZWykazu odczytuje pole osobnym wywołaniem wykazu, niezależnym od
+// odpowiedzi wstawienia, żeby sprawdzian mierzył stan zapisany.
 func poleZWykazu(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	dokument, pole string) shared.StudioDocumentField {
 	t.Helper()
@@ -47,7 +40,8 @@ func poleZWykazu(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	return shared.StudioDocumentField{}
 }
 
-// TestPoleLiczbyStronWchodziPoliczone mierzy, że pole nie wchodzi puste.
+// TestPoleLiczbyStronWchodziPoliczone mierzy, że pole nie wchodzi puste,
+// tylko z wartością rzeczywiście policzoną przez rdzeń.
 func TestPoleLiczbyStronWchodziPoliczone(t *testing.T) {
 	adapter, zycie, dokument := poleUprzazSprawdzianu(t)
 
@@ -176,7 +170,8 @@ func TestPoleObliczaneNazwaneOdmowyPrzyBledzie(t *testing.T) {
 	}
 }
 
-// TestPoleObliczaneDzieliPrzezZeroOdmawia pilnuje granicy rachunku.
+// TestPoleObliczaneDzieliPrzezZeroOdmawia pilnuje granicy rachunku: dzielenie
+// przez zero ma się skończyć odmową, nie wynikiem zmyślonym.
 func TestPoleObliczaneDzieliPrzezZeroOdmawia(t *testing.T) {
 	if _, err := poleObliczWyrazenie("4 / 0", nil); err == nil {
 		t.Error("dzielenie przez zero w polu obliczanym wróciło bez odmowy")
@@ -236,7 +231,8 @@ func TestPoleDatyBierzeWzorOperatora(t *testing.T) {
 	}
 }
 
-// TestPoleRodzajuNieznanegoOdmawia pilnuje granicy kontraktu.
+// TestPoleRodzajuNieznanegoOdmawia pilnuje granicy kontraktu: rodzaj pola
+// spoza wyliczenia ma dostać odmowę, a nie wejść jako pole zwykłe.
 func TestPoleRodzajuNieznanegoOdmawia(t *testing.T) {
 	adapter, zycie, dokument := poleUprzazSprawdzianu(t)
 
@@ -247,8 +243,8 @@ func TestPoleRodzajuNieznanegoOdmawia(t *testing.T) {
 	}
 }
 
-// TestOdswiezeniePolBezPolOdmawia pilnuje, że odświeżenie niczego nie wraca jako
-// wykonane.
+// TestOdswiezeniePolBezPolOdmawia pilnuje, że odświeżenie niczego nie wraca
+// jako wykonane, gdy dokument nie niesie ani jednego pola obliczanego.
 func TestOdswiezeniePolBezPolOdmawia(t *testing.T) {
 	adapter, zycie, dokument := poleUprzazSprawdzianu(t)
 

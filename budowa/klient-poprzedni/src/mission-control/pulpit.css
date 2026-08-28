@@ -1,17 +1,4 @@
-/* ============================================================================
-   MISSION CONTROL — RAMA PULPITU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: rozkład pulpitu, rama sekcji, nagłówki, kafle liczb,
-   pas decyzji i pas ostatniego działania.
-
-   Wartości pochodzą wyłącznie z żetonów `motyw/` i klas `komponenty/`: arkusz
-   nie zawiera barwy szesnastkowej ani odstępu spoza skali 4 px.
-
-   Akcent złoty ogranicza się do wstęgi pasa decyzji i cienia przycisku wezwania;
-   nigdzie nie wypełnia powierzchni.
-
-   Arkusz nie zawiera reguły `:disabled` ani żadnej wygaszającej.
-   ============================================================================ */
+/* Arkusz opisuje ramę pulpitu Mission Control: rozkład, ramę sekcji, nagłówki, kafle liczb, pas decyzji i pas ostatniego działania. */
 
 .mc-pulpit {
   display: flex;
@@ -27,9 +14,7 @@
   line-height: var(--dn-lh-bazowy);
 }
 
-/* ---------------------------------------------------------------------------
-   CZOŁO PULPITU — tytuł i oznaczenie pochodzenia liczb
-   --------------------------------------------------------------------------- */
+/* Czoło pulpitu niesie tytuł widoku oraz oznaczenie pochodzenia liczb pokazywanych w kaflach poniżej, w jednym poziomym pasku. */
 .mc-czolo {
   display: flex;
   align-items: flex-start;
@@ -64,9 +49,7 @@
   flex: none;
 }
 
-/* ---------------------------------------------------------------------------
-   RAMA SEKCJI
-   --------------------------------------------------------------------------- */
+/* Rama sekcji ujednolica obudowę każdej sekcji pulpitu: tytuł, obrys i odstęp wewnętrzny wspólne dla czoła, kafli i pasów. */
 .mc-sekcja {
   display: flex;
   flex-direction: column;
@@ -122,10 +105,7 @@
   flex: none;
 }
 
-/* ---------------------------------------------------------------------------
-   KAFLE LICZB — sekcja „Aktywność AI"
-   Liczba krojem technicznym; krój szeryfowy zostaje przy nagłówkach.
-   --------------------------------------------------------------------------- */
+/* Kafle liczb w sekcji Aktywność AI pokazują liczbę krojem technicznym, podczas gdy krój szeryfowy zostaje zarezerwowany dla nagłówków. */
 .mc-kafle {
   display: grid;
   gap: var(--dn-od-4);
@@ -173,10 +153,7 @@
   font-size: var(--dn-fs-sm);
 }
 
-/* ---------------------------------------------------------------------------
-   PAS DECYZJI — eskalacja koordynatora
-   Jedyne miejsce pulpitu, w którym praca stoi i czeka na człowieka.
-   --------------------------------------------------------------------------- */
+/* Pas decyzji niesie eskalację koordynatora: to jedyne miejsce pulpitu, w którym praca stoi i czeka na decyzję człowieka. */
 .mc-sekcja--aktywnosc__pod {
   display: block;
 }
@@ -193,7 +170,7 @@
   overflow: hidden;
 }
 
-/* Wstęga sygnału 3 px — akcent na pasku, nie na powierzchni */
+/* Wstęga sygnału o szerokości 3 pikseli jest akcentem na krawędzi paska decyzji, nie barwą całej jego powierzchni. */
 .mc-decyzje::before {
   content: '';
   position: absolute;
@@ -231,14 +208,12 @@
   box-shadow: var(--dn-cien-sygnal);
 }
 
-/* Brak oczekujących przepływów nie gasi pasa — zmienia jego treść */
+/* Brak oczekujących przepływów nie gasi pasa decyzji, tylko zmienia jego treść na komunikat o braku spraw do rozstrzygnięcia. */
 .mc-decyzje[data-oczekuje='nie'] .mc-decyzje__znak {
   color: var(--dn-sukces-tekst);
 }
 
-/* ---------------------------------------------------------------------------
-   PAS OSTATNIEGO DZIAŁANIA
-   --------------------------------------------------------------------------- */
+/* Pas ostatniego działania pokazuje najnowsze zdarzenie zarejestrowane przez pulpit, niezależnie od jego środowiska źródłowego. */
 .mc-dzialania {
   display: flex;
   align-items: center;

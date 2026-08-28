@@ -1,15 +1,5 @@
 // Odpowiedzialność pliku: odczyt katalogu kont modeli i kont programów code CLI
-// (tabela `konto`). Katalog jest sterowany danymi — nowe konto to nowy wiersz,
-// nie nowy typ w kodzie. Wzorcem jest rejestr kanałów modelu z `kanaly.go`.
-//
-// Odczyt katalogu nie wynosi odwołania do poświadczenia. Zapytania tego pliku
-// zwracają wyłącznie znacznik `MaPoswiadczenie`; samo odwołanie ma jedną, jawnie
-// nazwaną drogę wyjścia — `OdwolaniePoswiadczenia` w `konta_zapis.go` — a sekretu
-// nie ma w bazie w ogóle.
-//
-// Katalog rozstrzyga, które konta wolno wziąć do rotacji i w jakiej kolejności.
-// Kiedy przejść na następne, rozstrzyga `injection.PulaKont` — repozytorium nie
-// powiela tamtej logiki (patrz `konta_rotacja.go`).
+// (tabela `konto`). Katalog jest sterowany danymi — nowe konto to nowy wiersz, nie nowy typ w kodzie.
 package dane
 
 import (
@@ -21,7 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Konto to wiersz katalogu kont.
+// Konto to wiersz katalogu kont, niosący pełny profil uwierzytelnienia modelu albo programu CLI rdzenia.
 type Konto struct {
 	ID                      int64
 	Nazwa                   string
@@ -31,8 +21,7 @@ type Konto struct {
 	ModelDomyslny           *string
 	AdresBazowy             *string
 	KatalogKonfiguracji     *string
-	// MaPoswiadczenie mówi tylko tyle, że odwołanie jest zapisane. Treści
-	// odwołania odczyt katalogu nie niesie.
+	// MaPoswiadczenie mówi tylko, że odwołanie jest zapisane; treści odwołania odczyt katalogu nie niesie.
 	MaPoswiadczenie bool
 	Stan            StanKonta
 	// WyczerpaneDo jest chwilą odnowienia limitu w zapisie ISO 8601; puste
@@ -45,7 +34,7 @@ type Konto struct {
 	Zaktualizowano string
 }
 
-// FiltrKont zawęża wykaz kont. Pusty filtr znaczy „komplet katalogu".
+// FiltrKont zawęża wykaz kont wynikowych; pusty filtr znaczy „komplet katalogu" bez żadnego zawężenia.
 type FiltrKont struct {
 	// Rodzaj ogranicza wykaz do jednego rodzaju kont; nil znaczy wszystkie.
 	Rodzaj *shared.AccountKind
@@ -53,7 +42,7 @@ type FiltrKont struct {
 	TylkoAktywne bool
 }
 
-// RepozytoriumKont jest kontraktem katalogu kont.
+// RepozytoriumKont jest kontraktem katalogu kont, określającym operacje dostępne na całym wykazie kont.
 type RepozytoriumKont interface {
 	Dodaj(ctx context.Context, konto Konto, odwolaniePoswiadczenia *string) (int64, error)
 	Aktualizuj(ctx context.Context, konto Konto) error
@@ -104,7 +93,7 @@ func noweRepozytoriumKont(z *zapytania, db *sql.DB) *repozytoriumKont {
 	return &repozytoriumKont{zapytania: z, db: db}
 }
 
-// Lista zwraca wykaz kont zawężony filtrem.
+// Lista zwraca wykaz kont z katalogu, zawężony przekazanym filtrem wyszukiwania kont modeli i programów.
 func (r *repozytoriumKont) Lista(ctx context.Context, filtr FiltrKont) ([]Konto, error) {
 	rodzaj := ""
 	if filtr.Rodzaj != nil {
@@ -126,7 +115,7 @@ func (r *repozytoriumKont) Lista(ctx context.Context, filtr FiltrKont) ([]Konto,
 	return zbierzKonta(wiersze)
 }
 
-// Pobierz zwraca jedno konto po kluczu głównym.
+// Pobierz zwraca jedno konto z katalogu kont wskazane kluczem głównym wiersza tabeli kont w bazie danych.
 func (r *repozytoriumKont) Pobierz(ctx context.Context, id int64) (Konto, error) {
 	return r.jednoKonto(ctx, pobierzKonto, fmt.Sprintf("konto %d", id), id)
 }
@@ -148,8 +137,7 @@ func (r *repozytoriumKont) Domyslne(ctx context.Context, rodzaj shared.AccountKi
 		fmt.Sprintf("konto domyślne rodzaju %q", wartosc), wartosc)
 }
 
-// jednoKonto wykonuje odczyt jednego wiersza i przekłada brak wiersza na
-// ErrBrakWiersza.
+// jednoKonto wykonuje odczyt jednego wiersza i przekłada brak wiersza wyniku na zgłoszony błąd braku wiersza.
 func (r *repozytoriumKont) jednoKonto(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) (Konto, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)

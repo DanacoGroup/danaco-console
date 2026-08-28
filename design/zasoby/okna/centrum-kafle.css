@@ -177,3 +177,18 @@
 .cd-strona[data-wnetrze='przyrzadowe'] .cd-wlasny-poz,
 .cd-strona[data-wnetrze='przyrzadowe'] .dn-rejestr-glowa { padding: 10px 15px; }
 .cd-strona[data-wnetrze='przyrzadowe'] .dn-rejestr-glowa { padding-right: 44px; }
+
+/* Widok środowiska w oknie roboczym: treść przedsionka bierze płótno karty,
+   więc własna powłoka przedsionka nie narzuca tu ani szerokości, ani odstępu. */
+.cd-strona .cd-tresc--srodowisko { gap: var(--dn-od-6); }
+.cd-strona .cd-tresc--srodowisko .pd-naglowek { align-items: flex-start; }
+.cd-strona .cd-tresc--srodowisko .pd-godlo { width: 56px; height: 56px; flex: none; }
+.cd-strona .cd-tresc--srodowisko .pd-godlo > svg { width: 32px; height: 32px; }
+.cd-strona .cd-tresc--srodowisko .pd-strefa { gap: var(--dn-od-4); }
+
+/* Rejestr projektów ma o kolumnę więcej niż rejestr komponentów własnych —
+   podział musi bić regułę centrum, inaczej piąta kolumna spada do drugiego wiersza. */
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-tresc--srodowisko .dn-rejestr-glowa,
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-tresc--srodowisko .pd-rejestr-poz {
+  grid-template-columns: 30px minmax(0, 2fr) minmax(0, 1.4fr) 90px 150px;
+}

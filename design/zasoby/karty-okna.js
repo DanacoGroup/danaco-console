@@ -152,6 +152,20 @@
 
   /* ── „+": moduł jako nowa karta zakładająca nową grupę ─────────────────── */
 
+  /* ── Wejscie do srodowiska z karty centrum ─────────────────────────────
+     Przycisk „Wejdz" na karcie srodowiska otwiera karte tego srodowiska
+     w oknie roboczym; okno lewe i okno prawe zostaja na miejscu. */
+
+  qq('[data-wejdz]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var nazwa = b.getAttribute('data-wejdz');
+      var karta = q('.dn-karta-widoku[data-srodowisko="' + nazwa + '"]', pasmo);
+      if (!karta) { return; }
+      aktywuj(karta);
+      oglos('Otwarto srodowisko ' + nazwa + ' w oknie roboczym.');
+    });
+  });
+
   qq('[data-nowa-karta-modul]').forEach(function (b) {
     b.addEventListener('click', function () {
       var modul = b.getAttribute('data-nowa-karta-modul');

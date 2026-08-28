@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="../../zasoby/izolacja.css?w=1787895929">
 <link rel="stylesheet" href="../../zasoby/okno-robocze.css?w=1787895929">
 <link rel="stylesheet" href="../../zasoby/stanowisko.css?w=1787895929">
+<link rel="stylesheet" href="../../zasoby/przedsionek.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css?w=1787895929">
 <link rel="stylesheet" href="../../zasoby/prototyp.css?w=1787895929">
 <link rel="stylesheet" href="../../zasoby/okna/centrum-dowodzenia.css?w=1787895929">
@@ -847,6 +848,7 @@
 </span>
 <div class="dn-karty-lista" role="tablist" aria-label="Otwarte karty">
 <div class="dn-karta-widoku dn-karta-widoku--glowna" role="tab" tabindex="0" aria-selected="true" data-karta="centrum" data-karta-rodzaj="centrum" aria-controls="cd-tresc" data-etykietka="Centrum dowodzenia" aria-label="Centrum dowodzenia"><svg class="dn-karta-widoku-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span class="dn-karta-widoku-nazwa">Centrum dowodzenia</span></div>
+<div class="dn-karta-widoku" role="tab" tabindex="0" draggable="true" aria-selected="false" data-karta="talkin" data-karta-rodzaj="srodowisko" data-srodowisko="TalkIn" aria-controls="karta-srodowisko" data-etykietka="TalkIn — moduły środowiska" aria-label="TalkIn"><svg class="dn-karta-widoku-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v9A2.5 2.5 0 0 0 6 17h2l4 4 4-4h2a2.5 2.5 0 0 0 2.5-2.5z"/></svg><span class="dn-karta-widoku-nazwa">TalkIn</span><span class="dn-karta-widoku-zamknij dn-etykietka" data-etykietka="Zamknij kartę" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></div>
 <div class="dn-karta-widoku" role="tab" tabindex="0" draggable="true" aria-selected="false" data-karta="redakcja" data-karta-rodzaj="modul" data-modul="Studio" aria-controls="karta-modul" data-grupa="Raport kwartalny — trzeci kwartał"><svg class="dn-karta-widoku-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg><span class="dn-karta-widoku-nazwa">Redakcja rozdziału</span><span class="dn-karta-widoku-zamknij dn-etykietka" data-etykietka="Zamknij kartę" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></div>
 <div class="dn-karta-widoku dn-karta-widoku--grupa" role="tab" tabindex="0" draggable="true" aria-selected="false" data-karta="grupa-umowy" data-karta-rodzaj="grupa" data-modul="Research" aria-controls="karta-modul" data-grupa="Rejestr umów serwisowych"><svg class="dn-karta-widoku-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5c0-1.1.9-2 2-2h2" /> <path d="M17 3h2c1.1 0 2 .9 2 2v2" /> <path d="M21 17v2c0 1.1-.9 2-2 2h-2" /> <path d="M7 21H5c-1.1 0-2-.9-2-2v-2" /> <rect width="7" height="5" x="7" y="7" rx="1" /> <rect width="7" height="5" x="10" y="12" rx="1" /></svg><span class="dn-karta-widoku-nazwa">Rejestr umów</span><span class="dn-karta-widoku-grot dn-etykietka" data-etykietka="Karty grupy" data-menu="menu-grupa-umowy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></div>
 </div>
@@ -1242,6 +1244,236 @@
     <div class="cd-tresc cd-tresc--modul dn-wejscie-kaskada" id="karta-modul" hidden>
       <div class="cd-modul-glowa"><svg class="dn-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg><span class="dn-etyk-mono dn-etyk-mono--wiodaca" data-karta-modul-nazwa>Studio</span><span class="dn-meta">sesja: Redakcja rozdziału o przychodach</span></div>
       <div class="cd-modul-odnosnik"><svg class="dn-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /> <path d="M10 14 21 3" /> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg><a class="dn-link" href="../moduly/studio.html">Prototyp okna modułu Studio</a></div>
+    </div>
+    <div class="cd-tresc cd-tresc--srodowisko dn-wejscie-kaskada" id="karta-srodowisko" hidden>
+        <div class="pd-naglowek">
+          <span class="pd-godlo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <div>
+            <p class="pd-nadtytul">Środowisko pracy</p>
+            <h1 class="pd-tytul">TalkIn</h1>
+            <p class="pd-motto">Myśl. Analizuj. Rozumiej.</p>
+            <p class="pd-opis">Wiedza, komunikacja i praca z treścią. Dziewięć modułów operuje na jednym przedmiocie — treści — i wymienia ją między sobą jako odwołanie, nie kopię.</p>
+            <div class="dn-metryka pd-odczyty">
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">3</span><span class="dn-mikroopis">Projekty</span></span>
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">7</span><span class="dn-mikroopis">Sesje</span></span>
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">9</span><span class="dn-mikroopis">Moduły</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── STREFA 1 · KAFLE MODUŁÓW ────────────────────────────────── -->
+        <section class="pd-strefa" aria-labelledby="pd-strefa-moduly">
+          <div class="pd-strefa-glowa">
+            <h2 class="pd-strefa-tytul" id="pd-strefa-moduly">Moduły środowiska</h2>
+            <p class="pd-strefa-opis">Wybór kafla otwiera przestrzeń roboczą środowiska z tym modułem jako wiodącym. Do chwili wyboru żaden moduł nie jest otwarty.</p>
+          </div>
+          <div class="pd-siatka">
+          <button class="pd-kafel" type="button" data-modul="Studio">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Studio</span>
+              <span class="pd-kafel-opis">Redakcja i tworzenie treści długiej</span>
+            </span>
+            <span class="pd-kafel-meta">4 sesje</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Library">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Library</span>
+              <span class="pd-kafel-opis">Repozytorium dokumentów i zbiorów wiedzy</span>
+            </span>
+            <span class="pd-kafel-meta">1 240 pozycji</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Browser">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Browser</span>
+              <span class="pd-kafel-opis">Praca ze stronami i źródłami sieciowymi</span>
+            </span>
+            <span class="pd-kafel-meta">—</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Research">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/><path d="m13.56 11.747 4.332-.924"/><path d="m16 21-3.105-6.21"/><path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z"/><path d="m6.158 8.633 1.114 4.456"/><path d="m8 21 3.105-6.21"/><circle cx="12" cy="13" r="2"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Research</span>
+              <span class="pd-kafel-opis">Badanie zagadnienia i porządkowanie źródeł</span>
+            </span>
+            <span class="pd-kafel-meta">2 sesje</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Translate">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Translate</span>
+              <span class="pd-kafel-opis">Przekład i praca dwujęzyczna nad treścią</span>
+            </span>
+            <span class="pd-kafel-meta">—</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Roundtable">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Roundtable</span>
+              <span class="pd-kafel-opis">Debata wielomodelowa i wypracowanie stanowiska</span>
+            </span>
+            <span class="pd-kafel-meta">1 narada</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Assistant">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Assistant</span>
+              <span class="pd-kafel-opis">Dialog głosowy i tekstowy nad bieżącą treścią</span>
+            </span>
+            <span class="pd-kafel-meta">—</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Workspace">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Workspace</span>
+              <span class="pd-kafel-opis">Projekty, zasoby i porządek pracy środowiska</span>
+            </span>
+            <span class="pd-kafel-meta">3 projekty</span>
+          </button>
+          <button class="pd-kafel" type="button" data-modul="Agents">
+            <span class="pd-kafel-ikona" aria-hidden="true"><svg class="pd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+            <span class="pd-kafel-tresc">
+              <span class="pd-kafel-nazwa">Agents</span>
+              <span class="pd-kafel-opis">Definicje agentów wykorzystywanych jako Wykonawcy</span>
+            </span>
+            <span class="pd-kafel-meta">7 definicji</span>
+          </button>
+          </div>
+        </section>
+
+
+        <!-- ── STREFA 2 · PROJEKTY ŚRODOWISKA ──────────────────────────── -->
+        <section class="pd-strefa" aria-labelledby="pd-strefa-projekty">
+          <div class="pd-strefa-glowa">
+            <h2 class="pd-strefa-tytul" id="pd-strefa-projekty">Projekty środowiska<span class="dn-sekcja-licznik">3</span></h2>
+            <p class="pd-strefa-opis">Projekt zbiera sesje wokół jednego przedmiotu pracy. Wybór wiersza otwiera projekt w module, w którym ostatnio pracował.</p>
+          </div>
+          <div class="dn-rejestr">
+            <div class="dn-rejestr-glowa" aria-hidden="true"><span></span><span>Nazwa</span><span>Moduły</span><span>Sesje</span><span>Stan</span></div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Raport kwartalny — trzeci kwartał">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Raport kwartalny — trzeci kwartał</span>
+                <span class="dn-rejestr-meta">Studio · Research</span>
+                <span class="dn-rejestr-meta">3 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">pracuje</span>
+              </button>
+            </div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Rejestr umów serwisowych">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Rejestr umów serwisowych</span>
+                <span class="dn-rejestr-meta">Research · Studio</span>
+                <span class="dn-rejestr-meta">2 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">2 dni temu</span>
+              </button>
+            </div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Materiały regulacyjne">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Materiały regulacyjne</span>
+                <span class="dn-rejestr-meta">Browser · Translate</span>
+                <span class="dn-rejestr-meta">2 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">w zeszłym tygodniu</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── STREFA 3 · OSTATNIE SESJE ───────────────────────────────── -->
+        <section class="pd-strefa" aria-labelledby="pd-strefa-sesje">
+          <div class="pd-strefa-glowa">
+            <h2 class="pd-strefa-tytul" id="pd-strefa-sesje">Ostatnie sesje<span class="dn-sekcja-licznik">7</span></h2>
+            <p class="pd-strefa-opis">Praca wznawia się w miejscu, w którym została przerwana — razem z modułem, kontekstem i plikami sesji.</p>
+          </div>
+          <div class="dn-rejestr pd-tasma">
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Redakcja rozdziału o przychodach serwisowych" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="praca"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Redakcja rozdziału o przychodach serwisowych</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>pracuje<svg class="dn-przebieg" viewBox="0 0 56 12" fill="none" aria-hidden="true"><path d="M1 9 L8 5 L14 8 L21 2 L28 7 L35 4 L42 6 L49 3 L55 7"/></svg></span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Streszczenie zarządcze" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="praca"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Streszczenie zarządcze</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>12 min temu<svg class="dn-przebieg" viewBox="0 0 56 12" fill="none" aria-hidden="true"><path d="M1 9 L8 5 L14 8 L21 2 L28 7 L35 4 L42 6 L49 3 L55 7"/></svg></span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Weryfikacja tabeli przychodów" data-modul="Research">
+                <span class="dn-stan-znacznik" data-stan="reakcja"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Weryfikacja tabeli przychodów</span>
+                  <span class="dn-wiersz-meta">Research<i aria-hidden="true">·</i>wczoraj</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Klasyfikacja umów według rodzaju świadczenia" data-modul="Research">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Klasyfikacja umów według rodzaju świadczenia</span>
+                  <span class="dn-wiersz-meta">Research<i aria-hidden="true">·</i>2 dni temu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Kary umowne — przegląd zdarzeń" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Kary umowne — przegląd zdarzeń</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>2 dni temu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Przegląd zmian w prawie energetycznym" data-modul="Browser">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Przegląd zmian w prawie energetycznym</span>
+                  <span class="dn-wiersz-meta">Browser<i aria-hidden="true">·</i>w zeszłym tygodniu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Przekład noty technicznej DE → PL" data-modul="Translate">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Przekład noty technicznej DE → PL</span>
+                  <span class="dn-wiersz-meta">Translate<i aria-hidden="true">·</i>w zeszłym tygodniu</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── STREFA 4 · LISTWA DZIAŁAŃ ŚRODOWISKA ────────────────────── -->
+        <section class="pd-strefa pd-strefa--listwa" aria-labelledby="pd-strefa-listwa">
+          <h2 class="pd-strefa-tytul dn-sr-only" id="pd-strefa-listwa">Działania środowiska</h2>
+          <div class="pd-listwa">
+            <button class="pd-listwa-poz pd-listwa-poz--glowna" type="button" data-nowy-projekt-srodowisko="talkin">
+              <svg class="pd-ik-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>Nowy projekt treściowy</span>
+            </button>
+            <span class="pd-listwa-rozdzielacz" aria-hidden="true"></span>
+            <button class="pd-listwa-poz" type="button">
+              <svg class="pd-ik-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg><span>Konfiguracja środowiska</span>
+            </button>
+            <button class="pd-listwa-poz" type="button">
+              <svg class="pd-ik-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2"/><circle cx="12" cy="12" r="3"/></svg><span>Ustawienia</span>
+            </button>
+            <span class="pd-listwa-meta">3 projekty · 7 sesji</span>
+          </div>
+        </section>
     </div>
   </main>
         <div class="dn-dok">

@@ -1,6 +1,6 @@
 import type { SpeechTranscribeResponse } from '../../../../shared/contract';
 
-/** Wynik dyktowania różnicuje trzy stany kontraktu: rozpoznano, bez_mowy oraz nieprzetworzone. */
+/** Wynik dyktowania różnicuje trzy stany kontraktu: rozpoznano, bez_mowy oraz nieprzetworzone nagranie. */
 
 /** Stan wyniku dyktowania rozstrzyga, co użytkownik właśnie zobaczył na ekranie po zakończeniu nagrywania i próbie rozpoznania mowy. */
 export type StanWyniku = 'rozpoznano' | 'bez_mowy' | 'nieprzetworzone';

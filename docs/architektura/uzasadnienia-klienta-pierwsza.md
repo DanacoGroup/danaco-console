@@ -8754,3 +8754,24 @@ Bez tej drogi okno otwarte poza sceną pracowałoby w rdzeniu, mając proces i k
 modelu, a ekran pokazywałby dalej stan sprzed jego powstania. Scena nie rozstrzyga,
 kto okno otworzył, i o nic nie pyta: okno sesji Operatora ma być na jego ekranie
 niezależnie od sprawcy.
+## budowa/klient-poprzedni/src/moduly/design/wydania-zasobu.ts
+Pole adresu zasobu jest ścieżką w systemie plików rdzenia, a rdzeń biegnie na innej maszynie niż
+przeglądarka Operatora — przeglądarka nie wczyta spod niego niczego, także wtedy, gdy zasób powstał
+bez zarzutu. Kafelek z odwołaniem, którego nie da się otworzyć, wygląda dokładnie tak samo jak
+zasób bez bajtów. Przycisk „Sprawdź treść w magazynie" jest jedyną drogą, która na to pytanie
+odpowiada.
+
+Sprawdzenie treści melduje zmierzoną wielkość i sumę kontrolną oddaną przez rdzeń, a nie „udało
+się". Wydanie melduje wielkość pliku i jego typ treści. Zdanie „gotowe" bez liczby nie odróżniłoby
+pliku od pustki.
+
+Lista formatów niesie te, które rdzeń naprawdę zapisuje biblioteką wkompilowaną. Formatu, którego
+rdzeń odmawia, w liście nie ma — a wpisany ręcznie wraca odmową wymieniającą formaty obsługiwane,
+i to zdanie okno pokazuje bez skracania.
+
+Skala zero nie jest krotnością, a wysłana do rdzenia wróciłaby odmową o żądaniu, którego Operator
+nie złożył świadomie.
+
+Odmowa za przekroczenie granicy, której Operator nie ustawił, byłaby odmową bez powodu.
+
+Wykaz krótszy bez słowa byłby ciszą, której kontrakt tej komendy wprost zabrania.

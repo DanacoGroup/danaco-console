@@ -9,73 +9,30 @@ import {
   type UstawieniaOkna,
 } from './klucze-ustawien';
 
-/**
- * Wartość obowiązująca — to, czym naprawdę pojedzie model — obok wartości
- * zapisanej na poziomie okna.
- *
- * Prawdy są dwie i zlanie ich dałoby trzeci rozjazd. Ster zapisuje na poziomie
- * okna (`config.set`, zasięg `window`), ale rdzeń buduje wywołanie z wartości
- * rozstrzygniętej po wszystkich poziomach zasięgu
- * (`core/adapter_rozmowa_wykonanie.go`, funkcja `Ustal` →
- * `injection/argumenty.go`: `--fallback-model`, `--effort`). Nakład ustawiony
- * globalnie obowiązuje model, a ster czytający sam poziom okna napisałby „Bez
- * wskazania". Etykieta niesie więc wartość obowiązującą; menu i suwak nadal
- * ustawiają poziom okna.
- *
- * `config.effective.get` jest komendą o czym innym: składa obszary konfiguracji
- * sesji zapisane pod kluczami rezolwera `sesja.konfiguracja.<obszar>`
- * (`core/sesja_konfiguracja.go`, stała `przedrostekObszaru`;
- * `core/sesja_konfiguracja_skladanie.go`, funkcja `rozstrzygnijObszary`).
- * Klucza prostego `naklad_rozumowania` — tego, który ster zapisuje i który
- * czyta budowa wywołania — ta droga nie ogląda wcale, więc pokazywałaby pustkę
- * tam, gdzie nastawa jest ustawiona.
- *
- * Drogą właściwą jest `config.get` bez poziomu. Adapter rdzenia rozgałęzia
- * odczyt: z podanym poziomem oddaje surowe wpisy tego poziomu, a bez poziomu —
- * politykę efektywną, czyli po jednym zwycięskim wpisie na klucz, z polem
- * `scope` niosącym poziom, na którym wartość znaleziono
- * (`core/adapter_ustawienia.go`, funkcja `Odczytaj`, gałąź `z.Scope == nil`;
- * `konfig/odwzorowanie_kontraktu.go`, `WpisKontraktu`). Poziom pusty znaczy
- * wartość domyślną katalogu, nie błąd.
- *
- * Czego ta droga nie obejmuje: kontekst rozstrzygania budowany przez rdzeń dla
- * tej gałęzi ma wypełnione wyłącznie okno (`core/adapter_ustawienia.go`,
- * funkcja `kontekstZasiegu`), a droga tury wypełnia dodatkowo kartę sesji i oś
- * modelu (`Ustal`: `konfig.Kontekst{Okno, KartaSesji, Model}`). Wartość
- * zapisana na karcie sesji albo na osi kanału modelu obowiązuje więc wywołanie,
- * a tą komendą się nie pokaże — klient nie ma jak tego domknąć po swojej
- * stronie i nie udaje, że ma.
- */
+// Wartość obowiązująca: to, czym naprawdę pojedzie model, obok wartości zapisanej na poziomie okna.
 
-/** Jedna nastawa w postaci obowiązującej wraz z poziomem, z którego pochodzi. */
+/** Jedna nastawa w postaci obowiązującej wraz z poziomem zasięgu i bytem poziomu, z których ona pochodzi. */
 export interface NastawaObowiazujaca {
   /** Wartość rozstrzygnięta przez rdzeń; pusta znaczy wartość domyślną katalogu. */
   wartosc: string;
-  /**
-   * Poziom zasięgu, na którym rdzeń znalazł wartość. Napis pusty znaczy
-   * „z żadnego zapisu" — obowiązuje warstwa definicji katalogu.
-   * Typ jest napisem, nie wyliczeniem, bo rdzeń wysyła tu również poziom pusty.
-   */
+  // Poziom zasięgu, na którym rdzeń znalazł wartość; napis pusty znaczy brak zapisu.
   zasieg: string;
   /** Byt poziomu; pusty dla poziomu globalnego. */
   bytZasiegu: string;
 }
 
-/** Komplet nastaw okna w postaci obowiązującej. */
+/** Komplet nastaw okna w postaci obowiązującej, wraz ze znacznikiem tego, czy rdzeń już oddał politykę. */
 export type ObowiazujaceOkna = {
-  /**
-   * Czy rdzeń zdążył oddać politykę. Do tego czasu stery pokazują poziom okna —
-   * pokazywanie wartości domyślnej jako „obowiązującej" byłoby zmyśleniem.
-   */
+  // Czy rdzeń zdążył oddać politykę; do tego czasu stery pokazują poziom okna.
   znane: boolean;
 } & Record<keyof UstawieniaOkna, NastawaObowiazujaca>;
 
-/** Nastawa nieznana: bez wartości i bez poziomu. */
+/** Nastawa nieznana: niesie samą wartość domyślną, bez poziomu zasięgu i bez bytu tego poziomu zasięgu. */
 function nastawaPusta(wartosc: string): NastawaObowiazujaca {
   return { wartosc, zasieg: '', bytZasiegu: '' };
 }
 
-/** Komplet przed odpowiedzią rdzenia. */
+/** Komplet nastaw obowiązujących przed odpowiedzią rdzenia, złożony wyłącznie z pojedynczych nastaw nieznanych. */
 export function obowiazujaceNieznane(): ObowiazujaceOkna {
   const domyslne = ustawieniaDomyslne();
   return {
@@ -108,7 +65,7 @@ export function naniesObowiazujaca(
   };
 }
 
-/** Komplet złożony z wpisów polityki efektywnej oddanych przez rdzeń. */
+/** Komplet nastaw obowiązujących całego okna złożony z wpisów polityki efektywnej oddanych przez rdzeń. */
 export function obowiazujaceZWpisow(wpisy: readonly ConfigEntry[]): ObowiazujaceOkna {
   let komplet: ObowiazujaceOkna = { ...obowiazujaceNieznane(), znane: true };
   for (const wpis of wpisy) komplet = naniesObowiazujaca(komplet, wpis);
@@ -150,7 +107,7 @@ export function zdanieSteru(
   return `${nazwij(nastawa.wartosc)} · obowiązuje z poziomu ${nazwaZasiegu(nastawa.zasieg)}`;
 }
 
-/** Odczyt polityki efektywnej okna. */
+/** Odczyt polityki efektywnej okna: pyta rdzeń o nastawy obowiązujące i oddaje komplet wywołaniem zwrotnym. */
 export interface OdczytObowiazujacej {
   /** Pyta rdzeń o politykę efektywną i oddaje wynik wywołaniem zwrotnym. */
   wczytaj(przyKomplecie: (komplet: ObowiazujaceOkna) => void): void;
@@ -162,12 +119,9 @@ export function utworzOdczytObowiazujacej(
 ): OdczytObowiazujacej {
   return {
     wczytaj(przyKomplecie) {
-      // Bez pola `scope` — to ono rozgałęzia adapter rdzenia na politykę
-      // efektywną. `scopeId` niesie okno, bo kontekst rozstrzygania buduje się
-      // właśnie z niego.
+      // Bez pola poziomu — to ono rozgałęzia adapter rdzenia na politykę efektywną.
       kanal.wyslij(Command.ConfigGet, { scopeId: idOkna() }, (wynik) => {
-        // Niepowodzenie nie zmienia niczego: stery zostają przy poziomie okna,
-        // zamiast pokazać domyślne jako obowiązujące.
+        // Niepowodzenie nie zmienia niczego: stery zostają przy poziomie okna.
         if (!wynik.udany) return;
         przyKomplecie(obowiazujaceZWpisow(wynik.wynik?.entries ?? []));
       });

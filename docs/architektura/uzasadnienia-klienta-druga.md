@@ -7659,3 +7659,16 @@ wyszukiwania w jednym module nie wyglądały na powielenie.
 Zamiana ma podgląd przed zatwierdzeniem: opcja Zamień wszystko prezentuje podgląd zmian przed
 zatwierdzeniem. Podgląd nie jest ozdobą — zamiana wyrażeniem regularnym potrafi przepisać
 dokument inaczej, niż zamierzano, a cofnięcia po zapisie już nie ma.
+
+## budowa/klient-poprzedni/src/sterowanie/wartosc-obowiazujaca.ts
+Prawdy są dwie i zlanie ich dałoby trzeci rozjazd. Ster zapisuje na poziomie okna, ale rdzeń buduje wywołanie z wartości rozstrzygniętej po wszystkich poziomach zasięgu. Nakład ustawiony globalnie obowiązuje model, a ster czytający sam poziom okna napisałby „Bez wskazania". Etykieta niesie więc wartość obowiązującą; menu i suwak nadal ustawiają poziom okna.
+
+Komenda odczytu efektywnej konfiguracji sesji jest komendą o czym innym: składa obszary konfiguracji sesji zapisane pod osobnymi kluczami rezolwera. Klucza prostego nakładu rozumowania — tego, który ster zapisuje i który czyta budowa wywołania — ta droga nie ogląda wcale, więc pokazywałaby pustkę tam, gdzie nastawa jest ustawiona.
+
+Drogą właściwą jest odczyt konfiguracji bez podanego poziomu. Adapter rdzenia rozgałęzia odczyt: z podanym poziomem oddaje surowe wpisy tego poziomu, a bez poziomu — politykę efektywną, czyli po jednym zwycięskim wpisie na klucz, z polem niosącym poziom, na którym wartość znaleziono. Poziom pusty znaczy wartość domyślną katalogu, nie błąd.
+
+Czego ta droga nie obejmuje: kontekst rozstrzygania budowany przez rdzeń dla tej gałęzi ma wypełnione wyłącznie okno, a droga tury wypełnia dodatkowo kartę sesji i oś modelu. Wartość zapisana na karcie sesji albo na osi kanału modelu obowiązuje więc wywołanie, a tą komendą się nie pokaże — klient nie ma jak tego domknąć po swojej stronie i nie udaje, że ma.
+
+Poziom okna bierzemy ze stałej kontraktu, nie z literału zapisanego wprost w kodzie.
+
+Zdanie steru niesie nazwę wartości, którą naprawdę pojedzie model, z dopiskiem o poziomie, gdy wartość przychodzi spoza okna.

@@ -6891,3 +6891,17 @@ tura trwa. Tura zamknięta ma czas trwania ostateczny, od chwili rozpoczęcia do
 więc licznik zatrzymuje się na nim zamiast rosnąć w nieskończoność. Chwila rozpoczęcia równa zeru
 znaczy, że rdzeń chwili nie podał, nie że tura zaczęła się w chwili zero epoki — wtedy zegar mówi
 o braku pomiaru, a nie o pięćdziesięciu latach trwania tury.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/szerokosci-gniazda.ts
+Rachunek stoi osobno, bez ani jednego odwołania do DOM, bo podział
+szerokości myli się po cichu: gdy panel weźmie za dużo, rozmowa nie znika,
+tylko robi się nieczytelna. Rozmowa nie schodzi poniżej swojego minimum, a
+panel proszący o całą scenę dostaje tyle, ile zostaje po rozmowie. Kolumna
+paneli ma albo dokładnie zero, gdy stosu nie ma, albo co najmniej minimum
+panelu, bo panel węższy od minimum jest paskiem, na którym nic nie widać.
+Gdy dostępna szerokość nie mieści sumy minimów, rozmowa i panele dostają
+swoje minima, a gniazdo przewija się w poziomie tak jak tor okien —
+ciasnota nie odmawia otwarcia panelu, szerokość ustawia uchwyt. Moduł nie
+tworzy elementów, nie czyta wymiarów z DOM i nie wie, jakie panele są
+otwarte ani ile ich jest — dostaje dwie liczby, oddaje podział albo gotowy
+napis dla kolumn siatki.

@@ -1,6 +1,22 @@
--- Migracja tworzy okno komunikacji jako byt pośredniczący między sesją a wiadomością;
--- niesie moduł, kanał modelu, katalogi robocze, środowisko wykonania, tryb uprawnień
--- i rolę w pętli koordynator-wykonawca. Wartości wyliczeniowe pochodzą z kontraktu.
+-- Migracja 002 — okno komunikacji jako byt pośredni między sesją a wiadomością.
+-- Okno niesie moduł, kanał modelu, listę katalogów roboczych, środowisko wykonania,
+-- tryb uprawnień oraz rolę w pętli koordynator–wykonawca.
+--
+-- Wartości wyliczeniowe pochodzą z kontraktu — `shared/contract.json` jest
+-- jedynym źródłem prawdy. Kontrakt zapisuje nazwy po angielsku, model danych
+-- po polsku; odwzorowanie jest jeden do jednego i leży wyłącznie w kontrakcie
+-- (pole `baza` przy każdej wartości wyliczenia). Generator wytwarza z niego słowniki
+-- `WartosciBazy*` / `WartosciKontraktu*` w `contract.go` i `contract.ts` — warstwa
+-- trwałości sięga po nie zamiast wpisywać przekład u siebie.
+--
+--   okno_komunikacji.srodowisko_wykonania  ← ExecutionEnv
+--   okno_komunikacji.tryb_uprawnien        ← PermissionMode
+--   okno_komunikacji.rola_okna             ← WindowRole
+--   okno_komunikacji.stan                  ← WindowStatus
+--   proces_sesji.stan                      ← ProgressStatus
+--   wiadomosc.rola                         ← MessageRole
+--   wiadomosc.stan                         ← MessageStatus
+--   wiadomosc.rodzaj_tresci                ← ChunkKind
 
 CREATE TABLE okno_komunikacji (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +31,8 @@ CREATE TABLE okno_komunikacji (
                                                             'bez_pytania')),
     rola_okna              TEXT    NOT NULL DEFAULT 'samodzielne'
                                    CHECK(rola_okna IN ('samodzielne','wykonawca','koordynator')),
-    -- Pole odpowiada coordinatorWindowId kontraktu: okno wykonawcy wskazuje własnego koordynatora.
+    -- Odpowiednik pola `coordinatorWindowId` kontraktu: okno wykonawcy wskazuje
+    -- swojego koordynatora, dzięki czemu pętla koordynator–wykonawca ma kierunek.
     okno_koordynatora_id   INTEGER REFERENCES okno_komunikacji(id) ON DELETE SET NULL,
     tryb_komunikacji       TEXT    NOT NULL DEFAULT 'tekst',
     stan                   TEXT    NOT NULL DEFAULT 'otwarte'
@@ -29,8 +46,7 @@ CREATE INDEX idx_okno_modul ON okno_komunikacji(modul_id);
 CREATE INDEX idx_okno_kanal ON okno_komunikacji(kanal_modelu_id);
 CREATE INDEX idx_okno_koordynator ON okno_komunikacji(okno_koordynatora_id);
 
--- Katalog roboczy okna jest listą ścieżek, nie pojedynczym polem, ponieważ jedno
--- okno komunikacji może pracować na wielu katalogach jednocześnie.
+-- ── Katalog roboczy okna jest listą, nie pojedynczym polem ───────────
 CREATE TABLE katalog_okna (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     okno_komunikacji_id    INTEGER NOT NULL REFERENCES okno_komunikacji(id) ON DELETE CASCADE,
@@ -61,15 +77,19 @@ CREATE TABLE proces_sesji (
     zakonczono             TEXT
 );
 
--- Wiadomość należy do okna, nie wprost do sesji; rola ma cztery wartości kontraktu,
--- a okno_zrodlowe_id niesie atrybucję w pętli koordynator-wykonawca. Treść obszerna
--- trafia do pliku, baza trzyma odwołanie.
+-- ── Wiadomość należy do okna, nie wprost do sesji ────────────────────
+-- Rola ma cztery wartości kontraktu (MessageRole). Atrybucję w pętli
+-- koordynator–wykonawca niesie okno_zrodlowe_id: okno źródłowe zna własną
+-- rola_okna, więc nie potrzeba drugiego, równoległego słownika ról.
+-- Treści obszerne trafiają do pliku — baza trzyma odwołanie.
 CREATE TABLE wiadomosc (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     okno_komunikacji_id    INTEGER NOT NULL REFERENCES okno_komunikacji(id) ON DELETE CASCADE,
     rola                   TEXT    NOT NULL
                                    CHECK(rola IN ('uzytkownik','model','system','narzedzie')),
-    -- Rola nazywa nadawcę, persona nazywa pełnioną funkcję; jest pusta dla zwykłej wypowiedzi.
+    -- Atrybucja wypowiedzi. Rola mowi, czym jest nadawca; persona mowi, w jakiej
+    -- roli wystapil. Persony sa warstwa prezentacji i nie mnoza wartosci pola
+    -- `rola`. Puste dla zwyklej wypowiedzi uzytkownika i modelu.
     persona                TEXT
                                    CHECK(persona IS NULL OR persona IN (
                                        'coordinator','executor','validator',

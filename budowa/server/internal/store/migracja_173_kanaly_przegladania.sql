@@ -1,5 +1,19 @@
--- Migracja 173 zakłada tabele kanałów RSS, Atom i JSON Feed oraz ich wpisów, z kaskadowym usuwaniem wpisów i warunkiem unikalności adresu w oknie.
-
+-- Migracja 173 — kanały RSS/Atom/JSON Feed i ich wpisy (`browser.feed.*`).
+--
+-- Wpis kanału jest bytem osobnym, nie polem kanału: ma własny adres, własny
+-- czas publikacji i własne oznaczenie przeczytania, a wykaz `browser.feed.list`
+-- pyta o kanały z wpisami albo o same kanały (`includeEntries`). Wpisy zapisane
+-- kolumną JSON w wierszu kanału nie dałyby się oznaczyć pojedynczo bez
+-- przepisywania całej kolumny przy każdym przeczytanym wpisie.
+--
+-- Wpis ma więz obcy do kanału z kasowaniem kaskadowym, bo kontrakt mówi wprost:
+-- `browser.feed.remove` zdejmuje subskrypcję „wraz z jej wpisami". Kaskada
+-- w schemacie jest tu jedyną gwarancją, że zdjęcie kanału nie zostawia wpisów
+-- bez rodzica — sprzątanie w kodzie pominęłoby je przy pierwszym błędzie.
+--
+-- Ten sam adres w tym samym oknie nie zakłada drugiej subskrypcji: warunek
+-- UNIQUE(okno, url) czyni z ponownego wywołania `browser.feed.subscribe`
+-- odświeżenie zastanego kanału, a nie jego duplikat.
 CREATE TABLE kanal_przegladania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

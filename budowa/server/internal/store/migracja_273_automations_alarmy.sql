@@ -1,5 +1,9 @@
--- Migracja 273 wprowadza reguły alarmowania automatyki, których kanały leżą jako zapis
--- strukturalny, ponieważ kontrakt niesie je wykazem tekstów ustalanym w całości.
+-- Migracja 273 — reguły alarmowania (`automation.alert.rule.set`, `.list`).
+--
+-- Kanały leżą zapisem strukturalnym, bo kontrakt niesie je wykazem tekstów
+-- ustalanym w całości: reguła ma kanały takie, jakie zapisano ostatnio.
+-- Rozbicie na tabelę wierszy dałoby możliwość stanu, którego kontrakt nie zna
+-- — kanału dopisanego bez przepisania reguły.
 CREATE TABLE regula_alarmowania_automatyki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

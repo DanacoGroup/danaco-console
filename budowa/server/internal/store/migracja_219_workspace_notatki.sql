@@ -1,4 +1,16 @@
--- Migracja 219 zakłada tabele notatek i stron wiki projektu wraz z odnośnikami treści, niosącymi hierarchię przez wskazanie strony nadrzędnej.
+-- Migracja 219 — notatki i strony wiki projektu wraz z odnośnikami treści.
+--
+-- Strona jest notatką: hierarchię daje wskazanie strony nadrzędnej, a nie druga
+-- tabela. Nagłówki treści leżą w kolumnie obok treści, bo spis treści notatki
+-- czyta się przy każdym otwarciu strony, a parsowanie Markdowna przy każdym
+-- odczycie byłoby liczeniem tego samego po raz drugi.
+--
+-- Odnośnik treści jest osobnym wierszem, bo panel „co linkuje tutaj" pyta
+-- ODWROTNIE niż zapisuje edytor: szuka stron wskazujących tę stronę. Bez
+-- osobnego wiersza trzeba by przeszukiwać treść wszystkich stron projektu.
+--
+-- Odnośnik do strony jeszcze niezałożonej ma pustą kolumnę `notatka_docelowa`.
+-- To jest stan poprawny wiki, nie usterka: nazwa czeka na stronę.
 
 CREATE TABLE notatka_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

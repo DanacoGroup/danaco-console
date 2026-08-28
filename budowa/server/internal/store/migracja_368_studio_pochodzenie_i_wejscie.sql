@@ -1,5 +1,32 @@
--- Migracja 368 dodaje pochodzenie fragmentów dokumentu, autozamianę znaków
--- oraz zapamiętaną postać malarza formatów.
+-- Migracja 368 — pochodzenie fragmentów, autozamiana znaków i malarz formatów.
+--
+-- ── Dlaczego pochodzenie jest bytem trwałym ─────────────────────────────────
+-- Fragment wciągnięty ze strony albo z Biblioteki niesie zapis, skąd jest —
+-- adres, plik, wersja. Bez tego za tydzień nikt nie odtworzy, na czym pismo się
+-- opiera. To jest też podstawa pod „podobieństwa" w panelu redaktora i pod
+-- bibliografię: powołanie bibliograficzne dopisywane z ręki po tygodniu jest
+-- zgadywaniem, a nie powołaniem.
+--
+-- Zakres jest liczony w znakach i przesuwa się razem z treścią, tak samo jak
+-- zakres blokady. Fragment usunięty zostawia wiersz o zerowej długości —
+-- świadomie: to, że Operator wniósł kiedyś fragment z danego źródła, jest
+-- faktem, którego usunięcie tekstu nie unieważnia, a wiersz zdejmuje się
+-- jawnie, nie w tle.
+--
+-- ── Dlaczego autozamiana jest zasięgu Operatora, nie dokumentu ──────────────
+-- Skrót zamieniany na znak („--" na półpauzę, „(c)" na znak praw autorskich)
+-- obowiązuje Operatora we wszystkich pismach. Zakładanie go od nowa w każdym
+-- dokumencie byłoby pracą bez powodu. Nastawa jest JAWNA i ODWRACALNA — stąd
+-- kolumna `czynna`, a nie usuwanie wiersza przy wyłączeniu: Operator, który
+-- wyłączył zasadę fabryczną, ma ją zobaczyć wyłączoną, a nie stracić.
+--
+-- ── Dlaczego malarz formatów ma wiersz, a nie pamięć procesu ────────────────
+-- Malarz kopiuje POSTAĆ, nie treść, i nanosi ją w innym miejscu — czyli między
+-- pobraniem a naniesieniem stoją dwie osobne komendy. Postać trzymana w pamięci
+-- procesu przepadłaby przy przeładowaniu rdzenia, a przy pracy modelu przepadła
+-- by jeszcze łatwiej: model pobiera postać jednym narzędziem i nanosi ją drugim,
+-- być może po kilku innych czynnościach. Wiersz z wygasaniem jest jedynym
+-- miejscem, w którym oba wywołania widzą to samo.
 
 CREATE TABLE pochodzenie_fragmentu_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,8 +64,10 @@ CREATE TABLE autozamiana_znaku_studio (
     zaktualizowano           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- Zasady fabryczne autozamiany obejmują znaki interpunkcyjne niedostępne
--- z klawiatury i wchodzą do bazy, aby dało się je wyłączyć.
+-- Zasady fabryczne: znaki interpunkcyjne niedostępne z klawiatury, wymienione
+-- przez Właściciela. Wchodzą do bazy, a nie do kodu, żeby Operator mógł je
+-- wyłączyć — „--" zamieniane na półpauzę przeszkadza temu, kto pisze o wierszu
+-- polecenia.
 INSERT INTO autozamiana_znaku_studio (skrot, zamiennik, fabryczna) VALUES
     ('--',   '–', 1),
     ('---',  '—', 1),
@@ -62,7 +91,8 @@ CREATE TABLE postac_malarza_studio (
     postac_akapitu_json      TEXT,
     styl_nazwany             TEXT,
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-    -- Pobrana postać wygasa, bo malarz jest narzędziem jednej czynności.
+    -- Pobrana postać wygasa: malarz jest narzędziem jednej czynności, a postać
+    -- pobrana wczoraj naniesiona dziś byłaby zaskoczeniem, nie pomocą.
     wygasa                   TEXT
 );
 CREATE INDEX idx_postac_malarza_studio_okno

@@ -1,3 +1,26 @@
--- Dodaje do tabeli wiadomosc kolumnę zalaczniki, przechowującą tablicę JSON odwołań do plików, z wartością pustą oznaczającą brak wiedzy o załącznikach sprzed migracji.
+-- Migracja 118 — załączniki wiadomości dostają kolumnę.
+--
+-- `message.send` przyjmuje pole `attachments`, niesie je w odpowiedzi i podaje
+-- modelowi (`core/adapter_rozmowa_zalaczniki.go`); bez tej kolumny tabela
+-- `wiadomosc` nie ma gdzie ich trzymać, więc `message.list` oddaje w tym miejscu
+-- `null` i model wracający do rozmowy po restarcie albo po przewinięciu historii
+-- nie widzi, że w rozmowie były pliki.
+--
+-- Dlaczego kolumna, a nie tabela załączników. Kontrakt opisuje
+-- `Message.attachments` jako `string[]` — wykaz odwołań, nie
+-- byt z własnym życiem. Nie ma tu ani jednego pola, którego załącznik nie
+-- dzieliłby z wiadomością: nie ma własnego stanu, własnego czasu, własnego
+-- właściciela ani niczego, co można by po nim wyszukiwać. Osobna tabela dałaby
+-- złączenie i drugie repozytorium po to, żeby przechować listę napisów; wykaz
+-- jest częścią wiadomości i zostaje przy niej. Gdy załącznik stanie się bytem
+-- (rozmiar, typ nośny, ślad użycia), tabela powstanie wtedy i będzie miała czym
+-- się uzasadnić.
+--
+-- Postać wartości. Kolumna niesie tablicę JSON napisów, dokładnie tak, jak brzmi
+-- pole kontraktu.
+-- NULL znaczy „wiadomość bez załączników” i tak też wraca do kontraktu — jako
+-- pole nieobecne, a nie pusta tablica. Rozróżnienie jest z zamysłu: wszystkie
+-- wiersze sprzed tej migracji mają NULL, bo o ich załącznikach baza nic nie wie,
+-- i „nie wiadomo” nie ma prawa wyglądać jak „nie było żadnych”.
 
 ALTER TABLE wiadomosc ADD COLUMN zalaczniki TEXT;

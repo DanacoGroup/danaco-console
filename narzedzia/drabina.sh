@@ -42,7 +42,20 @@ else
 fi
 
 szczebel "Dyscyplina inżynierska"
-WALIDATOR="$(find "$HOME/.claude" -name style_guard.py 2>/dev/null | head -1)"
+# Na maszynie stoi kilka wydań walidatora o różnych progach udziału komentarzy.
+# Pierwsze trafienie wyszukiwania dawało próg losowy w rozrzucie czterokrotnym,
+# więc wydanie dobiera się po zgodności z progiem zapisanym w standardzie redakcji.
+PROG_STANDARDU=0.05
+WALIDATOR=""
+while IFS= read -r kandydat; do
+	[ -z "$kandydat" ] && continue
+	NASTAWA="$(dirname "$kandydat")/dyscyplina.config.json"
+	[ -r "$NASTAWA" ] || continue
+	if grep -q "\"max_udzial_komentarzy\"[[:space:]]*:[[:space:]]*$PROG_STANDARDU" "$NASTAWA"; then
+		WALIDATOR="$kandydat"
+		break
+	fi
+done < <(find "$HOME/.claude" -name style_guard.py 2>/dev/null | sort)
 if [ -z "$WALIDATOR" ]; then
 	printf '   pominięty: walidatora dyscypliny nie ma na tej maszynie\n'
 else

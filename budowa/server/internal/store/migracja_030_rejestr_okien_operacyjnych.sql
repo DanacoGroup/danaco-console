@@ -1,6 +1,19 @@
--- Migracja 030 rozdziela definicję okna od jego przypisania do modułu: okno
--- operacyjne niesie definicję, a osobna macierz niesie wystąpienia wraz
--- z kolejnością właściwą danemu modułowi.
+-- Migracja 030 — rejestr okien operacyjnych: definicja okna osobno, przypisanie
+-- okna do modułu osobno.
+--
+-- Okno jest bytem katalogu, a obecność okna w module jest relacją między dwoma
+-- bytami. Rozdzielamy jedno od drugiego: `okno_operacyjne` niesie definicję —
+-- jeden wiersz na okno; macierz `okno_operacyjne_modul` (migracja 031) niesie
+-- wystąpienia wraz z kolejnością właściwą danemu modułowi. Dzięki temu okno
+-- wspólne dla wielu modułów ma jeden wiersz definicji i wiele przypięć, a jego
+-- pozycja może być inna w każdym module — czego jedna kolumna `kolejnosc` na
+-- definicji nie potrafi wyrazić.
+--
+-- Kolumna `modul_id` odchodzi, więc tabela powstaje na nowo i przejmuje nazwę
+-- starej. Katalog jest słownikiem wnoszonym migracją — nie ma w nim danych
+-- operatora, dlatego wiersze zastępujemy kompletem inwentarza. Kolumna
+-- `kolejnosc` definicji porządkuje okno w obrębie jego kategorii; kolejność
+-- w module należy do macierzy.
 
 CREATE TABLE okno_operacyjne_nowe (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,8 +33,7 @@ DROP TABLE okno_operacyjne;
 ALTER TABLE okno_operacyjne_nowe RENAME TO okno_operacyjne;
 CREATE INDEX idx_okno_operacyjne_kategoria ON okno_operacyjne(kategoria, kolejnosc);
 
--- Definicje okien są bezmodułowe, bo katalog jest słownikiem wnoszonym
--- migracją, a przynależność do modułu i jej kolejność należą do osobnej macierzy.
+-- ── Definicje okien. Kod jest bezmodułowy, bo definicja nie należy do modułu. ─
 INSERT INTO okno_operacyjne (kod, nazwa, rola, kategoria, kolejnosc)
 VALUES
     ('chat-window',            'Chat Window',                        'wiodace',    'komunikacja',  1),

@@ -1,4 +1,13 @@
--- Migracja 197 zakłada tabele macierzy decyzyjnej wariantów i kryteriów z wagami, gdzie ocena wariantu w kryteriach idzie jednym polem JSON.
+-- Migracja 197 — macierz decyzyjna wariantów i kryteriów z wagami.
+--
+-- Wynik wariantu (`total`) liczy się przy odczycie z ocen i wag, a nie stoi
+-- w kolumnie: zmiana wagi jednego kryterium przestawia wynik każdego wariantu
+-- naraz, więc kolumna wymagałaby przeliczenia całej macierzy przy każdym
+-- zapisie i rozjeżdżałaby się z ocenami przy pierwszym pominięciu.
+--
+-- Oceny wariantu w kryteriach idą jednym polem JSON, bo są mapą „kryterium →
+-- ocena" o kształcie zadanym przez kryteria tej macierzy. Tabela wiążąca
+-- dawałaby ten sam kształt kosztem trzeciego złączenia przy każdym odczycie.
 
 CREATE TABLE debata_macierz (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

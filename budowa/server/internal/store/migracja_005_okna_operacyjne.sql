@@ -1,5 +1,14 @@
--- Migracja zakłada katalog okien operacyjnych: wpisów słownikowych opisujących okna
--- robocze niesione przez moduł.
+-- Migracja 005 — katalog okien operacyjnych.
+--
+-- Okno operacyjne to pozycja katalogu funkcji modułu, a nie okno komunikacji.
+-- Okno komunikacji jest bytem wykonania jednej sesji; okno operacyjne jest
+-- wpisem słownikowym mówiącym, jakie okna robocze niesie moduł.
+--
+-- `modul_id` dopuszcza NULL: trzy okna aplikacji (Konfiguracja, Ustawienia,
+-- Strona główna) oraz okno konfiguracji punktów izolacji i okna ról
+-- MultitaskingAI nie należą do żadnego modułu.
+--
+-- Role okna: wiodące · pomocnicze · monitor · kreator · zarządca.
 
 CREATE TABLE okno_operacyjne (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,

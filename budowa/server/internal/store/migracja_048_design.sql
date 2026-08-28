@@ -1,9 +1,33 @@
--- Migracja tworzy trwałość modułu Design: prompt strukturalny ma własną tabelę,
--- bo wiele zasobów i wariantów powstaje z tego samego promptu, a warstwy kompozycji
--- mają własną tabelę zamiast zapisu JSON.
+-- Migracja 048 — trwałość modułu Design: prompt strukturalny, zasób
+-- wizualny Assets Panel oraz kompozycja Design Board wraz z jej warstwami.
+--
+-- Prompt dostaje własną tabelę. Kontrakt niesie `DesignPrompt.Id` jako pole
+-- opcjonalne, a `DesignAsset.PromptId` odwołuje się do promptu osobnym polem —
+-- dwa sygnały, że prompt bywa bytem trwałym, nie tylko parametrem jednego
+-- wywołania `design.asset.generate`. Warianty (`DesignAsset.VariantOfAssetId`,
+-- `DesignPrompt.Variants`) i generowanie obraz-do-obrazu (`ReferenceAssetId`)
+-- zakładają wprost, że wiele zasobów powstaje z tego samego promptu — gdyby
+-- prompt żył jako kolumny powielone w każdym wierszu zasobu, każdy wariant
+-- niósłby własną kopię tych samych pól. Jedna tabela `prompt_design` jest jedną
+-- prawdą o promptcie; `zasob_design.prompt_id` jest jedynym miejscem odwołania.
+--
+-- Warstwa kompozycji dostaje własną tabelę, nie zapis strukturalny w kolumnie.
+-- `DesignBoardLayer` niesie własny `Id`, pozycję (X, Y, Width, Height), `Order`
+-- i `Locked` — pola, po których trzeba by filtrować i sortować przy odczycie
+-- („warstwa zablokowana”, kolejność renderowania), gdyby leżały w jednym polu
+-- JSON. `design.board.update` nadsyła całą listę warstw na nowo (kontrakt:
+-- `Layers []DesignBoardLayer` bez trybu częściowej zmiany), więc zapis jest
+-- zawsze „usuń warstwy kompozycji, wstaw przysłane od nowa”.
+--
+-- Treść zasobu trzyma dysk lub usługa zewnętrzna, nie baza. `DesignAsset.Uri`
+-- w kontrakcie już jest odnośnikiem, nie surową treścią — kolumna `uri`
+-- przechowuje więc ten odnośnik wprost, bez pośredniej kolumny BLOB.
+--
+-- Etykiety zasobu mają własną tabelę złącznikową: etykieta jest wolnym tekstem
+-- bez własnej tożsamości (kontrakt: `DesignAsset.Tags []string`), więc para
+-- (zasób, etykieta) jest kluczem bez surogatu.
 
--- Tabela prompt_design trzyma prompt strukturalny modułu Prompt Builder jako byt
--- trwały, niezależny od pojedynczego wywołania generowania zasobu.
+-- ── Prompt strukturalny — Prompt Builder ──────────────────────────────────────
 CREATE TABLE prompt_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -34,7 +58,9 @@ CREATE TABLE zasob_design (
     format                   TEXT,
     uri                      TEXT,
     prompt_id                INTEGER REFERENCES prompt_design(id) ON DELETE SET NULL,
-    -- Wariant zasobu jest polem danych, nie więzem obcym: nie wymusza kolejności wstawiania wierszy.
+    -- Odwołanie do wariantu jest wartością danych (identyfikator zewnętrzny),
+    -- nie więzem obcym: wariant i zasób źródłowy współistnieją bez porządku
+    -- wstawiania wymuszonego przez SQLite.
     wariant_zasobu_id        TEXT,
     ulubiony                 INTEGER NOT NULL DEFAULT 0 CHECK(ulubiony IN (0,1)),
     szerokosc                INTEGER,
@@ -47,15 +73,14 @@ CREATE TABLE zasob_design (
 CREATE INDEX idx_zasob_design_okno ON zasob_design(okno, utworzono DESC, id DESC);
 CREATE INDEX idx_zasob_design_prompt ON zasob_design(prompt_id);
 
--- Tabela etykieta_zasobu_design trzyma etykiety zasobu panelu Assets Panel jako
--- parę zasób-etykieta bez własnego identyfikatora.
+-- ── Etykieta zasobu — Assets Panel ─────────────────────────────────────────────
 CREATE TABLE etykieta_zasobu_design (
     zasob_id   INTEGER NOT NULL REFERENCES zasob_design(id) ON DELETE CASCADE,
     etykieta   TEXT    NOT NULL,
     utworzono  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     PRIMARY KEY (zasob_id, etykieta)
 );
--- Indeks etykiety wspiera zapytanie design.asset.list, które filtruje wykaz zasobów po etykiecie żądania.
+-- design.asset.list filtruje po etykiecie (Tags []string w żądaniu).
 CREATE INDEX idx_etykieta_zasobu_design_etykieta ON etykieta_zasobu_design(etykieta, zasob_id);
 
 -- ── Kompozycja — Design Board ───────────────────────────────────────────────────
@@ -70,13 +95,14 @@ CREATE TABLE kompozycja_design (
 );
 CREATE INDEX idx_kompozycja_design_okno ON kompozycja_design(okno, zaktualizowano DESC);
 
--- Tabela warstwa_kompozycji_design trzyma warstwy kompozycji Design Board, każda
--- z własną pozycją, rozmiarem i kolejnością renderowania.
+-- ── Warstwa kompozycji — Design Board ────────────────────────────────────────
 CREATE TABLE warstwa_kompozycji_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     kompozycja_id            INTEGER NOT NULL REFERENCES kompozycja_design(id) ON DELETE CASCADE,
-    -- Zasób warstwy jest polem danych, nie więzem obcym; może wskazywać zasób już usunięty z panelu.
+    -- Zasób warstwy jest wartością danych, nie więzem obcym: warstwa może
+    -- wskazywać zasób usunięty z Assets Panel po zapisie kompozycji, a
+    -- design.board.update nie ma trybu naprawy takiego wskazania.
     zasob_id                 TEXT,
     x                        REAL,
     y                        REAL,

@@ -1,4 +1,11 @@
--- Migracja 218 zakłada tabelę kolumn tablicy kanban projektu, odwzorowującą się na stan zadania z sygnalizowaną, nieegzekwowaną granicą prac w toku.
+-- Migracja 218 — kolumny tablicy kanban projektu.
+--
+-- Kolumna jest nastawą Operatora i odwzorowuje się na stan zadania z zestawu
+-- wyjściowego platformy. Kolumna własna nie zakłada stanu nowego — dlatego
+-- kolumna `stan` ma ten sam warunek co zadanie, a nie własne słownictwo.
+--
+-- Granica prac w toku jest sygnalizowana, nie egzekwowana: zero znaczy brak
+-- granicy, a przekroczenie wraca ostrzeżeniem odpowiedzi, nie odmową.
 
 CREATE TABLE kolumna_tablicy_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

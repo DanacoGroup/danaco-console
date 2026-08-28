@@ -1,5 +1,36 @@
--- Migracja 370 tworzy pętlę wykonawczą Studia: rozkład zlecenia na zadania,
--- zajęcie fragmentu dokumentu i spięcie dwóch agentów pracujących nad nim naraz.
+-- Migracja 370 — pętla wykonawcza Studia i praca dwóch agentów naraz.
+--
+-- Oba narzędzia są DOMYŚLNIE WYŁĄCZONE i włączane jawnym, odwracalnym
+-- ustawieniem Operatora. Nastaw nie ma w tym schemacie z zamysłu: idą zasięgami
+-- rodziny `config.*`, która ma własny magazyn. Drugiego magazynu ustawień Studio
+-- nie zakłada — inaczej Operator wyłączyłby pętlę w jednym miejscu, a ona
+-- chodziłaby dalej wedle drugiego.
+--
+-- ── Dlaczego rozkład zlecenia jest bytem trwałym ────────────────────────────
+-- Zlecenie dokumentowe rozłożone na zadania musi przetrwać przeładowanie rdzenia
+-- i zamknięcie okna: pętla wykonawcza chodzi obiegami, a obieg drugi ma wiedzieć,
+-- co zrobił obieg pierwszy. Rozkład trzymany w pamięci procesu znaczyłby, że
+-- każde przeładowanie zaczyna pracę od nowa — na dokumencie, który już jest w pół
+-- przerobiony.
+--
+-- ── Dlaczego zadanie niesie wykonawcę, a nie tylko stan ─────────────────────
+-- Przy dwóch agentach naraz „zadanie w biegu" bez wskazania wykonawcy nie mówi
+-- niczego: nie wiadomo, czy stoi, czy ktoś nad nim pracuje, ani kogo zapytać
+-- o wynik. Tożsamością jest kod agenta z modułu Agents, tak samo jak przy zmianie
+-- śledzonej.
+--
+-- ── Dlaczego zajęcie fragmentu wygasa ────────────────────────────────────────
+-- Wykonawca ubity w pół pracy nie może trzymać akapitu na zawsze — drugi agent
+-- stałby bezczynnie, a Operator nie wiedziałby, dlaczego. Stąd `wygasa`:
+-- zajęcie bez odnowienia przestaje obowiązywać samo. To nie jest rozjemca; to
+-- zapora przed zakleszczeniem.
+--
+-- ── Dlaczego spięcie ma wiersz, choć rdzeń nie rozstrzyga sporu ─────────────
+-- Dwóch wykonawców zmieniających ten sam akapit nie może dać dokumentu, w którym
+-- jeden nadpisał drugiego W CISZY. Rdzeń nie orzeka, kto ma rację — odkłada
+-- prawdę o tym, co się stało: czyja zmiana weszła, czyja została odłożona
+-- i dlaczego. Odłożone brzmienie zostaje w wierszu, więc nie przepada: Operator
+-- może je wnieść sam albo znaleźć jako propozycję na marginesie.
 
 CREATE TABLE rozklad_zlecenia_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,9 +85,9 @@ CREATE INDEX idx_zadanie_rozkladu_studio_rozklad
 CREATE INDEX idx_zadanie_rozkladu_studio_stan
     ON zadanie_rozkladu_studio(rozklad_id, stan);
 
--- Zależność między zadaniami ma osobną tabelę, ponieważ pytanie o zadania
--- stojące na drodze pada przy każdym obiegu pętli i nie może wymagać
--- przeszukania wszystkich wierszy rozkładu.
+-- Zależność między zadaniami. Osobna tabela z tego samego powodu, co przy
+-- dzienniku czynności: pytanie „co stoi na tym zadaniu" pada przy każdym obiegu
+-- pętli i nie może wymagać przeszukania wszystkich wierszy.
 CREATE TABLE zaleznosc_zadania_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     zadanie_id               INTEGER NOT NULL
@@ -87,9 +118,9 @@ CREATE TABLE zajecie_fragmentu_studio (
     wygasa                   TEXT,
     CHECK(zakres_do >= zakres_od)
 );
--- Zapytanie o pokrycie zakresu żądania z fragmentem zajętym przez innego
--- wykonawcę pada przed każdą zmianą dokumentu przy czynnej pracy wielu
--- agentów, więc indeks utrzymuje ten dostęp tanim.
+-- Najczęstsze pytanie tej tabeli: „czy zakres tego żądania dotyka fragmentu
+-- zajętego przez kogo innego" — pada przed każdą zmianą dokumentu przy czynnej
+-- pracy wielu agentów, więc musi być tanie.
 CREATE INDEX idx_zajecie_fragmentu_studio_zakres
     ON zajecie_fragmentu_studio(dokument_id, zakres_od, zakres_do);
 CREATE INDEX idx_zajecie_fragmentu_studio_wykonawca
@@ -112,8 +143,8 @@ CREATE TABLE spiecie_wykonawcow_studio (
     nastawa                  TEXT    NOT NULL DEFAULT 'queue'
                                      CHECK(nastawa IN ('refuse','queue','fragmentLock')),
     powod                    TEXT    NOT NULL,
-    -- Odłożone brzmienie zostaje zapisane, więc zmiana odłożona przy
-    -- spięciu nie przepada.
+    -- Odłożone brzmienie NIE PRZEPADA. Bez tej kolumny bilans mówiłby „zmiana
+    -- drugiego wykonawcy została odłożona" i nie byłoby czego wnieść.
     brzmienie_odlozone       TEXT,
     zmiana_sledzona_kod      TEXT,
     znakowanie_kod           TEXT,

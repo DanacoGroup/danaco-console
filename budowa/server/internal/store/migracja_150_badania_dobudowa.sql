@@ -1,7 +1,37 @@
--- Migracja 150 dobudowuje moduł Research o byty brakujące wobec kontraktu:
--- katalogowanie źródeł, adnotacje lektury, książkę kodów, sprzeczności,
--- ślad prowenancji, odkrycia, monitory i wersje raportu. Uzasadnienie w docs.
+-- Migracja 150 — dobudowa modułu Research: byty, na których stoi pełny arsenał
+-- badawczy opracowania modułu.
+--
+-- Moduł miał w schemacie pięć tabel (źródło, ustalenie, wiązanie, raport,
+-- sekcja, eksport, przestrzeń) obsługujących pięć komend. Kontrakt niesie ich
+-- siedemdziesiąt sześć, a opracowanie modułu — dziewięć okien i osiem rodzin
+-- funkcji. Ta migracja wnosi byty brakujące: katalogowanie źródeł, załączniki,
+-- treść do lektury, adnotacje i wypisy, książkę kodów, sprzeczności, weryfikacje,
+-- wątki, ślad prowenancji, pytania badawcze, odkrycia i ich przesiew, monitory,
+-- style cytowania, szablony, wersje raportu, komentarze recenzji, bloki wstawek
+-- oraz szablony i udostępnienia eksportu.
+--
+-- ── Dlaczego treść źródła jest kolumną źródła, a nie tabelą ─────────────────
+-- Tekst wydobyty ze źródła nie ma tożsamości własnej: nie da się go wskazać
+-- bez wskazania źródła, nie ma historii i ginie razem ze źródłem. Tabela
+-- podrzędna dałaby złączenie przy każdym otwarciu lektury i nie dałaby nic
+-- w zamian. Stron i warstwa tekstowa idą obok tekstu, bo są jego cechami:
+-- „skan bez warstwy tekstowej" jest stanem treści, nie stanem źródła.
+--
+-- ── Dlaczego wynik odkrycia jest bytem trwałym ─────────────────────────────
+-- `research.discovery.reject` odrzuca wynik po kluczu, a `research.prisma.get`
+-- liczy przesiew. Bez wiersza wyniku nie ma czego odrzucić ani czego policzyć:
+-- liczniki PRISMA byłyby liczbami wymyślonymi w chwili odpytania, a odrzucenie
+-- nie przeżyłoby odświeżenia panelu. Wynik zapisuje się więc w chwili
+-- wyszukania, a odrzucenie jest zmianą jego stanu.
+--
+-- ── Dlaczego wersja raportu niesie migawkę, a nie różnicę ───────────────────
+-- `research.report.diff` porównuje dwie wskazane wersje, także nieprzyległe.
+-- Łańcuch różnic wymagałby odtworzenia stanu przez złożenie wszystkich kroków
+-- pośrednich i rozsypałby się przy pierwszym kroku zgubionym. Migawka sekcji
+-- jest samowystarczalna: dwie wersje wystarczą do porównania i żadna trzecia
+-- nie jest potrzebna.
 
+-- ── Źródło: katalogowanie, lektura, treść, wycofanie ────────────────────────
 ALTER TABLE zrodlo_badania ADD COLUMN stan_lektury TEXT NOT NULL DEFAULT 'unread';
 ALTER TABLE zrodlo_badania ADD COLUMN etap_indeks INTEGER;
 ALTER TABLE zrodlo_badania ADD COLUMN identyfikator TEXT;
@@ -65,6 +95,7 @@ CREATE TABLE tabela_zrodla_badania (
 );
 CREATE INDEX idx_tabela_zrodla_badania ON tabela_zrodla_badania(zrodlo_id, id);
 
+-- ── Adnotacje lektury — podświetlenia, notatki, zakładki ───────────────────
 CREATE TABLE adnotacja_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -86,6 +117,7 @@ CREATE TABLE adnotacja_badania (
 );
 CREATE INDEX idx_adnotacja_badania_zrodlo ON adnotacja_badania(zrodlo_id, utworzono DESC);
 
+-- ── Ustalenie: klasyfikacja, waga, kotwica, notatka robocza ────────────────
 ALTER TABLE ustalenie_badania ADD COLUMN rodzaj TEXT;
 ALTER TABLE ustalenie_badania ADD COLUMN waga TEXT;
 ALTER TABLE ustalenie_badania ADD COLUMN notatka TEXT;
@@ -98,6 +130,7 @@ ALTER TABLE ustalenie_badania ADD COLUMN kotwica_do INTEGER;
 ALTER TABLE ustalenie_badania ADD COLUMN kotwica_selektor TEXT;
 ALTER TABLE ustalenie_badania ADD COLUMN kotwica_czas_ms INTEGER;
 
+-- ── Kodowanie jakościowe — książka kodów i przypisania ─────────────────────
 CREATE TABLE kod_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -115,6 +148,7 @@ CREATE TABLE kod_ustalenia_badania (
 );
 CREATE INDEX idx_kod_ustalenia_badania_kod ON kod_ustalenia_badania(kod_id, ustalenie_id);
 
+-- ── Sprzeczności i ich rozstrzygnięcia ─────────────────────────────────────
 CREATE TABLE sprzecznosc_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -134,6 +168,7 @@ CREATE TABLE ustalenie_sprzecznosci_badania (
     PRIMARY KEY (sprzecznosc_id, ustalenie_kod)
 );
 
+-- ── Weryfikacja twierdzenia (fact-check) ───────────────────────────────────
 CREATE TABLE weryfikacja_ustalenia_badania (
     ustalenie_id INTEGER NOT NULL PRIMARY KEY REFERENCES ustalenie_badania(id) ON DELETE CASCADE,
     werdykt      TEXT    NOT NULL
@@ -142,6 +177,7 @@ CREATE TABLE weryfikacja_ustalenia_badania (
     sprawdzono   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+-- ── Wątki tematyczne ustaleń ───────────────────────────────────────────────
 CREATE TABLE watek_ustalen_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -156,6 +192,7 @@ CREATE TABLE ustalenie_watku_badania (
     PRIMARY KEY (watek_id, ustalenie_kod)
 );
 
+-- ── Ślad prowenancji ustalenia ─────────────────────────────────────────────
 CREATE TABLE prowenancja_badania (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     ustalenie_kod  TEXT    NOT NULL,
@@ -168,6 +205,7 @@ CREATE TABLE prowenancja_badania (
 );
 CREATE INDEX idx_prowenancja_badania ON prowenancja_badania(ustalenie_kod, o_czasie);
 
+-- ── Przestrzeń badania: pytania, odbiorca, protokół, notatka ───────────────
 ALTER TABLE przestrzen_badania ADD COLUMN odbiorca TEXT;
 ALTER TABLE przestrzen_badania ADD COLUMN protokol TEXT;
 ALTER TABLE przestrzen_badania ADD COLUMN granice TEXT;
@@ -180,6 +218,7 @@ CREATE TABLE pytanie_badania (
     kolejnosc                INTEGER NOT NULL DEFAULT 0
 );
 
+-- ── Odkrywanie źródeł: wyniki, przesiew, monitory ──────────────────────────
 CREATE TABLE wynik_odkrycia_badania (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     klucz             TEXT    NOT NULL UNIQUE,
@@ -214,6 +253,7 @@ CREATE TABLE monitor_badania (
 );
 CREATE INDEX idx_monitor_badania_okno ON monitor_badania(okno, identyfikator_zewnetrzny);
 
+-- ── Cytowania: style własne ────────────────────────────────────────────────
 CREATE TABLE styl_cytowania_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -221,6 +261,7 @@ CREATE TABLE styl_cytowania_badania (
     wlasny                   INTEGER NOT NULL DEFAULT 1
 );
 
+-- ── Raport: szablony, wersje, komentarze, bloki, przypisy ──────────────────
 CREATE TABLE szablon_raportu_badania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -271,7 +312,12 @@ CREATE TABLE blok_raportu_badania (
 );
 CREATE INDEX idx_blok_raportu_badania ON blok_raportu_badania(raport_id, sekcja_kod);
 
--- Eksport powstaje na nowo, bo więz CHECK na kolumnie format wymieniał pięć wartości, a kontrakt niesie już osiem.
+-- ── Eksport: cel, szablony, udostępnienia ──────────────────────────────────
+--
+-- Tabela eksportu powstaje na nowo, bo warunek CHECK na kolumnie `format`
+-- wymieniał pięć formatów, a kontrakt niesie osiem (doszły pptx, xlsx, latex).
+-- SQLite nie zna zmiany warunku w miejscu; przepisanie tabeli jest jedyną
+-- drogą, a przeniesienie wierszy zachowuje ślad eksportów już wykonanych.
 CREATE TABLE eksport_raportu_badania_nowy (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

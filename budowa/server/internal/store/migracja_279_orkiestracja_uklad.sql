@@ -1,5 +1,27 @@
--- Migracja 279 dodaje tabele bramki dołączenia, grupy kroków oraz kroku
--- wycofującego dla układu zależności automatyki.
+-- Migracja 279 — trzy dopełnienia układu zależności: bramka dołączenia, grupa
+-- kroków i krok wycofujący (`orchestration.gate.set`,
+-- `orchestration.group.set`, `orchestration.compensation.set`).
+--
+-- Wszystkie trzy wiszą na `automatyka(id)` i posługują się identyfikatorem
+-- ZEWNĘTRZNYM kroku — tym samym napisem, którym posługuje się
+-- `zaleznosc_kroku_automatyki` (migracja 039). Klucz wiersza kroku nie wchodzi
+-- tu z rozmysłem: układ zależności przepisuje się w całości
+-- (`automation.orchestrator.define`), więc kroki bywają zakładane od nowa,
+-- a wtedy klucz wiersza jest inny, choć krok w oczach Operatora ten sam.
+--
+-- Bramka dołączenia jest jedna na krok: krok scalający tory ma jedną regułę
+-- scalenia i drugiej mieć nie może. Stąd klucz pierwotny na parze
+-- (automatyka, krok), a nie osobny identyfikator.
+--
+-- Grupa ma identyfikator własny, bo kontrakt `orchestration.group.set` przyjmuje
+-- `groupId` przy zmianie i pozwala go pominąć przy założeniu. Kroki grupy leżą
+-- w tabeli podrzędnej z zachowaną kolejnością — grupa sekwencyjna to grupa,
+-- w której kolejność jest treścią, a nie ozdobą.
+--
+-- Kompensacja jest jedna na krok główny: krok wycofujący skutki kroku N jest
+-- jeden, bo dwa wycofania tego samego kroku dałyby stan, którego nikt nie
+-- umiałby rozstrzygnąć. Zdjęcie kompensacji kasuje wiersz — to jest znaczenie
+-- pustego `compensationStepId` z kontraktu.
 
 CREATE TABLE orkiestracja_bramka (
     automatyka_id INTEGER NOT NULL REFERENCES automatyka(id) ON DELETE CASCADE,
@@ -10,7 +32,8 @@ CREATE TABLE orkiestracja_bramka (
     licznik       INTEGER NOT NULL DEFAULT 0 CHECK (licznik >= 0),
     zapisano      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     PRIMARY KEY (automatyka_id, krok),
-    -- Reguła licznikowa bez liczby torów otwierałaby się zawsze albo nigdy.
+    -- Reguła licznikowa bez liczby torów byłaby bramką, która nigdy się nie
+    -- otworzy albo otworzy zawsze — zależnie od tego, kto ją później czyta.
     CHECK (regula <> 'count' OR licznik > 0)
 );
 

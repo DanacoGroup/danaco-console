@@ -1,5 +1,36 @@
--- Migracja 364 dodaje odwracalny dziennik czynności dokumentu wraz
--- z zależnościami między czynnościami.
+-- Migracja 364 — odwracalny dziennik czynności dokumentu.
+--
+-- ── Czego rdzeń NIE miał ─────────────────────────────────────────────────────
+-- Zmiana śledzona cofa się pojedynczo już dziś (`studio.tracking.decide`
+-- przyjmuje ChangeIds). Zmiana JUŻ WNIESIONA do treści nie cofała się wcale —
+-- nie było czego cofnąć, bo nie było zapisu, że coś się stało. Ten dziennik jest
+-- tym zapisem: każda czynność (wpis, zmiana postaci, wstawienie tabeli,
+-- przyjęcie propozycji modelu) odkłada wiersz, który da się wycofać.
+--
+-- ── Dlaczego stan sprzed i po, a nie sam opis ───────────────────────────────
+-- Cofnięcie ma obejmować POSTAĆ, nie tylko treść: pomyłkowa zmiana kroju
+-- w całym dokumencie musi się cofać tak samo jak skasowany akapit. Opis
+-- słowny na to nie wystarcza — trzeba mieć stan, do którego się wraca. Dlatego
+-- wiersz niesie `stan_przed_json` i `stan_po_json`: wycinek postaci objęty
+-- czynnością, nie cały dokument.
+--
+-- Wycinek, nie całość, bo cofnięcie ma działać NIE PO KOLEI. Gdyby wiersz
+-- trzymał migawkę całego dokumentu, cofnięcie czynności ze środka dziennika
+-- zabrałoby ze sobą wszystko, co po niej weszło — czyli byłoby przywróceniem
+-- wersji, a nie cofnięciem czynności.
+--
+-- ── Dlaczego zależności są osobną tabelą ────────────────────────────────────
+-- Cofnięcie czynności ze środka dziennika, która jest podstawą późniejszej, ma
+-- ODMÓWIĆ i nazwać zależność, a nie zostawić dokument w stanie niespójnym.
+-- Zależność jest relacją wiele-do-wielu (wstawienie tabeli jest podstawą
+-- scalenia komórki I policzenia szerokości), a wykaz kodów w kolumnie nie
+-- pozwoliłby zapytać „co stoi na tej czynności" bez przeszukania wszystkich
+-- wierszy. Kierunek: `czynnosc_id` stoi na `podstawa_id`.
+--
+-- ── Dlaczego kolejność jest osobną kolumną, a nie kluczem wiersza ───────────
+-- Ponowienie czynności cofniętej nie zakłada nowego wpisu — przestawia stan
+-- zastanego. Kolejność musi więc zostać ta sama, co przy pierwszym wykonaniu,
+-- żeby dziennik dalej opisywał porządek pracy, a nie porządek zapisu.
 
 CREATE TABLE czynnosc_dokumentu_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -10,8 +41,11 @@ CREATE TABLE czynnosc_dokumentu_studio (
                                      CHECK(rodzaj IN ('textEdit','formatChange','styleChange','pageChange',
                                            'listChange','tableChange','objectChange','apparatusChange',
                                            'markupChange','proposalAccept','importChange')),
-    -- Rodzaj autora rozróżnia człowieka i wykonawcę; tożsamość niesie kod
-    -- agenta modułu Agents.
+    -- Rodzaj autora zostaje grubym rozróżnieniem człowiek/wykonawca; tożsamością
+    -- jest kod agenta z modułu Agents. Agentów jest dowolnie wielu i są
+    -- zakładani przez Operatora, więc wyliczenie nigdy by ich nie objęło.
+    -- Kolumny agenta są nieobowiązkowe: czynności zapisane przed tą dobudową
+    -- agenta nie mają i mają zostać poprawne.
     autor_rodzaj             TEXT    NOT NULL DEFAULT 'uzytkownik'
                                      CHECK(autor_rodzaj IN ('uzytkownik','model')),
     autor_agent_kod          TEXT,
@@ -46,8 +80,8 @@ CREATE TABLE zaleznosc_czynnosci_studio (
                                      REFERENCES czynnosc_dokumentu_studio(id) ON DELETE CASCADE,
     powod                    TEXT,
     UNIQUE(czynnosc_id, podstawa_id),
-    -- Czynność nie może stać na sobie samej, bo cofnięcie stałoby się
-    -- niemożliwe do naprawienia.
+    -- Czynność nie stoi na sobie samej; taki wiersz uczyniłby cofnięcie
+    -- niemożliwym bez podania powodu, którego nikt nie mógłby naprawić.
     CHECK(czynnosc_id <> podstawa_id)
 );
 CREATE INDEX idx_zaleznosc_czynnosci_studio_podstawa

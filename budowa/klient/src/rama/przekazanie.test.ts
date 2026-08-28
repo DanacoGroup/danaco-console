@@ -22,7 +22,7 @@ import type { TozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { bieg, poOdstepie, rowne, sprawdz } from '../sprawdzian.ts';
 import { magazynWPamieci, utworzPrzebieg, type StanPrzebiegu } from '../wejscie/przebieg.ts';
 import { zbudujDokument, type DokumentZastepczy } from './dom-zastepczy.ts';
-import { gotowaDoPrzekazania, utworzZatrzaskPrzekazania, wykonajPrzekazanie } from './przekazanie.ts';
+import { gotowaDoPrzekazania, utworzPrzekazanieJednorazowe, wykonajPrzekazanie } from './przekazanie.ts';
 
 /* Odczyt pliku bez typów środowiska: klient nie zaciąga deklaracji Node,
    a specyfikator spoza literału zostawia moduł nieopisanym — ten sam
@@ -336,10 +336,10 @@ await bieg('rama aplikacji — przekazanie sterowania', {
     );
   },
 
-  async 'zatrzask produkcyjny nie blokuje na stałe: przekazanie udaje się przy kolejnej zmianie, gdy węzeł montażu się pojawi'() {
+  async 'przekazanie produkcyjne nie blokuje na stałe: przekazanie udaje się przy kolejnej zmianie, gdy węzeł montażu się pojawi'() {
     const stan = await stanZeSrodowiskiem();
     let zdjeta = 0;
-    const naZmianePrzebiegu = utworzZatrzaskPrzekazania({
+    const naZmianePrzebiegu = utworzPrzekazanieJednorazowe({
       get dokument() {
         return globalThis.document as unknown as Document;
       },
@@ -352,19 +352,19 @@ await bieg('rama aplikacji — przekazanie sterowania', {
     jakoGlobalny(dokumentBezRamy);
     naZmianePrzebiegu(stan);
     sprawdz(dokumentBezRamy.querySelector('[data-wejscie]')!.hidden === false, 'scena wejścia zeszła mimo braku węzła montażu ramy');
-    rowne(zdjeta, 0, 'zatrzask zdjął okno wejścia mimo nieudanego przekazania');
+    rowne(zdjeta, 0, 'okno wejścia zeszło mimo nieudanego przekazania');
 
     const dokumentZRama = zbudujDokument(INDEKS_HTML);
     jakoGlobalny(dokumentZRama);
     naZmianePrzebiegu(stan);
-    sprawdz(dokumentZRama.querySelector('[data-belka-tytul]') !== null, 'rama nie zamontowała się przy powtórnej próbie zatrzasku');
-    rowne(zdjeta, 1, 'zatrzask nie zdjął okna wejścia przy udanej próbie po odmowie');
+    sprawdz(dokumentZRama.querySelector('[data-belka-tytul]') !== null, 'rama nie zamontowała się przy powtórnej próbie przekazania');
+    rowne(zdjeta, 1, 'okno wejścia nie zeszło przy udanej próbie po odmowie');
 
     const dokumentPonownie = zbudujDokument(INDEKS_HTML);
     jakoGlobalny(dokumentPonownie);
     naZmianePrzebiegu(stan);
-    sprawdz(dokumentPonownie.querySelector('[data-belka-tytul]') === null, 'zatrzask przekazał sterowanie po raz drugi, choć już raz się powiódł');
-    rowne(zdjeta, 1, 'zatrzask zdjął okno wejścia po raz drugi, choć przekazanie już się powiodło wcześniej');
+    sprawdz(dokumentPonownie.querySelector('[data-belka-tytul]') === null, 'sterowanie przekazane po raz drugi, choć raz już się powiodło');
+    rowne(zdjeta, 1, 'okno wejścia zeszło po raz drugi, choć przekazanie już się powiodło wcześniej');
   },
 });
 

@@ -11,7 +11,7 @@ import { utworzSesje } from './protokol/sesja.ts';
 import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
 import { zamontuj } from './wejscie/montaz.ts';
 import { utworzPrzebieg } from './wejscie/przebieg.ts';
-import { utworzZatrzaskPrzekazania } from './rama/przekazanie.ts';
+import { utworzPrzekazanieJednorazowe } from './rama/przekazanie.ts';
 
 /**
  * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
@@ -32,11 +32,11 @@ const przebieg = utworzPrzebieg({
 const oknoWejscia = zamontuj({ korzen: document, przebieg, wersjaKlienta: klient.wersja });
 
 /* Scena drogi wejścia i miejsce ramy stoją w dokumencie jako dwa węzły
-   odrębne od tego, co montuje `zamontuj` wewnątrz sceny — zatrzask przełącza
+   odrębne od tego, co montuje `zamontuj` wewnątrz sceny — przekazanie przełącza
    między nimi raz, dopiero po udanym przekazaniu, więc odmowa (np. węzeł
    montażu jeszcze nie stoi w dokumencie) nie blokuje próby przy kolejnej
    zmianie stanu. */
-const naZmianePrzebiegu = utworzZatrzaskPrzekazania({
+const naZmianePrzebiegu = utworzPrzekazanieJednorazowe({
   dokument: document,
   zdejmijOknoWejscia: () => oknoWejscia.zdejmij(),
 });

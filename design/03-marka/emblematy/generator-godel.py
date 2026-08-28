@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Skrypt wytwarza komplet godeł pochodnych marki: emblematy w postaci wektorowej
+# i rastrowej, ikonę aplikacji oraz pliki favicon, z jednej zatwierdzonej geometrii.
 """
 Danaco Console — generator systemu godeł pochodnych.
 
@@ -22,7 +24,8 @@ import struct
 import cairosvg
 from PIL import Image
 
-# ── katalogi ────────────────────────────────────────────────────────────────
+# Katalogi wyjściowe powstają przed wytworzeniem plików, osobno dla emblematów,
+# ikony aplikacji oraz kompletu favicon.
 BAZA = os.path.dirname(os.path.abspath(__file__))
 KAT_SVG = os.path.join(BAZA, "svg")
 KAT_SVG_MARKA = os.path.join(KAT_SVG, "warianty")
@@ -32,7 +35,8 @@ KAT_FAVICON = os.path.join(BAZA, "favicon")
 for k in (KAT_SVG, KAT_SVG_MARKA, KAT_PNG, KAT_IKONA, KAT_FAVICON):
     os.makedirs(k, exist_ok=True)
 
-# ── barwy (odpowiedniki żetonów; w plikach SVG barwy własne marki podajemy dosłownie) ──
+# Barwy odpowiadają żetonom systemu projektowego, lecz w plikach wektorowych
+# zapisuje się je dosłownie, ponieważ plik wychodzi poza arkusz stylów.
 INK_JASNY = "#16181D"   # --dn-tekst (motyw jasny)  = szary-900
 INK_CIEMNY = "#ECECEC"  # --dn-tekst (motyw ciemny) = szary-100
 DOT_JASNY = "#3B6FE0"   # --dn-kropka (motyw jasny)  = sygnal-500
@@ -41,7 +45,8 @@ SYGNAL_JASNY = "#2457C9"   # --dn-sygnal (motyw jasny)  = sygnal-600
 SYGNAL_CIEMNY = "#8FB2F5"  # --dn-sygnal (motyw ciemny) = sygnal-300
 GRUNT = "#111317"       # --dn-rama = szary-925 — grunt kafla i ikony aplikacji
 
-# ── ZATWIERDZONA geometria sygnetu „Delegacja" (siatka 96×96) ───────────────
+# Zatwierdzona geometria sygnetu opisana jest na siatce dziewięćdziesięciu sześciu
+# jednostek i stanowi jedyne źródło kształtu dla wszystkich plików pochodnych.
 GROT_1 = "M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"
 GROT_2 = "M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"
 KROPKA = ("83", "63.5", "6.5")          # cx, cy, r
@@ -59,8 +64,7 @@ EMBLEMATY = {
             '<path d="M7.5 10.8h5"/>',
         ],
         "kropka": ("16.2", "10.8", "1.5"),
-        # wariant 16 px — usunięta górna (dłuższa) linia tekstu, para „linia + kropka"
-        # podniesiona do optycznego środka dymka, kropka powiększona 1,5 → 1,9
+        # Wariant szesnastopikselowy: górna linia tekstu usunięta, kropka powiększona.
         "obrys16": [
             '<path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/>',
             '<path d="M7.5 9.4h4.6"/>',
@@ -77,9 +81,7 @@ EMBLEMATY = {
             '<rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/>',
         ],
         "kropka": ("16.9", "16.9", "1.6"),
-        # wariant 16 px — obrys czwartego modułu ustępuje kropce: w miejscu modułu
-        # aktywnego stoi sama kropka (obrys i kropka na 3,3 px sklejają się w plamę).
-        # Moduły zwężone (szersza szczelina), promień naroża 2 → 1,4.
+        # Wariant szesnastopikselowy: obrys czwartego modułu ustępuje samej kropce.
         "obrys16": [
             '<rect x="3.55" y="3.55" width="6.9" height="6.9" rx="1.4"/>',
             '<rect x="13.55" y="3.55" width="6.9" height="6.9" rx="1.4"/>',
@@ -96,8 +98,7 @@ EMBLEMATY = {
             '<path d="M12.6 15.4h4"/>',
         ],
         "kropka": ("18.4", "9.9", "1.5"),
-        # wariant 16 px — usunięta linia wyniku (najdrobniejszy element),
-        # ramka zwężona, grot wyśrodkowany w pionie, kropka 1,5 → 1,85
+        # Wariant szesnastopikselowy: linia wyniku usunięta, ramka zwężona.
         "obrys16": [
             '<rect x="3.2" y="4.2" width="17.6" height="15.6" rx="2.2"/>',
             '<path d="M7.2 9.4l3.1 2.8-3.1 2.8"/>',
@@ -116,8 +117,7 @@ EMBLEMATY = {
             '<path d="M14.2 13.4l3.3 1.9"/>',
         ],
         "kropka": ("12", "12", "2.6"),
-        # wariant 16 px — ŻADEN element nie znika (usunięcie gałęzi zmienia znaczenie);
-        # węzły powiększone, łączniki przeliczone na nowe promienie
+        # Wariant szesnastopikselowy: żaden element nie znika, węzły powiększone.
         "obrys16": [
             '<circle cx="12" cy="4.6" r="2"/>',
             '<circle cx="4.9" cy="16.4" r="2"/>',
@@ -139,7 +139,8 @@ KOLEJNOSC = [
 ]
 
 ROZMIARY_SVG = [16, 20, 24, 32, 48, 64]
-# obrys w jednostkach siatki 24 — kompensacja optyczna poniżej 24 px
+# Grubość obrysu podana w jednostkach siatki dwudziestoczterojednostkowej rośnie
+# poniżej dwudziestu czterech pikseli, kompensując optyczne zanikanie kreski.
 OBRYS_DLA = {16: "1.9", 20: "1.9", 24: "1.75", 32: "1.75", 48: "1.75", 64: "1.75"}
 
 
@@ -207,9 +208,8 @@ def zbuduj_ico(sciezka, pary):
     return sciezka
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# 1 · Emblematy — warianty rozmiarowe SVG (wariant interfejsowy, currentColor)
-# ════════════════════════════════════════════════════════════════════════════
+# Emblematy w wariancie interfejsowym powstają w postaci wektorowej dla każdego
+# rozmiaru, dziedzicząc barwę po otoczeniu zamiast nieść ją zapisaną w pliku.
 licznik = {"svg": 0, "png": 0, "ico": 0, "inne": 0}
 
 for klucz in KOLEJNOSC:
@@ -217,10 +217,8 @@ for klucz in KOLEJNOSC:
         zapisz(os.path.join(KAT_SVG, "%s-%d.svg" % (klucz, r)), emblemat_svg(klucz, r))
         licznik["svg"] += 1
 
-# 2 · Emblematy — warianty barwne z wypaloną barwą (dla rastrów i osadzeń,
-#     które nie potrafią dziedziczyć currentColor).
-#     BEZWZGLĘDNIE: cały emblemat jedną barwą — kropka NIGDY nie odrywa się
-#     barwą od obrysu (rozstrzygnięcie D-5 księgi znaku + komponenty.css).
+# Emblematy w wariantach barwnych niosą barwę wypaloną w pliku, dla rastrów oraz
+# osadzeń niezdolnych dziedziczyć barwy po otoczeniu; cały emblemat ma jedną barwę.
 WARIANTY_BARWNE = [
     ("jasny", INK_JASNY),           # na tle jasnym  — --dn-tekst (motyw jasny)
     ("ciemny", INK_CIEMNY),         # na tle ciemnym — --dn-tekst (motyw ciemny)
@@ -235,7 +233,8 @@ for klucz in KOLEJNOSC:
         )
         licznik["svg"] += 1
 
-# 3 · Emblematy — rastry PNG (jednobarwne, tło przezroczyste)
+# Emblematy w postaci rastrowej powstają jako pliki jednobarwne z tłem
+# przezroczystym, w rozmiarach wymaganych przez osadzenia poza interfejsem.
 for klucz in KOLEJNOSC:
     for px in (24, 48, 96, 192):
         for przyrostek, barwa in (("jasny", INK_JASNY), ("ciemny", INK_CIEMNY)):
@@ -246,9 +245,8 @@ for klucz in KOLEJNOSC:
             )
             licznik["png"] += 1
 
-# ════════════════════════════════════════════════════════════════════════════
-# 4 · Ikona aplikacji — kompozycja zatwierdzona (skala 6,6133; odsunięcie 194,6)
-# ════════════════════════════════════════════════════════════════════════════
+# Ikona aplikacji powstaje z kompozycji zatwierdzonej, w której sygnet jest
+# przeskalowany i odsunięty od krawędzi kafla o wartości podane niżej.
 SYGNET_W_IKONIE = (
     '<g transform="translate(194.6,194.6) scale(6.6133)">'
     '<path fill="{ink}" d="{g1}"/><path fill="{ink}" d="{g2}"/>'
@@ -263,7 +261,8 @@ SYGNET_W_MASCE = (
 ).format(ink=INK_CIEMNY, g1=GROT_1, g2=GROT_2,
          cx=KROPKA[0], cy=KROPKA[1], cr=KROPKA[2], dot=DOT_CIEMNY)
 
-# wariant uproszczony do najmniejszych rastrów ikony (≤ 32 px)
+# Wariant uproszczony sygnetu służy najmniejszym rastrom ikony aplikacji, gdzie
+# pełna geometria zlewa się w plamę nieczytelną dla oka.
 SYGNET_UPR_W_IKONIE = (
     '<g transform="translate(88,128) scale(8)">'
     '<path fill="{ink}" d="{g}"/>'
@@ -307,7 +306,8 @@ for px in (32, 64, 128, 180, 192, 256, 512, 1024):
     png_z_svg(zrodlo, os.path.join(KAT_IKONA, "ikona-%d.png" % px), px)
     licznik["png"] += 1
 
-# Tauri: 128x128@2x = 256 px
+# Powłoka aplikacji oczekuje pliku o podwojonej gęstości pod nazwą wskazującą
+# rozmiar podstawowy, czyli obrazu o boku dwustu pięćdziesięciu sześciu pikseli.
 Image.open(os.path.join(KAT_IKONA, "ikona-256.png")).save(
     os.path.join(KAT_IKONA, "ikona-128@2x.png")
 )
@@ -317,7 +317,8 @@ for px in (192, 512):
     png_z_svg(IKONA_MASKA_SVG, os.path.join(KAT_IKONA, "ikona-maskowalna-%d.png" % px), px)
     licznik["png"] += 1
 
-# ICO aplikacji (Windows / Tauri): 16–256, grafika dobrana do rozmiaru
+# Plik ikony aplikacji dla systemu Windows niesie rozmiary od szesnastu do
+# dwustu pięćdziesięciu sześciu pikseli, z grafiką dobraną osobno do każdego.
 pary = []
 for px in (16, 24, 32, 48, 64, 128, 256):
     zrodlo = IKONA_UPR_SVG if px <= 32 else IKONA_SVG
@@ -325,11 +326,8 @@ for px in (16, 24, 32, 48, 64, 128, 256):
 zbuduj_ico(os.path.join(KAT_IKONA, "ikona-aplikacji.ico"), pary)
 licznik["ico"] += 1
 
-# ════════════════════════════════════════════════════════════════════════════
-# 5 · Favicon
-# ════════════════════════════════════════════════════════════════════════════
-# 5.1 SVG adaptacyjny — kopia zatwierdzonego pliku (przezroczyste tło,
-#     wariant uproszczony, przełączanie barw przez prefers-color-scheme)
+# Favicon wektorowy jest kopią pliku zatwierdzonego: tło przezroczyste, wariant
+# uproszczony, barwy przełączane zapytaniem o motyw preferowany przez przeglądarkę.
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
   <style>
     .znak { fill: %s; }
@@ -347,7 +345,8 @@ FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" rol
 zapisz(os.path.join(KAT_FAVICON, "favicon.svg"), FAVICON_SVG)
 licznik["svg"] += 1
 
-# 5.2 Kafel — grunt kryjący; nośnik rastrowy (ICO/PNG) czytelny na obu paskach kart
+# Kafel stoi na gruncie kryjącym, ponieważ nośnik rastrowy musi pozostać czytelny
+# na pasku karty w motywie jasnym oraz ciemnym.
 KAFEL_PELNY = """<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
 <rect width="96" height="96" rx="21" fill="%s"/>
 <g transform="translate(16.535,18.240) scale(0.62)"><path fill="%s" d="%s"/><path fill="%s" d="%s"/><circle cx="%s" cy="%s" r="%s" fill="%s"/></g>
@@ -381,22 +380,23 @@ zbuduj_ico(
 )
 licznik["ico"] += 1
 
-# 5.3 apple-touch-icon — kwadrat bez zaokrąglenia (maskę nakłada system) i bez alfy
+# Ikona dotykowa systemu mobilnego jest kwadratem bez zaokrąglenia i bez kanału
+# przezroczystości, ponieważ maskę nakłada sam system operacyjny.
 att = os.path.join(KAT_FAVICON, "apple-touch-icon.png")
 png_z_svg(IKONA_KWADRAT_SVG, att, 180)
 Image.open(att).convert("RGB").save(att)
 licznik["png"] += 1
 
-# 5.4 ikony PWA — z kompletu ikony aplikacji
+# Ikony aplikacji instalowanej ze strony powstają z tego samego kompletu, co ikona
+# aplikacji, w dwóch rozmiarach wymaganych przez manifest.
 for px in (192, 512):
     png_z_svg(IKONA_SVG, os.path.join(KAT_FAVICON, "icon-%d.png" % px), px)
     licznik["png"] += 1
 png_z_svg(IKONA_MASKA_SVG, os.path.join(KAT_FAVICON, "ikona-maskowalna-512.png"), 512)
 licznik["png"] += 1
 
-# ════════════════════════════════════════════════════════════════════════════
-# 6 · Manifest i snippet <head>
-# ════════════════════════════════════════════════════════════════════════════
+# Manifest aplikacji instalowanej ze strony oraz fragment nagłówka dokumentu
+# powstają na końcu, gdy komplet plików graficznych stoi już na dysku.
 MANIFEST = """{
   "id": "/",
   "name": "Danaco Console — AI Operating Environment",
@@ -465,7 +465,8 @@ SNIPPET = """<!-- ════════════════════�
 zapisz(os.path.join(KAT_FAVICON, "naglowek-snippet.html"), SNIPPET)
 licznik["inne"] += 1
 
-# ── kontrola: czy kropka sygnału przetrwała rasteryzację w 16 px ────────────
+# Kontrola końcowa sprawdza, czy kropka sygnału przetrwała rasteryzację
+# w najmniejszym rozmiarze, mierząc jej obecność w wytworzonych plikach.
 kontrola = []
 for nazwa in ("favicon-16.png", "favicon-32.png", "favicon-48.png"):
     im = Image.open(os.path.join(KAT_FAVICON, nazwa)).convert("RGB")

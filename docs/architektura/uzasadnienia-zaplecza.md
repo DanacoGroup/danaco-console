@@ -3576,3 +3576,334 @@ Usunięcie sesji stawia znacznik czasu, a czyszczenie trwałe wykonuje rdzeń pr
 
 ## budowa/server/internal/store/migracja_098_poczta.sql
 Protokoły: odbiór szyfrowany, wysyłka z podniesieniem szyfrowania, oba z biblioteki standardowej języka, która nie ma protokołu IMAP, a jego użycie wymagałoby nowej zależności. Hasło skrzynki nie leży w bazie: kolumna odwołania niesie wyłącznie odwołanie do sejfu poświadczeń, wzorem kont, i kolumny na treść sekretu w schemacie nie ma. Pole weryfikacji szyfrowania jest polem konfiguracji: stanowisko probiercze mówi prawdziwym protokołem przez prawdziwe gniazdo, lecz jego certyfikat jest samopodpisany, więc wyłączenie weryfikacji łańcucha jest jawnym zapisem w wierszu skrzynki, a domyślnie weryfikacja jest włączona. Identyfikator listu jest unikalnym identyfikatorem serwera w obrębie skrzynki, więc ten sam list odczytany w dwóch taktach obserwatora daje jeden wiersz; rdzeń nie kasuje listów z serwera, bo odbiór nie może być jedynym istnieniem listu.
+
+## budowa/server/internal/store/migracja_096_tresc_rozmowy.sql
+
+Tabela `blok_wiadomosci` przechowuje bloki wiadomości rodzaju nietekstowego:
+tok rozumowania, wywołania narzędzi z wynikami, prowenancję wywołania oraz
+metadane konta. Bez tej tabeli treści te żyłyby wyłącznie w strumieniu i
+ginęłyby z restartem rdzenia — okno po odświeżeniu pokazywałoby sam tekst,
+choć widoki transkryptu klienta ('rozumowanie', 'pelny') istnieją
+(widok-zapisu.ts). Jeden wiersz odpowiada jednemu fragmentowi strumienia,
+zapisanemu w trakcie tury przez rejestrator bloków (core/rejestrator_blokow.go).
+
+Tekstu tu nie ma i nie wolno go tu pisać. Treść tekstowa odpowiedzi mieszka
+w `wiadomosc.tresc` (domyka ją dziennik po turze) — powtórzenie jej w blokach
+byłoby drugą prawdą o tej samej wypowiedzi. Słownik `rodzaj` jest więc
+słownikiem ChunkKind pomniejszonym o 'text'.
+
+Rodzaj niesie wartość kontraktu (angielską), nie przekład. Kolumna
+`wiadomosc.rodzaj_tresci` ma polski słownik, bo kontrakt odwzorowuje jej
+siedem wartości polem `baza`; dla 'provenance' i 'account' kontrakt żadnego
+przekładu nie zapisuje, a przekład wolno trzymać wyłącznie w kontrakcie.
+Dopisanie własnego słownika tutaj byłoby drugim źródłem odwzorowania —
+zamiast tego kolumna trzyma wartość kontraktu dosłownie, a round-trip
+zapis → odczyt → klient obywa się bez tłumaczenia.
+
+`wiadomosc_kod` i `okno_kod` są identyfikatorami kontraktowymi (napisy), nie
+kluczami obcymi: rejestrator strumienia zna wyłącznie identyfikatory rdzenia,
+a sięganie po klucz wiersza w środku tury dokładałoby odczyt bazy do każdego
+fragmentu. Skutkiem braku klucza obcego kaskada usunięcia sesji bloków nie
+zabiera — sprząta je czyszczenie kosza (dane/sesje_kosz.go), ta sama droga,
+którą znika sama sesja.
+
+`ladunek` niesie surowe pole `data` fragmentu (dowód pierwotny, jak
+`dziennik_zdarzen.ladunek`); NULL znaczy fragment bez ładunku. `tresc` niesie
+pole `text` fragmentu — tak nadchodzi tok rozumowania.
+
+Indeks pełnotekstowy `wiadomosc_szukanie` (FTS5, sterownik modernc.org/sqlite:
+CREATE VIRTUAL TABLE USING fts5, MATCH, snippet() i rank) jest zewnętrzny
+(content='wiadomosc') z triggerami spójności obsługującymi wstawienie,
+aktualizację treści (droga ZapiszWynik) i usunięcie kaskadą. Będąc zewnętrzny,
+nie powiela treści — jedyną prawdą o słowie pozostaje `wiadomosc.tresc`, a
+indeks trzyma wyłącznie słownik trafień. Spójność utrzymują triggery
+towarzyszące; są częścią schematu, nie warstwy dane, bo indeks ma nadążać
+także za zapisem, który przyjdzie inną drogą niż repozytorium wiadomości.
+
+Ograniczenie zapisane jawnie: tokenizator unicode61 z remove_diacritics 2
+sprowadza ż/ź/ó/ą/ę/ć/ń/ś do liter podstawowych, ale „ł" nie jest znakiem
+składanym i pozostaje osobną literą — zapytanie „lodz" nie trafi w „łódź",
+trafi „łodz" i „łódź". Warstwa dane powtarza to ograniczenie przy
+repozytorium szukania (dane/szukanie_rozmow.go).
+
+## budowa/scripts/arsenal-serwera.sh
+
+Arsenał serwera Danaco Console — prowizjonowanie kompletu programów, na których
+stoi rdzeń, na maszynie SERWERA docelowego.
+
+── Po co ten skrypt ──────────────────────────────────────────────────────────
+Model wdrożenia (rozstrzygnięcie zamknięte): wszystkie programy
+jadą WRAZ Z APLIKACJĄ NA SERWER, a u Operatora stoi tylko cienka instalka
+(okno aplikacji, scripts/instalka-hybryda-win-x64.sh dla x64 oraz
+scripts/instalka-hybryda-win-arm.sh dla ARM64). Skutek: arsenał ma stać na
+serwerze, a wdrożenie ma go stawiać. Instalka Operatora ma zostać cienka i tego
+nie robi — od tego jest ten skrypt, uruchamiany na serwerze podczas wdrożenia.
+Bez arsenału funkcje odmawiają Operatorowi z braku programu (zewnetrzne.Wolaj
+→ BrakNarzedzia), osobno przy każdym naciśniętym przycisku.
+
+── Skąd bierze listę (żeby się nie rozjechała) ───────────────────────────────
+NIE przepisuje nazw pakietów ani nazw warstw. Woła binarium rdzenia w dwóch
+trybach wykazu i konsumuje wynik:
+    danaco-console --wykaz-zaleznosci   → komplet pozycji wykazu, po wierszu
+    danaco-console --wykaz-mowy         → arsenał mowy (piper, głosy, model)
+Źródłem jest jeden rejestr deklaracji narzędzi
+(server/internal/core/zaleznosci_zewnetrzne.go wraz z deklaracjami
+w adapterach), z którego bierze go też sonda startowa rdzenia. Zmiana pola
+`Pakiet` w deklaracji narzędzia dojeżdża więc i do sondy, i tutaj jednym
+ruchem — bez drugiej listy do ręcznego utrzymania.
+
+Wiersz wykazu zależności ma pola rozdzielone tabulacją:
+    warstwa <TAB> program <TAB> pakiet <TAB> stoi <TAB> nazwa <TAB> zakres
+Kolumnę `warstwa` liczy rdzeń (core.WarstwaZaleznosci) — skrypt jej nie
+odgaduje dopasowaniem napisów, bo rozdział warstw jest rozstrzygnięciem, nie
+formatowaniem, i ma jeden sprawdzian w Go.
+
+── Gdy binarium rdzenia jest nieosiągalne (wykaz awaryjny) ───────────────────
+Wdrożenie zdarza się na maszynie, na której binarium jeszcze nie stoi (świeży
+serwer, wykaz czytany przed rozpakowaniem wydania), a bywa i tak, że stoi, lecz
+nie da się go uruchomić. Odmowa w tym miejscu znaczyłaby, że arsenału NIE MA
+CZYM postawić — a to jest właśnie ta chwila, w której trzeba go postawić.
+Dlatego skrypt niesie wykaz awaryjny: odpis kompletu deklaracji rdzenia w tej
+samej postaci wiersza, użyty TYLKO wtedy, gdy rdzenia nie ma czym zapytać, i za
+każdym razem zapowiedziany na wyjściu błędu — czytelnik ma wiedzieć, że patrzy
+na odpis, nie na wykaz policzony przez rdzeń.
+
+Wykaz awaryjny jest JEDNYM miejscem w tym skrypcie, z którego biorą go wszystkie
+trzy tryby (plan, sprawdz, postaw) — nie ma drugiej listy programów do
+sprawdzania obok listy pakietów do postawienia. Rozjazd z rdzeniem łapie tryb
+`sprawdz` uruchomiony przy dostępnym binarium: liczba pozycji i nazwy pakietów
+muszą wyjść te same. Zmiana deklaracji w rdzeniu ma dojechać tutaj tym samym
+ruchem — pole `Pakiet` przepisane błędnie kieruje Operatora do pakietu, którego
+nie ma.
+
+── Co pakiet serwera niesie ──────────────────────────────────────────────────
+Warstwy przychodzą z wykazu; poniżej ich znaczenie, nie ich zawartość:
+  obowiazkowa-apt — pakiety dystrybucji, bez których moduły odmawiają:
+                    Tesseract OCR WRAZ z pakietem językowym polskim
+                    (tesseract-ocr-pol — stoi w polu `Pakiet` deklaracji),
+                    7-Zip, eSpeak NG, Pandoc, ffmpeg, ffprobe, LibreOffice,
+                    Chromium, ImageMagick, poppler, OpenSSH, ShellCheck,
+                    shfmt, picocom, telnet, łańcuch Go.
+  warsztat-go     — gopls, goimports, golangci-lint, staticcheck, Delve;
+                    moduł Developer pracuje na serwerze, więc jego warsztat
+                    też należy do serwera.
+  warsztat-npm    — Prettier, ESLint.
+  snap            — kubectl, PowerShell (moduł Terminal); moduły pwsh, np.
+                    PSScriptAnalyzer, to osobny krok Install-Module.
+  model-recznie   — Real-ESRGAN (wydanie z GitHuba) i rembg (środowisko
+                    pythonowe): wydania spoza repozytoriów dystrybucji,
+                    drukowane jako kroki ręczne z treścią pola `Pakiet`.
+  decyzyjna       — silnik kontenerów (docker/podman). Silnik kontenerów jest wstrzymany
+                    świadomie, więc skrypt go nie stawia. Skrypt go NIE stawia i mówi o tym wprost;
+                    postawienie wymaga wyraźnego DANACO_SILNIK_KONTENEROW=tak.
+  zaplecze wiedzy — poza wykazem zależności: środowisko pythonowe z fastembed
+                    (silnik wiedzy), torch i transformers (przesiew
+                    wyszukiwania) oraz pillow (oś obrazu). Rdzeń woła je
+                    INTERPRETEREM wskazanym ustawieniem `wiedza_program`, a nie
+                    nazwą programu, więc `--wykaz-zaleznosci` ich nie wypisuje
+                    i sonda startowa ich nie mierzy — brak widać dopiero
+                    odmową `knowledge.search`.
+  twarze          — poza wykazem stoi też środowisko pomocnika odtwarzania
+                    twarzy: torch, torchvision, facexlib oraz architektura
+                    GFPGAN, wystawione opakowaniem /usr/local/bin/danaco-twarze
+                    (samo opakowanie JEST w wykazie, jako `danaco-twarze`),
+                    wraz z trzema zestawami wag w /opt/danaco-modele/twarze.
+  arsenał mowy    — poza wykazem zależności stoi jeszcze: piper wraz z plikami
+                    głosów `.onnx`, biblioteka pythonowa rozpoznawania
+                    (faster-whisper z pomocniki/transkrypcja/wymagania.txt,
+                    uruchamiana pomocnikiem pomocniki/transkrypcja/transkrypcja.py)
+                    oraz WAGI MODELU pobierane z góry (patrz niżej).
+
+── Wagi modelu rozpoznawania mowy: pobierane przy stawianiu serwera ──────────
+faster-whisper ściąga wagi przy pierwszym użyciu. Gdyby zostało tak na
+serwerze, pierwsze użycie mikrofonu u Operatora czekałoby na sieć — kilka minut
+ciszy przy pierwszym nagraniu. Dlatego prowizjonowanie pobiera wagi z góry,
+w rozmiarze domyślnym rdzenia (`mowa.ModelDomyslny`, dziś „small"; rozmiar
+przychodzi z wykazu mowy, nie jest tu wpisany).
+
+ROZMIAR POBRANIA — model „small" to około 480 MB na dysku (repozytorium
+Systran/faster-whisper-small; wagi float16, kwantyzacja do int8 dzieje się przy
+ładowaniu, więc pobranie nie jest mniejsze od plików repozytorium). Rozmiary
+pozostałych rozmiarów modelu rosną w tej samej skali — „tiny" i „base" są
+rzędu dziesiątek megabajtów, „medium" i „large-v3" rzędu gigabajtów. Skrypt po
+pobraniu mierzy katalog i wypisuje rozmiar zmierzony, żeby ta liczba nie była
+obietnicą, a pomiarem. Docelowy katalog: DANACO_KATALOG_MODELI (domyślnie
+/opt/danaco-arsenal/modele-mowy) — ten sam, który wskazuje się rdzeniowi
+ustawieniem `mowa_katalog_modeli`.
+
+── Czego wymaga system operacyjny serwera ────────────────────────────────────
+Warstwa apt zakłada dystrybucję z `apt-get` (Debian/Ubuntu). Warstwa snap
+zakłada `snapd`. Warstwa Go zakłada `go` na ścieżce (pakiet `golang` stawia
+warstwa apt, więc kolejność warstw jest istotna: apt przed go). Warstwa npm
+zakłada `npm`. Warstwa mowy zakłada `python3` wraz z `python3-venv` i `pip`.
+Postawienie (`postaw`) wymaga uprawnień roota dla apt/snap. Tryby `plan`
+i `sprawdz` niczego nie zmieniają i nie wymagają roota.
+
+── Jak zweryfikować sondą startową rdzenia ───────────────────────────────────
+Po postawieniu arsenału rdzeń przy starcie wypisuje do dziennika wiersz
+zbiorczy „zależności zewnętrzne: N z M obecnych" oraz osobny wiersz dla każdego
+braku wraz z zakresem, który przestaje działać, i podpowiedzią instalacyjną
+(core/zaleznosci_zewnetrzne.go, zglosZaleznosci). Kompletny arsenał to wiersz
+„M z M obecnych" bez wierszy braku. Ten sam stan bez uruchamiania rdzenia
+pokazuje `arsenal-serwera.sh sprawdz` — czyta obecność przez `command -v`
+i niczego nie instaluje. Gotowość samej mowy sprawdza pomocnik:
+`python3 pomocniki/transkrypcja/transkrypcja.py --wersja --model small`.
+
+── Użycie ────────────────────────────────────────────────────────────────────
+  bash scripts/arsenal-serwera.sh plan       # (domyślnie) wypisz plan, nic nie rusza
+  bash scripts/arsenal-serwera.sh sprawdz    # sprawdź obecność, read-only
+  bash scripts/arsenal-serwera.sh postaw     # POSTAW arsenał na serwerze
+Tryb przyjmujemy w obu zapisach — `sprawdz` i `--sprawdz` — tak samo, jak rdzeń
+przyjmuje swoje znaczniki z jednym i z dwoma minusami (core.zadanoZnacznik).
+Tryb `sprawdz` kończy się kodem 1, gdy brakuje choć jednego programu wykazu:
+wdrożenie ma się na nim zatrzymać, a nie przeczytać braki i jechać dalej.
+Zmienne:
+  DANACO_RDZEN=/ścieżka/danaco-console    — binarium rdzenia wypisujące wykaz
+  DANACO_WYKAZ_PLIK=/ścieżka/wykaz.tsv    — gotowy wykaz zamiast wołania binarium
+  DANACO_WYKAZ_MOWY_PLIK=/ścieżka/mowa.tsv— gotowy wykaz mowy
+  DANACO_KATALOG_MODELI=/ścieżka          — katalog wag modelu mowy
+  DANACO_SRODOWISKO_MOWY=/ścieżka         — środowisko pythonowe rozpoznawania
+  DANACO_SRODOWISKO_WIEDZY=/ścieżka       — środowisko pythonowe wiedzy
+  DANACO_SRODOWISKO_TWARZY=/ścieżka       — środowisko pythonowe pomocnika twarzy
+  DANACO_KATALOG_WAG_TWARZY=/ścieżka      — katalog trzech zestawów wag twarzy
+  DANACO_OPAKOWANIE_TWARZY=/ścieżka       — plik opakowania danaco-twarze
+  DANACO_INDEKS_TORCH=adres               — składnica kół PyTorcha (domyślnie CPU)
+  DANACO_BEZ_WAG_MOWY=1                   — pomiń pobranie wag (instalacja bez sieci)
+  DANACO_SILNIK_KONTENEROW=tak            — postaw też WSTRZYMANY silnik kontenerów
+
+Skrypt nie pobiera głosów pipera ani wag Real-ESRGAN/rembg — to wydania spoza
+repozytoriów dystrybucji; wypisuje je jako kroki ręczne wraz z miejscem,
+w które mają trafić, i zmienną, którą można je wskazać.
+
+### Uzasadnienia zdjęte z nagłówków wewnętrznych
+
+## zaplecze-pythonowe
+── Zaplecze pythonowe poza wykazem zależności ────────────────────────────────
+Rdzeń woła te dwa środowiska interpreterem, a nie nazwą programu, więc
+`--wykaz-zaleznosci` ich nie wypisuje — a bez nich cztery zakresy odmawiają:
+  wiedza  — `knowledge.index`, `knowledge.search` (fastembed), przesiew
+            wyszukiwania (torch, transformers) i oś obrazu (dodatkowo pillow);
+            nazwy bibliotek stoją w deklaracjach narzędzi pomocników
+            (server/internal/wiedza/{silnik,przesiew,obraz}.go) i w opisie
+            naprawy (wiedza/bledy.go), skąd są tu przepisane.
+  twarze  — `image.upscale` z `faces: true`; skład środowiska stoi w polu
+            `Pakiet` deklaracji `narzedzieOdtwarzaniaTwarzy`, a katalog wag
+            w stałej `katalogWagTwarzyLinux`.
+Ścieżki są te same, które niosą opakowania stojące na maszynie wdrożenia
+(/usr/local/bin/danaco-twarze wskazuje /opt/danaco/silniki/twarze/bin/python),
+żeby prowizjonowanie i stan zastany mówiły o jednym miejscu.
+
+## nazwy-wag
+Nazwy plików wag przebiegu twarzowego. Przepisane ze stałych rdzenia
+(adapter_narzedzia_obraz_model_twarze.go: wagiOdtwarzaniaTwarzy,
+wagiWykrywaniaTwarzy, wagiPodzialuTwarzy) — rdzeń sprawdza obecność tych trzech
+plików przed startem pomocnika i bez któregokolwiek odmawia.
+
+## indeks-torch
+INDEKS_TORCH — składnica kół PyTorcha liczących na procesorze. Wdrożenie jest
+CPU-only (pomocnik twarzy i pomocniki wiedzy ładują modele na `cpu`), a koła
+z indeksu domyślnego ciągną warstwę CUDA — kilka gigabajtów, których nic tu nie
+uruchomi. Wydania stojące na maszynie wdrożenia noszą znacznik `+cpu`
+(torch 2.13.0+cpu, torchvision 0.28.0+cpu), czyli pochodzą właśnie stąd.
+
+## pakiety-poza-wykazem
+PAKIETY_POZA_WYKAZEM — pakiety apt, których w wykazie zależności NIE MA, a bez
+których arsenał serwera jest niekompletny. Każdy ma tu powód, bo pakiet bez
+powodu jest pakietem do wyrzucenia przy następnym czytaniu:
+  python3, python3-venv, python3-pip — interpreter i budowa środowiska
+      rozpoznawania mowy oraz środowiska rembg. Rdzeń nie woła interpretera
+      jako narzędzia, tylko pomocnika, więc w wykazie go nie ma.
+  nodejs, npm — nośnik warsztatu npm. Prettier i ESLint stoją w wykazie jako
+      programy (`prettier`, `eslint`), ale `npm i -g` nie ma czym ich postawić,
+      dopóki npm nie stoi; warstwa npm milcząco pomijała się na czystym serwerze.
+  sane-utils — program `scanimage`, warstwa SANE cyfryzacji w module Studio
+      (adapter_modul_studio_cyfryzacja.go deklaruje go osobno, poza wykazem
+      zależności rdzenia). Bez niego wykaz skanerów jest pusty, a Operator
+      dostaje odmowę przy każdym skanowaniu.
+
+## wykaz-awaryjny
+WYKAZ_AWARYJNY — odpis kompletu deklaracji rdzenia w postaci wiersza wykazu:
+    warstwa <TAB> program <TAB> pakiet <TAB> stoi <TAB> nazwa <TAB> zakres
+Używany tylko wtedy, gdy nie ma czym zapytać rdzenia (patrz nagłówek). Kolumna
+`stoi` niesie tu `?`, bo odpis nie jest pomiarem — obecność mierzy `command -v`
+w trybie sprawdz.
+
+Odpis powstaje ZRZUTEM, nie przepisaniem ręcznym: wiersze poniżej są wyjściem
+`danaco-console --wykaz-zaleznosci` wklejonym w całości. Ręczne skracanie
+zakresu rozjeżdżało odpis z rejestrem przy każdej dołożonej deklaracji —
+odpis niósł 30 pozycji, gdy rejestr niósł już 55.
+
+Pakiety są przepisane z pól `Pakiet` deklaracji i tylko stamtąd. W szczególności
+7-Zip idzie z pakietu `7zip`, NIE z `p7zip-full`: tego drugiego w dystrybucji
+już nie ma i podpowiedź prowadziłaby donikąd (adapter_narzedzia_archiwum.go
+mówi to wprost).
+
+## rozbior-pola
+── Rozbiór pola `Pakiet` warstwy obowiązkowej ────────────────────────────────
+Warstwę liczy rdzeń, ale do warstwy `obowiazkowa-apt` wpada dziś WSZYSTKO, co
+nie pasowało do pozostałych reguł — także podpowiedzi pisane zdaniem:
+    „środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika…"
+    „hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)"
+    „typst (jeden plik wykonywalny z wydania projektu)"
+    „pip install ruff"
+Rozbicie takiego pola na spacjach dawało `apt-get install -y … uruchomieniowe
+Javy (default-jre) wraz z wydaniem …` — apt padał na pierwszym takim tokenie,
+a `set -e` zabijał cały przebieg PRZED warstwą Go, npm, snap i mową. Skrypt nie
+stawiał więc nawet tego, co umiał postawić.
+
+Dlatego pole rozbieramy z rozpoznaniem postaci, a nie na ślepo:
+  • same tokeny w kształcie nazwy pakietu   → warstwa apt,
+  • `pip install …`                         → warstwa pip (polecenie rdzenia
+                                              wykonane dosłownie),
+  • cokolwiek innego                        → KROK RĘCZNY z podpowiedzią
+                                              przepisaną co do znaku.
+Skrypt niczego tu nie zgaduje: pole, którego nie rozpoznał, drukuje w całości
+zamiast wykonywać jego fragment.
+
+## wagi-twarzy
+pobierzWagiTwarzy ściąga dwa zestawy wag POBIERACZEM SAMEJ BIBLIOTEKI. Adresów
+wydań nie wpisujemy tutaj: facexlib zna je sam, a druga kopia adresu rozjechałaby
+się z biblioteką przy jej następnym wydaniu. Wagi samej sieci odtwarzającej
+(GFPGANv1.4.pth) tą drogą nie idą — facexlib ich nie zna, a adresu wydania rdzeń
+nie podaje.
+
+## zbuduj-srodowisko
+zbudujSrodowisko stawia środowisko pythonowe albo zostawia stojące nietknięte.
+`python3 -m venv` na katalogu z gotowym środowiskiem nie kasuje bibliotek, ale
+sprawdzenie mówi wprost, który przebieg co zrobił — a drugi przebieg ma o sobie
+mówić „stoi", nie „stawiam".
+
+## sprawdzenie
+── Sprawdzenie ───────────────────────────────────────────────────────────────
+Nic nie instaluje i nie wymaga roota. Wykaz programów bierze z tego samego
+źródła, z którego biorą go plan i postaw (wykaz rdzenia albo wykaz awaryjny) —
+osobnej listy „co sprawdzić" nie ma, bo rozjechałaby się z listą „co postawić".
+
+Kod wyjścia: 1 przy jakimkolwiek braku programu wykazu, 0 przy komplecie.
+Wdrożenie ma się na tym zatrzymać. Braki arsenału mowy (głosy pipera, wagi
+modelu) są wypisywane, ale kodu nie zmieniają: to pliki, nie programy na
+ścieżce, a synteza ma zejście na eSpeak NG z wykazu.
+## design/03-marka/emblematy/generator-godel.py
+
+Warianty barwne emblematów niosą barwę wypaloną w pliku, ponieważ rastry oraz
+osadzenia poza interfejsem nie potrafią dziedziczyć barwy po otoczeniu. Zasada
+bezwzględna: cały emblemat ma jedną barwę, kropka nigdy nie odrywa się barwą od
+obrysu. Rozstrzygnięcie należy do księgi znaku i powtarza je arkusz komponenty.css.
+
+Warianty szesnastopikselowe godeł powstają przez uproszczenie geometrii, ponieważ
+w tym rozmiarze pełny kształt zlewa się w plamę:
+
+- godło dymka traci górną, dłuższą linię tekstu; para linii i kropki podnosi się
+  do optycznego środka dymka, a kropka rośnie z tysiąca pięciuset do tysiąca
+  dziewięciuset tysięcznych jednostki;
+- godło modułów oddaje obrys czwartego modułu kropce, bo obrys i kropka przy
+  trzech i trzech dziesiątych piksela sklejają się w plamę; moduły są zwężone,
+  a promień naroża zmalał z dwóch do jednej i czterech dziesiątych;
+- godło wyniku traci linię wyniku jako element najdrobniejszy, ramka jest zwężona,
+  a grot wyśrodkowany w pionie;
+- w godle gałęzi żaden element nie znika, ponieważ usunięcie gałęzi zmienia
+  znaczenie znaku; węzły są powiększone, a łączniki przeliczone na nowe promienie.
+
+Kompozycja ikony aplikacji jest zatwierdzona wraz z wartościami skali oraz
+odsunięcia sygnetu od krawędzi kafla. Grubość obrysu rośnie poniżej dwudziestu
+czterech pikseli, kompensując optyczne zanikanie kreski w małych rozmiarach.

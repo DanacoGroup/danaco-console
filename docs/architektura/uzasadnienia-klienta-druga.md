@@ -7059,3 +7059,14 @@ udawaniem skutku, który nie zaszedł. Wypełnienie, przy którym pominięto pol
 wymagane, mówi to wprost i nie przedstawia się jako powodzenie, ponieważ
 dokument powstał z dziurami. Szablon bez postaci wzorcowej albo bez blokad
 nazywa ten brak, zamiast pokazać sam tytuł.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-wersji.ts
+Wersja bieżąca jest wyróżniona kropką pełną, a archiwalne kropką pustą; stan
+nigdy nie jest niesiony samą barwą, bo kropce towarzyszy słowo, więc barwa bez
+słowa nie mówi nic użytkownikowi, który jej nie rozróżnia. Podgląd, przywrócenie
+i porównanie stoją w wierszu wprost, bo sięga się po nie najczęściej;
+etykieta, eksport, odwołanie i schowanie miejscowe siedzą w rozwijanym menu
+pozycji, ponieważ wiersz z siedmioma przyciskami byłby nieczytelny, a te
+cztery są czynnościami rzadkimi. Czynność rozgałęzienia wersji pozostaje poza
+zakresem tego modułu — komendy studio.branch.* pracują w rdzeniu dalej. Plik
+nie woła rdzenia: oddaje przyciski, a rozmowę prowadzi okno historii.

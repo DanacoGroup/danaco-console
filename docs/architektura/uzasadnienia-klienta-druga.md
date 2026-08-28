@@ -6713,3 +6713,14 @@ bywają przytoczeniem cudzej tezy po to, żeby ją obalić. Miara mówi, gdzie s
 — i tak jest nazwana w oknie. Zdania krótsze niż próg porównania są w debacie potwierdzeniami
 i zwrotami wiążącymi, więc zbiegałyby się u wszystkich mówców naraz i zalałyby wykaz zbieżności
 treścią bez wartości rozpoznawczej.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/naglowek-gniazda.ts
+Wybór okien otwartych obok należy do rozmowy, więc sterowanie nimi stoi w
+prawym górnym rogu okna rozmowy. Miejsce sterowania panelami jest własne,
+a nie doklejane do nagłówka, bo do nagłówka dokleja się już przycisk
+szuflady sterowania — dwaj wołający dopisujący na koniec tego samego
+elementu dawaliby kolejność zależną od tego, kto zdążył pierwszy.
+Etykieta modułu niesie wartość bieżącą, nie napis rodzajowy: sam numer
+gniazda mówi, które to miejsce na scenie, ale nic o tym, co w nim pracuje;
+moduł jest tą samą wartością, po której scena liczy swoją figurę. Model i
+katalog roboczy w nagłówku nie stoją, bo gniazdo ich w ogóle nie zna.

@@ -10,21 +10,10 @@ import { utworzPlakietkeStanu } from './plakietka-stanu';
 import type { StanPary } from './stan-pary';
 import type { OpisKierunku } from './wiez-koordynacji';
 
-/** Nagłówek gniazda — tożsamość okna, rola, kierunek zlecenia i stan pętli. */
+/** Nagłówek gniazda — tożsamość okna, rola, kierunek zlecenia i stan pętli — widoczne jednym spojrzeniem w każdym gnieździe sceny. */
 export interface NaglowekGniazda {
   element: HTMLElement;
-  /**
-   * Gniazdo na sterowanie panelami, przy prawej krawędzi nagłówka.
-   *
-   * Wybór okien otwartych obok należy do rozmowy, więc sterowanie nimi stoi
-   * w prawym górnym rogu okna rozmowy — czyli tutaj.
-   *
-   * Miejsce jest własne, a nie doklejane do nagłówka, bo do nagłówka dokleja
-   * się już przycisk szuflady sterowania (`aplikacja/wiazanie-gniazda.ts` podaje
-   * `akcjePaska: gniazdo.naglowek.element`). Dwaj wołający dopisujący na koniec
-   * tego samego elementu dawaliby kolejność zależną od tego, kto zdążył
-   * pierwszy; sterowanie panelami stoi więc przed tym, co dokleja się na koniec.
-   */
+  /** Gniazdo na sterowanie panelami przy prawej krawędzi nagłówka, osobne od przycisku szuflady. */
   sterowanie: HTMLElement;
   /** Ustawia rolę okna widoczną w nagłówku. */
   ustawRole(rola: WindowRole): void;
@@ -32,19 +21,7 @@ export interface NaglowekGniazda {
   ustawKierunek(opis: OpisKierunku | null): void;
   /** Ustawia stan pętli; `null` chowa plakietkę stanu. */
   ustawStan(stan: StanPary | null): void;
-  /**
-   * Nazywa moduł, w którym to okno pracuje.
-   *
-   * Etykieta niesie wartość bieżącą, nie napis rodzajowy: sam numer gniazda
-   * mówi, które to miejsce na scenie, ale nic o tym, co w nim pracuje. Moduł
-   * jest pierwszą rzeczą, jaką okno naprawdę zna — przychodzi z rdzenia
-   * zdarzeniem `window.changed` i jest tą samą wartością, po której scena liczy
-   * swoją figurę.
-   *
-   * Model i katalog roboczy tu nie stoją: gniazdo ich nie zna — nie ma ich
-   * w opisie okna (`okno-komunikacji/opis-okna.ts`) ani w żadnym zdarzeniu
-   * docierającym do układu. Wpisanie czegokolwiek „na oko" byłoby atrapą.
-   */
+  /** Nazywa moduł, w którym to okno pracuje — pierwsza rzecz, jaką okno naprawdę zna. */
   ustawModul(kod: string): void;
   /** Przyjmuje odczyt łączności; plakietka sama rozstrzyga, czy się pokazać. */
   ustawLacznosc(odczyt: OdczytLacznosci): void;
@@ -54,27 +31,17 @@ export interface NaglowekGniazda {
   zamknij(): void;
 }
 
-/** Ustawienia nagłówka; każde ma wartość domyślną. */
+/** Ustawienia nagłówka gniazda; każde pole ma wartość domyślną stosowaną, gdy gospodarz jej nie poda wprost. */
 export interface OpcjeNaglowka {
-  /**
-   * Dojście do przebiegu ponowienia dla plakietki łączności.
-   *
-   * Pominięte znaczy, że transport nie wystawia numeru próby — plakietka mówi
-   * to wtedy wprost zamiast liczyć próby drugi raz.
-   */
+  /** Dojście do przebiegu ponowienia dla plakietki łączności; pominięte znaczy brak numeru próby. */
   ponowienie?: PortPonawiania;
 }
 
-/** Czas widocznego podświetlenia przekazania, w milisekundach. */
+/** Czas widocznego podświetlenia przekazania zlecenia w nagłówku gniazda, wyrażony w milisekundach czasu. */
 const CZAS_BLYSKU = 900;
 
 /**
- * Nagłówek gniazda układu okien równoległych.
- *
- * Rola jest widoczna na pierwszy rzut oka: numer gniazda krojem technicznym,
- * tytuł krojem szeryfowym (nagłówek — nie treść ciągła), plakietka roli,
- * kierunek zlecenia i stan pętli. Nagłówek nie steruje oknem — sterowanie
- * ośmioma ustawieniami należy do kompletu `sterowanie/`.
+ * Nagłówek gniazda układu okien równoległych pokazuje jednym spojrzeniem numer gniazda, tytuł, plakietkę roli, kierunek zlecenia i stan pętli, nie sterując przy tym samym oknem.
  */
 export function utworzNaglowekGniazda(
   id: IdGniazda,
@@ -93,8 +60,7 @@ export function utworzNaglowekGniazda(
   tytul.className = 'dn-okna__tytul';
   tytul.textContent = tytulGniazda(id);
 
-  // Moduł stoi przy tytule, nie zamiast niego: numer mówi, które to miejsce
-  // na scenie, moduł — co w nim pracuje. Obie odpowiedzi są potrzebne naraz.
+  // Moduł stoi przy tytule, nie zamiast niego: numer mówi, które to miejsce, moduł — co w nim pracuje.
   const modul = document.createElement('span');
   modul.className = 'dn-okna__modul';
   modul.hidden = true;
@@ -111,15 +77,11 @@ export function utworzNaglowekGniazda(
   const plakietkaStanu = utworzPlakietkeStanu('brak-pary');
   plakietkaStanu.element.hidden = true;
 
-  // Gniazdo sterowania panelami stoi za rozpychaczem, czyli przy prawej
-  // krawędzi, a przed plakietką stanu: stan pętli jest odczytem, sterowanie
-  // panelami czynnością, i to czynność ma być bliżej ręki.
+  // Sterowanie panelami stoi bliżej ręki niż plakietka stanu, bo jest czynnością, a stan tylko odczytem.
   const sterowanie = document.createElement('div');
   sterowanie.className = 'dn-okna__sterowanie';
 
-  // Plakietka łączności stoi przed plakietką stanu pary, bo brak łącza
-  // unieważnia sens stanu pętli: „Para gotowa" przy zerwanym łączu jest
-  // zdaniem prawdziwym i mylącym naraz.
+  // Plakietka łączności stoi przed plakietką stanu pary, bo brak łącza unieważnia sens stanu pętli.
   const plakietkaLacznosci: PlakietkaLacznosci = utworzPlakietkeLacznosci(
     opcje.ponowienie === undefined ? {} : { ponowienie: opcje.ponowienie },
   );
@@ -168,9 +130,7 @@ export function utworzNaglowekGniazda(
 
     ustawModul(kod) {
       const profil = profilModulu(kod);
-      // Kod pusty znaczy „rdzeń jeszcze nie nazwał modułu okna" — wtedy wiersz
-      // znika w całości. Napis o module wspólnym byłby podaniem stanu zastanego
-      // za rozstrzygnięcie o oknie.
+      // Kod pusty znaczy, że rdzeń jeszcze nie nazwał modułu okna, więc wiersz o module znika w całości.
       const nazwany = profil.kod.length > 0;
       modul.hidden = !nazwany;
       modul.textContent = nazwany ? nazwaModuluGniazda(profil.nazwa) : '';
@@ -185,8 +145,7 @@ export function utworzNaglowekGniazda(
 
     blysnij() {
       element.classList.remove('dn-okna__naglowek--przekazanie');
-      // Wymuszenie ponownego przeliczenia układu, żeby powtórne wywołanie
-      // uruchomiło animację od nowa zamiast ją pominąć.
+      // Wymuszenie ponownego przeliczenia układu, żeby powtórne wywołanie uruchomiło animację od nowa.
       void element.offsetWidth;
       element.classList.add('dn-okna__naglowek--przekazanie');
       window.clearTimeout(zegar);
@@ -203,7 +162,7 @@ export function utworzNaglowekGniazda(
   };
 }
 
-/** Węzły wiersza kierunku: grot po stronie okna partnera, zwrócony z biegiem zlecenia. */
+/** Węzły wiersza kierunku: grot po stronie okna partnera, zwrócony zgodnie z kierunkiem biegu zlecenia. */
 function trescKierunku(opis: OpisKierunku): Node[] {
   const ikona: NazwaIkony = opis.wPrawo ? 'strzalka-prawo' : 'strzalka-lewo';
   const grot = elementIkony(ikona, { rozmiar: 16 });

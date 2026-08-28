@@ -9186,3 +9186,8 @@ w wybranym trybie i na wybranych korzeniach.
 Punkt jest bytem platformy, nadanie bytem okna. Dlatego karta pokazuje stan
 punktu wspólny dla wszystkich okien, a przycisk nadania działa na oknie,
 z którym związana jest sekcja.
+## budowa/klient-poprzedni/src/moduly/apps/okno-warsztatu.ts
+Podgląd wyniku pokazuje to, co potwierdził rdzeń: odpowiedź komendy niesie ścieżkę, treść po zapisie, rozmiar i wersję. Podgląd na żywo nie ma w kontrakcie ani komendy, ani zdarzenia, więc stoi w wykazie braków zamiast w udawanym oknie podglądu. Ścieżka jest tożsamością pliku, więc okno nie przycina jej po swojemu i nie odmawia w imieniu kontraktu — zatrzymuje wyłącznie pole dosłownie puste i mówi wtedy o sobie, a nie o kontrakcie. Zdanie o zapisie zestawia wpisane z oddanym, bo sama ścieżka z odpowiedzi to za mało: gdy rdzeń zapisze plik pod ścieżką inną niż wpisana, potwierdzenie wymieniające ścieżkę oddaną jest prawdziwe, a mimo to zostawia czytającego w przekonaniu, że zapisał to, co wpisał.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-warsztatu.ts (rozbieżność zapisu)
+Klucz naturalny warsztatu to trójka złożona z okna, warstwy i ścieżki, więc rozejście się choćby jednego z tych pól znaczy nadpisanie innego pliku niż zamierzony. Rdzeń przyjmuje ścieżkę poprzedzoną znakiem niewidocznym i zapisuje ją dosłownie, a na ekranie wygląda ona identycznie jak ścieżka bez tego znaku, choć klucz naturalny czyni z nich dwa różne pliki — potwierdzenie zapisu byłoby wtedy prawdziwe co do znaku i mylące co do rzeczy.

@@ -18,38 +18,17 @@ import { utworzWykazPlikowWarsztatu } from './wykaz-plikow-warsztatu';
 import { utworzWyborZMenu, wierszWyboru } from './wybor-z-menu';
 
 /**
- * Rama wspólna Frontend Workspace i Backend Workspace — obu okien wiodących
- * modułu Apps.
- *
- * Jedna komenda obsługuje oba okna: `apps.workspace.update` niesie pole `layer`
- * o dwóch wartościach, a różnica między oknami sprowadza się do wartości tego
- * pola, do zbioru komponentów warstwy i do wykazu czynności bez drogi
- * w kontrakcie. Różnice przychodzą parametrem, nie drugim plikiem widoku.
- *
- * Podgląd wyniku pokazuje to, co potwierdził rdzeń: odpowiedź komendy niesie
- * `DeveloperFile` — ścieżkę, treść po zapisie, rozmiar i wersję. Podgląd na żywo
- * (hot reload) nie ma w kontrakcie ani komendy, ani zdarzenia, więc stoi
- * w wykazie braków zamiast w udawanym oknie podglądu.
- *
- * Ścieżka jest tożsamością pliku, więc okno nie przycina jej po swojemu i nie
- * odmawia w imieniu kontraktu. Klucz `(okno, warstwa, ścieżka)` rozstrzyga,
- * który plik zostanie nadpisany (`migracja_051_aplikacje.sql`), a `trim()`
- * przeglądarki nie jest tym samym przycięciem co `strings.TrimSpace` rdzenia:
- * ścieżki złożonej z samych znaków niewidocznych rdzeń za pustą nie uznaje.
- * Okno zatrzymuje więc wyłącznie pole dosłownie puste i mówi wtedy o sobie,
- * a nie o kontrakcie; o każdej innej wartości rozstrzyga rdzeń.
- *
- * Zdanie o zapisie zestawia wpisane z oddanym. Sama ścieżka z odpowiedzi to za
- * mało: gdy rdzeń zapisze plik pod ścieżką inną niż wpisana, potwierdzenie
- * wymieniające ścieżkę oddaną jest prawdziwe, a mimo to zostawia czytającego
- * w przekonaniu, że zapisał to, co wpisał. Różnicę okno nazywa.
+ * Rama wspólna Frontend Workspace i Backend Workspace, obu okien wiodących
+ * modułu Apps: jedna komenda obsługuje oba okna, a różnica sprowadza się do
+ * parametru warstwy, zbioru komponentów i wykazu czynności bez drogi
+ * w kontrakcie.
  */
 export interface OknoWarsztatu {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Czym różnią się oba warsztaty — wszystko, czego rama nie wywnioskuje sama. */
+/** Czym różnią się oba warsztaty — wszystko, czego ta rama wspólna nie jest w stanie wywnioskować sama. */
 export interface OpisWarsztatu {
   kodOkna: string;
   tytul: string;
@@ -66,8 +45,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
   const wykaz = utworzWykazKomponentowWarstwy(opis.warstwa, opis.tytulWykazu);
 
   const sciezka = poleTekstowe({ etykieta: 'Ścieżka pliku', podpowiedz: 'src/…' });
-  // Rozwijanie z biblioteki kontrolek, nie natywny `<select>`. Wykaz wchodzi
-  // dopiero w `odswiez`, bo pochodzi z kanwy, nie z wyliczenia kontraktu.
+  // Rozwijanie z biblioteki kontrolek: wykaz wchodzi dopiero przy odświeżeniu, z kanwy, nie z kontraktu.
   const komponent = utworzWyborZMenu('Komponent architektury');
   const komponentWiersz = wierszWyboru('Komponent architektury', komponent);
   const tresc = poleWielowierszowe({ etykieta: 'Treść pliku po edycji' }, 8);
@@ -75,8 +53,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
   const odczytaj = przycisk('Odczytaj pliki warsztatu', 'dn-btn dn-btn--sm dn-btn--zarys');
   const odpowiedz = utworzWierszOdpowiedzi();
 
-  // Wybór pliku z wykazu wstawia go do formularza — i mówi o tym wprost, bo
-  // przepisuje pole treści, w którym mogła już stać niezapisana zmiana.
+  // Wybór pliku z wykazu wstawia go do formularza i przepisuje pole treści, nawet niezapisane.
   const pliki = utworzWykazPlikowWarsztatu('Pliki warsztatu w rdzeniu', (plik) => {
     sciezka.kontrolka.value = plik.path;
     tresc.kontrolka.value = plik.content ?? '';
@@ -95,8 +72,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
   podglad.className = 'mp-podglad';
 
   rama.akcje.append(utworzWykazBrakow('Bez drogi w kontrakcie', opis.braki));
-  // Narzędzia zależą od warstwy: podgląd i mapa routingu należą do frontendu,
-  // eksplorator punktów końcowych i schemat bazy — do backendu.
+  // Narzędzia zależą od warstwy: frontend i backend mają każdy własny, dobrany do siebie zestaw.
   rama.akcje.append(
     utworzPrzybornikApps('Narzędzia warstwy', narzedziaWarsztatu(stan, opis.warstwa)).element,
   );
@@ -119,14 +95,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
   zapisz.addEventListener('click', () => void wyslij());
   odczytaj.addEventListener('click', () => void odczytajPliki());
 
-  /**
-   * Odczyt plików warsztatu z rdzenia.
-   *
-   * Zawężamy do własnej warstwy, bo okno jest oknem jednej warstwy. Odczyt bez
-   * pola `layer` przyniósłby oba warsztaty naraz i Frontend Workspace pokazałby
-   * pliki backendu jako swoje, a klucz `(okno, warstwa, ścieżka)` czyni z nich
-   * byty osobne.
-   */
+  /** Odczyt plików warsztatu z rdzenia, zawężony do własnej warstwy, bo okno jest oknem jednej warstwy. */
   async function odczytajPliki(): Promise<void> {
     rama.ladowanie('Odczyt plików warsztatu w toku…');
     odpowiedz.pokaz('Odczyt plików warsztatu: żądanie wysłane do rdzenia…', true);
@@ -180,10 +149,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
       return;
     }
     podglad.textContent = opiszPlik(wynik.wynik.file);
-    // Plik potwierdzony przez rdzeń wchodzi do zbioru warstwy natychmiast —
-    // bez czekania na zdarzenie `apps.workspace.changed`, którego rdzeń nie
-    // musi odesłać nadawcy zmiany. Wykaz pokazuje wtedy stan po zapisie zamiast
-    // stanu sprzed niego.
+    // Plik potwierdzony przez rdzeń wchodzi do zbioru warstwy natychmiast, bez czekania na zdarzenie.
     stan.wchlonZapisWarsztatu(wynik.wynik.layer, wynik.wynik.file);
     const rozbieznosc = rozbieznoscZapisu(
       zamowionaSciezka,
@@ -214,9 +180,7 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
     ]);
     if (rama.faza() === 'blad' || rama.faza() === 'ladowanie') return;
     if (ile === 0 && ilePlikow === 0 && podglad.textContent === '') {
-      // Dwa różne zdania o pustce, bo to dwa różne stany: po udanym odczycie
-      // wiadomo, że rdzeń warsztatu nie ma, a przed nim wyłącznie tyle, że nikt
-      // o warsztat nie pytał.
+      // Dwa różne zdania o pustce, bo to dwa różne stany: po odczycie i przed nim.
       rama.puste(
         stan.czyWarsztatCzytany(opis.warstwa)
           ? 'Rdzeń nie zna ani jednego pliku tej warstwy ani komponentu do niej należącego. ' +
@@ -234,15 +198,10 @@ export function utworzOknoWarsztatu(stan: StanProduktu, opis: OpisWarsztatu): Ok
 }
 
 /**
- * Czym zapis oddany przez rdzeń różni się od zamówionego — pusty łańcuch, gdy
- * niczym.
- *
- * Zestawiane są ścieżka i warstwa, bo to one rozstrzygają, który plik został
- * nadpisany: klucz naturalny warsztatu to `(okno, warstwa, ścieżka)`
- * (`migracja_051_aplikacje.sql`), więc rozejście się choćby jednego z tych pól
- * znaczy nadpisanie innego pliku niż zamierzony. Treści nie zestawiamy —
- * kontrakt nie obiecuje, że `content` w odpowiedzi jest dosłownym echem
- * żądania. Podgląd pokazuje treść oddaną w całości.
+ * Czym zapis oddany przez rdzeń różni się od zamówionego — pusty łańcuch,
+ * gdy niczym. Zestawiane są ścieżka i warstwa, bo one rozstrzygają, który
+ * plik został nadpisany; treści nie zestawiamy, bo kontrakt nie obiecuje
+ * dosłownego echa żądania.
  */
 function rozbieznoscZapisu(
   zamowionaSciezka: string,
@@ -264,18 +223,12 @@ function rozbieznoscZapisu(
 }
 
 /**
- * Ścieżka wypisana tak, żeby dwie różne ścieżki nie wyglądały tak samo.
- *
- * Rdzeń przyjmuje ścieżkę poprzedzoną znakiem niewidocznym i zapisuje ją
- * dosłownie, a na ekranie wygląda ona identycznie jak ścieżka bez tego znaku —
- * choć klucz `(okno, warstwa, ścieżka)` czyni z nich dwa różne pliki.
- * Potwierdzenie zapisu byłoby wtedy prawdziwe co do znaku i mylące co do rzeczy.
- * Znaki niewidoczne — sterujące, formatujące i spacje inne niż zwykła —
- * wypisujemy więc kodem, a wszystko pozostałe zostaje bez zmian.
+ * Ścieżka wypisana tak, żeby dwie różne ścieżki nie wyglądały tak samo:
+ * znaki niewidoczne — sterujące, formatujące i spacje inne niż zwykła —
+ * wypisujemy kodem, a wszystko pozostałe zostaje bez zmian.
  */
 function czytelnaSciezka(sciezka: string): string {
-  // Zakresy: sterujące C0/C1, miękki dywiz, spacje inne niż U+0020, znaczniki
-  // kierunku i złączenia oraz znacznik kolejności bajtów.
+  // Zakresy: znaki sterujące, miękki dywiz, spacje niestandardowe oraz znaczniki kierunku i kolejności.
   const niewidoczne =
     /[\u0000-\u001F\u007F-\u00A0\u00AD\u1680\u2000-\u200F\u2028\u2029\u202F\u205F\u2060\u3000\uFEFF]/g;
   return sciezka.replace(
@@ -284,7 +237,7 @@ function czytelnaSciezka(sciezka: string): string {
   );
 }
 
-/** Podgląd wyniku: plik tak, jak oddał go rdzeń po zapisie. */
+/** Podgląd wyniku pokazuje plik dokładnie tak, jak oddał go rdzeń po zapisie, bez żadnych własnych poprawek. */
 function opiszPlik(plik: DeveloperFile): string {
   const wiersze = [
     `ścieżka: ${plik.path}`,

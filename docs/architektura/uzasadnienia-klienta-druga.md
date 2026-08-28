@@ -7771,3 +7771,16 @@ z ujednoliconej metryki MQM/DQF, przyjętej w zawodzie jako model oceny
 jakości przekładu. Kategorie górnego poziomu to dokładność, poprawność
 językowa, terminologia, styl, spójność, zamiana znaczeniowa i inne błędy
 tej metryki.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-materialu-studio.ts
+Przed rozpoznaniem pisma potrzebne bywa prostowanie skosu, odszumianie, podniesienie kontrastu
+i przycięcie marginesów oraz wczytywanie wsadowe z archiwum. Obszar studio nie niesie żadnej
+z tych czynności, ale kontrakt niesie je gdzie indziej i mają one uchwyt w rdzeniu: poprawka
+obrazu idzie komendą image.adjust, przekształcenie geometryczne komendą image.transform,
+a rozpakowanie wsadu komendą archive.unpack. Panel woła je wprost, zamiast nazywać brakiem
+czynność, którą rdzeń umie.
+
+Każda poprawka obrazu oddaje nowy zasób magazynu, a źródło zostaje nietknięte. Pozycja kolejki
+przestawia się więc na zasób wynikowy i od tej chwili rozpoznanie pisma pracuje na obrazie
+po czyszczeniu.
+
+Zrównanie skali szarości z binaryzacją byłoby obietnicą progowania, którego nikt nie wykonuje.

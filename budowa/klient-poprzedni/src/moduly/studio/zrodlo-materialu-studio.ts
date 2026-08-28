@@ -11,23 +11,9 @@ import { czyLiczba, czyObiekt, sprawdzKsztalt } from '../../protokol/ksztalt-odp
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Przygotowanie materiału wejściowego przed rozpoznaniem pisma — trzy komendy
- * spoza obszaru `studio`.
- *
- * Opracowanie modułu żąda przed rozpoznaniem prostowania skosu, odszumiania,
- * podniesienia kontrastu i przycięcia marginesów oraz wczytywania wsadowego
- * z archiwum. Obszar `studio` nie niesie żadnej z tych czynności, ale kontrakt
- * niesie je gdzie indziej i mają one uchwyt w rdzeniu: poprawka obrazu idzie
- * `image.adjust`, przekształcenie geometryczne `image.transform`,
- * a rozpakowanie wsadu `archive.unpack`. Panel woła je wprost, zamiast nazywać
- * brakiem czynność, którą rdzeń umie.
- *
- * Każda poprawka obrazu oddaje NOWY zasób magazynu, a źródło zostaje nietknięte.
- * Pozycja kolejki przestawia się więc na zasób wynikowy i od tej chwili
- * rozpoznanie pisma pracuje na obrazie po czyszczeniu.
+ * Poprawka obrazu wykonalna przed rozpoznaniem pisma — jedna z trzech komend przygotowania
+ * materiału wejściowego spoza obszaru `studio`.
  */
-
-/** Poprawka obrazu wykonalna przed rozpoznaniem pisma. */
 export interface PoprawkaObrazu {
   /** Kod pozycji; trafia do `data-poprawka` przycisku. */
   kod: string;
@@ -39,12 +25,8 @@ export interface PoprawkaObrazu {
 }
 
 /**
- * Cztery poprawki wskazane przez opracowanie i obecne w kontrakcie.
- *
- * Binaryzacji w wykazie nie ma i nie ma jej w kontrakcie — skala szarości wraz
- * z wyrównaniem poziomów jest tym, co rdzeń w tej drodze umie, i tak jest
- * nazwana. Zrównanie jej z binaryzacją byłoby obietnicą progowania, którego
- * nikt nie wykonuje.
+ * Cztery poprawki obrazu obecne w kontrakcie. Binaryzacji w wykazie nie ma: skala szarości
+ * wraz z wyrównaniem poziomów jest tym, co rdzeń w tej drodze umie.
  */
 export const POPRAWKI_OBRAZU: readonly PoprawkaObrazu[] = [
   {
@@ -73,7 +55,7 @@ export const POPRAWKI_OBRAZU: readonly PoprawkaObrazu[] = [
   },
 ];
 
-/** Wskazanie materiału dla poprawki: zasób magazynu albo ścieżka rdzenia. */
+/** Wskazanie materiału dla poprawki obrazu: zasób magazynu przechowany po stronie rdzenia albo jego ścieżka. */
 export interface WskazanieObrazu {
   idZasobu: string;
   sciezka: string;
@@ -98,11 +80,7 @@ export interface ZrodloMaterialuStudio {
 }
 
 export function utworzZrodloMaterialuStudio(kanal: Kanal): ZrodloMaterialuStudio {
-  /**
-   * Dopisuje wskazanie materiału do żądania. Zasób magazynu ma pierwszeństwo
-   * przed ścieżką: jego treść stoi już pod sumą kontrolną, więc rdzeń nie
-   * wciąga jej po raz drugi.
-   */
+  /** Dopisuje wskazanie materiału do żądania; zasób magazynu ma pierwszeństwo przed ścieżką. */
   function wskaz(
     zadanie: { assetId?: string; sourcePath?: string },
     wskazanie: WskazanieObrazu,
@@ -116,8 +94,7 @@ export function utworzZrodloMaterialuStudio(kanal: Kanal): ZrodloMaterialuStudio
       const zadanie: ImageAdjustRequest = { operation: rodzaj };
       wskaz(zadanie, wskazanie);
       if (idOkna !== '') zadanie.windowId = idOkna;
-      // Siła wchodzi wyłącznie podana: brak pola znaczy „weź wartość rozsądną
-      // dla operacji", co jest rozstrzygnięciem rdzenia, a nie okna.
+      // Siła wchodzi wyłącznie podana; jej brak to rozstrzygnięcie rdzenia o wartości domyślnej.
       if (sila > 0) zadanie.amount = sila;
       const wynik = sprawdzKsztalt(
         await wywolaj(kanal, Command.ImageAdjust, zadanie),

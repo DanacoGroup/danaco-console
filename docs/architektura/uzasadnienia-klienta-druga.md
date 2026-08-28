@@ -6091,3 +6091,6 @@ pokazuje stan pusty, bo bez materiału nie ma ani jednej czynności do wykonania
 redakcji jest inaczej: cztery czynności — wczytanie strony, skanowanie, wsad i odwołanie do
 wersji — nie potrzebują dokumentu w edytorze, więc okno zostaje czynne, a czynności wymagające
 dokumentu mówią o tym własnym zdaniem w chwili wykonania.
+
+## budowa/klient-poprzedni/src/polaczenie/dziennik-nieznanych.ts
+Rdzeń odpowiada na nieznaną komendę zdarzeniem zapasowym właściwym dla obszaru nazwy — strona główna, środowisko, moduł i przestrzeń robocza mają własne zdarzenia zapasowe — a dziennik obejmuje je wszystkie, sięgając po komplet z mapy kontraktu, nigdy po literał nazwy, więc dopisanie obszaru w kontrakcie rozszerza dziennik samo, bez zmiany tego pliku. Osobno przechwytywane są koperty o typie spoza kontraktu, których nie zna ani wykaz komend, ani wykaz zdarzeń — powstają, gdy rdzeń wyprzedził klienta wersją albo gdy ramka była nieczytelna, a żaden z tych przypadków nie zrywa połączenia ani nie blokuje sesji.

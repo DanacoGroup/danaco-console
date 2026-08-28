@@ -8031,3 +8031,16 @@ niezależnie i bez rozproszenia trafiałyby w rdzeń równocześnie; brak
 górnego limitu prób, bo poddanie się po ustalonej liczbie zostawiłoby
 użytkownika z produktem wymagającym przeładowania strony — przyspieszenie
 daje czynność „Ponów teraz”, rezygnacji nie ma.
+
+## budowa/klient-poprzedni/src/sterowanie/adnotacje-wykonania.ts
+Pole eksperta wybranego dla okna się utrwala w polach rdzenia, lecz nałożenie
+tożsamości eksperta — warstw promptu, skilli, wtyczek — na wywołanie modelu
+nie potwierdza żadna znana ścieżka rdzenia, więc milczenie kazałoby uznać,
+że okno pracuje tożsamością eksperta; sekcja „Moi agenci” nie jest przy tym
+wyszarzana, bo to byłaby blokada. Zasięg local startuje na hoście rdzenia,
+bo toru zwrotnego do urządzenia operatora w drzewie nie ma; wybór jest
+honorowany dosłownie dopóty, dopóki rdzeń stoi na urządzeniu operatora.
+Host wykonania, kanał zapasowy i nakład rozumowania mają konsumenta
+wskazanego w nagłówku pliku; pusty wykaz kluczy bez konsumenta zostaje,
+bo droga dopisania ma być ta sama co droga wycofania — następny klucz bez
+konsumenta wpisuje się tutaj, a nie w nowym mechanizmie.

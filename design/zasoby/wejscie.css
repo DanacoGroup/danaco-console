@@ -431,17 +431,6 @@
 .we-panel .dn-pole-opis { color: var(--dn-tekst-2); }
 
 .au-metody { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dn-od-2); }
-.au-metoda {
-  display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1);
-  padding: var(--dn-od-3) var(--dn-od-2);
-  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
-  background: var(--dn-panel); color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-xs); text-align: center; cursor: pointer;
-  transition: border-color var(--dn-czas-1) var(--dn-ease), background-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease);
-}
-.au-metoda:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); transform: translateY(-1px); }
-.au-metoda svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
-.au-metoda-stan { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 
 /* ── Kod potwierdzający ─────────────────────────────────────────────────── */
 .au-kod { display: flex; gap: var(--dn-od-2); }

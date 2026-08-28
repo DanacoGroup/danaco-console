@@ -6429,3 +6429,12 @@ odmawia, nazywając brakujące wpięcie. Uchwyt podaje kompozycja programu głó
 zasilenia dotyczy wołających spoza kompozycji i sprawdzianów. Nadajnik powiadomień jest osobnym
 wpięciem: bez niego przebieg kolejki odmawia w całości i nie tyka ani jednego wiersza, a powiadomienia
 czekają z pełnym budżetem prób, zamiast po cichu wygasać.
+
+## budowa/server/internal/dane/studio_wsad.go
+Typ i kontrakt obszaru wsadu deklaruje plik studio.go; ten plik implementuje
+wyłącznie metody obszaru wsadu na tym samym uchwycie repozytorium studia, tak
+jak plik studio_wersje.go implementuje metody obszaru wersji. Przebieg wsadu
+i jego pozycje zapisują się w jednej transakcji, ponieważ liczby przyjętych
+i odrzuconych pozycji w nagłówku przebiegu są sumą wierszy pozycji: zapis
+rozdzielony na dwa osobne polecenia zostawiałby nagłówek niezgodny z jego
+własnymi pozycjami.

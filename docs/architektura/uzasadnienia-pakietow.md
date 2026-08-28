@@ -7055,3 +7055,27 @@ a cicha podmiana na inne konto po wyczerpaniu limitu wykonałaby turę
 tożsamością, której Operator nie wybrał. Wyczerpanie zostaje odnotowane
 w puli jako ślad i trwałość limitu, a tura kończy się tym, co konto oddało;
 konto spoza puli daje odmowę, nie inną tożsamość.
+
+## budowa/server/internal/injection/materializacja.go
+Przełączniki --settings i --mcp-config programu `claude` wskazują plik na
+dysku. Warstwa sesji składa jednak wartości tych pól z obszarów konfiguracji
+(tools, permissions, mcp) i przekazuje je jako napis JSON, czyli treść, nie
+ścieżkę. Gdyby taki napis trafił wprost do argv, program szukałby pliku o tej
+nazwie, nie znalazłby go i całe przekierowanie byłoby bezczynne.
+
+Przed uruchomieniem procesu treść zapisuje się do pliku tymczasowego,
+a wartość podmienia się na jego ścieżkę. Plik żyje tylko przez jeden przebieg
+tury — sprząta go porządek zwrócony domknięciem, uruchamiany funkcją defer
+w `wykonajPrzebieg`.
+
+Rozpoznanie treści od ścieżki jest jednoznaczne: konfiguracja JSON zaczyna się
+od znaku `{` albo `[` po odcięciu białych znaków, a ścieżka pliku nigdy tak nie
+zaczyna. Wartość rozpoznaną jako ścieżkę materializacja zostawia nietkniętą,
+bo plik zapisała już inna warstwa i wystarczy wskazać go procesowi.
+
+Kopia ustawień nie narusza oryginału: prowenancja nadal pokazuje pierwotną
+treść JSON, a argumenty procesu realną ścieżkę pliku tymczasowego.
+
+Katalog tymczasowy systemu daje ścieżkę widoczną dla procesu niezależnie od
+jego katalogu roboczego. Przy każdym potknięciu zapisu plik tymczasowy zostaje
+usunięty, żeby nie zostawić pliku bez właściciela.

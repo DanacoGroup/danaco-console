@@ -9323,3 +9323,22 @@ Okno rozmowy i okno pętli wykonawczej są oknami wspólnymi platformy i leżą 
 tym katalogiem: pas komunikacji montuje scena sesji, ta sama we wszystkich
 modułach. Okno modułu ustala się przed odczytami, ponieważ polecenie głosowe
 wymaga wskazania okna, a odczyty zawężają się do niego, jeżeli rdzeń je zna.
+
+## budowa/klient-poprzedni/src/moduly/research/czynnosci-raportu.ts
+Jedna odpowiedzialność: kompozycja raportu i rozdział akcji panelu. Materiał
+wejściowy pochodzi z Findings Panel, pole identyfikatorów ustaleń bierze
+zaznaczenie wspólne obu oknom przez stan badania. Rdzeń ma dwie drogi budowy
+raportu, a rozstrzyga o nich redakcja: żądanie z podanymi sekcjami składa
+raport z samych podanych sekcji i odkłada identyfikatory ustaleń na bok; to
+samo żądanie bez sekcji woła kanał modelu po sekcję nadrzędną, a po niej idzie
+sekcja na każde zaznaczone ustalenie — okno nie obchodzi tej reguły po swojej
+stronie, nazywa ją operatorowi, żeby zaznaczenie ustaleń nie znikało bez
+słowa. Droga modelu kończy się sukcesem także wtedy, gdy model nic nie
+powiedział: bez czynnego logowania budowa wraca powodzeniem, raport zostaje
+zapisany, a treścią sekcji nadrzędnej jest komunikat procesu kanału, bo rdzeń
+zbiera z kanału same fragmenty tekstu, więc odpowiedź modelu i komunikat jego
+procesu docierają tą samą drogą i jako ta sama treść — czynność nie orzeka
+o tym po napisie, skutek nazywa osobna funkcja opisu złożenia, z odpowiedzi.
+Zdanie pustki podglądu dobiera osobny plik pustki okien: przy niewskazanym
+oknie badania żądanie budowy odmawia i żadna z dwóch dróg budowy nie ruszy,
+więc tłumaczenie tam reguły dwóch dróg myliłoby operatora.

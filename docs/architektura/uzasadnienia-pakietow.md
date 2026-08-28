@@ -6073,3 +6073,16 @@ Odwzorowanie błędów pakietu na kody kontraktu leży w tym pakiecie: pakiet
 session nie zakłada własnego katalogu kodów.
 ## budowa/server/internal/dane/studio_propozycje.go
 Propozycja nie jest wersją: porównanie różnic przyjmuje identyfikator propozycji zamiennie z identyfikatorem wersji docelowej, więc porównanie czyta propozycję i wersję tym samym mechanizmem odczytu treści, ale zapis obu bytów jest rozdzielony, bo zatwierdzenie propozycji do repozytorium wykonuje osobny zapis dokumentu, nie ten plik. Fragmentów różnicy tu nie ma: liczą się w locie z dwóch treści w warstwie rdzenia, a ten plik oddaje wyłącznie treść propozycji do porównania, nie sam wynik porównania.
+
+## budowa/server/internal/dane/design_kolekcje.go
+
+Liczba zmienionych przypisań kolekcji liczy się z wyniku poleceń, nie z długości nadesłanego
+wykazu: kontrakt pyta, ile przypisań naprawdę się zmieniło, a dołożenie zasobu już
+należącego do kolekcji zmienia zero.
+
+Dołożenie zasobu, który już jest w kolekcji, zmienia zero przypisań i tak ma zostać
+policzone — powtórzenie w wykazie nie jest odmową.
+
+Znacznik czasu kolekcji przestawia się tylko wtedy, gdy coś się naprawdę zmieniło: wykaz
+kolekcji sortuje się po nim, a przypisanie bez skutku nie ma prawa przestawiać kolejności
+na ekranie.

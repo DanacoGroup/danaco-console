@@ -8349,3 +8349,27 @@ a edytor kodu otworzy go sam. Numer wiersza zostaje w napisie i niczego nie
 otwiera, bo polecenie otwarcia pliku nie ma pola wiersza, a pole edycji nie ma
 numeracji — przejście otwiera plik, nie miejsce w pliku, i przycisk mówi
 dokładnie tyle.
+
+## budowa/klient-poprzedni/src/moduly/design/skroty-designu.ts
+Skąd biorą się kombinacje: dokumentacja modułu wymienia skrót klawiszowy jako drogę równorzędną
+kliknięciu — przy adnotacjach na kanwie, przy powiększeniu podglądu i przy całej warstwie czwartej
+— ale konkretnych kombinacji nie podaje. Kombinacje są więc rozstrzygnięciem projektowym tej
+budowy, podjętym wedle jednej reguły: bierzemy to, co ten produkt już związał w module Translate,
+żeby Operator przechodzący między modułami nie uczył się dwóch układów klawiatury. Czynności, dla
+których dokumentacja skrótu nie przewiduje, skrótu tu nie dostają — wymyślanie ich byłoby
+dokładaniem funkcji.
+
+Nasłuch wisi na elemencie modułu, nie na dokumencie. Moduł znika z drzewa przy zejściu ze sceny
+i nasłuch znika razem z nim; nasłuch dokumentu trzeba by odpinać osobno, a pierwszy przeoczony
+byłby wyciekiem.
+
+Skutek uboczny tej decyzji jest nazwany, nie przemilczany: skrót działa, gdy ognisko stoi wewnątrz
+modułu. Poza modułem klawisze należą do powłoki.
+
+Dwa skróty stoją w wykazie, a moduł ich nie wiąże. Powiększenie podglądu należy do Preview Window,
+którego wytwórnia leży poza katalogiem tego modułu; sterowanie pętlą należy do Execution Loop
+Window, okna wspólnego platformy. Wykaz mówi to wprost, zamiast pomijać pozycje i sugerować, że
+skrótów nie ma.
+
+Ctrl i Cmd są tu równoważne, tak jak w zapisie skrótów dokumentacji: na komputerach Apple
+modyfikatorem polecenia jest klawisz Meta.

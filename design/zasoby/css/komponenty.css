@@ -4078,3 +4078,61 @@ button.dn-link {
   background: var(--dn-sygnal);
 }
 [data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku-zamknij { border-radius: var(--dn-r-xs); }
+
+/* ── Ramka sekcji ────────────────────────────────────────────────────────
+   Wydziela pakiet kafli z plotna: obrys sygnalu, siatka pomiarowa wewnatrz
+   i wlasny ruch tla. Ruch idzie po przeksztalceniach, wiec nie wymusza
+   przeliczania ukladu; przy ograniczonym ruchu gasnie w calosci. */
+.dn-organizer {
+  position: relative;
+  padding: var(--dn-od-6);
+  border: 1px solid color-mix(in srgb, var(--dn-sygnal-wypelnienie) 55%, transparent);
+  border-radius: var(--dn-r-md);
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--pz-punkt) 1px, transparent 1.6px);
+  background-size: var(--pz-siatka) var(--pz-siatka);
+  overflow: hidden;
+  isolation: isolate;
+}
+.dn-organizer > *:not(.dn-naroznik) { position: relative; z-index: 1; }
+
+/* Ruch sekcji srodowisk: swiatlo przebiega gorna krawedz ramki. */
+.dn-organizer--srodowiska::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40%;
+  height: 1px;
+  z-index: 0;
+  background: linear-gradient(90deg, transparent, var(--pz-akcent-2), transparent);
+  transform: translateX(-100%);
+  animation: dn-organizer-przebieg 9s linear infinite;
+}
+@keyframes dn-organizer-przebieg {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(350%); }
+}
+
+/* Ruch sekcji komponentow: poswiata przesuwa sie pod kaflami. */
+.dn-organizer--komponenty::before {
+  content: '';
+  position: absolute;
+  inset: -40% -10%;
+  z-index: 0;
+  background: radial-gradient(38% 50% at 50% 50%, var(--dn-sygnal-tlo), transparent 70%);
+  transform: translateX(-30%);
+  animation: dn-organizer-poswiata 16s ease-in-out infinite alternate;
+}
+@keyframes dn-organizer-poswiata {
+  from { transform: translateX(-30%); }
+  to { transform: translateX(30%); }
+}
+
+/* Naroznik ramki — ten sam znak co na obudowie przyrzadu. */
+.dn-organizer > .dn-naroznik { z-index: 2; border-color: var(--dn-sygnal); opacity: 0.85; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-organizer--srodowiska::before,
+  .dn-organizer--komponenty::before { animation: none; }
+}

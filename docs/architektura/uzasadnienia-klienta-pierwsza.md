@@ -8950,3 +8950,13 @@ obowiązkowym i musi pochodzić z powitania (drugie wywołanie `tozsamoscKlienta
 nadałoby identyfikator nowy i rozdzieliło ognisko od połączenia). Stanowisko
 podglądu buduje stronę bez uzgodnienia, więc dla niego zostaje odczyt samego
 wykazu — brak tożsamości nie gasi ekranu.
+## budowa/klient-poprzedni/src/moduly/research/badanie-domkniecie.test.ts
+Cztery czynności badania sprawdzone tu to przestrzeń badania, załącznik
+pełnego tekstu, zdjęcie adnotacji i zapis książki kodów. Sprawdzian pilnuje
+dwóch rzeczy naraz: że droga z okna do rdzenia istnieje, czyli chwyt
+w katalogu akcji oraz wywołanie w rozdzielniku są obecne razem, bo jedno bez
+drugiego jest przyciskiem bez skutku albo wywołaniem bez przycisku, oraz że
+dwie czynności o skutku nieodwracalnym mówią o nim, zanim go wywołają.
+Odpowiedź w kanale próbnym wraca po oddaniu identyfikatora żądania, tak jak
+w kanale prawdziwym: nasłuch odmów modułu zdejmuje żądanie z rejestru po tym
+identyfikatorze, więc rozstrzygnięcie synchroniczne nie miałoby czego zdjąć.

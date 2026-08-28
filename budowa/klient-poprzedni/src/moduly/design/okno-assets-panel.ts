@@ -14,30 +14,13 @@ import { powodZTorem } from './tor-komendy';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Assets Panel — okno **zarządca** modułu Design (kod katalogu rdzenia
- * `assets-panel`): wykaz zasobów wraz z filtrem i panelem metadanych.
- *
- * Zasób wchodzi do wykazu dwiema drogami. `design.asset.upload` przyjmuje plik
- * wskazany w oknie — klient czyta jego bajty i oddaje je rdzeniowi
- * (`wgranie-zasobu.ts`); kontrolka stoi w oknie pierwsza. `design.asset.generate`
- * oddaje bajty z kanału obrazowego, a powstały zasób trafia do wykazu zdarzeniem
- * `design.asset.changed`, bez czynności w tym oknie.
- *
- * Zawartość wykazu przestawiają jeszcze trzy komendy: `design.asset.tag.set`
- * zasila filtr etykiet, `design.asset.favorite.set` — przełącznik „Tylko
- * ulubione", a `design.asset.remove` jest nadawcą rodzaju zmiany `deleted`;
- * obie ostatnie stoją w `czynnosci-zasobu.ts`. Usunięcie idzie bez pytania
- * „czy na pewno" — uzasadnienie w nagłówku tamtego pliku.
- *
- * Odmowa odczytu nie gasi okna: `design.asset.list` zakończona odmową wchodzi
- * w stan błędu, a okno zostaje czynne. Zasób przysłany zdarzeniem
- * `design.asset.changed` wejdzie do wykazu mimo to, bo wciąga go stan modułu,
- * nie ta odpowiedź.
+ * Assets Panel — okno zarządca modułu Design, wykaz zasobów wraz z filtrem i panelem metadanych,
+ * zasilany dwiema drogami wejścia zasobu oraz trzema komendami przestawiającymi jego zawartość.
  */
 export interface OknoAssetsPanel {
   element: HTMLElement;
   odswiez(): void;
-  /** Zleca odczyt zasobów z warunkami filtra. */
+  /** Zleca odczyt zasobów z warunkami filtra ustawionymi w oknie. */
   wczytaj(): Promise<void>;
 }
 
@@ -50,8 +33,7 @@ export function utworzOknoAssetsPanel(
   const etykietowanie: NadanieEtykiet = utworzNadanieEtykiet(stan);
   const wgranie: WgranieZasobu = utworzWgranieZasobu(stan);
   const czynnosci: CzynnosciZasobu = utworzCzynnosciZasobu(stan);
-  // Wydania i kolekcje dotyczą zasobu wskazanego w wykazie, więc stoją pod nim,
-  // obok pozostałych czynności na jednym zasobie.
+  // Wydania i kolekcje dotyczą zasobu wskazanego w wykazie, więc stoją pod nim, obok innych czynności.
   const wydania: WydaniaZasobu = utworzWydaniaZasobu(stan);
   const kolekcje: KolekcjeDesignu = utworzKolekcjeDesignu(stan);
 
@@ -72,10 +54,7 @@ export function utworzOknoAssetsPanel(
     naKanwe(zasob);
   });
 
-  // Wgranie stoi przed filtrem, bo filtr zawęża zbiór, który wgranie dopiero
-  // tworzy. Czynności na zasobie wskazanym (ulubiony, usunięcie) idą zaraz pod
-  // wykazem, obok nadania etykiet — wszystkie trzy dotyczą jednego zasobu
-  // wskazanego kartą.
+  // Wgranie stoi przed filtrem, bo filtr zawęża zbiór, który wgranie dopiero tworzy.
   okno.tresc.append(
     wgranie.element,
     filtr.element,
@@ -93,7 +72,7 @@ export function utworzOknoAssetsPanel(
   element.dataset['okno'] = OKNO_ASSETS_PANEL.kod;
   element.append(naglowekOkna(OKNO_ASSETS_PANEL.nazwa, OKNO_ASSETS_PANEL.rola), okno.element);
 
-  /** Zasoby po zawężeniu miejscowym — po nazwie i po etykietach. */
+  /** Zasoby po zawężeniu miejscowym — po nazwie zasobu i po jego etykietach. */
   function widoczne(): readonly DesignAsset[] {
     const fraza = filtr.fraza();
     if (fraza === '') return stan.zasoby();
@@ -119,15 +98,12 @@ export function utworzOknoAssetsPanel(
 
   function pokazStan(widocznych: number): void {
     if (stan.faza() === 'odczyt') {
-      // Zdanie czuwania („rdzeń odpowiada, odczyt trwa N s") wchodzi na miejsce
-      // zapowiedzi, gdy jest — pokazuje, że milczenie rdzenia zostało sprawdzone.
+      // Zdanie czuwania wchodzi na miejsce zapowiedzi, gdy jest — pokazuje, że milczenie rdzenia sprawdzono.
       okno.ladowanie(stan.powod() === '' ? 'Odczyt zasobów w toku…' : stan.powod());
       return;
     }
     if (stan.faza() === 'blad') {
-      // Zdanie o torze komendy tłumaczy pola żądania i należy się odmowie
-      // rdzenia. Zerwanego gniazda nie tłumaczy żadne pole żądania, więc przy
-      // braku rozstrzygnięcia dopisek zostaje pominięty.
+      // Zdanie o torze komendy tłumaczy pola żądania i należy się odmowie rdzenia, nie zerwanemu gniazdu.
       okno.blad(
         stan.czyBezRozstrzygniecia()
           ? stan.powod()
@@ -152,9 +128,7 @@ export function utworzOknoAssetsPanel(
 
   async function wczytaj(): Promise<void> {
     await stan.odswiez(filtr.warunki());
-    // Kolekcje idą tą samą drogą co zasoby: wykaz kolekcji nieodświeżony po
-    // odczycie pokazywałby liczniki sprzed zmian, których Operator właśnie
-    // dokonał w innym oknie.
+    // Kolekcje idą tą samą drogą co zasoby: nieodświeżony wykaz pokazywałby liczniki sprzed zmian.
     await kolekcje.wczytaj();
   }
 

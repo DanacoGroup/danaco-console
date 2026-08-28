@@ -7709,3 +7709,28 @@ Widok nie zawiera odnośników, bo odnośnik wyprowadziłby okno aplikacji pod o
 Adres jest wypisany jako tekst do skopiowania, a pobieranie zostaje pod przyciskiem
 banera albo na witrynie. Widok nie montuje się sam: oddaje element, a osadza go ten,
 kto go przywołał — przycisk „Wykaz wydań” przy banerze.
+
+## budowa/klient-poprzedni/src/moduly/design/okno-assets-panel.ts
+Zasób wchodzi do wykazu dwiema drogami. Wgranie zasobu przyjmuje plik wskazany w oknie — klient
+czyta jego bajty i oddaje je rdzeniowi; kontrolka stoi w oknie pierwsza. Generowanie oddaje bajty
+z kanału obrazowego, a powstały zasób trafia do wykazu zdarzeniem zmiany, bez czynności w tym
+oknie.
+
+Zawartość wykazu przestawiają jeszcze trzy komendy: nadanie etykiet zasila filtr etykiet, ustawienie
+ulubionego zasila przełącznik „Tylko ulubione", a usunięcie jest nadawcą rodzaju zmiany usunięcia;
+obie ostatnie stoją w module czynności zasobu. Usunięcie idzie bez pytania „czy na pewno".
+
+Odmowa odczytu nie gasi okna: odczyt zakończony odmową wchodzi w stan błędu, a okno zostaje czynne.
+Zasób przysłany zdarzeniem zmiany wejdzie do wykazu mimo to, bo wciąga go stan modułu, nie ta
+odpowiedź.
+
+Czynności na zasobie wskazanym (ulubiony, usunięcie) idą zaraz pod wykazem, obok nadania etykiet —
+wszystkie trzy dotyczą jednego zasobu wskazanego kartą.
+
+Zerwanego gniazda nie tłumaczy żadne pole żądania, więc przy braku rozstrzygnięcia dopisek
+zostaje pominięty.
+
+## budowa/klient-poprzedni/src/mobile/ekran-interwencji.ts
+Od otwarcia ekranu do wykonanej decyzji prowadzą dwa dotknięcia: karta, potem droga. Nagłówek melduje każdą odmowę odczytu osobno. Wykaz pusty to nie to samo co brak źródła — „Nic nie czeka” pada wyłącznie wtedy, gdy odczyty doszły; przy odmowach ekran mówi, że nie wie.
+
+Zdarzenie `mobile.process.changed` nie ma po stronie rdzenia producenta (`handlers_mobile.go`), więc nasłuch przerysowania wykazu stoi na trzech zdarzeniach, które go mają — telefon nie ma być odpytywany palcem.

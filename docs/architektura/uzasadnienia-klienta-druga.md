@@ -6382,3 +6382,14 @@ później, oraz przejście stanu z przekazania zlecenia do pracy wykonawcy.
 
 ## budowa/klient-poprzedni/src/powiadomienia/kolumna-powiadomien.ts
 Kolumna nie wykonuje działań zdarzenia: zatwierdzenie, ponowienie i wstrzymanie należą do rodziny, która je już niesie, więc pozycja pokazuje je jako drogę do tamtej rodziny, nie jako drugą jej implementację — kolumna zmienia wyłącznie stan zdarzenia w rejestrze, czyli odczytane, zamknięte albo odłożone. Zamknięcie kolumny nie jest obsłużeniem zdarzeń: chowa widok i nic nie zapisuje, a zdarzenia zostają w stanie, w jakim były, inaczej samo zajrzenie do centrum kasowałoby to, po co operator zaglądał.
+
+## budowa/klient-poprzedni/src/moduly/studio/osadzenie-zrodel.ts
+Rodziny komend przeglądarki i biblioteki plików są zbudowane i zamknięte gdzie indziej; to źródło
+woła z nich sześć, których osadzenie w studiu potrzebuje, i nie wchodzi w pliki tamtych modułów
+ani w rdzeniu, ani w kliencie. Dwie drogi wciągnięcia strony są równorzędne, a wybór należy do
+operatora: pobranie strony oknem studia oczyszcza ją z nawigacji i reklam i oddaje pozycję kolejki
+wraz z wydobytym tekstem, prowadząc wprost do dokumentu, i nie wymaga okna przeglądarki, więc
+działa zawsze; migawka strony otwartej w module przeglądarki oddaje adres, tytuł, treść
+renderowaną i źródło, wymaga jednak okna przeglądarki, więc jest drogą operatora, który już
+przegląda. Pierwsza droga wciąga adres bez przeglądania, druga bierze to, co operator już ma
+przed oczami. Źródło nie ma stanu i nie buduje elementu.

@@ -10,31 +10,7 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Przeglądarka i Biblioteka wewnątrz Studia — komendy wołane, nie pisane drugi
- * raz.
- *
- * ── Czego tu NIE ma ─────────────────────────────────────────────────────────
- * Ani jednego rachunku przeglądania i ani jednego rachunku repozytorium plików.
- * Rodziny `browser.*` (47 komend) i `library.*` (48 komend) są zbudowane
- * i zamknięte; to źródło woła z nich sześć, których osadzenie w Studiu
- * potrzebuje, i nie wchodzi w pliki tamtych modułów — ani w rdzeniu, ani
- * w kliencie.
- *
- * ── Dwie drogi wciągnięcia strony i dlaczego obie ───────────────────────────
- *   — `studio.ingest.url` pobiera stronę **oknem Studia**, oczyszcza ją
- *     z nawigacji i reklam i oddaje pozycję kolejki wraz z wydobytym tekstem.
- *     Nie wymaga okna modułu Browser, więc działa zawsze; jej wynik prowadził
- *     dotąd do kolejki, a nie do dokumentu — tu prowadzi do dokumentu.
- *   — `browser.snapshot.get` i `browser.navigate` oddają migawkę strony
- *     otwartej w module Browser: adres, tytuł, treść renderowaną i źródło.
- *     Wymagają okna przeglądarki, więc są drogą Operatora, który już przegląda.
- *
- * Obie są równorzędne i wybór należy do Operatora — pierwsza wciąga adres bez
- * przeglądania, druga bierze to, co już ma przed oczami.
- *
- * Źródło nie ma stanu i nie buduje elementu.
- */
+/** Przeglądarka i Biblioteka wewnątrz Studia: sześć komend wołanych z gotowych rodzin, bez rachunku przeglądania ani repozytorium plików. */
 export interface OsadzenieZrodel {
   /** Pliki Biblioteki wedle frazy i etykiet. */
   osadzenieBiblioteka(fraza: string, granica: number): Promise<Wynik<LibraryFileListResponse>>;

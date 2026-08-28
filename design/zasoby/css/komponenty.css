@@ -3987,7 +3987,14 @@ button.dn-link {
 [data-wnetrze='przyrzadowe'] .dn-obszar-panel--samouczek { background: var(--dn-powierzchnia-2); }
 /* Pasek stanu na barwie belki, tak jak rama okna. */
 [data-wnetrze='przyrzadowe'] .dn-stan { background: var(--dn-rama); color: var(--dn-rama-tekst-2); }
-[data-wnetrze='przyrzadowe'] .dn-karty-pasmo { background: var(--dn-powierzchnia-2); }
+[data-wnetrze='przyrzadowe'] .dn-karty-pasmo {
+  background: var(--dn-powierzchnia-2);
+  /* Pas ma 40 px, przelacznik 24, karta 26 — przy dosunieciu do dolu obie
+     stawaly ponizej srodka pasa. Koncepcja srodkuje je w pionie. */
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
 
 /* Belka i szyna na barwie ramy — bez tego biora barwe gruntu i cala lewa
    krawedz okna zlewa sie z obrzezem paneli. */
@@ -4079,60 +4086,94 @@ button.dn-link {
 }
 [data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-karta-widoku-zamknij { border-radius: var(--dn-r-xs); }
 
-/* ── Ramka sekcji ────────────────────────────────────────────────────────
-   Wydziela pakiet kafli z plotna: obrys sygnalu, siatka pomiarowa wewnatrz
-   i wlasny ruch tla. Ruch idzie po przeksztalceniach, wiec nie wymusza
-   przeliczania ukladu; przy ograniczonym ruchu gasnie w calosci. */
-.dn-organizer {
-  position: relative;
-  padding: var(--dn-od-6);
-  border: 1px solid color-mix(in srgb, var(--dn-sygnal-wypelnienie) 55%, transparent);
-  border-radius: var(--dn-r-md);
-  background-image:
-    radial-gradient(circle at 1px 1px, var(--pz-punkt) 1px, transparent 1.6px);
-  background-size: var(--pz-siatka) var(--pz-siatka);
-  overflow: hidden;
-  isolation: isolate;
-}
-.dn-organizer > *:not(.dn-naroznik) { position: relative; z-index: 1; }
+/* Wykaz kart srodkuje sie razem z pasem — same karty maja 26 px w pasie 40 px. */
+[data-wnetrze='przyrzadowe'] .dn-karty-lista { align-items: center; }
 
-/* Ruch sekcji srodowisk: swiatlo przebiega gorna krawedz ramki. */
-.dn-organizer--srodowiska::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 40%;
-  height: 1px;
-  z-index: 0;
-  background: linear-gradient(90deg, transparent, var(--pz-akcent-2), transparent);
-  transform: translateX(-100%);
-  animation: dn-organizer-przebieg 9s linear infinite;
+/* ── Wstazka panelu bocznego ─────────────────────────────────────────────
+   Narzedzia wykazu stoja ciasno, jednym rzedem, oddzielone od tresci
+   wloskowa linia. Znak wiodacy w miejsce opisu — panel jest waski. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-obszar-pasek {
+  gap: 1px;
+  min-height: 34px;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
 }
-@keyframes dn-organizer-przebieg {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(350%); }
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-obszar-pasek .dn-btn-ikona {
+  width: 30px;
+  height: 28px;
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-3);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-obszar-pasek .dn-btn-ikona:hover {
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--boczny .dn-obszar-pasek .dn-btn-ikona[aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
 }
 
-/* Ruch sekcji komponentow: poswiata przesuwa sie pod kaflami. */
-.dn-organizer--komponenty::before {
-  content: '';
-  position: absolute;
-  inset: -40% -10%;
-  z-index: 0;
-  background: radial-gradient(38% 50% at 50% 50%, var(--dn-sygnal-tlo), transparent 70%);
-  transform: translateX(-30%);
-  animation: dn-organizer-poswiata 16s ease-in-out infinite alternate;
+/* ── Wstazka okna roboczego ──────────────────────────────────────────────
+   Pas narzedzi modulu: grupy rozdzielone kreska, nazwa modulu pismem
+   maszynowym po lewej, menu nadmiaru dosuniete do prawej. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-obszar-pasek {
+  gap: var(--dn-od-1);
+  min-height: 38px;
+  padding: 0 var(--dn-od-3);
+  background: var(--dn-powierzchnia-2);
+  border-bottom: 1px solid var(--dn-obrys);
 }
-@keyframes dn-organizer-poswiata {
-  from { transform: translateX(-30%); }
-  to { transform: translateX(30%); }
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-obszar-pasek .dn-btn-ikona {
+  width: 34px;
+  height: 30px;
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-3);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-obszar-pasek .dn-btn-ikona:hover {
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+}
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-obszar-pasek .dn-sep-pionowy,
+[data-wnetrze='przyrzadowe'] .dn-obszar-panel--glowny .dn-obszar-pasek .dn-pasek-okna-rozdzielacz {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--dn-od-2);
+  background: var(--dn-obrys-mocny);
+}
+[data-wnetrze='przyrzadowe'] .dn-pasek-okna-modul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
 }
 
-/* Naroznik ramki — ten sam znak co na obudowie przyrzadu. */
-.dn-organizer > .dn-naroznik { z-index: 2; border-color: var(--dn-sygnal); opacity: 0.85; }
-
-@media (prefers-reduced-motion: reduce) {
-  .dn-organizer--srodowiska::before,
-  .dn-organizer--komponenty::before { animation: none; }
+/* ── Wstazka samouczka ───────────────────────────────────────────────────
+   Panel nauki dostaje wlasny pas: przejscie miedzy krokami i licznik
+   postepu. Licznik stoi po prawej, pismem maszynowym. */
+.dn-pasek-nauki {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  min-height: 34px;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+.dn-pasek-nauki .dn-btn-ikona {
+  width: 30px;
+  height: 28px;
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-3);
+}
+.dn-pasek-nauki .dn-btn-ikona:hover { background: var(--dn-panel); color: var(--dn-tekst); }
+.dn-pasek-nauki-postep {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.08em;
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
 }

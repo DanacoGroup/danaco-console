@@ -17,23 +17,9 @@ import { utworzZrodloObszarowSesji, type ZrodloObszarowSesji } from './zrodlo-ob
 
 /**
  * Stan panelu obszarów konfiguracji sesji — jedno źródło prawdy dla wykazu
- * obszarów, plakietek pochodzenia i zapisu.
- *
- * Punkt widzenia jest wspólny z resztą okna. Pasek u góry okna ustala, dla kogo
- * liczymy wartości obowiązujące; ten stan bierze od niego ten sam adres, którym
- * jedzie łańcuch zapisów kluczy. Dwa punkty widzenia w jednym oknie znaczyłyby,
- * że plakietka klucza i plakietka obszaru mówią o dwóch różnych miejscach
- * przestrzeni konfiguracji.
- *
- * Zapis utrwala to, co obowiązuje: panel nie redaguje pól obszaru, tylko
- * zapisuje obszar odziedziczony z poziomu szerszego albo z innego rejestru jako
- * zapis własny na poziomie wskazanym punktem widzenia. Treść zapisu bierze się
- * z konfiguracji obowiązującej, którą oddał rdzeń. Obszar spoza wykazu `areas`
- * rdzeń zostawia nietknięty, a obszar w wykazie bez treści usuwa, wracając do
- * dziedziczenia.
- *
- * Żadna ścieżka nie zatrzymuje okna: odmowa odczytu zostawia wykaz pusty
- * i powód do pokazania, odmowa zapisu wraca `Wynikiem` z błędem.
+ * obszarów, plakietek pochodzenia i zapisu. Żadna ścieżka nie zatrzymuje
+ * okna: odmowa odczytu zostawia wykaz pusty, odmowa zapisu wraca `Wynikiem`
+ * z błędem.
  */
 export interface StanObszarowSesji {
   /** Faza odczytu konfiguracji obowiązującej. */
@@ -56,11 +42,7 @@ export interface StanObszarowSesji {
   odswiez(): Promise<void>;
   /** `config.session.set` — utrwala wskazane obszary na poziomie punktu. */
   utrwal(obszary: readonly SessionConfigArea[]): Promise<Wynik<ConfigSessionSetResponse>>;
-  /**
-   * `config.session.set` — zapisuje obszar `hooks` TREŚCIĄ ZŁOŻONĄ przez
-   * Operatora (panel zaczepów). Jedyny obszar redagowany w oknie:
-   * zaczep trzeba móc złożyć, a nie tylko utrwalić odziedziczony.
-   */
+  /** `config.session.set` — zapisuje obszar `hooks` treścią złożoną przez Operatora w panelu zaczepów. */
   utrwalZaczepy(zaczepy: SessionConfigHooks): Promise<Wynik<ConfigSessionSetResponse>>;
   /** Subskrypcja przeliczenia stanu. */
   naZmiane(sluchacz: () => void): void;
@@ -121,7 +103,7 @@ export function utworzStanObszarowSesji(
   };
 }
 
-/** `config.effective.get` — rozstrzygnięcie obszarów dla punktu widzenia. */
+/** `config.effective.get` — rozstrzygnięcie obszarów konfiguracji sesji dla wskazanego punktu widzenia okna. */
 async function wczytaj(
   zapis: ZapisStanu,
   zrodlo: ZrodloObszarowSesji,
@@ -133,8 +115,7 @@ async function wczytaj(
 
   const wynik = await zrodlo.obowiazujaca(zapis.punkt);
   if (!wynik.udany || wynik.wynik === undefined) {
-    // Wykaz zostaje pusty, a nie udawany: pusty obszar i nieudany odczyt to dwa
-    // różne stany i Operator ma prawo je rozróżnić.
+    // Wykaz zostaje pusty, a nie udawany: pusty obszar i nieudany odczyt to różne stany.
     zapis.obowiazujaca = null;
     zapis.powod = opisOdmowyBledu('Konfiguracja obowiązująca nie dotarła', wynik.blad);
     zapis.faza = 'blad';
@@ -148,7 +129,7 @@ async function wczytaj(
   oglos();
 }
 
-/** `config.session.set` — utrwalenie obszarów na poziomie punktu widzenia. */
+/** `config.session.set` — utrwalenie wskazanych obszarów sesji na poziomie wybranego punktu widzenia okna. */
 async function utrwalObszary(
   zapis: ZapisStanu,
   zrodlo: ZrodloObszarowSesji,
@@ -168,11 +149,9 @@ async function utrwalObszary(
 }
 
 /**
- * Zapis obszaru `hooks` treścią z panelu zaczepów.
- *
- * Reszta konfiguracji jedzie z odczytu obowiązującego — klient podmienia
- * wyłącznie obszar, który Operator złożył; rdzeń i tak zapisuje tylko obszary
- * z wykazu `areas`, więc pozostałe pola są kontekstem, nie zapisem.
+ * Zapis obszaru `hooks` treścią z panelu zaczepów. Klient podmienia wyłącznie
+ * obszar, który Operator złożył; rdzeń zapisuje tylko obszary z wykazu
+ * `areas`, więc pozostałe pola są kontekstem, nie zapisem.
  */
 async function utrwalZaczepy(
   zapis: ZapisStanu,
@@ -195,12 +174,10 @@ async function utrwalZaczepy(
 }
 
 /**
- * Zapis bez wcześniejszego odczytu nie idzie do rdzenia.
- *
- * Treścią zapisu jest konfiguracja obowiązująca; bez niej klient musiałby
- * wysłać obszar pusty, co w kontrakcie znaczy USUNIĘCIE zapisu.
- * Cichy zapis pustki zamiast utrwalenia wartości byłby zniszczeniem ustawienia,
- * więc czynność odmawia z powodem, zamiast zgadywać.
+ * Zapis bez wcześniejszego odczytu nie idzie do rdzenia. Bez treści
+ * konfiguracji obowiązującej klient musiałby wysłać obszar pusty, co
+ * w kontrakcie znaczy usunięcie zapisu, więc czynność odmawia z powodem,
+ * zamiast zgadywać.
  */
 function bladBezOdczytu(): ErrorInfo {
   return {

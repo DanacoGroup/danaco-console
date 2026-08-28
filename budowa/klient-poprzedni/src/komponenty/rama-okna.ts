@@ -1,28 +1,14 @@
 /**
- * Rama okna operacyjnego — jedna obudowa dla okien wszystkich modułów.
- *
- * Rama ma jedną odpowiedzialność: obudowę. Nie buduje ani jednego elementu
- * treści i nie zna żadnej komendy — dostaje gotowe elementy od widoku okna, tak
- * jak przestrzeń modułu dostaje gotowe okna.
- *
- * Rola stoi w nagłówku, bo rozstrzyga układ: okna dzielą się na wiodące,
- * pomocnicze, monitory, kreatory i zarządców, moduł ustawia je w pasach według
- * roli, a Operator ma widzieć, dlaczego okno stoi tam, gdzie stoi.
- *
- * Fazy okna (puste · ładowanie · błąd · gotowe) nie należą do ramy. Rama daje
- * `cialo`; przesłonę stanu buduje osobny byt modułu (`stany-okna`) i moduł
- * osadza ją w ciele. Inaczej obudowa znałaby cykl życia danych, których nie
- * pobiera.
- *
- * Wygląd w całości z biblioteki (`komponenty/okno.css`, `karta.css`,
- * `plakietka.css`) i żetonów `motyw/` — plik nie zna ani jednej barwy i ani
- * jednego odstępu.
+ * Rama okna operacyjnego to jedna obudowa dla okien wszystkich modułów; nie
+ * buduje treści i nie zna komend, tylko dostaje gotowe elementy od widoku
+ * okna. Fazy okna nie należą do ramy, a wygląd pochodzi wyłącznie
+ * z biblioteki i żetonów motywu.
  */
 
-/** Rola, jaką okno pełni w module. */
+/** Rola, jaką okno pełni w module — wiodące, pomocnicze, monitor, kreator albo zarządca; rozstrzyga układ w pasie. */
 export type RolaOkna = 'wiodące' | 'pomocnicze' | 'monitor' | 'kreator' | 'zarządca';
 
-/** Waga plakietki stanu w nagłówku — licznik obiegów, stan kolejki, tura w biegu. */
+/** Waga plakietki stanu w nagłówku okna — licznik obiegów, stan kolejki albo tura w biegu; rozstrzyga barwę plakietki. */
 export type WagaZnacznika = 'neutralna' | 'sukces' | 'ostrzezenie' | 'blad';
 
 /**
@@ -45,14 +31,9 @@ export interface OpisRamyOkna {
   przeznaczenie?: string;
   /** Nazwa modułu w etykiecie dostępności; bez niej etykieta niesie rolę. */
   modul?: string;
-  /** Elementy doklejane do wiersza tytułu — np. dymek objaśnienia [?]. */
+  /** Elementy doklejane do wiersza tytułu — na przykład dymek objaśnienia [?]. */
   dodatkiNaglowka?: readonly HTMLElement[];
-  /**
-   * Przedrostek klas modułu (`'dt'`, `'mp'`…). Klasy modułu nie wnoszą wyglądu
-   * — wygląd jest tu — ale bywają uchwytem reguł własnych arkusza: `.dt-okno`
-   * niesie rozmiar pisma terminala i selektor `[data-zawijanie]`. Moduł bez
-   * takiej reguły nie podaje nic i dostaje wygląd biblioteczny.
-   */
+  /** Przedrostek klas modułu (`'dt'`, `'mp'`…) — bywa uchwytem reguł własnych arkusza modułu. */
   przedrostek?: string;
   /** Okno przyjmuje ognisko z kodu (`element.focus()`) — pas z `tabIndex = -1`. */
   ogniskowalne?: boolean;
@@ -90,7 +71,7 @@ function gniazdo<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-/** Nagłówek okna: tytuł, plakietka roli, dodatki, znacznik stanu i pasek sterowania. */
+/** Nagłówek okna: tytuł, plakietka roli, dodatki przy tytule, znacznik stanu oraz pasek sterowania kontekstowego. */
 function utworzNaglowek(
   opis: OpisRamyOkna,
   przedrostek: string,
@@ -168,7 +149,7 @@ export function utworzRameOkna(opis: OpisRamyOkna): RamaOkna {
   };
 }
 
-/** Akapit „po co to okno" — pusty wykaz, gdy moduł przeznaczenia nie podał. */
+/** Akapit „po co to okno" pod nagłówkiem — pusty wykaz elementów, gdy moduł opisu przeznaczenia nie podał. */
 function akapitPrzeznaczenia(opis: OpisRamyOkna, przedrostek: string): HTMLElement[] {
   if (opis.przeznaczenie === undefined || opis.przeznaczenie === '') return [];
   const element = gniazdo('p', 'dn-pole-opis dn-okno__opis', 'okno__opis', przedrostek);

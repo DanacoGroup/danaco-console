@@ -13,19 +13,9 @@ import { utworzWiezAutomations } from './wiez-automations';
 import type { ZrodloNadzoru } from './zrodlo-nadzoru';
 
 /**
- * Sekcja HARMONOGRAM I AUTOMATYKI — reguła czasowa pracy ciągłej 24/7/365.
- *
- * Cały mechanizm harmonogramu w kontrakcie to para komend:
- * `automation.schedule.set` zapisuje regułę, `schedule.get` ją oddaje. Okno
- * robocze jest cudze — Scheduler i Execution Monitor modułu Automations; sekcja
- * ustawia regułę i wskazuje, gdzie ona potem pracuje.
- *
- * Regułę zakłada się na wskazanym układzie automatyki, nie „na środowisku":
- * bez wskazania nie ma czego uruchamiać cyklicznie, więc sekcja mówi to wprost
- * zamiast zapisywać regułę w próżnię.
- *
- * Przełącznik „Harmonogram obowiązuje" jest stanem danych, nie bramką:
- * harmonogram wyłączony zostaje w rdzeniu i włącza się jednym naciśnięciem.
+ * Sekcja harmonogramu i automatyki zakłada regułę czasową pracy ciągłej na
+ * wskazanym układzie automatyki, bo bez wskazania nie ma czego uruchamiać
+ * cyklicznie.
  */
 export interface SekcjaHarmonogramu {
   element: HTMLElement;
@@ -39,11 +29,9 @@ export interface OpcjeSekcjiHarmonogramu {
 }
 
 /**
- * Kształt komendy, której kontrakt nie ma — zdjęcie jednego wyzwalacza.
- *
- * `AutomationScheduleSetRequest` przyjmuje `triggers`, ale `AutomationTrigger`
- * niesie wyłącznie rodzaj i wyrażenie; żadna komenda nie oddaje wykazu
- * wyzwalaczy osobno ani nie zdejmuje pojedynczego wyzwalacza.
+ * Kształt komendy, której kontrakt nie ma: zdjęcie jednego wyzwalacza, bo
+ * żadna komenda nie zdejmuje pojedynczego wyzwalacza osobno od zapisu całej
+ * reguły.
  */
 const BRAK_WYZWALACZY =
   'schedule.trigger.remove { scheduleId, triggerId } → { schedule: AutomationSchedule } — kontrakt komendy nie ma; wyzwalacz zdejmuje się dziś wyłącznie przez ponowny zapis całej reguły.';
@@ -133,8 +121,7 @@ export function utworzSekcjeHarmonogramu(
       powierzchnia.meldunek(`Rdzeń odmówił zapisu harmonogramu. ${powod(wynik.blad?.message, wynik.blad?.code)}`, false);
       return;
     }
-    // Meldunek składa się z odpowiedzi rdzenia, łącznie z najbliższym
-    // uruchomieniem — dopiero ono pokazuje, że reguła pracuje.
+    // Meldunek składa się z odpowiedzi rdzenia, łącznie z najbliższym uruchomieniem reguły harmonogramu.
     const zapisany = wynik.wynik;
     powierzchnia.meldunek(
       `Rdzeń zapisał harmonogram ${zapisany.id}: cron „${zapisany.cron ?? 'nie podany'}", ${zapisany.enabled ? 'obowiązuje' : 'nie obowiązuje'}${
@@ -203,7 +190,7 @@ export function utworzSekcjeHarmonogramu(
   };
 }
 
-/** Treść odmowy wraz z kodem kontraktu. */
+/** Treść odmowy wraz z kodem kontraktu, złożona w jedno pełne zdanie gotowe do pokazania w meldunku sekcji. */
 function powod(zdanie: string | undefined, kod: string | undefined): string {
   return `Powód: ${zdanie ?? 'rdzeń nie podał przyczyny'} (kod ${kod ?? 'brak'}).`;
 }

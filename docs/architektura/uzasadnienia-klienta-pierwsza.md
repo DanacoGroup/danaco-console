@@ -9023,3 +9023,46 @@ bez ścieżki i bez repozytorium nie ma czego brakować. Żądanie składane bez
 wskazania operatora wracałoby odmową walidacji, z której nic dla niego nie
 wynika — ten jeden krok mówi, skąd okno bierze treść, a gdy jej nie ma,
 wywołanie komendy nazywa brak, zamiast wysyłać puste pole.
+
+## budowa/klient-poprzedni/src/aplikacja/zrodlo-posuniec.ts
+Źródło posunięć jest jedynym miejscem klienta odpowiadającym na pytanie, czy dane
+zdarzenie wywołało to połączenie, czy inne. Asystent steruje platformą przez
+osobne połączenie, a rdzeń rozgłasza każdą zmianę do wszystkich połączeń konta
+(`transport/rozgloszenie.go`), więc ekran dostaje komplet zdarzeń — także cudzych.
+
+Kontrakt nie niesie sprawcy: `WindowChangedEvent` niesie okno, a nie autora
+zmiany, a `Message.role` mówi „user” niezależnie od tego, czy zdanie wpisano
+ręcznie, czy przez MCP. Jedynym zdarzeniem z jawnym sprawcą jest
+`session.focus.changed` niosące `clientId`. Resztę rozstrzyga rejestr własnych
+odpowiedzi: zdarzenie o bycie spoza rejestru przyszło skądinąd. Mechanizm
+rejestru i zwłoki mieszka w `rozstrzyganie-sprawcy.ts`; tutaj zostaje to, co
+z werdyktu wynika — które posunięcia trafiają na pas, za czym podąża nawigacja
+i które okno wchodzi na scenę.
+
+Źródło mówi „spoza tego połączenia”, nigdy „asystent”: drugie urządzenie
+użytkownika i asystent są z tego miejsca nieodróżnialne.
+
+Okna zakładane przez sam interfejs tędy nie idą: wchodzą na scenę drogą własnego
+zamówienia (`scena-sesji.ts`), a puszczone tu drugi raz stanęłyby w drugim
+gnieździe.
+
+Migawka niesie ostatnio widziane ustawienia okna: moduł, kanał modelu, agent,
+rola, zasięg wykonania, tryb uprawnień. Zdarzenie `window.changed` niesie okno
+po zmianie i nie mówi, co się w nim zmieniło. Bez tej migawki pas meldowałby
+„okno zmienione” przy każdym dotknięciu zamiast nazwać przestawione ustawienie.
+
+Odpowiedzi na własne komendy niosą okno w stanie bieżącym i są jedynym źródłem
+stanu wyjściowego, jakie ta warstwa ma. Bez zasiewu pierwsza cudza zmiana okna
+przepada, bo nie ma z czym jej porównać.
+
+Nadpisywanie kasowałoby stan zapisany przez zdarzenie, które tę odpowiedź
+wyprzedziło, i różnica kolejnej zmiany liczyłaby się od stanu nieaktualnego.
+
+Okno zakładane przez sam interfejs (`workspace.enter` przed uzgodnieniem) również
+przychodzi zdarzeniem `created`, i to wcześniej niż odpowiedź, która je zamawiała;
+bez zwłoki scena wprowadziłaby je drugi raz, do wolnego gniazda. Zwłoka niczego
+nie wstrzymuje po stronie rdzenia.
+
+Zdarzenie pracy asystenta mówi to o swoich zleceniach, nie o posunięciach
+w cudzych oknach. Pasek trzyma więc dwie warstwy osobno: stan pracy bierze się
+stąd, a wykaz posunięć ze zdarzeń obsługiwanych wyżej.

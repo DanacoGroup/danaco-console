@@ -5,15 +5,9 @@ import { nazwaRodzaju, rodzajUzywaKataloguKonfiguracji } from './rodzaje-kont';
 import type { StanKont } from './stan-kont';
 
 /**
- * Formularz jednego konta — założenie nowego albo zmiana istniejącego.
- *
- * Pole poświadczenia jest wyłącznie wejściem: kontrakt nie zwraca zapisanej
- * wartości żadną komendą, a puste pole przy zmianie zostawia poświadczenie
- * dotychczasowe, zamiast je kasować.
- * `account.update` nie przyjmuje rodzaju, więc przy zmianie konta rodzaj jest
- * plakietką informacyjną, a nie kontrolką.
- * Katalog konfiguracji dotyczy wyłącznie kont programu code CLI; dla pozostałych
- * rodzajów pole znika w całości.
+ * Formularz jednego konta obsługuje założenie nowego konta albo zmianę
+ * istniejącego, w tym pole poświadczenia wprowadzane wyłącznie jako wejście
+ * oraz katalog konfiguracji właściwy dla rodzaju konta.
  */
 export interface FormularzKonta {
   /** Formularz osadzany w panelu kont. */
@@ -172,7 +166,7 @@ export function utworzFormularzKonta(stan: StanKont): FormularzKonta {
   return { element, pokaz: wypelnij };
 }
 
-/** Pola konta, których pominięcie zostawia zapis rdzenia bez zmiany. */
+/** Pola opcjonalne konta, których pominięcie w żądaniu zmiany zostawia odpowiadający zapis po stronie rdzenia bez zmiany wartości. */
 interface PolaOpcjonalne {
   externalId?: string;
   defaultModel?: string;

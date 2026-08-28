@@ -8142,3 +8142,15 @@ Funkcja składająca kontrolki nie domyka się na stanie okna ani na buforze. Je
 z wytwórnią to funkcja przyOdtwarzaniu — odtwarzacz musi obudzić rysowanie, a rysowanie zostaje
 w wytwórni. Pozycja bez pokrycia w kontrakcie jest jawnie nieczynna: wyjaśnienie zaznaczenia
 jedzie oknem rozmowy modułu.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-pomocnicze.ts
+
+Podanie okna wykonania gospodarza wolno wołać wielokrotnie: to samo okno nie
+przebudowuje niczego, a inne przebudowuje złożenie wraz z zamknięciem
+poprzednich subskrypcji. Napis pusty znaczy, że rdzeń nie dał modułowi okna,
+i wypełnia ciało zdaniem o braku.
+
+Montaż terminala sam podmienia zawartość gospodarza, więc osobne czyszczenie
+ciała byłoby drugą drogą do tego samego skutku. Zdanie stanu o gospodarzu bez
+okna cytuje odmowę rdzenia przy próbie założenia karty powłoki, ponieważ karta
+wymaga wskazania okna.

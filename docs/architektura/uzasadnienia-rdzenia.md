@@ -7406,3 +7406,14 @@ umiejętności: rodzajem updated wraz z ekspertem po zmianie.
 Plik nie sprawdza wartości — nazwa warstwy i tryb podania są sprawdzane
 w adapterze, przy katalogu wartości kontraktu. Nie odmawia też z powodu
 niewpiętego repozytorium: odmowa jest odpowiedzią domeny, a nie dyspozycji.
+
+## budowa/server/internal/core/handlers_agent_zakres.go
+Port ZakresEksperta jest osobny od portu Agenci, bo Agenci opisuje bibliotekę
+ekspertów — założenie, wykaz, zmianę, usunięcie — i wtopienie dwunastu
+czynności zakresu rozdęłoby go ponad czytelność. Osobny port kosztuje jedno
+pole w Portach i jedną linię w kompozycji.
+
+Kontrakt daje modułowi Agents wyłącznie zdarzenie agent.changed, więc każda
+komenda zmieniająca rozgłasza się rodzajem updated wraz z ekspertem po
+zmianie, tym samym wzorcem co w module Agenci. Komendy odczytujące milczą:
+wykaz niczego nie zmienia, więc nie ma czego rozgłaszać.

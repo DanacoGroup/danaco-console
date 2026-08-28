@@ -6,6 +6,67 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### silnik-twarzy
+
+| | |
+|---|---|
+| **Galaz** | `teren/silnik-twarzy` z `main` |
+| **Drzewo** | `~/robocze/silnik-twarzy` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_narzedzia_obraz_model_twarze.go` wraz ze sprawdzianami; `budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go`; `budowa/pomocniki/twarze/` |
+| **Poza terenem** | kontrakt, migracje, `internal/wiedza/`, `prowadzenie/` |
+
+**Przedmiot.** Pole `faces` komendy `image.upscale` istnieje w kontrakcie, wagi
+GFPGAN i CodeFormer stoja w `/opt/danaco-modele/twarze` (692 MB), a silnika nie ma:
+wydanie ncnn nie niesie sieci twarzowej, wagi `.pth` zadaja stosu torch, ktorego
+rdzen nie wola. Odmowa mowi dzis o braku `gfpgan-ncnn-vulkan`.
+
+**Kryteria odbioru.**
+1. `image.upscale` z `faces: true` oddaje obraz z poprawiona twarza, a nie odmowe.
+2. Sprawdzian zdolnosci mierzy SKUTEK na obrazie, nie koperte odpowiedzi.
+3. Brak wag jest odmowa nazwana, nie panika ani cicha praca bez poprawki.
+4. `go build ./...` oraz sprawdziany pakietu `core` przechodza.
+
+### wpiecie-unpaper
+
+| | |
+|---|---|
+| **Galaz** | `teren/wpiecie-unpaper` z `main` |
+| **Drzewo** | `~/robocze/wpiecie-unpaper` |
+| **Wykaz plikow** | `budowa/shared/contract.json` wraz z wytworzonymi `contract.go` i `contract.ts`; `budowa/server/internal/core/adapter_modul_badania_lektura.go` wraz ze sprawdzianami |
+| **Poza terenem** | migracje, `internal/wiedza/`, warstwa projektowa, `prowadzenie/` |
+
+**Przedmiot.** Uchwyt `adapter_modul_badania_lektura.go:589` upuszcza pola
+`preprocess` i `languages`, a `DocumentTextExtractRequest` kontraktu ich nie ma.
+Obrobka wstepna unpaper jest nieosiagalna z drogi badan, a pole `preprocess`
+pozostaje martwe.
+
+**Kryteria odbioru.**
+1. Kontrakt niesie pola, ktorych uchwyt zada; generatory `contract.go` i `contract.ts`
+   przebudowane tym samym poleceniem, ktore repozytorium juz ma.
+2. `research.source.ocr` z obrobka wstepna daje wynik rozny od wyniku bez niej —
+   sprawdzian mierzy roznice, nie samo przejscie.
+3. Suma kontrolna kontraktu odnotowana w raporcie; sprawdzian swiezosci generatorow przechodzi.
+
+### mermaid-za-zapora
+
+| | |
+|---|---|
+| **Galaz** | `teren/mermaid-za-zapora` z `main` |
+| **Drzewo** | `~/robocze/mermaid-za-zapora` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_modul_design_wykresy.go` wraz ze sprawdzianami; zapora fotografii `budowa/server/internal/core/zapora_fotografii_test.go` |
+| **Poza terenem** | kontrakt, migracje, pozostale pliki `adapter_modul_design*`, `prowadzenie/` |
+
+**Przedmiot.** `design.diagram.render` lezy za zapora fotografii, ktora zabrania
+KAZDEGO wolania procesu w plikach `adapter_modul_design*.go`. mermaid-cli stoi na
+maszynie i nie ma legalnego miejsca wpiecia.
+
+**Kryteria odbioru.**
+1. Diagram powstaje jako obraz o zmierzonych wymiarach, nie jako odmowa.
+2. Zapora fotografii nadal broni tego, co miala bronic — jej sprawdzian przechodzi,
+   a wyjatek jest waski i nazwany, nie zniesieniem zapory.
+3. Sprawdzian zapory PADA, gdy wyjatek rozszerzyc poza diagramy.
+
+
 ### trwalosc-wektorow-obrazu
 
 | | |

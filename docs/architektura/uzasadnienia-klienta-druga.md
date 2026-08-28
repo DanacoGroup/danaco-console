@@ -7757,3 +7757,10 @@ z kodami okien, bo obie rzeczy są tym samym — oznaczeniami, którymi moduł
 zgłasza się rdzeniowi. Moduł nie zna powłoki: warstwa składająca decyduje,
 gdzie postawić oddany element, dzięki czemu te same okna dają się osadzić
 w różnych układach.
+
+## budowa/klient-poprzedni/src/strona-glowna/menu-sesji.ts
+Menu buduje przyciski czynności sensownych dla tego wiersza i prowadzi jedną z nich od naciśnięcia do meldunku. O tym, które czynności są sensowne, rozstrzyga moduł czynności sesji; ten plik nie zna stanów sesji. Pusty wykaz czynności daje wartość pustą zamiast pustego pojemnika — wiersz czysto informacyjny nie dostaje ramki po menu, którego nie ma.
+
+Na czas wykonania wiersz nie przyjmuje drugiej czynności — także z innego przycisku niż naciśnięty: archiwizacja w trakcie zmiany nazwy dawałaby dwa żądania o tę samą sesję o przypadkowej kolejności skutków. Zajętość nie jest bramą i nie gasi przycisków: atrybutu blokującego nie stawiamy nigdzie w produkcie. Przycisk zostaje klikalny, a stan niesie napis — przycisk czynny dopisuje wielokropek, więc zajętość jest widoczna bez samego koloru. Naciśnięcie w trakcie biegu wraca meldunkiem, nie ciszą.
+
+Odmowa wraca meldunkiem, nie wyjątkiem: wykonanie oddaje zdanie albo wartość pustą, a ten plik podaje ją dalej. Wyjątek nieprzewidziany też kończy się meldunkiem, żeby wiersz nie został z zablokowanymi przyciskami.

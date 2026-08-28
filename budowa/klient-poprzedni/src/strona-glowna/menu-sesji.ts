@@ -2,35 +2,13 @@ import { utworzDymekObjasnienia } from '../komponenty/dymek';
 import { czynnosciWiersza, type CzynnosciSesji, type MeldunekCzynnosci } from './czynnosci-sesji';
 import type { WpisSesji } from './zrodlo-sesji';
 
-/**
- * Menu czynności jednego wiersza historii sesji.
- *
- * Buduje przyciski czynności sensownych dla tego wiersza i prowadzi jedną
- * z nich od naciśnięcia do meldunku. O tym, które czynności są sensowne,
- * rozstrzyga `czynnosci-sesji`; ten plik nie zna stanów sesji.
- *
- * Pusty wykaz czynności daje `null` zamiast pustego pojemnika — wiersz czysto
- * informacyjny nie dostaje ramki po menu, którego nie ma.
- *
- * Na czas wykonania wiersz nie przyjmuje drugiej czynności — także z innego
- * przycisku niż naciśnięty: archiwizacja w trakcie zmiany nazwy dawałaby dwa
- * żądania o tę samą sesję o przypadkowej kolejności skutków.
- *
- * Zajętość nie jest bramą i nie gasi przycisków: atrybutu `disabled` nie
- * stawiamy nigdzie w produkcie. Przycisk zostaje klikalny, a stan niesie napis
- * — przycisk czynny dopisuje „…”, więc zajętość jest widoczna bez samego
- * koloru. Naciśnięcie w trakcie biegu wraca meldunkiem, nie ciszą.
- *
- * Odmowa wraca meldunkiem, nie wyjątkiem: wykonanie oddaje zdanie albo `null`,
- * a ten plik podaje je dalej. Wyjątek nieprzewidziany też kończy się meldunkiem,
- * żeby wiersz nie został z zablokowanymi przyciskami.
- */
+// Menu czynności jednego wiersza historii sesji, prowadzące wybraną czynność do meldunku wyniku.
 
 export interface MenuSesji {
   element: HTMLElement;
 }
 
-/** Odbiorca zdania o wyniku czynności; strefa pokazuje je nad wykazem. */
+/** Odbiorca zdania o wyniku czynności menu; strefa komunikatów pokazuje je operatorowi nad wykazem sesji. */
 export type OdbiorcaMeldunku = (tekst: string) => void;
 
 export function utworzMenuSesji(
@@ -48,10 +26,7 @@ export function utworzMenuSesji(
 
   let zajete = false;
 
-  /**
-   * Zajętość widoczna dla technologii wspomagających. `aria-busy` opisuje bieg
-   * czynności, a nie odbiera pozycji dostępności — inaczej niż `disabled`.
-   */
+  // Zajętość widoczna dla technologii wspomagających przez atrybut zajętości, bez odbierania dostępu.
   function ustawZajetosc(biegnie: boolean): void {
     zajete = biegnie;
     element.setAttribute('aria-busy', biegnie ? 'true' : 'false');
@@ -67,8 +42,7 @@ export function utworzMenuSesji(
     przycisk.dataset.czynnosc = pozycja.klucz;
 
     przycisk.addEventListener('click', () => {
-      // Naciśnięcie w trakcie biegu nie jest odrzucane po cichu — Operator
-      // dostaje zdanie o tym, dlaczego czynność nie ruszyła teraz.
+      // Naciśnięcie w trakcie biegu nie jest odrzucane po cichu — operator dostaje zdanie.
       if (zajete) {
         meldunek('Czynność tego wiersza jeszcze biegnie — poczekaj na jej meldunek.');
         return;
@@ -87,7 +61,7 @@ export function utworzMenuSesji(
   return { element };
 }
 
-/** Doprowadza czynność do meldunku — także wtedy, gdy rzuciła wyjątkiem. */
+/** Doprowadza czynność do meldunku wyniku — także wtedy, gdy wykonanie rzuciło nieprzewidzianym wyjątkiem. */
 async function wykonaj(
   bieg: Promise<MeldunekCzynnosci>,
   meldunek: OdbiorcaMeldunku,

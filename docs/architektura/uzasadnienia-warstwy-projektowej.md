@@ -746,3 +746,11 @@ Barwa ostrzegawcza idzie żetonem `--dn-blad-*`, nie wartością; rodzinę
 ## budowa/klient-poprzedni/src/okna-rownolegle/gniazdo.css
 Rozkład sceny opisuje `uklad.css`, ten arkusz go nie dotyka. Wartości barw,
 odstępów i pisma pochodzą wyłącznie z żetonów `motyw/`.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/menu.css
+Rozkład sceny opisuje `uklad.css`, wygląd samego gniazda opisuje
+`gniazdo.css` — podział arkusza przypada na komponent. Menu rozwijane stoi
+w tym pliku, bo klient nie ma wspólnej formy dropdownu, popoveru ani menu
+kontekstowego, więc powstaje pod nazwą własną `.dn-menu`, a nie na aliasie
+zgodności. Wszystkie wartości pochodzą z żetonów `motyw/`, zero barw,
+odstępów, promieni i rozmiarów pisma zaszytych wprost.

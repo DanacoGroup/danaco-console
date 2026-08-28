@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"danacoconsole/server/internal/protocol"
+	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
 )
 
@@ -304,6 +306,71 @@ func TestObrobkaWstepnaProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 	}
 	if len(rozpoznanie.Words) == 0 {
 		t.Fatal("rozpoznanie nie oddało warstwy słów — korekta rozpoznania nie ma czego poprawiać")
+	}
+}
+
+// TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem wykazuje drogę unpapera
+// z komendy document.text.extract: pole preprocess kontraktu przestało być
+// zapisem bez skutku — skan pochylony przechodzi przez prostowanie, a
+// rozpoznanie oddaje słowo materiału.
+func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem(t *testing.T) {
+	pomijBezProgramu(t, narzedzieCzyszczeniaSkanu.Nazwa, narzedzieCzyszczeniaSkanu.Program)
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const tresc = "PROTOKOL ODBIORU"
+	sciezka := skanPochylony(t, tresc)
+
+	// Przebieg pierwszy bez obróbki jest odniesieniem — bez niego drugi
+	// przebieg nie dowiódłby zmiany. Rozpoznanie materiału pochylonego może
+	// tu odmówić pustym odczytem albo oddać tekst bez szukanego słowa; oba
+	// wyniki są odniesieniem, tylko odczyt SŁOWA czyniłby sprawdzian bezprzedmiotowym.
+	odpowiedzOdniesienia := wykonajKomende(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pol")})
+	if odpowiedzOdniesienia.Error == nil {
+		var bezObrobki shared.DocumentTextExtractResponse
+		if err := protocol.LadunekDo(odpowiedzOdniesienia, &bezObrobki); err != nil {
+			t.Fatalf("nieczytelny ładunek odpowiedzi odniesienia: %v", err)
+		}
+		if strings.Contains(strings.ToUpper(bezZlamanWiersza(bezObrobki.Text)), "PROTOKOL") {
+			t.Skip("pomiar bezprzedmiotowy: rozpoznanie czyta materiał pochylony bez obróbki, " +
+				"więc ten sprawdzian nie odróżniłby drogi z unpaperem od drogi bez niego")
+		}
+	}
+
+	var poObrobce shared.DocumentTextExtractResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Language: wskaznik("pol"), Preprocess: wskaznik(true),
+		}, &poObrobce)
+
+	odczytane := strings.ToUpper(bezZlamanWiersza(poObrobce.Text))
+	if !strings.Contains(odczytane, "PROTOKOL") {
+		t.Fatalf("tekst rozpoznany po obróbce nie niesie słowa z materiału\n"+
+			" materiał: %q\n po obróbce: %q", tresc, poObrobce.Text)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera pilnuje, żeby brak
+// programu na maszynie dał odmowę nazwaną, nie cichy odczyt bez obróbki.
+func TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera(t *testing.T) {
+	if zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
+		t.Skip("pomiar niewykonany: unpaper jest na tej maszynie, sprawdzian mierzy jego brak")
+	}
+	pomijBezProgramu(t, "ImageMagick", "magick")
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	sciezka := skanPochylony(t, "MATERIAL")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Preprocess: wskaznik(true),
+		})
+	if blad.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("odmowa braku unpapera niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(strings.ToLower(blad.Message), "unpaper") {
+		t.Fatalf("treść odmowy nie nazywa brakującego programu: %q", blad.Message)
 	}
 }
 

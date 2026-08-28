@@ -84,7 +84,7 @@ export function utworzHistorieTur(): HistoriaTur {
     znajdz: (idWiadomosci) => poWiadomosci.get(idWiadomosci),
 
     zwiazWypowiedz(tresc, idWiadomosci) {
-      // Szukamy od końca, aby związać najnowszą niezwiązaną wypowiedź o tej samej treści.
+      // Wyszukanie przebiega od końca, aby związać najnowszą niezwiązaną wypowiedź o tej treści.
       const szukana = tresc.trim();
       for (let i = kolejnosc.length - 1; i >= 0; i -= 1) {
         const wpis = kolejnosc[i];

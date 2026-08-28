@@ -28,6 +28,13 @@ export function stan(w: WlasciwosciStanu): HTMLElement {
     'div',
     { klasa: 'dn-stan', role: 'status', 'aria-label': tekst('stan.etykieta') },
     [
+      /* Tożsamość Operatora: rdzeń nie niesie jej w odpowiedzi environment.enter — pozycja
+         stoi nazwanym stanem pustym zamiast wartości zmyślonej po stronie klienta. */
+      pozycja(ikony.uzytkownik, [
+        el('b', { tekst: tekst('stan.operator') }),
+        ` · ${tekst('stan.brakTozsamosci')}`,
+      ]),
+      el('span', { klasa: 'dn-stan-sep', 'aria-hidden': true }),
       pozycja(ikony.godlo, [
         el('b', { tekst: tekst('stan.srodowisko') }),
         ` · ${w.srodowisko}`,

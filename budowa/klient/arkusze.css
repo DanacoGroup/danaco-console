@@ -1,13 +1,7 @@
-/* Arkusz wciąga warstwę projektową do pakietu przez wskazania na jedno źródło w katalogu zasobów, w kolejności żetony, fundament, biblioteka, arkusz okna. */
-
-@import url('../../design/zasoby/zetony/fonty.css');
-@import url('../../design/zasoby/zetony/zetony.css');
-@import url('../../design/zasoby/css/fundament.css');
-@import url('../../design/zasoby/css/komponenty.css');
-@import url('../../design/zasoby/wejscie.css');
-@import url('../../design/zasoby/rama.css');
-@import url('../../design/zasoby/stanowisko.css');
-@import url('../../design/zasoby/okna/studio.css');
+/* Arkusz niesie wyłącznie reguły własne klienta — widoczność odsłon drogi
+   wejścia i przekazanie sterowania ramie. Warstwę projektową (żetony,
+   fundament, biblioteka, arkusze okien) wciąga `index.html` wprost przez
+   `<link rel="stylesheet">`, w kolejności źródła prawdy. */
 
 /* ── Widoczność odsłon ────────────────────────────────────────────────────
 

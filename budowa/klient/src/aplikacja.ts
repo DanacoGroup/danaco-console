@@ -11,8 +11,7 @@ import { utworzSesje } from './protokol/sesja.ts';
 import { tozsamoscKlienta } from './protokol/tozsamosc-klienta.ts';
 import { zamontuj } from './wejscie/montaz.ts';
 import { utworzPrzebieg, type StanPrzebiegu } from './wejscie/przebieg.ts';
-import { zamontujRame } from './rama/montaz.ts';
-import { gotowaDoPrzekazania } from './rama/przekazanie.ts';
+import { gotowaDoPrzekazania, wykonajPrzekazanie } from './rama/przekazanie.ts';
 
 /**
  * Adres gniazda rdzenia pochodzi z dokumentu wczytanego po HTTP; w pozostałych
@@ -34,26 +33,17 @@ const oknoWejscia = zamontuj({ korzen: document, przebieg, wersjaKlienta: klient
 
 /* Scena drogi wejścia i miejsce ramy stoją w dokumencie jako dwa węzły
    odrębne od tego, co montuje `zamontuj` wewnątrz sceny — przekazanie
-   przełącza między nimi raz, nieodwracalnie. */
+   przełącza między nimi raz. Zatrzask zapada dopiero po udanym przekazaniu,
+   więc odmowa (np. węzeł montażu jeszcze nie stoi w dokumencie) nie blokuje
+   próby przy kolejnej zmianie stanu. */
 let przekazano = false;
 
 function naZmianePrzebiegu(stan: StanPrzebiegu): void {
   if (przekazano || !gotowaDoPrzekazania(stan)) return;
-  przekazano = true;
-
-  const scenaWejscia = document.querySelector('[data-wejscie]');
-  const miejsceRamy = document.querySelector('[data-rama-aplikacji]');
-  if (scenaWejscia === null || miejsceRamy === null || stan.srodowisko === undefined) return;
-
-  oknoWejscia.zdejmij();
-  (scenaWejscia as HTMLElement).hidden = true;
-  zamontujRame({
-    miejsce: miejsceRamy as HTMLElement,
-    srodowisko: stan.srodowisko,
-    moduly: stan.moduly,
-    sesje: stan.sesje,
+  przekazano = wykonajPrzekazanie(stan, {
+    dokument: document,
+    zdejmijOknoWejscia: () => oknoWejscia.zdejmij(),
   });
-  (miejsceRamy as HTMLElement).hidden = false;
 }
 
 przebieg.naZmiane(naZmianePrzebiegu);

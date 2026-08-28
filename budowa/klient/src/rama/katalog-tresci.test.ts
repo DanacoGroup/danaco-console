@@ -30,6 +30,9 @@ const ZESTAW_ZNAKOW = 'ikony.ts';
 /** Przyrostek plików sprawdzianów — instrumentów mierzących ramę, a nie samej ramy, pomijanych przez tę regułę. */
 const SPRAWDZIAN = '.test.ts';
 
+/** Jedyny plik, który ten teren dołożył poza katalogiem ramy — bez niego straż nie sięga do korzenia `src/`. */
+const PLIK_U_KORZENIA = '../aplikacja.ts';
+
 /** Polskie znaki diakrytyczne — po ich obecności w łańcuchu poznaje się zdanie napisane po polsku wprost. */
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 
@@ -171,7 +174,7 @@ function lancuchyPliku(nazwa: string, tresc: string): Lancuch[] {
   return znalezione;
 }
 
-const wykaz = wykazPlikow(KORZEN);
+const wykaz = [...wykazPlikow(KORZEN), PLIK_U_KORZENIA];
 const plikiRamy = wykaz.filter((nazwa) => !nazwa.endsWith(SPRAWDZIAN));
 const pominiete = wykaz.filter((nazwa) => nazwa.endsWith(SPRAWDZIAN));
 const wszystkie: Lancuch[] = plikiRamy.flatMap((nazwa) =>
@@ -192,6 +195,7 @@ await bieg('rama aplikacji — katalog treści', {
     sprawdz(wykaz.length > 0, `nie znaleziono ani jednego pliku w ${KORZEN}`);
     sprawdz(plikiRamy.includes(KATALOG_TRESCI), `nie znaleziono katalogu ${KATALOG_TRESCI}`);
     sprawdz(plikiRamy.includes(ZESTAW_ZNAKOW), `nie znaleziono zestawu znaków ${ZESTAW_ZNAKOW}`);
+    sprawdz(plikiRamy.includes(PLIK_U_KORZENIA), `nie znaleziono pliku u korzenia ${PLIK_U_KORZENIA}`);
     sprawdz(wszystkie.length > 0, 'nie znaleziono ani jednego łańcucha — wzorzec nic nie łapie');
     sprawdz(pozaKatalogiem.length > 0, 'poza katalogiem nie znaleziono ani jednego łańcucha');
     wypisz('plików ramy', plikiRamy.length);

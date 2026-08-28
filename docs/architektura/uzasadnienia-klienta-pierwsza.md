@@ -7039,3 +7039,17 @@ podagenta, bo kontrakt nie niesie komendy, która by je wykonała: rodzina
 komend podagenta obejmuje tylko powołanie, wykaz i zebranie wyników,
 a komenda czynności kolejki wymaga identyfikatora kolejki, którego podagent
 nie niesie.
+
+## budowa/klient-poprzedni/src/moduly/browser/slady-adnotacji.ts — oprawa wykreślenia
+Płótno rysunkowe nie zna zmiennej stylu ani skrótu czcionki z arkusza i przyjmuje wyłącznie wartości gotowe. Rozwiązanie żetonu barwy należy więc do warstwy, która ma element w dokumencie, a nie do samego rysowania.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sekcja-harmonogram.ts
+Cały mechanizm harmonogramu w kontrakcie to para komend: jedna zapisuje
+regułę, druga ją oddaje, a okno robocze jest cudze, więc sekcja ustawia
+regułę i wskazuje, gdzie ona potem pracuje. Przełącznik obowiązywania jest
+stanem danych, nie bramką: harmonogram wyłączony zostaje w rdzeniu i włącza
+się jednym naciśnięciem. Definicja wyzwalacza niesie wyłącznie rodzaj
+i wyrażenie, a żadna komenda nie oddaje wykazu wyzwalaczy osobno.
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-dobudowy.ts
+Cztery panele — wersje, nadzór harmonogramu, zlecenia kolejki, dozór przebiegu — mają tę samą budowę, a pod nimi jeden nośnik stanu treści, zamiast czterech razy tego samego rusztowania. Panel nie jest oknem operacyjnym i nie udaje nim być: okien modułu jest pięć, a panel osadza się wewnątrz okna, do którego należy jego praca — wersje w Workflow Builderze, zlecenia w Queue Managerze; szósty kafel na siatce byłby szóstym oknem, którego dokument projektowy nie zna. Odpowiedź rdzenia pokazuje się w całości, zapisem strukturalnym: panel jest powierzchnią roboczą Operatora nad czynnościami, których kontrakt oddaje bardzo różne kształty — wykaz wersji, różnicę pól, ładunek kroku, punkty wznowienia; rysunek zmyślony osobno dla każdej z nich pokazywałby mniej, niż rdzeń oddał, a to jest gorsze niż surowy zapis, Operator ma widzieć odpowiedź, a nie jej streszczenie napisane przez okno. Jedno miejsce wykonania czynności wystarcza, bo wszystkie czterdzieści trzy czynności kończą się tak samo i różnią się wyłącznie zdaniem. Pole nieobecne w żądaniu znaczy co innego niż pole o wartości pustej, a zapis nieczytelny sprawia, że wołający odmawia wysłania — żądanie z uszkodzonym ładunkiem odbiłoby się od rdzenia komunikatem o kopercie, a Operator ma zobaczyć, że to on pomylił nawias.

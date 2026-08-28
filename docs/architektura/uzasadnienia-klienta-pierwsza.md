@@ -7834,3 +7834,67 @@ Pozycja powstaje wyłącznie z tego, co rdzeń umie udowodnić odpowiedzią kome
 Kolejek eskalacji — przepływów wstrzymanych z pytaniem do człowieka — rdzeń nie wystawia: nie ma na nie ani komendy odczytu, ani zdarzenia. Pulpit mówi o tym wprost, a warstwa mobilna nie zamalowuje braku pozycjami zmyślonymi. Gdy rdzeń wykaz eskalacji wystawi, wejdzie on portem `port-kolejki-decyzji.ts`.
 
 Kontekst decyzji jest częścią pozycji: Operator otwiera telefon na minutę i musi wiedzieć, na czym praca stoi, zanim cokolwiek naciśnie. Każde zdanie kontekstu niesie nazwę komendy, z której przyszło, więc da się sprawdzić jego źródło.
+
+## budowa/klient-poprzedni/src/aktualizacja/wykaz-wydan.ts
+Odczyt nie jest warunkiem pracy. Brak sieci, adres nieosiągalny, odpowiedź
+nieczytelna i wykaz pusty znaczą dla banera to samo: nie wiadomo o żadnym
+nowszym wydaniu, więc baner się nie pokazuje. Żadna ścieżka nie rzuca
+wyjątkiem — kanał wydań nie może popsuć uruchomienia produktu.
+
+Dla wykazu pokazywanego w oknie aplikacji te stany znaczą co innego i muszą
+być rozróżnione, inaczej okno mówi „nie ma wydań” wtedy, gdy prawdą jest
+„nie ma sieci”. Dlatego są tu dwie drogi odczytu: `pobierzWykazWydan()`
+oddaje nazwany stan świata (typ `OdczytWykazu`), a `nowszeWydanie()` jest
+nakładką na tamtą, oddającą `Wydanie|null` dla banera, któremu wystarczy
+„jest co zakładać”.
+
+
+
+Człony porównuje się liczbowo, nie napisami — inaczej `1.10` byłoby starsze
+niż `1.9`. Człon nieliczbowy (np. `1.2.0-rc1`) schodzi do zera: wydanie próbne
+nie ma prawa udawać nowszego niż wydanie właściwe.
+
+Dwa miejsca, w których `parseInt` sam z siebie nie wystarcza: `Number.parseInt('4-rc1')`
+oddaje 4, nie NaN, więc `1.2.4-rc1` wyszłoby równe `1.2.4` — dlatego człon musi być
+liczbą w całości (`/^\d+$/`), inaczej jest zerem. Przedrostek `v` (`v1.9.0`) zbija
+pierwszy człon do zera, więc jest zdejmowany z napisu, bo `v1.9.0` i `1.9.0` to
+zapis tej samej wersji.
+
+
+
+Rozpoznanie idzie po `navigator`, bo interfejs działa w oknie przeglądarkowym
+także wtedy, gdy siedzi w powłoce natywnej — i to jest jedyna rzecz o systemie,
+jaką strona wie bez pytania powłoki. Gdy nie wiadomo, oddawany jest pusty napis:
+niewiedza nie jest podstawą do odrzucenia wydania.
+
+
+
+Pole `system` deklaruje plik `wydania.json` i rozróżnia nim pliki strona „Pobierz”.
+Bez tego sprawdzenia baner na Linuksie podałby plik `.exe` dla Windowsa, a powłoka
+podstawiłaby go w miejsce AppImage. Wydanie bez pola `system` przechodzi: wykaz
+jednosystemowy jest zgodny z takim kształtem pliku, a brak deklaracji to brak
+wiedzy, nie deklaracja obcego systemu.
+Rozróżnienie istnieje obok `nowszeWydanie()`, bo okno wykazu musi umieć powiedzieć
+co innego przy zerwanym łączu, a co innego przy kanale, który wprost deklaruje brak
+wydań. Zwinięte do jednego `null` obie sytuacje wyglądałyby dla okna tak samo
+i przy braku sieci pisałoby ono „nie ma jeszcze żadnego wydania”.
+
+Nazwy stanów (`brak-lacznosci`, `odpowiedz-serwera`) są wspólne z kodami powłoki
+w `budowa/desktop/src-tauri/src/aktualizacja/pobranie.rs` — ta sama rzecz nazywa
+się tak samo po obu stronach mostu.
+
+`brak-wydania-pod-adresem` stoi osobno od `odpowiedz-serwera`: „serwer odpowiedział,
+że tego pliku nie ma” to informacja o kanale, a nie o łączu, i nie wolno wtedy
+kazać sprawdzać połączenia.
+
+
+
+Pierwsza pozycja wykazu jest najnowsza (tak składa go witryna), ale nie ufamy
+kolejności — porównanie idzie po wszystkich pozycjach. Plik wydania musi być
+wskazany: wydanie bez pliku jest wpisem historycznym, a nie czymś, co da się
+zainstalować.
+
+Funkcja jest nakładką na `pobierzWykazWydan()` gubiącą rozróżnienie stanów: baner
+pyta o jedno — „czy jest co zakładać”. Brak sieci, 404 i pusty wykaz odpowiadają
+na to tak samo, a baner ma się wtedy nie pokazać. Kto potrzebuje zdania o świecie,
+woła `pobierzWykazWydan()` wprost.

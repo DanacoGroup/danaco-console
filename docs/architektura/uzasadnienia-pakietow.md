@@ -6097,3 +6097,23 @@ Instancja komponentu wskazuje warstwę identyfikatorem zewnętrznym, który prze
 planszy. Liczba instancji przy komponencie jest liczona w bazie przy odczycie, nie
 przechowywana obok jako osobna wartość: licznik trzymany osobno rozjeżdżałby się
 z rzeczywistością przy pierwszym usunięciu wiersza, o którym nikt licznika nie powiadomił.
+
+## budowa/server/internal/session/izolacja.go
+Rozstrzyganie zasięgu w pakiecie konfig mówi, jaka wartość izolacji obowiązuje
+w danym oknie, ale samo z siebie nie zmienia niczego w wykonaniu; egzekutor
+bierze tę wartość i odrzuca uruchomienie, które by ją naruszyło, a wartość
+wyłączona nie ogranicza niczego, bo stanem wyjściowym platformy jest pełna
+swoboda operacyjna.
+
+Egzekutor nie zamyka procesu modelu w piaskownicy systemu operacyjnego. Panuje
+wyłącznie nad tym, co procesowi podaje: katalogiem startowym, środowiskiem,
+katalogiem danych kanału, wykazem korzeni, adresami i treścią tury. Gniazd
+sieciowych ani wywołań systemowych uruchomionego już procesu potomnego nie
+ogranicza, do tego potrzebne są środki systemu operacyjnego. Nazwy punktów
+izolacji pochodzą z pakietu konfig.
+
+Porównanie ścieżek w SciezkaWewnatrz idzie po członach ścieżki, nie po
+prefiksie napisu: katalog nazwany podobnie z dopiskiem nie leży w katalogu
+oryginalnym. Na systemie plików nierozróżniającym wielkości liter porównanie
+też jej nie rozróżnia, inaczej ta sama ścieżka zapisana inną wielkością
+omijałaby obszar.

@@ -7536,3 +7536,8 @@ wiersz z ikoną bez wyjaśnienia byłby tu tym samym co cisza.
 Wykonawca nienazwany nie jest brakiem do przemilczenia: „wykonawca nienazwany" mówi prawdę
 o tym, że rozkład powierzono komuś bez wskazania eksperta, a puste miejsce sugerowałoby, że
 nikomu.
+
+## budowa/klient-poprzedni/src/sterowanie/naklad-rozumowania.ts
+Stopień jest wartością wyliczenia katalogu rdzenia, nie nazwą modelu — zmiana kanału nie unieważnia ustawienia, a kanał przekłada stopień na własny parametr. Suwak pokazuje położenie w wykazie stopni, wysyła zaś sam stopień, bo rdzeń nie przyjmuje numeru położenia. Wartość idzie ustawieniem poziomu okna, bo treść żądania aktualizacji okna nie ma dla niej pola. Suwak nie ma stanu wyłączonego: przesunięcie jest czynne zawsze, także gdy rdzeń nie odpowiada.
+
+Położenie suwaka to wartość ustawiona tutaj i zmieniana przesunięciem. Zdanie pod suwakiem to wartość obowiązująca po rozstrzygnięciu poziomów zasięgu. Gdy wartość przychodzi z poziomu szerszego niż okno, zdanie podaje ten poziom; bez tego suwak stojący na „Bez wskazania" przeczyłby nakładowi narzuconemu z poziomu globalnego.

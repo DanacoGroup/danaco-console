@@ -7394,3 +7394,12 @@ to fakt pomiaru, nie awaria — i nie przetworzono wcale. Ten sam przycisk
 obsadza wiersz polecenia i treść dokumentu; różni je wyłącznie to, komu
 oddają rozpoznany tekst i napis na przycisku, żeby druga droga nagrywania
 nie rozjechała się z pierwszą przy pierwszej poprawce.
+
+## budowa/klient-poprzedni/src/sterowanie/etykiety-sterowania.ts
+Nazwy roli okna i środowiska wykonania są już nazwane w komplecie etykiet okna komunikacji — ten komplet czyta je stamtąd, zamiast zakładać drugi słownik tych samych wartości. Ta sama wartość jest pokazywana w trzech miejscach o trzech różnych szerokościach, więc każda wartość ma trzy postacie w jednym wykazie: postać pełną jako wiersz listy wyboru w kolumnie sterowania i podsumowanie szuflady, gdzie miejsca jest na całe zdanie; postać krótką jako uchwyt steru w pasku zlecenia, gdzie etykieta jest bieżącą wartością, a pasek ma zostać jednym rzędem („Ręczny", nie „Ręczny — pytanie przed każdą zmianą"); opis jako zdanie przy pozycji menu, mówiące o skutku wyboru, nie powtarzające nazwy. Postać pełna nie jest osobnym napisem, tylko złożeniem krótkiej z dopiskiem — inaczej pasek i szuflada rozjechałyby się przy pierwszej zmianie słownika.
+
+Etykiety stopni nakładu rozumowania są przepisane z kolumny etykiety opcji ustawienia katalogu rdzenia dla klucza nakładu rozumowania; stopień jest napisem wyliczenia, nie liczbą.
+
+Brak wartości nazwy stopnia nakładu schodzi na napis pusty, bo to pełnoprawny stopień katalogu o nazwie „Bez wskazania" — nie etykieta wymyślona w tym pliku. Stopień spoza wykazu, ale niepusty, zostaje pokazany dosłownie: rdzeń może znać stopień, którego ten słownik jeszcze nie zna, a jego kod jest prawdą o oknie.
+
+Rdzeń przysyła moduły komendą listy modułów z gotową nazwą; funkcja nazwy modułu jest wyłącznie zapasem na kod, dopóki katalog rdzenia się nie naładuje. Oddaje identyfikator bez zmiany, bo moduł spoza wykazu ma zachować swój kod zamiast zniknąć z widoku pod nazwą zmyśloną po stronie klienta.

@@ -404,8 +404,7 @@ func (a *adapterNarzedziDokumentu) obrazPoObrobceWstepnej(ctx context.Context, o
 
 // zagwarantujCzyszczenieSkanuDostepne odmawia nazwanie braku unpapera na tej
 // maszynie, gdy żądanie zamówiło obróbkę wstępną — wołane PRZED kosztowną
-// pracą (rasteryzacją stron PDF-u albo rozpoznaniem obrazu), żeby Operator
-// zobaczył odmowę, zanim rdzeń ją opłaci, tak jak w module Studio.
+// rasteryzacją albo rozpoznaniem, tak jak Studio pyta o program przed pracą.
 func zagwarantujCzyszczenieSkanuDostepne() error {
 	if zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
 		return nil
@@ -419,21 +418,18 @@ func zagwarantujCzyszczenieSkanuDostepne() error {
 			"rozpoznanie pobiegnie na materiale bez obróbki")
 }
 
-// argumentyObrobkiWstepnejDokumentu składa wiersz wywołania unpapera dla pola
-// preprocess przez wspólne argumentyCzyszczenia modułu Studio, w wariancie
-// „wszystko włączone poza progowaniem" — jedno źródło wiersza zamiast
-// powielonego, żeby rozejście stron przestało być możliwe po cichu.
+// argumentyObrobkiWstepnejDokumentu składa wiersz unpapera dla pola preprocess
+// przez wspólne argumentyCzyszczenia modułu Studio — jedno źródło wiersza
+// zamiast powielonego, żeby rozejście stron przestało być możliwe po cichu.
 func argumentyObrobkiWstepnejDokumentu(wejscie, wyjscie string) []string {
 	return argumentyCzyszczenia(nastawyRozpoznania{
 		Prostowanie: true, Odszumianie: true, PrzycinanieMarginesow: true,
 	}, wejscie, wyjscie)
 }
 
-// jezykRozpoznaniaDokumentu sprowadza wskazanie wołającego do wykazu nazw
-// języków, jaki oczekuje przełącznik -l Tesseracta: człony rozdzielone
-// znakiem „+" idą do sprowadzenia osobno i wracają złożone tym samym znakiem.
-// Człon nierozpoznany zostaje bez zmian, ponieważ podmiana na język domyślny
-// dałaby odczyt zmyślony.
+// jezykRozpoznaniaDokumentu sprowadza wskazanie do wykazu nazw, jaki oczekuje
+// przełącznik -l Tesseracta: człony rozdzielone znakiem „+" idą do sprowadzenia
+// osobno i wracają złożone tym samym znakiem, nierozpoznane bez zmian.
 func jezykRozpoznaniaDokumentu(wskazanie *string) string {
 	tekst := strings.TrimSpace(wartoscTekstu(wskazanie))
 	if tekst == "" {

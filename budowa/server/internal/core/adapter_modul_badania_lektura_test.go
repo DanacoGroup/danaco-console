@@ -56,10 +56,8 @@ func zlozAdapterBadan(t *testing.T) (*adapterBadan, dane.RepozytoriumBadan, cont
 
 // TestRozpoznaniePismaZrodlaPrzekazujePreprocessIJezyki wykazuje, że
 // `research.source.ocr` przekazuje pola `preprocess` i `languages` żądania
-// nietknięte do `document.text.extract` — bez tego uchwytu jedno albo drugie
-// pole ginie po drodze, a Operator dostaje rozpoznanie inną drogą niż zamówił.
-// Miarę skutku obróbki wstępnej na materiale produkcyjnym niesie
-// TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem.
+// nietknięte do `document.text.extract`. Skutek obróbki wstępnej na
+// materiale produkcyjnym mierzy TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem.
 func TestRozpoznaniePismaZrodlaPrzekazujePreprocessIJezyki(t *testing.T) {
 	adapter, _, zycie := zlozAdapterBadan(t)
 	fake := &fakeDokumentyLektury{}

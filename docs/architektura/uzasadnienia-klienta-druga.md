@@ -7706,3 +7706,6 @@ Stan „jeszcze nie wiadomo" to co innego niż stan „rejestr pusty"; rozróżn
 Odmowa nie jest pustką. Rejestr po odmowie odczytu listy kanałów zachowuje wykaz poprzedni i samej odmowy nie niesie, więc jej treść wkłada tu panel osobnym wywołaniem; inaczej nieudany odczyt wyglądałby jak rejestr pusty.
 
 Usuwania w wierszu nie ma, bo przycisk czynności nieodwracalnej przy każdej pozycji leży na wyciągnięcie omyłkowego kliknięcia; usuwanie stoi w panelu akcji, dotyczy kanału wskazanego i wymaga potwierdzenia.
+
+## budowa/klient-poprzedni/src/sterowanie/zmiana-okna.ts
+Nazwa komendy i nazwa zdarzenia pochodzą z pakietu kontraktu współdzielonego — zmiana nazwy w kontrakcie przerywa kompilację tego pliku. Zmiana idzie komendą aktualizacji okna, potwierdzeniem jest odpowiedź na nią oraz zdarzenie zmiany okna rozgłaszane do wszystkich urządzeń konta. Zdarzenie dotyczące innego okna nie zmienia tego stanu — filtr po identyfikatorze okna jest adresowaniem. Niepowodzenie zmiany nie wstrzymuje sterowania: widok wraca do stanu potwierdzonego i przyjmuje kolejną zmianę.

@@ -8464,3 +8464,9 @@ rdzeń uruchamia git wprost, a zadanie budowania rozbiera na program
 i parametry, gdzie programem jest pierwsze słowo pola zadania. Pozostałe
 pozycje czekają na komendy przyszłe i są tu wymienione, bo operator planujący
 pracę ma wiedzieć, czego jego maszyna będzie potrzebowała.
+
+## budowa/klient-poprzedni/src/moduly/agents/formularz-tozsamosci.ts
+Zasięg i pamięć stoją tutaj, a nie w oknie osobnym, bo są komponentami definicji zapisywanymi tą samą komendą co reszta tożsamości. Osobne okno musiałoby wołać tę samą komendę drugi raz i zakładałoby drugą wersję eksperta na każdą zmianę zasięgu. Moduł Agents jest kompozytorem: Operator nie konfiguruje tu konta ani API, tylko nadaje surowemu modelowi tożsamość i zapisuje ją pod własną nazwą. Nazwa jest nazwą bytu w bibliotece i po niej ekspert odnajduje się w wykazie modułu, a imię własne jest tym, czym ekspert przedstawia się w oknach roboczych całego produktu — zlanie ich w jedno pole odbierałoby Operatorowi możliwość nazwania eksperta technicznie i ludzko jednocześnie. Odstępstwo od promptu globalnego stoi przy tożsamości, a nie przy warstwach: prompt systemowy ustawia się globalnie i obowiązuje domyślnie, a moduł Agents daje instrukcję dopisywaną do niego albo jawne oznaczenie odstępstwa. Formularz nie buduje wybieraka emoji ani katalogu ikon: kontrakt niesie znak jako napis i nie ma komendy oddającej katalog znaków.
+
+## budowa/klient-poprzedni/src/moduly/agents/formularz-tozsamosci.ts (dopisywanie instrukcji)
+Rozdzielenie wklejenia od zapisu jest tu treścią, nie ostrożnością: rada doradcy przeniesiona do instrukcji ma najpierw stanąć Operatorowi przed oczami w polu, które sam potem zatwierdzi przyciskiem. Zapis wykonany automatycznie zmieniłby tożsamość eksperta cudzym zdaniem, którego Operator jeszcze nie przeczytał.

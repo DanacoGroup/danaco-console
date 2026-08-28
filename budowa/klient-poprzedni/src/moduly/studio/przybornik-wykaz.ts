@@ -8,33 +8,7 @@ import {
 import type { PropozycjaZmiany } from './pola-stanu';
 import { przybornikOpiszZnacznik, type ZnacznikWlasny } from './przybornik-znaczniki';
 
-/**
- * Wykaz znakowań jako spis do przejścia.
- *
- * ── Po co spis, jeśli znakowanie stoi przy fragmencie ───────────────────────
- * Bo w długim dokumencie znakowanie ginie. Dymek stoi przy akapicie, którego
- * Operator w tej chwili nie widzi, a wyróżnienie ze strony ósmej nie woła
- * o siebie. Wymaganie Właściciela jest więc podwójne: znakowanie **przy
- * miejscu** ORAZ jedna lista, po której skacze się po kolei i którą się odhacza.
- *
- * ── Pięć rodzajów w jednym wykazie, ale nie zlanych w jedno ─────────────────
- * Wykaz zbiera komentarze, propozycje zmian, zmiany śledzone, adnotacje
- * przy fragmentach różnicy i znaczniki własne. Rodzaj jedzie w każdej pozycji
- * i przybornik rysuje go osobno, bo trzy z tych bytów Właściciel wymienia jako
- * ROZŁĄCZNE i wymaga, żeby Operator po wyglądzie wiedział, na co patrzy:
- *
- *   — **komentarz** nie niesie brzmienia: mówi o fragmencie, nie zamiast niego;
- *   — **propozycja zmiany** niesie brzmienie, ale nie weszła w treść;
- *   — **zmiana śledzona** jest już w treści i czeka na decyzję.
- *
- * Zlanie ich w jedną pozycję „uwaga modelu" byłoby stratą rozróżnienia, po
- * którym Operator poznaje, czy dokument już się zmienił, czy jeszcze nie.
- *
- * Plik nie zna DOM ani rdzenia: wejściem są wykazy z kontraktu, wyjściem
- * pozycje i ich zawężenie. Dzięki temu filtr sprawdza się bez stawiania okna.
- */
-
-/** Rodzaj znakowania — pięć bytów rozłącznych. */
+/** Stała RodzajZnakowania nazywa pięć rozłącznych rodzajów znakowania dokumentu: komentarz, propozycję, zmianę, adnotację i znacznik. */
 export const RodzajZnakowania = {
   Komentarz: 'komentarz',
   Propozycja: 'propozycja',
@@ -44,7 +18,7 @@ export const RodzajZnakowania = {
 } as const;
 export type RodzajZnakowania = (typeof RodzajZnakowania)[keyof typeof RodzajZnakowania];
 
-/** Nazwa rodzaju wraz ze zdaniem o tym, czym się od pozostałych różni. */
+/** Stała NAZWY_RODZAJOW niesie nazwę każdego rodzaju znakowania wraz ze zdaniem opisującym, czym różni się od pozostałych rodzajów. */
 export const NAZWY_RODZAJOW: Readonly<Record<RodzajZnakowania, { nazwa: string; czym: string }>> = {
   komentarz: {
     nazwa: 'Komentarz',
@@ -68,7 +42,7 @@ export const NAZWY_RODZAJOW: Readonly<Record<RodzajZnakowania, { nazwa: string; 
   },
 };
 
-/** Jedna pozycja wykazu znakowań. */
+/** Interfejs PozycjaZnakowania niesie jedną pozycję wykazu znakowań: kod, rodzaj, autora, zakres, tytuł, treść, podstawę i czas założenia. */
 export interface PozycjaZnakowania {
   kod: string;
   rodzaj: RodzajZnakowania;
@@ -87,19 +61,19 @@ export interface PozycjaZnakowania {
   czas: number;
 }
 
-/** Zawężenie wykazu — trzy osie wymienione przez Właściciela. */
+/** Interfejs FiltrZnakowan niesie zawężenie wykazu znakowań wedle trzech osi: rodzaju, autora i stanu otwarcia pozycji. */
 export interface FiltrZnakowan {
   rodzaj: RodzajZnakowania | 'wszystkie';
   autor: StudioAuthor | 'wszyscy';
   stan: 'wszystkie' | 'otwarte' | 'zamkniete';
 }
 
-/** Filtr niczego nie zawężający — stan początkowy przybornika. */
+/** Funkcja przybornikFiltrPelny zwraca filtr niczego nie zawężający, będący stanem początkowym przybornika znakowań. */
 export function przybornikFiltrPelny(): FiltrZnakowan {
   return { rodzaj: 'wszystkie', autor: 'wszyscy', stan: 'wszystkie' };
 }
 
-/** Materiał, z którego składa się wykaz znakowań. */
+/** Interfejs MaterialZnakowan niesie materiał, z którego przybornik składa wykaz znakowań: komentarze, zmiany, adnotacje, znaczniki i propozycję. */
 export interface MaterialZnakowan {
   komentarze: readonly StudioComment[];
   zmiany: readonly StudioTrackedChange[];
@@ -112,16 +86,7 @@ export interface MaterialZnakowan {
 }
 
 /**
- * Składa wykaz znakowań ze wszystkich pięciu źródeł.
- *
- * Kolejność jest kolejnością **położenia w treści**, a nie czasu założenia:
- * spis służy przejściu dokumentu od góry do dołu. Pozycje bez zakotwiczenia
- * (komentarz do całości, adnotacja przy fragmencie różnicy) idą na koniec,
- * zamiast być wstawiane w miejsce zgadnięte.
- *
- * Odpowiedzi w wątkach nie są osobnymi pozycjami: wątek jest jednym
- * znakowaniem, a odpowiedzi widać w dymku. Liczba odpowiedzi jedzie w zdaniu
- * o pozycji, żeby Operator wiedział, czy wątek ma ciąg dalszy.
+ * Funkcja przybornikZlozZnakowania składa wykaz znakowań ze wszystkich pięciu źródeł, w kolejności położenia w treści; pozycje bez zakotwiczenia idą na koniec wykazu.
  */
 export function przybornikZlozZnakowania(material: MaterialZnakowan): PozycjaZnakowania[] {
   const pozycje: PozycjaZnakowania[] = [];
@@ -198,8 +163,7 @@ export function przybornikZlozZnakowania(material: MaterialZnakowan): PozycjaZna
       rodzaj: RodzajZnakowania.Adnotacja,
       autor: adnotacja.author,
       otwarta: true,
-      // Adnotacja wisi przy numerze fragmentu różnicy, a nie przy znaku treści —
-      // udawanie zakresu w treści wskazywałoby niewłaściwe miejsce.
+      // Adnotacja wisi przy numerze fragmentu różnicy, nie przy znaku treści, więc zakres zostaje pusty.
       zakres: null,
       tytul: `${NAZWY_RODZAJOW.adnotacja.nazwa} — fragment ${adnotacja.hunkIndex}`,
       tresc: adnotacja.body,
@@ -228,7 +192,7 @@ export function przybornikZlozZnakowania(material: MaterialZnakowan): PozycjaZna
   return pozycje.sort(przybornikPorownajPolozeniem);
 }
 
-/** Porządek wykazu: wedle położenia w treści, pozycje bez zakotwiczenia na końcu. */
+/** Funkcja przybornikPorownajPolozeniem porządkuje wykaz wedle położenia w treści, stawiając pozycje bez zakotwiczenia na końcu. */
 function przybornikPorownajPolozeniem(
   pierwsza: PozycjaZnakowania,
   druga: PozycjaZnakowania,
@@ -242,7 +206,7 @@ function przybornikPorownajPolozeniem(
   return pierwsza.czas - druga.czas;
 }
 
-/** Zawęża wykaz wedle rodzaju, autora i stanu. */
+/** Funkcja przybornikPrzefiltruj zawęża wykaz znakowań dokumentu wedle rodzaju, autora i stanu otwarcia pozycji. */
 export function przybornikPrzefiltruj(
   pozycje: readonly PozycjaZnakowania[],
   filtr: FiltrZnakowan,
@@ -279,7 +243,7 @@ export function przybornikOpiszWykaz(
   );
 }
 
-/** Liczba pozycji danego rodzaju — do plakietek przy zawężeniu. */
+/** Funkcja przybornikPolicz zwraca liczbę pozycji danego rodzaju znakowania, do plakietek przy zawężeniu wykazu. */
 export function przybornikPolicz(
   pozycje: readonly PozycjaZnakowania[],
   rodzaj: RodzajZnakowania,

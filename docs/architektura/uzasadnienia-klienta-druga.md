@@ -7312,3 +7312,22 @@ służy wyłącznie pierwszemu wypełnieniu i wznowieniu po rozłączeniu. Podzb
 kart domyka się sam — zamknięcie karty gasi jej przypięcie i jej ostatnie
 polecenie w jednym miejscu; zapis ostatniego polecenia nie budzi okien, bo
 jest nośnikiem czynności „uruchom ponownie”, a nie treścią okna.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-wykaz.ts
+W długim dokumencie znakowanie ginie: dymek stoi przy akapicie, którego
+Operator w tej chwili nie widzi, a wyróżnienie ze strony ósmej nie woła
+o siebie. Wymaganie jest więc podwójne: znakowanie przy miejscu oraz jedna
+lista, po której skacze się po kolei i którą się odhacza. Wykaz zbiera
+komentarze, propozycje zmian, zmiany śledzone, adnotacje przy fragmentach
+różnicy i znaczniki własne; rodzaj jedzie w każdej pozycji i przybornik
+rysuje go osobno, ponieważ trzy z tych bytów są rozłączne i Operator ma po
+wyglądzie wiedzieć, na co patrzy — komentarz nie niesie brzmienia i mówi
+o fragmencie, nie zamiast niego; propozycja zmiany niesie brzmienie, ale nie
+weszła w treść; zmiana śledzona jest już w treści i czeka na decyzję.
+Zlanie ich w jedną pozycję byłoby stratą rozróżnienia, po którym Operator
+poznaje, czy dokument już się zmienił, czy jeszcze nie. Moduł nie zna
+struktury dokumentu obiektowego ani rdzenia: wejściem są wykazy z kontraktu,
+wyjściem pozycje i ich zawężenie, dzięki czemu filtr sprawdza się bez
+stawiania okna. Odpowiedzi w wątkach nie są osobnymi pozycjami wykazu: wątek
+jest jednym znakowaniem, a odpowiedzi widać w dymku; liczba odpowiedzi jedzie
+w zdaniu o pozycji, żeby Operator wiedział, czy wątek ma ciąg dalszy.

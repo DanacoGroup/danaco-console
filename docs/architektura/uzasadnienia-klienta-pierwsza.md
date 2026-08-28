@@ -7083,3 +7083,18 @@ zmiany, choć nie niesie etykiety ani sesji, więc widok złożony z samych
 zdarzeń gubiłby nazwy przebiegów po pierwszej zmianie. Okna analizy wyników
 i monitora wykonania należą do tej sekcji, ale są osobnymi oknami produktu,
 więc panel nie buduje trzeciego monitora.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — zdarzenie zmiany strony
+Jedna sesja bywa oglądana w kilku oknach, a migawka nie swojego okna przestawiłaby podgląd na stronę, której operator tu nie otwierał.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — migawka po ustaleniu okna
+Rdzeń zna treść strony tego okna również wtedy, gdy przejście odbyło się w innej karcie albo przed przeładowaniem powłoki.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — odpięcie pozycji pokrycia
+Wpis kanału trzymałby inaczej przerysowanie kontrolek zdjętych już z drzewa, tak samo jak nieodpięty pasek uczciwości trzymałby przerysowanie po zamknięciu katalogu okien.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sekcja-orkiestracja.ts
+Ocenę układu wydaje rdzeń: zapis zależności oddaje pole poprawności wraz
+z zastrzeżeniami, a sprawdzenie układu dokłada ścieżkę krytyczną. Widok nie
+wylicza cyklu samodzielnie, tylko pokazuje odpowiedź rdzenia łącznie
+z odmową.

@@ -586,3 +586,11 @@ należy do motywu. Układ jest jednoręczny: karty pozycji czyta się oczami
 u góry, a arkusza dróg i paska kwitu dotyka się kciukiem u dołu. Żadne pismo
 nie schodzi poniżej najmniejszego stopnia żetonu, żeby treść pozostała
 czytelna bez powiększania.
+
+## budowa/klient-poprzedni/src/moduly/developer/developer.css
+Plik nie zna ani jednej barwy dosłownej, ani jednego rozmiaru czcionki
+dosłownego: wszystko pochodzi z żetonów motywu i z biblioteki komponenty/.
+Arkusz niesie wyłącznie rozkład pięciu okien modułu — edytora kodu, drzewa
+projektu, panelu git, logu budowania i zakładek narzędzi — wraz
+z odróżnieniem trzech stanów obowiązkowych oraz oznaczeniem wagi zgłoszeń
+budowania i konfliktów repozytorium.

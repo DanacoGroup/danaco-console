@@ -7884,3 +7884,20 @@ wpisanym z pamięci — przychodzi z katalogu czynności, a ten bierze ją ze st
 
 Sprawdzenie kształtu żądania wykonuje rdzeń i odsyła odmowę walidacji z nazwą pola — to
 sprawdzenie, którego klient i tak nie zastąpi, bo kontrakt rozstrzyga po stronie rdzenia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/menu-rozwijane.ts
+Jedyny byt rozwijany w kliencie, wzorowany na szufladzie sterowania: znacznik
+aria-expanded na uchwycie, klawisz Escape zwijający z powrotem ognisko na
+uchwyt oraz zasada, że zwinięcie nie jest blokadą. Menu dostaje gotowe
+elementy przez ustawienie treści i nie rozstrzyga, czy stoją w niej panele
+czy działania sesji, więc ten sam byt obsłuży menu nagłówka rozmowy i menu
+wewnątrz nagłówka panelu. Nie zakłada, że jest jedyny na scenie — cztery
+gniazda razy kilka paneli to wiele menu naraz, dlatego żaden identyfikator
+nie powstaje (powiązanie uchwytu z listą niesie atrybut haspopup, nie
+controls z id), nasłuchy dokumentu istnieją wyłącznie w czasie rozwinięcia,
+a warstwa jest wspólnym żetonem dla wszystkich egzemplarzy. Podmenu nie
+jest tu budowane, ale nie jest wykluczone: wędrówka ogniska strzałkami
+chodzi po każdym elemencie roli menuitem bez pytania, co on otwiera.
+Ikoną jest znak trzech kropek poziomych za czynnością „pokaż więcej”.
+Znacznik „jest tu coś nowego” ma mechanizm ustawienia, ale nic go tu nie
+zapala samo z siebie — źródło sygnału ustala wołający.

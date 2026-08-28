@@ -3,11 +3,8 @@ import './ladowanie.css';
 import { elementGodla } from '../ikony/ikony';
 
 /**
- * Scena wejścia: obraz, który Operator widzi między przejściem bramki wejścia
- * a postawieniem strony głównej, wraz z progiem czasu, po którym schodzi.
- *
- * Próg mignięcia poniżej jest najkrótszym czasem pozostawania sceny na ekranie
- * i chroni przed błyskiem, gdy gotowość przychodzi natychmiast.
+ * Scena wejścia: obraz między przejściem bramki a postawieniem strony głównej.
+ * Próg mignięcia poniżej jest najkrótszym czasem pozostawania sceny na ekranie.
  */
 const PROG_MIGNIECIA = 320;
 

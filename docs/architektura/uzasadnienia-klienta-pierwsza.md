@@ -8516,3 +8516,19 @@ natychmiast. Rozróżnienie przebiegu już domkniętego od wciąż trwającego
 w przerwaniu budowania jest potrzebne, bo rdzeń na oba przypadki odpowiada tą
 samą migawką — bez tego rozróżnienia okno meldowałoby przyjęcie żądania także
 wtedy, gdy przerywać nie było czego.
+
+## budowa/klient-poprzedni/src/moduly/design/wersje-kompozycji.ts
+Zapis bieżącego układu zastępuje poprzedni, więc ciągu postaci tablicy nie było skąd wziąć: praca
+sprzed godziny znikała przy pierwszym przesunięciu warstwy.
+
+Przywrócenie nie kasuje stanu porzuconego: rdzeń zakłada przy przywróceniu wersję z układu sprzed
+przywrócenia i oddaje ją w odpowiedzi. Panel pokazuje jej identyfikator wprost, żeby droga powrotna
+była widoczna od razu, a nie po ponownym odczycie wykazu.
+
+Wyrys jest plikiem, nie zapowiedzią: odpowiedź melduje nazwę pliku i jego typ treści. Kompozycja
+bez ani jednej warstwy z bajtami kończy się odmową rdzenia i panel pokazuje to zdanie w całości —
+pusty prostokąt podany jako plik wyglądałby jak plik uszkodzony.
+
+Wszystkie cztery komendy tego panelu wskazują kompozycję identyfikatorem, który nadaje rdzeń przy
+pierwszym zapisie; odmowa rdzenia mówiłaby wtedy o kompozycji nieznanej zamiast o zapisie, którego
+zabrakło.

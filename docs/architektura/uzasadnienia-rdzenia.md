@@ -6918,3 +6918,12 @@ drugim bez ostrzeżenia.
 Emiter zdarzeń zostaje w sygnaturze funkcji rejestrującej dla zgodności
 z pozostałymi funkcjami rejestrującymi moduły, mimo że kontrakt nie ma
 zdarzenia rozgłaszającego wykonanie akcji okna ani nowe przekazanie.
+
+## budowa/server/internal/core/handlers_dostep_nadania.go
+Port pracuje zbiorem, nie pojedynczym nadaniem: każda czynność zapisu oddaje
+nie tylko wiersz zmieniony, ale komplet nadań okna po zmianie. Kolejność
+i oznaczenie głównego są własnością zbioru, więc dopisanie jednego nadania
+przestawia pozostałe — klient, który dostałby sam zmieniony wiersz, pokazałby
+zbiór nieprawdziwy. Zawężenie korzeni poza obszar punktu jest odmową
+merytoryczną, błędem `dane.ErrPozaKorzeniami`, nie awarią zapisu, bo nadanie
+dostępu szerszego, niż punkt obiecuje, byłoby obejściem granicy uprawnień.

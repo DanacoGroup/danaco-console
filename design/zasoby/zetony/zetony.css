@@ -371,7 +371,12 @@
      a rozdzielenie ma nieść powierzchnia I kreska, nie jedno z dwojga. */
   --dn-obrys: var(--dn-szary-200);           /* #D5D7DC · L*  86 */
   --dn-obrys-subtelny: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 */
-  --dn-obrys-mocny: var(--dn-szary-300);     /* #BDC0C6 — obrysy kontrolek */
+  /* Granica kontrolki musi być widoczna: WCAG 1.4.11 wymaga 3:1 dla elementu,
+     który identyfikuje pole. Odcień 300 dawał w jasnym 1,42–1,82:1, a 750
+     w ciemnym 1,26–1,68:1 — pola nie było widać. Odcień 500 przechodzi
+     w OBU motywach (3,26–4,59) i odpowiada domyślnemu obrysowi kontrolki
+     w przeglądarce (#767676). */
+  --dn-obrys-mocny: var(--dn-szary-500);     /* #787C85 — obrysy kontrolek */
   /* Kreska wyrazna — kontrolka stojaca na plotnie, bez wlasnego wypelnienia.
      Obrys mocny daje na powierzchni panelu 8 stopni L* i ginie; ten daje 30. */
   --dn-obrys-wyrazny: var(--dn-szary-400);   /* #9A9EA6 · L* 63 */
@@ -467,7 +472,7 @@
 
   --dn-obrys: var(--dn-szary-800);           /* #272A30 */
   --dn-obrys-subtelny: var(--dn-szary-850);  /* #1E2126 */
-  --dn-obrys-mocny: var(--dn-szary-750);     /* #373A41 */
+  --dn-obrys-mocny: var(--dn-szary-500);     /* #787C85 — jak w jasnym: jeden odcień przechodzi w obu */
   --dn-obrys-wyrazny: var(--dn-szary-700);   /* #464A52 · L* 31,4 */
 
   --dn-tekst: var(--dn-szary-100);           /* #EBECEF · 15,0:1 na tle */
@@ -546,7 +551,7 @@
     --dn-hover: rgba(10, 10, 10, 0.05); --dn-wcisniecie: rgba(10, 10, 10, 0.09);
     --dn-nakladka: rgba(10, 10, 10, 0.45);
     --dn-obrys: var(--dn-szary-150); --dn-obrys-subtelny: var(--dn-szary-100);
-    --dn-obrys-mocny: var(--dn-szary-300);
+    --dn-obrys-mocny: var(--dn-szary-500);
     --dn-tekst: var(--dn-szary-900); --dn-tekst-2: var(--dn-szary-600);
     --dn-tekst-3: var(--dn-szary-600); --dn-tekst-inv: var(--dn-szary-0);
     --dn-atrament: var(--dn-szary-900); --dn-atrament-hover: var(--dn-szary-1000);
@@ -593,7 +598,7 @@
     --dn-hover: rgba(255, 255, 255, 0.06); --dn-wcisniecie: rgba(255, 255, 255, 0.10);
     --dn-nakladka: rgba(0, 0, 0, 0.62);
     --dn-obrys: var(--dn-szary-800); --dn-obrys-subtelny: var(--dn-szary-850);
-    --dn-obrys-mocny: var(--dn-szary-750);
+    --dn-obrys-mocny: var(--dn-szary-500);
     --dn-tekst: var(--dn-szary-100); --dn-tekst-2: var(--dn-szary-400);
     --dn-tekst-3: var(--dn-szary-450); --dn-tekst-inv: var(--dn-szary-950);
     --dn-atrament: var(--dn-szary-100); --dn-atrament-hover: var(--dn-szary-25);

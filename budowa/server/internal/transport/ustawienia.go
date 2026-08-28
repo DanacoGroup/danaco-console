@@ -45,7 +45,7 @@ type Ustawienia struct {
 	WszystkieInterfejsy bool
 	// PochodzeniaDozwolone to wykaz wzorców nagłówka Origin przyjmowanych przy nawiązaniu gniazda.
 	PochodzeniaDozwolone []string
-	// WymogLogowania jest dźwignią Operatora nad strażą bramki; wskaźnik niesie trzy stany zamiast dwóch.
+	// WymogLogowania jest rozstrzygnięciem Operatora nad dopuszczeniem bramki; wskaźnik niesie trzy stany zamiast dwóch.
 	WymogLogowania *bool
 	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS; wskazanie obu włącza szyfrowany nasłuch.
 	CertyfikatTLS string

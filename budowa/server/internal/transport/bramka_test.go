@@ -9,11 +9,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// Straż bramki jest jedyną granicą bezpieczeństwa tego pakietu i jedynym miejscem odmowy produktu.
+// Dopuszczenie bramki jest jedyną granicą bezpieczeństwa tego pakietu i jedynym miejscem odmowy produktu.
 
-// ujscieSprawdzianu jest najuboższym ujściem, jakie straż widzi: identyfikatorem
-// i niczym więcej. Straż pyta wyłącznie o identyfikator, więc bogatsze ujście
-// mierzyłoby coś innego niż straż.
+// ujscieSprawdzianu jest najuboższym ujściem, jakie dopuszczenie widzi: identyfikatorem
+// i niczym więcej. Dopuszczenie pyta wyłącznie o identyfikator, więc bogatsze ujście
+// mierzyłoby coś innego niż regułę dopuszczenia.
 type ujscieSprawdzianu struct {
 	id string
 }
@@ -75,8 +75,8 @@ func TestWymogLogowaniaRozstrzygaAdresAlboWskazanie(t *testing.T) {
 	}
 }
 
-// Metoda TestStrazPrzepuszczaWylacznieWedlugReguly przechodzi wszystkie układy trzech wejść straży bramki.
-func TestStrazPrzepuszczaWylacznieWedlugReguly(t *testing.T) {
+// Metoda TestDopuszczeniePrzepuszczaWylacznieWedlugReguly przechodzi wszystkie układy trzech wejść dopuszczenia bramki.
+func TestDopuszczeniePrzepuszczaWylacznieWedlugReguly(t *testing.T) {
 	zeStanem := rdzenZeStanemBramki{zwiazane: map[string]bool{"pol-zwiazane": true}}
 
 	przypadki := []struct {
@@ -87,7 +87,7 @@ func TestStrazPrzepuszczaWylacznieWedlugReguly(t *testing.T) {
 		ujscie      Ujscie
 		przepuszcza bool
 	}{
-		{"straż wyłączona przepuszcza komendę dowolną", false, zeStanem,
+		{"dopuszczenie wyłączone przepuszcza komendę dowolną", false, zeStanem,
 			shared.CommandTerminalCommandExec, ujscieSprawdzianu{"pol-obce"}, true},
 		{"powitanie przechodzi zawsze", true, zeStanem,
 			shared.CommandConnectionHello, ujscieSprawdzianu{"pol-obce"}, true},
@@ -115,9 +115,9 @@ func TestStrazPrzepuszczaWylacznieWedlugReguly(t *testing.T) {
 
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
-			straz := straznikBramki{wymagana: przypadek.wymagana}
-			if przepuszcza := straz.przepusc(przypadek.rdzen, przypadek.komenda, przypadek.ujscie); przepuszcza != przypadek.przepuszcza {
-				t.Errorf("straż rozstrzygnęła %t, oczekiwane %t", przepuszcza, przypadek.przepuszcza)
+			regula := dopuszczenieBramki{wymagana: przypadek.wymagana}
+			if przepuszcza := regula.przepusc(przypadek.rdzen, przypadek.komenda, przypadek.ujscie); przepuszcza != przypadek.przepuszcza {
+				t.Errorf("dopuszczenie rozstrzygnęło %t, oczekiwane %t", przepuszcza, przypadek.przepuszcza)
 			}
 		})
 	}

@@ -43,7 +43,7 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go polaczenie.petlaWysylki()
-	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.straznik())
+	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.dopuszczenie())
 }
 
 // pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs produktu w powłoce i przeglądarce.

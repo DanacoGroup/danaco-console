@@ -18,7 +18,7 @@ export function sprawdzKsztalt<T>(
   return { udany: false, blad: bladKsztaltu(komenda) };
 }
 
-/** Czy wartość jest napisem — prosty strażnik typu wykorzystywany przez sprawdziany kształtu odpowiedzi. */
+/** Czy wartość jest napisem — proste rozpoznanie typu, używane przez sprawdziany kształtu odpowiedzi. */
 export function czyTekst(wartosc: unknown): wartosc is string {
   return typeof wartosc === 'string';
 }

@@ -68,7 +68,7 @@ duplikat do złożenia.
 | Pole dotyku < 24 px (WCAG 2.5.8) | **0** — 11 kontrolek ma rysunek mniejszy, wszystkie mają pole 24 px | trafienie `elementFromPoint` 11 px od środka |
 | Zasada trzech stref (okna przedaplikacyjne) | **dotrzymana** we wszystkich krokach i widokach, oba motywy | `~/robocze/pomiar/strefy-okna.mjs` |
 | Kolizje skrótów | Centrum **2**, TalkIn **3**, Studio **3** — wszystkie odziedziczone po WZORCU, wypisane w rozdz. 6 | grupowanie `<span class="skrot">` po treści |
-| Bloki `<style>` odrzucone przez strażnika | **0 z 5 okien pakietu** | `~/robocze/pomiar/straznik-skladnikow.sh` |
+| Bloki `<style>` odrzucone przez sprawdzenie | **0 z 5 okien pakietu** | `~/robocze/pomiar/sprawdzenie-skladnikow.sh` |
 | Deklaracje wyglądu w arkuszach okien pakietu | `wejscie.css` **133**, `okna/studio.css` **75** | jw. |
 
 Ogniskowalnych kontrolek: Instalator 25, Uruchomienie 130, Centrum 682, TalkIn 412, Studio 441.
@@ -197,7 +197,7 @@ Pełny wykaz 16 pytań z uzasadnieniem i pomiarem: `~/robocze/prowadzenie/komple
 Serwer statyczny na `127.0.0.1:8611` z korzeniem w `~/budowa`. Wszystkie polecenia z `~/budowa`.
 
 ```bash
-bash ~/robocze/pomiar/straznik-skladnikow.sh
+bash ~/robocze/pomiar/sprawdzenie-skladnikow.sh
 ```
 
 ```bash
@@ -211,7 +211,7 @@ poza rodziną pozycji menu).
 
 ### Pułapki zmierzone w tej pracy
 
-1. **Strażnik obcina wykaz na 25 pozycjach** („… i N dalszych"). Pełną listę daje kopia
+1. **Sprawdzenie obcina wykaz na 25 pozycjach** („… i N dalszych"). Pełną listę daje kopia
    skryptu z `head -25` podniesionym.
 2. **Bilans `<div>` trzeba sprawdzać osobno.** Usunięcie wiersza menu zdjęło `</div>`
    domykające menu, bo stało na końcu ostatniej pozycji, nie w osobnym wierszu. Bilans

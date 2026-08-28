@@ -52,11 +52,11 @@ przeniesiony nigdy — zostaje skopiowany do następnego okna.
 ## Sprawdzenie
 
 ```
-~/robocze/pomiar/straznik-skladnikow.sh
+~/robocze/pomiar/sprawdzenie-skladnikow.sh
 ```
 
-Strażnik odrzuca okno, które definiuje składnik o roli już obecnej w bibliotece,
-oraz arkusz okna zawierający deklaracje wyglądu. Okno, które nie przechodzi strażnika,
+Sprawdzenie odrzuca okno, które definiuje składnik o roli już obecnej w bibliotece,
+oraz arkusz okna zawierający deklaracje wyglądu. Okno, które nie przechodzi sprawdzenia,
 nie jest gotowe — niezależnie od tego, jak wygląda na ekranie.
 
 ## Zakres

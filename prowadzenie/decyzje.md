@@ -1375,7 +1375,7 @@ zaakceptowana wraz z nia.
   zszedl na szczebel drugiego, bo na poprzednim dawal 3,80 : 1. Rozroznienie niesie
   pismo maszynowe i stopien 12 px. Piec obejsc rozsianych po bibliotece stracilo
   powod istnienia i czeka na zdjecie.
-- Straznik normy zera byl do dzis martwy w trzech miejscach; kazdy jego wynik
+- Sprawdzenie normy zera bylo do dzis martwe w trzech miejscach; kazdy jego wynik
   „czysto" sprzed 2026-08-27 jest bez wartosci.
 
 ---

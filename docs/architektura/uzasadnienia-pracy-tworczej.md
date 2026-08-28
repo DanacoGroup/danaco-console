@@ -1706,7 +1706,7 @@ wpisy z tej samej milisekundy, żeby kolejność była stała między wywołania
 
 Funkcja sprawdzWpis odrzuca wpisy, których baza i tak by nie przyjęła — po to,
 żeby wołający dostał zdanie po polsku zamiast komunikatu o naruszonym CHECK-u.
-Zdublowaniem więzu to nie jest: baza pozostaje ostatecznym strażnikiem, bo
+Zdublowaniem więzu to nie jest: baza pozostaje ostatecznym sprawdzeniem, bo
 pisać do niej może też przyszła ścieżka, która tej funkcji nie wywoła.
 
 Funkcja napisDoKolumny przekłada napis pusty na NULL. Kolumny `okno_id`
@@ -2451,7 +2451,7 @@ Dzieki temu pomocnik przechodzi przez te sama brame izolacji okna i przez
 to samo obejmowanie potomstwa, co pozostale procesy — a proces Pythona,
 ktory rozgalezia wlasne watki dekodera, bez objecia drzewem zostawialby
 sieroty. Sekwencja jest ta sama, co w core/adapter_modul_terminal_bieg.go
-i core/adapter_modul_developer_git_wykonanie.go: straznik nil, sprawdzenie
+i core/adapter_modul_developer_git_wykonanie.go: kontrola nil, sprawdzenie
 izolacji, UruchomProces, PrzejmijDrzewo(pid), defer Zwolnij, pompy obu
 strumieni, select na Czekaj/timer/ctx.Done, Ubij calego drzewa przy
 przekroczeniu. Odstepstwo od niej konczy sie wyciekiem procesu albo
@@ -3443,7 +3443,7 @@ Pole `skladnica` struktury `Wskaznik`: trwałość przy bazie rdzenia
 (`store/migracja_115_wskaznik_znaczenia.sql`).
 
 Pole `dlugoscFragmentu`: wartość spoza przedziału sensownego sprowadza
-`Podziel` do domyślnej — jeden strażnik tej liczby, nie dwóch.
+`Podziel` do domyślnej — jedno sprawdzenie tej liczby, nie dwa.
 
 `Wnies`: dokument bez treści dającej się podzielić jest pomijany, a nie
 odmawiany; plik pusty w bibliotece nie ma prawa odebrać Operatorowi wskaźnika

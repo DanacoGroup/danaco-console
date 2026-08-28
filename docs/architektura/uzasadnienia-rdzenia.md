@@ -6609,3 +6609,9 @@ komendy, roli ani zakresu i mieć nie będzie.
 Bez metody Rozwiaz mapa rosłaby przez całe życie procesu o jeden wpis na
 każde nawiązanie połączenia — więź pamięciowa bytu nietrwałego musi umieć
 zapomnieć.
+
+## budowa/server/internal/core/wynik.go
+
+Pakiet domeny zwraca błąd niosący kod kontraktu przez protocol.JakoError,
+a rdzeń go przenosi bez tłumaczenia — rdzeń nie zgaduje za domenę, czy to
+brak bytu, konflikt, czy usterka.

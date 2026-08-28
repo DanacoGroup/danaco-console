@@ -19,15 +19,7 @@ func wynik(v any) protocol.Odpowiedz {
 	return o
 }
 
-// porazka zamienia błąd czynności domeny na odpowiedź błędną.
-//
-// Kod błędu wybiera warstwa, która zna przyczynę: pakiet domeny zwraca błąd
-// niosący kod kontraktu przez protocol.JakoError, a rdzeń go przenosi bez
-// tłumaczenia. Błąd bez kodu jest błędem wewnętrznym rdzenia — rdzeń nie
-// zgaduje za domenę, czy to brak bytu, konflikt, czy usterka.
-//
-// Zerwany kontekst wywołania jest osobnym przypadkiem: żądanie nie zostało
-// wykonane, ale ponowienie ma sens, więc idzie kodem ponawialnym.
+// porazka zamienia błąd czynności domeny na odpowiedź błędną. Kod błędu wybiera warstwa, która zna przyczynę, a błąd bez kodu jest błędem wewnętrznym rdzenia. Zerwany kontekst wywołania jest osobnym przypadkiem, idącym kodem ponawialnym.
 func porazka(err error) protocol.Odpowiedz {
 	if err == nil {
 		return protocol.PorazkaKodem(shared.ErrorCodeInternalError, "rdzeń: czynność nie zwróciła ani wyniku, ani przyczyny")

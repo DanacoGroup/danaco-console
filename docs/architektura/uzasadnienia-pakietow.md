@@ -6447,3 +6447,17 @@ generatora rozjeżdża je po cichu i obie strony kompilują się dalej — rdze�
 zna, albo odwrotnie; rozjazd wychodzi dopiero na gnieździe, u operatora maszyny. Sprawdzian puszcza
 generator na kopii, a nie na katalogu źródłowym, ponieważ generator zapisuje artefakty na dysk, więc
 puszczony na miejscu nadpisałby pliki sprawdzanego drzewa.
+
+## budowa/server/internal/dane/studio_wersje.go
+Typ i interfejs obszaru wersji deklaruje plik studio.go; ten plik implementuje
+wyłącznie metody obszaru wersji na tym samym uchwycie repozytorium studia,
+podobnie jak inne pliki obszarowe modułów danych implementują swój obszar na
+współdzielonym repozytorium modułu.
+
+Treść wersji niesie dwa pola: pole treści krótkiej wprost oraz pole odwołania
+do pliku dla treści obszernej, tym samym sposobem co repozytorium wiadomości.
+
+Przywrócenie wersji jest zapisem dwutabelowym: metoda PrzywrocWersje czyta
+wersję docelową i nadpisuje treść dokumentu w jednej transakcji — bez niej
+odczyt wersji i zapis dokumentu mogłyby rozjechać się przy równoległym zapisie
+tego samego dokumentu z innego okna.

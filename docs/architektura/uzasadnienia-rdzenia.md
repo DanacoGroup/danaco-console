@@ -6816,3 +6816,17 @@ w jeden nierozróżnialny wiersz. Rozgłoszenia po uruchomieniu analizy nie ma
 w obsługiwaczu z zamysłem: nadaje je adapter, bo tylko on wie, czy migawka
 rzeczywiście powstała — rozgłoszenie z obsługiwacza powiadamiałoby także
 o analizie, której zapis się nie powiódł.
+
+## budowa/server/internal/core/adapter_okna_trwalosc.go
+Bez zapisu wiersza okna w chwili założenia wszystko, co pyta o okno bazę
+zamiast rejestru nadzorcy — powołanie podagentów, przekazanie okna, nadania
+dostępu, odtworzenie stanu po restarcie — nie znajduje okna świeżo otwartego.
+Sesję utrwala od razu inny plik rdzenia; okno utrwala ten plik.
+
+Niepowodzenie zapisu nie przerywa zakładania tak samo jak przy sesji: okno
+żyje w rejestrze i pracuje, tylko nie przetrwa restartu rdzenia bez bazy.
+
+Wiersz okna niesie klucze obce, a rejestr nadzorcy kody, więc trzeba
+rozstrzygnąć trzy więzy: sesję, moduł i kanał modelu. Sesji się przy tym nie
+zakłada, ponieważ jej wiersz powstaje przy założeniu sesji, a okno bez sesji
+nie jest oknem — drugie miejsce zakładania sesji byłoby drugą prawdą o niej.

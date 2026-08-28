@@ -646,3 +646,8 @@ Kontrolki formularzy pochodzą z modele/kontrolki-formularza, stąd import
 modele.css. Panel rodzin rdzenia niesie także kolejkę czytania, wytwory
 i granice Wykonawcy, obok kart, przestrzeni, monitorów, kanałów, pobrań
 i makr.
+
+## budowa/klient-poprzedni/src/moduly/browser/operacje.css
+Arkusz jest wciągany importem z pliku browser.css — moduł wciąga jeden
+arkusz, a podział na pliki wynika z progu trzystu wierszy na arkusz. Barwy
+wyłącznie z żetonów motywu, bez wartości zapisanych wprost.

@@ -779,6 +779,42 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 .dn-kafel-znak > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 
+/* Wybór — kafel do wskazania jednej z kilku dróg: znak nad nazwą, nazwa nad
+   stanem, wszystko w osi. Rodzina stała w arkuszu okna wejściowego jako
+   `.au-metoda`; różniła się od kafla tylko układem kolumnowym i zwarciem
+   wyściółki, więc weszła tu jako odmiana, a nie jako druga rodzina.
+
+   Barwa nazwy zostaje z kafla (`--dn-tekst`). Arkusz okna gasił ją do
+   `--dn-tekst-2` razem ze stanem, przez co nazwa drogi i przypis o jej
+   dostępności ważyły tyle samo; stan ustępuje teraz nazwie o stopień. */
+.dn-kafel--wybor {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3) var(--dn-od-2);
+  border-radius: var(--dn-r-md);
+  font-size: var(--dn-fs-xs);
+  text-align: center;
+}
+.dn-kafel--wybor > svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  color: var(--dn-tekst-2);
+  transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel--wybor:hover > svg, .dn-kafel--wybor:focus-visible > svg {
+  color: var(--dn-sygnal);
+  transform: scale(var(--dn-skala-ikony));
+}
+/* Stan drogi — przypis pod nazwą. Krój maszynowy, bo to wartość odczytana,
+   a nie zdanie: „aktywna" / „nieaktywna" stoją zawsze w tym samym miejscu. */
+.dn-kafel-stan {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
 /* ==========================================================================
    GROT WEJŚCIA — znak marki jako czynność „wejdź"
    --------------------------------------------------------------------------

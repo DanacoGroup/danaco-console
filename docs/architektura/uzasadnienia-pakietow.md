@@ -6240,3 +6240,43 @@ Wpięcie rozpoznania wystawienia przy samym otwarciu gniazda sieciowego byłoby 
 adresNasluchu wołana jest kilka razy i ostrzeżenie by się dublowało; ostrzeżenie idzie po ustaleniu
 dziennika, żeby brak dziennika kierował je do kosza, a nie gubił wywołania. Kto chce wystawienia
 szerszego, mówi to wprost jednym z dwóch pól ustawień.
+
+## budowa/server/internal/transport/wystawienie.go
+
+Cztery decyzje rdzenia były rozsądne osobno, dopóki nasłuch nie wychodził poza pętlę zwrotną: nasłuch
+pusty oznaczał wszystkie interfejsy, uwierzytelnianie celowo nie działało, wzorce pochodzenia otwarte
+nie sprawdzały niczego, a warstwa TLS nie istniała. Trzy z nich są już zdjęte: adres pusty znaczy pętlę
+zwrotną, pochodzenie jest sprawdzane wykazem wzorców, a warstwa TLS włącza się parą plików wskazaną
+przełącznikiem albo zmienną środowiska. Czwartą, brak uwierzytelniania, wygasza straż bramki: poza
+pętlą zwrotną gniazdo wykonuje wyłącznie powitanie, logowanie i rejestrację, dopóki nie przedstawi
+tokenu sesji, a na pętli zwrotnej straż nie istnieje. Ostrzeżenie zostaje, ale mówi o stanie bieżącym:
+składa się z tego, co naprawdę zastane w nastawach, nie z braków, których już nie ma. Ten plik nie
+zatrzymuje startu — rdzeń ma wstać i działać, tylko ma powiedzieć głośno, na czym staje.
+
+Linia ostrzeżenia wystawienia mówi stan faktyczny: co od tej chwili obowiązuje i co nadal zostaje na
+operatorze maszyny. Nie jest to już ostrzeżenie o braku bramki, bo bramka jest, lecz zawiadomienie
+o zmianie zachowania rdzenia — nic istotnego nie dzieje się po cichu.
+
+Bez warstwy szyfrowanej zdanie ostrzeżenia jest mocniejsze: token sesji jedzie tym łączem przy każdym
+powitaniu, a otwartym tekstem jedzie w postaci czytelnej dla każdego po drodze. Warstwa szyfrowana nie
+rozstrzyga, kto się łączy, od tego jest bramka, ale bez niej bramka broni wejścia, którego klucz leci
+obok, na wierzchu.
+
+Pusty adres nasłuchu to nie pętla zwrotna: otwarcie gniazda z pustym hostem wiąże wszystkie interfejsy,
+zarówno IPv4, jak i IPv6, więc pusty adres jest najszerszym z możliwych wystawień, nie najwęższym. To
+samo dotyczy zapisanych wprost adresów wszystkich interfejsów w obu wersjach protokołu. IPv4 i IPv6 idą
+jedną drogą sprawdzania pętli zwrotnej, obejmującą całą sieć adresów lokalnych oraz ich zagnieżdżoną
+postać w IPv6; identyfikator strefy adresu łączowego odcinamy przed rozbiorem, bo rozbiór go nie
+przyjmuje, a bez odcięcia adres łączowy zostałby wzięty za nazwę. Nazwa, która nie jest adresem, jest
+traktowana jako wystawienie, nie jako pętla zwrotna — jedynym wyjątkiem jest nazwa localhost i nazwy
+w jej domenie, których rozwiązanie na pętlę zwrotną gwarantuje odpowiednia norma internetowa. Rdzeń nie
+pyta o to systemu nazw, ponieważ odpytanie DNS przy starcie wstrzymywałoby start, a ostrzeżenie ma być
+tanie i pewne; wynik z tego jest asymetryczny celowo — przy wątpliwości ostrzeżenie pada, bo ostrzeżenie
+zbędne kosztuje linię dziennika, a ostrzeżenie pominięte kosztuje wystawiony rdzeń.
+
+Funkcja ostrzezJezeliWystawiony nic nie zwraca i nic nie zatrzymuje — jedynym skutkiem jest linia
+w dzienniku, ponieważ brak zabezpieczenia nie wstrzymuje startu i nic istotnego nie dzieje się po cichu.
+Operator ma prawo zdjąć dźwignię wymogu logowania, bo to jego maszyna i jego rozstrzygnięcie, ale nie ma
+prawa zrobić tego po cichu: nieuwierzytelnione połączenie sięga po hosty zdalne, czyli po zdalny serwer
+i komputer w biurze, więc linia ostrzeżenia idzie zamiast zawiadomienia zwykłego, bo mówi o tym samym
+nasłuchu rzecz ważniejszą.

@@ -5956,3 +5956,38 @@ tury i wypowiedzi, a komenda wykazu modeli sam skład — żadnej z nich moduł 
 więc okno otwarte w trakcie debaty zna wyłącznie to, co usłyszało od swojego otwarcia. Dotyczy to
 każdego okna modułu naraz, dlatego zdanie stoi na pasie, a nie w jednym z nich. Pas niczego nie
 blokuje i niczego nie ocenia — podaje liczby i nazywa granicę.
+
+## budowa/klient-poprzedni/src/powloka/wedrowka-kart.ts
+Jedna odpowiedzialność: przełożenie klawisza na czynność pasa. Strzałki przenoszą wybór z zawijaniem,
+Home i End skaczą na krańce, Enter i spacja wybierają kartę pod fokusem, Delete ją zamyka. Plik nie
+wie, co wybór i zamknięcie znaczą: w pasie związanym z rdzeniem obie czynności są komendami
+kontraktu, w pasie samego widoku — zmianą miejscową. Rozstrzyga to moduł kart sesji, który podaje tu
+czynności.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-uwierzytelnianie.ts
+Dwóch komend rodziny tu nie ma: rejestracja odmawia trwale po pierwszym uruchomieniu, a logowanie jest
+samą bramką — obie należą do ekranu logowania. Wykaz metod przychodzi z czynności albo ze zdarzenia,
+nie z odczytu: kontrakt nie ma komendy odczytu metod, ma za to zdarzenie zmiany bramki z pełnym wykazem
+metod po zmianie; sekcja je subskrybuje, więc wykaz nadąża także za czynnością wykonaną w drugim oknie
+albo na drugim urządzeniu. Nie obejmuje to pierwszego otwarcia: zanim zajdzie jakakolwiek zmiana, nie ma
+czego rozgłosić i wykaz jest pusty — sekcja mówi to wprost, zamiast pokazywać pustkę, którą dałoby się
+odczytać jako brak metod. Metoda systemowa jest nieczynna; zdanie na ekranie cytuje odmowę rdzenia co do
+słowa, żeby powód na ekranie i powód w odmowie nie mówiły dwóch rzeczy o tej samej niedostępności. Wymóg
+logowania jest tu pokazywany, ale zmienia się go w oknie konfiguracji.
+
+## budowa/klient-poprzedni/src/moduly/workspace/pamiec-kontekstu.ts
+Pamięć jest odrębna dla projektu, a zakresem współdzielenia jest poziom zasięgu wpisu: zapis
+szerszy niż projekt wchodzi do pamięci innych projektów po włączeniu ustaleń wspólnych. Wpis
+o pochodzeniu model jest propozycją czekającą na decyzję: przyjęcie zapisuje ten sam wpis
+z pochodzeniem operator, a odrzucenie usuwa go komendą usunięcia wpisu pamięci. Zmienia się
+kolejność prezentacji zasięgów, nie nastawa: nazwy poziomów są w całym module jedne.
+Trzy kontrolki paska narzędzi nie zmieniają pamięci projektu, tylko zawężają wykaz już odczytany.
+Pamięć karty sesji prowadzi osobna rodzina komend, oddzielona od pamięci projektu, żeby mieszanie
+obu wykazów nie zatarło, który wpis czyją własnością jest. Wpis zapisany w zasięgu szerszym niż
+projekt bywa niewidoczny w wykazie poniżej, bo wykaz pokazuje wspólne dopiero po włączeniu
+przełącznika. Rdzeń odmawia usunięcia wpisu, którego nie ma, i okno pokazuje tę odmowę wprost.
+Zapis scali dołączoną treść w jeden wpis; wpis źródłowy zostaje w pamięci projektu, dopóki nie
+usunie się go osobnym przyciskiem, a przycisk bierze powód z rdzenia, więc kopia w innym miejscu
+mogłaby się rozjechać. Przy zapytaniu w drodze rysowanie pokazywałoby wykaz sprzed zmiany;
+plakietka mówi, ile wpisów rdzeń oddał i ile z nich przeszło przez filtr, bez drugiej liczby
+wykaz zawężony wyglądałby jak pamięć uboższa, niż jest.

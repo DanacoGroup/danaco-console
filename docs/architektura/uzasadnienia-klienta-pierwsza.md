@@ -7803,3 +7803,27 @@ Kafelek stanu platformy woła `mobile.status.get` i pokazuje odpowiedź rdzenia 
 Warstwy okna nie są trzema źródłami prawdy: wszystkie czytają ten sam rejestr telemetrii procesów, z którego czyta `monitor.status`. Różnią się drogą i tym, co potrafią — obraz interwencji rozstrzyga, wykaz procesów steruje.
 
 Trzecia warstwa okna czyta inną rodzinę komend niż obraz interwencji i niesie to, czego obraz nie ma — sterowanie procesem. Odmowa jednej warstwy nie gasi pozostałych dwóch. Kafelek stanu platformy, obraz interwencji i wykaz procesów mówią o tym samym rdzeniu trzema różnymi rodzinami komend.
+
+## budowa/klient-poprzedni/src/moduly/design/okno-prompt-builder.ts
+Pola strukturalne mieszkają w modalu, bo klasa okna kreatora żąda nośnika modalnego w stanie
+zamkniętym; sekcja okna zostaje widoczna zawsze, bo jest jednym z okien operacyjnych modułu.
+Przycisk generowania stoi w obu miejscach i prowadzi do tej samej czynności.
+
+Generowanie kończy się jedną z dwóch dróg i okno obsługuje obie. Rdzeń wysyła polecenie kanałem
+obrazowym, odbiera fragment obrazu, odkłada bajty w magazynie pod sumą kontrolną, mierzy format
+i wymiary z nagłówka utrwalonego pliku i zakłada wiersz zasobu — odpowiedź udana niesie zasoby
+z treścią. Odmowa przychodzi przy braku kanału obrazowego w rejestrze, kanale nieczynnym, kanale
+tekstowym, braku poświadczenia albo odpowiedzi bez obrazu; niesie wtedy gotową treść polecenia,
+więc okno pokazuje odmowę wraz z oddanym tekstem — złożenie promptu odbyło się także wtedy.
+
+Odpowiedź udanego generowania ma w kontrakcie pole identyfikatora procesu, którego rdzeń nie
+wypełnia, a zdarzenia postępu nie przychodzą. Bez tego pola pasek postępu jest więc wyciszany,
+zamiast stać na „zlecenie przyjęte" po pracy już zakończonej.
+
+Panel oddaje prompt z powrotem w pola kreatora, więc szablon da się użyć, a nie tylko obejrzeć.
+
+Cisza kanału nie jest odmową generowania: rdzeń mógł zlecenie odebrać i wykonać, więc pasek
+postępu milknie, a zdanie mówi o skutku nieznanym, nie o niepowodzeniu.
+
+Odmowa wskazania (bez okna, bez tematu) różni się od odmowy braku silnika tym, że tam składać
+nie było czego — złożenie promptu jeszcze się nie odbyło.

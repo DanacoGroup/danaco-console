@@ -8331,3 +8331,8 @@ Katalog rodzajów sugestii stoi w powierzchni interakcji na stałe, a nie przy
 pozycji, właśnie dlatego, że pozycji nie da się do rodzaju przypisać: kontrakt
 nie niesie tego pola. Operator widzi więc, jakie rodzaje funkcja zna i jakie
 działania każdy niesie, i widzi zarazem, dlaczego przy pozycji rodzaju nie ma.
+## budowa/klient-poprzedni/src/moduly/agents/drzewo-narzedzi.ts
+Komponent jest sterem, nie wyświetlaczem: etykieta uchwytu niesie wskazany kod, kliknięcie rozwija wybór, wybór zmienia nastawę. Nastawa jest jedna i dzieli ją z polem otwartym Skills Managera — wpisanie kodu ręcznie przestawia uchwyt, wskazanie w drzewie wypełnia pole. Pole otwarte zostaje obok drzewa, ponieważ lista umiejętności w kontrakcie jest listą napisów bez narzuconego słownika, a serwer narzędzi rozpoznaje też kody, których katalog kontraktu nie zna. Liście są dwojakie: pierwszy liść każdej gałęzi wskazuje cały obszar jednym kodem, pozostałe — pojedyncze narzędzia. Obszar jest jednostką doboru, bo pozycji jest ponad dwieście. Gałąź zwinięta nie jest brakiem: widoczne są nazwy obszarów wraz z liczbą narzędzi, a pozycje odsłania dopiero wejście w obszar.
+
+## budowa/klient-poprzedni/src/moduly/agents/drzewo-narzedzi.ts (budowa drzewa)
+Znacznik przypisania znakuje pozycje, które ekspert już ma, i idzie zdaniem w opisie, a nie samym wskaźnikiem wyboru: wskaźnik wyboru niesie nastawę tej kontrolki, a przypisanie jest czymś innym — stanem eksperta. Zlanie obu w jeden znacznik kazałoby uchwytowi pokazywać naraz kilkanaście wartości, czyli przestać być sterem nastawy.

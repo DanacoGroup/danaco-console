@@ -397,11 +397,18 @@ func TestWyciagnijTekstOdmawiaJezykaNieniesionegoPrzezTesseracta(t *testing.T) {
 
 // TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera pilnuje, żeby brak
 // programu na maszynie dał odmowę nazwaną, nie cichy odczyt bez obróbki.
+// Brak jest wymuszony nastawą programu, nie stanem maszyny — inaczej ten
+// sprawdzian pomijałby się wszędzie tam, gdzie unpaper akurat stoi, czyli
+// na każdej maszynie drabiny weryfikacji.
 func TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera(t *testing.T) {
-	if zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
-		t.Skip("pomiar niewykonany: unpaper jest na tej maszynie, sprawdzian mierzy jego brak")
-	}
 	pomijBezProgramu(t, "ImageMagick", "magick")
+
+	zastane := narzedzieCzyszczeniaSkanu
+	narzedzieCzyszczeniaSkanu = zewnetrzne.Narzedzie{
+		Nazwa: zastane.Nazwa, Program: "danaco-unpaper-ktorego-nie-ma", Pakiet: zastane.Pakiet,
+	}
+	t.Cleanup(func() { narzedzieCzyszczeniaSkanu = zastane })
+
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
 	sciezka := skanPochylony(t, "MATERIAL")

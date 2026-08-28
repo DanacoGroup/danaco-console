@@ -1013,7 +1013,10 @@
 .dn-szyna-poz--modul svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 .dn-szyna-poz--modul[aria-current='true'] {
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
 }
 
 /* Grupa modułów rozwijana pod środowiskiem. */

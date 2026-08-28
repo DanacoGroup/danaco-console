@@ -1058,7 +1058,10 @@ th.dn-tabela-liczba { text-align: right; }
 .dn-zakladki--wybor .dn-zakladka[aria-selected='true']:hover,
 .dn-zakladki--wybor .dn-zakladka[aria-checked='true']:hover {
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
 }
 .dn-zakladki--wybor .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
 
@@ -2272,7 +2275,10 @@ label.dn-pasek-szukaj:focus-within {
 .dn-karta-srodowiska:hover .dn-btn {
   border-color: var(--dn-sygnal-wypelnienie);
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie --dn-tekst-inv: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu stoi
+     przy .dn-btn--sygnal. */
+  color: var(--dn-szary-0);
   box-shadow: var(--dn-poswiata-sygnal);
 }
 

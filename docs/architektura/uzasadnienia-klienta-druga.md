@@ -6584,3 +6584,10 @@ segmentem, ani czynnym, ani wyszarzonym: odmawia z powodu pochodzenia dokumentu,
 pod domeną po szyfrowanym połączeniu, nie dopisaniem kodu; zdanie o przyczynie stoi w sekcji
 uwierzytelniania okna ustawień, gdzie metoda się zakłada. Znak marki bierze się z osobnego elementu
 godła, a nie z gołego nagłówka tekstowego.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/podmenu-widoku-zapisu.ts
+Podmenu kosztuje kliknięcie i drugi poziom wędrówki ognisk, więc pozostałe
+czynności sekcji zostają płaskie. Bez portu widoku sekcja czynności jest
+krótsza o tę pozycję — nie ma wiersza wygaszonego ani strzałki do pustki.
+Tryb bieżący nosi ptaszek, a wybór jest jednokrotny, więc rola wiersza jest
+rolą przycisku radiowego menu, nie pola wyboru.

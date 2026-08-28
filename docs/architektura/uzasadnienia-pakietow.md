@@ -6090,3 +6090,10 @@ na ekranie.
 ## budowa/server/internal/session/identyfikator.go
 Jedna sesja prowadzi wiele okien i wiele procesów biegnących równolegle,
 każde z własnym kanałem modelu i własnym katalogiem roboczym.
+
+## budowa/server/internal/dane/design_komponenty.go
+
+Instancja komponentu wskazuje warstwę identyfikatorem zewnętrznym, który przeżywa zapis
+planszy. Liczba instancji przy komponencie jest liczona w bazie przy odczycie, nie
+przechowywana obok jako osobna wartość: licznik trzymany osobno rozjeżdżałby się
+z rzeczywistością przy pierwszym usunięciu wiersza, o którym nikt licznika nie powiadomił.

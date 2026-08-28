@@ -6854,3 +6854,19 @@ odliczający rozjechałby się z transportem przy próbie podjętej wcześniej.
 Znaczenie stanu niesie i tak napis, nie sam ruch spinnera. Scena bez
 transportu, jak podgląd układu, nie zna łącza w ogóle, więc brak odczytu i
 brak łącza to dwie różne rzeczy nazwane osobno.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/widok-panelu-debaty.ts
+Panel stoi w stosie paneli pomocniczych, węższym niż okno operacyjne modułu. Stąd nagłówek gęsty
+(wiersz o turze, wiersz o składzie), tożsamość przy każdym głosie w całości oraz rozróżnienie
+sąsiadów wstęgą w wariancie motywu, a nie własną paletą modułu. Tożsamość idzie po identyfikatorze
+uczestnika, nie po identyfikatorze kanału: kontrakt przy dodaniu modelu dopuszcza dwa wystąpienia
+tego samego kanału pod odrębnymi tożsamościami, a wykaz po kanale podpisałby zdania cudzą nazwą.
+Głos ma trzy stany i każdy dostaje inne zdanie: nie zabrany, rosnący na żywo, domknięty. Wypowiedź
+utrwalona przez rdzeń i wypowiedź rosnąca ze strumienia to ta sama treść w dwóch chwilach, więc
+panel pokazuje świeższą z nich i mówi, którą pokazuje. Widok nie woła rdzenia, nie subskrybuje
+niczego i nie trzyma stanu — stan debaty, gromadzenie strumienia i nośnik treści bierze
+parametrem. Stała moderatora i zdanie o mówcy nieznanym idą z pliku czytelności głosów: uczestnik
+nieznany nie może dostać podpisu moderatora, bo panel otwarty w trakcie debaty nie zna wszystkich
+tożsamości, odczytu składu jeszcze nie wywołuje. Fragment strumienia niesie identyfikator
+wiadomości, a nie identyfikator uczestnika, więc fragment o identyfikatorze nieznanym ani
+składowi, ani wykazowi wypowiedzi tury jest treścią bez ustalonego mówcy — panel mówi to wprost.

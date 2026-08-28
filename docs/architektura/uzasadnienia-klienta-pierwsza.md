@@ -7168,3 +7168,15 @@ Plik odpowiada wyłącznie za to, co moduł wie i jak ta wiedza zmienia się po 
 
 ## budowa/klient-poprzedni/src/moduly/browser/warstwa-adnotacji.ts — bufor płótna i spłaszczenie
 Element schowany mierzy zero i dałby płótno o boku jednego piksela, dlatego bufor dostaje rozmiar dopiero, gdy warstwa jest widoczna. Płótno bez rasteryzacji oddaje pusty napis przy spłaszczeniu, więc sprawdzenie stoi przed wysyłką załącznika.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/tryby-wspolpracy.ts
+Tryb mówi wyłącznie, który wykonawca dostaje zlecenie i co do niego jedzie;
+automatyczne podawanie wyniku dalej po każdej turze byłoby drugim silnikiem
+pętli obok pętli sesji w rdzeniu, więc moduł go nie buduje. Rdzeń nie
+rejestruje komendy aktualizacji roli, więc profil roli po jego stronie się
+nie zmienia. Selektor trybu stoi w oknie koordynatora i w obu oknach
+wykonawców, a zapis jest jeden i ten sam, więc mieszka w tym pliku. Zapis
+klucza trybu współpracy kończy się odmową walidacji, bo klucz leży poza
+katalogiem ustawień, i odmowa cofa widok do wartości poprzedniej, a zdanie
+mówi wprost, że zapisu nie ma. Rdzeń oddaje zapisany wpis, więc to jego
+wartość mówi, co stoi w konfiguracji okna koordynatora.

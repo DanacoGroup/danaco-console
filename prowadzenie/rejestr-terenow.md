@@ -6,6 +6,82 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### narzedzia-obszarow-zerowych
+
+| | |
+|---|---|
+| **Galaz** | `teren/narzedzia-obszarow-zerowych` z `main` |
+| **Drzewo** | `~/robocze/narzedzia-obszarow-zerowych` |
+| **Wykaz plikow** | `budowa/shared/contract.json`; wytwory `budowa/shared/contract.go` i `budowa/shared/contract.ts` WYLACZNIE z generatora |
+| **Poza terenem** | rdzen, klient, migracje, `design/`, `prowadzenie/` |
+
+**Podstawa.** Rozstrzygniecie 20 rejestru decyzji. Kontrakt zapisuje kryterium
+wystawiania komend kanalowi modelu; implementacja od niego odstaje o 716 komend,
+a 13 obszarow nie ma ANI JEDNEGO narzedzia — model nie siegnie tam wcale.
+Ten teren zamyka etap pierwszy: obszary zerowe.
+
+**Zadanie.** Dopisac do `narzedzia.pozycje` w `contract.json` DOKLADNIE ponizsze
+32 pozycje, ani jednej wiecej:
+
+1. `mobile.status.get`
+2. `mobile.process.list`
+3. `mobile.process.control`
+4. `device.list`
+5. `retention.set`
+6. `clipboard.list`
+7. `clipboard.push`
+8. `clipboard.pin`
+9. `clipboard.delete`
+10. `snippet.list`
+11. `snippet.set`
+12. `snippet.delete`
+13. `launcher.hotkey.get`
+14. `launcher.hotkey.set`
+15. `provenance.call.list`
+16. `provenance.call.get`
+17. `provenance.call.replay`
+18. `provenance.call.rate`
+19. `provenance.trace.export`
+20. `usage.summary.get`
+21. `usage.report.build`
+22. `alert.rule.save`
+23. `alert.rule.list`
+24. `alert.rule.remove`
+25. `alert.trigger.list`
+26. `alert.trigger.acknowledge`
+27. `health.probe.save`
+28. `health.probe.list`
+29. `health.probe.remove`
+30. `health.probe.run`
+31. `health.result.list`
+32. `health.uptime.get`
+
+Kazda pozycja niesie dwa pola: `komenda` i `zastosowanie`. Zdanie `zastosowanie`
+mowi modelowi, KIEDY siegnac po narzedzie, i powstaje z opisu komendy stojacego
+w kontrakcie — nie z domyslu. Deklaracja NIE powiela ksztaltu zadania.
+
+**Czego wystawic NIE WOLNO** — te komendy sa objete wyjatkiem zapisanym
+w `narzedzia.opis` i ich pominiecie jest zgodne z zasada, nie brakiem:
+`connection.hello`, wszystkie dziewiec `auth.*`, `device.revoke` (uniewaznienie
+dostepu urzadzenia to zapis do punktu dostepu), `model.channel.set` (podmiana
+kanalu obslugujacego okno to zmiana wlasnego dostepu modelu).
+Wystawienie ktorejkolwiek z nich jest zwrotem terenu.
+
+**Kryteria odbioru.**
+1. `narzedzia.pozycje` ma 372 pozycje (340 + 32). Ani jedna nie wskazuje komendy
+   nieistniejacej, ani jedna nie powtarza komendy juz wystawionej, ani jedna nie
+   ma pustego `zastosowanie`. Sprawdzone przeliczeniem, nie oszacowaniem.
+2. Zadna z komend objetych wyjatkiem nie zostala wystawiona. Wypisz je i pokaz brak.
+3. `contract.go` i `contract.ts` powstaly GENERATOREM (`budowa/shared/gen/`),
+   nie recznie. Plik generowany edytowany recznie jest zwrotem terenu.
+4. `bash narzedzia/drabina.sh szybka` przechodzi, w tym szczebel swiezosci wytworow.
+5. Sprawdziany zgodnosci kontraktu w rdzeniu przechodza:
+   `go test -run Kontrakt ./internal/core/`.
+6. Zdanie `zastosowanie` kazdej nowej pozycji jest po polsku, bez ogonkow tam,
+   gdzie sasiednie pozycje ich nie maja — sprawdz ksztalt pozycji juz stojacych
+   i powtorz go, zamiast wprowadzac drugi styl.
+
+
 ### straznik-zapory-designu
 
 | | |

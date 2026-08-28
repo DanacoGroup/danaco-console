@@ -5991,3 +5991,18 @@ usunie się go osobnym przyciskiem, a przycisk bierze powód z rdzenia, więc ko
 mogłaby się rozjechać. Przy zapytaniu w drodze rysowanie pokazywałoby wykaz sprzed zmiany;
 plakietka mówi, ile wpisów rdzeń oddał i ile z nich przeszło przez filtr, bez drugiej liczby
 wykaz zawężony wyglądałby jak pamięć uboższa, niż jest.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-preview-window.ts
+Podgląd dokumentu przestał być osobnym oknem: jest trybem widoku okna pracy z dokumentem, bo
+pokazywał tę samą treść co edytor, tylko w formacie wyjściowym, a jego trzy czynności poszły tam
+wraz z nim bez przepisania — wydanie i przekazanie do Library dalej idą przez czynności podglądu,
+a decyzja o wyniku przez decyzję o propozycji. Definicja okna w katalogu rdzenia jest jedna
+i miała dwa przypięcia; zostało przypięcie modułu Design, więc rozróżnik wariantu niesie dziś
+jedną wartość, ale zostaje jawny, bo drugie przypięcie może wrócić i wtedy ma się rozejść polem,
+nie odpisem pliku. Wariant Designu podgląda zasób wizualny: rdzeń nie generuje obrazów, więc
+zasób wraca bez adresu, formatu i wymiarów, a podgląd pokazuje nazwę zasobu, wykaz pól wraz z
+tymi, których rdzeń nie podał, oraz porównanie wariantów po treści słownej, nie po obrazie.
+Przekazanie potwierdza się modułem z pola odpowiedzi, bo samo przekazanie kontekstu nie sprawdza
+katalogu modułów, a kod modułu docelowego jest zamówieniem, nie potwierdzeniem. Eksport zasobu
+i akceptacja wyniku nie mają odpowiednika w kontrakcie i stoją jako nazwane braki drogi, nie jako
+martwe przyciski.

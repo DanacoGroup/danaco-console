@@ -6603,3 +6603,6 @@ pamięta odczyt, żeby nie pytać rdzenia przy każdym przerysowaniu, ale nigdy 
 swojemu i nie zgaduje wartości domyślnych: brak odczytu znaczy „nie wiem", a nie „wyłączone".
 Stan początkowy okna jest zamknięty, żeby dokument miał całą szerokość, dopóki operator nie
 poprosi o pętlę.
+
+## budowa/klient-poprzedni/src/powloka/brak-wynikow.ts
+Cztery przypadki niosą cztery różne zdania: wykaz naprawdę pusty, pozycje przycięte filtrem, rdzeń jeszcze nie odpowiedział, rdzeń odpowiedział odmową. „Brak sesji” powiedziane w przypadku oczekiwania na odpowiedź byłoby nieprawdą o stanie rdzenia, bo cisza nie jest orzeczeniem, a w przypadku przyciętego filtra byłoby nieprawdą o danych, bo dane są, tylko zasłonił je filtr, który da się zdjąć. Trzy pierwsze zdania mają jeden kształt — co, dlaczego, czym to zmienić — a czwarte go nie ma, bo treść odmowy należy do rdzenia i idzie dosłownie, więc parafraza odmowy byłaby atrapą odmowy. Nośnik nie zna wykazu, nad którym stoi, nie pyta rdzenia i nie rozstrzyga, który przypadek zachodzi — wie to wyłącznie wołający.

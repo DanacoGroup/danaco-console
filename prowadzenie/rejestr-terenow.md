@@ -399,8 +399,13 @@ zdolnosciach:
 DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...
 ```
 
-Do rozstrzygniecia: czy bieg kontrolny ma te zmienna ustawiac z urzedu, czy
-pominiecie ma wywracac bieg na maszynie, ktora wagi ma.
+**Rozstrzygniete 28.08 przez prowadzenie: sprawdzian bierze wagi z katalogu
+wdrozeniowego, gdy zmienna milczy.** Ustawianie zmiennej z urzedu ukrywaloby
+zaleznosc, a wywracanie biegu psuloby maszyny, ktore wag nie maja. Gdy zmienna
+nie wskazuje niczego, a `/opt/danaco-modele` istnieje, sprawdzian bierze wagi
+stamtad; pominiecie zostaje wylacznie dla maszyny bez wag i nazywa oba braki.
+Zmierzone po zmianie: bieg BEZ zmiennej trwa 86,5 s i daje ZERO pominiec —
+wczesniej pomijal sie natychmiast.
 
 
 ### Droga wejscia nie ma dokad prowadzic

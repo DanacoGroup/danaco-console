@@ -6206,3 +6206,37 @@ limitu, ani liczby całkowitej liczonej osobno od długości wykazu — liczba o
 liczbą zwróconych kompozycji, więc przycięcie wykazu tutaj rozjechałoby obie liczby naraz.
 Okno puste oddaje wykaz pusty, nie wszystkie kompozycje: brak wskazania okna sprawdza
 wołający, a zapytanie i tak porównuje kolumnę z pustym tekstem, którego żadne okno nie nosi.
+
+## budowa/server/internal/transport/ustawienia.go
+
+Pojemność kolejki domyślna to liczba komunikatów oczekujących na zapis do jednego gniazda; bufor chroni
+rdzeń przed zablokowaniem na wolnym urządzeniu, a przepełnienie kończy pojedynczą wysyłkę, nie całą
+sesję. Konto domyślne obowiązuje, dopóki urządzenie nie wskaże konta, ponieważ uwierzytelnianie jest
+jedyną kontrolą dostępu i w fazie budowy nie działa, więc brak konta nie może wstrzymać połączenia.
+Nagłówek konta jest nagłówkową postacią parametru konta, dla klientów, które nie mogą dopisać parametru
+do adresu. Wyjście poza pętlę zwrotną jest osiągalne jednym polem i nadal ostrzega w dzienniku; stała
+adresu domyślnego jest wewnętrzna, ponieważ wołający wskazują adres wprost, nie sięgają po wartość
+domyślną.
+
+Pole Adres rdzenia zmienia umiejscowienie w czasie, więc droga do wystawienia zostaje otwarta —
+zmienia się wyłącznie to, co dzieje się bez jawnego wskazania. Pole WszystkieInterfejsy jest osobnym
+polem, a nie pustym napisem, ponieważ brak wskazania i chęć wystawienia wszędzie to dwa różne zdania,
+mające wyglądać różnie w miejscu wywołania. Pusty wykaz pochodzeń dozwolonych bierze pochodzenia
+własne opisane w warstwie nawiązania połączenia.
+
+Pole WymogLogowania ma trzy stany, nie dwa, dlatego jest wskaźnikiem: brak wskazania oddaje
+rozstrzygnięcie adresowi nasłuchu, czyli bez wymogu na pętli zwrotnej i z wymogiem przy nasłuchu
+szerszym; wartość prawda włącza wymóg także na pętli zwrotnej; wartość fałsz znosi wymóg także przy
+nasłuchu szerszym, co jest dozwolone, ale nigdy ciche, bo dziennik mówi o tym wprost, kiedy maszyny
+operatora stoją otworem przez tor zdalny. Wartość logiczna zamiast wskaźnika kasowałaby różnicę między
+brakiem wskazania a jawnym wskazaniem odmowy, a to jest tu cała różnica.
+
+Brak obu plików pary TLS zostawia otwarty tekst i, poza pętlą zwrotną, ostrzeżenie w dzienniku.
+Wskazanie tylko jednego z dwóch plików jest błędem konfiguracji i zatrzymuje start, ponieważ cicha
+praca otwartym tekstem przy wskazanym certyfikacie byłaby najgorszym z możliwych wyników. Wartość
+ujemna portu nie występuje, bo konfiguracja sprawdza jej zakres wcześniej.
+
+Wpięcie rozpoznania wystawienia przy samym otwarciu gniazda sieciowego byłoby bliżej faktu, ale metoda
+adresNasluchu wołana jest kilka razy i ostrzeżenie by się dublowało; ostrzeżenie idzie po ustaleniu
+dziennika, żeby brak dziennika kierował je do kosza, a nie gubił wywołania. Kto chce wystawienia
+szerszego, mówi to wprost jednym z dwóch pól ustawień.

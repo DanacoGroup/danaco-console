@@ -3,7 +3,7 @@ import { utworzMagistrale, type Magistrala, type Odsubskrybuj } from './magistra
 import { wykladniczePonawianie, type PolitykaPonawiania } from './ponawianie';
 import type { StanPolaczenia } from './stan-polaczenia';
 
-/** Transport ramek tekstowych do rdzenia. */
+/** Transport ramek tekstowych do rdzenia, ukrywający przed wywołującym szczegóły protokołu połączenia sieciowego. */
 export interface Transport {
   /** Rozpoczyna łączenie i utrzymuje je przez ponawianie. */
   polacz(): void;
@@ -19,7 +19,7 @@ export interface Transport {
   oczekujace(): number;
 }
 
-/** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek. */
+/** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek wychodzących na czas przerwy w łączności z rdzeniem. */
 class Gniazdo implements Transport {
   private readonly ramki: Magistrala<string> = utworzMagistrale<string>();
   private readonly stany: Magistrala<StanPolaczenia> = utworzMagistrale<StanPolaczenia>();

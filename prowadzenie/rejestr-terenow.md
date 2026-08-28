@@ -6,6 +6,51 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### okno-studia-w-kliencie
+
+| | |
+|---|---|
+| **Galaz** | `teren/okno-studia` z `teren/rama-aplikacji` — nie z `main`, bo okno wchodzi W RAME, a rama nie jest jeszcze scalona |
+| **Drzewo** | `~/robocze/okno-studia` |
+| **Wykaz plikow** | `budowa/klient/src/moduly/studio/` (nowy katalog) wraz z tresciami; `budowa/klient/src/rama/montaz.ts` i `skladniki/szyna.ts` wylacznie w zakresie otwierania okna modulu; `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia arkusza okna; `budowa/klient/package.json` |
+| **Poza terenem** | `src/wejscie/`, `polaczenie/`, `protokol/`; rdzen; kontrakt; `design/`; `prowadzenie/` |
+
+**Przedmiot — brakujace ogniwo ciagu.** Wlasciciel zada pelnego ciagu od instalacji
+do okna Studio, dzialajacego od konca do konca. Zmierzony stan ogniw:
+
+| Ogniwo | Stan |
+|---|---|
+| instalator Windows | wytworzony, pakiet NSIS stoi |
+| droga wejscia w kliencie | 8 plikow, dziala |
+| rama aplikacji | 9 plikow, na galezi `teren/rama-aplikacji` |
+| **okno Studio w kliencie** | **NIE ISTNIEJE — `src/moduly/` ma zero plikow** |
+
+Do tego szyna nawigacji ramy dzis **nie otwiera okna modulu** — klikniecie zmienia
+wylacznie tytul belki. Poprzedni wykonawca nazwal to wprost i slusznie zostawil,
+bo mial to poza terenem. Teraz to jest przedmiot.
+
+**Skad bierzesz ksztalt okna — i czego NIE ROBISZ.** Kompozycja okna Studio nalezy do
+Wlasciciela i stoi w przyjetym prototypie `design/05-okna/moduly/studio.html`.
+Czytasz go jako WZORZEC ukladu i nazw klas. **Nie proponujesz wlasnego ukladu, nie
+dokladasz stref, nie zmieniasz kompozycji.** Gdy prototyp milczy o czyms, czego kod
+potrzebuje, wybierasz rozwiazanie najblizsze temu, co juz stoi w `src/wejscie/`
+i `src/rama/`, i nazywasz to w rozstrzygnieciach.
+
+**Kryteria odbioru — wszystkie sprawdzalne uruchomieniem okna, nie sprawdzianem.**
+1. Klikniecie pozycji Studio w szynie nawigacji OTWIERA okno Studia w obszarze roboczym
+   ramy. Powrot do innego modulu zdejmuje je.
+2. Okno pokazuje DANE Z RDZENIA, nie tresc wymyslona. Rdzen niesie komendy `studio.*` —
+   przekroj od komendy do zapisu w SQLite zostal sprawdzony dzialaniem. Wybierasz komende,
+   ktora daje sie pokazac na wejsciu (wykaz materialu albo wykaz urzadzen), wolasz ja
+   przez warstwe `protokol/` tak, jak robi to droga wejscia, i pokazujesz odpowiedz.
+3. Odmowa rdzenia jest POKAZANA Operatorowi, nie polkniete. Puste dane to nie to samo
+   co odmowa i okno ma je rozrozniac.
+4. Zero lancuchow widocznych dla Operatora poza katalogiem tresci — ten klient juz tego
+   pilnuje i katalog `rama/` pokazuje wzorzec.
+5. Barwy, odstepy i pismo wylacznie z zetonow warstwy projektowej.
+6. `npm run typy` i `npm run budowanie` przechodza.
+
+
 ### wpiecie-analizy-typescriptu
 
 | | |

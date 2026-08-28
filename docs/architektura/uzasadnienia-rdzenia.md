@@ -7212,3 +7212,15 @@ PrzypiszProjekt obsługuje jedną komendą oba warianty żądania — przeniesie
 istniejącego projektu oraz przeniesienie z założeniem nowego — ponieważ z punktu
 widzenia historii to ten sam gest: wskazanie, dokąd sesja ma odtąd należeć.
 Rozróżnia je wyłącznie to, czy podano istniejący kod projektu, czy nazwę nowego.
+
+## budowa/server/internal/core/adapter_sesje_usuwanie.go
+Usun jest jedyną drogą utraty danych sesji w produkcie: znacznik kosza zdejmuje
+sesję z historii od ręki, a trwałe czyszczenie startowe po terminie kosza kasuje
+zapis fizycznie — to druga faza tego samego usuwania, nie nowa droga utraty.
+Pomyłkę naprawia odwracalność, nie bramka potwierdzenia: w oknie terminu sesja
+wraca w całości komendą session.restore. Zamknięcie okna i zamknięcie sesji
+zmieniają wyłącznie stan — wiadomości, okna, artefakty i katalog roboczy
+zostają nietknięte. Wskazań może być wiele, bo usunięcie zaznaczonych i
+usunięcie jednej to w historii sesji ten sam gest; wskazanie bez odpowiednika
+nie jest błędem i wraca w polu missingIds, ponieważ usuwanie zbiorcze nie może
+paść przez jedną pozycję usuniętą wcześniej z drugiego okna.

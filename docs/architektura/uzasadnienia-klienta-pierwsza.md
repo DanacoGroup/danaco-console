@@ -6939,3 +6939,10 @@ Zakładka, nagrywarka makr i menedżer pobrań mają w rdzeniu uchwyty, a okno j
 
 ## budowa/klient-poprzedni/src/moduly/automations/edytor-krokow.ts
 Kolejność zmieniają przyciski w górę i w dół, a nie przeciąganie myszą: kontrakt niesie ją liczbą pola porządkowego kroku, a przyciski są dostępne z klawiatury. Mapa nazw rodzajów jest zupełna po wyliczeniu, nie wykazem przepisanym ręcznie: gdy rodzaj kroku urośnie w kontrakcie, kompilacja zatrzyma się tutaj i nowy rodzaj dostanie nazwę, zamiast zniknąć z pola wyboru bez śladu.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/okno-results-analyzer.ts
+Przycisk stanu monitora melduje stan procesów telemetrii oddany przez
+rdzeń. Zgłoszenie niezgodności idzie do okna koordynatora zwykłym zapisem
+wiadomości. Wcielenie roli analityka niesie własny wykaz kryteriów oceny
+i własny nagłówek zgłoszenia; wartość utrwala zapis ustawienia na poziomie
+okna analityka.

@@ -99,7 +99,7 @@ const (
 	                           SET zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 	                           WHERE id = ?`
 
-	// Karty sesji projektu bierzemy z kolumny `sesja.projekt` — jedynego miejsca,
+	// Karty sesji projektu pochodzą z kolumny `sesja.projekt` — jedynego miejsca,
 	// w którym sesja mówi, nad czym pracuje. Sesja bez identyfikatora zewnętrznego
 	// nie wyszła nigdy kontraktem, więc do wykazu nie wchodzi.
 	sesjeProjektu = `SELECT identyfikator_zewnetrzny FROM sesja

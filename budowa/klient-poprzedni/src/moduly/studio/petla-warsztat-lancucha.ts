@@ -6,25 +6,7 @@ import type {
 import { KATEGORIE_OPERACJI, nazwaOperacji } from './kategorie-operacji';
 import { przycisk } from './zadania-wykaz';
 
-/**
- * Warsztat łańcucha operacji — składanie sekwencji wykonywanej jednym
- * poleceniem: korekta → streszczenie → zmiana tonu.
- *
- * ── Skąd biorą się czynności ─────────────────────────────────────────────────
- * Z jednego wykazu, nie z dwóch. Katalog operacji kontekstowych — dwadzieścia
- * osiem czynności w siedmiu grupach — stoi w `kategorie-operacji.ts` i ten plik
- * go WYŁĄCZNIE czyta. Do tego dochodzą operacje własne Operatora z
- * `studio.operation.list`, odróżnione plakietką: Operator ma wiedzieć, czy
- * sięga po czynność fabryczną, czy po swoją.
- *
- * ── Czym warsztat NIE jest ──────────────────────────────────────────────────
- * Nie jest drugą maszynerią przebiegu. Warsztat składa łańcuch i zapisuje go
- * (`studio.chain.save`); przebieg prowadzi ta sama kolejka zadań, którą prowadzi
- * rozkład zlecenia. Kontrakt mówi wprost, że przebieg łańcucha prowadzi pętla
- * wykonawcza okna — więc prowadzi go pętla, a nie osobny licznik obok.
- */
-
-/** Czynności warsztatu sięgające do rdzenia. */
+/** Warsztat łańcucha operacji składa sekwencję wykonywaną jednym poleceniem; czynności warsztatu sięgające do rdzenia: zapis, uruchomienie i wniesienie łańcucha do zmiany. */
 export interface CzynnosciWarsztatuLancucha {
   /** Zapisuje łańcuch składany pod jego nazwą. */
   zapisz(): void;
@@ -152,8 +134,7 @@ export function utworzWarsztatLancucha(czynnosci: CzynnosciWarsztatuLancucha): W
     nazwa.textContent = `${numer + 1}. ${nazwaOperacji(krok.actionId) ?? krok.actionId}`;
     pozycja.append(nazwa);
 
-    // Przyjęcie wyniku bez decyzji Operatora jest nastawą KROKU, nie łańcucha:
-    // korekta może wchodzić sama, a zmiana tonu wymagać spojrzenia.
+    // Przyjęcie wyniku bez decyzji operatora jest nastawą kroku, nie całego łańcucha operacji.
     const przelacznik = document.createElement('label');
     przelacznik.className = 'petla-warsztat__krok-nastawa';
     const pole = document.createElement('input');
@@ -224,8 +205,7 @@ export function utworzWarsztatLancucha(czynnosci: CzynnosciWarsztatuLancucha): W
         const krok = kroki[numer];
         if (krok !== undefined) listaKrokow.append(wierszKroku(krok, numer));
       }
-      // Zapis łańcucha bez nazwy albo bez kroków nie ma czego zapisać —
-      // przycisk jest wtedy nieosiągalny, a nie milcząco bezskuteczny.
+      // Zapis łańcucha bez nazwy albo kroków nie ma czego zapisać, przycisk jest wtedy nieosiągalny.
       zapiszGuzik.disabled = kroki.length === 0 || nazwa.trim() === '';
 
       listaZapisanych.replaceChildren();
@@ -236,7 +216,7 @@ export function utworzWarsztatLancucha(czynnosci: CzynnosciWarsztatuLancucha): W
   };
 }
 
-/** Przestawia krok z jednego miejsca w drugie, zachowując pozostałe. */
+/** Przestawia krok łańcucha z jednego miejsca na drugie w kolejności, zachowując wszystkie pozostałe kroki. */
 function przestaw(
   kroki: readonly StudioChainStep[],
   skad: number,

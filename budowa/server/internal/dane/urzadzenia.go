@@ -135,7 +135,7 @@ func (r *repozytoriumUrzadzen) jedno(ctx context.Context, zapytanie, opis string
 }
 
 // odczytajUrzadzenie składa strukturę z jednego wiersza wyniku. Kolumny
-// opcjonalne (`system_operacyjny`, `wersja_klienta`) czytamy jako napis pusty —
+// opcjonalne (`system_operacyjny`, `wersja_klienta`) są odczytywane jako napis pusty —
 // dla warstw wyższych brak rozpoznania i rozpoznanie puste znaczą to samo.
 func odczytajUrzadzenie(wiersz skaner) (Urzadzenie, error) {
 	var urzadzenie Urzadzenie

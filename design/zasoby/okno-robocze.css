@@ -69,7 +69,7 @@
   padding-right: var(--dn-od-1);
 }
 
-/* Znak modułu w narożniku pasma — bryła ma widoczną przynależność. */
+/* Znak modułu w narożniku pasma sprawia, że cała bryła zyskuje wyraźną, widoczną przynależność do modułu. */
 .dn-pasmo-znak {
   display: inline-flex;
   align-items: center;
@@ -101,10 +101,10 @@
 .dn-karty-pasmo--w-oknie .dn-karta-widoku[aria-selected='true'] {
   box-shadow: inset 0 var(--dn-wym-wstega) 0 var(--dn-kropka);
 }
-/* Karta robocza — jedna w oknie, odróżnia się grubością bez czytania nazwy. */
+/* Karta robocza jest jedna w oknie i odróżnia się od pozostałych grubością, bez konieczności czytania nazwy. */
 .dn-karta-widoku--robocza { font-weight: var(--dn-fw-polgruba); }
 
-/* Kontrolki pasma stoją poza wykazem kart, za kreską rozdzielającą. */
+/* Kontrolki pasma stoją poza wykazem kart, oddzielone od nich kreską rozdzielającą po prawej stronie pasma. */
 .dn-pasmo-sterowanie {
   display: inline-flex;
   align-items: center;
@@ -140,7 +140,7 @@
   overflow: visible;
 }
 
-/* Tabliczka sesji — czym jest karta robocza. */
+/* Tabliczka sesji określa, czym w tym oknie roboczym jest karta robocza, i pokazuje jej nazwę oraz stan. */
 .dn-wstazka-sesja {
   display: inline-flex;
   align-items: center;
@@ -165,7 +165,7 @@
   gap: var(--dn-od-05);
   flex: none;
 }
-/* Kreska rozdziela RODZINY narzędzi, nie pojedyncze przyciski. */
+/* Kreska rozdziela całe rodziny narzędzi pasma wstążki, nigdy pojedyncze przyciski wewnątrz jednej rodziny. */
 .dn-wstazka-grupa + .dn-wstazka-grupa::before,
 .dn-wstazka-sesja + .dn-wstazka-grupa::before {
   content: '';
@@ -195,7 +195,7 @@
   overflow: hidden;
 }
 
-/* Przy wąskim oknie bryła traci wcięcie — przestrzeń idzie na pracę. */
+/* Przy wąskim oknie bryła pracy traci wcięcie boczne, a odzyskana przestrzeń przechodzi na obszar pracy. */
 @media (max-width: 1200px) {
   .dn-okno-robocze { margin: 0; border-inline: 0; border-radius: 0; }
   .dn-karty-pasmo--w-oknie { border-radius: 0; }

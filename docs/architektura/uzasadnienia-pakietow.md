@@ -6713,3 +6713,23 @@ z którego postać zabrano, stoi obok jako wiedza, a nie jako warunek.
 
 Nazwy pomocnicze tego pliku niosą przedrostek `malarz`, ponieważ przestrzeń
 nazw pakietu `dane` jest dzielona z innymi wykonawcami.
+
+## budowa/server/internal/konfiguracja/srodowisko.go
+Odczyt zmiennej środowiska z pominięciem wykazu zwracanego przez
+ZmienneSrodowiska rozjeżdża wzorzec .env.example z implementacją. Pilnuje
+tego granica pakietu: nazwy zmiennych są nieeksportowane, więc odczyt po
+nazwie dosłownej spoza tego pakietu jest widoczny w przeglądzie zmian.
+
+Wartość nieczytelna zmiennej startTLS zatrzymuje start rdzenia zamiast po
+cichu znaczyć „nie”, ponieważ ciche zejście do rozmowy otwartym tekstem
+oddałoby poświadczenie nadawcy każdemu po drodze.
+
+Wartość nieczytelna zmiennej wystawienia na wszystkie interfejsy zatrzymuje
+start z tego samego powodu: pomyłka w zapisie tej jednej zmiennej
+rozstrzyga o tym, czy rdzeń stanie w sieci, czy na pętli zwrotnej, a
+milczące „nie” byłoby tu najgorszym z możliwych wyników, w stronę
+przeciwną niż przy TLS.
+
+Wartość nieczytelna zmiennej wymogu logowania zatrzymuje start z tego
+samego powodu: literówka rozstrzyga o tym, czy rdzeń pyta wołającego
+o token, czy nie pyta nikogo o nic.

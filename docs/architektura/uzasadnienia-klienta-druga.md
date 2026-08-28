@@ -7211,3 +7211,14 @@ exitCode jest w kontrakcie opcjonalne i nie przychodzi dla procesu biegnącego
 ani ubitego sygnałem; widok nie podstawia w to miejsce zera, bo czytałoby się
 jako powodzenie. Pusty strumień i treść przycięta dostają własne zdanie,
 zamiast wyglądać jak komplet.
+
+## budowa/klient-poprzedni/src/moduly/terminal/pozycja-procesu.ts
+Inicjator stoi w opisie pozycji, nie w podpowiedzi, bo różnica między procesem
+uruchomionym przez operatora a uruchomionym przez model jest różnicą
+odpowiedzialności i ma być widoczna bez najeżdżania kursorem. Zakończenie ma
+dwa przyciski, bo ma dwa skutki: sygnał łagodny kończy sam proces polecenia,
+wymuszony obejmuje całe drzewo potomstwa. Żaden przycisk pozycji nie jest
+wygaszany, bo stan procesu znany oknu jest kopią z wykazu i zdarzeń rdzenia,
+a kopia bywa nieświeża — blokada mogłaby wtedy odebrać jedyną drogę
+zakończenia albo podglądu. Proces wstrzymany zostaje w stanie running, bo
+ma PID, pamięć i otwarte pliki, a kontrakt stanu wstrzymany nie ma.

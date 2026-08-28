@@ -12,16 +12,7 @@ import { utworzPrzelacznikTrybu } from './przelacznik-trybu';
 import type { StanDostepow } from './stan-dostepow';
 import { utworzWyborKorzeni } from './wybor-korzeni';
 
-/**
- * Wiersz jednego nadania w zbiorze okna.
- *
- * Okno ma zbiór nadań, a kolejność i oznaczenie głównego mają znaczenie —
- * dlatego wiersz niesie cztery czynności, nie jedną: przestawienie w górę
- * i w dół, oznaczenie głównym, zmianę trybu wraz z korzeniami oraz odebranie.
- *
- * Każda z nich idzie osobną komendą i wraca kompletem nadań okna, więc wiersz
- * nie zgaduje, jak przestawiły się pozostałe — dostaje je z rdzenia.
- */
+/** Wiersz jednego nadania w zbiorze okna, niosący cztery czynności: przestawienie, główne, zakres, odbiór. */
 export interface WierszNadania {
   /** Element osadzany w liście nadań. */
   element: HTMLElement;
@@ -118,8 +109,7 @@ export function utworzWierszNadania(zaleznosci: ZaleznosciWiersza): WierszNadani
 
   element.append(naglowek, opis, zakres, komunikat.element);
 
-  // Skrajne pozycje nie chowają przycisków i nie wygaszają ich:
-  // naciśnięcie daje odpowiedź, że wiersz już jest pierwszy albo ostatni.
+  // Skrajne pozycje nie chowają przycisków — naciśnięcie odpowiada, że wiersz już jest skrajny.
   async function przestaw(nowa: number): Promise<void> {
     if (nowa < 1 || nowa > liczba) {
       komunikat.pokaz(
@@ -159,14 +149,7 @@ export function utworzWierszNadania(zaleznosci: ZaleznosciWiersza): WierszNadani
   return { element, nadanieID: nadanie.id };
 }
 
-/**
- * Punkt zastępczy dla nadania, którego punktu nie ma w wykazie.
- *
- * Wiersz musi dać się narysować także wtedy, gdy wykaz punktów jeszcze nie
- * dotarł — inaczej nadanie zniknęłoby z widoku, choć w rdzeniu istnieje.
- * Ostrzeżenie o zapisie liczone jest wtedy z pustej nazwy maszyny, czyli nie
- * pojawia się; pojawi się po dojściu wykazu.
- */
+/** Punkt zastępczy dla nadania, którego punktu jeszcze wcale nie ma w wykazie punktów dostępu tego rdzenia. */
 function zastepczyPunkt(nadanie: AccessGrant): AccessPoint {
   return {
     id: nadanie.accessPointId,

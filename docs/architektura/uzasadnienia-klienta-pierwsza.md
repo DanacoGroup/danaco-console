@@ -9273,3 +9273,39 @@ byłoby wtedy mylące. Właściwe zdanie dobiera plik pustka-okien.ts.
 nie wynika dla obsługującego okno. Pole tytułu formularza źródła niesie tekst
 swobodny tej rodziny: adres do pozyskania, ścieżkę bibliografii albo etykiety
 rozdzielone przecinkiem.
+
+## budowa/klient-poprzedni/src/moduly/assistant/okno-actions-monitor.ts
+
+Panel akcji niesie sześć pozycji — wstrzymanie, wznowienie, anulowanie, ponowienie,
+szczegóły i odsłonięcie wyniku — oraz priorytetyzację zleceń; wszystkie mieszczą
+się w jednej komendzie stanu zlecenia wraz z polami sterowania i priorytetu.
+
+Okno nie ma pętli odświeżania: zdarzenie zmiany zlecenia wciąga zmianę stanu
+w chwili, w której rdzeń ją ogłasza. Subskrypcja mieszka w stanie modułu, więc
+zdarzenie zmienia wszystkie trzy okna naraz.
+
+Zdanie potwierdzenia mówi, co zrobił rdzeń, a nie co wysłało okno: składa je
+osobny składnik ze zlecenia, które wróciło, ponieważ nie każde przyjęte żądanie
+coś zmienia. Sprawdzane są wszystkie zamówienia panelu — cztery przyciski stanu
+tak samo jak priorytet — inaczej przycisk meldowałby powodzenie także wtedy, gdy
+rdzeń oddał niepowodzenie.
+
+Druga tabela zbiera zlecenia spoza tego okna. Praca asystenta wydana w nakładce
+podręcznej siada na oknie, które nakładka dobiera sama, zwykle na oknie rozmowy,
+nie na oknie modułu. Bez drugiej tabeli taka praca byłaby w monitorze
+niewidzialna, ponieważ stan modułu odrzuca zdarzenia o cudzym wskazaniu okna.
+Tabela ma ten sam panel akcji, ponieważ rdzeń przyjmuje sterowanie po
+identyfikatorze zlecenia, nie po oknie.
+
+## budowa/klient-poprzedni/src/dostepy/wiersz-nadania.ts
+Okno ma zbiór nadań, a kolejność i oznaczenie głównego mają znaczenie — dlatego
+wiersz niesie cztery czynności, nie jedną: przestawienie w górę i w dół,
+oznaczenie głównym, zmianę trybu wraz z korzeniami oraz odebranie.
+
+Każda z nich idzie osobną komendą i wraca kompletem nadań okna, więc wiersz nie
+zgaduje, jak przestawiły się pozostałe — dostaje je z rdzenia.
+
+Wiersz musi dać się narysować także wtedy, gdy wykaz punktów jeszcze nie dotarł
+— inaczej nadanie zniknęłoby z widoku, choć w rdzeniu istnieje. Ostrzeżenie
+o zapisie liczone jest wtedy z pustej nazwy maszyny, czyli nie pojawia się;
+pojawi się po dojściu wykazu.

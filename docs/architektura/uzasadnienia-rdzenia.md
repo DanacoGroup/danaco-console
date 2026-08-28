@@ -7167,3 +7167,15 @@ Wartość pusta ustawień wykonania nie nadpisuje tego, co przyszło z okna albo
 z wiersza rejestru: brak wskazania na żadnym poziomie znaczy zostawienie
 decyzji kanałowi, a nie jej wyczyszczenie. Dlatego przypisanie jest warunkowe,
 nie bezwarunkowe.
+
+## budowa/server/internal/core/adapter_rozmowa_tozsamosc.go
+Rdzeń nie składa treści systemowej samodzielnie, bierze wynik jedynego
+składacza. Po wyliczeniu osi modelu i konta nakładka dostaje warstwy eksperta
+wskazanego przez okno — jedyne miejsce, w którym tożsamość eksperta wchodzi
+do treści systemowej procesu. Okno przychodzi w wywołaniu w całości, nie
+samym identyfikatorem: kod eksperta jest nastawą okna, więc pytanie o niego
+rejestru drugi raz byłoby powtórzeniem odczytu, który wywołujący już wykonał.
+
+Tryb nakładki — czy tożsamość zamienia treść systemową, czy się do niej
+dokłada — pochodzi z jedynego przekładu trybu w rdzeniu, więc rozstrzygnięcie
+dojeżdża do procesu modelu tą samą drogą, którą pokazuje okno konfiguracji.

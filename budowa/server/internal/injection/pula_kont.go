@@ -17,9 +17,7 @@ type Konto struct {
 	Kod                 string
 	KatalogKonfiguracji string
 	// WyczerpaneDo niesie chwilę odnowienia limitu odczytaną z trwałego zapisu
-	// katalogu (kolumny konto.stan / konto.wyczerpane_do). Zero znaczy „konto
-	// nie było wyczerpane". Dzięki temu wyczerpanie przeżywa restart rdzenia:
-	// pula odtwarza pamięć limitu z bazy, zamiast zaczynać od czystej mapy.
+	// katalogu.
 	WyczerpaneDo time.Time
 }
 
@@ -33,13 +31,9 @@ type PulaKont struct {
 	wyczerpane map[string]time.Time
 	teraz      func() time.Time
 	// utrwal zapisuje wyczerpanie konta w trwałym katalogu, żeby przeżyło
-	// restart. Nil znaczy pulę bez trwałości (np. z katalogu profili na dysku).
-	// Wołany poza zamkiem — zapis do bazy nie może blokować rotacji.
+	// restart.
 	utrwal func(kod string, doChwili time.Time)
-	// zrodlo podaje bieżący wykaz kont z katalogu. Pula sięga po nie na progu
-	// tury, dzięki czemu konto dodane komendą account.* wchodzi do rotacji bez
-	// restartu (analogicznie do Odswiez rejestru kanałów). Nil znaczy pulę
-	// nieodświeżalną.
+	// zrodlo podaje bieżący wykaz kont z katalogu, na progu każdej tury.
 	zrodlo func() ([]Konto, bool)
 }
 
@@ -112,9 +106,8 @@ func (p *PulaKont) przeladuj(konta []Konto) {
 			nowe[konto.Kod] = konto.WyczerpaneDo
 		}
 	}
-	// Pamięć sesji jest źródłem świeższym niż katalog dla kont wciąż obecnych:
-	// wyczerpanie rozpoznane w tej turze zapisało się już do bazy, ale odczyt
-	// mógł je wyprzedzić. Zachowujemy późniejszą z dwóch chwil.
+	// Pamięć sesji jest źródłem świeższym niż katalog; zachowujemy późniejszą
+	// z dwóch chwil.
 	for kod, chwila := range stare {
 		if !obecne[kod] {
 			continue
@@ -149,7 +142,8 @@ func KontaZKatalogu(katalog string) ([]Konto, error) {
 	return konta, nil
 }
 
-// Konta zwraca kopię wykazu kont w kolejności rotacji.
+// Konta zwraca kopię całego wykazu kont puli, zachowaną w kolejności
+// aktualnej rotacji między kontami.
 func (p *PulaKont) Konta() []Konto {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -158,10 +152,8 @@ func (p *PulaKont) Konta() []Konto {
 	return kopia
 }
 
-// PoKodzie zwraca konto o wskazanym kodzie, nie przestawiając rotacji.
-// Droga dla wskazania konta per okno: tura wskazana jedzie dokładnie
-// tą tożsamością, a wskaźnik `biezace` rotacji pozostaje nietknięty — dwa
-// okna na dwóch kontach nie przestawiają sobie nawzajem puli.
+// PoKodzie zwraca konto puli o wskazanym kodzie, nie przestawiając przy tym
+// bieżącej rotacji między kontami.
 func (p *PulaKont) PoKodzie(kod string) (Konto, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -173,13 +165,8 @@ func (p *PulaKont) PoKodzie(kod string) (Konto, bool) {
 	return Konto{}, false
 }
 
-// Pusta mówi, czy pula nie ma ani jednego konta.
-//
-// Pula pusta to NIE to samo co pula wyczerpana. Brak kont oznacza, że Operator
-// nie wskazał żadnej tożsamości — a wtedy program `claude` ma użyć tożsamości
-// otoczenia (własnego logowania na maszynie), bo CLAUDE_CONFIG_DIR jest
-// wyłącznie nośnikiem tożsamości, nie warunkiem uruchomienia.
-// Odmowa w takiej sytuacji łamie fail-open.
+// Pusta mówi, czy pula nie ma ani jednego konta; pula pusta nie jest tożsama
+// z pulą kont wyczerpanych.
 func (p *PulaKont) Pusta() bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -212,9 +199,8 @@ func (p *PulaKont) Wyczerpane(kod string, doChwili time.Time) (Konto, bool) {
 	konto, dostepne := p.dostepneOd(p.biezace)
 	utrwal := p.utrwal
 	p.mu.Unlock()
-	// Trwały ślad wyczerpania idzie poza zamkiem: zapis do katalogu (baza) nie
-	// może wstrzymywać kolejnych decyzji rotacji. Brak utrwalacza znaczy pulę
-	// bez trwałości — pamięć limitu żyje wtedy do restartu.
+	// Trwały ślad wyczerpania idzie poza zamkiem, żeby zapis do bazy nie
+	// wstrzymywał rotacji.
 	if utrwal != nil {
 		utrwal(kod, doChwili)
 	}

@@ -7986,3 +7986,11 @@ zdanie nazywające granicę. Zatwierdzenia kroku kontrakt nie zna, a przestawien
 ogniska wymaga identyfikatora klienta z powitania połączenia, którego okno
 nakładki nie otrzymuje. Żaden przycisk nie pyta o potwierdzenie i żaden nie jest
 wyszarzany — rozstrzyga rdzeń, nakładka pokazuje odpowiedź.
+## budowa/klient-poprzedni/src/mobile/procesy-mobilne.ts
+Powierzchnia stoi na ekranie „Przegląd zadań i procesów", z listą procesów wraz z filtrem stanu i z zestawem czynności przy pozycji. Rodzina jest w rdzeniu wpięta i to zostało zmierzone, nie założone: `montaz_porty.go` wnosi do portu nawigacji ogniwo `ZWarstwaMobilna`, więc asercja w `handlers_mobile.go` przechodzi i trzy komendy mają obsługiwaczy. Zdanie z `zrodlo-interwencji.ts` o niewpiętej warstwie opisywało stan wcześniejszy i przestało być prawdziwe.
+
+Wykaz procesów nie zastępuje obrazu interwencji. Obraz stoi na pięciu komendach czytających stan pracy z różnych stron (telemetria, kolejki, okna, role, bieg naprawczy); `mobile.process.list` jest jednym skrótem do procesów i tak jest tu użyty — jako druga, węższa droga do tego samego stanu, przynosząca to, czego obraz nie ma: sterowanie procesem.
+
+Sterowanie nie ma w kontrakcie zdarzenia własnego, więc po każdym udanym poleceniu wykaz czyta się na nowo. Proces oddany w odpowiedzi opisuje jeden wiersz; o pozostałych rozstrzyga rdzeń, a nie widok, który je wcześniej widział.
+
+Zatrzymanie i ponowne uruchomienie przerywają pracę, która biegnie: tego, co proces zdążył zrobić, żadne z nich nie odda. Zatwierdzenie i modyfikacja idą naprzód, nie w tył.

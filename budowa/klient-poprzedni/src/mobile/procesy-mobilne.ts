@@ -11,44 +11,14 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpow
 import { przenies } from '../protokol/wynik-czastkowy';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Procesy platformy widziane z urządzenia mobilnego — `mobile.process.list`
- * i `mobile.process.control`.
- *
- * Powierzchnia stoi tam, gdzie stawia ją opracowanie funkcji globalnej Mobile:
- * na ekranie „Przegląd zadań i procesów" (rozdz. 4.6), z listą procesów wraz
- * z filtrem stanu i z zestawem czynności przy pozycji (rozdz. 5.3).
- *
- * Rodzina jest w rdzeniu wpięta i to zostało zmierzone, nie założone:
- * `montaz_porty.go` wnosi do portu nawigacji ogniwo `ZWarstwaMobilna`, więc
- * asercja w `handlers_mobile.go` przechodzi i trzy komendy mają obsługiwaczy.
- * Zdanie z `zrodlo-interwencji.ts` o niewpiętej warstwie opisywało stan
- * wcześniejszy i przestało być prawdziwe.
- *
- * Wykaz procesów NIE zastępuje obrazu interwencji. Obraz stoi na pięciu
- * komendach czytających stan pracy z różnych stron (telemetria, kolejki, okna,
- * role, bieg naprawczy); `mobile.process.list` jest jednym skrótem do procesów
- * i tak jest tu użyty — jako druga, węższa droga do tego samego stanu,
- * przynosząca to, czego obraz nie ma: sterowanie procesem.
- *
- * Sterowanie nie ma w kontrakcie zdarzenia własnego, więc po każdym udanym
- * poleceniu wykaz czyta się na nowo. Proces oddany w odpowiedzi opisuje jeden
- * wiersz; o pozostałych rozstrzyga rdzeń, a nie widok, który je wcześniej
- * widział.
- */
+// Procesy platformy widziane z telefonu — `mobile.process.list`, `mobile.process.control`.
 
-/** Czynności sterowania wraz z nazwą i wagą czynności. */
+/** Czynności sterowania procesem wraz z nazwą widoczną dla Operatora oraz wagą nieodwracalności czynności. */
 export interface CzynnoscSterowania {
   kod: MobileProcessControl;
   /** Nazwa czynności widziana przez Operatora — pełna, bez skrótu. */
   nazwa: string;
-  /**
-   * Czy czynność zatrzymuje pracę nieodwracalnie.
-   *
-   * Zatrzymanie i ponowne uruchomienie przerywają pracę, która biegnie: tego,
-   * co proces zdążył zrobić, żadne z nich nie odda. Wstrzymanie i wznowienie
-   * przerwaniem nie są, a zatwierdzenie i modyfikacja idą naprzód, nie w tył.
-   */
+  /** Czy czynność zatrzymuje pracę nieodwracalnie; wstrzymanie i wznowienie przerwaniem nie są. */
   nieodwracalna: boolean;
   /** Zdanie ostrzeżenia — mówi, co Operator traci, zanim to straci. */
   ostrzezenie?: string;
@@ -78,7 +48,7 @@ export const CZYNNOSCI_STEROWANIA: readonly CzynnoscSterowania[] = [
   { kod: MobileProcessControl.Modify, nazwa: 'Modyfikuj zlecenie w toku', nieodwracalna: false },
 ];
 
-/** Stany procesu do filtra wraz z nazwą; pusty wybór znaczy wszystkie stany. */
+/** Stany procesu dostępne w filtrze wraz z nazwą wyświetlaną; pusty wybór filtra znaczy wszystkie stany. */
 export const STANY_PROCESU: readonly { kod: ProgressStatus; nazwa: string }[] = [
   { kod: ProgressStatus.Pending, nazwa: 'Oczekuje' },
   { kod: ProgressStatus.Running, nazwa: 'W biegu' },
@@ -115,12 +85,12 @@ export function utworzZrodloProcesowMobilnych(kanal: Kanal): ZrodloProcesowMobil
   };
 }
 
-/** Nazwa stanu procesu dla Operatora; stan spoza wykazu wraca własnym kodem. */
+/** Nazwa stanu procesu pokazywana wprost Operatorowi; stan spoza znanego wykazu wraca swoim kodem własnym. */
 export function nazwaStanu(kod: ProgressStatus): string {
   return STANY_PROCESU.find((pozycja) => pozycja.kod === kod)?.nazwa ?? kod;
 }
 
-/** Nazwa czynności sterowania; czynność spoza wykazu wraca własnym kodem. */
+/** Nazwa czynności sterowania pokazywana Operatorowi; czynność spoza wykazu wraca własnym kodem źródłowym. */
 export function nazwaCzynnosci(kod: MobileProcessControl): string {
   return CZYNNOSCI_STEROWANIA.find((pozycja) => pozycja.kod === kod)?.nazwa ?? kod;
 }

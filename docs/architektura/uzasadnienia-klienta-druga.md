@@ -7432,3 +7432,15 @@ Wygląd formularza pochodzi w całości z biblioteki kontrolek i z arkusza stylu
 Nazwa hosta jest ustawieniem okna, a nie wartością wyliczenia środowiska wykonania, dzięki czemu dopisanie kolejnego hosta nie wymaga zmiany kodu. Pole przyjmuje dowolną nazwę; lista hostów znanych skraca drogę do trzech używanych dziś.
 
 Wartość idzie ustawieniem poziomu okna, ponieważ treść żądania aktualizacji okna nie ma dla niej pola. Pole pozostaje czynne przy każdym zasięgu wykonania; przy zasięgu lokalnym i przy zasięgu rdzenia wpis nie ma zastosowania.
+
+## budowa/klient-poprzedni/src/moduly/terminal/terminal.test.ts
+Sprawdziany pilnują tego, co przy poprawce łatwo zepsuć po cichu: każda
+komenda rodziny wychodzi pod swoją nazwą z kontraktu i z otrzymanym ładunkiem,
+odpowiedź o kształcie innym niż kontraktowy nie przechodzi jako wynik udany,
+wykaz książki hostów i biblioteki jest zastępowany wykazem z rdzenia, a nie
+scalany, a czytanie konfiguracji OpenSSH bierze port do wpisu, bo rdzeń
+podaje go programowi ssh przełącznikiem. Rdzeń w sprawdzianach jest atrapą:
+sprawdzian pyta o zachowanie modułu, nie serwera. Zapora rozstrzygnięcia rodziny
+komend harmonogramu pilnuje, żeby cykliczność zadań szła komendami automatyki,
+a nie osobną rodziną komend terminala — rozjazd rozstrzygnięto na korzyść
+kontraktu.

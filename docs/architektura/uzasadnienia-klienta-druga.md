@@ -7338,3 +7338,21 @@ gdzie indziej: okno, które po odmowie rdzenia pokazuje pustą listę procesów,
 mówi operatorowi „nic nie biegnie” wtedy, gdy biegnie kompilacja, o którą nie
 udało się zapytać. Kod kontraktu w zdaniu błędu odróżnia odmowę uprawnienia
 od usterki rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-katalog.ts
+Katalog jest wykazem jednym, nie dwoma — ten sam dla Operatora i dla modelu.
+Pozycje mają jednak trzy pochodzenia, które katalog rozróżnia, żeby Operator
+wiedział, czym rozporządza: rejestr akcji rdzenia niesie pozycje wskazujące
+komendę operacji kontekstowej i jest źródłem właściwym, bo nowa operacja to
+wiersz rejestru; operacje zapisane w rdzeniu obejmują fabryczne i własne
+Operatora, rozdzielone polem builtin; wykaz dokumentacji niesie czynności
+w siedmiu grupach, dopóki dwa pierwsze źródła ich nie przejmą, a pozycja
+przejęta znika z wykazu dokumentacji, żeby nie stała w menu dwa razy. Katalog
+nie odtwarza rozwijania, wyszukiwania po nazwie, opisów przy pozycjach,
+wędrówki strzałkami ani znacznika wyboru na gałęzi — to wszystko niesie
+mechanizm menu drzewa, stąd bierze się dostępność z klawiatury: cały katalog
+jest osiągalny bez myszki, bo mechanizm menu obsługuje strzałki, Enter
+i Escape sam, a drugi mechanizm rozwijania byłby rozjazdem. Czynność będąca
+wielkością ciągłą zostaje w katalogu, ale jej opis mówi, że sterowanie ma
+suwakiem, nie jednym naciśnięciem, i wskazuje pływak, żeby Operator nie
+szukał jej w dwóch miejscach.

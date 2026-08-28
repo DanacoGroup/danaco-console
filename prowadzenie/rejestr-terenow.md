@@ -637,6 +637,22 @@ a strona obiecuje szesc.
 
 ### Instalka wychodzi bez licencji i instrukcji
 
+**Sprzecznosc zrodel — do rozstrzygniecia przez Wlasciciela, 28.08.**
+Skrypt `pakiet-serwera.sh:106-115` zada czterech dokumentow produktu z korzenia
+i przerywa budowe, gdy ktoregos brak. Wszystkie cztery **istnialy i zostaly
+swiadomie usuniete** rewizja `d28990b8` jako opracowania poprzedniego podejscia:
+README.md (593 wiersze), LICENSE.md (1198), INSTALACJA-I-KONFIGURACJA.md (641),
+INSTRUKCJA-UZYTKOWANIA.md (796). Sa odzyskiwalne co do znaku z `d28990b8^`.
+
+Skutek dzisiejszy: pakietu serwera nie da sie zlozyc w ogole, a instalatory
+Windows wychodza bez licencji. Stopki dokumentacji odsylaja przy tym do pliku
+`LICENSE`, ktorego w drzewie nie ma — odsylacz jest martwy.
+
+Prowadzenie NIE przywraca ich samo. Tresc licencji jest instrumentem prawnym,
+a przywrocenie cofneloby decyzje o usunieciu materialu poprzedniego podejscia.
+Rozstrzygniecia wymaga jedno: czy dokumenty wracaja z historii, powstaja na nowo
+dla obecnego produktu, czy skrypt przestaje ich zadac.
+
 Skrypty instalek wymagaly z korzenia czterech dokumentow produktu i pakowaly je
 do zasobow instalki. W korzeniu stoi dzis sam `CLAUDE.md`, wiec krok padal na
 pierwszym pliku i teren `powloka-i-wydanie` go zdjal, zeby skrypty w ogole biegly.

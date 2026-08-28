@@ -635,3 +635,14 @@ Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
 z żetonów motywu. Kontrolki formularza modułu pochodzą z
 modele/kontrolki-formularza, więc moduł wciąga też arkusz modele.css, inaczej
 pola dm-* byłyby bez oprawy.
+
+## budowa/klient-poprzedni/src/moduly/browser/browser.css
+Plik nie zna ani jednej barwy zapisanej wprost: wszystkie wartości pochodzą
+z żetonów motywu. Podział na cztery arkusze wynika z progu trzystu wierszy na
+arkusz: podgląd strony, paski narzędzi i wykazy mieszkają w
+podglad-i-wykazy.css, scena z płótnem adnotacji w adnotacja.css, a pasek
+kontekstu wraz z oknami operacji i panelami warstwy czwartej w operacje.css.
+Kontrolki formularzy pochodzą z modele/kontrolki-formularza, stąd import
+modele.css. Panel rodzin rdzenia niesie także kolejkę czytania, wytwory
+i granice Wykonawcy, obok kart, przestrzeni, monitorów, kanałów, pobrań
+i makr.

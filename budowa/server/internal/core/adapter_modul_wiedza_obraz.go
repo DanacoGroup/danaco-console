@@ -6,6 +6,7 @@ package core
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"danacoconsole/server/internal/dane"
@@ -39,15 +40,21 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	}
 
 	ustawienia := a.ustawienia()
-	silnik := wiedza.NowySilnikObrazu(a.uruchamiacz, a.katalogDanych).ZUstawieniami(ustawienia)
+	silnik := wiedza.NowySilnikObrazu(a.uruchamiacz, a.katalogDanych).
+		ZUstawieniami(ustawienia).ZeSkladnica(a.skladnica)
 	okno, zasady, obszar := a.zasiegPlatformy()
 	if err := silnik.Gotowy(ctx, okno, zasady, obszar, wiedza.LimitOsiObrazu); err != nil {
 		return shared.KnowledgeImageSearchResponse{}, bladWiedzy(err)
 	}
 
-	obrazy, err := a.obrazyBiblioteki(ctx, z.ProjectId)
+	obrazy, obciete, err := a.obrazyBiblioteki(ctx, z.ProjectId)
 	if err != nil {
 		return shared.KnowledgeImageSearchResponse{}, err
+	}
+	if obciete {
+		log.Printf("moduł Wiedza: oś obrazu porównała sufit %d obrazów biblioteki "+
+			"(GranicaObrazow) — biblioteka niesie więcej obrazów niż to weszło do porównania",
+			wiedza.GranicaObrazow)
 	}
 	model := silnik.Model()
 	if len(obrazy) == 0 {
@@ -79,14 +86,14 @@ func (a *adapterWiedzy) SzukajObrazu(ctx context.Context,
 	}, nil
 }
 
-// obrazyBiblioteki wybiera z repozytorium wiedzy pliki będące obrazami. Wykaz
-// idzie przez to samo repozytorium, którym czyta bibliotekę budowanie
-// wskaźnika. Plik bez odwołania do bajtów jest pomijany.
+// obrazyBiblioteki wybiera z repozytorium wiedzy pliki będące obrazami. Plik
+// bez odwołania do bajtów jest pomijany. Drugi wynik mówi, czy biblioteka
+// niosła więcej obrazów niż sufit GranicaObrazow wpuścił do porównania.
 func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
-	projekt *string) ([]wiedza.Obraz, error) {
+	projekt *string) ([]wiedza.Obraz, bool, error) {
 
 	if a.biblioteka == nil {
-		return nil, bladWiedzyBezZrodla("biblioteka")
+		return nil, false, bladWiedzyBezZrodla("biblioteka")
 	}
 	filtr := dane.FiltrPlikow{Limit: granicaDokumentowBiblioteki}
 	if projekt != nil && strings.TrimSpace(*projekt) != "" {
@@ -94,18 +101,20 @@ func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 	}
 	pliki, _, err := a.biblioteka.Pliki(ctx, filtr)
 	if err != nil {
-		return nil, bladWiedzy(err)
+		return nil, false, bladWiedzy(err)
 	}
 
 	obrazy := make([]wiedza.Obraz, 0, len(pliki))
+	obciete := false
 	for _, plik := range pliki {
-		if len(obrazy) >= wiedza.GranicaObrazow {
-			break
-		}
 		if plik.MimeType == nil || !strings.HasPrefix(*plik.MimeType, przedrostekRodzajuObrazu) {
 			continue
 		}
 		if plik.TrescOdwolanie == nil || strings.TrimSpace(*plik.TrescOdwolanie) == "" {
+			continue
+		}
+		if len(obrazy) >= wiedza.GranicaObrazow {
+			obciete = true
 			continue
 		}
 		obrazy = append(obrazy, wiedza.Obraz{
@@ -115,7 +124,7 @@ func (a *adapterWiedzy) obrazyBiblioteki(ctx context.Context,
 			Sciezka:   *plik.TrescOdwolanie,
 		})
 	}
-	return obrazy, nil
+	return obrazy, obciete, nil
 }
 
 // przelozObraz składa pozycję kontraktu ze wskazaniem źródła. Ścieżka na dysku

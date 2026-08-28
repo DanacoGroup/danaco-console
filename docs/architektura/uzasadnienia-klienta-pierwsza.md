@@ -7414,3 +7414,10 @@ Wykaz bez zapisu obsługuje jeden przepis na dwie drogi: przywrócenie własne (
 Rodzaj zmiany pominięty w odpowiedzi rdzenia znaczy zapis — tak wchodzi odpowiedź na własną komendę `config.set`.
 
 Zmiana punktu widzenia dociąga poziom, który do tej pory nie był czytany; bez tego wartość spod okna, sesji czy projektu nie ma pokrycia w stanie, a pochodzenie wskazuje poziom globalny. Funkcja odczytu wpisów ogłasza od razu, względem wpisów już znanych, i ponownie, gdy poziom dojedzie.
+
+## budowa/klient-poprzedni/src/konfiguracja/stan-obszarow-sesji.ts
+Punkt widzenia jest wspólny z resztą okna: pasek u góry okna ustala, dla kogo liczymy wartości obowiązujące, a ten stan bierze od niego ten sam adres, którym jedzie łańcuch zapisów kluczy. Dwa punkty widzenia w jednym oknie znaczyłyby, że plakietka klucza i plakietka obszaru mówią o dwóch różnych miejscach przestrzeni konfiguracji.
+
+Zapis utrwala to, co obowiązuje: panel nie redaguje pól obszaru, tylko zapisuje obszar odziedziczony z poziomu szerszego albo z innego rejestru jako zapis własny na poziomie wskazanym punktem widzenia. Treść zapisu bierze się z konfiguracji obowiązującej, którą oddał rdzeń. Obszar spoza wykazu `areas` rdzeń zostawia nietknięty, a obszar w wykazie bez treści usuwa, wracając do dziedziczenia.
+
+Obszar `hooks` jest jedynym obszarem redagowanym w oknie konfiguracji: zaczep trzeba móc złożyć, a nie tylko utrwalić odziedziczony.

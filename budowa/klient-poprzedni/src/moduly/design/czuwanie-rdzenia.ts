@@ -1,36 +1,11 @@
 import type { Wynik } from '../../protokol/kanal';
 
-/**
- * Czuwanie nad czynnością, której rdzeń nie rozstrzygnął: mówi prawdę
- * o wywołaniu bez odpowiedzi i odróżnia rdzeń pracujący od kanału milczącego.
- *
- * Gdy gniazdo padnie w trakcie oczekiwania, okno samo się nie odnajdzie:
- * obietnica `protokol/wywolanie.ts` nigdy nie jest odrzucana, a odbiorca
- * odpowiedzi żyje w rejestrze korelacji przypisanym do gniazda, które padło —
- * odpowiedź nie przyjdzie już nigdy, także po ponownym połączeniu.
- *
- * Zwykły limit czasu nie odróżnia rdzenia, który pracuje długo, od kanału,
- * który zamilkł, a komendy modułu bywają wolne i długie oczekiwanie jest tu
- * stanem poprawnym. Czuwanie pyta więc kanał o życie: wysyła jedno tanie
- * żądanie kontraktu tą samą drogą.
- *   · próba odpowiedziała → kanał żyje, czynność nadal trwa
- *   · próba zamilkła      → kanał zamilkł, skutek pozostaje nieznany
- *
- * Ta sama próba jest zarazem czujnikiem powrotu i nie kosztuje dodatkowej
- * ramki: żądanie wysłane przy rozłączeniu czeka w kolejce wychodzącej
- * (`polaczenie/kolejka-wychodzaca.ts`), a rdzeń odpowiada na nie w chwili
- * ponownego połączenia. Jedna obietnica próby mówi więc najpierw „kanał
- * milczy", a potem „łączność wróciła"; pętli odpytującej tu nie ma.
- *
- * Czuwanie nie ogłasza niepowodzenia czynności i nie zgaduje jej skutku —
- * rdzeń mógł żądanie odebrać i wykonać, zanim gniazdo padło. Jedyną drogą do
- * prawdy jest odczyt po powrocie łączności i tak brzmi zdanie dla Operatora.
- */
+// Czuwanie odróżnia rdzeń pracujący długo od kanału milczącego, pytając kanał o życie.
 
-/** Jedno tanie pytanie do rdzenia; obietnica spełnia się, gdy rdzeń odpowie. */
+/** Jedno tanie pytanie kierowane do rdzenia o życie kanału; obietnica spełnia się dopiero, gdy rdzeń na nie odpowie. */
 export type ProbaZycia = () => Promise<unknown>;
 
-/** Co okno robi z prawdą o czynności bez rozstrzygnięcia. */
+/** Określa, co okno robi z prawdą o czynności, dla której rdzeń nie zdążył jeszcze rozstrzygnąć skutku wywołania. */
 export interface NasluchCzuwania {
   /** Kanał odpowiada, czynność nadal trwa — rdzeń pracuje, nie milczy. */
   wToku?(zdanie: string): void;
@@ -43,14 +18,7 @@ export interface NasluchCzuwania {
 }
 
 export interface CzuwanieRdzenia {
-  /**
-   * Prowadzi wywołanie rdzenia pod czuwaniem.
-   *
-   * Zwraca odpowiedź rdzenia albo `null`, gdy kanał zamilkł. `null` nie jest
-   * odmową — znaczy „bez rozstrzygnięcia".
-   *
-   * @param czynnosc nazwa czynności w mianowniku, np. „generowanie zasobu"
-   */
+  /** Prowadzi wywołanie rdzenia pod czuwaniem; zwraca odpowiedź albo `null`, gdy kanał zamilkł. */
   prowadz<T>(
     czynnosc: string,
     wywolanie: Promise<Wynik<T>>,
@@ -58,12 +26,12 @@ export interface CzuwanieRdzenia {
   ): Promise<Wynik<T> | null>;
 }
 
-/** Po tyle bez odpowiedzi pytamy kanał, czy w ogóle żyje. */
+/** Po upływie tylu milisekund bez odpowiedzi na czynność czuwanie pyta kanał, czy jeszcze w ogóle odpowiada. */
 const CZAS_CISZY_MS = 4000;
-/** Tyle czekamy na odpowiedź próby życia; rdzeń lokalny odpowiada w milisekundach. */
+/** Tyle czasu czuwanie czeka na odpowiedź próby życia kanału; rdzeń lokalny odpowiada zwykle w milisekundach. */
 const CZAS_PROBY_MS = 2500;
 
-/** Znacznik wygranej zegara w wyścigu — nie do pomylenia z żadnym wynikiem. */
+/** Znacznik wygranej zegara w wyścigu obietnic czuwania; nie jest wynikiem żadnej czynności ani próby życia. */
 const ZEGAR = Symbol('zegar czuwania');
 
 function poCzasie<T>(ms: number, wartosc: T): Promise<T> {
@@ -72,7 +40,7 @@ function poCzasie<T>(ms: number, wartosc: T): Promise<T> {
   });
 }
 
-/** Zdanie o czynności, która trwa, choć kanał odpowiada. */
+/** Zdanie przedstawiane Operatorowi o czynności, która wciąż trwa, mimo że kanał w międzyczasie odpowiedział. */
 function zdanieWToku(czynnosc: string, sekund: number): string {
   return (
     `Rdzeń odpowiada na inne pytania, więc łączność jest — ${czynnosc} trwa już ${sekund} s ` +
@@ -80,7 +48,7 @@ function zdanieWToku(czynnosc: string, sekund: number): string {
   );
 }
 
-/** Zdanie o kanale, który zamilkł. Nie orzeka o skutku czynności. */
+/** Zdanie przedstawiane Operatorowi o kanale, który zamilkł; nie orzeka nic o skutku prowadzonej czynności. */
 function zdanieCiszy(czynnosc: string): string {
   return (
     `Połączenie z rdzeniem zamilkło w trakcie czynności: ${czynnosc}. Odpowiedzi na to żądanie ` +
@@ -91,7 +59,7 @@ function zdanieCiszy(czynnosc: string): string {
   );
 }
 
-/** Zdanie o powrocie łączności — bez zmiany orzeczenia o skutku. */
+/** Zdanie przedstawiane Operatorowi o powrocie łączności, bez zmiany wcześniejszego orzeczenia o skutku czynności. */
 function zdaniePowrotu(czynnosc: string): string {
   return (
     `Łączność z rdzeniem wróciła (rdzeń odpowiedział na próbę), ale odpowiedzi na czynność ` +
@@ -100,7 +68,7 @@ function zdaniePowrotu(czynnosc: string): string {
   );
 }
 
-/** Zdanie o odpowiedzi spóźnionej — czuwanie poprawia własne orzeczenie. */
+/** Zdanie przedstawiane Operatorowi o odpowiedzi, która przyszła spóźniona; czuwanie poprawia własne orzeczenie. */
 function zdanieSpoznione(czynnosc: string, wynik: Wynik<unknown>): string {
   const co = wynik.udany
     ? 'rdzeń przyjął żądanie'
@@ -115,8 +83,7 @@ export function utworzCzuwanieRdzenia(probaZycia: ProbaZycia): CzuwanieRdzenia {
   return {
     async prowadz(czynnosc, wywolanie, nasluch) {
       const poczatek = Date.now();
-      // Obietnica wywołania jest jedna na cały czas czuwania: drugie `then`
-      // na tej samej obietnicy nie wysyła drugiego żądania do rdzenia.
+      // Obietnica wywołania jest jedna na cały czas czuwania; drugie `then` nie ponawia żądania.
       const odpowiedz = wywolanie.then((wynik) => ({ rodzaj: 'odpowiedz' as const, wynik }));
 
       for (;;) {
@@ -133,8 +100,7 @@ export function utworzCzuwanieRdzenia(probaZycia: ProbaZycia): CzuwanieRdzenia {
         }
 
         nasluch.cisza(zdanieCiszy(czynnosc));
-        // Ta sama próba czeka teraz w kolejce wychodzącej i odpowie w chwili
-        // ponownego połączenia — jest więc czujnikiem powrotu za darmo.
+        // Ta sama próba czeka w kolejce wychodzącej i jest czujnikiem powrotu za darmo.
         void pilnujPowrotu(czynnosc, odpowiedz, proba, nasluch);
         return null;
       }

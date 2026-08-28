@@ -6152,3 +6152,6 @@ pokazywać. Studio potrzebuje jednego i drugiego naraz, więc tu zostaje samo zs
 z biblioteki i pas stanu z modułu, jednym wywołaniem zamiast powtarzania go w pięciu oknach.
 Dymek objaśnienia jest wymagany, nie opcjonalny, bo każde okno modułu ma mówić, po co jest
 i którą komendą działa, zanim cokolwiek zostanie naciśnięte.
+
+## budowa/klient-poprzedni/src/polaczenie/indeks.ts
+Kanał kontraktu zakłada tu dziennik nierozpoznanych, a widoki sięgają po obserwatora ogniska, by śledzić zmiany sesji i ustawiać kartę jako czynną, gdy identyfikator zmiany zgadza się z identyfikatorem sesji widoku.

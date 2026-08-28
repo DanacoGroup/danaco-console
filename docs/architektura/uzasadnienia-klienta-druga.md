@@ -7873,3 +7873,14 @@ w nagłówku okna komunikacji, więc po jej zmianie widok musi powstać na
 nowo, inaczej gniazdo pokazywałoby jedną rolę, a okno pod nim drugą; bez
 wbudowanej rozmowy nie ma czego przebudować, bo rolę widzi operator już
 w nagłówku gniazda.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-warsztatu-dokumentu.ts
+Warsztat pracuje na dokumentach wniesionych do okna, a te leżą w jednym magazynie całego
+produktu, zasilanym komendą design.asset.list. Drugi magazyn dokumentów byłby drugim miejscem,
+w którym ta sama treść żyje.
+
+Funkcja wykonaj jest jedną drogą na piętnaście komend, bo wszystkie idą tak samo: nazwa komendy
+ze stałych kontraktu, treść żądania złożona z formularza. Nazwa nie jest tu nigdy napisem
+wpisanym z pamięci — przychodzi z katalogu czynności, a ten bierze ją ze stałych.
+
+Sprawdzenie kształtu żądania wykonuje rdzeń i odsyła odmowę walidacji z nazwą pola — to
+sprawdzenie, którego klient i tak nie zastąpi, bo kontrakt rozstrzyga po stronie rdzenia.

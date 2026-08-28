@@ -9,16 +9,8 @@ import { nazwaKanalu, type RejestrKanalow } from '../../sterowanie/rejestr-kanal
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
 /**
- * Debata bieżąca modułu — jeden stan wspólny dla sześciu okien: Model Panels,
- * Debate Panel, Argument Map & Analysis, Voting & Evaluation Center, Moderator
- * Panel i Consensus Panel widzą ten sam skład i tę samą turę.
- *
- * Uczestnik jest kluczowany po `participantId`, nie po `channelId`: kontrakt przy
- * `roundtable.model.add` dopuszcza dwa wystąpienia tego samego kanału pod odrębnymi
- * tożsamościami, a wykaz po kanale nadpisałby jedno z nich drugim.
- *
- * Wykaz kanałów pochodzi z rejestru rdzenia (`sterowanie/rejestr-kanalow`), tego
- * samego, którym jedzie okno rozmowy — moduł nie prowadzi drugiej listy modeli.
+ * Debata bieżąca modułu — jeden stan wspólny dla sześciu okien, kluczowany po tożsamości
+ * uczestnika, nie po kanale, z wykazem kanałów z rejestru rdzenia.
  */
 export interface StanDebaty {
   /** Okno debaty; wymagane przez każdą komendę obszaru, którą moduł wywołuje. */
@@ -26,21 +18,13 @@ export interface StanDebaty {
   /** Przestawia moduł na inne okno debaty i czyści byty poprzedniej. */
   ustawOkno(idOkna: string): void;
 
-  /**
-   * Uczestnicy debaty; wspólni dla Model Panels i Moderator Panel.
-   *
-   * Kolejność jest kolejnością głosu, gdy rdzeń ją podał (`order` u KAŻDEGO
-   * uczestnika), a w przeciwnym razie kolejnością dodania — patrz `poKolejnosci`.
-   */
+  // Uczestnicy debaty; kolejność jest kolejnością głosu, gdy rdzeń ją podał, inaczej dodania.
   uczestnicy(): RoundtableParticipant[];
   /** Uczestnik o podanej tożsamości; `null`, gdy nieznany. */
   uczestnik(idUczestnika: string): RoundtableParticipant | null;
   /** Dokłada albo podmienia uczestnika — klucz po `participantId`. */
   dodajUczestnika(uczestnik: RoundtableParticipant): void;
-  /**
-   * Podmienia skład po czynności moderatora oddającej `participants`.
-   * Wykaz pusty jest pomijany — uzasadnienie przy ciele czynności.
-   */
+  // Podmienia skład po czynności moderatora; wykaz pusty jest pomijany, znaczy brak zmiany.
   ustawUczestnikow(lista: RoundtableParticipant[]): void;
   /** Ile razy ten kanał wystąpił w debacie — dwie tożsamości to dwa wystąpienia. */
   wystapieniaKanalu(idKanalu: string): number;
@@ -70,7 +54,7 @@ export interface StanDebaty {
   zamknij(): void;
 }
 
-/** Zależności stanu: okno debaty i tura otwierane od razu. */
+/** Zależności stanu debaty: okno debaty i tura otwierane od razu, obie pola opcjonalne o wartości domyślnej pustej. */
 export interface OpcjeStanuDebaty {
   okno?: string;
   tura?: string;
@@ -82,8 +66,7 @@ export function utworzStanDebaty(
   opcje: OpcjeStanuDebaty = {},
 ): StanDebaty {
   const sluchacze = new Set<() => void>();
-  // Mapa zachowuje kolejność wstawiania, więc kolejność dodania uczestników
-  // jest kolejnością wykazu w oknie bez osobnego sortowania.
+  // Mapa zachowuje kolejność wstawiania, więc dodanie uczestników ustala wykaz bez osobnego sortowania.
   const skladDebaty = new Map<string, RoundtableParticipant>();
   let idOkna = opcje.okno ?? '';
   let idTury = opcje.tura ?? '';
@@ -94,8 +77,7 @@ export function utworzStanDebaty(
     for (const sluchacz of [...sluchacze]) sluchacz();
   }
 
-  // Przyrost debaty przychodzi także z pracy innego okna albo innego urządzenia
-  // tego konta. Tura z innego okna debaty nas nie dotyczy i nie rusza widoku.
+  // Przyrost debaty przychodzi też z pracy innego okna; tura z innego okna debaty nas nie dotyczy.
   const odsubskrybujDebate = zrodlo.naZmianeDebaty((tresc) => {
     if (idOkna !== '' && tresc.turn.windowId !== idOkna) return;
     const zmianaTury = tresc.turn.id !== idTury;
@@ -114,8 +96,7 @@ export function utworzStanDebaty(
     ustawOkno(nowe) {
       const przyciety = nowe.trim();
       if (przyciety === idOkna) return;
-      // Uczestnicy, tura i wypowiedzi należą do okna debaty. Zostawione po
-      // poprzednim oknie pokazywałyby cudzą debatę pod nowym identyfikatorem.
+      // Uczestnicy, tura i wypowiedzi należą do okna debaty; zostawione pokazywałyby cudzą debatę.
       idOkna = przyciety;
       skladDebaty.clear();
       idTury = '';
@@ -133,16 +114,7 @@ export function utworzStanDebaty(
       powiadom();
     },
 
-    /**
-     * Wykaz pusty od rdzenia nie kasuje składu — pusta tablica znaczy „bez zmian
-     * w składzie", nie „skład jest pusty".
-     *
-     * `participants` w odpowiedzi `roundtable.moderator.direct` jest polem
-     * nieobowiązkowym; rdzeń dokłada je tylko przy zmianie składu albo kolejności
-     * głosu. Odczyt składu jest w kontrakcie (`roundtable.model.list`), ale żadne
-     * okno modułu go jeszcze nie wywołuje, więc wykaz raz wymazany zostaje
-     * w tym stanie nieodzyskiwalny.
-     */
+    // Wykaz pusty od rdzenia nie kasuje składu — pusta tablica znaczy brak zmiany, nie skład pusty.
     ustawUczestnikow(lista) {
       if (lista.length === 0) return;
       skladDebaty.clear();
@@ -196,13 +168,8 @@ export function utworzStanDebaty(
 }
 
 /**
- * Wchłonięcie przyrostu wypowiedzi — jedna wypowiedź to jeden wpis.
- *
- * Rdzeń rozgłasza tę samą wypowiedź dwukrotnie: jako `created` w chwili otwarcia
- * głosu, gdy treść jest jeszcze pusta, i jako `updated` po domknięciu strumienia
- * modelu. Klucz jest `id` wypowiedzi, a nie jej treść ani mówca: przyrost
- * o znanym identyfikatorze podmienia wpis w miejscu (treść rośnie, kolejność
- * zostaje), przyrost nieznany dokleja się na koniec.
+ * Wchłonięcie przyrostu wypowiedzi — jedna wypowiedź to jeden wpis, kluczowany identyfikatorem,
+ * nie treścią ani mówcą.
  */
 function wchlonWypowiedz(
   wykaz: readonly RoundtableStatement[],
@@ -216,16 +183,8 @@ function wchlonWypowiedz(
 }
 
 /**
- * Kolejność głosu wykazu uczestników.
- *
- * `RoundtableParticipant.order` jest w kontrakcie polem nieobowiązkowym,
- * a `speakingOrder` przy `roundtable.moderator.direct` obejmuje cały stół —
- * kolejność głosu jest własnością składu, nie pojedynczego uczestnika. Wykaz
- * z `order` tylko u części uczestników znaczy, że rdzeń kolejności nie ustalił.
- *
- * Dlatego sortujemy wyłącznie wtedy, gdy `order` ma każdy uczestnik; inaczej
- * zostaje kolejność dodania (Mapa zachowuje kolejność wstawiania). Decyzja stoi
- * w stanie wspólnym, żeby wszystkie okna widziały tę samą kolejność.
+ * Kolejność głosu wykazu uczestników: sortujemy wyłącznie, gdy kolejność ma każdy uczestnik,
+ * inaczej zostaje kolejność dodania.
  */
 function poKolejnosci(lista: RoundtableParticipant[]): RoundtableParticipant[] {
   const kazdyZKolejnoscia = lista.every((uczestnik) => uczestnik.order !== undefined);
@@ -234,12 +193,8 @@ function poKolejnosci(lista: RoundtableParticipant[]): RoundtableParticipant[] {
 }
 
 /**
- * Nazwa uczestnika widziana przez Operatora.
- *
- * Tożsamość jest ważniejsza od kanału, bo dwóch uczestników potrafi jechać tym
- * samym kanałem i sama nazwa modelu ich nie odróżnia. Gdy tożsamości nie nadano,
- * zostaje opis kanału i identyfikator uczestnika, żeby dwa wiersze wykazu nie
- * wyglądały identycznie.
+ * Nazwa uczestnika widziana przez Operatora, ważniejsza tożsamością niż kanałem, bo dwóch
+ * uczestników potrafi jechać tym samym kanałem.
  */
 export function nazwaUczestnika(uczestnik: RoundtableParticipant, opisKanalu: string): string {
   const kanal = opisKanalu === '' ? uczestnik.channelId : opisKanalu;

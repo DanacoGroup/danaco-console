@@ -7483,3 +7483,10 @@ Wykaz czynności bez drogi powstał, gdy kontrakt nie niósł dla nich ani jedne
 rodziny komend design większość z nich komendę już ma — brakiem jest już uchwyt w rdzeniu i droga
 z okna, a to jest inne zdanie. Rozstrzygnięcie o pokryciu nie należy jednak do tego pliku: napis nie
 jest z rdzeniem połączony i zestarzeje się znowu.
+
+## budowa/klient-poprzedni/src/kontrakt.test.ts
+Kontrakt jest jedynym źródłem prawdy nazw, a `contract.ts` jego wytworem. Trzy rzeczy mogą się tu rozejść po cichu i żadnej nie wychwyci ani kompilator, ani przegląd: generat starszy od źródła (`contract.json` zmienione, generator niepuszczony — kompilacja przechodzi, bo stała nadal istnieje), literał nazwy powielony w kodzie klienta zamiast wzięty z generatu (zmiana nazwy w kontrakcie zostawia wtedy w interfejsie martwe wywołanie, które rdzeń odbije jako `*.unknown`), oraz port rdzenia zaszyty w kliencie rozjechany z portem domyślnym rdzenia — klient szuka gniazda tam, gdzie nikt nie nasłuchuje.
+
+Nierozpoznana komenda wraca pod nazwą swojego obszaru, a nie pod nazwą połączenia — odmowa poczty przedstawia się jako sprawa poczty. Sprawdzian obszarów wypada niepomyślnie zarówno wtedy, gdy taki obszar się pojawi, jak i wtedy, gdy wiersz zostanie tu po obszarze już domkniętym.
+
+Zmiana nazwy w `contract.json` przechodzi przez kompilację obu stron i zostawia w interfejsie martwe wywołanie, które rdzeń odbije zdarzeniem `*.unknown` — dług nie rośnie i nie znika po cichu.

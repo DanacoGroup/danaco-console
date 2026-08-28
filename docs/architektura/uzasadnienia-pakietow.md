@@ -6857,3 +6857,14 @@ samego numeru.
 
 Po osieroceniu tunele przestawione na `inactive` nie przenoszą już ani
 jednego bajtu.
+
+## budowa/server/internal/session/izolacja_przydzial.go
+Każdy z trzech punktów izolacji ma tę samą treść: włączony znaczy zasób
+dedykowany oknu, wyłączony znaczy zasób wspólny platformy. Egzekucja jest
+więc jedna dla trzech zakresów. Właściciela zasobu wskazuje ten, kto go
+przydziela: rejestr procesów kluczowany oknem, pula kont oddająca kod
+profilu, przydział serwera wykonania.
+
+Puste pole Wlasciciel oznacza zasób wspólny platformy: pulę kont, wspólną
+pulę procesów albo współdzielony serwer wykonania, zależnie od typu
+zasobu.

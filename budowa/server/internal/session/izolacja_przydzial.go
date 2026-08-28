@@ -1,12 +1,7 @@
-// Egzekucja trzech punktów izolacji, które rozstrzygają się przydziałem zasobu
-// wykonawczego — konta i tokenu, instancji procesu modelu oraz serwera wykonania.
-//
-// Każdy z tych trzech zakresów ma tę samą treść: włączony znaczy „zasób
-// dedykowany oknu", wyłączony znaczy „zasób wspólny platformy". Egzekucja jest
-// więc jedna dla trzech zakresów: zasób, którego właścicielem nie jest to okno,
-// zostaje odrzucony. Właściciela wskazuje ten, kto zasób przydziela — rejestr
-// procesów kluczowany oknem, pula kont oddająca kod profilu, przydział serwera
-// wykonania.
+// Egzekucja trzech punktów izolacji, rozstrzyganych przydziałem zasobu
+// wykonawczego: konta i tokenu, instancji procesu modelu oraz serwera
+// wykonania. Zasób, którego właścicielem nie jest to okno, zostaje
+// odrzucony.
 package session
 
 import (
@@ -15,17 +10,18 @@ import (
 	"danacoconsole/server/internal/konfig"
 )
 
-// Zasob to jeden zasób wykonawczy, po który sięga okno.
+// Zasob to jeden zasób wykonawczy, po który sięga okno, wraz z informacją
+// o tym, do jakiego okna należy.
 type Zasob struct {
 	// Identyfikator zasobu — kod konta, identyfikator procesu, nazwa serwera.
 	Identyfikator string
-	// Wlasciciel wskazuje okno, dla którego zasób został wydzielony. Puste
-	// znaczy zasób wspólny platformy: pulę kont, wspólną pulę procesów albo
-	// współdzielony serwer wykonania.
+	// Wlasciciel wskazuje okno, dla którego zasób został wydzielony; puste
+	// znaczy zasób wspólny platformy.
 	Wlasciciel string
 }
 
-// Przydzial opisuje zasoby jednego uruchomienia okna komunikacji.
+// Przydzial opisuje zasoby jednego uruchomienia okna komunikacji: konto,
+// proces oraz serwer wykonania modelu.
 type Przydzial struct {
 	// IdOkna — okno, dla którego przydział powstał.
 	IdOkna string
@@ -63,7 +59,8 @@ func SprawdzPrzydzial(zasady Zasady, przydzial Przydzial) error {
 	return nil
 }
 
-// sprawdzWylacznosc odrzuca zasób wspólny oraz zasób wydzielony innemu oknu.
+// sprawdzWylacznosc odrzuca zasób wspólny platformy oraz zasób wydzielony
+// innemu oknu niż to sprawdzane.
 func sprawdzWylacznosc(klucz, nazwa, idOkna string, zasob Zasob) error {
 	wlasciciel := strings.TrimSpace(zasob.Wlasciciel)
 	if wlasciciel == "" {
@@ -77,7 +74,8 @@ func sprawdzWylacznosc(klucz, nazwa, idOkna string, zasob Zasob) error {
 	return nil
 }
 
-// opisZasobu zwraca identyfikator zasobu w postaci nadającej się do komunikatu.
+// opisZasobu zwraca identyfikator zasobu w postaci czytelnej, nadającej się
+// do komunikatu naruszenia izolacji.
 func opisZasobu(zasob Zasob) string {
 	if identyfikator := strings.TrimSpace(zasob.Identyfikator); identyfikator != "" {
 		return identyfikator

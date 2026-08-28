@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: odbiór zdarzeń wykonawczych kanału głównego —
-// zdarzeń zaczepów i zamknięć tur — oraz rozstrzyganie stanu odpowiedzi
-// ze zdarzenia, a nie z treści wypowiedzi modelu.
-//
-// Dziennik zdarzeń dostaje każde zdarzenie zaczepu wraz z surową kopertą jako
-// dowodem, tabela zamknięć dostaje zdarzenie `result` wraz ze stanem, który
-// z niego wyprowadzono. Zapis następuje po zdarzeniu i nie steruje przebiegiem
-// tury.
+// Plik odbiera zdarzenia wykonawcze kanału głównego — zdarzenia zaczepów i zamknięć tur —
+// oraz rozstrzyga stan odpowiedzi na podstawie zdarzenia, a nie treści wypowiedzi modelu.
 package core
 
 import (
@@ -21,14 +15,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// zdarzeniaWykonawcze przyjmuje zdarzenia wykonawcze tury i prowadzi ich ślad.
+// zdarzeniaWykonawcze przyjmuje zdarzenia wykonawcze tury i prowadzi ich ślad w dzienniku
+// zdarzeń oraz w diagnostyce.
 type zdarzeniaWykonawcze struct {
 	zycie    context.Context
 	repo     dane.RepozytoriumZdarzenWykonawczych
 	dziennik *log.Logger
 
-	// diagnostyka dopina się po montażu rejestru kanałów — rejestr powstaje
-	// przed modułami — stąd zamek zamiast pola ustalanego w konstruktorze.
+	// diagnostyka dopina się po montażu rejestru kanałów, stąd zamek zamiast pola z konstruktora.
 	mu          sync.RWMutex
 	diagnostyka *adapterDiagnostyki
 }
@@ -71,7 +65,8 @@ func (o *zdarzeniaWykonawcze) HaczykZaczepow(okno, wiadomosc string) func(inject
 	return func(e injection.ZdarzenieZaczepu) { o.zanotujZaczep(okno, wiadomosc, e) }
 }
 
-// rodzaje wierszy dziennika zdarzeń — słownik kolumny `dziennik_zdarzen.rodzaj`.
+// rodzaje wierszy dziennika zdarzeń — słownik kolumny dziennik_zdarzen.rodzaj — zaczep
+// startu i odpowiedzi zaczepu.
 const (
 	rodzajZaczepStart     = "zaczep_start"
 	rodzajZaczepOdpowiedz = "zaczep_odpowiedz"
@@ -107,8 +102,8 @@ func (o *zdarzeniaWykonawcze) zanotujZaczep(okno, wiadomosc string, e injection.
 	o.przekazDiagnostyce(okno, e)
 }
 
-// ZanotujZamkniecie utrwala zamknięcie tury razem ze stanem wiadomości
-// wyprowadzonym ze zdarzenia.
+// ZanotujZamkniecie utrwala zamknięcie tury razem ze stanem wiadomości wyprowadzonym ze
+// zdarzenia zamknięcia tury.
 func (o *zdarzeniaWykonawcze) ZanotujZamkniecie(okno, wiadomosc string, z *zamkniecieTury, stan shared.MessageStatus) {
 	if o == nil || o.repo == nil || z == nil {
 		return
@@ -187,15 +182,9 @@ func zamkniecieZFragmentu(dane json.RawMessage) (zamkniecieTury, bool) {
 	return z, true
 }
 
-// stanOdpowiedziZeZdarzen rozstrzyga stan wiadomości po turze na podstawie
-// zdarzeń wykonawczych.
-//
-// Kolejność warunków odpowiada hierarchii wiarygodności: przerwanie tury,
-// potem błąd toru (kanał nie dowiózł strumienia), potem zdarzenie `result` —
-// jego pole `is_error` rozstrzyga niezależnie od podtypu, ponieważ podtyp
-// `success` występuje także przy `is_error: true`. Tura bez zamknięcia — na
-// kanale, który zamknięcia nie nadaje (echo, api) — kończy się stanem
-// ukończonym.
+// stanOdpowiedziZeZdarzen rozstrzyga stan wiadomości po turze na podstawie zdarzeń
+// wykonawczych, według hierarchii wiarygodności: przerwanie tury, błąd toru, potem
+// zdarzenie result.
 func stanOdpowiedziZeZdarzen(kontekst context.Context, err error, z *zamkniecieTury) shared.MessageStatus {
 	if kontekst.Err() != nil {
 		return shared.MessageStatusStopped

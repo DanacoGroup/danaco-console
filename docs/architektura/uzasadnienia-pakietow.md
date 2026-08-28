@@ -6905,3 +6905,26 @@ po to, żeby miała co uruchomić.
 W teście TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost każda wartość
 inna niż wartość wskazująca współdzielenie wprost zostawia wymiar odrębny,
 więc pomyłka w zapisie nie może rozszczelnić kontekstu.
+
+## budowa/server/internal/dane/tlumaczenie.go
+Panel tłumaczenia leży w `tlumaczenie_panele.go`, zmiany treści panelu
+w `tlumaczenie_tresc.go`, słownik w plikach `slownik*.go`, jakość i mowa
+w plikach `jakosc*.go` — jedno repozytorium, dziewięć plików wedle
+odpowiedzialności. Interfejs deklaruje wyłącznie ten plik, w całości, wraz
+z metodami implementowanymi w pozostałych plikach; interfejs rozdzielony na
+dziewięć plików byłby dziewięcioma prawdami o jednym kontrakcie.
+
+Rdzeń nie rozpoznaje języka i nie tłumaczy: `jezyk_zrodlowy` bywa pusty, dopóki
+Operator albo polecenie `source.set` go nie poda — repozytorium nie dorabia
+wartości domyślnej udającej rozpoznanie. Treść panelu bywa pusta z tego samego
+powodu. Czas jest liczbą milisekund epoki, wzorem `dane/asystent.go`, nie
+tekstem.
+
+Treść źródłowa okna tłumaczenia bywa obszerna, więc trafia do pliku na dysku,
+a baza trzyma odwołanie, wzorem `dane/wiadomosci.go`: `TekstZrodlowy` niesie
+treść wprost, gdy jest krótka, `TekstZrodlowyOdwolanie` niesie odwołanie do
+pliku, gdy jest obszerna. Repozytorium nie rozstrzyga, które pole wypełnić,
+i zapisuje to, co przyszło z wyższej warstwy.
+
+Zapis okna nie ustala języka źródłowego, gdy przyszedł pusty, ponieważ rdzeń
+nie rozpoznaje języka — wartość pusta zostaje pusta.

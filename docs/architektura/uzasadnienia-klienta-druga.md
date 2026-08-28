@@ -7541,3 +7541,15 @@ nikomu.
 Stopień jest wartością wyliczenia katalogu rdzenia, nie nazwą modelu — zmiana kanału nie unieważnia ustawienia, a kanał przekłada stopień na własny parametr. Suwak pokazuje położenie w wykazie stopni, wysyła zaś sam stopień, bo rdzeń nie przyjmuje numeru położenia. Wartość idzie ustawieniem poziomu okna, bo treść żądania aktualizacji okna nie ma dla niej pola. Suwak nie ma stanu wyłączonego: przesunięcie jest czynne zawsze, także gdy rdzeń nie odpowiada.
 
 Położenie suwaka to wartość ustawiona tutaj i zmieniana przesunięciem. Zdanie pod suwakiem to wartość obowiązująca po rozstrzygnięciu poziomów zasięgu. Gdy wartość przychodzi z poziomu szerszego niż okno, zdanie podaje ten poziom; bez tego suwak stojący na „Bez wskazania" przeczyłby nakładowi narzuconemu z poziomu globalnego.
+
+## budowa/klient-poprzedni/src/moduly/terminal/wybor-drzewem.ts
+Plik nie rysuje ani jednego wiersza menu — strzałki, rozwijanie i znacznik
+wyboru niesie mechanizm biblioteki menu drzewa, który oddaje wołającemu
+klucz pozycji zamiast wykonywać wybór. Zostają tu dwie rzeczy, których
+mechanizm nie robi: pamięć wybranej wartości, bo biblioteka dostaje drzewo
+z zewnątrz przy każdym ustawieniu, oraz przełożenie wykazów modułu na
+pozycje menu jako dane, a nie łańcuch warunków. Uchwyt niesie wartość, nie
+nazwę nastawy: stoi na nim „Bash”, a nie „Powłoka” — nazwa rodzajowa idzie
+do etykiety dostępności i do podpowiedzi. Wartość pusta jest wartością:
+pusty ciąg znaczy „bez zawężenia” w wykazie procesów i ma własną pozycję
+„Wszystkie procesy”, inaczej z filtra nie byłoby drogi powrotnej.

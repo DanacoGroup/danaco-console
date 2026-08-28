@@ -9,11 +9,14 @@ import {
   Command,
   StudioInputDeviceKind,
   type ErrorInfo,
+  type Module,
+  type Session,
   type StudioInputDevice,
 } from '../../../../shared/contract.ts';
 import type { Kanal } from '../../protokol/kanal.ts';
 import { wywolaj } from '../../protokol/wywolanie.ts';
 import { ikony, type NazwaZnaku } from './ikony.ts';
+import { panelDokumentu } from './dokument.ts';
 import { el, tekst, zeZnacznika } from './narzedzia.ts';
 
 export interface NastawyOknaStudio {
@@ -21,6 +24,10 @@ export interface NastawyOknaStudio {
   miejsce: HTMLElement;
   /** Kanał, którym okno woła komendy rdzenia. */
   kanal: Kanal;
+  /** Karty sesji odtworzone przez rdzeń — pod nimi staje okno modułu. */
+  sesje: Session[];
+  /** Moduł, którego okno powstaje w rdzeniu. */
+  modul: Module;
 }
 
 export interface OknoStudio {
@@ -125,8 +132,9 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
     ]),
     tresc,
   ]);
+  const dokument = panelDokumentu({ kanal: w.kanal, sesje: w.sesje, modul: w.modul });
   const obszar = el('div', { klasa: 'sta-obszar', 'data-czaty': 'ukryte' }, [
-    el('div', { klasa: 'sta-robocza', 'data-liczba': '1' }, [panel]),
+    el('div', { klasa: 'sta-robocza', 'data-liczba': '2' }, [dokument.wezel, panel]),
   ]);
   const bryla = el('section', { klasa: 'st-okno-robocze', 'aria-label': tekst('okno.etykieta') }, [obszar]);
 
@@ -153,6 +161,7 @@ export function zamontujOknoStudio(w: NastawyOknaStudio): OknoStudio {
   return {
     zdejmij() {
       zdjete = true;
+      dokument.zdejmij();
       if (bryla.isConnected) bryla.remove();
     },
   };

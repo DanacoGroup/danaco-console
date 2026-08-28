@@ -31,11 +31,11 @@ export function metodyLogowania(w: WlasciwosciMetod): HTMLElement[] {
         const znak = zeZnacznika(ikony[m.ikona]);
         znak.setAttribute('aria-hidden', 'true');
         const czynna = w.dostepne.includes(m.klucz);
-        return el('button', { klasa: 'au-metoda', type: 'button' }, [
+        return el('button', { klasa: 'dn-kafel dn-kafel--wybor', type: 'button' }, [
           znak,
           el('span', { tekst: tekst(`dostep.logowanie.metody.${m.klucz}`) }),
           el('span', {
-            klasa: 'au-metoda-stan',
+            klasa: 'dn-kafel-stan',
             tekst: tekst(`dostep.logowanie.metody.${czynna ? 'aktywna' : 'nieaktywna'}`),
           }),
         ]);

@@ -11,17 +11,8 @@ import { zwinieteZakonczone } from './zwiniete-zakonczone';
 import './zadania-w-tle.css';
 
 /**
- * Panel „Zadania w tle" — podagenci całej karty sesji w jednym miejscu.
- *
- * Każdy przepływ (okno wykonawcy wraz z jego zadaniem) dostaje kartę: nazwę
- * z odznaką stanu, wiersz podsumowania, etap z telemetrii i tabelę agentów.
- * Przepływy domknięte idą do zwiniętego licznika, żeby praca trwająca nie
- * schodziła poniżej krawędzi.
- *
- * Panel nie stawia pauzy ani usuwania podagenta, bo kontrakt nie niesie komendy,
- * która by je wykonała: rodzina `subagent.*` to `spawn`, `list` i
- * `result.collect`, a `queue.action` wymaga `queueId`, którego `Subagent` nie
- * niesie (ma sam `queueItemId`).
+ * Panel Zadania w tle zbiera podagentów całej karty sesji: każdy przepływ
+ * dostaje kartę, a domknięte przepływy idą do zwiniętego licznika.
  */
 export interface PanelZadanWTle {
   element: HTMLElement;
@@ -38,7 +29,7 @@ export interface OpcjeZadanWTle {
   stan: StanMultitaskingu;
 }
 
-/** Pozycje sita stanu; pusta wartość znaczy „bez zawężenia". */
+/** Pozycje sita stanu; pusta wartość znaczy bez zawężenia, pozostałe odpowiadają stanom podagenta z kontraktu. */
 const POZYCJE_SITA: ReadonlyArray<readonly [string, string]> = [
   ['', 'Wszystkie stany'],
   [SubagentStatus.Running, 'W toku'],
@@ -69,12 +60,7 @@ export function utworzPanelZadanWTle(opcje: OpcjeZadanWTle): PanelZadanWTle {
 
   const element = zlozPowierzchnie(licznik, sito, odswiezanie, tresci.element);
 
-  /**
-   * Odczyt podagentów karty sesji wraz z telemetrią etapów.
-   *
-   * Chwila odniesienia powstaje raz i wędruje w dół, żeby czasy trwania
-   * wszystkich wierszy mierzyły się do tej samej milisekundy.
-   */
+  // Chwila odniesienia powstaje raz i wędruje w dół, żeby czasy mierzyły się do tej samej milisekundy.
   async function odczytaj(): Promise<void> {
     const sesja = stan.sesja();
     if (sesja === '') {
@@ -174,7 +160,7 @@ export function utworzPanelZadanWTle(opcje: OpcjeZadanWTle): PanelZadanWTle {
   };
 }
 
-/** Żądanie `subagent.list`; sito puste nie dokłada pola do żądania. */
+/** Żądanie wykazu podagentów sesji; sito puste nie dokłada pola stanu do żądania wysyłanego do rdzenia. */
 function zadanieWykazu(sesja: string, stanSita: string): {
   sessionId: string;
   status?: SubagentStatus;
@@ -202,7 +188,7 @@ async function odczytajTelemetrie(bieg: ZrodloBiegu, sesja: string): Promise<Tel
   return zlozTelemetrie(statusy, '');
 }
 
-/** Zdanie stanu pustego; sito zawężające mówi o sobie wprost. */
+/** Zdanie stanu pustego; sito zawężające mówi o sobie wprost, żeby zawężenie nie wyglądało na pustą sesję. */
 function zdaniePustki(stanSita: string): string {
   const opis = POZYCJE_SITA.find(([wartosc]) => wartosc === stanSita)?.[1] ?? stanSita;
   return stanSita === ''
@@ -210,7 +196,7 @@ function zdaniePustki(stanSita: string): string {
     : `Rdzeń nie oddał ani jednego podagenta w stanie „${opis}". Zdejmij zawężenie, żeby zobaczyć pozostałe.`;
 }
 
-/** Powierzchnia panelu: pasek tytułu z licznikiem i sterowaniem oraz treść. */
+/** Powierzchnia panelu: pasek tytułu z licznikiem i sterowaniem oraz miejsce na treść odczytanego wykazu. */
 function zlozPowierzchnie(
   licznik: HTMLElement,
   sito: HTMLElement,

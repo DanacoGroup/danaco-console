@@ -7031,3 +7031,11 @@ Plik zawiera model rysunku i wykreślenie go pisakiem; elementy dokumentu i zdar
 
 ## budowa/klient-poprzedni/src/moduly/automations/okno-wykaz-petli.ts
 Przycisk uruchomienia nie pyta o potwierdzenie ani o wskazanie kolejki — zakłada kolejkę i posuwa ją działaniem start; pętla wyłączona ma ten sam przycisk co czynna, jej stan stoi w opisie pozycji. Zawężanie zastępuje blokowanie wierszy: napis szukania skraca wykaz po stronie klienta, bo kontrakt nie ma pola zapytania, a przełącznik tylko czynne zawęża samo żądanie polem stanu włączenia. Uruchomienie przestawia wspólny stan modułu na tę pętlę i jej kolejkę, więc Execution Monitor pokazuje jej przebiegi, a Queue Manager posuwa jej kolejkę bez przepisywania identyfikatorów. Nad wykazem stoi wykaz przekazań: scenariusze przeniesione tu z innych modułów komendą przeniesienia kontekstu; okno jest wejściem do modułu, więc to tutaj widać, że ktoś coś oddał — przekazanie zostaje propozycją do chwili, w której Operator naciśnie zapis, nic nie wchodzi do magazynu automatyk samo. Zdanie potwierdzenia po odczycie wykazu podaje liczbę oddanych pozycji, żeby wykaz krótki dał się odróżnić od przyciętego granicą; odczyt przekazań mówi, ile okien sprawdzono i ile z nich niesie scenariusz — pustka po sprawdzeniu jest odpowiedzią, nie usterką.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-zadan-w-tle.ts
+Każdy przepływ dostaje kartę z nazwą, odznaką stanu, wierszem podsumowania,
+etapem z telemetrii i tabelą agentów. Panel nie stawia pauzy ani usuwania
+podagenta, bo kontrakt nie niesie komendy, która by je wykonała: rodzina
+komend podagenta obejmuje tylko powołanie, wykaz i zebranie wyników,
+a komenda czynności kolejki wymaga identyfikatora kolejki, którego podagent
+nie niesie.

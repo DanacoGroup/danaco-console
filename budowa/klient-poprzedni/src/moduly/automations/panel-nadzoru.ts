@@ -1,17 +1,6 @@
 /**
- * Panel Schedulera — pięć czynności rodziny `schedule.*`, których stan MUSI
- * przeżyć restart rdzenia: okna wykonania, uruchomienie wsteczne, historia
- * wyzwoleń, nadzór obecności uruchomień i adres wejściowy wyzwalacza webhook.
- *
- * Cztery z pięciu żądają HARMONOGRAMU, nie automatyki — kontrakt wskazuje go
- * polem `scheduleId`. Panel pyta więc o niego wprost i nie podstawia w jego
- * miejsce automatyki bieżącej: harmonogram ma własny identyfikator
- * (`AutomationSchedule.id`) i to on jest przedmiotem tych czynności. Piąta,
- * adres webhooka, żąda automatyki i tę bierze ze stanu modułu.
- *
- * Klucz podpisu nie wraca i nie może wrócić. Odpowiedź niesie referencję
- * (`signatureSecretRef`), a nie wartość — panel pokazuje dokładnie to, co
- * dostał, i niczego nie dopowiada.
+ * Panel Schedulera obsługuje pięć czynności rodziny schedule, których stan musi przeżyć restart
+ * rdzenia: okna wykonania, wsteczne uruchomienie, historię i nadzór.
  */
 import { pole, poleLiczbowe, poleTresci } from '../../modele/kontrolki-formularza';
 import {
@@ -24,7 +13,7 @@ import {
 import type { StanAutomatyki } from './stan-automatyki';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
-/** Panel dopełniający Schedulera. */
+/** Panel dopełniający Schedulera, osadzany wewnątrz okna harmonogramów wraz z jego szufladami czynności. */
 export interface PanelNadzoru {
   element: HTMLElement;
 }

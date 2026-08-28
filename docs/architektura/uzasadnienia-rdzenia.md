@@ -7253,3 +7253,13 @@ samo okno: parametry wykonania zna rejestr nadzorcy, a po restarcie rdzenia —
 wiersz bazy; stan procesu zna rejestr procesów; historię zna baza. Pytanie
 o stan nie ma prawa zerwać niczego, dlatego okno nieznane żadnemu z rejestrów
 otrzymuje odpowiedź pustą ze stanem pending zamiast odmowy.
+
+## budowa/server/internal/core/adapter_sesje_historia.go
+Wszystkie czynności tego pliku są odwracalne — żadna nie traci zapisu.
+Jedyną drogą utraty danych pozostaje usunięcie sesji, obsłużone w osobnym
+pliku. Archiwizacja przenosi sesję poza historię bieżącą, ale zapis zostaje
+w całości w tej samej bazie, oznaczony stanem, i wraca po przywróceniu.
+
+Przy przywracaniu kolejność jest istotna: najpierw schodzi znacznik kosza,
+inaczej sesja zostałaby niewidzialna mimo stanu czynnego, potem stan, na
+końcu powrót do rejestru żywego — wiersz wraca tam już jako czynny.

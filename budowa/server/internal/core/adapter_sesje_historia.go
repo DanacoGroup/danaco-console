@@ -1,3 +1,5 @@
+// Plik zawiera odwracalne czynności na wykazie sesji: zmianę nazwy,
+// archiwizację i przywrócenie, z zapisem zachowanym w całości w bazie.
 package core
 
 import (
@@ -8,14 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Czynności Operatora na wykazie sesji: nazwa, projekt, archiwum.
-//
-// Wszystkie są odwracalne — żadna nie traci zapisu. Jedyną drogą utraty danych
-// pozostaje session.delete (adapter_sesje_usuwanie.go). Archiwizacja przenosi
-// sesję poza historię bieżącą, ale zapis zostaje w całości w tej samej bazie,
-// oznaczony stanem, i wraca po przywróceniu.
-
-// ZmienNazwe zmienia nazwę sesji w historii.
+// ZmienNazwe zmienia nazwę sesji w historii bieżącej konta, utrwalając ją
+// w bazie, gdy baza jest dostępna.
 func (a *adapterSesji) ZmienNazwe(ctx context.Context, z shared.SessionRenameRequest) (shared.SessionRenameResponse, error) {
 	if err := a.zapiszNazwe(ctx, z.SessionId, z.Title); err != nil {
 		return shared.SessionRenameResponse{}, err
@@ -37,11 +33,9 @@ func (a *adapterSesji) Archiwizuj(ctx context.Context, z shared.SessionArchiveRe
 	return shared.SessionArchiveResponse{ArchivedIds: przeniesione}, nil
 }
 
-// Przywroc wraca sesje do historii bieżącej — i z archiwum, i z kosza: to jedna
-// komenda kontraktu i jedno znaczenie „przywróć".
-// Kolejność jest istotna: najpierw schodzi znacznik kosza (inaczej sesja
-// zostałaby niewidzialna mimo stanu czynnego), potem stan, na końcu powrót
-// do rejestru żywego — wiersz wraca tam już jako czynny.
+// Przywroc wraca sesje do historii bieżącej z archiwum i z kosza, jedną
+// komendą kontraktu i jednym znaczeniem przywrócenia niezależnie od stanu
+// wyjściowego.
 func (a *adapterSesji) Przywroc(ctx context.Context, z shared.SessionRestoreRequest) (shared.SessionRestoreResponse, error) {
 	zKosza := a.wyjmijZKosza(ctx, z.SessionIds)
 	przywrocone := a.przestawStan(ctx, z.SessionIds, shared.SessionStatusActive)
@@ -49,7 +43,8 @@ func (a *adapterSesji) Przywroc(ctx context.Context, z shared.SessionRestoreRequ
 	return shared.SessionRestoreResponse{RestoredIds: przywrocone}, nil
 }
 
-// WykazArchiwum zwraca sesje archiwum — wgląd z okna ustawień.
+// WykazArchiwum zwraca sesje archiwum konta, jako wgląd udostępniany z okna
+// ustawień platformy operatorowi.
 func (a *adapterSesji) WykazArchiwum(ctx context.Context, z shared.SessionArchiveListRequest) (shared.SessionArchiveListResponse, error) {
 	if a.trwalosc == nil || a.trwalosc.sesje == nil {
 		return shared.SessionArchiveListResponse{Sessions: []shared.Session{}}, nil
@@ -102,9 +97,7 @@ func (a *adapterSesji) zapiszNazwe(ctx context.Context, identyfikator, nazwa str
 	}
 	wiersz, err := a.trwalosc.sesje.PoIdentyfikatorze(ctx, identyfikator)
 	if err != nil {
-		// `PoIdentyfikatorze` owija brak wiersza (`%w`), więc porównanie wprost
-		// nigdy by go nie rozpoznało i zmiana nazwy padałaby na sesji, której
-		// baza jeszcze nie zna.
+		// Odczyt sesji owija brak wiersza, więc porównanie wprost nie rozpozna sesji nieznanej bazie.
 		if errors.Is(err, dane.ErrBrakWiersza) {
 			return nil
 		}

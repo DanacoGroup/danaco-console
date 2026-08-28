@@ -7288,3 +7288,35 @@ z wykazu okien operacyjnych, także taką, której kontrakt nie ma — oraz opis
 czynności, który wchodzi w zdanie powodu. Powitanie idzie raz na połączenie,
 nie raz na moduł, więc wszystkie wywołania odczytu czekają na jedną
 odpowiedź.
+
+## budowa/klient-poprzedni/src/moduly/design/czynnosci-zasobu.ts
+Usunięcie wykonuje się bez pytania „czy na pewno": bramka potwierdzająca zabiera Operatorowi
+jedno kliknięcie i uczy odruchowego potwierdzania, zamiast podnosić bezpieczeństwo. Okno wykonuje
+czynność i mówi, co się stało.
+
+Odpowiedź niesie treść, a nie samo powodzenie: `design.asset.remove` oddaje pole `removed`, gdzie
+`false` znaczy „takiego zasobu nie było" i jest odpowiedzią udaną, a zarazem inną wiadomością niż
+„usunięto". Zlanie ich w jedno zdanie potwierdzałoby czynność, która się nie odbyła.
+
+Przyciski są czynne zawsze: brak wskazanego zasobu nie gasi kontrolki, a naciśnięcie mówi wtedy,
+czego brakuje.
+
+Stan ulubionego docelowy liczy się z zasobu, nie z napisu na przycisku. Napis bywa o ułamek sekundy
+starszy od zbioru, ponieważ zdarzenie mogło właśnie przestawić ulubionego z drugiego okna, a wtedy
+przełącznik wysłałby wartość, którą zasób już ma.
+
+Rdzeń oddaje zasób odczytany z bazy po zapisie, więc porównanie zamówienia z odpowiedzią jest
+tanie: gdy rdzeń zapisał co innego, okno mówi to wprost zamiast potwierdzać własne zamówienie.
+
+Cisza kanału nie jest odmową usunięcia: rdzeń mógł zasób skasować, a odpowiedź zginąć z gniazdem.
+Zdanie mówi o braku rozstrzygnięcia, a zasób zostaje w wykazie do czasu odczytu potwierdzającego
+stan (`czuwanie-rdzenia.ts`).
+
+Zasób był w wykazie, a rdzeń go nie zna — wykaz był nieaktualny. Zdejmujemy go z wykazu, ponieważ
+pokazywanie dalej byłoby pokazywaniem bytu, o którym rdzeń właśnie powiedział, że go nie ma.
+
+Napis mówi, co przycisk zrobi, a nie w jakim stanie zasób jest — przełącznik opisany stanem
+bieżącym czyta się dokładnie odwrotnie do tego, co wykonuje.
+
+## budowa/klient-poprzedni/src/dostepy/zrodlo-punktow.ts
+Punkt dostępu określa, do czego model ma wgląd: do maszyny przez most MCP albo do katalogu lokalnego. Nie jest środowiskiem — środowisko pozostaje profilem widoczności modułów w bocznej nawigacji i tej sekcji nie dotyczy. Nie jest też katalogiem roboczym: ten mieszka w ustawieniu `katalog.roboczy.podstawa` i ma w tej sekcji własny obszar.

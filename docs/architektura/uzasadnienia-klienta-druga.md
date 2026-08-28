@@ -7083,3 +7083,20 @@ a czynność nie przedstawia się jako udana — scalenie komórek, które bloka
 zatrzymała, nie może wyglądać na wykonane. Szerokości kolumn są wypisywane
 liczbami, a szerokość zerowa jest nazwana wprost, ponieważ sprawdzian skutku
 zlecenia mierzy właśnie to, że tabela po scaleniu ma szerokości policzone.
+
+## budowa/klient-poprzedni/src/moduly/studio/suwaki-koncepcyjne.ts
+Skrócenie i rozwinięcie tekstu nie są dwiema odrębnymi czynnościami, tylko
+dwoma końcami jednej wielkości ciągłej: objętości. To samo dotyczy tonu,
+rejestru, poziomu szczegółu i stopnia dopracowania. Przycisk daje jeden skok
+o nieznanej wielkości, a drugie naciśnięcie skacze znowu; suwak nazywa, o ile
+wielkość ma się zmienić, i pokazuje to przed wysłaniem żądania. Operacje
+suwaków pochodzą z istniejącego katalogu akcji, nie z nowego wykazu — każdy
+suwak wskazuje identyfikator akcji, który już tam stoi, i dokłada mu
+wielkość; operacje, które wielkością ciągłą nie są, jak korekta interpunkcji,
+spis treści czy tłumaczenie, zostają przyciskami w swoich miejscach. Nastawa
+jedzie polem params żądania operacji kontekstowej, które kontrakt opisuje
+jako parametry operacji wymagane przez pozycję rejestru, więc nastawy jadą
+drogą już obecną w kontrakcie i nie wymagają jego zmiany. Rdzeń dziś pola
+params do polecenia modelu nie dokłada, dlatego okno pisze przy suwakach, że
+wielkość jedzie w żądaniu, i dokłada ją także do treści polecenia wysyłanego
+wierszem polecenia, gdzie model ją przeczyta.

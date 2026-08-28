@@ -9435,3 +9435,21 @@ pozycji, dlatego sprawdzany jest rodzaj tablicy, a nie jej długość. Podobnie
 pole uninstalled jest w kontrakcie wymagane, a jego wartość fałszywa jest
 odpowiedzią udaną i znaczy, że rdzeń pozycji nie zdjął — sprawdzany jest rodzaj,
 nie prawdziwość, inaczej odmowa merytoryczna wyglądałaby na uszkodzony kształt.
+
+## budowa/klient-poprzedni/src/ladowanie/scena-wejscia.ts
+
+Strona główna znosi odmowę pierwszego odczytu bez gaszenia ekranu, więc zejście
+sceny nad stroną, która nic nie dostała, kosztuje jedno zdanie w wykazie, podczas
+gdy scena, która nie schodzi, jest zamknięciem produktu. Dlatego kres czekania
+jest bezwarunkowy, a odrzucenie obietnicy gotowości znaczy to samo co jej
+spełnienie: o tym, czy strona ma czym stanąć, rozstrzyga strona, nie ekran nad nią.
+
+Usunięcie sceny idzie po wygaszeniu, a nie zamiast niego. Samo zdarzenie końca
+przejścia nie wystarcza, ponieważ przy wyłączonym ruchu przejście nie zachodzi
+wcale i zdarzenie nie pada, więc scena zostawałaby na ekranie na stałe.
+
+Próg mignięcia chroni przed błyskiem: gotowość przychodząca natychmiast, gdy
+rdzeń stoi na tej samej maszynie, dałaby scenę widoczną przez dwie klatki, co
+czyta się jak usterka obrazu. Znak marki stoi na każdej ścianie bryły, ponieważ
+bryła obraca się w kółko, ale etykietę niesie tylko napis pod nią — sześć etykiet
+znaczyłoby dla czytnika ekranu sześć osobnych znaków marki.

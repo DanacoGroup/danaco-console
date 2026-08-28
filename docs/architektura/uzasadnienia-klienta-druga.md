@@ -6606,3 +6606,24 @@ poprosi o pętlę.
 
 ## budowa/klient-poprzedni/src/powloka/brak-wynikow.ts
 Cztery przypadki niosą cztery różne zdania: wykaz naprawdę pusty, pozycje przycięte filtrem, rdzeń jeszcze nie odpowiedział, rdzeń odpowiedział odmową. „Brak sesji” powiedziane w przypadku oczekiwania na odpowiedź byłoby nieprawdą o stanie rdzenia, bo cisza nie jest orzeczeniem, a w przypadku przyciętego filtra byłoby nieprawdą o danych, bo dane są, tylko zasłonił je filtr, który da się zdjąć. Trzy pierwsze zdania mają jeden kształt — co, dlaczego, czym to zmienić — a czwarte go nie ma, bo treść odmowy należy do rdzenia i idzie dosłownie, więc parafraza odmowy byłaby atrapą odmowy. Nośnik nie zna wykazu, nad którym stoi, nie pyta rdzenia i nie rozstrzyga, który przypadek zachodzi — wie to wyłącznie wołający.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/stan-debaty.ts
+Uczestnik jest kluczowany po identyfikatorze uczestnika, nie po identyfikatorze kanału: kontrakt
+przy komendzie dodania modelu dopuszcza dwa wystąpienia tego samego kanału pod odrębnymi
+tożsamościami, a wykaz po kanale nadpisałby jedno z nich drugim. Wykaz kanałów pochodzi z rejestru
+rdzenia, tego samego, którym jedzie okno rozmowy — moduł nie prowadzi drugiej listy modeli.
+Rdzeń rozgłasza tę samą wypowiedź dwukrotnie: jako rodzaj stworzonej w chwili otwarcia głosu, gdy
+treść jest jeszcze pusta, i jako rodzaj zaktualizowanej po domknięciu strumienia modelu — przyrost
+o znanym identyfikatorze podmienia wpis w miejscu (treść rośnie, kolejność zostaje), przyrost
+nieznany dokleja się na koniec. Pole kolejności głosu jest w kontrakcie nieobowiązkowe, a
+kolejność ustawiana czynnością moderatora obejmuje cały stół — kolejność głosu jest własnością
+składu, nie pojedynczego uczestnika. Wykaz z kolejnością tylko u części uczestników znaczy, że
+rdzeń kolejności nie ustalił; decyzja o sortowaniu stoi w stanie wspólnym, żeby wszystkie okna
+widziały tę samą kolejność. Tożsamość jest ważniejsza od kanału przy nazywaniu uczestnika, bo
+dwóch uczestników potrafi jechać tym samym kanałem i sama nazwa modelu ich nie odróżnia; gdy
+tożsamości nie nadano, zostaje opis kanału i identyfikator uczestnika, żeby dwa wiersze wykazu
+nie wyglądały identycznie.
+
+Pole składu w odpowiedzi czynności moderatora jest polem nieobowiązkowym; rdzeń dokłada je tylko
+przy zmianie składu albo kolejności głosu. Odczyt składu jest w kontrakcie, ale żadne okno modułu
+go jeszcze nie wywołuje, więc wykaz raz wymazany zostaje w tym stanie nieodzyskiwalny.

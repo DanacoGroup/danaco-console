@@ -1,8 +1,26 @@
--- Migracja zakłada trwałość modułu przestrzeni roboczej: tabelę projektu, pamięci
--- projektu i przypisania eksperta do projektu.
+-- Migracja 035 — trwałość modułu Workspace: projekt, pamięć projektu (Context
+-- Memory) i przypisanie eksperta do projektu (Agent Manager).
+--
+-- Projekt jest bytem, nie napisem. Kolumna `sesja.projekt` niesie sam napis,
+-- bez nazwy, stanu i czasu ostatniej zmiany — a Project Dashboard ma pokazać
+-- dokładnie te trzy rzeczy. Tabela `projekt` daje im miejsce, a kolumna `kod`
+-- wiąże wiersz z napisem, którym posługują się sesje i kontrakt
+-- (`WorkspaceProject.id`). Kolumny `sesja.projekt` nie ruszamy: wiąże się po
+-- kodzie, więc sesje wiążące się samym napisem zostają czytelne.
+--
+-- Instrukcji projektu tu nie ma i nie jest to przeoczenie. Instrukcje systemowe
+-- podlegają dziedziczeniu warstwowemu ośmiu poziomów zasięgu, które
+-- rozstrzyga pakiet `internal/konfig` nad tabelą `ustawienie`. Druga tabela
+-- instrukcji znaczyłaby drugi rozstrzygacz, więc `workspace.instructions.set`
+-- zapisuje ustawienie o kluczu `workspace.instrukcje` pod adresem wskazanego
+-- poziomu — dokładnie tam, gdzie mieszka reszta konfiguracji warstwowej.
+--
+-- Biblioteki projektu tu nie ma — również z zamysłem. Pliki projektu leżą
+-- w katalogu roboczym projektu, a `workspace.library.list`
+-- czyta ten katalog. Tabela plików bez komendy zapisu w module Workspace byłaby
+-- pusta i bez pisarza; repozytorium wiedzy jest bytem modułu Library.
 
--- Tabela projektu niesie nazwę, stan i czas ostatniej zmiany, których kolumna sesji
--- z samym kodem projektu nie niesie.
+-- ── Projekt przestrzeni roboczej ──────────────────────────────────────────────
 CREATE TABLE projekt (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     kod            TEXT    NOT NULL UNIQUE,
@@ -13,8 +31,11 @@ CREATE TABLE projekt (
     zaktualizowano TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- Wpis pamięci projektu niesie poziom zasięgu współdzielenia oraz pochodzenie
--- odróżniające ustalenie Operatora od propozycji modelu.
+-- ── Pamięć projektu — Context Memory ──────────────────────────────────────────
+-- Wpis niesie poziom zasięgu współdzielenia: domyślnie projekt, lecz Operator
+-- może wynieść ustalenie wyżej albo zawęzić je do karty sesji czy okna.
+-- Pochodzenie odróżnia ustalenie Operatora od propozycji modelu, bo propozycja
+-- czeka na przyjęcie i nie ma prawa wejść do pracy sama.
 CREATE TABLE wpis_pamieci_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     projekt_id               INTEGER NOT NULL REFERENCES projekt(id) ON DELETE CASCADE,
@@ -31,8 +52,11 @@ CREATE TABLE wpis_pamieci_projektu (
 CREATE INDEX idx_wpis_pamieci_projektu_projekt
     ON wpis_pamieci_projektu(projekt_id, przypiety DESC, zaktualizowano DESC);
 
--- Ekspert mieszka poza tą tabelą jako komponent własny modułu agentów; tabela zapisuje
--- wyłącznie fakt przypisania go do projektu.
+-- ── Przypisanie eksperta do projektu — Agent Manager ──────────────────────────
+-- Ekspert jest komponentem własnym modułu Agents i mieszka poza tą
+-- tabelą; tu zapisujemy wyłącznie fakt przypisania go do projektu wraz z rolą
+-- i wskazaniem domyślnego wykonawcy. Kolumna `agent_kod` niesie identyfikator
+-- kontraktu, więc przypisanie nie czeka na tabelę modułu Agents.
 CREATE TABLE przypisanie_agenta_projektu (
     projekt_id         INTEGER NOT NULL REFERENCES projekt(id) ON DELETE CASCADE,
     agent_kod          TEXT    NOT NULL,

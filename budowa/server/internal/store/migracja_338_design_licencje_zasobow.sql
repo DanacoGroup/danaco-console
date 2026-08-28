@@ -1,5 +1,17 @@
--- Migracja 338 dodaje tabelę licencji zasobów wciągniętych z katalogów
--- zewnętrznych, powiązaną kluczem obcym z zasobem.
+-- Migracja 338 — licencje zasobów wciągniętych z katalogów zewnętrznych
+-- (`design.stock.import`).
+--
+-- Licencja stoi w tabeli obok, a nie kolumną w `zasob_design`: dotyczy
+-- WYŁĄCZNIE zasobów przyszłych z zewnątrz, a te są mniejszością wśród zasobów
+-- okna. Kolumna w tabeli zasobów byłaby pusta przy każdym zasobie
+-- wygenerowanym i wniesionym, a każdy odczyt zasobu ciągnąłby ją bez potrzeby.
+--
+-- Zapis licencji jest częścią wciągnięcia, nie dodatkiem po nim. Zasób
+-- z katalogu zewnętrznego bez zapisanej licencji to materiał, o którym za pół
+-- roku nikt nie powie, czy wolno go było użyć w kampanii — a pyta o to dopiero
+-- pismo od właściciela praw.
+--
+-- Więz obcy z kasowaniem kaskadowym: licencja bez zasobu nie opisuje niczego.
 
 CREATE TABLE licencja_zasobu_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

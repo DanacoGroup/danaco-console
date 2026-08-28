@@ -1,5 +1,19 @@
--- Migracja 179 dopisuje do źródeł i notatek przeglądania kolumny grupowania, klasyfikacji, wątku i przypięcia oraz zakłada tabelę zestawów tematycznych.
-
+-- Migracja 179 — zestawy tematyczne źródeł, wątki notatek oraz brakujące
+-- własności źródła i notatki (`browser.source.group.*`, `browser.note.thread.*`,
+-- `browser.note.update`).
+--
+-- Kontrakt niesie w `BrowserSource` pole `groupId`, a w `BrowserNote` —
+-- `classification`, `threadId` i `pinned`. Migracja 047 zakładała te tabele,
+-- zanim rodzina komend obejmowała grupowanie i klasyfikację, więc kolumn tych
+-- w nich nie ma. Dopisanie ich tutaj jest jedynym sposobem, żeby okno mogło
+-- oddać notatkę tak oznaczoną, jak ją Operator oznaczył — oznaczenie żyjące
+-- wyłącznie w kliencie ginie przy przeładowaniu karty.
+--
+-- Przynależność stoi po stronie źródła i notatki, nie w kolumnie zestawu:
+-- źródło należy do jednego zestawu, a notatka do jednego wątku, więc skład
+-- zestawu jest zapytaniem po kolumnie, a nie drugą listą do utrzymania.
+-- Kontrakt oddaje `sourceIds` i `noteIds` — rdzeń wylicza je z tej samej
+-- kolumny, którą zapisuje.
 ALTER TABLE zrodlo_przegladania ADD COLUMN grupa TEXT;
 ALTER TABLE notatka_przegladania ADD COLUMN klasyfikacja TEXT;
 ALTER TABLE notatka_przegladania ADD COLUMN watek TEXT;

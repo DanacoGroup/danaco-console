@@ -1,5 +1,27 @@
--- Migracja zakłada tabelę katalogu akcji sterowanego danymi: panel akcji powstaje
--- z rejestru wierszy, nie ze zmiany w kodzie.
+-- Migracja 008 — katalog akcji sterowany danymi.
+--
+-- Panel akcji powstaje z rejestru: nowa akcja to nowy wiersz, nie zmiana w kodzie.
+-- Ten sam rejestr zasila narzędzia modelu, więc kod nie zna ani jednej akcji.
+-- Tabela naśladuje `kanal_modelu`: wiersz opisuje byt w całości, kod jest jego
+-- trwałym identyfikatorem, `aktywna` rozstrzyga widoczność, `kolejnosc` porządek
+-- prezentacji.
+--
+-- Zasięg. Akcja należy do jednego z ośmiu poziomów zasięgu. `poziom_zasiegu_id`
+-- wskazuje poziom, `klucz_zasiegu` konkretny byt tego poziomu — kod modułu dla
+-- poziomu `modul`, kod środowiska dla poziomu `srodowisko`, identyfikator okna
+-- dla poziomu `okno`. Pusty `klucz_zasiegu` znaczy „każdy byt tego poziomu",
+-- tak samo jak w tabeli `ustawienie`.
+--
+-- Komenda. `komenda` niesie nazwę komendy kontraktu wywoływanej przez akcję.
+-- Kolumna nie jest kluczem obcym — kontrakt mieszka w `shared/contract.json`,
+-- nie w bazie. Akcja wskazująca komendę bez obsługiwacza dostaje odpowiedź
+-- `*.unknown`, więc rozjazd katalogu z rdzeniem jest widoczny, a nie wywracający.
+--
+-- Warunek dostępności. Zamknięty zbiór bytów, których akcja wymaga, żeby dało
+-- się ją zaoferować: pusty (nic nie wymaga), `srodowisko`, `sesja`, `okno`,
+-- `kolejka`, `kanal`. Wartość wyprowadzona z pól obowiązkowych żądania komendy
+-- w `shared/contract.json`. Warunek nie wygasza kontrolki — rozstrzyga, czy
+-- akcja trafia do panelu danego kontekstu.
 
 CREATE TABLE akcja (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,

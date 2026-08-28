@@ -1,4 +1,14 @@
--- Migracja 199 zakłada tabele szablonów moderacji debaty oraz artefaktów wydanych z debaty, niosących odwołanie do bajtów w magazynie treści.
+-- Migracja 199 — szablony moderacji i artefakty wydane z debaty.
+--
+-- Szablon moderacji zapisuje format, liczbę tur, granicę czasu i kolejność
+-- głosu (opracowanie, 2.8.5). Kolejność jest listą kodów uczestników
+-- rozdzieloną znakiem nowego wiersza, a nie tabelą wiążącą: uczestnik należy do
+-- okna, a szablon ma przeżyć okno, więc więz obcy do składu zabiłby szablon
+-- razem z debatą, z której go zdjęto.
+--
+-- Artefakt debaty niesie odwołanie do bajtów w magazynie treści, nie same bajty.
+-- Transkrypt, graf i nagranie idą w megabajtach, a baza rdzenia trzyma stan,
+-- nie treść — tak samo jak w bibliotece i w module Design.
 
 CREATE TABLE debata_szablon (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

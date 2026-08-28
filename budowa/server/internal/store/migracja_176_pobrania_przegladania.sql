@@ -1,5 +1,13 @@
--- Migracja 176 zakłada tabelę pobrań modułu przeglądarki, niosącą stan cyklu życia pobrania, postęp w bajtach oraz komunikat błędu przy niepowodzeniu.
-
+-- Migracja 176 — menedżer pobrań modułu Browser (`browser.download.*`).
+--
+-- Pobranie jest bytem o własnym cyklu życia: czeka w kolejce, biegnie, bywa
+-- wstrzymane, kończy się powodzeniem, błędem albo przerwaniem. Postęp
+-- (`odebrano_bajtow` wobec `razem_bajtow`) jest liczbą mierzoną w trakcie, nie
+-- opisem — wykaz pobrań ma pokazywać, ile naprawdę leży na dysku.
+--
+-- Komunikat błędu stoi w kolumnie obok stanu, bo „nie udało się" bez powodu
+-- każe Operatorowi zgadywać, czy ponowienie ma sens. Ta sama zasada rządzi
+-- odmowami rdzenia.
 CREATE TABLE pobranie_przegladania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

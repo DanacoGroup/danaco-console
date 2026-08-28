@@ -1,10 +1,35 @@
--- Migracja 012 przenosi katalog pozycji okna konfiguracji do danych i wprowadza
--- oś zasięgu ConfigAxis obok ośmiu istniejących poziomów zasięgu.
+-- Migracja 012 — katalog ustawień sterowany danymi oraz oś zasięgu.
+--
+-- Katalog pozycji okna konfiguracji mieszka w bazie, nie w kodzie: nowa pozycja
+-- okna konfiguracji to nowy wiersz. Rejestr wbudowany rdzenia
+-- (`server/internal/konfig/definicje_wykonania.go`, `definicje_izolacji.go`)
+-- służy wyłącznie jako zejście awaryjne rezolwera.
+--
+-- Tabele naśladują `kanal_modelu` i `akcja`: kod jest trwałym identyfikatorem
+-- wiersza, `aktywna` rozstrzyga widoczność, `kolejnosc` porządek prezentacji,
+-- a zbiór dopuszczalnych zasięgów jest relacją do słownika `poziom_zasiegu`,
+-- nie napisem w kolumnie.
+--
+-- Oś zasięgu. `ConfigAxis` (`platform` · `model` · `account`) jest prostopadła
+-- do ośmiu poziomów zasięgu: poziom mówi jak wąsko (okno → … → globalny), oś
+-- mówi dla czego (platforma, model, konto). Klucz rozstrzygania jest złożony:
+-- klucz + poziom + byt poziomu + oś + byt osi, dlatego `ustawienie` niesie
+-- kolumny `os` i `klucz_osi`, a więz jednoznaczności obejmuje obie. Brak osi
+-- znaczy `platform`.
+--
+-- Pierwszeństwo osi. Kolumna `os_zasiegu.pierwszenstwo` porządkuje osie od
+-- najszerszej (platforma) do najwęższej (konto): konto jest bytem konkretnym,
+-- model klasą, platforma tłem. Rozstrzyganie idzie najpierw po poziomie,
+-- a dopiero w ramach poziomu po osi: konto → model → platforma. Ustawienie per
+-- konto zapisane globalnie nie bije więc ustawienia zapisanego na oknie — oś
+-- opisuje adresata wartości, nie jej wagę.
+--
+-- `ustawienie` nie jest wskazywane kluczem obcym z żadnej innej tabeli, więc
+-- przebudowa (nowa tabela → przepisanie wierszy → podmiana nazwy) nie rusza
+-- niczyich odwołań. Indeks `idx_ustawienie_klucz` wraca pod tą samą nazwą.
 
--- Domyślna oś 'platform' obowiązuje przy braku wskazania osi.
-
--- Wartości kolumny `kod` odpowiadają wyliczeniu ConfigAxis kontraktu.
-
+-- ── Oś zasięgu — słownik trzech osi (słownik w danych) ───────────────
+-- Wartości kolumny `kod` odpowiadają dosłownie wyliczeniu ConfigAxis kontraktu.
 CREATE TABLE os_zasiegu (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                    TEXT    NOT NULL UNIQUE
@@ -19,12 +44,13 @@ INSERT INTO os_zasiegu (kod, nazwa, pierwszenstwo) VALUES
     ('account',  'Konto',     3);
 
 -- ── Przebudowa tabeli `ustawienie` o oś rozstrzygania ────────────────────────
-
 CREATE TABLE ustawienie_z_osia (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     poziom_zasiegu_id      INTEGER NOT NULL REFERENCES poziom_zasiegu(id) ON DELETE CASCADE,
     klucz_zasiegu          TEXT    NOT NULL DEFAULT '',
-    -- Oś wskazywana kodem `os_zasiegu.kod`; wartość domyślna 'platform' znaczy brak wskazania.
+    -- Oś wskazywana kodem, nie kluczem sztucznym: kolumna `os_zasiegu.kod` jest
+    -- jednoznaczna, więc niesie i więz klucza obcego, i wartość domyślną.
+    -- Domyślne 'platform' realizuje regułę „brak osi znaczy platformę".
     os                     TEXT    NOT NULL DEFAULT 'platform'
                                    REFERENCES os_zasiegu(kod) ON UPDATE CASCADE,
     klucz_osi              TEXT    NOT NULL DEFAULT '',
@@ -49,8 +75,9 @@ ALTER TABLE ustawienie_z_osia RENAME TO ustawienie;
 CREATE INDEX idx_ustawienie_klucz ON ustawienie(klucz);
 CREATE INDEX idx_ustawienie_os ON ustawienie(os, klucz_osi, klucz);
 
--- Kategoria może mieć rodzica: drzewo okna konfiguracji rośnie wierszami, nie kodem.
-
+-- ── Kategorie okna konfiguracji ──────────────────────────────────────────────
+-- Odpowiednik struktury SettingCategory kontraktu. Kategoria może mieć rodzica,
+-- więc drzewo okna konfiguracji rośnie wierszami, nie kodem.
 CREATE TABLE kategoria_ustawien (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                    TEXT    NOT NULL UNIQUE,
@@ -63,8 +90,15 @@ CREATE TABLE kategoria_ustawien (
     utworzono              TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- Brak wiersza w katalogu nie jest awarią: rezolwer schodzi na rejestr wbudowany rdzenia.
-
+-- ── Pozycje katalogu ustawień ────────────────────────────────────────────────
+-- Odpowiednik struktury SettingDefinition kontraktu. `rodzaj_wartosci` niesie
+-- wartości wyliczenia SettingValueType — klient buduje z niego kontrolkę
+-- formularza i nie zna ani jednego klucza z osobna.
+--
+-- `wartosc_domyslna` trzymana jest tak samo jak `ustawienie.wartosc`: napisem
+-- w postaci właściwej dla rodzaju. Brak wiersza w tabeli `ustawienie` znaczy
+-- właśnie tę wartość, a brak wiersza w katalogu nie jest awarią —
+-- rezolwer schodzi wtedy na rejestr wbudowany rdzenia.
 CREATE TABLE definicja_ustawienia (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     klucz                  TEXT    NOT NULL UNIQUE,
@@ -93,7 +127,6 @@ CREATE TABLE definicja_ustawienia (
 CREATE INDEX idx_definicja_ustawienia_kategoria ON definicja_ustawienia(kategoria_id, kolejnosc);
 
 -- Dopuszczalne wartości pozycji o rodzaju enum albo enumList (SettingOption).
-
 CREATE TABLE opcja_ustawienia (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     definicja_id           INTEGER NOT NULL REFERENCES definicja_ustawienia(id) ON DELETE CASCADE,
@@ -105,7 +138,6 @@ CREATE TABLE opcja_ustawienia (
 );
 
 -- Poziomy zasięgu, na których wolno zapisać pozycję (SettingDefinition.allowedScopes).
-
 CREATE TABLE definicja_ustawienia_zasieg (
     definicja_id           INTEGER NOT NULL REFERENCES definicja_ustawienia(id) ON DELETE CASCADE,
     poziom_zasiegu_id      INTEGER NOT NULL REFERENCES poziom_zasiegu(id) ON DELETE CASCADE,
@@ -113,14 +145,48 @@ CREATE TABLE definicja_ustawienia_zasieg (
 );
 
 -- Osie, dla których wolno zapisać pozycję (SettingDefinition.allowedAxes).
-
 CREATE TABLE definicja_ustawienia_os (
     definicja_id           INTEGER NOT NULL REFERENCES definicja_ustawienia(id) ON DELETE CASCADE,
     os                     TEXT    NOT NULL REFERENCES os_zasiegu(kod) ON UPDATE CASCADE,
     PRIMARY KEY (definicja_id, os)
 );
 
--- Osiem kategorii katalogu ustawień odpowiada bytom czytanym przez rdzeń.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- ZACZYN KATALOGU
+--
+-- Pozycje odpowiadają bytom, które czyta rdzeń:
+--
+--   1. `server/internal/konfig/definicje_wykonania.go` — osiem parametrów
+--      wykonania okna komunikacji wraz z wartościami domyślnymi. Wartości
+--      domyślne pochodzą ze stałych kontraktu (PermissionMode.manual,
+--      WindowRole.standalone, ExecutionEnv.local).
+--   2. `server/internal/konfig/definicje_izolacji.go` — jedenaście punktów
+--      izolacji: trzy wymiary kontekstu (`odrebna`) i osiem zakresów
+--      technicznych (`wylaczony`).
+--   3. Klucze katalogu roboczego i tożsamości: `katalog.roboczy.podstawa`,
+--      `katalog.roboczy.wzorzec_sesji`, `tozsamosc.tryb_domyslny`.
+--   4. `server/internal/injection/ustawienia.go` — pola struktury Ustawienia:
+--      Program (`harness.program_claude`), PlikUstawien
+--      (`harness.plik_ustawien`, przełącznik --settings), KonfiguracjaMCP
+--      (`harness.konfiguracja_mcp`, przełącznik --mcp-config).
+--   5. `server/internal/session/obieg.go` — ProgBrakuPostepuDomyslny
+--      (`petla.prog_braku_postepu`, pole LoopState.threshold kontraktu).
+--   6. Egzekwowanie uwierzytelniania włączane przez Operatora
+--      (`bezpieczenstwo.egzekwowanie_uwierzytelniania`).
+--   7. `client/src/motyw/motyw.ts` — wybór motywu `light` albo `dark`; brak
+--      wyboru znaczy preferencję systemu (`personalizacja.motyw`).
+--
+-- Poza katalogiem pozostają parametry startu procesu — port, katalog danych,
+-- katalog klienta, katalog profili, rola procesu. Czyta je
+-- `server/internal/konfiguracja` w chwili startu z warstw: wartość domyślna →
+-- zmienna środowiska → argument wywołania (`.env.example`), a plik bazy jest
+-- dopiero skutkiem tych parametrów. Wiersz katalogu byłby dla nich drugim
+-- źródłem prawdy, którego nikt nie czyta.
+--
+-- Każde wstawienie kończy się klauzulą ON CONFLICT DO NOTHING, więc migracja
+-- przechodzi także na bazie, w której część wierszy już jest. Klauzula
+-- `WHERE true` przed ON CONFLICT jest wymogiem składni SQLite dla
+-- INSERT ... SELECT z upsertem.
 
 INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
     ('modele',          'Ustawienia modeli', 'Kanał modelu, kanał zapasowy i nakład rozumowania',                                    'siec',       1),
@@ -134,7 +200,6 @@ INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
 ON CONFLICT(kod) DO NOTHING;
 
 -- ── Pozycje katalogu ─────────────────────────────────────────────────────────
-
 WITH katalog(klucz, kategoria, nazwa, opis, rodzaj, domyslna, minimum, skok,
              podpowiedz, wymaga_restartu, kolejnosc) AS (
     VALUES
@@ -186,8 +251,12 @@ SELECT k.klucz, kat.id, k.nazwa, k.opis, k.rodzaj, k.domyslna, k.minimum, k.skok
  WHERE true
 ON CONFLICT(klucz) DO NOTHING;
 
--- Wartość pusta jest pełnoprawną opcją: znaczy, że rozstrzyga warstwa niżej.
-
+-- ── Dopuszczalne wartości pozycji o rodzaju enum ─────────────────────────────
+-- Wartości wyliczeń kontraktu (PermissionMode, WindowRole, ExecutionEnv) oraz
+-- wartości kolumn izolacji z `regula_izolacji_kontekstu.wymiar`
+-- i `regula_izolacji_technicznej.zakres`. Wartość pusta jest pełnoprawną opcją
+-- wszędzie tam, gdzie brak wskazania coś znaczy — nie jest brakiem
+-- danych, tylko decyzją „rozstrzyga warstwa niżej".
 WITH opcje(klucz, wartosc, etykieta, opis, kolejnosc) AS (
     VALUES
         ('tryb_uprawnien', 'manual',            'Ręczny',                'Pytanie o zgodę przed każdą zmianą',                  1),
@@ -227,7 +296,6 @@ SELECT d.id, o.wartosc, o.etykieta, o.opis, o.kolejnosc
 ON CONFLICT(definicja_id, wartosc) DO NOTHING;
 
 -- Trzy wymiary izolacji kontekstu: odrębna albo współdzielona.
-
 WITH wymiary(wartosc, etykieta, opis, kolejnosc) AS (
     VALUES
         ('odrebna',       'Odrębna',       'Zasięg ma własny zasób',            1),
@@ -241,7 +309,6 @@ SELECT d.id, w.wartosc, w.etykieta, w.opis, w.kolejnosc
 ON CONFLICT(definicja_id, wartosc) DO NOTHING;
 
 -- Osiem zakresów izolacji technicznej: włączony albo wyłączony.
-
 WITH zakresy(wartosc, etykieta, opis, kolejnosc) AS (
     VALUES
         ('wylaczony', 'Wyłączony', 'Zasób wspólny zasięgu — stan wyjściowy platformy', 1),
@@ -255,10 +322,11 @@ SELECT d.id, w.wartosc, w.etykieta, w.opis, w.kolejnosc
    AND d.klucz NOT IN ('izolacja_historia','izolacja_pamiec','izolacja_kontekst')
 ON CONFLICT(definicja_id, wartosc) DO NOTHING;
 
--- Pozycja jest ustawialna na wszystkich ośmiu poziomach zasięgu, poza wyjątkami niżej.
-
--- Wyjątki globalne: motyw interfejsu, egzekwowanie uwierzytelniania, wzorzec katalogu sesji.
-
+-- ── Dopuszczalne poziomy zasięgu pozycji ─────────────────────────────────────
+-- Reguła: pozycja jest ustawialna na wszystkich ośmiu poziomach, chyba że
+-- dotyczy bytu, który poziomów nie ma. Wyjątki wyliczone są niżej wprost:
+-- motyw interfejsu i egzekwowanie uwierzytelniania należą do platformy jako
+-- całości, a wzorzec katalogu sesji jest jednym wzorcem instalacji.
 INSERT INTO definicja_ustawienia_zasieg (definicja_id, poziom_zasiegu_id)
 SELECT d.id, p.id
   FROM definicja_ustawienia d
@@ -278,10 +346,12 @@ SELECT d.id, p.id
    AND p.kod = 'globalny'
 ON CONFLICT DO NOTHING;
 
--- Oś `platform` przysługuje każdej pozycji katalogu ustawień.
-
--- Osie `model` i `account` przysługują pozycjom opisu uruchomienia modelu.
-
+-- ── Dopuszczalne osie pozycji ────────────────────────────────────────────────
+-- Oś `platform` przysługuje każdej pozycji — to warstwa tła. Osie `model`
+-- i `account` przysługują pozycjom opisującym sposób uruchomienia modelu, bo to
+-- one dają pełną konfigurację per model i per konto. Izolacja zasięgu, motyw
+-- i uwierzytelnianie należą do platformy — nie zależą od tego, który model
+-- odpowiada.
 INSERT INTO definicja_ustawienia_os (definicja_id, os)
 SELECT d.id, o.kod
   FROM definicja_ustawienia d

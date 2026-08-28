@@ -1,6 +1,31 @@
--- Migracja 209 zakłada tabele warstwy integracji zewnętrznych rodziny extension: transport i poświadczenie, webhooki oraz odwzorowania danych.
+-- Migracja 209 — rodzina `extension.*`, warstwa integracji zewnętrznych:
+-- transport i poświadczenie integracji, webhooki oraz odwzorowania danych.
+--
+-- TRANSPORT JEST WŁASNOŚCIĄ INTEGRACJI, NIE PUNKTU DOSTĘPU.
+-- `extension.transport.set` przyjmuje transport wraz z adresem albo poleceniem
+-- procesu, a `punkt_dostepu` (migracja 013) opisuje most maszyny, nie sposób
+-- rozmowy z serwerem MCP tej pozycji. Wiersz niżej trzyma to, czym rdzeń woła
+-- serwer: wybrany transport, adres nasłuchu i polecenie procesu lokalnego.
+--
+-- POŚWIADCZENIE TO ODWOŁANIE, NIGDY TREŚĆ. `extension.credential.bind` przyjmuje
+-- `credentialRef` — klucz jawny warstwy sekretów — i zakres uprawnień OAuth2.
+-- Hasła, tokenu ani klucza API w tej tabeli nie ma i nie będzie; wprowadzenie
+-- ich zostaje po stronie Operatora, a rdzeń trzyma wyłącznie nazwę, po której
+-- sejf je wydaje.
+--
+-- WEBHOOK MA JEDNĄ TABELĘ NA OBA KIERUNKI. Przychodzący niesie adres nasłuchu
+-- i odwołanie do sekretu podpisu HMAC, wychodzący — adres docelowy i wykaz
+-- zdarzeń platformy. Kształt jest wspólny, więc dwie tabele byłyby dwiema
+-- prawdami; kolumna `kierunek` rozstrzyga, które pola mają znaczenie.
+--
+-- ODWZOROWANIE TRZYMA REGUŁY JAKO SUROWY JSON. Kontrakt niesie je polem `rules`
+-- typu `json`, a kształt reguły należy do systemu zewnętrznego. Rozłożenie ich
+-- na kolumny byłoby wyborem cudzego kształtu zrobionym przez platformę.
 
--- Zakłada tabelę integracja_rozszerzenia niosącą transport, poświadczenie i zakresy OAuth2 jednym wierszem nadpisywanym przy każdej zmianie pozycji.
+-- ── Transport i poświadczenie integracji ─────────────────────────────────────
+-- Jeden wiersz na pozycję: `extension.transport.set` i `extension.credential.bind`
+-- zmieniają dwie strony tej samej rozmowy z jednym serwerem, więc zapis jest
+-- UPSERT-em po kodzie pozycji, nie dziennikiem kolejnych nastaw.
 CREATE TABLE integracja_rozszerzenia (
     rozszerzenie_kod  TEXT PRIMARY KEY,
     -- Wartości kontraktu (McpTransport).
@@ -9,14 +34,15 @@ CREATE TABLE integracja_rozszerzenia (
     polecenie         TEXT,
     -- Wartości kontraktu (ExtensionAuthKind).
     sposob_logowania  TEXT CHECK(sposob_logowania IN ('oauth2','apiKey','token','basic','none')),
-    -- Klucz jawny warstwy sekretów, nigdy treść samego sekretu.
+    -- Klucz jawny warstwy sekretów — patrz czoło pliku.
     odwolanie_sekretu TEXT,
-    -- Zakresy OAuth2 rozdzielone znakiem nowej linii, wychodzące zawsze w komplecie.
+    -- Zakresy OAuth2 rozdzielone znakiem nowej linii; nikt nie filtruje po
+    -- pojedynczym zakresie, a wychodzą zawsze w komplecie.
     zakresy           TEXT,
     zaktualizowano    INTEGER NOT NULL DEFAULT 0
 );
 
--- Zakłada tabelę webhook_rozszerzenia niosącą webhook przychodzący albo wychodzący w jednym kształcie rozstrzyganym kolumną kierunku.
+-- ── Webhook przychodzący albo wychodzący ─────────────────────────────────────
 CREATE TABLE webhook_rozszerzenia (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -33,13 +59,13 @@ CREATE TABLE webhook_rozszerzenia (
 );
 CREATE INDEX idx_webhook_rozszerzenia ON webhook_rozszerzenia(rozszerzenie_kod, kierunek, id);
 
--- Zakłada tabelę mapowanie_rozszerzenia niosącą regułę odwzorowania danych jako surowy JSON systemu zewnętrznego.
+-- ── Odwzorowanie i transformacja danych ──────────────────────────────────────
 CREATE TABLE mapowanie_rozszerzenia (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
     rozszerzenie_kod         TEXT    NOT NULL,
     nazwa                    TEXT    NOT NULL,
-    -- Surowy JSON reguł odwzorowania, w kształcie należącym do systemu zewnętrznego.
+    -- Surowy JSON reguł — patrz czoło pliku.
     reguly                   TEXT    NOT NULL DEFAULT '{}',
     zaktualizowano           INTEGER NOT NULL DEFAULT 0
 );

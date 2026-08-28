@@ -1,5 +1,11 @@
--- Migracja 263 wprowadza mapowanie danych między krokami automatyki: krok jest wskazywany
--- własnym kodem, nie kluczem obcym, ponieważ zapis kroków podmienia wiersze w całości.
+-- Migracja 263 — mapowanie danych między krokami
+-- (`automation.workflow.variables.set`, pole `mappings`).
+--
+-- Kroki wskazywane są kodem kroku, nie kluczem wiersza `krok_automatyki`:
+-- Workflow Builder zapisuje mapowanie równocześnie z krokami, a zapis kroków
+-- podmienia wiersze w całości. Klucz obcy do wiersza kasowałby mapowanie przy
+-- każdym zapisie definicji. Mapowanie do kroku nieistniejącego jest
+-- zastrzeżeniem oddawanym w wyniku, nie odmową schematu.
 CREATE TABLE mapowanie_danych_automatyki (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     automatyka_id INTEGER NOT NULL REFERENCES automatyka(id) ON DELETE CASCADE,

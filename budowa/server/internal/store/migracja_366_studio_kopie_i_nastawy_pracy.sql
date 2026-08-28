@@ -1,5 +1,35 @@
--- Migracja tworzy kopię zapasową dokumentu Studio, niezależną od historii wersji,
--- oraz nastawy pracy okna i dokumentu wraz z ustawieniami autozapisu i widoku.
+-- Migracja 366 — kopie zapasowe, autozapis i nastawy widoku okna pracy.
+--
+-- ── Dlaczego kopia zapasowa jest osobna od historii wersji ──────────────────
+-- Kopia ma przetrwać awarię procesu I awarię zapisu. Wersja leży w repozytorium
+-- sesji i zakłada się ją zapisem, który właśnie się nie udał — więc wersja nie
+-- ochroni pracy przed nieudanym zapisem. Kopia jest zakładana niezależnie
+-- i dlatego ma własny wiersz.
+--
+-- ── Dlaczego kolumna `udalo_sie` jest obowiązkowa ───────────────────────────
+-- Wskaźnik „zapisano" pokazany, gdy zapis się nie udał, jest najgorszym możliwym
+-- błędem tego modułu: Operator zamknie okno i straci pracę. Nieudany zapis musi
+-- być WIDOCZNY i NAZWANY — stąd `udalo_sie` i `powod_niepowodzenia` przy każdej
+-- kopii, a nie tylko wiersz przy kopiach udanych. Wiersz o nieudanym zapisie
+-- jest tu najważniejszym wierszem tej tabeli.
+--
+-- `zmiany_niezapisane` znaczy kopię niosącą pracę, której w dokumencie nie ma.
+-- Po tym Studio samo zgłasza „mam niezapisany dokument z godziny X, przywrócić?",
+-- zamiast czekać, aż Operator się domyśli.
+--
+-- ── Dlaczego autozapis odkłada wersje w osobnym szeregu ─────────────────────
+-- Wersje nazwane i kluczowe zakłada Operator. Zapisy samoczynne mają być
+-- odróżnialne w wykazie i mieć własną zasadę wygasania — inaczej po godzinie
+-- pracy historia wersji przestaje być historią decyzji, a staje się dziennikiem
+-- naciśnięć klawisza. Rozróżnienie idzie kolumną `szereg`; pojęcia wersji
+-- kluczowej Studio ma już w `studio.version.label.set` i drugiego nie zakłada.
+--
+-- ── Dlaczego nastawy pracy są jedną tabelą na parę okno-dokument ────────────
+-- Skala widoku jest pamiętana PRZY DOKUMENCIE (Właściciel wymienia to wprost),
+-- a tryb powierzchni — przy oknie. Jedna tabela z nieobowiązkowym dokumentem
+-- obsługuje oba: wiersz bez dokumentu jest nastawą okna, wiersz z dokumentem
+-- nastawą tego dokumentu. Dwie tabele znaczyłyby dwa odczyty przy każdym
+-- otwarciu okna i pytanie, która wygrywa.
 
 CREATE TABLE kopia_zapasowa_studio (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +68,8 @@ CREATE TABLE nastawa_pracy_studio (
     ostatni_zapis            TEXT,
     ostatni_zapis_nieudany   INTEGER NOT NULL DEFAULT 0,
     ostatni_powod_niepowodzenia TEXT,
-    -- Wybór trybu powierzchni jest pamiętany, bo przełączenie nie zamyka ani nie gubi treści okna.
+    -- Widok. Wybór Operatora jest PAMIĘTANY: przełączenie trybu powierzchni
+    -- niczego nie gubi i nie zamyka, więc tryb musi przetrwać zamknięcie okna.
     tryb_powierzchni         TEXT    NOT NULL DEFAULT 'tabs'
                                      CHECK(tryb_powierzchni IN ('tabs','split')),
     kierunek_podzialu        TEXT    NOT NULL DEFAULT 'vertical'

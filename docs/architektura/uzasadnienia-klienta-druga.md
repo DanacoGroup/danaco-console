@@ -6479,3 +6479,14 @@ program spoza instalki jest zakazany. Podobieństwa liczy rdzeń, zestawiając d
 wejściowym i szukając fragmentów bliskich znaczeniowo, a statystyki bierze moduł liczników
 dokumentu. Panel nie woła rdzenia sam: okno podaje mu wyniki, które ma, dzięki czemu pomiar
 zlecony i pomiar policzony na miejscu nie mieszają się w jednym miejscu kodu.
+
+## budowa/klient-poprzedni/src/powloka/zrodlo-kart-sesji.ts
+Jedna odpowiedzialność: odpytanie wykazu sesji i nasłuch zdarzeń zmiany sesji oraz zmiany ogniska,
+złożone w jedną migawkę pasa. Karta sesji jest sesją rdzenia. Pas nie nadaje kartom identyfikatorów
+miejscowych i nie zakłada ich sam: karta powstaje, bo rdzeń ma sesję, i znika, bo rdzeń ją zamknął.
+Sesja i okno komunikacji pozostają dwoma bytami — liczba okien na scenie nie ma tu wpływu. Zakładkami
+są sesje otwarte: czynne i wstrzymane. Sesja zakończona albo zarchiwizowana przestaje być zakładką,
+tak samo jak po zamknięciu sesji. Ognisko jest właściwością klienta. Kartę czynną wskazuje
+przeniesienie ogniska tego klienta, nie konta — zdarzenia z innego identyfikatora klienta pas
+pomija. Zanim padnie pierwsze zdarzenie, czynna jest sesja powiązana z tym połączeniem. Odmowa albo
+odpowiedź o złym kształcie daje stan błędu z treścią odmowy, a nie pusty pas udający brak sesji.

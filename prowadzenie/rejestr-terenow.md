@@ -6,6 +6,41 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### trwalosc-wektorow-obrazu
+
+| | |
+|---|---|
+| **Galaz** | `teren/trwalosc-wektorow-obrazu` z `main` |
+| **Drzewo** | `~/robocze/trwalosc-wektorow-obrazu` |
+| **Wykonawca** | sesja wykonawcza, kontrola osobna |
+| **Wykaz plikow** | `budowa/server/internal/wiedza/obraz.go` wraz z jego sprawdzianami; nowa migracja `budowa/server/internal/store/migracja_*.sql`; `budowa/server/internal/core/adapter_modul_wiedza_obraz.go` wylacznie w zakresie nazwania obciecia wykazu |
+| **Poza terenem** | wszystko inne, w szczegolnosci migracje juz zapisane, `internal/core/` poza wymienionym plikiem, katalog `prowadzenie/` |
+
+**Przedmiot.** Wektor osi obrazu liczy sie przy kazdym zapytaniu: `Dopasuj` wola
+pomocnika Pythona bez jednego odczytu z bazy, a kolumna `zakres` tabeli wskaznika
+dopuszcza trzy wartosci i nie ma miejsca na wektor obrazu. Zmierzone: 17 s dla
+trzech obrazow.
+
+**Kryteria odbioru.** Sprawdzalne uruchomieniem, nie odczytem:
+
+1. Drugie zapytanie o ten sam obraz NIE wola pomocnika zewnetrznego. Dowodzi tego
+   sprawdzian liczacy wolania atrapa pomocnika; sprawdzian ma padac przed naprawa.
+2. Zmiana nastawy `wiedza_model_obrazu` uniewaznia zapisany wektor. Wektor
+   policzony innym modelem opisuje znaczenie w innej przestrzeni, wiec jego ponowne
+   uzycie jest usterka ciezsza niz liczenie od nowa.
+3. Zadna migracja juz zapisana nie zostaje zmieniona. Nowy stan wchodzi nowa
+   migracja o kolejnym wolnym numerze.
+4. Obciecie wykazu sufitem `GranicaObrazow` jest NAZWANE w odpowiedzi. Dzis pole
+   `examined` mowi tylko, ile weszlo, wiec biblioteka o pieciu tysiacach obrazow
+   jest nieodrozninalna od biblioteki o dwustu.
+5. `go build ./...` oraz `DANACO_MODELE=/opt/danaco-modele go test -count=1 -timeout 20m
+   ./internal/wiedza/ ./internal/store/` koncza sie powodzeniem.
+
+**Rozstrzygniecia pozostawione wykonawcy**, do nazwania w raporcie: czy wektor
+mieszka w nowej wartosci kolumny `zakres`, czy w osobnej tabeli — blizej tego, co
+juz stoi dla wektorow tekstu.
+
+
 **Orkiestracja czterech terenow komentarzy — rytm zapisu i wznowienie po
 urwaniu.** Pisarz robi rewizje PO KAZDYM PLIKU (kod + przyrost docs razem);
 dziennik trwaly stoi w `~/robocze/prowadzenie/komentarze/` (pomiar bazowy,

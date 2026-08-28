@@ -603,3 +603,12 @@ Poziomy i priorytety wyróżniają plakietki biblioteki w wariantach sukces,
 ostrzeżenie, błąd i informacja — własnej skali barw ten moduł nie zakłada.
 Zostaje tu jedynie wstęga na krawędzi pozycji, bo wykaz błędów czyta się
 wzrokiem po lewej krawędzi, nie po plakietce.
+
+## budowa/klient-poprzedni/src/moduly/agents/archiwum.css
+Arkusz stoi osobno, tak jak plik doradca.css, ponieważ arkusz modułu
+przekracza próg trzystu wierszy, więc podział idzie po komponentach.
+Atrybut data-pokrycie niesie jedną z pięciu wartości stanu pokrycia; wiersz
+maluje trzy z nich, bo tylko trzy znaczą coś innego niż stan w porządku: brak
+w kontrakcie, brak uchwytu w rdzeniu i stan nieustalony. Stan nieustalony nie
+dostaje barwy ostrzeżenia, ponieważ brak odpowiedzi rdzenia nie jest
+orzeczeniem o braku.

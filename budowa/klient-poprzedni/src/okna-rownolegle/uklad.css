@@ -1,19 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — UKŁAD OKIEN RÓWNOLEGŁYCH · SCENA
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: rozkład sceny — listwa przełącznika liczby okien
-   i tor, w którym stoją gniazda. Wygląd samego gniazda opisuje `gniazdo.css`,
-   powiązanie pary — `relacje.css` (podział arkusza per komponent).
-
-   Wszystkie wartości pochodzą z żetonów `motyw/` i klas `komponenty/`
-   (`--dn-sygnal-*`, `--dn-fw-polgruba`). Poza skalą 4 px stoją dwie wartości:
-   wstęga roli 3 px oraz szerokość włosowa 1 px.
-
-   Pigułki i znak objaśnienia mieszkają tutaj: wspólne klasy niosą pas zakładek
-   (`.dn-zakladki`) i chmurkę dymka (`.dn-tooltip`), ale nie niosą ani odmiany
-   pigułkowej grupy jednokrotnego wyboru, ani znaku [?]. Obie formy stoją więc
-   w arkuszu widoku pod nazwą własną, nie na aliasie zgodności.
-   ============================================================================ */
+/* Arkusz opisuje rozkład sceny układu okien równoległych: listwa przełącznika liczby okien oraz tor, w którym stoją gniazda. */
 
 /* ---------------------------------------------------------------------------
    SCENA
@@ -28,7 +13,7 @@
   background: var(--dn-tlo);
 }
 
-/* Osadzenie na scenie powłoki — układ zajmuje jej całą szerokość */
+/* Osadzenie na scenie powłoki sprawia, że układ zajmuje jej całą dostępną szerokość, bez marginesu po bokach. */
 .dn-powloka__scena > .dn-okna {
   flex: 1 1 auto;
 }

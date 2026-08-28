@@ -1,14 +1,6 @@
-/*
- * Warstwa wizualna modułu Browser, część druga: podgląd współdzielony strony,
- * paski narzędzi oraz wykazy źródeł, notatek i wyodrębnień.
- *
- * Wciągana importem z `browser.css` — moduł wciąga jeden arkusz, a podział na
- * dwa pliki wynika z progu 300 wierszy na arkusz. Barwy wyłącznie z żetonów
- * motywu, bez wartości zapisanych wprost.
- */
+/* Arkusz opisuje drugą część warstwy wizualnej modułu Browser: podgląd współdzielony strony, paski narzędzi oraz wykazy źródeł, notatek i wyodrębnień. */
 
-/* ── Podgląd współdzielony strony ─────────────────────────────────────────── */
-
+/* Sekcja opisuje podgląd współdzielony strony: przewijany obszar treści strony renderowanej przez rdzeń, wspólny dla wszystkich trybów odczytu. */
 .mb-podglad {
   display: flex;
   flex-direction: column;
@@ -45,7 +37,7 @@
   overflow: auto;
 }
 
-/* Tryb czytnika: sam tekst, krojem bazowym i luźnym interlinią. */
+/* Tryb czytnika pokazuje sam tekst strony krojem bazowym i luźną interlinią, bez tła i bez elementów dekoracyjnych podglądu. */
 .mb-podglad[data-czytnik='tak'] .mb-podglad__tekst {
   background: transparent;
   font-family: var(--dn-ff-bazowa);
@@ -53,8 +45,7 @@
   line-height: var(--dn-lh-luzny);
 }
 
-/* ── Panele i paski narzędzi ──────────────────────────────────────────────── */
-
+/* Sekcja opisuje panele i paski narzędzi: pasek dolny sterowania, wykaz notatek oraz pasek pływający zaznaczenia fragmentu strony. */
 .mb-panel {
   display: flex;
   flex-direction: column;
@@ -86,11 +77,7 @@
   border-top: 1px solid var(--dn-obrys-subtelny);
 }
 
-/*
- * Miejsce steru nastawy w pasku i w formularzu — sam uchwyt, wykaz, haczyk
- * i opis niesie `komponenty/menu-drzewo.css`. Tutaj stoi wyłącznie to, czego
- * mechanizm o sobie nie wie: ile miejsca ma zająć w rzędzie modułu.
- */
+/* Miejsce steru nastawy w pasku i formularzu niesie sam uchwyt; wykaz, haczyk i opis niesie biblioteka menu-drzewo, a tutaj stoi tylko szerokość rzędu. */
 .mb-pasek-dolny__ster {
   display: flex;
   align-items: center;
@@ -103,7 +90,7 @@
   gap: var(--dn-od-1);
 }
 
-/* Pasek pływający zaznaczenia — obwódka mówi, czy fragment jest zaznaczony. */
+/* Pasek pływający zaznaczenia pokazuje obwódką, czy fragment strony jest aktualnie zaznaczony przez operatora do dalszej pracy. */
 .mb-zaznaczenie {
   display: flex;
   align-items: center;
@@ -124,8 +111,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Wykazy źródeł, notatek i wyodrębnień ─────────────────────────────────── */
-
+/* Sekcja opisuje wykazy źródeł, notatek i wyodrębnień, ułożone jako listy pozycji wspólnym mechanizmem przewijania i grupowania. */
 .mb-zrodla__lista,
 .mb-notatki__lista,
 .mb-wyodrebnienia__lista {

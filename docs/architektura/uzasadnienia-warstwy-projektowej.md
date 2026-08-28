@@ -657,3 +657,8 @@ Arkusz jest wciągany importem z pliku browser.css. Pasek pływa na warstwie
 płótna przy dolnej krawędzi dzięki temu arkuszowi, a nie układowi okna: rząd
 narzędzi nie zabiera stronie wysokości, bo leży w warstwie pozycjonowanej
 bezwzględnie nad sceną i nie zajmuje żadnego piksela toku dokumentu.
+
+## budowa/klient-poprzedni/src/moduly/browser/podglad-i-wykazy.css
+Arkusz jest wciągany importem z pliku browser.css — moduł wciąga jeden
+arkusz, a podział na dwa pliki wynika z progu trzystu wierszy na arkusz.
+Barwy wyłącznie z żetonów motywu, bez wartości zapisanych wprost.

@@ -23,7 +23,6 @@ export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 export interface StanDostepow {
   // Faza odczytu wykazów z rdzenia — bez niej pusty wykaz znaczy trzy różne rzeczy naraz.
-   */
   faza(): FazaOdczytu;
   /** Powód ostatniego niepowodzenia odczytu; pusty, gdy odczyt się powiódł. */
   powodNiepowodzenia(): string;

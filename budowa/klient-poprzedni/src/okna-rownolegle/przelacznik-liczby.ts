@@ -2,34 +2,20 @@ import { ETYKIETA_PRZELACZNIKA, OBJASNIENIE_PRZELACZNIKA, OPIS_PRZELACZNIKA } fr
 import { LICZBA_MAX, LICZBA_MIN, ograniczLiczbe } from './identyfikatory';
 import { utworzObjasnienie } from './objasnienie-ukladu';
 
-/** Identyfikator zdania o figurze modułu — wskazują je pozycje ponad figurą. */
+/** Identyfikator zdania o figurze modułu, przez który pozycje ponad figurą wskazują je jako swój opis dostępności. */
 const ID_UWAGI = 'dn-okna-przelacznik-figura';
 
-/** Przełącznik liczby okien komunikacji na scenie. */
+/** Przełącznik liczby okien komunikacji na scenie — grupa pól jednokrotnego wyboru z zawsze czynnymi pozycjami. */
 export interface PrzelacznikLiczby {
   element: HTMLElement;
   /** Odznacza wskazaną liczbę bez wywoływania słuchacza. */
   pokaz(liczba: number): void;
-  /**
-   * Wypowiada figurę rozmowy modułu: ile okien moduł prowadzi i dlaczego.
-   *
-   * `liczbaOkien` mniejsza od `LICZBA_MAX` nie wyłącza pozycji wyższych —
-   * wskazuje im to zdanie jako opis. Pozycja zostaje czynna i mówi, co się
-   * stanie po jej wybraniu, zamiast wygasnąć bez powodu.
-   */
+  /** Wypowiada figurę rozmowy modułu; liczba mniejsza od granicy nie wyłącza pozycji wyższych. */
   ustawFigure(liczbaOkien: number, zdanie: string): void;
 }
 
 /**
- * Przełącznik „Okna komunikacji: 1 2 3".
- *
- * Wszystkie trzy pozycje są czynne zawsze — żadna nie zostaje wyszarzona.
- * Wybór jest grupą pól jednokrotnego wyboru, więc odczyt technologiami
- * wspomagającymi mówi wprost, że to jedna wartość z trzech, a nie trzy
- * niezależne przyciski.
- *
- * Liczba okien jest elementem konfiguracji, więc obok etykiety stoi dymek [?]
- * z objaśnieniem kontekstowym, a pod grupą — jednozdaniowy opis skutku wyboru.
+ * Przełącznik liczby okien komunikacji ma wszystkie pozycje czynne zawsze, jako grupę pól jednokrotnego wyboru z dymkiem objaśnienia i opisem skutku wyboru.
  */
 export function utworzPrzelacznikLiczby(
   liczbaPoczatkowa: number,
@@ -69,8 +55,7 @@ export function utworzPrzelacznikLiczby(
   pomoc.className = 'dn-pole-opis dn-okna__pomoc';
   pomoc.textContent = OPIS_PRZELACZNIKA;
 
-  // Zdanie o figurze rozmowy modułu. Stoi pod grupą i mówi o module tyle, ile
-  // niesie jego profil — także wtedy, gdy moduł rozmowy nie prowadzi wcale.
+  // Zdanie o figurze rozmowy modułu stoi pod grupą i mówi o module tyle, ile niesie jego profil.
   const figura = document.createElement('p');
   figura.className = 'dn-pole-opis dn-okna__figura';
   figura.id = ID_UWAGI;
@@ -93,8 +78,7 @@ export function utworzPrzelacznikLiczby(
     figura.hidden = zdanie.length === 0;
 
     for (const [wartosc, pozycja] of pozycje) {
-      // Pozycja ponad figurą modułu zostaje czynna — bierze tylko opis, żeby
-      // odczyt technologią wspomagającą podał powód razem z liczbą.
+      // Pozycja ponad figurą modułu zostaje czynna i bierze opis, by odczyt podał powód razem z liczbą.
       const ponadFigura = zdanie.length > 0 && wartosc > liczbaOkien;
       if (ponadFigura) pozycja.setAttribute('aria-describedby', ID_UWAGI);
       else pozycja.removeAttribute('aria-describedby');

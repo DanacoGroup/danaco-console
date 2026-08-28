@@ -6863,3 +6863,33 @@ jest ustawieniem osobnym `katalog.roboczy.*` i mówi, gdzie model zostawia
 własne pliki. Rdzeń rozgłasza zmianę obu bytów, bo okno konfiguracji bywa
 otwarte na kilku urządzeniach konta naraz, a nośnikiem synchronizacji jest
 zdarzenie zmiany właściwe obszarowi.
+
+## budowa/server/internal/core/adapter_okno_akcja.go
+Typ i konstruktor deklaruje inny plik rdzenia; ten plik dokłada wyłącznie
+metodę obszaru dziennika akcji, tym samym wzorcem, jakim inne pliki dokładają
+metody obok typu zadeklarowanego gdzie indziej.
+
+Metoda nie wykonuje akcji katalogu, tylko sprawdza ją, zapisuje ślad
+zgłoszenia i odmawia wprost, ponieważ meldunek o wykonaniu czynności, której
+nikt nie wykonał, jest gorszy od odmowy: zgłaszający odchodzi od ekranu
+przekonany, że rzecz się stała.
+
+Katalog akcji niesie kod komendy docelowej, więc wykonanie jest kiedyś
+osiągalne, ale nie da się go domknąć teraz uczciwie z dwóch powodów.
+Obsługiwacze rdzenia przyjmują pełną kopertę żądania z tożsamością klienta,
+wiązaniem sesji i identyfikatorem żądania, a port przekazania okna dostaje
+samą treść bez koperty — sklejenie koperty zastępczej znaczyłoby wykonanie
+komendy w cudzym albo w żadnym kontekście sesji, czyli zamianę fałszywego
+meldunku na fałszywy skutek. Parametry komendy window.action to surowy JSON
+o kształcie zależnym od akcji, a kontrakt nie mówi, że jest to treść żądania
+komendy docelowej — przyjęcie tego założenia byłoby zgadywaniem kontraktu.
+
+Dlatego metoda robi trzy rzeczy, do których ma pełne pokrycie, i ani jednej
+więcej: sprawdza akcję w katalogu, zostawia trwały ślad zgłoszenia w dzienniku
+i odmawia wprost kodem kontraktu, podając kod komendy, którą zgłaszający ma
+wywołać sam. Odmowa niesie tę samą wiedzę co wykonanie, bez fałszu o skutku.
+
+Zapis śladu zgłoszenia pełni dwie role naraz: jest zapisem tego, kto, w którym
+oknie i o co prosił, oraz jedynym sprawdzeniem istnienia okna, bo nieznane
+okno odrzuca repozytorium samo. Nieudany zapis kończy się własną odmową, żeby
+brak okna nie zlał się w odpowiedzi z odmową wykonania akcji katalogu.

@@ -7328,3 +7328,9 @@ W stanOdpowiedziZeZdarzen pole is_error rozstrzyga niezależnie od podtypu,
 ponieważ podtyp success występuje także przy is_error równym true. Tura bez
 zamknięcia — na kanale, który zamknięcia nie nadaje, na przykład echo albo
 api — kończy się stanem ukończonym.
+
+## budowa/server/internal/core/adapter_zdarzenia_zaczepow_diagnostyka.go
+Kod permission_denied jest najbliższym słowem kontraktu na odmowę zaczepu:
+zaczep niesie politykę, a jego niezerowe wyjście jest odmową tej polityki.
+Poziom i priorytet zostają przy regułach słownika — warn i low — ponieważ
+odmowa zaczepu jest zdarzeniem zwykłej pracy, a nie awarią.

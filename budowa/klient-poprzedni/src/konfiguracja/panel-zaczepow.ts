@@ -7,19 +7,9 @@ import {
 import type { StanObszarowSesji } from './stan-obszarow-sesji';
 
 /**
- * Panel zaczepów cyklu życia kanału — powierzchnia redagowania obszaru `hooks`.
- *
- * Stoi osobno od panelu obszarów, bo tamten utrwala wartości obowiązujące i nie
- * redaguje pól, a zaczep trzeba złożyć z punktu cyklu życia, polecenia
- * i zawężenia.
- *
- * Panel nie waliduje niczego ponad to, czego żąda kontrakt: zaczep bez zdarzenia
- * albo bez polecenia odrzuca rdzeń (`adapter_rozmowa_powierzchnia.go`). Punkt
- * cyklu życia jest polem wpisu z podpowiedzią, nie listą zamkniętą — to wartość
- * danych, a nie typ kodu.
- *
- * Zapis idzie tym samym adresem co panel obszarów: `config.session.set`
- * z obszarem `hooks` pod punktem widzenia okna.
+ * Panel zaczepów cyklu życia kanału — powierzchnia redagowania obszaru
+ * `hooks`. Zaczep bez zdarzenia albo bez polecenia odrzuca rdzeń. Zapis idzie
+ * adresem `config.session.set` z obszarem `hooks` pod punktem widzenia okna.
  */
 export interface PanelZaczepow {
   element: HTMLElement;
@@ -27,12 +17,12 @@ export interface PanelZaczepow {
   odswiez(): void;
 }
 
-/** Punkty cyklu życia obsługiwane przez program modelu — podpowiedź, nie lista zamknięta. */
+/** Punkty cyklu życia obsługiwane przez program modelu — podpowiedź w polu wpisu, nie lista zamknięta wartości. */
 const ZNANE_ZDARZENIA =
   'UserPromptSubmit · PreToolUse · PostToolUse · Stop · SessionStart · ' +
   'SessionEnd · Notification · SubagentStop · PreCompact';
 
-/** Jeden redagowany wiersz zaczepu. */
+/** Jeden redagowany wiersz zaczepu: zdarzenie, zawężenie, polecenie oraz przełącznik stanu czynnego zaczepu. */
 interface WierszZaczepu {
   element: HTMLElement;
   odczyt(): HookBinding;
@@ -145,7 +135,7 @@ function zlozStopke(...czesci: HTMLElement[]): HTMLElement {
   return element;
 }
 
-/** Wiersz redagowania jednego zaczepu: zdarzenie, zawężenie, polecenie, czynność. */
+/** Wiersz redagowania jednego zaczepu: zdarzenie, zawężenie, polecenie, czynność oraz przycisk usunięcia wiersza. */
 function zlozWierszZaczepu(zaczep: HookBinding, usunMnie: () => void): WierszZaczepu {
   const zdarzenie = pole('Punkt cyklu życia', 'np. UserPromptSubmit');
   zdarzenie.value = zaczep.event;
@@ -187,7 +177,7 @@ function zlozWierszZaczepu(zaczep: HookBinding, usunMnie: () => void): WierszZac
   };
 }
 
-/** Pole z podpisem — podpis mówi, czym pole jest, zanim dostanie treść. */
+/** Pole z podpisem — podpis mówi, czym pole jest, zanim użytkownik zdąży wpisać do niego treść ustawienia. */
 function otul(kontrolka: HTMLInputElement, podpis: string): HTMLElement {
   const etykieta = document.createElement('label');
   etykieta.className = 'dk-zaczepy__pole';

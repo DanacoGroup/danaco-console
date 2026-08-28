@@ -7362,3 +7362,6 @@ Zakres „Izolacja" jest jedyną kategorią z przejściem dalej: rozwinięty jes
 Różnica między jedenastoma wierszami katalogu w tym panelu a oknem punktów izolacji z selektorem zasięgu i podglądem polityki efektywnej jest powodem, dla którego przejście do tego okna tu stoi. Przycisk przejścia niczego nie wygasza: obie drogi pozostają czynne.
 
 O błędzie odczytu katalogu mówi komunikat blokowy nad stopką okna, nie stan pusty formularza.
+
+## budowa/klient-poprzedni/src/konfiguracja/panel-zaczepow.ts
+Panel zaczepów stoi osobno od panelu obszarów, bo tamten utrwala wartości obowiązujące i nie redaguje pól, a zaczep trzeba złożyć z punktu cyklu życia, polecenia i zawężenia. Zaczep bez zdarzenia albo bez polecenia odrzuca rdzeń (`adapter_rozmowa_powierzchnia.go`). Punkt cyklu życia jest polem wpisu z podpowiedzią, nie listą zamkniętą — to wartość danych, a nie typ kodu.

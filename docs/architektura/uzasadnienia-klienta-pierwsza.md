@@ -8833,3 +8833,49 @@ pokazuje proponowaną poprawkę, lecz jej nie stosuje, a przyciski „zastosuj
 poprawkę", „odrzuć" i „inna propozycja" stoją jako czynności bez własnej
 komendy, z podanym powodem. Pole statusu rekomendacji wyświetla się przy
 każdej pozycji wykazu.
+
+## budowa/klient-poprzedni/src/aplikacja/widok-srodowiska.ts
+Jedna odpowiedzialność — związanie powłoki środowiska ze sceną sesji i z routerem.
+Ten plik nie buduje ani pasa kart, ani nawigacji, ani okna; wszystko przychodzi
+gotowe z `powloka/` i ze sceny.
+
+Treść obszaru roboczego rozstrzyga `przestrzen-modulu.ts` przy każdym wyborze
+pozycji bocznej nawigacji. Scena raz osadzona nie jest niszczona — przełączenie
+modułu wyłącznie ją odsłania albo chowa, bo w środku żyje okno rozmowy z otwartym
+strumieniem do rdzenia.
+
+Powłoka powstaje bez połączenia, więc źródło wykazu nawigacji (`environment.enter`,
+`module.list`) dokłada się tutaj — w jedynym miejscu, które zna naraz powłokę
+i drogę do rdzenia.
+
+Karta sesji i okno komunikacji idą w parze: pas kart zgłasza założenie karty,
+scena odpowiada oknem zamówionym w rdzeniu komendą `window.create`, a zamknięcie
+karty zdejmuje okno ze sceny.
+
+Grupa akcji paska górnego dostaje wskaźnik łączności z rdzeniem oraz przełącznik
+widoków. Przełącznik motywu jest już w pasku powłoki (`powloka/akcje-paska`),
+więc drugiego się nie dokłada.
+
+Asystent pływający wisi w korzeniu powłoki, nie w obszarze roboczym: moduł
+podmienia wyłącznie zawartość `powloka.obszar`, więc favikon w korzeniu przetrwa
+każdą zmianę modułu. Asystent nie wchodzi na scenę sesji — nie jest oknem
+równoległym i nie liczy się do sufitu liczby okien.
+
+Boczna nawigacja pokazuje wyłącznie moduły widoczne w macierzy `srodowisko_modul`;
+widoczność rozstrzyga, czy pozycja stoi na liście, nie czy wolno moduł otworzyć.
+Moduł bez wiersza macierzy dobiera się tutaj z katalogu `module.list`, który
+zwraca komplet modułów platformy niezależnie od macierzy.
+
+Moduł nieodnaleziony w katalogu nie daje odmowy ani komunikatu: kolumna została
+już ustawiona na pierwszą pozycję wykazu, więc praca trwa dalej.
+
+Wymagane są oba warunki naraz: ognisko stoi w polu tekstowym i pole ma już
+treść. Samo ognisko nie wystarcza — pole wypowiedzi dostaje je przy otwarciu
+okna i trzyma bezterminowo, więc podążanie nie ruszyłoby nigdy.
+
+Przejście przestawia boczną nawigację i obszar roboczy, tak jakby wybór padł
+ręcznie; inaczej okno i kolumna nawigacji pokazywałyby dwa różne moduły.
+
+Gdy pole wypowiedzi jest w trakcie pisania, wstrzymane zostaje wyłącznie
+przesunięcie ekranu — posunięcie asystenta już się wykonało w rdzeniu. Przejście
+nie przepada: ląduje na pasie jako jedno kliknięcie.

@@ -6006,3 +6006,33 @@ Przekazanie potwierdza się modułem z pola odpowiedzi, bo samo przekazanie kont
 katalogu modułów, a kod modułu docelowego jest zamówieniem, nie potwierdzeniem. Eksport zasobu
 i akceptacja wyniku nie mają odpowiednika w kontrakcie i stoją jako nazwane braki drogi, nie jako
 martwe przyciski.
+
+## budowa/klient-poprzedni/src/sterowanie/naglowek-sterowania.ts
+Jeden wiersz obsługuje cały komplet sterowania — listę wyboru, suwak nakładu,
+pole hosta i wykaz katalogów — bo wszystkie potrzebują tego samego nagłówka.
+Etykieta nie obudowuje kontrolki: znak objaśnienia jest przyciskiem,
+a wewnątrz obudowy jego naciśnięcie przenosiłoby się na kontrolkę zamiast
+pokazać objaśnienie. Wiązanie idzie więc atrybutem wskazującym pole, nie
+zagnieżdżeniem.
+
+## budowa/klient-poprzedni/src/sterowanie/pasek-komunikatow.ts
+Pasek jest jedyną reakcją interfejsu na niepowodzenie zmiany: informacja. Nie
+wyłącza sterowań, nie zamyka okna i nie wymusza potwierdzenia — kolejna próba
+idzie zwyczajnie, bo błąd dotyczy wyłącznie bieżącego wywołania.
+
+## budowa/klient-poprzedni/src/sterowanie/wskaznik-odczytu.ts
+Wskaźnik stoi obok pola, nigdy zamiast pola: podmiana kontrolki na wskaźnik
+byłaby blokadą, a Operator ma móc wybrać wartość także wtedy, gdy katalog
+jeszcze jedzie z rdzenia. Wskaźnik mówi też technologiom wspomagającym, co się
+dzieje: ogłasza zmianę bez zabierania ogniska, a etykieta dostępności niesie
+nazwę katalogu, którego dotyczy odczyt.
+
+## budowa/klient-poprzedni/src/sterowanie/rejestr-modulow.ts
+Wykaz idzie z rdzenia, nie ze stałej listy znanych identyfikatorów kontraktu:
+tam stoją cztery pozycje, a są to środowiska, nie moduły. Katalog rdzenia
+niesie piętnaście modułów zasilanych migracją bazy. Podstawienie wykazu
+środowisk pod pole pytające o moduł pokazywałoby każdy prawdziwy moduł jako
+spoza wykazu, a Operatorowi proponowałoby środowiska tam, gdzie pyta się
+o moduł. Rejestr niczego nie zapisuje — jest wyłącznie odczytem. Wykaz jest
+pusty do chwili odpowiedzi rdzenia; osobna flaga rozróżnia „jeszcze nie wiem"
+od „katalog jest pusty", bo widok musi te dwa stany rozróżnić.

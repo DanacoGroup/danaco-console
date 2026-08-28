@@ -7796,3 +7796,10 @@ Faza wraca z ładowania, żeby odczyt w toku nie został przykryty stanem pustym
 
 Zapis pod czuwaniem nie ogłasza niepowodzenia zapisu, który mógł się w rdzeniu odbyć mimo
 zerwanego gniazda.
+
+## budowa/klient-poprzedni/src/mobile/okno-mobile.ts
+Kafelek stanu platformy woła `mobile.status.get` i pokazuje odpowiedź rdzenia bez interpretacji; odmowa dotyczy wyłącznie kafelka i nie gasi niczego poza nim. Ekran interwencji stoi na komendach, które rdzeń obsługuje — `monitor.status`, `queue.list`, `window.list`, `window.state.get`, `role.list` — i niesie cztery drogi interwencji w dwóch dotknięciach. Przegląd zadań i procesów woła `mobile.process.list` i `mobile.process.control` — wykaz procesów wraz ze sterowaniem nimi, czyli jedyną czynność sprawczą okna nad procesem; czynność nieodwracalna mówi to przed wykonaniem.
+
+Warstwy okna nie są trzema źródłami prawdy: wszystkie czytają ten sam rejestr telemetrii procesów, z którego czyta `monitor.status`. Różnią się drogą i tym, co potrafią — obraz interwencji rozstrzyga, wykaz procesów steruje.
+
+Trzecia warstwa okna czyta inną rodzinę komend niż obraz interwencji i niesie to, czego obraz nie ma — sterowanie procesem. Odmowa jednej warstwy nie gasi pozostałych dwóch. Kafelek stanu platformy, obraz interwencji i wykaz procesów mówią o tym samym rdzeniu trzema różnymi rodzinami komend.

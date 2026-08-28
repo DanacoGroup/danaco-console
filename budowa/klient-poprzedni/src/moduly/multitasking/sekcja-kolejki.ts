@@ -14,22 +14,9 @@ import type { ZrodloBiegu } from './zrodlo-biegu';
 import type { ZrodloNadzoru } from './zrodlo-nadzoru';
 
 /**
- * Sekcja KOLEJKI panelu orkiestracji — sterowanie silnikiem kolejek rdzenia.
- *
- * `queue.create`, `queue.action` i `queue.list` obsługują pętlę sesyjną, moduł
- * Automations i to środowisko; sekcja nimi steruje, zamiast budować własnego
- * wykonawcę zleceń. Okno robocze jest cudze — po skonfigurowaniu powiązania
- * kolejkę prowadzi Queue Manager modułu Automations.
- *
- * `QueueAction` kontraktu niesie `start · pause · resume · stop · retry · clear`.
- * Czynności spoza tego zbioru (`enqueue`, `dequeue`, `delay`, `split`/`merge`,
- * `route`/`branch`/`condition`) sekcja wypisuje wraz z brakującym kształtem
- * komendy, zamiast składać je z czynności istniejących: przycisk „split" oparty
- * na dwóch `retry` robiłby co innego, niż mówi jego napis.
- *
- * `Queue` niesie sesję, okna, stan i licznik obiegów — pola zasięgu nie ma.
- * Zasięg jest więc wykazem opisowym wraz z kształtem brakującego pola, a nie
- * kontrolką bez skutku.
+ * Sekcja Kolejki panelu orkiestracji steruje silnikiem kolejek rdzenia,
+ * wspólnym z modułem Automations; czynności spoza sześciu podstawowych sekcja
+ * wypisuje wraz z brakującym kształtem komendy zamiast je składać.
  */
 export interface SekcjaKolejek {
   element: HTMLElement;
@@ -46,7 +33,7 @@ export interface OpcjeSekcjiKolejek {
   sesja(): string;
 }
 
-/** Zasięgi kolejki wraz z ich znaczeniem; kontrakt pola zasięgu nie niesie. */
+/** Zasięgi kolejki wraz z ich znaczeniem; kontrakt pola zasięgu nie niesie, więc wykaz jest wyłącznie opisowy. */
 const ZASIEGI: ReadonlyArray<[string, string]> = [
   ['globalna', 'jedna kolejka na całą instalację'],
   ['lokalna', 'kolejka jednej karty sesji'],
@@ -55,7 +42,7 @@ const ZASIEGI: ReadonlyArray<[string, string]> = [
   ['dla projektu', 'kolejka wspólna oknom jednego projektu'],
 ];
 
-/** Czynności bez odpowiednika w `QueueAction` wraz z kształtem brakującej komendy. */
+/** Czynności bez odpowiednika w akcjach kolejki wraz z kształtem brakującej komendy dla każdej z nich osobno. */
 const BRAKI_AKCJI: ReadonlyArray<[string, string]> = [
   ['enqueue', 'queue.action { queueId, action: "enqueue", item: QueueItem }'],
   ['dequeue', 'queue.action { queueId, action: "dequeue", itemId }'],
@@ -64,11 +51,11 @@ const BRAKI_AKCJI: ReadonlyArray<[string, string]> = [
   ['route / branch / condition', 'queue.action { queueId, action: "route" | "branch" | "condition", itemId, target?, condition? }'],
 ];
 
-/** Kształt pola zasięgu, którego `Queue` kontraktu nie ma. */
+/** Kształt pola zasięgu, którego struktura kolejki w kontrakcie dziś nie ma, wraz z proponowanym zestawem wartości. */
 const BRAK_ZASIEGU =
   'Queue { …, scope: "global" | "local" | "model" | "agent" | "project", scopeId?: string } oraz queue.create przyjmujące te dwa pola.';
 
-/** Sześć czynności kontraktu wraz z tym, co robią. */
+/** Sześć czynności kontraktu wraz z tym, co dokładnie robią, gdy zostaną wykonane na wskazanej kolejce. */
 const AKCJE: ReadonlyArray<[QueueAction, string, string]> = [
   [QueueAction.Start, 'Uruchom', 'Wprawia kolejkę w bieg: pozycje zaczynają schodzić do okien, które kolejka obsługuje.'],
   [QueueAction.Pause, 'Wstrzymaj', 'Zatrzymuje pobieranie kolejnych pozycji; pozycja w biegu dochodzi do końca.'],
@@ -266,8 +253,7 @@ export function utworzSekcjeKolejek(opcje: OpcjeSekcjiKolejek): SekcjaKolejek {
     );
     for (const [akcja, miano, objasnienie] of AKCJE) {
       const kontrolka = przycisk(miano, 'dn-btn dn-btn--sm dn-btn--zarys');
-      // Objaśnienie idzie na przycisk trzema drogami, tak jak przy kontrolkach
-      // z powodem blokady: wskaźnik, czytnik ekranu i sprawdzian mają je widzieć.
+      // Objaśnienie idzie na przycisk trzema drogami: wskaźnik, czytnik ekranu i sprawdzian mają je widzieć.
       kontrolka.title = objasnienie;
       kontrolka.setAttribute('aria-description', objasnienie);
       kontrolka.addEventListener('click', () => {
@@ -280,8 +266,7 @@ export function utworzSekcjeKolejek(opcje: OpcjeSekcjiKolejek): SekcjaKolejek {
   }
 
   wiez.naZmiane(() => odczytaj());
-  // `queue.changed` niesie stan kolejki na żywo: kolejka rusza i staje bez
-  // udziału tego widoku, więc bez subskrypcji wykaz zastygałby na chwili odczytu.
+  // Zdarzenie zmiany kolejki niesie stan na żywo; bez subskrypcji wykaz zastygałby na chwili odczytu.
   const odsubskrybuj = bieg.naKolejke(() => odczytaj());
 
   return {
@@ -292,7 +277,7 @@ export function utworzSekcjeKolejek(opcje: OpcjeSekcjiKolejek): SekcjaKolejek {
   };
 }
 
-/** Treść odmowy wraz z kodem kontraktu. */
+/** Treść odmowy wraz z kodem kontraktu, złożona w jedno pełne zdanie gotowe do pokazania w meldunku sekcji. */
 function powod(zdanie: string | undefined, kod: string | undefined): string {
   return `Powód: ${zdanie ?? 'rdzeń nie podał przyczyny'} (kod ${kod ?? 'brak'}).`;
 }

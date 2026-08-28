@@ -6538,3 +6538,13 @@ się ostatni wśród wypowiedzi widzianych przez to okno, i tak też jest nazwan
 opisuje zdanie składane z wykazu komend kontraktu. Nagłówek tury zostaje widoczny nawet przy
 pustym składzie: pusty skład przy otwartej turze nie czyści całego miejsca treści razem z numerem
 i stanem tury.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przeciaganie-kolejnosci.ts
+Gest idzie przechwyconym wskaźnikiem, nie HTML5 Drag and Drop, więc
+obsługuje również dotyk i pióro bez podpórek. Klawiatura leży w tym samym
+pliku — kombinacja ze strzałką przestawia pozycję, więc czynność nie jest
+dostępna wyłącznie myszą. Plik nie wie, co przestawia, i nie pamięta
+wyniku: kolejność zapamiętuje nakładka kolejności miejscowej, a znaczenie
+przestawienia rozstrzyga wołający. W trakcie ruchu pas pokazuje kreskę, a
+nie przestawia treści, bo przestawianie na bieżąco kazałoby celować w
+element, który sam ucieka.

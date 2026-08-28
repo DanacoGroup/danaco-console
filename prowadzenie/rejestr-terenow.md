@@ -6,6 +6,61 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### instalator-jako-program
+
+| | |
+|---|---|
+| **Galaz** | `teren/instalator-program` z `main` |
+| **Drzewo** | `~/robocze/instalator-program` |
+| **Wykaz plikow** | `budowa/instalator/` (nowy katalog: powloka Tauri wraz z wydaniem okna); `budowa/desktop/src-tauri/tauri.conf.json` wylacznie w zakresie wskazania instalatora |
+| **Poza terenem** | klient, rdzen, kontrakt, migracje, **`design/` — CZYTASZ, NIE ZMIENIASZ**, `prowadzenie/` |
+
+**Stan zmierzony.** Wytworem budowy jest dzis `nsis/Danaco Console_1.0.0_x64-setup.exe`,
+czyli STANDARDOWY instalator NSIS. Prototyp `design/05-okna/platformowe/instalator.html`
+to wlasny kreator w szesciu krokach. Przeszukanie repozytorium na ciagi z tego prototypu
+(„Kreator instalacji", „Wymagania i parametry instalacji") daje ZERO trafien — kreatora
+nikt nigdy nie zbudowal. Wlasciciel: „caly instalator jest niezgodny z prototypem".
+
+**Rzecz, ktora zmienia wielkosc tej pracy.** Okno instalatora JEST JUZ NAPISANE
+w warstwie projektowej i nie trzeba go pisac drugi raz. Prototyp wciaga 6 arkuszy
+i **36 skryptow**, w tym komplet skladania:
+`okna/instalator/montaz.js`, szesc ekranow `ekrany/1-wymagania.js` … `6-podsumowanie.js`,
+22 skladniki (`nawigacja-krokow`, `pasek-postepu`, `pole-sciezki`, `blok-bledu`,
+`okno-dialogowe` i dalsze), wlasne `tresci.js`, `ikony.js`, `stany.js` oraz `bryla.js`
+z animacja. Znacznik ma 107 wierszy, bo cala kompozycje skladaja skrypty.
+
+**Brakuje wiec nie okna, tylko PROGRAMU, ktory to okno niesie i wykonuje kroki.**
+
+**Zadanie.** Postawic instalator jako osobna powloke Tauri, ktora wydaje to okno
+z warstwy projektowej i wiaze jego kroki z rzeczywistym stanem maszyny:
+1. **Wymagania** — wydanie systemu, procesor, wolne miejsce, uprawnienia CZYTANE
+   Z MASZYNY, nie wpisane na sztywno. Wartosc, ktorej nie da sie odczytac, jest
+   nazwana odmowa, nie zgadywana.
+2. **Licencja** — tresc z `design/zasoby/tresci/licencja.js`; brak zgody wstrzymuje krok.
+3. **Wersja programu** — wybor wydania zgodnego z procesorem maszyny.
+4. **Lokalizacja** — wskazanie katalogu z rzeczywistym sprawdzeniem prawa zapisu.
+5. **Instalacja** — pasek postepu odzwierciedla PRAWDZIWY przebieg, nie licznik czasu.
+6. **Podsumowanie** — co stanelo i gdzie.
+
+**Rozstrzygniecie, ktore podejmujesz i nazywasz:** jak instalator dociera do Operatora.
+Wlasciciel rozstrzygnal, ze u Operatora stoi cienka instalka (~250 MB), a rdzen i arsenal
+stoja na serwerze Danaco — prototyp mowi zgodnie z tym: „Instalator pobiera skladniki
+programu z serwera Danaco". Wybierz droge: samodzielny plik wykonywalny czy powloka
+uruchamiana przez NSIS. Nazwij wybor i jego powod. Adresu serwera wdrozenia NIE
+WYMYSLASZ — jesli go nie ma w zrodlach, krok pobierania jest nazwana odmowa z pytaniem
+o adres, nie zmyslonym adresem.
+
+**Kryteria odbioru.**
+1. Okno instalatora wydaje sie z warstwy projektowej: wszystkie 6 arkuszy i 36 skryptow
+   naprawde laduje wydana strona. Policz i przytocz liczbe.
+2. ZRZUT EKRANU przy 2560x1440 zestawiony z prototypem, oceniony przez Ciebie strefa
+   po strefie. Zrzut jest dowodem; deklaracja nim nie jest.
+3. Kroki 1 i 4 czytaja PRAWDZIWY stan maszyny. Pokaz to uruchomieniem: wartosci na
+   zrzucie zgadzaja sie z tym, co oddaje system.
+4. Zadna wartosc prototypu nie zostala przepisana na sztywno.
+5. Instalator buduje sie: `cargo build` albo `cargo tauri build` konczy sie wytworem.
+
+
 ### rama-wpieta-w-biblioteke
 
 | | |

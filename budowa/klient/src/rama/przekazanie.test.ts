@@ -9,6 +9,7 @@ import {
   Command,
   EnvelopeStatus,
   PROTOCOL_VERSION,
+  SessionStatus,
   type Envelope,
   type ErrorInfo,
 } from '../../../shared/contract.ts';
@@ -21,7 +22,7 @@ import type { TozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { bieg, poOdstepie, rowne, sprawdz } from '../sprawdzian.ts';
 import { magazynWPamieci, utworzPrzebieg, type StanPrzebiegu } from '../wejscie/przebieg.ts';
 import { zbudujDokument, type DokumentZastepczy } from './dom-zastepczy.ts';
-import { gotowaDoPrzekazania, wykonajPrzekazanie } from './przekazanie.ts';
+import { gotowaDoPrzekazania, utworzZatrzaskPrzekazania, wykonajPrzekazanie } from './przekazanie.ts';
 
 /* Odczyt pliku bez typów środowiska: klient nie zaciąga deklaracji Node,
    a specyfikator spoza literału zostawia moduł nieopisanym — ten sam
@@ -103,11 +104,15 @@ const SRODOWISKA: Odpowiedz = {
   tresc: { environments: [{ id: '1', code: 'talkin', name: 'TalkIn', order: 1, navigationKind: 'modules' }] },
 };
 
+/** Dwa moduły i jedna sesja: liczba niezerowa i wykaz nietrywialny — nastawa, która odróżnia wykaz od jego okrojenia. */
 const WEJSCIE: Odpowiedz = {
   tresc: {
     environment: { id: '1', code: 'talkin', name: 'TalkIn', order: 1, navigationKind: 'modules' },
-    modules: [{ id: '1', code: 'studio', name: 'Studio', order: 1, operationalWindowCodes: [], kind: 'srodowisko_robocze', configuredOnHome: false }],
-    sessions: [],
+    modules: [
+      { id: '1', code: 'studio', name: 'Studio', order: 1, operationalWindowCodes: [], kind: 'srodowisko_robocze', configuredOnHome: false },
+      { id: '2', code: 'research', name: 'Research', order: 2, operationalWindowCodes: [], kind: 'srodowisko_robocze', configuredOnHome: false },
+    ],
+    sessions: [{ id: 'sesja-1', status: SessionStatus.Active, createdAt: 0, updatedAt: 0 }],
   },
 };
 
@@ -222,13 +227,81 @@ await bieg('rama aplikacji — przekazanie sterowania', {
 
     const licznikSesji = miejsceRamy!.querySelector('[data-stan-sesje]');
     sprawdz(licznikSesji !== null, 'pas stanu nie wystawił licznika sesji');
-    rowne(licznikSesji!.textContent, '0', 'licznik sesji nie odpowiada liczbie kart odtworzonych przez rdzeń');
+    rowne(licznikSesji!.textContent, '1', 'licznik sesji nie odpowiada liczbie kart odtworzonych przez rdzeń');
 
-    const przyciskModulu = miejsceRamy!.querySelector('.dn-szyna-poz--modul');
-    sprawdz(przyciskModulu !== null, 'szyna nie wystawiła przycisku modułu');
-    przyciskModulu!.dispatchEvent({ type: 'click', target: przyciskModulu! });
-    rowne(przyciskModulu!.getAttribute('aria-current'), 'true', 'kliknięty moduł nie został oznaczony jako bieżący');
+    const przyciskiModulow = miejsceRamy!.querySelectorAll('.dn-szyna-poz--modul');
+    rowne(przyciskiModulow.length, 2, 'szyna nie wystawiła przycisku dla każdego modułu z wykazu');
+
+    const przyciskModulu = przyciskiModulow[0]!;
+    przyciskModulu.dispatchEvent({ type: 'click', target: przyciskModulu });
+    rowne(przyciskModulu.getAttribute('aria-current'), 'true', 'kliknięty moduł nie został oznaczony jako bieżący');
     rowne(tytulBelki!.textContent, 'Danaco Console › Studio', 'kliknięcie modułu nie zmieniło tytułu belki na jego nazwę');
+  },
+
+  async 'pas stanu odzwierciedla motyw czynny w dokumencie'() {
+    const stanJasny = await stanZeSrodowiskiem();
+    const dokumentJasny = zbudujDokument(INDEKS_HTML);
+    dokumentJasny.documentElement.setAttribute('data-theme', 'light');
+    jakoGlobalny(dokumentJasny);
+    wykonajPrzekazanie(stanJasny, { dokument: dokumentJasny as unknown as Document, zdejmijOknoWejscia: () => {} });
+    const znakJasny = dokumentJasny.querySelector('[data-stan-motyw]');
+    sprawdz(znakJasny !== null, 'pas stanu nie wystawił węzła motywu przy jasnym widoku');
+    rowne(znakJasny!.textContent, 'jasny', 'motyw jasny nie doszedł do pasa stanu');
+
+    const stanCiemny = await stanZeSrodowiskiem();
+    const dokumentCiemny = zbudujDokument(INDEKS_HTML);
+    dokumentCiemny.documentElement.setAttribute('data-theme', 'dark');
+    jakoGlobalny(dokumentCiemny);
+    wykonajPrzekazanie(stanCiemny, { dokument: dokumentCiemny as unknown as Document, zdejmijOknoWejscia: () => {} });
+    const znakCiemny = dokumentCiemny.querySelector('[data-stan-motyw]');
+    sprawdz(znakCiemny !== null, 'pas stanu nie wystawił węzła motywu przy ciemnym widoku');
+    rowne(znakCiemny!.textContent, 'ciemny', 'motyw ciemny nie doszedł do pasa stanu');
+  },
+
+  async 'wyjątek z montażu zostaje odmową nazwaną: scena wejścia zostaje na ekranie, nic nie znika'() {
+    const stan = await stanZeSrodowiskiem();
+    const stanZeZlymWykazem = { ...stan, moduly: null } as unknown as Parameters<typeof wykonajPrzekazanie>[0];
+    const dokument = zbudujDokument(INDEKS_HTML);
+    jakoGlobalny(dokument);
+    let zdjeta = 0;
+    const oryginalnyBlad = console.error;
+    const zapisane: unknown[][] = [];
+    console.error = (...argumenty: unknown[]) => {
+      zapisane.push(argumenty);
+    };
+
+    let udalo: boolean;
+    try {
+      udalo = wykonajPrzekazanie(stanZeZlymWykazem, {
+        dokument: dokument as unknown as Document,
+        zdejmijOknoWejscia: () => {
+          zdjeta += 1;
+        },
+      });
+    } finally {
+      console.error = oryginalnyBlad;
+    }
+
+    sprawdz(!udalo, 'przekazanie zgłosiło powodzenie mimo wyjątku z montażu');
+    rowne(zdjeta, 0, 'okno wejścia zostało zdjęte mimo nieudanego montażu');
+    const scenaWejscia = dokument.querySelector('[data-wejscie]');
+    const miejsceRamy = dokument.querySelector('[data-rama-aplikacji]');
+    sprawdz(!scenaWejscia!.hidden, 'scena wejścia zeszła z ekranu mimo nieudanego montażu — Operator zostaje z pustym ekranem');
+    sprawdz(miejsceRamy!.hidden, 'miejsce ramy odkryło się mimo nieudanego montażu');
+    sprawdz(zapisane.length >= 1, 'wyjątek z montażu nie trafił do dziennika');
+    sprawdz(
+      zapisane.some((wpis) => typeof wpis[0] === 'string' && wpis[0].startsWith('[rama]')),
+      'odmowa po wyjątku z montażu nie niesie znacznika warstwy',
+    );
+
+    const ponownaProba = wykonajPrzekazanie(stan, {
+      dokument: dokument as unknown as Document,
+      zdejmijOknoWejscia: () => {
+        zdjeta += 1;
+      },
+    });
+    sprawdz(ponownaProba, 'przekazanie z poprawnym wykazem modułów nie udało się po wcześniejszej odmowie');
+    rowne(zdjeta, 1, 'okno wejścia nie zostało zdjęte przy udanej próbie po odmowie');
   },
 
   async 'brak węzła montażu w dokumencie jest odmową nazwaną w dzienniku, nie cichym zaniechaniem'() {
@@ -263,27 +336,35 @@ await bieg('rama aplikacji — przekazanie sterowania', {
     );
   },
 
-  async 'zatrzask nie blokuje na stałe: przekazanie udaje się przy kolejnej zmianie, gdy węzeł montażu się pojawi'() {
+  async 'zatrzask produkcyjny nie blokuje na stałe: przekazanie udaje się przy kolejnej zmianie, gdy węzeł montażu się pojawi'() {
     const stan = await stanZeSrodowiskiem();
-    let przekazano = false;
-    function naZmianeAplikacji(dokument: DokumentZastepczy): boolean {
-      if (przekazano) return przekazano;
-      jakoGlobalny(dokument);
-      przekazano = wykonajPrzekazanie(stan, {
-        dokument: dokument as unknown as Document,
-        zdejmijOknoWejscia: () => {},
-      });
-      return przekazano;
-    }
+    let zdjeta = 0;
+    const naZmianePrzebiegu = utworzZatrzaskPrzekazania({
+      get dokument() {
+        return globalThis.document as unknown as Document;
+      },
+      zdejmijOknoWejscia: () => {
+        zdjeta += 1;
+      },
+    });
 
     const dokumentBezRamy = zbudujDokument(INDEKS_HTML.replace('<div data-rama-aplikacji hidden></div>', ''));
-    sprawdz(!naZmianeAplikacji(dokumentBezRamy), 'przekazanie udało się mimo braku węzła montażu ramy');
-    sprawdz(!przekazano, 'zatrzask zapadł mimo nieudanego przekazania');
+    jakoGlobalny(dokumentBezRamy);
+    naZmianePrzebiegu(stan);
+    sprawdz(dokumentBezRamy.querySelector('[data-wejscie]')!.hidden === false, 'scena wejścia zeszła mimo braku węzła montażu ramy');
+    rowne(zdjeta, 0, 'zatrzask zdjął okno wejścia mimo nieudanego przekazania');
 
     const dokumentZRama = zbudujDokument(INDEKS_HTML);
-    sprawdz(naZmianeAplikacji(dokumentZRama), 'przekazanie nie udało się przy kolejnej zmianie, choć węzeł montażu już stał w dokumencie');
-    sprawdz(przekazano, 'zatrzask nie zapadł mimo udanego przekazania');
-    sprawdz(dokumentZRama.querySelector('[data-belka-tytul]') !== null, 'rama nie zamontowała się przy powtórnej próbie');
+    jakoGlobalny(dokumentZRama);
+    naZmianePrzebiegu(stan);
+    sprawdz(dokumentZRama.querySelector('[data-belka-tytul]') !== null, 'rama nie zamontowała się przy powtórnej próbie zatrzasku');
+    rowne(zdjeta, 1, 'zatrzask nie zdjął okna wejścia przy udanej próbie po odmowie');
+
+    const dokumentPonownie = zbudujDokument(INDEKS_HTML);
+    jakoGlobalny(dokumentPonownie);
+    naZmianePrzebiegu(stan);
+    sprawdz(dokumentPonownie.querySelector('[data-belka-tytul]') === null, 'zatrzask przekazał sterowanie po raz drugi, choć już raz się powiódł');
+    rowne(zdjeta, 1, 'zatrzask zdjął okno wejścia po raz drugi, choć przekazanie już się powiodło wcześniej');
   },
 });
 

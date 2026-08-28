@@ -251,7 +251,7 @@ await bieg('rama aplikacji — katalog treści', {
   'wpis do dziennika nie przemyca treści dla użytkownika'() {
     // Odstępstwo jest wąskie: wpis diagnostyczny wolno pisać po polsku, ale nie zastępuje katalogu treści.
     sprawdz(
-      doDziennika.length <= 2,
+      doDziennika.length <= 3,
       `wpisów do dziennika przybyło: ${doDziennika.map((l) => `${l.plik}:${l.wiersz}`).join(', ')}`,
     );
     const bezNawiasu = doDziennika.filter((l) => !l.tresc.startsWith('['));

@@ -1,9 +1,4 @@
-/**
- * Rozstrzygnięcie i wykonanie chwili przekazania sterowania. Droga wejścia
- * kończy się komendą `environment.enter` — przebieg zapisuje jej wynik w
- * `srodowisko` dopiero po powodzeniu, więc obecność tego pola jest jedynym
- * pewnym znakiem, że rama aplikacji ma dokąd prowadzić.
- */
+/** Rozstrzygnięcie i wykonanie chwili przekazania sterowania ramie po drodze wejścia. */
 
 import type { Environment } from '../../../shared/contract.ts';
 import type { StanPrzebiegu } from '../wejscie/przebieg.ts';
@@ -24,11 +19,8 @@ export interface ZaleznosciPrzekazania {
 }
 
 /**
- * Wykonuje przekazanie sterowania ramie: zdejmuje scenę drogi wejścia,
- * montuje ramę i odkrywa jej miejsce. Brak węzła montażu w dokumencie jest
- * odmową nazwaną w dzienniku, nie cichym zaniechaniem — wywołujący rozpoznaje
- * niepowodzenie po zwróconej wartości `false` i może spróbować przy kolejnej
- * zmianie stanu.
+ * Montuje ramę, a dopiero po powodzeniu zdejmuje scenę wejścia — nieudany
+ * montaż zostaje odmową nazwaną w dzienniku, scena wejścia zostaje na ekranie.
  */
 export function wykonajPrzekazanie(stan: StanZeSrodowiskiem, zaleznosci: ZaleznosciPrzekazania): boolean {
   const scenaWejscia = zaleznosci.dokument.querySelector('[data-wejscie]');
@@ -38,14 +30,31 @@ export function wykonajPrzekazanie(stan: StanZeSrodowiskiem, zaleznosci: Zalezno
     return false;
   }
 
+  try {
+    zamontujRame({
+      miejsce: miejsceRamy as HTMLElement,
+      srodowisko: stan.srodowisko,
+      moduly: stan.moduly,
+      sesje: stan.sesje,
+    });
+  } catch (blad) {
+    console.error('[rama] przekazanie odrzucone: montaż rzucił wyjątkiem', blad);
+    return false;
+  }
+
   zaleznosci.zdejmijOknoWejscia();
   (scenaWejscia as HTMLElement).hidden = true;
-  zamontujRame({
-    miejsce: miejsceRamy as HTMLElement,
-    srodowisko: stan.srodowisko,
-    moduly: stan.moduly,
-    sesje: stan.sesje,
-  });
   (miejsceRamy as HTMLElement).hidden = false;
   return true;
+}
+
+/** Zatrzask jednorazowego przekazania: zapada po powodzeniu, przy odmowie zostaje otwarty na kolejną zmianę stanu. */
+export function utworzZatrzaskPrzekazania(
+  zaleznosci: ZaleznosciPrzekazania,
+): (stan: StanPrzebiegu) => void {
+  let przekazano = false;
+  return function naZmianePrzebiegu(stan: StanPrzebiegu): void {
+    if (przekazano || !gotowaDoPrzekazania(stan)) return;
+    przekazano = wykonajPrzekazanie(stan, zaleznosci);
+  };
 }

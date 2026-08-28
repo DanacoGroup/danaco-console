@@ -12,19 +12,29 @@ export interface WlasciwosciBelki {
   srodowisko: string;
 }
 
-export function belka(w: WlasciwosciBelki): HTMLElement {
+/** Belka wraz z odrębnym uchwytem do węzła tytułu — wywołujący zmienia tytuł bez ponownego odpytywania drzewa. */
+export interface Belka {
+  wezel: HTMLElement;
+  tytul: HTMLElement;
+}
+
+export function belka(w: WlasciwosciBelki): Belka {
   const znak = zeZnacznika(ikony.godlo);
   znak.setAttribute('aria-hidden', 'true');
 
-  return el('header', { klasa: 'dn-belka' }, [
+  const tytul = el('span', {
+    klasa: 'dn-belka-tytul',
+    tekst: `${tekst('belka.marka')} ${tekst('belka.separator')} ${w.srodowisko}`,
+    'data-belka-tytul': true,
+  });
+
+  const wezel = el('header', { klasa: 'dn-belka' }, [
     el('span', { klasa: 'dn-belka-marka' }, [
       znak,
       el('span', { klasa: 'dn-belka-nazwa', tekst: tekst('belka.marka') }),
     ]),
-    el('span', {
-      klasa: 'dn-belka-tytul',
-      tekst: `${tekst('belka.marka')} ${tekst('belka.separator')} ${w.srodowisko}`,
-      'data-belka-tytul': true,
-    }),
+    tytul,
   ]);
+
+  return { wezel, tytul };
 }

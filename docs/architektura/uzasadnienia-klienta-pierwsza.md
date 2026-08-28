@@ -7269,3 +7269,22 @@ komendą rdzenia. Nadanie roli idzie komendą przeznaczoną do nadawania roli,
 a wcielenie osobną komendą aktualizacji roli, bo zmiana okna pola wcielenia
 nie niesie; zmiana okna zostaje przy tym, co jest jej: tytuł, katalogi,
 kanał modelu.
+
+## budowa/klient-poprzedni/src/moduly/pokrycie-komend.ts
+Zdanie wpisane w moduł na sztywno przestaje być prawdą w dniu, w którym
+zmieni się rdzeń albo kontrakt, i nikt go nie zdejmuje, bo nic go z rdzeniem
+nie łączy; taki napis myli też stronę braku, bo komenda bywa w kontrakcie,
+a nie ma uchwytu w złożonym rdzeniu, więc pokrycie bierze rozstrzygnięcie
+z odczytu i nazywa brak tam, gdzie jest. Byt stoi w korzeniu katalogu
+modułów, a nie w jednym module, bo tę samą potrzebę ma każdy moduł, a
+przepisywanie dałoby tyle samo rozjeżdżających się zdań o jednym stanie
+produktu; sam fakt i zdania o nim leżą warstwę niżej, w źródle wykazu
+komend rdzenia. Gdy żadna komenda nie jest nawet pomyślana dla czynności
+wyłącznie okiennej, pozycja zostaje przy przycisku bez komendy z modeli
+kontrolek formularza, bo bez nazwy komendy nie ma czego sprawdzać u
+rdzenia, a byt nie zgaduje. Wywołanie przyjmuje etykietę pozycji w panelu
+akcji, komendę, która tę pozycję by wykonała — nazwę z kontraktu albo
+z wykazu okien operacyjnych, także taką, której kontrakt nie ma — oraz opis
+czynności, który wchodzi w zdanie powodu. Powitanie idzie raz na połączenie,
+nie raz na moduł, więc wszystkie wywołania odczytu czekają na jedną
+odpowiedź.

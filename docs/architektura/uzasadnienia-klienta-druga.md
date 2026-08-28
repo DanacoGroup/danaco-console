@@ -6668,3 +6668,15 @@ albo przerwana — bo odmowa jednego nie wstrzymuje pozostałych, tak mówi kont
 
 ## budowa/klient-poprzedni/src/powloka/czesci-sekcji.ts
 Kto stoi przed kim w układzie sekcji, rozstrzyga warstwa układu, a czym się to zapisuje — osobne źródło sekcji paneli; ten plik nie wie ani jednego, ani drugiego, więc da się go czytać i sprawdzać bez rdzenia. Skutek zdjęcia sekcji jest odwracalny jednym naciśnięciem przywracającym z pasa sekcji zdjętych, więc potwierdzanie go byłoby przeszkodą bez treści, a pusty pas z napisem o braku zabierałby miejsce, nic nie mówiąc. Stan idzie atrybutem, nie samą barwą: zwinięcie niesie atrybut rozwinięcia na przycisku i ukrycie na ciele, a nie klasa zmieniająca wygląd, inaczej czytnik ekranu ogłaszałby treść, której na ekranie nie ma. Wygląd w całości pochodzi z biblioteki komponentów — plik nie zna ani jednej barwy i ani jednego odstępu.
+
+## budowa/klient-poprzedni/src/moduly/studio/petla-zrodlo.ts
+Pięć komend rozkładu obsługuje pętla wykonawcza rdzenia, cztery komendy kontroli pracy — nastawy,
+obsada fragmentów i spięcia — obsługuje warstwa kontroli pracy, a okno je woła bez zakładania dla
+nich drugiego magazynu ani drugiej drogi. Trzy komendy łańcucha i wsadu są w rdzeniu zbudowane
+od dawna i nie miały czym być uruchomione, więc to okno jest tym czymś. Źródło nie ma stanu i nie
+buduje ani jednego elementu: jest warstwą wywołań i sprawdzenia kształtu odpowiedzi, a stan
+przebiegu mieszka w module stanu pętli. Wywołanie uczciwe broni okna przed kopertą bez uchwytu,
+która nie niesie pola stanu i nigdy by się nie skorelowała, więc okno stałoby w ładowaniu bez
+końca — rodziny komend rozkładu i kontroli pracy są świeże i wystawiane przez różnych
+wykonawców, więc odmowa braku uchwytu jest tu ścieżką realną, nie teoretyczną, i ma wracać jako
+nazwany błąd.

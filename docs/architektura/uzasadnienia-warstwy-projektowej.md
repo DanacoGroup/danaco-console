@@ -856,3 +856,19 @@ ich składniki (`--dn-obrys-mocny`, `--dn-wstazka`, `--dn-tekst-2`,
 `--dn-tekst-3`) są już zależne od motywu i rozstrzygają się w miejscu
 użycia. Dzięki temu proporcja domieszki jest zapisana raz, a nie powtórzona
 w czterech kontekstach motywu, więc się między nimi nie rozjeżdża.
+
+## design/zasoby/karty-okna.css
+Wygląd kart należy wyłącznie do tego arkusza — `rama.css` odpowiada za
+obudowę okna, nie za karty. Arkusz wymaga `zetony/zetony.css`,
+`zetony/ruch.css` i `stany.css`; mechanizm dostarcza `karty-okna.js` (menu
+powłok, grot, kontrolka dodania, ustawienia widoku). Porządek pasma jest
+wiążący i idzie od lewej: grot jako pierwsza kontrolka pasma otwiera menu
+kart; powłoki niosą okna robocze bieżącej sesji z licznikiem wewnątrz
+ikony; zakładki to `.dn-karty-lista[role=tablist]` z wyłącznie pozycjami
+`tab`; kontrolka dodania stoi jako jedyna za zakładkami; odstęp rozpycha
+pasmo; narzędzia niosą maksymalizację okna i ustawienia widoku przy prawej
+krawędzi. Pasmo nie jest listą zakładek samo w sobie: rolę `tablist` niesie
+wyłącznie `.dn-karty-lista`, bo lista zakładek nie może mieć dzieci innych
+niż `tab`. Geometria pochodzi ze wzorca pasa kart i jest zapisana raz,
+w jednym bloku zmiennych komponentu — pozostałe reguły wyłącznie się do
+niej odwołują.

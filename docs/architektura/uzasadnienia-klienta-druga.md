@@ -7497,3 +7497,22 @@ Lista nigdy nie dostaje atrybutu blokującego, także wtedy, gdy katalog wartoś
 Zawężanie stoi nad listą, a nie w jej rozwinięciu, bo rozwinięcie natywnej listy wyboru rysuje system operacyjny, nie dokument — pola tekstowego nie da się tam wstawić, a filtr wewnątrz rozwinięcia wymagałby zastąpienia natywnej listy własnym bytem rozwijanym. Pole nad listą przycina katalog pozycji: wpisana fraza zostawia pozycje pasujące, sekcje zwężają się razem z nimi. Ceną jest ruch dwutaktowy — najpierw fraza, potem rozwinięcie. Fraza bez trafień nie kasuje wyboru ani nie blokuje listy: wartość bieżąca okna zostaje na liście zawsze, a pod polem staje zdanie o braku trafień.
 
 Kolejność sekcji węzłów listy wynika z kolejności pierwszego wystąpienia, nie z sortowania po nazwie: wołający układa katalog w wybranym przez siebie porządku, a lista tego porządku nie przestawia. Sekcja pusta nie powstaje — grupa opcji bez pozycji byłaby nagłówkiem nad niczym.
+
+## budowa/klient-poprzedni/src/sterowanie/model-glowny.ts
+Kanał jest parametrem okna, nie sesji: dwa okna jednej sesji pracują na dwóch różnych modelach równocześnie. Wykaz pochodzi z rejestru kanałów — nowy model to nowy wiersz rejestru, nie zmiana w tym pliku. Menu ma dwie sekcje i jeden wybór: modele surowe w sekcji „Modele", agenci w „Moi agenci". Okno obsługuje albo model, albo agenta nałożonego na model. Lista płaska zatarłaby tę zależność i przy licznych agentach utopiłaby między nimi modele surowe. Agent nie jest kanałem: kanał to droga do modelu, agent to tożsamość nałożona na tę drogę. Wybór agenta niesie więc jego kod w polu identyfikatora agenta, a pole kanału modelu bierze kanał bazowy agenta — model, na którym agent stoi. Kanał oznaczony jako nieczynny zostaje na liście i pozostaje wybieralny; o jego stanie mówi nazwa pozycji.
+
+Rola okna czy tryb uprawnień mają pozycji tyle, ile ma ich kontrakt, więc pole zawężania byłoby tam kontrolką nad niczym — dlatego zawężanie jest włączone wyłącznie w tym sterowaniu.
+
+Wybór dotyczy okna; rozesłanie na kartę sesji stoi pod listą, bo jedna wspólna kontrolka nie pokazywałaby, ile okien obejmuje zmiana.
+
+Kolejność katalogu wyboru jest treścią, nie porządkiem alfabetycznym: modele surowe stoją pierwsze, bo agent bez modelu nie istnieje. Sekcja bez pozycji nie powstaje, więc pusty rejestr agentów nie tworzy nagłówka nad pustką.
+
+Okno z nałożonym agentem niesie oba pola — identyfikator agenta i kanał bazowy tego agenta — więc zaznaczenie kanału pokazywałoby model surowy tam, gdzie pracuje agent.
+
+Kolumna sterowania, pasek zlecenia i wiersz podsumowania szuflady czytają tę samą funkcję nazwy modelu, więc pokazują tę samą nastawę. Rejestr agentów jest nieobowiązkowy. Czytelnik, który go nie ma, nie zobaczy modelu surowego zamiast agenta: dostanie kod agenta z rzeczownikiem, a nie podmieniony kanał. Identyfikator spoza obu rejestrów zostaje pokazany dosłownie, nigdy jako „Bez wskazania" — wskazanie jest, tylko wykaz go nie zna.
+
+Wybór modelu surowego zdejmuje agenta pustym identyfikatorem agenta; bez tego agent zostawałby nałożony na model, który nie jest już wybrany, a wykaz pokazywałby co innego niż stan okna. Agent bez kanału bazowego, gdy jest założony, ale model jeszcze nie przypisany, nie jest odmową: idzie sam identyfikator agenta, a kanał zostaje ten, który okno miało.
+
+Rozróżnienie stanu, w którym rdzeń jeszcze nie odpowiedział, od stanu, w którym rejestr jest pusty, jest konieczne: bez niego wskaźnik odczytu nigdy nie zgasłby na rdzeniu z pustym rejestrem, zapowiadając wykaz, który nie nadejdzie.
+
+Kanał zakłada się komendą channel.add; okna do zakładania kanałów w tym wydaniu nie ma, więc zdanie stanu pustego mówi to wprost zamiast odsyłać do nieistniejącego ekranu.

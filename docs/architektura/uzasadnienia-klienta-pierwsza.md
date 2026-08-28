@@ -8297,3 +8297,15 @@ Panel nie pokazuje przycisków kroku, dopóki sesji nie ma, bo wykonanie
 wyrażenia wymaga ramki, a ramka istnieje tylko w programie zatrzymanym.
 Kontrakt nie niesie zdarzenia zatrzymania, więc panel odczytuje stan na
 żądanie, zamiast udawać widok na żywo.
+
+## budowa/klient-poprzedni/src/aod/sekcja-obecnosci.ts
+Rejestr obecności dotyczy procesów przypiętych do nakładki komendami
+`aod.observe.attach` i `aod.observe.detach`. Obie komendy zwracają
+`attachedProcessIds` po zmianie, więc wykaz rysuje odpowiedź rdzenia, a nie
+przewidywanie klienta: po odmowie wykaz zostaje niezmieniony i nie trzeba
+powtarzać odczytu stanu.
+
+Odpięcie idzie bez pytania o potwierdzenie, a puste pole identyfikatora procesu
+wolno wysłać — pustą wartość ocenia rdzeń (`validation_failed`). `detach`
+procesu nieprzypiętego kończy się `not_found`; to stan poprawny, nie awaria,
+i zdanie odmowy z `odmowy-aod.ts` mówi to wprost.

@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: doprowadzenie do zapytania kanału dwóch rzeczy, bez
-// których model by ich nie zobaczył — katalogu roboczego sesji i konfiguracji
-// mostów MCP okna rozmowy.
-//
-// To dwa różne byty i dwie różne drogi. Katalog roboczy mówi, gdzie model
-// zostawia własne pliki, i pochodzi z rozstrzygnięcia dwóch kluczy katalogu
-// ustawień. Nadania dostępu mówią, do czego model sięga, i pochodzą ze zbioru
-// nadań tego jednego okna. Ani jedno nie wynika z drugiego, więc ani jedno nie
-// jest liczone z drugiego.
-//
-// Brak ustalenia katalogu zostawia domyślne zachowanie kanału (pierwszy katalog
-// roboczy okna), a brak nadań zostawia proces bez przełącznika `--mcp-config`.
-// Rozmowa toczy się w obu przypadkach.
+// Plik doprowadza do zapytania kanału katalog roboczy sesji i konfigurację
+// mostów MCP okna rozmowy, dwa różne byty pochodzące z osobnych dróg
+// rozstrzygania.
 package core
 
 import (
@@ -28,7 +18,8 @@ func (a *adapterRozmowy) ZKatalogiemRoboczym(k *KatalogRoboczy) *adapterRozmowy 
 	return a
 }
 
-// ZMostami wpina składacz konfiguracji mostów MCP okna rozmowy.
+// ZMostami wpina składacz konfiguracji mostów MCP okna rozmowy do zapytania
+// kierowanego do kanału modelu.
 func (a *adapterRozmowy) ZMostami(m *mostyOkna) *adapterRozmowy {
 	a.mosty = m
 	return a
@@ -42,9 +33,8 @@ func (a *adapterRozmowy) ZParametramiWykonania(p ParametryWykonania) *adapterRoz
 }
 
 // uzupelnijSrodowisko dokłada do zapytania katalog sesji, konfigurację mostów
-// oraz parametry wykonania z konfiguracji. Osobno od zapytanieKanalu, bo tamta
-// funkcja jest czysta — bierze okno i dwie wiadomości, a te wartości wymagają
-// odczytu konfiguracji i bazy.
+// oraz parametry wykonania z konfiguracji, osobno od czystej funkcji
+// zapytanieKanalu.
 func (a *adapterRozmowy) uzupelnijSrodowisko(ctx context.Context, okno session.Okno,
 	zapytanie *models.Zapytanie) {
 
@@ -53,30 +43,16 @@ func (a *adapterRozmowy) uzupelnijSrodowisko(ctx context.Context, okno session.O
 	}
 	zapytanie.KatalogSesji = a.katalogSesji(okno)
 	if a.mosty != nil {
-		// Konfiguracja MCP okna niesie dwie różne rzeczy, które jadą jednym
-		// przełącznikiem: mosty do maszyn (z nadań okna) i narzędzia sterujące
-		// platformą. Pierwsze przysługują z nadania, drugie każdemu oknu, które
-		// w ogóle rozmawia — inaczej model nie otworzyłby modułu bez wglądu
-		// w serwer, co popychałoby Operatora do rozdawania dostępu, którego nikt
-		// nie potrzebuje. Granica uprawnień siedzi wewnątrz wykazu narzędzi:
-		// zapisy zastrzeżone są poza nim strukturalnie.
-		//
-		// Zestaw narzędzi tury składa się tutaj, nie przy starcie procesu. Wynik
-		// jedynego składacza konfiguracji przechodzi przez dopisanie zestawu
-		// (adapter_rozmowa_zestaw.go): podstawa z definicji eksperta plus doraźne
-		// dołożenia sesji. Drugiej konfiguracji nie ma; zestaw niezawężony nie
-		// dokłada nic i tura jedzie pełnym wykazem kontraktu.
+		// Konfiguracja MCP okna niesie mosty z nadań i narzędzia platformy pod jednym przełącznikiem.
 		zapytanie.KonfiguracjaMCP = a.zKonfiguracjaZestawu(ctx, okno,
 			a.mosty.tekstZNarzedziami(ctx, okno.Id))
 	}
 	a.uzupelnijWykonanie(ctx, okno, zapytanie)
 }
 
-// uzupelnijWykonanie przenosi ustawienia Operatora do zapytania kanału.
-//
-// Wartość pusta nie nadpisuje tego, co przyszło z okna albo z wiersza rejestru:
-// „bez wskazania na żadnym poziomie" znaczy „zostaw decyzję kanałowi", a nie
-// „wyczyść". Dlatego przypisanie jest warunkowe, nie bezwarunkowe.
+// uzupelnijWykonanie przenosi ustawienia uczestnika rozmowy do zapytania
+// kanału warunkowo: wartość pusta nie nadpisuje tego, co przyszło z okna albo
+// z wiersza rejestru.
 func (a *adapterRozmowy) uzupelnijWykonanie(ctx context.Context, okno session.Okno,
 	zapytanie *models.Zapytanie) {
 

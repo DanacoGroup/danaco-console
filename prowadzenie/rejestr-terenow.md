@@ -81,7 +81,7 @@ Studia — nadaja sie do ponownego uzycia bez przenoszenia kodu.
 |---|---|
 | **Galaz** | `teren/rama-aplikacji` z `main` |
 | **Drzewo** | `~/robocze/rama-aplikacji` |
-| **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy |
+| **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy; `budowa/klient/src/main.ts` (zniesiony na rzecz `aplikacja.ts` — dwa punkty wejscia otwieralyby dwa polaczenia i dwie maszyny stanu); `budowa/klient/package.json` wylacznie w zakresie dopisania sprawdzianow ramy do polecenia `testy` |
 | **Poza terenem** | `budowa/klient/src/wejscie/`, `polaczenie/`, `protokol/`; caly `design/`; rdzen; `prowadzenie/` |
 
 **Przedmiot.** Droga wejscia konczy sie komenda `environment.enter` i okno zostaje

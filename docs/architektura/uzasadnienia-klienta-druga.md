@@ -6039,3 +6039,11 @@ od „katalog jest pusty", bo widok musi te dwa stany rozróżnić.
 
 ## budowa/klient-poprzedni/src/polaczenie/adres-rdzenia.ts
 Port nasłuchu rdzenia lokalnego jest wartością wybraną spoza portów już zajętych w środowisku produkcyjnym platformy. Powłoka natywna zna port rdzenia ze zmiennej środowiskowej i wystawia go poleceniem odczytu adresu — strona osadzonego pakietu ma pochodzenie lokalne dla powłoki, więc wyliczenie adresu z samej lokalizacji dokumentu dałoby adres, pod którym nie nasłuchuje nikt, a ponawianie by nie pomogło, bo milczałby nie rdzeń, tylko sam adres. Funkcja przyjmująca adres rdzenia wywołuje się raz, przed złożeniem aplikacji, po to, żeby odczyt adresu pozostał wywołaniem natychmiastowym dla wszystkich swoich wywołujących zamiast rozlewać obietnicę po całym drzewie kompozycji; zwraca informację, czy adres dało się przyjąć, a adres nie do rozłożenia nie wstrzymuje niczego, tylko zostaje przy wyliczeniu z lokalizacji. Rozstrzygnięcie adresu wyliczonego z lokalizacji idzie po pochodzeniu strony: dla adresu z portem — ten sam host i port, bo rdzeń serwuje stronę; dla adresu bez portu — host ze strony i port domyślny rdzenia, bo porty 80 i 443 nie są portem rdzenia i byłyby ślepe; dla pozostałych pochodzeń, w tym pakietu osadzonego bez źródła sieciowego — pętla zwrotna i port domyślny.
+
+## budowa/klient-poprzedni/src/moduly/workspace/pamiec-pozycja.ts
+Osobny plik od okna, bo to inna odpowiedzialność: okno prowadzi odczyt i stany, pozycja rysuje
+jeden wpis. Czynności przychodzą wstrzyknięte — pozycja nie zna ani kanału, ani stanu okna.
+Usunięcie wpisu idzie komendą usunięcia: kasuje ona wpis założony zapisem kontekstu i oddaje
+znacznik usunięcia, a usunięcie wpisu nieistniejącego kończy odmową; odrzucenie propozycji modelu
+jest właśnie takim usunięciem i woła tę samą komendę. Odpięcie wpisu nie jest tu wołane, bo jego
+znaczenie nie jest w kontrakcie ustalone, więc okno nie nadaje mu własnego sensu.

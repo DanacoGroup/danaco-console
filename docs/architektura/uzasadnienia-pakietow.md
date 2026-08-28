@@ -7183,3 +7183,58 @@ systemowe uruchomienia z `session.AtrybutyDrzewa()`.
 
 Pole WyjscieBledowOsobno potrzebne jest strumieniowi okna, który czyta oba
 wyjścia procesu naraz.
+
+## budowa/server/internal/injection/uruchamiacz_okna.go
+Pakiet session nie startuje procesów — zna wyłącznie port
+session.Uruchamiacz, który wypełnia ten plik. Dzięki temu w drzewie jest jedna
+droga uruchomienia procesu modelu (`rozruch.go`) i jedna droga ubijania jego
+drzewa potomstwa (`session.PrzejmijDrzewo`). Kierunek zależności jest ten sam,
+który zapowiada `session/przejecie.go`: warstwa kanału sięga po część
+sesyjną, nigdy odwrotnie.
+
+Zasięg wykonania jest czytany i ma skutek. Okno niesie wybór Operatora w polu
+SrodowiskoWykonania, a w jedynym spawnerze platformy ten wybór rozstrzyga,
+gdzie proces rusza:
+
+- core — host rdzenia; proces rusza tutaj i to jest wykonanie zgodne
+  z wyborem;
+- remote — host zdalny; proces jedzie torem SSH pakietu internal/zdalne: host
+  wskazuje ustawienie `host_wykonania`, zgodę per host trzyma tabela
+  `host_zdalny`, a każde brakujące ogniwo drogi jest osobną, nazwaną odmową,
+  nie cichym startem na maszynie rdzenia, bo to byłaby praca w innym
+  miejscu, niż wskazał Operator;
+- local — urządzenie Operatora; toru zwrotnego do urządzenia w drzewie nie ma
+  i nie domknie go ta warstwa: powłoka natywna wystawia interfejsowi trzy
+  polecenia bez uruchamiania procesów (desktop/src-tauri, invoke_handler),
+  a kontrakt nie ma kanału, którym rdzeń prowadziłby strumienie procesu na
+  kliencie — tor zwrotny wymaga nowych poleceń powłoki i nowych komend
+  kontraktu poza tym pakietem. Zasięg obsługuje więc host rdzenia i idzie
+  o tym wpis do dziennika; wybór jest honorowany dosłownie dopóty, dopóki
+  rdzeń stoi na urządzeniu Operatora, a tak stoi dziś każda instalacja
+  lokalna.
+
+Wartość pusta i wartość spoza wyliczenia nie zatrzymują pracy — schodzą na
+zachowanie dotychczasowe (host rdzenia), ale zostawiają ślad w dzienniku, bo
+brak wskazania ma dawać pracę, nie odmowę.
+
+Proces okna rusza jako korzeń własnego drzewa, bo zaraz po starcie obejmie go
+uchwyt systemowy warstwy sesji; bez tego wnuki procesu przeżyłyby zamknięcie
+okna. Przed startem rozstrzygany jest zasięg wykonania okna: proces, którego
+nie da się uruchomić tam, gdzie wskazał Operator, nie rusza po cichu na
+hoście rdzenia.
+
+Dla zasięgu core i dróg schodzących na niego rozruchWedlugZasiegu uruchamia
+sam proces okna; dla zasięgu remote uruchamia proces transportu SSH, którego
+strumienie są strumieniami procesu na hoście zdalnym.
+
+Katalog i środowisko rozruchu zdalnego jadą w komendzie zdalnej; proces
+transportu dziedziczy środowisko rdzenia, bo SSH potrzebuje własnej
+konfiguracji (klucze, agent). Odmowa toru wraca do wołającego z powodem —
+uruchomienie na hoście rdzenia byłoby pracą w innym miejscu, niż wskazał
+Operator.
+
+Moduł Terminal startuje proces przy każdym poleceniu, więc wpis w dzienniku
+przy każdym starcie utopiłby dziennik w powtórzeniach i wyszłoby z tego to
+samo, co z ciszy: nikt by tego nie czytał. Zmiana zasięgu okna, a przy torze
+zdalnym także zmiana wyniku (odmowa kontra tor), daje nowy klucz, więc kolejny
+obrót sprawy znów zostawia ślad.

@@ -7672,3 +7672,14 @@ Czego ta droga nie obejmuje: kontekst rozstrzygania budowany przez rdzeń dla te
 Poziom okna bierzemy ze stałej kontraktu, nie z literału zapisanego wprost w kodzie.
 
 Zdanie steru niesie nazwę wartości, którą naprawdę pojedzie model, z dopiskiem o poziomie, gdy wartość przychodzi spoza okna.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-akcji-studio.ts
+Dla zasięgu modułu Studio komenda action.list oddaje akcje okna komunikacji — studio.message.send,
+studio.message.stop, studio.message.list — a nie operacje redakcyjne. Wierszy operacji
+kontekstowych Studia w katalogu nie ma; okno pokazuje to wprost, zamiast dorabiać je po stronie
+klienta.
+
+Komenda window.action jest drogą generyczną dla akcji bez własnej komendy. Uchwyt komendy
+istnieje, ale akcja spoza katalogu wraca zwykłą kopertą błędu not_found z powodem, że akcja nie
+istnieje w katalogu akcji. Brakuje więc wiersza katalogu, a nie uchwytu komendy, i tak ma to być
+widoczne. Osłona funkcji wywolajUczciwie zostaje na wypadek koperty window.unknown, która nie
+niesie pola status i sama by się nie skorelowała.

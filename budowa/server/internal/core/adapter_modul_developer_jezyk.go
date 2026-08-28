@@ -467,7 +467,12 @@ func wagaAnalizy(waga string) shared.ProblemSeverity {
 }
 
 // serwerJezykaPliku dobiera serwer języka po rozszerzeniu pliku i mówi, czy
-// rdzeń ma czym go zapytać pojedynczym wywołaniem.
+// rdzeń ma czym go zapytać pojedynczym wywołaniem. Rozstrzygnięcie trwałe:
+// `gopls` ma tryb wiersza poleceń obok trybu LSP, a
+// `typescript-language-server` mówi wyłącznie sesją protokołu LSP przez
+// stdin/stdout — warstwa językowa pyta serwery pojedynczym wywołaniem i tej
+// sesji nie ma czym otworzyć. Wywołujący nazywa odmowę: NawigujDoSymbolu
+// przez pole kontraktu `ServerAvailable: false`, Refaktoryzuj zdaniem błędu.
 func serwerJezykaPliku(sciezka string) (zewnetrzne.Narzedzie, bool) {
 	switch strings.ToLower(filepath.Ext(sciezka)) {
 	case ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs":
@@ -492,9 +497,10 @@ type analizaPozaGo struct {
 // rozszerzeniaPythona i rozszerzeniaArkuszy nazywają pliki, które mają swój
 // analizator. Wykaz jest wzięty z tego, co program naprawdę czyta.
 var (
-	rozszerzeniaGo      = []string{".go"}
-	rozszerzeniaPythona = []string{".py", ".pyi"}
-	rozszerzeniaArkuszy = []string{".css", ".scss", ".less"}
+	rozszerzeniaGo          = []string{".go"}
+	rozszerzeniaPythona     = []string{".py", ".pyi"}
+	rozszerzeniaArkuszy     = []string{".css", ".scss", ".less"}
+	rozszerzeniaTypeScriptu = []string{".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"}
 )
 
 // analizyRepozytorium dobiera programy analizy, które w danym żądaniu mają
@@ -525,6 +531,25 @@ func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 			czytaj: func(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 				return zgloszeniaAnalizy(wyjscie, korzen)
 			},
+		})
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieStaticcheck,
+			argumenty: append([]string{"-f", "json"}, cele...),
+			czytaj:    zgloszeniaStaticcheck,
+		})
+	}
+
+	skrypty := sciezkiORozszerzeniu(wskazane, rozszerzeniaTypeScriptu)
+	if caleDrzewo || len(skrypty) > 0 {
+		cele := skrypty
+		if caleDrzewo {
+			cele = []string{"."}
+		}
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieEslint,
+			argumenty: append([]string{"--format", "json",
+				"--no-error-on-unmatched-pattern"}, cele...),
+			czytaj: zgloszeniaEslint,
 		})
 	}
 
@@ -670,6 +695,120 @@ func zgloszeniaRuff(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 		zgloszenia = append(zgloszenia, zgloszenie)
 	}
 	return zgloszenia
+}
+
+// wyjscieStaticcheck jest kształtem pojedynczego wiersza wyjścia programu
+// `staticcheck -f json` — jeden dokument JSON na wiersz, nie tablica.
+type wyjscieStaticcheck struct {
+	Code     string `json:"code"`
+	Severity string `json:"severity"`
+	Message  string `json:"message"`
+	Location struct {
+		File   string `json:"file"`
+		Line   int    `json:"line"`
+		Column int    `json:"column"`
+	} `json:"location"`
+}
+
+// zgloszeniaStaticcheck przekłada wynik programu `staticcheck` na wykaz
+// zgłoszeń kontraktu wraz z kodem reguły i kolumną.
+func zgloszeniaStaticcheck(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	for _, wiersz := range strings.Split(wyjscie, "\n") {
+		tresc := strings.TrimSpace(wiersz)
+		if tresc == "" {
+			continue
+		}
+		var uwaga wyjscieStaticcheck
+		if err := json.Unmarshal([]byte(tresc), &uwaga); err != nil || uwaga.Location.File == "" {
+			continue
+		}
+		zgloszenie := shared.DeveloperDiagnostic{
+			Path:     sciezkaWzgledemKorzenia(uwaga.Location.File, korzen),
+			Line:     uwaga.Location.Line,
+			Severity: wagaAnalizy(uwaga.Severity),
+			Message:  uwaga.Message,
+			Source:   wskaznikTekstu(narzedzieStaticcheck.Program),
+		}
+		if uwaga.Code != "" {
+			zgloszenie.Code = wskaznikTekstu(uwaga.Code)
+		}
+		if uwaga.Location.Column > 0 {
+			zgloszenie.Column = wskaznikLiczby(uwaga.Location.Column)
+		}
+		zgloszenia = append(zgloszenia, zgloszenie)
+	}
+	return zgloszenia
+}
+
+// wyjscieEslint jest kształtem pojedynczego pliku odpowiedzi programu
+// `eslint --format json` wraz z jego zgłoszeniami.
+type wyjscieEslint struct {
+	FilePath string `json:"filePath"`
+	Messages []struct {
+		RuleId   *string         `json:"ruleId"`
+		Severity int             `json:"severity"`
+		Message  string          `json:"message"`
+		Line     int             `json:"line"`
+		Column   int             `json:"column"`
+		Fix      json.RawMessage `json:"fix"`
+	} `json:"messages"`
+}
+
+// zgloszeniaEslint przekłada wynik programu `ESLint` na wykaz zgłoszeń
+// kontraktu. Program bez pliku nastaw w repozytorium odmawia analizy przed
+// wypisaniem jakiegokolwiek JSON-u na wyjściu — odmowa wraca jednym
+// zgłoszeniem NAZYWAJĄCYM przyczynę, nie cichą pustą listą.
+func zgloszeniaEslint(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	var pliki []wyjscieEslint
+	if err := json.Unmarshal([]byte(strings.TrimSpace(wyjscie)), &pliki); err != nil {
+		if tresc := strings.TrimSpace(diagnostyka); tresc != "" {
+			zgloszenia = append(zgloszenia, shared.DeveloperDiagnostic{
+				Path:     korzen,
+				Line:     1,
+				Severity: shared.ProblemSeverityError,
+				Message:  "ESLint odmówił analizy: " + skrocDiagnostyke(tresc, nil),
+				Source:   wskaznikTekstu(narzedzieEslint.Program),
+			})
+		}
+		return zgloszenia
+	}
+	for _, plik := range pliki {
+		for _, uwaga := range plik.Messages {
+			wiersz := uwaga.Line
+			if wiersz <= 0 {
+				wiersz = 1
+			}
+			zgloszenie := shared.DeveloperDiagnostic{
+				Path:     sciezkaWzgledemKorzenia(plik.FilePath, korzen),
+				Line:     wiersz,
+				Severity: wagaEslint(uwaga.Severity),
+				Message:  uwaga.Message,
+				Source:   wskaznikTekstu(narzedzieEslint.Program),
+			}
+			if uwaga.RuleId != nil && *uwaga.RuleId != "" {
+				zgloszenie.Code = wskaznikTekstu(*uwaga.RuleId)
+			}
+			if uwaga.Column > 0 {
+				zgloszenie.Column = wskaznikLiczby(uwaga.Column)
+			}
+			if len(uwaga.Fix) > 0 {
+				zgloszenie.FixAvailable = wskaznikPrawdy(true)
+			}
+			zgloszenia = append(zgloszenia, zgloszenie)
+		}
+	}
+	return zgloszenia
+}
+
+// wagaEslint przekłada wagę zgłoszenia ESLint (1 ostrzeżenie, 2 błąd) na wagę
+// kontraktu.
+func wagaEslint(waga int) shared.ProblemSeverity {
+	if waga >= 2 {
+		return shared.ProblemSeverityError
+	}
+	return shared.ProblemSeverityWarning
 }
 
 // wyjscieStylelinta jest kształtem pojedynczego pliku odpowiedzi programu

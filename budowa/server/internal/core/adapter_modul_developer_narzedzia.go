@@ -55,8 +55,9 @@ var (
 		Nazwa: "typos", Program: "typos", Pakiet: "cargo install typos-cli"}
 	narzedzieStylelint = zewnetrzne.Narzedzie{
 		Nazwa: "Stylelint", Program: "stylelint", Pakiet: "npm i -g stylelint"}
-	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma dziś czym go zapytać —
-	// powód stoi przy serwerJezykaPliku, rozstrzygającym drogę warstwy językowej.
+	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma czym go
+	// zapytać pojedynczym wywołaniem — program mówi wyłącznie sesją LSP, nie
+	// wierszem poleceń; powód stoi przy serwerJezykaPliku.
 	narzedzieSerweraTypeScript = zewnetrzne.Narzedzie{
 		Nazwa: "serwer języka TypeScript", Program: "typescript-language-server",
 		Pakiet: "npm i -g typescript-language-server typescript"}

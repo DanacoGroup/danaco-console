@@ -1,41 +1,18 @@
 import type { JednostkaMiary } from './nastawy-strony';
 
-/**
- * Nastawy widoku należące do Operatora — jawne, odwracalne i pamiętane.
- *
- * ── Skąd ten plik ───────────────────────────────────────────────────────────
- * Zasada ogólna zlecenia: gdzie da się zrobić dwojako i obie drogi mają sens,
- * wybór należy do Operatora jako jawne, odwracalne i pamiętane ustawienie, a nie
- * rozstrzygnięcie wykonawcy zapisane w kodzie. Ten plik jest jednym miejscem, w
- * którym takie wybory stoją — zakładki kontra podział powierzchni, przewijanie,
- * jednostka linijki, tryb adiustacji, tryb źródłowy, układ kartek. Rozsypane po
- * kilku plikach rozjechałyby się, a część z nich zostałaby na twardo.
- *
- * ── Dlaczego `localStorage`, a nie rdzeń ────────────────────────────────────
- * Dotyczą powierzchni na TYM urządzeniu i nie mają swojego bytu w kontrakcie:
- * `panel.sections.*` zapisuje układ sekcji panelu, nie skalę widoku ani jednostkę
- * linijki. Ten sam wzorzec nosi `motyw/motyw.ts`. Gdy kontrakt dostanie pozycję
- * na nastawy widoku dokumentu, zapis przejdzie do rdzenia bez zmiany wołaczy —
- * dlatego magazyn jest podawany, a nie brany z globalnej przestrzeni na sztywno.
- *
- * Awaria magazynu (tryb prywatny, osadzenie w ramce) zostawia wartości domyślne
- * i nie jest zgłaszana jako błąd: nastawa widoku nie jest powodem, żeby okno nie
- * wstało.
- */
-
-/** Dwa równorzędne tryby pracy nad dwoma dokumentami. */
+/** Typ TrybDwochDokumentow nazywa dwa równorzędne tryby pracy nad dwoma dokumentami: zakładki i podział powierzchni. */
 export type TrybDwochDokumentow = 'zakladki' | 'podzial';
 
-/** Kierunek podziału powierzchni. */
+/** Typ KierunekPodzialu nazywa kierunek podziału powierzchni pracy nad dwoma dokumentami: pionowy albo poziomy. */
 export type KierunekPodzialu = 'pionowy' | 'poziomy';
 
-/** Przewijanie powierzchni — ciągłe albo strona po stronie. */
+/** Typ TrybPrzewijania nazywa sposób przewijania powierzchni dokumentu przy pracy: ciągłe albo strona po stronie. */
 export type TrybPrzewijania = 'ciagle' | 'strona-po-stronie';
 
-/** Układ kartek na powierzchni. */
+/** Typ UkladKartek nazywa układ kartek na powierzchni dokumentu widoku: jedną, obok siebie albo rozkładówkę. */
 export type UkladKartek = 'jedna' | 'obok' | 'rozkladowka';
 
-/** Nastawy widoku Operatora. */
+/** Interfejs NastawyOperatoraWidoku niesie wszystkie nastawy widoku należące do Operatora: tryb dokumentów, podział, przewijanie, układ kartek, jednostkę, linijki, tryb źródłowy i skalę. */
 export interface NastawyOperatoraWidoku {
   /** Zakładki albo podział powierzchni — dwa tryby, żaden zapasowy. */
   trybDokumentow: TrybDwochDokumentow;
@@ -55,7 +32,7 @@ export interface NastawyOperatoraWidoku {
   skala: number;
 }
 
-/** Nastawy domyślne: zakładki, przewijanie ciągłe, jedna kartka, milimetry. */
+/** Funkcja domyslneNastawyWidoku zwraca nastawy domyślne: zakładki, przewijanie ciągłe, jedna kartka w rzędzie, jednostka milimetrowa. */
 export function domyslneNastawyWidoku(): NastawyOperatoraWidoku {
   return {
     trybDokumentow: 'zakladki',
@@ -72,20 +49,20 @@ export function domyslneNastawyWidoku(): NastawyOperatoraWidoku {
   };
 }
 
-/** Magazyn nastaw — pominięty znaczy `localStorage`, `null` znaczy „bez zapisu". */
+/** Interfejs MagazynNastawWidoku opisuje magazyn nastaw widoku; pominięty magazyn znaczy localStorage, a wartość null znaczy brak zapisu. */
 export interface MagazynNastawWidoku {
   getItem(klucz: string): string | null;
   setItem(klucz: string, wartosc: string): void;
 }
 
-/** Klucz zapisu — nastawy widoku nie mieszają się z danymi sesji. */
+/** Stała KLUCZ_ZAPISU jest kluczem magazynu, pod którym nastawy widoku nie mieszają się z danymi sesji dokumentu. */
 const KLUCZ_ZAPISU = 'dn.studio.widok';
 
-/** Granice udziału podziału — pole węższe niż 15 % nie jest polem pracy. */
+/** Stałe UDZIAL_DOLNY i UDZIAL_GORNY wyznaczają granice udziału podziału powierzchni; pole węższe niż 15 procent nie jest polem pracy. */
 const UDZIAL_DOLNY = 0.15;
 const UDZIAL_GORNY = 0.85;
 
-/** Granice skali widoku, wzorem pakietu biurowego. */
+/** Stałe SKALA_DOLNA i SKALA_GORNA wyznaczają granice skali widoku, wzorowane na granicach pakietu biurowego. */
 export const SKALA_DOLNA = 10;
 export const SKALA_GORNA = 500;
 
@@ -98,11 +75,7 @@ function magazynDomyslny(): MagazynNastawWidoku | null {
 }
 
 /**
- * Czyta nastawy Operatora; brak zapisu i zapis uszkodzony dają domyślne.
- *
- * Każde pole jest sprawdzane osobno, a nie cały zapis naraz: zapis z wersji
- * wcześniejszej, w którym brakuje pola nowego, ma dać nastawę domyślną tego pola,
- * a nie unieważnić wszystkie pozostałe wybory Operatora.
+ * Funkcja czytajNastawyWidoku czyta nastawy Operatora z magazynu; brak zapisu, zapis uszkodzony albo pole niezgodne z typem dają wartość domyślną tego pola.
  */
 export function czytajNastawyWidoku(
   magazyn: MagazynNastawWidoku | null = magazynDomyslny(),
@@ -139,7 +112,7 @@ export function czytajNastawyWidoku(
   };
 }
 
-/** Zapisuje nastawy Operatora; awaria zapisu niczego nie przerywa. */
+/** Funkcja zapamietajNastawyWidoku zapisuje nastawy Operatora w magazynie; awaria zapisu niczego w oknie nie przerywa. */
 export function zapamietajNastawyWidoku(
   nastawy: NastawyOperatoraWidoku,
   magazyn: MagazynNastawWidoku | null = magazynDomyslny(),
@@ -167,7 +140,7 @@ function prawda(wartosc: unknown, domyslna: boolean): boolean {
   return typeof wartosc === 'boolean' ? wartosc : domyslna;
 }
 
-/** Przycina udział podziału do granic pola pracy. */
+/** Funkcja przytnijUdzialPodzialu przycina udział podziału powierzchni do granic dolnej i górnej pola pracy. */
 export function przytnijUdzialPodzialu(udzial: number): number {
   if (!Number.isFinite(udzial)) return 0.5;
   return Math.min(Math.max(udzial, UDZIAL_DOLNY), UDZIAL_GORNY);
@@ -205,7 +178,7 @@ export function utworzPamiecNastawWidoku(
   };
 }
 
-/** Zdanie o nastawach widoku — do paska stanu i do objaśnień. */
+/** Funkcja opiszNastawyWidoku zwraca zdanie o bieżących nastawach widoku, przeznaczone do paska stanu i do objaśnień. */
 export function opiszNastawyWidoku(nastawy: NastawyOperatoraWidoku): string {
   const uklad =
     nastawy.ukladKartek === 'rozkladowka'

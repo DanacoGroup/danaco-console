@@ -7114,3 +7114,19 @@ komentarzy. Znacznik nosi barwę jako żeton motywu, nie jako wartość
 szesnastkową: arkusz modułu nie zna ani jednej barwy zapisanej wprost i oba
 motywy obsługują się same, więc paleta jest wykazem żetonów. Plik nie zna
 struktury dokumentu obiektowego.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-nastawy-operatora.ts
+Zasada ogólna zlecenia mówi, że gdzie da się zrobić dwojako i obie drogi mają
+sens, wybór należy do Operatora jako jawne, odwracalne i pamiętane ustawienie,
+a nie rozstrzygnięcie wykonawcy zapisane w kodzie na sztywno. Ten moduł jest
+jednym miejscem, w którym takie wybory stoją — zakładki kontra podział
+powierzchni, przewijanie, jednostka linijki, tryb źródłowy, układ kartek.
+Rozsypane po kilku plikach rozjechałyby się, a część z nich zostałaby na
+twardo. Nastawy dotyczą powierzchni na danym urządzeniu i nie mają swojego
+bytu w kontrakcie, podobnie jak układ sekcji panelu i motyw interfejsu; gdy
+kontrakt dostanie kiedyś pozycję na nastawy widoku dokumentu, zapis przejdzie
+do rdzenia bez zmiany wołających funkcji, dlatego magazyn jest podawany jako
+parametr, a nie brany z globalnej przestrzeni na sztywno. Awaria magazynu,
+na przykład w trybie prywatnym albo przy osadzeniu w ramce, zostawia wartości
+domyślne i nie jest zgłaszana jako błąd, ponieważ nastawa widoku nie jest
+powodem, żeby okno nie wstało.

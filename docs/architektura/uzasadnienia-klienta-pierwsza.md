@@ -9177,3 +9177,12 @@ z domysłem, że materiał się nie wczytał. Żądanie składane bez wskazania
 operatora wracałoby odmową walidacji, z której nic dla niego nie wynika —
 ten jeden krok mówi, skąd okno bierze treść, a gdy jej nie ma, wywołanie
 komendy nazywa brak, zamiast wysyłać puste pole.
+
+## budowa/klient-poprzedni/src/dostepy/karta-punktu.ts
+Karta odpowiada na dwa pytania Operatora: „co to za maszyna albo katalog” oraz
+„czy w ogóle odpowiada”. Do tego daje jedną czynność — nadanie oknu dostępu
+w wybranym trybie i na wybranych korzeniach.
+
+Punkt jest bytem platformy, nadanie bytem okna. Dlatego karta pokazuje stan
+punktu wspólny dla wszystkich okien, a przycisk nadania działa na oknie,
+z którym związana jest sekcja.

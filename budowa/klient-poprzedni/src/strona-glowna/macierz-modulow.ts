@@ -1,7 +1,7 @@
 import { KnownModuleIds, type Environment } from '../../../shared/contract';
 import { kodZnany, type KodSrodowiska } from './pozycje-srodowisk';
 
-/** Macierz widoczności modułów po stronie klienta odwzorowuje macierz z rdzenia bez wykazu par. */
+/** Macierz widoczności modułów po stronie klienta odwzorowuje macierz rdzenia bez wykazu par środowisk. */
 
 /** Środowisko sprowadzone do tego, co macierz widoczności modułów mówi o nim: kod, kolejność i lista modułów. */
 interface WierszMacierzy {

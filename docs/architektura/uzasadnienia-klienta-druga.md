@@ -6297,3 +6297,15 @@ rdzeń nie podał, nie do odróżnienia od zmierzonego zera.
 
 ## budowa/klient-poprzedni/src/polaczenie/zrodlo-zdarzen.ts
 Gdyby obserwator importował kanał wprost, strzałka zależności odwróciłaby się i powstałby cykl warstw; zamiast tego obserwator opisuje dokładnie to, czego potrzebuje — subskrypcję zdarzenia po nazwie z kontraktu i podgląd całego ruchu — a kanał spełnia ten opis samym kształtem, bez ani jednej dodatkowej deklaracji.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/naglowek-panelu.ts
+Wszystkie czynności panelu mieszczą się w jednym rzędzie ikon o wysokości
+jednego wiersza, bez paska narzędzi, bez drugiego rzędu i bez nagłówka
+sekcji nad zawartością. Pełna nazwa tytułu zostaje w atrybucie tytułu i w
+etykiecie dostępności nagłówka, bo cięcie napisu w kodzie odebrałoby ją
+czytnikowi ekranu. Nagłówek nie wie, co robią czynności, i nie zna ani
+jednej komendy rdzenia — dostaje gotowe działanie, nie buduje treści
+panelu ani menu rozwijanego i nie przyjmuje drugiego rzędu. Czynność,
+której nie ma czym wykonać, nie wchodzi do wykazu — rząd ikon jest wtedy
+krótszy, a nie wyszarzony. Rama okna daje trzy pasy pod tytułem i należy
+do okien operacyjnych; panel w stosie jej nie używa.

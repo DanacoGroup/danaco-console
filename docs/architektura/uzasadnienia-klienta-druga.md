@@ -6562,3 +6562,7 @@ pusty układ udający „panel bez sekcji".
 
 ## budowa/klient-poprzedni/src/powloka/akcje-paska.ts
 Ikona dzwonka należy do powiadomień, nie do Always On Display: dzwonek nosi plakietkę licznika, a Always On Display nie ma czego liczyć, bo jest jednym pływającym podglądem, nie zbiorem zdarzeń — Always On Display stoi przy osobnej ikonie oka. Kontrolka, której ten pasek nie dostał czynności z zewnątrz, mówi wprost, że to pasek nie ma drogi do okna, nie że okna nie ma w produkcie; oba okna obecności są zbudowane, a menu operatora stoi na drugim pasku. Dzwonek otwiera centrum powiadomień, gdy pasek dostał do niego zaczep — bez zaczepu mówi wprost, że to ten pasek nie ma drogi do kolumny, choć rodzina zdarzeń jest w kontrakcie, a rejestr w rdzeniu. Zaczep czytany dopiero w chwili naciśnięcia dzwonka mówi wprost, że to on nie ma drogi do centrum, nie że centrum nie ma w produkcie, bo odczyt przy montażu zastałby powłokę jeszcze bez kanału do rdzenia.
+
+## budowa/klient-poprzedni/src/rozmowa/blok-narzedzi.ts
+Wynik narzędzia jest w kontrakcie osobną rolą wiadomości, ale w historii należy do tury, w której
+padł. Dlatego wywołanie i jego wynik stoją w jednej pozycji, bez przeskakiwania między wpisami.

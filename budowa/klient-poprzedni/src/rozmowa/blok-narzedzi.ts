@@ -2,7 +2,7 @@ import { blokKodu, utworzBlokZwijany, type BlokZwijany } from './blok-zwijany';
 import { NAPISY } from './etykiety-rozmowy';
 import type { WywolanieNarzedzia } from './wpis-rozmowy';
 
-/** Blok wywołań narzędzi jednego wpisu. */
+/** Blok wywołań narzędzi jednego wpisu rozmowy, pokazywany zawsze wraz z pełnymi wynikami tych wywołań. */
 export interface BlokNarzedzi {
   /** Element montowany we wpisie. */
   element: HTMLElement;
@@ -12,13 +12,7 @@ export interface BlokNarzedzi {
   ustawRozwiniecie(otwarty: boolean): void;
 }
 
-/**
- * Wywołania narzędzi tury — rodzaje `tool_use` i `tool_result` strumienia.
- *
- * Wynik narzędzia jest w kontrakcie osobną rolą wiadomości, ale w historii
- * należy do tury, w której padł. Dlatego wywołanie i jego wynik stoją w jednej
- * pozycji, bez przeskakiwania między wpisami.
- */
+/** Wywołania narzędzi tury — wynik narzędzia stoi zawsze w tej samej pozycji, w której padło wywołanie. */
 export function utworzBlokNarzedzi(): BlokNarzedzi {
   const blok: BlokZwijany = utworzBlokZwijany({ tytul: NAPISY.narzedzia, ikona: 'kod' });
 
@@ -35,14 +29,14 @@ export function utworzBlokNarzedzi(): BlokNarzedzi {
   return { element: blok.element, aktualizuj, ustawRozwiniecie: blok.ustawRozwiniecie };
 }
 
-/** Podtytuł: liczba wywołań i liczba wyników błędnych. */
+/** Podtytuł bloku: liczba wszystkich wywołań w tej turze oraz liczba wyników zakończonych pełnym błędem. */
 function podtytul(narzedzia: WywolanieNarzedzia[]): string {
   const bledne = narzedzia.filter((pozycja) => pozycja.bledne).length;
   const opis = `wywołań: ${narzedzia.length}`;
   return bledne > 0 ? `${opis} · błędnych: ${bledne}` : opis;
 }
 
-/** Jedno wywołanie wraz z wynikiem. */
+/** Jedno wywołanie narzędzia wraz z jego wynikiem, pokazywane jako osobna pozycja tego samego bloku wywołań. */
 function pozycja(narzedzie: WywolanieNarzedzia): HTMLElement {
   const element = document.createElement('article');
   element.className = 'dc-narzedzie';

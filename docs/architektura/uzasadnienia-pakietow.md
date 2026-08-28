@@ -6280,3 +6280,22 @@ Operator ma prawo zdjąć dźwignię wymogu logowania, bo to jego maszyna i jego
 prawa zrobić tego po cichu: nieuwierzytelnione połączenie sięga po hosty zdalne, czyli po zdalny serwer
 i komputer w biurze, więc linia ostrzeżenia idzie zamiast zawiadomienia zwykłego, bo mówi o tym samym
 nasłuchu rzecz ważniejszą.
+
+## budowa/server/internal/zdalne/budzik_powiadomien.go
+
+Bez tej pętli ponowienie i wygaśnięcie powiadomień byłyby trzema kolumnami, których nikt nigdy nie
+rusza, czyli atrapą wymagania, a nie jego spełnieniem. Wzorzec jest wzięty z już działającej pętli
+rdzenia: zegar taktujący, oczekiwanie na kontekst życia procesu, pierwszy przebieg od razu po starcie
+i awaria jednego przebiegu, która nie zatrzymuje pętli. Pierwszy przebieg od razu ma znaczenie akurat
+tutaj: powiadomienia zgłoszone tuż przed postojem rdzenia mają dolecieć zaraz po jego powrocie, a nie
+po pełnym takcie.
+
+Takt gęstszy niż trzydzieści sekund nie przyspieszyłby niczego, bo i tak czeka się na kolumnę kolejnej
+próby, a takt rzadszy opóźniałby pierwsze podejście o więcej, niż wynosi cała jego zwłoka. Kolejność
+w metodzie przebieg jest rozmyślna: wygaszanie idzie pierwsze, żeby przeterminowane powiadomienie nie
+zdążyło polecieć w tym samym takcie, w którym straciło ważność, ponieważ takt to zawsze jakiś kawałek
+czasu, a gdyby wysyłka szła pierwsza, budzik zabrzmiałby o sprawie, o której sam za chwilę orzeka, że
+jest nieaktualna. Wygaszanie idzie także wtedy, gdy nadajnika nie ma, ponieważ sprawa nieaktualna jest
+nieaktualna niezależnie od tego, czy było komu ją zanieść.
+
+Brak nadajnika ma być widoczny w dzienniku, a nie odgadywany z tego, że nic nie dolatuje.

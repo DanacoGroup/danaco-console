@@ -9242,3 +9242,8 @@ merytoryczną rdzenia, nie z fałszywym sukcesem.
 Pole opcjonalne kontraktu jest wysyłane tylko, gdy znane jest urządzenie. Puste
 `deviceId` nie przechodzi więzu schematu, więc pominięcie jest uczciwsze niż
 napis pusty — rdzeń odmówi z powodem, a nie z błędu bazy.
+## budowa/klient-poprzedni/src/moduly/apps/stan-rozszerzen.ts
+Sześć okien strony dystrybucji patrzy na ten sam rejestr, więc dwa równoległe zbiory dałyby dwie prawdy o jednym katalogu: włączenie pozycji w jednym oknie musi być natychmiast widoczne w pozostałych. Zbiór jest jeden i nieszukany rodzajem: odczyt idzie bez zawężenia, a każde okno odsiewa z niego swoje rodzaje, bo cztery odczyty po jednym na rodzaj dawałyby cztery migawki z czterech różnych chwil. Stan wyjściowy pozycji rozstrzyga rdzeń, nie okno: pochodzenie pozycji jest jedynym miejscem, w którym zmienia zachowanie, a poza tym jest faktem do pokazania Operatorowi. Wybór pozycji mieszka tutaj, a nie w oknie, bo panele boczne otwierają się na pozycji wskazanej w innym oknie.
+
+## budowa/klient-poprzedni/src/moduly/apps/stan-rozszerzen.ts (dobudowa obszaru rozszerzeń)
+Dobudowa jest osobnym źródłem, nie rozrostem pierwszego: pierwsze źródło obsługuje cykl życia pozycji — wykaz, instalację, konfigurację, przełącznik, odinstalowanie — a dobudowa obsługuje wszystko, co robi się na pozycji już stojącej. Rozdzielenie jest czytelne w oknach: część z nich pracuje na pierwszym źródle, część na drugim.

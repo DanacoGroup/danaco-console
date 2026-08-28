@@ -8492,3 +8492,6 @@ Historia jest zapisem tego, co się stało: prompt bez ani jednego zasobu zostaj
 bywa odmawiał, a wtedy prompt jest zapisem próby — czyli dokładnie tego, po co Operator do historii
 sięga. Panel pokazuje przy każdym prompcie liczbę zasobów, które z niego powstały, więc próba
 nieudana odróżnia się od udanej bez zgadywania.
+
+## budowa/klient-poprzedni/src/moduly/agents/historia-wersji.ts
+Wykaz pochodzi z rdzenia: rodzina komend historii oddaje wersje trwałe, zapisane także przed uruchomieniem tego klienta i na innym urządzeniu konta. Panel nie składa własnego wykazu z odpowiedzi biblioteki — wykaz zbierany w toku sesji obejmowałby wyłącznie zmiany zrobione przy tym oknie i milczał o całej reszcie. Przywrócenie jest komendą historii, nie zapisem tożsamości: wskazana wersja wraca jako kolejna, więc historia nie zostaje skrócona i wersje pośrednie zostają na miejscu. Wersję wskazuje identyfikator, nie numer — numer jest porządkiem historii, a po przywróceniu ten sam numer znaczyłby co innego. Treść wersji dociąga osobna komenda na żądanie, przy wskazanym wierszu — dociąganie migawek całej historii z góry kosztowałoby tyle odczytów, ile wersji, a Operator ogląda naraz jedną.

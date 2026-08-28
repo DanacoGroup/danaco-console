@@ -7417,3 +7417,10 @@ Kontrakt daje modułowi Agents wyłącznie zdarzenie agent.changed, więc każda
 komenda zmieniająca rozgłasza się rodzajem updated wraz z ekspertem po
 zmianie, tym samym wzorcem co w module Agenci. Komendy odczytujące milczą:
 wykaz niczego nie zmienia, więc nie ma czego rozgłaszać.
+
+## budowa/server/internal/core/handlers_akcje.go
+Rdzeń nie zna ani jednej akcji — zna wyłącznie sposób jej odczytania. Nazwa
+komendy jest parametrem, a nie literałem w tym pliku: podaje ją punkt
+składania stałą pakietu shared, dokładnie jak przy pozostałych domenach.
+Pusta nazwa albo brak portu nie rejestruje niczego. Komenda odpowie wtedy
+kodem unknown, a pozostałe domeny pracują bez zmian.

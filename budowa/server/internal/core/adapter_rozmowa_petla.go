@@ -1,3 +1,6 @@
+// Plik rozstrzyga stronę rozmowy pętli koordynator–wykonawca: jak zacząć
+// obieg, który wchodzi do okna koordynatora zwykłą wypowiedzią i rusza tą samą
+// drogą co wiadomość uczestnika rozmowy.
 package core
 
 import (
@@ -8,13 +11,6 @@ import (
 	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
 )
-
-// Strona rozmowy pętli koordynator–wykonawca.
-//
-// Pakiet sesji rozstrzyga, kiedy zacząć obieg — pilnuje wybudzeń, licznika
-// obiegów i warunku zatrzymania. Ten plik rozstrzyga, jak go zacząć: obieg
-// wchodzi do okna koordynatora zwykłą wypowiedzią i rusza tą samą drogą, co
-// wiadomość Operatora. Drugiego silnika tury w rdzeniu nie ma.
 
 // RozpocznijObieg podejmuje kolejny obieg koordynatora. Strumień wykonawcy
 // wchodzi do okna koordynatora jako wypowiedź, a tura rusza zwykłą drogą Wyslij.
@@ -42,15 +38,9 @@ func zlecenieObiegu(o session.Obieg) string {
 	return tresc.String()
 }
 
-// powodTury nazywa przyczynę zamknięcia tury przekazywaną koordynatorowi.
-//
-// Warunki i ich kolejność są te same, co w `stanOdpowiedziZeZdarzen`
-// (adapter_zdarzenia_zaczepow.go), i tak ma być: pętla poznaje wynik pracy po
-// powodzie tury, Operator po stanie wiadomości, a oba wychodzą z jednego
-// zamknięcia. Zdarzenie `result` z `is_error` liczy się także wtedy, gdy kanał
-// dowiózł turę bez błędu — inaczej tura zamknięta błędem przy sprawnym kanale
-// szłaby do pętli jako wynik i bieg ogłaszałby ukończenie, choć wiadomość ma
-// stan `error`.
+// powodTury nazywa przyczynę zamknięcia tury przekazywaną koordynatorowi,
+// tymi samymi warunkami i w tej samej kolejności, w jakiej stan wiadomości
+// poznaje uczestnik rozmowy z jednego zamknięcia zdarzenia.
 func powodTury(kontekst context.Context, err error, zamkniecie *zamkniecieTury) string {
 	switch {
 	case kontekst.Err() != nil:

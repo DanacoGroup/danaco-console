@@ -6690,3 +6690,26 @@ pakiet obok binarium pod tą nazwą, nie pod własną, ponieważ dwie różne
 nazwy tego samego katalogu wracałyby odmową pakietu przy pierwszym
 uruchomieniu. Katalog nieistniejący nie wstrzymuje startu, ponieważ gniazdo
 pracuje wtedy bez plików statycznych.
+
+## budowa/server/internal/dane/studio_postac_malarz.go
+Migracja 368 zapisała powód wprost, a ten plik go wykonuje: malarz kopiuje
+postać, nie treść, i nanosi ją w innym miejscu, więc między pobraniem
+a naniesieniem stoją dwie osobne komendy, `studio.format.painter.copy`
+i `studio.format.painter.apply`. Postać trzymana w pamięci procesu przepadała
+przy przeładowaniu rdzenia — Operator pobierał postać, rdzeń wstawał od nowa,
+a naniesienie odmawiało, nie znajdując takiej postaci. Przy pracy modelu
+przepadała jeszcze łatwiej: model pobiera postać jednym narzędziem i nanosi
+drugim, być może po kilku innych czynnościach.
+
+Malarz jest narzędziem jednej czynności. Postać pobrana wczoraj i naniesiona
+dziś byłaby zaskoczeniem, nie pomocą — stąd kolumna `wygasa` i odczyt, który
+wpisu wygasłego nie oddaje. Wygasły wiersz nie jest przy tym kasowany
+w odczycie: sprzątanie idzie osobnym wywołaniem, bo odczyt, który po cichu
+usuwa wiersze, jest odczytem zmieniającym stan.
+
+Malarz przenosi postać między dokumentami — to jego zwykłe użycie w pakiecie
+biurowym. Kluczem jest więc okno, w którym Operator pracuje; dokument,
+z którego postać zabrano, stoi obok jako wiedza, a nie jako warunek.
+
+Nazwy pomocnicze tego pliku niosą przedrostek `malarz`, ponieważ przestrzeń
+nazw pakietu `dane` jest dzielona z innymi wykonawcami.

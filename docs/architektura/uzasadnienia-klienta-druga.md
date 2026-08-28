@@ -6405,3 +6405,18 @@ i karta sesji to dwa różne byty i moduł trzyma je osobno: pamięć projektu j
 kartom, a poziomy pamięci przestawia się karcie.
 Trzymanie starego identyfikatora okna rozmowy po zmianie karty wysłałoby przeniesienie kontekstu
 z oknem cudzej karty, z odpowiedzią udaną i skutkiem w niewłaściwym miejscu.
+
+## budowa/klient-poprzedni/src/powloka/zaczepy-paska.ts
+Kształt zaczepów jest potrzebny naraz czterem miejscom powłoki, a te importują się nawzajem. Wspólny
+kształt w pliku bez zależności jest jedyną postacią, która nie zawiązuje cyklu importów. Okna Always
+On Display, Mobile, Modeli czy Konfiguracji potrzebują kanału do rdzenia, którego powłoka nie ma.
+Pasek dostaje więc czynność, nie drogę. Zaczep czyta się w chwili naciśnięcia, nie przy montażu:
+powłoka powstaje bez połączenia z rdzeniem, więc funkcja zapamiętana przy montażu byłaby pusta,
+a zaczep podłączony później nie doszedłby do kontrolek. Stąd wszystkie odczyty zaczepu ustawień stoją
+w obsłudze naciśnięcia. Brak zaczepu nie jest brakiem okna. Kontrolka bez podanej czynności zostaje
+klikalna i mówi, że ten pasek nie dostał drogi do okna — nie że okna nie ma, bo okna są zbudowane
+i osiągalne z listwy strony głównej. Jedna czynność otwarcia ustawienia obsługuje wszystkie siedem
+pozycji, bo po drugiej stronie i tak stoi jedno rozgałęzienie. Siedem osobnych zaczepów byłoby
+siedmioma drogami do tego samego rozgałęzienia. Centrum powiadomień nie jest oknem platformy z listwy
+strony głównej, tylko kolumną powłoki środowiska, a jego wyzwalaczem jest plakietka dzwonka — element
+warstwy pierwszej, jedyna spoczynkowa reprezentacja tego mechanizmu.

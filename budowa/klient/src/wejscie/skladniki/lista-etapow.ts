@@ -43,15 +43,23 @@ function znakKroku(stan: StanKroku, numer: number): Node {
   return document.createTextNode(String(numer));
 }
 
+/** Odmiana kroku właściwa stanowi; stan oczekujący nie ma odmiany i zostaje na rysunku podstawowym. */
+function odmianaKroku(stan: StanKroku): string {
+  if (stan === 'pracuje') return ' dn-krok--pracuje';
+  if (stan === 'gotowy') return ' dn-krok--poprawny';
+  if (stan === 'blad') return ' dn-krok--wstrzymany';
+  return '';
+}
+
 export function listaEtapow(w: WlasciwosciWykazu): HTMLElement {
   const kroki = wykaz(w.nazwy).map((nazwa, i) => {
     const stan = w.stany[i] ?? 'oczekuje';
     const miara = w.wartosciMiar[i] ?? { klucz: 'oczekuje' };
-    return el('li', { klasa: 'we-krok', dane: { stan } }, [
-      el('span', { klasa: 'we-krok-znak', 'aria-hidden': 'true' }, [znakKroku(stan, i + 1)]),
+    return el('li', { klasa: `dn-krok dn-krok--pole${odmianaKroku(stan)}`, dane: { stan } }, [
+      el('span', { klasa: 'dn-krok-znak', 'aria-hidden': 'true' }, [znakKroku(stan, i + 1)]),
       el('span', { tekst: nazwa }),
       el('span', {
-        klasa: 'we-krok-meta',
+        klasa: 'dn-krok-meta',
         tekst: tekst(`${w.miary}.${miara.klucz}`, miara.dane),
       }),
     ]);
@@ -59,7 +67,7 @@ export function listaEtapow(w: WlasciwosciWykazu): HTMLElement {
 
   return el(
     'ol',
-    { klasa: 'we-kroki', 'aria-live': 'polite', 'aria-label': tekst(w.obszar) },
+    { klasa: 'dn-kolejka dn-kolejka--pola', 'aria-live': 'polite', 'aria-label': tekst(w.obszar) },
     kroki,
   );
 }

@@ -12,13 +12,8 @@ import {
 import type { ZastrzezenieDefinicji } from './walidacja-definicji';
 
 /**
- * Edytor kroków automatyki — treść okna Workflow Builder. Obsługuje dodanie
- * kroku, ustalenie warunku i ustalenie kolejności wykonania; zapis definicji
- * należy do okna, bo to ono rozmawia z rdzeniem.
- *
- * Kolejność zmieniają przyciski „w górę/w dół”, a nie przeciąganie myszą:
- * kontrakt niesie ją liczbą (`AutomationStep.order`), a przyciski są dostępne
- * z klawiatury.
+ * Edytor kroków automatyki jest treścią okna Workflow Builder: dodaje krok, ustala warunek
+ * i kolejność, a zapis definicji należy do okna.
  */
 export interface EdytorKrokow {
   element: HTMLElement;
@@ -28,23 +23,11 @@ export interface EdytorKrokow {
   wczytaj(kroki: readonly AutomationStep[]): void;
   /** Dokłada krok pusty na koniec. */
   dodajKrok(): void;
-  /**
-   * Sygnalizuje zastrzeżenia walidacji przy krokach, których dotyczą.
-   *
-   * Zastrzeżenie jest ostrzeżeniem, nie bramą: wiersz dostaje znacznik
-   * `data-zastrzezenie` i zdanie w dymku, ale zostaje w pełni edytowalny,
-   * a zapis definicji pozostaje możliwy.
-   */
+  /** Sygnalizuje zastrzeżenia walidacji przy krokach, których dotyczą; wiersz zostaje edytowalny. */
   oznaczZastrzezenia(zastrzezenia: readonly ZastrzezenieDefinicji[]): void;
 }
 
-/**
- * Nazwy rodzajów kroku na ekranie.
- *
- * Mapa zupełna po wyliczeniu, nie wykaz przepisany ręcznie: gdy
- * `AutomationStepKind` urośnie, kompilacja zatrzyma się tutaj i nowy rodzaj
- * dostanie nazwę, zamiast zniknąć z pola wyboru bez śladu.
- */
+/** Nazwy rodzajów kroku na ekranie, mapa zupełna po wyliczeniu, nie wykaz przepisany ręcznie osobno w oknie. */
 const NAZWY_RODZAJOW: Readonly<Record<AutomationStepKind, string>> = {
   [AutomationStepKind.Command]: 'komenda',
   [AutomationStepKind.Model]: 'model',
@@ -60,7 +43,7 @@ const NAZWY_RODZAJOW: Readonly<Record<AutomationStepKind, string>> = {
   [AutomationStepKind.Script]: 'skrypt w piaskownicy',
 };
 
-/** Rodzaje kroku w kolejności kontraktu. */
+/** Rodzaje kroku w kolejności kontraktu, złożone z mapy nazw dla pola wyboru rodzaju w wierszu edytora. */
 export const RODZAJE_KROKU: ReadonlyArray<[string, string]> = Object.values(AutomationStepKind).map(
   (rodzaj) => [rodzaj, NAZWY_RODZAJOW[rodzaj]],
 );
@@ -77,11 +60,7 @@ export function utworzEdytorKrokow(przyZmianie: () => void): EdytorKrokow {
   /** Zależności kroku są własnością Orchestratora — edytor je przenosi. */
   const zaleznosci = new Map<HTMLElement, string[]>();
 
-  /**
-   * Wypełnianie edytora definicją nie jest zmianą wprowadzoną w oknie, więc na
-   * czas `wczytaj` powiadomienie milknie. Bez tego każdy dokładany krok zgłasza
-   * stan częściowy i zaśmieca stos cofnięć okna.
-   */
+  /** Wypełnianie edytora definicją nie jest zmianą wprowadzoną w oknie, więc powiadomienie milknie. */
   let wczytywanie = false;
 
   function powiadom(): void {
@@ -157,8 +136,7 @@ export function utworzEdytorKrokow(przyZmianie: () => void): EdytorKrokow {
       for (const zastrzezenie of zastrzezenia) {
         const rzad = rzedy[zastrzezenie.miejsce - 1];
         if (rzad === undefined) continue;
-        // Waga poważniejsza ma pierwszeństwo: krok z jednym błędem i jednym
-        // ostrzeżeniem jest krokiem z błędem, a nie krokiem ostrzeżonym.
+        // Waga poważniejsza ma pierwszeństwo: krok z błędem nie jest krokiem tylko ostrzeżonym.
         if (rzad.dataset['zastrzezenie'] !== 'blad') {
           rzad.dataset['zastrzezenie'] = zastrzezenie.waga;
         }
@@ -168,14 +146,14 @@ export function utworzEdytorKrokow(przyZmianie: () => void): EdytorKrokow {
   };
 }
 
-/** Wywołania zwrotne wiersza kroku — porządkowanie i usunięcie. */
+/** Wywołania zwrotne wiersza kroku porządkujące jego miejsce w wykazie oraz jego usunięcie z edytora kroków. */
 interface CzynnosciWiersza {
   wGore(rzad: HTMLElement): void;
   wDol(rzad: HTMLElement): void;
   usun(rzad: HTMLElement): void;
 }
 
-/** Buduje jeden wiersz kroku wraz z jego polami i czynnościami. */
+/** Buduje jeden wiersz kroku wraz z jego polami wartości, przyciskami porządkowania i przyciskiem usunięcia. */
 function utworzWierszKroku(
   krok: AutomationStep | undefined,
   przyZmianie: () => void,
@@ -245,7 +223,7 @@ function utworzWierszKroku(
   return rzad;
 }
 
-/** Odczytuje krok z wiersza edytora; kolejność bierze z miejsca w wykazie. */
+/** Odczytuje krok z wiersza edytora; kolejność bierze z miejsca w wykazie, nie z pola formularza wiersza. */
 function odczytajKrok(rzad: HTMLElement, numer: number, poprzednicy?: string[]): AutomationStep {
   const wartosci = [...rzad.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
     'input, textarea',
@@ -266,10 +244,7 @@ function odczytajKrok(rzad: HTMLElement, numer: number, poprzednicy?: string[]):
   return krok;
 }
 
-/**
- * Treść żądania kroku. Zapis nieczytelny jako JSON trafia do rdzenia jako napis,
- * dzięki czemu wpisana treść nie ginie przy zapisie.
- */
+/** Treść żądania kroku, gdzie zapis nieczytelny jako JSON trafia do rdzenia jako zwykły napis tekstowy. */
 function odczytajTresc(tresc: string): unknown {
   try {
     return JSON.parse(tresc);

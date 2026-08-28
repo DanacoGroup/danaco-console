@@ -30,7 +30,7 @@ export interface OpcjePanelu {
   zrodlo: ZrodloOkien;
   /** Wykaz komend rdzenia — stąd bierze się powód nieczynnych kontrolek. */
   komendy: WykazKomendRdzenia;
-  /** Sesja, z której czytamy obszar `tools`. */
+  /** Sesja, z której pochodzi odczyt obszaru `tools`. */
   sesja(): string;
   potwierdz(zdanie: string, udane: boolean): void;
   // Żywy wykaz powołanych jest sekcją zamkniętą; pola opcjonalne, bo wytwórnia bywa wołana bez źródeł.

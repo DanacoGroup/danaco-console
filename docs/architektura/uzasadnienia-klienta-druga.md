@@ -8128,3 +8128,17 @@ kropką jest dyrektywą programu make; zapis nazwa := jest przypisaniem zmiennej
 
 Głębsze klucze bloku tasks pliku Taskfile są polami zadania (cmds, desc), a nie zadaniami,
 więc wejście na nie dawałoby wykaz nazw, których program task nie zna.
+## budowa/klient-poprzedni/src/moduly/terminal/okno-output-console.ts
+Panel akcji niesie eksport, wyczyszczenie, przełączniki zawijania, znaczników czasu
+i auto-przewijania, grep, odtwarzanie sesji, podział widoku i ponowne uruchomienie ostatniego
+polecenia. Bufor jest jeden na całe okno, a wiersz niesie swoją kartę i swój proces. Zawężenie
+do jednej karty jest filtrem widoku, nie osobnym buforem — inaczej wynik zbiorczy rozpadłby się
+na tyle konsol, ile kart.
+
+Powód pustego widoku: wyciąć wszystko potrafią trzy nastawy — wzorzec grepa, zawężenie do karty
+bieżącej (osobno przypadek, w którym karty bieżącej nie ma wcale) oraz suwak odtwarzania sesji.
+
+Funkcja składająca kontrolki nie domyka się na stanie okna ani na buforze. Jedyne wiązanie
+z wytwórnią to funkcja przyOdtwarzaniu — odtwarzacz musi obudzić rysowanie, a rysowanie zostaje
+w wytwórni. Pozycja bez pokrycia w kontrakcie jest jawnie nieczynna: wyjaśnienie zaznaczenia
+jedzie oknem rozmowy modułu.

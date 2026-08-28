@@ -7827,3 +7827,10 @@ postępu milknie, a zdanie mówi o skutku nieznanym, nie o niepowodzeniu.
 
 Odmowa wskazania (bez okna, bez tematu) różni się od odmowy braku silnika tym, że tam składać
 nie było czego — złożenie promptu jeszcze się nie odbyło.
+
+## budowa/klient-poprzedni/src/mobile/pozycje-decyzji.ts
+Pozycja powstaje wyłącznie z tego, co rdzeń umie udowodnić odpowiedzią komendy — cztery dowody, cztery rodzaje pozycji: `queue.list` z kolejką w stanie `paused` (praca stoi na kolejce), `window.state.get` z `loop.stopped = true` (pętla stoi, z powodem), `monitor.status` z procesem `failed` (krok padł) i `monitor.status` z procesem `paused` (krok wstrzymany).
+
+Kolejek eskalacji — przepływów wstrzymanych z pytaniem do człowieka — rdzeń nie wystawia: nie ma na nie ani komendy odczytu, ani zdarzenia. Pulpit mówi o tym wprost, a warstwa mobilna nie zamalowuje braku pozycjami zmyślonymi. Gdy rdzeń wykaz eskalacji wystawi, wejdzie on portem `port-kolejki-decyzji.ts`.
+
+Kontekst decyzji jest częścią pozycji: Operator otwiera telefon na minutę i musi wiedzieć, na czym praca stoi, zanim cokolwiek naciśnie. Każde zdanie kontekstu niesie nazwę komendy, z której przyszło, więc da się sprawdzić jego źródło.

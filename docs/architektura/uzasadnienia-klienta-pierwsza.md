@@ -7421,3 +7421,24 @@ Punkt widzenia jest wspólny z resztą okna: pasek u góry okna ustala, dla kogo
 Zapis utrwala to, co obowiązuje: panel nie redaguje pól obszaru, tylko zapisuje obszar odziedziczony z poziomu szerszego albo z innego rejestru jako zapis własny na poziomie wskazanym punktem widzenia. Treść zapisu bierze się z konfiguracji obowiązującej, którą oddał rdzeń. Obszar spoza wykazu `areas` rdzeń zostawia nietknięty, a obszar w wykazie bez treści usuwa, wracając do dziedziczenia.
 
 Obszar `hooks` jest jedynym obszarem redagowanym w oknie konfiguracji: zaczep trzeba móc złożyć, a nie tylko utrwalić odziedziczony.
+
+## budowa/klient-poprzedni/src/moduly/design/czuwanie-rdzenia.ts
+Czuwanie nad czynnością, której rdzeń nie rozstrzygnął, mówi prawdę o wywołaniu bez odpowiedzi
+i odróżnia rdzeń pracujący od kanału milczącego. Gdy gniazdo padnie w trakcie oczekiwania, okno
+samo się nie odnajdzie: obietnica wywołania nigdy nie jest odrzucana, a odbiorca odpowiedzi żyje
+w rejestrze korelacji przypisanym do gniazda, które padło — odpowiedź nie przyjdzie już nigdy,
+także po ponownym połączeniu.
+
+Zwykły limit czasu nie odróżnia rdzenia, który pracuje długo, od kanału, który zamilkł, a komendy
+modułu bywają wolne i długie oczekiwanie jest tu stanem poprawnym. Czuwanie pyta więc kanał
+o życie: wysyła jedno tanie żądanie kontraktu tą samą drogą. Gdy próba odpowiedziała, kanał żyje
+i czynność nadal trwa; gdy próba zamilkła, kanał zamilkł i skutek pozostaje nieznany.
+
+Ta sama próba jest zarazem czujnikiem powrotu i nie kosztuje dodatkowej ramki: żądanie wysłane
+przy rozłączeniu czeka w kolejce wychodzącej, a rdzeń odpowiada na nie w chwili ponownego
+połączenia. Jedna obietnica próby mówi więc najpierw, że kanał milczy, a potem, że łączność
+wróciła; pętli odpytującej tu nie ma.
+
+Czuwanie nie ogłasza niepowodzenia czynności i nie zgaduje jej skutku — rdzeń mógł żądanie odebrać
+i wykonać, zanim gniazdo padło. Jedyną drogą do prawdy jest odczyt po powrocie łączności i tak
+brzmi zdanie dla Operatora.

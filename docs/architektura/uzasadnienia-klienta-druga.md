@@ -6880,3 +6880,14 @@ wnętrze przebudowuje osobna funkcja. Moduł nie zna stanu paneli, nie
 otwiera i nie zamyka niczego: pyta o stan otwarcia i woła wybór, dzięki
 czemu rząd skrótów i wykaz w menu pokazują ten sam stan trzymany przez
 stan paneli.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zegar-tury.ts
+Zamierzenie modułu opisuje w Moderator Panelu timer tury z paskiem postępu i limitem czasu.
+Limitu nie ma z czego wziąć: tura niesie chwilę rozpoczęcia i chwilę zamknięcia, a pola limitu
+czasu nie ma ani tura, ani żądanie tury, ani czynność moderatora. Pasek postępu wymaga dwóch
+końców, więc zamiast niego stoi licznik: ile czasu upłynęło od otwarcia tury. Licznik nie jest
+ozdobą — moderator zamyka turę ręcznie i to jest jedyna wielkość, po której poznaje, jak długo
+tura trwa. Tura zamknięta ma czas trwania ostateczny, od chwili rozpoczęcia do chwili zamknięcia,
+więc licznik zatrzymuje się na nim zamiast rosnąć w nieskończoność. Chwila rozpoczęcia równa zeru
+znaczy, że rdzeń chwili nie podał, nie że tura zaczęła się w chwili zero epoki — wtedy zegar mówi
+o braku pomiaru, a nie o pięćdziesięciu latach trwania tury.

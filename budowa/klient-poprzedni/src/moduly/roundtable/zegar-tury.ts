@@ -1,33 +1,14 @@
 import { RoundtableTurnStatus, type RoundtableTurn } from '../../../../shared/contract';
 
-/**
- * Zegar tury debaty — czas mierzony, nie odliczany.
- *
- * Opracowanie modułu opisuje w Moderator Panelu timer tury z paskiem postępu
- * i limitem czasu. Limitu nie ma z czego wziąć: `RoundtableTurn` niesie chwilę
- * rozpoczęcia i chwilę zamknięcia, a pola limitu czasu nie ma ani tura, ani
- * żądanie tury, ani czynność moderatora. Pasek postępu wymaga dwóch końców,
- * więc zamiast niego stoi licznik: ile czasu upłynęło od otwarcia tury.
- *
- * Licznik nie jest ozdobą — moderator zamyka turę ręcznie i to jest jedyna
- * wielkość, po której poznaje, jak długo tura trwa. Tura zamknięta ma czas
- * trwania ostateczny (od `startedAt` do `closedAt`), więc licznik zatrzymuje
- * się na nim zamiast rosnąć w nieskończoność.
- *
- * `startedAt` równe zeru znaczy „rdzeń chwili nie podał”, nie „tura zaczęła się
- * w chwili zero epoki” — wtedy zegar mówi o braku pomiaru, a nie o pięćdziesięciu
- * latach trwania tury.
- */
-
-/** Odstęp odświeżania licznika — sekunda, bo licznik pokazuje sekundy. */
+/** Zegar tury debaty — czas mierzony, nie odliczany: odstęp odświeżania licznika to sekunda, bo licznik pokazuje sekundy. */
 export const ODSTEP_ZEGARA_MS = 1000;
 
-/** Czy znacznik czasu kontraktu niesie chwilę, czy brak wiedzy. */
+/** Czy znacznik czasu kontraktu niesie chwilę, czy brak wiedzy — zero i wartość ujemna znaczą brak, nie chwilę zero. */
 function chwilaZnana(znacznik: number | undefined): znacznik is number {
   return znacznik !== undefined && Number.isFinite(znacznik) && znacznik > 0;
 }
 
-/** Czas trwania w postaci minuty:sekundy, z zerem wiodącym w sekundach. */
+/** Czas trwania w postaci minuty:sekundy, z zerem wiodącym w sekundach, licząc od zera przy wartości ujemnej. */
 export function czasTrwania(milisekundy: number): string {
   const sekundy = Math.max(0, Math.floor(milisekundy / 1000));
   const minuty = Math.floor(sekundy / 60);

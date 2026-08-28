@@ -6990,3 +6990,16 @@ Liczba kroków ma znaczenie osobne od samego zapisu: samo słowo „zapisano" ni
 
 ## budowa/klient-poprzedni/src/moduly/automations/panel-nadzoru.ts
 Cztery z pięciu czynności żądają harmonogramu, nie automatyki — kontrakt wskazuje go osobnym polem; panel pyta więc o niego wprost i nie podstawia w jego miejsce automatyki bieżącej, bo harmonogram ma własny identyfikator i to on jest przedmiotem tych czynności. Piąta, adres webhooka, żąda automatyki i tę bierze ze stanu modułu. Klucz podpisu nie wraca i nie może wrócić: odpowiedź niesie referencję, a nie wartość — panel pokazuje dokładnie to, co dostał, i niczego nie dopowiada.
+
+## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — pytanie w oknie rozmowy
+Polecenie wysyłania wiadomości oddaje wiersz wiadomości wraz z oknem; gdyby wiadomość trafiła do cudzego okna, zdanie o „przyjęciu przez okno rozmowy" byłoby prawdą o czymś innym niż to okno.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-podagentow.ts
+Rdzeń rozgłasza zmianę podagenta przy powołaniu, wejściu w bieg, zakończeniu
+i zatrzymaniu, a przycisk odświeżenia wykazu zostaje, bo zdarzenie mówi
+o zmianie, nie o stanie zastanym, i po ponownym nawiązaniu łącza wykaz
+trzeba odczytać raz od nowa. Panel wykonawcy nie ma odświeżać się na cudzym
+podagencie. Sekcja niesie wyżej definicje podagentów i kontrolki wytwórni,
+zanim żywy wykaz się otworzy. Rdzeń oddaje osobno podagentów, których
+zatrzymał, i tych, którzy w chwili wywołania nie pracowali; ten drugi
+przypadek nie jest błędem i panel go tak nie nazywa.

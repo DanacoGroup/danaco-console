@@ -5,22 +5,13 @@ import (
 	"time"
 )
 
-// wieziKlientow pamięta, co klient ma otwarte: kartę sesji w ognisku i okno
-// ogniskowane wewnątrz tej karty.
-//
-// Ognisko żyje w rdzeniu, a nie w bazie. Jest właściwością klienta, nie
-// konta (kontrakt komendy `session.focus`), i trwa tyle, co połączenie. Schemat
-// nie ma dla niego kolumny: tabela `polaczenie` zna stan łącza, nie kartę
-// w ognisku. Więź żyje więc w rdzeniu i kończy się wraz z jego procesem —
-// sesja i jej procesy trwają dalej, a klient po restarcie rdzenia wskazuje
-// kartę ponownie. Sesji, okien ani słowników ten rejestr nie
-// przechowuje; mają własne repozytoria i własnego nadzorcę.
+// wieziKlientow pamięta, co klient ma otwarte: kartę sesji w ognisku i okno ogniskowane wewnątrz tej karty. Ognisko żyje w rdzeniu, nie w bazie, jest właściwością klienta, nie konta, i trwa tyle, co połączenie.
 type wieziKlientow struct {
 	mu    sync.RWMutex
 	wpisy map[string]wiezKlienta
 }
 
-// wiezKlienta jest stanem jednego klienta.
+// wiezKlienta jest stanem jednego klienta: karta sesji, okno w niej i chwila jego ostatniego ogniskowania.
 type wiezKlienta struct {
 	idSesji string
 	idOkna  string
@@ -36,7 +27,7 @@ type zmianaOgniska struct {
 	Chwila     time.Time
 }
 
-// noweWieziKlientow zakłada pusty rejestr więzi.
+// noweWieziKlientow zakłada pusty rejestr więzi, gotowy do przyjmowania wpisów kolejnych klientów rdzenia.
 func noweWieziKlientow() *wieziKlientow {
 	return &wieziKlientow{wpisy: map[string]wiezKlienta{}}
 }
@@ -68,10 +59,7 @@ func (w *wieziKlientow) Ogniskuj(idKlienta, idSesji string, idOkna *string) zmia
 	return zmiana
 }
 
-// Powiaz zapisuje sesję, z którą klient związał połączenie. Powiązanie nadaje
-// też ognisko, gdy klient jeszcze żadnego nie ma — powrót do sesji jest
-// powrotem do jej karty. Klient ogniskujący wcześniej inną kartę zachowuje
-// swoje ognisko: powiązanie odtwarza stan, nie przestawia widoku.
+// Powiaz zapisuje sesję, z którą klient związał połączenie. Powiązanie nadaje też ognisko, gdy klient jeszcze żadnego nie ma — powrót do sesji jest powrotem do jej karty. Klient ogniskujący wcześniej inną kartę zachowuje swoje ognisko.
 func (w *wieziKlientow) Powiaz(idKlienta, idSesji string) {
 	if w == nil || idSesji == "" {
 		return

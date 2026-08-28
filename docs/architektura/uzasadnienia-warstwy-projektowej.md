@@ -801,3 +801,14 @@ Kropka stanu połączenia jest komponentem biblioteki: barwy stanu wybiera
 `naglowek.ts` odmianą `.dn-kropka--*`. Pole wpisywania nie odtwarza listwy:
 ramka pola już oddziela je od historii, a druga krawędź nad nią byłaby
 kreską bez zadania.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/pasek-zlecenia.css
+Wygląd uchwytu, wykazu, haczyka i opisu niesie `komponenty/menu-drzewo.css`;
+zdanie odmowy ubiera plakietka `.dn-plakietka--blad`. Arkusz nie powtarza
+żadnej z tych reguł. Pasek jest jedną decyzją, kopertą zlecenia, rozłożoną
+na kilka nastaw w rzędzie, a nie w siatce, bo rząd czyta się jak zdanie:
+gdzie, na czym, czym, jak — siatka rozbiłaby to na kratki bez kolejności.
+Zawijanie jest konieczne, bo gniazdo sceny bywa wąskie (trzy okna obok
+siebie), a ster wychodzący poza krawędź przestaje być sterem. Źródłem
+wartości są wyłącznie żetony `motyw/`, ani jednej barwy szesnastkowej, ani
+jednego odstępu spoza skali.

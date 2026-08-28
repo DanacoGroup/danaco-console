@@ -6387,3 +6387,15 @@ hostów zdalnych, zgoda operatora na tym wierszu wydana oraz program SSH obecny 
 Odmowa nie jest bramką wobec operatora maszyny: każda mówi, co się nie stało, dlaczego, i którym ruchem
 operator to zmienia. Zgoda per host chroni maszyny operatora — rdzeń nie zainicjuje połączenia z maszyną,
 której mu nie oddano.
+
+## budowa/server/internal/dane/terminal_odczyt.go
+Filtr dziennika procesów terminala idzie parametrem, nie sklejaniem tekstu SQL:
+jedno przygotowane zapytanie obsługuje cztery zawężenia naraz, bo pusty
+parametr znaczy „nie zawężaj”. Dzięki temu pamięć podręczna zapytań ma jedną
+pozycję zamiast szesnastu, a wartości nigdy nie wchodzą do treści zapytania.
+
+Uchwyt bazy w repozytoriumTerminala stoi obok przygotowanych zapytań, bo dwa
+zapisy tego obszaru obejmują więcej niż jedno polecenie i muszą pójść jedną
+transakcją: nadanie numeru wersji pozycji biblioteki wraz z wpisem tej wersji
+oraz odpięcie klucza od wpisów hostów wraz z odczytaniem, których wpisów to
+dotyczyło.

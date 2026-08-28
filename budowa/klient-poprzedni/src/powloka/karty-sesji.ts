@@ -9,35 +9,9 @@ import { przeniesWedrowke } from './wedrowka-kart';
 import { zwiazPasKartZRdzeniem, type ZamiaryKart } from './wpiecie-kart-sesji';
 import type { MigawkaKart } from './zrodlo-kart-sesji';
 
-/**
- * Pas kart sesji powłoki — poziome karty o mechanice zakładek.
- *
- * Jedna odpowiedzialność: wykaz kart i wybór jednej z nich. Wygląd karty
- * należy do `karta-sesji.ts`, klawiatura do `wedrowka-kart.ts`, stan pusty
- * i komunikat do `postac-pasa-kart.ts`, a droga do rdzenia do
- * `wpiecie-kart-sesji.ts`.
- *
- * Karta sesji jest sesją rdzenia. Gdy aplikacja udostępniła drogę do rdzenia,
- * pas przestaje być własnym wykazem: karty biorą się z `session.list` i zdarzeń
- * `session.changed`, ＋ zakłada sesję (`session.create`), zamknięcie karty
- * zamyka sesję (`session.close`), kosz usuwa ją trwale (`session.delete`, po
- * potwierdzeniu), a wybór przenosi ognisko klienta (`session.focus`).
- *
- * Zamknięcie i usunięcie to dwie czynności, nie dwie nazwy jednej. Krzyżyk
- * zamyka sesję i zostawia jej zapis w całości; kosz zdejmuje sesję z historii,
- * a zapis rdzeń kasuje trwale po terminie kosza — potwierdzenie pokazuje wykaz
- * tego, co znika (`potwierdzenie-usuniecia.ts`). Skład pasa rozstrzyga wtedy
- * wyłącznie rdzeń i pas nie zakłada ani jednej karty miejscowej. Bez rdzenia
- * pas jest samym widokiem.
- *
- * Karta sesji to nie okno komunikacji. Liczbą okien na scenie rządzi
- * przełącznik „Okna komunikacji: 1 2 3" układu okien równoległych, więc ＋ nie
- * wprowadza okna na scenę, a zamknięcie karty nie zdejmuje okna ze sceny.
- * Mechanika zakładek idzie wzorcem ARIA: ogniskuje się wyłącznie karta czynna,
- * a ＋ stoi poza pasem zakładek — zakłada kartę, nie wybiera istniejącej.
- */
+// Pas kart sesji powłoki — poziome karty o mechanice zakładek, wykaz kart i wybór jednej z nich.
 
-/** Słuchacz zdarzenia dotyczącego jednej karty. */
+/** Słuchacz zdarzenia dotyczącego jednej karty, wywoływany przy każdej zmianie stanu pasa kart sesji powłoki. */
 export type SluchaczKarty = (karta: KartaSesji) => void;
 
 export interface KartySesji {
@@ -64,7 +38,7 @@ export interface KartySesji {
   naNowa(sluchacz: SluchaczKarty): void;
 }
 
-/** Ustawienia pasa: tytuł karty zakładanej przyciskiem ＋. */
+/** Ustawienia pasa: tytuł karty zakładanej przyciskiem plus, zanim rdzeń nada jej właściwą nazwę sesji. */
 export interface OpcjeKart {
   tytulNowej?(): string;
 }
@@ -100,8 +74,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
 
   element.append(lista, postac.pustka, dodajKarte, postac.komunikat);
 
-  // Naciśnięcie karty jest w pasie rdzenia zamiarem (rozstrzyga go rdzeń),
-  // a poza nim zmianą miejscową — to jedyna różnica obu postaci pasa.
+  // Naciśnięcie karty jest w pasie rdzenia zamiarem, poza nim zmianą miejscową — jedyna różnica pasa.
   function zamierzWybor(id: string): void {
     if (zamiary !== null) zamiary.przyWyborze(id);
     else wybierz(id);
@@ -112,11 +85,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
     else zamknij(id);
   }
 
-  /**
-   * Usunięcie trwałe ma sens wyłącznie w pasie rdzenia: karta miejscowa nie ma
-   * zapisu, który dałoby się skasować. Poza rdzeniem pas nie usuwa karty na
-   * pocieszenie — mówi wprost, że nie ma czego usuwać.
-   */
+  /** Usunięcie trwałe ma sens tylko w pasie rdzenia — karta miejscowa nie ma zapisu do skasowania. */
   function zamierzUsuniecie(id: string): void {
     const wskazana = karty.find((karta) => karta.id === id);
     if (zamiary === null || wskazana === undefined) {
@@ -136,8 +105,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
 
   function dodaj(tytul: string, stan: ProgressStatus = ProgressStatus.Pending): KartaSesji {
     const karta = utworzKarteSesji({ id: nowyIdentyfikator('karta'), tytul, stan }, obsluga);
-    // Pas związany z rdzeniem nie przyjmuje kart miejscowych: karta powstaje
-    // dopiero z odpowiedzi rdzenia, więc zwrócona karta zostaje poza pasem.
+    // Pas związany z rdzeniem nie przyjmuje kart miejscowych: karta powstaje dopiero z odpowiedzi rdzenia.
     if (zamiary !== null) return karta;
     karty.push(karta);
     lista.append(karta.element);
@@ -161,8 +129,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
     const byla = zamknieta.czyCzynna();
     zamknieta.element.remove();
 
-    // Po zamknięciu karty czynnej pas nie zostaje bez wskazania: wybór
-    // przechodzi na sąsiada z prawej, a przy jego braku z lewej.
+    // Po zamknięciu karty czynnej pas nie zostaje bez wskazania: wybór przechodzi na sąsiada obok.
     const nastepna = karty[Math.min(miejsce, karty.length - 1)];
     if (byla && nastepna !== undefined) {
       wybierz(nastepna.id);
@@ -171,13 +138,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
     powiadom(sluchaczeZamkniecia, zamknieta);
   }
 
-  /**
-   * Uzgodnienie pasa z migawką rdzenia.
-   *
-   * Karta spoza wykazu znika bez zdarzenia zamknięcia: zamknięcie sesji
-   * w rdzeniu nie jest zamknięciem karty przez Operatora i nie ma zdejmować
-   * okna ze sceny.
-   */
+  /** Karta spoza wykazu znika bez zdarzenia zamknięcia — zamknięcie sesji to nie zamknięcie karty. */
   function ustawMigawke(migawka: MigawkaKart): void {
     postac.schowajKomunikat();
     const wykazane = new Set(migawka.wpisy.map((wpis) => wpis.id));
@@ -213,10 +174,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
     ustawMigawke,
 
     przemianujCzynna(tytul) {
-      // W pasie rdzenia tytuł karty jest nazwą sesji, nie nazwą modułu: moduł
-      // widać w kontekście paska górnego, a kontrakt nie zna komendy zmiany
-      // nazwy sesji — nadpisanie miejscowe rozjechałoby pas z rdzeniem przy
-      // pierwszej migawce.
+      // W pasie rdzenia tytuł karty jest nazwą sesji, nie modułu, bo kontrakt nie zna zmiany nazwy sesji.
       if (zamiary !== null) return;
       karty.find((karta) => karta.czyCzynna())?.ustawTytul(tytul);
     },
@@ -235,7 +193,7 @@ export function utworzKartySesji(opcje: OpcjeKart = {}): KartySesji {
   return pas;
 }
 
-/** Rozesłanie zdarzenia do wszystkich słuchaczy. */
+/** Rozesłanie zdarzenia do wszystkich słuchaczy zarejestrowanych na pasie kart sesji powłoki aplikacji. */
 function powiadom(sluchacze: readonly SluchaczKarty[], karta: KartaSesji): void {
   for (const sluchacz of sluchacze) sluchacz(karta);
 }

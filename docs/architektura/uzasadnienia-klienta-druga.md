@@ -6218,3 +6218,10 @@ dzięki czemu wskaźnik obok, pasek zaznaczenia w edytorze i żądanie operacji 
 jedną wspólną nastawę. Wszystkie operacje idą jedną komendą, rozróżnianą polem identyfikatora
 akcji z rejestru, stąd jedna ścieżka wywołania i wykaz identyfikatorów zamiast osobnej ścieżki
 na każdą operację.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przelacznik-liczby.ts
+Pozycja ponad figurą modułu zostaje czynna i mówi, co się stanie po jej
+wybraniu, zamiast wygasnąć bez powodu — wskazuje jej to zdanie jako opis
+dostępności. Wybór jest grupą pól jednokrotnego wyboru, więc odczyt
+technologiami wspomagającymi mówi wprost, że to jedna wartość z trzech, a
+nie trzy niezależne przyciski.

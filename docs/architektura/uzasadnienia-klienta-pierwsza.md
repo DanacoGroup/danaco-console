@@ -8137,3 +8137,21 @@ roboczego, nie sąsiadem zarządcy repozytorium, i potrzebuje pełnej szerokośc
 na wykaz zależności zewnętrznych. Pas okien pomocniczych zamyka się pierwszy,
 bo trzyma subskrypcję strumienia, która żyje niezależnie od stanu modułu
 i po zejściu ze sceny nikt by jej nie zdjął.
+
+## budowa/klient-poprzedni/src/moduly/design/plyta-podgladu.ts
+Pokazuje jeden zasób takim, jakim rdzeń go zna. Powierzchnia ma trzy stany: rdzeń podał adres —
+płyta wstawia obraz i mówi, skąd go bierze; rdzeń podał adres, a treść spod niego się nie
+wczytała — płyta nazywa przyczynę, zamiast zrzucać ją na przeglądarkę; rdzeń adresu nie podał —
+płyta mówi, czego nie ma, i nie dorabia obrazu.
+
+Drugi stan jest stanem każdego zasobu z generowania: rdzeń wypełnia pole adresu ścieżką w swoim
+systemie plików, a nie adresem do pobrania. Obraz powstaje poprawnie i mimo to się nie wyświetli,
+dopóki droga po treść zasobu — opisana już w kontrakcie i wspólna całemu magazynowi — nie dostanie
+uchwytu w rdzeniu.
+
+Wykaz pól mówi także o tym, czego nie ma: wartość pusta to nie pustka w wierszu, tylko zdanie
+„rdzeń tego nie podał". Format nieznany i format nieistniejący to dwa różne stany.
+
+Dla pola prompt źródłowy zdanie mówi więcej niż „nie podał": klucza nie niesie żadna odpowiedź
+rdzenia, bo nie ma on przekładu klucza wiersza promptu na kod kontraktu i nie zgaduje go. Samo
+„rdzeń tego nie podał" kazałoby sądzić, że zasób prompt zgubił.

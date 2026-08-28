@@ -7004,3 +7004,22 @@ następuje po zdarzeniu i nie wpływa na przebieg wykonania.
 Zapis zamknięcia tury idzie poleceniem INSERT OR REPLACE, bo kolumna
 `wiadomosc_kod` jest UNIQUE: gdyby tura z jakiegoś powodu domknęła się dwa
 razy, prawdą zostaje zamknięcie ostatnie.
+
+## budowa/server/internal/injection/argumenty.go
+Przełącznik --verbose jest częścią szkieletu argumentów, ponieważ bez niego
+program nie wypuszcza zdarzeń pośrednich i strumień przestałby być
+strumieniem. Przełącznik --include-hook-events stoi tu z tego samego powodu:
+stan zmieniają zdarzenia wykonawcze, nie słowo modelu, a bez tego przełącznika
+zdarzenia zaczepów nie wchodzą na strumień i rdzeń nie ma czym odróżnić zaczep
+skonfigurowany od zaczepu, który zadziałał.
+
+Brak ustawienia nie jest błędem, tylko brakiem przełącznika w wierszu
+argumentów. Katalogi robocze są listą, więc przełącznik --add-dir powtarza się
+tyle razy, ile jest katalogów okna; tak samo przełącznik --mcp-config.
+
+Pułap kosztu niedodatni daje napis pusty, a napis pusty nie dokłada
+przełącznika --max-budget-usd, bo brak nastawy jest brakiem ograniczenia,
+nie ograniczeniem zerowym — wartość --max-budget-usd 0 kazałaby programowi
+przerwać turę, zanim ta cokolwiek zrobi. Notacja wykładnicza, którą dałby zapis
+ogólny dla kwot bardzo małych albo bardzo dużych, nie jest wartością liczbową
+dla programu, tylko napisem, którego może nie przyjąć.

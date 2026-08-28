@@ -7380,3 +7380,15 @@ Brak jest wymuszony zmiennymi środowiska i odcięciem PATH, nie stanem
 maszyny: na stanowisku deweloperskim piper i espeak bywają doinstalowane
 ręcznie, więc sprawdzian liczący na ich nieobecność kłamałby tam, gdzie
 się go uruchamia.
+
+## budowa/server/internal/core/handlers_agenci.go
+Cały obszar modułu Agents ma jedno zdarzenie. Kontrakt daje modułowi wyłącznie
+agent.changed, więc zmiana modelu bazowego, przypisanie umiejętności,
+podłączenie konektora i zmiana uprawnienia rozgłaszają się tak samo jak
+zmiana tożsamości: rodzajem updated wraz z ekspertem po zmianie. Okna modułu
+odświeżają się z jednej subskrypcji, a nie z pięciu.
+
+Dwie komendy oddają co innego niż eksperta: dodanie konektora oddaje
+konektor, a ustawienie uprawnienia — wykaz uprawnień. Zdarzenie ma nieść
+eksperta, więc obsługiwacz dobiera go portem Pobierz. Nieudany dobór nie
+wywraca komendy — zmiana już zaszła, gaśnie wyłącznie rozgłoszenie.

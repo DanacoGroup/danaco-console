@@ -6470,3 +6470,12 @@ jako jedyne rozstrzyga o życiu sesji i jako jedyne oddaje nowy czas ważności,
 zastąpi; który formularz rozstrzyga pole z powitania, a jego milczenie — i tylko wtedy — idzie sondą bez
 sekretu, bo milczenie nie jest zamieniane na odmowę; metody pokazują segment PIN wyłącznie wtedy, gdy PIN
 na tej maszynie naprawdę jest założony, bo metody niepewnej ekran nie proponuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/panel-redaktora.ts
+Każda liczba panelu jest policzona: ocena wychodzi z miary czytelności liczonej z tekstu, a nie
+z wrażenia, korekty liczą wzorce rozpoznawalne w zapisie, a pisownia i gramatyka stoją w wykazie
+z wartością niepodaną i z powodem, bo słownika języka i analizy składniowej rdzeń nie ma, a
+program spoza instalki jest zakazany. Podobieństwa liczy rdzeń, zestawiając dokument z materiałem
+wejściowym i szukając fragmentów bliskich znaczeniowo, a statystyki bierze moduł liczników
+dokumentu. Panel nie woła rdzenia sam: okno podaje mu wyniki, które ma, dzięki czemu pomiar
+zlecony i pomiar policzony na miejscu nie mieszają się w jednym miejscu kodu.

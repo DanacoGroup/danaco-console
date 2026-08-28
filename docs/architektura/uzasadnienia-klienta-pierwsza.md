@@ -7576,3 +7576,9 @@ i ciemny osobno — a system wizualny traktuje je jako równoprawne.
 Wykaz progów nie podaje roli pary. WCAG dopuszcza próg niższy dla tekstu dużego oraz dla obrysów
 i wskaźników skupienia, więc para obrysu wychodzi tu poniżej progu, choć wobec właściwej reguły
 może być zgodna. Wynik oznaczamy więc jako pomiar, a nie jako werdykt.
+
+## budowa/klient-poprzedni/src/modele/kontrolki-formularza.ts
+Formularz konta i edytor tożsamości opisują byty o polach stałych, wynikających wprost z kontraktu, a nie z katalogu wierszy, więc nie mogą korzystać z generatora pól okna konfiguracji, który buduje kontrolkę z definicji ustawienia — nie ma czego mu podać. Zamiast dwóch równoległych sposobów budowania pola w dwóch plikach sekcja ma jeden ten. Wygląd pochodzi w całości z biblioteki komponentów współdzielonych, więc plik nie zna ani jednej barwy i ani jednego odstępu.
+
+## budowa/klient-poprzedni/src/modele/kontrolki-formularza.ts (pole poświadczenia)
+Kontrakt przyjmuje poświadczenie w żądaniu i nie zwraca go żadną komendą. Pole jest zatem wyłącznie wejściem: puste znaczy „nie zmieniaj”, wypełnione znaczy „zapisz nowe”. Nigdy nie pokazuje wartości zapisanej, ponieważ klient jej nie ma.

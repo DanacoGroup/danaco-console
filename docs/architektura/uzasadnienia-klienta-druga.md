@@ -6174,3 +6174,30 @@ warstwowe panel pokazuje, ale go nie przelicza: warstwę obowiązującą rozstrz
 w wyniku zapisu wraz ze wskazaniem poziomu, z którego pochodzi, bo drugi rozstrzygacz po stronie
 okna rozjechałby się z rdzeniem przy pierwszej zmianie reguł. Podgląd warstwy pyta rdzeń o zapis
 jednego poziomu — to odczyt, nie rozstrzyganie: odpowiada na pytanie, czy ta warstwa ma własną treść.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/przebieg-debaty.ts
+Podział wobec pliku okna Debate Panel idzie po odpowiedzialności: tu leżą funkcje, które nie
+domykają się ani na stanie okna, ani na źródle — biorą stan debaty i stan treści parametrem
+i oddają węzły interfejsu albo napisy. Ten plik odpowiada za porządek: nagłówek tury, wykaz
+z filtrem, stany puste i transkrypt. Wygląd pojedynczego głosu leży w pliku czytelności głosów,
+bo tożsamość mówcy — znacznik, odstęp między mówcami, zdanie o powtórzonym kanale — jest osobną
+odpowiedzialnością od porządku listy. Bez gromadzenia fragmentów strumienia wykaz pokazywałby
+przez cały czas mówienia modelu wypowiedź pustą: rdzeń rozgłasza zdarzenie zmiany debaty rodzaju
+stworzonej z treścią pustą, dopisuje słowa strumieniem i dopiero po jego domknięciu rozgłasza
+zaktualizowaną z całością.
+
+Treść transkryptu Markdown bierze się z głosu bieżącego, nie wprost z zapisanej treści: eksport
+w trakcie mówienia modelu zapisywałby inaczej pustą wypowiedź jako pustą, a Operator ma w oknie
+przed sobą jej słowa. Bez tego oznaczenia plik czytałby się jako pełny protokół debaty, którym
+nie jest.
+
+Filtr czyta także treść rosnącą. Bez tego wypowiedź, której słowa właśnie płyną strumieniem,
+znikałaby z wykazu przy każdym filtrze — jej zapisana treść jest przez cały czas mówienia modelu
+pustym napisem, więc nie pasowałaby do niczego.
+
+Fragment strumienia potrafi wyprzedzić zdarzenie zmiany debaty, które nazywa jego wypowiedź: dwa
+strumienie idą osobnymi biegami. Słowa padły, więc wykaz je pokazuje i mówi wprost, że mówca
+jeszcze nie jest ustalony; przypisanie nastąpi samo przy następnym fragmencie.
+
+Kontekst czytelności powstaje na jedno rysowanie: znaczniki mówców i role wstęgi mają odpowiadać
+temu, co widać teraz, a nie narastać między przerysowaniami.

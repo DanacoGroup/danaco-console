@@ -6618,3 +6618,7 @@ nasłuchów niczego nie kosztuje.
 
 Błąd zwracany przez funkcję zapisy wraca obok wyniku rozstrzygnięcia
 i służy wyłącznie diagnostyce; nie zatrzymuje samego rozstrzygania.
+
+## budowa/server/internal/konfig/wartosc.go
+Funkcja KodujJSON nigdy nie zawodzi: wartość uszkodzona trafia do koperty
+kontraktu jako napis, nie jako błąd.

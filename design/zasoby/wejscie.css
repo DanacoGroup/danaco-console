@@ -241,37 +241,6 @@
    pod formularzem, który jest właściwym działaniem tego okna. */
 /* ── 5 · TOR KROKÓW URUCHOMIENIA ────────────────────────────────────────── */
 
-.we-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
-.we-krok {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  padding: var(--dn-od-2) var(--dn-od-3);
-  border: 1px solid transparent;
-  border-radius: var(--dn-r-md);
-  font-size: var(--dn-fs-sm);
-  color: var(--dn-tekst-2);
-}
-.we-krok-znak {
-  display: grid;
-  place-content: center;
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border: 1px solid var(--dn-obrys-mocny);
-  border-radius: var(--dn-r-pill);
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-2);
-}
-.we-krok-znak svg { width: 12px; height: 12px; }
-.we-krok-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-.we-krok[data-stan='gotowy'] { color: var(--dn-tekst-2); }
-.we-krok[data-stan='gotowy'] .we-krok-znak { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
-.we-krok[data-stan='pracuje'] { border-color: var(--dn-obrys-subtelny); background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
-.we-krok[data-stan='pracuje'] .we-krok-znak { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
-.we-krok[data-stan='blad'] { color: var(--dn-tekst-2); }
-.we-krok[data-stan='blad'] .we-krok-znak { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); color: var(--dn-blad-tekst); }
 
 /* ── 6 · KOMUNIKAT W KOLUMNIE STANU ─────────────────────────────────────── */
 

@@ -1540,6 +1540,7 @@ label.dn-pasek-szukaj:focus-within {
   /* Kolejka bywa listą porządkową — wcięcie i znaczniki listy należą do niej,
      nie do okna, które ją wstawia. */
   list-style: none;
+  margin: 0;
   padding: 0;
 }
 .dn-krok {
@@ -1714,7 +1715,13 @@ label.dn-pasek-szukaj:focus-within {
   white-space: nowrap;
 }
 .dn-krok--pracuje { border-left-color: var(--dn-sygnal-wypelnienie); }
-.dn-krok--pracuje .dn-krok-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+/* Wypełnienie znaku: stan pracujący był jedynym z czterech bez tła, przez co
+   w kolejce czterech kroków rzucał się w oczy słabiej niż zakończone. */
+.dn-krok--pracuje .dn-krok-znak {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
 .dn-krok--poprawny { border-left-color: var(--dn-sukces-obrys); }
 .dn-krok--poprawny .dn-krok-znak {
   background: var(--dn-sukces-tlo);
@@ -1732,6 +1739,29 @@ label.dn-pasek-szukaj:focus-within {
   background: var(--dn-blad-tlo);
   border-color: var(--dn-blad-obrys);
   color: var(--dn-blad-tekst);
+}
+
+/* Pole — krok rysowany bryłą zamiast szyną. Szyna prowadzi wzrok w dół listy
+   i nadaje się tam, gdzie kroki czyta się po kolei; bryła zamyka krok w polu
+   i nadaje się tam, gdzie ważny jest ten JEDEN, który trwa teraz — bo tylko
+   on dostaje wypełnienie, a pozostałe stoją na przezroczystym tle.
+
+   Rodzina stała w arkuszu okna wejściowego jako `.we-krok` i różniła się od
+   kroku wyłącznie tym rysunkiem; stany brała te same, tyle że przez
+   `data-stan` zamiast przez odmiany. */
+.dn-kolejka--pola { gap: var(--dn-od-1); }
+.dn-krok--pole {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+/* Bryła nie ma szyny, więc stany malują pole, a nie jego krawędź lewą. */
+.dn-krok--pole.dn-krok--pracuje {
+  border-color: var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst);
 }
 
 /* ==========================================================================

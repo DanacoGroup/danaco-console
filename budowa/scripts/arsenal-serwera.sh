@@ -46,7 +46,7 @@ czytajWykazAwaryjny() {
 	# Pola wiersza wykazu rozdziela tabulator, zapisywany poniżej literałem.
 	cat <<-'WYKAZ'
 		obowiazkowa-apt	7z	7zip	?	7-Zip	pakowanie i wydobycie zawartości archiwum
-		obowiazkowa-apt	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika albo w katalogu wskazanym zmienną DANACO_TIKA	?	Apache Tika (uruchamiana środowiskiem Javy)	odczyt treści pliku w formacie spoza słownika rdzenia (document.text.extract) — arkusz, prezentacja, wiadomość poczty
+		obowiazkowa-recznie	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika albo w katalogu wskazanym zmienną DANACO_TIKA	?	Apache Tika (uruchamiana środowiskiem Javy)	odczyt treści pliku w formacie spoza słownika rdzenia (document.text.extract) — arkusz, prezentacja, wiadomość poczty
 		obowiazkowa-apt	chromium-browser	chromium-browser	?	Chromium	zrzuty stron, drzewo DOM, konsola, rejestr sieciowy, emulacja urządzenia i przewijanie w module Browser, a także strona otwierana przez audyt dostępności i audyt wydajności — te dwa dostają tę samą przeglądarkę, zamiast pobierać własną
 		warsztat-go	dlv	go install github.com/go-delve/delve/cmd/dlv@latest	?	Delve	debugowanie krokowe programów Go w oknie Run & Debug
 		decyzyjna	docker	docker.io albo podman	?	Docker	wykaz kontenerów i obrazów, budowanie obrazu i uruchomienie stosu w zakładce Containers
@@ -55,7 +55,7 @@ czytajWykazAwaryjny() {
 		obowiazkowa-apt	exiftool	libimage-exiftool-perl	?	ExifTool	odczyt metadanych IPTC, XMP i ID3 osadzonych w zasobie (library.metadata.get z includeTechnical) — EXIF i GPS czyta czytnik wkompilowany i te pola zostają także bez tego programu
 		model-recznie	danaco-twarze	torch, torchvision i facexlib w osobnym środowisku pythonowym wraz z architekturą GFPGAN (gfpganv1_clean_arch, stylegan2_clean_arch z wydania github.com/TencentARC/GFPGAN), wystawione opakowaniem /usr/local/bin/danaco-twarze; wagi w /opt/danaco-modele/twarze	?	GFPGAN (pomocnik pythonowy)	osobny przebieg poprawiania twarzy przy powiększaniu obrazu (image.upscale z faces: true) — bez niego powiększanie pracuje dalej, a żądanie z tym polem odmawia zamiast oddać obraz bez poprawki twarzy
 		obowiazkowa-apt	magick	imagemagick	?	ImageMagick	zapis obrazu w AVIF oraz w WEBP stratnym, a także pomiar pliku AVIF (image.convert, image.inspect) — pozostałe czynności rodziny image.* liczy biblioteka wkompilowana i przy braku tego programu pracują dalej
-		obowiazkowa-apt	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem LanguageToola w /opt/languagetool albo w katalogu wskazanym zmienną DANACO_LANGUAGETOOL	?	LanguageTool (uruchamiany środowiskiem Javy)	gramatyka, ortografia, interpunkcja, typografia i styl w korekcie językowej modułu Translate (translate.proofread.run)
+		obowiazkowa-recznie	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem LanguageToola w /opt/languagetool albo w katalogu wskazanym zmienną DANACO_LANGUAGETOOL	?	LanguageTool (uruchamiany środowiskiem Javy)	gramatyka, ortografia, interpunkcja, typografia i styl w korekcie językowej modułu Translate (translate.proofread.run)
 		obowiazkowa-apt	libreoffice	libreoffice	?	LibreOffice	zamiana formatów biurowych, których nie czyta Pandoc
 		warsztat-npm	lighthouse	npm i -g lighthouse	?	Lighthouse	audyt wydajności strony produktu wraz z Core Web Vitals (apps.performance.audit) — miary powstają w przeglądarce po wykonaniu skryptów, więc rdzeń nie policzy ich własnym pobraniem
 		obowiazkowa-apt	node	nodejs	?	Node.js	orzeczenie o składni skryptu karty node w module Terminal (terminal.script.lint) — innego analizatora ta karta nie ma
@@ -84,7 +84,7 @@ czytajWykazAwaryjny() {
 		warsztat-go	goimports	go install golang.org/x/tools/cmd/goimports@latest	?	goimports	formatowanie plików Go wraz z porządkowaniem importów
 		warsztat-go	golangci-lint	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest	?	golangci-lint	analiza statyczna repozytorium Go w module Developer
 		warsztat-go	gopls	go install golang.org/x/tools/gopls@latest	?	gopls	przejście do definicji, wystąpienia symbolu i refaktoryzacje semantyczne w module Developer
-		obowiazkowa-apt	hunspell	hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)	?	hunspell	ortografia w korekcie językowej modułu Translate na maszynie bez LanguageToola — LanguageTool ma pierwszeństwo i obejmuje pisownię wraz z gramatyką, słownik zostaje drogą zapasową
+		obowiazkowa-recznie	hunspell	hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)	?	hunspell	ortografia w korekcie językowej modułu Translate na maszynie bez LanguageToola — LanguageTool ma pierwszeństwo i obejmuje pisownię wraz z gramatyką, słownik zostaje drogą zapasową
 		obowiazkowa-apt	jpegoptim	jpegoptim	?	jpegoptim	dogniecenie zapisu JPEG przy zamianie formatu (image.convert) — bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem
 		warsztat-npm	jscpd	npm i -g jscpd	?	jscpd	wykrywanie powtórzonych fragmentów w plikach TypeScriptu i JavaScriptu podczas skanu kodu w module Developer
 		snap	kubectl	kubectl (snap)	?	kubectl	karta powłoki wewnątrz poda w module Terminal
@@ -96,10 +96,10 @@ czytajWykazAwaryjny() {
 		warsztat-npm	typescript-language-server	npm i -g typescript-language-server typescript	?	serwer języka TypeScript	przejście do definicji, wystąpienia symbolu i refaktoryzacje semantyczne plików TypeScriptu w module Developer
 		obowiazkowa-apt	shfmt	shfmt	?	shfmt	formatowanie skryptów powłoki bash w module Terminal
 		warsztat-go	staticcheck	go install honnef.co/go/tools/cmd/staticcheck@latest	?	staticcheck	pogłębiona analiza statyczna kodu Go
-		warsztat-go	typos	cargo install typos-cli	?	typos	wykrywanie literówek w identyfikatorach i treści plików repozytorium w module Developer
-		obowiazkowa-apt	typst	typst (jeden plik wykonywalny z wydania projektu)	?	typst	skład dokumentu do PDF-u w komendzie document.convert dla materiału, którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta droga wraca do wersji zapasowej przez HTML i LibreOffice
+		obowiazkowa-recznie	typos	cargo install typos-cli	?	typos	wykrywanie literówek w identyfikatorach i treści plików repozytorium w module Developer
+		obowiazkowa-recznie	typst	typst (jeden plik wykonywalny z wydania projektu)	?	typst	skład dokumentu do PDF-u w komendzie document.convert dla materiału, którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta droga wraca do wersji zapasowej przez HTML i LibreOffice
 		obowiazkowa-apt	unpaper	unpaper	?	unpaper	prostowanie skosu, odszumianie, progowanie i przycinanie marginesów skanu przed rozpoznaniem pisma (studio.ingest.recognize)
-		obowiazkowa-apt	vale	vale (jeden plik wykonywalny z wydania projektu)	?	vale	styl prozy w korekcie językowej modułu Translate — powtórzenia i terminy, zestawem reguł wbudowanym w program
+		obowiazkowa-recznie	vale	vale (jeden plik wykonywalny z wydania projektu)	?	vale	styl prozy w korekcie językowej modułu Translate — powtórzenia i terminy, zestawem reguł wbudowanym w program
 	WYKAZ
 }
 
@@ -272,6 +272,8 @@ trybPlan() {
 	wypiszWarstwe "$wykaz" warsztat-npm
 	zglos "SNAP [$(policzWarstwe "$wykaz" snap)]"
 	wypiszWarstwe "$wykaz" snap
+	zglos "OBOWIĄZKOWE — kroki ręczne, podpowiedź zdaniem albo polecenie spoza apt [$(policzWarstwe "$wykaz" obowiazkowa-recznie)]"
+	wypiszWarstwe "$wykaz" obowiazkowa-recznie
 	zglos "MODELE/SILNIKI — kroki ręczne, wydania spoza repozytoriów [$(policzWarstwe "$wykaz" model-recznie)]"
 	wypiszWarstwe "$wykaz" model-recznie
 
@@ -632,6 +634,9 @@ trybPostaw() {
 
 	zglos "Pomocnik odtwarzania twarzy (danaco-twarze)"
 	postawTwarze
+
+	zglos "OBOWIĄZKOWE — kroki ręczne (nieautomatyzowane)"
+	wypiszWarstwe "$wykaz" obowiazkowa-recznie
 
 	zglos "MODELE/SILNIKI — kroki ręczne (nieautomatyzowane)"
 	wypiszWarstwe "$wykaz" model-recznie

@@ -87212,6 +87212,134 @@
       {
         "komenda": "notification.list",
         "zastosowanie": "Uzyj, aby poznac stan platformy z rejestru centrum powiadomien: co sie zakonczylo, co czeka na decyzje i co zawiodlo"
+      },
+      {
+        "komenda": "mobile.status.get",
+        "zastosowanie": "Uzyj w sesji mobilnego centrum dowodzenia, gdy Operator pyta o biezacy stan platformy"
+      },
+      {
+        "komenda": "mobile.process.list",
+        "zastosowanie": "Uzyj, gdy z mobilnego centrum dowodzenia trzeba sprawdzic, jakie procesy platformy dzialaja teraz"
+      },
+      {
+        "komenda": "mobile.process.control",
+        "zastosowanie": "Uzyj, gdy Operator z mobilnego centrum dowodzenia poleca wstrzymac, wznowic albo zatrzymac dzialajacy proces platformy"
+      },
+      {
+        "komenda": "device.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, jakie urzadzenia maja dostep do platformy pod kontem wlasciciela"
+      },
+      {
+        "komenda": "retention.set",
+        "zastosowanie": "Uzyj, gdy Operator zmienia, jak dlugo platforma ma trzymac historie w danym zakresie"
+      },
+      {
+        "komenda": "clipboard.list",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc tresc wczesniej skopiowana do schowka Operatora, a nie zdefiniowany zawczasu skrot tekstowy — ten niesie snippet.list"
+      },
+      {
+        "komenda": "clipboard.push",
+        "zastosowanie": "Uzyj, gdy Operator kopiuje albo zapisuje tresc, ktora ma trafic do historii schowka"
+      },
+      {
+        "komenda": "clipboard.pin",
+        "zastosowanie": "Uzyj, gdy wpis schowka trzeba zabezpieczyc przed wygasnieciem z zasada retencji albo zdjac to zabezpieczenie"
+      },
+      {
+        "komenda": "clipboard.delete",
+        "zastosowanie": "Uzyj, aby usunac wpis schowka albo cala historie; includePinned wlaczone kasuje nieodwracalnie takze wpisy przypiete — bez niego przypiete pozostaja bezpieczne"
+      },
+      {
+        "komenda": "snippet.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic zdefiniowane skroty tekstowe, zanim wskazesz ktorys do zmiany; to nie skopiowana tresc ze schowka — ta niesie clipboard.list, a slownik jest wspolny dla calej platformy, nie jednego okna"
+      },
+      {
+        "komenda": "snippet.set",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowy skrot tekstowy albo zmienia tresc istniejacego"
+      },
+      {
+        "komenda": "snippet.delete",
+        "zastosowanie": "Uzyj, gdy skrot tekstowy przestal byc potrzebny i ma zniknac ze slownika"
+      },
+      {
+        "komenda": "launcher.hotkey.get",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic biezacy skrot globalny wywolywacza polecen i czy powloka w ogole potrafi go zarejestrowac, zanim Operator zmieni nastawe"
+      },
+      {
+        "komenda": "launcher.hotkey.set",
+        "zastosowanie": "Uzyj, gdy Operator zmienia skrot globalny wywolywacza polecen; zapis przechodzi nawet gdy skrot jest zajety przez inny program, co nie jest bledem zapisu"
+      },
+      {
+        "komenda": "provenance.call.list",
+        "zastosowanie": "Uzyj, aby odszukac wywolania kanalu modelu spelniajace okreslone kryteria, zanim przejdziesz do pojedynczego zapisu przez provenance.call.get"
+      },
+      {
+        "komenda": "provenance.call.get",
+        "zastosowanie": "Uzyj, gdy trzeba zbadac pojedyncze wywolanie szczegolowo wraz z drzewem odcinkow; tresc promptu i odpowiedzi wraca domyslnie, ale znika, gdy includeContent zostanie wylaczone"
+      },
+      {
+        "komenda": "provenance.call.replay",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, czy wywolanie da dzis ten sam wynik; powtorzenie moze isc innym kanalem albo modelem niz pierwowzor"
+      },
+      {
+        "komenda": "provenance.call.rate",
+        "zastosowanie": "Uzyj, gdy Operator ocenia trafnosc odpowiedzi wywolania, aby zapisac ta ocene wraz z uzasadnieniem"
+      },
+      {
+        "komenda": "provenance.trace.export",
+        "zastosowanie": "Uzyj, gdy slady wywolan trzeba wyniesc poza platforme do dalszej analizy albo audytu"
+      },
+      {
+        "komenda": "usage.summary.get",
+        "zastosowanie": "Uzyj, gdy Operator pyta, ile platforma kosztuje albo zuzywa w danym okresie, i potrzebuje zestawienia w jednym przekroju"
+      },
+      {
+        "komenda": "usage.report.build",
+        "zastosowanie": "Uzyj, gdy zuzycie trzeba udokumentowac jako gotowy raport rozliczeniowy do przekazania dalej"
+      },
+      {
+        "komenda": "alert.rule.save",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowa regule wyzwalania alertu albo zmienia warunki juz istniejacej"
+      },
+      {
+        "komenda": "alert.rule.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec zdefiniowane reguly wyzwalania alertow, a nie ich historie zadzialan — ta niesie alert.trigger.list"
+      },
+      {
+        "komenda": "alert.rule.remove",
+        "zastosowanie": "Uzyj, gdy regula wyzwalania przestala byc potrzebna i ma zniknac wraz z historia swoich zadzialan"
+      },
+      {
+        "komenda": "alert.trigger.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec historie zadzialan alertow wraz z czasem reakcji, a nie same definicje regul — te niesie alert.rule.list"
+      },
+      {
+        "komenda": "alert.trigger.acknowledge",
+        "zastosowanie": "Uzyj, gdy Operator potwierdza obsluzenie wyzwolenia, aby wstrzymac jego eskalacje"
+      },
+      {
+        "komenda": "health.probe.save",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowa sonde kondycji albo zmienia parametry juz istniejacej"
+      },
+      {
+        "komenda": "health.probe.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec zdefiniowane sondy kondycji wraz z ich ostatnim wynikiem, a nie pelna serie pomiarow — ta niesie health.result.list"
+      },
+      {
+        "komenda": "health.probe.remove",
+        "zastosowanie": "Uzyj, gdy sonda kondycji przestala byc potrzebna i ma zniknac wraz z cala seria swoich wynikow"
+      },
+      {
+        "komenda": "health.probe.run",
+        "zastosowanie": "Uzyj, aby wykonac sonde kondycji od razu, poza jej odstepem, gdy trzeba potwierdzic stan natychmiast"
+      },
+      {
+        "komenda": "health.result.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec pelna serie pomiarow sondy, z ktorej liczy sie jej dostepnosc, a nie sama definicje sondy — ta niesie health.probe.list"
+      },
+      {
+        "komenda": "health.uptime.get",
+        "zastosowanie": "Uzyj, gdy trzeba podac Operatorowi wyliczona dostepnosc i budzet bledow, zamiast surowej serii pomiarow"
       }
     ]
   },

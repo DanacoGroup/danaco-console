@@ -8102,3 +8102,29 @@ programu ssh.
 
 Przy zapisie konfiguracji portu domyślnego nie dopisujemy: byłby wymyśleniem danych, których
 nie podano.
+## budowa/klient-poprzedni/src/moduly/terminal/manifesty-zadan.ts
+Treść manifestu czyta rdzeń komendą terminal.file.read, a nie polecenie powłoki: dzięki temu
+wykrycie zadań nie zależy ani od programu wypisującego plik, ani od składni powłoki karty,
+i działa jednakowo w każdej z nich. Przeglądania katalogu kontrakt nie ma wcale, więc nazwa
+manifestu pochodzi z zamkniętego wykazu — okno nie zgaduje, co leży w katalogu. Gdy manifestu
+nie ma, rdzeń odmawia kodem not_found, a okno pokazuje tę odmowę dosłownie zamiast pustego
+wykazu zadań.
+
+Rozbiór jest czytaniem, nie wykonaniem: treść manifestu nigdy nie trafia do powłoki z powrotem.
+Do powłoki idzie wyłącznie polecenie złożone z nazwy programu i nazwy zadania odczytanej
+z manifestu. Nazwy plików pochodzą z zamkniętego wykazu, nie z pola wpisywania — dlatego wchodzą
+w treść polecenia bez cudzysłowu obliczanego w czasie działania.
+
+Każda powłoka wykazu kontraktu ma swoją drogę wypisania pliku: Node.js i Python czytają plik
+własną biblioteką standardową, więc nie potrzebują do tego żadnego programu zewnętrznego.
+Powłoki systemowe sięgają po program wypisujący plik i to jest ich zależność zewnętrzna.
+
+Treść pola scripts niebędąca poprawnym JSON-em nie jest błędem programu, tylko odpowiedzią
+powłoki — plik bywa nieobecny, a wtedy w wyjściu stoi komunikat błędu. Rozbiór oddaje wtedy
+pusty wykaz, a zdanie o powodzie składa okno z treści wyjścia.
+
+Przy celach Makefile: wiersz wcięty jest przepisem celu, a nie celem; nazwa zaczynająca się
+kropką jest dyrektywą programu make; zapis nazwa := jest przypisaniem zmiennej.
+
+Głębsze klucze bloku tasks pliku Taskfile są polami zadania (cmds, desc), a nie zadaniami,
+więc wejście na nie dawałoby wykaz nazw, których program task nie zna.

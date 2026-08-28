@@ -7137,3 +7137,25 @@ Samo zdanie o odczycie tego nie niosło: powód bywa niepusty również wtedy, g
 
 ## budowa/klient-poprzedni/src/moduly/automations/graf-krokow.ts
 Opracowanie modułu opisuje graf zależności jako widok własny, oddzielny od wykazu: wykaz mówi, co z czym jest związane, rysunek mówi, jak długi jest łańcuch i gdzie tory się rozchodzą — a tego z wykazu wierszy nie widać. Rysunek nie jest edytorem: zapis układu idzie komendami kontraktu z panelu akcji i z wykazu, kanwa pokazuje stan po zapisie. Układ węzłów liczy się z samych zależności, więc jest powtarzalny, lecz nie jest układem, który Operator mógłby ułożyć myszą — przenoszenie węzłów wymaga zapisania ich położenia osobną komendą, a tej rdzeń jeszcze nie obsługuje, do tego czasu kanwa układa graf sama i nie obiecuje, że zapamięta cudze ułożenie. Barwy i grubości nie stoją tutaj: węzły i krawędzie noszą klasy rodziny modułu, a wygląd niesie osobny arkusz stylów na żetonach koloru. Warstwa mówi, ile zależności trzeba przejść, zanim krok może ruszyć, więc układ warstwowy pokazuje kolejność wykonania wprost; węzeł stojący w cyklu nie ma najdłuższej drogi, rachunek zatrzymuje się wtedy na węźle już odwiedzonym i węzeł zostaje na warstwie, do której doszedł — cykl jest zastrzeżeniem układu, nie powodem, żeby nie narysować niczego.
+
+## budowa/klient-poprzedni/src/moduly/browser/warstwa-adnotacji.ts — treść wiadomości adnotacji
+Rdzeń materializuje URI danych do pliku i wplata jego ścieżkę w zapytanie, więc model zobaczy rysunek dopiero, gdy sięgnie po plik narzędziem odczytu. Adres strony i liczba śladów docierają do niego bez otwierania pliku i dlatego stoją w treści wiadomości, a nie tylko w podpisie załącznika.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/stany-relacji.ts
+Znaczniki nazywają wyłącznie to, co rdzeń zlicza i oddaje: kolejka
+wstrzymana odpowiada stanowi wstrzymania kolejki etapu bieżącego,
+a koordynator wybudzony odpowiada dodatniemu licznikowi obiegów przy biegu
+niezatrzymanym i przy żadnej turze wykonawcy w biegu, przy czym licznik
+obiegów prowadzi pętla sesji w rdzeniu, nie klient. Wybudzenia nie zgadujemy
+z czasu: znacznik czasu ostatniej zmiany biegu mówi, kiedy licznik ruszył
+ostatnio, ale próg liczby sekund bez obiegu, który miałby znaczyć, że
+koordynator myśli, byłby liczbą wymyśloną w kliencie. Rama okna ma jeden
+znacznik, a przesłanki potrafią zajść naraz, więc kolejność sprawdzeń idzie
+od stanu, który zatrzymuje pracę, do stanu, który ją opisuje, a pełny obraz
+zostaje w polu powodu.
+
+## budowa/klient-poprzedni/src/moduly/browser/warstwa-adnotacji.ts
+Rysowanie mieszka w pliku `plotno-adnotacji.ts`, kontrolki w pliku `pasek-adnotacji.ts`, a ocena odpowiedzi rdzenia w pliku `skutek-zapisu.ts`. Rama okna stawia warstwę jako rodzeństwo podglądu w tym samym kontenerze pozycjonującym. Wyłączony tryb chowa warstwę atrybutem ukrycia — schowana nie łapie wskaźnika, więc zaznaczanie tekstu w podglądzie pozostaje możliwe. Rdzeń zostawia pole zrzutu puste, więc pod rysunkiem nie ma zrzutu strony. Zdanie o braku tła stoi w warstwie na stałe, aby operator wiedział przed wysłaniem, że w załączniku pójdzie sam rysunek. Wysyłka idzie poleceniem wysłania wiadomości, a nie przeniesieniem kontekstu: adresatem jest rozmowa tego okna, a przeniesienie międzymodułowe zaniosłoby rysunek gdzie indziej.
+
+## budowa/klient-poprzedni/src/moduly/browser/warstwa-adnotacji.ts — barwa początkowa
+Dwa zapisy tej samej domyślnej barwy rozjechałyby się przy zmianie palety, dlatego barwa początkowa nie stoi osobnym literałem.

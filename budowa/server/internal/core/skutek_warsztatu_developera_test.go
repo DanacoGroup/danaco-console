@@ -1,26 +1,5 @@
 package core
 
-// Sprawdziany SKUTKU warsztatu modułu Developer — rodzin `developer.*`
-// dobudowanych ponad Code Editor, Project Tree, Git Panel i Build Output.
-//
-// ── Czego te sprawdziany NIE robią ──────────────────────────────────────────
-// Nie sprawdzają, czy odpowiedź jest odpowiedzią. Koperta ze stanem `ok`
-// i pustym wynikiem jest kopertą udaną i zarazem kłamiącą — a to jest wzorzec
-// szkody, który w tym produkcie już wystąpił. Dlatego każdy sprawdzian tego
-// pliku po udanej odpowiedzi SCHODZI NIŻEJ i mierzy niezależnie: własnym
-// zapytaniem SQL do tej samej bazy albo odczytem pliku z dysku.
-//
-// Zapytanie idzie osobnym połączeniem do pliku bazy, a nie przez repozytorium
-// rdzenia. Gdyby szło przez repozytorium, sprawdzian mierzyłby to samo, czym
-// mierzy się rdzeń — i wspólna usterka odczytu zostałaby niewidoczna po obu
-// stronach.
-//
-// Uprząż jest własna, a nie wspólna z `uprzaz_skutku_test.go`: tamta montuje
-// cały rdzeń i wchodzi kopertami protokołu, a moduł Developer potrzebuje OKNA
-// z katalogiem roboczym, którego kontrakt komendy nie zakłada. Adapter składany
-// wprost daje dokładnie tę jedną rzecz, a mierzone i tak jest to, co zostało
-// w bazie i na dysku.
-
 import (
 	"context"
 	"database/sql"
@@ -46,7 +25,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// warsztatDevelopera niesie złożony moduł wraz z drogami pomiaru skutku.
+// warsztatDevelopera niesie złożony moduł Developer wraz z adapterem, oknem sesji,
+// ścieżką katalogu roboczego i ścieżką bazy do pomiaru skutku.
 type warsztatDevelopera struct {
 	adapter    *adapterDevelopera
 	okno       session.Okno
@@ -54,8 +34,8 @@ type warsztatDevelopera struct {
 	sciezkaBaz string
 }
 
-// zlozWarsztatDevelopera składa adapter modułu nad świeżą bazą i świeżym oknem
-// z katalogiem roboczym.
+// zlozWarsztatDevelopera składa adapter modułu Developer nad świeżą bazą SQLite
+// i świeżym oknem sesji z katalogiem roboczym w katalogu tymczasowym.
 func zlozWarsztatDevelopera(t *testing.T) warsztatDevelopera {
 	t.Helper()
 
@@ -99,7 +79,8 @@ func zlozWarsztatDevelopera(t *testing.T) warsztatDevelopera {
 	}
 }
 
-// zapiszPlikRoboczy zakłada plik w katalogu roboczym okna i oddaje jego ścieżkę.
+// zapiszPlikRoboczy zakłada plik z podaną treścią w katalogu roboczym okna,
+// tworząc brakujące katalogi nadrzędne, i oddaje jego pełną ścieżkę.
 func (w warsztatDevelopera) zapiszPlikRoboczy(t *testing.T, nazwa, tresc string) string {
 	t.Helper()
 	sciezka := filepath.Join(w.repozytnik, nazwa)
@@ -125,7 +106,8 @@ func pomiarWBazieDevelopera(t *testing.T, sciezka, zapytanie string, argumenty .
 	return baza.QueryRow(zapytanie, argumenty...)
 }
 
-// liczbaWBazieDevelopera oddaje jedną liczbę zmierzoną w bazie.
+// liczbaWBazieDevelopera wykonuje w bazie pomiar zwracający jedną liczbę całkowitą,
+// korzystając z osobnego połączenia do pliku bazy.
 func liczbaWBazieDevelopera(t *testing.T, sciezka, zapytanie string, argumenty ...any) int64 {
 	t.Helper()
 	var liczba int64
@@ -183,8 +165,8 @@ func TestSkutekPrzywroceniaWersjiPliku(t *testing.T) {
 		t.Fatalf("plik na dysku nie niesie przywróconej treści; zastano %q", string(bajty))
 	}
 
-	// Pomiar drugi: własne zapytanie do bazy — migawka stanu sprzed
-	// przywrócenia ma tam być, inaczej „wersja druga” przepadła na zawsze.
+	// Pomiar drugi: migawka sprzed przywrócenia ma być w bazie, inaczej
+	// „wersja druga” przepadła.
 	ile := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
 		`SELECT COUNT(*) FROM developer_wersja_pliku WHERE okno_kod = ? AND tresc = ?`,
 		warsztat.okno.Id, "wersja druga")
@@ -216,8 +198,8 @@ func TestSkutekPunktuPrzerwania(t *testing.T) {
 	if len(odpowiedz.Breakpoints) != 1 {
 		t.Fatalf("odpowiedź nie niesie postawionego punktu: %+v", odpowiedz.Breakpoints)
 	}
-	// Rodzaj wywiedziony z warunku, a nie wpisany na siłę: punkt z warunkiem
-	// jest punktem warunkowym niezależnie od tego, czy okno to nazwało.
+	// Rodzaj punktu wynika z warunku, nie z pola okna: obecność warunku
+	// czyni punkt warunkowym.
 	if odpowiedz.Breakpoints[0].Kind != shared.BreakpointKindConditional {
 		t.Fatalf("punkt z warunkiem nie został rozpoznany jako warunkowy: %s",
 			odpowiedz.Breakpoints[0].Kind)
@@ -367,10 +349,9 @@ paths:
 
 // ── Konsola danych ──────────────────────────────────────────────────────────
 
-// TestSkutekKonsoliDanych sprawdza całą drogę Data Console na bazie SQLite
-// założonej w katalogu roboczym: opis połączenia trafia do bazy produktu, schemat
-// czyta się z bazy Operatora, polecenie zmieniające naprawdę wstawia wiersz,
-// a nastawa „tylko do odczytu” naprawdę odmawia.
+// TestSkutekKonsoliDanych sprawdza drogę Data Console na bazie SQLite: opis
+// połączenia trafia do bazy produktu, schemat czyta się z bazy Operatora,
+// polecenie zmieniające wstawia wiersz, a nastawa „tylko do odczytu” odmawia.
 func TestSkutekKonsoliDanych(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 
@@ -568,11 +549,6 @@ func TestSkutekMigracjiDanych(t *testing.T) {
 
 // TestSkutekWynikuTestowIPokrycia sprawdza, że rozbiór wyjścia przebiegu zapisuje
 // wyniki i pokrycie do bazy, a komendy odczytu oddają to, co tam leży.
-//
-// Sprawdzian wchodzi drogą, którą wchodzi rdzeń: zakłada przebieg, dopisuje mu
-// wiersze wyjścia tak, jak robi to pompa logu, i domyka pomiar. Mierzy potem
-// bazę własnym zapytaniem — bo to ona jest jedynym miejscem, z którego wynik
-// testu da się odczytać po zamknięciu okna.
 func TestSkutekWynikuTestowIPokrycia(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 
@@ -806,8 +782,8 @@ func Szukaj(nazwa string) string {
 		t.Fatal("skan kodu nie zapisał ani jednego znaleziska")
 	}
 
-	// Sekret NIE ma prawa wylądować w bazie produktu: baza byłaby wtedy drugim
-	// miejscem, w którym ten klucz leży.
+	// Sekret nie ma prawa wylądować w bazie produktu: byłaby wtedy drugim
+	// miejscem przechowania klucza.
 	wyciek := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
 		`SELECT COUNT(*) FROM developer_znalezisko
 		 WHERE skan_kod = ? AND (tytul LIKE '%AKIAIOSFODNN7EXAMPLE%'
@@ -859,8 +835,8 @@ func TestSkutekSondyWarsztatu(t *testing.T) {
 	for _, pozycja := range odpowiedz.Programs {
 		switch pozycja.Program {
 		case "gofmt":
-			// gofmt jedzie z instalacją języka, więc na maszynie budującej
-			// produkt stoi zawsze — a gdyby nie stał, sonda ma o tym powiedzieć.
+			// gofmt jedzie z instalacją języka i stoi zawsze; brak na maszynie
+			// sonda ma zgłosić.
 			if pozycja.Present && (pozycja.Path == nil || *pozycja.Path == "") {
 				t.Fatal("sonda uznała gofmt za obecny, lecz nie podała jego ścieżki")
 			}
@@ -873,8 +849,8 @@ func TestSkutekSondyWarsztatu(t *testing.T) {
 		}
 	}
 
-	// Pytanie puste znaczy „powiedz o wszystkim, co znasz” — wykaz ma wtedy
-	// objąć komplet programów warsztatu.
+	// Pytanie puste żąda pełnego wykazu: ma objąć komplet programów
+	// warsztatu.
 	pelna, err := warsztat.adapter.SprawdzWarsztat(context.Background(),
 		shared.DeveloperToolchainCheckRequest{})
 	if err != nil {
@@ -891,10 +867,6 @@ func TestSkutekSondyWarsztatu(t *testing.T) {
 // TestSkutekWykazuKontenerow sprawdza rzecz, która w tym produkcie jest
 // rozstrzygnięciem, a nie drobiazgiem: brak silnika kontenerów na serwerze ma
 // wrócić JAWNIE polem `engineAvailable`, a nie udawać, że kontenerów nie ma.
-//
-// Sprawdzian nie zakłada, czy silnik na maszynie stoi — sprawdza spójność
-// odpowiedzi z tym, co zastała. Wykaz niepusty przy `engineAvailable: false`
-// byłby odpowiedzią wewnętrznie sprzeczną.
 func TestSkutekWykazuKontenerow(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 
@@ -911,8 +883,8 @@ func TestSkutekWykazuKontenerow(t *testing.T) {
 			len(odpowiedz.Containers))
 	}
 
-	// Czynność na kontenerze przy braku silnika ma ODMÓWIĆ zdaniem nazywającym
-	// brak — cisza kazałaby Operatorowi czekać na skutek, którego nie będzie.
+	// Czynność na kontenerze bez silnika ma odmówić zdaniem nazywającym
+	// brak, nie milczeć.
 	if !odpowiedz.EngineAvailable {
 		_, err := warsztat.adapter.CzynnoscKontenera(context.Background(),
 			shared.DeveloperContainerActionRequest{
@@ -932,10 +904,6 @@ func TestSkutekWykazuKontenerow(t *testing.T) {
 
 // TestSkutekFormatowania sprawdza, że formatowanie z zapisem na dysk naprawdę
 // zmienia PLIK, a nie tylko oddaje sformatowaną treść w odpowiedzi.
-//
-// Sprawdzian pomija się, gdy serwer nie ma formatera plików Go: brak programu
-// jest wtedy stanem serwera, a nie usterką modułu — i mówi o tym sonda
-// warsztatu, która ma własny sprawdzian.
 func TestSkutekFormatowania(t *testing.T) {
 	narzedzie, _, jest := formaterPliku("x.go")
 	if !jest || !zewnetrzne.Stoi(narzedzie) {
@@ -944,12 +912,12 @@ func TestSkutekFormatowania(t *testing.T) {
 	}
 
 	warsztat := zlozWarsztatDevelopera(t)
-	// Formater jest programem serwera, więc adapter dostaje ten sam uruchamiacz
-	// procesów, którym jedzie budowanie i git.
+	// Formater jest programem serwera: adapter dostaje ten sam uruchamiacz
+	// procesów co budowanie i git.
 	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
 
-	// Plik celowo źle wcięty i z niepotrzebnym odstępem — po sformatowaniu ma
-	// wyglądać inaczej, więc pomiar ma co porównać.
+	// Plik jest celowo źle wcięty, żeby formatowanie miało co zmienić
+	// i pomiar miał co porównać.
 	sciezka := warsztat.zapiszPlikRoboczy(t, "krzywy.go",
 		"package krzywy\n\nfunc Suma( a int ,b int ) int {\n\t\t\treturn a+b\n}\n")
 	przed, err := os.ReadFile(sciezka)
@@ -1002,8 +970,6 @@ func TestSkutekFormatowania(t *testing.T) {
 
 // TestSkutekZapytaniaApi sprawdza, że komenda naprawdę WYSYŁA zapytanie: mierzy
 // je po stronie serwera, który je odebrał, a nie po treści odpowiedzi rdzenia.
-// Sprawdzian obejmuje też podstawienie `{{nazwa}}` ze środowiska kolekcji —
-// bez niego kolekcja miałaby adres wpisany na stałe.
 func TestSkutekZapytaniaApi(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 
@@ -1018,8 +984,8 @@ func TestSkutekZapytaniaApi(t *testing.T) {
 	}))
 	defer serwer.Close()
 
-	// Środowisko kolekcji niesie adres serwera — zapytanie wskaże go
-	// podstawieniem, tak jak robi to okno API Client.
+	// Środowisko kolekcji niesie adres serwera; zapytanie wskaże go
+	// podstawieniem, jak okno API Client.
 	if _, err := warsztat.adapter.ZapiszKolekcjeApi(context.Background(),
 		shared.DeveloperApiCollectionSaveRequest{
 			WindowId:     warsztat.okno.Id,
@@ -1077,11 +1043,6 @@ func TestSkutekZapytaniaApi(t *testing.T) {
 // TestSkutekSesjiDebugowania sprawdza całą drogę Run & Debug na PRAWDZIWYM
 // adapterze Delve: sesja startuje, zatrzymuje się na postawionym punkcie,
 // oddaje stos wywołań ze zmiennymi i liczy wyrażenie w kontekście ramki.
-//
-// To jest sprawdzian skutku, a nie koperty: odpowiedź `ok` z pustym stosem
-// wywołań byłaby dokładnie tym wzorcem szkody, którego ten plik pilnuje. Pomiar
-// idzie po WARTOŚCI zmiennej odczytanej z zatrzymanego procesu — takiej, której
-// nie da się oddać bez faktycznego zatrzymania programu.
 func TestSkutekSesjiDebugowania(t *testing.T) {
 	if testing.Short() {
 		t.Skip("sprawdzian buduje i uruchamia program pod debuggerem — pomijany w biegu skróconym")
@@ -1170,11 +1131,9 @@ func main() {
 	}
 }
 
-// czekajNaZatrzymanieSesji czeka, aż program dojdzie do punktu przerwania.
-//
-// Czekanie jest odpytywaniem stanu, a nie uśpieniem na stałą chwilę: budowanie
-// programu pod debuggerem trwa raz dłużej, raz krócej, a sprawdzian ma mierzyć
-// skutek, nie szybkość maszyny.
+// czekajNaZatrzymanieSesji czeka, aż program dojdzie do punktu przerwania,
+// odpytując stan zamiast czekać przez stałą chwilę, bo czas budowania programu
+// pod debuggerem bywa różny.
 func czekajNaZatrzymanieSesji(t *testing.T, adapter *adapterDevelopera,
 	kod string) shared.DebugSession {
 	t.Helper()
@@ -1202,10 +1161,6 @@ func czekajNaZatrzymanieSesji(t *testing.T, adapter *adapterDevelopera,
 
 // TestSkutekAnalizyStatycznejPozaGo sprawdza, że `developer.lint.get` sięga po
 // programy właściwe językom plików, a nie po jeden program Go.
-//
-// Pomiar nie liczy zgłoszeń: liczy, KTÓRY program je wystawił. Wykaz niepusty
-// złożony wyłącznie ze zgłoszeń Go byłby odpowiedzią, która wygląda dobrze
-// i milczy o plikach, których nie sprawdzono.
 func TestSkutekAnalizyStatycznejPozaGo(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
@@ -1251,8 +1206,8 @@ func TestSkutekAnalizyStatycznejPozaGo(t *testing.T) {
 	}
 }
 
-// TestSkutekAnalizyLiterowek sprawdza drogę `typos` — jedyną, która nie zależy
-// od języka pliku.
+// TestSkutekAnalizyLiterowek sprawdza drogę programu `typos` — jedyną wśród
+// sprawdzianów tego pliku, która nie zależy od języka pliku źródłowego.
 func TestSkutekAnalizyLiterowek(t *testing.T) {
 	if !zewnetrzne.Stoi(narzedzieTypos) {
 		t.Skipf("serwer nie ma programu %s", narzedzieTypos.Program)
@@ -1330,8 +1285,8 @@ func TestSkutekWyszukaniaPoSkladni(t *testing.T) {
 		}
 	}
 
-	// Ten sam wzorzec drogą napisu ma nie znaleźć niczego — to jest dowód, że
-	// wyżej zadziałała droga składni, a nie zbieg okoliczności.
+	// Ten sam wzorzec jako napis ma nie znaleźć niczego — dowód drogi
+	// składni, nie zbiegu.
 	prawda := true
 	poNapisie, err := warsztat.adapter.SzukajWRepozytorium(context.Background(),
 		shared.DeveloperGrepSearchRequest{
@@ -1419,10 +1374,6 @@ func TestSkutekZamianyPoSkladni(t *testing.T) {
 // TestOdmowaBrakuProgramuSkladni sprawdza kryterium odmowy: brak programu ma
 // wrócić zdaniem NAZYWAJĄCYM brak wraz z drogą naprawy, a nie usterką wewnętrzną
 // ani zerem trafień.
-//
-// Program podmienia się na nazwę, której na żadnej maszynie nie ma — brak jest
-// stanem maszyny, więc sprawdzian ten stan odtwarza, zamiast czekać, aż zastanie
-// go u kogoś.
 func TestOdmowaBrakuProgramuSkladni(t *testing.T) {
 	zastane := narzedzieAstGrep
 	narzedzieAstGrep = zewnetrzne.Narzedzie{
@@ -1464,9 +1415,6 @@ func TestOdmowaBrakuProgramuSkladni(t *testing.T) {
 // TestNawigacjaPoTypeScripcieNieUdajeOdpowiedzi sprawdza rzecz, która jest
 // rozstrzygnięciem, a nie drobiazgiem: pytanie o symbol w pliku TypeScriptu ma
 // wrócić z `serverAvailable: false`, bo rdzeń nie ma dziś czym o niego zapytać.
-//
-// Pusty wykaz przy `true` znaczyłby „sprawdziłem i nie ma" — zdanie nieprawdziwe,
-// którego okno nie miałoby jak odróżnić od prawdziwego.
 func TestNawigacjaPoTypeScripcieNieUdajeOdpowiedzi(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
@@ -1539,9 +1487,8 @@ func TestSkutekSkanuPowtorzenGo(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
 
-	// Fragment jest długi z rozmysłem: próg powtórzenia narzuca sam program
-	// (dla plików Go — sto żetonów), a sprawdzian ma mierzyć drogę rdzenia,
-	// nie ocierać się o cudzy próg.
+	// Fragment jest długi celowo: dla plików Go próg powtórzenia programu
+	// wynosi sto żetonów.
 	powtorzony := `package %s
 
 func %s(x int, y int) int {
@@ -1583,8 +1530,8 @@ func %s(x int, y int) int {
 		t.Fatalf("skan domknął się stanem %s", skan.Scan.Status)
 	}
 
-	// Pomiar w bazie, osobnym połączeniem: znalezisko ma nieść nazwę programu
-	// jako regułę, żeby widać było, co je wystawiło.
+	// Pomiar w bazie osobnym połączeniem: znalezisko niesie nazwę programu
+	// jako regułę.
 	powtorzenia := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
 		`SELECT COUNT(*) FROM developer_znalezisko WHERE skan_kod = ? AND regula = ?`,
 		skan.Scan.Id, narzedzieDupl.Program)
@@ -1675,8 +1622,7 @@ func TestSkutekSkanuSemgrepem(t *testing.T) {
 
 // TestPrzebiegObciazeniowyOddajeRozkladCzasowIPrzepustowosc obciąża punkt
 // końcowy stojący naprawdę i mierzy skutek NIEZALEŻNIE od odpowiedzi: serwer
-// sprawdzianu liczy żądania, które do niego doszły. Wynik mówiący o tysiącach
-// żądań przy liczniku serwera na zerze byłby przebiegiem zmyślonym.
+// sprawdzianu liczy żądania, które do niego doszły.
 func TestPrzebiegObciazeniowyOddajeRozkladCzasowIPrzepustowosc(t *testing.T) {
 	if !zewnetrzne.Stoi(narzedzieAutocannon) {
 		t.Skip("na tej maszynie nie ma programu autocannon — punktu nie ma czym obciążyć")
@@ -1735,11 +1681,9 @@ func TestPrzebiegObciazeniowyOddajeRozkladCzasowIPrzepustowosc(t *testing.T) {
 	}
 }
 
-// TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer jest wymierzony
-// we wzorzec szkody z ustroju budowy: „zero żądań na sekundę" o usłudze,
-// której nie ma, czyta się jak usługa skrajnie wolna — czyli jak pomiar,
-// którego nikt nie wykonał. Punkt gaśnie przed przebiegiem; odmowa ma nazwać
-// liczbę błędów, a nie oddać wynik złożony z zer.
+// TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer sprawdza, że przebieg
+// bez żadnej odpowiedzi odmawia zdaniem nazywającym brak, a nie oddaje wyniku
+// zerowego, który czytałby się jak usługa skrajnie wolna.
 func TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer(t *testing.T) {
 	if !zewnetrzne.Stoi(narzedzieAutocannon) {
 		t.Skip("na tej maszynie nie ma programu autocannon — punktu nie ma czym obciążyć")
@@ -1747,8 +1691,8 @@ func TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer(t *testing.T) {
 	warsztat := zlozWarsztatDevelopera(t)
 	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
 
-	// Adres po zamkniętym serwerze: port był przed chwilą wolny do nasłuchu,
-	// więc wskazuje maszynę własną i nie trafi w cudzą usługę.
+	// Adres po zamkniętym serwerze wskazuje maszynę własną i nie trafi
+	// w cudzą usługę.
 	serwer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	adres := serwer.URL
 	serwer.Close()

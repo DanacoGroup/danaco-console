@@ -7,16 +7,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek dwóch rozstrzygnięć Właściciela z 17.08.2026: wyłączania pamięci
-// z pozycji Operatora w konfiguracji i wyciszenia nakładki jako bytu rdzenia.
-//
-// Warunek prawdziwości jest tu ostry, bo obie czynności są CISZĄ. Komenda, która
-// zamelduje wyłączenie albo wyciszenie, nie zostawiwszy wiersza, daje Operatorowi
-// spokój, którego nie ma: sugestie wejdą w drugiej powłoce, a ustalenie wróci do
-// kontekstu przy następnym zapytaniu modelu. Dlatego każdy sprawdzian poniżej
-// schodzi WŁASNYM zapytaniem do tabel `wylaczenie_pamieci`, `wyciszenie_nakladki`
-// i `sygnal_nakladki` — i sprawdza także to, czego zabraknąć NIE MOŻE: treść
-// wyłączonego wpisu.
+// Każdy sprawdzian pyta wprost tabele `wylaczenie_pamieci`, `wyciszenie_nakladki`
+// i `sygnal_nakladki`.
 
 // TestWylaczeniePamieciNieKasujeTresci wykazuje różnicę wobec `memory.delete`:
 // wpis wyłączony wypada z kontekstu, jego treść zostaje nietknięta w tabeli
@@ -84,8 +76,8 @@ func TestWylaczeniePamieciNieKasujeTresci(t *testing.T) {
 		t.Fatalf("treść wpisu po wyłączeniu brzmi %q, a zapisano %q", trescPoWylaczeniu, tresc)
 	}
 
-	// Odczyt pamięci: wpis nie wchodzi do kontekstu, ale jest NAZWANY wraz
-	// z zasięgiem, który go wyłączył, i tożsamością zniesienia.
+	// Odczyt pamięci: wpis nie wchodzi do kontekstu, ale jest nazwany wraz
+	// z zasięgiem, który go wyłączył.
 	var po shared.MemoryListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandMemoryList,
 		shared.MemoryListRequest{ProjectId: wskaz(projekt)}, &po)
@@ -215,8 +207,7 @@ func TestWyciszenieNakladkiZostawiaWierszIWstrzymujeSygnal(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianu(t, katalog)
 
-	// Sygnał klasy „wynik kontroli jakości" — jednej z trzech, których rdzeń nie
-	// widział własną telemetrią.
+	// Sygnał klasy „wynik kontroli jakości", nienależnej do telemetrii rdzenia.
 	var sygnal shared.AodSignalReportResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAodSignalReport,
 		shared.AodSignalReportRequest{
@@ -282,8 +273,8 @@ func TestWyciszenieNakladkiZostawiaWierszIWstrzymujeSygnal(t *testing.T) {
 			wykaz.SuppressedCount, len(wykaz.Mutes))
 	}
 
-	// Sygnał zgłoszony przy czynnym wyciszeniu ODKŁADA SIĘ NADAL — wyciszenie
-	// wstrzymuje ujawnienie, a nie zapis.
+	// Sygnał przy czynnym wyciszeniu nadal się odkłada — wyciszenie wstrzymuje
+	// ujawnienie, nie zapis.
 	var drugi shared.AodSignalReportResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAodSignalReport,
 		shared.AodSignalReportRequest{
@@ -326,7 +317,7 @@ func TestWyciszenieNakladkiZostawiaWierszIWstrzymujeSygnal(t *testing.T) {
 
 // TestWyciszenieCzasoweMaKoniecIObowiazujeWszedzie wykazuje dwie rzeczy naraz:
 // wyciszenie czasowe bez chwili końca jest odmawiane, a wyciszenie czasowe
-// obejmuje sygnał każdej klasy — tak mówi kolumna „Zakres" rozdz. 3.5.
+// obejmuje sygnał każdej klasy.
 func TestWyciszenieCzasoweMaKoniecIObowiazujeWszedzie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -468,8 +459,7 @@ func TestKatalogUstawienNiesiePamiecIRegulyWyciszania(t *testing.T) {
 		}
 	}
 
-	// Wyłączenie pamięci ma się dać zapisać w module — bez tego poziomu
-	// „wyłącz tylko dla niektórych modułów" nie miałoby zasięgu.
+	// Wyłączenie pamięci ma się dać zapisać w zasięgu modułu i karty sesji.
 	zasiegi := map[shared.ConfigScope]bool{}
 	for _, zasieg := range klucze["memory.enabled"].AllowedScopes {
 		zasiegi[zasieg] = true

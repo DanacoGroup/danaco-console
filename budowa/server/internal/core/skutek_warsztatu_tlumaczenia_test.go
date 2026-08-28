@@ -1,3 +1,6 @@
+// Sprawdziany tego pliku mierzą skutek rodzin dobudowanych modułu Translate
+// niezależnie od odpowiedzi komendy: drugim połączeniem do bazy albo odczytem
+// pliku wytworzonego na dysku.
 package core
 
 import (
@@ -14,22 +17,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek dobudowanych rodzin modułu Translate.
-//
-// Wzorzec szkody, którego pilnuje ten plik, ma w tym produkcie precedens:
-// komenda meldowała `status: ok` z pustym wynikiem, a za odpowiedzią nie leżało
-// nic. Dlatego żaden sprawdzian tutaj nie kończy się na udanej odpowiedzi.
-// Każdy schodzi niżej, do jednego z dwóch miejsc, w których skutek albo jest,
-// albo go nie ma:
-//
-//   - do bazy — drugim, niezależnym połączeniem do tego samego pliku SQLite,
-//     zapytaniem SQL wprost, z pominięciem całej warstwy adapterów;
-//   - na dysk — otwarciem pliku, który komenda miała wytworzyć, i odczytaniem
-//     jego treści (nie samego istnienia).
-//
-// Żaden sprawdzian nie woła modelu ani programu zewnętrznego, więc wszystkie
-// wypadają tak samo u Operatora, jak na maszynie budującej.
-
 // bazaSprawdzianu otwiera drugie połączenie do bazy stanowiska. Odczyt idzie
 // nim, a nie przez rdzeń: gdyby szedł przez rdzeń, sprawdzian mierzyłby zgodność
 // adaptera z samym sobą.
@@ -45,7 +32,8 @@ func bazaSprawdzianuTlumaczen(t *testing.T, katalog string) *sql.DB {
 	return db
 }
 
-// policzWierszeTlumaczenia liczy wiersze zapytaniem wprost.
+// policzWierszeTlumaczenia liczy wiersze zapytaniem wprost, z pominięciem
+// warstwy adaptera, którą sprawdzian bada.
 func policzWierszeTlumaczenia(t *testing.T, db *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -56,7 +44,8 @@ func policzWierszeTlumaczenia(t *testing.T, db *sql.DB, zapytanie string, argume
 	return ile
 }
 
-// napisZBazy odczytuje jedną wartość tekstową zapytaniem wprost.
+// napisZBazy odczytuje jedną wartość tekstową zapytaniem wprost, z pominięciem
+// warstwy adaptera, którą sprawdzian bada.
 func napisZBazy(t *testing.T, db *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -67,7 +56,8 @@ func napisZBazy(t *testing.T, db *sql.DB, zapytanie string, argumenty ...any) st
 	return wartosc.String
 }
 
-// zalozOknoZrodlowe zakłada okno tłumaczenia z podanym tekstem źródłowym.
+// zalozOknoZrodlowe zakłada okno tłumaczenia z podanym tekstem źródłowym,
+// komendą, którą warsztat udostępnia do tego celu.
 func zalozOknoZrodlowe(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno, tekst string) {
 	t.Helper()
@@ -83,8 +73,8 @@ func zalozPanelBezModelu(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 	db *sql.DB, okno, jezyk, tresc string) string {
 	t.Helper()
 
-	// Panel zakłada import XLIFF: jedyna droga rdzenia, która zakłada panel
-	// wskazanego języka z gotową treścią i bez wołania modelu.
+	// Import XLIFF jest jedyną drogą, która zakłada panel języka gotową treścią
+	// bez wołania modelu.
 	sciezka := filepath.Join(t.TempDir(), "material.xlf")
 	jednostki := make([]jednostkaXliff, 0)
 	for _, akapit := range rozdzielAkapity(tresc) {
@@ -106,8 +96,8 @@ func zalozPanelBezModelu(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 	if kod == "" {
 		t.Fatalf("import XLIFF nie założył panelu języka %s", jezyk)
 	}
-	// Treść panelu ustawiamy wprost, żeby sprawdzian pracował na dokładnie tym
-	// tekście, który zadeklarował.
+	// Treść panelu ustawia się wprost, by sprawdzian pracował na dokładnie
+	// zadeklarowanym tekście.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTranslateTranslationSet,
 		shared.TranslateTranslationSetRequest{PanelId: kod, Text: tresc}, nil)
 
@@ -149,8 +139,8 @@ func TestPamiecTlumaczenLezyWBazieIWPliku(t *testing.T) {
 		t.Fatalf("eksport zgłosił %d par, a w pamięci jest jedna", wydana.ExportedCount)
 	}
 
-	// Plik czytamy z powrotem tą samą drogą, którą czyta go import — czyli
-	// mierzymy, że wynik jest prawdziwym TMX, a nie napisem o TMX.
+	// Plik czyta się drogą importu — mierzy się, że wynik jest prawdziwym TMX, nie
+	// napisem o TMX.
 	pary, err := wczytajParyWymiany(sciezka)
 	if err != nil {
 		t.Fatalf("wynik eksportu nie jest czytelnym plikiem wymiany: %v", err)
@@ -360,8 +350,8 @@ func TestProfilKontroliJakosciZyjeWBazie(t *testing.T) {
 	if ile := policzWierszeTlumaczenia(t, db, `SELECT COUNT(*) FROM profil_qa`); ile != 0 {
 		t.Fatalf("po usunięciu profilu w bazie zostało %d wierszy", ile)
 	}
-	// Kontrole schodzą razem z profilem — klucz obcy kaskadowy ma działać
-	// naprawdę, a nie tylko stać w migracji.
+	// Kontrole schodzą razem z profilem: klucz obcy kaskadowy ma działać, nie
+	// tylko stać w migracji.
 	if ile := policzWierszeTlumaczenia(t, db,
 		`SELECT COUNT(*) FROM profil_qa_kontrola`); ile != 0 {
 		t.Fatalf("po usunięciu profilu zostało %d jego kontroli", ile)
@@ -663,9 +653,8 @@ func TestPrzebiegPakietowyZostawiaPozycje(t *testing.T) {
 	zalozOknoZrodlowe(t, zmontowany, zycie, "okno-pakietu", "wstęp")
 	zalozPanelBezModelu(t, zmontowany, zycie, db, "okno-pakietu", "angielski",
 		"Amount and placeholder are gone.")
-	// Tekst źródłowy ustawiamy PO panelu: import XLIFF wnosi własne źródło, więc
-	// kolejność odwrotna zostawiłaby okno z tekstem identycznym jak przekład,
-	// a kontrola jakości nie miałaby czego zgłosić.
+	// Źródło ustawia się PO panelu: import wnosi własne, kolejność odwrotna
+	// zrównałaby je z przekładem.
 	zalozOknoZrodlowe(t, zmontowany, zycie, "okno-pakietu", "Kwota 100 zł i {znacznik}.")
 
 	var przebieg shared.TranslateBatchRunResponse
@@ -681,8 +670,8 @@ func TestPrzebiegPakietowyZostawiaPozycje(t *testing.T) {
 		`SELECT COUNT(*) FROM pozycja_pakietu_tlumaczenia WHERE stan = 'done'`); ile != 1 {
 		t.Fatalf("wykonanych pozycji w bazie: %d", ile)
 	}
-	// Kontrola jakości pakietu ma zostawić niezgodności — inaczej przebieg
-	// zapisałby „zrobione” bez ani jednego skutku.
+	// Kontrola jakości ma zostawić niezgodności — inaczej przebieg zapisałby
+	// zrobione bez skutku.
 	if ile := policzWierszeTlumaczenia(t, db,
 		`SELECT COUNT(*) FROM panel_tlumaczenia_niezgodnosc`); ile == 0 {
 		t.Fatal("przebieg zapisał pozycję jako wykonaną, a niezgodności nie ma ani jednej")

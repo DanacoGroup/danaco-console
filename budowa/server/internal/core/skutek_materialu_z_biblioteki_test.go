@@ -7,18 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek narzędzi dokumentu: czy `assetId` sięga do obu magazynów rdzenia.
-//
-// Opis pola `assetId` w kontrakcie obiecuje w dziewięciu komendach „zasób
-// z magazynu rdzenia (Design albo Library)". Obietnica była nieprawdziwa:
-// rozwiązywanie szło wyłącznie przez repozytorium zasobów designu, więc
-// identyfikator pliku biblioteki wracał odmową `not_found`. Moduł Library nie
-// miał przez to jak wydobyć tekstu z własnego pliku ani zamienić jego formatu,
-// choć bajty leżały w magazynie pod sumą kontrolną.
-//
-// Sprawdzian mierzy SKUTEK, nie kopertę: wnosi plik do biblioteki, po czym pyta
-// narzędzie dokumentu o jego treść i porównuje ją z tym, co naprawdę weszło.
-// Odpowiedź udana z pustym tekstem byłaby tą samą szkodą co odmowa.
+// Sprawdzian mierzy skutek: assetId sięga obu magazynów rdzenia, Design i Library.
 
 // TestWydobycieTekstuSiegaPlikuBiblioteki wykazuje drogę, której wcześniej nie
 // było: identyfikator pliku biblioteki jako materiał komendy `document.text.extract`.

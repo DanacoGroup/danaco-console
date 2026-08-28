@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: pomiar miar reguł alertu i ewaluacja reguł na tych
-// pomiarach. Definicje, rejestr i przekłady na kontrakt leżą
-// w `adapter_alerty.go`.
-//
-// ── Skąd bierze się każda miara ─────────────────────────────────────────────
-//   - `errorCount`     — dziennik błędów rdzenia, liczba wpisów w oknie czasu.
-//   - `errorRate`      — ślad wywołań modelu: udział wywołań nieudanych.
-//   - `cost`           — ślad wywołań: suma kosztu w oknie czasu.
-//   - `tokens`         — ślad wywołań: suma żetonów w oknie czasu.
-//   - `callLatency`    — ślad wywołań: średnie opóźnienie ważone liczbą wywołań.
-//   - `budgetPercent`  — koszt w oknie wobec pułapu kosztu z konfiguracji.
-//   - `probeFailure`   — seria pomiarów kondycji: liczba pomiarów nieudanych.
-//   - `processFailure` — kolejki rdzenia: liczba pozycji zakończonych błędem.
-//
-// Każda z ośmiu ma źródło i każda jest liczona w chwili odpowiedzi. Miara,
-// której źródła rdzeń nie ma wpiętego, jest odrzucana już przy zapisie reguły
-// (`sprawdzMiareReguly`) — po to, żeby nie istniała reguła, która wygląda na
-// czynną, a nigdy nie zawoła.
+// Plik niesie pomiar miar reguł alertu i ewaluację reguł na tych pomiarach; definicje, rejestr i przekłady na kontrakt leżą w adapter_alerty.go.
 package core
 
 import (
@@ -39,13 +22,7 @@ const kluczPulapuKosztu = "pulap_kosztu_usd"
 // reguły do zasięgu.
 const wymiarZuzyciaAlertow = "channel"
 
-// sprawdzMiareReguly odbija miarę spoza wyliczenia kontraktu oraz miarę, której
-// źródła rdzeń nie ma wpiętego.
-//
-// Druga część jest tu ważniejsza od pierwszej. Reguła zapisana na miarę bez
-// źródła przechodziłaby ewaluację w ciszy i wyglądała w wykazie na czynną —
-// czyli obiecywała czujność, której nie ma. Lepsza jest odmowa przy zapisie,
-// nazywająca brakujące ogniwo.
+// sprawdzMiareReguly odbija miarę spoza wyliczenia kontraktu oraz miarę, której źródła rdzeń nie ma wpiętego — reguła bez źródła przechodziłaby ewaluację w ciszy i wyglądała na czynną.
 func (a *adapterAlertow) sprawdzMiareReguly(miara shared.AlertMetric) error {
 	switch miara {
 	case shared.AlertMetricErrorCount:
@@ -79,12 +56,7 @@ func (a *adapterAlertow) sprawdzMiareReguly(miara shared.AlertMetric) error {
 	}
 }
 
-// przelicz ewaluuje wszystkie reguły czynne i zapisuje wyzwolenia tych, które
-// przekroczyły próg.
-//
-// Metoda nie zwraca błędu z zamysłu: ewaluacja jest pracą przy okazji odczytu
-// rejestru, a jej niepowodzenie nie ma prawa odebrać Operatorowi wykazu
-// wyzwoleń zapisanych wcześniej.
+// przelicz ewaluuje wszystkie reguły czynne i zapisuje wyzwolenia tych, które przekroczyły próg; metoda nie zwraca błędu, bo niepowodzenie nie ma prawa odebrać wykazu wyzwoleń wcześniejszych.
 func (a *adapterAlertow) przelicz(ctx context.Context) {
 	reguly, err := a.repozytorium.Reguly(ctx, "", "", true, 0)
 	if err != nil {
@@ -96,13 +68,7 @@ func (a *adapterAlertow) przelicz(ctx context.Context) {
 	}
 }
 
-// przeliczRegule wykonuje jeden pomiar i — gdy próg został przekroczony —
-// zapisuje wyzwolenie.
-//
-// Wyciszenie i powtórzenie sprawdzamy przed pomiarem: reguła wyciszona nie ma
-// prawa zawołać, a reguła, która wyzwoliła się w bieżącym oknie czasu, nie ma
-// prawa zawołać po raz drugi za to samo. Bez drugiego warunku każde otwarcie
-// wykazu dokładałoby wiersz do rejestru.
+// przeliczRegule wykonuje jeden pomiar i, gdy próg został przekroczony, zapisuje wyzwolenie; wyciszenie i powtórzenie sprawdza się przed pomiarem, żeby reguła nie zawołała dwa razy za to samo.
 func (a *adapterAlertow) przeliczRegule(ctx context.Context, regula dane.RegulaAlertu, teraz int64) {
 	if regula.WyciszonaDo != nil && *regula.WyciszonaDo > teraz {
 		return
@@ -145,15 +111,7 @@ func (a *adapterAlertow) przeliczRegule(ctx context.Context, regula dane.RegulaA
 	a.wniesDoCentrum(ctx, zapisane)
 }
 
-// wniesDoCentrum zapisuje wyzwolony alert w rejestrze centrum powiadomień.
-//
-// Klasa jest jedna — `blad` — bo alert z definicji mówi o czymś, co poszło nie
-// tak; wagę bierze taksonomia klasy, nie waga reguły, żeby jedna nastawa
-// Operatora rozstrzygała o wszystkich alarmach tak samo.
-//
-// Niepowodzenie zapisu NIE przerywa niczego i nie wraca do wołającego: alarm
-// został już zapisany we własnym magazynie i rozgłoszony, a centrum jest tu
-// drugim odbiorcą, nie warunkiem.
+// wniesDoCentrum zapisuje wyzwolony alert w rejestrze centrum powiadomień jedną klasą blad; niepowodzenie zapisu nie przerywa niczego, bo alarm już został zapisany i rozgłoszony.
 func (a *adapterAlertow) wniesDoCentrum(ctx context.Context, w dane.WyzwolenieAlertu) {
 	if a.centrum == nil {
 		return
@@ -248,8 +206,7 @@ func (a *adapterAlertow) zmierzZeSladu(ctx context.Context, miara shared.AlertMe
 		return float64(zetony), true
 	case shared.AlertMetricErrorRate:
 		if zadania == 0 {
-			// Okres bez wywołań nie ma udziału niepowodzeń. Zero oddane tutaj
-			// znaczyłoby „wszystko się udało", a nic się nie działo.
+			// Okres bez wywołań nie ma udziału niepowodzeń; zero tu znaczyłoby udało się, choć nic się nie działo.
 			return 0, false
 		}
 		return float64(bledne) * 100 / float64(zadania), true
@@ -261,8 +218,7 @@ func (a *adapterAlertow) zmierzZeSladu(ctx context.Context, miara shared.AlertMe
 	case shared.AlertMetricBudgetPercent:
 		pulap := a.pulapKosztu(ctx)
 		if pulap <= 0 {
-			// Pułap zerowy znaczy pułap zniesiony (`injection/pulap.go`), więc
-			// udziału w budżecie nie ma z czego policzyć.
+			// Pułap zerowy znaczy pułap zniesiony, więc udziału w budżecie nie ma z czego policzyć.
 			return 0, false
 		}
 		return koszt * 100 / pulap, true
@@ -271,7 +227,7 @@ func (a *adapterAlertow) zmierzZeSladu(ctx context.Context, miara shared.AlertMe
 	}
 }
 
-// pulapKosztu odczytuje nastawę pułapu kosztu z konfiguracji.
+// pulapKosztu odczytuje nastawę pułapu kosztu z konfiguracji obowiązującej ocenę reguły alertu tej maszyny.
 func (a *adapterAlertow) pulapKosztu(_ context.Context) float64 {
 	if a.rozstrzygacz == nil {
 		return 0
@@ -284,14 +240,7 @@ func (a *adapterAlertow) pulapKosztu(_ context.Context) float64 {
 	return pulap
 }
 
-// przekroczonoProg rozstrzyga, czy zmierzona wartość wyzwala regułę.
-//
-// Brak progu znaczy „każda wartość niezerowa": reguła bez progu jest regułą
-// obecności zjawiska (jeden nieudany pomiar, jeden nowy odcisk błędu), a nie
-// regułą, która nigdy nie zawoła.
-//
-// Brak porównania znaczy „więcej niż" — to jedyne porównanie, przy którym próg
-// czyta się tak, jak brzmi po polsku: „alarmuj, gdy koszt przekroczy dziesięć".
+// przekroczonoProg rozstrzyga, czy zmierzona wartość wyzwala regułę; brak progu znaczy każda wartość niezerowa, a brak porównania znaczy więcej niż.
 func przekroczonoProg(wartosc float64, regula dane.RegulaAlertu) bool {
 	if regula.Prog == nil {
 		return wartosc > 0

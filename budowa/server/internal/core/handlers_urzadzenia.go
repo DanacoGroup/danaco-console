@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: wpięcie rodziny `device.*` do rejestru komend.
-//
-// Unieważnienie rozgłasza `device.changed` do WSZYSTKICH połączonych urządzeń,
-// nie tylko do tego, które je zleciło. Operator odbierający dostęp maszynie
-// stojącej obok ma zobaczyć skutek na obu ekranach naraz — inaczej drugi ekran
-// pokazywałby dostęp, którego już nie ma, aż do następnej komendy.
+// Plik wpina rodzinę device.* do rejestru komend. Unieważnienie rozgłasza zmianę do wszystkich
+// połączonych urządzeń, nie tylko do tego, które je zleciło.
 package core
 
 import (
@@ -12,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Urzadzenia jest portem rodziny `device.*`.
+// Urzadzenia jest portem rodziny device.* obsługującym wykaz i unieważnienie urządzeń tego konta użytkownika.
 type Urzadzenia interface {
 	// WykazUrzadzen obsługuje `device.list`.
 	WykazUrzadzen(ctx context.Context, z shared.DeviceListRequest) (shared.DeviceListResponse, error)
@@ -21,21 +17,18 @@ type Urzadzenia interface {
 		z shared.DeviceRevokeRequest) (shared.DeviceRevokeResponse, error)
 }
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem sprawdzana jest przy kompilacji, bez próby wykonania kodu rdzenia platformy.
 var _ Urzadzenia = (*adapterUrzadzen)(nil)
 
-// zWiezia przyjmuje więź połączeń z bramką.
-//
-// Więź powstaje w kompozycji, a port składa się piętro niżej, w montażu — stąd
-// dołożenie przez asercję zamiast argumentu konstruktora. Port, który więzi nie
-// przyjmie, po prostu nie oznaczy bieżącego urządzenia; wykaz działa dalej.
+// zWiezia przyjmuje więź połączeń z bramką, dołożoną asercją zamiast argumentu konstruktora, bo
+// więź powstaje w kompozycji, a port składa się piętro niżej, w montażu.
 type zWiezia interface {
 	przyjmijWiez(w *wiezBramki)
 }
 
 func (a *adapterUrzadzen) przyjmijWiez(w *wiezBramki) { a.wiez = w }
 
-// zarejestrujUrzadzenia wpina dwie komendy rodziny `device.*`.
+// zarejestrujUrzadzenia wpina dwie komendy rodziny device.* obsługujące wykaz i unieważnienie urządzenia.
 func zarejestrujUrzadzenia(r *Rejestr, u Urzadzenia, e *emiter, wiez *wiezBramki) {
 	if r == nil || u == nil {
 		return
@@ -55,9 +48,7 @@ func zarejestrujUrzadzenia(r *Rejestr, u Urzadzenia, e *emiter, wiez *wiezBramki
 			if err != nil {
 				return odpowiedz, err
 			}
-			// Wykaz do zdarzenia bierze się z tego samego źródła, co odpowiedź
-			// `device.list` — pozostałe ekrany dostają stan po zmianie, a nie
-			// polecenie „odpytaj jeszcze raz".
+			// Wykaz do zdarzenia bierze się z tego samego źródła co odpowiedź wykazu urządzeń.
 			wykaz, bladWykazu := u.WykazUrzadzen(ctx, shared.DeviceListRequest{})
 			if bladWykazu == nil {
 				e.wyslij(shared.EventDeviceChanged, "", shared.DeviceChangedEvent{

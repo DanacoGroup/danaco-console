@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: porty i wpięcie trzech rodzin przekrojowych obsługi
-// tekstu — historii schowka (`clipboard.*`), słownika skrótów (`snippet.*`)
-// oraz nazwanych kontekstów pamięci i zasad retencji (`memory.context.*`,
-// `memory.retention.*`).
-//
-// Trzy porty, nie jeden: schowek, słownik skrótów i konteksty pamięci mają
-// osobne magazyny i osobne powody do awarii. Wspólny port związałby ich
-// dostępność w jedno „jest albo nie ma" — maszyna ze słownikiem i bez historii
-// schowka straciłaby rozwijanie skrótów razem z historią.
-//
-// Zdarzeń żadna z tych rodzin nie ma. Kontrakt zna `memory.changed`, ale
-// dotyczy ono WPISÓW pamięci przestrzeni roboczej i rozgłasza je ta domena
-// (`handlers_workspace_pamiec.go`); kontekst jest zestawem wskazań, a nie
-// wpisem, więc rozgłaszanie go pod tą nazwą kazałoby oknu odświeżyć wykaz
-// faktów po zmianie, która żadnego faktu nie dotknęła.
+// Plik wpina porty i rejestrację trzech rodzin przekrojowych obsługi tekstu: historii schowka,
+// słownika skrótów oraz nazwanych kontekstów pamięci i zasad retencji.
 package core
 
 import (
@@ -21,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Schowek jest portem rodziny `clipboard.*`.
+// Schowek jest portem rodziny clipboard.* obsługującym odczyt i zapis historii schowka tego konta użytkownika.
 type Schowek interface {
 	WykazSchowka(ctx context.Context, z shared.ClipboardListRequest) (shared.ClipboardListResponse, error)
 	DopiszDoSchowka(ctx context.Context, z shared.ClipboardPushRequest) (shared.ClipboardPushResponse, error)
@@ -29,7 +16,7 @@ type Schowek interface {
 	UsunZeSchowka(ctx context.Context, z shared.ClipboardDeleteRequest) (shared.ClipboardDeleteResponse, error)
 }
 
-// SkrotyTekstowe jest portem rodziny `snippet.*`.
+// SkrotyTekstowe jest portem rodziny snippet.* obsługującym słownik skrótów tekstowych tego konta użytkownika.
 type SkrotyTekstowe interface {
 	WykazSkrotow(ctx context.Context, z shared.SnippetListRequest) (shared.SnippetListResponse, error)
 	ZapiszSkrot(ctx context.Context, z shared.SnippetSetRequest) (shared.SnippetSetResponse, error)
@@ -47,14 +34,14 @@ type KontekstyPamieci interface {
 	ZapiszZasadeRetencji(ctx context.Context, z shared.MemoryRetentionSetRequest) (shared.MemoryRetentionSetResponse, error)
 }
 
-// Adaptery wypełniają porty w całości.
+// Adaptery wypełniają wszystkie trzy porty w całości, bez żadnej metody pozostawionej niezaimplementowanej.
 var (
 	_ Schowek          = (*adapterSchowka)(nil)
 	_ SkrotyTekstowe   = (*adapterSkrotowTekstowych)(nil)
 	_ KontekstyPamieci = (*adapterKontekstowPamieci)(nil)
 )
 
-// zarejestrujSchowek wpina cztery komendy rodziny `clipboard.*`.
+// zarejestrujSchowek wpina cztery komendy rodziny clipboard.* obsługujące historię schowka tego konta.
 func zarejestrujSchowek(r *Rejestr, s Schowek) {
 	if r == nil || s == nil {
 		return
@@ -65,7 +52,7 @@ func zarejestrujSchowek(r *Rejestr, s Schowek) {
 	r.Zarejestruj(shared.CommandClipboardDelete, obsluz(s.UsunZeSchowka))
 }
 
-// zarejestrujSkrotyTekstowe wpina trzy komendy rodziny `snippet.*`.
+// zarejestrujSkrotyTekstowe wpina trzy komendy rodziny snippet.* obsługujące słownik skrótów tekstowych konta.
 func zarejestrujSkrotyTekstowe(r *Rejestr, s SkrotyTekstowe) {
 	if r == nil || s == nil {
 		return
@@ -75,8 +62,8 @@ func zarejestrujSkrotyTekstowe(r *Rejestr, s SkrotyTekstowe) {
 	r.Zarejestruj(shared.CommandSnippetDelete, obsluz(s.UsunSkrot))
 }
 
-// zarejestrujKontekstyPamieci wpina sześć komend rodziny `memory.*` spoza
-// obszaru pojedynczego wpisu.
+// zarejestrujKontekstyPamieci wpina sześć komend rodziny memory.* spoza obszaru pojedynczego
+// wpisu, obsługujących konteksty pamięci i zasady retencji.
 func zarejestrujKontekstyPamieci(r *Rejestr, k KontekstyPamieci) {
 	if r == nil || k == nil {
 		return

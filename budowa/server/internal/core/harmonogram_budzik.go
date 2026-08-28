@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: budzik harmonogramu — długożyjący komponent, który
-// obserwuje wyliczone terminy automatyk i o wskazanej godzinie odpala ich
-// uruchomienie.
-//
-// Okno Scheduler zapisuje cykliczność, a `chwilaNastepnegoUruchomienia` liczy
-// najbliższy termin (`adapter_modul_automations_cron.go`). Budzik cyklicznie
-// pyta repozytorium o harmonogramy należne (`czynny`, termin minął) i każdy
-// odpala tą samą drogą, którą automatykę rusza Operator (`UruchomAutomatyke`).
-//
-// Przesunięcie terminu idzie przed odpaleniem: najpierw wyliczamy i zapisujemy
-// następny termin, dopiero potem ruszamy automatykę. Dzięki temu ten sam
-// harmonogram nie odpali się w kółko, gdyby odpalenie trwało dłużej niż takt
-// zegara albo gdyby uruchomienie zawiodło — awaria jednego przebiegu nie
-// zawiesza budzika.
+// Plik wpina budzik harmonogramu — długożyjący komponent, który obserwuje wyliczone terminy
+// automatyk i o wskazanej godzinie odpala ich uruchomienie tą samą drogą co Operator.
 package core
 
 import (
@@ -68,7 +56,7 @@ func (b *budzikHarmonogramu) petla(zycie context.Context) {
 	}
 }
 
-// wyzwolNalezne odpala wszystkie harmonogramy, których termin już minął.
+// wyzwolNalezne odpala wszystkie harmonogramy czynne, których termin już minął w tym takcie zegara budzika.
 func (b *budzikHarmonogramu) wyzwolNalezne(ctx context.Context, teraz time.Time) {
 	znacznik := teraz.Format(formatZnacznikaBazy)
 	nalezne, err := b.automatyki.repozytorium.HarmonogramyNalezne(ctx, znacznik)
@@ -97,8 +85,7 @@ func (b *budzikHarmonogramu) wyzwol(ctx context.Context, harmonogram dane.Harmon
 		return
 	}
 	if !automatyka.Czynna {
-		// Automatyka wyłączona nie rusza, choć harmonogram był należny — termin
-		// już przesunięto, więc budzik nie będzie jej dobijał w kółko.
+		// Automatyka wyłączona nie rusza; termin już przesunięto, więc budzik jej nie dobija.
 		return
 	}
 	if _, err := b.automatyki.UruchomAutomatyke(ctx, automatyka); err != nil {
@@ -122,7 +109,7 @@ func (b *budzikHarmonogramu) nastepneUruchomienie(ctx context.Context,
 	return chwilaNastepnegoUruchomienia(harmonogram.Cron, wyzwalacze, harmonogram.Czynny, teraz)
 }
 
-// zapisz nanosi wiersz do dziennika rdzenia, znosząc dziennik pusty.
+// zapisz nanosi wiersz do dziennika rdzenia, znosząc dziennik pusty przed pierwszym wpisem zapisu budzika.
 func (b *budzikHarmonogramu) zapisz(wzorzec string, argumenty ...any) {
 	if b.dziennik == nil {
 		return

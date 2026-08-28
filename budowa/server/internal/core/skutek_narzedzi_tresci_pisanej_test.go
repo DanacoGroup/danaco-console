@@ -10,21 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek sześciu programów treści pisanej: składu PDF-u, odczytu formatu spoza
-// słownika rdzenia, korekty językowej dwoma silnikami pisowni, analizy prozy
-// i obróbki wstępnej skanu.
-//
-// Żaden sprawdzian tego pliku nie kończy się na kopercie udanej. Programy
-// zewnętrzne mają w tym produkcie własną odmianę szkody „ok przy pustym
-// wyniku": każdy z nich potrafi skończyć się kodem zero i nie zrobić nic —
-// typst zapisze PDF bez treści, Tika odda pustkę dla rodzaju pliku, którego nie
-// zna, vale bez konfiguracji zamelduje jeden „błąd wykonania" zamiast ustaleń,
-// a unpaper przepisze obraz bez żadnego filtru. Dlatego każdy sprawdzian pyta
-// o SKUTEK: czy w PDF-ie da się odczytać zdanie, które do niego weszło, czy
-// ustalenie niesie rodzaj i propozycję, czy tekst rozpoznany ze skanu niesie
-// słowa materiału.
-
-// pomijBezProgramu pomija sprawdzian, nazywając program, którego zabrakło.
+// pomijBezProgramu pomija sprawdzian, nazywając program, którego na maszynie
+// zabrakło, żeby wynik pominięcia był czytelny w dzienniku.
 func pomijBezProgramu(t *testing.T, nazwa, program string) {
 	t.Helper()
 	if _, err := exec.LookPath(program); err != nil {
@@ -33,7 +20,8 @@ func pomijBezProgramu(t *testing.T, nazwa, program string) {
 	}
 }
 
-// pomijBezWydaniaJavy pomija sprawdzian, gdy nie ma Javy albo archiwum programu.
+// pomijBezWydaniaJavy pomija sprawdzian, gdy na maszynie nie ma Javy albo
+// brakuje wydania (archiwum) programu wymaganego do pracy.
 func pomijBezWydaniaJavy(t *testing.T, nazwa, archiwum string) {
 	t.Helper()
 	pomijBezProgramu(t, nazwa, "java")
@@ -42,13 +30,10 @@ func pomijBezWydaniaJavy(t *testing.T, nazwa, archiwum string) {
 	}
 }
 
-// TestSkladPdfOddajeDokumentDoOdczytania wykazuje drogę składu: markdown, którego
-// LibreOffice nie otwiera wprost, wychodzi PDF-em, a z tego PDF-u da się
-// odczytać zdanie, które do niego weszło.
-//
-// Odczyt idzie DRUGĄ komendą i innym programem (poppler), więc mierzy plik, a
-// nie własną pamięć: gdyby typst zapisał okładkę bez treści, `%PDF` na początku
-// pliku i tak by stało, a tekst by nie wrócił.
+// TestSkladPdfOddajeDokumentDoOdczytania wykazuje drogę składu: markdown
+// wychodzi PDF-em, z którego da się odczytać zdanie, które do niego weszło.
+// Odczyt idzie drugą komendą i innym programem (poppler), więc mierzy plik,
+// a nie własną pamięć.
 func TestSkladPdfOddajeDokumentDoOdczytania(t *testing.T) {
 	pomijBezProgramu(t, narzedziePandoc.Nazwa, narzedziePandoc.Program)
 	pomijBezProgramu(t, narzedzieTypst.Nazwa, narzedzieTypst.Program)
@@ -77,17 +62,15 @@ func TestSkladPdfOddajeDokumentDoOdczytania(t *testing.T) {
 	if !strings.HasPrefix(string(bajty), "%PDF") {
 		t.Fatalf("wynik nie jest dokumentem PDF — pierwsze bajty: %q", pierwszeBajty(bajty))
 	}
-	// Nazwa silnika stoi w metadanych dokumentu (pole `Creator`). Bez tego
-	// sprawdzenia zielony wynik dostałaby także droga zapasowa przez
-	// LibreOffice, a sprawdzian ma wykazać, że złożył go silnik składu.
+	// Nazwa silnika stoi w metadanych dokumentu (pole `Creator`) — dowód, że
+	// złożył go silnik składu.
 	if !strings.Contains(strings.ToLower(string(bajty)), narzedzieTypst.Program) {
 		t.Fatal("dokument nie niesie w metadanych nazwy silnika składu — " +
 			"PDF powstał inną drogą niż typst")
 	}
 
-	// Odczyt idzie ścieżką bloku, nie identyfikatorem zasobu: żądanie bez
-	// `windowId` odkłada bajty w magazynie i celowo nie zakłada wiersza zasobu,
-	// więc identyfikator nie ma czego wskazać.
+	// Odczyt idzie ścieżką bloku, nie identyfikatorem: żądanie bez `windowId`
+	// nie zakłada wiersza zasobu.
 	var odczyt shared.DocumentTextExtractResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
 		shared.DocumentTextExtractRequest{SourcePath: wynik.Asset.Uri}, &odczyt)
@@ -118,8 +101,8 @@ func TestOdczytSiegaFormatuSpozaSlownika(t *testing.T) {
 		t.Fatalf("nie można założyć materiału sprawdzianu: %v", err)
 	}
 
-	// Format `eml` nie stoi w słowniku rdzenia — gdyby stanął, ten sprawdzian
-	// mierzyłby inną drogę niż myśli.
+	// Format `eml` nie stoi w słowniku rdzenia — gdyby stanął, sprawdzian
+	// mierzyłby inną drogę.
 	if _, stoi := formatyDokumentu["eml"]; stoi {
 		t.Fatal("format eml wszedł do słownika rdzenia — sprawdzian mierzy już inną drogę")
 	}
@@ -209,13 +192,10 @@ func TestKorektaSiegaSlownikaJezyka(t *testing.T) {
 	}
 }
 
-// TestKorektaPisowniSchodziNaSlownikSystemu wykazuje drogę zapasową: bez wydania
-// LanguageToola pisownię prowadzi hunspell, a ustalenie nazywa słownik, którym
-// mierzono.
-//
-// Nieobecność LanguageToola jest tu WYWOŁANA, nie czekana: zmienna wskazuje
-// katalog pusty, więc rdzeń nie znajduje archiwum. Sprawdzian mierzy przez to
-// drogę zapasową także na maszynie, na której LanguageTool stoi.
+// TestKorektaPisowniSchodziNaSlownikSystemu wykazuje drogę zapasową: bez
+// wydania LanguageToola pisownię prowadzi hunspell, a ustalenie nazywa
+// słownik, którym mierzono. Nieobecność LanguageToola jest tu wywołana
+// pustym katalogiem w zmiennej.
 func TestKorektaPisowniSchodziNaSlownikSystemu(t *testing.T) {
 	pomijBezProgramu(t, narzedzieHunspella.Nazwa, narzedzieHunspella.Program)
 	t.Setenv(zmiennaLanguageToola, t.TempDir())
@@ -250,12 +230,8 @@ func TestKorektaPisowniSchodziNaSlownikSystemu(t *testing.T) {
 
 // TestKorektaProzyZglaszaPowtorzenie wykazuje drogę vale: powtórzenie wyrazu
 // przez granicę zdania, którego reguła wbudowana nie widzi, wraca ustaleniem
-// rodzaju „styl".
-//
-// Reguła wbudowana rdzenia szuka powtórzenia W JEDNYM zdaniu
-// (`slowoPowtorzone`), więc materiał sprawdzianu stawia je w jednym wierszu bez
-// kropki między wyrazami — inaczej sprawdzian nie odróżniłby vale od reguły,
-// która stała tu wcześniej.
+// rodzaju „styl". Materiał stawia powtórzenie w jednym wierszu bez kropki
+// między wyrazami.
 func TestKorektaProzyZglaszaPowtorzenie(t *testing.T) {
 	pomijBezProgramu(t, narzedzieVale.Nazwa, narzedzieVale.Program)
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
@@ -294,8 +270,8 @@ func TestObrobkaWstepnaProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 	sciezka := skanPochylony(t, tresc)
 	pozycja := dolozPozycje(t, zmontowany, zycie, "okno-obrobki", sciezka)
 
-	// Przebieg pierwszy BEZ obróbki — odniesienie. Bez niego zielony wynik
-	// drugiego przebiegu nie mówiłby, czy program cokolwiek zmienił.
+	// Przebieg pierwszy bez obróbki jest odniesieniem — bez niego drugi
+	// przebieg nie dowiódłby zmiany.
 	var bezObrobki shared.StudioIngestRecognizeResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioIngestRecognize,
 		shared.StudioIngestRecognizeRequest{
@@ -354,11 +330,10 @@ func TestObrobkaWstepnaNieRuszaBezNastaw(t *testing.T) {
 	}
 }
 
-// TestArgumentyObrobkiWylaczajaFiltryNiezamowione pilnuje rozstrzygnięcia
-// opisanego przy `oczyscMaterial`: unpaper ma filtry włączone domyślnie, a
-// kontrakt domyślnie wyłączone, więc filtr niezamówiony musi zostać wyłączony
-// JAWNIE. Bez tego jedno `deskew` włączałoby po cichu obróbkę, o którą nikt nie
-// prosił.
+// TestArgumentyObrobkiWylaczajaFiltryNiezamowione pilnuje, że unpaper ma
+// filtry włączone domyślnie, a kontrakt wyłączone, więc filtr niezamówiony
+// musi zostać wyłączony jawnie, inaczej `deskew` włączałoby po cichu obróbkę,
+// o którą nikt nie prosił.
 func TestArgumentyObrobkiWylaczajaFiltryNiezamowione(t *testing.T) {
 	argumenty := strings.Join(
 		argumentyCzyszczenia(nastawyRozpoznania{Prostowanie: true}, "we.ppm", "wy.ppm"), " ")
@@ -422,9 +397,8 @@ func TestWykazZaleznosciZnaProgramyTresciPisanej(t *testing.T) {
 }
 
 // TestJezykKorektyNieZmyslaOdmianyKrajowej pilnuje trzystopniowego
-// rozstrzygnięcia opisanego przy `jezykKorekty`: oznaczenie idzie bez zmiany,
-// nazwa własna sprowadza się do języka podstawowego bez odmiany krajowej, a
-// napis nierozpoznany nie idzie do programu wcale.
+// rozstrzygnięcia: oznaczenie idzie bez zmiany, nazwa własna sprowadza się
+// do języka podstawowego, a napis nierozpoznany nie idzie do programu wcale.
 func TestJezykKorektyNieZmyslaOdmianyKrajowej(t *testing.T) {
 	for wejscie, oczekiwane := range map[string]string{
 		"pl-PL":                   "pl-PL",
@@ -447,12 +421,8 @@ func TestJezykKorektyNieZmyslaOdmianyKrajowej(t *testing.T) {
 // ── Pomocnicy sprawdzianów ──────────────────────────────────────────────────
 
 // skanPochylony rysuje kartkę o znanej treści i pochyla ją o dwa stopnie —
-// czyli składa dokładnie tę usterkę, którą unpaper prostuje.
-//
-// Dwa stopnie to skos, którego oko prawie nie widzi, a Tesseract nie czyta
-// wcale: na materiale sprzed obróbki nie odczytuje ani jednego znaku. To jest
-// powód, dla którego ten sprawdzian mierzy skutek dwoma przebiegami — bez
-// przebiegu bez obróbki nie byłoby wiadomo, czy program w ogóle był potrzebny.
+// skos, którego oko prawie nie widzi, a Tesseract nie czyta wcale, więc
+// sprawdzian mierzy skutek dwoma przebiegami, z obróbką i bez niej.
 func skanPochylony(t *testing.T, tresc string) string {
 	t.Helper()
 
@@ -484,7 +454,8 @@ func sciezkaArchiwumTikiDoPomiaru() string {
 	return sciezka
 }
 
-// ustalenieORodzaju wybiera pierwsze ustalenie wskazanego rodzaju.
+// ustalenieORodzaju wybiera pierwsze ustalenie wskazanego rodzaju z wykazu
+// ustaleń, które sprawdzian dostał od programu korekty.
 func ustalenieORodzaju(ustalenia []shared.ProofreadFinding,
 	rodzaj shared.ProofreadCheckKind) (shared.ProofreadFinding, bool) {
 
@@ -516,7 +487,8 @@ func bezZlamanWiersza(tekst string) string {
 	return strings.Join(strings.Fields(tekst), " ")
 }
 
-// pierwszeBajty oddaje początek treści do komunikatu o niepowodzeniu.
+// pierwszeBajty oddaje początek treści do komunikatu o niepowodzeniu, żeby
+// dziennik sprawdzianu nie niósł całej długiej treści materiału.
 func pierwszeBajty(bajty []byte) string {
 	if len(bajty) > 16 {
 		bajty = bajty[:16]

@@ -1,17 +1,6 @@
-// Przejęcie bezpośredniego sterowania — rodzina komend `control.*`, którą
-// Operator odbiera prowadzenie zlecenia pętli koordynator–wykonawca i oddaje je
-// z powrotem.
-//
-// Stan bieżący („kto steruje teraz") żyje w pamięci procesu, bo dotyczy biegu
-// żywego, a bieg żywy nie przeżywa restartu rdzenia. Ślad („kto i kiedy przejął")
-// jest faktem historycznym i idzie do dziennika akcji okna `log_akcji_okna`.
-// Po restarcie zlecenie wraca pod Koordynatora, a ślad przejęcia zostaje czytelny.
-//
-// Plik nie prowadzi biegu: nie liczy obiegów, nie wykrywa braku postępu, nie
-// rozpoczyna tur — robi to wyłącznie pętla. Nie zapisuje też do `pozycja_kolejki`:
-// wznowienie drogą `queue.action resume` woła `krok()`, a ten przesuwa pozycję po
-// mapie `krokNaprzod`, czyli pracę przerwaną w stanie „wykonywana" traktuje jak
-// skończoną.
+// Plik obsługuje rodzinę komend `control.*`, którą Operator odbiera i oddaje
+// prowadzenie zlecenia pętli koordynator-wykonawca: stan bieżący żyje w
+// pamięci procesu, ślad przejęcia idzie do dziennika akcji okna.
 package core
 
 import (
@@ -26,21 +15,22 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sterujacy nazywa rękę prowadzącą zlecenie.
-//
-// Kontrakt nie ma wyliczenia sterującego, więc katalog wartości mieszka w rdzeniu.
+// Sterujacy nazywa rękę prowadzącą zlecenie. Kontrakt nie ma wyliczenia
+// sterującego, więc katalog wartości mieszka w rdzeniu.
 type Sterujacy string
 
 const (
-	// SterujacyKoordynator — zlecenie prowadzi pętla koordynator–wykonawca.
-	// Stan domyślny: brak przejęcia ma wyglądać jak Koordynator, nie jak brak
+	// SterujacyKoordynator — zlecenie prowadzi pętla koordynator-wykonawca,
+	// stan domyślny: brak przejęcia ma wyglądać jak Koordynator, nie jak brak
 	// wiedzy.
 	SterujacyKoordynator Sterujacy = "coordinator"
-	// SterujacyOperator — sterowanie trzyma człowiek.
+	// SterujacyOperator — sterowanie trzyma człowiek, który przejął zlecenie
+	// komendą `control.takeover` i zwraca je komendą `control.release`.
 	SterujacyOperator Sterujacy = "operator"
 )
 
-// SterZlecenia jest odpowiedzią na pytanie „kto prowadzi to zlecenie TERAZ".
+// SterZlecenia jest odpowiedzią na pytanie „kto prowadzi to zlecenie teraz”,
+// niesie okno, sterującego, chwilę przejęcia i klienta, który przejął.
 type SterZlecenia struct {
 	// Okno koordynatora, którego zlecenia dotyczy ster.
 	Okno string
@@ -49,33 +39,32 @@ type SterZlecenia struct {
 	// PrzejeteO — chwila przejęcia w milisekundach epoki; zero, gdy prowadzi
 	// Koordynator.
 	PrzejeteO int64
-	// PrzejalKlient — identyfikator klienta Operatora, który przejął. Pusty
-	// znaczy „rdzeń nie potrafił tego rozstrzygnąć", tak samo jak `actorClientId`
-	// w zdarzeniach.
+	// PrzejalKlient — identyfikator klienta Operatora, który przejął, pusty gdy nierozstrzygalny.
 	PrzejalKlient string
 }
 
-// sterKoordynatora składa stan domyślny — zlecenie w rękach pętli.
+// sterKoordynatora składa stan domyślny: zlecenie w rękach pętli
+// koordynator-wykonawca, bez przejęcia przez Operatora.
 func sterKoordynatora(okno string) SterZlecenia {
 	return SterZlecenia{Okno: okno, Sterujacy: SterujacyKoordynator}
 }
 
-// rejestrSteru pamięta bieżącego sterującego każdego zlecenia z osobna.
-//
-// Byt równoległy do `rejestrBiegow` i z tego samego powodu: pętla zna swój stan
-// w chwili obiegu i wydaje go jednorazowo, a pytanie „kto steruje tym zleceniem"
-// pada z zewnątrz, w dowolnej chwili. Rejestr nie prowadzi biegu i nie zatrzymuje go.
+// rejestrSteru pamięta bieżącego sterującego każdego zlecenia z osobna, bytem
+// równoległym do rejestru biegów, ale odpowiadającym na pytanie z zewnątrz,
+// w dowolnej chwili.
 type rejestrSteru struct {
 	mu    sync.RWMutex
 	stany map[string]SterZlecenia
 }
 
-// nowyRejestrSteru zakłada pusty rejestr steru.
+// nowyRejestrSteru zakłada pusty rejestr steru dla wszystkich zleceń procesu
+// rdzenia, gotowy do zapisu i odczytu przez adapter przejęcia.
 func nowyRejestrSteru() *rejestrSteru {
 	return &rejestrSteru{stany: map[string]SterZlecenia{}}
 }
 
-// ustaw zapisuje bieżącego sterującego.
+// ustaw zapisuje bieżącego sterującego zlecenia wskazanego oknem koordynatora
+// w rejestrze steru procesu.
 func (r *rejestrSteru) ustaw(s SterZlecenia) {
 	if r == nil || s.Okno == "" {
 		return
@@ -85,7 +74,8 @@ func (r *rejestrSteru) ustaw(s SterZlecenia) {
 	r.stany[s.Okno] = s
 }
 
-// zdejmij kasuje wpis — zlecenie wraca pod Koordynatora.
+// zdejmij kasuje wpis rejestru steru — zlecenie wraca pod prowadzenie
+// Koordynatora po oddaniu przez Operatora.
 func (r *rejestrSteru) zdejmij(okno string) {
 	if r == nil {
 		return
@@ -96,7 +86,7 @@ func (r *rejestrSteru) zdejmij(okno string) {
 }
 
 // stan zwraca bieżącego sterującego. Brak wpisu daje fałsz, a nie ster pusty —
-// wołający sam rozstrzyga, czy „nikt nie przejął" znaczy dla niego Koordynatora.
+// wołający sam rozstrzyga, czy „nikt nie przejął” znaczy dla niego Koordynatora.
 func (r *rejestrSteru) stan(okno string) (SterZlecenia, bool) {
 	if r == nil || okno == "" {
 		return SterZlecenia{}, false
@@ -108,8 +98,7 @@ func (r *rejestrSteru) stan(okno string) (SterZlecenia, bool) {
 }
 
 // zachowaj zostawia wyłącznie stery okien wciąż otwartych i zwraca liczbę
-// wykreślonych. Wykaz pusty niczego nie kasuje — brak wiedzy o oknach nie jest
-// wiedzą o ich zamknięciu. Wzorowane na `rejestrBiegow.Zachowaj`.
+// wykreślonych, wzorowane na sprzątaniu rejestru biegów tej samej pętli.
 func (r *rejestrSteru) zachowaj(okna map[string]struct{}) int {
 	if r == nil || len(okna) == 0 {
 		return 0
@@ -127,26 +116,19 @@ func (r *rejestrSteru) zachowaj(okna map[string]struct{}) int {
 	return wykreslone
 }
 
-// sterBiegow jest jedynym rejestrem steru w procesie rdzenia.
-//
-// Byt pakietowy, a nie pole struktury: klucz rejestru jest niepowtarzalny
-// w procesie (identyfikator zewnętrzny okna), a odpowiedź „kto prowadzi to
-// zlecenie" jest jedna dla całego procesu — dwa rejestry dałyby dwie odpowiedzi
-// o tym samym oknie. Odpis biegu kontraktu (`biegKontraktu` w
-// `core/stan_obiegu.go`) po ster nie sięga: `LoopState` nie ma pola
-// o sterującym, więc rejestr obsługuje wyłącznie rodzinę `control.*`.
+// sterBiegow jest jedynym rejestrem steru w procesie rdzenia: bytem
+// pakietowym, nie polem struktury, bo odpowiedź „kto prowadzi to zlecenie”
+// jest jedna dla całego procesu.
 var sterBiegow = nowyRejestrSteru()
 
-// zachowajStery wykreśla stery okien już zamkniętych. Sprzątanie idzie od strony
-// okien żywych, bo pętla o zamknięciu okna nie mówi.
+// zachowajStery wykreśla stery okien już zamkniętych, idąc od strony okien
+// żywych, bo pętla koordynator-wykonawca o zamknięciu okna nie mówi.
 func zachowajStery(okna map[string]struct{}) int {
 	return sterBiegow.zachowaj(okna)
 }
 
-// adapterPrzejeciaSterowania obsługuje rodzinę `control.*`.
-//
-// Rejestr okien mówi, czy okno prowadzi zlecenie; pętla wykonuje zatrzymanie
-// i wznowienie; repozytorium przekazań pisze i czyta ślad w dzienniku akcji okna.
+// adapterPrzejeciaSterowania obsługuje rodzinę `control.*`: rejestr okien
+// mówi, czy okno prowadzi zlecenie, pętla wykonuje zatrzymanie i wznowienie.
 type adapterPrzejeciaSterowania struct {
 	okna         *session.Rejestr
 	petla        *session.Petla
@@ -154,8 +136,8 @@ type adapterPrzejeciaSterowania struct {
 	ster         *rejestrSteru
 }
 
-// nowyAdapterPrzejeciaSterowania składa adapter czwartej drogi interwencji.
-// Rejestr steru jest wspólny dla procesu — patrz komentarz przy `sterBiegow`.
+// nowyAdapterPrzejeciaSterowania składa adapter czwartej drogi interwencji,
+// ze wspólnym dla procesu rejestrem steru.
 func nowyAdapterPrzejeciaSterowania(okna *session.Rejestr, petla *session.Petla,
 	repozytorium dane.RepozytoriumPrzekazan) *adapterPrzejeciaSterowania {
 	return &adapterPrzejeciaSterowania{
@@ -163,15 +145,9 @@ func nowyAdapterPrzejeciaSterowania(okna *session.Rejestr, petla *session.Petla,
 	}
 }
 
-// Przejmij wykonuje `control.takeover`: Operator bierze zlecenie w swoje ręce.
-//
-// Kolejność czynności jest treścią, nie stylem:
-//  1. ślad idzie do dziennika pierwszy, bo tylko on może się nie udać —
-//     przejęcie bez zapisu zostałoby bez świadka;
-//  2. ster wchodzi do rejestru przed zatrzymaniem, żeby rozgłoszenie stanu biegu
-//     wywołane zatrzymaniem niosło już nowego sterującego;
-//  3. `petla.Zatrzymaj` staje na końcu i nie kasuje niczego z dorobku
-//     Koordynatora — Operator wchodzi tam, gdzie proces stoi.
+// Przejmij wykonuje `control.takeover`: Operator bierze zlecenie w swoje ręce,
+// a kolejność zapisu śladu, rejestru i zatrzymania pętli jest treścią, nie
+// stylem.
 func (a *adapterPrzejeciaSterowania) Przejmij(ctx context.Context,
 	z ZadaniePrzejeciaSterowania) (WynikPrzejeciaSterowania, error) {
 	if err := a.sprawdzZlecenie(z.WindowId); err != nil {
@@ -197,15 +173,9 @@ func (a *adapterPrzejeciaSterowania) Przejmij(ctx context.Context,
 	return WynikPrzejeciaSterowania{Loop: biegKontraktu(stan), Handover: zapis}, nil
 }
 
-// Oddaj wykonuje `control.release`: Operator zwraca zlecenie Koordynatorowi.
-//
-// `Petla.Wznow` kasuje wyłącznie licznik braku postępu i ostatni odcisk
-// strumienia: historia obiegów zostaje, więc Koordynator podejmuje bieg, a nie
-// zaczyna go od nowa.
-//
-// Oddanie zlecenia, którego nikt nie przejął, jest odmawiane nazwanym błędem.
-// Cicha zgoda wznowiłaby bieg, którego Operator nie zatrzymywał — czyli zmiana
-// stanu, o którą nikt nie prosił.
+// Oddaj wykonuje `control.release`: Operator zwraca zlecenie Koordynatorowi,
+// a oddanie zlecenia, którego nikt nie przejął, jest odmawiane nazwanym
+// błędem.
 func (a *adapterPrzejeciaSterowania) Oddaj(ctx context.Context,
 	z ZadanieOddaniaSterowania) (WynikOddaniaSterowania, error) {
 	if err := a.sprawdzZlecenie(z.WindowId); err != nil {
@@ -233,9 +203,9 @@ func (a *adapterPrzejeciaSterowania) Oddaj(ctx context.Context,
 	return WynikOddaniaSterowania{Loop: biegKontraktu(stan), Handover: zapis}, nil
 }
 
-// Ster wykonuje `control.get`: kto prowadzi zlecenie i kto je dotąd przejmował.
-//
-// Okno bez ani jednego przejęcia oddaje `coordinator` i wykaz pusty.
+// Ster wykonuje `control.get`: kto prowadzi zlecenie i kto je dotąd
+// przejmował. Okno bez ani jednego przejęcia oddaje wartość Koordynatora
+// i wykaz pusty.
 func (a *adapterPrzejeciaSterowania) Ster(ctx context.Context,
 	z ZadanieOdczytuSterowania) (WynikOdczytuSterowania, error) {
 	if err := a.sprawdzZlecenie(z.WindowId); err != nil {
@@ -256,10 +226,8 @@ func (a *adapterPrzejeciaSterowania) Ster(ctx context.Context,
 	}, nil
 }
 
-// sprawdzZlecenie odmawia wszystkiemu, co nie jest zleceniem prowadzonym.
-//
-// Sprawdzana jest żywa rola okna z rejestru nadzorcy, a nie kolumna w bazie —
-// przejęcie dotyczy biegu żywego, a więź koordynatora bywa w bazie pusta.
+// sprawdzZlecenie odmawia wszystkiemu, co nie jest zleceniem prowadzonym,
+// sprawdzając żywą rolę okna z rejestru nadzorcy, a nie kolumnę w bazie.
 func (a *adapterPrzejeciaSterowania) sprawdzZlecenie(idOkna string) error {
 	if idOkna == "" {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
@@ -293,11 +261,8 @@ func (a *adapterPrzejeciaSterowania) sprawdzZlecenie(idOkna string) error {
 	return nil
 }
 
-// zapiszSlad odnotowuje przejęcie albo oddanie w dzienniku akcji okna.
-//
-// Ślad idzie dwiema kolumnami surowego zapisu, dokładnie tak, jak dziennik ich
-// używa: `parametry` niosą to, o co poprosił Operator, `wynik` — odpis biegu
-// z chwili czynności. Warstwa danych żadnej z nich nie rozbiera.
+// zapiszSlad odnotowuje przejęcie albo oddanie w dzienniku akcji okna,
+// dwiema kolumnami surowego zapisu, których warstwa danych nie rozbiera.
 func (a *adapterPrzejeciaSterowania) zapiszSlad(ctx context.Context, rodzaj string,
 	zapis ZapisSterowania, stan session.StanObiegu) error {
 	parametry, err := zapisJSON(zapis)
@@ -319,12 +284,9 @@ func (a *adapterPrzejeciaSterowania) zapiszSlad(ctx context.Context, rodzaj stri
 	return nil
 }
 
-// historia odczytuje ślad sterowania i przekłada go z powrotem na zapisy.
-//
-// Repozytorium sięgane jest asercją typu po wąski interfejs `dane.RepozytoriumSteru`,
-// bo szeroki kontrakt obszaru window.* deklaruje w całości inny plik. Port,
-// który tej zdolności nie niesie, dostaje odmowę nazywającą brak — nigdy pusty
-// wykaz udający „nikt nie przejmował".
+// historia odczytuje ślad sterowania i przekłada go z powrotem na zapisy,
+// sięgając repozytorium asercją typu po wąski interfejs
+// `dane.RepozytoriumSteru`.
 func (a *adapterPrzejeciaSterowania) historia(ctx context.Context, okno string, limit int) ([]ZapisSterowania, error) {
 	czytnik, niesie := a.repozytorium.(dane.RepozytoriumSteru)
 	if !niesie {
@@ -344,11 +306,9 @@ func (a *adapterPrzejeciaSterowania) historia(ctx context.Context, okno string, 
 	return historia, nil
 }
 
-// zapisZeSladu odtwarza zapis przejęcia z wiersza dziennika akcji.
-//
-// Wiersz nieczytelny zostaje w historii z rodzajem odczytanym z kolumny
-// `akcja_id`, bo sam fakt „ktoś tu przejmował sterowanie" jest prawdziwy nawet
-// wtedy, gdy szczegóły są uszkodzone.
+// zapisZeSladu odtwarza zapis przejęcia z wiersza dziennika akcji. Wiersz
+// nieczytelny zostaje w historii, bo sam fakt przejęcia jest prawdziwy nawet
+// uszkodzony.
 func zapisZeSladu(wiersz dane.AkcjaOkna) ZapisSterowania {
 	zapis := ZapisSterowania{WindowId: wiersz.Okno, Controller: SterujacyKoordynator}
 	if wiersz.AkcjaID == dane.AkcjaPrzejeciaSterowania {
@@ -366,7 +326,8 @@ func zapisZeSladu(wiersz dane.AkcjaOkna) ZapisSterowania {
 	return odczytany
 }
 
-// zapisJSON zamienia byt na surowy zapis kolumny dziennika.
+// zapisJSON zamienia byt przejęcia sterowania na surowy zapis kolumny
+// dziennika akcji okna, gotowy do zapisania w repozytorium.
 func zapisJSON(v any) (*string, error) {
 	tresc, err := json.Marshal(v)
 	if err != nil {
@@ -377,7 +338,8 @@ func zapisJSON(v any) (*string, error) {
 	return &zapis, nil
 }
 
-// tekstWskaznika odczytuje pole opcjonalne jako napis; brak daje pustkę.
+// tekstWskaznika odczytuje pole opcjonalne surowego zapisu jako napis; brak
+// wartości daje pustkę zamiast odmowy.
 func tekstWskaznika(w *string) string {
 	if w == nil {
 		return ""
@@ -385,8 +347,8 @@ func tekstWskaznika(w *string) string {
 	return *w
 }
 
-// wartoscWskaznika odczytuje liczbę opcjonalną; brak daje zero, które warstwa
-// danych sprowadza do limitu domyślnego.
+// wartoscWskaznika odczytuje liczbę opcjonalną surowego zapisu; brak daje
+// zero, które warstwa danych sprowadza do limitu domyślnego.
 func wartoscWskaznika(w *int) int {
 	if w == nil {
 		return 0

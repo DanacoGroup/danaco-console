@@ -1,3 +1,6 @@
+// Sprawdziany warsztatów wektora, kroju ikonowego, schematu, makiety i barwy
+// modułu Design mierzą liczbę wynikową operacji, a nie sam fakt odpowiedzi bez
+// błędu.
 package core
 
 import (
@@ -15,33 +18,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek warsztatów WEKTORA, IKON, MAKIETY i BARWY modułu Design.
-//
-// ── Po co ten plik istnieje ─────────────────────────────────────────────────
-// Sprawdziany tych czterech obszarów były przez jedną turę sprawdzianami
-// KOMPILACJI: wołały komendę i patrzyły, czy odpowiedź jest odpowiedzią.
-// Sprawdzian tego rodzaju przechodzi także wtedy, gdy operacja logiczna oddaje
-// pierwszy kształt zamiast sumy, krój niesie zero glifów, a schemat wychodzi
-// pustym płótnem — bo wszystko to są odpowiedzi udane.
-//
-// Dlatego każdy sprawdzian tego pliku pyta o LICZBĘ zmierzoną w wyniku:
-//   - operacja logiczna — o współrzędne węzłów i o to, które punkty płaszczyzny
-//     do kształtu należą (sprawdzenie przynależności, nie oglądanie prostokąta
-//     otaczającego);
-//   - krój ikonowy — o liczbę glifów ODCZYTANĄ z pliku TTF przez czytnik krojów
-//     wraz z liczbą krzywych w konturach;
-//   - schemat — o liczbę ścieżek w dokumencie SVG;
-//   - barwa — o współczynnik kontrastu przeliczony niezależnie wzorem WCAG
-//     i o kąty odcieni harmonii;
-//   - układ makiety — o położenia warstw ODCZYTANE z bazy po zapisie;
-//   - odszumienie — o to, czy krawędź została krawędzią, a płaski obszar
-//     wygładzeniem.
-//
-// Pierwszy przebieg tego pliku wykrył defekt zastany: tabela `maxp` składanego
-// kroju miała 36 bajtów wobec 32 wymaganych przez format, więc żaden czytnik
-// krojów nie wczytywał pliku, choć rdzeń oddawał go bez odmowy. To jest miara
-// wartości sprawdzianu skutku — sprawdzian kompilacji świecił nad tym zielono.
 
 // ── Warsztat wektorowy: operacje logiczne na węzłach ────────────────────────
 
@@ -61,8 +37,8 @@ func zalozPlanszeWektorowaSprawdzianu(t *testing.T, zmontowany *Zmontowany,
 	return wynik.Board.Id
 }
 
-// dolozProstokatSprawdzianu wstawia prostokąt jako ścieżkę o węzłach i oddaje
-// jej identyfikator.
+// dolozProstokatSprawdzianu wstawia na wskazaną planszę prostokąt jako ścieżkę
+// złożoną z węzłów i oddaje identyfikator zapisanej ścieżki.
 func dolozProstokatSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	plansza string, x, y, szerokosc, wysokosc float64) string {
 
@@ -77,12 +53,9 @@ func dolozProstokatSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie conte
 	return wynik.Path.Id
 }
 
-// czyPunktWSciezceDesignu rozstrzyga, czy punkt leży w wielokącie węzłów —
-// regułą parzystości przecięć.
-//
-// To jest sedno pomiaru operacji logicznej: prostokąt otaczający wyniku bywa
-// identyczny dla sumy i dla pierwszego z kształtów, a przynależność punktu
-// rozróżnia je bez pudła.
+// czyPunktWSciezceDesignu rozstrzyga regułą parzystości przecięć, czy punkt
+// leży w wielokącie węzłów; przynależność punktu rozróżnia sumę od pierwszego
+// kształtu, gdy ich prostokąty otaczające są identyczne.
 func czyPunktWSciezceDesignu(wezly []shared.DesignVectorNode, x, y float64) bool {
 	wewnatrz := false
 	ile := len(wezly)
@@ -100,7 +73,8 @@ func czyPunktWSciezceDesignu(wezly []shared.DesignVectorNode, x, y float64) bool
 	return wewnatrz
 }
 
-// prostokatOtaczajacyWezlowDesignu oddaje krańce wykazu węzłów.
+// prostokatOtaczajacyWezlowDesignu oddaje najmniejsze i największe współrzędne
+// wykazu węzłów jako krańce prostokąta otaczającego kształt.
 func prostokatOtaczajacyWezlowDesignu(wezly []shared.DesignVectorNode) (float64, float64,
 	float64, float64) {
 
@@ -115,16 +89,15 @@ func prostokatOtaczajacyWezlowDesignu(wezly []shared.DesignVectorNode) (float64,
 	return najmniejszyX, najmniejszyY, najwiekszyX, najwiekszyY
 }
 
-// TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt mierzy WYNIK sumy, części
+// TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt mierzy wynik sumy, części
 // wspólnej i różnicy dwóch prostokątów: prostokąt otaczający oraz przynależność
-// trzech punktów rozstrzygających. Operacja oddająca pierwszy kształt zamiast
-// wyniku przechodzi sprawdzian kompilacji i wywala się tutaj.
+// trzech punktów rozstrzygających.
 func TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	plansza := zalozPlanszeWektorowaSprawdzianu(t, zmontowany, zycie, "okno-wektora")
 
-	// Dwa prostokąty 40×40 zachodzące na siebie narożami: część wspólna to
-	// kwadrat 20×20 od (20;20) do (40;40).
+	// Dwa prostokąty 40×40 zachodzące narożami: część wspólna to kwadrat 20×20
+	// od (20;20) do (40;40).
 	przypadki := []struct {
 		operacja                    shared.DesignBooleanOp
 		odX, odY, doX, doY          float64
@@ -146,15 +119,13 @@ func TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt(t *testing.T) {
 				Operation: przypadek.operacja,
 			}, &wynik)
 
-		// Ścieżki źródłowe mają zniknąć i wrócić w bilansie — inaczej okno
-		// pokazywałoby kształty, których w bazie już nie ma.
+		// Ścieżki źródłowe znikają i wracają w bilansie usuniętych.
 		if len(wynik.RemovedPathIds) != 2 {
 			t.Errorf("operacja %s usunęła %d ścieżek źródłowych, a były dwie",
 				przypadek.operacja, len(wynik.RemovedPathIds))
 		}
 
-		// Węzły czytamy Z BAZY, nie z odpowiedzi: wynik operacji ma dać się ciągnąć
-		// piórem dalej, a to znaczy, że musi w bazie leżeć.
+		// Węzły wyniku czytane są z bazy, nie z odpowiedzi operacji.
 		var wykaz shared.DesignVectorPathListResponse
 		wykonajUdana(t, zmontowany, zycie, shared.CommandDesignVectorPathList,
 			shared.DesignVectorPathListRequest{BoardId: plansza}, &wykaz)
@@ -178,8 +149,8 @@ func TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt(t *testing.T) {
 				przypadek.odX, przypadek.odY, przypadek.doX, przypadek.doY)
 		}
 
-		// Trzy punkty rozstrzygające: wyłącznie w pierwszym (10;10), w obu (30;30),
-		// wyłącznie w drugim (50;50).
+		// Punkty rozstrzygające: wyłącznie w pierwszym, w obu, wyłącznie w drugim
+		// prostokącie.
 		sprawdz := func(x, y float64, oczekiwane bool, gdzie string) {
 			if czyPunktWSciezceDesignu(wezly, x, y) != oczekiwane {
 				t.Errorf("operacja %s: punkt (%.0f;%.0f) %s w wyniku, a jest odwrotnie",
@@ -199,11 +170,8 @@ func TestOperacjeLogiczneNaWezlachDajaZmierzonyKsztalt(t *testing.T) {
 // ── Krój ikonowy: liczba glifów w pliku TTF ─────────────────────────────────
 
 // TestKrojIkonowyMaZmierzonaLiczbeGlifowWPliku składa krój z ikon katalogu
-// i mierzy PLIK czytnikiem krojów: liczbę glifów, przypisanie punktów kodowych,
-// obecność konturów i obecność krzywych kwadratowych.
-//
-// Pole `included` odpowiedzi mogło powstać z długości wykazu żądania — plik
-// mówi, ile glifów naprawdę w nim leży.
+// i mierzy plik czytnikiem krojów: liczbę glifów, przypisanie punktów
+// kodowych, obecność konturów i krzywych kwadratowych.
 func TestKrojIkonowyMaZmierzonaLiczbeGlifowWPliku(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -234,9 +202,8 @@ func TestKrojIkonowyMaZmierzonaLiczbeGlifowWPliku(t *testing.T) {
 	}
 	bajty := bajtyPodOdwolaniem(t, katalog, *pakiet.Asset.Uri)
 
-	// Czytnik krojów jest tu MIARĄ, nie ozdobą: jeżeli plik ma tabelę o złej
-	// długości albo katalog tabel nie zgadza się z treścią, `sfnt.Parse` odmawia
-	// tak samo jak przeglądarka.
+	// Czytnik krojów odmawia pliku o tabeli złej długości tak samo jak
+	// przeglądarka.
 	kroj, err := sfnt.Parse(bajty)
 	if err != nil {
 		t.Fatalf("złożony krój nie daje się wczytać czytnikiem krojów: %v — plik w tym stanie "+
@@ -256,8 +223,7 @@ func TestKrojIkonowyMaZmierzonaLiczbeGlifowWPliku(t *testing.T) {
 		if err != nil {
 			t.Fatalf("odczyt przypisania znaku %U nie powiódł się: %v", znak, err)
 		}
-		// Zero znaczy `.notdef`: znak, którego krój nie zna. Ikona bez punktu
-		// kodowego jest ikoną, do której arkusz stylów nie ma jak sięgnąć.
+		// Zero oznacza glif `.notdef`: znak bez przypisania w kroju.
 		if indeks == 0 {
 			t.Fatalf("krój nie przypisuje znaku %U do żadnego glifu, a ikona %s ma tam stać",
 				znak, kody[numer])
@@ -279,9 +245,8 @@ func TestKrojIkonowyMaZmierzonaLiczbeGlifowWPliku(t *testing.T) {
 			}
 		}
 	}
-	// Kontury ikon to obrysy kresek z zaokrąglonymi końcami i złączeniami, więc
-	// krzywe w nich BYĆ MUSZĄ. Zero krzywych znaczy, że kontur został spłaszczony
-	// do łamanej i plik jest kilka razy większy, niż powinien.
+	// Kontury ikon niosą krzywe z zaokrągleń; ich brak znaczy spłaszczenie do
+	// łamanej.
 	if krzywych == 0 {
 		t.Errorf("glify kroju nie niosą ani jednej krzywej kwadratowej (odcinków: %d) — "+
 			"kontury zostały spłaszczone do łamanej", odcinkow)
@@ -322,16 +287,13 @@ func TestSchematMaZmierzonaLiczbeSciezekWPliku(t *testing.T) {
 			dokument[:min(120, len(dokument))])
 	}
 	sciezek := strings.Count(dokument, "<path")
-	// Cztery węzły, jedno połączenie, tło i podpisy konturami — każdy z tych
-	// elementów jest ścieżką. Granica pięciu jest ostrożna i nadal wyłapuje
-	// płótno puste albo schemat z jednym węzłem.
+	// Cztery węzły z podpisami dają co najmniej pięć ścieżek dokumentu.
 	if sciezek < 5 {
 		t.Errorf("dokument SVG schematu ma %d ścieżek, a cztery węzły z podpisami dają "+
 			"co najmniej pięć", sciezek)
 	}
 
-	// Węzeł wskazujący nadrzędnego, którego w wykazie nie ma, MA wrócić
-	// w bilansie: postawienie go w warstwie zerowej udawałoby, że jest korzeniem.
+	// Węzeł o nieistniejącym nadrzędnym wraca w bilansie nieumieszczonych.
 	var zBrakiem shared.DesignDiagramRenderResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignDiagramRender,
 		shared.DesignDiagramRenderRequest{
@@ -347,13 +309,8 @@ func TestSchematMaZmierzonaLiczbeSciezekWPliku(t *testing.T) {
 	}
 }
 
-// TestWykresMaZmierzonaLiczbeSciezekWPliku mierzy to samo co sprawdzian schematu
-// i po tym samym płótnie: wykres słupkowy wydany do SVG ma mieć w pliku ścieżkę
-// na każdy słupek, osie i podpisy.
-//
-// Sprawdzian stoi obok schematu, bo obie czynności idą jednym płótnem i jednym
-// wydawcą — a wydawca SVG przerywa wykonanie przy styl obrysu bez zakończenia
-// kreski i właśnie tak przerywał je przy osiach każdego wykresu.
+// TestWykresMaZmierzonaLiczbeSciezekWPliku mierzy liczbę ścieżek wydanego
+// dokumentu SVG wykresu słupkowego: ścieżkę na każdy słupek, osie i podpisy.
 func TestWykresMaZmierzonaLiczbeSciezekWPliku(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -377,8 +334,8 @@ func TestWykresMaZmierzonaLiczbeSciezekWPliku(t *testing.T) {
 	if !strings.Contains(dokument, "<svg") {
 		t.Fatal("wydany plik wykresu nie jest dokumentem SVG")
 	}
-	// Sześć słupków, osie, tło, tytuł, legenda i podpisy kategorii — ścieżek jest
-	// znacznie więcej niż osiem, a granica ośmiu wyłapuje płótno puste.
+	// Dwie serie po trzy wartości z osiami i podpisami dają co najmniej osiem
+	// ścieżek.
 	if sciezek := strings.Count(dokument, "<path"); sciezek < 8 {
 		t.Errorf("dokument SVG wykresu ma %d ścieżek, a dwie serie po trzy wartości z osiami "+
 			"i podpisami dają co najmniej osiem", sciezek)
@@ -393,9 +350,7 @@ func TestWykresMaZmierzonaLiczbeSciezekWPliku(t *testing.T) {
 // ── Makieta: układ automatyczny stawia warstwy w policzalnych miejscach ─────
 
 // TestUkladAutomatycznyStawiaWarstwyWZmierzonychMiejscach liczy położenia
-// warstw w głowie i porównuje z tym, co po zapisie leży W BAZIE. Układ, który
-// zwraca warstwy przeliczone w pamięci i nie zapisuje ich, przechodzi sprawdzian
-// kompilacji i gubi pracę Operatora przy odświeżeniu okna.
+// warstw w głowie i porównuje je z położeniami zapisanymi w bazie po ułożeniu.
 func TestUkladAutomatycznyStawiaWarstwyWZmierzonychMiejscach(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -439,8 +394,7 @@ func TestUkladAutomatycznyStawiaWarstwyWZmierzonychMiejscach(t *testing.T) {
 			},
 		}, &uklad)
 
-	// Trzy warstwy o wysokościach 10, 20 i 30 z odstępem 5 i odstępem wewnętrznym
-	// 8 od góry stają na 8, 23 i 48. Treść ma wtedy 50 szerokości i 70 wysokości.
+	// Trzy warstwy 10, 20, 30 z odstępem 5 i wcięciem 8 stają na 8, 23 i 48.
 	oczekiwaneY := map[string]float64{kody[0]: 8, kody[1]: 23, kody[2]: 48}
 	if uklad.ContentWidth == nil || math.Abs(*uklad.ContentWidth-50) > 0.001 {
 		t.Errorf("szerokość treści po ułożeniu to %v, a trzy warstwy o szerokości 50 dają 50",
@@ -450,7 +404,7 @@ func TestUkladAutomatycznyStawiaWarstwyWZmierzonychMiejscach(t *testing.T) {
 		t.Errorf("wysokość treści po ułożeniu to %v, a 10+5+20+5+30 daje 70", uklad.ContentHeight)
 	}
 
-	// Pomiar niezależny: stan po zapisie czytamy drugą komendą, nie z odpowiedzi
+	// Pomiar niezależny: stan po zapisie czyta się drugą komendą, nie z odpowiedzi
 	// układu.
 	var wykaz shared.DesignBoardListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignBoardList,
@@ -531,9 +485,8 @@ func TestKontrastBarwJestZmierzonyWzoremNiezaleznym(t *testing.T) {
 			t.Errorf("rdzeń podaje kontrast %.3f dla pary %s na %s, a wzór WCAG daje %.3f",
 				wynik.Result.Ratio, para.pierwszoplanowa, para.tlo, zmierzony)
 		}
-		// Próg AA dla tekstu zwykłego to 4,5, AAA to 7 — orzeczenie ma się zgadzać
-		// z liczbą, którą sam rdzeń podał. Rozjazd znaczy, że Operator dostaje
-		// zielone światło do pary, która progu nie spełnia.
+		// Orzeczenie progu AA ma się zgadzać ze współczynnikiem kontrastu podanym
+		// przez rdzeń.
 		if wynik.Result.PassesAA != (wynik.Result.Ratio >= 4.5) {
 			t.Errorf("para %s na %s: kontrast %.3f, a orzeczenie AA to %v",
 				para.pierwszoplanowa, para.tlo, wynik.Result.Ratio, wynik.Result.PassesAA)
@@ -544,8 +497,7 @@ func TestKontrastBarwJestZmierzonyWzoremNiezaleznym(t *testing.T) {
 		}
 	}
 
-	// Czerń na białym ma kontrast 21 — najwyższy, jaki wzór daje. Liczba inna
-	// znaczy, że rachunek nie jest rachunkiem WCAG.
+	// Czerń na białym ma kontrast 21 — najwyższy możliwy wynik wzoru WCAG.
 	var skrajny shared.DesignColorContrastCheckResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignColorContrastCheck,
 		shared.DesignColorContrastCheckRequest{Foreground: "#000000", Background: "#ffffff"},
@@ -572,11 +524,8 @@ func TestHarmonieBarwMajaZmierzoneKatyOdcieni(t *testing.T) {
 		{shared.DesignColorHarmonyTetrad, 4, []float64{0, 90, 180, 270}},
 	}
 	for _, przypadek := range przypadki {
-		// Barwa wiodąca jest wybrana z zamysłem: jej nasycenie jest takie, że po
-		// obrocie odcienia o dowolny kąt barwa nadal MIEŚCI SIĘ w zakresie
-		// wyświetlacza. Barwa nasycona mocno wychodziłaby przy części obrotów poza
-		// zakres, przycięcie przesuwałoby odcień o kilkanaście stopni i sprawdzian
-		// mierzyłby zakres wyświetlacza zamiast reguły harmonii.
+		// Nasycenie barwy wiodącej mieści każdy obrót odcienia w zakresie
+		// wyświetlacza.
 		var wynik shared.DesignColorPaletteGenerateResponse
 		wykonajUdana(t, zmontowany, zycie, shared.CommandDesignColorPaletteGenerate,
 			shared.DesignColorPaletteGenerateRequest{
@@ -600,9 +549,8 @@ func TestHarmonieBarwMajaZmierzoneKatyOdcieni(t *testing.T) {
 			odcien, _, _ := barwa.Hcl()
 			oczekiwany := math.Mod(odcienWiodacy+przypadek.obroty[numer]+360, 360)
 			roznica := math.Abs(math.Mod(odcien-oczekiwany+540, 360) - 180)
-			// Trzy stopnie tolerancji — tyle, ile bierze zaokrąglenie barwy do zapisu
-			// szesnastkowego i powrót z niego. Obrót o 90 stopni ma się od tego różnić
-			// bez wątpliwości.
+			// Trzy stopnie tolerancji odpowiadają zaokrągleniu barwy do zapisu
+			// szesnastkowego.
 			if roznica > 3 {
 				t.Errorf("harmonia %s, barwa %d (%s): odcień %.1f stopni, a obrót o %.0f od "+
 					"wiodącej (%.1f) daje %.1f", przypadek.harmonia, numer+1, wpis.Hex,
@@ -643,9 +591,8 @@ func obrazSchodkowyPNG(t *testing.T, bok int) []byte {
 }
 
 // TestWygladzenieObrysuKonturowMaSkutekWPliku mierzy różnicę między obrysowaniem
-// bez wygładzenia i z wygładzeniem: bez niego dokument nie ma ani jednej krzywej,
-// z nim — ma. Pole przyjmowane i nieużywane obiecuje Operatorowi czynność,
-// której nie ma.
+// bez wygładzenia i z wygładzeniem: bez niego dokument nie ma ani jednej
+// krzywej, z nim — ma.
 func TestWygladzenieObrysuKonturowMaSkutekWPliku(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -694,10 +641,9 @@ func TestWygladzenieObrysuKonturowMaSkutekWPliku(t *testing.T) {
 	}
 }
 
-// TestObrysObszaruObchodziDziureWPrzeciwnaStrone mierzy dwie własności obrysu, na
-// których stoi poprawność wypełnienia w SVG: obszar z dziurą daje DWA kontury,
-// a dziura biegnie w stronę przeciwną do konturu zewnętrznego. Bez tego dziura
-// wypełniłaby się barwą obszaru i pierścień wyszedłby kołem.
+// TestObrysObszaruObchodziDziureWPrzeciwnaStrone mierzy dwie własności obrysu
+// potrzebne poprawności wypełnienia SVG: obszar z dziurą daje dwa kontury,
+// a dziura biegnie w stronę przeciwną do konturu zewnętrznego.
 func TestObrysObszaruObchodziDziureWPrzeciwnaStrone(t *testing.T) {
 	// Pierścień 5×5 z dziurą 3×3 w środku, zapisany odcinkami wierszy.
 	pierscien := [][3]int{
@@ -774,7 +720,8 @@ func obrazZKrawedziaIZiarnemPNG(t *testing.T, bok int) []byte {
 	return bufor.Bytes()
 }
 
-// odchylenieObszaruSprawdzianu liczy odchylenie jasności w prostokącie obrazu.
+// odchylenieObszaruSprawdzianu liczy odchylenie standardowe jasności punktów
+// we wskazanym prostokącie obrazu, niezależnie od rachunku rdzenia.
 func odchylenieObszaruSprawdzianu(obraz image.Image, obszar image.Rectangle) float64 {
 	suma, sumaKwadratow, punktow := 0.0, 0.0, 0.0
 	for y := obszar.Min.Y; y < obszar.Max.Y; y++ {
@@ -793,7 +740,8 @@ func odchylenieObszaruSprawdzianu(obraz image.Image, obszar image.Rectangle) flo
 	return math.Sqrt(math.Max(0, sumaKwadratow/punktow-srednia*srednia))
 }
 
-// sredniaObszaruSprawdzianu liczy średnią jasność w prostokącie obrazu.
+// sredniaObszaruSprawdzianu liczy średnią jasność punktów we wskazanym
+// prostokącie obrazu, niezależnie od rachunku rdzenia.
 func sredniaObszaruSprawdzianu(obraz image.Image, obszar image.Rectangle) float64 {
 	suma, punktow := 0.0, 0.0
 	for y := obszar.Min.Y; y < obszar.Max.Y; y++ {
@@ -809,10 +757,9 @@ func sredniaObszaruSprawdzianu(obraz image.Image, obszar image.Rectangle) float6
 	return suma / punktow
 }
 
-// TestOdszumienieZdejmujeZiarnoIZostawiaKrawedz mierzy w PLIKU dwie rzeczy
-// naraz: odchylenie jasności w płaskim obszarze (ziarno ma zejść) i skok
-// jasności na krawędzi (krawędź ma zostać). Rozmycie zdejmuje jedno i drugie —
-// filtr bilateralny tylko pierwsze, i to jest cała różnica między nimi.
+// TestOdszumienieZdejmujeZiarnoIZostawiaKrawedz mierzy w pliku odchylenie
+// jasności w płaskim obszarze i skok jasności na krawędzi po zastosowaniu
+// odszumienia.
 func TestOdszumienieZdejmujeZiarnoIZostawiaKrawedz(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -863,8 +810,8 @@ func TestOdszumienieZdejmujeZiarnoIZostawiaKrawedz(t *testing.T) {
 		t.Fatalf("obraz źródłowy ma na krawędzi skok %.1f — sprawdzian nie ma czego bronić",
 			skokPrzed)
 	}
-	// Osiemdziesiąt procent skoku: rozmycie o promieniu trzech punktów zjada go
-	// na tych pasach w dużej części, a filtr bilateralny prawie nie rusza.
+	// Rozmycie zdejmuje skok na krawędzi, a filtr bilateralny prawie go nie
+	// rusza.
 	if skokPo < 0.8*skokPrzed {
 		t.Errorf("po odszumieniu skok na krawędzi to %.1f, a przed był %.1f — odszumienie "+
 			"rozmyło krawędź zamiast ją zachować", skokPo, skokPrzed)

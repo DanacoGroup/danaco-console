@@ -1,26 +1,5 @@
-// Odpowiedzialność pliku: wpięcie pięciu komend rodziny `memory.*`.
-//
-// Plik stoi osobno od `handlers_workspace.go`, który wpina sześć komend obszaru
-// `workspace.*`. Rodzina `memory.*` weszła do kontraktu osobno i osobno się
-// wpina, choć jedzie na tej samej maszynerii pamięci. Port poniżej jest
-// rozszerzeniem portu PrzestrzenRobocza, nie drugim portem: pamięć ma w rdzeniu
-// jednego właściciela.
-//
-// Jedna zmiana wpisu rozgłasza dwa zdarzenia i nie jest to powtórzenie:
-// `workspace.project.changed` niesie projekt i mówi oknu Workspace, że coś się
-// w nim ruszyło, a `memory.changed` niesie sam wpis wraz z rodzajem zmiany
-// i zasila okno Context Memory bez odpytywania `memory.list`. To dwa różne byty
-// tej samej czynności — tym samym wzorem, co `queue.changed` obok
-// `automation.execution.status`.
-//
-// `memory.toggle` nie rozgłasza niczego: przestawia konfigurację karty sesji,
-// nie stan wpisu ani projektu, a zdarzenia dla tego bytu kontrakt nie ma.
-//
-// Rodzaj zmiany idzie za tym, co się stało. `memory.set` bez `entryId` zakłada
-// wpis (`created`), ze wskazaniem — zmienia go (`updated`); `memory.detach`
-// zwęża zasięg wpisu, który żyje dalej (`updated`); `memory.delete` kasuje
-// (`deleted`). Odesłanie wszystkiego jako `updated` kazałoby klientowi zgadywać,
-// czy wpis dopisać do wykazu, czy z niego zdjąć.
+// Plik wpina pięć komend rodziny memory.* jako rozszerzenie portu PrzestrzenRobocza, bo pamięć
+// ma w rdzeniu jednego właściciela wspólnego z obszarem workspace.*.
 package core
 
 import (
@@ -47,19 +26,15 @@ type PamiecPrzestrzeni interface {
 	// WylaczeniaPamieciZasiegu obsługuje `memory.disable.list`.
 	WylaczeniaPamieciZasiegu(ctx context.Context,
 		z shared.MemoryDisableListRequest) (shared.MemoryDisableListResponse, error)
-	// PrzestawWylaczeniePamieci obsługuje `memory.disable.set` — założenie
-	// wyłączenia i jego zniesienie idą jedną komendą, bo odwracalność jednym
-	// ruchem jest wymogiem produktu.
+	// PrzestawWylaczeniePamieci obsługuje założenie i zniesienie wyłączenia jedną komendą odwracalną.
 	PrzestawWylaczeniePamieci(ctx context.Context,
 		z shared.MemoryDisableSetRequest) (shared.MemoryDisableSetResponse, error)
 
-	// WpisPamieciKontraktu oddaje wpis w kształcie kontraktu. Potrzebują go oba
-	// rozgłoszenia po `memory.delete`, którego żądanie niesie sam identyfikator:
-	// projekt dla `workspace.project.changed`, cały wpis dla `memory.changed`.
+	// WpisPamieciKontraktu oddaje wpis w kształcie kontraktu, potrzebny obu rozgłoszeniom po usunięciu go.
 	WpisPamieciKontraktu(ctx context.Context, identyfikator string) (shared.WorkspaceMemoryEntry, error)
 }
 
-// zarejestrujPamiec wpina pięć komend rodziny `memory.*`.
+// zarejestrujPamiec wpina pięć komend rodziny memory.* w rejestrze rdzenia tej platformy konta użytkownika.
 func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -67,10 +42,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 
 	r.Zarejestruj(shared.CommandMemoryDelete,
 		obsluz(func(ctx context.Context, z shared.MemoryDeleteRequest) (shared.MemoryDeleteResponse, error) {
-			// Wpis odczytuje się przed usunięciem — po nim już go nie ma
-			// i nie ma jak powiedzieć ani czyja pamięć się zmieniła, ani co
-			// zniknęło. Nieudany odczyt kończy wyłącznie rozgłoszenie, nie
-			// komendę.
+			// Wpis odczytuje się przed usunięciem, bo po nim go nie ma; nieudany odczyt kończy rozgłoszenie.
 			wpis, _ := m.WpisPamieciKontraktu(ctx, z.EntryId)
 			odpowiedz, err := m.UsunWpisPamieciKomenda(ctx, z)
 			if err == nil && wpis.Id != "" {
@@ -110,10 +82,7 @@ func zarejestrujPamiec(r *Rejestr, m PamiecPrzestrzeni, e *emiter) {
 	r.Zarejestruj(shared.CommandMemoryDisableSet,
 		obsluz(func(ctx context.Context, z shared.MemoryDisableSetRequest) (shared.MemoryDisableSetResponse, error) {
 			odpowiedz, err := m.PrzestawWylaczeniePamieci(ctx, z)
-			// Bez zmiany wykazu nie ma czego rozgłaszać: wyłączenie powtórzone
-			// nie jest zdarzeniem. Rodzaj zmiany idzie za żądaniem — wyłączenie
-			// zakłada wiersz, zniesienie go kasuje — żeby powłoka nie musiała
-			// zgadywać, czy pozycję dopisać do wykazu, czy z niego zdjąć.
+			// Bez zmiany wykazu nie ma czego rozgłaszać; wyłączenie zakłada wiersz, zniesienie go kasuje.
 			if err == nil && odpowiedz.Changed {
 				e.wylaczeniePamieci(rodzajZmianyWylaczenia(z.Disabled), odpowiedz.Disable)
 			}

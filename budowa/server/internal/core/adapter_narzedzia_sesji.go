@@ -1,24 +1,6 @@
-// Odpowiedzialność pliku: wypełnienie portu NarzedziaSesji — doraźne dołożenie
-// narzędzia na czas sesji oraz wykaz pozycji po ukośniku, z którego się je
-// wybiera (`store/migracja_122_narzedzia_sesji.sql`).
-//
-// ── Wykaz nie jest tabelą ──────────────────────────────────────────────────
-// Składa się na bieżąco z dwóch żywych źródeł i to jest jedyny powód, dla
-// którego schemat nie zakłada trzeciego katalogu:
-//
-//	komendy kontraktu  → rodzaj `action`: komenda po ukośniku wykonuje czynność
-//	                     aplikacji i zestawu narzędzi nie dotyka. Biorą się
-//	                     z `shared.NarzedziaModelu()`, bo tam stoi opis pełnym
-//	                     zdaniem — a opis jest w tym wykazie polem obowiązkowym,
-//	                     nie ozdobą.
-//	katalog rozszerzeń → rodzaj `tool`: powołanie narzędzia albo skilla, jedyne
-//	                     pozycje, które poszerzają zestaw modelu na czas sesji.
-//
-// Katalogu akcji (tabela `akcja`) tu celowo nie ma. Każdy jego wiersz wskazuje
-// komendę kontraktu, która stoi w wykazie już z pierwszego źródła — dołożenie go
-// dorzuciłoby po kilkadziesiąt wpisów mówiących „wyślij wiadomość" pod różnymi
-// nazwami modułowymi. Byłaby to druga pozycja o tej samej czynności w jednym
-// wykazie filtrowanym od pierwszego znaku.
+// Plik wypełnia port NarzedziaSesji. Dołożenie dodaje narzędzie do sesji na
+// czas jej trwania, a wykaz łączy komendy kontraktu z katalogiem rozszerzeń
+// w jedną filtrowaną listę pozycji po ukośniku.
 package core
 
 import (
@@ -30,7 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterNarzedziSesji wypełnia port NarzedziaSesji.
+// adapterNarzedziSesji wypełnia port NarzedziaSesji, opierając się na
+// repozytorium dołożeń sesji, repozytorium sesji oraz repozytorium rozszerzeń
+// dostępnych do dołożenia.
 type adapterNarzedziSesji struct {
 	dolozenia    dane.RepozytoriumNarzedziSesji
 	sesje        dane.RepozytoriumSesji
@@ -42,7 +26,8 @@ func nowyAdapterNarzedziSesji(dolozenia dane.RepozytoriumNarzedziSesji,
 	return &adapterNarzedziSesji{dolozenia: dolozenia, sesje: sesje, rozszerzenia: rozszerzenia}
 }
 
-// Doloz dokłada narzędzie do sesji na czas jej trwania.
+// Doloz dokłada narzędzie do sesji na czas jej trwania i oddaje zapisane
+// dołożenie razem z pełnym zestawem narzędzi sesji po tej czynności.
 func (a *adapterNarzedziSesji) Doloz(ctx context.Context,
 	z shared.SessionToolAttachRequest) (shared.SessionToolAttachResponse, error) {
 
@@ -85,15 +70,9 @@ func (a *adapterNarzedziSesji) Doloz(ctx context.Context,
 	}, nil
 }
 
-// Zdejmij zdejmuje dołożenie z sesji. Brak dołożenia NIE JEST odmową: Operator
-// prosił o stan „tego narzędzia tu nie ma" i taki stan zastaje.
-//
-// DRUGA WARTOŚĆ TO POZYCJE FAKTYCZNIE ZDJĘTE — nośnik rozgłoszenia, nie ozdoba.
-// Zdarzenie `session.tool.detached` musi nazwać pozycję nazwą PEŁNĄ, bo tylko
-// nią sąsiednie okno trafi w ten wiersz; żądanie mogło przyjść nazwą skróconą,
-// a odpowiedź kontraktu niesie już wyłącznie zestaw PO czynności, więc z niej
-// samej nie da się odczytać, co zniknęło. Adapter wie to na pewno i przekazuje
-// dalej, zamiast kazać uchwytowi zgadywać z różnicy dwóch odczytów.
+// Zdejmij zdejmuje dołożenie z sesji. Brak dołożenia nie jest odmową, bo
+// żądany stan już zachodzi. Druga zwracana wartość niesie pozycje faktycznie
+// zdjęte, nazwane pełną nazwą, do rozgłoszenia zdarzenia.
 func (a *adapterNarzedziSesji) Zdejmij(ctx context.Context,
 	z shared.SessionToolDetachRequest) (shared.SessionToolDetachResponse, []shared.SessionTool, error) {
 
@@ -107,9 +86,8 @@ func (a *adapterNarzedziSesji) Zdejmij(ctx context.Context,
 			"dołożenia bez wskazania narzędzia; Operator poda `toolName` — nazwę pełną " +
 			"ze źródłem albo skróconą")
 	}
-	// ZDEJMUJEMY PO NAZWIE ZAPISANEJ, NIE PO WYKAZIE. Narzędzie odinstalowane
-	// po dołożeniu wypada z wykazu, ale JEGO WIERSZ ZOSTAJE — i bez tego odczytu
-	// Operator nie miałby czym go zdjąć. Szukanie idzie więc po dołożeniach sesji.
+	// Zdejmowanie idzie po dołożeniach sesji, nie po wykazie: wiersz zostaje
+	// mimo odinstalowania.
 	zastane, err := a.dolozenia.Narzedzia(ctx, sesja)
 	if err != nil {
 		return shared.SessionToolDetachResponse{}, nil, bladNosnikaNarzedziSesji(err)
@@ -123,9 +101,8 @@ func (a *adapterNarzedziSesji) Zdejmij(ctx context.Context,
 		if err != nil {
 			return shared.SessionToolDetachResponse{}, nil, bladNosnikaNarzedziSesji(err)
 		}
-		// DO ROZGŁOSZENIA WCHODZI WYŁĄCZNIE WIERSZ, KTÓRY NAPRAWDĘ ZNIKNĄŁ.
-		// Repozytorium melduje fałszem, że wiersza już nie było — zdarzenie
-		// o zdjęciu czegoś, czego nie zdjęto, byłoby meldunkiem bez pracy.
+		// Do rozgłoszenia wchodzi wyłącznie wiersz faktycznie zdjęty, nie
+		// każda próba zdjęcia.
 		if usuniete {
 			zdjete = append(zdjete, narzedzieKontraktu(wpis))
 		}
@@ -137,7 +114,8 @@ func (a *adapterNarzedziSesji) Zdejmij(ctx context.Context,
 	return shared.SessionToolDetachResponse{Detached: len(zdjete) > 0, Tools: zestaw}, zdjete, nil
 }
 
-// Wykaz oddaje dołożenia sesji.
+// Wykaz oddaje dołożenia bieżącej sesji przełożone na kształt kontraktu wraz
+// z ich pełną, całkowitą liczbą.
 func (a *adapterNarzedziSesji) Wykaz(ctx context.Context,
 	z shared.SessionToolListRequest) (shared.SessionToolListResponse, error) {
 
@@ -152,7 +130,8 @@ func (a *adapterNarzedziSesji) Wykaz(ctx context.Context,
 	return shared.SessionToolListResponse{Tools: zestaw, Total: len(zestaw)}, nil
 }
 
-// Katalog oddaje wykaz pozycji po ukośniku po zawężeniu i uporządkowaniu.
+// Katalog oddaje wykaz pozycji po ukośniku po zawężeniu, oznaczeniu
+// dołożonych i uporządkowaniu, gotowy do stronicowania.
 func (a *adapterNarzedziSesji) Katalog(ctx context.Context,
 	z shared.ToolsCatalogListRequest) (shared.ToolsCatalogListResponse, error) {
 
@@ -176,7 +155,9 @@ func (a *adapterNarzedziSesji) Katalog(ctx context.Context,
 
 // ── składanie wykazu ─────────────────────────────────────────────────────────
 
-// pozycjeWykazu składa wykaz z dwóch żywych źródeł — patrz nagłówek pliku.
+// pozycjeWykazu składa wykaz z dwóch żywych źródeł: komend kontraktu modelu
+// oraz zainstalowanego katalogu rozszerzeń, bez trzeciego, osobnego katalogu
+// akcji.
 func (a *adapterNarzedziSesji) pozycjeWykazu(ctx context.Context) ([]*shared.ToolCatalogEntry, error) {
 	deklaracje := shared.NarzedziaModelu()
 	pozycje := make([]*shared.ToolCatalogEntry, 0, len(deklaracje)+32)
@@ -191,8 +172,7 @@ func (a *adapterNarzedziSesji) pozycjeWykazu(ctx context.Context) ([]*shared.Too
 			Group:       obszar,
 			Origin:      zrodloPlatformy,
 			Command:     &komenda,
-			// Komenda akcji WYKONUJE czynność i zestawu narzędzi nie zmienia
-			// — nie ma czego dokładać do sesji.
+			// Komenda akcji wykonuje czynność i zestawu narzędzi nie zmienia.
 			Attachable: false,
 		})
 	}
@@ -210,11 +190,8 @@ func (a *adapterNarzedziSesji) pozycjeWykazu(ctx context.Context) ([]*shared.Too
 }
 
 // pozycjaRozszerzenia przekłada wiersz katalogu rozszerzeń na pozycję wykazu.
-//
-// PRZEDROSTEK ŹRÓDŁA BIERZEMY Z KODU, GDY GO NIESIE. Kod `anthropic-skills:skill-creator`
-// niesie źródło i nazwę skróconą w jednym napisie. Kod bez dwukropka dostaje
-// przedrostek z pochodzenia pozycji (`danaco` albo `personal`), żeby wykaz nie
-// miał pozycji bez źródła.
+// Przedrostek źródła bierze z kodu, gdy kod go niesie, a w pozostałych
+// wypadkach z pochodzenia pozycji.
 func pozycjaRozszerzenia(w dane.Rozszerzenie) *shared.ToolCatalogEntry {
 	zrodlo, skrocona, zDwukropkiem := strings.Cut(w.Kod, ":")
 	pelna := w.Kod
@@ -233,10 +210,8 @@ func pozycjaRozszerzenia(w dane.Rozszerzenie) *shared.ToolCatalogEntry {
 		Kind:        shared.SlashEntryKindTool,
 		Group:       w.Rodzaj,
 		Origin:      zrodlo,
-		// DOŁOŻYĆ MOŻNA WYŁĄCZNIE TO, CO NAPRAWDĘ DA SIĘ PODAĆ MODELOWI.
-		// Pozycja niezainstalowana albo wyłączona zostaje w wykazie widoczna —
-		// Operator ma wiedzieć, że istnieje — ale dołożenie jej meldowałoby
-		// poszerzenie zestawu, którego nie ma.
+		// Dołożyć można wyłącznie pozycję zainstalowaną i włączoną; pozostałe
+		// zostają widoczne, niedołożalne.
 		Attachable: w.Zainstalowane && w.Wlaczone,
 	}
 }
@@ -282,11 +257,11 @@ func (a *adapterNarzedziSesji) pozycjaPoNazwie(ctx context.Context,
 
 // ── stan zestawu sesji ───────────────────────────────────────────────────────
 
-// sesjaZadania przekłada identyfikator kontraktowy sesji na klucz wiersza.
+// sesjaZadania przekłada identyfikator kontraktowy sesji na klucz jej wiersza
+// w repozytorium sesji rdzenia.
 func (a *adapterNarzedziSesji) sesjaZadania(ctx context.Context, wskazanie string) (int64, error) {
-	// Straż odbiornika zerowego — powód jak przy `DolozeniaNarzedzi`. Metoda jest
-	// wołana ze wszystkich czynności portu, więc stoi tu drugi raz: strażnik
-	// jednego wejścia nie chroni pozostałych.
+	// Straż odbiornika zerowego, bo metoda jest wołana ze wszystkich czynności
+	// portu.
 	if a == nil {
 		return 0, bladNosnikaNarzedziSesji(nil)
 	}
@@ -310,7 +285,8 @@ func (a *adapterNarzedziSesji) sesjaZadania(ctx context.Context, wskazanie strin
 	return wiersz.ID, nil
 }
 
-// zestawSesji oddaje dołożenia sesji przełożone na kształt kontraktu.
+// zestawSesji oddaje dołożenia sesji przełożone na kształt kontraktu, gotowy
+// do zwrócenia w odpowiedzi.
 func (a *adapterNarzedziSesji) zestawSesji(ctx context.Context, sesja int64) ([]shared.SessionTool, error) {
 	if a.dolozenia == nil {
 		return nil, bladNosnikaNarzedziSesji(nil)
@@ -326,25 +302,12 @@ func (a *adapterNarzedziSesji) zestawSesji(ctx context.Context, sesja int64) ([]
 	return zestaw, nil
 }
 
-// DolozeniaNarzedzi wypełnia port `core.DolozeniaNarzedziSesji`
-// (`adapter_rozmowa_zestaw.go`): oddaje same NAZWY dołożeń sesji, w kolejności
-// dokładania, na potrzeby składania zestawu narzędzi tury.
-//
-// Osobno od `Wykaz`, bo tamta czynność odpowiada komendzie kontraktu i oddaje
-// pozycje w pełnym kształcie dla Operatora, a ta oddaje WSKAZANIE dla procesu
-// modelu. Sesja bez dołożeń oddaje listę PUSTĄ i to jest stan poprawny, nie brak.
-//
-// Nazwą jest `NazwaPelna` — ta z przedrostkiem źródła — bo to ona jest
-// tożsamością dołożenia w obrębie sesji i to ją rozpoznaje strona przeciwna
-// (`narzedzia.RozbijDolozenia` → `WykazEksperta.ZDolozeniami`).
+// DolozeniaNarzedzi wypełnia port DolozeniaNarzedziSesji: oddaje same nazwy
+// dołożeń sesji w kolejności dokładania, na potrzeby składania zestawu
+// narzędzi tury modelu. Sesja bez dołożeń oddaje listę pustą.
 func (a *adapterNarzedziSesji) DolozeniaNarzedzi(ctx context.Context, idSesji string) ([]string, error) {
-	// Odbiornik zerowy NIE jest tu przypadkiem niemożliwym i nie wolno mu być
-	// paniką. Adapter wchodzi do składacza zestawu tury przez interfejs
-	// (`DolozeniaNarzedziSesji`), a wskaźnik zerowy schowany w interfejsie
-	// przechodzi porównanie `== nil` u wołającego — sprawdzenie po tamtej stronie
-	// go nie zatrzyma. Bez tej straży pierwsze `message.send` w takim montażu
-	// zabija CAŁY proces rdzenia w gorutynie tury, a Operator traci sesję, kolejkę
-	// i połączenie zamiast dostać zdanie o niewpiętym porcie.
+	// Odbiornik zerowy nie jest przypadkiem niemożliwym: przechodzi
+	// porównanie u wołającego niezauważony.
 	if a == nil {
 		return nil, bladNosnikaNarzedziSesji(nil)
 	}
@@ -366,7 +329,8 @@ func (a *adapterNarzedziSesji) DolozeniaNarzedzi(ctx context.Context, idSesji st
 	return nazwy, nil
 }
 
-// oznaczDolozone zaznacza w wykazie pozycje już dołożone do wskazanej sesji.
+// oznaczDolozone zaznacza w przekazanym wykazie pozycje już dołożone do
+// wskazanej sesji, wypełniając pole obecności przy każdej pozycji.
 func (a *adapterNarzedziSesji) oznaczDolozone(ctx context.Context, wskazanie string,
 	pozycje []*shared.ToolCatalogEntry) error {
 
@@ -382,8 +346,8 @@ func (a *adapterNarzedziSesji) oznaczDolozone(ctx context.Context, wskazanie str
 	for _, wiersz := range wiersze {
 		dolozone[wiersz.NazwaPelna] = true
 	}
-	// POLE WYPEŁNIAMY PRZY KAŻDEJ POZYCJI, także fałszem: skoro sesja została
-	// wskazana, „puste" znaczyłoby „nie wiem", a wiemy.
+	// Pole wypełnia się przy każdej pozycji, także fałszem, bo puste
+	// znaczyłoby brak wiedzy.
 	for _, pozycja := range pozycje {
 		jest := dolozone[pozycja.Name]
 		pozycja.Attached = &jest

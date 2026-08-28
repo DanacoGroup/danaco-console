@@ -1,30 +1,6 @@
-// Wspólne zaplecze dwóch narzędzi modelu, które nie są przekształceniem
-// obrazu, tylko uruchomieniem modelu nad obrazem — `image.upscale`
-// (superrozdzielczość) i `image.background.remove` (wycięcie tła). Same
-// czynności leżą w `adapter_narzedzia_obraz_model_silniki.go`, port i wpięcie
-// w `adapter_narzedzia_obraz_model_port.go`.
-//
-// To osobna rodzina od czynności `image.*`, bo obie zmyślają szczegół, którego
-// w źródle nie ma (piksele między pikselami, granicę obiektu i tła), i obie
-// potrzebują do tego sieci neuronowej z wagami na dysku. Wspólny z tamtą
-// rodziną zostaje mechanizm: rozwiązanie pary `assetId?|sourcePath?` na plik
-// do odczytu, zasięg izolacji dla wołania binarium i odłożenie bajtów wyniku
-// w magazynie zasobów Designu. Trzymamy je przez `wspolne`, a nie kopiujemy,
-// żeby druga kopia reguły nie rozjechała się z pierwszą.
-//
-// Bez silnika na maszynie ta rodzina odmawia, nazywając brak
-// (`*zewnetrzne.BrakNarzedzia` → `channel_unavailable`). Podstawienie
-// `magick -resize 200%` oddałoby obraz dwa razy większy i ani o szczegół
-// bogatszy. Tak samo z tłem: brak silnika to odmowa, a nie obraz bez zmian
-// podany jako wycięty.
-//
-// Wagi modelu leżą obok silnika i nie ściągają się w trakcie żądania. `rembg`
-// przy pierwszym uruchomieniu pobiera model sam, a wtedy sto siedemdziesiąt
-// sześć megabajtów wchodzi w czas jednego żądania, którego granica jest
-// liczona na przetwarzanie, nie na łącze; przy wolnym łączu albo braku sieci
-// żądanie urywa się w połowie pobierania i wygląda jak usterka silnika. Wagi
-// sprawdzamy więc przed uruchomieniem, a przy ich braku odmawiamy, podając,
-// gdzie mają leżeć i ile ważą.
+// Adapter obsługuje `image.upscale` i `image.background.remove`: uruchamia sieć neuronową
+// nad obrazem, weryfikuje obecność wag na dysku i odkłada wynik w magazynie zasobów Designu,
+// dzieląc mechanizm źródła i izolacji z rodziną `image.*`.
 package core
 
 import (
@@ -42,12 +18,9 @@ import (
 )
 
 const (
-	// granicaPowiekszenia to granica czasu jednego przebiegu
-	// superrozdzielczości. Bez karty graficznej sieć liczy się na procesorze:
-	// obraz 512×512 powiększany dwukrotnie zajmuje ponad minutę, a materiał
-	// aparatowy (4000 pikseli szerokości) rośnie z tym kwadratowo. Piętnaście
-	// minut znaczy „coś stanęło", a nie „to długo trwa"; niższa granica
-	// ucinałaby pracę udaną w połowie i oddawała plik urwany.
+	// granicaPowiekszenia to granica czasu jednego przebiegu superrozdzielczości bez karty
+	// graficznej; piętnaście minut mieści powiększenie materiału aparatowego na procesorze,
+	// nie ucinając pracy udanej w połowie.
 	granicaPowiekszenia = 15 * time.Minute
 
 	// granicaWycinaniaTla jest krótsza, bo przebieg jest jeden i stały:
@@ -56,27 +29,16 @@ const (
 	// wczytanie wag i przebieg z ogromnym zapasem.
 	granicaWycinaniaTla = 5 * time.Minute
 
-	// katalogModeliPowiekszeniaLinux i katalogWagWycinaniaLinux to miejsca wag
-	// na serwerze — arsenał pakietu Linux stawia je pod `/usr/local/share`
-	// (`scripts/arsenal-serwera.sh`). Na Windowsie tego drzewa nie ma, więc
-	// ścieżkę składa się względem pliku wykonywalnego — patrz `katalogModeli...`
-	// i `katalogWag...` (funkcje niżej).
+	// katalogModeliPowiekszeniaLinux i katalogWagWycinaniaLinux to miejsca wag na serwerze,
+	// gdzie arsenał pakietu Linux je stawia; na Windowsie ścieżkę składają osobne funkcje
+	// względem pliku wykonywalnego.
 	katalogModeliPowiekszeniaLinux = "/usr/local/share/realesrgan-ncnn-vulkan/models"
 	katalogWagWycinaniaLinux       = "/usr/local/share/rembg-modele"
 )
 
-// katalogModeliPowiekszenia oddaje miejsce, w którym leżą wagi sieci
-// powiększającej. Silnik ncnn szuka ich domyślnie w katalogu `models` względem
-// katalogu bieżącego, a katalog bieżący wołania arsenału jest obszarem okna —
-// czyli za każdym razem innym. Ścieżka podana jawnie (`-m`) jest jedyną, która
-// od tego nie zależy.
-//
-// Zależy od systemu, bo wagi są SKŁADNIKIEM PAKIETU, a pakiet jest inny na
-// serwerze i inny w wersji natywnej Windows. Na Linuksie arsenał serwera stawia
-// je pod `/usr/local/share`; w wersji natywnej Windows jadą obok rdzenia
-// w `pomocniki/`, więc ścieżkę bezwzględną liczy się dopiero w czasie pracy,
-// względem pliku wykonywalnego. Ścieżka zaszyta po linuksowemu odmawiała na
-// Windowsie ZANIM doszło do wołania silnika, choćby wagi były w paczce.
+// katalogModeliPowiekszenia oddaje miejsce wag sieci powiększającej: silnik ncnn szuka ich
+// domyślnie względem katalogu bieżącego wołania, który jest za każdym razem inny, więc
+// ścieżkę rdzeń podaje jawnie i zależnie od systemu.
 func katalogModeliPowiekszenia() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(katalogWagWindows(), "realesrgan-ncnn-vulkan", "models")
@@ -84,11 +46,9 @@ func katalogModeliPowiekszenia() string {
 	return katalogModeliPowiekszeniaLinux
 }
 
-// katalogWagWycinania oddaje miejsce wag sieci wycinającej tło — po tej samej
-// zasadzie co wagi powiększania. Na Linuksie ta sama ścieżka stoi w opakowaniu
-// `/usr/local/bin/rembg` jako `U2NET_HOME`, bo `zewnetrzne.Wolaj` nie dziedziczy
-// środowiska; na Windowsie opakowanie `pomocniki/rembg/rembg.exe` ustawia
-// `U2NET_HOME` na ten sam katalog, który zwraca ta funkcja.
+// katalogWagWycinania oddaje miejsce wag sieci wycinającej tło tą samą zasadą co wagi
+// powiększania; opakowanie silnika ustawia zmienną środowiskową na ten sam katalog, który
+// zwraca ta funkcja.
 func katalogWagWycinania() string {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(katalogWagWindows(), "rembg", "modele")
@@ -96,10 +56,8 @@ func katalogWagWycinania() string {
 	return katalogWagWycinaniaLinux
 }
 
-// katalogWagWindows składa katalog `pomocniki` obok pliku wykonywalnego rdzenia
-// — tą samą drogą, którą `zewnetrzne` odnajduje programy arsenału. Gdy miejsca
-// procesu nie da się ustalić, zostaje ścieżka względna: proces i tak startuje
-// z katalogu rdzenia w wydaniu natywnym.
+// katalogWagWindows składa katalog pomocniczych programów obok pliku wykonywalnego rdzenia,
+// tą samą drogą, którą odnajdywanie programów arsenału korzysta na Windowsie.
 func katalogWagWindows() string {
 	if biezace, err := os.Executable(); err == nil {
 		return filepath.Join(filepath.Dir(biezace), "pomocniki")
@@ -107,48 +65,32 @@ func katalogWagWindows() string {
 	return "pomocniki"
 }
 
-// adapterNarzedziObrazuModelu wypełnia port `NarzedziaObrazuModelu`. Nie ma
-// własnego stanu: źródło, zasięg izolacji i magazyn wyniku bierze z adaptera
-// rodziny `image.*`, a dokłada wyłącznie to, czego tamten nie zna — dwa
-// silniki neuronowe, ich wagi i granice czasu liczone w minutach.
+// adapterNarzedziObrazuModelu wypełnia port narzędzi modelu obrazu; źródło, zasięg izolacji
+// i magazyn wyniku bierze z adaptera rodziny `image.*`, dokładając dwa silniki neuronowe,
+// ich wagi i granice czasu.
 type adapterNarzedziObrazuModelu struct {
 	wspolne *adapterNarzedziObrazu
 }
 
-// nowyAdapterNarzedziObrazuModelu składa adapter na tym samym zapleczu, na
-// którym stoi rodzina `image.*`. Zaplecze przychodzi z zewnątrz, bo instancja
-// zbudowana tutaj miałaby własny uchwyt magazynu i własny uruchamiacz, czyli
-// drugą prawdę o tym, gdzie rdzeń odkłada bajty. Brak zaplecza nie psuje
-// montażu — psuje dwie komendy, które wtedy odmawiają, nazywając brak.
+// nowyAdapterNarzedziObrazuModelu składa adapter na zapleczu przychodzącym z zewnątrz, tym
+// samym, na którym stoi rodzina `image.*`, żeby uchwyt magazynu i uruchamiacz procesów nie
+// miały drugiej prawdy.
 func nowyAdapterNarzedziObrazuModelu(wspolne *adapterNarzedziObrazu) *adapterNarzedziObrazuModelu {
 	return &adapterNarzedziObrazuModelu{wspolne: wspolne}
 }
 
-// pracowniaObrazu jest katalogiem jednego przebiegu: leży w nim dowiązanie do
-// źródła i plik wyniku.
-//
-// Pliki pośrednie są tu konieczne, choć rodzina `image.*` bierze wynik
-// ImageMagicka ze standardowego wyjścia: ani `realesrgan-ncnn-vulkan`, ani
-// `rembg` nie umieją pisać obrazu na wyjście, oba żądają ścieżki wyniku.
-// Katalog własny na przebieg nie miesza równoległych żądań i znika jednym
-// `RemoveAll` niezależnie od tego, czy silnik się udał.
+// pracowniaObrazu jest katalogiem jednego przebiegu silnika, niosącym dowiązanie do źródła
+// i plik wyniku; oba silniki żądają ścieżek na dysku i nie umieją pisać obrazu na wyjście
+// standardowe.
 type pracowniaObrazu struct {
 	katalog string
 	wejscie string
 	wyjscie string
 }
 
-// przygotujPracownie zakłada katalog przebiegu i wystawia w nim źródło pod
-// nazwą, którą silnik przyjmie.
-//
-// Źródło wchodzi dowiązaniem, nie kopią: blob zasobu leży pod swoją sumą
-// kontrolną i bywa wielkim plikiem, więc kopiowanie go tylko po to, żeby
-// zmienić nazwę, dawałoby drugi egzemplarz zdjęcia przy każdym żądaniu. Oba
-// silniki rozpoznają format po zawartości, a nie po rozszerzeniu, więc nazwa
-// `zrodlo.png` jest tylko uchwytem, nie deklaracją formatu.
-//
-// Kopia jest drogą zapasową na wypadek, gdy dowiązanie się nie uda (magazyn na
-// innym nośniku niż katalog tymczasowy, system plików bez dowiązań).
+// przygotujPracownie zakłada katalog przebiegu i wystawia w nim źródło dowiązaniem pod
+// nazwą, którą silnik przyjmie, a przy braku dowiązań kopią zapasową, gdy magazyn leży na
+// innym nośniku.
 func przygotujPracownie(zrodlo string) (pracowniaObrazu, error) {
 	katalog, err := os.MkdirTemp("", "danaco-obraz-model-")
 	if err != nil {
@@ -185,12 +127,9 @@ func (p pracowniaObrazu) sprzatnij() {
 	}
 }
 
-// odczytajWynikSilnika bierze bajty pliku, który silnik miał wytworzyć.
-//
-// Plik nieobecny albo pusty jest odmową mimo zerowego kodu wyjścia. Oba
-// silniki potrafią zakończyć się powodzeniem i nie napisać nic — `rembg` przy
-// wagach uszkodzonych, ncnn przy nieudanej alokacji pamięci na procesorze
-// programowym — a oddanie pustego zasobu byłoby sukcesem bez skutku.
+// odczytajWynikSilnika bierze bajty pliku, który silnik miał wytworzyć; plik nieobecny albo
+// pusty jest odmową mimo zerowego kodu wyjścia, bo oba silniki potrafią zakończyć się
+// powodzeniem bez wyniku.
 func odczytajWynikSilnika(sciezka, silnik string) ([]byte, error) {
 	bajty, err := os.ReadFile(sciezka)
 	if err != nil {
@@ -204,13 +143,9 @@ func odczytajWynikSilnika(sciezka, silnik string) ([]byte, error) {
 	return bajty, nil
 }
 
-// wolajSilnik przeprowadza jedno uruchomienie silnika neuronowego wspólną
-// drogą wołania binarium (`zewnetrzne.Wolaj`): przez port
-// `session.Uruchamiacz`, bramę izolacji okna i objęcie drzewa procesów.
-//
-// Zasięg bierzemy z rodziny `image.*`, bo jest ten sam: żądanie niesie obraz,
-// a nie okno rozmowy, więc adresem jest zasięg platformy, a wykonanie idzie na
-// dysku rdzenia, bo to rdzeń odkłada potem bajty do swojego magazynu.
+// wolajSilnik przeprowadza jedno uruchomienie silnika neuronowego wspólną drogą wołania
+// binarium, przez port uruchamiacza, bramę izolacji okna i objęcie drzewa procesów; zasięg
+// bierze z rodziny `image.*`.
 func (a *adapterNarzedziObrazuModelu) wolajSilnik(ctx context.Context,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string, limit time.Duration) error {
 
@@ -243,14 +178,9 @@ func sprawdzWagi(sciezka, nazwaModelu, waga, skad string) error {
 		"nie zjadał granicy czasu przetwarzania)")
 }
 
-// wymiaryWyniku wyciąga zmierzone wymiary z odłożonego zasobu.
-//
-// Brak wymiarów jest odmową, a nie zerem w odpowiedzi: kontrakt
-// `image.upscale` obiecuje `width` i `height` jako liczby, a odpowiedź
-// z zerami mówiłaby, że powstał obraz bez pikseli. Wymiary pochodzą z pomiaru
-// pliku, który legł w magazynie (`rozpoznajObrazZasobu`), a nie z pomnożenia
-// żądanej krotności przez wymiar źródła — przy zaokrągleniach silnika te dwie
-// liczby się różnią, a zgadnięta wygląda w odpowiedzi jak zmierzona.
+// wymiaryWyniku wyciąga zmierzone wymiary z odłożonego zasobu; brak wymiarów jest odmową,
+// bo kontrakt obiecuje liczby, a wymiary pochodzą z pomiaru pliku, nie z pomnożenia żądanej
+// krotności przez wymiar źródła.
 func wymiaryWyniku(zasob shared.DesignAsset) (int, int, error) {
 	if zasob.Width == nil || zasob.Height == nil {
 		return 0, 0, bladPrzetwarzaniaModeluObrazu(
@@ -260,10 +190,9 @@ func wymiaryWyniku(zasob shared.DesignAsset) (int, int, error) {
 	return *zasob.Width, *zasob.Height, nil
 }
 
-// bladArsenaluModeluObrazu przekłada odmowę pakietu `zewnetrzne` na kod
-// kontraktu. Brak silnika dostaje inny kod niż niepowodzenie silnika, bo „nie
-// ma czym" jest jedynym zakończeniem żądania bez zainstalowanego modelu —
-// alternatywą byłoby rozciągnięcie podane jako powiększenie.
+// bladArsenaluModeluObrazu przekłada odmowę pakietu zewnętrznego na kod kontraktu: brak
+// silnika dostaje inny kod niż niepowodzenie silnika, bo są to dwa różne zakończenia
+// żądania.
 func bladArsenaluModeluObrazu(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -287,7 +216,8 @@ func bladWskazaniaModeluObrazu(powod string) error {
 		"silniki obrazu: "+powod))
 }
 
-// bladPrzetwarzaniaModeluObrazu znakuje przebieg, który ruszył i się nie udał.
+// bladPrzetwarzaniaModeluObrazu znakuje przebieg silnika, który ruszył, ale się nie udał —
+// usterka w trakcie pracy, nie w żądaniu ani w instalacji.
 func bladPrzetwarzaniaModeluObrazu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"silniki obrazu: "+powod))

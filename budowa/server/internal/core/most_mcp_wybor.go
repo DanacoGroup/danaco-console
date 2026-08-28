@@ -1,7 +1,5 @@
-// Dobór i uporządkowanie nadań przekazywanych generatorowi wpisu `mcpServers`
-// oraz zawężenie korzeni. Reguły doboru stoją osobno od kształtu wpisu, bo
-// odpowiadają na inne pytanie: nie „jak wygląda wpis", lecz „które nadania
-// w ogóle do niego wchodzą i jak daleko sięgają".
+// Plik dobiera i porządkuje nadania przekazywane generatorowi wpisu mcpServers oraz zawęża
+// korzenie, bo reguły doboru odpowiadają na inne pytanie niż kształt wpisu.
 package core
 
 import (
@@ -22,8 +20,7 @@ func KorzenieNadania(nadanie NadanieMostu) []string {
 	wskazane := niepusteKorzenie(nadanie.Nadanie.Roots)
 	korzeniePunktu := niepusteKorzenie(nadanie.Punkt.Roots)
 	if len(korzeniePunktu) == 0 {
-		// Punkt bez korzeni obejmuje cały system plików maszyny, więc korzenie
-		// nadania są jedynym zawężeniem i wchodzą w całości.
+		// Punkt bez korzeni obejmuje cały system plików maszyny, więc korzenie nadania wchodzą w całości.
 		return wskazane
 	}
 	dozwolone := make(map[string]struct{}, len(korzeniePunktu))
@@ -39,7 +36,7 @@ func KorzenieNadania(nadanie NadanieMostu) []string {
 	return wybrane
 }
 
-// niepusteKorzenie przycina korzenie i odrzuca puste.
+// niepusteKorzenie przycina korzenie katalogów po obu stronach i odrzuca wpisy puste z całego tego wykazu.
 func niepusteKorzenie(korzenie []string) []string {
 	wynik := make([]string, 0, len(korzenie))
 	for _, korzen := range korzenie {

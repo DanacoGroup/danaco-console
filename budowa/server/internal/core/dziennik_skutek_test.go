@@ -8,36 +8,22 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany SKUTKU odwracalnego dziennika czynności oraz przełącznika
-// podświetlającego zmiany wykonawców.
-//
-// Mierzą świat, nie kopertę: treść dokumentu i stan wpisów dziennika czytane są
-// osobnym połączeniem do bazy.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. cofnięcie czynności ze ŚRODKA dziennika, które zabiera ze sobą pracę
-//     późniejszą — czyli jest przywróceniem wersji podanym jako cofnięcie
-//     pojedyncze;
-//  2. cofnięcie czynności, na której stoi późniejsza, wykonane PO CICHU;
-//  3. cofnięcie wszystkiego, co zrobił model, wykonane przez „przywróć wersję
-//     sprzed" — kasuje wtedy pracę Operatora naniesioną w tym czasie;
-//  4. licznik zmian modelu, który liczy zmiany Operatora albo liczy dwóch
-//     wykonawców jako jednego.
+// Sprawdziany skutku odwracalnego dziennika i przełącznika zmian wykonawców.
 
-// dziennikSkutekTresc jest treścią o trzech osobnych akapitach. Osobnych, bo
-// cofanie NIE PO KOLEI trzeba zmierzyć na trzech czynnościach, z których każda
-// rusza inny fragment — inaczej nie byłoby widać, że cofnięcie środkowej
-// zostawiło pierwszą i trzecią.
+// dziennikSkutekTresc jest treścią o trzech osobnych akapitach, po jednym na
+// każdą z trzech czynności cofania nie po kolei w tym pliku.
 const dziennikSkutekTresc = "Akapit pierwszy bez zmian.\n" +
 	"Akapit drugi do poprawy.\n" +
 	"Akapit trzeci bez zmian."
 
-// dziennikSkutekUprzaz składa rdzeń, dokument i połączenie pomiarowe.
+// dziennikSkutekUprzaz składa rdzeń, dokument i połączenie pomiarowe do bazy,
+// wspólne dla sprawdzianów tego pliku.
 type dziennikSkutekUprzaz struct {
 	*blokadaUprzazSprawdzianu
 }
 
-// dziennikSkutekZmontuj zakłada dokument o znanej treści.
+// dziennikSkutekZmontuj zakłada dokument o znanej treści `dziennikSkutekTresc`
+// i zapisuje jego pierwszą wersję.
 func dziennikSkutekZmontuj(t *testing.T) *dziennikSkutekUprzaz {
 	t.Helper()
 
@@ -69,7 +55,8 @@ func (u *dziennikSkutekUprzaz) dziennikSkutekZmienTekst(t *testing.T,
 	}
 }
 
-// dziennikSkutekWpisy czyta wpisy dziennika WPROST z bazy, od najstarszego.
+// dziennikSkutekWpisy czyta wpisy dziennika wprost z bazy, od najstarszego,
+// niezależnie od odpowiedzi rdzenia.
 func (u *dziennikSkutekUprzaz) dziennikSkutekWpisy(t *testing.T) []dziennikSkutekWpis {
 	t.Helper()
 
@@ -117,8 +104,7 @@ type dziennikSkutekWpis struct {
 func TestDziennikSkutekCofniecieZeSrodkaZostawiaPozniejsza(t *testing.T) {
 	uprzaz := dziennikSkutekZmontuj(t)
 
-	// Trzy czynności na trzech różnych akapitach, od końca do początku — tak
-	// zakresy wcześniejszych nie przesuwają się pod nogami późniejszym.
+	// Trzy czynności na trzech akapitach, od końca do początku.
 	trzeci := strings.Index(dziennikSkutekTresc, "Akapit trzeci bez zmian.")
 	uprzaz.dziennikSkutekZmienTekst(t, trzeci, trzeci+len("Akapit trzeci bez zmian."),
 		"Akapit trzeci PO ZMIANIE.", "agent-pierwszy")
@@ -136,8 +122,7 @@ func TestDziennikSkutekCofniecieZeSrodkaZostawiaPozniejsza(t *testing.T) {
 		t.Fatalf("dziennik nie odłożył wpisu dla każdej czynności: stoi %d, miało 3", len(wpisy))
 	}
 
-	// Czynność ŚRODKOWA — druga z trzech. Nie ostatnia: cofanie „ostatnim
-	// ruchem" jest tym, czego Właściciel wprost nie chce.
+	// Czynność środkowa, druga z trzech — sprawdzian nie cofa ostatniej.
 	srodkowa := wpisy[1].Kod
 
 	var cofniecie shared.StudioJournalRevertResponse
@@ -162,15 +147,15 @@ func TestDziennikSkutekCofniecieZeSrodkaZostawiaPozniejsza(t *testing.T) {
 		t.Errorf("cofnięcie ze środka zabrało pracę WCZEŚNIEJSZĄ; treść: %q", po)
 	}
 
-	// Stan wpisu w bazie: cofnięty, nie usunięty. Dziennik nic nie kasuje, bo
-	// cofnięcie samo ma być odwracalne.
+	// Stan wpisu w bazie: cofnięty, nie usunięty — dziennik nic nie kasuje.
 	stanWpisu := uprzaz.dziennikSkutekStanWpisu(t, srodkowa)
 	if stanWpisu != string(shared.StudioActionStateReverted) {
 		t.Errorf("wpis dziennika nie stoi w stanie „reverted” po cofnięciu: %q", stanWpisu)
 	}
 }
 
-// dziennikSkutekStanWpisu czyta stan wpisu dziennika z bazy.
+// dziennikSkutekStanWpisu czyta stan wpisu dziennika z bazy, wskazanego kodem
+// czynności, wprost, niezależnie od odpowiedzi rdzenia.
 func (u *dziennikSkutekUprzaz) dziennikSkutekStanWpisu(t *testing.T, kod string) string {
 	t.Helper()
 
@@ -190,9 +175,7 @@ func (u *dziennikSkutekUprzaz) dziennikSkutekStanWpisu(t *testing.T, kod string)
 func TestDziennikSkutekZaleznoscOdmawiaZamiastPsuc(t *testing.T) {
 	uprzaz := dziennikSkutekZmontuj(t)
 
-	// Dwie czynności na TYM SAMYM fragmencie: druga stoi na pierwszej, bo ruszyła
-	// to samo miejsce. Cofnięcie pierwszej wgrałoby tam stan sprzed niej i zabrało
-	// pracę drugiej.
+	// Dwie czynności na tym samym fragmencie: druga stoi na pierwszej.
 	drugi := strings.Index(dziennikSkutekTresc, "Akapit drugi do poprawy.")
 	koniec := drugi + len("Akapit drugi do poprawy.")
 	uprzaz.dziennikSkutekZmienTekst(t, drugi, koniec, "Akapit drugi krok pierwszy.", "agent-pierwszy")
@@ -296,17 +279,13 @@ func TestZmianyModeluLicznikNieLiczyOperatora(t *testing.T) {
 	}
 }
 
-// TestZmianyModeluCofniecieWszystkiegoZachowujeOperatora jest trudną częścią
-// wymagania: cofnięcie WSZYSTKIEGO, co zrobił model, ma ZACHOWAĆ zmiany
-// Operatora naniesione w tym czasie. Zrobione przez „przywróć wersję sprzed"
-// skasowałoby jego pracę — i właśnie to ten sprawdzian wyklucza.
+// TestZmianyModeluCofniecieWszystkiegoZachowujeOperatora mierzy, że cofnięcie
+// wszystkiego, co zrobił model, zachowuje zmiany Operatora naniesione w tym
+// czasie, zamiast przywracać wersję sprzed nich.
 func TestZmianyModeluCofniecieWszystkiegoZachowujeOperatora(t *testing.T) {
 	uprzaz := dziennikSkutekZmontuj(t)
 
-	// Śledzenie zmian włączone, żeby zmiany OPERATORA też odkładały się wierszem.
-	// Bez tego „ile zmian Operatora zachowano" liczyłoby zero zgodnie z prawdą —
-	// nie byłoby żadnych zmian śledzonych Operatora — i sprawdzian mierzyłby
-	// wtedy co innego, niż wymaganie mówi.
+	// Śledzenie włączone, żeby zmiany Operatora też odkładały się wierszem.
 	var sledzenie shared.StudioTrackingSetResponse
 	wykonajUdana(t, uprzaz.zmontowany, uprzaz.zycie, shared.CommandStudioTrackingSet,
 		shared.StudioTrackingSetRequest{DocumentId: uprzaz.dokument, Enabled: true}, &sledzenie)
@@ -384,7 +363,7 @@ func TestZmianyModeluCofniecieWybranychNieRuszaReszty(t *testing.T) {
 			len(zestawienie.Summary.Changes))
 	}
 
-	// Cofamy JEDNĄ — tę, która dotyczy akapitu trzeciego.
+	// Cofa się JEDNĄ — tę, która dotyczy akapitu trzeciego.
 	var wybrana string
 	for _, zmiana := range zestawienie.Summary.Changes {
 		if zmiana.After != nil && strings.Contains(*zmiana.After, "trzeci") {
@@ -415,21 +394,16 @@ func TestZmianyModeluCofniecieWybranychNieRuszaReszty(t *testing.T) {
 
 // ── Autor na każdej drodze ──────────────────────────────────────────────────
 
-// TestZmianyModeluAutorZapisanyNaKazdejDrodze mierzy założenie, na którym stoi
-// cały przełącznik: czynność wykonawcy odkłada ślad podpisany JAKO WYKONAWCA
-// nawet wtedy, gdy żądanie nie niosło pola `author`.
-//
-// Bez tego przełącznik „pokaż wszystko, co zrobił model" pokazywałby część
-// pracy modelu jako pracę Operatora — a Właściciel nazwał to usterką do
-// naprawy, nie ograniczeniem do zgłoszenia.
+// TestZmianyModeluAutorZapisanyNaKazdejDrodze mierzy założenie przełącznika:
+// czynność wykonawcy odkłada ślad podpisany jako wykonawca nawet wtedy, gdy
+// żądanie nie niosło pola `author`.
 func TestZmianyModeluAutorZapisanyNaKazdejDrodze(t *testing.T) {
 	uprzaz := dziennikSkutekZmontuj(t)
 
 	drugi := strings.Index(dziennikSkutekTresc, "Akapit drugi do poprawy.")
 	koniec := drugi + len("Akapit drugi do poprawy.")
 
-	// Żądanie BEZ pola `author` i BEZ kodu agenta — sam fakt gniazda serwera
-	// narzędzi. Tego model nie może o sobie zataić.
+	// Żądanie bez pola `author` i bez kodu agenta — sam fakt gniazda narzędzi.
 	odpowiedz := uprzaz.blokadaWykonajJakoModel(t, shared.CommandStudioTextEdit,
 		shared.StudioTextEditRequest{
 			DocumentId: uprzaz.dokument, RangeStart: drugi, RangeEnd: koniec,

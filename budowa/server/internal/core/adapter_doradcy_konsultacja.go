@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: komenda `advisor.consult` — jedyna droga, którą model
-// prosi o radę, i miejsce, w którym rada staje się widoczna w oknie.
-//
-// Adapter doradcy (`adapter_doradcy.go`) wykonuje konsultację tą samą drogą, co
-// każdy inny wołacz kanału. Tu stoi to, co należy wyłącznie do komendy: odczyt
-// okna, złożenie pytania z danych okna, strumień jawności i przełożenie wyniku
-// na kontrakt.
-//
-// Jawność nie jest buforem: ujście konsultacji jest nadawcą strumienia, więc
-// fragmenty jadą kopertami `stream.chunk` do okna pytającego — tą samą drogą,
-// którą płynie odpowiedź agenta, debata Roundtable i wyjście Terminala. Bez
-// tego Operator widziałby wyłącznie skrót rady w zdarzeniu `advisor.consulted`,
-// a pytanie, doradca i rada nie stanęłyby w jednym oknie. Drugiej drogi do okna
-// rdzeń nie ma i tutaj też jej nie zakładamy.
+// Plik obsługuje komendę advisor.consult: jedyną drogę, którą model prosi o
+// radę doradcy, i miejsce, w którym rada staje się widoczna w oknie.
 package core
 
 import (
@@ -24,13 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Konsultacja obsługuje `advisor.consult`: przekłada żądanie modelu na pytanie
+// Konsultacja obsługuje advisor.consult: przekłada żądanie modelu na pytanie
 // do doradcy, wykonuje konsultację tą samą drogą co każdy inny wołacz, pokazuje
 // ją w oknie i oddaje radę wraz z gotowym ładunkiem zdarzenia jawności.
-//
-// Kim jest pytający, rozstrzyga okno, a nie żądanie. Model podaje wyłącznie
-// sprawę, kontekst i prośbę o doradcę; gdyby `Pytajacy` dało się podać
-// żądaniem, model podniósłby sobie sufit jednym polem.
 func (a *adapterDoradcow) Konsultacja(ctx context.Context, z shared.AdvisorConsultRequest) (
 	shared.AdvisorConsultResponse, JawnoscKonsultacji, error) {
 
@@ -43,23 +27,14 @@ func (a *adapterDoradcow) Konsultacja(ctx context.Context, z shared.AdvisorConsu
 		return shared.AdvisorConsultResponse{}, JawnoscKonsultacji{}, bladOknaDoradcy(
 			shared.ErrorCodeNotFound, "okno "+z.WindowId+" nie istnieje — konsultacja nie ma czyim kanałem pytać")
 	}
-	// Okno zamknięte nie konsultuje. Rada ma być widoczna tam, gdzie pracuje
-	// agent — w oknie zamkniętym nie pracuje nikt, więc konsultacja szłaby
-	// w miejsce, którego Operator już nie ogląda, a zdarzenie `advisor.consulted`
-	// rozgłaszałoby pracę okna, które stanęło. Sprawdzenie jest tym samym, które
-	// robią pozostałe moduły oknowe (adapter_modul_model.go, adapter_modul_aod.go).
-	// Kod `conflict` mówi prawdę o powodzie: stan zasobu, nie brak kanału — i nie
-	// jest ponawialny, bo okno samo się nie otworzy.
+	// Okno zamknięte nie konsultuje: rada ma być widoczna tam, gdzie pracuje agent.
 	if !okno.CzyOtwarte() {
 		return shared.AdvisorConsultResponse{}, JawnoscKonsultacji{}, bladOknaDoradcy(
 			shared.ErrorCodeConflict, "okno "+okno.Id+" jest zamknięte — konsultacja nie ma się gdzie odbyć ani komu pokazać")
 	}
 
-	// Strumień jawności zakładamy przed konsultacją i domykamy zawsze — także
-	// po odmowie doboru. Identyfikator strumienia jest tożsamością tej jednej
-	// konsultacji: wchodzi do koperty jako identyfikator żądania i do fragmentów
-	// jako `messageId`, więc klient wie, że wszystkie te fragmenty należą do
-	// jednego wywołania (wzorem wypowiedzi Roundtable).
+	// Strumień jawności powstaje przed konsultacją i domyka się zawsze, także po
+	// odmowie doboru doradcy.
 	idStrumienia := nowyIdentyfikator(przedrostekKonsultacji)
 	strumien := nowyNadawcaStrumienia(a.nadajnik, idStrumienia, okno.IdSesji)
 	ujscie := &ujscieKonsultacji{strumien: strumien}
@@ -87,21 +62,10 @@ func (a *adapterDoradcow) Konsultacja(ctx context.Context, z shared.AdvisorConsu
 		}, nil
 }
 
-// Podstawa doboru jest jedna i dlatego stoi wyżej stałą, a nie funkcją.
-// Kontrakt zna dwie wartości `selection`, ale `operatorIndication` nie ma
-// w produkcie danych pod sobą: Operator nie ma czym wskazać doradcy, a pole
-// `modelChannelId` okna mówi, którym modelem pracuje okno, nie kogo Operator
-// wyznaczył na doradcę. Podstawienie jednego pod drugie ogłaszałoby „wskazanie
-// Operatora" przy każdej konsultacji bez prośby. Wartość kontraktu zostaje na
-// czas, gdy wskazanie Operatora będzie miało skąd pochodzić (nagłówek
-// `podagenci/doradca_wybor.go`).
+// Wartość doboru jest stała, ponieważ dane źródłowe wskazania Operatora nie są jeszcze dostępne.
 
-// pytanieZOkna składa pytanie do doradcy: sprawa i kontekst od modelu, kanał
-// pytającego z okna, tożsamość strumienia od komendy.
-//
-// Pole `Wiadomosc` niesie identyfikator strumienia, bo to ono zasila `messageId`
-// wszystkich fragmentów kanału (`models/fragment.go`) — bez niego fragmenty rady
-// jechałyby do okna bez wskazania, do czego należą.
+// pytanieZOkna składa pytanie do doradcy: sprawę i kontekst od modelu, kanał
+// pytającego z okna oraz tożsamość strumienia od komendy.
 func pytanieZOkna(okno session.Okno, idStrumienia string, z shared.AdvisorConsultRequest) podagenci.Pytanie {
 	return podagenci.Pytanie{
 		Okno:          okno.Id,
@@ -114,17 +78,14 @@ func pytanieZOkna(okno session.Okno, idStrumienia string, z shared.AdvisorConsul
 }
 
 // ujscieKonsultacji przepuszcza fragmenty konsultacji do okna i zapamiętuje
-// tekst, którym strumień zostanie domknięty.
-//
-// Zbiera cały tekst, łącznie z blokiem jawności doklejanym przez `Skonsultuj` —
-// fragment domykający ma być tym, co Operator widzi w oknie po konsultacji,
-// czyli radą wraz z podpisem, kto jej udzielił.
+// tekst, którym strumień zostanie domknięty po zakończeniu.
 type ujscieKonsultacji struct {
 	strumien *nadawcaStrumienia
 	zebrane  strings.Builder
 }
 
-// Fragment przyjmuje jeden fragment strumienia doradcy.
+// Fragment przyjmuje jeden fragment strumienia doradcy, dopisuje go do zebranego
+// tekstu przy rodzaju tekstowym i przekazuje go dalej do nadawcy strumienia okna.
 func (u *ujscieKonsultacji) Fragment(ctx context.Context, f models.Fragment) error {
 	if f.Kind == shared.ChunkKindText {
 		u.zebrane.WriteString(models.TrescFragmentu(f))

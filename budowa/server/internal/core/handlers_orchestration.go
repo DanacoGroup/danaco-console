@@ -1,19 +1,5 @@
-// Odpowiedzialność pliku: wpięcie czterech komend rodziny `orchestration.*`.
-//
-// Rodzina wpina się osobno od `adapter_modul_automations_uchwyty.go`, choć jedzie
-// na tej samej maszynerii układu zależności: port poniżej rozszerza port
-// Automatyki, bo układ zależności ma w rdzeniu jednego właściciela.
-//
-// Rozdział miejsc emisji zdarzeń układu:
-//
-//   - `orchestration.dependency.set` → `created`/`updated` ze wskazaniem łuku;
-//     `orchestration.dependency.remove` → `deleted`; oba tutaj;
-//   - `automation.orchestrator.define` → `updated` bez wskazania zależności
-//     (przepisuje cały układ), `DependencyId` zostaje wtedy puste;
-//   - `automation.schedule.set` → `automation.link.changed` z `AutomationId`
-//     równym `workflowId`.
-//
-// Dwa ostatnie jadą z `adapter_modul_automations_uchwyty.go`.
+// Plik wpina cztery komendy rodziny orchestration.* obsługujące układ zależności, rozszerzając
+// port modułu Automations o operacje na łuku układu.
 package core
 
 import (
@@ -76,10 +62,7 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 
 	r.Zarejestruj(shared.CommandOrchestrationValidate, obsluz(m.SprawdzUkladZaleznosci))
 
-	// Cztery dopełnienia układu. Każde zmienia układ, więc każde rozgłasza
-	// `orchestration.changed` — bez wskazania łuku, bo bramka, grupa,
-	// kompensacja i spięcie nie dotyczą żadnej jednej pary kroków. Okno czyta
-	// takie zdarzenie jako „przelicz układ od nowa" (patrz `ukladOrkiestracji`).
+	// Cztery dopełnienia układu rozgłaszają zmianę układu bez wskazania łuku, bo dotyczą całości.
 	r.Zarejestruj(shared.CommandOrchestrationGateSet,
 		obsluz(func(ctx context.Context, z shared.OrchestrationGateSetRequest) (shared.OrchestrationGateSetResponse, error) {
 			odpowiedz, err := m.UstawBramke(ctx, z)
@@ -117,11 +100,8 @@ func zarejestrujOrkiestracje(r *Rejestr, m Orkiestracja, e *emiter) {
 		}))
 }
 
-// rodzajZmianyLuku orzeka, czy `dependency.set` łuk dokłada, czy przepisuje.
-// Odpowiedź komendy tego nie mówi (oddaje cały układ po zapisie), więc pyta się
-// o układ PRZED zapisem. Nieudany odczyt nie wstrzymuje niczego — komenda ma
-// się wykonać tak samo, a rodzaj zmiany schodzi wtedy do `updated`, bo
-// „zmieniło się" jest zdaniem prawdziwym w obu przypadkach.
+// rodzajZmianyLuku orzeka, czy zapis zależności łuk dokłada, czy przepisuje, pytając o układ
+// przed zapisem, bo odpowiedź komendy tego nie mówi.
 func rodzajZmianyLuku(ctx context.Context, m Orkiestracja,
 	z shared.OrchestrationDependencySetRequest) shared.ChangeKind {
 
@@ -137,12 +117,8 @@ func rodzajZmianyLuku(ctx context.Context, m Orkiestracja,
 	return shared.ChangeKindCreated
 }
 
-// wskazanieLuku składa identyfikator zależności z obu jej końców.
-//
-// Łuk nie ma własnego klucza: tabela `zaleznosc_kroku_automatyki` rozpoznaje go
-// parą (krok_z, krok_do) i tą samą parą posługują się obie komendy kontraktu.
-// Pole `dependencyId` jest złożeniem tej pary; łuk bez obu końców wskazania
-// nie ma.
+// wskazanieLuku składa identyfikator zależności z obu jej końców, bo łuk nie ma własnego klucza
+// w tabeli zależności kroku automatyki.
 func wskazanieLuku(luk shared.AutomationDependency) string {
 	if luk.FromStepId == "" || luk.ToStepId == "" {
 		return ""
@@ -150,14 +126,8 @@ func wskazanieLuku(luk shared.AutomationDependency) string {
 	return luk.FromStepId + "→" + luk.ToStepId
 }
 
-// ukladOrkiestracji rozgłasza `orchestration.changed`. Układ zależności jest
-// komponentem własnym automatyki, nie bytem karty sesji, więc zdarzenie idzie
-// bez jej wskazania — tak samo jak przebieg automatyki.
-//
-// Puste wskazanie jest stanem zamierzonym: `dependencyId` jest polem
-// nieobowiązkowym, bo przepisanie całego układu
-// (`automation.orchestrator.define`) nie dotyczy żadnego jednego łuku. Okno
-// czyta wtedy zdarzenie jako „przelicz układ od nowa”.
+// ukladOrkiestracji rozgłasza orchestration.changed dla komponentu własnego automatyki, bez
+// wskazania karty sesji, tak samo jak przebieg automatyki.
 func (e *emiter) ukladOrkiestracji(zmiana shared.ChangeKind, idZaleznosci string) {
 	tresc := shared.OrchestrationChangedEvent{Change: zmiana}
 	if idZaleznosci != "" {

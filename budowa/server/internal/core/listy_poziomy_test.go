@@ -1,3 +1,5 @@
+// Plik zawiera sprawdziany obszaru list, mierzące rachunek poziomów i wcięć, na którym stoi
+// wygląd punktu na kartce.
 package core
 
 import (
@@ -7,19 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany obszaru list. Mierzą rachunek poziomów i wcięć, na którym stoi
-// wygląd punktu na kartce.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. poziom listy założony bez nastaw — okno nie wiedziałoby, jakim znakiem
-//     punkt narysować;
-//  2. wcięcie poziomu, które nie schodzi do akapitu — linijka nie miałaby czym
-//     pokazać znacznika wcięcia;
-//  3. numeracja prawnicza wielopoziomowa bez wzoru składanego z poziomów
-//     nadrzędnych — wtedy 1.1.2 jest niewykonalne;
-//  4. rodzaj listy spoza kontraktu przyjęty w ciszy.
-
-// TestListyPoziomyPowstajaZNastawami mierzy, że poziom nie jest pustą pozycją.
+// TestListyPoziomyPowstajaZNastawami mierzy, że poziom listy nie jest pustą pozycją bez własnej nastawy.
 func TestListyPoziomyPowstajaZNastawami(t *testing.T) {
 	wypunktowanie := shared.StudioListDefinition{
 		Id: "studio-lis-jedna", Kind: shared.StudioListKindBullet,
@@ -92,14 +82,12 @@ func TestListyWciecieSchodziDoAkapitu(t *testing.T) {
 	if zmiana.IndentLeftMm == nil || *zmiana.IndentLeftMm != 12.7 {
 		t.Error("wcięcie poziomu nie zeszło do wcięcia lewego akapitu")
 	}
-	// Wysunięcie pierwszego wiersza jest UJEMNE — na tym stoi wygląd punktu,
-	// którego znak wisi po lewej stronie tekstu.
+	// Wysunięcie pierwszego wiersza jest ujemne — na tym stoi znak punktu wiszący z lewej strony.
 	if zmiana.FirstLineIndentMm == nil || *zmiana.FirstLineIndentMm != -6.35 {
 		t.Errorf("wysunięcie pierwszego wiersza wynosi %v, a ma być ujemne",
 			zmiana.FirstLineIndentMm)
 	}
-	// Poziom niepodany nie zmienia niczego — czynność na akapicie poza listą nie
-	// ma prawa ruszyć jego wcięcia w ciszy.
+	// Poziom niepodany nie zmienia niczego — czynność poza listą nie rusza wcięcia w ciszy.
 	if pusta := listyWciecieAkapitu(nil); pusta.IndentLeftMm != nil {
 		t.Error("brak poziomu ustawił wcięcie akapitu")
 	}
@@ -166,8 +154,7 @@ func TestListyBlokiIZakresListy(t *testing.T) {
 		t.Errorf("zakres listy wyszedł %d-%d, a punkty stoją %d-%d",
 			od, do, *forma.Blocks[1].RangeStart, *forma.Blocks[2].RangeEnd)
 	}
-	// Akapit poza listą nie wchodzi do zakresu — inaczej wpis dziennika mówiłby,
-	// że zmiana listy dotknęła treści, której nie tknęła.
+	// Akapit poza listą nie wchodzi do zakresu, inaczej wpis dziennika mówiłby o zmianie, której nie było.
 	if od == 0 {
 		t.Error("zakres listy objął akapit stojący poza listą")
 	}

@@ -1,39 +1,7 @@
-// Czynności narzędzi obrazu — `image.inspect`, `image.transform`,
-// `image.adjust`, `image.convert`. Wspólne zaplecze (źródło, odłożenie wyniku,
-// odmowy) stoi w `adapter_narzedzia_obraz.go`; sam rachunek na pikselach —
-// w `adapter_narzedzia_obraz_wkompilowany.go`; metody stoją na tym samym
-// `*adapterNarzedziObrazu`.
-//
-// ── Dwie drogi, pierwszeństwo ma wkompilowana ───────────────────────────────
-// Każda z czterech czynności liczy się w procesie biblioteką wkompilowaną
-// w binarium. Program pakietu serwera wchodzi wyłącznie tam, gdzie rachunku Go
-// nie ma wcale: AVIF (bez kodera i bez dekodera w Go) oraz WEBP stratny
-// (`nativewebp` zapisuje sam bezstratny). Rozpoznaje to
-// `errBrakRachunkuGoObrazu` — jedyny błąd, po którym czynność zmienia drogę.
-// Każdy inny błąd jest odmową wprost: obraz uszkodzony ma zostać nazwany, a nie
-// oddany drugiej drodze, która powie o nim to samo wolniej.
-//
-// Składanie argumentów programu zostaje w tym pliku (`argumentyPrzeksztalcenia`,
-// `argumentyPoprawki`, `argumentyKonwersji`), bo droga zapasowa musi umieć
-// dokładnie to samo, co rachunek wkompilowany — inaczej ten sam wniosek modelu
-// dałby dwa różne skutki w zależności od formatu pliku.
-//
-// ── Dogniecenie zapisu należy do konwersji ──────────────────────────────────
-// `image.convert` obiecuje w odpowiedzi `savedBytes`, więc po zakodowaniu obrazu
-// schodzi jeszcze z długości strumienia programem dogniatającym
-// (`adapter_narzedzia_obraz_kompresja.go`). Ten krok NIE ODMAWIA: przy braku
-// programu oddaje bajty bez zmiany, więc zapis udaje się tak samo na maszynie,
-// która żadnego z nich nie niesie. Trzy pozostałe czynności go nie wołają —
-// zmieniają treść obrazu, a nie sam jego zapis.
-//
-// Każda wartość `ImageTransformKind` i `ImageAdjustKind` ma własną gałąź,
-// a wartość spoza wyliczenia kończy się odmową nazywającą ją wprost. Gałąź
-// domyślna „rób nic" oddałaby zasób identyczny ze źródłem jako rzekomy skutek
-// retuszu.
-//
-// Brak pola `amount` bierze wartość domyślną operacji, nie zero: zero byłoby
-// poprawką bez skutku, a model prosząc „rozjaśnij" bez liczby dostałby obraz
-// nieodróżnialny od źródła.
+// Czynności narzędzi obrazu image.inspect, image.transform, image.adjust
+// i image.convert. Każda liczy się w procesie biblioteką wkompilowaną,
+// a przy formacie bez rachunku Go korzysta z programu pakietu serwera jako
+// drogi zapasowej.
 package core
 
 import (
@@ -59,10 +27,8 @@ var domyslneSilyPoprawki = map[shared.ImageAdjustKind]int{
 }
 
 // formatyDocelowe to zamknięty zbiór formatów, które `image.convert` przyjmuje.
-// Nazwa formatu wchodzi w nazwę kodera, a na drodze zapasowej — w argument
-// programu: przepuszczenie dowolnego tekstu oddałoby modelowi wpływ na to, co
-// program zrozumie jako tryb wyjścia (np. `ephemeral:`), a to jest wpływ szerszy
-// niż zamiana formatu.
+// Nazwa formatu trafia w argument programu drogi zapasowej, więc dowolny tekst
+// dawałby modelowi wpływ szerszy niż zamiana formatu.
 var formatyDocelowe = map[string]struct{}{
 	"png": {}, "jpeg": {}, "jpg": {}, "webp": {}, "avif": {}, "tiff": {}, "gif": {},
 }
@@ -77,20 +43,14 @@ type czynnoscObrazu struct {
 	jakosc      *int
 	bezstratnie *bool
 	nazwa       string
-	// kompresuj włącza dogniecenie zapisu programem
-	// (`adapter_narzedzia_obraz_kompresja.go`). Niesie je sama konwersja, bo
-	// tylko ona obiecuje w odpowiedzi zysk na rozmiarze (`savedBytes`).
-	// Przekształcenie i poprawka oddają obraz o innej treści i pytanie
-	// „o ile mniejszy" nie ma przy nich sensu.
+	// kompresuj włącza dogniecenie zapisu programem; niesie je tylko
+	// konwersja.
 	kompresuj bool
 }
 
-// Zbadaj obsługuje `image.inspect` — czynność czytającą. Niczego nie zmienia:
-// model używa jej, zanim cokolwiek zrobi, żeby znać format i wymiary.
-//
-// Nagłówek pliku czyta biblioteka wkompilowana, a nie program: pomiar formatu
-// i wymiarów jest jednym odczytem kilkuset bajtów i nie ma powodu, żeby kosztował
-// uruchomienie procesu.
+// Zbadaj obsługuje `image.inspect` — czynność czytającą, którą model wywołuje
+// przed każdą zmianą, żeby znać format i wymiary. Nagłówek pliku czyta
+// biblioteka wkompilowana, bo pomiar to jeden odczyt kilkuset bajtów.
 func (a *adapterNarzedziObrazu) Zbadaj(ctx context.Context,
 	z shared.ImageInspectRequest) (shared.ImageInspectResponse, error) {
 
@@ -113,8 +73,8 @@ func (a *adapterNarzedziObrazu) Zbadaj(ctx context.Context,
 		Height:    opis.wysokosc,
 		SizeBytes: zrodlo.rozmiar,
 	}
-	// Pola opcjonalne obsadzamy tylko wtedy, gdy pomiar coś dał. Pusty tekst
-	// w polu opcjonalnym wyglądałby jak „obraz ma metadane, i są puste".
+	// Pola opcjonalne obsadza się tylko wtedy, gdy pomiar coś dał — pusty tekst
+	// udawałby metadane.
 	if opis.przestrzen != "" {
 		przestrzen := opis.przestrzen
 		odpowiedz.ColorSpace = &przestrzen
@@ -126,11 +86,9 @@ func (a *adapterNarzedziObrazu) Zbadaj(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// zbadajProgramem mierzy plik, którego dekodera w drzewie nie ma (AVIF), jedynym
-// sposobem, jaki zostaje — programem pakietu serwera.
-//
-// `[0]` bierze pierwszą klatkę. Bez tego GIF animowany wypisałby komplet pól dla
-// każdej ze swoich klatek i odpowiedź niosłaby wymiary ostatniej.
+// zbadajProgramem mierzy programem pakietu serwera plik bez dekodera w Go,
+// na przykład AVIF. Indeks `[0]` bierze pierwszą klatkę, inaczej GIF animowany
+// oddałby wymiary swojej ostatniej klatki.
 func (a *adapterNarzedziObrazu) zbadajProgramem(ctx context.Context,
 	zrodlo zrodloObrazu) (shared.ImageInspectResponse, error) {
 
@@ -164,7 +122,9 @@ func (a *adapterNarzedziObrazu) zbadajProgramem(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// Przeksztalc obsługuje `image.transform` — geometria obrazu.
+// Przeksztalc obsługuje `image.transform` — geometrię obrazu. Składa argumenty
+// dla obu dróg i deleguje rachunek do `przetworz`, wspólnego dla wszystkich
+// czynności zmieniających obraz.
 func (a *adapterNarzedziObrazu) Przeksztalc(ctx context.Context,
 	z shared.ImageTransformRequest) (shared.ImageTransformResponse, error) {
 
@@ -189,7 +149,9 @@ func (a *adapterNarzedziObrazu) Przeksztalc(ctx context.Context,
 	return shared.ImageTransformResponse{Asset: zasob}, nil
 }
 
-// Popraw obsługuje `image.adjust` — retusz barw i ostrości obrazu.
+// Popraw obsługuje `image.adjust` — retusz barw i ostrości obrazu. Składa
+// argumenty dla obu dróg i deleguje rachunek do `przetworz`, tak samo
+// jak Przeksztalc.
 func (a *adapterNarzedziObrazu) Popraw(ctx context.Context,
 	z shared.ImageAdjustRequest) (shared.ImageAdjustResponse, error) {
 
@@ -214,12 +176,10 @@ func (a *adapterNarzedziObrazu) Popraw(ctx context.Context,
 	return shared.ImageAdjustResponse{Asset: zasob}, nil
 }
 
-// Przekonwertuj obsługuje `image.convert` — zmiana formatu i kompresji.
-//
-// Pole `savedBytes` wypełnia się tylko przy realnej oszczędności: konwersja
-// bywa większa od źródła (PNG bezstratny z JPEG-a), a wartość ujemna
-// nazywałaby stratę oszczędnością. Puste pole znaczy „nie zaoszczędzono",
-// a `sizeBytes` obok podaje rozmiar wyniku.
+// Przekonwertuj obsługuje `image.convert` — zmianę formatu i kompresji. Pole
+// `savedBytes` wypełnia się tylko przy realnej oszczędności, bo wartość ujemna
+// nazywałaby stratę oszczędnością; `sizeBytes` obok zawsze podaje rozmiar
+// wyniku.
 func (a *adapterNarzedziObrazu) Przekonwertuj(ctx context.Context,
 	z shared.ImageConvertRequest) (shared.ImageConvertResponse, error) {
 
@@ -232,8 +192,8 @@ func (a *adapterNarzedziObrazu) Przekonwertuj(ctx context.Context,
 		return shared.ImageConvertResponse{}, err
 	}
 	zasob, rozmiar, err := a.przetworz(ctx, zrodlo, z.WindowId, czynnoscObrazu{
-		// Konwersja nie rusza pikseli — zmienia sam zapis, więc rachunkiem jest
-		// przepisanie obrazu do kodera formatu docelowego.
+		// Konwersja nie rusza pikseli — rachunkiem jest przepisanie obrazu
+		// do kodera formatu docelowego.
 		rachunek:    func(obraz image.Image) (image.Image, error) { return obraz, nil },
 		argumenty:   argumenty,
 		format:      format,
@@ -252,13 +212,9 @@ func (a *adapterNarzedziObrazu) Przekonwertuj(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// przetworz jest jedną drogą wszystkich trzech czynności zmieniających: liczy
-// obraz w procesie, a przy formacie bez rachunku Go schodzi na program pakietu
-// serwera. Bajty wyniku odkłada jako nowy zasób.
-//
-// Format wyniku równa się formatowi źródła, gdy czynność go nie zmienia — bez
-// tego wymuszenia zapis nie miałby jak nazwać formatu. Format nierozpoznany
-// oddaje `png` jako wybór bezstratny.
+// przetworz jest wspólną drogą trzech czynności zmieniających obraz: liczy go
+// w procesie, a przy formacie bez rachunku Go korzysta z programu pakietu
+// serwera, po czym odkłada wynik jako nowy zasób.
 func (a *adapterNarzedziObrazu) przetworz(ctx context.Context, zrodlo zrodloObrazu,
 	oknoZadane *string, czynnosc czynnoscObrazu) (shared.DesignAsset, int, error) {
 
@@ -279,17 +235,15 @@ func (a *adapterNarzedziObrazu) przetworz(ctx context.Context, zrodlo zrodloObra
 	}
 	if czynnosc.kompresuj {
 		// Krok bez odmowy: przy braku programu dogniatającego oddaje te same
-		// bajty, więc zapis udaje się tak samo na maszynie, która go nie ma.
+		// bajty bez zmiany.
 		bajty = a.dogniecZapisObrazu(ctx, bajty, format, czynnosc.bezstratnie)
 	}
 	return a.odlozZasob(ctx, zrodlo, oknoZadane, bajty, format, czynnosc.nazwa)
 }
 
-// policzWkompilowanym przeprowadza czynność biblioteką w procesie.
-//
-// Odmowa rachunku (kadr poza obrazem, operacja spoza wyliczenia) wraca wprost
-// i kończy czynność — droga zapasowa nie ma jej czym naprawić, a jej uruchomienie
-// zamieniłoby odmowę czytelną na odmowę programu.
+// policzWkompilowanym przeprowadza czynność biblioteką w procesie. Odmowa
+// rachunku wraca wprost i kończy czynność, ponieważ droga zapasowa nie potrafi
+// jej naprawić.
 func (a *adapterNarzedziObrazu) policzWkompilowanym(zrodlo zrodloObrazu, format string,
 	czynnosc czynnoscObrazu) ([]byte, error) {
 
@@ -305,11 +259,8 @@ func (a *adapterNarzedziObrazu) policzWkompilowanym(zrodlo zrodloObrazu, format 
 }
 
 // policzProgramem przeprowadza czynność programem pakietu serwera — drogą dla
-// AVIF-a i WEBP-a stratnego.
-//
-// Kolejność argumentów jest wiążąca: program czyta wiersz od lewej i stosuje
-// operatory do obrazu wczytanego wcześniej. Ścieżka źródła stoi więc przed
-// operatorami, a cel — `format:-`, czyli standardowe wyjście — na końcu.
+// AVIF-a i WEBP-a stratnego. Kolejność argumentów jest wiążąca: ścieżka źródła
+// stoi przed operatorami, a cel `format:-` na końcu.
 func (a *adapterNarzedziObrazu) policzProgramem(ctx context.Context, zrodlo zrodloObrazu,
 	format string, czynnosc czynnoscObrazu) ([]byte, error) {
 
@@ -319,10 +270,8 @@ func (a *adapterNarzedziObrazu) policzProgramem(ctx context.Context, zrodlo zrod
 }
 
 // argumentyPrzeksztalcenia składa operatory geometryczne dla drogi zapasowej.
-// Każda gałąź sprawdza własne wskazania: kadr bez wymiarów albo obrót bez kąta to
-// żądanie, którego nie da się wykonać, a nie żądanie o skutku pustym. Sprawdzenie
-// stoi tu, przed wyborem drogi, żeby odmowa żądania niepoprawnego brzmiała tak
-// samo niezależnie od formatu pliku.
+// Każda gałąź sprawdza własne wskazania, bo kadr bez wymiarów albo obrót bez
+// kąta to żądanie niewykonalne, a nie żądanie o skutku pustym.
 func argumentyPrzeksztalcenia(z shared.ImageTransformRequest) ([]string, error) {
 	switch z.Operation {
 	case shared.ImageTransformKindResize:
@@ -333,9 +282,8 @@ func argumentyPrzeksztalcenia(z shared.ImageTransformRequest) ([]string, error) 
 		return []string{"-resize", miara}, nil
 
 	case shared.ImageTransformKindThumbnail:
-		// `-thumbnail` to `-resize` ze zdjętym profilem i metadanymi: miniatura
-		// niosąca kilobajty EXIF-u aparatu byłaby miniaturą tylko z nazwy.
-		// Brak wymiarów bierze bok 256 — tak samo jak rachunek wkompilowany.
+		// `-thumbnail` zdejmuje profil i metadane, inaczej niż `-resize`.
+		// Brak wymiarów bierze bok 256.
 		szerokosc, wysokosc := z.Width, z.Height
 		if szerokosc == nil && wysokosc == nil {
 			bok := 256
@@ -354,9 +302,8 @@ func argumentyPrzeksztalcenia(z shared.ImageTransformRequest) ([]string, error) 
 		}
 		miara := strconv.Itoa(*z.Width) + "x" + strconv.Itoa(*z.Height) +
 			przesuniecie(z.X) + przesuniecie(z.Y)
-		// `+repage` kasuje ślad po pierwotnym płótnie. Bez niego kadr niesie
-		// odsunięcie w nagłówku i każdy następny operator liczy je od nowa —
-		// obrót po kadrze wyszedłby przesunięty.
+		// `+repage` kasuje ślad po pierwotnym płótnie, inaczej obrót po kadrze
+		// wyszedłby przesunięty.
 		return []string{"-crop", miara, "+repage"}, nil
 
 	case shared.ImageTransformKindRotate:
@@ -366,8 +313,7 @@ func argumentyPrzeksztalcenia(z shared.ImageTransformRequest) ([]string, error) 
 		return []string{"-rotate", strconv.Itoa(*z.Degrees)}, nil
 
 	case shared.ImageTransformKindFlipHorizontal:
-		// `-flop` odbija w poziomie, `-flip` w pionie. Nazwy programu są mylące
-		// i podmiana ich miejscami byłaby usterką niewidoczną w kodzie.
+		// `-flop` odbija w poziomie, `-flip` w pionie; nazwy łatwo pomylić.
 		return []string{"-flop"}, nil
 
 	case shared.ImageTransformKindFlipVertical:
@@ -391,16 +337,16 @@ func argumentyPoprawki(z shared.ImageAdjustRequest) ([]string, error) {
 	case shared.ImageAdjustKindContrast:
 		return []string{"-brightness-contrast", "0x" + strconv.Itoa(sila)}, nil
 	case shared.ImageAdjustKindSaturation:
-		// `-modulate jasność,nasycenie,odcień` liczy w procentach, gdzie 100
-		// znaczy „bez zmian" — siła jest więc przyrostem, nie wartością.
+		// `-modulate` liczy w procentach, gdzie 100 znaczy bez zmian — siła
+		// jest przyrostem, nie wartością.
 		return []string{"-modulate", "100," + strconv.Itoa(100+sila) + ",100"}, nil
 	case shared.ImageAdjustKindSharpen:
 		return []string{"-sharpen", "0x" + promienZSily(sila)}, nil
 	case shared.ImageAdjustKindBlur:
 		return []string{"-blur", "0x" + promienZSily(sila)}, nil
 	case shared.ImageAdjustKindDenoise:
-		// `-median` bierze promień sąsiedztwa, więc jest tym samym filtrem, co
-		// rachunek wkompilowany; powtórzenia liczy ta sama granica trzech.
+		// `-median` bierze promień sąsiedztwa — ten sam filtr, co rachunek
+		// wkompilowany.
 		operatory := make([]string, 0, 2*przebiegiOdszumianiaArsenalu(sila))
 		for i := 0; i < przebiegiOdszumianiaArsenalu(sila); i++ {
 			operatory = append(operatory, "-median", "1")
@@ -417,6 +363,8 @@ func argumentyPoprawki(z shared.ImageAdjustRequest) ([]string, error) {
 }
 
 // argumentyKonwersji rozstrzyga format docelowy i parametry kompresji.
+// Sprawdza, że format należy do zbioru `formatyDocelowe`, i odrzuca żądanie
+// bezstratności, którego wskazany format nie potrafi spełnić.
 func argumentyKonwersji(z shared.ImageConvertRequest) (string, []string, error) {
 	format := strings.ToLower(strings.TrimSpace(z.Format))
 	if format == "" {
@@ -437,9 +385,8 @@ func argumentyKonwersji(z shared.ImageConvertRequest) (string, []string, error) 
 		operatory = append(operatory, "-quality", strconv.Itoa(*z.Quality))
 	}
 	if z.Lossless != nil && *z.Lossless {
-		// Bezstratność ma sens tylko tam, gdzie format ją zna. Wymuszona na
-		// JPEG-u byłaby obietnicą, której format nie umie dotrzymać — stąd
-		// odmowa zamiast pliku stratnego opisanego jako bezstratny.
+		// Bezstratność ma sens tylko tam, gdzie format ją zna — na JPEG-u
+		// byłaby niespełnialną obietnicą.
 		switch format {
 		case "webp", "avif":
 			operatory = append(operatory, "-define", format+":lossless=true")
@@ -454,13 +401,10 @@ func argumentyKonwersji(z shared.ImageConvertRequest) (string, []string, error) 
 	return format, operatory, nil
 }
 
-// miaraSkalowania składa miarę skalowania programu z pary wymiarów — w tym samym
-// rozumieniu, co `przeskalujObrazArsenalu`.
-//
-// Proporcje zachowujemy domyślnie, tak jak mówi kontrakt: model prosi zwykle
-// o „szerokość 800", a nie o rozciągnięcie zdjęcia. Wyłączenie proporcji (`!`)
-// wymaga obu wymiarów, bo rozciągnięcie do jednego boku nie ma czego
-// rozciągnąć.
+// miaraSkalowania składa miarę skalowania programu z pary wymiarów, w tym
+// samym rozumieniu, co `przeskalujObrazArsenalu`. Proporcje zachowuje
+// domyślnie; wyłączenie ich wymaga obu wymiarów, bo rozciągnięcie do jednego
+// boku nie ma czego rozciągnąć.
 func miaraSkalowania(szerokosc, wysokosc *int, zachowajProporcje *bool) (string, error) {
 	if !dodatnia(szerokosc) && !dodatnia(wysokosc) {
 		return "", bladWskazaniaObrazu(

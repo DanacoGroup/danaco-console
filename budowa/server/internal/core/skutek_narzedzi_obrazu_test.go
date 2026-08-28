@@ -1,3 +1,6 @@
+// Skutek czterech czynności obrazu modelu (`image.inspect`, `image.transform`,
+// `image.adjust`, `image.convert`) mierzy piksele wyniku wkompilowanym
+// rachunkiem, nie pola odpowiedzi ani obecność programu.
 package core
 
 import (
@@ -13,20 +16,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek czterech czynności obrazu modelu: `image.inspect`, `image.transform`,
-// `image.adjust`, `image.convert`.
-//
-// ── Dlaczego ten sprawdzian nie pomija się przy braku programu ──────────────
-// Te cztery czynności liczył wcześniej program pakietu serwera i sprawdzian
-// skutku wymagałby jego obecności — na maszynie bez niego świeciłby na zielono
-// jako „pominięty", czyli nie mierzyłby niczego. Rachunek stoi teraz
-// wkompilowany w binarium (`adapter_narzedzia_obraz_wkompilowany.go`), więc
-// sprawdzian idzie zawsze i mierzy PIKSELE wyniku, a nie pola odpowiedzi.
-//
-// Program zostaje wyłącznie drogą zapasową dla AVIF-a i WEBP-a stratnego — tych
-// dwóch wyjść ten plik nie mierzy, bo nie ma czym: kodera czysto-Go dla nich nie
-// ma i dlatego właśnie tamta droga istnieje.
 
 // obrazPolowaNaPolowe składa PNG podzielony pionowo na dwie barwy. Materiał do
 // mierzenia kadru i obrotu: każda z dwóch połówek jest rozpoznawalna po barwie,
@@ -118,12 +107,8 @@ func TestKadrowanieWycinaWskazanaPolowe(t *testing.T) {
 	}
 }
 
-// TestObrotIdzieZgodnieZeWskazowkamiZegara pilnuje kierunku obrotu. Kierunek
-// odwrotny daje obraz o tych samych wymiarach, więc pomiar samych boków by go nie
-// zauważył — mierzymy więc, gdzie wylądowała czerwona połowa.
-//
-// Obrót o dziewięćdziesiąt stopni zgodnie z ruchem wskazówek zegara przenosi lewą
-// połowę na GÓRĘ. Obrót przeciwny położyłby ją na dole.
+// TestObrotIdzieZgodnieZeWskazowkamiZegara pilnuje kierunku obrotu: mierzy, gdzie
+// po obrocie wylądowała czerwona połowa, bo pomiar samych boków by go nie zauważył.
 func TestObrotIdzieZgodnieZeWskazowkamiZegara(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -260,11 +245,9 @@ func TestKonwersjaDoJpegDajeCzytelnyJpeg(t *testing.T) {
 	}
 }
 
-// TestKonwersjaDoWebpBezstratnegoNieWymagaProgramu mierzy zapis WEBP —
-// jedyny format, który produkt do tej pory umiał wyłącznie zdekodować.
-//
-// Sprawdzian dekoduje wynik bibliotecznym czytnikiem WEBP: gdyby zapis szedł
-// programem, na maszynie bez niego czynność by odmówiła, a tu ma przejść zawsze.
+// TestKonwersjaDoWebpBezstratnegoNieWymagaProgramu mierzy zapis WEBP — jedyny
+// format, który produkt do tej pory umiał wyłącznie zdekodować, i ma przejść
+// zawsze, bez udziału programu.
 func TestKonwersjaDoWebpBezstratnegoNieWymagaProgramu(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
@@ -297,7 +280,8 @@ func TestKonwersjaDoWebpBezstratnegoNieWymagaProgramu(t *testing.T) {
 	}
 }
 
-// TestPomiarObrazuCzytaFormatIWymiaryBezProgramu mierzy `image.inspect`.
+// TestPomiarObrazuCzytaFormatIWymiaryBezProgramu mierzy `image.inspect`: format
+// i wymiary obrazu mają wyjść bez udziału programu pakietu serwera.
 func TestPomiarObrazuCzytaFormatIWymiaryBezProgramu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -336,12 +320,8 @@ func TestPomiarNiepodanegoObrazuOdmawiaNazywajacBrak(t *testing.T) {
 }
 
 // TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak mierzy kształt odmowy na
-// jedynej drodze rodziny, która NIE MA rachunku wkompilowanego: AVIF powstaje
-// wyłącznie programem pakietu serwera, więc jego brak ma wyjść zdaniem
-// nazywającym program i drogę naprawy — nie błędem wewnętrznym.
-//
-// Pustą ścieżką wyszukiwania sprawdzian czyni z tej maszyny maszynę bez
-// programu, więc odmowę mierzy każdy bieg, nie tylko bieg na cienkiej instalce.
+// jedynej drodze rodziny bez rachunku wkompilowanego: AVIF ma odmówić zdaniem
+// nazywającym program, nie błędem wewnętrznym.
 func TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 
@@ -356,14 +336,16 @@ func TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak(t *testing.T) {
 			AssetId:  wskaznik(zrodlo),
 			Format:   "avif",
 		})
-	// Trzy człony odmowy: co (program po nazwie), skąd wiadomo (nie ma na tej
-	// maszynie), jak naprawić (pakiet do zainstalowania).
+	// Trzy człony odmowy: co, program po nazwie.
+
+	// Skąd wiadomo: nie ma na tej maszynie; jak naprawić: pakiet do zainstalowania.
 	odmowaNazywa(t, odmowa, shared.ErrorCodeChannelUnavailable,
 		"ImageMagick", "nie ma na tej maszynie", "naprawa: zainstalować pakiet imagemagick")
 	t.Logf("odmowa: %s", odmowa.Message)
 }
 
-// rozpoznajFormatPlikuSprawdzianu czyta nagłówek pliku wynikowego.
+// rozpoznajFormatPlikuSprawdzianu czyta nagłówek pliku wynikowego i oddaje
+// nazwę formatu, jaką rozpoznaje biblioteka standardowa obrazu.
 func rozpoznajFormatPlikuSprawdzianu(sciezka string) (image.Config, string, error) {
 	plik, err := os.Open(sciezka)
 	if err != nil {

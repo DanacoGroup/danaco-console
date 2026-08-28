@@ -1,19 +1,5 @@
-// Odpowiedzialność pliku: złożenie konfiguracji mostów MCP dla jednego okna
-// rozmowy — od wierszy nadań i punktów do gotowego tekstu `mcpServers`.
-//
-// Tu domyka się dostęp. Punkt dostępu i nadanie bez tego pliku byłyby wpisami
-// w oknie konfiguracji i niczym więcej: model nie dostawałby ani jednego mostu.
-// Ścieżka jest jedna — nadania okna → punkty → generator wpisów
-// (`most_mcp.go`) → plik `--mcp-config` procesu modelu.
-//
-// Słownictwo trybu jest danymi. Argument, jakim dany most nazywa tryb
-// nadania, pochodzi z wiersza `argument_trybu_mostu` tego punktu. Rdzeń nie zna
-// ani jednego takiego słowa; brak wiersza znaczy uruchomienie bez argumentu,
-// czyli tryb odczytu — wariant bezpieczniejszy.
-//
-// Błąd odczytu nie zerwie tury. Okno bez mostów rozmawia dalej, tyle że bez
-// wglądu w maszyny. Odmowa rozmowy z powodu niedostępnego katalogu dostępów
-// byłaby bramą, której dokumentacja nie stawia.
+// Plik składa konfigurację mostów MCP dla jednego okna rozmowy: od wierszy nadań i punktów do
+// gotowego tekstu mcpServers, domykając dostęp modelu do maszyn.
 package core
 
 import (
@@ -24,11 +10,8 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// mostyOkna składa konfigurację mostów z repozytoriów warstwy danych.
-//
-// Dziennik i rejestr zgłoszonych braków służą wyłącznie wpisowi serwera
-// narzędzi (`most_narzedzi.go`): odmowa dołożenia tego wpisu ma być
-// powiedziana, a nie przemilczana, i ma być powiedziana raz na powód.
+// mostyOkna składa konfigurację mostów z repozytoriów warstwy danych. Dziennik i rejestr
+// zgłoszonych braków służą wyłącznie wpisowi serwera narzędzi, powiedzianemu raz na powód.
 type mostyOkna struct {
 	nadania        dane.RepozytoriumNadan
 	punkty         dane.RepozytoriumPunktowDostepu

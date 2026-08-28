@@ -19,33 +19,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Design: czy za odpowiedzią naprawdę coś zostaje.
-//
-// ── Dlaczego akurat ten moduł mierzy się tak surowo ─────────────────────────
-// To jest moduł z precedensem szkody. `design.asset.list` meldował kiedyś
-// `status: ok` z wykazem zasobów, za którymi nie było ANI JEDNEGO BAJTU.
-// Koperta była udana i zarazem kłamała, a klient czyta kopertę, nie komentarz
-// w kodzie. Od tamtej pory obowiązuje w produkcie zasada, której ten plik jest
-// wzorcowym zastosowaniem:
-//
-//	Sprawdzian schodzi po odwołaniu do magazynu albo do bazy i mierzy
-//	NIEZALEŻNIE. Nigdy nie kończy się na treści odpowiedzi.
-//
-// Stąd dwa narzędzia pomiaru, oba omijające rdzeń:
-//
-//  1. Wydanie zasobu jest DEKODOWANE Z POWROTEM JAKO OBRAZ i mierzone co do
-//     wymiarów po skali. Odpowiedź mówiąca „oto png @2x" nie jest dowodem;
-//     dowodem jest `image.Decode`, któremu te bajty wystarczą, i szerokość,
-//     która wyszła dwa razy większa.
-//
-//  2. Kolekcja, wersja kompozycji, adnotacja i zestaw żetonów są odczytywane
-//     DRUGIM, NIEZALEŻNYM POŁĄCZENIEM SQLite do pliku bazy stanowiska. Rdzeń
-//     nie bierze w tym odczycie udziału: gdyby zapis nie doszedł do pliku,
-//     odpowiedź komendy i tak wyglądałaby tak samo.
-//
-// Sumę kontrolną treści sprawdzian liczy z BAJTÓW, nie przepisuje jej
-// z odpowiedzi — zgodność tych dwóch wartości jest tu mierzona, a nie założona.
-
 // ── Uprząż pomiaru ──────────────────────────────────────────────────────────
 
 // polaczenieOboczneDesignu otwiera drugie połączenie do pliku bazy stanowiska.
@@ -66,8 +39,8 @@ func polaczenieOboczneDesignu(t *testing.T, katalogDanych string) *sql.DB {
 	return oboczne
 }
 
-// liczbaObocznaDesignu odczytuje jedną liczbę zapytaniem na obocznym
-// połączeniu.
+// liczbaObocznaDesignu odczytuje jedną liczbę zapytaniem wykonanym na obocznym
+// połączeniu do pliku bazy stanowiska.
 func liczbaObocznaDesignu(t *testing.T, oboczne *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -78,7 +51,8 @@ func liczbaObocznaDesignu(t *testing.T, oboczne *sql.DB, zapytanie string, argum
 	return wynik
 }
 
-// tekstObocznyDesignu odczytuje jeden tekst zapytaniem na obocznym połączeniu.
+// tekstObocznyDesignu odczytuje jeden tekst zapytaniem wykonanym na obocznym
+// połączeniu do pliku bazy stanowiska.
 func tekstObocznyDesignu(t *testing.T, oboczne *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -132,11 +106,6 @@ func wymiaryWydaniaDesignu(t *testing.T, trescBase64 string) (int, int) {
 
 // zycieZGniazdemDesignu dokłada do kontekstu tożsamość połączenia — taką, jaką
 // nadaje transport oknu, które się przywitało.
-//
-// Zgłoszenie obecności bez rozpoznanego klienta jest odmawiane, i słusznie:
-// kursor bez tożsamości nie da się odróżnić od cudzego ani zdjąć przy odejściu.
-// Uprząż woła rdzeń z pominięciem gniazda, więc tożsamość trzeba tu podstawić —
-// inaczej sprawdzian mierzyłby wywołanie, które w produkcie nie zachodzi.
 func zycieZGniazdemDesignu(zycie context.Context, klient string) context.Context {
 	return zPolaczeniem(zycie, transport.Tozsamosc{
 		IdPolaczenia: "gniazdo-sprawdzianu",
@@ -287,7 +256,7 @@ func TestWydanieZasobuDesignuSkladaJpegIkoneIDokument(t *testing.T) {
 		bajtyIkony[2] != 1 || bajtyIkony[3] != 0 {
 		t.Fatalf("wydanie ico nie ma nagłówka ikony (%d bajtów)", len(bajtyIkony))
 	}
-	// Zawartość wpisu leży od bajtu 22 i jest obrazem PNG — rozkładamy ją,
+	// Zawartość wpisu leży od bajtu 22 i jest obrazem PNG — rozklada się ją,
 	// zamiast wierzyć nagłówkowi.
 	if _, err := png.Decode(bytes.NewReader(bajtyIkony[22:])); err != nil {
 		t.Errorf("zawartość ikony nie rozkłada się jako obraz: %v", err)
@@ -353,7 +322,7 @@ func TestWydaniePartiaDesignuNiesieBilansZamiastCiszy(t *testing.T) {
 	if wynik.Rejected[0].Reason == "" {
 		t.Error("odrzucenie w partii nie niesie powodu")
 	}
-	// Każde wydanie rozkładamy z powrotem: partia melduje cztery pliki, więc
+	// Każde wydanie rozklada się z powrotem: partia melduje cztery pliki, więc
 	// cztery mają być obrazami.
 	for _, plik := range wynik.Files {
 		szerokosc, wysokosc := wymiaryWydaniaDesignu(t, plik.ContentBase64)
@@ -561,8 +530,8 @@ func TestHistoriaPromptowDesignuOddajePustyWykazBezWydan(t *testing.T) {
 
 // ── Wersje kompozycji ───────────────────────────────────────────────────────
 
-// zalozKompozycjeDesignu zakłada kompozycję z warstwą wskazującą zasób
-// i oddaje jej identyfikator.
+// zalozKompozycjeDesignu zakłada kompozycję z jedną warstwą wskazującą podany
+// zasób i oddaje identyfikator założonej kompozycji.
 func zalozKompozycjeDesignu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno, zasob string) string {
 	t.Helper()
@@ -726,8 +695,8 @@ func TestWyrysKompozycjiDesignuJestObrazemOZmierzonychWymiarach(t *testing.T) {
 	}
 }
 
-// katalogMagazynuWSvgDesignu jest fragmentem ścieżki magazynu — wyrys nie ma
-// prawa go nieść.
+// katalogMagazynuWSvgDesignu jest fragmentem ścieżki magazynu rdzenia — wyrys
+// svg nie ma prawa go nieść w treści osadzonej.
 const katalogMagazynuWSvgDesignu = "design/zasoby"
 
 // TestWyrysKompozycjiDesignuOdmawiaGdyNieMaCzegoWyrysowac pilnuje, że pusta
@@ -1066,7 +1035,7 @@ func TestObecnoscDesignuJestUlotnaINieZostawiaWiersza(t *testing.T) {
 	}
 
 	// Zgłoszenie bez rozpoznanego klienta jest odmawiane — kursor bez
-	// tożsamości nie da się ani odróżnić od cudzego, ani zdjąć przy odejściu.
+	// tożsamości nie da się odróżnić.
 	bezKlienta := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDesignPresenceReport,
 		shared.DesignPresenceReportRequest{BoardId: plansza})
 	if bezKlienta.Code != shared.ErrorCodeValidationFailed {

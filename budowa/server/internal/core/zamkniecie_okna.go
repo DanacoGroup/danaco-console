@@ -2,12 +2,7 @@ package core
 
 import "time"
 
-// karencjaZamkniecia jest czasem, jaki tura dostaje na samodzielne domknięcie,
-// zanim drzewo procesu zostanie ubite.
-//
-// Dwie sekundy pokrywają to, co model robi na końcu tury: dopisanie ostatniego
-// fragmentu i zamknięcie otwartych plików. Dłuższa karencja opóźniałaby widoczne
-// zamknięcie okna, krótsza nie starczyłaby na zapis.
+// karencjaZamkniecia jest czasem, jaki tura dostaje na samodzielne domknięcie, zanim drzewo procesu zostanie ubite. Dwie sekundy pokrywają dopisanie ostatniego fragmentu i zamknięcie otwartych plików przez model.
 const karencjaZamkniecia = 2 * time.Second
 
 // krokKarencji wyznacza częstość sprawdzania, czy tura już się domknęła.
@@ -15,10 +10,10 @@ const karencjaZamkniecia = 2 * time.Second
 // po ustaniu tury, a nie po upływie całej karencji.
 const krokKarencji = 50 * time.Millisecond
 
-// PrzerwanieTury przerywa turę okna i mówi, czy jakaś biegła.
+// PrzerwanieTury przerywa turę okna i mówi, czy jakaś w ogóle biegła, zanim przerwanie zostało wykonane.
 type PrzerwanieTury func(idOkna string) bool
 
-// TuraWBiegu mówi, czy w oknie trwa jeszcze tura.
+// TuraWBiegu mówi, czy w oknie trwa jeszcze tura, sprawdzane po jej przerwaniu, w trakcie okresu karencji.
 type TuraWBiegu func(idOkna string) bool
 
 // ZPrzerwaniemTury wpina łagodny krok zamykania okna.
@@ -32,14 +27,7 @@ func (a *adapterOkien) ZPrzerwaniemTury(przerwij PrzerwanieTury, wBiegu TuraWBie
 	return a
 }
 
-// domknijTureLagodnie przerywa turę okna i czeka, aż ustanie — nie dłużej niż
-// karencja.
-//
-// Kolejność jest istotna: najpierw przerwanie tury, które daje procesowi szansę
-// zamknąć się samemu, dopiero potem ubicie drzewa przez nadzorcę.
-//
-// Brak wpiętego przerwania nie blokuje zamykania — okno zamyka się wtedy bez
-// łagodnego kroku.
+// domknijTureLagodnie przerywa turę okna i czeka, aż ustanie, nie dłużej niż karencja. Kolejność jest istotna: najpierw przerwanie tury, które daje procesowi szansę zamknąć się samemu, dopiero potem ubicie drzewa przez nadzorcę.
 func (a *adapterOkien) domknijTureLagodnie(idOkna string) {
 	if a.przerwijTure == nil {
 		return

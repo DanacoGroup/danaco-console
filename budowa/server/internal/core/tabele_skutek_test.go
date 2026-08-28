@@ -1,3 +1,6 @@
+// Sprawdziany skutku czynności na tabelach mierzą osobnym wykazem, czy po odpowiedzi udanej
+// w dokumencie stoi tabela zamówiona przez Operatora, z nienaruszoną siatką i policzonymi
+// szerokościami kolumn.
 package core
 
 import (
@@ -8,21 +11,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek czynności na tabelach: czy po odpowiedzi udanej w dokumencie NAPRAWDĘ
-// stoi tabela, jaką Operator zamówił.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. szerokości kolumn zerowe po scaleniu — tabela wygląda na złożoną,
-//     a w wydaniu ma kolumny niewidzialne (wymaganie zlecenia wprost);
-//  2. sortowanie, które rozrywa wiersze albo przestawia wiersz nagłówkowy;
-//  3. zamiana tekstu na tabelę, która zostawia tekst w treści i daje dokument
-//     niosący to samo dwa razy;
-//  4. usunięcie ostatniego wiersza albo kolumny, po którym zostaje tabela
-//     o zerowej siatce.
-//
-// Miara jest brana OSOBNYM wywołaniem wykazu tabel, a nie z odpowiedzi
-// czynności: Operator otworzy dokument ponownie, a nie przeczyta odpowiedź.
 
 // tabelaUprzazSprawdzianu składa adapter modułu nad bazą sprawdzianu.
 //
@@ -36,7 +24,8 @@ func tabelaUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context, str
 	return nowyAdapterStudia(zmontowany.dane.Studio), zycie, dokument.Id
 }
 
-// tabelaWykazSprawdzianu odczytuje tabelę osobnym wywołaniem.
+// tabelaWykazSprawdzianu odczytuje wskazaną tabelę osobnym wywołaniem wykazu, niezależnym
+// od odpowiedzi czynności, która ją założyła albo zmieniła.
 func tabelaWykazSprawdzianu(t *testing.T, adapter *adapterStudia, zycie context.Context,
 	dokument, tabela string) shared.StudioDocumentTable {
 	t.Helper()
@@ -53,7 +42,8 @@ func tabelaWykazSprawdzianu(t *testing.T, adapter *adapterStudia, zycie context.
 	return wykaz.Tables[0]
 }
 
-// tabelaKomorkaSprawdzianu odczytuje treść komórki wykazu.
+// tabelaKomorkaSprawdzianu odczytuje treść komórki o wskazanym wierszu i kolumnie z wykazu
+// tabeli, albo kończy sprawdzian, gdy takiej komórki nie ma.
 func tabelaKomorkaSprawdzianu(t *testing.T, tabela shared.StudioDocumentTable,
 	wiersz, kolumna int) string {
 	t.Helper()
@@ -357,7 +347,8 @@ func TestTabelaWstawienieKolumnyZachowujeSzerokosci(t *testing.T) {
 	tabelaSprawdzSzerokosci(t, tabela, "tabela po wstawieniu kolumny")
 }
 
-// TestTabelaPostacBezCechyOdmawia pilnuje zakazu odpowiedzi „ok" bez skutku.
+// TestTabelaPostacBezCechyOdmawia pilnuje zakazu odpowiedzi udanej bez skutku: ustawienie
+// postaci tabeli bez wskazania ani jednej cechy ma odmówić, a nie zameldować sukces.
 func TestTabelaPostacBezCechyOdmawia(t *testing.T) {
 	adapter, zycie, dokument := tabelaUprzazSprawdzianu(t)
 

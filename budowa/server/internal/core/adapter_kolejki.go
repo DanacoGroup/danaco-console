@@ -10,28 +10,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterKolejek wypełnia port Kolejki repozytorium kolejek — jednym silnikiem
-// pętli sesyjnej i MultitaskingAI. Drugiej implementacji nie ma.
-//
-// Kolumnę `kolejka.sesja_id` wypełnia dowiązanie wpięte przez `ZSesjami`:
-// tabela `sesja` ma kolumnę `identyfikator_zewnetrzny`
-// (`migracja_006_identyfikatory_zewnetrzne.sql`), repozytorium sesji ma
-// `PoIdentyfikatorze`, a wiersz sesji powstaje wraz z pierwszą utrwaloną
-// wiadomością okna. Gdy wiersz sesji istnieje, kolejka zapisuje się z kluczem
-// obcym, a odczyt kolejki spoza pamięci odtwarza identyfikator sesji z wiersza.
-//
-// Kolejka założona wcześniej niż pierwsza wiadomość sesji zapisuje się bez
-// dowiązania, bo wiersza sesji jeszcze nie ma. Nie jest to błąd — brak
-// konfiguracji ani brak wiersza nie mogą odmówić założenia kolejki.
-// Pamięć powiązań zostaje jako źródło identyfikatora sesji dla takich kolejek.
+// adapterKolejek wypełnia port Kolejki repozytorium kolejek jednym silnikiem pętli sesyjnej i MultitaskingAI. Kolejka bez wiersza sesji zapisuje się bez dowiązania — nie jest to błąd.
 type adapterKolejek struct {
 	repozytorium dane.RepozytoriumKolejek
 	silnik       silnikKolejki
 	sesje        dane.RepozytoriumSesji
 	telemetria   *telemetriaPostepu
 	sesjeKolejek *pamiecSesjiKolejek
-	// kanaly jest rejestrem kanałów modelu, którym wykonawca kroku prowadzi
-	// realną turę pozycji. Pusty zostawia silnik przy samym przebiegu stanów.
+	// kanaly jest rejestrem kanałów modelu, którym wykonawca kroku prowadzi realną turę pozycji.
 	kanaly *models.Rejestr
 }
 
@@ -54,34 +40,19 @@ func (a *adapterKolejek) ZSesjami(repozytorium dane.RepozytoriumSesji) *adapterK
 	return a
 }
 
-// ZWykonawcaModelu wpina wykonawcę kroku, który pozycję wchodzącą w stan
-// `wykonywana` uruchamia turą kanału modelu (kolejka_wykonawca.go).
-// Bez tej metody silnik zostaje czystą maszyną stanów — pozycję posuwa wtedy
-// wyłącznie działanie Operatora, pętli albo MultitaskingAI. Rejestr
-// kanałów i nadajnik strumienia idą tą samą drogą co tura okna.
+// ZWykonawcaModelu wpina wykonawcę kroku, który pozycję wchodzącą w stan wykonywana uruchamia turą kanału modelu; bez tej metody silnik zostaje czystą maszyną stanów.
 func (a *adapterKolejek) ZWykonawcaModelu(kanaly *models.Rejestr, nadajnik Nadajnik) *adapterKolejek {
 	a.kanaly = kanaly
 	a.silnik = a.silnik.ZWykonawca(nowyWykonawcaModelu(kanaly, nadajnik, a.rozwiazKanalPozycji))
 	return a
 }
 
-// UstawUjscieWyniku wpina odbiorcę zebranej treści tury pozycji.
-// Woła go adapter podagentów przy własnym montażu (`zWykonaniem`), więc zapis
-// biegnie przed obsługą pierwszego żądania — pole silnika jest wartościowe
-// i podmienia się w miejscu, dokładnie jak przy `ZWykonawcaModelu` wyżej.
-// Silnik jest jeden, więc ujście dostaje każdą pozycję z treścią;
-// pozycja nienależąca do podagenta kończy się w odbiorcy zapisem donikąd,
-// co jest zwykłym stanem, nie usterką.
+// UstawUjscieWyniku wpina odbiorcę zebranej treści tury pozycji. Silnik jest jeden, więc ujście dostaje każdą pozycję z treścią; pozycja nienależąca do podagenta kończy się zapisem donikąd.
 func (a *adapterKolejek) UstawUjscieWyniku(ujscie func(ctx context.Context, pozycjaID int64, tresc string)) {
 	a.silnik = a.silnik.ZUjsciemWyniku(ujscie)
 }
 
-// rozwiazKanalPozycji ustala kanał modelu i zasięgi wykonania pozycji kolejki.
-// Pozycja nie niesie kanału — ani schemat `pozycja_kolejki`, ani kontrakt nie
-// mają pola kanału, więc krok jedzie domyślnym czynnym kanałem rejestru:
-// pierwszym wierszem czynnym i gotowym do pracy.
-// Brak takiego kanału znaczy „nie ma czym wykonać kroku" — wykonawca odda błąd,
-// a silnik pokaże pozycję jako `bledna`, zamiast udawać wykonanie.
+// rozwiazKanalPozycji ustala kanał modelu i zasięgi wykonania pozycji kolejki; pozycja nie niesie kanału, więc krok jedzie domyślnym czynnym kanałem rejestru — pierwszym wierszem gotowym do pracy.
 func (a *adapterKolejek) rozwiazKanalPozycji(_ context.Context, _ dane.Pozycja) (string, models.Zasiegi, bool) {
 	if a.kanaly == nil {
 		return "", models.Zasiegi{}, false
@@ -205,10 +176,7 @@ func etapDzialania(dzialanie shared.QueueAction) string {
 	return etapDzialanieNaKolejce
 }
 
-// kolejkaKontraktu przekłada wiersz kolejki na kolejkę kontraktu. Identyfikator
-// sesji bierze z pamięci powiązań, a gdy jej brak — z dowiązanego wiersza sesji.
-// Licznik obiegów pochodzi z pozycji, na której kolejka stoi: pole Queue.Cycle
-// opisuje bieg naprawczy zlecenia, a ten liczy się na pozycji.
+// kolejkaKontraktu przekłada wiersz kolejki na kolejkę kontraktu; identyfikator sesji bierze z pamięci powiązań, a licznik obiegów pochodzi z pozycji, na której kolejka stoi.
 func (a *adapterKolejek) kolejkaKontraktu(ctx context.Context, k dane.Kolejka) shared.Queue {
 	idSesji, okna := a.sesjeKolejek.Odczytaj(k.ID)
 	if idSesji == "" {
@@ -223,18 +191,12 @@ func (a *adapterKolejek) kolejkaKontraktu(ctx context.Context, k dane.Kolejka) s
 		nazwa := k.Nazwa
 		kolejka.Name = &nazwa
 	}
-	// Polityka i liczba zleceń oczekujących idą razem z kolejką, bo Queue
-	// Manager pokazuje jedno i drugie w nagłówku okna — bez tego okno musiałoby
-	// wołać dwie komendy po to, by narysować jeden wiersz. Nieudany odczyt
-	// zostawia oba pola puste zamiast wywracać odpowiedź: kolejka bez zapisanej
-	// polityki jest kolejką o polityce domyślnej, a nie kolejką uszkodzoną.
+	// Polityka i liczba zleceń idą razem z kolejką, bo Queue Manager pokazuje oba pola w nagłówku okna.
 	if polityka, err := a.repozytorium.PolitykaKolejki(ctx, k.ID); err == nil {
 		zapis := politykaKontraktu(polityka)
 		kolejka.Policy = &zapis
 	}
-	// Licznik bierze się z DŁUGOŚCI wykazu zawężonego stanem, a nie z licznika
-	// wszystkich zleceń kolejki: ten drugi liczy także zakończone i martwe,
-	// więc nagłówek okna pokazywałby zaległość, której nie ma.
+	// Licznik bierze się z długości wykazu zawężonego stanem, nie z licznika wszystkich zleceń kolejki.
 	if oczekujace, _, err := a.repozytorium.ZleceniaKolejki(ctx, k.ID,
 		stanZleceniaBazy(shared.QueueItemStatusPending), 0); err == nil {
 		oczekujacych := len(oczekujace)

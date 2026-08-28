@@ -1,3 +1,4 @@
+// Sprawdziany centrum powiadomień mierzą skutek: co zostaje w rejestrze po zgłoszeniu i co widzi Operator, a nie to, że wywołanie wróciło bez błędu.
 package core
 
 import (
@@ -9,12 +10,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany centrum powiadomień mierzą SKUTEK: co zostaje w rejestrze po
-// zgłoszeniu i co widzi Operator, a nie to, że wywołanie wróciło bez błędu.
-//
-// Uprząż jest ta sama, co dla pozostałych sprawdzianów skutku
-// (`zmontujDoPomiaruSkutku`): świeża baza, pełny montaż, komendy przez rejestr.
-
 // zglosDoCentrum wnosi zdarzenie drogą wewnętrzną — tą, którą idzie rdzeń.
 // Komendy zgłaszającej kontrakt nie ma z zamysłu, więc sprawdzian sięga po
 // adapter tak samo jak reszta rdzenia.
@@ -22,8 +17,7 @@ func zglosDoCentrum(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	zgloszenie ZgloszenieCentrum) bool {
 
 	t.Helper()
-	// Adapter składa się nad tym samym repozytorium i tym samym adapterem
-	// ustawień, co w montażu — droga wewnętrzna nie ma innego wejścia.
+	// Adapter składa się nad tym samym repozytorium i tym samym adapterem ustawień, co w montażu.
 	centrum := nowyAdapterCentrumPowiadomien(zmontowany.dane.CentrumPowiadomien).
 		ZNastawami(zmontowany.ustawienia)
 	wniesione, err := centrum.Zglos(zycie, zgloszenie)
@@ -60,9 +54,7 @@ func TestZgloszenieWchodziDoRejestruIPodnosiLicznik(t *testing.T) {
 	if zdarzenie.Weight != shared.NotificationWeightNormalna {
 		t.Errorf("waga zdarzenia klasy zakonczenie: %q, oczekiwana normalna", zdarzenie.Weight)
 	}
-	// Klasa „zakończenie" ma w katalogu (migracja 377, makieta 5 rozdz. 7.4)
-	// kanał Mobile włączony domyślnie, więc zdarzenie idzie obiema drogami.
-	// Nastawy rozstrzygają o kanale, nie kod adaptera.
+	// Klasa zakończenie ma w katalogu kanał Mobile włączony domyślnie, więc idzie obiema drogami.
 	if zdarzenie.Delivery != shared.NotificationDeliveryCentrumIPush {
 		t.Errorf("kanał dostarczenia: %q, oczekiwany centrum_i_push", zdarzenie.Delivery)
 	}
@@ -71,8 +63,7 @@ func TestZgloszenieWchodziDoRejestruIPodnosiLicznik(t *testing.T) {
 func TestKlasaWygaszonaNastawaNieWchodziDoRejestru(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
-	// Operator wyłącza klasę „termin" w sekcji Powiadomień — tą samą drogą, co
-	// każdą inną nastawę platformy.
+	// Operator wyłącza klasę termin w sekcji Powiadomień — tą samą drogą, co każdą inną nastawę platformy.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandConfigSet, shared.ConfigSetRequest{
 		Key:   "powiadomienia.klasa.termin",
 		Value: json.RawMessage("false"),
@@ -211,8 +202,7 @@ func TestOdlozenieWPrzeszloscOdmawia(t *testing.T) {
 func TestZdarzenieOdlozoneWracaPoTerminie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
-	// Klasa „wzmianka" nie ma kanału dodatkowego w katalogu, więc zdarzenie
-	// zostaje w samym centrum — sprawdzian odłożenia nie dotyka kolejki doręczeń.
+	// Klasa wzmianka nie ma kanału dodatkowego w katalogu, więc zdarzenie zostaje w samym centrum.
 	zglosDoCentrum(t, zmontowany, zycie, ZgloszenieCentrum{
 		Klasa: shared.NotificationClassWzmianka, Tresc: "Wzmianka w komentarzu",
 	})
@@ -261,8 +251,7 @@ func TestFiltrZawezaWykazAleNieLicznik(t *testing.T) {
 	if len(wykaz.Notifications) != 1 {
 		t.Errorf("filtr klasy oddał %d zdarzeń, oczekiwane 1", len(wykaz.Notifications))
 	}
-	// Plakietka liczy CAŁY rejestr, nie widok — inaczej zawężenie filtrem
-	// wyglądałoby jak obsłużenie zdarzeń spoza filtru.
+	// Plakietka liczy cały rejestr, nie widok — filtr nie ma udawać obsłużenia zdarzeń spoza siebie.
 	if wykaz.Unread != 2 {
 		t.Errorf("licznik przy zawężonym widoku: %d, oczekiwany 2", wykaz.Unread)
 	}

@@ -13,25 +13,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek warsztatu fotografii i części drukarskiej modułu Design — mierzony
-// w PIKSELACH i w STRONACH, nie w kopercie.
-//
-// Żaden sprawdzian tego pliku nie kończy się na tym, że odpowiedź jest udana.
-// Każdy schodzi po odwołaniu zasobu do magazynu, rozkłada plik i pyta go
-// o rzeczy, których koperta nie zna: ile ma pikseli, czy niesie kanał krycia
-// i jakie ma w nim wartości, o ile przesunęła się średnia jasność, ile kafli
-// powstało i o jakich wymiarach, ile stron ma wydany plik PDF.
-//
-// Powód jest zapisany w historii tego produktu: `design.asset.generate` meldował
-// kiedyś `status: ok` z wykazem zasobów, za którymi nie było ani jednego bajtu.
-// Sprawdzian zaglądający w `status` świecił wtedy zielono. Odtąd sprawdzian
-// obszaru Design mierzy SKUTEK.
-
-// wniesObrazSprawdzianu wnosi obraz do magazynu okna i oddaje zasób kontraktu.
-//
-// Droga jest drogą Operatora (`design.asset.upload` z treścią w base64), a nie
-// zapisem wprost do bazy: sprawdzian ma mierzyć to, co dzieje się w produkcie,
-// a nie stan, który sam sobie ustawił obok produktu.
+// wniesObrazSprawdzianu wnosi obraz do magazynu okna komendą
+// `design.asset.upload` z treścią w base64 i oddaje zasób kontraktu, aby
+// sprawdzian mierzył to, co dzieje się w produkcie, a nie stan ustawiony obok niego.
 func wniesObrazSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno string, bajty []byte) shared.DesignAsset {
 
@@ -111,7 +95,9 @@ func obrazZPrzedmiotemPNG(t *testing.T, bok int) []byte {
 	return bufor.Bytes()
 }
 
-// sredniaJasnoscPliku liczy średnią jasność obrazu odczytanego z dysku.
+// sredniaJasnoscPliku liczy średnią jasność obrazu wagami koloru czerwonego,
+// zielonego i niebieskiego, dla obrazu odczytanego bezpośrednio z pliku na dysku,
+// a nie z pola odpowiedzi komendy.
 func sredniaJasnoscPliku(obraz image.Image) float64 {
 	granice := obraz.Bounds()
 	suma, punktow := 0.0, 0
@@ -147,8 +133,7 @@ func TestPowiekszenieZdjeciaMaZmierzonaRozdzielczoscWPliku(t *testing.T) {
 		t.Errorf("plik po powiększeniu ×4 ma %d×%d pikseli, a źródło 20×15 daje 80×60",
 			granice.Dx(), granice.Dy())
 	}
-	// Odpowiedź ma mówić o tym samym, co plik. Rozjazd znaczy, że jedno z dwojga
-	// kłamie, i wtedy nie da się powiedzieć które.
+	// Odpowiedź ma mówić o tym samym, co plik, inaczej nie wiadomo, które kłamie.
 	if wynik.Width != granice.Dx() || wynik.Height != granice.Dy() {
 		t.Errorf("odpowiedź podaje %d×%d, a plik ma %d×%d",
 			wynik.Width, wynik.Height, granice.Dx(), granice.Dy())
@@ -156,16 +141,15 @@ func TestPowiekszenieZdjeciaMaZmierzonaRozdzielczoscWPliku(t *testing.T) {
 	if wynik.ComputedBy == "" {
 		t.Error("odpowiedź nie mówi, którą drogą rdzeń policzył wynik — pole computedBy jest puste")
 	}
-	// Wariant wskazuje źródło: bez tego łańcuch edycji nie ma jak wrócić do
-	// zdjęcia, które Operator wniósł.
+	// Wariant wskazuje źródło, bez którego łańcuch edycji nie wraca do zdjęcia.
 	if wynik.Asset.VariantOfAssetId == nil || *wynik.Asset.VariantOfAssetId != zrodlo.Id {
 		t.Errorf("wynik nie wskazuje źródła jako wariantu (%v), a źródłem jest %s",
 			wynik.Asset.VariantOfAssetId, zrodlo.Id)
 	}
 }
 
-// TestOdcieciaTlaZostawiaKanalKryciaWPliku mierzy OBECNOŚĆ i TREŚĆ kanału krycia
-// w pliku: punkt tła ma mieć krycie zerowe, punkt przedmiotu — pełne. Odpowiedź
+// TestOdcieciaTlaZostawiaKanalKryciaWPliku mierzy obecność i treść kanału krycia
+// w pliku: punkt tła ma mieć krycie zerowe, punkt przedmiotu pełne. Odpowiedź
 // `hasAlpha: true` nad plikiem bez przezroczystości byłaby kopertą bez skutku.
 func TestOdcieciaTlaZostawiaKanalKryciaWPliku(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
@@ -198,9 +182,7 @@ func TestOdcieciaTlaZostawiaKanalKryciaWPliku(t *testing.T) {
 		t.Error("punkt przedmiotu (20;20) zniknął razem z tłem — wynik jest pustym płótnem")
 	}
 
-	// Udział zmierzony w pliku ma się zgadzać z tym, co powiedziała odpowiedź.
-	// Pomiar niezależny jest sednem: liczba w odpowiedzi mogła powstać z czegoś
-	// innego niż z pikseli, które wyszły.
+	// Udział zmierzony niezależnie w pliku ma się zgadzać z liczbą w odpowiedzi.
 	granice := obraz.Bounds()
 	przezroczystych := 0
 	for y := granice.Min.Y; y < granice.Max.Y; y++ {
@@ -273,8 +255,7 @@ func TestPodzialWielkoformatowyOddajeKafleOZmierzonychWymiarach(t *testing.T) {
 			TargetHeightMm: wskaznik(200.0),
 		}, &wynik)
 
-	// Materiał 300×200 mm na kafle 100×100 mm bez zakładki to trzy kolumny i dwa
-	// wiersze — liczba, którą da się policzyć w głowie i sprawdzić w wyniku.
+	// Materiał 300×200 mm na kafle 100×100 mm bez zakładki daje trzy kolumny i dwa wiersze.
 	if wynik.Columns != 3 || wynik.Rows != 2 {
 		t.Errorf("podział dał %d kolumn i %d wierszy; 300×200 mm na kafle 100×100 mm daje 3×2",
 			wynik.Columns, wynik.Rows)
@@ -352,10 +333,7 @@ func TestWydaniePublikacjiMaZmierzonaLiczbeStronWPliku(t *testing.T) {
 			},
 		}, &zapis)
 
-	// Kontrola przeddrukowa pominięta świadomie: materiałem stron jest obraz
-	// 60×84 px rozciągnięty na arkusz A4, więc rozdzielczość skuteczna jest niska
-	// i kontrola słusznie by ją zablokowała. Sprawdzian mierzy tu LICZBĘ STRON,
-	// a pominięcie wraca w odpowiedzi i jest niżej sprawdzone.
+	// Kontrola przeddrukowa jest pominięta świadomie: sprawdzian mierzy liczbę stron.
 	var wydanie shared.DesignPrintExportResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignPrintExport,
 		shared.DesignPrintExportRequest{
@@ -381,21 +359,9 @@ func TestWydaniePublikacjiMaZmierzonaLiczbeStronWPliku(t *testing.T) {
 	}
 }
 
-// liczbaStronPdfSprawdzianu liczy strony pliku PDF, licząc obiekty typu `/Page`
-// w treści pliku ORAZ w jego strumieniach obiektów po rozpakowaniu.
-//
-// Rachunek jest własny i celowo nie sięga po bibliotekę, którą rdzeń plik złożył.
-// Gdyby liczył strony tą samą biblioteką, mierzyłby zgodność biblioteki z samą
-// sobą — a to jest właśnie ten rodzaj sprawdzianu, który przepuszcza szkodę:
-// błąd w składaniu pliku i błąd w jego odczycie zniosłyby się wzajemnie.
-//
-// Rozpakowanie strumieni jest konieczne, bo `pdfcpu` zapisuje katalog obiektów
-// w STRUMIENIACH OBIEKTÓW skompresowanych metodą Flate (PDF 1.5 i wyżej). Napisu
-// `/Type /Page` nie ma wtedy w pliku wprost. Pakiet `compress/zlib` biblioteki
-// standardowej wystarcza — to ta sama kompresja.
-//
-// Wzorzec bez ukośnika po `Page` odróżnia stronę od drzewa stron (`/Type /Pages`),
-// które w pliku występuje raz.
+// liczbaStronPdfSprawdzianu liczy strony pliku PDF własnym rachunkiem, licząc
+// obiekty typu `/Page` w treści pliku oraz w jego strumieniach obiektów po
+// rozpakowaniu metodą Flate, celowo bez użycia biblioteki, którą rdzeń plik złożył.
 func liczbaStronPdfSprawdzianu(bajty []byte) int {
 	stron := zlicznikStronWTresciSprawdzianu(bajty)
 	for _, strumien := range strumienieFlateSprawdzianu(bajty) {
@@ -404,7 +370,9 @@ func liczbaStronPdfSprawdzianu(bajty []byte) int {
 	return stron
 }
 
-// zlicznikStronWTresciSprawdzianu liczy wystąpienia typu `/Page` w treści.
+// zlicznikStronWTresciSprawdzianu liczy wystąpienia typu `/Page` w podanej
+// treści pliku PDF, odróżniając stronę od drzewa stron znakiem następującym
+// bezpośrednio po dopasowanym wzorcu.
 func zlicznikStronWTresciSprawdzianu(tresc []byte) int {
 	stron := 0
 	for _, wzor := range [][]byte{[]byte("/Type /Page"), []byte("/Type/Page")} {
@@ -415,8 +383,7 @@ func zlicznikStronWTresciSprawdzianu(tresc []byte) int {
 				break
 			}
 			po := reszta[numer+len(wzor):]
-			// Znak następny rozstrzyga: litera `s` znaczy `/Pages`, czyli drzewo
-			// stron, a nie stronę.
+			// Znak następny rozstrzyga: litera `s` znaczy drzewo stron, a nie stronę.
 			if len(po) > 0 && po[0] != 's' {
 				stron++
 			}
@@ -427,12 +394,8 @@ func zlicznikStronWTresciSprawdzianu(tresc []byte) int {
 }
 
 // strumienieFlateSprawdzianu wyciąga z pliku PDF treść strumieni rozpakowywalnych
-// metodą Flate.
-//
-// Rozbiór jest prymitywny i taki ma być: szuka par `stream` / `endstream`
-// i próbuje rozpakować każdą. Strumień, którego nie da się rozpakować (obraz JPEG,
-// treść nieskompresowana), jest po prostu pomijany — sprawdzian szuka katalogu
-// obiektów, a nie wszystkiego, co w pliku leży.
+// metodą Flate, szukając par `stream` / `endstream`; strumień, którego nie da się
+// rozpakować, jest pomijany, ponieważ sprawdzian szuka wyłącznie katalogu obiektów.
 func strumienieFlateSprawdzianu(bajty []byte) [][]byte {
 	strumienie := [][]byte{}
 	reszta := bajty
@@ -456,7 +419,8 @@ func strumienieFlateSprawdzianu(bajty []byte) [][]byte {
 	}
 }
 
-// rozpakujFlateSprawdzianu rozpakowuje strumień metodą Flate.
+// rozpakujFlateSprawdzianu rozpakowuje pojedynczy strumień pliku PDF metodą
+// kompresji Flate pakietem `compress/zlib` biblioteki standardowej języka.
 func rozpakujFlateSprawdzianu(tresc []byte) ([]byte, error) {
 	czytnik, err := zlib.NewReader(bytes.NewReader(tresc))
 	if err != nil {
@@ -466,20 +430,15 @@ func rozpakujFlateSprawdzianu(tresc []byte) ([]byte, error) {
 	return io.ReadAll(czytnik)
 }
 
-// TestKontrolaPrzeddrukowaOdmawiaWydaniaPrzyWadzieOWadzeBledu pilnuje
-// rozstrzygnięcia, które kosztuje nakład: plik nie do druku NIE wychodzi jako
-// gotowy do druku.
-//
-// Materiałem jest obraz o rozdzielczości skutecznej rażąco poniżej progu —
-// wtedy kontrola ma dać wadę o wadze błędu, a wydanie ma ODMÓWIĆ. Sprawdzian
-// mierzy tu odmowę, bo odmowa jest tu funkcją.
+// TestKontrolaPrzeddrukowaOdmawiaWydaniaPrzyWadzieOWadzeBledu wykazuje, że plik
+// o rozdzielczości skutecznej poniżej progu dostaje od kontroli wadę o wadze
+// błędu, a wydanie takiego pliku bez pominięcia kontroli wraca odmową.
 func TestKontrolaPrzeddrukowaOdmawiaWydaniaPrzyWadzieOWadzeBledu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
 	zasob := wniesObrazSprawdzianu(t, zmontowany, zycie, "okno-druku", obrazPNG(t, 20, 20))
 
-	// Kompozycja o wymiarach arkusza A4 w milimetrach: warstwa 210 mm szerokości
-	// z obrazu 20 px daje około 2 dpi, czyli grubo poniżej połowy progu 300 dpi.
+	// Warstwa 210 mm szerokości z obrazu 20 px daje około 2 dpi, poniżej progu 300 dpi.
 	var kompozycja shared.DesignBoardUpdateResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignBoardUpdate,
 		shared.DesignBoardUpdateRequest{
@@ -512,9 +471,8 @@ func TestKontrolaPrzeddrukowaOdmawiaWydaniaPrzyWadzieOWadzeBledu(t *testing.T) {
 			kontrola.Issues[0].Severity)
 	}
 
-	// Wydanie bez pominięcia kontroli ma ODMÓWIĆ. Odmowa jest tu wynikiem
-	// oczekiwanym: plik nie do druku wydany jako gotowy do druku jedzie do
-	// drukarni i kosztuje nakład.
+	// Wydanie bez pominięcia kontroli ma odmówić, bo plik nie do druku nie
+	// może jechać do drukarni.
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDesignPrintExport,
 		shared.DesignPrintExportRequest{
 			Format:   "pdf",
@@ -525,8 +483,7 @@ func TestKontrolaPrzeddrukowaOdmawiaWydaniaPrzyWadzieOWadzeBledu(t *testing.T) {
 		t.Error("odmowa wydania nie nazywa powodu — Operator ma dostać zdanie, nie sam kod")
 	}
 
-	// Pominięcie kontroli jest jawnym wyborem Operatora i ma się udać — inaczej
-	// funkcja byłaby uprzejmą odmową bez drogi wyjścia.
+	// Pominięcie kontroli jest jawnym wyborem Operatora i ma się udać.
 	var zPominieciem shared.DesignPrintExportResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignPrintExport,
 		shared.DesignPrintExportRequest{
@@ -616,8 +573,7 @@ func TestMetadaneZasobuMierzaPlikNieWiersz(t *testing.T) {
 	if metadane.Metadata.Format == nil || *metadane.Metadata.Format != "png" {
 		t.Errorf("zmierzony format to %v, a plik jest png", metadane.Metadata.Format)
 	}
-	// Liczba odczytanych pól EXIF wchodzi ZAWSZE, także zerowa: zero znaczy „plik
-	// EXIF-u nie ma" i jest odpowiedzią, nie brakiem odpowiedzi.
+	// Liczba odczytanych pól EXIF wchodzi zawsze, także zerowa jako odpowiedź.
 	if metadane.Metadata.ExifFieldsRead == nil {
 		t.Error("odpowiedź nie podaje liczby odczytanych pól EXIF — zero jest tu odpowiedzią")
 	}

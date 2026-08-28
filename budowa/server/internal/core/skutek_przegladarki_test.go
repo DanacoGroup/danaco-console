@@ -1,3 +1,6 @@
+// Sprawdziany tego pliku mierzą skutek komendy modułu Browser niezależnie od jej
+// odpowiedzi: przez drugie połączenie do bazy rdzenia albo przez bajty magazynu
+// treści pod odwołaniem.
 package core
 
 import (
@@ -16,20 +19,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Browser: czy za odpowiedzią udaną naprawdę coś zostaje.
-//
-// Sprawdziany tego pliku nie kończą się na `status: ok`. Każdy schodzi o poziom
-// niżej niż odpowiedź komendy: albo do bazy — drugim, niezależnym połączeniem do
-// tego samego pliku, którym jedzie rdzeń — albo do magazynu treści, gdzie liczy
-// bajty leżące pod odwołaniem. Powód jest w tym produkcie znany z doświadczenia:
-// koperta udana z pustym wykazem wygląda dokładnie tak samo jak koperta udana
-// z wykazem prawdziwym, a klient czyta kopertę.
-//
-// Zrzut ekranu wymaga Chromium — programu serwerowego wpisanego do sondy
-// zależności. Sprawdziany, które go potrzebują, pomijają się na maszynie bez
-// niego, nazywając powód; reszta biegnie zawsze, bo stoi na bibliotece
-// standardowej.
-
 // bazaSprawdzianuPrzegladarki otwiera drugie połączenie do bazy rdzenia.
 // Pomiar idzie własnym połączeniem, a nie przez rdzeń: gdyby wykaz komendy
 // i pomiar czytały tę samą warstwę, sprawdzian potwierdzałby sam siebie.
@@ -44,7 +33,8 @@ func bazaSprawdzianuPrzegladarki(t *testing.T, katalogDanych string) *sql.DB {
 	return baza.DB
 }
 
-// policzWierszePrzegladania liczy wiersze wskazanego zapytania.
+// policzWierszePrzegladania liczy wiersze zwrócone wskazanym zapytaniem SQL i przerywa
+// sprawdzian niepowodzeniem, gdy zapytanie się nie wykona.
 func policzWierszePrzegladania(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -55,21 +45,22 @@ func policzWierszePrzegladania(t *testing.T, baza *sql.DB, zapytanie string, arg
 	return liczba
 }
 
-// chromiumStoi mówi, czy na tej maszynie jest czym uruchomić stronę.
+// chromiumStoi mówi, czy na tej maszynie jest zainstalowany program Chromium,
+// którego wymagają sprawdziany zależne od uruchomionej strony.
 func chromiumStoi() bool {
 	return zewnetrzne.Stoi(narzedzieChromium())
 }
 
-// stronaZTytulem składa prosty dokument o zadanej treści.
+// stronaZTytulem składa prosty dokument HTML o zadanym tytule i treści akapitu,
+// używany jako strona serwowana testowemu serwerowi HTTP.
 func stronaZTytulem(tytul, tresc string) string {
 	return "<html><head><title>" + tytul + "</title></head><body><p id=\"tresc\">" +
 		tresc + "</p></body></html>"
 }
 
-// TestZrzutStronyNiesieBajtyObrazuAOdczytOddajeTeSameBajty jest sprawdzianem
-// wymierzonym wprost we wzorzec szkody: odpowiedź udana z odwołaniem, za którym
-// nie ma ani jednego bajtu. Miarą jest plik w magazynie odczytany i rozebrany
-// jako PNG o dodatnich wymiarach — nie pole `ref` w odpowiedzi.
+// TestZrzutStronyNiesieBajtyObrazuAOdczytOddajeTeSameBajty sprawdza zrzut ekranu
+// miarą pliku w magazynie: obrazu PNG o dodatnich wymiarach, a nie samego pola
+// odwołania w odpowiedzi komendy.
 func TestZrzutStronyNiesieBajtyObrazuAOdczytOddajeTeSameBajty(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — zrzut strony nie ma czym powstać")
@@ -119,8 +110,7 @@ func TestZrzutStronyNiesieBajtyObrazuAOdczytOddajeTeSameBajty(t *testing.T) {
 
 // TestMonitorMierzyZmianeStronyAOdniesienieLezyWMagazynie sprawdza, czy monitor
 // naprawdę mierzy: odniesienie ma leżeć w magazynie jako bajty, a sprawdzenie po
-// zmianie strony ma oddać różnicę o niezerowej liczbie wierszy — a nie samo
-// `changed: true` wzięte znikąd.
+// zmianie ma oddać niezerową różnicę wierszy.
 func TestMonitorMierzyZmianeStronyAOdniesienieLezyWMagazynie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuPrzegladarki(t, katalog)
@@ -167,8 +157,8 @@ func TestMonitorMierzyZmianeStronyAOdniesienieLezyWMagazynie(t *testing.T) {
 			poZmianie.Monitor.Status, shared.BrowserMonitorStatusChanged)
 	}
 
-	// Miara niezależna: wiersz monitora w bazie ma odnotowany czas sprawdzenia
-	// i czas zmiany, a odniesienie zostało przesunięte na treść nową.
+	// Miara niezależna: wiersz monitora ma czas sprawdzenia i zmiany, a odniesienie
+	// wskazuje treść nową.
 	if liczba := policzWierszePrzegladania(t, baza,
 		`SELECT COUNT(*) FROM monitor_przegladania
 		 WHERE identyfikator_zewnetrzny = ? AND sprawdzono IS NOT NULL AND zmieniono IS NOT NULL`,
@@ -221,8 +211,8 @@ func TestSubskrypcjaKanaluOdkladaWpisyWBazie(t *testing.T) {
 		t.Fatalf("wykaz kanałów nie oddał wpisów: %+v", wykaz.Feeds)
 	}
 
-	// Zdjęcie kanału zabiera jego wpisy — kaskada schematu, nie sprzątanie
-	// w kodzie, więc mierzone jest to, co naprawdę zostało w bazie.
+	// Zdjęcie kanału zabiera wpisy kaskadą schematu bazy, nie sprzątaniem — miarą
+	// jest stan bazy.
 	var zdjecie shared.BrowserFeedRemoveResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserFeedRemove,
 		shared.BrowserFeedRemoveRequest{FeedId: subskrypcja.Feed.Id}, &zdjecie)
@@ -564,10 +554,9 @@ func TestMakroZapisujeKrokiAGraniceObowiazujaPoOdczycie(t *testing.T) {
 	}
 }
 
-// TestNarzedziaInspekcyjneCzytajaStroneUruchomiona sprawdza drogę idącą przez
-// silnik przeglądarki: drzewo DOM ma nieść element zbudowany skryptem, konsola —
-// komunikat wypisany przez stronę, a rejestr sieciowy — żądanie dokumentu.
-// Bez Chromium sprawdzian pomija się, nazywając powód.
+// TestNarzedziaInspekcyjneCzytajaStroneUruchomiona sprawdza silnik przeglądarki:
+// drzewo DOM niesie element zbudowany skryptem, konsola niesie komunikat wypisany
+// przez stronę, a rejestr sieciowy niesie żądanie dokumentu.
 func TestNarzedziaInspekcyjneCzytajaStroneUruchomiona(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
@@ -630,11 +619,9 @@ func TestNarzedziaInspekcyjneCzytajaStroneUruchomiona(t *testing.T) {
 	}
 }
 
-// TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom mierzy czwartą sondę
-// strony uruchomionej na stronie z naruszeniami włożonymi celowo. Miarą nie
-// jest stan `ok`, tylko treść wykazu: naruszenie obrazka bez tekstu
-// zastępczego ma wrócić wraz z selektorem wskazującym ten właśnie węzeł —
-// audyt bez wskazania węzła nie mówi Operatorowi, co poprawić.
+// TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom sprawdza audyt strony
+// z naruszeniami włożonymi celowo: miarą jest treść wykazu, gdzie naruszenie
+// obrazka bez tekstu zastępczego niesie selektor wskazujący ten węzeł.
 func TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
@@ -684,8 +671,8 @@ func TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom(t *testing.T) {
 			audyt.Issues)
 	}
 
-	// Norma spoza wyliczenia kontraktu wraca odmową wskazania, a nie komunikatem
-	// programu o nieznanej normie.
+	// Norma spoza wyliczenia kontraktu wraca odmową wskazania, nie komunikatem
+	// o nieznanej normie.
 	normaSpoza := shared.BrowserAccessibilityStandard("wcag9zz")
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandBrowserAccessibilityAudit,
 		shared.BrowserAccessibilityAuditRequest{WindowId: okno, Standard: &normaSpoza})
@@ -697,10 +684,9 @@ func TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom(t *testing.T) {
 	}
 }
 
-// TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen jest wymierzony
-// we wzorzec szkody z ustroju budowy: zero naruszeń na stronie, której nie ma,
-// jest brakiem pomiaru podanym jako pomiar. Strona gaśnie PO przejściu, więc
-// okno ma migawkę — i właśnie wtedy pusty wykaz wyglądałby wiarygodnie.
+// TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen sprawdza, że audyt
+// strony zgaszonej po przejściu odmawia zamiast zwrócić zero naruszeń — zero na
+// stronie, której nie ma, byłoby brakiem pomiaru podanym jako pomiar.
 func TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
@@ -720,10 +706,9 @@ func TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen(t *testing.T)
 	}
 }
 
-// TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy zdejmuje
-// z ścieżki wyszukiwania wszystko poza przeglądarką i mierzy odmowę: ma nazwać
-// brakujący program oraz pakiet, którego instalacja brak usuwa — a nie wyjść
-// usterką wewnętrzną rdzenia.
+// TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy zwęża ścieżkę
+// wyszukiwania do przeglądarki i mierzy odmowę: ma nazwać brakujący program
+// i pakiet naprawy, a nie usterkę wewnętrzną rdzenia.
 func TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
@@ -735,9 +720,8 @@ func TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy(t *testing
 	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserNavigate,
 		shared.BrowserNavigateRequest{WindowId: okno, Url: serwer.URL}, nil)
 
-	// Ścieżka wyszukiwania zostaje zwężona do katalogu z samą przeglądarką:
-	// audyt ma się zatrzymać na braku programu audytującego, nie na braku
-	// przeglądarki — odmowa o przeglądarce mówiłaby o innym braku.
+	// Ścieżka ma tylko przeglądarkę: audyt zatrzymuje się na braku programu,
+	// nie przeglądarki.
 	przegladarka := narzedzieChromium()
 	sciezkaPrzegladarki, jest := zewnetrzne.Odnajdz(przegladarka)
 	if !jest {

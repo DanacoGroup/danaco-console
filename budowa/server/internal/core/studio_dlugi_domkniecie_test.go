@@ -9,34 +9,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany domknięcia długów funkcjonalnych modułu Studio wypisanych
-// w sprawozdaniu jako „czego nie ma — do rozstrzygnięcia Właściciela".
-//
-// Każdy z nich mierzy SKUTEK, nie kopertę: rzecz, której przed domknięciem nie
-// dało się zmierzyć, bo jej nie było.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. paginacja spisu treści liczona kartką A4 zaszytą na stałe, przez co numer
-//     strony zgadza się z podglądem, a nie z nastawami dokumentu;
-//  2. cofnięcie czynności, które odtwarza treść i postać, a aparat dokumentu
-//     zostawia w brzmieniu bieżącym;
-//  3. malarz formatów żyjący w pamięci procesu — postać zabrana przepada przy
-//     przeładowaniu rdzenia;
-//  4. zmiana postaci zapisana bez kodu wykonawcy, po której rozbicie zmian po
-//     wykonawcy pokazuje dwóch agentów jako jednego nienazwanego;
-//  5. sortowanie tabeli układające „Łukasiewicza" za „Zawadzkim", bo porównanie
-//     idzie po Unikodzie, a nie porządkiem alfabetycznym pisma polskiego;
-//  6. wklejenie „zachowaj postać źródła", które zachowuje postać MIEJSCA.
-
 // ── Punkt pierwszy: paginacja z nastaw sekcji ───────────────────────────────
 
-// TestPaginacjaLiczySieZNastawStrony wykazuje, że rachunek stron idzie
-// z nastaw, a nie z zaszytej kartki A4.
-//
-// Miara jest prosta i nie da się jej podrobić: ta sama treść na kartce A5
-// zajmuje WIĘCEJ stron niż na A4, bo kartka jest mniejsza. Dopóki geometria była
-// stałą, oba rachunki dawały tę samą liczbę — i to był dowód, że nastawy nie
-// docierają do rachunku.
+// TestPaginacjaLiczySieZNastawStrony wykazuje, że rachunek stron idzie z nastaw
+// dokumentu, a nie z zaszytej kartki A4: ta sama treść na kartce A5 zajmuje
+// więcej stron niż na A4, bo kartka jest mniejsza.
 func TestPaginacjaLiczySieZNastawStrony(t *testing.T) {
 	akapity := make([]string, 0, 80)
 	for i := 0; i < 80; i++ {
@@ -71,17 +48,15 @@ func TestPaginacjaLiczySieZNastawStrony(t *testing.T) {
 			"musi dać stron więcej, inaczej nastawy strony nie dochodzą do rachunku",
 			stronA5, stronA4)
 	}
-	// Orientacja: kartka położona ma kolumnę szerszą (mniej wierszy na akapit)
-	// i stronę niższą (mniej wierszy na kartkę). Który skutek przeważy, zależy od
-	// treści — dlatego miarą jest RÓŻNICA, a nie kierunek. Ta sama liczba stron
-	// pionowo i poziomo znaczyłaby, że orientacja do rachunku nie dochodzi.
+	// Miarą orientacji jest różnica liczby stron, bo kierunek przewagi zależy
+	// od treści akapitów.
 	if stronPoziomo == stronA4 {
 		t.Errorf("ta sama treść zajmuje poziomo i pionowo tyle samo stron (%d) — "+
 			"orientacja nie dochodzi do rachunku stron", stronA4)
 	}
 
 	// Marginesy szerokie zabierają miejsce, więc stron ma być więcej niż przy
-	// marginesach wąskich. To jest ta sama miara, tylko od strony marginesu.
+	// marginesach wąskich.
 	waskie := shared.StudioPageSetup{
 		PageSize: postacWskaznikTekstu("A4"),
 		// Marginesy w kontrakcie są w milimetrach.
@@ -186,13 +161,9 @@ func TestGeometriaNieZjadaKartkiMarginesami(t *testing.T) {
 
 // ── Punkt drugi: aparat dokumentu cofa się dziennikiem ─────────────────────
 
-// TestAparatCofaSieDziennikiem wykazuje, że cofnięcie czynności zdejmuje element
-// aparatu wniesiony tą czynnością — z drzewa I Z WIERSZA.
-//
-// Miara po dwóch stronach jest tu konieczna: dopóki cofnięcie zdejmowało element
-// tylko z drzewa, następny odczyt aparatu (`studio.apparatus.list`, czytający
-// wiersze) pokazywałby przypis, którego w dokumencie już nie ma. Dawniej
-// cofnięcie nie robiło ani jednego z dwóch i oddawało bilans nazywający brak.
+// TestAparatCofaSieDziennikiem wykazuje, że cofnięcie czynności zdejmuje
+// element aparatu wniesiony tą czynnością z drzewa postaci i z wiersza aparatu,
+// bo jeden bez drugiego zostawia dokument niespójny.
 func TestAparatCofaSieDziennikiem(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, "okno-aparat-cofania",
@@ -264,8 +235,8 @@ func TestAparatCofaSieDziennikiem(t *testing.T) {
 func TestSortowanieZnaPismoPolskie(t *testing.T) {
 	zestawiacz := tabelaZestawiaczPolski()
 
-	// Wyraz kluczowy: przed poprawką „Łukasiewicz" wypadał ZA „Zawadzkim", bo
-	// wielkie „Ł" ma w Unikodzie punkt kodowy wyższy od „Z".
+	// Wielkie „Ł" ma w Unikodzie punkt kodowy wyższy od „Z", stąd znaczenie
+	// kolacji polskiej.
 	if !tabelaMniejszyTekst(zestawiacz, "Łukasiewicz", "Zawadzki") {
 		t.Error("„Łukasiewicz” nie wyprzedza „Zawadzkiego” — porządek nie zna pisma polskiego")
 	}
@@ -281,8 +252,8 @@ func TestSortowanieZnaPismoPolskie(t *testing.T) {
 	if !tabelaMniejszyTekst(zestawiacz, "Ćma", "dom") {
 		t.Error("„Ćma” nie wyprzedza „domu” — wielkość liter nie ma rozstrzygać")
 	}
-	// Ogonek rozstrzyga, gdy litery bazowe są te same: „laska" i „łaska" są
-	// dwoma wyrazami i mają stanąć osobno, a nie jeden za drugim losowo.
+	// Ogonek rozstrzyga, gdy litery bazowe są te same — „laska" i „łaska" stoją
+	// osobno.
 	if tabelaMniejszyTekst(zestawiacz, "łaska", "laska") {
 		t.Error("„łaska” wyprzedza „laskę” — znak diakrytyczny idzie po literze bazowej")
 	}
@@ -320,12 +291,10 @@ func TestSortowanieTabeliUkladaNazwiskaPoPolsku(t *testing.T) {
 
 // ── Punkt trzeci: malarz formatów w tabeli ──────────────────────────────────
 
-// TestMalarzFormatowPrzezywaPrzeladowanieRdzenia jest miarą właściwą dla tego
-// długu: postać zabraną kładzie ADAPTER ZŁOŻONY OD NOWA nad tą samą bazą.
-//
-// Adapter nowy nie dzieli z poprzednim ani jednej zmiennej pakietu, więc
-// położenie postaci może się udać wyłącznie wtedy, gdy postać leży w wierszu.
-// Dopóki malarz żył w pamięci procesu, ten sprawdzian nie mógł przejść.
+// TestMalarzFormatowPrzezywaPrzeladowanieRdzenia wykazuje, że postać zabrana
+// malarzem formatów przeżywa przeładowanie rdzenia: adapter złożony od nowa nie
+// dzieli zmiennych pakietu z poprzednim, a położenie udaje się tylko, gdy
+// postać leży w wierszu.
 func TestMalarzFormatowPrzezywaPrzeladowanieRdzenia(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, "okno-malarza",
@@ -386,13 +355,10 @@ func TestMalarzOdmawiaNazywajacBrakUchwytu(t *testing.T) {
 
 // ── Punkt szósty: postać przez schowek ──────────────────────────────────────
 
-// TestSchowekPrzenosiPostacZrodla wykazuje, że „zachowaj postać źródła"
-// zachowuje postać ŹRÓDŁA, a nie postać miejsca wklejenia.
-//
-// Miara: fragment źródłowy dostaje wytłuszczenie, miejsce wklejenia go nie ma.
-// Po wklejeniu wytłuszczenie musi stać w miejscu wklejenia — inaczej wpis
-// schowka nie przeniósł postaci i sposób `keepFormat` robi to samo, co
-// `mergeFormat`.
+// TestSchowekPrzenosiPostacZrodla wykazuje, że wklejenie „zachowaj postać
+// źródła" przenosi postać fragmentu źródłowego, a nie postać miejsca
+// wklejenia: fragment dostaje wytłuszczenie, które po wklejeniu stoi w miejscu
+// wklejenia.
 func TestSchowekPrzenosiPostacZrodla(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	zrodlowy := "Fragment wytluszczony."
@@ -401,8 +367,8 @@ func TestSchowekPrzenosiPostacZrodla(t *testing.T) {
 		zrodlowy+"\n"+dalszy)
 	adapter := nowyAdapterStudia(zmontowany.dane.Studio)
 
-	// Fragment źródłowy dostaje wytłuszczenie — drogą kontraktu, nie zapisem
-	// z boku: sprawdzian mierzy zachowanie rdzenia, a nie własny zapis.
+	// Wytłuszczenie fragmentu źródłowego idzie drogą kontraktu, nie zapisem
+	// z boku sprawdzianu.
 	prawda := true
 	if _, err := adapter.UstawPostacZnaku(zycie, shared.StudioFormatCharacterSetRequest{
 		DocumentId: dokument.Id,
@@ -464,11 +430,9 @@ func TestSchowekPrzenosiPostacZrodla(t *testing.T) {
 // ── Punkt czwarty: tożsamość agenta na drodze postaci ──────────────────────
 
 // TestTozsamoscAgentaStemplujeSieNaZmianiePostaci wykazuje, że kod wykonawcy
-// dojeżdża do wiersza dziennika i do zmiany śledzonej.
-//
-// Podpis wchodzi kontekstem, tą samą drogą, którą wkłada go wpięcie rejestru
-// (`podpisWykonawcyStudia`). Sprawdzian woła adapter wprost, bo mierzy
-// STEMPLOWANIE, a nie wpięcie — wpięcie mierzy sprawdzian niżej.
+// dojeżdża do wiersza dziennika i do zmiany śledzonej, bo podpis wchodzi
+// kontekstem tą samą drogą, którą wkłada go wpięcie rejestru zapisujące podpis
+// wykonawcy studia.
 func TestTozsamoscAgentaStemplujeSieNaZmianiePostaci(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	dokument := dokumentZTrescia(t, zmontowany, zycie, "okno-agenta",
@@ -526,8 +490,8 @@ func TestTozsamoscAgentaStemplujeSieNaZmianiePostaci(t *testing.T) {
 		t.Error("zawężenie zmian modelu do kodu agenta nie znalazło ani jednej zmiany — " +
 			"tożsamość nie została odbita na zmianie śledzonej")
 	}
-	// Rozbicie PO WYKONAWCY jest tym, o co szło: bez stempla wykaz pokazywałby
-	// jedną pozycję bez nazwy, a nie pozycję nazwanego agenta.
+	// Rozbicie po wykonawcy musi znaleźć agenta nazwanego, a nie jedną pozycję
+	// bez nazwy.
 	nazwany := false
 	for _, wykonawca := range zmiany.Summary.ByAgent {
 		if wykonawca.Actor.AgentId != nil && *wykonawca.Actor.AgentId == kodAgenta {
@@ -541,10 +505,8 @@ func TestTozsamoscAgentaStemplujeSieNaZmianiePostaci(t *testing.T) {
 }
 
 // TestPodpisWykonawcyWchodziZLadunkuZadania wykazuje, że wpięcie rejestru
-// naprawdę czyta podpis z ładunku żądania i wkłada go do kontekstu.
-//
-// To jest miara WPIĘCIA, a nie stemplowania: bez niej stempel działałby
-// wyłącznie tam, gdzie ktoś kontekst założył ręcznie — czyli w sprawdzianach.
+// czyta podpis z ładunku żądania i wkłada go do kontekstu, co odróżnia tę
+// miarę od stemplowania zmiany postaci sprawdzanego osobno.
 func TestPodpisWykonawcyWchodziZLadunkuZadania(t *testing.T) {
 	var widziany kontrolaWykonawca
 	var byl bool

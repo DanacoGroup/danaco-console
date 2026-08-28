@@ -1,3 +1,6 @@
+// Sprawdziany tego pliku mierzą skutek modułu Workspace niezależnie od
+// odpowiedzi komendy: własnym zapytaniem SQL do pliku bazy albo odczytem
+// pliku na dysku.
 package core
 
 import (
@@ -14,17 +17,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Workspace: czy za udaną odpowiedzią stoi wiersz w bazie i plik
-// na dysku.
-//
-// Wzorzec szkody, którego pilnuje ten plik, ma w produkcie precedens: koperta
-// `status: ok` z pustym wynikiem przechodzi każdy sprawdzian zgodności
-// z kontraktem i nie mówi nic o tym, czy cokolwiek zostało. Dlatego żaden
-// sprawdzian tutaj nie kończy się na odczytaniu odpowiedzi komendy: każdy
-// schodzi WŁASNYM zapytaniem SQL do pliku bazy albo do pliku na dysku i mierzy
-// niezależnie od tego, co rdzeń zameldował.
-
-// projektSprawdzianuWorkspace jest kodem projektu wspólnym sprawdzianom pliku.
+// projektSprawdzianuWorkspace jest kodem projektu wspólnym sprawdzianom pliku,
+// żeby każdy sprawdzian pracował na tym samym, niezależnym od reszty zakresie
+// danych.
 const projektSprawdzianuWorkspace = "projekt-sprawdzianu"
 
 // bazaWorkspace otwiera drugie połączenie do pliku bazy sprawdzianu. Miara ma
@@ -40,7 +35,8 @@ func bazaWorkspace(t *testing.T, katalog string) *sql.DB {
 	return polaczenie
 }
 
-// liczbaWorkspace odczytuje jedną liczbę własnym zapytaniem.
+// liczbaWorkspace odczytuje jedną liczbę własnym zapytaniem, z pominięciem
+// warstwy adaptera, którą sprawdzian bada.
 func liczbaWorkspace(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -51,7 +47,8 @@ func liczbaWorkspace(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...
 	return wynik
 }
 
-// napisWorkspace odczytuje jedną wartość tekstową własnym zapytaniem.
+// napisWorkspace odczytuje jedną wartość tekstową własnym zapytaniem,
+// z pominięciem warstwy adaptera, którą sprawdzian bada.
 func napisWorkspace(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -62,7 +59,8 @@ func napisWorkspace(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...a
 	return wynik
 }
 
-// zalozZadanieSprawdzianu zakłada zadanie i oddaje jego identyfikator.
+// zalozZadanieSprawdzianu zakłada zadanie komendą warsztatu i oddaje jego
+// identyfikator wraz z pozostałymi polami odpowiedzi.
 func zalozZadanieSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	tytul string, poczatek, termin int64) shared.WorkspaceTask {
 	t.Helper()

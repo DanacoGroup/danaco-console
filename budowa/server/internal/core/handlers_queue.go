@@ -6,13 +6,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// zarejestrujKolejki wpina domenę kolejek jednego silnika pętli
-// koordynator–wykonawca. Ten sam silnik obsługuje pętlę sesyjną
-// i MultitaskingAI — rdzeń kieruje komendy kolejek w jedno miejsce, żeby druga
-// implementacja nie miała gdzie powstać.
-//
-// Działanie „powtórz" nie ma limitu obiegów. Rdzeń nie zlicza prób
-// i nie odmawia po którejś z kolei — przerwanie należy do użytkownika.
+// zarejestrujKolejki wpina domenę kolejek jednego silnika pętli koordynator–wykonawca, wspólnego
+// dla pętli sesyjnej i MultitaskingAI, żeby druga implementacja nie miała gdzie powstać.
 func zarejestrujKolejki(r *Rejestr, kolejki Kolejki, e *emiter) {
 	if r == nil || kolejki == nil {
 		return

@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: rejestrator bloków wiadomości — zapis nietekstowych
-// fragmentów strumienia odpowiedzi do tabeli `blok_wiadomosci`
-// (`store/migracja_096_tresc_rozmowy.sql`) W TRAKCIE tury.
-//
-// GDZIE STOI I DLACZEGO TU. Jedynym miejscem, które widzi KAŻDY fragment
-// strumienia przed spakowaniem w kopertę, jest ujście tury w adapterze rozmowy
-// (adapter_rozmowa.go, prowadzTure). Dziennik rozmowy i utrwalacz widzą dopiero
-// domkniętą wiadomość — czyli sam sklejony tekst; wpięcie tam wymagałoby
-// przenoszenia bloków przez typ Message, którego kontrakt nie modeluje.
-// Rejestrator jest więc portem adaptera, wzorem odbiornika zdarzeń
-// wykonawczych: adapter woła jedną metodę, montaż podaje całość.
-//
-// CO ZAPISUJE. Wszystkie rodzaje fragmentów POZA tekstem: rozumowanie,
-// wywołania narzędzi z wynikami, obraz, dźwięk, błąd, prowenancję i metadane
-// konta. Tekst pomija świadomie — treść tekstową domyka dziennik rozmowy
-// w `wiadomosc.tresc`, a druga kopia byłaby drugą prawdą.
-//
-// AWARIA ZAPISU NIE PRZERYWA TURY. Okno, którego zapis bloków
-// zawiódł, schodzi z rejestracji do końca życia procesu — wzorem degradacji
-// dziennika rozmowy: jedno zgłoszenie do dziennika rdzenia, zero powtórek.
+// Rejestrator bloków wiadomości zapisuje nietekstowe fragmenty strumienia do tabeli blok_wiadomosci w trakcie tury, pomijając tekst, który domyka dziennik rozmowy. Awaria zapisu nie przerywa tury — okno schodzi z rejestracji do końca życia procesu.
 package core
 
 import (
@@ -31,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// rejestratorBlokow zapisuje bloki strumienia przez repozytorium warstwy danych.
+// rejestratorBlokow zapisuje bloki strumienia przez repozytorium warstwy danych, pomijając fragmenty tekstowe i fragmenty bez wiadomości.
 type rejestratorBlokow struct {
 	zycie    context.Context
 	bloki    dane.RepozytoriumBlokow
@@ -82,7 +63,7 @@ func (r *rejestratorBlokow) Zanotuj(f models.Fragment) {
 	}
 }
 
-// czyZdegradowane mówi, czy okno wypadło z rejestracji bloków.
+// czyZdegradowane mówi, czy okno wypadło z rejestracji bloków po wcześniejszej awarii ich zapisu do repozytorium.
 func (r *rejestratorBlokow) czyZdegradowane(idOkna string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()

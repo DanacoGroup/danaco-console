@@ -11,25 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek WEJŚCIA do edytora: czy plik Operatora wchodzi wprost do dokumentu
-// z zachowaną postacią, czy zapis znaków jest rozpoznawany i czy kopia dokumentu
-// jest osobnym bytem.
-//
-// Miara jest zawsze taka sama i nie jest kopertą odpowiedzi: po czynności
-// dokument czyta się PONOWNIE (`PostacDokumentu`), bo Operator otworzy go
-// ponownie, a nie przeczyta odpowiedzi komendy.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. plik wniesiony jako treść płaska, z arkuszem stylów i tabelą zgubionymi
-//     po drodze — czyli postać ginąca przy wniesieniu;
-//  2. plik w stronie kodowej innej niż UTF-8 wczytany jako krzaczki, bez ani
-//     jednego zdania o tym w bilansie;
-//  3. kopia dokumentu założona jako drugie odwołanie do tego samego bytu, po
-//     której zmiana w kopii rusza oryginał;
-//  4. wniesienie oddane jako udane, a bez zapisu pochodzenia — po tygodniu nikt
-//     nie odtworzy, na czym pismo się opiera.
-
-// wejscieUprzazSprawdzianu składa adapter modułu Studia wraz z bazą.
+// wejscieUprzazSprawdzianu składa adapter modułu Studia razem z bazą danych
+// sprawdzianu, gotowy do wniesienia i odczytu dokumentu w teście.
 func wejscieUprzazSprawdzianu(t *testing.T) (*adapterStudia, context.Context) {
 	t.Helper()
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
@@ -99,11 +82,9 @@ func wejscieDokumentWzorcowy(kod string) shared.StudioDocumentForm {
 	}
 }
 
-// TestWejscieDocxZachowujePostacPoWniesieniu mierzy obieg pełny: postać pisma
-// złożona do `.docx`, wniesiona z powrotem i odczytana Z BAZY.
-//
-// Porównanie idzie po ODCZYCIE, nie po bajtach — tak stanowi zlecenie: dokument
-// wczytany z `.docx` i oddany z powrotem zachowuje styl, sekcje i tabele.
+// TestWejscieDocxZachowujePostacPoWniesieniu mierzy obieg pełny: postać złożona
+// do pliku `.docx`, wniesiona z powrotem i odczytana z bazy zachowuje styl,
+// sekcje i tabele, a porównanie idzie po odczycie, nie po bajtach.
 func TestWejscieDocxZachowujePostacPoWniesieniu(t *testing.T) {
 	adapter, zycie := wejscieUprzazSprawdzianu(t)
 
@@ -280,8 +261,8 @@ func TestWejscieRozpoznajeStroneKodowa(t *testing.T) {
 	}
 }
 
-// TestWejscieKopiaJestOsobnymDokumentem mierzy to, o co prosi zlecenie wprost:
-// zmiana w kopii NIE rusza oryginału.
+// TestWejscieKopiaJestOsobnymDokumentem mierzy niezależność kopii od oryginału:
+// zmiana treści kopii nie zmienia treści oryginału.
 func TestWejscieKopiaJestOsobnymDokumentem(t *testing.T) {
 	adapter, zycie := wejscieUprzazSprawdzianu(t)
 
@@ -360,8 +341,7 @@ func TestWejscieObrazWchodziWMiejsceKursora(t *testing.T) {
 	if err != nil {
 		t.Fatalf("założenie dokumentu odmówiło: %v", err)
 	}
-	// Najmniejszy poprawny PNG — jeden piksel. Bajty są tu treścią sprawdzianu,
-	// bo mierzymy odłożenie ich w magazynie, a nie rozbiór obrazu.
+	// Najmniejszy poprawny PNG, jeden piksel — bajty są treścią samego sprawdzianu.
 	png, err := base64.StdEncoding.DecodeString(
 		"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==")
 	if err != nil {

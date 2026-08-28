@@ -1,33 +1,4 @@
-// Odpowiedzialność pliku: `launcher.hotkey.get` i `launcher.hotkey.set` —
-// skrót globalny otwierający wywoływacz poleceń.
-//
-// ── Kto naprawdę rejestruje skrót globalny ──────────────────────────────────
-// Skrót globalny przechwytuje powłoka programu okiennego na maszynie Operatora
-// — nie rdzeń. Rdzeń stoi na serwerze i klawiatury tamtej maszyny nie widzi.
-// Podział jest więc taki:
-//
-//   - Rdzeń TRZYMA nastawę. Dzięki temu skrót jest ten sam na każdej maszynie
-//     tego samego Operatora i przeżywa ponowne zainstalowanie okna.
-//   - Powłoka REJESTRUJE skrót u siebie i to ona wie, czy się udało; skrót
-//     zajęty przez inny program zajmie go dalej, cokolwiek rdzeń o tym sądzi.
-//
-// ── Uczciwy stan wykonalności ───────────────────────────────────────────────
-// `supported` mówi, czy po drugiej stronie stoi powłoka, która w ogóle umie
-// zarejestrować skrót globalny. Rdzeń wie to z jednego miejsca: z powitania.
-// Klient deklaruje w nim swoje zdolności (`connection.hello`, pole
-// `capabilities`), a rdzeń zapamiętuje deklarację. Przeglądarka takiej
-// zdolności nie zadeklaruje i wtedy odpowiedź mówi wprost, że skrótu nie ma
-// kto przechwycić — zamiast obiecywać skrót, który nikogo nie obudzi.
-//
-// `registered` nie jest zgadywane: jest prawdą wtedy i tylko wtedy, gdy skrót
-// jest niepusty ORAZ stoi powłoka deklarująca zdolność. Rdzeń nie twierdzi, że
-// rejestracja się powiodła, gdy nie ma komu jej wykonać.
-//
-// ── Zapis zostaje nawet wtedy, gdy rejestracja się nie uda ──────────────────
-// Kontrakt mówi to wprost i tak jest tutaj: zapis nastawy idzie pierwszy,
-// a odpowiedź mówi osobno o zapisie i osobno o rejestracji. Skrót zajęty przez
-// inny program nie jest błędem zapisu — Operator zwolni go później i nie będzie
-// musiał wpisywać nastawy od nowa.
+// Plik obsługuje launcher.hotkey.get i launcher.hotkey.set: skrót globalny otwierający wywoływacz poleceń; rdzeń trzyma nastawę, powłoka programu okiennego rejestruje skrót u siebie.
 package core
 
 import (
@@ -42,7 +13,7 @@ import (
 )
 
 const (
-	// kluczSkrotuWywolywacza to nastawa niosąca zapis skrótu globalnego.
+	// kluczSkrotuWywolywacza to nastawa niosąca zapis skrótu globalnego w konfiguracji tego Operatora rdzenia.
 	kluczSkrotuWywolywacza = "wywolywacz_skrot_globalny"
 
 	// zdolnoscSkrotuGlobalnego to nazwa zdolności deklarowanej przez powłokę
@@ -50,22 +21,18 @@ const (
 	zdolnoscSkrotuGlobalnego = "launcher.hotkey"
 )
 
-// zdolnosciKlientow zapamiętuje, co klienci zadeklarowali w powitaniu.
-//
-// Rejestr jest w pamięci i żyje tyle, co rdzeń: deklaracja dotyczy połączenia,
-// a nie Operatora. Wiersz w bazie przeżyłby zamknięcie okna i twierdziłby, że
-// skrót globalny ma kto przechwycić, gdy po tamtej stronie nie ma już nikogo.
+// zdolnosciKlientow zapamiętuje, co klienci zadeklarowali w powitaniu; rejestr jest w pamięci i żyje tyle, co rdzeń, bo deklaracja dotyczy połączenia, nie Operatora.
 type zdolnosciKlientow struct {
 	zamek sync.RWMutex
 	wpisy map[string][]string
 }
 
-// noweZdolnosciKlientow zakłada pusty rejestr deklaracji.
+// noweZdolnosciKlientow zakłada pusty rejestr deklaracji zdolności klientów przy starcie tego rdzenia.
 func noweZdolnosciKlientow() *zdolnosciKlientow {
 	return &zdolnosciKlientow{wpisy: map[string][]string{}}
 }
 
-// zapamietaj odkłada deklarację jednego klienta.
+// zapamietaj odkłada deklarację jednego klienta w rejestrze zdolności tego bieżącego połączenia rdzenia.
 func (z *zdolnosciKlientow) zapamietaj(klient string, zdolnosci []string) {
 	if z == nil || strings.TrimSpace(klient) == "" {
 		return
@@ -81,8 +48,7 @@ func (z *zdolnosciKlientow) zapamietaj(klient string, zdolnosci []string) {
 	z.wpisy[klient] = kopia
 }
 
-// ktokolwiekDeklaruje mówi, czy którykolwiek ze znanych klientów zadeklarował
-// wskazaną zdolność.
+// ktokolwiekDeklaruje mówi, czy którykolwiek ze znanych klientów zadeklarował wskazaną zdolność w powitaniu.
 func (z *zdolnosciKlientow) ktokolwiekDeklaruje(zdolnosc string) bool {
 	if z == nil {
 		return false
@@ -99,14 +65,14 @@ func (z *zdolnosciKlientow) ktokolwiekDeklaruje(zdolnosc string) bool {
 	return false
 }
 
-// adapterWywolywacza wypełnia port `Wywolywacz`.
+// adapterWywolywacza wypełnia port Wywolywacz magazynem nastaw i rejestrem deklaracji tych klientów rdzenia.
 type adapterWywolywacza struct {
 	konfiguracja dane.RepozytoriumKonfiguracji
 	rozstrzygacz *konfig.Rozstrzygacz
 	zdolnosci    *zdolnosciKlientow
 }
 
-// nowyAdapterWywolywacza wiąże port z magazynem nastaw i rejestrem deklaracji.
+// nowyAdapterWywolywacza wiąże port z magazynem nastaw i rejestrem deklaracji klientów przy tym montażu.
 func nowyAdapterWywolywacza(konfiguracja dane.RepozytoriumKonfiguracji,
 	rozstrzygacz *konfig.Rozstrzygacz, zdolnosci *zdolnosciKlientow) *adapterWywolywacza {
 
@@ -115,7 +81,7 @@ func nowyAdapterWywolywacza(konfiguracja dane.RepozytoriumKonfiguracji,
 	}
 }
 
-// SkrotWywolywacza obsługuje `launcher.hotkey.get`.
+// SkrotWywolywacza obsługuje launcher.hotkey.get, oddając nastawę skrótu wraz z jej pełną wykonalnością.
 func (a *adapterWywolywacza) SkrotWywolywacza(_ context.Context,
 	_ shared.LauncherHotkeyGetRequest) (shared.LauncherHotkeyGetResponse, error) {
 
@@ -143,7 +109,7 @@ func (a *adapterWywolywacza) SkrotWywolywacza(_ context.Context,
 	return odpowiedz, nil
 }
 
-// ZapiszSkrotWywolywacza obsługuje `launcher.hotkey.set`.
+// ZapiszSkrotWywolywacza obsługuje launcher.hotkey.set, zapisując nastawę niezależnie od jej rejestracji.
 func (a *adapterWywolywacza) ZapiszSkrotWywolywacza(ctx context.Context,
 	z shared.LauncherHotkeySetRequest) (shared.LauncherHotkeySetResponse, error) {
 
@@ -196,7 +162,7 @@ func (a *adapterWywolywacza) ZapiszSkrotWywolywacza(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// odczytajSkrot oddaje nastawę obowiązującą po rozstrzygnięciu poziomów.
+// odczytajSkrot oddaje nastawę obowiązującą po rozstrzygnięciu poziomów zasięgu tej całej konfiguracji.
 func (a *adapterWywolywacza) odczytajSkrot() string {
 	if a.rozstrzygacz == nil {
 		return ""
@@ -205,12 +171,7 @@ func (a *adapterWywolywacza) odczytajSkrot() string {
 		a.rozstrzygacz.Rozstrzygnij(konfig.Kontekst{}, kluczSkrotuWywolywacza).Wartosc)
 }
 
-// sprawdzZapisSkrotu odbija zapis, którego powłoka nie zrozumie.
-//
-// Sprawdzenie jest celowo zachowawcze: rdzeń nie zna wykazu klawiszy każdej
-// powłoki i nie będzie go zgadywał. Odrzuca to, co na pewno jest błędem —
-// zapis bez klawisza głównego albo z samymi modyfikatorami — a resztę
-// przepuszcza, bo to powłoka jest tu autorytetem.
+// sprawdzZapisSkrotu odbija zapis, którego powłoka nie zrozumie: odrzuca zapis bez klawisza głównego albo z samymi modyfikatorami, a resztę przepuszcza, bo to powłoka jest tu autorytetem.
 func sprawdzZapisSkrotu(skrot string) error {
 	czlony := strings.Split(skrot, "+")
 	modyfikatory := map[string]struct{}{

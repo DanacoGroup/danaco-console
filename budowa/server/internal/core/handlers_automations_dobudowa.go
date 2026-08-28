@@ -1,22 +1,4 @@
-// Wpięcie dwudziestu sześciu komend obszaru `automation.*` dopełniających
-// sześć komend z `adapter_modul_automations_uchwyty.go`.
-//
-// Osobny plik, bo osobna jest odpowiedzialność: tamten wpina rdzeń modułu
-// (definicja, harmonogram, kolejka, zależności, przebiegi), ten — panele
-// i szuflady okien operacyjnych, którymi Operator sięga po wersje, szablony,
-// logi, ładunki, alarmy, sekrety i audyt. Port jest jeden, bo moduł jest jeden.
-//
-// Rozgłasza się tylko to, co zmienia byt widziany przez inne okno. Zapis
-// definicji, publikacja, udostępnienie, etykiety i przywrócenie wersji zmieniają
-// automatykę, więc idą zdarzeniem `automation.link.changed` — tym samym, którym
-// idzie zmiana harmonogramu. Odczyty (wykaz wersji, porównanie, log, kroki,
-// ładunek, audyt, wykaz szablonów, wykaz reguł, wykaz sekretów) nie rozgłaszają
-// niczego: zdarzenie po odczycie byłoby szumem, na który okna reagowałyby
-// odświeżeniem bez powodu.
-//
-// Wznowienie i odtworzenie przebiegu rozgłaszają stan przebiegu
-// (`automation.execution.status`), bo obie zmieniają to, co pokazuje Execution
-// Monitor — i robią to przez ten sam nośnik, którym idzie działanie na kolejce.
+// Plik wpina dwadzieścia sześć komend obszaru automation dopełniających sześć komend rdzenia modułu: panele i szuflady okien operacyjnych.
 package core
 
 import (
@@ -70,12 +52,7 @@ type AutomatykiDobudowa interface {
 	OdczytajAudyt(ctx context.Context, z shared.AutomationAuditListRequest) (shared.AutomationAuditListResponse, error)
 }
 
-// zarejestrujDobudoweAutomatyk wpina dwadzieścia sześć komend dopełniających.
-//
-// Port modułu bez tych czynności to co innego niż brak portu: moduł jest,
-// a rdzeń nie umie wykonać części jego pracy. Wtedy komendy i tak zostają
-// wpięte i odmawiają wprost — odpowiedź „nieznana komenda" wskazywałaby na brak
-// modułu, a nie na usterkę montażu.
+// zarejestrujDobudoweAutomatyk wpina dwadzieścia sześć komend dopełniających; bez portu dobudowy wpina je jako odmowę wprost, zamiast jako komendy nieznane.
 func zarejestrujDobudoweAutomatyk(r *Rejestr, m Automatyki, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -159,9 +136,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Zastosowanie szablonu ZAKŁADA automatykę, więc rozgłasza jej powstanie,
-	// a identyfikator bierze z odpowiedzi — żądanie go nie zna, bo automatyki
-	// jeszcze nie było.
+	// Zastosowanie szablonu zakłada automatykę; identyfikator bierze z odpowiedzi, żądanie go nie zna.
 	r.Zarejestruj(shared.CommandAutomationTemplateApply,
 		obsluz(func(ctx context.Context, z shared.AutomationTemplateApplyRequest) (shared.AutomationTemplateApplyResponse, error) {
 			odpowiedz, err := m.ZastosujSzablon(ctx, z)
@@ -172,7 +147,7 @@ func zarejestrujZmianyAutomatyki(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 		}))
 }
 
-// zarejestrujZmianyPrzebiegu wpina dwie komendy zmieniające stan przebiegu.
+// zarejestrujZmianyPrzebiegu wpina dwie komendy zmieniające stan przebiegu, wznowienie i odtworzenie z ładunku.
 func zarejestrujZmianyPrzebiegu(r *Rejestr, m AutomatykiDobudowa, e *emiter) {
 	r.Zarejestruj(shared.CommandAutomationExecutionResume,
 		obsluz(func(ctx context.Context, z shared.AutomationExecutionResumeRequest) (shared.AutomationExecutionResumeResponse, error) {
@@ -201,8 +176,7 @@ const (
 	etapOdtworzeniePrzebiegu = "odtworzenie z ładunku"
 )
 
-// zarejestrujOdmoweDobudowyAutomatyk wpina wszystkie dwadzieścia sześć komend
-// jako odmowę montażu — patrz uzasadnienie przy `zarejestrujDobudoweAutomatyk`.
+// zarejestrujOdmoweDobudowyAutomatyk wpina wszystkie dwadzieścia sześć komend jako odmowę montażu, gdy port modułu dobudowy nie niesie.
 func zarejestrujOdmoweDobudowyAutomatyk(r *Rejestr) {
 	const powod = "moduł Automations: port modułu nie niesie czynności dobudowy"
 

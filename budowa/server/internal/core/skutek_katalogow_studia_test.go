@@ -1,3 +1,6 @@
+// Sprawdziany skutku modułu Studio: czy wpis katalogowy zostaje po zapisie i czy szablon
+// zakłada dokument. Każdy sprawdzian pyta o wpis osobnym odczytem, bo odpowiedzi tej rodziny
+// niosą byt złożony z pól żądania.
 package core
 
 import (
@@ -7,14 +10,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek modułu Studio: czy wpis katalogowy ZOSTAJE i czy szablon coś zakłada.
-//
-// Szkoda, którą ten plik ma wykluczyć: zapis, który wraca `ok` i nie zostawia
-// wiersza. Rodzina katalogowa jest na nią podatna, bo jej odpowiedzi niosą byt
-// złożony z żądania — wystarczyłoby oddać to, co przyszło, żeby wszystko
-// wyglądało poprawnie. Dlatego każdy sprawdzian pyta o wpis OSOBNYM odczytem,
-// a szablon mierzy treścią dokumentu, który z niego powstał.
 
 // TestOperacjaWlasnaZostajeWKatalogu sprawdza pełny obieg: zapis, odczyt,
 // nadpisanie, usunięcie — i to, że usunięcie bytu nieistniejącego odmawia.
@@ -199,8 +194,7 @@ func TestSzablonFabrycznyZakladaDokumentZWypelnionymiPolami(t *testing.T) {
 	if strings.Contains(tresc, "{{tytul}}") {
 		t.Error("znacznik pola wypełnionego został w treści")
 	}
-	// Pole niewypełnione ZOSTAJE widoczne — dokument z pustym miejscem po polu
-	// wyglądałby na kompletny, a nie jest.
+	// Pole niewypełnione zostaje widoczne, bo dokument z pustym miejscem wyglądałby na kompletny.
 	if !strings.Contains(tresc, "{{wnioski}}") {
 		t.Error("znacznik pola niewypełnionego zniknął z treści zamiast zostać widoczny")
 	}
@@ -316,8 +310,7 @@ func TestFormatDokumentuPrzestawiaSieBezZamianyTresci(t *testing.T) {
 		t.Error("przestawienie formatu zmieniło treść dokumentu")
 	}
 
-	// Zamiana treści nie należy do tej komendy i ma to powiedzieć wprost,
-	// zamiast po cichu jej nie wykonać.
+	// Zamiana treści nie należy do tej komendy i ma to powiedzieć wprost, a nie przemilczeć.
 	odpowiedz := wykonajKomende(t, zmontowany, zycie, shared.CommandStudioDocumentFormatSet,
 		shared.StudioDocumentFormatSetRequest{
 			DocumentId: dokument.Id, Format: shared.StudioDocumentFormatPdf,

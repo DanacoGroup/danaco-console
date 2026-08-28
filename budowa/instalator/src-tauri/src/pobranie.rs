@@ -13,6 +13,43 @@ use tauri::{AppHandle, Emitter};
 /// ten sam plik, z którego korzysta powłoka główna (`aktualizacja/pobranie.rs`).
 const WYKAZ_WYDAN: &str = include_str!("../../../witryna/wydania.json");
 
+/// Poświadczenia kanału pobrań wpisane w postać instalki przy jej składaniu.
+/// Katalog `/wydania/` chroni uwierzytelnienie podstawowe, a kreator nie ma
+/// gdzie o nie zapytać: żaden z sześciu kroków nie przewiduje takiego pola.
+/// Hasła nie ma w repozytorium — wchodzi zmienną środowiska w chwili budowy,
+/// tak samo jak adres serwera wdrożenia w powłoce.
+const UZYTKOWNIK_KANALU: Option<&str> = option_env!("DANACO_KANAL_UZYTKOWNIK");
+const HASLO_KANALU: Option<&str> = option_env!("DANACO_KANAL_HASLO");
+
+/// Składa nagłówek uwierzytelnienia podstawowego, gdy poświadczenia wpisano
+/// przy składaniu. Bez nich żądanie idzie tak jak dotąd — i wraca odmową 401
+/// nazwaną wprost, zamiast cichego niepowodzenia.
+fn naglowek_poswiadczen() -> Option<String> {
+    let uzytkownik = UZYTKOWNIK_KANALU?;
+    let haslo = HASLO_KANALU?;
+    let para = format!("{uzytkownik}:{haslo}");
+    Some(format!("Basic {}", base64_podstawowy(para.as_bytes())))
+}
+
+/// Zapis base64 bez zależności zewnętrznej: kanał wymaga jednego nagłówka,
+/// a dokładanie dla niego biblioteki byłoby kosztem bez pokrycia.
+fn base64_podstawowy(dane: &[u8]) -> String {
+    const ZNAKI: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut wynik = String::with_capacity(dane.len().div_ceil(3) * 4);
+    for porcja in dane.chunks(3) {
+        let b = [porcja[0], *porcja.get(1).unwrap_or(&0), *porcja.get(2).unwrap_or(&0)];
+        let trojka = u32::from(b[0]) << 16 | u32::from(b[1]) << 8 | u32::from(b[2]);
+        for i in 0..4 {
+            if i <= porcja.len() {
+                wynik.push(ZNAKI[(trojka >> (18 - i * 6) & 0x3F) as usize] as char);
+            } else {
+                wynik.push('=');
+            }
+        }
+    }
+    wynik
+}
+
 /// Zdarzenie niosące postęp pobierania do okna kreatora.
 pub const ZDARZENIE_POSTEP: &str = "instalator:postep-pobrania";
 
@@ -133,7 +170,12 @@ pub fn sprawdz_wstepnie(architektura: &str) -> Result<PozycjaWydania, Odmowa> {
         .http_status_as_error(false)
         .build()
         .into();
-    let odpowiedz = klient.get(&pozycja.plik).call().map_err(|blad| {
+    let zadanie = klient.get(&pozycja.plik);
+    let zadanie = match naglowek_poswiadczen() {
+        Some(naglowek) => zadanie.header("Authorization", &naglowek),
+        None => zadanie,
+    };
+    let odpowiedz = zadanie.call().map_err(|blad| {
         Odmowa::nowa(
             "brak-lacznosci",
             format!("Nie udało się połączyć z {}: {blad}.", pozycja.plik),
@@ -209,7 +251,12 @@ fn wykonaj(
         .build()
         .into();
 
-    let mut odpowiedz = klient.get(&pozycja.plik).call().map_err(|blad| {
+    let zadanie = klient.get(&pozycja.plik);
+    let zadanie = match naglowek_poswiadczen() {
+        Some(naglowek) => zadanie.header("Authorization", &naglowek),
+        None => zadanie,
+    };
+    let mut odpowiedz = zadanie.call().map_err(|blad| {
         Odmowa::nowa(
             "brak-lacznosci",
             format!("Nie udało się połączyć z {}: {blad}.", pozycja.plik),

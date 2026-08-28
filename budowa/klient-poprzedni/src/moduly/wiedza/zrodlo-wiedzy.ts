@@ -40,7 +40,7 @@ export function utworzZrodloWiedzy(kanal: Kanal): ZrodloWiedzy {
   return {
     async szukaj(zadanie) {
       const surowy = await wywolaj(kanal, Command.KnowledgeSearch, zadanie);
-      // Sprawdzamy pole wyników, jedyne pole, po którym okno iteruje, inaczej pętla wywróciłaby się od razu.
+      // Sprawdzenie obejmuje pole wyników, jedyne, po którym okno iteruje, inaczej pętla się wywróci.
       const sprawdzony = sprawdzKsztalt(surowy, Command.KnowledgeSearch, (tresc) =>
         czyTablica(tresc.results),
       );

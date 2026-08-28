@@ -1,38 +1,13 @@
 import type { MagazynNastawWidoku } from './widok-nastawy-operatora';
 import { przytnijSkale } from './widok-skali';
 
-/**
- * Drukowanie — czynność OPERATORA, nie rdzenia.
- *
- * ── Dlaczego w kliencie ─────────────────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: „póki co tylko funkcja dla Operatora". W całym
- * kontrakcie nie ma ani jednej komendy drukowania i nie jest to przeoczenie —
- * drukarka stoi na maszynie Operatora, a rdzeń pracuje na serwerze. Rdzeń nie ma
- * czym drukować i nie udaje, że ma; tak samo odmawia uczciwie skaner
- * (`studio.ingest.device.scan`). Wydanie do pliku to CZYNNOŚĆ INNA i jedno nie
- * zastępuje drugiego.
- *
- * ── Drukuje się to, co pokazuje podgląd ─────────────────────────────────────
- * Nie surowy tekst. Wydruk różniący się od podglądu byłby usterką gorszą niż brak
- * funkcji, więc drukowanie bierze kartki powierzchni takimi, jakimi są: nośnik,
- * orientacja, marginesy, paginacja, nagłówek i stopka. Ten plik nie rysuje własnej
- * kartki i nie zna DOM powierzchni — składa nastawy i woła drogę druku, a
- * przygotowanie kartek należy do powierzchni.
- *
- * ── Czego nie da się tu obiecać ─────────────────────────────────────────────
- * Liczby kopii i druku dwustronnego nie rozstrzyga strona, tylko okno drukarki
- * systemu. Nastawy są więc przenoszone jako **życzenie wpisane w podsumowanie**,
- * a okno mówi wprost, że zatwierdza je drukarka — obietnica, że strona ustawi
- * dupleks, byłaby nieprawdą przy pierwszej drukarce jednostronnej.
- */
-
-/** Zakres stron do wydruku. */
+/** Typ ZakresDruku nazywa zakres stron do wydruku dokumentu: wszystkie strony, stronę bieżącą albo zakres podany ręcznie. */
 export type ZakresDruku = 'wszystkie' | 'biezaca' | 'podany';
 
-/** Co robić z adiustacją na wydruku. */
+/** Typ AdiustacjaDruku nazywa sposób ujęcia adiustacji na wydruku dokumentu: z adiustacją albo tekst po zmianach. */
 export type AdiustacjaDruku = 'z-adiustacja' | 'po-zmianach';
 
-/** Nastawy druku. */
+/** Interfejs NastawyDruku niesie wszystkie nastawy wydruku dokumentu: zakres stron, liczbę kopii, tryb dwustronny, skalę i adiustację. */
 export interface NastawyDruku {
   zakres: ZakresDruku;
   /** Pierwsza strona zakresu podanego. */
@@ -46,7 +21,7 @@ export interface NastawyDruku {
   adiustacja: AdiustacjaDruku;
 }
 
-/** Nastawy domyślne: wszystkie strony, jedna kopia, bez adiustacji. */
+/** Funkcja domyslneNastawyDruku zwraca nastawy domyślne wydruku: wszystkie strony, jedna kopia, bez adiustacji. */
 export function domyslneNastawyDruku(): NastawyDruku {
   return {
     zakres: 'wszystkie',
@@ -54,14 +29,13 @@ export function domyslneNastawyDruku(): NastawyDruku {
     doStrony: 1,
     kopie: 1,
     dwustronny: false,
-    // Bez adiustacji, bo najczęstszy wydruk to pismo do wysłania. Korekta
-    // z adiustacją jest wyborem świadomym i stoi jedno naciśnięcie obok.
+    // Bez adiustacji domyślnie: najczęstszy wydruk to pismo do wysłania, korekta to wybór osobny.
     skala: 100,
     adiustacja: 'po-zmianach',
   };
 }
 
-/** Klucz zapisu nastaw druku — szybkie drukowanie bierze je bez pytania. */
+/** Stała KLUCZ_DRUKU jest kluczem zapisu nastaw druku w magazynie; szybkie drukowanie bierze je bez pytania Operatora. */
 const KLUCZ_DRUKU = 'dn.studio.druk';
 
 function magazynDomyslny(): MagazynNastawWidoku | null {
@@ -72,7 +46,7 @@ function magazynDomyslny(): MagazynNastawWidoku | null {
   }
 }
 
-/** Czyta ostatnie nastawy druku; brak zapisu daje domyślne. */
+/** Funkcja czytajNastawyDruku czyta ostatnie zapisane nastawy druku z magazynu; brak zapisu daje nastawy domyślne. */
 export function czytajNastawyDruku(
   magazyn: MagazynNastawWidoku | null = magazynDomyslny(),
 ): NastawyDruku {
@@ -99,7 +73,7 @@ export function czytajNastawyDruku(
   }
 }
 
-/** Zapisuje nastawy druku; awaria zapisu niczego nie przerywa. */
+/** Funkcja zapamietajNastawyDruku zapisuje nastawy druku w magazynie; awaria zapisu niczego w oknie nie przerywa. */
 export function zapamietajNastawyDruku(
   nastawy: NastawyDruku,
   magazyn: MagazynNastawWidoku | null = magazynDomyslny(),
@@ -117,12 +91,7 @@ function liczba(wartosc: unknown, domyslna: number): number {
 }
 
 /**
- * Numery stron objętych nastawami, przycięte do liczby stron dokumentu.
- *
- * Zakres podany odwrotnie (od 8 do 3) jest odwracany, a nie odrzucany: Operator
- * miał na myśli strony od trzeciej do ósmej i odmowa byłaby tu formalizmem. Zakres
- * całkowicie poza dokumentem oddaje wykaz pusty — i wołający ma wtedy odmówić
- * wydruku, zamiast drukować wszystko.
+ * Funkcja stronyDoDruku zwraca numery stron objętych nastawami, przycięte do liczby stron dokumentu; zakres podany odwrotnie zostaje odwrócony, a nie odrzucony.
  */
 export function stronyDoDruku(
   nastawy: NastawyDruku,
@@ -146,7 +115,7 @@ export function stronyDoDruku(
   return Array.from({ length: ile }, (_, numer) => numer + 1);
 }
 
-/** Zdanie o nastawach druku — podsumowanie przed naciśnięciem „Drukuj". */
+/** Funkcja opiszNastawyDruku zwraca zdanie o nastawach druku, wyświetlane jako podsumowanie przed naciśnięciem przycisku Drukuj. */
 export function opiszNastawyDruku(nastawy: NastawyDruku, liczbaStron: number, kartka: number): string {
   const strony = stronyDoDruku(nastawy, liczbaStron, kartka);
   const zakres =
@@ -163,38 +132,28 @@ export function opiszNastawyDruku(nastawy: NastawyDruku, liczbaStron: number, ka
 }
 
 /**
- * Czy droga druku jest w tym środowisku dostępna.
- *
- * Sprawdzane PRZED próbą, bo przycisk, który po naciśnięciu milczy, jest gorszy
- * od nazwanego braku. Powłoka bez okna drukarki (osadzenie w ramce bez uprawnień,
- * środowisko sprawdzianu) nie ma funkcji `print` i wtedy okno mówi to wprost.
+ * Funkcja czyDrukDostepny sprawdza, czy droga druku jest w tym środowisku dostępna, zanim okno pokaże przycisk drukowania.
  */
 export function czyDrukDostepny(): boolean {
   return typeof (globalThis as { print?: unknown }).print === 'function';
 }
 
-/** Powód, którym okno odmawia druku, gdy droga nie jest dostępna. */
+/** Stała POWOD_BRAKU_DRUKU niesie powód, którym okno odmawia druku, gdy droga druku nie jest w tym środowisku dostępna. */
 export const POWOD_BRAKU_DRUKU =
   'Ta powłoka nie udostępnia okna drukarki, więc wydruk nie ma czym wyjść. Drukowanie jest ' +
   'czynnością Operatora, nie rdzenia: w kontrakcie nie ma ani jednej komendy drukowania, bo ' +
   'drukarka stoi na maszynie Operatora, a rdzeń na serwerze. Wydanie dokumentu do pliku jest ' +
   'czynnością INNĄ i działa niezależnie od tego braku.';
 
-/** Otoczenie druku — powierzchnia, która wie, jak przygotować kartki. */
+/** Interfejs OtoczenieDruku opisuje otoczenie druku: powierzchnię, która wie, jak przygotować kartki dokumentu do wydruku. */
 export interface OtoczenieDruku {
   liczbaStron(): number;
   kartkaBiezaca(): number;
-  /**
-   * Przygotowuje powierzchnię do wydruku i oddaje sposób przywrócenia jej.
-   *
-   * Przywrócenie jest oddawane, a nie domyślane: wydruk zostawiający dokument
-   * w postaci przygotowanej do druku byłby usterką widoczną dopiero wtedy, gdy
-   * Operator wróci do pisania.
-   */
+  /** Przygotowuje powierzchnię do wydruku i oddaje sposób przywrócenia jej stanu poprzedniego. */
   przygotuj(nastawy: NastawyDruku, strony: readonly number[]): () => void;
 }
 
-/** Wynik próby wydruku. */
+/** Interfejs WynikDruku niesie wynik próby wydruku dokumentu: czy wydruk się powiódł i zdanie opisujące jego skutek. */
 export interface WynikDruku {
   udany: boolean;
   zdanie: string;

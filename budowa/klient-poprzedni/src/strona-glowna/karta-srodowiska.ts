@@ -1,7 +1,7 @@
 import { elementIkony } from '../ikony/ikony';
 import type { KodSrodowiska, PozycjaSrodowiska } from './pozycje-srodowisk';
 
-/** Karta środowiska jest elementem strefy pierwszej, środkiem ciężkości strony głównej. */
+/** Karta środowiska jest elementem strefy pierwszej, będącym środkiem ciężkości strony głównej klienta. */
 
 /** Godło środowiska renderowane jest w największej skali dostępnej w zestawie ikon całego systemu wizualnego. */
 const ROZMIAR_GODLA = 24;

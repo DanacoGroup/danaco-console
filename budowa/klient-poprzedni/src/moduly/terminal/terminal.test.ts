@@ -10,26 +10,8 @@ import type { Kanal } from '../../protokol/kanal';
 import { czytajKonfiguracjeSsh, utworzKsiazkeHostow, zapiszKonfiguracjeSsh } from './ksiazka-hostow';
 import { utworzBiblioteke } from './biblioteka-skryptow';
 import { utworzZrodloTerminala } from './zrodlo-terminala';
-
 /**
- * Sprawdziany modułu Terminal — czynność, nie kształt pliku.
- *
- * Pilnowane jest to, co przy poprawce łatwo zepsuć po cichu, a co rozstrzyga
- * o tym, czy okno naprawdę dochodzi do rdzenia:
- *
- *   1. każda komenda rodziny wychodzi POD SWOJĄ NAZWĄ z kontraktu i z ładunkiem,
- *      który dostała — pomyłka w nazwie kończy się dziś odmową `not_found`
- *      dopiero na żywym rdzeniu, a tu widać ją od razu;
- *   2. odpowiedź o kształcie innym niż kontraktowy nie przechodzi jako wynik
- *      udany — okno, które przyjęłoby wykaz bez pola `hosts`, pokazałoby pustkę
- *      zamiast odmowy;
- *   3. wykaz książki hostów i biblioteki jest ZASTĘPOWANY wykazem z rdzenia,
- *      a nie scalany: wpis zdjęty w rdzeniu ma zniknąć także z ekranu;
- *   4. czytanie konfiguracji OpenSSH bierze port do wpisu, bo rdzeń podaje go
- *      programowi ssh przełącznikiem — port zgubiony po drodze kierowałby kartę
- *      na port domyślny bez słowa.
- *
- * Rdzeń jest atrapą: sprawdzian pyta o zachowanie modułu, nie serwera.
+ * Sprawdziany modułu Terminal weryfikują czynność okna, nie kształt pliku testowego.
  */
 
 interface Zapis {
@@ -37,6 +19,9 @@ interface Zapis {
   zadanie: Record<string, unknown>;
 }
 
+/**
+ * Atrapa kanału łączności z rdzeniem na potrzeby sprawdzianów: zapisuje wysłane komendy i oddaje przygotowane odpowiedzi.
+ */
 function atrapaKanalu(zapisy: Zapis[], odpowiedzi: Record<string, unknown> = {}): Kanal {
   return {
     wyslij(
@@ -149,9 +134,7 @@ describe('źródło modułu Terminal — droga z okna do komendy', () => {
   it('nie przepuszcza odpowiedzi o kształcie spoza kontraktu jako wyniku udanego', async () => {
     const zrodlo = utworzZrodloTerminala(
       atrapaKanalu([], {
-        // Odpowiedź bez pola `hosts` jest odpowiedzią cudzej komendy albo rdzenia
-        // starszego niż kontrakt. Przepuszczona dałaby oknu pusty wykaz, czyli
-        // zdanie „książka jest pusta" zamiast „nie udało się zapytać".
+        // Odpowiedź bez pola hosts jest odpowiedzią cudzej komendy albo starszego rdzenia.
         [Command.TerminalHostList]: { total: 0 },
         [Command.TerminalKeyList]: { keys: [{ id: 'tkey-1' }], total: 1 },
       }),
@@ -172,8 +155,7 @@ describe('źródło modułu Terminal — droga z okna do komendy', () => {
 
     const wynik = await zrodlo.usunHosta({ hostId: 'thost-nieistniejacy' });
 
-    // Wywołanie się udało, a wpisu nie było — to dwie różne rzeczy i okno musi
-    // widzieć obie.
+    // Wywołanie się udało, a wpisu nie było — to dwie różne rzeczy i okno musi widzieć obie.
     expect(wynik.udany).toBe(true);
     expect(wynik.wynik).toBe(false);
   });
@@ -213,14 +195,7 @@ describe('książka hostów jako widok na dziennik rdzenia', () => {
 
 describe('plan zadania powłoki — jedna rodzina komend, druga powierzchnia', () => {
   /**
-   * Zapora rozstrzygnięcia, nie sprawdzian kształtu.
-   *
-   * Opracowanie modułu opisuje w oknie Task & Schedule runner zadań z wyrażeniami
-   * cron, a kontrakt wiąże cykliczność z automatyką. Rozjazd rozstrzygnięto na
-   * korzyść kontraktu: rodzina zostaje jedna, a okno Terminala jest jej drugą
-   * powierzchnią. Gdyby ktoś kiedyś wniósł rodzinę `terminal.schedule.*`, byłyby
-   * dwie prawdy o jednym harmonogramie — i to jest właśnie ta pomyłka, której
-   * sprawdzian ma nie przepuścić.
+   * Zapora rozstrzygnięcia rodziny komend harmonogramu, nie sprawdzian kształtu odpowiedzi.
    */
   it('zakłada plan komendami rodziny automatyk, a nie własną rodziną terminala', async () => {
     const zapisy: Zapis[] = [];
@@ -265,9 +240,7 @@ describe('plan zadania powłoki — jedna rodzina komend, druga powierzchnia', (
     });
 
     const kroki = (zapisy[0]?.zadanie as { steps?: AutomationStep[] }).steps ?? [];
-    // Krok wołający komendę kontraktu przechodzi tą samą bramą uprawnień
-    // i egzekutorem izolacji, co polecenie wydane ręcznie z karty. Krok niosący
-    // polecenie powłoki wprost byłby drugą drogą do powłoki, bez tych sprawdzeń.
+    // Krok wołający komendę kontraktu przechodzi tą samą bramą uprawnień co polecenie ręczne.
     expect(kroki[0]?.kind).toBe(AutomationStepKind.Command);
     expect(kroki[0]?.command).toBe(Command.TerminalCommandExec);
     expect(kroki[0]?.params).toEqual({ sessionId: 'term-9', command: 'tar -czf kopia.tgz dane/' });

@@ -1,8 +1,7 @@
 import type { Wynik } from '../protokol/kanal';
 import type { WpisSesji } from './zrodlo-sesji';
 
-/** Plik niesie dwa zdania wspólne czynnościom historii sesji: nazwanie sesji i nazwanie odmowy. */
-
+/** Plik niesie dwa zdania wspólne czynnościom historii sesji: nazwanie sesji na potrzeby meldunku oraz nazwanie treści odmowy rdzenia. */
 /** Treść odmowy z rdzenia albo zdanie zastępcze nazywające czynność, gdy rdzeń odmówił bez treści odmowy. */
 export function odmowa(wynik: Wynik<unknown>, czynnosc: string): string {
   return wynik.blad?.message ?? `Rdzeń odmówił: ${czynnosc}.`;

@@ -18,28 +18,8 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Drogi do rdzenia potrzebne oknu pracy z dokumentem, a nieznane oknom
- * poprzednim.
- *
- * `zrodlo-studio.ts` niesie sześć komend obszaru, na których stały Studio Editor
- * i Diff/Grep Panel: otwarcie, zapis, operacja, porównanie, wykaz wersji,
- * przywrócenie. Jedno okno pracy potrzebuje ponad to sześciu dalszych rodzin,
- * które w kontrakcie są, a w kliencie nie miały wołającego:
- *
- *   — `studio.tracking.*`  — zmiany śledzone: wykaz, decyzja, przełącznik.
- *     To one niosą wynik modelu w miejscu, w którym stoi treść, więc bez nich
- *     „zmiany autora model przyjmowane po kolei" nie ma czym działać;
- *   — `studio.proposal.decide` — decyzja o propozycji po stronie RDZENIA,
- *     z fragmentami wskazanymi wybiórczo (`hunkIndexes`);
- *   — `studio.export.profile.*` — nastawy strony, jedyne miejsce w kontrakcie,
- *     w którym kartka, marginesy, nagłówek i stopka mają zapis trwały;
- *   — `studio.preview.render` — paginacja i typografia liczone przez rdzeń;
- *   — `studio.template.*` — galeria szablonów i zakładanie dokumentu z szablonu;
- *   — `studio.search.semantic` i `studio.diff.source` — pomiary panelu
- *     Redaktora: bliskość znaczeniowa i rozbieżność wobec materiału wejściowego.
- *
- * Źródło nie ma stanu i nie buduje elementu — sprawdza kształt odpowiedzi
- * i oddaje ją oknu.
+ * Drogi do rdzenia potrzebne oknu pracy z dokumentem, a nieznane oknom poprzednim; źródło nie
+ * ma stanu i nie buduje elementu, sprawdza kształt odpowiedzi.
  */
 export interface ZrodloPracyStudio {
   /** Zmiany śledzone dokumentu; `tylkoOczekujace` zawęża do nierozstrzygniętych. */
@@ -77,19 +57,7 @@ export interface ZrodloPracyStudio {
     idOkna: string,
     idProfilu: string,
   ): Promise<Wynik<{ pageAssetIds: string[]; pages: number }>>;
-  /**
-   * Pobiera TREŚĆ zasobu magazynu rdzenia (`design.asset.content.get`).
-   *
-   * Rodzina komendy nazywa się `design.*`, ale komenda nie należy do modułu
-   * Design: kontrakt mówi wprost, że dotyczy KAŻDEGO zasobu magazynu, bo magazyn
-   * jest jeden dla rodzin `design.*`, `document.*`, `media.*` i `archive.*`.
-   * Podgląd wydania sięga nią po obrazy stron wyrysowane przez rdzeń — pole `uri`
-   * zasobu jest ścieżką w systemie plików rdzenia, więc przeglądarka nie wczyta
-   * spod niego niczego.
-   *
-   * Druga komenda „pobierz zasób Studia" byłaby drugą drogą do tego samego
-   * magazynu, więc jej tu nie ma i nie ma jej w kontrakcie.
-   */
+  /** Pobiera treść zasobu magazynu rdzenia; rodzina komendy `design.*` dotyczy każdego zasobu. */
   trescZasobu(
     idZasobu: string,
     granicaBajtow: number,
@@ -182,9 +150,7 @@ export function utworzZrodloPracyStudio(kanal: Kanal): ZrodloPracyStudio {
           documentId: idDokumentu,
           proposalId: idPropozycji,
           accept: przyjmij,
-          // Wykaz pusty znaczy „w całości" i pola wtedy nie ma: kontrakt czyta
-          // brak `hunkIndexes` jako całość, a wykaz pusty byłby wskazaniem
-          // zera fragmentów.
+          // Wykaz pusty znaczy w całości; brak hunkIndexes to całość, nie zero fragmentów.
           ...(fragmenty.length === 0 ? {} : { hunkIndexes: [...fragmenty] }),
           createVersion: true,
         }),
@@ -234,10 +200,7 @@ export function utworzZrodloPracyStudio(kanal: Kanal): ZrodloPracyStudio {
           ...(granicaBajtow > 0 ? { maxBytes: granicaBajtow } : {}),
         }),
         Command.DesignAssetContentGet,
-        // `contentBase64` jest w kontrakcie nieobowiązkowe (postać odsyłania go
-        // nie niesie), więc sprawdzenie kształtu pyta o pola OBOWIĄZKOWE. Brak
-        // treści przy postaci „content" rozstrzyga wołający — i mówi o tym wprost,
-        // zamiast rysować pustą kartkę.
+        // Pole contentBase64 jest nieobowiązkowe; brak treści rozstrzyga wołający.
         (tresc) => typeof tresc.mediaType === 'string' && typeof tresc.sizeBytes === 'number',
       );
     },
@@ -279,8 +242,7 @@ export function utworzZrodloPracyStudio(kanal: Kanal): ZrodloPracyStudio {
         await wywolaj(kanal, Command.StudioCommentAdd, {
           documentId: idDokumentu,
           body: tresc,
-          // Zakres jedzie wyłącznie wtedy, gdy jest: komentarz bez zaznaczenia
-          // dotyczy dokumentu, a zakres 0–0 byłby kotwicą przy pierwszym znaku.
+          // Zakres jedzie tylko, gdy jest: brak zaznaczenia dotyczy dokumentu, nie zera.
           ...(zakres === null
             ? {}
             : { selectionStart: zakres.poczatek, selectionEnd: zakres.koniec }),

@@ -23,7 +23,7 @@ export interface ZrodloUrzadzen {
 export function utworzZrodloUrzadzen(kanal: Kanal): ZrodloUrzadzen {
   return {
     async wykaz() {
-      // Kształt sprawdzamy, bo rzutowanie kanału jest obietnicą kompilatora, nie rdzenia.
+      // Sprawdzenie kształtu wynika stąd, że rzutowanie kanału jest obietnicą kompilatora, nie rdzenia.
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DeviceList, {}),
         Command.DeviceList,

@@ -14,15 +14,7 @@ import { rozbieznoscOdpowiedzi, type PoleOdpowiedzi } from './zgodnosc-odpowiedz
 import type { ZrodloGlosariusza } from './zrodlo-glosariusza';
 
 /**
- * Formularz definicji terminu — obie funkcje Operatora Glossary Managera
- * w jednym miejscu: „definiowanie odpowiednika terminu" (formularz pusty)
- * i „edycja glosariusza" (formularz wczytany terminem z wykazu).
- *
- * Jeden formularz obsługuje obie czynności: kontrakt rozróżnia je polem
- * `termId` — obecne znaczy zmianę, nieobecne termin nowy.
- *
- * Po odmowie formularz zostaje wypełniony, a pola edytowalne, żeby poprawić
- * wpisane wartości zamiast wpisywać je od nowa.
+ * Formularz definicji terminu obsługuje w module Translate dwie czynności Glossary Managera jednym kodem.
  */
 export interface FormularzTerminu {
   element: HTMLElement;
@@ -39,7 +31,9 @@ interface PolaTerminu {
   nieTlumacz: PoleFormularza<HTMLInputElement>;
 }
 
-/** Termin będący przedmiotem edycji; pusty identyfikator znaczy termin nowy. */
+/**
+ * Termin będący przedmiotem edycji w tym formularzu glosariusza; pusty identyfikator znaczy termin nowy.
+ */
 interface Edycja {
   id: string;
 }
@@ -94,7 +88,9 @@ export function utworzFormularzTerminu(
   };
 }
 
-/** Odbiorcy wyniku zapisu — okno, wiersz odpowiedzi i wykaz terminów. */
+/**
+ * Odbiorcy wyniku zapisu terminu glosariusza: okno, wiersz odpowiedzi formularza i cały wykaz terminów.
+ */
 interface OdbiorcyZapisu {
   okno: StanOkna;
   odpowiedz: WierszOdpowiedzi;
@@ -124,10 +120,7 @@ async function zapiszTermin(
   if (uwaga !== '') zadanie.note = uwaga;
   if (pola.nieTlumacz.kontrolka.checked) zadanie.doNotTranslate = true;
 
-  // Stan ładowania okna, nie tylko wiersza odpowiedzi: zapis terminu jest
-  // jedynym wywołaniem rdzenia, które Glossary Manager wykonuje z tego
-  // formularza, więc to on niesie stan ładowania okna. Pola zostają widoczne
-  // i edytowalne.
+  // Stan ładowania obejmuje całe okno, bo zapis terminu jest jedynym wywołaniem rdzenia z formularza.
   odbiorcy.okno.ladowanie(
     edycja.id === ''
       ? `Rdzeń zapisuje nowy termin „${termin}" w glosariuszu.`
@@ -141,10 +134,7 @@ async function zapiszTermin(
     odbiorcy.okno.blad(zdanie);
     return;
   }
-  // Zamówienie kontra termin, który wrócił. Sprawdzane są cztery pola, bo tylko
-  // tyle niesie żądanie i tyle wraca w `GlossaryTerm`; `termId` sprawdzamy
-  // wyłącznie przy edycji, bo przy terminie nowym identyfikator nadaje rdzeń
-  // i nie ma go z czym porównać.
+  // Sprawdzane są cztery pola zamówienia przeciw terminowi, który wrócił z rdzenia po zapisie.
   const zapisany = wynik.wynik.term;
   const sprawdzane: PoleOdpowiedzi[] = [
     { nazwa: 'termin źródłowy', zamowione: termin, oddane: zapisany.source },
@@ -158,10 +148,7 @@ async function zapiszTermin(
   }
   const rozbiezne = rozbieznoscOdpowiedzi('Zapis terminu glosariusza', sprawdzane);
 
-  // Wykaz okna napełnia się terminem z rdzenia także przy rozbieżności: prawdą
-  // o glosariuszu jest to, co rdzeń u siebie zapisał. `naZapis` odbudowuje sam
-  // wykaz i fazy okna nie rusza (patrz `odswiez` w `okno-glossary-manager.ts`),
-  // więc wolno je wywołać przed rozstrzygnięciem o fazie.
+  // Wykaz okna napełnia się terminem z rdzenia także przy rozbieżności odpowiedzi z zamówieniem.
   edycja.id = '';
   odbiorcy.naZapis(zapisany);
   if (rozbiezne !== null) {
@@ -169,9 +156,7 @@ async function zapiszTermin(
     odbiorcy.okno.blad(rozbiezne);
     return;
   }
-  // Fazę ładowania i fazę błędu zdejmuje wyłącznie udany zapis: przerysowanie
-  // okna ich nie rusza, żeby nie skasować nieprzeczytanego komunikatu ani
-  // zapowiedzi trwającego wywołania.
+  // Fazę ładowania i fazę błędu zdejmuje wyłącznie udany zapis terminu, nie samo przerysowanie okna.
   odbiorcy.okno.gotowe();
   odbiorcy.odpowiedz.pokaz(`Termin „${zapisany.source}" zapisany w rdzeniu.`, true);
 }

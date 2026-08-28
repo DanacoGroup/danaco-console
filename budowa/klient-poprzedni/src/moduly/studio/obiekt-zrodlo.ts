@@ -51,7 +51,7 @@ export function utworzObiektZrodlo(kanal: Kanal): ObiektZrodlo {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioObjectRemove, zadanie),
         Command.StudioObjectRemove,
-        // Pole removed sprawdzamy wprost: nieusunięcie jest wynikiem, nie awarią, do przeczytania jako odmowa.
+        // Pole removed podlega sprawdzeniu wprost: nieusunięcie jest wynikiem, nie awarią, jako odmowa.
         (tresc) => czyLogiczna(tresc.removed) && czyObiekt(tresc.balance),
       );
     },

@@ -1,56 +1,17 @@
 import { KluczUstawieniaOkna } from './klucze-ustawien';
 
 /**
- * Adnotacje o tym, co ze sterowań okna dociera do wywołania modelu, a co jest
- * wyłącznie zapisywane.
- *
- * Sterowanie, którego wartość nie dociera do wywołania, zostaje czynne —
- * wyszarzenie byłoby blokadą — ale mówi o swoim stanie wprost w objaśnieniu [?].
- * Milczenie kazałoby uznać zapisaną wartość za sterującą modelem.
- *
- * Wykaz, którego nikt nie odświeża, kłamie w dymkach i każe budować drugi raz
- * to, co już działa. Dlatego przy każdym sterowaniu stoi plik i miejsce
- * w rdzeniu, po których da się zdanie sprawdzić zamiast w nie uwierzyć:
- *   · naklad_rozumowania — `core/adapter_rozmowa_wykonanie.go` (funkcja `Ustal`,
- *     pole `Naklad`) → `injection/argumenty.go`, parametr `--effort`;
- *   · kanal_modelu_zapasowy — tamże, pole `ModelZapasowy`, po przekładzie kodu
- *     kanału na identyfikator modelu (`modelKanalu`) → `--fallback-model`;
- *   · host_wykonania — `zdalne/hosty.go` (odczyt z bazy), `zdalne/tor.go`
- *     (złożenie toru SSH), `injection/uruchamiacz_okna.go` (gałąź
- *     `shared.ExecutionEnvRemote` → `zdalne.Przeloz`);
- *   · środowisko wykonania — zasięg `remote` prowadzi jawny tor SSH, a każde
- *     brakujące ogniwo jest nazwaną odmową, nie cichym startem na rdzeniu
- *     (`injection/uruchamiacz_okna.go`, `rozruchZdalny`); zasięg `local` schodzi
- *     na host rdzenia i zostawia o tym wpis w dzienniku;
- *   · model — kanał modelu jest osią całego wywołania.
- *
- * Zdanie o sterowaniu niepotwierdzonym zostaje jedno — patrz
- * `AGENT_ZAPISYWANY`. Adnotację zdejmuje się przez skreślenie wiersza z tego
- * wykazu, w jednym miejscu, wraz ze wskazaniem miejsca w rdzeniu, które to
- * uzasadnia.
+ * Adnotacje wykonania opisują pola konfiguracji zadania, których wykonanie nie czyta wprost.
  */
 
 /**
- * Zdanie o wyborze eksperta — stan spoiny, nie obietnica.
- *
- * Pole `agentId` się utrwala: `session/okno.go` (pole `Agent`),
- * `core/przeklad.go` (funkcja `zmianaOkna`). Nałożenia tożsamości eksperta —
- * warstw promptu, skilli, wtyczek — na wywołanie modelu nie potwierdza żadna
- * znana ścieżka rdzenia, więc zdanie zostaje: milczenie kazałoby uznać, że okno
- * pracuje tożsamością eksperta.
- *
- * Sekcja „Moi agenci" nie jest przy tym wyszarzana — to byłaby blokada.
+ * Zdanie o wyborze eksperta jest stanem spoiny, nie obietnicą, bo żadna znana ścieżka rdzenia nie potwierdza nałożenia tożsamości eksperta na wywołanie modelu.
  */
 const AGENT_ZAPISYWANY =
   'Wybór eksperta: okno bierze jego model bazowy i zapisuje jego kod (rdzeń utrwala pole agentId), ale nałożenia tożsamości eksperta — warstw promptu, skilli, wtyczek — na wywołanie nie potwierdzono pomiarem.';
 
 /**
- * Zdanie o zasięgu `local`, powiedziane wprost zamiast przemilczane.
- *
- * Źródło: `injection/uruchamiacz_okna.go` — toru zwrotnego do urządzenia
- * Operatora w drzewie nie ma, więc `local` startuje na hoście rdzenia
- * i zostawia o tym wpis w dzienniku. Wybór jest honorowany dosłownie dopóty,
- * dopóki rdzeń stoi na urządzeniu Operatora.
+ * Zdanie o zasięgu local jest powiedziane wprost: bez toru zwrotnego do urządzenia operatora zasięg startuje na hoście rdzenia i zostawia o tym wpis w dzienniku.
  */
 const ZASIEG_LOKALNY =
   'Stan: zasięg zdalny prowadzi proces torem SSH na wskazany host, a brakujące ogniwo drogi jest nazwaną odmową. Zasięg „urządzenie Operatora" startuje dziś na hoście rdzenia — toru zwrotnego do urządzenia nie ma — i zostawia o tym wpis w dzienniku.';
@@ -83,12 +44,7 @@ export function objasnienieSterowania(nazwa: string): string {
 }
 
 /**
- * Klucze konfiguracji bez konsumenta w rdzeniu.
- *
- * Wykaz jest pusty: host wykonania, kanał zapasowy i nakład rozumowania mają
- * konsumenta wskazanego w nagłówku pliku. Pusty wykaz zostaje, bo droga
- * dopisania ma być ta sama co droga wycofania — następny klucz bez konsumenta
- * wpisuje się tutaj, a nie w nowym mechanizmie.
+ * Wykaz kluczy konfiguracji bez konsumenta w rdzeniu jest pusty, bo droga dopisania ma być ta sama co droga wycofania klucza.
  */
 const KLUCZE_BEZ_KONSUMENTA: readonly string[] = [];
 
@@ -99,7 +55,9 @@ const KLUCZE_BEZ_KONSUMENTA: readonly string[] = [];
  */
 const PRZEDROSTKI_BEZ_KONSUMENTA: readonly string[] = ['harness.'];
 
-/** Zdanie doklejane do objaśnienia klucza, którego wykonanie nie czyta. */
+/**
+ * Zdanie doklejane do objaśnienia klucza konfiguracji, którego samo wykonanie zadania nie czyta wprost.
+ */
 const NIE_STERUJE_JESZCZE =
   'Stan: wartość zapisuje się w oknie, ale budowa wywołania modelu jeszcze jej nie czyta — w tym wydaniu nie zmienia sposobu wykonania.';
 

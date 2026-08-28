@@ -39,8 +39,8 @@ const ZNAKI_WZORCA: ReadonlyMap<string, ZnakiPozycji> = new Map([
 /**
  * Składa spis czynności dla wpisu sesji tego okna.
  *
- * Pusty wynik jest odpowiedzią poprawną: bez wpisu sesji nie wiemy, w jakim
- * ona stanie, a czynność nazwana na ślepo obiecywałaby skutek, którego nikt nie
+ * Pusty wynik jest odpowiedzią poprawną: bez wpisu sesji stan sesji pozostaje
+ * nieznany, a czynność nazwana na ślepo obiecywałaby skutek, którego nikt nie
  * sprawdził.
  */
 export function spisCzynnosciSesji(

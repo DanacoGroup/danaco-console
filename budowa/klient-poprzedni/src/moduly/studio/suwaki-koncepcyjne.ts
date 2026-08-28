@@ -1,32 +1,8 @@
 /**
- * Suwaki koncepcyjne — wielkości ciągłe pracy nad tekstem.
- *
- * ── Dlaczego suwak, a nie przycisk ──────────────────────────────────────────
- * „Skróć" i „Rozwiń" to nie dwie czynności, tylko dwa końce jednej wielkości:
- * objętości. To samo z tonem, rejestrem, poziomem szczegółu i stopniem
- * dopracowania. Przycisk daje jeden skok o nieznanej wielkości i drugie
- * naciśnięcie skacze znowu; suwak nazywa, o ile ma się zmienić, i pokazuje to
- * przed wysłaniem.
- *
- * ── Skąd biorą się operacje ─────────────────────────────────────────────────
- * Z `kategorie-operacji.ts`, nie z nowego wykazu. Każdy suwak wskazuje
- * identyfikator akcji, który już tam stoi, i dokłada mu wielkość. Operacje,
- * które wielkością ciągłą nie są (korekta interpunkcji, spis treści,
- * tłumaczenie), zostają przyciskami w swoich miejscach.
- *
- * ── Czym jedzie nastawa ─────────────────────────────────────────────────────
- * Polem `params` żądania `studio.contextual.op` — kontrakt ma je jako `unknown`
- * i opisuje jako „parametry operacji wymagane przez pozycję rejestru". Nastawy
- * jadą więc drogą, która w kontrakcie jest, i nie wymagają jego zmiany. Rdzeń
- * dziś `params` do polecenia modelu nie dokłada — to jest potrzeba nazwana
- * w sprawozdaniu, nie brak ukryty: okno pisze przy suwakach, że wielkość jedzie
- * w żądaniu, i dokłada ją TAKŻE do treści polecenia wysyłanego wierszem
- * polecenia, gdzie model ją przeczyta.
- *
- * Plik nie zna DOM — oddaje wykaz, zdania i ładunek żądania.
+ * Moduł suwaki-koncepcyjne opisuje wielkości ciągłe pracy nad tekstem — objętość, ton, rejestr, poziom szczegółu i stopień dopracowania — jako suwaki zamiast przycisków, wraz z ładunkiem żądania operacji kontekstowej.
  */
 
-/** Jedna wielkość ciągła: identyfikator operacji, końce skali i jej nazwa. */
+/** Interfejs WielkoscCiagla opisuje jedną wielkość ciągłą pracy nad tekstem: identyfikator operacji, końce skali i jej nazwę widoczną w interfejsie. */
 export interface WielkoscCiagla {
   /** Kod nastawy — trafia do `params` i do `data-suwak`. */
   kod: string;
@@ -44,12 +20,7 @@ export interface WielkoscCiagla {
 }
 
 /**
- * Granice skali wszystkich suwaków.
- *
- * Skala jest jedna dla wszystkich wielkości i symetryczna wobec zera, bo każdy
- * suwak ma dwa przeciwne kierunki i środek, w którym nie robi nic. Osobne skale
- * dla każdej wielkości kazałyby Operatorowi czytać liczbę inaczej przy każdym
- * suwaku.
+ * Stała SKALA_SUWAKA niesie granice skali wspólne dla wszystkich suwaków, symetryczne wobec zera, ponieważ każdy suwak ma dwa przeciwne kierunki i środek neutralny.
  */
 export const SKALA_SUWAKA = { dol: -3, gora: 3, krok: 1 } as const;
 
@@ -108,10 +79,10 @@ export const WIELKOSCI_CIAGLE: readonly WielkoscCiagla[] = [
   },
 ];
 
-/** Nastawy wszystkich suwaków — kod wielkości na jej wartość. */
+/** Typ NastawySuwakow mapuje kod każdej wielkości ciągłej na jej bieżącą wartość liczbową na skali suwaka. */
 export type NastawySuwakow = Record<string, number>;
 
-/** Nastawy neutralne: każdy suwak w środku skali. */
+/** Funkcja neutralneNastawy zwraca nastawy początkowe, w których każdy suwak stoi dokładnie w środku skali. */
 export function neutralneNastawy(): NastawySuwakow {
   const nastawy: NastawySuwakow = {};
   for (const wielkosc of WIELKOSCI_CIAGLE) nastawy[wielkosc.kod] = wielkosc.neutralna;
@@ -119,11 +90,7 @@ export function neutralneNastawy(): NastawySuwakow {
 }
 
 /**
- * Identyfikator akcji dla wielkości ustawionej w danym kierunku.
- *
- * Objętość ma dwie operacje przeciwne w `kategorie-operacji.ts` — skrócenie
- * i rozwinięcie — więc kierunek suwaka wskazuje, która z nich pojedzie. Reszta
- * wielkości ma jedną operację i kierunek jedzie w nastawie.
+ * Funkcja akcjaWielkosci zwraca identyfikator akcji dla wielkości ustawionej w danym kierunku; objętość ma dwie operacje przeciwne, a kierunek suwaka wskazuje, która z nich pojedzie.
  */
 export function akcjaWielkosci(wielkosc: WielkoscCiagla, wartosc: number): string {
   if (wielkosc.kod === 'objetosc' && wartosc > 0) return 'studio.styl.rozwiniecie';
@@ -149,7 +116,7 @@ export function opiszNastawe(wielkosc: WielkoscCiagla, wartosc: number): string 
   return `${wielkosc.nazwa}: ${nasilenie} w stronę „${kierunek}" (${wartosc > 0 ? '+' : ''}${wartosc} z ${SKALA_SUWAKA.gora}) · akcja ${akcjaWielkosci(wielkosc, wartosc)}.`;
 }
 
-/** Nastawy różne od neutralnych — tylko one jadą w żądaniu. */
+/** Funkcja nastawyCzynne zwraca nastawy różne od wartości neutralnej — tylko one jadą w żądaniu operacji kontekstowej. */
 export function nastawyCzynne(nastawy: NastawySuwakow): { wielkosc: WielkoscCiagla; wartosc: number }[] {
   const czynne: { wielkosc: WielkoscCiagla; wartosc: number }[] = [];
   for (const wielkosc of WIELKOSCI_CIAGLE) {
@@ -179,12 +146,7 @@ export function ladunekOperacji(
 }
 
 /**
- * Zdanie polecenia dla modelu składane z nastaw.
- *
- * Rdzeń nie dokłada dziś `params` do treści polecenia (`trescOperacjiStudia`
- * składa czynność i treść dokumentu), więc nastawy muszą pojechać także słowem —
- * inaczej suwak przestawiałby pole, którego model nie czyta. Zdanie jest jedno
- * i powstaje tutaj, żeby wiersz polecenia i wstążka mówiły modelowi to samo.
+ * Funkcja zdanieDlaModelu składa zdanie polecenia dla modelu z nastaw suwaków, ponieważ rdzeń nie dokłada dziś tych nastaw do treści polecenia samodzielnie.
  */
 export function zdanieDlaModelu(nastawy: NastawySuwakow, polecenie: string): string {
   const czesci: string[] = [];

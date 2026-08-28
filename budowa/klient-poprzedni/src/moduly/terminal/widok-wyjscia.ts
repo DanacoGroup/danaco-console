@@ -1,16 +1,7 @@
 import type { WierszWyjscia } from './bufor-wyjscia';
 
 /**
- * Rysowanie wierszy wyjścia wraz z grepem i zawężeniem karty.
- *
- * Wzorzec wpisuje człowiek w trakcie pisania, więc przez większość czasu jest
- * niedokończony i niepoprawny. Niepoprawne wyrażenie regularne wraca stąd jako
- * treść błędu, a nie jako wyjątek: okno pokazuje wtedy stan błędu z powodem,
- * zamiast gasnąć.
- *
- * Do dokumentu wchodzi wyłącznie ogon bufora. Bufor trzyma tysiące wierszy, lecz
- * wystarcza ostatnie okno o stałej wysokości — pozostałe wiersze leżałyby poza
- * polem widzenia, a ich odrysowanie kosztuje przy każdym fragmencie.
+ * Rysowanie wierszy wyjścia z grepem i zawężeniem karty pokazuje wyłącznie ogon bufora, ograniczony do stałej wysokości okna.
  */
 export interface NastawyWidoku {
   wzorzec: string;
@@ -22,13 +13,7 @@ export interface NastawyWidoku {
   /** Ostatni wiersz brany pod uwagę — nośnik odtwarzania sesji; ujemna znaczy „wszystkie”. */
   doWiersza: number;
   /**
-   * Ile wierszy naraz wchodzi do dokumentu; pominięte bierze `OKNO_RYSOWANIA`.
-   *
-   * Konsola i karta powłoki patrzą na ten sam bufor, ale mają różne miejsce:
-   * konsola jest oknem obserwacyjnym na pół ekranu, a ogon w karcie stoi pod
-   * opisem karty i ma być podglądem, nie drugą konsolą. Nastawa stoi tutaj,
-   * a nie w drugiej wytwórni wierszy — dwa rysowania tej samej treści
-   * rozjechałyby się ze sobą.
+   * Ile wierszy naraz wchodzi do dokumentu; pominięte bierze wartość domyślną okna rysowania.
    */
   oknoRysowania?: number;
 }
@@ -39,7 +24,9 @@ export interface WynikRysowania {
   blad: string;
 }
 
-/** Ile wierszy naraz wchodzi do dokumentu. */
+/**
+ * Ile wierszy naraz wchodzi do dokumentu w widoku wyjścia, gdy wywołanie samo nie poda innej wartości.
+ */
 export const OKNO_RYSOWANIA = 800;
 
 export function rysujWiersze(
@@ -66,8 +53,7 @@ export function rysujWiersze(
       (nastawy.wielkoscLiter ? tresc : tresc.toLowerCase()).includes(szukane);
   }
 
-  // Zero jest poprawnym położeniem odtwarzania — suwak zsunięty na sam początek —
-  // i musi wyciąć wszystko; „wszystkie wiersze” niesie dopiero wartość ujemna.
+  // Zero jest poprawnym położeniem odtwarzania; wartość ujemna niesie dopiero wszystkie wiersze.
   const granica = nastawy.doWiersza < 0 ? wiersze.length : nastawy.doWiersza;
   const wybrane = wiersze
     .slice(0, granica)

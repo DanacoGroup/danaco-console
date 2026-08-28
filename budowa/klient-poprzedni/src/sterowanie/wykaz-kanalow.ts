@@ -3,24 +3,7 @@ import { oznaczFaze, type FazaOkna } from '../komponenty/faza-okna';
 import { przyciskAkcji, wykaz } from '../modele/kontrolki-formularza-braki';
 import { nazwaKanalu, type RejestrKanalow } from './rejestr-kanalow';
 
-/**
- * Wykaz wierszy rejestru kanałów wraz z trzema stanami obowiązkowymi:
- * ładowanie, pustka, odmowa.
- *
- * Drugiej listy kanałów tu nie ma: treść pochodzi w całości z rejestru kanałów,
- * a nazwa wiersza z jego `nazwaKanalu` — tej samej, którą niesie sterowanie
- * modelu okna. Wykaz nie pyta rdzenia i nie trzyma własnej kopii kanałów, tylko
- * wskazanie.
- *
- * „Jeszcze nie wiem" to co innego niż „rejestr pusty"; rozróżnia je
- * `odpowiedzOtrzymana()` rejestru. Bez tego wskaźnik ładowania nie zgasłby na
- * rdzeniu o autentycznie pustym rejestrze, a taki rejestr jest stanem
- * poprawnym — wpisy zaczynu dają się skasować.
- *
- * Odmowa nie jest pustką. Rejestr po odmowie `channel.list` zachowuje wykaz
- * poprzedni i samej odmowy nie niesie, więc jej treść wkłada tu panel przez
- * `pokazOdmowe`; inaczej nieudany odczyt wyglądałby jak rejestr pusty.
- */
+/** Wykaz wierszy rejestru kanałów wraz z trzema stanami obowiązkowymi: ładowanie, pustka i odmowa rdzenia. */
 export interface WykazKanalow {
   /** Element osadzany w ciele okna. */
   element: HTMLElement;
@@ -34,7 +17,7 @@ export interface WykazKanalow {
   pokazOdmowe(zdanie: string): void;
 }
 
-/** Zdania trzech stanów — jedno miejsce, bez powtórzeń w gałęziach. */
+/** Zdania trzech stanów pasa: jedno miejsce dla tytułu i opisu, bez powtórzeń w poszczególnych gałęziach. */
 const ZDANIA: Record<'ladowanie' | 'pusto', { tytul: string; opis: string }> = {
   ladowanie: {
     tytul: 'Odczytuję rejestr kanałów',
@@ -100,7 +83,7 @@ export function utworzWykazKanalow(
   };
 }
 
-/** Powłoka wykazu: pas stanu nad listą. Czysty fragment konstrukcyjny. */
+/** Powłoka wykazu: pas stanu nad listą wierszy, jako czysty fragment konstrukcyjny bez domknięcia na stanie. */
 function zlozPowloke(): { element: HTMLElement; pas: HTMLElement; lista: HTMLUListElement } {
   const lista = wykaz('Wiersze rejestru kanałów', 'dc-kanaly__lista');
 
@@ -113,7 +96,7 @@ function zlozPowloke(): { element: HTMLElement; pas: HTMLElement; lista: HTMLULi
   return { element, pas, lista };
 }
 
-/** Nanosi fazę wraz ze zdaniami pasa stanu — jedno miejsce dla trzech stanów. */
+/** Nanosi na wykaz fazę wraz ze zdaniami pasa stanu — jedno miejsce wspólne dla wszystkich trzech stanów. */
 function naniesStan(
   element: HTMLElement,
   pas: HTMLElement,
@@ -125,12 +108,7 @@ function naniesStan(
   oznaczFaze(element, pas, faza);
 }
 
-/**
- * Pozycja wykazu: nazwa wiersza z rejestru, jego identyfikator i jeden przycisk
- * wskazania. Usuwania w wierszu nie ma, bo przycisk czynności nieodwracalnej
- * przy każdej pozycji leży na wyciągnięcie omyłkowego kliknięcia; usuwanie stoi
- * w panelu akcji, dotyczy kanału wskazanego i wymaga potwierdzenia.
- */
+/** Pozycja wykazu: nazwa wiersza z rejestru, jego identyfikator i jeden przycisk wskazania, bez przycisku usuwania. */
 function pozycja(kanal: Channel, wskazany: boolean, przyWskazaniu: () => void): HTMLElement {
   const tytul = document.createElement('strong');
   tytul.className = 'dc-kanaly-pozycja__tytul';
@@ -155,7 +133,7 @@ function pozycja(kanal: Channel, wskazany: boolean, przyWskazaniu: () => void): 
   return element;
 }
 
-/** Akapit pasa stanu. */
+/** Akapit pasa stanu, budowany jednakowo dla tytułu i dla opisu wykazu, różniący się jedynie klasą stylu. */
 function zdanie(klasa: string, tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = klasa;

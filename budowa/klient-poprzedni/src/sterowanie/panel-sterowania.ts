@@ -20,14 +20,14 @@ import { utworzSterowanieUprawnien } from './tryb-uprawnien';
 import { utworzZmianeOkna } from './zmiana-okna';
 import { utworzZmianeUstawienia } from './zmiana-ustawienia';
 
-/** Zależności kompletu: kanał kontraktu, okno oraz wspólny wykaz kanałów modelu. */
+/** Zależności kompletu sterowania: kanał kontraktu, okno komunikacji oraz wspólny wykaz kanałów modelu. */
 export interface ZaleznosciPanelu {
   kanal: Kanal;
   okno: Window;
   rejestrKanalow: RejestrKanalow;
 }
 
-/** Komplet sterowania jednego okna komunikacji. */
+/** Komplet sterowania jednego okna komunikacji, złożony z pól ustawień, elementu montowanego i subskrypcji. */
 export interface PanelSterowania {
   /** Element montowany przy oknie. */
   element: HTMLElement;
@@ -39,18 +39,7 @@ export interface PanelSterowania {
   rozlacz(): void;
 }
 
-/**
- * Komplet sterowania **per okno**, nie globalny pasek.
- *
- * Każde wywołanie buduje osobny stan, osobne sterowania i osobne subskrypcje,
- * domknięte na identyfikatorze swojego okna. Dwa komplety otwarte obok siebie
- * nie mają wspólnej zmiennej: zmiana w jednym idzie komendą `window.update`
- * z identyfikatorem tego okna, a potwierdzenie — odpowiedź i zdarzenie
- * `window.changed` — trafia wyłącznie do stanu okna o tym identyfikatorze.
- *
- * Wspólny pozostaje jedynie wykaz kanałów modelu: katalog wyboru, nie
- * ustawienie okna.
- */
+/** Komplet sterowania na okno, nie globalny pasek: każde wywołanie buduje osobny stan i osobne subskrypcje domknięte na oknie. */
 export function utworzPanelSterowania(zaleznosci: ZaleznosciPanelu): PanelSterowania {
   const { kanal, okno, rejestrKanalow } = zaleznosci;
 
@@ -68,12 +57,7 @@ export function utworzPanelSterowania(zaleznosci: ZaleznosciPanelu): PanelSterow
       utworzSterowanieSrodowiska(stan, zmiana),
       utworzSterowanieHostu(stan, ustawienia),
       utworzSterowanieModulu(stan, zmiana, utworzRejestrModulow(kanal)),
-      // Rejestr ekspertów powstaje w miejscu, wzorem rejestru modułów wiersz
-      // wyżej: jest katalogiem wyboru czytanym z rdzenia, nie stanem okna,
-      // więc nie ma po co przeciągać go przez umowę kompletu.
-      // Rozesłanie wyboru na całą kartę sesji idzie osobną komendą
-      // (`model.channel.set` z `sessionId`) — to jedyna jej zdolność, której
-      // `window.update` nie ma.
+      // Rejestr ekspertów jest katalogiem wyboru czytanym z rdzenia, nie stanem okna.
       utworzSterowanieModelu(
         stan,
         zmiana,
@@ -103,7 +87,7 @@ export function utworzPanelSterowania(zaleznosci: ZaleznosciPanelu): PanelSterow
   };
 }
 
-/** Nagłówek kompletu z identyfikatorem okna — komplet należy do jednego okna. */
+/** Nagłówek kompletu sterowania z identyfikatorem okna, do którego ten jeden konkretny komplet zawsze należy. */
 function naglowek(idOkna: string): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dc-sterowanie__naglowek';
@@ -121,7 +105,7 @@ function naglowek(idOkna: string): HTMLElement {
   return element;
 }
 
-/** Siatka sterowań kompletu. */
+/** Siatka sterowań kompletu, montująca wszystkie pola sterowania jednego okna w jednym wspólnym układzie. */
 function siatka(sterowania: HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dc-sterowanie__siatka';

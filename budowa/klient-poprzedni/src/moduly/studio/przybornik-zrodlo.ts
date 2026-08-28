@@ -12,24 +12,7 @@ import { czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protok
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Adnotacje przybornika — droga własna, nie generyczna.
- *
- * ── Sprawdzenie uwagi z kontraktu ───────────────────────────────────────────
- * Kontrakt przy `studio.annotation.add` niesie uwagę: „dziś czynność ta idzie
- * drogą generyczną `window.action` i wraca odmowa `not_found`, bo katalog akcji
- * nie ma jej wiersza". Sprawdzone: okno pracy z dokumentem wołało adnotację
- * właśnie tak — `window.action` z identyfikatorem `studio.diff.adnotacja`, czyli
- * nazwą, której w katalogu akcji rdzenia nie ma. Skutkiem była odmowa
- * `not_found` przy każdym naciśnięciu, mimo że **własna komenda w kontrakcie
- * jest** i ma parę: `studio.annotation.add` i `studio.annotation.list`.
- *
- * To źródło woła te dwie komendy wprost. Czy uchwyt po stronie rdzenia stoi,
- * pokaże odpowiedź: gdy go brak, wraca odmowa nazywająca komendę, a nie odmowa
- * nazywająca brakujący wiersz katalogu akcji — i to jest różnica, po której
- * Właściciel pozna, czego naprawdę brakuje. Uwaga do sprawozdania stąd
- * pochodzi.
- *
- * Źródło nie ma stanu i nie buduje elementu.
+ * Interfejs PrzybornikZrodlo woła bezpośrednio komendy adnotacji i operacji przybornika w kontrakcie, zamiast drogi generycznej window.action, która dla adnotacji zwracała odmowę not_found.
  */
 export interface PrzybornikZrodlo {
   /** Zakłada adnotację przy fragmencie różnicy. */
@@ -44,13 +27,7 @@ export interface PrzybornikZrodlo {
     idDokumentu: string,
     wersje: { odniesienie?: string; porownywana?: string },
   ): Promise<Wynik<StudioAnnotationListResponse>>;
-  /**
-   * Operacje zapisane w rdzeniu — fabryczne i własne Operatora razem.
-   *
-   * Wykaz jest jeden, tak jak żąda uzupełnienie o narzędziach ukrytych. Pole
-   * `builtin` rozdziela pochodzenie, więc przybornik odróżnia własne od
-   * fabrycznych bez drugiego wykazu.
-   */
+  /** Wykaz operacji łączy własne i fabryczne pod jednym wywołaniem; pole builtin rozróżnia pochodzenie. */
   przybornikOperacje(): Promise<Wynik<StudioOperationListResponse>>;
   /** Zakłada albo zmienia operację własną Operatora. */
   przybornikZapiszOperacje(
@@ -59,13 +36,7 @@ export interface PrzybornikZrodlo {
     kategoria: string,
     polecenie: string,
   ): Promise<Wynik<StudioOperationSaveResponse>>;
-  /**
-   * Usuwa operację własną.
-   *
-   * Operacji fabrycznej nie usuwa: rdzeń odpowiada odmową nazywającą powód i tak
-   * ma zostać. Klient tej odmowy nie uprzedza wyłączeniem przycisku — Operator
-   * ma usłyszeć powód od rdzenia, a nie domyślać się go z martwej kontrolki.
-   */
+  /** Nie usuwa operacji fabrycznej: rdzeń odmawia z nazwanym powodem, a przycisk pozostaje aktywny. */
   przybornikUsunOperacje(idOperacji: string): Promise<Wynik<StudioOperationDeleteResponse>>;
 }
 

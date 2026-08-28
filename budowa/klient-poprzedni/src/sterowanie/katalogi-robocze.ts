@@ -4,16 +4,7 @@ import type { ZmianaOkna } from './zmiana-okna';
 
 const NAZWA = 'Katalogi robocze';
 
-/**
- * Sterowanie listą katalogów roboczych okna.
- *
- * Katalogi są listą, nie pojedynczą wartością: dodaje się i usuwa po jednym,
- * a każda operacja idzie komendą `window.update` z pełną listą po zmianie —
- * kontrakt niesie `workingDirs` jako całość.
- *
- * Lista pokazywana operatorowi jest listą okna, nie listą wspólną: dwa okna
- * jednej sesji mogą pracować na dwóch różnych zestawach katalogów.
- */
+/** Sterowanie listą katalogów roboczych okna, zapisywaną komendą aktualizacji okna z pełną listą po każdej zmianie. */
 export function utworzSterowanieKatalogow(
   stan: StanSterowania,
   zmiana: ZmianaOkna,
@@ -21,8 +12,7 @@ export function utworzSterowanieKatalogow(
   const element = document.createElement('div');
   element.className = 'dc-ster-pole dc-ster-pole--lista';
 
-  // Identyfikator niesie identyfikator okna, więc dwa komplety otwarte obok
-  // siebie nie dzielą jednego elementu dokumentu.
+  // Identyfikator niesie identyfikator okna, by dwa komplety nie dzieliły jednego elementu.
   const identyfikator = `dc-ster-katalogi-${stan.idOkna()}`;
   const naglowek = utworzNaglowekSterowania(NAZWA, identyfikator);
 
@@ -56,7 +46,7 @@ export function utworzSterowanieKatalogow(
   return element;
 }
 
-/** Pozycja listy: ścieżka i usunięcie tego jednego katalogu. */
+/** Pozycja listy katalogów: ścieżka katalogu wraz z przyciskiem usuwającym wyłącznie ten jeden wiersz listy. */
 function pozycja(katalog: string, przyUsunieciu: () => void): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'dc-ster-katalogi__pozycja';
@@ -77,7 +67,7 @@ function pozycja(katalog: string, przyUsunieciu: () => void): HTMLLIElement {
   return element;
 }
 
-/** Informacja o pustej liście; nie jest komunikatem błędu. */
+/** Informacja o pustej liście katalogów, pokazywana w wykazie zamiast wiersza pozycji; nie jest komunikatem błędu. */
 function pustaLista(): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'dc-ster-katalogi__pusta';
@@ -85,7 +75,7 @@ function pustaLista(): HTMLLIElement {
   return element;
 }
 
-/** Wiersz dodawania: ścieżka i przycisk; przycisk pozostaje czynny zawsze. */
+/** Wiersz dodawania katalogu: pole ścieżki i przycisk dodania, przycisk pozostaje czynny niezależnie od treści pola. */
 function utworzDodawanie(
   identyfikator: string,
   przyDodaniu: (katalog: string) => void,

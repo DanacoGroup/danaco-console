@@ -13,19 +13,7 @@ import type { ZmianaUstawienia } from './zmiana-ustawienia';
 
 const NAZWA = 'Nakład rozumowania';
 
-/**
- * Sterowanie nakładem rozumowania: suwak od odpowiedzi szybkiej po pełny namysł.
- *
- * Stopień jest wartością wyliczenia katalogu rdzenia (`naklad_rozumowania`), nie
- * nazwą modelu — zmiana kanału nie unieważnia ustawienia, a kanał przekłada
- * stopień na własny parametr. Suwak pokazuje położenie w wykazie stopni, wysyła
- * zaś sam stopień, bo rdzeń nie przyjmuje numeru położenia. Wartość idzie
- * ustawieniem poziomu okna (`config.set`, zasięg `window`), bo treść
- * `window.update` nie ma dla niej pola.
- *
- * Suwak nie ma stanu wyłączonego: przesunięcie jest czynne zawsze, także gdy
- * rdzeń nie odpowiada.
- */
+/** Sterowanie nakładem rozumowania: suwak od odpowiedzi szybkiej po pełny namysł, zapisywany ustawieniem poziomu okna. */
 export function utworzSterowanieNakladu(
   stan: StanSterowania,
   ustawienia: ZmianaUstawienia,
@@ -63,15 +51,7 @@ export function utworzSterowanieNakladu(
     );
   });
 
-  /**
-   * Suwak i zdanie pod nim niosą dwie różne wartości.
-   *
-   * Położenie suwaka to zapis poziomu okna — wartość ustawiona tutaj i zmieniana
-   * przesunięciem. Zdanie pod suwakiem to wartość obowiązująca po rozstrzygnięciu
-   * poziomów zasięgu. Gdy wartość przychodzi z poziomu szerszego niż okno, zdanie
-   * podaje ten poziom; bez tego suwak stojący na „Bez wskazania" przeczyłby
-   * nakładowi narzuconemu z poziomu globalnego.
-   */
+  // Suwak niesie zapis poziomu okna, zdanie pod nim wartość obowiązującą po rozstrzygnięciu.
   function odrysuj(migawka: MigawkaSterowania): void {
     suwak.value = String(polozenieNakladu(migawka.ustawienia.nakladRozumowania));
     opis.textContent = zdanieSteru(

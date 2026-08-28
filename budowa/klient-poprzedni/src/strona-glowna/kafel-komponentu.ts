@@ -1,7 +1,7 @@
 import { elementIkony } from '../ikony/ikony';
 import type { PozycjaKomponentu } from './pozycje-komponentow';
 
-/** Kafel komponentu własnego jest elementem strefy drugiej o jednej odpowiedzialności. */
+/** Kafel komponentu własnego stanowi element strefy drugiej, a otwiera komponent wskazany jego pozycją. */
 
 /** Ikona kafla w skali średniej zestawu ikon jest mniejsza niż godło środowiska widoczne na karcie środowiska. */
 const ROZMIAR_IKONY = 18;

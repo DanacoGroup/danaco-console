@@ -6334,3 +6334,47 @@ Komenda zdalna ma postać zmiany katalogu i podmiany procesu powłoki zmiennymi 
 i argumentami. Każdy człon jest cytowany zgodnie z regułami powłoki POSIX, więc treść polecenia nie
 może zmienić kształtu komendy. Podmiana procesu powłoki oddaje procesowi miejsce powłoki — sygnał
 zerwania połączenia trafia wprost do niego, nie do pośrednika.
+
+## budowa/server/internal/zdalne/powiadomienia.go
+
+Silnik doręcza po łączu, które operator już otworzył; wygaszonego telefonu nie budzi, ponieważ
+wymagałoby to usługi wypychania powiadomień spoza tego systemu. Przy telefonie wygaszonym powiadomienie
+czeka w kolejce i doleci przy najbliższym otwarciu; interfejs musi to pokazywać, bo inaczej operator
+liczyłby na dzwonek, którego nie ma.
+
+Format znacznika czasu nie używa skrótu obcinającego zera końcowe, ponieważ przy takim zapisie chwila
+równa co do milisekundy wypadłaby raz z pełnymi zerami, jak zapisuje je baza, a raz bez nich, jak
+zapisałby je język programowania, a terminy w tej kolejce porównuje się jako napisy. Porównanie
+leksykalne tych dwóch zapisów dawałoby odpowiedź odwrotną do prawdziwej, więc próba wypadałaby
+o milisekundę za wcześnie albo za późno bez żadnego śladu.
+
+Po wyczerpaniu wykazu odstępów ponowienia obowiązuje ostatni odstęp: kolejka nie dobija urządzenia
+częściej, ale też nie przestaje próbować przed terminem ważności. O tym, kiedy przestać, rozstrzyga
+termin ważności powiadomienia, a nie licznik prób. Pole nadawania trzyma nadajnik podany przez
+kompozycję i stoi osobno od zasilenia bazy, bo uchwyt bazy i droga doręczenia to dwa niezależne
+wpięcia.
+
+Funkcja Zglos wnosi powiadomienie do kolejki i oddaje jego klucz; sama droga nie doręcza, wysyłką
+zajmuje się takt wywoływany funkcją Wyslij. Gdyby zgłoszenie doręczało od razu, decyzja podjęta w tej
+samej chwili nie zdążyłaby powiadomienia odwołać.
+
+Identyfikator kanału jest identyfikatorem klienta, tym samym napisem, który transport niesie jako
+identyfikator klienta w tożsamości połączenia. Rejestracja powtórzona odświeża wiersz zamiast zakładać
+drugi, więc powrót urządzenia na łącze może ją wołać bez sprawdzania, czy już było.
+
+Sama droga odwołania nie wystarcza, by nie zawołać po fakcie: brak odstępu, w którym dałoby się coś
+przegapić między odwołaniem a taktem, bierze się stąd, że takt sprawdza stan pod zamkiem zapisu na tym
+samym wierszu. Bez tamtego zamka wywołanie odwołania byłoby wyścigiem.
+
+Funkcja Wygas zamyka powiadomienia, którym minął termin ważności, i oddaje ich liczbę. Droga jest osobna
+od funkcji Wyslij, ponieważ termin ważności ma mijać także wtedy, gdy nadajnika nie ma.
+
+Brak nadajnika w funkcji Wyslij nie jest ciszą ani zerem: gdyby przebieg bez nadajnika po prostu nikomu
+nie doręczył, każde powiadomienie podbijałoby licznik prób i po kilkunastu taktach wygasłoby, nigdy nie
+mając odbiorcy, a kolejka twierdziłaby, że próbowała. Dlatego przebieg bez nadajnika odmawia całością
+i nie tyka ani jednego wiersza: powiadomienia zostają z pełnym budżetem prób na chwilę wpięcia
+nadajnika. Awaria taktu przerywa przebieg; podsumowanie oddaje to, co zdążyło się rozstrzygnąć przed
+błędem.
+
+Funkcja rozeslij woła każdy czynny adres i oddaje klucze rejestracji, które kopertę przyjęły; urządzenie
+nieobecne odpowiada fałszem, co nie jest błędem przebiegu, tylko powodem ponowienia.

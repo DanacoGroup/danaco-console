@@ -6942,3 +6942,14 @@ odmawia zapisu wprost. Brak pola to nie to samo co pole niezrozumiałe:
 pominięcie jest dopuszczone kontraktem i znaczy, że urządzenia nie wskazano,
 co dla katalogu lokalnego rozstrzyga warstwa trwałości maszyną, na której
 działa rdzeń.
+
+## budowa/server/internal/core/handlers_dostep_punkty.go
+Usunięcie punktu i sprawdzenie osiągalności leżą w
+`handlers_dostep_sprawdzenie.go`. Punkt dostępu jest bytem konfiguracji
+platformy, nie sesji: raz opisana maszyna albo katalog służy wielu oknom
+rozmowy, a wiązanie z oknem jest osobnym bytem, nadaniem. Pole próby
+osiągalności zastępuje funkcję wolnostojącą, bo próba sięgnięcia do maszyny
+jest wywołaniem świata zewnętrznego i test musi umieć podstawić w jej miejsce
+własną. Pominięcie takiego pola przy zmianie punktu zostawiłoby wiersz przy
+dawnym urządzeniu i potwierdziłoby zmianę, której nie było, dlatego wskazanie
+urządzenia, które nie jest identyfikatorem katalogu, wraca odmową.

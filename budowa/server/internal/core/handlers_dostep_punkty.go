@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: wypełnienie portu PunktyDostepu katalogiem punktów
-// z bazy — założenie, wykaz i zmiana. Usunięcie i sprawdzenie osiągalności leżą
-// w `handlers_dostep_sprawdzenie.go`.
-//
-// Punkt dostępu jest bytem konfiguracji platformy, nie sesji: raz opisana
-// maszyna albo katalog służy wielu oknom rozmowy. Wiązanie z oknem jest osobnym
-// bytem — nadaniem.
+// Plik wypełnia port PunktyDostepu katalogiem punktów z bazy, obsługując
+// założenie, wykaz i zmianę punktu konfiguracji platformy.
 package core
 
 import (
@@ -18,20 +13,22 @@ import (
 // identyfikatorem punktu w kontrakcie i w nadaniach, więc musi być trwały.
 const przedrostekPunktuDostepu = "pd-"
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem PunktyDostepu sprawdzana jest przy kompilacji,
+// bez osobnego testu zgodności typów.
 var _ PunktyDostepu = (*adapterPunktowDostepu)(nil)
 
-// adapterPunktowDostepu wypełnia port PunktyDostepu tabelą `punkt_dostepu`.
+// adapterPunktowDostepu wypełnia port PunktyDostepu tabelą `punkt_dostepu`,
+// wraz z sejfem poświadczeń i próbą osiągalności.
 type adapterPunktowDostepu struct {
 	repozytorium dane.RepozytoriumPunktowDostepu
 	sejf         SejfPoswiadczen
-	// sprawdzenie bada osiągalność punktu. Pole zamiast funkcji wolnostojącej,
-	// bo próba sięgnięcia do maszyny jest wywołaniem świata zewnętrznego i test
-	// musi umieć podstawić w jej miejsce własną.
+	// sprawdzenie bada osiągalność punktu, polem zamiast funkcją wolnostojącą,
+	// by test mógł je podstawić.
 	sprawdzenie ProbaPunktu
 }
 
-// nowyAdapterPunktowDostepu wiąże port z repozytorium katalogu.
+// nowyAdapterPunktowDostepu wiąże port z repozytorium katalogu i wbudowaną
+// próbą sprawdzenia korzeni lokalnych.
 func nowyAdapterPunktowDostepu(repozytorium dane.RepozytoriumPunktowDostepu) *adapterPunktowDostepu {
 	return &adapterPunktowDostepu{repozytorium: repozytorium, sprawdzenie: probaKorzeniLokalnych}
 }
@@ -43,7 +40,8 @@ func (a *adapterPunktowDostepu) ZSejfem(sejf SejfPoswiadczen) *adapterPunktowDos
 	return a
 }
 
-// Dodaj zakłada punkt dostępu wraz z jego korzeniami.
+// Dodaj zakłada punkt dostępu wraz z jego korzeniami, odrzucając żądanie,
+// które kształtowi punktu nie odpowiada.
 func (a *adapterPunktowDostepu) Dodaj(ctx context.Context,
 	z shared.AccessPointAddRequest) (shared.AccessPointAddResponse, error) {
 
@@ -80,7 +78,8 @@ func (a *adapterPunktowDostepu) Dodaj(ctx context.Context,
 	return shared.AccessPointAddResponse{Point: punktKontraktu(zapisany)}, nil
 }
 
-// Wykaz zwraca katalog punktów zawężony rodzajem i urządzeniem.
+// Wykaz zwraca katalog punktów zawężony rodzajem i urządzeniem, pustym
+// wykazem, gdy repozytorium nie jest wpięte.
 func (a *adapterPunktowDostepu) Wykaz(ctx context.Context,
 	z shared.AccessPointListRequest) (shared.AccessPointListResponse, error) {
 
@@ -134,10 +133,8 @@ func (a *adapterPunktowDostepu) Zmien(ctx context.Context,
 	return shared.AccessPointUpdateResponse{Point: punktKontraktu(zapisany)}, nil
 }
 
-// zastosujZmianePunktu nakłada na wiersz pola wskazane w żądaniu. Zwraca odmowę,
-// gdy podane wskazanie urządzenia nie jest identyfikatorem katalogu — pominięcie
-// takiego pola zostawiłoby wiersz przy dawnym urządzeniu i potwierdziłoby zmianę,
-// której nie było.
+// zastosujZmianePunktu nakłada na wiersz pola wskazane w żądaniu i zwraca
+// odmowę, gdy wskazanie urządzenia nie jest identyfikatorem katalogu.
 func zastosujZmianePunktu(punkt *dane.PunktDostepu, z shared.AccessPointUpdateRequest,
 	odwolanie *string) error {
 

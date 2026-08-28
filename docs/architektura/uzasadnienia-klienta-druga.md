@@ -6337,3 +6337,16 @@ jest. Okno rozmowy odpada z wykazu okien operacyjnych: montuje je scena sesji pr
 i nie jest oknem operacyjnym. Rdzeń niesie je dziś w dwóch postaciach — odsiewamy obie, tak samo jak
 robi to katalog okien modułów. Warunek jest przepisany, a nie zaimportowany, bo ten katalog należy do
 innej grupy roboczej.
+
+## budowa/klient-poprzedni/src/moduly/studio/osadzenie-pochodzenie.ts
+Fragment wciągnięty ze strony albo z biblioteki niesie zapis, skąd jest — adres, plik, wersja —
+bo inaczej za tydzień nikt nie odtworzy, na czym pismo się opiera; to jest też podstawa pod
+podobieństwa w panelu redaktora i pod bibliografię. Kontrakt niesie dziś zapis pochodzenia jako
+osobny byt: wniesienie z biblioteki i wniesienie ze strony internetowej oddają go przy wniesieniu
+wraz z zakresem znaków, wersją źródła, tytułem i czasem sięgnięcia, a odczyt pochodzenia oddaje
+pochodzenie fragmentów całego dokumentu — zapis trwały idzie więc rdzeniem i przeżywa zamknięcie
+okna. Dwa tory zostają, bo służą różnym rzeczom i oba są jawne: wiersz pochodzenia wnoszony do
+treści jest jedynym, który przeżywa wydanie dokumentu do formatu nieniosącego zapisu pochodzenia,
+takiego jak tekst czysty albo markdown, i jest częścią treści, więc da się go usunąć jak każdy
+inny wiersz; wykaz pochodzeń sesji okna jest podręczny, wraz z czasem, długością i miejscem
+wstawienia, ginie z zamknięciem karty i nie jest źródłem prawdy, odkąd źródłem prawdy jest rdzeń.

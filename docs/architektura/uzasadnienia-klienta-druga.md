@@ -7301,3 +7301,14 @@ Plik jest przyrządem pomiarowym sprawdzianów, nieużywanym poza plikami testow
 Odwzorowane zachowania: rozgłoszenie idzie także do nadawcy (`transport/rozgloszenie.go`, funkcja `Rozglos` woła `rozglosPoza` z pustym identyfikatorem pomijanym) — na tym stoi zbieżność równoległych egzemplarzy stanu okna. Komenda `config.set` daje odpowiedź z wpisem i zdarzenie `config.changed` rodzaju `updated` (`core/handlers_config.go`). Komenda `config.reset` daje odpowiedź z listą wpisów i zdarzenie `config.changed` rodzaju `deleted`, niosące wpis ze starą wartością (`core/handlers_config.go`, `core/adapter_ustawienia.go`, funkcja `Przywroc`, która usuwa wiersz i oddaje to, co usunęła). Komenda `config.get` z podanym poziomem zwraca surowe wpisy tego poziomu, niezależnie od osi (`core/adapter_ustawienia.go`, gałąź `ListaPoziomu`). Komenda `config.get` bez poziomu zwraca politykę efektywną: po jednym zwycięskim wpisie na klucz, z polem niosącym poziom, na którym wartość znaleziono (`core/adapter_ustawienia.go`, gałąź rozstrzygająca przez `PolitykaEfektywna` i `kontekstZasiegu`, dalej `konfig/odwzorowanie_kontraktu.go`, funkcja `WpisKontraktu`); kontekst tej gałęzi ma wypełnione wyłącznie okno, więc rozstrzyganie obejmuje poziom okna i poziom globalny osi platformy, a karty sesji ani osi modelu ta droga nie widzi. Komenda `window.update` daje odpowiedź z oknem i zdarzenie `window.changed`.
 
 Funkcja wewnętrzna wyznaczająca politykę efektywną zwycięża poziomem najwęższym; kontekst gałęzi bez poziomu zna wyłącznie okno, więc wykaz adresów, po których szuka wpisu, obejmuje okno i poziom globalny.
+
+## budowa/klient-poprzedni/src/moduly/terminal/stan-terminala.ts
+Karty otwiera Terminal Tabs, procesy kończy Process Monitor, a wyjście zbiera
+Output Console — wszystkie trzy patrzą na ten sam przebieg. Gdyby każde okno
+trzymało własny wykaz, zakończenie procesu w monitorze nie zgasłoby w konsoli,
+a karta zamknięta w oknie wiodącym dalej przyjmowałaby polecenia. Okna
+monitorujące żyją ze zdarzeń, nie z odpytywania; odczyt pełnej listy procesów
+służy wyłącznie pierwszemu wypełnieniu i wznowieniu po rozłączeniu. Podzbiór
+kart domyka się sam — zamknięcie karty gasi jej przypięcie i jej ostatnie
+polecenie w jednym miejscu; zapis ostatniego polecenia nie budzi okien, bo
+jest nośnikiem czynności „uruchom ponownie”, a nie treścią okna.

@@ -264,7 +264,7 @@ KAZDA ma oblewac sprawdzian. To jest miara odbioru, nie wskazowka.
 
 | | Zmiana probna | Co pokazuje |
 |---|---|---|
-| M1 | wstawic z powrotem `przekazano = true` przed wolaniem przekazania | sprawdzian mierzy WLASNA KOPIE zatrzasku (`przekazanie.test.ts:266-287`), nie kod produkcyjny; `aplikacja.ts` nie jest importowana przez zaden sprawdzian |
+| M1 | wstawic z powrotem `przekazano = true` przed wolaniem przekazania | sprawdzian mierzy WLASNA KOPIE znacznika jednorazowosci (`przekazanie.test.ts:266-287`), nie kod produkcyjny; `aplikacja.ts` nie jest importowana przez zaden sprawdzian |
 | M2 | zapisac `liczbaSesji: 0` na sztywno w `montaz.ts:40` i `:75` | nastawa niesie `sessions: []`, wiec sprawdzian porownuje 0 z 0 |
 | M3 | `w.moduly.slice(0, 1)` w `skladniki/szyna.ts:43` | nastawa niesie JEDEN modul, wiec szyna z wykazu jest nieodrozznialna od szyny rysujacej pierwszy element |
 | M4 | wyciac znak motywu i wezel `[data-stan-motyw]` | zaden sprawdzian po niego nie siega; `motywCiemny()` nie wykonuje sie ani razu |
@@ -276,7 +276,7 @@ i co najmniej jedna sesja. Nastawa pusta zamienia miare w porownanie zera z zere
 `zdejmijOknoWejscia()` i `scenaWejscia.hidden = true` wykonuja sie PRZED `zamontujRame`,
 a `miejsceRamy.hidden = false` dopiero po nim. Kazdy wyjatek montazu zostawia OBA wezly
 ukryte — Operator dostaje bialy ekran. Wyjatek polyka `przebieg.ts:333-338`
-(`try { sluchacz(stan) } catch { console.error }`), zatrzask zostaje `false`, wiec proba
+(`try { sluchacz(stan) } catch { console.error }`), znacznik zostaje `false`, wiec proba
 wraca przy kazdej zmianie stanu i rzuca od nowa. Zadnej odmowy nazwanej.
 Pokazane uruchomieniem, nie czytaniem.
 
@@ -293,6 +293,18 @@ Rozstrzygniecie o zakresie naprawy nalezy do wykonawcy i ma byc NAZWANE — jesl
 subskrypcja wykracza poza ten teren, ma powstac zgloszenie, a nie milczenie.
 
 `src/rama/dom-zastepczy.ts:1` — naglowek 355 znakow przy limicie 350.
+
+**Do wykonania przy nastepnej rundzie, wina prowadzenia, nie wykonawcy.**
+Nazwa wystawiona `utworzZatrzaskPrzekazania` (`src/rama/przekazanie.ts:52`) niesie
+przenosnie, ktora wniosl do zlecenia Prowadzacy, a wykonawca ja stamtad wzial.
+Rzecz jest znacznikiem jednorazowosci: `let przekazano = false` ustawiane na `true`
+DOPIERO po powodzeniu, zeby odmowa nie zamykala drogi na kolejna zmiane stanu.
+Nazwa ma opisywac te funkcje — `utworzPrzekazanieJednorazowe` albo blizsze temu,
+co w kliencie juz stoi. Razem z nia schodza: komentarz w `:51`, wzmianka
+w `aplikacja.ts:35` i siedem komunikatow sprawdzianow.
+
+Zmiana NIE wchodzi w trakcie biegu kontroli — kontrolerzy uruchamiaja sprawdziany
+na tym drzewie i podmiana nazw w locie zepsulaby ich pomiar.
 
 **Przedmiot.** Droga wejscia konczy sie komenda `environment.enter` i okno zostaje
 na ekranie na zawsze, bo nie ma dokad prowadzic. Klient bierzacy liczy 51 plikow

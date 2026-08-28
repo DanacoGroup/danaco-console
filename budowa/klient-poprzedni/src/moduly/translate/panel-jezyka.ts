@@ -88,7 +88,7 @@ export function utworzPanelJezyka(
     stan.panele,
     {
       idPanelu: () => biezacy.id,
-      // Pamięć tłumaczeń pyta o segment źródłowy: bierzemy pierwszy, a bez podziału cały tekst źródłowy.
+      // Pamięć tłumaczeń pyta o segment źródłowy: pierwszy trafia do niej, a bez podziału cały tekst.
       segment: () => stan.segmenty()[0] ?? stan.tekstZrodlowy(),
       // Treść widziana przez operatora, nie ostatnio wchłonięta z rdzenia: zwrotne porównuje to, co widać.
       tresc: () => tresc.kontrolka.value,

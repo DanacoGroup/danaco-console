@@ -5,25 +5,12 @@ import { opisPodsumowania } from './podsumowanie-tury';
 import type { WarstwyZapisu } from './widok-zapisu';
 import type { BladWpisu, WpisRozmowy } from './wpis-rozmowy';
 
-/**
- * Rozliczenie tury pod wypowiedzią — stopka i blok błędów.
- *
- * Rozliczenie, nie transkrypt: podsumowanie tury, konto kanału, typy zdarzeń
- * i wykaz wytworów mówią, ile tura kosztowała i co po sobie zostawiła, a nie co
- * model powiedział. Widok wpisu składa warstwy i steruje nimi; ten plik wie,
- * jak wygląda jedna notka.
- *
- * O tym, które części pokazać, ten plik nie rozstrzyga — rozkład warstw
- * przychodzi gotowy z `widok-zapisu.ts`.
- */
+// Rozliczenie tury pod wypowiedzią: stopka i blok błędów, nie transkrypt wypowiedzi
+// modelu.
 
 /**
- * Części stopki: podsumowanie tury, konto kanału, a w wybranych trybach także
- * zdarzenia tury (`pelny`) i wykaz wytworów (`streszczenie`).
- *
- * Podsumowanie i konto stoją w każdym trybie — na tej warstwie opiera się tryb
- * „Streszczenie", a jej zdjęcie w trybie „Zwykłym" odebrałoby Operatorowi
- * rozliczenie tury dostępne bez przełącznika.
+ * Części stopki: podsumowanie tury i konto kanału zawsze, a w wybranych trybach zdarzenia
+ * tury i wykaz wytworów.
  */
 export function czesciStopki(wpis: WpisRozmowy, warstwy: WarstwyZapisu): HTMLElement[] {
   const czesci: HTMLElement[] = [];
@@ -33,9 +20,8 @@ export function czesciStopki(wpis: WpisRozmowy, warstwy: WarstwyZapisu): HTMLEle
   if (warstwy.stopka && wpis.konto !== null) {
     czesci.push(notka(`${NAPISY.konto}: ${opisKonta(wpis.konto)}`));
   }
-  // Typy linii przechwyconych w turze — przejrzystość kanału, nie diagnostyka
-  // błędu. Tryb „Pełny" jest jedynym miejscem, w którym ta lista ma sens: poza
-  // nim jest szumem nad odpowiedzią.
+  // Typy linii przechwyconych w turze; ma sens wyłącznie w trybie pełnym, poza nim jest
+  // szumem.
   const zdarzenia = wpis.podsumowanie?.typyZdarzen ?? [];
   if (warstwy.zdarzenia && zdarzenia.length > 0) {
     czesci.push(notka(`${NAPISY.zdarzenia}: ${zdarzenia.join(', ')}`));
@@ -48,11 +34,8 @@ export function czesciStopki(wpis: WpisRozmowy, warstwy: WarstwyZapisu): HTMLEle
 }
 
 /**
- * Wykaz wytworów tury.
- *
- * Spisu plików tu nie ma: rdzeń go nie nadaje — wpis niesie wywołania narzędzi
- * (`WywolanieNarzedzia`), a nie listę tego, co po nich zostało na dysku.
- * Wytworem tury są więc nazwy narzędzi, które tura uruchomiła, każda raz.
+ * Wykaz wytworów tury złożony z nazw narzędzi, które tura zdążyła uruchomić, każde nazwane
+ * po jednym razie.
  */
 export function nazwyWytworow(wpis: WpisRozmowy): string[] {
   const nazwy: string[] = [];
@@ -63,11 +46,8 @@ export function nazwyWytworow(wpis: WpisRozmowy): string[] {
 }
 
 /**
- * Jeden błąd tury: ikona, treść, informacja o ponawialności.
- *
- * Błąd nie podlega trybowi widoku transkryptu. Wpis, w którym tura padła, mówi
- * o tym zawsze — schowanie błędu za ustawieniem widoku byłoby ciszą w miejscu,
- * gdzie Operator musi wiedzieć, że kanał odmówił.
+ * Jeden błąd tury: ikona, treść błędu oraz informacja o jego ponawialności, pokazywany
+ * niezależnie od trybu widoku.
  */
 export function wierszBledu(blad: BladWpisu): HTMLElement {
   const element = document.createElement('p');
@@ -84,7 +64,10 @@ export function wierszBledu(blad: BladWpisu): HTMLElement {
   return element;
 }
 
-/** Drobna notka stopki — jeden fakt rozliczeniowy w kroju monospacjowym. */
+/**
+ * Drobna notka stopki niosąca jeden fakt rozliczeniowy tury, zapisana czcionką o stałej
+ * szerokości znaków, bez ozdobników.
+ */
 function notka(tekst: string): HTMLElement {
   const element = document.createElement('span');
   element.className = 'dc-wpis__notka';

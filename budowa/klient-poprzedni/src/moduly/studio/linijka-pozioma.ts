@@ -23,30 +23,11 @@ import {
 } from './linijka-podzialka';
 
 /**
- * Linijka pozioma — podziałka z chwytami, nie sama miarka do patrzenia.
- *
- * ── Co się na niej chwyta ───────────────────────────────────────────────────
- * Margines lewy i prawy, wcięcie pierwszego wiersza, wcięcie lewe i prawe
- * osobnymi znacznikami, tabulatory zakładane naciśnięciem wraz z rodzajem
- * i znakiem wiodącym, oraz szerokości kolumn tabeli. Wszystko chwytem I z
- * klawiatury: każdy chwyt jest `slider` z wartością w milimetrach albo calach, bo
- * przestawianie marginesu pisma urzędowego wyłącznie myszą odcięłoby połowę
- * Operatorów.
- *
- * ── Dlaczego wcięcie pierwszego wiersza liczy się względnie ─────────────────
- * Bo tak zachowuje się linijka pakietu biurowego: przeciągnięcie wcięcia lewego
- * zabiera pierwszy wiersz ze sobą. Gdyby oba wcięcia były liczone od krawędzi
- * pola, Operator przy każdej zmianie wcięcia lewego poprawiałby drugie — a to nie
- * jest praca, to nadrabianie za oknem.
- *
- * ── Czego linijka nie robi ──────────────────────────────────────────────────
- * Nie zmienia dokumentu i nie woła rdzenia. Oddaje nastawę temu, kto ją zbudował
- * (`CzynnosciLinijkiPoziomej`), a nastawy strony i wcięcia trzyma powierzchnia —
- * inaczej byłyby dwa źródła prawdy o marginesie i rozjechałyby się przy pierwszym
- * profilu wydania wziętym z rdzenia.
+ * Linijka pozioma — podziałka z chwytami do przestawiania marginesów, wcięć
+ * i tabulatorów.
  */
 
-/** Czynności linijki poziomej zlecane powierzchni. */
+/** Czynności linijki poziomej zlecane powierzchni, ponieważ to ona trzyma nastawy strony i wcięcia jako jedyne źródło prawdy. */
 export interface CzynnosciLinijkiPoziomej {
   /** Margines przestawiony chwytem. */
   naMargines(strona: 'lewy' | 'prawy', milimetry: number): void;
@@ -54,16 +35,11 @@ export interface CzynnosciLinijkiPoziomej {
   naWciecie(wciecie: WciecieAkapitu): void;
   /** Wykaz tabulatorów po zmianie — założeniu, przestawieniu albo zdjęciu. */
   naTabulatory(tabulatory: readonly TabulatorAkapitu[]): void;
-  /**
-   * Krawędź kolumny tabeli przestawiona chwytem.
-   *
-   * Numer krawędzi liczony od lewej, od zera; wartość jest odległością od lewej
-   * krawędzi pola pisania w milimetrach.
-   */
+  /** Krawędź kolumny tabeli przestawiona chwytem; numer liczony od lewej, od zera. */
   naKrawedzKolumny(numer: number, milimetry: number): void;
 }
 
-/** Linijka pozioma wraz z jej sterowaniem. */
+/** Linijka pozioma wraz z jej sterowaniem: element gotowy do osadzenia, nastawy strony, wcięcia, tabulatory i kolumny. */
 export interface LinijkaPozioma {
   element: HTMLElement;
   ustawStrone(strona: StronaPracy): void;
@@ -85,7 +61,7 @@ export interface LinijkaPozioma {
   opis(): string;
 }
 
-/** Najmniejsze pole pisania, jakie chwyt marginesu wolno zostawić. */
+/** Najmniejsze pole pisania, jakie chwyt marginesu wolno zostawić, żeby kartka nie została bez miejsca na tekst. */
 const NAJMNIEJSZE_POLE_MM = 10;
 
 export function utworzLinijkePozioma(
@@ -108,13 +84,7 @@ export function utworzLinijkePozioma(
   const chwyty = document.createElement('div');
   chwyty.className = 'ms-linijka__chwyty';
 
-  /**
-   * Wybieracz rodzaju tabulatora — narożnik linijki, wzorem pakietu biurowego.
-   *
-   * Jedno naciśnięcie przestawia rodzaj następnego zakładanego tabulatora. Rodzaj
-   * jest widoczny na przycisku, żeby Operator wiedział, co założy, ZANIM naciśnie
-   * podziałkę.
-   */
+  // Wybieracz rodzaju tabulatora — narożnik linijki, wzorem pakietu biurowego.
   const wybieracz = document.createElement('button');
   wybieracz.type = 'button';
   wybieracz.className = 'ms-linijka__wybieracz';
@@ -324,8 +294,7 @@ export function utworzLinijkePozioma(
     polozenie: () => marginesy().lewyMm + wciecieBiezace.leweMm,
     granice: () => ({ dolnaMm: 0, gornaMm: szerokoscPola() - wciecieBiezace.praweMm }),
     zPolozenia: (naKartce) => naKartce - marginesy().lewyMm,
-    // Wcięcie pierwszego wiersza jest liczone względem lewego, więc jedzie razem
-    // z nim samo — bez dopisywania czegokolwiek do nastawy.
+    // Wcięcie pierwszego wiersza jest liczone względem lewego, więc jedzie razem z nim samo.
     ustaw: (milimetry) => czynnosci.naWciecie({ ...wciecieBiezace, leweMm: milimetry }),
   });
 
@@ -391,8 +360,7 @@ export function utworzLinijkePozioma(
     const szerokoscKartki = szerokoscKartkiMm(stronaBiezaca);
     pas.style.width = `${punkty(szerokoscKartki)}px`;
 
-    // Podziałka liczona od lewej krawędzi POLA PISANIA, nie kartki: Operator mierzy
-    // wcięcie od marginesu, a nie od krawędzi papieru.
+    // Podziałka liczona od lewej krawędzi pola pisania, nie kartki: Operator mierzy wcięcie od marginesu.
     const { lewyMm, prawyMm } = marginesy();
     podzialka.replaceChildren();
     for (const kreska of zlozPodzialkeLinijki(szerokoscPola(), stronaBiezaca.jednostka, skala)) {
@@ -517,13 +485,7 @@ export function utworzLinijkePozioma(
     }
   }
 
-  /**
-   * Przestawia krawędź kolumny, pilnując kolejności krawędzi.
-   *
-   * Krawędź nie może przejść przez sąsiednią: kolumna o szerokości ujemnej nie
-   * jest kolumną. Granicą jest sąsiad odsunięty o najmniejsze pole, a nie sam
-   * sąsiad — dwie krawędzie w jednym miejscu dałyby kolumnę zerową.
-   */
+  // Przestawia krawędź kolumny, pilnując kolejności krawędzi — nie może minąć sąsiedniej.
   function przestawKrawedz(numer: number, milimetry: number): void {
     const poprzednia = krawedzieKolumn[numer - 1];
     const nastepna = krawedzieKolumn[numer + 1];

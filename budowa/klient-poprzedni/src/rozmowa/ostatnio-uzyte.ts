@@ -1,15 +1,12 @@
 /**
- * Rejestr ostatnio użytych pozycji wykazu po ukośniku — podstawa dla
- * szeregowania, które trzyma świeżo użyte pozycje bliżej wierzchu.
- *
- * Rejestr jest kliencki i sesyjny: żyje w pamięci okna, przeżywa otwarcie
- * i zamknięcie wykazu, nie przeżywa odświeżenia strony. Kontrakt takiego
- * pojęcia nie niesie — `tools.catalog.list` oddaje wykaz, nie historię
- * sięgania po niego — więc rejestr nie idzie do rdzenia żadną komendą i nie
- * udaje jego stanu.
+ * Rejestr ostatnio użytych pozycji wykazu po ukośniku, kliencki i sesyjny, żyjący w
+ * pamięci okna do odświeżenia strony.
  */
 
-/** Ile kluczy rejestr pamięta; dalsze wypadają z ogona. */
+/**
+ * Ile kluczy rejestr pamięta w kolejności ostatniego użycia; kolejne, starsze wpisy
+ * wypadają z jego ogona.
+ */
 const POJEMNOSC = 12;
 
 export interface RejestrOstatnich {

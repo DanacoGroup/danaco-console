@@ -1,16 +1,5 @@
 /**
- * Warstwa łączności — interfejs katalogu.
- *
- * Jedne drzwi do transportu, magistrali i obserwatorów zdarzeń. Kanał
- * kontraktu zakłada tu dziennik nierozpoznanych, a widoki sięgają po
- * obserwatora ogniska:
- *
- *   const dziennik = zalozDziennikNieznanych(kanal);
- *   const ognisko = utworzObserwatorOgniska(kanal);
- *   ognisko.naSesje(idSesji, (zmiana) => karta.ustawCzynna(zmiana.sessionId === idSesji));
- *
- * Obserwator osadza się na `ZrodloZdarzen`, nie na `Kanal` — dzięki temu
- * łączność nie zależy od warstwy protokołu i strzałka warstw pozostaje jedna.
+ * Warstwa łączności jest interfejsem katalogu: jedne drzwi do transportu, magistrali i obserwatorów zdarzeń, gdzie obserwator osadza się na źródle zdarzeń, nie na kanale, więc łączność nie zależy od warstwy protokołu.
  */
 export { adresRdzenia, przyjmijAdresZPowloki } from './adres-rdzenia';
 

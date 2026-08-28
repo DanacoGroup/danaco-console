@@ -8,29 +8,7 @@ import { tozsamoscUrzadzenia } from './tozsamosc-urzadzenia';
 import { utworzWierszWymoguLogowania, type WierszWymogu } from './wiersz-wymogu-logowania';
 import { utworzZrodloBramki, type ZrodloBramki } from './zrodlo-bramki';
 
-/**
- * Sekcja „Uwierzytelnianie" Okna Ustawień — cztery komendy `auth.*`
- * wykonywane po zalogowaniu.
- *
- * Dwóch komend rodziny tu nie ma — powód stoi w `zrodlo-bramki.ts`:
- * `auth.register` odmawia trwale po pierwszym uruchomieniu, a `auth.login`
- * jest samą bramką. Obie należą do ekranu logowania.
- *
- * Wykaz metod przychodzi z czynności albo ze zdarzenia, nie z odczytu: kontrakt
- * nie ma komendy `auth.method.list`, ma za to zdarzenie `auth.changed` z pełnym
- * wykazem metod po zmianie. Sekcja je subskrybuje, więc wykaz nadąża także za
- * czynnością wykonaną w drugim oknie albo na drugim urządzeniu. Nie obejmuje to
- * pierwszego otwarcia: zanim zajdzie jakakolwiek zmiana, nie ma czego rozgłosić
- * i wykaz jest pusty — sekcja mówi to wprost, zamiast pokazywać pustkę, którą
- * dałoby się odczytać jako „nie masz metod".
- *
- * Windows Hello jest nieczynne. Zdanie na ekranie cytuje odmowę rdzenia co do
- * słowa, żeby powód na ekranie i powód w odmowie nie mówiły dwóch rzeczy o tej
- * samej niedostępności. Pełny cytat: nagłówek `zrodlo-bramki.ts`.
- *
- * Wymóg logowania jest tu pokazywany, ale zmienia się go w Oknie Konfiguracji.
- * Powód rozdziału: `wiersz-wymogu-logowania.ts`.
- */
+/** Sekcja uwierzytelniania w oknie ustawień wykonuje cztery komendy bramki po zalogowaniu i pokazuje wymóg logowania, którego zmiana należy do okna konfiguracji. */
 export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
   const zrodlo: ZrodloBramki = utworzZrodloBramki(kanal);
 
@@ -73,8 +51,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
         wpis.append(nazwa);
 
         if (metoda.anchor) {
-          // Kotwicy zdjąć się nie da — mówi to kontrakt. Zamiast przycisku
-          // pewnej odmowy stoi tu zdanie, dlaczego przycisku nie ma.
+          // Kotwicy zdjąć się nie da; zamiast przycisku pewnej odmowy stoi zdanie, dlaczego go nie ma.
           const kotwica = document.createElement('span');
           kotwica.className = 'dn-plakietka du-metoda__kotwica';
           kotwica.textContent = 'kotwica bramki — nie do zdjęcia';
@@ -100,12 +77,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
 
   const przedluz = przycisk('Przedłuż sesję bramki', 'dn-btn dn-btn--sm');
 
-  /**
-   * Powód niedostępności Windows Hello — słowami rdzenia.
-   *
-   * Cytat zamiast własnego zdania: parafraza rozjeżdżałaby się z odmową, którą
-   * Operator zobaczy po kliknięciu.
-   */
+  // Powód niedostępności metody systemowej — słowami rdzenia, cytatem zamiast własnego zdania.
   const oHello = document.createElement('p');
   oHello.className = 'dn-pole-opis du-granica';
   oHello.textContent =
@@ -161,9 +133,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
       return;
     }
     pokazMetody(wynik.wynik.methods);
-    // Rozstrzyga odpowiedź rdzenia, nie samo powodzenie wywołania: rdzeń może
-    // przyjąć wywołanie i nie zdjąć metody, a wtedy „zdjęto" byłoby
-    // potwierdzeniem czynności, która się nie odbyła.
+    // Rozstrzyga odpowiedź rdzenia, nie samo powodzenie wywołania, bo rdzeń może metody nie zdjąć.
     powiedz(
       wynik.wynik.removed
         ? 'Metoda zdjęta z urządzenia.'
@@ -204,11 +174,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
   zmien.addEventListener('click', () => void zmienHaslo());
   przedluz.addEventListener('click', () => void przedluzSesje());
 
-  /**
-   * Zmiana metod wykonana gdzie indziej dolatuje tutaj: `auth.changed` niesie
-   * komplet metod do każdego gniazda, więc sekcja przerysowuje wykaz bez
-   * pytania rdzenia.
-   */
+  // Zmiana metod wykonana gdzie indziej dolatuje tutaj zdarzeniem niosącym komplet metod.
   const odsubskrybuj = zrodlo.naZmianeBramki((zmiana) => {
     if (zmiana.methods !== undefined) pokazMetody(zmiana.methods);
     powiedz(zdanieZmiany(zmiana.reason), true);
@@ -217,9 +183,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
   return {
     element,
 
-    // Odświeżenie nie ma czego odczytać w części metod i mówi to wprost —
-    // milczenie wyglądałoby jak odczyt, który nic nie znalazł. Wiersz wymogu
-    // logowania to zwykła nastawa katalogu i odczytuje się normalnie.
+    // Odświeżenie nie ma czego odczytać w części metod i mówi to wprost, zamiast milczeć.
     odswiez() {
       wymog.odswiez();
       powiedz(
@@ -237,11 +201,7 @@ export function utworzSekcjeUwierzytelnianie(kanal: Kanal): SekcjaUstawien {
   };
 }
 
-/**
- * Zdanie o zmianie przyniesionej zdarzeniem. Bez niego zmiana wykonana w innym
- * oknie byłaby niema: wykaz podmieniłby się pod ręką Operatora bez słowa o tym,
- * co zaszło.
- */
+/** Zdanie o zmianie przyniesionej zdarzeniem, bez którego zmiana wykonana w innym oknie byłaby niema dla operatora. */
 function zdanieZmiany(powod: AuthChangeReason): string {
   switch (powod) {
     case 'methodAdded':
@@ -253,13 +213,12 @@ function zdanieZmiany(powod: AuthChangeReason): string {
     case 'sessionRevoked':
       return 'Sesja bramki unieważniona — zgłosił to rdzeń zdarzeniem auth.changed.';
     default:
-      // Powód spoza kontraktu nie wywraca sekcji ani nie jest przemilczany —
-      // nazywamy go dosłownie, tak jak przyszedł.
+      // Powód spoza kontraktu nie wywraca sekcji ani nie jest przemilczany, nazywamy go dosłownie.
       return `Rdzeń zgłosił zmianę stanu uwierzytelnienia: ${String(powod)}.`;
   }
 }
 
-/** Pole sekretu — osobna wytwórnia, bo `type` rozstrzyga o widoczności treści. */
+/** Pole sekretu jest osobną wytwórnią, bo typ pola rozstrzyga o widoczności wpisywanej treści na ekranie. */
 function poleTajne(etykieta: string, klasa: string): HTMLInputElement {
   const pole = document.createElement('input');
   pole.type = 'password';
@@ -278,9 +237,4 @@ function poleJawne(etykieta: string, klasa: string): HTMLInputElement {
   return pole;
 }
 
-/*
- * Tożsamość urządzenia mieszka w `tozsamosc-urzadzenia.ts`. Sekcja „Urządzenia"
- * potrzebuje tej samej wartości, ale wyłącznie do odczytu, bez nadawania jej
- * przy otwarciu okna. Klucz pamięci i obie drogi (odczyt oraz
- * odczyt-z-nadaniem) mają dlatego jedno miejsce.
- */
+// Tożsamość urządzenia mieszka w osobnym pliku; sekcja urządzeń czyta tę samą wartość.

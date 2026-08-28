@@ -7,25 +7,14 @@ import type { WierszOdpowiedzi } from '../../modele/kontrolki-formularza';
 import type { StanOknaStudio } from './stan-okna-studio';
 import type { StanStudio } from './stan-studio';
 
-/**
- * Uruchomienie operacji kontekstowej — czynność Tools Panelu wyjęta z wytwórni.
- *
- * Zakres bierze się ze stanu modułu, a nie z kontrolki: zakres skuteczny liczy
- * `stan-studio` i biorą go stamtąd wszyscy trzej odbiorcy — wskaźnik panelu,
- * pasek zaznaczenia edytora i to żądanie. Druga kopia nastawy, trzymana w `value`
- * listy wyboru panelu, rozjeżdżała się ze stanem.
- *
- * Wybór „Zaznaczenie" bez zaznaczenia nie jest blokowany — schodzi na cały
- * dokument, a panel pisze o tym we wskaźniku zakresu. Żądanie z zakresem
- * `selection` i bez granic zaznaczenia dostałoby odmowę walidacji.
- */
+/** Uruchomienie operacji kontekstowej, czynność Tools Panelu wyjęta z wytwórni: zakres bierze się ze stanu modułu, nie z kontrolki wyboru. */
 export interface ZapleczeNarzedzi {
   stan: StanStudio;
   pas: StanOknaStudio;
   odpowiedz: WierszOdpowiedzi;
 }
 
-/** Składa treść żądania operacji; `null`, gdy brakuje dokumentu albo wyboru. */
+/** Składa treść żądania operacji kontekstowej na podstawie stanu modułu; zwraca null, gdy brakuje dokumentu albo wyboru akcji. */
 export function zlozZadanieOperacji(
   stan: StanStudio,
   idAkcji: string,
@@ -47,7 +36,7 @@ export function zlozZadanieOperacji(
   return tresc;
 }
 
-/** Wysyła operację do rdzenia i odkłada jej wynik jako propozycję zmiany. */
+/** Wysyła operację kontekstową do rdzenia i odkłada jej wynik jako propozycję zmiany dokumentu w stanie modułu. */
 export async function uruchomOperacje(
   zaplecze: ZapleczeNarzedzi,
   zadanie: StudioContextualOpRequest | null,
@@ -62,9 +51,7 @@ export async function uruchomOperacje(
   if (!wynik.udany || wynik.wynik === undefined) {
     const powod = opisOdmowy('Operacja kontekstowa', wynik.blad?.code, wynik.blad?.message);
     zaplecze.pas.blad(powod);
-    // Odmowa idzie także do stanu modułu, nie tylko do pasa tego okna. Kanwa
-    // tekstowa stoi obok i bez tego pokazałaby brak propozycji jako „operacji
-    // jeszcze nie było" — czyli pustkę w miejscu odmowy rdzenia.
+    // Odmowa idzie też do stanu modułu, inaczej kanwa tekstowa pokazałaby brak propozycji jako pustkę.
     zaplecze.stan.ustawOdmoweOperacji(`Operacja ${idAkcji}: ${powod}`);
     return;
   }
@@ -75,15 +62,7 @@ export async function uruchomOperacje(
   zaplecze.odpowiedz.pokaz(opiszWynikOperacji(tresc, idPropozycji), true);
 }
 
-/**
- * Zdanie o treści, która przyszła, a nie o tym, że „wynik czeka".
- *
- * `studio.contextual.op` wraca odpowiedzią pomyślną także wtedy, gdy kanał modelu
- * oddał zamiast wyniku swój własny komunikat. Rdzeń tego nie odróżnia, bo dostał
- * fragmenty treści, a klient nie ma po czym, bo to zwykły tekst. Zamiast zgadywać
- * po treści zdanie mówi, ile jej przyszło i że przyjęcie wyniku podmieni nią
- * dokument.
- */
+/** Zdanie opisujące treść, która przyszła z operacji kontekstowej, zamiast ogólnikowego stwierdzenia, że wynik czeka na przyjęcie. */
 function opiszWynikOperacji(tresc: string, idPropozycji: string): string {
   if (tresc !== '') {
     return (

@@ -1,28 +1,6 @@
 import { policzTresc, type LicznikiDokumentu } from './liczniki-dokumentu';
 
-/**
- * Pomiary panelu Redaktora — wyłącznie to, co da się policzyć z treści.
- *
- * ── Zasada tego pliku ───────────────────────────────────────────────────────
- * Każda liczba, którą panel pokazuje, jest tu policzona z napisu, i nic poza
- * tym. Panel Redaktora w pakiecie biurowym pokazuje „ocenę 87 %" liczoną
- * słownikiem języka, korpusem i regułami gramatyki — czego ten produkt nie ma
- * i czego nie zdobędzie programem spoza instalki. Zamiast oceny wymyślonej
- * panel pokazuje ocenę POLICZONĄ z miar czytelności i nazywa, z czego ona jest;
- * pozycje bez pomiaru mówią wprost, że pomiaru nie ma, i wskazują, co byłoby
- * potrzebne, żeby był.
- *
- * ── Skąd wskaźnik czytelności ───────────────────────────────────────────────
- * Ze średniej długości zdania i średniej długości słowa — dwóch wielkości, które
- * liczy się z samego tekstu, bez słownika. Jest to rodzina wskaźników
- * mglistości (Gunning fog, FOG-PL): im dłuższe zdania i im dłuższe wyrazy, tym
- * wyżej wykształcenia potrzeba, żeby tekst przeczytać bez potykania się.
- * Wartość nie jest oceną jakości i panel tego nie udaje.
- *
- * Plik nie zna DOM ani rdzenia.
- */
-
-/** Pomiar nazwany wraz z tym, czym został policzony. */
+/** Pomiar nazwany, część pomiarów panelu Redaktora liczonych wyłącznie z treści, wraz z kodem, jednostką i podstawą wartości. */
 export interface PomiarRedaktora {
   kod: string;
   nazwa: string;
@@ -34,7 +12,7 @@ export interface PomiarRedaktora {
   podstawa: string;
 }
 
-/** Wynik pomiaru czytelności wraz z jego składnikami. */
+/** Wynik pomiaru czytelności treści dokumentu wraz z jego czterema składnikami liczonymi wprost z tekstu. */
 export interface Czytelnosc {
   /** Średnia liczba słów w zdaniu. */
   slowNaZdanie: number;
@@ -46,10 +24,10 @@ export interface Czytelnosc {
   mglistosc: number;
 }
 
-/** Granica, od której słowo liczy się jako długie. Wartość nazwana, nie magiczna. */
+/** Granica liczby znaków, od której słowo liczy się jako długie na potrzeby pomiaru czytelności tekstu. */
 const DLUGIE_SLOWO = 10;
 
-/** Liczy czytelność treści; treść pusta oddaje zera, nie dzielenie przez zero. */
+/** Liczy czytelność treści dokumentu na podstawie długości zdań i słów; treść pusta oddaje same zera zamiast błędu. */
 export function policzCzytelnosc(tresc: string): Czytelnosc {
   const liczniki = policzTresc(tresc);
   const slowa = tresc.split(/\s+/u).filter((slowo) => slowo !== '');
@@ -68,19 +46,12 @@ export function policzCzytelnosc(tresc: string): Czytelnosc {
   };
 }
 
-/** Zaokrąglenie do jednego miejsca po przecinku — panel nie pokazuje szumu. */
+/** Zaokrągla wartość pomiaru do jednego miejsca po przecinku, żeby panel nie pokazywał szumu liczbowego. */
 function zaokraglij(wartosc: number): number {
   return Math.round(wartosc * 10) / 10;
 }
 
-/**
- * Ocena dokumentu wyrażona liczbą — punkty czytelności od 0 do 100.
- *
- * Nie jest to „jakość pisma": to odwrotność mglistości przełożona na skalę
- * setną. Mglistość 8 (tekst prasowy) daje wynik wysoki, mglistość 20 (zdania
- * wielokrotnie złożone z terminami) — niski. Panel podaje przy liczbie jej
- * podstawę, bo liczba bez podstawy jest kopertą.
- */
+/** Ocena dokumentu wyrażona liczbą punktów czytelności od zera do stu, będąca odwrotnością mglistości tekstu. */
 export function ocenaCzytelnosci(czytelnosc: Czytelnosc): number {
   if (czytelnosc.mglistosc === 0) return 0;
   // Granice: mglistość 6 i niżej to 100 punktów, 26 i wyżej to 0.
@@ -88,7 +59,7 @@ export function ocenaCzytelnosci(czytelnosc: Czytelnosc): number {
   return Math.max(0, Math.min(100, Math.round(punkty)));
 }
 
-/** Zdanie o ocenie wraz z jej podstawą. */
+/** Zdanie opisujące ocenę czytelności dokumentu wraz z liczbami, z których ta ocena została faktycznie policzona. */
 export function opiszOcene(czytelnosc: Czytelnosc): string {
   if (czytelnosc.mglistosc === 0) {
     return 'Oceny nie ma, bo nie ma czego mierzyć — dokument jest pusty.';
@@ -103,18 +74,7 @@ export function opiszOcene(czytelnosc: Czytelnosc): string {
 
 /* ── Korekty: co da się policzyć bez słownika ──────────────────────────────── */
 
-/**
- * Pomiary korekty — wykaz wzorców, które rozpoznaje się w samym zapisie.
- *
- * Pisowni i gramatyki nie mierzymy: jedno wymaga słownika języka, drugie
- * analizy składniowej, a rdzeń nie ma ani jednego, ani drugiego. Wiersze
- * pisowni i gramatyki zostają więc w panelu z wartością niepodaną i z powodem —
- * usunięcie ich kazałoby panelowi wyglądać na kompletny.
- *
- * Interpunkcję mierzymy częściowo i tylko tam, gdzie wzorzec jest pewny:
- * odstęp przed znakiem przestankowym, brak odstępu po nim, podwójny odstęp,
- * podwójny znak przestankowy, spójnik na końcu wiersza.
- */
+/** Pomiary korekty liczone wprost z zapisu tekstu, bez pisowni i gramatyki wymagających słownika języka. */
 export function pomiaryKorekty(tresc: string): PomiarRedaktora[] {
   const odstepPrzed = (tresc.match(/\s+[,.;:!?]/gu) ?? []).length;
   const bezOdstepu = (tresc.match(/[,;:](?=\p{L})/gu) ?? []).length;
@@ -168,7 +128,7 @@ export function pomiaryKorekty(tresc: string): PomiarRedaktora[] {
 
 /* ── Uściślenia: wielkości ciągłe pracy nad stylem ─────────────────────────── */
 
-/** Jedno uściślenie panelu — nazwa, pomiar wskazujący potrzebę i akcja. */
+/** Jedno uściślenie panelu redaktora: nazwa, zdanie wskazujące potrzebę i identyfikator akcji do wykonania. */
 export interface Uscislenie {
   kod: string;
   nazwa: string;
@@ -178,15 +138,7 @@ export interface Uscislenie {
   idAkcji: string;
 }
 
-/**
- * Uściślenia liczone z tekstu.
- *
- * Każde ma pomiar, który mówi, po co je uruchamiać: zwięzłość opiera się na
- * długości zdań, słownictwo na powtórzeniach, rejestr na udziale słów długich,
- * język literacki na stronie biernej rozpoznawanej po formach „został/została/
- * zostały" wraz z imiesłowem. Uściślenie bez pomiaru byłoby przyciskiem
- * z ładną nazwą.
- */
+/** Uściślenia liczone wprost z tekstu, każde z pomiarem wskazującym powód, dla którego warto je uruchomić. */
 export function uscisleniaTresci(tresc: string, liczniki: LicznikiDokumentu): Uscislenie[] {
   const czytelnosc = policzCzytelnosc(tresc);
   const bierne = (tresc.match(/\b(?:został|została|zostały|zostało|jest|są)\s+\p{L}+[nyt]\w*/giu) ?? [])
@@ -229,7 +181,7 @@ export function uscisleniaTresci(tresc: string, liczniki: LicznikiDokumentu): Us
   ];
 }
 
-/** Liczy słowa powtórzone co najmniej trzy razy; słowa krótkie się nie liczą. */
+/** Liczy słowa powtórzone co najmniej trzy razy w treści; słowa krótkie do tego zestawienia się nie liczą. */
 function policzPowtorzenia(tresc: string): number {
   const wystapienia = new Map<string, number>();
   for (const slowo of tresc.toLowerCase().match(/\p{L}{5,}/gu) ?? []) {

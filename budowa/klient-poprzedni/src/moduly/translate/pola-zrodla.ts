@@ -8,15 +8,8 @@ import { OBJASNIENIA, PODPOWIEDZ_JEZYKOW } from './etykiety-translate';
 import { dopnijDymek, podepnijPodpowiedz } from './kontrolki-translate';
 
 /**
- * Pola formularza Source Panel wraz z dymkami objaśnień [?].
- *
- * Wydzielone z okna, bo skład pola — etykieta, podpowiedź, dymek, wykaz
- * podpowiadanych wartości — to inna odpowiedzialność niż to, co się dzieje po
- * naciśnięciu przycisku. Okno składa całość i wiąże zdarzenia; ten plik zna
- * wyłącznie kształt formularza.
- *
- * Dymek objaśnienia dostaje każde pole zmieniające treść żądania — język
- * źródłowy i ponowna segmentacja.
+ * Pola formularza panelu źródła wraz z dymkami objaśnień, budujące wyłącznie
+ * kształt formularza, bez wiązania zdarzeń należącego do okna.
  */
 export interface PolaZrodlaFormularza {
   tekst: PoleFormularza<HTMLTextAreaElement>;

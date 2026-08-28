@@ -28,16 +28,8 @@ import type {
 } from './zlecenia-badania';
 
 /**
- * Pięć komend obszaru `research.*` widzianych przez okna modułu.
- *
- * Źródło nie ma stanu i niczego nie pamięta — jest warstwą wywołań i sprawdzianu
- * kształtu odpowiedzi. Zbiór źródeł, ustaleń i raportu mieszka w `stan-badania`,
- * żeby pięć okien patrzyło na jeden komplet, a nie na pięć kopii.
- *
- * Wszystkie pięć ma uchwyt w rdzeniu: wpina je `zarejestrujBadania`
- * (`server/internal/core/adapter_modul_badania_uchwyty.go`), wołane
- * z `kompozycja.go`; port `Badania` jest wypełniony w `montaz_porty.go`.
- * Odmowa merytoryczna wraca zwykłym błędem i okno pokazuje ją wprost.
+ * Pięć komend obszaru research widzianych przez okna modułu: źródło nie ma stanu, jest
+ * warstwą wywołań i sprawdzianu kształtu odpowiedzi rdzenia.
  */
 export interface ZrodloResearch {
   ustawZakres(zlecenie: ZlecenieZakresu): Promise<OdpowiedzBadania<ResearchWorkspaceSetResponse>>;
@@ -47,16 +39,7 @@ export interface ZrodloResearch {
   ): Promise<OdpowiedzBadania<ResearchFindingAddResponse>>;
   zlozRaport(zlecenie: ZlecenieRaportu): Promise<OdpowiedzBadania<ResearchReportBuildResponse>>;
   eksportuj(zlecenie: ZlecenieEksportu): Promise<OdpowiedzBadania<ResearchReportExportResponse>>;
-  /**
-   * Wywołanie dowolnej komendy obszaru `research.*` wraz z rozpoznaniem odmowy
-   * nieznanej komendy.
-   *
-   * Pięć komend wyżej ma własne metody, bo ich żądanie składa się ze zlecenia
-   * okna, a nie z samych pól. Pozostałe siedemdziesiąt jeden idzie tędy: żądanie
-   * składa `wywolania-komend.ts`, znający zaznaczenie i wskazania okien.
-   * Druga taka sama metoda per komenda byłaby siedemdziesięcioma jeden
-   * przepisaniami tego samego wywołania.
-   */
+  /** Wywołanie dowolnej komendy obszaru research wraz z rozpoznaniem odmowy nieznanej komendy. */
   wywolaj<K extends Command>(
     komenda: K,
     zadanie: RequestOf<K>,
@@ -131,11 +114,8 @@ export function utworzZrodloResearch(kanal: Kanal): ZrodloResearch {
 }
 
 /**
- * Sprawdzian kształtu zachowujący nazwę nieznanego typu.
- *
- * `sprawdzKsztalt` zna wyłącznie `Wynik` warstwy protokołu i o polu
- * `nieznanyTyp` nie wie. Bez tego przełożenia odmowa nieznanej komendy
- * dochodziłaby do okna jako zwykły błąd i okno nie miałoby czego wypisać.
+ * Sprawdzian kształtu zachowujący nazwę nieznanego typu, którego sprawdzian kształtu warstwy
+ * protokołu nie zna, by okno mogło ją wypisać.
  */
 function sprawdz<T>(
   odpowiedz: OdpowiedzBadania<T>,
@@ -147,7 +127,7 @@ function sprawdz<T>(
   return { ...wynik, nieznanyTyp: odpowiedz.nieznanyTyp };
 }
 
-/** Treść żądania `research.source.add`; pola puste nie idą do rdzenia. */
+/** Treść żądania dodania źródła złożona ze zlecenia okna; pola puste nie idą do rdzenia jako treść żądania. */
 function zadanieZrodla(zlecenie: ZlecenieZrodla): ResearchSourceAddRequest {
   const zadanie: ResearchSourceAddRequest = {
     windowId: zlecenie.idOkna,
@@ -163,7 +143,7 @@ function zadanieZrodla(zlecenie: ZlecenieZrodla): ResearchSourceAddRequest {
   return zadanie;
 }
 
-/** Treść żądania `research.finding.add`; brak identyfikatora zakłada ustalenie nowe. */
+/** Treść żądania zapisu ustalenia złożona ze zlecenia okna; brak identyfikatora ustalenia zakłada wpis nowy. */
 function zadanieUstalenia(zlecenie: ZlecenieUstalenia): ResearchFindingAddRequest {
   const zadanie: ResearchFindingAddRequest = {
     windowId: zlecenie.idOkna,
@@ -175,7 +155,7 @@ function zadanieUstalenia(zlecenie: ZlecenieUstalenia): ResearchFindingAddReques
   return zadanie;
 }
 
-/** Treść żądania `research.report.build`; brak identyfikatora zakłada raport nowy. */
+/** Treść żądania złożenia raportu złożona ze zlecenia okna; brak identyfikatora raportu zakłada raport nowy. */
 function zadanieRaportu(zlecenie: ZlecenieRaportu): ResearchReportBuildRequest {
   const zadanie: ResearchReportBuildRequest = { windowId: zlecenie.idOkna };
   if (zlecenie.idRaportu !== '') zadanie.reportId = zlecenie.idRaportu;

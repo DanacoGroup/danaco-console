@@ -7,31 +7,7 @@ import {
 } from './pozycje-ustawien';
 import { utworzSygnalWyboru, type SluchaczWyboru } from './sygnal-wyboru';
 
-/**
- * Strefa trzecia — listwa ustawień: zwarty pasek narzędziowy.
- *
- * Jedna odpowiedzialność: pas wejść pomocniczych rozpięty na całą szerokość.
- * Segmenty dzieli delikatny separator wewnątrz jednej powierzchni, więc pas
- * czyta się jako jeden byt o kilku wejściach, a nie jako trzecia siatka kart —
- * opracowanie mówi wprost, że pozycje listwy nie mają formy kart ani kafli
- * (rozdz. 3.4).
- *
- * Segmenty ustawień są trzy — tyle wymienia tabela zawartości listwy: Okno
- * konfiguracji, Mobile, Always On Display (wykaz w `pozycje-ustawien.ts`).
- *
- * Czwarty segment nie jest ustawieniem: „Dodaj nowy" otwiera formularz
- * zakładania komponentu własnego. Zgłasza to osobnym wywołaniem zwrotnym, nie
- * przez wykaz ustawień — pozycja, która ustawieniem nie jest, nie udaje jego
- * kodu. Wedle opracowania zakładanie komponentu należy do strefy drugiej;
- * przeniesienie segmentu wymaga zmiany montażu w `aplikacja/`, więc zostaje
- * zgłoszone, a nie wykonane z tego katalogu.
- *
- * Waga wizualna strefy jest najniższa z trzech: segment ma wysokość kontrolki
- * (32 px) i niesie ikonę oraz nazwę, bez wezwania do działania i bez metadanych.
- *
- * Żadna pozycja nie jest wyszarzona ani pozbawiona klikalności; wykaz skutków
- * mieszka w `aplikacja/akcje-ustawien.ts`.
- */
+/** Strefa trzecia jest listwą ustawień: zwartym paskiem narzędziowym o jednej odpowiedzialności. */
 
 /**
  * Ikona segmentu ustawienia.
@@ -42,7 +18,7 @@ import { utworzSygnalWyboru, type SluchaczWyboru } from './sygnal-wyboru';
  */
 const ROZMIAR_IKONY = 16;
 
-/** Nazwa strefy z opracowania (rozdz. 3.1, 3.4) i z makiety — bez parafrazy. */
+/** Nazwa strefy trzeciej i jej wyjaśnienie pochodzą z ustalonej makiety, bez własnej parafrazy nazwy strefy. */
 const ETYKIETA = 'Strefa 3 · Listwa ustawień';
 const WYJASNIENIE =
   'Okno konfiguracji platformy oraz dwie funkcje globalne — Mobile i Always On Display.';
@@ -66,8 +42,7 @@ export function utworzListweUstawien(): ListwaUstawien {
   const belka = document.createElement('div');
   belka.className = 'dn-strona__belka';
 
-  // Trzy segmenty wykazu: pozostałe pozycje są zakresami Okna konfiguracji
-  // i dublowałyby jego segment (powód w `pozycje-ustawien.ts`).
+  // Trzy segmenty wykazu pomijają pozostałe pozycje, będące zakresami okna konfiguracji.
   for (const pozycja of POZYCJE_USTAWIEN) {
     if (!KODY_STREFY_TRZECIEJ.includes(pozycja.kod)) continue;
     belka.append(utworzSegment(pozycja.nazwa, pozycja.ikona, pozycja.wyjasnienie, () => sygnal.nadaj(pozycja), pozycja.kod));
@@ -101,14 +76,7 @@ export function utworzListweUstawien(): ListwaUstawien {
   };
 }
 
-/**
- * Jeden segment belki: ikona i nazwa.
- *
- * Rozwinięcie nazwy idzie w dymek, nie na belkę: wyjaśnienia bywają długie
- * i postawione w pasie rozsadziłyby go do wysokości strefy drugiej, odwracając
- * hierarchię wag. W segmencie stoi nazwa, a rozwinięcie czyta technologia
- * wspomagająca i dymek.
- */
+/** Jeden segment belki niesie ikonę i nazwę; rozwinięcie nazwy czyta technologia wspomagająca i dymek, nie sama belka. */
 function utworzSegment(
   nazwaPozycji: string,
   ikonaPozycji: NazwaIkony,

@@ -6,21 +6,7 @@ import { utworzObiektPanel } from './obiekt-panel';
 import { utworzObiektZrodlo } from './obiekt-zrodlo';
 import { utworzStanStudio } from './stan-studio';
 
-/**
- * Warsztat obiektów — cztery rzeczy, które muszą zostać prawdziwe.
- *
- *   1. wskazanie źródła jedzie do POLA, które rdzeń dla tego źródła czyta: węzeł
- *      Designu jako `designNodeId`, zasób jako `assetId`, plik Biblioteki jako
- *      `libraryFileId`. Wsadzenie wszystkiego w `path` byłoby odmową walidacji
- *      przy każdym źródle poza plikiem;
- *   2. wykres jest odmową NAZWANĄ, widoczną przed próbą i kierującą do modułu
- *      Design — rdzeń rachunku wykresu nie ma i okno tego nie udaje;
- *   3. odpowiedź „nie usunąłem" jest czytana jako wynik, nie jako awaria, i nie
- *      zdejmuje obiektu z wykazu;
- *   4. brak tekstu zastępczego jest nazwany, bo wydanie bez obrazów nie powie
- *      wtedy, co w dokumencie stało.
- */
-
+/** Warsztat obiektów sprawdza cztery rzeczy: pole wskazania źródła, nazwaną odmowę wykresu, wynik nieusunięcia i brak tekstu zastępczego. */
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;

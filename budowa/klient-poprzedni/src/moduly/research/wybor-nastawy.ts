@@ -1,33 +1,6 @@
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 
-/**
- * Obsada bibliotecznego `komponenty/menu-drzewo.ts` dla trzech nastaw modułu
- * Research: rodzaju źródła, oceny wiarygodności i formatu eksportu.
- *
- * Ster nastawy niesie wartość bieżącą na uchwycie — „PDF", nie „Format
- * wyjściowy" — bo to ona jest odpowiedzią na pytanie „co jest teraz
- * ustawione". Natywny `<select>` tego nie robi: pokazuje wartość dopiero po
- * rozwinięciu.
- *
- * Plik nie jest drugim mechanizmem rozwijania: rozwijanie, znacznik wyboru,
- * opisy pozycji, wędrówka strzałkami, pole szukania po progu i zdanie o pustym
- * wykazie należą do biblioteki. Ten plik podaje mechanizmowi dane.
- *
- * Ta sama obsada stoi też w `moduly/apps/wybor-z-menu.ts` (wraz z wymianą
- * pozycji w locie) i w `moduly/browser/ster-wyboru.ts`. Miejscem docelowym
- * jest `komponenty/`; do czasu przeniesienia moduł nie sięga po cudzą obsadę
- * przez granicę modułu, bo import między modułami wiąże je mocniej niż
- * powtórzenie kilkudziesięciu wierszy.
- *
- * Wykaz jest stały — to jedyna różnica wobec obsady Apps. Trzy nastawy
- * Research pochodzą z wyliczeń kontraktu (`ResearchSourceKind`,
- * `ResearchCredibility`, `ExportFormat`), a nie z odpowiedzi rdzenia, więc
- * wymiany pozycji w locie tu nie ma.
- *
- * Uchwyt jest klikalny zawsze, także zanim Operator cokolwiek wybrał.
- */
-
-/** Jedna pozycja wyboru — para klucz–nazwa wraz z opcjonalnym zdaniem opisu. */
+/** Jedna pozycja wyboru — para klucz-nazwa z opcjonalnym opisem — wśród obsady bibliotecznego komponentu menu-drzewo dla trzech nastaw modułu Research. */
 export interface PozycjaNastawy {
   /** Wartość jadąca do rdzenia — napis wyliczenia kontraktu. */
   wartosc: string;
@@ -42,20 +15,14 @@ export interface WyborNastawy {
   element: HTMLElement;
   /** Wartość bieżąca — ta sama, którą niesie uchwyt. */
   wartosc(): string;
-  /**
-   * Ustawia wybór z zewnątrz. Klucz spoza wykazu nie jest wybierany i oddaje
-   * `false`, żeby okno nie pokazało jako wybranej pozycji, której w wykazie
-   * nie ma.
-   */
+  /** Ustawia wybór z zewnątrz; klucz spoza wykazu nie jest wybierany i oddaje odmowę wyboru. */
   ustawWartosc(klucz: string): boolean;
 }
 
 /**
- * @param nastawa nazwa rodzajowa wyboru — idzie do `aria-label`, nie na ekran
- * @param pozycje wykaz stały; pierwsza pozycja jest wyborem początkowym, tak
- *   jak w natywnej liście wyboru
- * @param naZmiane wołane wyłącznie po wyborze Operatora — nie po `ustawWartosc`,
- *   tak jak natywny `<select>` nie wysyła `change` przy zmianie z kodu
+ * @param nastawa nazwa rodzajowa wyboru, idąca do etykiety dostępności, nie na ekran
+ * @param pozycje wykaz stały, którego pierwsza pozycja jest wyborem początkowym
+ * @param naZmiane wołane wyłącznie po wyborze Operatora, nie po ustawieniu z kodu
  */
 export function utworzWyborNastawy(
   nastawa: string,
@@ -103,13 +70,8 @@ export function utworzWyborNastawy(
 }
 
 /**
- * Wiersz formularza: podpis nad sterem — kształt `dn-pole` biblioteki.
- *
- * Nie jest `<label>`, bo uchwyt menu jest przyciskiem, a przycisk nie jest
- * elementem etykietowalnym: `<label>` owinięta wokół niego nie przeniosłaby ani
- * kliknięcia, ani ogniska, więc udawałaby wiązanie, którego nie ma. Nazwę
- * nastawy niesie `aria-label` uchwytu, stawiany przez mechanizm z pola
- * `nastawa` — podpis jest tu dla oka, nie dla czytnika ekranu.
+ * Wiersz formularza: podpis nad sterem, w kształcie pola biblioteki, niezwiązany z uchwytem
+ * etykietą, bo uchwyt jest przyciskiem.
  */
 export function wierszNastawy(etykieta: string, wybor: WyborNastawy): HTMLElement {
   const podpis = document.createElement('span');

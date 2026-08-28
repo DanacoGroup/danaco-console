@@ -1,37 +1,16 @@
 import type { StudioTemplate } from '../../../../shared/contract';
 
-/**
- * Galeria szablonów — miniatury pism, z których zakłada się dokument.
- *
- * ── Skąd szablony ───────────────────────────────────────────────────────────
- * Z rdzenia: `studio.template.list` oddaje pismo, umowę, raport, notatkę
- * i ofertę wraz z polami do wypełnienia, a `studio.template.apply` zakłada
- * dokument z wypełnieniem. Obie komendy mają uchwyt i obie działały, tylko nie
- * miały czym się pokazać. Galeria nie dopisuje ani jednego szablonu od siebie.
- *
- * ── Czym jest miniatura ─────────────────────────────────────────────────────
- * Podglądem WYGLĄDU złożonym z tego, co szablon o sobie mówi: nazwa,
- * przeznaczenie, format i pola. Obrazka miniatury kontrakt nie niesie i rdzeń
- * obrazów nie generuje, więc miniatura jest wyrysem układu — kartka, na niej
- * nagłówek nazwy i kreski wierszy w liczbie pól. Rysunek udający gotowe pismo
- * pokazywałby wygląd, którego szablon nie obiecuje.
- */
+/** Galeria nie dopisuje żadnego szablonu od siebie: szablony pochodzą z rdzenia, miniatura to wyrys. */
 
-/** Czynności galerii zlecane oknu. */
+/** Czynności galerii szablonów zlecane oknu: założenie dokumentu z szablonu i, opcjonalnie, przejście do warsztatu szablonów. */
 export interface CzynnosciGalerii {
   /** Zakłada dokument z szablonu wraz z wartościami jego pól. */
   naZalozenie(idSzablonu: string, wartosci: Record<string, string>, tytul: string): void;
-  /**
-   * Otwiera szablon w warsztacie szablonów — pola, zmiana, oddanie do pliku.
-   *
-   * Nieobowiązkowe: galeria działa bez warsztatu, tylko wtedy wykaz jest wyłącznie
-   * do CZYTANIA i zakładania dokumentu. Gdy warsztat jest zamontowany, miniatura
-   * dostaje przejście do niego — bo szablon zmienia się tam, a nie tutaj.
-   */
+  /** Nieobowiązkowe przejście do warsztatu szablonów; bez niego galeria działa wyłącznie do odczytu. */
   naWarsztat?(idSzablonu: string): void;
 }
 
-/** Galeria wraz z jej odświeżeniem. */
+/** Galeria szablonów dokumentu wraz z metodą wstawienia szablonów i przełącznikiem jej widoczności w oknie. */
 export interface GaleriaSzablonow {
   element: HTMLElement;
   /** Wstawia szablony oddane przez rdzeń. */
@@ -66,13 +45,7 @@ export function utworzGalerieSzablonow(czynnosci: CzynnosciGalerii): GaleriaSzab
   element.setAttribute('aria-label', 'Galeria szablonów dokumentu');
   element.append(szukanie, kategorie, zdanie, miniatury);
 
-  /**
-   * Kategoria szablonu — fabryczny albo własny.
-   *
-   * Innej kategorii kontrakt nie niesie: `StudioTemplate` ma `builtin`, a nie
-   * pole kategorii. Wymyślanie działów („pisma", „umowy") na podstawie nazw
-   * byłoby porządkiem zgadniętym.
-   */
+  /** Kategoria szablonu jest fabryczna albo własna, bo kontrakt innego podziału nie niesie. */
   let kategoria: 'wszystkie' | 'fabryczne' | 'wlasne' = 'wszystkie';
 
   for (const pozycja of [
@@ -134,7 +107,7 @@ export function utworzGalerieSzablonow(czynnosci: CzynnosciGalerii): GaleriaSzab
   };
 }
 
-/** Buduje jedną miniaturę wraz z polami szablonu i przyciskiem założenia. */
+/** Buduje jedną miniaturę galerii wraz z wierszami pól szablonu i przyciskiem założenia dokumentu z niego. */
 function utworzMiniature(szablon: StudioTemplate, czynnosci: CzynnosciGalerii): HTMLElement {
   const pola = szablon.fields ?? [];
 
@@ -145,8 +118,7 @@ function utworzMiniature(szablon: StudioTemplate, czynnosci: CzynnosciGalerii): 
   nazwaNaKartce.className = 'ms-galeria__kartka-naglowek';
   nazwaNaKartce.textContent = szablon.name;
   kartka.append(nazwaNaKartce);
-  // Wiersz miniatury na każde pole szablonu: podgląd mówi, ile miejsc jest do
-  // wypełnienia, i nic ponad to.
+  // Wiersz miniatury na każde pole szablonu pokazuje tylko liczbę miejsc do wypełnienia.
   for (const pole of pola) {
     const kreska = document.createElement('div');
     kreska.className = 'ms-galeria__kartka-wiersz';

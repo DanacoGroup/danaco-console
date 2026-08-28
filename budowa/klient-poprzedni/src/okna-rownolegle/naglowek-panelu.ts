@@ -3,35 +3,8 @@ import './panele.css';
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 
 /**
- * Gęsty nagłówek panelu — jeden wiersz, tytuł i rząd ikon, nic więcej.
- *
- * Wszystkie czynności panelu mieszczą się w jednym rzędzie ikon o wysokości
- * jednego wiersza: bez paska narzędzi, bez drugiego rzędu, bez nagłówka sekcji
- * nad zawartością.
- *
- * Tytuł skraca arkusz (`text-overflow: ellipsis`), nie kod. Cięcie napisu
- * w kodzie odebrałoby pełną nazwę czytnikowi ekranu i podpowiedzi, a wielokropek
- * zależy od szerokości kolumny, której kod nie zna. Pełna nazwa zostaje więc
- * w `title` i w `aria-label` nagłówka.
- *
- * Menu `⋮` panelu dokłada gospodarz, nie nagłówek: pozycje takiego menu są
- * własnością panelu (Przeglądarka ma inne niż Terminal), a nagłówek ich nie zna.
- * Dlatego rząd przyjmuje obok opisu czynności także gotowy element
- * (`PozycjaNaglowka`) i daje mu wyłącznie miejsce w rzędzie.
- *
- * Nagłówek nie wie, co robią czynności, i nie zna ani jednej komendy rdzenia —
- * dostaje gotowe `dzialanie()`. Nie buduje treści panelu ani menu rozwijanego
- * i nie przyjmuje drugiego rzędu.
- *
- * Każdy przycisk jest czynny zawsze. Czynność, której nie ma czym wykonać, nie
- * wchodzi do wykazu — rząd ikon jest wtedy krótszy, a nie wyszarzony.
- *
- * Rama okna (`komponenty/rama-okna.ts`) daje trzy pasy pod tytułem (nagłówek,
- * akcje, narzędzia) i należy do okien operacyjnych; panel w stosie jej nie
- * używa.
+ * Gęsty nagłówek panelu to jeden wiersz z tytułem i rzędem ikon, w którym tytuł skraca arkusz, nie kod, a menu panelu dokłada gospodarz, więc rząd przyjmuje opisy czynności oraz gotowe elementy jako pozycje.
  */
-
-/** Jedna czynność w rzędzie ikon nagłówka panelu. */
 export interface CzynnoscPanelu {
   /** Ikona z zestawu marki — dobrana pod czynność, nie pod wygląd narzędzia. */
   ikona: NazwaIkony;
@@ -41,15 +14,11 @@ export interface CzynnoscPanelu {
 }
 
 /**
- * Pozycja rzędu ikon: opis czynności albo gotowy element od gospodarza.
- *
- * Suma typów, a nie osobne pole `dodatki`, bo o kolejności w rzędzie rozstrzyga
- * gospodarz — menu `⋮` bywa raz przed pełnym ekranem, raz po nim, a osobne pole
- * narzucałoby jedno miejsce na sztywno.
+ * Pozycja rzędu ikon jest sumą typów opisu czynności albo gotowego elementu od gospodarza, bo o kolejności w rzędzie rozstrzyga gospodarz, nie sztywne pole.
  */
 export type PozycjaNaglowka = CzynnoscPanelu | HTMLElement;
 
-/** Bok ikony w rzędzie czynności — najmniejszy rozmiar kanoniczny zestawu. */
+/** Bok ikony w rzędzie czynności nagłówka panelu — najmniejszy rozmiar kanoniczny w całym zestawie ikon. */
 const ROZMIAR_IKONY = 14;
 
 /**
@@ -76,8 +45,7 @@ export function utworzNaglowekPanelu(
   rzad.className = 'dn-okna__naglowek-panelu-czynnosci';
   rzad.setAttribute('aria-label', `Czynności panelu ${tytul}`);
   for (const pozycja of czynnosci) {
-    // Element gotowy idzie do rzędu bez tknięcia — jego etykiety, `title`
-    // i zachowanie należą do tego, kto go zbudował, i nagłówek ich nie zna.
+    // Element gotowy idzie do rzędu bez tknięcia — etykiety i zachowanie należą do tego, kto go zbudował.
     rzad.append(pozycja instanceof HTMLElement ? pozycja : przyciskCzynnosci(pozycja));
   }
 

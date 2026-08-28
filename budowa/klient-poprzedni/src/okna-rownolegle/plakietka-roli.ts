@@ -2,7 +2,7 @@ import { WindowRole } from '../../../shared/contract';
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 import { nazwaRoli } from '../okno-komunikacji/etykiety-okna';
 
-/** Plakietka roli okna — widoczna na pierwszy rzut oka w nagłówku gniazda. */
+/** Plakietka roli okna — widoczna na pierwszy rzut oka w nagłówku gniazda, niosąca ikonę i etykietę zamiast samej barwy. */
 export interface PlakietkaRoli {
   element: HTMLElement;
   /** Przestawia plakietkę na inną rolę. */
@@ -10,11 +10,7 @@ export interface PlakietkaRoli {
 }
 
 /**
- * Plakietka roli okna w pętli koordynator–wykonawca.
- *
- * Rola nigdy nie jest sygnalizowana samą barwą: plakietka niesie ikonę oraz
- * etykietę. Wariant sygnałowy dostaje wyłącznie koordynator i wyłącznie na
- * powierzchni pigułki — tło gniazda zostaje neutralne.
+ * Plakietka roli okna w pętli koordynator-wykonawca nigdy nie sygnalizuje roli samą barwą: wariant sygnałowy dostaje wyłącznie koordynator, wyłącznie na powierzchni pigułki.
  */
 export function utworzPlakietkeRoli(rola: WindowRole): PlakietkaRoli {
   const element = document.createElement('span');
@@ -56,7 +52,7 @@ function ikonaRoli(rola: WindowRole): NazwaIkony {
   }
 }
 
-/** Wariant barwny plakietki; okno samodzielne zostaje neutralne. */
+/** Wariant barwny plakietki roli; okno samodzielne, bez pary, zostaje neutralne wobec sygnału koordynatora. */
 function wariant(rola: WindowRole): string {
   switch (rola) {
     case WindowRole.Coordinator:

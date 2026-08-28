@@ -17,37 +17,9 @@ import type { ZrodloPetli } from './petla-zrodlo';
 import type { StanStudio } from './stan-studio';
 import { utworzWykazZadan, przycisk } from './zadania-wykaz';
 
-/**
- * Execution Loop Window — okno pętli wykonawczej modułu Studio.
- *
- * ── POWIERZCHNIA NALEŻY DO DOKUMENTU ────────────────────────────────────────
- * Opracowanie modułu stawia to okno jako kolumnę sąsiadującą z oknem rozmowy.
- * Rozstrzygnięcie Właściciela, podjęte dwukrotnie i obowiązujące w całym module,
- * jest mocniejsze: panele nie zajmują stałych kolumn — wchodzą na żądanie
- * i schodzą, gdy nie są używane. Okno pętli wchodzi więc znacznikiem przebiegu
- * i schodzi po zamknięciu, a stała kolumna jest TRYBEM DO WYBORU Operatora,
- * jawnym, odwracalnym i pamiętanym — nigdy postacią domyślną.
- *
- * Samoczynne otwarcie zostaje, bo jest wprost w opracowaniu: zlecenie
- * wielozadaniowe otwiera okno w chwili uruchomienia. Otwarcie samoczynne nie
- * jest tu sprzeczne z zasadą powierzchni — okno wchodzi wtedy, gdy naprawdę jest
- * używane, i to jest dokładnie ta reguła.
- *
- * ── Cztery widoki, jedna kolejka ────────────────────────────────────────────
- * Kolejka zadań, obsada wykonawców, warsztat łańcucha i tryb wsadowy patrzą na
- * ten sam stan. Krok łańcucha i dokument wsadu są zadaniami tej samej kolejki, bo
- * kontrakt mówi wprost: przebieg łańcucha i wsadu prowadzi pętla wykonawcza okna.
- * Druga maszyneria obok byłaby drugą prawdą o tym samym przebiegu.
- *
- * ── Czego to okno nie robi ──────────────────────────────────────────────────
- * Nie przestawia nastaw pętli. Nastawy — czy pętla jest czynna, ilu wykonawców
- * naraz, co przy spięciu — idą zasięgami rodziny `config.*` i komendą
- * `studio.agents.settings.set`. Okno je CZYTA i pokazuje wprost, a gdy pętla jest
- * wyłączona, mówi to zdaniem, zamiast pozwalać naciskać przycisk, który i tak
- * odmówi.
- */
+// Okno pętli wykonawczej modułu Studio: kolejka zadań, obsada, warsztat łańcucha i tryb wsadowy.
 
-/** Wywołania okna sięgające do sąsiednich okien modułu. */
+/** Wywołania okna sięgające do sąsiednich okien modułu — pokazanie wyniku zadania i wskazanie fragmentu dokumentu. */
 export interface CzynnosciSasiedzkie {
   /** Otwiera wynik zadania w oknie pracy z dokumentem. */
   pokazWynikZadania(zadanie: StudioDocumentTask): void;
@@ -176,18 +148,12 @@ export function utworzOknoPetliWykonawczej(
 
   okno.stan.tresc.append(nastawaZdanie, wskazniki, sterowanie, filtrStanu, zakladki.element);
 
-  // Znacznik przebiegu stoi POZA oknem, bo okno bywa zwinięte, a znacznik jest
-  // jedyną drogą do jego rozwinięcia. Pas obejmuje oba: jest kotwicą układu dla
-  // nakładki (`position: absolute` potrzebuje przodka ustawionego) i miejscem,
-  // w którym znacznik zostaje widoczny przy zwiniętym oknie.
+  // Znacznik przebiegu stoi poza oknem — okno bywa zwinięte, znacznik jest jedyną drogą rozwinięcia.
   const pas = document.createElement('div');
   pas.className = 'petla-pas';
   pas.append(znacznik, okno.element);
 
-  // ── Postęp przebiegu z rdzenia ────────────────────────────────────────────
-  // Okno odświeża się ZDARZENIEM, nie odpytywaniem w pętli. Rozkład o dziesięciu
-  // zadaniach odpytywany co sekundę znaczyłby dziesięć wywołań na nic w każdej
-  // sekundzie, w której nic się nie stało.
+  // Postęp przebiegu z rdzenia odświeża okno zdarzeniem, nie odpytywaniem w pętli co sekundę.
   const odsubskrybujPostep = zrodlo.naPostep((tresc) => {
     const rozklad = stan.rozklad();
     if (rozklad === null || tresc.runId !== rozklad.id) return;
@@ -203,9 +169,7 @@ export function utworzOknoPetliWykonawczej(
       stan.ustawNastawy(wynik.wynik.settings);
       return;
     }
-    // Odczyt nieudany zostawia nastawy jako „nie wiem" — a nie jako
-    // „wyłączone". Zgadnięcie „wyłączone" byłoby twierdzeniem o stanie rdzenia,
-    // którego okno nie sprawdziło.
+    // Odczyt nieudany zostawia nastawy jako „nie wiem", nie jako „wyłączone" — tego okno nie sprawdziło.
     stan.ustawNastawy(null);
     okno.stan.blad(
       `Nastaw pętli nie udało się odczytać: ${wynik.blad?.message ?? 'bez powodu podanego przez rdzeń'}`,
@@ -224,9 +188,7 @@ export function utworzOknoPetliWykonawczej(
       ...(zawezenie === undefined ? {} : { state: zawezenie }),
     });
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Dokument bez ani jednego rozkładu wraca odmową `not_found` — i to jest
-      // odpowiedź prawdziwa, nie awaria. Okno pokazuje wtedy stan pusty, a nie
-      // błąd: „rozkładu nie ma" i „odczyt się nie udał" to dwie różne rzeczy.
+      // Dokument bez ani jednego rozkładu wraca odmową not_found — to odpowiedź prawdziwa, nie awaria.
       stan.ustawRozklad(null);
       stan.ustawRozklady([]);
       okno.stan.puste(
@@ -292,9 +254,7 @@ export function utworzOknoPetliWykonawczej(
       return;
     }
     stan.ustawRozklad(wynik.wynik.plan);
-    // Pętla wyłączona nastawą wraca `started: false` wraz z powodem. Powód
-    // WCHODZI DO OKNA wprost — po to rdzeń go nazywa. Milczące nic nie zmieniło
-    // by się od udanego przebiegu bez pracy, a to jest wzorzec szkody.
+    // Pętla wyłączona nastawą wraca started: false wraz z powodem, który wchodzi do okna wprost.
     if (!wynik.wynik.started) {
       stan.ustawOdmowePrzebiegu(
         wynik.wynik.refusalReason ?? 'rdzeń odmówił uruchomienia bez podania powodu',
@@ -304,8 +264,7 @@ export function utworzOknoPetliWykonawczej(
     stan.ustawOdmowePrzebiegu(null);
     const bilans = wynik.wynik.balance;
     if (bilans !== undefined && bilans.skippedCount > 0) {
-      // Pominięcia przebiegu — także te z blokad fragmentu — pokazujemy nad
-      // kolejką, bo dotyczą przebiegu w całości, a nie jednego zadania.
+      // Pominięcia przebiegu pokazywane są nad kolejką, bo dotyczą przebiegu w całości, nie jednego zadania.
       okno.stan.blad(zdanieOPominieciach(bilans.note, bilans.skippedCount));
     } else {
       okno.stan.gotowe();
@@ -349,16 +308,7 @@ export function utworzOknoPetliWykonawczej(
     await wczytajLancuchy();
   }
 
-  /**
-   * Uruchomienie łańcucha: rdzeń rejestruje przebieg, a kroki wchodzą do
-   * kolejki pętli jako zadania.
-   *
-   * Kontrakt mówi wprost, że przebieg łańcucha prowadzi pętla wykonawcza okna —
-   * więc okno robi dwie rzeczy w tej kolejności: woła `studio.chain.run`, żeby
-   * przebieg powstał i był policzony po stronie rdzenia, a potem rozkłada kroki
-   * na zadania (`studio.plan.create`), żeby każdy krok miał swój stan, swojego
-   * wykonawcę i swój powód, gdy się nie uda.
-   */
+  /** Uruchomienie łańcucha: rdzeń rejestruje przebieg, a kroki wchodzą do kolejki pętli jako zadania. */
   async function uruchomLancuch(idLancucha: string): Promise<void> {
     const dokument = stanStudio.dokument();
     if (dokument === null) {
@@ -386,8 +336,7 @@ export function utworzOknoPetliWykonawczej(
       return;
     }
 
-    // Każdy krok łańcucha wchodzi jako zadanie: rodzaj `custom`, bo krok jest
-    // czynnością Operatora z katalogu, a nie jedną z siedmiu faz zlecenia.
+    // Każdy krok łańcucha wchodzi jako zadanie rodzaju custom, bo jest czynnością Operatora z katalogu.
     const zadania = lancuch.steps.map((krok, numer) => ({
       id: '',
       planId: '',
@@ -418,13 +367,7 @@ export function utworzOknoPetliWykonawczej(
     await puscPetle(false);
   }
 
-  /**
-   * Wsad: dokument po dokumencie, z chwilą na „przerwij" między nimi.
-   *
-   * Zatrzymanie NIE wycofuje niczego. Dokumenty już przetworzone zostają
-   * przetworzone; pozostałe dostają stan „przerwana" wraz z powodem, żeby
-   * Operator wiedział, gdzie wsad się skończył, a nie zgadywał.
-   */
+  /** Wsad idzie dokument po dokumencie, z chwilą na przerwanie między nimi; nic się nie wycofuje. */
   async function puscWsad(dokumenty: readonly string[], idAkcji: string): Promise<void> {
     stan.ustawPrzerwanieWsadu(false);
     stan.ustawWsad(
@@ -463,9 +406,7 @@ export function utworzOknoPetliWykonawczej(
         continue;
       }
       if (wynik.wynik.accepted === 0) {
-        // Rdzeń nie przyjął dokumentu i nie podał odrzucenia. Nie udajemy
-        // powodzenia: „przyjęto 0" bez wykazu jest bilansem niepełnym i tak to
-        // nazywamy.
+        // Rdzeń nie przyjął dokumentu i nie podał odrzucenia — bilans wsadu jest wtedy niepełny.
         stan.przestawPozycjeWsadu(
           idDokumentu,
           'odrzucona',
@@ -477,15 +418,7 @@ export function utworzOknoPetliWykonawczej(
     }
   }
 
-  /**
-   * Przyjęcie odłożonego brzmienia po spięciu.
-   *
-   * Brzmienie odłożone wchodzi do dokumentu decyzją Operatora, a nie samo.
-   * Droga jest ta sama, którą wchodzi każda zmiana: przez rozkład i pętlę, więc
-   * przyjęcie ma swój wiersz w kolejce i swój ślad. Rdzeń nie ma dziś komendy
-   * „przyjmij odłożone brzmienie" — to jest brak wypisany w sprawozdaniu, a nie
-   * dziura zaklejona wywołaniem, którego nie ma.
-   */
+  /** Przyjęcie odłożonego brzmienia idzie tą samą drogą co każda zmiana: przez rozkład i pętlę. */
   async function przyjmijBrzmienie(spiecie: StudioAgentConflict): Promise<void> {
     if (spiecie.deferredText === undefined || spiecie.deferredText === '') return;
     const rozklad = await zrodlo.rozlozZlecenie({
@@ -573,9 +506,7 @@ export function utworzOknoPetliWykonawczej(
       delete wskazniki.dataset['odmowa'];
     }
 
-    // Przycisk, który i tak odmówi, jest nieosiągalny — a powód stoi zdaniem
-    // wyżej. Ukrycie powodu i zostawienie czynnego przycisku byłoby zaproszeniem
-    // do odmowy bez wyjaśnienia.
+    // Przycisk, który i tak odmówi, jest nieosiągalny — powód odmowy stoi zdaniem wyżej.
     const mozeRuszyc = rozklad !== null && nastawy !== null && nastawy.executionLoopEnabled;
     puscGuzik.disabled = !mozeRuszyc;
     probaGuzik.disabled = rozklad === null;
@@ -600,10 +531,7 @@ export function utworzOknoPetliWykonawczej(
     znacznik,
 
     async wczytaj() {
-      // Odczyt przy wczytaniu modułu ogranicza się do nastaw: okno jest zwinięte,
-      // a odczytywanie rozkładu, obsady i łańcuchów dla okna, którego Operator
-      // nie otworzył, byłoby czterema wywołaniami na nic. Nastawy są wyjątkiem,
-      // bo od nich zależy treść znacznika przebiegu, który JEST widoczny.
+      // Odczyt przy wczytaniu modułu ogranicza się do nastaw — reszta byłaby wywołaniem na nic.
       await wczytajNastawy();
     },
 
@@ -623,9 +551,7 @@ export function utworzOknoPetliWykonawczej(
         return;
       }
       stan.ustawRozklad(wynik.wynik.plan);
-      // Zlecenie WIELOZADANIOWE otwiera okno samoczynnie — tak każe opracowanie
-      // modułu. Zlecenie jednozadaniowe okna nie otwiera: jedno zadanie widać
-      // w pasku kontekstu i nie warto mu oddawać powierzchni dokumentu.
+      // Zlecenie wielozadaniowe otwiera okno samoczynnie; jednozadaniowe zostaje w pasku kontekstu.
       if ((wynik.wynik.plan.tasks?.length ?? 0) > 1) stan.ustawOtwarte(true);
       await wczytajNastawy();
     },
@@ -636,13 +562,13 @@ export function utworzOknoPetliWykonawczej(
   };
 }
 
-/** Zdanie o pominięciach przebiegu — liczba plus nota rdzenia. */
+/** Zdanie o pominięciach przebiegu — liczba pominięć w bilansie plus nota rdzenia tłumacząca ich powód. */
 function zdanieOPominieciach(nota: string | undefined, ile: number): string {
   const wstep = `Przebieg zostawił ${ile} pominięć — pętla ich NIE przemilcza`;
   return nota === undefined || nota === '' ? `${wstep}.` : `${wstep}: ${nota}`;
 }
 
-/** Zakładki widoków okna — cztery widoki, jedna powierzchnia. */
+/** Zakładki widoków okna — cztery widoki nad tym samym stanem pętli wykonawczej, jedna wspólna powierzchnia. */
 interface ZakladkiOkna {
   element: HTMLElement;
   wybierz(kod: string): void;

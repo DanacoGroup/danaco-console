@@ -18,7 +18,7 @@ export interface KontekstOkna {
   wpisyWatku?: () => number;
 }
 
-/** Panel kontekstu okna komunikacji. */
+/** Panel kontekstu okna komunikacji, pokazujący moduł, kanał modelu, środowisko wykonania oraz wątek rozmowy w bieżącym oknie. */
 export interface PanelKontekstu {
   /** Element montowany w oknie. */
   element: HTMLElement;
@@ -56,7 +56,7 @@ export function utworzPanelKontekstu(): PanelKontekstu {
   };
 }
 
-/** Pozycje panelu w kolejności czytania: moduł, jego okna, wykonanie, wątek. */
+/** Pozycje panelu w kolejności czytania: moduł, jego okna, środowisko wykonania modelu oraz licznik wpisów wątku. */
 function wiersze(profil: ProfilModulu, kontekst: KontekstOkna): Array<[string, string]> {
   const pozycje: Array<[string, string]> = [['Przeznaczenie modułu', profil.przeznaczenie]];
 
@@ -85,7 +85,7 @@ function wiersze(profil: ProfilModulu, kontekst: KontekstOkna): Array<[string, s
   return pozycje;
 }
 
-/** Jedna pozycja panelu: nazwa i wartość. */
+/** Jedna pozycja panelu kontekstu, niosąca nazwę pola oraz jego bieżącą wartość tekstową w oknie komunikacji. */
 function wiersz(nazwa: string, wartosc: string): DocumentFragment {
   const fragment = document.createDocumentFragment();
 

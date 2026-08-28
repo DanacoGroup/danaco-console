@@ -1,34 +1,12 @@
 import type { SekcjaUstawien } from './sekcje';
 
-/**
- * Sekcja nazwanego braku — wspólny kształt dla miejsc, których rdzeń nie
- * pokrywa.
- *
- * Dwie sekcje Okna Ustawień (Konto Operatora, Powiadomienia) mówią tę samą
- * rzecz: czego w rdzeniu nie ma i dlaczego kontrolki tu nie ma. Wspólna
- * wytwórnia trzyma ten kształt w jednym miejscu, zamiast w dwóch odmianach.
- *
- * Sekcja nie stawia ani jednego pola, przełącznika czy przycisku, który nie ma
- * dokąd pójść. Kontrolka wyłączona byłaby tu gorsza niż jej brak: stan
- * „wyłączony" należy się elementowi, który w danym miejscu nie ma sensu, a nie
- * zapowiedzi czegoś, czego nie ma.
- *
- * Zaślepka mówi „wkrótce" — ta sekcja mówi, co dokładnie sprawdzono i gdzie,
- * z nazwami plików rdzenia i migracji, żeby dało się to zweryfikować. Zdanie
- * fałszywe albo nieaktualne waży tu więcej niż jego brak: Operator czyta je
- * jako wiedzę o stanie produktu.
- */
+/** Sekcja nazwanego braku jest wspólnym kształtem dla miejsc, których rdzeń nie pokrywa, i nie stawia ani jednego pola, przełącznika czy przycisku, który nie ma dokąd pójść. */
 export interface OpisBraku {
   /** Zdanie otwierające: czego w tej sekcji nie ma i dlaczego. */
   wstep: string;
   /** Po jednym zdaniu na wiersz — co sprawdzono i z jakim wynikiem. */
   pomiar: readonly string[];
-  /**
-   * Miejsce, do którego Operator ma pójść po tę zdolność.
-   *
-   * Pominięte znaczy „nie ma takiego miejsca" — i wtedy sekcja tego nie udaje.
-   * Odesłanie stoi tu zamiast drugiej ramy do tych samych danych.
-   */
+  /** Miejsce, do którego operator ma pójść po tę zdolność; pominięte znaczy, że takiego miejsca nie ma. */
   odeslanie?: string;
 }
 
@@ -67,8 +45,7 @@ export function utworzSekcjeBraku(opis: OpisBraku): SekcjaUstawien {
   return {
     element,
 
-    // Odświeżenie nie ma czego odczytać: przepisuje zdanie wstępu, bo cisza
-    // wyglądałaby jak odczyt, który nic nie znalazł.
+    // Odświeżenie nie ma czego odczytać: przepisuje zdanie wstępu, żeby cisza nie wyglądała jak odczyt.
     odswiez() {
       wstep.textContent = opis.wstep;
     },

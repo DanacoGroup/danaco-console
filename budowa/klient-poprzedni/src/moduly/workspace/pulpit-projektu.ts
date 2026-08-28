@@ -19,16 +19,8 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Project Dashboard — okno wiodące modułu Workspace: przegląd stanu projektu
- * i punkt wejścia po jego wybraniu. Stąd trzy części okna: wskazanie projektu,
- * zestawienie liczb i skoki do czterech pozostałych okien modułu.
- *
- * Wskazanie projektu jest polem, nie wykazem — okno nie zna komendy zwracającej
- * listę projektów. Wpisany identyfikator idzie do rdzenia komendą
- * `workspace.dashboard.get`, a co rdzeń z nim zrobi, mówi jego odpowiedź.
- *
- * Powody bezczynności przycisków bez pokrycia bierze `braki-kontraktu.ts`
- * z wykazu komend kontraktu, a nie z napisu na stałe.
+ * Project Dashboard to okno wiodące modułu Workspace: przegląd stanu projektu i punkt wejścia,
+ * złożone z wskazania projektu, zestawienia liczb i skoków do pozostałych okien.
  */
 export interface OknoPulpitu {
   element: HTMLElement;
@@ -36,7 +28,7 @@ export interface OknoPulpitu {
   odswiez(): void;
 }
 
-/** Skoki do pozostałych okien modułu. */
+/** Skoki do pozostałych okien modułu prowadzą operatora z pulpitu do okien powiązanych z bieżącym projektem. */
 export interface SkokiOkien {
   pokaz(kodOkna: string): void;
 }
@@ -62,10 +54,7 @@ export function utworzOknoPulpitu(
   const wejdz = przycisk('Wejdź do projektu', 'dn-btn dn-btn--atrament');
   const odswiez = przycisk('Odśwież zestawienie');
   const eksport = przycisk('Eksportuj podsumowanie');
-  // Archiwizacja jest zmianą stanu projektu, nie osobną czynnością: kontrakt ma
-  // na nią `workspace.project.status.set`, a stan `archived` znaczy „projekt
-  // zamknięty, dostępny do podglądu". Dlatego przycisk woła komendę wprost,
-  // zamiast stać jako kontrolka bez pokrycia.
+  // Archiwizacja jest zmianą stanu projektu, nie osobną czynnością, więc przycisk woła komendę wprost.
   const zarchiwizuj = przycisk('Zarchiwizuj projekt');
   zarchiwizuj.addEventListener('click', () => {
     const projekt = stan.projekt();
@@ -104,8 +93,7 @@ export function utworzOknoPulpitu(
 
   function pokaz(zestawienie: WorkspaceDashboard): void {
     ostatnie = zestawienie;
-    // Plakietka niesie stan wprost z odpowiedzi rdzenia, bez tłumaczenia go na
-    // własne słowo: ten sam napis stoi w wierszu „Stan prac” poniżej.
+    // Plakietka niesie stan wprost z odpowiedzi rdzenia, bez tłumaczenia go na własne słowo.
     rama.ustawZnacznik(zestawienie.project.status, wagaStanu(zestawienie.project.status));
     skokiPaska.ustawLiczniki(zestawienie);
     const lista = wykaz('Zestawienie projektu', 'dw-wykaz');
@@ -133,8 +121,7 @@ export function utworzOknoPulpitu(
     tresc.ladowanie('Odczyt zestawienia projektu…');
     void zrodlo.pulpit(projekt).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Plakietka i liczniki gasną razem z zestawieniem: pokazane nad odmową
-        // mówiłyby o odczycie, który się nie powiódł.
+        // Plakietka i liczniki gasną razem z zestawieniem: pokazane nad odmową mówiłyby o nieudanym odczycie.
         ostatnie = null;
         rama.ustawZnacznik('');
         skokiPaska.ustawLiczniki(null);
@@ -162,9 +149,7 @@ export function utworzOknoPulpitu(
 
   stan.naZmiane(() => {
     if (wskazanie.value !== stan.projekt()) wskazanie.value = stan.projekt();
-    // Zestawienie skasowane — zmianą projektu albo zdarzeniem rdzenia — unieważnia
-    // plakietkę stanu, liczniki kafli i materiał eksportu: wszystkie trzy mówiły
-    // o projekcie, który nie jest już projektem bieżącym okna.
+    // Zestawienie skasowane unieważnia plakietkę stanu, liczniki kafli i materiał eksportu naraz.
     if (stan.pulpit() !== null) return;
     ostatnie = null;
     rama.ustawZnacznik('');
@@ -175,11 +160,8 @@ export function utworzOknoPulpitu(
 }
 
 /**
- * Waga plakietki stanu projektu — trzy stany kontraktu wedle rozdz. 6.2
- * opracowania: czynny sukcesem, wstrzymany ostrzeżeniem, zarchiwizowany
- * neutralnie. Stan spoza kontraktu dostaje wagę ostrzegawczą, bo okno nie wie,
- * co rdzeń przez niego rozumie — przypisanie mu wagi „sukces” albo „neutralna”
- * byłoby zgadywaniem.
+ * Waga plakietki stanu projektu ma trzy stany kontraktu: czynny sukcesem, wstrzymany
+ * ostrzeżeniem, zarchiwizowany neutralnie, a stan spoza kontraktu dostaje wagę ostrzegawczą.
  */
 const WAGA_STANU: Readonly<Record<string, WagaZnacznika>> = {
   [WorkspaceProjectStatus.Active]: 'sukces',
@@ -191,7 +173,7 @@ function wagaStanu(status: string): WagaZnacznika {
   return WAGA_STANU[status] ?? 'ostrzezenie';
 }
 
-/** Kafel nawigacyjny: okno docelowe i — gdy zestawienie go niesie — licznik pozycji. */
+/** Kafel nawigacyjny niesie okno docelowe oraz, gdy zestawienie go niesie, licznik pozycji pokazywany na kaflu. */
 interface OpisSkoku {
   kod: string;
   nazwa: string;
@@ -230,7 +212,7 @@ const SKOKI: readonly OpisSkoku[] = [
   },
 ];
 
-/** Pasek kafli nawigacyjnych do pozostałych okien modułu. */
+/** Pasek kafli nawigacyjnych do pozostałych okien modułu pokazuje licznik pozycji przy każdym kaflu, gdy zestawienie go niesie. */
 interface PasekSkokow {
   element: HTMLElement;
   /** Przepisuje liczniki; zestawienie nieodczytane mówi to wprost, nie zeruje. */
@@ -266,7 +248,7 @@ function etykietaSkoku(opis: OpisSkoku, zestawienie: WorkspaceDashboard | null):
   return `→ ${opis.nazwa} (${opis.licznik.nazwa}: ${wartosc})`;
 }
 
-/** Wykaz identyfikatorów w jednym zdaniu; wykaz pusty mówi to wprost. */
+/** Wykaz identyfikatorów w jednym zdaniu podaje ich liczbę i treść; wykaz pusty mówi to wprost, zamiast milczeć. */
 function opisWykazu(pozycje?: string[]): string {
   if (pozycje === undefined || pozycje.length === 0) return 'brak';
   return `${pozycje.length} — ${pozycje.join(', ')}`;
@@ -281,13 +263,13 @@ function opisLiczby(ile?: number): string {
   return ile === undefined ? 'rdzeń nie podał' : String(ile);
 }
 
-/** Chwila w postaci lokalnej; brak znacznika mówi „nie odnotowano”. */
+/** Chwila w postaci lokalnej dla operatora; brak znacznika czasu mówi wprost, że zdarzenia nie odnotowano. */
 function opisChwili(chwila?: number): string {
   if (chwila === undefined || chwila === 0) return 'nie odnotowano';
   return new Date(chwila).toLocaleString('pl-PL');
 }
 
-/** Podsumowanie projektu w Markdown — treść pliku eksportu. */
+/** Podsumowanie projektu w Markdown stanowi treść pliku eksportu, budowaną z pól zestawienia pulpitu projektu. */
 function podsumowanie(zestawienie: WorkspaceDashboard): string {
   return [
     `# Projekt ${zestawienie.project.name}`,

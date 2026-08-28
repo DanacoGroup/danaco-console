@@ -13,25 +13,7 @@ import {
 } from './ocena-redaktora';
 import { opiszStatystyke, policzRoznice } from './statystyka-roznicy';
 
-/**
- * Panel Redaktora — ocena dokumentu, korekty, uściślenia, podobieństwa
- * i statystyki, po prawej stronie treści.
- *
- * ── Zasada panelu: każda liczba policzona ───────────────────────────────────
- * Ocena wychodzi z miary czytelności liczonej z tekstu (`ocena-redaktora.ts`),
- * a nie z wrażenia. Korekty liczą wzorce, które da się rozpoznać w zapisie;
- * pisownia i gramatyka stoją w wykazie z wartością NIEPODANĄ i z powodem, bo
- * słownika języka i analizy składniowej rdzeń nie ma, a program spoza instalki
- * jest zakazany. Podobieństwa liczy rdzeń — `studio.diff.source` zestawia
- * dokument z materiałem wejściowym, a `studio.search.semantic` szuka fragmentów
- * bliskich znaczeniowo. Statystyki bierze `liczniki-dokumentu.ts`.
- *
- * Panel nie woła rdzenia sam: okno podaje mu wyniki, które ma. Dzięki temu
- * pomiar zlecony i pomiar policzony na miejscu nie mieszają się w jednym
- * miejscu kodu.
- */
-
-/** Czynności panelu zlecane oknu. */
+/** Czynności panelu redaktora zlecane oknu: ocena, korekty i uściślenia liczone z tekstu, podobieństwa i wyszukiwanie zlecane rdzeniowi. */
 export interface CzynnosciRedaktora {
   /** Uruchamia uściślenie operacją kontekstową. */
   naUscislenie(idAkcji: string): void;
@@ -41,7 +23,7 @@ export interface CzynnosciRedaktora {
   naWyszukanie(zapytanie: string): void;
 }
 
-/** Panel wraz z jego odświeżeniem. */
+/** Panel redaktora wraz z jego odświeżeniem: przeliczeniem pomiarów oraz przyjęciem wyników zleconych rdzeniowi. */
 export interface PanelRedaktora {
   element: HTMLElement;
   /** Przelicza pomiary z treści bieżącej. */
@@ -234,12 +216,12 @@ export function utworzPanelRedaktora(czynnosci: CzynnosciRedaktora): PanelRedakt
   };
 }
 
-/** Czy zestawienie nie ma ani jednego fragmentu zmiany. */
+/** Sprawdza, czy zestawienie różnicy nie ma ani jednego fragmentu rzeczywistej zmiany treści dokumentu. */
 function fragmentyPuste(fragmenty: readonly StudioDiffHunk[]): boolean {
   return fragmenty.every((fragment) => fragment.kind === DiffHunkKind.Context);
 }
 
-/** Sekcja panelu wraz z jej tytułem. */
+/** Buduje sekcję panelu redaktora wraz z jej tytułem i wszystkimi elementami należącymi do tej samej sekcji. */
 function czesc(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-redaktor__tytul';
@@ -251,7 +233,7 @@ function czesc(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   return sekcja;
 }
 
-/** Zdanie opisu — jedno miejsce składania akapitu pomocniczego. */
+/** Buduje zdanie opisu, jedyne miejsce składania krótkiego akapitu pomocniczego wyświetlanego w panelu. */
 function zdanie(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';

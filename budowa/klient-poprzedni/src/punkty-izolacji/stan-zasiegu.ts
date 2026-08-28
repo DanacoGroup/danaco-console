@@ -1,24 +1,7 @@
 import { ConfigScope } from '../../../shared/contract';
 import { ETYKIETY_ZASIEGU } from './katalog-izolacji';
 
-/**
- * Zasięg czynny okna Punktów Izolacji — poziom, na którym reguła izolacji ma
- * obowiązywać, wraz z identyfikatorem bytu tego poziomu.
- *
- * Stan jest wspólny dla całego okna z tego samego powodu, dla którego wspólna
- * jest warstwa (`stan-warstwy.ts`): poziom rozstrzyga, który zapis czyta i pisze
- * macierz izolacji, dokąd trafia przypisanie profilu i czego dotyczy podgląd
- * polityki efektywnej. Osobny selektor w każdym z tych miejsc pokazywałby obok
- * siebie wartości z trzech różnych poziomów pod jedną nazwą „izolacja".
- *
- * Poziom globalny jest warstwą bazową i jedynym, który nie potrzebuje bytu —
- * każdy węższy wskazuje byt (kod środowiska, identyfikator projektu, sesji,
- * nazwę roli). Byt pusty przy poziomie węższym nie jest błędem klienta: żądanie
- * idzie bez pola `scopeId`, a odmowę — jeżeli rdzeń bytu wymaga — nazywa on sam.
- *
- * Plik nie woła rdzenia i nie buduje ani jednego elementu widoku. Selektor stoi
- * w `panel-zasiegu.ts`, czytelnicy — w obszarach.
- */
+/** Zasięg czynny okna Punktów Izolacji — poziom, na którym reguła izolacji ma obowiązywać, wraz z bytem. */
 export interface StanZasiegu {
   /** Poziom czynny; przed pierwszym wyborem — globalny, warstwa bazowa platformy. */
   zasieg(): ConfigScope;

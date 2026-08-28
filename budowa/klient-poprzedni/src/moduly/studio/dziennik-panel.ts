@@ -24,39 +24,12 @@ import {
 } from './dziennik-czynnosci';
 import type { ZrodloKontroliStudio } from './zrodlo-kontroli-studio';
 
-/**
- * Panel kontroli pracy nad dokumentem — cofanie, zmiany modelu, różnica postaci
- * i schowek dokumentu.
- *
- * ── Co panel niesie i czego NIE dubluje ─────────────────────────────────────
- * Historia wersji ma swoje okno (Session Repository), a zmiany śledzone swoje
- * miejsce w treści. Ten panel dokłada to, czego ani jedno, ani drugie nie ma:
- *
- *   — **dziennik czynności** — cofnięcie pojedyncze i NIE PO KOLEI, wraz
- *     z ponowieniem; zależności wypisane przy wpisie, żeby odmowa nie była
- *     zaskoczeniem;
- *   — **zmiany modelu** — licznik, skakanie i cofnięcie wszystkiego albo
- *     odhaczonych, z zachowaniem pracy Operatora;
- *   — **różnica POSTACI dwóch wersji** wraz z przeniesieniem pojedynczego
- *     fragmentu do stanu bieżącego;
- *   — **schowek dokumentu** — odłożenie i wklejenie fragmentu drogą rdzenia,
- *     która sprawdza blokady i odkłada wpis dziennika, więc wklejenie da się
- *     cofnąć pojedynczo.
- *
- * ── Dlaczego panel woła rdzeń sam ───────────────────────────────────────────
- * Bo każda z tych czynności oddaje BILANS, a bilans jest treścią dla Operatora,
- * nie wartością pośrednią: co przeszło, co stanęło i przez którą blokadę.
- * Przepuszczanie go przez okno nadrzędne kosztowałoby jedno przełożenie na
- * każdej z dziesięciu dróg, a bilans musi trafić na widok w całości. Skutek
- * czynności — nową treść i postać — panel oddaje oknu wywołaniem zwrotnym,
- * bo powierzchnia dokumentu jest po jego stronie.
- *
- * Panel nie zna treści dokumentu ani zaznaczenia: bierze je z kontekstu, który
- * podaje okno. Dzięki temu ten sam panel obsługuje dokument w zakładce i drugi
- * w podziale powierzchni.
- */
+// Panel kontroli pracy nad dokumentem — cofanie, zmiany modelu, różnica postaci i schowek dokumentu.
 
-/** Czym panel pyta okno o stan dokumentu i co mu oddaje. */
+/**
+ * Czym panel pyta okno o stan dokumentu i co mu oddaje: dokument czynny,
+ * zaznaczenie, miejsce kursora oraz skutek czynności do wpisania w powierzchnię.
+ */
 export interface KontekstDziennika {
   /** Dokument czynny; puste znaczy „nie ma na czym pracować". */
   idDokumentu(): string;
@@ -70,7 +43,10 @@ export interface KontekstDziennika {
   naMiejsce(poczatek: number, koniec: number): void;
 }
 
-/** Panel wraz z czynnościami wołanymi z zewnątrz. */
+/**
+ * Panel wraz z czynnościami wołanymi z zewnątrz: odczytem dziennika, skokiem
+ * po zmianach modelu, odłożeniem do schowka i wklejeniem z niego.
+ */
 export interface DziennikPanel {
   element: HTMLElement;
   /** Odczytuje dziennik i zestawienie zmian modelu. */
@@ -590,8 +566,7 @@ export function utworzDziennikPanel(
       kontekst.kursor(),
       { idWpisu },
       tryb,
-      // Zaznaczenie niepuste znaczy „wklej ZAMIAST tego": tak działa wklejenie
-      // w pakiecie biurowym i inne zachowanie byłoby tu zaskoczeniem.
+      // Zaznaczenie niepuste znaczy „wklej zamiast tego", tak jak w pakiecie biurowym.
       zaznaczenie === null || zaznaczenie.poczatek === zaznaczenie.koniec
         ? {}
         : { poczatek: zaznaczenie.poczatek, koniec: zaznaczenie.koniec },
@@ -636,9 +611,7 @@ export function utworzDziennikPanel(
     } else {
       const cofniecie = przyciskPanelu('Cofnij tę czynność', 'cofnij');
       cofniecie.title = DZIENNIK_ROZNICA_DRZEW;
-      // Przycisk zostaje CZYNNY nawet przy zależności: prawdę rozstrzyga rdzeń,
-      // a wykaz zależności mógł się zmienić po ostatnim odczycie. Operator
-      // dowiaduje się o przeszkodzie zdaniem obok, a odmowę nazywa rdzeń.
+      // Przycisk zostaje czynny nawet przy zależności — prawdę i odmowę rozstrzyga rdzeń.
       cofniecie.dataset['zaleznosc'] = dziennikCzyCofnieciePowstrzymane(wpis) ? 'tak' : 'nie';
       cofniecie.addEventListener('click', () => {
         void cofnij(wpis);
@@ -706,7 +679,10 @@ export function utworzDziennikPanel(
   };
 }
 
-/** Przycisk panelu wraz z kodem czynności do sprawdzianu. */
+/**
+ * Przycisk panelu wraz z kodem czynności do sprawdzianu — kod trafia do
+ * znacznika danych przycisku, żeby sprawdzian mógł go wskazać bez tekstu.
+ */
 function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -716,7 +692,10 @@ function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   return przycisk;
 }
 
-/** Pas przycisków — jeden rząd czynności. */
+/**
+ * Pas przycisków — jeden rząd czynności, wspólny wzorzec złożenia dla wszystkich
+ * części panelu dziennika.
+ */
 function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   const pas = document.createElement('div');
   pas.className = 'ms-kontrola__pas';
@@ -724,7 +703,10 @@ function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   return pas;
 }
 
-/** Część panelu wraz z jej tytułem. */
+/**
+ * Część panelu wraz z jej tytułem — dziennik czynności, zmiany modelu, różnica
+ * postaci i schowek stoją tym samym wzorcem tytułu i zawartości.
+ */
 function czescPanelu(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-kontrola__tytul';

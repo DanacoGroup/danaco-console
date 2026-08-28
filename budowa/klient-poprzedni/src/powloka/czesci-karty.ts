@@ -1,14 +1,8 @@
 import { elementIkony } from '../ikony/ikony';
 
-/**
- * Węzły jednej karty sesji — sama budowa i etykiety czynności.
- *
- * Jedna odpowiedzialność: kształt karty. Stan, wybór i cykl życia zostają
- * w `karta-sesji.ts`; te funkcje są czyste i nie domykają się na stanie karty,
- * więc wytwórnia karty zostaje krótka.
- */
+// Węzły jednej karty sesji — sama budowa i etykiety czynności, czyste i niezależne od stanu karty.
 
-/** Węzły jednej karty; złożone osobno, żeby wytwórnia została krótka. */
+/** Węzły jednej karty; złożone osobno w tej wytwórni, żeby karta-sesji.ts pozostała krótkim złożeniem stanu. */
 export interface CzesciKarty {
   element: HTMLElement;
   kropka: HTMLElement;
@@ -18,7 +12,7 @@ export interface CzesciKarty {
   zamknij: HTMLButtonElement;
 }
 
-/** Przycisk ikonowy karty — obie czynności karty mają ten sam kształt. */
+/** Przycisk ikonowy karty — obie czynności karty, zamknięcie i usunięcie, mają ten sam kształt kontrolki. */
 function przyciskKarty(ikona: 'zamknij' | 'kosz', klasa: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -28,14 +22,7 @@ function przyciskKarty(ikona: 'zamknij' | 'kosz', klasa: string): HTMLButtonElem
 }
 
 /**
- * Budowa węzłów karty.
- *
- * Karta jest zakładką z czynnościami w środku, więc nośnikiem roli jest element
- * bez własnej semantyki — przycisk w przycisku byłby zapisem wadliwym.
- *
- * Usunięcie trwałe stoi obok zamknięcia, nie zamiast niego: kosz mówi
- * o utracie zapisu, krzyżyk o zamknięciu karty. Jedna kontrolka dla obu
- * czynności kazałaby Operatorowi zgadywać, którą właśnie wykonał.
+ * Budowa węzłów karty: nośnikiem roli jest element bez własnej semantyki, a usunięcie trwałe stoi obok zamknięcia, nie zamiast niego, żeby operator nie musiał zgadywać, którą czynność wykonał.
  */
 export function zlozCzesciKarty(id: string): CzesciKarty {
   const element = document.createElement('div');

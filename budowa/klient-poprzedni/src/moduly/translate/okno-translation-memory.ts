@@ -15,24 +15,8 @@ import { oznaczWarstwe, utworzRozwiniecie } from './warstwy-translate';
 import type { ZrodloPaneli } from './zrodlo-paneli';
 
 /**
- * Translation Memory Panel — okno **zarządca** modułu Translate.
- *
- * Kontrakt daje pamięci tłumaczeń dokładnie jedno wejście: podpowiedź dla
- * wskazanego segmentu w wskazanym panelu. Nie ma odczytu par, nie ma ich
- * edycji, nie ma progu dopasowania, zasięgu, wymiany TMX ani operacji
- * konserwacyjnych. Okno robi więc to jedno, co da się zrobić, i przy każdej
- * pozostałej funkcji mówi, czego brakuje — zamiast stawiać kontrolkę, która
- * nie ma czego wysłać.
- *
- * Konkordancja i podpowiedź to w tym oknie jedna czynność, bo w kontrakcie są
- * jedną komendą: pole szukania wypełnia się segmentem wybranym z tekstu
- * źródłowego albo fragmentem wpisanym ręcznie, a wynikiem jest wykaz
- * podpowiedzi rdzenia. Dwa osobne przyciski nad jedną komendą sugerowałyby dwie
- * różne zdolności.
- *
- * Wskazanie panelu jest wymagane przez kontrakt (`panelId`), a nie przez okno:
- * pamięć odpowiada w języku panelu, więc bez panelu nie ma języka, w którym
- * miałaby podpowiadać.
+ * Translation Memory Panel to okno zarządca modułu Translate; kontrakt daje pamięci tłumaczeń
+ * jedno wejście, podpowiedź dla wskazanego segmentu w wskazanym panelu.
  */
 export interface OknoTranslationMemory {
   element: HTMLElement;
@@ -40,16 +24,8 @@ export interface OknoTranslationMemory {
 }
 
 /**
- * Odesłania do warsztatu — czynności pamięci, które rdzeń już wykonuje.
- *
- * To okno prowadzi jedną czynność: podpowiedź pamięci dla wskazanego segmentu.
- * Pozostałe czynności rodziny `translate.memory.*` — wykaz par, zapis pary,
- * usunięcie, wymiana z plikiem TMX, utrzymanie, tłumaczenie wstępne, wyrównanie
- * i polityka okna — mają swoje pola w oknie „Warsztat tłumaczenia".
- *
- * Nie są tu powtórzone i nie są tu nazwane brakiem: jedna czynność w dwóch
- * oknach to dwie drogi, które rozjadą się przy pierwszej zmianie kontraktu,
- * a napis „brak" przy czynności, która działa, jest zwykłą nieprawdą.
+ * Odesłania do warsztatu wskazują czynności pamięci, które rdzeń już wykonuje w oknie Warsztat
+ * tłumaczenia: wykaz par, wymianę plikiem, nastawy i wyrównanie.
  */
 const ODESLANIA = {
   wykaz: 'Wykaz par, zapis pary i usunięcie pary — okno „Warsztat tłumaczenia".',
@@ -113,12 +89,7 @@ export function utworzOknoTranslationMemory(stan: StanTranslate): OknoTranslatio
   element.dataset['okno'] = 'translation-memory-panel';
   element.append(naglowekOkna('Translation Memory Panel', 'zarządca'), okno.element);
 
-  /**
-   * Przerysowanie odbudowuje wykaz paneli i segmentów, nie ruszając fazy
-   * trwającej ani fazy błędu — te zdejmuje czynność, która je postawiła.
-   * Wykaz trafień zostaje na widoku: jest wynikiem szukania, a nie odbiciem
-   * stanu modułu, więc zmiana panelu w innym oknie nie ma go kasować.
-   */
+  /** Przerysowanie odbudowuje wykaz paneli i segmentów, nie ruszając fazy trwającej ani fazy błędu. */
   function odswiez(): void {
     const panele = stan.panelJezykow();
     ustawPozycje(
@@ -146,11 +117,8 @@ export function utworzOknoTranslationMemory(stan: StanTranslate): OknoTranslatio
 }
 
 /**
- * `translate.memory.suggest` — jedyne wejście do pamięci tłumaczeń.
- *
- * Wykaz pusty jest wynikiem, nie pustką okna: rdzeń odpowiedział i dopasowania
- * nie znalazł. Odmowa czyści wykaz, bo trafienia sprzed odmowy dotyczyłyby
- * innego zapytania niż to, które właśnie zawiodło.
+ * Wyszukanie w pamięci tłumaczeń jest jedynym wejściem do pamięci; wykaz pusty jest wynikiem
+ * szukania, a odmowa czyści wykaz trafień.
  */
 async function szukajWPamieci(
   zrodlo: ZrodloPaneli,
@@ -211,7 +179,7 @@ function wierszTrafienia(tresc: string): HTMLElement {
   return element;
 }
 
-/** Warstwa druga: nastawy pamięci — prowadzi je polityka okna w warsztacie. */
+/** Warstwa druga niesie nastawy pamięci, których zasięg i próg dopasowania prowadzi polityka okna w warsztacie tłumaczenia. */
 function zasiegIProg(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 2,
@@ -223,7 +191,7 @@ function zasiegIProg(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa trzecia: menu pamięci — wymiana, wykaz par i wyrównanie. */
+/** Warstwa trzecia mieści menu pamięci: wymianę plikiem, wykaz par oraz wyrównanie pamięci z materiałem już przełożonym. */
 function menuPamieci(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 3,
@@ -240,7 +208,7 @@ function menuPamieci(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa czwarta: konserwacja pamięci — cztery operacje wsadowe. */
+/** Warstwa czwarta niesie konserwację pamięci złożoną z czterech operacji wsadowych wykonywanych w oknie warsztatu. */
 function konserwacjaPamieci(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 4,
@@ -252,7 +220,7 @@ function konserwacjaPamieci(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** zdanieOdeslania stawia jedno zdanie wskazujące okno, które czynność prowadzi. */
+/** Funkcja zdanieOdeslania stawia jedno zdanie wskazujące okno warsztatu, które czynność pamięci prowadzi zamiast tego okna. */
 function zdanieOdeslania(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';

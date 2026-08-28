@@ -1,31 +1,8 @@
 import { utworzRozwiniecie } from './warstwy-translate';
 
-/**
- * Skróty klawiszowe modułu Translate — wykaz z załącznika opracowania wraz
- * z tym, które z nich moduł faktycznie wiąże.
- *
- * Nasłuch wisi na elemencie modułu, nie na dokumencie. Moduł znika z drzewa
- * przy zejściu ze sceny i nasłuch znika razem z nim; nasłuch dokumentu
- * trzeba by odpinać osobno, a pierwszy przeoczony byłby wyciekiem —
- * to samo rozstrzygnięcie, co przy sterze kanału.
- *
- * Skutek uboczny tej decyzji jest nazwany, nie przemilczany: skrót działa, gdy
- * ognisko stoi wewnątrz modułu. Poza modułem klawisze należą do powłoki.
- *
- * Wyszukiwarka funkcji zajmuje `Ctrl/Cmd + K` za opracowaniem modułu, a ten sam
- * skrót wiąże na dokumencie pole poleceń paska górnego. Rozstrzygnięcie jest
- * miejscowe: dopóki ognisko stoi w module, skrót otwiera wyszukiwarkę modułu
- * i nie idzie dalej (`stopPropagation`); poza modułem prowadzi do pola poleceń
- * bez zmian. Zbieżność jest realna i wymaga rozstrzygnięcia właściciela
- * projektu — do tego czasu pierwszeństwo ma okno, w którym Operator pracuje.
- *
- * Dwa skróty pętli wykonawczej stoją w wykazie, ale moduł ich nie wiąże:
- * Execution Loop Window jest oknem wspólnym platformy i leży poza katalogiem
- * tego modułu. Wykaz mówi to wprost, zamiast pomijać pozycje i sugerować, że
- * skrótów nie ma.
- */
+/** Skróty klawiszowe modułu Translate stanowią wykaz z opracowania, z których część moduł wiąże. */
 
-/** Jedna pozycja wykazu skrótów. */
+/** Jedna pozycja wykazu skrótów niesie zapis klawiszy, opis działania, okno, do którego skrót należy, oraz stan wiązania w module. */
 export interface Skrot {
   /** Zapis klawiszy tak, jak podaje go opracowanie. */
   readonly klawisze: string;
@@ -99,7 +76,7 @@ export const SKROTY: readonly Skrot[] = [
   },
 ];
 
-/** Czynności wyzwalane skrótami — okna dostarczają je przy montażu modułu. */
+/** Czynności wyzwalane skrótami klawiszowymi, które okna modułu dostarczają jako obiekt przy montażu, wołane po dopasowaniu zdarzenia klawiatury. */
 export interface CzynnosciSkrotow {
   /** `Ctrl/Cmd + Shift + L` — prowadzi do formularza dodania języka. */
   dodajJezyk(): void;
@@ -117,13 +94,12 @@ export interface CzynnosciSkrotow {
   otworzWyszukiwarke(): void;
 }
 
-/** Podpina skróty do elementu modułu; zwraca odpięcie wołane przy rozłączeniu. */
+/** Podpina skróty klawiszowe do elementu modułu i zwraca funkcję odpięcia, wołaną przy rozłączeniu modułu od dokumentu. */
 export function podepnijSkroty(element: HTMLElement, czynnosci: CzynnosciSkrotow): () => void {
   function przyKlawiszu(zdarzenie: KeyboardEvent): void {
     const czynnosc = dopasuj(zdarzenie, czynnosci);
     if (czynnosc === null) return;
-    // Zdarzenie zatrzymuje się na module, bo skrót został tu obsłużony. Bez tego
-    // ta sama kombinacja wykonałaby się drugi raz na poziomie powłoki.
+    // Zdarzenie zatrzymuje się na module, bo skrót obsłużono tu, inaczej wykonałby się w powłoce.
     zdarzenie.preventDefault();
     zdarzenie.stopPropagation();
     czynnosc();
@@ -158,7 +134,7 @@ function dopasuj(zdarzenie: KeyboardEvent, czynnosci: CzynnosciSkrotow): (() => 
   return null;
 }
 
-/** Wykaz skrótów jako element warstwy czwartej — droga bez klawiatury. */
+/** Wykaz skrótów jako element warstwy czwartej stanowi drogę bez klawiatury do tej samej informacji, którą niosą skróty. */
 export function utworzWykazSkrotow(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 4,

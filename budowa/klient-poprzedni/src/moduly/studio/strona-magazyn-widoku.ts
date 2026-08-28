@@ -15,51 +15,24 @@ import {
 } from './widok-nastawy-operatora';
 
 /**
- * Nastawy widoku prowadzone przez RDZEŃ, a nie przez magazyn przeglądarki.
- *
- * ── Dlaczego to jest przełożenie, a nie nowa droga ──────────────────────────
- * `widok-nastawy-operatora.ts` od początku brał magazyn PODANY, a nie sięgał po
- * `localStorage` z globalnej przestrzeni — właśnie po to, żeby zapis dał się
- * przełożyć na rdzeń bez zmiany ani jednego wołacza. Kontrakt ma dziś
- * `studio.view.get` i `studio.view.set`, więc ten plik jest tym przełożeniem:
- * podstawia się go tam, gdzie stał magazyn przeglądarki, i nastawy przestają
- * ginąć przy przesiadce na inne urządzenie.
- *
- * ── Dlaczego magazyn jest nadal natychmiastowy ──────────────────────────────
- * `MagazynNastawWidoku` jest z natury natychmiastowy: `getItem` musi oddać
- * wartość w chwili składania okna, a rdzeń odpowiada później. Zapis dwustopniowy
- * rozwiązuje to bez kłamstwa: pamięć podręczna trzyma nastawy zapisane w rdzeniu,
- * a `wczytaj()` ją napełnia. Do chwili odpowiedzi obowiązuje odbicie w magazynie
- * przeglądarki (gdy jest) albo nastawy domyślne — okno nie stoi wtedy w miejscu
- * i nie udaje, że zna wybór Operatora.
- *
- * ── Dlaczego odbicie w przeglądarce zostaje ─────────────────────────────────
- * Bo pierwsza klatka okna rysuje się przed odpowiedzią rdzenia. Odbicie nie jest
- * drugim źródłem prawdy: rdzeń nadpisuje je przy każdym odczycie, a zapis idzie
- * do obu naraz. Bez odbicia każde wejście do modułu zaczynałoby się skalą 100 %
- * i zakładkami, choćby Operator ustawił co innego.
- *
- * ── Uczciwość niepowodzenia ─────────────────────────────────────────────────
- * Nieudany zapis nastawy widoku NIE przerywa pracy — ale i nie milczy: idzie
- * zdaniem do wołacza (`naZdanie`), więc Operator wie, że wybór nie przeżyje
- * zamknięcia okna. Cisza byłaby tu obietnicą trwałości bez pokrycia.
+ * Klucz zapisu nastaw widoku w magazynie zgodny z kluczem używanym przez moduł
+ * nastaw operatora widoku, dla zgodności odczytu między obiema drogami zapisu.
  */
-
-/** Klucz zapisu — ten sam, którym posługuje się `widok-nastawy-operatora.ts`. */
 const KLUCZ_ZAPISU = 'dn.studio.widok';
 
-/** Magazyn nastaw widoku oparty na rdzeniu. */
+/**
+ * Magazyn nastaw widoku oparty na rdzeniu zamiast na magazynie przeglądarki;
+ * zapis idzie dwustopniowo przez pamięć podręczną i odbicie lokalne.
+ */
 export interface MagazynWidokuRdzenia extends MagazynNastawWidoku {
-  /**
-   * Napełnia pamięć podręczną nastawami z rdzenia.
-   *
-   * Wywołuje się raz, przy wczytaniu okna. Odmowa zostawia nastawy zastane
-   * i oddaje `false` — okno ma wtedy powiedzieć, że nastawy są miejscowe.
-   */
+  /** Napełnia pamięć podręczną nastawami z rdzenia; odmowa zostawia nastawy zastane. */
   wczytaj(): Promise<boolean>;
 }
 
-/** Zaplecze magazynu: źródło komend, wskazanie okna i dokumentu, zdanie o skutku. */
+/**
+ * Zaplecze magazynu nastaw widoku: źródło komend rdzenia, wskazanie okna
+ * i dokumentu bieżącego oraz zdanie zwrotne o skutku zapisu nastawy.
+ */
 export interface ZapleczeMagazynuWidoku {
   zrodlo: ZrodloPostaciStudio;
   idDokumentu(): string;
@@ -76,7 +49,7 @@ export function utworzMagazynWidokuRdzenia(
   const odbicie = zaplecze.odbicie === undefined ? magazynPrzegladarki() : zaplecze.odbicie;
   let pamiec: string | null = null;
 
-  /** Pola wskazujące zasięg nastaw; oba opcjonalne w kontrakcie. */
+  /** Pola zasięgu nastaw: identyfikator dokumentu i okna; oba pola opcjonalne. */
   function zasieg(): { documentId?: string; windowId?: string } {
     const dokument = zaplecze.idDokumentu();
     const okno = zaplecze.idOkna();
@@ -99,8 +72,7 @@ export function utworzMagazynWidokuRdzenia(
       try {
         odbicie?.setItem(klucz, wartosc);
       } catch {
-        // Odbicie jest wygodą pierwszej klatki, nie trwałością — jego awaria
-        // (tryb prywatny, osadzenie w ramce) niczego nie przerywa.
+        // Odbicie jest wygodą pierwszej klatki, awaria zapisu niczego nie przerywa.
       }
       const nastawy = odczytajNastawy(wartosc);
       if (nastawy === null) return;
@@ -140,7 +112,7 @@ export function utworzMagazynWidokuRdzenia(
   }
 }
 
-/** Nastawy okna z zapisu; zapis uszkodzony oddaje `null`. */
+/** Nastawy okna odtworzone z tekstu zapisu magazynu; zapis uszkodzony albo o złej postaci oddaje `null`. */
 function odczytajNastawy(zapis: string): NastawyOperatoraWidoku | null {
   try {
     const tresc = JSON.parse(zapis) as unknown;
@@ -152,11 +124,8 @@ function odczytajNastawy(zapis: string): NastawyOperatoraWidoku | null {
 }
 
 /**
- * Nastawy okna przełożone na kontrakt.
- *
- * Układ kartek okna („jedna", „obok", „rozkładówka") rozkłada się w kontrakcie na
- * DWA pola — liczbę stron w rzędzie i rozkładówkę — bo to dwie różne rzeczy:
- * rozkładówka ma stronę otwarcia po prawej, a dwie kartki obok siebie nie mają.
+ * Nastawy okna przełożone na kontrakt; układ kartek rozkłada się na dwa pola
+ * kontraktu — liczbę stron w rzędzie i rozkładówkę — bo to dwie różne rzeczy.
  */
 export function naNastawyRdzenia(nastawy: NastawyOperatoraWidoku): StudioViewSetRequest {
   return {
@@ -167,9 +136,7 @@ export function naNastawyRdzenia(nastawy: NastawyOperatoraWidoku): StudioViewSet
         ? StudioSplitOrientation.Horizontal
         : StudioSplitOrientation.Vertical,
     splitRatio: nastawy.udzialPodzialu,
-    // Tryb widoku niesie tu wyłącznie przełącznik trybu źródłowego. Podglądu
-    // wydruku i różnicy okno przestawia własną drogą (`ustawTryb`), a nadpisywanie
-    // ich stąd zabierałoby Operatorowi tryb, w którym właśnie pracuje.
+    // Tryb widoku niesie tu wyłącznie przełącznik trybu źródłowego, nie podgląd.
     viewMode: nastawy.trybZrodlowy ? StudioViewMode.Source : StudioViewMode.Edit,
     zoomPercent: nastawy.skala,
     rulersVisible: nastawy.linijkiWidoczne,
@@ -184,7 +151,7 @@ export function naNastawyRdzenia(nastawy: NastawyOperatoraWidoku): StudioViewSet
   };
 }
 
-/** Nastawy kontraktu przełożone na nastawy okna; brak pola bierze wartość domyślną. */
+/** Nastawy kontraktu przełożone na nastawy okna operacyjnego Studio; brak pola bierze wartość domyślną modułu. */
 export function zNastawRdzenia(nastawy: StudioViewSettings): NastawyOperatoraWidoku {
   const okno = domyslneNastawyWidoku();
   if (nastawy.surfaceMode !== undefined) {
@@ -205,8 +172,7 @@ export function zNastawRdzenia(nastawy: StudioViewSettings): NastawyOperatoraWid
     okno.przewijanie =
       nastawy.scrollMode === StudioScrollMode.Page ? 'strona-po-stronie' : 'ciagle';
   }
-  // Rozkładówka ma pierwszeństwo nad liczbą stron w rzędzie: jedno wyklucza
-  // drugie, a rdzeń wolno mu oddać oba naraz.
+  // Rozkładówka ma pierwszeństwo nad liczbą stron w rzędzie.
   if (nastawy.spreadView === true) okno.ukladKartek = 'rozkladowka';
   else if (nastawy.pagesPerRow !== undefined && nastawy.pagesPerRow > 1) {
     okno.ukladKartek = 'obok';
@@ -216,7 +182,7 @@ export function zNastawRdzenia(nastawy: StudioViewSettings): NastawyOperatoraWid
   return okno;
 }
 
-/** Magazyn przeglądarki albo `null`, gdy niedostępny. */
+/** Magazyn przeglądarki dla odbicia nastaw widoku pierwszej klatki albo `null`, gdy magazyn przeglądarki jest niedostępny. */
 function magazynPrzegladarki(): MagazynNastawWidoku | null {
   try {
     return globalThis.localStorage ?? null;

@@ -2,29 +2,8 @@ import type { RoundtableParticipant, RoundtableStatement } from '../../../../sha
 import type { GlosNaZywo } from './strumien-wypowiedzi';
 
 /**
- * Głos uczestnika w chwili bieżącej — wspólne dla trzech widoków modułu ustalenie,
- * którą treść pokazać i jak ją nazwać.
- *
- * Rdzeń nadaje wypowiedź dwiema drogami: zdarzeniem `roundtable.debate.changed`
- * (rodzaju `created` z treścią pustą w chwili otwarcia głosu, rodzaju `updated`
- * z treścią pełną po domknięciu strumienia) oraz fragmentami `stream.chunk` przez
- * cały czas mówienia. Widok czytający wyłącznie zdarzenia pokazuje pustą wypowiedź
- * aż do domknięcia strumienia, dlatego obie drogi trzeba złożyć w jedną treść.
- *
- * Świeższą treść wybiera się po długości, bo fragment nie niesie znacznika czasu
- * (`StreamChunkEvent` go nie ma), a `RoundtableStatement.createdAt` bywa zerem:
- * rosnąca wygrywa, gdy jest niekrótsza; utrwalona wchodzi, gdy rosnącej nie ma
- * albo urwała się krótsza — strumień zerwany w połowie, a rdzeń zapisał całość.
- *
- * Moduł nie tworzy węzłów DOM i nie zna klas CSS: trzy widoki rysują inaczej
- * (kolumna, wykaz, panel), a treść i stan mają mieć to samo.
- */
-
-/**
- * Nazwy stanów głosu — napisy stałe, bo trafiają do atrybutu `data-stan-glosu`,
- * w który arkusze `panel-debaty.css` i `debata.css` celują wprost. Wyliczenie
- * stoi tu, a nie w widoku, żeby zmiana napisu w jednym miejscu nie rozjechała
- * dwóch arkuszy i trzech okien.
+ * Nazwy stanów głosu uczestnika bieżącego, złożonego z obu dróg rdzenia — zdarzenia zapisu
+ * i strumienia fragmentów — wspólne dla trzech widoków modułu.
  */
 export const STAN_GLOSU = {
   mowi: 'mówi teraz',
@@ -35,7 +14,7 @@ export const STAN_GLOSU = {
   brak: 'głosu jeszcze nie zabrał',
 } as const;
 
-/** Głos uczestnika złożony z obu dróg rdzenia. */
+/** Głos uczestnika złożony z obu dróg rdzenia: świeższa treść, jej pochodzenie, stan oraz tok rozumowania i powód zerwania. */
 export interface GlosBiezacy {
   /** Treść do pokazania — świeższa z dwóch; pusta, gdy żadnej nie ma. */
   tekst: string;
@@ -51,14 +30,7 @@ export interface GlosBiezacy {
   przyczyna: string;
 }
 
-/**
- * Składa głos bieżący uczestnika.
- *
- * @param glos gromadzenie ze `stream.chunk`; `null`, gdy nic nie płynęło.
- * @param utrwalona ostatnia wypowiedź tego uczestnika zapisana przez rdzeń.
- * @param wyciszony czy uczestnik jest wyciszony w turze — rozdziela „milczy,
- *   bo go nie pytano" od „milczy, choć pytano".
- */
+/** Składa głos bieżący uczestnika z gromadzenia strumienia i ostatniej wypowiedzi utrwalonej, wybierając treść świeższą po długości. */
 export function zlozGlosBiezacy(
   glos: GlosNaZywo | null,
   utrwalona: RoundtableStatement | null,
@@ -77,13 +49,7 @@ export function zlozGlosBiezacy(
   };
 }
 
-/**
- * Zdanie o stanie głosu — rozdziela sześć stanów, których nie wolno mylić.
- *
- * Kolejność sprawdzeń jest kolejnością ważności: awaria przed trwaniem, trwanie
- * przed domknięciem, cokolwiek ze strumienia przed samym zapisem, a dopiero na
- * końcu dwa rodzaje ciszy.
- */
+/** Zdanie o stanie głosu — rozdziela sześć stanów, których nie wolno mylić, w kolejności ważności od awarii po ciszę. */
 function opisStanuGlosu(
   glos: GlosNaZywo | null,
   utrwalona: RoundtableStatement | null,
@@ -96,14 +62,7 @@ function opisStanuGlosu(
   return wyciszony ? STAN_GLOSU.wyciszony : STAN_GLOSU.brak;
 }
 
-/**
- * Zdanie pod tożsamością, gdy słów nie ma — podaje powód zamiast pustki.
- *
- * Wypowiedź utrwalona o treści pustej jest przypadkiem osobnym: rdzeń rozgłasza
- * `created` z pustą treścią w chwili otwarcia głosu, więc okno bez odbioru
- * strumienia widzi ten stan przez cały czas mówienia modelu. Zdanie mówi wtedy,
- * że głos jest otwarty, a nie że uczestnik milczy.
- */
+/** Zdanie pod tożsamością, gdy słów nie ma, nazywające powód: zerwanie, głos dopiero otwarty, wyciszenie albo cisza w turze. */
 export function zdanieBezSlow(biezacy: GlosBiezacy, wyciszony: boolean): string {
   if (biezacy.przyczyna !== '') {
     return 'Rdzeń nie przypisał uczestnikowi ani jednego słowa — kanał odmówił przed odpowiedzią.';
@@ -118,19 +77,12 @@ export function zdanieBezSlow(biezacy: GlosBiezacy, wyciszony: boolean): string 
   return 'Ten uczestnik nie powiedział jeszcze w tej turze ani słowa widzianego przez to okno.';
 }
 
-/** Czy uczestnik jest wyciszony — `muted` jest polem nieobowiązkowym kontraktu. */
+/** Czy uczestnik jest wyciszony w tej turze — pole wyciszenia jest polem nieobowiązkowym kontraktu, więc brak znaczy nie. */
 export function wyciszony(uczestnik: RoundtableParticipant | null): boolean {
   return uczestnik !== null && uczestnik.muted === true;
 }
 
-/**
- * Ostatnia wypowiedź uczestnika w wykazie tury; `null`, gdy żadnej nie było.
- *
- * Rdzeń dopisuje wypowiedź uczestnika raz na turę, ale interwencja moderatora
- * potrafi otworzyć mu głos powtórnie i wtedy rośnie ta ostatnia. Wykaz
- * `StanDebaty.wypowiedzi()` zachowuje kolejność przyjścia, więc ostatnie
- * trafienie jest tym, o które chodzi.
- */
+/** Ostatnia wypowiedź uczestnika w wykazie tury, wybrana po kolejności przyjścia, ponieważ interwencja moderatora może otworzyć głos powtórnie. */
 export function ostatniaWypowiedz(
   wypowiedzi: readonly RoundtableStatement[],
   idUczestnika: string,
@@ -142,14 +94,7 @@ export function ostatniaWypowiedz(
   return znaleziona;
 }
 
-/**
- * Identyfikatory wypowiedzi będących ostatnimi głosami swoich mówców.
- *
- * Głos rosnący jest własnością uczestnika, a wykaz Debate Panelu jest wykazem
- * wypowiedzi. Doklejenie treści rosnącej do każdej wypowiedzi tego samego mówcy
- * powtórzyłoby te same słowa tyle razy, ile razy odezwał się w turze; rosnąca
- * należy wyłącznie do wypowiedzi otwartej ostatnio.
- */
+/** Identyfikatory wypowiedzi będących ostatnimi głosami swoich mówców, żeby treść rosnąca doklejała się wyłącznie do wypowiedzi otwartej ostatnio. */
 export function ostatnieGlosy(wypowiedzi: readonly RoundtableStatement[]): Set<string> {
   const ostatnia = new Map<string, string>();
   for (const wypowiedz of wypowiedzi) ostatnia.set(wypowiedz.participantId, wypowiedz.id);

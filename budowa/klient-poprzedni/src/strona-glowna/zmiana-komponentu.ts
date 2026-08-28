@@ -10,33 +10,7 @@ import type { Kanal } from '../protokol/kanal';
 import { czyObiekt, czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Zmiana komponentu własnego (`component.update`) i jego przypisanie
- * (`component.assign`) — dwie czynności strefy drugiej strony głównej.
- *
- * Zakładanie stoi obok, w `zalozenie-komponentu.ts`; tu jest to, co robi się
- * z komponentem JUŻ założonym.
- *
- * `component.update` zmienia pola podane, a pominięte zostawia bez zmian — tak
- * stanowi kontrakt. Formularz wysyła więc wyłącznie to, co Operator naprawdę
- * zmienił: przesłanie wszystkich pól przy każdej zmianie nazwy nadpisywałoby
- * opis i stan czynności wartościami z ekranu, który mógł być odczytany dawno.
- *
- * `component.assign` zapamiętuje na wierszu komponentu, na którym poziomie
- * zasięgu ten komponent obowiązuje — i NIC PONAD TO. Nie przenosi bytu
- * modułowego, nie nadaje uprawnień, nie włącza komponentu do żadnej pętli
- * wykonania (`server/internal/core/adapter_modul_komponenty.go`, `Przypisz`).
- * Kontrakt zaznacza przy tej komendzie, że znaczenie przypisania nie zostało
- * rozstrzygnięte przez Właściciela; widok mówi to wprost, zamiast obiecywać
- * skutek, którego rdzeń nie wywołuje.
- *
- * Rdzeń przyjmuje pięć poziomów z dziewięciu: global, environment, project,
- * session i window; module, modulePair, role i application odpowiadają
- * `validation_failed`. Wykaz stoi tutaj, bo mówi o zdolności rdzenia, nie
- * o wyglądzie, i ma się zmieniać w jednym miejscu.
- */
-
-/** Poziom zasięgu przyjmowany przez rdzeń wraz z nazwą bytu, którego żąda. */
+/** Zmiana komponentu własnego i jego przypisanie do poziomu zasięgu są dwiema czynnościami strefy drugiej strony głównej, wykonywanymi na komponencie już założonym. */
 export interface PoziomPrzypisania {
   kod: ConfigScope;
   /** Nazwa poziomu widziana przez Operatora. */
@@ -65,19 +39,19 @@ export const POZIOMY_PRZYPISANIA: readonly PoziomPrzypisania[] = [
   { kod: ConfigScope.Session, nazwa: 'Karta sesji', zBytem: true, zrodloBytow: 'wpisywany' },
 ];
 
-/** Poziomy, których rdzeń nie przyjmuje, wraz z powodem — do zdania w widoku. */
+/** Poziomy, których rdzeń w przypisaniu nie przyjmuje, wraz z powodem przeznaczonym do pokazania w zdaniu widoku. */
 export const POZIOMY_ODRZUCANE =
   'Poziomów modułu, pary modułów, roli i aplikacji rdzeń w przypisaniu nie przyjmuje — ' +
   'odpowiada odmową sprawdzenia żądania. Brak jest po stronie RDZENIA, w rozstrzygnięciu ' +
   'komendy, nie w tym oknie.';
 
-/** Byt poziomu wraz z nazwą — to, z czym okno wiąże komponent. */
+/** Byt poziomu wraz z jego nazwą — to, z czym okno wiąże komponent podczas przypisania zasięgu komponentu. */
 export interface BytPoziomu {
   id: string;
   nazwa: string;
 }
 
-/** Wynik czynności w postaci, którą widok pokazuje bez dopowiadania. */
+/** Wynik czynności zmiany albo przypisania w postaci, którą widok pokazuje bez dopowiadania niczego od siebie. */
 export interface WynikCzynnosci {
   udane: boolean;
   zdanie: string;
@@ -97,11 +71,11 @@ export interface ZmianaKomponentu {
   okna(): Promise<readonly BytPoziomu[]>;
 }
 
+/** Zmiana komponentu udostępnia wykaz, zmianę pól, przypisanie zasięgu oraz byty poziomów środowiska i okna komunikacji. */
 export function utworzZmianeKomponentu(kanal: Kanal): ZmianaKomponentu {
   return {
     async wykaz() {
-      // `includeDisabled: true`, w odróżnieniu od kafli strefy: komponent
-      // wyłączony jest właśnie tym, który Operator przychodzi tu włączyć.
+      // Wykaz z włączeniem wyłączonych: komponent wyłączony jest tym, który operator przychodzi włączyć.
       const wynik = sprawdzKsztalt(
         await wywolaj(kanal, Command.ComponentList, { includeDisabled: true }),
         Command.ComponentList,
@@ -123,8 +97,7 @@ export function utworzZmianeKomponentu(kanal: Kanal): ZmianaKomponentu {
         return { udane: false, zdanie: opisOdmowyBledu('Zmiana komponentu', wynik.blad) };
       }
       const komponent = wynik.wynik.component;
-      // Zdanie mówi o tym, co oddał rdzeń, a nie o tym, co poszło w żądaniu:
-      // nazwa bywa przycięta, a stan czynności rozstrzyga zapis w bazie.
+      // Zdanie mówi o tym, co oddał rdzeń, a nie o tym, co poszło w żądaniu: nazwa bywa przycięta.
       return {
         udane: true,
         zdanie:
@@ -145,8 +118,7 @@ export function utworzZmianeKomponentu(kanal: Kanal): ZmianaKomponentu {
         return { udane: false, zdanie: opisOdmowyBledu('Przypisanie komponentu', wynik.blad) };
       }
       const tresc = wynik.wynik;
-      // `assigned: false` znaczy powtórzenie tego samego przypisania — nic nie
-      // doszło do skutku i zdanie mówi to wprost, zamiast udawać czynność.
+      // Wynik odmowny znaczy powtórzenie tego samego przypisania — nic nie doszło do skutku.
       return {
         udane: true,
         zdanie: tresc.assigned
@@ -180,9 +152,7 @@ export function utworzZmianeKomponentu(kanal: Kanal): ZmianaKomponentu {
         (tresc) => czyTablica(tresc.windows),
       );
       if (!wynik.udany || wynik.wynik === undefined) return [];
-      // Okno komunikacji nie ma w kontrakcie nazwy własnej, więc nazywa się
-      // tym, co je odróżnia: modułem i kartą sesji. Nazwa ułożona po stronie
-      // widoku z niczego byłaby nazwą, której rdzeń nie zna.
+      // Okno komunikacji nie ma w kontrakcie nazwy własnej, więc nazywa się tym, co je odróżnia.
       return wynik.wynik.windows.map((okno) => ({
         id: okno.id,
         nazwa: `${okno.moduleId} · sesja ${okno.sessionId} · ${okno.id}`,
@@ -191,7 +161,7 @@ export function utworzZmianeKomponentu(kanal: Kanal): ZmianaKomponentu {
   };
 }
 
-/** Poziom o wskazanym kodzie; kod spoza wykazu bierze poziom globalny. */
+/** Poziom przypisania o wskazanym kodzie; kod spoza wykazu bierze poziom globalny jako wartość zastępczą. */
 export function poziomOKodzie(kod: string): PoziomPrzypisania {
   return (
     POZIOMY_PRZYPISANIA.find((pozycja) => pozycja.kod === kod) ??

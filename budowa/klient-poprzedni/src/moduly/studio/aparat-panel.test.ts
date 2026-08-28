@@ -6,19 +6,7 @@ import { utworzAparatZrodlo } from './aparat-zrodlo';
 import type { Kanal } from '../../protokol/kanal';
 import { utworzStanStudio } from './stan-studio';
 
-/**
- * Aparat dokumentu i pola — nieświeżość jest treścią, nie ozdobą.
- *
- *   1. spis treści zakłada się z POZIOMÓW nagłówków wskazanych przez Operatora,
- *      a numer nadaje rdzeń — okno nie numeruje niczego samo, bo zakaz numeracji
- *      wymyślonej obowiązuje i tutaj;
- *   2. element wymagający odświeżenia jest nazwany liczbą i znacznikiem
- *      w danych, więc spis treści rozjechany z dokumentem nie może wyglądać na
- *      zgodny;
- *   3. pole bez policzonej wartości mówi to wprost, zamiast pokazać pustkę;
- *   4. usunięcie odmówione nie zdejmuje elementu z wykazu.
- */
-
+/** Testy panelu aparatu dokumentu i pola sprawdzają, że nieświeżość elementów spisu treści jest widoczna wprost, a nie ukryta jako pustka. */
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;

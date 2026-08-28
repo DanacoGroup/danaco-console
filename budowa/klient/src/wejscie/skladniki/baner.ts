@@ -1,23 +1,16 @@
 /**
- * SKŁADNIK — BANER KOMUNIKATU.
- *
- * Głowa nazywa rzecz, treść mówi, co z niej wynika albo co zrobić. Wygląd
- * wnosi składnik biblioteki `.dn-alert` w wariancie ze wstęgą: barwa stanu
- * obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan kształtem —
- * barwa jako jedyna różnica nie wystarcza (WCAG 1.4.1).
- *
- * Głowa z licznikiem rozpada się na trzy części: to, co przed liczbą, sam
- * licznik i to, co po niej. Inaczej mechanika musiałaby przepisywać całe zdanie
- * co sekundę, a wtedy czytnik ekranu ogłaszałby je od nowa.
+ * Składnik — baner komunikatu. Głowa nazywa rzecz, treść mówi, co z niej
+ * wynika albo co zrobić; wygląd wnosi składnik biblioteki w wariancie ze
+ * wstęgą.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika, type DanePodstawienia, type Dziecko } from '../narzedzia.ts';
 
-/** Rodzaj banera; rozstrzyga barwę wstęgi i rolę dla czytnika ekranu. */
+/** Rodzaj banera; rozstrzyga barwę wstęgi i rolę dla czytnika ekranu, dopasowaną do wagi komunikatu wyświetlanego. */
 export type RodzajBanera = 'informacja' | 'ostrzezenie' | 'blad' | 'sukces';
 
-/** Postać licznika: zapis `mm:ss` albo sama liczba sekund. */
+/** Postać licznika: zapis minut i sekund albo sama liczba sekund pozostałych do końca danego odliczania. */
 export type PostacOdliczania = 'zegar' | 'sekundy';
 
 export interface WlasciwosciBanera {
@@ -39,7 +32,7 @@ export interface WlasciwosciBanera {
   id?: string | null;
 }
 
-/** Klasa wariantu biblioteki dla każdego rodzaju banera. */
+/** Klasa wariantu biblioteki dla każdego rodzaju banera, przypisana zgodnie z jego wagą oraz znaczeniem komunikatu. */
 const WARIANTY: Record<RodzajBanera, string> = {
   informacja: 'info',
   ostrzezenie: 'ostrzezenie',
@@ -59,8 +52,7 @@ function zLicznikiem(
     el('span', {
       dane: {
         odliczanie: sekundy,
-        // Wartość początkowa zostaje przy węźle, żeby licznik, który doszedł do
-        // zera i ma ruszyć od nowa, miał od czego ruszyć.
+        // Wartość początkowa zostaje przy węźle, żeby licznik po dojściu do zera miał od czego ruszyć od nowa.
         'odliczanie-poczatek': sekundy,
         'odliczanie-postac': postac,
       },
@@ -76,8 +68,7 @@ export function baner(w: WlasciwosciBanera): HTMLElement {
   const glowa = tekst(w.glowa, w.daneGlowy);
   const tresc = w.tresc ? tekst(w.tresc, w.dane) : '';
 
-  // Licznik zerowy nie jest brakiem licznika: odsłona zwłoki dostaje wartość
-  // z pomiaru dopiero po odmowie rdzenia, a węzeł musi już wtedy stać.
+  // Licznik zerowy nie jest brakiem licznika: wartość z pomiaru dochodzi dopiero po odmowie rdzenia.
   const czesciTresci: Dziecko[] = [
     w.odliczanie === null || w.odliczanie === undefined
       ? el('b', { tekst: glowa })
@@ -93,8 +84,7 @@ export function baner(w: WlasciwosciBanera): HTMLElement {
     {
       klasa: `dn-alert dn-alert--wstega dn-alert--${WARIANTY[w.rodzaj]}`,
       id: w.id ?? null,
-      // Baner niosący usterkę przerywa czytnikowi ekranu; baner informacyjny
-      // czeka na przerwę. Rola idzie więc za rodzajem, nie za wyglądem.
+      // Baner z usterką przerywa czytnikowi ekranu; informacyjny czeka na przerwę — rola idzie za rodzajem.
       role: w.rodzaj === 'blad' || w.rodzaj === 'ostrzezenie' ? 'alert' : 'status',
     },
     [

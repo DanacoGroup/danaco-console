@@ -2,16 +2,8 @@ import { MessageRole, WindowRole } from '../../../shared/contract';
 import type { NazwaIkony } from '../ikony/ikony';
 
 /**
- * Dziewięć rodzajów nadawcy wpisu w historii okna komunikacji.
- *
- * Rodzaje rozróżniają się trzema nośnikami naraz i ani jeden z nich nie jest
- * barwą tła:
- *   1. ikona w medalionie pierwszej kolumny wpisu,
- *   2. barwa medalionu i kreski krawędzi — wyłącznie w rozdzielczości klasy
- *      semantycznej, nie rodzaju (patrz `KlasaNadawcy` niżej),
- *   3. etykieta słowna wersalikami.
- * Barwa sama nie może być jedynym nośnikiem znaczenia, więc tło wpisu pozostaje
- * jedno dla wszystkich dziewięciu rodzajów.
+ * Dziewięć rodzajów nadawcy wpisu w historii okna komunikacji, rozróżnianych ikoną, barwą
+ * medalionu i etykietą słowną, nigdy barwą tła.
  */
 export const RodzajNadawcy = {
   /** Operator przy klawiaturze. */
@@ -37,25 +29,15 @@ export const RodzajNadawcy = {
 export type RodzajNadawcy = (typeof RodzajNadawcy)[keyof typeof RodzajNadawcy];
 
 /**
- * Klasa semantyczna nadawcy — trzy, nie dziewięć.
- *
- * Arkusz `budowa/client/src/komponenty/wpis.css` zna dokładnie trzy
- * modyfikatory `.dn-wpis--czlowiek` / `--inteligencja` / `--system` i wiąże
- * z nimi barwę kreski oraz barwę medalionu:
- *
- *   człowiek      atrament   `--dn-atrament`             (Operator)
- *   inteligencja  sygnał     `--dn-sygnal-wypelnienie`   (model, agent,
- *                                                        koordynator,
- *                                                        wykonawca, walidator)
- *   system        neutralna  `--dn-obrys-mocny`          (automatyzacja,
- *                                                        Always On Display,
- *                                                        wynik narzędzia)
- *
- * Rodzaj wewnątrz klasy różnicuje ikona i etykieta, nigdy kolor.
+ * Klasa semantyczna nadawcy dzieli dziewięć rodzajów na trzy grupy: człowieka,
+ * inteligencję i system, każdą z własną barwą kreski i medalionu.
  */
 export type KlasaNadawcy = 'czlowiek' | 'inteligencja' | 'system';
 
-/** Znaki rozpoznawcze nadawcy: etykieta, ikona i klasa semantyczna. */
+/**
+ * Znaki rozpoznawcze nadawcy: etykieta słowna wersalikami, przypisana ikona oraz jego
+ * klasa semantyczna.
+ */
 export interface ZnakiNadawcy {
   etykieta: string;
   ikona: NazwaIkony;
@@ -74,18 +56,17 @@ const ZNAKI: Readonly<Record<RodzajNadawcy, ZnakiNadawcy>> = {
   narzedzie: { etykieta: 'Wynik narzędzia', ikona: 'kod', klasa: 'system' },
 };
 
-/** Znaki rozpoznawcze wskazanego rodzaju nadawcy. */
+/**
+ * Znaki rozpoznawcze wskazanego rodzaju nadawcy: jego etykieta słowna, ikona oraz
+ * przypisana klasa semantyczna.
+ */
 export function znakiNadawcy(rodzaj: RodzajNadawcy): ZnakiNadawcy {
   return ZNAKI[rodzaj];
 }
 
 /**
- * Rozpoznaje nadawcę wpisu z roli wiadomości i roli okna.
- *
- * Rola wiadomości pochodzi z kontraktu (`MessageRole`) i zna cztery wartości;
- * rola okna (`WindowRole`) rozdziela wypowiedź modelu na koordynatora
- * i wykonawcę pętli. Rola systemowa oznacza wypowiedź warstwy
- * automatycznej platformy, a nie żadnego z ośmiu pozostałych nadawców.
+ * Rozpoznaje nadawcę wpisu na podstawie roli wiadomości z kontraktu oraz roli okna w pętli
+ * koordynator-wykonawca.
  */
 export function rozpoznajNadawce(
   rola: MessageRole,
@@ -103,7 +84,10 @@ export function rozpoznajNadawce(
   }
 }
 
-/** Wypowiedź modelu w oknie o wskazanej roli. */
+/**
+ * Wypowiedź modelu w oknie o wskazanej roli, zapisywana jako wpis automatyzacji w historii
+ * rozmowy okna.
+ */
 function nadawcaModelu(rolaOkna: WindowRole | null): RodzajNadawcy {
   switch (rolaOkna) {
     case WindowRole.Coordinator:

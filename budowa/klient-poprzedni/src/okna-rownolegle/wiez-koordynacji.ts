@@ -2,7 +2,10 @@ import { WindowRole } from '../../../shared/contract';
 import { kierunekKoordynatora, kierunekWykonawcy } from './etykiety-ukladu';
 import { numerGniazda, type IdGniazda } from './identyfikatory';
 
-/** Para koordynator–wykonawca odczytana z ról okien na scenie. */
+/**
+ * Para koordynator–wykonawca odczytana z ról okien widocznych na scenie, wraz
+ * z informacją, po której stronie sceny stoi koordynator względem wykonawcy.
+ */
 export interface Wiez {
   koordynator: IdGniazda;
   wykonawca: IdGniazda;
@@ -10,7 +13,10 @@ export interface Wiez {
   wPrawo: boolean;
 }
 
-/** Opis kierunku pokazywany w nagłówku jednego gniazda. */
+/**
+ * Opis kierunku zlecenia pokazywany w nagłówku jednego gniazda: tekst opisu
+ * oraz kierunek i położenie grota względem napisu.
+ */
 export interface OpisKierunku {
   tekst: string;
   /** Prawda, gdy grot ma wskazywać w prawo — kierunek biegu zlecenia. */
@@ -20,12 +26,8 @@ export interface OpisKierunku {
 }
 
 /**
- * Ustalenie pary koordynator–wykonawca.
- *
- * Wiąże się pierwszy widoczny koordynator z pierwszym widocznym wykonawcą.
- * Trzecie okno w roli wykonawcy pozostaje poza tą więzią — pas relacji
- * pokazuje jedno powiązanie naraz, żeby obraz dał się ogarnąć wzrokiem.
- * Brak którejkolwiek z ról oznacza brak więzi, nie błąd.
+ * Ustala parę koordynator–wykonawca, wiążąc pierwszy widoczny koordynator z pierwszym
+ * widocznym wykonawcą; brak którejkolwiek roli oznacza brak więzi.
  */
 export function ustalWiez(
   role: ReadonlyMap<IdGniazda, WindowRole>,
@@ -42,13 +44,8 @@ export function ustalWiez(
 }
 
 /**
- * Kierunek zlecenia widoczny w nagłówku danego gniazda.
- *
- * Koordynator niesie napis „Zleca Oknu N", wykonawca „Zlecenia z Okna N".
- * Groty obu napisów wskazują tę samą stronę sceny — kierunek biegu zlecenia —
- * i stoją po stronie okna partnera. U koordynatora grot wychodzi z napisu ku
- * wykonawcy, u wykonawcy wchodzi w napis od strony koordynatora, więc kierunek
- * pętli czyta się bez czytania słów. Gniazdo spoza więzi nie dostaje napisu.
+ * Ustala kierunek zlecenia widoczny w nagłówku danego gniazda, z napisem i położeniem
+ * grota zależnym od roli gniazda względem więzi koordynator–wykonawca.
  */
 export function opisKierunku(wiez: Wiez | null, id: IdGniazda): OpisKierunku | null {
   if (wiez === null) return null;
@@ -69,7 +66,10 @@ export function opisKierunku(wiez: Wiez | null, id: IdGniazda): OpisKierunku | n
   return null;
 }
 
-/** Krańce więzi ułożone w kolejności scenicznej, od lewej. */
+/**
+ * Krańce więzi ułożone w kolejności scenicznej, od lewej do prawej strony sceny, na
+ * podstawie ustalonego kierunku pary koordynator–wykonawca.
+ */
 export function krance(wiez: Wiez): { lewy: IdGniazda; prawy: IdGniazda } {
   return wiez.wPrawo
     ? { lewy: wiez.koordynator, prawy: wiez.wykonawca }

@@ -4,12 +4,7 @@ import type { UkladOkien } from './uklad-okien';
 import { ID_GNIAZD } from './identyfikatory';
 
 /**
- * Treść przykładowa strony podglądu układu.
- *
- * Wyłącznie na potrzeby podglądu wizualnego: strona nie łączy się z rdzeniem,
- * więc historia okien byłaby pusta, a rozkład sceny nieczytelny. Treść jest
- * jawnie oznaczona jako przykładowa i nie występuje w aplikacji — punkt
- * wejścia klienta jej nie importuje.
+ * Treść przykładowa strony podglądu układu jest wyłącznie na potrzeby podglądu wizualnego i nie występuje w aplikacji — punkt wejścia klienta jej nie importuje.
  */
 export function zasiejTrescProbna(uklad: UkladOkien): void {
   const [pierwsze, drugie, trzecie] = ID_GNIAZD;
@@ -54,7 +49,7 @@ export function zasiejTrescProbna(uklad: UkladOkien): void {
   }
 }
 
-/** Persona wypowiedzi w oknie o danej roli. */
+/** Persona wypowiedzi w oknie o danej roli — nazwa czytana przez Operatora zamiast surowej roli technicznej. */
 function nazwaPersony(rola: WindowRole): string {
   return rola === WindowRole.Coordinator ? 'Koordynator' : 'Wykonawca';
 }

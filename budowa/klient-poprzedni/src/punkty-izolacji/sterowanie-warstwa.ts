@@ -5,26 +5,7 @@ import type { Kanal } from '../protokol/kanal';
 import { idSesji, posijKomende } from './komenda';
 import { NAZWY_WARSTW, OPISY_WARSTW, type StanWarstwy } from './stan-warstwy';
 
-/**
- * Wybór warstwy izolacji — kontrolka pasa narzędzi okna, nie zakładka.
- *
- * Kontrolka stoi w ramie okna, a nie w obszarze, bo warstwa rozstrzyga, który
- * zapis czyta i pisze każdy obszar tego okna: kontekst, zakres techniczny,
- * przypisanie profilu i podgląd polityki efektywnej. Schowana w jednej zakładce
- * byłaby ustawieniem czterech pozostałych, którego z nich nie widać — dlatego
- * stoi nad paskiem zakładek, tak samo widoczna z każdego obszaru.
- *
- * Warstwa czynna okna zmienia się dopiero po odpowiedzi rdzenia na
- * `isolation.layer.set` (`response.layer`) — nigdy przed nią i nigdy na samą
- * wartość wybraną w liście. Gdy rdzeń odmawia, lista wraca do warstwy
- * poprzedniej: pokazywanie wyboru, którego rdzeń nie przyjął, mówiłoby
- * nieprawdę o stanie maszyny.
- *
- * Lista nigdy nie dostaje `disabled` i nie pyta „czy na pewno" — warstwa nie
- * jest kłódką na Operatorze, tylko wskazaniem, na którym podkładzie pracuje.
- * Odmowa jest meldowana zdaniem trzyczęściowym: co się nie udało, dlaczego
- * (treść wprost z rdzenia) i czym Operator to zmieni.
- */
+/** Wybór warstwy izolacji — kontrolka pasa narzędzi okna punktów izolacji, a nie osobna zakładka widoku. */
 export interface SterowanieWarstwa {
   /** Element montowany w pasie narzędzi ramy okna. */
   element: HTMLElement;

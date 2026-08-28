@@ -2,12 +2,8 @@ import type { GlossaryTerm } from '../../../../shared/contract';
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Jeden termin glosariusza w wykazie okna zarządcy.
- *
- * Jeden wiersz na plik — tak samo jak wiersz biblioteki ekspertów w module
- * Agents. Wiersz niczego nie woła: oddaje dwa naciśnięcia oknu, które wie,
- * co z nimi zrobić. Dzięki temu ten sam wiersz nadaje się i do wykazu, i do
- * zestawienia wystąpień.
+ * Wiersz jednego terminu glosariusza w wykazie okna zarządcy, przekazujący oknu
+ * naciśnięcia edycji i podglądu wystąpień bez wywoływania działań samodzielnie.
  */
 export interface CzynnosciWiersza {
   /** „Edytuj" — wciąga termin z powrotem do formularza definicji. */

@@ -3,7 +3,10 @@ import { RodzajNadawcy } from './nadawca';
 import type { PodsumowanieTury } from './podsumowanie-tury';
 import type { Prowenancja } from './prowenancja';
 
-/** Stan wpisu w cyklu tury. */
+/**
+ * Stan wpisu rozmowy w cyklu jednej tury tego okna komunikacji, prowadzonej wprost z
+ * rdzeniem tej aplikacji.
+ */
 export type StanWpisu =
   /** Wysłano komendę, rdzeń jeszcze nie nadał ani jednego fragmentu. */
   | 'wysylanie'
@@ -11,19 +14,18 @@ export type StanWpisu =
   | 'strumien'
   /** Strumień domknięty znacznikiem końca. */
   | 'zakonczony'
-  /**
-   * Tura domknięta, a nie przyniosła niczego: ani znaku odpowiedzi, ani toku
-   * rozumowania, ani wywołania narzędzia, ani błędu. Stan osobny, bo etykieta
-   * „zakończona" przy pustym wpisie nie mówi, czy model milczał, czy widok
-   * czegoś nie narysował.
-   */
+  // Tura domknięta bez żadnej treści: ani znaku odpowiedzi, rozumowania, narzędzia czy
+  // błędu.
   | 'pusty'
   /** Turę przerwał Operator komendą zatrzymania. */
   | 'przerwany'
   /** Turę zamknął błąd kanału; sesja i okno pozostają czynne. */
   | 'bledny';
 
-/** Jedno wywołanie narzędzia wraz z jego wynikiem. */
+/**
+ * Jedno wywołanie narzędzia zgłoszone przez model w trakcie tury, wraz z jego wynikiem po
+ * zakończeniu.
+ */
 export interface WywolanieNarzedzia {
   /** Identyfikator wywołania nadany przez model. */
   id: string;
@@ -37,7 +39,10 @@ export interface WywolanieNarzedzia {
   bledne: boolean;
 }
 
-/** Błąd odebrany fragmentem strumienia. */
+/**
+ * Błąd odebrany fragmentem strumienia odpowiedzi rdzenia dla tej konkretnej tury tego okna
+ * bieżącej rozmowy.
+ */
 export interface BladWpisu {
   /** Kod z katalogu kontraktu, jeżeli rdzeń go podał. */
   kod: string;
@@ -48,13 +53,8 @@ export interface BladWpisu {
 }
 
 /**
- * Wpis rozmowy — jedna pozycja historii okna komunikacji.
- *
- * Wpis modelu odpowiada jednej turze, nie jednemu fragmentowi. Wszystko, co
- * turę opisuje — prowenancja wywołania, tok rozumowania, wywołania narzędzi,
- * konto, błędy, podsumowanie — wisi przy tym samym wpisie, zamiast rozsypywać
- * się po historii na osobne pozycje. Dzięki temu „co poszło do modelu" stoi
- * obok tego, co model odpowiedział.
+ * Wpis rozmowy — jedna pozycja historii okna, odpowiadająca całej turze modelu, nie
+ * pojedynczemu fragmentowi.
  */
 export interface WpisRozmowy {
   /** Klucz wpisu w historii. */
@@ -91,7 +91,10 @@ export interface WpisRozmowy {
   znacznikCzasu: number;
 }
 
-/** Zakłada pusty wpis wskazanego nadawcy. */
+/**
+ * Zakłada zupełnie pusty wpis wskazanego nadawcy na samym początku każdej nowej tury tej
+ * bieżącej rozmowy.
+ */
 export function nowyWpis(
   id: string,
   nadawca: RodzajNadawcy,
@@ -118,7 +121,10 @@ export function nowyWpis(
   };
 }
 
-/** Wpis Operatora — powstaje w chwili wysłania, przed odpowiedzią rdzenia. */
+/**
+ * Wpis Operatora — powstaje w chwili wysłania jego wypowiedzi, jeszcze przed odpowiedzią
+ * samego rdzenia.
+ */
 export function wpisOperatora(id: string, tresc: string, persona: string): WpisRozmowy {
   const wpis = nowyWpis(id, RodzajNadawcy.Uzytkownik, persona, 'zakonczony');
   wpis.tresc = tresc;
@@ -126,7 +132,10 @@ export function wpisOperatora(id: string, tresc: string, persona: string): WpisR
   return wpis;
 }
 
-/** Wpis warstwy automatycznej — komunikat rdzenia, transportu albo kolejki. */
+/**
+ * Wpis warstwy automatycznej — komunikat rdzenia, transportu albo kolejki zdarzeń tego
+ * całego systemu.
+ */
 export function wpisAutomatyzacji(id: string, tresc: string): WpisRozmowy {
   const wpis = nowyWpis(id, RodzajNadawcy.Automatyzacja, 'Danaco Console', 'zakonczony');
   wpis.tresc = tresc;
@@ -135,11 +144,8 @@ export function wpisAutomatyzacji(id: string, tresc: string): WpisRozmowy {
 }
 
 /**
- * Czy tura domknęła się, nie przynosząc ani jednej treści.
- *
- * Pytanie dotyczy wszystkich warstw wpisu, nie samego tekstu: tura, która
- * oddała sam tok rozumowania albo samo wywołanie narzędzia, coś przyniosła.
- * Pusta jest dopiero taka, po której na ekranie nie zostaje nic prócz nagłówka.
+ * Czy dana tura domknęła się, nie przynosząc ze sobą ani jednej treści widocznej na ekranie
+ * po jej całkowitym zakończeniu.
  */
 export function czyPustaTura(wpis: WpisRozmowy): boolean {
   return (
@@ -150,7 +156,10 @@ export function czyPustaTura(wpis: WpisRozmowy): boolean {
   );
 }
 
-/** Godzina wpisu w postaci prezentacyjnej. */
+/**
+ * Godzina wpisu tej rozmowy zapisana w postaci gotowej do wyświetlenia w interfejsie tego
+ * okna komunikacji.
+ */
 export function godzinaWpisu(wpis: WpisRozmowy): string {
   return new Date(wpis.znacznikCzasu).toLocaleTimeString('pl-PL', {
     hour: '2-digit',

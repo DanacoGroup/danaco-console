@@ -19,10 +19,7 @@ export interface WlasciwosciPola {
   uzupelnij?: string | null;
   /** Klucz katalogu — zdanie pod polem. */
   opis?: string | null;
-  /**
-   * Kontrolka niesie `aria-invalid`; obwódka bierze się z tego stanu, nie
-   * z osobnej klasy — inaczej wygląd i ogłoszenie czytnika rozjeżdżają się.
-   */
+  /** Kontrolka niesie stan błędu; obwódka bierze się z niego, nie z osobnej klasy stylu. */
   bledne?: boolean;
   /** Identyfikator komunikatu opisującego usterkę. */
   opisuje?: string | null;

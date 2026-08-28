@@ -1,16 +1,6 @@
 /**
- * Komplet sterowania okna komunikacji — interfejs katalogu.
- *
- * Punkt wejścia klienta montuje komplet dla każdego okna z osobna:
- *
- *   const rejestrKanalow = utworzRejestrKanalow(kanal);
- *   rejestrKanalow.odswiez();
- *   const sterowanie = utworzPanelSterowania({ kanal, okno, rejestrKanalow });
- *   kontener.append(sterowanie.element);
- *
- * Rejestr kanałów powstaje raz na klienta — jest katalogiem wyboru, nie
- * ustawieniem okna. Panel powstaje raz na okno i nie ma z innym panelem
- * żadnej wspólnej zmiennej.
+ * Komplet sterowania okna komunikacji — interfejs katalogu montowany osobno dla każdego
+ * okna klienta osobno.
  */
 export {
   utworzPanelSterowania,

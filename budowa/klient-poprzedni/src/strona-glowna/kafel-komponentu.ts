@@ -1,21 +1,9 @@
 import { elementIkony } from '../ikony/ikony';
 import type { PozycjaKomponentu } from './pozycje-komponentow';
 
-/**
- * Kafel komponentu własnego — element strefy drugiej.
- *
- * Jedna odpowiedzialność: zbudowanie jednego kafla i zgłoszenie jego wyboru.
- *
- * Ta sama karta co środowiskowa, o mniejszej wadze: wariant
- * `.dn-karta--komponent` odbiera wstęgę i cień sygnału w spoczynku, zmniejsza
- * skalę ikony i zapisuje etykietę krojem bazowym półgrubym — nie nagłówkowym.
- *
- * Różnica krojów niesie znaczenie: nagłówkowy to wejście do środowiska, bazowy
- * to zbudowanie komponentu. Dlatego kafel nie dostaje klasy
- * `.dn-karta--akcent`, którą nosi karta środowiska.
- */
+/** Kafel komponentu własnego jest elementem strefy drugiej o jednej odpowiedzialności. */
 
-/** Ikona kafla w skali średniej zestawu — mniejszej niż godło środowiska. */
+/** Ikona kafla w skali średniej zestawu ikon jest mniejsza niż godło środowiska widoczne na karcie środowiska. */
 const ROZMIAR_IKONY = 18;
 
 export interface KafelKomponentu {
@@ -31,8 +19,7 @@ export function utworzKafelKomponentu(
   element.className =
     'dn-karta dn-karta--klikalna dn-karta--komponent dn-strona__kafel';
   element.dataset.komponent = pozycja.kod;
-  // Kafli jednego rodzaju bywa wiele — rodzaj ich nie rozróżnia. Identyfikator
-  // komponentu Operatora rozróżnia, i tylko kafel personalizowany go niesie.
+  // Kafli jednego rodzaju bywa wiele; rozróżnia je identyfikator komponentu na kaflu personalizowanym.
   if (pozycja.komponent !== undefined) element.dataset.wystapienie = pozycja.komponent;
 
   const tresc = document.createElement('span');
@@ -62,17 +49,7 @@ export function utworzKafelKomponentu(
   return { element };
 }
 
-/**
- * Wiersz metadanych kafla — stan czynności i czas ostatniej zmiany.
- *
- * Kafel rodzaju nie dostaje wiersza wcale: rodzaj nie jest bytem w bazie, więc
- * nie ma ani daty, ani stanu, a wiersz pusty wyglądałby jak metadane, których
- * nie odczytano.
- *
- * Czas formatuje widok, bo rdzeń nie zna strefy Operatora. Data pojawia się
- * dopiero, gdy zmiana wypadła innego dnia; w dniu bieżącym wystarcza godzina —
- * wzorem `opisWaznosci` z `uwierzytelnienie/sesja-bramki.ts`.
- */
+/** Wiersz metadanych kafla niesie stan czynności i czas ostatniej zmiany; kafel rodzaju, niebędący bytem w bazie, wiersza nie dostaje. */
 function wierszMetadanych(pozycja: PozycjaKomponentu): HTMLElement[] {
   const metadane = pozycja.metadane;
   if (metadane === undefined) return [];
@@ -93,7 +70,7 @@ function wierszMetadanych(pozycja: PozycjaKomponentu): HTMLElement[] {
   return [element];
 }
 
-/** Czas ostatniej zmiany zdaniem czytelnym; zero znaczy „rdzeń nie podał". */
+/** Czas ostatniej zmiany oddany zdaniem czytelnym dla Operatora; wartość zero znaczy, że rdzeń czasu zmiany nie podał. */
 function opisZmiany(zmieniony: number, teraz: number = Date.now()): string {
   if (!Number.isFinite(zmieniony) || zmieniony <= 0) return 'bez zapisanej zmiany';
   const kiedy = new Date(zmieniony);

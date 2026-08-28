@@ -1,14 +1,7 @@
 /**
- * DROGA WEJŚCIA — przebieg.
- *
  * Maszyna stanów trzech etapów wejścia: łączenie z rdzeniem, dostęp do konta,
- * przygotowanie środowiska. Przebieg nie dotyka dokumentu i nie zna żadnego
- * składnika — rozstrzyga wyłącznie, który etap i która odsłona obowiązuje oraz
- * co wysłać do rdzenia. Dzięki temu każda odsłona, także odsłona błędu
- * i wstrzymania, jest osiągalna w sprawdzianie bez przeglądarki.
- *
- * Nazwy komend i kształty ich treści pochodzą wyłącznie z kontraktu; przebieg
- * nie powtarza ani jednego literału nazwy komendy.
+ * przygotowanie środowiska. Przebieg nie dotyka dokumentu — rozstrzyga, który
+ * etap i odsłona obowiązują oraz co wysłać do rdzenia.
  */
 
 import {
@@ -34,18 +27,22 @@ import { wywolaj } from '../protokol/wywolanie.ts';
 
 /* ── Stan widziany przez widok ───────────────────────────────────────────── */
 
-/** Etap wejścia. Trzy, tak jak w prototypie. */
+/**
+ * Etap wejścia. Trzy, tak jak w prototypie: uruchomienie łączy z rdzeniem,
+ * dostęp prowadzi konto, przygotowanie buduje środowisko pracy.
+ */
 export type Etap = 'uruchomienie' | 'dostep' | 'przygotowanie';
 
-/** Odsłona etapu uruchomienia. */
+/**
+ * Odsłona etapu uruchomienia — łączenie z rdzeniem, wejście tokenem
+ * zapamiętanego urządzenia albo błąd połączenia.
+ */
 export type OdslonaUruchomienia = 'w-laczenie' | 'w-token' | 'w-blad';
 
 /**
- * Odsłona etapu dostępu.
- *
- * `konto-bez-potwierdzenia` nie pochodzi z prototypu — wymusza ją pozycja 11
- * rejestru decyzji: rejestracja bez konta nadawczego kończy się wejściem
- * hasłem, a okno ma wtedy NAZWAĆ niepotwierdzony adres.
+ * Odsłona etapu dostępu. `konto-bez-potwierdzenia` obsługuje rejestrację bez
+ * konta nadawczego: adres pozostaje niepotwierdzony, a okno musi go nazwać
+ * wprost.
  */
 export type OdslonaDostepu =
   | 'logowanie'
@@ -59,15 +56,24 @@ export type OdslonaDostepu =
   | 'odzyskiwanie-haslo'
   | 'odzyskiwanie-wstrzymane';
 
-/** Odsłona etapu przygotowania. Jedna — nie ma tu czego przełączać. */
+/**
+ * Odsłona etapu przygotowania. Jedna — nie ma tu czego przełączać, bo etap ma
+ * tylko jeden widok postępu.
+ */
 export type OdslonaPrzygotowania = 'przygotowanie';
 
 export type Odslona = OdslonaUruchomienia | OdslonaDostepu | OdslonaPrzygotowania;
 
-/** Stan jednego z etapów przygotowania środowiska. */
+/**
+ * Stan jednego z etapów przygotowania środowiska — gotowy, w toku, błędny
+ * albo czekający na swoją kolej.
+ */
 export type StanEtapu = 'gotowy' | 'pracuje' | 'blad' | 'oczekuje';
 
-/** Usterka pokazywana nad formularzem: klucz katalogu albo opis od rdzenia. */
+/**
+ * Usterka pokazywana nad formularzem: klucz katalogu albo opis od rdzenia,
+ * gdy rdzeń wie o powodzie więcej niż okno.
+ */
 export interface Usterka {
   /** Klucz rozpoznania z katalogu treści; puste dla odmowy rdzenia. */
   klucz?: string;
@@ -75,7 +81,10 @@ export interface Usterka {
   odRdzenia?: ErrorInfo;
 }
 
-/** Miara etapu przygotowania odczytana z odpowiedzi rdzenia. */
+/**
+ * Miara etapu przygotowania odczytana z odpowiedzi rdzenia — klucz katalogu
+ * treści wraz z danymi podstawianymi w tekst.
+ */
 export interface MiaraEtapu {
   /** Klucz miary z katalogu treści. */
   klucz: string;
@@ -83,7 +92,10 @@ export interface MiaraEtapu {
   dane?: Record<string, string | number>;
 }
 
-/** Wykaz etapów przygotowania wraz ze stanem i miarą każdego z nich. */
+/**
+ * Wykaz etapów przygotowania wraz ze stanem i miarą każdego z nich, z którego
+ * liczy się postęp w procentach.
+ */
 export interface PostepPrzygotowania {
   stany: StanEtapu[];
   miary: MiaraEtapu[];
@@ -91,7 +103,10 @@ export interface PostepPrzygotowania {
   wartosc: number;
 }
 
-/** Pełny stan przebiegu widziany przez widok. */
+/**
+ * Pełny stan przebiegu widziany przez widok — etap, odsłona, dane łączenia,
+ * usterki i wynik przygotowania środowiska.
+ */
 export interface StanPrzebiegu {
   etap: Etap;
   odslona: Odslona;
@@ -103,12 +118,7 @@ export interface StanPrzebiegu {
   wToku: boolean;
   /** Usterki nad formularzem bieżącej odsłony. */
   usterki: Usterka[];
-  /**
-   * Zwłoka nałożona przez rdzeń na kolejną próbę, w sekundach — ZMIERZONA
-   * czasem trwania próby poprzedniej. Odmowa rdzenia nie niesie tej wartości
-   * (pole `details` jest puste), więc okno nie ma jej skąd odczytać; mierzy
-   * więc to, ile rdzeń kazał czekać naprawdę, i tego nie zgaduje.
-   */
+  /** Zwłoka nałożona przez rdzeń na kolejną próbę, w sekundach — zmierzona czasem trwania próby. */
   zwlokaS: number;
   /** Adres, na który poszedł list — okno wpisuje go w zdanie odsłony. */
   adres: string;
@@ -129,22 +139,13 @@ export interface StanPrzebiegu {
 /* ── Nastawy przebiegu ───────────────────────────────────────────────────── */
 
 /**
- * Od jakiej zwłoki okno nazywa ją Operatorowi, w milisekundach.
- *
- * Progu prób NIE MA. Kontrakt stanowi przy `auth.login` wprost, że progu i
- * odmowy „za dużo prób” po stronie rdzenia nie ma i nie będzie — nieudana
- * próba nakłada na następną rosnącą zwłokę, nic więcej. Pomiar to potwierdza:
- * osiem kolejnych nieudanych prób oddaje osiem razy `not_authenticated`, a po
- * nich hasło poprawne wpuszcza. Odsłona z prototypu zostaje i obsługuje
- * ZWŁOKĘ, nie zaporę.
- *
- * Próg bierze się z jednostki wyświetlania, nie z reguły produktu: licznik
- * odmierza sekundy, więc zwłoka krótsza od sekundy nie ma czego pokazać
- * i odsłona tylko mignęłaby.
+ * Od jakiej zwłoki okno nazywa ją Operatorowi, w milisekundach. Progu prób
+ * nie ma: nieudana próba nakłada rosnącą zwłokę, nic więcej. Próg bierze się
+ * z jednostki wyświetlania — zwłoka krótsza od sekundy nie ma czego pokazać.
  */
 const PROG_NAZWANIA_ZWLOKI_MS = 1000;
 
-/** Ile znaków ma mieć hasło. Reguła wspólna miernikowi siły i sprawdzeniu. */
+/** Ile znaków ma mieć hasło. Reguła wspólna miernikowi siły w oknie i sprawdzeniu przed wysłaniem żądania. */
 const NAJKROTSZE_HASLO = 12;
 
 /**
@@ -161,7 +162,7 @@ export function ocenHaslo(wartosc: string): Record<string, boolean> {
   };
 }
 
-/** Czy hasło spełnia wszystkie cztery warunki. */
+/** Czy hasło spełnia wszystkie cztery warunki naraz — długość, wielkość liter, cyfrę oraz znak specjalny. */
 export function hasloSpelnia(wartosc: string): boolean {
   return Object.values(ocenHaslo(wartosc)).every(Boolean);
 }
@@ -180,12 +181,9 @@ export function adresPoprawny(wartosc: string): boolean {
 const METODA_HASLEM: AuthMethodKind = 'password';
 
 /**
- * Magazyn tokenu bramki między uruchomieniami programu.
- *
- * Przebieg czyta token przy starcie, żeby rozpoznać zaufane urządzenie, i
- * zapisuje go po wejściu. GDZIE token mieszka, nie rozstrzyga żaden ze
- * źródeł tego terenu — należy to do powłoki. Przebieg opisuje więc wyłącznie
- * potrzebę, a wołający wskazuje magazyn.
+ * Magazyn tokenu bramki między uruchomieniami programu. Przebieg czyta token
+ * przy starcie, żeby rozpoznać zaufane urządzenie, i zapisuje go po wejściu;
+ * miejsce przechowania nie należy do tego terenu, tylko do powłoki wołającej.
  */
 export interface MagazynTokenu {
   odczytaj(): string | undefined;
@@ -194,11 +192,9 @@ export interface MagazynTokenu {
 }
 
 /**
- * Magazyn trzymający token wyłącznie w pamięci procesu.
- *
- * Wartość domyślna, bo magazyn trwały nie jest rozstrzygnięty. Token ginie
- * wraz z procesem — i to jest zachowanie uczciwe: magazyn, który udawałby
- * trwałość, obiecywałby rozpoznanie urządzenia, którego nie ma.
+ * Magazyn trzymający token wyłącznie w pamięci procesu. Wartość domyślna, bo
+ * magazyn trwały nie jest rozstrzygnięty — token ginie wraz z procesem
+ * zamiast udawać trwałość, której nie ma.
  */
 export function magazynWPamieci(): MagazynTokenu {
   let token: string | undefined;
@@ -281,17 +277,17 @@ export interface Przebieg {
   przygotujSrodowisko(): Promise<void>;
 }
 
-/** Cztery etapy łączenia — wykaz jest daną, nie rozgałęzieniem w kodzie. */
+/**
+ * Cztery etapy łączenia — wykaz jest daną, nie rozgałęzieniem w kodzie, więc
+ * odsłona błędu wypełnia go tą samą drogą co powodzenie.
+ */
 const MIARY_LACZENIA = ['nawiazane', 'zgodna', 'zaufane', 'wToku'] as const;
 const MIARY_NIEUDANE = ['nieudane', 'oczekuje', 'oczekuje', 'oczekuje'] as const;
 
 /**
- * Ile etapów ma przygotowanie środowiska.
- *
- * Tyle, ile droga wejścia potrafi zmierzyć: uwierzytelnienie i przywrócenie
- * kart sesji. Etap bez komendy w kontrakcie nie jest etapem czekającym —
- * jest obietnicą, której nikt nie wykona, a postęp liczony razem z nim nie
- * dobiegłby końca nigdy.
+ * Ile etapów ma przygotowanie środowiska — tyle, ile droga wejścia potrafi
+ * zmierzyć: uwierzytelnienie i przywrócenie kart sesji, bo etap bez komendy
+ * w kontrakcie nie doczekałby się nigdy końca.
  */
 const ETAPOW_PRZYGOTOWANIA = 2;
 
@@ -366,9 +362,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       void przywitaj();
       return;
     }
-    // Ponawianie jest stanem błędu widzianym przez Operatora: gniazdo próbuje
-    // dalej samo, a okno mówi, że serwer nie odpowiada. Do etapu 1 wracamy
-    // wyłącznie stąd — zerwanie po wejściu nie cofa Operatora przed bramkę.
+    // Ponawianie jest stanem błędu widzianym przez Operatora — gniazdo próbuje dalej samo.
     if (stanGniazda === 'ponawianie' && stan.etap === 'uruchomienie') {
       zmien({
         odslona: 'w-blad',
@@ -391,9 +385,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       return;
     }
     const powitanie = wynik.wynik;
-    // Wersja protokołu jest jedyną rzeczą, którą klient uzgadnia z rdzeniem
-    // przed czymkolwiek innym. Rozjazd zatrzymuje wejście tutaj: dalsza
-    // rozmowa szłaby po omacku, a odmowy nie dałoby się odróżnić od usterki.
+    // Wersja protokołu jest jedyną rzeczą, którą klient uzgadnia z rdzeniem przed czymkolwiek innym.
     if (powitanie.protocolVersion !== PROTOCOL_VERSION) {
       zmien({
         powitanie,
@@ -434,14 +426,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     zmien({ etap: 'dostep', odslona, usterki: [] });
   }
 
-  /**
-   * Wywołanie komendy z jedną obsługą oczekiwania dla wszystkich formularzy.
-   *
-   * Obietnica warstwy protokołu nie jest odrzucana nigdy, a przy zerwanym
-   * połączeniu nie rozstrzyga się wcale. Stan `wToku` jest więc jedynym
-   * miejscem, w którym okno mówi, że czeka. Typ treści żądania i odpowiedzi
-   * bierze się z kontraktu — okno nie deklaruje ani jednego kształtu własnego.
-   */
+  /** Wywołanie komendy z jedną obsługą oczekiwania dla wszystkich formularzy okna dostępu. */
   async function doRdzenia<K extends Command>(
     komenda: K,
     zadanie: RequestOf<K>,
@@ -454,10 +439,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     return wynik;
   }
 
-  /**
-   * Ile trwało ostatnie wywołanie. Rdzeń nakłada zwłokę PRZED odpowiedzią, więc
-   * czas trwania wywołania JEST zwłoką — innego jej pomiaru okno nie ma.
-   */
+  /** Ile trwało ostatnie wywołanie — rdzeń nakłada zwłokę przed odpowiedzią, więc czas jest zwłoką. */
   let ostatniCzasMs = 0;
 
   /** Zwłoka w sekundach, zaokrąglona w górę; zero, gdy nie ma czego nazywać. */
@@ -505,12 +487,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     return [];
   }
 
-  /**
-   * Odmowa logowania. Progu prób nie ma — każda kolejna próba jest przyjmowana,
-   * tylko czeka dłużej. Gdy zwłoka urosła na tyle, że da się ją nazwać, okno
-   * przechodzi do odsłony zwłoki i samo z niej wraca; przy zwłoce krótszej
-   * zostaje na odsłonie niepowodzenia, bo nie ma czego odmierzać.
-   */
+  /** Odmowa logowania. Progu prób nie ma — okno przechodzi do zwłoki tylko, gdy da się ją nazwać. */
   function nazwijOdmoweLogowania(wynik: Wynik<unknown>): void {
     const zwlokaS = wynik.blad?.code === ErrorCode.NotAuthenticated ? zmierzonaZwlokaS() : 0;
     if (zwlokaS > 0) {
@@ -549,10 +526,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       zmien({ usterki: [{ klucz: 'usterki.brakOdpowiedzi' }] });
       return;
     }
-    // Dwie gałęzie pozycji 11 rejestru decyzji, rozstrzygane odpowiedzią rdzenia.
-    // Z kontem nadawczym list poszedł i okno prowadzi do jego przepisania. Bez
-    // konta nadawczego wejście działa hasłem, a okno MUSI nazwać adres, którego
-    // nikt nie potwierdził — bo adres jest jedyną drogą odzyskania konta.
+    // Dwie gałęzie rejestracji rozstrzygane odpowiedzią rdzenia: z kontem nadawczym albo bez niego.
     zmien({
       adres: dane.email.trim(),
       odslona: odpowiedz.pendingVerification ? 'kod' : 'konto-bez-potwierdzenia',
@@ -602,17 +576,14 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       zmien({ usterki: [{ klucz: 'email-bledny' }] });
       return;
     }
-    // Progu wysyłek nie ma — zmierzone: siedem kolejnych wysłań oddaje siedem
-    // razy `sent: true` i siedem listów. Gdyby rdzeń kiedyś nałożył zwłokę,
-    // okno nazwie ją tym samym pomiarem, którym nazywa zwłokę logowania.
+    // Progu wysyłek nie ma — zmierzone: siedem kolejnych wysłań oddaje siedem razy potwierdzenie.
     const wynik = await doRdzenia(Command.AuthRecover, { email: email.trim() });
     if (!wynik.udany) {
       zmien({ usterki: odmowa(wynik) });
       return;
     }
     const odpowiedz = wynik.wynik;
-    // Odpowiedź nie zdradza, czy adres pasuje do konta — tak stanowi kontrakt.
-    // Okno nie ma więc czego z niej odczytać poza tym, że żądanie przyjęto.
+    // Odpowiedź nie zdradza, czy adres pasuje do konta — tak stanowi kontrakt odzyskiwania hasła.
     if (odpowiedz === undefined || !odpowiedz.sent) {
       zmien({ usterki: [{ klucz: 'usterki.brakOdpowiedzi' }] });
       return;
@@ -648,19 +619,12 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       zmien({ usterki: [{ klucz: 'usterki.brakOdpowiedzi' }] });
       return;
     }
-    // Nowe hasło unieważnia tokeny wydane wcześniej, więc okno wraca do
-    // logowania: sesji ta komenda nie wydaje i wydać nie może.
+    // Nowe hasło unieważnia tokeny wydane wcześniej, więc okno wraca do logowania, nie do sesji.
     magazyn.wyczysc();
     zmien({ zwlokaS: 0, odslona: 'logowanie', usterki: [] });
   }
 
-  /**
-   * Wejście po rejestracji bez konta nadawczego.
-   *
-   * Rejestracja sesji nie zakłada — tak stanowi kontrakt — więc wejście idzie
-   * przez zwykłe logowanie hasłem, które Operator przed chwilą ustawił.
-   * Okno prowadzi go do logowania, bo hasła nie przechowuje.
-   */
+  /** Wejście po rejestracji bez konta nadawczego idzie przez zwykłe logowanie hasłem Operatora. */
   async function wejdzBezPotwierdzenia(): Promise<void> {
     zmien({ odslona: 'logowanie', usterki: [] });
     return Promise.resolve();
@@ -673,17 +637,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
 
   /* ── Etap 3: przygotowanie środowiska ──────────────────────────────────── */
 
-  /**
-   * Trzeci etap: wejście do środowiska i odczytanie tego, co rdzeń odtworzył.
-   *
-   * Wykaz niesie te etapy, dla których droga wejścia ma komendę:
-   * uwierzytelnienie i przywracanie kart sesji. Etap oznaczony jako gotowy
-   * bez pomiaru mówiłby nieprawdę, a etap czekający na komendę, której nie ma,
-   * zatrzymywałby postęp na zawsze — więc wykazu nie ma dłuższego niż pomiar.
-   *
-   * Wywołanie powtórne jest ponowieniem: wykaz stanów rusza od nowa, więc
-   * odsłona po nieudanym wejściu wraca do stanu sprzed próby.
-   */
+  /** Trzeci etap: wejście do środowiska i odczytanie tego, co rdzeń odtworzył z kart sesji. */
   async function przygotujSrodowisko(): Promise<void> {
     const stany = nowyWykazStanow();
     const miary = nowyWykazMiar();
@@ -742,10 +696,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     });
   }
 
-  /**
-   * Środowisko pierwsze w kolejności wyświetlania. Kolejność niesie kontrakt
-   * polem `order`, liczonym od jedynki — nie wybiera go okno.
-   */
+  /** Środowisko pierwsze w kolejności wyświetlania — liczy się pole `order` z kontraktu. */
   function pierwszeSrodowisko(srodowiska?: Environment[]): Environment | undefined {
     if (srodowiska === undefined || srodowiska.length === 0) return undefined;
     return [...srodowiska].sort((a, b) => a.order - b.order)[0];
@@ -779,8 +730,8 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
   };
 }
 
-/** Ile znaków wymaga hasło — miernik siły wypisuje tę liczbę w warunku. */
+/** Ile znaków wymaga hasło, żeby przeszedł warunek długości — miernik siły w oknie wypisuje tę samą liczbę. */
 export const DLUGOSC_HASLA = NAJKROTSZE_HASLO;
 
-/** Od jakiej zwłoki okno ją nazywa. Sprawdzian mierzy tę granicę. */
+/** Od jakiej zwłoki okno ją nazywa Operatorowi. Sprawdzian mierzy dokładnie tę granicę w milisekundach. */
 export const PROG_ZWLOKI_MS = PROG_NAZWANIA_ZWLOKI_MS;

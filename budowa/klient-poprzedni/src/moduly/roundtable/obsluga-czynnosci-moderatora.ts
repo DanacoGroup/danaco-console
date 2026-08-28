@@ -11,36 +11,13 @@ import { nazwaUczestnika, type StanDebaty } from './stan-debaty';
 import type { StanTresci } from './stany-okna';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
-/**
- * Obsługa odpowiedzi czynności moderatora — wydzielona z
- * `okno-moderator-panel.ts` wzorem `KontekstBudowania` z Build Output. Zwarta
- * odpowiedzialność: wysyłka `roundtable.moderator.direct`, zapis tury, warunkowy
- * zapis składu i złożenie zdania potwierdzenia.
- *
- * Potwierdzenie mówi, co zrobił rdzeń, a nie co wysłało okno: zdanie składa
- * funkcja biorąca odpowiedź, nie napis wnoszony razem z żądaniem. Gotowe zdanie
- * sukcesu nie odróżniłoby zamknięcia tury od potwierdzenia tury już zamkniętej,
- * a przy zmianie zagadnienia przemilczałoby, że rdzeń zamknął turę bieżącą
- * i otworzył nową.
- *
- * Tura zapisywana jest zawsze, skład wyłącznie wtedy, gdy rdzeń go przysłał:
- * `participants` jest w kontrakcie nieobowiązkowe, więc bez tego pola okno nie
- * ma dowodu, że zmiana składu zaszła.
- *
- * Odmowa nie jest jedynym niepowodzeniem. `sprawdzKsztalt` oddaje `udany: false`
- * także wtedy, gdy rdzeń odpowiedział, ale bez pola obowiązkowego — zdanie
- * „rdzeń odmówił” byłoby wtedy zarzutem, którego rdzeń nie orzekł. Dlatego
- * mówimy o czynności, która nie doszła do skutku, a powód niesie treść błędu
- * wprost z kontraktu.
- */
-
-/** Zdanie potwierdzenia wraz z oceną: czy czynność naprawdę się odbyła. */
+/** Zdanie potwierdzenia wraz z oceną, czy czynność moderatora naprawdę się odbyła, złożone z odpowiedzi rdzenia, nie z żądania okna. */
 export interface Potwierdzenie {
   zdanie: string;
   udane: boolean;
 }
 
-/** Opis jednej czynności moderatora dla obsługi jej odpowiedzi. */
+/** Opis jednej czynności moderatora dla obsługi jej odpowiedzi: nazwa, sposób złożenia potwierdzenia oraz zdanie dodatkowe. */
 export interface OpcjeCzynnosci {
   /** Nazwa czynności w zdaniu o niepowodzeniu — wskazuje, co nie doszło do skutku. */
   czynnosc: string;
@@ -50,7 +27,7 @@ export interface OpcjeCzynnosci {
   przyNiepowodzeniu?: string;
 }
 
-/** Kontekst wysyłki czynności moderatora i obsługi jej odpowiedzi. */
+/** Kontekst wysyłki czynności moderatora i obsługi jej odpowiedzi, wspólny dla zamknięcia tury, zmiany zagadnienia i wyciszenia. */
 export interface KontekstCzynnosci {
   obsluz(zadanie: RoundtableModeratorDirectRequest, opcje: OpcjeCzynnosci): void;
 }
@@ -79,11 +56,7 @@ function obsluzOdpowiedzCzynnosci(
   rysuj: () => void,
 ): void {
   if (!wynik.udany || wynik.wynik === undefined) {
-    // Niepowodzenie czynności nie kasuje treści okna. `tresc.blad(...)` czyści
-    // miejsce treści, więc nieudana czynność zabrałaby z ekranu turę i cały
-    // skład — okno pokazywałoby pustą debatę tam, gdzie debata jest. Odmowa
-    // idzie zatem pasem czynności (`data-udane='false'`, arkusz maluje go barwą
-    // błędu), a wykaz zostaje przerysowany.
+    // Niepowodzenie czynności nie kasuje treści; odmowa idzie pasem czynności, wykaz się przerysowuje.
     rysuj();
     const uwaga = opcje.przyNiepowodzeniu === undefined ? '' : ` ${opcje.przyNiepowodzeniu}`;
     const zdanie = opisOdmowyBledu(
@@ -102,15 +75,8 @@ function obsluzOdpowiedzCzynnosci(
 }
 
 /**
- * Zamknięcie tury.
- *
- * Zdanie mówi, co rdzeń oddał, a nie co zrobił. Rdzeń nie odmawia zamknięcia
- * tury już zamkniętej — oddaje ją bez zmiany, więc okno nie ma czym odróżnić
- * zamknięcia od potwierdzenia stanu zastanego. Stan sprzed wywołania też nie
- * jest świadkiem pewnym, bo po zamknięciu potrafi jeszcze przyjść rozgłoszenie
- * z turą oznaczoną jako otwarta. Dlatego zdanie opisuje turę z odpowiedzi wraz
- * z chwilą zamknięcia, a czasownik „zamknął” pada wyłącznie tam, gdzie stan
- * sprzed wywołania mówił coś innego.
+ * Zamknięcie tury: zdanie opisuje turę wraz z chwilą zamknięcia z odpowiedzi rdzenia, a nie sam
+ * fakt wywołania czynności.
  */
 export function potwierdzZamkniecie(
   odpowiedz: RoundtableModeratorDirectResponse,

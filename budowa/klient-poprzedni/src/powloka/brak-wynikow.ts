@@ -1,30 +1,8 @@
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 
-/**
- * Brak wyników — wspólna treść pustki dla wykazów z filtrem i dla wyszukiwarki.
- *
- * Wygląd niesie klasa `.dn-pusty-stan` biblioteki, więc plik nie wnosi ani
- * jednej reguły arkusza; dokłada wyłącznie treść, która w ręcznie składanych
- * pustkach rozjeżdża się między wykazami.
- *
- * Cztery przypadki i cztery różne zdania:
- *   1. `pusto`      — wykaz naprawdę nie ma pozycji,
- *   2. `bezTrafien` — pozycje są, przyciął je filtr,
- *   3. `wOdczycie`  — rdzeń jeszcze nie odpowiedział,
- *   4. `odmowa`     — rdzeń odpowiedział odmową.
- * „Brak sesji" powiedziane w trzecim przypadku jest nieprawdą o stanie rdzenia,
- * bo cisza nie jest orzeczeniem; w drugim jest nieprawdą o danych, bo dane są,
- * a zasłonił je filtr, który da się zdjąć.
- *
- * Trzy pierwsze zdania mają jeden kształt: co · dlaczego · czym to zmienić.
- * Czwarte go nie ma, bo treść odmowy należy do rdzenia i idzie dosłownie —
- * parafraza odmowy jest atrapą odmowy.
- *
- * Nośnik nie zna wykazu, nad którym stoi, nie pyta rdzenia i nie rozstrzyga,
- * który przypadek zachodzi. Wie to wołający.
- */
+// Brak wyników to wspólna treść pustki dla wykazów z filtrem i dla wyszukiwarki.
 
-/** Który z czterech przypadków pustki pokazuje w tej chwili nośnik. */
+/** Który z czterech przypadków pustki pokazuje w tej chwili nośnik, wybierany przez wołający wykaz albo wyszukiwarkę. */
 export type RodzajPustki = 'pusto' | 'bez-trafien' | 'w-odczycie' | 'odmowa';
 
 export interface BrakWynikow {
@@ -32,20 +10,9 @@ export interface BrakWynikow {
   element: HTMLElement;
   /** Który przypadek stoi na ekranie; pusty napis znaczy „jeszcze żaden". */
   rodzaj(): RodzajPustki | '';
-  /**
-   * Wykaz naprawdę nie ma pozycji — i to jest stan poprawny, nie usterka.
-   *
-   * @param co czego nie ma, w dopełniaczu („otwartych sesji").
-   * @param coZmieni jedna czynność, po której pozycje się pojawią.
-   */
+  /** Wykaz naprawdę nie ma pozycji — stan poprawny, nie usterka, z czynnością do pojawienia pozycji. */
   pusto(co: string, coZmieni: string): void;
-  /**
-   * Filtr przyciął wykaz do zera; zdanie nie mówi „brak danych", bo dane są.
-   *
-   * @param fraza treść pola, cytowana dosłownie, żeby było widać, czym wykaz
-   *   został przycięty.
-   * @param coPrzeszukano zakres przeszukania, wymieniony wprost.
-   */
+  /** Filtr przyciął wykaz do zera; zdanie cytuje frazę i zakres przeszukania, nie mówi brak danych. */
   bezTrafien(fraza: string, coPrzeszukano: string): void;
   /**
    * Rdzeń nie odpowiedział; zdanie nie używa słowa „brak", bo cisza nie jest
@@ -56,7 +23,7 @@ export interface BrakWynikow {
   odmowa(zdanieRdzenia: string): void;
 }
 
-/** Ikona przypadku; rozróżnienie nigdy nie stoi na samej barwie. */
+/** Ikona przypadku pustki; rozróżnienie między czterema stanami nigdy nie stoi na samej barwie tła ikony. */
 const IKONY: Readonly<Record<RodzajPustki, NazwaIkony>> = {
   pusto: 'info',
   'bez-trafien': 'szukaj',
@@ -65,11 +32,7 @@ const IKONY: Readonly<Record<RodzajPustki, NazwaIkony>> = {
 };
 
 /**
- * Zdanie zastępcze, gdy rdzeń odmówił bez treści.
- *
- * Pusta odmowa zdarza się przy zerwaniu transportu. Pusty akapit zostawiłby
- * tytuł bez powodu, a dopisanie rdzeniowi zdania, którego nie powiedział, byłoby
- * zmyśleniem; zostaje zdanie mówiące wprost, że powodu nie było.
+ * Zdanie zastępcze, gdy rdzeń odmówił bez treści: pusta odmowa zdarza się przy zerwaniu transportu, a dopisanie rdzeniowi zdania, którego nie powiedział, byłoby zmyśleniem.
  */
 const ODMOWA_BEZ_TRESCI =
   'Rdzeń odmówił bez podania powodu — odpowiedź przyszła pusta. '

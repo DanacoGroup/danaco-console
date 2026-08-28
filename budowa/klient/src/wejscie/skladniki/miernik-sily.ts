@@ -1,21 +1,13 @@
 /**
- * SKŁADNIK — MIERNIK SIŁY HASŁA.
- *
- * Cztery odcinki toru, zdanie o wyniku i cztery warunki. Znak warunku różni
- * się KSZTAŁTEM, nie samą barwą: niespełniony niesie puste kółko, spełniony
- * ptaszka. Ptaszek w każdym stanie czytał się jako „zrobione”, a barwa jako
- * jedyna różnica łamie WCAG 1.4.1.
- *
- * Miernik wiąże się z polem przez `data-sila-dla`, nie przez sąsiedztwo
- * w drzewie — sąsiedztwo bywa różne w różnych oknach i cicho się rozjeżdża.
- * Regułę oceny niesie przebieg; miernik jej nie powtarza.
+ * Składnik — miernik siły hasła. Cztery odcinki toru, zdanie o wyniku
+ * i cztery warunki; znak warunku różni się kształtem, nie samą barwą.
  */
 
 import { ikony } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 import { DLUGOSC_HASLA } from '../przebieg.ts';
 
-/** Cztery warunki, w kolejności wyświetlania. */
+/** Cztery warunki, w kolejności wyświetlania, oceniane osobno przez przebieg i pokazywane tym miernikiem. */
 export const WARUNKI_HASLA = ['dlugosc', 'wielkosc', 'cyfra', 'znak'] as const;
 
 export interface WlasciwosciMiernika {

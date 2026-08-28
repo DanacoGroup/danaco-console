@@ -29,29 +29,7 @@ import {
 import { odczytajTozsamoscUrzadzenia } from './tozsamosc-urzadzenia';
 import { bezUchwytu, utworzZrodloUwierzytelnienia, type MetodaWejscia } from './zrodlo-auth';
 
-/**
- * Ekran logowania — jedyna bramka produktu; po wejściu nic więcej nie pyta.
- *
- * Ekran jest przesłoną nad aplikacją, nie czwartą trasą: kładzie się nad
- * gospodarzem dokumentu, a aplikacja pod nim składa się i łączy z rdzeniem w tym
- * samym czasie, więc po wejściu przesłona znika i widoczne jest gotowe Centrum
- * dowodzenia, zamiast drugiego ładowania. Trasy (`aplikacja/trasy.ts`) zostają
- * nietknięte — bramka nie jest miejscem pracy, więc nie jest trasą.
- *
- * Ekran nie zakłada budzika, nie liczy czasu sesji i nie przerywa pracy pytaniem
- * o tożsamość. Rdzeń nie odcina komend po wygaśnięciu sesji — bramka jest
- * progiem wejścia, nie strażnikiem każdego żądania — więc wygaśnięcie ujawnia
- * się wyłącznie tutaj, przy następnym uruchomieniu, zdaniem nad formularzem.
- *
- * Który z dwóch formularzy pokazać — wejście hasłem czy pierwsze ustawienie
- * hasła — rozstrzyga rdzeń (`rozpoznanie-bramki.ts`), nie domysł klienta. Pole
- * nie jest blokowane, przycisk nie jest wyszarzany; jedyny sprawdzian po stronie
- * formularza to zgodność hasła z powtórzeniem przy zakładaniu, bo kontrakt
- * opisuje powtórzenie jako sprawę formularza klienta.
- *
- * Wymóg logowania jest nastawą (`gateway.requireLogin`) — gdy jest wyłączony,
- * przesłona nie staje. Kroki rozpoznania: `rozpoznanie-bramki.ts`.
- */
+/** Ekran logowania to jedyna bramka produktu — przesłona nad złożoną już aplikacją, nie osobna trasa; po wejściu znika, a rdzeń rozstrzyga wybór formularza i czas ważności sesji. */
 export interface OpisEkranuLogowania {
   kanal: Kanal;
   /** Wejście udane — aplikacja pod przesłoną dostaje sesję bramki. */
@@ -79,9 +57,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
   const haslo = poleHasla('au-haslo', 'Hasło', 'current-password');
   const nowe = poleHasla('au-nowe', 'Nowe hasło', 'new-password');
   const powtorzenie = poleHasla('au-powtorzenie', 'Powtórz hasło', 'new-password');
-  // Login i adres należą do rejestracji i do wejścia hasłem; droga potwierdzenia
-  // — do dwóch kroków, które przychodzą listem. Wszystkie trzy stoją w jednym
-  // formularzu i chowają się trybem, zamiast budować trzy osobne postacie ekranu.
+  // Login, adres i droga potwierdzenia stoją w jednym formularzu i chowają się trybem.
   const login = poleTekstu('au-login', 'Login', 'username');
   const adres = poleTekstu('au-adres', 'Adres e-mail', 'email', 'email');
   const droga = poleTekstu('au-droga', 'Droga potwierdzenia z listu', 'one-time-code');
@@ -93,48 +69,18 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
   przycisk.type = 'submit';
   przycisk.className = 'dn-btn dn-btn--atrament au-wyslij';
 
-  /**
-   * „Nie wyloguj mnie" — rozstrzyga, czy sesja przeżyje zamknięcie aplikacji.
-   *
-   * Stan wyjściowy bierze się z tego, gdzie leży sesja zapisana poprzednio
-   * (`sesjaTrwala`), a nie ze stałej: raz odznaczone pole ma zostać odznaczone.
-   * Skutek opisuje `sesja-bramki.ts` — zaznaczone kładzie sesję w pamięci
-   * trwałej, odznaczone w pamięci okna — a ta sama wartość idzie do rdzenia
-   * i rozstrzyga o trwaniu sesji.
-   */
+  /** Pole „nie wyloguj mnie” rozstrzyga, czy sesja przeżyje zamknięcie aplikacji. */
   const niewylogowuj = utworzNiewylogowuj(sesjaTrwala());
 
-  /**
-   * Segmenty metody wejścia — obsadzane wynikiem rozpoznania, nie na zapas.
-   * Przełączenie niczego nie wysyła i niczego nie blokuje (patrz `wybierzMetode`).
-   */
+  /** Segmenty metody wejścia obsadza wynik rozpoznania; przełączenie niczego nie wysyła ani nie blokuje. */
   const segmenty = utworzSegmentyMetody((wybrana) => wybierzMetode(wybrana));
 
-  /**
-   * „Reset hasła" — przestawia ekran na zmianę hasła i z powrotem.
-   *
-   * Stoi wyłącznie przy wejściu hasłem. Przy pierwszym uruchomieniu nie ma
-   * czego resetować (hasła jeszcze nie ma), a w samym trybie zmiany odnośnik
-   * prowadziłby tam, gdzie ekran już stoi.
-   */
-  // Odnośnik prowadzi do ODZYSKANIA konta, nie do zmiany hasła ze znanym hasłem
-  // bieżącym: naciska go ten, kto hasła nie pamięta, a wtedy zmiana ze znanym
-  // hasłem jest drogą donikąd. Zmiana hasła świadoma jest czynnością Ustawień.
+  /** Odnośnik resetu przełącza ekran na odzyskanie konta i wraca; stoi wyłącznie przy wejściu hasłem. */
   const reset = utworzOdnosnikResetu(() =>
     pokazFormularz(tryb === 'wejscie' ? 'odzyskanie' : 'wejscie'),
   );
 
-  /**
-   * „Mam drogę potwierdzenia z listu" — wejście w krok drugi rejestracji
-   * i wyjście z niego.
-   *
-   * Bez tego odnośnika krok potwierdzenia prowadził wyłącznie z udanej
-   * rejestracji w tym samym oknie. Odświeżenie strony między listem
-   * a przepisaniem drogi zostawiało Operatora przed formularzem wejścia bez
-   * żadnej drogi dalej: rejestracja odmawia wtedy `conflict`, a logowanie —
-   * oczekiwaniem na potwierdzenie adresu. To samo dotyczy listu odczytanego
-   * na innej maszynie.
-   */
+  /** Odnośnik wprowadza krok potwierdzenia adresu drogą z listu i pozwala z niego wyjść. */
   const potwierdzenieZListu = utworzOdnosnikPotwierdzenia(() =>
     pokazFormularz(tryb === 'potwierdzenie' ? 'wejscie' : 'potwierdzenie'),
   );
@@ -171,12 +117,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
 
   // ── przepływ ───────────────────────────────────────────────────────────────
 
-  /**
-   * Rozpoznanie: co pokazać, zanim ekran cokolwiek wyświetli.
-   *
-   * Kolejność kroków i powód każdego z nich stoją w `rozpoznanie-bramki.ts` —
-   * tutaj zostaje wyłącznie pokazanie wyniku.
-   */
+  /** Rozpoznaje stan bramki i pokazuje jego wynik; kroki rozpoznania prowadzi rdzeń. */
   async function rozpoznaj(): Promise<void> {
     ponow.hidden = true;
     stany.ladowanie('Sprawdzam stan bramki…');
@@ -189,9 +130,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
     });
 
     if (droga.rodzaj === 'bez-przeslony') {
-      // Przesłona schodzi bez komunikatu: zdanie „logowanie wyłączone" byłoby
-      // meldunkiem o nastawie ustawionej świadomie, a aplikacja pod spodem jest
-      // już złożona i gotowa.
+      // Przesłona schodzi bez komunikatu — nastawa wyłączająca logowanie jest świadoma.
       zdejmij();
       return;
     }
@@ -214,21 +153,15 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
 
   function pokazFormularz(nowy: Tryb, nowaMetoda: MetodaWejscia = metoda): void {
     tryb = nowy;
-    // Metoda inna niż hasło należy wyłącznie do wejścia: pierwsze hasło zakłada
-    // się hasłem, a zmienia hasłem dotychczasowym.
+    // Metoda inna niż hasło należy wyłącznie do wejścia; zmiana hasła używa hasła dotychczasowego.
     metoda = tryb === 'wejscie' ? nowaMetoda : 'haslo';
     segmenty.element.hidden = tryb !== 'wejscie';
     if (tryb === 'wejscie') segmenty.pokaz(metody, metoda);
-    // Login idzie z rejestracją i z wejściem hasłem — rdzeń rozpoznaje konto po
-    // nim. Metody właściwe urządzeniu loginu nie potrzebują, bo wskazuje je
-    // materiał leżący na maszynie.
+    // Login idzie z rejestracją i wejściem hasłem; rdzeń rozpoznaje konto po nim.
     login.pole.hidden = !(tryb === 'zalozenie' || (tryb === 'wejscie' && metoda === 'haslo'));
     adres.pole.hidden = !(tryb === 'zalozenie' || tryb === 'odzyskanie');
     droga.pole.hidden = !(tryb === 'potwierdzenie' || tryb === 'odzyskanie-haslo');
-    // Pierwszego pola nie ma tam, gdzie nie pyta się o hasło dotychczasowe:
-    // przy potwierdzeniu adresu, przy prośbie o odzyskanie i przy ustawianiu
-    // nowego hasła po odzyskaniu — tam hasła dotychczasowego z definicji nie ma,
-    // bo właśnie dlatego konto się odzyskuje.
+    // Pole hasła dotychczasowego znika tam, gdzie z definicji hasła jeszcze nie ma.
     haslo.pole.hidden =
       tryb === 'potwierdzenie' || tryb === 'odzyskanie' || tryb === 'odzyskanie-haslo';
     // Pole „nowe hasło" należy do zmiany hasła i do ostatniego kroku odzyskania.
@@ -236,28 +169,19 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
     powtorzenie.pole.hidden = tryb === 'wejscie' || tryb === 'potwierdzenie' || tryb === 'odzyskanie';
     haslo.ustawEtykiete(etykietaPierwszego(tryb, metoda));
     haslo.kontrolka.autocomplete = tryb === 'zalozenie' ? 'new-password' : 'current-password';
-    // Puste objaśnienie znika, zamiast zostawiać pusty odstęp pod polami:
-    // przy wejściu hasłem ekran nie ma nic do dopowiedzenia.
+    // Puste objaśnienie znika, by nie zostawiać pustego odstępu pod polami formularza.
     objasnienie.textContent = OBJASNIENIA[tryb];
     objasnienie.hidden = OBJASNIENIA[tryb] === '';
     przycisk.textContent = NAPISY_PRZYCISKU[tryb];
-    // Nastawa „nie wyloguj mnie" stoi tam, gdzie czynność kończy się wejściem:
-    // przy logowaniu i przy potwierdzeniu adresu, które wydaje pierwszą sesję.
-    // Rejestracja sesji nie zakłada, więc nie ma tam czego przedłużać.
+    // Nastawa „nie wyloguj mnie” stoi tam, gdzie czynność kończy się wejściem do aplikacji.
     niewylogowuj.pole.hidden = tryb !== 'wejscie' && tryb !== 'potwierdzenie';
     reset.hidden = tryb === 'zalozenie';
-    // Droga z listu stoi przy wejściu — tam wraca ten, kto konto założył i list
-    // odczytał później — oraz w samym kroku potwierdzenia, gdzie jest drogą
-    // powrotną. Przy zakładaniu konta listu jeszcze nie ma, a przy odzyskaniu
-    // drogę niesie już własne pole tamtych kroków.
+    // Droga z listu stoi przy wejściu i przy potwierdzeniu — drogach powrotnych do konta.
     potwierdzenieZListu.hidden = tryb !== 'wejscie' && tryb !== 'potwierdzenie';
     if (tryb === 'potwierdzenie') potwierdzenieZListu.textContent = 'Wróć do logowania';
     else potwierdzenieZListu.textContent = 'Mam drogę potwierdzenia z listu';
     stany.tresc().replaceChildren(formularz);
-    // Ognisko idzie na pierwsze pole widoczne w tym trybie, nie zawsze na hasło:
-    // w kroku potwierdzenia hasła nie ma, a ognisko na polu ukrytym zostawiłoby
-    // Operatora przed formularzem, w którym nic się nie dzieje po naciśnięciu
-    // klawisza.
+    // Ognisko trafia na pierwsze pole widoczne w trybie, nigdy na pole ukryte.
     pierwszeWidoczne().focus();
   }
 
@@ -269,13 +193,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
     return haslo.kontrolka;
   }
 
-  /**
-   * Przełączenie metody wejścia.
-   *
-   * Sekret znika przy przełączeniu: PIN wpisany w polu podpisanym „Hasło"
-   * poleciałby do rdzenia jako hasło, podniósł dławik prób i wrócił odmową
-   * o haśle, którego nikt nie próbował podać.
-   */
+  /** Przełączenie metody czyści pole sekretu, by PIN nie trafił do rdzenia jako hasło. */
   function wybierzMetode(wybrana: MetodaWejscia): void {
     if (wybrana === metoda) return;
     haslo.kontrolka.value = '';
@@ -300,10 +218,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
       await ustawHasloPoOdzyskaniu();
       return;
     }
-    // Długości PIN-u ekran nie pilnuje. Minimum znaków jest regułą formularza
-    // dla hasła zakładanego tutaj; PIN zakłada się w Ustawieniach i to tamten
-    // formularz obiecuje jego kształt. Sprawdzian przepisany na wejście PIN-em
-    // odmawiałby PIN-owi, który rdzeń przyjmie.
+    // Ekran nie sprawdza długości PIN-u — minimum znaków dotyczy wyłącznie hasła.
     if (tryb === 'zalozenie' && haslo.kontrolka.value.length < MIN_ZNAKOW) {
       stany.potwierdzenie(
         `Hasło jest za krótkie — potrzeba co najmniej ${MIN_ZNAKOW} znaków. Nic nie zostało wysłane.`,
@@ -312,8 +227,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
       return;
     }
     if (tryb === 'zalozenie' && haslo.kontrolka.value !== powtorzenie.kontrolka.value) {
-      // Jedyny sprawdzian formularza — nakazany przez kontrakt, bo rdzeń
-      // dostaje hasło raz i przepisania sprawdzić nie może.
+      // Zgodność hasła z powtórzeniem jest jedynym sprawdzianem formularza przy zakładaniu.
       stany.potwierdzenie(
         'Hasła różnią się od siebie — wpisz to samo hasło w obu polach. Nic nie zostało wysłane.',
         false,
@@ -342,31 +256,21 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
       wpusc(odpowiedz.wynik.session);
       return;
     }
-    // Obszar rady zależy od metody: `not_found` przy haśle znaczy „bramki nie
-    // ustawiono", a przy PIN-ie „PIN-u na tej maszynie nie ma". Jedna rada na
-    // dwa znaczenia odsyłałaby do zakładania hasła, które już stoi.
+    // Obszar rady zależy od metody — jedna rada na oba znaczenia myliłaby przy PIN-ie.
     const zdanie = opisOdmowyBramki(
       metoda === 'pin' ? 'Wejście PIN-em' : 'Wejście przez bramkę',
       metoda === 'pin' ? 'wejscie-pin' : 'wejscie',
       odpowiedz.blad,
       bezUchwytu(odpowiedz),
     );
-    // Bramka zniknęła między rozpoznaniem a wejściem (świeża baza, inne
-    // urządzenie): rdzeń mówi „nieustawiona", więc ekran przechodzi na
-    // założenie. PIN-u to nie dotyczy — tam `not_found` mówi o samym PIN-ie.
+    // Gdy rdzeń mówi „nieustawiona”, ekran przechodzi na założenie konta zamiast wejścia.
     if (metoda === 'haslo' && !bezUchwytu(odpowiedz) && odpowiedz.blad?.code === 'not_found') {
       pokazFormularz('zalozenie');
     }
     stany.potwierdzenie(zdanie, false);
   }
 
-  /**
-   * Zmiana hasła z ekranu wejścia (`auth.password.reset`).
-   *
-   * Nie wpuszcza. Rdzeń oddaje tu potwierdzenie zmiany i liczbę unieważnionych
-   * zalogowań, nie sesję — po zmianie trzeba zalogować się nowym hasłem. Ekran
-   * wraca więc do formularza wejścia z wyczyszczonymi polami.
-   */
+  /** Zmiana hasła nie wpuszcza — rdzeń oddaje potwierdzenie, a wejście wymaga nowego hasła. */
   async function zmienHaslo(): Promise<void> {
     if (nowe.kontrolka.value.length < MIN_ZNAKOW) {
       stany.potwierdzenie(
@@ -413,9 +317,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
       haslo: haslo.kontrolka.value,
     });
     if (odpowiedz.udana && odpowiedz.wynik !== undefined) {
-      // Hasło i powtórzenie znikają z pól: konto jest założone, a droga
-      // potwierdzenia przychodzi listem — trzymanie hasła w formularzu przez
-      // czas czekania na list nie służy już niczemu.
+      // Hasło i powtórzenie znikają z pól po założeniu konta, przed potwierdzeniem adresu.
       haslo.kontrolka.value = '';
       powtorzenie.kontrolka.value = '';
       pokazFormularz('potwierdzenie');
@@ -431,20 +333,14 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
       odpowiedz.blad,
       bezUchwytu(odpowiedz),
     );
-    // Kotwica już stoi (założona z innego urządzenia albo wyścig dwóch okien):
-    // jedyną drogą jest wejście hasłem istniejącym.
+    // Gdy konto już istnieje, jedyną drogą dalej jest wejście hasłem istniejącym.
     if (!bezUchwytu(odpowiedz) && odpowiedz.blad?.code === 'conflict') {
       pokazFormularz('wejscie');
     }
     stany.potwierdzenie(zdanie, false);
   }
 
-  /**
-   * Krok drugi rejestracji — potwierdzenie adresu drogą z listu.
-   *
-   * To tutaj Operator wchodzi do platformy po raz pierwszy: rdzeń wydaje token
-   * dostępu dopiero po potwierdzeniu.
-   */
+  /** Krok drugi rejestracji: rdzeń wydaje token dostępu dopiero po potwierdzeniu adresu. */
   async function potwierdzAdres(): Promise<void> {
     stany.potwierdzenie('Potwierdzam adres…', true);
     const odpowiedz = await zrodlo.potwierdz(
@@ -462,14 +358,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
     );
   }
 
-  /**
-   * Odzyskanie konta, krok pierwszy — prośba o list.
-   *
-   * Odpowiedź rdzenia jest taka sama dla adresu właściciela i dla obcego, więc
-   * ekran mówi dokładnie tyle, ile wie: że jeżeli adres pasuje, list poszedł.
-   * Zdanie „wysłano" bez tego zastrzeżenia byłoby potwierdzeniem, że konto o tym
-   * adresie istnieje.
-   */
+  /** Odpowiedź rdzenia jest jednakowa dla adresu istniejącego i obcego konta. */
   async function poprosOOdzyskanie(): Promise<void> {
     stany.potwierdzenie('Wysyłam drogę odzyskania…', true);
     const odpowiedz = await zrodlo.odzyskaj(adres.kontrolka.value.trim());
@@ -540,13 +429,7 @@ export function utworzEkranLogowania(opis: OpisEkranuLogowania): EkranLogowania 
     element.remove();
   }
 
-  /**
-   * Zdjęcie przesłony bez wejścia — gdy strzec nie ma czego.
-   *
-   * `naWejscie` nie leci, bo nie ma sesji do oddania, a wywołanie go z sesją
-   * zmyśloną byłoby atrapą wejścia. Aplikacja pod spodem jest już złożona
-   * i połączona, więc zdjęcie przesłony jest całą czynnością.
-   */
+  /** Zdjęcie przesłony bez wejścia — aplikacja pod spodem jest już złożona i połączona. */
   function zdejmij(): void {
     if (wpuszczony) return;
     wpuszczony = true;

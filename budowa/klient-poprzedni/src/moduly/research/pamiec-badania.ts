@@ -1,15 +1,7 @@
 import type { ResearchFinding, ResearchReport, ResearchSource } from '../../../../shared/contract';
 
 /**
- * Pamięć jednego badania — dane, które pięć okien ogląda wspólnie.
- *
- * Jedna odpowiedzialność: przechowanie i ogłoszenie zmiany. Pamięć nie zna
- * kontraktu i nie woła rdzenia — dzięki temu odczyt (`odczyt-badania`) i wykazy
- * okien patrzą na ten sam zbiór, a nie na jego kopie.
- *
- * Fazy są trzy, nie dwie: „jeszcze nie pytałem", „pytam" i „rdzeń nic nie ma"
- * zostają rozróżnialne, bo zlanie ich w jedno kazałoby zgadywać, czy czekać,
- * czy działać.
+ * Interfejs pamięci przechowuje dane jednego badania oglądane wspólnie przez pięć okien modułu Research oraz ogłasza każdą ich zmianę obserwatorom.
  */
 export type FazaBadania = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 

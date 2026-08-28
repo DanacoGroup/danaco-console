@@ -7,24 +7,7 @@ import {
   type ZalozenieKomponentu,
 } from './zalozenie-komponentu';
 
-/**
- * Formularz zakładania komponentu własnego — wejście do `component.create`
- * ze strony głównej.
- *
- * Formularz stoi zwinięty: środkiem ciężkości strony głównej są karty
- * środowisk, a formularz stale rozłożony odbierałby im pas ekranu przy
- * czynności wykonywanej rzadko. Rozwija go segment „Dodaj nowy" belki strefy
- * trzeciej.
- *
- * Wykaz rodzajów bierze się z `zalozenie-komponentu.ts`: `assistant` odmawia,
- * bo platforma nie ma magazynu profili. Powód stoi na ekranie, nie tylko
- * w komentarzu — inaczej zostałaby sama krótsza lista bez wyjaśnienia.
- *
- * Pod formularzem stoi panel komponentu już założonego (`panel-komponentu.ts`)
- * — zmiana i przypisanie. Zakładanie i zmiana idą jedną szufladą, bo są jedną
- * pracą w dwóch krokach, a osobny uchwyt do drugiego kroku kazałby Operatorowi
- * szukać go po założeniu komponentu.
- */
+/** Formularz zakładania komponentu własnego jest wejściem do zakładania komponentu ze strony głównej, umieszczonym pod panelem komponentu już założonego. */
 export interface FormularzKomponentu {
   element: HTMLElement;
   /** Rozwija albo zwija formularz — wywołuje go segment „Dodaj nowy". */
@@ -96,8 +79,7 @@ export function utworzFormularzKomponentu(opcje: OpcjeFormularza): FormularzKomp
     if (!wynik.udane) return;
     nazwa.value = '';
     opis.value = '';
-    // Wykaz dociąga strefa, pytając rdzeń na nowo. Doklejenie kafla z odpowiedzi
-    // pokazałoby stan, którego rdzeń nie potwierdził drugim odczytem.
+    // Wykaz komponentów dociąga strefa, pytając rdzeń na nowo.
     opcje.naZalozenie();
   }
 
@@ -107,11 +89,7 @@ export function utworzFormularzKomponentu(opcje: OpcjeFormularza): FormularzKomp
     odpowiedz.dataset['powodzenie'] = String(powodzenie);
   }
 
-  // Panel komponentu założonego stoi pod formularzem zakładania i otwiera się
-  // razem z nim: „Dodaj nowy" jest jedynym uchwytem przybornika, a czynności nad
-  // komponentem już założonym (`component.update`, `component.assign`) nie mają
-  // w strefie drugiej innego wejścia — kafel prowadzi do modułu, nie do zmiany.
-  // Drugi uchwyt do jednej szuflady byłby drugą drogą do jednego bytu.
+  // Panel komponentu założonego stoi pod formularzem i otwiera się razem z nim segmentem „Dodaj nowy”.
   const panel = utworzPanelKomponentu({
     kanal: opcje.kanal,
     naZmiane: opcje.naZalozenie,
@@ -123,9 +101,7 @@ export function utworzFormularzKomponentu(opcje: OpcjeFormularza): FormularzKomp
 
   return {
     element,
-    // Formularz nie ma własnego uchwytu — otwiera go segment „Dodaj nowy"
-    // belki strefy trzeciej. Drugi przycisk do tego samego formularza byłby
-    // drugą drogą do jednego bytu.
+    // Formularz otwiera segment „Dodaj nowy” belki strefy trzeciej.
     przelacz() {
       const otwarty = formularz.hidden;
       formularz.hidden = !otwarty;

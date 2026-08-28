@@ -1,13 +1,8 @@
 import type { MigawkaKart, StanZrodlaKart } from './zrodlo-kart-sesji';
 
-/**
- * Postać pasa kart poza samymi kartami: stan pusty i komunikat rdzenia.
- *
- * Nazywa przyczynę braku karty w pasie oraz treść odpowiedzi rdzenia na
- * czynność Operatora.
- */
+// Postać pasa kart poza samymi kartami: stan pusty oraz komunikat odpowiedzi rdzenia.
 
-/** Napisy pasa bez ani jednej karty, po jednym na stan źródła. */
+/** Napisy pasa kart bez ani jednej karty, po jednym na każdy możliwy stan źródła kart sesji tego rdzenia. */
 const PUSTE: Readonly<Record<StanZrodlaKart, string>> = {
   oczekiwanie: 'Oczekiwanie na rdzeń…',
   gotowe: 'Rdzeń nie ma otwartej sesji',

@@ -2,7 +2,7 @@ import { elementIkony } from '../ikony/ikony';
 import { nazwaStanuPary } from './etykiety-ukladu';
 import { wygladStanu, type StanPary } from './stan-pary';
 
-/** Plakietka stanu pętli — kropka, ikona i etykieta. */
+/** Plakietka stanu pętli — kropka, ikona i etykieta pokazujące stan pary koordynator-wykonawca w jednym znaku. */
 export interface PlakietkaStanu {
   element: HTMLElement;
   /** Przestawia plakietkę na inny stan pary. */
@@ -10,13 +10,7 @@ export interface PlakietkaStanu {
 }
 
 /**
- * Plakietka stanu pary koordynator–wykonawca.
- *
- * Każdy stan ma odrębną ikonę, odrębną etykietę i odrębną kropkę — odczyt nie
- * zależy od rozróżnienia barw.
- *
- * Praca trwająca teraz dokłada `.dn-spinner` obok etykiety. Wskaźnik nie
- * zastępuje ani ikony, ani napisu.
+ * Plakietka stanu pary koordynator-wykonawca łączy odrębną ikonę, etykietę i kropkę dla każdego stanu, a praca trwająca dokłada wskaźnik obok etykiety, nie zamiast niej.
  */
 export function utworzPlakietkeStanu(stan: StanPary): PlakietkaStanu {
   const element = document.createElement('span');

@@ -25,7 +25,7 @@ import type { StanPary } from './stan-pary';
 import { opisKierunku, ustalWiez, type Wiez } from './wiez-koordynacji';
 import { portPonawiania, zwiazLacznoscUkladu } from './zrodlo-lacznosci';
 
-/** Układ od jednego do trzech okien komunikacji obok siebie. */
+/** Układ okien komunikacji pokazuje od jednego do trzech okien obok siebie na wspólnej scenie równoległej. */
 export interface UkladOkien {
   /** Element montowany na scenie powłoki. */
   element: HTMLElement;
@@ -33,12 +33,7 @@ export interface UkladOkien {
   ustawLiczbe(liczba: number): void;
   /** Bieżąca liczba okien na scenie. */
   liczba(): number;
-  /**
-   * Przestawia scenę na moduł o podanym kodzie: liczbę okien, jaką ten moduł
-   * prowadzi, i zdanie o niej dla Operatora.
-   *
-   * Sama okien nie zdejmuje — patrz `zdanieNadmiaruSceny`.
-   */
+  // Przestawia scenę na moduł o podanym kodzie, licząc jego liczbę okien i zdanie o niej dla operatora.
   ustawModulSceny(kod: string): void;
   /** Figura rozmowy modułu, w którym scena pracuje w tej chwili. */
   figura(): FiguraModulu;
@@ -48,124 +43,51 @@ export interface UkladOkien {
   pokazPrzekazanie(od: string, do_: string): void;
   /** Ustawia stan pętli pokazywany w nagłówkach pary i na pasie relacji. */
   ustawStanPary(stan: StanPary): void;
-  /**
-   * Rozsyła odczyt łączności do wszystkich gniazd sceny.
-   *
-   * Jedna prawda o nastawie: łącze jest jedno na całego klienta, więc gniazdo
-   * pierwsze i czwarte muszą po jednej zmianie transportu pokazać dokładnie to
-   * samo. Rozesłanie idzie stąd, a nie z każdego gniazda osobno, właśnie po to.
-   *
-   * Woła to samo wiązanie transportu (`OpcjeUkladu.transport`); wejście zostaje
-   * publiczne, bo scena podglądu układu pracuje bez rdzenia i podaje odczyty
-   * ręcznie.
-   */
+  // Rozsyła odczyt łączności do wszystkich gniazd sceny, bo łącze jest jedno na całego klienta.
   ustawLacznosc(odczyt: OdczytLacznosci): void;
   /** Gniazdo po identyfikatorze; `null` dla identyfikatora spoza układu. */
   gniazdo(idOkna: string): GniazdoOkna | null;
   /** Fasada okna gniazda — punkt podpięcia przepływu komunikatów. */
   fasadaOkna(idOkna: string): OknoKomunikacji | null;
-  /**
-   * Podaje gniazdu kod okna wykonania nadany przez rdzeń.
-   *
-   * Panele pomocnicze wołają komendy żądające `windowId` okna otwartego, a ten
-   * kod powstaje dopiero po uzgodnieniu — układ montuje się wcześniej. Dopóki
-   * kodu nie ma, panel mówi wprost, czego mu brakuje, zamiast pokazywać pustkę.
-   */
+  // Podaje gniazdu kod okna wykonania nadany przez rdzeń dopiero po uzgodnieniu, po zmontowaniu układu.
   ustawOknoWykonania(idGniazda: string, kod: string): void;
-  /**
-   * Zamyka panele wszystkich gniazd wraz z ich subskrypcjami rdzenia.
-   *
-   * Subskrypcja strumienia przeżywa usunięcie węzła z drzewa dokumentu —
-   * scena zdjęta bez tego wywołania zostawia po sobie żywe nasłuchy.
-   */
+  // Zamyka panele wszystkich gniazd wraz z ich subskrypcjami rdzenia, żeby nie zostały żywe nasłuchy.
   zamknij(): void;
 }
 
-/** Ustawienia początkowe układu; każde ma wartość domyślną. */
+/** Ustawienia początkowe układu okien mają wartość domyślną, więc żadne pole nie jest wymagane do podania. */
 export interface OpcjeUkladu {
   /** Opis wspólny, z którego powstają opisy okien gniazd. */
   podstawa?: OpisOkna;
-  /**
-   * Liczba okien na starcie.
-   *
-   * Zostaje sprowadzona do figury modułu sceny: moduł prowadzący dwa okna nie
-   * wstanie z czterema tylko dlatego, że ktoś je tu wpisał.
-   */
+  // Liczba okien na starcie zostaje sprowadzona do figury modułu sceny, nie przyjmowana wprost.
   liczbaPoczatkowa?: number;
   /** Role nadane z góry; pozostałe gniazda biorą rolę domyślną. */
   rolePoczatkowe?: Partial<Record<IdGniazda, WindowRole>>;
-  /**
-   * Czy każde gniazdo buduje własny widok rozmowy — patrz
-   * `GniazdoOkna` / `OpcjeGniazda.wbudowanaRozmowa`.
-   *
-   * Domyślnie wyłączone (scena sesji osadza właściwy widok z zewnątrz);
-   * stanowisko podglądu układu włącza je jawnie, bo nie ma z zewnątrz niczego
-   * do osadzenia.
-   */
+  // Czy każde gniazdo buduje własny widok rozmowy; domyślnie wyłączone, bo scenę osadza się z zewnątrz.
   wbudowanaRozmowa?: boolean;
-  /**
-   * Kanał do rdzenia przekazywany gniazdom dla ich paneli pomocniczych.
-   *
-   * Pominięty znaczy „nie ma czym otworzyć ani jednego panelu" — menu paneli
-   * jest wtedy puste i mówi to wprost. Stanowisko podglądu układu pracuje bez
-   * rdzenia i właśnie tak ma wyglądać (brak nazwany, nie ukryty).
-   */
+  // Kanał do rdzenia przekazywany gniazdom dla paneli pomocniczych; pominięty czyni menu paneli pustym.
   kanal?: Kanal;
-  /**
-   * Transport, z którego scena bierze stan łącza i długość kolejki.
-   *
-   * Pominięty znaczy „nie ma czego pokazywać" — plakietki łączności milczą,
-   * bo scena nie zna łącza. Tak pracuje stanowisko podglądu układu.
-   */
+  // Transport, z którego scena bierze stan łącza i długość kolejki; pominięty wycisza plakietki łącza.
   transport?: Transport;
 }
 
-/**
- * Układ okien równoległych.
- *
- * Jedna odpowiedzialność: kompozycja sceny — przełącznik liczby, tor gniazd
- * i pas relacji — oraz utrzymanie tego, co między oknami wspólne: liczby,
- * ról i więzi koordynator–wykonawca. Samo okno komunikacji nie powstaje tutaj;
- * układ składa gotowe okna z `okno-komunikacji/`.
- */
+/** Układ okien równoległych ma jedną odpowiedzialność: kompozycję sceny wraz z liczbą, rolami i więzią koordynator–wykonawca. */
 export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
   const podstawa = opcje.podstawa ?? opisPoczatkowy();
 
-  /**
-   * Figura rozmowy modułu sceny — ile okien moduł prowadzi i w jakich rolach.
-   *
-   * Moduł bierze się z opisu okna, a przy każdej odpowiedzi rdzenia
-   * (`window.changed`) przestawia go gniazdo pierwsze — patrz subskrypcja niżej.
-   */
+  // Figura rozmowy modułu sceny mówi, ile okien moduł prowadzi i w jakich rolach; nadaje ją gniazdo.
   let figuraSceny = figuraModulu(podstawa.modul);
   let liczbaOkien = ograniczLiczbe(
     Math.min(opcje.liczbaPoczatkowa ?? LICZBA_MIN, pojemnoscModulu()),
   );
   let stanBiezacy: StanPary = 'brak-pary';
 
-  /**
-   * Ile okien scena otworzy w module bieżącym.
-   *
-   * Moduł bez rozmowy (`liczbaOkien === 0`) nie zostawia sceny pustej: scena
-   * trzyma `LICZBA_MIN`, a zdanie przełącznika mówi wprost, że rozmowy w tym
-   * module nie ma. Pusta scena czytałaby się jak awaria, a to nie jest awaria.
-   */
+  // Ile okien scena otworzy w module bieżącym; moduł bez rozmowy nie zostawia sceny pustej.
   function pojemnoscModulu(): number {
     return Math.max(figuraSceny.liczbaOkien, LICZBA_MIN);
   }
 
-  /**
-   * Czy dostawienie gniazda cokolwiek zmieni.
-   *
-   * Pytanie idzie tą samą rachubą, która potem wykona: odpowiedź to wprost
-   * wynik `ustawLiczbe` policzony na sucho, bo sufit składa się z figury modułu
-   * i z `LICZBA_MAX`, a figura przestawia się z rdzenia (`window.changed`).
-   * Osobne „liczba < 4" rozjechałoby się z tamtym przycięciem przy pierwszym
-   * module węższym niż scena.
-   *
-   * Odpowiedź „nie" znaczy krótszą listę w menu `⋮`, a nie wiersz wygaszony —
-   * patrz `pozycja-nowego-okna.ts`.
-   */
+  // Czy dostawienie gniazda cokolwiek zmieni, liczone tą samą rachubą, którą wykona ustawienie liczby.
   function wolneGniazdo(): boolean {
     return ograniczLiczbe(Math.min(liczbaOkien + 1, pojemnoscModulu())) > liczbaOkien;
   }
@@ -173,13 +95,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
   /** Gniazda o roli nadanej z zewnątrz — zmiana liczby okien jej nie odbiera. */
   const reczne = new Set<IdGniazda>();
 
-  /**
-   * Znacznik przestawiania ról przez sam układ. Gniazdo zgłasza tylko to, że
-   * rola się zmieniła, a źródło rozstrzyga o trwałości: rola z zewnątrz (operator
-   * albo rdzeń) jest decyzją i zostaje, rola z `ustawLiczbe` jest domyślną
-   * i ustępuje następnej. Nadawanie ról jest synchroniczne, więc znacznik nie
-   * przecieka poza swoją pętlę.
-   */
+  // Znacznik przestawiania ról przez sam układ odróżnia rolę domyślną od roli nadanej z zewnątrz.
   let ukladPrzestawia = false;
 
   const element = document.createElement('section');
@@ -197,9 +113,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
   const przelacznik = utworzPrzelacznikLiczby(liczbaOkien, (wybor) => ustawLiczbe(wybor));
   listwa.append(przelacznik.element);
 
-  // Przebieg ponowienia bierze się z transportu, jeśli transport go wystawia.
-  // Gdy nie wystawia, port jest `null`, a plakietka nazywa ten brak zamiast
-  // go zasłaniać.
+  // Przebieg ponowienia bierze się z transportu; brak transportu daje port pusty, nazwany wprost.
   const ponowienie =
     opcje.transport === undefined ? null : portPonawiania(opcje.transport);
 
@@ -211,12 +125,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
       wbudowanaRozmowa: opcje.wbudowanaRozmowa,
       ...(opcje.kanal === undefined ? {} : { kanal: opcje.kanal }),
       ...(ponowienie === null ? {} : { ponowienie }),
-      // Pozycja `Otwórz w nowym oknie` idzie tą samą drogą co przełącznik
-      // liczby. Podniesienie liczby wprowadza gniazdo na scenę, a wejście
-      // gniazda na scenę zamawia dla niego okno rdzenia
-      // (`aplikacja/scena-sesji.ts`, obserwator `hidden`). Okno założone
-      // `window.create` z boku byłoby niewidoczne. Tu stoją same wywołania:
-      // układ nie wie, że po drugiej stronie jest wiersz menu.
+      // Pozycja otwarcia nowego okna idzie tą samą drogą co przełącznik liczby, nie zakłada okna z boku.
       noweOkno: { wolneGniazdo, naNoweOkno: () => ustawLiczbe(liczbaOkien + 1) },
     });
     gniazda.set(id, gniazdo);
@@ -228,11 +137,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     });
   }
 
-  // Moduł sceny idzie z gniazda pierwszego. To ono niesie okno uzgodnione
-  // z rdzeniem (`montaz-ukladu.ts`), więc to na nie przychodzi `window.changed`
-  // razem z `moduleId` (`okno-komunikacji/przeplyw-komunikatow.ts`) — także po
-  // `workspace.enter`, które przestawia moduł okna zamiast zakładać drugie.
-  // Scena z oknami w różnych modułach bierze figurę z gniazda pierwszego.
+  // Moduł sceny idzie z gniazda pierwszego, bo to ono niesie okno uzgodnione z rdzeniem.
   gniazda.get(ID_GNIAZD[0])?.naZmianeModulu((kod) => ustawModulSceny(kod));
 
   element.append(listwa, tor, pas.element);
@@ -264,10 +169,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     const naScenie = widoczne();
     for (const [id, gniazdo] of gniazda) {
       gniazdo.pokaz(naScenie.includes(id));
-      // Menu `⋮` każdego gniazda niesie pozycję żyjącą z wolnego gniazda na
-      // scenie. Zmiana liczby albo figury modułu przesuwa sufit, więc sekcja
-      // czynności musi przeliczyć się razem ze sceną — inaczej wiersz przeżyłby
-      // własne pokrycie.
+      // Menu gniazda niesie pozycję zależną od wolnego miejsca na scenie, więc przelicza się razem z nią.
       gniazdo.odswiezCzynnosci();
     }
 
@@ -284,14 +186,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     przelacznik.ustawFigure(pojemnoscModulu(), zdanieSceny());
   }
 
-  /**
-   * Co scena ma dziś do powiedzenia o liczbie okien swojego modułu.
-   *
-   * Trzy zdania, każde tylko wtedy, gdy jest prawdziwe: czym jest figura
-   * modułu; że pozycja wyższa okna nie dokłada; że scena trzyma okien więcej,
-   * niż moduł prowadzi. Ostatnie bierze się stąd, że układ okien nie zdejmuje
-   * sam — zdjęcie okna zamyka je również w rdzeniu i jest decyzją Operatora.
-   */
+  // Co scena ma dziś do powiedzenia o liczbie okien modułu, w trzech zdaniach, tylko gdy prawdziwe.
   function zdanieSceny(): string {
     const zdania = [figuraSceny.zdanie];
     const pojemnosc = pojemnoscModulu();
@@ -305,17 +200,9 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     return zdania.join(' ');
   }
 
-  /**
-   * Zmiana liczby okien. Gniazda o roli nadanej z zewnątrz zachowują ją;
-   * pozostałe biorą rolę domyślną właściwą dla nowej liczby okien — przejście
-   * z jednego okna na dwa od razu pokazuje figurę koordynator–wykonawca,
-   * a decyzja operatora ani rdzenia nigdy nie zostaje cofnięta.
-   */
+  // Zmiana liczby okien zachowuje role nadane z zewnątrz, a pozostałym gniazdom nadaje rolę domyślną.
   function ustawLiczbe(liczba: number): void {
-    // Żądanie ponad figurę modułu nie jest odmową: pozycja przełącznika zostaje
-    // czynna, scena bierze tyle okien, ile moduł prowadzi, a zdanie pod grupą
-    // mówi, dlaczego wyżej się nie da. Cicha zgoda na czwarte okno w module
-    // dwuokiennym byłaby sukcesem udawanym.
+    // Żądanie ponad figurę modułu nie jest odmową: scena bierze tyle okien, ile moduł prowadzi.
     liczbaOkien = ograniczLiczbe(Math.min(liczba, pojemnoscModulu()));
     ukladPrzestawia = true;
     for (const [id, gniazdo] of gniazda) {
@@ -327,15 +214,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     odswiez();
   }
 
-  /**
-   * Przestawienie sceny na moduł.
-   *
-   * Okien nie zdejmuje, nawet gdy jest ich więcej, niż moduł prowadzi. Zdjęcie
-   * okna ze sceny zamyka je również w rdzeniu (`aplikacja/scena-sesji.ts` →
-   * `zamknijOstatnie`); zrobione samoczynnie przy przestawieniu modułu byłoby
-   * zamknięciem okna, o które nikt nie prosił. Scena mówi o nadmiarze wprost
-   * i zostawia zdjęcie Operatorowi.
-   */
+  // Przestawienie sceny na moduł nie zdejmuje okien samo, nawet gdy jest ich więcej, niż moduł prowadzi.
   function ustawModulSceny(kod: string): void {
     if (kod === figuraSceny.kod) return;
     figuraSceny = figuraModulu(kod);
@@ -353,21 +232,12 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     rozeslijStan(ustalWiez(role(), widoczne()));
   }
 
-  /**
-   * Rozesłanie odczytu łącza do wszystkich gniazd — także tych poza sceną.
-   *
-   * Gniazdo zdjęte ze sceny przełącznikiem liczby wraca na nią bez ponownego
-   * montażu, więc pominięcie go tutaj dałoby okno pokazujące stan łącza sprzed
-   * schowania. Rozesłanie do czterech elementów jest tańsze niż druga ścieżka
-   * doganiania stanu przy pokazaniu gniazda.
-   */
+  // Rozesłanie odczytu łącza idzie do wszystkich gniazd, także tych chwilowo zdjętych ze sceny.
   function ustawLacznosc(odczyt: OdczytLacznosci): void {
     for (const [, miejsce] of gniazda) miejsce.ustawLacznosc(odczyt);
   }
 
-  // Wiązanie transportu żyje tak długo jak scena. Subskrypcja przeżywa
-  // usunięcie węzła z dokumentu, więc odłączenie idzie w `zamknij()` razem
-  // z panelami gniazd.
+  // Wiązanie transportu żyje tak długo jak scena, więc odłączenie idzie razem z zamknięciem paneli.
   const odlaczLacznosc =
     opcje.transport === undefined
       ? null
@@ -382,8 +252,7 @@ export function utworzUkladOkien(opcje: OpcjeUkladu = {}): UkladOkien {
     ustawModulSceny,
     figura: () => figuraSceny,
 
-    // Znacznik trwałości i przeliczenie sceny bierze na siebie zgłoszenie
-    // gniazda — tą samą drogą wchodzi rola nadana przez rdzeń.
+    // Znacznik trwałości i przeliczenie sceny biorą na siebie zgłoszenie gniazda o zmianie roli.
     nadajRole: (idOkna, rola) => gniazdo(idOkna)?.ustawRole(rola),
 
     pokazPrzekazanie(od, do_) {

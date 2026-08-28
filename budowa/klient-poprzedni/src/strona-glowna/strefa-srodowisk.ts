@@ -3,28 +3,14 @@ import { utworzNaglowekStrefy } from './naglowek-strefy';
 import { POZYCJE_SRODOWISK, type KodSrodowiska, type PozycjaSrodowiska } from './pozycje-srodowisk';
 import { utworzSygnalWyboru, type SluchaczWyboru } from './sygnal-wyboru';
 
-/**
- * Strefa pierwsza — siatka kart środowisk wraz z ich stanem czynnym.
- *
- * To środek ciężkości strony głównej: największa powierzchnia, największy
- * promień, największy stopień pisma i jedyny krój nagłówkowy na ekranie.
- */
-
-/**
- * Nazwa strefy jest nazwą z opracowania, nie parafrazą: „Strefa 1 · Karty
- * środowisk" stoi tak samo w rozdziale 3.1 opracowania i w makiecie Centrum
- * dowodzenia. Nazw sekcji nie tłumaczymy i nie skracamy.
- */
+/** Strefa pierwsza pokazuje siatkę kart środowisk ze stanem czynnym i stanowi środek ciężkości strony głównej: największą powierzchnię i jedyny krój nagłówkowy na ekranie. */
 const ETYKIETA = 'Strefa 1 · Karty środowisk';
 const WYJASNIENIE = 'Wybór środowiska otwiera przestrzeń roboczą i przywraca jej karty sesji.';
 
 export interface StrefaSrodowisk {
   element: HTMLElement;
   naWybor(sluchacz: SluchaczWyboru<PozycjaSrodowiska>): void;
-  /**
-   * Przerysowuje strefę wykazem z rdzenia (`environment.list`). Stała
-   * `POZYCJE_SRODOWISK` służy wyłącznie jako treść zastana przed odpowiedzią.
-   */
+  /** Przerysowuje strefę wykazem z rdzenia; stała zastana służy tylko jako treść przed odpowiedzią. */
   ustawWykaz(pozycje: readonly PozycjaSrodowiska[]): void;
   /** Oznacza środowisko czynne; `null` zdejmuje oznaczenie ze wszystkich. */
   ustawCzynne(kod: KodSrodowiska | null): void;

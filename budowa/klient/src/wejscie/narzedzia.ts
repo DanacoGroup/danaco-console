@@ -1,19 +1,15 @@
 /**
- * NARZĘDZIA OKIEN — warstwa pod składnikami.
- *
- * Trzy rzeczy, których potrzebuje każde okno składane ze składników i których
- * nie powinno wymyślać po raz drugi: budowanie węzła, sięganie po łańcuch
- * z katalogu treści i podstawianie danych w łańcuch.
- *
- * Nic tu nie wie o żadnym oknie — to warstwa niżej niż składniki.
+ * Narzędzia okien — warstwa pod składnikami. Trzy rzeczy, których potrzebuje
+ * każde okno: budowanie węzła, sięganie po łańcuch z katalogu treści
+ * i podstawianie danych w łańcuch.
  */
 
 import { tresci, type WezelTresci } from './tresci.ts';
 
-/** Wartość atrybutu. `null` i `false` pomijają atrybut, `true` stawia go pusty. */
+/** Wartość atrybutu węzła: null i false pomijają atrybut całkowicie, true stawia go pusty, bez wartości. */
 export type WartoscAtrybutu = string | number | boolean | null | undefined;
 
-/** Atrybuty węzła. Nazwy własne: `klasa`, `tekst`, `dane`; reszta idzie wprost. */
+/** Atrybuty węzła przekazywane budowie; nazwy własne — klasa, tekst, dane — reszta idzie wprost jako atrybut HTML. */
 export interface AtrybutyWezla {
   klasa?: string | null;
   tekst?: string | null;
@@ -21,17 +17,13 @@ export interface AtrybutyWezla {
   [nazwa: string]: WartoscAtrybutu | Record<string, WartoscAtrybutu> | null | undefined;
 }
 
-/** Dziecko węzła: węzeł, łańcuch albo nic. */
+/** Dziecko węzła: sam węzeł, łańcuch tekstu albo nic, gdy warunek składnika nie chce go wcale wstawiać. */
 export type Dziecko = Node | string | null | undefined | false;
 
 /**
- * Budowa węzła. Atrybuty rozpoznawane po nazwie: `klasa` → class, `tekst` →
- * textContent, `dane` → komplet atrybutów `data-*`, reszta wprost jako atrybut.
- *
- * Wartość `null` albo `false` pomija atrybut — dzięki temu warianty składnika
- * pisze się warunkiem, a nie rozgałęzieniem. Treści nie wstawia się znacznikiem:
- * węzeł powstaje z `createElement`, a tekst z `createTextNode`, więc dana
- * z zewnątrz nie ma jak stać się znacznikiem.
+ * Budowa węzła. Atrybuty rozpoznawane po nazwie: klasa, tekst, dane, reszta
+ * wprost jako atrybut. Wartość null albo false pomija atrybut — dzięki temu
+ * warianty składnika pisze się warunkiem, nie rozgałęzieniem.
  */
 export function el(znacznik: string, atrybuty?: AtrybutyWezla, dzieci?: Dziecko[]): HTMLElement {
   const wezel = document.createElement(znacznik);
@@ -62,13 +54,12 @@ export function zeZnacznika(znacznik: string): SVGElement {
   const szablon = document.createElement('template');
   szablon.innerHTML = znacznik.trim();
   const pierwszy = szablon.content.firstElementChild;
-  // Wpis diagnostyczny dla wykonawcy, nie tekst okna: pusty znacznik znaku jest
-  // usterką zestawu, a nie sytuacją, którą Operator ma czytać.
+  // Wpis diagnostyczny dla wykonawcy, nie tekst okna: pusty znacznik znaku jest usterką zestawu.
   if (pierwszy === null) throw new Error('[wejscie] pusty znacznik znaku');
   return pierwszy as SVGElement;
 }
 
-/** Dane podstawiane w miejsca ujęte w nawiasy klamrowe. */
+/** Dane podstawiane w miejsca ujęte w nawiasy klamrowe wewnątrz łańcucha wziętego z tego katalogu treści. */
 export type DanePodstawienia = Record<string, string | number>;
 
 /**
@@ -99,21 +90,21 @@ export function wezel(sciezka: string): WezelTresci {
   return biezacy as WezelTresci;
 }
 
-/** Łańcuch z katalogu, wraz z podstawieniem danych, gdy je podano. */
+/** Łańcuch z katalogu, wraz z podstawieniem danych, gdy je podano; brak klucza zwraca samą jego ścieżkę. */
 export function tekst(sciezka: string, dane?: DanePodstawienia): string {
   const znaleziony = wezel(sciezka);
   if (typeof znaleziony !== 'string') return `⟨${sciezka}⟩`;
   return dane === undefined ? znaleziony : podstaw(znaleziony, dane);
 }
 
-/** Wykaz łańcuchów z katalogu. */
+/** Wykaz łańcuchów z katalogu, wskazany ścieżką kluczy prowadzącą prosto do tablicy wewnątrz drzewa treści. */
 export function wykaz(sciezka: string): string[] {
   const znaleziony = wezel(sciezka);
   if (!Array.isArray(znaleziony)) return [`⟨${sciezka}⟩`];
   return znaleziony.map((pozycja) => (typeof pozycja === 'string' ? pozycja : `⟨${sciezka}⟩`));
 }
 
-/** Wykaz par głowa–treść z katalogu; używa go kolumna tożsamości. */
+/** Wykaz par głowa–treść z katalogu; używa go kolumna tożsamości do pokazania kolejnych zdań o programie. */
 export function wykazZalet(sciezka: string): { glowa: string; tresc: string }[] {
   const znaleziony = wezel(sciezka);
   if (!Array.isArray(znaleziony)) return [];
@@ -126,7 +117,7 @@ export function wykazZalet(sciezka: string): { glowa: string; tresc: string }[] 
   });
 }
 
-/** Dane podstawienia z katalogu — na przykład adres nadawcy listu. */
+/** Dane podstawienia z katalogu — na przykład adres nadawcy listu — złożone z par klucza i jego wartości. */
 export function daneZKatalogu(sciezka: string): DanePodstawienia {
   const znaleziony = wezel(sciezka);
   if (znaleziony === null || typeof znaleziony !== 'object' || Array.isArray(znaleziony)) return {};
@@ -137,7 +128,7 @@ export function daneZKatalogu(sciezka: string): DanePodstawienia {
   return dane;
 }
 
-/** Czas w postaci `mm:ss`. Postać należy do widoku, nie do katalogu treści. */
+/** Czas w postaci minut i sekund oddzielonych dwukropkiem; postać należy do widoku, nie do katalogu treści. */
 export function naZegar(sekundy: number): string {
   const minuty = Math.floor(Math.max(0, sekundy) / 60);
   const reszta = Math.max(0, sekundy) % 60;

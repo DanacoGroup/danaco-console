@@ -4,23 +4,10 @@ import type { StanPary } from './stan-pary';
 import type { UkladOkien } from './uklad-okien';
 
 /**
- * Parametry adresu strony podglądu.
- *
- * Wyłącznie na potrzeby podglądu wizualnego: pozwalają otworzyć scenę od razu
- * w wybranym stanie, bez klikania. Każdy wariant ekranu okien równoległych —
- * jedno, dwa i trzy okna, oba motywy, chwila przekazania — daje się przywołać
- * samym adresem.
- *
- *   ?liczba=3&motyw=light&stan=kolejka-wstrzymana&przekazanie=okno-1:okno-2
- *   ?modul=automations&liczba=4   → scena bierze dwa okna, bo tyle prowadzi moduł
+ * Parametry adresu strony podglądu pozwalają otworzyć scenę od razu w wybranym stanie bez klikania, przywołując samym adresem dowolny wariant ekranu okien równoległych — liczbę okien, motyw, stan pary czy chwilę przekazania.
  */
 export interface ParametryPodgladu {
-  /**
-   * Kod modułu sceny; pusty zostawia moduł nieustalony.
-   *
-   * Bez rdzenia to jedyna droga, żeby zobaczyć figurę rozmowy modułu —
-   * w produkcie moduł przychodzi zdarzeniem `window.changed`.
-   */
+  /** Kod modułu sceny; pusty zostawia moduł nieustalony, bo to jedyna droga do figury bez rdzenia. */
   modul: string;
   liczba: number;
   motyw: Motyw | null;
@@ -28,7 +15,7 @@ export interface ParametryPodgladu {
   przekazanie: { od: string; do_: string } | null;
 }
 
-/** Odczyt parametrów z adresu; brak parametru oznacza wartość domyślną. */
+/** Odczyt parametrów z adresu strony podglądu; brak parametru w adresie oznacza przyjęcie wartości domyślnej. */
 export function odczytajParametry(adres: string): ParametryPodgladu {
   const pytanie = new URL(adres).searchParams;
   return {
@@ -51,7 +38,7 @@ export function zastosujMotywPodgladu(parametry: ParametryPodgladu): void {
   if (parametry.motyw !== null) ustawMotyw(parametry.motyw);
 }
 
-/** Zastosowanie pozostałych parametrów na gotowym układzie. */
+/** Zastosowanie pozostałych parametrów podglądu na już gotowym, zmontowanym układzie okien równoległych. */
 export function zastosujParametry(uklad: UkladOkien, parametry: ParametryPodgladu): void {
   // Moduł przed liczbą: to on rozstrzyga, ile okien scena w ogóle otworzy.
   uklad.ustawModulSceny(parametry.modul);
@@ -62,12 +49,12 @@ export function zastosujParametry(uklad: UkladOkien, parametry: ParametryPodglad
   }
 }
 
-/** Nazwa motywu albo brak wskazania. */
+/** Nazwa motywu odczytana z parametru adresu albo brak wskazania, gdy wartość jest zupełnie nierozpoznawalna. */
 function czyMotyw(wartosc: string | null): Motyw | null {
   return wartosc === 'light' || wartosc === 'dark' ? wartosc : null;
 }
 
-/** Nazwa stanu pary albo brak wskazania. */
+/** Nazwa stanu pary odczytana z parametru adresu albo brak wskazania, gdy wartość jest nierozpoznawalna. */
 function czyStan(wartosc: string | null): StanPary | null {
   const znane: StanPary[] = [
     'brak-pary',
@@ -80,7 +67,7 @@ function czyStan(wartosc: string | null): StanPary | null {
   return znane.find((stan) => stan === wartosc) ?? null;
 }
 
-/** Para gniazd zapisana jako `od:do` albo brak wskazania. */
+/** Para gniazd zapisana w adresie jako źródło i cel rozdzielone dwukropkiem, albo brak jakiegokolwiek wskazania. */
 function czyPrzekazanie(wartosc: string | null): { od: string; do_: string } | null {
   if (wartosc === null) return null;
   const [od, do_] = wartosc.split(':');

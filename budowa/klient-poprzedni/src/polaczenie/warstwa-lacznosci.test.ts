@@ -6,14 +6,7 @@ import { utworzMagistrale } from './magistrala-zdarzen';
 import { wykladniczePonawianie } from './ponawianie';
 import type { StanPolaczenia } from './stan-polaczenia';
 
-/**
- * Warstwa łączności klienta.
- *
- * Jej obietnica wobec Operatora jest jedna i mocna: okno komunikacji pozostaje
- * użyteczne w każdym stanie, a wiadomość wpisana przy rozłączeniu nie ginie.
- * Sprawdziany niżej mierzą dokładnie to — kolejkowanie przy braku rdzenia,
- * opróżnienie kolejki po powrocie oraz ponawianie, które nie ustaje.
- */
+// Warstwa łączności ma jedną obietnicę: okno pozostaje użyteczne, wiadomość nie ginie.
 
 describe('kolejka wychodząca', () => {
   it('wydaje elementy w kolejności dodania i zostawia się pusta', () => {

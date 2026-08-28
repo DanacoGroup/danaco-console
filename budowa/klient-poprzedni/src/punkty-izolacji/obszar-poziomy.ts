@@ -5,49 +5,9 @@ import { pole, wiersz as wierszPola } from '../modele/kontrolki-formularza-braki
 import type { Kanal, Wynik } from '../protokol/kanal';
 import type { ObszarIzolacji, ZaleznosciObszaru } from './obszary';
 
-/**
- * Obszar „Poziom zasięgu" — selektor zasięgu okna, czyli lewa kolumna rozdz. 6.1
- * Modelu konfiguracji: drabina poziomów zapisu punktu izolacji (okno → rola →
- * sesja → projekt → para modułów → moduł → środowisko → globalny), w kolejności
- * rozstrzygania — wygrywa pierwszy poziom mający własny zapis, zanim w grę
- * wchodzi oś (obszar `osie`).
- *
- * Drabina nie jest wykazem do czytania: wskazanie poziomu ustawia zasięg czynny
- * okna (`stan-zasiegu.ts`), a na nim czyta i pisze macierz izolacji, przypisanie
- * profilu i podgląd polityki efektywnej. Ograniczenie konfiguracji do jednego,
- * z góry narzuconego poziomu byłoby twardą regułą — a tych okno nie stawia.
- *
- * Drabina woła rdzeń (`isolation.scope.list`) i nie jest drugą kopią słownika.
- * Nazwa, kolejność i flaga najwęższego poziomu przychodzą z odpowiedzi rdzenia
- * (`shared.IsolationScopeLevel`), który czyta je z tabeli `poziom_zasiegu`
- * (`server/internal/core/adapter_modul_isolation.go`, funkcja `PoziomyZasiegu`)
- * — ten plik ich nie zgaduje ani nie trzyma jako stałej.
- *
- * Pole `order` w kontrakcie liczy odwrotnie niż kolejność rozstrzygania: rośnie
- * od poziomu najszerszego (`order: 1` dla globalnego), a tabela pokazuje
- * kolejność od najwęższego — stąd sortowanie malejąco po `order`.
- *
- * Czego rdzeń nie niesie: pola `description`, bo adapter pomija je tam, gdzie
- * baza nie ma treści. Zdania objaśniające przy każdym poziomie zostają więc
- * lokalnym słownikiem tego pliku (`ZDANIA`, kluczowany po `ConfigScope`
- * z kontraktu) — to nie jest druga kopia drabiny, tylko treść, której rdzeń
- * nie ma i nie udaje, że ma.
- *
- * Obszar nie pokazuje, który poziom wygrywa dla bieżącego Operatora — pokazuje
- * wyłącznie ten, który Operator wskazał do zapisu.
- * `isolation.scope.list` zwraca słownik poziomów (nazwa, kolejność, czy poziom
- * jest najwęższy w ogóle), a nie zapis Operatora na którymkolwiek z nich.
- * Takie rozstrzygnięcie wymaga innej rodziny komend (`isolation.context.get`,
- * `isolation.policy.preview`) oraz pełnej ścieżki bytów — identyfikatorów roli,
- * sesji, projektu i pary modułów — których klient nie zna. Bliźniacze okno
- * Konfiguracji ma tę samą drabinę (`konfiguracja/zasiegi.ts`) i z tego samego
- * powodu jego odczyt (`konfiguracja/zrodlo-wartosci.ts`, funkcja `wpisy`)
- * pobiera tylko dwa poziomy: globalny oraz ten wskazany punktem widzenia okna.
- * Braku nie wolno zamalować milczącą pustką, która wyglądałaby jak „nikt nic
- * nie zapisał" zamiast uczciwym „tego nie odczytaliśmy".
- */
+// Obszar Poziom zasięgu — selektor zasięgu okna, drabina poziomów zapisu punktu izolacji.
 
-/** Zdania objaśniające poziom — treść, której rdzeń dziś nie niesie (pole `description` puste u źródła). */
+/** Zdania objaśniające poziom — treść, której rdzeń dziś nie niesie, bo nie ma jej wcale u źródła danych. */
 const ZDANIA: Readonly<Record<ConfigScope, string>> = {
   [ConfigScope.Window]:
     'Obejmuje wyłącznie jedno okno komunikacji — pojedynczą kartę rozmowy w module. ' +
@@ -64,8 +24,7 @@ const ZDANIA: Readonly<Record<ConfigScope, string>> = {
     'Studio a modułem Translate.',
   [ConfigScope.Module]: 'Obejmuje jeden moduł platformy — np. odrębna pamięć długoterminowa modułu Developer.',
   [ConfigScope.Environment]: 'Obejmuje jedno środowisko uruchomieniowe — np. inna polityka dla CodeStudio niż dla TalkIn.',
-      // Zakres „aplikacja" obsługuje przełącznik „Wymóg logowania". Stoi przy
-      // globalnym, bo dotyczy całej aplikacji — szerzej się nie da.
+      // Zakres aplikacja obsługuje przełącznik logowania, stoi przy globalnym, bo dotyczy całej aplikacji.
   [ConfigScope.Application]: 'aplikacja',
   [ConfigScope.Global]:
     'Obejmuje całą platformę — warstwa bazowa, dziedziczona przez każdy węższy poziom ' +
@@ -77,7 +36,7 @@ const POWOD_BRAKU_ROZSTRZYGNIECIA =
   'Rozstrzygnięcie „który poziom dziś wygrywa" wymaga pełnej ścieżki bytów (identyfikatora roli, ' +
   'sesji, projektu, pary modułów), której ten klient nie zna — tak samo jak w oknie Konfiguracji.';
 
-/** Opakowuje `kanal.wyslij` w Promise — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
+/** Opakowuje wysłanie komendy kanału w obietnicę — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
 function posijKomende<K extends Command>(
   kanal: Kanal,
   komenda: K,
@@ -96,11 +55,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   bytPoziomu.value = zasieg.bytZasiegu();
   bytPoziomu.addEventListener('change', () => zasieg.ustaw(zasieg.zasieg(), bytPoziomu.value.trim()));
 
-  /**
-   * Byt karty sesji klient zna sam — wpisywanie go ręcznie z pamięci byłoby
-   * proszeniem Operatora o identyfikator, który okno ma pod ręką. Podpowiedź
-   * wchodzi wyłącznie do pola pustego: wpis własny nie jest nadpisywany.
-   */
+  // Byt karty sesji klient zna sam; podpowiedź wchodzi wyłącznie do pola pustego, wpis własny nie ginie.
   function wskazPoziom(wybrany: ConfigScope): void {
     const wpisany = bytPoziomu.value.trim();
     const byt = wpisany === '' && wybrany === ConfigScope.Session ? kanal.sesja().id() : wpisany;
@@ -161,8 +116,7 @@ function zbudujTabeleDrabiny(
   wybrany: ConfigScope,
   naWybor: (poziom: ConfigScope) => void,
 ): HTMLElement {
-  // Kolejność rozstrzygania od najwęższego: `order` kontraktu rośnie od
-  // najszerszego (1 = globalny), więc wyświetlamy malejąco po `order`.
+  // Kolejność rozstrzygania od najwęższego: pole kontraktu rośnie od najszerszego, wyświetlamy malejąco.
   const uporzadkowane = [...scopes].sort((a, b) => b.order - a.order);
 
   const naglowek = document.createElement('tr');
@@ -231,13 +185,7 @@ function zbudujWiersz(
   return element;
 }
 
-/**
- * Notatka o braku rozstrzygnięcia: plakietka ostrzegawcza i zdanie z powodem —
- * `isolation.scope.list` niesie słownik poziomów, nie zapis Operatora na
- * żadnym z nich, więc obszar nie umie wskazać, który poziom wygrywa dla
- * bieżącego okna albo sesji. Braku nie chowamy za `disabled` ani za milczącą
- * pustką — stoi nazwany wprost.
- */
+/** Notatka o braku rozstrzygnięcia: plakietka ostrzegawcza i zdanie z powodem, stojące zawsze nazwane wprost. */
 function zbudujNotatkeBrakuRozstrzygniecia(): HTMLElement {
   const plakietka = document.createElement('span');
   plakietka.className = 'dn-plakietka dn-plakietka--ostrzezenie';

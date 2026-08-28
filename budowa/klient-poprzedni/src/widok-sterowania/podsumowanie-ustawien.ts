@@ -6,26 +6,7 @@ import type { RejestrKanalow } from '../sterowanie/rejestr-kanalow';
 import { pozycjePodsumowania, type PozycjaPodsumowania } from './nazwy-ustawien';
 import type { ObserwatorUstawien } from './obserwator-ustawien';
 
-/**
- * Podsumowanie ośmiu ustawień okna — odczyt, nie kontrolka.
- *
- * Widoczne wtedy, gdy szuflada z kontrolkami jest zwinięta: operator zamyka
- * sterowanie i nadal wie, na czym okno pracuje. Wartość każdego ustawienia
- * stoi obok jego nazwy, więc osiem odpowiedzi widać jednym spojrzeniem, bez
- * rozwijania czegokolwiek.
- *
- * Podsumowanie nie jest bramą: kliknięcie wiersza otwiera szufladę i prowadzi
- * do kontrolki, a nie odmawia dostępu. Ikona przy każdym wierszu
- * sprawia, że rozróżnienie nie opiera się na samej barwie (dostępność).
- */
-/**
- * Klasy własne dymka [?] podawane bibliotecznej fabryce.
- *
- * Powłoka niesie `flex: none` i odstęp z prawej, bez których dymek kurczy się
- * w rzędzie nazwy; znak zastępuje biblioteczne `.dn-btn-ikona`, bo jest
- * pierścieniem 14 px ze wskaźnikiem `help`, a nie kwadratowym przyciskiem
- * ikonowym. Reguły stoją w `podsumowanie-ustawien.css`.
- */
+/** Klasy własne dymka pomocy podawane bibliotecznej fabryce; powłoka niesie własny odstęp, a znak zastępuje styl biblioteczny pierścieniem ze wskaźnikiem pomocy. */
 const KLASY_DYMKA: KlasyDymka = {
   powloka: 'dc-widok-ster__dymek',
   znak: 'dc-widok-ster__dymek-znak',
@@ -67,19 +48,7 @@ export function utworzPodsumowanie(
   };
 }
 
-/**
- * Pozycja listy opisowej: nazwa ustawienia i jego bieżąca wartość.
- *
- * Para `dt`–`dd` mieszka we własnym bloku — dopuszcza to budowa listy
- * opisowej, a układ zyskuje jedną komórkę siatki na ustawienie zamiast
- * dwóch niezależnych, które przy zmianie liczby kolumn rozjechałyby się
- * względem siebie.
- *
- * Nazwa jest przyciskiem prowadzącym do kontrolki — nie oznakowaniem, którego
- * nie da się nacisnąć. Wartość zostaje tekstem, bo jest odczytem stanu.
- * Obok nazwy stoi dymek [?] z objaśnieniem ustawienia, a wiersz czekający na
- * dane rdzenia niesie wskaźnik ładowania obok wartości — nigdy zamiast niej.
- */
+/** Buduje wiersz listy opisowej: nazwę jako przycisk prowadzący do kontrolki, dymek objaśnienia oraz wartość tekstową ze wskaźnikiem ładowania, gdy dane są w drodze. */
 function wiersz(
   pozycja: PozycjaPodsumowania,
   przyWskazaniu: (klucz: string) => void,
@@ -112,7 +81,7 @@ function wiersz(
   return blok;
 }
 
-/** Wskaźnik ładowania obok wartości — wykaz kanałów w drodze z rdzenia. */
+/** Buduje wskaźnik ładowania stawiany obok wartości wiersza, gdy wykaz kanałów modelu jest jeszcze w drodze z rdzenia. */
 function wskaznikLadowania(): HTMLElement {
   const wskaznik = document.createElement('span');
   wskaznik.className = 'dn-spinner';
@@ -122,7 +91,7 @@ function wskaznikLadowania(): HTMLElement {
   return wskaznik;
 }
 
-/** Element tekstowy o wskazanej klasie. */
+/** Buduje element tekstowy o wskazanym rodzaju znacznika i klasie, niosący podaną treść jako zawartość tekstową. */
 function tekst(rodzaj: string, klasa: string, tresc: string): HTMLElement {
   const element = document.createElement(rodzaj);
   element.className = klasa;

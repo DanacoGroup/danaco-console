@@ -3,22 +3,8 @@ import { utworzRozwiniecie } from './warstwy-translate';
 import { STYLE_DOCELOWE, przelozStyl, type StylDocelowy } from './wzorce-placeholderow';
 
 /**
- * Mapowanie stylów symboli zastępczych — warstwa czwarta Translation Panels.
- *
- * Ta sama zmienna zapisuje się na różnych platformach różnie i przeniesienie
- * materiału między nimi wymaga przełożenia zapisu, nie treści. Kontrakt takiej
- * komendy nie ma, więc przekład liczy okno i oddaje go do przeniesienia
- * ręcznego — w rdzeniu nic się przy tym nie zmienia i element mówi to przy
- * wyniku.
- *
- * Przekład działa na tekście źródłowym, bo to on jest wzorcem dla wszystkich
- * paneli: zamiana zapisu w jednym przekładzie, a niezamienienie go w źródle
- * i w pozostałych panelach, dałaby materiał niespójny co do zmiennych — czyli
- * dokładnie tę usterkę, której kontrola jakości szuka.
- *
- * Wykaz zamian jest obowiązkowy przy wyniku: przekład zapisu jest zmianą,
- * której Operator nie zobaczy w treści na pierwszy rzut oka, a od niej zależy
- * podstawienie wartości w gotowym produkcie.
+ * Mapowanie stylów symboli zastępczych przekłada zapis zmiennej między platformami na tekście
+ * źródłowym, licząc okno na przeniesienie ręczne, bo rdzeń nie ma komendy tej zmiany.
  */
 export interface MapowanieStylow {
   element: HTMLElement;

@@ -8,32 +8,12 @@ import {
   type StudioModelChangeSummary,
 } from '../../../../shared/contract';
 
-/**
- * Odwracalny dziennik czynności dokumentu — słowa, którymi okno mówi
- * Operatorowi, co cofa i czego cofnąć nie może.
- *
- * ── Trzy rzeczy, których nie wolno zgubić ───────────────────────────────────
- * 1. **Cofnięcie nakłada RÓŻNICĘ drzew, nie migawkę.** Praca naniesiona po
- *    cofanej czynności zostaje. Operator, który tego nie wie, nie odważy się
- *    cofnąć czynności ze środka dziennika — a to jest cała wartość tej rodziny.
- *    Zdanie stoi więc przy każdej czynności, nie w pomocy.
- * 2. **Czynność będąca podstawą późniejszej ODMAWIA i nazywa te czynności.**
- *    Rdzeń oddaje je w `blockedBy` wpisu oraz w bilansie odpowiedzi. Okno
- *    pokazuje powód, a nie samo „nie udało się" — inaczej Operator zostaje
- *    z zamkniętą drogą i bez wskazania, co ją zamknęło.
- * 3. **Wykonawca jest nazwany.** Wpis niesie `authorAgentName`, więc dwóch
- *    agentów nie pokazuje się jako jeden „model".
- *
- * Plik nie zna DOM ani rdzenia: wejściem są byty kontraktu, wyjściem napisy
- * i rozstrzygnięcia. Dzięki temu sprawdza się bez stawiania okna.
- */
-
-/** Zdanie o różnicy drzew — jedno miejsce tej treści w całym oknie. */
+/** Odwracalny dziennik czynności dokumentu opisuje słowami, co okno cofa i czego cofnąć nie może, przy czym cofnięcie nakłada różnicę drzew dokumentu, a nie migawkę stanu sprzed. */
 export const DZIENNIK_ROZNICA_DRZEW =
   'Cofnięcie nakłada RÓŻNICĘ drzew dokumentu, a nie migawkę stanu sprzed: praca naniesiona po ' +
   'tej czynności ZOSTAJE. Cofasz tę jedną czynność, nie wszystko, co po niej.';
 
-/** Nazwa rodzaju czynności widoczna dla Operatora — pełna, bez kodu. */
+/** Nazwa rodzaju czynności widoczna dla operatora, pełna i bez kodu wewnętrznego, dla każdego z dwunastu rodzajów niesionych przez kontrakt. */
 export const NAZWY_RODZAJOW_CZYNNOSCI: Readonly<Record<StudioActionKind, string>> = {
   [StudioActionKind.TextEdit]: 'zmiana treści',
   [StudioActionKind.FormatChange]: 'zmiana postaci',
@@ -49,12 +29,12 @@ export const NAZWY_RODZAJOW_CZYNNOSCI: Readonly<Record<StudioActionKind, string>
   [StudioActionKind.FieldChange]: 'zmiana pola dokumentu',
 };
 
-/** Nazwa rodzaju czynności; rodzaj nieznany oddaje swoją wartość, nie pustkę. */
+/** Nazwa rodzaju czynności odczytana ze słownika nazw; rodzaj nieznany słownikowi oddaje swoją surową wartość, nie pustkę. */
 export function dziennikNazwaRodzaju(rodzaj: StudioActionKind | string): string {
   return NAZWY_RODZAJOW_CZYNNOSCI[rodzaj as StudioActionKind] ?? rodzaj;
 }
 
-/** Kto czynność wykonał — wykonawca nazwany, gdy rdzeń podał jego nazwę. */
+/** Zdanie mówiące, kto wykonał czynność: operator albo wykonawca modelowy nazwany, gdy rdzeń podał jego imię i wersję. */
 export function dziennikNazwaWykonawcy(wpis: StudioDocumentAction): string {
   if (wpis.author !== StudioAuthor.Model) return 'Operator';
   const nazwa = wpis.authorAgentName ?? '';
@@ -63,13 +43,11 @@ export function dziennikNazwaWykonawcy(wpis: StudioDocumentAction): string {
       ? `model — ${nazwa}`
       : `model — ${nazwa} (wersja ${wpis.authorAgentVersion})`;
   }
-  // Rdzeń nie stempluje tożsamości wykonawcy na wszystkich drogach postaci.
-  // Podstawienie tu nazwy własnej byłoby wskazaniem wykonawcy, którego rdzeń
-  // nie zapisał — brak jest nazwany, a nie zasłonięty.
+  // Rdzeń nie stempluje tożsamości wykonawcy na wszystkich drogach; brak jest nazwany, nie zasłonięty.
   return 'model — wykonawca nienazwany';
 }
 
-/** Zdanie o wpisie dziennika: co, kto, kiedy i czego dotknęło. */
+/** Zdanie opisujące wpis dziennika czynności: co się zmieniło, kto to zrobił, kiedy i którego miejsca dokumentu dotknęło. */
 export function dziennikOpiszWpis(wpis: StudioDocumentAction): string {
   const gdzie =
     wpis.rangeStart === undefined || wpis.rangeEnd === undefined
@@ -82,19 +60,12 @@ export function dziennikOpiszWpis(wpis: StudioDocumentAction): string {
   );
 }
 
-/**
- * Czy tę czynność da się cofnąć samodzielnie.
- *
- * Czynność już cofnięta nie ma czego cofać — dla niej właściwe jest ponowienie.
- * Czynność, na której stoją późniejsze, cofnąć się nie da i okno mówi to
- * ZAWCZASU, a nie po odmowie: przycisk pozostaje jednak czynny, bo prawdę
- * rozstrzyga rdzeń, a wykaz `blockedBy` mógł się zmienić po ostatnim odczycie.
- */
+/** Sprawdza, czy tę czynność da się cofnąć samodzielnie, biorąc pod uwagę wykaz późniejszych czynności, które na niej stoją. */
 export function dziennikCzyCofnieciePowstrzymane(wpis: StudioDocumentAction): boolean {
   return (wpis.blockedBy ?? []).length > 0;
 }
 
-/** Zdanie o zależnościach wpisu; brak zależności też jest odpowiedzią. */
+/** Zdanie opisujące zależności wpisu dziennika wobec innych czynności; brak zależności też jest pełnoprawną odpowiedzią. */
 export function dziennikOpiszZaleznosci(wpis: StudioDocumentAction): string {
   const stoiNa = wpis.dependsOn ?? [];
   const stojaNaNiej = wpis.blockedBy ?? [];
@@ -114,13 +85,7 @@ export function dziennikOpiszZaleznosci(wpis: StudioDocumentAction): string {
   return czesci.join(' ');
 }
 
-/**
- * Zdanie o bilansie czynności — co przeszło, co stanęło i przez co.
- *
- * Bilans jest tu jedyną drogą, którą Operator dowiaduje się o pominięciu.
- * Przemilczenie pominięcia jest w tym module zakazane wprost, więc pominięcia
- * są wypisane po jednym, wraz z powodem podanym przez rdzeń.
- */
+/** Zdanie opisujące bilans czynności: ile weszło, ile stanęło i przez co, z pominięciami wypisanymi po jednym wraz z powodem. */
 export function dziennikOpiszBilans(bilans: StudioActionBalance): string {
   const czesci: string[] = [
     `Weszło w ${bilans.applied} miejscach, stanęło w ${bilans.skippedCount}.`,
@@ -143,7 +108,7 @@ export function dziennikOpiszBilans(bilans: StudioActionBalance): string {
   return czesci.join(' ');
 }
 
-/** Zdanie o jednym pominięciu; kształt pozycji bilansu bywa niepełny. */
+/** Zdanie opisujące jedno pominięcie z bilansu czynności; kształt pozycji bilansu bywa niepełny i pola bywają nieobecne. */
 function dziennikOpiszPominiecie(pominiete: {
   rangeStart?: number;
   rangeEnd?: number;
@@ -169,14 +134,7 @@ function dziennikOpiszPominiecie(pominiete: {
   return `${gdzie}${przezCo}${czego}${powod}`;
 }
 
-/**
- * Zdanie o odmowie cofnięcia — powód, nie „nie udało się".
- *
- * Wywołanie cofnięcia bywa UDANE, a mimo to nic nie cofa: rdzeń oddaje wykaz
- * cofniętych pusty i bilans z pominięciem nazywającym zależność. Okno musi to
- * odróżnić od powodzenia, bo inaczej pokazałoby „cofnięto" po czynności, która
- * nie zeszła.
- */
+/** Zdanie opisujące odmowę cofnięcia czynności nazywające jej powód, zamiast ogólnikowego stwierdzenia, że się nie udało. */
 export function dziennikOpiszCofniecie(
   cofniete: readonly string[],
   bilans: StudioActionBalance,
@@ -197,7 +155,7 @@ export function dziennikOpiszCofniecie(
   };
 }
 
-/** Zestawienie zmian modelu jako zdanie przy przełączniku podświetlenia. */
+/** Zdanie zestawiające zmiany modelu w dokumencie, wyświetlane przy przełączniku podświetlenia tych zmian. */
 export function dziennikOpiszZmianyModelu(zestawienie: StudioModelChangeSummary): string {
   if (zestawienie.total === 0) {
     return 'Model nie wniósł do tego dokumentu ani jednej zmiany — ani treści, ani postaci.';
@@ -224,13 +182,7 @@ export function dziennikOpiszZmianyModelu(zestawienie: StudioModelChangeSummary)
   return czesci.join(' ');
 }
 
-/**
- * Zdanie o cofnięciu zmian modelu.
- *
- * Liczba zmian Operatora ZACHOWANYCH jest tu treścią równie ważną jak liczba
- * cofniętych: to ona odróżnia cofnięcie pracy modelu od przywrócenia wersji
- * sprzed, które skasowałoby też pracę Operatora.
- */
+/** Zdanie opisujące cofnięcie zmian modelu wraz z liczbą zmian operatora zachowanych, bo to ona odróżnia je od przywrócenia wersji. */
 export function dziennikOpiszCofniecieModelu(
   cofnietych: number,
   zachowanychOperatora: number,
@@ -248,7 +200,7 @@ export function dziennikOpiszCofniecieModelu(
   );
 }
 
-/** Zdanie o różnicy postaci; zero cech też jest odpowiedzią, nie pustką. */
+/** Zdanie opisujące różnicę postaci między wersjami dokumentu; brak różnic też jest pełnoprawną odpowiedzią, nie pustką. */
 export function dziennikOpiszRoznicePostaci(
   wpisy: readonly StudioFormDiffEntry[],
   liczby: { added: number; removed: number; changed: number },
@@ -265,7 +217,7 @@ export function dziennikOpiszRoznicePostaci(
   );
 }
 
-/** Zdanie o jednej różnicy postaci wraz z obszarem i stanem przed i po. */
+/** Zdanie opisujące jedną różnicę postaci wraz z obszarem, rodzajem zmiany oraz stanem przed i po niej. */
 export function dziennikOpiszRoznicePostaciWpis(wpis: StudioFormDiffEntry): string {
   const gdzie =
     wpis.rangeStart === undefined || wpis.rangeEnd === undefined
@@ -276,7 +228,7 @@ export function dziennikOpiszRoznicePostaciWpis(wpis: StudioFormDiffEntry): stri
   return `${wpis.area} · ${wpis.kind} · ${gdzie} · ${wpis.detail} · przed: ${przed} → po: ${po}`;
 }
 
-/** Wpisy dziennika od najświeższego; rdzeń tak je oddaje, okno tego nie odwraca. */
+/** Sortuje wpisy dziennika czynności od najświeższego według kolejności nadanej przez rdzeń, bez jej odwracania. */
 export function dziennikPoKolejnosci(
   wpisy: readonly StudioDocumentAction[],
 ): readonly StudioDocumentAction[] {

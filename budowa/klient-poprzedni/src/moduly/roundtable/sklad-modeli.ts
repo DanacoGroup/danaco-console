@@ -16,38 +16,9 @@ import { nazwaUczestnika, type StanDebaty } from './stan-debaty';
 import type { StanTresci } from './stany-okna';
 import type { StrumienWypowiedzi } from './strumien-wypowiedzi';
 
-/**
- * Skład debaty w Model Panels — osobny panel odpowiedzi na każdy model.
- *
- * Podział z `okno-model-panels.ts` idzie po odpowiedzialności: tu leży
- * rysowanie składu, tam — formularz dodania uczestnika i wywołanie
- * `roundtable.model.add`.
- *
- * Każdy panel niesie głos swojego uczestnika złożony z obu dróg rdzenia
- * (`glos-biezacy.ts`) — treści utrwalonej i przyrostu strumienia — i rośnie na
- * oczach Operatora, bo złożenie podaje mu `StrumienWypowiedzi`.
- *
- * Atrybut `data-ostatni-glos` dostaje uczestnik, którego wypowiedź jest ostatnią
- * w wykazie tury; arkusz modułu ma pod niego regułę
- * `.dr-uczestnik[data-ostatni-glos='tak']`. To jedyne, co da się o głosie
- * bieżącym orzec z zapisu.
- *
- * Tryb ślepy i metryki są nastawami widoku, nie stanem rdzenia: kontrakt nie ma
- * ani nastawy anonimizacji, ani licznika odpowiedzi, więc obie żyją w oknie
- * i schodzą wraz z nim. Wnoszone są parametrem, bo rysowanie składu jest czystą
- * funkcją danych — okno trzyma nastawy, ten plik ich nie pamięta.
- */
-
-/** Nastawy widoku wnoszone przez okno przy każdym rysowaniu. */
+/** Skład debaty w Model Panels: nastawy widoku wnoszone przez okno przy każdym rysowaniu, bo rysowanie jest czystą funkcją danych. */
 export interface NastawySkladu {
-  /**
-   * Tryb ślepy — tożsamość uczestnika ukryta do czasu zdjęcia nastawy.
-   *
-   * Anonimizacja jest wyłącznie widokiem tego okna: kontrakt nie ma nastawy
-   * trybu ślepego, więc nie schodzi do rdzenia i nie obejmuje Debate Panelu ani
-   * pozostałych okien modułu. Panel mówi to wprost, żeby ukrycie nazwy nie
-   * czytało się jako ukrycie tożsamości przed modelami.
-   */
+  /** Tryb ślepy — tożsamość ukryta do zdjęcia nastawy, wyłącznie widokiem tego okna, nie stanem rdzenia. */
   trybSlepy: boolean;
   /** Czy pokazywać metryki odpowiedzi — długość i czas od otwarcia tury. */
   metryki: boolean;
@@ -112,7 +83,7 @@ function notaTrybuSlepego(): HTMLElement {
   return nota;
 }
 
-/** Zależności rysowania jednego panelu — zebrane, żeby sygnatura nie puchła. */
+/** Zależności rysowania jednego panelu — zebrane, żeby sygnatura funkcji rysującej panel nie puchła kolejnymi parametrami. */
 interface OtoczenieSkladu {
   kontekst: KontekstCzytelnosci;
   strumien: StrumienWypowiedzi;
@@ -121,18 +92,15 @@ interface OtoczenieSkladu {
   nastawy: NastawySkladu;
 }
 
-/** Mówca wypowiedzi stojącej w wykazie tury jako ostatnia; pusty, gdy brak. */
+/** Mówca wypowiedzi stojącej w wykazie tury jako ostatnia; pusty napis, gdy tura nie ma jeszcze żadnej wypowiedzi. */
 function mowcaOstatniegoGlosu(wypowiedzi: readonly RoundtableStatement[]): string {
   const ostatnia = wypowiedzi[wypowiedzi.length - 1];
   return ostatnia === undefined ? '' : ostatnia.participantId;
 }
 
 /**
- * Panel pojedynczego uczestnika — jego tożsamość, kanał, stan i odpowiedź.
- *
- * Znacznik jest ten sam co nad wypowiedzią w Debate Panelu (`znacznikMowcy`),
- * bo Operator zestawia oba okna właśnie po nim: nazwa tożsamości bywa pusta,
- * a wtedy dwa panele tego samego kanału różnią się wyłącznie identyfikatorem.
+ * Panel pojedynczego uczestnika — jego tożsamość, kanał, stan i odpowiedź, znaczony tym samym
+ * znacznikiem co w Debate Panelu.
  */
 function panelUczestnika(
   uczestnik: RoundtableParticipant,
@@ -154,10 +122,7 @@ function panelUczestnika(
   kolejnosc.textContent = znacznikMowcy(uczestnik.id, stan, otoczenie.kontekst);
   kolejnosc.title = 'Ten sam znacznik stoi nad wypowiedziami tego uczestnika w Debate Panelu.';
 
-  // Tożsamość (nazwa + kanał) siedzi w `.dr-tozsamosc` — ta sama klasa co
-  // w formularzu dodania uczestnika. Arkusz ma już regułę
-  // `.dr-uczestnik[data-wyciszony='tak'] .dr-tozsamosc`; zagnieżdżenie
-  // klasy tutaj czyni ją żywą bez dopisywania nowej reguły przez koordynatora.
+  // Tożsamość (nazwa i kanał) siedzi w klasie wspólnej z formularzem dodania uczestnika.
   const slepy = otoczenie.nastawy.trybSlepy;
   const tozsamosc = document.createElement('div');
   tozsamosc.className = 'dr-tozsamosc';
@@ -190,9 +155,7 @@ function panelUczestnika(
 
   const panel = document.createElement('div');
   panel.className = 'dr-uczestnik';
-  // Tożsamość na panelu, nie sam wygląd: po niej odnajduje się konkretnego
-  // uczestnika, a przy dwóch tożsamościach jednego kanału nic innego ich nie
-  // odróżnia.
+  // Tożsamość na panelu, nie sam wygląd: po niej odnajduje się uczestnika przy powtórzonym kanale.
   panel.dataset['uczestnik'] = uczestnik.id;
   panel.dataset['kanalPowtorzony'] = powtorzony ? 'tak' : 'nie';
   if (cisza) panel.dataset['wyciszony'] = 'tak';
@@ -202,9 +165,8 @@ function panelUczestnika(
 }
 
 /**
- * Stany uczestnika słowem, nie samym atrybutem i nie samym krojem: przy
- * czterech panelach obok siebie „wyciszony" odróżniony wyłącznie kursywą jest
- * nie do przeczytania bez porównania z sąsiadem.
+ * Stany uczestnika słowem, nie samym atrybutem i nie samym krojem: przy czterech panelach
+ * obok siebie sama kursywa jest nie do przeczytania bez porównania z sąsiadem.
  */
 function listaStanow(
   uczestnik: RoundtableParticipant,
@@ -220,8 +182,7 @@ function listaStanow(
   ];
   if (powtorzony) opisy.push('Ten sam kanał modelu pod inną tożsamością — odrębny głos');
   if (uczestnik.order !== undefined) opisy.push(`Kolejność głosu wg rdzenia: #${uczestnik.order}`);
-  // Pole `key` ustawia wyłącznie rdzeń — żadna komenda obszaru go nie zmienia —
-  // więc panel je pokazuje, a Operator nie ma czym go przestawić.
+  // Pole klucza ustawia wyłącznie rdzeń — Operator nie ma czym go przestawić, panel je tylko pokazuje.
   if (uczestnik.key === true) opisy.push('Oznaczony przez rdzeń jako kluczowy');
   for (const opis of opisy) {
     const pozycja = document.createElement('li');
@@ -233,14 +194,8 @@ function listaStanow(
 }
 
 /**
- * Prompt systemowy tożsamości — pokazywany, bo `RoundtableParticipant` go
- * niesie.
- *
- * Prompt rozstrzyga, czym uczestnik ma być w debacie, i jest jedynym miejscem,
- * w którym widać różnicę między dwiema tożsamościami jednego kanału. Panel bez
- * niego pokazywałby dwa panele różniące się wyłącznie nazwą. Brak promptu jest
- * stanem poprawnym i nazwanym: uczestnik dodany bez promptu odpowiada tak, jak
- * skonfigurowano jego kanał.
+ * Prompt systemowy tożsamości — pokazywany, bo kontrakt go niesie i jest jedynym miejscem
+ * odróżniającym dwie tożsamości jednego kanału.
  */
 function promptSystemowy(uczestnik: RoundtableParticipant): HTMLElement {
   const element = document.createElement('span');
@@ -255,11 +210,8 @@ function promptSystemowy(uczestnik: RoundtableParticipant): HTMLElement {
 }
 
 /**
- * Metryki odpowiedzi uczestnika — długość i czas, zmierzone z kontraktu.
- *
- * Zdanie o metrykach niemierzalnych (koszt tokenów, pewność modelu) jedzie
- * razem z nimi, bo rubryka pokazująca dwie metryki z czterech wygląda na
- * komplet, dopóki nie powie, że kompletem nie jest.
+ * Metryki odpowiedzi uczestnika — długość i czas zmierzone z kontraktu, wraz ze zdaniem
+ * o metrykach niemierzalnych.
  */
 function metrykiPanelu(
   tekst: string,
@@ -279,12 +231,8 @@ function metrykiPanelu(
 }
 
 /**
- * Odpowiedź uczestnika — treść rosnąca albo utrwalona, zawsze ze zdaniem
- * o tym, którą z nich Operator ogląda.
- *
- * Blok stoi także wtedy, gdy słów nie ma: milczenie uczestnika ma powód
- * (wyciszony, głos otwarty bez słowa, strumień zerwany) i powód jest treścią,
- * a puste miejsce nią nie jest.
+ * Odpowiedź uczestnika — treść rosnąca albo utrwalona, zawsze ze zdaniem o tym, którą z nich
+ * Operator ogląda.
  */
 function odpowiedzUczestnika(biezacy: GlosBiezacy, cisza: boolean): HTMLElement {
   const blok = document.createElement('div');

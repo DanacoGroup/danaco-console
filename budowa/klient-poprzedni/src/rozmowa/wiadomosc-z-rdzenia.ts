@@ -6,20 +6,14 @@ import type { StanRozmowy } from './stan-rozmowy';
 import { czyPustaTura, wpisOperatora, type StanWpisu, type WpisRozmowy } from './wpis-rozmowy';
 
 /**
- * Przyjęcie zdarzenia `message.changed` do wątku okna.
- *
- * Mieszka tu całe przełożenie wiadomości kontraktu na wpis wątku: dwie
- * równorzędne gałęzie — wypowiedź roli `user` i domknięcie tury modelu — wraz
- * z obroną przed podwojeniem wpisu. Rozdzielenie od `rozmowa.ts` biegnie wzdłuż
- * odpowiedzialności, nie wzdłuż długości pliku.
- *
- * Plik nie wie, kto wypowiedź napisał, i nie zgaduje. Kontrakt nie niesie
- * sprawcy zmiany — ani `Message`, ani koperta zdarzenia nie mają pola
- * połączenia — więc jedyne, co da się udowodnić o wypowiedzi nieznanej wątkowi,
- * to że nie powstała w tym połączeniu. Tyle mówi persona i ani słowa więcej.
+ * Przyjęcie zdarzenia message.changed do wątku okna; przełożenie wiadomości kontraktu na
+ * wpis.
  */
 
-/** Czego przyjęcie wiadomości potrzebuje od okna rozmowy. */
+/**
+ * Zależności, których przyjęcie wiadomości do wątku okna rozmowy potrzebuje od warstwy
+ * nadrzędnej rozmowy.
+ */
 export interface OtoczenieWiadomosci {
   historia: HistoriaTur;
   /** Rola okna w pętli; rozstrzyga, którym z dziewięciu nadawców jest model. */
@@ -35,13 +29,8 @@ export interface OtoczenieWiadomosci {
 }
 
 /**
- * Tożsamość wypowiedzi, która przyszła innym połączeniem tego konta.
- *
- * Widok składa ją z etykietą rodzaju nadawcy w jeden napis — „Operator ·
- * spoza tego połączenia" (`widok-wpisu.ts`). To jest cała prawda, jaką da się
- * o tej wypowiedzi powiedzieć bez zmiany kontraktu: wiadomo, że nie powstała
- * tutaj; nie wiadomo, czy wpisał ją asystent, czy Operator z drugiego
- * urządzenia. Napis „Asystent" byłby wygodniejszy i nieprawdziwy.
+ * Tożsamość wypowiedzi, która przyszła do okna innym połączeniem tego samego konta
+ * Operatora niż bieżące.
  */
 export const PERSONA_Z_ZEWNATRZ = 'spoza tego połączenia';
 
@@ -54,24 +43,15 @@ export function przyjmijWiadomosc(o: OtoczenieWiadomosci, message: Message): voi
 }
 
 /**
- * Wypowiedź roli `user`.
- *
- * Autorem wypowiedzi Operatora bywa nie tylko sam Operator: prompt wpisuje też
- * asystent, innym połączeniem WebSocket, przez MCP. Wypowiedź wchodzi więc do
- * wątku zawsze — inaczej pytanie, na które model odpowiada, nie byłoby widoczne
- * ani w polu wypowiedzi, ani w wątku.
- *
- * Przed podwojeniem broni jej wiązanie po treści: echo miejscowe, założone
- * w `wyslij`, dostaje identyfikator z rdzenia zamiast drugiej pozycji obok.
+ * Wypowiedź roli user, wchodząca do wątku rozmowy zawsze, niezależnie od tego, kto
+ * naprawdę ją wpisał.
  */
 function przyjmijWypowiedz(o: OtoczenieWiadomosci, message: Message): void {
   if (o.historia.znajdz(message.id) !== undefined) return;
   if (o.historia.zwiazWypowiedz(message.content, message.id) !== undefined) return;
 
-  // Wpis składamy wprost, a nie przez `historia.dlaWiadomosci`: tamta droga
-  // przejmuje wpis oczekujący, czyli ramkę przygotowaną na odpowiedź modelu.
-  // Wypowiedź wjechałaby wtedy w miejsce odpowiedzi i tura straciłaby swoją
-  // pozycję w wątku.
+  // Wpis składany wprost, nie przez historię wiadomości, żeby nie przejąć wpisu czekającego
+  // na model.
   const wpis = wpisOperatora(kluczMiejscowy('zzewnatrz'), message.content, PERSONA_Z_ZEWNATRZ);
   wpis.idWiadomosci = message.id;
   wpis.znacznikCzasu = message.createdAt;
@@ -79,7 +59,10 @@ function przyjmijWypowiedz(o: OtoczenieWiadomosci, message: Message): void {
   o.zglosWypowiedzZZewnatrz(message.content);
 }
 
-/** Domknięcie tury modelu. */
+/**
+ * Domknięcie tury modelu zdarzeniem zmiany wiadomości kontraktu, kończące jej
+ * dotychczasowy stan wysyłania.
+ */
 function przyjmijTureModelu(o: OtoczenieWiadomosci, message: Message): void {
   const znany = o.historia.znajdz(message.id);
   if (znany === undefined) {
@@ -92,9 +75,8 @@ function przyjmijTureModelu(o: OtoczenieWiadomosci, message: Message): void {
     wpis.stan = stanDomknietej(message.status, wpis);
     wpis.domkniety = true;
     o.oglos(wpis);
-    // Bez tego wiersza tura domknięta samym zdarzeniem zmiany wiadomości —
-    // czyli taka, do której nie doszedł ani jeden fragment strumienia —
-    // zostawiłaby wskaźnik na „Wysyłanie…" na zawsze.
+    // Bez tego wiersza tura bez fragmentu strumienia zostałaby wskaźnikiem wysyłania na
+    // zawsze.
     o.ustawStan({
       wysyla: false,
       idWiadomosci: message.id,
@@ -110,11 +92,8 @@ function przyjmijTureModelu(o: OtoczenieWiadomosci, message: Message): void {
 }
 
 /**
- * Stan wpisu domkniętego zdarzeniem zmiany wiadomości.
- *
- * Rozstrzygnięcia są cztery, nie dwa: tura zamknięta błędem i tura, która nie
- * przyniosła ani jednego znaku, mają własne stany. Bez nich obie wyglądałyby na
- * ekranie tak samo jak udana — pustą ramką z napisem „zakończona".
+ * Stan wpisu domkniętego zdarzeniem zmiany wiadomości, rozróżniający cztery różne
+ * rozstrzygnięcia tury.
  */
 function stanDomknietej(status: MessageStatus, wpis: WpisRozmowy): StanWpisu {
   if (wpis.bledy.length > 0 || status === MessageStatus.Error) return 'bledny';

@@ -18,33 +18,8 @@ import type { ZrodloArsenaluRoundtable } from './zrodlo-arsenalu';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
 /**
- * Consensus Panel — okno pomocnicze modułu Roundtable: zapis stanowiska
- * końcowego i eksport wniosków, odświeżany po zakończeniu tury albo całej
- * debaty.
- *
- * `roundtable.consensus.get` bierze `turnId` opcjonalny: podany zawęża do jednej
- * tury, pominięty obejmuje całą debatę. Okno nie zgaduje, którą chce Operator —
- * pole „Zakres stanowiska" rozstrzyga to wprost, a odpowiedź mówi, czego dotyczy
- * (`Dotyczy: tury #N` albo `Dotyczy: całej debaty`). Wybór „cała debata" pomija
- * pole `turnId` w żądaniu — nie wysyła go pustym napisem, bo to udawałoby
- * żądanie tury.
- *
- * Brak tury bieżącej przy zakresie „tura" i brak treści stanowiska po udanym
- * odczycie to dwa różne stany puste, oba poprawne. Odmowa odczytu jest trzecim,
- * osobnym stanem z kodem i treścią rdzenia — puste stanowisko przy odmowie
- * mówiłoby nieprawdę.
- *
- * Ponowny odczyt idzie na zamknięciu tury, nie przy każdej zmianie:
- * `stan-debaty.ts` subskrybuje `roundtable.debate.changed` i budzi
- * `stan.naZmiane(...)` przy każdym przyroście, więc druga subskrypcja zdarzenia
- * byłaby powieleniem. Okno łapie wyłącznie przejście tury
- * w `RoundtableTurnStatus.Closed`.
- *
- * Stanowisko niesie dziś w kontrakcie znacznie więcej, niż to okno pokazuje:
- * punkty zgody i sporne, zdania odrębne, poparcie ważone oraz części zapisu
- * decyzji. Okno rysuje treść i metrykę, bo tyle oddaje mu rdzeń — pozostałe
- * pola pozostają puste do czasu zbudowania ich obsługi, a nie dlatego, że
- * kontrakt ich nie ma.
+ * Consensus Panel — okno pomocnicze modułu Roundtable: zapis stanowiska końcowego i eksport
+ * wniosków, odświeżany po zamknięciu tury.
  */
 export interface OknoConsensusPanel {
   element: HTMLElement;
@@ -71,18 +46,13 @@ export function utworzOknoConsensusPanel(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Pole redakcji stoi w oknie, bo stanowisko końcowe jest „edytowalnym punktem
-  // wyjścia, nie wynikiem ostatecznym" (opracowanie, 2.7.2). Bez pola komenda
-  // zapisu nie miałaby czego zapisać poza tym, co rdzeń i tak już złożył.
+  // Pole redakcji stoi w oknie, bo stanowisko końcowe jest punktem wyjścia, nie wynikiem ostatecznym.
   const poleRedakcji = poleTresci(
     'Treść stanowiska po redakcji',
     5,
     'Stanowisko końcowe własnymi słowami — od zapisu należy do Ciebie.',
   );
-  // Czynności stanowiska wołają komendy obszaru wprost: redakcję treści, zdanie
-  // odrębne, wykaz wersji i przekazanie do modułu docelowego. Treść bierze się
-  // z pola redakcji tego okna — rdzeń nie dostaje niczego, czego Operator nie
-  // napisał.
+  // Czynności stanowiska wołają komendy obszaru wprost; treść bierze się z pola redakcji tego okna.
   const powierzchnia = zlozPowierzchnieConsensusPanel(
     rama,
     tresc.element,
@@ -127,8 +97,7 @@ export function utworzOknoConsensusPanel(
     tresc.ladowanie(`Odczyt stanowiska ${opisZakresu}…`);
     void zrodlo.stanowisko(zadanie).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Zdanie nie mówi „rdzeń odmówił": niepowodzenie bywa też odpowiedzią
-        // bez pola obowiązkowego (`sprawdzKsztalt`). Powód niesie treść błędu.
+        // Zdanie nie mówi rdzeń odmówił: niepowodzenie bywa też odpowiedzią bez pola obowiązkowego.
         ostatnieStanowisko = null;
         tresc.blad(`Odczyt stanowiska ${opisZakresu} nie udał się.`, wynik.blad);
         return;
@@ -188,7 +157,7 @@ export function utworzOknoConsensusPanel(
   return { element: rama.element, odswiez: odczytaj, zamknij: odsubskrybuj };
 }
 
-/** Opis tury bieżącej dla zdań Operatora — numer i stan, gdy definicja jest znana. */
+/** Opis tury bieżącej dla zdań Operatora — numer i stan, gdy definicja tury jest już rdzeniowi znana, inaczej sam identyfikator. */
 function opisTury(stan: StanDebaty): string {
   const definicja = stan.definicjaTury();
   if (definicja === null) return `tury ${stan.tura()}`;
@@ -229,12 +198,8 @@ function rysujStanowisko(
 }
 
 /**
- * Zdanie z polami nośnymi `RoundtableConsensus`, których treść stanowiska nie
- * niesie.
- *
- * `updatedAt` jest w kontrakcie liczbą milisekund epoki; zero nie znaczy
- * „1 stycznia 1970", tylko „rdzeń chwili nie podał". Stopka pisze więc wprost
- * „nieznane" zamiast daty z początku epoki.
+ * Zdanie z polami nośnymi stanowiska, których treść sama nie niesie: wersja, tury objęte
+ * i chwila aktualizacji z kontraktu.
  */
 function metaStanowiska(stanowisko: RoundtableConsensus): string {
   const wersja = stanowisko.version === undefined ? 'brak wersji' : `wersja ${stanowisko.version}`;
@@ -250,7 +215,7 @@ function metaStanowiska(stanowisko: RoundtableConsensus): string {
   return `${wersja} · ${zaktualizowano} · ${tury} · id ${stanowisko.id}`;
 }
 
-/** Treść pliku eksportu — wnioski w Markdown, gotowe do przekazania dalej. */
+/** Treść pliku eksportu wniosków w formacie Markdown, złożona ze stanowiska i jego metryki, gotowa do przekazania dalej. */
 function raportStanowiska(stanowisko: RoundtableConsensus, opisZakresu: string): string {
   const wiersze = [
     '# Stanowisko debaty',
@@ -274,14 +239,8 @@ function raportStanowiska(stanowisko: RoundtableConsensus, opisZakresu: string):
 }
 
 /**
- * Zapis decyzji w układzie ADR, złożony z tego, co stanowisko naprawdę niesie.
- *
- * Wszystkie pięć części ma dziś pole w `RoundtableConsensus`: kontekst, warianty
- * i konsekwencje zapisuje `roundtable.consensus.set`, a zdanie odrębne —
- * `roundtable.consensus.minority.set`. Część, której rdzeń nie wypełnił, zostaje
- * w pliku nazwana jako nieuzupełniona wraz z powodem. Zapis decyzji z domyślonym
- * kontekstem byłby dokumentem, który wygląda na protokół ustaleń, a niesie
- * zdania, których nikt w debacie nie powiedział.
+ * Zapis decyzji w układzie ADR, złożony z tego, co stanowisko naprawdę niesie, z częściami
+ * nieuzupełnionymi nazwanymi wprost.
  */
 function zapisDecyzji(stanowisko: RoundtableConsensus, opisZakresu: string): string {
   const czesc = (tresc: string | undefined, czego: string): string =>
@@ -329,7 +288,7 @@ function zapisDecyzji(stanowisko: RoundtableConsensus, opisZakresu: string): str
   ].join('\n');
 }
 
-/** Kontrolki paska akcji i pola zakresu okna. */
+/** Kontrolki paska akcji i pola zakresu okna: przycisk odczytu, dwa przyciski eksportu oraz przełącznik zakresu stanowiska. */
 interface PowierzchniaConsensusPanel {
   zakres: HTMLSelectElement;
   odczytajPrzycisk: HTMLButtonElement;
@@ -338,11 +297,8 @@ interface PowierzchniaConsensusPanel {
 }
 
 /**
- * Składa pasek akcji ramy: odczyt stanowiska i dwie postaci wydania — wnioski
- * oraz zapis decyzji. Czynności zmieniające stanowisko stoją w zestawie warstwy
- * trzeciej: ich komendy są w kontrakcie (`roundtable.consensus.set` zapisuje
- * treść wraz z częściami zapisu decyzji), ale okno wywołuje dziś wyłącznie
- * odczyt.
+ * Składa pasek akcji ramy: odczyt stanowiska i dwie postaci wydania — wnioski oraz zapis
+ * decyzji, jedyne czynności wywoływane dziś.
  */
 function zlozAkcjeConsensusPanel(gospodarz: HTMLElement): {
   odczytajPrzycisk: HTMLButtonElement;
@@ -357,12 +313,12 @@ function zlozAkcjeConsensusPanel(gospodarz: HTMLElement): {
   return { odczytajPrzycisk, eksport, eksportZapisu };
 }
 
-/** Zestaw akcji warstwy trzeciej — redakcja i wydanie jeszcze niezbudowane. */
+/** Zestaw akcji warstwy trzeciej — redakcja i wydanie jeszcze niezbudowane, wypisane obok odczytu wykonalnego. */
 function zlozZestawStanowiska(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Zestaw operacji na stanowisku', czynnosci);
 }
 
-/** Składa pole zakresu, pasek akcji, warstwy i ciało ramy. */
+/** Składa pole zakresu stanowiska, pasek akcji, warstwy operacji oraz ciało ramy okna z gotowymi kontrolkami. */
 function zlozPowierzchnieConsensusPanel(
   rama: { akcje: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -385,7 +341,7 @@ function zlozPowierzchnieConsensusPanel(
   return { zakres, ...akcje };
 }
 
-/** Podpina pasek akcji i zmianę zakresu do czynności okna. */
+/** Podpina pasek akcji i zmianę zakresu do czynności okna: odczyt, eksport wniosków i eksport zapisu decyzji. */
 function podepnijAkcjeConsensusPanel(
   powierzchnia: PowierzchniaConsensusPanel,
   obsluga: { odczytaj: () => void; eksportuj: () => void; eksportujZapisDecyzji: () => void },

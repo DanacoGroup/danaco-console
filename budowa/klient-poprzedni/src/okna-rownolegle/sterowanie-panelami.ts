@@ -5,25 +5,7 @@ import { utworzMenuRozwijane } from './menu-rozwijane';
 import { utworzSkrotyPaneli } from './skroty-paneli';
 
 /**
- * Komplet sterowania panelami osadzany w nagłówku okna rozmowy.
- *
- * Nagłówek niesie rząd skrótów i przycisk `⋮`, w tej kolejności. Ten moduł
- * składa jedno z drugim w jeden byt, żeby nagłówek gniazda dostał jeden element
- * do osadzenia, a nie dwa, których kolejność musiałby znać.
- *
- * Element zewnętrzny jest stały, a wnętrze wymienne: wykaz pozycji zależy od
- * modułu gniazda, a moduł przestawia rdzeń w trakcie pracy (`window.changed`).
- * Gdyby wykaz był ustalany raz, przy montażu, przestawienie modułu zostawiłoby
- * w nagłówku menu poprzedniego modułu. Nagłówek nie musi więc podmieniać
- * elementu — wnętrze przebudowuje `ustawPozycje`.
- *
- * Moduł nie zna stanu paneli, nie otwiera i nie zamyka niczego: pyta
- * `czyOtwarty` i woła `naWybor`. Dzięki temu rząd skrótów i wykaz w menu
- * pokazują ten sam stan — ten, który trzyma `stan-paneli.ts`.
- *
- * Zamknięcie jest obowiązkowe: menu rozwijane zakłada nasłuch dokumentu, gdy
- * jest rozwinięte. Cztery gniazda, każde z własnym menu, zostawiłyby cztery
- * żywe nasłuchy po zejściu sceny.
+ * Komplet sterowania panelami osadzany w nagłówku okna rozmowy składa rząd skrótów i przycisk menu w jeden byt, przebudowując wnętrze przy zmianie modułu, bez znajomości stanu paneli i z obowiązkowym zamknięciem nasłuchu menu.
  */
 export interface SterowaniePanelami {
   /** Element osadzany w nagłówku okna rozmowy; stały przez życie gniazda. */
@@ -42,13 +24,7 @@ export interface OpcjeSterowania {
   nieotwieralne: number;
   czyOtwarty(kod: string): boolean;
   naWybor(kod: string): void;
-  /**
-   * Sekcje doklejane w menu za kreską — czynności sesji.
-   *
-   * Przechodzą tędy nietknięte do `utworzMenuPaneli`. Ten moduł nie wie, co
-   * w nich stoi: menu `⋮` składa panele i czynności sesji, ale sterowanie
-   * panelami nie jest właścicielem tych drugich.
-   */
+  /** Sekcje doklejane w menu za kreską przechodzą nietknięte, bez własności sterowania panelami. */
   sekcjeDalsze?: readonly HTMLElement[];
 }
 
@@ -65,8 +41,7 @@ export function utworzSterowaniePanelami(opcje: OpcjeSterowania): SterowaniePane
     element,
 
     ustawPozycje(pozycje, nieotwieralne) {
-      // Menu poprzedniego wykazu ma własny nasłuch dokumentu — bez zamknięcia
-      // przeżyłoby podmianę wnętrza, nasłuchując dla elementu spoza drzewa.
+      // Menu poprzedniego wykazu ma własny nasłuch dokumentu — bez zamknięcia przeżyłoby podmianę wnętrza.
       menu.uchwyt.zamknij();
       menu.tresc.zamknij();
 
@@ -87,7 +62,7 @@ export function utworzSterowaniePanelami(opcje: OpcjeSterowania): SterowaniePane
   };
 }
 
-/** Rząd skrótów ikonowych; pusty wykaz daje rząd, który nie zajmuje miejsca. */
+/** Rząd skrótów ikonowych panelu; pusty wykaz pozycji daje rząd, który wtedy nie zajmuje żadnego miejsca. */
 function zbudujSkroty(pozycje: readonly PozycjaMenu[], opcje: OpcjeSterowania) {
   return utworzSkrotyPaneli({
     pozycje,
@@ -115,9 +90,7 @@ function zbudujMenu(
     nieotwieralne,
     czyOtwarty: opcje.czyOtwarty,
     naWybor: opcje.naWybor,
-    // Ten sam element wraca przy każdej przebudowie wnętrza (zmiana modułu):
-    // `append` go przenosi, a nie kopiuje, więc sekcja czynności zachowuje
-    // swoje nasłuchy i swoją subskrypcję rdzenia.
+    // Ten sam element wraca przy przebudowie, bo dołączenie przenosi go, nie kopiuje.
     ...(opcje.sekcjeDalsze === undefined ? {} : { sekcjeDalsze: opcje.sekcjeDalsze }),
   });
   uchwyt.ustawTresc([tresc.element]);

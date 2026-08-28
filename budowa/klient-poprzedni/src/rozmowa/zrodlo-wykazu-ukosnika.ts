@@ -9,31 +9,16 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import type { Kanal } from '../protokol/kanal';
 
 /**
- * Wejście danych wykazu po ukośniku, wzorowane na
- * `okno-komunikacji/katalog-akcji.ts`.
- *
- * Typ funkcyjny oddający `(pozycje, powod)` jest w tym repozytorium wzorcem
- * zastanym: panel akcji modułu bierze pozycje tak samo i z tego samego powodu —
- * wykaz pusty bez powodu jest atrapą, wykaz pusty z powodem jest stanem
- * opisanym.
- *
- * Pozycją jest `ToolCatalogEntry` z kontraktu, a nie własny kształt: drugi model
- * dawałby dwie prawdy o tym, czym jest pozycja wykazu, i pierwszy rozjazd nazw
- * w rdzeniu przeszedłby tu niezauważony. Rozróżnienie powołania narzędzia od
- * komendy akcji niesie pole `kind` tej struktury, więc stoi w danych, a nie
- * w domyśle widoku.
+ * Wejście danych wykazu po ukośniku, wzorowane na module katalogu akcji i korzystające z
+ * tego samego kształtu pozycji.
  */
 export type ZrodloWykazuUkosnika = (
   oddaj: (pozycje: readonly ToolCatalogEntry[], powod: string) => void,
 ) => void;
 
 /**
- * Wykonanie wyboru pozycji rodzaju `tool` — dołożenie na czas sesji.
- *
- * Oddaje zdanie dla Operatora i to, czy dołożenie weszło. Zdanie idzie do wątku
- * rozmowy: model dostał narzędzie, którego nie miał, więc musi to być widoczne
- * — tak samo jak niepowodzenie, bo cisza po wyborze byłaby nieodróżnialna od
- * powodzenia.
+ * Wykonanie wyboru pozycji rodzaju narzędzia — dołożenie go na czas sesji, ze zdaniem dla
+ * Operatora o skutku.
  */
 export type DolozenieNarzedzia = (
   pozycja: ToolCatalogEntry,
@@ -41,16 +26,8 @@ export type DolozenieNarzedzia = (
 ) => void;
 
 /**
- * Źródło wykazu czytane z rdzenia komendą `tools.catalog.list`.
- *
- * Wykaz idzie w komplecie, bez pola `query`. Kontrakt umie zawęzić wykaz po
- * stronie rdzenia, ale filtrowanie ma działać od pierwszego znaku, a runda do
- * rdzenia na każde uderzenie w klawisz tego nie daje. Zawężanie, porządek
- * według trafności i wytłuszczenie trafień niesie mechanizm z biblioteki
- * (`komponenty/menu-drzewo.ts`), któremu wykaz jest podawany w całości.
- *
- * `sessionId` idzie, gdy sesja stoi — wtedy rdzeń oznacza pozycje już dołożone
- * polem `attached` i Operator nie dokłada po raz drugi tego, co ma.
+ * Źródło wykazu czytane z rdzenia komendą tools.catalog.list, w komplecie, bez zawężania
+ * po stronie rdzenia.
  */
 export function zrodloWykazuKanalu(kanal: Kanal): ZrodloWykazuUkosnika {
   return (oddaj) => {
@@ -76,15 +53,8 @@ export function zrodloWykazuKanalu(kanal: Kanal): ZrodloWykazuUkosnika {
 }
 
 /**
- * Dołożenie narzędzia do sesji komendą `session.tool.attach`.
- *
- * Powtórzenie nie jest błędem: kontrakt oddaje `alreadyAttached` i to pole jest
- * tu czytane wprost, więc sięgnięcie po narzędzie już dołożone daje zdanie
- * o tym, a nie drugi wpis „dołożono".
- *
- * `source` idzie jawnie jako `slashCommand`, choć kontrakt przyjmuje tę wartość
- * także milczeniem. Komenda po ukośniku jest jedyną drogą poszerzenia zestawu
- * w trakcie pracy, więc zapis sprawcy ma stać w danych wprost.
+ * Dołożenie narzędzia do sesji komendą session.tool.attach; powtórzenie nie jest błędem,
+ * tylko odrębnym zdaniem.
  */
 export function dolozenieKanalu(kanal: Kanal): DolozenieNarzedzia {
   return (pozycja, oddaj) => {
@@ -109,8 +79,8 @@ export function dolozenieKanalu(kanal: Kanal): DolozenieNarzedzia {
           oddaj(`Narzędzia „${pozycja.name}" nie dołożono — ${opisBledu(wynik.blad)}`, false);
           return;
         }
-        // Zameldowane TU nie ma być zameldowane drugi raz przez rozgłoszone
-        // zdarzenie `session.tool.attached`, które wróci także do tego okna.
+        // Zameldowane tu dołożenie nie melduje się drugi raz przez rozgłoszone zdarzenie tej samej
+        // sesji.
         wlasneDolozenia.add(pozycja.name);
         oddaj(
           wynik.wynik?.alreadyAttached === true
@@ -124,13 +94,8 @@ export function dolozenieKanalu(kanal: Kanal): DolozenieNarzedzia {
 }
 
 /**
- * Nasłuch zdarzenia `session.tool.attached` — widoczność dołożenia spoza tego
- * okna.
- *
- * Wybór z tego okna niesie własne zdanie z odpowiedzi komendy, ale zestaw
- * narzędzi sesji poszerza także asystent działający za Operatora
- * (`SessionToolSource.assistant`). Bez tego nasłuchu takie dołożenie byłoby
- * niewidoczne.
+ * Nasłuch zdarzenia dołożenia narzędzia — widoczność dołożenia wykonanego spoza tego okna
+ * przez asystenta.
  */
 export function nasluchDolozen(
   kanal: Kanal,
@@ -149,12 +114,8 @@ export function nasluchDolozen(
 /* ------------------------------------------------------------------------- */
 
 /**
- * Nazwy dołożeń zameldowanych już przez odpowiedź komendy z tego okna.
- *
- * Zbiór jest maleńki i sesyjny. Stoi tutaj, bo tylko ten plik widzi obie drogi
- * wejścia tej samej wiadomości: odpowiedź komendy i rozgłoszone zdarzenie.
- * Bez niego Operator, który dołożył narzędzie sam, przeczytałby o tym w wątku
- * dwa razy — a to jest ten sam rodzaj podwojenia, co dwa wpisy jednej tury.
+ * Nazwy dołożeń zameldowanych już przez odpowiedź komendy z tego okna, trzymane w małym
+ * zbiorze sesyjnym.
  */
 const wlasneDolozenia = new Set<string>();
 
@@ -164,7 +125,10 @@ function czyWlasneDolozenie(nazwa: string): boolean {
   return true;
 }
 
-/** Zdanie stawiane w wątku po udanym dołożeniu. */
+/**
+ * Zdanie stawiane w wątku bieżącej rozmowy zaraz po udanym dołożeniu narzędzia do
+ * trwającej sesji Operatora.
+ */
 function zdanieDolozenia(pozycja: ToolCatalogEntry): string {
   return (
     `Model dostał narzędzie, którego nie miał: „${pozycja.name}"` +
@@ -173,17 +137,26 @@ function zdanieDolozenia(pozycja: ToolCatalogEntry): string {
   );
 }
 
-/** Dokleja opis pozycji jako zdanie poboczne; pusty opis nie dokleja nic. */
+/**
+ * Dokleja opis wybranej pozycji wykazu jako zdanie poboczne w wątku rozmowy; pusty opis
+ * nie dokleja niczego.
+ */
 function opisemDo(opis: string): string {
   return opis === '' ? '.' : ` — ${opis}`;
 }
 
-/** Czy pozycja poszerza zestaw narzędzi modelu, czy wykonuje czynność. */
+/**
+ * Czy wybrana pozycja wykazu poszerza zestaw narzędzi modelu, czy raczej wykonuje czynność
+ * aplikacji.
+ */
 export function czyPowolanieNarzedzia(pozycja: ToolCatalogEntry): boolean {
   return pozycja.kind === SlashEntryKind.Tool;
 }
 
-/** Opis błędu kontraktu dla Operatora — jak w `katalog-akcji.ts`. */
+/**
+ * Opis błędu kontraktu przeznaczony dla Operatora, złożony z treści komunikatu i kodu
+ * błędu rdzenia.
+ */
 function opisBledu(blad: { message: string; code: string } | undefined): string {
   if (blad === undefined) return 'rdzeń nie podał przyczyny';
   return `${blad.message} (${blad.code})`;

@@ -1,16 +1,4 @@
-/**
- * Punkt zbiorczy strony głównej — jedyne wejście dla warstw zewnętrznych.
- *
- * Powłoka aplikacji sięga po `utworzStroneGlowna` wyłącznie stąd i nie zna
- * podziału widoku na strefy, karty ani kafle. Zmiana wewnętrzna
- * katalogu nie dotyka niczego poza nim.
- *
- * Montaż w powłoce (`aplikacja/`):
- *   import { utworzStroneGlowna } from './strona-glowna/indeks';
- *   const strona = utworzStroneGlowna();
- *   korzen.scena.append(strona.element);
- *   strona.naWyborSrodowiska((s) => otworzSrodowisko(s.kod));
- */
+/** Plik jest punktem zbiorczym strony głównej: jedyne wejście dla warstw zewnętrznych, przez które powłoka aplikacji sięga po budowę strony głównej. */
 
 export { utworzStroneGlowna, type StronaGlowna } from './okno-strona-glowna';
 export { type KodSrodowiska, type PozycjaSrodowiska } from './pozycje-srodowisk';

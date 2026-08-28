@@ -15,10 +15,7 @@ const KLASA_WPISU: Record<MessageRole, string> = {
 };
 
 /**
- * Znak w medalionie wpisu. Rozróżnienie nadawcy niesie zawsze komplet trzech
- * kanałów — ikona, etykieta, kreska krawędzi — bo rola nigdy nie może stać na
- * samym kolorze (`komponenty/wpis.css`). Wynik narzędzia dzieli z systemem klasę
- * neutralną, ale nie ikonę: klasa mówi o randze wypowiedzi, ikona o jej źródle.
+ * Znak w medalionie wpisu niesie komplet trzech kanałów rozróżnienia nadawcy — ikonę, etykietę i kreskę krawędzi — bo rola nigdy nie stoi na samym kolorze; wynik narzędzia dzieli z systemem klasę, ale nie ikonę.
  */
 const IKONA_WPISU: Record<MessageRole, NazwaIkony> = {
   [MessageRole.User]: 'uzytkownik',
@@ -27,7 +24,7 @@ const IKONA_WPISU: Record<MessageRole, NazwaIkony> = {
   [MessageRole.Tool]: 'polecenie',
 };
 
-/** Obszar historii okna komunikacji. */
+/** Obszar historii okna komunikacji, gromadzący i pokazujący kolejne wpisy wymiany z modelem językowym. */
 export interface Historia {
   /** Element montowany w oknie. */
   element: HTMLElement;

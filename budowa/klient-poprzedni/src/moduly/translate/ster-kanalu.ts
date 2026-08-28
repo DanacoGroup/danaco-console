@@ -3,35 +3,8 @@ import { WARTOSC_KANALU_OKNA } from './etykiety-translate';
 import type { ZrodloKanalowTranslate } from './zrodlo-kanalow-translate';
 
 /**
- * Ster kanału modelu — wskazanie, który model wykonuje przekład.
- *
- * To jest ster, nie wyświetlacz: etykieta uchwytu niesie wartość bieżącą
- * nastawy (nazwę kanału, a nie słowo „Kanał"), kliknięcie rozwija wybór, wybór
- * zmienia nastawę. Nazwa rodzajowa idzie do `aria-label` mechanizmu, bo czytnik
- * ekranu musi wiedzieć, czego dotyczy wartość, której nazwa sama tego nie mówi.
- *
- * Mechanizm pochodzi z biblioteki, własnego menu tu nie ma. Całe rozwijanie,
- * szukanie, znacznik wyboru i obsługa klawiatury idą z
- * `komponenty/menu-drzewo.ts`; ten plik wyłącznie obsadza go danymi rejestru
- * i tłumaczy klucz pozycji na identyfikator kanału.
- *
- * Podpis jest blokiem, nie `<label>`. Etykieta bez `for` wiąże się z pierwszym
- * potomkiem, który da się etykietować, a tym jest uchwyt menu. Skutek byłby
- * dwojaki i oba razy zły: kliknięcie w podpis otwierałoby menu (podpis nie jest
- * sterem), a nazwa dostępna uchwytu konkurowałaby z `aria-label`, które
- * mechanizm ustawia sam i które niesie bieżącą wartość. To samo rozstrzygnięcie
- * co w `poczta/wiersz-steru.ts`; przepisane, bo tamten plik należy do innego
- * modułu i niesie jego klasy rozkładu.
- *
- * Pusty wybór jest wyborem, nie brakiem. Pozycja „kanał czynny okna" stoi
- * w drzewie zawsze i jest domyślna, bo dokładnie to opisuje kontrakt: brak
- * wskazania bierze kanał czynny okna. Dzięki niej jest droga powrotna do
- * zachowania sprzed wskazania, a żądanie bez `channelId` nie jest stanem
- * nieosiągalnym z ekranu.
- *
- * Rejestr, który nie dotarł, nie odbiera czynności: drzewo ma wtedy samą
- * pozycję domyślną, a powód odmowy stoi przy niej jako opis. Ster nie wygasza
- * się, nie znika i nie zatrzymuje przycisku obok.
+ * Ster kanału modelu wskazuje, który model wykonuje przekład; mechanizm pochodzi z biblioteki menu
+ * drzewa, a plik obsadza go danymi rejestru kanałów.
  */
 export interface SterKanalu {
   /** Wiersz z podpisem i sterem, osadzany w formularzu okna. */
@@ -40,26 +13,17 @@ export interface SterKanalu {
   wybrany(): string;
   /** Przepisuje drzewo i etykietę z rejestru. */
   odswiez(): void;
-  /**
-   * Zwija menu i zdejmuje jego nasłuchy dokumentu — obowiązkowe przy usunięciu.
-   *
-   * Menu rozwinięte wiesza `pointerdown` na dokumencie (tak zamyka się po
-   * kliknięciu poza sobą). Instancja panelu, która znika z wykazu rdzenia, jest
-   * z dokumentu usuwana — gdyby jej ster był wtedy rozwinięty, nasłuch zostałby
-   * na dokumencie na zawsze i wołałby do elementu, którego już nie ma. Panele
-   * przychodzą i znikają z każdą zmianą wykazu, więc to nie jest przypadek
-   * teoretyczny.
-   */
+  /** Zwija menu i zdejmuje jego nasłuchy dokumentu, obowiązkowe przy usunięciu instancji panelu. */
   zwin(): void;
 }
 
-/** Przedrostek klucza pozycji — mechanizm oddaje klucz, nie identyfikator. */
+/** Przedrostek klucza pozycji menu odróżnia klucz pozycji drzewa od identyfikatora kanału, który ta pozycja opisuje. */
 const KLUCZ_KANALU = 'kanal:';
 
 export interface OpisSteruKanalu {
   /** Podpis nad sterem — mówi, czego dotyczy wskazanie. */
   podpis: string;
-  /** Nazwa czynności w zdaniu opisu, np. „przekład panelu". */
+  /** Nazwa czynności w zdaniu opisu podaje przykładowo przekład panelu jako czynność kanału. */
   czynnosc: string;
 }
 
@@ -85,15 +49,7 @@ export function utworzSterKanalu(
   element.className = 'mt-ster';
   element.append(podpis, menu.element);
 
-  /**
-   * Przepisanie drzewa wraz z etykietą uchwytu.
-   *
-   * Wskazanie, którego nie ma już w wykazie, wraca do domyślnego. Kanał
-   * wyłączony w innym oknie znika z `channel.list(enabledOnly)`, a rdzeń
-   * odmówiłby przekładu wskazaniem na niego. Cichy powrót byłby jednak zmianą
-   * nastawy bez wiedzy Operatora, więc towarzyszy mu zdanie przy pozycji
-   * domyślnej.
-   */
+  /** Przepisanie drzewa z etykietą uchwytu wraca do pozycji domyślnej, gdy wskazania nie ma w wykazie. */
   function odswiez(): void {
     const kanaly = rejestr.kanaly();
     const znaleziony = kanaly.find((kanalModelu) => kanalModelu.id === wskazany);
@@ -125,7 +81,7 @@ export function utworzSterKanalu(
   return { element, wybrany: () => wskazany, odswiez, zwin: () => menu.zwin() };
 }
 
-/** Zdanie przy pozycji domyślnej — mówi, co się dzieje przy braku wskazania. */
+/** Zdanie przy pozycji domyślnej mówi, co się dzieje przy braku wskazania kanału, zależnie od fazy odczytu rejestru. */
 function zdanieDomyslne(
   rejestr: ZrodloKanalowTranslate,
   ile: number,
@@ -153,7 +109,7 @@ function zdanieDomyslne(
   return `Nie wskazujesz kanału — ${czynnosc} wykona kanał, który rdzeń uznaje za czynny dla tego okna.`;
 }
 
-/** Zdanie po zniknięciu wskazanego kanału z wykazu kanałów czynnych. */
+/** Zdanie po zniknięciu wskazanego kanału z wykazu kanałów czynnych informuje o powrocie wskazania do kanału czynnego okna. */
 function zdanieZnikniecia(): string {
   return (
     'Kanału wskazanego wcześniej nie ma już wśród czynnych — wskazanie wróciło do kanału czynnego ' +
@@ -161,7 +117,7 @@ function zdanieZnikniecia(): string {
   );
 }
 
-/** Opis pozycji kanału: rodzaj i model, bo sama nazwa nie mówi, czym przełoży. */
+/** Opis pozycji kanału niesie rodzaj i model kanału, bo sama nazwa rodzaju nie mówi, czym przełoży tekst źródłowy. */
 function opisKanalu(rodzaj: string, model: string | undefined): string {
   const nazwaModelu = (model ?? '').trim();
   if (nazwaModelu === '') return `${rodzaj} — rdzeń nie podał modelu tego kanału.`;

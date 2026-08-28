@@ -1,7 +1,10 @@
 import { elementIkony } from '../ikony/ikony';
 import { PRZEKAZANIE_OPIS, PRZEKAZANIE_TYTUL } from './etykiety-ukladu';
 
-/** Komunikat blokowy sceny — trwały, dopóki sytuacja nie ustanie. */
+/**
+ * Komunikat blokowy sceny, trwały na ekranie dopóki sytuacja go wywołująca nie ustanie,
+ * montowany w pasie relacji i ukryty do chwili pokazania.
+ */
 export interface UwagaPodgladu {
   /** Element montowany w pasie relacji; do czasu pokazania stoi ukryty. */
   element: HTMLElement;
@@ -10,13 +13,8 @@ export interface UwagaPodgladu {
 }
 
 /**
- * Uwaga: przekazanie zlecenia jest podglądem układu, nie wykonaną pracą.
- *
- * Komunikat blokowy pełnej szerokości rodzica, oznaczony wyłącznie cienką kreską
- * po lewej — bez tła i obwódki, żeby nie czytał się jako druga karta. Forma stoi
- * w arkuszu tego widoku pod nazwą własną, bo biblioteka nie niesie klasy `.dn-alert`.
- * Komunikat zostaje na scenie, dopóki nie ustanie powód — brak komendy przekazania
- * w kontrakcie — więc odpowiada na pytanie „dlaczego nic się nie stało" także później.
+ * Tworzy komunikat blokowy informujący, że przekazanie zlecenia jest wyłącznie podglądem
+ * układu, a nie wykonaną pracą, i pozostaje widoczny, dopóki nie ustanie jego przyczyna.
  */
 export function utworzUwagePodgladu(): UwagaPodgladu {
   const element = document.createElement('p');

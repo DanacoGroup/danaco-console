@@ -1,7 +1,7 @@
-/** Odbiorca powiadomienia o zdarzeniu. */
+/** Odbiorca powiadomienia o zdarzeniu — funkcja wywoływana z ładunkiem danych przy każdym rozgłoszeniu magistrali. */
 export type Sluchacz<T> = (dane: T) => void;
 
-/** Odwołanie subskrypcji. Wywołanie odłącza słuchacza. */
+/** Odwołanie subskrypcji zwracane przez rejestrację słuchacza; wywołanie odłącza go od magistrali zdarzeń. */
 export type Odsubskrybuj = () => void;
 
 /**

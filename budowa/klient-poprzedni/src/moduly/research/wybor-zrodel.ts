@@ -2,15 +2,8 @@ import type { ResearchSource } from '../../../../shared/contract';
 import type { ZaznaczeniePozycji } from './zaznaczenie-pozycji';
 
 /**
- * Wybór źródeł powiązanych z ustaleniem.
- *
- * Jedna odpowiedzialność: pole wielokrotnego wyboru zasilane katalogiem
- * Sources Manager. Tak Findings Panel wiąże ustalenie ze źródłem — powiązanie
- * jedzie w polu `sourceIds` komendy `research.finding.add`, więc okno nie
- * potrzebuje osobnej komendy.
- *
- * Pusty katalog nie jest błędem ani blokadą: zdanie zastępcze mówi, skąd wziąć
- * źródła, a formularz ustalenia zostaje w pełni czynny.
+ * Wybór źródeł powiązanych z ustaleniem: pole wielokrotnego wyboru zasilane katalogiem
+ * Sources Manager, jedzie w polu sourceIds komendy zapisu ustalenia.
  */
 export interface WyborZrodel {
   element: HTMLElement;
@@ -53,7 +46,7 @@ export function utworzWyborZrodel(
   };
 }
 
-/** Jedno źródło jako pole wyboru wraz z etykietą. */
+/** Jedno źródło jako pole wyboru wraz z etykietą tytułu, zaznaczane w powiązaniu ze wskazanym ustaleniem. */
 function pozycja(
   zrodlo: ResearchSource,
   zaznaczenie: ZaznaczeniePozycji,

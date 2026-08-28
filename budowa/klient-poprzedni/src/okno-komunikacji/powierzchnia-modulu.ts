@@ -9,7 +9,7 @@ import type { ProfilModulu } from './profil-modulu';
 import { profilModulu } from './rejestr-profilow';
 import { utworzWskaznikModulu } from './wskaznik-modulu';
 
-/** Zależności powierzchni modułowej okna komunikacji. */
+/** Zależności powierzchni modułowej okna komunikacji, wstrzykiwane z zewnątrz jako kanał, katalog akcji i kontekst. */
 export interface OpcjePowierzchni {
   /** Wstawia gotowe polecenie do pola wypowiedzi operatora. */
   naPolecenie(tekst: string): void;
@@ -22,8 +22,7 @@ export interface OpcjePowierzchni {
 }
 
 /**
- * Powierzchnia modułowa okna komunikacji — wszystko, co okno przestawia przy
- * zmianie modułu.
+ * Powierzchnia modułowa okna komunikacji — wszystko, co okno przestawia przy zmianie modułu, z zachowaniem historii wątku.
  */
 export interface PowierzchniaModulu {
   /** Element montowany w oknie, nad historią wątku. */
@@ -32,21 +31,12 @@ export interface PowierzchniaModulu {
   ustawModul(kod: string): void;
   /** Kod modułu, w którym okno pracuje w tej chwili. */
   modul(): string;
-  /** Odświeża panel kontekstu bez zmiany modułu (np. po dopisaniu wpisu). */
+  /** Odświeża panel kontekstu bez zmiany modułu, na przykład po dopisaniu wpisu. */
   odswiezKontekst(): void;
 }
 
 /**
- * Rekonfiguracja okna komunikacji przy każdej zmianie modułu.
- *
- * Przestawiają się trzy rzeczy: pasek narzędzi promptu, panel akcji i panel
- * kontekstu — plus wskaźnik, żeby operator wiedział, gdzie jest. Historia
- * rozmowy nie należy do tej powierzchni i dlatego nie ma jak zniknąć: okno
- * zachowuje wątek, zmienia się to, czym można w nim pracować.
- *
- * Katalog akcji przychodzi z rdzenia odpowiedzią późniejszą niż samo
- * przestawienie. Odpowiedź spóźniona o kolejną zmianę modułu jest odrzucana —
- * inaczej okno pokazałoby akcje modułu, z którego operator już wyszedł.
+ * Rekonfiguracja okna komunikacji przy zmianie modułu przestawia pasek narzędzi promptu, panel akcji i panel kontekstu, zachowując historię wątku; katalog akcji spóźniony o kolejną zmianę modułu jest odrzucany.
  */
 export function utworzPowierzchnieModulu(opcje: OpcjePowierzchni): PowierzchniaModulu {
   const wskaznik = utworzWskaznikModulu();
@@ -106,7 +96,7 @@ export function utworzPowierzchnieModulu(opcje: OpcjePowierzchni): PowierzchniaM
   };
 }
 
-/** Polecenie wykonania akcji katalogu; wywołania dokonuje model. */
+/** Polecenie wykonania akcji katalogu wywoływane przez model po kliknięciu pozycji panelu akcji operatora. */
 function polecenieAkcji(akcja: Action): string {
   return `Wykonaj akcję „${akcja.name}" (komenda kontraktu ${akcja.command}).`;
 }

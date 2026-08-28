@@ -2,12 +2,9 @@ import { EnvelopeStatus, type Envelope, type MessageType } from '../../../shared
 import { nowyIdentyfikator } from './identyfikator.ts';
 
 /**
- * Składanie i rozpoznawanie koperty kontraktu.
- *
- * Kształt koperty pochodzi w całości z `shared/contract.ts` — plik nie
- * definiuje własnego typu komunikatu i nie powiela ani jednego literału nazwy.
- * Odpowiada wyłącznie za nadanie kopercie wychodzącej identyfikatora oraz
- * czasu nadania i za odczytanie pól odpowiedzi z koperty przychodzącej.
+ * Składanie i rozpoznawanie koperty kontraktu; kształt koperty pochodzi
+ * w całości ze współdzielonego kontraktu. Odpowiada za nadanie kopercie
+ * wychodzącej identyfikatora i czasu nadania oraz za odczyt pól odpowiedzi.
  */
 export function zbudujKoperte<T>(typ: MessageType, idSesji: string, tresc: T): Envelope<T> {
   return {
@@ -29,7 +26,7 @@ export function czyOdpowiedz(koperta: Envelope): boolean {
   return koperta.status !== undefined;
 }
 
-/** Czy odpowiedź niesie wynik. Brak statusu traktujemy jak brak wyniku. */
+/** Czy odpowiedź niesie wynik — sprawdzenie działa na podstawie statusu koperty; brak statusu traktowany jest jak brak wyniku. */
 export function czyUdana(koperta: Envelope): boolean {
   return koperta.status === EnvelopeStatus.Ok;
 }

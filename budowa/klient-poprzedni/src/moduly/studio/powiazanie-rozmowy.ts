@@ -2,27 +2,12 @@ import { liczbaOkienRozmowy, type ProfilModulu } from '../../okno-komunikacji/pr
 import { profilModulu } from '../../okno-komunikacji/rejestr-profilow';
 import { KOD_MODULU } from './zrodlo-akcji-studio';
 
-/**
- * Powiązanie modułu Studio z oknem rozmowy — opis, a nie drugie okno czatu.
- *
- * Chat Window jest jednym oknem na cały produkt i przy zmianie modułu przestawia
- * wygląd, narzędzia oraz kontekst (`okno-komunikacji/profil-modulu.ts`). Stoi na
- * scenie sesji, obok obszaru modułu, a nie wewnątrz niego, więc moduł z własnym
- * czatem prowadziłby drugi zapis tej samej rozmowy.
- *
- * Pasek nazywa to powiązanie i wylicza narzędzia promptu, które niesie profil
- * Studia: bez niego nie widać, że operacje Tools Panelu zleca się z okna
- * komunikacji sesji.
- *
- * Liczby okien rozmowy pasek nie podaje: profil Studia stoi na
- * `GRANICA_NIEPODANA`, więc wypisanie stamtąd liczby podawałoby wartość zastępczą
- * jako ustaloną.
- */
+/** Powiązanie modułu Studio z oknem rozmowy: opis powiązania i wykaz narzędzi promptu, a nie drugie okno czatu w module. */
 export interface PowiazanieRozmowy {
   element: HTMLElement;
 }
 
-/** Zdanie o postaci rozmowy modułu; każda postać ma własne, żadna nie milczy. */
+/** Zdanie opisujące postać rozmowy modułu widoczną operatorowi; każda postać ma własne zdanie, żadna nie milczy. */
 function zdanieOPostaci(profil: ProfilModulu): string {
   if (liczbaOkienRozmowy(profil) === 0) {
     return (
@@ -44,7 +29,7 @@ function zdanieOPostaci(profil: ProfilModulu): string {
   );
 }
 
-/** Zdanie o pamięci wątku — moduł gubiący wątek po cichu wygląda jak awaria. */
+/** Zdanie opisujące pamięć wątku rozmowy modułu; moduł gubiący wątek po cichu wyglądałby jak awaria okna. */
 function zdanieOPamieci(profil: ProfilModulu): string {
   return profil.pamiecSesyjna
     ? 'Wątek rozmowy przeżywa zmianę modułu i zamknięcie okna operacyjnego: profil ma pamięć sesyjną.'
@@ -73,8 +58,7 @@ export function utworzPowiazanieRozmowy(): PowiazanieRozmowy {
 
   element.append(tytul, postac, pamiec);
 
-  // Moduł bez rozmowy nie dostaje wykazu narzędzi promptu: byłby to wykaz
-  // czynności, których nie ma gdzie wykonać.
+  // Moduł bez rozmowy nie dostaje wykazu narzędzi promptu, bo nie ma gdzie ich wykonać.
   if (liczbaOkienRozmowy(profil) === 0) return { element };
 
   const wstep = document.createElement('p');

@@ -19,7 +19,7 @@ export function nazwaRoli(rola: WindowRole): string {
   }
 }
 
-/** Nazwa środowiska wykonania modelu. */
+/** Nazwa środowiska wykonania modelu — lokalne urządzenie operatora, rdzeń albo host zdalny — pokazywana w interfejsie po polsku. */
 export function nazwaSrodowiska(srodowisko: ExecutionEnv): string {
   switch (srodowisko) {
     case ExecutionEnv.Local:
@@ -31,7 +31,7 @@ export function nazwaSrodowiska(srodowisko: ExecutionEnv): string {
   }
 }
 
-/** Nazwa etapu uzgodnienia z rdzeniem. */
+/** Nazwa etapu uzgodnienia z rdzeniem, pokazywana operatorowi po polsku jako czytelny odpowiednik wartości kontraktu. */
 export function nazwaEtapu(etap: EtapUzgodnienia): string {
   switch (etap) {
     case 'powitanie':

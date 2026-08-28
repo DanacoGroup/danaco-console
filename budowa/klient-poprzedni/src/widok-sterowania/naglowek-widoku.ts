@@ -2,18 +2,7 @@ import { WindowRole } from '../../../shared/contract';
 import { nazwaRoli } from '../okno-komunikacji/etykiety-okna';
 import type { ObserwatorUstawien } from './obserwator-ustawien';
 
-/**
- * Nagłówek kolumny sterowania: tytuł, rola okna i jego identyfikator.
- *
- * Tytuł jest jedynym miejscem kroju szeryfowego w tym widoku — krój ten należy
- * wyłącznie do nagłówków.
- *
- * Rola okna stoi w nagłówku, a nie tylko w podsumowaniu, ponieważ to ona
- * rozstrzyga, czym okno jest w pętli koordynator–wykonawca:
- * przy dwóch oknach obok siebie operator musi widzieć rolę bez rozwijania
- * czegokolwiek. Plakietka niesie ikonę słowną — nazwę roli — więc stan nie
- * opiera się na samej barwie.
- */
+/** Nagłówek kolumny sterowania niesie tytuł, plakietkę roli okna oraz jego identyfikator; rola stoi tu, a nie tylko w podsumowaniu, żeby była widoczna bez rozwijania niczego. */
 export interface NaglowekWidoku {
   /** Element montowany na szczycie kolumny sterowania. */
   element: HTMLElement;
@@ -60,7 +49,7 @@ export function utworzNaglowekWidoku(
   return { element, rozlacz: odsubskrybuj };
 }
 
-/** Co rola oznacza w pętli koordynator–wykonawca. */
+/** Opisuje zdaniem, co dana rola oznacza w pętli pracy koordynatora i wykonawców, pokazywanym jako podpowiedź przy plakietce roli w nagłówku. */
 function opisRoli(rola: WindowRole): string {
   switch (rola) {
     case WindowRole.Coordinator:

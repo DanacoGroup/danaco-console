@@ -17,21 +17,14 @@ import { utworzWyborNastawy, wierszNastawy } from './wybor-nastawy';
 import { utworzWyborZrodel } from './wybor-zrodel';
 
 /**
- * Findings Panel — ustalenia narastające w toku badania.
- *
- * Narastanie na żywo jeszcze nie działa: zdarzenie zmiany ustalenia jest już
- * w kontrakcie, ale rdzeń go nie rozgłasza, więc wykaz nie dostanie ustalenia
- * zapisanego na innym urządzeniu konta. Okno mówi o tym w stanie pustym zamiast
- * odpytywać rdzeń w pętli — subskrypcja dojdzie razem z rozgłaszaniem.
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-ustalen`.
+ * Findings Panel gromadzi ustalenia narastające w toku badania, choć narastanie na żywo jeszcze nie działa, bo rdzeń nie rozgłasza zdarzenia zmiany ustalenia.
  */
 export interface OknoFindingsPanel {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Dwie reprezentacje wykazu ustaleń, obie liczone po stronie klienta. */
+/** Stała wylicza dwie reprezentacje wykazu ustaleń, chronologiczną oraz według liczby źródeł, obie liczone po stronie klienta. */
 const WIDOKI = [
   {
     wartosc: 'chronologia',
@@ -71,11 +64,7 @@ export function utworzOknoFindingsPanel(
   const wykaz = document.createElement('ul');
   wykaz.className = 'mr-wykaz';
 
-  // Dwie reprezentacje wykazu, obie policzalne z tego, co rdzeń oddał.
-  // Opracowanie (rozdz. 3.7) wylicza trzecią — kodowanie jakościowe. Kody są już
-  // w kontrakcie, ale `ResearchFinding` ich nie niesie i rdzeń nie ma uchwytu
-  // książki kodów, więc widok, który nie miałby czego pokazać, tu nie stoi;
-  // pozycja jest w panelu akcji, pod nazwą swojej komendy.
+  // Widok kodowania jakościowego tu nie stoi: rdzeń nie ma jeszcze uchwytu książki kodów.
   const widok = utworzWyborNastawy('Widok ustaleń', WIDOKI, () => odswiez());
 
   const zapisz = przycisk('Zapisz ustalenie', 'dn-btn dn-btn--sm dn-btn--atrament');
@@ -140,11 +129,7 @@ export function utworzOknoFindingsPanel(
 }
 
 /**
- * Porządek wykazu wg wybranej reprezentacji.
- *
- * Kopia przed sortowaniem jest konieczna: wykaz pochodzi wprost z pamięci
- * modułu, a `sort` przestawia tablicę w miejscu — porządek widoku wywróciłby
- * wtedy porządek narastania w pamięci, wspólnej wszystkim oknom.
+ * Funkcja porządkuje wykaz ustaleń według wybranej reprezentacji, sortując kopię tablicy, by nie naruszyć porządku narastania w pamięci modułu.
  */
 function uporzadkuj(
   ustalenia: readonly ResearchFinding[],

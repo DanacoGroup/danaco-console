@@ -2,27 +2,15 @@ import { elementIkony } from '../ikony/ikony';
 import './czynnosci.css';
 
 /**
- * `Widok transkryptu ›` — jedyne podmenu sekcji czynności sesji. Podmenu
- * kosztuje kliknięcie i drugi poziom wędrówki ognisk, więc opłaca się tylko
- * tam, gdzie celów jest wiele; pozostałe czynności są płaskie.
- *
- * Tryby przychodzą z zewnątrz: buduje je potok `client/src/rozmowa/`, a ten
- * plik zna je wyłącznie przez port opisany napisami (`kod: string`). Własny
- * spis trybów byłby drugą prawdą o tym samym. Bez portu sekcja czynności jest
- * krótsza o tę pozycję — nie ma wiersza wygaszonego ani strzałki do pustki.
- *
- * Tryb bieżący nosi ptaszek. Wybór jest jednokrotny, więc rola wiersza brzmi
- * `menuitemradio`, a nie `menuitemcheckbox`.
+ * Widok transkryptu jest jedynym podmenu sekcji czynności sesji, opłacalnym tylko tam, gdzie celów jest wiele, a tryby przychodzą z zewnątrz przez port opisany napisami, więc plik nie prowadzi własnego spisu trybów.
  */
-
-/** Jeden tryb pokazywania zapisu — kształt zgodny z `rozmowa/WIDOKI_ZAPISU`. */
 export interface TrybZapisu {
   kod: string;
   nazwa: string;
   przeznaczenie: string;
 }
 
-/** Dojście do trybu okna; wypełnia je powłoka, gdy potok rozmowy odda API. */
+/** Dojście do trybu okna; wypełnia je powłoka, gdy potok rozmowy odda odpowiedni interfejs programistyczny. */
 export interface PortWidokuZapisu {
   tryby: readonly TrybZapisu[];
   /** Kod trybu, w którym okno pokazuje wątek w tej chwili. */
@@ -90,12 +78,7 @@ export function utworzPodmenuWidokuZapisu(port: PortWidokuZapisu): PodmenuWidoku
     odswiez();
   }
 
-  /**
-   * Zwinięcie chowa listę i każdy jej wiersz. Wędrówka strzałkami
-   * w `menu-rozwijane.ts` pomija pozycje z `hidden`, ale pyta o atrybut samej
-   * pozycji, nie jej przodka — bez tego ognisko wpadałoby w tryby schowane pod
-   * zwiniętą strzałką.
-   */
+  /** Zwinięcie chowa listę i każdy jej wiersz; wędrówka strzałkami pyta o atrybut samej pozycji. */
   function ustaw(nowe: boolean): void {
     rozwiniete = nowe;
     lista.hidden = !nowe;
@@ -118,8 +101,7 @@ export function utworzPodmenuWidokuZapisu(port: PortWidokuZapisu): PodmenuWidoku
     wiersze[0]?.focus();
   });
 
-  // Strzałka w lewo wraca z listy trybów na wiersz nadrzędny — droga powrotna
-  // musi istnieć, bo Escape zwija całe menu, a nie samo podmenu.
+  // Strzałka w lewo wraca na wiersz nadrzędny, bo Escape zwija całe menu, nie samo podmenu.
   lista.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.key !== 'ArrowLeft') return;
     zdarzenie.preventDefault();
@@ -138,7 +120,7 @@ export function utworzPodmenuWidokuZapisu(port: PortWidokuZapisu): PodmenuWidoku
   };
 }
 
-/** Jeden tryb: ptaszek, nazwa i przeznaczenie. Bez skrótu klawiszowego. */
+/** Jeden tryb widoku transkryptu: ptaszek wyboru, nazwa oraz przeznaczenie, bez własnego skrótu klawiszowego. */
 function zbudujTryb(tryb: TrybZapisu, naWybor: () => void): HTMLElement {
   const wiersz = document.createElement('button');
   wiersz.type = 'button';

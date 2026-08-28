@@ -14,27 +14,10 @@ import { STYLE_NAZWANE, type RodzajBloku } from './zapis-formatowany';
 import type { TrybAdiustacji, TrybWidoku } from './powierzchnia-dokumentu';
 
 /**
- * Wstążka okna pracy z dokumentem — osiem zakładek, w każdej nazwane grupy.
- *
- * ── Dlaczego wstążka, a nie pasek ───────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: czynności zebrane wedle rodzaju pracy, wzorem
- * pakietu biurowego. Jeden pasek na sto czynności byłby wykazem, po którym
- * Operator szuka wzrokiem; zakładka mówi, gdzie czego szukać, a nazwana grupa —
- * dlaczego te czynności stoją razem.
- *
- * ── Czynności AI mają własną zakładkę ───────────────────────────────────────
- * „Asystent" jest zakładką, nie pozycją w menu: suwaki koncepcyjne, wykaz
- * operacji z `kategorie-operacji.ts` i decyzja o wyniku. Wykaz operacji nie
- * powstaje tu od nowa — pochodzi z tego samego pliku, co wykaz Tools Panelu.
- *
- * ── Czego wstążka nie robi ──────────────────────────────────────────────────
- * Nie woła rdzenia i nie zna stanu modułu. Buduje kontrolki i zgłasza
- * naciśnięcia oknu (`CzynnosciWstazki`), a złożone kawałki — formularz
- * wczytania, znajdź/zamień, pola różnicy — przyjmuje gotowe jako gniazda.
- * Dzięki temu jedno miejsce trzyma układ, a inne rozmowę z rdzeniem.
+ * Czynności wstążki zlecane oknu, pogrupowane wedle zakładki — plik, narzędzia
+ * główne, wstawianie, projektowanie, recenzja, widok i asystent — tak jak
+ * grupuje je sama wstążka.
  */
-
-/** Czynności wstążki zlecane oknu. */
 export interface CzynnosciWstazki {
   /* Plik */
   naZapis(): void;
@@ -85,7 +68,10 @@ export interface CzynnosciWstazki {
   naDecyzjePropozycji(przyjmij: boolean, fragmenty: readonly number[]): void;
 }
 
-/** Gniazda wstążki — kawałki złożone poza nią i wstawiane w jej grupy. */
+/**
+ * Gniazda wstążki — kawałki złożone poza nią, takie jak formularz wczytania,
+ * panel znajdź/zamień czy pola różnicy wersji, wstawiane gotowe w jej grupy.
+ */
 export interface GniazdaWstazki {
   /** Formularz wskazania dokumentu do wczytania. */
   wczytanie: HTMLElement;
@@ -95,18 +81,15 @@ export interface GniazdaWstazki {
   roznica: readonly HTMLElement[];
   /** Wykaz fragmentów różnicy wraz z decyzją wybiórczą. */
   fragmenty: HTMLElement;
-  /**
-   * Pasek widoku powierzchni — skala, układ kartek, linijki, przewijanie.
-   *
-   * Nieobowiązkowy: pasek stoi domyślnie przy powierzchni, bo Operator sięga po
-   * skalę i skok o stronę co chwilę, a wyprawa na zakładkę wstążki przy każdym
-   * takim ruchu byłaby karą. Podany tutaj — wstążka pokazuje go w zakładce
-   * „Widok" i wtedy jest to JEDNO miejsce tych nastaw, nie drugie.
-   */
+  /** Pasek widoku powierzchni jest nieobowiązkowy: gdy podany, wstążka pokazuje go w zakładce widoku. */
   widok?: HTMLElement;
 }
 
-/** Wstążka wraz z jej sterowaniem. */
+/**
+ * Wstążka wraz z jej sterowaniem: przełączaniem zakładki czynnej, odświeżaniem
+ * suwaków asystenta, znacznika śledzenia zmian, trybu widoku i wykazu profili
+ * wydania.
+ */
 export interface WstazkaPracy {
   element: HTMLElement;
   /** Przestawia zakładkę czynną. */
@@ -121,6 +104,11 @@ export interface WstazkaPracy {
   ustawProfile(profile: readonly { id: string; nazwa: string }[]): void;
 }
 
+/**
+ * Buduje wstążkę okna pracy z dokumentem złożoną z ośmiu zakładek z nazwanymi
+ * grupami czynności; nie woła rdzenia i nie zna stanu modułu, zgłasza jedynie
+ * naciśnięcia oknu przez `CzynnosciWstazki`.
+ */
 export function utworzWstazkePracy(
   czynnosci: CzynnosciWstazki,
   gniazda: GniazdaWstazki,
@@ -452,10 +440,8 @@ export function utworzWstazkePracy(
 
   /* ── Widok ───────────────────────────────────────────────────────────────── */
 
-  // Trybami są widok formatowany, podgląd wydruku i różnica na treści. Tryb
-  // źródłowy stoi OSOBNO, jako przełącznik: pismo pisze się na kartce, a znaczniki
-  // są podglądem tego, co jedzie do rdzenia — nie czwartym równorzędnym widokiem
-  // i nie widokiem domyślnym.
+  // Tryb źródłowy stoi osobno, przełącznikiem nad trybami widoku, wydruku
+  // i różnicy.
   const tryby: readonly { kod: TrybWidoku; nazwa: string; opis: string }[] = [
     {
       kod: 'formatowany',
@@ -488,10 +474,8 @@ export function utworzWstazkePracy(
   przelacznikZrodlowy.type = 'checkbox';
   przelacznikZrodlowy.className = 'dn-przelacznik';
   przelacznikZrodlowy.setAttribute('aria-label', 'Tryb źródłowy ze znacznikami');
-  // Znacznik czynności zostaje ten sam co przy przycisku trybu, bo to ta sama
-  // czynność — zmienił się jej KSZTAŁT (przełącznik zamiast czwartego przycisku
-  // trybu), nie jej znaczenie. Sprawdziany i katalog sterów mówią o niej dalej
-  // tą samą nazwą.
+  // Znacznik czynności zostaje ten sam co przy przycisku trybu — zmienia się
+  // kształt, nie znaczenie.
   przelacznikZrodlowy.dataset['czynnosc'] = 'tryb-zrodlowy';
   przelacznikZrodlowy.title =
     'Pokazuje treść ze znacznikami, tak jak jedzie do rdzenia. Przełącznik, nie tryb domyślny — ' +
@@ -656,7 +640,10 @@ export function utworzWstazkePracy(
 
 /* ── Kawałki wspólne wstążki ──────────────────────────────────────────────── */
 
-/** Nazwana grupa czynności — jedno miejsce składania kafla wstążki. */
+/**
+ * Nazwana grupa czynności — jedno miejsce składania kafla wstążki złożonego
+ * z tytułu grupy i rzędu jej kontrolek lub przycisków.
+ */
 function grupa(nazwa: string, elementy: readonly HTMLElement[]): HTMLElement {
   const tytul = document.createElement('p');
   tytul.className = 'ms-wstazka__grupa-tytul';
@@ -673,7 +660,10 @@ function grupa(nazwa: string, elementy: readonly HTMLElement[]): HTMLElement {
   return element;
 }
 
-/** Przycisk wstążki wraz z jego objaśnieniem. */
+/**
+ * Przycisk wstążki wraz z jego objaśnieniem: tytuł i opis dostępności pokazują
+ * to samo objaśnienie, żeby czynność miała jedno, spójne uzasadnienie.
+ */
 function przyciskWstazki(
   nazwa: string,
   kod: string,
@@ -693,7 +683,10 @@ function przyciskWstazki(
   return przycisk;
 }
 
-/** Lista wyboru wstążki wraz z etykietą. */
+/**
+ * Lista wyboru wstążki wraz z etykietą, budowana z podanych pozycji i zgłaszająca
+ * zmianę wybranej wartości wywołującemu bez własnej pamięci stanu.
+ */
 function wybor(
   etykieta: string,
   pozycje: readonly { wartosc: string; etykieta: string }[],
@@ -712,7 +705,10 @@ function wybor(
   return { element: obudowa(etykieta, kontrolka), kontrolka };
 }
 
-/** Pole liczbowe wstążki — milimetry, procenty, liczba kartek. */
+/**
+ * Pole liczbowe wstążki — milimetry, procenty albo liczba kartek — z wartością
+ * domyślną i zgłoszeniem zmiany do wywołującego przy każdej edycji.
+ */
 function liczba(
   etykieta: string,
   domyslna: number,
@@ -728,7 +724,10 @@ function liczba(
   return { element: obudowa(etykieta, kontrolka), kontrolka };
 }
 
-/** Pole tekstowe wstążki. */
+/**
+ * Pole tekstowe wstążki z etykietą dostępności, zgłaszające wywołującemu każdą
+ * zmianę wpisanej treści bez własnej pamięci stanu.
+ */
 function pole(
   etykieta: string,
   naZmiane: (wartosc: string) => void,
@@ -741,7 +740,10 @@ function pole(
   return { element: obudowa(etykieta, kontrolka), kontrolka };
 }
 
-/** Obudowa kontrolki wstążki: etykieta nad kontrolką. */
+/**
+ * Obudowa kontrolki wstążki: etykieta widoczna nad kontrolką, wspólna dla
+ * wszystkich pól wstążki niezależnie od rodzaju kontrolki.
+ */
 function obudowa(etykieta: string, kontrolka: HTMLElement): HTMLElement {
   const napis = document.createElement('span');
   napis.className = 'ms-wstazka__etykieta';

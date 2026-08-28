@@ -101,70 +101,31 @@ import type { ZrodloPracyStudio } from './zrodlo-pracy-studio';
 import type { ZrodloPrzekazania } from './zrodlo-przekazania';
 
 /**
- * Okno pracy z dokumentem — jedna powierzchnia zamiast czterech.
- *
- * ── Co się w nim zeszło ─────────────────────────────────────────────────────
- * Studio Editor, kanwa tekstowa, Preview Window i Diff/Grep Panel. Cztery okna
- * pracowały nad tą samą treścią w czterech miejscach, a przy dwóch dokumentach
- * dawało to sześć okien. Tutaj treść jest jedna, tryby widoku są jej trybami,
- * a różnica jest warstwą nakładaną na nią, nie drugą kolumną.
- *
- * Kanwa tekstowa nie ma następnika w postaci osobnej powierzchni i mieć go nie
- * miała: wynik operacji wchodzi do dokumentu jako zmiana śledzona autora
- * `model` (`studio.contextual.op` w `adapter_modul_studio_roznice.go`), a jej
- * poprawianie przed decyzją odbywa się tam, gdzie zmiana stoi — w treści.
- * Poprawka po stronie klienta nie jest więc już potrzebna, bo poprawia się
- * dokument, a nie bufor obok niego.
- *
- * ── Układ ───────────────────────────────────────────────────────────────────
- * Wstążka z zakładkami na górze, zakładki dokumentów pod nią, dalej trzy
- * kolumny: powierzchnia z kartkami, margines z dymkami komentarzy i panel
- * Redaktora. Wiersz polecenia otwiera się przy kursorze, wewnątrz powierzchni.
- *
- * ── Czego okno nie robi ─────────────────────────────────────────────────────
- * Nie prowadzi rozmowy — Chat Window jest jedno na produkt i stoi obok
- * (`powiazanie-rozmowy.ts`). Nie zastępuje Tools Panelu jako pełnego wykazu
- * operacji, Session Repository jako historii wersji ani Ingest/OCR Panelu jako
- * cyfryzacji: te trzy nie mają powierzchni tekstowej i zostają osobno.
+ * Okno pracy z dokumentem łączy w jednej powierzchni edycję treści, podgląd wydania i różnicę wersji, z marginesem komentarzy i panelem Redaktora.
  */
 export interface OknoPracyZDokumentem {
   element: HTMLElement;
   /** Wczytuje to, co okno potrzebuje z rdzenia: szablony i profile wydania. */
   wczytaj(): Promise<void>;
-  /**
-   * Przestawia tryb wykazu operacji — narzędzia ukryte albo stały panel.
-   *
-   * Woła to stały panel operacji, gdy Operator przełączy tryb u niego: nastawa
-   * jest jedna na moduł i zapisuje ją okno pracy, bo tu stoi pływak.
-   */
+  /** Przestawia tryb wykazu operacji — narzędzia ukryte albo stały panel. */
   ustawTrybOperacji(tryb: TrybOperacji): void;
   odswiez(): void;
 }
 
-/** Czynności, które okno zleca poza siebie — do innych okien modułu. */
+/**
+ * Czynności, które okno pracy z dokumentem zleca poza siebie: przejście do Tools Panelu, do Warsztatu dokumentu i zmiana trybu wykazu operacji w module.
+ */
 export interface CzynnosciPracy {
   /** Przenosi ognisko do Tools Panelu — pełnego wykazu operacji. */
   naWiecejOperacji(): void;
   /** Przenosi ognisko do Warsztatu dokumentu — czynności ochrony. */
   naWarsztat(): void;
-  /**
-   * Przestawia tryb wykazu operacji w całym module.
-   *
-   * Nastawa dotyczy dwóch okien naraz — pływaka w tym oknie i stałego panelu
-   * obok — więc rozstrzyga ją moduł, a nie żadne z nich osobno.
-   */
+  /** Przestawia tryb wykazu operacji w całym module. */
   naTrybOperacji(tryb: TrybOperacji): void;
 }
 
 /**
- * Siedem źródeł postaci dokumentu, kontroli pracy i wstawień.
- *
- * Rodziny `studio.page.*`, `style.*`, `format.*`, `table.*`, `object.*`,
- * `apparatus.*`, `field.*`, `journal.*`, `markup.*`, `lock.*`, `backup.*`
- * i `template.*` nie należą do portu pracy — dlatego wchodzą osobnym bytem,
- * a nie dopiskiem do `ZrodloPracyStudio`. Byt jest **nieobowiązkowy**: okno bez
- * niego działa jak dotąd i mówi wprost, że drogi do tych rodzin nie podano —
- * brak jest wtedy po stronie złożenia modułu, nie rdzenia.
+ * Siedem źródeł postaci dokumentu, kontroli pracy i wstawień; brak któregokolwiek nie blokuje okna, tylko wyłącza jego rodzinę poleceń w rdzeniu.
  */
 export interface ZrodlaPostaciStudia {
   postaci: ZrodloPostaciStudio;
@@ -177,22 +138,12 @@ export interface ZrodlaPostaciStudia {
 }
 
 /**
- * Górna granica wielkości JEDNEJ kartki przyjmowanej z rdzenia.
- *
- * Kartka A4 w 96 punktach na cal to obraz PNG rzędu setek kilobajtów; sześć
- * megabajtów mieści ją z zapasem także przy nośniku wielkoformatowym. Granica
- * jest podawana rdzeniowi, bo kontrakt każe mu wtedy ODMÓWIĆ nazywając zmierzoną
- * wielkość, zamiast oddać treść uciętą — a obraz ucięty wyglądałby na kartkę
- * zepsutą przez rdzeń.
+ * Górna granica wielkości jednej kartki przyjmowanej z rdzenia w bajtach; rdzeń po jej przekroczeniu odmawia, zamiast oddać treść uciętą.
  */
 const GRANICA_BAJTOW_KARTKI = 6 * 1024 * 1024;
 
 /**
- * Górna liczba kartek pobieranych z rdzenia jednym renderem.
- *
- * Pismo dwustustronicowe to dwieście żądań i dwieście obrazów w pamięci karty.
- * Podgląd wydania służy sprawdzeniu składu, a nie czytaniu całego pisma
- * obrazkami, więc pobiera się początek i mówi o tym wprost.
+ * Górna liczba kartek pobieranych z rdzenia jednym renderem podglądu wydania; dalsze kartki zostają zasobami magazynu rdzenia.
  */
 const GRANICA_KARTEK_RDZENIA = 24;
 
@@ -258,10 +209,7 @@ export function utworzOknoPracyZDokumentem(
 
   /* ── Postać dokumentu: strona, marginesy, numeracja, styl ───────────────── */
 
-  // Postać powstaje PRZED powierzchnią, bo powierzchnia bierze od niej magazyn
-  // nastaw widoku i zgłasza jej chwyty linijki. Odwrotna kolejność zostawiłaby
-  // chwyty bez odbiorcy — a to jest właśnie ta usterka, po której nastawa ginie
-  // przy zapisie.
+  // Postać musi powstać przed powierzchnią — powierzchnia bierze od niej magazyn nastaw widoku.
   const postac = utworzPostacDokumentu({
     zrodlo: zrodlaPostaci.postaci,
     idDokumentu: () => stan.dokument()?.id ?? '',
@@ -275,11 +223,7 @@ export function utworzOknoPracyZDokumentem(
   const powierzchnia = utworzPowierzchnieDokumentu(strona, nastawyWizualne, akapity, {
     naTresc: (tresc) => {
       stan.ustawTresc(tresc);
-      // Kartki wyrysowane przez rdzeń przestają być podglądem TEJ treści w chwili,
-      // w której Operator dopisze literę. Zdejmuje się je więc od razu i podgląd
-      // wraca do kartek liczonych w oknie — pokazywanie starego wyrysu jako
-      // podglądu treści bieżącej byłoby kłamstwem o dokumencie, a nie oszczędnością
-      // jednego wywołania.
+      // Kartki wyrysowane przez rdzeń tracą aktualność po zmianie treści i są zdejmowane natychmiast.
       if (powierzchnia.kartekZRdzenia() > 0) powierzchnia.ustawKartkiRdzenia([]);
     },
     naZaznaczenie: (zakres) => {
@@ -287,9 +231,7 @@ export function utworzOknoPracyZDokumentem(
       pokazWierszPolecenia(zakres === null ? 0 : zakres.koniec - zakres.poczatek);
     },
     naDecyzjeZmiany: (kod, przyjmij) => void rozstrzygnijZmiany(zapleczePracy, [kod], przyjmij),
-    // Chwyty linijki dojeżdżają teraz do rdzenia: margines i wcięcie idą
-    // `studio.page.setup.set`, tabulatory `studio.ruler.tabstop.set`. Bez tych
-    // trzech przewodów chwyt działał, ale nastawa ginęła przy zapisie.
+    // Chwyty linijki jadą do rdzenia komendami studio.page.setup.set i studio.ruler.tabstop.set.
     naStrone: (nowa) => postac.zglosStrone(nowa),
     naWciecieAkapitu: (_numer, wciecia) => postac.zglosWciecia(wciecia),
     naTabulatoryAkapitu: (_numer, tabulatory) => postac.zglosTabulatory(tabulatory),
@@ -319,10 +261,7 @@ export function utworzOknoPracyZDokumentem(
 
   const mikrofonPolecenia = utworzPrzyciskMikrofonu({
     zrodlo: przybornikZaplecze,
-    // Moduł dostaje z powłoki okno komunikacji, nie kartę sesji, a kontrakt
-    // `speech.audio.upload` przyjmuje puste `sessionId` jako „nagranie bez
-    // przypisania do karty". Zgadywanie karty z okna byłoby wskazaniem
-    // nieprawdziwym; okno jedzie i wystarcza do odnalezienia nagrania.
+    // Moduł dostaje okno komunikacji, nie kartę sesji; speech.audio.upload przyjmuje sessionId pusty.
     idSesji: () => '',
     idOkna: () => stan.idOkna(),
     naTekst: (tekst) => wiersz.ustawTresc(tekst),
@@ -359,12 +298,7 @@ export function utworzOknoPracyZDokumentem(
     wiersz.pokaz(polozenie, dlugosc);
   }
 
-  /**
-   * Zleca operację i podnosi jej licznik użycia.
-   *
-   * Licznik jedzie do rdzenia po każdym uruchomieniu, bo z niego bierze się
-   * kolejność czynności na wierzchu pływaka — „z użycia, nie z domysłu".
-   */
+  /** Zleca operację i podnosi jej licznik użycia. */
   function zlecOperacjeZUzyciem(idAkcji: string, polecenie: string): void {
     void zlecOperacje(zapleczePracy, idAkcji, polecenie, nastawySuwakow);
     void przybornikZaplecze.przybornikZapisz(KLUCZ_UZYCIA, uzycie.policz(idAkcji));
@@ -403,9 +337,7 @@ export function utworzOknoPracyZDokumentem(
         void dodajKomentarz(zapleczePracy, tresc, stan.zaznaczenie(), '');
       },
       naPropozycje: (polecenie) => {
-        // Propozycja brzmienia idzie operacją kontekstową: rdzeń oddaje treść
-        // wyniku jako propozycję, a ta staje NA MARGINESIE — w treści jej nie ma
-        // do chwili przyjęcia (studio.proposal.decide).
+        // Propozycja brzmienia idzie operacją kontekstową i staje na marginesie do chwili przyjęcia.
         zlecOperacjeZUzyciem('studio.styl.rejestr', polecenie);
       },
       naAdnotacje: (numer, tresc) => void dodajAdnotacjePrzybornika(numer, tresc),
@@ -472,10 +404,7 @@ export function utworzOknoPracyZDokumentem(
           naZnaku: zakres?.poczatek ?? 0,
         });
         przybornik.ustawZakladki(zakladki);
-        // Zakładka jest elementem APARATU dokumentu (`StudioApparatusKind.Bookmark`),
-        // więc zapisuje się w rdzeniu i przeżywa zapis. Wykaz w oknie zostaje, bo
-        // powrót ma działać od ręki, nie po odczycie — ale prawdą o dokumencie
-        // jest wiersz w rdzeniu, nie ten wykaz.
+        // Zakładka jest elementem aparatu dokumentu i zapisuje się w rdzeniu; wykaz lokalny służy powrotowi.
         const idDokumentu = stan.dokument()?.id ?? '';
         if (idDokumentu === '') {
           przybornik.pokazOdpowiedz(
@@ -518,9 +447,7 @@ export function utworzOknoPracyZDokumentem(
       },
     },
     mikrofonTresci.element,
-    // Trzeci argument jest rdzeniem znakowania — bez niego przybornik pokazuje
-    // znakowania sesji i mówi wprost, że droga do `studio.markup.*` nie jest
-    // wpięta. Z nim znakowanie jest TRWAŁE i przechodzi przez zapis.
+    // Trzeci argument jest rdzeniem znakowania; z nim znakowanie jest trwałe i przechodzi przez zapis.
     {
       zrodlo: zrodlaPostaci.kontrola,
       idDokumentu: () => stan.dokument()?.id ?? '',
@@ -544,14 +471,7 @@ export function utworzOknoPracyZDokumentem(
 
   /* ── Kontrola pracy: dziennik, kopie, blokady ───────────────────────────── */
 
-  // Trzy panele stoją nakładkami przy powierzchni, bo dotyczą TEJ treści:
-  // dziennik cofa jej czynności, kopie ją ratują, blokady jej pilnują. Każdy
-  // przyjmuje skutek tą samą drogą co reszta okna — treścią roboczą stanu, więc
-  // po cofnięciu i po przywróceniu powierzchnia pokazuje to, co oddał rdzeń.
-  // Postać po czynności czytamy z rdzenia, a nie przyjmujemy nieopisanym
-  // ładunkiem z odpowiedzi: postać jest drzewem o kształcie kontraktu, a `unknown`
-  // wstawione w stan okna byłoby drugą prawdą o dokumencie, tym razem
-  // niesprawdzoną kompilacją.
+  // Dziennik, kopie i blokady dotyczą tej treści; każdy przyjmuje skutek treścią roboczą stanu okna.
   function przyjmijSkutek(tresc: string | undefined, _postacPoZmianie: unknown): void {
     if (tresc !== undefined) {
       stan.ustawTresc(tresc);
@@ -565,8 +485,7 @@ export function utworzOknoPracyZDokumentem(
     zaznaczenie: () => stan.zaznaczenie(),
     kursor: () => stan.zaznaczenie()?.poczatek ?? stan.trescRobocza().length,
     naSkutek: przyjmijSkutek,
-    // Skok po zmianach modelu przestawia zaznaczenie stanu — powierzchnia idzie
-    // za nim tą samą drogą, którą idzie za zaznaczeniem Operatora.
+    // Skok po zmianach modelu przestawia zaznaczenie stanu; powierzchnia idzie za nim jak za Operatorem.
     naMiejsce: (poczatek, koniec) => stan.ustawZaznaczenie({ poczatek, koniec }),
   });
 
@@ -612,18 +531,14 @@ export function utworzOknoPracyZDokumentem(
   const galeria = utworzGalerieSzablonow({
     naZalozenie: (idSzablonu, wartosci, tytul) =>
       void zalozZSzablonu(idSzablonu, wartosci, tytul),
-    // Galeria zakłada dokument z szablonu; warsztat szablon ZMIENIA. To dwie
-    // czynności i dwa miejsca, więc galeria nie udaje warsztatu, tylko do niego
-    // prowadzi.
+    // Galeria zakłada dokument z szablonu; warsztat szablon zmienia — to dwie czynności w dwóch miejscach.
     naWarsztat: (idSzablonu) => szablony.wskaz(idSzablonu),
   });
 
   /* ── Kawałki przeniesione z okien scalonych ──────────────────────────────── */
 
   const wczytanie = utworzWczytanieDokumentu();
-  // Wniesienie pliku i wydanie do formatu stoją nakładkami, bo obie czynności
-  // wychodzą poza treść: pierwsza ją zakłada, druga wypuszcza na zewnątrz wraz
-  // z bilansem cech pominiętych.
+  // Wniesienie pliku i wydanie do formatu wychodzą poza treść: pierwsze ją zakłada, drugie wypuszcza.
   const wniesienie = utworzWniesieniePliku(stan, zrodlaPostaci.wstawienia);
   const wydanie = utworzWydaniePanel(stan, zrodlaPostaci.wstawienia);
   const status = utworzPasekStatusu(stan);
@@ -687,14 +602,7 @@ export function utworzOknoPracyZDokumentem(
   const pochodzenie = document.createElement('p');
   pochodzenie.className = 'dn-pole-opis ms-praca__pochodzenie';
 
-  /**
-   * Wskaźnik zakresu operacji — przeniesiony z paska zaznaczenia Studio Editora.
-   *
-   * Mówi, co pojedzie do rdzenia: zaznaczenie wraz z jego długością, cały
-   * dokument, albo cały dokument z zaznaczeniem POMINIĘTYM wyborem ręcznym
-   * z Tools Panelu. Trzeci przypadek jest osobny, bo bez niego wybór ręczny
-   * wyglądałby jak usterka: zaznaczenie widać, a operacja idzie na całość.
-   */
+  /** Wskaźnik zakresu operacji: zaznaczenie, cały dokument, albo dokument z zaznaczeniem pominiętym. */
   const zakresOperacji = document.createElement('span');
   zakresOperacji.className = 'dn-plakietka ms-praca__zakres';
 
@@ -736,9 +644,7 @@ export function utworzOknoPracyZDokumentem(
     {
       naZapis: () => void zapiszDokument(zapleczeEdytora),
       naGalerie: () => galeria.przestawWidocznosc(),
-      // Wydanie i przekazanie idą tą samą drogą, którą szły z Preview Window:
-      // `czynnosci-podgladu.ts`. Druga kopia tych dwóch czynności rozjechałaby się
-      // z pierwszą przy pierwszej poprawce zdania o wyniku.
+      // Wydanie i przekazanie idą drogą wspólną z czynnosci-podgladu.ts, żeby uniknąć rozjazdu dwóch kopii.
       naWydanie: (format) => void eksportujDokument(zapleczePodgladu(), format),
       naPrzekazanie: () => void przekazDoLibrary(zapleczePodgladu(), przekazanie),
       naNarzedzieTekstu: (narzedzie) => {
@@ -872,54 +778,39 @@ export function utworzOknoPracyZDokumentem(
   /* ── Zakładki dokumentów ─────────────────────────────────────────────────── */
 
   const karty = utworzKartyDokumentow(stan, () => {
-    // Przełączenie zakładki to inny dokument czynny: zmiany, komentarze
-    // i odpowiedź różnicy dotyczyły poprzedniego, więc schodzą do czasu odczytu.
+    // Przełączenie zakładki to inny dokument czynny; zmiany i komentarze dotyczyły poprzedniego dokumentu.
     zmiany = [];
     komentarze = [];
     adnotacje = [];
     fragmentyOdpowiedzi = [];
     trafieniaOdpowiedzi = [];
     dokumentOdpowiedzi = '';
-    // Znaczniki, zakładki i pochodzenia dotyczą dokumentu, nie okna: przeniesienie
-    // ich na dokument drugi wskazywałoby fragmenty, których w nim nie ma.
+    // Znaczniki, zakładki i pochodzenia dotyczą dokumentu, nie okna, więc czyszczą się przy zmianie karty.
     znaczniki.wyczysc();
     pochodzenia.wyczysc();
     zakladki.length = 0;
     odswiez();
     void odswiezZRdzenia();
-    // Trzeci argument daje zakładkom drogę do `studio.document.create`: nowy
-    // dokument staje OBOK, nie zamiast — zakładka bez tej drogi mówiła wprost,
-    // że założenia dokumentu nie ma czym zlecić.
+    // Trzeci argument daje zakładkom drogę do studio.document.create — nowy dokument staje obok.
   }, zrodlaPostaci.wstawienia);
 
   /* ── Układ okna ──────────────────────────────────────────────────────────── */
 
   const powloka = document.createElement('div');
   powloka.className = 'ms-praca__powloka';
-  // Panel osadzenia źródeł stoi wewnątrz powłoki treści, bo w położeniu „na całej
-  // powierzchni" przykrywa kartkę, a nie całe okno: wstążka i pasek statusu mają
-  // zostać widoczne, żeby Operator nie stracił drogi powrotu.
+  // Panel osadzenia źródeł stoi w powłoce treści i przykrywa kartkę, nie całe okno.
   powloka.append(powierzchnia.element, wiersz.element, osadzenie.element);
 
   const kolumny = document.createElement('div');
   kolumny.className = 'ms-praca__kolumny';
-  // Przybornik znakowania stoi PRZY KRAWĘDZI treści, między marginesem z dymkami
-  // a panelem Redaktora: znakowanie fragmentu należy do treści bliżej niż pomiary
-  // dokumentu.
+  // Przybornik znakowania stoi między marginesem z dymkami a panelem Redaktora, przy krawędzi treści.
   kolumny.append(powloka, dymki.element, przybornik.element, redaktor.element);
 
   const decyzja = document.createElement('div');
   decyzja.className = 'ms-decyzja';
   decyzja.append(zakresOperacji, wstaw);
 
-  /**
-   * Pas otwarć odcinka znakowania.
-   *
-   * Trzy panele — schowek, źródła i przybornik — otwiera się stąd, a nie ze
-   * wstążki: wstążka niesie formatowanie i widok, a te trzy są narzędziami
-   * bocznymi treści. Pas jest jednym wierszem, więc zamknięte panele nie zajmują
-   * powierzchni.
-   */
+  /** Pas otwarć odcinka znakowania. */
   const pasPrzybornika = document.createElement('div');
   pasPrzybornika.className = 'ms-przybornik__pas';
 
@@ -950,13 +841,7 @@ export function utworzOknoPracyZDokumentem(
   otworzPrzybornik.dataset['czynnosc'] = 'otworz-przybornik';
   otworzPrzybornik.addEventListener('click', () => przybornik.przestawWidocznosc());
 
-  /**
-   * Otwarcia paneli postaci i kontroli pracy.
-   *
-   * Siedem powierzchni idzie jednym wzorem: przycisk w pasie, treść nakładką.
-   * Panel zamknięty nie zajmuje powierzchni, a Operator widzi w pasie, co ma pod
-   * ręką — to jest reguła stopniowego ujawniania, nie oszczędność miejsca.
-   */
+  /** Otwarcia paneli postaci i kontroli pracy. */
   function otwarcie(nazwa: string, czynnosc: string, przestaw: () => void): HTMLButtonElement {
     const przycisk = document.createElement('button');
     przycisk.type = 'button';
@@ -1014,8 +899,7 @@ export function utworzOknoPracyZDokumentem(
       );
       return;
     }
-    // Wstawienie idzie przez ten sam rachunek co w Studio Editorze, tylko kursor
-    // czyta się z powierzchni, a nie z pola tekstowego.
+    // Wstawienie czyta kursor z powierzchni dokumentu, a nie z pola tekstowego.
     const atrapa = document.createElement('textarea');
     atrapa.value = stan.trescRobocza();
     const zakres = stan.zaznaczenie();
@@ -1052,9 +936,7 @@ export function utworzOknoPracyZDokumentem(
   function ustawTryb(tryb: TrybWidoku): void {
     powierzchnia.ustawTryb(tryb);
     if (tryb === 'wydanie') {
-      // Podgląd wydania czyta treść ZAAKCEPTOWANĄ — pisanie w oknie podglądu nie
-      // rusza, rusza nim zapis albo decyzja o zmianie. Tak samo czytał ją Preview
-      // Window przed scaleniem.
+      // Podgląd wydania czyta treść zaakceptowaną; pisanie w oknie podglądu jej nie rusza.
       powierzchnia.pokaz(stan.trescZaakceptowana(), true);
       void zlecRender();
       return;
@@ -1088,13 +970,7 @@ export function utworzOknoPracyZDokumentem(
     odswiez();
   }
 
-  /**
-   * Przerysowuje margines trzema bytami naraz.
-   *
-   * Jedno wywołanie, bo komentarz, propozycja i zmiana śledzona stoją w jednej
-   * kolumnie i muszą się ustawić wobec siebie — dwa osobne przerysowania
-   * kładłyby jedne na drugich.
-   */
+  /** Przerysowuje margines trzema bytami naraz. */
   function przerysujMargines(polozenie: (kod: string) => number | null): void {
     dymki.pokaz(
       {
@@ -1191,11 +1067,7 @@ export function utworzOknoPracyZDokumentem(
       );
       return;
     }
-    // Nakładki różnicy wyglądu SĄ obrazami stron i pobierają się tą samą drogą,
-    // co kartki podglądu wydania: `design.asset.content.get` dotyczy każdego
-    // zasobu magazynu, bo magazyn jest jeden dla całej platformy. Zdanie „komendy
-    // pobierającej ich bajty kontrakt nie niesie" stało tu do 17.08.2026 i było
-    // nieprawdą — komenda była, brakowało wołacza.
+    // Nakładki różnicy wyglądu są obrazami stron i pobierają się komendą design.asset.content.get.
     const nakladki = wynik.wynik.overlayAssetIds ?? [];
     const obrazy: KartkaRdzenia[] = [];
     for (const [numer, kod] of nakladki.slice(0, GRANICA_KARTEK_RDZENIA).entries()) {
@@ -1233,11 +1105,7 @@ export function utworzOknoPracyZDokumentem(
       return;
     }
 
-    // Zasoby stron stoją na POCZĄTKU wykazu, a dokument w formacie docelowym —
-    // przy formacie `pdf` — dochodzi na jego końcu. Kartek jest więc dokładnie
-    // `pages`, i to jest liczba, którą wykaz się przycina; rozpoznawanie kartki
-    // po typie treści wymagałoby pobrania także dokumentu, czyli megabajtów
-    // pobranych po to, żeby je odrzucić.
+    // Zasoby stron stoją na początku wykazu, dokument pdf na jego końcu; wykaz przycina się do pages.
     const kartek = Math.min(wynik.wynik.pages, GRANICA_KARTEK_RDZENIA);
     const kody = wynik.wynik.pageAssetIds.slice(0, kartek);
     const kartki: KartkaRdzenia[] = [];
@@ -1386,15 +1254,7 @@ export function utworzOknoPracyZDokumentem(
     redaktor.ustawTrafienia(wynik.wynik.matches, wynik.wynik.mode);
   }
 
-  /**
-   * Adnotacja przy fragmencie różnicy — droga własnej komendy.
-   *
-   * Dotąd szła generyczną `window.action` z identyfikatorem `studio.diff.adnotacja`,
-   * którego katalog akcji rdzenia nie ma, więc wracała odmowa `not_found` przy
-   * każdym naciśnięciu. Kontrakt ma parę komend własnych — `studio.annotation.add`
-   * i `studio.annotation.list` — i tędy adnotacja jedzie teraz. Treść bierze się
-   * z pola przybornika, bo adnotacja bez treści nie jest adnotacją.
-   */
+  /** Adnotacja przy fragmencie różnicy jedzie komendami studio.annotation.add i studio.annotation.list. */
   async function dodajAdnotacje(): Promise<void> {
     przybornik.pokazOdpowiedz(
       'Adnotację zakłada się w przyborniku znakowania: wpisz jej treść i numer fragmentu różnicy, ' +
@@ -1406,15 +1266,7 @@ export function utworzOknoPracyZDokumentem(
 
   /* ── Wstawianie w miejsce kursora ────────────────────────────────────────── */
 
-  /**
-   * Wstawia treść w miejsce kursora — jedna droga dla schowka, dyktowania
-   * i wniesienia ze źródła.
-   *
-   * Zaznaczenie zostaje zastąpione, tak jak w każdym edytorze; brak zaznaczenia
-   * znaczy „na końcu treści", bo kursor bez zaznaczenia stoi tam, gdzie stan
-   * modułu ostatnio go widział. Druga kopia tego rachunku rozjechałaby się przy
-   * pierwszej poprawce.
-   */
+  /** Wstawia treść w miejsce kursora — jedna droga dla schowka, dyktowania i wniesienia ze źródła. */
   function wstawWTresc(tekst: string): void {
     if (tekst === '') {
       odpowiedz.pokaz('Nie ma czego wstawić — treść wstawiana jest pusta.', false);
@@ -1491,13 +1343,7 @@ export function utworzOknoPracyZDokumentem(
     await odczytajSchowek('', false);
   }
 
-  /**
-   * Postać akapitu pobrana malarzem formatów.
-   *
-   * Malarz kopiuje POSTAĆ, nie treść, więc nie jedzie schowkiem rdzenia:
-   * `clipboard.*` niesie treść i rodzaj wpisu, a nie arkusz nastaw akapitu.
-   * Postać czyta się z nastaw akapitu okna, bo dziś tam ona mieszka.
-   */
+  /** Postać akapitu pobrana malarzem formatów. */
   let postacMalarza: ReturnType<typeof akapity.dla> | null = null;
 
   function pobierzPostacAkapitu(): string | null {
@@ -1615,15 +1461,7 @@ export function utworzOknoPracyZDokumentem(
 
   /* ── Adnotacje przybornika ───────────────────────────────────────────────── */
 
-  /**
-   * Zakłada adnotację drogą WŁASNEJ komendy.
-   *
-   * Kontrakt ostrzega przy `studio.annotation.add`, że czynność ta „idzie dziś
-   * drogą generyczną `window.action` i wraca odmowa `not_found`". Sprawdzone:
-   * tak było i w tym oknie. Teraz jedzie komendą własną, więc odmowa — jeśli
-   * przyjdzie — nazwie brakujący uchwyt komendy, a nie brakujący wiersz katalogu
-   * akcji. To różnica, po której poznaje się, czego naprawdę brakuje.
-   */
+  /** Zakłada adnotację drogą własnej komendy studio.annotation.add. */
   async function dodajAdnotacjePrzybornika(numer: number, tresc: string): Promise<void> {
     const dokument = stan.dokument();
     if (dokument === null || tresc.trim() === '') {
@@ -1913,9 +1751,7 @@ export function utworzOknoPracyZDokumentem(
 
   function odswiez(): void {
     status.odswiez();
-    // Siedem powierzchni postaci i kontroli pracy odświeża się razem z oknem:
-    // każda patrzy na TEN dokument, więc rozjazd między nimi byłby rozjazdem
-    // o jednym bycie.
+    // Siedem powierzchni postaci i kontroli pracy odświeża się razem z oknem, bo dotyczą tego dokumentu.
     postac.odswiez();
     void tabele.odswiez();
     void obiekty.odswiez();
@@ -1954,16 +1790,13 @@ export function utworzOknoPracyZDokumentem(
           : `${opiszZmiany(zmiany)} · wątków otwartych ${dymki.ile()} · ${powierzchnia.opis()} · ${opiszNastawy(nastawyWizualne)}`;
     decyzja.dataset['propozycja'] = propozycja === null ? 'brak' : 'oczekuje';
 
-    // Treść powierzchni idzie za stanem, ale wyłącznie wtedy, gdy stan mówi co
-    // innego niż powierzchnia — przerysowanie przy każdym naciśnięciu klawisza
-    // zabierałoby kursor.
+    // Treść powierzchni idzie za stanem tylko, gdy się różnią — inaczej przerysowanie zabierałoby kursor.
     const tresc = powierzchnia.tryb() === 'wydanie' ? stan.trescZaakceptowana() : stan.trescRobocza();
     powierzchnia.pokaz(tresc);
 
     const dokument = stan.dokument();
     if (dokument !== null && dokument.id !== dokumentOdpowiedzi && wykazFragmentow.childElementCount > 0) {
-      // Odpowiedź różnicy dotyczyła innego dokumentu — jej wyrys i statystyka nie
-      // mówią prawdy o tym, który stoi w oknie teraz.
+      // Odpowiedź różnicy dotyczyła innego dokumentu; wyrys i statystyka nie mówią prawdy o oknie teraz.
       fragmentyOdpowiedzi = [];
       trafieniaOdpowiedzi = [];
       przerysujRoznice();
@@ -1988,8 +1821,7 @@ export function utworzOknoPracyZDokumentem(
     element: rama.element,
 
     async wczytaj() {
-      // Postać dokumentu idzie pierwsza: arkusz stylów, nastawy strony i sekcje
-      // są tym, wobec czego liczą się wszystkie pozostałe odczyty okna.
+      // Postać dokumentu wczytuje się pierwsza — wobec niej liczą się pozostałe odczyty okna.
       await postac.wczytaj();
       const szablony = await praca.szablony();
       if (szablony.udany && szablony.wynik !== undefined) {
@@ -1997,8 +1829,7 @@ export function utworzOknoPracyZDokumentem(
       }
       await wczytajProfile();
 
-      // Nastawy przybornika idą przed wykazem operacji: kolejność czynności na
-      // wierzchu pływaka liczy się z użycia, a użycie leży w nastawach.
+      // Nastawy przybornika wczytują się przed wykazem operacji — kolejność na pływaku liczy się z użycia.
       const nastawy = await przybornikZaplecze.przybornikNastawy();
       if (nastawy.udany && nastawy.wynik !== undefined) {
         uzycie.wchlon(nastawy.wynik);
@@ -2007,8 +1838,7 @@ export function utworzOknoPracyZDokumentem(
       }
       odswiezPlywak();
 
-      // Rejestr akcji rdzenia zasila katalog narzędzi ukrytych tym samym
-      // odczytem, którym żywi się stały panel — wykaz jest jeden, nie dwa.
+      // Rejestr akcji rdzenia zasila katalog narzędzi ukrytych tym samym odczytem co stały panel.
       const rejestr = await akcje.katalog();
       if (rejestr.udany && rejestr.wynik !== undefined) katalog.ustawRejestr(rejestr.wynik.actions);
       await wczytajOperacje();
@@ -2022,12 +1852,7 @@ export function utworzOknoPracyZDokumentem(
 }
 
 /**
- * Treść wpisu schowka zdjęta z postaci — droga „wklej jako czysty tekst".
- *
- * Postać w treści tego edytora niosą znaczniki markdown (`znaczniki-markdown.ts`)
- * oraz znacznik podziału strony. Czyszczenie zdejmuje właśnie je, a nie same
- * litery: wklejenie czyste ma dać brzmienie bez formatu, nie brzmienie okrojone.
- * Oba warianty wklejenia są równorzędne i wybór należy do Operatora.
+ * Zdejmuje z treści wpisu schowka znaczniki formatowania markdown oraz znacznik podziału strony, zostawiając wyłącznie brzmienie akapitów.
  */
 function schowekTekstCzysty(tresc: string): string {
   return tresc

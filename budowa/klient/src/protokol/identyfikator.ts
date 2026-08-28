@@ -9,7 +9,7 @@ export function nowyIdentyfikator(przedrostek: string): string {
   return `${przedrostek}-${losowyCzlon()}`;
 }
 
-/** Człon losowy: UUID środowiska, a przy jego braku czas i liczba pseudolosowa. */
+/** Człon losowy identyfikatora: UUID środowiska, a przy jego braku znacznik czasu i liczba pseudolosowa łączone w jeden ciąg. */
 function losowyCzlon(): string {
   const kryptografia = globalThis.crypto;
   if (kryptografia && typeof kryptografia.randomUUID === 'function') {

@@ -3,12 +3,7 @@ import { nazwaRoli, nazwaSrodowiska } from './etykiety-okna';
 import type { OpisOkna } from './opis-okna';
 
 /**
- * Klasa kropki stanu połączenia. Kropka jest komponentem biblioteki
- * (`komponenty/plakietka.css`, sekcja „KROPKA SYGNAŁU”) wraz z kompletem barw
- * stanu — okno wskazuje wariant, a nie powtarza jego reguł.
- *
- * Łączenie i ponawianie dzielą barwę ostrzeżenia: obie mówią „jeszcze nie ma
- * połączenia, praca trwa”, a rozróżnia je zdanie obok kropki, nie kolor.
+ * Klasa kropki stanu połączenia pochodzi z biblioteki plakietek z kompletem barw stanu — okno wskazuje wariant, a łączenie i ponawianie dzieli barwa ostrzeżenia, rozróżniana zdaniem obok kropki, nie kolorem.
  */
 const KLASA_KROPKI: Record<StanPolaczenia, string> = {
   polaczony: 'dn-kropka dn-kropka--sukces',
@@ -17,7 +12,7 @@ const KLASA_KROPKI: Record<StanPolaczenia, string> = {
   rozlaczony: 'dn-kropka dn-kropka--blad',
 };
 
-/** Nagłówek okna komunikacji. */
+/** Nagłówek okna komunikacji, niosący nazwę modułu, wskaźnik stanu połączenia oraz pasek tożsamości sesji. */
 export interface Naglowek {
   element: HTMLElement;
   /** Odświeża wskaźnik stanu połączenia z rdzeniem. */
@@ -41,8 +36,7 @@ export function utworzNaglowek(opis: OpisOkna): Naglowek {
   const stan = document.createElement('div');
   stan.className = 'dc-stan';
   const znacznik = document.createElement('span');
-  // Stan przed pierwszym odczytem transportu jest nieznany, a nie zły —
-  // odmiana neutralna jest jedyną, która tego nie przesądza.
+  // Stan przed pierwszym odczytem transportu jest nieznany, nie zły — odmiana neutralna nie przesądza.
   znacznik.className = 'dn-kropka dn-kropka--neutralna';
   const opisStanu = document.createElement('span');
   opisStanu.className = 'dc-stan__opis';
@@ -60,7 +54,7 @@ export function utworzNaglowek(opis: OpisOkna): Naglowek {
   };
 }
 
-/** Pojedyncza pozycja tożsamości okna: etykieta i wartość. */
+/** Pojedyncza pozycja tożsamości okna: etykieta i jej wartość, pokazywane operatorowi w nagłówku każdego okna komunikacji. */
 function pole(etykieta: string, wartosc: string): HTMLElement {
   const kontener = document.createElement('div');
   kontener.className = 'dc-pole';
@@ -77,7 +71,7 @@ function pole(etykieta: string, wartosc: string): HTMLElement {
   return kontener;
 }
 
-/** Opis stanu połączenia wraz z liczbą ramek oczekujących w kolejce. */
+/** Opis stanu połączenia wraz z liczbą ramek transportu oczekujących w kolejce do wysłania przez rdzeń. */
 function opisPolaczenia(stan: StanPolaczenia, oczekujace: number): string {
   const ogon = oczekujace > 0 ? ` · w kolejce: ${oczekujace}` : '';
   switch (stan) {

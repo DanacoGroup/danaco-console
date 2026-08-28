@@ -1,16 +1,4 @@
-/**
- * Wiersz rejestru akcji, który nie jest operacją kontekstową — bez wybieraka.
- *
- * `studio.contextual.op` przyjmuje `actionId` i nie sprawdza go względem rejestru
- * akcji: identyfikator spoza rejestru wraca odpowiedzią pomyślną z propozycją
- * zmiany. Rejestr zasięgu modułu Studio niesie także wiersze wskazujące komendy
- * okna komunikacji (`message.send`, `message.stop`, `message.list`). Gdyby były
- * wybieralne, „Uruchom operację" na pozycji „Wyślij" wysłałoby jej identyfikator
- * jako operację redakcyjną i wróciło wynikiem wyglądającym na udany. Wiersz
- * zostaje więc widoczny, bo rejestr go niesie, ale nie zostaje wybieralny.
- *
- * Plakietka źródła mówi, z czego wiersz pochodzi i którą komendę wskazuje.
- */
+/** Buduje wiersz rejestru akcji, który nie jest operacją kontekstową i nie ma wybieraka, bo identyfikator wskazuje komendę okna komunikacji. */
 export function utworzPozycjeSpozaOperacji(
   id: string,
   nazwa: string,

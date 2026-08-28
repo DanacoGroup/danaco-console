@@ -18,39 +18,18 @@ import { utworzStanTresci, type StanTresci } from './stany-okna';
 import { utworzWyborDrzewem, type WyborDrzewem } from './wybor-drzewem';
 import type { ZrodloTerminala } from './zrodlo-terminala';
 
-/**
- * Process Monitor — okno monitorujące modułu Terminal: podgląd i zakończenie
- * procesu, w tym procesu zainicjowanego poleceniem AI, zgodnie z rejestrem
- * procesów rdzenia serwera.
- *
- * Na żywo znaczy ze zdarzeń. Okno odczytuje `terminal.process.list` przy
- * wejściu i na wyraźne żądanie Operatora; każdą późniejszą zmianę przynosi
- * `terminal.process.changed`. Odpytywanie w pętli dałoby ten sam obraz drożej
- * i z opóźnieniem, a przy stu procesach zalałoby gniazdo.
- *
- * Filtr stanu i inicjatora jedzie do rdzenia parametrem komendy — tak stanowi
- * kontrakt i tak wynik jest spójny z dziennikiem rdzenia. Grupowanie jest
- * wyłącznie porządkiem wyświetlania i zostaje w oknie.
- *
- * Wyjście na żywo idzie `stream.chunk` do wspólnego bufora Output Console, ale
- * bufor żyje jedno połączenie: po rozłączeniu i ponownym podłączeniu ma zero
- * fragmentów, a rdzeń wciąż oddaje pełną treść. Osobny przycisk pozycji pyta
- * o nią `terminal.output.read` i pokazuje ją przy pozycji, a nie w buforze,
- * więc żaden wiersz nie wchodzi do konsoli dwa razy.
- */
+/** Interfejs OknoMonitora opisuje węzeł okna Process Monitor, które pokazuje na żywo rejestr procesów rdzenia terminala wraz z czynnościami udostępnianymi palecie poleceń. */
 export interface OknoMonitora {
   element: HTMLElement;
   odswiez(): void;
-  /** Czynności okna oddane palecie poleceń. */
+  /** Czynności okna oddane palecie poleceń wywołują odświeżenie rejestru i eksport migawki wykazu. */
   czynnosci: readonly CzynnoscOkna[];
 }
 
 export function utworzOknoMonitora(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
-  // Okno nie ma dziś ani jednej pozycji bez pokrycia w rdzeniu: wstrzymanie
-  // procesu było ostatnią i stoi już przy wierszu wykazu. Parametr zostaje
-  // w podpisie, bo składa go wspólne złożenie modułu wraz z pozostałymi oknami.
+  // Parametr zostaje w podpisie, bo składa go wspólne złożenie modułu wraz z pozostałymi oknami.
   _pokrycie: PokrycieKomend,
 ): OknoMonitora {
   const rama = utworzRameOkna({
@@ -67,10 +46,7 @@ export function utworzOknoMonitora(
     zlozPowierzchnieRejestruProcesow(rama, tresc.element);
 
   const przypiete = new Set<string>();
-  // Podglądy wyjścia żyją w oknie, nie w węźle pozycji: wykaz przerysowuje się
-  // przy każdym `terminal.process.changed`, więc treść trzymana w węźle znikałaby
-  // Operatorowi pod ręką. Klucz to identyfikator procesu, wartość — odpowiedź
-  // rdzenia w całości.
+  // Podglądy wyjścia żyją w oknie, aby przetrwały ponowne rysowanie wykazu procesów.
   const podglady = new Map<string, TerminalOutputReadResponse>();
 
   function widoczne(): TerminalProcess[] {
@@ -101,10 +77,7 @@ export function utworzOknoMonitora(
           },
           eksportuj: () =>
             pobierzPlik(`proces-${proces.id}.json`, JSON.stringify(proces, null, 2), 'text/plain'),
-          // Wykaz procesów przychodzi z rdzenia, a karty żyją w widoku: proces
-          // bywa więc związany z kartą, której ten widok nie zna (zamkniętą
-          // albo z innej sesji). Skok na taki identyfikator musi się nazwać,
-          // zamiast gasić wykaz kart w oknie wiodącym bez słowa.
+          // Karta procesu bywa nieznana temu widokowi, więc skok na nią musi się nazwać, a nie milczeć.
           doKarty: () => {
             const karta = proces.sessionId ?? '';
             if (karta === '') {
@@ -147,17 +120,15 @@ export function utworzOknoMonitora(
   }
 
   odczyt.addEventListener('click', odczytaj);
-  // Filtry jadą do rdzenia parametrem `terminal.process.list`, więc ich zmiana
-  // jest odczytem; grupowanie jest porządkiem wyświetlania, więc wystarczy
-  // przerysowanie.
+  // Zmiana filtra jest odczytem, bo filtr jedzie do rdzenia parametrem terminal.process.list.
   filtrStanu.naZmiane(odczytaj);
   filtrInicjatora.naZmiane(odczytaj);
+  // Grupowanie jest porządkiem wyświetlania, więc zmiana tylko przerysowuje wykaz.
   grupowanie.naZmiane(pokaz);
   migawka.addEventListener('click', () => {
     const procesy = widoczne();
     if (procesy.length === 0) {
-      // Migawka pustego wykazu to plik `[]` — nie do odróżnienia od migawki,
-      // której zapis się nie udał.
+      // Migawka pustego wykazu byłaby nie do odróżnienia od migawki, której zapis się nie udał.
       tresc.potwierdzenie('Wykaz jest pusty — migawki nie zapisano.', false);
       return;
     }
@@ -188,14 +159,7 @@ export function utworzOknoMonitora(
   return { element: rama.element, odswiez: odczytaj, czynnosci };
 }
 
-/**
- * Pięć fragmentów wyjętych z wytwórni okna. Trzy pierwsze nie znają stanu okna
- * wcale — składają żądanie, zawężają wykaz i budują węzeł podpisu z samych
- * danych. Dwa ostatnie sięgają po rdzeń i po stan treści, więc biorą je
- * parametrem zamiast domykać się na wytwórni.
- */
-
-/** Żądanie wykazu; puste pole filtra znaczy „bez zawężenia”, więc klucza nie ma wcale. */
+/** Żądanie wykazu procesów pomija pole filtra, którego wartość jest pusta, ponieważ pusty filtr oznacza brak zawężenia wykazu po tej cesze. */
 function zadanieWykazuProcesow(
   okno: string,
   stanProcesu: string,
@@ -208,7 +172,7 @@ function zadanieWykazuProcesow(
   };
 }
 
-/** Zawężenie i porządek wykazu: procesy przypięte idą na górę, reszta zachowuje kolejność stanu. */
+/** Zawężenie i porządek wykazu procesów: przypięte idą na górę wykazu, reszta zachowuje kolejność nadaną przez stan procesu w rdzeniu. */
 function zawezWykazProcesow(
   procesy: readonly TerminalProcess[],
   stanProcesu: string,
@@ -221,7 +185,7 @@ function zawezWykazProcesow(
     .sort((a, b) => Number(przypiete.has(b.id)) - Number(przypiete.has(a.id)));
 }
 
-/** Podpis grupy wykazu; grupowanie jest porządkiem wyświetlania, więc węzeł powstaje z samej nazwy. */
+/** Podpis grupy wykazu procesów powstaje z samej nazwy grupy, ponieważ grupowanie jest wyłącznie porządkiem wyświetlania w oknie. */
 function podpisGrupyProcesow(grupa: string): HTMLElement {
   const podpis = document.createElement('h3');
   podpis.className = 'dt-grupa';
@@ -229,7 +193,7 @@ function podpisGrupyProcesow(grupa: string): HTMLElement {
   return podpis;
 }
 
-/** Zakończenie procesu w rdzeniu; źródło i stan treści wchodzą parametrem. */
+/** Zakończenie procesu w rdzeniu wykonuje się źródłem terminala i stanem treści przekazanymi funkcji jako parametry wywołania. */
 function zakonczProcesRejestru(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -248,8 +212,7 @@ function zakonczProcesRejestru(
     }
     const zapisany = wynik.wynik;
     stan.zapiszProces(zapisany);
-    // Czasownik bierze się z odpowiedzi, nie z żądania: samo wysłanie żądania
-    // nie jest zakończeniem procesu.
+    // Czasownik bierze się z odpowiedzi rdzenia, nie z samego faktu wysłania żądania.
     if (zapisany.status === TerminalProcessStatus.Running) {
       tresc.potwierdzenie(
         `Rdzeń przyjął zakończenie procesu ${zapisany.id}, ale oddaje go nadal w stanie ${zapisany.status} — proces biegnie.`,
@@ -261,14 +224,7 @@ function zakonczProcesRejestru(
   });
 }
 
-/**
- * Wstrzymanie albo wznowienie procesu w rdzeniu.
- *
- * Pole `supported` odpowiedzi jest tu treścią, nie ozdobą: fałsz znaczy, że
- * proces został NIETKNIĘTY, bo system tego nie umie — co jest czymś innym niż
- * niepowodzenie czynności. Okno mówi to wprost, zamiast pokazywać powodzenie
- * przy procesie, który dalej zajmuje procesor.
- */
+/** Wstrzymanie albo wznowienie procesu w rdzeniu zależy od pola supported odpowiedzi, które odróżnia zmianę biegu od procesu pozostawionego nietkniętym. */
 function wstrzymajProcesRejestru(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -306,27 +262,10 @@ function wstrzymajProcesRejestru(
     });
 }
 
-/**
- * Ile milisekund rdzeń ma czekać na domknięcie procesu, zanim odczyta wyjście.
- *
- * Kontrakt dopuszcza 60 000, ale czekanie trzyma zadanie gniazda i minuta bez
- * odpowiedzi wygląda dla Operatora jak zawieszone okno. Trzy sekundy
- * wystarczają, żeby polecenie krótkie zdążyło się domknąć i oddało komplet wraz
- * z kodem wyjścia; polecenie długie i tak odda wyjście dotychczasowe ze stanem
- * `running`, bo czekanie nie jest warunkiem odpowiedzi. Operator, który chce
- * zobaczyć resztę, klika ponownie.
- */
+/** Stała CZEKANIE_NA_DOMKNIECIE_MS podaje czas w milisekundach, jaki rdzeń czeka na domknięcie procesu, zanim odczyta jego wyjście. */
 const CZEKANIE_NA_DOMKNIECIE_MS = 3000;
 
-/**
- * Podgląd wyjścia procesu: odczyt `terminal.output.read` albo zwinięcie tego,
- * co już stoi. Wykaz podglądów i przerysowanie wchodzą parametrem, bo rysowanie
- * zostaje w wytwórni okna.
- *
- * Zwinięcie nie pyta rdzenia: drugie kliknięcie zdejmuje treść z widoku i mówi
- * to wprost, inaczej Operator nie odróżniłby zwinięcia od odczytu, który wrócił
- * pusty.
- */
+/** Przełączenie podglądu wyjścia procesu odczytuje terminal.output.read albo zwija treść już pokazaną w wykazie procesów okna. */
 function przelaczPodgladWyjscia(
   zrodlo: ZrodloTerminala,
   tresc: StanTresci,
@@ -356,9 +295,7 @@ function przelaczPodgladWyjscia(
     })
     .then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Odmowa rdzenia idzie dosłownie — `not_found` niesie pełne zdanie
-        // o tym, czy proces nigdy nie ruszył, wypadł z historii, czy rdzeń był
-        // uruchomiony ponownie. Parafraza zgubiłaby wszystkie trzy powody.
+        // Odmowa rdzenia idzie dosłownie, ponieważ sama nazywa dokładny powód braku wyjścia procesu.
         tresc.blad(
           `Rdzeń nie oddał wyjścia procesu ${proces.id} (${Command.TerminalOutputRead}).`,
           wynik.blad,
@@ -372,15 +309,7 @@ function przelaczPodgladWyjscia(
     });
 }
 
-/**
- * Zdanie potwierdzenia odczytu — mierzy treść, nie sam fakt odpowiedzi.
- *
- * Wyjście puste jest przebiegiem udanym (polecenie mogło nic nie wypisać), ale
- * różni się od wyjścia niepustego, inaczej „odczytano" znaczyłoby to samo
- * w obu przypadkach. Rozjazd stanu też idzie wprost: wykaz w oknie jest kopią
- * z `terminal.process.list`, a odpowiedź na odczyt przychodzi z tej chwili —
- * gdy się różnią, świeższa jest odpowiedź.
- */
+/** Zdanie potwierdzenia odczytu wyjścia mierzy treść odpowiedzi rdzenia, a nie sam fakt jej otrzymania od serwera. */
 function zdanieOdczytuWyjscia(
   proces: TerminalProcess,
   odpowiedz: TerminalOutputReadResponse,
@@ -399,7 +328,7 @@ function zdanieOdczytuWyjscia(
   return czesci.join(' ');
 }
 
-/** Powtórzenie polecenia procesu w jego karcie źródłowej; źródło i stan treści wchodzą parametrem. */
+/** Powtórzenie polecenia procesu wykonuje się w jego karcie źródłowej wraz ze źródłem terminala i stanem treści przekazanymi parametrem. */
 function powtorzProcesRejestru(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -424,7 +353,7 @@ function powtorzProcesRejestru(
     });
 }
 
-/** Kontrolki okna Process Monitor. */
+/** Kontrolki okna Process Monitor obejmują filtry, grupowanie wykazu oraz przyciski odczytu i eksportu migawki procesów. */
 interface PowierzchniaRejestruProcesow {
   filtrStanu: WyborDrzewem;
   filtrInicjatora: WyborDrzewem;
@@ -433,13 +362,7 @@ interface PowierzchniaRejestruProcesow {
   migawka: HTMLButtonElement;
 }
 
-/**
- * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna.
- *
- * Czysta konstrukcja: nie domyka się na stanie okna ani na rdzeniu, więc dała
- * się wyjąć bez przenoszenia zależności. Pozycja, której okno nie wykonuje, jest
- * jawnie nieczynna wraz z powodem liczonym z odczytu wykazu komend rdzenia.
- */
+/** Złożenie powierzchni rejestru procesów tworzy filtry, grupowanie i przyciski okna bez domykania się na stanie okna ani na rdzeniu. */
 function zlozPowierzchnieRejestruProcesow(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -450,8 +373,7 @@ function zlozPowierzchnieRejestruProcesow(
   const odczyt = przyciskAkcji('Odśwież wykaz');
   const migawka = przyciskAkcji('Eksportuj migawkę');
 
-  // Wstrzymanie i wznowienie stoją PRZY PROCESIE, a nie w panelu okna: dotyczą
-  // jednego wiersza wykazu, a przycisk panelu musiałby najpierw zapytać, którego.
+  // Wstrzymanie i wznowienie stoją przy procesie, nie w panelu, bo dotyczą jednego wiersza wykazu.
   oznaczWarstwy([
     [odczyt, 'zawsze'],
     [filtrStanu.element, 'na-zadanie'],

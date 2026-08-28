@@ -2,26 +2,15 @@ import { Command } from '../../../../shared/contract';
 import type { WarstwaWidocznosci } from './warstwy-translate';
 
 /**
- * Katalog funkcji modułu Translate — pełny wykaz z opracowania modułu wraz
- * z tym, czym każda pozycja jest wykonywana w tej budowie.
- *
- * Wykaz istnieje po to, żeby stan modułu dało się przeczytać, a nie zgadnąć.
- * Okno pokazuje czynności, które wykonuje; katalog pokazuje komplet zamierzony
- * w opracowaniu i przy każdej pozycji mówi jedno z dwojga: którą komendą
- * kontraktu jest wykonywana albo czego brakuje, żeby była. Pozycja bez komendy
- * nie znika z wykazu — zniknięcie byłoby ukryciem braku.
- *
- * Nazwy pozycji i podział na grupy pochodzą z opracowania modułu i nie są
- * tłumaczone ani parafrazowane. Numeracji opracowania katalog nie przenosi:
- * pozycję odnajduje się po pełnej nazwie, nie po oznaczeniu, które poza
- * dokumentem nic nie znaczy.
- *
- * Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji
- * (`wyszukiwarka-funkcji.ts`) buduje z niego listę, a okna sięgają po pozycje
- * swojej grupy.
+ * Katalog funkcji modułu Translate: wykaz z opracowania wraz z komendą, która
+ * pozycję wykonuje.
  */
 
-/** Nazwy okien operacyjnych modułu — jedno brzmienie na cały moduł. */
+/**
+ * Nazwy okien operacyjnych modułu Translate w jednym brzmieniu na cały moduł,
+ * aby pozycja katalogu i okno, które ją pokazuje, nazywały to samo miejsce
+ * jednym słowem.
+ */
 export const OKNA = {
   chat: 'Chat Window',
   petla: 'Execution Loop Window',
@@ -33,7 +22,11 @@ export const OKNA = {
   jakosc: 'QA & Review Center',
 } as const;
 
-/** Jedna pozycja katalogu funkcji. */
+/**
+ * Jedna pozycja katalogu funkcji: nazwa, grupa i opis przejęte z opracowania
+ * modułu, okno i warstwa widoczności w tej budowie oraz komenda kontraktu albo
+ * nazwany brak pokrycia.
+ */
 export interface PozycjaKatalogu {
   /** Nazwa własna pozycji, dokładnie jak w opracowaniu modułu. */
   readonly nazwa: string;
@@ -689,14 +682,20 @@ export const KATALOG_FUNKCJI: readonly PozycjaKatalogu[] = [
   },
 ];
 
-/** Grupy katalogu w kolejności opracowania — bez powtórzeń. */
+/**
+ * Grupy katalogu w kolejności opracowania, bez powtórzeń — kolejność, w jakiej
+ * wyszukiwarka funkcji i okna modułu układają pozycje na widoku.
+ */
 export function grupyKatalogu(): readonly string[] {
   const widziane = new Set<string>();
   for (const pozycja of KATALOG_FUNKCJI) widziane.add(pozycja.grupa);
   return [...widziane];
 }
 
-/** Ile pozycji katalogu ma komendę kontraktu — liczba, nie deklaracja. */
+/**
+ * Ile pozycji katalogu ma komendę kontraktu — liczba pozycji rzeczywiście
+ * wykonywanych, a nie zadeklarowana wielkość modułu.
+ */
 export function liczbaZKomenda(): number {
   return KATALOG_FUNKCJI.filter((pozycja) => pozycja.komendy.length > 0).length;
 }

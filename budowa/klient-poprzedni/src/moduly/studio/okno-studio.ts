@@ -2,19 +2,7 @@ import { utworzDymekObjasnienia } from '../../komponenty/dymek';
 import { utworzRameOkna, type RolaOkna } from '../../komponenty/rama-okna';
 import { utworzStanOknaStudio, type StanOknaStudio } from './stan-okna-studio';
 
-/**
- * Okno operacyjne Studio: biblioteczna rama plus pas stanu modułu.
- *
- * Obudowa okna — nagłówek, plakietka roli, gniazda akcji i ciało — jest wspólna
- * całemu drzewu (`komponenty/rama-okna`). Rama nie zna faz okna, bo nie pobiera
- * danych, których cykl życia miałaby pokazywać. Studio potrzebuje jednego
- * i drugiego naraz, więc tutaj zostaje samo zszycie: rama z biblioteki, pas
- * stanu z modułu, jedno wywołanie zamiast powtarzania go w pięciu oknach.
- *
- * Dymek objaśnienia jest wymagany, nie opcjonalny: każde okno modułu mówi, po co
- * jest i którą komendą działa, zanim cokolwiek zostanie naciśnięte.
- */
-
+/** Okno operacyjne Studio: biblioteczna rama okna złączona z pasem stanu modułu, wraz z wymaganym dymkiem objaśnienia. */
 export interface OknoStudio {
   /** Sekcja osadzana w pasie układu modułu. */
   element: HTMLElement;
@@ -24,7 +12,7 @@ export interface OknoStudio {
   pasek: HTMLElement;
 }
 
-/** Kod okna w katalogu rdzenia (`okno_operacyjne.kod`) i jego opis dla Operatora. */
+/** Kod okna w katalogu rdzenia oraz jego tytuł, rola i objaśnienie wyświetlane operatorowi przy otwarciu. */
 export interface OpisOkna {
   kod: string;
   tytul: string;
@@ -45,9 +33,7 @@ export function utworzOknoStudio(opis: OpisOkna): OknoStudio {
     kod: opis.kod,
     modul: 'Studio',
     dodatkiNaglowka: [dymek],
-    // Przedrostek `ms` nie wnosi wyglądu — jest uchwytem reguły
-    // `.ms-okno[data-ognisko='tak']`, którą Tools Panel znaczy okno wskazane
-    // z paska zaznaczenia edytora.
+    // Przedrostek ms jest uchwytem reguły znaczącej okno wskazane z paska zaznaczenia edytora.
     przedrostek: 'ms',
   });
   rama.cialo.append(stan.element);

@@ -7,23 +7,7 @@ import {
   type Srodowisko,
 } from './srodowiska';
 
-/**
- * Źródło wykazu bocznej nawigacji — jedyna prawda powłoki o środowiskach
- * i modułach.
- *
- * Jedna odpowiedzialność: zamiana odpowiedzi rdzenia na wykaz nawigacji.
- * Plik nie buduje ani jednego elementu i nie zna nazwy ani jednej komendy —
- * bierze gotowe opakowania warstwy protokołu.
- *
- * `environment.enter` oddaje środowisko razem z jego modułami, każdy
- * z katalogiem okien operacyjnych, więc jedno wywołanie wystarcza na cały
- * wykaz. `module.list` zawężony do środowiska jest drugim podejściem na
- * wypadek, gdy wejście oddało wykaz pusty mimo nawigacji modułowej.
- *
- * Nieudane wywołanie daje wykaz pusty wraz z treścią odmowy, a nie zaszytą
- * listę modułów — kopia katalogu w kliencie byłaby drugim źródłem prawdy
- * o tym, co rdzeń niesie.
- */
+/** Źródło wykazu bocznej nawigacji — jedyna prawda powłoki o środowiskach i modułach tego samego klienta. */
 export type ZrodloNawigacji = (klucz: KluczSrodowiska) => Promise<Srodowisko>;
 
 export function utworzZrodloNawigacji(
@@ -56,12 +40,12 @@ export function utworzZrodloNawigacji(
   };
 }
 
-/** Środowisko rozpoznane to takie, któremu rdzeń nadał kod — pustka nim nie jest. */
+/** Środowisko rozpoznane to takie, któremu rdzeń nadał kod — pustka takim środowiskiem nigdy tu nie jest. */
 function czyRozpoznane(dane: Environment | undefined): dane is Environment {
   return dane !== undefined && typeof dane.code === 'string' && dane.code.length > 0;
 }
 
-/** Panel orkiestracji nie ma modułów z założenia — pusty wykaz nie jest brakiem. */
+/** Panel orkiestracji nie ma modułów z założenia — pusty wykaz w tym wypadku wcale nie jest ich brakiem. */
 function czyPanel(dane: Environment): boolean {
   return dane.navigationKind !== NavigationKind.Modules;
 }

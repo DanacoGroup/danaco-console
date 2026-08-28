@@ -13,7 +13,7 @@ import { utworzPodsumowanie } from './podsumowanie-ustawien';
 import { utworzSzuflade } from './szuflada';
 import { utworzUchwytPaska } from './uchwyt-paska';
 
-/** Miejsca powłoki, w które montuje się widok sterowania. */
+/** Definiuje miejsca powłoki aplikacji, w które montuje się widok sterowania: kolumnę panelu obok sceny okna oraz miejsce akcji na pasku górnym. */
 export interface MiejscaWidoku {
   /** Kolumna sterowania obok sceny okna (`KorzenAplikacji.panel`). */
   panel: HTMLElement;
@@ -21,14 +21,14 @@ export interface MiejscaWidoku {
   akcjePaska: HTMLElement;
 }
 
-/** Zależności widoku: droga do rdzenia, okno oraz wspólny wykaz kanałów. */
+/** Zależności widoku sterowania: droga do rdzenia, okno, którego widok dotyczy, wspólny wykaz kanałów oraz miejsca powłoki, w które widok się montuje. */
 export interface ZaleznosciWidoku extends MiejscaWidoku {
   kanal: Kanal;
   okno: Window;
   rejestrKanalow: RejestrKanalow;
 }
 
-/** Widok sterowania jednego okna komunikacji. */
+/** Widok sterowania jednego okna komunikacji, udostępniający jego element, identyfikator okna oraz czynności rozwijania, przyjęcia okna i odłączenia. */
 export interface WidokSterowania {
   /** Element kolumny sterowania. */
   element: HTMLElement;
@@ -42,23 +42,7 @@ export interface WidokSterowania {
   rozlacz(): void;
 }
 
-/**
- * Oprawa czyniąca komplet sterowania widocznym.
- *
- * Kontrolki nie powstają tutaj — pochodzą w całości z katalogu `sterowanie/`
- * (`utworzPanelSterowania`: środowisko wykonania, host, moduł, model, model
- * zapasowy, nakład rozumowania, tryb uprawnień, rola okna, katalogi robocze).
- * Ten plik dokłada im miejsce, nagłówek, podsumowanie wartości i dwa uchwyty
- * rozwijania.
- *
- * Kolumna montuje się obok sceny okna, a nie w prawym rogu paska górnego —
- * dziewięć kontrolek nie ma jak się tam zmieścić.
- *
- * Widok powstaje osobno dla każdego okna i domyka się na jego identyfikatorze,
- * więc dwa okna obok siebie dostają dwie niezależne kolumny bez ani jednej
- * wspólnej zmiennej. Szuflada startuje rozwinięta, żeby komplet ustawień był
- * widoczny bez szukania, co nacisnąć.
- */
+/** Widok sterowania buduje oprawę dla kontrolek katalogu sterowania: montuje kolumnę obok sceny okna, nagłówek, podsumowanie wartości oraz dwa uchwyty rozwijania, osobno dla każdego okna. */
 export function zamontujWidokSterowania(
   zaleznosci: ZaleznosciWidoku,
 ): WidokSterowania {

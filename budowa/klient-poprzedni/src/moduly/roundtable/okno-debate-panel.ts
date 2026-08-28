@@ -24,57 +24,21 @@ import type { ZrodloArsenaluRoundtable } from './zrodlo-arsenalu';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
 /**
- * Debate Panel — okno monitora modułu Roundtable.
- *
- * Okno uruchamia kolejną turę debaty i pokazuje narastające argumenty; debatę
- * inicjuje ono samo albo Moderator Panel.
- *
- * Pytanie idzie jednocześnie do wszystkich uczestników. Okno wysyła jedno
- * pytanie przez `roundtable.debate.start`, a rdzeń oddaje `participantIds`
- * tury: skład, który faktycznie odpowiada. Bywa on węższy od całego składu
- * debaty (uczestnik wyciszony w poprzedniej turze), więc panel liczy różnicę
- * i mówi ją wprost.
- *
- * Na żywo znaczy z dwóch dróg, nie z jednej.
- * `core/adapter_modul_roundtable_glos.go` rozgłasza `created` z wypowiedzią
- * pustą w chwili otwarcia głosu, nadaje słowa fragmentami `stream.chunk`
- * i dopiero po domknięciu strumienia rozgłasza `updated` z całością — samo
- * `roundtable.debate.changed` pokazywałoby więc pustą wypowiedź przez cały
- * czas mówienia modelu. Okno bierze `StrumienWypowiedzi` parametrem;
- * subskrypcji nie zakłada — jedna na całe złożenie stoi w `indeks.ts`, bo
- * cztery subskrypcje tego samego zdarzenia byłyby czterokrotnym odbiorem
- * jednej treści.
- *
- * Ucięcie historii wypowiedzi jest powiedziane wprost: okno bierze wypowiedzi
- * wyłącznie ze zdarzenia, więc otwarte w trakcie debaty widzi sam ogon, nie
- * transkrypt od pierwszej wypowiedzi. Nie jest to już brak kontraktu —
- * `roundtable.debate.get` oddaje skład, tury i wypowiedzi jednym wywołaniem —
- * lecz brak obsługi tego odczytu. Nagłówek przebiegu i eksport transkryptu to
- * zapowiadają, żeby pusty początek listy nie czytał się jako „debata zaczęła
- * się teraz".
+ * Debate Panel — okno monitora modułu Roundtable: uruchamia kolejną turę debaty i pokazuje
+ * narastające argumenty jednocześnie od wszystkich uczestników.
  */
 export interface OknoDebatePanel {
   element: HTMLElement;
   odswiez(): void;
-  /**
-   * Przerysowanie po fragmencie strumienia — wołane przez złożenie modułu.
-   *
-   * Osobne od `odswiez()`, bo idzie na każdy fragment, czyli kilkanaście razy
-   * na sekundę. Komunikat błędu i zapowiedź odczytu przetrwają: przerysowanie
-   * w tych dwóch stanach jest pomijane, inaczej odmowa rdzenia znikałaby
-   * z ekranu przy pierwszym słowie następnego mówcy.
-   */
+  /** Przerysowanie po fragmencie strumienia — wołane przez złożenie modułu, kilkanaście razy na sekundę. */
   odswiezGlosy(): void;
   /** Zamyka nasłuch `stan.naZmiane(...)` założony przez to okno. */
   zamknij(): void;
 }
 
 /**
- * @param przyciskiRozszerzen przyciski otwierające okna warstwy drugiej,
- *   wytworzone przez pas rozszerzeń złożenia modułu. Debate Panel jest miejscem,
- *   z którego opracowanie każe otwierać Argument Map & Analysis i Voting &
- *   Evaluation Center, ale sam mechanizmu rozszerzeń nie zna: dostaje gotowe
- *   przyciski, tak jak rama okna dostaje gotowe elementy treści.
+ * @param przyciskiRozszerzen przyciski otwierające okna warstwy drugiej, wytworzone przez pas
+ *   rozszerzeń złożenia modułu; Debate Panel dostaje je gotowe, mechanizmu nie zna.
  */
 export function utworzOknoDebatePanel(
   zrodlo: ZrodloRoundtable,
@@ -92,9 +56,7 @@ export function utworzOknoDebatePanel(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Czynności nad zapisem debaty wołają komendy obszaru wprost; format wydania
-  // bierze się z pola wyboru okna, a rodzaj analizy z wartości domyślnej
-  // wydobycia argumentów — to ono buduje graf, na którym stoi reszta analiz.
+  // Czynności nad zapisem debaty wołają komendy obszaru wprost; format bierze się z pól okna.
   const powierzchnia = zlozPowierzchnieDebaty(
     rama,
     tresc.element,
@@ -140,8 +102,7 @@ export function utworzOknoDebatePanel(
     tresc.ladowanie('Pytanie wysyłane jednocześnie do wszystkich uczestników…');
     void zrodlo.uruchomDebate(zadanie).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Nie „rdzeń odmówił": niepowodzenie bywa też odpowiedzią bez pola
-        // obowiązkowego (`sprawdzKsztalt`), a takiej odmowy rdzeń nie orzekł.
+        // Nie rdzeń odmówił: niepowodzenie bywa odpowiedzią bez pola obowiązkowego, którego nie orzekł.
         tresc.blad('Tura debaty nie została uruchomiona.', wynik.blad);
         return;
       }
@@ -208,7 +169,7 @@ export function utworzOknoDebatePanel(
   return { element: rama.element, odswiez: rysuj, odswiezGlosy, zamknij: odsubskrybuj };
 }
 
-/** Zadanie `roundtable.debate.start` z kontrolek — pola puste nie trafiają do żądania. */
+/** Zadanie uruchomienia debaty złożone z kontrolek okna — pola puste nie trafiają do żądania wysyłanego rdzeniowi. */
 function zlozZadanieDebaty(
   idOkna: string,
   pytanie: string,
@@ -224,14 +185,8 @@ function zlozZadanieDebaty(
 }
 
 /**
- * Zdanie o tym, którą turę rdzeń otworzył i kto w niej faktycznie odpowiada.
- *
- * Numer i stan tury biorą się z `turn` w odpowiedzi, nie z żądania okna — okno
- * nie zna numeru tury, dopóki rdzeń go nie nada. `participantIds` bywa węższy
- * od pełnego składu debaty (uczestnik wyciszony wcześniej) i to musi być
- * widoczne, nie domyślane. Wykaz pusty jest przypadkiem osobnym: „tura
- * uruchomiona” bez ani jednego adresata byłoby potwierdzeniem czynności, która
- * nikogo nie dotyczy.
+ * Zdanie o tym, którą turę rdzeń otworzył i kto w niej faktycznie odpowiada, licząc różnicę
+ * wobec pełnego składu debaty.
  */
 function opisUczestnictwa(
   tura: RoundtableTurn,
@@ -272,13 +227,8 @@ interface AkcjeDebaty {
 }
 
 /**
- * Pasek akcji Debate Panel: uruchomienie tury, dwie postaci transkryptu
- * i przyciski otwierające okna warstwy drugiej.
- *
- * Przyciski rozszerzeń przychodzą gotowe z pasa rozszerzeń modułu, bo to
- * z Debate Panelu opracowanie każe otwierać Argument Map & Analysis i Voting &
- * Evaluation Center. Okno nie zna ich wnętrza — dostaje przycisk i stawia go
- * w pasku.
+ * Pasek akcji Debate Panel: uruchomienie tury, dwie postaci transkryptu i przyciski
+ * otwierające okna warstwy drugiej.
  */
 function zlozAkcjeDebaty(
   gospodarz: HTMLElement,
@@ -292,11 +242,8 @@ function zlozAkcjeDebaty(
 }
 
 /**
- * Zestaw akcji warstwy trzeciej — czynności nad zapisem debaty.
- *
- * Pozycje wołają komendy obszaru wprost: odczyt przebiegu, analizę, zbieżność
- * i wydanie transkryptu. Wynik melduje się w stanie treści okna, tą samą drogą
- * co reszta odpowiedzi — Operator nie musi szukać go w innym miejscu.
+ * Zestaw akcji warstwy trzeciej — czynności nad zapisem debaty, meldujące wynik w stanie
+ * treści okna, tą samą drogą co reszta odpowiedzi.
  */
 function zlozZestawDebaty(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Zestaw akcji i filtrów zapisu debaty', czynnosci);
@@ -311,11 +258,8 @@ interface PowierzchniaDebaty extends AkcjeDebaty {
 }
 
 /**
- * Formaty debaty — komplet wyliczenia `RoundtableFormat`, nie jego podzbiór.
- *
- * Rundy Delphi i panel ekspercki weszły do wyliczenia razem ze scaleniem
- * kontraktu; pole wyboru pokazujące cztery wartości z sześciu odbierałoby
- * Operatorowi dwa formaty, których rdzeń nie odmawia.
+ * Formaty debaty — komplet wyliczenia kontraktu, nie jego podzbiór, żeby pole wyboru nie
+ * odbierało Operatorowi formatów, których rdzeń nie odmawia.
  */
 const OPISY_FORMATU: ReadonlyArray<readonly [string, string]> = [
   ['', 'Format domyślny rdzenia'],
@@ -327,7 +271,7 @@ const OPISY_FORMATU: ReadonlyArray<readonly [string, string]> = [
   [RoundtableFormat.ExpertPanel, 'Panel ekspercki'],
 ];
 
-/** Składa kontrolki okna, pasek akcji i ciało ramy — czysta konstrukcja. */
+/** Składa kontrolki okna, pasek akcji i ciało ramy — czysta konstrukcja bez podpięcia zdarzeń, które robi funkcja osobna. */
 function zlozPowierzchnieDebaty(
   rama: { akcje: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,

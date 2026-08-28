@@ -1,15 +1,6 @@
 /**
- * Dwie kontrolki, których biblioteka nie ma: dymek objaśnienia [?] przy
- * elemencie konfiguracji i podpowiedź przy polu otwartym.
- *
- * Dymek jest budowany tutaj, a nie brany z biblioteki, bo nosi klasy arkusza
- * modułu (`mt-…`); wersja biblioteczna wymaga klas układu, których ten arkusz
- * nie wciąga, więc dałaby dymek bez pozycjonowania.
- *
- * Dymek pokazuje się na `:hover` albo `:focus-within`, bez klikania i bez
- * zamykania; znak jest przyciskiem, więc naciśnięcie prowadzi ognisko i daje
- * odpowiedź; treść siedzi w `aria-label`, więc dymek nie potrzebuje
- * identyfikatora i nie zderza się między oknami.
+ * Dwie kontrolki tworzą dymek objaśnienia i podpowiedź przy polu otwartym; dymek
+ * pokazuje się na najechaniu albo skupieniu, a jego treść leży w opisie dostępności.
  */
 
 export function utworzDymek(objasnienie: string): HTMLElement {
@@ -70,7 +61,7 @@ export function podepnijPodpowiedz(
   return wykaz;
 }
 
-/** Nagłówek okna operacyjnego wraz z jego rolą z wykazu okien. */
+/** Buduje nagłówek okna operacyjnego, złożony z tytułu okna oraz plakietki przedstawiającej jego rolę pośród okien modułu tłumaczeń. */
 export function naglowekOkna(nazwa: string, rola: string): HTMLElement {
   const tytul = document.createElement('h3');
   tytul.className = 'mt-okno__tytul';

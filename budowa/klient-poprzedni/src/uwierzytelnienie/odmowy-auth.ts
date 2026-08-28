@@ -1,65 +1,16 @@
 import { opisOdmowyBledu, type PowodOdmowy } from '../komponenty/odmowa';
 
-/**
- * Odmowa trójczęściowa bramki: co · dlaczego · czym Operator to zmieni
- * (wzorzec `aod/odmowy-aod.ts`).
- *
- * Pierwsze dwie części składa `komponenty/odmowa.ts` i nie są tu przepisywane.
- * Ten plik dokłada wyłącznie część trzecią — radę, której wspólny komponent
- * znać nie może, bo zależy od czynności bramki.
- *
- * Odmowy bramki są poprawnym zachowaniem, nie usterką, a bez zdania trzeciego
- * czyta się je jak awarię:
- *
- *   • sekret niezgodny z zapisem → `not_authenticated`; rada każe wpisać hasło
- *     (albo PIN) ponownie;
- *   • bramka nieustawiona przy wejściu → `not_found`; to pierwsze uruchomienie,
- *     ekran przechodzi na ustawienie hasła sam, a rada to nazywa;
- *   • powtórzone `auth.register` → `conflict`; kotwica już stoi, a od zmiany
- *     hasła jest `auth.password.reset` w Ustawieniach;
- *   • przedłużenie sesji wygasłej albo unieważnionej → `conflict`, sesji
- *     nieznanej → `not_found`; obie drogi prowadzą do wejścia hasłem na nowo;
- *   • droga potwierdzenia nieznana, zużyta albo wydana do innej czynności →
- *     `not_found` / `conflict` / `not_authenticated`; wszystkie trzy kończą się
- *     prośbą o nowy list, a nie szukaniem usterki;
- *   • rejestracja i odzyskanie na platformie bez konta nadawczego →
- *     `internal_error`; listu nie ma czym nadać, a rada nazywa obie drogi
- *     ustawienia serwera poczty wychodzącej.
- *
- * Obszary rad odpowiadają czynnościom ekranu co do jednej: `wejscie`,
- * `wejscie-pin`, `zalozenie`, `potwierdzenie`, `odzyskanie`, `zmiana`,
- * `przedluzenie`, `rozpoznanie`. Obszar bez wpisu kończy radą ogólną, czyli
- * odesłaniem do dziennika rdzenia — tam Operator nie sięga.
- *
- * Bramka jest w produkcie jedyna, więc odmowa musi wystarczyć do wyjścia
- * z każdego z tych stanów bez szukania pomocy poza ekranem.
- */
-
-/**
- * Rada domyślna, gdy kod odmowy nie ma osobnego zdania.
- *
- * Każde jej użycie jest usterką do zamknięcia, nie stanem dopuszczalnym: odsyła
- * Operatora do dziennika rdzenia, czyli tam, gdzie nie sięga. Wykaz rad ma
- * pokrywać wszystkie kody, jakimi rdzeń odmawia w rodzinie `auth.*`; kod, który
- * z niego wypadnie, kończy tutaj.
- */
+/** Odmowa trójczęściowa bramki nazywa co się nie udało, dlaczego i czym operator to zmieni; rada domyślna odsyła do dziennika rdzenia, gdy kod odmowy nie ma osobnego zdania. */
 export const RADA_OGOLNA = 'Powtórz czynność; jeśli odmowa wraca, sprawdź dziennik rdzenia.';
 
-/** Rada na odpowiedź `auth.unknown` — rdzeń bez wpiętej rodziny `auth.*`. */
+/** Rada na odpowiedź bez wpiętej rodziny komend bramki w rdzeniu, gdy montaż uwierzytelniania jej brakuje. */
 const RADA_BEZ_UCHWYTU =
   'Rdzeń odpowiedział kopertą auth.unknown — rodzina auth.* nie jest wpięta do tego rdzenia. ' +
   'Uruchom rdzeń zbudowany z montażem bramki i odczytaj ekran ponownie.';
 
 const RADY: Record<string, Record<string, string>> = {
   wejscie: {
-    // Hasłu niezgodnemu z zapisem rdzeń odmawia kodem `not_authenticated`,
-    // a `validation_failed` zostaje przy brakach kształtu żądania — czyli przy
-    // haśle pustym („wejście metodą password bez sekretu"). Oba zdania muszą tu
-    // stać, bo oba kody są osiągalne z formularza.
-    // Ten sam kod niesie konto czekające na potwierdzenie adresu
-    // (`kontoPotwierdzone` w rdzeniu), a wtedy powtarzanie hasła jest drogą
-    // donikąd — dlatego rada nazywa oba wyjścia, a zdanie rdzenia nad nią mówi,
-    // o które z dwóch chodzi.
+    // Hasłu niezgodnemu rdzeń odmawia jednym kodem, a brakom kształtu żądania innym kodem.
     not_authenticated:
       'Hasło nie zgadza się z zapisem bramki — wpisz je ponownie. ' +
       'Jeżeli odmowa mówi o oczekiwaniu na potwierdzenie adresu, hasło jest dobre: ' +
@@ -71,10 +22,7 @@ const RADY: Record<string, Record<string, string>> = {
       'Rdzeń pracuje bez sejfu poświadczeń albo sejf nie niesie sekretu — sprawdź dziennik rdzenia; ' +
       'bez sejfu bramka nie działa i żadne hasło nie wejdzie.',
   },
-  // Wejście PIN-em ma własny obszar, bo te same kody znaczą tu co innego:
-  // `not_found` przy haśle to „bramki nie ustawiono", a przy PIN-ie — „PIN na
-  // tej maszynie nie istnieje". Jedna rada na dwa znaczenia odsyłałaby do
-  // zakładania hasła, które już stoi.
+  // Wejście PIN-em ma własny obszar, bo te same kody znaczą tu co innego niż przy haśle.
   'wejscie-pin': {
     not_authenticated: 'PIN nie zgadza się z zapisem tej maszyny — wpisz go ponownie.',
     validation_failed:
@@ -103,8 +51,7 @@ const RADY: Record<string, Record<string, string>> = {
       'a po wejściu w oknie Konfiguracji, w kategorii „Konto nadawcze platformy". ' +
       'Ten sam kod niesie rdzeń pracujący bez sejfu poświadczeń — odmowa mówi wprost, o co chodzi.',
   },
-  // Krok drugi rejestracji: droga z listu w zamian za token dostępu. Tu nie ma
-  // ani hasła, ani sekretu — każda odmowa dotyczy samej drogi.
+  // Krok drugi rejestracji: droga z listu w zamian za token dostępu; każda odmowa dotyczy samej drogi.
   potwierdzenie: {
     validation_failed:
       'Przepisz drogę potwierdzenia z listu — pole nie może zostać puste. ' +
@@ -123,8 +70,7 @@ const RADY: Record<string, Record<string, string>> = {
       'Rdzeń nie mógł domknąć potwierdzenia — sprawdź dziennik rdzenia; ' +
       'konto zostaje niepotwierdzone, a droga z listu jest nadal ważna do godziny od nadania.',
   },
-  // Obie strony odzyskania konta: prośba o list (`auth.recover`) i ustawienie
-  // nowego hasła drogą z listu (`auth.reset`).
+  // Obie strony odzyskania konta: prośba o list i ustawienie nowego hasła drogą z listu.
   odzyskanie: {
     validation_failed:
       'Podaj adres e-mail uwierzytelniający konta, a w kroku drugim drogę z listu i nowe hasło — ' +
@@ -142,9 +88,7 @@ const RADY: Record<string, Record<string, string>> = {
       'a po wejściu w oknie Konfiguracji, w kategorii „Konto nadawcze platformy".',
   },
   zmiana: {
-    // `auth.password.reset` odmawia hasłu niezgodnemu kodem `validation_failed`,
-    // inaczej niż `auth.login`. Zdanie dla `not_authenticated` stoi tu mimo to,
-    // żeby wyrównanie kodów po stronie rdzenia nie zostawiło rady ogólnej.
+    // Zmiana hasła odmawia inaczej niż logowanie; zdanie stoi, by wyrównanie kodów nie zostawiło rady.
     not_authenticated:
       'Dotychczasowe hasło nie zgadza się z zapisem bramki — wpisz je ponownie. ' +
       'Hasła zapomnianego ta droga nie odzyska, bo pyta o hasło dotychczasowe; ' +
@@ -176,16 +120,7 @@ const RADY: Record<string, Record<string, string>> = {
   },
 };
 
-/**
- * Składa pełne zdanie odmowy: co się nie udało, dlaczego (wprost z rdzenia)
- * i czym Operator to zmieni.
- *
- * @param czynnosc nazwa czynności widziana przez Operatora, np. „Wejście przez bramkę”.
- * @param obszar klucz rad — `wejscie`, `wejscie-pin`, `zalozenie`, `zmiana`,
- *   `przedluzenie`, `rozpoznanie`.
- * @param bezUchwytu odpowiedź przyszła kopertą `auth.unknown` — rada mówi wtedy
- *   o montażu rdzenia, a nie o haśle, niezależnie od kodu odmowy.
- */
+/** Składa pełne zdanie odmowy: co się nie udało, dlaczego wprost z rdzenia, i czym operator to zmieni według obszaru czynności. */
 export function opisOdmowyBramki(
   czynnosc: string,
   obszar: string,

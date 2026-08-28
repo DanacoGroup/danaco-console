@@ -1,37 +1,13 @@
 import type { StanBadania } from './stan-badania';
 import type { StanOknaBadania } from './stan-okna-badania';
 
-/**
- * Zdania stanu pustego siedmiu okien modułu Research — wyjęte z plików czynności.
- *
- * Stan pusty tłumaczy, czym okno jest i jak je zapełnić, a nie melduje brak
- * pozycji. Takie zdania są tekstem produktu, nie logiką widoku: mają dać się
- * przeczytać obok siebie i poprawić w jednym miejscu, gdy kontrakt dostanie
- * komendę, której dziś nie ma. Ten sam wzorzec niesie
- * `moduly/library/etykiety-biblioteki.ts`.
- *
- * Brak okna badania to co innego niż pusty wykaz, więc rozróżnienie stoi w
- * jednym miejscu, nie w siedmiu oknach. Komendy zapisu źródła, ustalenia
- * i budowy raportu mają `windowId` w polach obowiązkowych, więc bez okna
- * zaproszenie „skataloguj pierwsze źródło" prowadzi Operatora wprost pod odmowę.
- *
- * Żadne z tych zdań nie odbiera klikalności ani jednej kontrolce — nazywa
- * warunek merytoryczny, po czym formularze i przyciski zostają czynne,
- * a odmowa rdzenia wraca własnymi słowami rdzenia.
- */
-
-/** Stan pusty w formie inwentarza: tytuł i zdanie wyjaśniające pod nim. */
+/** Zdania stanu pustego siedmiu okien modułu Research, w formie inwentarza z tytułem i opisem, tłumaczą, czym okno jest i jak je zapełnić. */
 export interface ZdaniePustki {
   tytul: string;
   opis: string;
 }
 
-/**
- * Przed pierwszym odczytem — moduł nie pytał jeszcze rdzenia o nic.
- *
- * „Jeszcze nie pytałem" nie jest tym samym, co „rdzeń nic nie ma": twierdzenie
- * o zawartości rdzenia postawione bez jego odpowiedzi jest zgadywaniem.
- */
+// Przed pierwszym odczytem moduł nie pytał jeszcze rdzenia o nic — pustka nie znaczy, że rdzeń nic nie ma, tylko że modułu jeszcze nie zapytał.
 const PRZED_ODCZYTEM: ZdaniePustki = {
   tytul: 'Okno jeszcze nie pytało rdzenia',
   opis:
@@ -39,7 +15,7 @@ const PRZED_ODCZYTEM: ZdaniePustki = {
     'Dopóki nie przeczytał, nie ma o czym twierdzić, że jest puste.',
 };
 
-/** Rdzeń odpowiedział, ale okna modułowi nie dał — pustka bez miejsca na treść. */
+/** Rdzeń odpowiedział, ale okna modułu Research nie dał w tej sesji — pustka bez miejsca na treść, nie pusty wykaz gotowego okna. */
 function bezOknaBadania(powod: string): ZdaniePustki {
   return {
     tytul: 'Badanie bez okna w rdzeniu',
@@ -51,7 +27,7 @@ function bezOknaBadania(powod: string): ZdaniePustki {
   };
 }
 
-/** Research Workspace — zakres badania i wejście do pozostałych okien. */
+/** Research Workspace trzyma zakres badania i jego etapy: jedno zdanie o tym, co i po co badamy, oraz wykaz kroków do wypełnienia. */
 export const PUSTKA_ZAKRESU: ZdaniePustki = {
   tytul: 'Badanie bez zestawionego zakresu',
   opis:
@@ -60,7 +36,7 @@ export const PUSTKA_ZAKRESU: ZdaniePustki = {
     '— pozostałe okna modułu biorą zakres stąd.',
 };
 
-/** Discovery Panel — wyszukiwanie i odkrywanie źródeł. */
+/** Discovery Panel wyszukuje i odkrywa źródła materiału badania spośród wiedzy Operatora oraz treści zasobów repozytorium. */
 export const PUSTKA_ODKRYWANIA: ZdaniePustki = {
   tytul: 'Panel jeszcze o nic nie pytał',
   opis:
@@ -70,7 +46,7 @@ export const PUSTKA_ODKRYWANIA: ZdaniePustki = {
     'i kończą się odmową rdzenia, wypisaną tu wprost. Wpisz zapytanie i naciśnij „Szukaj".',
 };
 
-/** Reading View — lektura materiału i wypisy z niego. */
+/** Reading View czyta materiał wskazanego źródła i zamienia zaznaczony fragment w ustalenie z cytatem powiązanym z tym źródłem. */
 export const PUSTKA_LEKTURY: ZdaniePustki = {
   tytul: 'Nie wskazano, co czytać',
   opis:
@@ -80,7 +56,7 @@ export const PUSTKA_LEKTURY: ZdaniePustki = {
     'repozytorium; przy pozostałych okno powie to wprost, zamiast pokazać pusty czytnik.',
 };
 
-/** Sources Manager — katalog materiału badania. */
+/** Sources Manager jest katalogiem materiału badania: tytuł, typ, pochodzenie i ocena wiarygodności każdego zapisanego źródła. */
 export const PUSTKA_ZRODEL: ZdaniePustki = {
   tytul: 'Katalog źródeł jeszcze pusty',
   opis:
@@ -91,7 +67,7 @@ export const PUSTKA_ZRODEL: ZdaniePustki = {
     'ma jeszcze którędy dojść.',
 };
 
-/** Findings Panel — ustalenia narastające w toku badania. */
+/** Findings Panel zbiera ustalenia narastające w toku badania: jedno ustalenie na wpis, wiązane z zaznaczonymi źródłami materiału. */
 export const PUSTKA_USTALEN: ZdaniePustki = {
   tytul: 'Bez zapisanego jeszcze ustalenia',
   opis:
@@ -102,7 +78,7 @@ export const PUSTKA_USTALEN: ZdaniePustki = {
     'innym urządzeniu konta tu nie dojdzie.',
 };
 
-/** Report Builder — kompozycja raportu z ustaleń. */
+/** Report Builder składa raport z ustaleń badania, zaznaczonych w Findings Panel, w kompozycję gotową do wydania dokumentowego. */
 export const PUSTKA_RAPORTU: ZdaniePustki = {
   tytul: 'Raport jeszcze nie złożony',
   opis:
@@ -111,7 +87,7 @@ export const PUSTKA_RAPORTU: ZdaniePustki = {
     'i składa raport z niej samej. Zaznacz ustalenia w Findings Panel i otwórz kreator.',
 };
 
-/** Export Panel — wydanie raportu w formacie dokumentowym. */
+/** Export Panel wydaje złożony raport badania w formacie dokumentowym, pod miejscem docelowym wybranym przez Operatora. */
 export const PUSTKA_EKSPORTU: ZdaniePustki = {
   tytul: 'Nie ma jeszcze czego wydać',
   opis:
@@ -121,12 +97,8 @@ export const PUSTKA_EKSPORTU: ZdaniePustki = {
 };
 
 /**
- * Wybiera i pokazuje zdanie pustki właściwe dla stanu, w jakim moduł naprawdę
- * stoi. Trzy przypadki, bo trzy różne rzeczy: nie pytałem · pytałem i nie mam
- * gdzie · pytałem, miejsce mam, treści nie ma.
- *
- * Fazy `odczyt` i `blad` tu nie dochodzą — rozstrzygają je czynności okien
- * wcześniej, wskaźnikiem odczytu i komunikatem odmowy.
+ * Wybiera i pokazuje zdanie pustki właściwe dla stanu modułu: nie pytałem, pytałem bez okna,
+ * albo miejsce jest, a treści nie ma.
  */
 export function pokazPustke(
   okno: StanOknaBadania,

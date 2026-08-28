@@ -8,26 +8,7 @@ import { utworzZmianeUstawienia } from '../sterowanie/zmiana-ustawienia';
 import type { StanPrzelacznika, ZaleznosciPrzelacznika } from './przelacznik-srodowiska';
 
 /**
- * Port przełącznika środowiska do kompletu sterowania okna.
- *
- * Przełącznik (`przelacznik-srodowiska.ts`) nie zna kanału ani stanu globalnego —
- * żąda migawki, subskrypcji zmian i wysyłki. Ten plik podpina te trzy rzeczy pod
- * stan rdzenia, tak samo jak `katalog-akcji.ts` zamienia kanał na źródło pozycji
- * panelu akcji.
- *
- * Zasięg wykonania ma w kliencie dwa widoki: listę wyboru w szufladzie ustawień
- * (`sterowanie/srodowisko-wykonania.ts`, pokazuje nazwy wartości wyliczenia) oraz
- * ten przełącznik nad polem wypowiedzi (pokazuje maszyny). Reguła protokołu nie
- * jest tu pisana po raz drugi: odczyt idzie przez `StanSterowania`, zapis przez
- * `ZmianaOkna` — te same byty katalogu `sterowanie/`, ta sama komenda
- * `window.update` z tym samym `windowId`, ta sama nazwa zmiany w komunikacie.
- * Oba widoki przyjmują wyłącznie stan potwierdzony przez rdzeń: odpowiedź na
- * komendę oraz zdarzenia `window.changed` i `config.changed` rozgłaszane do
- * wszystkich urządzeń konta.
- *
- * Nazwa maszyny zdalnej jest ustawieniem poziomu okna `host_wykonania`, a nie
- * polem `window.update` — dlatego port wczytuje ustawienia zasięgu okna. Bez tego
- * przełącznik pokazywałby „nie wskazano" przy hoście zapisanym w bazie.
+ * Port przełącznika środowiska do kompletu sterowania okna podpina migawkę, subskrypcję zmian i wysyłkę pod stan rdzenia, tak jak katalog akcji zamienia kanał na źródło pozycji panelu.
  */
 export interface ZrodloSrodowiska extends ZaleznosciPrzelacznika {
   /** Odłącza subskrypcje kanału i stanu. */
@@ -45,23 +26,14 @@ const NAZWA = 'Środowisko wykonania';
 export function utworzZrodloSrodowiska(kanal: Kanal, okno: Window): ZrodloSrodowiska {
   const stan = utworzStanSterowania(okno);
 
-  /**
-   * Kolejka wywołań czekających na los swojej zmiany.
-   *
-   * `ZmianaOkna.zastosuj` melduje wynik wywołaniem zwrotnym, a przełącznik żąda
-   * obietnicy — kolejka jest całym przekładem między jednym a drugim. Odbiorca
-   * kompletu dostaje dokładnie jeden komunikat na jedną wysyłkę, więc kolejka
-   * nie rośnie: każdy meldunek zdejmuje z niej najstarsze oczekiwanie.
-   */
+  /** Kolejka wywołań czekających na los zmiany — przekład między wywołaniem zwrotnym a obietnicą. */
   const oczekujace: ((komunikat: KomunikatZmiany) => void)[] = [];
 
   const zmiana = utworzZmianeOkna(kanal, stan, (komunikat) => {
     oczekujace.shift()?.(komunikat);
   });
 
-  // Ustawienia poziomu okna czyta port, ale ich nie zapisuje — nazwę hosta
-  // nadaje pole w szufladzie sterowania. Meldunek o losie zapisu nie ma tu
-  // odbiorcy, bo ten port nigdy nie woła `zapisz`.
+  // Ustawienia okna czyta port, ale ich nie zapisuje — nazwę hosta nadaje pole w szufladzie sterowania.
   const ustawienia = utworzZmianeUstawienia(kanal, stan, () => undefined);
   ustawienia.wczytaj();
 
@@ -80,13 +52,7 @@ export function utworzZrodloSrodowiska(kanal: Kanal, okno: Window): ZrodloSrodow
       odsubskrybuj.push(stan.naZmiane(() => sluchacz()));
     },
 
-    /**
-     * Odmowa rdzenia dochodzi dosłownie. Komunikat niepowodzenia składa
-     * `sterowanie/komunikat-zmiany.ts` — kod i zdanie błędu wprost z kontraktu,
-     * bez parafrazy — i tym samym zdaniem odzywa się pasek komunikatów kompletu
-     * przy zmianie z szuflady. Obietnica odrzucona tym zdaniem trafia do pola
-     * odmowy przełącznika.
-     */
+    /** Odmowa rdzenia dochodzi dosłownie, tym samym zdaniem co pasek komunikatów przy zmianie z szuflady. */
     zastosuj(srodowisko) {
       return new Promise<void>((spelnij, odrzuc) => {
         oczekujace.push((komunikat) => {

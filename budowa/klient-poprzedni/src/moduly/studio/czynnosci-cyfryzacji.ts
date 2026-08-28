@@ -13,29 +13,7 @@ import type { StanStudio } from './stan-studio';
 import { SKLADNIKI_PAKIETU_SERWERA } from './braki-cyfryzacji';
 import type { ZrodloWstawienStudio } from './zrodlo-wstawien-studio';
 
-/**
- * Czynności narzędziowni cyfryzacji — sześć komend rodziny `studio.ingest.*`.
- *
- * ── Co się zmieniło wobec poprzedniej postaci ───────────────────────────────
- * Wsad szedł `document.text.extract`: jedno wydobycie na jedno wywołanie, jeden
- * język, bez silnika, bez progu pewności i bez pojęcia kolejki. Teraz kolejkę
- * prowadzi rdzeń (`ingest.queue.add`, `ingest.queue.list`), rozpoznanie ma pełne
- * sterowanie (`ingest.recognize`), poprawka słowa wchodzi przed przyjęciem
- * (`ingest.correction.set`), a przyjęcie zakłada DOKUMENT wraz z pierwszą wersją
- * (`ingest.item.accept`) — nie sam bufor edytora.
- *
- * ── Przekazanie do edytora przestało być półśrodkiem ────────────────────────
- * Poprzednio wynik szedł do bufora edytora i panel musiał tłumaczyć, że wersji
- * pierwszej nie ma, bo wydobycie tekstu żadnej nie zakłada. `ingest.item.accept`
- * zakłada dokument I wersję, więc panel może wreszcie powiedzieć prawdę bez
- * zastrzeżenia. Dokument wchodzi do stanu modułu, żeby okno pracy zobaczyło go
- * natychmiast.
- *
- * ── Odmowa jednej pozycji nie zatrzymuje pozostałych ────────────────────────
- * Zostaje bez zmian: zatrzymanie całej kolejki na pierwszym nieczytelnym skanie
- * byłoby karą za materiał, a nie obsługą błędu. Bilans na końcu mówi, ile
- * przeszło, ile wróciło do ponowienia i ile odpadło.
- */
+/** Czynności narzędziowni cyfryzacji, sześć komend rodziny studio.ingest.*: kolejka, rozpoznanie, poprawka słowa i przyjęcie wyniku jako dokument z pierwszą wersją. */
 export interface ZapleczeCyfryzacji {
   stan: StanStudio;
   /** Źródło rodziny `studio.ingest.*` wraz z pozostałymi wstawieniami. */
@@ -53,7 +31,7 @@ export interface ZapleczeCyfryzacji {
   odswiez(): void;
 }
 
-/** Odczytuje kolejkę rdzenia do odbicia w oknie. */
+/** Odczytuje kolejkę wczytywania z rdzenia i odbija jej pozycje w stanie okna, żeby widok pokazywał aktualną zawartość kolejki. */
 export async function odczytajKolejke(zaplecze: ZapleczeCyfryzacji): Promise<void> {
   const idOkna = zaplecze.stan.idOkna();
   if (idOkna === '') return;
@@ -66,7 +44,7 @@ export async function odczytajKolejke(zaplecze: ZapleczeCyfryzacji): Promise<voi
   zaplecze.odswiez();
 }
 
-/** Dokłada wskazany materiał do kolejki rdzenia; wiele wskazań jednym żądaniem. */
+/** Dokłada wskazany materiał, jedną albo wieloma ścieżkami lub zasobami naraz, do kolejki wczytywania rdzenia jednym żądaniem. */
 export async function dolozMaterial(
   zaplecze: ZapleczeCyfryzacji,
   wskazanie: string,
@@ -86,9 +64,7 @@ export async function dolozMaterial(
   if (czyZasob) zadanie.assetIds = wskazania;
   else zadanie.sourcePaths = wskazania;
   const nastawy = zaplecze.ustawienia();
-  // Nastawy wspólne wsadu wchodzą już przy dołożeniu, bo kontrakt je tu
-  // przyjmuje: pozycja niesie wtedy swoje nastawy i rozpoznanie nie musi ich
-  // powtarzać przy każdym wywołaniu.
+  // Nastawy wspólne wsadu wchodzą już przy dołożeniu, więc rozpoznanie nie musi ich powtarzać.
   if (Object.keys(nastawy).length > 0) zadanie.settings = nastawy;
 
   zaplecze.pas.ladowanie('Dołożenie materiału do kolejki rdzenia w toku…');
@@ -107,7 +83,7 @@ export async function dolozMaterial(
   zaplecze.odswiez();
 }
 
-/** Rozpakowuje archiwum wsadu wprost do kolejki rdzenia. */
+/** Rozpakowuje wskazane archiwum wsadu po stronie rdzenia i dokłada powstałe z niego pozycje wprost do kolejki wczytywania. */
 export async function dolozArchiwum(
   zaplecze: ZapleczeCyfryzacji,
   sciezka: string,
@@ -127,8 +103,7 @@ export async function dolozArchiwum(
     archivePath: sciezka,
   });
   if (!wynik.udany || wynik.wynik === undefined) {
-    // Odmowa z powodu rozpakowywacza jest usterką WDROŻENIA, nie brakiem funkcji,
-    // i tak musi być nazwana — inaczej Operator uzna, że produkt wsadu nie ma.
+    // Odmowa z powodu rozpakowywacza jest usterką wdrożenia, nie brakiem funkcji, i tak ma być nazwana.
     zaplecze.pas.blad(
       `${opisOdmowyBledu('Rozpakowanie archiwum', wynik.blad)} ${SKLADNIKI_PAKIETU_SERWERA.archiwum}`,
     );
@@ -144,7 +119,7 @@ export async function dolozArchiwum(
   zaplecze.odswiez();
 }
 
-/** Rozpoznaje tekst jednej pozycji kolejki wraz z pełnym sterowaniem. */
+/** Rozpoznaje tekst jednej pozycji kolejki, przekazując rdzeniowi pełne nastawy sterujące silnikiem, jeśli okno je ustawiło. */
 export async function rozpoznajPozycje(
   zaplecze: ZapleczeCyfryzacji,
   idPozycji: string,
@@ -159,8 +134,7 @@ export async function rozpoznajPozycje(
 
   const wynik = await zaplecze.wstawienia.rozpoznaj({
     itemId: idPozycji,
-    // Brak nastaw znaczy „weź nastawy kolejki" — to rozstrzygnięcie rdzenia,
-    // a nie okna, więc pustego obiektu nie wysyłamy.
+    // Brak nastaw znaczy: weź nastawy kolejki — rozstrzyga rdzeń, więc pustego obiektu nie wysyłamy.
     ...(Object.keys(nastawy).length === 0 ? {} : { settings: nastawy }),
   });
   zaplecze.kolejka.ustawWToku(idPozycji, false);
@@ -179,16 +153,14 @@ export async function rozpoznajPozycje(
   zaplecze.odswiez();
 }
 
-/** Rozpoznaje wszystkie pozycje oczekujące i wracające do ponowienia. */
+/** Rozpoznaje kolejno wszystkie pozycje kolejki będące w stanie oczekiwania albo wracające do ponowienia po niskiej pewności. */
 export async function rozpoznajKolejke(zaplecze: ZapleczeCyfryzacji): Promise<void> {
   if (zaplecze.kolejka.nastepnaDoRozpoznania() === null) {
     zaplecze.odpowiedz.pokaz(BRAK_OCZEKUJACYCH, false);
     return;
   }
   zaplecze.pas.ladowanie('Rozpoznanie kolejki wczytywania w toku…');
-  // Pozycje przechodzimy po migawce identyfikatorów, a nie pytając kolejki
-  // w pętli o „następną": pozycja, której rdzeń nie ruszył ze stanu oczekiwania,
-  // wracałaby wtedy w nieskończoność.
+  // Pozycje przechodzimy po migawce identyfikatorów, inaczej pytanie o następną wracałoby bez końca.
   const doRozpoznania = zaplecze.kolejka
     .pozycje()
     .filter(
@@ -211,7 +183,7 @@ export async function rozpoznajKolejke(zaplecze: ZapleczeCyfryzacji): Promise<vo
   );
 }
 
-/** Poprawia rozpoznane słowo na warstwie tekstowej PRZED przyjęciem do edytora. */
+/** Poprawia treść jednego rozpoznanego słowa na warstwie tekstowej pozycji kolejki, zanim pozycja zostanie przyjęta do edytora. */
 export async function poprawSlowo(
   zaplecze: ZapleczeCyfryzacji,
   idPozycji: string,
@@ -285,8 +257,7 @@ export async function przyjmijWynik(
     zaplecze.pas.blad(opisOdmowyBledu('Przyjęcie wyniku cyfryzacji', wynik.blad));
     return;
   }
-  // Dokument wchodzi do stanu modułu, więc okno pracy widzi go natychmiast —
-  // przyjęcie kończy się dokumentem, nie samą treścią w buforze.
+  // Dokument wchodzi do stanu modułu, więc okno pracy widzi go od razu, nie dopiero po samej treści.
   zaplecze.stan.wchlon(wynik.wynik.document);
   zaplecze.pas.gotowe();
   zaplecze.odpowiedz.pokaz(
@@ -298,13 +269,7 @@ export async function przyjmijWynik(
   zaplecze.odswiez();
 }
 
-/**
- * Odczytuje urządzenia wejściowe maszyny rdzenia.
- *
- * Wykaz oddaje się wywołaniem, a nie zwracaną wartością, bo wstawia go kontrolka
- * wyboru w polach panelu — a ta wie o urządzeniach wszystko, czego potrzebuje do
- * etykiety, i nie ma po co przechodzić przez widok pośredni.
- */
+/** Odczytuje urządzenia wejściowe maszyny rdzenia i przekazuje wykaz wywołaniem do kontrolki wyboru pól panelu, która sama zna wszystko potrzebne do etykiety. */
 export async function odczytajUrzadzenia(
   zaplecze: ZapleczeCyfryzacji,
   pokaz: (urzadzenia: readonly StudioInputDevice[]) => void,
@@ -328,7 +293,7 @@ export async function odczytajUrzadzenia(
   );
 }
 
-/** Zdanie o wyniku rozpoznania — stan, pewność i to, co wróciło ze strukturą. */
+/** Zdanie opisujące wynik rozpoznania tekstu: stan pozycji, osiągniętą pewność oraz to, czy rdzeń oddał także strukturę układu. */
 function opiszRozpoznanie(
   stan: StudioIngestState,
   wynik: { words?: readonly unknown[]; layout?: readonly unknown[]; item: { confidence?: number } },
@@ -357,7 +322,7 @@ function opiszRozpoznanie(
   return `Pozycja rozpoznana: ${pewnosc}. ${slowa}. ${uklad}.`;
 }
 
-/** Rozbija wskazania rozdzielone przecinkiem; puste odpadają. */
+/** Rozbija ciąg wskazań materiału rozdzielonych przecinkiem na tablicę pojedynczych wskazań, odrzucając wpisy puste. */
 function rozbij(wartosc: string): string[] {
   return wartosc
     .split(',')

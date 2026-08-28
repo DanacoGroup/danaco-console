@@ -67,6 +67,26 @@ dostepu urzadzenia to zapis do punktu dostepu), `model.channel.set` (podmiana
 kanalu obslugujacego okno to zmiana wlasnego dostepu modelu).
 Wystawienie ktorejkolwiek z nich jest zwrotem terenu.
 
+**RUNDA DRUGA — zdania zwrocone przez kontrole tresci 28.08.** Kontrola zgodnosci
+przyjela w calosci: 372 pozycje, zero wiszacych, zero powtorzen, zero pustych, zadna
+komenda objeta wyjatkiem nie wystawiona, wytwory bajt w bajt z generatora, 128 dopisan
+i ZERO usuniec w kontrakcie. Liczby sa dobre. Wracaja ZDANIA.
+
+| | Rzecz | Ile pozycji |
+|---|---|---|
+| A | Zdanie mowi, CO komenda robi, zamiast KIEDY po nia siegnac — opis komendy przepisany po slowie „Uzyj". W wytworzonym opisie modelu stoi wtedy dwa razy to samo w jednym napisie, np. `usage.summary.get`: „Zwraca zuzycie tokenow... Uzyj, aby poznac zuzycie tokenow...". `narzedzia.opis` zada czegos odwrotnego: zdania mowiacego, kiedy siegnac. | 15 z 32 |
+| B | Powielenie ksztaltu zadania, zakazane wprost w `narzedzia.opis`: wartosci pol i wyliczenia wypisane w zdaniu, choc stoja obok w tej samej pozycji — `retention.set`, `mobile.process.list`, `provenance.call.list`, `usage.summary.get`, `clipboard.list`. | 5 |
+| C | **GROZNE** — `clipboard.delete`: zdanie mowi „cala historie NIEPRZYPIETA", a opis komendy mowi „albo cala historie", przy czym pole `includePinned` pozwala skasowac takze przypiete. Model uwierzy, ze wpisy przypiete sa bezpieczne, i skasuje je nieodwracalnie. | 1 |
+| D | Wyzwalacz niesprawdzalny przez model — `mobile.status.get` i `mobile.process.control` opisuja czynnosc urzadzenia („gdy urzadzenie pyta"), czyli warunek, ktorego model nie widzi. Zdania powstaly z opisu pola `deviceId`, nie z opisu komendy. | 2 |
+| E | Zgubione ostrzezenia stojace w opisie komendy: `launcher.hotkey.set` gubi „skrot zajety przez inny program nie jest bledem zapisu"; `snippet.list` gubi „slownik nalezy do rdzenia, nie do jednego okna"; `provenance.call.replay` gubi powtorzenie na innym kanale i modelu; `provenance.call.get` podaje tresc promptu jako pewnik wbrew polu `includeContent`. | 4 |
+| F | Nierozroznialnosc par bliskich sobie — `health.probe.list` wobec `health.result.list`, `alert.rule.list` wobec `alert.trigger.list`, `clipboard.list` wobec `snippet.list`. | — |
+
+**Luka bramki, nie wina wykonawcy.** Szczebel dyscypliny w drabinie POMINAL SIE z powodem
+„brak zmienionych plikow kodu", choc przybylo 256 wierszy w trzech plikach — walidator nie
+obejrzal tej zmiany ani razu. Osobno: `budowa/klient/node_modules` nie istnieje, wiec
+`contract.ts` nie zostal skompilowany przez nikogo, mimo ze osiem plikow klienta go wciaga.
+Obie luki idą do zgloszen, nie do tego terenu.
+
 **Kryteria odbioru.**
 1. `narzedzia.pozycje` ma 372 pozycje (340 + 32). Ani jedna nie wskazuje komendy
    nieistniejacej, ani jedna nie powtarza komendy juz wystawionej, ani jedna nie

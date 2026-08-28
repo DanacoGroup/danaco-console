@@ -619,3 +619,8 @@ idzie wzdłuż komponentu. Barwy biorą się z żetonów, nie z literałów —
 etykieta rady i ostrzeżenie o urwanej turze sięgają po te same żetony
 ostrzeżenia, którymi mówi odstępstwo promptu w pliku agents.css, żeby rada
 była rozpoznawalna kolorem bez czytania nagłówka.
+
+## budowa/klient-poprzedni/src/moduly/apps/apps.css
+Wnętrza okien opisuje osobny arkusz okna-apps.css. Kontrolki formularzy
+modułu pochodzą z modele/kontrolki-formularza, więc moduł wciąga też arkusz
+modele.css, inaczej pola dm-* byłyby bez oprawy.

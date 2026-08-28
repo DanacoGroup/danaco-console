@@ -7263,3 +7263,20 @@ w całości w tej samej bazie, oznaczony stanem, i wraca po przywróceniu.
 Przy przywracaniu kolejność jest istotna: najpierw schodzi znacznik kosza,
 inaczej sesja zostałaby niewidzialna mimo stanu czynnego, potem stan, na
 końcu powrót do rejestru żywego — wiersz wraca tam już jako czynny.
+
+## budowa/server/internal/core/adapter_transportu.go
+Zależność między rdzeniem a transportem idzie w jedną stronę. Transport nie
+zna rdzenia — zna wyłącznie własne interfejsy Rdzen, Ujscie i Rozglosnik, więc
+da się go wymienić i uruchomić bez rdzenia. Rdzeń zna transport, bo to w
+rdzeniu stoi montaż, który składa serwer i podaje mu to wejście. Prawdą wartą
+pilnowania nie jest brak obu zależności, tylko brak cyklu: dopisanie w
+transporcie importu z rdzenia wywraca kompilację, i o to właśnie chodzi.
+
+Obsluz bierze z ujścia jedno: jego tożsamość. Wchodzi ona do kontekstu żądania
+w całości, ponieważ bez niej rdzeń nie umiałby odpowiedzieć na pytanie, kto
+stoi po drugiej stronie tego gniazda — a od tego zależy powitanie, wyłączenie
+bieżącej sesji ze zmiany hasła oraz sprawca wpisywany w zdarzenia zmiany.
+Poszerzenie tego jednego wpisu jest tu istotą: drugi wpis obok byłby drugą
+prawdą o tym samym gnieździe. Samo ujście dalej nie idzie: rdzeń nie umie
+odesłać czegokolwiek do jednego urządzenia z pominięciem rozgłoszenia, bo to
+byłaby druga droga wyjścia obok nadajnika.

@@ -6572,3 +6572,40 @@ Objaśnienie jest częścią definicji, nie dodatkiem: odpowiada kolumnie
 objasnienie ustawionej jako NOT NULL w modelu danych. Pusty zbiór
 dopuszczalnych adresów przy definicji zbudowanej w kodzie nie jest bramą
 zamykającą dostęp, tylko brakiem wskazania miejsca w oknie konfiguracji.
+
+## budowa/server/internal/konfig/rozgloszenie.go
+Rozgłośnia nie jest drugim mechanizmem nastaw ani drugą tabelą: nie
+przechowuje ani jednej wartości ustawienia z własnej woli, tylko przy
+każdym ogłoszeniu pyta ten sam rozstrzygacz o rozstrzygnięcie w kontekście
+nasłuchującego i podaje dalej wynik. Jedynym stanem, jaki trzyma, jest
+zapis tego, co już powiedziała, po to, by nie budzić nasłuchującego zmianą,
+której nie było; ten zapis nie jest źródłem wartości, jest pamięcią
+rozmowy.
+
+Rozgłośnia nie jest też własną usługą ani własnym wątkiem: nie odpala
+gorutyny, nie odpytuje niczego w pętli i nie ma zegara. Doręczenie dzieje
+się w wątku tego, kto ogłosił zapis, czyli w torze komendy config.set.
+Droga zapisu woła Oglos z kluczem, który się zmienił, dopiero po udanym
+utrwaleniu wiersza tabeli ustawienie, ponieważ nastawa, która nie usiadła
+w bazie, nie jest zmianą nastawy. Punkty wywołania leżą poza tym pakietem.
+
+Pierwsze doręczenie w funkcji Sledz jest częścią umowy, nie uprzejmością.
+Nasłuchujący, który nie ma się przeładowywać, musi skądś wziąć punkt
+wyjścia; gdyby brał go osobnym pytaniem, miałby dwie drogi do jednej
+wartości i wyścig między nimi, w którym zapis mieszczący się pomiędzy
+pytaniem a zapisaniem się zginąłby. Jedna droga niesie jedno źródło.
+
+Funkcja Oglos mówi, że wskazane klucze mogły się zmienić, a nie że się
+zmieniły, ponieważ ogłaszający zna adres zapisu, a nie skutek dla każdego
+nasłuchującego z osobna. Skutek liczy rozstrzygacz osobno dla kontekstu
+każdego nasłuchu, dzięki czemu zapis na poziomie okna nie budzi nasłuchu
+poziomu aplikacji, a zapis na poziomie aplikacji nie budzi nikogo, kto ma
+wartość z węższego poziomu.
+
+Uchwyt Nastawa istnieje obok funkcji Rozstrzygnij, ponieważ korzystający
+z niego siedzi na drodze gorącej, gdzie straż bramki rozstrzyga przy
+każdym pakiecie z gniazda, a Rozstrzygnij za każdym razem schodzi po
+wartość do warstwy trwałości. Uchwyt zdejmuje ten koszt bez zdejmowania
+prawdy: nie jest drugą wartością mogącą rozjechać się ze źródłem, ponieważ
+jedyną drogą jego zmiany jest ogłoszenie ze źródła, a własnego zapisu
+uchwyt nie przyjmuje.

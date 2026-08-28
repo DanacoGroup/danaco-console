@@ -6556,3 +6556,13 @@ i najbardziej celowym, a oś opisuje adresata wartości, nie jej wagę.
 Odwrotna kolejność oznaczałaby, że wybór konta unieważnia decyzję podjętą
 wprost w oknie, co odbierałoby operatorowi sterowanie zamiast je
 rozszerzać.
+
+## budowa/server/internal/konfig/poziomy.go
+Żadna ścieżka pakietu nie odmawia rozstrzygnięcia; także błąd źródła danych
+kończy się polityką domyślną.
+
+Kolejność poziomów wyliczana przez poziomyOdNajwezszego jest odwrotnością
+kolumny poziom_zasiegu.pierwszenstwo. Ta kolumna mieszka w bazie i niesie
+własną numerację poziomów, od aplikacji przez wartość 0, globalnego przez
+wartość 1, aż po okno przez wartość 8; powielanie tej numeracji w kodzie
+byłoby drugą prawdą o tej samej kolejności.

@@ -1,0 +1,3 @@
+# Kopia design/zasoby/ osadzana przez build.rs przed każdą budową — odtwarzalna
+# z warstwy projektowej, nie jest tu drugim źródłem prawdy.
+interfejs/warstwa/

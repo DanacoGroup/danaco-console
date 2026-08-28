@@ -6155,3 +6155,9 @@ i którą komendą działa, zanim cokolwiek zostanie naciśnięte.
 
 ## budowa/klient-poprzedni/src/polaczenie/indeks.ts
 Kanał kontraktu zakłada tu dziennik nierozpoznanych, a widoki sięgają po obserwatora ogniska, by śledzić zmiany sesji i ustawiać kartę jako czynną, gdy identyfikator zmiany zgadza się z identyfikatorem sesji widoku.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/pas-relacji.ts
+Więź trafia dokładnie nad kolumny swojej pary, więc działa także wtedy, gdy
+koordynator i wykonawca nie sąsiadują ze sobą. Brak pary jest położeniem
+oczekiwanym, nie usterką, dlatego pas niesie też dymek z objaśnieniem, skąd
+bierze się figura, oraz miejsce na trwałą uwagę o podglądzie przekazania.

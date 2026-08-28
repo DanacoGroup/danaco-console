@@ -31,7 +31,7 @@ Jedno repozytorium: `~/budowa`. Poza nim nie ma drugiego drzewa z tą samą tre�
 | `budowa/desktop/` | powłoka Tauri |
 | `budowa/klient-poprzedni/` | klient wersji poprzedniej; **materiał do czytania i przeszczepu, nie do rozwoju** |
 | `design/` | system projektowy wraz z prototypami okien |
-| `docs/` | dokumentacja projektowa; uzasadnienia komentarzy rdzenia stoja w `docs/architektura/uzasadnienia-*.md`, sekcje nazwane sciezkami plikow |
+| `docs/` | dokumentacja projektowa |
 | `prowadzenie/` | prowadzenie budowy; **znika przed wydaniem** |
 | `narzedzia/` | skrypty budowy |
 

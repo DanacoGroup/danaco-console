@@ -1259,7 +1259,7 @@ porcje. Zdanie wlicza sie do granicy, odsylacz nie.
 
 **Dopowiedzenie piate Wlasciciela (27.08, po poludniu).** Odsylacze do docs
 NIE sa obowiazkowe i domyslnie ich nie ma — to zbedna komplikacja i lancuszek:
-mapowanie jest mechaniczne (sekcja w `docs/architektura/uzasadnienia-*.md`
+mapowanie bylo mechaniczne (sekcja w dokumencie uzasadnien, zniesionym 28.08
 nazywa sie sciezka pliku), wiec konwencje zapisuje sie RAZ, w przewodniku
 wykonawcy i w naglowkach plikow uzasadnien, nie w kazdym pliku kodu.
 Naglowek pliku to samo pelne zdanie odpowiedzialnosci. Wskazanie miejsca

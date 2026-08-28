@@ -97,7 +97,7 @@ export function panelSesje(w: WlasciwosciPanelu): HTMLElement {
           { klasa: 'dn-panel-wykaz', id: 'wykaz-sesji', 'data-sesje-widok': 'wszystkie' },
           w.sesje.map((sesja, indeks) => wierszSesji(sesja, indeks === 0)),
         )
-      : el('p', { klasa: 'dn-panel-pusty', tekst: tekst('panel.brakSesji') });
+      : el('p', { klasa: 'dn-pusty-stan dn-pusty-stan--zwarty', tekst: tekst('panel.brakSesji') });
 
   const panelSesjeWezel = el(
     'div',
@@ -108,7 +108,7 @@ export function panelSesje(w: WlasciwosciPanelu): HTMLElement {
   const panelProjektyWezel = el(
     'div',
     { klasa: 'dn-obszar-tresc', id: 'panel-projekty', role: 'tabpanel', hidden: true },
-    [el('p', { klasa: 'dn-panel-pusty', tekst: tekst('panel.brakProjektow') })],
+    [el('p', { klasa: 'dn-pusty-stan dn-pusty-stan--zwarty', tekst: tekst('panel.brakProjektow') })],
   );
 
   return el(

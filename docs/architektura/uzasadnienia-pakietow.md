@@ -7135,3 +7135,38 @@ działania domyślnego.
 
 Brak utrwalacza znaczy pulę bez trwałości — pamięć limitu żyje wtedy tylko do
 restartu.
+
+## budowa/server/internal/injection/pulap.go
+Pułap i awaria wymagają od Operatora innego działania. Pułap oznacza, że tura
+zatrzymała się na kwocie ustawionej w oknie: konto jest sprawne, limit
+dostawcy nietknięty, kanał czynny, a naprawą jest podniesienie pułapu albo
+zawężenie zadania. Awaria oznacza, że tura padła — kanał odmówił, proces
+zginął albo strumień się urwał — i powtórzenie bez zmiany warunków zwykle daje
+ten sam skutek.
+
+Rozpoznanie pułapu stoi obok pliku `wyczerpanie.go`, a nie w nim. Wyczerpanie
+jest granicą dostawcy (limit konta, kod HTTP 429, zdarzenie
+`rate_limit_event`) i uruchamia rotację kont. Pułap jest granicą nastawy okna
+i rotacji uruchamiać nie może: kolejne konto wydałoby tę samą kwotę, której
+nastawa zabrania.
+
+Wzorce rozpoznania są zachowawcze. Rozpoznanie nietrafione zostawia turę
+w drodze awarii, a zgłoszenie trafia do wykazu nierozstrzygniętych meldunków
+pakietu.
+
+Nastawa zmieniana odmową to `pulap_kosztu_usd`, dostępna w oknie Ustawienia,
+w sekcji Modele, jako Pułap kosztu okna. Kod odmowy to `permission_denied`,
+nie `rate_limited`: kod `rate_limited` niesie w kontrakcie ponawialność,
+a ponowienie tury na tym samym pułapie dałoby ten sam wynik. Kanał, konto
+i sesja zostają czynne — wstrzymana jest jedna tura.
+
+Wzorce pułapu są angielskie, bo pochodzą z komunikatów programu zewnętrznego.
+Każdy zawiera słowo „budget”, które odróżnia tę granicę od granicy dostawcy
+(„usage limit”, „rate limit”, rozpoznawanych w pliku `wyczerpanie.go`) — sam
+wzorzec „limit” złapałby wyczerpanie i zawrócił turę z rotacji kont.
+
+Źródła sprawdzane w rozpoznajPulap idą w kolejności wiarygodności, tej samej
+co w rozpoznajWyczerpanie: podtyp zdarzenia kończącego turę, potem jego tekst,
+na końcu wyjście diagnostyczne procesu. Tura bez zdarzenia `result` nie jest
+pułapem, ponieważ pułap przerywa turę wewnątrz programu, więc program zdąża
+zgłosić przerwanie — strumień urwany bez zdarzenia kończącego jest awarią.

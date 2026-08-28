@@ -12,7 +12,7 @@ import (
 )
 
 // fakeDokumentyLektury podstawia port Dokumenty pod adapter Badań: zamiast
-// wołać programy zewnętrzne, oddaje tekst zależny od zadania, żeby dało się
+// wołać programy zewnętrzne, zapamiętuje ostatnie zadanie, żeby dało się
 // zmierzyć, czy pola `preprocess` i `languages` doszły do portu, zamiast
 // zostać po drodze upuszczone.
 type fakeDokumentyLektury struct {
@@ -27,11 +27,7 @@ func (f *fakeDokumentyLektury) Przeksztalc(ctx context.Context,
 func (f *fakeDokumentyLektury) WyciagnijTekst(ctx context.Context,
 	z shared.DocumentTextExtractRequest) (shared.DocumentTextExtractResponse, error) {
 	f.ostatnie = z
-	tekst := "tekst surowy"
-	if z.Preprocess != nil && *z.Preprocess {
-		tekst = "tekst po obróbce wstępnej"
-	}
-	return shared.DocumentTextExtractResponse{Text: tekst, UsedOcr: true}, nil
+	return shared.DocumentTextExtractResponse{Text: "tekst rozpoznany", UsedOcr: true}, nil
 }
 
 // zlozAdapterBadan składa adapter modułu Research nad świeżą bazą SQLite,
@@ -58,12 +54,14 @@ func zlozAdapterBadan(t *testing.T) (*adapterBadan, dane.RepozytoriumBadan, cont
 	return adapter, repozytoria.Badania, zycie
 }
 
-// TestSkutekObrobkiWstepnejPrzyRozpoznaniuZrodla mierzy skutek `research.source.ocr`:
-// treść zapisana po rozpoznaniu z żądaną obróbką wstępną różni się od treści
-// zapisanej bez niej. Przed naprawą uchwyt upuszczał pole `preprocess`, więc
-// obie treści wychodziły identyczne niezależnie od żądania.
-func TestSkutekObrobkiWstepnejPrzyRozpoznaniuZrodla(t *testing.T) {
-	adapter, repozytorium, zycie := zlozAdapterBadan(t)
+// TestRozpoznaniePismaZrodlaPrzekazujePreprocessIJezyki wykazuje, że
+// `research.source.ocr` przekazuje pola `preprocess` i `languages` żądania
+// nietknięte do `document.text.extract` — bez tego uchwytu jedno albo drugie
+// pole ginie po drodze, a Operator dostaje rozpoznanie inną drogą niż zamówił.
+// Miarę skutku obróbki wstępnej na materiale produkcyjnym niesie
+// TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem.
+func TestRozpoznaniePismaZrodlaPrzekazujePreprocessIJezyki(t *testing.T) {
+	adapter, _, zycie := zlozAdapterBadan(t)
 	fake := &fakeDokumentyLektury{}
 	adapter.ZDokumentami(fake)
 
@@ -86,9 +84,12 @@ func TestSkutekObrobkiWstepnejPrzyRozpoznaniuZrodla(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("source.ocr bez obróbki odmówiło: %v", err)
 	}
-	bezObrobki, err := repozytorium.TrescZrodlaBadania(zycie, dodane.Source.Id)
-	if err != nil || bezObrobki.Tekst == nil {
-		t.Fatalf("treść po rozpoznaniu bez obróbki się nie zapisała: %v", err)
+	if fake.ostatnie.Preprocess != nil && *fake.ostatnie.Preprocess {
+		t.Fatalf("preprocess doszedł do portu jako prawda, mimo że żądanie go nie zamówiło")
+	}
+	if fake.ostatnie.Language != nil {
+		t.Fatalf("language doszedł do portu, mimo że żądanie nie podało languages: %q",
+			*fake.ostatnie.Language)
 	}
 
 	prawda := true
@@ -97,14 +98,9 @@ func TestSkutekObrobkiWstepnejPrzyRozpoznaniuZrodla(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("source.ocr z obróbką odmówiło: %v", err)
 	}
-	zObrobka, err := repozytorium.TrescZrodlaBadania(zycie, dodane.Source.Id)
-	if err != nil || zObrobka.Tekst == nil {
-		t.Fatalf("treść po rozpoznaniu z obróbką się nie zapisała: %v", err)
-	}
-
-	if *bezObrobki.Tekst == *zObrobka.Tekst {
-		t.Fatalf("obróbka wstępna nie zmieniła wyniku rozpoznania — pole preprocess "+
-			"nie dociera do portu dokumentów (treść obu przebiegów: %q)", *bezObrobki.Tekst)
+	if fake.ostatnie.Preprocess == nil || !*fake.ostatnie.Preprocess {
+		t.Fatalf("pole preprocess nie doszło do portu dokumentów jako prawda: %+v",
+			fake.ostatnie.Preprocess)
 	}
 	if fake.ostatnie.Language == nil || *fake.ostatnie.Language != "pol+eng" {
 		t.Fatalf("pole languages nie doszło do portu dokumentów jako language: %+v",

@@ -13,29 +13,9 @@ import { czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import type { TozsamoscKlienta } from '../protokol/tozsamosc-klienta';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Źródło pasa kart sesji — jedyna prawda powłoki o tym, jakie sesje trwają.
- *
- * Jedna odpowiedzialność: odpytanie `session.list` i nasłuch zdarzeń
- * `session.changed` oraz `session.focus.changed`, złożone w jedną migawkę pasa.
- *
- * Karta sesji jest sesją rdzenia. Pas nie nadaje kartom identyfikatorów
- * miejscowych i nie zakłada ich sam: karta powstaje, bo rdzeń ma sesję, i znika,
- * bo rdzeń ją zamknął. Sesja i okno komunikacji pozostają dwoma bytami —
- * liczba okien na scenie nie ma tu wpływu.
- *
- * Zakładkami są sesje otwarte: czynne i wstrzymane. Sesja zakończona albo
- * zarchiwizowana przestaje być zakładką, tak samo jak po `session.close`.
- *
- * Ognisko jest właściwością klienta. Kartę czynną wskazuje `session.focus`
- * tego klienta, nie konta — zdarzenia z innego `clientId` pas pomija. Zanim
- * padnie pierwsze zdarzenie, czynna jest sesja powiązana z tym połączeniem.
- *
- * Odmowa albo odpowiedź o złym kształcie daje stan `blad` z treścią odmowy,
- * a nie pusty pas udający brak sesji.
- */
+// Źródło pasa kart sesji — jedyna prawda powłoki o tym, jakie sesje rdzenia w tej chwili trwają.
 
-/** Jedna zakładka pasa: sesja rdzenia w postaci gotowej dla karty. */
+/** Jedna zakładka pasa: sesja rdzenia w postaci gotowej dla karty widocznej w tym samym pasie sesji klienta. */
 export interface WpisKarty {
   /** Identyfikator sesji nadany przez rdzeń — on jest identyfikatorem karty. */
   id: string;
@@ -43,10 +23,10 @@ export interface WpisKarty {
   stan: ProgressStatus;
 }
 
-/** Stan źródła: przed pierwszą odpowiedzią rdzenia, po niej, albo po odmowie. */
+/** Stan źródła: przed pierwszą odpowiedzią rdzenia, zaraz po niej, albo po jego pełnej odmowie wykonania. */
 export type StanZrodlaKart = 'oczekiwanie' | 'gotowe' | 'blad';
 
-/** Migawka pasa — komplet danych do jednego przerysowania. */
+/** Migawka pasa — komplet danych do jednego przerysowania pasa kart sesji tego samego klienta tej powłoki. */
 export interface MigawkaKart {
   stan: StanZrodlaKart;
   wpisy: readonly WpisKarty[];
@@ -63,7 +43,7 @@ export interface ZrodloKartSesji {
   naZmiane(sluchacz: (migawka: MigawkaKart) => void): Odsubskrybuj;
 }
 
-/** Nazwa zastępcza sesji bez tytułu; nie udaje danych, nazywa ich brak. */
+/** Nazwa zastępcza sesji bez tytułu; nie udaje danych, których wcale nie ma, tylko wprost nazywa ich brak. */
 const BEZ_NAZWY = 'Sesja bez nazwy';
 
 export function utworzZrodloKartSesji(kanal: Kanal, klient: TozsamoscKlienta): ZrodloKartSesji {
@@ -134,8 +114,7 @@ export function utworzZrodloKartSesji(kanal: Kanal, klient: TozsamoscKlienta): Z
     oglos();
   });
 
-  // Pierwsze odpytanie od razu: ramka przy braku połączenia trafia do kolejki
-  // wychodzącej transportu i wychodzi z chwilą nawiązania łączności.
+  // Pierwsze odpytanie od razu: ramka przy braku połączenia trafia do kolejki wychodzącej transportu.
   odpytaj();
 
   return {
@@ -144,24 +123,18 @@ export function utworzZrodloKartSesji(kanal: Kanal, klient: TozsamoscKlienta): Z
   };
 }
 
-/** Zakładką jest sesja otwarta: czynna albo wstrzymana. */
+/** Zakładką jest sesja otwarta w tym rdzeniu: czynna albo wstrzymana, nigdy zakończona ani zarchiwizowana. */
 function czyZakladka(sesja: Session): boolean {
   return sesja.status === SessionStatus.Active || sesja.status === SessionStatus.Paused;
 }
 
-/** Przekład sesji rdzenia na zakładkę pasa. */
+/** Przekład sesji rdzenia na zakładkę pasa, gotową do narysowania jako karta w tym samym pasie kart sesji. */
 function wpisKarty(sesja: Session, obecnosc?: SessionPresence): WpisKarty {
   const tytul = sesja.title !== undefined && sesja.title.length > 0 ? sesja.title : BEZ_NAZWY;
   return { id: sesja.id, tytul, stan: stanKarty(sesja, obecnosc) };
 }
 
-/**
- * Stan karty liczony wyłącznie z odpowiedzi rdzenia.
- *
- * Kropka „praca w tle" zapala się od strumienia zgłoszonego w żywym stanie
- * sesji, a nie od samego faktu, że sesja jest czynna — inaczej wskaźnik
- * mówiłby o pracy, której nie ma.
- */
+/** Stan karty liczony wyłącznie z odpowiedzi rdzenia, nigdy z lokalnego domysłu tego samego widoku klienta. */
 function stanKarty(sesja: Session, obecnosc?: SessionPresence): ProgressStatus {
   if ((obecnosc?.streamingWindowCount ?? 0) > 0) return ProgressStatus.Running;
   if (sesja.status === SessionStatus.Paused) return ProgressStatus.Paused;

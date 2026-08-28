@@ -6684,3 +6684,29 @@ znakowania zaszyty jako operator, przez co znakowanie modelu ginie
 w przełączniku pokazującym wszystko, co zrobił model; oraz brzmienie
 zastane fragmentu liczone w bajtach — dokument polski ma litery
 dwubajtowe, a wycinek policzony po bajtach rozciąłby taką literę w środku.
+
+## budowa/server/internal/core/adapter_nawigacja_dziedziczenie.go
+Wejście do modułu niesie w kontrakcie wyłącznie sesję, moduł i ewentualne okno
+do ponownego użycia. Gdyby okno powstawało z samego modułu, powstawałoby bez
+kanału modelu, czyli jako okno, które się rysuje i nie umie rozmawiać. Kanał
+dobiera się z tego, czym sesja już rozmawia, a brak obu źródeł daje okno bez
+kanału: rdzeń nie odmawia wtedy wejścia do modułu, a okno zgłasza brak dopiero
+przy próbie tury.
+
+Dziedziczy się komplet parametrów wykonania, nie sam kanał, ponieważ okno
+modułu ma pozostać samodzielne i nie wchodzić do cudzej pętli koordynator
+wykonawca.
+
+## budowa/server/internal/core/handlers_aod.go
+Nakładka stałej obecności asystenta stoi na jednym porcie, bo siedem komend
+obsługuje jedną powierzchnię i jedno pojęcie stanu — osobne porty dla stanu,
+rozmowy i obserwacji byłyby trzema prawdami o jednym bycie. Rodzina nie ma
+zdarzenia własnego: wiadomość założona przez `aod.chat.send` idzie zdarzeniem
+`message.changed`, tym samym, którym idzie wiadomość z okna rozmowy, bo jest to
+ta sama wiadomość w tej samej historii. Zlecenie założone przez
+`aod.voice.command` rozgłasza moduł Assistant przez `assistant.action.changed`,
+więc obsługa komendy nie rozgłasza go drugi raz. Port niewypełniony nie
+rejestruje niczego: komendy odpowiadają wtedy `aod.unknown`, a pozostałe domeny
+pracują bez zmian. Rozgłoszenie wyciszenia po `aod.mute.set` odróżnia zdarzenie
+realne od powtórzonego bez zmiany, bo bez tego rozróżnienia jedna powłoka
+wyciszałaby, a druga wciąż pokazywałaby sugestie tej samej rozmowy.

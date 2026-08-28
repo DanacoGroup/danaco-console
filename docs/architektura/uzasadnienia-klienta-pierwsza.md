@@ -8823,3 +8823,13 @@ układu okien. Wykaz idzie z `rozmowa/`, odczyt i zapis to wywołania
 `ZamontowanaRozmowa`; `rozpoznajWidokZapisu` jest przekładem napisu na kod trybu
 z tamtego katalogu, a nie drugim wykazem. Port podpinany jest dopiero tutaj, bo
 dopiero tutaj rozmowa istnieje.
+## budowa/klient-poprzedni/src/moduly/diagnostics/okno-recommendations-panel.ts
+Okno nie trzyma własnego wskazania analizy: centrum diagnostyki ustawia
+analizę po udanym przebiegu, a to okno czyta wskazanie ze stanu wspólnego jako
+identyfikator żądania i przelicza wykaz przy zmianie stanu — analiza pusta
+jest stanem poprawnym, nie usterką, więc żądanie bez identyfikatora analizy
+nie wychodzi. Komenda odczytu rekomendacji jest wyłącznie odczytem: panel
+pokazuje proponowaną poprawkę, lecz jej nie stosuje, a przyciski „zastosuj
+poprawkę", „odrzuć" i „inna propozycja" stoją jako czynności bez własnej
+komendy, z podanym powodem. Pole statusu rekomendacji wyświetla się przy
+każdej pozycji wykazu.

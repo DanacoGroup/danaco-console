@@ -7086,3 +7086,22 @@ dlatego Proces udostępnia identyfikator procesu i honoruje odwołanie kontekstu
 zamiast samodzielnie zarządzać cyklem życia drzewa procesów. Sam start procesu
 leży w pliku `rozruch.go` i jest jedyny w drzewie; tutaj zostaje wyłącznie to,
 co swoiste dla tury: kształt wejścia JSON-lines.
+
+## budowa/server/internal/injection/przebieg.go
+Kolejność w wykonajPrzebieg jest zamierzona — prowenancja idzie przed
+uruchomieniem procesu, więc odbiorca zna warunki wywołania nawet wtedy, gdy
+proces w ogóle nie wystartuje.
+
+Program `claude` oczekuje w polach --settings i --mcp-config ścieżek plików,
+nie napisów JSON, dlatego treść tych pól trzeba najpierw zapisać na dysk.
+Pliki tymczasowe żyją tylko przez ten przebieg i są sprzątane po zakończeniu
+tury.
+
+Pole prowenancji „settings” ma pokazywać treść przekazaną kanałowi przed
+materializacją, a wiersz argv realną komendę ze ścieżką pliku tymczasowego —
+stąd argv składa się z ustawień materializowanych, a prowenancja
+z pierwotnych.
+
+Zawiadomienie o starcie procesu idzie zaraz po starcie, przed podaniem
+wejścia: gdyby tura padła w połowie, proces i tak jest już objęty uchwytem
+sesji.

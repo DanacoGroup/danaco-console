@@ -21,16 +21,17 @@ zamknietego terenu mermaid. `TestObszarDesignNieWymieniaSilnikowObrazuSpozaInsta
 ktory jego blizniak ma w wierszach 48, 62 i 91 (`sprawdzonych++` oraz
 `if sprawdzonych == 0 { t.Fatal(...) }`).
 
-Skutek zmierzony mutacja: w katalogu bez plikow o przedrostku `adapter_modul_design`
+Skutek zmierzony zmiana probna: w katalogu bez plikow o przedrostku `adapter_modul_design`
 blizniak oblewa komunikatem „zapora nie znalazla ani jednego pliku", a ten test daje
 `--- PASS (0.00s)`, nie sprawdziwszy niczego. Zmiana przedrostka nazw albo przeniesienie
 obszaru Design do podkatalogu zdejmie zapore **bez jednego czerwonego sprawdzianu**.
 
-To jest ten sam rodzaj usterki, ktory dzis wraca w budowie raz po raz: bramka, ktora
-przy braku materialu swieci zielono zamiast oblac. Rozbrojenie wyglada jak powodzenie.
+To jest ten sam rodzaj usterki, ktory dzis wraca w budowie raz po raz: sprawdzian, ktory
+przy braku materialu konczy sie bez bledu zamiast oblac. Wylaczona miara wyglada
+wtedy jak wynik dobry.
 
 **Kryteria odbioru.**
-1. Test oblewa GLOSNO, gdy nie przejrzal ani jednego pliku. Dowodem jest mutacja:
+1. Test oblewa GLOSNO, gdy nie przejrzal ani jednego pliku. Dowodem jest zmiana probna:
    zmien filtr przedrostka w kopii poza drzewem i pokaz, ze test **pada**.
 2. Przed naprawa ta sama mutacja daje `PASS` — przytocz oba biegi.
 3. Przejrzyj CALY plik zapory i wypisz KAZDA petle oraz KAZDY wykaz, ktory moze
@@ -181,11 +182,11 @@ Studia — nadaja sie do ponownego uzycia bez przenoszenia kodu.
 | **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy; `budowa/klient/src/main.ts` (zniesiony na rzecz `aplikacja.ts` — dwa punkty wejscia otwieralyby dwa polaczenia i dwie maszyny stanu); `budowa/klient/package.json` wylacznie w zakresie dopisania sprawdzianow ramy do polecenia `testy` |
 | **Poza terenem** | `budowa/klient/src/wejscie/`, `polaczenie/`, `protokol/`; caly `design/`; rdzen; `prowadzenie/` |
 
-**Runda trzecia — bateria mutacji jako kryterium odbioru.** Dwie niezalezne kontrole
-zwrocily runde druga. Kazda z ponizszych mutacji przechodzi DZIS na zielono; po naprawie
-KAZDA ma oblewac. To jest miara odbioru, nie wskazowka.
+**Runda trzecia — wykaz zmian probnych jako kryterium odbioru.** Dwie niezalezne kontrole
+zwrocily runde druga. Kazda z ponizszych zmian probnych przechodzi DZIS bez bledu; po naprawie
+KAZDA ma oblewac sprawdzian. To jest miara odbioru, nie wskazowka.
 
-| | Mutacja | Co obnaza |
+| | Zmiana probna | Co pokazuje |
 |---|---|---|
 | M1 | wstawic z powrotem `przekazano = true` przed wolaniem przekazania | sprawdzian mierzy WLASNA KOPIE zatrzasku (`przekazanie.test.ts:266-287`), nie kod produkcyjny; `aplikacja.ts` nie jest importowana przez zaden sprawdzian |
 | M2 | zapisac `liczbaSesji: 0` na sztywno w `montaz.ts:40` i `:75` | nastawa niesie `sessions: []`, wiec sprawdzian porownuje 0 z 0 |

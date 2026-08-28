@@ -7976,3 +7976,13 @@ w wyniku kończy przegląd wcześniej, bo wykaz na kilkaset pozycji nie jest
 odpowiedzią, tylko zrzutem. Zagnieżdżenie reguł ma znaczenie, bo definicje
 motywu ciemnego stoją w regule warunkowej, więc przegląd płaski przeoczyłby
 połowę produktu.
+
+## budowa/klient-poprzedni/src/aod/cztery-stery.ts
+Cztery stery decyzji stoją w jednym pasie przy wpisie: zatwierdzenie kroku,
+wstrzymanie, konfiguracja Koordynatora, przejęcie bezpośredniego sterowania.
+
+Ster ma przycisk tylko wtedy, gdy stoi za nim komenda kontraktu; inaczej wyświetla
+zdanie nazywające granicę. Zatwierdzenia kroku kontrakt nie zna, a przestawienie
+ogniska wymaga identyfikatora klienta z powitania połączenia, którego okno
+nakładki nie otrzymuje. Żaden przycisk nie pyta o potwierdzenie i żaden nie jest
+wyszarzany — rozstrzyga rdzeń, nakładka pokazuje odpowiedź.

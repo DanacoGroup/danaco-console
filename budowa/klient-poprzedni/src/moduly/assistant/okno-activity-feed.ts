@@ -15,33 +15,12 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 import { wierszDziennika } from './wiersz-dziennika';
 
-/** Kod okna w katalogu rdzenia (`okno_operacyjne.kod`). */
+/** Kod okna w katalogu rdzenia, po którym rdzeń rozpoznaje to okno operacyjne modułu Assistant tego typu. */
 export const KOD_OKNA = 'activity-feed';
 
 /**
- * Activity Feed — okno monitorujące modułu Assistant.
- *
- * Daje przegląd historii działań oraz powrót do wyniku wcześniejszego
- * zlecenia. Zapis jest chronologiczny i wspólny dla poleceń głosowych
- * i tekstowych.
- *
- * Wpisy stoją w grupach dziennych: nagłówek doby rozdziela zapis tak, jak
- * rozdziela go pamięć Operatora („kiedy prosiłem o rezerwację sali"). Grupę
- * składa okno, bo rdzeń oddaje wykaz płaski — `assistant.activity.list` nie ma
- * pola grupowania.
- *
- * Zawężenie — pole szukania i rodzaj wpisu — liczy się również w oknie
- * (`filtr-dziennika.ts`); rdzeń nie ma czym zawęzić tego wykazu.
- *
- * Pustki są rozróżnione tak jak w `dostepy/stany-odczytu.ts`: „jeszcze nie
- * pytałem", „pytam" i „rdzeń nie zna ani jednego wpisu" to trzy różne zdania.
- * Czwartym jest pustka po zawężeniu — wpisy są, tylko żaden nie pasuje —
- * a piątym odmowa rdzenia wraz z jej powodem; komunikat zostaje w układzie,
- * a „Spróbuj ponownie" go nie usuwa.
- *
- * Powrót do wyniku nie potrzebuje osobnej komendy: wpis rodzaju `result` niesie
- * treść wyniku, a zawężenie dziennika do jednego zlecenia idzie polem
- * `actionId` komendy `assistant.activity.list`.
+ * Activity Feed jest oknem monitorującym modułu Assistant, dającym przegląd historii działań
+ * oraz powrót do wyniku wcześniejszego zlecenia.
  */
 export interface OknoActivityFeed {
   element: HTMLElement;
@@ -65,7 +44,7 @@ export function utworzOknoActivityFeed(stan: StanAssistant): OknoActivityFeed {
 
   okno.tresc.append(zakres, lista, odpowiedz.element, wynik);
 
-  /** Wpisy widoczne po zawężeniu — one, i tylko one, wchodzą do eksportu. */
+  /** Wpisy widoczne po zawężeniu — one, i tylko one, wchodzą do eksportu dziennika. */
   let widoczne: readonly AssistantActivityEntry[] = [];
 
   const element = document.createElement('section');
@@ -96,15 +75,7 @@ export function utworzOknoActivityFeed(stan: StanAssistant): OknoActivityFeed {
       wpis === undefined ? 'Dziennik nie ma wpisu rodzaju „wynik" dla tego zlecenia.' : wpis.content;
   }
 
-  /**
-   * Dwie czynności wykonywane wprost na wpisie dziennika.
-   *
-   * Odsłuch pobiera bajty i odtwarza je w karcie: dźwięk wraca tam, skąd
-   * wyszedł, a rdzeń oddaje wyłącznie nagrania, które sam wystawił.
-   * Wyróżnienie idzie do rdzenia, więc przeżywa odświeżenie wykazu — po zapisie
-   * czytamy dziennik ponownie, żeby wykaz pokazywał stan zapisany, a nie
-   * przewidywany.
-   */
+  /** Dwie czynności wykonywane wprost na wpisie dziennika: odsłuch nagrania i wyróżnienie w rdzeniu. */
   const czynnosciWpisu = {
     odsluch(odnosnik: string): void {
       void (async () => {
@@ -168,15 +139,7 @@ export function utworzOknoActivityFeed(stan: StanAssistant): OknoActivityFeed {
   return { element, odswiez };
 }
 
-/**
- * Wpisy przeplecione nagłówkami dni.
- *
- * Nagłówek pada wyłącznie przy zmianie doby, więc wykaz w kolejności rdzenia
- * daje po jednym nagłówku na dzień. Sortowania tu nie ma: kolejność zapisu
- * należy do rdzenia (`assistant.activity.list` oddaje wykaz uporządkowany),
- * a przestawianie go w oknie zamieniłoby chronologię rdzenia na chronologię
- * klienta.
- */
+/** Wpisy przeplecione nagłówkami dni; nagłówek pada wyłącznie przy zmianie doby, sortowania tutaj nie ma. */
 function grupujDniami(
   wpisy: readonly AssistantActivityEntry[],
   rysuj: (wpis: AssistantActivityEntry) => HTMLElement,
@@ -194,7 +157,7 @@ function grupujDniami(
   return pozycje;
 }
 
-/** Nagłówek grupy dnia — pozycja listy o roli separatora, nie wpis dziennika. */
+/** Nagłówek grupy dnia — pozycja listy o roli separatora, nie wpis dziennika, widoczna w wykazie zapisów. */
 function naglowekDnia(nazwa: string): HTMLElement {
   const element = document.createElement('li');
   element.className = 'ma-dziennik__dzien';
@@ -203,13 +166,13 @@ function naglowekDnia(nazwa: string): HTMLElement {
   return element;
 }
 
-/** Wpisy i zakres widoku, z których powstaje plik eksportu. */
+/** Wpisy i zakres widoku, z których powstaje plik eksportu, złożone razem w jeden opis danych do zapisu. */
 interface WidokEksportu {
   widoczne(): readonly AssistantActivityEntry[];
   zakres(): string;
 }
 
-/** Stopka okna: zdjęcie zawężenia, ponowienie odczytu i eksport dziennika. */
+/** Stopka okna: zdjęcie zawężenia, ponowienie odczytu i eksport dziennika do pliku widocznego Operatorowi. */
 function pasekZapisu(
   stan: StanAssistant,
   odpowiedz: WierszOdpowiedzi,
@@ -217,15 +180,13 @@ function pasekZapisu(
 ): HTMLElement {
   const calosc = przycisk('Cały dziennik', 'dn-btn dn-btn--sm dn-btn--zarys');
   calosc.addEventListener('click', () => {
-    // Wybór jest przełącznikiem: wskazanie zlecenia już wybranego zdejmuje
-    // zawężenie i czyta dziennik w całości.
+    // Wybór jest przełącznikiem: wskazanie zlecenia już wybranego zdejmuje zawężenie dziennika.
     void stan.wybierz(stan.wybrane());
   });
 
   const ponow = przycisk('Spróbuj ponownie', 'dn-btn dn-btn--sm dn-btn--zarys');
   ponow.addEventListener('click', () => {
-    // Komunikat błędu zostaje: ponowienie wyzwala odczyt, a zdanie o odmowie
-    // znika dopiero, gdy odczyt się powiedzie.
+    // Komunikat błędu zostaje: zdanie o odmowie znika dopiero, gdy ponowiony odczyt się powiedzie.
     void stan.odswiezDziennik().then(() => {
       if (stan.fazaDziennika() !== 'blad') return;
       odpowiedz.pokaz(opisOdmowy('Ponowny odczyt dziennika', '', stan.powodDziennika()), false);
@@ -236,8 +197,7 @@ function pasekZapisu(
   eksport.addEventListener('click', () => {
     const wpisy = widok.widoczne();
     if (wpisy.length === 0) {
-      // Plik o zerowej treści wyglądałby jak eksport udany, a nie jest niczym:
-      // pobranie bez wpisów nazywamy zamiast je udawać.
+      // Plik o zerowej treści wyglądałby jak eksport udany; pobranie bez wpisów nazywamy wprost.
       odpowiedz.pokaz(
         'Widok nie ma ani jednego wpisu — nie ma czego wydać. Zdejmij zawężenie albo ' +
           'poczekaj na pierwsze działanie asystenta.',
@@ -268,7 +228,7 @@ function pasekZapisu(
   return element;
 }
 
-/** Pięć stanów widoku: przed pytaniem, odczyt, pustka, pustka po zawężeniu, odmowa. */
+/** Pięć stanów widoku: przed pytaniem, odczyt, pustka, pustka po zawężeniu, odmowa rdzenia wraz z powodem. */
 function naniesFaze(
   okno: StanOkna,
   stan: StanAssistant,
@@ -286,14 +246,12 @@ function naniesFaze(
     return;
   }
   if (ile === 0) {
-    // Zanim rdzeń odpowie, okno mówi „jeszcze nie pytałem" — pusty dziennik
-    // po odmowie i pusty dziennik przed odczytem to dwa różne stany.
+    // Zanim rdzeń odpowie, okno mówi jeszcze nie pytałem — to inny stan niż pustka po odmowie.
     if (!stan.pytanoODziennik()) {
       okno.puste(PUSTE.dziennikSpoczynek);
       return;
     }
-    // Zapis pełny, z którego zawężenie nie przepuściło niczego, to trzecia
-    // sytuacja: wpisy są, więc zdanie o pustym dzienniku byłoby nieprawdą.
+    // Zapis pełny, z którego zawężenie nie przepuściło niczego, to trzecia sytuacja stanu.
     if (filtr.zawezony() && stan.wpisy().length > 0) {
       okno.puste(PUSTE.dziennikSzukanie);
       return;

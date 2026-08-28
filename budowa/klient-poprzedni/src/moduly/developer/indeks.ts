@@ -15,41 +15,7 @@ import { utworzZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
  * Moduł Developer — złożenie pięciu okien operacyjnych wokół jednego
- * repozytorium.
- *
- * Moduł pracuje w oknie, nie w sesji: wszystkie pięć komend obszaru
- * (`developer.file.open`, `file.save`, `tree.get`, `git.action`, `build.run`)
- * wymaga `windowId`. Umowa `WidokModulu.wczytaj` niesie natomiast
- * identyfikator sesji, więc złożenie jedzie przez `widokZOknaSesji`: przejście
- * pyta rdzeń o okna sesji i odracza montaż do chwili, gdy okno tego modułu
- * jest znane. Kod modułu jest przejściu podawany, bo bez niego przejście bierze
- * pierwsze okno w wykazie — także cudze (`moduly/rejestracja.ts`).
- *
- * Układ wynika z ról. W pasie górnym wiodące okno Code Editor wraz
- * z pomocniczym Project Tree: drzewo wskazuje plik (`stan.wskazPlik`), edytor
- * go odczytuje. W pasie środkowym zarządca repozytorium (Git Panel) i monitor
- * (Build Output i Run & Debug). W pasie dolnym Dev Tools — kolumna czterech
- * integracji deweloperskich. Okno rozmowy modułu nie należy do tego złożenia:
- * jest bytem sesji i składa je warstwa rozmowy, tak samo jak Execution Loop
- * Window.
- *
- * Opracowanie wymienia siedem okien modułu. Pięć składa to złożenie, dwa
- * pozostałe są wspólne platformie i stoją poza katalogiem modułu. Monitor jest
- * JEDNYM oknem o dwóch częściach (Build Output i Run & Debug) przełączanych
- * zakładkami w nagłówku kolumny, nie dwoma oknami — dlatego ma jeden kod
- * katalogu rdzenia.
- *
- * Ostatni pas niesie okna pomocnicze — zbudowane (podgląd w tle bash na
- * `terminal.output.stream`) oraz spis pozycji jeszcze nieistniejących wraz
- * z powodem każdej (`okna-pomocnicze/rejestr-pomocniczych.ts`). Terminal ma
- * w tym spisie miejsce i nie jest tu budowany drugi raz; nie powiela go też
- * zakładka Containers okna Dev Tools.
- *
- * Zdarzenie `developer.build.changed` ma dwie subskrypcje, bo każda bierze co
- * innego. Stan modułu unieważnia po nim drzewo i edytor — budowanie generuje
- * pliki. Build Output bierze przyrost logu (`logLine`), którego stan nie
- * przenosi; kontrakt nie ma komendy rozwijającej `logRef`, więc log narasta
- * wyłącznie ze zdarzenia.
+ * repozytorium, montowane w oknie identyfikowanym kodem, nie w sesji.
  */
 export interface ZamontowanyDeveloper {
   /** Element osadzony w dokumencie. */
@@ -62,7 +28,7 @@ export interface ZamontowanyDeveloper {
   zamknij(): void;
 }
 
-/** Nazwa modułu w etykietach dostępności pasa okien pomocniczych. */
+/** Nazwa modułu w etykietach dostępności pasa okien pomocniczych modułu Developer w oknie sesji rdzenia. */
 const NAZWA_MODULU = 'Developer';
 
 export function zamontujDeveloper(
@@ -71,10 +37,7 @@ export function zamontujDeveloper(
   okno: string,
 ): ZamontowanyDeveloper {
   const zrodlo = utworzZrodloDeveloper(kanal);
-  // Warsztat jest drugim źródłem, bo ma innych odbiorców: zakładki Dev Tools,
-  // panel Run & Debug, historię przebiegów i pasek operacji Code Editora.
-  // Jedna umowa na wszystko kazałaby Project Tree przyjmować zależność od
-  // czterdziestu metod, z których używa czterech.
+  // Warsztat jest drugim źródłem, bo ma innych odbiorców niż Project Tree i Code Editor.
   const warsztat = utworzZrodloWarsztatu(kanal);
   const stan = utworzStanDevelopera(zrodlo, { okno });
 
@@ -103,10 +66,7 @@ export function zamontujDeveloper(
     oznacz(budowanie.element, 'build-output'),
   );
 
-  // Dev Tools dostaje własny pas, a nie miejsce obok Git Panelu: kolumna
-  // czterech zakładek integracji jest w opracowaniu rozszerzeniem bocznym
-  // obszaru roboczego, nie sąsiadem zarządcy repozytorium, i potrzebuje pełnej
-  // szerokości na wykaz zależności zewnętrznych.
+  // Dev Tools dostaje własny pas, a nie miejsce obok Git Panelu, bo potrzebuje pełnej szerokości.
   const dolny = document.createElement('div');
   dolny.className = 'mdev-modul__dol';
   dolny.append(
@@ -142,8 +102,7 @@ export function zamontujDeveloper(
     stan,
     odswiez,
     zamknij() {
-      // Pas zamyka się PIERWSZY: trzyma subskrypcję `stream.chunk`, która żyje
-      // niezależnie od stanu modułu i po zejściu ze sceny nikt by jej nie zdjął.
+      // Pas zamyka się pierwszy: trzyma subskrypcję, która żyje niezależnie od stanu modułu.
       pomocnicze.zamknij();
       warsztatKodu.zamknij();
       narzedzia.zamknij();
@@ -156,7 +115,7 @@ export function zamontujDeveloper(
   };
 }
 
-/** Znakuje okno kodem rejestru okien operacyjnych — po nim skacze nawigacja. */
+/** Znakuje okno kodem rejestru okien operacyjnych, po którym skacze nawigacja między oknami modułu Developer. */
 function oznacz(element: HTMLElement, kod: string): HTMLElement {
   element.dataset['okno'] = kod;
   element.tabIndex = -1;

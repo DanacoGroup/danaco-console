@@ -1124,6 +1124,38 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 ## Zgłoszenia oczekujące na teren
 
+### Warstwa druku jest napisana i porzucona — do rozstrzygnięcia Właściciela
+
+`budowa/server/internal/core/urzadzenia_druk.go` niesie **422 wiersze gotowej warstwy**:
+`Drukarki()` czyta wykaz drukarek (`lpstat` na CUPS, PowerShell na Windows),
+`Wyslij()` posyła zlecenie (`lp` albo PowerShell), obie drogi mają nazwane odmowy,
+osobne dla braku programu i dla obcego systemu.
+
+**Nikt jej nie woła.** `NowaWarstwaDruku` (`:84`) nie ma ani jednego wołającego w całym
+repozytorium; typy `WarstwaDruku`, `ZlecenieDruku` i `DrukarkaSystemowa` nie występują
+poza tym plikiem.
+
+**Kontrakt nie ma rodziny `printer.*`.** Jedyne komendy druku to `design.print.*`, a te
+są przygotowaniem do druku — profil wydania, preflight, wykaz nośników, eksport materiału
+gotowego do druku. Żadna nie posyła niczego na drukarkę.
+
+**Arsenał też tego nie obiecuje.** Wykaz zależności wydawany przez binarium rdzenia
+**nie wymienia `lp` ani `lpstat`** — warstwa deklaruje te programy u siebie, poza wykazem.
+Sprawdzone uruchomieniem `danaco-console --wykaz-zaleznosci`.
+
+**Dlaczego prowadzenie tego nie zbudowało.** Wpięcie tej warstwy wymaga dopisania komend
+do kontraktu, a to jest poszerzenie zakresu produktu, nie domknięcie wpięcia. Produkt
+nigdzie nie obiecuje Operatorowi drukowania: ani w kontrakcie, ani w arsenale, ani
+w prototypach okien. Rozstrzygnięcie należy do Właściciela i ma dwie drogi:
+
+1. **Drukowanie wchodzi do produktu** — rodzina komend `printer.*` w kontrakcie, wpisy
+   `lp` i `lpstat` w wykazie zależności, wpięcie warstwy w moduł, który ma drukować.
+2. **Drukowania nie ma** — warstwa schodzi z repozytorium jako kod bez wołającego.
+
+Trzecia droga — zostawić jak jest — kosztuje najwięcej: 422 wiersze utrzymywane bez
+skutku i dwa programy zadeklarowane w kodzie poza wykazem arsenału.
+
+
 ### Wielojęzyczność rozpoznania rozsypuje się na dwóch językach
 
 Zgłoszenie dotyczy **gałęzi `teren/wpiecie-unpaper`, nie `main`** — na `main`

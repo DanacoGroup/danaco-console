@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: zestawy żetonów systemu projektowego (Tokens &
-// System Panel) — `design.tokenset.save`, `design.tokenset.list`,
-// `design.tokenset.import` — oraz rozpoznanie ról znanych systemowi produktu.
-// Wydanie zestawu do kodu leży w `adapter_modul_design_zetony_wydanie.go`.
-// Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`).
-//
-// ── Rdzeń NIE nadpisuje motywu produktu ─────────────────────────────────────
-// Motyw jest własnością powłoki. Zestaw żetonów jest bytem OBOK niego: Operator
-// go zakłada, wczytuje z zapisu zewnętrznego i wydaje do kodu, a produkt dalej
-// wygląda tak, jak wygląda. Import oddaje przy okazji bilans ról, których
-// system produktu nie zna — bilans zamiast ciszy.
-//
-// ── Rola nieznana wchodzi do zestawu i JEST WYMIENIONA ──────────────────────
-// Odrzucenie takiej roli byłoby zgubieniem pracy Operatora, który wczytuje
-// system projektowy klienta, a ten ma własne nazwy. Przemilczenie jej byłoby
-// obietnicą, że wszystko pasuje. Rola więc wchodzi, a jej nazwa wraca
-// w `unknownNames`.
+// Odpowiedzialność pliku: zestawy żetonów systemu projektowego — obsługuje
+// `design.tokenset.save`, `design.tokenset.list`, `design.tokenset.import`
+// oraz rozpoznanie ról znanych systemowi produktu.
 package core
 
 import (
@@ -28,7 +14,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekZestawuZetonowDesign znakuje identyfikatory zewnętrzne zestawów.
+// przedrostekZestawuZetonowDesign znakuje identyfikatory zewnętrzne zestawów
+// żetonów. Nowy identyfikator dostaje go przy zapisie bez wskazanego kodu
+// zestawu, a przy zapisie z kodem podanym przez wołającego przedrostek nie
+// wchodzi w grę.
 const przedrostekZestawuZetonowDesign = "zestaw-zetonow-"
 
 // rolePrzedrostekDesignu jest przedrostkiem własności niestandardowych systemu
@@ -38,13 +27,6 @@ const rolePrzedrostekDesignu = "--dn-"
 
 // roleSystemuWizualnegoDesignu wylicza role SEMANTYCZNE systemu wizualnego
 // produktu — te, po które wolno sięgać komponentom.
-//
-// Wykaz jest tu kopią wykazu z panelu żetonów po stronie klienta i jest to
-// cena świadoma: kontrakt nie niesie bytu „rola systemu wizualnego", więc
-// wspólnego źródła dla obu stron nie ma. Skutek rozjazdu jest ograniczony
-// z zamysłu: wykaz służy WYŁĄCZNIE do wypełnienia `unknownNames` przy imporcie,
-// a rola spoza niego i tak wchodzi do zestawu. Rozjazd daje więc bilans zbyt
-// obszerny, nigdy zgubiony żeton.
 var roleSystemuWizualnegoDesignu = map[string]bool{
 	// Powierzchnie
 	"tlo": true, "powierzchnia": true, "powierzchnia-2": true, "panel": true, "nakladka": true,
@@ -90,11 +72,7 @@ var roleSystemuWizualnegoDesignu = map[string]bool{
 }
 
 // ZapiszZestawZetonow utrwala zestaw żetonów — obsługuje
-// `design.tokenset.save`.
-//
-// Rodzaj żetonu spoza kontraktu jest odmową wołającemu, nie odbiciem od
-// schematu: tabela `zeton_design` świadomie nie ma warunku CHECK (nagłówek
-// migracji 235), więc sprawdzenie stoi tutaj i wymienia rodzaje dopuszczalne.
+// `design.tokenset.save`, sprawdzając rodzaj każdego żetonu wobec kontraktu.
 func (a *adapterDesignu) ZapiszZestawZetonow(ctx context.Context,
 	z shared.DesignTokensetSaveRequest) (shared.DesignTokensetSaveResponse, error) {
 
@@ -139,7 +117,8 @@ func (a *adapterDesignu) ZapiszZestawZetonow(ctx context.Context,
 }
 
 // ZestawyZetonow zwraca zestawy żetonów okna wraz z ich żetonami — obsługuje
-// `design.tokenset.list`.
+// `design.tokenset.list`. Zestawy wracają wraz z zawartością, bez osobnego
+// wołania po żetony każdego z nich.
 func (a *adapterDesignu) ZestawyZetonow(ctx context.Context,
 	z shared.DesignTokensetListRequest) (shared.DesignTokensetListResponse, error) {
 
@@ -163,11 +142,8 @@ func (a *adapterDesignu) ZestawyZetonow(ctx context.Context,
 }
 
 // WczytajZestawZetonow zakłada zestaw z zapisu zewnętrznego — obsługuje
-// `design.tokenset.import`.
-//
-// Postać zapisu rozpoznaje rdzeń, gdy wołający jej nie wskazał. Rozpoznanie
-// idzie po TREŚCI, nie po nazwie: zapis zaczynający się nawiasem klamrowym jest
-// JSON-em niezależnie od tego, jak nazywał się plik u Operatora.
+// `design.tokenset.import`, rozpoznając postać zapisu po treści, nie po
+// nazwie pliku.
 func (a *adapterDesignu) WczytajZestawZetonow(ctx context.Context,
 	z shared.DesignTokensetImportRequest) (shared.DesignTokensetImportResponse, error) {
 
@@ -288,9 +264,7 @@ func roleNieznaneSystemowiDesignu(zetony []shared.DesignToken) []string {
 }
 
 // rozlozZapisZetonowDesignu rozkłada zapis zewnętrzny na żetony. Rdzeń czyta
-// dwie postacie: zapis JSON (płaski albo zagnieżdżony, wzorem W3C Design
-// Tokens) oraz zmienne CSS. Postać spoza tych dwóch jest odmową wymieniającą
-// postacie czytane — zgadywanie dałoby zestaw złożony z przypadkowych napisów.
+// dwie postacie: zapis JSON (płaski albo zagnieżdżony) oraz zmienne CSS.
 func rozlozZapisZetonowDesignu(tresc string, postac *string) ([]shared.DesignToken, error) {
 	nazwaPostaci := ""
 	if postac != nil {
@@ -440,9 +414,7 @@ func rodzajZetonuZNazwyDesignu(nazwa string) (shared.DesignTokenKind, bool) {
 }
 
 // rodzajZetonuZWartosciDesignu rozpoznaje rodzaj z samej wartości. Rozpoznanie
-// jest zachowawcze: wartość, której nie da się przypisać do rodzaju pewnie,
-// wychodzi jako miara — najczęstszy rodzaj w systemach projektowych i jedyny,
-// który nie obiecuje niczego szczególnego.
+// jest zachowawcze i przy niepewności oddaje rodzaj miary.
 func rodzajZetonuZWartosciDesignu(wartosc string) shared.DesignTokenKind {
 	oczyszczona := strings.ToLower(strings.TrimSpace(wartosc))
 	switch {
@@ -491,7 +463,9 @@ func zestawZetonowKontraktuDesignu(z dane.ZestawZetonowDesignu,
 	}
 }
 
-// bladNieznanegoZestawuZetonowDesignu nazywa zestaw, którego rdzeń nie zna.
+// bladNieznanegoZestawuZetonowDesignu nazywa zestaw, którego rdzeń nie zna —
+// zapis z kodem wskazującym zestaw nieistniejący jest odmową, nie założeniem
+// nowego zestawu pod cudzym kodem.
 func bladNieznanegoZestawuZetonowDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("zestawu żetonów " + kod + " nie ma w module Design")

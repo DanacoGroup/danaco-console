@@ -1,22 +1,6 @@
 // Odpowiedzialność pliku: moduł Studio — byty, które NIE należą do jednego
-// dokumentu: operacje własne Tools Panel, łańcuchy operacji, szablony
-// dokumentów i profile wydania. Do tego dwie czynności na dokumencie, które są
-// czystym zapisem cechy: format dokumentu i etykieta wersji.
-//
-// ── Dlaczego zasięg wchodzi do każdej z nich ────────────────────────────────
-// Operator zapisuje własny prompt raz i sięga po niego w każdym dokumencie,
-// a zespół pracujący nad projektem ma widzieć łańcuchy tego projektu, nie
-// cudze. Zasięg jest więc częścią tożsamości wpisu, nie ozdobą: ten sam
-// identyfikator w dwóch zasięgach to dwa różne wpisy.
-//
-// ── Dlaczego łańcuch nie wykonuje się tutaj w całości ───────────────────────
-// `chain.run` sprawdza łańcuch, dokument i zakres, po czym oddaje identyfikator
-// przebiegu wraz z liczbą kroków. Samych kroków nie puszcza synchronicznie:
-// każdy jest operacją kontekstową wychodzącą do kanału modelu, a odpowiedź
-// kontraktu nie niesie ich wyników — niesie przebieg, po którym poznaje się
-// zadania. Wykonanie kroku po kroku prowadzi pętla wykonawcza okna, a postęp
-// idzie zdarzeniem. Udawanie tu wykonania oddawałoby `steps` policzone
-// z definicji i przebieg, za którym nic nie stoi.
+// dokumentu: operacje, łańcuchy, szablony i profile wydania; dwie cechy
+// dokumentu.
 package core
 
 import (
@@ -38,7 +22,8 @@ const (
 
 // ── Operacje własne Tools Panel ─────────────────────────────────────────────
 
-// ZapiszOperacje obsługuje `studio.operation.save`.
+// ZapiszOperacje obsługuje studio.operation.save, zakładając albo
+// zmieniając zapisany prompt Operatora w danym zasięgu.
 func (a *adapterStudia) ZapiszOperacje(ctx context.Context,
 	z shared.StudioOperationSaveRequest) (shared.StudioOperationSaveResponse, error) {
 
@@ -62,7 +47,8 @@ func (a *adapterStudia) ZapiszOperacje(ctx context.Context,
 	return shared.StudioOperationSaveResponse{Operation: złóżOperacje(zapisany)}, nil
 }
 
-// Operacje obsługuje `studio.operation.list`.
+// Operacje obsługuje studio.operation.list, oddając wykaz zapisanych
+// operacji własnych widocznych w danym zasięgu.
 func (a *adapterStudia) Operacje(ctx context.Context,
 	z shared.StudioOperationListRequest) (shared.StudioOperationListResponse, error) {
 
@@ -82,11 +68,8 @@ func (a *adapterStudia) Operacje(ctx context.Context,
 	return shared.StudioOperationListResponse{Operations: operacje}, nil
 }
 
-// UsunOperacje obsługuje `studio.operation.delete`.
-//
-// Usunięcie bytu, którego nie ma, wraca odmową, a nie `deleted: false`:
-// wartość logiczna „nie usunięto" nie odróżnia braku wiersza od odmowy
-// uprawnienia, a Operator ma wiedzieć, czy pomylił identyfikator.
+// UsunOperacje obsługuje studio.operation.delete; usunięcie bytu, którego
+// nie ma, wraca odmową, a nie polem logicznym.
 func (a *adapterStudia) UsunOperacje(ctx context.Context,
 	z shared.StudioOperationDeleteRequest) (shared.StudioOperationDeleteResponse, error) {
 
@@ -107,7 +90,8 @@ func (a *adapterStudia) UsunOperacje(ctx context.Context,
 
 // ── Łańcuchy operacji ───────────────────────────────────────────────────────
 
-// ZapiszLancuch obsługuje `studio.chain.save`.
+// ZapiszLancuch obsługuje studio.chain.save, zakładając albo zmieniając
+// łańcuch operacji widoczny w danym zasięgu.
 func (a *adapterStudia) ZapiszLancuch(ctx context.Context,
 	z shared.StudioChainSaveRequest) (shared.StudioChainSaveResponse, error) {
 
@@ -141,7 +125,8 @@ func (a *adapterStudia) ZapiszLancuch(ctx context.Context,
 	return shared.StudioChainSaveResponse{Chain: lancuch}, nil
 }
 
-// Lancuchy obsługuje `studio.chain.list`.
+// Lancuchy obsługuje studio.chain.list, oddając wykaz łańcuchów operacji
+// widocznych zespołowi w danym zasięgu.
 func (a *adapterStudia) Lancuchy(ctx context.Context,
 	z shared.StudioChainListRequest) (shared.StudioChainListResponse, error) {
 
@@ -161,7 +146,8 @@ func (a *adapterStudia) Lancuchy(ctx context.Context,
 	return shared.StudioChainListResponse{Chains: lancuchy}, nil
 }
 
-// UruchomLancuch obsługuje `studio.chain.run`.
+// UruchomLancuch obsługuje studio.chain.run, oddając identyfikator
+// przebiegu wraz z liczbą kroków, bez wykonania.
 func (a *adapterStudia) UruchomLancuch(ctx context.Context,
 	z shared.StudioChainRunRequest) (shared.StudioChainRunResponse, error) {
 
@@ -187,8 +173,8 @@ func (a *adapterStudia) UruchomLancuch(ctx context.Context,
 	if err != nil {
 		return shared.StudioChainRunResponse{}, err
 	}
-	// Zakres `selection` bez granic zaznaczenia jest żądaniem sprzecznym:
-	// rdzeń nie ma czego wyciąć z treści i nie zgaduje całości.
+	// Zakres selection bez granic zaznaczenia jest żądaniem sprzecznym: nie
+	// ma czego wyciąć z treści.
 	if z.Scope == shared.StudioOperationScopeSelection && (z.SelectionStart == nil || z.SelectionEnd == nil) {
 		return shared.StudioChainRunResponse{},
 			bladWskazaniaStudio("zakres „zaznaczenie” bez granic zaznaczenia")
@@ -201,7 +187,8 @@ func (a *adapterStudia) UruchomLancuch(ctx context.Context,
 
 // ── Szablony dokumentów ─────────────────────────────────────────────────────
 
-// Szablony obsługuje `studio.template.list`.
+// Szablony obsługuje studio.template.list, oddając wykaz szablonów
+// dokumentów widocznych w danym zasięgu Operatora.
 func (a *adapterStudia) Szablony(ctx context.Context,
 	_ shared.StudioTemplateListRequest) (shared.StudioTemplateListResponse, error) {
 
@@ -220,11 +207,8 @@ func (a *adapterStudia) Szablony(ctx context.Context,
 	return shared.StudioTemplateListResponse{Templates: szablony}, nil
 }
 
-// ZastosujSzablon obsługuje `studio.template.apply`.
-//
-// Pola wypełnia się podstawieniem `{{nazwa}}` w treści szablonu. Pole bez
-// wartości zostaje w treści WIDOCZNE jako znacznik, a nie znika: dokument
-// z pustym miejscem po polu wygląda na kompletny, a nie jest.
+// ZastosujSzablon obsługuje studio.template.apply, podstawiając wartości
+// pod znaczniki wprost w treści szablonu.
 func (a *adapterStudia) ZastosujSzablon(ctx context.Context,
 	z shared.StudioTemplateApplyRequest) (shared.StudioTemplateApplyResponse, error) {
 
@@ -267,12 +251,8 @@ func (a *adapterStudia) ZastosujSzablon(ctx context.Context,
 	return shared.StudioTemplateApplyResponse{Document: a.zlozDokument(zapisany)}, nil
 }
 
-// wypelnijSzablon podstawia wartości pod znaczniki `{{nazwa}}`.
-//
-// Wartości przychodzą surowym JSON-em, bo kontrakt opisuje je typem `json` —
-// szablon nie ma z góry znanego zbioru pól i mieć nie może. Treść nieczytelna
-// zostawia szablon nietknięty: dokument ze znacznikami jest odróżnialny od
-// dokumentu wypełnionego, a dokument wypełniony bzdurą — nie.
+// wypelnijSzablon podstawia wartości pod znaczniki nazwa w treści
+// szablonu, zostawiając brakujące pola widoczne.
 func wypelnijSzablon(tresc string, wartosci json.RawMessage) string {
 	if len(wartosci) == 0 {
 		return tresc
@@ -293,7 +273,8 @@ func wypelnijSzablon(tresc string, wartosci json.RawMessage) string {
 
 // ── Profile wydania ─────────────────────────────────────────────────────────
 
-// ZapiszProfilWydania obsługuje `studio.export.profile.save`.
+// ZapiszProfilWydania obsługuje studio.export.profile.save, zakładając
+// albo zmieniając profil wydania dokumentu.
 func (a *adapterStudia) ZapiszProfilWydania(ctx context.Context,
 	z shared.StudioExportProfileSaveRequest) (shared.StudioExportProfileSaveResponse, error) {
 
@@ -329,7 +310,8 @@ func (a *adapterStudia) ZapiszProfilWydania(ctx context.Context,
 	return shared.StudioExportProfileSaveResponse{Profile: profil}, nil
 }
 
-// ProfileWydania obsługuje `studio.export.profile.list`.
+// ProfileWydania obsługuje studio.export.profile.list, oddając wykaz
+// profili wydania widocznych w danym zasięgu.
 func (a *adapterStudia) ProfileWydania(ctx context.Context,
 	z shared.StudioExportProfileListRequest) (shared.StudioExportProfileListResponse, error) {
 
@@ -351,13 +333,8 @@ func (a *adapterStudia) ProfileWydania(ctx context.Context,
 
 // ── Cechy dokumentu i wersji ────────────────────────────────────────────────
 
-// UstawFormatDokumentu obsługuje `studio.document.format.set`.
-//
-// Zamiana treści jest tu WYBOREM, nie skutkiem ubocznym: przestawienie formatu
-// bez zamiany zostawia ten sam tekst pod nową nazwą formatu, co bywa właściwe
-// (markdown oznaczony jako tekst czysty). Zamiana treści między formatami
-// należy do obszaru dokumentów i idzie osobną komendą — tutaj byłaby drugą
-// drogą do tej samej czynności.
+// UstawFormatDokumentu obsługuje studio.document.format.set; zamiana
+// treści jest tu WYBOREM, nie skutkiem ubocznym.
 func (a *adapterStudia) UstawFormatDokumentu(ctx context.Context,
 	z shared.StudioDocumentFormatSetRequest) (shared.StudioDocumentFormatSetResponse, error) {
 
@@ -383,11 +360,8 @@ func (a *adapterStudia) UstawFormatDokumentu(ctx context.Context,
 	return shared.StudioDocumentFormatSetResponse{Document: a.zlozDokument(zapisany)}, nil
 }
 
-// UstawEtykieteWersji obsługuje `studio.version.label.set`.
-//
-// Etykieta pusta ZDEJMUJE etykietę — kontrakt mówi to wprost przy polu. Dzięki
-// temu jedna komenda nadaje i zdejmuje, zamiast dwóch różniących się wyłącznie
-// tym, że druga niczego nie przyjmuje.
+// UstawEtykieteWersji obsługuje studio.version.label.set; etykieta pusta
+// ZDEJMUJE etykietę, zgodnie z opisem kontraktu.
 func (a *adapterStudia) UstawEtykieteWersji(ctx context.Context,
 	z shared.StudioVersionLabelSetRequest) (shared.StudioVersionLabelSetResponse, error) {
 
@@ -420,9 +394,8 @@ func (a *adapterStudia) UstawEtykieteWersji(ctx context.Context,
 
 // ── Składanie odpowiedzi ────────────────────────────────────────────────────
 
-// zasiegKatalogowyStudia sprowadza zasięg żądania do postaci zapisywanej w bazie.
-// Zasięg globalny nie ma identyfikatora bytu — podany przy nim byłby wskazaniem
-// bytu, do którego wpis i tak nie należy.
+// zasiegKatalogowyStudia sprowadza zasięg żądania do postaci zapisywanej
+// w bazie; zasięg globalny nie ma identyfikatora bytu.
 func zasiegKatalogowyStudia(zasieg *shared.ConfigScope, zasiegID *string, domyslny string) (string, *string) {
 	nazwa := domyslny
 	if zasieg != nil && *zasieg != "" {
@@ -440,8 +413,8 @@ func złóżOperacje(wiersz dane.WpisKatalogowyStudia) shared.StudioOperation {
 		Name:     wiersz.Nazwa,
 		Category: wiersz.Rodzaj,
 		Prompt:   wiersz.Ladunek,
-		// Wpis w tej tabeli powstaje wyłącznie z zapisu Operatora: operacje
-		// fabryczne stoją w katalogu akcji rdzenia, nie tutaj.
+		// Wpis w tej tabeli powstaje wyłącznie z zapisu Operatora, nie
+		// z operacji fabrycznych rdzenia.
 		Builtin: false,
 		Scope:   shared.ConfigScope(wiersz.Zasieg),
 	}

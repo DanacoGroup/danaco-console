@@ -1,9 +1,5 @@
 // Odpowiedzialność pliku: operacja kontekstowa Tools Panel (`studio.contextual.op`)
-// i porównanie Diff/Grep Panel (`studio.diff.compare`) — druga połowa portu
-// Studio, dopisana na `adapterStudia` zadeklarowanym w `adapter_modul_studio.go`.
-//
-// Fragmenty różnicy liczy ten plik w locie — `DiffHunk` nie ma tabeli,
-// a porównanie wierszowe jest własne, bez biblioteki zewnętrznej.
+// i porównanie Diff/Grep Panel (`studio.diff.compare`) — druga połowa portu Studio.
 package core
 
 import (
@@ -24,30 +20,13 @@ import (
 const przedrostekPropozycjiStudio = "studio-prop-"
 
 // przedrostekZmianyModeluStudia nadaje identyfikator zewnętrzny zmianie
-// śledzonej odłożonej przez operację kontekstową. Zmiana śledzona ma swoje
-// wiersze w `dane/studio_adnotacje.go`, ale przedrostek nadaje ten plik, bo
-// tutaj ona powstaje.
+// śledzonej odłożonej przez operację kontekstową; przedrostek nadaje ten
+// plik, bo tutaj ona powstaje.
 const przedrostekZmianyModeluStudia = "studio-zm-"
 
 // OperacjaKontekstowa wykonuje operację kontekstową silnikiem modelu, odkłada
-// jej wynik jako propozycję zmiany ORAZ wpisuje go do treści dokumentu jako
+// jej wynik jako propozycję zmiany oraz wpisuje go do treści dokumentu jako
 // zmianę śledzoną autora `model`.
-//
-// ── Dlaczego wynik wchodzi do dokumentu, a nie stoi obok ────────────────────
-// Rozstrzygnięcie Właściciela: Operator i model pracują nad tą samą treścią
-// w tym samym miejscu. Wynik odłożony wyłącznie jako propozycja wymagał drugiej
-// powierzchni tekstowej (kanwy), a ta przestała istnieć. Wynik wchodzi więc
-// w miejsce zakresu operacji, a jego przyjęcie albo odrzucenie idzie drogą,
-// która już istnieje: `studio.tracking.list` pokazuje zmiany oczekujące,
-// `studio.tracking.decide` rozstrzyga je pojedynczo albo grupą. Propozycja
-// zostaje zapisana dalej, bo po jej identyfikatorze porównuje się strony
-// w `studio.diff.compare`.
-//
-// Silnik jedzie tym samym rejestrem kanałów, co okno rozmowy i moduł
-// Roundtable. Odmowa pada tylko tam, gdzie czegoś naprawdę brakuje: rdzeń
-// złożony bez rejestru (silnik jest dodatkiem, nie warunkiem startu), okno bez
-// kanału, kanał spoza rejestru, silnik bez ani jednego fragmentu treści. Każda
-// z tych odmów nazywa brak wprost.
 func (a *adapterStudia) OperacjaKontekstowa(ctx context.Context,
 	z shared.StudioContextualOpRequest) (shared.StudioContextualOpResponse, error) {
 
@@ -100,8 +79,7 @@ func (a *adapterStudia) OperacjaKontekstowa(ctx context.Context,
 			"moduł Studio: silnik modelu nie oddał ani jednego fragmentu treści dla "+z.ActionId))
 	}
 
-	// Propozycja powstaje po wykonaniu i niesie wynik. Zapis przed wywołaniem
-	// zostawiałby w Tools Panel propozycje puste po każdej nieudanej próbie.
+	// Propozycja powstaje po wykonaniu, nie przed nim, i niesie wynik gotowy.
 	propozycja, err := a.repozytorium.ZapiszPropozycje(ctx, dokument.ID, dane.PropozycjaZmiany{
 		IdentyfikatorZewnetrzny: nowyIdentyfikator(przedrostekPropozycjiStudio),
 		AkcjaID:                 z.ActionId,
@@ -119,18 +97,8 @@ func (a *adapterStudia) OperacjaKontekstowa(ctx context.Context,
 }
 
 // odlozWynikModeluStudia wpisuje wynik operacji do treści dokumentu i rejestruje
-// go jako zmianę śledzoną autora `model`.
-//
-// Zakres liczony jest w ZNAKACH, nie w bajtach — tak nazywa go kontrakt
-// (`StudioTrackedChange.rangeStart`: „poczatek zmiany w znakach") i tak czyta go
-// decyzja o zmianach. Zakres zmiany wskazuje miejsce wyniku w treści NOWEJ:
-// przyjęcie zostawia wtedy treść bez ruchu, a odrzucenie wstawia w to miejsce
-// treść sprzed operacji. Zakres liczony w treści starej wskazywałby po zapisie
-// nie ten fragment, o który szło.
-//
-// Wersję zakłada `zalozWersjeDokumentu` z autorem `model` i odwołaniem do
-// propozycji — ta sama droga, którą idzie decyzja o propozycji. Drugiej drogi
-// zakładania wersji Studio nie ma i mieć nie ma.
+// go jako zmianę śledzoną autora `model`. Zakres liczony jest w znakach, nie
+// w bajtach — tak nazywa go kontrakt i tak czyta go decyzja o zmianach.
 func (a *adapterStudia) odlozWynikModeluStudia(ctx context.Context,
 	dokument dane.DokumentStudia, z shared.StudioContextualOpRequest,
 	wynik, kodPropozycji string) error {
@@ -170,11 +138,8 @@ func (a *adapterStudia) odlozWynikModeluStudia(ctx context.Context,
 }
 
 // zakresOperacjiStudia oddaje zakres, na którym operacja pracowała, w znakach.
-//
 // Zakres poza treścią i zakres odwrócony schodzą na cały dokument, a nie na
-// odmowę: żądanie już się wykonało i wynik modelu jest w ręku, więc odmowa
-// zapisu wyrzuciłaby pracę, o którą Operator prosił. Cały dokument jest przy tym
-// zakresem prawdziwym — tyle właśnie model dostał w treści polecenia.
+// odmowę: żądanie już się wykonało i wynik modelu jest w ręku.
 func zakresOperacjiStudia(z shared.StudioContextualOpRequest, dlugosc int) (int, int) {
 	if z.Scope != shared.StudioOperationScopeSelection ||
 		z.SelectionStart == nil || z.SelectionEnd == nil {
@@ -191,19 +156,12 @@ func zakresOperacjiStudia(z shared.StudioContextualOpRequest, dlugosc int) (int,
 // wraz z treścią dokumentu, na której ma pracować.
 func trescOperacjiStudia(z shared.StudioContextualOpRequest, dokument dane.DokumentStudia) string {
 	czesci := []string{"Czynnosc: " + z.ActionId}
-	// Parametry operacji jadą do modelu, a nie tylko do bazy. Kontrakt niesie je
-	// jako „parametry operacji wymagane przez pozycję rejestru", a wiersz
-	// polecenia okna pracy wkłada tam słowa Operatora i nastawy suwaków
-	// koncepcyjnych. Pominięte tutaj byłyby nastawą, której model nigdy nie
-	// przeczyta — suwak przestawiałby wtedy pole bez skutku.
+	// Parametry operacji jadą do modelu, nie tylko do bazy.
 	if len(z.Params) > 0 && strings.TrimSpace(string(z.Params)) != "null" {
 		czesci = append(czesci, "Nastawy i polecenie Operatora:", string(z.Params))
 	}
 	if dokument.Tresc != nil && *dokument.Tresc != "" {
-		// Zakres operacji niesie kontrakt polami selectionStart/selectionEnd —
-		// nie osobnym napisem zaznaczenia. Wycinek bierzemy po runach, nie po
-		// bajtach: dokument polski ma znaki dwubajtowe i ciecie po bajtach
-		// rozcinaloby litery.
+		// Wycinek bierze się po runach, nie po bajtach.
 		runy := []rune(*dokument.Tresc)
 		if z.SelectionStart != nil && z.SelectionEnd != nil {
 			od, do_ := *z.SelectionStart, *z.SelectionEnd
@@ -217,9 +175,8 @@ func trescOperacjiStudia(z shared.StudioContextualOpRequest, dokument dane.Dokum
 }
 
 // Porownaj obsługuje `studio.diff.compare`: liczy fragmenty różnicy między
-// dwiema treściami (wersja↔wersja albo wersja↔propozycja, bo `proposalId` jest
-// zamienne z `targetVersionId`) i, niezależnie, wyszukuje wzorzec w treści
-// porównywanej strony.
+// dwiema treściami i, niezależnie, wyszukuje wzorzec w treści porównywanej
+// strony.
 func (a *adapterStudia) Porownaj(ctx context.Context,
 	z shared.StudioDiffCompareRequest) (shared.StudioDiffCompareResponse, error) {
 
@@ -240,11 +197,7 @@ func (a *adapterStudia) Porownaj(ctx context.Context,
 		return shared.StudioDiffCompareResponse{}, err
 	}
 
-	// Żądanie, z którego nie da się policzyć ANI fragmentów różnicy, ANI
-	// trafień wzorca, jest żądaniem bez odpowiedzi. Powodzenie z kopertą pustą
-	// mówiłoby oknu „porównałem i nie ma różnic", a rdzeń niczego nie porównał:
-	// fragmenty potrzebują dwóch stron, a wzorzec potrzebuje strony, po której
-	// ma szukać — sama treść dokumentu stroną porównania nie jest.
+	// Żądanie bez fragmentów i bez trafień wzorca jest żądaniem bez odpowiedzi.
 	maFragmenty := idBazy != "" && idCelu != ""
 	maWzorzec := z.Pattern != nil && strings.TrimSpace(*z.Pattern) != ""
 	maTrafienia := maWzorzec && (idBazy != "" || idCelu != "")
@@ -271,10 +224,9 @@ func (a *adapterStudia) Porownaj(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// trescStrony czyta treść jednej strony porównania — wersji (kod wprost) albo,
-// gdy podano, propozycji zamiast wersji docelowej. Strona pominięta oddaje
-// pusty identyfikator: `Porownaj` odróżnia po nim „strony nie podano” od
-// „strona ma treść pustą”.
+// trescStrony czyta treść jednej strony porównania — wersji albo, gdy podano,
+// propozycji zamiast wersji docelowej. Strona pominięta oddaje pusty
+// identyfikator.
 func (a *adapterStudia) trescStrony(ctx context.Context, kodWersji, kodPropozycji *string) (string, string, error) {
 	if kodPropozycji != nil && strings.TrimSpace(*kodPropozycji) != "" {
 		propozycja, err := a.repozytorium.Propozycja(ctx, *kodPropozycji)
@@ -293,17 +245,9 @@ func (a *adapterStudia) trescStrony(ctx context.Context, kodWersji, kodPropozycj
 	return "", "", nil
 }
 
-// trescBytuPorownania oddaje treść krótką wprost. Treść obszerną,
-// przechowaną poza bazą przez `trescOdwolanie`, adapter Studio na tym poziomie
-// nie potrafi doczytać — rdzeń nie ma tu mechanizmu odczytu pliku odwołania
-// (żaden moduł w tym drzewie go jeszcze nie używa z warstwy `core`) — więc
+// trescBytuPorownania oddaje treść krótką wprost. Treść obszerną, przechowaną
+// poza bazą przez `trescOdwolanie`, adapter Studio nie potrafi tu doczytać —
 // odmawia wprost zamiast oddać porównanie połowy treści.
-//
-// Druga zwracana wartość to kod strony, nie znacznik jej istnienia. Idzie
-// wprost do `StudioTextMatch.VersionId`, które kontrakt opisuje jako „wersja,
-// w której wystąpiło trafienie" — po tym kodzie poznaje się, gdzie wzorzec się
-// znalazł. Stały napis w tym miejscu sprawiłby, że każde trafienie wyglądałoby
-// tak samo.
 func trescBytuPorownania(kod string, tresc, odwolanie *string) (string, string, error) {
 	if tresc != nil {
 		return *tresc, kod, nil
@@ -316,10 +260,8 @@ func trescBytuPorownania(kod string, tresc, odwolanie *string) (string, string, 
 	return "", kod, nil
 }
 
-// brakStronPorownania nazywa to, czego w żądaniu zabrakło, polami kontraktu.
-// Odmowa idzie do Operatora, więc mówi, co dopisać, a nie że „czegoś brakuje":
-// sam wzorzec bez wskazanej strony jest innym brakiem niż jedna strona bez
-// drugiej, choć obydwa kończą się tą samą pustą odpowiedzią.
+// brakStronPorownania nazywa to, czego w żądaniu zabrakło, polami kontraktu,
+// zamiast mówić ogólnie, że czegoś brakuje.
 func brakStronPorownania(idBazy, idCelu string, maWzorzec bool) string {
 	if idBazy == "" && idCelu == "" {
 		if maWzorzec {
@@ -347,12 +289,8 @@ func bladWskazaniaStronyPorownania(kod string, err error) error {
 }
 
 // policzFragmentyRoznicy liczy fragmenty różnicy dwóch treści wierszami —
-// porównanie jest własne i proste: przycina wspólny przedrostek i wspólny sufiks
-// wierszy, a to, co zostaje pomiędzy, jest jednym fragmentem zmiany. To nie
-// jest algorytm klasy `diff` (Myers, LCS wielowierszowy) — dla dokumentów
-// Studio Editor (tekst krótki, nie repozytorium kodu) rozstrzygnięcie „co się
-// zmieniło pomiędzy niezmienionym początkiem a niezmienionym końcem" wystarcza,
-// a jest o rząd prościej opisać i sprawdzić niż pełny LCS.
+// przycina wspólny przedrostek i wspólny sufiks, a to, co zostaje pomiędzy,
+// jest jednym fragmentem zmiany.
 func policzFragmentyRoznicy(bazowa, docelowa string) []shared.StudioDiffHunk {
 	przed := podzielNaWiersze(bazowa)
 	po := podzielNaWiersze(docelowa)
@@ -399,9 +337,7 @@ func kontekstFragmentu(numer int, wiersze []string, wierszPoczatkowy int) shared
 }
 
 // fragmentZmiany składa jeden fragment różnicy między wersją bazową i
-// docelową. Rodzaj zależy od tego, która strona ma tu wiersze: obie strony
-// dają „changed”, sama docelowa „added”, sama bazowa „removed” — Diff Panel
-// pokazuje trzy różne oznaczenia, jedno na fragment.
+// docelową. Rodzaj zależy od tego, która strona ma tu wiersze.
 func fragmentZmiany(numer int, przed, po []string, wierszPoczatkowy int) shared.StudioDiffHunk {
 	var rodzaj shared.DiffHunkKind = shared.DiffHunkKindChanged
 	switch {
@@ -439,9 +375,7 @@ func podzielNaWiersze(tresc string) []string {
 }
 
 // szukajWzorca przeszukuje treść wiersz po wierszu — dosłownie albo jako
-// wyrażenie regularne, zależnie od `regex`. Wiersz pusty do przeszukania
-// (strona porównania pominięta) oddaje wykaz pusty, nie błąd — szukanie bez
-// treści jest pytaniem poprawnym, tylko bez odpowiedzi.
+// wyrażenie regularne, zależnie od `regex`.
 func szukajWzorca(tresc, wzorzec string, jakoRegex *bool, idStrony string) ([]shared.StudioTextMatch, error) {
 	if tresc == "" {
 		return nil, nil

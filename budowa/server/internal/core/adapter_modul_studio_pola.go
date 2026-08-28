@@ -1,24 +1,4 @@
-// Odpowiedzialność pliku: pola dokumentu — numer strony, liczba stron, data,
-// godzina, tytuł i właściwości dokumentu, pole obliczane oraz pole szablonu.
-// Trzy czynności kontraktu: wstawienie, wykaz i odświeżenie.
-//
-// ── Pole trzyma wartość policzoną i znacznik nieświeżości ───────────────────
-// Pole ma swój wiersz (`pole_dokumentu_studio`) z kolumną `nieswieze`, bo się
-// o nie pyta: „które pola wymagają odświeżenia". Wartość zapisana jest
-// wartością Z CHWILI odświeżenia, a nie z chwili odczytu — inaczej dokument
-// wydany do PDF-u i dokument w edytorze mówiłyby dwie różne rzeczy o tej samej
-// dacie.
-//
-// ── Numer strony liczy się tym samym silnikiem, co podgląd ──────────────────
-// Strona pola bierze się z `aparatStronyAkapitow`, czyli z tego samego łamania,
-// którym jedzie podgląd wydruku, i z tych samych NASTAW SEKCJI. Drugi rachunek
-// dałby numer strony inny niż widzi Operator, a to jest gorsze niż brak numeru.
-//
-// ── Pole obliczane liczy rdzeń, nie klient ──────────────────────────────────
-// Wyrażenie liczy rachunek wkompilowany w tym pliku: liczby, cztery działania,
-// nawiasy oraz działania na kolumnie tabeli (SUMA, ŚREDNIA, MIN, MAKS, LICZBA).
-// Wyrażenia, którego rachunek nie zna, nie udaje się policzyć — odmowa nazywa
-// miejsce i znak, na którym rachunek stanął.
+// Plik liczy pola dokumentu: numer strony, liczbę stron, datę, godzinę, tytuł i właściwości dokumentu, pole obliczane oraz pole szablonu, przez czynności wstawienia, wykazu i odświeżenia.
 package core
 
 import (
@@ -32,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WstawPole wstawia pole dokumentu (`studio.field.insert`).
+// WstawPole wstawia pole dokumentu i od razu liczy jego wartość, żeby odpowiedź nie zostawiała pustego miejsca w treści (`studio.field.insert`).
 func (a *adapterStudia) WstawPole(ctx context.Context,
 	z shared.StudioFieldInsertRequest) (shared.StudioFieldInsertResponse, error) {
 
@@ -67,9 +47,7 @@ func (a *adapterStudia) WstawPole(ctx context.Context,
 		AnchorOffset: postacWskaznikLiczby(miejsce), Format: z.Format,
 		Expression: z.Expression, PropertyName: z.PropertyName,
 	}
-	// Pole wchodzi policzone od razu: pole wstawione z pustą wartością
-	// pokazywałoby w dokumencie puste miejsce, a Operator dostałby odpowiedź
-	// „wstawiono".
+	// Pole wchodzi policzone od razu, inaczej dokument pokazałby puste miejsce mimo odpowiedzi „wstawiono”
 	strony, stron, err := aparatStronyAkapitow(postacTekstFormy(&stan.forma), &stan.forma)
 	if err != nil {
 		return shared.StudioFieldInsertResponse{}, err
@@ -119,7 +97,7 @@ func (a *adapterStudia) WstawPole(ctx context.Context,
 	}, nil
 }
 
-// WykazPol oddaje pola dokumentu (`studio.field.list`).
+// WykazPol oddaje pola dokumentu, na żądanie zawężone do wskazanego rodzaju pola (`studio.field.list`).
 func (a *adapterStudia) WykazPol(ctx context.Context,
 	z shared.StudioFieldListRequest) (shared.StudioFieldListResponse, error) {
 
@@ -142,7 +120,7 @@ func (a *adapterStudia) WykazPol(ctx context.Context,
 	return shared.StudioFieldListResponse{Fields: pola}, nil
 }
 
-// OdswiezPola liczy wartości pól od nowa (`studio.field.refresh`).
+// OdswiezPola liczy wartości pól od nowa, całego dokumentu albo pola wskazanego kodem (`studio.field.refresh`).
 func (a *adapterStudia) OdswiezPola(ctx context.Context,
 	z shared.StudioFieldRefreshRequest) (shared.StudioFieldRefreshResponse, error) {
 
@@ -272,8 +250,7 @@ func (a *adapterStudia) polePolicz(ctx context.Context, stan *stanPostaci,
 		return poleZapisLiczby(wynik), nil
 
 	case shared.StudioFieldKindTemplateField:
-		// Pole szablonu wypełnia się przy zakładaniu dokumentu z szablonu —
-		// odświeżenie nie ma skąd wziąć jego wartości i nie udaje, że ma.
+		// Pole szablonu wypełnia się przy zakładaniu z szablonu; odświeżenie nie ma skąd wziąć jego wartości
 		if pole.Value != nil && strings.TrimSpace(*pole.Value) != "" {
 			return *pole.Value, nil
 		}
@@ -286,12 +263,7 @@ func (a *adapterStudia) polePolicz(ctx context.Context, stan *stanPostaci,
 		"rdzeń nie ma czym policzyć pola rodzaju „"+string(pole.Kind)+"”")
 }
 
-// poleAutorDokumentu oddaje autora dokumentu.
-//
-// Rdzeń nie trzyma imienia i nazwiska autora dokumentu — trzyma RODZAJ autora
-// wersji: Operator albo model. Pole oddaje więc to, co rdzeń wie na pewno,
-// i mówi wprost, czego nie wie. Wpisanie tam nazwy Operatora, której rdzeń nie
-// ma, byłoby wymysłem.
+// poleAutorDokumentu oddaje autora dokumentu jako rodzaj autora ostatniej wersji, Operatora albo model, bo rdzeń nie trzyma imienia i nazwiska autora, tylko rodzaj autora wersji.
 func (a *adapterStudia) poleAutorDokumentu(ctx context.Context, stan *stanPostaci,
 	pole shared.StudioDocumentField) (string, *shared.StudioSkippedItem) {
 
@@ -315,7 +287,7 @@ func (a *adapterStudia) poleAutorDokumentu(ctx context.Context, stan *stanPostac
 	return "Operator", nil
 }
 
-// poleWlasciwoscDokumentu oddaje wskazaną właściwość dokumentu.
+// poleWlasciwoscDokumentu oddaje wartość wskazanej właściwości dokumentu, na przykład tytuł, liczbę stron albo liczbę słów.
 func (a *adapterStudia) poleWlasciwoscDokumentu(stan *stanPostaci,
 	pole shared.StudioDocumentField, stron int) (string, *shared.StudioSkippedItem) {
 
@@ -376,7 +348,7 @@ func poleWykazWlasciwosci() string {
 		"liczba obiektów"
 }
 
-// poleBrak składa pominięcie bilansu dla pola, którego nie da się policzyć.
+// poleBrak składa pominięcie bilansu dla pola, którego nie da się policzyć, wraz z powodem i wskazaniem miejsca pola w dokumencie.
 func poleBrak(pole shared.StudioDocumentField, powod, szczegol string) *shared.StudioSkippedItem {
 	pominiecie := shared.StudioSkippedItem{
 		Reason: powod,
@@ -417,7 +389,7 @@ func poleZapisChwili(chwila time.Time, wzor, domyslny string) string {
 
 // ── Pole obliczane ──────────────────────────────────────────────────────────
 
-// poleObliczWyrazenie liczy wyrażenie pola obliczanego.
+// poleObliczWyrazenie liczy wyrażenie pola obliczanego i zwraca liczbę albo błąd wskazujący miejsce, w którym rachunek się zatrzymał.
 func poleObliczWyrazenie(wyrazenie string, forma *shared.StudioDocumentForm) (float64, error) {
 	rachunek := &poleRachunek{znaki: []rune(wyrazenie), forma: forma}
 	wynik, err := rachunek.suma()
@@ -435,7 +407,7 @@ func poleObliczWyrazenie(wyrazenie string, forma *shared.StudioDocumentForm) (fl
 	return wynik, nil
 }
 
-// poleRachunek to rachunek wyrażenia czytany znak po znaku.
+// poleRachunek to rachunek wyrażenia pola obliczanego, czytany znak po znaku od lewej strony wyrażenia.
 type poleRachunek struct {
 	znaki   []rune
 	miejsce int
@@ -448,7 +420,7 @@ func (r *poleRachunek) omijOdstepy() {
 	}
 }
 
-// suma liczy dodawanie i odejmowanie.
+// suma liczy dodawanie i odejmowanie w wyrażeniu pola obliczanego, wywołując iloczyn dla składników silniej wiążących.
 func (r *poleRachunek) suma() (float64, error) {
 	wynik, err := r.iloczyn()
 	if err != nil {
@@ -476,7 +448,7 @@ func (r *poleRachunek) suma() (float64, error) {
 	}
 }
 
-// iloczyn liczy mnożenie i dzielenie.
+// iloczyn liczy mnożenie i dzielenie w wyrażeniu pola obliczanego, wywołując składnik dla pojedynczych wartości.
 func (r *poleRachunek) iloczyn() (float64, error) {
 	wynik, err := r.skladnik()
 	if err != nil {
@@ -507,8 +479,7 @@ func (r *poleRachunek) iloczyn() (float64, error) {
 	}
 }
 
-// skladnik liczy liczbę, nawias, znak jednoargumentowy albo działanie na
-// kolumnie tabeli.
+// skladnik liczy pojedynczy składnik wyrażenia: liczbę, nawias, znak jednoargumentowy albo działanie na kolumnie tabeli.
 func (r *poleRachunek) skladnik() (float64, error) {
 	r.omijOdstepy()
 	if r.miejsce >= len(r.znaki) {
@@ -544,7 +515,7 @@ func (r *poleRachunek) skladnik() (float64, error) {
 		string(r.znaki[r.miejsce]) + "” rachunek nie zna")
 }
 
-// liczba czyta liczbę, przyjmując przecinek dziesiętny pisma polskiego.
+// liczba czyta zapis liczby z wyrażenia, przyjmując przecinek dziesiętny właściwy pismu polskiemu obok kropki.
 func (r *poleRachunek) liczba() (float64, error) {
 	poczatek := r.miejsce
 	for r.miejsce < len(r.znaki) {
@@ -564,7 +535,7 @@ func (r *poleRachunek) liczba() (float64, error) {
 	return wartosc, nil
 }
 
-// dzialanieNaTabeli liczy działanie na kolumnie tabeli — SUMA(tabela; kolumna).
+// dzialanieNaTabeli liczy działanie na kolumnie tabeli, na przykład SUMA(tabela; kolumna), pomijając wiersz nagłówkowy.
 func (r *poleRachunek) dzialanieNaTabeli() (float64, error) {
 	poczatek := r.miejsce
 	for r.miejsce < len(r.znaki) && (unicode.IsLetter(r.znaki[r.miejsce]) ||
@@ -619,8 +590,7 @@ func (r *poleRachunek) dzialanieNaTabeli() (float64, error) {
 	}
 	pierwszy := 0
 	if kopia.HeaderRows != nil && *kopia.HeaderRows > 0 {
-		// Wiersz nagłówkowy nie wchodzi do rachunku: sumowanie nagłówka dałoby
-		// wynik, którego Operator nie umiałby wyjaśnić.
+		// Wiersz nagłówkowy nie wchodzi do rachunku: sumowanie nagłówka dałoby wynik trudny do wyjaśnienia.
 		pierwszy = *kopia.HeaderRows
 	}
 	liczby := make([]float64, 0, kopia.Rows)
@@ -636,7 +606,7 @@ func (r *poleRachunek) dzialanieNaTabeli() (float64, error) {
 	return poleDzialanie(nazwa, liczby)
 }
 
-// poleDzialanie liczy wskazane działanie na zebranych liczbach.
+// poleDzialanie liczy wskazane działanie — sumę, średnią, minimum, maksimum albo liczbę wartości — na zebranych liczbach kolumny.
 func poleDzialanie(nazwa string, liczby []float64) (float64, error) {
 	if nazwa == "LICZBA" {
 		return float64(len(liczby)), nil
@@ -679,7 +649,7 @@ func poleDzialanie(nazwa string, liczby []float64) (float64, error) {
 		"” rachunek nie zna; wykaz: SUMA, ŚREDNIA, MIN, MAKS, LICZBA")
 }
 
-// poleZapisLiczby zapisuje wynik pola obliczanego, ucinając zbędne zera.
+// poleZapisLiczby zapisuje wynik pola obliczanego tekstem, ucinając zbędne zera po przecinku dziesiętnym.
 func poleZapisLiczby(wartosc float64) string {
 	zapis := strconv.FormatFloat(wartosc, 'f', -1, 64)
 	return zapis
@@ -687,7 +657,7 @@ func poleZapisLiczby(wartosc float64) string {
 
 // ── Drobne rachunki ─────────────────────────────────────────────────────────
 
-// poleZnajdz odnajduje pole w postaci dokumentu.
+// poleZnajdz odnajduje pole o wskazanym kodzie w postaci dokumentu i mówi, czy takie pole w niej jest.
 func poleZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioDocumentField, bool) {
 	for _, pole := range forma.Fields {
 		if pole.Id == kod {
@@ -697,7 +667,7 @@ func poleZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioDocu
 	return shared.StudioDocumentField{}, false
 }
 
-// poleSprawdzRodzaj odrzuca rodzaj pola, którego kontrakt nie zna.
+// poleSprawdzRodzaj odrzuca rodzaj pola, którego kontrakt nie zna, wskazując w odmowie wykaz rodzajów znanych.
 func poleSprawdzRodzaj(rodzaj shared.StudioFieldKind) error {
 	for _, znany := range shared.WartosciStudioFieldKind() {
 		if rodzaj == znany {
@@ -712,8 +682,7 @@ func poleSprawdzRodzaj(rodzaj shared.StudioFieldKind) error {
 		"”, którego rdzeń nie zna; wykaz: " + strings.Join(nazwy, ", "))
 }
 
-// poleSprawdzWymagania pilnuje, żeby pole wchodziło z tym, bez czego nie da się
-// go policzyć.
+// poleSprawdzWymagania pilnuje, żeby pole wchodziło z danymi, bez których rdzeń nie ma z czego policzyć jego wartości.
 func poleSprawdzWymagania(z shared.StudioFieldInsertRequest) error {
 	switch z.Kind {
 	case shared.StudioFieldKindCalculated:
@@ -732,7 +701,7 @@ func poleSprawdzWymagania(z shared.StudioFieldInsertRequest) error {
 	return nil
 }
 
-// poleNazwaRodzaju nazywa rodzaj pola pełnym słowem.
+// poleNazwaRodzaju nazywa rodzaj pola pełnym słowem, zamiast kodu kontraktu, na potrzeby noty bilansu i odmowy.
 func poleNazwaRodzaju(rodzaj shared.StudioFieldKind) string {
 	switch rodzaj {
 	case shared.StudioFieldKindPageNumber:
@@ -758,7 +727,7 @@ func poleNazwaRodzaju(rodzaj shared.StudioFieldKind) string {
 	}
 }
 
-// poleZapisWartosci opisuje wartość pola w nocie bilansu.
+// poleZapisWartosci opisuje wartość pola w nocie bilansu, nazywając brak wartości wprost, zamiast pomijać go milczeniem.
 func poleZapisWartosci(wartosc *string) string {
 	if wartosc == nil || *wartosc == "" {
 		return "brak — pole wymaga odświeżenia albo uzupełnienia wskazania"
@@ -766,7 +735,7 @@ func poleZapisWartosci(wartosc *string) string {
 	return "„" + *wartosc + "”"
 }
 
-// poleDoWiersza przekłada pole na wiersz warstwy danych.
+// poleDoWiersza przekłada pole postaci dokumentu na wiersz warstwy danych, gotowy do zapisu w składnicy.
 func poleDoWiersza(dokumentID int64, pole shared.StudioDocumentField) dane.PoleDokumentuStudia {
 	nieswieze := pole.Stale != nil && *pole.Stale
 	return dane.PoleDokumentuStudia{

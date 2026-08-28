@@ -1,28 +1,6 @@
 // Odpowiedzialność pliku: zadania pętli wykonawczej modułu Studio — rozkład
-// zlecenia dokumentowego Operatora na zadania, magazyn rozkładów i złożenie
-// obu bytów w kształt kontraktu (`StudioTaskPlan`, `StudioDocumentTask`).
-//
-// Pętla, która te zadania prowadzi, stoi w `adapter_modul_studio_petla.go`.
-// Podział jest taki: tutaj mieszka to, CZYM pętla pracuje, tam to, JAK pracuje.
-//
-// ── Rozkład jest robotą, nie ozdobą ─────────────────────────────────────────
-// Operator mówi „napisz pismo w tej sprawie na podstawie tych materiałów,
-// sprawdź terminologię i przygotuj wersję do druku" i ma dostać cztery zadania,
-// nie jedno. Rozkład idzie dwiema drogami po kolei: najpierw modelem (kontrakt
-// mówi wprost „brak znaczy rozkład ułożony przez model"), a gdy modelu nie ma
-// albo jego odpowiedź nie składa się w zadania — rozkładem własnym, po czynności
-// nazwanych w zleceniu. Druga droga nie jest atrapą: rozpoznaje czynności
-// z wykazu `StudioTaskKind` po słowach, którymi Operator o nich mówi, i zachowuje
-// ich kolejność ze zdania. Zlecenie, w którym nie da się rozpoznać ani jednej
-// czynności, daje jedno zadanie rodzaju `custom` niosące całe zlecenie — bo
-// „nie rozpoznałem" nie może znaczyć „rozkład pusty".
-//
-// ── Magazyn jest w rdzeniu, nie w bazie — i to jest zapisane ─────────────────
-// Rozkłady leżą w magazynie pamięciowym tego procesu. Warstwa danych nie ma
-// dziś tabeli rozkładu ani zadania, a zakładanie jej należy do odcinka
-// fundamentu, nie tutaj. Skutek jest nazwany, nie przemilczany: rozkład nie
-// przeżywa ponownego uruchomienia rdzenia. Tabela `plan_studio` i
-// `zadanie_studio` są wypisane w sprawozdaniu jako brak do domknięcia.
+// zlecenia dokumentowego na zadania, magazyn rozkładów i złożenie
+// kontraktu.
 package core
 
 import (
@@ -34,15 +12,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów bytów pętli wykonawczej.
+// Przedrostki identyfikatorów bytów pętli wykonawczej, wspólne dla
+// rozkładu i zadania w magazynie tego procesu.
 const (
 	przedrostekRozkladuStudia = "studio-plan-"
 	przedrostekZadaniaStudia  = "studio-zad-"
 )
 
-// petlaZadanieStudia jest zadaniem rozkładu w postaci magazynu. Kształt
-// kontraktu składa `petlaZlozZadanie`; tutaj leżą te same pola plus wskazanie
-// okna, którym zadanie jedzie do modelu.
+// petlaZadanieStudia jest zadaniem rozkładu w postaci magazynu; kształt
+// kontraktu składa petlaZlozZadanie z tych samych pól.
 type petlaZadanieStudia struct {
 	Kod           string
 	KodRozkladu   string
@@ -63,7 +41,8 @@ type petlaZadanieStudia struct {
 	Domknieto     *int64
 }
 
-// petlaRozkladStudia jest rozkładem zlecenia w postaci magazynu.
+// petlaRozkladStudia jest rozkładem zlecenia w postaci magazynu, niosącym
+// zadania i stan zatrzymania pętli wykonawczej.
 type petlaRozkladStudia struct {
 	Kod              string
 	KodDokumentu     string
@@ -76,16 +55,13 @@ type petlaRozkladStudia struct {
 	PowodZatrzymania *string
 	Utworzono        int64
 	Zaktualizowano   int64
-	// zatrzymanie stoi na `true` od chwili, w której Operator zawołał
-	// `studio.plan.stop`. Pętla sprawdza je PRZED każdym zadaniem i po każdym
-	// obiegu, więc zatrzymanie naprawdę zatrzymuje, a nie tylko przestawia
-	// napis w oknie.
+	// zatrzymanie stoi na true od chwili, gdy Operator zawołał
+	// studio.plan.stop; pętla sprawdza je stale.
 	zatrzymanie bool
 }
 
-// petlaMagazynStudia trzyma rozkłady procesu. Zamek jest jeden na magazyn, bo
-// pętla czyta i zapisuje ten sam rozkład w jednym obiegu, a dwa zamki na tym
-// samym bycie znaczyłyby dwie prawdy o jego stanie.
+// petlaMagazynStudia trzyma rozkłady procesu; zamek jest jeden na magazyn,
+// bo pętla czyta i zapisuje ten sam rozkład w jednym obiegu.
 type petlaMagazynStudia struct {
 	zamek     sync.Mutex
 	rozklady  map[string]*petlaRozkladStudia
@@ -93,7 +69,8 @@ type petlaMagazynStudia struct {
 	kolejnosc []string
 }
 
-// petlaNowyMagazyn zakłada pusty magazyn rozkładów.
+// petlaNowyMagazyn zakłada pusty magazyn rozkładów, gotowy do przyjęcia
+// pierwszego rozkładu zlecenia dokumentowego.
 func petlaNowyMagazyn() *petlaMagazynStudia {
 	return &petlaMagazynStudia{
 		rozklady: make(map[string]*petlaRozkladStudia),
@@ -101,7 +78,8 @@ func petlaNowyMagazyn() *petlaMagazynStudia {
 	}
 }
 
-// petlaDolozRozklad wnosi rozkład do magazynu wraz z jego zadaniami.
+// petlaDolozRozklad wnosi rozkład do magazynu wraz z jego zadaniami, pod
+// zamkiem chroniącym spójność magazynu.
 func (m *petlaMagazynStudia) petlaDolozRozklad(rozklad *petlaRozkladStudia) {
 	if m == nil || rozklad == nil {
 		return
@@ -115,7 +93,8 @@ func (m *petlaMagazynStudia) petlaDolozRozklad(rozklad *petlaRozkladStudia) {
 	}
 }
 
-// petlaRozkladPoKodzie oddaje rozkład wskazany kodem.
+// petlaRozkladPoKodzie oddaje rozkład wskazany kodem, odczytany pod
+// zamkiem magazynu rozkładów procesu.
 func (m *petlaMagazynStudia) petlaRozkladPoKodzie(kod string) (*petlaRozkladStudia, bool) {
 	if m == nil {
 		return nil, false
@@ -126,7 +105,8 @@ func (m *petlaMagazynStudia) petlaRozkladPoKodzie(kod string) (*petlaRozkladStud
 	return rozklad, jest
 }
 
-// petlaZadaniePoKodzie oddaje zadanie wskazane kodem wraz z jego rozkładem.
+// petlaZadaniePoKodzie oddaje zadanie wskazane kodem wraz z jego
+// rozkładem, odczytane pod zamkiem magazynu.
 func (m *petlaMagazynStudia) petlaZadaniePoKodzie(kod string) (*petlaZadanieStudia, *petlaRozkladStudia, bool) {
 	if m == nil {
 		return nil, nil, false
@@ -144,7 +124,8 @@ func (m *petlaMagazynStudia) petlaZadaniePoKodzie(kod string) (*petlaZadanieStud
 	return zadanie, rozklad, true
 }
 
-// petlaRozkladyDokumentu oddaje rozkłady dokumentu, od najświeższego.
+// petlaRozkladyDokumentu oddaje rozkłady dokumentu, od najświeższego, tak
+// jak Operator ma je zobaczyć w oknie.
 func (m *petlaMagazynStudia) petlaRozkladyDokumentu(kodDokumentu string) []*petlaRozkladStudia {
 	if m == nil {
 		return nil
@@ -170,13 +151,8 @@ func (m *petlaMagazynStudia) petlaRozkladyDokumentu(kodDokumentu string) []*petl
 
 // ── Rozkład zlecenia na zadania ─────────────────────────────────────────────
 
-// petlaZnacznikCzynnosci wiąże słowa, którymi Operator nazywa czynność, z jej
-// rodzajem z wykazu kontraktu. Wykaz jest po polsku, bo zlecenie przychodzi po
-// polsku; dopisanie wariantu jest dopisaniem wiersza, nie zmianą rozkładu.
-//
-// Kolejność w tablicy nie ma znaczenia — kolejność zadań bierze się z miejsca,
-// w którym słowo stoi w zleceniu, bo Operator wymienia czynności w tej
-// kolejności, w jakiej mają się wykonać.
+// petlaZnacznikCzynnosci wiąże słowa, którymi Operator nazywa czynność,
+// z jej rodzajem z wykazu kontraktu, po polsku.
 var petlaZnacznikiCzynnosci = []struct {
 	slowa  []string
 	rodzaj shared.StudioTaskKind
@@ -221,16 +197,6 @@ var petlaZnacznikiCzynnosci = []struct {
 
 // petlaRozlozZlecenie rozkłada zlecenie Operatora na zadania rozpoznaniem
 // czynności nazwanych w jego treści.
-//
-// Rozpoznanie idzie po POŁOŻENIU słowa w zleceniu, nie po kolejności wykazu:
-// „sprawdź terminologię i napisz pismo" ma dać korektę po napisaniu tylko wtedy,
-// gdy Operator tak powiedział. Rodzaj rozpoznany dwa razy wchodzi raz — dwa
-// zadania tej samej czynności z jednego zdania byłyby zdublowaną robotą.
-//
-// Zależności między zadaniami są łańcuchem: zadanie stoi na poprzednim. Rozkład
-// zlecenia dokumentowego jest z natury szeregowy — nie da się poprawić języka
-// pisma, którego jeszcze nie ma. Rozkład podany wprost przez Operatora albo
-// przez model swoje zależności niesie własne i ich nie nadpisujemy.
 func petlaRozlozZlecenie(zlecenie string) []petlaZadanieStudia {
 	tresc := strings.ToLower(zlecenie)
 	type trafienie struct {
@@ -264,8 +230,7 @@ func petlaRozlozZlecenie(zlecenie string) []petlaZadanieStudia {
 
 	if len(trafienia) == 0 {
 		// Zlecenie bez rozpoznanej czynności NIE daje rozkładu pustego: daje
-		// jedno zadanie niosące zlecenie w całości. Pusty rozkład byłby
-		// odpowiedzią udaną bez treści, a takiej w tym produkcie nie ma.
+		// jedno zadanie w całości.
 		return []petlaZadanieStudia{{
 			Kolejnosc: 1,
 			Rodzaj:    shared.StudioTaskKindCustom,
@@ -289,8 +254,8 @@ func petlaRozlozZlecenie(zlecenie string) []petlaZadanieStudia {
 	return zadania
 }
 
-// petlaSkrocZlecenie oddaje zlecenie skrócone do nazwy zadania. Nazwa jest
-// jednym zdaniem, tak jak każe kontrakt (`StudioDocumentTask.title`).
+// petlaSkrocZlecenie oddaje zlecenie skrócone do nazwy zadania; nazwa jest
+// jednym zdaniem, tak jak każe kontrakt.
 func petlaSkrocZlecenie(zlecenie string) string {
 	tresc := strings.TrimSpace(zlecenie)
 	if tresc == "" {
@@ -304,8 +269,8 @@ func petlaSkrocZlecenie(zlecenie string) string {
 	return strings.TrimSpace(string(runy[:granica])) + "…"
 }
 
-// petlaZlozZadania nadaje zadaniom kody, wiąże je z rozkładem i układa łańcuch
-// zależności tam, gdzie zadanie własnej zależności nie niesie.
+// petlaZlozZadania nadaje zadaniom kody, wiąże je z rozkładem i układa
+// łańcuch zależności, gdzie ich brakuje.
 func petlaZlozZadania(kodRozkladu, kodDokumentu string,
 	surowe []petlaZadanieStudia) []*petlaZadanieStudia {
 
@@ -339,7 +304,8 @@ func petlaZlozZadania(kodRozkladu, kodDokumentu string,
 
 // ── Złożenie w kształt kontraktu ────────────────────────────────────────────
 
-// petlaZlozZadanie oddaje zadanie w kształcie kontraktu.
+// petlaZlozZadanie oddaje zadanie w kształcie kontraktu, gotowe do
+// wpisania w odpowiedź rozkładu albo pojedynczego zapytania.
 func petlaZlozZadanie(zadanie *petlaZadanieStudia) shared.StudioDocumentTask {
 	if zadanie == nil {
 		return shared.StudioDocumentTask{}
@@ -376,7 +342,7 @@ func petlaZlozZadanie(zadanie *petlaZadanieStudia) shared.StudioDocumentTask {
 }
 
 // petlaZlozRozklad oddaje rozkład w kształcie kontraktu, z zadaniami
-// zawężonymi do wskazanego stanu, gdy Operator o zawężenie poprosił.
+// zawężonymi do wskazanego stanu, gdy Operator poprosił.
 func petlaZlozRozklad(rozklad *petlaRozkladStudia,
 	stan *shared.StudioTaskState) shared.StudioTaskPlan {
 
@@ -408,15 +374,14 @@ func petlaZlozRozklad(rozklad *petlaRozkladStudia,
 	return kształt
 }
 
-// petlaTeraz oddaje chwilę bieżącą w milisekundach epoki — jednostce, którą
-// kontrakt nazywa w polach czasu rozkładu i zadania.
+// petlaTeraz oddaje chwilę bieżącą w milisekundach epoki — jednostce,
+// którą kontrakt nazywa w polach czasu rozkładu i zadania.
 func petlaTeraz() int64 {
 	return time.Now().UnixMilli()
 }
 
-// petlaWykonawcaZlecenia składa tożsamość wykonawcy z pól żądania. Rodzaj
-// autora jest `model`, bo rozkład układa wykonawca, nie Operator — a rozkład
-// bez zapisanego autora nie dałby się odróżnić w podświetleniu zmian modelu.
+// petlaWykonawcaZlecenia składa tożsamość wykonawcy z pól żądania; rodzaj
+// autora jest model, bo rozkład układa wykonawca.
 func petlaWykonawcaZlecenia(kodEksperta, nazwaEksperta, okno *string) *shared.StudioActor {
 	wykonawca := shared.StudioActor{Kind: shared.StudioAuthorModel}
 	pusty := true
@@ -434,7 +399,7 @@ func petlaWykonawcaZlecenia(kodEksperta, nazwaEksperta, okno *string) *shared.St
 	}
 	if pusty {
 		// Wykonawca bez ani jednego wskazania nadal jest wykonawcą — rodzaj
-		// autora niesie prawdę o tym, że rozkładu nie ułożył Operator.
+		// autora niesie prawdę o rozkładzie.
 		return &wykonawca
 	}
 	return &wykonawca

@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: kolekcje zasobów Assets Panel —
 // `design.collection.create`, `design.collection.assign`,
-// `design.collection.list`. Metody stoją na `*adapterDesignu`
-// (`adapter_modul_design.go`).
-//
-// Kolekcja jest bytem osobnym od etykiety. Etykieta jest słowem, kolekcja ma
-// nazwę, opis i porządek — powód rozdziału stoi w nagłówku migracji 230.
-//
-// Przypisanie jest dokładką albo odjęciem, nigdy zastąpieniem. Zasoby wchodzące
-// do kolekcji sprawdzamy PRZED zapisem: kolekcja pełna kodów, za którymi nie
-// stoi żaden zasób, byłaby dokładnie tym rodzajem koperty, który ten moduł już
-// raz oddał — wykazem bez treści. Zasób nieznany jest więc odmową całej
-// komendy, nie cichym pominięciem, bo `changed` nie ma pola na „ten nie wszedł".
+// `design.collection.list`.
 package core
 
 import (
@@ -27,10 +17,7 @@ import (
 const przedrostekKolekcjiDesign = "kolekcja-"
 
 // ZalozKolekcje zakłada kolekcję zasobów — obsługuje `design.collection.create`.
-//
-// Odpowiedź niesie kolekcję ODCZYTANĄ Z BAZY, nie echo żądania (kontrakt mówi
-// to wprost): panel dostaje identyfikator, znacznik czasu i licznik zasobów
-// takie, jakie naprawdę zostały zapisane.
+// Odpowiedź niesie kolekcję odczytaną z bazy, nie echo żądania.
 func (a *adapterDesignu) ZalozKolekcje(ctx context.Context,
 	z shared.DesignCollectionCreateRequest) (shared.DesignCollectionCreateResponse, error) {
 
@@ -57,11 +44,8 @@ func (a *adapterDesignu) ZalozKolekcje(ctx context.Context,
 }
 
 // PrzypiszDoKolekcji dokłada zasoby do kolekcji albo je z niej zdejmuje —
-// obsługuje `design.collection.assign`.
-//
-// Sprawdzenie istnienia zasobów idzie tylko przy dokładaniu. Przy zdejmowaniu
-// zasób z kolekcji bywa już usunięty z Assets Panelu, a odmowa zdjęcia go
-// zamknęłaby Operatorowi jedyną drogę do posprzątania kolekcji.
+// obsługuje `design.collection.assign`. Sprawdzenie istnienia zasobów idzie
+// tylko przy dokładaniu.
 func (a *adapterDesignu) PrzypiszDoKolekcji(ctx context.Context,
 	z shared.DesignCollectionAssignRequest) (shared.DesignCollectionAssignResponse, error) {
 
@@ -108,7 +92,7 @@ func (a *adapterDesignu) PrzypiszDoKolekcji(ctx context.Context,
 }
 
 // Kolekcje zwraca kolekcje okna wraz z licznikiem zasobów — obsługuje
-// `design.collection.list`.
+// `design.collection.list`, bez kodów zasobów.
 func (a *adapterDesignu) Kolekcje(ctx context.Context,
 	z shared.DesignCollectionListRequest) (shared.DesignCollectionListResponse, error) {
 
@@ -128,9 +112,8 @@ func (a *adapterDesignu) Kolekcje(ctx context.Context,
 }
 
 // kolekcjaKontraktuDesignu składa `DesignCollection` kontraktu z wiersza
-// repozytorium. `AssetCount` bierze się z licznika policzonego przez bazę, nie
-// z długości wykazu — obie liczby są tu równe, ale prawdą o kolekcji jest ta
-// z bazy, a nie ta z tego, co akurat udało się wczytać.
+// repozytorium. `AssetCount` bierze się z licznika policzonego przez bazę,
+// nie z długości wykazu.
 func kolekcjaKontraktuDesignu(k dane.KolekcjaDesignu) shared.DesignCollection {
 	return shared.DesignCollection{
 		Id:          k.Kod,

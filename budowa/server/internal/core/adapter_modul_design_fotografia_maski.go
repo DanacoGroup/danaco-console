@@ -1,23 +1,6 @@
-// Odpowiedzialność pliku: rachunek maskowy i naprawczy warsztatu fotografii —
-// odcięcie tła, zaznaczenie obiektu, domalowanie obszaru, rozszerzenie kadru,
-// retusz, filtry obrazu i obrysowanie konturów. Rachunek geometryczny i barwny
-// leży w `adapter_modul_design_fotografia_rachunek.go`; czynności kontraktu
-// w `adapter_modul_design_fotografia.go`.
-//
-// ── Rachunek wkompilowany JEST wynikiem, nie namiastką ──────────────────────
-// Cztery czynności mają wariant neuronowy lepszy od rachunku: powiększenie,
-// odcięcie tła, domalowanie i rozszerzenie kadru. Gdy kanał modelu obrazowego
-// stoi, liczy kanał. Gdy nie stoi, liczy TO, co jest w tym pliku, a odpowiedź
-// mówi którą drogą policzyła (`computedBy`). Nie ma tu odmowy i nie ma udawania:
-// obie drogi oddają piksele, tylko jednej jakość jest wyższa.
-//
-// ── Progowanie zamiast segmentacji neuronowej ───────────────────────────────
-// Odcięcie tła rachunkiem stoi na barwie TŁA odczytanej z obwodu obrazu
-// i na rozrostu obszaru od brzegów. Działa na zdjęciach produktowych i na
-// grafice na jednolitym tle — czyli na tym, po co Operator najczęściej po to
-// sięga. Na portrecie w tłumie da wynik gorszy niż kanał modelu i tak ma być
-// powiedziane: pole `transparentShare` jest POMIAREM i Operator widzi po nim,
-// ile obrazu zniknęło.
+// Plik liczy maski i naprawy warsztatu fotografii rachunkiem własnym: odcięcie tła,
+// zaznaczenie obiektu, domalowanie obszaru, rozszerzenie kadru, retusz, filtry obrazu i
+// obrysowanie konturów rysunkiem wektorowym.
 package core
 
 import (
@@ -48,13 +31,9 @@ const (
 	granicaSciezekWektoryzacjiDesignu = 2000
 )
 
-// odetnijTloRachunkiemDesignu odcina tło i zostawia kanał krycia. Oddaje obraz
-// wraz ze ZMIERZONYM udziałem punktów przezroczystych.
-//
-// Rachunek jest rozrostem obszaru od brzegów obrazu: punkt brzegowy o barwie
-// bliskiej barwie tła jest tłem, a jego sąsiad o barwie bliskiej — też. Dzięki
-// temu jasny przedmiot na jasnym tle nie znika w środku kadru, choć tło ma tam
-// tę samą barwę.
+// odetnijTloRachunkiemDesignu odcina tło i zostawia kanał krycia, oddając obraz wraz ze
+// zmierzonym udziałem punktów przezroczystych. Rachunek jest rozrostem obszaru od brzegów
+// wedle bliskości barwy do barwy tła.
 func odetnijTloRachunkiemDesignu(obraz image.Image, tolerancja float64) (image.Image, float64) {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()
@@ -114,17 +93,21 @@ func odetnijTloRachunkiemDesignu(obraz image.Image, tolerancja float64) (image.I
 			wynik.SetNRGBA(x, y, punkt)
 		}
 	}
-	// Krawędź obiektu wygładzamy jednym przebiegiem rozmycia SAMEGO kanału
-	// krycia: bez tego wycinek ma zębatą obwódkę, po której od razu widać, że
-	// powstał progowaniem.
+	// Krawędź obiektu wygladza się jednym przebiegiem rozmycia samego kanału krycia.
+
+	// Bez tego wycinek ma zębatą obwódkę, po której widać, że powstał progowaniem.
 	wygladzKrawedzMaskiDesignu(wynik)
 
-	// Udział punktów przezroczystych liczy się PO wygładzeniu, na pikselach, które
-	// naprawdę wyszły. Liczba policzona przed wygładzeniem mówiłaby o obrazie
-	// pośrednim, którego Operator nigdy nie zobaczy — a sprawdzian skutku, który
-	// zejdzie do pliku i przeliczy punkty sam, wykazałby wtedy rozjazd między
-	// odpowiedzią i plikiem. Wygładzenie zmienia krycie na krawędzi, więc rozjazd
-	// byłby prawdziwy.
+	// Udział punktów przezroczystych liczy się po wygładzeniu, na pikselach, które
+	// naprawdę wyszły.
+
+	// Liczba policzona przed wygładzeniem mówiłaby o obrazie pośrednim, którego Operator
+	// nie zobaczy.
+
+	// Sprawdzian skutku, przeliczając punkty samodzielnie, wykazałby wtedy rozjazd wobec
+	// odpowiedzi.
+
+	// Wygładzenie zmienia krycie na krawędzi, więc taki rozjazd byłby prawdziwy.
 	przezroczystych := 0
 	for y := 0; y < wysokosc; y++ {
 		for x := 0; x < szerokosc; x++ {
@@ -136,8 +119,9 @@ func odetnijTloRachunkiemDesignu(obraz image.Image, tolerancja float64) (image.I
 	return wynik, float64(przezroczystych) / float64(szerokosc*wysokosc)
 }
 
-// odstepstwoOdBarwyDesignu liczy sumę odstępstw składowych punktu od barwy
-// odniesienia.
+// odstepstwoOdBarwyDesignu liczy sumę odstępstw składowych punktu od barwy odniesienia.
+// Suma trzech różnic bezwzględnych składowych barwy służy jako miara podobieństwa punktu
+// do barwy tła.
 func odstepstwoOdBarwyDesignu(obraz image.Image, granice image.Rectangle, x, y int,
 	odniesienieR, odniesienieG, odniesienieB int) float64 {
 
@@ -249,13 +233,9 @@ func zaznaczObiektDesignu(obraz image.Image, punktX, punktY int,
 	return maska, udzial, image.Rect(lewa, gora, prawa+1, dol+1), nil
 }
 
-// domalujObszarRachunkiemDesignu wypełnia obszary maski treścią z ich otoczenia.
-//
-// Rachunek jest rozrostem od brzegu obszaru w głąb: punkt do domalowania bierze
-// średnią z sąsiadów, którzy już treść mają, i tak warstwa po warstwie do środka.
-// Daje to wypełnienie ciągłe z otoczeniem — usuwa kabel na tle nieba albo rysę na
-// jednolitej ścianie. Nie odtworzy twarzy zasłoniętej ręką i to jest granica,
-// którą pole `computedBy` nazywa wprost.
+// domalujObszarRachunkiemDesignu wypełnia obszary maski treścią z ich otoczenia rozrostem
+// od brzegu obszaru w głąb: punkt do domalowania bierze średnią z sąsiadów, którzy już
+// treść mają, i tak warstwa po warstwie do środka.
 func domalujObszarRachunkiemDesignu(obraz image.Image, doWypelnienia func(x, y int) bool,
 	granicaPrzebiegow int) image.Image {
 
@@ -277,9 +257,10 @@ func domalujObszarRachunkiemDesignu(obraz image.Image, doWypelnienia func(x, y i
 		}
 	}
 	if pozostalo == 0 || pozostalo == szerokosc*wysokosc {
-		// Obszar pusty nie ma czego domalować; obszar obejmujący cały obraz nie ma
-		// z czego. W obu przypadkach oddajemy obraz taki, jaki wszedł — wołający
-		// nazywa to Operatorowi.
+		// Obszar pusty nie ma czego domalować, a obszar obejmujący cały obraz nie ma z
+		// czego.
+
+		// W obu przypadkach funkcja oddaje obraz taki, jaki wszedł, bez zmiany.
 		return obraz
 	}
 	for przebieg := 0; przebieg < granicaPrzebiegow && pozostalo > 0; przebieg++ {
@@ -323,9 +304,10 @@ func domalujObszarRachunkiemDesignu(obraz image.Image, doWypelnienia func(x, y i
 			break
 		}
 	}
-	// Domalowany obszar rozmywamy delikatnie: rozrost średnią zostawia w środku
-	// obszaru widoczne pasy, a jeden przebieg rozmycia je znosi bez ruszania
-	// otoczenia, bo poza obszarem nic się nie zmieniło.
+	// Domalowany obszar rozmywa się delikatnie: rozrost średnią zostawia w środku widoczne
+	// pasy.
+
+	// Jeden przebieg rozmycia znosi te pasy bez ruszania otoczenia poza obszarem.
 	return wynik
 }
 
@@ -364,17 +346,9 @@ func maskaZObrazuDesignu(maska image.Image, szerokosc, wysokosc int,
 	}
 }
 
-// obrazMaskiDesignu zamienia maskę rdzenia (funkcję przynależności punktu)
-// w OBRAZ, który da się wysłać do punktu końcowego edycji.
-//
-// ── Maska spełnia OBA rozstrzygnięcia naraz ─────────────────────────────────
-// Punkty końcowe edycji nie zgadzają się co do tego, co w masce znaczy „tutaj
-// pracuj": jedne czytają KANAŁ KRYCIA (obszar pracy jest przezroczysty), drugie
-// JASNOŚĆ (obszar pracy jest biały). Kontrakt rdzenia mówi o białym
-// (`design.photo.inpaint`: „punkt biały znaczy obszar objęty"). Dlatego obszar
-// objęty jest tu biały ORAZ przezroczysty, a tło czarne i kryjące — jedna maska
-// czytelna dla obu rodzajów punktu końcowego, bez parametru w wierszu kanału,
-// którego Operator nie miałby jak ustawić świadomie.
+// obrazMaskiDesignu zamienia maskę rdzenia, czyli funkcję przynależności punktu, w obraz,
+// który da się wysłać do punktu końcowego edycji. Obszar objęty jest biały oraz
+// przezroczysty, a tło czarne i kryjące.
 func obrazMaskiDesignu(nalezy func(x, y int) bool, szerokosc, wysokosc int) image.Image {
 	maska := image.NewNRGBA(image.Rect(0, 0, szerokosc, wysokosc))
 	for y := 0; y < wysokosc; y++ {
@@ -389,13 +363,9 @@ func obrazMaskiDesignu(nalezy func(x, y int) bool, szerokosc, wysokosc int) imag
 	return maska
 }
 
-// plotnoRozszerzeniaDesignu składa parę dla drogi neuronowej rozszerzenia kadru:
-// płótno o wymiarze WYNIKU z oryginałem w środku oraz maskę samych marginesów.
-//
-// Marginesy płótna zostają PUSTE (przezroczyste), a nie odbite lustrzanie jak
-// w rachunku rdzenia. Odbicie jest tam wynikiem samym w sobie; tutaj byłoby
-// podpowiedzią, którą model wziąłby za treść i domalował kopię brzegu zamiast
-// dalszej części obrazu.
+// plotnoRozszerzeniaDesignu składa parę dla drogi neuronowej rozszerzenia kadru: płótno o
+// wymiarze wyniku z oryginałem w środku oraz maskę samych marginesów, które zostają
+// puste, a nie odbite lustrzanie jak w rachunku rdzenia.
 func plotnoRozszerzeniaDesignu(obraz image.Image, lewa, prawa, gora, dol int) (image.Image,
 	image.Image) {
 
@@ -436,13 +406,9 @@ func udzialPrzezroczystosciDesignu(obraz image.Image) float64 {
 	return float64(przezroczystych) / float64(punktow)
 }
 
-// rozszerzKadrRachunkiemDesignu rozszerza kadr, wypełniając nowy obszar treścią
-// z brzegu obrazu.
-//
-// Wypełnienie jest ODBICIEM lustrzanym brzegu, nie rozciągnięciem ostatniego
-// rzędu punktów: rozciągnięcie daje widoczne smugi, a odbicie kontynuuje wzór
-// (niebo, trawa, tkanina) w sposób, którego nie widać. To ta sama droga, którą
-// idą filtry rozmycia na brzegu obrazu.
+// rozszerzKadrRachunkiemDesignu rozszerza kadr, wypełniając nowy obszar treścią z brzegu
+// obrazu. Wypełnienie jest odbiciem lustrzanym brzegu, nie rozciągnięciem ostatniego
+// rzędu punktów, bo odbicie kontynuuje wzór obrazu w sposób, którego nie widać.
 func rozszerzKadrRachunkiemDesignu(obraz image.Image, lewa, prawa, gora, dol int) image.Image {
 	granice := obraz.Bounds()
 	szerokosc := granice.Dx() + lewa + prawa
@@ -459,7 +425,8 @@ func rozszerzKadrRachunkiemDesignu(obraz image.Image, lewa, prawa, gora, dol int
 	return wynik
 }
 
-// odbijWZakresieDesignu odbija współrzędną w zakres 0..bok-1.
+// odbijWZakresieDesignu odbija współrzędną w zakres 0..bok-1. Współrzędna poza zakresem
+// wraca odbita od najbliższej krawędzi, tak jak przy odbiciu lustrzanym brzegu obrazu.
 func odbijWZakresieDesignu(wartosc, bok int) int {
 	if bok < 1 {
 		return 0
@@ -475,13 +442,9 @@ func odbijWZakresieDesignu(wartosc, bok int) int {
 	return wartosc
 }
 
-// powiekszRachunkiemDesignu powiększa obraz krotnie z wyostrzeniem po
-// powiększeniu.
-//
-// Filtr jest Lanczos — najostrzejszy z filtrów rekonstrukcji, jaki biblioteka
-// niesie. Wyostrzenie po powiększeniu odzyskuje część mikrokontrastu, którą
-// interpolacja rozmywa; nie odzyskuje szczegółu, którego w źródle nie było, i tak
-// ma być powiedziane.
+// powiekszRachunkiemDesignu powiększa obraz krotnie z wyostrzeniem po powiększeniu. Filtr
+// jest Lanczos, najostrzejszy z filtrów rekonstrukcji, jaki biblioteka niesie;
+// wyostrzenie odzyskuje część mikrokontrastu, który interpolacja rozmywa.
 func powiekszRachunkiemDesignu(obraz image.Image, krotnosc int, wyostrz bool) (image.Image, error) {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx()*krotnosc, granice.Dy()*krotnosc
@@ -495,7 +458,9 @@ func powiekszRachunkiemDesignu(obraz image.Image, krotnosc int, wyostrz bool) (i
 	return wynik, nil
 }
 
-// nalozFiltrFotografiiDesignu nakłada filtr obrazu z zadaną siłą.
+// nalozFiltrFotografiiDesignu nakłada filtr obrazu z zadaną siłą. Siła jest ułamkiem od
+// zera do jedynki i rozstrzyga, w jakim stopniu wynik filtra miesza się z obrazem
+// źródłowym.
 func nalozFiltrFotografiiDesignu(obraz image.Image, filtr shared.DesignPhotoFilter,
 	sila float64) image.Image {
 
@@ -510,17 +475,18 @@ func nalozFiltrFotografiiDesignu(obraz image.Image, filtr shared.DesignPhotoFilt
 	case shared.DesignPhotoFilterVignette:
 		return nalozWinieteDesignu(obraz, sila)
 	case shared.DesignPhotoFilterSepia:
-		// Sepia mieszana z oryginałem wedle siły: pełna sepia przy sile 0.3
-		// byłaby filtrem bez suwaka. Sam odcień sepii składa się z odbarwienia
-		// i przesunięcia barwy w stronę ciepłą — biblioteka gotowej sepii nie ma,
-		// a te dwa kroki są tym, czym sepia jest.
+		// Sepia mieszana z oryginałem wedle siły: pełna sepia przy sile 0.3 byłaby
+		// filtrem bez suwaka.
+
+		// Odcień sepii to odbarwienie i przesunięcie barwy w stronę ciepłą — biblioteka
+		// gotowej sepii nie ma.
 		return zmieszajObrazyDesignu(obraz,
 			zmienTemperatureBarwowaDesignu(imaging.Grayscale(obraz), 0.8), sila)
 	case shared.DesignPhotoFilterMonochrome:
 		return zmieszajObrazyDesignu(obraz, imaging.Grayscale(obraz), sila)
 	case shared.DesignPhotoFilterGlow:
-		// Poświata: rozmyta kopia dołożona trybem ekranu. Tak powstaje efekt
-		// „bloom" — jasne miejsca rozlewają się na sąsiedztwo.
+		// Poświata: rozmyta kopia dołożona trybem ekranu, dająca efekt jasnych miejsc
+		// rozlewających się dalej.
 		return zmieszajTrybemDesignu(obraz, imaging.Blur(obraz, 12), sila*0.7,
 			shared.DesignPhotoBlendModeScreen)
 	case shared.DesignPhotoFilterShadow:
@@ -532,11 +498,9 @@ func nalozFiltrFotografiiDesignu(obraz image.Image, filtr shared.DesignPhotoFilt
 	return obraz
 }
 
-// nalozZiarnoDesignu dokłada ziarno.
-//
-// Ziarno jest POWTARZALNE: wartość zaburzenia liczy się z położenia punktu, a nie
-// z generatora losowego. Dwa wywołania na tym samym obrazie mają dać ten sam
-// wynik — inaczej Operator nie mógłby powtórzyć tego, co zobaczył.
+// nalozZiarnoDesignu dokłada ziarno powtarzalne: wartość zaburzenia liczy się z położenia
+// punktu, a nie z generatora losowego, więc dwa wywołania na tym samym obrazie dają ten
+// sam wynik.
 func nalozZiarnoDesignu(obraz image.Image, sila float64) image.Image {
 	granice := obraz.Bounds()
 	wynik := image.NewNRGBA(image.Rect(0, 0, granice.Dx(), granice.Dy()))
@@ -544,8 +508,8 @@ func nalozZiarnoDesignu(obraz image.Image, sila float64) image.Image {
 	for y := 0; y < granice.Dy(); y++ {
 		for x := 0; x < granice.Dx(); x++ {
 			punkt := nrgbaPunktuDesignu(obraz, granice.Min.X+x, granice.Min.Y+y)
-			// Funkcja mieszająca współrzędne: iloczyn sinusów o niewymiernych
-			// okresach daje rozkład bez widocznego wzoru, a jest deterministyczna.
+			// Funkcja mieszająca współrzędne: iloczyn sinusów o niewymiernych okresach
+			// daje rozkład bez wzoru.
 			zaburzenie := (math.Mod(math.Abs(math.Sin(float64(x)*12.9898+
 				float64(y)*78.233))*43758.5453, 1) - 0.5) * amplituda
 			wynik.SetNRGBA(x, y, color.NRGBA{
@@ -559,7 +523,8 @@ func nalozZiarnoDesignu(obraz image.Image, sila float64) image.Image {
 	return wynik
 }
 
-// nalozWinieteDesignu przyciemnia brzegi obrazu.
+// nalozWinieteDesignu przyciemnia brzegi obrazu. Przyciemnienie rośnie od środka kadru ku
+// brzegom, dzięki czemu środek obrazu pozostaje nienaruszony.
 func nalozWinieteDesignu(obraz image.Image, sila float64) image.Image {
 	granice := obraz.Bounds()
 	wynik := image.NewNRGBA(image.Rect(0, 0, granice.Dx(), granice.Dy()))
@@ -572,8 +537,8 @@ func nalozWinieteDesignu(obraz image.Image, sila float64) image.Image {
 		for x := 0; x < granice.Dx(); x++ {
 			punkt := nrgbaPunktuDesignu(obraz, granice.Min.X+x, granice.Min.Y+y)
 			promien := math.Hypot(float64(x)-srodekX, float64(y)-srodekY) / promienNormujacy
-			// Przyciemnienie rośnie z kwadratem promienia, a zaczyna się od połowy
-			// kadru: winieta liniowa od środka przyciemniałaby także twarz.
+			// Przyciemnienie rośnie z kwadratem promienia i zaczyna się od połowy kadru,
+			// nie od środka.
 			przyciemnienie := 1.0
 			if promien > 0.5 {
 				nadmiar := (promien - 0.5) * 2
@@ -593,12 +558,14 @@ func nalozWinieteDesignu(obraz image.Image, sila float64) image.Image {
 	return wynik
 }
 
-// zmieszajObrazyDesignu miesza dwa obrazy o tych samych wymiarach wedle udziału.
+// zmieszajObrazyDesignu miesza dwa obrazy o tych samych wymiarach wedle udziału,
+// korzystając z trybu mieszania zwykłego jako wartości domyślnej.
 func zmieszajObrazyDesignu(pierwszy, drugi image.Image, udzial float64) image.Image {
 	return zmieszajTrybemDesignu(pierwszy, drugi, udzial, shared.DesignPhotoBlendModeNormal)
 }
 
-// zmieszajTrybemDesignu miesza dwa obrazy trybem mieszania.
+// zmieszajTrybemDesignu miesza dwa obrazy trybem mieszania wskazanym parametrem,
+// zwracając nowy obraz o wymiarach pierwszego z nich.
 func zmieszajTrybemDesignu(pierwszy, drugi image.Image, udzial float64,
 	tryb shared.DesignPhotoBlendMode) image.Image {
 
@@ -652,8 +619,8 @@ func wyretuszujObszaryDesignu(obraz image.Image, obszary []shared.DesignPhotoReg
 			weszlo++
 			continue
 		}
-		// Leczenie: obszar zostaje wypełniony z otoczenia. Rachunek jest ten sam,
-		// co przy domalowaniu — bo to jest to samo zadanie na mniejszą skalę.
+		// Leczenie wypełnia obszar treścią z otoczenia tym samym rachunkiem, co
+		// domalowanie na mniejszą skalę.
 		wyleczony := domalujObszarRachunkiemDesignu(wynik,
 			maskaZObszarowDesignu([]shared.DesignPhotoRegion{obszar}), 512)
 		wynik = imaging.Clone(wyleczony)
@@ -662,7 +629,8 @@ func wyretuszujObszaryDesignu(obraz image.Image, obszary []shared.DesignPhotoReg
 	return wynik, weszlo, pominiete
 }
 
-// klonujObszarDesignu przenosi punkty ze wskazanego źródła w obszar docelowy.
+// klonujObszarDesignu przenosi punkty ze wskazanego źródła w obszar docelowy, kopiując
+// treść bez zmiany jej barwy ani jasności.
 func klonujObszarDesignu(plotno *image.NRGBA, cel image.Rectangle, zrodloweX, zrodloweY int) {
 	granice := plotno.Bounds()
 	zrodlo := imaging.Clone(plotno)
@@ -683,14 +651,9 @@ func klonujObszarDesignu(plotno *image.NRGBA, cel image.Rectangle, zrodloweX, zr
 	}
 }
 
-// obrysujKonturyDesignu zamienia raster w dokument SVG rachunkiem własnym:
-// zmniejszenie liczby barw, spójne obszary, obejście każdego obszaru po granicy.
-//
-// Narzędzia obrysowywania konturów leżą poza instalką Operatora, więc tej drogi
-// tu nie ma. Kontur idzie krawędziami punktów — schodkowy, ale PRAWDZIWY: opisuje
-// dokładnie te punkty, które do obszaru należą. Wygładzenie żądania
-// (`smoothing`) zaokrągla naroża wielokąta krzywymi kwadratowymi o promieniu
-// równym jego wartości; wygładzenie zerowe zostawia obrys punkt w punkt.
+// obrysujKonturyDesignu zamienia raster w dokument SVG rachunkiem własnym: zmniejszenie
+// liczby barw, spójne obszary, obejście każdego obszaru po granicy. Wygładzenie żądania
+// zaokrągla naroża krzywymi kwadratowymi o promieniu równym jego wartości.
 func obrysujKonturyDesignu(obraz image.Image, barw int, prog,
 	wygladzenie float64) (string, int, int, error) {
 
@@ -700,8 +663,8 @@ func obrysujKonturyDesignu(obraz image.Image, barw int, prog,
 		return "", 0, 0, fmt.Errorf("obraz o boku %d×%d nie ma czego obrysować",
 			szerokosc, wysokosc)
 	}
-	// Barwy rozkłada to samo skupianie, którym liczy się paleta z obrazu — jedna
-	// prawda o tym, jakie barwy obraz ma.
+	// Barwy rozkłada to samo skupianie, którym liczy się paleta z obrazu — jedna prawda o
+	// barwach obrazu.
 	punkty := probkujPunktyObrazuDesignu(obraz, granicaPunktowPomiaruPaletyDesignu)
 	if len(punkty) == 0 {
 		return "", 0, 0, fmt.Errorf("obraz nie ma ani jednego punktu do obrysowania")
@@ -727,9 +690,10 @@ func obrysujKonturyDesignu(obraz image.Image, barw int, prog,
 					najblizsze, najmniejsza = numer, odleglosc
 				}
 			}
-			// Punkt odbiegający od każdego skupienia powyżej progu zostaje bez
-			// etykiety (-1) i nie wchodzi do żadnej ścieżki: obszar zlepiony
-			// z punktów niepodobnych do niczego nie jest kształtem.
+			// Punkt odbiegający od każdego skupienia powyżej progu zostaje bez etykiety i
+			// nie wchodzi do ścieżki.
+
+			// Obszar zlepiony z punktów niepodobnych do niczego nie jest kształtem.
 			if prog > 0 && najmniejsza > prog {
 				etykiety[y*szerokosc+x] = -1
 				continue
@@ -765,9 +729,11 @@ func obrysujKonturyDesignu(obraz image.Image, barw int, prog,
 			}
 			obrys := zapisSvgObrysuDesignu(obrysObszaruDesignu(odcinki), wygladzenie)
 			if obrys == "" {
-				// Obszar bez ani jednego zamkniętego konturu nie jest kształtem —
-				// wchodzi do bilansu odrzuconych, a nie do dokumentu jako ścieżka
-				// z pustym atrybutem `d`, której przeglądarka nie pokaże.
+				// Obszar bez ani jednego zamkniętego konturu nie jest kształtem i wchodzi
+				// do bilansu odrzuconych.
+
+				// Nie trafia do dokumentu jako ścieżka z pustym atrybutem d, której
+				// przeglądarka nie pokaże.
 				odrzuconych++
 				continue
 			}
@@ -785,13 +751,9 @@ func obrysujKonturyDesignu(obraz image.Image, barw int, prog,
 	return dokument.String(), sciezek, odrzuconych, nil
 }
 
-// obszarEtykietyDesignu przechodzi po obszarze spójnym o jednej etykiecie
-// i oddaje liczbę punktów wraz z wykazem poziomych odcinków, z których obszar się
-// składa.
-//
-// Odcinki, nie pojedyncze punkty: obszar o dziesięciu tysiącach punktów zapisany
-// punkt po punkcie dałby ścieżkę o czterdziestu tysiącach współrzędnych, a ten
-// sam obszar w odcinkach — o kilkuset.
+// obszarEtykietyDesignu przechodzi po obszarze spójnym o jednej etykiecie i oddaje liczbę
+// punktów wraz z wykazem poziomych odcinków, z których obszar się składa; zapis odcinkami
+// jest wielokrotnie krótszy niż zapis punkt po punkcie.
 func obszarEtykietyDesignu(etykiety []int, odwiedzone []bool, szerokosc, wysokosc,
 	startX, startY, etykieta int) (int, [][3]int) {
 
@@ -854,35 +816,9 @@ func sortujRosnacoDesignu(wykaz []int) {
 	}
 }
 
-// obrysObszaruDesignu obchodzi obszar po jego GRANICY i oddaje wielokąty
-// obrysu — po jednym na każdy zamknięty kontur obszaru.
-//
-// ── Dlaczego obchodzenie granicy, a nie wykaz prostokątów ───────────────────
-// Obszar dałoby się zapisać jako wykaz prostokątów o wysokości jednego punktu
-// i tak było zapisywany wcześniej. Zapis jest wtedy prawdziwy, ale nie jest
-// KSZTAŁTEM: nie ma w nim naroży, więc nie ma czego wygładzić, a pole
-// `smoothing` żądania nie miałoby na czym pracować. Obrys granicą daje wielokąt
-// o narożach — ten sam kształt punkt w punkt, a przy tym poddający się
-// zaokrągleniu.
-//
-// ── Kierunek obchodzenia rozstrzyga o dziurach ──────────────────────────────
-// Krawędzie składa się tak, że obszar zostaje po LEWEJ stronie kierunku marszu.
-// Kontur zewnętrzny wychodzi wtedy zgodnie z ruchem wskazówek zegara, a dziura
-// w obszarze — przeciwnie. Dzięki temu domyślna reguła wypełniania SVG (niezerowa)
-// wycina dziury sama, bez wskazywania jej w atrybucie.
-//
-// ── Naroże, w którym schodzą się dwie krawędzie po skosie ───────────────────
-// Obszar jest spójny czterokierunkowo, ale dwa jego ramiona mogą stykać się
-// narożem. W takim wierzchołku wychodzą dwie krawędzie i wybór między nimi
-// rozstrzyga o tym, czy obrys się nie przecina. Marsz trzyma się ściany:
-// najpierw skręt w prawo, potem prosto, potem w lewo — reguła znana i dająca
-// kontury nieprzecinające się.
-// ── Rachunek idzie po PUNKTACH obszaru, nie po jego prostokącie otaczającym ──
-// Obszar wężowaty — ukośna kreska przez cały obraz — ma prostokąt otaczający
-// wielkości obrazu i kilkaset punktów. Przejście po prostokącie kosztowałoby przy
-// każdym takim obszarze tyle, ile cały obraz, a obrysowanie liczy do dwóch
-// tysięcy obszarów. Dlatego przynależność punktu rozstrzygają ODCINKI (wyszukanie
-// połówkowe w wierszu), a nie tablica wielkości prostokąta.
+// obrysObszaruDesignu obchodzi obszar po jego granicy i oddaje wielokąty obrysu, po
+// jednym na każdy zamknięty kontur. Krawędzie składa się tak, że obszar zostaje po lewej
+// stronie kierunku marszu, dzięki czemu reguła wypełniania SVG wycina dziury sama.
 func obrysObszaruDesignu(odcinki [][3]int) [][]image.Point {
 	if len(odcinki) == 0 {
 		return nil
@@ -910,17 +846,20 @@ func obrysObszaruDesignu(odcinki [][3]int) [][]image.Point {
 		return false
 	}
 
-	// Krawędzie granicy: dla każdego punktu obszaru te jego boki, za którymi
-	// obszaru już nie ma. Współrzędne są NAROŻAMI punktów, nie punktami — bok
-	// punktu (0;0) od góry biegnie od naroża (0;0) do naroża (1;0).
+	// Krawędzie granicy to dla każdego punktu obszaru te jego boki, za którymi obszaru
+	// już nie ma.
+
+	// Współrzędne są narożami punktów: bok punktu (0;0) od góry biegnie od naroża (0;0)
+	// do naroża (1;0).
 	type krawedzObrysuDesignu struct {
 		poczatek image.Point
 		kierunek image.Point
 	}
 	wychodzace := map[image.Point][]image.Point{}
-	// Kolejność zakładania krawędzi jest kolejnością wierszy i punktów w wierszu,
-	// więc jest ta sama przy każdym wywołaniu. Od niej zależy kolejność konturów
-	// w pliku: przejście po mapie dawałoby dwa różne pliki z jednego obrazu.
+	// Kolejność zakładania krawędzi jest kolejnością wierszy i punktów w wierszu, więc
+	// jest stała.
+
+	// Od niej zależy kolejność konturów w pliku wynikowym.
 	kolejnosc := []krawedzObrysuDesignu{}
 	dolozKrawedz := func(poczatek, kierunek image.Point) {
 		wychodzace[poczatek] = append(wychodzace[poczatek], kierunek)
@@ -983,9 +922,8 @@ func obrysObszaruDesignu(odcinki [][3]int) [][]image.Point {
 				break
 			}
 			if nastepny != kierunek {
-				// Wierzchołek zapisuje się dopiero przy ZMIANIE kierunku: prosty
-				// odcinek złożony z dziesięciu krawędzi jest jednym bokiem wielokąta,
-				// nie dziesięcioma.
+				// Wierzchołek zapisuje się dopiero przy zmianie kierunku: prosty odcinek
+				// jest jednym bokiem wielokąta.
 				wierzcholki = append(wierzcholki, biezacy)
 			}
 			kierunek = nastepny
@@ -997,18 +935,9 @@ func obrysObszaruDesignu(odcinki [][3]int) [][]image.Point {
 	return kontury
 }
 
-// zapisSvgObrysuDesignu składa treść `d` ścieżki z wielokątów obrysu.
-//
-// Wygładzenie ZAOKRĄGLA naroża: bok skraca się z obu stron naroża o promień
-// wygładzenia, a łuk między skróconymi końcami idzie krzywą kwadratową, której
-// punktem sterującym jest samo naroże. Promień przycina się do połowy krótszego
-// z boków schodzących się w narożu — inaczej dwa sąsiednie zaokrąglenia zjadłyby
-// ten sam bok i kształt zawinąłby się na siebie.
-//
-// Wygładzenie zerowe daje wielokąt bez krzywych, czyli obrys punkt w punkt taki,
-// jakie są krawędzie punktów obszaru. To rozstrzygnięcie: obrysowanie bez
-// wskazania wygładzenia ma być POMIAREM obrazu, a nie kształtem upiększonym
-// o liczbę, której nikt nie podał.
+// zapisSvgObrysuDesignu składa treść atrybutu d ścieżki z wielokątów obrysu. Wygładzenie
+// zaokrągla naroża: bok skraca się z obu stron naroża o promień wygładzenia, a łuk między
+// skróconymi końcami idzie krzywą kwadratową.
 func zapisSvgObrysuDesignu(kontury [][]image.Point, wygladzenie float64) string {
 	var zapis strings.Builder
 	for _, wierzcholki := range kontury {
@@ -1028,13 +957,14 @@ func zapisSvgObrysuDesignu(kontury [][]image.Point, wygladzenie float64) string 
 	return zapis.String()
 }
 
-// zapiszZaokraglonyKonturDesignu dopisuje jeden kontur z zaokrąglonymi narożami.
+// zapiszZaokraglonyKonturDesignu dopisuje jeden kontur z zaokrąglonymi narożami do
+// budowanej treści ścieżki SVG.
 func zapiszZaokraglonyKonturDesignu(zapis *strings.Builder, wierzcholki []image.Point,
 	wygladzenie float64) {
 
 	ile := len(wierzcholki)
-	// Wejście i wyjście każdego naroża: punkty na bokach, odsunięte od naroża
-	// o promień przycięty do połowy boku.
+	// Wejście i wyjście każdego naroża: punkty na bokach, odsunięte o promień przycięty
+	// do połowy boku.
 	wejscia := make([][2]float64, ile)
 	wyjscia := make([][2]float64, ile)
 	for numer := 0; numer < ile; numer++ {
@@ -1078,10 +1008,8 @@ func punktNaBokuDesignu(naroze, sasiad image.Point, wygladzenie float64) [2]floa
 	}
 }
 
-// liczbaObrysuDesignu zapisuje współrzędną obrysu zaokrągloną do setnej części
-// punktu obrazu i bez zer na końcu. Poniżej setnej nie ma czego zapisywać,
-// a wygładzenie podane jako jedna trzecia rozdmuchałoby plik o kilkanaście cyfr
-// przy każdej współrzędnej.
+// liczbaObrysuDesignu zapisuje współrzędną obrysu zaokrągloną do setnej części punktu
+// obrazu i bez zer na końcu, ponieważ poniżej setnej części nie ma czego zapisywać.
 func liczbaObrysuDesignu(wartosc float64) string {
 	return strconv.FormatFloat(math.Round(wartosc*100)/100, 'f', -1, 64)
 }

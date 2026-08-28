@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: Preview Window i różnica wizualna —
-// `studio.preview.render` oraz `studio.diff.visual`. Silnik wyrysu stoi
-// w `adapter_studio_wyrys.go`; ten plik odpowiada wyłącznie za to, skąd wziąć
-// treść, jakimi nastawami ją wyrysować i gdzie odłożyć wynik.
-//
-// ── Podgląd oddaje STRONY, nie tekst ────────────────────────────────────────
-// Kontrakt obu komend mówi o zasobach: `pageAssetIds` i `overlayAssetIds`.
-// Powód stoi w opracowaniu (rozdz. 3.7): podgląd ma pokazać UKŁAD — typografię,
-// paginację, nagłówek i stopkę — a nie ten sam tekst, który Operator widzi
-// w edytorze. Strona wychodzi więc obrazem, bo obraz jest jedyną postacią,
-// w której układ da się zobaczyć bez drugiego silnika składu po stronie okna.
+// Plik obsługuje komendy `studio.preview.render` i `studio.diff.visual`:
+// dostarcza treść, dobiera nastawy wyrysu i odkłada wynik jako zasoby stron.
 package core
 
 import (
@@ -32,13 +23,8 @@ type ustawieniaProfiluStudia struct {
 	ZnakWodny string `json:"znakWodny,omitempty"`
 }
 
-// WyrenderujPodglad obsługuje `studio.preview.render`.
-//
-// Format docelowy rozstrzyga o postaci wyniku dwustopniowo: strony powstają
-// zawsze jako obrazy (bo podgląd pokazuje układ), a przy formacie `pdf` z tych
-// samych stron składa się dodatkowo dokument. Dwa różne silniki — jeden dla
-// podglądu, drugi dla wydania — dawałyby dwa różne układy, a wtedy podgląd
-// przestaje być podglądem.
+// WyrenderujPodglad obsługuje `studio.preview.render`: strony powstają zawsze
+// jako obrazy, a przy formacie `pdf` z tych samych stron składa się dokument.
 func (a *adapterStudia) WyrenderujPodglad(ctx context.Context,
 	z shared.StudioPreviewRenderRequest) (shared.StudioPreviewRenderResponse, error) {
 
@@ -86,10 +72,7 @@ func (a *adapterStudia) WyrenderujPodglad(ctx context.Context,
 		kody = append(kody, zasob.Id)
 	}
 
-	// Dokument w formacie docelowym powstaje OBOK stron i dokłada się na końcu
-	// wykazu — Preview Window pobiera go jako całość, a strony pokazuje jedna
-	// po drugiej. Wykaz bez niego zmuszałby okno do drugiego żądania po to
-	// samo, co rdzeń ma już złożone.
+	// Dokument w formacie docelowym dokłada się na końcu wykazu, obok stron.
 	if strings.EqualFold(strings.TrimSpace(z.Format), "pdf") {
 		bajty, err := pdfZeStronStudia(strony)
 		if err != nil {
@@ -105,13 +88,8 @@ func (a *adapterStudia) WyrenderujPodglad(ctx context.Context,
 	return shared.StudioPreviewRenderResponse{PageAssetIds: kody, Pages: len(karty)}, nil
 }
 
-// PorownajWizualnie obsługuje `studio.diff.visual`.
-//
-// Porównanie idzie po WYRYSIE obu wersji, nie po ich tekście: sedno tej
-// czynności jest w tym, żeby zobaczyć zmianę, której różnica tekstowa nie widzi
-// — przesunięcie akapitu na następną stronę, zmianę łamania, przestawienie
-// nagłówka. Obie strony rysuje ten sam silnik tymi samymi nastawami, więc
-// różnica pikseli jest różnicą treści, a nie różnicą sposobu rysowania.
+// PorownajWizualnie obsługuje `studio.diff.visual`: porównuje wyrys obu
+// wersji tym samym silnikiem i tymi samymi nastawami, nie ich tekst.
 func (a *adapterStudia) PorownajWizualnie(ctx context.Context,
 	z shared.StudioDiffVisualRequest) (shared.StudioDiffVisualResponse, error) {
 
@@ -150,9 +128,7 @@ func (a *adapterStudia) PorownajWizualnie(ctx context.Context,
 	okno := wartoscTekstu(z.WindowId)
 	obszary := []shared.StudioVisualDiffRegion{}
 	nakladki := []string{}
-	// Wersje bywają różnej długości. Strona, której druga wersja nie ma, jest
-	// zmianą CAŁEJ strony — i tak ją tu widać, bo za brakującą stronę wchodzi
-	// pusta biała karta o tych samych wymiarach.
+	// Strona, której druga wersja nie ma, wychodzi jako zmiana całej strony.
 	dluzsza := len(kartyBazy)
 	if len(kartyCelu) > dluzsza {
 		dluzsza = len(kartyCelu)
@@ -216,9 +192,7 @@ func (a *adapterStudia) nastawyPodgladuStudia(ctx context.Context, dokument dane
 	}
 	var ustawienia ustawieniaProfiluStudia
 	if err := json.Unmarshal([]byte(profil.Ladunek), &ustawienia); err != nil {
-		// Ładunek nieczytelny nie unieważnia podglądu: profil jest nastawą
-		// strony, a nie treścią. Odmowa byłaby tu odmową pokazania dokumentu
-		// z powodu ustawienia nagłówka.
+		// Ładunek nieczytelny nie unieważnia podglądu, tylko pomija nastawę.
 		return nastawy, nil
 	}
 	if ustawienia.Naglowek != "" {
@@ -231,19 +205,9 @@ func (a *adapterStudia) nastawyPodgladuStudia(ctx context.Context, dokument dane
 	return nastawy, nil
 }
 
-// geometriaDokumentuStudia oddaje geometrię wyrysu wyliczoną z NASTAW STRONY
-// dokumentu, a nie ze stałej A4.
-//
-// Postać dokumentu nieczytelna albo niezapisana daje geometrię domyślną, a nie
-// odmowę: podgląd dokumentu, który nastaw strony jeszcze nie ma, jest normalną
-// drogą, a nie usterką.
-//
-// Nastawy SEKCJI ta droga bierze przez nastawy dokumentu, na które sekcja
-// pierwsza się nakłada. Dokument o sekcjach różnych NOŚNIKÓW wychodzi w wyrysie
-// jednym rozmiarem — wyrys składa jeden ciąg kartek i drugiego rozmiaru w tym
-// samym ciągu nie umie. Rachunek stron aparatu (`aparatStronyAkapitow`) liczy
-// za to sekcja po sekcji, bo numer strony musi być prawdziwy nawet wtedy, gdy
-// obraz kartki jest przybliżeniem.
+// geometriaDokumentuStudia oddaje geometrię wyrysu wyliczoną z nastaw strony
+// dokumentu, a przy postaci nieczytelnej albo niezapisanej — geometrię
+// domyślną zamiast odmowy.
 func (a *adapterStudia) geometriaDokumentuStudia(ctx context.Context,
 	kodDokumentu string) geometriaStronyStudia {
 
@@ -254,7 +218,8 @@ func (a *adapterStudia) geometriaDokumentuStudia(ctx context.Context,
 	return geometriaZNastawStrony(postac.PageSetup)
 }
 
-// tytulDokumentuStudia oddaje nazwę, którą dokument nosi w nagłówku strony.
+// tytulDokumentuStudia oddaje nazwę, którą dokument nosi w nagłówku strony,
+// z kodem dokumentu jako wartością zastępczą, gdy tytułu nie wskazano.
 func tytulDokumentuStudia(dokument dane.DokumentStudia) string {
 	if dokument.Tytul != nil && strings.TrimSpace(*dokument.Tytul) != "" {
 		return *dokument.Tytul
@@ -273,7 +238,8 @@ func kartaAlboPustaStudia(karty []kartaWyrysuStudia, i int,
 	return pustaStronaStudia(kartka)
 }
 
-// stronaZeWskaznikaStudia sprowadza pole liczbowe nieobowiązkowe do zera przy braku.
+// stronaZeWskaznikaStudia sprowadza pole liczbowe nieobowiązkowe do zera,
+// gdy wskaźnik jest pusty albo wartość jest ujemna.
 func stronaZeWskaznikaStudia(wskazanie *int) int {
 	if wskazanie == nil || *wskazanie < 0 {
 		return 0

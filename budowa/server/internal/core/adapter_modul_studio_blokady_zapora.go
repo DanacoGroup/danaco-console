@@ -1,48 +1,6 @@
-// Odpowiedzialność pliku: ZAPORA BLOKAD — sprawdzenie blokad fragmentów wpięte
-// w rejestr komend, na drodze KAŻDEJ komendy zmieniającej dokument Studia.
-//
-// ── Dlaczego w rejestrze, a nie w obsługiwaczach ─────────────────────────────
-// Wymaganie Właściciela mówi: sprawdzenie stoi na drodze każdej komendy
-// zmieniającej dokument, po stronie serwera, PRZED dotknięciem treści. Komend
-// zmieniających dokument Studio ma dziś ponad setkę i pisze je czterech
-// wykonawców naraz. Wywołanie sprawdzenia w każdym obsługiwaczu z osobna
-// znaczyłoby: sto miejsc do pominięcia przez pomyłkę, a każde pominięcie to
-// cicha dziura w blokadzie. Zapora wpięta w rejestr obejmuje wszystkie te
-// komendy JEDNYM warunkiem — i obejmuje też te, których jeszcze nikt nie
-// napisał, bo działa po nazwie rodziny, nie po wykazie obsługiwaczy.
-//
-// Rejestr jest jedynym miejscem, w którym rdzeń rozstrzyga „co wykonać"
-// (`rejestr.go`), więc jest też jedynym miejscem, przez które przechodzi
-// KAŻDE wywołanie — także wywołanie modelu, bo model woła komendy tą samą
-// drogą co klient. Owinięcie wpisu rejestru jest zatem tym samym, co postawienie
-// straży w drzwiach, a nie przy każdym stoliku.
-//
-// ── Dwie drogi sprawdzenia, bo dwa kształty komend ──────────────────────────
-//
-//  1. KOMENDA NA FRAGMENCIE — żądanie niesie `rangeStart` i `rangeEnd`. Zakres
-//     znany PRZED wykonaniem, więc sprawdzenie jest czyste: zakres stykający się
-//     z blokadą wiążącą kończy się odmową NAZWANĄ i obsługiwacz nie rusza. Tak
-//     idzie przygniatająca większość czynności postaci i treści.
-//
-//  2. KOMENDA NA CAŁYM DOKUMENCIE — żądanie zakresu nie niesie (zamiana
-//     w całym dokumencie, przyjęcie wszystkich zmian, przestawienie formatu).
-//     Tu zakresu przed wykonaniem NIE MA: powstaje dopiero z rachunku
-//     obsługiwacza. Odmowa całości byłaby nieproporcjonalna — Właściciel mówi to
-//     wprost — więc zapora robi trzy rzeczy: zakłada kopię zapasową (czynność
-//     nieodwracalna i tak jej wymaga), puszcza obsługiwacza, a potem UZGADNIA
-//     wynik z blokadami: fragmenty zablokowane wracają do brzmienia zastanego,
-//     a odpowiedź dostaje BILANS pominięć. Blokada nie zostaje przy tym naruszona
-//     na zewnątrz: żaden inny wołający nie widzi stanu przejściowego, bo
-//     uzgodnienie zamyka się w tym samym wywołaniu, a odpowiedź niesie już stan
-//     uzgodniony.
-//
-// ── Dlaczego bilans dopisuje się do odpowiedzi tutaj ────────────────────────
-// Bilans musi wyjść odpowiedzią TEJ komendy, którą Operator albo model zawołał —
-// inaczej pominięcie zostałoby przemilczane, a to jest zakazane. Odpowiedzi
-// większości tych komend należą do innych odcinków i ich kształtów ten plik nie
-// zmienia. Dopisuje więc pole `balance` do gotowego ładunku JSON (`wynik` jest
-// `json.RawMessage`), zamiast żądać od czterech wykonawców, żeby każdy dołożył
-// u siebie to samo pole i pamiętał o nim w każdej nowej komendzie.
+// Plik obsługuje zaporę blokad — sprawdzenie blokad fragmentów wpięte
+// w rejestr komend na drodze każdej komendy zmieniającej dokument Studia —
+// oraz siatkę dopisującą ślad autora, gdy obsługiwacz go nie odłożył.
 package core
 
 import (
@@ -65,8 +23,8 @@ type zaporaZadanieZmiany struct {
 	// Selection* to druga nazwa tego samego pojęcia w rodzinie komentarzy.
 	SelectionStart *int `json:"selectionStart,omitempty"`
 	SelectionEnd   *int `json:"selectionEnd,omitempty"`
-	// Content niosą komendy przepisujące treść w całości. Gdy jest, zapora
-	// uzgadnia je PRZED wykonaniem — to jest sprawdzenie najczystsze z możliwych.
+	// Content niosą komendy przepisujące treść w całości; zapora uzgadnia je
+	// przed wykonaniem.
 	Content *string `json:"content,omitempty"`
 
 	Author     *shared.StudioAuthor `json:"author,omitempty"`
@@ -75,7 +33,8 @@ type zaporaZadanieZmiany struct {
 	SubagentId *string              `json:"subagentId,omitempty"`
 }
 
-// zakres oddaje zakres żądania pod obiema nazwami kontraktu.
+// zakres oddaje zakres żądania pod obiema nazwami kontraktu: rangeStart
+// i rangeEnd albo selectionStart i selectionEnd.
 func (z zaporaZadanieZmiany) zakres() (int, int, bool) {
 	if z.RangeStart != nil && z.RangeEnd != nil {
 		return *z.RangeStart, *z.RangeEnd, true
@@ -86,27 +45,17 @@ func (z zaporaZadanieZmiany) zakres() (int, int, bool) {
 	return 0, 0, false
 }
 
-// podpis oddaje pola tożsamości wykonawcy.
+// podpis oddaje pola tożsamości wykonawcy potrzebne rozpoznaniu, kto zawołał
+// daną komendę zmieniającą.
 func (z zaporaZadanieZmiany) podpis() kontrolaPodpisZadania {
 	return kontrolaPodpisZadania{
 		Author: z.Author, AgentId: z.AgentId, AgentName: z.AgentName, SubagentId: z.SubagentId,
 	}
 }
 
-// zaporaKomendyBezZmianyTresci wymienia komendy rodziny `studio.*`, które
-// dokumentu NIE zmieniają, więc zapora ich nie dotyczy.
-//
-// Wykaz jest wykazem WYJĄTKÓW, nie wykazem objętych — i to jest zamierzone.
-// Gdyby zapora obejmowała wykaz komend zmieniających, komenda dopisana przez
-// innego wykonawcę i niewpisana do wykazu byłaby cichą dziurą w blokadzie.
-// Tak ułożony wykaz myli się w drugą stronę: komenda nowa jest domyślnie
-// sprawdzana, a najgorsze, co może z tego wyjść, to sprawdzenie zbędne przy
-// odczycie — widoczne od razu i nieszkodliwe dla dokumentu.
-//
-// Odczyty i wykazy stoją tu wszystkie, bo odczyt nie ma czego naruszyć.
-// Czynności samych blokad i dziennika stoją tu, bo są narzędziem Operatora
-// NAD blokadą i sprawdzają jego prawa same, dokładniej (blokadę zdejmuje
-// wyłącznie Operator — sprawdza to `ZdejmijBlokade`).
+// zaporaKomendyBezZmianyTresci wymienia komendy rodziny studio.*, które
+// dokumentu nie zmieniają, więc zapora ich nie dotyczy. Wykaz jest wykazem
+// wyjątków, nie wykazem objętych, żeby komenda nowa była domyślnie sprawdzana.
 var zaporaKomendyBezZmianyTresci = map[shared.MessageType]bool{
 	shared.CommandStudioDocumentOpen:          true,
 	shared.CommandStudioRepositoryList:        true,
@@ -156,21 +105,8 @@ var zaporaKomendyBezZmianyTresci = map[shared.MessageType]bool{
 	shared.CommandStudioAgentsSettingsSet:     true,
 	shared.CommandStudioDiffFormCompare:       true,
 
-	// Czynności, które sprawdzają blokadę SAME, i to dokładniej niż zapora.
-	// Wpis tutaj nie jest osłabieniem: obsługiwacz robi to samo sprawdzenie
-	// przed dotknięciem treści, a zapora zrobiłaby je na zakresie o innym
-	// znaczeniu i przez to albo za szeroko, albo za wąsko.
-	//
-	//   markup.add — propozycja na marginesie jest JEDYNĄ drogą wykonawcy do
-	//     fragmentu pod blokadą i musi przechodzić; wyróżnienie barwą sprawdza
-	//     blokadę samo (`postacOdcinkiDozwolone`).
-	//   markup.remove — zdejmuje barwę z zakresu SWOJEGO znakowania, którego
-	//     zapora z żądania nie zna.
-	//   clipboard.copy — odczyt fragmentu, także zablokowanego; wycięcie sprawdza
-	//     blokadę samo.
-	//   clipboard.paste — miejsce wklejenia jedzie polem `offset`, nie zakresem.
-	//   diff.hunk.apply — zakres w żądaniu dotyczy WERSJI ŹRÓDŁOWEJ, nie treści
-	//     bieżącej; uzgodnienie liczy się na treści bieżącej.
+	// Czynności, które sprawdzają blokadę same, dokładniej niż zapora byłaby
+	// w stanie.
 	shared.CommandStudioMarkupAdd:      true,
 	shared.CommandStudioMarkupRemove:   true,
 	shared.CommandStudioClipboardCopy:  true,
@@ -199,14 +135,13 @@ func zaporaBlokadStudia(r *Rejestr, a *adapterStudia) {
 	}
 }
 
-// zaporaOwin składa obsługiwacza pilnowanego blokadami.
+// zaporaOwin składa obsługiwacza pilnowanego blokadami, wpinanego w miejsce
+// obsługiwacza pierwotnego w rejestrze.
 func (a *adapterStudia) zaporaOwin(nazwa shared.MessageType, obsluga Obsluga) Obsluga {
 	return func(ctx context.Context, z protocol.Request) protocol.Odpowiedz {
 		var zadanie zaporaZadanieZmiany
-		// Ładunek innego kształtu NIE jest tu usterką: nie każda komenda Studia
-		// niesie dokument, a te, które go nie niosą, nie mają czego naruszyć.
-		// Odmowa z powodu niedopasowania kształtu zablokowałaby komendę,
-		// o której zapora nie ma nic do powiedzenia.
+		// Ładunek innego kształtu nie jest usterką: komenda bez dokumentu nie
+		// ma czego naruszyć.
 		if err := json.Unmarshal(z.Ladunek, &zadanie); err != nil || zadanie.DocumentId == "" {
 			return obsluga(ctx, z)
 		}
@@ -214,17 +149,14 @@ func (a *adapterStudia) zaporaOwin(nazwa shared.MessageType, obsluga Obsluga) Ob
 
 		skladnica, err := a.kontrolaSkladnica()
 		if err != nil {
-			// Rdzeń złożony bez tabel blokad nie ma czym sprawdzić, czy zmiana
-			// jest wolna. Pilnowanie ustępuje wtedy DZIAŁANIU, a nie odwrotnie:
-			// zamiana pracy całego modułu na odmowę z powodu braku montażu
-			// byłaby szkodą większą niż brak sprawdzenia. Brak nazywa się
-			// wprost przy pierwszej czynności samych blokad.
+			// Rdzeń bez tabel blokad ustępuje działaniu; brak nazywa się przy
+			// pierwszej czynności blokad.
 			return obsluga(ctx, z)
 		}
 		dokument, err := a.repozytorium.Dokument(ctx, zadanie.DocumentId)
 		if err != nil {
-			// Dokumentu nie ma albo odczyt się nie udał — rozstrzygnięcie tego
-			// należy do obsługiwacza, który powie o tym własną treścią odmowy.
+			// Dokumentu nie ma albo odczyt się nie udał — rozstrzyga to
+			// obsługiwacz własną odmową.
 			return obsluga(ctx, z)
 		}
 		blokady, err := skladnica.BlokadyFragmentow(ctx, dokument.ID)
@@ -264,9 +196,8 @@ func (a *adapterStudia) zaporaOwin(nazwa shared.MessageType, obsluga Obsluga) Ob
 			return zaporaDopiszBilans(odpowiedz, blokadaBilans(uzgodnienie))
 		}
 
-		// ── Droga trzecia: czynność na całym dokumencie ──────────────────────
-		// Zakresu przed wykonaniem nie ma. Kopia zapasowa PRZED (czynność
-		// nieodwracalna i tak jej wymaga), wykonanie, uzgodnienie wyniku.
+		// ── Droga trzecia: czynność na całym dokumencie. Kopia zapasowa przed
+		// wykonaniem, potem uzgodnienie.
 		trescPrzed := wartoscTekstu(dokument.Tresc)
 		if _, err := a.kopiaPrzedCzynnoscia(ctx, dokument,
 			shared.StudioBackupReasonBeforeIrreversible); err != nil {
@@ -286,8 +217,8 @@ func (a *adapterStudia) zaporaOwin(nazwa shared.MessageType, obsluga Obsluga) Ob
 		if len(uzgodnienie.Pominiete) == 0 {
 			return odpowiedz
 		}
-		// Treść uzgodniona wraca do bazy: fragmenty zablokowane odzyskują
-		// brzmienie zastane, reszta zmiany zostaje.
+		// Treść uzgodniona wraca do bazy: fragmenty zablokowane wracają,
+		// reszta zmiany zostaje.
 		po.Tresc = &uzgodnienie.Tresc
 		if _, err := a.repozytorium.ZapiszDokument(ctx, po); err != nil {
 			return porazka(bladStudio(err))
@@ -296,12 +227,9 @@ func (a *adapterStudia) zaporaOwin(nazwa shared.MessageType, obsluga Obsluga) Ob
 	}
 }
 
-// zaporaPrzepiszTresc podmienia pole `content` w ładunku żądania, zostawiając
-// wszystkie pozostałe pola nietknięte.
-//
-// Przez mapę, nie przez strukturę: zapora nie zna kształtów żądań innych
-// odcinków, a złożenie ładunku ze znanej jej struktury zgubiłoby każde pole,
-// o którym nie wie.
+// zaporaPrzepiszTresc podmienia pole content w ładunku żądania przez mapę,
+// zostawiając pozostałe pola nietknięte, bo struktura znana zaporze
+// zgubiłaby pola jej nieznane.
 func zaporaPrzepiszTresc(ladunek json.RawMessage, tresc string) (json.RawMessage, error) {
 	pola := map[string]json.RawMessage{}
 	if err := json.Unmarshal(ladunek, &pola); err != nil {
@@ -315,11 +243,9 @@ func zaporaPrzepiszTresc(ladunek json.RawMessage, tresc string) (json.RawMessage
 	return json.Marshal(pola)
 }
 
-// zaporaDopiszBilans dopisuje bilans pominięć do odpowiedzi komendy.
-//
-// Bilans zastany NIE jest nadpisywany, a scalany: obsługiwacz mógł już oddać
-// własny bilans (pominięcia formatu, cechy nieprzeniesione), a bilans blokad
-// jest o czym innym. Nadpisanie zamieniłoby jedno przemilczenie na drugie.
+// zaporaDopiszBilans dopisuje bilans pominięć do odpowiedzi komendy. Bilans
+// zastany nie jest nadpisywany, a scalany, bo obsługiwacz mógł już oddać
+// bilans własny, o czym innym.
 func zaporaDopiszBilans(odpowiedz protocol.Odpowiedz,
 	bilans shared.StudioActionBalance) protocol.Odpowiedz {
 
@@ -329,9 +255,8 @@ func zaporaDopiszBilans(odpowiedz protocol.Odpowiedz,
 	pola := map[string]json.RawMessage{}
 	if len(odpowiedz.Wynik) > 0 {
 		if err := json.Unmarshal(odpowiedz.Wynik, &pola); err != nil {
-			// Wynik nie jest obiektem JSON — nie ma gdzie dopisać pola.
-			// Milczenie byłoby tu przemilczeniem pominięcia, więc odpowiedzią
-			// jest odmowa nazywająca, że bilansu nie dało się oddać.
+			// Wynik nie jest obiektem JSON — odpowiedzią jest odmowa
+			// nazywająca, że bilansu nie dało się oddać.
 			return porazka(kontrolaBladZaplecza(
 				"czynność pominęła fragmenty zablokowane, ale jej odpowiedź nie ma " +
 					"kształtu, w którym da się oddać bilans — pominięcia nie wolno przemilczeć"))
@@ -362,13 +287,9 @@ func zaporaDopiszBilans(odpowiedz protocol.Odpowiedz,
 	return odpowiedz
 }
 
-// kopiaPrzedCzynnoscia zakłada kopię zapasową przed czynnością nieodwracalną.
-//
-// Wymóg Właściciela wymienia trzy takie czynności wprost: przyjęcie wszystkich
-// zmian modelu, zamianę w całym dokumencie i zmianę formatu nośnika. Zapora
-// zakłada kopię przed KAŻDĄ czynnością na całym dokumencie, bo wszystkie trzy
-// wchodzą tą drogą, a dołożenie do wykazu czwartej nie powinno wymagać
-// pamiętania o kopii.
+// kopiaPrzedCzynnoscia zakłada kopię zapasową przed czynnością nieodwracalną:
+// przyjęciem wszystkich zmian modelu, zamianą w całym dokumencie i zmianą
+// formatu nośnika.
 func (a *adapterStudia) kopiaPrzedCzynnoscia(ctx context.Context, dokument dane.DokumentStudia,
 	powod shared.StudioBackupReason) (dane.KopiaZapasowaStudia, error) {
 
@@ -410,26 +331,9 @@ func (a *adapterStudia) kopiaPostacJako(ctx context.Context, kodDokumentu string
 
 // ── Siatka pod zapisem autora ───────────────────────────────────────────────
 
-// sladWykonawcyStudia owija komendy Studia siatką, która dopisuje ŚLAD AUTORA
-// tam, gdzie obsługiwacz go nie odłożył.
-//
-// ── Dlaczego siatka, a nie zaufanie obsługiwaczom ───────────────────────────
-// Przełącznik „pokaż wszystko, co zrobił model" stoi na jednym założeniu: każda
-// zmiana wykonawcy ma ślad podpisany wykonawcą. Zmierzone: `studio.document.save`
-// zawołane przez wykonawcę zmieniało treść dokumentu i NIE odkładało ani zmiany
-// śledzonej, ani wpisu dziennika — czyli praca modelu wchodziła do pisma
-// niewidzialna dla przełącznika. Właściciel nazwał taką drogę wprost USTERKĄ do
-// naprawy, nie ograniczeniem do zgłoszenia.
-//
-// Naprawa nie może stać w obsługiwaczu tej jednej komendy: komend zmieniających
-// treść jest w Studiu ponad setka i pisze je czterech wykonawców, a każda nowa
-// mogłaby przeoczyć ślad tak samo. Siatka mierzy więc SKUTEK — czy treść się
-// zmieniła — i dopisuje ślad tylko wtedy, gdy obsługiwacz go nie odłożył.
-// Obsługiwacz, który odkłada ślad sam (czynności postaci), nie dostaje drugiego.
-//
-// Siatka NIE zastępuje śladu odkładanego przez obsługiwacza i nie ma zastąpić:
-// tamten zna zakres i rodzaj zmiany dokładnie, a siatka zna tylko to, że treść
-// jest inna. Dlatego zakres siatki to zakres RÓŻNICY, a nie zgadywane miejsce.
+// sladWykonawcyStudia owija komendy Studia siatką, która dopisuje ślad autora
+// tam, gdzie obsługiwacz go nie odłożył, mierząc skutek na treści, nie samo
+// wywołanie.
 func sladWykonawcyStudia(r *Rejestr, a *adapterStudia) {
 	if r == nil || r.wpisy == nil || a == nil {
 		return
@@ -445,7 +349,8 @@ func sladWykonawcyStudia(r *Rejestr, a *adapterStudia) {
 	}
 }
 
-// sladOwin składa obsługiwacza z siatką śladu autora.
+// sladOwin składa obsługiwacza z siatką śladu autora, wpinaną w miejsce
+// obsługiwacza pierwotnego w rejestrze.
 func (a *adapterStudia) sladOwin(obsluga Obsluga) Obsluga {
 	return func(ctx context.Context, z protocol.Request) protocol.Odpowiedz {
 		var zadanie zaporaZadanieZmiany
@@ -474,27 +379,25 @@ func (a *adapterStudia) sladOwin(obsluga Obsluga) Obsluga {
 		}
 		trescPo := wartoscTekstu(po.Tresc)
 		if trescPo == trescPrzed {
-			// Treść ta sama. Zmianę samej POSTACI odkłada droga postaci i tam
-			// ślad już jest — siatka nie ma czego tu dopisać, a dopisanie wpisu
-			// „coś się stało" bez skutku na treści byłoby zaśmieceniem wykazu.
+			// Treść ta sama: zmianę postaci odkłada droga postaci, siatka nie
+			// ma czego tu dopisać.
 			return odpowiedz
 		}
 		if a.sladIleZmianWykonawcy(ctx, po.ID) > sladowPrzed {
-			// Obsługiwacz odłożył ślad sam — drugiego nie dokładamy.
+			// Obsługiwacz odłożył ślad sam — drugiego nie dokłada się.
 			return odpowiedz
 		}
 		if err := a.sladOdlozBrakujacy(ctx, po, wykonawca, trescPrzed, trescPo); err != nil {
-			// Ślad jest tu warunkiem kontroli Operatora nad pracą modelu, więc
-			// jego brak nie może przejść ciszą. Skutek na dokumencie już zapadł
-			// i odmowa byłaby nieprawdą — dlatego odpowiedź zostaje udana, a brak
-			// śladu wraca odmową dopiero wtedy, gdy nie da się go odłożyć wcale.
+			// Skutek na dokumencie już zapadł, odpowiedź jest udana; odmowa
+			// wraca, gdy śladu nie da się odłożyć.
 			return porazka(err)
 		}
 		return odpowiedz
 	}
 }
 
-// sladIleZmianWykonawcy liczy zmiany śledzone autora `model` w dokumencie.
+// sladIleZmianWykonawcy liczy zmiany śledzone autora model w dokumencie,
+// pomijając zmiany podpisane inaczej.
 func (a *adapterStudia) sladIleZmianWykonawcy(ctx context.Context, dokumentID int64) int {
 	zmiany, err := a.repozytorium.ZmianySledzone(ctx, dokumentID)
 	if err != nil {
@@ -509,13 +412,9 @@ func (a *adapterStudia) sladIleZmianWykonawcy(ctx context.Context, dokumentID in
 	return ile
 }
 
-// sladOdlozBrakujacy odkłada zmianę śledzoną i wpis dziennika dla zmiany treści,
-// której obsługiwacz nie podpisał.
-//
-// Zakres bierze się z RÓŻNICY treści — wspólny przedrostek i wspólny sufiks
-// przycięte w ZNAKACH — bo tyle da się o zmianie powiedzieć uczciwie. Zakres
-// „cały dokument" byłby wygodniejszy i nieprawdziwy: podświetlenie zaznaczyłoby
-// wtedy pismo w całości i przestałoby cokolwiek pokazywać.
+// sladOdlozBrakujacy odkłada zmianę śledzoną i wpis dziennika dla zmiany
+// treści, której obsługiwacz nie podpisał, licząc zakres z różnicy treści
+// w znakach.
 func (a *adapterStudia) sladOdlozBrakujacy(ctx context.Context, dokument dane.DokumentStudia,
 	wykonawca kontrolaWykonawca, trescPrzed, trescPo string) error {
 
@@ -568,7 +467,8 @@ func sladZakresRoznicy(przed, po string) (int, int, int) {
 	return od, len(znakiPrzed) - sufiks, len(znakiPo) - sufiks
 }
 
-// sladWycinek wycina fragment treści w znakach; zakres poza treścią daje pustkę.
+// sladWycinek wycina fragment treści dokumentu w znakach; zakres poza treścią
+// daje pustkę zamiast błędu.
 func sladWycinek(tresc string, od, do int) string {
 	znaki := []rune(tresc)
 	od, do, poprawny := kontrolaZakresWTresci(znaki, od, do)

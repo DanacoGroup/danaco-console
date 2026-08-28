@@ -1,28 +1,6 @@
 // Odpowiedzialność pliku: warsztat obrazu modułu Design — odczyt bajtów
 // zasobu, skalowanie i przekodowanie do formatu wydania. Z niego korzystają
-// `design.asset.export`, `design.asset.export.batch` i wyrys kompozycji
-// (`adapter_modul_design_wyrys.go`).
-//
-// ── Biblioteka wkompilowana, nigdy program zewnętrzny ───────────────────────
-// Nie ma tu ani jednego uruchomienia procesu i mieć nie będzie. Skalowanie robi
-// `golang.org/x/image/draw` filtrem `CatmullRom`, zapis PNG i JPEG — biblioteka
-// standardowa, dokument — `pdfcpu`, ikonę — koder w tym pliku. Powód jest ten
-// sam, co w warsztacie PDF modułu Studio (`adapter_studio_pdf.go`): funkcja
-// zależna od programu, którego instalka nie niesie, jest u Operatora odmową,
-// a nie funkcją, a sprawdzian na maszynie deweloperskiej świeciłby przy niej
-// zielono.
-//
-// ── Formaty, których biblioteka nie umie, są ODMAWIANE ──────────────────────
-// WEBP wchodzi (dekoder `golang.org/x/image/webp`), ale nie wychodzi: enkodera
-// WEBP w Go bez zależności zewnętrznej nie ma. AVIF nie wchodzi i nie wychodzi.
-// Wydanie takiego formatu kończy się odmową wymieniającą formaty obsługiwane —
-// cichy PNG pod nazwą `.avif` byłby plikiem, który Operator wyśle dalej jako
-// AVIF i który odbiorcy nie otworzy się tam, gdzie miał się otworzyć.
-//
-// ── SVG przechodzi bez rasteryzacji ─────────────────────────────────────────
-// Zasób wektorowy wydany jako SVG to te same bajty, które leżą w magazynie:
-// rasteryzacja odebrałaby mu jedyną własność, dla której jest wektorem. Skala
-// nie ma wtedy zastosowania i nie jest po cichu stosowana.
+// `design.asset.export`, `design.asset.export.batch` i wyrys kompozycji.
 package core
 
 import (
@@ -37,8 +15,7 @@ import (
 	"os"
 	"strings"
 
-	// Dekodery wejścia. Import pusty — używamy wyłącznie skutku rejestracji,
-	// tak przewiduje pakiet `image`.
+	// Dekodery wejścia. Import pusty niesie wyłącznie skutek rejestracji.
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
 	_ "golang.org/x/image/webp"
@@ -53,14 +30,12 @@ import (
 )
 
 const (
-	// formatyWydaniaDesignu wylicza formaty, w których rdzeń NAPRAWDĘ potrafi
-	// wydać zasób. Wykaz wchodzi wprost w treść każdej odmowy formatu, żeby
-	// Operator dostał drogę wyjścia, a nie samo „nie".
+	// formatyWydaniaDesignu wylicza formaty, w których rdzeń potrafi wydać
+	// zasób, i wchodzi wprost w treść każdej odmowy formatu.
 	formatyWydaniaDesignu = "png, jpeg, svg, pdf, ico"
 
-	// granicaSkaliWydaniaDesignu chroni rdzeń przed żądaniem, które zamawia
-	// obraz nie do zmieszczenia w pamięci. Nie jest to polityka jakości, tylko
-	// granica rachunku: skala tysiąckrotna z obrazu 4000×4000 to bilion pikseli.
+	// granicaSkaliWydaniaDesignu chroni rdzeń przed żądaniem obrazu nie do
+	// zmieszczenia w pamięci, granicą rachunku, nie polityką jakości.
 	granicaSkaliWydaniaDesignu = 16.0
 )
 
@@ -83,13 +58,9 @@ func obrazZasobuDesignu(sciezka string) (image.Image, error) {
 }
 
 // przeskalujObrazDesignu oddaje obraz w zadanej krotności skali. Skala pusta
-// albo równa jedności oddaje obraz bez dotknięcia — przepuszczenie go przez
-// filtr „dla porządku" kosztowałoby jakość bez żadnego zysku.
-//
-// Filtr jest `CatmullRom`: przy pomniejszaniu nie zostawia schodków, przy
-// powiększaniu nie rozmywa krawędzi tak, jak dwuliniowy. Miniatura ikony
-// wydana filtrem najbliższego sąsiada wygląda na uszkodzoną, a to jest
-// najczęstsze wydanie tego modułu.
+// albo równa jedności oddaje obraz bez dotknięcia. Filtr jest `CatmullRom`:
+// przy pomniejszaniu nie zostawia schodków, przy powiększaniu nie rozmywa
+// krawędzi tak, jak dwuliniowy.
 func przeskalujObrazDesignu(obraz image.Image, skala float64) image.Image {
 	if skala <= 0 || skala == 1 {
 		return obraz
@@ -183,9 +154,8 @@ func rozszerzenieWydaniaDesignu(format string) string {
 }
 
 // odmowaFormatuWydaniaDesignu składa zdanie odmowy formatu, którego rdzeń nie
-// wydaje — wraz z wykazem formatów obsługiwanych, żeby Operator miał dokąd
-// pójść. WEBP i AVIF dostają zdanie własne, bo ich brak ma powód, którego nie
-// widać z wykazu: WEBP rdzeń CZYTA, więc „nie znam" byłoby nieprawdą.
+// wydaje, wraz z wykazem formatów obsługiwanych. WEBP i AVIF dostają zdanie
+// własne, bo ich brak ma powód, którego nie widać z wykazu.
 func odmowaFormatuWydaniaDesignu(komenda, format string) error {
 	nazwa := normalizujFormatWydaniaDesignu(format)
 	switch nazwa {
@@ -206,10 +176,9 @@ func odmowaFormatuWydaniaDesignu(komenda, format string) error {
 		komenda, format, formatyWydaniaDesignu))
 }
 
-// sprawdzSkaleWydaniaDesignu odrzuca skalę bezsensowną PRZED wczytaniem obrazu.
-// Skala niedodatnia dałaby obraz o zerowym boku, a skala nad granicą — żądanie
-// pamięci, którego rdzeń nie zaspokoi; jedno i drugie jest pomyłką wołającego,
-// nie awarią rdzenia.
+// sprawdzSkaleWydaniaDesignu odrzuca skalę bezsensowną przed wczytaniem obrazu:
+// skala niedodatnia dałaby obraz o zerowym boku, skala nad granicą — żądanie
+// pamięci, którego rdzeń nie zaspokoi.
 func sprawdzSkaleWydaniaDesignu(komenda string, skala *float64) error {
 	if skala == nil {
 		return nil
@@ -226,16 +195,9 @@ func sprawdzSkaleWydaniaDesignu(komenda string, skala *float64) error {
 	return nil
 }
 
-// zakodujIkoneDesignu składa plik ICO z jednego obrazu.
-//
-// Zawartością wpisu jest PNG, nie mapa bitowa DIB: postać PNG w ikonie
-// przyjmują wszystkie systemy od Windows Vista i wszystkie przeglądarki, a DIB
-// wymagałby własnej maski przezroczystości zapisanej odwróconymi wierszami —
-// czyli drugiego kodera obrazu w tym pliku.
-//
-// Bok ponad 256 pikseli jest odmawiany, a nie przycinany po cichu: pole
-// szerokości w katalogu ikony ma JEDEN bajt, zero znaczy w nim 256, więc obraz
-// większy zapisałby się jako ikona o boku wziętym z reszty z dzielenia.
+// zakodujIkoneDesignu składa plik ICO z jednego obrazu. Zawartością wpisu jest
+// PNG, nie mapa bitowa DIB. Bok ponad 256 pikseli jest odmawiany, a nie
+// przycinany po cichu.
 func zakodujIkoneDesignu(obraz image.Image) ([]byte, error) {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()
@@ -271,11 +233,8 @@ func zakodujIkoneDesignu(obraz image.Image) ([]byte, error) {
 	return plik.Bytes(), nil
 }
 
-// zakodujDokumentDesignu osadza obraz w dokumencie PDF biblioteką `pdfcpu` —
-// tą samą, którą pracuje warsztat dokumentu modułu Studio.
-//
-// Droga wiedzie przez PNG w pamięci, nie przez plik pośredni: `pdfcpu` przyjmuje
-// strumień, a plik pośredni byłby trzecim miejscem, w którym ta sama treść żyje.
+// zakodujDokumentDesignu osadza obraz w dokumencie PDF biblioteką `pdfcpu`.
+// Droga wiedzie przez PNG w pamięci, nie przez plik pośredni.
 func zakodujDokumentDesignu(obraz image.Image) ([]byte, error) {
 	var zrodlo bytes.Buffer
 	if err := png.Encode(&zrodlo, obraz); err != nil {

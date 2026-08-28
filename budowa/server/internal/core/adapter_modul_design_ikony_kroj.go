@@ -1,45 +1,7 @@
-// Odpowiedzialność pliku: złożenie KROJU IKONOWEGO z konturów ikon — postać
-// `webfont` pakietu `design.icon.sprite.build`. Postać `sprite-svg` składa się
-// w `adapter_modul_design_ikony.go`; katalog wzorów leży
+// Plik składa krój ikonowy TrueType (postać `webfont`) z konturów ikon katalogu —
+// obsługuje `design.icon.sprite.build`. Postać `sprite-svg` składa
+// `adapter_modul_design_ikony.go`, katalog wzorów leży
 // w `adapter_modul_design_ikony_katalog.go`.
-//
-// ── Dlaczego rdzeń pisze krój sam ───────────────────────────────────────────
-// Krój ikonowy trzeba ZŁOŻYĆ, nie tylko zapisać: trzeba zbudować tabele
-// TrueType. Programy, którymi się to zwykle robi, leżą poza instalką Operatora,
-// więc funkcja od nich zależna byłaby u niego odmową — a ich nazwy nie mają prawa
-// stać nawet w tym komentarzu, żeby nikt nie wziął ich za wskazówkę. Biblioteki
-// Go, która pisze krój od zera, w tym
-// drzewie nie ma — `tdewolff/font` krój czyta i przepisuje, ale złożenie go
-// z konturów wymagałoby zbudowania wszystkich tabel tak samo jak tutaj. Zapis
-// stoi więc w rdzeniu, w jednym pliku, i jest wkompilowany.
-//
-// ── Kontur ikony jest OBRYSEM zamienionym w obszar ──────────────────────────
-// Ikony katalogu są rysowane kreską (`stroke`), a glif kroju jest OBSZAREM
-// wypełnianym. Kreska idzie więc przez `Path.Stroke` biblioteki `tdewolff/canvas`
-// — obrys kreski staje się konturem glifu. Bez tego kroku wszystkie glify
-// wyszłyby jako cienkie zamknięte pętle albo jako plamy, zależnie od kształtu.
-//
-// ── Kontury niosą KRZYWE KWADRATOWE, nie same odcinki ───────────────────────
-// Obrys kreski wychodzi z biblioteki jako łamana: `Path.Stroke` spłaszcza krzywe
-// i łuki złączeń do odcinków, bo inaczej nie umiałoby ich odsunąć. Łamana
-// zapisana do tabeli `glyf` wprost dawała plik kilka razy większy, niż potrzeba
-// — okrąg o promieniu jednej trzeciej firetu schodził na kilkadziesiąt punktów.
-//
-// Dlatego łamana jest tu DOPASOWYWANA z powrotem do krzywych kwadratowych
-// (`dopasujKrzyweKonturuDesignu`) — tych samych, którymi TrueType opisuje glif.
-// Obrys liczy się przy tym tolerancją drobniejszą od jednostki kroju, żeby
-// łamana, do której dopasowuje się krzywe, była wierna; dopasowanie trzyma się
-// potem tolerancji jednej jednostki kroju. Naroża są ROZPOZNAWANE i nigdy nie
-// wchodzą w środek krzywej: krzywa przeciągnięta przez naroże zaokrągliłaby je,
-// a naroże w ikonie jest kształtem, nie szumem.
-//
-// Punkt sterujący leży POZA konturem i tabela `glyf` mówi o tym bitem zerowym
-// znacznika — to jedyne miejsce, w którym postać krzywej ma znaczenie dla zapisu.
-//
-// ── Znaki idą w obszar prywatny Unicode ─────────────────────────────────────
-// Ikony nie są literami, więc nie mają własnych punktów kodowych. Krój
-// przypisuje im kolejne punkty obszaru prywatnego od U+E000 — tak robią wszystkie
-// kroje ikonowe i tego oczekuje arkusz stylów, który Operator napisze.
 package core
 
 import (
@@ -72,11 +34,9 @@ const (
 	// krzywej, w jednostkach kroju. Poniżej jednostki różnicy nie widać.
 	tolerancjaSplaszczeniaKrojuDesignu = 1.0
 
-	// tolerancjaObrysuKrojuDesignu jest tolerancją, z jaką liczy się obrys kreski
-	// — podana w jednostkach SIATKI ikony, bo obrys powstaje przed przeskalowaniem
-	// do jednostek kroju. Jedna czwarta jednostki kroju: łamana ma być wierniejsza
-	// od tolerancji, do której dopasowuje się potem krzywe, inaczej dopasowanie
-	// mierzyłoby własny błąd spłaszczenia.
+	// tolerancjaObrysuKrojuDesignu jest tolerancją liczenia obrysu kreski, podaną
+	// w jednostkach siatki ikony — obrys powstaje przed przeskalowaniem do
+	// jednostek kroju, na poziomie jednej czwartej jednostki kroju.
 	tolerancjaObrysuKrojuDesignu = 0.25 * siatkaIkonyKataloguDesignu /
 		jednostekNaFiretDesignu
 
@@ -86,13 +46,13 @@ const (
 	najmniejszyOdstepPunktowKrojuDesignu = 0.5
 
 	// katNarozaKrojuDesignu jest kątem załamania łamanej, od którego wierzchołek
-	// uznaje się za NAROŻE. Łamana powstała ze spłaszczenia łuku załamuje się na
-	// każdym wierzchołku o kilka stopni; naroże ikony — o kilkadziesiąt. Dwadzieścia
-	// pięć stopni leży wyraźnie między jednym i drugim.
+	// uznaje się za naroże — dwadzieścia pięć stopni leży wyraźnie między
+	// załamaniem spłaszczonego łuku a prawdziwym narożem ikony.
 	katNarozaKrojuDesignu = 25.0
 )
 
-// glifKrojuIkonowegoDesignu to jeden glif gotowy do zapisania.
+// glifKrojuIkonowegoDesignu to jeden glif gotowy do zapisania: kontury w
+// jednostkach kroju, postęp firetowy i prostokąt graniczny.
 type glifKrojuIkonowegoDesignu struct {
 	// Kontury niosą punkty konturu w jednostkach kroju, oś Y w górę.
 	Kontury [][]punktKrojuDesignu
@@ -103,23 +63,18 @@ type glifKrojuIkonowegoDesignu struct {
 	YMax    int
 }
 
-// punktKrojuDesignu to jeden punkt konturu w jednostkach kroju.
-//
-// NaKonturze rozstrzyga, czy punkt leży na rysunku (wierzchołek), czy jest
-// punktem STERUJĄCYM krzywej kwadratowej. Tabela `glyf` nie ma innego sposobu
-// zapisania krzywej niż tym jednym bitem znacznika.
+// punktKrojuDesignu to jeden punkt konturu w jednostkach kroju. NaKonturze
+// rozstrzyga, czy punkt leży na rysunku, czy jest punktem sterującym krzywej
+// kwadratowej.
 type punktKrojuDesignu struct {
 	X          int
 	Y          int
 	NaKonturze bool
 }
 
-// zlozKrojIkonowyDesignu składa krój TrueType z ikon podanych jako pary
-// (nazwa, treść SVG) i oddaje bajty pliku wraz z liczbą glifów.
-//
-// Ikona, z której nie da się wyciągnąć ani jednej ścieżki, jest ODMOWĄ całego
-// pakietu: krój z pustym glifem w środku wygląda jak krój gotowy, a w miejscu
-// tej ikony pokazuje nic — i Operator dowie się o tym dopiero na stronie.
+// zlozKrojIkonowyDesignu składa krój TrueType z ikon podanych jako pary (nazwa,
+// treść SVG) i oddaje bajty pliku wraz z liczbą glifów. Ikona bez ani jednej
+// ścieżki jest odmową całego pakietu, nie glifem pustym.
 func zlozKrojIkonowyDesignu(nazwaKroju string, ikony []ikonaDoKrojuDesignu) ([]byte, int, error) {
 	if len(ikony) == 0 {
 		return nil, 0, fmt.Errorf("krój ikonowy bez ani jednej ikony nie ma czego nieść")
@@ -131,8 +86,7 @@ func zlozKrojIkonowyDesignu(nazwaKroju string, ikony []ikonaDoKrojuDesignu) ([]b
 			len(ikony), granicaGlifowKrojuIkonowegoDesignu)
 	}
 
-	// Glif zerowy jest `.notdef` i musi istnieć: tak stanowi format, a program
-	// czytający krój bierze go dla znaku, którego krój nie ma.
+	// Glif zerowy jest `.notdef` i musi istnieć — czytnik bierze go dla znaku, którego krój nie ma.
 	glify := []glifKrojuIkonowegoDesignu{{Postep: jednostekNaFiretDesignu}}
 	punkty := make([]rune, 0, len(ikony))
 	for numer, ikona := range ikony {
@@ -146,7 +100,8 @@ func zlozKrojIkonowyDesignu(nazwaKroju string, ikony []ikonaDoKrojuDesignu) ([]b
 	return zapiszKrojTrueTypeDesignu(nazwaKroju, glify, punkty), len(ikony), nil
 }
 
-// ikonaDoKrojuDesignu to jedna ikona wchodząca do kroju.
+// ikonaDoKrojuDesignu to jedna ikona wchodząca do kroju: nazwa, ścieżki SVG,
+// siatka źródłowa i grubość obrysu, z których powstaje glif.
 type ikonaDoKrojuDesignu struct {
 	Nazwa   string
 	Sciezki []string
@@ -154,7 +109,8 @@ type ikonaDoKrojuDesignu struct {
 	Grubosc float64
 }
 
-// glifZIkonyDesignu zamienia ścieżki ikony na kontury glifu.
+// glifZIkonyDesignu zamienia ścieżki ikony na kontury glifu przez obrys kreski
+// skalowany do jednostek kroju.
 func glifZIkonyDesignu(ikona ikonaDoKrojuDesignu) (glifKrojuIkonowegoDesignu, error) {
 	if len(ikona.Sciezki) == 0 {
 		return glifKrojuIkonowegoDesignu{}, fmt.Errorf(
@@ -173,7 +129,7 @@ func glifZIkonyDesignu(ikona ikonaDoKrojuDesignu) (glifKrojuIkonowegoDesignu, er
 			return glifKrojuIkonowegoDesignu{}, fmt.Errorf(
 				"ścieżki %q nie da się odczytać jako ścieżki SVG: %w", zapis, err)
 		}
-		// Kreska w obszar: obrys kreski staje się konturem glifu (nagłówek pliku).
+		// Kreska w obszar: obrys kreski staje się konturem glifu.
 		obrys := sciezka.Stroke(grubosc, canvas.RoundCap, canvas.RoundJoin,
 			tolerancjaObrysuKrojuDesignu)
 		obszar = obszar.Append(obrys)
@@ -183,21 +139,14 @@ func glifZIkonyDesignu(ikona ikonaDoKrojuDesignu) (glifKrojuIkonowegoDesignu, er
 			"obrys ścieżek ikony wyszedł pusty — glif nie miałby konturu")
 	}
 
-	// Oś Y kroju rośnie w GÓRĘ, a siatka ikony w dół. Odbicie i skalowanie idą
-	// jedną macierzą, żeby nie było dwóch miejsc, w których się to liczy.
+	// Oś Y kroju rośnie w górę, siatki ikony — w dół; odbicie i skalowanie idą jedną macierzą.
 	przeksztalcenie := canvas.Identity.Scale(skala, -skala).
 		Translate(0, -float64(siatkaIkonyKataloguDesignu))
-	// Spłaszczenie po przekształceniu ma jedno zadanie: ZAGWARANTOWAĆ, że ścieżka
-	// niesie wyłącznie odcinki. Obrys kreski i tak wychodzi z biblioteki spłaszczony
-	// (biblioteka nie umie odsunąć krzywej inaczej), ale dopasowanie krzywych niżej
-	// zakłada łamaną i to założenie ma być prawdą z zapisu, nie z domysłu.
+	// Spłaszczenie gwarantuje, że ścieżka niesie wyłącznie odcinki — dopasowanie niżej zakłada łamaną.
 	lamany := obszar.Transform(przeksztalcenie).
 		Flatten(tolerancjaSplaszczeniaKrojuDesignu)
 
-	// Postęp jest zawsze firetem: kontur skaluje się z siatki kanonicznej 24 do
-	// firetu, więc glif zajmuje kwadrat firetowy bez względu na to, na jakiej
-	// siatce Operator ikonę zapisał. Postęp liczony z siatki żądania dawałby
-	// glify o różnych szerokościach dla tego samego rysunku.
+	// Postęp jest zawsze firetem niezależnie od siatki ikony — inaczej glify różniłyby się szerokością.
 	glif := glifKrojuIkonowegoDesignu{Postep: jednostekNaFiretDesignu}
 	for _, lamana := range lamaneKonturowKrojuDesignu(lamany) {
 		kontur := dopasujKrzyweKonturuDesignu(lamana, tolerancjaSplaszczeniaKrojuDesignu)
@@ -233,13 +182,10 @@ func glifZIkonyDesignu(ikona ikonaDoKrojuDesignu) (glifKrojuIkonowegoDesignu, er
 	return glif, nil
 }
 
-// lamaneKonturowKrojuDesignu rozbiera ścieżkę na łamane zamknięte — po jednej na
-// kontur.
-//
-// Punkt leżący bliżej poprzedniego niż najmniejszy odstęp NIE wchodzi: kontur
-// z punktami zlewającymi się po zaokrągleniu do jednostek kroju bywa odrzucany
-// przez rasteryzatory jako niepoprawny, a dopasowanie krzywych liczyłoby na nim
-// kierunek z odjęcia dwóch równych liczb.
+// lamaneKonturowKrojuDesignu rozbiera ścieżkę na łamane zamknięte, po jednej na
+// kontur. Punkt leżący bliżej poprzedniego niż najmniejszy odstęp nie wchodzi —
+// kontur z punktami zlewającymi się po zaokrągleniu bywa odrzucany przez
+// rasteryzatory.
 func lamaneKonturowKrojuDesignu(sciezka *canvas.Path) [][]canvas.Point {
 	kontury := [][]canvas.Point{}
 	biezacy := []canvas.Point{}
@@ -287,20 +233,7 @@ func lamaneKonturowKrojuDesignu(sciezka *canvas.Path) [][]canvas.Point {
 
 // dopasujKrzyweKonturuDesignu zamienia łamaną w kontur glifu: ciągi wierzchołków
 // leżące na jednej krzywej schodzą do krzywych kwadratowych, ciągi leżące na
-// prostej — do odcinków.
-//
-// ── Bieg zachłanny ──────────────────────────────────────────────────────────
-// Od każdego wierzchołka bieg przedłuża się tak długo, jak długo cały jego ciąg
-// mieści się w tolerancji — najpierw jako odcinek, a gdy odcinek nie mieści się,
-// jako krzywa. Bieg zachłanny nie daje zapisu najkrótszego z możliwych, ale daje
-// zapis o kilka razy krótszy od łamanej przy jednym przejściu po konturze.
-//
-// ── Naroże kończy bieg ──────────────────────────────────────────────────────
-// Krzywa przeciągnięta przez naroże przechodziłaby przez sam wierzchołek naroża
-// (bo mierzy się odejście w wierzchołkach), a mimo to zaokrąglałaby kształt po
-// obu jego stronach. Dlatego naroża wyznacza się z góry i bieg zawsze się na nich
-// urywa. Kontur obraca się przy tym tak, żeby zaczynał się od naroża — inaczej
-// naroże wypadające na styku końca i początku konturu zostałoby zaokrąglone.
+// prostej — do odcinków. Bieg zachłanny kończy się na każdym rozpoznanym narożu.
 func dopasujKrzyweKonturuDesignu(lamana []canvas.Point, tolerancja float64) []punktKrojuDesignu {
 	ile := len(lamana)
 	if ile < 3 {
@@ -321,8 +254,7 @@ func dopasujKrzyweKonturuDesignu(lamana []canvas.Point, tolerancja float64) []pu
 		break
 	}
 
-	// Łamana rozszerzona o powrót do punktu pierwszego: ostatni bieg konturu
-	// kończy się właśnie tam, a bez tego punktu nie dałoby się go dopasować.
+	// Łamana rozszerzona o powrót do punktu pierwszego — ostatni bieg konturu kończy się właśnie tam.
 	rozszerzona := make([]canvas.Point, 0, ile+1)
 	rozszerzona = append(rozszerzona, lamana...)
 	rozszerzona = append(rozszerzona, lamana[0])
@@ -410,14 +342,8 @@ func odejscieOdOdcinkaKrojuDesignu(ciag []canvas.Point) float64 {
 }
 
 // dopasujKrzywaKwadratowaDesignu liczy punkt sterujący krzywej kwadratowej
-// przechodzącej przez krańce ciągu i najbliższej jego wierzchołkom, wraz
-// z największym odejściem od nich.
-//
-// Krańce są USTALONE — krzywa musi się schodzić z sąsiednimi biegami, inaczej
-// kontur pękłby. Wolny jest tylko punkt sterujący i liczy się go najmniejszymi
-// kwadratami: wierzchołkom przypisuje się położenie na krzywej proporcjonalne do
-// przebytej długości łamanej, a potem szuka punktu sterującego najlepiej
-// pasującego do wszystkich naraz.
+// przechodzącej przez ustalone krańce ciągu i najbliższej jego wierzchołkom,
+// metodą najmniejszych kwadratów, wraz z największym odejściem od nich.
 func dopasujKrzywaKwadratowaDesignu(ciag []canvas.Point) (canvas.Point, float64) {
 	if len(ciag) < 3 {
 		return ciag[0], 0
@@ -454,9 +380,7 @@ func dopasujKrzywaKwadratowaDesignu(ciag []canvas.Point) (canvas.Point, float64)
 	}
 	sterujacy := canvas.Point{X: licznikX / mianownik, Y: licznikY / mianownik}
 
-	// Odejście liczy się PO dopasowaniu, w tych samych położeniach: dopasowanie
-	// najmniejszymi kwadratami minimalizuje sumę, a granicą jest największe
-	// odejście pojedynczego wierzchołka.
+	// Odejście liczy się po dopasowaniu — najmniejsze kwadraty minimalizują sumę, nie odejście pojedyncze.
 	najwieksze := 0.0
 	for numer := 1; numer < len(ciag)-1; numer++ {
 		polozenie := dlugosci[numer] / calosc
@@ -504,12 +428,9 @@ func bezPowtorzenKonturuKrojuDesignu(kontur []punktKrojuDesignu) []punktKrojuDes
 	return wynik
 }
 
-// zapiszKrojTrueTypeDesignu składa bajty pliku kroju z gotowych glifów.
-//
-// Tabele są te, bez których krój nie wczyta się w przeglądarce ani w systemie:
-// `head`, `hhea`, `maxp`, `OS/2`, `hmtx`, `cmap`, `loca`, `glyf`, `name`,
-// `post`. Kolejność wpisów katalogu jest alfabetyczna po nazwie tabeli — tak
-// stanowi format.
+// zapiszKrojTrueTypeDesignu składa bajty pliku kroju z gotowych glifów: tabele
+// `head`, `hhea`, `maxp`, `OS/2`, `hmtx`, `cmap`, `loca`, `glyf`, `name` i
+// `post`, w katalogu ułożonym alfabetycznie po nazwie.
 func zapiszKrojTrueTypeDesignu(nazwa string, glify []glifKrojuIkonowegoDesignu,
 	punkty []rune) []byte {
 
@@ -536,8 +457,7 @@ func zapiszKrojTrueTypeDesignu(nazwa string, glify []glifKrojuIkonowegoDesignu,
 	naglowek := &bytes.Buffer{}
 	_ = binary.Write(naglowek, binary.BigEndian, uint32(0x00010000)) // wersja: TrueType
 	_ = binary.Write(naglowek, binary.BigEndian, uint16(len(tabele)))
-	// Trójka pól wyszukiwania binarnego: potęga dwójki nieprzekraczająca liczby
-	// tabel, jej podwojenie w bajtach wpisu i reszta.
+	// Trójka pól wyszukiwania binarnego: potęga dwójki, jej podwojenie w bajtach wpisu i reszta.
 	potega := uint16(1)
 	log := uint16(0)
 	for potega*2 <= uint16(len(tabele)) {
@@ -572,10 +492,7 @@ func zapiszKrojTrueTypeDesignu(nazwa string, glify []glifKrojuIkonowegoDesignu,
 	plik.Write(tresc.Bytes())
 	bajty := plik.Bytes()
 
-	// `checkSumAdjustment` tabeli `head` liczy się z sumy CAŁEGO pliku, więc
-	// wpisuje się go po złożeniu. Pole leży osiem bajtów od początku tabeli
-	// `head`, którą trzeba odnaleźć w katalogu — jej przesunięcie zależy od
-	// kolejności alfabetycznej.
+	// checkSumAdjustment liczy się z sumy całego pliku, więc wpisuje się po złożeniu, w tabeli head.
 	przesuniecieHead := uint32(0)
 	for numer, nazwaTabeli := range nazwyTabel {
 		if nazwaTabeli != "head" {
@@ -595,7 +512,8 @@ func zapiszKrojTrueTypeDesignu(nazwa string, glify []glifKrojuIkonowegoDesignu,
 	return bajty
 }
 
-// dopelnijNazweTabeliDesignu wyrównuje nazwę tabeli do czterech znaków.
+// dopelnijNazweTabeliDesignu wyrównuje nazwę tabeli do czterech znaków spacjami,
+// zgodnie z zapisem katalogu tabel formatu TrueType.
 func dopelnijNazweTabeliDesignu(nazwa string) string {
 	for len(nazwa) < 4 {
 		nazwa += " "
@@ -620,12 +538,9 @@ func sumaKontrolnaTabeliDesignu(dane []byte) uint32 {
 	return suma
 }
 
-// zapiszGlifyDesignu składa tabele `glyf` i `loca`.
-//
-// `loca` jest w postaci długiej (przesunięcia czterobajtowe), a nie krótkiej:
-// postać krótka dzieli przesunięcia przez dwa i wymaga, żeby każdy glif miał
-// długość parzystą. Postać długa nie ma tego warunku i mieści krój dowolnej
-// wielkości — cena to cztery bajty na glif.
+// zapiszGlifyDesignu składa tabele `glyf` i `loca` w postaci długiej —
+// przesunięcia czterobajtowe bez warunku parzystej długości glifu, kosztem
+// czterech bajtów na glif.
 func zapiszGlifyDesignu(glify []glifKrojuIkonowegoDesignu) ([]byte, []byte) {
 	glyf := &bytes.Buffer{}
 	loca := &bytes.Buffer{}
@@ -647,10 +562,7 @@ func zapiszGlifyDesignu(glify []glifKrojuIkonowegoDesignu) ([]byte, []byte) {
 			_ = binary.Write(glyf, binary.BigEndian, uint16(koniec))
 		}
 		_ = binary.Write(glyf, binary.BigEndian, uint16(0)) // bez instrukcji hintingu
-		// Znaczniki: bit zerowy mówi, czy punkt leży NA konturze. Punkt bez tego
-		// bitu jest punktem sterującym krzywej kwadratowej. Bez powtórzeń i bez
-		// skrótów jednobajtowych: skrót oszczędza bajt na współrzędnej, a wymaga
-		// drugiej gałęzi zapisu przy każdym punkcie.
+		// Znacznik: bit zerowy mówi, czy punkt leży na konturze. Zapis bez powtórzeń i skrótów jednobajtowych.
 		for _, kontur := range glif.Kontury {
 			for _, punkt := range kontur {
 				if punkt.NaKonturze {
@@ -682,7 +594,8 @@ func zapiszGlifyDesignu(glify []glifKrojuIkonowegoDesignu) ([]byte, []byte) {
 	return glyf.Bytes(), loca.Bytes()
 }
 
-// zapiszTabeleHeadDesignu składa tabelę `head`.
+// zapiszTabeleHeadDesignu składa tabelę `head` formatu TrueType, niosącą wersję
+// kroju, skalę jednostek i prostokąt graniczny wszystkich glifów.
 func zapiszTabeleHeadDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	xMin, yMin, xMax, yMax := graniceKrojuDesignu(glify)
 	bufor := &bytes.Buffer{}
@@ -692,9 +605,7 @@ func zapiszTabeleHeadDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	_ = binary.Write(bufor, binary.BigEndian, uint32(0x5F0F3CF5)) // magicNumber
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0x000B))     // flagi: bazowa w zerze, lsb, skala całkowita
 	_ = binary.Write(bufor, binary.BigEndian, uint16(jednostekNaFiretDesignu))
-	// Znaczniki czasu kroju są liczone od 1904 roku. Zapisujemy zero: krój
-	// składa się przy każdym żądaniu, więc data „powstania" byłaby datą kliknięcia
-	// i sprawiałaby, że dwa pakiety z tych samych ikon różniłyby się bajtami.
+	// Znacznik czasu liczy się od 1904 roku; wpisuje się zero, żeby pakiety nie różniły się bajtami.
 	_ = binary.Write(bufor, binary.BigEndian, int64(0))
 	_ = binary.Write(bufor, binary.BigEndian, int64(0))
 	_ = binary.Write(bufor, binary.BigEndian, int16(xMin))
@@ -709,7 +620,8 @@ func zapiszTabeleHeadDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	return bufor.Bytes()
 }
 
-// zapiszTabeleHheaDesignu składa tabelę `hhea`.
+// zapiszTabeleHheaDesignu składa tabelę `hhea` formatu TrueType, niosącą metryki
+// poziome kroju wymagane do rozstawiania glifów w wierszu.
 func zapiszTabeleHheaDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	xMin, _, xMax, _ := graniceKrojuDesignu(glify)
 	najwiekszyPostep := 0
@@ -738,7 +650,8 @@ func zapiszTabeleHheaDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	return bufor.Bytes()
 }
 
-// zapiszTabeleMaxpDesignu składa tabelę `maxp`.
+// zapiszTabeleMaxpDesignu składa tabelę `maxp` formatu TrueType, niosącą liczbę
+// glifów i graniczne rozmiary konturu wymagane przez czytniki kroju.
 func zapiszTabeleMaxpDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	najwiecejPunktow, najwiecejKonturow := 0, 0
 	for _, glif := range glify {
@@ -753,22 +666,16 @@ func zapiszTabeleMaxpDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 			najwiecejKonturow = len(glif.Kontury)
 		}
 	}
-	// Tabela `maxp` wersji 1.0 ma DOKŁADNIE 32 bajty: cztery na wersję i czternaście
-	// pól dwubajtowych. Długość inna jest w formacie błędem — czytnik kroju odrzuca
-	// wtedy cały plik, nie samą tabelę. Dlatego pola stoją tu wypisane po jednym,
-	// z nazwami: pętla „tyle a tyle zer" raz już policzyła się o dwa pola za
-	// długo i krój, choć wychodził z rdzenia bez odmowy, nie dawał się wczytać.
+	// Tabela `maxp` wersji 1.0 ma dokładnie 32 bajty — inna długość jest błędem, pola stoją tu z nazwami.
 	bufor := &bytes.Buffer{}
 	_ = binary.Write(bufor, binary.BigEndian, uint32(0x00010000))        // wersja 1.0
 	_ = binary.Write(bufor, binary.BigEndian, uint16(len(glify)))        // numGlyphs
 	_ = binary.Write(bufor, binary.BigEndian, uint16(najwiecejPunktow))  // maxPoints
 	_ = binary.Write(bufor, binary.BigEndian, uint16(najwiecejKonturow)) // maxContours
-	// Glifów złożonych krój ikonowy nie ma: każda ikona jest własnym konturem,
-	// a nie odwołaniem do innego glifu — stąd zera przy polach kompozycji.
+	// Glifów złożonych krój ikonowy nie ma — każda ikona jest własnym konturem, stąd zera przy kompozycji.
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0)) // maxCompositePoints
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0)) // maxCompositeContours
-	// Strefy: jedna, bo krój nie niesie instrukcji, a więc nie używa strefy
-	// pomocniczej. Zero jest tu poza formatem.
+	// Strefa: jedna, bo krój bez instrukcji nie używa strefy pomocniczej.
 	_ = binary.Write(bufor, binary.BigEndian, uint16(1)) // maxZones
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0)) // maxTwilightPoints
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0)) // maxStorage
@@ -807,9 +714,7 @@ func zapiszTabeleOs2Designu(glify []glifKrojuIkonowegoDesignu, punkty []rune) []
 	_ = binary.Write(bufor, binary.BigEndian, uint16(400)) // usWeightClass: zwykła
 	_ = binary.Write(bufor, binary.BigEndian, uint16(5))   // usWidthClass: średnia
 	_ = binary.Write(bufor, binary.BigEndian, uint16(0))   // fsType: bez ograniczeń osadzania
-	// Wymiary indeksów górnego i dolnego oraz przekreślenia. Krój ikonowy ich nie
-	// używa, ale pola są wymagane — wpisujemy proporcje przyjęte dla krojów
-	// bezszeryfowych, a nie zera, które niektóre rasteryzatory czytają jako błąd.
+	// Pola indeksów i przekreślenia są wymagane, choć krój ich nie używa — zera bywają błędem.
 	for _, wartosc := range []int16{650, 600, 0, 0, 650, 600, 0, 0, 50, 512} {
 		_ = binary.Write(bufor, binary.BigEndian, wartosc)
 	}
@@ -837,7 +742,8 @@ func zapiszTabeleOs2Designu(glify []glifKrojuIkonowegoDesignu, punkty []rune) []
 	return bufor.Bytes()
 }
 
-// zapiszTabeleHmtxDesignu składa tabelę `hmtx`.
+// zapiszTabeleHmtxDesignu składa tabelę `hmtx` formatu TrueType, niosącą postęp
+// i lewy odstęp boczny każdego glifu kroju.
 func zapiszTabeleHmtxDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	bufor := &bytes.Buffer{}
 	for _, glif := range glify {
@@ -847,11 +753,9 @@ func zapiszTabeleHmtxDesignu(glify []glifKrojuIkonowegoDesignu) []byte {
 	return bufor.Bytes()
 }
 
-// zapiszTabeleCmapDesignu składa tabelę `cmap` z jednym podziałem formatu 4.
-//
-// Format 4 pokrywa płaszczyznę podstawową Unicode, w której leży cały obszar
-// prywatny pierwszego poziomu — czyli wszystko, czego krój ikonowy potrzebuje.
-// Punkty kodowe są kolejne, więc powstaje jeden przedział.
+// zapiszTabeleCmapDesignu składa tabelę `cmap` z jednym podziałem formatu 4,
+// który pokrywa płaszczyznę podstawową Unicode wraz z obszarem prywatnym
+// pierwszego poziomu.
 func zapiszTabeleCmapDesignu(punkty []rune) []byte {
 	posortowane := make([]rune, len(punkty))
 	copy(posortowane, punkty)
@@ -924,14 +828,13 @@ func zapiszTabeleCmapDesignu(punkty []rune) []byte {
 }
 
 // zapiszTabeleNameDesignu składa tabelę `name` z zapisami wymaganymi przez
-// systemy i przeglądarki.
+// systemy i przeglądarki: nazwą rodziny, podrodziny, kroju pełnego i wersji.
 func zapiszTabeleNameDesignu(nazwa string) []byte {
 	nazwa = strings.TrimSpace(nazwa)
 	if nazwa == "" {
 		nazwa = "ikony"
 	}
-	// Nazwa postscriptowa nie może mieć odstępów ani znaków spoza zakresu ASCII
-	// drukowalnego — tak stanowi format.
+	// Nazwa postscriptowa nie może mieć odstępów ani znaków spoza zakresu ASCII drukowalnego.
 	postscriptowa := strings.Map(func(znak rune) rune {
 		if znak >= 'A' && znak <= 'Z' || znak >= 'a' && znak <= 'z' ||
 			znak >= '0' && znak <= '9' || znak == '-' {
@@ -958,9 +861,7 @@ func zapiszTabeleNameDesignu(nazwa string) []byte {
 	tresc := &bytes.Buffer{}
 	katalog := &bytes.Buffer{}
 	for _, zapis := range zapisy {
-		// Kodowanie UTF-16BE, platforma Windows — jedyne, które czyta każdy
-		// system. Zapis jednobajtowy dla Macintosha byłby drugim wykazem tych
-		// samych napisów.
+		// Kodowanie UTF-16BE, platforma Windows — jedyne, które czyta każdy system.
 		bajty := &bytes.Buffer{}
 		for _, znak := range zapis.tresc {
 			_ = binary.Write(bajty, binary.BigEndian, uint16(znak))
@@ -1000,7 +901,8 @@ func zapiszTabelePostDesignu() []byte {
 	return bufor.Bytes()
 }
 
-// graniceKrojuDesignu oddaje prostokąt obejmujący wszystkie glify.
+// graniceKrojuDesignu oddaje prostokąt obejmujący wszystkie glify kroju, liczony
+// z granic każdego glifu z osobna.
 func graniceKrojuDesignu(glify []glifKrojuIkonowegoDesignu) (int, int, int, int) {
 	xMin, yMin := math.MaxInt32, math.MaxInt32
 	xMax, yMax := math.MinInt32, math.MinInt32

@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: siedem czynności warsztatu fotografii pracujących nad
-// WIELOMA zasobami albo nad wiedzą o zasobie — `design.photo.layer.composite`,
-// `.batch.apply`, `.preset.save`, `.preset.list`, `.vectorize`, `.metadata.get`,
-// `.history.get`. Czynności nad jednym obrazem leżą
-// w `adapter_modul_design_fotografia.go`.
-//
-// ── Wsad powtarza CZYNNOŚCI, nie kopiuje wyniku ─────────────────────────────
-// `design.photo.batch.apply` puszcza ten sam zestaw czynności na każdym zasobie
-// osobno, przez te same uchwyty, którymi jadą czynności pojedyncze. Nie ma tu
-// drugiej drogi rachunku: gdyby wsad liczył po swojemu, wynik wsadowy różniłby
-// się od pojedynczego i Operator nie mógłby zaufać żadnemu z nich.
-//
-// ── Zasób, którego nie udało się przetworzyć, WRACA w bilansie ──────────────
-// `failedAssetIds` niesie zasób wraz z powodem. Wsad na stu zdjęciach, z których
-// trzy padły, wygląda bez tego pola jak wsad kompletny, a brak wyjdzie na jaw
-// dopiero przy przeglądaniu wyników.
-//
-// ── Metadane są POMIAREM z pliku, nie echem wiersza ─────────────────────────
-// `design.photo.metadata.get` czyta nagłówek pliku leżącego w magazynie: wymiary,
-// format, model barwny, obecność kanału krycia, rozdzielczość i pola EXIF. Wiersz
-// bazy niesie tylko to, co zmierzono przy wniesieniu — a plik może być jedyną
-// prawdą o tym, co Operator naprawdę ma.
+// Plik obsługuje siedem czynności warsztatu fotografii pracujących nad wieloma zasobami
+// albo nad wiedzą o zasobie: kompozycję warstw, wsad, nastawy, wektoryzację, metadane
+// oraz łańcuch edycji. Czynności nad jednym obrazem leżą w pliku fotografia.go.
 package core
 
 import (
@@ -38,7 +19,8 @@ import (
 )
 
 const (
-	// przedrostekNastawyFotografiiDesign znakuje identyfikatory zewnętrzne nastaw.
+	// przedrostekNastawyFotografiiDesign znakuje identyfikatory zewnętrzne nastaw,
+	// odróżniając je od identyfikatorów zasobów w tej samej przestrzeni nazw.
 	przedrostekNastawyFotografiiDesign = "nastawa-foto-"
 
 	// granicaZasobowWsaduDesignu chroni wsad przed żądaniem na dziesięciu
@@ -50,7 +32,8 @@ const (
 	// zakłada wariant, więc sto kroków na stu zasobach to dziesięć tysięcy plików.
 	granicaCzynnosciWsaduDesignu = 24
 
-	// granicaOgniwLancuchaDesignu jest górną granicą wykazu łańcucha edycji.
+	// granicaOgniwLancuchaDesignu jest górną granicą wykazu łańcucha edycji, chroniącą
+	// odczyt historii przed zasobem wskazującym sam siebie w pętli.
 	granicaOgniwLancuchaDesignu = 500
 
 	// domyslnaLiczbaBarwWektoryzacjiDesignu jest liczbą barw, na które rdzeń
@@ -58,8 +41,8 @@ const (
 	domyslnaLiczbaBarwWektoryzacjiDesignu = 6
 )
 
-// ZlozWarstwyFotografii składa warstwy rastrowe — obsługuje
-// `design.photo.layer.composite`.
+// ZlozWarstwyFotografii składa warstwy rastrowe w jeden obraz — obsługuje komendę
+// design.photo.layer.composite, zapisując wynik jako nowy zasób.
 func (a *adapterDesignu) ZlozWarstwyFotografii(ctx context.Context,
 	z shared.DesignPhotoLayerCompositeRequest) (shared.DesignPhotoLayerCompositeResponse, error) {
 
@@ -82,8 +65,9 @@ func (a *adapterDesignu) ZlozWarstwyFotografii(ctx context.Context,
 		}
 	}
 
-	// Pierwsza warstwa rozstrzyga o rozmiarze płótna, gdy żądanie go nie podało:
-	// jest spodem kompozycji, więc jej wymiar jest wymiarem obrazu.
+	// Pierwsza warstwa rozstrzyga o rozmiarze płótna, gdy żądanie go nie podało.
+
+	// Jest spodem kompozycji, więc jej wymiar jest wymiarem obrazu.
 	pierwszy, wierszPierwszej, err := a.obrazZasobuPoKodzieDesignu(ctx,
 		"design.photo.layer.composite", z.Layers[0].AssetId)
 	if err != nil {
@@ -108,8 +92,8 @@ func (a *adapterDesignu) ZlozWarstwyFotografii(ctx context.Context,
 		obraz, _, err := a.obrazZasobuPoKodzieDesignu(ctx, "design.photo.layer.composite",
 			warstwa.AssetId)
 		if err != nil {
-			// Warstwa nie do odczytania NIE kończy kompozycji: wynik z pozostałych
-			// warstw jest lepszy niż odmowa, a brak wraca w bilansie.
+			// Warstwa nie do odczytania nie kończy kompozycji: wynik z pozostałych warstw
+			// jest lepszy niż odmowa.
 			pominiete = append(pominiete, fmt.Sprintf("%s (%s)",
 				strings.TrimSpace(warstwa.AssetId), err.Error()))
 			continue
@@ -242,9 +226,10 @@ func (a *adapterDesignu) PuscWsadFotografii(ctx context.Context,
 				break
 			}
 			biezacy = nastepny.Id
-			// Wynik ostatniej czynności jest wynikiem wsadu dla tego zasobu; wyniki
-			// pośrednie zostają w magazynie jako ogniwa łańcucha edycji i nie wchodzą
-			// do odpowiedzi — inaczej wykaz `assets` mieszałby ogniwa z wynikami.
+			// Wynik ostatniej czynności jest wynikiem wsadu dla tego zasobu.
+
+			// Wyniki pośrednie zostają w magazynie jako ogniwa łańcucha i nie wchodzą do
+			// odpowiedzi.
 			if numer == len(czynnosci)-1 {
 				wyniki = append(wyniki, nastepny)
 			}
@@ -261,13 +246,9 @@ func (a *adapterDesignu) PuscWsadFotografii(ctx context.Context,
 	}, nil
 }
 
-// komendyWsaduFotografiiDesignu wylicza komendy, które wsad umie puścić.
-//
-// Wykaz jest wąski z zamysłu: wsad puszcza czynności działające na JEDNYM
-// obrazie i niepotrzebujące wskazania drugiego zasobu. Kompozycja warstw, maska
-// i zaznaczenie obiektu wymagają wskazań, których wsad nie ma skąd wziąć dla
-// każdego zasobu osobno — przepuszczenie ich dałoby ten sam obszar albo tę samą
-// maskę nałożoną na sto różnych zdjęć.
+// komendyWsaduFotografiiDesignu wylicza komendy, które wsad umie puścić. Wykaz jest wąski
+// z zamysłu: wsad puszcza czynności działające na jednym obrazie, bez wskazania drugiego
+// zasobu, którego nie ma skąd wziąć dla każdej pozycji wsadu osobno.
 func komendyWsaduFotografiiDesignu() []string {
 	return []string{
 		shared.CommandDesignPhotoCrop,
@@ -281,7 +262,8 @@ func komendyWsaduFotografiiDesignu() []string {
 	}
 }
 
-// czyKomendaWsaduFotografiiDesignu rozstrzyga, czy wsad puszcza tę komendę.
+// czyKomendaWsaduFotografiiDesignu rozstrzyga, czy wsad puszcza tę komendę, sprawdzając
+// ją przeciw wykazowi komend dopuszczonych dla wsadu.
 func czyKomendaWsaduFotografiiDesignu(komenda string) bool {
 	for _, znana := range komendyWsaduFotografiiDesignu() {
 		if znana == komenda {
@@ -291,13 +273,9 @@ func czyKomendaWsaduFotografiiDesignu(komenda string) bool {
 	return false
 }
 
-// puscCzynnoscFotografiiDesignu wykonuje jedną czynność wsadu na wskazanym
-// zasobie, przez ten sam uchwyt, którym jedzie czynność pojedyncza.
-//
-// Nastawy czynności są przekładane na żądanie komendy przez rozbiór JSON razem
-// z dołożonym wskazaniem zasobu. Dzięki temu nastawa zapisana w oknie i nastawa
-// puszczona wsadem to DOKŁADNIE ten sam zestaw pól — nie ma tu drugiego zapisu
-// nastaw, który mógłby się rozjechać z pierwszym.
+// puscCzynnoscFotografiiDesignu wykonuje jedną czynność wsadu na wskazanym zasobie, przez
+// ten sam uchwyt, którym jedzie czynność pojedyncza. Nastawy przekładają się na żądanie
+// komendy tym samym rozbiorem, który zapisuje nastawę w oknie.
 func (a *adapterDesignu) puscCzynnoscFotografiiDesignu(ctx context.Context, zasob string,
 	czynnosc shared.DesignPhotoOperation, okno *string) (shared.DesignAsset, error) {
 
@@ -378,8 +356,8 @@ func (a *adapterDesignu) puscCzynnoscFotografiiDesignu(ctx context.Context, zaso
 	return shared.DesignAsset{}, fmt.Errorf("wsad nie puszcza komendy %q", czynnosc.Command)
 }
 
-// ZapiszNastaweFotografii zapisuje zestaw czynności pod nazwą — obsługuje
-// `design.photo.preset.save`.
+// ZapiszNastaweFotografii zapisuje zestaw czynności pod nazwą — obsługuje komendę
+// design.photo.preset.save, nadpisując nastawę o tej samej nazwie.
 func (a *adapterDesignu) ZapiszNastaweFotografii(ctx context.Context,
 	z shared.DesignPhotoPresetSaveRequest) (shared.DesignPhotoPresetSaveResponse, error) {
 
@@ -440,7 +418,8 @@ func (a *adapterDesignu) ZapiszNastaweFotografii(ctx context.Context,
 	return shared.DesignPhotoPresetSaveResponse{Preset: nastawa}, nil
 }
 
-// NastawyFotografii zwraca nastawy okna — obsługuje `design.photo.preset.list`.
+// NastawyFotografii zwraca nastawy okna — obsługuje komendę design.photo.preset.list,
+// wraz z zestawem czynności każdej z nich.
 func (a *adapterDesignu) NastawyFotografii(ctx context.Context,
 	z shared.DesignPhotoPresetListRequest) (shared.DesignPhotoPresetListResponse, error) {
 
@@ -463,8 +442,8 @@ func (a *adapterDesignu) NastawyFotografii(ctx context.Context,
 	return shared.DesignPhotoPresetListResponse{Presets: nastawy, Total: len(nastawy)}, nil
 }
 
-// nastawaKontraktuFotografiiDesignu składa `DesignPhotoPreset` kontraktu
-// z wiersza.
+// nastawaKontraktuFotografiiDesignu składa strukturę nastawy kontraktu z wiersza bazy,
+// rozkładając zapis czynności z jej kolumny tekstowej.
 func nastawaKontraktuFotografiiDesignu(
 	wiersz dane.NastawaFotografiiDesignu) (shared.DesignPhotoPreset, error) {
 
@@ -479,7 +458,8 @@ func nastawaKontraktuFotografiiDesignu(
 	}, nil
 }
 
-// czynnosciZZapisuFotografiiDesignu rozkłada zapis czynności z kolumny.
+// czynnosciZZapisuFotografiiDesignu rozkłada zapis czynności z kolumny na wykaz operacji
+// kontraktu, zwracając błąd przy zapisie nieczytelnym.
 func czynnosciZZapisuFotografiiDesignu(zapis string) ([]shared.DesignPhotoOperation, error) {
 	var czynnosci []shared.DesignPhotoOperation
 	if err := json.Unmarshal([]byte(zapis), &czynnosci); err != nil {
@@ -489,8 +469,8 @@ func czynnosciZZapisuFotografiiDesignu(zapis string) ([]shared.DesignPhotoOperat
 	return czynnosci, nil
 }
 
-// ObrysujKontury zamienia raster w rysunek wektorowy — obsługuje
-// `design.photo.vectorize`.
+// ObrysujKontury zamienia raster w rysunek wektorowy — obsługuje komendę
+// design.photo.vectorize, zapisując wynik jako zasób osobnego rodzaju.
 func (a *adapterDesignu) ObrysujKontury(ctx context.Context,
 	z shared.DesignPhotoVectorizeRequest) (shared.DesignPhotoVectorizeResponse, error) {
 
@@ -531,8 +511,8 @@ func (a *adapterDesignu) ObrysujKontury(ctx context.Context,
 			"komenda design.photo.vectorize: " + err.Error())
 	}
 
-	// Wynik jest WEKTOREM, więc nie idzie drogą wariantu rastrowego: format i
-	// rodzaj zasobu są inne, a `zapiszWariantFotografiiDesignu` koduje PNG.
+	// Wynik jest wektorem, więc nie idzie drogą wariantu rastrowego: format i rodzaj
+	// zasobu są inne.
 	nazwa := nazwaZasobuDesignu(zrodlo) + " — obrysowanie konturów"
 	zapisany, err := a.zalozZasobZBajtowDesignu(ctx, oknoWytworu(z.WindowId, zrodlo.Okno),
 		nazwa, shared.DesignAssetKindVector, "svg", []byte(dokument))
@@ -556,8 +536,8 @@ func (a *adapterDesignu) ObrysujKontury(ctx context.Context,
 	}, nil
 }
 
-// MetadaneZasobu oddaje zmierzone właściwości zasobu — obsługuje
-// `design.photo.metadata.get`.
+// MetadaneZasobu oddaje zmierzone właściwości zasobu — obsługuje komendę
+// design.photo.metadata.get, czytając je z nagłówka pliku w magazynie.
 func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 	z shared.DesignPhotoMetadataGetRequest) (shared.DesignPhotoMetadataGetResponse, error) {
 
@@ -579,8 +559,9 @@ func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 	wielkosc := len(bajty)
 	metadane.SizeBytes = &wielkosc
 
-	// Wymiary, format i model barwny mierzymy z NAGŁÓWKA — `image.DecodeConfig`
-	// nie rozpakowuje obrazu, więc pomiar kosztuje kilkadziesiąt bajtów odczytu.
+	// Wymiary, format i model barwny mierzy się z nagłówka pliku.
+
+	// Dekodowanie konfiguracji nie rozpakowuje obrazu, więc pomiar jest tani.
 	if opis, format, err := image.DecodeConfig(bytes.NewReader(bajty)); err == nil {
 		szerokosc, wysokosc := opis.Width, opis.Height
 		metadane.Width, metadane.Height = &szerokosc, &wysokosc
@@ -591,9 +572,10 @@ func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 		zKryciem := czyModelZKryciemDesignu(opis)
 		metadane.HasAlpha = &zKryciem
 	} else if zasob.Format != nil {
-		// Plik, którego rdzeń nie rozkłada (SVG, dokument), nadal ma format
-		// zmierzony przy wniesieniu. Pusto tam, gdzie czegoś nie wiemy, ale nie
-		// zapominamy tego, co już wiedzieliśmy.
+		// Plik, którego rdzeń nie rozkłada, nadal ma format zmierzony przy wniesieniu.
+
+		// Pusto tam, gdzie czegoś nie wiadomo, ale nie zapomina się tego, co już
+		// wiedziano.
 		metadane.Format = zasob.Format
 	}
 
@@ -608,11 +590,9 @@ func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 	return shared.DesignPhotoMetadataGetResponse{Metadata: metadane}, nil
 }
 
-// nazwaModeluBarwnegoDesignu nazywa model barwny odczytany z nagłówka.
-//
-// Rozpoznanie idzie po TOŻSAMOŚCI modelu biblioteki standardowej, nie po nazwie
-// typu: modele są wartościami jednostkowymi pakietu `image/color`, więc
-// porównanie jest dokładne i nie łamie się przy zmianie nazw wewnętrznych.
+// nazwaModeluBarwnegoDesignu nazywa model barwny odczytany z nagłówka. Rozpoznanie idzie
+// po tożsamości modelu biblioteki standardowej, nie po nazwie typu, bo modele są
+// wartościami jednostkowymi pakietu image/color.
 func nazwaModeluBarwnegoDesignu(opis image.Config) string {
 	switch opis.ColorModel {
 	case color.GrayModel, color.Gray16Model:
@@ -627,12 +607,9 @@ func nazwaModeluBarwnegoDesignu(opis image.Config) string {
 	return "rgb"
 }
 
-// czyModelZKryciemDesignu rozstrzyga, czy nagłówek pliku zapowiada kanał krycia.
-//
-// To POMIAR zapowiedzi, nie treści: plik PNG z kanałem krycia wypełnionym
-// wszędzie pełną wartością nadal jest plikiem z kanałem krycia, i tak ma być
-// powiedziane. Czy krycie naprawdę jest gdzieś częściowe, mówi pole
-// `transparentShare` przy odcięciu tła.
+// czyModelZKryciemDesignu rozstrzyga, czy nagłówek pliku zapowiada kanał krycia. To
+// pomiar zapowiedzi, nie treści: plik z kanałem krycia wypełnionym wszędzie pełną
+// wartością nadal jest plikiem z kanałem krycia.
 func czyModelZKryciemDesignu(opis image.Config) bool {
 	switch opis.ColorModel {
 	case color.NRGBAModel, color.RGBAModel, color.NRGBA64Model, color.RGBA64Model,
@@ -642,13 +619,9 @@ func czyModelZKryciemDesignu(opis image.Config) bool {
 	return false
 }
 
-// LancuchEdycji oddaje łańcuch edycji zasobu — obsługuje
-// `design.photo.history.get`.
-//
-// Łańcuch idzie WSTECZ po wariantach: od wskazanego zasobu do zdjęcia, którego
-// nikt nie obrabiał. Każdy krok niesie czynność i jej nastawy odczytane z bazy,
-// a nie odtworzone z różnicy obrazów — różnica obrazów nie powiedziałaby, jakimi
-// suwakami Operator do niej doszedł.
+// LancuchEdycji oddaje łańcuch edycji zasobu — obsługuje komendę
+// design.photo.history.get. Łańcuch idzie wstecz po wariantach, od wskazanego zasobu do
+// zdjęcia, którego nikt nie obrabiał.
 func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 	z shared.DesignPhotoHistoryGetRequest) (shared.DesignPhotoHistoryGetResponse, error) {
 
@@ -668,9 +641,10 @@ func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 
 	ogniwa := []shared.DesignPhotoEdit{}
 	biezacy := zasob
-	// Granica przejścia jest podwójna: liczba ogniw i granica bezpieczeństwa na
-	// wypadek pętli wariantów (zasób wskazujący sam siebie jako wariant). Pętla
-	// w danych nie ma prawa zawiesić odczytu.
+	// Granica przejścia jest podwójna: liczba ogniw i granica bezpieczeństwa na wypadek
+	// pętli wariantów.
+
+	// Pętla w danych nie ma prawa zawiesić odczytu.
 	for krokow := 0; krokow < granicaOgniwLancuchaDesignu && len(ogniwa) < granica; krokow++ {
 		czynnosc, err := a.repozytorium.CzynnoscFotografiiDesignuWyniku(ctx, biezacy.ID)
 		if err != nil {
@@ -700,15 +674,16 @@ func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 		}
 		poprzedni, err := a.repozytorium.Zasob(ctx, strings.TrimSpace(*biezacy.WariantZasobuID))
 		if err != nil {
-			// Źródło usunięte z panelu przerywa łańcuch, ale nie unieważnia tego, co
-			// już zebrano: Operator ma widzieć ogniwa, które ocalały.
+			// Źródło usunięte z panelu przerywa łańcuch, ale nie unieważnia tego, co już
+			// zebrano.
 			break
 		}
 		biezacy = poprzedni
 	}
 
-	// Ogniwa idą od NAJSTARSZEGO — tak opisuje pole kontrakt i tak czyta się
-	// historię pracy. Przejście szło wstecz, więc wykaz odwracamy.
+	// Ogniwa idą od najstarszego, tak jak opisuje pole kontraktu.
+
+	// Przejście szło wstecz, więc wykaz przed zwróceniem odwraca się.
 	for lewa, prawa := 0, len(ogniwa)-1; lewa < prawa; lewa, prawa = lewa+1, prawa-1 {
 		ogniwa[lewa], ogniwa[prawa] = ogniwa[prawa], ogniwa[lewa]
 	}
@@ -718,18 +693,9 @@ func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 	return shared.DesignPhotoHistoryGetResponse{Edits: ogniwa, Total: len(ogniwa)}, nil
 }
 
-// odczytajExifDesignu odczytuje pola EXIF z bajtów pliku i oddaje je wraz
-// z liczbą pól odczytanych.
-//
-// Rozbiór jest własny i wąski: rdzeń szuka segmentu APP1 pliku JPEG, czyta
-// katalog IFD0 i wyciąga z niego pola o znanych numerach. Biblioteki EXIF w tym
-// drzewie nie ma, a pełny rozbiór wszystkich katalogów (IFD1, GPS, Interop,
-// MakerNote każdego producenta) jest zadaniem na osobną bibliotekę — nie na plik
-// modułu.
-//
-// Liczba odczytanych pól wraca w odpowiedzi (`exifFieldsRead`): zero znaczy, że
-// plik EXIF-u nie ma albo że rdzeń go nie rozłożył, i jest to POWIEDZIANE, a nie
-// przemilczane pustym obiektem.
+// odczytajExifDesignu odczytuje pola EXIF z bajtów pliku i oddaje je wraz z liczbą pól
+// odczytanych. Rozbiór jest własny i wąski: rdzeń szuka segmentu APP1 pliku JPEG, czyta
+// katalog IFD0 i wyciąga z niego pola o znanych numerach.
 func odczytajExifDesignu(bajty []byte) ([]byte, int) {
 	segment := segmentExifDesignu(bajty)
 	if len(segment) < 8 {
@@ -785,11 +751,9 @@ func odczytajExifDesignu(bajty []byte) ([]byte, int) {
 	return zapis, len(odczytane)
 }
 
-// nazwyExifDesignu to numery pól EXIF, które rdzeń rozpoznaje.
-//
-// Wykaz jest krótki z zamysłu: to pola, o które pyta się przy grafice użytkowej —
-// aparat, obiektyw, czas, przysłona, czułość, rozdzielczość i orientacja. Pełny
-// wykaz EXIF ma kilkaset pól, a większość z nich nie ma w tym module znaczenia.
+// nazwyExifDesignu to numery pól EXIF, które rdzeń rozpoznaje. Wykaz jest krótki z
+// zamysłu: obejmuje pola istotne przy grafice użytkowej — aparat, obiektyw, czas,
+// przysłonę, czułość, rozdzielczość i orientację.
 var nazwyExifDesignu = map[uint16]string{
 	0x010E: "opis",
 	0x010F: "producent",
@@ -808,7 +772,8 @@ var nazwyExifDesignu = map[uint16]string{
 	0x920A: "ogniskowa",
 }
 
-// wartoscExifDesignu odczytuje wartość jednego pola EXIF.
+// wartoscExifDesignu odczytuje wartość jednego pola EXIF spod wskazanego numeru
+// znacznika, przechodząc katalog IFD0.
 func wartoscExifDesignu(segment []byte, porzadek binary.ByteOrder, rodzaj uint16,
 	liczba uint32, wartosc []byte) (any, bool) {
 
@@ -853,8 +818,8 @@ func wartoscExifDesignu(segment []byte, porzadek binary.ByteOrder, rodzaj uint16
 	return nil, false
 }
 
-// segmentExifDesignu odnajduje treść segmentu APP1 z podpisem „Exif" w pliku
-// JPEG.
+// segmentExifDesignu odnajduje treść segmentu APP1 z podpisem Exif w pliku JPEG,
+// pomijając pozostałe segmenty nagłówka.
 func segmentExifDesignu(bajty []byte) []byte {
 	if len(bajty) < 4 || bajty[0] != 0xFF || bajty[1] != 0xD8 {
 		return nil
@@ -889,7 +854,8 @@ func segmentExifDesignu(bajty []byte) []byte {
 	return nil
 }
 
-// rozdzielczoscZExifDesignu wyciąga rozdzielczość z odczytanych pól EXIF.
+// rozdzielczoscZExifDesignu wyciąga rozdzielczość z odczytanych pól EXIF, przeliczając ją
+// do cali według jednostki zapisanej w pliku.
 func rozdzielczoscZExifDesignu(zapis []byte) (int, bool) {
 	if len(zapis) == 0 {
 		return 0, false
@@ -906,15 +872,16 @@ func rozdzielczoscZExifDesignu(zapis []byte) (int, bool) {
 	if !jest || liczba <= 0 {
 		return 0, false
 	}
-	// Jednostka 3 znaczy punkty na centymetr; przeliczamy na cale, bo w tym module
-	// wszystko inne liczy się w calach (`milimetryNaCal`).
+	// Jednostka 3 znaczy punkty na centymetr; przelicza się na cale, bo reszta modułu liczy
+	// w calach.
 	if jednostka, jest := odczytane["jednostkaRozdzielczosci"].(float64); jest && jednostka == 3 {
 		liczba *= 2.54
 	}
 	return int(liczba + 0.5), true
 }
 
-// bladNieznanejNastawyFotografiiDesignu nazywa nastawę, której rdzeń nie zna.
+// bladNieznanejNastawyFotografiiDesignu nazywa nastawę, której rdzeń nie zna, wskazując
+// jej identyfikator w treści odmowy.
 func bladNieznanejNastawyFotografiiDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("nastawy warsztatu fotografii " + kod +

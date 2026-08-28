@@ -1,20 +1,7 @@
-// Odpowiedzialność pliku: wpięcie ośmiu komend obszaru `design.*` — modułu
-// Design (Prompt Builder, Assets Panel, Design Board) — i rozgłoszenie
-// `design.asset.changed` po tych z nich, które zasób zmieniają.
-//
-// `design.asset.tag.set` domyka lukę odczytu: `design.asset.list` zawęża wykaz
-// polem `tags`, a bez tej komendy nie byłoby czym etykiet nadać; uchwyt leży
-// w `adapter_modul_design_etykiety.go`.
-//
-// Zdarzenie `created` ma dwóch nadawców: generowanie i wniesienie. Obie drogi
-// odkładają bajty w magazynie rdzenia pod sumą kontrolną, zanim powstanie choć
-// jeden wiersz (`adapter_modul_design_generowanie.go`), a odmowa nie rozgłasza
-// niczego — opakowanie milczy przy błędzie, więc droga bez bajtów jest też
-// drogą bez zdarzenia.
-//
-// Generowanie rozgłasza tyle zdarzeń, ile założyło zasobów. Wariantów bywa
-// kilka, a `design.asset.changed` niesie jeden zasób — jedno zdarzenie na cały
-// zbiór opisywałoby powstanie jednego z nich i przemilczało resztę.
+// Wpięcie ośmiu komend obszaru `design.*` — modułu Design (Prompt Builder,
+// Assets Panel, Design Board) — i rozgłoszenie `design.asset.changed` po tych
+// z nich, które zasób zmieniają; pozostałe czynności wpinają funkcje
+// pomocnicze niżej w pliku.
 package core
 
 import (
@@ -24,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Design jest portem modułu Design.
+// Design jest portem modułu Design: interfejsem czynności, które adapter
+// warstwy danych musi spełnić dla rejestru komend.
 type Design interface {
 	GenerujZasob(ctx context.Context, z shared.DesignAssetGenerateRequest) (shared.DesignAssetGenerateResponse, error)
 	Zasoby(ctx context.Context, z shared.DesignAssetListRequest) (shared.DesignAssetListResponse, error)
@@ -32,11 +20,7 @@ type Design interface {
 	UstawEtykietyZasobu(ctx context.Context, z shared.DesignAssetTagSetRequest) (shared.DesignAssetTagSetResponse, error)
 	WniesZasob(ctx context.Context, z shared.DesignAssetUploadRequest) (shared.DesignAssetUploadResponse, error)
 	UstawUlubionyZasob(ctx context.Context, z shared.DesignAssetFavoriteSetRequest) (shared.DesignAssetFavoriteSetResponse, error)
-	// UsunZasob oddaje trzy wartości, jako jedyna w tym porcie. Odpowiedź
-	// kontraktu niesie samo `removed`, a zdarzenie `deleted` musi nieść cały
-	// usunięty zasób — po usunięciu wiersza nie ma go już skąd odczytać, więc
-	// adapter podaje go obok odpowiedzi. Rozgłaszanie z wnętrza adaptera byłoby
-	// drugą drogą do szyny zdarzeń (emiter należy do rejestru, nie do modułu).
+	// UsunZasob oddaje trzy wartości, jedyna w tym porcie: odpowiedź, zasób usunięty i błąd.
 	UsunZasob(ctx context.Context, z shared.DesignAssetRemoveRequest) (shared.DesignAssetRemoveResponse, shared.DesignAsset, error)
 	Kompozycje(ctx context.Context, z shared.DesignBoardListRequest) (shared.DesignBoardListResponse, error)
 
@@ -164,21 +148,13 @@ type Design interface {
 	MetadaneZasobu(ctx context.Context, z shared.DesignPhotoMetadataGetRequest) (shared.DesignPhotoMetadataGetResponse, error)
 	LancuchEdycji(ctx context.Context, z shared.DesignPhotoHistoryGetRequest) (shared.DesignPhotoHistoryGetResponse, error)
 
-	// --- odczyty dla szyny zdarzeń ---
-	// Te dwie metody nie obsługują żadnej komendy. Istnieją, bo zdarzenie
-	// `design.board.changed` niesie CAŁĄ kompozycję, a komendy, które ją zmieniają
-	// (układ automatyczny, przeliczenie więzi, instancja komponentu, obie drogi
-	// makiety), oddają w odpowiedzi wyłącznie swój wycinek. Rejestr musi więc
-	// odczytać stan po zapisie, a bazę widzi wyłącznie adapter.
-	//
-	// Brak wiersza oddają jako `false`, nie jako błąd: zmiana się już udała, więc
-	// niepowodzenie odczytu ma zamknąć usta szynie zdarzeń, a nie unieważnić
-	// komendę Operatora.
+	// --- odczyty dla szyny zdarzeń — te dwie metody nie obsługują komendy; czytają stan po zapisie ---
 	KompozycjaZdarzenia(ctx context.Context, kod string) (shared.DesignBoard, bool)
 	KompozycjaRamkiZdarzenia(ctx context.Context, ramka string) (shared.DesignBoard, bool)
 }
 
-// zarejestrujDesign wpina osiem komend modułu Design.
+// zarejestrujDesign wpina osiem komend modułu Design bezpośrednio oraz woła
+// rejestrację pozostałych obszarów.
 func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -186,13 +162,10 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 
 	r.Zarejestruj(shared.CommandDesignAssetList, obsluz(m.Zasoby))
 	r.Zarejestruj(shared.CommandDesignBoardUpdate, obsluz(m.ZapiszKompozycje))
-	// Odczyt kompozycji okna. Bez opakowania rozgłaszającego — niczego nie
-	// zmienia, tak samo jak `design.asset.list`.
+	// Odczyt kompozycji okna, bez opakowania rozgłaszającego — niczego nie zmienia, jak wykaz zasobów.
 	r.Zarejestruj(shared.CommandDesignBoardList, obsluz(m.Kompozycje))
 
-	// Zdarzenie idzie po zasobie, nie po komendzie: każdy wariant dostaje własne
-	// bajty w magazynie i własny wiersz, więc każdy ma własne zdarzenie
-	// (nagłówek pliku).
+	// Zdarzenie idzie po zasobie, nie po komendzie: każdy wariant ma bajty, wiersz i zdarzenie własne.
 	r.Zarejestruj(shared.CommandDesignAssetGenerate,
 		obsluz(func(ctx context.Context, z shared.DesignAssetGenerateRequest) (shared.DesignAssetGenerateResponse, error) {
 			odpowiedz, err := m.GenerujZasob(ctx, z)
@@ -204,12 +177,7 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// `design.asset.changed` jest jedynym zdarzeniem obszaru; nadanie etykiet
-	// zmienia zasób zastany, więc `updated`. `design.asset.list`
-	// i `design.board.list` niczego nie zmieniają, a `design.board.update`
-	// zmienia kompozycję, dla której kontrakt osobnego zdarzenia nie ma —
-	// kompozycji więc nie rozgłaszamy zdarzeniem zasobu, bo odbiorca dostałby
-	// zmianę bytu, który się nie zmienił.
+	// `design.asset.changed` jest jedynym zdarzeniem obszaru; nadanie etykiet daje rodzaj `updated`.
 	r.Zarejestruj(shared.CommandDesignAssetTagSet,
 		obsluz(func(ctx context.Context, z shared.DesignAssetTagSetRequest) (shared.DesignAssetTagSetResponse, error) {
 			odpowiedz, err := m.UstawEtykietyZasobu(ctx, z)
@@ -219,9 +187,7 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Wniesienie jest drugim źródłem `created` — obie drogi zasobu do modułu
-	// (wniesiona przez Operatora i wygenerowana kanałem) kończą się tak samo:
-	// bajtami w magazynie pod sumą kontrolną, wierszem i zdarzeniem.
+	// Wniesienie jest drugim źródłem `created` — obie drogi kończą się bajtami, wierszem i zdarzeniem.
 	r.Zarejestruj(shared.CommandDesignAssetUpload,
 		obsluz(func(ctx context.Context, z shared.DesignAssetUploadRequest) (shared.DesignAssetUploadResponse, error) {
 			odpowiedz, err := m.WniesZasob(ctx, z)
@@ -241,12 +207,7 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Usunięcie jest jedynym nadawcą `deleted`. Zdarzenie idzie wyłącznie wtedy,
-	// gdy wiersz naprawdę zniknął (`Removed`): usunięcie zasobu, którego nie
-	// było, kończy się odpowiedzią `removed: false` i milczeniem szyny —
-	// rozgłoszenie donosiłoby panelowi o zniknięciu czegoś, czego nie miał.
-	// Zasób w zdarzeniu jest tym odczytanym przed usunięciem, bo po nim nie ma
-	// już czego czytać.
+	// Usunięcie jest jedynym nadawcą `deleted`, tylko gdy wiersz naprawdę zniknął — inaczej szyna milczy.
 	r.Zarejestruj(shared.CommandDesignAssetRemove,
 		obsluz(func(ctx context.Context, z shared.DesignAssetRemoveRequest) (shared.DesignAssetRemoveResponse, error) {
 			odpowiedz, usuniety, err := m.UsunZasob(ctx, z)
@@ -271,18 +232,8 @@ func zarejestrujDesign(r *Rejestr, m Design, e *emiter) {
 }
 
 // zarejestrujDesignFotografia wpina dwadzieścia czynności warsztatu fotografii.
-//
-// Każda czynność zakładająca WARIANT zasobu rozgłasza `design.asset.changed`
-// z rodzajem `created`: Assets Panel ma pokazać nowy wariant natychmiast, bo
-// warsztat fotografii jest pracą ciągłą i Operator sięga po poprzedni wynik
-// w następnym kroku.
-//
-// Trzy czynności milczą i każda z innego powodu. `design.photo.metadata.get`
-// i `design.photo.history.get` niczego nie zmieniają — są odczytem.
-// `design.photo.batch.apply` zakłada po jednym wariancie na zasób i oddaje wykaz;
-// jedno zdarzenie opisywałoby jeden z nich i przemilczało resztę, a rozgłoszenie
-// dwustu zdarzeń z jednej komendy zalałoby szynę. Panel odświeża się tam
-// odpowiedzią komendy, która niesie komplet zasobów.
+// Każda czynność zakładająca wariant zasobu rozgłasza `created`; trzy czynności
+// milczą, bo są odczytem albo oddają wykaz bez pojedynczego zasobu.
 func zarejestrujDesignFotografia(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignPhotoMetadataGet, obsluz(m.MetadaneZasobu))
 	r.Zarejestruj(shared.CommandDesignPhotoHistoryGet, obsluz(m.LancuchEdycji))
@@ -323,17 +274,8 @@ func zarejestrujDesignFotografia(r *Rejestr, m Design, e *emiter) {
 }
 
 // zZasobemFotografiiDesignu składa obsługę jednej czynności warsztatu
-// fotografii wraz z rozgłoszeniem zasobu, który z niej powstał.
-//
-// Jedna funkcja na piętnaście czynności, a nie piętnaście opakowań: wszystkie
-// robią DOKŁADNIE to samo — wołają uchwyt i rozgłaszają jeden zasób
-// z odpowiedzi. Piętnaście kopii tego samego opakowania byłoby piętnastoma
-// miejscami, w których da się zapomnieć o zdarzeniu.
-//
-// Wpięcie zostaje przy wołającym, z nazwą komendy wpisaną WPROST: wykaz komend
-// obsługiwanych przez rdzeń czyta się z treści plików rdzenia (`shared.Command…`
-// obok `Zarejestruj`), a nazwa komendy schowana w zmiennej wypadałaby z tego
-// wykazu i komenda wyglądałaby na niewpiętą.
+// fotografii wraz z rozgłoszeniem zasobu, który z niej powstał — jedna funkcja
+// zamiast piętnastu identycznych opakowań.
 func zZasobemFotografiiDesignu[Z any, W any](e *emiter,
 	czynnosc func(context.Context, Z) (W, error), zasob func(W) shared.DesignAsset) Obsluga {
 
@@ -347,14 +289,8 @@ func zZasobemFotografiiDesignu[Z any, W any](e *emiter,
 }
 
 // zarejestrujDesignWektor wpina dziesięć czynności warsztatu wektorowego.
-//
-// Żadna z nich nie rozgłasza `design.asset.changed`: ścieżka i symbol są bytami
-// KOMPOZYCJI, a nie zasobami Assets Panelu. Rozgłoszenie zdarzenia zasobu po
-// narysowaniu krzywej donosiłoby panelowi o zmianie zasobu, który się nie zmienił.
-//
-// `design.vector.export` też milczy — oddaje treść w odpowiedzi (`contentBase64`),
-// a nie zasób w magazynie, więc nie ma czego rozgłosić. To ta sama zasada, którą
-// jadą `design.asset.export` i `design.board.export`.
+// Żadna nie rozgłasza `design.asset.changed`: ścieżka i symbol są bytami
+// kompozycji, nie zasobami Assets Panelu.
 func zarejestrujDesignWektor(r *Rejestr, m Design) {
 	r.Zarejestruj(shared.CommandDesignVectorPathSet, obsluz(m.UstawSciezke))
 	r.Zarejestruj(shared.CommandDesignVectorPathList, obsluz(m.SciezkiWektorowe))
@@ -369,18 +305,9 @@ func zarejestrujDesignWektor(r *Rejestr, m Design) {
 }
 
 // zarejestrujDesignMakiety wpina piętnaście czynności warsztatu makiety.
-//
-// Rozgłoszenie `design.board.changed` idzie po tych, które ZMIENIAJĄ układ
-// warstw kompozycji: układ automatyczny, przeliczenie więzi po zmianie rozmiaru
-// ramki, dołożenie instancji komponentu oraz obie drogi makiety. Drugie okno nad
-// tą samą tablicą ma się dowiedzieć, że warstwy, które widzi, przestały być
-// aktualne.
-//
-// Ramka, więz, siatka, komponent i przejście prototypu NIE rozgłaszają zdarzenia
-// kompozycji: obszar `design.*` ma trzy zdarzenia — zasobu, kompozycji
-// i obecności — a żaden z tych bytów nie jest kompozycją. Zdarzenie kompozycji po
-// zapisie samej ramki mówiłoby, że zmienił się układ warstw, który się nie
-// zmienił.
+// Rozgłoszenie `design.board.changed` idzie po tych, które zmieniają układ
+// warstw kompozycji; ramka, więz, siatka, komponent i przejście prototypu nie
+// rozgłaszają go.
 func zarejestrujDesignMakiety(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignFrameSet, obsluz(m.UstawRamke))
 	r.Zarejestruj(shared.CommandDesignFrameList, obsluz(m.Ramki))
@@ -435,12 +362,9 @@ func zarejestrujDesignMakiety(r *Rejestr, m Design, e *emiter) {
 		}))
 }
 
-// zarejestrujDesignBarwy wpina siedem czynności barwy.
-//
-// Zdarzenie idzie po jednej: symulacja wady widzenia zakłada ZASÓB w magazynie,
-// więc rozgłasza `design.asset.changed` z rodzajem `created`. Pozostałe sześć
-// niczego w bazie zasobów nie zmienia — paleta, kontrast i przeliczenie są
-// rachunkiem, a gradient jest bytem kompozycji, nie zasobem.
+// zarejestrujDesignBarwy wpina siedem czynności barwy. Zdarzenie idzie po
+// jednej: symulacja wady widzenia zakłada zasób w magazynie i rozgłasza
+// `created`; pozostałe są rachunkiem.
 func zarejestrujDesignBarwy(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignColorPaletteGenerate, obsluz(m.GenerujPalete))
 	r.Zarejestruj(shared.CommandDesignColorPaletteExtract, obsluz(m.WyciagnijPalete))
@@ -459,18 +383,9 @@ func zarejestrujDesignBarwy(r *Rejestr, m Design, e *emiter) {
 		}))
 }
 
-// zarejestrujDesignIkony wpina osiem czynności ikon i krojów.
-//
-// Pakiet ikon zakłada zasób magazynu i rozgłasza `created`. Ikony własne
-// (`design.icon.set`, `design.icon.generate`) NIE rozgłaszają zdarzenia zasobu:
-// ikona jest bytem osobnym od zasobu Assets Panelu — leży we własnej tabeli
-// i kontrakt nie ma dla niej zdarzenia. Rozgłoszenie `design.asset.changed`
-// z ikoną wymagałoby złożenia `DesignAsset` z bytu, który nim nie jest.
-//
-// `design.favicon.build` też milczy, choć zakłada zasoby: odpowiedź niesie same
-// IDENTYFIKATORY (`assetIds`), a zdarzenie wymaga całego zasobu. Rozgłoszenie
-// jednego z dziewięciu opisywałoby powstanie jednego i przemilczało resztę —
-// ta sama zasada, którą jedzie generowanie wariantów.
+// zarejestrujDesignIkony wpina osiem czynności ikon i krojów. Pakiet ikon
+// zakłada zasób magazynu i rozgłasza `created`; ikony własne i favicony milczą,
+// bo nie są zasobem Assets Panelu albo nie niosą go w odpowiedzi.
 func zarejestrujDesignIkony(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignIconLibrarySearch, obsluz(m.SzukajIkon))
 	r.Zarejestruj(shared.CommandDesignIconSet, obsluz(m.UstawIkone))
@@ -509,12 +424,9 @@ func zarejestrujDesignSzablonyMaterialu(r *Rejestr, m Design, e *emiter) {
 		}))
 }
 
-// zarejestrujDesignMarketing wpina cztery czynności marketingowe.
-//
-// Wciągnięcie z bazy zdjęciowej i makieta produktowa zakładają zasób i oddają go
-// w całości, więc rozgłaszają `created`. Komplet kampanii oddaje same
-// identyfikatory rozmiarów, więc milczy — z tego samego powodu, co
-// `design.favicon.build`. Wyszukanie niczego nie zmienia.
+// zarejestrujDesignMarketing wpina cztery czynności marketingowe. Wciągnięcie
+// z bazy zdjęciowej i makieta produktowa zakładają zasób i rozgłaszają
+// `created`; komplet kampanii i wyszukanie milczą.
 func zarejestrujDesignMarketing(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignCampaignSetBuild, obsluz(m.ZbudujKompletKampanii))
 	r.Zarejestruj(shared.CommandDesignStockSearch, obsluz(m.SzukajWBazachZdjeciowych))
@@ -538,13 +450,8 @@ func zarejestrujDesignMarketing(r *Rejestr, m Design, e *emiter) {
 }
 
 // zarejestrujDesignDruk wpina osiem czynności druku, wykresu i schematu.
-//
-// Wydanie do druku, wykres i schemat zakładają zasób magazynu i oddają go
-// w całości, więc rozgłaszają `created`. Podział na kafle oddaje wykaz kafli
-// z identyfikatorami, więc milczy — jedno zdarzenie na kilkadziesiąt kafli
-// opisywałoby powstanie jednego i przemilczało resztę.
-//
-// Kontrola przeddrukowa, profile i wykaz nośników niczego nie zmieniają.
+// Wydanie, wykres i schemat zakładają zasób i rozgłaszają `created`; podział
+// na kafle, kontrola i wykazy milczą.
 func zarejestrujDesignDruk(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignPrintProfileSet, obsluz(m.UstawProfilDruku))
 	r.Zarejestruj(shared.CommandDesignPrintProfileList, obsluz(m.ProfileDruku))
@@ -579,13 +486,8 @@ func zarejestrujDesignDruk(r *Rejestr, m Design, e *emiter) {
 }
 
 // kompozycjaPoKodzieDesignu rozgłasza `design.board.changed` dla kompozycji
-// wskazanej kodem — odczytując jej stan PO zmianie.
-//
-// Odczyt jest ceną prawdy o skutku: zdarzenie niesie komplet warstw, a warstwy
-// zmieniły się właśnie w tym wywołaniu. Zdarzenie złożone z żądania mówiłoby
-// o zamiarze, nie o stanie, i drugie okno narysowałoby układ, którego w bazie nie
-// ma. Niepowodzenie odczytu NIE unieważnia komendy — zmiana się już udała, a szyna
-// zdarzeń milczy wtedy zamiast rozgłaszać nieprawdę.
+// wskazanej kodem, odczytując jej stan po zmianie — zdarzenie ma nieść skutek,
+// nie zamiar żądania.
 func (e *emiter) kompozycjaPoKodzieDesignu(ctx context.Context, m Design, kod string) {
 	if e == nil || strings.TrimSpace(kod) == "" {
 		return
@@ -621,12 +523,8 @@ func zarejestrujDesignWydania(r *Rejestr, m Design) {
 }
 
 // zarejestrujDesignKolekcjeIPrompty wpina kolekcje zasobów oraz szablony
-// i historię promptów.
-//
-// Kolekcja i szablon nie rozgłaszają zdarzenia: obszar `design.*` ma trzy
-// zdarzenia — zasobu, kompozycji i obecności — a kolekcja nie jest żadnym
-// z tych bytów. Rozgłoszenie `design.asset.changed` po zmianie kolekcji
-// donosiłoby panelowi o zmianie zasobu, który się nie zmienił.
+// i historię promptów. Kolekcja i szablon nie rozgłaszają zdarzenia: żaden nie
+// jest zasobem, kompozycją ani obecnością.
 func zarejestrujDesignKolekcjeIPrompty(r *Rejestr, m Design) {
 	r.Zarejestruj(shared.CommandDesignCollectionCreate, obsluz(m.ZalozKolekcje))
 	r.Zarejestruj(shared.CommandDesignCollectionAssign, obsluz(m.PrzypiszDoKolekcji))
@@ -638,17 +536,8 @@ func zarejestrujDesignKolekcjeIPrompty(r *Rejestr, m Design) {
 }
 
 // zarejestrujDesignPlansze wpina wersjonowanie kompozycji, jej wyrys,
-// adnotacje i obecność.
-//
-// Przywrócenie wersji ZMIENIA układ kompozycji, więc rozgłasza
-// `design.board.changed` — drugie okno nad tą samą tablicą ma się dowiedzieć,
-// że warstwy, które widzi, przestały być aktualne. Zapis wersji i wykaz wersji
-// układu nie ruszają, więc milczą.
-//
-// Zgłoszenie obecności rozgłasza `design.board.presence` — po to jest.
-// Zdarzenie niesie komplet obecnych, nie samą zmianę: odbiorca ma narysować
-// wszystkie kursory, a nie doliczać stan z ciągu przyrostów, którego początku
-// nie widział.
+// adnotacje i obecność. Przywrócenie wersji rozgłasza `design.board.changed`;
+// zgłoszenie obecności rozgłasza `design.board.presence` z kompletem obecnych.
 func zarejestrujDesignPlansze(r *Rejestr, m Design, e *emiter) {
 	r.Zarejestruj(shared.CommandDesignBoardVersionSave, obsluz(m.ZapiszWersjeKompozycji))
 	r.Zarejestruj(shared.CommandDesignBoardVersionList, obsluz(m.WersjeKompozycji))
@@ -675,7 +564,8 @@ func zarejestrujDesignPlansze(r *Rejestr, m Design, e *emiter) {
 		}))
 }
 
-// zarejestrujDesignZetony wpina zestawy żetonów i przewodnik stylu.
+// zarejestrujDesignZetony wpina zestawy żetonów i przewodnik stylu; żadna
+// z tych pięciu czynności nie rozgłasza zdarzenia.
 func zarejestrujDesignZetony(r *Rejestr, m Design) {
 	r.Zarejestruj(shared.CommandDesignTokensetSave, obsluz(m.ZapiszZestawZetonow))
 	r.Zarejestruj(shared.CommandDesignTokensetList, obsluz(m.ZestawyZetonow))

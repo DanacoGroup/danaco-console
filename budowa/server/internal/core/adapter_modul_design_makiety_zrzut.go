@@ -1,51 +1,7 @@
-// Odpowiedzialność pliku: dwie drogi powstania makiety — z opisu
-// (`design.mockup.generate`) i ze zrzutu ekranu (`design.mockup.import`).
-// Ramki, więzy, komponenty i prototyp leżą w `adapter_modul_design_makiety.go`.
-//
-// ── Makieta jest UKŁADEM, nie obrazkiem ─────────────────────────────────────
-// Obie komendy oddają ramkę i WARSTWY, nie plik graficzny. Dlatego kanał
-// obrazowy — ten, którym jedzie `design.asset.generate` — nie jest tu drogą:
-// obraz ekranu nie da się przesunąć piórem, a makieta ma być czymś, w czym
-// Operator pracuje dalej. Rozkład na sekcje liczy więc rdzeń, a kanał modelu
-// wchodzi wyłącznie tam, gdzie dodaje wiedzę: przy rozpisaniu OPISU na nazwy
-// sekcji.
-//
-// ── Rozkład opisu: rachunek rdzenia, kanał gdy stoi ─────────────────────────
-// Bez wskazanego kanału rdzeń rozkłada opis własną regułą — rozdziela go na
-// części i rozpoznaje nazwy sekcji, które w makietach ekranów występują. Wynik
-// jest zawsze, na każdej maszynie i bez konta u dostawcy. Ze wskazanym kanałem
-// pyta model o rozpisanie tego samego opisu; odpowiedź nieczytelna albo błąd
-// kanału NIE kończy komendy — liczy wtedy reguła rdzenia, bo makieta ma powstać.
-//
-// ── Zrzut: rdzeń wykrywa układ RACHUNKIEM, a litery czyta PROGRAMEM ─────────
-// `design.mockup.import` rozkłada zrzut na obszary rachunkiem własnym na
-// pikselach: tło z obwodu obrazu, progowanie odstępstwa od tła, spójne bloki,
-// prostokąty otaczające. To daje prawdziwy układ warstw ze zrzutu i nie zależy
-// od niczego spoza binarium.
-//
-// TREŚĆ napisów czyta program `tesseract` — składnik pakietu serwera
-// zadeklarowany w `zaleznosci_zewnetrzne.go` i wołany przez `zewnetrzne.Wolaj`,
-// tą samą drogą, co w Studiu i w Translate. Czytnika liter w czystym Go nie ma,
-// więc jest to drugi przypadek zasady: nie ma biblioteki — program idzie
-// z pakietem serwera. Ten jeden plik obszaru Design jest objęty nazwanym
-// wyjątkiem zapory (`plikiDesignuZOdczytemPisma`); własny `exec` zostaje
-// zabroniony i tutaj.
-//
-// ── Czego brak programu NIE psuje ───────────────────────────────────────────
-// Rozstrzygnięcie jest dwustopniowe, bo pole `recognizeText` domyślnie ZNACZY
-// „tak", a układ makiety nie ma prawa zależeć od odczytu liter:
-//
-//   - `recognizeText` podane WPROST jako `true` — Operator poprosił o odczyt.
-//     Brak programu jest wtedy ODMOWĄ nazwaną, nie pustym odczytem udającym, że
-//     napisów nie było.
-//   - pole POMINIĘTE — obowiązuje domyślne „tak", ale odczyt jest dodatkiem do
-//     układu. Brak programu daje wtedy makietę z układem, a każda linia tekstu
-//     niesie w adnotacji zdanie o tym, że treści nie odczytano i dlaczego. Cisza
-//     jest zakazana także tutaj — adnotacja jest jedynym polem, którym da się to
-//     powiedzieć, bo kontrakt nie ma na to osobnego.
-//
-// Obszary, których rdzeń nie rozłożył na elementy, wracają
-// w `unrecognizedRegions` — bilans zamiast ciszy.
+// Plik obsługuje dwie drogi powstania makiety: budowę z opisu tekstowego komendą
+// design.mockup.generate oraz odczyt układu ze zrzutu ekranu komendą
+// design.mockup.import. Ramki, więzy, komponenty i prototyp leżą w pliku
+// adapter_modul_design_makiety.go.
 package core
 
 import (
@@ -74,10 +30,9 @@ import (
 )
 
 const (
-	// bokBlokuZrzutuDesignu jest bokiem kratki, na której rdzeń szuka spójnych
-	// obszarów. Piksel na piksel byłby rachunkiem na milionach komórek przy
-	// każdym zrzucie; kratka ośmiopikselowa zostawia dokładność wystarczającą,
-	// żeby rozdzielić przycisk od nagłówka.
+	// bokBlokuZrzutuDesignu jest bokiem kratki, na której rdzeń szuka spójnych obszarów.
+	// Kratka ośmiopikselowa zostawia dokładność wystarczającą, żeby rozdzielić przycisk
+	// od nagłówka, przy rozsądnym koszcie rachunku.
 	bokBlokuZrzutuDesignu = 8
 
 	// progOdstepstwaOdTlaDesignu jest różnicą składowych, od której punkt uznaje
@@ -103,23 +58,19 @@ const (
 	// wysokości wiersza — minuta na taki wycinek to zapas, nie miara.
 	granicaCzasuOdczytuPismaZrzutuDesignu = 30 * time.Second
 
-	// jezykiOdczytuPismaZrzutuDesignu to języki, którymi czyta się napisy zrzutu.
-	// Oba, bo makiety powstają i z okien polskich, i z angielskich, a wskazania
-	// języka kontrakt tej komendy nie ma. Oba pochodzą z pakietu serwera
-	// (`tesseract-ocr` niesie angielski, `tesseract-ocr-pol` polski), więc żaden
-	// nie jest założeniem o maszynie Operatora.
+	// jezykiOdczytuPismaZrzutuDesignu to języki, którymi czyta się napisy zrzutu. Oba
+	// pochodzą z pakietu serwera, bo makiety powstają i z okien polskich, i z
+	// angielskich, a wskazania języka kontrakt tej komendy nie ma.
 	jezykiOdczytuPismaZrzutuDesignu = "pol+eng"
 
-	// powiekszenieOdczytuPismaZrzutuDesignu podnosi wycinek przed odczytem.
-	// Wiersz interfejsu ma na zrzucie kilkanaście punktów wysokości, a czytnik
-	// pisma pracuje na wysokościach kilkakrotnie większych — bez powiększenia
-	// odczyt zwracałby znaki przypadkowe zamiast słów.
+	// powiekszenieOdczytuPismaZrzutuDesignu podnosi wycinek przed odczytem, bo wiersz
+	// interfejsu ma na zrzucie kilkanaście punktów wysokości, a czytnik pisma pracuje na
+	// wysokościach kilkakrotnie większych.
 	powiekszenieOdczytuPismaZrzutuDesignu = 3
 
 	// granicaObszarowOdczytuPismaZrzutuDesignu ogranicza liczbę odczytów w jednym
-	// wciągnięciu zrzutu. Każdy odczyt jest osobnym uruchomieniem programu, więc
-	// zrzut o sześćdziesięciu liniach tekstu trwałby minuty. Linie powyżej granicy
-	// zostają liniami tekstu bez odczytanej treści.
+	// wciągnięciu zrzutu, bo każdy odczyt jest osobnym uruchomieniem programu. Linie
+	// powyżej granicy zostają liniami tekstu bez odczytanej treści.
 	granicaObszarowOdczytuPismaZrzutuDesignu = 24
 
 	// granicaZnakowOdczytuPismaZrzutuDesignu przycina odczyt wchodzący do
@@ -127,10 +78,9 @@ const (
 	granicaZnakowOdczytuPismaZrzutuDesignu = 160
 )
 
-// sekcjeMakietyDesignu to nazwy sekcji rozpoznawane w opisie ekranu wraz
-// z wysokością, jaką rdzeń im nadaje. Wysokość nie jest zgadywana za Operatora
-// — jest proporcją utrzymaną między sekcjami, żeby makieta była czytelna od
-// pierwszego spojrzenia; Operator zmienia ją dalej sam.
+// sekcjeMakietyDesignu to nazwy sekcji rozpoznawane w opisie ekranu wraz z wysokością,
+// jaką rdzeń im nadaje jako proporcję utrzymaną między sekcjami, żeby makieta była
+// czytelna od pierwszego spojrzenia.
 var sekcjeMakietyDesignu = []struct {
 	Nazwa    string
 	Slowa    []string
@@ -150,8 +100,8 @@ var sekcjeMakietyDesignu = []struct {
 	{"stopka", []string{"stopka", "footer"}, 160},
 }
 
-// GenerujMakiete zakłada ramkę makiety wraz z warstwami sekcji — obsługuje
-// `design.mockup.generate`.
+// GenerujMakiete zakłada ramkę makiety wraz z warstwami sekcji — obsługuje komendę
+// design.mockup.generate, zwracając błąd, gdy opis ekranu jest pusty.
 func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 	z shared.DesignMockupGenerateRequest) (shared.DesignMockupGenerateResponse, error) {
 
@@ -221,9 +171,12 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 		return shared.DesignMockupGenerateResponse{}, bladDesignu(err)
 	}
 
-	// Komponenty okna, których nazwa pada w opisie, wchodzą do makiety: Operator,
-	// który ma w oknie komponent „przycisk główny" i pisze o przyciskach, ma
-	// dostać swój komponent, a nie prostokąt bez nazwy.
+	// Komponenty okna, których nazwa pada w opisie, wchodzą do makiety.
+
+	// Operator, który ma komponent „przycisk główny" i pisze o przyciskach, dostaje swój
+	// komponent.
+
+	// Nie dostaje prostokąta bez nazwy.
 	komponenty, err := a.repozytorium.KomponentyDesignu(ctx, z.WindowId, nil)
 	if err != nil {
 		return shared.DesignMockupGenerateResponse{}, bladDesignu(err)
@@ -251,8 +204,9 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 		return shared.DesignMockupGenerateResponse{}, bladDesignu(err)
 	}
 
-	// Sekcje układają się pionowo jedna pod drugą — to jest układ ekranu i po to
-	// jest układ automatyczny; liczenie tego drugą drogą byłoby drugą prawdą.
+	// Sekcje układają się pionowo jedna pod drugą, bo to jest układ ekranu.
+
+	// Liczenie tego drugą drogą byłoby drugą prawdą.
 	odstep := 0.0
 	uklad := shared.DesignAutoLayout{
 		Direction: shared.DesignLayoutDirectionVertical,
@@ -276,7 +230,8 @@ func (a *adapterDesignu) GenerujMakiete(ctx context.Context,
 	}, nil
 }
 
-// warstwaSekcjiMakietyDesignu składa wiersz warstwy jednej sekcji makiety.
+// warstwaSekcjiMakietyDesignu składa wiersz warstwy jednej sekcji makiety, łącząc jej
+// granice z nazwą i wysokością.
 func warstwaSekcjiMakietyDesignu(kompozycjaID int64, adnotacja string,
 	szerokosc, wysokosc float64) dane.WarstwaKompozycji {
 
@@ -289,10 +244,9 @@ func warstwaSekcjiMakietyDesignu(kompozycjaID int64, adnotacja string,
 	}
 }
 
-// pasujeKomponentDoSekcjiDesignu rozstrzyga, czy komponent okna należy do tej
-// sekcji makiety. Dopasowanie idzie po nazwie: komponent „przycisk główny"
-// wchodzi do sekcji „przyciski", a komponent wymieniony w opisie wprost — do
-// sekcji, w której jego nazwa padła.
+// pasujeKomponentDoSekcjiDesignu rozstrzyga, czy komponent okna należy do tej sekcji
+// makiety. Dopasowanie idzie po nazwie: komponent „przycisk główny" wchodzi do sekcji
+// „przyciski", a komponent nazwany w opisie wprost — do sekcji, gdzie nazwa padła.
 func pasujeKomponentDoSekcjiDesignu(nazwaKomponentu, nazwaSekcji, opis string) bool {
 	komponent := strings.ToLower(strings.TrimSpace(nazwaKomponentu))
 	if komponent == "" {
@@ -326,22 +280,16 @@ func (a *adapterDesignu) sekcjeOpisuMakietyDesignu(ctx context.Context,
 	return sekcjeZOpisuDesignu(opis)
 }
 
-// sekcjaMakietyDesignu to jedna sekcja makiety wraz z wysokością.
+// sekcjaMakietyDesignu to jedna sekcja makiety wraz z wysokością wyrażoną proporcją
+// względem wysokości pozostałych sekcji.
 type sekcjaMakietyDesignu struct {
 	Nazwa    string
 	Wysokosc float64
 }
 
-// sekcjeZOpisuDesignu rozkłada tekst na sekcje regułą rdzenia.
-//
-// Reguła jest dwustopniowa. Najpierw tekst dzieli się na części po wierszach,
-// przecinkach, średnikach i myślnikach — tak Operator wylicza sekcje. Potem
-// każda część szuka swojej nazwy w wykazie sekcji; część, która nie trafia
-// w żadną, zostaje sekcją o własnej nazwie i wysokości sekcji treści, bo to
-// wciąż jest coś, o co Operator prosił.
-//
-// Sekcje w kolejności ich wystąpienia w opisie: to Operator ustala, co jest
-// u góry ekranu, a nie kolejność w wykazie rdzenia.
+// sekcjeZOpisuDesignu rozkłada tekst na sekcje regułą rdzenia, dwustopniową: najpierw
+// tekst dzieli się na części po wierszach, przecinkach, średnikach i myślnikach, potem
+// każda część szuka swojej nazwy w wykazie sekcji.
 func sekcjeZOpisuDesignu(opis string) []sekcjaMakietyDesignu {
 	czesci := strings.FieldsFunc(opis, func(znak rune) bool {
 		return znak == '\n' || znak == ',' || znak == ';' || znak == '•' || znak == '|'
@@ -370,9 +318,12 @@ func sekcjeZOpisuDesignu(opis string) []sekcjaMakietyDesignu {
 			}
 		}
 		if wysokosc == 0 {
-			// Część nierozpoznana zostaje sekcją własną. Wysokość bierze proporcję
-			// sekcji treści — jedynej, o której da się coś powiedzieć, gdy nie
-			// wiadomo, co to za sekcja.
+			// Część nierozpoznana zostaje sekcją własną.
+
+			// Wysokość bierze proporcję sekcji treści — jedynej, o której da się coś
+			// powiedzieć.
+
+			// Dotyczy to sytuacji, gdy sekcja jest nieznana.
 			wysokosc = 240
 			if len(nazwa) > 60 {
 				nazwa = strings.TrimSpace(string([]rune(nazwa)[:60])) + "…"
@@ -401,8 +352,8 @@ func nazwaMakietyDesignu(opis string) string {
 	return nazwa
 }
 
-// WczytajMakiete rozkłada zrzut ekranu na ramkę i warstwy — obsługuje
-// `design.mockup.import`.
+// WczytajMakiete rozkłada zrzut ekranu na ramkę i warstwy — obsługuje komendę
+// design.mockup.import, oddając również bilans obszarów odrzuconych.
 func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 	z shared.DesignMockupImportRequest) (shared.DesignMockupImportResponse, error) {
 
@@ -444,9 +395,11 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 			granice.Dx(), granice.Dy(), granicaBokuZrzutuDesignu))
 	}
 
-	// Rozmiar ramki bierze wymiary zrzutu, a nastawa urządzenia — gdy wskazana —
-	// tylko go NAZYWA. Nadpisanie wymiarów nastawą przeskalowałoby obszary
-	// względem zrzutu, z którego je odczytano.
+	// Rozmiar ramki bierze wymiary zrzutu, a nastawa urządzenia — gdy wskazana — tylko go
+	// nazywa.
+
+	// Nadpisanie wymiarów nastawą przeskalowałoby obszary względem zrzutu, z którego je
+	// odczytano.
 	nastawa := ""
 	if z.DevicePreset != nil && strings.TrimSpace(*z.DevicePreset) != "" {
 		if _, _, znana := nastawaUrzadzeniaDesignu(*z.DevicePreset); !znana {
@@ -484,10 +437,10 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 		return shared.DesignMockupImportResponse{}, bladDesignu(err)
 	}
 
-	// Rozpoznanie tekstu jest domyślnie włączone (kontrakt: „brak znaczy tak").
-	// Rdzeń wykrywa rachunkiem, KTÓRE obszary są liniami tekstu, i czyta ich
-	// treść programem pakietu serwera — nagłówek pliku mówi, którą drogą i co się
-	// dzieje, gdy programu nie ma.
+	// Rozpoznanie tekstu jest domyślnie włączone, bo kontrakt mówi: brak pola znaczy tak.
+
+	// Rdzeń wykrywa rachunkiem, które obszary są liniami tekstu, i czyta ich treść
+	// programem serwera.
 	znaczycTekst := z.RecognizeText == nil || *z.RecognizeText
 	odczyt := map[int]string{}
 	powodBrakuOdczytu := ""
@@ -497,13 +450,14 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 		case err == nil:
 			odczyt = odczytany
 		case z.RecognizeText != nil && *z.RecognizeText:
-			// Operator poprosił o odczyt WPROST. Makieta bez odczytu byłaby
-			// odpowiedzią na inne żądanie, niż zadał.
+			// Operator poprosił o odczyt wprost — makieta bez odczytu byłaby odpowiedzią
+			// na inne żądanie.
 			return shared.DesignMockupImportResponse{}, bladOdczytuPismaZrzutuDesignu(err)
 		default:
-			// Pole pominięte: układ jest tym, o co Operator prosił, a odczyt
-			// dodatkiem. Brak wchodzi w adnotację każdej linii tekstu, żeby nie
-			// wyglądało to na zrzut bez napisów.
+			// Pole pominięte: układ jest tym, o co Operator prosił, a odczyt dodatkiem.
+
+			// Brak wchodzi w adnotację każdej linii tekstu, żeby nie wyglądało to na
+			// zrzut bez napisów.
 			powodBrakuOdczytu = err.Error()
 		}
 	}
@@ -548,18 +502,14 @@ func (a *adapterDesignu) WczytajMakiete(ctx context.Context,
 		Frame:  ramkaKontraktuDesignu(kompozycja.Kod, ramka),
 		Layers: warstwy,
 	}
-	// Bilans wchodzi zawsze, także zerowy: pole mówi, ile obszarów rdzeń
-	// odrzucił, a zero jest tu odpowiedzią, nie brakiem odpowiedzi.
+	// Bilans wchodzi zawsze, także zerowy: pole mówi, ile obszarów rdzeń odrzucił.
 	odpowiedz.UnrecognizedRegions = &nierozlozonych
 	return odpowiedz, nil
 }
 
-// bladOdczytuPismaZrzutuDesignu znakuje odmowę odczytu pisma kodem kontraktu.
-//
-// Rozstrzygnięcie jest to samo, co w warsztacie dokumentu, bo Operator naprawia
-// te trzy rzeczy różnymi ruchami: brak programu jest ZAPLECZEM NIEDOSTĘPNYM
-// (kod ponawialny — po dołożeniu pakietu to samo żądanie przejdzie), naruszenie
-// izolacji jest odmową punktu Operatora, a reszta usterką rdzenia.
+// bladOdczytuPismaZrzutuDesignu znakuje odmowę odczytu pisma kodem kontraktu. Brak
+// programu jest zapleczem niedostępnym z kodem ponawialnym, naruszenie izolacji jest
+// odmową punktu, a reszta usterką rdzenia.
 func bladOdczytuPismaZrzutuDesignu(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -576,19 +526,9 @@ func bladOdczytuPismaZrzutuDesignu(err error) error {
 		"moduł Design: odczyt pisma ze zrzutu nie powiódł się: "+err.Error()))
 }
 
-// odczytajPismoObszarowDesignu czyta TREŚĆ napisów z obszarów uznanych za linie
-// tekstu i oddaje odczyt pod numerem obszaru.
-//
-// Odczyt idzie obszar po obszarze, nie całym zrzutem naraz. Powód jest
-// rozstrzygnięciem: makieta wiąże napis z WARSTWĄ, więc odczyt musi wiedzieć,
-// z którego prostokąta pochodzi. Odczyt całości oddałby jeden blok tekstu bez
-// przypisania do obszarów i trzeba by go dzielić z powrotem po współrzędnych,
-// których czytnik w tej postaci wyjścia nie podaje.
-//
-// Wycinek idzie do programu jako plik PNG w katalogu tymczasowym. Katalog
-// roboczy wywołania zostaje PUSTY, a ścieżka argumentu jest bezwzględna — tak
-// samo, jak w warsztacie dokumentu: własny katalog tymczasowy podany bramie
-// izolacji zostałby odrzucony jako wyjście poza obszar okna.
+// odczytajPismoObszarowDesignu czyta treść napisów z obszarów uznanych za linie tekstu i
+// oddaje odczyt pod numerem obszaru. Odczyt idzie obszar po obszarze, nie całym zrzutem
+// naraz, bo makieta wiąże napis z warstwą.
 func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz image.Image,
 	obszary []obszarZrzutuDesignu) (map[int]string, error) {
 
@@ -633,22 +573,24 @@ func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz
 			return nil, fmt.Errorf("nie można zapisać wycinka obszaru %d: %w", numer+1, err)
 		}
 
-		// `--psm 7` mówi czytnikowi, że obraz jest JEDNĄ linią tekstu — a obszar
-		// właśnie nią jest. Bez tego czytnik szuka układu stron w wycinku
-		// o wysokości wiersza i oddaje pojedyncze znaki albo nic.
+		// `--psm 7` mówi czytnikowi, że obraz jest jedną linią tekstu, a obszar właśnie
+		// nią jest.
+
+		// Bez tego czytnik szuka układu stron w wycinku wysokości wiersza i oddaje
+		// pojedyncze znaki albo nic.
 		wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszarZasiegu,
 			narzedzieTesseract,
 			[]string{sciezka, "stdout", "-l", jezykiOdczytuPismaZrzutuDesignu, "--psm", "7"},
 			"", granicaCzasuOdczytuPismaZrzutuDesignu)
 		if err != nil {
-			// Brak programu dotyczy WSZYSTKICH obszarów, więc kończy odczyt i wraca
-			// do wołającego — ten rozstrzyga, czy jest odmową całej komendy.
+			// Brak programu dotyczy wszystkich obszarów, więc kończy odczyt i wraca do
+			// wołającego.
 			var brak *zewnetrzne.BrakNarzedzia
 			if errors.As(err, &brak) || errors.Is(err, session.ErrIzolacja) {
 				return nil, err
 			}
-			// Potknięcie na jednym wycinku nie zabiera makiety: obszar zostaje
-			// linią tekstu bez odczytanej treści i adnotacja niczego nie obiecuje.
+			// Potknięcie na jednym wycinku nie zabiera makiety: obszar zostaje linią
+			// tekstu bez odczytanej treści.
 			continue
 		}
 		if tresc := jednaLiniaOdczytuDesignu(string(wynik.Wyjscie)); tresc != "" {
@@ -658,15 +600,9 @@ func (a *adapterDesignu) odczytajPismoObszarowDesignu(ctx context.Context, obraz
 	return odczyt, nil
 }
 
-// zasiegOdczytuPismaDesignu składa trójkę okno–zasady–obszar dla uruchomienia
-// programu rozpoznającego pismo.
-//
-// Rozstrzygnięcie jest to samo, co w warsztacie dokumentu i w rodzinie mowy:
-// odczyt pisma jest zdolnością PLATFORMY, nie czynnością okna Operatora, więc
-// zasady i obszar składają się dla kontekstu najszerszego poziomu.
-// `session.Zasady{}` podstawione z ręki znaczyłoby „izolacja wyłączona"
-// niezależnie od tego, co Operator ustawił, a `SrodowiskoWykonania` wpisane jest
-// jawnie, bo zrzut leży na hoście rdzenia i program musi ruszyć tam samo.
+// zasiegOdczytuPismaDesignu składa trójkę okno-zasady-obszar dla uruchomienia programu
+// rozpoznającego pismo. Odczyt pisma jest zdolnością platformy, nie czynnością okna, więc
+// zasady i obszar składają się dla kontekstu najszerszego.
 func (a *adapterDesignu) zasiegOdczytuPismaDesignu() (session.Okno, session.Zasady,
 	session.Obszar) {
 
@@ -697,8 +633,9 @@ func wycinekObszaruZrzutuDesignu(obraz image.Image, obszar obszarZrzutuDesignu) 
 		return nil
 	}
 	wycinek := imaging.Crop(obraz, kadr)
-	// Powiększenie dwuliniowe, nie najbliższym sąsiadem: schodki na literach
-	// mylą czytnik bardziej niż lekkie rozmycie krawędzi.
+	// Powiększenie dwuliniowe, nie najbliższym sąsiadem.
+
+	// Schodki na literach mylą czytnik bardziej niż rozmycie krawędzi.
 	return imaging.Resize(wycinek,
 		kadr.Dx()*powiekszenieOdczytuPismaZrzutuDesignu,
 		kadr.Dy()*powiekszenieOdczytuPismaZrzutuDesignu, imaging.Linear)
@@ -713,8 +650,9 @@ func jednaLiniaOdczytuDesignu(wyjscie string) string {
 		return ""
 	}
 	if len(tresc) > granicaZnakowOdczytuPismaZrzutuDesignu {
-		// Przycięcie idzie po RUNACH, nie po bajtach: cięcie w środku znaku
-		// wielobajtowego dałoby w adnotacji bajt nieczytelny.
+		// Przycięcie idzie po runach, nie po bajtach.
+
+		// Cięcie w środku znaku wielobajtowego dałoby bajt nieczytelny.
 		runy := []rune(tresc)
 		if len(runy) > granicaZnakowOdczytuPismaZrzutuDesignu {
 			tresc = string(runy[:granicaZnakowOdczytuPismaZrzutuDesignu]) + "…"
@@ -723,7 +661,8 @@ func jednaLiniaOdczytuDesignu(wyjscie string) string {
 	return tresc
 }
 
-// obszarZrzutuDesignu to jeden prostokąt odczytany ze zrzutu.
+// obszarZrzutuDesignu to jeden prostokąt odczytany ze zrzutu wraz z granicami i średnią
+// barwą jego wnętrza.
 type obszarZrzutuDesignu struct {
 	X           int
 	Y           int
@@ -732,19 +671,9 @@ type obszarZrzutuDesignu struct {
 	LiniaTekstu bool
 }
 
-// obszaryZrzutuDesignu rozkłada zrzut na obszary i oddaje liczbę obszarów, których
-// rdzeń nie wziął do makiety.
-//
-// Rachunek jest własny i wkompilowany, w czterech krokach:
-//
-//  1. barwa tła bierze się z OBWODU obrazu (najczęstsza wśród punktów brzegu) —
-//     tło ekranu prawie zawsze dochodzi do krawędzi, a środek zrzutu bywa
-//     wypełniony treścią;
-//  2. obraz schodzi na kratkę bloków; blok jest „treścią", gdy jego średnia
-//     odbiega od tła powyżej progu;
-//  3. bloki treści łączą się w obszary spójne (przejście po kratce);
-//  4. obszary za drobne wypadają, a nadliczbowe (powyżej granicy) też — jedne
-//     i drugie wracają w liczbie odrzuconych.
+// obszaryZrzutuDesignu rozkłada zrzut na obszary i oddaje liczbę obszarów, których rdzeń
+// nie wziął do makiety, rachunkiem własnym opartym na barwie tła, kratce bloków i
+// łączeniu bloków treści w obszary spójne.
 func obszaryZrzutuDesignu(obraz image.Image) ([]obszarZrzutuDesignu, int) {
 	granice := obraz.Bounds()
 	kolumn := (granice.Dx() + bokBlokuZrzutuDesignu - 1) / bokBlokuZrzutuDesignu
@@ -781,9 +710,10 @@ func obszaryZrzutuDesignu(obraz image.Image) ([]obszarZrzutuDesignu, int) {
 		}
 	}
 
-	// Obszary większe idą pierwsze: przy granicy liczby warstw ma zostać układ,
-	// a nie drobiny. Kolejność wynikowa wraca potem do porządku czytania (od
-	// góry, potem od lewej), bo tak Operator patrzy na ekran.
+	// Obszary większe idą pierwsze: przy granicy liczby warstw ma zostać układ, a nie
+	// drobiny.
+
+	// Kolejność wynikowa wraca potem do porządku czytania: od góry, potem od lewej.
 	sort.SliceStable(surowe, func(i, j int) bool {
 		return surowe[i].Szerokosc*surowe[i].Wysokosc > surowe[j].Szerokosc*surowe[j].Wysokosc
 	})
@@ -864,15 +794,18 @@ func czyLiniaTekstuDesignu(obszar obszarZrzutuDesignu) bool {
 	return obszar.Szerokosc >= 3*obszar.Wysokosc
 }
 
-// barwaTlaZrzutuDesignu odczytuje barwę tła z obwodu obrazu.
+// barwaTlaZrzutuDesignu odczytuje barwę tła z obwodu obrazu, biorąc wartość najczęstszą
+// wśród punktów brzegu.
 func barwaTlaZrzutuDesignu(obraz image.Image) (int, int, int) {
 	granice := obraz.Bounds()
 	licznik := map[[3]int]int{}
 	dodaj := func(x, y int) {
 		r, g, b, _ := obraz.At(x, y).RGBA()
-		// Kwantyzacja po 16: tło z gradientem albo szumem kompresji nie ma
-		// jednej dokładnej wartości, a bez kwantyzacji każdy punkt byłby własną
-		// barwą i najczęstsza nie znaczyłaby nic.
+		// Kwantyzacja po 16: tło z gradientem albo szumem kompresji nie ma jednej
+		// dokładnej wartości.
+
+		// Bez kwantyzacji każdy punkt byłby własną barwą i najczęstsza nie znaczyłaby
+		// nic.
 		klucz := [3]int{int(r>>8) / 16, int(g>>8) / 16, int(b>>8) / 16}
 		licznik[klucz]++
 	}
@@ -894,7 +827,8 @@ func barwaTlaZrzutuDesignu(obraz image.Image) (int, int, int) {
 	return najczestsza[0]*16 + 8, najczestsza[1]*16 + 8, najczestsza[2]*16 + 8
 }
 
-// sredniaBlokuZrzutuDesignu liczy średnią składową jednego bloku kratki.
+// sredniaBlokuZrzutuDesignu liczy średnią składową jednego bloku kratki, po której
+// rozstrzyga się przynależność bloku do treści.
 func sredniaBlokuZrzutuDesignu(obraz image.Image, granice image.Rectangle,
 	kolumna, wiersz int) (int, int, int) {
 
@@ -924,7 +858,8 @@ func sredniaBlokuZrzutuDesignu(obraz image.Image, granice image.Rectangle,
 	return sumaR / punktow, sumaG / punktow, sumaB / punktow
 }
 
-// absRoznicaDesignu oddaje wartość bezwzględną różnicy dwóch liczb całkowitych.
+// absRoznicaDesignu oddaje wartość bezwzględną różnicy dwóch liczb całkowitych, używaną
+// do porównania barw składowych.
 func absRoznicaDesignu(pierwsza, druga int) int {
 	if pierwsza < druga {
 		return druga - pierwsza
@@ -932,8 +867,8 @@ func absRoznicaDesignu(pierwsza, druga int) int {
 	return pierwsza - druga
 }
 
-// bezPowtorzenDesignu usuwa powtórzenia z wykazu, zachowując kolejność
-// pierwszego wystąpienia.
+// bezPowtorzenDesignu usuwa powtórzenia z wykazu, zachowując kolejność pierwszego
+// wystąpienia każdej wartości.
 func bezPowtorzenDesignu(wykaz []string) []string {
 	widziane := make(map[string]bool, len(wykaz))
 	wynik := make([]string, 0, len(wykaz))
@@ -947,14 +882,9 @@ func bezPowtorzenDesignu(wykaz []string) []string {
 	return wynik
 }
 
-// zapytajModelDesignu woła wskazany kanał modelu i zbiera całą odpowiedź
-// tekstową. Most jest wspólny dla czynności słownych modułu Design (rozpisanie
-// opisu makiety, propozycje zestawień krojów).
-//
-// Niepowodzenie wraca błędem, a wołający rozstrzyga, czy je przeżyć: przy
-// makiecie i przy zestawieniach krojów rdzeń liczy wtedy własną regułą, bo wynik
-// ma być zawsze. Odmowa całej komendy dlatego, że cudzy dostawca nie odpowiedział,
-// byłaby brakiem funkcji u Operatora.
+// zapytajModelDesignu woła wskazany kanał modelu i zbiera całą odpowiedź tekstową. Most
+// jest wspólny dla czynności słownych modułu Design: rozpisania opisu makiety oraz
+// propozycji zestawień krojów.
 func (a *adapterDesignu) zapytajModelDesignu(ctx context.Context, okno, kanal,
 	tresc string) (string, error) {
 

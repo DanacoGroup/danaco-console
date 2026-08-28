@@ -1,27 +1,6 @@
-// Odpowiedzialność pliku: wykres (`design.chart.render`) i schemat
-// (`design.diagram.render`) modułu Design. Część drukarska leży
+// Plik obsługuje wykres (`design.chart.render`) i schemat
+// (`design.diagram.render`) modułu design. Część drukarska leży
 // w `adapter_modul_design_druk.go`.
-//
-// ── Wykres bierze SERIE DANYCH, nie obraz ───────────────────────────────────
-// Kontrakt żąda serii liczb i to jest rozstrzygnięcie obowiązujące: wykres ma
-// dać się PRZERYSOWAĆ po zmianie liczb. Gdyby komenda przyjmowała obraz, zmiana
-// jednej wartości wymagałaby narysowania wykresu od nowa poza produktem, a rdzeń
-// byłby tylko miejscem, w którym ten obraz leży.
-//
-// ── Jedno płótno, dwa wydania ───────────────────────────────────────────────
-// Wykres i schemat powstają RAZ, jako płótno biblioteki `tdewolff/canvas`, a
-// potem wychodzą albo jako SVG (wydawca `renderers/svg`), albo jako PNG
-// (rasteryzator `renderers/rasterizer`). Dwie osobne drogi rysowania dałyby dwa
-// wykresy różniące się szczegółami zależnie od formatu — a to ten sam wykres.
-//
-// ── Podpisy są KONTURAMI, nie elementem tekstowym ───────────────────────────
-// Napisy jadą przez `sciezkaTekstuDesignu` — kontury glifów kroju wkompilowanego.
-// Element `<text>` w SVG pokazałby podpisy wyłącznie tam, gdzie ten krój jest
-// zainstalowany, a wykres ma być plikiem, który Operator wysyła dalej.
-//
-// ── Bilans zamiast ciszy ────────────────────────────────────────────────────
-// `design.diagram.render` niesie `unplacedNodeIds` — węzły, których układ nie
-// umieścił. Schemat z połową węzłów wygląda bez tego pola jak schemat kompletny.
 package core
 
 import (
@@ -49,14 +28,15 @@ const (
 	domyslnaWysokoscWykresuDesignu  = 500.0
 
 	// granicaBokuWyrysuDanychDesignu chroni rachunek przed płótnem o boku
-	// stutysięcznym.
+	// stutysięcznym, ograniczając bok wyrysu do dwudziestu tysięcy jednostek płótna.
 	granicaBokuWyrysuDanychDesignu = 20000.0
 
 	// granicaPunktowSeriiDesignu chroni wykres przed serią milionową: wykres
 	// z milionem słupków nie jest wykresem.
 	granicaPunktowSeriiDesignu = 5000
 
-	// granicaWezlowSchematuDesignu chroni schemat przed grafem tysiącznym.
+	// granicaWezlowSchematuDesignu chroni schemat przed grafem tysiącznym, ograniczając
+	// liczbę węzłów do pięciuset.
 	granicaWezlowSchematuDesignu = 500
 
 	// rozdzielczoscWyrysuDanychDesignu jest rozdzielczością rasteryzacji wykresu
@@ -74,19 +54,16 @@ const (
 	rozmiarTytuluDanychDesignu  = 18.0
 )
 
-// barwySeriiDesignu to barwy domyślne serii wykresu i węzłów schematu.
-//
-// Wykaz jest ośmioelementowy i dobrany tak, żeby dał się rozróżnić także przy
-// wadzie widzenia barw: sąsiednie pary różnią się nie tylko odcieniem, ale
-// i jasnością. Serię dziewiątą barwi ta sama lista od początku — powtórzenie jest
-// uczciwsze niż barwa dobrana losowo, bo Operator widzi wtedy, że ma za wiele
-// serii, zamiast dostawać dwie serie w barwach nie do rozróżnienia.
+// barwySeriiDesignu to barwy domyślne serii wykresu i węzłów schematu. Wykaz
+// jest ośmioelementowy, dobrany tak, żeby dał się rozróżnić także przy wadzie
+// widzenia barw. Serię dziewiątą barwi ta sama lista od początku.
 var barwySeriiDesignu = []string{
 	"#1f6feb", "#f0883e", "#2da44e", "#cf222e",
 	"#8250df", "#0e7490", "#bf8700", "#6e7781",
 }
 
-// WyrysujWykres składa wykres z serii danych — obsługuje `design.chart.render`.
+// WyrysujWykres składa wykres z serii danych i oddaje go jako zasób SVG albo
+// PNG — obsługuje `design.chart.render`.
 func (a *adapterDesignu) WyrysujWykres(ctx context.Context,
 	z shared.DesignChartRenderRequest) (shared.DesignChartRenderResponse, error) {
 
@@ -161,12 +138,12 @@ func (a *adapterDesignu) WyrysujWykres(ctx context.Context,
 	}, nil
 }
 
-// narysujWykresDesignu rysuje wykres na płótnie.
+// narysujWykresDesignu rysuje wykres na płótnie: tło, tytuł, dane wybranym
+// rodzajem wykresu oraz legendę, w marginesach obliczonych dla podpisów.
 func narysujWykresDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRequest,
 	szerokosc, wysokosc float64, barwy []string, legenda bool) error {
 
-	// Marginesy: lewy szerszy na podpisy osi wartości, dolny na kategorie, górny
-	// na tytuł, prawy na legendę.
+	// Marginesy: lewy na podpisy wartości, dolny na kategorie, górny na tytuł, prawy na legendę.
 	marginesLewy, marginesPrawy := 64.0, 24.0
 	marginesGorny, marginesDolny := 24.0, 48.0
 	if z.Title != nil && strings.TrimSpace(*z.Title) != "" {
@@ -222,11 +199,8 @@ func narysujWykresDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRe
 }
 
 // zakresWartosciDesignu oddaje najmniejszą i największą wartość serii wraz
-// z informacją, czy wykres jest skumulowany.
-//
-// Zakres bierze ZERO jako jeden z krańców, gdy wszystkie wartości są dodatnie:
-// wykres słupkowy zaczynający się od najmniejszej wartości przekłamuje proporcje,
-// bo słupek dwa razy wyższy nie znaczy wtedy wartości dwa razy większej.
+// z informacją, czy wykres jest skumulowany. Zakres bierze zero jako jeden
+// z krańców, gdy wszystkie wartości są dodatnie, żeby nie przekłamać proporcji.
 func zakresWartosciDesignu(z shared.DesignChartRenderRequest) (float64, float64) {
 	skumulowany := z.Kind == shared.DesignChartKindStackedBar
 	najmniejsza, najwieksza := math.MaxFloat64, -math.MaxFloat64
@@ -262,15 +236,14 @@ func zakresWartosciDesignu(z shared.DesignChartRenderRequest) (float64, float64)
 		najwieksza = 0
 	}
 	if najwieksza == najmniejsza {
-		// Wszystkie wartości równe: zakres o zerowej wysokości dałby dzielenie
-		// przez zero. Rozszerzamy go o jedność, więc wykres pokazuje płaską linię
-		// — co jest prawdą o tych danych.
+		// Wartości równe dałyby zakres zerowy i dzielenie przez zero — rozszerza się go o jedność.
 		najwieksza = najmniejsza + 1
 	}
 	return najmniejsza, najwieksza
 }
 
-// narysujSlupkoweDesignu rysuje wykres słupkowy, kolumnowy albo skumulowany.
+// narysujSlupkoweDesignu rysuje wykres słupkowy, kolumnowy albo skumulowany,
+// dzieląc każdą grupę kategorii między słupki serii.
 func narysujSlupkoweDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRequest,
 	lewa, dol, szerokosc, wysokosc float64, barwy []string) error {
 
@@ -289,8 +262,7 @@ func narysujSlupkoweDesignu(kontekst *canvas.Context, z shared.DesignChartRender
 	}
 	narysujOsieDesignu(kontekst, lewa, dol, szerokosc, wysokosc)
 
-	// Grupa jest miejscem jednej kategorii; słupki serii dzielą ją między siebie,
-	// chyba że wykres jest skumulowany — wtedy stoją na sobie.
+	// Grupa jest miejscem jednej kategorii; słupki dzielą ją między sobą, a skumulowany — stoi na sobie.
 	dlugoscOsi := szerokosc
 	if poziomy {
 		dlugoscOsi = wysokosc
@@ -351,7 +323,8 @@ func narysujSlupkoweDesignu(kontekst *canvas.Context, z shared.DesignChartRender
 		lewa, dol, szerokosc, wysokosc, poziomy)
 }
 
-// narysujLinioweDesignu rysuje wykres liniowy albo warstwowy.
+// narysujLinioweDesignu rysuje wykres liniowy albo warstwowy, łącząc punkty
+// serii odcinkami na polu danych.
 func narysujLinioweDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRequest,
 	lewa, dol, szerokosc, wysokosc float64, barwy []string) error {
 
@@ -401,7 +374,8 @@ func narysujLinioweDesignu(kontekst *canvas.Context, z shared.DesignChartRenderR
 		lewa, dol, szerokosc, wysokosc, false)
 }
 
-// narysujPunktoweDesignu rysuje wykres punktowy.
+// narysujPunktoweDesignu rysuje wykres punktowy, stawiając jeden znacznik dla
+// każdej wartości serii na polu danych.
 func narysujPunktoweDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRequest,
 	lewa, dol, szerokosc, wysokosc float64, barwy []string) error {
 
@@ -456,11 +430,8 @@ func narysujKoloweDesignu(kontekst *canvas.Context, z shared.DesignChartRenderRe
 	}
 }
 
-// wycinekKolaDesignu składa ścieżkę wycinka koła albo pierścienia.
-//
-// Łuk idzie odcinkami: wycinek złożony z odcinków o kroku poniżej stopnia jest
-// nierozróżnialny od łuku, a `canvas.Path.ArcTo` wymagałby liczenia znaczników
-// dużego łuku i kierunku obiegu dla każdego z czterech przypadków.
+// wycinekKolaDesignu składa ścieżkę wycinka koła albo pierścienia. Łuk idzie
+// odcinkami o kroku poniżej stopnia, nierozróżnialnymi od łuku na oko.
 func wycinekKolaDesignu(srodekX, srodekY, promien, promienWewnetrzny,
 	od, do float64) *canvas.Path {
 
@@ -491,7 +462,8 @@ func wycinekKolaDesignu(srodekX, srodekY, promien, promienWewnetrzny,
 	return sciezka
 }
 
-// narysujOsieDesignu rysuje osie pola danych.
+// narysujOsieDesignu rysuje osie pola danych: pionową po lewej i poziomą u
+// dołu, jako jedną łamaną linię.
 func narysujOsieDesignu(kontekst *canvas.Context, lewa, dol, szerokosc, wysokosc float64) {
 	osie := &canvas.Path{}
 	osie.MoveTo(lewa, dol+wysokosc)
@@ -502,26 +474,22 @@ func narysujOsieDesignu(kontekst *canvas.Context, lewa, dol, szerokosc, wysokosc
 	}), canvas.Identity)
 }
 
-// narysujProstokatDanychDesignu rysuje jeden słupek.
+// narysujProstokatDanychDesignu rysuje jeden słupek wykresu jako wypełniony
+// prostokąt o wskazanych wymiarach.
 func narysujProstokatDanychDesignu(kontekst *canvas.Context, x, y, szerokosc, wysokosc float64,
 	barwa string) {
 
 	if szerokosc <= 0 || wysokosc <= 0 {
-		// Słupek o zerowej wysokości (wartość zero) nie jest rysowany, ale jego
-		// miejsce w grupie zostaje — inaczej pozostałe słupki przesunęłyby się
-		// i kategoria bez wartości wyglądałaby na nieistniejącą.
+		// Słupek zerowy nie jest rysowany, ale jego miejsce w grupie zostaje.
 		return
 	}
 	prostokat := canvas.Rectangle(szerokosc, wysokosc).Translate(x, y)
 	kontekst.RenderPath(prostokat, stylWypelnieniaDanychDesignu(barwa), canvas.Identity)
 }
 
-// narysujPodpisyKategoriiDesignu podpisuje kategorie osi.
-//
-// Podpisy wchodzą CO N-TĄ kategorię, gdy nie mieszczą się obok siebie: wykaz
-// nachodzących na siebie napisów jest nieczytelny, a przemilczenie ich w ogóle
-// odebrałoby wykresowi opis. Liczba pominiętych nie jest zmyślana — krok liczy
-// się z szerokości pola.
+// narysujPodpisyKategoriiDesignu podpisuje kategorie osi. Podpisy wchodzą co
+// n-tą kategorię, gdy nie mieszczą się obok siebie — krok liczy się z szerokości
+// pola, nie jest zmyślany.
 func narysujPodpisyKategoriiDesignu(kontekst *canvas.Context, kategorie []string, ile int,
 	lewa, dol, szerokosc, wysokosc float64, poziomy bool) error {
 
@@ -566,7 +534,8 @@ func narysujPodpisyKategoriiDesignu(kontekst *canvas.Context, kategorie []string
 	return nil
 }
 
-// narysujLegendeDesignu rysuje legendę serii.
+// narysujLegendeDesignu rysuje legendę serii: próbkę barwy i nazwę dla każdej
+// serii, w kolumnie od góry.
 func narysujLegendeDesignu(kontekst *canvas.Context, serie []shared.DesignChartSeries,
 	barwy []string, lewa, gora float64) error {
 
@@ -584,8 +553,7 @@ func narysujLegendeDesignu(kontekst *canvas.Context, serie []shared.DesignChartS
 		}
 		y -= 20
 		if y < 20 {
-			// Legenda dłuższa niż płótno urywa się i mówi to wprost: wykaz
-			// niedokończony bez słowa wyglądałby jak wykaz kompletny.
+			// Legenda dłuższa niż płótno urywa się i mówi to wprost, zamiast wyglądać jak wykaz kompletny.
 			return napisWyrysuDanychDesignu(kontekst,
 				fmt.Sprintf("… i %d dalszych serii", len(serie)-numer-1),
 				lewa, y, rozmiarPodpisuDanychDesignu, "#57606a")
@@ -594,7 +562,8 @@ func narysujLegendeDesignu(kontekst *canvas.Context, serie []shared.DesignChartS
 	return nil
 }
 
-// napisWyrysuDanychDesignu rysuje napis jako kontury glifów kroju wkompilowanego.
+// napisWyrysuDanychDesignu rysuje napis jako kontury glifów kroju wkompilowanego,
+// niezależnie od krojów zainstalowanych na maszynie odbiorcy.
 func napisWyrysuDanychDesignu(kontekst *canvas.Context, tresc string, x, y, rozmiar float64,
 	barwa string) error {
 
@@ -605,12 +574,10 @@ func napisWyrysuDanychDesignu(kontekst *canvas.Context, tresc string, x, y, rozm
 	if err != nil {
 		return fmt.Errorf("podpisów wykresu nie da się złożyć: %w", err)
 	}
-	// Kontury z `sciezkaTekstuDesignu` mają oś Y w DÓŁ (jak kompozycja), a płótno
-	// biblioteki w GÓRĘ — stąd odbicie względem linii pisma.
+	// Kontury tekstu mają oś Y w dół, a płótno biblioteki w górę — stąd odbicie względem linii pisma.
 	kontury, err := sciezkaTekstuDesignu(krojWczytany, tresc, rozmiar, 0, 0)
 	if err != nil {
-		// Znak spoza kroju nie kończy wyrysu: napis wypada, wykres zostaje.
-		// Wykres bez jednego podpisu jest lepszy niż odmowa wykresu.
+		// Znak spoza kroju nie kończy wyrysu — napis wypada, wykres zostaje.
 		return nil
 	}
 	kontekst.RenderPath(kontury.Transform(canvas.Identity.Translate(x, y).Scale(1, -1)),
@@ -618,21 +585,17 @@ func napisWyrysuDanychDesignu(kontekst *canvas.Context, tresc string, x, y, rozm
 	return nil
 }
 
-// stylWypelnieniaDanychDesignu składa styl wypełnienia jednolitego.
+// stylWypelnieniaDanychDesignu składa styl wypełnienia jednolitego dla wskazanej
+// barwy płótna, bez obrysu.
 func stylWypelnieniaDanychDesignu(barwa string) canvas.Style {
 	return canvas.Style{
 		Fill: canvas.Paint{Color: barwaRgbaZapisuDesignu(barwa, nil)}, FillRule: canvas.NonZero,
 	}
 }
 
-// zObrysemDanychDesignu dopełnia styl ZAKOŃCZENIEM i ZŁĄCZENIEM kreski.
-//
-// Wydawca SVG biblioteki nie ma dla nich wartości domyślnej: styl z obrysem,
-// a bez wskazanego zakończenia albo złączenia, PRZERYWA mu wykonanie
-// (`SVG: line cap not support`). Rdzeń oddawał wtedy odmowę techniczną zamiast
-// pliku i wychodziło to dopiero na wydaniu, bo rasteryzator PNG braku nie
-// zauważa. Dlatego każdy styl z obrysem przechodzi tutaj — jedno miejsce, w
-// którym nie da się o tym zapomnieć.
+// zObrysemDanychDesignu dopełnia styl zakończeniem i złączeniem kreski: wydawca
+// SVG biblioteki nie ma dla nich wartości domyślnej, a styl z obrysem bez nich
+// przerywa mu wykonanie.
 func zObrysemDanychDesignu(styl canvas.Style) canvas.Style {
 	if styl.StrokeCapper == nil {
 		styl.StrokeCapper = canvas.RoundCap
@@ -654,12 +617,14 @@ func barwaRgbaZapisuDesignu(zapis string, krycie *float64) color.RGBA {
 	return barwaRgbaDesignu(barwa, krycie)
 }
 
-// udzialWZakresieDesignu przekłada wartość na ułamek wysokości pola danych.
+// udzialWZakresieDesignu przekłada wartość na ułamek wysokości pola danych,
+// względem krańców zakresu serii.
 func udzialWZakresieDesignu(wartosc, najmniejsza, najwieksza float64) float64 {
 	return (wartosc - najmniejsza) / (najwieksza - najmniejsza)
 }
 
-// udzialPozycjiDesignu przekłada numer punktu na ułamek szerokości pola.
+// udzialPozycjiDesignu przekłada numer punktu na ułamek szerokości pola,
+// rozkładając punkty równomiernie.
 func udzialPozycjiDesignu(numer, ile int) float64 {
 	if ile <= 1 {
 		return 0
@@ -668,11 +633,8 @@ func udzialPozycjiDesignu(numer, ile int) float64 {
 }
 
 // barwyWyrysuDanychDesignu oddaje barwy wyrysu: z zestawu żetonów, gdy wskazany,
-// albo z wykazu rdzenia.
-//
-// Zestaw żetonów NARZUCA barwy — po to jest wskazywany. Zestaw bez ani jednego
-// żetonu barwnego jest odmową: wykres złożony barwami rdzenia pod zestawem, który
-// Operator wskazał, wyglądałby jak wykres w jego systemie, a nie byłby nim.
+// albo z wykazu rdzenia. Zestaw bez ani jednego żetonu barwnego jest odmową —
+// zestaw narzuca barwy, po to jest wskazywany.
 func (a *adapterDesignu) barwyWyrysuDanychDesignu(ctx context.Context, zestaw *string,
 	ile int) ([]string, error) {
 
@@ -707,8 +669,7 @@ func (a *adapterDesignu) barwyWyrysuDanychDesignu(ctx context.Context, zestaw *s
 				"narzucający barwy — rdzeń nie podstawi za niego własnych", wiersz.Kod))
 	}
 	if len(barwy) < ile {
-		// Barw mniej niż serii: wykaz powtarza się od początku. To jest widoczne
-		// i uczciwe — dobranie barw spoza zestawu łamałoby jego rolę.
+		// Barw mniej niż serii: wykaz powtarza się od początku, zamiast dobierać barwy spoza zestawu.
 		sort.SliceStable(barwy, func(i, j int) bool { return barwy[i] < barwy[j] })
 	}
 	return barwy, nil
@@ -729,7 +690,8 @@ func formatWyrysuDanychDesignu(komenda string, wskazany *string) (string, error)
 	return format, nil
 }
 
-// rodzajWyrysuDanychDesignu nazywa rodzaj zasobu wyrysu.
+// rodzajWyrysuDanychDesignu nazywa rodzaj zasobu wyrysu wynikowego: wektorowy
+// dla SVG, obrazowy dla PNG.
 func rodzajWyrysuDanychDesignu(format string) shared.DesignAssetKind {
 	if format == "svg" {
 		return shared.DesignAssetKindVector
@@ -737,7 +699,8 @@ func rodzajWyrysuDanychDesignu(format string) shared.DesignAssetKind {
 	return shared.DesignAssetKindImage
 }
 
-// plotnoWyrysuDanychDesignu rozstrzyga wymiary płótna.
+// plotnoWyrysuDanychDesignu rozstrzyga wymiary płótna: wskazane w żądaniu,
+// a bez wskazania — domyślne, w granicy dopuszczalnego boku.
 func plotnoWyrysuDanychDesignu(komenda string, szerokosc, wysokosc *float64) (float64, float64, error) {
 	wynikSzerokosc := domyslnaSzerokoscWykresuDesignu
 	wynikWysokosc := domyslnaWysokoscWykresuDesignu
@@ -762,8 +725,8 @@ func plotnoWyrysuDanychDesignu(komenda string, szerokosc, wysokosc *float64) (fl
 	return wynikSzerokosc, wynikWysokosc, nil
 }
 
-// wydajPlotnoDanychDesignu wydaje płótno jako SVG albo PNG — jedno płótno, dwa
-// wydania (nagłówek pliku).
+// wydajPlotnoDanychDesignu wydaje płótno jako SVG albo PNG — jedno płótno,
+// dwa wydania tej samej treści.
 func wydajPlotnoDanychDesignu(plotno *canvas.Canvas, szerokosc, wysokosc float64,
 	format string) ([]byte, string, error) {
 
@@ -785,8 +748,8 @@ func wydajPlotnoDanychDesignu(plotno *canvas.Canvas, szerokosc, wysokosc float64
 	return bajty, typTresci, nil
 }
 
-// WyrysujSchemat składa schemat z węzłów i połączeń — obsługuje
-// `design.diagram.render`.
+// WyrysujSchemat składa schemat z węzłów i połączeń, układa go warstwami
+// i oddaje jako zasób — obsługuje `design.diagram.render`.
 func (a *adapterDesignu) WyrysujSchemat(ctx context.Context,
 	z shared.DesignDiagramRenderRequest) (shared.DesignDiagramRenderResponse, error) {
 
@@ -873,7 +836,8 @@ func (a *adapterDesignu) WyrysujSchemat(ctx context.Context,
 	}, nil
 }
 
-// polozenieWezlaSchematuDesignu to prostokąt jednego węzła na płótnie.
+// polozenieWezlaSchematuDesignu to prostokąt jednego węzła na płótnie: położenie
+// lewego górnego rogu wraz z szerokością i wysokością.
 type polozenieWezlaSchematuDesignu struct {
 	X         float64
 	Y         float64
@@ -881,17 +845,10 @@ type polozenieWezlaSchematuDesignu struct {
 	Wysokosc  float64
 }
 
-// ulozSchematDesignu liczy położenia węzłów i oddaje wykaz nieumieszczonych wraz
-// z wymiarami płótna.
-//
-// Układ jest WARSTWOWY: węzeł bez nadrzędnego stoi w warstwie zerowej, węzeł
-// z nadrzędnym — warstwę niżej. To jest układ, którego oczekuje schemat
-// przepływu, schemat organizacyjny i mapa myśli; osi czasu daje jedną warstwę
-// z węzłami po kolei.
-//
-// Węzeł, którego nadrzędnego nie ma w wykazie, jest NIEUMIESZCZONY i wraca
-// w bilansie: postawienie go w warstwie zerowej udawałoby, że jest korzeniem,
-// a to nieprawda o tym, co Operator nadesłał.
+// ulozSchematDesignu liczy położenia węzłów i oddaje wykaz nieumieszczonych
+// wraz z wymiarami płótna. Układ jest warstwowy: węzeł bez nadrzędnego stoi
+// w warstwie zerowej, węzeł z nadrzędnym — warstwę niżej. Nieumieszczony wraca
+// w bilansie.
 func ulozSchematDesignu(z shared.DesignDiagramRenderRequest) (
 	map[string]polozenieWezlaSchematuDesignu, []string, float64, float64) {
 
@@ -907,9 +864,7 @@ func ulozSchematDesignu(z shared.DesignDiagramRenderRequest) (
 		istnieje[wezel.Id] = true
 	}
 
-	// Warstwa węzła: liczba kroków do korzenia. Cykl w danych zatrzymuje się na
-	// granicy liczby węzłów — schemat z cyklem nadrzędności nie ma korzenia,
-	// a rachunek bez granicy szedłby bez końca.
+	// Warstwa węzła: liczba kroków do korzenia. Cykl zatrzymuje się na granicy liczby węzłów.
 	warstwa := map[string]int{}
 	nieumieszczone := []string{}
 	nadrzedny := map[string]string{}
@@ -951,8 +906,7 @@ func ulozSchematDesignu(z shared.DesignDiagramRenderRequest) (
 		}
 	}
 
-	// Kolejność w warstwie: kolejność wykazu żądania. To Operator ustala, co jest
-	// z lewej, a nie porządek alfabetyczny.
+	// Kolejność w warstwie to kolejność wykazu żądania, nie porządek alfabetyczny.
 	wWarstwie := map[int][]string{}
 	najwyzszaWarstwa := 0
 	for _, wezel := range z.Nodes {
@@ -1012,19 +966,18 @@ func ulozSchematDesignu(z shared.DesignDiagramRenderRequest) (
 	return polozenia, nieumieszczone, szerokoscPlotna, wysokoscPlotna
 }
 
-// narysujSchematDesignu rysuje węzły i połączenia schematu.
+// narysujSchematDesignu rysuje węzły i połączenia schematu na wskazanych
+// położeniach, połączenia pod węzłami.
 func narysujSchematDesignu(kontekst *canvas.Context, z shared.DesignDiagramRenderRequest,
 	polozenia map[string]polozenieWezlaSchematuDesignu, barwy []string,
 	wysokoscPlotna float64) error {
 
-	// Połączenia idą PRZED węzłami, żeby linie schodziły pod ksztaltWezlay, a nie po
-	// nich. Linia przechodząca przez podpis czyni schemat nieczytelnym.
+	// Połączenia idą przed węzłami, żeby linie schodziły pod nimi, a nie nad podpisami.
 	for _, polaczenie := range z.Edges {
 		od, maOd := polozenia[strings.TrimSpace(polaczenie.FromId)]
 		do, maDo := polozenia[strings.TrimSpace(polaczenie.ToId)]
 		if !maOd || !maDo {
-			// Połączenie do węzła nieumieszczonego nie jest rysowane; węzeł już
-			// wrócił w `unplacedNodeIds`, więc cisza nie powstaje.
+			// Połączenie do węzła nieumieszczonego nie jest rysowane — węzeł już wrócił w unplacedNodeIds.
 			continue
 		}
 		linia := &canvas.Path{}
@@ -1052,8 +1005,7 @@ func narysujSchematDesignu(kontekst *canvas.Context, z shared.DesignDiagramRende
 		if wezel.Color != nil && strings.TrimSpace(*wezel.Color) != "" {
 			barwa = *wezel.Color
 		}
-		// Oś Y płótna biblioteki rośnie w górę; układ liczy od góry, więc każdy
-		// węzeł odbija się względem wysokości płótna.
+		// Oś Y płótna rośnie w górę, układ liczy od góry — każdy węzeł odbija się względem wysokości płótna.
 		y := wysokoscPlotna - polozenie.Y - polozenie.Wysokosc
 		ksztaltWezla := ksztaltWezlaSchematuDesignu(wezel.Shape, polozenie.Szerokosc,
 			polozenie.Wysokosc).Translate(polozenie.X, y)

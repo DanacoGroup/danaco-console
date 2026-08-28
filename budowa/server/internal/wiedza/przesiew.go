@@ -1,26 +1,6 @@
 // Odpowiedzialność pliku: silnik przesiewu — drugi przebieg wyszukiwania po
 // znaczeniu, w którym krzyżowy koder układa kandydatów pierwszego przebiegu
 // na nowo.
-//
-// Dlaczego dwa przebiegi, a nie jeden lepszy. Osadzarka liczy wektor pytania
-// i wektor fragmentu OSOBNO, więc wektory fragmentów wolno policzyć raz
-// i trzymać w bazie — cała biblioteka Operatora jest przejrzana jednym
-// iloczynem skalarnym na wiersz. Krzyżowy koder tego nie umie: czyta pytanie
-// razem z fragmentem, więc jego oceny nie da się policzyć zawczasu, bo pytania
-// jeszcze nie ma. Przejrzenie nim całego wskaźnika znaczyłoby przebieg
-// transformera na każdym fragmencie biblioteki, czyli minuty na zapytanie.
-// Podział pracy jest stąd: tani przebieg zbiera kilkudziesięciu kandydatów,
-// drogi układa ich kolejność.
-//
-// Silnik nie ma dostępu do składnicy i nie zna kontraktu — dostaje pytanie
-// i teksty, oddaje po jednej ocenie na tekst. Wybór kandydatów, przycięcie do
-// `limit` i przekład na trafienia należą do wołającego, tak samo jak przy
-// osadzarce.
-//
-// Proces startuje wyłącznie przez `zewnetrzne.Wolaj` i wczytuje wagi na każde
-// wołanie — powód stoi w nagłówku `silnik.go` i jest tu ten sam. Granica czasu
-// jest jedna, bo przesiew ma jedną chwilę użycia: zapytanie. Jest szersza od
-// granicy osadzenia pytania, bo pierwsze uruchomienie może pobierać wagi.
 package wiedza
 
 import (
@@ -39,9 +19,7 @@ const (
 	// ocenienie kilkudziesięciu kandydatów na wagach stojących zajmuje sekundy.
 	LimitPrzesiewu = 20 * time.Minute
 	// KandydaciDomyslni — ilu kandydatów pierwszego przebiegu wchodzi do
-	// przesiewu, gdy żądanie nie mówi ilu. Pięćdziesiąt to tyle, ile koder
-	// ocenia w kilku sekundach, a jednocześnie na tyle więcej od dziesięciu
-	// oddawanych fragmentów, żeby przesiew miał co przestawić.
+	// przesiewu, gdy żądanie nie mówi ilu.
 	KandydaciDomyslni = 50
 	// GranicaKandydatow — sufit liczby ocenianych par. Koszt rośnie wprost
 	// proporcjonalnie do liczby kandydatów, więc żądanie o cały wskaźnik
@@ -60,7 +38,8 @@ type SilnikPrzesiewu struct {
 	ustawienia    Ustawienia
 }
 
-// NowySilnikPrzesiewu zakłada silnik na uruchamiaczu procesów i katalogu danych.
+// NowySilnikPrzesiewu zakłada silnik na uruchamiaczu procesów i katalogu
+// danych, z nastawami domyślnymi.
 func NowySilnikPrzesiewu(uruchamiacz session.Uruchamiacz, katalogDanych string) *SilnikPrzesiewu {
 	return &SilnikPrzesiewu{
 		uruchamiacz:   uruchamiacz,
@@ -69,7 +48,8 @@ func NowySilnikPrzesiewu(uruchamiacz session.Uruchamiacz, katalogDanych string) 
 	}
 }
 
-// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji.
+// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji
+// poziomu okna, zamiast domyślnych.
 func (s *SilnikPrzesiewu) ZUstawieniami(u Ustawienia) *SilnikPrzesiewu {
 	s.ustawienia = u
 	return s
@@ -103,12 +83,9 @@ type odpowiedzPrzesiewu struct {
 	WagaMb int       `json:"wagaMb"`
 }
 
-// Gotowy sprawdza, czy jest czym przesiewać, nie oceniając niczego.
-//
-// Osobne pytanie, tak samo jak w silniku osadzeń: odmowa „nie ma czym" jest dla
-// Operatora czymś innym niż „liczyło i się wywróciło". Wołający sięga po nie
-// przed zebraniem kandydatów, żeby nie przeglądać wskaźnika po to, by zaraz
-// odmówić.
+// Gotowy sprawdza, czy jest czym przesiewać, nie oceniając niczego. Osobne
+// pytanie, tak samo jak w silniku osadzeń: odmowa „nie ma czym" jest dla
+// Operatora czymś innym niż „liczyło i się wywróciło".
 func (s *SilnikPrzesiewu) Gotowy(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar, limit time.Duration) error {
 
@@ -116,16 +93,8 @@ func (s *SilnikPrzesiewu) Gotowy(ctx context.Context, okno session.Okno,
 	return err
 }
 
-// Przesiej oddaje po jednej ocenie na tekst, w kolejności tekstów.
-//
-// Kolejność jest warunkiem: wołający wiąże ocenę z kandydatem pozycją, a nie
-// treścią — dwa fragmenty bywają identyczne co do znaku, a pochodzić z dwóch
-// różnych dokumentów. Liczba ocen różna od liczby tekstów jest usterką
-// pomocnika, nie wynikiem gorszym, więc kończy się odmową zamiast rankingiem
-// przesuniętym o jedną pozycję.
-//
-// Wykaz pusty oddaje wykaz pusty bez uruchamiania procesu: „przesiej nic" nie
-// jest pytaniem o gotowość (od tego jest `Gotowy`).
+// Przesiej oddaje po jednej ocenie na tekst, w kolejności tekstów. Kolejność
+// jest warunkiem: wołający wiąże ocenę z kandydatem pozycją, a nie treścią.
 func (s *SilnikPrzesiewu) Przesiej(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	pytanie string, teksty []string, limit time.Duration) ([]float32, error) {
@@ -146,7 +115,8 @@ func (s *SilnikPrzesiewu) Przesiej(ctx context.Context, okno session.Okno,
 	return oceny, nil
 }
 
-// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź.
+// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź,
+// zwracając oceny albo błąd wywołania.
 func (s *SilnikPrzesiewu) wolaj(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	pytanie string, teksty []string, limit time.Duration) ([]float32, error) {
@@ -179,9 +149,7 @@ func (s *SilnikPrzesiewu) wolaj(ctx context.Context, okno session.Okno,
 		Program: odnajdzInterpreter(s.ustawienia.Program),
 		Pakiet:  "python3 wraz z bibliotekami torch i transformers",
 	}
-	// `-X utf8` idzie zawsze — powód ten sam co w silniku osadzeń: pomocnik
-	// oddaje polski tekst, a Python bez tego przełącznika koduje wyjście według
-	// ustawień regionalnych systemu.
+	// `-X utf8` idzie zawsze, bo pomocnik oddaje polski tekst.
 	wynik, err := zewnetrzne.Wolaj(ctx, s.uruchamiacz, okno, zasady, obszar,
 		narzedzie, []string{"-X", "utf8", skrypt, sciezkaZlecenia}, "", limit)
 	if err != nil {
@@ -219,11 +187,7 @@ func (s *SilnikPrzesiewu) odczytaj(wynik zewnetrzne.Wynik) ([]float32, error) {
 }
 
 // GranicaKandydatowZadania sprowadza wskazanie żądania do liczby kandydatów.
-//
-// Wartość mniejsza od granicy trafień nie jest podnoszona do niej po cichu:
-// wołający, który prosi o dziesięć fragmentów i pięciu kandydatów, dostaje pięć
-// — przesiew nie ma prawa dołożyć do odpowiedzi fragmentu, którego pierwszy
-// przebieg nie wybrał.
+// Wartość mniejsza od granicy trafień nie jest podnoszona do niej po cichu.
 func GranicaKandydatowZadania(wskazanie *int) int {
 	if wskazanie == nil || *wskazanie <= 0 {
 		return KandydaciDomyslni
@@ -234,16 +198,9 @@ func GranicaKandydatowZadania(wskazanie *int) int {
 	return *wskazanie
 }
 
-// PoPrzesiewie układa trafienia według ocen kodera i przycina do `ile`.
-//
-// Ocena zastępuje podobieństwo, a nie dokłada się do niego. Średnia obu byłaby
-// liczbą, o której nie wiadomo, co znaczy: kosinus wektorów i prawdopodobieństwo
-// dopasowania pary nie leżą w jednej skali, a przesiew istnieje właśnie po to,
-// żeby zdanie kodera było ostateczne.
-//
-// Sortowanie stabilne — dwa kandydaty o równej ocenie zachowują kolejność
-// pierwszego przebiegu, więc to samo pytanie zadane dwa razy daje tę samą
-// odpowiedź.
+// PoPrzesiewie układa trafienia według ocen kodera i przycina do `ile`. Ocena
+// zastępuje podobieństwo, a nie dokłada się do niego, bo obie miary nie leżą
+// w jednej skali.
 func PoPrzesiewie(kandydaci []Trafienie, oceny []float32, ile int) []Trafienie {
 	if len(oceny) != len(kandydaci) {
 		return kandydaci

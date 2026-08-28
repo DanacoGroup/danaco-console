@@ -1,18 +1,4 @@
-// Odpowiedzialność pliku: sześć czynności na tabelach dokumentu — założenie
-// tabeli o wskazanym rozmiarze, wykaz tabel, zmiana budowy (wiersze, kolumny,
-// scalenie, podział), postać tabeli i komórek wraz z powtarzaniem wiersza
-// nagłówkowego, sortowanie zawartości oraz zamiana tekstu na tabelę i tabeli
-// na tekst.
-//
-// Rachunek siatki stoi w `_tabele_pomocniki.go`, a droga zapisu, zmiany
-// śledzonej i dziennika — w `_postac.go` (`postacWczytaj`, `postacZakoncz`).
-// Ten plik nie liczy ani jednej z tych rzeczy drugi raz.
-//
-// ── Dlaczego tabela nie zajmuje ani jednego znaku treści ────────────────────
-// Tabela wchodzi do drzewa blokiem nietekstowym, więc jej wstawienie nie
-// przesuwa ani jednego zakresu zaznaczenia, przypisu ani blokady. Gdyby tabela
-// zajmowała znaki, każde jej wstawienie rozjeżdżałoby wszystko, co wisi na
-// miejscu w treści — a to jest właśnie ta cicha szkoda, której zlecenie zakazuje.
+// Plik prowadzi sześć czynności na tabelach dokumentu: założenie, wykaz, zmianę budowy, postać tabeli i komórek, sortowanie oraz zamianę tekstu na tabelę i odwrotnie; tabela wchodzi do drzewa blokiem nietekstowym, nie zajmując znaku treści.
 package core
 
 import (
@@ -24,11 +10,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// tabelaRozdzielnikDomyslny — brak wskazania znaczy tabulator, tak jak
-// w pakiecie biurowym.
+// tabelaRozdzielnikDomyslny — brak wskazania znaczy tabulator, tak jak w pakiecie biurowym, przy zamianie tekstu na tabelę i tabeli na tekst.
 const tabelaRozdzielnikDomyslny = "\t"
 
-// WstawTabele zakłada tabelę o wskazanym rozmiarze (`studio.table.insert`).
+// WstawTabele zakłada tabelę o wskazanym rozmiarze i, na żądanie, wypełnia jej komórki treścią przysłaną w żądaniu (`studio.table.insert`).
 func (a *adapterStudia) WstawTabele(ctx context.Context,
 	z shared.StudioTableInsertRequest) (shared.StudioTableInsertResponse, error) {
 
@@ -60,8 +45,7 @@ func (a *adapterStudia) WstawTabele(ctx context.Context,
 	if miejsce > dlugosc {
 		miejsce = dlugosc
 	}
-	// Blokada obowiązuje w rdzeniu, przed dotknięciem dokumentu: tabela
-	// wstawiona w zablokowany fragment omijałaby blokadę bez wysiłku.
+	// Blokada obowiązuje w rdzeniu, przed dotknięciem dokumentu, żeby ominąć jej wstawieniem nie dało się.
 	if odcinki, pominiete := postacOdcinkiDozwolone(&stan.forma, miejsce, miejsce, autor); len(odcinki) == 0 {
 		return shared.StudioTableInsertResponse{}, tabelaBladWskazania(
 			"wstawienie tabeli " + postacZapisZakresu(miejsce, miejsce) +
@@ -80,9 +64,7 @@ func (a *adapterStudia) WstawTabele(ctx context.Context,
 		tabela.HeaderRows = postacWskaznikLiczby(tabela.Rows)
 	}
 	if tabela.RepeatHeader == nil {
-		// Powtarzanie wiersza nagłówkowego na kolejnych stronach jest wymienione
-		// w zleceniu wprost i jest nastawą, której Operator oczekuje domyślnie —
-		// tabela wielostronicowa bez nagłówka na drugiej stronie jest nieczytelna.
+		// Powtarzanie nagłówka na stronach jest domyślne: bez niego tabela wielostronicowa jest nieczytelna.
 		tabela.RepeatHeader = postacWskaznikPrawdy(*tabela.HeaderRows > 0)
 	}
 	tabelaSiatkaPelna(&tabela)
@@ -140,7 +122,7 @@ func (a *adapterStudia) WstawTabele(ctx context.Context,
 	}, nil
 }
 
-// WykazTabel oddaje tabele dokumentu (`studio.table.list`).
+// WykazTabel oddaje tabele dokumentu, na żądanie zawężone do jednej wskazanej kodem (`studio.table.list`).
 func (a *adapterStudia) WykazTabel(ctx context.Context,
 	z shared.StudioTableListRequest) (shared.StudioTableListResponse, error) {
 
@@ -252,8 +234,7 @@ func (a *adapterStudia) ZmienBudoweTabeli(ctx context.Context,
 				"”, której rdzeń nie zna; wykaz: insertRow, deleteRow, insertColumn, " +
 				"deleteColumn, mergeCells, splitCell")
 	}
-	// Szerokości liczą się po KAŻDEJ zmianie budowy — to jest wymaganie
-	// zlecenia: tabela po scaleniu komórek ma szerokości policzone, nie zerowe.
+	// Szerokości liczą się po każdej zmianie budowy, żeby scalenie nie zostawiło szerokości zerowych.
 	tabelaPrzeliczSzerokosci(tabela, tabelaSzerokoscTekstu(&stan.forma))
 
 	bilans := shared.StudioActionBalance{
@@ -347,8 +328,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 	if z.WidthMm != nil {
 		tabela.WidthMm = z.WidthMm
 		if len(z.ColumnWidthsMm) == 0 {
-			// Szerokość całej tabeli rozdziela się na kolumny od nowa: kolumny
-			// zostawione bez zmiany nie sumowałyby się do nowej szerokości.
+			// Szerokość tabeli rozdziela się na kolumny od nowa: kolumny bez zmiany nie sumowałyby się do niej.
 			tabela.ColumnWidthsMm = nil
 		}
 		bilans.Applied++
@@ -376,9 +356,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 	}
 	if z.RepeatHeader != nil {
 		if *z.RepeatHeader && (tabela.HeaderRows == nil || *tabela.HeaderRows == 0) {
-			// Powtarzanie nagłówka bez wskazania, który wiersz jest nagłówkiem,
-			// nie miałoby czego powtarzać — rdzeń bierze wiersz pierwszy i mówi
-			// o tym w bilansie, zamiast milczeć.
+			// Powtarzanie nagłówka bez wskazania wiersza nie miałoby czego powtarzać, więc rdzeń bierze pierwszy.
 			tabela.HeaderRows = postacWskaznikLiczby(1)
 			bilans.Note = postacWskaznikTekstu("powtarzanie wiersza nagłówkowego włączone; " +
 				"za nagłówek przyjęty wiersz pierwszy, bo tabela nie miała go wskazanego")
@@ -388,8 +366,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 	}
 	if z.Caption != nil {
 		tabela.Caption = z.Caption
-		// Podpis tabeli zmieniony znaczy spis tabel nieświeży — inaczej spis
-		// mówiłby co innego niż tabela pod nim.
+		// Podpis tabeli zmieniony znaczy spis tabel nieświeży, inaczej spis różniłby się od tabeli pod nim.
 		if err := a.aparatZnaczNieswiezoscRodzaju(ctx, stan,
 			shared.StudioApparatusKindTableIndex); err != nil {
 
@@ -427,8 +404,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 					komorka.VerticalAlign = z.VerticalAlign
 				}
 				if z.Align != nil {
-					// Wyrównanie w komórce jest cechą jej akapitu — tak samo jak
-					// w treści dokumentu, więc idzie tą samą strukturą.
+					// Wyrównanie komórki jest cechą jej akapitu, tak jak w treści dokumentu, więc idzie tą samą strukturą.
 					komorka.Paragraph = postacScalAkapit(komorka.Paragraph,
 						shared.StudioParagraphFormat{Align: z.Align})
 				}
@@ -473,8 +449,7 @@ func (a *adapterStudia) UstawPostacTabeli(ctx context.Context,
 	}, nil
 }
 
-// SortujTabele sortuje zawartość tabeli po wskazanej kolumnie
-// (`studio.table.sort`).
+// SortujTabele sortuje zawartość tabeli po wskazanej kolumnie, tekstowo albo liczbowo, rosnąco albo malejąco (`studio.table.sort`).
 func (a *adapterStudia) SortujTabele(ctx context.Context,
 	z shared.StudioTableSortRequest) (shared.StudioTableSortResponse, error) {
 
@@ -538,8 +513,7 @@ func (a *adapterStudia) SortujTabele(ctx context.Context,
 	}, nil
 }
 
-// ZamienTabeleITekst zamienia tekst na tabelę albo tabelę na tekst
-// (`studio.table.convert`).
+// ZamienTabeleITekst zamienia zaznaczony tekst na tabelę albo wskazaną tabelę na tekst, zależnie od kierunku żądania (`studio.table.convert`).
 func (a *adapterStudia) ZamienTabeleITekst(ctx context.Context,
 	z shared.StudioTableConvertRequest) (shared.StudioTableConvertResponse, error) {
 
@@ -627,8 +601,7 @@ func (a *adapterStudia) tabelaZamienTekstNaTabele(ctx context.Context, stan *sta
 	}, nil
 }
 
-// tabelaZamienTabeleNaTekst rozkłada tabelę na wiersze tekstu i zdejmuje ją
-// z dokumentu.
+// tabelaZamienTabeleNaTekst rozkłada tabelę na wiersze tekstu rozdzielone znakiem rozdzielnika i zdejmuje tabelę z dokumentu.
 func (a *adapterStudia) tabelaZamienTabeleNaTekst(ctx context.Context, stan *stanPostaci,
 	z shared.StudioTableConvertRequest, autor shared.StudioAuthor,
 	rozdzielnik string) (shared.StudioTableConvertResponse, error) {
@@ -668,8 +641,7 @@ func (a *adapterStudia) tabelaZamienTabeleNaTekst(ctx context.Context, stan *sta
 		})
 	}
 
-	// Tabela schodzi z drzewa i z wykazu, a jej zawartość wchodzi w treść
-	// w miejscu, w którym tabela stała.
+	// Tabela schodzi z drzewa i z wykazu, a jej zawartość wchodzi w treść w miejscu, gdzie stała.
 	tabelaUsunBlokTabeli(&stan.forma, kod)
 	pozostale := make([]shared.StudioDocumentTable, 0, len(stan.forma.Tables))
 	for _, zastana := range stan.forma.Tables {
@@ -701,7 +673,7 @@ func (a *adapterStudia) tabelaZamienTabeleNaTekst(ctx context.Context, stan *sta
 	}, nil
 }
 
-// tabelaMaScalenia mówi, czy tabela niesie choć jedno scalenie.
+// tabelaMaScalenia mówi, czy tabela niesie choć jedno scalenie wierszy albo kolumn, rozstrzygając, co zgłosić w bilansie.
 func tabelaMaScalenia(tabela *shared.StudioDocumentTable) bool {
 	for _, komorka := range tabela.Cells {
 		if komorka.Merged != nil && *komorka.Merged {
@@ -717,8 +689,7 @@ func tabelaMaScalenia(tabela *shared.StudioDocumentTable) bool {
 	return false
 }
 
-// tabelaMaPostacKomorek mówi, czy komórki niosą postać, której tekst nie
-// przeniesie.
+// tabelaMaPostacKomorek mówi, czy komórki niosą postać, której zamiana na tekst nie przeniesie, jak obramowanie czy cieniowanie.
 func tabelaMaPostacKomorek(tabela *shared.StudioDocumentTable) bool {
 	for _, komorka := range tabela.Cells {
 		if komorka.Border != nil || komorka.ShadingColor != nil ||

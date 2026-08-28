@@ -1,31 +1,7 @@
 // Odpowiedzialność pliku: rachunki wspólne obszaru strony i sekcji — wykaz
-// formatów nośnika, wymiary użytkowe po marginesach, scalanie nastaw strony,
-// nagłówków, numeracji i znaku wodnego, przekład sekcji na wiersz warstwy danych
-// oraz bilans przeliczenia układu po zmianie nośnika.
-//
-// ── Skąd bierze się wykaz nośników ───────────────────────────────────────────
-// Wykaz rozmiarów stoi w rdzeniu raz, w `wykazNosnikowDruku` miejsca wspólnego
-// modułu Design (`design.print.paper.list`). Studio go CZYTA — nie kopiuje.
-// Zmienna leży w tym samym pakiecie `core`, więc odczyt nie wymaga wejścia
-// w plik modułu Design ani drugiego wykazu wymiarów.
-//
-// Wykaz rdzenia nie niesie kopert C4, C5 i C6, które Właściciel wymienia wprost.
-// Brakujące trzy pozycje dokłada `stronaKopertyUzupelniajace` w TYM pliku
-// i każda z nich jest tak oznaczona polem `source`, żeby było widać, że wykaz
-// jest zszyty z dwóch miejsc. Jest to stan przejściowy do scalenia — wykaz
-// nośników należy przenieść do miejsca wspólnego dla Studia i Designu, i tak
-// stoi w sprawozdaniu tego odcinka.
-//
-// ── Dlaczego nagłówek mieszka w sekcji, także dla całego dokumentu ───────────
-// Kontrakt trzyma nagłówki i stopki w sekcji, wedle zasięgu (strony zwykłe,
-// pierwsza strona, strony parzyste) — bo tak stawia je zlecenie i tak są
-// w pakiecie biurowym. Dokument bez ani jednej sekcji nie miałby więc gdzie
-// trzymać własnego nagłówka. Dlatego czynność na nagłówku, numeracji i znaku
-// wodnym bez wskazania sekcji sięga do SEKCJI PIERWSZEJ, a gdy dokument nie ma
-// żadnej — zakłada jedną, obejmującą całą treść. Dokument jest wtedy jedną
-// sekcją, dokładnie jak w Wordzie po założeniu nowego pisma. Drugie miejsce na
-// „nagłówek całego dokumentu" byłoby drugą prawdą i pierwsza zmiana sekcji
-// rozjechałaby je.
+// nośnika, wymiary użytkowe po marginesach, scalanie nastaw strony, nagłówków
+// i znaku wodnego, przekład sekcji na wiersz danych oraz bilans przeliczenia
+// układu po zmianie nośnika.
 package core
 
 import (
@@ -42,14 +18,9 @@ import (
 // swojej nie ma. Nazwa jest pełna i widoczna dla Operatora — żadnego kodu.
 const stronaNazwaSekcjiPierwszej = "Sekcja pierwsza"
 
-// stronaNosniki oddaje wykaz formatów nośnika Studia.
-//
-// Wykaz jedzie z JEDNEGO miejsca w rdzeniu (`wykazNosnikowDruku`,
-// `nosniki_druku_wspolne.go`) i to jest cała treść tej funkcji. Do 17.08.2026
-// stały tu dwa złożenia: wykaz obszaru druku Designu oraz osobne uzupełnienie
-// kopertami C4, C5 i C6, których tamten wykaz nie niósł. Rozstrzygnięcie
-// Właściciela zniosło ten podział — koperty stoją teraz w wykazie wspólnym,
-// więc uzupełnienie zniknęło razem z powodem swojego istnienia.
+// stronaNosniki oddaje wykaz formatów nośnika Studia, wzięty z jedynego
+// wykazu nośników druku wspólnego dla całego rdzenia, łącznie z kopertami
+// C4, C5 i C6.
 func stronaNosniki() []shared.StudioPaperFormat {
 	return nosnikiDrukuJakoFormatyStudia()
 }
@@ -109,8 +80,7 @@ func stronaWymiary(nastawy *shared.StudioPageSetup) (float64, float64) {
 			szerokosc, wysokosc = nosnik.WidthMm, nosnik.HeightMm
 		}
 	}
-	// Wymiar własny przebija nazwę: Operator, który podał milimetry, podał je
-	// dlatego, że wykaz mu nie wystarczył.
+	// Wymiar własny przebija nazwę nośnika.
 	if nastawy.WidthMm != nil && *nastawy.WidthMm > 0 {
 		szerokosc = *nastawy.WidthMm
 	}
@@ -183,8 +153,7 @@ func stronaScalNastawy(zastane *shared.StudioPageSetup,
 		wynik.PageSize = postacWskaznikTekstu(nosnik.Name)
 		rodzaj := nosnik.Kind
 		wynik.PaperKind = &rodzaj
-		// Nazwa z wykazu ZDEJMUJE wymiar własny — inaczej dokument twierdziłby,
-		// że jest A4 o szerokości 500 mm.
+		// Nazwa z wykazu zdejmuje wymiar własny nastawy zastanej.
 		wynik.WidthMm, wynik.HeightMm = nil, nil
 		zmian++
 	}
@@ -231,8 +200,7 @@ func stronaScalNastawy(zastane *shared.StudioPageSetup,
 		wynik.MarginPreset = postacWskaznikTekstu(strings.ToLower(strings.TrimSpace(*z.MarginPreset)))
 		zmian++
 	}
-	// Margines podany wprost przebija nastawę gotową i sam ją odznacza jako
-	// „własne" — nastawa „normalne" przy marginesie 40 mm byłaby nieprawdą.
+	// Margines podany wprost przebija nastawę gotową i odznacza się jako własny.
 	wlasnyMargines := false
 	for _, para := range []struct {
 		wartosc *float64
@@ -292,20 +260,9 @@ func stronaScalNastawy(zastane *shared.StudioPageSetup,
 	return wynik, zmian, nil
 }
 
-// stronaBilansUkladu PRZELICZA układ pod nowy nośnik i oddaje bilans tego, co
-// trzeba było przeliczyć.
-//
-// Robi dwie rzeczy naraz, bo wymaganie Właściciela brzmi dwuczłonowo: „zmiana
-// formatu przelicza układ, nie obcina treści; co się nie zmieściło, wraca
-// bilansem". Tabela szersza niż kolumna tekstu i obraz szerszy niż kolumna
-// schodzą więc do szerokości użytkowej — tabela w proporcji swoich kolumn,
-// obraz z zachowaniem proporcji boków — a każde takie przeliczenie wchodzi do
-// bilansu.
-//
-// Sama cisza byłaby tu najgorszą odpowiedzią: Operator zobaczyłby obcięty
-// załącznik dopiero na wydruku. Ale samo zgłoszenie bez przeliczenia jest
-// niewiele lepsze — zostawiałoby dokument w stanie, którego nie da się
-// wydrukować, i kazałoby Operatorowi poprawiać każdą tabelę osobno.
+// stronaBilansUkladu przelicza układ pod nowy nośnik zamiast obcinać treść:
+// tabela i obraz szerszy niż kolumna tekstu schodzą do szerokości użytkowej
+// z zachowaniem proporcji, a każde przeliczenie wchodzi do bilansu.
 func stronaBilansUkladu(forma *shared.StudioDocumentForm,
 	nastawy *shared.StudioPageSetup) []shared.StudioSkippedItem {
 
@@ -325,27 +282,22 @@ func stronaBilansUkladu(forma *shared.StudioDocumentForm,
 			szerokosc = *tabela.WidthMm
 		}
 		// Szerokość prawdziwa tabeli jest większą z dwóch: podanej wprost i sumy
-		// szerokości kolumn. Tabela o zerowym polu `widthMm`, ale z policzonymi
-		// kolumnami, i tak nie zmieści się na węższym nośniku.
+		// szerokości kolumn.
 		if suma := sumaMiarStrony(tabela.ColumnWidthsMm); suma > szerokosc {
 			szerokosc = suma
 		}
 		if szerokosc <= uzytkowa+0.5 {
 			continue
 		}
-		// Układ się PRZELICZA, nie obcina: kolumny schodzą w tej samej
-		// proporcji, w jakiej stały, więc tabela o kolumnie wąskiej i szerokiej
-		// zostaje tabelą o kolumnie wąskiej i szerokiej. Obcięcie na krawędzi
-		// nośnika dałoby wydruk bez ostatniej kolumny i bez ani jednego słowa
-		// o tym, że jej brakuje.
+		// Kolumny schodzą w tej samej proporcji, w jakiej stały, zamiast obcinać
+		// się na krawędzi nośnika.
 		wspolczynnik := uzytkowa / szerokosc
 		for numer := range tabela.ColumnWidthsMm {
 			tabela.ColumnWidthsMm[numer] *= wspolczynnik
 		}
 		tabela.WidthMm = postacWskaznikMiary(uzytkowa)
 		if len(tabela.ColumnWidthsMm) == 0 && tabela.Columns > 0 {
-			// Tabela bez policzonych kolumn dostaje siatkę równą — kolumna
-			// zerowej szerokości jest kolumną niewidzialną.
+			// Tabela bez policzonych kolumn dostaje siatkę równą.
 			tabela.ColumnWidthsMm = make([]float64, tabela.Columns)
 			for numer := range tabela.ColumnWidthsMm {
 				tabela.ColumnWidthsMm[numer] = uzytkowa / float64(tabela.Columns)
@@ -411,7 +363,8 @@ func stronaZapisMiary(wartosc float64) string {
 
 // ── Sekcje ──────────────────────────────────────────────────────────────────
 
-// stronaSekcjaPoKodzie znajduje sekcję postaci po identyfikatorze.
+// stronaSekcjaPoKodzie znajduje sekcję postaci po identyfikatorze, albo
+// oddaje wskaźnik pusty, gdy dokument sekcji o takim wskazaniu nie niesie.
 func stronaSekcjaPoKodzie(forma *shared.StudioDocumentForm, kod string) *shared.StudioSection {
 	szukany := strings.TrimSpace(kod)
 	for i := range forma.Sections {
@@ -422,12 +375,9 @@ func stronaSekcjaPoKodzie(forma *shared.StudioDocumentForm, kod string) *shared.
 	return nil
 }
 
-// stronaSekcjaZadania rozstrzyga, na której sekcji czynność stoi.
-//
-// Wskazanie sekcji, której dokument nie ma, jest odmową nazwaną — Operator ma
-// wiedzieć, że sekcja nie istnieje, a nie dostać cichą zmianę w sekcji
-// przypadkowej. Brak wskazania znaczy sekcję pierwszą, a gdy dokument sekcji nie
-// ma — sekcję pierwszą zakładaną na całą treść.
+// stronaSekcjaZadania rozstrzyga, na której sekcji czynność stoi. Wskazanie
+// sekcji, której dokument nie ma, jest odmową nazwaną; brak wskazania znaczy
+// sekcję pierwszą, zakładaną na całą treść, gdy dokument sekcji jeszcze nie ma.
 func (a *adapterStudia) stronaSekcjaZadania(ctx context.Context, stan *stanPostaci,
 	kod *string) (*shared.StudioSection, error) {
 
@@ -462,11 +412,9 @@ func (a *adapterStudia) stronaSekcjaZadania(ctx context.Context, stan *stanPosta
 	return &stan.forma.Sections[len(stan.forma.Sections)-1], nil
 }
 
-// stronaZapiszSekcje utrwala sekcję wierszem warstwy danych.
-//
-// Sekcja ma wiersz, a nie miejsce w drzewie postaci, bo po sekcji się PYTA
-// („która sekcja obejmuje ten znak", „jakie nastawy ma załącznik") — i dlatego
-// zapis postaci wycina sekcje z drzewa. Kolumna jest tu prawdą.
+// stronaZapiszSekcje utrwala sekcję wierszem warstwy danych, a nie miejscem
+// w drzewie postaci, bo po sekcji się pyta, więc zapis postaci wycina sekcje
+// z drzewa.
 func (a *adapterStudia) stronaZapiszSekcje(ctx context.Context, dokumentID int64,
 	sekcja shared.StudioSection) error {
 
@@ -578,8 +526,7 @@ func stronaScalNaglowek(zastane []shared.StudioHeaderFooter,
 	naglowek := &wykaz[wskazanie]
 	zmian := 0
 	if z.HeaderText != nil {
-		// Napis pusty ZDEJMUJE nagłówek — Operator, który wyczyścił pole, chciał
-		// je wyczyścić, a nie zostawić stan poprzedni.
+		// Napis pusty zdejmuje nagłówek zamiast zostawiać stan poprzedni.
 		if strings.TrimSpace(*z.HeaderText) == "" {
 			naglowek.HeaderText = nil
 		} else {
@@ -625,13 +572,9 @@ func stronaKolejnoscZasiegu(zasieg shared.StudioHeaderScope) int {
 	return len(shared.WartosciStudioHeaderScope())
 }
 
-// stronaNaglowkiZNastaw przekłada stare pola `header` i `footer` nastaw strony na
-// nagłówek zasięgu zwykłego.
-//
-// Dokument założony przed tą dobudową ma nagłówek w jednym polu nastaw strony.
-// Przemilczenie go znaczyłoby, że po dobudowie nagłówek Operatora znika z okna,
-// choć stoi w bazie — dlatego wykaz pusty domyka się z tych pól, zamiast wracać
-// pusty.
+// stronaNaglowkiZNastaw przekłada pola `header` i `footer` nastaw strony na
+// nagłówek zasięgu zwykłego, żeby wykaz sekcji bez nagłówka własnego domykał
+// się z tych pól, zamiast wracać pusty.
 func stronaNaglowkiZNastaw(nastawy *shared.StudioPageSetup) []shared.StudioHeaderFooter {
 	if nastawy == nil {
 		return nil
@@ -655,7 +598,8 @@ func stronaNaglowkiZNastaw(nastawy *shared.StudioPageSetup) []shared.StudioHeade
 
 // ── Numeracja i znak wodny ──────────────────────────────────────────────────
 
-// stronaScalNumeracje wnosi do numeracji stron pola podane w żądaniu.
+// stronaScalNumeracje wnosi do numeracji stron wyłącznie pola podane
+// w żądaniu, zostawiając pozostałe pola nastawy zastanej bez zmiany.
 func stronaScalNumeracje(zastana *shared.StudioPageNumbering,
 	z shared.StudioPageNumberingSetRequest) (shared.StudioPageNumbering, error) {
 
@@ -776,8 +720,7 @@ func stronaScalZnakWodny(zastany *shared.StudioWatermark,
 				"znak wodny obrazowy bez zasobu obrazu — podaj pole assetId")
 		}
 	case shared.StudioWatermarkKindNone:
-		// Rodzaj `none` jest zdjęciem znaku wodnego i jest czynnością prawdziwą,
-		// nie brakiem — nastawy zostają na wypadek przywrócenia.
+		// Rodzaj `none` zdejmuje znak wodny; nastawy zostają do przywrócenia.
 	}
 	if wynik.Opacity == nil {
 		wynik.Opacity = postacWskaznikMiary(0.25)

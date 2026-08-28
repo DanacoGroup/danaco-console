@@ -1,53 +1,6 @@
-// Odpowiedzialność pliku: trzynaście czynności warsztatu fotografii modułu
-// Design — `design.photo.crop`, `.transform`, `.resample`, `.upscale`,
-// `.enhance`, `.color.correct`, `.filter.apply`, `.retouch`, `.inpaint`,
-// `.expand`, `.background.remove`, `.select.object`, `.mask.set`. Wsad, nastawy,
-// łańcuch, metadane, kompozycja warstw i obrysowanie leżą
-// w `adapter_modul_design_fotografia_wsad.go`; rachunek na pikselach
-// w `_fotografia_rachunek.go` i `_fotografia_maski.go`.
-//
-// ── Obróbka zakłada WARIANT, oryginał zostaje ───────────────────────────────
-// Każda czynność zapisuje NOWY zasób i wskazuje źródło polem
-// `variantOfAssetId` (kolumna istniała od migracji 048). Oryginał nie jest nigdy
-// nadpisywany — dzięki temu łańcuch edycji da się przejść wstecz do zdjęcia,
-// które Operator wniósł, a „cofnij" nie wymaga historii operacji w pamięci okna.
-// Obok wariantu powstaje wiersz czynności (migracja 346) z nastawami, którymi
-// poszła — bez niego `design.photo.history.get` pokazywałby wykaz obrazków bez
-// słowa o tym, co je różni.
-//
-// ── Wynik wychodzi jako PNG ─────────────────────────────────────────────────
-// Bezstratnie i z kanałem krycia. JPEG traciłby jakość przy każdym ogniwie
-// łańcucha (dziesięć korekcji to dziesięć kompresji) i nie uniósłby
-// przezroczystości po odcięciu tła. Format wyjścia Operator zmienia dopiero przy
-// wydaniu (`design.asset.export`), gdzie strata jest jednorazowa i świadoma.
-//
-// ── `computedBy` mówi PRAWDĘ o drodze rachunku ──────────────────────────────
-// Cztery czynności (`upscale`, `background.remove`, `inpaint`, `expand`) mają
-// DWIE drogi i obie stoją:
-//
-//   - `channelId` WSKAZANY — liczy kanał obrazowy. Zdjęcie Operatora jedzie do
-//     punktu końcowego edycji jako obraz WEJŚCIOWY (`models.ObrazWejsciowy`
-//     w roli materiału), a domalowanie i rozszerzenie kadru dokładają maskę
-//     w roli maski. Odpowiedź oddaje `computedBy: kanalModelu`.
-//   - `channelId` POMINIĘTY — liczy rachunek wkompilowany i odpowiedź oddaje
-//     `computedBy: rachunekRdzenia`. Tak mówi kontrakt tych czterech pól i tak
-//     ma być: zejście na „pierwszy czynny kanał" wysyłałoby materiał Operatora
-//     do dostawcy, o którego nie prosił.
-//
-// Droga jest zapisana w łańcuchu edycji (`czynnosc_fotografii_design.
-// policzone_przez`), więc po tygodniu da się powiedzieć, którą powstał
-// konkretny wariant.
-//
-// WYMIAR wyniku jest zawsze ten, który czynność obiecała: `factor: 4` znaczy
-// cztery razy, a `expand` o sto punktów znaczy sto — także na drodze kanału,
-// który oddaje obraz o rozmiarze ze swojej nastawy. Sprowadzenie do zamówionego
-// wymiaru robi rachunek rdzenia i to jedyna rzecz, którą on na tej drodze robi
-// (`sprowadzWynikKanaluFotografiiDesignu`); treść pozostaje kanału i o niej mówi
-// `computedBy`.
-//
-// Niepowodzenie wskazanego kanału jest ODMOWĄ, nie cichym zejściem na rachunek:
-// Operator prosił o drogę neuronową, a obraz policzony inaczej byłby odpowiedzią
-// na inne żądanie.
+// Plik obsługuje trzynaście czynności warsztatu fotografii modułu Design, od kadrowania
+// po odcięcie tła i zaznaczanie obiektu. Wsad i łańcuch leżą w pliku fotografia_wsad,
+// rachunek na pikselach w plikach fotografia_rachunek i fotografia_maski.
 package core
 
 import (
@@ -70,7 +23,8 @@ import (
 // powód stoi w nagłówku pliku.
 const formatWynikuFotografiiDesignu = "png"
 
-// Kadruj kadruje zdjęcie — obsługuje `design.photo.crop`.
+// Kadruj kadruje zdjęcie do wskazanego prostokąta — obsługuje komendę design.photo.crop,
+// zapisując wynik jako nowy wariant źródła.
 func (a *adapterDesignu) Kadruj(ctx context.Context,
 	z shared.DesignPhotoCropRequest) (shared.DesignPhotoCropResponse, error) {
 
@@ -94,8 +48,8 @@ func (a *adapterDesignu) Kadruj(ctx context.Context,
 	}, nil
 }
 
-// Przeksztalc obraca, odbija i koryguje perspektywę — obsługuje
-// `design.photo.transform`.
+// Przeksztalc obraca, odbija i koryguje perspektywę zdjęcia — obsługuje komendę
+// design.photo.transform według nastaw podanych w żądaniu.
 func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	z shared.DesignPhotoTransformRequest) (shared.DesignPhotoTransformResponse, error) {
 
@@ -103,9 +57,10 @@ func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	if err != nil {
 		return shared.DesignPhotoTransformResponse{}, err
 	}
-	// Żądanie bez ani jednej nastawy jest odmową, nie kopią: zasób oddany jako
-	// „przekształcony" bez przekształcenia zajmowałby miejsce w magazynie
-	// i w łańcuchu edycji, nie różniąc się od źródła niczym.
+	// Żądanie bez ani jednej nastawy jest odmową, nie kopią.
+
+	// Zasób oddany jako przekształcony bez przekształcenia zajmowałby miejsce w magazynie
+	// i łańcuchu.
 	if (z.RotateDeg == nil || *z.RotateDeg == 0) &&
 		(z.FlipHorizontal == nil || !*z.FlipHorizontal) &&
 		(z.FlipVertical == nil || !*z.FlipVertical) &&
@@ -131,8 +86,8 @@ func (a *adapterDesignu) Przeksztalc(ctx context.Context,
 	}, nil
 }
 
-// PrzeliczRozdzielczosc przelicza rozdzielczość — obsługuje
-// `design.photo.resample`.
+// PrzeliczRozdzielczosc przelicza rozdzielczość zdjęcia do wskazanych wymiarów —
+// obsługuje komendę design.photo.resample.
 func (a *adapterDesignu) PrzeliczRozdzielczosc(ctx context.Context,
 	z shared.DesignPhotoResampleRequest) (shared.DesignPhotoResampleResponse, error) {
 
@@ -172,7 +127,8 @@ func (a *adapterDesignu) PrzeliczRozdzielczosc(ctx context.Context,
 	}, nil
 }
 
-// Powieksz powiększa zdjęcie — obsługuje `design.photo.upscale`.
+// Powieksz powiększa zdjęcie krotnie z wyostrzeniem — obsługuje komendę
+// design.photo.upscale, przyjmując krotność dwa, cztery albo osiem.
 func (a *adapterDesignu) Powieksz(ctx context.Context,
 	z shared.DesignPhotoUpscaleRequest) (shared.DesignPhotoUpscaleResponse, error) {
 
@@ -222,7 +178,8 @@ func (a *adapterDesignu) Powieksz(ctx context.Context,
 	}, nil
 }
 
-// PopraweJakosc poprawia jakość zdjęcia — obsługuje `design.photo.enhance`.
+// PopraweJakosc poprawia jakość zdjęcia rachunkiem wkompilowanym — obsługuje komendę
+// design.photo.enhance, działając na zasobie wskazanym identyfikatorem.
 func (a *adapterDesignu) PopraweJakosc(ctx context.Context,
 	z shared.DesignPhotoEnhanceRequest) (shared.DesignPhotoEnhanceResponse, error) {
 
@@ -244,11 +201,9 @@ func (a *adapterDesignu) PopraweJakosc(ctx context.Context,
 	return shared.DesignPhotoEnhanceResponse{Asset: zasob, AppliedSteps: kroki}, nil
 }
 
-// SkorygujBarwe koryguje barwę zdjęcia — obsługuje `design.photo.color.correct`.
-//
-// Pole `histogramShift` jest POMIAREM: rdzeń liczy średnią jasność źródła
-// i wyniku i oddaje różnicę. Sprawdzian skutku ma po czym poznać, że korekcja
-// naprawdę ruszyła piksele, a nie tylko zwróciła `status: ok`.
+// SkorygujBarwe koryguje barwę zdjęcia — obsługuje komendę design.photo.color.correct.
+// Pole histogramShift jest pomiarem: rdzeń liczy średnią jasność źródła i wyniku i oddaje
+// różnicę.
 func (a *adapterDesignu) SkorygujBarwe(ctx context.Context,
 	z shared.DesignPhotoColorCorrectRequest) (shared.DesignPhotoColorCorrectResponse, error) {
 
@@ -277,9 +232,9 @@ func (a *adapterDesignu) SkorygujBarwe(ctx context.Context,
 func sredniaJasnoscDesignu(obraz image.Image) float64 {
 	granice := obraz.Bounds()
 	suma, punktow := 0.0, 0
-	// Próbkowanie co czwarty punkt w obu osiach: średnia z co szesnastego punktu
-	// różni się od pełnej o setne części jednostki, a rachunek jest szesnaście
-	// razy tańszy. Pomiar ma być pomiarem, nie kosztem.
+	// Próbkowanie co czwarty punkt: różnica od pełnej wartości to setne części jednostki.
+
+	// Rachunek jest wtedy szesnaście razy tańszy, a pomiar ma być pomiarem, nie kosztem.
 	for y := granice.Min.Y; y < granice.Max.Y; y += 4 {
 		for x := granice.Min.X; x < granice.Max.X; x += 4 {
 			r, g, b, _ := obraz.At(x, y).RGBA()
@@ -293,7 +248,8 @@ func sredniaJasnoscDesignu(obraz image.Image) float64 {
 	return suma / float64(punktow)
 }
 
-// NalozFiltr nakłada filtr obrazu — obsługuje `design.photo.filter.apply`.
+// NalozFiltr nakłada filtr obrazu z zadaną siłą — obsługuje komendę
+// design.photo.filter.apply, sprawdzając nazwę filtra przeciw wyliczeniu.
 func (a *adapterDesignu) NalozFiltr(ctx context.Context,
 	z shared.DesignPhotoFilterApplyRequest) (shared.DesignPhotoFilterApplyResponse, error) {
 
@@ -326,7 +282,8 @@ func (a *adapterDesignu) NalozFiltr(ctx context.Context,
 	return shared.DesignPhotoFilterApplyResponse{Asset: zasob}, nil
 }
 
-// Wyretuszuj retuszuje obszary — obsługuje `design.photo.retouch`.
+// Wyretuszuj retuszuje wskazane obszary zdjęcia — obsługuje komendę design.photo.retouch,
+// wypełniając każdy obszar treścią z jego otoczenia.
 func (a *adapterDesignu) Wyretuszuj(ctx context.Context,
 	z shared.DesignPhotoRetouchRequest) (shared.DesignPhotoRetouchResponse, error) {
 
@@ -362,7 +319,8 @@ func (a *adapterDesignu) Wyretuszuj(ctx context.Context,
 	}, nil
 }
 
-// Domaluj domalowuje obszar z maski — obsługuje `design.photo.inpaint`.
+// Domaluj domalowuje obszar wskazany maską lub wykazem prostokątów — obsługuje komendę
+// design.photo.inpaint.
 func (a *adapterDesignu) Domaluj(ctx context.Context,
 	z shared.DesignPhotoInpaintRequest) (shared.DesignPhotoInpaintResponse, error) {
 
@@ -393,9 +351,10 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 	droga := shared.DesignPhotoComputeRoute(shared.DesignPhotoComputeRouteRachunekRdzenia)
 	var wynik image.Image
 	if czyDrogaKanaluFotografiiDesignu(z.ChannelId) {
-		// Maska jedzie do kanału jako OBRAZ, bo tak przyjmuje ją punkt końcowy
-		// edycji. Rdzeń ma już maskę policzoną (z zasobu albo z obszarów), więc
-		// zamienia ją w obraz jednokanałowy tą samą drogą, którą zapisuje wyniki.
+		// Maska jedzie do kanału jako obraz, bo tak przyjmuje ją punkt końcowy edycji.
+
+		// Rdzeń zamienia policzoną maskę w obraz jednokanałowy tą samą drogą, którą
+		// zapisuje wyniki.
 		polecenie := "domaluj obszar wskazany maską tak, żeby wtopił się w otoczenie"
 		if z.Prompt != nil && strings.TrimSpace(*z.Prompt) != "" {
 			polecenie = strings.TrimSpace(*z.Prompt)
@@ -419,8 +378,8 @@ func (a *adapterDesignu) Domaluj(ctx context.Context,
 	return shared.DesignPhotoInpaintResponse{Asset: zasob, ComputedBy: droga}, nil
 }
 
-// RozszerzKadr rozszerza kadr poza pierwotną ramkę — obsługuje
-// `design.photo.expand`.
+// RozszerzKadr rozszerza kadr poza pierwotną ramkę — obsługuje komendę
+// design.photo.expand, wypełniając nowy obszar treścią z brzegu obrazu.
 func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	z shared.DesignPhotoExpandRequest) (shared.DesignPhotoExpandResponse, error) {
 
@@ -463,9 +422,11 @@ func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	droga := shared.DesignPhotoComputeRoute(shared.DesignPhotoComputeRouteRachunekRdzenia)
 	var wynik image.Image
 	if czyDrogaKanaluFotografiiDesignu(z.ChannelId) {
-		// Materiałem jest płótno POWIĘKSZONE z oryginałem w środku i pustymi
-		// marginesami, a maską — same marginesy. Wysłanie samego oryginału kazałoby
-		// modelowi domyślać się, gdzie ma dorysować i ile; płótno mówi to wymiarem.
+		// Materiałem jest płótno powiększone z oryginałem w środku, a maską — same
+		// marginesy.
+
+		// Wysłanie samego oryginału kazałoby modelowi domyślać się, gdzie i ile
+		// dorysować.
 		polecenie := "dorysuj brakujące części obrazu w obszarze wskazanym maską, " +
 			"kontynuując treść zdjęcia"
 		if z.Prompt != nil && strings.TrimSpace(*z.Prompt) != "" {
@@ -494,7 +455,8 @@ func (a *adapterDesignu) RozszerzKadr(ctx context.Context,
 	}, nil
 }
 
-// OdetnijTlo odcina tło — obsługuje `design.photo.background.remove`.
+// OdetnijTlo odcina tło zdjęcia i zostawia kanał krycia — obsługuje komendę
+// design.photo.background.remove.
 func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 	z shared.DesignPhotoBackgroundRemoveRequest) (shared.DesignPhotoBackgroundRemoveResponse, error) {
 
@@ -528,9 +490,9 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 		if err != nil {
 			return shared.DesignPhotoBackgroundRemoveResponse{}, err
 		}
-		// Udział punktów przezroczystych liczy się z PLIKU kanału, nie z założenia:
-		// obraz bez ani jednego punktu przezroczystego nie jest odcięciem tła i pola
-		// `hasAlpha: true` nie wolno nad nim postawić.
+		// Udział punktów przezroczystych liczy się z pliku kanału, nie z założenia.
+
+		// Obraz bez ani jednego punktu przezroczystego nie jest odcięciem tła.
 		udzial = udzialPrzezroczystosciDesignu(wynik)
 		if udzial == 0 {
 			return shared.DesignPhotoBackgroundRemoveResponse{}, bladWydaniaDesignu(fmt.Sprintf(
@@ -565,8 +527,8 @@ func (a *adapterDesignu) OdetnijTlo(ctx context.Context,
 	}, nil
 }
 
-// ZaznaczObiekt zaznacza obiekt i oddaje maskę — obsługuje
-// `design.photo.select.object`.
+// ZaznaczObiekt zaznacza obiekt wokół wskazanego punktu i oddaje maskę — obsługuje
+// komendę design.photo.select.object.
 func (a *adapterDesignu) ZaznaczObiekt(ctx context.Context,
 	z shared.DesignPhotoSelectObjectRequest) (shared.DesignPhotoSelectObjectResponse, error) {
 
@@ -604,11 +566,9 @@ func (a *adapterDesignu) ZaznaczObiekt(ctx context.Context,
 	}, nil
 }
 
-// UstawMaske zakłada maskę nieniszczącą — obsługuje `design.photo.mask.set`.
-//
-// „Nieniszcząca" znaczy tu dokładnie to: ŹRÓDŁO zostaje nietknięte, a maska
-// wchodzi do wariantu i do łańcucha edycji razem ze wskazaniem, którym zasobem
-// jest. Operator zdejmuje ją wracając do źródła, którego nikt nie nadpisał.
+// UstawMaske zakłada maskę nieniszczącą — obsługuje komendę design.photo.mask.set.
+// Nieniszcząca znaczy, że źródło zostaje nietknięte, a maska wchodzi do wariantu i do
+// łańcucha edycji razem ze wskazaniem zasobu.
 func (a *adapterDesignu) UstawMaske(ctx context.Context,
 	z shared.DesignPhotoMaskSetRequest) (shared.DesignPhotoMaskSetResponse, error) {
 
@@ -647,16 +607,17 @@ func (a *adapterDesignu) UstawMaske(ctx context.Context,
 	}, nil
 }
 
-// nalozMaskeNaObrazDesignu przepuszcza obraz przez maskę: jasność maski staje się
-// kryciem punktu.
+// nalozMaskeNaObrazDesignu przepuszcza obraz przez maskę: jasność maski staje się kryciem
+// punktu, z opcjonalnym odwróceniem i miękkością krawędzi.
 func nalozMaskeNaObrazDesignu(obraz, maska image.Image, odwroc bool,
 	miekkosc float64) image.Image {
 
 	granice := obraz.Bounds()
 	uzytaMaska := maska
 	if miekkosc > 0 {
-		// Miękkość krawędzi to rozmycie SAMEJ maski — rozmycie obrazu zmieniłoby
-		// jego treść, a nie kształt zaznaczenia.
+		// Miękkość krawędzi to rozmycie samej maski.
+
+		// Rozmycie obrazu zmieniłoby jego treść, nie kształt zaznaczenia.
 		uzytaMaska = nalozFiltrFotografiiDesignu(maska, shared.DesignPhotoFilterBlur,
 			przytnijUlamekDesignu(miekkosc/8))
 	}
@@ -675,18 +636,9 @@ func nalozMaskeNaObrazDesignu(obraz, maska image.Image, odwroc bool,
 	return wynik
 }
 
-// sprawdzKanalObrazowyFotografiiDesignu sprawdza kanał wskazany przy czynności
-// o wariancie neuronowym.
-//
-// Wskazanie kanału, którego nie ma, jest ODMOWĄ, nie ciszą: Operator prosił
-// o drogę neuronową i ma prawo wiedzieć, że wskazał kanał nieistniejący.
-// Sprawdzenie idzie tą samą drogą, co przy `design.asset.generate`, więc odmowy
-// są te same i Operator naprawia je tymi samymi ruchami.
-//
-// Sprawdzenie zostaje przed odczytem zasobu, choć wywołanie kanału i tak wybrało
-// by go ponownie: odmowa za zły kanał ma padać PRZED wczytaniem zdjęcia
-// z magazynu, żeby Operator nie czekał na rachunek, którego wynik i tak nie
-// wyjdzie.
+// sprawdzKanalObrazowyFotografiiDesignu sprawdza kanał wskazany przy czynności o
+// wariancie neuronowym. Wskazanie kanału, którego nie ma, jest odmową, nie ciszą, tą samą
+// drogą, co przy komendzie design.asset.generate.
 func (a *adapterDesignu) sprawdzKanalObrazowyFotografiiDesignu(kanal *string) error {
 	if kanal == nil || strings.TrimSpace(*kanal) == "" {
 		return nil
@@ -700,33 +652,15 @@ func (a *adapterDesignu) sprawdzKanalObrazowyFotografiiDesignu(kanal *string) er
 }
 
 // czyDrogaKanaluFotografiiDesignu rozstrzyga, czy czynność idzie kanałem modelu.
-//
-// Rozstrzyga WSKAZANIE, nie dostępność: kontrakt mówi o tych czterech polach
-// wprost — „gdy stoi, liczy kanał, gdy nie stoi — rachunek wkompilowany".
-// Zejście na pierwszy czynny kanał obrazowy przy pominiętym polu wysyłałoby
-// zdjęcie Operatora do dostawcy, o którego nie prosił, i kosztowało go pieniądze
-// bez jednego słowa.
+// Rozstrzyga wskazanie pola, nie dostępność kanału: gdy pole stoi, liczy kanał, gdy pole
+// jest pominięte, liczy rachunek wkompilowany.
 func czyDrogaKanaluFotografiiDesignu(kanal *string) bool {
 	return kanal != nil && strings.TrimSpace(*kanal) != ""
 }
 
-// obrazKanalemFotografiiDesignu wysyła materiał (i maskę, gdy czynność ją ma) do
-// kanału obrazowego i oddaje obraz, który kanał policzył.
-//
-// ── Wynik jest sprowadzany do wymiaru, który czynność OBIECAŁA ──────────────
-// Punkt końcowy edycji oddaje obraz o rozmiarze ze swojej nastawy, nie o tym,
-// który wynika z żądania Operatora: `factor: 4` znaczy dokładnie cztery razy,
-// a `expand` o sto punktów z lewej znaczy dokładnie sto. Dlatego wynik kanału
-// dochodzi do zamówionego wymiaru przeliczeniem rozdzielczości rdzenia —
-// najpierw kadrem do proporcji celu (żeby obraz nie został ściśnięty), potem
-// przeliczeniem. TREŚĆ pozostaje kanału i to o niej mówi `computedBy`; wymiar
-// jest zamówieniem Operatora i o nim mówią pola `width` i `height`.
-//
-// ── Niepowodzenie kanału jest ODMOWĄ, nie cichym zejściem na rachunek ───────
-// Operator wskazał kanał wprost, więc wynik rachunku wkompilowanego byłby
-// odpowiedzią na inne żądanie. Zdanie kanału (brak poświadczenia, odmowa
-// dostawcy, odpowiedź bez obrazu) jedzie do niego w treści odmowy, bo kanał wie
-// o swoim braku więcej niż ten moduł.
+// obrazKanalemFotografiiDesignu wysyła materiał, a gdy czynność ma maskę także maskę, do
+// kanału obrazowego i oddaje obraz, który kanał policzył, sprowadzony do wymiaru, który
+// czynność obiecała.
 func (a *adapterDesignu) obrazKanalemFotografiiDesignu(ctx context.Context, komenda string,
 	kanal, okno *string, polecenie string, material, maska image.Image,
 	szerokosc, wysokosc int) (image.Image, error) {
@@ -782,9 +716,9 @@ func sprowadzWynikKanaluFotografiiDesignu(wynik image.Image,
 	if granice.Dx() == szerokosc && granice.Dy() == wysokosc {
 		return wynik
 	}
-	// Kadr do proporcji celu przed przeliczeniem: bez niego obraz kwadratowy
-	// oddany na żądanie o proporcji 4:3 zostałby ściśnięty, a ściśnięte zdjęcie
-	// jest zdjęciem zepsutym, nie przeliczonym.
+	// Kadr do proporcji celu idzie przed przeliczeniem rozdzielczości.
+
+	// Bez niego obraz kwadratowy na żądanie proporcji 4:3 zostałby ściśnięty.
 	przyciety := wpiszProporcjeWKadrDesignu(granice, float64(szerokosc)/float64(wysokosc))
 	if przyciety.Dx() > 0 && przyciety.Dy() > 0 && przyciety != granice {
 		wynik = imaging.Crop(wynik, przyciety)
@@ -792,17 +726,9 @@ func sprowadzWynikKanaluFotografiiDesignu(wynik image.Image,
 	return imaging.Resize(wynik, szerokosc, wysokosc, imaging.Lanczos)
 }
 
-// zapiszWariantFotografiiDesignu utrwala wynik obróbki jako WARIANT źródła
-// i dokłada ogniwo do łańcucha edycji.
-//
-// Kolejność jest ta sama, co przy wniesieniu i przy generowaniu: najpierw bajty
-// w magazynie, potem wiersz zasobu, na końcu ogniwo łańcucha. Ogniwo na końcu, bo
-// wskazuje klucz wiersza, którego przed zapisem nie ma.
-//
-// Niepowodzenie zapisu OGNIWA nie unieważnia komendy: bajty i wiersz są już
-// prawdziwe, a odmowa dlatego, że nie dało się zapisać opisu obróbki, zabierałaby
-// Operatorowi rzecz, o którą prosił. Zasób wychodzi wtedy bez ogniwa — czyli
-// `design.photo.history.get` mówi prawdę o tym, czego rdzeń o nim nie wie.
+// zapiszWariantFotografiiDesignu utrwala wynik obróbki jako wariant źródła i dokłada
+// ogniwo do łańcucha edycji, tą samą kolejnością zapisu, co przy wniesieniu i przy
+// generowaniu zasobu.
 func (a *adapterDesignu) zapiszWariantFotografiiDesignu(ctx context.Context,
 	zrodlo dane.ZasobDesignu, okno *string, komenda, opis string, obraz image.Image,
 	nastawy any, droga *shared.DesignPhotoComputeRoute) (shared.DesignAsset, error) {
@@ -818,8 +744,9 @@ func (a *adapterDesignu) zapiszWariantFotografiiDesignu(ctx context.Context,
 		return shared.DesignAsset{}, err
 	}
 
-	// Wariant wskazuje ŹRÓDŁO — po tym łańcuch edycji da się przejść wstecz do
-	// zdjęcia wniesionego przez Operatora.
+	// Wariant wskazuje źródło.
+
+	// Po tym łańcuch edycji da się przejść wstecz do zdjęcia wniesionego pierwotnie.
 	zapisany.WariantZasobuID = &zrodlo.Kod
 	zapisany, err = a.repozytorium.ZapiszZasob(ctx, zapisany)
 	if err != nil {

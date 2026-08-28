@@ -1,19 +1,6 @@
 // Odpowiedzialność pliku: zamiana jednego nagrania na tekst — złożenie
 // wywołania, odczyt odpowiedzi pomocnika i rozstrzygnięcie, czy wynik wolno
 // oddać jako transkrypcję.
-//
-// Pusta transkrypcja jest wynikiem, gdy przetworzenie się odbyło. Atrapą byłoby
-// oddanie pustego tekstu zamiast rozpoznania, którego nie wykonano; nie jest nią
-// pusty tekst będący stwierdzeniem, że w nagraniu nie ma mowy. Rozróżnia je pole
-// `Stan`, a odmowa zostaje wyłącznie dla przypadku trzeciego: nie przetworzono.
-//
-// Dźwięk nie wychodzi z maszyny Operatora. To warunek pakietu, nie preferencja.
-// Ten plik nie ma i nie będzie miał klienta HTTP: jedyną drogą nagrania jest
-// ścieżka na dysku podana pomocnikowi, który pracuje lokalnie na procesorze.
-//
-// Trwanie to długość nagrania, nie czas przetwarzania. Pomocnik oddaje jedno
-// i drugie da się pomylić przy czytaniu; pomyłka byłaby kłamstwem w dzienniku,
-// bo na słabym procesorze przetwarzanie trwa dłużej niż samo nagranie.
 package mowa
 
 import (
@@ -26,15 +13,13 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// granicaTranskrypcji to granica czasu jednego rozpoznania.
-//
-// Hojna rozmyślnie: pierwsze uruchomienie pobiera wagi modelu (rząd setek
-// megabajtów), a rozpoznanie na procesorze bez akceleracji bywa wolniejsze od
-// odtwarzania nagrania. Granica ma odciąć proces zawieszony, a nie pracę, która
-// po prostu trwa.
+// granicaTranskrypcji to granica czasu jednego rozpoznania. Hojna
+// rozmyślnie: granica ma odciąć proces zawieszony, a nie pracę, która po
+// prostu trwa.
 const granicaTranskrypcji = 30 * time.Minute
 
-// Przełączniki pomocnika w trybie rozpoznawania.
+// Przełączniki pomocnika w trybie rozpoznawania, przekazywane jako
+// argumenty wywołania procesu pomocnika.
 const (
 	przelacznikPliku         = "--plik"
 	przelacznikModelu        = "--model"
@@ -42,12 +27,8 @@ const (
 	przelacznikKataloguModel = "--katalog-modeli"
 )
 
-// Zlecenie opisuje jedno rozpoznanie.
-//
-// Okno, zasady i obszar jadą razem ze zleceniem, bo pomocnik przechodzi przez
-// tę samą bramę izolacji, co każdy inny proces okna (uruchomienie.go). Model
-// i język puste znaczą wartość z ustawień okna, nie brak wskazania — brak
-// danych ma dawać poprawny wynik, nie odmowę.
+// Zlecenie opisuje jedno rozpoznanie. Model i język puste znaczą wartość
+// z ustawień okna, nie brak wskazania.
 type Zlecenie struct {
 	// Odnosnik — wskazanie nagrania; ścieżka pliku na dysku Operatora.
 	Odnosnik string
@@ -78,26 +59,21 @@ type Transkrypcja struct {
 	Model string `json:"model"`
 	// Jezyk — język, w którym rozpoznano.
 	Jezyk string `json:"jezyk"`
-	// Stan niesie stanRozpoznano albo StanBezMowy — patrz niżej.
+	// Stan niesie stanRozpoznano albo StanBezMowy.
 	Stan string `json:"stan"`
 	// Blad — odmowa pomocnika; wypełniona wyłącznie, gdy rozpoznania nie ma.
 	Blad string `json:"blad"`
 }
 
 // Trzy stany transkrypcji, z których dwa są wynikiem, a trzeci odmową.
-//
-// Nagranie ciszy albo szumu daje pusty tekst, który jest faktem, a nie atrapą:
-// odmowa znaczyłaby „rdzeń nie umie rozpoznać”, podczas gdy rdzeń umie i
-// stwierdził, że nie ma czego rozpoznać. Rozróżnienie przebiega więc nie po
-// długości tekstu, lecz po tym, czy przetworzenie się odbyło:
-//
-//	stanRozpoznano — przetworzono, mowa jest, tekst niepusty
-//	StanBezMowy    — przetworzono, mowy brak, tekst pusty i to jest wynik
-//	(odmowa)       — nie przetworzono; jedyny przypadek błędu, bez Transkrypcji
+// Rozróżnienie przebiega nie po długości tekstu, lecz po tym, czy
+// przetworzenie się odbyło.
 const (
-	// stanRozpoznano — w nagraniu rozpoznano wypowiedź.
+	// stanRozpoznano — w nagraniu rozpoznano wypowiedź, a tekst wraca niepusty
+	// jako wynik samego rozpoznania.
 	stanRozpoznano = "rozpoznano"
-	// StanBezMowy — nagranie przetworzono i nie zawiera mowy.
+	// StanBezMowy — nagranie przetworzono i nie zawiera mowy, a pusty tekst
+	// jest tego wynikiem, nie odmową.
 	StanBezMowy = "bez_mowy"
 )
 
@@ -110,16 +86,9 @@ func (t Transkrypcja) Rozpoznano() bool {
 	return t.Stan == stanRozpoznano
 }
 
-// Transkrybuj zamienia nagranie na tekst.
-//
-// Kolejność sprawdzeń nie jest dowolna: najpierw nagranie, potem pomocnik.
-// Ścieżka, której nie ma, jest pomyłką Operatora i ma wrócić natychmiast,
-// zanim rdzeń zacznie szukać interpretera i uruchamiać proces — komunikat
-// o brakującym Pythonie w odpowiedzi na literówkę w ścieżce wskazywałby
-// naprawę zupełnie nie tam, gdzie leży usterka.
-//
-// Dziennik zapisuje także odmowy. Odmowa bez śladu jest nie do zdiagnozowania,
-// a to właśnie odmowy Operator zgłasza.
+// Transkrybuj zamienia nagranie na tekst. Kolejność sprawdzeń nie jest
+// dowolna: najpierw nagranie, potem pomocnik. Dziennik zapisuje także
+// odmowy.
 func (s *Silnik) Transkrybuj(ctx context.Context, z Zlecenie) (Transkrypcja, error) {
 	model := pierwszeNiepuste(z.Model, s.ustawienia.Model)
 	jezyk := pierwszeNiepuste(z.Jezyk, s.ustawienia.Jezyk)
@@ -151,11 +120,9 @@ func (s *Silnik) Transkrybuj(ctx context.Context, z Zlecenie) (Transkrypcja, err
 	return transkrypcja, nil
 }
 
-// argumentyRozpoznania składa wiersz wywołania pomocnika w trybie rozpoznawania.
-//
-// Katalog modeli dokładany jest tylko wtedy, gdy Operator go wskazał: wartość
-// pusta znaczy katalog domyślny biblioteki, a przekazanie pustego przełącznika
-// kazałoby pomocnikowi szukać modelu w katalogu o nazwie pustej.
+// argumentyRozpoznania składa wiersz wywołania pomocnika w trybie
+// rozpoznawania. Katalog modeli dokładany jest tylko wtedy, gdy Operator
+// go wskazał.
 func argumentyRozpoznania(nagranie Nagranie, model, jezyk, katalogModeli string) []string {
 	argumenty := []string{
 		przelacznikPliku, nagranie.Sciezka,
@@ -170,10 +137,6 @@ func argumentyRozpoznania(nagranie Nagranie, model, jezyk, katalogModeli string)
 
 // odczytajRozpoznanie rozbiera odpowiedź pomocnika i pilnuje, żeby nie oddać
 // pustego wyniku jako udanego rozpoznania.
-//
-// Nazwa mówi „rozpoznanie", a nie „transkrypcję", bo `odczytajTranskrypcje`
-// należy już do dziennika i czyta wiersz bazy. Dwie funkcje o jednej nazwie
-// w jednym pakiecie nie tylko się nie skompilują — myliłyby dwa różne odczyty.
 func odczytajRozpoznanie(wynik Wynik) (Transkrypcja, error) {
 	tresc := strings.TrimSpace(string(wynik.Wyjscie))
 	if tresc == "" {
@@ -192,10 +155,8 @@ func odczytajRozpoznanie(wynik Wynik) (Transkrypcja, error) {
 		return Transkrypcja{}, &BrakSilnika{Powod: odmowa}
 	}
 
-	// Pusty tekst nie jest odmową — patrz komentarz przy stałych stanów.
-	// Stan uzupełniamy, gdy pomocnik go nie podał: starsze wydanie pomocnika
-	// pola nie miało, a odmowa z powodu brakującego pola unieważniłaby wynik,
-	// który jest kompletny. Rozstrzyga wtedy sama treść.
+	// Pusty tekst nie jest odmową. Stan wchodzi uzupełniony, gdy pomocnik go
+	// nie podał.
 	if strings.TrimSpace(odpowiedz.Stan) == "" {
 		odpowiedz.Stan = stanRozpoznano
 		if strings.TrimSpace(odpowiedz.Tekst) == "" {
@@ -206,15 +167,13 @@ func odczytajRozpoznanie(wynik Wynik) (Transkrypcja, error) {
 }
 
 // OpisDziennika składa zdanie, którym transkrypcja melduje się w dzienniku.
-//
-// Kształt wprost z rozpoznania procesu głównego: „dyktowanie: rozpoznano N zn.
-// (model …)”. Liczba znaków jest miarą, którą widać bez zaglądania w treść —
-// dziennik nie powtarza wypowiedzi Operatora.
+// Liczba znaków jest miarą, którą widać bez zaglądania w treść.
 func OpisDziennika(t Transkrypcja) string {
 	return "dyktowanie: rozpoznano " + strconv.Itoa(t.Znakow) + " zn. (model " + t.Model + ")"
 }
 
-// pierwszeNiepuste oddaje wskazanie zlecenia albo — gdy go nie ma — ustawienie.
+// pierwszeNiepuste oddaje wskazanie zlecenia albo — gdy go nie ma —
+// ustawienie okna zamiast niego wprost.
 func pierwszeNiepuste(wskazane, domyslne string) string {
 	if strings.TrimSpace(wskazane) != "" {
 		return wskazane

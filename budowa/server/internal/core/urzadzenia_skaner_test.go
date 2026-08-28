@@ -1,13 +1,4 @@
-// Sprawdzian odmów warstwy urządzeń przy braku programu samej warstwy: droga
-// SANE (`scanimage`) ma odmawiać tak samo, jak droga WIA (`pwsh`) — zdaniem
-// nazywającym brak, naprawę i drogę obejścia `studio.ingest.queue.add`.
-//
-// Sprawdzian nie uruchamia ani jednego programu. Brak jest wymuszony odcięciem
-// PATH, nie stanem maszyny — na stanowisku deweloperskim `scanimage` bywa
-// zainstalowany, więc sprawdzian liczący na jego nieobecność kłamałby tam,
-// gdzie się go uruchamia. Uruchamiacz-atrapa pilnuje drugiej strony pomiaru:
-// odmowa braku ma zapaść PRZED startem procesu, więc dojście do uruchamiacza
-// jest usterką mierzonej drogi, nie zdarzeniem.
+// Sprawdzian odmów warstwy urządzeń przy braku programu: droga SANE ma odmawiać tak samo jak droga WIA, zdaniem nazywającym brak, naprawę i drogę obejścia. Brak jest wymuszony odcięciem PATH, nie stanem maszyny.
 package core
 
 import (
@@ -90,9 +81,7 @@ func TestSkanowanieNazywaBrakProgramuSaneIDrogeObejscia(t *testing.T) {
 			runtime.GOOS)
 	}
 	odetnijProgramyWarstw(t)
-	// Katalog skanów powstaje przed rozstrzygnięciem drogi, a adapter bez
-	// katalogu roboczego schodzi na katalog tymczasowy systemu — ten idzie pod
-	// katalog sprawdzianu, żeby pomiar nie zostawił śladu na maszynie.
+	// Katalog skanów powstaje przed rozstrzygnięciem drogi; TMPDIR wskazuje katalog sprawdzianu bez śladu.
 	t.Setenv("TMPDIR", t.TempDir())
 	a := &adapterStudia{uruchamiacz: uruchamiaczNieruszany{t: t}}
 
@@ -113,11 +102,7 @@ func TestSkanowanieNazywaBrakProgramuSaneIDrogeObejscia(t *testing.T) {
 	}
 }
 
-// TestOdmowaBrakuProgramuJestTaSamaNaObuDrogachSkanera mierzy parytet na
-// poziomie mechanizmu, bo gałęzi Windows nie da się wziąć na Linuksie przez
-// `runtime.GOOS`: obie odmowy składa dokładnie tak, jak składają je gałęzie
-// `wykazSkanerow` — wołaniem warstwy i przekładem braku — i wymaga od nich
-// jednego kodu oraz tej samej drogi obejścia.
+// TestOdmowaBrakuProgramuJestTaSamaNaObuDrogachSkanera mierzy parytet mechanizmu, bo gałęzi Windows nie da się wziąć na Linuksie. Obie odmowy składa tak, jak gałęzie wykazSkanerow, i wymaga jednego kodu oraz tej samej drogi obejścia.
 func TestOdmowaBrakuProgramuJestTaSamaNaObuDrogachSkanera(t *testing.T) {
 	odetnijProgramyWarstw(t)
 	a := &adapterStudia{uruchamiacz: uruchamiaczNieruszany{t: t}}

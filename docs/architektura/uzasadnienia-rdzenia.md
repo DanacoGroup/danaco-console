@@ -6521,3 +6521,17 @@ zostanie wskazane ręcznie.
 Sprawdzian sprawdza to, co da się sprawdzić bez skanera i bez drukarki:
 czy rdzeń odczytuje odpowiedź, i czy odmawia tam, gdzie odpowiedzi nie
 zrozumiał, zamiast oddać pusty wykaz.
+
+## budowa/server/internal/core/urzadzenia_skaner_test.go
+
+Zdanie odmowy nazywa brak, naprawę i drogę obejścia komendą
+studio.ingest.queue.add.
+
+Sprawdzian nie uruchamia ani jednego programu skanera. Brak jest wymuszony
+odcięciem PATH, nie stanem maszyny — na stanowisku deweloperskim program
+scanimage bywa zainstalowany, więc sprawdzian liczący na jego nieobecność
+kłamałby tam, gdzie się go uruchamia. Uruchamiacz-atrapa pilnuje drugiej
+strony pomiaru: odmowa braku ma zapaść przed startem procesu, więc dojście
+do uruchamiacza jest usterką mierzonej drogi, nie zdarzeniem.
+
+Adapter bez katalogu roboczego schodzi na katalog tymczasowy systemu.

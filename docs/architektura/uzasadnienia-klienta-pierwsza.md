@@ -7260,3 +7260,12 @@ sesję, okno i licznik procesów, ale nie niesie wartości obserwator albo
 operator. Wiązanie kolejki z ekspertem, projektem albo automatyką jest
 czynnością panelu, nie źródła biegu, bo bieg pętli koordynator–wykonawca
 porusza rolami i nie zna projektów.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zrodlo-okien.ts
+Rola okna pochodzi z kontraktu, nie z oznaczenia własnego: pole roli
+i identyfikator koordynatora niosą całą przynależność okna do pętli
+koordynator–wykonawca, a moduł nie zakłada drugiego rejestru ról poza
+komendą rdzenia. Nadanie roli idzie komendą przeznaczoną do nadawania roli,
+a wcielenie osobną komendą aktualizacji roli, bo zmiana okna pola wcielenia
+nie niesie; zmiana okna zostaje przy tym, co jest jej: tytuł, katalogi,
+kanał modelu.

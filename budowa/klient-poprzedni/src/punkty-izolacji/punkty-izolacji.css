@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO PUNKTY IZOLACJI (`punkty-izolacji`, zarządca, konfiguracja)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy, ani jednego rozmiaru — wszystko z żetonów
-   motywu (`--dn-*`) i biblioteki `komponenty/`. Obudowa okna
-   (nagłówek, opis, akcje, ciało) niesie `komponenty/rama-okna.ts` przez klasy
-   `dn-okno*`; tutaj zostają wyłącznie trzy panele okna i miejsca montażu
-   obszarów w nich. Stan treści każdego obszaru (ładowanie/pustka/błąd/gotowe)
-   niesie `komponenty/stan-tresci.ts` przez klasy `pi-stany*` — nie duplikat.
-   ============================================================================ */
+/* Okno punktów izolacji zawiera trzy panele i miejsca montażu obszarów w nich, korzystając wyłącznie z żetonów motywu i biblioteki komponentów. */
 
 /* ── Trzy panele okna ──────────────────────────────────────────────────────────
    Selektor zasięgu · macierz izolacji · profil i podgląd polityki efektywnej.

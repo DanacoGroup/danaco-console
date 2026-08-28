@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — POWŁOKA ŚRODOWISKA · SZKIELET
-   ----------------------------------------------------------------------------
-   Rozkład czterech pasów powłoki i jego zachowanie przy zawężeniu okna.
-   Wygląd każdego pasa niesie własny arkusz obok modułu, który go buduje
-   (README, „Modularność" — podział arkusza per komponent):
-
-     pasek-gorny.css · karty-sesji.css · nawigacja-modulow.css · obszar-roboczy.css
-
-   Arkusz wciąga sam moduł `powloka.ts`, więc trafia do pakietu razem z nim.
-   Wszystkie barwy, stopnie pisma, odstępy, promienie i czasy pochodzą
-   z żetonów `motyw/`; wymiary układu są wielokrotnością 4 px.
-   ============================================================================ */
+/* Powłoka środowiska rozkłada cztery pasy i ich zachowanie przy zawężeniu okna; wygląd każdego pasa niesie własny arkusz obok modułu, który go buduje. */
 
 .dn-srodowisko {
   /* Szerokość pełnej kolumny nawigacji niesie system wizualny
@@ -31,7 +19,7 @@
   line-height: var(--dn-lh-bazowy);
 }
 
-/* Korpus — nawigacja stałej szerokości i obszar roboczy zabierający resztę */
+/* Korpus łączy nawigację stałej szerokości z obszarem roboczym, który zabiera całą pozostałą szerokość dostępnej kolumny. */
 .dn-srodowisko__korpus {
   display: grid;
   grid-template-columns: var(--dn-wym-boczna) minmax(0, 1fr);
@@ -39,16 +27,7 @@
   overflow: hidden;
 }
 
-/* ---------------------------------------------------------------------------
-   ZAWĘŻENIE OKNA — punkt łamania w2 (960 px)
-   Nawigacja pozostaje pionowa i schodzi do samych ikon. Odpadają podpisy
-   powtarzające informację dostępną gdzie indziej.
-
-   Próg jest punktem łamania w2 systemu wizualnego — tym samym, przy którym
-   system nazywa zwinięcie bocznej nawigacji do ikon. Wartość stoi tu liczbą,
-   bo zapytanie medialne nie czyta zmiennych własnych; żeton `--dn-bp-w2`
-   (`motyw/wymiary.css`) pozostaje jej jedynym źródłem i musi się z nią zgadzać.
-   --------------------------------------------------------------------------- */
+/* Zawężenie okna poniżej punktu łamania w2 sprowadza nawigację pionową do samych ikon, chowając podpisy powtarzające informację dostępną gdzie indziej. */
 @media (max-width: 960px) {
   .dn-srodowisko__korpus {
     grid-template-columns: var(--dn-szer-nawigacja-waska) minmax(0, 1fr);

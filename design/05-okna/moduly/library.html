@@ -260,8 +260,7 @@
     </span>
   </header>
 
-  <!-- ══ PASEK NARZĘDZI — stały pas czynności okna i aplikacji ═══════════ -->
-    <!-- ══ PASEK EDYCJI — belka nakładana, układ przeglądarkowy ═════════ -->
+  <!-- Pasek narzędzi: stały pas czynności okna z nałożoną belką edycji w układzie przeglądarkowym. -->
       <div class="dn-narzedzia-pas">
       <div class="dn-narzedzia">
 
@@ -750,7 +749,7 @@
 
 <script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
 
-<!-- ══ OKNO „DOSTOSUJ WSTĄŻKĘ" — konfiguracja paska edycji ═══════════ -->
+<!-- Modal „Dostosuj wstążkę” rozmieszcza składniki między wstążką poziomą a szyną pionową, porządkuje ich kolejność w rodzinach oraz obejmuje zakładki kart sesji, wyglądu i personalizacji widoku. -->
 <dialog class="dn-modal dn-modal--szeroki" id="dostosuj-wstazke" aria-labelledby="dostosuj-tytul">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul" id="dostosuj-tytul">Dostosuj paski</h2>

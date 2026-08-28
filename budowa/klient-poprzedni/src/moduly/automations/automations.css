@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Moduł Automations rozkłada pięć okien operacyjnych, odróżniając trzy stany obowiązkowe oraz oznaczenie ścieżki krytycznej i stanu przebiegu. ================
    DANACO CONSOLE — MODUŁ AUTOMATIONS (pięć okien operacyjnych)
    ----------------------------------------------------------------------------
    Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu (`--dn-*`)
@@ -32,14 +32,14 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Dwa kreatory obok siebie: budowa struktury i jej układ. */
+/* Dwa kreatory obok siebie w tym samym rzędzie: budowa struktury automatyzacji po lewej, jej graficzny układ po prawej stronie. */
 .da-modul__gora {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--dn-od-4);
 }
 
-/* Pas wykonania: harmonogram, kolejka, monitor. */
+/* Pas wykonania obejmuje trzy kolumny równej szerokości: harmonogram nadchodzących uruchomień, kolejkę oczekujących zadań i bieżący monitor. */
 .da-modul__dol {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -147,13 +147,13 @@
   gap: var(--dn-od-1);
 }
 
-/* Podświetlenie ścieżki krytycznej — pozycja panelu akcji Orchestratora. */
+/* Podświetlenie ścieżki krytycznej wyróżnia pozycję, na której stoi panel akcji Orchestratora, wstęgą w barwie ostrzeżenia. */
 .da-pozycja[data-sciezka='krytyczna'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
   padding-left: var(--dn-od-2);
 }
 
-/* Przebieg nieudany i przerwany ma być odróżnialny od trwającego. */
+/* Przebieg nieudany oraz przebieg przerwany mają być odróżnialne od przebiegu trwającego kolorem wstęgi bocznej pozycji. */
 .da-pozycja[data-stan-przebiegu='failed'],
 .da-pozycja[data-stan-przebiegu='stopped'] {
   border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
@@ -270,7 +270,7 @@
   min-width: 0;
 }
 
-/* Zdanie o cykliczności w mowie Operatora, tuż pod polem zapisu. */
+/* Zdanie o cykliczności zapisu jest wypowiadane w mowie Operatora i stoi bezpośrednio pod polem zapisu wzorca cron. */
 .da-opis-cyklicznosci {
   margin: 0;
 }

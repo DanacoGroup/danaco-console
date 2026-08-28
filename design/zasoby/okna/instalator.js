@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Skrypt składa okno instalatora: przełącza sześć kroków kreatora, prowadzi wykrycie procesora z trzema wynikami, przebieg zapisu z wycofywaniem i błędem oraz pas działań zależny od kroku.
    INSTALATOR — złożenie okna
 
    Mechanika kreatora sześciu kroków: przełączanie ekranów, wykrycie procesora

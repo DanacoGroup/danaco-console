@@ -1,8 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNA WEJŚCIOWE
-   ----------------------------------------------------------------------------
-   Wspólna budowa okien poprzedzających pracę: instalator, okno startowe
-   (łączenie), okno rejestracji i logowania, okno przygotowania środowiska.
+/* Okna wejściowe dzielą wspólną budowę dla instalatora, okna startowego, okna rejestracji i logowania oraz okna przygotowania środowiska pracy, w jednym stylu.
 
    Wszystkie dzielą się na dwie kolumny: kolumnę tożsamości (atrament,
    po lewej) i kolumnę stanu albo formularza (powierzchnia, po prawej).
@@ -98,6 +94,7 @@
 .we-okno--z-belka { grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr) [pas] auto; }
 
 /* ── 2 · MINIMALNA BELKA OKNA SYSTEMOWEGO ───────────────────────────────── */
+
 /* Okno przed uwierzytelnieniem nie ma ramy aplikacji: ani szyny nawigacji,
    ani wstążki, ani paska stanu. Ma wyłącznie belkę okna systemowego —
    znak, tytuł, uchwyt przeciągania i zamknięcie. */
@@ -109,7 +106,7 @@
   gap: var(--dn-od-3);
   height: var(--dn-wym-belka);
   padding: 0 0 0 var(--dn-od-3);
-  /* Strefa 1 z 3 — najciemniejsza. Patrz NORMA-OKNA.md. */
+  /* Strefa pierwsza z trzech w oknie, najciemniejsza; kolumna i pas działań nie mogą mieć tej barwy. */
   background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
@@ -251,7 +248,7 @@
   line-height: var(--dn-lh-ciasny);
   color: var(--dn-tekst);
 }
-/* Obszar komunikatów panelu — pusty nie zabiera odstępu kolumny. */
+/* Obszar komunikatów panelu formularza pozostaje pusty w stanie spoczynku, nie zabierając wtedy odstępu kolumny przeznaczonego na treść formularza. */
 .we-komunikaty { display: contents; }
 .we-lid { margin: 0; max-width: 62ch; font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
 
@@ -375,12 +372,11 @@
 .we-lacznik { color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
 
 /* ── 8 · FORMULARZ UWIERZYTELNIENIA ─────────────────────────────────────── */
-/* Rejestracja, logowanie, kod potwierdzający i odzyskiwanie dostępu. */
-
+/* Formularz uwierzytelnienia obejmuje rejestrację, logowanie, kod potwierdzający oraz odzyskiwanie dostępu, w jednej wspólnej budowie pól i przycisków. */
 .au-pola { display: flex; flex-direction: column; gap: var(--dn-od-4); }
 .au-para { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dn-od-4); }
 
-/* pole hasła z odsłonięciem */
+/* Pole hasła z odsłonięciem pozwala pokazać albo ukryć wpisany tekst hasła przyciskiem po prawej stronie pola, bez opuszczania formularza logowania. */
 .au-haslo { position: relative; display: flex; }
 .au-haslo > .dn-pole-kontrolka { width: 100%; padding-right: var(--dn-wym-kontrolka); }
 .au-haslo-oko {
@@ -397,7 +393,7 @@
 .au-haslo-oko[aria-pressed='true'] .ik-odkryte { display: none; }
 .au-haslo-oko[aria-pressed='true'] .ik-zakryte { display: block; }
 
-/* wskaźnik siły hasła */
+/* Wskaźnik siły hasła pokazuje cztery odcinki toru oraz zdanie o wyniku, informując użytkownika o sile hasła jeszcze przed wysłaniem formularza. */
 .au-sila { display: flex; flex-direction: column; gap: var(--dn-od-2); margin-top: var(--dn-od-3); }
 .au-sila-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 .au-sila-odc { height: 3px; border-radius: var(--dn-r-pill); background: var(--dn-obrys); }
@@ -426,11 +422,11 @@
    nie robił nic — także tego, co robić umiał. */
 .au-haslo > .dn-pole-kontrolka::-ms-reveal { display: none; }
 .au-haslo > .dn-pole-kontrolka::-ms-clear { display: none; }
-/* Ta sama ostrożność wobec przeglądarek opartych na WebKicie. */
+/* Ta sama ostrożność dotyczy przeglądarek opartych na silniku WebKit, których własny przycisk wypełniania hasła również trzeba ukryć w polu. */
 .au-haslo > .dn-pole-kontrolka::-webkit-credentials-auto-fill-button { display: none; }
 .au-haslo > .dn-pole-kontrolka::-webkit-strong-password-auto-fill-button { display: none; }
 
-/* wiersz opcji sesji */
+/* Wiersz opcji sesji zbiera pola wyboru dotyczące zachowania sesji logowania, ułożone w kolumnę pod polami formularza uwierzytelnienia. */
 .au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }
 .au-opcja { display: flex; align-items: flex-start; gap: var(--dn-od-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); cursor: pointer; }
 .au-opcja small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -464,7 +460,7 @@
 .au-metoda svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
 .au-metoda-stan { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-2); }
 
-/* ── Kod potwierdzający ─────────────────────────────────────────────────── */
+/* Kod potwierdzający zbiera sześć pól logowania kodu, stopkę z odliczaniem ważności oraz czynność ponownego wysłania wiadomości z kodem. */
 .au-kod { display: flex; gap: var(--dn-od-2); }
 .au-kod-pole {
   width: 52px; height: 60px; flex: none;
@@ -479,8 +475,9 @@
 .au-odliczanie { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 .au-odliczanie b { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
 
-/* ── Kroki odzyskiwania ─────────────────────────────────────────────────── */
-/* Tor kroków stoi między tytułem a zdaniem wprowadzającym — dostaje własne
+/* Kroki odzyskiwania dostępu tworzą tor trzech etapów: adres, potwierdzenie
+   oraz ustawienie nowego hasła, wyświetlany nad formularzem danego etapu.
+   Tor kroków stoi między tytułem a zdaniem wprowadzającym — dostaje własne
    powietrze z obu stron, bo jest wskazaniem miejsca w procesie, nie tekstem. */
 .we-glowa .au-kroki { padding: var(--dn-od-1) 0; }
 .au-kroki { display: flex; align-items: center; gap: var(--dn-od-2); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
@@ -492,7 +489,7 @@
 }
 .au-krok[data-biezacy='tak'] { color: var(--dn-tekst); }
 .au-krok[data-biezacy='tak'] .au-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
-/* Krok zrobiony — znak zamiast numeru, żeby stan nie stał na samej barwie. */
+/* Krok zrobiony w torze kroków niesie własny znak zamiast numeru porządkowego, dzięki czemu jego stan nie opiera się wyłącznie na barwie. */
 .au-krok[data-zrobiony='tak'] { color: var(--dn-tekst-2); }
 .au-krok[data-zrobiony='tak'] .au-krok-nr {
   border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst);
@@ -504,6 +501,7 @@
 .au-krok-strzalka { color: var(--dn-tekst-2); }
 
 /* ── 9 · PRZYGOTOWANIE ŚRODOWISKA ───────────────────────────────────────── */
+
 /* Bryła przestrzenna warstw platformy w kolumnie tożsamości — jedyny ruch
    ciągły widoku — oraz pasek postępu w kolumnie stanu. */
 

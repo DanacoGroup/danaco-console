@@ -1,9 +1,6 @@
-/* ============================================================================
-   EKRANY OKNA URUCHOMIENIA
-
-   Trzy odsłony tego samego okna: łączenie, powrót z ważnym tokenem, błąd
-   połączenia. Leżą razem, bo dzielą całą oprawę — belkę, kolumnę tożsamości
-   i wykaz czterech etapów. Różni je stan etapów i to, co stoi pod wykazem.
+/* Ekrany okna uruchomienia obejmują trzy odsłony tego samego okna: łączenie, powrót z ważnym tokenem oraz błąd połączenia, różniące się stanem czterech etapów.
+   Leżą razem, bo dzielą całą oprawę — belkę, kolumnę tożsamości i wykaz
+   czterech etapów. Różni je stan etapów i to, co stoi pod wykazem.
 
    Łączenie i powrót z tokenem nie mają czynności głównej: przechodzą dalej
    same, po ostatnim etapie. Błąd ją ma, bo tam jest co rozstrzygnąć.

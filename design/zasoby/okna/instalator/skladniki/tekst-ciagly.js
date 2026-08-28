@@ -1,14 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — TEKST CIĄGŁY
-   ----------------------------------------------------------------------------
-   Blok akapitów kroku. Akapity jednej myśli stoją w rytmie akapitu, nie
-   w rytmie sekcji — inaczej dwa zdania tego samego wprowadzenia rozchodzą się
-   na dwa osobne bloki.
-
-   Właściwości:
-     klucze     tablica kluczy katalogu — po jednym na akapit
-     dane       atrybuty `data-*` na pierwszym akapicie (np. wskazówka kroku)
-   ============================================================================ */
+/* Tekst ciągły składa blok akapitów kroku, przy czym akapity jednej myśli stoją w rytmie akapitu, a nie sekcji, aby zdania jednego wprowadzenia nie rozchodziły się na osobne bloki. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

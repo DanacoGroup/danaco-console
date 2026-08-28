@@ -1,11 +1,4 @@
-/* Rama kokpitu: pasek górny i listwa ustawień.
-
-   Pasek górny jest atramentowy w obu motywach — to rama kokpitu, nie
-   powierzchnia treści. Sięga wyłącznie po żetony `--dn-rama-*` z `motyw/rama.css`,
-   które stoją poza blokami motywów.
-
-   Tło pola wyszukiwania w pasku jest półprzezroczystą bielą 6%, a nie żetonem:
-   to warstwa na atramencie ramy, niezależna od motywu. */
+/* Arkusz opisuje ramę kokpitu: pasek górny i listwę ustawień, atramentowe w obu motywach, jako ramę kokpitu, nie powierzchnię treści. */
 
 .dn-pasek {
   display: flex;
@@ -61,7 +54,7 @@
 }
 .dn-pasek-prawa { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 
-/* Listwa ustawień — najniższa masa wizualna */
+/* Listwa ustawień niesie najniższą masę wizualną spośród kontrolek paska, spójną z rolą pomocniczą tych pozycji. */
 .dn-listwa {
   display: flex;
   align-items: center;

@@ -1,19 +1,6 @@
-/* Obudowa okna rozmowy.
+/* Arkusz opisuje obudowę okna rozmowy, złożoną z pięciu wierszy, w której historia rozciąga się i zajmuje całą wolną wysokość okna. */
 
-   `.dn-rozmowa` nie jest `.dn-okno` (`okno.css`). `.dn-okno` to rama okna
-   operacyjnego modułu — pion, gniazda akcji i narzędzi. `.dn-rozmowa` to
-   pięciowierszowa siatka rozmowy, w której rozciąga się wyłącznie historia:
-   nagłówek tożsamości, panel kontekstu, historia, monitor wykonania, dół
-   z polem wpisywania i paskiem akcji.
-
-   Obudowa nie nosi cienia — inaczej niż `.dn-karta`. Okno rozmowy stoi wewnątrz
-   środowiska i uniesienia nie deklaruje; kto potrzebuje uniesienia, dokłada
-   `.dn-karta` na rodzicu.
-
-   Wnętrze wierszy niosą osobne arkusze: `wpis.css` (historia), `postep.css`
-   (monitor), `drobne.css` (pole wpisywania i przybornik). */
-
-/* --- OBUDOWA — pięć wierszy, rozciąga się historia ------------------------ */
+/* Obudowa okna rozmowy niesie pięć wierszy, z których wyłącznie historia rozciąga się i zajmuje wolną wysokość okna. */
 .dn-rozmowa {
   display: grid;
   grid-template-rows: auto auto 1fr auto auto;
@@ -45,9 +32,7 @@
   border-top-color: var(--dn-sygnal-wypelnienie);
 }
 
-/* --- WIERSZ 1: NAGŁÓWEK TOŻSAMOŚCI --------------------------------------- */
-/* Kreska subtelna (nie `--dn-obrys`), tło panelu. Pasek przewija się w poziomie
-   bez widocznego suwaka — pola tożsamości nigdy się nie łamią. */
+/* Wiersz pierwszy niesie nagłówek tożsamości: pasek z kreską subtelną i tłem panelu, przewijany w poziomie bez widocznego suwaka. */
 .dn-rozmowa-naglowek {
   display: flex;
   align-items: center;
@@ -74,7 +59,7 @@
   font-weight: var(--dn-fw-polgruba);
 }
 
-/* Stan połączenia — dosunięty do prawej krawędzi nagłówka. */
+/* Stan połączenia jest dosunięty do prawej krawędzi nagłówka, jako ostatni element wiersza tożsamości okna rozmowy. */
 .dn-rozmowa-stan {
   margin-left: auto;
   display: inline-flex;
@@ -97,9 +82,7 @@
 .dn-rozmowa-glowa > b { font-size: var(--dn-fs-base); font-weight: var(--dn-fw-polgruba); }
 .dn-rozmowa-glowa .dn-dane { font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
 
-/* --- WIERSZ 2: PANEL KONTEKSTU ------------------------------------------- */
-/* Czynne źródła jako plakietki z odłączaniem. Bez tła własnego — kontekst
-   należy do powierzchni okna, nie do panelu. */
+/* Wiersz drugi niesie panel kontekstu: czynne źródła jako plakietki z odłączaniem, bez własnego tła panelu. */
 .dn-rozmowa-kontekst {
   display: flex;
   align-items: center;
@@ -111,10 +94,7 @@
 }
 .dn-rozmowa-kontekst::-webkit-scrollbar { display: none; }
 
-/* --- WIERSZ 3: HISTORIA --------------------------------------------------- */
-/* Tło `--dn-tlo` zadeklarowane wprost: obudowa wyżej ustawia
-   `--dn-powierzchnia`, więc bez tej deklaracji historia dostałaby barwę karty
-   zamiast papieru roboczego. */
+/* Wiersz trzeci niesie historię rozmowy na tle papieru roboczego, odrębnym od tła karty, którym obudowa pokrywa pozostałe wiersze. */
 .dn-rozmowa-historia {
   display: flex;
   flex-direction: column;
@@ -125,9 +105,7 @@
 }
 .dn-rozmowa--zwarta .dn-rozmowa-historia { padding: var(--dn-od-3); }
 
-/* --- WIERSZ 4: MONITOR WYKONANIA ----------------------------------------- */
-/* Kreska górna subtelna, tło panelu. Wnętrze niesie `.dn-postep` (postep.css)
-   w wariancie rozciągniętym oraz przycisk zatrzymania. */
+/* Wiersz czwarty niesie monitor wykonania: kreskę górną subtelną, tło panelu oraz pasek postępu z przyciskiem zatrzymania. */
 .dn-rozmowa-monitor {
   display: flex;
   align-items: center;
@@ -137,9 +115,7 @@
   background: var(--dn-panel);
 }
 
-/* --- WIERSZ 5: DÓŁ — pole wpisywania i pasek akcji ------------------------ */
-/* W układzie pełnym kreski górnej nie ma, bo odgradza go monitor. W wariancie
-   zwartym monitora nie ma, więc dół niesie własną kreskę górną. */
+/* Wiersz piąty niesie dół okna rozmowy: pole wpisywania i pasek akcji, oddzielone kreską górną w wariancie bez monitora. */
 .dn-rozmowa-dol {
   padding: var(--dn-od-2) var(--dn-od-4) var(--dn-od-3);
   background: var(--dn-panel);
@@ -149,7 +125,7 @@
   border-top: 1px solid var(--dn-obrys-subtelny);
 }
 
-/* Pasek akcji pod polem — przybornik promptu i etykieta czynności. */
+/* Pasek akcji pod polem wpisywania niesie przybornik promptu oraz etykietę czynności wykonywanej w oknie rozmowy. */
 .dn-rozmowa-akcje {
   display: flex;
   align-items: center;

@@ -1,16 +1,7 @@
 /*
- * Warstwa wizualna modułu Research.
- *
- * Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
- * z żetonów motywu. Klasy `dn-*` (pole, przycisk, plakietka, modal,
- * pusty stan, spinner, dymek) wnosi biblioteka komponentów; tutaj leży wyłącznie
- * rozkład okien modułu i to, czego biblioteka nie ma: pasy układu, wykazy
- * źródeł i ustaleń oraz znakowanie faz stanu.
- *
- * Kontrolki formularza pochodzą z `modele/kontrolki-formularza`, więc moduł
- * wciąga arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
- *
- * Prefiks lokalny modułu: `mr-`.
+ * Warstwa wizualna modułu Research korzysta wyłącznie z żetonów motywu i biblioteki
+ * komponentów `dn-*`, a lokalny prefiks `mr-` obejmuje jedynie rozkład okien
+ * i elementy, których biblioteka nie dostarcza.
  */
 
 @import '../../modele/modele.css';
@@ -103,7 +94,7 @@
   margin: 0;
 }
 
-/* Wskaźnik odczytu stoi obok zdania, nigdy zamiast niego. */
+/* Wskaźnik odczytu stoi obok zdania, nigdy zamiast niego, ponieważ zastąpienie tekstu samym symbolem pozbawiałoby czytelnika informacji, gdy ikona nie zostanie rozpoznana. */
 .mr-stan__wiersz {
   display: flex;
   align-items: center;

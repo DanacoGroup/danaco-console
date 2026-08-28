@@ -1,17 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ARKUSZE OKNA WEJŚCIA
-
-   Wciągnięcie warstwy projektowej do pakietu. Arkusze mają jedno źródło
-   w `design/zasoby/` i stąd są wyłącznie wskazane — narzędzie budowania
-   rozwija `@import` i składa je w jeden arkusz pakietu. Kopia w katalogu
-   klienta rozjechałaby się przy pierwszej zmianie żetonu.
-
-   Kolejność jest wiążąca i pochodzi z nagłówka prototypu
-   `design/05-okna/przeplyw/przeplyw-wejscia.html`: żetony przed fundamentem,
-   fundament przed biblioteką, biblioteka przed arkuszem okna.
-
-   `prototyp.css` nie wchodzi — należy do warstwy podglądu, nie produktu.
-   ============================================================================ */
+/* Arkusz wciąga warstwę projektową do pakietu przez wskazania na jedno źródło w katalogu zasobów, w kolejności żetony, fundament, biblioteka, arkusz okna. */
 
 @import url('../../design/zasoby/zetony/fonty.css');
 @import url('../../design/zasoby/zetony/zetony.css');

@@ -1,18 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — STOPKA Z PRZYCISKAMI
-   ----------------------------------------------------------------------------
-   Pas czynności biegnący pod obiema kolumnami okna. Skład pasa wyprowadza się
-   z kroku i odsłony, nie ustawia po kawałku — każdy krok ma własny komplet
-   czynności i to on rozstrzyga, których nie ma.
-
-   Czynność niedostępna z powodu niespełnionego warunku nosi `aria-disabled`,
-   nie `disabled`: musi przyjąć kliknięcie, żeby móc odpowiedzieć, czego brakuje.
-
-   Właściwości:
-     poboczna   { klucz, dane } — czynność po lewej stronie pary
-     glowna     { klucz, dane } — czynność domyślna
-     dodatkowa  { klucz, dane } — czynność trzecia (opcjonalna, np. kopiowanie)
-   ============================================================================ */
+/* Pas czynności biegnie pod obiema kolumnami okna, a jego skład wyprowadza się z kroku i odsłony, ponieważ każdy krok ma własny komplet czynności i rozstrzyga, których w nim brakuje. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

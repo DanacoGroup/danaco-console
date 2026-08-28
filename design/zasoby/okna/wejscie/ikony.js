@@ -1,10 +1,6 @@
-/* ============================================================================
-   PRZEPŁYW WEJŚCIA — zestaw znaków
-
-   Rysunki wyjęte ze znacznika bez zmiany kształtu. Klasę i wymiar nakłada
-   miejsce użycia, nie sam znak — ten sam sygnet stoi w belce i w kolumnie
-   tożsamości, w dwóch różnych wielkościach.
-   ============================================================================ */
+/* Zestaw znaków przepływu wejścia zawiera rysunki wyjęte ze znacznika bez zmiany kształtu, a klasę i wymiar każdego znaku nakłada miejsce jego użycia.
+   Ten sam sygnet stoi w belce i w kolumnie tożsamości, w dwóch różnych
+   wielkościach. */
 window.DanacoWejscie = window.DanacoWejscie || {};
 window.DanacoWejscie.ikony = {
   /* Kropka sygnału niesie KLASĘ, nie wpisaną barwę: barwę rozstrzyga arkusz,

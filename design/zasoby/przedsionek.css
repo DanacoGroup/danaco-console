@@ -1,15 +1,8 @@
-/* ============================================================================
-   DANACO CONSOLE — PRZEDSIONEK ŚRODOWISKA
-   ----------------------------------------------------------------------------
-   Widok wejściowy środowiska pracy: stan przed wyborem modułu. Powłoka nosi ten
-   sam pasek górny co przestrzeń robocza; poniżej dzieli się na szynę sesji
-   (lewa krawędź) i płótno z kaflami modułów oraz listwą działań środowiska.
-
-   Hierarchia trzech stref o malejącej masie: nagłówek środowiska → kafle
-   modułów → listwa działań. Ten sam porządek co na stronie głównej.
-
-   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
-   ============================================================================ */
+/* Przedsionek środowiska to widok wejściowy przed wyborem modułu, dzielący się na szynę sesji przy lewej krawędzi oraz płótno z kaflami modułów i listwą działań.
+   Powłoka nosi ten sam pasek górny co przestrzeń robocza. Hierarchia trzech
+   stref o malejącej masie: nagłówek środowiska, kafle modułów, listwa działań,
+   ten sam porządek co na stronie głównej. Wyłącznie żetony `var(--dn-*)`,
+   zero wartości szesnastkowych, oba motywy. */
 
 :root { --pd-szyna: 288px; --pd-tresc-maks: 1360px; }
 
@@ -375,20 +368,15 @@
 .pd-sesja:hover::before { transform: scaleY(0.6); }
 .pd-sesja[aria-current='true']::before { transform: scaleY(1); }
 
-/* Listwa dolna — reakcja najkrótsza, jak w strefie trzeciej Centrum. */
+/* Listwa dolna ma reakcję najkrótszą spośród elementów przedsionka, tak samo jak odpowiadający jej element w strefie trzeciej centrum dowodzenia. */
 .pd-listwa-poz { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
 .pd-listwa-poz:hover { transform: translateY(var(--dn-podniesienie-sm)); }
 .pd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
 .pd-listwa-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
 .pd-listwa-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); color: var(--dn-sygnal); }
 
-/* Kaskada wejścia stref przedsionka — kolejność stref niesie ich ważność. */
-/* `backwards`, nie `both`: animacja wypełniająca w przód pozostaje animacją
-     czynną, a element z czynną animacją krycia albo przesunięcia jest kontekstem
-     nakładania — panel rozwinięty w tej strefie schodził wtedy pod strefę stojącą
-     niżej w dokumencie (zmierzone: wykaz zapisanych automatyk pod listwą ustawień).
-     Przy `backwards` klatka początkowa działa tylko na czas opóźnienia i ruchu,
-     a po jego zakończeniu element wraca do zwykłego stanu. */
+/* Kaskada wejścia stref przedsionka nadaje kolejności stref znaczenie ich
+   ważności, animując każdą strefę osobno po kolei w ustalonej sekwencji. */
   .pd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
 .pd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
 .pd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }

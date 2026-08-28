@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŁĄCZNOŚĆ W OKNIE ROBOCZYM
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: plakietka łączności stojąca w nagłówku gniazda.
-   Kropka, plakietka i spinner pochodzą z biblioteki (`komponenty/plakietka.css`,
-   `komponenty/spinner.css`) — tutaj stoi wyłącznie to, czego biblioteka nie
-   niesie: miejsce plakietki w nagłówku i rozmiar przycisku „Ponów teraz".
-
-   Bez barw własnych i bez nowych żetonów.
-   ============================================================================ */
+/* Łączność w oknie roboczym to plakietka w nagłówku gniazda, korzystająca wyłącznie z biblioteki komponentów i żetonów motywu, bez barw własnych. */
 
 .dn-okna__lacznosc {
   flex: none;

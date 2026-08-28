@@ -1,11 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY GRADIENTÓW
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: dwa gradienty systemu, oba niezależne od motywu.
-
-   Zakres użycia jest wyłącznie ilustracyjny: awatary bez zdjęcia, rdzeń AOD,
-   grafiki brandowe. Gradient nie jest tłem przycisku, karty ani sekcji.
-   ============================================================================ */
+/* Żetony gradientów systemu obejmują dwa wzory niezależne od motywu, przeznaczone wyłącznie do użycia ilustracyjnego, nigdy jako tło przycisku, karty ani sekcji. */
 
 :root {
   --dn-grad-atrament: linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925));

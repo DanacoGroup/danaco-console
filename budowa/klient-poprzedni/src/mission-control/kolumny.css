@@ -1,12 +1,4 @@
-/* ============================================================================
-   MISSION CONTROL — TRZY KOLUMNY: PROCESY · KOLEJKI · ZESPÓŁ
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: dolny pas pulpitu — procesy w tle z paskami postępu,
-   kolejki ze sterowaniem per rola i wykaz agentów.
-
-   Arkusz nie ma reguły `:disabled` ani wygaszającej: przyciski transportu
-   wyglądają tak samo w każdym stanie kolejki, a stan niesie plakietka ze słowem.
-   ============================================================================ */
+/* Arkusz opisuje dolny pas pulpitu Mission Control w trzech kolumnach: procesy w tle z paskami postępu, kolejki ze sterowaniem per rola i wykaz agentów. */
 
 .mc-trojkolumna {
   display: grid;
@@ -24,9 +16,7 @@
   }
 }
 
-/* ---------------------------------------------------------------------------
-   PROCESY W TLE
-   --------------------------------------------------------------------------- */
+/* Kolumna procesów w tle pokazuje trwające zadania paskami postępu, z etykietą etapu obok toru, nigdy samą barwą wypełnienia. */
 .mc-procesy,
 .mc-kolejki,
 .mc-zespol {
@@ -73,7 +63,7 @@
   font-size: var(--dn-fs-xs);
 }
 
-/* Pasek postępu — napis „etap N/M" obok toru, nigdy sama barwa */
+/* Pasek postępu niesie napis etapu obok toru, w postaci liczby etapu bieżącego wobec liczby etapów, nigdy samą barwę wypełnienia. */
 .mc-postep {
   display: flex;
   align-items: center;
@@ -126,9 +116,7 @@
   background: var(--dn-obrys-mocny);
 }
 
-/* ---------------------------------------------------------------------------
-   KOLEJKI ZE STEROWANIEM PER ROLA
-   --------------------------------------------------------------------------- */
+/* Kolumna kolejek niesie sterowanie oddzielone per rola, z nazwą roli krojem technicznym pełniącym rolę identyfikatora, nie nagłówka. */
 .mc-kolejka {
   display: flex;
   flex-direction: column;
@@ -146,7 +134,7 @@
   gap: var(--dn-od-2);
 }
 
-/* Nazwa roli krojem technicznym — jest identyfikatorem, nie nagłówkiem */
+/* Nazwa roli w kolejce niesie krój techniczny, ponieważ pełni rolę identyfikatora tekstowego, a nie nagłówka wizualnego wiersza. */
 .mc-kolejka__rola {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-sm);
@@ -176,9 +164,7 @@
   flex: none;
 }
 
-/* ---------------------------------------------------------------------------
-   ZESPÓŁ AGENTÓW
-   --------------------------------------------------------------------------- */
+/* Kolumna zespołu agentów wykazuje jednostki inteligencji pracujące w tle, każdą ze stanem i rolą, wyłącznie z żetonów warstwy motywu. */
 .mc-agent {
   display: flex;
   align-items: flex-start;

@@ -1,6 +1,5 @@
-/* ŻETONY RUCHU
-   Czasy, krzywa, wartości uwydatnienia, klatki kluczowe i zachowanie przy
-   `prefers-reduced-motion`. Wpinany przez `zetony.css`.
+/* Żetony ruchu niosą czasy, krzywą, wartości uwydatnienia, klatki kluczowe oraz zachowanie animacji przy ograniczonych preferencjach ruchu systemu.
+   Wpinany przez plik `zetony.css`.
    Granice: jedna krzywa `--dn-ease` (wyjątek: `linear` obrotu wskaźnika),
    górny czas 220 ms, jeden ruch ciągły na widok, animowane wyłącznie
    `transform`, `opacity`, `box-shadow` i barwy. Animacje wejścia z

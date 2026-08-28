@@ -1,9 +1,4 @@
-/* Tabela robocza.
-
-   Gęstość zwarta jest domyślna: wysokość wiersza bierze `--dn-wym-wiersz`.
-   Nagłówek kolumny to etykieta maszynowa (mono, wersaliki) — przykleja się
-   do górnej krawędzi na warstwie `--dn-z-przybornik`.
-   Wiersz wybrany wskazuje sygnał tłem, nie obwódką. */
+/* Arkusz opisuje tabelę roboczą o zwartej gęstości domyślnej, z nagłówkiem kolumny przyklejonym do górnej krawędzi i wierszem wybranym tłem. */
 
 .dn-tabela {
   width: 100%;

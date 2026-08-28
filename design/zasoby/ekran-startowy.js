@@ -1,5 +1,4 @@
-/* ============================================================================
-   EKRAN STARTOWY — składnik biblioteki
+/* Składnik biblioteki odtwarza animację znaku marki światłem po uruchomieniu programu, zanim pojawi się główne okno aplikacji.
 
    Znak marki kreślony światłem. Odtwarza się po uruchomieniu programu, zanim
    stanie okno: punkt świetlny obrysowuje oba chevrony sygnetu, kontur wypełnia
@@ -39,13 +38,11 @@
        data-powtarzaj         graj w kółko — wyłącznie do oglądania
 
    Koniec biegu zgłasza zdarzenie `ekran-startowy-koniec`, bąbelkujące. Powłoka
-   na nim pokazuje okno programu i zamyka ekran startowy.
-   ============================================================================ */
+   na nim pokazuje okno programu i zamyka ekran startowy. */
 (function () {
 'use strict';
 
-/* Czytnik barw stoi w `narzedzia-okien.js` — potrzebuje go każdy składnik
-   rysujący na płótnie. */
+/* Czytnik barw modułu odczytuje aktualne wartości żetonów kolorystycznych i jest wymagany przez każdy składnik rysujący na płótnie. */
 var czytnikBarw = window.DanacoNarzedzia.czytnikBarw;
 
 function zaloz(host) {
@@ -299,7 +296,7 @@ function zaloz(host) {
   return api;
 }
 
-/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+/* Zakładanie tego składnika na wszystkich polach strony wykorzystuje wspólny mechanizm dostarczany przez warstwę narzędzi okien. */
 var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-ekran-startowy', zaloz);
 
 window.DanacoEkranStartowy = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };

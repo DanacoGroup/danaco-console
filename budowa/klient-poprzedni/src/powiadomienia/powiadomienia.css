@@ -1,14 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — CENTRUM POWIADOMIEŃ (kolumna boczna)
-   ----------------------------------------------------------------------------
-   Postać z karty komponentu (katalog-komponentow.md, rozdz. 11.6): kolumna
-   boczna o pełnej wysokości obszaru roboczego, szerokość 320–420 px,
-   regulowana wyłącznie na szerokość. Po zamknięciu kolumna znika z układu
-   całkowicie — stąd `hidden` na elemencie, a nie zerowa szerokość.
-
-   Plik nie zna ani jednej barwy: wszystko z żetonów motywu. Każdy selektor
-   zaczyna się od `.po-`.
-   ============================================================================ */
+/* Centrum powiadomień to kolumna boczna o pełnej wysokości obszaru roboczego, szerokości od 320 do 420 pikseli, znikająca z układu całkowicie po zamknięciu przez atrybut hidden. */
 
 .po-kolumna {
   display: flex;
@@ -61,14 +51,12 @@
   padding: var(--dn-od-3);
 }
 
-/* Zdarzenie wymagające decyzji wyróżnia kreska w barwie uwagi — i zostaje na
-   liście do chwili podjęcia decyzji. Sama barwa stanu nie niesie: klasa stoi
-   obok, wypisana słowem w plakietce. */
+/* Zdarzenie wymagające decyzji wyróżnia kreska w barwie uwagi i zostaje na liście do chwili podjęcia decyzji; sama barwa stanu nie niesie znaczenia, klasa stoi obok w plakietce. */
 .po-pozycja[data-waga='wymagajaca_decyzji'] {
   border-inline-start: 3px solid var(--dn-ostrzezenie-tekst);
 }
 
-/* Zdarzenie odczytane przygasa, ale nie znika: rejestr jest trwały. */
+/* Zdarzenie odczytane przygasa widocznością, ale nie znika z listy, ponieważ rejestr powiadomień pozostaje trwały niezależnie od stanu odczytania. */
 .po-pozycja[data-stan='odczytane'] { opacity: 0.7; }
 
 .po-pozycja__naglowek {

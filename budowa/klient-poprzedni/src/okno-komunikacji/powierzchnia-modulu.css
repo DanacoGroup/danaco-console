@@ -1,13 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — POWIERZCHNIA MODUŁOWA OKNA KOMUNIKACJI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: układ tego, co okno przestawia przy zmianie modułu —
-   wskaźnik modułu, pasek narzędzi promptu, panel akcji, panel kontekstu.
-   Historia wątku i pole wypowiedzi mieszkają w arkuszach warstwy rozmowy.
-
-   ŹRÓDŁO WARTOŚCI. Wyłącznie żetony `motyw/` i klasy `komponenty/` — ani jednej
-   wartości szesnastkowej, ani jednego odstępu spoza skali 4 px.
-   ============================================================================ */
+/* Powierzchnia modułowa okna komunikacji układa wskaźnik modułu, pasek narzędzi promptu, panel akcji i panel kontekstu wyłącznie żetonami motywu. */
 
 .dc-powierzchnia {
   display: flex;

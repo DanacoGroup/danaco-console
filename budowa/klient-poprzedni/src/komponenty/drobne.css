@@ -1,14 +1,6 @@
-/* ============================================================================
-   DANACO CONSOLE — DROBNE: DYMEK · AWATAR · SPINNER · PUSTY STAN ·
-                    POLE PROMPTU · ALWAYS ON DISPLAY
-   ----------------------------------------------------------------------------
-   Dymek stoi na atramencie ramy w obu motywach (`--dn-rama`) — objaśnienie
-   należy do ramy kokpitu, nie do powierzchni treści.
-   Klatki `dn-obrot` definiuje ten arkusz (spinner) — używa ich także przycisk
-   w stanie ładowania. Klatki `dn-tetno` definiuje `plakietka.css`.
-   ============================================================================ */
+/* Arkusz opisuje drobne komponenty: dymek, awatar, spinner, pusty stan, pole promptu i pływający awatar always on display, z żetonów motywu. */
 
-/* --- DYMEK OBJAŚNIENIA (tooltip) ----------------------------------------- */
+/* Dymek objaśnienia stoi na atramencie ramy w obu motywach, ponieważ objaśnienie należy do ramy kokpitu, a nie do powierzchni treści. */
 .dn-tooltip { position: relative; display: inline-flex; }
 .dn-tooltip-tresc {
   position: absolute;
@@ -40,7 +32,7 @@
   transform: translate(-50%, 0);
 }
 
-/* --- AWATAR · SPINNER · PUSTY STAN --------------------------------------- */
+/* Awatar, spinner i pusty stan dzielą wspólną rodzinę klas, w której rozmiar i kształt zmienia modyfikator, a barwę niesie wyłącznie żeton motywu. */
 .dn-awatar {
   position: relative;
   display: inline-flex;
@@ -62,7 +54,7 @@
    sięga wyłącznie po --sm i --inteligencja. */
 .dn-awatar--lg { width: var(--dn-wym-awatar-lg); height: var(--dn-wym-awatar-lg); font-size: var(--dn-fs-md); }
 .dn-awatar--kwadrat { border-radius: var(--dn-r-sm); }
-/* jednostka inteligencji (agent/model) — rdzeń sygnałowy */
+/* Jednostka inteligencji, czyli agent albo model, niesie rdzeń sygnałowy jako barwę wypełnienia awatara, odróżniającą ją od operatora. */
 .dn-awatar--inteligencja { background: var(--dn-grad-sygnal); color: var(--dn-szary-0); }
 .dn-awatar-stan {
   position: absolute;
@@ -109,7 +101,7 @@
 }
 .dn-pusty-stan-opis { max-width: 40ch; font-size: var(--dn-fs-sm); }
 
-/* --- POLE WPISYWANIA PROMPTU — grot ❯ jako sygnatura wejścia ------------- */
+/* Pole wpisywania promptu niesie znak grota jako sygnaturę wejścia, wskazującą miejsce, w które operator wpisuje polecenie dla modelu. */
 .dn-prompt {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -154,7 +146,7 @@
 .dn-prompt--zwarty { padding: var(--dn-od-1); }
 .dn-prompt--zwarty .dn-prompt-obszar { min-height: 28px; }
 
-/* Przybornik promptu — załączniki, biblioteka, agent, model… */
+/* Przybornik promptu grupuje załączniki, bibliotekę, wybór agenta i wybór modelu w jednym rzędzie kontrolek pod polem wpisywania. */
 .dn-przybornik {
   display: flex;
   align-items: center;
@@ -162,10 +154,7 @@
   flex-wrap: wrap;
 }
 
-/* --- ALWAYS ON DISPLAY — pływający awatar -------------------------------- */
-/* Czeka na widok: `strona-glowna/pozycje-ustawien.ts` niesie pozycję listwy
-   ustawień `kod: 'aod'`, ale ta pozycja, jak i `mobile`, nie ma okna —
-   listwa renderuje ją przyciskiem duch bez treści za nim. */
+/* Pływający awatar always on display renderuje pozycję listwy ustawień aod, która, podobnie jak mobile, nie ma okna, więc listwa pokazuje ją przyciskiem duch. */
 .dn-aod {
   position: fixed;
   right: var(--dn-od-5);

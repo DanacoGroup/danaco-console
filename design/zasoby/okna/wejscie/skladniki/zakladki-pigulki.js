@@ -1,9 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — ZAKŁADKI LOGOWANIA I REJESTRACJI
-
-   Dwie drogi równorzędne. Wygląd wnosi wariant biblioteki `--wybor`: stan
-   wybrany niesie podświetlenie, nie wypełnienie, bo pigułka w pełnym błękicie
-   czyta się jak przycisk działania, a to kontrolka wskazująca położenie.
+/* Zakładki logowania i rejestracji przedstawiają dwie drogi równorzędne, których stan wybrany wariant biblioteki oznacza podświetleniem, nie pełnym wypełnieniem pigułki.
+   Pigułka w pełnym błękicie czytałaby się jak przycisk działania, a to
+   kontrolka wskazująca położenie.
 
    Właściwości:
      wybrana   'logowanie' | 'rejestracja'

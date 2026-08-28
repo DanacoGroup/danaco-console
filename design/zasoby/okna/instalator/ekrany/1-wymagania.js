@@ -1,11 +1,9 @@
-/* ============================================================================
-   EKRAN 1 — WYMAGANIA
-   ----------------------------------------------------------------------------
+/* Ekran pierwszy kreatora instalacji przedstawia wymagania sprzętowe i systemowe niezbędne do rozpoczęcia wdrożenia programu.
+
    Otwarcie kreatora. Nagłówek nazywa czynność, nie wita. Podmiotem zdań jest
    instalacja albo ten komputer, nie program mówiący o sobie w trzeciej osobie.
    Wymóg połączenia stoi wyłącznie w banerze — w tabliczce byłby tą samą rzeczą
-   powiedzianą dwa razy.
-   ============================================================================ */
+   powiedzianą dwa razy. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

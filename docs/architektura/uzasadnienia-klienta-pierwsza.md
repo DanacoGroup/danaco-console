@@ -8373,3 +8373,19 @@ skrótów nie ma.
 
 Ctrl i Cmd są tu równoważne, tak jak w zapisie skrótów dokumentacji: na komputerach Apple
 modyfikatorem polecenia jest klawisz Meta.
+
+## budowa/klient-poprzedni/src/aod/wyciszenie-aod.test.ts
+Sprawdziany wyciszania Always On Display pilnują rzeczy, których zlecenie żąda
+wprost: trzy rodzaje wyciszenia wstrzymują to, co mają wstrzymywać, i nie
+wstrzymują niczego więcej (kontekstowe — tylko wskazany byt, klasy — tylko
+wskazaną klasę); wyjątek wagi krytycznej przechodzi przez wszystkie rodzaje
+wyciszenia i przez tryb cichy — plakietką, bez dymka; wyciszenie i jego
+zniesienie idą jednym ruchem; magazyn jest podawany, nie brany z globalnej
+przestrzeni na sztywno; brak pozycji kontraktu jest nazwany wprost, nie
+zasłonięty.
+
+Sprawdzian pilnuje tego samego, co przed dobudową wyciszenia w rdzeniu: granica
+ma być nazwana, a nie zasłonięta. Zmieniła się wyłącznie strona braku. Kontrakt
+niesie już wyciszenie nakładki wraz z odczytem, zapisem i rozgłoszeniem, więc
+zdanie mówiące „brak po stronie kontraktu” byłoby dziś nieprawdą — zostaje brak
+po stronie nakładki, której wołacze piszą jeszcze do magazynu stanowiska.

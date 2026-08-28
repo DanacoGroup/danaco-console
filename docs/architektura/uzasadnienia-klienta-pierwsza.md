@@ -8495,3 +8495,24 @@ nieudana odróżnia się od udanej bez zgadywania.
 
 ## budowa/klient-poprzedni/src/moduly/agents/historia-wersji.ts
 Wykaz pochodzi z rdzenia: rodzina komend historii oddaje wersje trwałe, zapisane także przed uruchomieniem tego klienta i na innym urządzeniu konta. Panel nie składa własnego wykazu z odpowiedzi biblioteki — wykaz zbierany w toku sesji obejmowałby wyłącznie zmiany zrobione przy tym oknie i milczał o całej reszcie. Przywrócenie jest komendą historii, nie zapisem tożsamości: wskazana wersja wraca jako kolejna, więc historia nie zostaje skrócona i wersje pośrednie zostają na miejscu. Wersję wskazuje identyfikator, nie numer — numer jest porządkiem historii, a po przywróceniu ten sam numer znaczyłby co innego. Treść wersji dociąga osobna komenda na żądanie, przy wskazanym wierszu — dociąganie migawek całej historii z góry kosztowałoby tyle odczytów, ile wersji, a Operator ogląda naraz jedną.
+
+## budowa/klient-poprzedni/src/moduly/developer/zdania-odpowiedzi.ts
+Reguła, której ten plik pilnuje: potwierdzenie mówi, co zrobił rdzeń, a nie co
+wysłało okno. Zdanie sukcesu biorące wartość z żądania jest usterką nawet
+wtedy, gdy dziś przypadkiem się zgadza — rozjedzie się przy pierwszej zmianie
+po stronie rdzenia i nikt tego nie zauważy. Odmowa nie jest tu składana: treść
+odmowy rdzenia niesie osobny stan błędu okna, z kodem i wiadomością wprost.
+Rozjazd żądanej czynności repozytorium z wykonaną nie jest przemilczany: gdy
+rdzeń wykona inną niż zamówiona, mówi o tym zdanie, a nie etykieta
+naciśniętego przycisku. Wersja zapisu pliku rozstrzyga się zmianą
+identyfikatora wersji, a nie samą jego obecnością, bo zapis bez zakładania
+nowej wersji też oddaje identyfikator wersji najnowszej, założonej wcześniej
+— pytanie o zmianę identyfikatora odróżnia wersję świeżo założoną od zastanej,
+podczas gdy pytanie o samą obecność meldowałoby nową wersję przy każdym
+zapisie pliku, który kiedykolwiek jakąś miał. Stan uruchomienia budowania nie
+jest wpisany na stałe jako uruchomione, bo rdzeń może oddać przebieg już
+domknięty przy wyścigu odpowiedzi ze zdarzeniem, gdy zadanie kończy się
+natychmiast. Rozróżnienie przebiegu już domkniętego od wciąż trwającego
+w przerwaniu budowania jest potrzebne, bo rdzeń na oba przypadki odpowiada tą
+samą migawką — bez tego rozróżnienia okno meldowałoby przyjęcie żądania także
+wtedy, gdy przerywać nie było czego.

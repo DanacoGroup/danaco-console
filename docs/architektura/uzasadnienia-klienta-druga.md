@@ -7994,3 +7994,11 @@ element, którego nie ma w dokumencie. Okno oddaje więc wywołanie, a nie kontr
 
 Widoczność pełna nie jest trybem administracyjnym ani ukrytym — to zwykła nastawa o jedno
 wskazanie dalej.
+## budowa/klient-poprzedni/src/moduly/terminal/grupowanie-procesow.ts
+Filtr stanu i inicjatora jedzie do rdzenia parametrem terminal.process.list, bo tak stanowi
+kontrakt i tylko tak wynik jest spójny z dziennikiem rdzenia. Grupowanie nie zmienia zbioru,
+wyłącznie porządek wyświetlania, więc zostaje w kliencie. Różnicę niesie objaśnienie przy każdej
+pozycji, bo wykazy karmią menu z biblioteki.
+
+Wartość pusta ma własną pozycję: „Wszystkie procesy” i „Każdy inicjator” to brak zawężenia,
+a nie brak wyboru. Bez niej filtr byłby drogą w jedną stronę.

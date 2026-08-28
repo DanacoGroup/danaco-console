@@ -7563,3 +7563,16 @@ Model danych pulpitu ma jedną odpowiedzialność: kształt danych, które widok
 Typ kodu środowiska jest napisem, a nie unią wywiedzioną z `KnownModuleIds`, bo wykaz środowisk należy do rdzenia jako dane i `environment.list` niesie go w całości — unia zamykałaby matrycę na kody znane klientowi, a środowisko spoza niej trafiałoby do wykazu „poza środowiskami" jako sesja bez wskazania środowiska. `KnownModuleIds` pilnuje kodów tam, gdzie klient sam je wymienia (`strona-glowna/pozycje-srodowisk.ts`); kolumna matrycy przepisuje to, co przyszło z rdzenia.
 
 Widok wypisuje etykietę braku źródła przy miarach wysycenia, kolejki, limitu i kosztu kanału.
+
+## budowa/klient-poprzedni/src/moduly/design/kontrast-wcag.ts
+Pary i progi kontrastu nie są wymyślone w tym module — pochodzą z wykazu progów kontrastu produktu,
+tego samego, którym mierzy przyrząd pomiaru produktu. Ułożenie tu własnej listy par dałoby drugą
+miarę jednego stanu, a dwie miary zawsze się rozjeżdżają.
+
+Wartości barw czytane są z motywu obowiązującego, więc tabela mówi o produkcie w tej chwili,
+a nie o zapisie sprzed przełączenia motywu. To jest zarazem jedyna droga, żeby ocenić motyw jasny
+i ciemny osobno — a system wizualny traktuje je jako równoprawne.
+
+Wykaz progów nie podaje roli pary. WCAG dopuszcza próg niższy dla tekstu dużego oraz dla obrysów
+i wskaźników skupienia, więc para obrysu wychodzi tu poniżej progu, choć wobec właściwej reguły
+może być zgodna. Wynik oznaczamy więc jako pomiar, a nie jako werdykt.

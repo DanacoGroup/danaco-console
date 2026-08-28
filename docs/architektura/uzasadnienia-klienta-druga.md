@@ -7516,3 +7516,6 @@ Wybór modelu surowego zdejmuje agenta pustym identyfikatorem agenta; bez tego a
 Rozróżnienie stanu, w którym rdzeń jeszcze nie odpowiedział, od stanu, w którym rejestr jest pusty, jest konieczne: bez niego wskaźnik odczytu nigdy nie zgasłby na rdzeniu z pustym rejestrem, zapowiadając wykaz, który nie nadejdzie.
 
 Kanał zakłada się komendą channel.add; okna do zakładania kanałów w tym wydaniu nie ma, więc zdanie stanu pustego mówi to wprost zamiast odsyłać do nieistniejącego ekranu.
+
+## budowa/klient-poprzedni/src/sterowanie/model-karty-sesji.ts
+Żądanie aktualizacji okna nadaje kanał jednemu oknu; żądanie ustawienia kanału modelu przyjmuje identyfikator sesji i przestawia wszystkie okna karty naraz. Karta z czterema oknami to jedno żądanie zamiast czterech, a więc i jedna okazja do niepowodzenia zamiast czterech. Żądanie niesie identyfikator agenta obok identyfikatora kanału modelu, bo karta ma dostać ten sam wybór, który stoi w oknie: kanał surowy albo agenta nałożonego na kanał. Pominięcie agenta przestawiłoby pozostałe okna na model surowy. Przycisk jest zawsze klikalny. Karta jednookienna nie jest powodem do wyszarzenia — nadanie jednemu oknu tą drogą daje ten sam skutek co przez okno.

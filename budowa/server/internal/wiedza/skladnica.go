@@ -1,23 +1,6 @@
 // Odpowiedzialność pliku: trwałość wskaźnika znaczenia — zapis, odczyt
-// i czyszczenie pozycji tabeli `fragment_wiedzy`.
-//
-// Wskaźnik leży przy bazie rdzenia, a nie w osobnym pliku: druga baza obok
-// pierwszej to drugi plik do przeniesienia, drugi do kopii zapasowej i drugi,
-// który da się zgubić osobno. Wektor jest bytem wtórnym — odtwarzalnym z treści
-// jednym przebiegiem `knowledge.index` — więc jego utrata kosztuje czas
-// procesora, a nie wiedzę Operatora. Tak samo wtórny jest indeks FTS5 treści
-// biblioteki i leży w tej samej bazie.
-//
-// Baza nadal nie przechowuje pliku: bajty treści leżą w magazynie biblioteki
-// pod sumą sha256, a tu leży wektor i fragment tekstu, z którego go policzono.
-// Fragment jest w tabeli z jednego powodu:
-// kontrakt każe oddać w trafieniu `text`, a odtwarzanie go przy każdym zapytaniu
-// znaczyłoby otwieranie plików źródłowych i ponowne dzielenie ich na fragmenty —
-// czyli wykonywanie całej pracy indeksowania po to, żeby oddać dwa zdania.
-//
-// Składnica mówi własnymi typami, nie typami kontraktu. Pakiet `wiedza` nie zna
-// kontraktu i nie ma go poznać: przekład na `shared.KnowledgeHit` należy do
-// adaptera rdzenia, tak samo jak w silniku mowy.
+// i czyszczenie pozycji tabeli fragment_wiedzy; wskaźnik leży przy bazie
+// rdzenia.
 package wiedza
 
 import (
@@ -27,36 +10,34 @@ import (
 	"fmt"
 )
 
-// Pozycja to jeden wiersz wskaźnika: fragment treści, jego pochodzenie i wektor.
+// Pozycja to jeden wiersz wskaźnika: fragment treści, jego pochodzenie
+// i wektor, w kształcie zapisywanym do tabeli fragment_wiedzy.
 type Pozycja struct {
-	// Zakres — `library`, `history` albo `workspace`. Napisy przychodzą
-	// z adaptera, bo to on zna wyliczenie kontraktu.
+	// Zakres — library, history albo workspace; napisy przychodzą z adaptera.
 	Zakres string
-	// Zrodlo — nazwa czytelna dla człowieka: nazwa pliku biblioteki, tytuł okna
-	// rozmowy, ścieżka względna pliku przestrzeni. Wchodzi wprost do trafienia,
-	// bo bez wskazania źródła model cytowałby bez możliwości sprawdzenia.
+	// Zrodlo — nazwa czytelna dla człowieka: pliku biblioteki, okna rozmowy
+	// albo ścieżki przestrzeni.
 	Zrodlo string
-	// ZrodloKod — identyfikator, którym da się po źródło sięgnąć (kod pliku
-	// biblioteki, identyfikator wiadomości). Pusty jest stanem poprawnym dla
-	// źródeł, które kodu nie mają — wtedy trafienie oddaje samą nazwę.
+	// ZrodloKod — identyfikator, którym da się po źródło sięgnąć; pusty dla
+	// źródeł bez kodu.
 	ZrodloKod string
 	// Kolejnosc — numer fragmentu w dokumencie źródłowym.
 	Kolejnosc int
 	// Tresc — sam fragment, ten, który wróci Operatorowi jako cytat.
 	Tresc string
-	// Model — nazwa modelu, którym policzono wektor. Bez niej nie wiadomo,
-	// z czym wolno ten wektor porównywać.
+	// Model — nazwa modelu, którym policzono wektor.
 	Model string
-	// Wektor — współrzędne znormalizowane (patrz `podobienstwo.go`).
+	// Wektor — współrzędne znormalizowane funkcją podobieństwa kosinusowego.
 	Wektor []float32
 }
 
-// Skladnica prowadzi tabelę wskaźnika.
+// Skladnica prowadzi tabelę wskaźnika, oddając zapis, odczyt i czyszczenie
+// pozycji rdzeniowi bez znajomości kontraktu.
 type Skladnica struct {
 	baza *sql.DB
 }
 
-// NowaSkladnica zakłada składnicę nad bazą rdzenia. Baza pusta oddaje nil —
+// NowaSkladnica zakłada składnicę nad bazą rdzenia; baza pusta oddaje nil,
 // wołający znosi to sam, tak jak dziennik transkrypcji.
 func NowaSkladnica(baza *sql.DB) *Skladnica {
 	if baza == nil {
@@ -66,19 +47,7 @@ func NowaSkladnica(baza *sql.DB) *Skladnica {
 }
 
 // Zapisz wnosi komplet pozycji jednego źródła w jednej transakcji i zwraca
-// liczbę wniesionych.
-//
-// Źródło wchodzi w całości albo wcale. Fragmenty jednego dokumentu wniesione
-// połowicznie dałyby wskaźnik, który o tym dokumencie wie, ale zna go do
-// połowy — a Operator nie ma jak tego zobaczyć: zapytanie o drugą połowę wróci
-// puste tak samo, jak wraca dla dokumentu nieindeksowanego. Dlatego przerwanie
-// w środku cofa całość.
-//
-// Powtórne indeksowanie nadpisuje, a nie dokłada. Warunek jednoznaczności
-// (zakres, kod źródła, kolejność, model) czyni z zapisu upsert, więc dokument
-// zmieniony i zaindeksowany ponownie ma tyle fragmentów, ile ma treści — a nie
-// sumę wszystkich swoich wersji. Fragmenty nadmiarowe po skróceniu dokumentu
-// kasuje `UsunZrodlo` wołane przez adapter przed zapisem.
+// liczbę wniesionych; źródło wchodzi w całości albo wcale.
 func (s *Skladnica) Zapisz(ctx context.Context, pozycje []Pozycja, chwila int64) (int, error) {
 	if s == nil {
 		return 0, brakSkladnicy()
@@ -122,9 +91,8 @@ func (s *Skladnica) Zapisz(ctx context.Context, pozycje []Pozycja, chwila int64)
 	return len(pozycje), nil
 }
 
-// UsunZrodlo kasuje wszystkie fragmenty jednego źródła w danym zakresie.
-// Wołane przed zapisem, żeby dokument skrócony nie zostawił po sobie fragmentów
-// z treści, której już nie ma — a które wracałyby jako cytat z dokumentu.
+// UsunZrodlo kasuje wszystkie fragmenty jednego źródła w danym zakresie;
+// wołane przed zapisem, żeby nie zostały fragmenty nieaktualne.
 func (s *Skladnica) UsunZrodlo(ctx context.Context, zakres, zrodloKod string) error {
 	if s == nil {
 		return brakSkladnicy()
@@ -137,8 +105,8 @@ func (s *Skladnica) UsunZrodlo(ctx context.Context, zakres, zrodloKod string) er
 	return nil
 }
 
-// UsunZakres czyści cały zakres — droga przebudowy od zera (`rebuild`).
-// Zakres pusty czyści wszystko; wołający rozstrzyga, czy tego chce.
+// UsunZakres czyści cały zakres — droga przebudowy od zera (rebuild);
+// zakres pusty czyści wszystko, wołający rozstrzyga, czy tego chce.
 func (s *Skladnica) UsunZakres(ctx context.Context, zakresy []string) error {
 	if s == nil {
 		return brakSkladnicy()
@@ -156,13 +124,8 @@ func (s *Skladnica) UsunZakres(ctx context.Context, zakresy []string) error {
 	return nil
 }
 
-// Pozycje odczytuje wiersze zakresów policzone wskazanym modelem.
-//
-// Zawężenie po modelu jest warunkiem poprawności, nie optymalizacją. Operator,
-// który zmienił ustawienie modelu, ma w tabeli wektory z dwóch przestrzeni;
-// porównanie pytania z wektorem cudzego modelu daje liczbę, która wygląda jak
-// trafność i nią nie jest. Stare wiersze zostają w tabeli świadomie — wracają
-// do użytku, gdy Operator wróci do poprzedniego modelu, a `rebuild` je czyści.
+// Pozycje odczytuje wiersze zakresów policzone wskazanym modelem;
+// zawężenie po modelu jest warunkiem poprawności, nie optymalizacją.
 func (s *Skladnica) Pozycje(ctx context.Context, zakresy []string, model string) ([]Pozycja, error) {
 	if s == nil {
 		return nil, brakSkladnicy()
@@ -200,10 +163,8 @@ func (s *Skladnica) Pozycje(ctx context.Context, zakresy []string, model string)
 	return pozycje, wiersze.Err()
 }
 
-// Policz zwraca liczbę pozycji wskaźnika dla modelu — pole `total` odpowiedzi
-// `knowledge.index`. Liczone zapytaniem, a nie długością odczytanego wykazu:
-// wykaz bywa dziesiątkami tysięcy wierszy z wektorami, a pytanie brzmi „ile",
-// nie „które".
+// Policz zwraca liczbę pozycji wskaźnika dla modelu — pole total
+// odpowiedzi knowledge.index, liczone zapytaniem, a nie długością wykazu.
 func (s *Skladnica) Policz(ctx context.Context, model string) (int, error) {
 	if s == nil {
 		return 0, brakSkladnicy()
@@ -217,9 +178,8 @@ func (s *Skladnica) Policz(ctx context.Context, model string) (int, error) {
 	return ile, nil
 }
 
-// znakiZapytania składa listę znaków zapytania dla klauzuli IN. Argumenty
-// wiązane, nie sklejane — zakres przychodzi z żądania i wklejony w SQL byłby
-// dokładnie tym, przed czym chroni wiązanie.
+// znakiZapytania składa listę znaków zapytania dla klauzuli IN; argumenty
+// wiązane, nie sklejane, bo zakres przychodzi z żądania klienta.
 func znakiZapytania(ile int) string {
 	znaki := make([]byte, 0, ile*3)
 	for i := 0; i < ile; i++ {
@@ -231,7 +191,8 @@ func znakiZapytania(ile int) string {
 	return string(znaki)
 }
 
-// brakSkladnicy nazywa jedyny stan, w którym składnica nie umie nic.
+// brakSkladnicy nazywa jedyny stan, w którym składnica nie umie nic,
+// i podaje wołającemu jednoznaczne rozpoznanie tego stanu.
 func brakSkladnicy() error {
 	return errors.New("wskaźnik znaczenia: rdzeń nie ma bazy, w której miałby leżeć " +
 		"wskaźnik — wektorów nie ma gdzie zapisać ani skąd odczytać; " +

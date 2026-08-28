@@ -1,17 +1,5 @@
 // Odpowiedzialność pliku: odnalezienie pary interpreter+skrypt, którą rdzeń
-// wywoła, żeby przepisać nagranie na tekst.
-//
-// Wzorzec odnajdywania jest ten sam, co w `narzedzia/wpiecie.go`: najpierw obok
-// binarium rdzenia, potem droga zapasowa, a gdy zawiodą obie — typowany błąd
-// zamiast ścieżki. Ścieżka zmyślona jest gorsza od odmowy, bo odmowę da się
-// powiedzieć Operatorowi, a zmyślona ścieżka wraca dopiero jako niezrozumiały
-// błąd uruchomienia procesu.
-//
-// Ten plik niczego nie uruchamia. Składa jedynie nazwę programu i wykaz
-// argumentów; start procesu należy wyłącznie do portu session.Uruchamiacz.
-// Jedyny wyjątek to `exec.LookPath` — ono nie uruchamia procesu, tylko
-// przegląda ścieżkę wyszukiwania systemu, dokładnie tak jak robi to
-// `narzedzia/wpiecie.go`.
+// wywoła, żeby przepisać nagranie na tekst; plik niczego nie uruchamia.
 package mowa
 
 import (
@@ -22,14 +10,14 @@ import (
 )
 
 const (
-	// nazwaSkryptu jest nazwą skryptu pomocniczego transkrypcji.
+	// nazwaSkryptu jest nazwą skryptu pomocniczego transkrypcji, uruchamianego
+	// przez znaleziony interpreter.
 	nazwaSkryptu = "transkrypcja.py"
 	// interpreterPreferowany to interpreter szukany, gdy Operator nie wskazał
-	// własnego. Trójka jawnie, bo goła nazwa `python` na wielu systemach wciąż
-	// wskazuje wydanie drugie, w którym pomocnik się nie uruchomi.
+	// własnego programu do uruchomienia skryptu.
 	interpreterPreferowany = "python3"
 	// interpreterZapasowy wchodzi tam, gdzie `python3` nie istnieje jako osobne
-	// polecenie (typowo Windows i część obrazów kontenerowych).
+	// polecenie w systemie operacyjnym.
 	interpreterZapasowy = "python"
 )
 
@@ -48,21 +36,9 @@ type Pomocnik struct {
 	Skrypt string
 }
 
-// OdnajdzPomocnika wskazuje parę interpreter+skrypt albo mówi, czemu jej nie ma.
-//
-// Skryptu szuka obok binarium, które właśnie pracuje: rdzeń i katalog
-// `pomocniki` wychodzą z jednego pakowania i stoją w jednym katalogu. Droga
-// zapasowa to ta sama ścieżka względna liczona od katalogu bieżącego rdzenia —
-// obsługuje uruchomienie z `go run`, gdzie binarium stoi w katalogu tymczasowym
-// i obok niego nie ma niczego z produktu.
-//
-// Interpreter: wskazanie Operatora wchodzi wprost, bez sprawdzania na dysku,
-// bo może być nazwą do rozwinięcia przez system albo dowiązaniem środowiska
-// wirtualnego, a odmowa na podstawie własnego sprawdzenia unieważniałaby to
-// ustawienie. Gdy wskazania nie ma, szukamy `python3`, a gdy i tego nie ma —
-// zostaje `python`. Ta ostatnia wartość jest zgadywana i może nie istnieć;
-// odmowa przyjdzie wtedy z uruchomienia procesu, bo tylko ono zna prawdę
-// o wykonywalności.
+// OdnajdzPomocnika wskazuje parę interpreter+skrypt albo mówi, czemu jej nie
+// ma; skryptu szuka obok binarium, które właśnie pracuje, potem drogą
+// zapasową liczoną od katalogu bieżącego rdzenia.
 func OdnajdzPomocnika(program string) (Pomocnik, error) {
 	skrypt, szukano, err := odnajdzSkrypt()
 	if err != nil {
@@ -100,20 +76,21 @@ func odnajdzSkrypt() (string, []string, error) {
 	return "", szukano, ostatni
 }
 
-// odnajdzInterpreter rozstrzyga, który program uruchomi skrypt.
+// odnajdzInterpreter rozstrzyga, który program uruchomi skrypt; wskazanie
+// Operatora wchodzi wprost, bez sprawdzania na dysku.
 func odnajdzInterpreter(program string) string {
 	if program != "" {
 		return program
 	}
-	// LookPath, nie uruchomienie: pytamy system o położenie pliku, nie startujemy
-	// procesu. To ta sama droga, którą idzie `narzedzia/wpiecie.go`.
+	// LookPath, nie uruchomienie: pytanie systemu o położenie pliku interpretera.
 	if zeSciezki, err := exec.LookPath(interpreterPreferowany); err == nil {
 		return zeSciezki
 	}
 	return interpreterZapasowy
 }
 
-// plikUzyteczny odpowiada, czy pod ścieżką stoi plik, a nie katalog i nie nic.
+// plikUzyteczny odpowiada, czy pod ścieżką stoi plik, a nie katalog i nie
+// nic, zanim rdzeń spróbuje go uruchomić.
 func plikUzyteczny(sciezka string) error {
 	opis, err := os.Stat(sciezka)
 	if err != nil {
@@ -125,14 +102,8 @@ func plikUzyteczny(sciezka string) error {
 	return nil
 }
 
-// Argumenty składa wiersz wywołania pomocnika w jednym miejscu.
-//
-// `-X utf8` idzie zawsze i nie jest opcją wołającego: pomocnik oddaje tekst
-// transkrypcji na standardowe wyjście, a Python bez tego przełącznika koduje je
-// według ustawień regionalnych systemu. Na polskim Windowsie znaczy to stronę
-// kodową 1250, w której transkrypcja rozpada się na krzaki, zanim rdzeń zdąży ją
-// odczytać. Wymuszenie UTF-8 w jednym miejscu jest jedyną obroną, która nie
-// zależy od tego, kto pomocnika woła.
+// Argumenty składa wiersz wywołania pomocnika w jednym miejscu; `-X utf8`
+// idzie zawsze i nie jest opcją wołającego.
 func (p Pomocnik) Argumenty(dalsze ...string) []string {
 	argumenty := make([]string, 0, 3+len(dalsze))
 	argumenty = append(argumenty, "-X", "utf8", p.Skrypt)

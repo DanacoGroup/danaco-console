@@ -1,30 +1,7 @@
-// Odpowiedzialność pliku: zamiana PDF na dokument EDYTOWALNY modułu Studio —
-// odzyskanie tekstu, akapitów, układów tabelarycznych i obrazów na tyle, na ile
-// PDF je niesie, wraz z BILANSEM tego, co odzyskane, a co nie.
-//
-// ── Dlaczego to jest odtworzenie, nie odczyt ────────────────────────────────
-// PDF nie niesie struktury akapitu ani tabeli. Niesie rozkaz „postaw ten napis
-// w tym miejscu strony". Akapit, wiersz tabeli i kolumna są WNIOSKAMI z układu
-// napisów, a nie zapisem w pliku. Dlatego:
-//
-//   - wynik nazywa się odzyskaniem i idzie z bilansem;
-//   - bilans mówi, ile stron miało warstwę tekstową, ile akapitów odtworzono,
-//     ile układów tabelarycznych rozpoznano, a ile POZOSTAŁO nierozpoznanych;
-//   - PDF ze samych skanów NIE UDAJE konwersji — wchodzi do kolejki rozpoznania
-//     pisma, a odpowiedź mówi to wprost i oddaje pozycję tej kolejki.
-//
-// Zlecenie stanowi to wprost: „konwersja PDF → dokument edytowalny bez bilansu
-// odzyskanego jest brakiem, nie skrótem".
-//
-// ── Czym liczone ────────────────────────────────────────────────────────────
-// `pdfcpu`, wkompilowany w binarium rdzenia. Programów zewnętrznych zdjętych
-// z rdzenia nie wołamy — wykaz zdjętych trzyma zapora rdzenia
-// (`zapora_warsztatu_pdf_test.go`) i to ona jest jego jedynym miejscem. Arsenał
-// jest wkompilowany, a proces potomny byłby tu regresem: jedno binarium serwera
-// zamieniłoby się w dwa, doszedłby koszt uruchomienia i rozjazd wersji.
-// Rozpoznanie pisma ze skanu jest osobną drogą (kolejka wczytywania modułu),
-// bo wymaga Tesseractu, czyli składnika PAKIETU SERWERA — i tak też jest
-// zgłoszone, jako brak w wykazie zależności pakietu, nie jako brak funkcji.
+// Plik zamienia PDF na dokument edytowalny modułu Studio: odzyskuje tekst,
+// akapity, układy tabelaryczne i obrazy z układu wydruku i podaje bilans tego,
+// co odzyskane, a co nie, ponieważ PDF niesie rozkazy rysowania napisów, a nie
+// strukturę dokumentu.
 package core
 
 import (
@@ -46,7 +23,7 @@ const (
 	// razem. Dokument dłuższy wchodzi w całości, ale nadwyżka stron wychodzi
 	// w wykazie pominiętych — Operator ma wiedzieć, że reszta czeka.
 	wejscieNajwiecejStronPdf = 500
-	// wejscieNajwiecejObrazowPdf ogranicza liczbę obrazów osadzanych w wyniku.
+	// wejscieNajwiecejObrazowPdf ogranicza liczbę obrazów osadzanych w wyniku, ponieważ dokument z setkami obrazów wyjętych ze stron obciążałby pamięć i magazyn zasobów ponad potrzebę podglądu.
 	wejscieNajwiecejObrazowPdf = 200
 	// wejscieProgWarstwyTekstowej to najmniejsza liczba znaków, po której strona
 	// uznaje się za niosącą warstwę tekstową. Jedna litera z sygnatury drukarki
@@ -60,19 +37,15 @@ type wejscieOdzyskaniePdf struct {
 	Postac shared.StudioDocumentForm
 	Tresc  string
 	Bilans shared.StudioImportBalance
-	// Obrazy niosą bajty obrazów wyjętych ze stron. Odłożenie ich do magazynu
-	// robi wołający, bo tylko on ma kontekst żądania i okno; ten rachunek nie
-	// sięga do magazynu, żeby dało się go sprawdzić bez bazy.
+	// Obrazy niosą bajty wyjęte ze stron; do magazynu odkłada je wołający, mający kontekst żądania.
 	Obrazy []wejscieObrazPdf
-	// SamSkan mówi, że dokument nie ma warstwy tekstowej i konwersji udawać
-	// nie wolno — wołający kieruje go na rozpoznanie pisma.
+	// SamSkan wskazuje brak warstwy tekstowej: wołający kieruje dokument na rozpoznanie pisma.
 	SamSkan bool
 }
 
-// wejscieObrazPdf niesie obraz wyjęty ze strony PDF.
+// wejscieObrazPdf niesie obraz wyjęty ze strony PDF wraz z wymiarami i numerem strony, potrzebnymi przy osadzeniu obrazu w postaci dokumentu edytowalnego.
 type wejscieObrazPdf struct {
-	// ObiektKod wiąże obraz z obiektem postaci, do którego trafi kod zasobu po
-	// odłożeniu bajtów w magazynie.
+	// ObiektKod wiąże obraz z obiektem postaci, który dostanie kod zasobu po zapisie w magazynie.
 	ObiektKod   string
 	Nazwa       string
 	Format      string
@@ -82,7 +55,7 @@ type wejscieObrazPdf struct {
 	NumerStrony int
 }
 
-// wejscieCzytajPdf odzyskuje dokument edytowalny z PDF.
+// wejscieCzytajPdf odzyskuje dokument edytowalny z PDF: rozbiera treść stron, składa akapity i tabele oraz, na żądanie, wyjmuje obrazy, a wynik niesie razem z bilansem odzyskania.
 func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 	odzyskacTabele, osadzacObrazy bool) (wejscieOdzyskaniePdf, error) {
 
@@ -106,9 +79,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 		wybraneStrony = []string{czysty}
 	}
 
-	// Odczyt strumieni treści stron. Każda strona daje swoje wiersze — akapity
-	// składa się z wierszy, a nie ze stron, bo akapit potrafi przechodzić przez
-	// granicę strony.
+	// Odczyt strumieni stron: akapit składa się z wierszy, bo bywa przenoszony między stronami.
 	wierszeStron := make([][]string, 0, stron)
 	err = api.ExtractContent(bytes.NewReader(bajty), wybraneStrony,
 		func(strumien io.Reader, _ int) error {
@@ -136,9 +107,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 	wynik.Bilans.PagesWithoutText = wejscieWskaznikCalkowity(bezTekstu)
 
 	if zeTekstem == 0 {
-		// PDF ze samych skanów. Konwersji nie udajemy: dokument bez warstwy
-		// tekstowej po „konwersji" byłby pustą kartką, o której Operator
-		// pomyślałby, że taki jest jego plik.
+		// PDF ze samych skanów: konwersji nie udaje się, dokument idzie do rozpoznania pisma.
 		wynik.SamSkan = true
 		wynik.Bilans.NeedsTextRecognition = wejscieWskaznikLogiczny(true)
 		wynik.Bilans.Note = wejscieWskaznikTekstu("dokument PDF nie ma warstwy tekstowej na " +
@@ -167,8 +136,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 	wszystkieWiersze := make([]string, 0, 256)
 	for _, wiersze := range wierszeStron {
 		wszystkieWiersze = append(wszystkieWiersze, wiersze...)
-		// Granica strony jest wierszem pustym: bez niej ostatni akapit strony
-		// zlałby się z pierwszym akapitem strony następnej.
+		// Granica strony jest wierszem pustym, inaczej akapity sąsiednich stron złączyłyby się w jeden.
 		wszystkieWiersze = append(wszystkieWiersze, "")
 	}
 
@@ -220,7 +188,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 	return wynik, nil
 }
 
-// wejscieZdanieOdzyskaniaPdf składa zdanie o uczciwym stanie wyniku.
+// wejscieZdanieOdzyskaniaPdf składa zdanie bilansu podające czytelnikowi, ile stron, akapitów, tabel i obrazów odzyskano z dokumentu PDF.
 func wejscieZdanieOdzyskaniaPdf(bilans *shared.StudioImportBalance) string {
 	return "odzyskanie z PDF jest ODTWORZENIEM, nie odczytem: " +
 		strconv.Itoa(wartoscCalkowita(bilans.PagesWithText)) + " z " +
@@ -232,7 +200,7 @@ func wejscieZdanieOdzyskaniaPdf(bilans *shared.StudioImportBalance) string {
 		strconv.Itoa(wartoscCalkowita(bilans.ImagesEmbedded)) + " obrazów"
 }
 
-// wejscieDlugoscWierszy liczy znaki treści strony.
+// wejscieDlugoscWierszy liczy znaki treści strony po przycięciu odstępów, rozstrzygając, czy strona niesie warstwę tekstową.
 func wejscieDlugoscWierszy(wiersze []string) int {
 	dlugosc := 0
 	for _, wiersz := range wiersze {
@@ -243,16 +211,7 @@ func wejscieDlugoscWierszy(wiersze []string) int {
 
 // ── Wiersze ze strumienia treści strony ─────────────────────────────────────
 
-// wejscieWierszeStronyPdf wyjmuje wiersze tekstu ze strumienia treści strony.
-//
-// Rozbiór idzie po operatorach zapisu napisu (`Tj`, `TJ`, `'`, `"`) i po
-// operatorach przesunięcia wiersza (`Td`, `TD`, `T*`, `Tm`): przesunięcie
-// zaczyna wiersz nowy. To jest właśnie ten wniosek z układu, o którym mówi
-// nagłówek pliku — PDF nie mówi „nowy wiersz", mówi „przesuń kursor".
-//
-// Napisy sześciowartościowe (`<0041>` w miejsce `(A)`) też wchodzą: pliki
-// składane z kroju osadzonego zapisują tekst właśnie tak, a pominięcie ich
-// dałoby dokument pusty przy pliku, który tekst niesie.
+// wejscieWierszeStronyPdf wyjmuje wiersze tekstu ze strumienia treści strony po operatorach zapisu i przesunięcia wiersza, które w PDF pełnią rolę znaku nowego wiersza; obejmuje też napisy zapisane szesnastkowo, właściwe plikom z krojem osadzonym.
 func wejscieWierszeStronyPdf(strumien string) []string {
 	wiersze := make([]string, 0, 64)
 	var wiersz strings.Builder
@@ -348,9 +307,7 @@ func wejscieWierszeStronyPdf(strumien string) []string {
 	}
 	domknijWiersz()
 
-	// Wiersze pojedynczych napisów potrafią przyjść w kawałkach — łączymy je
-	// bez rozdzielania słów, bo `TJ` rozbija wyraz na kilka napisów po to, żeby
-	// dosunąć odstępy między literami.
+	// Wiersze łączy się bez rozdzielania: `TJ` rozbija wyraz na kilka napisów z odstępami.
 	sprzatniete := make([]string, 0, len(wiersze))
 	for _, wiersz := range wiersze {
 		sprzatniete = append(sprzatniete, strings.TrimRight(wiersz, " \t"))
@@ -369,11 +326,7 @@ func wejscieRozkazNowegoWierszaPdf(rozkaz string) bool {
 	return false
 }
 
-// wejscieNapisSzesnastkowyPdf przekłada napis zapisany szesnastkowo na tekst.
-//
-// Zapis dwubajtowy (`<00410042>`) jest w plikach z krojem osadzonym normą.
-// Bajt wyższy zerowy znaczy zwykły znak ASCII; wartość wyższą przepuszczamy
-// jako punkt kodowy, bo to najlepsze, co da się zrobić bez mapy kroju.
+// wejscieNapisSzesnastkowyPdf przekłada napis zapisany szesnastkowo na tekst, rozpoznając zapis dwubajtowy typowy dla plików z krojem osadzonym, i przepuszcza wartość jako punkt kodowy bez mapy kroju.
 func wejscieNapisSzesnastkowyPdf(zapis string) string {
 	czysty := strings.Map(func(znak rune) rune {
 		switch {
@@ -480,9 +433,7 @@ func wejsciePostacZWierszyPdf(kodDokumentu string, wiersze []string,
 						continue
 					}
 				}
-				// Układu nie dało się rozpoznać jako tabeli (albo Operator
-				// odzyskiwania tabel nie chciał): wiersze wchodzą akapitami
-				// z zachowanym rozkładem odstępów, a bilans to liczy.
+				// Układu nie rozpoznano jako tabeli: wiersze wchodzą akapitami z zachowanym rozkładem odstępów.
 				nierozpoznane++
 				for _, wierszUkladu := range blok {
 					postac.Blocks = append(postac.Blocks, wejscieBlokAkapituPdf(
@@ -494,9 +445,7 @@ func wejsciePostacZWierszyPdf(kodDokumentu string, wiersze []string,
 		}
 
 		akapit = append(akapit, strings.TrimSpace(wiersz))
-		// Wiersz kończący zdanie domyka akapit: PDF nie mówi, gdzie akapit się
-		// kończy, a zdanie zamknięte kropką i krótszy wiersz są najmocniejszą
-		// przesłanką, jaką układ napisów daje.
+		// Wiersz kończący zdanie domyka akapit: PDF nie niesie granicy akapitu, a innej przesłanki brak.
 		if wejscieWierszZamykaAkapitPdf(wiersz, wiersze, i) {
 			domknijAkapit()
 		}
@@ -524,7 +473,7 @@ func wejscieBlokAkapituPdf(kodSekcji, tresc, styl string,
 	return blok
 }
 
-// wejscieWierszZamykaAkapitPdf rozstrzyga, czy wiersz domyka akapit.
+// wejscieWierszZamykaAkapitPdf rozstrzyga, czy wiersz domyka akapit, na podstawie znaku kończącego zdanie i wielkości litery wiersza następnego.
 func wejscieWierszZamykaAkapitPdf(wiersz string, wiersze []string, wskazanie int) bool {
 	czysty := strings.TrimSpace(wiersz)
 	if czysty == "" {
@@ -541,21 +490,13 @@ func wejscieWierszZamykaAkapitPdf(wiersz string, wiersze []string, wskazanie int
 	if nastepny == "" {
 		return true
 	}
-	// Zdanie zamknięte, a wiersz następny zaczyna się wielką literą albo
-	// cyfrą — akapit nowy. Wiersz następny małą literą znaczy zdanie łamane
-	// przez skrót („art. 5 ust. 1"), a nie akapit nowy.
+	// Wielka litera albo cyfra w wierszu następnym znaczy akapit nowy; mała znaczy zdanie łamane skrótem.
 	pierwszy := []rune(nastepny)[0]
 	return pierwszy >= 'A' && pierwszy <= 'Z' || pierwszy >= '0' && pierwszy <= '9' ||
 		strings.ContainsRune("ĄĆĘŁŃÓŚŹŻ", pierwszy)
 }
 
-// wejsciePoziomNaglowkaPdf rozpoznaje nagłówek po układzie wiersza: krótki,
-// bez kropki na końcu, pisany wersalikami albo poprzedzony numeracją własną
-// dokumentu Operatora.
-//
-// To jest odtworzenie po układzie, nie odczyt stylu — i tak wychodzi w bilansie.
-// Numeracja, o którą tu chodzi, jest numeracją PISMA OPERATORA (rozdział 1,
-// paragraf 3), a nie kodem wymyślonym przez rdzeń.
+// wejsciePoziomNaglowkaPdf rozpoznaje poziom nagłówka po układzie wiersza: krótkości, braku kropki na końcu, zapisie wersalikami albo numeracji własnej pisma źródłowego, a nie po stylu, którego PDF nie niesie.
 func wejsciePoziomNaglowkaPdf(tresc string) int {
 	czysta := strings.TrimSpace(tresc)
 	if czysta == "" || len([]rune(czysta)) > 120 {
@@ -593,13 +534,13 @@ func wejsciePoziomNaglowkaPdf(tresc string) int {
 
 // ── Układy tabelaryczne ─────────────────────────────────────────────────────
 
-// wejscieWierszTabelarycznyPdf mówi, czy wiersz wygląda na wiersz tabeli:
+// wejscieWierszTabelarycznyPdf sprawdza, czy wiersz wygląda na wiersz tabeli:
 // niesie co najmniej dwa odstępy szerokie, którymi PDF rozdziela kolumny.
 func wejscieWierszTabelarycznyPdf(wiersz string) bool {
 	return len(wejscieKolumnyWierszaPdf(wiersz)) >= 2
 }
 
-// wejscieKolumnyWierszaPdf rozdziela wiersz na kolumny po odstępach szerokich.
+// wejscieKolumnyWierszaPdf rozdziela wiersz na kolumny po odstępach szerokich, którymi PDF oddziela treść sąsiednich kolumn tabeli.
 func wejscieKolumnyWierszaPdf(wiersz string) []string {
 	czysty := strings.ReplaceAll(wiersz, "\t", "   ")
 	czlony := strings.Split(czysty, "  ")
@@ -616,7 +557,7 @@ func wejscieKolumnyWierszaPdf(wiersz string) []string {
 	return kolumny
 }
 
-// wejscieZbierzBlokTabelaryczny zbiera ciąg wierszy tabelarycznych.
+// wejscieZbierzBlokTabelaryczny zbiera ciąg kolejnych wierszy tabelarycznych, tworząc blok, z którego dalszy rozbiór złoży tabelę.
 func wejscieZbierzBlokTabelaryczny(wiersze []string, od int) []string {
 	blok := []string{}
 	for i := od; i < len(wiersze); i++ {
@@ -628,12 +569,7 @@ func wejscieZbierzBlokTabelaryczny(wiersze []string, od int) []string {
 	return blok
 }
 
-// wejscieTabelaZBlokuPdf składa tabelę z bloku wierszy tabelarycznych.
-//
-// Tabela powstaje wtedy i tylko wtedy, gdy liczba kolumn jest ZGODNA w całym
-// bloku albo różni się o jedną. Blok o rozjeżdżającej się liczbie kolumn nie
-// jest tabelą, tylko tekstem w kolumnach — i wtedy rachunek go NIE UDAJE, tylko
-// oddaje fałsz, a wołający liczy go jako układ nierozpoznany.
+// wejscieTabelaZBlokuPdf składa tabelę z bloku wierszy tabelarycznych, gdy liczba kolumn jest zgodna w całym bloku albo różni się o jedną; inaczej zwraca fałsz, a blok liczy się jako układ nierozpoznany.
 func wejscieTabelaZBlokuPdf(blok []string) (shared.StudioDocumentTable, bool) {
 	wiersze := make([][]string, 0, len(blok))
 	najwiecej := 0
@@ -659,15 +595,11 @@ func wejscieTabelaZBlokuPdf(blok []string) (shared.StudioDocumentTable, bool) {
 		Id:      nowyIdentyfikator(przedrostekTabeliStudia),
 		Rows:    len(wiersze),
 		Columns: najwiecej,
-		// Wiersz pierwszy bierze się za nagłówkowy: w piśmie urzędowym tabela
-		// bez nagłówka jest rzadkością, a odzyskanie mówi wprost, że jest
-		// odtworzeniem.
+		// Wiersz pierwszy liczy się za nagłówkowy: w piśmie urzędowym tabela bez nagłówka jest rzadkością.
 		HeaderRows:   wejscieWskaznikCalkowity(1),
 		RepeatHeader: wejscieWskaznikLogiczny(true),
 	}
-	// Szerokości kolumn liczone udziałem najdłuższej treści w kolumnie: tabela
-	// z szerokościami zerowymi jest usterką, którą sprawdzian odcinka postaci
-	// mierzy wprost.
+	// Szerokości kolumn liczy się udziałem najdłuższej treści w kolumnie, aby uniknąć szerokości zerowych.
 	najdluzsze := make([]float64, najwiecej)
 	for _, kolumny := range wiersze {
 		for numer, tresc := range kolumny {
@@ -708,7 +640,7 @@ func wejscieTabelaZBlokuPdf(blok []string) (shared.StudioDocumentTable, bool) {
 
 // ── Obrazy ──────────────────────────────────────────────────────────────────
 
-// wejscieObrazyPdf wyjmuje obrazy osadzone w stronach dokumentu.
+// wejscieObrazyPdf wyjmuje obrazy osadzone w stronach dokumentu PDF, pomijając te, których biblioteka nie potrafi rozpakować.
 func wejscieObrazyPdf(bajty []byte, wybraneStrony []string,
 	nastawy *model.Configuration) ([]wejscieObrazPdf, int) {
 
@@ -746,9 +678,7 @@ func wejscieObrazyPdf(bajty []byte, wybraneStrony []string,
 			return nil
 		}, nastawy)
 	if err != nil {
-		// Odmowa biblioteki na obrazach NIE przewraca odzyskania tekstu:
-		// dokument z tekstem, a bez obrazów, jest wynikiem gorszym, ale
-		// prawdziwym — i bilans mówi, ile obrazów odpadło.
+		// Odmowa biblioteki na obrazach nie przewraca odzyskania tekstu; bilans liczy obrazy odpadnięte.
 		pominiete++
 	}
 	return obrazy, pominiete
@@ -776,8 +706,7 @@ func wejscieDolozObrazyDoPostaci(wynik *wejscieOdzyskaniePdf) {
 			AltText: wejscieWskaznikTekstu(opis),
 		}
 		if obraz.Szerokosc > 0 && obraz.Wysokosc > 0 {
-			// Wymiar w milimetrach przy 96 punktach na cal — tyle, ile PDF
-			// niesie bez macierzy przekształcenia strony.
+			// Wymiar w milimetrach liczony przy 96 punktach na cal — tyle niesie PDF bez macierzy przekształcenia.
 			obiekt.WidthMm = wejscieWskaznikRzeczywisty(float64(obraz.Szerokosc) / 96 * 25.4)
 			obiekt.HeightMm = wejscieWskaznikRzeczywisty(float64(obraz.Wysokosc) / 96 * 25.4)
 		}

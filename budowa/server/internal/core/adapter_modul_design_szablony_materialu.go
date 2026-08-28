@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: szablony materiału marketingowego —
 // `design.template.save`, `design.template.list`, `design.template.apply`.
-// Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`); szablony
-// promptu leżą w `adapter_modul_design_szablony.go` i są innym bytem.
-//
-// ── Szablon jest UKŁADEM, nie poleceniem ────────────────────────────────────
-// Szablon materiału niesie rozmiar (baner 1200×628, wizytówka 90×50) i komplet
-// warstw. Zastosowanie zakłada z niego kompozycję gotową do pracy — po to
-// istnieje. Wykaz szablonów, z którego nie da się szablonu użyć, byłby spisem
-// cudzej pracy.
-//
-// ── Podstawienie treści idzie po nazwie warstwy ─────────────────────────────
-// Warstwa niesie adnotację (`note`) i to ona jest jej nazwą w szablonie:
-// „logo", „nagłówek", „zdjęcie produktu". Podstawienie wskazuje zasób, który ma
-// w tej warstwie stanąć. Nazwa, której szablon nie ma, wraca w `unmatchedNames`
-// — bilans zamiast ciszy. Cicha zgoda oznaczałaby komplet kampanii złożony
-// z szablonu, w którym połowa podstawień nie weszła, a Operator dowiedziałby
-// się o tym dopiero z wydruku.
+// Szablony promptu leżą w `adapter_modul_design_szablony.go` i są innym bytem.
 package core
 
 import (
@@ -38,11 +23,8 @@ const przedrostekSzablonuMaterialuDesign = "szablon-materialu-"
 const przedrostekStronySzablonuDesign = "strona-szablonu-"
 
 // ZapiszSzablonMaterialu utrwala szablon materiału wraz z warstwami —
-// obsługuje `design.template.save`.
-//
-// Szablon wskazany a nieznany jest ODMOWĄ, nie cichym założeniem nowego —
-// wzorem szablonu promptu: Operator, który nadpisuje, oczekuje że nadpisał ten
-// jeden, a nie że dostał drugi obok.
+// obsługuje `design.template.save`. Szablon wskazany a nieznany jest odmową,
+// nie cichym założeniem nowego.
 func (a *adapterDesignu) ZapiszSzablonMaterialu(ctx context.Context,
 	z shared.DesignTemplateSaveRequest) (shared.DesignTemplateSaveResponse, error) {
 
@@ -90,9 +72,7 @@ func (a *adapterDesignu) ZapiszSzablonMaterialu(ctx context.Context,
 		return shared.DesignTemplateSaveResponse{}, bladDesignu(err)
 	}
 
-	// Strony czynią z szablonu PUBLIKACJĘ. Zapis idzie po zapisie samego
-	// szablonu, bo strona wskazuje jego klucz. Szablon bez stron zostaje
-	// jednostronicowy i jego warstwy leżą tam, gdzie leżały — baner nie ma stron.
+	// Strony czynią z szablonu publikację. Zapis idzie po zapisie samego szablonu.
 	if len(z.Pages) > 0 {
 		strony, warstwyStron, err := stronySzablonuDoZapisuDesignu(z.Pages)
 		if err != nil {
@@ -112,11 +92,7 @@ func (a *adapterDesignu) ZapiszSzablonMaterialu(ctx context.Context,
 }
 
 // stronySzablonuDoZapisuDesignu przekłada strony kontraktu na wiersze wraz
-// z warstwami przypisanymi do kodu strony.
-//
-// Numery stron są sprawdzane PRZED zapisem: numer niedodatni nie jest numerem
-// strony, a numer powtórzony odbiłby się od unikatu schematu i wrócił jako
-// awaria rdzenia oznaczona jako ponawialna — a to jest pomyłka wołającego.
+// z warstwami przypisanymi do kodu strony, sprawdzając numery przed zapisem.
 func stronySzablonuDoZapisuDesignu(strony []shared.DesignTemplatePage) (
 	[]dane.StronaSzablonuMaterialuDesignu, map[string][]dane.WarstwaKompozycji, error) {
 
@@ -148,7 +124,8 @@ func stronySzablonuDoZapisuDesignu(strony []shared.DesignTemplatePage) (
 	return wiersze, warstwy, nil
 }
 
-// SzablonyMaterialu zwraca szablony okna — obsługuje `design.template.list`.
+// SzablonyMaterialu zwraca szablony okna — obsługuje `design.template.list`,
+// wraz z warstwami każdego z nich.
 func (a *adapterDesignu) SzablonyMaterialu(ctx context.Context,
 	z shared.DesignTemplateListRequest) (shared.DesignTemplateListResponse, error) {
 
@@ -202,9 +179,8 @@ func (a *adapterDesignu) ZastosujSzablonMaterialu(ctx context.Context,
 	if err != nil {
 		return shared.DesignTemplateApplyResponse{}, bladNieznanegoSzablonuMaterialu(z.TemplateId, err)
 	}
-	// Publikacja wielostronicowa: na kompozycję wchodzi JEDNA strona — ta
-	// wskazana albo pierwsza. Wszystkie strony naraz na jednym płótnie leżałyby
-	// jedna na drugiej, bo kompozycja jest arkuszem, nie plikiem.
+	// Publikacja wielostronicowa: na kompozycję wchodzi jedna strona — wskazana
+	// albo pierwsza.
 	strony, err := a.repozytorium.StronySzablonuMaterialuDesignu(ctx, szablon.ID)
 	if err != nil {
 		return shared.DesignTemplateApplyResponse{}, bladDesignu(err)
@@ -249,9 +225,7 @@ func (a *adapterDesignu) ZastosujSzablonMaterialu(ctx context.Context,
 		}
 	}
 
-	// Warstwy szablonu dostają WŁASNE identyfikatory w kompozycji: kompozycja
-	// jest odtąd bytem osobnym i jej zmiana nie ma prawa ruszyć szablonu, z
-	// którego powstała.
+	// Warstwy szablonu dostają własne identyfikatory w kompozycji.
 	uzyte := map[string]bool{}
 	warstwy := make([]dane.WarstwaKompozycji, 0, len(warstwySzablonu))
 	for numer, warstwa := range warstwySzablonu {
@@ -293,8 +267,7 @@ func (a *adapterDesignu) ZastosujSzablonMaterialu(ctx context.Context,
 
 	odpowiedz := shared.DesignTemplateApplyResponse{Board: kompozycja}
 	// Strony wracają w odpowiedzi, żeby okno publikacji wiedziało, ile stron
-	// zostało — bez tego Operator dostawałby jedną kompozycję i nie miałby po
-	// czym poznać, że publikacja ma jeszcze dwadzieścia trzy.
+	// zostało.
 	if len(strony) > 0 {
 		odpowiedz.Pages, err = a.stronyKontraktuSzablonuDesignu(ctx, strony)
 		if err != nil {
@@ -315,11 +288,7 @@ func (a *adapterDesignu) ZastosujSzablonMaterialu(ctx context.Context,
 }
 
 // podstawieniaSzablonu rozkłada `replacements` żądania na mapę nazwa warstwy →
-// identyfikator zasobu.
-//
-// Wartość musi być napisem: podstawienie wskazuje ZASÓB, który ma stanąć
-// w warstwie. Liczba ani obiekt nie jest identyfikatorem zasobu, a przepuszczone
-// po cichu dałyby warstwę pustą przy powodzeniu komendy.
+// identyfikator zasobu. Wartość musi być napisem wskazującym zasób.
 func podstawieniaSzablonu(surowe json.RawMessage) (map[string]string, error) {
 	if len(surowe) == 0 {
 		return map[string]string{}, nil
@@ -383,7 +352,8 @@ func sprawdzRodzajSzablonuMaterialu(rodzaj shared.DesignTemplateKind) error {
 		string(rodzaj), strings.Join(nazwy, ", ")))
 }
 
-// bladNieznanegoSzablonuMaterialu nazywa szablon, którego rdzeń nie zna.
+// bladNieznanegoSzablonuMaterialu nazywa szablon, którego rdzeń nie zna —
+// zapis wskazujący go byłby cichym założeniem nowego.
 func bladNieznanegoSzablonuMaterialu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("szablonu materiału " + kod + " nie ma w tym rdzeniu")

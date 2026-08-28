@@ -1,34 +1,5 @@
-// Odpowiedzialność pliku: ODWRACALNY DZIENNIK CZYNNOŚCI dokumentu — wykaz
-// (`studio.journal.list`), cofnięcie pojedynczej czynności także NIE PO KOLEI
-// (`studio.journal.revert`) i ponowienie cofniętej (`studio.journal.redo`).
-//
-// ── Dlaczego wpis niesie całe drzewo postaci, a nie samą treść ───────────────
-// Wymaganie Właściciela: „pomyłkowa zmiana kroju w całym dokumencie musi się
-// cofać tak samo jak skasowany akapit". Taka zmiana nie rusza ANI JEDNEJ litery,
-// więc treść sprzed czynności jej nie odtworzy. Dlatego wpis dziennika niesie
-// `StanPrzed` i `StanPo` jako pełne drzewo postaci (`StudioDocumentForm`),
-// a cofnięcie przywraca drzewo, nie napis.
-//
-// ── Dlaczego cofnięcie NIE jest przywróceniem wersji ────────────────────────
-// Przywrócenie wersji cofa wszystko, co po niej weszło — także pracę Operatora.
-// Cofnięcie czynności ze ŚRODKA dziennika ma zdjąć wyłącznie to, co zrobiła ta
-// jedna czynność. Dlatego rdzeń nie wgrywa `StanPrzed` w miejsce dokumentu, a
-// liczy RÓŻNICĘ między `StanPo` i `StanPrzed` i nakłada ją odwrotnie na stan
-// BIEŻĄCY, byt po bycie (blok, styl, sekcja, obiekt, pole, nastawy strony).
-// Byt, którego czynność nie tknęła, zostaje nietknięty.
-//
-// ── Dlaczego czynność z zależnością ODMAWIA, a nie cofa się po cichu ─────────
-// Tabela zależności czynności (migracja 364) istnieje wyłącznie po to. Cofnięcie
-// czynności, na której stoi późniejsza, zostawiłoby dokument w stanie
-// niespójnym — na przykład zdjęcie tabeli, do której później wstawiono wiersze.
-// Odmowa NAZYWA zależność: Operator ma wiedzieć, co cofnąć wcześniej, a nie
-// zgadywać, dlaczego nic się nie stało.
-//
-// ── Dwa słowniki, których nie wolno pomieszać ───────────────────────────────
-// Rodzaj czynności dziennika to `shared.StudioActionKind` (jedenaście wartości).
-// Rodzaj zmiany śledzonej to `shared.StudioChangeKind` (trzy). Stan wpisu
-// dziennika to WYŁĄCZNIE `active` albo `reverted` — tabela z migracji 364 nie
-// przyjmie niczego innego.
+// Plik obsługuje odwracalny dziennik czynności dokumentu: wykaz, cofnięcie
+// pojedynczej czynności nie po kolei i ponowienie czynności cofniętej.
 package core
 
 import (
@@ -44,7 +15,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// DziennikCzynnosci obsługuje `studio.journal.list`.
+// DziennikCzynnosci oddaje wykaz czynności dziennika dokumentu, zawężony
+// autorem, rodzajem, stanem, agentem i podagentem żądania.
 func (a *adapterStudia) DziennikCzynnosci(ctx context.Context,
 	z shared.StudioJournalListRequest) (shared.StudioJournalListResponse, error) {
 
@@ -82,9 +54,8 @@ func (a *adapterStudia) DziennikCzynnosci(ctx context.Context,
 		}
 		wybrane = append(wybrane, dziennikZlozCzynnosc(wiersz))
 	}
-	// Licznik mówi, ile wpisów dziennik niesie PO zawężeniu, a nie ile ich
-	// wyszło po obcięciu granicą: Operator pytający o dziesięć ostatnich ma
-	// wiedzieć, że stoi ich sto.
+	// Licznik mówi, ile wpisów dziennik niesie po zawężeniu, nie ile ich
+	// wyszło po obcięciu granicą.
 	wszystkich := len(wybrane)
 	if z.Limit != nil && *z.Limit > 0 && *z.Limit < len(wybrane) {
 		wybrane = wybrane[:*z.Limit]
@@ -92,11 +63,8 @@ func (a *adapterStudia) DziennikCzynnosci(ctx context.Context,
 	return shared.StudioJournalListResponse{Actions: wybrane, Total: wszystkich}, nil
 }
 
-// CofnijCzynnosc obsługuje `studio.journal.revert`.
-//
-// Cofa POJEDYNCZO i nie po kolei. Kolejność wykonania jest odwrotna do
-// kolejności dziennika: gdy Operator wskazał kilka czynności naraz, zdejmuje się
-// najpierw najświeższą, bo starsza mogła być jej podstawą.
+// CofnijCzynnosc cofa pojedynczo, nie po kolei, jedną albo kilka wskazanych
+// czynności dziennika, zdejmując najpierw najświeższą z nich.
 func (a *adapterStudia) CofnijCzynnosc(ctx context.Context,
 	z shared.StudioJournalRevertRequest) (shared.StudioJournalRevertResponse, error) {
 
@@ -141,9 +109,8 @@ func (a *adapterStudia) CofnijCzynnosc(ctx context.Context,
 			return shared.StudioJournalRevertResponse{}, bladStudio(err)
 		}
 		if !przestawiona {
-			// Wiersz zmienił stan między odczytem wykazu a zapisem — inne okno
-			// cofnęło tę czynność pierwsze. To nie jest usterka, ale nie wolno
-			// tego policzyć jako skutku tego wywołania.
+			// Wiersz zmienił stan między odczytem wykazu a zapisem — cofnął go
+			// w tym czasie ktoś inny.
 			bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 				Reason: "czynność była już cofnięta",
 				Detail: kontrolaWskaznikTekstu("czynność „" + czynnosc.Opis +
@@ -182,10 +149,8 @@ func (a *adapterStudia) CofnijCzynnosc(ctx context.Context,
 	}, nil
 }
 
-// PonowCzynnosc obsługuje `studio.journal.redo`.
-//
-// Ponowienie idzie w kolejności dziennika, nie odwrotnie: czynność starsza
-// wchodzi pierwsza, bo młodsza mogła na niej stać.
+// PonowCzynnosc ponawia jedną albo kilka wskazanych czynności cofniętych,
+// w kolejności dziennika, czynność starszą przed młodszą.
 func (a *adapterStudia) PonowCzynnosc(ctx context.Context,
 	z shared.StudioJournalRedoRequest) (shared.StudioJournalRedoResponse, error) {
 
@@ -221,8 +186,7 @@ func (a *adapterStudia) PonowCzynnosc(ctx context.Context,
 			})
 			continue
 		}
-		// Ponowienie jest cofnięciem cofnięcia: nakłada się różnicę w kierunku
-		// od stanu sprzed czynności do stanu po niej.
+		// Ponowienie nakłada różnicę od stanu sprzed czynności do stanu po niej.
 		pominiete, err := a.dziennikNalozOdwrotnie(ctx, stan, czynnosc.StanPrzed, czynnosc.StanPo)
 		if err != nil {
 			return shared.StudioJournalRedoResponse{}, err
@@ -285,12 +249,9 @@ func (a *adapterStudia) dziennikStanIWykaz(ctx context.Context,
 	return stan, skladnica, wykaz, nil
 }
 
-// dziennikWybierz przesiewa dziennik do czynności wskazanych żądaniem.
-//
-// Wskazanie czynności, której nie ma, jest ODMOWĄ, nie ciszą: odpowiedź
-// pomyślna na cofnięcie czegoś, czego dziennik nie zna, kazałaby Operatorowi
-// czytać to jako wykonane. Tak samo wskazanie czynności w stanie innym niż
-// wymagany — cofnięcie już cofniętej nie jest cofnięciem.
+// dziennikWybierz przesiewa dziennik do czynności wskazanych żądaniem
+// i odmawia nazwanym powodem, gdy wskazana czynność nie istnieje albo stoi
+// w stanie innym niż wymagany przez czynność wołającą.
 func dziennikWybierz(wykaz []dane.CzynnoscDokumentuStudia, kody []string,
 	kodDokumentu, stanWymagany string) (map[string]bool,
 	[]dane.CzynnoscDokumentuStudia, error) {
@@ -321,26 +282,8 @@ func dziennikWybierz(wykaz []dane.CzynnoscDokumentuStudia, kody []string,
 }
 
 // dziennikStojaceNaNiej oddaje kod pierwszej czynności późniejszej, która stoi
-// na tej i nie jest cofana razem z nią. Pusty napis znaczy „nic nie stoi".
-//
-// ── Dwa źródła zależności, nie jedno ────────────────────────────────────────
-// Zależność ZAPISANA (tabela `zaleznosc_czynnosci_studio`) mówi o powiązaniach,
-// których z zakresu nie widać: wstawienie tabeli jest podstawą scalenia komórki,
-// choć zakresy mogą się nie stykać. Tę wiedzę ma czynność, która wpis odkładała,
-// i ona ją zapisuje.
-//
-// Zależność WYWIEDZIONA z zakresu jest siatką pod tym: czynność późniejsza,
-// która ruszyła TEN SAM fragment, stoi na tej wcześniejszej z samej natury
-// rzeczy — cofnięcie wcześniejszej wgrałoby w to miejsce stan sprzed niej,
-// a więc zabrałoby ze sobą pracę późniejszą i zostawiło dokument w stanie,
-// którego nigdy nie było.
-//
-// Dlaczego oba, a nie tylko zapisane: wykaz zapisanych zależności wypełniają
-// czynności czterech odcinków i jest dziś NIEPEŁNY — a niepełny wykaz zależności
-// znaczy ciche cofnięcie, które psuje dokument. Wywiedzenie z zakresu myli się
-// w drugą stronę: odmawia czasem cofnięcia, które byłoby bezpieczne, i mówi
-// wtedy wprost, która czynność stoi na drodze. Odmowa nazwana jest tu tańsza
-// niż niespójny dokument.
+// na tej i nie jest cofana razem z nią, łącząc zależność zapisaną z zależnością
+// wywiedzioną z zakresu; pusty napis znaczy „nic nie stoi".
 func dziennikStojaceNaNiej(czynnosc dane.CzynnoscDokumentuStudia,
 	wykaz []dane.CzynnoscDokumentuStudia, stanWpisu map[string]string,
 	objete map[string]bool) string {
@@ -356,12 +299,8 @@ func dziennikStojaceNaNiej(czynnosc dane.CzynnoscDokumentuStudia,
 	return dziennikStojaceZZakresu(czynnosc, wykaz, stanWpisu, objete)
 }
 
-// dziennikStojaceZZakresu wywodzi zależność ze stykających się zakresów.
-//
-// Czynność bez zakresu (nastawa strony, odświeżenie aparatu) nie wywodzi
-// zależności ani w jedną, ani w drugą stronę: nie ma czego porównać, a
-// przyjęcie „brak zakresu znaczy cały dokument" zablokowałoby cofanie
-// czegokolwiek po pierwszej takiej czynności.
+// dziennikStojaceZZakresu wywodzi zależność ze stykających się zakresów;
+// czynność bez zakresu nie wywodzi zależności w żadną stronę.
 func dziennikStojaceZZakresu(czynnosc dane.CzynnoscDokumentuStudia,
 	wykaz []dane.CzynnoscDokumentuStudia, stanWpisu map[string]string,
 	objete map[string]bool) string {
@@ -388,7 +327,8 @@ func dziennikStojaceZZakresu(czynnosc dane.CzynnoscDokumentuStudia,
 	return ""
 }
 
-// dziennikZakresCzynnosci oddaje zakres wpisu dziennika w znakach.
+// dziennikZakresCzynnosci oddaje zakres wpisu dziennika w znakach i mówi,
+// czy czynność zakres w ogóle niesie.
 func dziennikZakresCzynnosci(czynnosc dane.CzynnoscDokumentuStudia) (int, int, bool) {
 	if czynnosc.ZakresOd == nil || czynnosc.ZakresDo == nil {
 		return 0, 0, false
@@ -412,7 +352,8 @@ func dziennikPodstawaCofnieta(czynnosc dane.CzynnoscDokumentuStudia,
 	return ""
 }
 
-// dziennikPominiecieZaleznosci składa pozycję bilansu NAZYWAJĄCĄ zależność.
+// dziennikPominiecieZaleznosci składa pozycję bilansu nazywającą zależność,
+// która zatrzymała cofnięcie tej czynności.
 func dziennikPominiecieZaleznosci(czynnosc dane.CzynnoscDokumentuStudia,
 	przeszkoda string) shared.StudioSkippedItem {
 
@@ -433,11 +374,8 @@ func dziennikPominiecieZaleznosci(czynnosc dane.CzynnoscDokumentuStudia,
 	return pozycja
 }
 
-// dziennikBladZaleznosci zamienia bilans samych pominięć w odmowę nazwaną.
-//
-// Odpowiedź pomyślna bez ani jednej cofniętej czynności byłaby najgorszym
-// możliwym wynikiem: Operator zobaczyłby „gotowe" i uznał, że dokument wrócił
-// do stanu sprzed pomyłki.
+// dziennikBladZaleznosci zamienia bilans samych pominięć w odmowę nazwaną,
+// aby odpowiedź bez ani jednej cofniętej czynności nie wyglądała na pomyślną.
 func dziennikBladZaleznosci(pominiete []shared.StudioSkippedItem) error {
 	powody := make([]string, 0, len(pominiete))
 	for _, pozycja := range pominiete {
@@ -456,16 +394,8 @@ func dziennikBladZaleznosci(pominiete []shared.StudioSkippedItem) error {
 
 // ── Nakładanie różnicy drzew postaci ────────────────────────────────────────
 
-// dziennikNalozOdwrotnie nakłada na stan BIEŻĄCY różnicę między drzewem `zStanu`
-// i drzewem `naStan`, byt po bycie.
-//
-// Kierunek podaje wołający: cofnięcie idzie od `StanPo` do `StanPrzed`,
-// ponowienie od `StanPrzed` do `StanPo`. Rachunek jest ten sam, więc stoi
-// w jednym miejscu — dwie kopie rozjechałyby się przy pierwszej poprawce.
-//
-// Nakłada się RÓŻNICĘ, a nie całe drzewo: wgranie `StanPrzed` w miejsce
-// dokumentu zabrałoby ze sobą wszystko, co po tej czynności weszło, czyli
-// byłoby przywróceniem wersji, a nie cofnięciem pojedynczej czynności.
+// dziennikNalozOdwrotnie nakłada na stan bieżący różnicę między drzewem
+// postaci zStanu i drzewem naStan, byt po bycie, w kierunku podanym wołającym.
 func (a *adapterStudia) dziennikNalozOdwrotnie(ctx context.Context, stan *stanPostaci,
 	zStanu, naStan *string) ([]shared.StudioSkippedItem, error) {
 
@@ -488,18 +418,15 @@ func (a *adapterStudia) dziennikNalozOdwrotnie(ctx context.Context, stan *stanPo
 
 	pominiete := []shared.StudioSkippedItem{}
 
-	// Bloki — treść i postać znaku oraz akapitu. Tożsamością bloku jest jego
-	// identyfikator; blok, którego czynność nie tknęła, zostaje nietknięty.
+	// Bloki — treść i postać znaku oraz akapitu, tożsamością jest identyfikator.
 	dziennikNalozBloki(&stan.forma, zrodlo, cel)
 
-	// Nastawy strony są jednym bytem, więc nakłada się je w całości — ale tylko
-	// wtedy, gdy czynność je naprawdę zmieniła.
+	// Nastawy strony są jednym bytem; nakłada się je w całości, jeśli różne.
 	if dziennikRoznePola(zrodlo.PageSetup, cel.PageSetup) {
 		stan.forma.PageSetup = cel.PageSetup
 	}
 
-	// Styl nazwany, sekcja, obiekt i pole mają WŁASNE WIERSZE i drzewo ich nie
-	// zapisuje — dlatego wracają osobnym zapisem.
+	// Styl nazwany, sekcja, obiekt i pole mają własne wiersze i wracają osobno.
 	odrzucone, err := a.dziennikPrzywrocByty(ctx, stan, zrodlo, cel)
 	if err != nil {
 		return nil, err
@@ -508,15 +435,15 @@ func (a *adapterStudia) dziennikNalozOdwrotnie(ctx context.Context, stan *stanPo
 	return pominiete, nil
 }
 
-// dziennikDrzewo czyta drzewo postaci z ładunku wpisu dziennika.
+// dziennikDrzewo czyta drzewo postaci z ładunku wpisu dziennika i odmawia,
+// gdy ładunek niepusty jest nieczytelny jako zapis JSON.
 func dziennikDrzewo(zapis *string) (*shared.StudioDocumentForm, error) {
 	if zapis == nil || strings.TrimSpace(*zapis) == "" {
 		return nil, nil
 	}
 	var drzewo shared.StudioDocumentForm
 	if err := json.Unmarshal([]byte(*zapis), &drzewo); err != nil {
-		// Ładunek nieczytelny NIE zamienia się w brak: to zamieniłoby uszkodzenie
-		// wpisu w ciszę, a Operator uznałby, że czynność nie miała czego cofać.
+		// Ładunek nieczytelny nie zamienia się cicho w brak.
 		return nil, kontrolaBladZaplecza("wpis dziennika niesie nieczytelne drzewo " +
 			"postaci: " + err.Error())
 	}
@@ -563,7 +490,8 @@ func dziennikNalozBloki(biezaca, zrodlo, cel *shared.StudioDocumentForm) {
 	biezaca.Blocks = nowe
 }
 
-// dziennikBlokiPoKodzie układa bloki drzewa pod ich identyfikatorami.
+// dziennikBlokiPoKodzie układa bloki drzewa pod ich identyfikatorami, do
+// szybkiego odnalezienia bloku podczas nakładania różnicy.
 func dziennikBlokiPoKodzie(
 	bloki []shared.StudioDocumentBlock) map[string]shared.StudioDocumentBlock {
 
@@ -574,15 +502,14 @@ func dziennikBlokiPoKodzie(
 	return poKodzie
 }
 
-// dziennikRownyBlok mówi, czy dwa bloki są tym samym stanem. Porównanie idzie
-// zapisem JSON, bo blok niesie zagnieżdżone postaci znaku i akapitu, a
-// porównanie pole po polu rozjechałoby się przy pierwszym dołożonym polu
-// kontraktu.
+// dziennikRownyBlok mówi, czy dwa bloki są tym samym stanem, porównaniem
+// zapisu JSON zamiast porównania pole po polu.
 func dziennikRownyBlok(pierwszy, drugi shared.StudioDocumentBlock) bool {
 	return dziennikRoznePola(pierwszy, drugi) == false
 }
 
-// dziennikRoznePola mówi, czy dwie wartości kontraktu różnią się treścią.
+// dziennikRoznePola mówi, czy dwie wartości kontraktu różnią się treścią po
+// zapisaniu obu w postaci JSON.
 func dziennikRoznePola(pierwsza, druga any) bool {
 	zapisPierwszej, blad := json.Marshal(pierwsza)
 	if blad != nil {
@@ -596,13 +523,8 @@ func dziennikRoznePola(pierwsza, druga any) bool {
 }
 
 // dziennikPrzywrocByty przywraca byty o własnych wierszach: styl nazwany,
-// sekcję, obiekt osadzony, pole dokumentu i aparat dokumentu.
-//
-// Przekłady „byt kontraktu → wiersz" bierze się z obszarów, które te wiersze
-// zakładają (`postacStylDoWiersza`, `wejscieSekcjaDoWiersza`,
-// `wejscieObiektDoWiersza`, `wejsciePoleDoWiersza`, `aparatDoWiersza`). Drugi
-// przekład tej samej tabeli byłby drugą prawdą o jednym wierszu — i właśnie
-// dlatego cofnięcie woła cudze przekłady, a nie pisze własnych.
+// sekcję, obiekt osadzony, pole dokumentu i aparat dokumentu, wołając przekład
+// „byt kontraktu → wiersz” każdego obszaru zamiast pisać go drugi raz.
 func (a *adapterStudia) dziennikPrzywrocByty(ctx context.Context, stan *stanPostaci,
 	zrodlo, cel *shared.StudioDocumentForm) ([]shared.StudioSkippedItem, error) {
 
@@ -717,18 +639,6 @@ func (a *adapterStudia) dziennikPrzywrocByty(ctx context.Context, stan *stanPost
 	}
 
 	// Aparat dokumentu — tożsamością jest identyfikator elementu.
-	//
-	// Do 17.08.2026 stała tu ODMOWA nazwana: cofnięcie czynności odtwarzało treść
-	// i postać, a spis treści, przypis albo bibliografia zostawały w brzmieniu
-	// bieżącym, bo dziennik nie miał przekładu „element kontraktu → wiersz".
-	// Przekład istniał — `aparatDoWiersza` obszaru aparatu — i był w tym pliku
-	// nieużyty. Aparat wraca więc tak samo jak sekcja i obiekt, a bilans
-	// nazywający brak zniknął razem z brakiem.
-	//
-	// Kotwica i znacznik nieświeżości idą Z ELEMENTU, nie z rachunku: cofnięcie
-	// ma przywrócić stan sprzed czynności, a nie przeliczyć aparat od nowa.
-	// Przeliczenie wstawiłoby numery stron liczone na treści BIEŻĄCEJ, czyli
-	// numery, których w stanie sprzed nie było.
 	aparatCelu := map[string]shared.StudioApparatusItem{}
 	for _, element := range cel.Apparatus {
 		aparatCelu[element.Id] = element
@@ -753,8 +663,7 @@ func (a *adapterStudia) dziennikPrzywrocByty(ctx context.Context, stan *stanPost
 		}
 	}
 
-	// Wykaz bytów w drzewie musi zgadzać się z tym, co stoi w wierszach —
-	// inaczej następny odczyt postaci pokazałby stan sprzed przywrócenia.
+	// Wykaz bytów w drzewie musi zgadzać się z tym, co stoi w wierszach.
 	stan.forma.Styles = cel.Styles
 	stan.forma.Sections = cel.Sections
 	stan.forma.Objects = cel.Objects
@@ -763,7 +672,8 @@ func (a *adapterStudia) dziennikPrzywrocByty(ctx context.Context, stan *stanPost
 	return pominiete, nil
 }
 
-// dziennikMaStyl mówi, czy arkusz niesie styl o tej nazwie.
+// dziennikMaStyl mówi, czy arkusz stylów niesie styl nazwany podaną nazwą,
+// aby przywrócenie bytów wiedziało, czy styl istniał w drzewie źródłowym.
 func dziennikMaStyl(style []shared.StudioNamedStyle, nazwa string) bool {
 	for _, styl := range style {
 		if styl.Name == nazwa {
@@ -775,7 +685,8 @@ func dziennikMaStyl(style []shared.StudioNamedStyle, nazwa string) bool {
 
 // ── Przekład wpisu dziennika ────────────────────────────────────────────────
 
-// dziennikZlozCzynnosc składa wpis dziennika kontraktu z wiersza warstwy danych.
+// dziennikZlozCzynnosc składa wpis dziennika kontraktu z wiersza warstwy
+// danych, pole po polu, bez drzewa postaci niesionego osobno w ładunku.
 func dziennikZlozCzynnosc(wiersz dane.CzynnoscDokumentuStudia) shared.StudioDocumentAction {
 	czynnosc := shared.StudioDocumentAction{
 		Id:                 wiersz.Kod,
@@ -799,13 +710,9 @@ func dziennikZlozCzynnosc(wiersz dane.CzynnoscDokumentuStudia) shared.StudioDocu
 	return czynnosc
 }
 
-// dziennikOdlozCzynnosc odkłada wpis dziennika dla czynności TEGO odcinka —
-// znakowania, schowka, przeniesienia fragmentu różnicy, przywrócenia kopii.
-//
-// Czynności postaci odkłada `postacOdlozCzynnosc`; ta droga jest jej
-// odpowiednikiem dla czynności, które nie idą przez drzewo postaci. Przedrostek
-// kodu jest ten sam, bo dziennik jest JEDEN — dwa przedrostki rozdzieliłyby go
-// na dwa nieporównywalne szeregi.
+// dziennikOdlozCzynnosc odkłada wpis dziennika dla czynności, które nie idą
+// przez drzewo postaci: znakowania, schowka, przeniesienia fragmentu różnicy,
+// przywrócenia kopii — odpowiednik postacOdlozCzynnosc dla tych czynności.
 func (a *adapterStudia) dziennikOdlozCzynnosc(ctx context.Context, dokument dane.DokumentStudia,
 	wykonawca kontrolaWykonawca, rodzaj shared.StudioActionKind, opis string,
 	od, do *int, drzewoPrzed, drzewoPo *string, zmianaKod *string) (*string, error) {
@@ -839,7 +746,8 @@ func (a *adapterStudia) dziennikOdlozCzynnosc(ctx context.Context, dokument dane
 	return &zapisana.Kod, nil
 }
 
-// dziennikZapisDrzewa składa ładunek drzewa postaci do wpisu dziennika.
+// dziennikZapisDrzewa składa ładunek drzewa postaci do wpisu dziennika,
+// zapisując drzewo w postaci JSON gotowej do odłożenia w wierszu.
 func dziennikZapisDrzewa(forma shared.StudioDocumentForm) (*string, error) {
 	zapis, err := json.Marshal(forma)
 	if err != nil {
@@ -851,7 +759,7 @@ func dziennikZapisDrzewa(forma shared.StudioDocumentForm) (*string, error) {
 }
 
 // dziennikBrakWiersza odróżnia „bytu nie ma" od „odczyt się nie powiódł" dla
-// bytów tego odcinka.
+// bytów tego odcinka, aby odmowa niosła powód właściwy usterce.
 func dziennikBrakWiersza(err error, powod string) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return bladBrakuStudio(powod)

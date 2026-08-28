@@ -1,26 +1,4 @@
-// Odpowiedzialność pliku: ZNAKOWANIE FRAGMENTÓW — wyróżnienie barwą, znacznik
-// własny Operatora i propozycja zmiany na marginesie — wraz z wykazem do
-// przejścia, rozstrzygnięciem propozycji i warsztatem rodzajów znaczników.
-//
-// ── Trzy różne byty, których nie wolno zlać ─────────────────────────────────
-// Właściciel każe odróżnić je w oknie wyraźnie, więc rdzeń odróżnia je w danych:
-//
-//	WYRÓŻNIENIE (`highlight`) — cecha POSTACI dokumentu. Barwa tła fragmentu
-//	    idzie tą samą drogą co reszta formatowania, czyli w runy drzewa postaci;
-//	    wiersz znakowania jest wykazem do przejścia, nie drugim miejscem, w którym
-//	    trzymana jest barwa.
-//	ZNACZNIK (`mark`) — nazwa własna Operatora („do sprawdzenia", „wymaga
-//	    źródła", „gotowe"). Treści dokumentu NIE rusza.
-//	PROPOZYCJA (`suggestion`) — brzmienie proponowane, stojące NA MARGINESIE.
-//	    Nie jest zmianą śledzoną, bo tamta jest już w treści, i nie jest
-//	    komentarzem, bo tamten nie niesie brzmienia. Wchodzi do treści dopiero
-//	    decyzją Operatora — i wtedy odkłada się jako zmiana śledzona jej autora.
-//
-// ── Dlaczego propozycja jest jedyną drogą wykonawcy do fragmentu pod blokadą ──
-// Blokadę zdejmuje wyłącznie Operator. Wykonawca, który uzna, że fragment wymaga
-// zmiany, zakłada propozycję — i dlatego założenie PROPOZYCJI na fragmencie
-// zablokowanym jest dozwolone, a wniesienie jej do treści już nie: decyzja
-// należy do Operatora, a jego blokada o zasięgu `model` nie wiąże.
+// Plik znakuje fragmenty dokumentu: wyróżnienie barwą, znacznik własny Operatora i propozycja zmiany na marginesie, wraz z wykazem do przejścia, rozstrzygnięciem propozycji i warsztatem rodzajów znaczników.
 package core
 
 import (
@@ -35,7 +13,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// DodajZnakowanie obsługuje `studio.markup.add`.
+// DodajZnakowanie zakłada znakowanie fragmentu: wyróżnienie, znacznik własny albo propozycję zmiany (`studio.markup.add`).
 func (a *adapterStudia) DodajZnakowanie(ctx context.Context,
 	z shared.StudioMarkupAddRequest) (shared.StudioMarkupAddResponse, error) {
 
@@ -59,9 +37,7 @@ func (a *adapterStudia) DodajZnakowanie(ctx context.Context,
 		Author: z.Author, AgentId: z.AgentId, AgentName: z.AgentName, SubagentId: z.SubagentId,
 	})
 
-	// Rodzaj znacznika własnego musi istnieć w wykazie rodzajów. Znacznik o
-	// nazwie spoza wykazu byłby znacznikiem, którego Operator nie odfiltruje
-	// i którego barwy nikt nie zna.
+	// Rodzaj znacznika własnego musi istnieć w wykazie, inaczej Operator go nie odfiltruje.
 	if z.Kind == shared.StudioMarkupKindMark {
 		if !kontrolaTekstNiepusty(z.MarkType) {
 			return shared.StudioMarkupAddResponse{}, bladWskazaniaStudio(
@@ -111,10 +87,7 @@ func (a *adapterStudia) DodajZnakowanie(ctx context.Context,
 
 	odpowiedz := shared.StudioMarkupAddResponse{}
 
-	// Wyróżnienie barwą jest cechą postaci — nakłada się na runy drzewa, tą samą
-	// drogą co reszta formatowania. Blokada wiążąca tę rękę zatrzymuje wyłącznie
-	// nałożenie barwy; sam wiersz znakowania stoi POZA treścią i blokady nie
-	// narusza, więc odmowa całości byłaby nieproporcjonalna.
+	// Wyróżnienie barwą jest cechą postaci; blokada zatrzymuje nałożenie barwy, nie sam wiersz znakowania.
 	if z.Kind == shared.StudioMarkupKindHighlight {
 		if !kontrolaTekstNiepusty(z.Color) {
 			return shared.StudioMarkupAddResponse{}, bladWskazaniaStudio(
@@ -161,11 +134,7 @@ func (a *adapterStudia) DodajZnakowanie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// Znakowania obsługuje `studio.markup.list`.
-//
-// Wykaz jest SPISEM DO PRZEJŚCIA: idzie w kolejności wystąpienia w treści, żeby
-// Operator skakał po nim od góry dokumentu do dołu i odhaczał pozycje. Bez tego
-// znakowanie w długim dokumencie ginie.
+// Znakowania oddaje spis do przejścia w kolejności wystąpienia w treści, żeby Operator odhaczał pozycje od góry (`studio.markup.list`).
 func (a *adapterStudia) Znakowania(ctx context.Context,
 	z shared.StudioMarkupListRequest) (shared.StudioMarkupListResponse, error) {
 
@@ -213,9 +182,7 @@ func (a *adapterStudia) Znakowania(ctx context.Context,
 	}
 	odpowiedz.Total = len(odpowiedz.Markups)
 
-	// Komentarze redakcyjne wchodzą do tego samego spisu — Operator ma widzieć
-	// WSZYSTKO, czym dokument jest znaczony, w jednym wykazie. Kontrakt mówi
-	// „brak znaczy tak", bo bez komentarzy spis nie byłby spisem znakowań.
+	// Komentarze wchodzą do tego spisu, żeby Operator widział wszystko, czym dokument jest znaczony.
 	if z.IncludeComments == nil || *z.IncludeComments {
 		komentarze, err := a.repozytorium.Komentarze(ctx, dokument.ID, rodzajKomentarza)
 		if err != nil {
@@ -253,16 +220,7 @@ func (a *adapterStudia) Znakowania(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// RozstrzygnijZnakowanie obsługuje `studio.markup.decide`.
-//
-// Przyjęcie propozycji WNOSI proponowane brzmienie do treści i odkłada zmianę
-// śledzoną AUTORA PROPOZYCJI — nie Operatora, który ją przyjął. Inaczej
-// przełącznik „pokaż wszystko, co zrobił model" przestałby pokazywać zmianę,
-// którą model naprawdę wniósł, tylko dlatego, że Operator ją zaakceptował.
-//
-// Decyzja idzie od KOŃCA dokumentu: zakresy propozycji liczone są w treści
-// sprzed decyzji, więc przyjęcie od początku przesuwałoby zakresy propozycji
-// jeszcze nierozpatrzonych.
+// RozstrzygnijZnakowanie przyjmuje albo odrzuca propozycje: przyjęcie wnosi brzmienie do treści z autorstwem propozycji, nie Operatora (`studio.markup.decide`).
 func (a *adapterStudia) RozstrzygnijZnakowanie(ctx context.Context,
 	z shared.StudioMarkupDecideRequest) (shared.StudioMarkupDecideResponse, error) {
 
@@ -453,7 +411,7 @@ func (a *adapterStudia) ZdejmijZnakowanie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// RodzajeZnacznika obsługuje `studio.markup.type.list`.
+// RodzajeZnacznika wykazuje rodzaje znaczników własnych wraz z liczbą ich użyć (`studio.markup.type.list`).
 func (a *adapterStudia) RodzajeZnacznika(ctx context.Context,
 	z shared.StudioMarkupTypeListRequest) (shared.StudioMarkupTypeListResponse, error) {
 
@@ -461,8 +419,7 @@ func (a *adapterStudia) RodzajeZnacznika(ctx context.Context,
 	if err != nil {
 		return shared.StudioMarkupTypeListResponse{}, err
 	}
-	// Dokument zerowy znaczy „nie zawężaj licznika do jednego dokumentu"; wtedy
-	// licznik jest liczbą użyć rodzaju we wszystkich dokumentach.
+	// Dokument zerowy znaczy brak zawężenia: licznik jest liczbą użyć rodzaju we wszystkich dokumentach.
 	var dokumentID int64
 	if kontrolaTekstNiepusty(z.DocumentId) {
 		dokument, err := a.dokumentDoCzynnosci(ctx, *z.DocumentId)
@@ -522,12 +479,7 @@ func (a *adapterStudia) ZapiszRodzajZnacznika(ctx context.Context,
 	return shared.StudioMarkupTypeSaveResponse{MarkupType: znakowanieZlozRodzaj(zapisany)}, nil
 }
 
-// UsunRodzajZnacznika obsługuje `studio.markup.type.delete`.
-//
-// Rodzaju fabrycznego NIE usuwa — odpowiada odmową nazywającą powód, wzorem
-// `studio.operation.delete`. Rodzaju będącego w użyciu też nie: usunięcie
-// zostawiłoby znakowania wskazujące na rodzaj, którego nie ma, a Operator
-// przestałby je odfiltrować.
+// UsunRodzajZnacznika usuwa rodzaj znacznika własnego, odmawiając dla rodzaju fabrycznego i dla rodzaju będącego w użyciu (`studio.markup.type.delete`).
 func (a *adapterStudia) UsunRodzajZnacznika(ctx context.Context,
 	z shared.StudioMarkupTypeDeleteRequest) (shared.StudioMarkupTypeDeleteResponse, error) {
 
@@ -631,7 +583,7 @@ func znakowanieBladBlokady(pominiete []shared.StudioSkippedItem, od, do int) err
 			"(studio.markup.add o rodzaju suggestion)."))
 }
 
-// znakowanieZlozKontrakt składa znakowanie kontraktu z wiersza warstwy danych.
+// znakowanieZlozKontrakt składa znakowanie kontraktu z wiersza warstwy danych, gotowe do odpowiedzi kontraktu.
 func znakowanieZlozKontrakt(wiersz dane.ZnakowanieStudia) shared.StudioMarkup {
 	return shared.StudioMarkup{
 		Id:                 wiersz.Kod,
@@ -654,7 +606,7 @@ func znakowanieZlozKontrakt(wiersz dane.ZnakowanieStudia) shared.StudioMarkup {
 	}
 }
 
-// znakowanieZlozRodzaj składa rodzaj znacznika kontraktu z wiersza.
+// znakowanieZlozRodzaj składa rodzaj znacznika kontraktu z wiersza warstwy danych, gotowy do odpowiedzi.
 func znakowanieZlozRodzaj(wiersz dane.RodzajZnacznikaStudia) shared.StudioMarkupType {
 	ileUzyc := int(wiersz.IleUzyc)
 	return shared.StudioMarkupType{

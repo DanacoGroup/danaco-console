@@ -1,29 +1,7 @@
 // Odpowiedzialność pliku: pięć czynności barwy modułu Design liczonych bez
-// dotykania obrazu — paleta z harmonii (`design.color.palette.generate`),
-// pomiar kontrastu (`design.color.contrast.check`), gradient
-// (`design.color.gradient.set`), przeliczenie zapisu (`design.color.convert`)
-// i badanie dostępności zestawu żetonów
-// (`design.color.accessibility.audit`). Czynności czytające PIKSELE leżą
-// w `adapter_modul_design_kolor_obraz.go`; sam rachunek barwy —
-// w `adapter_modul_design_barwy.go`.
-//
-// ── Harmonia jest rachunkiem na kole barw, nie tablicą gotowych palet ───────
-// Dopełnienie, triada, tetrada i analogia to obroty odcienia o ustalony kąt.
-// Rachunek idzie w przestrzeni HCL biblioteki `go-colorful`, nie w HSL: HCL jest
-// percepcyjnie równomierna, więc dwie barwy „o tym samym odcieniu i jasności"
-// wyglądają na równie jasne, a nie tylko mają równe liczby. Paleta zbudowana
-// w HSL daje żółć jaskrawą i błękit przygaszony przy identycznych nastawach.
-//
-// ── Odmowa za zapis barwy, nigdy czerń domyślna ─────────────────────────────
-// Zapis, którego rdzeń nie zrozumiał, jest odmową (`rozpoznajBarweDesignu`).
-// Paleta zbudowana wokół czerni podstawionej za nieczytelne wejście wyglądałaby
-// w oknie jak paleta poprawna.
-//
-// ── Badanie dostępności mierzy PARY, nie pojedyncze żetony ──────────────────
-// `design.color.accessibility.audit` bierze wszystkie pary barwnych żetonów
-// zestawu i mierzy kontrast każdej. Odpowiedź niesie liczbę par sprawdzonych,
-// liczbę spełniających próg i wykaz łamiących go — bilans, a nie samo „są
-// problemy".
+// dotykania obrazu — paleta z harmonii, pomiar kontrastu, gradient,
+// przeliczenie zapisu i badanie dostępności zestawu żetonów, rodzina
+// `design.color.*`.
 package core
 
 import (
@@ -49,7 +27,8 @@ const (
 	// nikt w oknie nie obejrzy.
 	granicaBarwPaletyDesignu = 64
 
-	// przedrostekGradientuDesign znakuje identyfikatory zewnętrzne gradientów.
+	// przedrostekGradientuDesign znakuje identyfikatory zewnętrzne gradientów,
+	// odróżniając je od innych bytów modułu Design.
 	przedrostekGradientuDesign = "gradient-"
 )
 
@@ -82,8 +61,8 @@ func (a *adapterDesignu) GenerujPalete(_ context.Context,
 	for numer, barwa := range barwy {
 		rola := rolaBarwyPaletyDesignu(numer, len(barwy))
 		wpis := shared.DesignPaletteColor{Hex: barwa.Clamped().Hex(), Role: &rola}
-		// Nazwa wchodzi wyłącznie przy trafieniu dokładnym w próbkę nazwaną —
-		// nazwa „najbliższa" mówiłaby o barwie, której w palecie nie ma.
+		// Nazwa wchodzi tylko przy trafieniu dokładnym — „najbliższa” mówi
+		// o barwie, której nie ma w palecie.
 		if nazwa := nazwaBarwyDesignu(wpis.Hex); nazwa != nil {
 			wpis.Name = nazwa
 		}
@@ -94,11 +73,9 @@ func (a *adapterDesignu) GenerujPalete(_ context.Context,
 	}, nil
 }
 
-// paletaHarmoniiDesignu liczy barwy palety wedle reguły harmonii.
-//
-// Rachunek jest dwustopniowy: reguła daje ODCIENIE (obroty koła barw), a liczba
-// barw żądania rozciąga je jasnością. Dzięki temu żądanie o ośmiobarwną triadę
-// dostaje osiem barw, a nie trzy i pustkę — i nadal jest triadą.
+// paletaHarmoniiDesignu liczy barwy palety wedle reguły harmonii: reguła daje
+// odcienie, a liczba barw żądania rozciąga je jasnością, więc ośmiobarwna
+// triada dostaje osiem barw, nie trzy i pustkę.
 func paletaHarmoniiDesignu(wiodaca colorful.Color, harmonia shared.DesignColorHarmony,
 	ile int) []colorful.Color {
 
@@ -108,9 +85,9 @@ func paletaHarmoniiDesignu(wiodaca colorful.Color, harmonia shared.DesignColorHa
 	barwy := make([]colorful.Color, 0, ile)
 	for numer := 0; numer < ile; numer++ {
 		obrot := obroty[numer%len(obroty)]
-		// Jasność zmienia się dopiero po wyczerpaniu odcieni reguły: pierwsze
-		// przejście daje czyste barwy harmonii, kolejne — ich odcienie jaśniejsze
-		// i ciemniejsze. Krok jest ułamkiem, żeby paleta nie wyszła poza skalę.
+		// Jasność zmienia się dopiero po wyczerpaniu odcieni reguły harmonii.
+
+		// Krok jasności jest ułamkiem, żeby paleta nie wyszła poza skalę.
 		okrag := numer / len(obroty)
 		przesuniecieJasnosci := 0.0
 		if okrag > 0 {
@@ -125,7 +102,7 @@ func paletaHarmoniiDesignu(wiodaca colorful.Color, harmonia shared.DesignColorHa
 		nasycenieBarwy := nasycenie
 		if harmonia == shared.DesignColorHarmonyMono && okrag == 0 && numer > 0 {
 			// Harmonia monochromatyczna nie ma innych odcieni — różnicuje ją
-			// nasycenie i jasność, inaczej wszystkie barwy byłyby identyczne.
+			// nasycenie i jasność.
 			nasycenieBarwy = przytnijUlamekDesignu(nasycenie * (1 - 0.15*float64(numer)))
 			nowaJasnosc = przytnijUlamekDesignu(jasnosc + 0.1*float64(numer) - 0.2)
 		}
@@ -169,7 +146,8 @@ func rolaBarwyPaletyDesignu(numer, ile int) string {
 	return fmt.Sprintf("uzupełniająca %d", numer-2)
 }
 
-// nazwaBarwyDesignu oddaje nazwę próbki przy trafieniu dokładnym.
+// nazwaBarwyDesignu oddaje nazwę próbki przy trafieniu dokładnym w zapis
+// szesnastkowy, a wskaźnik pusty, gdy próbka nie ma nazwy.
 func nazwaBarwyDesignu(hex string) *string {
 	for nazwa, wzor := range barwyNazwaneDesignu {
 		if wzor == hex {
@@ -181,7 +159,8 @@ func nazwaBarwyDesignu(hex string) *string {
 }
 
 // SprawdzKontrast mierzy kontrast pary barw wedle WCAG 2.1 — obsługuje
-// `design.color.contrast.check`.
+// `design.color.contrast.check`, uwzględniając rozmiar i grubość pisma
+// przy progu.
 func (a *adapterDesignu) SprawdzKontrast(_ context.Context,
 	z shared.DesignColorContrastCheckRequest) (shared.DesignColorContrastCheckResponse, error) {
 
@@ -207,12 +186,8 @@ func (a *adapterDesignu) SprawdzKontrast(_ context.Context,
 }
 
 // PrzeliczBarwe oddaje barwę we wszystkich przestrzeniach naraz — obsługuje
-// `design.color.convert`.
-//
-// Przestrzeń wejściową rdzeń rozpoznaje z samego zapisu. Wskazanie `space`
-// zawęża rozpoznanie: `"808080"` bez wskazania jest zapisem szesnastkowym, a ze
-// wskazaniem `rgb` — trójką składowych. Wskazanie sprzeczne z zapisem jest
-// odmową, nie cichym rozpoznaniem po swojemu.
+// `design.color.convert`; przestrzeń wejściową rdzeń rozpoznaje z zapisu,
+// a wskazanie `space` zawęża to rozpoznanie.
 func (a *adapterDesignu) PrzeliczBarwe(_ context.Context,
 	z shared.DesignColorConvertRequest) (shared.DesignColorConvertResponse, error) {
 
@@ -227,8 +202,10 @@ func (a *adapterDesignu) PrzeliczBarwe(_ context.Context,
 			return shared.DesignColorConvertResponse{}, err
 		}
 		// Zapis bez nawiasu wraz ze wskazaniem przestrzeni funkcyjnej dostaje
-		// nawias tutaj: Operator, który podał `space: "hsl"` i `210 50% 40%`, ma
-		// dostać barwę, a nie odmowę za brak nawiasu, którego nie musiał pisać.
+		// nawias tutaj.
+
+		// Operator, który podał zapis bez nawiasu, ma dostać barwę, nie odmowę
+		// za brak nawiasu.
 		if *z.Space != shared.DesignColorSpaceHex && !strings.Contains(zapis, "(") {
 			zapis = string(*z.Space) + "(" + zapis + ")"
 		}
@@ -242,12 +219,9 @@ func (a *adapterDesignu) PrzeliczBarwe(_ context.Context,
 }
 
 // UstawGradient zakłada gradient na wskazanym celu albo zmienia zastany —
-// obsługuje `design.color.gradient.set`.
-//
-// Gradient rozstrzyga się CELEM (kompozycja, ścieżka, warstwa), nie
-// identyfikatorem: powtórne wywołanie na tej samej ścieżce ZMIENIA gradient,
-// zamiast dokładać drugi obok — inaczej ścieżka miałaby dwa wypełnienia i nie
-// dałoby się powiedzieć, które obowiązuje.
+// obsługuje `design.color.gradient.set`; gradient rozstrzyga się celem, nie
+// identyfikatorem, więc powtórne wywołanie na tym samym celu zmienia
+// gradient zamiast dokładać drugi.
 func (a *adapterDesignu) UstawGradient(ctx context.Context,
 	z shared.DesignColorGradientSetRequest) (shared.DesignColorGradientSetResponse, error) {
 
@@ -276,8 +250,8 @@ func (a *adapterDesignu) UstawGradient(ctx context.Context,
 	if err != nil {
 		return shared.DesignColorGradientSetResponse{}, bladNieznanejKompozycjiDesignu(z.BoardId, err)
 	}
-	// Cel wskazany a nieznany jest odmową: gradient na ścieżce, której nie ma,
-	// byłby wypełnieniem bez kształtu.
+	// Cel wskazany a nieznany jest odmową: gradient bez kształtu nie ma czego
+	// wypełniać.
 	if sciezkaCelu != "" {
 		wiersz, err := a.repozytorium.SciezkaWektorowaDesignuPoKodzie(ctx, sciezkaCelu)
 		if err != nil {
@@ -311,17 +285,17 @@ func (a *adapterDesignu) UstawGradient(ctx context.Context,
 				"stopień numer %d gradientu w położeniu %v: położenie stopnia idzie od 0 do 1",
 				numer+1, stopien.Offset))
 		}
-		// Barwę zapisujemy w postaci sprowadzonej do zapisu szesnastkowego:
-		// stopień zapisany jako „red" i stopień zapisany jako „#ff0000" są tą samą
-		// barwą, a wykaz mieszający zapisy zmuszałby każdego czytelnika do
-		// ponownego rozpoznania.
+		// Barwę zapisuje się sprowadzoną do zapisu szesnastkowego: „red” i
+		// „#ff0000” są tą samą barwą.
+
+		// Wykaz mieszający zapisy zmuszałby czytelnika do ponownego rozpoznania
+		// barwy.
 		stopnie = append(stopnie, dane.StopienGradientuDesignu{
 			Polozenie: stopien.Offset, Barwa: barwa.Clamped().Hex(), Krycie: stopien.Opacity,
 		})
 	}
-	// Stopnie idą w kolejności położenia, nie w kolejności żądania: gradient jest
-	// przejściem od lewej do prawej, a stopnie podane na wyrywki dałyby przejście
-	// niezgodne z tym, co Operator widzi w oknie.
+	// Stopnie idą w kolejności położenia, nie żądania: gradient jest
+	// przejściem od lewej do prawej.
 	sort.SliceStable(stopnie, func(i, j int) bool {
 		return stopnie[i].Polozenie < stopnie[j].Polozenie
 	})
@@ -352,7 +326,8 @@ func (a *adapterDesignu) UstawGradient(ctx context.Context,
 	return shared.DesignColorGradientSetResponse{Gradient: gradient, PreviewSvg: &podglad}, nil
 }
 
-// gradientKontraktuDesignu składa `DesignGradient` kontraktu z wiersza.
+// gradientKontraktuDesignu składa `DesignGradient` kontraktu z wiersza bazy,
+// przekładając stopnie gradientu do postaci kontraktu.
 func gradientKontraktuDesignu(wiersz dane.GradientDesignu) shared.DesignGradient {
 	stopnie := make([]shared.DesignGradientStop, 0, len(wiersz.Stopnie))
 	for _, stopien := range wiersz.Stopnie {
@@ -367,11 +342,9 @@ func gradientKontraktuDesignu(wiersz dane.GradientDesignu) shared.DesignGradient
 	}
 }
 
-// podgladGradientuSvgDesignu składa podgląd gradientu jako dokument SVG.
-//
-// Podgląd jest prawdziwym gradientem SVG, nie obrazkiem: okno pokazuje go
-// wprost, a Operator może go skopiować do arkusza stylów. Kąt przekłada się na
-// parę punktów `x1,y1 → x2,y2`, bo tak gradient liniowy opisuje SVG.
+// podgladGradientuSvgDesignu składa podgląd gradientu jako dokument SVG:
+// podgląd jest prawdziwym gradientem SVG, nie obrazkiem, więc okno pokazuje
+// go wprost i operator może go skopiować do arkusza stylów.
 func podgladGradientuSvgDesignu(gradient shared.DesignGradient) string {
 	var dokument strings.Builder
 	dokument.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="48" ` +
@@ -383,9 +356,10 @@ func podgladGradientuSvgDesignu(gradient shared.DesignGradient) string {
 		dopiszStopnieSvgDesignu(&dokument, gradient.Stops)
 		dokument.WriteString(`</radialGradient>`)
 	case shared.DesignGradientKindConic:
-		// Gradientu stożkowego SVG 1.1 nie ma. Podgląd idzie wtedy jako liniowy
-		// i mówi to wprost tytułem — udawanie stożkowego liniowym bez słowa
-		// pokazywałoby Operatorowi coś innego, niż zapisał.
+		// Gradientu stożkowego SVG 1.1 nie ma; podgląd idzie wtedy jako liniowy.
+
+		// Tytuł mówi to wprost — inaczej podgląd pokazywałby coś innego, niż
+		// zapisano.
 		dokument.WriteString(`<linearGradient id="podglad" x1="0" y1="0" x2="1" y2="0">`)
 		dopiszStopnieSvgDesignu(&dokument, gradient.Stops)
 		dokument.WriteString(`</linearGradient>`)
@@ -405,7 +379,8 @@ func podgladGradientuSvgDesignu(gradient shared.DesignGradient) string {
 	return dokument.String()
 }
 
-// dopiszStopnieSvgDesignu dokłada stopnie gradientu do dokumentu.
+// dopiszStopnieSvgDesignu dokłada stopnie gradientu do dokumentu SVG jako
+// elementy `<stop>` z barwą i opcjonalnym kryciem.
 func dopiszStopnieSvgDesignu(dokument *strings.Builder, stopnie []shared.DesignGradientStop) {
 	for _, stopien := range stopnie {
 		fmt.Fprintf(dokument, `<stop offset="%g" stop-color="%s"`, stopien.Offset, stopien.Color)
@@ -461,11 +436,11 @@ func (a *adapterDesignu) ZbadajDostepnoscBarw(ctx context.Context,
 		return shared.DesignColorAccessibilityAuditResponse{}, bladDesignu(err)
 	}
 
-	// Żeton, którego wartość nie jest barwą, nie wchodzi do pomiaru i nie jest
-	// usterką: zestaw niesie także wymiary, kroje i czasy. Żeton rodzaju „color"
-	// o wartości nieczytelnej jest natomiast ODMOWĄ — zestaw z barwą, której
-	// rdzeń nie rozumie, nie da się zbadać, a wynik pomijający ją po cichu
-	// mówiłby „zestaw jest zgodny", nie sprawdziwszy wszystkiego.
+	// Żeton, którego wartość nie jest barwą, nie wchodzi do pomiaru — zestaw
+	// niesie też wymiary i kroje.
+
+	// Żeton rodzaju „color” o wartości nieczytelnej jest natomiast odmową,
+	// nie pominięciem po cichu.
 	barwy := make([]shared.DesignPaletteColor, 0, len(zetony))
 	for _, zeton := range zetony {
 		if zeton.Rodzaj != shared.DesignTokenKindColor {
@@ -504,9 +479,8 @@ func (a *adapterDesignu) ZbadajDostepnoscBarw(ctx context.Context,
 			lamiace = append(lamiace, wynik)
 		}
 	}
-	// Pary łamiące próg idą od najgorszej: Operator naprawia najpierw tę, która
-	// jest najdalej od progu, a nie tę, która przypadkiem wypadła pierwsza
-	// w kolejności żetonów.
+	// Pary łamiące próg idą od najgorszej, żeby operator naprawiał najpierw tę
+	// najdalszą od progu.
 	sort.SliceStable(lamiace, func(i, j int) bool { return lamiace[i].Ratio < lamiace[j].Ratio })
 	return shared.DesignColorAccessibilityAuditResponse{
 		Violations: lamiace, Checked: sprawdzonych, Passed: spelniajacych,

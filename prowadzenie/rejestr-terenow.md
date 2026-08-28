@@ -438,10 +438,20 @@ generycznej uprzezy — kazdy taki przebieg zostanie urwany i zamelduje usterke
 rdzenia tam, gdzie po prostu liczyl model. Oba tereny obeszly to wlasna droga
 wykonania z osobna granica, i oba zglosily to jako obejscie, nie rozwiazanie.
 
-**Do rozstrzygniecia:** czy uprzaz ma dostac granice zaleznа od rodzaju komendy
-(komendy neuronowe osobno), czy komendy liczace modelami maja byc z niej wyjete
-i mierzone wlasna droga. Wartosc jednolita nie da sie pogodzic: 190 s dla kazdej
-z ponad tysiaca komend to bieg sprawdzianow liczony w godzinach.
+**Rozstrzygniete 28.08 przez prowadzenie: granica jednolita, podniesiona do
+dziesieciu minut.** Przeslanka o biegu liczonym w godzinach okazala sie falszywa
+i zostala obalona pomiarem. Uprzaz wola `context.WithTimeout` i czeka na
+zakonczenie komendy, wiec granica jest ograniczeniem gornym, a nie czasem
+oczekiwania: komenda szybka wraca natychmiast. Bieg `TestKazdaKomendaZnosiPustyLadunek`
+po podniesieniu granicy trwa 10,9 s, czyli tyle samo co przed nim.
+
+Granica zalezna od rodzaju komendy zostala odrzucona z drugiego powodu: kontrakt
+nie niesie znacznika komendy liczacej modelem, wiec kazdy taki wykaz bylby
+dopowiedziany, a tego zapora przed dryfem zabrania.
+
+Skutek: prywatna stala `granicaKomendyZWagami` zniesiona, oba tereny moga zdjac
+swoje obejscia, a sprawdzian skutku komendy neuronowej pisze sie zwykla droga
+uprzezy.
 
 
 ### Pakiet serwera nie stawia jeszcze pomocnika twarzy

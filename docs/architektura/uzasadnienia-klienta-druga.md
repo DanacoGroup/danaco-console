@@ -7901,3 +7901,12 @@ chodzi po każdym elemencie roli menuitem bez pytania, co on otwiera.
 Ikoną jest znak trzech kropek poziomych za czynnością „pokaż więcej”.
 Znacznik „jest tu coś nowego” ma mechanizm ustawienia, ale nic go tu nie
 zapala samo z siebie — źródło sygnału ustala wołający.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-wstawien-studio.test.ts
+Sprawdzian pilnuje ciszy zakazanej wprost: wydanie do formatu uboższego niż dokument wypisuje
+wykaz cech pominiętych, bo milczące zgubienie tabeli przy wydaniu do tekstu czystego jest
+dokładnie tym błędem, którego nie wolno popełnić. PDF bez warstwy tekstowej nie udaje konwersji:
+bilans mówi to wprost, a okno kieruje na rozpoznanie tekstu wraz z numerem pozycji kolejki.
+Fragment wniesiony z Biblioteki niesie zapis pochodzenia oddany przez rdzeń, nie tylko wiersz
+w treści — bo tamten ginie razem z kartą. Pusty dokument zakłada się komendą rdzenia, a odmowa
+nie znika w ciszy. Wydanie do PDF bez profilu wydania jest odmową nazwaną przed próbą, bo profil
+niesie paginację i stopkę.

@@ -18,22 +18,9 @@ import {
 } from './zrodlo-wstawien-studio';
 
 /**
- * Wejście, wydanie i wniesienie ze źródła — BILANS musi być widoczny.
- *
- * To jest sprawdzian pilnujący ciszy, której zlecenie zakazuje wprost:
- *
- *   1. wydanie do formatu uboższego niż dokument wypisuje wykaz cech pominiętych.
- *      Milczące zgubienie tabeli przy wydaniu do tekstu czystego jest dokładnie
- *      tym błędem, którego nie wolno popełnić;
- *   2. PDF bez warstwy tekstowej NIE udaje konwersji: bilans mówi to wprost,
- *      a okno kieruje na rozpoznanie tekstu wraz z numerem pozycji kolejki;
- *   3. fragment wniesiony z Biblioteki niesie zapis pochodzenia oddany przez
- *      RDZEŃ, nie tylko wiersz w treści — bo tamten ginie razem z kartą;
- *   4. pusty dokument zakłada się komendą rdzenia, a odmowa nie znika w ciszy;
- *   5. wydanie do PDF bez profilu wydania jest odmową NAZWANĄ przed próbą,
- *      bo profil niesie paginację i stopkę.
+ * Wejście, wydanie i wniesienie ze źródła — bilans musi być widoczny; sprawdzian pilnuje ciszy
+ * zakazanej wprost przy wydaniu, wniesieniu i pustym dokumencie.
  */
-
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
@@ -92,8 +79,7 @@ describe('bilans widoczny', () => {
       format: StudioExportFormat.Docx,
       assetId: 'zasob-1',
     });
-    // Brak strat jest zdaniem osobnym: cisza byłaby nie do odróżnienia od
-    // wydania, przy którym nikt bilansu nie policzył.
+    // Brak strat jest zdaniem osobnym: cisza nie różni się od wydania bez policzonego bilansu.
     expect(zdanie).toContain('nie zgłosił ani jednej cechy');
   });
 
@@ -273,8 +259,7 @@ describe('nowy dokument', () => {
     await new Promise((gotowe) => setTimeout(gotowe, 0));
 
     expect(zapisy.some((z) => z.komenda === Command.StudioDocumentCreate)).toBe(true);
-    // Nowa strona staje w zakładce NOWEJ, a nie zamiast pisma, nad którym Operator
-    // pracował — zakładek jest teraz dwie.
+    // Nowa strona staje w zakładce nowej, nie zamiast pisma; zakładek jest teraz dwie.
     expect(karty.ile()).toBe(2);
     expect(stan.dokument()?.id).toBe('dokument-nowy');
     expect(karty.element.querySelector('.ms-karty__zdanie')?.textContent ?? '').toContain(

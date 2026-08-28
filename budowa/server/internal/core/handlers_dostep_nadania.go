@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: wypełnienie portu NadaniaDostepu zbiorem nadań okna
-// rozmowy.
-//
-// Zbiór, nie pojedyncze nadanie. Każda czynność zapisu oddaje nie tylko wiersz
-// zmieniony, ale komplet nadań okna po zmianie. Kolejność i oznaczenie głównego
-// są własnością zbioru, więc dopisanie jednego nadania przestawia pozostałe;
-// klient, który dostałby sam zmieniony wiersz, pokazałby zbiór nieprawdziwy.
-//
-// Granica korzeni. Zawężenie korzeni poza obszar punktu jest odmową
-// merytoryczną (dane.ErrPozaKorzeniami), nie awarią zapisu — nadanie dostępu
-// szerszego, niż punkt obiecuje, byłoby obejściem granicy uprawnień.
+// Plik wypełnia port NadaniaDostepu zbiorem nadań okna rozmowy, oddając przy
+// każdym zapisie komplet nadań, nie sam wiersz zmieniony.
 package core
 
 import (
@@ -20,13 +11,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekNadania znakuje identyfikator nadania nadany przez rdzeń.
+// przedrostekNadania znakuje identyfikator nadania nadany przez rdzeń,
+// odróżniając go od identyfikatorów innych bytów obszaru dostępów.
 const przedrostekNadania = "nd-"
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem NadaniaDostepu sprawdzana jest przy kompilacji,
+// bez osobnego testu zgodności typów.
 var _ NadaniaDostepu = (*adapterNadanDostepu)(nil)
 
-// adapterNadanDostepu wypełnia port NadaniaDostepu tabelą `nadanie_dostepu`.
+// adapterNadanDostepu wypełnia port NadaniaDostepu tabelą `nadanie_dostepu`,
+// korzystając z repozytoriów nadań, okien i punktów.
 type adapterNadanDostepu struct {
 	nadania dane.RepozytoriumNadan
 	okna    dane.RepozytoriumOkien
@@ -41,7 +35,8 @@ func nowyAdapterNadanDostepu(nadania dane.RepozytoriumNadan, okna dane.Repozytor
 	return &adapterNadanDostepu{nadania: nadania, okna: okna, punkty: punkty}
 }
 
-// Dodaj nadaje oknu dostęp do punktu i oddaje zbiór nadań okna po zapisie.
+// Dodaj nadaje oknu dostęp do punktu i oddaje zbiór nadań okna po zapisie,
+// z zachowaniem granicy korzeni punktu.
 func (a *adapterNadanDostepu) Dodaj(ctx context.Context,
 	z shared.AccessGrantAddRequest) (shared.AccessGrantAddResponse, error) {
 
@@ -73,7 +68,8 @@ func (a *adapterNadanDostepu) Dodaj(ctx context.Context,
 	return shared.AccessGrantAddResponse{Grant: zeZbioru(zbior, identyfikator), Grants: zbior}, nil
 }
 
-// Wykaz zwraca nadania okna w kolejności zbioru.
+// Wykaz zwraca nadania okna w kolejności zbioru, pustym wykazem, gdy okno nie
+// ma żadnego nadania w rejestrze.
 func (a *adapterNadanDostepu) Wykaz(ctx context.Context,
 	z shared.AccessGrantListRequest) (shared.AccessGrantListResponse, error) {
 
@@ -102,7 +98,8 @@ func (a *adapterNadanDostepu) Wykaz(ctx context.Context,
 	return shared.AccessGrantListResponse{Grants: nadania}, nil
 }
 
-// Zmien zapisuje tryb, korzenie, kolejność albo oznaczenie głównego.
+// Zmien zapisuje tryb, korzenie, kolejność albo oznaczenie głównego i oddaje
+// zbiór nadań okna po zapisie.
 func (a *adapterNadanDostepu) Zmien(ctx context.Context,
 	z shared.AccessGrantUpdateRequest) (shared.AccessGrantUpdateResponse, error) {
 
@@ -166,7 +163,8 @@ func (a *adapterNadanDostepu) Usun(ctx context.Context,
 	return shared.AccessGrantRemoveResponse{Removed: true, Grants: zbior}, nil
 }
 
-// gotowy odpowiada, czy adapter ma komplet repozytoriów potrzebnych do zapisu.
+// gotowy odpowiada, czy adapter ma komplet trzech repozytoriów: nadań, okien
+// i punktów, potrzebnych do zapisu.
 func (a *adapterNadanDostepu) gotowy() bool {
 	return a != nil && a.nadania != nil && a.okna != nil && a.punkty != nil
 }

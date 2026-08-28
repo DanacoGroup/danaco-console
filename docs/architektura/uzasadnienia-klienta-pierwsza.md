@@ -8235,3 +8235,34 @@ stoi zdanie nazywające granicę zamiast przycisku-atrapy.
 Wartość „waga sugestii ujawnianej samoczynnie — wysoka” jest ustawieniem
 konfiguracyjnym; do czasu, aż kontrakt poniesie ustawienia zasięgu Always On
 Display, obowiązuje wartość domyślna.
+## budowa/klient-poprzedni/src/moduly/design/pola-promptu.ts
+Jedna odpowiedzialność: zebranie treści promptu z pól i oddanie jej jako prompt kontraktu. Siedem
+pól odwzorowuje pola promptu — temat, styl, kompozycję, oświetlenie, paletę, proporcje, wykluczenia
+— bez pola spoza kontraktu i bez pominięcia któregoś z nich. Każde niesie dymek objaśnienia, bo
+jest elementem konfiguracji.
+
+Biblioteka stylów jest podpowiedzią, nie wykazem zamkniętym: kontrakt nie ma komendy katalogu
+stylów, więc podpowiedź składa się ze stylów użytych w tej sesji, a pole pozostaje otwarte.
+
+Stoi osobno, bo etykieta niesie nastawę bieżącą, a nie samą nazwę pola. Nazwa i nastawa pochodzą
+z jednego miejsca, inaczej rozjadą się przy pierwszej zmianie.
+
+Pole kompozycji stoi poza wykazem rodzajów, bo kompozycja powstaje z układu warstw Design Board,
+a nie z promptu. Rodzaje audio, wideo i archiwum kontrakt zna, ale kanał obrazowy oddaje wyłącznie
+fragment obrazu — wskazanie ich opisałoby bajty obrazu nazwą innego rodzaju.
+
+Ta sama wartość silnika idzie także w pole silnika promptu, ale w roli opisowej: rdzeń wpisuje
+prompt do wiersza w całości, więc pole zostaje śladem w zapisie promptu — po nim poznać, którym
+kanałem zasób powstał.
+
+Bez przycięcia temat złożony z samego znaku NEL (U+0085) przechodzi przez przycięcie standardowe
+cało, mija sprawdzian „temat jest wymagany" i zakłada w rdzeniu zasób z tematem niewidocznym.
+
+Ukrycie kanału tekstowego kazałoby Operatorowi szukać kanału, który założył, a wybieralność
+prowadziłaby prosto w odmowę rdzenia.
+
+Operator czyta etykietę, a nie identyfikator kanału; wpisanie identyfikatora dałoby etykietę
+mówiącą co innego niż rozwinięty wykaz.
+
+Rejestr bez ani jednego kanału obrazowego jest stanem, po którym generowanie odmówi — Operator
+widzi to przed naciśnięciem przycisku generowania.

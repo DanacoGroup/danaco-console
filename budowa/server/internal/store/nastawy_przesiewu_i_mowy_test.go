@@ -13,9 +13,9 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 
 	oczekiwane := map[string]string{
 		wiedza.KluczModelPrzesiewu:   wiedza.ModelPrzesiewuDomyslny,
-		wiedza.KluczKatalogPrzesiewu: "",
+		wiedza.KluczKatalogPrzesiewu: wiedza.KatalogPrzesiewuDomyslny,
 		wiedza.KluczModelObrazu:      wiedza.ModelObrazuDomyslny,
-		wiedza.KluczKatalogObrazu:    "",
+		wiedza.KluczKatalogObrazu:    wiedza.KatalogObrazuDomyslny,
 	}
 	for klucz, stala := range oczekiwane {
 		var domyslna string
@@ -55,6 +55,14 @@ func TestNastawyPrzesiewuIObrazuStojaWKatalogu(t *testing.T) {
 		`SELECT wartosc_domyslna FROM definicja_ustawienia WHERE klucz = ?`,
 		"wiedza_klucz_ktorego_nie_ma").Scan(&nic); err == nil {
 		t.Fatal("odczyt oddał wartość dla klucza spoza katalogu — mierzy co innego, niż sądzi")
+	}
+
+	// Katalog wag pusty znaczy pobranie wag od nowa do katalogu danych rdzenia przy starcie.
+	if wiedza.KatalogPrzesiewuDomyslny == "" {
+		t.Error("domyślny katalog wag przesiewu jest pusty — świeże wdrożenie pobierze model z sieci")
+	}
+	if wiedza.KatalogObrazuDomyslny == "" {
+		t.Error("domyślny katalog wag osi obrazu jest pusty — świeże wdrożenie pobierze model z sieci")
 	}
 }
 

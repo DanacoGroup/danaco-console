@@ -6852,3 +6852,14 @@ przez model po model silniejszy bez wyraźnego wskazania, wraca pytającemu
 błędem i ląduje w dzienniku konsultacji jako wpis odmowy, bo rozgłoszenie
 udanej konsultacji po próbie, która się nie odbyła, byłoby fałszywym
 powiadomieniem.
+
+## budowa/server/internal/core/handlers_dostep.go
+Obszar dostępów obejmuje cztery byty, których nie wolno mieszać. Punkt dostępu
+mówi, do jakich maszyn i katalogów model ma wgląd. Nadanie wiąże punkt z jednym
+oknem rozmowy, a okno ma zbiór nadań, w którym kolejność i oznaczenie głównego
+niosą znaczenie. Środowisko jest czymś trzecim, profilem widoczności modułów
+w bocznej nawigacji, i tej rodziny komend nie dotyka. Katalog roboczy modelu
+jest ustawieniem osobnym `katalog.roboczy.*` i mówi, gdzie model zostawia
+własne pliki. Rdzeń rozgłasza zmianę obu bytów, bo okno konfiguracji bywa
+otwarte na kilku urządzeniach konta naraz, a nośnikiem synchronizacji jest
+zdarzenie zmiany właściwe obszarowi.

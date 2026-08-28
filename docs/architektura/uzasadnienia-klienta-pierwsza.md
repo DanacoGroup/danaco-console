@@ -9135,3 +9135,25 @@ Okno ma w kontrakcie wyłącznie zdarzenie przejścia budowy i ani jednej komend
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-product-builder.ts (zdanie o pustym wykazie etapów)
 Rozróżniane są trzy stany: zero ramek znaczy „jeszcze nic nie przyszło” i nic ponadto, ramki bez identyfikatora etapu znaczą „przyszło, ale etapów w tym nie było”, a trzeci przypadek to wykaz opróżniony zdarzeniami usunięcia. Żadna gałąź nie orzeka o tym, czego rdzeń nie robi — zdanie mówi wyłącznie o tym, co padło albo nie padło w tej sesji gniazda, więc nowy nadawca etapów po stronie rdzenia zmienia je samo, bez dotykania tego pliku.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/okno-dymkowe.ts
+Postać bierze się z profilu, nie z tego pliku. `profilModulu('assistant')`
+niesie `postacRozmowy: 'dymek-glosowy'`, `granicaOkien: 1` i `pamiecSesyjna: true`.
+Dymek pyta o liczbę okien funkcją `liczbaOkienRozmowy`, nie polem `granicaOkien`:
+pole niesie granicę, funkcja niesie prawo do otwarcia. Profil przestawiony na
+`postacRozmowy: 'brak'` daje zdanie o rozbieżności, a nie zniknięcie dymka.
+
+Pasek pod nagłówkiem mówi o braku kanału głosowego od chwili otwarcia, więc
+Operator dowiaduje się o nim, zanim sięgnie po mikrofon. Przycisk mikrofonu nie
+jest wygaszany i odmawia z powodem, który wymienia brakujące ogniwa z nazwy.
+Nagrywania do pamięci tu nie ma: nagranie, którego nie ma dokąd wysłać, byłoby
+atrapą mikrofonu.
+
+Wiersz nad polem wypowiedzi niesie zdanie o oknie modułu — osobne dla odmowy
+`window.list`, osobne dla braku okna. Dopóki polecenie nie ma dokąd pojechać,
+Operator widzi dlaczego.
+
+Wskaźnik pracy niesie tę samą prawdę, którą niesie favikon i pas dolny,
+rozwiniętą w zdanie. Wiersz pojawiający się i znikający przeskakiwałby treścią.
+
+Milczące zbudowanie dymka wbrew profilowi byłoby drugą prawdą o module.

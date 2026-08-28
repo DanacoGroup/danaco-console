@@ -7558,3 +7558,22 @@ pusty ciąg znaczy „bez zawężenia” w wykazie procesów i ma własną pozyc
 Panel obsługuje wszystkie trzy czynności rejestru, bo instalacja ma na starcie jeden kanał, a okno komunikacji bez kanału nie ma czym rozmawiać. Rejestr kanałów pozostaje bytem tylko do odczytu: panel nie ma do rejestru żadnej drogi zapisu. Po udanym zapisie woła odświeżenie rejestru — zamówienie listy kanałów, którego wynik rejestr rozgłasza wszystkim czytelnikom: oknu rozmowy, sterowaniom modelu głównego i zapasowego, panelowi modeli i widokowi wspólnemu. Jeden zapis odświeża wszystkich, a żaden z czytelników nie wie o istnieniu tego panelu. Usunięcie idzie w dwóch krokach, przyciskiem w wariancie ostrzegawczym stojącym na końcu panelu akcji; w wierszach wykazu przycisku usuwania nie ma.
 
 Panel nie ma ani jednej reguły stylu własnej dla gniazd ramy okna, więc klasy modułu byłyby uchwytami bez żadnej reguły.
+## budowa/klient-poprzedni/src/moduly/studio/zmiany-modelu.ts
+Rdzeń rejestruje wynik operacji kontekstowej jako zmianę śledzoną autora model o zakresie liczonym
+w znakach treści bieżącej. Treść ma więc już w sobie tekst modelu, a zmiana mówi, który to fragment
+i co stało tam wcześniej. Zadaniem tego pliku jest przełożyć to na odcinki treści, żeby powierzchnia
+mogła oznaczyć fragment modelu w miejscu, a nie obok.
+
+Plik nie zna DOM ani rdzenia: wejściem jest napis i wykaz zmian, wyjściem odcinki. Dzięki temu
+nakładanie sprawdza się bez stawiania okna.
+
+Zakresy sięgające poza treść są pomijane, a nie przycinane: zakres spoza treści znaczy, że
+dokument zmienił się od czasu zarejestrowania zmiany, więc oznaczenie fragmentu wskazywałoby
+niewłaściwe miejsce. Tak samo rozstrzyga rdzeń przy decyzji o zmianie — treść zostawia
+nietkniętą. Zakresy nachodzące na siebie liczą się pierwszy wygrywa: dwie zmiany na tym samym
+fragmencie to stan, którego rdzeń nie zakłada, a oznaczenie fragmentu dwoma autorami naraz nie
+miałoby czego znaczyć.
+
+Liczby w opisie zmiany są policzone z treści zmiany, nie oszacowane: tyle znaków stało przed,
+tyle stoi po. Bez nich określenie zmiany modelu nie mówi, czy chodzi o przecinek, czy
+o przepisanie akapitu.

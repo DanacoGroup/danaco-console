@@ -13,17 +13,7 @@ import type { ZrodloWarsztatu } from './zrodlo-warsztatu';
 
 /**
  * Źródło próbne warsztatu modułu Developer — rdzeń zastąpiony zapisem wywołań
- * i gotowymi odpowiedziami.
- *
- * Jedna atrapa dla całej rodziny zamiast atrapy przepisywanej w każdym
- * sprawdzianie: rozjazd z umową `ZrodloWarsztatu` przerywa wtedy kompilację,
- * zamiast rozjeżdżać sprawdziany po cichu. Plik służy wyłącznie sprawdzianom
- * `*.test.ts` tego modułu i nie jest importowany przez żadne okno.
- *
- * Atrapa zapisuje NAZWY wywołanych czynności w kolejności wywołania. To jest
- * jej główny sens: sprawdzian pyta, czy z okna naprawdę prowadzi droga do danej
- * komendy — przycisk, który nie woła niczego, jest atrapą po stronie interfejsu
- * i wygląda tak samo jak przycisk działający.
+ * i gotowymi odpowiedziami, wspólne dla sprawdzianów.
  */
 export interface ZrodloWarsztatuProbne extends ZrodloWarsztatu {
   /** Nazwy wywołanych czynności w kolejności wywołania. */
@@ -39,9 +29,7 @@ export interface ZrodloWarsztatuProbne extends ZrodloWarsztatu {
 }
 
 export function utworzZrodloWarsztatuProbne(): ZrodloWarsztatuProbne {
-  // Stan atrapy stoi osobno od jej metod: metody są przypisywane niżej, a bez
-  // tego rozdziału deklaracja musiałaby wymienić trzydzieści trzy czynności
-  // w jednym literale i przestałaby być czytelna.
+  // Stan atrapy stoi osobno od jej metod, bo metody są przypisywane niżej, po deklaracji stanu.
   const stan = {
     wywolania: [] as string[],
     ladunki: {} as Record<string, unknown[]>,

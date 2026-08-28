@@ -7238,3 +7238,23 @@ przy każdym starcie utopiłby dziennik w powtórzeniach i wyszłoby z tego to
 samo, co z ciszy: nikt by tego nie czytał. Zmiana zasięgu okna, a przy torze
 zdalnym także zmiana wyniku (odmowa kontra tor), daje nowy klucz, więc kolejny
 obrót sprawy znów zostawia ślad.
+
+## budowa/server/internal/injection/ustawienia.go
+Pole CLAUDE_CONFIG_DIR w zmiennych środowiskowych ustawia pula kont, więc pole
+Srodowisko go nie podaje.
+
+Wskazanie konta jest rozkazem tożsamości: tura nie pojedzie innym kontem niż
+wskazane, bez cichej podmiany.
+
+Pułap kosztu jest zapobiegawczy, a nie sprawozdawczy: pole Koszt fragmentu
+zamknięcia tury mówi, ile wydano, a pole PulapKosztuUSD mówi, ile wydać wolno.
+Wartość zerowa, tak samo jak ujemna, której Operator wpisać nie powinien, ale
+wpisać może, znaczy że przełącznika --max-budget-usd nie podajemy i wywołanie
+idzie bez ograniczenia.
+
+Haczyk NaStartProcesu pusty nie zmienia przebiegu tury — znika wyłącznie
+sprzątanie po niej, bo warstwa sesji obejmuje proces uchwytem systemowym,
+dzięki czemu zamknięcie okna kończy także jego potomstwo.
+
+Haczyk NaZdarzenieZaczepu pusty nie zmienia przebiegu tury — znika wyłącznie
+ślad zaczepów; kanał treści zdarzenia zaczepu nie interpretuje.

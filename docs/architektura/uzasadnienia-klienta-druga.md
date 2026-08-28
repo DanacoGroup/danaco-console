@@ -6695,3 +6695,21 @@ odmowy rdzenia.
 
 ## budowa/klient-poprzedni/src/powloka/karta-sesji.ts
 Budowa węzłów karty należy do osobnego pliku części karty, a mechanika pasa — wybór, kolejność, wędrujący fokus — do pliku pasa kart. Karta niesie trzy rzeczy: wskaźnik pracy w tle, tytuł równy nazwie otwartego modułu oraz zamknięcie; wskaźnik pracy pokazuje, że proces biegnie, choć operator patrzy gdzie indziej. Nazwy stanów pochodzą z kontraktu współdzielonego — powłoka nie zakłada własnego słownika stanu procesu.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/struktura-argumentow.ts
+Graf teza-argument-kontrargument-riposta ma dziś w kontrakcie wszystko, czego wymaga: wypowiedź
+niesie pole odpowiedzi na inną wypowiedź i typ aktu mowy, a węzły i krawędzie oddaje komenda
+wykazu argumentów. Brakuje obsługi — ani rdzeń tych pól jeszcze nie wypełnia, ani to okno komendy
+grafu nie wywołuje. Dlatego plik liczy to, co da się policzyć z samego zapisu tury, i osobno
+mierzy, ile wypowiedzi niesie już pola relacji: strukturę chronologiczną — kto, kiedy i ile
+powiedział w tej turze; zbieżność leksykalną wypowiedzi — zdania powtarzające się dosłownie
+u kilku mówców i zdania wyłącznie własne; pokrycie pól relacji — ile wypowiedzi ma pole
+odpowiedzi, a ile typ aktu mowy. Pomiar trzeci jest odpowiedzią na pytanie, którego okno nie ma
+jak zadać kontraktowi: czy rdzeń pola relacji już wypełnia. Zero znaczy jeszcze nie, a wartość
+niezerowa jest sygnałem, że graf da się zbudować na prawdziwych krawędziach zamiast na
+chronologii. Zbieżność leksykalna nie jest zgodnością stanowisk i nie udaje jej być. Dwa zdania
+o tym samym znaczeniu i innych słowach są dla tej miary różne, a dwa zdania identyczne w brzmieniu
+bywają przytoczeniem cudzej tezy po to, żeby ją obalić. Miara mówi, gdzie szukać, nie co znaleziono
+— i tak jest nazwana w oknie. Zdania krótsze niż próg porównania są w debacie potwierdzeniami
+i zwrotami wiążącymi, więc zbiegałyby się u wszystkich mówców naraz i zalałyby wykaz zbieżności
+treścią bez wartości rozpoznawczej.

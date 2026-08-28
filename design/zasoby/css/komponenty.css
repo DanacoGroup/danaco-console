@@ -1969,7 +1969,8 @@ label.dn-pasek-szukaj:focus-within {
   padding: var(--dn-od-2) 0 0 var(--dn-od-2);
   font-family: var(--dn-ff-mono);
   font-weight: var(--dn-fw-polgruba);
-  color: var(--dn-kropka);
+  /* Pismo, nie kropka — próg kontrastu 4,5:1, nie 3:1. */
+  color: var(--dn-sygnal);
   user-select: none;
 }
 .dn-prompt-obszar {

@@ -269,9 +269,12 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-edytor-numery { padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-2) var(--dn-od-3); text-align: right; color: var(--dn-tekst-3); background: var(--dn-powierzchnia-2); user-select: none; font-variant-numeric: tabular-nums; }
 .pt-edytor-kod { padding: var(--dn-od-2) var(--dn-od-3); white-space: pre; color: var(--dn-tekst); }
 .pt-skl-slowo { color: var(--dn-sygnal); }
-.pt-skl-tekst { color: var(--dn-zielen-400); }
+/* Barwy składni idą żetonami semantycznymi, nie prymitywami: prymityw -400 jest
+   wartością motywu ciemnego, a płótno edytora idzie za motywem — w jasnym dawał
+   1,8–2,5:1. Zestaw własnych żetonów składni nie istnieje (dług). */
+.pt-skl-tekst { color: var(--dn-sukces-tekst); }
 .pt-skl-komentarz { color: var(--dn-tekst-3); font-style: italic; }
-.pt-skl-liczba { color: var(--dn-bursztyn-400); }
+.pt-skl-liczba { color: var(--dn-ostrzezenie-tekst); }
 .pt-skl-funkcja { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
 .pt-wiersz-dodany { background: var(--dn-sukces-tlo); }
 .pt-wiersz-usuniety { background: var(--dn-blad-tlo); }

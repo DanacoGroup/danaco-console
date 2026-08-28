@@ -1,16 +1,4 @@
-/*
- * Warstwa wizualna modułu Translate — prefiks lokalny `mt-`.
- *
- * Plik nie zna ani jednej barwy zapisanej wprost: każda wartość pochodzi
- * z żetonów motywu, więc oba motywy obsługuje z definicji. Klasy
- * `dn-*` (pole, przycisk, plakietka, pusty stan, dymek) wnosi biblioteka
- * komponentów; tutaj leży wyłącznie rozkład trzech okien modułu i to, czego
- * biblioteka nie ma: pas kontekstu, siatka paneli językowych, zestawienie
- * porównawcze i znakowanie faz stanu.
- *
- * Kontrolki formularza modułu pochodzą z `modele/kontrolki-formularza`, więc
- * moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
- */
+/* Arkusz obejmuje warstwę wizualną modułu Translate: rozkład trzech okien, pas kontekstu, siatkę paneli językowych i zestawienie porównawcze. */
 
 @import '../../modele/modele.css';
 
@@ -115,7 +103,7 @@
   padding: var(--dn-od-2);
 }
 
-/* Komunikat błędu: cienka kreska po lewej, bez tła i bez obwódki dookoła. */
+/* Komunikat błędu niesie cienką kreskę po lewej stronie, bez tła i bez obwódki dookoła treści komunikatu. */
 .mt-stan__powloka[data-faza='blad'] .mt-stan {
   border-left: 2px solid var(--dn-blad-obrys);
   color: var(--dn-blad-tekst);
@@ -124,11 +112,10 @@
 .mt-stan__tytul,
 .mt-stan__opis { margin: 0; }
 
-/* Wskaźnik odczytu stoi obok tytułu, nigdy zamiast treści. */
+/* Wskaźnik odczytu stoi obok tytułu panelu i nigdy nie zastępuje jego treści, tylko jej towarzyszy przy odświeżaniu. */
 .mt-stan__spinner { margin-left: var(--dn-od-1); }
 
-/* Ikona należy do stanu pustego i tylko do niego: ładowanie ma spinner,
-   błąd ma kreskę po lewej. */
+/* Ikona należy wyłącznie do stanu pustego: stan ładowania pokazuje spinner, a stan błędu kreskę po lewej. */
 .mt-stan__powloka:not([data-faza='puste']) .mt-stan__ikona { display: none; }
 
 /* ── Pasek czynności, wspólny trzem oknom ─────────────────────────────────── */
@@ -159,7 +146,7 @@
 
 .mt-segmenty__wiersz { font-family: var(--dn-ff-mono); }
 
-/* Język, który trzyma rdzeń — zdanie obok pola wejściowego, nie zamiast niego. */
+/* Język, który trzyma rdzeń, opisuje zdanie umieszczone obok pola wejściowego, nigdy go nie zastępujące. */
 .mt-zrodlo__jezyk-rdzenia {
   margin: 0;
   font-size: var(--dn-fs-xs);
@@ -175,7 +162,7 @@
   flex-wrap: wrap;
 }
 
-/* Ster kanału modelu: podpis nad menu-drzewem, rytm ten sam co przy polach. */
+/* Ster kanału modelu niesie podpis nad menu-drzewem, zachowując ten sam rytm co przy pozostałych polach. */
 .mt-ster {
   display: flex;
   flex-direction: column;

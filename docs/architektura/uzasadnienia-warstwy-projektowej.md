@@ -690,3 +690,11 @@ Plik nie zapisuje wprost ani jednej barwy, ani jednego rozmiaru czcionki:
 wszystko pochodzi z żetonów motywu `--dn-*` oraz z biblioteki `komponenty/`.
 Moduł terminala obejmuje sześć okien operacyjnych i odróżnia trzy stany
 obowiązkowe: ładowanie, pustkę oraz błąd.
+
+## budowa/klient-poprzedni/src/moduly/translate/translate.css
+Plik nie zapisuje wprost ani jednej barwy: każda wartość pochodzi z żetonów
+motywu. Klasy `dn-*` wnosi biblioteka komponentów, więc tutaj leży wyłącznie
+rozkład trzech okien modułu, pas kontekstu, siatka paneli językowych,
+zestawienie porównawcze oraz znakowanie faz stanu. Kontrolki formularza
+pochodzą z `modele/kontrolki-formularza`, dlatego moduł wciąga też arkusz
+`modele.css`, inaczej pola `dm-*` zostałyby bez oprawy.

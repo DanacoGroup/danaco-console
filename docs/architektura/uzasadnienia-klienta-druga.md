@@ -7648,3 +7648,6 @@ czego brakuje. Wskazanie kanału jest wskazaniem ze steru kanału; puste
 znaczy „kanał czynny okna” i wtedy żądanie pola kanału nie niesie. Gałąź
 pozytywna przy pliku potwierdza samo wskazanie, nie plik: klient dysku nie
 czyta, wie tylko, że rdzeń ścieżkę podał.
+
+## budowa/klient-poprzedni/src/sterowanie/tryb-uprawnien.ts
+Wartości trybu uprawnień odpowiadają dosłownie przełącznikowi trybu uprawnień kanału głównego i pochodzą z wyliczenia kontraktu. Żadna pozycja nie jest wyszarzona ani ukryta, w tym pominięcie kontroli uprawnień: kontrolą dostępu jest uwierzytelnianie, a nie ta lista. Tryb jest parametrem okna, więc okno planistyczne i okno wykonawcze mogą pracować obok siebie.

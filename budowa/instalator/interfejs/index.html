@@ -32,7 +32,14 @@
 </section>
 </div>
 
-<script src="warstwa/zasoby/wspolne.js"></script>
+<!-- Motyw ciemny zapada przed `wspolne.js`, ktore inaczej wzieloby nastawe systemu.
+       Instalator stoi przed uruchomieniem aplikacji: nie ma jeszcze Operatora, ktorego
+       wybor mialby uszanowac. Rozstrzygniecie 21 rejestru decyzji. -->
+  <script>
+    document.documentElement.dataset.theme = 'dark';
+    try { localStorage.setItem('dn-motyw', 'dark'); } catch (e) {}
+  </script>
+  <script src="warstwa/zasoby/wspolne.js"></script>
 <script src="warstwa/zasoby/prototyp.js"></script>
 <script src="warstwa/zasoby/narzedzia-okien.js"></script>
 <script src="warstwa/zasoby/bryla.js"></script>

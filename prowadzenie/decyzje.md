@@ -1431,6 +1431,41 @@ Deklaracja narzędzia nie powiela kształtu żądania: wskazuje komendę i dopis
 jedno zdanie mówiące modelowi, kiedy po nie sięgnąć. Zdanie powstaje z opisu
 komendy w kontrakcie, nie z domysłu.
 
+## 21. Instalator wydaje się w motywie ciemnym
+
+**Rozstrzygnięcie Właściciela z 28.08.2026**, podjęte po pomiarze przedstawionym
+przez prowadzenie.
+
+**Stan, który do niego doprowadził.** `zetony.css` niesie trzy komplety żetonów:
+`:root` (193), `:root[data-theme='light']` (55) i `:root[data-theme='dark']` (169).
+Trzynaście żetonów bryły `--dn-bryla-*` stoi **wyłącznie w `:root`** i nie ma wariantu
+dla żadnego motywu. Ich wartości są skomponowane pod tło ciemne — blaty klocków to
+`rgba(41,66,101)`, `rgba(26,45,71)` i `rgba(17,30,48)`.
+
+Instalator wydawał się dotąd w motywie jasnym, bo `wspolne.js` ustala motyw
+z `localStorage`, a przy jego braku z `prefers-color-scheme`. Bryła stawała wtedy
+na pasie `.dn-kreator-szyna` o barwie `rgb(235,236,239)`:
+
+| | |
+|---|---|
+| kontrast blatu wobec tła | **11,8 : 1** |
+| średnia jasność bryły | **66 / 255** |
+
+Czytało się to jako czarna plama na jasnym panelu — w oknie, które Operator widzi
+jako pierwsze.
+
+**Rozstrzygnięcie.** Instalator wydaje się w motywie ciemnym, na stałe. Nie idzie za
+nastawą systemu ani za wyborem zapisanym w przeglądarce, bo jest oknem sprzed
+uruchomienia aplikacji i nie ma jeszcze Operatora, którego wybór miałby uszanować.
+
+**Czego to rozstrzygnięcie NIE zmienia.** Żetony `--dn-bryla-*` zostają nietknięte.
+Paleta bryły jest skomponowana pod ciemne tło i w motywie ciemnym działa tak, jak
+została zaprojektowana. Warstwa projektowa nie wymaga tu żadnej zmiany.
+
+**Gdzie to stoi w kodzie.** `budowa/instalator/interfejs/index.html` — wybór motywu
+zapada przed uruchomieniem `wspolne.js`, żeby ten nie nadpisał go nastawą systemu.
+Poza plikami instalatora nic się nie zmienia.
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

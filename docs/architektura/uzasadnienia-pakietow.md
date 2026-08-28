@@ -7170,3 +7170,16 @@ co w rozpoznajWyczerpanie: podtyp zdarzenia kończącego turę, potem jego tekst
 na końcu wyjście diagnostyczne procesu. Tura bez zdarzenia `result` nie jest
 pułapem, ponieważ pułap przerywa turę wewnątrz programu, więc program zdąża
 zgłosić przerwanie — strumień urwany bez zdarzenia kończącego jest awarią.
+
+## budowa/server/internal/injection/rozruch.go
+Sięgają tu obie drogi kanału głównego: `Uruchom` dla jednego wywołania tury
+w trybie stream-json, z pliku `proces.go`, i `UruchamiaczOkien` dla procesu
+okna komunikacji prowadzonego przez sesję, z pliku `uruchamiacz_okna.go`.
+Pakiet session nie buduje własnego `exec.Cmd`, tylko bierze stąd gotowy
+uchwyt.
+
+Proces, który ma zostać objęty drzewem przez warstwę sesji, dostaje atrybuty
+systemowe uruchomienia z `session.AtrybutyDrzewa()`.
+
+Pole WyjscieBledowOsobno potrzebne jest strumieniowi okna, który czyta oba
+wyjścia procesu naraz.

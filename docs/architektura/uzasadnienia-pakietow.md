@@ -6790,3 +6790,34 @@ startu procesu: warstwa nasłuchu nie przyjmuje zmiany wymogu na żywo.
 
 Pole PochodzeniaDozwolone dopisuje wzorce nagłówka Origin przyjmowane przy
 nawiązaniu gniazda i nie zastępuje pochodzeń własnych produktu.
+
+## budowa/server/internal/konfiguracja/wczytanie.go
+Odczyt środowiska w funkcji Wczytaj jest parametrem, dzięki czemu wczytanie
+konfiguracji daje się sprawdzić bez zmiany zmiennych środowiska procesu.
+
+## budowa/server/internal/dane/studio_wejscie_szablony.go
+`SzablonStudia` i jego trzy metody stoją w `studio_katalogi.go` — pliku innego
+odcinka, w który wchodzić nie wolno. Kolumny z migracji 367 tamten odczyt
+pomija, więc szablon czytany tamtą drogą nie niesie postaci wzorcowej: ani
+arkusza stylów, ani nastaw strony, ani nagłówka i stopki, mimo że szablon ma
+nieść te rzeczy naraz.
+
+Ten plik ogłasza więc `SzablonWarsztatuStudia`: ten sam wiersz tej samej
+tabeli, widziany w pełni. Druga tabela szablonów byłaby drugim wykazem
+i drugą prawdą; drugi odczyt jednej tabeli nią nie jest, bo zapis idzie
+upsertem po tym samym kluczu i kolumny nie zachodzą na siebie — tamten zapis
+przepisuje nazwę, opis, format, treść i pola, ten dokłada resztę.
+
+Powód trzymania pól w kolumnie `pola_json` stoi w migracji 367: wykaz pól
+czyta się cały przy wypełnianiu i nikt nie pyta o jedno pole osobno. Kształt
+zapisu rośnie (rodzaj, opis, wartości do wyboru, miejsce w treści), a miejsce
+przechowania zostaje jedno.
+
+Usunięcie obejmuje wyłącznie szablon własny. Warunek stoi w zapytaniu, nie
+tylko w kodzie wywołującym: szablon fabryczny usunięty inną drogą zabrałby
+odcinkowi możliwość odróżnienia go od szablonu własnego przy kolejnym odczycie.
+
+Kolumna `fabryczny` przy nadpisaniu zapisem warsztatu zostaje nietknięta:
+szablon fabryczny ma zostać fabryczny, bo od tego zależy, czy da się go
+usunąć, a zapis warsztatu nie jest miejscem na przestawienie tego
+rozstrzygnięcia.

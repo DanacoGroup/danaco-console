@@ -6238,3 +6238,31 @@ domyślny zamiast poprzedniego — wygaszenie jest więc widokiem, nie zapisem. 
 zdarzenia mają powiadamiać; samego doręczania nie ma jeszcze czym wykonać, silnik kolejki jest w rdzeniu
 zbudowany, ale nie ma wołacza, a centrum powiadomień nie ma rodziny komend w kontrakcie — sekcja mówi
 o tym wprost zdaniem pod tabelą, zamiast udawać, że przełączniki już czymś sterują.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/rozszerzenia-boczne.ts
+Zamierzenie modułu dzieli okna na dwie warstwy. Warstwa pierwsza — Model Panels i Debate Panel —
+jest widoczna bez interakcji. Warstwa druga — Argument Map & Analysis, Voting & Evaluation Center,
+Moderator Panel i Consensus Panel — otwiera się jako rozszerzenie boczne przyciskiem albo
+znacznikiem kontekstowym. Zwinięcie nie jest blokadą: okno zwinięte stoi w module przez cały czas,
+jest zbudowane i zasubskrybowane na stan debaty, a jego przycisk otwarcia jest zawsze klikalny
+i zawsze odpowiada — schowana jest wyłącznie treść. Dzięki temu Operator, który rozszerzenia nie
+otwiera, nie ogląda czterech okien naraz w obszarze roboczym, a ten, który je otwiera, dostaje je
+jednym naciśnięciem, bez ładowania i bez utraty stanu. Zwinięcie idzie atrybutem widoczności na
+powłoce rozszerzenia, nie usunięciem okna z dokumentu: usunięte okno traciłoby ognisko, pozycję
+przewinięcia i wpisane w nie treści, a nasłuch stanu i tak musiałby zostać żywy, bo subskrypcje
+zakłada wytwórnia okna, nie jego osadzenie.
+
+Identyfikatory powłok muszą być niepowtarzalne, bo atrybut sterujący dostępnością wiąże przycisk
+z powłoką po identyfikatorze, a moduł i panel pomocniczy Roundtable potrafią stać w dokumencie
+jednocześnie.
+
+Pas dostaje wykaz rozszerzeń przy zakładaniu i nikt go później nie zmienia. Ciche pominięcie
+nieznanego kodu dałoby przycisk, który po naciśnięciu nie robi nic i niczego nie mówi.
+
+## budowa/klient-poprzedni/src/moduly/studio/osadzenie-modulu.ts
+Identyfikator okna komunikacji sesji jest polem obowiązkowym komend otwarcia dokumentu i operacji
+kontekstowej, a moduł dostaje z powłoki wyłącznie sesję, więc wskazanie okna jest czynnością
+wspólną wszystkim oknom operacyjnym modułu i stoi ponad nimi, zamiast w jednym z nich — inaczej
+pozostałe okna sięgałyby do cudzego widoku. Pozostałe parametry wykonania, takie jak moduł, kanał
+modelu, zasięg, tryb uprawnień, rola i katalogi robocze, stoją na tym samym ekranie w osobnym
+panelu sterowania oknem, więc powtarzanie ich tutaj zajmowałoby przestrzeń bez nowej treści.

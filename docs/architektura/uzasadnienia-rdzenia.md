@@ -7355,3 +7355,8 @@ trafiła tu przed odbiorem.
 
 Ręka modelu bierze się z gniazda serwera narzędzi, a pole author sprawdzian
 celowo nie podaje — mierzy to, czego model nie może o sobie zataić.
+
+## budowa/server/internal/core/ciaglosc_rozmowy.go
+Port CiagloscRozmowy jest celowo wąski — dwie czynności na jednej kolumnie.
+Rozmowa należy do okna, nie do sesji: dwa okna jednej sesji prowadzą dwie
+niezależne rozmowy z modelem i muszą mieć osobne wznowienia.

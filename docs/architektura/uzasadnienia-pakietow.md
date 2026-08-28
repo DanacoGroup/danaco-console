@@ -6507,3 +6507,21 @@ powtórzone jest czynnością pustą, nie błędem.
 Kształt wyniku ArgumentyDolozen odpowiada funkcjom
 narzedzia.ArgumentyZasiegu i ArgumentyEksperta, ponieważ wszystkie trzy
 zasilają ten sam wpis danaco tą samą drogą argumentów uruchomienia.
+
+## budowa/server/internal/konfig/definicje_aplikacji.go
+Nastawy wykonania oraz izolacji rozstrzygają, jak platforma prowadzi
+rozmowę; nastawy tego pliku rozstrzygają, jak stoi sam rdzeń, na przykład
+czy nasłuch wymaga logowania. Poziom zasięgu, na którym mieszkają, jest
+najszerszy i nie ma bytu nadrzędnego, ponieważ programu nie ma czym zawęzić.
+
+Nastawy konta nadawczego wchodzą także zmiennymi środowiska przy starcie,
+zapisanymi w pliku konfiguracja/srodowisko.go; zapis w tabeli ustawienie
+przesłania środowisko, ponieważ pomyłki w adresie serwera poczty nie da się
+naprawić bez zatrzymania rdzenia, gdyby jedyną drogą poprawki było
+środowisko.
+
+Wartość domyślna wymogu logowania jest pusta, nie fałsz, ponieważ nastawa
+ma trzy stany: brak wskazania rozstrzyga adres nasłuchu, a wskazania „tak”
+i „nie” ustalają wymóg wprost. Wartość domyślna fałsz skasowałaby stan
+pierwszy i zniosłaby wymóg logowania na nasłuchu wystawionym poza pętlę
+zwrotną.

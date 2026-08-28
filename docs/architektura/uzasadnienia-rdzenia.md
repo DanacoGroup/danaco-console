@@ -6966,3 +6966,56 @@ jeszcze katalogiem nieosiągalnym, bo punkt rodzaju localDirectory należy do
 wskazanego urządzenia, a rdzeń nie musi pracować na tym samym — rozstrzygnięcie
 należy do agenta urządzenia, a do czasu jego wpięcia rdzeń mówi wprost, czego
 nie wie.
+
+## budowa/server/internal/core/adapter_rozmowa_konfiguracja.go
+Jednolity model konfiguracji zapisuje komenda ustawiania konfiguracji sesji;
+ten plik jest jego czytelnikiem na drodze tury. Obszary tłumaczą się na te
+same pola zapytania, którymi jedzie reszta wywołania, a stamtąd na wejście
+warstwy wstrzykiwania parametrów procesu: model i konto na wybór wywołania,
+narzędzia i uprawnienia na ustawienia procesu, środowisko i dostawca na
+zmienne środowiska, integracje zewnętrzne na osobną konfigurację. Zmiana
+obszaru w oknie konfiguracji zmienia więc zbudowane wywołanie modelu. Brak
+czytelnika albo błąd odczytu zostawia turę na wartościach okna i wiersza
+rejestru: konfiguracja sesji dokłada rozstrzygnięcia, nie odbiera dawnych.
+
+Przełożone są obszary: model, konto, uprawnienia, narzędzia, zaczepy,
+umiejętności (samo wyłączenie obszaru), środowisko, dostawca (fragment) oraz
+integracje zewnętrzne.
+
+Czytelnik konfiguracji obowiązującej jest portem osobnym od portu konfiguracji
+sesji rodziny komend config.session — tamten port mówi typami kontraktu, ten
+oddaje już złożony model.
+
+Konto z obszaru account rozstrzyga się według sposobu wyboru: sposoby fixed
+i kindDefault biorą wskazane konto wprost, sposób pool bierze pierwsze konto
+puli jako wejście rotacji. Rotacja po wyczerpaniu limitu należy do puli kont
+warstwy wstrzykiwania parametrów procesu — tu zapada tylko wskazanie wejściowe.
+
+Obszary i fragmenty obszarów bez odpowiednika na powierzchni procesu, wymienione
+jawnie, żeby obszar wypełniony a nieprzełożony nie uchodził za wpięty:
+
+Obszar pamięci pozostaje w całości poza powierzchnią. Treść pamięci wpisana
+wprost w konfiguracji wymaga zapisania pliku pamięci projektu w katalogu
+roboczym, a warstwa wstrzykiwania parametrów nie zapisuje dziś plików sesji
+ani nie ma na to pola w ustawieniach czy zapytaniu. Przełączniki pamięci
+projektu i użytkownika oraz dodatkowe ścieżki pamięci nie mają odpowiednika
+w pliku ustawień bieżącej powierzchni. Wpięcie wymaga nowego mechanizmu —
+zapisu plików sesji wraz z polem, które je niesie — i leży poza tym plikiem.
+
+Obszar umiejętności poza samym wyłączeniem: wyłączenie obszaru odmawia
+narzędzia obsługującego umiejętności. Dopuszczanie imienne umiejętności,
+katalogi wyszukiwania i samowykrywanie nie mają pola ani przełącznika na
+bieżącej powierzchni, ponieważ imienny słownik reguł tego narzędzia nie jest
+tu potwierdzony, więc jego wpisanie byłoby atrapą.
+
+Obszar tożsamości systemowej jedzie osobną drogą nakładki tożsamości, nie tym
+przekładem.
+
+Obszary kontekstu projektu, kontekstu rozmowy, katalogu roboczego, katalogów
+dodatkowych, wejścia i wyjścia, środowiska wykonania oraz cyklu życia sesji
+wpina warstwa okna — katalog roboczy, mosty, parametry wykonania — albo nie są
+wpięte wcale.
+
+Obszar dostawcy poza adresem punktu końcowego, temperatura próbkowania modelu
+i funkcje beta modelu nie mają odpowiednika na powierzchni wywołania albo mają
+osobny przełącznik, który nie jest dziś wpięty.

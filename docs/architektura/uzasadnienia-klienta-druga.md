@@ -7910,3 +7910,16 @@ Fragment wniesiony z Biblioteki niesie zapis pochodzenia oddany przez rdzeń, ni
 w treści — bo tamten ginie razem z kartą. Pusty dokument zakłada się komendą rdzenia, a odmowa
 nie znika w ciszy. Wydanie do PDF bez profilu wydania jest odmową nazwaną przed próbą, bo profil
 niesie paginację i stopkę.
+
+## budowa/klient-poprzedni/src/moduly/terminal/bufor-wyjscia.ts
+
+Pierścień zamiast rosnącej tablicy, ponieważ jedno `npm install` albo jedno
+`find /` daje setki tysięcy wierszy. Tablica bez granicy rośnie do wyczerpania
+pamięci karty, a odrysowanie jej przy każdym fragmencie zatrzymuje wątek
+interfejsu. Bufor trzyma stałą liczbę wierszy najnowszych i podaje, ile wierszy
+przepadło, żeby było widać, że w oknie stoi ogon, a nie całość.
+
+Fragment nie jest wierszem: rdzeń wysyła porcje bajtów, więc jeden fragment bywa
+połową wiersza, a inny trzema wierszami naraz. Bufor skleja ogon niedokończonego
+wiersza z początkiem następnego fragmentu; bez tego wyjście rozsypałoby się na
+przypadkowych granicach odczytu.

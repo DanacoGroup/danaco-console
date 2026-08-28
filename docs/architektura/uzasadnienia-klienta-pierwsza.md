@@ -6904,3 +6904,29 @@ Schowek należy do maszyny Operatora i rdzeń go nie czyta: Operator kopiuje u s
 
 ## budowa/klient-poprzedni/src/moduly/automations/automations.test.ts
 Sprawdziany obejmują wyłącznie byty rozstrzygalne bez rdzenia: przekład wzorca cykliczności na zapis cron i z powrotem, walidację definicji, miary i zawężenie wykazu przebiegów, układ warstwowy grafu, zapisy eksportu, kalendarz oraz wyjęcie scenariusza z przeniesionego kompletu. Dane przykładowe pochodzą ze świata produktu — kroki i przebiegi automatyki raportowej — i są oznaczone jako przykładowe nazwą. Zapora na powtórzenie usterki: wykazy przepisane ręcznie przestały raz odpowiadać kontraktowi po jego rozszerzeniu, a okno pokazywało wtedy mniej rodzajów i działań, niż silnik naprawdę zna, nie mówiąc o tym ani słowem; kompletność wymusza już typ mapy zupełnej po wyliczeniu, sprawdzian pilnuje drugiej połowy — że wykaz na ekranie powstaje z tej mapy, a nie obok niej.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-dolny.ts
+Rozmowa z rdzeniem jest w pliku `czynnosci-paska-dolnego.ts`, podgląd i pasek zaznaczenia osobno. Przyciski są trzech rodzajów. Podział ekranu, tryb czytnika i tryb adnotacji dzieją się w kliencie — adnotacja rysuje na płótnie nad sceną, a do rdzenia idzie dopiero jej wynik przez komendę wysyłania wiadomości. Zrzut ekranu i tłumaczenie mają uchwyt w rdzeniu. Zakładka, makro i pobrania mają w kontrakcie własne komendy, których to okno jeszcze nie wywołuje — pytają więc rdzeń o ich pokrycie i mówią jego odpowiedź.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-dolny.ts — przełącznik trybu adnotacji
+Tryb adnotacji zamyka się także przyciskiem zamknięcia trybu na pływającym pasku, a wtedy przycisk paska dolnego musi przestać twierdzić, że tryb trwa.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/okno-executor-chat.ts
+Okno nie ma sterowania kolejką ani planu etapów. Identyfikator koordynatora
+okna wykonawczego jest jedynym oznaczeniem więzi, więc okno wypisuje je
+wprost, inaczej wykonawca własnej pary jest nie do odróżnienia od cudzego.
+Tryb współpracy jest wspólny obu wykonawcom i rozstrzyga, kto dostaje
+zlecenie przy przekazaniu, więc zapisuje się na oknie koordynatora, a nie
+osobno w każdym wykonawcy, bo dwa zapisy tej samej rzeczy rozjeżdżałyby się
+przy pierwszej zmianie. Numer wykonawcy spoza zakresu dawałby kod pusty,
+czyli okno zbudowane bez wiersza katalogu, o czym nikt by nie zameldował.
+Zapis wiadomości przez rdzeń zwraca zapisaną wiadomość użytkownika i nic nie
+orzeka o turze modelu. Wywołanie zmiany stanu woła się także na fragment
+strumienia, więc odczyt bezwarunkowy zasypałby rdzeń wywołaniami wykazu
+podagentów w tempie strumienia.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-dolny.ts — nazwy rodzajów wyodrębnienia
+„Treść renderowana" i „źródło strony" brzmią podobnie, a dają dwie różne rzeczy — dlatego opis przy pozycji rozstrzyga, co wyjdzie z wyodrębnienia.
+
+## budowa/klient-poprzedni/src/moduly/automations/droga-komend.test.ts
+Wykaz oczekiwany bierze się z kontraktu, nie z tego pliku: komenda dołożona do którejkolwiek z trzech rodzin i pominięta w źródle wypadnie tu jako brak, bez dopisywania czegokolwiek w sprawdzianie — sprawdzian nie mierzy więc tego, co ktoś pamiętał, tylko to, czego rodzina naprawdę wymaga. Przelot woła każdą czynność źródła raz i nie sprawdza jej wyniku, od tego są sprawdziany skutku po stronie rdzenia, tylko to, że okno ma czym daną komendę wysłać; moduł, który wygląda na kompletny, a nie umie wysłać jednej komendy z czterdziestu dziewięciu, jest modułem niekompletnym w miejscu, którego nie widać.

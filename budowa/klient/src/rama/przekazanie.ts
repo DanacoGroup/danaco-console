@@ -48,8 +48,8 @@ export function wykonajPrzekazanie(stan: StanZeSrodowiskiem, zaleznosci: Zalezno
   return true;
 }
 
-/** Zatrzask jednorazowego przekazania: zapada po powodzeniu, przy odmowie zostaje otwarty na kolejną zmianę stanu. */
-export function utworzZatrzaskPrzekazania(
+/** Przekazanie jednorazowe: znacznik ustawia się dopiero po powodzeniu, więc odmowa nie zamyka drogi na kolejną zmianę stanu. */
+export function utworzPrzekazanieJednorazowe(
   zaleznosci: ZaleznosciPrzekazania,
 ): (stan: StanPrzebiegu) => void {
   let przekazano = false;

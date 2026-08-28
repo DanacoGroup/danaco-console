@@ -6667,3 +6667,17 @@ stało. Powód rozdziału tabel stoi w nagłówku migracji 231.
 Historia niesie prowenancję: prompt wydany wraca wraz z kodami zasobów, które
 z niego powstały. Bez tego pole `DesignAsset.PromptId` byłoby kodem bez drugiej
 strony — kontrakt komendy `design.prompt.history.list` ten przekład wnosi.
+
+## budowa/server/internal/dane/design_wersje.go
+Wersja jest migawką układu, nie odwołaniem do warstw żywych. Warstwy zapisuje
+się kolumna w kolumnę, bo `design.board.update` usuwa je i wstawia od nowa przy
+każdym zapisie — odwołanie wskazywałoby wtedy wiersze, których już nie ma,
+a wersja przestałaby opisywać cokolwiek dokładnie wtedy, gdy jest potrzebna.
+
+Wykaz wersji warstw nie czyta (kontrakt: `versions` bez `layers`), stąd
+`liczba_warstw` utrwalona w wierszu wersji. Warstwy wchodzą wyłącznie przy
+przywróceniu, osobnym odczytem `WarstwyWersjiKompozycjiDesignu`.
+
+Wersja jest zawsze nowa. Nadpisania nie ma i nie ma być: wersja to zapis stanu
+z konkretnej chwili, a nadpisanie oznaczałoby, że stan sprzed godziny właśnie
+się zmienił.

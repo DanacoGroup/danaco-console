@@ -6625,3 +6625,11 @@ programu, którego nikt nie zapowiedział) oraz wykaz kłamiący o obecności
 (pozycja meldowana jako obecna, gdy programu nie ma). Pierwsza zostawia
 niespodziankę po naciśnięciu, druga jest gorsza — odbiera sens całej
 sondzie.
+
+## budowa/server/internal/core/zamkniecie_okna.go
+
+Dłuższa karencja zamknięcia opóźniałaby widoczne zamknięcie okna, krótsza
+nie starczyłaby na zapis modelu.
+
+Brak wpiętego przerwania nie blokuje zamykania — okno zamyka się wtedy bez
+łagodnego kroku, od razu ubiciem drzewa procesu.

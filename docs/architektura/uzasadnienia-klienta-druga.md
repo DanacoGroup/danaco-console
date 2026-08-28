@@ -6777,3 +6777,28 @@ ile mówi sufit sceny. To dwie różne rzeczy i nota pokazuje obie. Sufit sceny 
 a nie przepisywany: liczba przepisana tutaj rozminęłaby się ze sceną, gdy ta zyska piąte gniazdo.
 Tak samo wiąże się z liczbą w profilu modułu komunikacji. Atrybut danych daje arkuszowi odróżnić
 stan „skład szerszy niż scena" od zwykłego opisu, ale i wtedy jest to opis stanu, nie sprzeciw.
+## budowa/klient-poprzedni/src/sterowanie/adnotacje-wykonania.ts
+Sterowanie, którego wartość nie dociera do wywołania, zostaje czynne w interfejsie, ponieważ wyszarzenie byłoby blokadą — zamiast tego okno mówi o swoim stanie wprost w objaśnieniu pozycji. Milczenie kazałoby uznać zapisaną wartość za sterującą modelem, choć nią nie jest.
+
+Wykaz, którego nikt nie odświeża, kłamie w dymkach i każe budować drugi raz to, co już działa. Dlatego przy każdym sterowaniu stoi plik i miejsce w rdzeniu, po których da się zdanie sprawdzić zamiast w nie uwierzyć:
+- nakład rozumowania — plik core/adapter_rozmowa_wykonanie.go, funkcja Ustal, pole Naklad, przekładane w injection/argumenty.go na parametr --effort;
+- kanał modelu zapasowego — tamże, pole ModelZapasowy, po przekładzie kodu kanału na identyfikator modelu (modelKanalu) trafia jako parametr --fallback-model;
+- host wykonania — zdalne/hosty.go (odczyt z bazy), zdalne/tor.go (złożenie toru SSH), injection/uruchamiacz_okna.go (gałąź shared.ExecutionEnvRemote wywołująca zdalne.Przeloz);
+- środowisko wykonania — zasięg remote prowadzi jawny tor SSH, a każde brakujące ogniwo jest nazwaną odmową, nie cichym startem na rdzeniu (injection/uruchamiacz_okna.go, funkcja rozruchZdalny); zasięg local schodzi na host rdzenia i zostawia o tym wpis w dzienniku;
+- model — kanał modelu jest osią całego wywołania.
+
+Zdanie o sterowaniu niepotwierdzonym zostaje jedno, utrzymywane w stałej AGENT_ZAPISYWANY tego pliku. Adnotację zdejmuje się przez skreślenie wiersza z tego wykazu, w jednym miejscu, wraz ze wskazaniem miejsca w rdzeniu, które to uzasadnia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/panele-gniazda.ts
+Panel jest własnością rozmowy, a nie ekranu: przy dwóch i czterech oknach
+każde okno ma własny zestaw paneli, więc powstaje jeden egzemplarz na
+gniazdo bez żadnej zmiennej na poziomie modułu — inaczej dwa gniazda
+podzieliłyby się stanem. Panele stoją osobno od gniazda okna, bo gniazdo
+odpowiada za jedno miejsce na scenie, a panele to siedem współpracujących
+bytów: stan, wytwórnia, stos, uchwyt, pełny ekran, menu i skróty. Wykaz
+pozycji przychodzi z rejestru okien pomocniczych po kodzie modułu gniazda,
+ale do menu wchodzą tylko pozycje mające wytwórnię — pozycja bez wytwórni
+nie dostaje wiersza nieczynnego, tylko zdanie pod wykazem mówi, ilu pozycji
+brakuje i dlaczego, bo wiersz, w który nie da się kliknąć, byłby bramką.
+Bez kanału żadna wytwórnia nie ma czym zbudować okna, więc wykaz jest
+pusty, a menu mówi wprost, czego brakuje — to brak środka, nie odmowa.

@@ -6680,3 +6680,15 @@ która nie niesie pola stanu i nigdy by się nie skorelowała, więc okno stało
 końca — rodziny komend rozkładu i kontroli pracy są świeże i wystawiane przez różnych
 wykonawców, więc odmowa braku uchwytu jest tu ścieżką realną, nie teoretyczną, i ma wracać jako
 nazwany błąd.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/spis-czynnosci-sesji.ts
+O tym, czy czynność ma sens dla danego stanu sesji, rozstrzyga wykaz
+czynności wiersza strony głównej, nie ten moduł — powtórzenie tamtych
+warunków tutaj dałoby dwie odpowiedzi na jedno pytanie. Tak samo z
+wykonaniem: komendy sesji stoją złożone w osobnym pliku wykonania
+czynności, a ten moduł nie pisze ani jednej nowej. Rozgałęzienia rozmowy
+menu nie oferuje, bo nie ma komendy ani bytu, który by je wykonał — wiersz
+wygaszony byłby bramką, a wiersz czynny atrapą. Każda czynność oddaje
+zdanie i to zdanie trafia do komunikatu, bo menu zwija się w chwili
+naciśnięcia, więc bez komunikatu nie byłoby widać ani powodzenia, ani
+odmowy rdzenia.

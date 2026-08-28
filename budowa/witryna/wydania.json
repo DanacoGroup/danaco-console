@@ -7,9 +7,9 @@
     "wdrozony": true,
     "adres": "https://pobierz.danaco-group.pl/",
     "tymczasowy": false,
-    "czym_jest": "Kanał stoi pod wlasna nazwa pobierz.danaco-group.pl (rekord A na 51.75.62.180, IPv6 2001:41d0:601:2000::1caa), nginx z TLS na porcie 443; port 80 przekierowuje na 443. To osobny host wydan — strona wizerunkowa produktu stoi na danaco-group.pl i tylko tu odsyla.",
-    "chronione_haslem": "Pliki wydania (/wydania/…) chroni uwierzytelnienie podstawowe — plik poświadczeń /etc/nginx-danaco-wydania.htpasswd, prawa 640 root:root, hasła NIE MA w repozytorium ani na stronie. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania: przeglądarka pyta o hasło dopiero przy sięgnięciu po plik. Na czas wyłączności Właściciela — jeden użytkownik.",
-    "certyfikat": "Let's Encrypt, wystawiony na pobierz.danaco-group.pl przez certbot --nginx. Przegladarka nie pokazuje zadnego ostrzezenia. Certyfikat wlasny, ktory stal tu do chwili dopisania rekordu DNS (/etc/nginx/danaco-tls/kanal-tymczasowy.crt), jest juz nieuzywany — zostawiony na wypadek, gdyby kanal trzeba bylo postawic ponownie na samym adresie liczbowym.",
+    "czym_jest": "Kanał stoi pod własną nazwą pobierz.danaco-group.pl na maszynie 57.128.253.74 (IPv6 2001:41d0:601:1100::2485) — tej samej, na której działa rdzeń wdrożenia. Serwerem stron jest CADDY, nie nginx; TLS na 443, przekierowanie z 80 robi Caddy sam. Katalog wydawany: /opt/danaco/danaco-console/portal, pliki wydań w /opt/danaco/danaco-console/wydania/. Strona wizerunkowa produktu stoi osobno, na danaco-group.pl (maszyna 137.74.41.149, nginx).",
+    "chronione_haslem": "Pliki wydania (/wydania/*) chroni uwierzytelnienie podstawowe zapisane WPROST w /etc/caddy/Caddyfile w bloku pobierz.danaco-group.pl — dyrektywa basic_auth, użytkownik `wlasciciel`, hasło jako skrót bcrypt. Osobnego pliku poświadczeń NIE MA; wcześniejszy zapis o /etc/nginx-danaco-wydania.htpasswd opisywał serwer, którego tu nie ma. Hasła nie ma w repozytorium ani na stronie. Sama witryna, w tym strona „Pobierz”, jest otwarta do czytania.",
+    "certyfikat": "Certyfikat wystawia i odnawia Caddy samodzielnie (ACME, Let's Encrypt). Przeglądarka nie pokazuje ostrzeżenia — sprawdzone: https://pobierz.danaco-group.pl/ odpowiada 200, nagłówek `server: Caddy`, a /wydania/ zwraca 401.",
     "docelowo": "Kanal jest na swoim miejscu. Do zrobienia zostaje strona wizerunkowa produktu w portfolio grupy: danaco-group.pl/danaco-console.html — bez pobierania plikow, z jednym odnosnikiem tutaj. Material do wgrania: DanacoConsole.git/DO-WGRANIA-DANACO-GROUP/.",
     "czego_brakuje": "",
     "po_co_to_pole": "Pole rozstrzyga, czy strona „Pobierz” wystawia przycisk POBIERZ, czy tylko adres jako tekst. `wdrozony: true` znaczy: pliki naprawdę leżą pod tymi adresami i odpowiadają kodem 200 — sprawdzone poleceniem `curl -sI`. `tymczasowy: true` dokłada do tego zdanie, że kanał jest z maszyny budującej i pod certyfikatem własnym, żeby nikt nie wziął tego adresu za docelowy."
@@ -66,7 +66,8 @@
     "rozmiar": "42,6 MB",
     "rozmiarBajty": 44719274,
     "suma": "7cb532232cb93220001a707180ee42dd643389f0c26542d9a3d54b412cf0274c",
-    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia."
+    "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia.",
+    "sprostowanie_28_08": "Zapis tej sekcji powstał przed wdrożeniem i opisywał nginx pod 51.75.62.180. Pomiar z 28.08.2026: kanał działa na 57.128.253.74 pod Caddy, a stary adres jest nieaktualny. Nazwy `danaco-system` i `danaco-web` nie są nazwami DNS — to etykiety wewnętrzne z migracji punktów dostępu; w DNS nie rozwiązują się."
   },
   "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Czytający wykaz zatrzymuje przy RÓWNYCH wersjach PIERWSZĄ pozycję pasującą do systemu, a wszystkie pozycje niosą 1.0.0 — o tym, co baner zaproponuje, rozstrzyga WYŁĄCZNIE kolejność. Dlatego x64 stoi przed ARM64: inaczej baner podałby maszynie Intel/AMD instalkę ARM.",
   "pola": {

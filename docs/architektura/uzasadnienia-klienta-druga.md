@@ -6393,3 +6393,15 @@ działa zawsze; migawka strony otwartej w module przeglądarki oddaje adres, tyt
 renderowaną i źródło, wymaga jednak okna przeglądarki, więc jest drogą operatora, który już
 przegląda. Pierwsza droga wciąga adres bez przeglądania, druga bierze to, co operator już ma
 przed oczami. Źródło nie ma stanu i nie buduje elementu.
+
+## budowa/klient-poprzedni/src/moduly/workspace/stan-projektu.ts
+Gdyby każde okno trzymało własne wskazanie, zmiana projektu w jednym oknie rozjechałaby pozostałe
+cztery, więc stan jest jeden i to on rozsyła powiadomienie o zmianie. Zdarzenie zmiany projektu
+z rdzenia wchodzi tą samą drogą: przychodzi także z pracy innego okna albo innego urządzenia tego
+konta, a stan przyjmuje je jak zmianę własną i odświeża okna, zamiast czekać na ruch operatora.
+Identyfikator bez powodu zostawiłby odmowę kontrolek przy zdaniu ogólnym, że moduł nie zna
+identyfikatora, które nie mówi, czy rdzeń odmówił, czy okna po prostu jeszcze nie ma. Projekt
+i karta sesji to dwa różne byty i moduł trzyma je osobno: pamięć projektu jest wspólna wszystkim
+kartom, a poziomy pamięci przestawia się karcie.
+Trzymanie starego identyfikatora okna rozmowy po zmianie karty wysłałoby przeniesienie kontekstu
+z oknem cudzej karty, z odpowiedzią udaną i skutkiem w niewłaściwym miejscu.

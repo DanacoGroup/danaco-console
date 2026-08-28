@@ -6821,3 +6821,18 @@ Kolumna `fabryczny` przy nadpisaniu zapisem warsztatu zostaje nietknięta:
 szablon fabryczny ma zostać fabryczny, bo od tego zależy, czy da się go
 usunąć, a zapis warsztatu nie jest miejscem na przestawienie tego
 rozstrzygnięcia.
+
+## budowa/server/internal/models/adapter_api.go
+Parametry wiersza rejestru w kolumnie parametry_json, którymi steruje
+KanalAPI: base_url jest pełnym adresem punktu końcowego i jest wymagany;
+strumien mówi, czy żądać strumienia, domyślnie prawda; sciezka_tekstu
+wskazuje ścieżkę do porcji tekstu w zdarzeniu strumienia; sciezka_odpowiedzi
+wskazuje ścieżkę do treści w odpowiedzi bez strumienia; sciezka_bledu
+wskazuje ścieżkę do komunikatu błędu w odpowiedzi; naglowek_klucza podaje
+nazwę nagłówka niosącego dane dostępowe; przedrostek_klucza podaje
+przedrostek wartości tego nagłówka; naglowki jest obiektem dodatkowych
+nagłówków; cialo_dodatkowe jest obiektem scalanym z ciałem żądania;
+limit_sekund podaje czas oczekiwania na odpowiedź.
+
+Błąd zwracany przez funkcję bladOdpowiedzi ma brzmieć tak samo niezależnie
+od tego, co kanał oddaje, dlatego jest wolną funkcją, a nie metodą.

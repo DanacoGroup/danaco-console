@@ -7612,3 +7612,10 @@ a bez niego dotyczyłby czegoś innego niż to okno. Zaplecze idzie równolegle 
 
 ## budowa/klient-poprzedni/src/modele/podglad-promptu.ts
 Treść nakładki bierze się z komendy odczytu tożsamości skutecznej, a nie ze sklejenia warstw w kliencie: własny porządek składania rozjechałby się z rdzeniem przy pierwszej zmianie reguł. Kategoria wymagana bez treści nie wstrzymuje uruchomienia, więc podgląd wylicza ją imiennie.
+
+## budowa/klient-poprzedni/src/mission-control/sekcja-matrycy.ts
+Pas relacji dokłada `mission-control.ts` pod matrycą — to osobny plik, bo niesie inną treść: powiązania, nie sesje. Jednym spojrzeniem widać, że procesy w różnych środowiskach biegną razem: karty strony głównej mówią, gdzie wejść, matryca — co już biegnie.
+
+Kontrakt wskazuje środowisko sesji wyłącznie w `presence.environmentCode` sesji trwających — sesję bez tego odpisu matryca wypisuje osobno pod kolumnami zamiast zgadywać przypisanie; wiersz sesji poza środowiskami nie jest kontrolką wejścia, bo wejście wymaga środowiska.
+
+Wskaźnik pracy w tle to kropka `dn-kropka--tetno` przy tytule; postęp etapów mieszka osobno, w kolumnie „Procesy w tle".

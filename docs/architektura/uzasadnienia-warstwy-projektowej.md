@@ -767,3 +767,14 @@ w jednym wierszu, żeby pas nie zabierał strefie rozmowy wysokości planszy:
 znak i tytuł w linii, opis obok, bez pionowego oddechu. Kolumny pasa muszą
 odpowiadać kolumnom toru okien z `uklad.css`, inaczej więź traci
 dopasowanie. Czwarta kolumna odpowiada `LICZBA_MAX` z `identyfikatory.ts`.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uklad.css
+Wygląd samego gniazda opisuje `gniazdo.css`, powiązanie pary opisuje
+`relacje.css` — podział arkusza przypada na komponent. Wszystkie wartości
+pochodzą z żetonów `motyw/` i klas `komponenty/` (`--dn-sygnal-*`,
+`--dn-fw-polgruba`). Poza skalą 4 px stoją dwie wartości: wstęga roli 3 px
+oraz szerokość włosowa 1 px. Pigułki i znak objaśnienia mieszkają w tym
+arkuszu: wspólne klasy niosą pas zakładek `.dn-zakladki` i chmurkę dymka
+`.dn-tooltip`, ale nie niosą ani odmiany pigułkowej grupy jednokrotnego
+wyboru, ani znaku objaśnienia — obie formy stoją więc pod nazwą własną
+widoku, nie na aliasie zgodności.

@@ -122,6 +122,7 @@ def transkrybuj(
         device="cpu",
         compute_type="int8",
         download_root=katalog_modeli or None,
+        local_files_only=True,
     )
     segmenty, info = silnik.transcribe(str(sciezka), language=jezyk or None)
 

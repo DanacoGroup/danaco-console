@@ -7023,3 +7023,12 @@ nie ograniczeniem zerowym — wartość --max-budget-usd 0 kazałaby programowi
 przerwać turę, zanim ta cokolwiek zrobi. Notacja wykładnicza, którą dałby zapis
 ogólny dla kwot bardzo małych albo bardzo dużych, nie jest wartością liczbową
 dla programu, tylko napisem, którego może nie przyjąć.
+
+## budowa/server/internal/injection/fragment.go
+Kanał niczego nie decyduje o treści: model, nakładka, katalogi i tryb
+uprawnień przychodzą z konfiguracji, a każde wywołanie poprzedza fragment
+prowenancji.
+
+Dwa znaczniki toru we Fragmencie mieszkają poza ładunkiem kontraktu, bo
+mieszkają w kopercie protokołu albo w pętli koordynator–wykonawca, nie
+w samym zdarzeniu strumienia.

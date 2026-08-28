@@ -6438,3 +6438,10 @@ tożsamość mówcy.
 
 Brak promptu systemowego jest stanem poprawnym i nazwanym: uczestnik dodany bez promptu odpowiada
 tak, jak skonfigurowano jego kanał.
+
+## budowa/klient-poprzedni/src/moduly/workspace/wiki-projektu.ts
+Odnośniki zapisem podwójnego nawiasu w treści wskazują inne strony. Odnośnik do strony jeszcze
+niezałożonej jest stanem poprawnym wiki — okno pokazuje takie nazwy wprost, zamiast milczeć
+i zostawiać operatora z martwym odnośnikiem do odkrycia po kliknięciu. Tablica wizualna stoi
+w tym samym oknie, bo niesie ten sam materiał w innej formie: scena płótna jest zapisem JSON
+i okno oddaje ją operatorowi wprost, zamiast udawać, że rysuje płótno, którego nie rysuje.

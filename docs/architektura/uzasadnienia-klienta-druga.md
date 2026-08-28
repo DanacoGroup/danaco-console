@@ -7522,3 +7522,17 @@ Kanał zakłada się komendą channel.add; okna do zakładania kanałów w tym w
 
 ## budowa/klient-poprzedni/src/sterowanie/model-zapasowy.ts
 Treść żądania aktualizacji okna nie ma pola na kanał zapasowy, więc wartość idzie ustawieniem poziomu okna — poziomem najwęższym, wygrywającym z każdym szerszym.
+## budowa/klient-poprzedni/src/moduly/studio/zadania-wykaz.ts
+Ten sam wykaz prowadzi zadania rozkładu zlecenia, kroki łańcucha operacji i pozycje wsadu.
+Rozstrzygnięcie jest wyraźne: krok łańcucha i dokument wsadu wchodzą do kolejki jako zadania
+tego samego rozkładu, a nie do drugiej maszynerii obok. Widoczne jest jedno miejsce, w którym
+widać, co dzieje się ze zleceniem.
+
+Stan zadania mówi prawdę, także niewygodną. Zadanie nieudane pokazuje powód przy sobie, nie
+w dzienniku obok. Zadanie przerwane zatrzymaniem pętli wraca do czekania i niesie zdanie
+o przerwaniu — nie znika i nie udaje domkniętego. Zadanie wstrzymane mówi, na czym stoi. Pusty
+wiersz z ikoną bez wyjaśnienia byłby tu tym samym co cisza.
+
+Wykonawca nienazwany nie jest brakiem do przemilczenia: „wykonawca nienazwany" mówi prawdę
+o tym, że rozkład powierzono komuś bez wskazania eksperta, a puste miejsce sugerowałoby, że
+nikomu.

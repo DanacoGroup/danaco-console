@@ -364,7 +364,9 @@ Regula klasyfikacji pytala o podnapis `go install`, a ten stoi wewnatrz
 `cargo install typos-cli`. **Domkniete 28.08 razem z pozycja wyzej** — dopasowanie bierze
 przedrostek, a pozycja idzie do warstwy recznej, nie do apt.
 
-### Pakiet `.deb` serwera nie niosl pomocnikow mowy
+### Pakiet `.deb` serwera nie niosl pomocnikow mowy — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** budowa/scripts/pakiet-serwera.sh:93-102 — blok kopiujący `pomocniki/` do drzewa pakietu istnieje: gdy `$BUDOWA/pomocniki` nie ma, skrypt woła `padnij "nie ma katalogu pomocników: ... — bez niego pakiet nie postawi mowy"` (funkcja `padnij` kończy `exit 1`, linie 24-27). Katalog `budowa/pomocniki` faktycznie istnieje w drzewie (zawiera `odprawa.mjs` i podkatalog `transkrypcja/`). Brak pomocników jest dziś odmową złożenia pakietu, dokładnie jak stwierdza zapis rejestru — usterka pierwotna (pakiet szedł bez pomocników po cichu) nie istnieje.
 
 Rdzen szuka pomocnikow obok siebie (potwierdzone `--wykaz-mowy`, klucz
 `rozpoznanie.pomocnik-szukano`), a `pakiet-serwera.sh` katalogu `pomocniki/`
@@ -372,7 +374,9 @@ do pakietu nie wkladal. **Warstwy mowy nie dalo sie postawic na serwerze nigdy.*
 Teren to naprawil: brak `pomocniki/` jest teraz odmowa zlozenia pakietu.
 
 
-### Dokumentacja zetonow rozjechana z arkuszem o caly stopien
+### Dokumentacja zetonow rozjechana z arkuszem o caly stopien — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** grep -n -- "--dn-fs-xs|...|--dn-fs-xl" na design/zasoby/zetony/zetony.css:111-116 i design/01-dokumentacja-md/04-tokens.md:360-365 — obie strony niosą identyczny ciąg 12/13/14/15/17/21 px, żadna z sześciu par nie różni się już o 1 px. Rozjazd nazwany zgłoszeniem nie istnieje w bieżącym stanie plików.
 
 Audyt wskazal jedna pozycje. Pomiar Prowadzacego pokazal, ze rozjazd jest
 **systematyczny**: z dziewieciu zetonow rozmiaru pisma **szesc** rozni sie
@@ -477,7 +481,9 @@ swoje obejscia, a sprawdzian skutku komendy neuronowej pisze sie zwykla droga
 uprzezy.
 
 
-### Pakiet serwera nie stawia jeszcze pomocnika twarzy
+### Pakiet serwera nie stawia jeszcze pomocnika twarzy — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** budowa/scripts/arsenal-serwera.sh zawiera pełną implementację warstwy TWARZE: `planTwarzy()` (linie ok. 337-350) opisuje kroki, `postawTwarze()` (linie 369-395) buduje środowisko pythonowe, instaluje torch/torchvision/facexlib, zapisuje opakowanie `/usr/local/bin/danaco-twarze` i woła `pobierzWagiTwarzy`. `grep -n postawTwarze` pokazuje wywołanie w `trybPostaw` na linii 636, obok `postawMowe` (630) i `postawWiedze` (633) — a `case "$TRYB" in ... postaw) trybPostaw "$WYKAZ" ;;` (linia 739) potwierdza, że to realna gałąź trybu `postaw`, nie tylko `plan`. Skrypt dziś stawia pomocnika twarzy tak samo jak realesrgan-ncnn-vulkan i rembg.
 
 Rdzen wola `danaco-twarze`, a `scripts/arsenal-serwera.sh` stawia dzis wylacznie
 `realesrgan-ncnn-vulkan` i `rembg`. Na maszynie Operatora `image.upscale`
@@ -527,7 +533,9 @@ obrazow. Przy bibliotece rzedu setek zapytanie zajmie odpowiednio wiecej, a sufi
 `GranicaObrazow` = 200 **obetnie wykaz bez ostrzezenia w odpowiedzi** — pole
 `examined` powie tylko, ile weszlo.
 
-### Cztery nastawy zdolnosci wyszukiwania bez wiersza w katalogu ustawien
+### Cztery nastawy zdolnosci wyszukiwania bez wiersza w katalogu ustawien — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** budowa/server/internal/store/migracja_402_nastawy_przesiewu_i_obrazu.sql wstawia wiersze `definicja_ustawienia` dla wszystkich czterech kluczy (wiedza_model_przesiewu, wiedza_katalog_przesiewu, wiedza_model_obrazu, wiedza_katalog_obrazu), wraz z definicja_ustawienia_zasieg (globalny) i definicja_ustawienia_os (platform); migracja_404_katalogi_przesiewu_i_obrazu_stojace.sql doklada domyslne sciezki katalogow. Migracje wchodza automatycznie przez `//go:embed migracja_*.sql` (zrodlo_migracji.go:16-17), bez recznego wpiecia. git log potwierdza commit 61abba24 "Cztery nastawy przesiewu i obrazu dostaja wiersz w katalogu" oraz 4cfe99b2 "Wskazuje stojace wagi przesiewu i osi obrazu zamiast pustej sciezki". `config.set` ma dzis wiersze do sprawdzenia dla wszystkich czterech kluczy.
 
 `wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`, `wiedza_model_obrazu`,
 `wiedza_katalog_obrazu` maja klucze i wartosci domyslne w `wiedza/ustawienia.go`,
@@ -578,7 +586,9 @@ zamknietych oknach, wzorowany na czynnym `rejestrBiegow.Zachowaj`; usuniecie
 zabraloby zabezpieczenie w chwili, gdy adapter zostanie wpiety.
 
 
-### Wagi mowy stoja poza katalogiem modeli
+### Wagi mowy stoja poza katalogiem modeli — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** Katalog /opt/danaco-modele/mowa istnieje (utworzony 27.08, 464 MB) i zawiera models--Systran--faster-whisper-small; `budowa/server/internal/mowa/ustawienia.go:38` ma dziś `KatalogModeliDomyslny = "/opt/danaco-modele/mowa"` (zgodnie z opisem w zgłoszeniu 'katalog nieistniejący'), a `migracja_075_mowa.sql` niesie wiersz definicja_ustawienia dla `mowa_katalog_modeli`. `~/.cache/huggingface/hub/` (ls) już NIE zawiera `models--Systran--faster-whisper-small` — wagi zostały fizycznie przeniesione, a kod wskazuje ten sam katalog. Domknięcie opisane w zgłoszeniu ('teren obejmujący przeniesienie wag i ustawienia.go') zaszło.
 
 Teren `nastawy-wdrozenia` slusznie **nie zalozyl** trzeciej nastawy. Zgloszenie
 podawalo `/opt/danaco-modele/mowa`, a takiego katalogu na maszynie nie ma -
@@ -601,7 +611,9 @@ dostanie niepowodzenie zamiast pomiaru. Obowiazujaca postac polecenia to odtad
 `gotestsum -- -count=1 -timeout 40m ./...`. Rozbicie pakietu `core` albo
 skrocenie najwolniejszych sprawdzianow jest osobna praca.
 
-### Sciezka wag na wdrozeniu - obawa rozstrzygnieta pozycja 8
+### Sciezka wag na wdrozeniu - obawa rozstrzygnieta pozycja 8 — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** Rozstrzygnięcie stoi i nic go nie podważa. `prowadzenie/decyzje.md` sekcja '## 8. Model wdrożenia: wyłącznie hybryda' (linie 670-721) ma `Stan: obowiązuje`, wprost stwierdza że rdzeń biegnie na serwerze Danaco a u Operatora tylko cienka powłoka Windows (pkt 1a, 2, 5). Kod: `budowa/server/internal/wiedza/ustawienia.go:53` ma `KatalogModeliDomyslny = "/opt/danaco-modele/embedder"`, a katalog `/opt/danaco-modele/embedder` fizycznie stoi na tej maszynie (serwerze) z wagami (pytorch_model.bin 2,27 GB, ls -la). Ścieżka linuksowa jest więc poprawną ścieżką serwera wdrożenia, zgodnie z zapisem 'obawa znika'.
 
 Wykonawca zglosil, ze `/opt/danaco-modele/embedder` jako wartosc domyslna jest
 wlasnoscia tej maszyny, a jedyna postacia produktu jest hybryda Windows 11.
@@ -612,7 +624,9 @@ wiec sciezka linuksowa jest sciezka serwera wdrozenia i jest poprawna. Nastawa
 pozostaje bez rozgalezienia po systemie.
 
 
-### Strona pobierania obiecuje warianty zniesione pozycja 8
+### Strona pobierania obiecuje warianty zniesione pozycja 8 — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** Wskazane wiersze `budowa/witryna/tresc/strony.mjs:114,116,292,295,339` opisują dziś wyłącznie dwie postacie hybrydowe: instalkę Windows (x64/ARM64) i osobny pakiet serwera wdrożenia — np. linia 292: „Windows 10, Linux i macOS nie są obsługiwane”, linia 339: instrukcja instalacji ogranicza się do wyboru x64/ARM64. `grep -n 'AppImage|Linux|linux|natywn' budowa/witryna/tresc/pobierz.mjs budowa/witryna/tresc/strony.mjs` daje jedno trafienie — właśnie zdanie o braku wsparcia Linuksa/macOS, żadnej wzmianki o AppImage, sumie kontrolnej AppImage ani natywnej instalce Windows. Próba dodatnia wzorca (samo `grep -n` bez filtra) potwierdza, że polecenie działa i po prostu nic więcej nie łapie. Treść strony jest dziś zgodna z dwoma wariantami z pozycji 8, obietnica sześciu wariantów zniknęła.
 
 Wykaz wydan sprowadzono do dwoch postaci hybrydowych, tresci strony wokol niego
 nie. `budowa/witryna/tresc/strony.mjs:114,116,292,295,339` oraz
@@ -671,14 +685,18 @@ jeden wiersz w `montaz_rozmowa.go` — plik poza terenem. Uwaga dla wpinającego
 w chwili `ZakonczTure` mapa `biegnace` wciąż zawiera okno koordynatora
 (`zapomnijBieg` jest `defer`), więc pytać wolno tylko o wykonawców.
 
-### Martwa funkcja `sterZlecenia` z komentarzem w nieistniejące miejsce
+### Martwa funkcja `sterZlecenia` z komentarzem w nieistniejące miejsce — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** grep -rni "sterZlecenia" w calym drzewie trafia wylacznie w typ `SterZlecenia` (adapter_przejecie_sterowania.go:34) i jego czynne uzycia (a.ster.ustaw/.stan/.zdejmij wolane wprost z metod Przejmij/Oddaj/Ster tego samego pliku) — funkcji o nazwie `sterZlecenia` (mala litera) nie ma. Komentarz odsylajacy do `stan_obiegu.go` tez nie istnieje: grep "przekład licznika obiegów|stan_obiegu" w plikach core/*.go daje zero trafien. git log -- adapter_przejecie_sterowania.go pokazuje commit 2b52fa57 "Usuwam martwa funkcje steru zlecenia" (27.08.2026, autor Dariusz Naharnowicz) usuwajacy dokladnie ta funkcje i komentarz (6 wstawien, 16 usuniec) — teren `warunek-ukonczenia-zadania` zgloszil usterke poza swoim zakresem, a nastepna rewizja ja zdjela.
 
 `core/adapter_przejecie_sterowania.go:146` — doc funkcji `sterZlecenia` mówi
 „Woła ją przekład licznika obiegów w `core/stan_obiegu.go`", a `stan_obiegu.go`
 jej nie woła i nikt inny też nie. Funkcja martwa, komentarz kieruje w nieistniejące
 miejsce. Zauważone przy terenie `warunek-ukonczenia-zadania`, poza jego zakresem.
 
-### Granica 15 s w uprzęży kontraktu jest ciasna dla warstwy skanera
+### Granica 15 s w uprzęży kontraktu jest ciasna dla warstwy skanera — nieaktualne
+
+**Zdjete 28.08 przegladem pomiarowym.** Stala `granicaKomendySprawdzianu` w budowa/server/internal/core/zgodnosc_kontraktu_test.go:26 wynosi dzis `10 * time.Minute`, nie 15 s, i jest uzywana konsekwentnie: zgodnosc_kontraktu_test.go:192,231, skutek_zdolnosci_wyszukiwania_test.go:129 oraz blokady_skutek_test.go:103 (to sa dokladnie pliki wskazane w zgloszeniu). Komentarz przy stalej (linie 17-25) wprost tlumaczy podniesienie: granica obejmuje "najwolniejsza zmierzona komende liczaca modelem na procesorze ... okolo stu dziewiedziesieciu sekund". grep "15 \* time.Second" w internal/core/*.go trafia tylko w cztery NIEZWIAZANE stale (adapter_kanaly_sprawdzenie.go, adapter_modul_extension_protokol.go, przegladarka_pobieranie.go, skutek_terminala_test.go) — zadna nie jest generyczna uprzeza zgodnosci kontraktu. git log potwierdza commity 1a3c537a "Granica komendy w uprzezy wychodzi z granicy warstwy" i 9cdec8aa "Ujednolica granice czasu uprzezy i znosi obejscie komend z wagami". Nowa granica 10 min jest daleko powyzej ~14,8 s czynnosci skanera, wiec opisany konflikt nie wystepuje.
 
 Ustalenie zmierzone przez teren `odmowy-skanera` i potwierdzone przez kontrolę.
 Generyczna uprząż zgodności kontraktu woła każdą komendę rdzenia z twardym

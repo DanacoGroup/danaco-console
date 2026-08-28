@@ -829,3 +829,8 @@ przewijać. Na ekranach wysokich, gdzie 54% przekracza próg, pas dalej
 bierze swoje 54%. Katalog okien operacyjnych, których jeszcze nie ma,
 niesie kody wprost z rdzenia, krojem maszynowym, bo to identyfikatory,
 nie nazwy własne.
+
+## design/03-marka/emblematy/favicon/naglowek-snippet.html
+Kolejność wpięć jest znacząca: przeglądarka wspierająca SVG bierze
+pierwszy pasujący wpis i pomija ICO; starsza przeglądarka pobiera
+favicon.ico ze ścieżki domyślnej.

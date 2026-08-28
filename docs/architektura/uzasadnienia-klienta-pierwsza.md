@@ -8480,3 +8480,15 @@ wyszarzana i żadna nie pyta o potwierdzenie; wyciszenie i jego zniesienie idą
 jednym kliknięciem; podgląd wyciszeń czynnych mówi, co jest wyciszone i do kiedy;
 pozycja, której nakładka nie ma czym wykonać, mówi czego brakuje, zamiast zniknąć
 albo zmilczeć.
+## budowa/klient-poprzedni/src/moduly/design/szablony-promptu.ts
+Do tej pory obie rzeczy żyły w oknie do zamknięcia karty przeglądarki. Prompt Builder wypracowywał
+polecenie, Operator zamykał kartę i praca znikała.
+
+Szablon wraca do pól, a nie tylko na listę: wykaz szablonów, z którego nie da się szablonu użyć,
+byłby spisem cudzej pracy. Wybór pozycji oddaje prompt kreatorowi, a ten wstawia go w swoje pola
+— dopiero to czyni szablon szablonem.
+
+Historia jest zapisem tego, co się stało: prompt bez ani jednego zasobu zostaje w historii, kanał
+bywa odmawiał, a wtedy prompt jest zapisem próby — czyli dokładnie tego, po co Operator do historii
+sięga. Panel pokazuje przy każdym prompcie liczbę zasobów, które z niego powstały, więc próba
+nieudana odróżnia się od udanej bez zgadywania.

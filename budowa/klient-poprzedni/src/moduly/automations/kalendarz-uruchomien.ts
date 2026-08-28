@@ -17,7 +17,7 @@ export const NAZWY_ZAKRESOW: ReadonlyArray<[ZakresKalendarza, string]> = [
   [ZAKRESY_KALENDARZA.miesiac, 'miesiąc'],
 ];
 
-/** Ile dni obejmuje każdy zakres podglądu; miesiąc liczymy czterema pełnymi tygodniami, nie datami kalendarza. */
+/** Ile dni obejmuje każdy zakres podglądu; miesiąc liczy się czterema pełnymi tygodniami, nie datami kalendarza. */
 const DNI_ZAKRESU: Readonly<Record<ZakresKalendarza, number>> = {
   [ZAKRESY_KALENDARZA.tydzien]: 7,
   [ZAKRESY_KALENDARZA.miesiac]: 28,

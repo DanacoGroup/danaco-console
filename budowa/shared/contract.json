@@ -87340,6 +87340,98 @@
       {
         "komenda": "health.uptime.get",
         "zastosowanie": "Uzyj, gdy trzeba podac Operatorowi wyliczona dostepnosc i budzet bledow, zamiast surowej serii pomiarow"
+      },
+      {
+        "komenda": "apps.performance.audit",
+        "zastosowanie": "Uzyj przed wydaniem zmiany frontendu albo gdy uzytkownik pyta o szybkosc dzialania strony, a nie o jej wyglad"
+      },
+      {
+        "komenda": "browser.accessibility.audit",
+        "zastosowanie": "Uzyj przed wydaniem strony albo gdy uzytkownik pyta, czy interfejs jest dostepny dla osob korzystajacych z czytnikow ekranu"
+      },
+      {
+        "komenda": "browser.console.read",
+        "zastosowanie": "Uzyj, gdy strona w przegladarce zachowuje sie niepoprawnie i trzeba sprawdzic bledy JavaScript albo zapisy logu, a nie budowe strony"
+      },
+      {
+        "komenda": "browser.device.emulate",
+        "zastosowanie": "Uzyj przed zrzutem albo inspekcja strony, gdy trzeba zobaczyc jej zachowanie na innym rozmiarze ekranu niz biezacy"
+      },
+      {
+        "komenda": "browser.dom.inspect",
+        "zastosowanie": "Uzyj, gdy trzeba zobaczyc budowe strony, atrybuty elementu albo zastosowane style, a nie bledy zglaszane w konsoli"
+      },
+      {
+        "komenda": "browser.network.har",
+        "zastosowanie": "Uzyj, gdy trzeba ustalic, jakie zadania wykonala strona w sieci i ile trwaly, na przyklad przy diagnozie wolnego ladowania"
+      },
+      {
+        "komenda": "browser.screenshot.capture",
+        "zastosowanie": "Uzyj, gdy widok strony ma zostac pokazany albo zapisany, na przyklad do porownania stanu przed zmiana i po niej"
+      },
+      {
+        "komenda": "browser.scroll",
+        "zastosowanie": "Uzyj, gdy potrzebna tresc strony lezy poza widocznym obszarem i trzeba do niej dotrzec przed inspekcja albo zrzutem"
+      },
+      {
+        "komenda": "developer.api.load.run",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic zachowanie punktu koncowego pod powtarzanym obciazeniem, a nie przy pojedynczym zapytaniu"
+      },
+      {
+        "komenda": "developer.debug.session.start",
+        "zastosowanie": "Uzyj, gdy trzeba zatrzymac program w miejscu bledu i przejrzec stan zmiennych krok po kroku, a nie tylko przeczytac slad stosu"
+      },
+      {
+        "komenda": "developer.format.run",
+        "zastosowanie": "Uzyj po edycji pliku, zanim zmiana trafi do przegladu, gdy tresc ma zostac dopasowana automatycznie zamiast recznie"
+      },
+      {
+        "komenda": "developer.grep.replace",
+        "zastosowanie": "Uzyj, gdy wszystkie trafienia wzorca w repozytorium maja zostac zmienione naraz, nie tylko wskazane — dzialanie modyfikuje pliki"
+      },
+      {
+        "komenda": "developer.grep.search",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc wystapienia wzorca w repozytorium przed decyzja o zmianie, bez modyfikowania plikow"
+      },
+      {
+        "komenda": "developer.lint.get",
+        "zastosowanie": "Uzyj po edycji konkretnych plikow, gdy trzeba szybko sprawdzic w nich usterki stylu i skladni, a nie przeszukac cale repozytorium jak developer.scan.run"
+      },
+      {
+        "komenda": "developer.refactor.apply",
+        "zastosowanie": "Uzyj, gdy zmiana nazwy albo sygnatury ma zostac spojnie odbita we wszystkich miejscach jej uzycia, a nie tylko w jednym pliku"
+      },
+      {
+        "komenda": "developer.scan.run",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec cale repozytorium pod katem zaleznosci, sekretow, powielen kodu albo licencji — nie sprawdzic styl wskazanych plikow jak developer.lint.get"
+      },
+      {
+        "komenda": "developer.symbol.navigate",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc definicje albo wszystkie uzycia symbolu w kodzie, a nie wystapienia tekstu wzorca"
+      },
+      {
+        "komenda": "developer.toolchain.check",
+        "zastosowanie": "Uzyj przed poleganiem na programie zewnetrznym, gdy trzeba wpierw ustalic, czy jest on w ogole zainstalowany"
+      },
+      {
+        "komenda": "library.metadata.get",
+        "zastosowanie": "Uzyj, aby poznac opis zasobu; po metadane osadzone w pliku (EXIF, IPTC, XMP, ID3) siegaj tylko na wyrazne zadanie uzytkownika, bo ich odczyt jest kosztowny"
+      },
+      {
+        "komenda": "studio.ingest.device.list",
+        "zastosowanie": "Uzyj na poczatku obiegu skanowania, zanim padnie wybor konkretnego skanera albo kamery"
+      },
+      {
+        "komenda": "studio.ingest.recognize",
+        "zastosowanie": "Uzyj, gdy pozycja jest juz w kolejce studia, a waskie document.text.extract nie daje dosc kontroli nad wynikiem rozpoznania"
+      },
+      {
+        "komenda": "terminal.script.lint",
+        "zastosowanie": "Uzyj, gdy uzytkownik ma tresc skryptu powloki, PowerShell albo Pythona i chce ja sprawdzic przed uruchomieniem"
+      },
+      {
+        "komenda": "translate.proofread.run",
+        "zastosowanie": "Uzyj, gdy tekst panelu ma trafic do odbiorcy zewnetrznego, a jeszcze nie przeszedl korekty jezykowej"
       }
     ]
   },

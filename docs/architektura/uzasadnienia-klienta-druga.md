@@ -5906,3 +5906,26 @@ a miejsce pokazania komunikatu jest jedno.
 ## budowa/klient-poprzedni/src/sterowanie/rola-okna.ts
 Wskazanie koordynatora, któremu podlega wykonawca, jest osobnym powiązaniem
 między oknami — komplet sterowania jednego okna go nie ustanawia.
+
+## budowa/klient-poprzedni/src/powloka/usuniecie-sesji.ts
+Usunięcie nie jest zamknięciem ani archiwizacją. Rdzeń rozdziela trzy czynności i tak samo rozdziela
+je powłoka: zamknięcie zmienia sam stan sesji, wiadomości, okna i katalog roboczy zostają nietknięte;
+archiwizacja wyprowadza sesję z historii bieżącej i pozwala ją przywrócić, zapis zostaje w całości;
+usunięcie wyprowadza zapis do kosza rdzenia, po terminie kosza rdzeń kasuje go trwale, a w oknie
+terminu zapis wraca przywróceniem. Dlatego czynność nazywa się „Usuń trwale", nigdy „Zamknij" — nazwa
+wzięta od sąsiada byłaby kłamstwem o skutku. Potwierdzenie jest warunkiem kontraktu, nie ozdobą
+widoku. Pole potwierdzenia przechodzi tędy dokładnie takie, jakie podał wywołujący — powłoka nie
+dopisuje go sama i nie uprzedza odmowy rdzenia własnym sprawdzeniem. Żądanie bez potwierdzenia wraca
+z rdzenia jako niepowodzenie walidacji i tak ma je zobaczyć Operator. Dwa wykazy znaczą dwie różne
+rzeczy. Wykaz usuniętych to sesje, których zapis zniknął; wykaz nieznalezionych to wskazania bez
+odpowiednika w historii, które nie są błędem — widok nie ma prawa ani ich przemilczeć, ani wliczyć do
+usuniętych, bo milczenie o nich znaczyłoby „usunąłem", gdy nie było czego usuwać. Kształt sprawdzamy
+na wykazie usuniętych i na liczniku usuniętych: wykaz nieznalezionych jest w kontrakcie polem
+opcjonalnym, więc jego brak jest odpowiedzią poprawną, a nie odpowiedzią o złym kształcie. Dopełnienie
+wykazu nieznalezionych do wykazu pustego jest tu wolne od zwykłego zarzutu o operator pustej
+wartości w źródłach: tędy przechodzą wyłącznie odpowiedzi udane, niepowodzenie zatrzymuje wcześniej
+przeniesienie wraz z powodem, a brak pola opcjonalnego w odpowiedzi udanej znaczy dokładnie „żadne
+wskazanie nie było bez odpowiednika". Odmowy ta gałąź nie widzi i nie ma czego przesłonić.
+
+## budowa/klient-poprzedni/src/polaczenie/adres-rdzenia.test.ts
+Ustalenie adresu gniazda jest miejscem, w którym klient albo trafia w rdzeń, albo szuka go tam, gdzie nikt nie nasłuchuje — a wtedy ponawianie milczy bez końca i wygląda jak awaria rdzenia, choć jest pomyłką adresu, dlatego sprawdzane są wszystkie drogi w jednym ustalonym pierwszeństwie. Adres z powłoki jest stanem modułu, dlatego każdy przypadek testowy wczytuje moduł na nowo, inaczej mierzyłby ślad po przypadku poprzednim.

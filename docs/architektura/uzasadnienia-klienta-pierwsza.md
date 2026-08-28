@@ -8714,3 +8714,43 @@ Konfiguracja możliwości, nie kontrola dostępu: nowo założony ekspert ma pe�
 
 ## budowa/klient-poprzedni/src/moduly/agents/okno-permissions-center.ts (reset dostępu)
 Różnica między resetem a przyznaniem nie jest kosmetyczna: komenda ustawienia wyłącznie ustawia wartość, więc po pierwszym zawężeniu wiersz zakresu zostawałby w wykazie na zawsze, z wartością przyznaną, ale obecny. Komenda usunięcia bez wskazania grupy zdejmuje wpisy wszystkich grup i przywraca stan „brak ustawienia = wartość domyślna”, czyli ten, w którym ekspert był przed pierwszym zawężeniem.
+
+## budowa/klient-poprzedni/src/aplikacja/scena-sesji.ts
+Zdjęcie ostatniego okna zamyka je w rdzeniu komendą `window.close`. Samo
+zmniejszenie układu zostawiłoby okno w `window.list` razem z jego procesem.
+
+Wprowadzenie okna z rdzenia jest drogą dla okien otwartych przez asystenta innym
+połączeniem. Scena nie zamawia wtedy niczego — okno już istnieje — tylko odsłania
+dla niego gniazdo i wiąże je z rozmową i sterowaniem. Okno cudzej sesji, okno już
+związane i scena pełna kończą wywołanie bez skutku i bez odmowy: to nie jest
+komenda Operatora, tylko doniesienie o stanie.
+
+Scena sesji ma jedną odpowiedzialność: związanie trzech warstw w jedną scenę —
+układu okien równoległych (`okna-rownolegle/`), rozmowy każdego okna (`rozmowa/`)
+oraz kompletu sterowania każdego okna (`widok-sterowania/`, `sterowanie/`). Scena
+nie buduje ani okna, ani kontrolki, ani wpisu rozmowy.
+
+Okno komunikacji to nie karta sesji. Karta w pasie powłoki jest sesją rdzenia
+i rządzi się komendami `session.*`; okno sceny jest bytem podrzędnym wobec sesji
+i rządzi się komendami `window.*`. Liczbę okien ustawia wyłącznie przełącznik
+„Okna komunikacji: 1 2 3” — pas kart nie dokłada okien i ich nie zdejmuje.
+
+Okno powstaje, gdy wchodzi na scenę. Pierwsze okno otwiera uzgodnienie z rdzeniem.
+Drugie i trzecie zamawiane są komendą `window.create` dokładnie w chwili, gdy
+Operator wprowadza je na scenę przełącznikiem liczby okien. Wejście gniazda na
+scenę rozpoznaje obserwator atrybutu `hidden`: o widoczności rozstrzyga układ
+okien, a scena obserwuje tylko jego skutek.
+
+Wszystkie okna sceny należą do jednej sesji. Po powiązaniu połączenia z inną
+sesją (`session.bind`) scena wciąż niesie okna sesji poprzedniej. Kolejne okno
+powstałoby wtedy w sesji innej niż jego sąsiedzi, więc scena go nie zamawia
+i mówi o tym wprost.
+
+Uzgodnienia scena nie rozpoczyna. Robi to przepływ komunikatów podpięty przez
+`zamontujUkladOkien` w chwili, gdy transport zgłosi stan „połączony”. Wywołanie
+stąd dałoby drugie powitanie i podwojenie całej historii.
+
+Bez tej drogi okno otwarte poza sceną pracowałoby w rdzeniu, mając proces i kanał
+modelu, a ekran pokazywałby dalej stan sprzed jego powstania. Scena nie rozstrzyga,
+kto okno otworzył, i o nic nie pyta: okno sesji Operatora ma być na jego ekranie
+niezależnie od sprawcy.

@@ -1,10 +1,4 @@
-// Sprawdzian odczytów warstwy urządzeń: przekładu odpowiedzi obcych warstw
-// (SANE, WIA, CUPS) na kształt rdzenia oraz znakowania wartości wchodzących do
-// skryptu PowerShella.
-//
-// Sprawdzian nie uruchamia ani jednego programu — sprawdza to, co da się
-// sprawdzić bez skanera i bez drukarki: czy rdzeń odczytuje odpowiedź, i czy
-// odmawia tam, gdzie odpowiedzi nie zrozumiał, zamiast oddać pusty wykaz.
+// Sprawdzian odczytów warstwy urządzeń: przekładu odpowiedzi obcych warstw (SANE, WIA, CUPS) na kształt rdzenia oraz znakowania wartości wchodzących do skryptu PowerShella. Nie uruchamia ani jednego programu.
 package core
 
 import (

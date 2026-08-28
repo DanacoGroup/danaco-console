@@ -6515,3 +6515,9 @@ maszyny bieżącej.
 Rdzeń bez wiersza swojej maszyny pracuje dalej po nieudanym rozpoznaniu,
 tylko katalog lokalny nie ma na czym stanąć, dopóki urządzenie nie
 zostanie wskazane ręcznie.
+
+## budowa/server/internal/core/urzadzenia_odczyty_test.go
+
+Sprawdzian sprawdza to, co da się sprawdzić bez skanera i bez drukarki:
+czy rdzeń odczytuje odpowiedź, i czy odmawia tam, gdzie odpowiedzi nie
+zrozumiał, zamiast oddać pusty wykaz.

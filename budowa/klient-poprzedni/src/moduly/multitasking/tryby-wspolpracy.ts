@@ -2,18 +2,7 @@ import { ConfigScope } from '../../../../shared/contract';
 import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
-/**
- * Cztery tryby współpracy wykonawców okien Executor Chat.
- *
- * Tryb rozstrzyga jedno przekazanie, a nie prowadzi biegu: mówi wyłącznie, który
- * wykonawca dostaje zlecenie i co do niego jedzie. Automatyczne podawanie wyniku
- * dalej po każdej turze byłoby drugim silnikiem pętli obok pętli sesji
- * w rdzeniu — moduł go nie buduje.
- *
- * Wartość utrwala `config.set` na poziomie okna koordynatora. Rdzeń nie
- * rejestruje `role.update`, więc profil roli po jego stronie się nie zmienia;
- * pokrycie kontraktu opisuje `braki-kontraktu.ts`.
- */
+// Tryb rozstrzyga jedno przekazanie, nie prowadzi biegu; wartość utrwala się na oknie koordynatora.
 
 export const TrybWspolpracy = {
   /** Obaj wykonawcy dostają to samo zlecenie i pracują osobno. */
@@ -27,10 +16,10 @@ export const TrybWspolpracy = {
 } as const;
 export type TrybWspolpracy = (typeof TrybWspolpracy)[keyof typeof TrybWspolpracy];
 
-/** Klucz utrwalenia trybu na poziomie okna koordynatora. */
+/** Klucz utrwalenia trybu na poziomie okna koordynatora, pod którym zapisuje się wybrana wartość trybu. */
 export const KLUCZ_TRYBU = 'multitasking.tryb_wspolpracy';
 
-/** Nazwy trybów w selektorze okna wykonawcy. */
+/** Nazwy trybów w selektorze okna wykonawcy, w kolejności pokazywanej użytkownikowi od niezależnej po iteracyjną. */
 export const NAZWY_TRYBOW: ReadonlyArray<[TrybWspolpracy, string]> = [
   [TrybWspolpracy.Niezalezna, 'Praca niezależna'],
   [TrybWspolpracy.Przekazywanie, 'Przekazywanie wyników'],
@@ -38,14 +27,14 @@ export const NAZWY_TRYBOW: ReadonlyArray<[TrybWspolpracy, string]> = [
   [TrybWspolpracy.Iteracyjna, 'Praca iteracyjna'],
 ];
 
-/** Czy wartość jest jednym z czterech trybów; nieznana schodzi na niezależną. */
+/** Czy wartość jest jednym z czterech trybów współpracy; nieznana wartość zawsze schodzi na tryb niezależny. */
 export function trybZWartosci(wartosc: unknown): TrybWspolpracy {
   return NAZWY_TRYBOW.some(([tryb]) => tryb === wartosc)
     ? (wartosc as TrybWspolpracy)
     : TrybWspolpracy.Niezalezna;
 }
 
-/** Jedno zlecenie skierowane do jednego okna wykonawcy. */
+/** Jedno zlecenie skierowane do jednego okna wykonawcy, złożone z adresata oraz pełnej treści polecenia. */
 export interface Zlecenie {
   /** Okno wykonawcy, do którego idzie polecenie. */
   okno: string;
@@ -53,7 +42,7 @@ export interface Zlecenie {
   tresc: string;
 }
 
-/** Stan potrzebny do rozdziału zlecenia między wykonawców. */
+/** Stan potrzebny do rozdziału zlecenia między wykonawców, odczytany wprost z magazynu stanu multitaskingu. */
 export interface RozdzialZlecenia {
   /** Okna wykonawców w kolejności Executor 1, Executor 2. */
   wykonawcy: readonly string[];
@@ -95,21 +84,15 @@ export function rozdziel(
   }
 }
 
-/** Zlecenie wzbogacone o wynik poprzednika; pusty wynik nie dokłada nagłówka. */
+/** Zlecenie wzbogacone o wynik poprzednika; pusty wynik nie dokłada osobnego nagłówka z tytułem źródła. */
 function zTrescia(tresc: string, wynik: string, zrodlo: string): string {
   return wynik === '' ? tresc : `${tresc}\n\n--- Wynik ${zrodlo} ---\n${wynik}`;
 }
 
 /**
- * Zapis trybu współpracy na oknie koordynatora — jedno miejsce dla trzech okien.
- *
- * Selektor trybu stoi w oknie koordynatora i w obu oknach wykonawców, a zapis
- * jest jeden i ten sam, więc mieszka tutaj.
- *
- * Widok nie zostaje przy wartości, której rdzeń nie ma: `config.set` klucza
- * `multitasking.tryb_wspolpracy` kończy się odmową `validation_failed`, bo
- * klucz leży poza katalogiem ustawień. Odmowa cofa widok do wartości
- * poprzedniej, a zdanie mówi wprost, że zapisu nie ma.
+ * Zapis trybu współpracy na oknie koordynatora jest jednym miejscem dla trzech
+ * okien: widok nie zostaje przy wartości, której rdzeń nie ma, bo odmowa cofa
+ * go do wartości poprzedniej.
  */
 export async function zapiszTrybNaKoordynatorze(
   okna: ZrodloOkien,

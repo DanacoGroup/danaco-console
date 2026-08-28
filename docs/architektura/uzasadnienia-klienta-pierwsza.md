@@ -9089,3 +9089,44 @@ transkrypcji i wysyłkę na wyciągnięcie ręki.
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-deployment-panel.ts
 Uruchomienie wdrożenia i cofnięcie do wersji wcześniejszej idą tą samą komendą, różniącą się polem docelowego przebiegu. Przycisk „Wdróż” jest zawsze klikalny: naciśnięcie przed zakończeniem prac w warsztatach wyświetla komunikat o brakującym warunku i mimo to idzie do rdzenia, bo o dopuszczalności wdrożenia rozstrzyga rdzeń, a nie wygaszona kontrolka. Odpowiedź komendy nie jest wynikiem wdrożenia: komenda wraca, gdy przebieg ruszy, ze stanem oczekującym. Okno zapamiętuje identyfikator przebiegu, który sam zlecił, i dopisuje jego stan końcowy, gdy przyniesie go zdarzenie przejścia, wraz z powodem, jeśli rdzeń go podał. Potwierdzenie bierze treść z odpowiedzi, a rozbieżność zamówienia z odpowiedzią jest odmową i towarzyszy każdej dalszej wiadomości o tym przebiegu.
+
+Spoczynek okna Voice Console rusza wyłącznie ze stanu pustego. Gdy wysyłka
+postawiła okno w ładowaniu, odmowie albo gotowości, jej komunikat należy do niej
+i zostaje — inaczej zdarzenie zmiany akcji z cudzego zlecenia zmiatałoby odmowę
+sprzed sekundy. Brak okna modułu jest błędem, nie pustką: bez wskazania okna
+polecenie głosowe nie ma dokąd pojechać i nie zmieni tego żadna treść w polu.
+
+Trzy odczyty przy wczytaniu okna idą równolegle: katalog akcji, katalog profili
+i stan silnika mowy dotyczą trzech różnych komend, żaden nie warunkuje
+pozostałych, a każdy nazywa swoje niepowodzenie w swoim miejscu, więc odmowa
+jednego nie zabiera treści dwóm pozostałym.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/favikon-plywajacy.ts
+Favikon nie wchodzi na scenę okien równoległych, nie liczy się do sufitu
+`LICZBA_MAX` i nie znika przy zmianie modułu. Jedna odpowiedzialność: przycisk
+i jego stan — rozmowy i drogi do rdzenia leżą w `okno-dymkowe.ts` i `stan-dymka.ts`.
+
+Favikon jest sterem, nie wyświetlaczem, więc etykieta dostępności niesie wartość
+bieżącą („Asystent pracuje: <tytuł zlecenia> · etap 2 z 5”), a nie napis rodzajowy
+„Asystent”.
+
+Licznik nieprzeczytanych istnieje, bo dymek bywa zwinięty: jest przywoływany,
+a nie rysowany z urzędu, więc asystent potrafi wykonać ciąg posunięć, zanim
+Operator go otworzy. Bez licznika ciąg ten nie zostawiałby na ekranie śladu.
+
+Kropka stanu mówi o głosie, nie o łączności — wskaźnik łączności z rdzeniem stoi
+w pasku górnym (`aplikacja/wskaznik-lacznosci.ts`) i drugiego się nie stawia. Ta
+kropka niesie to, czego nie niesie nic innego: czy kanał głosowy modułu w ogóle
+istnieje. Kanał zbudowany oznacza ikona zestawu; odpowiedź przeciwna zostaje
+znakiem typograficznym, bo zestaw nie niesie mikrofonu przekreślonego, a własnego
+znaku dorysować nie wolno. Znak pracy stoi obok kropki głosu i jest od niej
+niezależny.
+
+`null` znaczy „asystent nie prowadzi zlecenia” i tak też jest napisane — pusty
+stan nie jest tu brakiem odpowiedzi, tylko odpowiedzią.
+
+Zdanie składane jest znak w znak tak samo jak na pasie dolnym
+(`aplikacja/pas-posuniec.ts`, funkcja `opiszPrace`), łącznie ze środkową kropką
+przed etapem. Ta sama praca pokazana w trzech miejscach ma się czytać jednakowo —
+różnica choćby w przecinku każe Operatorowi sprawdzać, czy to na pewno to samo
+zlecenie.

@@ -7764,3 +7764,10 @@ Menu buduje przyciski czynności sensownych dla tego wiersza i prowadzi jedną z
 Na czas wykonania wiersz nie przyjmuje drugiej czynności — także z innego przycisku niż naciśnięty: archiwizacja w trakcie zmiany nazwy dawałaby dwa żądania o tę samą sesję o przypadkowej kolejności skutków. Zajętość nie jest bramą i nie gasi przycisków: atrybutu blokującego nie stawiamy nigdzie w produkcie. Przycisk zostaje klikalny, a stan niesie napis — przycisk czynny dopisuje wielokropek, więc zajętość jest widoczna bez samego koloru. Naciśnięcie w trakcie biegu wraca meldunkiem, nie ciszą.
 
 Odmowa wraca meldunkiem, nie wyjątkiem: wykonanie oddaje zdanie albo wartość pustą, a ten plik podaje ją dalej. Wyjątek nieprzewidziany też kończy się meldunkiem, żeby wiersz nie został z zablokowanymi przyciskami.
+
+## budowa/klient-poprzedni/src/moduly/translate/karta-lqa.ts
+Kategorie błędu i wagi dotkliwości nie są tu wymyślone: pochodzą
+z ujednoliconej metryki MQM/DQF, przyjętej w zawodzie jako model oceny
+jakości przekładu. Kategorie górnego poziomu to dokładność, poprawność
+językowa, terminologia, styl, spójność, zamiana znaczeniowa i inne błędy
+tej metryki.

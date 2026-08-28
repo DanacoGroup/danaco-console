@@ -4,37 +4,22 @@ import { KOLEJNOSC_POZIOMOW } from './poziomy-pamieci';
 import { czyZastepuje } from './warstwy-promptu';
 
 /**
- * Karta eksperta w Bibliotece — jedna zapisana definicja jako kafel siatki.
- *
- * Karta zastępuje wiersz z samą nazwą, bo wybór eksperta jest decyzją
- * podejmowaną na podstawie tego, czym ekspert JEST: jakim modelem mówi, jak
- * szeroko jest widziany, ile ma narzędzi i czy odstępuje od globalnego promptu
- * systemowego. Wiersz z nazwą kazał Operatorowi wejść w edytor, żeby to
- * sprawdzić, i wyjść, gdy trafił nie na tego.
- *
- * Wszystkie wartości karty pochodzą z pól bytu `Agent` oddanych przez rdzeń
- * przy odczycie biblioteki. Karta nie woła ani jednej komendy i niczego nie
- * dolicza — liczba narzędzi ma własny byt (`licznik-narzedzi.ts`) i stoi
- * w oknach eksperta, nie tutaj, żeby nie było dwóch rachunków jednej rzeczy.
- *
- * Stan nie jest tu samym kolorem: każda plakietka niesie napis, a odstępstwo od
- * promptu globalnego dostaje osobny znacznik słowny — zgodnie z regułą, że
- * żeton barwy nie zwalnia komponentu z etykiety.
+ * Karta eksperta w Bibliotece pokazuje jedną zapisaną definicję jako kafel
+ * siatki, złożony wyłącznie z pól bytu oddanych przez rdzeń.
  */
-
-/** Czynności karty — każda dotyczy tego jednego eksperta. */
+/** Czynności karty, z których każda dotyczy tego jednego eksperta i jego pozycji w bibliotece ekspertów. */
 export interface DzialaniaKarty {
   naWybor(): void;
   naDuplikowanie(): void;
   naUsuniecie(): void;
 }
 
-/** Napis plakietki zasięgu widoczności w języku Operatora. */
+/** Napis plakietki zasięgu widoczności eksperta na karcie, wyrażony wprost w języku zrozumiałym dla Operatora. */
 function napisWidocznosci(zasieg: AgentVisibility): string {
   return zasieg === AgentVisibility.Project ? 'projektowy' : 'globalny';
 }
 
-/** Napis plakietki pamięci; zbiór pusty jest wyłączeniem, nie brakiem danych. */
+/** Napis plakietki pamięci eksperta na karcie; zbiór pusty jest wyłączeniem pamięci, nie brakiem danych. */
 function napisPamieci(ekspert: Agent): string {
   const ile = ekspert.memoryLevels.length;
   if (ile === 0) return 'pamięć wyłączona';
@@ -42,7 +27,7 @@ function napisPamieci(ekspert: Agent): string {
   return `pamięć ${ile}/${KOLEJNOSC_POZIOMOW.length}`;
 }
 
-/** Wiersz „model · kanał” — skrót konfiguracji z okna Model Configuration. */
+/** Wiersz „model · kanał” widoczny na karcie eksperta jako skrót konfiguracji z okna Model Configuration. */
 function napisModelu(ekspert: Agent): string {
   const model = ekspert.model ?? '';
   const kanal = ekspert.channelId ?? '';
@@ -50,7 +35,7 @@ function napisModelu(ekspert: Agent): string {
   return [model === '' ? 'model kanału' : model, kanal].filter((czesc) => czesc !== '').join(' · ');
 }
 
-/** Plakietka z napisem — barwę niesie znacznik `data-`, arkusz modułu ją maluje. */
+/** Plakietka z napisem na karcie, której barwę niesie znacznik danych, a maluje ją arkusz stylu modułu. */
 function plakietka(napis: string, rodzaj: string): HTMLElement {
   const element = document.createElement('span');
   element.className = 'dn-plakietka da-karta__plakietka';
@@ -65,9 +50,7 @@ export function utworzKarteEksperta(
   dzialania: DzialaniaKarty,
   przypisan?: number,
 ): HTMLElement {
-  // Favikon pełni rolę awatara kwadratowego zarezerwowanego dla agentów.
-  // Ekspert bez znaku dostaje pierwszą literę nazwy, a nie pustkę — kafel bez
-  // niczego w lewym górnym rogu wygląda na niedoczytany.
+  // Favikon pełni rolę awatara; ekspert bez znaku dostaje pierwszą literę nazwy, nie pustkę.
   const awatar = document.createElement('span');
   awatar.className = 'dn-awatar dn-awatar--kwadrat da-karta__awatar';
   const znak = (ekspert.favicon ?? '').trim();
@@ -104,11 +87,7 @@ export function utworzKarteEksperta(
     plakietka(ekspert.enabled ? 'czynny' : 'wyłączony', ekspert.enabled ? 'czynny' : 'wylaczony'),
     plakietka(napisPamieci(ekspert), 'pamiec'),
   );
-  // Liczba przypisań pochodzi z `agent.assignment.list` — odczytu OD STRONY
-  // EKSPERTA. `workspace.agent.assign` zapisuje przynależność, ale patrzy na nią
-  // od strony projektu, więc bez tamtej komendy karta nie miałaby skąd wziąć
-  // liczby. Wartość nieznana nie daje plakietki: zero i „nie pytaliśmy" to dwie
-  // różne odpowiedzi i karta nie ma prawa ich mylić.
+  // Liczba przypisań pochodzi z odczytu od strony eksperta; wartość nieznana nie daje plakietki.
   if (przypisan !== undefined) {
     const znacznik = plakietka(
       przypisan === 0 ? 'bez przypisań' : `${przypisan} przypisań`,

@@ -8607,3 +8607,8 @@ Plik `migracja_030_rejestr_okien_operacyjnych.sql` zakłada kod bez przedrostka
 gdzie moduł powiela okno u siebie. Warunek pytający wyłącznie o końcówkę
 `.chat-window` pominąłby postać bezprzedrostkową i pasek uczciwości wymieniałby
 działające okno rozmowy jako niezbudowane.
+## budowa/klient-poprzedni/src/moduly/agents/karta-eksperta.ts
+Karta zastępuje wiersz z samą nazwą, bo wybór eksperta jest decyzją podejmowaną na podstawie tego, czym ekspert jest: jakim modelem mówi, jak szeroko jest widziany, ile ma narzędzi i czy odstępuje od globalnego promptu systemowego. Wiersz z nazwą kazał Operatorowi wejść w edytor, żeby to sprawdzić, i wyjść, gdy trafił nie na tego. Karta nie woła ani jednej komendy i niczego nie dolicza — liczba narzędzi ma własny byt i stoi w oknach eksperta, nie tutaj, żeby nie było dwóch rachunków jednej rzeczy. Stan nie jest tu samym kolorem: każda plakietka niesie napis, a odstępstwo od promptu globalnego dostaje osobny znacznik słowny, zgodnie z regułą, że żeton barwy nie zwalnia komponentu z etykiety.
+
+## budowa/klient-poprzedni/src/moduly/agents/karta-eksperta.ts (liczba przypisań)
+Liczba przypisań pochodzi z odczytu od strony eksperta, nie od strony projektu — bez tej komendy karta nie miałaby skąd wziąć liczby. Wartość nieznana nie daje plakietki: zero i brak odpowiedzi to dwie różne sytuacje i karta nie ma prawa ich mylić.

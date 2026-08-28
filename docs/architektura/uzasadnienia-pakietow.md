@@ -6996,3 +6996,11 @@ we własny błąd.
 Baza pilnuje jednoznaczności krawędzi; cyklu nie pilnuje, bo cykl rozpoznaje
 się przejściem grafu, a nie warunkiem kolumny. Przejście grafu wykonuje rdzeń
 przed zapisem — tutaj leży wyłącznie odczyt i zapis.
+
+## budowa/server/internal/dane/zdarzenia_wykonawcze.go
+Zdarzenia zaczepów i zamknięcia tur są śladem po tym, co zaszło — zapis
+następuje po zdarzeniu i nie wpływa na przebieg wykonania.
+
+Zapis zamknięcia tury idzie poleceniem INSERT OR REPLACE, bo kolumna
+`wiadomosc_kod` jest UNIQUE: gdyby tura z jakiegoś powodu domknęła się dwa
+razy, prawdą zostaje zamknięcie ostatnie.

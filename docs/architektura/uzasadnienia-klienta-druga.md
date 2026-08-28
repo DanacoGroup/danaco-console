@@ -7835,3 +7835,6 @@ bez rozmowy i moduł mówiący dymkiem dostają zdanie wprost, bo pusty
 przełącznik czytałby się jak awaria sceny; przy górnej granicy zdanie mówi
 o suficie platformy, nie o liczbie okien modułu, bo dla części modułów ta
 granica jest stanem zastanym, a nie liczbą podaną przez rdzeń.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-przekazania.ts
+Przekazanie do Library nie ma własnej komendy w kontrakcie, ma za to odpowiednik ogólny:
+komenda context.transfer przenosi komplet kontekstu między modułami i ma uchwyt w rdzeniu.

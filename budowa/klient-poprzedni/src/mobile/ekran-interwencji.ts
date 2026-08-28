@@ -10,15 +10,9 @@ import { utworzZrodloInterwencji, type ZrodloInterwencji } from './zrodlo-interw
 
 /**
  * Ekran interwencji — telefon jako kanał pojedynczej decyzji, nie mniejszy
- * pulpit. Stąd układ: jedna kolumna, wykaz „co czeka na ciebie”, karta pozycji
- * jako całość celem dotknięcia, arkusz dróg u dołu. Od otwarcia do wykonanej
- * decyzji prowadzą dwa dotknięcia: karta, potem droga.
- *
- * Odmowa jednego odczytu nie gasi ekranu: nagłówek melduje każdą odmowę osobno,
- * a wykaz decyzji stoi dalej na tych odczytach, które doszły.
- *
- * Wykaz pusty to nie to samo co brak źródła. „Nic nie czeka” pada wyłącznie
- * wtedy, gdy odczyty doszły; przy odmowach ekran mówi, że nie wie.
+ * pulpit: jedna kolumna, karta pozycji jako całość celem dotknięcia, arkusz
+ * dróg u dołu. Odmowa jednego odczytu nie gasi ekranu — wykaz stoi dalej na
+ * odczytach, które doszły.
  */
 export interface EkranInterwencji {
   element: HTMLElement;
@@ -137,10 +131,7 @@ export function utworzEkranInterwencji(opis: OpisEkranu): EkranInterwencji {
     }
   }
 
-  // Zdarzenia rdzenia przerysowują wykaz same — telefon nie ma być odpytywany
-  // palcem. `mobile.process.changed` nie ma po stronie rdzenia producenta
-  // (`handlers_mobile.go`), więc nasłuch stoi na trzech zdarzeniach, które go
-  // mają.
+  // Zdarzenia rdzenia przerysowują wykaz same; nasłuch stoi na trzech zdarzeniach, które go mają.
   const odsubskrybuj = [
     zrodlo.naPostep(() => void odswiez()),
     zrodlo.naKolejke(() => void odswiez()),

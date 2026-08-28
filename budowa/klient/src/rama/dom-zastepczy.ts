@@ -1,9 +1,9 @@
 /**
  * Dokument zastępczy dla sprawdzianów ramy: fragment `<body>` prawdziwego
- * `index.html` zamieniony na drzewo węzłów, z tylko tym wycinkiem zachowania
- * DOM, którego dotyka montaż ramy — bez zależności zewnętrznej. Węzeł nie
- * implementuje strukturalnie `Document`/`HTMLElement`; granicę z typami DOM
- * przenosi rzutowanie w `zbudujDokument`.
+ * `index.html` jako drzewo węzłów — tylko ten wycinek zachowania DOM,
+ * którego montaż ramy dotyka, bez zależności zewnętrznej. Węzeł nie
+ * implementuje typów `Document`/`HTMLElement`; granicę przenosi
+ * rzutowanie w `zbudujDokument`.
  */
 
 const TEKST = '#tekst';

@@ -34,7 +34,7 @@ function motywCiemny(): boolean {
 
 export function zamontujRame(w: NastawyRamy): void {
   const glowna = el('main', { 'aria-label': tekst('glowna.etykieta') });
-  const belkaWezel = belka({ srodowisko: w.srodowisko.name });
+  const { wezel: belkaWezel, tytul: tytulWezel } = belka({ srodowisko: w.srodowisko.name });
   let stanWezel = pasStanu({
     srodowisko: w.srodowisko.name,
     liczbaSesji: w.sesje.length,
@@ -63,8 +63,7 @@ export function zamontujRame(w: NastawyRamy): void {
     }
     przycisk.setAttribute('aria-current', 'true');
     const nazwa = przycisk.dataset['modulNazwa'] ?? w.srodowisko.name;
-    belkaWezel.querySelector('[data-belka-tytul]')!.textContent =
-      `${tekst('belka.marka')} ${tekst('belka.separator')} ${nazwa}`;
+    tytulWezel.textContent = `${tekst('belka.marka')} ${tekst('belka.separator')} ${nazwa}`;
   }
   w.miejsce.addEventListener('click', naKlikniecie);
 

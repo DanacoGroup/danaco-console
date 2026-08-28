@@ -6622,3 +6622,8 @@ i służy wyłącznie diagnostyce; nie zatrzymuje samego rozstrzygania.
 ## budowa/server/internal/konfig/wartosc.go
 Funkcja KodujJSON nigdy nie zawodzi: wartość uszkodzona trafia do koperty
 kontraktu jako napis, nie jako błąd.
+
+## budowa/server/internal/konfig/zrodlo_pamieciowe.go
+Rozstrzygacz zbudowany bez źródła sięga po puste źródło pamięciowe, dzięki
+czemu brak warstwy trwałości nie blokuje startu rdzenia, tylko daje
+politykę domyślną.

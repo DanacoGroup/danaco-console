@@ -7550,3 +7550,16 @@ Zawężenie do zasobu ukryłoby te kolekcje, do których Operator akurat chce za
 
 Zasób, który w kolekcji już był albo go w niej nie było, nie zmienił niczego, a potwierdzenie
 zmiany byłoby potwierdzeniem czynności, która się nie odbyła.
+
+## budowa/klient-poprzedni/src/modele/kontrolki-formularza-braki.ts
+Okno operacyjne modułu nie stawia formularza z etykietą nad polem: wkłada samą kontrolkę do panelu akcji albo do paska narzędzi, a nazwę niesie atrybut opisujący. Kontrolki hubowe zwracają wiersz złożony z elementu i kontrolki, którego w pasek akcji włożyć się nie da — tu stoją ich odpowiedniki bez wiersza. Wejście zostaje jedno: hub reeksportuje ten plik w całości. Wygląd pochodzi z biblioteki komponentów współdzielonych, więc plik nie zna ani jednej barwy i ani jednego odstępu. Klasa rodziny modułu przychodzi parametrem i należy do modułu wywołującego.
+
+## budowa/klient-poprzedni/src/modele/kontrolki-formularza-braki.ts (przycisk bez komendy)
+Pozycja przycisku nie znika ze sceny, bo okno bez niej wyglądałoby na kompletne, a brak przestałby być widoczny. Wygaszenie jest tu tak samo niedopuszczalne jak milczenie: element nie traci obsługi zdarzeń ani nie zmienia kursora. Powód idzie równolegle trzema drogami: tytułem, opisem dostępności i znacznikiem danych dla bram i sprawdzianów.
+
+## budowa/klient-poprzedni/src/mission-control/model-danych.ts
+Model danych pulpitu ma jedną odpowiedzialność: kształt danych, które widok pulpitu umie wyrysować; wartości buduje `zlozenie-danych.ts` wyłącznie z odczytów i zdarzeń rdzenia. Pole `null` znaczy brak źródła: miara, której kontrakt nie niesie, ma w modelu typ `X | null`, a widok wypisuje przy niej etykietę „brak źródła danych w kontrakcie" zamiast liczby. Nazwy stanów pochodzą z kontraktu (`shared/contract`) zamiast z powtarzanych literałów.
+
+Typ kodu środowiska jest napisem, a nie unią wywiedzioną z `KnownModuleIds`, bo wykaz środowisk należy do rdzenia jako dane i `environment.list` niesie go w całości — unia zamykałaby matrycę na kody znane klientowi, a środowisko spoza niej trafiałoby do wykazu „poza środowiskami" jako sesja bez wskazania środowiska. `KnownModuleIds` pilnuje kodów tam, gdzie klient sam je wymienia (`strona-glowna/pozycje-srodowisk.ts`); kolumna matrycy przepisuje to, co przyszło z rdzenia.
+
+Widok wypisuje etykietę braku źródła przy miarach wysycenia, kolejki, limitu i kosztu kanału.

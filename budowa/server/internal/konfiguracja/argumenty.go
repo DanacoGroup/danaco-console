@@ -9,7 +9,8 @@ import (
 	"strings"
 )
 
-// nazwaProgramu to nazwa binarki rdzenia używana w pomocy wiersza poleceń.
+// nazwaProgramu to nazwa binarki rdzenia używana w pomocy wiersza poleceń
+// i w komunikatach diagnostycznych startu.
 const nazwaProgramu = "danaco-console"
 
 // zastosujArgumenty nakłada na konfigurację wartości z wiersza poleceń.
@@ -30,10 +31,8 @@ func zastosujArgumenty(kon *Konfiguracja, argumenty []string) error {
 		"nasłuch na wszystkich interfejsach maszyny (wystawienie poza pętlę zwrotną)")
 	cert := zestaw.String("tls-certyfikat", kon.CertyfikatTLS, "plik certyfikatu TLS; razem z -tls-klucz włącza wss")
 	klucz := zestaw.String("tls-klucz", kon.KluczTLS, "plik klucza TLS; razem z -tls-certyfikat włącza wss")
-	// Przełącznik jest tekstem, nie flagą logiczną, bo niesie trzy stany:
-	// niewskazany (puste), wymuszony i zniesiony. flag.Bool umiałby dwa i
-	// zamieniłby brak wskazania we wskazanie „nie", zdejmując wymóg
-	// wystawionemu rdzeniowi przez samo pominięcie przełącznika.
+	// Przełącznik jest tekstem, nie flagą, bo niesie trzy stany: niewskazany,
+	// wymuszony, zniesiony.
 	wymog := zestaw.String("wymog-logowania", tekstWymogu(kon.WymogLogowania),
 		"czy połączenie musi przedstawić token bramki: true|false; "+
 			"puste = rozstrzyga adres nasłuchu (poza pętlą zwrotną wymóg obowiązuje)")
@@ -91,8 +90,7 @@ func wymogZTekstu(tekst string) (*bool, error) {
 
 // wykazPoPrzecinku rozbija jeden przełącznik na wykaz wzorców. Przełącznik
 // powtarzalny wymagałby własnego typu flagi; przecinek wystarcza, bo wzorzec
-// Origin przecinka nie zawiera. Człony puste wypadają — wzorzec pusty pasowałby
-// do niczego albo, w bibliotece gniazda, do czegokolwiek.
+// Origin przecinka nie zawiera. Człony puste wypadają.
 func wykazPoPrzecinku(tekst string) []string {
 	wykaz := make([]string, 0)
 	for _, czlon := range strings.Split(tekst, ",") {
@@ -106,7 +104,8 @@ func wykazPoPrzecinku(tekst string) []string {
 	return wykaz
 }
 
-// wypiszPomoc wypisuje nagłówek, katalog przełączników i nazwy zmiennych środowiska.
+// wypiszPomoc wypisuje nagłówek, katalog przełączników i nazwy zmiennych
+// środowiska na wskazane wyjście.
 func wypiszPomoc(wyjscie io.Writer, zestaw *flag.FlagSet) {
 	fmt.Fprintf(wyjscie, "%s — rdzeń Danaco Console\n\n", nazwaProgramu)
 	fmt.Fprintf(wyjscie, "Użycie:\n  %s [przełączniki]\n\nPrzełączniki:\n", nazwaProgramu)

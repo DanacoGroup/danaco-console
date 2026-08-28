@@ -1,16 +1,4 @@
-/*
- * Warstwa wizualna okna pracy z dokumentem: wstążka, zakładki dokumentów,
- * kartki, dymki komentarzy, panel Redaktora, wiersz polecenia i galeria
- * szablonów.
- *
- * Arkusz zastępuje `studio-kanwa.css`, który opisywał kanwę tekstową i pasek
- * narzędzi edytora — oba przestały istnieć przy scaleniu. Pasek powiązania
- * z oknem rozmowy przeniósł się tu razem ze swoim elementem.
- *
- * Ani jednej barwy zapisanej wprost — wyłącznie żetony motywu. Rozmiary kartki
- * i marginesów przychodzą zmiennymi ustawianymi przez `powierzchnia-dokumentu.ts`
- * z nastaw strony (`StudioPageSetup`), bo tylko ten plik zna wybrany nośnik.
- */
+/* Arkusz obejmuje warstwę wizualną okna pracy z dokumentem: wstążkę, zakładki dokumentów, kartki, dymki komentarzy, panel Redaktora oraz galerię szablonów. */
 
 /* ── Wstążka ───────────────────────────────────────────────────────────────── */
 
@@ -42,7 +30,7 @@
   cursor: pointer;
 }
 
-/* Zakładka czynna niesie obrys i tło panelu — stan nigdy samą barwą tekstu. */
+/* Zakładka czynna niesie obrys i tło panelu, ponieważ stan aktywności nigdy nie sygnalizuje wyłącznie barwą tekstu. */
 .ms-wstazka__zakladka[data-czynna='tak'] {
   border-color: var(--dn-obrys-subtelny);
   background: var(--dn-panel);
@@ -230,7 +218,7 @@
   box-shadow: 0 2px 12px rgb(0 0 0 / 22%);
 }
 
-/* Dwa panele naraz nie zasłaniają się: Redaktor staje obok dymków, nie na nich. */
+/* Dwa panele naraz nie zasłaniają się wzajemnie: Redaktor staje obok dymków komentarzy, nigdy na nich. */
 .ms-praca__kolumny > .ms-redaktor {
   inset-inline-end: calc(min(22rem, 34%) + var(--dn-od-3));
 }
@@ -342,7 +330,7 @@
   scroll-snap-stop: always;
 }
 
-/* Granica marginesu widoczna w treści — przełącznik Operatora. */
+/* Granica marginesu jest widoczna w treści strony jako przełącznik ustawiany bezpośrednio przez Operatora. */
 .ms-praca__powierzchnia[data-granice='tak'] .ms-strona__pole {
   outline: 1px dashed var(--dn-obrys);
   outline-offset: 2px;
@@ -371,11 +359,7 @@
   color: var(--dn-tekst-1);
 }
 
-/* Kartka WYRYSOWANA PRZEZ RDZEŃ — obraz strony podglądu wydania.
-   Marginesów ani kroju nie nakłada się na nią: obraz niesie już nagłówek, stopkę,
-   paginację i kolumnę tekstu wyliczone silnikiem składu rdzenia. Dołożenie
-   marginesu okna dodałoby biały pas WOKÓŁ marginesu, który jest już na obrazie,
-   i kartka wyszłaby węższa, niż wyjdzie w wydaniu. */
+/* Kartka wyrysowana przez rdzeń niesie już nagłówek, stopkę, paginację i kolumnę tekstu, więc okno nie nakłada na nią marginesu ani kroju. */
 .ms-strona--rdzen {
   padding: 0;
   overflow: hidden;
@@ -488,7 +472,7 @@
   text-align: justify;
 }
 
-/* Fragment różnicy nałożony na treść — rodzaj z `DiffHunkKind`, barwa z motywu. */
+/* Fragment różnicy nałożony na treść niesie rodzaj wywiedziony z `DiffHunkKind`, a barwę czerpie wyłącznie z żetonów motywu. */
 .ms-blok[data-rodzaj-fragmentu='added'] {
   border-left: 3px solid var(--dn-sukces-obrys, var(--dn-sygnal));
   padding-left: var(--dn-od-2);

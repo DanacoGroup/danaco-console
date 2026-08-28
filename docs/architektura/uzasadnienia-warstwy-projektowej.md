@@ -676,3 +676,11 @@ rodzaj komunikatu i nie konkuruje z akcentem barwy sygnałowej.
 ## budowa/klient-poprzedni/src/moduly/design/zasoby.css
 Układ kompozycji modułu ma własny arkusz `kompozycja.css`, oddzielony od
 tego pliku, który obejmuje wyłącznie filtr, wykaz zasobów i kreator promptu.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio-praca.css
+Arkusz zastępuje `studio-kanwa.css`, który opisywał kanwę tekstową i pasek
+narzędzi edytora, oba usunięte przy scaleniu. Pasek powiązania z oknem
+rozmowy przeniósł się tu razem ze swoim elementem. Ani jednej barwy nie
+zapisano wprost, wyłącznie żetony motywu. Rozmiary kartki i marginesów
+przychodzą zmiennymi ustawianymi przez `powierzchnia-dokumentu.ts` z nastaw
+strony `StudioPageSetup`, ponieważ tylko ten plik zna wybrany nośnik.

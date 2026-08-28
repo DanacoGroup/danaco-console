@@ -7334,3 +7334,11 @@ Kod permission_denied jest najbliższym słowem kontraktu na odmowę zaczepu:
 zaczep niesie politykę, a jego niezerowe wyjście jest odmową tej polityki.
 Poziom i priorytet zostają przy regułach słownika — warn i low — ponieważ
 odmowa zaczepu jest zdarzeniem zwykłej pracy, a nie awarią.
+
+## budowa/server/internal/core/akcje_rejestr.go
+Wzorcem RejestrAkcji jest rejestr kanałów modelu models.Rejestr — ta sama
+mechanika, inny byt. Rejestr wypełnia port Akcje, więc nie ma osobnego
+adaptera powtarzającego jego treść: jeden byt, jeden moduł.
+
+Wykaz: pierwszy odczyt po nieudanym starcie odbudowuje katalog sam —
+niepowodzenie odbudowy nie unieważnia odpowiedzi, tylko zostawia wykaz pusty.

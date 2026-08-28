@@ -99,9 +99,9 @@
 
 /* Blat wg koncepcji: 1760 px, z dwoma progami poszerzenia, żeby na bardzo
    szerokim ekranie treść nie stała w wąskiej kolumnie. */
-.cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 1760px; }
-@media (min-width: 2300px) { .cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2040px; } }
-@media (min-width: 3000px) { .cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2360px; } }
+.cd-strona[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 1760px; }
+@media (min-width: 2300px) { .cd-strona[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2040px; } }
+@media (min-width: 3000px) { .cd-strona[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2360px; } }
 
 .cd-strona .dn-sciezka { margin-bottom: var(--dn-od-3); }
 .cd-strona .dn-metryka { gap: var(--dn-od-8); flex-wrap: wrap; }
@@ -110,11 +110,11 @@
 
 /* Nadpis sekcji zajmuje cały wiersz, żeby licznik i menu sekcji stały przy
    krawędziach, a nie zaraz za tytułem. */
-.cd-strona [data-wnetrze='przyrzadowe'] .cd-sekcja-glowa { width: 100%; }
-.cd-strona [data-wnetrze='przyrzadowe'] .cd-sekcja-glowa > .dn-sekcja-licznik { margin-right: auto; }
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-sekcja-glowa { width: 100%; }
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-sekcja-glowa > .dn-sekcja-licznik { margin-right: auto; }
 
 /* Napis „Wejdź" stoi przed znakiem marki, oba w jednym rzędzie stopki. */
-.cd-strona [data-wnetrze='przyrzadowe'] .cd-wejdz {
+.cd-strona[data-wnetrze='przyrzadowe'] .cd-wejdz {
   display: flex;
   align-items: center;
   gap: var(--dn-od-2);

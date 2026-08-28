@@ -706,6 +706,18 @@
 /* Barwy chłodne — koncepcja odchodzi od szarości neutralnej ku niebieskiej. */
 [data-wnetrze='przyrzadowe'] {
   --dn-powierzchnia: #F4F7FA;
+  /* Rama okna, grunt i pasek stanu — w motywie jasnym belka jest jasna,
+     tak jak w koncepcji, wiec nakladki musza byc ciemne, nie biale. */
+  --dn-rama: #DFE4EA;
+  --dn-rama-grafit: #EAEEF3;
+  --dn-rama-tekst: #0D141C;
+  --dn-rama-tekst-2: #41505F;
+  --dn-rama-hover: rgba(13, 20, 28, .07);
+  --dn-rama-obrys: rgba(26, 95, 208, .18);
+  --dn-rama-obrys-mocny: rgba(26, 95, 208, .34);
+  --dn-rama-tlo: rgba(13, 20, 28, .04);
+  --dn-rama-pole: rgba(13, 20, 28, .06);
+  --dn-tlo: #EAEEF3;
   --dn-powierzchnia-2: #EAEEF3;
   --dn-panel: #FFFFFF;
   --dn-obrys: #DBE2EA;
@@ -731,6 +743,18 @@
 :root[data-theme='dark'] [data-wnetrze='przyrzadowe'],
 :root:not([data-theme]) [data-wnetrze='przyrzadowe'] {
   --dn-powierzchnia: #0E141C;
+  /* Rama okna, grunt i pasek stanu — koncepcja prowadzi jedna drabine chlodna
+     przez cale okno, nie tylko przez plotno tresci. */
+  --dn-rama: #05080B;
+  --dn-rama-grafit: #0A0F15;
+  --dn-rama-tekst: #E6EDF5;
+  --dn-rama-tekst-2: #A9B7C8;
+  --dn-rama-hover: rgba(255, 255, 255, .08);
+  --dn-rama-obrys: rgba(140, 176, 224, .14);
+  --dn-rama-obrys-mocny: rgba(140, 176, 224, .30);
+  --dn-rama-tlo: rgba(140, 176, 224, .06);
+  --dn-rama-pole: rgba(140, 176, 224, .08);
+  --dn-tlo: #0A0F15;
   --dn-powierzchnia-2: #0A0F15;
   --dn-panel: #131B25;
   --dn-obrys: #1A2430;
@@ -756,6 +780,18 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) [data-wnetrze='przyrzadowe'] {
     --dn-powierzchnia: #F4F7FA;
+    /* Rama okna, grunt i pasek stanu — w motywie jasnym belka jest jasna,
+       tak jak w koncepcji, wiec nakladki musza byc ciemne, nie biale. */
+    --dn-rama: #DFE4EA;
+    --dn-rama-grafit: #EAEEF3;
+    --dn-rama-tekst: #0D141C;
+  --dn-rama-tekst-2: #41505F;
+    --dn-rama-hover: rgba(13, 20, 28, .07);
+    --dn-rama-obrys: rgba(26, 95, 208, .18);
+    --dn-rama-obrys-mocny: rgba(26, 95, 208, .34);
+    --dn-rama-tlo: rgba(13, 20, 28, .04);
+    --dn-rama-pole: rgba(13, 20, 28, .06);
+    --dn-tlo: #EAEEF3;
     --dn-powierzchnia-2: #EAEEF3;
     --dn-panel: #FFFFFF;
     --dn-obrys: #DBE2EA;

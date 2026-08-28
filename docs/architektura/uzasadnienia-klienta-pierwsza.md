@@ -7372,3 +7372,34 @@ Wiersz nie zna ani jednego klucza z osobna — wszystko, co rysuje, pochodzi z p
 Adres zapisu wskazuje domyślnie punkt widzenia okna, po zmianie poziomu — poziom wybrany przez Operatora. Wynik zapisu widnieje przy polu, żeby naciśnięcie zawsze dało odpowiedź: powodzenie mówi, gdzie zapisano, niepowodzenie mówi, co odpowiedział rdzeń.
 
 Przemilczenie adnotacji o stanie klucza w objaśnieniu kazałoby Operatorowi wierzyć, że zapisana wartość steruje wykonaniem, mimo że żadna ścieżka rdzenia jej nie czyta.
+
+## budowa/klient-poprzedni/src/moduly/assistant/stan-assistant.ts
+Trzy okna obserwują ten sam zapis zleceń i dziennika: Voice Console zakłada zlecenie, Actions
+Monitor nim steruje, Activity Feed pokazuje jego przebieg. Gdyby każde okno prowadziło własny
+wykaz, wstrzymanie zlecenia w monitorze nie zmieniłoby tego, co Voice Console uważa za polecenie
+w toku.
+
+Poza własnym działaniem jedynym źródłem odświeżenia jest zdarzenie `assistant.action.changed`: ono
+wciąga zmianę dokonaną gdzie indziej tak samo jak zmianę własną, więc nie ma tu odpytywania w pętli.
+
+Zejście zlecenia z toru pociąga odczyt dziennika. Rdzeń dopisuje wpis rodzaju `result` dopiero przy
+domykaniu zlecenia, czyli po odczycie, który Voice Console robi zaraz po wysłaniu polecenia.
+Zdarzenie o stanie końcowym jest jedyną chwilą, w której klient wie, że dziennik urósł, więc odczyt
+jedzie właśnie tu.
+
+Zdarzenie przychodzi z całego konta, nie z jednego okna: rdzeń rozgłasza je do wszystkich połączeń
+konta, a kanał klienta nie zawęża zdarzeń do sesji. Zlecenie cudzej sesji wciągnięte do tego zapisu
+byłoby cudzą historią pokazaną jako własna, więc granicą jest sesja z koperty, nie okno z treści.
+Rdzeń wypełnia pole sesji koperty sesją okna zlecenia, więc porównanie z sesją kanału opiera się na
+danych, nie na domyśle. Zlecenia tej samej sesji spoza okna modułu, na przykład z nakładki Always
+On Display, która dobiera okno sama, idą do wykazu osobnego, bo są pracą asystenta widoczną na
+ekranie, a nie cudzą historią.
+
+Trzy źródła dobudowane obok rdzenia modułu, każde nad własną rodziną komend: mowa, konteksty
+pamięci wraz z zajętością okna oraz historia schowka wraz ze słownikiem skrótów i skrótem globalnym.
+Osobno, bo osobno znikają: maszyna bez silnika mowy ma sprawną historię schowka, a maszyna bez
+powłoki okiennej — sprawne konteksty pamięci.
+
+Dziennik czytamy dopiero po zejściu zlecenia z toru, bo wcześniej rdzeń nie dopisał do niego ani
+jednego wpisu. Zawężenie `actionId` czyta dziennik zlecenia bez oglądania się na okno, więc przebieg
+zlecenia z nakładki Always On Display jest widoczny w Activity Feed po jego wskazaniu w monitorze.

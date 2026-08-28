@@ -7280,3 +7280,14 @@ Poszerzenie tego jednego wpisu jest tu istotą: drugi wpis obok byłby drugą
 prawdą o tym samym gnieździe. Samo ujście dalej nie idzie: rdzeń nie umie
 odesłać czegokolwiek do jednego urządzenia z pominięciem rozgłoszenia, bo to
 byłaby druga droga wyjścia obok nadajnika.
+
+## budowa/server/internal/core/adapter_sesje_kopia.go
+Usunięcie kopii nie rusza źródła, a usunięcie źródła nie rusza kopii, inaczej
+kopiowanie byłoby współdzieleniem pod inną nazwą. Okna kopii zakłada
+nadzorca, nie warstwa danych, ponieważ cykl życia okna należy do pakietu
+sesji — dzięki temu kopia od razu żyje w rejestrze i daje się otworzyć bez
+restartu rdzenia.
+
+Rozmowa programu wywoływanego z wiersza poleceń nie jest przenoszona przy
+kopiowaniu: kopia zaczyna własną, bo wznowienie cudzej rozmowy dołączałoby
+nowe tury do wątku źródła.

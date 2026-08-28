@@ -3883,3 +3883,27 @@ Kod wyjścia: 1 przy jakimkolwiek braku programu wykazu, 0 przy komplecie.
 Wdrożenie ma się na tym zatrzymać. Braki arsenału mowy (głosy pipera, wagi
 modelu) są wypisywane, ale kodu nie zmieniają: to pliki, nie programy na
 ścieżce, a synteza ma zejście na eSpeak NG z wykazu.
+## design/03-marka/emblematy/generator-godel.py
+
+Warianty barwne emblematów niosą barwę wypaloną w pliku, ponieważ rastry oraz
+osadzenia poza interfejsem nie potrafią dziedziczyć barwy po otoczeniu. Zasada
+bezwzględna: cały emblemat ma jedną barwę, kropka nigdy nie odrywa się barwą od
+obrysu. Rozstrzygnięcie należy do księgi znaku i powtarza je arkusz komponenty.css.
+
+Warianty szesnastopikselowe godeł powstają przez uproszczenie geometrii, ponieważ
+w tym rozmiarze pełny kształt zlewa się w plamę:
+
+- godło dymka traci górną, dłuższą linię tekstu; para linii i kropki podnosi się
+  do optycznego środka dymka, a kropka rośnie z tysiąca pięciuset do tysiąca
+  dziewięciuset tysięcznych jednostki;
+- godło modułów oddaje obrys czwartego modułu kropce, bo obrys i kropka przy
+  trzech i trzech dziesiątych piksela sklejają się w plamę; moduły są zwężone,
+  a promień naroża zmalał z dwóch do jednej i czterech dziesiątych;
+- godło wyniku traci linię wyniku jako element najdrobniejszy, ramka jest zwężona,
+  a grot wyśrodkowany w pionie;
+- w godle gałęzi żaden element nie znika, ponieważ usunięcie gałęzi zmienia
+  znaczenie znaku; węzły są powiększone, a łączniki przeliczone na nowe promienie.
+
+Kompozycja ikony aplikacji jest zatwierdzona wraz z wartościami skali oraz
+odsunięcia sygnetu od krawędzi kafla. Grubość obrysu rośnie poniżej dwudziestu
+czterech pikseli, kompensując optyczne zanikanie kreski w małych rozmiarach.

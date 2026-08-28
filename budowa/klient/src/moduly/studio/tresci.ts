@@ -15,6 +15,26 @@ export const tresci = {
     ladowanie: 'Odpytywanie rdzenia…',
   },
 
+  dokument: {
+    tytul: 'Dokument',
+    nazwaNowego: 'Dokument bez tytułu',
+    zakladanie: 'Zakładanie okna roboczego w rdzeniu…',
+    etykietaTresci: 'Treść dokumentu',
+    zapisz: 'Zapisz',
+    zapisywanie: 'Zapisywanie…',
+    zapisany: 'Zapisane w repozytorium sesji',
+    wersja: 'wersja',
+    bezWersji: 'bez wersji',
+  },
+
+  dokumentOdmowa: {
+    sesja: 'Rdzeń nie założył sesji',
+    kanal: 'Rdzeń nie zgłosił żadnego kanału modelu',
+    okno: 'Rdzeń nie założył okna modułu',
+    dokument: 'Rdzeń nie założył dokumentu',
+    zapis: 'Rdzeń odmówił zapisu dokumentu',
+  },
+
   pusto: {
     tytul: 'Brak urządzeń wejściowych',
     opis: 'Rdzeń nie zgłosił żadnego skanera ani kamery podłączonych do maszyny.',

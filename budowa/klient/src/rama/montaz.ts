@@ -83,6 +83,10 @@ export function zamontujRame(w: NastawyRamy): void {
      zdejmuje, żeby obszar roboczy nie niósł treści modułu już opuszczonego. */
   let oknoModulu: OknoStudio | undefined;
 
+  /* Moduł Studia z wykazu rdzenia. Jego `id` — nie kod — idzie do `window.create`,
+     bo okno rdzenia wiąże się z modułem po identyfikatorze. */
+  const modulStudia = w.moduly.find((m) => m.code === KOD_MODULU_STUDIO);
+
   function naKlikniecie(zdarzenie: Event): void {
     const przycisk = (zdarzenie.target as Element | null)?.closest(
       '.dn-szyna-poz--modul',
@@ -97,8 +101,9 @@ export function zamontujRame(w: NastawyRamy): void {
 
     oknoModulu?.zdejmij();
     oknoModulu = undefined;
-    if (przycisk.dataset['modulKod'] === KOD_MODULU_STUDIO && w.kanal !== undefined) {
-      oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal });
+    if (przycisk.dataset['modulKod'] === KOD_MODULU_STUDIO && w.kanal !== undefined
+      && modulStudia !== undefined) {
+      oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal, sesje: w.sesje, modul: modulStudia });
     } else {
       glowna.textContent = tekst('glowna.brakModulu');
     }
@@ -108,8 +113,8 @@ export function zamontujRame(w: NastawyRamy): void {
   /* Pierwsza pozycja szyny startuje bieżąca — jeśli to Studio, okno wchodzi
      od razu, bez czekania na klik Operatora. */
   const pierwszy = w.moduly[0];
-  if (pierwszy?.code === KOD_MODULU_STUDIO && w.kanal !== undefined) {
-    oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal });
+  if (pierwszy?.code === KOD_MODULU_STUDIO && w.kanal !== undefined && modulStudia !== undefined) {
+    oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal, sesje: w.sesje, modul: modulStudia });
   }
 
   const zapytanieMotywu = globalThis.matchMedia?.(ZAPYTANIE_MOTYW_CIEMNY);

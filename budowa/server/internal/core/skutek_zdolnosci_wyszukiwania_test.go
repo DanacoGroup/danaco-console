@@ -1,17 +1,5 @@
-// Sprawdziany skutku dwóch zdolności rodziny `knowledge.*`: przesiewu wyników
-// i osi obrazu.
-//
-// Część z nich żąda wag na dysku i te są pominięte tam, gdzie wag nie ma.
-// Pominięcie jest tu jedyną uczciwą odpowiedzią: wagi ważą łącznie blisko
-// cztery gigabajty, więc sprawdzian, który by je pobierał, zamieniałby bieg
-// sprawdzianów w pobieranie modeli — a sprawdzian, który by ich nie potrzebował,
-// mierzyłby atrapę i milczałby dokładnie wtedy, gdy zdolność przestanie działać.
-// Katalog wag wskazuje zmienna środowiska `DANACO_MODELE`; nazwy podkatalogów
-// są nazwami zdolności, nie wydawców modeli.
-//
-// Sprawdziany odmowy wag NIE żądają: brak silnika ma być odpowiedzią nazywającą
-// brak na każdej maszynie, więc mierzy się go tam, gdzie modelu nie ma z samego
-// założenia.
+// Plik niesie sprawdziany skutku dwóch zdolności rodziny `knowledge.*`:
+// przesiewu wyników i osi obrazu, w części żądające wag modeli na dysku.
 package core
 
 import (
@@ -33,7 +21,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// zmiennaKatalogModeli wskazuje katalog, w którym leżą wagi modeli tej rodziny.
+// zmiennaKatalogModeli nazywa zmienną środowiska wskazującą katalog, w
+// którym leżą wagi modeli tej rodziny sprawdzianów.
 const zmiennaKatalogModeli = "DANACO_MODELE"
 
 // katalogModeliSprawdzianu oddaje katalog wag albo pomija sprawdzian.
@@ -58,16 +47,9 @@ func katalogModeliSprawdzianu(t *testing.T, podkatalog string) string {
 	return katalog
 }
 
-// ustawWiedzy zapisuje nastawę zasięgu globalnego wprost w tabeli ustawień.
-//
-// Drogą Operatora byłaby komenda `config.set`, ale ta sprawdza klucz wobec
-// katalogu ustawień, a wiersze katalogu zakłada migracja nastaw — plik
-// z pakietu, którego ten teren nie rusza. Rozstrzyganie nastawy wiersza katalogu
-// nie wymaga (`konfig/rozstrzyganie.go` czyta zapisy przed definicjami), więc
-// zdolność działa, a niedostępna jest wyłącznie droga jej ustawienia z okna
-// konfiguracji. Sprawdzian zapisuje więc to, co zapisałaby komenda, i mierzy to,
-// co mierzyć ma — zamiast milczeć o zdolności, dopóki nie powstanie wiersz
-// katalogu.
+// ustawWiedzy zapisuje nastawę zasięgu globalnego wprost w tabeli ustawień,
+// omijając komendę `config.set` i katalog ustawień, którego ten teren nie
+// zakłada.
 func ustawWiedzy(t *testing.T, katalogDanych, klucz, wartosc string) {
 	t.Helper()
 
@@ -94,7 +76,8 @@ func ustawWiedzy(t *testing.T, katalogDanych, klucz, wartosc string) {
 	}
 }
 
-// wgrajDokument wnosi do biblioteki jeden dokument tekstowy.
+// wgrajDokument wnosi do biblioteki jeden dokument tekstowy o podanej nazwie
+// i treści, wołaniem `library.file.upload`.
 func wgrajDokument(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa, tresc string) {
 
@@ -108,18 +91,12 @@ func wgrajDokument(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 		}, &wgrany)
 }
 
-// granicaKomendyZWagami — ile czasu wolno zająć komendzie, która wczytuje wagi.
-//
-// Uprząż sprawdzianów skutku daje komendzie piętnaście sekund i dla komend
-// odpowiadających z bazy jest to granica słuszna. Tu jest za krótka i nie z
-// powodu obciążenia maszyny: samo wczytanie wag rzędu dwóch gigabajtów do
-// pamięci trwa dłużej, a dzieje się na każde wołanie (patrz nagłówek
-// `wiedza/silnik.go`). Sprawdzian, który by tę granicę przyjął, mierzyłby czas
-// wczytania modelu zamiast wyniku, jaki model daje.
+// granicaKomendyZWagami nazywa czas, jaki wolno zająć komendzie wczytującej
+// wagi modelu do pamięci na każde wołanie, dłuższy niż granica bazowa uprzęży.
 const granicaKomendyZWagami = 10 * time.Minute
 
-// wykonajZWagami wykonuje komendę sięgającą po model i przerywa sprawdzian,
-// gdy rdzeń odmówił.
+// wykonajZWagami wykonuje komendę sięgającą po model wagą na dysku i
+// przerywa sprawdzian niepowodzeniem, gdy rdzeń odmówił jej wykonania.
 func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	komenda shared.MessageType, ladunek any, wynik any) {
 
@@ -144,10 +121,8 @@ func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	}
 }
 
-// TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg mierzy to, po co
-// przesiew istnieje: tę samą treść i to samo pytanie raz bez niego, raz z nim.
-// Odpowiedź identyczna w obu przebiegach znaczyłaby, że drugi model niczego nie
-// wnosi — i wtedy sprawdzian ma upaść, choć obie komendy odpowiedziały.
+// TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg mierzy tę samą treść
+// i to samo pytanie raz bez przesiewu, raz z nim, i wymaga różnej kolejności.
 func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	katalogOsadzarki := katalogModeliSprawdzianu(t, "embedder")
 	katalogPrzesiewu := katalogModeliSprawdzianu(t, "reranker")
@@ -156,11 +131,8 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogModeli, katalogOsadzarki)
 	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogPrzesiewu, katalogPrzesiewu)
 
-	// Cztery dokumenty o jednym temacie. Pierwszy przebieg widzi w nich podobne
-	// rozłożenie znaczeń i wynosi wysoko notatkę, która pytanie POWTARZA, oraz
-	// politykę, która o awarii mówi. Dopiero czytanie pytania razem z fragmentem
-	// rozstrzyga, że procedura — jedyna, która na pytanie ODPOWIADA, i to bez ani
-	// jednego wspólnego z nim wyrazu poza „usługą" — należy wyżej niż polityka.
+	// Cztery dokumenty o jednym temacie: procedura odpowiada na pytanie bez
+	// jego słownictwa.
 	wgrajDokument(t, zmontowany, zycie, "notatka-z-pytaniem.txt",
 		"Jak przywrócić usługę po awarii serwera? Pytanie wraca po każdej awarii "+
 			"serwera i wciąż nie mamy na nie spisanej odpowiedzi.")
@@ -212,10 +184,7 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	if bezPrzesiewu.Reranked != nil && *bezPrzesiewu.Reranked {
 		t.Fatal("odpowiedź bez przesiewu oznajmia przesiew, którego nie było")
 	}
-	// Porównanie idzie po samych źródłach, nie po trafnościach. Trafność zmienia
-	// się z definicji — po przesiewie jest oceną innego modelu — więc porównanie
-	// obejmujące ją orzekałoby „przesiew coś zmienił" nawet wtedy, gdyby oddał
-	// dokładnie tę samą kolejność.
+	// Porównanie idzie po samych źródłach, nie po trafnościach modelu.
 	if kolejnoscBez == kolejnoscZ {
 		t.Fatalf("obie odpowiedzi mają tę samą kolejność źródeł — przesiew niczego "+
 			"nie przestawił: %s", kolejnoscZ)
@@ -310,10 +279,8 @@ func TestOsObrazuOddajeObrazOpisanyZdaniem(t *testing.T) {
 	}
 }
 
-// TestOsObrazuBezSilnikaOdmawiaNazywajacBrak pilnuje, że brak zaplecza jest
-// odmową nazywającą brak i drogę naprawy, a nie usterką wewnętrzną. Wag nie
-// żąda: interpreter wskazany nastawą nie istnieje, więc pomocnik nie ruszy na
-// żadnej maszynie i odmowa jest ta sama wszędzie.
+// TestOsObrazuBezSilnikaOdmawiaNazywajacBrak sprawdza, czy brak zaplecza
+// wraca odmową nazywającą brak i drogę naprawy, a nie usterką wewnętrzną.
 func TestOsObrazuBezSilnikaOdmawiaNazywajacBrak(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	ustawWiedzy(t, katalog, wiedza.KluczProgram,
@@ -377,7 +344,8 @@ var (
 // wejścia modelu kształt pozostał rozpoznawalny.
 const bokObrazu = 320
 
-// kolo rysuje wypełnione koło na białym tle.
+// kolo rysuje wypełnione koło podanej barwy na białym tle obrazu sprawdzianu,
+// wypośrodkowane na płótnie o boku `bokObrazu`.
 func kolo(barwa color.RGBA) image.Image {
 	plotno := bialePlotno()
 	srodek, promien := bokObrazu/2, bokObrazu/3
@@ -392,7 +360,8 @@ func kolo(barwa color.RGBA) image.Image {
 	return plotno
 }
 
-// kwadrat rysuje wypełniony kwadrat na białym tle.
+// kwadrat rysuje wypełniony kwadrat podanej barwy na białym tle obrazu
+// sprawdzianu, wypośrodkowany na płótnie o boku `bokObrazu`.
 func kwadrat(barwa color.RGBA) image.Image {
 	plotno := bialePlotno()
 	odstep := bokObrazu / 5
@@ -417,7 +386,8 @@ func bialePlotno() *image.RGBA {
 	return plotno
 }
 
-// wgrajObraz wnosi do biblioteki jeden obraz zapisany w PNG.
+// wgrajObraz wnosi do biblioteki jeden obraz zapisany w formacie PNG, pod
+// podaną nazwą, wołaniem `library.file.upload`.
 func wgrajObraz(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa string, obraz image.Image) {
 

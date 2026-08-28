@@ -8,19 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Pokrycie kontraktu mierzone na ŻYWYM rejestrze zmontowanego rdzenia.
-//
-// Powód istnienia tego pliku jest konkretny. Pokrycie liczono dotąd czytaniem
-// źródeł wyrażeniem `Zarejestruj\(shared\.(Command\w+)` — i ta miara kłamie
-// w obie strony. Komendy wpinane przez parametr, a nie literałem
-// (`zarejestrujAkcje(rejestr, p.Akcje, shared.CommandActionList)`
-// w `kompozycja.go`), wyrażenie omija, więc `action.list` wychodził z pomiaru
-// jako komenda bez obsługi, choć rdzeń odpowiada na nią od dawna. W drugą
-// stronę: wywołanie `Zarejestruj` w gałęzi, do której montaż nigdy nie dochodzi,
-// pomiar liczy jako pokrycie.
-//
-// Rejestr zna prawdę, bo to on rozstrzyga, czy komenda dostanie uchwyt, czy
-// odpowiedź `*.unknown`. Sprawdzian pyta jego, a nie źródeł.
+// TestKazdaKomendaKontraktuMaUchwytWRejestrze mierzy pokrycie kontraktu na żywym rejestrze zmontowanego rdzenia, a nie odczytem źródeł, ponieważ rejestr rozstrzyga, czy komenda dostanie uchwyt.
 func TestKazdaKomendaKontraktuMaUchwytWRejestrze(t *testing.T) {
 	zmontowany, _, _ := zmontujDoPomiaruSkutku(t)
 

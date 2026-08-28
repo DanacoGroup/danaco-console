@@ -1,3 +1,6 @@
+// Straże bramy kontraktu: rdzeń wykonuje żądanie dopiero po sprawdzeniu go
+// wobec kontraktu. Odmowa niezgodnego żądania ma nazwać pole, o które idzie,
+// a nie zostawić wołającego przy milczeniu.
 package core
 
 import (
@@ -7,21 +10,6 @@ import (
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/shared"
 )
-
-// STRAŻE BRAMY KONTRAKTU.
-//
-// Rdzeń wykonuje żądanie dopiero po sprawdzeniu go wobec kontraktu. Sprawdziany
-// w tym pliku pilnują dwóch rzeczy naraz, bo obie znoszą się nawzajem:
-//
-//  1. żądanie niezgodne z kontraktem ma WRÓCIĆ ODMOWĄ, a nie powodzeniem
-//     z wartością dobraną przez rdzeń;
-//  2. odmowa ma NAZWAĆ pole, o które idzie — odmowa mówiąca „coś jest nie tak"
-//     zostawia wołającego dokładnie tam, gdzie zostawiało go milczenie.
-//
-// Ładunki są tu wypisane mapą, nie strukturą kontraktu: struktura Go niesie
-// pole wymagane zawsze (znacznik bez `omitempty`), więc żądania BEZ pola nie da
-// się nią złożyć. Żądanie niepełne przychodzi z drutu i tylko mapą da się je
-// odtworzyć.
 
 // odmowaNazywa przerywa sprawdzian, gdy odmowa nie ma spodziewanego kodu albo
 // nie nazywa wszystkich oczekiwanych członów treści.
@@ -49,8 +37,7 @@ func TestZadanieBezPolWymaganychWracaOdmowa(t *testing.T) {
 
 	odmowaNazywa(t, blad, shared.ErrorCodeValidationFailed, "kind", "roots", "defaultMode")
 
-	// Odmowa ma zostawić świat nietknięty: punkt założony „przy okazji" byłby
-	// tą samą szkodą co powodzenie.
+	// Odmowa ma zostawić świat nietknięty, bez punktu założonego „przy okazji".
 	var wykaz shared.AccessPointListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAccessPointList,
 		shared.AccessPointListRequest{}, &wykaz)
@@ -97,9 +84,7 @@ func TestWartoscWyliczeniaZKontraktuPrzechodzi(t *testing.T) {
 }
 
 // TestBrakPolaWymaganegoNazywaPoleNieUsterkeWewnetrzna pilnuje czterech dróg,
-// na których brak wartości wracał jako `internal_error`: wołający dostawał tekst
-// zapytania SQL albo zdanie o kolumnie bazy zamiast nazwy pola, którego nie
-// wypełnił, a kod błędu kazał mu ponowić żądanie, które nie ma prawa się udać.
+// na których brak wartości wracał jako `internal_error` zamiast nazwy pola.
 func TestBrakPolaWymaganegoNazywaPoleNieUsterkeWewnetrzna(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -127,10 +112,8 @@ func TestBrakPolaWymaganegoNazywaPoleNieUsterkeWewnetrzna(t *testing.T) {
 }
 
 // TestPustaWartoscPolaWymaganegoNazywaPole pilnuje tej samej granicy od drugiej
-// strony. Pole obecne, lecz puste, przechodzi bramę kontraktu — kontrakt żąda
-// obecności pola, nie jego niepustości — i rozstrzyga o nim dziedzina. Bez tego
-// sprawdzenia pusty rodzaj kanału dojeżdżał do więzu schematu i wracał treścią
-// zapytania SQL.
+// strony: pole obecne, lecz puste, przechodzi bramę kontraktu, bo kontrakt żąda
+// obecności pola, nie jego niepustości.
 func TestPustaWartoscPolaWymaganegoNazywaPole(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -160,18 +143,8 @@ func TestPustaWartoscPolaWymaganegoNazywaPole(t *testing.T) {
 // ── WYJĄTEK POWITANIA ────────────────────────────────────────────────────────
 
 // TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu pilnuje jedynego
-// wyjątku spod bramy (rejestr decyzji, pozycja 10).
-//
-// CZYM SIĘ TO ŁAMIE. Brama objęła `connection.hello`, którego trzy pola
-// kontrakt oznacza jako wymagane. Klient sprzed wprowadzenia pola `clientId`
-// dostawał więc odmowę zamiast wersji protokołu — a powitanie jest jedynym
-// miejscem, z którego klient tę wersję czyta, czyli jedynym, w którym rozpoznaje,
-// że jest starszy niż rdzeń. Im starszy klient, tym pewniej nie dowiadywał się,
-// dlaczego został odrzucony.
-//
-// Ładunek idzie mapą pustą, bo struktura kontraktu niesie pola wymagane zawsze
-// i żądania BEZ nich nie da się nią złożyć — a niepełne powitanie przychodzi
-// właśnie z drutu.
+// wyjątku spod bramy: powitanie ma oddać wersję protokołu klientowi starszemu
+// niż rdzeń, mimo braków w polach wymaganych kontraktu.
 func TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 
@@ -196,13 +169,9 @@ func TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu(t *testing.T) {
 	}
 }
 
-// TestBrakiPowitaniaIdaDoDziennikaRdzenia pilnuje drugiej połowy pozycji 10:
-// braki pól są odnotowane, a nie przemilczane.
-//
-// Dziennik jest jedynym miejscem, do którego mogą dojść: `ConnectionHelloResponse`
-// nie ma pola na wykaz braków, a dołożenie takiego pola jest zmianą kontraktu.
-// Sprawdzian mierzy więc zapis, a nie treść odpowiedzi — i tym samym pilnuje,
-// żeby wyjątek nie zamienił się w milczenie.
+// TestBrakiPowitaniaIdaDoDziennikaRdzenia pilnuje, żeby braki pól powitania
+// były odnotowane w dzienniku, a nie przemilczane, skoro odpowiedź na nie
+// pola nie ma.
 func TestBrakiPowitaniaIdaDoDziennikaRdzenia(t *testing.T) {
 	zmontowany, zycie, dziennik := zmontujZDziennikiem(t)
 
@@ -221,8 +190,9 @@ func TestBrakiPowitaniaIdaDoDziennikaRdzenia(t *testing.T) {
 			t.Errorf("dziennik rdzenia nie nazywa %q; zapis:\n%s", czlon, zapis)
 		}
 	}
-	// Pole podane nie ma prawa trafić do wykazu braków — inaczej wpis myliłby
-	// czytającego dziennik co do tego, czego klient nie przysłał.
+	// Pole podane nie ma prawa trafić do wykazu braków.
+
+	// Inaczej wpis myliłby czytającego dziennik co do tego, czego brak.
 	if strings.Contains(zapis, "clientId") {
 		t.Errorf("dziennik liczy pole podane jako brakujące; zapis:\n%s", zapis)
 	}
@@ -253,10 +223,6 @@ func TestPowitaniePelneNieZostawiaSladuWDzienniku(t *testing.T) {
 // TestWyjatekObejmujeWylaczniePowitanie pilnuje granicy wyjątku od drugiej
 // strony: sąsiadka powitania w tej samej rodzinie kontraktu przechodzi bramę
 // bez ustępstw i odmawia, nazywając brakujące pole.
-//
-// Bez tego sprawdzianu wyjątek dopisany dla powitania mógłby rozlać się na całą
-// rodzinę `connection.*` albo na komendy wołane przed zalogowaniem, a nikt by
-// tego nie zobaczył — odmowa zniknięta wygląda jak działanie.
 func TestWyjatekObejmujeWylaczniePowitanie(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 

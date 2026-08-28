@@ -8,24 +8,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdzian odmowy przebiegu twarzowego `image.upscale` przy braku wag.
-//
-// ── Dlaczego mierzymy odmowę, a nie skutek ──────────────────────────────────
-// Skutek przebiegu twarzowego mierzy się zdjęciem twarzy, siecią liczącą
-// minutami i trzema zestawami wag ważącymi pół gigabajta. Sprawdzian tego
-// rodzaju byłby na maszynie bez wag „pominięty", czyli świeciłby na zielono, nie
-// mierząc niczego — a to jest wprost ta klasa błędu, przed którą ostrzega ustrój
-// budowy. Odmowa natomiast jest zachowaniem, które MA działać wszędzie i daje
-// się zmierzyć na pustym katalogu.
-//
-// Skutek sieci na zdjęciu wykazuje się uruchomieniem na maszynie z wagami:
-// `faces: false` i `faces: true` nad tym samym źródłem dają obrazy różne,
-// a różnicę podaje się liczbą.
+// Sprawdzian odmowy przebiegu twarzowego image.upscale przy braku wag, mierzonej bez ciężkich zasobów.
 
-// TestBrakWagTwarzyOdmawiaNazywajacPlikIDrogeNaprawy pilnuje, żeby odmowa niosła
-// trzy rzeczy naraz: nazwę brakującego pliku, ścieżkę, pod którą ma leżeć, oraz
-// miejsce, z którego się go bierze. Odmowa mówiąca samo „brak wag" zostawia
-// Operatora z pytaniem, na które ten kod zna odpowiedź.
+// TestBrakWagTwarzyOdmawiaNazywajacPlikIDrogeNaprawy pilnuje, żeby odmowa niosła nazwę brakującego pliku, ścieżkę, pod którą ma leżeć, oraz miejsce, z którego się go bierze.
 func TestBrakWagTwarzyOdmawiaNazywajacPlikIDrogeNaprawy(t *testing.T) {
 	pusty := t.TempDir()
 
@@ -46,11 +31,7 @@ func TestBrakWagTwarzyOdmawiaNazywajacPlikIDrogeNaprawy(t *testing.T) {
 	}
 }
 
-// TestPomocnikTwarzyStoiWWykazieZaleznosci pilnuje, żeby silnik przebiegu
-// twarzowego był widoczny w sondzie startowej. Program wołany przez rdzeń, ale
-// nieobecny w wykazie, jest brakiem, o którym Operator dowiaduje się dopiero po
-// naciśnięciu przycisku — a wykaz istnieje właśnie po to, żeby się nie dowiadywał
-// tą drogą.
+// TestPomocnikTwarzyStoiWWykazieZaleznosci pilnuje, żeby silnik przebiegu twarzowego był widoczny w sondzie startowej, zanim jego brak ujawni się dopiero po wywołaniu.
 func TestPomocnikTwarzyStoiWWykazieZaleznosci(t *testing.T) {
 	szukany := narzedzieOdtwarzaniaTwarzy().Program
 	if szukany == "" {

@@ -1,22 +1,6 @@
-// Odpowiedzialność pliku: dopełnienie rodziny `memory.*` — nazwane konteksty
-// pamięci oraz zasady retencji i wygaszania. Wpisy pamięci zostają tam, gdzie
-// były (`adapter_modul_workspace_pamiec.go`); ten plik ich nie dotyka.
-//
-// ── Kontekst jest zestawem wskazań, nie właścicielem treści ─────────────────
-// Kontekst mówi: „te poziomy pamięci, te wpisy i ta warstwa promptu tworzą
-// zestaw «projekt Atlas»". Usunięcie kontekstu kasuje wskazanie — ani jednego
-// wpisu pamięci. Inaczej skasowanie zestawu roboczego zabierałoby ustalenia,
-// na które Operator się nie umawiał.
-//
-// Aktywacja też niczego nie kasuje: wskazuje kontekst czynny karty sesji, a
-// poprzedni zostaje na miejscu i wraca tym samym wywołaniem.
-//
-// ── Zasada retencji obowiązuje zapisy KOLEJNE ───────────────────────────────
-// Kontrakt mówi to wprost: zmiana reguły nie rusza wstecz wpisów zastanych.
-// Adapter dotrzymuje tego przez to, czego NIE robi — nie kasuje niczego przy
-// zapisie zasady. Liczba wpisów, których zasada dotknie przy najbliższym
-// wygaszaniu, jest policzona (`LiczbaWpisowPamieciProfilu`), a nie oszacowana:
-// odpowiedź niesie liczbę wierszy, nie zgadniętą wielkość.
+// Dopełnia rodzinę memory.* obsługą nazwanych kontekstów pamięci oraz zasad
+// retencji i wygaszania: kontekst jest zestawem wskazań na wpisy, nie ich
+// właścicielem, więc usunięcie kontekstu nie kasuje żadnego wpisu pamięci.
 package core
 
 import (
@@ -36,19 +20,23 @@ const (
 	przedrostekZasadyRetencji   = "retencja-"
 )
 
-// adapterKontekstowPamieci wypełnia port `KontekstyPamieci`.
+// adapterKontekstowPamieci wypełnia port KontekstyPamieci, wiążąc obsługę komend
+// memory.context oraz memory.retention z repozytorium kontekstów pamięci
+// przechowywanym w magazynie danych.
 type adapterKontekstowPamieci struct {
 	repozytorium dane.RepozytoriumKontekstowPamieci
 }
 
-// nowyAdapterKontekstowPamieci wiąże port z magazynem kontekstów.
+// nowyAdapterKontekstowPamieci wiąże port KontekstyPamieci z podanym repozytorium
+// magazynu, zwracając gotowy adapter dla montażu rdzenia bez dalszej konfiguracji.
 func nowyAdapterKontekstowPamieci(
 	repozytorium dane.RepozytoriumKontekstowPamieci) *adapterKontekstowPamieci {
 
 	return &adapterKontekstowPamieci{repozytorium: repozytorium}
 }
 
-// WykazKontekstow obsługuje `memory.context.list`.
+// WykazKontekstow obsługuje komendę memory.context.list: zwraca konteksty profilu
+// wraz z identyfikatorem kontekstu czynnego dla wskazanej karty sesji.
 func (a *adapterKontekstowPamieci) WykazKontekstow(ctx context.Context,
 	z shared.MemoryContextListRequest) (shared.MemoryContextListResponse, error) {
 
@@ -78,7 +66,8 @@ func (a *adapterKontekstowPamieci) WykazKontekstow(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// ZapiszKontekst obsługuje `memory.context.save`.
+// ZapiszKontekst obsługuje komendę memory.context.save: zakłada nowy kontekst albo
+// nadpisuje istniejący, sprawdzając wcześniej poprawność każdego wskazanego poziomu zasięgu.
 func (a *adapterKontekstowPamieci) ZapiszKontekst(ctx context.Context,
 	z shared.MemoryContextSaveRequest) (shared.MemoryContextSaveResponse, error) {
 
@@ -119,7 +108,8 @@ func (a *adapterKontekstowPamieci) ZapiszKontekst(ctx context.Context,
 	return shared.MemoryContextSaveResponse{Context: kontekstPamieciKontraktu(zapisany)}, nil
 }
 
-// UaktywnijKontekst obsługuje `memory.context.activate`.
+// UaktywnijKontekst obsługuje komendę memory.context.activate: ustawia kontekst
+// czynny wskazanej karty sesji, odmawiając dla kontekstu wyłączonego albo nieznanego.
 func (a *adapterKontekstowPamieci) UaktywnijKontekst(ctx context.Context,
 	z shared.MemoryContextActivateRequest) (shared.MemoryContextActivateResponse, error) {
 
@@ -138,9 +128,7 @@ func (a *adapterKontekstowPamieci) UaktywnijKontekst(ctx context.Context,
 		return shared.MemoryContextActivateResponse{}, bladMagazynuKontekstow(err)
 	}
 	if !kontekst.Czynny {
-		// Kontekst wyłączony da się uaktywnić — ale wtedy odpowiedź musi to
-		// powiedzieć, a nie udawać aktywacji. Stąd odmowa nazywająca stan:
-		// Operator włącza kontekst jednym zapisem i wraca.
+		// Kontekst wyłączony da się uaktywnić, ale odpowiedź musi to powiedzieć, nie udawać aktywacji.
 		return shared.MemoryContextActivateResponse{}, bladWskazaniaKontekstu(
 			"kontekst „" + kontekst.Nazwa + "” jest wyłączony — najpierw włącz go " +
 				"komendą memory.context.save (pole enabled)")
@@ -157,7 +145,8 @@ func (a *adapterKontekstowPamieci) UaktywnijKontekst(ctx context.Context,
 	}, nil
 }
 
-// UsunKontekst obsługuje `memory.context.delete`.
+// UsunKontekst obsługuje komendę memory.context.delete, usuwając kontekst o podanym
+// identyfikatorze i zwracając informację, czy wiersz w magazynie w ogóle istniał.
 func (a *adapterKontekstowPamieci) UsunKontekst(ctx context.Context,
 	z shared.MemoryContextDeleteRequest) (shared.MemoryContextDeleteResponse, error) {
 
@@ -171,7 +160,8 @@ func (a *adapterKontekstowPamieci) UsunKontekst(ctx context.Context,
 	return shared.MemoryContextDeleteResponse{Deleted: usuniety}, nil
 }
 
-// ZasadyRetencji obsługuje `memory.retention.get`.
+// ZasadyRetencji obsługuje komendę memory.retention.get, zwracając zasady retencji
+// dopasowane do wskazanego zasięgu, profilu i identyfikatora zasięgu.
 func (a *adapterKontekstowPamieci) ZasadyRetencji(ctx context.Context,
 	z shared.MemoryRetentionGetRequest) (shared.MemoryRetentionGetResponse, error) {
 
@@ -194,7 +184,8 @@ func (a *adapterKontekstowPamieci) ZasadyRetencji(ctx context.Context,
 	return shared.MemoryRetentionGetResponse{Policies: wykaz}, nil
 }
 
-// ZapiszZasadeRetencji obsługuje `memory.retention.set`.
+// ZapiszZasadeRetencji obsługuje komendę memory.retention.set: zapisuje nową zasadę
+// retencji i liczy wpisy pamięci, których zasada dotknie przy najbliższym wygaszaniu.
 func (a *adapterKontekstowPamieci) ZapiszZasadeRetencji(ctx context.Context,
 	z shared.MemoryRetentionSetRequest) (shared.MemoryRetentionSetResponse, error) {
 
@@ -230,9 +221,7 @@ func (a *adapterKontekstowPamieci) ZapiszZasadeRetencji(ctx context.Context,
 		return shared.MemoryRetentionSetResponse{}, bladMagazynuKontekstow(err)
 	}
 
-	// Wpisy zastane liczymy PO zapisie, wobec chwili zapisu: to dokładnie te,
-	// których zasada dotknie przy najbliższym wygaszaniu. Liczba pochodzi
-	// z policzenia wierszy, nie z oszacowania.
+	// Wpisy zastane liczy się po zapisie: to dokładnie te, których zasada dotknie przy wygaszaniu.
 	dotkniete, err := a.repozytorium.LiczbaWpisowPamieciProfilu(ctx,
 		teraz.UTC().Format("2006-01-02T15:04:05.000Z"))
 	if err != nil {
@@ -243,7 +232,8 @@ func (a *adapterKontekstowPamieci) ZapiszZasadeRetencji(ctx context.Context,
 	}, nil
 }
 
-// zapisPoziomowKontekstu składa poziomy zasięgu w zapis strukturalny kolumny.
+// zapisPoziomowKontekstu składa poziomy zasięgu kontekstu w zapis strukturalny kolumny
+// magazynu, oddając pustą tablicę tekstową, gdy poziomów nie podano.
 func zapisPoziomowKontekstu(poziomy []shared.ConfigScope) string {
 	if len(poziomy) == 0 {
 		return "[]"
@@ -255,7 +245,8 @@ func zapisPoziomowKontekstu(poziomy []shared.ConfigScope) string {
 	return string(bajty)
 }
 
-// odczytPoziomowKontekstu rozkłada zapis strukturalny kolumny na poziomy.
+// odczytPoziomowKontekstu rozkłada zapis strukturalny kolumny magazynu z powrotem na
+// poziomy zasięgu, oddając pustą wartość dla zapisu pustego albo niepoprawnego.
 func odczytPoziomowKontekstu(zapis string) []shared.ConfigScope {
 	if strings.TrimSpace(zapis) == "" {
 		return nil
@@ -267,7 +258,8 @@ func odczytPoziomowKontekstu(zapis string) []shared.ConfigScope {
 	return poziomy
 }
 
-// sprawdzPoziomKontekstu odbija poziom zasięgu spoza wyliczenia kontraktu.
+// sprawdzPoziomKontekstu odbija poziom zasięgu spoza wyliczenia kontraktu, porównując
+// podaną wartość z pełnym wykazem poziomów znanych kontraktowi.
 func sprawdzPoziomKontekstu(poziom shared.ConfigScope) error {
 	for _, znany := range shared.WartosciConfigScope() {
 		if poziom == znany {
@@ -277,7 +269,8 @@ func sprawdzPoziomKontekstu(poziom shared.ConfigScope) error {
 	return bladWskazaniaKontekstu("nie znam poziomu zasięgu „" + string(poziom) + "”")
 }
 
-// kontekstPamieciKontraktu przekłada wiersz na kontekst kontraktu.
+// kontekstPamieciKontraktu przekłada wiersz magazynu na kontekst kontraktu, ustawiając
+// identyfikator profilu tylko wtedy, gdy wiersz go niesie.
 func kontekstPamieciKontraktu(k dane.KontekstPamieci) shared.MemoryContext {
 	kontekst := shared.MemoryContext{
 		Id: k.Kod, Name: k.Nazwa, Description: k.Opis,
@@ -292,7 +285,8 @@ func kontekstPamieciKontraktu(k dane.KontekstPamieci) shared.MemoryContext {
 	return kontekst
 }
 
-// zasadaRetencjiKontraktu przekłada wiersz na zasadę kontraktu.
+// zasadaRetencjiKontraktu przekłada wiersz magazynu na zasadę retencji kontraktu,
+// ustawiając identyfikator zasięgu i profilu tylko wtedy, gdy wiersz je niesie.
 func zasadaRetencjiKontraktu(z dane.ZasadaRetencjiPamieci) shared.MemoryRetentionPolicy {
 	zasada := shared.MemoryRetentionPolicy{
 		Id: z.Kod, Scope: shared.ConfigScope(z.Zasieg), TtlDays: z.DniWygasania,
@@ -310,26 +304,30 @@ func zasadaRetencjiKontraktu(z dane.ZasadaRetencjiPamieci) shared.MemoryRetentio
 	return zasada
 }
 
-// bladZapleczaKontekstow nazywa brak magazynu kontekstów po stronie rdzenia.
+// bladZapleczaKontekstow nazywa brak magazynu kontekstów po stronie rdzenia i wskazuje
+// naprawę: podpięcie repozytorium kontekstów pamięci przy składaniu rdzenia.
 func bladZapleczaKontekstow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"konteksty pamięci: rdzeń nie ma wpiętego magazynu — naprawa: podpiąć "+
 			"repozytorium kontekstów pamięci przy składaniu rdzenia"))
 }
 
-// bladWskazaniaKontekstu nazywa niepoprawne żądanie.
+// bladWskazaniaKontekstu nazywa niepoprawne żądanie komendy kontekstów pamięci,
+// niosąc w treści błędu powód odmowy podany przez wywołanie.
 func bladWskazaniaKontekstu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"konteksty pamięci: "+powod))
 }
 
-// bladNieznanegoKontekstuPamieci nazywa wskazanie kontekstu, którego nie ma.
+// bladNieznanegoKontekstuPamieci nazywa wskazanie kontekstu o identyfikatorze, którego
+// magazyn kontekstów pamięci nie zawiera.
 func bladNieznanegoKontekstuPamieci(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"konteksty pamięci: nie ma kontekstu o identyfikatorze "+strings.TrimSpace(kod)))
 }
 
-// bladMagazynuKontekstow nazywa niepowodzenie zapisu albo odczytu.
+// bladMagazynuKontekstow nazywa niepowodzenie zapisu albo odczytu w magazynie
+// kontekstów pamięci, niosąc w treści błędu przyczynę zgłoszoną przez magazyn.
 func bladMagazynuKontekstow(err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"konteksty pamięci: "+err.Error()))

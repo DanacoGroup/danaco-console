@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: złożenie konfiguracji sesji obowiązującej — czyli
-// rozstrzygnięcie obszarów po ośmiu poziomach zasięgu i trzech osiach
-// wraz ze wskazaniem, skąd wzięty jest każdy obszar.
-//
-// Determinizm. Kolejność adresów bierze pakiet konfig (Kontekst.Adresy) —
-// najpierw poziom, w ramach poziomu oś. Wygrywa pierwszy adres, pod którym
-// obszar jest zapisany, a obszary wychodzą w kolejności pól kontraktu. Ta sama
-// zawartość rejestru daje więc zawsze ten sam wynik; rdzeń nie ma tu ani
-// jednego rozstrzygnięcia zależnego od kolejności mapy.
-//
-// Pierwszeństwo należy do pakietu konfig. Rdzeń nie zna kolejności
-// poziomów ani osi i jej nie powtarza; pyta o wykaz adresów i czyta po kolei.
-//
-// Granica katalogu roboczego. Rozejście „ustawiony vs faktycznie używany”
-// składane jest z samej konfiguracji, bez dotykania dysku: odczyt konfiguracji
-// obowiązującej ma być powtarzalny i nie ma prawa zakładać katalogów. Sprawdzenie
-// dysku należy do core.KatalogRoboczy na drodze uruchomienia tury,
-// dlatego pole checkedAt pozostaje zerowe — nic tu nie było sprawdzane.
+// Plik składa konfigurację sesji obowiązującą, rozstrzygając obszary po ośmiu poziomach zasięgu i trzech osiach wraz ze wskazaniem pochodzenia każdego obszaru, w kolejności adresów z pakietu konfig, bez dotykania dysku.
 package core
 
 import (
@@ -59,16 +42,7 @@ func (a *adapterUstawienOsi) KonfiguracjaObowiazujaca(ctx context.Context,
 	return shared.ConfigEffectiveGetResponse{Effective: obowiazujaca}, nil
 }
 
-// KonfiguracjaSesjiOkna rozstrzyga konfigurację obowiązującą dla okna i jego
-// sesji po wszystkich adresach zasięgu. Służy drodze tury: adapter
-// rozmowy odczytuje nią obowiązującą konfigurację i tłumaczy jej obszary na
-// wejście procesu przez warstwę injection (adapter_rozmowa_konfiguracja.go).
-//
-// Bez osi modelu i konta. Osie te są dopiero wynikiem tej konfiguracji (obszary
-// model i account tłumaczą się na wybór modelu i konta wywołania), więc nie
-// mogą wchodzić do jej rozstrzygania — inaczej powstałaby pętla „konto zależy od
-// konfiguracji, która zależy od konta”. Brak zapisu na każdym adresie daje
-// konfigurację pustą, nie odmowę.
+// KonfiguracjaSesjiOkna rozstrzyga konfigurację obowiązującą dla okna i jego sesji po wszystkich adresach zasięgu, pomijając osie modelu i konta jako wynik tej konfiguracji. Brak zapisu na adresie daje konfigurację pustą, nie odmowę.
 func (a *adapterUstawienOsi) KonfiguracjaSesjiOkna(ctx context.Context,
 	idOkna, idSesji string) (shared.SessionConfig, error) {
 
@@ -111,10 +85,7 @@ func (a *adapterUstawienOsi) rozstrzygnijObszary(ctx context.Context, kontekst k
 	return tresci, pochodzenie, nil
 }
 
-// kontekstKonfiguracjiSesji buduje kontekst rozstrzygania z pól żądania. Okno
-// i karta sesji wchodzą wprost, wskazany byt poziomu ląduje na swoim poziomie,
-// a oś modelu albo konta na swojej osi. Pole puste znaczy, że poziom albo oś
-// nie dotyczy tego wywołania i jest pomijana.
+// kontekstKonfiguracjiSesji buduje kontekst rozstrzygania z pól żądania: okno i karta sesji wchodzą wprost, wskazany byt poziomu ląduje na swoim poziomie, a oś modelu albo konta na swojej osi.
 func kontekstKonfiguracjiSesji(z shared.ConfigEffectiveGetRequest) konfig.Kontekst {
 	kontekst := konfig.Kontekst{
 		Okno:       wartoscTekstu(z.WindowId),

@@ -12,23 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek rodziny `extension.*`: czy za odpowiedzią stoi zapis, plik albo
-// rozmowa, która naprawdę się odbyła.
-//
-// Ten sam wzorzec szkody, którego pilnuje `skutek_budowy_produktu_test.go`:
-// koperta `ok` bez pokrycia. Dlatego żaden sprawdzian tutaj nie kończy się na
-// tym, że odpowiedź jest udana. Każdy schodzi niżej:
-//   - do bazy DRUGIM połączeniem i liczy wiersze,
-//   - do pliku w magazynie treści i czyta bajty,
-//   - do serwera protokołu podniesionego przez sprawdzian, który wie, o co go
-//     naprawdę zapytano.
-//
-// Serwer MCP sprawdzianu jest prawdziwym serwerem JSON-RPC nad HTTP: odpowiada
-// na `initialize`, `tools/list` i `tools/call` i zapamiętuje, co dostał.
-// Mierzona jest droga rdzenia — powitanie, odkrycie, wywołanie, dziennik ramek,
-// metryka użycia — a nie to, co odpowiada konkretny serwer.
-
-// pozycjaSprawdzianuRozszerzen zakłada pozycję katalogu i oddaje jej `Extension.id`.
+// pozycjaSprawdzianuRozszerzen zakłada w katalogu pozycję o podanym kodzie
+// i rodzaju, wywołując komendę instalacji, i oddaje jej `Extension.id`.
 func pozycjaSprawdzianuRozszerzen(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	kod string, rodzaj shared.ExtensionKind) string {
 	t.Helper()
@@ -90,7 +75,8 @@ func serwerProtokoluSprawdzianu(t *testing.T) (string, *[]string) {
 	return serwer.URL, &metody
 }
 
-// itoaSprawdzianu składa numer ramki w treść odpowiedzi serwera próbnego.
+// itoaSprawdzianu składa numer ramki żądania protokołu w treść odpowiedzi
+// serwera próbnego, bez odwołania do pakietu formatującego liczby.
 func itoaSprawdzianu(numer int) string {
 	if numer == 0 {
 		return "0"
@@ -103,7 +89,8 @@ func itoaSprawdzianu(numer int) string {
 	return cyfry
 }
 
-// ustawTransportSprawdzianu wskazuje pozycji adres serwera protokołu.
+// ustawTransportSprawdzianu wskazuje pozycji katalogu adres serwera protokołu
+// podniesionego na potrzeby sprawdzianu, ustawiając transport HTTP.
 func ustawTransportSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	pozycja, adres string) {
 	t.Helper()
@@ -167,8 +154,8 @@ func TestKolekcjaPrzestawiaStanWlaczeniaPozycji(t *testing.T) {
 		t.Fatalf("związek kolekcji z pozycjami ma %d wierszy zamiast dwóch", ile)
 	}
 
-	// Obie pozycje wchodzą wyłączone (pochodzenie Personal) — to jest punkt
-	// wyjścia, wobec którego mierzymy skutek.
+	// Obie pozycje wchodzą wyłączone (pochodzenie Personal) — punkt wyjścia
+	// pomiaru skutku.
 	if ile := wierszyApps(t, baza,
 		`SELECT COUNT(*) FROM rozszerzenie WHERE wlaczone = 1`); ile != 0 {
 		t.Fatalf("przed zastosowaniem kolekcji włączonych jest %d pozycji", ile)
@@ -417,14 +404,14 @@ func TestWywolanieNarzedziaZapisujeRamkiIMetryke(t *testing.T) {
 		t.Fatalf("metryka użycia: %+v", uzycie.Usage)
 	}
 
-	// Wywołanie narzędzia, którego serwer nie zna, NIE jest odmową komendy:
-	// inspektor ma pokazać odpowiedź serwera wraz z powodem.
+	// Wywołanie narzędzia nieznanego serwerowi nie jest odmową: inspektor
+	// pokazuje odpowiedź serwera.
 	var nieudane shared.ExtensionToolCallResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandExtensionToolCall,
 		shared.ExtensionToolCallRequest{ExtensionId: pozycja, ToolName: "repo.brak"}, &nieudane)
 	if nieudane.Ok {
-		// Serwer sprawdzianu odpowiada na `tools/call` zawsze — ten sprawdzian
-		// pilnuje więc drogi, nie wyniku: wywołanie ma się odbyć i policzyć.
+		// Serwer sprawdzianu odpowiada na `tools/call` zawsze — pilnowana
+		// jest droga, nie wynik wywołania.
 		t.Log("serwer sprawdzianu przyjmuje każde narzędzie — mierzona jest droga wywołania")
 	}
 	if ile := wierszyApps(t, baza,
@@ -434,7 +421,8 @@ func TestWywolanieNarzedziaZapisujeRamkiIMetryke(t *testing.T) {
 	}
 }
 
-// TestKondycjaIntegracjiMierzySerwerIZapisujeWynik wykazuje pomiar zdrowia.
+// TestKondycjaIntegracjiMierzySerwerIZapisujeWynik wykazuje, że pomiar
+// zdrowia integracji naprawdę pyta serwer protokołu i zapisuje wynik w bazie.
 func TestKondycjaIntegracjiMierzySerwerIZapisujeWynik(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuApps(t, katalog)
@@ -576,7 +564,8 @@ func TestImportOpenapiSkladaOperacjeZOpisu(t *testing.T) {
 	}
 }
 
-// TestImportGraphqlBierzePolaQueryIMutation wykazuje drugą drogę importu.
+// TestImportGraphqlBierzePolaQueryIMutation wykazuje drugą drogę importu
+// opisu: operacje powstają z pól typów Query i Mutation schematu GraphQL.
 func TestImportGraphqlBierzePolaQueryIMutation(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -617,8 +606,8 @@ func TestUprawnieniaRozrozniajaDeklaracjeOdNadania(t *testing.T) {
 	pozycja := pozycjaSprawdzianuRozszerzen(t, zmontowany, zycie, "konektor-crm",
 		shared.ExtensionKindApi)
 
-	// Deklarację manifestu wnosi publikacja pakietu; tutaj wpisujemy ją wprost
-	// przez warstwę danych, bo sprawdzian mierzy rozróżnienie, nie drogę wejścia.
+	// Deklarację manifestu wnosi publikacja pakietu; wpisano ją tu przez
+	// dane, bo liczy się rozróżnienie.
 	if _, err := baza.Exec(
 		`INSERT INTO uprawnienie_rozszerzenia (rozszerzenie_kod, zakres, byt, nadane)
 		 VALUES (?, 'network', 'crm.example.com', 0)`, pozycja); err != nil {
@@ -735,8 +724,8 @@ func TestWeryfikacjaPodpisuLiczyPodpisOdNowa(t *testing.T) {
 		t.Fatalf("poziom zaufania po udanej weryfikacji: %q", weryfikacja.Signature.TrustLevel)
 	}
 
-	// Podmiana sumy kontrolnej ma unieważnić podpis — weryfikacja liczy go od
-	// nowa, a nie przepisuje zapamiętanego werdyktu.
+	// Podmiana sumy kontrolnej unieważnia podpis — weryfikacja liczy go od
+	// nowa, nie z zapisu wcześniej.
 	if _, err := baza.Exec(
 		`UPDATE podpis_rozszerzenia SET suma_kontrolna = ? WHERE rozszerzenie_kod = ?`,
 		"0000000000000000000000000000000000000000000000000000000000000000",
@@ -830,7 +819,7 @@ func TestWersjonowaniePozycjiPrzypinaICofa(t *testing.T) {
 	}
 
 	// Aktualizacja liczy się z rejestru wersji: po cofnięciu do 1.0.0 wersja
-	// 2.0.0 jest dostępna i łamie zgodność semantyczną.
+	// 2.0.0 łamie zgodność.
 	var aktualizacje shared.ExtensionUpdateCheckResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandExtensionUpdateCheck,
 		shared.ExtensionUpdateCheckRequest{ExtensionId: wskaznik(pozycja)}, &aktualizacje)
@@ -933,8 +922,8 @@ func TestReferencjaSekretuNieNiesieTresciPoswiadczenia(t *testing.T) {
 	if odwolanie != "sejf:crm/klucz" {
 		t.Fatalf("w bazie stoi odwołanie %q", odwolanie)
 	}
-	// W bazie modułu nie ma i nie może być treści poświadczenia — jest tam
-	// wyłącznie nazwa, po której sejf je wydaje.
+	// W bazie modułu nie ma treści poświadczenia — leży tam wyłącznie
+	// nazwa, po której sejf je wydaje.
 	if ile := wierszyApps(t, baza,
 		`SELECT COUNT(*) FROM integracja_rozszerzenia WHERE odwolanie_sekretu LIKE '%tajne%'`); ile != 0 {
 		t.Fatal("w wierszu integracji znalazła się treść zamiast odwołania")
@@ -971,8 +960,8 @@ func TestReferencjaSekretuNieNiesieTresciPoswiadczenia(t *testing.T) {
 	if rejestr.Total != 1 || rejestr.Secrets[0].Ref != "sejf:crm/klucz" {
 		t.Fatalf("rejestr referencji: %+v", rejestr.Secrets)
 	}
-	// Sejf poświadczeń rdzenia nie dostał od tej drogi ani jednego wpisu:
-	// wprowadzenie poświadczenia zostaje po stronie Operatora.
+	// Sejf poświadczeń rdzenia nie dostał od tej drogi wpisu: poświadczenie
+	// wprowadza Operator.
 	if _, err := os.Stat(katalog + "/poswiadczenia.json"); err == nil {
 		tresc, _ := os.ReadFile(katalog + "/poswiadczenia.json")
 		if strings.Contains(string(tresc), "crm/klucz") {

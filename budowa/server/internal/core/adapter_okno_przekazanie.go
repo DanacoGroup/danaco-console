@@ -1,38 +1,7 @@
-// Odpowiedzialność pliku: obszar window.* — komenda `window.handoff`, która
-// utrwala przekazanie zlecenia od okna koordynatora do okna wykonawcy
-// Port `PrzekazanieOkna` i komenda `window.action` leżą w
-// `adapter_okno_akcja.go` i `adapter_okno_przekazanie_uchwyty.go`; ten plik
-// deklaruje wyłącznie typ adaptera, jego konstruktor i wiązania zależności.
-//
-// Więź koordynator–wykonawca (kolumna `okno_komunikacji.okno_koordynatora_id`)
-// bez utrwalenia tutaj żyłaby wyłącznie w pamięci przeglądarki i ginęła z jej
-// zamknięciem, a Mission Control nie miałby czego pokazać po ponownym
-// uruchomieniu rdzenia.
-//
-// Komenda robi trzy rzeczy naraz — wszystkie albo żadną:
-//  1. utrwala więź koordynator–wykonawca,
-//  2. zapisuje zlecenie wraz z kompletem kontekstu,
-//  3. zakłada pozycję kolejki, której identyfikator wraca w `QueueItemId`.
-//
-// Warstwa danych (`dane/przekazanie_okna*.go`) przyjmuje `PozycjaKolejkiID` jako
-// identyfikator gotowy i sama pozycji nie zakłada. Zakładanie należy więc do
-// tego adaptera i idzie przez jedyny silnik kolejek — ten sam `adapterKolejek`,
-// którym pracuje pętla sesyjna i moduł Automations. Wzorem
-// `adapterAutomatyk.ZKolejkami` (`adapter_modul_automations.go`) konstruktor
-// bierze wyłącznie repozytorium obszaru, a silnik kolejek dochodzi osobnym
-// wiązaniem po złożeniu grafu zależności w `montaz_moduly.go`. Bez podpiętego
-// adaptera kolejek `Przekaz` odmawia wprost, zamiast meldować wykonanie.
-//
-// Repozytoria okien, sesji, modułów i kanałów stoją tu, bo `window.handoff`
-// przyjmuje identyfikatory zewnętrzne (tekstowe) okien i sesji, a warstwa danych
-// obszaru window.* oraz silnik kolejek pracują na kluczach wewnętrznych
-// (`int64`) tabel `okno_komunikacji` i `sesja`. Rozwiązanie identyfikatora na
-// wiersz — i odmowa `not_found`, gdy okna nie ma — jest obowiązkiem tego
-// adaptera, bo warstwa danych przyjmuje klucze już rozwiązane. Moduły i kanały
-// modelu służą wyłącznie złożeniu odpowiedzi: kontrakt `Window` niesie kody
-// modułu i kanału, a wiersz okna niesie klucze obce do nich. Wszystkie te
-// zależności powstają w `montaz_moduly.go`, dlatego adapter przyjmuje je gotowe
-// przez wiązania tego pliku.
+// Wypełnia obszar window.* komendą `window.handoff`, która utrwala
+// przekazanie zlecenia od okna koordynatora do okna wykonawcy wraz z pozycją
+// kolejki i zapisanym kontekstem; deklaruje typ adaptera, konstruktor
+// i wiązania zależności.
 package core
 
 import (
@@ -47,27 +16,19 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki i stałe wartości bytów zakładanych przez tę komendę. Zlecenie
-// przekazania samo nie ma identyfikatora tekstowego kontraktu (kontrakt oddaje
-// wyłącznie `Window` i `QueueItemId`), więc jedyny przedrostek dotyczy rodzaju
-// kolejki, którą komenda zakłada dla każdego przekazania z osobna.
+// Stałe wartości bytów zakładanych przez tę komendę. Zlecenie przekazania nie
+// ma własnego identyfikatora tekstowego kontraktu, więc jedyna stała dotyczy
+// rodzaju kolejki zakładanej dla każdego przekazania z osobna.
 const (
-	// rodzajKolejkiPrzekazania to `multitasking`, a nie własna wartość.
-	//
-	// Schemat dopuszcza dokładnie dwa rodzaje kolejki — `sesyjna`
-	// i `multitasking` — bo jeden silnik kolejek obsługuje pętlę sesyjną
-	// i MultitaskingAI. Przekazanie zlecenia z okna koordynatora do okna
-	// wykonawcy jest pętlą MultitaskingAI, więc mieści się w rodzaju już
-	// istniejącym; własny rodzaj byłby trzecim znaczeniem tego samego pojęcia
-	// i padłby na warunku CHECK kolumny.
+	// rodzajKolejkiPrzekazania to `multitasking`, a nie własna wartość: schemat
+	// dopuszcza tylko `sesyjna` i `multitasking`, a przekazanie zlecenia jest
+	// pętlą MultitaskingAI.
 	rodzajKolejkiPrzekazania = "multitasking"
 )
 
-// adapterPrzekazaniaOkna wypełnia port PrzekazanieOkna.
-// Zależności poza repozytorium własnego obszaru są bytami montażu: silnik
-// kolejek (jedyny wykonawca pozycji), repozytoria okien i sesji (rozwiązanie
-// identyfikatorów zewnętrznych na wewnętrzne) oraz słowniki modułów i kanałów
-// modelu (złożenie okna wyniku).
+// adapterPrzekazaniaOkna wypełnia port PrzekazanieOkna. Zależności poza
+// repozytorium własnego obszaru — silnik kolejek, repozytoria okien i sesji,
+// słowniki modułów i kanałów — są bytami montażu.
 type adapterPrzekazaniaOkna struct {
 	repozytorium dane.RepozytoriumPrzekazan
 	kolejki      *adapterKolejek
@@ -94,10 +55,9 @@ func (a *adapterPrzekazaniaOkna) ZKolejkami(kolejki *adapterKolejek) *adapterPrz
 	return a
 }
 
-// ZBytamiOkien podpina repozytoria potrzebne do rozwiązania identyfikatorów
-// zewnętrznych żądania (okna, sesja) i do złożenia okna wyniku (moduły,
-// kanały modelu). Cztery byty naraz, bo wszystkie cztery powstają w tym samym
-// miejscu montażu i żaden z osobna nie czyni komendy wykonalną.
+// ZBytamiOkien podpina repozytoria do rozwiązania identyfikatorów żądania
+// (okna, sesja) i do złożenia okna wyniku (moduły, kanały). Cztery naraz,
+// bo powstają w tym samym miejscu montażu.
 func (a *adapterPrzekazaniaOkna) ZBytamiOkien(okna dane.RepozytoriumOkien, sesje dane.RepozytoriumSesji,
 	moduly dane.RepozytoriumModulow, kanaly dane.RepozytoriumKanalow) *adapterPrzekazaniaOkna {
 
@@ -108,30 +68,17 @@ func (a *adapterPrzekazaniaOkna) ZBytamiOkien(okna dane.RepozytoriumOkien, sesje
 	return a
 }
 
-// ZKatalogiemAkcji podpina katalog akcji (tabela `akcja`). Bez niego
-// `window.action` nie odróżniłaby akcji istniejącej od zmyślonej i kwitowałaby
-// każdą powodzeniem.
-// Katalog jest odczytywany wprost z repozytorium, a nie z `RejestrAkcji`,
-// bo rozstrzygnięcie „czy ta akcja istnieje" ma widzieć stan bieżący wiersza,
-// nie kopię z chwili startu rdzenia.
+// ZKatalogiemAkcji podpina katalog akcji. Bez niego `window.action` nie
+// odróżniłaby akcji istniejącej od zmyślonej. Katalog czyta się wprost
+// z repozytorium, żeby widzieć stan bieżący wiersza.
 func (a *adapterPrzekazaniaOkna) ZKatalogiemAkcji(akcje dane.RepozytoriumAkcji) *adapterPrzekazaniaOkna {
 	a.akcje = akcje
 	return a
 }
 
-// Przekaz wykonuje `window.handoff`. Trzy zapisy naraz: pozycja kolejki, więź
-// koordynator–wykonawca, zlecenie z kontekstem. Kolejność jest celowa: pozycja
-// kolejki idzie pierwsza, bo jest jedynym z trzech zapisów, który silnik kolejek
-// umie cofnąć samodzielnie (kolejka porzucona bez zlecenia jest stanem
-// nieszkodliwym); więź i zlecenie idą po niej, gdy wiadomo już, że jest czym
-// wykonać.
-//
-// Wspólnej transakcji SQL między repozytoriami nie ma — warstwa danych obszaru
-// window.* i silnik kolejek to dwa oddzielne repozytoria. Odmowa wczesna, przed
-// pierwszym zapisem, pokrywa najczęstszy przypadek: okno albo sesja, których nie
-// ma. Usterka po pierwszym zapisie zostawia założoną pozycję kolejki bez
-// zlecenia, co Queue Manager pokazuje jako pozycję do ręcznego domknięcia, a nie
-// jako ciche zaginięcie zlecenia.
+// Przekaz wykonuje `window.handoff`: zakłada pozycję kolejki, utrwala więź
+// koordynator–wykonawca i zapisuje zlecenie z kontekstem. Kolejność zapisów
+// jest celowa, a wspólnej transakcji SQL między repozytoriami nie ma.
 func (a *adapterPrzekazaniaOkna) Przekaz(ctx context.Context,
 	z shared.WindowHandoffRequest) (shared.WindowHandoffResponse, error) {
 
@@ -159,10 +106,9 @@ func (a *adapterPrzekazaniaOkna) Przekaz(ctx context.Context,
 	return shared.WindowHandoffResponse{Window: oknoWyniku, QueueItemId: strconv.FormatInt(pozycjaID, 10)}, nil
 }
 
-// rozwiazBytyZadania odnajduje okno źródłowe, okno docelowe i sesję po ich
-// identyfikatorach zewnętrznych. Okno, którego nie ma — po którejkolwiek
-// stronie przekazania — kończy się odmową `not_found`, nie cichą zgodą: cicha
-// zgoda potwierdzałaby więź, która w rzeczywistości nie powstała.
+// rozwiazBytyZadania odnajduje okno źródłowe, okno docelowe i sesję po
+// identyfikatorach zewnętrznych. Brak okna po którejkolwiek stronie kończy
+// się odmową `not_found`, nie cichą zgodą.
 func (a *adapterPrzekazaniaOkna) rozwiazBytyZadania(ctx context.Context,
 	z shared.WindowHandoffRequest) (dane.Okno, dane.Okno, dane.Sesja, error) {
 
@@ -182,11 +128,8 @@ func (a *adapterPrzekazaniaOkna) rozwiazBytyZadania(ctx context.Context,
 }
 
 // zalozPozycjeKolejki zakłada kolejkę przekazania i jej jedyną pozycję przez
-// silnik kolejek (`a.kolejki.repozytorium` — ten sam obiekt, którym jedzie
-// `adapter_modul_automations_kolejka.go`). Kolejka nowa dla każdego przekazania,
-// bo handoff nie ma pojęcia „kolejki tej pary okien" do ponownego użycia —
-// wzorzec `queue.create` w `adapter_kolejki.go` też zakłada kolejkę za każdym
-// wywołaniem.
+// silnik kolejek. Kolejka jest nowa dla każdego przekazania, bo handoff nie
+// ma pojęcia kolejki tej pary okien do ponownego użycia.
 func (a *adapterPrzekazaniaOkna) zalozPozycjeKolejki(ctx context.Context, sesja dane.Sesja,
 	zrodlowe, docelowe dane.Okno, z shared.WindowHandoffRequest) (int64, error) {
 
@@ -237,10 +180,8 @@ func kompletKontekstuJSON(pakiet *shared.ContextBundle) (*string, error) {
 }
 
 // oknoWynikuKontraktu składa okno docelowe kontraktu po przyjęciu zlecenia.
-// Korzysta z tego samego przekładu co odczyt utrwalony (`oknoWierszaKontraktu`
-// w `przeklad_nawigacja.go`); dokłada wyłącznie identyfikator sesji zewnętrzny
-// (już znany z żądania — drugi odczyt sesji byłby zapytaniem po to samo) i
-// świeżą więź koordynatora, którą ta komenda właśnie zapisała.
+// Korzysta z przekładu `oknoWierszaKontraktu` i dokłada identyfikator sesji
+// oraz świeżą więź koordynatora zapisaną przez tę komendę.
 func (a *adapterPrzekazaniaOkna) oknoWynikuKontraktu(ctx context.Context, docelowe dane.Okno,
 	z shared.WindowHandoffRequest) (shared.Window, error) {
 
@@ -267,12 +208,9 @@ func (a *adapterPrzekazaniaOkna) oknoWynikuKontraktu(ctx context.Context, docelo
 	return okno, nil
 }
 
-// kodSlownika odnajduje kod bytu o wskazanym kluczu wewnętrznym w już
-// odczytanym wykazie słownika (moduły albo kanały modelu). Typ ogólny, bo oba
-// słowniki mają ten sam kształt wyszukania — jeden przebieg wykazu zamiast
-// dwóch niemal identycznych funkcji; wykaz kanałów czyta się bez filtra
-// aktywności, bo okno mogło zostać założone na kanale, który od tamtej pory
-// wyłączono.
+// kodSlownika odnajduje kod bytu o wskazanym kluczu wewnętrznym w odczytanym
+// wykazie słownika, modułów albo kanałów. Typ ogólny zastępuje dwie niemal
+// identyczne funkcje jednym przebiegiem wykazu.
 func kodSlownika[T any](id int64, wykaz []T, klucz func(T) (int64, string)) (string, error) {
 	for _, element := range wykaz {
 		elementID, elementKod := klucz(element)
@@ -322,10 +260,8 @@ func bladNieznanejSesjiPrzekazania(idSesji string, err error) error {
 }
 
 // errBrakSilnikaKolejekPrzekazania nazywa brak wykonawcy pozycji kolejki.
-// Kontrakt nie ma kodu „domena niewpięta" (tak samo jak przy Automations —
-// `adapter_modul_automations_pozycje.go`), więc odmowa idzie tym samym kodem
-// `channel_unavailable`: ponawialna, wpięcie silnika czyni żądanie wykonalnym
-// bez zmiany treści.
+// Kontrakt nie ma kodu domena niewpięta, więc odmowa idzie kodem
+// `channel_unavailable`, ponawialnym po wpięciu silnika.
 var errBrakSilnikaKolejekPrzekazania = protocol.JakoError(protocol.NowyBlad(
 	shared.ErrorCodeChannelUnavailable,
 	"window.handoff: silnik kolejek nie jest wpięty — przekazania nie ma kto wykonać"))

@@ -1,30 +1,4 @@
-// Odpowiedzialność pliku: miejsca, w których rdzeń CZYTA zakres eksperta
-// i ODMAWIA.
-//
-// Powód istnienia pliku jest jeden i wart powtórzenia: zapis uprawnienia, który
-// nie jest sprawdzany przy wykonaniu, jest gorszy niż jego brak. Operator widzi
-// wtedy w Permissions Center ograniczenie, którego nikt nie egzekwuje, i pracuje
-// w przekonaniu, że ekspert czegoś nie może — choć może.
-//
-// Straż nie stoi w sprzeczności z zasadą braku twardych blokad. Blokady
-// wbudowanej na stałe tu nie ma: stanem wyjściowym eksperta jest pełny dostęp
-// operacyjny i straż wtedy milczy. Odmawia WYŁĄCZNIE tam, gdzie Operator
-// świadomie zawęził zakres — a zawężenie zignorowane byłoby kłamstwem okna,
-// nie swobodą.
-//
-// Dwa miejsca odmowy odpowiadają dwóm z czterech grup zakresu Permissions
-// Center:
-//
-//   - „Dostęp do modułów i zasobów" — nałożenie eksperta na okno modułu, który
-//     nie mieści się w jego zakresie (`agent.modules.set` oraz wpis uprawnienia
-//     grupy `modules`);
-//   - „Zakres działania w MultitaskingAI" — powołanie podagentów przez eksperta
-//     z wyłączonym Subagent Network (`agent.subagent.set`).
-//
-// Pozostałe dwie grupy — dostęp do rozszerzeń i izolacja techniczna — jadą
-// swoimi drogami: konektor niepodłączony po prostu nie wchodzi do `--mcp-config`
-// (`most_okna.go`), a zakresy izolacji technicznej wykonuje brama izolacji
-// procesu, ta sama, którą jedzie okno konfiguracji punktów izolacji.
+// Plik zawiera miejsca, w których rdzeń czyta zakres eksperta i odmawia: nałożenie eksperta na okno modułu spoza jego zakresu, oraz powołanie podagentów przez eksperta z wyłączonym Subagent Network. Straż milczy, gdy zakres nie jest zawężony.
 package core
 
 import (
@@ -36,17 +10,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// StrazEksperta rozstrzyga, czy ekspert może działać w danym miejscu.
-//
-// Port stoi po stronie odbiorcy: pytają go adapter okien (przy nałożeniu
-// eksperta) i adapter podagentów (przy powołaniu). Straż niewpięta nie zmienia
-// niczego — stanem wyjściowym platformy jest pełny dostęp.
+// StrazEksperta rozstrzyga, czy ekspert może działać w danym miejscu. Port stoi po stronie odbiorcy: pytają go adapter okien przy nałożeniu eksperta i adapter podagentów przy powołaniu. Straż niewpięta nie zmienia niczego.
 type StrazEksperta interface {
 	// SprawdzModulOkna odmawia, gdy zakres eksperta nie obejmuje modułu tego
 	// okna. Nil znaczy „wolno".
 	SprawdzModulOkna(ctx context.Context, kodEksperta string, modulID int64) error
-	// GranicaPodagentowEksperta oddaje górną liczbę jednoczesnych podagentów
-	// eksperta oraz to, czy ekspert w ogóle je uruchamia.
+	// GranicaPodagentowEksperta oddaje górną liczbę jednoczesnych podagentów eksperta i czy je uruchamia.
 	GranicaPodagentowEksperta(ctx context.Context, kodEksperta string) (int, bool)
 }
 
@@ -60,25 +29,14 @@ type strazEksperta struct {
 
 var _ StrazEksperta = (*strazEksperta)(nil)
 
-// NowaStrazEksperta wiąże straż z biblioteką ekspertów i katalogiem modułów.
+// NowaStrazEksperta wiąże straż z biblioteką ekspertów i katalogiem modułów, tworząc gotowy do użycia port StrazEksperta.
 func NowaStrazEksperta(biblioteka dane.RepozytoriumAgentow,
 	moduly dane.RepozytoriumModulow) *strazEksperta {
 
 	return &strazEksperta{biblioteka: biblioteka, moduly: moduly}
 }
 
-// SprawdzModulOkna odmawia nałożenia eksperta na okno modułu spoza jego zakresu.
-//
-// Dwa zapisy mówią o tym samym i oba obowiązują:
-//
-//   - moduły zastosowania (`agent.modules.set`) — wykaz PUSTY znaczy brak
-//     ograniczenia, więc milczy;
-//   - wpis uprawnienia grupy `modules` z zakresem równym kodowi modułu
-//     i wartością `granted = false` — świadome odebranie jednego modułu.
-//
-// Ekspert nierozpoznany przechodzi bez odmowy. Kod, którego nikt nie zna, jest
-// brakiem, a nie zawężeniem — składacz nakładki i tak nie znajdzie wtedy
-// eksperta i okno ruszy na modelu surowym (`tozsamosc_agenta.go`).
+// SprawdzModulOkna odmawia nałożenia eksperta na okno modułu spoza jego zakresu, rozstrzyganego wykazem modułów zastosowania oraz wpisem uprawnienia grupy modules. Ekspert nierozpoznany przechodzi bez odmowy jako brak, nie zawężenie.
 func (s *strazEksperta) SprawdzModulOkna(ctx context.Context, kodEksperta string, modulID int64) error {
 	if s == nil || s.biblioteka == nil || strings.TrimSpace(kodEksperta) == "" || modulID == 0 {
 		return nil
@@ -145,7 +103,7 @@ func (s *strazEksperta) GranicaPodagentowEksperta(ctx context.Context, kodEksper
 	return ekspert.LimitPodagentow, true
 }
 
-// zawieraKodModulu sprawdza obecność kodu w wykazie modułów zastosowania.
+// zawieraKodModulu sprawdza obecność kodu modułu w wykazie modułów zastosowania eksperta, przez proste porównanie.
 func zawieraKodModulu(kody []string, szukany string) bool {
 	for _, kod := range kody {
 		if kod == szukany {
@@ -164,7 +122,7 @@ func odmowaZakresuEksperta(kodEksperta, kodModulu, powod string) error {
 			"(agent.modules.set albo agent.permission.remove) albo wskaże innego eksperta"))
 }
 
-// odmowaPodagentowEksperta składa odmowę powołania podagentów.
+// odmowaPodagentowEksperta składa odmowę powołania podagentów przez eksperta z wyłączonym Subagent Network.
 func odmowaPodagentowEksperta(kodEksperta string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied,
 		"zakres eksperta: "+kodEksperta+" ma wyłączony Subagent Network — powołanie podagentów "+

@@ -1,25 +1,5 @@
-// Odpowiedzialność pliku: `image.vectorize` — zamiana bitmapy na czyste ścieżki
-// wektorowe. Arytmetyka obrysu, upraszczania i ścieńczania leży
-// w `adapter_narzedzia_obraz_wektor_slad.go`; tutaj jest rozstrzygnięcie, co
-// właściwie obrysowujemy w każdym z trzech trybów, i złożenie wyniku w SVG.
-//
-// ── Trzy tryby, trzy różne pytania ──────────────────────────────────────────
-//   - `outline`   — gdzie kończy się kształt. Obraz sprowadzamy do dwóch
-//     wartości progiem jasności i obrysowujemy obszar ciemny. To tryb dla
-//     logotypu, pieczęci, znaku.
-//   - `posterize` — z ilu płaszczyzn barwnych składa się obraz. Barwy skupiamy
-//     w tyle grup, ile mówi `colors`, i każdą grupę obrysowujemy osobno. To
-//     tryb dla ilustracji.
-//   - `centerline`— którędy biegnie kreska. Obszar ścieńczamy do linii
-//     o grubości piksela i obrysowujemy ją jako kreskę. To tryb dla rysunku
-//     technicznego i pisma odręcznego, gdzie obrys konturu dałby każdą kreskę
-//     jako podwójną pętlę.
-//
-// ── Wynik jest zasobem SVG, nie obrazem rastrowym ──────────────────────────
-// Zasób idzie do tego samego magazynu, co każdy inny wytwór rodziny `image.*`,
-// ale jego format to `svg`. Wymiarów rdzeń przy nim nie mierzy: `image.DecodeConfig`
-// nie zna SVG, a wpisanie tam wymiarów źródła podałoby liczby, których nikt nie
-// zmierzył na wyniku. Wymiary niosą atrybuty samego dokumentu SVG.
+// Plik realizuje `image.vectorize`: zamianę bitmapy na ścieżki wektorowe
+// w jednym z trzech trybów obrysu oraz złożenie wyniku w dokument SVG.
 package core
 
 import (
@@ -34,31 +14,25 @@ import (
 )
 
 const (
-	// granicaPikseliWektoryzacji — obrys chodzi po każdym pikselu i po każdym
-	// jego sąsiedzie, więc koszt rośnie liniowo z polem, ale pamięć maski jest
-	// dodatkowa. Szesnaście megapikseli to zdjęcie 4000×4000: więcej nie ma
-	// sensu obrysowywać, bo wynik ma wtedy więcej wierzchołków niż źródło
-	// pikseli.
+	// granicaPikseliWektoryzacji ogranicza pole obrazu poddawane obrysowi;
+	// szesnaście megapikseli odpowiada zdjęciu o boku cztery tysiące pikseli.
 	granicaPikseliWektoryzacji = 16_000_000
 
-	// najmniejszyObrysowywanyObszar odrzuca kontury krótsze niż pięć pikseli.
-	// Bez tego pojedynczy piksel szumu wchodzi do wyniku jako osobna ścieżka,
-	// a skan z aparatu daje ich dziesiątki tysięcy.
+	// najmniejszyObrysowywanyObszar odrzuca kontury krótsze niż pięć pikseli,
+	// usuwając z wyniku szum pojedynczych pikseli.
 	najmniejszyObrysowywanyObszar = 5
 
-	// gornaGranicaBarwWektoryzacji zamyka liczbę płaszczyzn trybu `posterize`.
-	// Powyżej kilkunastu barw wynik przestaje być wektorem, a staje się mapą
-	// pikseli zapisaną jako ścieżki — cięższą od źródła i nie do edycji.
+	// gornaGranicaBarwWektoryzacji zamyka liczbę płaszczyzn barwnych trybu
+	// `posterize`, powyżej której wynik przestaje być właściwym wektorem.
 	gornaGranicaBarwWektoryzacji = 24
 
-	// progJasnosciObrysu rozdziela obraz na ciemny (obrysowywany) i jasny (tło)
-	// w trybach `outline` i `centerline`. Połowa zakresu jest wyborem
-	// neutralnym; kontrakt nie ma pola na próg, a zgadywanie go z histogramu
-	// dawałoby dwa różne wyniki dla dwóch skanów tego samego rysunku.
+	// progJasnosciObrysu rozdziela obraz na ciemny obrysowywany i jasne tło
+	// w trybach `outline` i `centerline`, jako połowa zakresu jasności.
 	progJasnosciObrysu = 0.5
 )
 
-// Zwektoryzuj obsługuje `image.vectorize`.
+// Zwektoryzuj obsługuje `image.vectorize`, wybierając tryb obrysu i składając
+// znalezione ścieżki w dokument SVG odkładany do magazynu zasobów.
 func (a *adapterNarzedziObrazu) Zwektoryzuj(ctx context.Context,
 	z shared.ImageVectorizeRequest) (shared.ImageVectorizeResponse, error) {
 
@@ -103,9 +77,7 @@ func (a *adapterNarzedziObrazu) Zwektoryzuj(ctx context.Context,
 	}
 
 	if len(sciezki) == 0 {
-		// Obraz jednolity nie ma konturu i to jest odpowiedź, nie awaria. Ale
-		// pusty dokument SVG podany jako wektoryzacja byłby atrapą wyniku,
-		// więc odmawiamy, nazywając powód.
+		// Pusty dokument SVG podany jako wynik byłby atrapą wektoryzacji.
 		return shared.ImageVectorizeResponse{}, bladPrzetwarzaniaObrazu(
 			"obrys nie znalazł ani jednej ścieżki — obraz jest jednolity albo " +
 				"kontrast między kształtem a tłem jest zbyt mały do rozdzielenia")
@@ -177,7 +149,8 @@ func maskaCiemnychPikseli(obraz image.Image) *maskaRastrowa {
 	return maska
 }
 
-// obrysKonturu obrysowuje kształt ciemny — tryb `outline`.
+// obrysKonturu obrysowuje kształt ciemny wyznaczony progiem jasności — tryb
+// `outline`, właściwy logotypowi, pieczęci albo znakowi.
 func obrysKonturu(obraz image.Image, tolerancja float64) []sciezkaWektorowa {
 	kontury := obrysyMaski(maskaCiemnychPikseli(obraz), najmniejszyObrysowywanyObszar)
 	sciezki := make([]sciezkaWektorowa, 0, len(kontury))
@@ -193,8 +166,8 @@ func obrysKonturu(obraz image.Image, tolerancja float64) []sciezkaWektorowa {
 	return sciezki
 }
 
-// obrysLiniiSrodkowej ścieńcza kształt do linii i obrysowuje ją jako kreskę —
-// tryb `centerline`.
+// obrysLiniiSrodkowej ścieńcza kształt do linii o grubości piksela i
+// obrysowuje ją jako kreskę — tryb `centerline`, właściwy rysunkowi technicznemu.
 func obrysLiniiSrodkowej(obraz image.Image, tolerancja float64) []sciezkaWektorowa {
 	scienczona := scienczMaske(maskaCiemnychPikseli(obraz))
 	kontury := obrysyMaski(scienczona, najmniejszyObrysowywanyObszar)
@@ -211,16 +184,9 @@ func obrysLiniiSrodkowej(obraz image.Image, tolerancja float64) []sciezkaWektoro
 	return sciezki
 }
 
-// obrysPlaszczyznBarwnych skupia barwy obrazu i obrysowuje każdą płaszczyznę
-// osobno — tryb `posterize`.
-//
-// Barwy skupiamy metodą k-średnich na próbce pikseli. Próbka, a nie komplet:
-// dla obrazu megapikselowego przejście po wszystkich pikselach w każdej
-// iteracji kosztuje sekundy, a środki skupień z próbki co dziesiąty piksel
-// wychodzą praktycznie takie same.
-//
-// Płaszczyzny idą od najciemniejszej: w dokumencie SVG ścieżka późniejsza
-// zasłania wcześniejszą, a płaszczyzna jasna bywa tłem dla ciemnej.
+// obrysPlaszczyznBarwnych skupia barwy obrazu metodą k-średnich na próbce
+// pikseli i obrysowuje każdą płaszczyznę osobno, od najciemniejszej — tryb
+// `posterize`.
 func obrysPlaszczyznBarwnych(obraz image.Image, barw int, tolerancja float64) []sciezkaWektorowa {
 	if barw <= 1 {
 		return obrysKonturu(obraz, tolerancja)
@@ -264,11 +230,9 @@ func obrysPlaszczyznBarwnych(obraz image.Image, barw int, tolerancja float64) []
 	return sciezki
 }
 
-// skupieniaBarw wyznacza środki skupień barw metodą k-średnich.
-//
-// Środki startowe rozkładamy równomiernie po osi jasności próbki, a nie losowo:
-// losowy start dawałby dwa różne wyniki dla dwóch wywołań na tym samym obrazie,
-// a wektoryzacja ma być powtarzalna.
+// skupieniaBarw wyznacza środki skupień barw metodą k-średnich, ze środkami
+// startowymi rozłożonymi równomiernie po osi jasności próbki, nie losowo,
+// aby wynik wektoryzacji był powtarzalny między wywołaniami.
 func skupieniaBarw(obraz image.Image, barw int) [][3]float64 {
 	granice := obraz.Bounds()
 	krok := 1
@@ -334,7 +298,8 @@ func skupieniaBarw(obraz image.Image, barw int) [][3]float64 {
 	return srodki
 }
 
-// numerNajblizszegoSkupienia zwraca indeks środka najbliższego pikselowi.
+// numerNajblizszegoSkupienia zwraca indeks środka skupienia najbliższego
+// wskazanemu pikselowi w przestrzeni barw.
 func numerNajblizszegoSkupienia(piksel [3]float64, srodki [][3]float64) int {
 	najlepszy := 0
 	najmniejsza := math.MaxFloat64
@@ -350,27 +315,28 @@ func numerNajblizszegoSkupienia(piksel [3]float64, srodki [][3]float64) int {
 	return najlepszy
 }
 
-// najblizszeSkupienie zwraca środek najbliższy pikselowi.
+// najblizszeSkupienie zwraca środek skupienia najbliższy wskazanemu pikselowi
+// w przestrzeni barw, iterując po pełnym wykazie środków skupień.
 func najblizszeSkupienie(piksel [3]float64, srodki [][3]float64) [3]float64 {
 	return srodki[numerNajblizszegoSkupienia(piksel, srodki)]
 }
 
-// jasnoscSkupienia liczy jasność środka skupienia wagami luminancji.
+// jasnoscSkupienia liczy jasność środka skupienia wagami luminancji, wartość
+// używaną do sortowania płaszczyzn barwnych.
 func jasnoscSkupienia(srodek [3]float64) float64 {
 	return 0.2126*srodek[0] + 0.7152*srodek[1] + 0.0722*srodek[2]
 }
 
-// zapisBarwy zamienia środek skupienia na zapis szesnastkowy dokumentu SVG.
+// zapisBarwy zamienia środek skupienia na zapis szesnastkowy barwy właściwy
+// atrybutom `fill` i `stroke` dokumentu SVG.
 func zapisBarwy(srodek [3]float64) string {
 	return fmt.Sprintf("#%02x%02x%02x", bajtSkladowej(srodek[0]), bajtSkladowej(srodek[1]),
 		bajtSkladowej(srodek[2]))
 }
 
-// zlozDokumentSvg składa gotowy dokument z wykazu ścieżek.
-//
-// `shape-rendering="geometricPrecision"` mówi przeglądarce, żeby nie
-// zaokrąglała wierzchołków do siatki pikseli — bez tego uproszczona łamana
-// wygląda w podglądzie na bardziej postrzępioną, niż jest.
+// zlozDokumentSvg składa gotowy dokument z wykazu ścieżek, ustawiając
+// atrybut `shape-rendering="geometricPrecision"`, aby przeglądarka nie
+// zaokrąglała wierzchołków uproszczonej łamanej do siatki pikseli.
 func zlozDokumentSvg(szerokosc, wysokosc int, sciezki []sciezkaWektorowa) string {
 	var dokument strings.Builder
 	fmt.Fprintf(&dokument,
@@ -393,7 +359,8 @@ func zlozDokumentSvg(szerokosc, wysokosc int, sciezki []sciezkaWektorowa) string
 	return dokument.String()
 }
 
-// zapisSciezki składa atrybut `d` jednej ścieżki.
+// zapisSciezki składa atrybut `d` jednej ścieżki z jej wykazu punktów łamanej,
+// domykając ścieżkę wypełnienia poleceniem zamknięcia konturu.
 func zapisSciezki(sciezka sciezkaWektorowa) string {
 	if len(sciezka.punkty) < 2 {
 		return ""

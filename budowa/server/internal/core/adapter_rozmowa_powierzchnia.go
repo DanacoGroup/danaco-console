@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: przekład obszarów tools, permissions, hooks, skills,
-// environment, provider i mcp konfiguracji sesji na trzy powierzchnie procesu
-// kanału, które warstwa injection już potrafi złożyć:
-//
-//   - napis --settings (plik ustawień sesji) — reguły uprawnień i narzędzi,
-//     sekcja hooks (zaczepy cyklu życia) oraz odmowa narzędzia Skill, gdy obszar
-//     skills jest wyłączony;
-//   - zmienne środowiskowe procesu — obszar environment oraz adres dostawcy;
-//   - osobne --mcp-config — wiązania serwerów MCP opisane wprost.
-//
-// Ten plik jest jedynym miejscem w drzewie, które zna kształt pliku ustawień
-// dostawcy i nazwy zmiennych środowiskowych. Model konfiguracji pozostaje
-// dziedzinowy — dopiero tutaj staje się „permissions.allow” czy
-// „ANTHROPIC_BASE_URL”.
+// Plik przekłada obszary tools, permissions, hooks, skills, environment, provider i mcp konfiguracji sesji na trzy powierzchnie procesu kanału: napis --settings, zmienne środowiskowe i osobne --mcp-config.
 package core
 
 import (
@@ -69,11 +56,7 @@ type zaczepPoleceniaCLI struct {
 	Timeout *int   `json:"timeout,omitempty"`
 }
 
-// uprawnieniaCLI odwzorowuje obszar permissions oraz tools na sekcję permissions
-// pliku ustawień dostawcy. Trybu domyślnego tu nie ma: tryb uprawnień jedzie
-// przełącznikiem --permission-mode (z.TrybUprawnien, przelozUprawnienia), którego
-// słownik kontrakt potwierdza dosłownie — powtórzenie go w pliku groziłoby
-// rozejściem słownictwa i dwoma źródłami tej samej decyzji.
+// uprawnieniaCLI odwzorowuje obszar permissions oraz tools na sekcję permissions pliku ustawień dostawcy; trybu domyślnego tu nie ma, tryb jedzie przełącznikiem --permission-mode.
 type uprawnieniaCLI struct {
 	Allow []string `json:"allow,omitempty"`
 	Deny  []string `json:"deny,omitempty"`
@@ -91,7 +74,7 @@ type wpisSerweraMCP struct {
 	Env     map[string]string `json:"env,omitempty"`
 }
 
-// konfiguracjaSerwerowMCP jest kompletem wiązań serwerów MCP sesji.
+// konfiguracjaSerwerowMCP jest kompletem wiązań serwerów MCP sesji, przekazywanych osobnym plikiem --mcp-config.
 type konfiguracjaSerwerowMCP struct {
 	McpServers map[string]wpisSerweraMCP `json:"mcpServers"`
 }
@@ -111,10 +94,7 @@ func przelozPowierzchnieProcesu(k shared.SessionConfig, z *models.Zapytanie) {
 	}
 }
 
-// plikUstawienZKonfiguracji buduje napis --settings z obszarów permissions,
-// tools, skills oraz hooks. Reguły narzędzi i wyłączenie obszaru skills dokładają
-// się do reguł uprawnień; zaczepy jadą osobną sekcją hooks. Brak reguły i brak
-// zaczepu daje napis pusty, czyli brak przełącznika.
+// plikUstawienZKonfiguracji buduje napis --settings z obszarów permissions, tools, skills oraz hooks; brak reguły i brak zaczepu daje napis pusty, czyli brak przełącznika.
 func plikUstawienZKonfiguracji(k shared.SessionConfig) string {
 	plik := plikUstawienCLI{
 		Permissions: uprawnieniaZKonfiguracji(k),
@@ -148,14 +128,7 @@ func uprawnieniaZKonfiguracji(k shared.SessionConfig) *uprawnieniaCLI {
 	return &uprawnienia
 }
 
-// dodajRegulyUmiejetnosci przekłada obszar skills na regułę uprawnień. Jedyny
-// przekład, który powierzchnia pliku ustawień unosi bez atrapy: wyłączenie
-// obszaru wprost (Enabled == false) odmawia narzędzia Skill w sekcji deny —
-// tą samą drogą, którą obszar tools odmawia narzędzi imiennych. Obszar włączony
-// albo nieokreślony nie dokłada reguły: umiejętności pozostają wtedy
-// dostępne, jak przed wpięciem. Dopuszczanie imienne (AllowedSkillIds), katalogi
-// wyszukiwania (Directories) i samowykrywanie (AutoDiscovery) nie mają pola na
-// tej powierzchni i jadą do ryzyk — nie ma tu dla nich cichej atrapy.
+// dodajRegulyUmiejetnosci przekłada obszar skills na regułę uprawnień: wyłączenie wprost odmawia narzędzia Skill w sekcji deny, tą samą drogą co obszar tools odmawia narzędzi imiennych.
 func dodajRegulyUmiejetnosci(skills *shared.SessionConfigSkills, uprawnienia *uprawnieniaCLI) {
 	if skills == nil || skills.Enabled == nil || *skills.Enabled {
 		return
@@ -163,12 +136,7 @@ func dodajRegulyUmiejetnosci(skills *shared.SessionConfigSkills, uprawnienia *up
 	uprawnienia.Deny = append(uprawnienia.Deny, nazwaNarzedziaUmiejetnosc)
 }
 
-// hooksZKonfiguracji buduje sekcję hooks pliku ustawień z obszaru hooks. Obszar
-// wyłączony wprost (Enabled == false) nie daje żadnego zaczepu; obszar włączony
-// albo nieokreślony przenosi zaczepy czynne. Zaczep bez zdarzenia albo bez
-// polecenia jest niekompletny i nie jedzie. Zaczepy o tym samym
-// zdarzeniu i zawężeniu zbierają się w jednej grupie. Brak zaczepów daje nil,
-// więc sekcja znika z JSON.
+// hooksZKonfiguracji buduje sekcję hooks pliku ustawień z obszaru hooks; zaczep bez zdarzenia albo bez polecenia jest niekompletny i nie jedzie, a brak zaczepów daje nil.
 func hooksZKonfiguracji(k shared.SessionConfig) map[string][]grupaZaczepowCLI {
 	if k.Hooks == nil {
 		return nil
@@ -212,11 +180,7 @@ func wpiszZaczep(wynik map[string][]grupaZaczepowCLI, zdarzenie, matcher string,
 	})
 }
 
-// granicaSekund przelicza granicę czasu zaczepu z milisekund kontraktu na
-// sekundy pliku ustawień. Wartość niedodatnia nie daje granicy (nil); wartość
-// dodatnia poniżej sekundy zaokrągla w górę do jednej sekundy — pole timeout nie
-// wyraża ułamka, a granica poniżej pełnej sekundy nie może zejść do zera i
-// zamienić się w brak granicy.
+// granicaSekund przelicza granicę czasu zaczepu z milisekund kontraktu na sekundy pliku ustawień; wartość dodatnia poniżej sekundy zaokrągla w górę do jednej sekundy.
 func granicaSekund(timeoutMs *int) *int {
 	if timeoutMs == nil || *timeoutMs <= 0 {
 		return nil
@@ -243,10 +207,7 @@ func dodajRegulyNarzedzi(tools *shared.SessionConfigTools, uprawnienia *uprawnie
 	}
 }
 
-// srodowiskoZKonfiguracji składa zmienne środowiskowe procesu z obszaru
-// environment oraz z adresu i granicy odpowiedzi obszarów provider i model.
-// Zmienna tajna (SecretRef) nie wchodzi: jej treść zna wyłącznie sejf, którego
-// ta droga nie ma wpiętego — wpisanie nazwy bez wartości byłoby atrapą.
+// srodowiskoZKonfiguracji składa zmienne środowiskowe procesu z obszaru environment oraz adresu i granicy odpowiedzi obszarów provider i model; zmienna tajna nie wchodzi.
 func srodowiskoZKonfiguracji(k shared.SessionConfig) map[string]string {
 	srodowisko := map[string]string{}
 	if k.Environment != nil {
@@ -271,12 +232,7 @@ func srodowiskoZKonfiguracji(k shared.SessionConfig) map[string]string {
 	return srodowisko
 }
 
-// mcpZKonfiguracji buduje napis --mcp-config z wiązań obszaru mcp opisanych
-// wprost (transport stdio z programem albo sse/http z adresem). Wiązania
-// wskazujące punkt dostępu (AccessPointId) pomija: ich adres i poświadczenie
-// żyją w rejestrze punktów dostępu, którego ta droga nie rozstrzyga —
-// jadą one drogą nadań okna (mosty). Brak wiązań opisanych wprost daje napis
-// pusty, czyli brak przełącznika.
+// mcpZKonfiguracji buduje napis --mcp-config z wiązań obszaru mcp opisanych wprost; wiązania wskazujące punkt dostępu pomija, bo jadą drogą nadań okna.
 func mcpZKonfiguracji(k shared.SessionConfig) string {
 	if k.Mcp == nil || len(k.Mcp.Servers) == 0 {
 		return ""
@@ -342,7 +298,7 @@ func srodowiskoWiazaniaMCP(zmienne []shared.EnvironmentVariable) map[string]stri
 	return wynik
 }
 
-// ustawNiepusteSrodowisko wpisuje zmienną, gdy jej wartość jest niepusta.
+// ustawNiepusteSrodowisko wpisuje zmienną środowiskową do mapy, gdy jej wartość po przycięciu białych znaków jest niepusta.
 func ustawNiepusteSrodowisko(srodowisko map[string]string, nazwa, wartosc string) {
 	if wartosc != "" {
 		srodowisko[nazwa] = wartosc

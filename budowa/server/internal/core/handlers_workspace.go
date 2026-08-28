@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: wpięcie sześciu komend obszaru `workspace.*` — modułu
-// Workspace wraz z jego pięcioma oknami operacyjnymi (Project Dashboard,
-// Instructions Panel, Context Memory, Project Library, Agent Manager).
-//
-// `workspace.enter` nie należy do tego obszaru. Ta komenda przeładowuje
-// przestrzeń roboczą karty sesji na dowolny moduł i wpina ją nawigacja
-// (handlers_nawigacja.go) — nazwa jest wspólna, obszar nie.
-//
-// Jedno zdarzenie na cały moduł. Kontrakt daje modułowi wyłącznie
-// `workspace.project.changed`, więc każda zmiana stanu projektu — instrukcje,
-// wpis pamięci, przypisanie eksperta — rozgłasza się projektem po zmianie.
-// Okna modułu odświeżają się z jednej subskrypcji, a nie z czterech. Odczyty
-// (`dashboard.get`, `context.get`, `library.list`) niczego nie rozgłaszają poza
-// jednym przypadkiem: wejście na pulpit projektu, którego jeszcze nie było,
-// zakłada go — a założenie bytu jest zmianą (ChangeKind `created`).
+// Plik wpina sześć komend obszaru workspace.* obsługujące moduł Workspace wraz z jego pięcioma
+// oknami operacyjnymi: pulpitem projektu, panelem instrukcji, pamięcią kontekstu, biblioteką
+// i menedżerem agentów.
 package core
 
 import (
@@ -21,7 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// PrzestrzenRobocza jest portem modułu Workspace.
+// PrzestrzenRobocza jest portem modułu Workspace obsługującym pulpit, instrukcje, pamięć i bibliotekę.
 type PrzestrzenRobocza interface {
 	Pulpit(ctx context.Context, z shared.WorkspaceDashboardGetRequest) (shared.WorkspaceDashboardGetResponse, error)
 	ZapiszInstrukcje(ctx context.Context, z shared.WorkspaceInstructionsSetRequest) (shared.WorkspaceInstructionsSetResponse, error)
@@ -29,12 +17,11 @@ type PrzestrzenRobocza interface {
 	WpisyPamieci(ctx context.Context, z shared.WorkspaceContextGetRequest) (shared.WorkspaceContextGetResponse, error)
 	Biblioteka(ctx context.Context, z shared.WorkspaceLibraryListRequest) (shared.WorkspaceLibraryListResponse, error)
 	PrzypiszAgenta(ctx context.Context, z shared.WorkspaceAgentAssignRequest) (shared.WorkspaceAgentAssignResponse, error)
-	// Projekt oddaje projekt po zmianie. Służy rozgłoszeniu zdarzenia po
-	// komendach, których wynik projektu nie niesie.
+	// Projekt oddaje projekt po zmianie, dla komend, których wynik projektu nie niesie.
 	Projekt(ctx context.Context, idProjektu string) (shared.WorkspaceProject, error)
 }
 
-// zarejestrujPrzestrzenRobocza wpina sześć komend modułu Workspace.
+// zarejestrujPrzestrzenRobocza wpina sześć komend modułu Workspace w rejestrze rdzenia tej platformy konta.
 func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 	if r == nil || w == nil {
 		return
@@ -81,10 +68,8 @@ func zarejestrujPrzestrzenRobocza(r *Rejestr, w PrzestrzenRobocza, e *emiter) {
 		}))
 }
 
-// rodzajZmianyProjektu odróżnia projekt założony właśnie teraz od zastanego.
-// Rozróżnienie bierze się z samego bytu, nie z pamięci adaptera: projekt
-// dopiero założony ma czas utworzenia równy czasowi ostatniej zmiany, a każda
-// późniejsza czynność ten drugi przesuwa.
+// rodzajZmianyProjektu odróżnia projekt założony właśnie teraz od zastanego. Rozróżnienie bierze
+// się z bytu, nie z pamięci adaptera: nowy projekt ma czas utworzenia równy czasowi ostatniej zmiany.
 func rodzajZmianyProjektu(p shared.WorkspaceProject) shared.ChangeKind {
 	if p.CreatedAt == p.UpdatedAt {
 		return shared.ChangeKindCreated

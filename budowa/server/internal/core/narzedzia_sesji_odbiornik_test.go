@@ -5,22 +5,12 @@ import (
 	"testing"
 )
 
-// Straż odbiornika zerowego w porcie doraźnych dołożeń narzędzi.
-//
-// Adapter wchodzi do składacza zestawu tury przez interfejs, a wskaźnik zerowy
-// schowany w interfejsie przechodzi porównanie `== nil` u wołającego — więc
-// sprawdzenie po tamtej stronie go nie zatrzyma. Bez straży pierwsze
-// `message.send` w takim montażu zabijało CAŁY proces rdzenia panicą w gorutynie
-// tury, a Operator tracił sesję, kolejkę i połączenie naraz.
-//
-// Sprawdzian pilnuje zamiany paniki na odmowę, a nie samego montażu: montaż
-// dziś wpina adapter poprawnie, ale to jest stan do popsucia jednym pominiętym
-// ogniwem, i wtedy skutkiem ma być zdanie, nie zgaszony rdzeń.
+// Plik sprawdza straż odbiornika zerowego w porcie doraźnych dołożeń narzędzi: adapter wchodzi
+// przez interfejs, gdzie wskaźnik zerowy przechodzi porównanie z nil u wołającego.
 func TestPortDolozenNieGasiRdzeniaPrzyOdbiornikuZerowym(t *testing.T) {
 	var zerowy *adapterNarzedziSesji
 
-	// Wejście przez interfejs, nie przez wskaźnik — dokładnie tą drogą woła
-	// składacz zestawu tury. Wywołanie na wskaźniku pominęłoby badany przypadek.
+	// Wejście przez interfejs, nie przez wskaźnik — dokładnie tą drogą woła składacz zestawu tury.
 	var port DolozeniaNarzedziSesji = zerowy
 	if port == nil {
 		t.Fatal("wskaźnik zerowy w interfejsie porównał się do nil — " +
@@ -37,7 +27,7 @@ func TestPortDolozenNieGasiRdzeniaPrzyOdbiornikuZerowym(t *testing.T) {
 	}
 }
 
-// Ta sama straż na drugim wejściu portu: czynność Operatora, nie tura modelu.
+// Ta sama straż działa na drugim wejściu portu: czynność Operatora, nie tura modelu w tej samej rozmowie.
 func TestCzynnosciDolozenNieGasiaRdzeniaPrzyOdbiornikuZerowym(t *testing.T) {
 	var zerowy *adapterNarzedziSesji
 

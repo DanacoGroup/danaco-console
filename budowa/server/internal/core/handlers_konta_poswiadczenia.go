@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: droga poświadczenia od żądania do sejfu.
-//
-// Poświadczenie wchodzi żądaniem (`credential` przy koncie i przy punkcie
-// dostępu) i nie wychodzi nigdy. Baza zna wyłącznie odwołanie — nazwę wpisu
-// w sejfie albo ścieżkę profilu; kolumny na treść sekretu nie ma w schemacie
-// w ogóle, a odpowiedź kontraktu niesie co najwyżej znacznik `hasCredential`
-// albo `credentialRef`.
-//
-// Rdzeń nie jest sejfem i nie udaje sejfu. Zamiana sekretu na odwołanie należy
-// do portu SejfPoswiadczen wypełnianego przy montażu. Gdy sejfu nie wpięto,
-// poświadczenie jest odrzucane w tym samym wywołaniu: nie trafia do bazy, do
-// dziennika ani do odpowiedzi, a byt powstaje bez odwołania i pracuje dalej.
-// Cicha utrata sekretu byłaby gorsza od jawnego braku sejfu, więc warstwa wyżej
-// widzi to po pustym odwołaniu i po `hasCredential = false`.
+// Plik prowadzi drogę poświadczenia od żądania do sejfu; baza zna wyłącznie
+// odwołanie do sekretu, a rdzeń nie przechowuje treści sekretu w żadnej
+// postaci.
 package core
 
 import "context"
@@ -21,9 +10,8 @@ import "context"
 type SejfPoswiadczen interface {
 	// Zapisz umieszcza poświadczenie w sejfie i zwraca odwołanie do niego.
 	Zapisz(ctx context.Context, byt, poswiadczenie string) (string, error)
-	// Odczytaj zwraca poświadczenie bytu i znacznik, czy wpis istnieje. Brak
-	// wpisu nie jest błędem — daje pusty sekret i false. Bytem jest tu
-	// surowy klucz wpisu, bez przedrostka odwołania.
+	// Odczytaj zwraca poświadczenie bytu i znacznik istnienia wpisu; brak
+	// wpisu nie jest błędem.
 	Odczytaj(ctx context.Context, byt string) (string, bool)
 	// Usun kasuje poświadczenie bytu. Brak wpisu nie jest błędem.
 	Usun(ctx context.Context, byt string) error

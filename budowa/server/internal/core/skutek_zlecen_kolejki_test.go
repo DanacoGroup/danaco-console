@@ -1,3 +1,5 @@
+// Sprawdziany skutku rodziny `queue.item.*` i `queue.policy.set` czytają stan wprost z tabel
+// `zlecenie_kolejki` i `kolejka`, aby wykluczyć odpowiedź złożoną wyłącznie z pól żądania.
 package core
 
 import (
@@ -10,14 +12,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek zleceń kolejki: czy za odpowiedzią rodziny `queue.item.*` leży wiersz
-// tabeli `zlecenie_kolejki`, a za `queue.policy.set` — kolumny tabeli `kolejka`.
-//
-// Każdy sprawdzian schodzi do bazy własnym zapytaniem. Odpowiedzi tej rodziny
-// są szczególnie łatwe do sfałszowania: `queue.item.enqueue` oddaje zlecenie
-// złożone z pól żądania, więc rdzeń, który niczego nie zapisał, oddałby
-// dokładnie ten sam kształt.
-
 // kolejkaSprawdzianuZlecen zakłada kolejkę i oddaje jej identyfikator kontraktu
 // wraz z kluczem wiersza.
 func kolejkaSprawdzianuZlecen(t *testing.T, zmontowany *Zmontowany,
@@ -28,8 +22,7 @@ func kolejkaSprawdzianuZlecen(t *testing.T, zmontowany *Zmontowany,
 	wykonajUdana(t, zmontowany, zycie, shared.CommandQueueCreate,
 		shared.QueueCreateRequest{SessionId: "sesja-sprawdzianu"}, &wynik)
 
-	// Rdzeń oddaje kolejkę pod kluczem jej wiersza, więc sprawdzian schodzi do
-	// bazy wprost po nim — bez tego nie dałoby się zmierzyć niczego niezależnie.
+	// Rdzeń oddaje kolejkę pod kluczem wiersza; sprawdzian czyta bazę wprost, nie ufając odpowiedzi.
 	id, err := strconv.ParseInt(wynik.Queue.Id, 10, 64)
 	if err != nil {
 		t.Fatalf("identyfikator kolejki %q nie jest kluczem wiersza: %v", wynik.Queue.Id, err)
@@ -67,9 +60,7 @@ func TestSkutekDolozeniaZleceniaWBazie(t *testing.T) {
 		t.Fatalf("w bazie stoi ładunek %q, priorytet %d, stan %q", ladunek, priorytet, stan)
 	}
 
-	// Powtórzenie tego samego klucza ma oddać zlecenie zastane i NIE założyć
-	// drugiego wiersza — wywołanie przychodzące powtórzone przez nadawcę nie
-	// może wykonać pracy dwa razy.
+	// Powtórzenie klucza idempotencji ma oddać zlecenie zastane i nie założyć drugiego wiersza w bazie.
 	var drugie shared.QueueItemEnqueueResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandQueueItemEnqueue,
 		shared.QueueItemEnqueueRequest{
@@ -88,7 +79,8 @@ func TestSkutekDolozeniaZleceniaWBazie(t *testing.T) {
 	}
 }
 
-// liczbaZlecenWBazie liczy zlecenia kolejki własnym zapytaniem.
+// liczbaZlecenWBazie liczy zlecenia przypisane do wskazanej kolejki bezpośrednim zapytaniem
+// do tabeli `zlecenie_kolejki`, z pominięciem odpowiedzi komendy.
 func liczbaZlecenWBazie(t *testing.T, baza *sql.DB, kolejkaID int64) int {
 	t.Helper()
 
@@ -175,8 +167,7 @@ func TestSkutekCykluZleceniaWBazie(t *testing.T) {
 		t.Fatalf("zlecenie scalone ma w bazie stan %q, oczekiwano „oczekuje”", stan)
 	}
 
-	// Skierowanie przenosi zlecenie do INNEJ kolejki — mierzone kolumną
-	// `kolejka_id`, a nie odpowiedzią komendy.
+	// Skierowanie przenosi zlecenie do innej kolejki; mierzone kolumną `kolejka_id`, nie odpowiedzią.
 	kodDocelowej, idDocelowej := kolejkaSprawdzianuZlecen(t, zmontowany, zycie)
 	wykonajUdana(t, zmontowany, zycie, shared.CommandQueueItemRoute,
 		shared.QueueItemRouteRequest{
@@ -194,7 +185,8 @@ func TestSkutekCykluZleceniaWBazie(t *testing.T) {
 	}
 }
 
-// dolozZlecenieSprawdzianu dokłada zlecenie i oddaje jego identyfikator.
+// dolozZlecenieSprawdzianu dokłada zlecenie do wskazanej kolejki i oddaje identyfikator
+// zewnętrzny założonego wiersza tabeli `zlecenie_kolejki`.
 func dolozZlecenieSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	kolejka, ladunek string) string {
 	t.Helper()
@@ -205,7 +197,8 @@ func dolozZlecenieSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie contex
 	return wynik.Item.Id
 }
 
-// stanZleceniaWBazie oddaje stan i termin zlecenia odczytane wprost z bazy.
+// stanZleceniaWBazie odczytuje stan i termin zlecenia bezpośrednio z tabeli `zlecenie_kolejki`,
+// z pominięciem odpowiedzi komendy rdzenia.
 func stanZleceniaWBazie(t *testing.T, baza *sql.DB, kod string) (string, string) {
 	t.Helper()
 
@@ -219,10 +212,9 @@ func stanZleceniaWBazie(t *testing.T, baza *sql.DB, kod string) (string, string)
 	return stan, termin.String
 }
 
-// TestSkutekRozgalezieniaIZadanMartwychWBazie mierzy rozgałęzienie na tory
-// równoległe oraz odczyt zadań martwych — ten drugi po ręcznym przestawieniu
-// stanu w bazie, bo rdzeń przenosi zlecenie w stan martwy dopiero po wyczerpaniu
-// prób, a sprawdzian ma mierzyć ODCZYT, nie politykę ponawiania.
+// TestSkutekRozgalezieniaIZadanMartwychWBazie mierzy rozgałęzienie na tory równoległe oraz
+// odczyt zadań martwych po ręcznym przestawieniu stanu w bazie, ponieważ sprawdzian mierzy
+// odczyt, a nie politykę ponawiania prób.
 func TestSkutekRozgalezieniaIZadanMartwychWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -300,8 +292,7 @@ func TestSkutekPolitykiIWykazuZlecenWBazie(t *testing.T) {
 		t.Fatalf("w bazie stoi wycofanie %q i rozproszenie %d", wycofanie, rozproszenie)
 	}
 
-	// Pole nieobecne w żądaniu ma zostawić wartość zastaną, a nie wyzerować
-	// dziewięciu pozostałych: kontrakt ma tu same pola opcjonalne.
+	// Pole nieobecne w żądaniu zostawia wartość zastaną, bo kontrakt polityki ma same pola opcjonalne.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandQueuePolicySet,
 		shared.QueuePolicySetRequest{
 			QueueId: kod, Policy: shared.QueuePolicy{RatePerMinute: wskaznik(30)},

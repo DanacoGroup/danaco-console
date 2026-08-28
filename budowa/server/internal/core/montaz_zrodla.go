@@ -1,15 +1,6 @@
 // Odpowiedzialność pliku: budowniczowie rejestrów i źródeł, z których korzysta
-// montaż rdzenia — rejestr kanałów modelu wraz z pulą kont rotacji, źródło
-// wierszy konfiguracji spod adresu złożonego, rejestr definicji z katalogu
-// ustawień oraz katalog akcji.
-//
-// Wszystkie są sterowane danymi: nowy kanał, nowa pozycja
-// okna konfiguracji i nowa akcja to nowy wiersz, nie nowa gałąź w kodzie.
-// Niepowodzenie pierwszego odczytu nigdy nie przerywa startu — rdzeń rusza
-// z zawartością uboższą i odbudowuje ją przy kolejnym odczycie.
-//
-// Osobno od montaz.go, bo montaż mówi, co z czym się wiąże, a ten plik — jak
-// powstaje każde źródło.
+// montaż rdzenia, wszystkie sterowane danymi: nowy wiersz, nie nowa gałąź
+// w kodzie. Osobno od montaz.go, bo montaż mówi, co z czym się wiąże.
 package core
 
 import (
@@ -32,12 +23,9 @@ import (
 func rejestrKanalow(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw,
 	przejmowanie *przejmowanieProcesow, zdarzenia *zdarzeniaWykonawcze) *models.Rejestr {
 	rejestr := models.NowyRejestr(models.NoweZrodloBazy(m.Baza.DB), models.FabrykiWbudowane())
-	// Kanał główny obsługuje oba rodzaje procesu lokalnego: „cli" (program code
-	// CLI) i „lokalny" (proces lokalny rozmawiający strumieniem). Obie fabryki
-	// dzielą jedną pulę kont — rotacja po wyczerpaniu limitu ma sens tylko przy
-	// wspólnej pamięci wyczerpania. Rodzaj „sdk" nie ma tu fabryki:
-	// bez dostawcy SDK kanał tego rodzaju nie ma jak działać, więc rejestr nie
-	// pokaże go jako czynnego, zamiast udawać gotowość.
+	// Kanał główny obsługuje oba rodzaje procesu lokalnego, „cli" i „lokalny".
+
+	// Rodzaj „sdk" nie ma tu fabryki: bez dostawcy SDK nie ma jak działać.
 	fabrykaProcesu := fabrykaKanaluGlownego(pulaKont(kontekst, m, repozytoria), przejmowanie,
 		zdarzenia, nazwaKontaZKatalogu(kontekst, repozytoria))
 	rejestr.UstawFabryke(models.AdapterCLI, fabrykaProcesu)
@@ -54,13 +42,8 @@ func rejestrKanalow(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw
 const rodzajKanaluLokalny = "lokalny"
 
 // nazwaKontaZKatalogu tłumaczy wskazanie konta na kod (nazwę) konta puli.
-//
-// Kontrakt identyfikuje konto liczbą (`Account.id` = klucz główny wiersza),
-// a pula rotacji kodem (`konto.nazwa`) — wskazanie z obszaru account
-// konfiguracji sesji i z kolumny `kanal_modelu.konto_id` przychodzi więc
-// w innym słowniku niż ten, którym mówi pula. Wskazanie nieliczbowe
-// jedzie dosłownie: Operator mógł wpisać nazwę wprost. Katalog pusty zostawia
-// wskazanie bez tłumaczenia — tura powie wtedy, że konta nie zna.
+// Katalog pusty zostawia wskazanie bez tłumaczenia — tura powie wtedy, że
+// konta nie zna.
 func nazwaKontaZKatalogu(kontekst context.Context, repozytoria *dane.Zestaw) func(string) string {
 	if repozytoria == nil || repozytoria.Konta == nil {
 		return nil
@@ -79,23 +62,17 @@ func nazwaKontaZKatalogu(kontekst context.Context, repozytoria *dane.Zestaw) fun
 	}
 }
 
-// pulaKont bierze konta rotacji z katalogu kont (tabela `konto`, migracja 014).
-// Katalog jest źródłem pierwszym; katalog profili na dysku zostaje ścieżką
-// zapasową, żeby instalacja bez wpisanych kont dalej pracowała.
+// pulaKont bierze konta rotacji z katalogu kont, źródła pierwszego; katalog
+// profili na dysku zostaje ścieżką zapasową, gdy kont w katalogu nie ma.
 func pulaKont(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw) *injection.PulaKont {
 	if repozytoria != nil && repozytoria.Konta != nil {
 		konta, err := repozytoria.Konta.KontaRotacji(kontekst, shared.AccountKindCli)
 		if err != nil && m.Dziennik != nil {
 			m.Dziennik.Printf("katalog kont: %v", err)
 		}
-		// Katalog kont jest źródłem pierwszym, gdy repozytorium istnieje —
-		// niezależnie od tego, czy na starcie ma już wpisy. Pulę budujemy
-		// z bieżącego wykazu (może być pusty) i ZAWSZE wpinamy w nią źródło
-		// oraz utrwalacz: wyczerpanie zapisuje się do bazy, a bieżący wykaz
-		// odczytuje się na progu tury przez OdświeżZeŹródła, więc konto dodane
-		// komendą account.* wchodzi do rotacji bez restartu — także gdy pula
-		// wystartowała pusta. Ścieżka zapasowa z dysku zostaje
-		// tylko dla instalacji bez katalogu kont (repozytorium kont brak).
+		// Katalog kont jest źródłem pierwszym, gdy repozytorium istnieje.
+
+		// Pula zawsze wpina źródło i utrwalacz, także gdy wystartowała pusta.
 		pula := injection.NowaPula(naPuleKont(konta)...)
 		wyposazPuleKont(kontekst, pula, m, repozytoria.Konta)
 		return pula
@@ -110,10 +87,8 @@ func pulaKont(kontekst context.Context, m Montaz, repozytoria *dane.Zestaw) *inj
 	return injection.NowaPula(konta...)
 }
 
-// wyposazPuleKont wpina w pulę trwałość wyczerpania i odświeżanie z katalogu.
-// Trwałość zapisuje stan konta (konto.stan / konto.wyczerpane_do), żeby limit
-// przeżył restart; odświeżanie odczytuje bieżący wykaz kont rotacji, żeby zmiana
-// katalogu komendą account.* dotarła do rotacji bez restartu.
+// wyposazPuleKont wpina w pulę trwałość wyczerpania i odświeżanie z katalogu,
+// żeby limit przeżył restart, a zmiana kont dotarła do rotacji bez niego.
 func wyposazPuleKont(kontekst context.Context, pula *injection.PulaKont, m Montaz,
 	repo dane.RepozytoriumKont) {
 
@@ -144,10 +119,8 @@ func wyposazPuleKont(kontekst context.Context, pula *injection.PulaKont, m Monta
 }
 
 // naPuleKont przekłada wiersze katalogu na konta puli rotacji. Konto bez
-// katalogu konfiguracji do puli nie wchodzi — kanał główny bierze profil
-// z katalogu na dysku, nie z bazy. Stan wyczerpania odczytany
-// z katalogu (konto.stan / konto.wyczerpane_do) jedzie w polu WyczerpaneDo,
-// żeby pula odtworzyła limit po restarcie.
+// katalogu konfiguracji do puli nie wchodzi, a stan wyczerpania jedzie
+// w polu WyczerpaneDo, żeby pula odtworzyła limit po restarcie.
 func naPuleKont(konta []dane.Konto) []injection.Konto {
 	pula := make([]injection.Konto, 0, len(konta))
 	for _, konto := range konta {
@@ -193,7 +166,8 @@ func zrodloUstawienOsiZBazy(kontekst context.Context,
 	})
 }
 
-// katalogUstawienZBazy podaje rejestrowi definicji pozycje katalogu ustawień.
+// katalogUstawienZBazy podaje rejestrowi definicji pozycje katalogu ustawień,
+// czytane spod repozytorium bazy zamiast z wykazu wbudowanego w rdzeń.
 type katalogUstawienZBazy struct {
 	kontekst     context.Context
 	repozytorium dane.RepozytoriumKatalogUstawien
@@ -208,12 +182,8 @@ func (k katalogUstawienZBazy) Definicje() ([]shared.SettingDefinition, error) {
 	return k.repozytorium.Definicje(k.kontekst, true)
 }
 
-// rejestrUstawien buduje rejestr definicji z katalogu ustawień:
-// nowa pozycja okna konfiguracji to nowy wiersz migracji, nie nowa stała w kodzie.
-//
-// Katalog pusty albo niedostępny daje rejestr wbudowany rdzenia; wtedy — i tylko
-// wtedy — dokładane są definicje katalogu roboczego, bo ich wiersze katalogu nie
-// dojechały.
+// rejestrUstawien buduje rejestr definicji z katalogu ustawień: katalog pusty
+// albo niedostępny daje rejestr wbudowany, dokładany definicjami roboczymi.
 func rejestrUstawien(kontekst context.Context, repozytoria *dane.Zestaw,
 	dziennik *log.Logger) *konfig.Rejestr {
 

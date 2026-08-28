@@ -9,22 +9,7 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// Odtworzenie rejestru sesji i okien po restarcie rdzenia.
-//
-// Rejestr nadzorcy jest pamięcią jednego uruchomienia. Bez tego kroku rozmowa
-// sprzed restartu wraca wyłącznie historią wiadomości, a sam byt sesji i okna
-// znika: klient trzyma identyfikator, pod którym nie ma już czego wskazać.
-// Odtworzenie wnosi sesje i okna z bazy POD TYMI SAMYMI identyfikatorami
-// (`identyfikator_zewnetrzny`, `store/migracja_006_identyfikatory_zewnetrzne.sql`),
-// więc `session.bind`,
-// `window.state.get` i `message.send` trafiają w te same byty.
-//
-// Czego odtworzenie NIE robi: nie startuje procesów okien. Proces ginie wraz
-// z rdzeniem, a okno wraca jako byt bez procesu — rejestr procesów zgłosi wtedy
-// stan `pending`, a pierwsza tura uruchomi proces zwykłą drogą.
-
-// odtworzStanZBazy wnosi do rejestru rdzenia sesje i okna zapisane w bazie.
-// Błąd odczytu nie przerywa montażu: rdzeń rusza z rejestrem pustym.
+// odtworzStanZBazy odtwarza w rejestrze rdzenia sesje i okna zapisane w bazie po restarcie, pod tymi samymi identyfikatorami zewnętrznymi, bez uruchamiania procesów okien.
 func odtworzStanZBazy(kontekst context.Context, repozytoria *dane.Zestaw,
 	nadzorca *session.Nadzorca, dziennik *log.Logger) {
 
@@ -38,8 +23,7 @@ func odtworzStanZBazy(kontekst context.Context, repozytoria *dane.Zestaw,
 	}
 	moduly, kanaly, err := slownikiOkna(kontekst, repozytoria)
 	if err != nil {
-		// Brak słowników nie przerywa odtwarzania — okno wraca wtedy bez kodu
-		// modułu i bez kodu kanału, a Operator wskaże je ponownie.
+		// Brak słowników nie przerywa odtwarzania: okno wraca bez kodu modułu i kanału.
 		odnotujOdtworzenie(dziennik, "słowniki okien przy odtwarzaniu: %v", err)
 		moduly, kanaly = map[int64]string{}, map[int64]string{}
 	}
@@ -71,11 +55,7 @@ func wniesSesjeDoRejestru(kontekst context.Context, repozytoria *dane.Zestaw,
 	return true
 }
 
-// odtworzSesjePoIdentyfikatorze wnosi do rejestru jedną sesję odczytaną z bazy
-// po identyfikatorze rdzenia — droga POWROTU Z KOSZA (session.restore,
-// adapter_sesje_kosz.go): usunięcie zdjęło sesję z rejestru żywego, a wykaz
-// startowy sesji z kosza nie widział, więc przywrócenie musi ją wnieść samo,
-// tą samą drogą, którą wnosi start.
+// odtworzSesjePoIdentyfikatorze wnosi do rejestru jedną sesję odczytaną z bazy po identyfikatorze rdzenia, tą samą drogą, którą wnosi start rdzenia.
 func odtworzSesjePoIdentyfikatorze(kontekst context.Context, repozytoria *dane.Zestaw,
 	nadzorca *session.Nadzorca, dziennik *log.Logger, identyfikator string) bool {
 
@@ -127,7 +107,7 @@ func oknaOdtworzone(wiersze []dane.Okno, idSesji string,
 	return okna
 }
 
-// odnotujOdtworzenie zapisuje niepowodzenie odczytu w dzienniku rdzenia.
+// odnotujOdtworzenie zapisuje w dzienniku rdzenia niepowodzenie odczytu napotkane podczas odtwarzania stanu z bazy po restarcie.
 func odnotujOdtworzenie(dziennik *log.Logger, wzor string, argumenty ...any) {
 	if dziennik == nil {
 		return

@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: składanie tożsamości modelu z danych katalogu.
-//
-// Tożsamość modelu jest zamieniana, nie dołączana do ustawień fabrycznych.
-// Silnik nakładki już to umie —
-// `internal/injection` niesie trzy warstwy wg krytyczności oraz dwa
-// tryby podania: TrybZastap (`--system-prompt`) i TrybDopisz
-// (`--append-system-prompt`). Ten moduł nie powtarza silnika — daje mu
-// sterowanie z danych:
-// bierze kategorie z katalogu, treść z osi platformy, modelu i konta, układa
-// warstwy i oddaje prompt wraz z trybem.
-//
-// Rdzeń nie zna ani jednego zdania promptu. Zna wyłącznie porządek
-// składania i regułę wyboru osi.
+// Plik składa tożsamość modelu z danych katalogu, zamieniając ją zamiast dołączać do ustawień fabrycznych. Bierze kategorie z katalogu i treść z osi platformy, modelu i konta, układa warstwy silnika nakładki i oddaje prompt wraz z trybem.
 package core
 
 import (
@@ -24,8 +12,7 @@ import (
 // wyłącznie typami kontraktu — warstwa trwałości leży po drugiej stronie
 // adaptera (`tozsamosc_zrodlo.go`).
 type KatalogTozsamosci interface {
-	// Kategorie zwraca katalog kategorii zasad; kolejność wewnątrz warstwy
-	// wnosi katalog, kolejność warstw nakłada składacz.
+	// Kategorie zwraca katalog kategorii; kolejność w warstwie wnosi katalog, kolejność warstw składacz.
 	Kategorie(ctx context.Context, tylkoAktywne bool) ([]shared.IdentityCategory, error)
 	// Dokumenty zwraca treści zapisane dla jednej osi i jednego jej bytu.
 	Dokumenty(ctx context.Context, os shared.ConfigAxis, bytOsi string) ([]shared.IdentityDocument, error)
@@ -44,25 +31,17 @@ type ZapytanieTozsamosci struct {
 	TrybDomyslny shared.IdentityMode
 }
 
-// SkladaczTozsamosci buduje nakładkę obowiązującą z wierszy katalogu i treści.
-// Ta sama konfiguracja daje bajtowo ten sam prompt — porządek jest w całości
-// wyznaczony danymi, nigdy kolejnością odczytu z mapy. Bez tej własności
-// pamięć podręczna promptu po stronie kanału byłaby bezużyteczna.
+// SkladaczTozsamosci buduje nakładkę obowiązującą z wierszy katalogu i treści. Ta sama konfiguracja daje bajtowo ten sam prompt, bo porządek jest w całości wyznaczony danymi, nigdy kolejnością odczytu z mapy.
 type SkladaczTozsamosci struct {
 	katalog KatalogTozsamosci
 }
 
-// NowySkladaczTozsamosci wiąże składacz z katalogiem.
+// NowySkladaczTozsamosci wiąże składacz z katalogiem, tworząc obiekt gotowy do złożenia nakładki obowiązującej.
 func NowySkladaczTozsamosci(katalog KatalogTozsamosci) *SkladaczTozsamosci {
 	return &SkladaczTozsamosci{katalog: katalog}
 }
 
-// Zloz zwraca nakładkę obowiązującą: tryb, warstwy w kolejności krytyczności,
-// złożony prompt, jego odcisk oraz wykaz kategorii obowiązkowych bez treści.
-//
-// Brak katalogu, brak treści i brak kategorii obowiązkowej nie wstrzymują
-// niczego: wynikiem jest pusty prompt, a kanał rusza wtedy z samą powłoką.
-// Wykaz braków jest informacją dla Operatora, nie bramą.
+// Zloz zwraca nakładkę obowiązującą: tryb, warstwy w kolejności krytyczności, złożony prompt, jego odcisk oraz wykaz kategorii obowiązkowych bez treści. Brak katalogu, treści albo kategorii nie wstrzymuje niczego — wynikiem jest pusty prompt.
 func (s *SkladaczTozsamosci) Zloz(ctx context.Context, z ZapytanieTozsamosci) (shared.IdentityEffectiveGetResponse, error) {
 	if s == nil || s.katalog == nil {
 		return pustaTozsamosc(z.TrybDomyslny), nil

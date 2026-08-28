@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: adapter prowenancji wywołań modelu i rozliczenia
-// zużycia — przekład między kontraktem a magazynem śladu.
-//
-// ── Czego ten adapter nie robi ───────────────────────────────────────────────
-// Nie liczy kosztu z cennika. Koszt jest kolumną wiersza — zapisuje go ten, kto
-// wywołanie wykonał i zna odpowiedź dostawcy. Wywołanie bez ceny nie jest
-// wywołaniem darmowym, więc suma niesie osobno liczbę wierszy bez ceny: bez
-// niej rozliczenie pokazywałoby kwotę mniejszą niż rzeczywista i wyglądałoby
-// to identycznie jak kwota prawdziwa.
+// Odpowiedzialność pliku: adapter prowenancji wywołań modelu oraz rozliczenia
+// zużycia — przekład między kontraktem a magazynem śladu. Koszt zapisuje ten,
+// kto wywołanie wykonało i zna odpowiedź dostawcy, nie cennik tego adaptera.
 package core
 
 import (
@@ -32,9 +26,7 @@ const granicaWykazuWywolan = 500
 
 type adapterProwenancji struct {
 	repozytorium dane.RepozytoriumProwenancji
-	// kanaly obsluguje wylacznie `provenance.call.replay`
-	// (`adapter_prowenancja_powtorzenie.go`): powtorzenie jest NOWYM wywolaniem
-	// kanalu modelu, a nie odczytem sladu.
+	// kanaly obsługuje wyłącznie powtórzenie — nowe wywołanie, nie odczyt śladu.
 	kanaly *models.Rejestr
 }
 
@@ -42,17 +34,17 @@ func nowyAdapterProwenancji(r dane.RepozytoriumProwenancji) *adapterProwenancji 
 	return &adapterProwenancji{repozytorium: r}
 }
 
-// odmowaSladu buduje odmowę kontraktu dla rodzin śladu i rozliczenia.
-//
-// Nazwa jest inna niż `bladProwenancji` z adaptera konfiguracji, bo tamten
-// dotyczy prowenancji WYWOŁANIA MODELU w oknie konfiguracji — innego pojęcia
-// o tej samej nazwie własnej. Dwie funkcje o jednej nazwie w jednym pakiecie
-// byłyby dwiema prawdami o odmowie.
+// odmowaSladu buduje odmowę kontraktu dla rodzin śladu i rozliczenia; nazwa
+// jest inna niż `bladProwenancji` adaptera konfiguracji, bo tamten dotyczy
+// innego pojęcia o tej samej nazwie własnej — prowenancji wywołania modelu
+// w oknie konfiguracji.
 func odmowaSladu(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "ślad wywołań: "+powod))
 }
 
-// odmowaMagazynuSladu przekłada odmowę warstwy danych na odmowę kontraktu.
+// odmowaMagazynuSladu przekłada odmowę warstwy danych na odmowę kontraktu:
+// brak wiersza w magazynie oddaje kod „nie znaleziono", każdą inną usterkę —
+// kod błędu wewnętrznego z treścią pierwotnej przyczyny.
 func odmowaMagazynuSladu(err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return odmowaSladu(shared.ErrorCodeNotFound,
@@ -64,8 +56,8 @@ func odmowaMagazynuSladu(err error) error {
 // WykazWywolan oddaje ślad zawężony pytaniem Operatora.
 //
 // Pole `truncated` mówi prawdę o obcięciu: wykaz krótszy od liczby wszystkich
-// pasujących znaczy, że Operator patrzy na wycinek. Bez tego pola strona
-// pierwsza wyglądałaby jak komplet.
+// pasujących znaczy, że Operatorowi wraca jedynie wycinek. Bez tego pola
+// strona pierwsza wyglądałaby jak komplet.
 func (a *adapterProwenancji) WykazWywolan(ctx context.Context,
 	z shared.ProvenanceCallListRequest) (shared.ProvenanceCallListResponse, error) {
 
@@ -108,12 +100,9 @@ func (a *adapterProwenancji) WykazWywolan(ctx context.Context,
 	}, nil
 }
 
-// Wywolanie oddaje jeden ślad wraz z drzewem odcinków.
-//
-// Treść promptu i odpowiedzi idzie wyłącznie na wyraźne żądanie i wyłącznie
-// wtedy, gdy została zapisana. Pole `redacted` odróżnia treść zredagowaną od
-// niepodanej — bez niego Operator nie wie, czy patrzy na wywołanie bez treści,
-// czy na treść, której mu nie pokazano.
+// Wywolanie oddaje jeden ślad wraz z drzewem odcinków; treść promptu
+// i odpowiedzi idzie wyłącznie na wyraźne żądanie i wyłącznie wtedy, gdy
+// została zapisana. Pole `redacted` odróżnia treść zredagowaną od niepodanej.
 func (a *adapterProwenancji) Wywolanie(ctx context.Context,
 	z shared.ProvenanceCallGetRequest) (shared.ProvenanceCallGetResponse, error) {
 
@@ -142,7 +131,8 @@ func (a *adapterProwenancji) Wywolanie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// OcenWywolanie zapisuje zdanie Operatora o wywołaniu.
+// OcenWywolanie zapisuje zdanie Operatora o wywołaniu: trafność oceny wraz
+// z opcjonalną notatką, dopisywane do wiersza śladu po jego wykonaniu.
 func (a *adapterProwenancji) OcenWywolanie(ctx context.Context,
 	z shared.ProvenanceCallRateRequest) (shared.ProvenanceCallRateResponse, error) {
 
@@ -158,7 +148,8 @@ func (a *adapterProwenancji) OcenWywolanie(ctx context.Context,
 	return shared.ProvenanceCallRateResponse{Call: zlozSladWywolania(wiersz)}, nil
 }
 
-// WydajSlad składa wybrane wywołania w postać do wyniesienia poza produkt.
+// WydajSlad składa wybrane wywołania w postać do wyniesienia poza produkt —
+// JSON, JSONL albo CSV — zawężone do zakresu czasu i wskazanych identyfikatorów.
 func (a *adapterProwenancji) WydajSlad(ctx context.Context,
 	z shared.ProvenanceTraceExportRequest) (shared.ProvenanceTraceExportResponse, error) {
 
@@ -236,9 +227,7 @@ func wydajSladWPostaci(postac shared.TelemetryFormat,
 		return budowniczy.String(), zapis.Error()
 
 	case shared.TelemetryFormatOtlp:
-		// Postać OTLP jest w kontrakcie, a rdzeń nie ma czym jej złożyć: wymaga
-		// odwzorowania śladu na schemat OpenTelemetry, którego w drzewie nie ma.
-		// Odmowa nazywa brak zamiast oddać JSON pod cudzą nazwą.
+		// Rdzeń nie niesie odwzorowania na schemat OpenTelemetry: odmowa nazywa brak.
 		return "", odmowaSladu(shared.ErrorCodeNotFound,
 			"postać OTLP wymaga odwzorowania na schemat OpenTelemetry, którego rdzeń "+
 				"nie niesie; wyniesienie w postaci json, jsonl albo csv jest dostępne")
@@ -313,7 +302,8 @@ func (a *adapterZuzycia) Podsumowanie(ctx context.Context,
 	}, nil
 }
 
-// Raport składa rozliczenie po wielu wymiarach naraz.
+// Raport składa rozliczenie po wielu wymiarach naraz, po jednym wykazie sum
+// na każdy żądany wymiar, i oddaje je w postaci wybranej przez Operatora.
 func (a *adapterZuzycia) Raport(ctx context.Context,
 	z shared.UsageReportBuildRequest) (shared.UsageReportBuildResponse, error) {
 
@@ -441,11 +431,9 @@ var rodzajeOdcinka = map[string]shared.ModelCallSpanKind{
 	"cache":     shared.ModelCallSpanKindCache,
 }
 
-// progWolnegoWywolania oddziela wywołanie wolne od zwykłego.
-//
-// Dziesięć sekund jest progiem rdzenia, nie prawdą o modelach: wywołanie
-// dłuższe znaczy, że Operator czekał, patrząc na okno. Wartość stoi tutaj,
-// żeby dało się ją zmienić w jednym miejscu, gdy pojawi się ustawienie.
+// progWolnegoWywolania oddziela wywołanie wolne od zwykłego; dziesięć sekund
+// jest progiem rdzenia, nie prawdą o modelach, i stoi w jednym miejscu,
+// żeby dało się je zmienić, gdy pojawi się ustawienie tej wartości.
 const progWolnegoWywolania = 10_000
 
 func wolneWywolanie(w dane.WywolanieModelu) bool {
@@ -519,15 +507,9 @@ func zlozSumeZuzycia(s dane.SumaZuzycia, wymiar shared.UsageDimension) shared.Us
 	}
 }
 
-// chwilaAlboZero oddaje wskazaną granicę okna czasu albo zero.
-//
-// Zero znaczy „bez granicy" i jest tą samą wartością, którą przyjęło zapytanie —
-// odpowiedź powtarza granice, na których naprawdę liczyła, a nie te, o które
-// pytano. Przy braku granicy obie liczby są zerami i to jest prawda o wyniku.
-// kodOdmowy przekłada kolumnę tekstową na kod odmowy kontraktu.
-//
-// Kolumna trzyma napis, bo baza nie zna typu kontraktu; przekład stoi tutaj,
-// żeby nie powstał drugi w każdym miejscu odczytu.
+// kodOdmowy przekłada kolumnę tekstową na kod odmowy kontraktu; kolumna
+// trzyma napis, bo baza nie zna typu kontraktu, a przekład stoi w jednym
+// miejscu, żeby nie powstał drugi w każdym miejscu odczytu.
 func kodOdmowy(wartosc *string) *shared.ErrorCode {
 	if wartosc == nil || *wartosc == "" {
 		return nil
@@ -536,6 +518,9 @@ func kodOdmowy(wartosc *string) *shared.ErrorCode {
 	return &kod
 }
 
+// chwilaAlboZero oddaje wskazaną granicę okna czasu albo zero; zero znaczy
+// „bez granicy" i jest tą samą wartością, którą przyjęło zapytanie, więc przy
+// braku granicy obie liczby w odpowiedzi są zerami i to jest prawda o wyniku.
 func chwilaAlboZero(wskazanie *int64) int64 {
 	if wskazanie == nil {
 		return 0

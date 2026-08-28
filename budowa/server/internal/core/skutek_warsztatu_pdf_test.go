@@ -1,3 +1,4 @@
+// Skutek warsztatu dokumentu: czy za wynikiem leży prawdziwy PDF, sprawdzony odczytem bajtów magazynu.
 package core
 
 import (
@@ -14,20 +15,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek warsztatu dokumentu: czy za wynikiem leży prawdziwy PDF.
-//
-// Wzorzec szkody, którego pilnuje ten plik, ma w tym produkcie precedens
-// w module Design: komenda meldowała `status: ok` z wykazem zasobów, za którymi
-// nie było ani jednego bajtu. Dlatego żaden sprawdzian tutaj nie kończy się na
-// sprawdzeniu, że odpowiedź jest udana: każdy schodzi po odwołaniu do magazynu,
-// otwiera plik i liczy jego strony z bajtów, a nie z odpowiedzi komendy.
-//
-// Sprawdzian nie pomija się przy braku żadnego programu, bo warsztat PDF nie
-// uruchamia ani jednego procesu: pracuje biblioteką wkompilowaną w rdzeń.
-// Materiał powstaje tą samą biblioteką i to jest świadome — mierzone jest
-// działanie warsztatu, nie zgodność dwóch bibliotek między sobą.
-
-// pdfProbny wytwarza dokument o wskazanej liczbie stron i oddaje jego bajty.
+// pdfProbny wytwarza dokument o wskazanej liczbie stron i oddaje jego bajty gotowe do zapisu na dysku.
 func pdfProbny(t *testing.T, strony int) []byte {
 	t.Helper()
 
@@ -49,7 +37,7 @@ func pdfProbny(t *testing.T, strony int) []byte {
 	return dokument.Bytes()
 }
 
-// stronWyniku liczy strony dokumentu leżącego pod wskazaną ścieżką magazynu.
+// stronWyniku liczy strony dokumentu leżącego pod wskazaną ścieżką magazynu zasobów tego samego rdzenia.
 func stronWyniku(t *testing.T, sciezka string) int {
 	t.Helper()
 
@@ -64,7 +52,7 @@ func stronWyniku(t *testing.T, sciezka string) int {
 	return liczba
 }
 
-// wniesPdf wnosi dokument do magazynu zasobów i oddaje jego identyfikator.
+// wniesPdf wnosi dokument do magazynu zasobów rdzenia i oddaje jego identyfikator w tym samym magazynie.
 func wniesPdf(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	bajty []byte, nazwa string) string {
 	t.Helper()
@@ -81,7 +69,7 @@ func wniesPdf(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return wynik.Asset.Id
 }
 
-// sciezkaZasobuSprawdzianu schodzi po odwołaniu zasobu do pliku w magazynie.
+// sciezkaZasobuSprawdzianu schodzi po odwołaniu zasobu do pliku w magazynie danych tego samego rdzenia.
 func sciezkaZasobuSprawdzianu(t *testing.T, zmontowany *Zmontowany,
 	zycie context.Context, katalog, kod string) string {
 	t.Helper()

@@ -7,18 +7,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// Telemetria postępu kolejki. Kolejka jest procesem o policzalnych
-// etapach: etapem jest pozycja, a biegiem naprawczym powtórzenie pozycji bez
-// limitu obiegów. Dzięki temu Process Monitor warstwy wspólnej
-// dostaje z kolejki to samo zdarzenie, co z tury okna.
+// Telemetria postępu kolejki: etapem jest pozycja, biegiem naprawczym powtórzenie pozycji bez limitu.
 
 // przedrostekProcesuKolejki rozdziela klucze procesów kolejek od kluczy
 // procesów okien w jednym rejestrze telemetrii.
 const przedrostekProcesuKolejki = "kolejka-"
 
-// Słownik stanów pozycji stoi w `kolejka_stany.go` razem z tabelą przejść
-// silnika wykonania — telemetria liczy etapy zakończone tą samą listą, którą
-// silnik zamyka pozycje.
+// Słownik stanów pozycji stoi w kolejka_stany.go razem z tabelą przejść silnika wykonania.
 
 // odnotujPostep zgłasza telemetrii stan kolejki po czynności. Brak telemetrii
 // nie jest błędem — adapter pracuje wtedy bez rozgłaszania postępu.

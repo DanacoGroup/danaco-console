@@ -6,18 +6,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// telemetriaPostepu jest jedynym producentem zdarzenia progress.changed
-// . Zdarzenie niesie identyfikator procesu, etap bieżący, liczbę
-// etapów, stopień ukończenia i stan — dokładnie tak, jak opisuje kontrakt.
-//
-// Producent nie zna ani tury modelu, ani kolejki: zna wyłącznie proces
-// wskazany kluczem. Punkty pracy zgłaszają się same — tura przez owinięcie
-// portu rozmowy i nadajnika (telemetria_tury.go, telemetria_strumienia.go),
-// kolejka przez adapter kolejek. Dzięki temu jeden byt telemetryczny obsługuje
-// wszystkie źródła postępu, bez drugiej równoległej implementacji.
-//
-// Brak nadajnika nie jest błędem: rdzeń pracuje także wtedy, gdy nikt nie
-// słucha zdarzeń.
+// telemetriaPostepu jest jedynym producentem zdarzenia progress.changed. Producent nie zna ani tury modelu, ani kolejki, wyłącznie proces wskazany kluczem, więc jeden byt telemetryczny obsługuje wszystkie źródła postępu bez drugiej implementacji.
 type telemetriaPostepu struct {
 	emiter *emiter
 
@@ -56,7 +45,7 @@ type opisProcesu struct {
 	Etapow  int
 }
 
-// nowaTelemetriePostepu zakłada producenta nad nadajnikiem transportu.
+// nowaTelemetriePostepu zakłada producenta nad nadajnikiem transportu, gotowego do otwierania i przesuwania procesów.
 func nowaTelemetriePostepu(nadajnik Nadajnik) *telemetriaPostepu {
 	return &telemetriaPostepu{emiter: nowyEmiter(nadajnik), procesy: map[string]*procesPostepu{}}
 }
@@ -97,13 +86,7 @@ func (t *telemetriaPostepu) Krok(o opisProcesu, nazwaEtapu string) {
 	t.rozglos(odpis)
 }
 
-// Stan nadaje procesowi stan wskazany wprost: wstrzymanie, zatrzymanie,
-// domknięcie albo niepowodzenie. Zmiana stanu jest osobnym etapem pracy, więc
-// przesuwa licznik tak samo jak Krok — chyba że zgłaszający podał etap sam.
-//
-// Stan końcowy zamyka proces, a powtórne domknięcie już zamkniętego nie
-// rozgłasza niczego — inaczej zatrzymana tura zgłaszałaby najpierw zatrzymanie,
-// a zaraz potem niepowodzenie strumienia.
+// Stan nadaje procesowi stan wskazany wprost: wstrzymanie, zatrzymanie, domknięcie albo niepowodzenie, przesuwając licznik tak jak Krok, chyba że zgłaszający podał etap sam. Powtórne domknięcie już zamkniętego procesu nie rozgłasza niczego.
 func (t *telemetriaPostepu) Stan(o opisProcesu, stan shared.ProgressStatus, nazwaEtapu string) {
 	if t == nil || o.Klucz == "" {
 		return
@@ -136,7 +119,7 @@ func (t *telemetriaPostepu) czynny(o opisProcesu) (*procesPostepu, bool) {
 	return t.otworz(o), true
 }
 
-// otworz zakłada proces pod kluczem opisu. Wywoływać wyłącznie pod zamkiem.
+// otworz zakłada proces pod kluczem opisu, nadając mu nowy identyfikator. Wywoływać wyłącznie pod zamkiem.
 func (t *telemetriaPostepu) otworz(o opisProcesu) *procesPostepu {
 	proces := &procesPostepu{
 		Id:      nowyIdentyfikator(przedrostekProcesu),
@@ -149,7 +132,7 @@ func (t *telemetriaPostepu) otworz(o opisProcesu) *procesPostepu {
 	return proces
 }
 
-// rozglos oddaje ładunek telemetrii emiterowi zdarzeń.
+// rozglos oddaje ładunek telemetrii emiterowi zdarzeń, wysyłając go do kanału sesji, której dotyczy proces.
 func (t *telemetriaPostepu) rozglos(p procesPostepu) {
 	t.emiter.postep(p.IdSesji, p.ladunek())
 }

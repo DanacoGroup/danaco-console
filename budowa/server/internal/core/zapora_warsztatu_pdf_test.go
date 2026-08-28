@@ -7,30 +7,15 @@ import (
 	"testing"
 )
 
-// Zapora rodzin `studio.pdf.*` i `studio.security.*`: żadnego programu z zewnątrz.
-//
-// ── Powód, żeby następny wykonawca nie musiał go odtwarzać z rozmowy ────────
-// Warsztat dokumentu stał raz na `qpdf` i na Ghostscripcie. Sprawdziany świeciły
-// zielono, bo maszyna deweloperska ma oba doinstalowane ręcznie — a instalka
-// produktu ich nie niesie i nieść nie ma. To nie przeoczenie, to decyzja
-// Właściciela. U Operatora każda z tych czynności odmawiałaby za każdym razem,
-// a rdzeń meldowałby, że komenda jest obsłużona.
-//
-// Dlatego te dwie rodziny pracują wyłącznie bibliotekami wkompilowanymi
-// w binarium: `pdfcpu` dla dokumentu, `crypto` ze standardowej biblioteki dla
-// podpisu i szyfrowania. Zapora patrzy na pliki tych rodzin i nie przepuszcza
-// ani `zewnetrzne.Wolaj`, ani `exec.Command`.
-//
-// Zapora działa w obie strony: gdy plik rodziny zniknie albo zmieni nazwę,
-// kończy się niepowodzeniem zamiast cicho przestać czegokolwiek pilnować.
+// Zapora studio.pdf.* i studio.security.*: bez programu zewnętrznego, tylko biblioteki wkompilowane.
 
-// plikiBezProcesow wymienia pliki, których ta zasada dotyczy.
+// plikiBezProcesow wymienia pliki, których dotyczy zakaz wywoływania jakiegokolwiek programu zewnętrznego.
 var plikiBezProcesow = []string{
 	"adapter_studio_pdf.go",
 	"adapter_studio_bezpieczenstwo.go",
 }
 
-// wywolaniaZabronione wymienia sposoby uruchomienia cudzego programu.
+// wywolaniaZabronione wymienia sposoby uruchomienia cudzego programu, których żaden plik nie może zawierać.
 var wywolaniaZabronione = []string{
 	"zewnetrzne.Wolaj",
 	"exec.Command",
@@ -38,7 +23,7 @@ var wywolaniaZabronione = []string{
 	"os/exec",
 }
 
-// TestWarsztatDokumentuNieUruchamiaProcesow pilnuje zasady bezwzględnej.
+// TestWarsztatDokumentuNieUruchamiaProcesow pilnuje zasady bezwzględnej: żadnego wywołania programu zewnętrznego.
 func TestWarsztatDokumentuNieUruchamiaProcesow(t *testing.T) {
 	for _, nazwa := range plikiBezProcesow {
 		sciezka := filepath.Join(".", nazwa)

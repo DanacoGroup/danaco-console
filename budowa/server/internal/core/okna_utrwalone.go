@@ -8,16 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Odczyt okien komunikacji z warstwy utrwalonej.
-//
-// Rejestr nadzorcy zna okna tego uruchomienia rdzenia.
-// Po jego restarcie okna wskazane przez klienta istnieją już tylko wierszami —
-// i wtedy ta droga odpowiada na pytanie „co miałem otwarte". Wiersz niesie
-// klucze obce, kontrakt niesie kody, więc przekład dokłada słowniki modułów
-// i kanałów modelu.
-
-// oknoUtrwalone odnajduje okno po identyfikatorze nadanym przez rdzeń. Brak
-// wiersza nie jest błędem — wraca fałsz.
+// oknoUtrwalone odnajduje w warstwie utrwalonej okno po identyfikatorze nadanym przez rdzeń i uzupełnia je kodem modułu oraz kanału modelu; brak wiersza nie jest błędem.
 func oknoUtrwalone(ctx context.Context, zestaw *dane.Zestaw, idOkna string) (shared.Window, bool, error) {
 	wiersz, err := zestaw.Okna.PoIdentyfikatorze(ctx, idOkna)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -59,7 +50,7 @@ func oknaSesjiUtrwalone(ctx context.Context, zestaw *dane.Zestaw, sesjaID int64,
 	return okna, nil
 }
 
-// slownikiOkna buduje odwzorowania klucz obcy → kod dla modułu i kanału modelu.
+// slownikiOkna buduje odwzorowania klucza obcego na kod dla modułu i kanału modelu, potrzebne do przekładu wiersza okna na kontrakt.
 func slownikiOkna(ctx context.Context, zestaw *dane.Zestaw) (map[int64]string, map[int64]string, error) {
 	wiersze, err := zestaw.Moduly.Lista(ctx)
 	if err != nil {

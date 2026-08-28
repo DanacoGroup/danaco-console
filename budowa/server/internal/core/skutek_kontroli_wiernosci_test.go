@@ -1,3 +1,6 @@
+// Sprawdza skutek modułu Translate: kontrolę wierności przekładu oraz
+// tłumaczenie zwrotne, wykonywane przez prawdziwy kanał rdzenia wskazujący
+// punkt końcowy modelu podniesiony na czas sprawdzianu w tym samym procesie.
 package core
 
 import (
@@ -12,31 +15,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Translate: czy kontrola wierności ma co porównywać.
-//
-// Kontrola wierności polega na tym, że są dwa teksty i różnią się: przekład
-// w języku docelowym i jego tłumaczenie zwrotne na język źródłowy. Szkoda, którą
-// ten plik ma wykluczyć, odbierała kontroli właśnie to — `backtranslation.run`
-// przepisywał panel w to samo miejsce, więc po przebiegu obie strony
-// porównania były jednym tekstem i kontrola udawała się zawsze. Odpowiedź była
-// wtedy udana, wynik bezwartościowy.
-//
-// Dlatego sprawdziany tego pliku po każdym przebiegu pytają o obie strony
-// osobno: co niesie tłumaczenie zwrotne i co dalej niesie panel. Drugi przebieg
-// z inną odpowiedzią modelu ma dać inny wynik niż pierwszy — wynik, który się
-// nie zmienia mimo zmiany wejścia, nie jest wynikiem pomiaru.
-//
-// Model jest tu prawdziwym kanałem rdzenia wskazującym punkt końcowy podniesiony
-// na czas sprawdzianu w tym samym procesie, a nie zaślepką portu. Program spoza
-// maszyny nie jest do tego potrzebny; potrzebny jest natomiast do syntezy mowy
-// (`translate.speech.synthesize` woła `espeak-ng`), więc tej komendy ten plik
-// nie dotyka — sprawdzian jej skutku wypadałby u Operatora niepomyślnie z powodu
-// braku programu, a nie z powodu wady rdzenia.
-
 // znacznikPoleceniaZwrotnego jest fragmentem polecenia, po którym punkt końcowy
-// sprawdzianu poznaje, że pytany jest o tłumaczenie zwrotne, a nie o przekład.
-// Fragment pochodzi z `polecenieTlumaczeniaZwrotnego` — sprawdzian rozpoznaje
-// wywołanie po tym, co rdzeń naprawdę wysyła.
+// sprawdzianu poznaje, że pytany jest o tłumaczenie zwrotne, a nie o przekład;
+// pochodzi z `polecenieTlumaczeniaZwrotnego`.
 const znacznikPoleceniaZwrotnego = "KONTROLA WIERNOŚCI"
 
 // serwerModelu podnosi punkt końcowy modelu tekstowego. Odpowiedź składa
@@ -110,10 +91,9 @@ func panelOkna(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return shared.TranslationPanel{}
 }
 
-// Teksty sprawdzianu. Źródło niesie trzy rzeczy, których przekład nie ma prawa
+// Teksty sprawdzianu. Źródło niesie trzy rzeczy, których przekład nie może
 // zgubić: liczbę, walutę i znacznik podstawienia. Wierny przekład niesie je
-// wszystkie, niewierny żaden — a różnica długości obu jest na tyle mała, że
-// mieści się w paśmie dopuszczalnym i nie miesza się do wyniku.
+// wszystkie, niewierny żaden; różnica długości obu tekstów nie wpływa na wynik.
 const (
 	zrodloKontroli  = "Zamówienie na 1500 zł obejmuje {liczbaSztuk} sztuk towaru."
 	przekladWierny  = "The order for 1500 zł covers {liczbaSztuk} units of goods."
@@ -144,8 +124,7 @@ func zalozPanelPrzekladu(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 
 // TestKontrolaJakosciZglaszaToCzegoPrzekladNieOddal dowodzi, że kontrola ma co
 // porównywać: przekład, który zgubił liczbę, walutę i znacznik podstawienia,
-// wychodzi z kontroli z zastrzeżeniem o każdej z tych trzech rzeczy. Kontrola
-// oddająca pusty wykaz nad takim przekładem byłaby pieczątką, nie kontrolą.
+// wychodzi z zastrzeżeniem o każdej z tych rzeczy.
 func TestKontrolaJakosciZglaszaToCzegoPrzekladNieOddal(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -193,10 +172,10 @@ func TestKontrolaJakosciMilczyNadPrzeklademWiernym(t *testing.T) {
 	}
 }
 
-// TestTlumaczenieZwrotneNieNadpisujeTresciPanelu jest sprawdzianem wprost
-// wymierzonym w szkodę. Po przebiegu mają istnieć dwa różne teksty: panel
-// w języku docelowym i tłumaczenie zwrotne w języku źródłowym. Panel przepisany
-// wynikiem kontroli byłby porównaniem tekstu z samym sobą.
+// TestTlumaczenieZwrotneNieNadpisujeTresciPanelu sprawdza, że po przebiegu
+// istnieją dwa różne teksty: panel w języku docelowym i tłumaczenie zwrotne
+// w źródłowym. Panel przepisany wynikiem kontroli byłby porównaniem tekstu
+// z samym sobą.
 func TestTlumaczenieZwrotneNieNadpisujeTresciPanelu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -234,10 +213,8 @@ func TestTlumaczenieZwrotneNieNadpisujeTresciPanelu(t *testing.T) {
 }
 
 // TestDrugiPrzebiegKontroliWiernosciOddajeNowyWynik dowodzi, że wynik jest
-// mierzony, a nie zapamiętany: przy zmienionej odpowiedzi modelu drugi przebieg
-// ma dać co innego niż pierwszy. Wynik niezmienny wobec zmienionego wejścia
-// świadczyłby, że komenda oddaje wartość odłożoną wcześniej, a nie skutek tego
-// wywołania.
+// mierzony, a nie zapamiętany: przy zmienionej odpowiedzi modelu drugi
+// przebieg ma dać co innego niż pierwszy przebieg.
 func TestDrugiPrzebiegKontroliWiernosciOddajeNowyWynik(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -280,11 +257,9 @@ func TestDrugiPrzebiegKontroliWiernosciOddajeNowyWynik(t *testing.T) {
 	}
 }
 
-// TestKontrolaWiernosciBezJezykaZrodlowegoOdmawiaINieTykaPanelu pilnuje odmowy,
-// która zastępuje zgadywanie: bez języka źródłowego okna nie wiadomo, na jaki
-// język przełożyć panel z powrotem. Odmowa ma nazwać brak i zostawić panel
-// nietknięty — przebieg wykonany „na oko" dałby kontrolę mierzącą co innego,
-// niż Operator sądzi.
+// TestKontrolaWiernosciBezJezykaZrodlowegoOdmawiaINieTykaPanelu sprawdza, że
+// bez języka źródłowego okna komenda odmawia, nazywa brak i zostawia panel
+// nietknięty, zamiast zgadywać język przekładu.
 func TestKontrolaWiernosciBezJezykaZrodlowegoOdmawiaINieTykaPanelu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -295,8 +270,8 @@ func TestKontrolaWiernosciBezJezykaZrodlowegoOdmawiaINieTykaPanelu(t *testing.T)
 		return przekladWierny
 	})
 	kanal := wpiszKanalTekstowy(t, zmontowany, zycie, serwer.URL)
-	// Okno bez wskazania języka źródłowego — `source.set` niczego nie rozpoznaje
-	// sam, więc kolumna zostaje pusta.
+	// Okno bez języka źródłowego — `source.set` niczego nie rozpoznaje,
+	// kolumna zostaje pusta.
 	panel := zalozPanelPrzekladu(t, zmontowany, zycie, "okno-bez-jezyka", "", przekladWierny, kanal)
 
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandTranslateBacktranslationRun,
@@ -312,10 +287,9 @@ func TestKontrolaWiernosciBezJezykaZrodlowegoOdmawiaINieTykaPanelu(t *testing.T)
 	}
 }
 
-// TestPustyPrzekladModeluNieZakladaPanelu domyka rodzinę od strony wejścia:
-// model, który oddał pustkę, nie przetłumaczył niczego. Panel założony na takiej
-// odpowiedzi byłby atrapą, której kontrola jakości nie miałaby czego badać —
-// więc komenda ma odmówić, a okno ma zostać bez panelu.
+// TestPustyPrzekladModeluNieZakladaPanelu sprawdza wejście: model, który
+// oddał pustkę, nie przetłumaczył niczego, więc komenda ma odmówić, a okno
+// ma zostać bez panelu.
 func TestPustyPrzekladModeluNieZakladaPanelu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

@@ -6,13 +6,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// zarejestrujSesje wpina domenę sesji: zakładanie, wykaz, otwarcie z oknami,
-// zamknięcie i usunięcie.
-//
-// Sesja jest bytem wspólnym dla plików, pamięci, projektu i agentów; okna
-// komunikacji sesji mają własną domenę. Brak podłączonej domeny nie
-// wywraca rdzenia — komendy sesji odpowiedzą wtedy `session.unknown`, a
-// pozostałe domeny pracują dalej.
+// zarejestrujSesje wpina domenę sesji: zakładanie, wykaz, otwarcie z oknami, zamknięcie i
+// usunięcie, jako byt wspólny dla plików, pamięci, projektu i agentów.
 func zarejestrujSesje(r *Rejestr, sesje Sesje, e *emiter) {
 	if r == nil || sesje == nil {
 		return
@@ -44,11 +39,7 @@ func zarejestrujSesje(r *Rejestr, sesje Sesje, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.SessionDeleteRequest) (shared.SessionDeleteResponse, error) {
 			w, err := sesje.Usun(ctx, z)
 			if err == nil {
-				// Sesji już nie ma, więc zdarzenie niesie wyłącznie jej
-				// identyfikator — jedyną prawdziwą wiedzę o bycie usuniętym.
-				// Zdarzenie idzie osobno za KAŻDĄ usuniętą sesję: urządzenia
-				// konta mają zdjąć z historii dokładnie te pozycje, które
-				// zniknęły, a nie zgadywać po liczbie.
+				// Zdarzenie niesie wyłącznie identyfikator, osobno za każdą usuniętą sesję.
 				for _, identyfikator := range w.DeletedIds {
 					e.sesja(ctx, shared.ChangeKindDeleted, shared.Session{Id: identyfikator})
 				}
@@ -59,14 +50,8 @@ func zarejestrujSesje(r *Rejestr, sesje Sesje, e *emiter) {
 	zarejestrujHistorieSesji(r, sesje, e)
 }
 
-// zarejestrujHistorieSesji wpina czynności Operatora na WYKAZIE sesji: nazwę,
-// projekt, archiwum, kopię, wznowienie i zatrzymanie.
-//
-// Osobno od zarejestrujSesje, bo to inny rodzaj czynności: tamte prowadzą sesję
-// w pracy bieżącej, te porządkują historię.
-//
-// Każda rozgłasza zmianę, żeby wykaz na pozostałych urządzeniach konta
-// przestawił się bez odpytywania.
+// zarejestrujHistorieSesji wpina czynności Operatora na wykazie sesji: nazwę, projekt, archiwum,
+// kopię, wznowienie i zatrzymanie, osobno od bieżącej pracy nad sesją.
 func zarejestrujHistorieSesji(r *Rejestr, sesje Sesje, e *emiter) {
 	r.Zarejestruj(shared.CommandSessionRename,
 		obsluz(func(ctx context.Context, z shared.SessionRenameRequest) (shared.SessionRenameResponse, error) {

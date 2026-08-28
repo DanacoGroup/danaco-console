@@ -1,3 +1,6 @@
+// Skutek rodziny `schedule.*` sprawdza, czy okno wykonania, nadzór obecności
+// uruchomień i klucz podpisu webhooka przeżywają ponowne złożenie rdzenia nad
+// tą samą bazą.
 package core
 
 import (
@@ -11,15 +14,6 @@ import (
 	"danacoconsole/server/internal/store"
 	"danacoconsole/shared"
 )
-
-// Skutek rodziny `schedule.*`: czy okno wykonania, nadzór obecności uruchomień
-// i klucz podpisu webhooka PRZEŻYWAJĄ ponowne złożenie rdzenia.
-//
-// To jest właściwa miara tej rodziny. Wyzwalacz czasowy trzymany wyłącznie
-// w pamięci procesu jest wyzwalaczem, który po restarcie nigdy nie zadziała,
-// a okno Scheduler pokazywałoby go dalej jako obowiązujący. Sprawdzian, który
-// zapisuje i odczytuje w jednym procesie, tego nie zauważy — więc tutaj rdzeń
-// składa się DRUGI RAZ nad tą samą bazą i dopiero wtedy pada pytanie.
 
 // zlozRdzenPonownieNadBaza składa rdzeń raz jeszcze nad katalogiem danych,
 // w którym leży baza po pierwszym złożeniu. Odpowiada temu, co dzieje się przy
@@ -102,8 +96,9 @@ func TestSkutekOkienWykonaniaPrzezywaZlozenieRdzenia(t *testing.T) {
 	wykonajUdana(t, zmontowany, zycie, shared.CommandScheduleHeartbeatSet,
 		shared.ScheduleHeartbeatSetRequest{ScheduleId: kodHarmonogramu, ToleranceSeconds: 900}, nil)
 
-	// Zamykamy rdzeń pierwszy i składamy drugi nad tą samą bazą. Dopiero to
-	// odróżnia stan zapisany od stanu trzymanego w pamięci procesu.
+	// Rdzeń zamyka się pierwszy, drugi składa się nad tą samą bazą.
+
+	// Dopiero to odróżnia stan zapisany od stanu trzymanego w pamięci procesu.
 	zmontowany.Zamknij()
 	drugi, zycieDrugiego := zlozRdzenPonownieNadBaza(t, katalog)
 
@@ -133,8 +128,9 @@ func TestSkutekOkienWykonaniaPrzezywaZlozenieRdzenia(t *testing.T) {
 		t.Fatalf("w bazie stoi tolerancja %d, oczekiwano 900", tolerancja)
 	}
 
-	// Rdzeń złożony na nowo ma oddać ten sam harmonogram — nie „harmonogram
-	// nie istnieje”, bo to znaczyłoby, że stan zginął razem z procesem.
+	// Rdzeń złożony na nowo ma oddać ten sam harmonogram, nie odmowę istnienia.
+
+	// Odmowa istnienia znaczyłaby, że stan zginął razem z procesem.
 	var odczyt shared.ScheduleGetResponse
 	wykonajUdana(t, drugi, zycieDrugiego, shared.CommandScheduleGet,
 		shared.ScheduleGetRequest{ScheduleId: wskaznik(kodHarmonogramu)}, &odczyt)
@@ -143,8 +139,9 @@ func TestSkutekOkienWykonaniaPrzezywaZlozenieRdzenia(t *testing.T) {
 			len(odczyt.Schedules))
 	}
 
-	// Ta sama komenda na nowym rdzeniu ma przyjąć harmonogram, a nie odmówić
-	// nieistnieniem: nadzór po restarcie musi dać się zmienić.
+	// Ta sama komenda na nowym rdzeniu ma przyjąć harmonogram, a nie odmówić nieistnieniem.
+
+	// Nadzór po restarcie musi dać się zmienić.
 	wykonajUdana(t, drugi, zycieDrugiego, shared.CommandScheduleHeartbeatSet,
 		shared.ScheduleHeartbeatSetRequest{ScheduleId: kodHarmonogramu, ToleranceSeconds: 0}, nil)
 	if err := baza.QueryRow(`SELECT tolerancja_sekundy FROM harmonogram_automatyki WHERE id = ?`,
@@ -186,8 +183,9 @@ func TestSkutekKluczaPodpisuWebhookaWSejfie(t *testing.T) {
 			odwolanie, pierwszy.SignatureSecretRef)
 	}
 
-	// Odczyt powtórzony BEZ wymiany ma oddać tę samą referencję — inaczej każde
-	// otwarcie okna unieważniałoby podpisy nadawcy.
+	// Odczyt powtórzony bez wymiany ma oddać tę samą referencję.
+
+	// Inaczej każde otwarcie okna unieważniałoby podpisy nadawcy.
 	var powtorzony shared.ScheduleWebhookEndpointGetResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandScheduleWebhookEndpointGet,
 		shared.ScheduleWebhookEndpointGetRequest{WorkflowId: kodAutomatyki}, &powtorzony)

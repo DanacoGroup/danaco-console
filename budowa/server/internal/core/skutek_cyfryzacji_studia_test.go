@@ -11,24 +11,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Studio: czy droga od pliku do treści dokumentu jest cała.
-//
-// Szkoda, którą ten plik ma wykluczyć, ma w tym produkcie postać znaną:
-// odpowiedź `ok` przy pustym wyniku. Rozpoznanie pisma jest na nią szczególnie
-// podatne — Tesseract kończy się powodzeniem także wtedy, gdy nie odczytał ani
-// jednego słowa, więc koperta udana nie mówi nic o tym, czy Operator dostał
-// tekst.
-//
-// Dlatego żaden sprawdzian tego pliku nie kończy się na `ok`. Każdy pyta o to,
-// co ZOSTAŁO: czy pozycja jest w kolejce przy kolejnym odczycie, czy tekst
-// niesie słowa z obrazu, czy korekta zmieniła treść przyjmowaną do edytora
-// i czy dokument założony z cyfryzacji ma tę treść po ponownym otwarciu.
+// Sprawdziany tego pliku pytają, co ZOSTAŁO po cyfryzacji, nie tylko czy odpowiedź jest udana.
 
-// obrazZeSlowami rysuje obraz o znanej treści i oddaje jego ścieżkę.
-//
-// Materiał sprawdzianu powstaje na miejscu, a nie leży w drzewie: plik binarny
-// w repozytorium starzeje się bez śladu, a tu chodzi o to, żeby tekst na
-// obrazie i tekst oczekiwany pochodziły z jednego zapisu.
+// obrazZeSlowami rysuje obraz o znanej treści i oddaje jego ścieżkę; materiał powstaje na miejscu, żeby tekst na obrazie i tekst oczekiwany pochodziły z jednego zapisu.
 func obrazZeSlowami(t *testing.T, tresc string) string {
 	t.Helper()
 
@@ -52,7 +37,7 @@ func obrazZeSlowami(t *testing.T, tresc string) string {
 	return sciezka
 }
 
-// dolozPozycje wnosi materiał do kolejki i oddaje jego pozycję.
+// dolozPozycje wnosi materiał do kolejki cyfryzacji okna wskazanego identyfikatorem i oddaje jego pierwszą, świeżo założoną pozycję.
 func dolozPozycje(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno, sciezka string) shared.StudioIngestItem {
 	t.Helper()
@@ -126,8 +111,7 @@ func TestRozpoznanieOddajeTekstZObrazuWrazZeSlowami(t *testing.T) {
 		t.Errorf("na obrazie narysowano %q, rozpoznanie oddało %q", napis, *rozpoznanie.Item.Text)
 	}
 
-	// Słowa wraz z pewnością są warunkiem korekty rozpoznania: bez nich nie ma
-	// czego poprawiać, a panel nie ma czego nałożyć na skan.
+	// Słowa z pewnością są warunkiem korekty: bez nich nie ma czego poprawiać ani nałożyć na skan.
 	if len(rozpoznanie.Words) == 0 {
 		t.Fatal("rozpoznanie nie oddało ani jednego słowa — korekta rozpoznania nie miałaby czego poprawić")
 	}
@@ -185,8 +169,7 @@ func TestKorektaRozpoznaniaZmieniaTrescPrzyjmowanaDoEdytora(t *testing.T) {
 		t.Errorf("tekst po korekcie nie niesie poprawionego słowa: %q", *korekta.Item.Text)
 	}
 
-	// Poprawka ma przeżyć odświeżenie okna — inaczej znika przy pierwszym
-	// odczycie kolejki, czyli dokładnie wtedy, gdy Operator na nią patrzy.
+	// Poprawka ma przeżyć odświeżenie okna, inaczej znika przy pierwszym odczycie kolejki.
 	var wykaz shared.StudioIngestQueueListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioIngestQueueList,
 		shared.StudioIngestQueueListRequest{WindowId: "okno-studio-1"}, &wykaz)
@@ -196,15 +179,7 @@ func TestKorektaRozpoznaniaZmieniaTrescPrzyjmowanaDoEdytora(t *testing.T) {
 	}
 }
 
-// TestPrzyjeciePozycjiZakladaDokumentZTrescia zamyka drogę: czy to, co wyszło
-// z cyfryzacji, jest w dokumencie i czy dokument da się z niego odtworzyć.
-// Miarą jest odczyt dokumentu OSOBNYM wywołaniem — odpowiedź na przyjęcie
-// mogłaby nieść treść, której baza nie przyjęła.
-//
-// Materiałem jest obraz, a nie plik tekstowy: rozpoznanie pisma czyta piksele,
-// więc plik tekstowy podany jako materiał kończy się odmową i sprawdzian
-// pomijałby się zawsze. Sprawdzian, który zawsze się pomija, niczego nie
-// pilnuje.
+// TestPrzyjeciePozycjiZakladaDokumentZTrescia sprawdza, że dokument założony z cyfryzacji niesie treść, którą oddało rozpoznanie, i że treść ta przeżywa ponowny odczyt.
 func TestPrzyjeciePozycjiZakladaDokumentZTrescia(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -239,15 +214,13 @@ func TestPrzyjeciePozycjiZakladaDokumentZTrescia(t *testing.T) {
 			przyjecie.Document.VersionId, przyjecie.Version.Id)
 	}
 
-	// Autor wersji rozstrzyga rozdział 3.6 opracowania: wersja z cyfryzacji
-	// pochodzi od modelu, nie od Operatora. Kolumna autora powstała po to.
+	// Autor wersji z cyfryzacji ma nieść wartość modelu, nie Operatora.
 	if przyjecie.Version.Author == nil || *przyjecie.Version.Author != shared.StudioAuthorModel {
 		t.Errorf("wersja z cyfryzacji niesie autora %v, oczekiwano %q",
 			przyjecie.Version.Author, shared.StudioAuthorModel)
 	}
 
-	// Dokument odczytany osobno ma nieść tę samą treść. To jest miara właściwa:
-	// Operator otworzy go ponownie, a nie przeczyta odpowiedź na przyjęcie.
+	// Dokument odczytany osobno ma nieść tę samą treść co odpowiedź na przyjęcie.
 	var otwarty shared.StudioDocumentOpenResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentOpen,
 		shared.StudioDocumentOpenRequest{
@@ -258,8 +231,7 @@ func TestPrzyjeciePozycjiZakladaDokumentZTrescia(t *testing.T) {
 			otwarty.Document.Content, rozpoznanyTekst)
 	}
 
-	// Historia dokumentu ma tę wersję zawierać — inaczej Session Repository
-	// pokaże pustkę tuż po cyfryzacji.
+	// Historia dokumentu ma tę wersję zawierać zaraz po cyfryzacji.
 	var historia shared.StudioRepositoryListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioRepositoryList,
 		shared.StudioRepositoryListRequest{DocumentId: przyjecie.Document.Id}, &historia)

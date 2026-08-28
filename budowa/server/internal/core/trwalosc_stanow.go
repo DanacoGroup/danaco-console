@@ -8,25 +8,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// utrwalaczStanow zapisuje w bazie zmianę stanu sesji i okna komunikacji.
-//
-// Zamknięcie okna, zamknięcie sesji i jej usunięcie to czynności rejestru
-// nadzorcy — pakiet sesji jest ich właścicielem i o bazie nie wie. Bez tego
-// utrwalacza stan `zamkniete`/`zakonczona` żyłby wyłącznie w pamięci procesu:
-// historia wiadomości byłaby trwała, a sesja po restarcie wracałaby jako
-// czynna. Utrwalacz domyka ten rozjazd w jednym miejscu, zamiast powtarzać
-// zapis w każdym adapterze z osobna.
-//
-// Wiersz odnajduje po identyfikatorze rdzenia (`identyfikator_zewnetrzny`).
-// Brak wiersza nie jest usterką: sesja bez ani jednej utrwalonej wiadomości
-// nie ma jeszcze wiersza, a zamknięcie i tak ma się odbyć.
+// utrwalaczStanow zapisuje w bazie zmianę stanu sesji i okna komunikacji, domykając rozjazd między pamięcią procesu a trwałością w jednym miejscu. Wiersz odnajduje po identyfikatorze rdzenia; brak wiersza nie jest usterką.
 type utrwalaczStanow struct {
 	zycie context.Context
 	sesje dane.RepozytoriumSesji
 	okna  dane.RepozytoriumOkien
-	// kosz to odwrotna strona tabeli sesji: tam trafia wiersz po
-	// `session.delete` i stamtąd wraca po `session.restore`. Czynności kosza
-	// mieszkają w `trwalosc_kosza.go` — ten plik zna wyłącznie pole.
+	// kosz to odwrotna strona sesji: przyjmuje wiersz po session.delete i zwraca po session.restore.
 	kosz     dane.RepozytoriumKoszaSesji
 	dziennik *log.Logger
 }
@@ -46,7 +33,7 @@ func nowyUtrwalaczStanow(zycie context.Context, repozytoria *dane.Zestaw,
 	}
 }
 
-// StanOkna zapisuje stan okna komunikacji.
+// StanOkna zapisuje stan okna komunikacji w wierszu odnalezionym po identyfikatorze rdzenia tego okna.
 func (u *utrwalaczStanow) StanOkna(idOkna string, stan shared.WindowStatus) {
 	if u == nil || u.okna == nil || idOkna == "" {
 		return
@@ -61,7 +48,7 @@ func (u *utrwalaczStanow) StanOkna(idOkna string, stan shared.WindowStatus) {
 	}
 }
 
-// StanSesji zapisuje stan sesji.
+// StanSesji zapisuje stan sesji w wierszu odnalezionym po identyfikatorze rdzenia dla tej właśnie sesji.
 func (u *utrwalaczStanow) StanSesji(idSesji string, stan shared.SessionStatus) {
 	if u == nil || u.sesje == nil || idSesji == "" {
 		return
@@ -76,8 +63,7 @@ func (u *utrwalaczStanow) StanSesji(idSesji string, stan shared.SessionStatus) {
 	}
 }
 
-// StanOkien zapisuje jeden stan dla wielu okien — zamknięcie sesji zamyka
-// wszystkie jej okna naraz.
+// StanOkien zapisuje jeden stan dla wielu okien naraz, bo zamknięcie sesji zamyka od razu wszystkie jej okna.
 func (u *utrwalaczStanow) StanOkien(idOkien []string, stan shared.WindowStatus) {
 	for _, idOkna := range idOkien {
 		u.StanOkna(idOkna, stan)
@@ -103,10 +89,4 @@ func (u *utrwalaczStanow) odnotuj(wzor string, argumenty ...any) {
 	u.dziennik.Printf(wzor, argumenty...)
 }
 
-// Utrwalacz nie kasuje wierszy sesji. `session.delete` przenosi wiersz do kosza
-// (`trwalosc_kosza.go`), a fizyczny DELETE wykonuje wyłącznie czyszczenie
-// startowe po terminie, które sprząta również bloki wiadomości bez klucza
-// obcego.
-//
-// Katalog roboczy sesji zostaje nietknięty w obu fazach: pliki, które model
-// zostawił, nie należą do bazy i nie znikają razem z wierszem.
+// Utrwalacz nie kasuje wierszy sesji: session.delete przenosi wiersz do kosza sesji.

@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: rozpoznanie urządzenia bieżącego, czyli maszyny, na
-// której działa ten rdzeń. Rdzeń zna swoją maszynę z systemu operacyjnego, a
-// warstwa danych zna katalog urządzeń — spotykają się tutaj i nigdzie indziej.
-//
-// Punkt dostępu rodzaju `localDirectory` musi wskazać urządzenie (warunek CHECK
-// tabeli `punkt_dostepu`), bo katalog lokalny istnieje na jednej maszynie.
-// Rozpoznanie startowe zakłada wiersz maszyny, na której stoi rdzeń, i odświeża
-// go przy każdym starcie — powtórzenie nie tworzy drugiej maszyny.
+// Plik rozpoznaje urządzenie bieżące, czyli maszynę, na której działa rdzeń. Punkt dostępu rodzaju localDirectory musi wskazać urządzenie, bo katalog lokalny istnieje na jednej maszynie. Rozpoznanie startowe odświeża wiersz maszyny przy każdym starcie.
 package core
 
 import (
@@ -24,19 +17,14 @@ import (
 // rozpoznawalny po samym systemie operacyjnym.
 const nazwaHostaNierozpoznana = "nierozpoznany"
 
-// znamionaMaszyny to fakty maszyny czytane z systemu operacyjnego.
-//
-// `Identyfikator` nie jest numerem sprzętu: składamy go z systemu i nazwy hosta,
-// bo tyle da się ustalić bez sięgania po dane sprzętowe maszyny. Zmiana nazwy
-// hosta daje więc nowe urządzenie w katalogu — z punktu widzenia katalogów
-// lokalnych jest to inna maszyna.
+// znamionaMaszyny to fakty maszyny czytane z systemu operacyjnego. Identyfikator nie jest numerem sprzętu: składamy go z systemu i nazwy hosta. Zmiana nazwy hosta daje więc nowe urządzenie w katalogu.
 type znamionaMaszyny struct {
 	NazwaHosta       string
 	SystemOperacyjny string
 	Identyfikator    string
 }
 
-// odczytajZnamionaMaszyny ustala znamiona maszyny, na której działa proces.
+// odczytajZnamionaMaszyny ustala znamiona maszyny, na której działa proces, czytając system i nazwę hosta.
 func odczytajZnamionaMaszyny() znamionaMaszyny {
 	host, err := os.Hostname()
 	if err != nil {
@@ -53,10 +41,7 @@ func odczytajZnamionaMaszyny() znamionaMaszyny {
 	}
 }
 
-// urzadzenie przekłada znamiona na wiersz katalogu urządzeń. Maszyna, na której
-// działa rdzeń, jest zaufana z założenia — kod rdzenia już się na niej wykonuje.
-// Oznaczenie zaufania zapisuje się wyłącznie przy zakładaniu wiersza; odebranie
-// go później jest decyzją Operatora i rozpoznanie startowe jej nie cofa.
+// urzadzenie przekłada znamiona na wiersz katalogu urządzeń. Maszyna, na której działa rdzeń, jest zaufana z założenia. Zaufanie zapisuje się przy zakładaniu wiersza; odebranie go później jest decyzją, której rozpoznanie startowe nie cofa.
 func (z znamionaMaszyny) urzadzenie() dane.Urzadzenie {
 	return dane.Urzadzenie{
 		Nazwa:                  z.NazwaHosta,
@@ -68,10 +53,7 @@ func (z znamionaMaszyny) urzadzenie() dane.Urzadzenie {
 	}
 }
 
-// rozpoznajUrzadzenieBiezace zapewnia wiersz maszyny bieżącej i zwraca go wraz
-// z kluczem nadanym przez bazę. Wywołanie powtórzone na tej samej maszynie
-// zwraca ten sam wiersz — idempotencji pilnuje warstwa danych, bo tylko ona
-// widzi jednocześnie identyfikator sprzętowy i oznaczenie maszyny bieżącej.
+// rozpoznajUrzadzenieBiezace zapewnia wiersz maszyny bieżącej i zwraca go wraz z kluczem nadanym przez bazę. Wywołanie powtórzone na tej samej maszynie zwraca ten sam wiersz — idempotencji pilnuje warstwa danych.
 func rozpoznajUrzadzenieBiezace(kontekst context.Context,
 	repozytorium dane.RepozytoriumUrzadzen) (dane.Urzadzenie, error) {
 
@@ -81,10 +63,7 @@ func rozpoznajUrzadzenieBiezace(kontekst context.Context,
 	return repozytorium.ZapewnijBiezace(kontekst, odczytajZnamionaMaszyny().urzadzenie())
 }
 
-// odnotujUrzadzenieBiezace wykonuje rozpoznanie przy montażu rdzenia. Nieudane
-// rozpoznanie idzie do dziennika i nie przerywa startu: rdzeń bez wiersza swojej
-// maszyny pracuje dalej, tylko katalog lokalny nie ma na czym stanąć, dopóki
-// Operator nie wskaże urządzenia sam.
+// odnotujUrzadzenieBiezace wykonuje rozpoznanie przy montażu rdzenia. Nieudane rozpoznanie idzie do dziennika i nie przerywa startu: rdzeń bez wiersza swojej maszyny pracuje dalej, tylko katalog lokalny nie ma na czym stanąć.
 func odnotujUrzadzenieBiezace(kontekst context.Context, repozytorium dane.RepozytoriumUrzadzen,
 	dziennik *log.Logger) {
 

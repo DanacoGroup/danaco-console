@@ -11,19 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// magazynKontekstu przechowuje komplet kontekstu okna.
-//
-// Komplet nie ma własnej tabeli, bo nie ma jej też żaden z jego składników:
-// dokument, agent i źródło wiedzy są w kontrakcie identyfikatorami, a schemat
-// ich nie zna. Magazyn kładzie więc komplet tam, gdzie okno już ma
-// swój stan trwały — na ósmym, najwęższym poziomie zasięgu konfiguracji,
-// pod jednym kluczem i w rodzaju `json`. Ta sama droga czyni komplet
-// czytelnym dla klienta zwykłym `config.get` na poziomie okna, bez drugiej
-// komendy i bez drugiego magazynu.
-//
-// Pamięć procesu jest buforem: odpowiada bez odpytywania bazy i przejmuje
-// magazyn, gdy zapis albo odczyt zawiedzie. Awaria trwałości nie ma prawa
-// odmówić przeniesienia kontekstu.
+// magazynKontekstu przechowuje komplet kontekstu okna pod jednym kluczem konfiguracji na poziomie okna, z pamięcią procesu jako buforem przejmującym zapis i odczyt przy awarii trwałości.
 type magazynKontekstu struct {
 	mu           sync.RWMutex
 	okna         map[string]shared.ContextBundle
@@ -34,8 +22,7 @@ type magazynKontekstu struct {
 	dziennik     *log.Logger
 }
 
-// kluczKompletuKontekstu jest kluczem ustawienia, pod którym leży komplet
-// kontekstu okna.
+// kluczKompletuKontekstu jest kluczem ustawienia konfiguracji okna, pod którym leży zapisany komplet kontekstu tego okna.
 const kluczKompletuKontekstu = "kontekst.komplet"
 
 // nowyMagazynKontekstu zakłada magazyn nad repozytorium konfiguracji. Puste
@@ -55,7 +42,7 @@ func nowyMagazynKontekstu(zycie context.Context, repozytorium dane.RepozytoriumK
 	}
 }
 
-// Zapisz kładzie komplet kontekstu okna: do bufora i do trwałości.
+// Zapisz kładzie komplet kontekstu okna do bufora pamięci procesu oraz, gdy repozytorium jest dostępne, do trwałości konfiguracji.
 func (m *magazynKontekstu) Zapisz(idOkna string, komplet shared.ContextBundle) {
 	if m == nil || idOkna == "" {
 		return
@@ -118,14 +105,14 @@ func kompletZUstawienia(u dane.Ustawienie, zapasowy shared.ContextBundle) shared
 	return komplet
 }
 
-// bufor zwraca komplet trzymany w pamięci procesu.
+// bufor zwraca komplet kontekstu okna trzymany w pamięci procesu, niezależnie od stanu trwałości konfiguracji.
 func (m *magazynKontekstu) bufor(idOkna string) shared.ContextBundle {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.okna[idOkna]
 }
 
-// czyZdegradowane mówi, czy okno pracuje już wyłącznie na buforze.
+// czyZdegradowane mówi, czy okno pracuje już wyłącznie na buforze pamięci procesu, bez zapisu do trwałości.
 func (m *magazynKontekstu) czyZdegradowane(idOkna string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -133,7 +120,7 @@ func (m *magazynKontekstu) czyZdegradowane(idOkna string) bool {
 	return zdegradowane
 }
 
-// zdegraduj przenosi okno na bufor i zgłasza to raz, do dziennika procesu.
+// zdegraduj przenosi okno na bufor pamięci procesu i zgłasza to raz, do dziennika procesu, zamiast przy każdym zapisie.
 func (m *magazynKontekstu) zdegraduj(idOkna, czynnosc string, przyczyna error) {
 	m.mu.Lock()
 	_, juz := m.zdegradowane[idOkna]

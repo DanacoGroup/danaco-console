@@ -7,56 +7,33 @@ import (
 	"danacoconsole/shared"
 )
 
-// emiter rozgłasza zdarzenia zmiany do wszystkich połączeń konta.
-//
-// Kontrakt nie ma osobnego protokołu synchronizacji wielourządzeniowej:
-// nośnikiem zmiany jest zdarzenie właściwe zmienionemu obszarowi. Dlatego
-// obsługiwacz po udanej zmianie stanu zgłasza ją tutaj, a transport roznosi
-// zdarzenie dalej.
-//
-// Nadajnik niepodłączony nie jest błędem: rdzeń wykonuje komendy także wtedy,
-// gdy nikt nie słucha zdarzeń.
+// emiter rozgłasza zdarzenia zmiany do wszystkich połączeń konta. Kontrakt nie ma osobnego protokołu synchronizacji wielourządzeniowej: nośnikiem zmiany jest zdarzenie właściwe zmienionemu obszarowi. Nadajnik niepodłączony nie jest błędem.
 type emiter struct {
 	nadajnik Nadajnik
 }
 
-// nowyEmiter opakowuje nadajnik warstwy transportu.
+// nowyEmiter opakowuje nadajnik warstwy transportu, tworząc gotowy do rozgłaszania zdarzeń emiter zmian.
 func nowyEmiter(nadajnik Nadajnik) *emiter {
 	return &emiter{nadajnik: nadajnik}
 }
 
-// SZEŚĆ ZDARZEŃ NIESIE SPRAWCĘ i wszystkie sześć biorą go z JEDNEGO miejsca —
-// `sprawca(ctx)` (`sprawca.go`). Stąd kontekst w podpisie: bez niego rdzeń nie
-// ma jak odpowiedzieć na pytanie „czyja ręka", bo odpowiedź jest własnością
-// WYWOŁANIA, nie zmienionego bytu. Kontekst niesie już tożsamość żądania
-// i tożsamość połączenia, więc sprawca jest tu bytem tej samej klasy i nie
-// dokłada ani jednego parametru domenowego.
-//
-// KONTEKST BEZ GNIAZDA NIE JEST BŁĘDEM: pola zostają puste, a zdarzenie idzie
-// tak samo. Kontrakt mówi wprost, że brak znaczy „rdzeń nie potrafił tego
-// rozstrzygnąć" — i to jest wtedy prawda.
+// Sześć zdarzeń niesie sprawcę, biorąc go z kontekstu funkcją sprawca. Brak gniazda nie jest błędem.
 
-// sesja rozgłasza zmianę sesji.
+// sesja rozgłasza zmianę sesji wraz z rodzajem zmiany i sprawcą wywołania, wziętym z kontekstu żądania.
 func (e *emiter) sesja(ctx context.Context, zmiana shared.ChangeKind, s shared.Session) {
 	zdarzenie := shared.SessionChangedEvent{Change: zmiana, Session: s}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
 	e.wyslij(shared.EventSessionChanged, s.Id, zdarzenie)
 }
 
-// okno rozgłasza zmianę okna komunikacji.
+// okno rozgłasza zmianę okna komunikacji wraz z rodzajem zmiany i sprawcą wywołania, biorącym z kontekstu.
 func (e *emiter) okno(ctx context.Context, zmiana shared.ChangeKind, o shared.Window) {
 	zdarzenie := shared.WindowChangedEvent{Change: zmiana, Window: o}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
 	e.wyslij(shared.EventWindowChanged, o.SessionId, zdarzenie)
 }
 
-// wiadomosc rozgłasza zmianę wiadomości okna.
-//
-// TU SPRAWCA WAŻY NAJWIĘCEJ. Pole `Message.role` mówi `user` niezależnie od
-// tego, czy wiadomość wpisał człowiek, czy asystent jego klawiaturą — bo rola
-// opisuje MIEJSCE W ROZMOWIE, nie rękę. Dopiero `actor` odróżnia jedno od
-// drugiego i dopiero z nim interfejs może napisać „Asystent" zamiast „spoza
-// tego połączenia".
+// wiadomosc rozgłasza zmianę wiadomości okna. Pole Message.role mówi user niezależnie od tego, czy wiadomość wpisał człowiek, czy asystent jego klawiaturą, bo rola opisuje miejsce w rozmowie, nie rękę. Dopiero actor odróżnia jedno od drugiego.
 func (e *emiter) wiadomosc(ctx context.Context, zmiana shared.ChangeKind, w shared.Message) {
 	zdarzenie := shared.MessageChangedEvent{Change: zmiana, Message: w}
 	zdarzenie.Actor, zdarzenie.ActorClientId = sprawca(ctx)
@@ -74,7 +51,7 @@ func (e *emiter) ustawienie(zmiana shared.ChangeKind, w shared.ConfigEntry) {
 	e.wyslij(shared.EventConfigChanged, idSesji, shared.ConfigChangedEvent{Change: zmiana, Entry: w})
 }
 
-// kolejka rozgłasza zmianę kolejki jednego silnika pętli.
+// kolejka rozgłasza zmianę kolejki jednego silnika pętli wraz z rodzajem zmiany, bez sprawcy wywołania.
 func (e *emiter) kolejka(zmiana shared.ChangeKind, k shared.Queue) {
 	e.wyslij(shared.EventQueueChanged, k.SessionId, shared.QueueChangedEvent{Change: zmiana, Queue: k})
 }
@@ -91,13 +68,7 @@ func (e *emiter) zlecenieAsystenta(ctx context.Context, zmiana shared.ChangeKind
 	e.wyslij(shared.EventAssistantActionChanged, idSesji, zdarzenie)
 }
 
-// postep rozgłasza telemetrię postępu procesu. Jedno zdarzenie zasila
-// Execution Monitor okna i Process Monitor warstwy wspólnej, więc rdzeń nie ma
-// drugiego kanału telemetrii — producentem jest wyłącznie telemetria.go.
-//
-// Sesja komunikatu bywa nieznana: proces bez okna i bez sesji (na przykład
-// kolejka założona przed pierwszą wiadomością) rozgłasza się bez niej, zamiast
-// nie rozgłaszać się wcale.
+// postep rozgłasza telemetrię postępu procesu. Jedno zdarzenie zasila Execution Monitor okna i Process Monitor warstwy wspólnej, więc rdzeń nie ma drugiego kanału telemetrii. Sesja komunikatu bywa nieznana i wtedy zdarzenie rozgłasza się bez niej.
 func (e *emiter) postep(idSesji string, z shared.ProgressChangedEvent) {
 	e.wyslij(shared.EventProgressChanged, idSesji, z)
 }

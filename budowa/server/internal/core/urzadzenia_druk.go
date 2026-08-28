@@ -1,33 +1,6 @@
-// Odpowiedzialność pliku: warstwa druku lokalnego rozdzielona po systemie —
-// wykaz drukarek systemowych i WYSŁANIE gotowego wydania na jedną z nich.
-//
-// ── Czym to się różni od `design.print.export` ──────────────────────────────
-// `design.print.export` kończy pracę PLIKIEM: wydaje PDF, TIFF albo EPS z
-// przestrzenią barw, spadami i znacznikami cięcia, i kładzie go w magazynie jako
-// zasób. To jest wydanie do drukarni. Tego pliku nikt jednak nie wydrukował na
-// drukarce stojącej obok Operatora — i to jest dziura, którą zamyka ten plik:
-// zasób wydany przez `design.print.export` (albo dowolny inny plik widziany
-// przez rdzeń) idzie tu na kolejkę druku systemu.
-//
-// ── KTÓREJ KOMENDY KONTRAKTU BRAKUJE ────────────────────────────────────────
-// Kontrakt (`shared/contract.json`) nie ma komendy wysłania na drukarkę ani
-// komendy wykazu drukarek. Rodzina `design.print.*` ma nastawy profilu, kontrolę
-// przeddrukową, wydanie i podział wielkoformatowy — i na tym się kończy.
-// Nazwy nie wymyślam: warstwa stoi tu gotowa i czeka na dwie komendy, które
-// kontrakt musi wnieść (wykaz drukarek oraz zlecenie druku wraz z jego stanem).
-// Do tego czasu funkcje tego pliku są wystawione poza pakiet, żeby adapter
-// modułu Design mógł je wziąć jedną linią w dniu, w którym komendy powstaną —
-// bez przepisywania warstwy.
-//
-// ── Rozdzielenie po systemie: `runtime.GOOS`, nie warunek budowy ────────────
-// Powód ten sam, co przy skanerze (`urzadzenia_skaner.go`): `go build ./...` na
-// Linuksie nie skompilowałby gałęzi Windows ani razu, więc zepsułaby się
-// niezauważona aż do wydania instalki natywnej.
-//
-// Na Linuksie drogą jest CUPS (`lpstat`, `lp`) — ta sama, którą druku używa cały
-// system. Na Windowsie drogą jest PowerShell (`pwsh`): `Get-Printer` oddaje
-// wykaz, a wysłanie idzie przez .NET albo przez czasownik `PrintTo` powłoki
-// systemu. Program zewnętrzny idzie WYŁĄCZNIE przez `zewnetrzne.Wolaj`.
+// Plik obsługuje warstwę druku lokalnego rozdzieloną po systemie: wykaz
+// drukarek systemowych oraz wysłanie gotowego pliku na jedną z nich drogą CUPS
+// na Linuksie i PowerShell na Windowsie.
 package core
 
 import (
@@ -52,13 +25,11 @@ import (
 // rdzeń na niego nie czeka.
 const granicaDrukuLokalnego = 90 * time.Second
 
-// granicaWykazuDrukarek jest granicą czasu odpytania systemu o drukarki.
+// granicaWykazuDrukarek jest granicą czasu odpytania systemu operacyjnego o wykaz drukarek gotowych do wysłania.
 const granicaWykazuDrukarek = 30 * time.Second
 
-// Narzędzia warstwy druku. `lp` i `lpstat` NIE stoją jeszcze w wykazie
-// zależności rdzenia (`zaleznosci_zewnetrzne.go`) — wpis do wykazu należy do
-// tego pliku dopiero wtedy, gdy warstwę zawoła komenda kontraktu, bo sonda
-// startowa ma mówić o brakach czynności, które Operator może wykonać.
+// Narzędzia warstwy druku; lp i lpstat nie stoją jeszcze w wykazie zależności
+// rdzenia, bo sonda startowa ma mówić wyłącznie o brakach czynności dostępnych Operatorowi.
 var (
 	narzedzieDrukuCups = zewnetrzne.Narzedzie{
 		Nazwa: "CUPS (lp)", Program: "lp", Pakiet: "cups-client",
@@ -73,7 +44,7 @@ var (
 	}
 )
 
-// DrukarkaSystemowa opisuje jedną drukarkę widzianą przez system.
+// DrukarkaSystemowa opisuje jedną drukarkę widzianą przez system operacyjny maszyny, na której działa rdzeń.
 type DrukarkaSystemowa struct {
 	// Nazwa jest nazwą kolejki systemu i jednocześnie wskazaniem przy zleceniu.
 	Nazwa string
@@ -81,15 +52,13 @@ type DrukarkaSystemowa struct {
 	Opis string
 	// Domyslna mówi, czy system drukuje tam bez wskazania.
 	Domyslna bool
-	// Gotowa mówi, czy kolejka przyjmuje zlecenia. Wstrzymana kolejka przyjmie
-	// plik i nie wydrukuje go — Operator ma to wiedzieć przed wysłaniem.
+	// Gotowa mówi, czy kolejka przyjmuje zlecenia, a nie tylko przyjmie plik bez wydruku.
 	Gotowa bool
 }
 
-// ZlecenieDruku niesie jedno wysłanie na drukarkę.
+// ZlecenieDruku niesie jedno wysłanie pliku na kolejkę druku systemu operacyjnego maszyny, na której działa rdzeń.
 type ZlecenieDruku struct {
-	// Plik jest ścieżką widzianą przez rdzeń — na przykład bajtami zasobu
-	// wydanego przez `design.print.export`.
+	// Plik jest ścieżką widzianą przez rdzeń, na przykład zasobu wydanego wcześniej.
 	Plik string
 	// Drukarka jest nazwą z wykazu. Puste bierze drukarkę domyślną systemu.
 	Drukarka string
@@ -101,10 +70,8 @@ type ZlecenieDruku struct {
 	Tytul string
 }
 
-// WarstwaDruku jest wejściem do drukarki systemowej. Struktura, a nie zbiór
-// funkcji z siedmioma parametrami: uruchamiacz, zasady izolacji i obszar roboczy
-// idą razem w każdym wywołaniu, więc rozdzielanie ich przy każdym wołaniu
-// zaprasza do pominięcia jednego z nich.
+// WarstwaDruku jest wejściem do drukarki systemowej; uruchamiacz, zasady
+// izolacji i obszar roboczy idą razem w strukturze, żeby żadne wywołanie ich nie pominęło.
 type WarstwaDruku struct {
 	uruchamiacz session.Uruchamiacz
 	okno        session.Okno
@@ -112,20 +79,16 @@ type WarstwaDruku struct {
 	obszar      session.Obszar
 }
 
-// NowaWarstwaDruku składa warstwę z kompletu, który rdzeń już ma w adapterze.
-// Wystawiona poza pakiet po to, żeby adapter modułu Design wziął ją jedną linią,
-// gdy kontrakt wniesie komendy druku (patrz nagłówek pliku).
+// NowaWarstwaDruku składa warstwę z kompletu, który rdzeń już ma w adapterze,
+// wystawiona poza pakiet do wzięcia jedną linią przez adapter wołający.
 func NowaWarstwaDruku(uruchamiacz session.Uruchamiacz, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar) *WarstwaDruku {
 
 	return &WarstwaDruku{uruchamiacz: uruchamiacz, okno: okno, zasady: zasady, obszar: obszar}
 }
 
-// Drukarki oddaje wykaz drukarek systemu drogą właściwą dla systemu.
-//
-// Pusty wykaz oddaje TYLKO wtedy, gdy system odpowiedział i nie zgłosił żadnej
-// kolejki. Brak drogi — brak CUPS, brak `pwsh`, system nieznany — jest odmową
-// nazywającą brak, nie pustką udającą „nie ma drukarek".
+// Drukarki oddaje wykaz drukarek systemu drogą właściwą dla systemu; pusty
+// wykaz wraca wyłącznie po odpowiedzi systemu bez żadnej kolejki, brak drogi jest odmową.
 func (w *WarstwaDruku) Drukarki(ctx context.Context) ([]DrukarkaSystemowa, error) {
 	switch runtime.GOOS {
 	case systemLinux:
@@ -175,8 +138,7 @@ func (w *WarstwaDruku) Wyslij(ctx context.Context, z ZlecenieDruku) (string, err
 	}
 }
 
-// odmowaDrukuNaTymSystemie nazywa brak drogi druku na systemie, którego rdzeń
-// nie obsługuje.
+// odmowaDrukuNaTymSystemie nazywa brak drogi druku na systemie, którego rdzeń nie obsługuje w warstwie druku lokalnego.
 func odmowaDrukuNaTymSystemie() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 		"druk lokalny: rdzeń nie ma warstwy druku na systemie "+runtime.GOOS+
@@ -206,9 +168,7 @@ func (w *WarstwaDruku) wyslijCups(ctx context.Context, plik, tytul string, kopie
 	if err != nil {
 		return "", bladWarstwyDruku(err)
 	}
-	// `lp` oddaje wiersz postaci: `request id is HP-42 (1 file(s))`. Zdanie idzie
-	// do Operatora bez przekładu — to jest identyfikator, którym system druku
-	// nazywa jego zlecenie, i po nim je odnajdzie.
+	// Zdanie idzie do Operatora bez przekładu — niesie identyfikator zlecenia nadany przez system.
 	potwierdzenie := strings.TrimSpace(string(wyjscie))
 	if potwierdzenie == "" {
 		potwierdzenie = "system druku przyjął zlecenie bez identyfikatora"
@@ -216,8 +176,8 @@ func (w *WarstwaDruku) wyslijCups(ctx context.Context, plik, tytul string, kopie
 	return potwierdzenie, nil
 }
 
-// odczytajDrukarkiCups czyta wyjście `lpstat -p -d`. Wiersze mają postać:
-// `printer HP-42 is idle.  enabled since ...` oraz `system default destination: HP-42`.
+// odczytajDrukarkiCups czyta wyjście polecenia lpstat, wiersz po wierszu, i wydobywa
+// z niego nazwę oraz stan każdej kolejki wraz ze wskazaniem kolejki domyślnej systemu.
 func odczytajDrukarkiCups(wyjscie string) []DrukarkaSystemowa {
 	drukarki := []DrukarkaSystemowa{}
 	domyslna := ""
@@ -265,12 +225,11 @@ const skryptWykazuDrukarek = `$ErrorActionPreference='Stop';` +
 	`$w=New-Object System.Collections.ArrayList;` +
 	`foreach($p in $d){[void]$w.Add([pscustomobject]@{nazwa=$p.Name;` +
 	`opis=[string]$p.DriverName;domyslna=($p.Name -eq $domyslna);` +
-	// Kolejka w stanie błędu przyjmie plik i go nie wydrukuje — Operator ma to
-	// wiedzieć z wykazu, nie z pustej tacy.
+	// Kolejka w stanie błędu przyjmie plik i go nie wydrukuje.
 	`gotowa=([string]$p.PrinterStatus -ne 'Error')})};` +
 	`ConvertTo-Json -InputObject @($w) -Compress`
 
-// odczytajDrukarkiWindows czyta wykaz oddany przez PowerShell jako JSON.
+// odczytajDrukarkiWindows czyta wykaz oddany przez PowerShell jako JSON i składa go w drukarki systemowe.
 func odczytajDrukarkiWindows(wyjscie string) ([]DrukarkaSystemowa, error) {
 	tresc := strings.TrimSpace(wyjscie)
 	if tresc == "" {
@@ -305,13 +264,8 @@ func odczytajDrukarkiWindows(wyjscie string) ([]DrukarkaSystemowa, error) {
 	return drukarki, nil
 }
 
-// wyslijWindows zamawia druk przez PowerShell. Droga zależy od RODZAJU pliku, bo
-// Windows nie ma jednej: obraz drukuje .NET (`System.Drawing.Printing`), tekst
-// idzie przez `Out-Printer`, a dokument złożony (PDF, PostScript) potrzebuje
-// programu, który go rozumie — i dlatego idzie czasownikiem `PrintTo` powłoki
-// systemu. Gdy tego czasownika nikt nie zarejestrował, odmowa mówi to wprost
-// zamiast milczeć: plik wysłany w nicość wygląda jak wydruk, który się nie
-// pojawił.
+// wyslijWindows zamawia druk przez PowerShell drogą zależną od rodzaju pliku:
+// obraz, tekst albo dokument złożony przekazany czasownikowi powłoki systemu.
 func (w *WarstwaDruku) wyslijWindows(ctx context.Context, plik, tytul string, kopie int,
 	z ZlecenieDruku) (string, error) {
 
@@ -359,8 +313,7 @@ func skryptDrukuWindows(plik, tytul, drukarka string, kopie int, dwustronnie boo
 	s.WriteString(fmt.Sprintf(`$kopie=%d;`, kopie))
 	s.WriteString(`if(-not (Test-Path -LiteralPath $plik)){` +
 		`$wynik.blad='BRAK-PLIKU: '+$plik;ConvertTo-Json -InputObject $wynik -Compress;exit 0};`)
-	// Drukarka wskazana musi istnieć. Zejście na domyślną przy literówce
-	// wydrukowałoby materiał na innym urządzeniu — cicho i nieodwracalnie.
+	// Drukarka wskazana musi istnieć, zamiast cichego zejścia na domyślną przy literówce.
 	s.WriteString(`if($drukarka -ne ''){try{$null=Get-Printer -Name $drukarka}catch{` +
 		`$wynik.blad='BRAK-DRUKARKI: '+$drukarka;` +
 		`ConvertTo-Json -InputObject $wynik -Compress;exit 0}};`)
@@ -385,8 +338,7 @@ func skryptDrukuWindows(plik, tytul, drukarka string, kopie int, dwustronnie boo
 		`$dok.Print();$dok.Dispose();$obraz.Dispose()};` +
 		`$wynik.zlecenie='zlecenie obrazu przyjęte przez bufor wydruku: '+$tytul}` +
 		`else{` +
-		// Dokument złożony: czasownik `PrintTo` z drukarką wskazaną, a bez
-		// wskazania — `Print` na urządzeniu domyślnym systemu.
+		// Dokument złożony idzie czasownikiem powłoki zależnym od wskazania drukarki.
 		`$czasownik=$(if($drukarka -ne ''){'PrintTo'}else{'Print'});` +
 		`if($drukarka -ne ''){Start-Process -FilePath $plik -Verb $czasownik ` +
 		`-ArgumentList $drukarka -PassThru -WindowStyle Hidden | Out-Null}` +
@@ -431,7 +383,7 @@ func odmowaDrukuWindows(rozpoznanie, plik string) error {
 
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
-// wolaj jest jedyną drogą warstwy druku do programu zewnętrznego.
+// wolaj jest jedyną drogą warstwy druku do programu zewnętrznego CUPS albo PowerShell na maszynie rdzenia.
 func (w *WarstwaDruku) wolaj(ctx context.Context, n zewnetrzne.Narzedzie,
 	argumenty []string, granica time.Duration) ([]byte, error) {
 
@@ -449,10 +401,8 @@ func (w *WarstwaDruku) wolaj(ctx context.Context, n zewnetrzne.Narzedzie,
 	return wynik.Wyjscie, nil
 }
 
-// bladWarstwyDruku przekłada brak programu na odmowę mówiącą, czego brakuje i co
-// bez tego nie działa. Rozstrzygnięcie to samo, co w arsenale modułu Studio:
-// brak binarium jest zapleczem niedostępnym i kodem PONAWIALNYM, bo po
-// instalacji to samo żądanie przejdzie.
+// bladWarstwyDruku przekłada brak programu na odmowę mówiącą, czego brakuje i co bez tego
+// nie działa; brak binarium jest kodem ponawialnym, bo po instalacji to samo żądanie przejdzie.
 func bladWarstwyDruku(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {

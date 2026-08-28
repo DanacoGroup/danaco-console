@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: słownik formatów rodziny narzędzi dokumentowych —
-// jedna prawda o tym, jak nazywa się format w kontrakcie, jak nazywa go Pandoc
-// i jakie rozszerzenie nosi jego plik. Stoi osobno, bo z tej samej tabeli
-// korzystają obie czynności: zamiana formatu i odczyt treści.
-//
-// Trzy nazwy jednej rzeczy — i dlatego tabela jest jedna. „markdown" kontraktu
-// to `markdown` dla Pandoca i `.md` na dysku; „txt" to `plain` dla Pandoca
-// i `.txt` na dysku. Trzy osobne mapy rozjechałyby się przy pierwszym
-// dołożonym formacie.
-//
-// Format nieznany jest odmową, nie domysłem. Wołający dostaje wykaz tego, co
-// rodzina umie — zgadnięty format kończy się plikiem, którego nikt nie otworzy,
-// a koperta meldowałaby powodzenie.
+// Plik niesie słownik formatów rodziny narzędzi dokumentowych: jedną prawdę
+// o tym, jak nazywa się format w kontrakcie, jak nazywa go Pandoc i jakie
+// rozszerzenie nosi jego plik, wspólną dla zamiany formatu i odczytu treści.
 package core
 
 import (
@@ -22,29 +12,24 @@ import (
 )
 
 // opisFormatuDokumentu niesie trzy nazwy jednego formatu oraz dwie zdolności,
-// od których zależy dobór narzędzia.
+// od których zależy dobór narzędzia rodziny.
 type opisFormatuDokumentu struct {
-	// pandoc jest nazwą formatu w Pandocu. Pusta znaczy „Pandoc tego nie zna" —
-	// tak jest z PDF-em, którego Pandoc ani nie czyta, ani nie zapisuje bez
-	// silnika składu.
+	// pandoc jest nazwą formatu w Pandocu; pusta znaczy, że Pandoc go nie zna.
 	pandoc string
 	// rozszerzenie jest nazwą pliku na dysku, po której binaria rozpoznają
-	// wejście, gdy nie podamy formatu jawnie.
+	// wejście bez jawnego formatu.
 	rozszerzenie string
 	// czytaPandoc mówi, czy Pandoc weźmie ten format jako wejście.
 	czytaPandoc bool
 	// piszePandoc mówi, czy Pandoc odda ten format jako wyjście.
 	piszePandoc bool
-	// strawnyDlaLibre mówi, czy LibreOffice otworzy plik wprost. Tą drogą
-	// jedzie jedyne wytworzenie PDF-u, jakie ta maszyna potrafi (patrz
-	// `adapter_narzedzia_dokument_konwersja.go`).
+	// strawnyDlaLibre mówi, czy LibreOffice otworzy plik wprost, jedyna droga PDF-u.
 	strawnyDlaLibre bool
 }
 
-// formatyDokumentu jest kompletem formatów rodziny. Wykaz idzie za kontraktem:
-// „markdown, html, docx, odt, pdf, epub, rtf, csv" — plus `txt`, bo tekst
-// czysty jest naturalnym wyjściem odczytu i wejściem konwersji, a jego brak
-// zmuszałby model do udawania, że notatka jest markdownem.
+// formatyDokumentu jest kompletem formatów rodziny. Wykaz idzie za kontraktem,
+// plus `txt`, bo tekst czysty jest naturalnym wyjściem odczytu i wejściem
+// konwersji.
 var formatyDokumentu = map[string]opisFormatuDokumentu{
 	"markdown": {pandoc: "markdown", rozszerzenie: "md", czytaPandoc: true, piszePandoc: true},
 	"html":     {pandoc: "html", rozszerzenie: "html", czytaPandoc: true, piszePandoc: true, strawnyDlaLibre: true},
@@ -53,23 +38,15 @@ var formatyDokumentu = map[string]opisFormatuDokumentu{
 	"rtf":      {pandoc: "rtf", rozszerzenie: "rtf", czytaPandoc: true, piszePandoc: true, strawnyDlaLibre: true},
 	"epub":     {pandoc: "epub", rozszerzenie: "epub", czytaPandoc: true, piszePandoc: true},
 	"csv":      {pandoc: "csv", rozszerzenie: "csv", czytaPandoc: true, piszePandoc: true, strawnyDlaLibre: true},
-	// Nazwa pandokowa `plain` jest nazwą ZAPISU — czytnika o tej nazwie Pandoc
-	// nie ma, więc odczyt treści pliku tekstowego idzie wprost z dysku
-	// (`adapter_narzedzia_dokument_tekst.go`), a Pandoc dostaje ten format
-	// wyłącznie jako cel zamiany.
+	// Nazwa pandokowa plain jest nazwą zapisu — czytnika o tej nazwie Pandoc nie ma.
 	"txt": {pandoc: "plain", rozszerzenie: "txt", czytaPandoc: true, piszePandoc: true, strawnyDlaLibre: true},
-	// PDF stoi osobno: Pandoc go nie czyta (nie ma z czego złożyć struktury),
-	// więc `czytaPandoc` zostaje fałszem, a `piszePandoc` — także, bo zapis
-	// PDF-u Pandokiem wymaga silnika składu wołanego przez niego samego, czyli
-	// procesu poza bramą rdzenia. Czytaniem PDF-u zajmuje się
-	// `document.text.extract`, a zapisem dwie drogi rdzenia opisane
-	// w `adapter_narzedzia_dokument_konwersja.go`: skład typstem albo
-	// LibreOffice.
+	// PDF stoi osobno: Pandoc go nie czyta ani nie zapisuje, wymaga silnika
+	// składu poza bramą rdzenia.
 	"pdf": {rozszerzenie: "pdf", strawnyDlaLibre: true},
 }
 
 // obrazyDokumentu jest wykazem formatów, które są pikselami, a nie dokumentem:
-// jedyną drogą do ich treści jest rozpoznanie pisma. Zdjęcie kartki i skan
+// jedyną drogą do ich treści jest rozpoznanie pisma, zdjęcie kartki i skan
 // wchodzą tędy.
 var obrazyDokumentu = map[string]bool{
 	"png": true, "jpg": true, "jpeg": true, "tif": true, "tiff": true,
@@ -77,16 +54,15 @@ var obrazyDokumentu = map[string]bool{
 }
 
 // normalizujFormatDokumentu sprowadza wskazanie wołającego do nazwy ze
-// słownika. Przyjmuje pisownię, którą naprawdę przyśle model: wielkie litery,
-// kropkę wiodącą, skróty i nazwy typów MIME w części po ukośniku.
+// słownika: przyjmuje wielkie litery, kropkę wiodącą, skróty i nazwy typów
+// MIME.
 func normalizujFormatDokumentu(wskazanie string) string {
 	nazwa := strings.ToLower(strings.TrimSpace(wskazanie))
 	nazwa = strings.TrimPrefix(nazwa, ".")
 	if nazwa == "" {
 		return ""
 	}
-	// Synonimy, nie zgadywanie: każda z tych nazw wskazuje dokładnie jeden
-	// format słownika i nie ma drugiego kandydata.
+	// Synonimy, nie zgadywanie: każda z tych nazw wskazuje dokładnie jeden format słownika.
 	switch nazwa {
 	case "md", "mkd", "markdown_strict", "text/markdown":
 		return "markdown"
@@ -109,14 +85,13 @@ func normalizujFormatDokumentu(wskazanie string) string {
 }
 
 // formatZeSciezki rozpoznaje format po rozszerzeniu pliku. Pusty wynik znaczy
-// „nie wiem", a nie „format domyślny".
+// „nie wiem”, a nie „format domyślny”.
 func formatZeSciezki(sciezka string) string {
 	return normalizujFormatDokumentu(filepath.Ext(sciezka))
 }
 
 // pierwszyFormatDokumentu oddaje pierwsze wskazanie, które da się rozpoznać.
-// Kolejność argumentów ustala wołający — zwykle najpierw to, co powiedział
-// model, potem to, co widać po pliku.
+// Kolejność argumentów ustala wołający, zwykle najpierw model, potem plik.
 func pierwszyFormatDokumentu(wskazania ...string) string {
 	for _, wskazanie := range wskazania {
 		if nazwa := normalizujFormatDokumentu(wskazanie); nazwa != "" {
@@ -127,8 +102,7 @@ func pierwszyFormatDokumentu(wskazania ...string) string {
 }
 
 // rozszerzenieFormatuDokumentu oddaje rozszerzenie pliku dla formatu. Format
-// spoza słownika (obraz) oddaje własną nazwę — `png` jest i formatem, i
-// rozszerzeniem.
+// spoza słownika oddaje własną nazwę, bo png jest i formatem, i rozszerzeniem.
 func rozszerzenieFormatuDokumentu(format string) string {
 	if opis, jest := formatyDokumentu[format]; jest {
 		return opis.rozszerzenie
@@ -136,19 +110,9 @@ func rozszerzenieFormatuDokumentu(format string) string {
 	return format
 }
 
-// formatZNaglowka rozpoznaje format po pierwszych bajtach pliku.
-//
-// Wynik `document.convert` leży w magazynie jako blob, którego nazwą jest suma
-// SHA256 — bez kropki i bez rozszerzenia. Rozpoznanie wyłącznie po rozszerzeniu
-// zrywałoby więc łańcuch najbardziej w tej rodzinie naturalny: „zamień na PDF,
-// a potem przeczytaj, co wyszło".
-//
-// To jest odczyt, a nie domysł po nazwie: bajty `%PDF-` na początku pliku są
-// definicją PDF-u, a nie poszlaką — plik, który je niesie, jest PDF-em
-// niezależnie od tego, jak się nazywa. Materiał, którego nagłówek nie mówi nic
-// pewnego, oddaje pustkę, bo „nie wiem" jest odpowiedzią uczciwą, a zgadnięty
-// format kończy się odmową narzędzia w połowie pracy albo, gorzej, treścią
-// przeczytaną nie tym słownikiem.
+// formatZNaglowka rozpoznaje format po pierwszych bajtach pliku, bo wynik
+// konwersji leży w magazynie jako blob bez rozszerzenia, a zgadnięty format
+// kończy się treścią przeczytaną nie tym słownikiem.
 func formatZNaglowka(sciezka string) string {
 	plik, err := os.Open(sciezka)
 	if err != nil {
@@ -156,8 +120,7 @@ func formatZNaglowka(sciezka string) string {
 	}
 	defer plik.Close()
 
-	// Cztery kilobajty: mieszczą wszystkie znaczniki poniżej wraz z nazwami
-	// pierwszych pozycji archiwum ZIP, a kosztują jeden odczyt.
+	// Cztery kilobajty mieszczą wszystkie znaczniki wraz z nazwami pierwszych pozycji ZIP.
 	naglowek := make([]byte, 4096)
 	odczytane, _ := plik.Read(naglowek)
 	if odczytane <= 0 {
@@ -184,8 +147,7 @@ func formatZNaglowka(sciezka string) string {
 		return "rtf"
 	}
 
-	// Archiwum ZIP jest kopertą trzech różnych formatów, więc sam znacznik `PK`
-	// nie rozstrzyga niczego — rozstrzyga zawartość pierwszych pozycji.
+	// Archiwum ZIP jest kopertą trzech formatów, sam znacznik PK nie rozstrzyga niczego.
 	if bytes.HasPrefix(naglowek, []byte("PK\x03\x04")) {
 		switch {
 		case bytes.Contains(naglowek, []byte("mimetypeapplication/epub+zip")):
@@ -206,8 +168,8 @@ func formatZNaglowka(sciezka string) string {
 	return ""
 }
 
-// wykazFormatowDokumentu składa posortowany wykaz nazw do treści odmowy.
-// Odmowa ma powiedzieć, co rodzina umie, a nie tylko czego nie umie.
+// wykazFormatowDokumentu składa posortowany wykaz nazw do treści odmowy:
+// odmowa ma powiedzieć, co rodzina umie, a nie tylko czego nie umie.
 func wykazFormatowDokumentu() string {
 	nazwy := make([]string, 0, len(formatyDokumentu))
 	for nazwa := range formatyDokumentu {

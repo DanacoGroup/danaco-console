@@ -22,28 +22,21 @@ type Rdzen struct {
 	komendy  *protocol.RejestrKomend
 	nasluch  Nasluch
 	dziennik *log.Logger
-	// niepowodzenia przyjmuje odmowy wykonania komend, żeby stały się faktem
-	// widocznym w Errors Panel modułu Diagnostics. Brak obserwatora nie zmienia
-	// zachowania rdzenia — znika wyłącznie zapis.
+	// niepowodzenia przyjmuje odmowy wykonania komend, żeby stały się widoczne w module Diagnostics.
 	niepowodzenia ObserwatorNiepowodzen
-	// straz rozstrzyga, czy wywołanie ręki modelu mieści się w zakresie
-	// zapisanym dla profilu asystenta (`handlers_narzedzia_zakresy.go`).
-	// Niewpięta nie zmienia niczego: stanem wyjściowym platformy jest pełny
-	// dostęp bez granicy, a zawężenia po prostu wtedy nie ma.
+	// straz rozstrzyga, czy wywołanie ręki modelu mieści się w zakresie zapisanym dla profilu asystenta.
 	straz StrazZakresowNarzedzi
-	// wiez trzyma przypisania połączenie → sesja bramki. Nigdy nie jest zerowa
-	// po Zloz; zerowa znosi się sama, bo wszystkie metody więzi przyjmują
-	// odbiornik zerowy (`wiez_polaczenia.go`).
+	// wiez trzyma przypisania połączenie -> sesja bramki i nigdy nie jest zerowa po założeniu.
 	wiez *wiezBramki
 }
 
-// ZObserwatoremNiepowodzen wpina odbiorcę odmów wykonania komend.
+// ZObserwatoremNiepowodzen wpina odbiorcę odmów wykonania komend, dzięki czemu odmowy stają się widoczne poza rdzeniem, w module Diagnostics.
 func (r *Rdzen) ZObserwatoremNiepowodzen(o ObserwatorNiepowodzen) *Rdzen {
 	r.niepowodzenia = o
 	return r
 }
 
-// ZeStrazaZakresow wpina straż zakresów narzędzi.
+// ZeStrazaZakresow wpina straż zakresów narzędzi, która rozstrzyga, czy wywołanie ręki modelu mieści się w zakresie zapisanym dla profilu asystenta.
 func (r *Rdzen) ZeStrazaZakresow(s StrazZakresowNarzedzi) *Rdzen {
 	r.straz = s
 	return r
@@ -58,17 +51,7 @@ func (r *Rdzen) Wykonaj(ctx context.Context, zadanie protocol.Koperta) protocol.
 	return r.WykonajZadanie(ctx, protocol.ZbudujZadanie(zadanie, r.komendy))
 }
 
-// WykonajZadanie kieruje żądanie już rozpoznane przez warstwę niższą — tą drogą
-// wchodzi transport, który sam odkodował kopertę.
-//
-// Rozpoznanie warstwy niższej opiera się na całym kontrakcie, a rdzeń obsługuje
-// tylko to, co ma wpięte, dlatego komenda bez obsługiwacza jest tutaj rozpoznawana
-// ponownie — inaczej odpowiedź `*.unknown` wróciłaby pod nazwą komendy zamiast
-// pod nazwą zdarzenia obszaru.
-//
-// Obie drogi odmowy odnotowują się tak samo. Odmowa „rdzeń nie ma uchwytu
-// komendy" trafia do Errors Panel razem z odmową wykonania — inaczej byłaby
-// jedynym rodzajem odmowy niewidocznym w jedynym oknie, które odmowy pokazuje.
+// WykonajZadanie kieruje żądanie już rozpoznane przez warstwę niższą. Komenda bez obsługiwacza jest rozpoznawana ponownie, żeby odpowiedź „*.unknown" wróciła pod nazwą zdarzenia obszaru, a obie drogi odmowy trafiają jednakowo do Errors Panel.
 func (r *Rdzen) WykonajZadanie(ctx context.Context, z protocol.Request) protocol.Koperta {
 	ctx = zDziennikiemRdzenia(ctx, r.dziennik)
 	if !z.Znana {
@@ -83,8 +66,7 @@ func (r *Rdzen) WykonajZadanie(ctx context.Context, z protocol.Request) protocol
 		return protocol.KopertaOdpowiedzi(z.Koperta(), protocol.Odpowiedz{Blad: blad})
 	}
 	odpowiedz := r.wykonajOdpornie(ctx, obsluga, z)
-	// Odmowa staje się faktem po wykonaniu, nie zamiast niego: odpowiedź idzie
-	// do klienta niezależnie od tego, czy zapis się powiódł.
+	// Odmowa staje się faktem po wykonaniu, nie zamiast niego, niezależnie od wyniku zapisu.
 	r.odnotujNiepowodzenie(ctx, z, odpowiedz.Blad)
 	return protocol.KopertaOdpowiedzi(z.Koperta(), odpowiedz)
 }
@@ -115,7 +97,7 @@ func (r *Rdzen) Uruchom(ctx context.Context) error {
 	return r.nasluch.Sluchaj(ctx)
 }
 
-// kopertaOdpowiedzi odkodowuje komunikat i kieruje go dalej.
+// kopertaOdpowiedzi odkodowuje komunikat przychodzący z gniazda, a komunikat nieczytelny zwraca jako odpowiedź z kodem błędu.
 func (r *Rdzen) kopertaOdpowiedzi(ctx context.Context, dane []byte) protocol.Koperta {
 	zadanie, err := protocol.Odkoduj(dane)
 	if err != nil {
@@ -148,16 +130,10 @@ func (r *Rdzen) zapisz(wzorzec string, argumenty ...any) {
 	r.dziennik.Printf(wzorzec, argumenty...)
 }
 
-// kluczDziennikaRdzenia znakuje dziennik włożony do kontekstu żądania.
+// kluczDziennikaRdzenia znakuje dziennik włożony do kontekstu żądania, żeby warstwy niższe mogły go stamtąd odczytać.
 type kluczDziennikaRdzenia struct{}
 
-// zDziennikiemRdzenia niesie dziennik do warstw, które stoją na drodze żądania,
-// a rdzenia nie widzą.
-//
-// Taką warstwą jest brama kontraktu: przepuszczone powitanie niepełne ma
-// zostawić ślad w dzienniku (`brama_kontraktu.go`), a brama jest funkcją wolną
-// i innej drogi do dziennika nie ma. Kontekst wchodzi tu raz, w jedynym gardle
-// każdego żądania, więc warstwy niższe nie muszą go sobie podawać.
+// zDziennikiemRdzenia niesie dziennik do warstw, które stoją na drodze żądania, a rdzenia nie widzą, na przykład do bramy kontraktu, która zapisuje ślad przepuszczonego niepełnego powitania.
 func zDziennikiemRdzenia(ctx context.Context, dziennik *log.Logger) context.Context {
 	if dziennik == nil {
 		return ctx
@@ -178,13 +154,7 @@ func dziennikZKontekstu(ctx context.Context) *log.Logger {
 	return dziennik
 }
 
-// odmowaZakresu pyta straż o wywołanie ręki modelu.
-//
-// Pyta WYŁĄCZNIE o rękę modelu. Klawiatura Operatora zakresowi profilu
-// asystenta nie podlega: zakres opisuje, jak szeroko działa asystent w imieniu
-// Operatora, a nie co wolno samemu Operatorowi (`sprawca.go`). Praca własna
-// rdzenia i połączenie, które się nie przywitało, też przechodzą — zawężenie
-// nałożone na przemiatanie zatrzymywałoby platformę bez decyzji Operatora.
+// odmowaZakresu pyta straż wyłącznie o rękę modelu. Zakres profilu asystenta nie obejmuje klawiatury Operatora ani pracy własnej rdzenia, więc te drogi przechodzą bez zawężenia.
 func (r *Rdzen) odmowaZakresu(ctx context.Context, z protocol.Request) *protocol.Blad {
 	if r == nil || r.straz == nil {
 		return nil

@@ -1,3 +1,6 @@
+// Plik sprawdza wykaz wypisany maszynowo, jedyną drogę, którą prowizjonowanie
+// serwera dowiaduje się, co postawić: wykaz okrojony, warstwę nieznaną
+// i pozycję wstrzymaną wchodzącą do warstwy stawianej milcząco.
 package core
 
 import (
@@ -9,19 +12,6 @@ import (
 	"danacoconsole/server/internal/zewnetrzne"
 )
 
-// Wykaz wypisany maszynowo jest jedyną drogą, którą prowizjonowanie serwera
-// (`scripts/arsenal-serwera.sh`) dowiaduje się, co postawić. Szkoda, której te
-// sprawdziany pilnują, ma trzy postacie:
-//
-//	wykaz okrojony     — program wołany przez rdzeń nie trafia do prowizjonowania
-//	                     i funkcja odmawia Operatorowi na serwerze;
-//	warstwa nieznana   — pozycja wypada z każdej warstwy skryptu i cicho nie
-//	                     zostaje postawiona;
-//	silnik kontenerów  — wstrzymany decyzją Właściciela, wchodzi do warstwy
-//	                     stawianej milcząco.
-//
-// Sprawdziany nie mierzą, ile programów stoi na tej maszynie — mierzą mechanizm
-// wyprowadzenia wykazu.
 
 // TestWydrukWykazuNiesieKazdaPozycje pilnuje kompletności: wydruk ma mieć
 // dokładnie tyle wierszy danych, ile wykaz ma pozycji. Wiersz pominięty to
@@ -50,9 +40,7 @@ func TestWydrukWykazuNiesieKazdaPozycje(t *testing.T) {
 			continue
 		}
 		for numer, pole := range pola {
-			// Puste dopuszczamy tylko w podpowiedzi pakietu (pole trzecie,
-			// indeks 2) — deklaracja bez podpowiedzi jest legalna, choć wykaz
-			// zależności pilnuje osobno, żeby jej nie było.
+			// Puste pole jest dopuszczalne tylko w podpowiedzi pakietu (indeks 2).
 			if numer != 2 && strings.TrimSpace(pole) == "" {
 				t.Errorf("wiersz %q ma puste pole numer %d", wiersz, numer+1)
 			}
@@ -60,10 +48,9 @@ func TestWydrukWykazuNiesieKazdaPozycje(t *testing.T) {
 	}
 }
 
-// TestWydrukNiesiePolskiPakietTesseractu pilnuje wymagania Właściciela
-// wypowiedzianego wprost: rozpoznanie pisma ma działać po polsku. Sam
-// `tesseract-ocr` daje program bez języka polskiego, więc prowizjonowanie
-// postawiłoby OCR, który na polskim skanie zwraca miał.
+// TestWydrukNiesiePolskiPakietTesseractu pilnuje, że rozpoznanie pisma działa
+// po polsku: sam `tesseract-ocr` daje program bez języka polskiego, więc
+// prowizjonowanie postawiłoby OCR, który na polskim skanie zwraca miał.
 func TestWydrukNiesiePolskiPakietTesseractu(t *testing.T) {
 	var bufor bytes.Buffer
 	if err := WypiszWykazZaleznosci(&bufor); err != nil {
@@ -81,10 +68,9 @@ func TestWydrukNiesiePolskiPakietTesseractu(t *testing.T) {
 	}
 }
 
-// TestSilnikKontenerowStoiWWarstwieDecyzyjnej pilnuje decyzji Właściciela:
-// silnik kontenerów został wstrzymany i nie może wejść do warstwy, którą
-// prowizjonowanie stawia bez pytania. Obie jego deklaracje (warsztat Developera
-// i moduł Terminal) muszą trafić do warstwy decyzyjnej.
+// TestSilnikKontenerowStoiWWarstwieDecyzyjnej pilnuje, że wstrzymany silnik
+// kontenerów nie wchodzi do warstwy, którą prowizjonowanie stawia bez pytania:
+// obie jego deklaracje muszą trafić do warstwy decyzyjnej.
 func TestSilnikKontenerowStoiWWarstwieDecyzyjnej(t *testing.T) {
 	policzone := 0
 	for _, pozycja := range ZaleznosciZewnetrzne() {
@@ -135,8 +121,7 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 		{"pakiet dystrybucji", "pandoc", "pandoc", WarstwaObowiazkowa},
 		{"dwa pakiety dystrybucji", "tesseract", "tesseract-ocr tesseract-ocr-pol", WarstwaObowiazkowa},
 		{"warsztat Go", "gopls", "go install golang.org/x/tools/gopls@latest", WarstwaWarsztatGo},
-		// Podpowiedź warsztatu Go potrafi nieść adres GitHuba. Gdyby reguła
-		// pytała najpierw o GitHuba, golangci-lint stałby się krokiem ręcznym.
+		// Podpowiedź warsztatu Go potrafi nieść też adres GitHuba.
 		{"warsztat Go z adresem GitHuba", "golangci-lint",
 			"go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest", WarstwaWarsztatGo},
 		{"warsztat npm", "eslint", "npm i -g eslint", WarstwaWarsztatNpm},
@@ -231,8 +216,7 @@ func TestWykazMowyNiesieRozmiarModeluIMiejscaArsenalu(t *testing.T) {
 
 // TestZnacznikiWykazuRozpoznawaneWObuPostaciach pilnuje wejścia do trybów:
 // prowizjonowanie woła rdzeń z podwójnym minusem, a reszta projektu zapisuje
-// flagi z pojedynczym. Obie postacie mają wchodzić, a zwykły start rdzenia nie
-// może wpaść w tryb wykazu.
+// flagi pojedynczym. Obie postacie mają wchodzić.
 func TestZnacznikiWykazuRozpoznawaneWObuPostaciach(t *testing.T) {
 	if !ZadanoWykazZaleznosci([]string{"--wykaz-zaleznosci"}) ||
 		!ZadanoWykazZaleznosci([]string{"-wykaz-zaleznosci"}) {
@@ -250,7 +234,7 @@ func TestZnacznikiWykazuRozpoznawaneWObuPostaciach(t *testing.T) {
 }
 
 // wierszProgramu odnajduje w wydruku wiersz danych opisujący wskazany program.
-// Program bywa w wykazie dwa razy (silnik kontenerów) — bierzemy pierwszy,
+// Program bywa w wykazie dwa razy (silnik kontenerów), brany jest pierwszy,
 // bo sprawdziany pytają o warstwę i obecność, a te są dla obu takie same.
 func wierszProgramu(wydruk, program string) string {
 	for _, wiersz := range strings.Split(wydruk, "\n") {

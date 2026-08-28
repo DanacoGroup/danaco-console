@@ -90,7 +90,7 @@ export function utworzZrodloOkien(kanal: Kanal): ZrodloOkien {
       return przenies(wynik, (tresc) => tresc.window);
     },
 
-    // Kształt odpowiedzi komend ról sprawdzamy jak każdej innej: kod powodzenia nie dowodzi nadania roli.
+    // Kształt odpowiedzi ról podlega sprawdzeniu jak każdej innej: powodzenie nie dowodzi nadania roli.
     async nadajRole(zadanie) {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.RoleAssign, zadanie),

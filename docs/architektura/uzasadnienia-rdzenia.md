@@ -6710,3 +6710,65 @@ rejestruje niczego: komendy odpowiadają wtedy `aod.unknown`, a pozostałe domen
 pracują bez zmian. Rozgłoszenie wyciszenia po `aod.mute.set` odróżnia zdarzenie
 realne od powtórzonego bez zmiany, bo bez tego rozróżnienia jedna powłoka
 wyciszałaby, a druga wciąż pokazywałaby sugestie tej samej rozmowy.
+
+## budowa/server/internal/core/handlers_centrum_powiadomien.go
+Rodzina `notification.*` ma sam odczyt i zmianę stanu, bez komendy zgłaszającej
+zdarzenie: powiadomienia zgłasza platforma tam, gdzie coś zaszło, przez
+`adapter_centrum_powiadomien.go`, funkcję `Zglos`, a komenda w kontrakcie
+pozwalałaby klientowi wpisać do rejestru zdarzenie, które nigdy nie zaszło.
+Zdarzeń `notification.raised` i `notification.changed` nie rozgłasza ten plik,
+tylko adapter, bo rozgłasza je także droga wewnętrzna, która przez rejestr
+komend nie przechodzi — rozgłoszenie w dwóch miejscach dałoby przy zgłoszeniu
+dwie koperty o jednym zdarzeniu.
+
+## budowa/server/internal/core/handlers_channel.go
+Rejestr kanałów jest sterowany danymi: nowy kanał to nowy wiersz rejestru, nie
+nowy typ w kodzie ani nowa gałąź warunku. Rdzeń nie zna ani jednego rodzaju
+kanału — rodzaj jest wartością danych, którą czyta warstwa modeli. Kontrakt nie
+ma zdarzenia zmiany kanału, więc ta domena niczego nie rozgłasza, a rdzeń nie
+dokłada zdarzenia spoza kontraktu. Parametry kanału niosą wyłącznie odwołania
+do danych dostępowych, nigdy ich treść — pilnuje tego warstwa danych, rdzeń
+przenosi ładunek bez zaglądania do niego.
+
+## budowa/server/internal/core/handlers_config.go
+Domena konfiguracji ma dziewięć poziomów zasięgu, od zasięgu aplikacji,
+najszerszego, po okno komunikacji, najwęższe i wygrywające z pozostałymi.
+Rdzeń nie rozstrzyga pierwszeństwa poziomów ani nie zna katalogu ustawień — to
+należy do warstwy konfiguracji, rdzeń wyłącznie kieruje komendę i rozgłasza
+zmianę. Komenda `config.reset` przywraca wartość domyślną: skutkiem jest
+usunięcie ustawienia z poziomu, więc zmiana idzie jako usunięcie wpisu, a brak
+ustawienia znaczy wartość domyślną, nigdy blokadę.
+
+## budowa/server/internal/core/handlers_connection.go
+Powitanie uzgadnia wersję i oddaje klientowi wykaz komend rzeczywiście
+obsługiwanych przez rdzeń, nie wykaz z kontraktu, więc klient dowiaduje się
+z niego, co ta wersja rdzenia potrafi, zamiast zgadywać po odpowiedziach.
+Powitanie niesie token i jest jedyną drogą, którą token sesji bramki wchodzi do
+rdzenia, bo transportem jest jedno gniazdo, więc nie ma nagłówka na każdym
+żądaniu ani ciasteczka. Uzgodnienie nie jest bramą: token niepasujący, wygasły
+albo pusty nie odrzuca powitania i nie zamyka połączenia, tylko zmienia jedno
+pole odpowiedzi, a klient czyta `authenticated` i sam rozstrzyga, czy pokazać
+okno logowania. Pole `gatewayConfigured` odróżnia dwie różne pustki: bramka
+istnieje, ale operator nie jest zalogowany, prowadzi do okna logowania, a
+bramki nie ma wcale prowadzi do okna pierwszej rejestracji — bez tego pola
+klient musiałby wyprowadzać stan z odmowy `auth.login`. Pole `loginRequired`
+jest odczytem przy nawiązaniu: warstwa nasłuchu składa straż bramki raz na
+połączenie, więc chwilą, w której nastawa poziomu `aplikacja` ma znaczenie,
+jest właśnie powitanie. Rdzeń czyta ją tym samym rozstrzygaczem, którym idzie
+każde inne ustawienie platformy w `nastawy_aplikacji.go`, więc zmianę zapisaną
+komendą `config.set` widać od następnego połączenia, bez restartu rdzenia.
+Deklaracja zdolności klienta w polu `capabilities` jest zapamiętywana, bo
+powitanie jest jedyną chwilą, w której klient o sobie mówi — korzysta z niej
+rodzina `launcher.hotkey.*`, ponieważ skrót globalny przechwytuje powłoka
+programu okiennego, więc rdzeń musi wiedzieć, czy po drugiej stronie stoi
+ktoś, kto to potrafi.
+
+Funkcja `zwiazPowitanie` traktuje błąd odczytu jako fałsz, tak samo jak token
+nieznany, bo powitanie ma się udać zawsze — jedyną szkodą z niedostępnej bazy
+jest to, że operator zobaczy okno logowania. Powitanie nierozpoznane zrywa
+poprzednią więź tego połączenia zamiast zostawić ją nietkniętą, bo więź
+nietknięta kazałaby rdzeniowi odpowiadać `authenticated: false`, a mimo to
+uważać gniazdo za związane z sesją sprzed powitania i wyłączać ją ze zmiany
+hasła — czyli oszczędzać sesję, której wołający nie przedstawił. Zerwanie nie
+jest bramką: niczego nie odrzuca i połączenia nie zamyka, tylko sprowadza stan
+do nieustalenia, kto woła.

@@ -6940,3 +6940,30 @@ Zapytania składane są tu wprost na `*sql.DB`, nie przez pamięć przygotowanyc
 poleceń: wykaz pamięci ma cztery nieobowiązkowe zawężenia i limit, więc treść
 zapytania zależy od żądania, a pamięć przygotowanych poleceń trzymałaby
 kilkanaście wariantów jednego odczytu.
+
+## budowa/server/internal/dane/tlumaczenie_panele.go
+Niezgodności nie są polem tego typu. Kontraktowe pole `TranslationPanel.Issues`
+warstwa wyższa składa z osobnego odczytu niezgodności w pliku `jakosc.go`, po
+identyfikatorze panelu. Panel i jego niezgodności to dwa byty w dwóch tabelach;
+trzymanie ich razem w jednej strukturze Go byłoby fałszywym obrazem schematu.
+
+Pole `Ton` ustawia polecenie `translate.panel.tone.set`, a pole `TrescZwrotna`
+polecenie `backtranslation.run`; obie kolumny mieszkają w wierszu panelu, bo to
+jego pola, ale ten plik ich nie modyfikuje.
+
+Kolumna `OknoKod` jest doczytywana złączeniem, nie zapisywana drugi raz —
+prawda o kodzie okna zostaje w tabeli `okno_tlumaczenia`.
+
+Trzy pola migawki obiegu zatwierdzeń, z migracji 162, są wyłącznie stanem
+bieżącym, żeby odczyt panelu nie musiał dociągać ostatniego wiersza obiegu
+przy każdym wykazie paneli okna; pełną historię niesie tabela
+`zatwierdzenie_panelu` z pliku `tlumaczenie_kontrola.go`.
+
+ZapiszPanel nie nadpisuje panelu po kodzie zewnętrznym, ponieważ panel jest
+dodawany raz przez polecenie `translate.target.add`; nadpisanie treści, tonu
+i stanu idzie osobnymi poleceniami, więc zapis nie używa klauzuli ON CONFLICT.
+
+WszystkiePanele służy dwóm poleceniom obejmującym cały słownik. Polecenie
+`glossary.apply` traktuje puste `panelId` jako wskazanie wszystkich paneli,
+a polecenie `glossary.occurrences` niesie sam termin, bez wskazania okna —
+zakres bez zawężenia jest tu poprawny, bo słownik jest jeden na instalację.

@@ -6674,3 +6674,13 @@ adapter_modul_asystent_wykonawca.go, a nośnikiem ten sam emiter rdzenia,
 co dla pozostałych zmian obszarów.
 
 Producentem telemetrii postępu jest wyłącznie plik telemetria.go.
+
+## budowa/server/internal/core/znakowanie_wykaz_test.go
+
+Trzy szkody, które sprawdziany tego pliku mają wykluczyć: znakowanie
+o rodzaju spoza słownika tabeli (migracja 365), które przechodzi kompilację
+i wywraca się dopiero na ograniczeniu bazy, po zapisaniu zmiany; autor
+znakowania zaszyty jako operator, przez co znakowanie modelu ginie
+w przełączniku pokazującym wszystko, co zrobił model; oraz brzmienie
+zastane fragmentu liczone w bajtach — dokument polski ma litery
+dwubajtowe, a wycinek policzony po bajtach rozciąłby taką literę w środku.

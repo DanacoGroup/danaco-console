@@ -9066,3 +9066,26 @@ nie wstrzymuje po stronie rdzenia.
 Zdarzenie pracy asystenta mówi to o swoich zleceniach, nie o posunięciach
 w cudzych oknach. Pasek trzyma więc dwie warstwy osobno: stan pracy bierze się
 stąd, a wykaz posunięć ze zdarzeń obsługiwanych wyżej.
+## budowa/klient-poprzedni/src/moduly/assistant/okno-voice-console.ts
+
+Pasek narzędzi promptu niesie mikrofon, pole poleceń, wysyłkę, selektor profilu
+asystenta, przełącznik syntezy i przeniesienie fragmentu odpowiedzi w zadanie
+Actions Monitora; siatka szybkich akcji stoi pod nimi. Rozmowa z rdzeniem,
+kontrolki, katalog akcji, katalog profili i rozpoznawanie mowy mieszkają
+w osobnych składnikach — okno nie buduje treści, dostaje ją gotową.
+
+Droga głosu kończy się w tym samym polu transkrypcji, w które Operator wpisuje
+polecenie ręcznie. Rozpoznanie mowy jest warstwą wejścia, nie drugą drogą
+rozmowy: rdzeń dostaje zawsze jedno zlecenie polecenia głosowego z polem
+transkrypcji. Historia poleceń głosowych i tekstowych jest jedna i mieszka
+w zapisie czynności, który rozróżnia obie drogi polem pochodzenia; okno
+odświeża ten zapis po każdym poleceniu, zamiast prowadzić drugą kopię.
+
+Fazę okna nazywają dwa źródła, które nie mogą się pobić: wysyłka mówi fazę
+wprost, gdy polecenie jedzie, wróciło albo zostało odrzucone, a spoczynek liczy
+się wyłącznie z fazy pustej, więc komunikatu wysyłki nie zdejmie. Stan pusty nie
+zastępuje paska promptu, tylko stoi nad nim, więc Operator czyta go mając pole
+transkrypcji i wysyłkę na wyciągnięcie ręki.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-deployment-panel.ts
+Uruchomienie wdrożenia i cofnięcie do wersji wcześniejszej idą tą samą komendą, różniącą się polem docelowego przebiegu. Przycisk „Wdróż” jest zawsze klikalny: naciśnięcie przed zakończeniem prac w warsztatach wyświetla komunikat o brakującym warunku i mimo to idzie do rdzenia, bo o dopuszczalności wdrożenia rozstrzyga rdzeń, a nie wygaszona kontrolka. Odpowiedź komendy nie jest wynikiem wdrożenia: komenda wraca, gdy przebieg ruszy, ze stanem oczekującym. Okno zapamiętuje identyfikator przebiegu, który sam zlecił, i dopisuje jego stan końcowy, gdy przyniesie go zdarzenie przejścia, wraz z powodem, jeśli rdzeń go podał. Potwierdzenie bierze treść z odpowiedzi, a rozbieżność zamówienia z odpowiedzią jest odmową i towarzyszy każdej dalszej wiadomości o tym przebiegu.

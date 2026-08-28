@@ -7519,3 +7519,6 @@ Kanał zakłada się komendą channel.add; okna do zakładania kanałów w tym w
 
 ## budowa/klient-poprzedni/src/sterowanie/model-karty-sesji.ts
 Żądanie aktualizacji okna nadaje kanał jednemu oknu; żądanie ustawienia kanału modelu przyjmuje identyfikator sesji i przestawia wszystkie okna karty naraz. Karta z czterema oknami to jedno żądanie zamiast czterech, a więc i jedna okazja do niepowodzenia zamiast czterech. Żądanie niesie identyfikator agenta obok identyfikatora kanału modelu, bo karta ma dostać ten sam wybór, który stoi w oknie: kanał surowy albo agenta nałożonego na kanał. Pominięcie agenta przestawiłoby pozostałe okna na model surowy. Przycisk jest zawsze klikalny. Karta jednookienna nie jest powodem do wyszarzenia — nadanie jednemu oknu tą drogą daje ten sam skutek co przez okno.
+
+## budowa/klient-poprzedni/src/sterowanie/model-zapasowy.ts
+Treść żądania aktualizacji okna nie ma pola na kanał zapasowy, więc wartość idzie ustawieniem poziomu okna — poziomem najwęższym, wygrywającym z każdym szerszym.

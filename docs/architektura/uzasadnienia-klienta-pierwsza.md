@@ -7365,3 +7365,10 @@ O błędzie odczytu katalogu mówi komunikat blokowy nad stopką okna, nie stan 
 
 ## budowa/klient-poprzedni/src/konfiguracja/panel-zaczepow.ts
 Panel zaczepów stoi osobno od panelu obszarów, bo tamten utrwala wartości obowiązujące i nie redaguje pól, a zaczep trzeba złożyć z punktu cyklu życia, polecenia i zawężenia. Zaczep bez zdarzenia albo bez polecenia odrzuca rdzeń (`adapter_rozmowa_powierzchnia.go`). Punkt cyklu życia jest polem wpisu z podpowiedzią, nie listą zamkniętą — to wartość danych, a nie typ kodu.
+
+## budowa/klient-poprzedni/src/konfiguracja/pole-ustawienia.ts
+Wiersz nie zna ani jednego klucza z osobna — wszystko, co rysuje, pochodzi z pozycji katalogu przekazanej w zależnościach. Rodzaj kontrolki rozstrzyga jeden moduł rozdzielający, więc nowy rodzaj wartości nie dotyka tego pliku.
+
+Adres zapisu wskazuje domyślnie punkt widzenia okna, po zmianie poziomu — poziom wybrany przez Operatora. Wynik zapisu widnieje przy polu, żeby naciśnięcie zawsze dało odpowiedź: powodzenie mówi, gdzie zapisano, niepowodzenie mówi, co odpowiedział rdzeń.
+
+Przemilczenie adnotacji o stanie klucza w objaśnieniu kazałoby Operatorowi wierzyć, że zapisana wartość steruje wykonaniem, mimo że żadna ścieżka rdzenia jej nie czyta.

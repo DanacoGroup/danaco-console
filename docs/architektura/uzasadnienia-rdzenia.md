@@ -7342,3 +7342,16 @@ adaptera powtarzającego jego treść: jeden byt, jeden moduł.
 
 Wykaz: pierwszy odczyt po nieudanym starcie odbudowuje katalog sam —
 niepowodzenie odbudowy nie unieważnia odpowiedzi, tylko zostawia wykaz pusty.
+
+## budowa/server/internal/core/autor_na_drogach_test.go
+Sprawdzian wykazu dróg zmiany dokumentu wynika z założenia, że przełącznik
+pokazujący wszystko, co zrobił model, stoi na tym, że każda droga zmiany
+zostawia ślad podpisany wykonawcą. Sprawdzian jednej drogi dowodzi jednej
+drogi. Ten wykaz zmierzył pięć dróg i na jednej znalazł dziurę: zapis
+dokumentu zawołany przez wykonawcę zmieniał treść i nie odkładał ani zmiany
+śledzonej, ani wpisu dziennika. Dziura została zamknięta osobną siatką śladu
+wykonawcy; sprawdzian zostaje, żeby nie wróciła i żeby każda nowa droga
+trafiła tu przed odbiorem.
+
+Ręka modelu bierze się z gniazda serwera narzędzi, a pole author sprawdzian
+celowo nie podaje — mierzy to, czego model nie może o sobie zataić.

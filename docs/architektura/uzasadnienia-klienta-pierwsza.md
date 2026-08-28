@@ -7112,3 +7112,19 @@ osobna sekcja Role. Skład pokazuje się nazwami ekspertów, bo zespół niesie
 same identyfikatory, a nazwy dokłada osobny odczyt wykazu ekspertów; ekspert
 nieznany wykazowi zostaje w składzie z identyfikatorem i zdaniem, że rdzeń
 go nie oddał.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/stan-multitaskingu.ts
+Własna obsada w każdym oknie sprawiłaby, że przepięcie wykonawcy pod innego
+koordynatora zmieniłoby jedno okno i zostawiło trzy z obrazem nieaktualnym.
+Okna żyją ze zdarzeń: fragment strumienia niesie strumień wykonawcy do
+koordynatora, zmiana wiadomości domknięty wynik do analityka, a zmiana
+kolejki stan etapu; odczyty okien, stanu okna i wiadomości służą pierwszemu
+wypełnieniu i wznowieniu po rozłączeniu. Wewnątrz stoją trzy rejestry —
+obsada ról, tury wykonawców i kolejki etapów — każdy z własnymi polami, a na
+zewnątrz okna widzą je wyłącznie przez wspólny stan, bo koordynator musi
+widzieć ten sam przebieg co wykonawca, którym steruje. Cudza rozmowa nie
+pokazuje się jako praca własnego wykonawcy, bo strumień odsiewa fragmenty
+spoza obsady.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — pole pokrycia komend
+Pokrycie niesie pozycje, których okno jeszcze nie wykonuje, wspólne dla wszystkich takich pozycji modułu.

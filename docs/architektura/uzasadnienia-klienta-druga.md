@@ -7791,3 +7791,15 @@ do żadnego okna operacyjnego z osobna — stąd własny plik, a nie doklejenie 
 
 Komenda window.state.get jest wspólna każdemu oknu operacyjnemu: niesie moduł, kanał modelu,
 katalogi robocze, zasięg wykonania, tryb uprawnień i rolę.
+
+## budowa/klient-poprzedni/src/moduly/translate/katalog-okien-translate.ts
+Kody nie są wymyślone: kod modułu oraz kody okien panelu źródła, paneli
+tłumaczenia i menedżera glosariusza pochodzą z rejestru okien operacyjnych
+rdzenia. Trzy pozostałe okna — pamięć tłumaczeń, studio formatów i centrum
+kontroli jakości — w rejestrze rdzenia nie występują, więc ich kody powstają
+tutaj wedle tej samej reguły: nazwa własna okna zapisana małymi literami
+z łącznikami. Rozjazd nie jest przemilczany: moduł zgłasza katalogowi okien
+komplet sześciu kodów, a byt wspólny wypowiada obie strony różnicy — okna
+rejestru, których moduł nie buduje, oraz okna budowane spoza rejestru.
+Dopisanie trzech okien do rejestru rdzenia zdejmie tę drugą połowę bez
+zmiany ani jednej linii tutaj.

@@ -8015,3 +8015,19 @@ bramą, tylko skrótem do tego, co i tak zrobi kółko myszy albo klawiatura,
 i pokazują się wyłącznie wtedy, gdy jest dokąd przewijać. Element z
 przewijaniem poziomym w arkuszu jest pasem, który przewija swoją zawartość;
 wartość null przy elemencie w kadrze znaczy, że nic nie trzeba pilnować.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/lacznosc-okna.ts
+Interfejs transportu nie wystawia przebiegu ponowienia: klasa gniazda trzyma
+numer próby i uchwyt zaplanowanej próby jako pola prywatne, więc port jest
+opcjonalny — plakietka bez niego pokazuje stan i kolejkę, a brak numeru
+próby nazywa w podpowiedzi, zamiast liczyć próby u siebie. Wartości polityki
+ponawiania pochodzą z modułu ponawiania i to tam są ustalane, ten napis
+tylko je nazywa: baza 500 ms, bo rdzeń wstający lokalnie wraca zwykle
+w pierwszej albo drugiej próbie, więc przerwa bywa niezauważalna; mnożnik
+dwa z pułapem 15 s, żeby klient nie dobijał się co pół sekundy bez końca,
+a 15 s to jeszcze czekanie, po którym produkt nie wygląda na martwy;
+rozproszenie do 25%, bo okna równoległe i karty sesji ponawiają
+niezależnie i bez rozproszenia trafiałyby w rdzeń równocześnie; brak
+górnego limitu prób, bo poddanie się po ustalonej liczbie zostawiłoby
+użytkownika z produktem wymagającym przeładowania strony — przyspieszenie
+daje czynność „Ponów teraz”, rezygnacji nie ma.

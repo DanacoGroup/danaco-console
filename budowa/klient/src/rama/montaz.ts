@@ -1,8 +1,9 @@
 /**
- * Rama aplikacji — montaż. Składa trzy strefy z prototypu — szynę nawigacji,
- * belkę tytułową i pas stanu — i wstawia je w miejsce wskazane w dokumencie.
- * Ta sama zasada co w drodze wejścia: montaż jest jedynym miejscem, które
- * dotyka dokumentu.
+ * Rama aplikacji — montaż. Składa strefy z prototypu — szynę nawigacji,
+ * belkę tytułową, pasek narzędzi, panel Sesje i Projekty, pasmo kart, obszar
+ * roboczy i pas stanu — i wstawia je w miejsce wskazane w dokumencie. Ta sama
+ * zasada co w drodze wejścia: montaż jest jedynym miejscem, które dotyka
+ * dokumentu.
  */
 
 import type { Environment, Module, Session } from '../../../shared/contract.ts';
@@ -11,6 +12,9 @@ import { zamontujOknoStudio, type OknoStudio } from '../moduly/studio/montaz.ts'
 import { el, tekst } from './narzedzia.ts';
 import { belka } from './skladniki/belka.ts';
 import { szyna } from './skladniki/szyna.ts';
+import { pasekNarzedzi } from './skladniki/pasek-narzedzi.ts';
+import { panelSesje } from './skladniki/panel-sesje.ts';
+import { pasmoKart } from './skladniki/pasmo-kart.ts';
 import { stan as pasStanu } from './skladniki/stan.ts';
 
 export interface NastawyRamy {
@@ -20,7 +24,7 @@ export interface NastawyRamy {
   srodowisko: Environment;
   /** Moduły tego środowiska, w kolejności odebranej od rdzenia. */
   moduly: Module[];
-  /** Karty sesji odtworzone przez rdzeń — ich liczba zasila pas stanu. */
+  /** Karty sesji odtworzone przez rdzeń — zasilają panel sesji, pasmo kart i pas stanu. */
   sesje: Session[];
   /** Kanał, którym okno modułu woła komendy rdzenia; brak — rama montuje się bez okna modułu. */
   kanal?: Kanal;
@@ -28,6 +32,9 @@ export interface NastawyRamy {
 
 /** Kod modułu Studio w wykazie rdzenia — jedyny moduł z oknem roboczym dziś zmontowanym. */
 const KOD_MODULU_STUDIO = 'studio';
+
+/** Identyfikator obszaru roboczego — cel `aria-controls` kart pasma. */
+const ID_OBSZARU_ROBOCZEGO = 'dn-obszar-glowna';
 
 /** Zapytanie o preferencję systemową motywu — bez odstępu po dwukropku, składnia CSS przyjmuje oba zapisy. */
 const ZAPYTANIE_MOTYW_CIEMNY = '(prefers-color-scheme:dark)';
@@ -40,7 +47,12 @@ function motywCiemny(): boolean {
 }
 
 export function zamontujRame(w: NastawyRamy): void {
-  const glowna = el('main', { 'aria-label': tekst('glowna.etykieta') });
+  const glowna = el('main', {
+    id: ID_OBSZARU_ROBOCZEGO,
+    klasa: 'dn-obszar-tresc',
+    'aria-label': tekst('glowna.etykieta'),
+    tekst: tekst('glowna.brakModulu'),
+  });
   const { wezel: belkaWezel, tytul: tytulWezel } = belka({ srodowisko: w.srodowisko.name });
   let stanWezel = pasStanu({
     srodowisko: w.srodowisko.name,
@@ -48,10 +60,19 @@ export function zamontujRame(w: NastawyRamy): void {
     motywCiemny: motywCiemny(),
   });
 
+  const obszarGlowny = el('section', { klasa: 'dn-obszar-panel dn-obszar-panel--glowny', 'aria-label': tekst('glowna.etykieta') }, [
+    pasmoKart({ sesje: w.sesje, idTresci: ID_OBSZARU_ROBOCZEGO }),
+    glowna,
+  ]);
+
   const powloka = el('div', { klasa: 'sta-powloka' }, [
     el('div', { klasa: 'dn-rama-korpus' }, [
-      szyna({ moduly: w.moduly }),
-      el('div', { klasa: 'dn-rama-prawa' }, [belkaWezel, glowna]),
+      szyna({ srodowisko: w.srodowisko, moduly: w.moduly }),
+      el('div', { klasa: 'dn-rama-prawa' }, [
+        belkaWezel,
+        pasekNarzedzi(),
+        el('div', { klasa: 'dn-obszar' }, [panelSesje({ sesje: w.sesje }), obszarGlowny]),
+      ]),
     ]),
     stanWezel,
   ]);
@@ -79,7 +100,7 @@ export function zamontujRame(w: NastawyRamy): void {
     if (przycisk.dataset['modulKod'] === KOD_MODULU_STUDIO && w.kanal !== undefined) {
       oknoModulu = zamontujOknoStudio({ miejsce: glowna, kanal: w.kanal });
     } else {
-      glowna.replaceChildren();
+      glowna.textContent = tekst('glowna.brakModulu');
     }
   }
   w.miejsce.addEventListener('click', naKlikniecie);

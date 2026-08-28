@@ -1,19 +1,8 @@
 import './przeciaganie.css';
 
 /**
- * Zmiana kolejności pozycji w pasie — jedna mechanika dla wszystkich pasów,
- * zamiast kopii w każdym oknie.
- *
- * Gest idzie przechwyconym wskaźnikiem (`setPointerCapture`), a nie HTML5
- * Drag & Drop: obsługuje wtedy również dotyk i pióro bez podpórek. Klawiatura
- * leży w tym samym pliku — Ctrl+Strzałka przestawia pozycję, więc czynność nie
- * jest dostępna wyłącznie myszą.
- *
- * Plik nie wie, co przestawia, i nie pamięta wyniku: kolejność zapamiętuje
- * `kolejnosc-miejscowa.ts`, a znaczenie przestawienia rozstrzyga wołający.
+ * Zmiana kolejności pozycji w pasie to jedna mechanika dla wszystkich pasów, oparta na przechwyconym wskaźniku i klawiaturze zamiast HTML5 Drag and Drop, trzymająca wiązanie nasłuchów, które trzeba odłączyć po użyciu.
  */
-
-/** Wiązanie przeciągania — trzyma nasłuchy, więc trzeba je odłączyć. */
 export interface WiezPrzeciagania {
   /** Odłącza nasłuchy i sprząta kreskę upuszczenia. */
   rozlacz(): void;
@@ -21,19 +10,13 @@ export interface WiezPrzeciagania {
   wRuchu(): boolean;
 }
 
-/** Ustawienia wzorca; `pojemnik`, `pozycje` i `przyPrzestawieniu` są wymagane. */
+/** Ustawienia wzorca przeciągania; pojemnik, pozycje oraz skutek przestawienia są wymagane do działania mechaniki. */
 export interface OpcjePrzeciagania {
   /** Element obejmujący pozycje pasa — na nim wiszą nasłuchy. */
   pojemnik: HTMLElement;
   /** Pozycje pasa w kolejności wyświetlania; czytane przy każdym geście. */
   pozycje(): readonly HTMLElement[];
-  /**
-   * Skutek przestawienia: pozycja z miejsca `z` staje na miejscu `na`.
-   *
-   * Wołane raz, na koniec gestu. W trakcie ruchu pas pokazuje kreskę, a nie
-   * przestawia treści — przestawianie na bieżąco każe celować w element, który
-   * sam ucieka.
-   */
+  /** Skutek przestawienia: pozycja z jednego miejsca staje na drugim, wołany raz na koniec gestu. */
   przyPrzestawieniu(z: number, na: number): void;
   /** Nazwa pozycji dla czytnika ekranu; domyślnie jej tekst. */
   nazwaPozycji?(pozycja: HTMLElement): string;
@@ -83,8 +66,7 @@ export function zwiazPrzeciaganieKolejnosci(opcje: OpcjePrzeciagania): WiezPrzec
   }
 
   function przyNacisnieciu(zdarzenie: PointerEvent): void {
-    // Wyłącznie przycisk główny i wyłącznie poza czynnościami wewnątrz pozycji
-    // (zamknięcie, kosz) — przeciąganie nie ma przechwytywać ich naciśnięć.
+    // Wyłącznie przycisk główny i poza czynnościami wewnątrz pozycji — te nie mają być przechwytywane.
     if (zdarzenie.button !== 0) return;
     if (zdarzenie.target instanceof Element && zdarzenie.target.closest('button') !== null) return;
 
@@ -146,8 +128,7 @@ export function zwiazPrzeciaganieKolejnosci(opcje: OpcjePrzeciagania): WiezPrzec
       return;
     }
 
-    // Równoważnik klawiaturowy gestu — nie osobna czynność, ta sama droga
-    // (`przyPrzestawieniu`), więc obie drogi dają tę samą kolejność.
+    // Równoważnik klawiaturowy gestu idzie tą samą drogą, więc obie dają tę samą kolejność.
     if (!zdarzenie.ctrlKey) return;
     const krok = zdarzenie.key === 'ArrowRight' ? 1 : zdarzenie.key === 'ArrowLeft' ? -1 : 0;
     if (krok === 0) return;
@@ -159,8 +140,7 @@ export function zwiazPrzeciaganieKolejnosci(opcje: OpcjePrzeciagania): WiezPrzec
     if (docelowe < 0 || docelowe >= pozycje.length) return;
 
     zdarzenie.preventDefault();
-    // Zatrzymanie tu jest konieczne: wędrówka pasa (`powloka/wedrowka-kart.ts`)
-    // czyta te same strzałki i bez tego przeniosłaby wybór razem z pozycją.
+    // Zatrzymanie tu jest konieczne, bo wędrówka pasa czyta te same strzałki bez tego wyboru.
     zdarzenie.stopPropagation();
     opcje.przyPrzestawieniu(miejsce, docelowe);
     powiedz(
@@ -197,8 +177,7 @@ export function zwiazPrzeciaganieKolejnosci(opcje: OpcjePrzeciagania): WiezPrzec
   pojemnik.addEventListener('pointermove', przyRuchu);
   pojemnik.addEventListener('pointerup', przyPuszczeniu);
   pojemnik.addEventListener('pointercancel', posprzataj);
-  // Klawiatura na etapie przechwytywania: Ctrl+Strzałka ma trafić tu wcześniej,
-  // niż wędrówka pasa potraktuje ją jak zwykłą strzałkę wyboru.
+  // Klawiatura na etapie przechwytywania trafia tu wcześniej niż wędrówka pasa.
   pojemnik.addEventListener('keydown', przyKlawiszu, true);
 
   return {
@@ -217,7 +196,7 @@ export function zwiazPrzeciaganieKolejnosci(opcje: OpcjePrzeciagania): WiezPrzec
   };
 }
 
-/** Środki poziome pozycji — podstawa rachuby miejsca upuszczenia. */
+/** Środki poziome wszystkich pozycji pasa — podstawa rachuby miejsca, w którym nastąpi upuszczenie przeciąganej pozycji. */
 function srodkiPozycji(pozycje: readonly HTMLElement[]): number[] {
   return pozycje.map((pozycja) => {
     const rama = pozycja.getBoundingClientRect();

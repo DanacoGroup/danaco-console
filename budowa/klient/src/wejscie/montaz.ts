@@ -1,21 +1,7 @@
 /**
- * DROGA WEJŚCIA — montaż okien.
- *
- * Składa trzy okna ze składników i wstawia je w miejsca wskazane w dokumencie:
- *
- *     <div data-wejscie-okno="uruchomienie"></div>
- *     <div data-wejscie-okno="dostep"></div>
- *     <div data-wejscie-okno="przygotowanie"></div>
- *
- * Okno jest siatką o trzech wierszach: belka, korpus, pas działań. W wierszu
- * pasa stoją dwie rzeczy — pas przez całą szerokość i nota w kolumnie
- * tożsamości. Panele i pasy noszą ten sam `data-widok`, więc przełączają się
- * razem.
- *
- * Montaż jest jedynym miejscem, które dotyka dokumentu. Stan trzyma przebieg;
- * tutaj zostaje wyłącznie przełożenie stanu na węzły i zdarzeń na wywołania
- * przebiegu. Dzięki temu każda odsłona jest osiągalna w sprawdzianie bez
- * przeglądarki — sprawdzian prowadzi przebieg, nie okno.
+ * Droga wejścia — montaż okien. Składa trzy okna ze składników i wstawia je
+ * w miejsca wskazane w dokumencie; montaż jest jedynym miejscem, które dotyka
+ * dokumentu, a stan trzyma przebieg.
  */
 
 import { ekranDostepu, pasyDostepu } from './ekrany/dostep.ts';
@@ -48,10 +34,10 @@ import { listaEtapow } from './skladniki/lista-etapow.ts';
 import { odczytajDroge, przyjmijWklejenie, zapomnijWklejenie } from './skladniki/pole-kodu.ts';
 import { WARUNKI_HASLA } from './skladniki/miernik-sily.ts';
 
-/** Ile milisekund ma takt zegara okna. Jeden zegar na całe okno. */
+/** Ile milisekund ma takt zegara okna; jeden zegar odlicza dla całego okna, nie osobny na każdy licznik. */
 const TAKT_MS = 1000;
 
-/** Powiadomienie o rzeczy, która nie ma własnej odsłony. */
+/** Powiadomienie o rzeczy, która nie ma własnej odsłony okna i nie mieści się w obszarze komunikatów odsłony. */
 export type Powiadom = (tytul: string, tresc: string) => void;
 
 export interface NastawyMontazu {
@@ -65,13 +51,13 @@ export interface NastawyMontazu {
   powiadom?: Powiadom;
 }
 
-/** Zamontowane okno wraz z drogą jego zdjęcia. */
+/** Zamontowane okno wraz z drogą jego zdjęcia: odłączeniem słuchaczy zdarzeń i zatrzymaniem zegara okna. */
 export interface ZamontowaneOkno {
   /** Odłącza słuchacze i zatrzymuje zegar okna. */
   zdejmij(): void;
 }
 
-/** Trzy okna wraz z ich składem. Wykaz jest daną, nie rozgałęzieniem. */
+/** Trzy okna wraz z ich składem: belka systemowa, odsłona początkowa i miejsce noty. Wykaz jest daną, nie rozgałęzieniem kodu. */
 const OKNA = {
   uruchomienie: {
     belka: 'okno.uruchamianie',
@@ -126,8 +112,7 @@ export function zamontuj(nastawy: NastawyMontazu): ZamontowaneOkno {
     obszar.replaceChildren(
       baner({ rodzaj: 'informacja', ikona: 'informacja', glowa: tytul, tresc, dane: {} }),
     );
-    // Głowa i treść są tu gotowym tekstem, nie kluczem — baner przyjmuje klucz,
-    // więc podmieniamy oba napisy po zbudowaniu węzła.
+    // Głowa i treść to gotowy tekst, nie klucz — podmieniane są oba napisy po zbudowaniu węzła banera.
     const wezel = obszar.firstElementChild;
     const glowa = wezel?.querySelector('b');
     if (glowa !== null && glowa !== undefined) glowa.textContent = tytul;
@@ -174,7 +159,7 @@ function odswiez(korzen: ParentNode, stan: StanPrzebiegu): void {
   odswiezOczekiwanie(korzen, stan);
 }
 
-/** Panel i pas noszą ten sam `data-widok`, więc przełączają się razem. */
+/** Panel i pas dzielą ten sam znacznik `data-widok`, więc przełączają się razem jedną zmianą jego wartości. */
 function przelaczOdslony(korzen: ParentNode, odslona: Odslona): void {
   for (const wezel of korzen.querySelectorAll('[data-widok]')) {
     const czynny = (wezel as HTMLElement).dataset['widok'] === odslona;
@@ -206,18 +191,15 @@ function odswiezEtapyLaczenia(korzen: ParentNode, stan: StanPrzebiegu): void {
 }
 
 /**
- * Licznik zwłoki dostaje wartość ZMIERZONĄ przez przebieg — tyle, ile rdzeń
- * kazał czekać przy próbie poprzedniej. Odmowa rdzenia tej wartości nie niesie,
- * więc nie ma jej skąd odczytać; wpisanie tu stałej byłoby obietnicą czasu,
- * którego nikt nie mierzył.
+ * Licznik zwłoki dostaje wartość zmierzoną przez przebieg — tyle, ile rdzeń
+ * kazał czekać przy próbie poprzedniej; odmowa rdzenia tej wartości nie niesie.
  */
 function odswiezZwloke(korzen: ParentNode, stan: StanPrzebiegu): void {
   if (stan.zwlokaS <= 0) return;
   const panel = korzen.querySelector(`[data-widok="${stan.odslona}"]`);
   const licznik = panel?.querySelector('[data-odliczanie]') as HTMLElement | null;
   if (licznik === null || licznik === undefined) return;
-  // Nastawiamy licznik wyłącznie wtedy, gdy stoi na zerze, czyli przy wejściu
-  // w odsłonę. Nastawianie go przy każdej zmianie stanu zamroziłoby odliczanie.
+  // Nastawiany jest licznik wyłącznie przy wejściu w odsłonę, gdy stoi na zerze.
   if (Number.parseInt(licznik.dataset['odliczanie'] ?? '0', 10) > 0) return;
   licznik.dataset['odliczanie'] = String(stan.zwlokaS);
 }
@@ -242,8 +224,7 @@ function odswiezPrzygotowanie(korzen: ParentNode, stan: StanPrzebiegu): void {
   for (const miara of korzen.querySelectorAll('.dn-postep-wartosc[data-wartosc]')) {
     (miara as HTMLElement).style.width = `${(miara as HTMLElement).dataset['wartosc'] ?? '0'}%`;
   }
-  // Ponowienie stoi wyłącznie przy etapie nieudanym: przy przebiegu udanym nie
-  // ma czego ponawiać, a kontrolka bez skutku jest gorsza od jej braku.
+  // Ponowienie stoi wyłącznie przy etapie nieudanym; przy przebiegu udanym nie ma czego ponawiać.
   const ponowienie = korzen.querySelector(`#${PONOWIENIE}`) as HTMLElement | null;
   if (ponowienie !== null) ponowienie.hidden = !stan.przygotowanie.stany.includes('blad');
 }
@@ -253,10 +234,8 @@ function obszarKomunikatow(korzen: ParentNode, odslona: Odslona): Element | null
 }
 
 /**
- * Usterki zbierają się w JEDEN komunikat. Kilka osobnych banerów zepchnęłoby
- * formularz poza okno, a użytkownik i tak czyta je jako jedną listę tego, co
- * ma poprawić. Pole, którego usterka dotyczy, niesie `aria-invalid` — czytnik
- * ekranu dowiaduje się tego samego co oko.
+ * Usterki zbierają się w jeden komunikat, żeby kilka osobnych banerów nie
+ * zepchnęło formularza poza okno.
  */
 function odswiezUsterki(korzen: ParentNode, stan: StanPrzebiegu): void {
   for (const obszar of korzen.querySelectorAll('[data-komunikaty]')) obszar.replaceChildren();
@@ -269,8 +248,7 @@ function odswiezUsterki(korzen: ParentNode, stan: StanPrzebiegu): void {
 
   const odmowa = stan.usterki.find((u) => u.odRdzenia !== undefined);
   if (odmowa?.odRdzenia !== undefined) {
-    // Rdzeń wie o powodzie odmowy więcej niż okno, więc treścią jest to, co
-    // powiedział rdzeń; katalog daje wyłącznie głowę komunikatu.
+    // Rdzeń wie o powodzie odmowy więcej niż okno, więc treścią jest to, co powiedział rdzeń.
     const wezel = baner({
       rodzaj: 'blad',
       ikona: 'ostrzezenie',
@@ -315,18 +293,18 @@ function odswiezUsterki(korzen: ParentNode, stan: StanPrzebiegu): void {
   oznaczPolaUsterek(korzen, stan.odslona, klucze);
 }
 
-/** Klucz katalogu dla rozpoznania usterki; nazwy z kropką są już pełne. */
+/** Klucz katalogu dla rozpoznania usterki; nazwy zawierające kropkę są już pełnym kluczem katalogu tekstów. */
 function kluczUsterki(klucz: string, czesc: 'glowa' | 'tresc'): string {
   if (klucz.includes('.')) return `${klucz}.${czesc}`;
   return `usterki.${zNazwyKreskowej(klucz)}.${czesc}`;
 }
 
-/** Nazwa kreskowa na nazwę katalogu: `haslo-slabe` → `hasloSlabe`. */
+/** Zamienia nazwę kreskową na nazwę katalogu w notacji camelCase, na przykład `haslo-slabe` na `hasloSlabe`. */
 function zNazwyKreskowej(nazwa: string): string {
   return nazwa.replace(/-([a-z])/g, (_, znak: string) => znak.toUpperCase());
 }
 
-/** Pola, których dotyczy każde rozpoznanie — kontrakt z formularzem. */
+/** Pola formularza, których dotyczy każde rozpoznanie usterki — kontrakt między katalogiem usterek a formularzem. */
 const POLA_USTEREK: Record<string, string[]> = {
   brakLoginu: ['log-login', 'blad-login', 'rej-login'],
   brakHasla: ['log-haslo', 'blad-haslo', 'rej-haslo', 'odz-haslo'],
@@ -419,7 +397,7 @@ function zwiazZdarzenia(korzen: ParentNode, przebieg: Przebieg, powiadom: Powiad
   odswiezMierniki(korzen);
 }
 
-/** Odsłonięcie hasła zmienia typ pola i własną etykietę. */
+/** Odsłonięcie hasła zmienia typ pola wejściowego z ukrytego na jawny oraz zmienia własną etykietę przycisku. */
 function odslonHaslo(korzen: ParentNode, kontrolka: HTMLElement): void {
   const pole = korzen.querySelector(`#${kontrolka.dataset['odsloniecie']}`) as HTMLInputElement | null;
   if (pole === null) return;
@@ -444,7 +422,7 @@ async function wklejDroge(korzen: ParentNode, grupa: string, powiadom: Powiadom)
   }
 }
 
-/** Przejście między polami drogi potwierdzenia; wpisanie znosi wklejenie. */
+/** Przejście między polami drogi potwierdzenia po wpisaniu znaku; wpisanie ręczne znosi wcześniejsze wklejenie. */
 function obsluzZnakDrogi(korzen: ParentNode, pole: HTMLInputElement): void {
   const zestaw = pole.closest('[data-kod-grupa]') as HTMLElement | null;
   if (zestaw === null) return;
@@ -456,7 +434,7 @@ function obsluzZnakDrogi(korzen: ParentNode, pole: HTMLInputElement): void {
   void korzen;
 }
 
-/** Miernik siły ocenia tą samą regułą, którą przebieg sprawdza hasło. */
+/** Miernik siły hasła ocenia je tą samą regułą, którą przebieg sprawdza hasło przed wysłaniem do rdzenia. */
 function odswiezMierniki(korzen: ParentNode): void {
   for (const blok of korzen.querySelectorAll('[data-sila-dla]')) {
     const miernik = blok as HTMLElement;
@@ -481,7 +459,7 @@ function odswiezMierniki(korzen: ParentNode): void {
   }
 }
 
-/** Wartość pola formularza; brak pola daje pusty łańcuch, nie wyjątek. */
+/** Wartość pola formularza odczytana po identyfikatorze; brak pola w dokumencie daje pusty łańcuch, nie wyjątek. */
 function wartosc(korzen: ParentNode, id: string): string {
   return (korzen.querySelector(`#${id}`) as HTMLInputElement | null)?.value ?? '';
 }
@@ -553,14 +531,8 @@ async function wykonaj(
 /* ── Zegar okna ──────────────────────────────────────────────────────────── */
 
 /**
- * Każdy węzeł z `data-odliczanie` niesie czas w sekundach i sam się wypisuje.
- * Napis, który nie ubywa, jest gorszy od braku napisu: obiecuje odmierzanie,
- * którego nie ma. Jeden zegar na całe okno — nie kilkanaście osobnych.
- *
- * Wypisywane są WSZYSTKIE liczniki, także w odsłonach ukrytych — inaczej
- * licznik byłby pusty przez sekundę po pokazaniu odsłony. Ubywa natomiast
- * tylko licznik widoczny: czas, który schodzi za plecami, doprowadza do tego,
- * że użytkownik zastaje zero, choć odsłonę zobaczył przed chwilą.
+ * Każdy węzeł z `data-odliczanie` niesie czas w sekundach i sam się wypisuje;
+ * jeden zegar liczy dla całego okna, nie osobny na każdy licznik.
  */
 function odliczaj(korzen: ParentNode, przebieg: Przebieg): void {
   const odslona = przebieg.stan().odslona;
@@ -582,11 +554,9 @@ function odliczaj(korzen: ParentNode, przebieg: Przebieg): void {
 }
 
 /**
- * Co dzieje się po dojściu do zera, rozstrzyga odsłona, w której licznik stoi.
- * Wstrzymanie mija — okno wraca tam, skąd je wstrzymano. Serwer nie odpowiadał
- * — okno ponawia próbę samo, tak jak zapowiada baner. Ważność drogi
- * potwierdzenia wygasa; okno licznik zatrzymuje i niczego nie udaje, bo rdzeń
- * nie ma komendy wydającej drogę potwierdzenia adresu po raz drugi.
+ * Co dzieje się po dojściu licznika do zera, rozstrzyga odsłona, w której
+ * licznik stoi: wstrzymanie mija, połączenie ponawia próbę, droga potwierdzenia
+ * wygasa.
  */
 function poZerze(licznik: HTMLElement, przebieg: Przebieg, odslona: Odslona): void {
   if (odslona === 'w-blad') {
@@ -599,5 +569,5 @@ function poZerze(licznik: HTMLElement, przebieg: Przebieg, odslona: Odslona): vo
   }
 }
 
-/** Usterki wystawione sprawdzianowi montażu; okno ich nie tworzy samo. */
+/** Usterki wystawione sprawdzianowi montażu, ponieważ okno samo ich nie tworzy, tylko odczytuje ze stanu przebiegu. */
 export type { Usterka };

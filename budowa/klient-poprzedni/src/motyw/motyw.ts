@@ -1,27 +1,14 @@
-// ============================================================================
-// DANACO CONSOLE — MOTYW · ODCZYT, ZAPIS I PRZEŁĄCZANIE
-// ----------------------------------------------------------------------------
-// Jedna odpowiedzialność: wybór motywu użytkownika — odczyt trwałego zapisu,
-// zapis, ustawienie atrybutu data-theme oraz śledzenie preferencji systemu.
-// Wartości barw nie występują w tym pliku; należą do arkuszy motyw.css.
-//
-// Zasady:
-//   · brak zapisanego wyboru nie ustawia atrybutu — rozstrzyga prefers-color-scheme,
-//     a zmiana preferencji systemu działa na żywo;
-//   · żaden błąd pamięci trwałej nie zatrzymuje uruchomienia —
-//     wybór degraduje się do preferencji systemu, nigdy do blokady;
-//   · oba motywy są równoprawne, żaden nie jest wartością „domyślną" produktu.
-// ============================================================================
+/** Motyw obsługuje wybór motywu użytkownika: odczyt trwałego zapisu, jego zapis, ustawienie atrybutu koloru na dokumencie oraz śledzenie preferencji systemu, przy czym same wartości barw pozostają w arkuszu stylów. */
 
 export type Motyw = 'light' | 'dark';
 
-/** Klucz zapisu wyboru w pamięci trwałej przeglądarki. */
+/** Klucz zapisu, pod którym wybór motywu użytkownika jest przechowywany w pamięci trwałej przeglądarki. */
 export const KLUCZ_ZAPISU = 'danaco-console.motyw';
 
-/** Nazwa zdarzenia rozgłaszanego po każdej zmianie obowiązującego motywu. */
+/** Nazwa zdarzenia rozgłaszanego w oknie po każdej zmianie motywu faktycznie obowiązującego w dokumencie. */
 export const ZDARZENIE_MOTYWU = 'danaco-motyw';
 
-/** Treść zdarzenia zmiany motywu. */
+/** Treść zdarzenia zmiany motywu, niosąca zarówno motyw obowiązujący, jak i wybór dokonany przez użytkownika. */
 export interface ZmianaMotywu {
   /** Motyw faktycznie obowiązujący po zmianie. */
   obowiazujacy: Motyw;
@@ -35,7 +22,7 @@ function czyMotyw(wartosc: unknown): wartosc is Motyw {
   return wartosc === 'light' || wartosc === 'dark';
 }
 
-/** Pamięć trwała albo null, gdy środowisko jej nie udostępnia. */
+/** Pamięć trwała przeglądarki użyta do zapisu wyboru motywu, albo null, gdy środowisko jej nie udostępnia. */
 function pamiec(): Storage | null {
   try {
     return window.localStorage;
@@ -44,7 +31,7 @@ function pamiec(): Storage | null {
   }
 }
 
-/** Odczytuje zapisany wybór użytkownika. Brak wyboru albo zapis nieczytelny → null. */
+/** Odczytuje zapisany wybór użytkownika z pamięci trwałej; brak wyboru albo zapis nieczytelny dają wartość null. */
 export function odczytajWybor(): Motyw | null {
   try {
     const zapis = pamiec()?.getItem(KLUCZ_ZAPISU);
@@ -54,7 +41,7 @@ export function odczytajWybor(): Motyw | null {
   }
 }
 
-/** Zapisuje wybór użytkownika; null kasuje zapis i oddaje decyzję systemowi. */
+/** Zapisuje wybór motywu dokonany przez użytkownika; wartość null kasuje zapis i oddaje decyzję preferencji systemu. */
 export function zapiszWybor(wybor: Motyw | null): void {
   try {
     const magazyn = pamiec();
@@ -66,13 +53,13 @@ export function zapiszWybor(wybor: Motyw | null): void {
   }
 }
 
-/** Preferencja systemu operacyjnego. Bez obsługi matchMedia przyjmujemy jasny. */
+/** Preferencja systemu operacyjnego odczytana z zapytania o media; bez obsługi tego zapytania przyjmuje się motyw jasny. */
 export function preferencjaSystemu(): Motyw {
   if (typeof window.matchMedia !== 'function') return 'light';
   return window.matchMedia(ZAPYTANIE_CIEMNY).matches ? 'dark' : 'light';
 }
 
-/** Motyw faktycznie obowiązujący: wybór użytkownika, a w jego braku system. */
+/** Motyw faktycznie obowiązujący w dokumencie: wybór użytkownika, a w jego braku preferencja systemu operacyjnego. */
 export function motywObowiazujacy(): Motyw {
   const jawny = document.documentElement.getAttribute('data-theme');
   if (czyMotyw(jawny)) return jawny;
@@ -99,19 +86,19 @@ export function zastosujMotyw(wybor: Motyw | null): Motyw {
   return obowiazujacy;
 }
 
-/** Ustawia motyw i zapisuje go jako wybór użytkownika. */
+/** Ustawia motyw dokumentu i zapisuje go jednocześnie jako świadomy wybór użytkownika w pamięci trwałej. */
 export function ustawMotyw(wybor: Motyw): Motyw {
   zapiszWybor(wybor);
   return zastosujMotyw(wybor);
 }
 
-/** Kasuje wybór użytkownika i wraca do preferencji systemu. */
+/** Kasuje zapisany wybór użytkownika i przywraca dokument do stanu wyznaczanego przez preferencję systemu. */
 export function przywrocPreferencjeSystemu(): Motyw {
   zapiszWybor(null);
   return zastosujMotyw(null);
 }
 
-/** Przełącza motyw na przeciwny względem obowiązującego i zapisuje wybór. */
+/** Przełącza motyw dokumentu na przeciwny względem obecnie obowiązującego i zapisuje ten wybór jako decyzję użytkownika. */
 export function przelaczMotyw(): Motyw {
   return ustawMotyw(motywObowiazujacy() === 'dark' ? 'light' : 'dark');
 }

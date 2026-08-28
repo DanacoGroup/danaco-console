@@ -1,18 +1,8 @@
 /**
- * EKRANY OKNA DOSTĘPU DO KONTA.
- *
- * Dziesięć odsłon jednego okna: logowanie i jego odsłona z niepowodzeniem,
- * zwłoka nałożona przez rdzeń, zakładanie konta, potwierdzenie adresu, konto założone
- * bez potwierdzenia oraz cztery odsłony odzyskiwania dostępu. Leżą razem, bo
- * dzielą oprawę — belkę, kolumnę tożsamości i zakładki nad treścią.
- *
- * Zakładki niosą wyłącznie dwie drogi równorzędne: logowanie i rejestrację.
- * Odzyskiwanie dostępu nie jest trzecią drogą — jest wyjściem z logowania,
- * więc w zakładkach zostaje zaznaczone logowanie.
- *
- * `konto-bez-potwierdzenia` nie stoi w prototypie. Wymusza ją pozycja 11
- * rejestru decyzji: rejestracja bez konta nadawczego kończy się wejściem
- * hasłem, a okno ma wtedy NAZWAĆ adres, którego nikt nie potwierdził.
+ * Ekrany okna dostępu do konta — dziesięć odsłon: logowanie, niepowodzenie
+ * logowania, zwłoka nałożona przez rdzeń, zakładanie konta, potwierdzenie
+ * adresu, konto założone bez potwierdzenia oraz cztery odsłony odzyskiwania
+ * dostępu.
  */
 
 import { el, tekst, type Dziecko } from '../narzedzia.ts';
@@ -32,9 +22,7 @@ import { zakladkiPigulki, type Pigulka } from '../skladniki/zakladki-pigulki.ts'
 
 /**
  * Ile znaków ma droga potwierdzenia i jak długo obowiązuje — obie wartości
- * zmierzone na rdzeniu, nie wzięte z prototypu. Prototyp stawia w tych
- * miejscach wartości przykładowe, a pozycja 12 rejestru decyzji każe brać
- * prawdziwe z pomiaru.
+ * zmierzone na rdzeniu, nie wzięte z wartości przykładowych prototypu.
  */
 const ZNAKOW_DROGI = 6;
 const WAZNOSC_DROGI_S = 3600;
@@ -47,7 +35,7 @@ const WAZNOSC_DROGI_MIN = WAZNOSC_DROGI_S / 60;
  */
 const ZWLOKA_Z_POMIARU = 0;
 
-/** Klasa czynności głównej — wyjścia z odsłony. */
+/** Klasa czynności głównej — wyjścia z odsłony, nadawana przyciskowi prowadzącemu dalej w torze dostępu. */
 const KLASA_GLOWNA = 'dn-btn dn-btn--sygnal';
 
 const ZAMKNIJ: Czynnosc = { klucz: 'dzialania.zamknijAplikacje', komunikat: 'zamkniecie' };
@@ -80,7 +68,7 @@ function panel(
   );
 }
 
-/** Miejsce na komunikaty jednej odsłony; przebieg wstawia tam usterki. */
+/** Miejsce na komunikaty jednej odsłony; przebieg wstawia tam usterki zgłoszone przez rdzeń albo przez klienta. */
 function komunikaty(odslona: OdslonaDostepu): HTMLElement {
   return el('div', {
     klasa: 'we-komunikaty',
@@ -247,7 +235,7 @@ export function ekranDostepu(): HTMLElement[] {
       frazaNawigacyjna({ czynnosc: 'dostep.kod.zmienAdres', cel: 'rejestracja' }),
     ]),
 
-    /* ── konto założone bez konta nadawczego — pozycja 11 ──────────────── */
+    /* ── konto założone bez konta nadawczego ──────────────────────────── */
     panel(
       'konto-bez-potwierdzenia',
       false,
@@ -379,11 +367,9 @@ export function ekranDostepu(): HTMLElement[] {
 }
 
 /**
- * Pasy działań odsłon dostępu.
- *
- * Czynność główna albo prowadzi do kolejnej odsłony bez wysyłania czegokolwiek,
- * albo wywołuje komendę rdzenia. Bez jednego i drugiego przycisk jest martwy —
- * cały tor odzyskiwania dostępu stał tak w prototypie od pierwszego kroku.
+ * Pasy działań odsłon dostępu. Czynność główna albo prowadzi do kolejnej
+ * odsłony, albo wywołuje komendę rdzenia; bez jednego i drugiego przycisk
+ * jest martwy.
  */
 export function pasyDostepu(): HTMLElement[] {
   function pas(widok: OdslonaDostepu, aktywny: boolean, klucz: string, czynnosc: string): HTMLElement {

@@ -11,30 +11,17 @@ import { wywolaj } from '../../protokol/wywolanie';
 import { utworzRozwiniecie } from './warstwy-translate';
 
 /**
- * Wystawienie operacji modułu na zewnątrz — warstwa czwarta.
- *
- * Opracowanie nazywa tę funkcję „wystawieniem tłumaczenia i kontroli jakości
- * jako operacji wywoływanych z zewnątrz". Jedno z dwojga jest w kontrakcie
- * naprawdę, drugiego nie ma, i element rozdziela je wprost:
- *
- *  — operacje modułu SĄ zadeklarowane jako narzędzia modelu, z nazwą, komendą
- *    i kompletem pól żądania. To jest interfejs, którym wywołuje je model,
- *    i to jest realne wystawienie operacji;
- *  — webhooka wywoływanego z zewnątrz kontrakt nie wystawia. Nie ma komendy
- *    zakładającej odbiornik ani adresu, pod który rdzeń by uderzył.
- *
- * Wykaz deklaracji nie jest przepisany: pochodzi ze stałej kontraktu, więc
- * dopisanie komendy do obszaru zmienia go samo. Liczba pozycji jest liczona,
- * nie wpisana.
+ * Wystawienie operacji modułu na zewnątrz rozdziela dwie rzeczy: operacje modułu są zadeklarowane
+ * jako narzędzia modelu, a webhooka wywoływanego z zewnątrz kontrakt nie wystawia.
  */
 export interface WystawienieOperacji {
   element: HTMLElement;
 }
 
-/** Przedrostek nazw narzędzi obszaru — deklaracje modułu poznaje się po nim. */
+/** Przedrostek nazw narzędzi obszaru pozwala rozpoznać, które deklaracje kontraktu należą do modułu tłumaczeń. */
 const PRZEDROSTEK_NARZEDZIA = 'danaco_translate_';
 
-/** Deklaracje narzędzi obszaru translate — komplet wystawionych operacji modułu. */
+/** Deklaracje narzędzi obszaru translate stanowią komplet operacji modułu wystawionych modelowi jako narzędzia wywołania. */
 export function deklaracjeModulu(): readonly ToolDeclaration[] {
   return NARZEDZIA_MODELU.filter((narzedzie) => narzedzie.name.startsWith(PRZEDROSTEK_NARZEDZIA));
 }
@@ -118,7 +105,7 @@ async function sprawdzKatalog(
   );
 }
 
-/** Jedna deklaracja narzędzia: nazwa, komenda i pola żądania. */
+/** Jedna deklaracja narzędzia niesie nazwę, komendę oraz pola żądania, którymi model wywołuje operację modułu. */
 function wierszDeklaracji(narzedzie: ToolDeclaration): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'mt-wystawienie__nazwa';

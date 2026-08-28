@@ -1,23 +1,7 @@
 /**
- * DROGA WEJŚCIA — rozmowa z rdzeniem uruchomionym naprawdę.
- *
- * Sprawdzian prowadzi trzy etapy wejścia przez ten sam przebieg, którym idzie
- * okno, i przytacza odpowiedzi rdzenia. Wymaga rdzenia nasłuchującego oraz
- * BAZY ŚWIEŻEJ: rejestracja wykonuje się raz, więc rdzeń z założonym już
- * kontem odmawia jej kodem `conflict`, a wtedy nie ma czego zmierzyć.
- *
- * Wyjątkiem jest bieg wskazujący drogę potwierdzenia: ten KONTYNUUJE rejestrację
- * z biegu poprzedniego, więc konta oczekuje, zamiast go zakładać. Inaczej gałęzi
- * z kontem nadawczym nie dałoby się domknąć — drogę niesie list, a list powstaje
- * dopiero przy rejestracji.
- *
- * Milczenie rdzenia kończy się tu niepowodzeniem nazywającym przeszkodę, nie
- * pominięciem: sprawdzian, który sam siebie odpuszcza przy braku rdzenia,
- * wygląda potem tak samo jak sprawdzian zdany.
- *
- * Obie gałęzie pozycji 11 rejestru decyzji mierzy ten sam bieg, uruchomiony
- * dwa razy: raz wobec rdzenia bez konta nadawczego, raz wobec rdzenia z kontem
- * nadawczym. Gałąź rozstrzyga odpowiedź rdzenia, nie nastawa sprawdzianu.
+ * Droga wejścia — rozmowa z rdzeniem uruchomionym naprawdę. Sprawdzian
+ * prowadzi trzy etapy wejścia przez ten sam przebieg, którym idzie okno,
+ * wymagając rdzenia nasłuchującego na świeżej bazie.
  */
 
 import { PROTOCOL_VERSION } from '../../../shared/contract.ts';
@@ -29,10 +13,10 @@ import { tozsamoscKlienta } from '../protokol/tozsamosc-klienta.ts';
 import { bieg, sprawdz } from '../sprawdzian.ts';
 import { magazynWPamieci, utworzPrzebieg, type StanPrzebiegu } from './przebieg.ts';
 
-/** Górna granica oczekiwania na przejście przebiegu do spodziewanego stanu. */
+/** Górna granica oczekiwania na przejście przebiegu do spodziewanego stanu, wyrażona w milisekundach czasu. */
 const GRANICA_MS = 10_000;
 
-/** Konto zakładane przez ten sprawdzian na świeżej bazie rdzenia. */
+/** Konto zakładane przez ten sprawdzian na świeżej bazie rdzenia, jednorazowo, przy pierwszym uruchomieniu. */
 const KONTO = {
   login: 'operator',
   email: 'operator@danaco-group.pl',
@@ -66,7 +50,7 @@ function drogaZListu(): string | undefined {
   return wskazana === undefined || wskazana.length === 0 ? undefined : wskazana;
 }
 
-/** Czeka, aż przebieg dojdzie do stanu spełniającego warunek. */
+/** Czeka, aż przebieg dojdzie do stanu spełniającego podany warunek, sprawdzając go po każdej jego zmianie. */
 function azDo(
   przebieg: { naZmiane(s: (stan: StanPrzebiegu) => void): () => void; stan(): StanPrzebiegu },
   warunek: (stan: StanPrzebiegu) => boolean,
@@ -135,7 +119,7 @@ await bieg('droga wejścia — rozmowa z rdzeniem', {
       );
       sprawdz(poPowitaniu.etap === 'dostep', `etap po powitaniu: ${poPowitaniu.etap}`);
 
-      /* ── Etap 2a: rejestracja, obie gałęzie pozycji 11 ──────────────── */
+      /* ── Etap 2a: rejestracja, obie gałęzie ──────────────────────────── */
       const droga = drogaZListu();
       let zNadajnikiem: boolean;
       if (droga === undefined) {
@@ -155,9 +139,7 @@ await bieg('droga wejścia — rozmowa z rdzeniem', {
           poRejestracji.usterki.length === 0,
           `rdzeń odmówił rejestracji: ${JSON.stringify(poRejestracji.usterki)}`,
         );
-        // Gałąź rozstrzyga rdzeń, nie sprawdzian: z kontem nadawczym okno
-        // prowadzi do przepisania drogi z listu, bez konta nadawczego —
-        // do odsłony nazywającej niepotwierdzony adres.
+        // Gałąź rozstrzyga rdzeń, nie sprawdzian: z kontem nadawczym prowadzi do przepisania drogi z listu.
         zNadajnikiem = poRejestracji.odslona === 'kod';
         wypisz('auth.register', {
           odslona: poRejestracji.odslona,
@@ -182,12 +164,7 @@ await bieg('droga wejścia — rozmowa z rdzeniem', {
         wypisz('auth.register', { galaz: 'pendingVerification=true (bieg poprzedni)' });
       }
 
-      /* ── Etap 2b: wejście — gałęzią, którą wskazał rdzeń ───────────── */
-      // Zmierzone: gałęzie różnią się nie tylko komunikatem. Bez konta
-      // nadawczego bramka wpuszcza hasłem od razu. Z kontem nadawczym bramka
-      // jest ZAMKNIĘTA do chwili potwierdzenia adresu — i to jest właściwa
-      // droga tej gałęzi, nie usterka. Drogę potwierdzenia niesie list, więc
-      // sprawdzian bierze ją z zewnątrz; bez niej mierzy samą odmowę.
+      // Etap 2b: wejście gałęzią wskazaną przez rdzeń; gałęzie różnią się bramką, nie tylko komunikatem.
       if (zNadajnikiem) {
         if (droga === undefined) {
           przebieg.przejdzDo('logowanie');

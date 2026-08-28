@@ -4,17 +4,13 @@ import { NAPISY } from './etykiety-rozmowy';
 import type { WpisRozmowy } from './wpis-rozmowy';
 
 /**
- * Nadanie wiadomości i przerwanie tury — dwie czynności okna rozmowy, które
- * rozmawiają z rdzeniem komendami `message.send` i `message.stop`. Wysłanie
- * w trakcie odpowiedzi samo prosi o przerwanie, więc obie czynności są od
- * siebie zależne i stoją w jednym pliku.
- *
- * Warstwa nie zna widoku — dostaje wyłącznie haczyki: co ogłosić, jak zgłosić
- * błąd, jak przestawić stan. Dzięki temu ta sama logika obsługuje okno
- * komunikacji i podgląd.
+ * Plik łączy nadanie wiadomości i przerwanie tury, bo obie czynności zależą od siebie.
  */
 
-/** Zależności, których nadanie i przerwanie potrzebują od okna rozmowy. */
+/**
+ * Zależności, których nadanie i przerwanie potrzebują od okna rozmowy, dostarczane przez
+ * wywołującego.
+ */
 export interface OtoczenieNadania {
   kanal: Kanal;
   idOkna: string;
@@ -31,17 +27,8 @@ export interface OtoczenieNadania {
 }
 
 /**
- * Nadaje wiadomość, a gdy okno prowadzi turę — poprzedza ją zatrzymaniem.
- *
- * Przerwanie jest jawne: `message.send` skierowany do okna, które odpowiada,
- * odmawia kodem `conflict` zamiast skasować odpowiedź w połowie zdania, więc
- * przerwanie jedzie osobną komendą. Para komend idzie sekwencyjnie, nie
- * równolegle — nadane naraz dotarłyby w kolejności niegwarantowanej,
- * a wysłanie, które wyprzedziło zatrzymanie, trafiłoby na okno nadal zajęte
- * i odmówiło.
- *
- * Nieudane zatrzymanie nie wstrzymuje wysłania: jeżeli tura zdążyła tymczasem
- * dobiec końca sama, wysłanie przejdzie, a jeżeli nie — odmówi rdzeń.
+ * Nadaje wiadomość, a gdy okno prowadzi turę, poprzedza wysłanie jawnym przerwaniem
+ * biegnącej odpowiedzi.
  */
 export function nadajZPrzerwaniem(
   o: OtoczenieNadania,
@@ -67,7 +54,10 @@ export function nadajZPrzerwaniem(
   );
 }
 
-/** Samo nadanie wiadomości — bez rozstrzygania o przerwaniu. */
+/**
+ * Samo nadanie wiadomości do rdzenia komendą message.send, bez rozstrzygania o przerwaniu
+ * biegnącej tury okna.
+ */
 function nadaj(o: OtoczenieNadania, tresc: string, odpowiedz: WpisRozmowy): void {
   o.kanal.wyslij(
     Command.MessageSend,
@@ -80,10 +70,8 @@ function nadaj(o: OtoczenieNadania, tresc: string, odpowiedz: WpisRozmowy): void
 }
 
 /**
- * Przerywa turę. Każde z czterech rozstrzygnięć rdzenia — błąd komendy, brak
- * trwającej tury, brak wpisu bieżącego oraz przerwanie udane — kończy się
- * widocznym śladem w wątku albo na wskaźniku, żeby kliknięcie „Zatrzymaj"
- * nigdy nie wyglądało na martwe.
+ * Przerywa turę, a każde z czterech rozstrzygnięć rdzenia kończy się widocznym śladem w
+ * wątku rozmowy albo na wskaźniku wysyłania.
  */
 export function przerwijTure(o: OtoczenieNadania): void {
   const biezaca = o.biezaca();
@@ -112,7 +100,10 @@ export function przerwijTure(o: OtoczenieNadania): void {
   );
 }
 
-/** Opis błędu kontraktu dla Operatora. */
+/**
+ * Opis błędu kontraktu dla Operatora, złożony z treści komunikatu rdzenia oraz kodu błędu
+ * zwróconego przez rdzeń.
+ */
 function opisBledu(blad: ErrorInfo | undefined): string {
   if (blad === undefined) return 'rdzeń nie podał przyczyny';
   return `${blad.message} (${blad.code})`;

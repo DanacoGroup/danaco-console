@@ -6,37 +6,18 @@ import {
 } from '../../../shared/contract';
 import type { NazwaIkony } from '../ikony/ikony';
 
-/**
- * Widok wykazu środowiska — kształt, w jakim boczna nawigacja czyta odpowiedź
- * rdzenia, wraz z tym, czego kontrakt nie oddaje.
- *
- * Plik nie jest katalogiem modułów: środowiska, moduły i macierz widoczności
- * są sterowane danymi i przychodzą komendami `environment.enter`
- * oraz `module.list`. Nie ma tu ani jednej nazwy modułu, ani jednego wiersza
- * macierzy.
- *
- * Zostały dwie rzeczy, których kontrakt nie niesie:
- *  1. Ikony pozycji. `Module` nie ma pola ikony, bo rysunek jest zasobem
- *     pakietu wizualnego, nie wierszem tabeli. Mapa niżej wiąże kod modułu
- *     z nazwą ikony zestawu; kod nieznany dostaje ikonę zastępczą zamiast
- *     pustego miejsca.
- *  2. Sekcje panelu orkiestracji. Dla środowiska o nawigacji `orchestration`
- *     kontrakt zwraca pusty wykaz modułów (`Environment.moduleCodes` puste,
- *     `environment.enter` oddaje `modules: []`), bo sekcje panelu modułami nie
- *     są. Nie ma ich skąd wziąć z rdzenia, więc stoją tutaj — a że żadna nie ma
- *     modułu, żadna nie ma też zbudowanego widoku (patrz `pozycja.modul`).
- */
+// Widok wykazu środowiska — kształt, w jakim boczna nawigacja czyta odpowiedź rdzenia.
 
-/** Klucz środowiska — kody znane kontraktowi, nie literały klienta. */
+/** Klucz środowiska — kody znane kontraktowi rdzenia, nie literały wymyślone samodzielnie przez klienta. */
 export type KluczSrodowiska = (typeof KnownModuleIds)[number];
 
-/** Rodzaj wykazu w bocznej nawigacji. */
+/** Rodzaj wykazu w bocznej nawigacji — moduły tego środowiska albo sekcje panelu orkiestracji zespołowej. */
 export type RodzajWykazu = 'moduly' | 'sekcje';
 
-/** Stan wykazu: przed odpowiedzią rdzenia, po niej albo po odmowie. */
+/** Stan wykazu bocznej nawigacji: przed odpowiedzią rdzenia, zaraz po niej albo po jego pełnej odmowie. */
 export type StanWykazu = 'ladowanie' | 'gotowe' | 'blad';
 
-/** Pojedyncza pozycja bocznej nawigacji: moduł albo sekcja orkiestracji. */
+/** Pojedyncza pozycja bocznej nawigacji: moduł tego środowiska albo sekcja panelu orkiestracji zespołowej. */
 export interface PozycjaModulu {
   /** Klucz stabilny, używany w atrybutach i zdarzeniach; kod modułu z rdzenia. */
   klucz: string;
@@ -52,7 +33,7 @@ export interface PozycjaModulu {
   okna: readonly string[];
 }
 
-/** Środowisko wraz z pełnym wykazem pozycji nawigacji. */
+/** Środowisko wraz z pełnym wykazem pozycji bocznej nawigacji przygotowanym dla tego środowiska klienta. */
 export interface Srodowisko {
   klucz: KluczSrodowiska;
   nazwa: string;
@@ -64,17 +45,13 @@ export interface Srodowisko {
   blad?: string;
 }
 
-/** Środowisko otwierane, gdy wywołanie nie wskazuje innego. */
+/** Środowisko otwierane, gdy wywołanie tworzące powłokę środowiska nie wskazuje żadnego innego środowiska. */
 export const SRODOWISKO_DOMYSLNE: KluczSrodowiska = KnownModuleIds[0];
 
-/** Ikona pozycji, gdy kod modułu jest rdzeniowi znany, a klientowi nie. */
+/** Ikona pozycji, gdy kod modułu jest rdzeniowi znany, a temu klientowi jeszcze zupełnie nie jest znany. */
 const IKONA_ZASTEPCZA: NazwaIkony = 'karta-okna';
 
-/**
- * Kod modułu → ikona zestawu. Jedyny powód istnienia mapy: kontrakt nie niesie
- * rysunku. Kod spoza mapy nie jest błędem — dostaje ikonę zastępczą, bo nowy
- * moduł to nowy wiersz w bazie, nie zmiana kodu klienta.
- */
+/** Kod modułu przekładany na ikonę zestawu wizualnego — jedyny powód istnienia tej pomocniczej mapy kodów. */
 const IKONY_MODULOW: Readonly<Record<string, NazwaIkony>> = {
   studio: 'dokument',
   workspace: 'folder',
@@ -93,18 +70,7 @@ const IKONY_MODULOW: Readonly<Record<string, NazwaIkony>> = {
   agents: 'agent',
 };
 
-/**
- * Klucze sekcji panelu orkiestracji — zestaw domyślny.
- *
- * Wykaz stoi osobno i publicznie, bo znać go musi zarówno boczna nawigacja
- * (żeby narysować pozycje), jak i moduł MultitaskingAI (żeby zbudować
- * powierzchnię sekcji). Dwa wykazy rozjechałyby się przy pierwszej zmianie
- * kolejności, a rozjazd objawiłby się pozycją nawigacji bez treści.
- *
- * Kolejność i widoczność podlegają konfiguracji: układ podsekcji trzyma rdzeń
- * (`panel.sections.*`), a brak ustawienia znaczy wartość domyślną, a nie
- * niedostępność sekcji.
- */
+/** Klucze sekcji panelu orkiestracji — zestaw domyślny, stojący osobno i publicznie dla wielu odbiorców. */
 export const KLUCZE_SEKCJI_ORKIESTRACJI = [
   'zespoly',
   'role',
@@ -127,12 +93,12 @@ const SEKCJE_ORKIESTRACJI: readonly PozycjaModulu[] = [
   sekcja('monitor', 'Monitor procesu', 'monitor', 'przebieg pracy zespołu na żywo'),
 ];
 
-/** Skrót zapisu sekcji panelu — sekcja nigdy nie ma modułu ani okien rdzenia. */
+/** Skrót zapisu sekcji panelu orkiestracji — sekcja nigdy nie ma własnego modułu ani żadnych okien rdzenia. */
 function sekcja(klucz: string, nazwa: string, ikona: NazwaIkony, opis: string): PozycjaModulu {
   return { klucz, nazwa, ikona, opis, okna: [] };
 }
 
-/** Wykaz w drodze — stan pokazywany, dopóki rdzeń nie odpowiedział. */
+/** Wykaz w drodze — stan pokazywany bocznej nawigacji, dopóki rdzeń jeszcze wcale nie odpowiedział na żądanie. */
 export function srodowiskoWczytywane(klucz: KluczSrodowiska): Srodowisko {
   return {
     klucz,
@@ -144,7 +110,7 @@ export function srodowiskoWczytywane(klucz: KluczSrodowiska): Srodowisko {
   };
 }
 
-/** Odmowa rdzenia — wykaz pusty z treścią odmowy, nie kopia zapasowa. */
+/** Odmowa rdzenia — wykaz pusty z treścią odmowy tego samego rdzenia, nigdy kopia zapasowa tego wykazu. */
 export function srodowiskoNiedostepne(klucz: KluczSrodowiska, blad: string): Srodowisko {
   return {
     klucz,
@@ -175,15 +141,7 @@ export function srodowiskoZKontraktu(dane: Environment, moduly: readonly Module[
   };
 }
 
-/**
- * Moduł kontraktu jako pozycja wykazu; ikona dokładana, reszta z rdzenia.
- *
- * Publiczna, bo pozycję buduje się także poza wykazem środowiska: moduł bez
- * wiersza widoczności w macierzy nie stoi w bocznej nawigacji, a mimo to daje
- * się otworzyć — kafel komponentu własnego na stronie głównej sięga po niego
- * wprost do katalogu `module.list` i składa pozycję tą samą funkcją. Drugiego
- * przekładu modułu na pozycję nie ma.
- */
+/** Moduł kontraktu jako pozycja wykazu bocznej nawigacji; ikona dokładana lokalnie, reszta wprost z rdzenia. */
 export function pozycjaModulu(modul: Module): PozycjaModulu {
   return {
     klucz: modul.code,
@@ -207,7 +165,7 @@ export function opisLiczbyPozycji(dane: Srodowisko): string {
   return `${ile} ${odmiana(ile, formy)}`;
 }
 
-/** Odmiana rzeczownika po liczebniku: pojedyncza, mnoga, dopełniaczowa. */
+/** Odmiana rzeczownika po liczebniku wskazań: forma pojedyncza, forma mnoga oraz forma dopełniaczowa liczby. */
 function odmiana(ile: number, formy: readonly [string, string, string]): string {
   if (ile === 1) return formy[0];
   const setki = ile % 100;

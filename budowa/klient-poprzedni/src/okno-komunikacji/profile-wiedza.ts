@@ -1,13 +1,7 @@
 import { GRANICA_NIEPODANA, narzedzie, profil, type ProfilModulu } from './profil-modulu';
 
 /**
- * Profile pięciu modułów pracy z wiedzą i przekazem: Library, Translate,
- * Roundtable, Design, Assistant.
- *
- * Tu stoją oba moduły, które rozmowy w postaci okna nie mają: Library (`brak`)
- * i Assistant (`dymek-glosowy`). Ich profile mimo to istnieją, bo niosą
- * narzędzia i okna kontekstu, po które sięgają inne miejsca produktu — postać
- * rozmowy jest osobną własnością profilu, nie warunkiem jego istnienia.
+ * Profile pięciu modułów pracy z wiedzą i przekazem — Library, Translate, Roundtable, Design i Assistant — obejmujące dwa moduły bez rozmowy w postaci okna.
  */
 export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
   profil(
@@ -42,10 +36,7 @@ export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Library nie prowadzi rozmowy: to menedżer zasobów — eksplorator plików,
-      // menedżer dokumentów, repozytorium wiedzy. Okno, które trafi na Library,
-      // mówi to wprost i pokazuje eksplorator, bo puste okno czatu czytałoby się
-      // jak awaria.
+      // Library nie prowadzi rozmowy — pokazuje eksplorator, bo puste okno czatu czytałoby się jak awaria.
       postacRozmowy: 'brak',
       granicaOkien: 1,
       pamiecSesyjna: false,
@@ -84,9 +75,7 @@ export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Translate pracuje w układzie dwupanelowym: okno źródłowe i okno
-      // tłumaczenia, stąd granica dwóch okien. Liczba mówi o panelach układu,
-      // nie o zużyciu kanałów modelu.
+      // Translate pracuje w układzie dwupanelowym: źródło i tłumaczenie, stąd granica dwóch okien.
       postacRozmowy: 'okno',
       granicaOkien: 2,
       pamiecSesyjna: true,
@@ -124,10 +113,7 @@ export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Roundtable prowadzi wiele równoległych okien — po jednym na uczestnika
-      // debaty. Liczby profil nie podaje (`GRANICA_NIEPODANA`), bo wiążącym
-      // ograniczeniem jest sufit sceny `LICZBA_MAX`; wpisanie tu własnej liczby
-      // dublowałoby ten sufit albo z nim kolidowało.
+      // Roundtable prowadzi wiele równoległych okien po uczestniku; wiąże je sufit sceny, nie profil.
       postacRozmowy: 'okno',
       granicaOkien: GRANICA_NIEPODANA,
       pamiecSesyjna: true,
@@ -165,10 +151,7 @@ export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Okno rozmowy jest głównym kanałem współpracy z modelami generującymi
-      // treści wizualne, a obok niego stoi przestrzeń projektowa: Design Board.
-      // Stąd okno obowiązkowe — Design bez płótna nie jest Designem. Granicy
-      // liczby okien profil nie podaje.
+      // Okno rozmowy jest głównym kanałem współpracy z modelem, a obok stoi Design Board jako płótno.
       postacRozmowy: 'okno',
       granicaOkien: GRANICA_NIEPODANA,
       pamiecSesyjna: true,
@@ -207,12 +190,7 @@ export const PROFILE_WIEDZY: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Assistant nie ma okna rozmowy: mówi pływającym awatarem w oknie
-      // dymkowym, głosem przed tekstem. Jeden dymek, bo Assistant jest warstwą
-      // wsparcia w całej platformie, a nie sceną okien równoległych.
-      //
-      // Kontrakt i rdzeń nie niosą mowy, więc dymek mówi wprost, że kanału
-      // głosowego nie ma, zamiast milcząco zejść na tekst.
+      // Assistant nie ma okna rozmowy — mówi awatarem, jednym dymkiem, warstwą wsparcia platformy.
       postacRozmowy: 'dymek-glosowy',
       granicaOkien: 1,
       pamiecSesyjna: true,

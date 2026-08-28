@@ -18,7 +18,7 @@ import { utworzKorelacje } from './korelacja.ts';
 import { odczytajRamke, zapiszRamke } from './ramka.ts';
 import type { Sesja } from './sesja.ts';
 
-/** Wynik komendy widziany przez wywołującego. */
+/** Wynik komendy widziany przez wywołującego, niosący powodzenie, zwróconą wartość albo opis napotkanego błędu. */
 export interface Wynik<T> {
   udany: boolean;
   wynik?: T;
@@ -26,14 +26,9 @@ export interface Wynik<T> {
 }
 
 /**
- * Kanał komunikatów — cienka warstwa nad kontraktem osadzona na transporcie.
- *
- * Kanał nie zna treści dziedzinowej. Nazwy komend i zdarzeń oraz kształty ich
- * treści pochodzą wyłącznie z `shared/contract.ts`: zmiana nazwy
- * w `contract.json` przerywa kompilację klienta. Stąd jedno wejście `wyslij`
- * obsługuje każdą komendę kontraktu, a jedno wejście `naZdarzenie` — każde
- * jego zdarzenie; typ treści wyznacza nazwa. Komunikat nierozpoznany nie jest
- * odrzucany.
+ * Kanał komunikatów — cienka warstwa nad kontraktem osadzona na transporcie,
+ * nieznająca treści dziedzinowej. Nazwy komend i zdarzeń oraz kształty ich
+ * treści pochodzą wyłącznie ze współdzielonego kontraktu.
  */
 export interface Kanal {
   /** Wysyła komendę kontraktu; zwraca identyfikator żądania. */
@@ -94,16 +89,13 @@ export function utworzKanal(transport: Transport, sesja: Sesja): Kanal {
     dziennikNieznanych: () => dziennik,
   };
 
-  // Dziennik zakładamy od razu, bo komunikat nierozpoznany może przyjść przed
-  // pierwszą subskrypcją warstwy wyższej. Zapis i wpis do konsoli są jedyną
-  // reakcją: ani zdarzenie `*.unknown`, ani koperta o typie spoza kontraktu nie
-  // zrywa połączenia i nie blokuje sesji.
+  // Dziennik zakładany od razu — komunikat może przyjść przed pierwszą subskrypcją.
   const dziennik = zalozDziennikNieznanych(kanal);
 
   return kanal;
 }
 
-/** Przekłada kopertę odpowiedzi na wynik komendy. */
+/** Przekłada kopertę odpowiedzi na wynik komendy, wyodrębniając powodzenie, treść albo błąd zgodnie z kontraktem. */
 function zbudujWynik<T>(odpowiedz: Envelope): Wynik<T> {
   if (!czyUdana(odpowiedz)) {
     return { udany: false, blad: odpowiedz.error };

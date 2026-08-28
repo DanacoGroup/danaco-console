@@ -6,56 +6,30 @@ import { wywolaj } from '../protokol/wywolanie';
 import type { WpisSesji } from '../strona-glowna/zrodlo-sesji';
 
 /**
- * Sesja tego okna rozmowy — jeden wpis, żywy.
- *
- * Sekcja czynności menu gniazda rozstrzyga o pozycjach na podstawie `WpisSesji`
- * (stan sesji, tytuł, projekt, liczba okien strumieniujących), a gniazdo zna
- * wyłącznie identyfikator sesji; to źródło prowadzi od identyfikatora do wpisu.
- *
- * `strona-glowna/zrodlo-sesji.ts` się tu nie nadaje: obsługuje sekcję sesji
- * w tle i odcina sesję bieżącego połączenia, czyli dokładnie tę, o którą pyta
- * menu. Komenda jest ta sama — `session.list` z żywym stanem — różni się filtr.
- *
- * Źródło nie zna DOM-u, nie wykonuje żadnej czynności i nie ma zdania o tym, co
- * z sesją wolno zrobić: oddaje wpis albo `null`. `null` znaczy brak wiedzy, nie
- * zakaz — dopóki rdzeń nie oddał wykazu, sekcja czynności jest krótsza, bo
- * czynności bez znanego stanu sesji nie da się uczciwie nazwać.
+ * Źródło wpisu sesji bieżącego okna rozmowy, prowadzące od identyfikatora sesji do
+ * jej pełnego wpisu, którego gniazdo samo nie zna.
  */
 export interface ZrodloWpisuSesji {
   /** Wpis sesji okna; `null`, dopóki rdzeń go nie oddał. */
   wpis(): WpisSesji | null;
   /** Zgłasza każdą zmianę wpisu — także pierwsze jego pojawienie się. */
   naZmiane(sluchacz: () => void): Odsubskrybuj;
-  /**
-   * Ponowne odpytanie rdzenia.
-   *
-   * Potrzebne, gdy identyfikator sesji dopiero się pojawił — gniazdo montuje
-   * się przed uzgodnieniem — oraz po czynności, która sesję zmieniła.
-   */
+  /** Odpytanie po zmianie sesji albo gdy identyfikator dopiero się pojawił. */
   odswiez(): void;
   /** Zdejmuje subskrypcję zdarzeń rdzenia; wołający musi to zrobić. */
   zamknij(): void;
 }
 
 /**
- * Śledzi jedną sesję po identyfikatorze.
- *
- * Identyfikator przychodzi funkcją, nie napisem: sesja powstaje po uzgodnieniu,
- * więc w chwili montażu gniazda bywa jeszcze pusta. Odpytanie rusza dopiero,
- * gdy identyfikator jest niepusty — żądanie o sesję „" nie miałoby o co pytać.
+ * Śledzi jedną sesję po identyfikatorze przekazanym funkcją, bo sesja powstaje dopiero
+ * po uzgodnieniu i w chwili montażu gniazda bywa jeszcze pusta.
  */
 export function sledzWpisSesji(kanal: Kanal, idSesji: () => string): ZrodloWpisuSesji {
   const zmiany = utworzMagistrale<void>();
   let biezacy: WpisSesji | null = null;
   let numerZapytania = 0;
 
-  /**
-   * Odpytanie rdzenia o wykaz i wyjęcie z niego naszej sesji.
-   *
-   * Odpowiedź przedawniona nie nadpisuje świeższej (licznik `numerZapytania`) —
-   * dwa odpytania w locie potrafią wrócić w odwrotnej kolejności, a wtedy
-   * starszy stan przykryłby nowszy.
-   */
+  /** Odpytuje rdzeń o wykaz sesji i wyjmuje z niego naszą, odrzucając odpowiedzi przedawnione. */
   function odpytaj(): void {
     const id = idSesji();
     if (id === '') return;
@@ -66,8 +40,7 @@ export function sledzWpisSesji(kanal: Kanal, idSesji: () => string): ZrodloWpisu
       const sprawdzony = sprawdzKsztalt(wynik, Command.SessionList, (tresc) =>
         czyTablica(tresc.sessions),
       );
-      // Odmowa nie zeruje wpisu, który już mamy: menu ma wtedy pokazywać ostatnią
-      // znaną prawdę, a nie zapadać się przy pierwszym potknięciu łączności.
+      // Odmowa nie zeruje wpisu; menu pokazuje ostatnią znaną prawdę, nie błąd łączności.
       if (!sprawdzony.udany) return;
 
       const sesja = (sprawdzony.wynik?.sessions ?? []).find((pozycja) => pozycja.id === id);
@@ -80,8 +53,7 @@ export function sledzWpisSesji(kanal: Kanal, idSesji: () => string): ZrodloWpisu
     });
   }
 
-  // Zmiana sesji przychodzi zdarzeniem, więc menu nie musi odpytywać w kółko.
-  // Usunięcie zdejmuje wpis: sesji już nie ma i żadna czynność nie ma celu.
+  // Zmiana sesji przychodzi zdarzeniem; usunięcie zdejmuje wpis, bo czynność traci cel.
   const odsubskrybuj = kanal.naZdarzenie(EventType.SessionChanged, (zdarzenie) => {
     if (zdarzenie.session.id !== idSesji()) return;
     if (zdarzenie.change === ChangeKind.Deleted) {
@@ -104,8 +76,7 @@ export function sledzWpisSesji(kanal: Kanal, idSesji: () => string): ZrodloWpisu
 
     zamknij() {
       odsubskrybuj();
-      // Licznik przesunięty zawczasu unieważnia odpowiedź, która jest jeszcze
-      // w drodze — inaczej zapisałaby wpis po zejściu gniazda ze sceny.
+      // Licznik przesunięty zawczasu unieważnia odpowiedź w drodze po zejściu gniazda ze sceny.
       numerZapytania += 1;
     },
   };

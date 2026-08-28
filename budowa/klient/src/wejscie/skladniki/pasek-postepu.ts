@@ -1,10 +1,6 @@
 /**
- * SKŁADNIK — PASEK POSTĘPU Z GŁOWĄ.
- *
- * Nazwa tego, co trwa, wartość liczbą i tor. Wartość stoi w danej na
- * znaczniku, nie w atrybucie stylu — miara jest daną, a wygląd należy do
- * arkusza. Rolę `progressbar` niesie tor, bo to on wyraża postęp; nazwa toru
- * opisuje rzecz, a nie powtarza etykietę nad nim.
+ * Składnik — pasek postępu z głową. Nazwa tego, co trwa, wartość liczbą
+ * i tor; wartość stoi w danej na znaczniku, nie w atrybucie stylu.
  */
 
 import { el, tekst } from '../narzedzia.ts';

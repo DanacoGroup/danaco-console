@@ -5,25 +5,7 @@ import { elementIkony } from '../ikony/ikony';
 import type { Kanal } from '../protokol/kanal';
 import { utworzZrodloCentrum, type ZrodloCentrum } from './zrodlo-centrum';
 
-/**
- * Centrum powiadomień — kolumna boczna z rejestrem zdarzeń.
- *
- * Postać z karty komponentu (`katalog-komponentow.md`, rozdz. 11.6): kolumna
- * o pełnej wysokości obszaru roboczego, lista od najnowszego, pozycja niosąca
- * klasę, treść, znacznik czasu i zestaw działań, działanie zbiorcze w nagłówku.
- *
- * ── czego kolumna nie robi ─────────────────────────────────────────────────
- * Nie wykonuje działań zdarzenia. Karta komponentu wymienia „zatwierdzenie",
- * „ponowienie", „wstrzymanie" — każde z nich należy do rodziny, która je już
- * niesie, więc pozycja pokazuje je jako drogę do tamtej rodziny, a nie jako
- * drugą jej implementację. Kolumna zmienia wyłącznie STAN zdarzenia
- * w rejestrze: odczytane, zamknięte, odłożone.
- *
- * ── zamknięcie kolumny nie jest obsłużeniem ────────────────────────────────
- * Zamknięcie chowa widok i nic nie zapisuje. Zdarzenia zostają w stanie, w jakim
- * były — inaczej samo zajrzenie do centrum kasowałoby to, po co Operator
- * zaglądał.
- */
+// Centrum powiadomień to kolumna boczna z rejestrem zdarzeń, zmieniająca wyłącznie stan zdarzenia.
 
 export interface KolumnaPowiadomien {
   element: HTMLElement;
@@ -37,7 +19,7 @@ export interface KolumnaPowiadomien {
   rozlacz(): void;
 }
 
-/** Ile odkłada „Odłóż" — godzina, wprost z konwencji drogi potwierdzenia. */
+/** Ile odkłada Odłóż w rejestrze powiadomień — godzina, wprost z konwencji drogi potwierdzenia zdarzenia. */
 const ODLOZENIE_MS = 60 * 60 * 1000;
 
 export function utworzKolumnePowiadomien(
@@ -132,8 +114,7 @@ export function utworzKolumnePowiadomien(
     const czynnosci = document.createElement('div');
     czynnosci.className = 'po-pozycja__czynnosci';
 
-    // Zdarzenie już zamknięte nie dostaje czynności: nie ma czego zamykać ani
-    // odkładać, a przycisk pewnej odmowy jest gorszy od jego braku.
+    // Zdarzenie już zamknięte nie dostaje czynności: nie ma czego zamykać ani odkładać.
     if (zdarzenie.state !== NotificationState.Obsluzone) {
       czynnosci.append(
         czynnosc('Obsłużone', () =>
@@ -160,9 +141,7 @@ export function utworzKolumnePowiadomien(
 
     pozycja.append(naglowekPozycji, tresc, czynnosci);
 
-    // Działania zdarzenia pokazujemy jako nazwane drogi, nie jako przyciski:
-    // wykonuje je rodzina właściwa, a przycisk bez drogi obiecywałby czynność,
-    // której to okno nie zna.
+    // Działania zdarzenia pokazujemy jako nazwane drogi: wykonuje je rodzina właściwa, nie to okno.
     if (zdarzenie.actions !== undefined && zdarzenie.actions.length > 0) {
       const drogi = document.createElement('p');
       drogi.className = 'dn-pole-opis po-pozycja__drogi';
@@ -196,8 +175,7 @@ export function utworzKolumnePowiadomien(
     element.hidden = true;
   }
 
-  // Licznik nadąża zdarzeniami także wtedy, gdy kolumna stoi zamknięta — po to
-  // jest plakietka. Otwarta kolumna dodatkowo przerysowuje wykaz.
+  // Licznik nadąża zdarzeniami także przy zamkniętej kolumnie — po to jest plakietka.
   const odsubskrybuj = zrodlo.naZmiane((nowe) => {
     naLicznik?.(nowe);
     if (otwarta) odczytaj();
@@ -225,7 +203,7 @@ export function utworzKolumnePowiadomien(
   };
 }
 
-/** Godzina dnia bieżącego, data pełna dla dni wcześniejszych. */
+/** Godzina dnia bieżącego, data pełna dla dni wcześniejszych, pokazywana przy pozycji rejestru powiadomień. */
 function zapisChwili(znacznik: number): string {
   const chwila = new Date(znacznik);
   const dzis = new Date();

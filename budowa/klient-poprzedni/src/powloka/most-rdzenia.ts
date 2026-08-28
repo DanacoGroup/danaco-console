@@ -2,49 +2,16 @@ import { invoke } from '@tauri-apps/api/core';
 
 import { czyPowlokaNatywna } from './powloka-natywna';
 
-/**
- * Most do wiedzy powłoki natywnej o rdzeniu — konsument poleceń
- * `adres_rdzenia` i `stan_rdzenia` (`desktop/src-tauri/src/polecenia.rs`).
- *
- * Powłoka stawia proces rdzenia (`desktop/src-tauri/src/rdzen/`), zna jego port
- * ze zmiennej `DANACO_PORT`, jego identyfikator procesu i ścieżkę dziennika.
- * Interfejs nie zna żadnej z tych rzeczy: adres gniazda wylicza z lokalizacji
- * dokumentu (`polaczenie/adres-rdzenia.ts`), a powodu ciszy nie zna wcale.
- *
- * Stąd dwa polecenia:
- *
- *   `adres_rdzenia` — adres HTTP rdzenia lokalnego. Potrzebny, gdy okno dostało
- *   interfejs z pakietu osadzonego w powłoce: strona ma wtedy pochodzenie
- *   `tauri.localhost`, a wyliczenie z lokalizacji daje adres gniazda
- *   `ws://tauri.localhost:…`, pod którym nie nasłuchuje nikt (rozbieżność
- *   opisuje `desktop/src-tauri/src/zrodlo_interfejsu.rs`).
- *
- *   `stan_rdzenia` — opis rdzenia w tle wraz z przebiegiem uruchomienia. Bez
- *   niego wskaźnik łączności umie powiedzieć wyłącznie „Rozłączony", bez powodu
- *   i bez wskazania dziennika.
- *
- * Poza powłoką natywną oraz przy niepowodzeniu polecenia odpowiedzią jest
- * `null`. Żadna ścieżka nie rzuca wyjątkiem i nie odrzuca obietnicy — brak
- * odpowiedzi powłoki niczego nie wstrzymuje, bo interfejs ma własną drogę
- * ustalenia adresu i własny stan łączności.
- *
- * Polecenia zmieniającego stan rdzenia tu nie ma: zatrzymanie rdzenia jest
- * czynnością z zasobnika (`desktop/src-tauri/src/rdzen/uchwyt.rs`), a most nie
- * tworzy drugiej drogi sterowania platformą.
- */
-
-/** Nazwa polecenia powłoki; odpowiednik `polecenia::adres_rdzenia`. */
+/** Nazwa polecenia powłoki wywoływanego przy odczycie adresu rdzenia lokalnego; odpowiednik polecenia adres_rdzenia. */
 const POLECENIE_ADRESU = 'adres_rdzenia';
 
-/** Nazwa polecenia powłoki; odpowiednik `polecenia::stan_rdzenia`. */
+/** Nazwa polecenia powłoki wywoływanego przy odczycie stanu rdzenia postawionego w tle; odpowiednik polecenia stan_rdzenia. */
 const POLECENIE_STANU = 'stan_rdzenia';
 
 /**
- * Stan rdzenia widziany przez powłokę.
- *
- * Nazwy pól są przepisane z `OpisRdzenia` (`desktop/src-tauri/src/rdzen/uchwyt.rs`)
- * znak w znak, bo serde oddaje je bez przemianowania. Zmiana nazwy po stronie
- * powłoki rozspaja most po cichu — dlatego stoją tu dosłownie.
+ * Stan rdzenia widziany przez powłokę. Nazwy pól są przepisane znak w znak z opisu rdzenia po
+ * stronie powłoki, bo serde oddaje je bez przemianowania, a zmiana nazwy po tamtej stronie
+ * rozspaja most po cichu.
  */
 export interface StanRdzenia {
   /** Czy rdzeń odpowiada na porcie w chwili zapytania. */
@@ -96,11 +63,8 @@ export async function stanRdzeniaZPowloki(): Promise<StanRdzenia | null> {
 }
 
 /**
- * Sprawdzenie kształtu odpowiedzi.
- *
- * Most nie ufa kształtowi z drugiej strony granicy procesu bardziej niż
- * kształtowi z sieci: odpowiedź niepasująca do umowy jest traktowana jak brak
- * odpowiedzi, a nie wpuszczana do widoku jako `undefined` w środku zdania.
+ * Sprawdzenie kształtu odpowiedzi. Most nie ufa kształtowi z drugiej strony granicy procesu:
+ * odpowiedź niepasująca do umowy jest traktowana jak brak odpowiedzi, a nie wpuszczana do widoku.
  */
 function czyOpisRdzenia(wartosc: unknown): wartosc is StanRdzenia {
   if (typeof wartosc !== 'object' || wartosc === null) return false;

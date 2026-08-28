@@ -24,24 +24,9 @@ import {
 } from './zrodlo-wstawien-studio';
 
 /**
- * Warsztat szablonów pism — nakładka na żądanie.
- *
- * ── Czego brakowało, choć galeria stała ─────────────────────────────────────
- * Galeria (`galeria-szablonow.ts`) pokazywała wykaz FABRYCZNY i zakładała z niego
- * dokument. Nie było czym szablonu założyć, zmienić, wnieść z pliku Operatora ani
- * oddać do pliku — czyli warsztatu nie było wcale. Ten panel go zamyka siedmioma
- * komendami rodziny `studio.template.*`.
- *
- * ── Szablon niesie wszystkie rzeczy naraz ───────────────────────────────────
- * Wymaganie Właściciela wprost: szablon zapisany z bieżącego dokumentu bierze
- * arkusz stylów, nastawy strony, nagłówek, stopkę, logo, tabele I BLOKADY
- * WZORCOWE. Blokady idą polem `includeLocks`, którego brak znaczy „tak" —
- * fragmenty wzorcowe pisma mają zostać wzorcowe także w dokumentach z szablonu.
- *
- * ── Szablonu fabrycznego się nie usuwa ──────────────────────────────────────
- * Rdzeń odmawia i panel czyta pole `deleted`: odpowiedź „nie usunąłem" nazywa
- * powód i pozycja zostaje w wykazie. Zdjęcie jej z widoku i pozwolenie, żeby
- * wróciła przy następnym odczycie, byłoby udawaniem skutku.
+ * Nakładka warsztatu szablonów pism z komendami rodziny studio.template: zakłada
+ * szablon z bieżącego dokumentu, prowadzi jego pola do wypełnienia, wypełnia
+ * szablon w nowy dokument oraz wnosi i oddaje plik szablonu Operatora.
  */
 export interface SzablonPanel {
   element: HTMLElement;
@@ -51,7 +36,11 @@ export interface SzablonPanel {
   wskaz(idSzablonu: string): void;
 }
 
-/** Cztery rodzaje pola szablonu z kontraktu. */
+/**
+ * Cztery rodzaje pola szablonu z kontraktu wraz z nazwą widoczną dla Operatora:
+ * pole tekstowe, data, liczba i wybór z zamkniętego wykazu wartości podanych
+ * przy zapisie pola.
+ */
 const RODZAJE_POL: readonly (readonly [string, string])[] = [
   [StudioTemplateFieldKind.Text, 'tekst'],
   [StudioTemplateFieldKind.Date, 'data'],
@@ -59,7 +48,11 @@ const RODZAJE_POL: readonly (readonly [string, string])[] = [
   [StudioTemplateFieldKind.Choice, 'wybór z wykazu'],
 ];
 
-/** Formaty pliku szablonu Operatora — wnoszone i oddawane. */
+/**
+ * Formaty pliku szablonu Operatora przyjmowane przy wniesieniu i oddawane przy
+ * wydaniu: szablon Word, szablon OpenDocument oraz gotowy dokument w tych samych
+ * dwóch formatach.
+ */
 const FORMATY_WNOSZONE: readonly (readonly [string, string])[] = [
   ['', 'rozpoznanie po zawartości'],
   [StudioImportFormat.Dotx, 'szablon Word (dotx)'],
@@ -333,9 +326,7 @@ export function utworzSzablonPanel(stan: StanStudio, zrodlo: SzablonZrodlo): Sza
       ...(tytulDokumentu.kontrolka.value.trim() === ''
         ? {}
         : { title: tytulDokumentu.kontrolka.value.trim() }),
-      // Dokument bieżący podaje się wyłącznie wtedy, gdy Operator go ma: brak pola
-      // znaczy „załóż nowy z szablonu", a to inna czynność niż wypełnienie pól
-      // w piśmie, nad którym Operator właśnie pracuje.
+      // Dokument bieżący jest opcjonalny — jego brak zakłada nowy dokument z szablonu.
       ...(dokument === null ? {} : { documentId: dokument.id }),
     });
     if (!przyjalSie('Wypełnienie szablonu', wynik)) return;
@@ -408,9 +399,7 @@ export function utworzSzablonPanel(stan: StanStudio, zrodlo: SzablonZrodlo): Sza
     if (!przyjalSie('Usunięcie szablonu', wynik)) return;
     if (wynik.wynik === undefined) return;
     if (!wynik.wynik.deleted) {
-      // Rdzeń odmówił — najczęściej dlatego, że szablon jest fabryczny. Pozycja
-      // ZOSTAJE wskazana, bo nadal istnieje; zdjęcie jej z widoku byłoby
-      // udawaniem skutku, którego nie było.
+      // Rdzeń odmówił usunięcia; pozycja zostaje wskazana, bo szablon nadal istnieje.
       odpowiedz.pokaz(
         `Rdzeń NIE usunął szablonu ${szablon}. Szablonu fabrycznego się nie usuwa — jest częścią ` +
           'produktu, nie wpisem Operatora. Zapisz z niego szablon własny pod nową nazwą i zmieniaj ' +
@@ -572,7 +561,11 @@ export function utworzSzablonPanel(stan: StanStudio, zrodlo: SzablonZrodlo): Sza
   };
 }
 
-/** Zdanie o szablonie — co naprawdę niesie, a nie samo „zapisano". */
+/**
+ * Buduje pełne zdanie o stanie szablonu — pochodzenie, format dokumentu, liczbę
+ * pól, kategorię, blokady wzorcowe i obecność postaci wzorcowej — zamiast samego
+ * potwierdzenia zapisu.
+ */
 function opiszSzczegoly(szablon: StudioTemplateDetail): string {
   const czesci: string[] = [
     szablon.builtin ? 'szablon FABRYCZNY — usunąć się go nie da' : 'szablon własny Operatora',
@@ -596,7 +589,11 @@ function opiszSzczegoly(szablon: StudioTemplateDetail): string {
   return `Szablon „${szablon.name}": ${czesci.join(' · ')}.`;
 }
 
-/** Nazwa rodzaju pola pełnym słowem. */
+/**
+ * Zamienia rodzaj pola szablonu z kontraktu na pełną nazwę słowną widoczną dla
+ * Operatora w wykazie pól; nieznany rodzaj zwraca w postaci, w jakiej przyszedł
+ * z rdzenia.
+ */
 function opiszRodzajPola(rodzaj: StudioTemplateFieldKind): string {
   const znaleziony = RODZAJE_POL.find((pozycja) => pozycja[0] === rodzaj);
   return znaleziony === undefined ? rodzaj : znaleziony[1];

@@ -1,12 +1,6 @@
 import type { Envelope } from '../../../shared/contract';
 
-/**
- * Wiązanie odpowiedzi z żądaniem po identyfikatorze koperty.
- *
- * Kontrakt zapowiada dokładnie jedną odpowiedź na komendę, a odpowiedź powtarza
- * identyfikator żądania. Rejestr nie wprowadza limitu czasu ani limitu żądań
- * oczekujących: zerwanie połączenia nie kończy pracy rdzenia nad poleceniem.
- */
+/** Wiązanie odpowiedzi z żądaniem po identyfikatorze koperty, bez limitu czasu ani limitu żądań oczekujących. */
 export type OdbiorcaOdpowiedzi = (odpowiedz: Envelope) => void;
 
 export interface Korelacja {

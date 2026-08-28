@@ -2,29 +2,9 @@ import type { PanelSection } from '../../../shared/contract';
 import { przyciskAkcji } from '../modele/kontrolki-formularza';
 import type { OpisSekcji } from './uklad-sekcji';
 
-/**
- * Kształt jednej sekcji panelu — sam widok, bez reguły układu i bez komendy.
- *
- * Jedna odpowiedzialność: zamiana pary (opis sekcji, jej stan w układzie) na
- * węzły drzewa dokumentu. Kto stoi przed kim, rozstrzyga `uklad-sekcji.ts`;
- * czym się to zapisuje — `zrodlo-sekcji-paneli.ts`. Ten plik nie wie ani jednego,
- * ani drugiego: cztery czynności oddaje wywołaniem zwrotnym, więc da się go
- * czytać i sprawdzać bez rdzenia.
- *
- * Ani jeden przycisk nie jest wygaszany i ani jeden nie pyta „czy na pewno?" —
- * zdjęcie sekcji z widoku wykonuje się od razu, a wraca ją pas sekcji zdjętych
- * stojący pod panelem. Skutek jest odwracalny jednym naciśnięciem, więc
- * potwierdzanie go byłoby przeszkodą bez treści.
- *
- * Stan idzie atrybutem, nie samą barwą. Zwinięcie niesie `aria-expanded` na
- * przycisku i `hidden` na ciele, a nie klasa zmieniająca wygląd — inaczej
- * czytnik ekranu ogłaszałby treść, której na ekranie nie ma.
- *
- * Wygląd w całości z biblioteki (`komponenty/karta.css`, `przycisk.css`) —
- * plik nie zna ani jednej barwy i ani jednego odstępu.
- */
+// Kształt jednej sekcji panelu — sam widok, bez reguły układu, oddający czynności wywołaniem zwrotnym.
 
-/** Cztery czynności, które Operator wykonuje na sekcji panelu. */
+/** Cztery czynności, które operator wykonuje na sekcji panelu bez wygaszania przycisku ani pytania o potwierdzenie. */
 export interface CzynnosciSekcji {
   przyZwinieciu(id: string): void;
   przyPrzesunieciu(id: string, kierunek: -1 | 1): void;
@@ -32,7 +12,7 @@ export interface CzynnosciSekcji {
   przyPrzywroceniu(id: string): void;
 }
 
-/** Przycisk czynności sekcji — jeden kształt dla wszystkich czterech. */
+/** Przycisk czynności sekcji — jeden kształt dla wszystkich czterech czynności dostępnych na panelu bocznym. */
 function przyciskSekcji(etykieta: string, opis: string): HTMLButtonElement {
   const kontrolka = przyciskAkcji(etykieta, 'dn-btn dn-btn--sm dn-btn--zarys');
   kontrolka.title = opis;
@@ -95,11 +75,7 @@ export function zlozSekcje(
 }
 
 /**
- * Pas sekcji zdjętych z widoku — jedyna droga powrotu.
- *
- * Bez niego zdjęcie byłoby skutkiem nieodwracalnym z poziomu widoku, a to
- * dopiero kazałoby pytać „czy na pewno?". Pas znika, gdy nie ma czego wracać:
- * pusty pas z napisem „brak" zabierałby miejsce, nic nie mówiąc.
+ * Pas sekcji zdjętych z widoku jest jedyną drogą powrotu, bo bez niego zdjęcie byłoby skutkiem nieodwracalnym z poziomu widoku.
  */
 export function zlozPasZdjetych(
   zdjete: ReadonlyArray<{ id: string; tytul: string }>,

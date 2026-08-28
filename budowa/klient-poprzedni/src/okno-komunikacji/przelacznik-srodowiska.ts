@@ -3,34 +3,9 @@ import './przelacznik-srodowiska.css';
 import { ExecutionEnv } from '../../../shared/contract';
 import { utworzMenuDrzewo, type PozycjaMenu } from '../komponenty/menu-drzewo';
 
-/**
- * Urządzenie — pierwszy komponent paska zlecenia. Jednym ruchem wybiera się
- * maszynę, na której pracuje model.
- *
- * Komponent pokazuje maszynę, nie nazwę wartości: wyliczenie kontraktu niesie
- * `local`/`core`/`remote`, a w oknie stoi „To urządzenie”, „Maszyna rdzenia”
- * albo nazwa hosta z ustawienia `host_wykonania`.
- *
- * Wybór hosta zdalnego bez wskazanej maszyny zatrzymuje się na miejscu, z
- * pełnym zdaniem odmowy (co się nie stało, dlaczego, czym to zmienić), zamiast
- * zapisywać wartość, za którą nie stoi żadna maszyna. Odmowa rdzenia wraca
- * z `zastosuj` i jest pokazywana dosłownie, bez parafrazy. Wyróżnienie wybranej
- * maszyny bierze się wyłącznie z migawki stanu, więc nieudane przełączenie nie
- * zostawia mylącego podświetlenia.
- *
- * Drzewo ma jeden poziom, bo port zna wyłącznie `zastosuj(srodowisko)`: nazwa
- * hosta jest ustawieniem poziomu okna (`config.set`, `host_wykonania`)
- * i zmienia się w komplecie sterowania. Gałąź z nazwami hostów, z których
- * żadnej nie da się stąd wybrać, byłaby atrapą.
- *
- * Zależności są wąskie i wstrzykiwane — komplet sterowania okna podaje
- * migawkę, subskrypcję i wysyłkę `window.update`; komponent nie zna kanału ani
- * stanu globalnego. Podaje je port `zrodlo-srodowiska.ts`. Gotowy element
- * montuje widok rozmowy (`rozmowa/montaz-rozmowy.ts`) tuż nad polem
- * wypowiedzi, bo dopiero powłoka zna naraz okno i jego komplet sterowania.
- */
+// Urządzenie to pierwszy komponent paska zlecenia, wybierający jednym ruchem maszynę wykonania modelu.
 
-/** Migawka stanu, z której komponent czerpie całą swoją treść. */
+/** Migawka stanu, z której komponent czerpie całą swoją treść: zasięg wykonania oraz nazwę hosta zdalnego. */
 export interface StanPrzelacznika {
   /** Zasięg wykonania okna — wartość wyliczenia kontraktu. */
   srodowisko: ExecutionEnv;
@@ -38,20 +13,17 @@ export interface StanPrzelacznika {
   host: string;
 }
 
-/** Zależności komponentu, wstrzykiwane przez montaż okna. */
+/** Zależności komponentu, wstrzykiwane przez montaż okna: migawka stanu, subskrypcja zmian oraz zastosowanie wyboru. */
 export interface ZaleznosciPrzelacznika {
   /** Bieżąca migawka stanu okna. */
   migawka(): StanPrzelacznika;
   /** Subskrypcja zmian stanu (window.changed, config.changed). */
   naZmiane(sluchacz: () => void): void;
-  /**
-   * Zastosowanie wyboru (komenda window.update). Odrzucenie niesie zdanie
-   * odmowy — rdzeń mówi nim, którego ogniwa toru brakuje.
-   */
+  /** Zastosowanie wyboru komendą window.update; odrzucenie niesie zdanie odmowy od rdzenia. */
   zastosuj(srodowisko: ExecutionEnv): Promise<void>;
 }
 
-/** Komponent „urządzenie” paska zlecenia. */
+/** Komponent „urządzenie” paska zlecenia, pokazujący maszynę wykonania i pozwalający ją zmienić jednym ruchem. */
 export interface PrzelacznikSrodowiska {
   element: HTMLElement;
   /** Przerysowuje etykietę uchwytu i drzewo z bieżącej migawki. */
@@ -59,8 +31,7 @@ export interface PrzelacznikSrodowiska {
 }
 
 /**
- * Zdanie odmowy dla wyboru hosta zdalnego bez wskazanej maszyny. Eksportowane,
- * bo sprawdza je test.
+ * Zdanie odmowy dla wyboru hosta zdalnego bez wskazanej maszyny, eksportowane, bo sprawdza je test jednostkowy.
  */
 export const ZDANIE_BRAKU_HOSTA =
   'Okno nie zostało przełączone na host zdalny. ' +
@@ -68,12 +39,11 @@ export const ZDANIE_BRAKU_HOSTA =
   'nie ma więc dokąd przełączyć. ' +
   'Wpisz nazwę hosta w polu „Host wykonania” panelu sterowania i ponów wybór.';
 
-/** Etykieta maszyny dla braku wskazania — mówi o braku, niczego nie udaje. */
+/** Etykieta maszyny dla braku wskazania hosta zdalnego — mówi wprost o braku, niczego nie udaje operatorowi. */
 export const ETYKIETA_BRAKU_HOSTA = 'Host zdalny — nie wskazano';
 
 /**
- * Objaśnienia pozycji menu. Mówią o skutku wyboru, nie o nazwie wartości —
- * maszynę wybiera się po tym, co się na niej stanie.
+ * Objaśnienia pozycji menu mówią o skutku wyboru, nie o nazwie wartości — maszynę wybiera się po tym, co się na niej stanie.
  */
 const OPISY: Record<ExecutionEnv, string> = {
   [ExecutionEnv.Local]:
@@ -153,8 +123,7 @@ export function utworzPrzelacznikSrodowiska(
     try {
       await zaleznosci.zastosuj(srodowisko);
     } catch (blad) {
-      // Odmowa rdzenia idzie do Operatora dosłownie — bez parafrazy i bez
-      // przełączenia wyróżnienia, bo migawka stanu się nie zmieniła.
+      // Odmowa rdzenia idzie do operatora dosłownie, bez parafrazy i bez przełączenia wyróżnienia.
       pokazOdmowe(blad instanceof Error ? blad.message : String(blad));
     } finally {
       element.removeAttribute('aria-busy');

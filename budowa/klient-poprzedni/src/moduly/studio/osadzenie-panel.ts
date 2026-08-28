@@ -7,43 +7,9 @@ import {
   type ZrodloWstawienStudio,
 } from './zrodlo-wstawien-studio';
 
-/**
- * Przeglądarka i Biblioteka osadzone w oknie pracy — bez wychodzenia z dokumentu.
- *
- * ── Panel osadzony, nie przełączenie modułu ─────────────────────────────────
- * Wymaganie wprost: dokument zostaje widoczny, a Operatora nie wolno wyrzucać
- * z edytora do innego modułu i kazać mu wracać. Panel ma dwa położenia — obok
- * treści i na całej powierzchni — i wybór należy do Operatora, wedle zasady
- * ogólnej zlecenia.
- *
- * ── Wniesienie wprost do dokumentu ──────────────────────────────────────────
- * „Nie do kolejki i nie do zasobów — do dokumentu, w miejsce kursora." Panel
- * pokazuje treść podglądu i wnosi ją stąd wprost w miejsce kursora, wraz
- * z wierszem pochodzenia. Wciągnięcie strony idzie `studio.ingest.url`, która
- * dotąd kończyła się na kolejce; panel bierze z jej odpowiedzi pole `text`
- * i prowadzi je do dokumentu. Gdy rdzeń tekstu jeszcze nie ma — bo pozycja
- * czeka na rozpoznanie pisma — panel mówi to stanem pozycji, zamiast wnosić
- * pustkę.
- *
- * ── Pochodzenie zapisuje RDZEŃ, nie okno ────────────────────────────────────
- * Komendy `studio.insert.from.library` i `studio.insert.from.web` wnoszą fragment
- * wprost do dokumentu I ODDAJĄ ZAPIS POCHODZENIA — adres albo plik, wersję, czas
- * sięgnięcia i autora. Panel woła je, gdy dostał źródło wstawień, i pokazuje
- * pochodzenie oddane przez rdzeń wraz z bilansem czynności. Wiersz pochodzenia
- * wnoszony do treści zostaje jako droga druga, bo przeżywa wydanie dokumentu do
- * formatu, który zapisu pochodzenia nie niesie — i tak jest opisany
- * w `osadzenie-pochodzenie.ts`.
- *
- * ── Czego panel nie robi ────────────────────────────────────────────────────
- * Nie rysuje strony sieciowej. Migawka `browser.snapshot.get` oddaje adres,
- * tytuł, treść renderowaną i źródło — czyli tekst, nie obraz; zrzut ekranu jest
- * odnośnikiem zasobu, a komendy pobierającej jego bajty do przeglądarki kontrakt
- * nie niesie. Panel pokazuje więc to, co rdzeń naprawdę oddaje, i mówi wprost,
- * czego nie oddaje. Ramka z cudzą stroną wewnątrz okna byłaby drugą
- * przeglądarką, a moduł Browser jest jeden.
- */
+/** Panel osadzony łączy Bibliotekę plików i podgląd stron sieciowych z wnoszeniem treści do dokumentu. */
 
-/** Czynności panelu zlecane oknu. */
+/** Czynności panelu zlecane oknu: wyszukanie i podgląd pliku Biblioteki, wciągnięcie strony sieciowej, wzięcie migawki i wniesienie wybranej treści do dokumentu w miejsce kursora. */
 export interface CzynnosciOsadzenia {
   /** Odczytuje pliki Biblioteki wedle frazy. */
   naSzukanieBiblioteki(fraza: string): void;
@@ -61,7 +27,7 @@ export interface CzynnosciOsadzenia {
   naWniesienieZeStrony(tytul: string, adres: string, tresc: string): void;
 }
 
-/** Panel wraz z jego odświeżeniem. */
+/** Panel udostępnia okna metody pokazujące pliki, podgląd, treść strony, pochodzenie wniesionych fragmentów oraz odpowiedź rdzenia na żądanie wniesienia. */
 export interface OsadzeniePanel {
   element: HTMLElement;
   /** Pokazuje pliki oddane przez Bibliotekę. */
@@ -80,14 +46,13 @@ export interface OsadzeniePanel {
   polozenie(): 'obok' | 'calosc';
 }
 
-/** Ile znaków podglądu panel prosi od Biblioteki. */
+/** Liczba znaków podglądu, o którą panel prosi Bibliotekę przy każdym żądaniu podglądu pliku wybranego z wykazu wyników wyszukiwania. */
 const ZNAKOW_PODGLADU = 4000;
 
 /**
- * Wniesienie przez rdzeń — źródło i stan modułu podane razem.
- *
- * Nieobowiązkowe: bez niego panel prowadzi wniesienie czynnościami okna, tak jak
- * dotąd. Z nim woła `studio.insert.from.*` i zapis pochodzenia robi rdzeń.
+ * Wniesienie przez rdzeń: źródło wstawień i stan modułu podane razem. Pole jest
+ * opcjonalne — bez niego panel wnosi treść czynnościami okna, a z nim woła
+ * komendy `studio.insert.from.*` i zapis pochodzenia wykonuje rdzeń.
  */
 export interface WniesienieRdzeniem {
   stan: StanStudio;
@@ -402,8 +367,7 @@ export function utworzOsadzeniePanel(
         'identyfikator, wersja i suma kontrolna.';
       wnies.addEventListener('click', () => {
         if (plikPodgladany === null || podgladBiezacy === null) return;
-        // Droga rdzenia ma pierwszeństwo: pochodzenie zapisane po stronie rdzenia
-        // przeżywa zamknięcie okna, a wykaz sesji ginie z kartą.
+        // Droga rdzenia ma pierwszeństwo, bo zapis pochodzenia przeżywa zamknięcie okna.
         if (wniesienie !== undefined) {
           void wniesZBibliotekiRdzeniem(plikPodgladany);
           return;
@@ -495,10 +459,10 @@ export function utworzOsadzeniePanel(
   };
 }
 
-/** Ile znaków podglądu panel prosi od Biblioteki — jedno miejsce nastawy. */
+/** Liczba znaków podglądu, o którą panel prosi Bibliotekę — stała eksportowana jako jedyne miejsce nastawy tej wartości dla całego modułu. */
 export const OSADZENIE_ZNAKOW_PODGLADU = ZNAKOW_PODGLADU;
 
-/** Część panelu wraz z jej tytułem. */
+/** Buduje część panelu złożoną z nagłówka tytułowego oraz przekazanych elementów podrzędnych, ułożonych w jednej sekcji. */
 function czescOsadzenia(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-osadzenie__tytul';

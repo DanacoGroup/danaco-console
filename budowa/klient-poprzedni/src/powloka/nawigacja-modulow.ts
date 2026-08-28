@@ -11,31 +11,10 @@ import {
 } from './srodowiska';
 import type { ZrodloNawigacji } from './zrodlo-nawigacji';
 
-/**
- * Pas 3 powłoki — pionowa, stała nawigacja modułów środowiska.
- *
- * Jedna odpowiedzialność: wykaz pozycji bieżącego środowiska i wskazanie
- * pozycji wybranej. Nagłówek niesie nazwę środowiska krojem szeryfowym,
- * pod nią motto i liczbę pozycji; pozycja wybrana dostaje złoty pasek przy
- * lewej krawędzi.
- *
- * Nawigacja nie zna ani jednej nazwy modułu — pyta o wykaz podłączone źródło
- * (`zrodlo-nawigacji.ts`, komendy `environment.enter` i `module.list`). Do czasu
- * odpowiedzi kolumna pokazuje stan wczytywania, a po odmowie — treść odmowy;
- * kopii katalogu modułów nie ma tu żadnej.
- *
- * Źródło dokłada się po złożeniu: powłoka powstaje bez połączenia z rdzeniem
- * i dopiero warstwa składająca aplikację ma czym ją zasilić — stąd osobne
- * `podlaczZrodlo`, a nie parametr wytwórni.
- *
- * Żadna pozycja nie traci klikalności: wykaz wynika ze środowiska, a nie
- * z gotowości modułu.
- */
-
-/** Słuchacz wyboru pozycji nawigacji. */
+/** Słuchacz wyboru pozycji nawigacji, wywoływany z pozycją wybraną przez Operatora oraz danymi bieżącego środowiska. */
 export type SluchaczModulu = (pozycja: PozycjaModulu, dane: Srodowisko) => void;
 
-/** Słuchacz wskazania, które nie ma odpowiednika w wykazie środowiska. */
+/** Słuchacz wskazania, które nie ma odpowiednika w wykazie bieżącego środowiska — otwarcia modułu spoza kolumny nawigacji. */
 export type SluchaczBrakuPozycji = (kluczPozycji: string) => void;
 
 export interface NawigacjaModulow {
@@ -47,30 +26,18 @@ export interface NawigacjaModulow {
   pokaz(klucz: KluczSrodowiska): void;
   /** Wskazuje pozycję po kluczu; wykaz w drodze zapamiętuje wskazanie. */
   wybierz(kluczPozycji: string): void;
-  /**
-   * Otwiera moduł, którego nie ma w wykazie środowiska.
-   *
-   * Wykaz bierze się z macierzy widoczności, a ta rozstrzyga tylko o obecności
-   * modułu na liście, nie o prawie do jego otwarcia. Moduł bez wiersza macierzy
-   * ma więc krótszą drogę: kafel składa pozycję z katalogu `module.list`
-   * i wskazuje ją tędy. Kolumna nie zapala wtedy żadnego wiersza, bo żaden jej
-   * wiersz nie odpowiada temu modułowi.
-   */
+  /** Otwiera moduł, którego nie ma w wykazie środowiska; moduł bez wiersza macierzy otwiera się tą drogą. */
   wskazPozaWykazem(pozycja: PozycjaModulu): void;
   /** Pozycja wybrana albo brak, gdy wykaz jest pusty. */
   wybrana(): PozycjaModulu | undefined;
   /** Środowisko obecnie pokazywane. */
   srodowisko(): Srodowisko;
   naWybor(sluchacz: SluchaczModulu): void;
-  /**
-   * Zgłasza wskazanie bez odpowiednika w wykazie. Nawigacja nie zna rdzenia
-   * i nie ma skąd wziąć modułu spoza środowiska — obsługa należy do warstwy,
-   * która zna drogę do katalogu modułów.
-   */
+  /** Zgłasza wskazanie bez odpowiednika w wykazie — obsługa należy do warstwy znającej katalog modułów. */
   naBrakPozycji(sluchacz: SluchaczBrakuPozycji): void;
 }
 
-/** Puste elementy kolumny — powstają raz, treść wymienia się przy każdym wykazie. */
+/** Puste elementy kolumny nawigacji — powstają raz przy budowie, a ich treść wymienia się przy każdym kolejnym wykazie środowiska. */
 interface SzkieletKolumny {
   element: HTMLElement;
   nazwa: HTMLElement;
@@ -114,7 +81,7 @@ function zbudujSzkielet(): SzkieletKolumny {
   return { element, nazwa, motto, licznik, lista, stan };
 }
 
-/** Jeden wiersz wykazu. Wskazanie oddaje wytwórni — sam nie zna stanu kolumny. */
+/** Jeden wiersz wykazu środowiska, budowany z pozycji modułu. Wskazanie oddaje wytwórni — sam wiersz nie zna stanu kolumny. */
 function wierszPozycji(pozycja: PozycjaModulu, naWskazanie: (klucz: string) => void): HTMLLIElement {
   const punkt = document.createElement('li');
 
@@ -182,9 +149,7 @@ export function utworzNawigacjeModulow(): NawigacjaModulow {
       wybierz(zadana);
       return;
     }
-    // Pierwsza pozycja jest wartością zastępczą: wykaz nigdy nie zostaje bez
-    // wskazania. Jeżeli żądano modułu spoza wykazu, zgłoszenie idzie zaraz
-    // potem i otwarcie modułu je nadpisze.
+    // Pierwsza pozycja jest wartością zastępczą, więc wykaz nigdy nie zostaje bez wskazania.
     if (pierwsza !== undefined) wybierz(pierwsza.klucz);
     if (zadana !== undefined) zglosBrak(zadana);
   }
@@ -207,8 +172,7 @@ export function utworzNawigacjeModulow(): NawigacjaModulow {
     wybranaPozycja = pozycja;
     for (const przycisk of lista.querySelectorAll<HTMLButtonElement>('.dn-nawigacja__pozycja')) {
       const czynna = przycisk.dataset.pozycja === kluczPozycji;
-      // `aria-current` niesie wskazanie także wtedy, gdy barwa nie dociera —
-      // stan nie zależy wyłącznie od koloru.
+      // Znacznik aria-current niesie wskazanie także wtedy, gdy barwa nie dociera do Operatora.
       if (czynna) przycisk.setAttribute('aria-current', 'page');
       else przycisk.removeAttribute('aria-current');
     }
@@ -231,9 +195,7 @@ export function utworzNawigacjeModulow(): NawigacjaModulow {
 
     wskazPozaWykazem(pozycja) {
       wybranaPozycja = pozycja;
-      // Żaden wiersz kolumny nie odpowiada temu modułowi, więc żaden nie może
-      // nieść `aria-current`: wskazanie cudzego wiersza myliłoby co do tego,
-      // który moduł jest otwarty.
+      // Żaden wiersz kolumny nie odpowiada temu modułowi, więc żaden nie niesie znacznika aria-current.
       for (const przycisk of lista.querySelectorAll<HTMLButtonElement>('.dn-nawigacja__pozycja')) {
         przycisk.removeAttribute('aria-current');
       }
@@ -247,7 +209,7 @@ export function utworzNawigacjeModulow(): NawigacjaModulow {
   };
 }
 
-/** Zdanie pod wykazem, gdy wykazu nie ma — stan, nie atrapa listy. */
+/** Zdanie pod wykazem, gdy pozycji wykazu nie ma — opis rzeczywistego stanu wykazu, a nie pusta atrapa listy pozycji modułów. */
 function opisStanu(dane: Srodowisko): string {
   if (dane.stan === 'ladowanie') return 'Wykaz modułów wczytywany z rdzenia…';
   if (dane.stan === 'blad') return dane.blad ?? 'Rdzeń nie oddał wykazu modułów.';

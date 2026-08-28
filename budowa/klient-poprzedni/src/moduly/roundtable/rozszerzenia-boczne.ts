@@ -1,35 +1,13 @@
 import { przyciskAkcji } from '../../modele/kontrolki-formularza-braki';
 
-/**
- * Rozszerzenia boczne modułu Roundtable — warstwa druga widoczności.
- *
- * Opracowanie modułu (rozdz. 3, 3.1) dzieli okna na dwie warstwy. Warstwa
- * pierwsza — Model Panels i Debate Panel — jest widoczna bez interakcji.
- * Warstwa druga — Argument Map & Analysis, Voting & Evaluation Center,
- * Moderator Panel i Consensus Panel — otwiera się jako rozszerzenie boczne
- * przyciskiem albo znacznikiem kontekstowym.
- *
- * Zwinięcie nie jest blokadą. Okno zwinięte stoi w module przez cały czas,
- * jest zbudowane i zasubskrybowane na stan debaty, a jego przycisk otwarcia
- * jest zawsze klikalny i zawsze odpowiada — schowana jest wyłącznie treść.
- * Dzięki temu Operator, który rozszerzenia nie otwiera, nie ogląda czterech
- * okien naraz w obszarze roboczym, a ten, który je otwiera, dostaje je jednym
- * naciśnięciem, bez ładowania i bez utraty stanu.
- *
- * Zwinięcie idzie atrybutem `hidden` na powłoce rozszerzenia, nie usunięciem
- * okna z dokumentu: usunięte okno traciłoby ognisko, pozycję przewinięcia
- * i wpisane w nie treści, a nasłuch stanu i tak musiałby zostać żywy, bo
- * subskrypcje zakłada wytwórnia okna, nie jego osadzenie.
- */
-
-/** Kody rozszerzeń — te same, którymi okna podpisują się w `data-okno`. */
+/** Rozszerzenia boczne modułu Roundtable, warstwa druga widoczności: kody rozszerzeń, te same, którymi okna podpisują się w atrybucie okna. */
 export type KodRozszerzenia =
   | 'argument-map-analysis'
   | 'voting-evaluation-center'
   | 'moderator-panel'
   | 'consensus-panel';
 
-/** Okno warstwy drugiej wraz z nazwą, po której Operator je otwiera. */
+/** Okno warstwy drugiej wraz z nazwą, po której Operator je otwiera, i elementem gotowym do osadzenia w powłoce pasa. */
 export interface OpisRozszerzenia {
   kod: KodRozszerzenia;
   /** Nazwa własna okna — dokładnie jak w katalogu okien operacyjnych. */
@@ -40,11 +18,7 @@ export interface OpisRozszerzenia {
 export interface PasRozszerzen {
   /** Pas osadzany w obszarze modułu pod warstwą pierwszą. */
   element: HTMLElement;
-  /**
-   * Przycisk otwierający rozszerzenie, gotowy do wstawienia w pasek akcji okna
-   * warstwy pierwszej. Stan przycisku (`aria-expanded`) idzie za stanem pasa,
-   * także gdy rozszerzenie otwarto skądinąd.
-   */
+  /** Przycisk otwierający rozszerzenie; jego stan idzie za stanem pasa, także gdy otwarto skądinąd. */
   przyciskOtwarcia(kod: KodRozszerzenia): HTMLButtonElement;
   /** Otwiera rozszerzenie i przenosi do niego ognisko. */
   otworz(kod: KodRozszerzenia): void;
@@ -52,7 +26,7 @@ export interface PasRozszerzen {
   zwin(kod: KodRozszerzenia): void;
 }
 
-/** Stan jednego rozszerzenia wraz z jego powłoką i przyciskami otwarcia. */
+/** Stan jednego rozszerzenia wraz z jego powłoką, przyciskami otwarcia i nastawą, czy jest teraz otwarte. */
 interface WpisRozszerzenia {
   opis: OpisRozszerzenia;
   powloka: HTMLElement;
@@ -95,14 +69,7 @@ export function utworzPasRozszerzen(rozszerzenia: readonly OpisRozszerzenia[]): 
     wpisy.set(opis.kod, { opis, powloka, przyciski: [], otwarte: false });
   }
 
-  /**
-   * Wpis rozszerzenia albo błąd wprost.
-   *
-   * Kod nieznany pasowi jest usterką złożenia modułu, nie stanem, w którym
-   * Operator może się znaleźć: pas dostaje wykaz rozszerzeń przy zakładaniu
-   * i nikt go później nie zmienia. Ciche pominięcie dałoby przycisk, który po
-   * naciśnięciu nie robi nic i niczego nie mówi.
-   */
+  // Wpis rozszerzenia albo błąd wprost: kod nieznany pasowi jest usterką złożenia, nie Operatora.
   function wpisAlbo(kod: KodRozszerzenia): WpisRozszerzenia {
     const wpis = wpisy.get(kod);
     if (wpis === undefined) {
@@ -149,7 +116,7 @@ export function utworzPasRozszerzen(rozszerzenia: readonly OpisRozszerzenia[]): 
   };
 }
 
-/** Etykieta przycisku niesie stan słowem, nie samą strzałką ani samą barwą. */
+/** Etykieta przycisku niesie stan słowem, nie samą strzałką ani samą barwą, więc czytelnik ekranu ją usłyszy. */
 function etykietaPrzycisku(nazwa: string, otwarte: boolean): string {
   return otwarte ? `Zwiń: ${nazwa}` : `Otwórz: ${nazwa}`;
 }

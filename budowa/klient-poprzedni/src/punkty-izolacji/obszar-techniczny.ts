@@ -12,42 +12,14 @@ import type { Kanal, Wynik } from '../protokol/kanal';
 import type { ObszarIzolacji, ZaleznosciObszaru } from './obszary';
 import { NAZWY_WARSTW } from './stan-warstwy';
 
-/**
- * Obszar „Zakres techniczny" — osiem punktów izolacji technicznej
- * z `konfig/definicjeIzolacjiTechnicznej`
- * (`server/internal/konfig/definicje_izolacji.go`): katalog roboczy sesji,
- * środowisko procesu, katalog danych modelu, dostęp sieciowy, odczyt/zapis
- * plików, konto i token, model procesu, serwer wykonania. Wartości kluczy to
- * `wlaczony`/`wylaczony`, domyślnie zawsze `wylaczony`.
- *
- * Różnica wobec obszaru „Kontekst": tam wartość domyślna
- * (`odrebna`/`wspoldzielona`) opisuje zakres widoczności i obie wartości coś
- * znaczą. Tu `wylaczony` nie jest słabszym wariantem ochrony: egzekutor rdzenia
- * bierze wyłącznie klucze włączone i odrzuca wykonanie, które by je naruszyło.
- * Klucz wyłączony nie jest sprawdzany w ogóle — nikt nie pilnuje tego zakresu,
- * dopóki Operator świadomie go nie włączy. Stan wyjściowy platformy to pełna
- * swoboda operacyjna, a widok nazywa ten skutek przy każdym z ośmiu kluczy,
- * nie tylko raz na górze, żeby przewijanie wykazu nie zgubiło ostrzeżenia.
- *
- * `odswiez()` woła `isolation.technical.get`; przełączenie klucza woła
- * `isolation.technical.set` z pełnym zestawem ośmiu przełączników (zmieniony
- * jeden, reszta bez zmian) — kontrakt niesie cały zestaw naraz, nie pojedynczy
- * klucz.
- *
- * Wartość na ekranie zmienia się wyłącznie po potwierdzeniu z rdzenia:
- * `switches` w tym module to zawsze ostatnia odpowiedź `get`/`set`, nigdy
- * przewidywanie kliknięcia. Odmowa zapisu nie idzie do paska ogólnego obszaru —
- * ląduje w komórce „Zmiana" wiersza klucza, którego dotyczy, żeby Operator
- * wiedział, który z ośmiu się nie zapisał; wartość wyświetlona zostaje ta
- * sprzed próby, bo rdzeń jej nie potwierdził.
- */
+/** Obszar zakresu technicznego pokazuje osiem punktów izolacji technicznej wraz z ich bieżącą wartością, skutkiem włączenia i wyłączenia oraz przełącznikiem zapisu do rdzenia. */
 export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   const { kanal, warstwa, zasieg } = zaleznosci;
   const tresc = utworzStanTresci('pi');
 
   /** Ostatnia odpowiedź rdzenia — jedyne źródło wartości pokazywanych Operatorowi. */
   let switches: readonly IsolationTechnicalSwitch[] = [];
-  /** Odmowa zapisu ostatniej próby, per klucz — czyszczona przy udanym odczycie i udanym zapisie tego klucza. */
+  /** Odmowa zapisu ostatniej próby dla klucza, czyszczona przy udanym odczycie albo zapisie. */
   const bledyZapisu = new Map<string, string>();
   /** Klucz aktualnie w trakcie zapisu — blokuje ponowne kliknięcie tego samego wiersza, nie całej tabeli. */
   const wTrakcieZapisu = new Set<string>();
@@ -99,8 +71,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     wTrakcieZapisu.delete(punkt.klucz);
 
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Wartość nie zmienia się na ekranie — `switches` zostaje sprzed próby.
-      // Odmowa idzie do wiersza tego klucza, nie do paska ogólnego.
+      // Odmowa zapisu idzie do wiersza klucza, nie do paska ogólnego obszaru.
       bledyZapisu.set(
         punkt.klucz,
         opisOdmowyBledu(`Zapis klucza „${punkt.nazwa}” nie powiódł się`, wynik.blad),
@@ -134,12 +105,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     const plakietka = document.createElement('span');
     const wlaczony = wpis?.isolated === true;
 
-    // Trzy stany, trzy wyglądy — nie dwa. „Nieznany" (rdzeń nie zwrócił tego
-    // klucza) i „wyłączony" (rdzeń zwrócił: nikt nie pilnuje) prowadzą do
-    // przeciwnych wniosków o bezpieczeństwie maszyny, więc nie mogą wyglądać
-    // tak samo. Warianty zdefiniowane w `komponenty/plakietka.css`: sukces,
-    // ostrzezenie, blad, informacja, sygnal, rola, atrament — spoza tego zbioru
-    // plakietka nie dostaje żadnego wyróżnienia.
+    // Plakietka ma trzy stany i trzy wyglądy, bo nieznany i wyłączony znaczą coś przeciwnego.
     plakietka.className = [
       'dn-plakietka',
       wpis === undefined
@@ -179,9 +145,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     przyciskWylacz.textContent = zapisuje ? 'Zapisuję…' : 'Ustaw: wyłączony';
     przyciskWylacz.addEventListener('click', () => void ustawKlucz(punkt, false));
 
-    // Żaden przycisk nie niesie `disabled` — nawet w trakcie zapisu klik jest
-    // przyjmowany (kolejne wywołanie po prostu nadpisze poprzednie w locie
-    // rdzenia); etykieta „Zapisuję…" informuje, nie blokuje.
+    // Przyciski nie niosą atrybutu disabled, więc klik w trakcie zapisu nadpisuje poprzednie wywołanie.
 
     const grupa = document.createElement('div');
     grupa.className = 'dn-przybornik';
@@ -230,7 +194,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   }
 }
 
-/** Opakowuje `kanal.wyslij` w Promise — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
+/** Opakowuje wywołanie kanału w obietnicę, ponieważ kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
 function posijKomende<K extends Command>(
   kanal: Kanal,
   komenda: K,
@@ -257,9 +221,9 @@ function zbudujZestawZeZmiana(
   return zestaw;
 }
 
-/** Jeden z ośmiu punktów izolacji zakresu technicznego, wedle `definicje_izolacji.go`. */
+/** Jeden z ośmiu punktów izolacji zakresu technicznego zdefiniowanych w konfiguracji izolacji rdzenia serwera. */
 interface PunktTechniczny {
-  /** Klucz kolumny `regula_izolacji_technicznej.zakres` (`KluczIzolacja…`), do etykiet i identyfikacji wiersza. */
+  /** Klucz kolumny reguły izolacji technicznej, używany do etykiet i identyfikacji wiersza. */
   klucz: string;
   /** Wartość kontraktu (`IsolationTechnicalScope`) niesiona w `isolation.technical.get`/`.set`. */
   scope: IsolationTechnicalScope;
@@ -271,12 +235,7 @@ interface PunktTechniczny {
   skutekWylaczony: string;
 }
 
-/**
- * Osiem punktów w kolejności `definicjeIzolacjiTechnicznej`.
- * Treść `skutekWlaczony` parafrazuje `Objasnienie` z `definicje_izolacji.go`; `skutekWylaczony`
- * dopisuje to, czego `Objasnienie` nie mówi wprost — że brak włączenia oznacza
- * brak jakiejkolwiek kontroli tego zakresu, nie kontrolę słabszą.
- */
+/** Osiem punktów izolacji technicznej w ustalonej kolejności, każdy z nazwą, kluczem i opisem skutku włączenia oraz wyłączenia. */
 const PUNKTY_TECHNICZNE: readonly PunktTechniczny[] = [
   {
     klucz: 'izolacja_katalog_roboczy_sesji',
@@ -351,7 +310,7 @@ const PUNKTY_TECHNICZNE: readonly PunktTechniczny[] = [
   },
 ];
 
-/** Zdanie otwierające obszar — ramuje ośmiokrotnie powtórzony fakt, zanim Operator dojdzie do wykazu. */
+/** Zdanie otwierające obszar ramuje ośmiokrotnie powtórzony fakt o pełnej swobodzie operacyjnej, zanim wykaz pokaże każdy punkt osobno. */
 function wstepObszaru(zdanieZasiegu: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
@@ -390,13 +349,7 @@ function komorkaNazwy(punkt: PunktTechniczny): HTMLTableCellElement {
   return komorka;
 }
 
-/**
- * Objaśnienie kontekstowe [?] punktu — co ustawienie robi i jaki ma wpływ na
- * działanie aplikacji (rozdz. 3.3 Modelu konfiguracji). Oba skutki stoją
- * w jednym zdaniu, bo różnica między „włączony" a „wyłączony" jest tu różnicą
- * między pilnowaniem zakresu a jego brakiem, nie między ochroną mocniejszą
- * a słabszą.
- */
+/** Objaśnienie kontekstowe punktu podaje w jednym zdaniu skutek włączenia i wyłączenia zakresu, bo różnica jest różnicą pilnowania, nie siły ochrony. */
 function objasnienieKontekstowe(punkt: PunktTechniczny): string {
   return (
     `Włączony: ${punkt.skutekWlaczony} Wyłączony: ${punkt.skutekWylaczony} ` +

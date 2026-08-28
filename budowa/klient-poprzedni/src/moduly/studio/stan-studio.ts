@@ -26,20 +26,9 @@ import { utworzZrodloStudio, type ZrodloStudio } from './zrodlo-studio';
 export type { MigawkaDokumentu, ParaPorownania, PropozycjaZmiany, Zaznaczenie } from './pola-stanu';
 
 /**
- * Jeden dokument czynny na cały moduł Studio.
- *
- * Pięć okien — Studio Editor, Tools Panel, Diff/Grep Panel, Preview Window,
- * Session Repository — pracuje na tym samym dokumencie. Gdyby każde prowadziło
- * własną kopię, przywrócenie wersji w repozytorium nie przestawiłoby treści
- * edytora, a różnica dotyczyłaby innego dokumentu niż podgląd.
- *
- * Treść robocza jest oddzielona od treści rdzenia: edytor buforuje zmiany
- * lokalnie i wysyła je dopiero zapisem, żeby po rozłączeniu pola pozostały
- * edytowalne, a zmiany doczekały przywrócenia połączenia.
- *
- * Poza własnym działaniem okien jedynym źródłem odświeżenia jest zdarzenie
- * `studio.document.changed` — zmiana dokonana w innym oknie albo na innym
- * urządzeniu konta dociera nim. Odpytywania w pętli tu nie ma.
+ * Stan modułu Studio prowadzi jeden dokument czynny współdzielony przez pięć
+ * okien modułu, z buforem treści roboczej oddzielonym od treści rdzenia
+ * i odświeżeniem przez zdarzenie zmiany dokumentu zamiast odpytywania.
  */
 export interface StanStudio {
   /** Źródło komend obszaru `studio.*` — okna wołają je wprost. */
@@ -55,16 +44,9 @@ export interface StanStudio {
   /** Zaznaczenie w edytorze; `null` znaczy zakres „cały dokument". */
   zaznaczenie(): Zaznaczenie | null;
   ustawZaznaczenie(zakres: Zaznaczenie | null): void;
-  /**
-   * Zakres pokazywany przez ster Tools Panelu — wybór ręczny albo ślad
-   * zaznaczenia. Ster czyta wartość stąd i nigdzie jej nie przechowuje.
-   */
+  /** Zakres pokazywany przez ster panelu narzędzi — wybór ręczny albo ślad zaznaczenia. */
   zakresZadany(): StudioOperationScope;
-  /**
-   * Zakres, który pojedzie do rdzenia w `studio.contextual.op`. Wskaźnik
-   * panelu, pasek zaznaczenia edytora i żądanie operacji biorą go z tej jednej
-   * drogi — jedna nastawa, jedna prawda o niej.
-   */
+  /** Zakres wysyłany do rdzenia operacją kontekstową; jedyne źródło dla panelu i edytora. */
   zakresSkuteczny(): StudioOperationScope;
   /** Zapisuje wybór ręczny zakresu; `null` wraca do podążania za zaznaczeniem. */
   ustawZakresReczny(zakres: StudioOperationScope | null): void;
@@ -74,20 +56,10 @@ export interface StanStudio {
   /** Propozycja zmiany czekająca na decyzję; `null`, gdy żadnej nie ma. */
   propozycja(): PropozycjaZmiany | null;
   ustawPropozycje(propozycja: PropozycjaZmiany | null): void;
-  /**
-   * Powód odmowy ostatniej operacji kontekstowej; `null`, gdy żadna nie
-   * odmówiła. Pytają o to okna stojące obok Tools Panelu — żeby brak propozycji
-   * po odmowie nie wyglądał u nich jak „operacji jeszcze nie było".
-   */
+  /** Powód odmowy ostatniej operacji kontekstowej; `null`, gdy żadna nie odmówiła. */
   odmowaOperacji(): string | null;
   ustawOdmoweOperacji(powod: string | null): void;
-  /**
-   * Para wersji wskazana do porównania; `null`, gdy żadnej nie wskazano.
-   *
-   * Wskazuje ją Session Repository przyciskiem „Porównaj" przy wersji, a czyta
-   * Diff/Grep Panel przy składaniu żądania. Nastawa jest jedna i idzie przez
-   * stan, bo dotyczy dwóch okien naraz.
-   */
+  /** Para wersji wskazana do porównania; `null`, gdy żadnej nie wskazano. */
   paraPorownania(): ParaPorownania | null;
   ustawParePorownania(para: ParaPorownania | null): void;
   /** Treść ostatniej zmiany zaakceptowanej — źródło podglądu. */
@@ -96,14 +68,7 @@ export interface StanStudio {
   wchlon(dokument: StudioDocument): void;
   /** Przyjmuje propozycję: jej treść staje się treścią roboczą i podglądem. */
   przyjmijPropozycje(): void;
-  /**
-   * Zdejmuje migawkę pól dokumentu czynnego.
-   *
-   * Bierze ją okno pracy przy przełączaniu zakładek: dwa dokumenty naraz mają
-   * niezależne zaznaczenie, bufor i propozycję, a stan modułu prowadzi jeden
-   * dokument czynny. Migawka jest jedyną drogą do tego — druga kopia stanu
-   * modułu rozjechałaby się z nim przy pierwszym zdarzeniu rdzenia.
-   */
+  /** Zdejmuje migawkę pól dokumentu czynnego do niezależnego przechowania przez okno. */
   migawka(): MigawkaDokumentu;
   /** Wstawia migawkę jako dokument czynny. */
   przywrocMigawke(migawka: MigawkaDokumentu): void;
@@ -173,8 +138,7 @@ export function utworzStanStudio(kanal: Kanal): StanStudio {
 
     ustawPropozycje(nowa) {
       pola.propozycja = nowa;
-      // Nadejście wyniku unieważnia odmowę poprzednią: dwa komunikaty naraz —
-      // „rdzeń odmówił" i „oto wynik" — nie mogą stać obok siebie prawdziwe.
+      // Nadejście wyniku unieważnia odmowę poprzednią.
       if (nowa !== null) pola.odmowaOperacji = null;
       oglos();
     },

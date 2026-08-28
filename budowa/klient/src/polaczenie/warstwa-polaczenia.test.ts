@@ -7,15 +7,9 @@ import { wykladniczePonawianie } from './ponawianie.ts';
 import { utworzTransport, type Transport } from './gniazdo.ts';
 import type { StanPolaczenia } from './stan-polaczenia.ts';
 
-/**
- * Warstwa połączenia klienta.
- *
- * Jej obietnica wobec warstw wyższych jest jedna: ramka wpisana przy
- * rozłączeniu nie ginie, ponawianie nie ustaje, a subskrypcje przeżywają
- * wymianę gniazda. Sprawdziany niżej mierzą dokładnie to.
- */
+// Warstwa gwarantuje: ramka nie ginie, ponawianie nie ustaje, subskrypcje przeżywają wymianę gniazda.
 
-/** Zakłada transport bez odstępu ponowienia — bez losowości i bez czekania. */
+/** Zakłada transport bez odstępu ponowienia, bez losowości w odmierzaniu czasu i bez rzeczywistego czekania. */
 function zalozTransport(): { transport: Transport; stany: StanPolaczenia[] } {
   const stany: StanPolaczenia[] = [];
   const transport = utworzTransport('ws://127.0.0.1:17870/ws', { opoznienie: () => 0 });

@@ -53,46 +53,9 @@ import {
 } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
-/**
- * Kontrola pracy i bezpieczeństwo dokumentu — trzydzieści jedna droga z okna do
- * rdzenia, których okno pracy dotąd nie miało.
- *
- * ── Po co osobne źródło ─────────────────────────────────────────────────────
- * `zrodlo-pracy-studio.ts` niesie zmiany śledzone, profile wydania, podgląd,
- * szablony i komentarze. To są czynności REDAKCJI. Ten plik niesie czynności
- * KONTROLI nad tym, co się z dokumentem stało i czego modelowi nie wolno:
- *
- *   — `studio.journal.*` — odwracalny dziennik czynności: wykaz, cofnięcie
- *     pojedyncze (także nie po kolei) i ponowienie;
- *   — `studio.model.changes.*` — wszystko, co zrobił model, wraz z licznikiem,
- *     skakaniem i cofnięciem z zachowaniem pracy Operatora;
- *   — `studio.diff.form.compare` i `studio.diff.hunk.apply` — różnica POSTACI
- *     dwóch wersji i przeniesienie pojedynczego fragmentu do stanu bieżącego;
- *   — `studio.autosave.*`, `studio.backup.*`, `studio.version.series.list`,
- *     `studio.version.restore.initial` — zapis samoczynny osobnym szeregiem,
- *     kopie zapasowe i powrót do wersji założycielskiej;
- *   — `studio.markup.*` — znakowanie fragmentu w rdzeniu wraz z rodzajami
- *     znaczników własnych Operatora;
- *   — `studio.lock.*` — blokada fragmentu obowiązująca W RDZENIU;
- *   — `studio.agents.claim`, `.release`, `.settings.set` — zajęcie fragmentu
- *     przez wykonawcę i nastawy pracy kilku wykonawców naraz;
- *   — `studio.clipboard.copy` i `.paste` — schowek dokumentu, który w odróżnieniu
- *     od rodziny `clipboard.*` platformy sprawdza blokady i odkłada wpis
- *     dziennika, więc wklejenie da się cofnąć pojedynczo.
- *
- * ── Dlaczego `wywolajUczciwie`, a nie `wywolaj` ─────────────────────────────
- * Komenda bez uchwytu w rdzeniu wraca kopertą `studio.unknown` bez pola
- * `status`, której korelacja nie rozstrzyga — zwykłe `wywolaj` zostawiłoby okno
- * w ładowaniu bez końca. Każde z tych trzydziestu jednego wywołań idzie więc
- * drogą odporną na odmowę: brak uchwytu wraca zwykłym niepowodzeniem
- * nazywającym komendę, a okno mówi Operatorowi, po czyjej stronie jest brak.
- *
- * Źródło nie ma stanu i nie buduje elementu — sprawdza kształt odpowiedzi
- * i oddaje ją oknu. Nazwy metod noszą przedrostek `kontrola*`, więc suma
- * z pozostałymi źródłami modułu nie ma ani jednej kolizji.
- */
+/** Kontrola pracy i bezpieczeństwo dokumentu: dziennik, zmiany modelu, autozapis, blokady i wykonawcy. */
 
-/** Wskazanie wykonawcy czynności; puste znaczy Operatora. */
+/** Wskazanie wykonawcy czynności w żądaniu do rdzenia; pole puste znaczy, że czynność wykonał Operator. */
 export interface WykonawcaCzynnosci {
   autor?: StudioAuthor;
   idWykonawcy?: string;
@@ -100,7 +63,7 @@ export interface WykonawcaCzynnosci {
   idPodagenta?: string;
 }
 
-/** Zawężenie wykazu dziennika czynności. */
+/** Zawężenie wykazu dziennika czynności dokumentu wedle autora, rodzaju, stanu i granicy liczby wpisów. */
 export interface ZawezenieDziennika {
   autor?: StudioAuthor;
   rodzaj?: StudioActionKind;
@@ -108,7 +71,7 @@ export interface ZawezenieDziennika {
   granica?: number;
 }
 
-/** Nastawy autozapisu przestawiane jednym wywołaniem. */
+/** Nastawy autozapisu dokumentu przestawiane jednym wywołaniem: częstość, zdarzenia zapisu i liczba kopii. */
 export interface NastawyAutozapisu {
   czynny: boolean;
   odstepSekund?: number;
@@ -119,7 +82,7 @@ export interface NastawyAutozapisu {
   poIluGodzinachWygasa?: number;
 }
 
-/** Nastawy pracy kilku wykonawców naraz. */
+/** Nastawy pracy kilku wykonawców naraz nad tym samym dokumentem, wraz z polityką rozstrzygania sporów. */
 export interface NastawyWykonawcow {
   zasieg?: ConfigScope;
   idBytuZasiegu?: string;
@@ -140,13 +103,7 @@ export interface ZrodloKontroliStudio {
     idDokumentu: string,
     zawezenie: ZawezenieDziennika,
   ): Promise<Wynik<StudioJournalListResponse>>;
-  /**
-   * Cofa wskazane czynności — pojedynczo i NIE PO KOLEI.
-   *
-   * Cofnięcie nakłada różnicę drzew, a nie migawkę: praca naniesiona po cofanej
-   * czynności zostaje. Czynność będąca podstawą późniejszej wraca odmową
-   * nazywającą zależność, a nie cichym niepowodzeniem — okno pokazuje ten powód.
-   */
+  // Cofa wskazane czynności pojedynczo i nie po kolei; nakłada różnicę drzew, nie migawkę stanu.
   kontrolaCofnijCzynnosci(
     idDokumentu: string,
     kody: readonly string[],
@@ -173,13 +130,7 @@ export interface ZrodloKontroliStudio {
     wPrzod: boolean,
     tylkoPostac: boolean,
   ): Promise<Wynik<StudioModelChangesNavigateResponse>>;
-  /**
-   * Cofa zmiany modelu Z ZACHOWANIEM zmian Operatora naniesionych w tym czasie.
-   *
-   * Wykaz pusty wraz z `wszystkie` znaczy „wszystko, co zrobił model". Kopia
-   * zapasowa zakładana jest przed cofnięciem, bo jest to czynność nieodwracalna
-   * bez niej.
-   */
+  // Cofa zmiany modelu z zachowaniem zmian Operatora naniesionych w tym czasie; kopia jedzie zawsze.
   kontrolaCofnijZmianyModelu(
     idDokumentu: string,
     kody: readonly string[],
@@ -363,7 +314,7 @@ export interface ZrodloKontroliStudio {
   ): Promise<Wynik<StudioClipboardPasteResponse>>;
 }
 
-/** Pola wykonawcy w kształcie żądania; puste pola nie jadą wcale. */
+/** Pola wykonawcy przekształcone do kształtu żądania wysyłanego do rdzenia; nieznane pola nie jadą wcale. */
 function poleWykonawcy(wykonawca: WykonawcaCzynnosci): Record<string, unknown> {
   return {
     ...(wykonawca.autor === undefined ? {} : { author: wykonawca.autor }),
@@ -379,7 +330,7 @@ function poleWykonawcy(wykonawca: WykonawcaCzynnosci): Record<string, unknown> {
   };
 }
 
-/** Pole liczbowe, gdy podane i skończone; wartość ujemna nie jedzie. */
+/** Pole liczbowe dołączane do żądania rdzenia, gdy podane i skończone; wartość ujemna nie jedzie wcale. */
 function poleLiczby(nazwa: string, wartosc: number | undefined): Record<string, number> {
   if (wartosc === undefined || !Number.isFinite(wartosc) || wartosc < 0) return {};
   return { [nazwa]: wartosc };
@@ -409,9 +360,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
           createVersion: zalozWersje,
         }),
         Command.StudioJournalRevert,
-        // Bilans jest polem obowiązkowym odpowiedzi i to on niesie nazwaną
-        // zależność, przez którą cofnięcie stanęło. Odpowiedź bez bilansu nie
-        // dałaby oknu czym powiedzieć, dlaczego czynność nie zeszła.
+        // Bilans jest polem obowiązkowym: to on niesie zależność, przez którą cofnięcie nie zaszło.
         (tresc) => czyTablica(tresc.reverted) && czyObiekt(tresc.balance),
       );
     },
@@ -444,14 +393,12 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
         await wywolajUczciwie(kanal, Command.StudioModelChangesNavigate, {
           documentId: idDokumentu,
           ...poleLiczby('fromOffset', odMiejsca),
-          // Kierunek jedzie napisem wprost z kontraktu: pole `direction` jest
-          // opisane jako „next albo previous" i osobnego wykazu nie ma.
+          // Kierunek jedzie napisem wprost z kontraktu: pole direction nie ma osobnego wykazu wartości.
           direction: wPrzod ? 'next' : 'previous',
           onlyFormChanges: tylkoPostac,
         }),
         Command.StudioModelChangesNavigate,
-        // Brak `change` znaczy koniec wykazu, więc pole nie jest sprawdzane —
-        // sprawdzana jest liczba, bez której licznik nie miałby czego pokazać.
+        // Brak zmiany w odpowiedzi znaczy koniec wykazu, więc sprawdzana jest wyłącznie liczba wpisów.
         (tresc) => czyLiczba(tresc.total),
       );
     },
@@ -462,8 +409,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
           documentId: idDokumentu,
           ...(kody.length === 0 ? {} : { changeIds: [...kody] }),
           all: wszystkie,
-          // Kopia zapasowa przed czynnością nieodwracalną jest wymogiem
-          // zlecenia, nie wyborem okna — dlatego jedzie zawsze.
+          // Kopia zapasowa przed czynnością nieodwracalną jedzie zawsze, niezależnie od wyboru okna.
           createBackup: true,
           createVersion: true,
         }),
@@ -479,9 +425,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioDiffFormCompare, {
           documentId: idDokumentu,
-          // Brak odniesienia czyta rdzeń jako wersję założycielską, a brak
-          // wersji porównywanej jako stan bieżący — pola puste nie jadą, żeby
-          // nie zamienić tego znaczenia na wskazanie wersji nieistniejącej.
+          // Brak odniesienia czyta rdzeń jako wersję założycielską; pola puste nie jadą, by nie zgadywać wersji.
           ...(odniesienie === '' ? {} : { baseVersionId: odniesienie }),
           ...(porownywana === '' ? {} : { targetVersionId: porownywana }),
           ...(obszar === '' ? {} : { area: obszar }),
@@ -553,10 +497,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
           trigger: powod,
         }),
         Command.StudioAutosaveRun,
-        // `saved: false` jest odpowiedzią udaną o zapisie nieudanym i okno MUSI
-        // ją zobaczyć. Sprawdzian pilnuje więc obecności pola, a nie jego
-        // wartości — zamiana nieudanego zapisu na błąd wywołania zabrałaby oknu
-        // powód niepowodzenia.
+        // Odpowiedź udana z polem saved false opisuje zapis nieudany; sprawdzany jest sam fakt obecności pola.
         (odpowiedz) => czyLogiczna(odpowiedz.saved),
       );
     },
@@ -753,9 +694,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
 
     async kontrolaBlokadaZdejmij(idDokumentu, idBlokady) {
       return sprawdzKsztalt(
-        // Pola wykonawcy tu NIE jadą: blokadę zdejmuje wyłącznie Operator,
-        // a brak `author` znaczy w kontrakcie właśnie Operatora. Podanie autora
-        // `model` byłoby drogą obejścia blokady z okna.
+        // Pola wykonawcy tu nie jadą: blokadę zdejmuje wyłącznie Operator, inny autor obszedłby blokadę.
         await wywolajUczciwie(kanal, Command.StudioLockRemove, {
           documentId: idDokumentu,
           lockId: idBlokady,
@@ -775,9 +714,7 @@ export function utworzZrodloKontroliStudio(kanal: Kanal): ZrodloKontroliStudio {
           ...poleLiczby('ttlSeconds', ttlSekund),
         }),
         Command.StudioAgentsClaim,
-        // Odmowa zajęcia jest odpowiedzią UDANĄ: `claimed: false` wraz
-        // z `heldBy` i powodem. Okno ma nazwać wykonawcę i czas, a nie pokazać
-        // awarię wywołania.
+        // Odmowa zajęcia jest odpowiedzią udaną: pole claimed false niesie wykonawcę trzymającego fragment.
         (tresc) => czyLogiczna(tresc.claimed),
       );
     },

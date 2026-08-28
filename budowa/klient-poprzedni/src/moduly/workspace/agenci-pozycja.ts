@@ -1,19 +1,7 @@
 import { AgentPermissionGroup, type Agent } from '../../../../shared/contract';
 import { pozycjaWykazu, przyciskAkcji as przycisk } from '../../modele/kontrolki-formularza';
 
-/**
- * Jedna pozycja wykazu ekspertów wraz z czterema przełącznikami uprawnień.
- * Osobny plik od okna, bo to inna odpowiedzialność: okno prowadzi odczyt
- * i przypisanie, pozycja rysuje jednego eksperta.
- *
- * Pozycja nie trzyma własnego stanu — rysuje komplet uprawnień z pola
- * `Agent.permissions`, tak jak podał go rdzeń.
- *
- * Uprawnienie ma trzy stany, nie dwa: grupa, o której rdzeń nie powiedział nic,
- * nie jest ani przyznana, ani odebrana i tak też jest wypisana.
- */
-
-/** Cztery grupy zakresu uprawnień eksperta. */
+/** Cztery grupy zakresu uprawnień eksperta wraz z opisem każdej z nich, wyświetlanym w oknie dla Operatora. */
 const GRUPY: ReadonlyArray<[AgentPermissionGroup, string]> = [
   [AgentPermissionGroup.Files, 'pliki — odczyt i zapis'],
   [AgentPermissionGroup.Network, 'sieć — połączenia wychodzące'],
@@ -21,7 +9,7 @@ const GRUPY: ReadonlyArray<[AgentPermissionGroup, string]> = [
   [AgentPermissionGroup.Integrations, 'integracje — konektory i MCP'],
 ];
 
-/** Czynność okna wywoływana przełącznikiem uprawnienia. */
+/** Czynność okna wywoływana naciśnięciem przełącznika uprawnienia jednej z czterech grup uprawnień eksperta. */
 export interface CzynnosciAgenta {
   /** @param chciane stan żądany od rdzenia; wykaz pokaże to, co rdzeń odpowie. */
   zmienUprawnienie(grupa: AgentPermissionGroup, opis: string, chciane: boolean): void;
@@ -60,9 +48,7 @@ export function pozycjaAgenta(
     const stan = uprawnienieGrupy(agent, grupa);
     const przelacznik = przycisk(etykietaUprawnienia(opis, stan), 'dn-btn dn-btn--zarys');
     przelacznik.dataset['przyznane'] = stan === null ? 'nieznane' : stan ? 'tak' : 'nie';
-    // Naciśnięcie ŻĄDA stanu przeciwnego do podanego przez rdzeń; grupa bez
-    // odpowiedzi rdzenia daje żądanie przyznania. Nowego stanu przycisk sobie
-    // nie wpisuje — wykaz odrysowuje okno z odpowiedzi `agent.permission.set`.
+    // Naciśnięcie żąda stanu przeciwnego do podanego przez rdzeń; przycisk stanu sobie nie wpisuje.
     przelacznik.addEventListener('click', () =>
       czynnosci.zmienUprawnienie(grupa, opis, stan !== true),
     );
@@ -71,13 +57,13 @@ export function pozycjaAgenta(
   return element;
 }
 
-/** Zdanie o przypisaniu do projektu; niewiedza nazywa się niewiedzą. */
+/** Buduje zdanie o przypisaniu eksperta do projektu; brak odczytu przypisania jest nazwany wprost jako niewiedza. */
 function opisPrzypisania(przypisany: boolean | null): string {
   if (przypisany === null) return 'przypisanie do projektu nieodczytane';
   return przypisany ? 'przypisany do projektu' : 'w bibliotece, nieprzypisany do projektu';
 }
 
-/** Etykieta przełącznika: stan wedle rdzenia i czynność, którą wykona naciśnięcie. */
+/** Buduje etykietę przełącznika, niosącą stan uprawnienia wedle rdzenia i czynność, którą wykona naciśnięcie. */
 function etykietaUprawnienia(opis: string, stan: boolean | null): string {
   if (stan === null) return `Uprawnienie: ${opis} — rdzeń nie podał (przyznaj)`;
   return stan

@@ -2,49 +2,10 @@ import type { AuthSession, ErrorInfo } from '../../../shared/contract';
 import type { Tryb } from './postac-bramki';
 import { bezUchwytu, type MetodaWejscia, type ZrodloUwierzytelnienia } from './zrodlo-auth';
 
-/**
- * Rozpoznanie wejścia — co ma się stać, zanim Operator cokolwiek zobaczy.
- *
- * Kolejność kroków stoi w osobnym pliku, bo to jedyna część bramki, w której da
- * się popełnić błąd cichy: przesłona stanie tam, gdzie nie powinna, albo nie
- * stanie tam, gdzie musi. Wyjęta z ekranu sprawdza się bez ani jednego elementu
- * DOM, na podstawionym źródle.
- *
- * Kolejność kroków i powód każdego:
- *
- *   1. Powitanie. Rdzeń mówi w `connection.hello` trzy rzeczy naraz: czy wymóg
- *      logowania obowiązuje, czy bramka jest ustawiona i czy to połączenie jest
- *      już związane z sesją. Powitanie i tak leci przy każdym nawiązaniu, więc
- *      krok nie kosztuje ani jednej dodatkowej koperty.
- *
- *   2. Wymóg logowania. `loginRequired === false` znaczy, że Operator wymóg
- *      wyłączył nastawą `gateway.requireLogin` — i wtedy przesłona nie staje
- *      wcale. Przycisk „Pomiń" byłby bramą z furtką, a wola Operatora jest już
- *      wyrażona.
- *
- *   3. Połączenie związane. `authenticated === true` przy braku zapisanej sesji
- *      znaczy, że rdzeń uznał to gniazdo za wejście — nie ma do czego pokazywać
- *      formularza. Rdzeń mówi wprost, że pole jest do tego: „Klient czyta
- *      `authenticated` i sam rozstrzyga, czy pokazać okno logowania"
- *      (`handlers_connection.go`).
- *
- *   4. Sesja zapisana. Przedłużenie (`auth.token.refresh`) jako jedyne
- *      rozstrzyga o życiu sesji i jako jedyne oddaje nowy czas ważności.
- *      Powitanie tego nie zastąpi, więc gdy zapis istnieje, pyta się rdzenia
- *      przedłużeniem.
- *
- *   5. Który formularz. `gatewayConfigured` z powitania; pole puste znaczy
- *      „rdzeń nie wie" i wtedy — i tylko wtedy — idzie sonda `auth.login` bez
- *      sekretu. Milczenie nie jest zamieniane na „nie".
- *
- *   6. Metody. Segment „PIN" staje wyłącznie wtedy, gdy PIN na tej maszynie
- *      naprawdę jest założony; metody niepewnej ekran nie proponuje.
- */
-
-/** Skąd wiadomo, że przesłona nie ma stawać. */
+/** Rozpoznanie wejścia w osobnym pliku ustala, co ma się stać, zanim operator cokolwiek zobaczy, sprawdzalne bez ani jednego elementu przeglądarki, na podstawionym źródle danych. */
 export type PowodBezPrzeslony = 'wymog-wylaczony' | 'polaczenie-zwiazane';
 
-/** Co ekran ma zrobić po rozpoznaniu. */
+/** Co ekran ma zrobić po rozpoznaniu wejścia: pominąć przesłonę, wejść sesją żywą, pokazać formularz albo zgłosić stan niepewny rdzenia. */
 export type DrogaWejscia =
   /** Przesłona nie staje w ogóle — nie ma czego strzec. */
   | { rodzaj: 'bez-przeslony'; powod: PowodBezPrzeslony }
@@ -61,7 +22,7 @@ export type DrogaWejscia =
   /** Rdzeń nie rozstrzygnął — ekran pokazuje odmowę i „Spróbuj ponownie". */
   | { rodzaj: 'niepewny'; blad?: ErrorInfo; bezUchwytu: boolean };
 
-/** Zapis sesji bramki — wstrzykiwany, żeby rozpoznanie dało się sprawdzić bez przeglądarki. */
+/** Zapis sesji bramki jest wstrzykiwany, żeby rozpoznanie dało się sprawdzić bez przeglądarki, jedynie na podstawionym źródle danych. */
 export interface ZapisSesji {
   odczytaj(): AuthSession | null;
   skasuj(): void;
@@ -97,8 +58,7 @@ export async function rozpoznajWejscie(opis: OpisRozpoznania): Promise<DrogaWejs
     if (odpowiedz.udana && odpowiedz.wynik !== undefined) {
       return { rodzaj: 'sesja', sesja: odpowiedz.wynik.session };
     }
-    // Sesja martwa nie jest usterką — jest wiadomością sprzed rozpoczęcia
-    // pracy. Zapis znika, a zdanie o jej losie idzie nad formularz.
+    // Sesja martwa nie jest usterką; zapis znika, a zdanie o jej losie idzie nad formularz.
     opis.zapis.skasuj();
     notatka = opis.opiszOdmowe('przedluzenie', odpowiedz.blad, bezUchwytu(odpowiedz));
   }
@@ -114,13 +74,7 @@ export async function rozpoznajWejscie(opis: OpisRozpoznania): Promise<DrogaWejs
   };
 }
 
-/**
- * Tryb formularza: z powitania, a przy jego milczeniu — sondą.
- *
- * Sonda idzie raz, a jej odmowa wraca w całości — powtórne pytanie tylko po to,
- * żeby wziąć z niego powód, obciążałoby dławik drugi raz tą samą wątpliwością.
- * Wartości domyślnej nie ma: domyślną byłby zgadnięty formularz.
- */
+/** Tryb formularza pochodzi z powitania, a przy jego milczeniu ustala się sondą, bo wartości domyślnej dla zgadniętego formularza nie ma. */
 async function rozpoznajTryb(
   opis: OpisRozpoznania,
   zalozona: boolean | undefined,
@@ -137,13 +91,7 @@ async function rozpoznajTryb(
   };
 }
 
-/**
- * Metody czynne na tej maszynie.
- *
- * Przy pierwszym uruchomieniu jest jedna z konieczności: PIN zakłada się
- * w Ustawieniach po zalogowaniu, więc przy nieustawionej bramce nie ma go skąd
- * wziąć i nie ma po co o niego pytać rdzenia.
- */
+/** Metody czynne na tej maszynie: przy pierwszym uruchomieniu jest jedna z konieczności, bo PIN zakłada się dopiero po zalogowaniu w ustawieniach. */
 async function metodyWejscia(
   opis: OpisRozpoznania,
   tryb: 'wejscie' | 'zalozenie',

@@ -1,18 +1,6 @@
 /**
- * Rejestr okien pomocniczych modułów pasa inżynierskiego — Developer,
- * Diagnostics, Apps i Roundtable.
- *
- * Spis zawiera także pozycje niezbudowane: bez nich moduł wyglądałby na
- * kompletny, a brak przestałby być widoczny. Okno pomocnicze, którego nie ma,
- * jest nazwane wraz z powodem — tak samo jak przycisk bez komendy w kontrakcie
- * pozostaje widoczny i mówi, czego brakuje.
- *
- * Stany pozycji są rozłączne i mieszanie ich zaciera prawdę: „nie zbudowano"
- * to nie to samo co „nie da się zbudować", a „buduje to inna praca" to nie to
- * samo co „nikt nie rozstrzygnął, czy ma powstać".
+ * Rejestr okien pomocniczych modułów pasa inżynierskiego — Developer, Diagnostics, Apps i Roundtable — nazywa też pozycje niezbudowane wraz z powodem, bo stany pozycji są rozłączne i mieszanie ich zaciera prawdę o oknie.
  */
-
-/** Stan okna pomocniczego w produkcie. */
 export type StanPomocniczego =
   /** Okno stoi w pasie i woła rdzeń. */
   | 'zbudowane'
@@ -25,7 +13,7 @@ export type StanPomocniczego =
   /** Komenda jest, ale nikt nie rozstrzygnął, czy okno ma tu stanąć. */
   | 'do-rozstrzygniecia';
 
-/** Jedna pozycja spisu okien pomocniczych modułu. */
+/** Jedna pozycja spisu okien pomocniczych modułu: kod, nazwa widoczna, przeznaczenie, stan i wyjaśnienie. */
 export interface OpisPomocniczego {
   /** Kod pozycji — trafia w `data-okno` wiersza spisu. */
   kod: string;
@@ -34,14 +22,11 @@ export interface OpisPomocniczego {
   /** Po co Operatorowi to okno. */
   przeznaczenie: string;
   stan: StanPomocniczego;
-  /**
-   * Zdanie mówiące wprost, co z tym oknem jest — czytane przez Operatora
-   * w pasie. Dla pozycji zbudowanej niesie to, na czym okno stoi.
-   */
+  /** Zdanie mówiące wprost, co z tym oknem jest, czytane przez Operatora w pasie inżynierskim. */
   wyjasnienie: string;
 }
 
-/** Podgląd w tle bash — pozycja wspólna modułom pasa inżynierskiego. */
+/** Podgląd w tle bash — pozycja wspólna wszystkim modułom pasa inżynierskiego korzystającym ze wspólnej powłoki. */
 const PODGLAD_BASH: OpisPomocniczego = {
   kod: 'podglad-bash',
   nazwa: 'Podgląd w tle (bash)',
@@ -53,10 +38,7 @@ const PODGLAD_BASH: OpisPomocniczego = {
 };
 
 /**
- * Terminal — okno pomocnicze Developera, Diagnostics i Apps.
- *
- * Kartę powłoki stawia wytwórnia paneli (`wytwornia-paneli.ts`) i to jedyna
- * droga: moduły nie wpinają Terminala obok pasa na własną rękę.
+ * Terminal — okno pomocnicze Developera, Diagnostics i Apps, którego kartę powłoki stawia wyłącznie wytwórnia paneli.
  */
 const TERMINAL: OpisPomocniczego = {
   kod: 'terminal',
@@ -71,13 +53,7 @@ const TERMINAL: OpisPomocniczego = {
 };
 
 /**
- * Historia rozmowy — pozycja wspólna wszystkim spisom, bo rdzeń wiąże historię
- * z oknem, nie z modułem.
- *
- * Każdy moduł tego pasa pracuje w oknie, więc nie ma modułu, dla którego ta
- * pozycja byłaby bezprzedmiotowa. Wpisanie jej do jednego spisu dałoby
- * Operatorowi historię w Developerze i milczenie w Diagnostics przy tej samej
- * zdolności rdzenia.
+ * Historia rozmowy jest pozycją wspólną wszystkim spisom, bo rdzeń wiąże historię z oknem, nie z modułem, więc żaden moduł pasa nie jest dla niej bezprzedmiotowy.
  */
 const HISTORIA_ROZMOWY: OpisPomocniczego = {
   kod: 'historia-rozmowy',
@@ -92,7 +68,7 @@ const HISTORIA_ROZMOWY: OpisPomocniczego = {
     '(`trwalosc_kosza.go`), przy każdym odczycie i zaraz po jej zapisaniu.',
 };
 
-/** Artefakty — pozycja bez pokrycia w kontrakcie. */
+/** Artefakty — pozycja bez pokrycia w kontrakcie, wpisana do spisu z zamysłu jako zapowiedź przyszłej zdolności. */
 const ARTEFAKTY: OpisPomocniczego = {
   kod: 'artefakty',
   nazwa: 'Artefakty',
@@ -104,7 +80,7 @@ const ARTEFAKTY: OpisPomocniczego = {
     'ten odnośnik też nie ma — okno artefaktów nie miałoby czego zapytać.',
 };
 
-/** Pliki środowiska — pozycja bez pokrycia w kontrakcie. */
+/** Pliki środowiska — pozycja bez pokrycia w kontrakcie, czekająca na komendę rdzenia obsługującą ten zasób. */
 const PLIKI_SRODOWISKA: OpisPomocniczego = {
   kod: 'pliki-srodowiska',
   nazwa: 'Pliki środowiska',
@@ -116,7 +92,7 @@ const PLIKI_SRODOWISKA: OpisPomocniczego = {
     'a nie pliki konfiguracji uruchomienia. Podłożenie jednego pod drugie byłoby zgadywaniem.',
 };
 
-/** Przeglądarka — komendy są, decyzji nie ma. */
+/** Przeglądarka — komendy potrzebne w kontrakcie już są, decyzji o budowie samego panelu jeszcze nie podjęto. */
 const PRZEGLADARKA: OpisPomocniczego = {
   kod: 'przegladarka',
   nazwa: 'Przeglądarka',
@@ -129,16 +105,7 @@ const PRZEGLADARKA: OpisPomocniczego = {
 };
 
 /**
- * Zasoby Designu — panel wędrujący do modułu, który z nich korzysta.
- *
- * Zasoby Designu mają być dostępne w Studio Editorze i Frontend Workspace
- * (moduł Apps) — ta pozycja jest drogą, którą trafiają obok rozmowy w innym
- * module.
- *
- * Panel nie jest oknem operacyjnym Designu: Assets Panel modułu ma trzy pasy
- * i czynność „na kanwę", która poza Designem prowadziłaby donikąd. Panel obok
- * rozmowy jest gęstszym widokiem tych samych danych, czytanym tą samą warstwą
- * wywołań — nie drugim źródłem prawdy o zasobach.
+ * Zasoby Designu to panel wędrujący do modułu, który z nich korzysta — dostępny w Studio Editorze i module Apps, czytający te same dane co panel operacyjny Designu, nie drugie źródło prawdy.
  */
 const ZASOBY_DESIGNU: OpisPomocniczego = {
   kod: 'zasoby-designu',
@@ -152,7 +119,7 @@ const ZASOBY_DESIGNU: OpisPomocniczego = {
     'zawęziłoby wykaz do zasobów cudzego okna, czyli najczęściej do pustki.',
 };
 
-/** Przebieg debaty — panel modułu Roundtable pokazywany obok rozmowy. */
+/** Przebieg debaty — panel modułu Roundtable pokazywany obok rozmowy, niosący zapis wypowiedzi wielu modeli. */
 const PRZEBIEG_DEBATY: OpisPomocniczego = {
   kod: 'przebieg-debaty',
   nazwa: 'Przebieg debaty',
@@ -166,7 +133,7 @@ const PRZEBIEG_DEBATY: OpisPomocniczego = {
     'więc panel pokazuje wyłącznie to, co usłyszał od otwarcia.',
 };
 
-/** Spisy okien pomocniczych dla poszczególnych modułów. */
+/** Spisy okien pomocniczych dla poszczególnych modułów pasa inżynierskiego, indeksowane kodem każdego modułu. */
 const SPISY: ReadonlyMap<string, readonly OpisPomocniczego[]> = new Map([
   [
     'developer',
@@ -234,22 +201,14 @@ const SPISY: ReadonlyMap<string, readonly OpisPomocniczego[]> = new Map([
     ],
   ],
   [
-    // Roundtable — spis krótki z zamysłu. Moduł prowadzi debatę wielu modeli
-    // w jednym oknie, więc obok rozmowy stoi jej przebieg, a nie drugi komplet
-    // okien operacyjnych. Historia rozmowy dotyczy tego samego okna i pokazuje
-    // jego zapis trwały, którego przebieg debaty nie niesie — panel debaty
-    // słyszy wyłącznie to, co padło od otwarcia.
+    // Roundtable ma spis krótki z zamysłu: moduł prowadzi debatę modeli w jednym oknie, nie komplet okien.
     'roundtable',
     [PRZEBIEG_DEBATY, HISTORIA_ROZMOWY],
   ],
 ]);
 
 /**
- * Spis okien pomocniczych modułu.
- *
- * Moduł spoza spisu dostaje wykaz pusty; pas mówi wtedy wprost, że dla tego
- * modułu okien pomocniczych nie spisano, zamiast pokazać pustkę czytającą się
- * jak „ten moduł ich nie ma".
+ * Spis okien pomocniczych modułu; moduł spoza spisu dostaje wykaz pusty, a pas mówi wprost, że okien pomocniczych dla niego nie spisano.
  */
 export function oknaPomocnicze(kodModulu: string): readonly OpisPomocniczego[] {
   return SPISY.get(kodModulu) ?? [];

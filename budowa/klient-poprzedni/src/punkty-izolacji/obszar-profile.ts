@@ -8,35 +8,7 @@ import { utworzFormularzProfilu } from './profile-formularz';
 import { zbudujListeProfili, zbudujPodgladProfilu } from './profile-widok';
 import { NAZWY_WARSTW } from './stan-warstwy';
 
-/**
- * Obszar „Profile" — nazwany zestaw trzech przełączników kontekstu i ośmiu
- * zakresów technicznych, z czterema czynnościami rdzenia: Zapisz · Wczytaj ·
- * Przypisz do poziomu · Usuń.
- *
- * Pięć komend rdzenia (`core/kompozycja.go`): `isolation.profile.list` (wykaz),
- * `isolation.profile.save` (zapis nowego albo zmiana istniejącego),
- * `isolation.profile.load` (wczytanie do podglądu), `isolation.profile.assign`
- * (przypisanie do poziomu i warstwy), `isolation.profile.delete` (usunięcie).
- *
- * Wczytanie to nie przypisanie i na tym polega ten obszar. `profile.load`
- * zwraca zawartość profilu do podglądu i do formularza; maszyneria po nim
- * pracuje tak samo jak przedtem. `profile.assign` dopiero wiąże profil
- * z poziomem zasięgu i warstwą i zwraca `IsolationPolicy` — politykę
- * obowiązującą po przypisaniu. Dwie czynności, dwa skutki, dwa osobne zdania
- * przy przyciskach.
- *
- * Cel przypisania jest widoczny wcześniej i nie jest wybierany drugi raz tutaj:
- * poziom zasięgu i identyfikator bytu przychodzą z selektora zasięgu (lewy
- * panel, `stan-zasiegu.ts`), a warstwa z pasa narzędzi okna
- * (`sterowanie-warstwa.ts`) — oba dotyczą wszystkich paneli naraz. Drugi
- * selektor poziomu w tym obszarze pokazywałby cel przypisania inny niż zasięg,
- * na którym Operator właśnie przestawia macierz. Przycisk przy profilu mówi
- * w podpowiedzi, dokąd trafi zapis.
- *
- * Usunięcie idzie od razu, bez „czy na pewno"; żadna pozycja nie jest wygaszona
- * ani zablokowana. Odmowa rdzenia wraca zdaniem trzyczęściowym: co się nie
- * udało, dlaczego (treść wprost z rdzenia) i czym Operator to zmieni.
- */
+/** Obszar Profile — nazwany zestaw trzech przełączników kontekstu i ośmiu zakresów technicznych, z czterema czynnościami rdzenia. */
 export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   const { kanal, warstwa, zasieg } = zaleznosci;
   const tresc = utworzStanTresci('pi');
@@ -235,7 +207,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   };
 }
 
-/** Wstęp obszaru: czym jest profil i czym różni się wczytanie od przypisania. */
+/** Wstęp obszaru: czym jest profil i czym różni się jego wczytanie od przypisania do wybranego poziomu. */
 function zbudujWstep(): HTMLElement {
   const czym = document.createElement('p');
   czym.className = 'pi-profile__opis';
@@ -257,7 +229,7 @@ function zbudujWstep(): HTMLElement {
   return element;
 }
 
-/** Odmowa w miejscu treści cząstkowej: co się nie udało i czym Operator to zmieni. */
+/** Odmowa w miejscu treści cząstkowej: co się nie udało i czym dokładnie Operator ten brak zmieni dalej. */
 function zdanieOdmowy(co: string, czym: string): HTMLElement {
   const plakietka = document.createElement('span');
   plakietka.className = 'dn-plakietka dn-plakietka--blad';

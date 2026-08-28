@@ -17,26 +17,8 @@ import type { StanTresci } from './stany-okna';
 import type { GlosNieprzypisany, StrumienWypowiedzi } from './strumien-wypowiedzi';
 
 /**
- * Przebieg debaty — funkcje konstrukcyjne i rysujące Debate Panel.
- *
- * Podział wobec `okno-debate-panel.ts` idzie po odpowiedzialności: tu leżą
- * funkcje, które nie domykają się ani na stanie okna, ani na źródle — biorą
- * `StanDebaty`/`StanTresci` parametrem i oddają węzły DOM albo napisy.
- *
- * Ten plik odpowiada za porządek: nagłówek tury, wykaz z filtrem, stany puste
- * i transkrypt. Wygląd pojedynczego głosu leży w `czytelnosc-glosow.ts`, bo
- * tożsamość mówcy — znacznik, odstęp między mówcami, zdanie o powtórzonym
- * kanale — jest osobną odpowiedzialnością od porządku listy.
- */
-
-/**
- * Rysuje przebieg tury albo stan pustki — czysta funkcja danych.
- *
- * @param strumien gromadzenie fragmentów `stream.chunk` tego okna debaty.
- *   Bez niego wykaz pokazywałby przez cały czas mówienia modelu wypowiedź
- *   pustą: rdzeń rozgłasza `roundtable.debate.changed` rodzaju `created`
- *   z treścią pustą, dopisuje słowa strumieniem i dopiero po jego domknięciu
- *   rozgłasza `updated` z całością (`adapter_modul_roundtable_glos.go`).
+ * Rysuje przebieg tury albo stan pustki — czysta funkcja danych, biorąca gromadzenie
+ * strumienia tego okna debaty jako parametr.
  */
 export function rysujDebate(
   stan: StanDebaty,
@@ -98,12 +80,8 @@ export function transkryptMarkdown(stan: StanDebaty, strumien: StrumienWypowiedz
 }
 
 /**
- * Transkrypt w JSON — ta sama treść co Markdown, w postaci nadającej się do
- * dalszego przetwarzania.
- *
- * Postać jest jawnie oznaczona jako zapis okna, nie zapis rdzenia: pole
- * `zakres` mówi, że obejmuje wyłącznie wypowiedzi widziane od otwarcia okna.
- * Bez tego plik czytałby się jako pełny protokół debaty, którym nie jest.
+ * Transkrypt w JSON — ta sama treść co Markdown, jawnie oznaczona jako zapis okna, nie zapis
+ * rdzenia, do dalszego przetwarzania.
  */
 export function transkryptJson(stan: StanDebaty, strumien: StrumienWypowiedzi): string {
   const definicja = stan.definicjaTury();
@@ -143,7 +121,7 @@ export function transkryptJson(stan: StanDebaty, strumien: StrumienWypowiedzi): 
   return JSON.stringify(zapis, null, 2);
 }
 
-/** Głos bieżący mówcy tej wypowiedzi — zapis i strumień złożone w jedno. */
+/** Głos bieżący mówcy tej wypowiedzi — zapis i strumień złożone w jedno, gotowe do wyświetlenia w bloku wypowiedzi. */
 function glosDlaWypowiedzi(
   wypowiedz: RoundtableStatement,
   stan: StanDebaty,
@@ -186,13 +164,8 @@ function zbudujTure(tura: RoundtableTurn): HTMLElement {
 }
 
 /**
- * Spis głosów tej tury — ilu mówców i ile od każdego.
- *
- * Przy kilku głosach naraz sama lista nie odpowiada na pytanie, kto się już
- * odezwał, a kto jeszcze nie. Spis liczy to wyłącznie z wypowiedzi, które okno
- * widziało — nie z założenia, że skład odpowiada w komplecie. Uczestnicy składu
- * bez ani jednej wypowiedzi są wymienieni osobno, bo ich milczenie jest tu
- * informacją, nie pustką.
+ * Spis głosów tej tury — ilu mówców i ile od każdego, liczone wyłącznie z wypowiedzi, które
+ * okno widziało.
  */
 function zbudujGlosyTury(
   wypowiedzi: readonly RoundtableStatement[],
@@ -208,8 +181,7 @@ function zbudujGlosyTury(
   }
   const milczacy = stan.uczestnicy().filter((uczestnik) => !ile.has(uczestnik.id));
   const mowiacy = liczMowiacych(stan, strumien);
-  // Liczba mówiących stoi na pierwszym miejscu i jest w `data-mowiacych`, bo to
-  // jedyna wartość tego wiersza, która zmienia się w trakcie tury.
+  // Liczba mówiących stoi pierwsza, bo to jedyna wartość wiersza, która zmienia się w trakcie tury.
   spis.dataset['mowiacych'] = String(mowiacy);
   const czolo = mowiacy === 0 ? 'Nikt nie mówi w tej chwili.' : `Mówi teraz: ${mowiacy}.`;
 
@@ -230,7 +202,7 @@ function zbudujGlosyTury(
   return spis;
 }
 
-/** Ilu uczestników ma w tej chwili strumień otwarty i niezerwany. */
+/** Ilu uczestników ma w tej chwili strumień otwarty i niezerwany, licząc tylko głosy znane temu oknu debaty. */
 function liczMowiacych(stan: StanDebaty, strumien: StrumienWypowiedzi): number {
   let ilu = 0;
   for (const uczestnik of stan.uczestnicy()) {
@@ -241,13 +213,8 @@ function liczMowiacych(stan: StanDebaty, strumien: StrumienWypowiedzi): number {
 }
 
 /**
- * Głosy, których identyfikatora nie zna ani skład, ani wykaz wypowiedzi tury —
- * pokazane, nie porzucone.
- *
- * Fragment `stream.chunk` potrafi wyprzedzić zdarzenie `roundtable.debate.changed`,
- * które nazywa jego wypowiedź: dwa strumienie idą osobnymi biegami. Słowa padły,
- * więc wykaz je pokazuje i mówi wprost, że mówca jeszcze nie jest ustalony.
- * Przypisanie nastąpi samo przy następnym fragmencie.
+ * Głosy, których identyfikatora nie zna ani skład, ani wykaz wypowiedzi tury — pokazane, nie
+ * porzucone.
  */
 function zbudujNieprzypisane(wpisy: readonly GlosNieprzypisany[]): HTMLElement {
   const lista = document.createElement('ul');
@@ -307,8 +274,7 @@ function zbudujListeWypowiedzi(
     return lista;
   }
   const kontekst = utworzKontekstCzytelnosci();
-  // Treść rosnąca należy do wypowiedzi otwartej przez mówcę ostatnio — dołożona
-  // do każdej powtórzyłaby te same słowa tyle razy, ile razy się odezwał.
+  // Treść rosnąca należy do wypowiedzi otwartej przez mówcę ostatnio, nie do każdej jego wypowiedzi.
   const rosnace = ostatnieGlosy(wypowiedzi);
   for (const wypowiedz of wypowiedzi) {
     const biezacy = rosnace.has(wypowiedz.id)

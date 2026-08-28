@@ -12,28 +12,8 @@ import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Schowek Operatora — cztery komendy rodziny `clipboard.*`, wołane, nie pisane
- * drugi raz.
- *
- * ── Dlaczego rdzeń, a nie schowek przeglądarki ──────────────────────────────
- * Schowek przeglądarki żyje tyle, co karta, i nie ma historii: `navigator
- * .clipboard` oddaje jedną, ostatnią treść. Wymaganie Właściciela mówi
- * o wykazie wpisów sprzed kilku ruchów i o wpisach przypiętych na stałe, więc
- * historia musi leżeć w rdzeniu. Rodzina `clipboard.*` robi dokładnie to:
- * `push` dopisuje (powtórzenie identycznej treści NIE mnoży wpisów, tylko
- * podnosi zastany na czoło i oddaje `alreadyPresent`), `list` oddaje historię
- * wraz z przypiętymi, `pin` przypina (przypięty nie wygasa wraz z retencją),
- * `delete` usuwa wpis albo całą historię nieprzypiętą.
- *
- * ── Model sięga tą samą drogą ───────────────────────────────────────────────
- * Komendy schowka nie mają pola autora, więc wpis odłożony przez model i wpis
- * Operatora są w rdzeniu nierozróżnialne. Odkładając fragment za modelem,
- * okno zapisuje więc `sourceWindowId` — jedyne pole pochodzenia, które wpis
- * niesie. Rozróżnienia autora wpisu schowka w kontrakcie NIE MA i jest ono
- * wypisane w sprawozdaniu jako pozycja do dobudowy, a nie udawane tutaj
- * przedrostkiem w treści.
- *
- * Źródło nie ma stanu i nie buduje elementu.
+ * Źródło grupuje cztery komendy schowka rdzenia: odczyt historii wpisów wraz
+ * z przypiętymi, dopisanie treści, przypięcie oraz usunięcie wpisu; nie ma stanu.
  */
 export interface SchowekZrodlo {
   /** Historia schowka; `tylkoPrzypiete` zawęża do wpisów przypiętych. */
@@ -101,11 +81,8 @@ export function utworzSchowekZrodlo(kanal: Kanal): SchowekZrodlo {
 }
 
 /**
- * Zdanie o wpisie schowka wraz z jego rozmiarem i czasem.
- *
- * Podgląd bierze się z pola `preview`, gdy rdzeń je oddał, a z treści tylko
- * wtedy, gdy wpis jest tekstem — treść wpisu obrazowego to bajty base64
- * i pokazanie ich jako podglądu byłoby pokazaniem szumu za treść.
+ * Buduje zdanie opisowe wpisu schowka z jego rodzajem, rozmiarem w bajtach,
+ * stanem przypięcia oraz czasem utworzenia sformatowanym w zapisie lokalnym.
  */
 export function schowekOpiszWpis(wpis: ClipboardEntry): string {
   const czas = new Date(wpis.createdAt).toLocaleString('pl-PL');
@@ -113,7 +90,10 @@ export function schowekOpiszWpis(wpis: ClipboardEntry): string {
   return `${wpis.kind} · ${wpis.sizeBytes} bajtów · ${przypiety} · ${czas}`;
 }
 
-/** Podgląd treści wpisu do wykazu; wpis nietekstowy nie udaje tekstu. */
+/**
+ * Zwraca podgląd treści wpisu do wykazu; korzysta z pola przygotowanego przez
+ * rdzeń, a dla wpisu nietekstowego oddaje opis rodzaju zamiast surowych bajtów.
+ */
 export function schowekPodglad(wpis: ClipboardEntry): string {
   if (wpis.preview !== undefined && wpis.preview !== '') return wpis.preview;
   if (wpis.kind === ClipboardEntryKind.Text) return wpis.content;

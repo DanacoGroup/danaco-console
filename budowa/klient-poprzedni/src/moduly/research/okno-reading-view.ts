@@ -15,21 +15,7 @@ import type { StanBadania } from './stan-badania';
 import { utworzStanOknaBadania } from './stan-okna-badania';
 
 /**
- * Reading View — okno lektury i ekstrakcji.
- *
- * Okno szóste opracowania (rozdz. 3.6), którego katalog okien rdzenia jeszcze
- * nie zna — patrz `kody-okien.ts`. Zbudowane, bo dwie jego czynności mają dziś
- * pokrycie: wczytanie treści dokumentu repozytorium i zamiana zaznaczonego
- * fragmentu w ustalenie z powiązaniem do czytanego źródła.
- *
- * Czego tu jeszcze nie ma i dlaczego: podświetlenia trwałe, notatki na
- * marginesie i wypisy zbiorcze mają już w kontrakcie własne komendy i własny byt
- * wraz z kotwicą pozycji, ale rdzeń nie ma dla nich uchwytu. Okno ich nie udaje —
- * zaznaczenie jest zaznaczeniem przeglądarki, a trwałym staje się dopiero jako
- * ustalenie. Pozostałe operacje na źródle stoją w panelu akcji pod nazwami
- * swoich komend i wracają odmową rdzenia, zamiast znikać z okna.
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-lektury`.
+ * Reading View jest oknem lektury i ekstrakcji, wczytującym treść dokumentu repozytorium i zamieniającym zaznaczony fragment w ustalenie powiązane ze źródłem.
  */
 export interface OknoReadingView {
   element: HTMLElement;
@@ -121,9 +107,7 @@ export function utworzOknoReadingView(
     const zrodlo = wskazaneZrodlo(stan);
     naglowekMaterialu.textContent = opisMaterialu(zrodlo?.title ?? '', strona, podglad);
 
-    // Wskazanie nowego źródła zeruje stronę i pociąga jego treść. Warunek na
-    // `wczytane` jest zaporą: `odswiez` biegnie z każdego ogłoszenia stanu,
-    // a wczytanie ogłasza stan ponownie.
+    // Wskazanie nowego źródła zeruje stronę i pociąga treść; warunek chroni przed pętlą odczytu.
     const wskazane = zrodlo?.id ?? '';
     if (wskazane !== '' && wskazane !== wczytane) {
       wczytane = wskazane;
@@ -143,7 +127,7 @@ export function utworzOknoReadingView(
   return { element: rama.element, odswiez };
 }
 
-/** Odnośnik do podglądu graficznego — rdzeń oddaje wskazanie, nie obraz. */
+/** Funkcja tworzy odnośnik do podglądu graficznego strony, ponieważ rdzeń oddaje wyłącznie wskazanie zasobu, a nie samą grafikę. */
 function odnosnikGraficzny(wskazanie: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis mr-lektura__odnosnik';
@@ -151,7 +135,7 @@ function odnosnikGraficzny(wskazanie: string): HTMLElement {
   return element;
 }
 
-/** Zdanie nagłówka: co jest czytane i na której stronie. */
+/** Funkcja układa zdanie nagłówka opisujące tytuł czytanego materiału oraz numer bieżącej i łącznej liczby stron. */
 function opisMaterialu(tytul: string, strona: number, podglad: LibraryPreview | null): string {
   if (tytul === '') return 'Nie wskazano materiału do lektury.';
   const stron = podglad?.pageCount;

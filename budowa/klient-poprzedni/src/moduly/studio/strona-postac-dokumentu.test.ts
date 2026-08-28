@@ -15,30 +15,18 @@ import { liczbaPola, opiszBilans, wyborPola } from './strona-pola-postaci';
 import { domyslneNastawyWidoku } from './widok-nastawy-operatora';
 import type { ZrodloPostaciStudio } from './zrodlo-postaci-studio';
 
-/**
- * Sprawdziany odcinka „postać dokumentu w oknie".
- *
- * Miarą odbioru tego odcinka jest rozstrzygnięcie Właściciela: numeracja stron
- * konfigurowana przez Operatora — styl, umiejscowienie i numer początkowy — oraz
- * marginesy zmienialne. Sprawdziany mierzą więc TREŚĆ ŻĄDANIA, które wychodzi
- * z okna do rdzenia, a nie samo to, że przycisk dał się nacisnąć: nastawa, która
- * nie dojedzie do rdzenia, nie przeżyje zapisu i jest usterką, nie uproszczeniem.
- *
- * Druga rzecz mierzona wprost: pole puste znaczy „nie ruszaj tej cechy", a nie
- * zero. Bez tego każde naciśnięcie przycisku zerowałoby nastawy, których Operator
- * nie tknął.
- */
+// Sprawdziany mierzą treść żądania do rdzenia, nie samo to, że przycisk dał się nacisnąć.
 
-/** Jedno wywołanie zapisane przez atrapę źródła. */
+/** Jedno wywołanie zapisane przez atrapę źródła: nazwa wywołanej komendy wraz z treścią żądania, jakie do niej trafiło. */
 interface Wywolanie {
   nazwa: string;
   zadanie: Record<string, unknown>;
 }
 
-/** Bilans czynności bez pominięć — najczęstsza odpowiedź rdzenia. */
+/** Bilans czynności bez pominięć — najczęstsza odpowiedź rdzenia, gdy operacja objęła całe zaznaczenie bez odmów. */
 const BILANS_CZYSTY = { applied: 1, skippedCount: 0 };
 
-/** Postać dokumentu w kształcie najmniejszym, jaki niesie kontrakt. */
+/** Postać dokumentu w kształcie najmniejszym, jaki niesie kontrakt — sam identyfikator dokumentu, bez list i pól opcjonalnych. */
 const POSTAC = { documentId: 'dokument-jeden' };
 
 /**
@@ -118,7 +106,7 @@ function atrapaZrodla(
   return zrodlo as unknown as ZrodloPostaciStudio;
 }
 
-/** Kontrolka pola o wskazanej etykiecie; brak pola jest błędem sprawdzianu. */
+/** Kontrolka pola o wskazanej etykiecie; brak pola jest błędem sprawdzianu, nie stanem, który sprawdzian ma obsłużyć. */
 function pole(korzen: HTMLElement, etykieta: string): HTMLInputElement & HTMLSelectElement {
   for (const wiersz of Array.from(korzen.querySelectorAll<HTMLElement>('.dn-pole'))) {
     const napis = wiersz.querySelector('label');
@@ -129,14 +117,14 @@ function pole(korzen: HTMLElement, etykieta: string): HTMLInputElement & HTMLSel
   throw new Error(`Sprawdzian nie znalazł pola o etykiecie „${etykieta}"`);
 }
 
-/** Przycisk czynności; brak przycisku jest błędem sprawdzianu. */
+/** Przycisk czynności wskazany jej kodem; brak przycisku jest błędem sprawdzianu, nie stanem do obsłużenia. */
 function czynnosc(korzen: HTMLElement, kod: string): HTMLButtonElement {
   const przycisk = korzen.querySelector<HTMLButtonElement>(`[data-czynnosc='${kod}']`);
   if (przycisk === null) throw new Error(`Sprawdzian nie znalazł czynności „${kod}"`);
   return przycisk;
 }
 
-/** Zbudowana warstwa postaci wraz z zapisem wywołań i zdaniami okna. */
+/** Zbudowana warstwa postaci wraz z zapisem wywołań przekazanych do atrapy źródła i zdaniami pokazanymi w oknie. */
 interface Stanowisko {
   postac: PostacDokumentu;
   zapis: Wywolanie[];
@@ -156,8 +144,7 @@ function zbuduj(
     zrodlo: atrapaZrodla(zapis, ustawienia.odpowiedzi ?? {}),
     idDokumentu: () => ustawienia.idDokumentu ?? 'dokument-jeden',
     idOkna: () => 'okno-jeden',
-    // `null` jest wartością znaczącą („nic nie zaznaczono"), więc nie wolno jej
-    // podmienić wartością domyślną — o obecność wskazania pyta się kluczem.
+    // Wartość null znaczy „nic nie zaznaczono”, więc nie wolno jej podmienić wartością domyślną.
     zaznaczenie: () =>
       'zaznaczenie' in ustawienia ? ustawienia.zaznaczenie ?? null : { poczatek: 10, koniec: 40 },
     miejsceKursora: () => 25,
@@ -167,7 +154,7 @@ function zbuduj(
   return { postac, zapis, zdania };
 }
 
-/** Ostatnie żądanie wskazanej komendy. */
+/** Ostatnie żądanie wskazanej komendy — kolejne wywołania tej samej komendy nadpisują poprzednie w sprawdzianie. */
 function ostatnie(zapis: Wywolanie[], nazwa: string): Record<string, unknown> {
   const wybrane = zapis.filter((wpis) => wpis.nazwa === nazwa);
   const koniec = wybrane[wybrane.length - 1];
@@ -200,8 +187,7 @@ describe('numeracja stron jest nastawą Operatora, nie przełącznikiem tak/nie'
     expect(zadanie['restartInSection']).toBe(true);
     expect(zadanie['showTotal']).toBe(true);
     expect(zadanie['position']).toBe('stopka-srodek');
-    // Autor jedzie jawnie: bez niego przełącznik „pokaż zmiany modelu" nie
-    // rozróżniłby czynności Operatora od czynności modelu.
+    // Autor jedzie jawnie — bez niego przełącznik zmian modelu nie odróżni Operatora od modelu.
     expect(zadanie['author']).toBe(StudioAuthor.Uzytkownik);
   });
 
@@ -339,8 +325,7 @@ describe('nagłówek, stopka, znak wodny i koperta', () => {
     czynnosc(panel, 'zapisz-naglowek').click();
     const zadanie = ostatnie(zapis, 'ustawNaglowek');
     expect(zadanie['scope']).toBe(StudioHeaderScope.FirstPage);
-    // Treść pusta jedzie JAWNIE: opróżnienie nagłówka jest czynnością, a nie
-    // brakiem wskazania — inaczej nie dałoby się nagłówka zdjąć.
+    // Treść pusta jedzie jawnie: opróżnienie nagłówka jest czynnością, nie brakiem wskazania.
     expect(zadanie['headerText']).toBe('');
     expect(zadanie['footerText']).toBe('Strona');
   });
@@ -404,9 +389,7 @@ describe('tabulatory z linijki idą różnicą, nie przepisaniem wykazu', () => 
     await Promise.resolve();
     zapis.length = 0;
     postac.zglosTabulatory([{ milimetry: 55, rodzaj: 'lewy', znakWiodacy: 'brak' }]);
-    // Pierwsze żądanie wychodzi natychmiast; drugie po jego rozstrzygnięciu, bo
-    // kolejność ma znaczenie: założenie przed zdjęciem zostawiłoby dwa
-    // tabulatory tam, gdzie Operator przesunął jeden.
+    // Pierwsze żądanie wychodzi natychmiast, drugie po jego rozstrzygnięciu — kolejność ma znaczenie.
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
@@ -571,8 +554,7 @@ describe('nastawy widoku prowadzi rdzeń, bez zmiany wołaczy', () => {
     expect(await magazyn.wczytaj()).toBe(true);
     const zapisany = magazyn.getItem('dn.studio.widok') ?? '{}';
     expect(JSON.parse(zapisany)).toMatchObject({ skala: 133, linijkiWidoczne: false });
-    // Okno puste nie jedzie w żądaniu: kontrakt czyta jego brak jako „bez
-    // zawężenia do okna", a puste pole byłoby wskazaniem okna nieistniejącego.
+    // Okno puste nie jedzie w żądaniu: kontrakt czyta brak jako „bez zawężenia do okna”.
     expect('windowId' in ostatnie(zapis, 'widok')).toBe(false);
   });
 
@@ -621,8 +603,7 @@ describe('panel fragmentu, postaci i pochodzenia', () => {
     await Promise.resolve();
     expect(pole(panel, 'Brzmienie zaznaczonego fragmentu').value).toBe('Na podstawie art. 10');
     expect(panel.textContent ?? '').toContain('podstawa prawna');
-    // Zdanie o blokadzie mówi też, GDZIE stoi sprawdzenie: blokada pilnowana
-    // wyłącznie przez okno byłaby pozorna, bo model woła komendy tak samo.
+    // Zdanie o blokadzie mówi też, gdzie stoi sprawdzenie — wyłącznie w oknie byłoby pozorne.
     expect(panel.textContent ?? '').toContain('Sprawdzenie stoi w RDZENIU');
   });
 

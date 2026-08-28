@@ -12,20 +12,8 @@ import { czyTablica, czyTekst } from '../../protokol/ksztalt-odpowiedzi';
 import { zadaj, type WynikTranslate } from './wywolanie-translate';
 
 /**
- * Trzy komendy Source Panel — okna wiodącego modułu Translate.
- *
- * Źródło nie ma własnego stanu i nie buduje ani jednego elementu: jest warstwą
- * wywołania i sprawdzianu kształtu odpowiedzi. Tekst źródłowy mieszka
- * w `stan-translate.ts`, żeby Translation Panels patrzyły na ten sam tekst,
- * a nie na własną kopię.
- *
- * Wszystkie trzy komendy rdzeń rejestruje i obsługuje: `source.set` oddaje
- * `{sourceLanguage, segmentCount, panels}`, `source.segment` → `{segments:[…]}`,
- * `source.detect` → `{language}`. Bez zalogowanego modelu rdzeń oddaje stan
- * zdegradowany (`language` niesie wtedy komunikat „Not logged in") — to jest
- * odpowiedź rdzenia, nie brak uchwytu. Ścieżka odmowy
- * w `wywolanie-translate.ts` zostaje na wypadek starszego rdzenia albo
- * pośrednika.
+ * Trzy komendy panelu źródła okna wiodącego modułu, stanowiące wyłącznie warstwę
+ * wywołania i sprawdzianu kształtu odpowiedzi rdzenia, bez własnego stanu.
  */
 export interface ZrodloZrodla {
   /** Ustawia tekst źródłowy; wyzwala jednoczesną aktualizację wszystkich paneli. */
@@ -50,8 +38,7 @@ export function utworzZrodloZrodla(kanal: Kanal): ZrodloZrodla {
     },
 
     async segmentuj(tekst) {
-      // Kontrakt dopuszcza żądanie bez tekstu — wtedy rdzeń bierze tekst
-      // bieżący. Pustego pola nie wysyłamy, żeby nie kasować nim treści.
+      // Puste pole nie jest wysyłane, żeby nie skasować nim tekstu bieżącego w rdzeniu.
       const zadanie: TranslateSourceSegmentRequest = {};
       if (tekst.trim() !== '') zadanie.text = tekst;
       return zadaj(kanal, Command.TranslateSourceSegment, zadanie, (tresc) =>

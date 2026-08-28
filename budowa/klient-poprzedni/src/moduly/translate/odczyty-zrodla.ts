@@ -3,19 +3,8 @@ import { oznaczWarstwe } from './warstwy-translate';
 import { znajdzWzorce, type Wystapienie } from './wzorce-placeholderow';
 
 /**
- * Dwa odczyty tekstu źródłowego liczone w oknie: objętość materiału i ochrona
- * symboli zastępczych.
- *
- * Oba biorą się z tego samego napisu i z jednego przebiegu, więc stoją w jednym
- * pliku. Oba są też warstwą pierwszą Source Panel — mają być widoczne bez
- * interakcji, bo orientacja w rozmiarze materiału i wiedza o tym, czego nie
- * wolno przetłumaczyć, poprzedzają każdą czynność w tym oknie.
- *
- * Liczby są liczbami okna, nie rdzenia, i zdanie to mówi. Rdzeń oddaje liczbę
- * pozycji podziału przy zapisie źródła i to jest jego prawda o segmentach;
- * słowa i znaki liczy okno z tekstu, który ma przed sobą, bo kontrakt takiej
- * komendy nie ma. Analizy względem pamięci tłumaczeń ani wyceny nie ma tu
- * wcale — nie ma z czego ich złożyć i okno tego nie zastępuje szacunkiem.
+ * Dwa odczyty tekstu źródłowego liczone w oknie: objętość materiału i ochrona symboli
+ * zastępczych, liczone przez okno z tekstu, a nie przez rdzeń.
  */
 export interface OdczytyZrodla {
   /** Element osadzany w Source Panel. */

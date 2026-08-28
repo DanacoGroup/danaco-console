@@ -2,34 +2,13 @@ import type { StudioDiffCompareRequest } from '../../../../shared/contract';
 import { poleLogiczne, poleTekstowe } from '../../modele/kontrolki-formularza';
 import type { ParaPorownania, StanStudio } from './stan-studio';
 
-/**
- * Pola wejściowe Diff/Grep Panelu wraz ze złożeniem żądania.
- *
- * Wydzielone od widoku: panel odpowiada za układ i stany, ten plik za to, jak
- * cztery kontrolki składają się w treść żądania `studio.diff.compare`. Kształt
- * żądania można dzięki temu zmienić bez dotykania układu okna.
- *
- * Puste pole wersji porównywanej nie znaczy „brak danych": kontrakt czyta brak
- * `targetVersionId` jako zgodę na porównanie z propozycją zmiany.
- *
- * Wersja bieżąca wchodzi do żądania wprost, bo rdzeń jej nie podstawia sam.
- * `studio.diff.compare` przeszukuje treść wskazanej strony porównania, więc
- * żądanie z samym `pattern` wraca puste nawet wtedy, gdy dokument wzorzec
- * zawiera. Dokument niesie `versionId`, więc okno podstawia go za puste pole
- * odniesienia i podpowiedź przy kontrolce odpowiada temu, co się dzieje.
- */
+/** Pola wejściowe Diff/Grep Panelu wraz ze złożeniem żądania: cztery kontrolki składające się w treść żądania porównania. */
 export interface PolaRoznicy {
   /** Kontrolki w kolejności osadzenia w oknie. */
   elementy: readonly HTMLElement[];
   /** Treść żądania porównania; `null`, gdy nie ma dokumentu czynnego. */
   zadanie(stan: StanStudio): StudioDiffCompareRequest | null;
-  /**
-   * Wpisuje parę wersji wskazaną w Session Repository.
-   *
-   * Wpis idzie do kontrolek, a nie obok nich: Operator ma zobaczyć, co zostanie
-   * porównane, i móc to jeszcze zmienić przed naciśnięciem. Para wskazana
-   * z zewnątrz jest podpowiedzią, nie rozkazem.
-   */
+  /** Wpisuje parę wersji wskazaną w Session Repository do kontrolek, jako podpowiedź, nie rozkaz. */
   przyjmijPare(para: ParaPorownania): void;
 }
 

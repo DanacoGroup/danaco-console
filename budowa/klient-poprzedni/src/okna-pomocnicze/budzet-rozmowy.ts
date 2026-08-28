@@ -3,24 +3,7 @@ import { liczbaOkienRozmowy, type ProfilModulu } from '../okno-komunikacji/profi
 import { profilModulu } from '../okno-komunikacji/rejestr-profilow';
 
 /**
- * Ile okien rozmowy ma moduł — odczyt profilu, nie własny mechanizm.
- *
- * Budżet stoi przy oknach pomocniczych, bo pas pomocniczych podaje obie połowy
- * naraz: ile okien rozmowy moduł prowadzi i gdzie leży jego ciężar. Pas
- * milczący o rozmowie mówiłby tylko połowę.
- *
- * Liczbę daje funkcja `liczbaOkienRozmowy`, nie pole `granicaOkien`: pole
- * niesie granicę, funkcja — prawo do otwarcia. Dla modułu bez rozmowy pole
- * mówi 1, a funkcja 0, więc odczyt samego pola obiecałby Operatorowi czat
- * w module, który czatu nie prowadzi.
- *
- * Liczba początkowa pochodzi z `LICZBA_MIN` (`okna-rownolegle/identyfikatory.ts`),
- * czyli stamtąd, skąd bierze ją silnik okien równoległych. Własna jedynka
- * rozjechałaby się z silnikiem przy pierwszej jego zmianie.
- *
- * Granicy zapisanej w profilu nie da się tu odróżnić od stałej
- * `GRANICA_NIEPODANA` — obie są w czasie działania czwórką. Zdanie podaje więc
- * samą liczbę i nic o jej pochodzeniu nie orzeka.
+ * Budżet okien rozmowy modułu określa, ile okien rozmowy moduł prowadzi na starcie i do ilu Operator może je rozbudować, licząc od profilu, nie od mechanizmu własnego.
  */
 export interface BudzetRozmowy {
   /** Ile okien rozmowy stoi na scenie na starcie. */
@@ -31,7 +14,7 @@ export interface BudzetRozmowy {
   zdanie: string;
 }
 
-/** Budżet okien rozmowy modułu; moduł spoza rejestru dostaje profil wspólny. */
+/** Budżet okien rozmowy modułu; moduł spoza rejestru dostaje profil wspólny stosowany domyślnie do wszystkich takich modułów. */
 export function budzetRozmowy(kodModulu: string): BudzetRozmowy {
   const profil = profilModulu(kodModulu);
   const granica = liczbaOkienRozmowy(profil);

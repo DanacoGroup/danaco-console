@@ -2,20 +2,7 @@ import type { Agent, AgentPermissionGroup } from '../../../../shared/contract';
 import type { StanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
-/**
- * Czynności okna Agent Manager sięgające poza sam wykaz: zmiana uprawnienia
- * eksperta i zdanie o przypisaniach projektu.
- *
- * Osobny plik od okna, bo to inna odpowiedzialność: okno składa kontrolki
- * i prowadzi odczyt, tu leży przebieg czynności wraz z tym, co po niej widzi
- * operator. Wzór ten sam co w `biblioteka-czynnosci.ts`.
- *
- * Potwierdzenie mówi to, co zapisał rdzeń, nie to, czego żądało okno: rdzeń
- * oddaje po zapisie komplet uprawnień eksperta i ten komplet rozstrzyga.
- * Po odpowiedzi okno odrysowuje wykaz, bo stan ładowania go opróżnia.
- */
-
-/** Zależności czynności okna. */
+/** Zależności czynności okna zarządcy ekspertów, wymagane do wykonania zmiany i pokazania wyniku zapisu operatorowi. */
 export interface ZaleznosciAgentow {
   zrodlo: ZrodloWorkspace;
   tresc: StanTresci;

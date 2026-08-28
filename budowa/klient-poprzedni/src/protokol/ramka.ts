@@ -1,12 +1,6 @@
 import { zdarzenieNieznanej, type Envelope } from '../../../shared/contract';
 
-/**
- * Ramka tekstowa WebSocket: zapis i odczyt koperty w formacie JSON.
- *
- * Odczyt jest fail-open: ramka nieczytelna albo o kształcie
- * niezgodnym z kopertą nie zrywa połączenia i nie blokuje sesji — wraca jako
- * zdarzenie `*.unknown` z zachowaniem treści surowej w ładunku.
- */
+/** Ramka tekstowa WebSocket: zapis i odczyt koperty w formacie JSON, fail-open przy ramce nieczytelnej. */
 export function zapiszRamke(koperta: Envelope): string {
   return JSON.stringify(koperta);
 }
@@ -20,7 +14,7 @@ export function odczytajRamke(ramka: string): Envelope {
   }
 }
 
-/** Sprawdza, czy odczytana wartość ma pola obowiązkowe koperty kontraktu. */
+/** Sprawdza, czy odczytana wartość niesie pola obowiązkowe koperty kontraktu, przede wszystkim jej typ. */
 function czyKoperta(wartosc: unknown): wartosc is Envelope {
   if (typeof wartosc !== 'object' || wartosc === null) return false;
   const kandydat = wartosc as Record<string, unknown>;

@@ -2,22 +2,7 @@ import { Command } from '../../../shared/contract';
 import { utworzSekcjeBraku } from './sekcja-braku';
 import type { SekcjaUstawien } from './sekcje';
 
-/**
- * Sekcja „Konto Operatora" — miejsce nazwane, bez ani jednego pola.
- *
- * Konto ISTNIEJE: rejestracja zakłada jedyną encję właściciela z loginem,
- * adresem e-mail uwierzytelniającym, stanem potwierdzenia i datą utworzenia.
- * Sekcja nie ma jednak czym go pokazać, bo brakuje KOMENDY ODCZYTU profilu —
- * `auth.register` konto zapisuje, `auth.verify` oddaje sesję, ale żadna komenda
- * nie zwraca loginu ani adresu. Pole bez komendy odczytu byłoby puste, a pole
- * bez komendy zapisu — atrapą, więc ich tu nie ma do czasu, aż rodzina odczytu
- * profilu wejdzie do kontraktu.
- *
- * Rodzina `account.*` nie jest tym, czego tu brakuje: opisuje konta modeli
- * (klucze dostawców), nie konto Operatora, i jest obsłużona
- * w `budowa/client/src/modele/`. Sekcja „Konta modeli" niżej w rejestrze
- * odsyła właśnie tam.
- */
+/** Sekcja konta operatora nazywa miejsce bez ani jednego pola, bo kontrakt nie niesie dziś komendy odczytu profilu operatora. */
 export function utworzSekcjeKonto(): SekcjaUstawien {
   return utworzSekcjeBraku({
     wstep:

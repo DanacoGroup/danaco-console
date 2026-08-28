@@ -6,16 +6,7 @@ import { utworzStanOknaStudio } from './stan-okna-studio';
 import type { StanStudio } from './stan-studio';
 import type { ZrodloOsadzenia } from './zrodlo-osadzenia';
 
-/**
- * Pas osadzenia modułu — wskazanie okna komunikacji sesji, w imieniu którego
- * moduł pracuje.
- *
- * `windowId` jest polem obowiązkowym komend `studio.document.open`
- * i `studio.contextual.op`, a moduł dostaje z powłoki wyłącznie sesję. Wskazanie
- * okna jest więc czynnością wspólną wszystkim oknom operacyjnym modułu i stoi
- * ponad nimi, zamiast w jednym z nich — inaczej pozostałe sięgałyby do cudzego
- * widoku.
- */
+/** Pas osadzenia modułu wskazuje okno komunikacji sesji, w imieniu którego moduł pracuje, wspólnie dla wszystkich jego okien operacyjnych. */
 export interface OsadzenieModulu {
   element: HTMLElement;
   /** Odczytuje okna sesji i parametry wykonania okna wybranego. */
@@ -56,13 +47,7 @@ export function utworzOsadzenieModulu(
     parametry.append(etykieta, tresc);
   }
 
-  /**
-   * Wypisuje samo wskazanie okna i nic ponadto.
-   *
-   * Pozostałe parametry wykonania (moduł, kanał modelu, zasięg, tryb uprawnień,
-   * rola, katalogi robocze) stoją na tym samym ekranie w panelu „Sterowanie
-   * okna", więc powtarzanie ich tutaj zajmowałoby przestrzeń bez nowej treści.
-   */
+  /** Wypisuje samo wskazanie okna: pozostałe parametry wykonania stoją w panelu Sterowanie okna. */
   function pokazParametry(odpowiedz: WindowStateGetResponse): void {
     parametry.replaceChildren();
     wpisz('Okno kontekstu', odpowiedz.window.title ?? odpowiedz.window.id);
@@ -110,8 +95,7 @@ export function utworzOsadzenieModulu(
         pasStanu.puste('Sesja bez okna komunikacji', 'Komendy modułu potrzebują okna — załóż je w powłoce.');
         return;
       }
-      // Wybór ustawiamy wprost, a nie licząc na domyślną pozycję kontrolki:
-      // pusty `windowId` poleciałby do rdzenia jako żądanie bez okna.
+      // Wybór ustawiamy wprost, bo pusty windowId poleciałby do rdzenia jako żądanie bez okna.
       if (!okna.some((okno) => okno.id === wybor.kontrolka.value)) {
         wybor.kontrolka.value = pierwsze.id;
       }

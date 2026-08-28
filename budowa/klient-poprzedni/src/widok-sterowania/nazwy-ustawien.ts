@@ -8,19 +8,7 @@ import {
 import { nazwaKanalu, type RejestrKanalow } from '../sterowanie/rejestr-kanalow';
 import type { MigawkaSterowania } from '../sterowanie/stan-sterowania';
 
-/**
- * Osiem ustawień okna sprowadzonych do wierszy podsumowania.
- *
- * Plik nie zna ani jednej nazwy prezentacyjnej z osobna — wszystkie bierze
- * z istniejących słowników: `okno-komunikacji/etykiety-okna` (środowisko,
- * rola), `sterowanie/etykiety-sterowania` (moduł, nakład, uprawnienia)
- * i `sterowanie/rejestr-kanalow` (nazwa kanału modelu). Jedyne, co dokłada,
- * to złożenie wartości w wiersz czytelny bez otwierania kontrolki.
- *
- * Host wykonania nie jest osobnym wierszem, lecz dopiskiem przy środowisku
- * wykonania — uszczegóławia zasięg, a nie stanowi odrębnego ustawienia. Nazwa
- * hosta zostaje przez to widoczna bez dziewiątej pozycji.
- */
+/** Osiem ustawień okna sprowadzonych do wierszy podsumowania, złożonych z nazw pochodzących z istniejących słowników etykiet; host wykonania jest dopiskiem przy środowisku, nie odrębnym wierszem. */
 export interface PozycjaPodsumowania {
   /** Klucz porządkowy wiersza; zarazem wartość `data-ustawienie`. */
   klucz: string;
@@ -36,16 +24,14 @@ export interface PozycjaPodsumowania {
   ladowanie?: boolean;
 }
 
-/** Osiem wierszy podsumowania w kolejności, w jakiej stoją w widoku. */
+/** Zwraca osiem wierszy podsumowania w kolejności, w jakiej stoją w widoku sterowania, budowanych z migawki ustawień okna i rejestru kanałów. */
 export function pozycjePodsumowania(
   migawka: MigawkaSterowania,
   rejestr: RejestrKanalow,
 ): PozycjaPodsumowania[] {
   const { okno, ustawienia } = migawka;
 
-  // Pusty wykaz przed odpowiedzią rdzenia: nazwy kanałów są jeszcze w drodze.
-  // Rejestr nie odróżnia braku odpowiedzi od pustego rejestru (zgłoszone),
-  // więc do tego czasu wiersz kanału niesie wskaźnik ładowania, nie wyrok.
+  // Wykaz pusty w trakcie odpowiedzi rdzenia; wiersz kanału pokazuje wtedy wskaźnik ładowania.
   const wykazWDrodze = rejestr.kanaly().length === 0;
 
   return [
@@ -117,7 +103,7 @@ export function pozycjePodsumowania(
   ];
 }
 
-/** Zasięg wykonania wraz z nazwą hosta, jeżeli operator ją wskazał. */
+/** Zwraca opis zasięgu wykonania wraz z nazwą hosta, gdy host wykonania został wskazany w ustawieniach okna. */
 function opisSrodowiska(migawka: MigawkaSterowania): string {
   const zasieg = nazwaSrodowiska(migawka.okno.executionEnv);
   const host = migawka.ustawienia.hostWykonania.trim();
@@ -137,7 +123,7 @@ function opisKatalogow(katalogi: string[]): string {
   return `${ile} ${odmianaKatalogu(ile)}`;
 }
 
-/** Odmiana rzeczownika „katalog" przy liczebniku większym od jedności. */
+/** Zwraca odmianę rzeczownika „katalog" właściwą dla liczebnika większego od jedności, według reguł polskiej odmiany liczebników. */
 function odmianaKatalogu(ile: number): string {
   const dziesiatki = ile % 100;
   const jednosci = ile % 10;
@@ -145,14 +131,7 @@ function odmianaKatalogu(ile: number): string {
   return mnoga ? 'katalogi' : 'katalogów';
 }
 
-/**
- * Nazwa kanału modelu z rejestru rdzenia.
- *
- * Identyfikator spoza wykazu nie znika i nie zostaje podmieniony — widok
- * pokazuje prawdę o oknie, a nie pozycję pierwszą z brzegu. Dopóki wykaz
- * jest pusty (odpowiedź rdzenia w drodze), dopisek „spoza wykazu" byłby
- * przedwczesny — wiersz pokazuje sam identyfikator ze wskaźnikiem ładowania.
- */
+/** Zwraca nazwę kanału modelu z rejestru rdzenia; identyfikator spoza wykazu zostaje pokazany wprost, a pusty wykaz w trakcie odpowiedzi rdzenia daje sam identyfikator. */
 function opisKanalu(
   rejestr: RejestrKanalow,
   identyfikator: string,

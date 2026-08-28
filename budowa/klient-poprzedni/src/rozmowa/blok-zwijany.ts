@@ -2,7 +2,7 @@ import './blok.css';
 
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 
-/** Nastawy bloku zwijanego. */
+/** Interfejs zawiera pełny zestaw nastaw przekazywanych przy tworzeniu bloku zwijanego wewnątrz wpisu rozmowy. */
 export interface NastawyBloku {
   /** Tytuł bloku — etykieta wersalikowa. */
   tytul: string;
@@ -14,7 +14,7 @@ export interface NastawyBloku {
   odmiana?: 'neutralna' | 'akcent' | 'blad';
 }
 
-/** Blok zwijany — nagłówek klikalny i treść pod nim. */
+/** Interfejs bloku zwijanego udostępnia element osadzany we wpisie, obszar treści oraz sterowanie widocznością i rozwinięciem. */
 export interface BlokZwijany {
   /** Element montowany we wpisie. */
   element: HTMLElement;
@@ -24,23 +24,11 @@ export interface BlokZwijany {
   ustawPodtytul(tekst: string): void;
   /** Pokazuje albo ukrywa cały blok. */
   pokaz(widoczny: boolean): void;
-  /**
-   * Rozwija albo zwija blok z zewnątrz — używa tego widok transkryptu.
-   *
-   * Wołane tylko przy zmianie trybu, nigdy przy odświeżeniu treści: blok
-   * przestawiony ręcznie ma zostać w stanie, w jakim go zostawiono, także gdy
-   * w środku tury przychodzą kolejne fragmenty.
-   */
+  /** Rozwija albo zwija blok z zewnątrz, wywoływane wyłącznie przy zmianie trybu widoku. */
   ustawRozwiniecie(otwarty: boolean): void;
 }
 
-/**
- * Blok zwijany zbudowany na `details`/`summary`.
- *
- * Zwinięcie jest zachowaniem natywnym przeglądarki, więc blok działa
- * klawiaturą, ma poprawną semantykę dla technologii wspomagających i obywa się
- * bez obsługiwaczy zdarzeń. Brak treści oznacza ukrycie bloku, nie wyszarzenie.
- */
+/** Funkcja tworzy blok zwijany oparty na natywnych elementach details i summary, z ikoną, tytułem i podtytułem w nagłówku. */
 export function utworzBlokZwijany(nastawy: NastawyBloku): BlokZwijany {
   const element = document.createElement('details');
   element.className = `dc-blok dc-blok--${nastawy.odmiana ?? 'neutralna'}`;
@@ -82,7 +70,7 @@ export function utworzBlokZwijany(nastawy: NastawyBloku): BlokZwijany {
   };
 }
 
-/** Wiersz pary „nazwa — wartość" w treści bloku. */
+/** Funkcja buduje wiersz pary nazwa-wartość wyświetlany w treści bloku zwijanego, z wartością zapisaną krojem stałej szerokości. */
 export function wierszDanych(nazwa: string, wartosc: string): HTMLElement {
   const wiersz = document.createElement('div');
   wiersz.className = 'dc-dana';
@@ -99,7 +87,7 @@ export function wierszDanych(nazwa: string, wartosc: string): HTMLElement {
   return wiersz;
 }
 
-/** Blok tekstu w kroju monospacjowym — argv, prompt, wejście narzędzia. */
+/** Funkcja buduje blok tekstu w kroju stałej szerokości, przeznaczony na treść wywołania, polecenia albo wynik narzędzia. */
 export function blokKodu(tresc: string): HTMLElement {
   const element = document.createElement('pre');
   element.className = 'dc-kod dn-kod';

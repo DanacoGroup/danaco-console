@@ -23,21 +23,7 @@ import {
   dziennikPoKolejnosci,
 } from './dziennik-czynnosci';
 
-/**
- * Sprawdziany dziennika czynności — mierzone jest to, w czym pomyłka jest CICHA.
- *
- * Cztery rzeczy, których zgubienie kosztowałoby Operatora pracę albo zaufanie:
- *
- *   1. odmowa cofnięcia rozpoznana jako odmowa, mimo że wywołanie się udało;
- *   2. zależność nazwana wprost, a nie schowana za „nie udało się";
- *   3. zdanie o różnicy drzew obecne przy każdym cofnięciu;
- *   4. liczba zmian Operatora ZACHOWANYCH przy cofaniu pracy modelu.
- *
- * Czego tu NIE ma: sprawdzianu, że przycisk woła komendę. Taki sprawdzian mierzy
- * atrapę, którą sam stawia.
- */
-
-/** Wpis dziennika o wskazanym stanie i zależnościach. */
+/** Buduje wpis dziennika czynności o wskazanym kodzie, kolejności, stanie i zależnościach blokujących go zadania. */
 function wpis(
   kod: string,
   kolejnosc: number,
@@ -57,7 +43,7 @@ function wpis(
   };
 }
 
-/** Bilans z jednym pominięciem przez nazwaną blokadę. */
+/** Buduje bilans czynności z jednym pominięciem, zatrzymanym przez nazwaną blokadę fragmentu dokumentu. */
 function bilansZBlokada(): StudioActionBalance {
   return {
     applied: 3,

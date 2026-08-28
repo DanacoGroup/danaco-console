@@ -15,17 +15,7 @@ import type { StanBadania } from './stan-badania';
 import { utworzStanOknaBadania } from './stan-okna-badania';
 
 /**
- * Research Workspace — okno wiodące modułu: zakres badania i wejście do
- * czterech pozostałych okien.
- *
- * Zakres badania zapisuje komenda `research.workspace.set` (zakres i etapy),
- * której uchwyt stoi w rdzeniu — `adapter_modul_badania_uchwyty.go`,
- * `CommandResearchWorkspaceSet`. Zapis kończy się odpowiedzią rdzenia albo jego
- * odmową, nigdy ciszą.
- *
- * Nawigacja do pozostałych okien modułu jest przeniesieniem ogniska wewnątrz
- * przestrzeni modułu: okna stoją obok siebie, nie w osobnych trasach, więc nie
- * woła rdzenia.
+ * Research Workspace jest oknem wiodącym modułu, zapisującym zakres badania komendą ustawienia przestrzeni roboczej oraz otwierającym wejście do pozostałych okien.
  */
 export interface OknoResearchWorkspace {
   element: HTMLElement;
@@ -33,8 +23,7 @@ export interface OknoResearchWorkspace {
 }
 
 /**
- * Wykaz okien, do których to okno przenosi ognisko — w porządku pracy badawczej
- * z opracowania (rozdz. 4.1), nie w porządku alfabetycznym.
+ * Wykaz okien, do których to okno przenosi ognisko, ułożony w porządku pracy badawczej, nie w porządku alfabetycznym.
  */
 const PRZEJSCIA: readonly { kod: string; nazwa: string }[] = [
   { kod: KODY_OKIEN.odkrywanie, nazwa: 'Discovery Panel' },
@@ -75,11 +64,7 @@ export function utworzOknoResearchWorkspace(
   nawigacja.className = 'mr-przejscia';
   nawigacja.append(...PRZEJSCIA.map((przejscie) => pozycjaPrzejscia(przejscie, przejdz)));
 
-  // Wskazanie etapu prowadzi wzrok do okna właściwego temu krokowi pracy.
-  // Opracowanie chce przewinięcia „do materiału właściwego etapowi". Przypisanie
-  // źródła do etapu ma już pole w żądaniu katalogowania, ale samo źródło
-  // oddawane przez rdzeń go nie niesie, więc okno nie ma po czym zawężać
-  // i mówi to wprost, zamiast udawać filtr.
+  // Wskazanie etapu porządkuje pracę w widoku; źródło oddawane przez rdzeń nie niesie przypisania etapu.
   const etapy = utworzPasekEtapow((etap) => {
     kontekst.odpowiedz.pokaz(
       `Wskazano etap „${etap}". Przypisanie źródła do etapu da się wysłać, ale źródło oddawane ` +
@@ -120,7 +105,7 @@ export function utworzOknoResearchWorkspace(
   return { element: rama.element, odswiez };
 }
 
-/** Pozycja nawigacji do okna modułu; w pełni klikalna zawsze. */
+/** Funkcja tworzy pozycję nawigacji prowadzącą do okna modułu, w pełni klikalną niezależnie od stanu okna docelowego. */
 function pozycjaPrzejscia(
   przejscie: { kod: string; nazwa: string },
   przejdz: (kodOkna: string) => void,

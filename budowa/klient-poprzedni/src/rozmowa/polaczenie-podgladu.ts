@@ -9,7 +9,10 @@ import { utworzUzgodnienie } from '../protokol/uzgodnienie';
 import { zamontujRozmowe } from './indeks';
 import { zapewnijKanalGlowny } from './zapewnienie-kanalu';
 
-/** Miejsca, w których podgląd wypisuje przebieg. */
+/**
+ * Miejsca w interfejsie podglądu, w których uruchomiony podgląd wypisuje przebieg łączenia
+ * z rdzeniem.
+ */
 export interface CzesciPodgladu {
   /** Kontener widoku rozmowy. */
   scena: HTMLElement;
@@ -18,16 +21,8 @@ export interface CzesciPodgladu {
 }
 
 /**
- * Uruchomienie podglądu warstwy rozmowy na żywym rdzeniu.
- *
- * Droga jest ta sama, którą pójdzie powłoka: transport → kanał kontraktu →
- * zapewnienie kanału głównego w rejestrze → uzgodnienie (powitanie, sesja,
- * okno) → rozmowa okna. Podgląd nie stawia atrapy — rozmawia z rdzeniem tak
- * samo jak aplikacja.
- *
- * Kanał główny zapewniamy przed uzgodnieniem, ponieważ `window.create` wskazuje
- * kanał modelu, a świeża baza rdzenia nie ma jeszcze ani jednego wiersza
- * rejestru.
+ * Uruchamia podgląd warstwy rozmowy na żywym rdzeniu tą samą drogą, którą przechodzi
+ * powłoka produktu.
  */
 export function uruchomPodglad(czesci: CzesciPodgladu): void {
   const opis = opisPoczatkowy();

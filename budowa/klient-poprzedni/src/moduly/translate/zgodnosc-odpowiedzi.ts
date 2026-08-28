@@ -1,26 +1,9 @@
 /**
- * Zgodność zamówienia z odpowiedzią rdzenia — jedno miejsce na regułę, którą
- * moduł Translate stosuje w zdaniach potwierdzających.
- *
- * Zdanie o skutku buduje się z odpowiedzi, a nie z żądania. Okno wie, co
- * wysłało, i wie, co rdzeń oddał, więc porównanie jest darmowe; zdanie
- * zbudowane z żądania mówiłoby prawdę tylko tak długo, jak długo rdzeń zapisuje
- * dokładnie to, o co go poproszono.
- *
- * Rozbieżność jest odmową, nie uwagą na marginesie: gdy rdzeń oddał co innego,
- * niż zamówiono, okno nie potwierdza czynności — mówi wprost, co wysłało i co
- * wróciło. Przy zgodności zdanie potwierdza normalnie, bo o braku, którego rdzeń
- * nie pokazał, okno nie orzeka.
- *
- * Znaki niewidoczne wychodzą kodem. `trim()` przeglądarki i `strings.TrimSpace`
- * rdzenia nie są tożsame: JavaScript nie zdejmuje U+0085 (NEL), Go zdejmuje;
- * odwrotnie JavaScript zdejmuje U+FEFF (ZWNBSP), a Go nie. Gdyby rozbieżność
- * padła na taki znak, dwa cytaty wyglądałyby w oknie identycznie, a Operator
- * zobaczyłby zarzut bez różnicy. Dlatego każdy znak sterujący, formatujący
- * i odstęp inny niż zwykła spacja wychodzi jako „⟨U+0085⟩".
+ * Zgodność zamówienia z odpowiedzią rdzenia jest jednym miejscem na regułę, którą moduł Translate
+ * stosuje w zdaniach potwierdzających.
  */
 
-/** Jedno pole porównywane między żądaniem a odpowiedzią. */
+/** Jedno pole porównywane między żądaniem a odpowiedzią niesie nazwę pola, wartość zamówioną oraz wartość oddaną przez rdzeń. */
 export interface PoleOdpowiedzi {
   /** Nazwa pola tak, jak nazywa je okno — nie nazwa z kontraktu. */
   nazwa: string;
@@ -30,7 +13,7 @@ export interface PoleOdpowiedzi {
   oddane: string | undefined;
 }
 
-/** Po ilu znakach cytat się urywa — zdanie ma być czytelne, nie kompletne. */
+/** Po ilu znakach cytat się urywa — zdanie ma być czytelne, nie kompletne, więc długi cytat kończy się wielokropkiem. */
 const DLUGOSC_CYTATU = 60;
 
 /**
@@ -60,7 +43,7 @@ function opisPola(pole: PoleOdpowiedzi): string {
   return `${pole.nazwa}: wysłano ${cytat(pole.zamowione)}, ${wrocilo}`;
 }
 
-/** Cytat wartości — z ujawnionymi znakami niewidocznymi i uciętym ogonem. */
+/** Cytat wartości z ujawnionymi znakami niewidocznymi i uciętym ogonem pokazuje różnicę wprost, bez zgadywania. */
 function cytat(wartosc: string): string {
   if (wartosc === '') return '(pusto)';
   const widok = ujawnij(wartosc);

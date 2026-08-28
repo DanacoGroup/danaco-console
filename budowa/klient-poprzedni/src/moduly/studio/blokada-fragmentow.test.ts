@@ -18,16 +18,7 @@ import {
   blokadaZakresPoprawny,
 } from './blokada-fragmentow';
 
-/**
- * Sprawdziany blokad i zajęć — mierzą to, czego zgubienie byłoby ciszą.
- *
- *   — zmiana obejmująca blokadę częściowo oddaje BILANS wraz z nazwą blokady;
- *   — odmowa zajęcia NAZYWA wykonawcę i czas, a nie wraca pustką;
- *   — zasięg obejmujący Operatora jest opisany jako ustawienie jawne, bo blokada
- *     domyślnie jest skierowana przeciw modelowi, nie przeciw właścicielowi pisma.
- */
-
-/** Blokada o wskazanym zasięgu. */
+/** Buduje blokadę fragmentu o wskazanym zasięgu, z ustaloną nazwą i zakresem, do użycia w sprawdzianach opisu blokad. */
 function blokada(zasieg: StudioLockScope): StudioFragmentLock {
   return {
     id: 'blokada-1',
@@ -42,7 +33,7 @@ function blokada(zasieg: StudioLockScope): StudioFragmentLock {
   };
 }
 
-/** Zajęcie fragmentu przez nazwanego wykonawcę. */
+/** Buduje zajęcie fragmentu dokumentu przez nazwanego wykonawcę modelowego, do użycia w sprawdzianach opisu zajęć. */
 function zajecie(): StudioAgentSlot {
   return {
     id: 'zajecie-1',

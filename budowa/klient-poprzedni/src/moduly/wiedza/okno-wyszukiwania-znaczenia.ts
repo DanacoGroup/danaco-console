@@ -11,57 +11,16 @@ import {
 import { utworzZrodloWiedzy } from './zrodlo-wiedzy';
 import type { Kanal } from '../../protokol/kanal';
 
-/**
- * Okno wyszukiwania po znaczeniu — pytanie w języku Operatora, odpowiedź
- * fragmentami jego własnych treści. Wyszukiwanie po słowach ma osobną drogę
- * (`library.file.search`); tutaj jedzie `knowledge.search` i `knowledge.index`.
- *
- * Źródło jest treścią wyniku, nie ozdobą przy nim, bo trafienie bez wskazania
- * źródła jest bezwartościowe. Dlatego:
- *  • każdy fragment niesie `source` w nagłówku pozycji, nie w dymku;
- *  • źródło jest klikalne — przyciskiem, który kładzie `sourceId` do schowka
- *    Operatora, bo to jedyne wskazanie, którym da się po źródło sięgnąć
- *    w innym oknie. Kontrakt nie niesie komendy „otwórz źródło fragmentu"
- *    (`KnowledgeHit` ma `source` i `sourceId`, i nic więcej), więc skok wprost
- *    do pliku biblioteki nie ma pokrycia i okno mówi to wprost;
- *  • fragment bez `sourceId` dostaje zdanie o braku wskazania zamiast martwego
- *    przycisku: rdzeń ma prawo źródła nie umieć wskazać.
- *
- * Trafność też jest widoczna: `score` jest w setnych (100 = najbliższy możliwy)
- * i stoi plakietką przy każdej pozycji. Bez niej wykaz posortowany malejąco
- * wygląda tak samo przy trafieniu bliskim i przy trafieniu przypadkowym.
- *
- * Przebudowa wskaźnika stoi w tym samym oknie, bo pusty wynik szukania ma
- * dokładnie dwie przyczyny: nie ma czego znaleźć albo wskaźnik nie został
- * zbudowany. Przycisk przebudowy obok pustego wyniku pozwala rozstrzygnąć to
- * jednym kliknięciem.
- *
- * Wygląd w całości z żetonów i biblioteki (`komponenty/`, `--dn-*`). Plik nie
- * zna ani jednej barwy.
- */
+/** Okno wyszukiwania po znaczeniu zadaje pytanie w języku operatora i odpowiada fragmentami jego własnych treści wraz ze źródłem i trafnością. */
 export interface OknoWyszukiwaniaZnaczenia {
   element: HTMLElement;
   /** Powtarza ostatnie pytanie; bez pytania nie woła rdzenia. */
   odswiez(): void;
-  /**
-   * Zwija ster zakresu wraz z jego nasłuchem dokumentu.
-   *
-   * `menu-drzewo` zakłada nasłuch `pointerdown` na dokumencie, dopóki jest
-   * otwarte — okno zdjęte ze sceny przy rozwiniętym menu zostawiłoby ten
-   * nasłuch wskazujący na element, którego w dokumencie już nie ma.
-   */
+  /** Zwinięcie odpina nasłuch dokumentu, żeby zamknięte okno nie wskazywało na usunięty element. */
   zamknij(): void;
 }
 
-/**
- * Wiersz ze sterem zamiast pola — podpis nad menu-drzewem.
- *
- * Osobno od `wiersz()` z biblioteki kontrolek, bo tamten buduje `<label>`,
- * a etykieta bez `for` wiąże się z pierwszym potomkiem dającym się etykietować
- * — czyli z uchwytem menu. Kliknięcie w podpis otwierałoby wtedy menu (podpis
- * nie jest sterem), a nazwa dostępna uchwytu wchodziłaby w spór z `aria-label`,
- * które mechanizm ustawia sam i które niesie bieżącą wartość nastawy.
- */
+/** Wiersz ze sterem zamiast pola tworzy podpis nad menu drzewem osobno od wiersza biblioteki, bo tamten wiąże etykietę z uchwytem menu. */
 function wierszZakresu(etykieta: string, ster: HTMLElement): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dwz-wiersz';
@@ -74,14 +33,7 @@ function wierszZakresu(etykieta: string, ster: HTMLElement): HTMLElement {
   return element;
 }
 
-/**
- * Zakresy wiedzy podane wykazem kontraktu, nie literałami okna, wraz ze
- * zdaniem mówiącym, co każdy z nich przeszukuje.
- *
- * Zdanie jest tu potrzebne bardziej niż przy większości nastaw: „wszystko"
- * i „pliki przestrzeni" brzmią podobnie, a przeszukują dwa różne zbiory —
- * i to od nich zależy, czy pusty wynik znaczy „nie ma", czy „nie tam".
- */
+/** Zakresy wiedzy pochodzą z wykazu kontraktu, nie z literałów okna, i niosą zdanie mówiące, co każdy z nich przeszukuje. */
 const ZAKRESY: ReadonlyArray<readonly [KnowledgeScope, string, string]> = [
   [
     KnowledgeScope.All,
@@ -101,7 +53,7 @@ const ZAKRESY: ReadonlyArray<readonly [KnowledgeScope, string, string]> = [
   ],
 ];
 
-/** Zakres, od którego okno startuje — najszerszy, bo pytanie pada bez zawężeń. */
+/** Zakres, od którego okno startuje, jest najszerszy możliwy, bo pierwsze pytanie pada bez żadnych zawężeń. */
 const ZAKRES_POCZATKOWY = KnowledgeScope.All;
 
 export function utworzOknoWyszukiwaniaZnaczenia(
@@ -126,20 +78,14 @@ export function utworzOknoWyszukiwaniaZnaczenia(
   pytanie.placeholder = 'O co pytasz? np. „ustalenia z rozmowy o dostawcy"';
   pytanie.setAttribute('aria-label', 'Pytanie do wiedzy Operatora');
 
-  /**
-   * Zakres wskazany w oknie. Zmienna, a nie odczyt z kontrolki: menu-drzewo
-   * jest sterem oddającym klucz przy wyborze — mechanizm z biblioteki nie
-   * udaje `<input>` i nie ma być o wartość pytany.
-   */
+  // Zakres jest zmienną, nie odczytem z kontrolki, bo menu drzewa oddaje klucz przy wyborze.
   let zakres: KnowledgeScope = ZAKRES_POCZATKOWY;
   const menuZakresu = utworzMenuDrzewo({
     nastawa: 'Zakres przeszukiwanej wiedzy',
     naWybor: (klucz) => {
       zakres = klucz as KnowledgeScope;
       przepiszDrzewoZakresu();
-      // Zmiana zakresu po zadanym pytaniu powtarza je sama: Operator zawęża
-      // zakres właśnie dlatego, że poprzednia odpowiedź go nie zadowoliła,
-      // a drugie kliknięcie w „Szukaj" byłoby ruchem bez treści.
+      // Zmiana zakresu po zadanym pytaniu powtarza je sama, bo zawężenie bez nowego wyszukania nic nie da.
       if (ostatniePytanie !== '') szukajTeraz();
     },
   });
@@ -171,19 +117,13 @@ export function utworzOknoWyszukiwaniaZnaczenia(
   rama.akcje.append(szukaj, przebuduj);
   rama.cialo.append(tresc.element);
 
-  /**
-   * Ostatnie pytanie zadane, nie ostatnie wpisane. `odswiez()` powtarza to,
-   * co naprawdę poszło do rdzenia — inaczej odświeżenie po zmianie treści pola
-   * pokazałoby wynik jednego pytania pod nagłówkiem innego.
-   */
+  // Ostatnie pytanie zadane, nie ostatnie wpisane — odświeżenie powtarza to, co poszło do rdzenia.
   let ostatniePytanie = '';
 
   function szukajTeraz(): void {
     const fraza = pytanie.value.trim();
     if (fraza === '') {
-      // Pytanie puste nie jedzie do rdzenia: `query` jest w kontrakcie polem
-      // wymaganym, a odmowa walidacji powiedziałaby Operatorowi to samo, tylko
-      // po podróży w obie strony i cudzym językiem.
+      // Pytanie puste nie jedzie do rdzenia, bo pole jest w kontrakcie wymagane, a odmowa byłaby zbędna.
       tresc.pusto('Wpisz pytanie — wyszukiwanie po znaczeniu potrzebuje zdania, nie pustego pola.');
       return;
     }
@@ -213,8 +153,7 @@ export function utworzOknoWyszukiwaniaZnaczenia(
     fraza: string,
   ): void {
     if (trafienia.length === 0) {
-      // Pustka bywa poprawna — i ma dwie przyczyny, których Operator z samego
-      // pustego wykazu nie odróżni. Zdanie nazywa obie i wskazuje przycisk.
+      // Pustka bywa poprawna z dwóch różnych przyczyn, których sam pusty wykaz nie odróżnia.
       tresc.pusto(
         `Wiedza Operatora nie ma fragmentu bliskiego pytaniu „${fraza}". Jeżeli treści przybyło od ostatniego razu, przebuduj wskaźnik — bez tego nowe pozycje są dla szukania niewidoczne.`,
       );
@@ -229,8 +168,7 @@ export function utworzOknoWyszukiwaniaZnaczenia(
     for (const trafienie of trafienia) wykaz.append(pozycjaTrafienia(trafienie, tresc.potwierdzenie));
     miejsce.append(wykaz);
     if (trafienia.length < wszystkich) {
-      // Wykaz przycięty granicą mówi to wprost: Operator, który widzi
-      // dziesięć pozycji z czterdziestu i nie wie o tym, uzna, że reszty nie ma.
+      // Wykaz przycięty granicą mówi to wprost, żeby brak reszty nie wyglądał na brak wyniku.
       const przypis = document.createElement('p');
       przypis.className = 'dwz-przypis';
       przypis.textContent = `Pokazano ${trafienia.length} z ${wszystkich} fragmentów — podnieś granicę, żeby zobaczyć resztę.`;
@@ -261,8 +199,7 @@ export function utworzOknoWyszukiwaniaZnaczenia(
           `Wskaźnik przebudowany: wniesiono ${wynik.wynik.wniesione}, we wskaźniku ${wynik.wynik.wszystkich} pozycji${model}.`,
           true,
         );
-        // Po przebudowie powtarzamy ostatnie pytanie sami: Operator przebudował
-        // wskaźnik właśnie dlatego, że poprzedni wynik go nie zadowolił.
+        // Po przebudowie wskaźnika ostatnie pytanie jest powtarzane, bo po to wskaźnik przebudowano.
         if (ostatniePytanie !== '') szukajTeraz();
       });
   }
@@ -275,15 +212,13 @@ export function utworzOknoWyszukiwaniaZnaczenia(
 
   tresc.pusto('Zadaj pytanie — okno nie pytało jeszcze rdzenia.');
 
-  // Uchwyt niesie wartość od pierwszej chwili: pusty prostokąt w miejscu
-  // nastawy nie mówi Operatorowi, czego okno w tej chwili przeszukuje.
+  // Uchwyt niesie wartość od pierwszej chwili, żeby było widać, czego okno w tej chwili przeszukuje.
   przepiszDrzewoZakresu();
 
   return {
     element: rama.element,
     odswiez() {
-      // Bez zadanego pytania odświeżenie nie woła rdzenia: `knowledge.search`
-      // wymaga `query`, więc wywołanie byłoby pewną odmową walidacji.
+      // Bez zadanego pytania odświeżenie nie woła rdzenia, bo pole zapytania jest w kontrakcie wymagane.
       if (ostatniePytanie === '') return;
       pytanie.value = ostatniePytanie;
       szukajTeraz();
@@ -294,7 +229,7 @@ export function utworzOknoWyszukiwaniaZnaczenia(
   };
 }
 
-/** Granica z pola liczbowego; puste i niedodatnie znaczy „granica rdzenia". */
+/** Funkcja czyta granicę z pola liczbowego; wartość pusta albo niedodatnia znaczy granicę ustaloną przez rdzeń. */
 function granicaLiczbowa(pole: HTMLInputElement): number | undefined {
   const liczba = Number.parseInt(pole.value, 10);
   return Number.isFinite(liczba) && liczba > 0 ? liczba : undefined;
@@ -326,13 +261,7 @@ function pozycjaTrafienia(
   return element;
 }
 
-/**
- * Uchwyt do źródła — przycisk kopiujący wskazanie, gdy rdzeń je podał.
- *
- * Kopia, a nie skok, bo kontrakt nie ma komendy otwierającej źródło fragmentu;
- * `sourceId` jest jedynym, czym da się po nie sięgnąć w oknie biblioteki albo
- * w rozmowie z modelem. Przycisk nazywa więc wprost to, co robi.
- */
+/** Uchwyt do źródła jest przyciskiem kopiującym wskazanie źródła, gdy rdzeń je podał, bo kontrakt nie ma komendy skoku do źródła. */
 function uchwytZrodla(
   trafienie: KnowledgeHit,
   potwierdz: (zdanie: string, udane: boolean) => void,
@@ -353,15 +282,14 @@ function uchwytZrodla(
       .writeText(wskazanie)
       .then(() => potwierdz(`Wskazanie źródła skopiowane: ${wskazanie}`, true))
       .catch(() =>
-        // Schowek bywa odmówiony przez przeglądarkę — wtedy podajemy wskazanie
-        // wprost w potwierdzeniu, żeby Operator mógł je przepisać.
+        // Schowek bywa odmówiony przez przeglądarkę, więc wskazanie trafia wprost do treści potwierdzenia.
         potwierdz(`Schowek niedostępny. Wskazanie źródła: ${wskazanie}`, false),
       );
   });
   return uchwyt;
 }
 
-/** Zakres, z którego przyszedł fragment — biblioteka, historia, przestrzeń. */
+/** Funkcja buduje plakietkę zakresu, z którego przyszedł fragment: biblioteka, historia albo przestrzeń. */
 function plakietkaZakresu(trafienie: KnowledgeHit): HTMLElement {
   const element = document.createElement('span');
   element.className = 'dn-plakietka';
@@ -383,9 +311,7 @@ function plakietkaTrafnosci(trafienie: KnowledgeHit): HTMLElement {
     element.title = 'Rdzeń nie podał miary trafności tego fragmentu.';
     return element;
   }
-  // Klasy dokładane jawnymi literałami, nie składane w napisie: kontrola
-  // pokrycia klas CSS czyta napisy, a nazwa złożona w czasie działania jest
-  // dla niej ślepa — reguła bez wołacza gnije wtedy niezauważona.
+  // Klasy są dokładane jawnymi literałami, bo kontrola pokrycia klas CSS czyta napisy, nie składa je.
   element.className = 'dn-plakietka';
   element.classList.add(
     trafienie.score >= PROG_TRAFNOSCI_MOCNEJ ? 'dn-plakietka--sukces' : 'dn-plakietka--ostrzezenie',
@@ -394,16 +320,10 @@ function plakietkaTrafnosci(trafienie: KnowledgeHit): HTMLElement {
   return element;
 }
 
-/**
- * Próg, powyżej którego trafność dostaje plakietkę sukcesu.
- *
- * Wartość jest umową okna, nie miarą rdzenia — kontrakt mówi tylko, że `score`
- * jest w setnych i że 100 to najbliższy możliwy. Próg stoi stałą nazwaną, żeby
- * liczba w kodzie nie udawała progu wziętego skądinąd.
- */
+/** Próg trafności mocnej jest umową okna, nie miarą rdzenia, i stoi stałą nazwaną, żeby liczba nie udawała wartości znikąd. */
 const PROG_TRAFNOSCI_MOCNEJ = 70;
 
-/** Nazwy zakresów po polsku; klucze z kontraktu, nie literały okna. */
+/** Nazwy zakresów podane po polsku odpowiadają kluczom zakresu z kontraktu, nie literałom wymyślonym w oknie. */
 const OPIS_ZAKRESU: Record<string, string> = {
   [KnowledgeScope.Library]: 'biblioteka',
   [KnowledgeScope.History]: 'historia rozmów',

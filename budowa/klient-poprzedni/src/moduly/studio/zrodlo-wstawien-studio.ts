@@ -42,33 +42,10 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
-/**
- * Siedemnaście komend `studio.*` wnoszących treść do dokumentu i wydających go
- * dalej — wejście, wydanie, wniesienie ze źródła i cyfryzacja.
- *
- * ── Trzy rodziny w jednym źródle i dlaczego razem ────────────────────────────
- * Wszystkie trzy prowadzą tę samą drogę: coś spoza dokumentu wchodzi do
- * dokumentu albo dokument wychodzi na zewnątrz. `document.create` zakłada pustą
- * stronę, `document.import.*` wnosi plik i PDF WPROST do edytora,
- * `document.image.import` obraz w miejsce kursora, `insert.from.*` fragment
- * z Biblioteki i ze sieci wraz z zapisem pochodzenia, a `ingest.*` prowadzi
- * kolejkę cyfryzacji po stronie rdzenia. Wydanie (`export.format`,
- * `export.batch`), zapis pod nazwą i kopia zamykają drogę w drugą stronę.
- *
- * ── Bilans nie jest ozdobą odpowiedzi ───────────────────────────────────────
- * Rdzeń oddaje przy wniesieniu `StudioImportBalance` (co odzyskane, a co nie),
- * przy czynności `StudioActionBalance` (co zmienione, co pominięte i przez którą
- * blokadę), a przy wydaniu `StudioExportResult.droppedFeatures` (cechy, których
- * format nie niesie). Zdania składające te trzy bilanse stoją TUTAJ, w jednym
- * miejscu, bo czytają je wszystkie panele wstawień naraz. Milczące zgubienie
- * tabeli przy wydaniu do tekstu czystego jest dokładnie tą ciszą, której
- * zlecenie zakazuje — więc okno nie ma drogi, którą mogłoby bilans pominąć.
- *
- * Osłona `wywolajUczciwie` zostaje wszędzie: koperta `studio.unknown` nie niesie
- * pola `status` i bez niej okno stałoby w ładowaniu bez końca.
- */
+/** Interfejs ZrodloWstawienStudio zestawia siedemnaście komend studio wnoszących treść do dokumentu, wydających go oraz prowadzących kolejkę cyfryzacji rdzenia. */
 export interface ZrodloWstawienStudio {
   /* ── Wejście do edytora ────────────────────────────────────────────────── */
+
   /** Zakłada dokument pusty — nową stronę gotową do pisania. */
   zalozDokument(
     zadanie: StudioDocumentCreateRequest,
@@ -87,6 +64,7 @@ export interface ZrodloWstawienStudio {
   ): Promise<Wynik<StudioDocumentImageImportResponse>>;
 
   /* ── Zapis, kopia, wydanie ─────────────────────────────────────────────── */
+
   /** Zapisuje dokument pod nową nazwą albo do wskazanego pliku, wraz z postacią. */
   zapiszJako(
     zadanie: StudioDocumentSaveAsRequest,
@@ -107,6 +85,7 @@ export interface ZrodloWstawienStudio {
   ): Promise<Wynik<StudioDocumentFormatSetResponse>>;
 
   /* ── Wniesienie ze źródła ──────────────────────────────────────────────── */
+
   /** Wnosi plik, wzór albo obraz z Biblioteki wprost do dokumentu. */
   wniesZBiblioteki(
     zadanie: StudioInsertFromLibraryRequest,
@@ -117,6 +96,7 @@ export interface ZrodloWstawienStudio {
   ): Promise<Wynik<StudioInsertFromWebResponse>>;
 
   /* ── Cyfryzacja ────────────────────────────────────────────────────────── */
+
   /** Dokłada materiał do kolejki wczytywania po stronie rdzenia. */
   dolozDoKolejki(
     zadanie: StudioIngestQueueAddRequest,
@@ -149,9 +129,7 @@ export function utworzZrodloWstawienStudio(kanal: Kanal): ZrodloWstawienStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioDocumentImportFile, zadanie),
         Command.StudioDocumentImportFile,
-        // Bilans wniesienia jest polem OBOWIĄZKOWYM odpowiedzi i sprawdzian go
-        // pilnuje: wniesienie bez bilansu byłoby oddaniem kaleki jako dokumentu
-        // gotowego, a tego zlecenie zakazuje wprost.
+        // Bilans wniesienia jest polem obowiązkowym odpowiedzi, nie polem ozdobnym.
         (tresc) => czyObiekt(tresc.document) && czyObiekt(tresc.balance),
       );
     },
@@ -217,9 +195,7 @@ export function utworzZrodloWstawienStudio(kanal: Kanal): ZrodloWstawienStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioInsertFromLibrary, zadanie),
         Command.StudioInsertFromLibrary,
-        // Pochodzenie jest polem obowiązkowym i tak jest sprawdzane: fragment
-        // wniesiony bez zapisu, skąd jest, byłby dokładnie tą stratą, którą
-        // wymaganie o pochodzeniu ma zatrzymać.
+        // Pochodzenie fragmentu jest polem obowiązkowym, nie polem opcjonalnym odpowiedzi rdzenia.
         (tresc) => czyObiekt(tresc.provenance) && czyObiekt(tresc.balance),
       );
     },
@@ -252,8 +228,7 @@ export function utworzZrodloWstawienStudio(kanal: Kanal): ZrodloWstawienStudio {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioIngestRecognize, zadanie),
         Command.StudioIngestRecognize,
-        // Słowa i układ są nieobowiązkowe: rozpoznanie bez odtwarzania układu
-        // jest wynikiem poprawnym, nie usterką kształtu.
+        // Słowa i układ rozpoznania są nieobowiązkowe, więc ich brak jest wynikiem poprawnym.
         (tresc) => czyObiekt(tresc.item),
       );
     },
@@ -286,14 +261,7 @@ export function utworzZrodloWstawienStudio(kanal: Kanal): ZrodloWstawienStudio {
 
 /* ── Bilans widoczny — trzy zdania, jedno miejsce ─────────────────────────── */
 
-/**
- * Zdanie o bilansie czynności — co zmienione, co pominięte i przez którą blokadę.
- *
- * Zero zmian NIE jest tu powodzeniem: czynność, która nie tknęła ani jednego
- * miejsca, jest odpowiedzią „nic się nie stało" i tak ma być przeczytana.
- * Pominięcie z powodu blokady nazywa blokadę, bo Operator ma wiedzieć, która
- * zapora zatrzymała czynność, a nie że „częściowo się udało".
- */
+/** Zdanie o bilansie czynności podaje liczbę zmienionych i pominiętych miejsc wraz z nazwą blokady, która pominięcie spowodowała. */
 export function wstawieniaOpiszBilans(bilans: StudioActionBalance): string {
   const czesci: string[] = [
     bilans.applied === 0
@@ -314,14 +282,7 @@ export function wstawieniaOpiszBilans(bilans: StudioActionBalance): string {
   return zdania.join(' ');
 }
 
-/**
- * Zdanie o bilansie wniesienia — co odzyskane, a co nie.
- *
- * Odzyskanie z PDF-u jest odtworzeniem, nie odczytem, więc liczby stoją tu
- * obok siebie: strony z warstwą tekstową i bez niej, tabele rozpoznane
- * i nierozpoznane, obrazy osadzone i pominięte. Skierowanie na rozpoznanie
- * pisma jest zdaniem osobnym, bo to inna decyzja Operatora niż „wnieś dalej".
- */
+/** Zdanie o bilansie wniesienia podaje, ile stron, akapitów, tabel, obrazów, stylów i sekcji rdzeń odzyskał z wniesionego materiału. */
 export function wstawieniaOpiszWniesienie(bilans: StudioImportBalance): string {
   const czesci: string[] = [`Format wniesiony: ${bilans.format}`];
   if (bilans.encoding !== undefined && bilans.encoding !== '') {
@@ -368,13 +329,7 @@ export function wstawieniaOpiszWniesienie(bilans: StudioImportBalance): string {
   return zdania.join(' ');
 }
 
-/**
- * Zdanie o wyniku wydania wraz z wykazem cech pominiętych.
- *
- * Format uboższy niż dokument jest normalną sytuacją; przemilczenie straty nie
- * jest. Wydanie do tekstu czystego, które zgubiło tabelę i przypisy, mówi to
- * wprost — i nie ma w oknie drogi, którą Operator zobaczyłby samo „zapisano".
- */
+/** Zdanie o wyniku wydania dokumentu podaje ścieżkę albo zasób zapisu wraz z wykazem cech, których docelowy format nie niesie. */
 export function wstawieniaOpiszWydanie(wynik: StudioExportResult): string {
   const czesci: string[] = [`Wydanie do formatu ${wynik.format}`];
   if (wynik.path !== undefined && wynik.path !== '') czesci.push(`plik ${wynik.path}`);
@@ -397,7 +352,7 @@ export function wstawieniaOpiszWydanie(wynik: StudioExportResult): string {
   return zdania.join(' ');
 }
 
-/** Wykaz pominięć jednym zdaniem; pusty wykaz nie daje zdania. */
+/** Wykaz pominięć jednym zdaniem łączy powód, szczegół i blokadę każdej pominiętej pozycji, a pusty wykaz nie daje zdania wcale. */
 export function wstawieniaOpiszPominiecia(
   pominiecia: readonly StudioSkippedItem[] | undefined,
 ): string {
@@ -406,7 +361,7 @@ export function wstawieniaOpiszPominiecia(
   return `Pominięte: ${wykaz.map(opiszPominiecie).join('; ')}.`;
 }
 
-/** Jedno pominięcie: powód, czego dotyczy, i blokada, jeśli ona je zatrzymała. */
+/** Jedno pominięcie niesie powód, czego dotyczy, oraz nazwę albo identyfikator blokady, jeśli to ona je zatrzymała. */
 function opiszPominiecie(pozycja: StudioSkippedItem): string {
   const czesci: string[] = [pozycja.reason];
   if (pozycja.detail !== undefined && pozycja.detail !== '') czesci.push(pozycja.detail);

@@ -1,10 +1,4 @@
-// Punkt wejścia strony podglądu strony głównej.
-//
-// Wzorzec ten sam co w `motyw/podglad-zetonow.ts`: widok daje się obejrzeć bez
-// montażu w powłoce aplikacji. Podgląd nie jest częścią produktu — nie wchodzi
-// do pakietu `main.ts` i niczego z niego nie importuje.
-//
-// Podgląd pokazuje oba motywy, bo są równoprawne.
+// Punkt wejścia strony podglądu strony głównej pokazuje widok bez montażu w powłoce aplikacji, w obu motywach równoprawnie, poza pakietem produktu.
 
 import '../motyw/motyw.css';
 import '../komponenty/indeks.css';
@@ -14,10 +8,7 @@ import { motywObowiazujacy, przelaczMotyw, uruchomMotyw, ustawMotyw } from '../m
 import { POZYCJE_SRODOWISK } from './pozycje-srodowisk';
 import { utworzStroneGlowna } from './indeks';
 
-// Parametry podglądu w adresie: `#motyw=light&czynne=talkin`.
-// Bez nich obowiązuje preferencja systemu i brak środowiska czynnego.
-// Dzięki nim oba motywy i stan czynny karty dają się obejrzeć bez klikania —
-// także z narzędzia zrzucającego obraz strony.
+// Parametry podglądu w adresie ustawiają motyw i środowisko czynne bez klikania, także z narzędzia zrzucającego obraz strony.
 const parametry = new URLSearchParams(location.hash.slice(1));
 
 uruchomMotyw();
@@ -60,7 +51,7 @@ przelacznik.addEventListener('click', () => {
   odswiezPrzelacznik();
 });
 
-/** Przełącznik nazywa motyw, do którego prowadzi, i niesie jego ikonę. */
+/** Przełącznik nazywa motyw, do którego prowadzi kliknięcie, i niesie jego ikonę odpowiednią dla motywu obowiązującego teraz. */
 function odswiezPrzelacznik(): void {
   const jasny = motywObowiazujacy() === 'light';
   przelacznik.replaceChildren(

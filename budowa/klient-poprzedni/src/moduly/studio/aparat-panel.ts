@@ -20,26 +20,10 @@ import type { StanStudio } from './stan-studio';
 import { wstawieniaOpiszBilans } from './zrodlo-wstawien-studio';
 
 /**
- * Aparat dokumentu i pola — nakładka na żądanie.
- *
- * ── Jedna oś dla trzynastu rodzajów i dziewięciu pól ────────────────────────
- * Spis treści, spisy ilustracji i tabel, przypisy dolne i końcowe, podpisy,
- * zakładki, odwołania wzajemne, odsyłacze, powołania, bibliografia, hasła
- * indeksu i indeks — wszystkie są elementami WYLICZANYMI z dokumentu. Pola
- * dokumentu (numer strony, liczba stron, data, właściwość, pole obliczane) mają
- * tę samą naturę. Wspólne jest to, że po zmianie treści stają się NIEŚWIEŻE,
- * a odświeżenie liczy je od nowa.
- *
- * ── Nieświeżość jest treścią, nie barwą ─────────────────────────────────────
- * Panel prowadzi jeden wykaz „do odświeżenia" dla obu rodzin i pisze liczbą, ile
- * elementów rozjechało się z dokumentem. Spis treści pokazany bez znaku
- * nieświeżości kłamałby o dokumencie, którego nagłówki się zmieniły — a to
- * dokładnie ta cisza, której zlecenie zakazuje.
- *
- * ── Zakaz numeracji wymyślonej obowiązuje i tutaj ───────────────────────────
- * Numer przypisu i powołania nadaje RDZEŃ przy odświeżeniu (`StudioApparatusItem.
- * number`) i panel go wyłącznie pokazuje. Okno nie wymyśla ani jednego kodu
- * i nie numeruje niczego samo.
+ * Aparat dokumentu i pola — nakładka na żądanie. Elementy aparatu i pola
+ * dokumentu są wyliczane z treści i po jej zmianie stają się nieświeże, aż
+ * odświeżenie policzy je od nowa. Numer przypisu i powołania nadaje rdzeń,
+ * panel go wyłącznie pokazuje.
  */
 export interface AparatPanel {
   element: HTMLElement;
@@ -47,7 +31,7 @@ export interface AparatPanel {
   odswiez(): void;
 }
 
-/** Trzynaście rodzajów elementów aparatu wraz z nazwą pełną. */
+/** Trzynaście rodzajów elementów aparatu wraz z nazwą pełną, pokazywaną w oknie zamiast kodu kontraktu. */
 const RODZAJE_APARATU: readonly (readonly [string, string])[] = [
   [StudioApparatusKind.Toc, 'spis treści'],
   [StudioApparatusKind.FigureIndex, 'spis ilustracji'],
@@ -64,7 +48,7 @@ const RODZAJE_APARATU: readonly (readonly [string, string])[] = [
   [StudioApparatusKind.Index, 'indeks'],
 ];
 
-/** Dziewięć rodzajów pól dokumentu wraz z nazwą pełną. */
+/** Dziewięć rodzajów pól dokumentu wraz z ich nazwą pełną, pokazywaną w tym panelu zamiast kodu kontraktu. */
 const RODZAJE_POL: readonly (readonly [string, string])[] = [
   [StudioFieldKind.PageNumber, 'numer strony'],
   [StudioFieldKind.PageCount, 'liczba stron'],
@@ -435,9 +419,7 @@ export function utworzAparatPanel(stan: StanStudio, zrodlo: AparatZrodlo): Apara
           `${nieswieze} — spis treści albo numeracja rozjechały się z dokumentem, więc to, co ` +
           'widać na kartce, nie zgadza się z jego treścią.';
     stanSwiezosci.dataset['nieswieze'] = String(nieswieze);
-    // Licznik na przycisku przeliczamy przy każdym przerysowaniu, a nie tylko przy
-    // otwarciu: wykaz przychodzi z rdzenia PO otwarciu nakładki, więc licznik
-    // ustawiony raz przy otwarciu byłby zawsze o jeden odczyt spóźniony.
+    // Licznik na przycisku przelicza się przy przerysowaniu, bo wykaz przychodzi z rdzenia później.
     opiszWyzwalacz(nieswieze);
 
     if (elementy.length === 0) {
@@ -604,19 +586,19 @@ export function utworzAparatPanel(stan: StanStudio, zrodlo: AparatZrodlo): Apara
   };
 }
 
-/** Nazwa rodzaju elementu pełnym słowem. */
+/** Nazwa rodzaju elementu pełnym słowem, czytana z wykazu trzynastu rodzajów aparatu zamiast z kodu kontraktu. */
 function opiszRodzajAparatu(rodzaj: StudioApparatusKind): string {
   const znaleziony = RODZAJE_APARATU.find((pozycja) => pozycja[0] === rodzaj);
   return znaleziony === undefined ? rodzaj : znaleziony[1];
 }
 
-/** Nazwa rodzaju pola pełnym słowem. */
+/** Nazwa rodzaju pola pełnym słowem, czytana z wykazu dziewięciu rodzajów pól zamiast z kodu kontraktu. */
 function opiszRodzajPola(rodzaj: StudioFieldKind): string {
   const znaleziony = RODZAJE_POL.find((pozycja) => pozycja[0] === rodzaj);
   return znaleziony === undefined ? rodzaj : znaleziony[1];
 }
 
-/** Zdanie o elemencie aparatu — zakotwiczenie, treść, cel i pozycje zebrane. */
+/** Zdanie o elemencie aparatu — zakotwiczenie, treść, cel i pozycje zebrane, złożone z pól, które rdzeń oddał. */
 function opiszElement(pozycja: StudioApparatusItem): string {
   const czesci: string[] = [];
   if (pozycja.anchorStart !== undefined) {
@@ -644,7 +626,7 @@ function opiszElement(pozycja: StudioApparatusItem): string {
   return czesci.length === 0 ? 'Rdzeń nie oddał szczegółów tego elementu.' : `${czesci.join(' · ')}.`;
 }
 
-/** Zdanie o polu — miejsce, format i wartość policzona. */
+/** Zdanie o polu — miejsce, format i wartość policzona, złożone z pól odpowiedzi, które oddał rdzeń panelowi. */
 function opiszPole(pole: StudioDocumentField): string {
   const czesci: string[] = [pole.id];
   if (pole.anchorOffset !== undefined) czesci.push(`na znaku ${pole.anchorOffset}`);

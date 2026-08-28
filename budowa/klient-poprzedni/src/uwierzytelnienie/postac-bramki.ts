@@ -1,47 +1,21 @@
 import { elementGodla } from '../ikony/ikony';
 import type { MetodaWejscia } from './zrodlo-auth';
 
-/**
- * Postać ekranu wejścia — teksty, pola i przesłona. Bez ani jednego wywołania
- * rdzenia i bez wiedzy o tym, co się po naciśnięciu stanie.
- *
- * Oddzielone od `ekran-logowania.ts`, który prowadzi rozmowę z rdzeniem:
- * rozpoznaje stan bramki, wysyła hasło, czyta odmowę, wpuszcza. Podział idzie
- * po szwie między tym, co widać, a tym, co się dzieje.
- *
- * Nazwy wewnętrzne — bramka, rdzeń, `auth.register` — zostają w kodzie
- * i w komentarzach; na ekran idzie zdanie do przeczytania raz.
- */
-
-/** Tryb ekranu: wejście hasłem, pierwsze ustawienie hasła albo jego zmiana. */
+/** Postać ekranu wejścia niesie teksty, pola i przesłonę, bez ani jednego wywołania rdzenia i bez wiedzy o tym, co się stanie po naciśnięciu; rozmowę z rdzeniem prowadzi ekran logowania osobno. */
 export type Tryb =
   | 'wejscie'
   | 'zalozenie'
   | 'reset'
   // Krok drugi rejestracji: konto jest założone i czeka na drogę z listu.
-  // Osobny tryb, a nie stan w `zalozenie`, bo formularz jest inny — pyta
-  // wyłącznie o drogę i nie ma po co pokazywać pól, które już wypełniono.
   | 'potwierdzenie'
-  // Odzyskanie konta: krok pierwszy pyta o adres, krok drugi o drogę z listu
-  // i nowe hasło.
+  // Odzyskanie konta: krok pierwszy pyta o adres, krok drugi o drogę z listu i nowe hasło.
   | 'odzyskanie'
   | 'odzyskanie-haslo';
 
-/**
- * Najkrótsze przyjmowane hasło — reguła formularza, nie rdzenia.
- *
- * Rdzeń odmawia w `auth.register` wyłącznie przy haśle pustym, a w
- * `auth.password.reset` przy pustym którymkolwiek z dwóch; długości nie
- * egzekwuje. Skoro ekran obiecuje minimum, ekran go też pilnuje. Sprawdzian
- * pada po naciśnięciu, nigdy jako blokada przycisku — tak samo jak zgodność
- * hasła z powtórzeniem.
- *
- * Gdyby rdzeń dostał własną regułę długości, ta stała ma zejść: dwie reguły
- * w dwóch miejscach rozjadą się przy pierwszej zmianie.
- */
+/** Najkrótsze przyjmowane hasło jest regułą formularza, nie rdzenia: rdzeń długości nie egzekwuje, a ekran, skoro obiecuje minimum, sam go pilnuje. */
 export const MIN_ZNAKOW = 8;
 
-/** Zdanie pomocnicze pod polami; pusty napis chowa akapit. */
+/** Zdanie pomocnicze pod polami formularza dla każdego trybu ekranu; pusty napis chowa cały akapit wyjaśnienia. */
 export const OBJASNIENIA: Record<Tryb, string> = {
   wejscie: '',
   zalozenie:
@@ -60,15 +34,7 @@ export const OBJASNIENIA: Record<Tryb, string> = {
     'Wszystkie urządzenia zalogują się ponownie.',
 };
 
-/**
- * Napisy przycisku — jedna forma, czasownikowa, we wszystkich trzech trybach.
- * Przycisk nie jest nagłówkiem ani sterem, tylko czynnością, więc mówi, co się
- * stanie po naciśnięciu.
- *
- * „Załóż konto" nie obiecuje wejścia, bo rejestracja go nie daje: konto powstaje
- * niepotwierdzone, a token dostępu wydaje dopiero potwierdzenie adresu. Napis
- * obiecujący wejście kazałby czekać na coś, co nie nadejdzie.
- */
+/** Napisy przycisku mają jedną formę, czasownikową, we wszystkich trybach: przycisk mówi, co się stanie po naciśnięciu, nie jest nagłówkiem ani sterem. */
 export const NAPISY_PRZYCISKU: Record<Tryb, string> = {
   wejscie: 'Zaloguj się',
   zalozenie: 'Załóż konto',
@@ -78,28 +44,14 @@ export const NAPISY_PRZYCISKU: Record<Tryb, string> = {
   'odzyskanie-haslo': 'Ustaw nowe hasło',
 };
 
-/**
- * Etykieta pierwszego pola zależy od trybu i od metody.
- *
- * Przy zmianie hasła to samo pole niesie hasło dotychczasowe, a nie nowe; jedna
- * etykieta na dwa znaczenia kazałaby zgadywać, które hasło się wpisuje. Przy
- * wejściu PIN-em niesie PIN, a nazwanie go hasłem kazałoby podać rzecz, której
- * rdzeń w tej metodzie nie porówna.
- */
+/** Etykieta pierwszego pola zależy od trybu i od metody, bo jedna etykieta na dwa znaczenia kazałaby zgadywać, które pole się wpisuje. */
 export function etykietaPierwszego(tryb: Tryb, metoda: MetodaWejscia): string {
   if (tryb === 'reset') return 'Dotychczasowe hasło';
   if (tryb === 'wejscie' && metoda === 'pin') return 'PIN';
   return 'Hasło';
 }
 
-/**
- * Pole tekstowe biblioteki pól — login, adres e-mail i droga potwierdzenia.
- *
- * Osobne od `poleHasla`, bo te trzy wartości nie są sekretami i ukrywanie ich
- * kropkami utrudniałoby jedyną czynność, jaką się z nimi wykonuje: sprawdzenie,
- * czy przepisało się je bez pomyłki. Droga potwierdzenia jest długa i przepisuje
- * się ją z listu — zasłonięta byłaby nie do zweryfikowania okiem.
- */
+/** Pole tekstowe biblioteki pól służy loginowi, adresowi e-mail i drodze potwierdzenia, bo te wartości nie są sekretami i nie wymagają ukrycia treści. */
 export function poleTekstu(
   klasa: string,
   etykieta: string,
@@ -127,7 +79,7 @@ export function poleTekstu(
   };
 }
 
-/** Pole hasła w kształcie biblioteki pól (`komponenty/pole.css`). */
+/** Pole hasła w kształcie biblioteki pól, z kontrolką typu hasła i metodą zmiany napisu etykiety dla różnych trybów ekranu. */
 export interface PoleHasla {
   pole: HTMLElement;
   kontrolka: HTMLInputElement;
@@ -157,14 +109,7 @@ export function poleHasla(klasa: string, etykieta: string, autocomplete: AutoFil
   };
 }
 
-/**
- * Pole „Nie wyloguj mnie" — przełącznik w kształcie biblioteki pól.
- *
- * Nastawa nazywa się `keepSignedIn` w kontrakcie i `trwanieWejscia` w rdzeniu,
- * a na ekranie ma jeden napis w całym produkcie: dwie nazwy jednej nastawy każą
- * zgadywać, czy to ta sama rzecz. Skutek jest dwustronny — magazyn w kliencie
- * i trwanie w rdzeniu.
- */
+/** Pole nie wyloguj mnie jest przełącznikiem w kształcie biblioteki pól; nastawa ma jeden napis w całym produkcie, choć nosi dwie nazwy wewnętrzne. */
 export function utworzNiewylogowuj(zaznaczone: boolean): {
   pole: HTMLElement;
   kontrolka: HTMLInputElement;
@@ -184,15 +129,10 @@ export function utworzNiewylogowuj(zaznaczone: boolean): {
   return { pole, kontrolka };
 }
 
-/** Segmenty metody wejścia — ster, nie wyświetlacz. */
+/** Segmenty metody wejścia są sterem, nie wyświetlaczem, z metodą obsadzenia segmentami dostępnymi na tej maszynie i wskazaniem metody bieżącej. */
 export interface SegmentyMetody {
   element: HTMLElement;
-  /**
-   * Obsadza segmenty metodami, które otwierają bramkę na tej maszynie.
-   *
-   * @param metody metody czynne; jedna albo żadna chowa cały pas.
-   * @param wybrana metoda bieżąca — segment wybrany niesie wartość nastawy.
-   */
+  /** Obsadza segmenty metodami czynnymi; jedna metoda albo żadna chowa cały pas segmentów. */
   pokaz(metody: MetodaWejscia[], wybrana: MetodaWejscia): void;
 }
 
@@ -201,29 +141,11 @@ const NAZWY_METOD: Record<MetodaWejscia, string> = {
   pin: 'PIN',
 };
 
-/**
- * Przełącznik metody wejścia w postaci segmentów pigułkowych.
- *
- * Segmenty, a nie zakładki „Zaloguj się / Zarejestruj": `auth.register` jest
- * wykonalna dokładnie raz i po pierwszym uruchomieniu odmawia trwale, więc
- * zakładka rejestracji byłaby przyciskiem pewnej odmowy. O tym, który formularz
- * pokazać, rozstrzyga rdzeń polem `gatewayConfigured` powitania. Segmenty niosą
- * wybór, który w rdzeniu naprawdę istnieje: hasło i PIN.
- *
- * Pas znika przy jednej metodzie, bo przełącznik z jedną pozycją jest napisem,
- * a nie sterem; segment wyszarzony byłby bramą.
- *
- * Windows Hello nie jest tu segmentem — ani czynnym, ani wyszarzonym. Metoda
- * odmawia z powodu pochodzenia dokumentu (WebAuthn wywodzi `rp_id` z adresu,
- * a interfejs stoi pod adresem IP), więc wróci wdrożeniem pod domeną po
- * `https`, nie dopisaniem kodu. Zdanie o przyczynie stoi w sekcji
- * „Uwierzytelnianie" Okna Ustawień, gdzie Hello się zakłada.
- */
+/** Przełącznik metody wejścia w postaci segmentów pigułkowych zamiast zakładek, bo rejestracja jest wykonalna dokładnie raz i po pierwszym uruchomieniu odmawia trwale. */
 export function utworzSegmentyMetody(naWybor: (metoda: MetodaWejscia) => void): SegmentyMetody {
   const element = document.createElement('div');
   element.className = 'au-metody';
-  // Grupa radiowa, nie zakładki: zakładki obiecują czytnikowi ekranu, że pod
-  // każdą leży inny panel treści, a tu leży ten sam formularz z inną nastawą.
+  // Grupa radiowa, nie zakładki: tu leży ten sam formularz z inną nastawą, nie inny panel treści.
   element.setAttribute('role', 'radiogroup');
   element.setAttribute('aria-label', 'Metoda wejścia');
   element.hidden = true;
@@ -247,13 +169,7 @@ export function utworzSegmentyMetody(naWybor: (metoda: MetodaWejscia) => void): 
   return { element, pokaz };
 }
 
-/**
- * Odnośnik pod formularzem — przestawia ekran na inny tryb i nic poza tym.
- *
- * Przycisk, nie `<a href>`: odnośnik nigdzie nie prowadzi, tylko przestawia ten
- * sam ekran na inny tryb, a `<a>` bez celu myliłby czytnik ekranu i środkowy
- * przycisk myszy.
- */
+/** Odnośnik pod formularzem przestawia ekran na inny tryb i nic poza tym; przycisk, nie odnośnik adresowy, żeby nie mylić czytnika ekranu. */
 export function utworzOdnosnik(napis: string, naNacisniecie: () => void): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';
@@ -263,40 +179,19 @@ export function utworzOdnosnik(napis: string, naNacisniecie: () => void): HTMLBu
   return element;
 }
 
-/**
- * Odnośnik „Nie pamiętam hasła" — droga odzyskania konta listem.
- *
- * Naciska go ten, kto hasła nie pamięta, więc prowadzi do `auth.recover`,
- * a nie do zmiany hasła ze znanym hasłem dotychczasowym — tamta jest czynnością
- * Ustawień i wymaga hasła, którego tu z definicji nie ma.
- */
+/** Odnośnik nie pamiętam hasła prowadzi do drogi odzyskania konta listem, nie do zmiany hasła ze znanym hasłem dotychczasowym. */
 export function utworzOdnosnikResetu(naNacisniecie: () => void): HTMLButtonElement {
   return utworzOdnosnik('Nie pamiętam hasła', naNacisniecie);
 }
 
-/**
- * Odnośnik „Mam drogę potwierdzenia z listu" — powrót do kroku drugiego.
- *
- * Bez niego krok potwierdzenia jest osiągalny wyłącznie z udanej rejestracji
- * w tym samym oknie: odświeżenie strony między listem a przepisaniem drogi
- * zamykało konto niepotwierdzone przed platformą na głucho, bo rejestracja
- * drugi raz odmawia (`conflict`), a logowanie odmawia oczekiwaniem na
- * potwierdzenie adresu.
- */
+/** Odnośnik mam drogę potwierdzenia z listu wraca do kroku drugiego rejestracji, bez którego krok ten byłby osiągalny wyłącznie z tego samego okna. */
 export function utworzOdnosnikPotwierdzenia(naNacisniecie: () => void): HTMLButtonElement {
   return utworzOdnosnik('Mam drogę potwierdzenia z listu', naNacisniecie);
 }
 
-/**
- * Przesłona wejścia: pełny widok, karta pośrodku, znak marki nad nią.
- *
- * Znak bierze się z `ikony/marka.ts`, a nie z gołego nagłówka tekstowego.
- * Podłoże jasne, bo karta stoi na tle strony: znak ma barwy własne i odmianę
- * dobiera się do podłoża, nie do motywu.
- */
+/** Przesłona wejścia składa pełny widok z kartą pośrodku i znakiem marki nad nią, na podłożu jasnym niezależnym od motywu interfejsu. */
 export function zlozPrzeslone(stany: HTMLElement, ponow: HTMLElement): HTMLElement {
-  // Godło idzie osobno od nazwy, a nie odmianą złożoną: `zbudujElement` nadaje
-  // znakowi bok kwadratowy, więc odmiana pionowa zostałaby ściśnięta.
+  // Godło idzie osobno od nazwy, a nie odmianą złożoną, żeby odmiana pionowa nie została ściśnięta.
   const godlo = elementGodla({ rozmiar: 56, podloze: 'jasne', etykieta: 'Danaco Console' });
   godlo.classList.add('au-godlo');
 

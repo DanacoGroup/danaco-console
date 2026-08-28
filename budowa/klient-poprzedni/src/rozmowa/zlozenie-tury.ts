@@ -6,7 +6,10 @@ import { odczytajProwenancje } from './prowenancja';
 import { RodzajFragmentu } from './rodzaje-fragmentow';
 import { czyPustaTura, type WpisRozmowy, type WywolanieNarzedzia } from './wpis-rozmowy';
 
-/** Znaczniki toru strumienia niesione przez kopertę, nie przez ładunek. */
+/**
+ * Znaczniki toru strumienia niesione przez kopertę zdarzenia sieciowego, a nie przez sam
+ * ładunek fragmentu strumienia.
+ */
 export interface ZnacznikiFragmentu {
   /** Numer fragmentu liczony od jedynki (pole `seq`). */
   numer: number;
@@ -15,16 +18,8 @@ export interface ZnacznikiFragmentu {
 }
 
 /**
- * Złożenie tury — dokłada jeden fragment strumienia do wpisu rozmowy.
- *
- * Rozdzielenie rodzajów jest sednem: jedna droga niesie tekst, prowenancję,
- * metadane konta, tok rozumowania, wywołania narzędzi i błąd, a odbiorca
- * rozstrzyga po rodzaju, gdzie fragment trafi. Fragment rodzaju nieznanego nie
- * jest odrzucany — ląduje w treści wpisu z oznaczeniem rodzaju, żeby żadna
- * treść strumienia nie znikła bez śladu.
- *
- * Wpis jest zmieniany w miejscu: historia trzyma jedną tożsamość tury, a widok
- * odświeża tę samą pozycję zamiast dokładać kolejną.
+ * Złożenie tury dokłada jeden fragment strumienia odpowiedzi do wpisu rozmowy, według
+ * rozdzielenia jego rodzaju.
  */
 export function dolaczFragment(
   wpis: WpisRozmowy,
@@ -38,37 +33,19 @@ export function dolaczFragment(
 
   rozdzielRodzaj(wpis, fragment);
 
-  // Podsumowanie czyta się z każdego fragmentu, nie tylko z domykającego:
-  // ładunek podsumowania niesie fragment kanału, a strumień domyka osobne
-  // zdarzenie z wersją ostateczną (ChunkKind.final), więc odczyt tylko
-  // z domykającego gubiłby podsumowanie całkiem. Parser odrzuca ładunek bez
-  // własnych pól podsumowania, więc fragmenty pozostałych rodzajów przechodzą
-  // bez śladu, a `??=` zatrzymuje pierwsze odczytane.
+  // Podsumowanie czyta się z każdego fragmentu, nie tylko z fragmentu domykającego strumień.
   wpis.podsumowanie ??= odczytajPodsumowanie(fragment.data);
 
   if (!znaczniki.ostatni) return;
   wpis.domkniety = true;
-  // Stany są trzy, nie dwa. Tura, która domknęła się, nie przynosząc ani znaku
-  // odpowiedzi, ani rozumowania, ani narzędzia, ani błędu, nie jest
-  // „zakończona" — jest zamknięta bez odpowiedzi i tak ma się nazywać, żeby
-  // pusta ramka nie kazała zgadywać, czy model milczał, czy widok czegoś nie
-  // narysował.
+  // Tura bez znaku odpowiedzi, rozumowania czy narzędzia jest zamknięta bez odpowiedzi.
   if (wpis.bledy.length > 0) wpis.stan = 'bledny';
   else wpis.stan = czyPustaTura(wpis) ? 'pusty' : 'zakonczony';
 }
 
 /**
- * Odtwarza we wpisie jeden blok zapisany w bazie (tabela `blok_wiadomosci`
- * z pliku `migracja_096_tresc_rozmowy.sql`), odczytany z pola
- * `metadata.blocks` wiadomości kontraktu.
- *
- * Idzie przez ten sam rozdzielacz rodzajów, co fragment żywego strumienia:
- * historia po restarcie ma składać wpis tą samą logiką, którą składała go tura
- * na żywo, a drugi czytnik ładunków byłby drugą prawdą o rozdziale.
- *
- * Blok rodzaju tekstowego przechodzi bez śladu: rdzeń tekstu w blokach nie
- * zapisuje (treść mieszka w `content` wiadomości), więc taki blok mógłby być
- * wyłącznie powtórką — doliczenie go zdublowałoby treść wpisu.
+ * Odtwarza we wpisie jeden blok zapisany w bazie, przechodząc przez ten sam rozdzielacz
+ * rodzajów co żywy fragment.
  */
 export function odtworzZapisanyBlok(
   wpis: WpisRozmowy,
@@ -86,18 +63,17 @@ export function odtworzZapisanyBlok(
   });
 }
 
-/** Kieruje fragment do właściwej warstwy wpisu według jego rodzaju. */
+/**
+ * Kieruje fragment strumienia odpowiedzi do właściwej warstwy wpisu rozmowy według jego
+ * rodzaju wewnętrznego.
+ */
 function rozdzielRodzaj(wpis: WpisRozmowy, fragment: StreamChunkEvent): void {
   const tresc = fragment.text ?? '';
   switch (fragment.kind as RodzajFragmentu) {
     case RodzajFragmentu.Tekst:
       wpis.tresc += tresc;
       return;
-    // Zastąpienie, nie doklejenie — to cały powód istnienia tego rodzaju.
-    // Treść złożona z fragmentów jest przybliżeniem: kanał może fragment
-    // powtórzyć po rotacji konta, a tura zapasowa nadaje własne. Wersja
-    // ostateczna jest tą samą treścią, którą rdzeń zapisuje jako `content`
-    // wiadomości — po podmianie wpis na ekranie i wiersz w bazie mówią to samo.
+    // Wersja ostateczna zastępuje treść złożoną z fragmentów, nie dokłada się do niej.
     case RodzajFragmentu.WersjaOstateczna:
       wpis.tresc = tresc;
       return;
@@ -124,7 +100,10 @@ function rozdzielRodzaj(wpis: WpisRozmowy, fragment: StreamChunkEvent): void {
   }
 }
 
-/** Nowe wywołanie narzędzia. */
+/**
+ * Nowe wywołanie narzędzia, zgłoszone przez model w trakcie trwającej tury tego bieżącego
+ * okna rozmowy Operatora.
+ */
 function dopiszWywolanie(wpis: WpisRozmowy, dane: unknown): void {
   const zrodlo = obiekt(dane);
   const wywolanie: WywolanieNarzedzia = {
@@ -137,7 +116,10 @@ function dopiszWywolanie(wpis: WpisRozmowy, dane: unknown): void {
   wpis.narzedzia.push(wywolanie);
 }
 
-/** Wynik narzędzia dopisany do wywołania o tym samym identyfikatorze. */
+/**
+ * Wynik narzędzia dopisywany do wcześniejszego wywołania o tym samym identyfikatorze tego
+ * zgłoszenia narzędzia.
+ */
 function dopiszWynikNarzedzia(wpis: WpisRozmowy, dane: unknown): void {
   const zrodlo = obiekt(dane);
   const idWywolania = tekst(zrodlo, 'toolUseId');
@@ -152,7 +134,10 @@ function dopiszWynikNarzedzia(wpis: WpisRozmowy, dane: unknown): void {
   wywolanie.bledne = bledne;
 }
 
-/** Błąd kanału. Kończy turę i nic ponadto — okno i sesja zostają czynne. */
+/**
+ * Błąd zgłoszony przez kanał kończy bieżącą turę i nic więcej ponadto — samo okno oraz
+ * cała sesja rozmowy zostają nadal czynne.
+ */
 function dopiszBlad(wpis: WpisRozmowy, tresc: string, dane: unknown): void {
   const zrodlo = obiekt(dane);
   wpis.bledy.push({
@@ -162,7 +147,10 @@ function dopiszBlad(wpis: WpisRozmowy, tresc: string, dane: unknown): void {
   });
 }
 
-/** Fragment rodzaju spoza katalogu — pokazany, nie porzucony. */
+/**
+ * Fragment rodzaju spoza katalogu znanych rodzajów strumienia odpowiedzi, pokazany wprost,
+ * a nie porzucony po cichu.
+ */
 function dopiszNierozpoznany(
   wpis: WpisRozmowy,
   rodzaj: string,

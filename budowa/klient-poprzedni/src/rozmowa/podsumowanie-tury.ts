@@ -1,13 +1,8 @@
 import { liczba, listaTekstow, obiekt, prawda, tekst } from './odczyt-fragmentu';
 
 /**
- * Podsumowanie zakończonej tury kanału głównego.
- *
- * Rdzeń dokłada je do ostatniego fragmentu strumienia — tego, który koperta
- * znakuje polem `done`. To ono wybudza koordynatora w pętli koordynatora
- * i wykonawcy, dlatego jedzie osobnym ładunkiem, a nie tekstem.
- *
- * Kształt odpowiada `injection.ZakonczenieTury` po stronie rdzenia.
+ * Podsumowanie zakończonej tury kanału głównego, dokładane przez rdzeń do ostatniego
+ * fragmentu strumienia oznaczonego polem `done`.
  */
 export interface PodsumowanieTury {
   /** Identyfikator rozmowy po stronie kanału; kolejne wywołanie go wznawia. */
@@ -32,14 +27,17 @@ export interface PodsumowanieTury {
   linieNierozpoznane: number;
 }
 
-/** Odczytuje podsumowanie tury z ładunku fragmentu kończącego strumień. */
+/**
+ * Odczytuje podsumowanie tury z ładunku ostatniego fragmentu kończącego strumień
+ * odpowiedzi rdzenia.
+ */
 export function odczytajPodsumowanie(dane: unknown): PodsumowanieTury | null {
   const zrodlo = obiekt(dane);
   if (zrodlo === null) return null;
   const podtyp = tekst(zrodlo, 'subtype');
   const sesja = tekst(zrodlo, 'cliSessionId');
-  // Ładunek bez ani jednego pola własnego podsumowania nie jest podsumowaniem —
-  // ostatni fragment bywa domknięciem pustej tury (strumien_odpowiedzi.go).
+  // Ładunek bez pola własnego podsumowania nie jest podsumowaniem, tylko domknięciem pustej
+  // tury.
   if (podtyp === '' && sesja === '' && !('turns' in zrodlo)) return null;
   return {
     idSesjiKanalu: sesja,
@@ -55,7 +53,10 @@ export function odczytajPodsumowanie(dane: unknown): PodsumowanieTury | null {
   };
 }
 
-/** Podsumowanie tury jedną linią — do stopki wpisu. */
+/**
+ * Podsumowanie tury zapisane jedną linią tekstu, przeznaczone do wyświetlenia w stopce
+ * wpisu rozmowy.
+ */
 export function opisPodsumowania(p: PodsumowanieTury): string {
   const czesci: string[] = [];
   if (p.podtyp.length > 0) czesci.push(p.podtyp);

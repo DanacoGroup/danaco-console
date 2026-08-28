@@ -14,20 +14,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czynnosciPlanowania, kartyKolumny, postepProjektu } from './czynnosci-planowania';
 import { czynnosciWiedzy, glebokoscWezla, nazwyOdnosnikow } from './czynnosci-wiedzy';
 
-/**
- * Sprawdziany warstwy klienckiej obszaru planowania i wiedzy modułu Workspace.
- *
- * Główny z nich pilnuje jednej rzeczy: czy KAŻDA komenda kontraktu z tego
- * obszaru ma drogę z okna do rdzenia. Wykaz komend nie jest tu przepisany —
- * powstaje z wywołań czynności, a porównywany jest ze stałymi kontraktu, więc
- * komenda dołożona do kontraktu i pominięta w oknie zostanie tu nazwana.
- *
- * Pozostałe sprawdziany dotyczą bytów rozstrzygalnych bez rdzenia: kolejności
- * kart w kolumnie tablicy, paska postępu, wcięcia drzewa stron i odnośników
- * wyjętych z treści notatki.
- */
+/** Sprawdziany klienckie pilnują, czy każda komenda kontraktu obszaru ma drogę z okna do rdzenia. */
 
-/** Kanał próbny: zapamiętuje nazwy komend i oddaje odpowiedź pustą, lecz poprawną. */
+/** Kanał próbny zapamiętuje nazwy komend i oddaje odpowiedź pustą, lecz poprawną, dla każdego wywołania sprawdzianu. */
 function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   kanal: Kanal;
   wyslane: string[];
@@ -47,7 +36,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown> = {}): {
   return { kanal, wyslane };
 }
 
-/** Zadanie przykładowe w kształcie, w którym niesie je kontrakt. */
+/** Zadanie przykładowe w kształcie, w którym niesie je kontrakt, gotowe do nadpisania wybranych pól w sprawdzianie. */
 function zadanie(id: string, dodatki: Partial<WorkspaceTask> = {}): WorkspaceTask {
   return {
     id,

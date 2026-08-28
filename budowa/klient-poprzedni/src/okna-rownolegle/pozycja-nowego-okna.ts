@@ -1,39 +1,17 @@
 import type { PozycjaCzynnosciMenu } from './wiersz-czynnosci';
 
 /**
- * `Otwórz w nowym oknie` — pierwsza pozycja sekcji czynności sesji.
- *
- * Pozycja nie woła komendy rdzenia wprost, tylko podnosi liczbę gniazd sceny.
- * Gniazda bierze z tej liczby `uklad-okien.ts`, a `aplikacja/scena-sesji.ts`
- * zamawia okno rdzenia dopiero wtedy, gdy gniazdo wejdzie na scenę; okna
- * zakładanego z boku nic w układzie by nie zauważyło.
- *
- * Sufit gniazd bywa węższy od maksimum sceny (figura modułu —
- * `figura-modulu.ts`), więc pytamy o niego przy każdym rysowaniu wiersza. Przy
- * suficie osiągniętym pozycja nie powstaje: lista jest o jedną pozycję krótsza
- * zamiast pokazywać wiersz wygaszony. Skrótu klawiszowego pozycja nie ma.
+ * Otwarcie w nowym oknie jest pierwszą pozycją sekcji czynności sesji: nie woła komendy rdzenia wprost, tylko podnosi liczbę gniazd sceny, a gniazda bierze z tej liczby układ okien.
  */
-
-/** Dojście do liczby gniazd sceny; wypełnia je układ okien. */
 export interface PortNowegoOkna {
-  /**
-   * Czy podniesienie liczby gniazd cokolwiek zmieni.
-   *
-   * Pytanie zadane układowi, nie policzone tutaj: sufit zależy od figury modułu
-   * sceny, a ta przestawia się z rdzenia. Druga rachuba tej samej granicy
-   * rozjechałaby się z pierwszą przy zmianie modułu.
-   */
+  /** Czy podniesienie liczby gniazd cokolwiek zmieni; pytanie zadane układowi, nie policzone tutaj. */
   wolneGniazdo(): boolean;
   /** Podnosi liczbę gniazd sceny o jedno. */
   naNoweOkno(): void;
 }
 
 /**
- * Buduje pozycję albo oddaje `null`, gdy scena nie ma już wolnego gniazda.
- *
- * `poWykonaniu` przerysowuje sekcję zaraz po podniesieniu liczby: menu zostaje
- * rozwinięte po naciśnięciu, a wiersz, który właśnie zajął ostatnie wolne
- * gniazdo, ma z tego menu zniknąć.
+ * Buduje pozycję albo oddaje wartość pustą, gdy scena nie ma już wolnego gniazda; po wykonaniu przerysowuje sekcję zaraz po podniesieniu liczby.
  */
 export function pozycjaNowegoOkna(
   port: PortNowegoOkna,

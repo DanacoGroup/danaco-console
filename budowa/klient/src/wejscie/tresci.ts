@@ -1,20 +1,9 @@
 /**
- * DROGA WEJŚCIA — katalog treści.
- *
- * Jedyne miejsce z tekstem widocznym dla użytkownika. Klucze idą hierarchicznie:
- * obszar → element; klucz odczytuje się jak ścieżkę. Plik przekazuje się
- * tłumaczowi bez dostępu do kodu — nie ma tu ani znacznika, ani rozgałęzienia.
- *
- * Wartości w {nawiasach} to miejsca na dane podstawiane w czasie działania;
- * ich nazw nie tłumaczy się.
- *
- * Poza tym plikiem żaden plik drogi wejścia nie niesie łańcucha widocznego dla
- * użytkownika — ani składnik, ani ekran, ani przebieg. Właściwość jest
- * sprawdzalna: `sprawdzian-katalogu.ts` odrzuca każdy łańcuch spoza tego pliku,
- * który niesie spację albo polski znak diakrytyczny.
+ * Droga wejścia — katalog treści, jedyne miejsce z tekstem widocznym dla
+ * użytkownika. Klucze idą hierarchicznie: obszar do elementu, jak ścieżka.
  */
 
-/** Węzeł katalogu: łańcuch, liczba, wykaz albo poddrzewo. */
+/** Węzeł katalogu: łańcuch, liczba, wykaz albo poddrzewo złożone z kolejnych węzłów tego samego rodzaju. */
 export type WezelTresci = string | number | WezelTresci[] | { [klucz: string]: WezelTresci };
 
 export const tresci = {
@@ -182,7 +171,7 @@ export const tresci = {
       fraza: { pytanie: 'Masz już konto?', czynnosc: 'Zaloguj się' },
     },
 
-    /* Druga gałąź rejestracji — pozycja 11 rejestru decyzji. Platforma bez
+    /* Druga gałąź rejestracji — platforma bez
        konta nadawczego zakłada konto i wpuszcza hasłem, ale adresu nikt nie
        sprawdził. Ostrzeżenie jest WYMAGANE: adres jest jedyną drogą odzyskania
        konta, a Operator, który tego nie przeczyta przy rejestracji, dowie się

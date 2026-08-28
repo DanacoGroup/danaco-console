@@ -20,26 +20,10 @@ import type { TabelaZrodlo } from './tabela-zrodlo';
 import { wstawieniaOpiszBilans } from './zrodlo-wstawien-studio';
 
 /**
- * Warsztat tabel — nakładka na żądanie, nie stała kolumna.
- *
- * ── Wejście przez wskazanie rozmiaru siatką ─────────────────────────────────
- * Zamówione wprost: tabela wstawia się przez wskazanie rozmiaru siatką, a nie
- * przez wpisanie dwóch liczb. Siatka jest tu pierwsza, a pola liczbowe stoją
- * obok jako droga druga — dla tabeli większej niż siatka i dla pracy
- * z klawiatury. Oba wejścia prowadzą do tej samej komendy
- * `studio.table.insert`, więc nie ma dwóch zachowań.
- *
- * ── Bilans zamiast ciszy ────────────────────────────────────────────────────
- * Każda czynność tabeli oddaje bilans i panel go wypisuje ZAWSZE, nie tylko przy
- * pominięciu. Scalenie komórek w zablokowanym fragmencie wraca odpowiedzią
- * pomyślną z pominięciem w bilansie — bez wypisania bilansu wyglądałoby to na
- * scalenie wykonane. Wpis dziennika (`actionId`) idzie do tego samego zdania, bo
- * bez niego Operator nie wie, co ma cofnąć.
- *
- * ── Czego panel nie liczy sam ───────────────────────────────────────────────
- * Ani szerokości kolumn, ani wyniku sortowania, ani zamiany tekstu na tabelę.
- * Wszystko to robi rdzeń; panel składa żądanie, czyta tabelę z odpowiedzi
- * i pokazuje szerokości POLICZONE, a nie założone.
+ * Warsztat tabel — nakładka na żądanie, nie stała kolumna. Tabela wstawia się
+ * wskazaniem rozmiaru siatką albo polami liczbowymi, oboma drogami do tej
+ * samej komendy; panel składa żądanie i pokazuje szerokości policzone przez
+ * rdzeń, nie założone.
  */
 export interface TabelaPanel {
   element: HTMLElement;
@@ -49,11 +33,17 @@ export interface TabelaPanel {
   odswiez(): void;
 }
 
-/** Największy rozmiar wskazywany siatką; większe tabele idą polami liczbowymi. */
+/**
+ * Największy rozmiar wskazywany siatką; większe tabele idą polami liczbowymi,
+ * bo siatka o setkach pól byłaby nieczytelna.
+ */
 const SIATKA_WIERSZY = 8;
 const SIATKA_KOLUMN = 10;
 
-/** Sześć czynności na budowie tabeli wraz z nazwą widoczną dla Operatora. */
+/**
+ * Sześć czynności na budowie tabeli wraz z nazwą widoczną dla Operatora —
+ * wstawianie, usuwanie, scalanie i podział.
+ */
 const CZYNNOSCI_BUDOWY: readonly { operacja: StudioTableStructureOp; nazwa: string }[] = [
   { operacja: StudioTableStructureOp.InsertRow, nazwa: 'Wstaw wiersz' },
   { operacja: StudioTableStructureOp.DeleteRow, nazwa: 'Usuń wiersz' },
@@ -263,13 +253,7 @@ export function utworzTabelaPanel(stan: StanStudio, zrodlo: TabelaZrodlo): Tabel
     return wskazana;
   }
 
-  /**
-   * Jedno miejsce, w którym odpowiedź rdzenia zamienia się w zdanie.
-   *
-   * Bilans wypisuje się bezwarunkowo, także przy pełnym powodzeniu: „zmienionych
-   * miejsc 1, pominiętych 0" jest zdaniem prawdziwym, a wypisywanie bilansu tylko
-   * przy pominięciu uczyłoby Operatora, że brak bilansu znaczy „wszystko weszło".
-   */
+  /** Jedno miejsce, w którym odpowiedź rdzenia zamienia się w zdanie; bilans wypisuje się zawsze. */
   function opiszSkutek(
     nazwa: string,
     bilans: StudioActionBalance,
@@ -598,11 +582,9 @@ export function utworzTabelaPanel(stan: StanStudio, zrodlo: TabelaZrodlo): Tabel
 }
 
 /**
- * Zdanie o szerokościach kolumn — miara policzona, nie założona.
- *
- * Sprawdzian skutku zlecenia mierzy właśnie to: tabela po scaleniu komórek ma
- * szerokości POLICZONE, nie zerowe. Panel wypisuje je wprost, żeby zero było
- * widoczne w oknie, a nie tylko w bazie.
+ * Zdanie o szerokościach kolumn — miara policzona, nie założona: tabela po
+ * scaleniu komórek ma szerokości policzone, nie zerowe, a panel wypisuje je
+ * wprost, żeby zero było widoczne w oknie.
  */
 function opiszSzerokosci(tabela: StudioDocumentTable): string {
   const szerokosci = tabela.columnWidthsMm ?? [];
@@ -617,7 +599,10 @@ function opiszSzerokosci(tabela: StudioDocumentTable): string {
   );
 }
 
-/** Rozbija „40, 30, 30" na liczby; wartości niepoprawne odpadają. */
+/**
+ * Rozbija „40, 30, 30" na liczby; wartości niepoprawne odpadają, żeby
+ * literówka nie zepsuła całego wpisu.
+ */
 function rozbijSzerokosci(wartosc: string): number[] {
   return wartosc
     .split(',')
@@ -625,13 +610,19 @@ function rozbijSzerokosci(wartosc: string): number[] {
     .filter((miara) => Number.isFinite(miara) && miara > 0);
 }
 
-/** Liczba całkowita z pola; wartość pusta i niepoprawna znaczą zero. */
+/**
+ * Liczba całkowita z pola; wartość pusta i niepoprawna znaczą zero, bo pole
+ * odnosi się do liczby całkowitej wierszy albo kolumn.
+ */
 function liczba(wartosc: string): number {
   const odczytana = Number.parseInt(wartosc, 10);
   return Number.isFinite(odczytana) ? odczytana : 0;
 }
 
-/** Część nakładki wraz z jej tytułem. */
+/**
+ * Część nakładki wraz z jej tytułem — wspólny wzorzec złożenia stosowany
+ * w każdej sekcji warsztatu tabel.
+ */
 function czesc(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-tabela__tytul';

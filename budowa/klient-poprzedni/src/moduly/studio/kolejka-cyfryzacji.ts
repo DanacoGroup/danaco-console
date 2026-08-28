@@ -5,32 +5,7 @@ import {
   type StudioRecognizedWord,
 } from '../../../../shared/contract';
 
-/**
- * Kolejka wczytywania — od dziś kolejka RDZENIA, nie kliencka.
- *
- * ── Co się zmieniło i dlaczego ──────────────────────────────────────────────
- * Kolejka była prowadzona w oknie i ginęła z jego odświeżeniem, bo panel stał na
- * `document.text.extract`: jedno wydobycie na jedno wywołanie, bez pojęcia
- * pozycji. Rodzina `studio.ingest.*` niesie kolejkę po stronie rdzenia —
- * `queue.add` dokłada materiał, `queue.list` oddaje pozycje wraz ze stanem
- * i wynikiem. Ten plik przestał więc być kolejką, a stał się jej ODBICIEM:
- * pamięcią tego, co rdzeń ostatnio oddał, wraz z tym, czego rdzeń nie prowadzi.
- *
- * ── Czego rdzeń nie prowadzi i co zostaje po stronie okna ───────────────────
- *   — wskazanie pozycji, na której Operator pracuje (to nastawa widoku),
- *   — słowa rozpoznane i bloki układu odebrane z `ingest.recognize`: kontrakt
- *     oddaje je w odpowiedzi rozpoznania, a `queue.list` ich nie powtarza, więc
- *     bez odłożenia tutaj poprawianie słów nie miałoby na czym pracować,
- *   — znacznik wywołania w toku, żeby dwa naciśnięcia nie poszły naraz.
- *
- * Stan pozycji NIE jest już liczony w oknie: przychodzi z rdzenia jako
- * `StudioIngestState` i jest pięciowartościowy — oczekuje, przetwarzanie,
- * gotowa, ponowienie (pewność poniżej progu), odmowa. „Ponowienie" jest tu
- * stanem osobnym i tak ma być pokazane: pozycja nie jest ani gotowa, ani
- * odmówiona, tylko wraca do rozpoznania.
- */
-
-/** Odbicie kolejki rdzenia wraz z tym, czego rdzeń nie prowadzi. */
+/** Odbicie kolejki wczytywania utrzymywanej przez rdzeń wraz z tym, czego stanu rdzeń po swojej stronie nie prowadzi. */
 export interface KolejkaCyfryzacji {
   /** Pozycje w kolejności oddanej przez rdzeń. */
   pozycje(): readonly StudioIngestItem[];
@@ -63,7 +38,7 @@ export interface KolejkaCyfryzacji {
   bilans(): BilansKolejki;
 }
 
-/** Liczby pozycji w rozbiciu na pięć stanów kontraktu. */
+/** Liczby pozycji kolejki wczytywania w rozbiciu na pięć stanów niesionych przez kontrakt: oczekuje, przetwarzanie, gotowa, ponowienie, odmowa. */
 export interface BilansKolejki {
   wszystkie: number;
   oczekujace: number;
@@ -95,8 +70,7 @@ export function utworzKolejkeCyfryzacji(): KolejkaCyfryzacji {
 
     ustawPozycje(nowe) {
       pozycje = [...nowe];
-      // Wskazanie przeżywa odczyt, o ile pozycja nadal jest: odświeżenie kolejki
-      // nie może przestawiać Operatora na inną pozycję niż ta, którą poprawia.
+      // Wskazanie pozycji przeżywa odczyt, o ile pozycja nadal jest w kolejce po jej odświeżeniu.
       if (wskazana !== '' && !pozycje.some((pozycja) => pozycja.id === wskazana)) wskazana = '';
     },
 
@@ -135,9 +109,7 @@ export function utworzKolejkeCyfryzacji(): KolejkaCyfryzacji {
     uklad: (idPozycji) => uklady.get(idPozycji) ?? [],
 
     ustawRozpoznanie(idPozycji, noweSlowa, nowyUklad) {
-      // Brak słów w odpowiedzi NIE zeruje słów odłożonych: rozpoznanie bez
-      // odtwarzania układu jest wynikiem poprawnym, a poprawki Operatora
-      // wniesione wcześniej nie mają za co przepadać.
+      // Brak słów w odpowiedzi nie zeruje słów odłożonych, bo poprawki operatora nie mają za co przepadać.
       if (noweSlowa !== undefined) slowa.set(idPozycji, [...noweSlowa]);
       if (nowyUklad !== undefined) uklady.set(idPozycji, [...nowyUklad]);
     },

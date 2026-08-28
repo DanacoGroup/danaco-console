@@ -1,17 +1,12 @@
 /**
- * SKŁADNIK — ZAKŁADKI LOGOWANIA I REJESTRACJI.
- *
- * Dwie drogi równorzędne. Wygląd wnosi wariant biblioteki `--wybor`: stan
- * wybrany niesie podświetlenie, nie wypełnienie, bo pigułka w pełnym błękicie
- * czyta się jak przycisk działania, a to kontrolka wskazująca położenie.
- *
- * Odzyskiwanie dostępu nie jest trzecią drogą — jest wyjściem z logowania,
- * więc w zakładkach zostaje wtedy zaznaczone logowanie.
+ * Składnik — zakładki logowania i rejestracji. Dwie drogi równorzędne;
+ * wygląd wnosi wariant biblioteki, stan wybrany niesie podświetlenie, nie
+ * wypełnienie.
  */
 
 import { el, tekst, wykaz } from '../narzedzia.ts';
 
-/** Dwie drogi równorzędne, w kolejności zakładek katalogu. */
+/** Dwie drogi równorzędne, w kolejności zakładek katalogu, pomiędzy którymi przełącza się ten składnik. */
 export type Pigulka = 'logowanie' | 'rejestracja';
 
 const CELE: Pigulka[] = ['logowanie', 'rejestracja'];

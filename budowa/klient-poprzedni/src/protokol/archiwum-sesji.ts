@@ -11,22 +11,9 @@ import type { Kanal, Wynik } from './kanal';
 import { czyLiczba, czyTablica, sprawdzKsztalt } from './ksztalt-odpowiedzi';
 import { wywolaj } from './wywolanie';
 
-/**
- * Archiwum historii sesji — odłożenie, przywrócenie i wgląd.
- *
- * Jedna odpowiedzialność: trzy komendy jednego przejścia — sesja wychodzi
- * z historii bieżącej i wraca do niej. Zapis zostaje w całości, więc
- * archiwizacja nie jest usunięciem i widok nie nazywa jej tak.
- *
- * Wszystkie trzy działają na wielu sesjach: żądania niosą `sessionIds`,
- * a odpowiedzi oddają wykaz faktycznie przeniesionych. Rdzeń może przenieść
- * część zbioru, więc zwrócony wykaz idzie do widoku nietknięty.
- *
- * Wgląd jest stronicowany: `session.archive.list` przyjmuje `offset`/`limit`
- * i oddaje `total` — liczbę wszystkich sesji archiwum, nie długość strony.
- */
+// Archiwum historii sesji — odłożenie, przywrócenie i wgląd w trzy komendy jednego przejścia sesji.
 
-/** `session.archive` — przeniesienie sesji do archiwum. */
+/** `session.archive` — przeniesienie wskazanych sesji z historii bieżącej do archiwum, wraz z wykazem przeniesionych. */
 export function zadajArchiwizacjeSesji(
   kanal: Kanal,
   zadanie: SessionArchiveRequest,
@@ -36,7 +23,7 @@ export function zadajArchiwizacjeSesji(
   );
 }
 
-/** `session.restore` — przywrócenie sesji z archiwum do historii bieżącej. */
+/** `session.restore` — przywrócenie wskazanych sesji z archiwum z powrotem do historii bieżącej klienta. */
 export function zadajPrzywrocenieSesji(
   kanal: Kanal,
   zadanie: SessionRestoreRequest,
@@ -46,7 +33,7 @@ export function zadajPrzywrocenieSesji(
   );
 }
 
-/** `session.archive.list` — wykaz sesji archiwum wraz z ich łączną liczbą. */
+/** `session.archive.list` — stronicowany wykaz sesji archiwum wraz z ich łączną liczbą po stronie rdzenia. */
 export function zadajWykazArchiwum(
   kanal: Kanal,
   zadanie: SessionArchiveListRequest,

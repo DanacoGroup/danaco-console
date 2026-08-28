@@ -54,23 +54,7 @@ import type { Kanal } from '../../protokol/kanal';
 import { czyObiekt, czyTablica } from '../../protokol/ksztalt-odpowiedzi';
 import { zadaj, type WynikTranslate } from './wywolanie-translate';
 
-/**
- * Warsztat modułu Translate — jedno źródło dla wszystkich rodzin komend, które
- * nie mieszczą się w czterech oknach pierwotnych: pamięć jako byt Operatora,
- * segmentacja, terminologia, korekta i spójność, profile kontroli jakości,
- * obieg zatwierdzeń, dokumenty, lokalizacja oprogramowania, napisy i dubbing,
- * silniki, polityka pivota, przebieg pakietowy oraz wymiana zewnętrzna.
- *
- * Jedno źródło, nie jedno na okno. Wszystkie te komendy idą tą samą drogą
- * (`zadaj` z `wywolanie-translate.ts`), różnią się wyłącznie nazwą i ładunkiem;
- * rozbicie ich na dwanaście plików dałoby dwanaście kopii tej samej obudowy,
- * a każda z nich musiałaby osobno pamiętać o odmowie `translate.unknown`.
- *
- * Sprawdzian kształtu jest przy każdej komendzie i nie jest formalnością: to on
- * odróżnia „rdzeń odpowiedział wynikiem” od „rdzeń odpowiedział pustą kopertą”.
- * Okno, które przyjmie pustą kopertę jako wynik, pokaże Operatorowi pustkę jako
- * skutek — czyli dokładnie tę szkodę, przed którą stoi cały ten moduł.
- */
+/** Interfejs ZrodloWarsztatuTranslate zestawia wszystkie komendy modułu translate w jednym źródle, wychodzące poza cztery okna pierwotne. */
 export interface ZrodloWarsztatuTranslate {
   // --- pamięć tłumaczeń jako byt Operatora ---
   wykazPamieci(
@@ -260,12 +244,7 @@ export function utworzZrodloWarsztatuTranslate(kanal: Kanal): ZrodloWarsztatuTra
       );
   }
 
-  /**
-   * Komenda oddająca samą liczbę albo ścieżkę. Sprawdzianem jest obecność
-   * odpowiedzi jako obiektu: pola liczbowe bywają zerem i zero jest wynikiem
-   * poprawnym („nic nie zmieniono”), więc sprawdzanie ich wartości zamieniałoby
-   * prawdziwy wynik w odmowę.
-   */
+  /** Komenda oddająca liczbę albo ścieżkę sprawdza obecność odpowiedzi, bo zero też jest wynikiem. */
   function zLiczba<K extends keyof typeof Command & string>(komenda: (typeof Command)[K]) {
     return (zadanie: RequestOf<(typeof Command)[K]>) =>
       zadaj(kanal, komenda, zadanie, (tresc) => czyObiekt(tresc as unknown));

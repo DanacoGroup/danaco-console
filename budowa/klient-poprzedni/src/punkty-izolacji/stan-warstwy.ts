@@ -1,24 +1,6 @@
 import { IsolationLayer } from '../../../shared/contract';
 
-/**
- * Warstwa izolacji czynna w oknie — jedna dla wszystkich obszarów.
- *
- * Warstwy są dwie, ale nie są dwoma trybami do wyboru. `default` to warstwa
- * bazowa platformy: obowiązuje przy każdej nowej sesji, karcie, roli, projekcie
- * i oknie. `session` nakłada się na bazową bez jej zmiany i wygasa z zamknięciem
- * karty sesji — to podkład i naklejka na nim, nie dwa osobne magazyny.
- *
- * Warstwa jest stanem wspólnym, a nie polem jednego obszaru, bo dotyczy każdego
- * odczytu i każdego zapisu izolacji: kontekstu, zakresu technicznego,
- * przypisania profilu i podglądu polityki. Gdyby siedziała w jednej zakładce,
- * pozostałe pytałyby rdzeń o coś innego, niż widać na pasku — dlatego jej
- * kontrolka jest w narzędziach ramy okna, a stan tutaj.
- *
- * Ten plik nie woła rdzenia. Przełączenie warstwy w rdzeniu
- * (`isolation.layer.set`) należy do `sterowanie-warstwa.ts`; tutaj zostaje
- * wyłącznie to, co okno wie o warstwie po odpowiedzi rdzenia, i powiadomienie
- * obszarów o zmianie.
- */
+/** Warstwa izolacji czynna w oknie — jedna wspólna dla wszystkich obszarów tego okna Punktów Izolacji klienta. */
 export interface StanWarstwy {
   /** Warstwa czynna; przed pierwszym przełączeniem — bazowa platformy. */
   warstwa(): IsolationLayer;
@@ -28,13 +10,13 @@ export interface StanWarstwy {
   naZmiane(sluchacz: (warstwa: IsolationLayer) => void): () => void;
 }
 
-/** Nazwy obu warstw po polsku — jedno źródło dla paska i dla zdań obszarów. */
+/** Nazwy obu warstw izolacji po polsku — jedno wspólne źródło nazw dla paska narzędzi i dla zdań obszarów. */
 export const NAZWY_WARSTW: Readonly<Record<IsolationLayer, string>> = {
   [IsolationLayer.Default]: 'Domyślna platformy',
   [IsolationLayer.Session]: 'Karty sesji',
 };
 
-/** Zdanie o skutku wyboru warstwy — skutek jest ważniejszy niż nazwa. */
+/** Zdanie o skutku wyboru warstwy izolacji — skutek tego wyboru jest tu ważniejszy niż sama jego nazwa. */
 export const OPISY_WARSTW: Readonly<Record<IsolationLayer, string>> = {
   [IsolationLayer.Default]:
     'Warstwa bazowa. Zapis obowiązuje przy każdej nowej sesji, karcie, roli, projekcie i oknie — ' +

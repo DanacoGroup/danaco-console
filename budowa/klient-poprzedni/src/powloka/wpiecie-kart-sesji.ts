@@ -9,37 +9,16 @@ import { czyRozliczeniePuste, trescRozliczenia } from './rozliczenie-usuniecia';
 import { zadajUsuniecieSesji } from './usuniecie-sesji';
 import { utworzZrodloKartSesji, type MigawkaKart } from './zrodlo-kart-sesji';
 
-/**
- * Wpięcie pasa kart sesji w rdzeń — jedyne miejsce powłoki, które zna nazwę
- * komendy sesji.
- *
- * Wiąże migawki `zrodlo-kart-sesji` z pasem i wykonuje cztery zamiary: założenie
- * sesji (`session.create`), zamknięcie sesji (`session.close`), trwałe usunięcie
- * (`session.delete`) i przeniesienie ogniska (`session.focus`).
- *
- * Usunięcie nie jest zamknięciem: `session.close` zmienia stan i zostawia zapis,
- * `session.delete` kasuje zapis i jest jedyną drogą utraty danych sesji.
- * Dlatego tylko usunięcie przechodzi przez potwierdzenie z wykazem tego, co
- * ginie, i tylko ono rozlicza się dwoma wykazami rdzenia.
- *
- * Droga do rdzenia udostępnia się raz, przy złożeniu aplikacji. Pas kart
- * powstaje wewnątrz powłoki, która jest widokiem i nie zna ani transportu, ani
- * kontraktu; przeciąganie kanału przez wszystkie jej warstwy wprowadziłoby
- * protokół do każdego odbiorcy powłoki. Bez udostępnienia pas zostaje samym
- * widokiem — tak pracuje stanowisko podglądu, w którym rdzenia nie ma.
- *
- * Każde naciśnięcie dostaje odpowiedź: odmowa rdzenia idzie na pas jego własną
- * treścią, a skład pasa zmienia dopiero kolejna migawka rdzenia.
- */
+// Wpięcie pasa kart sesji w rdzeń — jedyne miejsce powłoki, które zna nazwę komendy sesji.
 
-/** Droga do rdzenia potrzebna pasowi kart. */
+/** Droga do rdzenia potrzebna pasowi kart sesji, wraz z tożsamością klienta udostępnioną tej samej powłoce. */
 export interface DostepDoRdzenia {
   kanal: Kanal;
-  /** Tożsamość z powitania; `session.focus` żąda właśnie jej (ognisko = klient). */
+  /** Tożsamość z powitania; przeniesienie ogniska żąda właśnie jej, bo ognisko równa się klient. */
   klient: TozsamoscKlienta;
 }
 
-/** Tyle pasa, ile potrzeba do zasilenia go rdzeniem — bez zależności zwrotnej. */
+/** Tyle pasa, ile potrzeba do zasilenia go rdzeniem — bez jakiejkolwiek zależności zwrotnej tego samego pasa. */
 export interface PasKart {
   ustawMigawke(migawka: MigawkaKart): void;
   zglosKomunikat(tekst: string, waga?: 'blad' | 'info'): void;
@@ -47,7 +26,7 @@ export interface PasKart {
   czynna(): { readonly id: string } | undefined;
 }
 
-/** Zamiary zgłaszane przez pas; rozstrzyga je rdzeń, nie widok. */
+/** Zamiary zgłaszane przez pas kart sesji; rozstrzyga je zawsze rdzeń, nigdy sam widok tego samego pasa. */
 export interface ZamiaryKart {
   /** ＋ — założenie sesji, nie okna komunikacji. */
   przyNowej(tytul: string): void;
@@ -55,35 +34,23 @@ export interface ZamiaryKart {
   przyZamknieciu(id: string): void;
   /** Wybór karty — przeniesienie ogniska tego klienta. */
   przyWyborze(id: string): void;
-  /**
-   * Kosz — trwałe usunięcie sesji po potwierdzeniu. Tytuł idzie razem
-   * z identyfikatorem, bo potwierdzenie ma nazwać stratę, a nie pokazać ciąg
-   * znaków.
-   */
+  // Kosz — trwałe usunięcie sesji po potwierdzeniu, tytuł idzie razem z identyfikatorem sesji.
   przyUsunieciu(id: string, tytul: string): void;
 }
 
-/**
- * Scena sesji pokazuje okna sesji powiązanej z tym połączeniem. Ognisko można
- * przenieść na inną kartę, ale przeniesienie sceny wymaga powiązania połączenia
- * z tamtą sesją (`session.bind`), a droga do tego prowadzi przez Centrum
- * dowodzenia; komunikat mówi to wprost.
- */
+/** Scena sesji pokazuje okna sesji powiązanej z tym połączeniem, a przeniesienie wymaga jej powiązania. */
 const SCENA_ZOSTAJE =
   'Ognisko przeszło na tę sesję. Scena pokazuje okna sesji bieżącego połączenia — po okna tamtej sesji wróć przyciskiem „Wróć do sesji" w Centrum dowodzenia.';
 
-/** Droga do rdzenia udostępniona przez aplikację; `null` poza produktem. */
+/** Droga do rdzenia udostępniona przez aplikację; wartość pusta oznacza pracę poza tym produktem klienta. */
 let dostep: DostepDoRdzenia | null = null;
 
-/** Podaje pasom kart drogę do rdzenia. Wywołuje ją złożenie aplikacji. */
+/** Podaje pasom kart drogę do rdzenia; wywołuje ją wyłącznie złożenie tej samej aplikacji przy jej starcie. */
 export function udostepnijRdzenPasomKart(nowy: DostepDoRdzenia): void {
   dostep = nowy;
 }
 
-/**
- * Wiąże świeżo złożony pas z rdzeniem. Zwraca zamiary, którym pas oddaje
- * naciśnięcia, albo `null`, gdy rdzeń nie został udostępniony.
- */
+/** Wiąże świeżo złożony pas z rdzeniem, zwracając zamiary, którym ten pas oddaje wszystkie naciśnięcia. */
 export function zwiazPasKartZRdzeniem(pas: PasKart): ZamiaryKart | null {
   if (dostep === null) return null;
   const { kanal, klient } = dostep;
@@ -133,24 +100,14 @@ export function zwiazPasKartZRdzeniem(pas: PasKart): ZamiaryKart | null {
     przyWyborze(id) {
       const poprzednia = pas.czynna()?.id;
       if (poprzednia === id) return;
-      // Zaznaczenie idzie od razu, bo wybór karty jest faktem widoku; odmowa
-      // rdzenia cofa je do karty poprzedniej.
+      // Zaznaczenie idzie od razu, bo wybór karty jest faktem widoku; odmowa rdzenia cofa je do poprzedniej.
       pas.wybierz(id);
       ogniskuj(id, poprzednia);
     },
   };
 }
 
-/**
- * Trwałe usunięcie sesji jednej karty.
- *
- * Potwierdzenie prowadzi całą czynność wraz ze stanami obowiązkowymi, a pas
- * kart dostaje samo rozliczenie, natychmiast po odpowiedzi rdzenia. Odmowę
- * nazwał już modal wraz z kodem, więc pas jej nie powtarza.
- *
- * Rozliczenie, w którym nic nie zginęło, idzie na pas z wagą błędu: „nie
- * usunąłem niczego" nie jest powodzeniem zamówionej czynności.
- */
+/** Trwałe usunięcie sesji jednej karty; pas kart dostaje samo rozliczenie zaraz po odpowiedzi tego rdzenia. */
 function usunSesjeKarty(kanal: Kanal, pas: PasKart, id: string, tytul: string): void {
   const nazwa = (idSesji: string): string => (idSesji === id ? tytul : '');
   void otworzUsuniecieSesji(

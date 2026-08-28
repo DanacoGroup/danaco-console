@@ -20,24 +20,8 @@ import {
 } from './zestawienie-udzialu';
 
 /**
- * Voting & Evaluation Center — okno monitora otwierane jako rozszerzenie boczne.
- *
- * Okno nie prowadzi głosowania i nie udaje, że je prowadzi — ale powód zmienił
- * się co do istoty. Kontrakt niesie dziś pełną rodzinę głosowania
- * (`roundtable.vote.start`, `.cast`, `.get`) wraz z metodą agregacji, progiem
- * kworum i wynikiem, a także rubryki, sędziów, ranking, macierz decyzyjną
- * i kalibrację. Brakuje ich obsługi: żadnej z tych komend to okno jeszcze nie
- * wywołuje. Suwak, gwiazdki albo przycisk „Uruchom głosowanie” postawione bez
- * obsługi zbierałyby wybór Operatora, który nie dociera nigdzie i znika wraz
- * z odświeżeniem okna — czyli byłyby pozorem czynności.
- *
- * Okno pokazuje zamiast tego jedyną wielkość, którą samo umie zmierzyć: udział
- * uczestników w turze bieżącej — ile razy i jak obszernie każdy się odezwał, kto
- * milczy, kto jest wyciszony i jakie ma miejsce w kolejności głosu. Nazwa
- * wielkości mówi, czym ona jest: udziałem, nie rankingiem i nie kworum.
- *
- * Wyliczenia siedzą w `zestawienie-udzialu.ts`. Subskrypcji strumienia okno nie
- * zakłada — jedna na całe złożenie stoi w `indeks.ts`.
+ * Voting & Evaluation Center — okno monitora otwierane jako rozszerzenie boczne, mierzące
+ * udział uczestników zamiast prowadzić głosowanie.
  */
 export interface OknoVotingEvaluation {
   element: HTMLElement;
@@ -62,9 +46,7 @@ export function utworzOknoVotingEvaluation(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Czynności oceny wołają komendy obszaru wprost: głosowanie, ocenę parami,
-  // rubryki, sędziów, ranking i macierz decyzyjną. Warianty głosowania bierze
-  // się z wypowiedzi tury bieżącej — to nad nimi głosuje się w tym oknie.
+  // Czynności oceny wołają komendy obszaru wprost; warianty głosowania biorą się z wypowiedzi tury.
   const powierzchnia = zlozPowierzchnieOceny(
     rama,
     tresc.element,
@@ -131,14 +113,14 @@ export function utworzOknoVotingEvaluation(
   return { element: rama.element, odswiez: rysuj, odswiezGlosy, zamknij: odsubskrybuj };
 }
 
-/** Opis tury bieżącej dla eksportu i zdań okna. */
+/** Opis tury bieżącej dla eksportu i zdań okna, z numerem i stanem, gdy definicja tury jest rdzeniowi znana. */
 function opisTury(stan: StanDebaty): string {
   const definicja = stan.definicjaTury();
   if (definicja === null) return 'debaty bez tury znanej temu oknu';
   return `tury #${definicja.index} (${definicja.status})`;
 }
 
-/** Wykaz udziału — wiersz na uczestnika, stany słowem. */
+/** Wykaz udziału — wiersz na uczestnika, ze znacznikiem, nazwą i wszystkimi stanami wypisanymi słowem wprost. */
 function wykazUdzialu(wiersze: readonly UdzialUczestnika[]): HTMLElement {
   const lista = document.createElement('ul');
   lista.className = 'dr-wezly';
@@ -167,7 +149,7 @@ function wykazUdzialu(wiersze: readonly UdzialUczestnika[]): HTMLElement {
   return lista;
 }
 
-/** Wszystkie stany wiersza słowem — atrybut danych nie niesie ich nikomu. */
+/** Wszystkie stany wiersza słowem — atrybut danych nie niesie ich nikomu, więc treść musi je nazwać wprost. */
 function zdanieWiersza(udzial: UdzialUczestnika): string {
   const czlony = [
     udzial.wypowiedzi === 0
@@ -202,15 +184,14 @@ function zdanieBrakuGlosowania(): HTMLElement {
   return zdanie;
 }
 
-/** Kontrolki okna. */
+/** Kontrolki okna: przycisk eksportu zestawienia udziału obok czterech pozycji jeszcze bez obsługi rdzenia. */
 interface PowierzchniaOceny {
   eksport: HTMLButtonElement;
 }
 
 /**
- * Pasek akcji okna: jeden raport wykonalny i cztery pozycje bez obsługi, wśród
- * nich obie czynności wiodące opracowania — uruchomienie głosowania i wybór
- * metody agregacji. Wszystkie cztery mają dziś komendę w kontrakcie.
+ * Pasek akcji okna: jeden raport wykonalny i cztery pozycje bez obsługi, wszystkie z komendą
+ * już w kontrakcie.
  */
 function zlozAkcjeOceny(gospodarz: HTMLElement): HTMLButtonElement {
   const eksport = przycisk('Eksportuj zestawienie udziału', 'dn-btn dn-btn--atrament');
@@ -248,12 +229,12 @@ function zlozAkcjeOceny(gospodarz: HTMLElement): HTMLButtonElement {
   return eksport;
 }
 
-/** Zestaw akcji warstwy trzeciej — operacje oceny jeszcze niezbudowane. */
+/** Zestaw akcji warstwy trzeciej — operacje oceny jeszcze niezbudowane, wypisane obok eksportu wykonalnego. */
 function zlozZestawOceny(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Operacje oceny okna', czynnosci);
 }
 
-/** Składa pasek akcji, warstwy i ciało ramy. */
+/** Składa pasek akcji, warstwy operacji oceny i ciało ramy okna z gotowymi kontrolkami eksportu udziału. */
 function zlozPowierzchnieOceny(
   rama: { akcje: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,

@@ -1,13 +1,5 @@
 /**
- * Okna pomocnicze modułów inżynierskich — jedno wejście obszaru.
- *
- * Obszar niesie okna towarzyszące rozmowie w modułach Developer i Diagnostics
- * (terminal, przeglądarka, artefakty, pliki, podgląd w tle bash, pliki
- * środowiska) oraz spis tych, których jeszcze nie ma, wraz z powodem braku.
- *
- * Obszar jest wspólny, nie modułowy: stoi poza `moduly/`, bo pas składa się
- * identycznie w obu modułach, a Terminal ma dojść w module Apps. Kopia
- * w każdym module byłaby kolejnym miejscem do rozejścia się treści.
+ * Plik zbiera i udostępnia elementy obszaru okien pomocniczych, wspólnego dla modułów Developer i Diagnostics, obejmującego terminal, przeglądarkę, artefakty, pliki oraz podgląd bash.
  */
 export { budzetRozmowy, type BudzetRozmowy } from './budzet-rozmowy';
 export { type OpcjePanelu, type PanelPomocniczy } from './panel-pomocniczy';

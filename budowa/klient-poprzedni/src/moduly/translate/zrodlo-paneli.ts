@@ -20,16 +20,8 @@ import { czyObiekt, czyTablica, czyTekst } from '../../protokol/ksztalt-odpowied
 import { zadaj, type WynikTranslate } from './wywolanie-translate';
 
 /**
- * Osiem komend i jedno zdarzenie Translation Panels — okna o instancji
- * wielokrotnej (N = liczba języków docelowych).
- *
- * Jedno źródło na wszystkie instancje, nie jedno na panel. Panele różnią się
- * tylko identyfikatorem, który wchodzi do żądania; gdyby każda instancja
- * zakładała własne źródło, subskrypcja `translate.translation.changed`
- * powstałaby N razy i N razy przyszłaby ta sama zmiana.
- *
- * Odmowa jednego panelu zostaje w tym panelu (fail-open): źródło
- * niczego nie ucisza i nie przerywa pozostałym instancjom pracy.
+ * Osiem komend i jedno zdarzenie Translation Panels — okna o instancji wielokrotnej — mają jedno
+ * źródło na wszystkie instancje, nie jedno na panel; odmowa jednego panelu zostaje w tym panelu.
  */
 export interface ZrodloPaneli {
   dodajJezyk(
@@ -39,14 +31,7 @@ export interface ZrodloPaneli {
     idPanelu: string,
     tekst: string,
   ): Promise<WynikTranslate<TranslateTranslationSetResponse>>;
-  /**
-   * `translate.backtranslation.run`; `idKanalu` pusty znaczy „kanał czynny okna"
-   * i wtedy pole `channelId` nie wchodzi do żądania wcale.
-   *
-   * Pusty napis nie jest tym samym, co brak pola: rdzeń przycina wskazanie
-   * i pustego traktuje jak brak (`kanalZadania`), ale wysyłanie pustej wartości
-   * nazwałoby wskazaniem coś, czego Operator nie wskazał.
-   */
+  /** Pusty kanał znaczy kanał czynny okna, więc pole kanału nie wchodzi do żądania wcale. */
   tlumaczZwrotnie(
     idPanelu: string,
     idKanalu: string,
@@ -95,8 +80,7 @@ export function utworzZrodloPaneli(kanal: Kanal): ZrodloPaneli {
     },
 
     async kontrolaJakosci(idPanelu) {
-      // Wykaz pusty znaczy „bez zastrzeżeń" i jest wynikiem, nie pustką —
-      // stąd sprawdzian pyta o tablicę, nie o jej długość.
+      // Wykaz pusty znaczy bez zastrzeżeń i jest wynikiem, nie pustką, więc sprawdzian pyta o tablicę.
       return zadaj(kanal, Command.TranslateQualityCheck, { panelId: idPanelu }, (tresc) =>
         czyTablica(tresc.issues),
       );

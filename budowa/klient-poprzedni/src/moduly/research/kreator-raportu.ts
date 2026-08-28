@@ -4,17 +4,7 @@ import { utworzSekcjeRaportu, type SekcjeRaportu } from './sekcje-raportu';
 import { utworzStanOknaBadania, type StanOknaBadania } from './stan-okna-badania';
 
 /**
- * Kreator raportu — modal z krokami pionowymi i stanami `zamknięty ·
- * otwierający się · otwarty · próba z brakami · ładowanie · błąd`.
- *
- * Cztery drogi zamknięcia, wszystkie z natywnego `<dialog>`: kontrolka
- * w nagłówku, klawisz Escape, kliknięcie w nakładkę i akcja w stopce. Wzorzec
- * powtórzony za `konfiguracja/okno-konfiguracji.ts`.
- *
- * Przycisk główny jest czynny od otwarcia. Próba z brakami nie gasi kontrolki:
- * kreator zostaje otwarty, a brak wraca komunikatem nad stopką. Ponowne
- * naciśnięcie w trakcie wywołania jest bezpieczne po stronie logiki kreatora,
- * nie przez odebranie klikalności.
+ * Kreator raportu jest modalem z krokami pionowymi, dostępnym czterema drogami zamknięcia, w tym klawiszem Escape i kliknięciem w nakładkę.
  */
 export interface KreatorRaportu {
   element: HTMLDialogElement;
@@ -46,10 +36,7 @@ export function utworzKreatorRaportu(naZlozenie: () => void): KreatorRaportu {
     sekcje.element,
   );
 
-  // Wnętrze kreatora jest gotowe od pierwszej chwili: pole tytułu, reguła dwóch
-  // dróg i redakcja sekcji stoją tu bez żadnego wywołania rdzenia. Pas stanu
-  // startuje w fazie `puste`, więc bez tego jednego zdania nad gotowym
-  // formularzem wisiałby komunikat o pustce, której nie ma.
+  // Stan startuje pusty; wołanie ustawia gotowość, by nie pokazać komunikatu o pustym wnętrzu.
   stan.gotowe();
 
   const element = document.createElement('dialog');
@@ -72,8 +59,7 @@ export function utworzKreatorRaportu(naZlozenie: () => void): KreatorRaportu {
 
   element.append(naglowek(() => element.close()), cialo, stopka);
 
-  // Czwarta droga zamknięcia: kliknięcie w nakładkę. Natywny `<dialog>` kieruje
-  // je na sam element, więc odróżnia je od kliknięcia w treść kreatora.
+  // Kliknięcie w nakładkę zamyka: zdarzenie trafia w element dialogu, a nie w jego treść.
   element.addEventListener('click', (zdarzenie) => {
     if (zdarzenie.target === element) element.close();
   });
@@ -96,19 +82,7 @@ export function utworzKreatorRaportu(naZlozenie: () => void): KreatorRaportu {
 }
 
 /**
- * Reguła, po której rdzeń wybiera drogę budowy — powiedziana Operatorowi przed
- * naciśnięciem, nie dopiero w wyniku.
- *
- * `research.report.build` z polem `sections` składa raport z samych sekcji
- * podanych i pomija `findingIds`; bez tego pola woła kanał modelu po sekcję
- * nadrzędną. Reguła stoi w kreatorze, bo tu Operator rozstrzyga ją każdym
- * wpisanym znakiem.
- *
- * Droga modelu nie gwarantuje odpowiedzi modelu: bez logowania do programu
- * `claude` budowa kończy się powodzeniem, raport zostaje zapisany, a treścią
- * sekcji nadrzędnej jest komunikat procesu kanału. Kreator uprzedza o tym przed
- * naciśnięciem, bo po nim klient nie ma już czym tego rozpoznać — odpowiedź nie
- * niesie znaku pochodzenia treści (`skutek-zlozenia.ts`).
+ * Funkcja opisuje regułę wyboru drogi budowy raportu, informując Operatora przed naciśnięciem, że wypełniona redakcja ma pierwszeństwo przed drogą modelu.
  */
 function reguleDwochDrog(): HTMLElement {
   const element = document.createElement('p');
@@ -118,7 +92,7 @@ function reguleDwochDrog(): HTMLElement {
   return element;
 }
 
-/** Nagłówek kreatora: tytuł i kontrolka zamknięcia — pierwsza z czterech dróg. */
+/** Funkcja tworzy nagłówek kreatora złożony z tytułu okna oraz kontrolki zamknięcia, pierwszej z czterech dostępnych dróg. */
 function naglowek(naZamkniecie: () => void): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dn-modal-naglowek mr-kreator__naglowek';

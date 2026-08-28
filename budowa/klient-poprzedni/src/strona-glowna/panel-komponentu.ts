@@ -9,26 +9,7 @@ import {
   type ZmianaKomponentu,
 } from './zmiana-komponentu';
 
-/**
- * Panel komponentu założonego — zmiana (`component.update`) i przypisanie
- * (`component.assign`).
- *
- * Panel stoi w przyborniku strefy drugiej, pod formularzem zakładania: kolejność
- * jest kolejnością pracy — najpierw komponent powstaje, potem się go zmienia
- * i wiąże. Opracowanie strony głównej nazywa to miejsce „Panelem popover kafla"
- * i menu `Operacje ▼`; panel wysuwany z kafla wymagałby warstwy nakładek, której
- * strefa druga dziś nie ma, więc czynności stoją w przyborniku i jest to
- * zgłoszone Właścicielowi jako rozjazd z makietą, nie ukryte.
- *
- * Wiązanie mówi, z czym wiąże, ZANIM zwiąże. Zdanie nad przyciskiem nazywa
- * komponent i byt poziomu po nazwach — nie po identyfikatorach — i przepisuje
- * się przy każdej zmianie wyboru. Przycisk, po którym Operator dowiaduje się
- * z odpowiedzi, co właśnie związał, byłby przyciskiem wiążącym w ciemno.
- *
- * Zmiana wysyła wyłącznie pola dotknięte. Pole zostawione puste nie jedzie
- * wcale, bo kontrakt mówi: pola pominięte zostają bez zmian. Puste pole nazwy
- * nie jest życzeniem pustej nazwy.
- */
+/** Panel komponentu założonego stoi w przyborniku strefy drugiej, pod formularzem zakładania, i udostępnia zmianę pól oraz przypisanie komponentu do poziomu zasięgu. */
 export interface PanelKomponentu {
   element: HTMLElement;
   /** Rozwija albo zwija panel. */
@@ -162,10 +143,7 @@ export function utworzPanelKomponentu(opcje: OpcjePanelu): PanelKomponentu {
     return komponenty.find((pozycja) => pozycja.id === komponent.value) ?? null;
   }
 
-  /**
-   * Wartości pól bierze się z komponentu wskazanego, ale jako podpowiedź
-   * miejsca zastanego, nie jako wysyłkę: pole niezmienione i tak nie pojedzie.
-   */
+  // Wartości pól bierze się z komponentu wskazanego jako podpowiedź miejsca zastanego, nie jako wysyłkę.
   function wypelnijZWybranego(): void {
     const pozycja = wybrany();
     nazwa.value = '';
@@ -238,8 +216,7 @@ export function utworzPanelKomponentu(opcje: OpcjePanelu): PanelKomponentu {
         return opcja;
       }),
     );
-    // Wykaz pusty przy poziomie żądającym bytu jest brakiem po stronie rdzenia
-    // i musi to powiedzieć, zamiast pokazać pustą listę bez wyjaśnienia.
+    // Wykaz pusty przy poziomie żądającym bytu jest brakiem po stronie rdzenia i musi to powiedzieć.
     if (byty.length === 0 && !byt.hidden) {
       const opcja = document.createElement('option');
       opcja.value = '';
@@ -259,9 +236,7 @@ export function utworzPanelKomponentu(opcje: OpcjePanelu): PanelKomponentu {
     const nowyOpis = opis.value.trim();
     const stanCzynnosci = czynny.checked;
     if (nowaNazwa === '' && nowyOpis === '' && stanCzynnosci === pozycja.enabled) {
-      // Żądanie bez ani jednego pola zmienionego byłoby wywołaniem bez treści:
-      // rdzeń oddałby ten sam komponent, a Operator zobaczyłby potwierdzenie
-      // zmiany, której nie było.
+      // Żądanie bez ani jednego pola zmienionego byłoby wywołaniem bez treści udającym zmianę.
       pokaz(
         'Nic nie zmieniono: nazwa i opis są puste, a stan czynności taki jak w rdzeniu. ' +
           'Pole puste zostawia wartość bez zmian — to nie żądanie pustej nazwy.',
@@ -353,5 +328,5 @@ export function utworzPanelKomponentu(opcje: OpcjePanelu): PanelKomponentu {
   };
 }
 
-/** Poziom globalny — wartość początkowa selektora poziomu. */
+/** Poziom globalny jest wartością początkową selektora poziomu, dopóki operator nie wybierze innego poziomu. */
 export const POZIOM_POCZATKOWY: ConfigScope = ConfigScope.Global;

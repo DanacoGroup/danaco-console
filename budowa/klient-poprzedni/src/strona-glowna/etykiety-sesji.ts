@@ -1,19 +1,8 @@
 import { SessionStatus, type SessionPresence } from '../../../shared/contract';
 
-/**
- * Etykiety sekcji sesji w tle — przekład danych kontraktu na polskie napisy.
- *
- * Zakres pliku to treść napisów karty sesji — bez elementów i bez stylu.
- *
- * Żadna funkcja nie wymyśla danych: każda przekłada wartość oddaną przez
- * rdzeń, a wartość nieobecną oddaje jako `undefined` — karta pomija wtedy
- * cały fragment zamiast pokazać zmyślony.
- *
- * Nazw środowisk tu nie ma: daje je `wykaz-srodowisk.ts`, zasilany wykazem
- * z rdzenia, żeby na jednym ekranie nie stały dwa źródła tej samej nazwy.
- */
+/** Plik przekłada dane kontraktu sesji na polskie napisy karty sesji, bez elementów i bez stylu. */
 
-/** Odmiana plakietki biblioteki komponentów niosąca stan sesji. */
+/** Odmiana plakietki biblioteki komponentów niosąca stan sesji przenosi status sesji na wygląd znacznika w karcie. */
 export type OdmianaStanu = 'sukces' | 'ostrzezenie' | 'neutralna';
 
 export interface EtykietaStanu {
@@ -21,7 +10,7 @@ export interface EtykietaStanu {
   odmiana: OdmianaStanu;
 }
 
-/** Komplet stanów kontraktu — nowy stan w `contract.json` przerywa kompilację. */
+/** Komplet stanów kontraktu udostępnia etykietę i odmianę plakietki dla każdego stanu sesji zdefiniowanego w kontrakcie. */
 const ETYKIETY_STANU: Readonly<Record<SessionStatus, EtykietaStanu>> = {
   active: { tekst: 'czynna', odmiana: 'sukces' },
   paused: { tekst: 'wstrzymana', odmiana: 'ostrzezenie' },
@@ -33,7 +22,7 @@ export function etykietaStanuSesji(stan: SessionStatus): EtykietaStanu {
   return ETYKIETY_STANU[stan];
 }
 
-/** Liczby okien z żywego odpisu: „2 okna · 1 w strumieniu". */
+/** Opis liczby okien z żywego odpisu obecności buduje napis w postaci liczby okien i liczby okien w strumieniu. */
 export function opisOkien(obecnosc: SessionPresence): string {
   const czesci = [liczebnikOkien(obecnosc.openWindowCount)];
   if (obecnosc.streamingWindowCount > 0) {
@@ -42,7 +31,7 @@ export function opisOkien(obecnosc: SessionPresence): string {
   return czesci.join(' · ');
 }
 
-/** Chwila ostatniej czynności względem teraz; starsza niż doba — datą. */
+/** Opis chwili ostatniej czynności podaje czas względem teraz, a dla chwili starszej niż doba oddaje pełną datę. */
 export function opisCzasu(chwila: number, teraz: number = Date.now()): string {
   const minuty = Math.floor(Math.max(0, teraz - chwila) / 60_000);
   if (minuty < 1) return 'przed chwilą';
@@ -54,7 +43,7 @@ export function opisCzasu(chwila: number, teraz: number = Date.now()): string {
   );
 }
 
-/** Polska liczba mnoga: 1 okno, 2–4 okna, 5+ okien (z wyjątkiem 12–14). */
+/** Funkcja oddaje polską liczbę mnogą rzeczownika okno zgodnie z regułami odmiany liczebnika w języku polskim. */
 function liczebnikOkien(liczba: number): string {
   if (liczba === 1) return '1 okno';
   const jednosc = liczba % 10;

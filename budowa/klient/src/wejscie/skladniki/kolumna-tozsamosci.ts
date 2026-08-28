@@ -1,28 +1,19 @@
 /**
- * SKŁADNIK — KOLUMNA TOŻSAMOŚCI.
- *
- * Lewa strefa okna: sygnet z pulsującą kropką, nazwa, motto i trzy zdania
- * o tym, czym program jest. Kolumna nie jest planszą marki — jest strefą okna,
- * więc powierzchnia różni się od panelu treści odcieniem, nie kontrastem.
- *
- * Nota wydawcy NIE należy do tego składnika: stoi w wierszu pasa działań,
- * niżej niż kolumna, i jest jedna dla całego okna.
- *
- * W odsłonie przygotowania zamiast zdań stoi pole animacji powłok: na tym
- * etapie użytkownik już nie wybiera programu, tylko czeka, aż się złoży.
+ * Składnik — kolumna tożsamości. Lewa strefa okna: sygnet z pulsującą
+ * kropką, nazwa, motto i trzy zdania o tym, czym program jest.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, wykazZalet, zeZnacznika } from '../narzedzia.ts';
 
-/** Odsłona kolumny; nazwa wskazuje gałąź katalogu z mottem i zdaniami. */
+/** Odsłona kolumny; nazwa wskazuje gałąź katalogu z mottem i zdaniami właściwymi tej odsłonie tego okna. */
 export type OdslonaKolumny = 'uruchamianie' | 'dostep' | 'przygotowanie';
 
 export interface WlasciwosciKolumny {
   odslona: OdslonaKolumny;
 }
 
-/** Znaki trzech zdań, po jednym na zdanie. Kolejność za prototypem. */
+/** Znaki trzech zdań, po jednym na każde zdanie, ułożone w kolejności zgodnej z kolejnością zdań w kolumnie. */
 const ZNAKI_ZALET: NazwaZnaku[] = ['srodowiska', 'modele', 'tarcza'];
 
 export function kolumnaTozsamosci(w: WlasciwosciKolumny): HTMLElement {

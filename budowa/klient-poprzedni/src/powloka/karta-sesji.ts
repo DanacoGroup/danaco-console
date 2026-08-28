@@ -1,44 +1,25 @@
 import { ProgressStatus } from '../../../shared/contract';
 import { ubierzCzynnosciKarty, zlozCzesciKarty } from './czesci-karty';
 
-/**
- * Pojedyncza karta sesji w pasie zakładek.
- *
- * Jedna odpowiedzialność: stan i cykl życia jednej karty. Budowa jej węzłów
- * należy do `czesci-karty.ts`, mechanika pasa — wybór, kolejność, wędrujący
- * fokus — do `karty-sesji.ts`.
- *
- * Karta niesie trzy rzeczy: wskaźnik pracy w tle, tytuł równy nazwie otwartego
- * modułu oraz zamknięcie; obok zamknięcia stoi usunięcie trwałe sesji, czynność
- * o innym skutku i innej etykiecie. Wskaźnik pracy pokazuje, że proces biegnie,
- * choć Operator patrzy gdzie indziej.
- *
- * Nazwy stanów pochodzą z `shared/contract` — powłoka nie zakłada
- * własnego słownika stanu procesu.
- */
+// Pojedyncza karta sesji w pasie zakładek — stan i cykl życia karty, budowanej z osobnych węzłów.
 
-/** Opis karty potrzebny do jej zbudowania. */
+/** Opis karty potrzebny do jej zbudowania, dostarczany przez pas zakładek przy tworzeniu nowej karty sesji. */
 export interface DaneKarty {
   id: string;
   tytul: string;
   stan: ProgressStatus;
 }
 
-/** Obsługa zdarzeń karty przekazywana przez pas zakładek. */
+/** Obsługa zdarzeń karty przekazywana przez pas zakładek, obejmująca zamknięcie oraz trwałe usunięcie sesji. */
 export interface ObslugaKarty {
   przyWyborze(id: string): void;
   przyZamknieciu(id: string): void;
-  /**
-   * Trwałe usunięcie sesji karty (`session.delete`) — czynność inna niż
-   * `przyZamknieciu`. Zamknięcie zmienia stan sesji i zostawia zapis; usunięcie
-   * wyprowadza zapis do kosza rdzenia, skąd po terminie znika trwale.
-   * Dwie nazwy, bo dwa skutki.
-   */
+  /** Trwałe usunięcie sesji karty jest czynnością inną niż zamknięcie — dwa skutki, dwie różne nazwy. */
   przyUsunieciu(id: string): void;
   przyKlawiszu(id: string, zdarzenie: KeyboardEvent): void;
 }
 
-/** Karta sesji gotowa do osadzenia w pasie. */
+/** Karta sesji gotowa do osadzenia w pasie zakładek, niosąca element, sterowanie stanem oraz obsługę zdarzeń. */
 export interface KartaSesji {
   readonly id: string;
   readonly element: HTMLElement;
@@ -51,7 +32,7 @@ export interface KartaSesji {
   ustawOgnisko(): void;
 }
 
-/** Wygląd i etykieta stanu procesu. Stan nigdy nie idzie samą barwą. */
+/** Wygląd i etykieta stanu procesu karty sesji; stan nigdy nie idzie samą barwą kropki wskaźnika pracy. */
 interface WygladStanu {
   /** Wariant kropki z biblioteki komponentów. */
   klasa: string;

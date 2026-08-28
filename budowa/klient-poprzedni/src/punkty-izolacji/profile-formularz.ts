@@ -12,24 +12,7 @@ import {
   etykietaTechniczna,
 } from './katalog-izolacji';
 
-/**
- * Formularz profilu izolacji — nazwa, opis i komplet jedenastu przełączników.
- *
- * Profil jest zestawem, nie skrótem. `isolation.profile.save` przyjmuje nazwę,
- * opis oraz oba zestawy przełączników (`contextSwitches`, `technicalSwitches`),
- * a formularz podaje zawsze komplet jedenastu, nawet gdy Operator ruszył jeden:
- * profil ma być pełnym zestawem, a nie różnicą wobec czegoś, czego rdzeń w tym
- * żądaniu nie widzi.
- *
- * Zapis nowego i zmiana istniejącego idą jedną komendą. Puste `profileId`
- * zakłada nowy profil, podane zmienia istniejący
- * (`IsolationProfileSaveRequest`). Formularz mówi wprost, którą z dwóch rzeczy
- * zrobi zapis, i pozwala wrócić do zakładania nowego jednym naciśnięciem.
- *
- * Formularz nie zastępuje walidacji rdzenia: pole nazwy nie blokuje zapisu i nie
- * wygasza przycisku, pusta nazwa jedzie do rdzenia i to rdzeń rozstrzyga, czy
- * ją przyjmie. Ten plik nie zna ani jednej barwy i ani jednego odstępu.
- */
+/** Formularz profilu izolacji — nazwa, opis i komplet jedenastu przełączników w jednym zestawie zapisu. */
 export interface FormularzProfilu {
   /** Element montowany w obszarze Profile. */
   element: HTMLElement;
@@ -41,7 +24,7 @@ export interface FormularzProfilu {
   wyczysc(): void;
 }
 
-/** Przełącznik z etykietą wartości aktualizowaną przy każdym przestawieniu. */
+/** Przełącznik z etykietą wartości aktualizowaną przy każdym przestawieniu tej samej kontrolki formularza. */
 interface Przelacznik {
   element: HTMLElement;
   kontrolka: HTMLInputElement;
@@ -157,7 +140,7 @@ function naglowekGrupy(tresc: string): HTMLElement {
   return element;
 }
 
-/** Jeden przełącznik: nazwa klucza, pole wyboru i słowna wartość obok niego. */
+/** Jeden przełącznik: nazwa klucza kontraktu, pole wyboru oraz jego słowna wartość widoczna obok niego. */
 function zbudujPrzelacznik(nazwaKlucza: string, etykieta: (isolated: boolean) => string): Przelacznik {
   const kontrolka = przelacznik(nazwaKlucza);
 

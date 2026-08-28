@@ -14,7 +14,7 @@ import (
 )
 
 // Metoda petlaOdbioru czyta komunikaty urządzenia i kieruje je do rdzenia w kontekście serwera, nie połączenia.
-func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, straz straznikBramki) {
+func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, dopuszczenie dopuszczenieBramki) {
 	for {
 		_, dane, err := p.gniazdo.Read(p.kontekst)
 		if err != nil {
@@ -22,7 +22,7 @@ func (p *Polaczenie) petlaOdbioru(kontekstRdzenia context.Context, zrodloRdzenia
 			p.Zamknij(powodRozlaczenia(err))
 			return
 		}
-		p.przyjmij(kontekstRdzenia, zrodloRdzenia, rejestr, praca, straz, dane)
+		p.przyjmij(kontekstRdzenia, zrodloRdzenia, rejestr, praca, dopuszczenie, dane)
 	}
 }
 
@@ -50,7 +50,7 @@ func (p *Polaczenie) przedstawZPowitania(zadanie protocol.Request) {
 }
 
 // Metoda przyjmij rozpoznaje komunikat i oddaje go rdzeniowi, uruchamiając obsługę każdego żądania osobnym biegiem.
-func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, straz straznikBramki, dane []byte) {
+func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia func() Rdzen, rejestr *protocol.RejestrKomend, praca *sync.WaitGroup, dopuszczenie dopuszczenieBramki, dane []byte) {
 	zadanie, err := protocol.OdkodujZadanie(dane, rejestr)
 	if err != nil {
 		p.dziennik.Printf("transport: komunikat %s odrzucony: %v", p.id, err)
@@ -65,7 +65,7 @@ func (p *Polaczenie) przyjmij(kontekstRdzenia context.Context, zrodloRdzenia fun
 		defer praca.Done()
 		// Rdzeń pobierany dopiero tutaj, przy obsłudze komunikatu, odzwierciedla stan po podłączeniu rdzenia.
 		rdzen := zrodloRdzenia()
-		odpowiedz := wykonajBezpiecznie(kontekstRdzenia, rdzen, zadanie, p, straz, p.dziennik)
+		odpowiedz := wykonajBezpiecznie(kontekstRdzenia, rdzen, zadanie, p, dopuszczenie, p.dziennik)
 		if odpowiedz.Type == "" {
 			return
 		}

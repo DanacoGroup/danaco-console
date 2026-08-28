@@ -13,7 +13,7 @@ import (
 )
 
 // ZMostami wpina składacz konfiguracji mostów MCP okna — ten sam, którym
-// jedzie rozmowa. Strażnik na nil jest tu z tego samego powodu co przy
+// jedzie rozmowa. Sprawdzenie na nil jest tu z tego samego powodu co przy
 // `ZMowa`.
 func (a *adapterAsystenta) ZMostami(m *mostyOkna) *adapterAsystenta {
 	if m == nil {

@@ -17,7 +17,7 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 **Przedmiot.** Usterka ZYWA NA `main`, znaleziona niezaleznie przez dwoch kontrolerow
 zamknietego terenu mermaid. `TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki`
-(`zapora_fotografii_test.go:99-125`) **nie ma straznika „zero przejrzanych plikow"**,
+(`zapora_fotografii_test.go:99-125`) **nie liczy przejrzanych plikow**,
 ktory jego blizniak ma w wierszach 48, 62 i 91 (`sprawdzonych++` oraz
 `if sprawdzonych == 0 { t.Fatal(...) }`).
 
@@ -67,7 +67,7 @@ konczy sie cicha awaria rozpoznania. Jeden jezyk przechodzi, wiec usterka czeka 
 zapewnia „tak samo jak w drodze Studia" — dzis prawda, ale NIC TEGO NIE WIAZE. Zmiana
 jednej strony rozejdzie sie po cichu.
 
-**3. Straznik odmowy nie biegnie na zadnej maszynie drabiny.**
+**3. Sprawdzenie odmowy nie biegnie na zadnej maszynie drabiny.**
 `skutek_narzedzi_tresci_pisanej_test.go:357-359` pomija sie sam wszedzie tam, gdzie
 unpaper STOI — czyli na kazdej maszynie weryfikacji. W drabinie wypada SKIP, nie PASS.
 Regresja w tresci odmowy przejdzie niezauwazona.

@@ -783,7 +783,7 @@ ani jednego procesu potomnego; bezpieczeństwo dokumentu sięga po ten sam
 warsztat, bo materiał wchodzi tą samą drogą, oraz po repozytorium Studia, bo
 rozpoznanie danych wrażliwych czyta treść dokumentu, a nie zasób magazynu.
 
-Porty Developer i Debata muszą być wypełnione oba: strażniki
+Porty Developer i Debata muszą być wypełnione oba: porty
 `if d == nil { return }` w `zarejestrujDevelopera` i `zarejestrujDebate`
 wychodzą przed rejestracją, więc port pusty daje odpowiedź `*.unknown` na
 komendy, których klient ma komplet. Debata dostaje ponadto katalog danych pod

@@ -195,7 +195,7 @@ func zlozPorty(s skladPortow) Porty {
 		// Bezpieczeństwo sięga po ten sam warsztat PDF i po repozytorium Studia dla rozpoznania treści.
 		BezpieczenstwoDokumentu: nowyAdapterBezpieczenstwaStudia(warsztatPdf).
 			ZeStudiem(s.repozytoria.Studio),
-		// Oba porty muszą być wypełnione — strażniki nil dają odpowiedź `*.unknown` zamiast realnej.
+		// Oba porty muszą być wypełnione — port pozostawiony na nil daje odpowiedź `*.unknown` zamiast realnej.
 		Developer: s.developer,
 		// Debata bierze katalog danych pod transkrypty i arsenał pod zamianę na dokument oraz odsłuch.
 		Debata: nowyAdapterDebaty(s.zycie, s.repozytoria.Roundtable).

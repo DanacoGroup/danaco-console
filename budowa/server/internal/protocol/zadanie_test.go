@@ -62,7 +62,7 @@ func TestObszarSpozaKontraktuTrafiaDoZdarzeniaPolaczenia(t *testing.T) {
 	}
 }
 
-// TestZasiegWychodziZLadunku sprawdza soczewkę na cztery poziomy zasięgu.
+// TestZasiegWychodziZLadunku sprawdza odczyt zasięgu na czterech poziomach.
 // Okno jest poziomem najwęższym i wygrywa z pozostałymi w rozstrzyganiu
 // konfiguracji, więc jego odczyt musi być pewny.
 func TestZasiegWychodziZLadunku(t *testing.T) {

@@ -570,7 +570,7 @@ przez konfigurowalność i widoczność**. W materiałach oznacza to:
 - używamy: „Operator decyduje", „wartość wyjściowa: pełny dostęp",
   „każda izolacja jest opcją, nie warunkiem",
 - funkcje bezpieczeństwa opisujemy jako **narzędzia Operatora** (Permissions
-  Center, punkty izolacji, Panel prowenancji), nie jako strażników produktu.
+  Center, punkty izolacji, Panel prowenancji), nie jako ograniczenia nakładane przez produkt.
 
 ### 7.4. Test zgodności z zasadą zero blokad
 

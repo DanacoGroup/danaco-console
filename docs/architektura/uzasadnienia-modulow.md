@@ -4350,7 +4350,7 @@ Nastawy poza promptem — kanał, zasięg urządzenia i zasięg pracy — są
 nastawą zasięgu, nie bramką: profil mówi, dokąd sięga praca, a nie czego
 zabrania. Nakładane są tylko wtedy, gdy profil naprawdę coś w danej
 sprawie mówi: pole puste znaczy brak zdania profilu i wtedy zostaje
-nastawa okna. Bez tego strażnika profil bez wskazanego kanału zabrałby
+nastawa okna. Bez tego sprawdzenia profil bez wskazanego kanału zabrałby
 turze jedyny kanał, jaki miała.
 
 Sprawdzenie profilu wskazanego przez żądanie jest konieczne: kolumna ma

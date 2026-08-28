@@ -5838,7 +5838,7 @@ między brakiem wiedzy a pominięciem.
 
 ## budowa/server/internal/protocol/zadanie.go
 Okno komunikacji jako zasięg wygrywa z projektem, środowiskiem i pozostałymi
-poziomami. Zasieg jest soczewką na ładunek, nie komunikatem: kontrakt nie ma
+poziomami. Zasieg jest odczytem ładunku, nie komunikatem: kontrakt nie ma
 jednej struktury zasięgu, więc cztery poziomy wyjmuje się z ładunku po
 nazwach pól, których kontrakt używa w treściach komend.
 

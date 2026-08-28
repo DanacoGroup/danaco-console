@@ -3243,7 +3243,7 @@ przy pierwszej zmianie manifestu.
 
 ŻADNE UPRAWNIENIE NICZEGO NIE BLOKUJE. Warstwa rozszerzeń mówi wprost, że
 kontrola idzie przez stan wyjściowy i zakres, nie przez bramę; ta tabela jest
-zapisem tego, co Operator wie i co nadał, a nie strażnikiem wywołania.
+zapisem tego, co Operator wie i co nadał, a nie sprawdzeniem wywołania.
 
 PODPIS MA WIERSZ, BO WERYFIKACJA MA WYNIK. `extension.signature.verify` oddaje
 `ExtensionSignature` — rozstrzygnięcia, nie bajty. Bajty podpisu i klucz

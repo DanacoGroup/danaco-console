@@ -5,7 +5,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Straż wejścia rdzenia stoi tam, gdzie logowanie do aplikacji ma skutek dla rdzenia i jego połączeń.
+// Dopuszczenie do rdzenia rozstrzyga się tam, gdzie logowanie do aplikacji ma skutek dla rdzenia i jego połączeń.
 
 // komendyWejscia to jedyne komendy wykonywane przez połączenie, które jeszcze nie przeszło przez bramkę wejścia rdzenia.
 var komendyWejscia = map[shared.MessageType]struct{}{
@@ -23,8 +23,8 @@ type StanBramki interface {
 	PolaczenieZwiazane(id string) bool
 }
 
-// straznikBramki rozstrzyga, czy żądanie z danego gniazda wolno oddać rdzeniowi, na podstawie adresu nasłuchu i wskazania Operatora.
-type straznikBramki struct {
+// dopuszczenieBramki rozstrzyga, czy żądanie z danego gniazda wolno oddać rdzeniowi, na podstawie adresu nasłuchu i wskazania Operatora.
+type dopuszczenieBramki struct {
 	// wymagana mówi, że gniazdo musi się przedstawić, zanim cokolwiek wykona.
 	wymagana bool
 }
@@ -39,13 +39,13 @@ func wymogLogowania(adres string, nastawa *bool) bool {
 	return !petlaZwrotna(adres)
 }
 
-// Metoda straznik składa straż z ustawień okna; pętla zwrotna bez wskazania Operatora daje straż wyłączoną.
-func (u Ustawienia) straznik() straznikBramki {
-	return straznikBramki{wymagana: wymogLogowania(u.Adres, u.WymogLogowania)}
+// Metoda dopuszczenie składa regułę z ustawień okna; pętla zwrotna bez wskazania Operatora daje regułę wyłączoną.
+func (u Ustawienia) dopuszczenie() dopuszczenieBramki {
+	return dopuszczenieBramki{wymagana: wymogLogowania(u.Adres, u.WymogLogowania)}
 }
 
 // Metoda przepusc mówi, czy żądanie idzie dalej do rdzenia, pytając wyłącznie o to, czy dane gniazdo przeszło przez bramkę.
-func (s straznikBramki) przepusc(rdzen Rdzen, komenda shared.MessageType, ujscie Ujscie) bool {
+func (s dopuszczenieBramki) przepusc(rdzen Rdzen, komenda shared.MessageType, ujscie Ujscie) bool {
 	if !s.wymagana {
 		return true
 	}
@@ -59,7 +59,7 @@ func (s straznikBramki) przepusc(rdzen Rdzen, komenda shared.MessageType, ujscie
 	return stan.PolaczenieZwiazane(ujscie.Id())
 }
 
-// Funkcja odmowaBezBramki składa jedyną odmowę tej straży, kodem oznaczającym brak uwierzytelnienia z kontraktu.
+// Funkcja odmowaBezBramki składa jedyną odmowę tego dopuszczenia, kodem oznaczającym brak uwierzytelnienia z kontraktu.
 func odmowaBezBramki(zadanie protocol.Request) protocol.Koperta {
 	blad := protocol.NowyBlad(shared.ErrorCodeNotAuthenticated,
 		"to połączenie nie przeszło przez bramkę — zaloguj się; "+

@@ -54,7 +54,7 @@ func TestNumeracjaMozeMiecLuki(t *testing.T) {
 }
 
 // TestKrokZasobuNiesieSumeTresci sprawdza, że suma kontrolna liczy się z treści
-// kroku, a nie z jego nazwy — inaczej strażnik niezmienności nie zauważyłby
+// kroku, a nie z jego nazwy — inaczej sprawdzenie niezmienności nie zauważyłoby
 // podmienionej treści pod tą samą nazwą.
 func TestKrokZasobuNiesieSumeTresci(t *testing.T) {
 	kroki, err := wczytajMigracje()

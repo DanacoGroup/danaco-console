@@ -413,7 +413,7 @@ nietknięte, ponieważ bramka nie jest miejscem pracy.
 
 Ekran nie zakłada budzika, nie liczy czasu sesji i nie przerywa pracy
 pytaniem o tożsamość. Rdzeń nie odcina komend po wygaśnięciu sesji — bramka
-jest progiem wejścia, nie strażnikiem każdego żądania — więc wygaśnięcie
+jest progiem wejścia, nie sprawdzeniem każdego żądania — więc wygaśnięcie
 ujawnia się wyłącznie przy następnym uruchomieniu, zdaniem nad formularzem.
 
 Który z dwóch formularzy pokazać — wejście hasłem czy pierwsze ustawienie
@@ -2843,8 +2843,8 @@ Obietnica rozstrzyga się z odpowiedzią rdzenia, nie z zamknięciem okna. Modal
 przeczytania skutku, ale pas kart ma odpowiedź natychmiast — wiązanie rozstrzygnięcia z zamknięciem
 okna kazałoby pasowi milczeć tak długo, jak długo Operator czyta.
 
-Przed powtórzeniem czynności broni strażnik stanu w toku w obsłudze kliknięcia, a przed zamknięciem
-okna ten sam strażnik w funkcji zdejmującej okno, więc znacznik zablokowania kontrolki nie dokładałby
+Przed powtórzeniem czynności broni sprawdzenie stanu w toku w obsłudze kliknięcia, a przed zamknięciem
+okna to samo sprawdzenie w funkcji zdejmującej okno, więc znacznik zablokowania kontrolki nie dokładałby
 ochrony — dokładałby ciszę. Zamiast tego przycisk odpowiada zdaniem, dlaczego w tej chwili nie ma czego
 zrobić. Powód idzie dwiema drogami: tytułem pod kursorem i opisem dostępności dla czytnika ekranu.
 

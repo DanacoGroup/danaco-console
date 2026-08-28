@@ -6615,3 +6615,13 @@ zapomnieć.
 Pakiet domeny zwraca błąd niosący kod kontraktu przez protocol.JakoError,
 a rdzeń go przenosi bez tłumaczenia — rdzeń nie zgaduje za domenę, czy to
 brak bytu, konflikt, czy usterka.
+
+## budowa/server/internal/core/zaleznosci_zewnetrzne_test.go
+
+Wykaz zależności jest jedyną drogą, którą korzystający z interfejsu
+dowiaduje się przed czynnością, czego rdzeń nie wykona. Szkoda, której te
+sprawdziany pilnują, ma dwie postacie: wykaz niekompletny (funkcja wymaga
+programu, którego nikt nie zapowiedział) oraz wykaz kłamiący o obecności
+(pozycja meldowana jako obecna, gdy programu nie ma). Pierwsza zostawia
+niespodziankę po naciśnięciu, druga jest gorsza — odbiera sens całej
+sondzie.

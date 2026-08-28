@@ -9367,3 +9367,9 @@ badania — zdanie techniczne trafiłoby w miejsce opisu pustego zakresu.
 nie wynika dla obsługującego okno. Pole zakresu niesie temat badania, z którego
 biorą treść pytania badawcze oraz notatka robocza, wypisywane po jednym
 w wierszu.
+
+## budowa/klient-poprzedni/src/moduly/apps/wybor-z-menu.ts
+Rozwijanie, znacznik wyboru, opisy pozycji, wędrówka strzałkami, pole szukania i zdanie o pustym wykazie należą do biblioteki komponentów współdzielonych — ten plik podaje mechanizmowi dane, a formy nie odtwarza. Obudowa nastawy zdalnej tu nie wystarcza, bo tamta wysyła klucz do rdzenia i czeka na potwierdzenie, podczas gdy tu żaden wybór nie jedzie do rdzenia sam z siebie — jest wejściem formularza czytanym dopiero przy naciśnięciu przycisku komendy. Menu oddaje klucz, nie wartość elementu, więc wybór trzyma ten plik, a nie element DOM. Zachowanie odwzorowuje natywne pole wyboru: pusty wybór jest wartością, nie brakiem, a wymiana pozycji utrzymuje wybór, o ile nadal istnieje.
+
+## budowa/klient-poprzedni/src/moduly/apps/wybor-z-menu.ts (rejestracja słuchacza)
+Wymiana pozycji z kodu ani ustawienie z odpowiedzi rdzenia nie wołają słuchacza, tak samo jak natywne pole wyboru nie wysyła zdarzenia zmiany przy zmianie z kodu — gdyby wołały, odświeżenie wykazu w oknie filtra zleciłoby odczyt, który sam kończy się odświeżeniem wykazu. Rejestracja jest osobną czynnością, a nie polem konstruktora, bo okna modułu Diagnostics składają powierzchnię najpierw, a podpinają obsługę dopiero wtedy, gdy zna ona całą powierzchnię.

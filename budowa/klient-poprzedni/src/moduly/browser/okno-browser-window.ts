@@ -25,20 +25,8 @@ import { utworzWarstweAdnotacji } from './warstwa-adnotacji';
 import type { RozszerzenieModulu } from './warstwy-widocznosci';
 
 /**
- * Browser Window — okno wiodące modułu przeglądarki.
- *
- * Jedna odpowiedzialność: rama okna. Nie buduje ani jednego elementu treści —
- * składa gotowe części: formularz nawigacji, podgląd strony, pasek zaznaczenia,
- * pasek dolny i panel wyodrębnień.
- *
- * Trzy czynności Operatora: nawigacja do strony (formularz), przewijanie
- * i zaznaczenie fragmentu (podgląd). Pierwsza idzie do rdzenia; przewijanie ma
- * komendę, której okno jeszcze nie wywołuje, a zaznaczenie dzieje się wyłącznie
- * w kliencie i komendy nie potrzebuje.
- *
- * Odmowa rdzenia jest treścią okna, nie jego awarią. Każda komenda obszaru
- * `browser.*` może odmówić — okno pokazuje wtedy powód odmowy i mówi wprost,
- * co odczytało naprawdę, zamiast pustego prostokąta.
+ * Browser Window — okno wiodące modułu przeglądarki. Jedna odpowiedzialność:
+ * rama okna, która składa gotowe części zamiast budować elementy treści samo.
  */
 export interface OknoBrowserWindow {
   element: HTMLElement;
@@ -77,10 +65,7 @@ export function utworzOknoBrowserWindow(
     powiedz,
   });
 
-  // Warstwa adnotacji powstaje przed paskiem dolnym, bo pasek jest jej
-  // przełącznikiem — a przełącznik nie może wskazywać czegoś, czego jeszcze nie
-  // ma. Zwrotne `naZmianeTrybu` domyka pętlę: tryb zamknięty pływającym paskiem
-  // gasi przycisk paska dolnego.
+  // Warstwa adnotacji powstaje przed paskiem dolnym, bo pasek jest jej przełącznikiem.
   const adnotacja = utworzWarstweAdnotacji(stan, {
     powiedz,
     naZmianeTrybu: (wlaczona) => dolny.ustawTrybAdnotacji(wlaczona),
@@ -108,15 +93,11 @@ export function utworzOknoBrowserWindow(
   const opisStanu = document.createElement('p');
   opisStanu.className = 'mb-stan-okna';
 
-  // Wskaźnik obecności Wykonawcy. Mówi o migawce, bo to ona jest wspólnym
-  // widokiem: model widzi dokładnie tę treść i dokładnie z tej chwili, a nie
-  // stronę taką, jaka jest teraz w sieci. Stan niesie napis, nie sama barwa.
+  // Wskaźnik obecności mówi o migawce, bo to ona jest wspólnym widokiem modelu, nie strona w sieci.
   const obecnosc = document.createElement('span');
   obecnosc.className = 'dn-plakietka dn-plakietka--informacja mb-obecnosc';
 
-  // Scena jest jedynym kontenerem pozycjonującym warstwę. Płótno adnotacji
-  // jest rodzeństwem podglądu strony, nie jego dzieckiem, więc oznaczanie
-  // strony nie wstrzykuje w jej DOM ani jednego węzła.
+  // Scena jest jedynym kontenerem pozycjonującym warstwę; płótno jest rodzeństwem podglądu.
   const scena = document.createElement('div');
   scena.className = 'mb-scena';
   scena.append(podglad.element, adnotacja.element);
@@ -126,13 +107,10 @@ export function utworzOknoBrowserWindow(
   cialo.dataset['podzial'] = 'nie';
   cialo.append(scena, wyodrebnienia.element);
 
-  // Panel inspekcji staje nad obszarem renderowania, a nie obok niego: to, co
-  // narzędzia pokazują, dotyczy strony leżącej pod nimi.
+  // Panel inspekcji staje nad obszarem renderowania — narzędzia pokazują to, co dotyczy strony pod nimi.
   const inspekcja = utworzNarzedziaInspekcyjne(stan, powiedz);
 
-  // Rodziny prowadzone przez rdzeń: karty, grupy kart, przestrzenie robocze,
-  // zakładki, przewinięcie, zrzut i narzędzia inspekcyjne CDP. Panel stoi pod
-  // obszarem renderowania, bo dotyczy strony leżącej wyżej — i nie zasłania jej.
+  // Panel rodzin stoi pod obszarem renderowania, bo dotyczy strony leżącej wyżej, i nie zasłania jej.
   const rodziny = utworzPanelRodzin(sekcjePrzegladania(stan));
 
   okno.tresc.append(
@@ -175,10 +153,7 @@ export function utworzOknoBrowserWindow(
   }
 
   stanOkna.addEventListener('click', () => void wczytajStan());
-  // Ponowienie sięga po jedno i drugie: stan okna czyta `window.state.get`,
-  // a treść strony `browser.snapshot.get`, i to ta druga odmowa stawia okno
-  // w stanie błędu. Ponowienie odczytujące tylko stan zostawiałoby Operatora
-  // z komunikatem, którego nie da się zdjąć czynnością, którą mu podano.
+  // Ponowienie sięga po stan okna i po treść strony naraz, bo druga odmowa stawia okno w stanie błędu.
   okno.ustawPonowienie(() => {
     void wczytajStan();
     void stan.zaciagnijMigawke();
@@ -192,9 +167,7 @@ export function utworzOknoBrowserWindow(
       zaznaczenie.odswiez();
       wyodrebnienia.odswiez();
       obecnosc.textContent = zdanieObecnosci(stan);
-      // Trzy stany w jednej kolejności: najpierw czekanie (obie drogi odczytu),
-      // potem odmowa, na końcu pustka. Odwrotna kolejność kazałaby Operatorowi
-      // czytać „jest pusto" w chwili, w której odczyt jeszcze trwa.
+      // Trzy stany w jednej kolejności: czekanie, potem odmowa, na końcu pustka — nigdy odwrotnie.
       if (stan.faza() === 'odczyt') {
         okno.ladowanie('Rdzeń ustala okno przeglądarki tej sesji…');
         return;
@@ -208,10 +181,7 @@ export function utworzOknoBrowserWindow(
         return;
       }
       if (stan.migawka() === null) {
-        // Pustka i odmowa to dwie różne rzeczy. „Rdzeń nie ma jeszcze migawki
-        // tego okna" jest stanem pustym; nieudany odczyt treści strony jest
-        // odmową i ma się nią przedstawić, bo Operator inaczej zareaguje na
-        // jedno, a inaczej na drugie.
+        // Pustka i odmowa to dwie różne rzeczy — operator inaczej reaguje na jedno, a inaczej na drugie.
         if (stan.fazaMigawki() === 'blad') okno.blad(stan.powodMigawki());
         else okno.puste(STANY_PUSTE.przegladarka.tytul, zdaniePustki(stan));
         return;
@@ -227,9 +197,7 @@ export function utworzOknoBrowserWindow(
         nazwa: WYZWALACZE.inspekcja,
         warstwa: 4,
         element: inspekcja.element,
-        // Skrót z załącznika opracowania modułu. Powłoka gospodarza potrafi
-        // przejąć tę kombinację przed stroną — wtedy zostaje wyzwalacz paska
-        // kontekstu w trybie administracyjnym.
+        // Powłoka gospodarza może przejąć ten skrót przed stroną — wtedy zostaje wyzwalacz paska kontekstu.
         skrot: { klawisz: 'i', zShift: true },
       },
     ],
@@ -238,31 +206,14 @@ export function utworzOknoBrowserWindow(
   };
 }
 
-/**
- * Zdanie stanu pustego: czym okno jest, a zaraz po tym — co dokładnie mówi
- * o nim rdzeń w tej chwili.
- *
- * Obie części są konieczne. Sam opis okna nie mówi, czy przeszkodą jest brak
- * sesji, brak okna przeglądarki czy tylko brak przejścia; sam powód z rdzenia
- * nie mówi, czym okno jest ani jak je zapełnić.
- *
- * Bez okna przeglądarki nie ma o co pytać o migawkę, więc zdanie o migawce
- * opisywałoby wtedy skutek zamiast przyczyny — Operator ma dostać powód braku
- * okna, bo to on rozstrzyga, co da się zrobić dalej.
- */
-/**
- * Zdanie wskaźnika obecności Wykonawcy.
- *
- * Wspólny podgląd jest wspólny przez migawkę: model dostaje jej treść, więc
- * wskaźnik mówi o migawce i o chwili jej pobrania, a nie o „obecności" bez
- * pokrycia. Bez migawki mówi wprost, że model nie ma na czym pracować.
- */
+/** Zdanie wskaźnika obecności Wykonawcy — wspólny podgląd jest wspólny przez migawkę, którą model dostaje. */
 function zdanieObecnosci(stan: StanPrzegladania): string {
   const migawka = stan.migawka();
   if (migawka === null) return 'Wykonawca bez widoku — okno nie ma jeszcze migawki';
   return `Wykonawca widzi migawkę z ${new Date(migawka.capturedAt).toLocaleTimeString('pl-PL')}`;
 }
 
+/** Zdanie stanu pustego okna: czym okno jest, a zaraz po tym co dokładnie mówi o nim rdzeń w tej chwili. */
 function zdaniePustki(stan: StanPrzegladania): string {
   const zRdzenia = stan.idOkna() === '' ? stan.powod() : stan.powodMigawki();
   return zRdzenia === ''

@@ -1,6 +1,10 @@
 import { czyTrasa, TRASA_POCZATKOWA, Trasa } from './trasy';
 
-/** Widok najwyższego rzędu obsługujący jedną trasę. */
+/**
+ * Widok najwyższego rzędu obsługujący jedną trasę: element wstawiany do
+ * gospodarza raz, przy pierwszym wejściu, oraz nieobowiązkowa czynność
+ * wykonywana przy każdym wejściu na trasę, także powrotnym.
+ */
 export interface WidokTrasy {
   /** Element widoku; router wstawia go do gospodarza raz, przy pierwszym wejściu. */
   element: HTMLElement;
@@ -8,10 +12,18 @@ export interface WidokTrasy {
   przyWejsciu?(): void;
 }
 
-/** Budowniczy widoku — wywoływany raz, przy pierwszym wejściu na trasę. */
+/**
+ * Budowniczy widoku trasy, wywoływany najwyżej raz, przy pierwszym wejściu na
+ * tę trasę. Widok zbudowany zostaje w pamięci routera i wraca przy każdym
+ * kolejnym wejściu bez ponownej budowy.
+ */
 export type BudowniczyWidoku = () => WidokTrasy;
 
-/** Odbiorca zmiany trasy. */
+/**
+ * Odbiorca zmiany trasy, wywoływany po każdym przejściu na inną trasę wraz
+ * z trasą, która stanęła na wierzchu. Subskrypcja pozwala warstwom zewnętrznym
+ * nadążać za położeniem bez pytania routera.
+ */
 export type SluchaczTrasy = (trasa: Trasa) => void;
 
 export interface Router {
@@ -30,21 +42,9 @@ export interface Router {
 }
 
 /**
- * Przełączanie widoków najwyższego rzędu — bez biblioteki zewnętrznej.
- *
- * Jedna odpowiedzialność: rozstrzygnięcie, który widok jest na wierzchu.
- * Router nie zna żadnego widoku z osobna; przyjmuje budowniczych i wywołuje
- * ich najwyżej raz.
- *
- * Widok opuszczony nie znika: element zostaje w dokumencie z atrybutem
- * `hidden`, zamiast być usuwanym i budowanym na nowo. Dzięki temu karty
- * opuszczonego środowiska trwają w tle i odtwarzają pełny stan po powrocie,
- * a żadna subskrypcja kanału się nie gubi — powrót nie zakłada drugiego
- * okna komunikacji.
- *
- * Trasa widnieje w adresie dokumentu, więc odświeżenie strony wraca tam,
- * gdzie Operator był, a przycisk „wstecz" przeglądarki działa bez kodu
- * dodatkowego. Adres nieznany nie zatrzymuje uruchomienia.
+ * Przełączanie widoków najwyższego rzędu bez biblioteki zewnętrznej. Jedyną
+ * odpowiedzialnością routera jest rozstrzygnięcie, który widok jest na wierzchu;
+ * widoków z osobna nie zna i przyjmuje samych budowniczych.
  */
 export function utworzRouter(gospodarz: HTMLElement): Router {
   const budowniczowie = new Map<Trasa, BudowniczyWidoku>();
@@ -111,7 +111,11 @@ export function utworzRouter(gospodarz: HTMLElement): Router {
   };
 }
 
-/** Trasa zapisana w adresie dokumentu; `null`, gdy adres jej nie niesie. */
+/**
+ * Trasa zapisana w adresie dokumentu; wartość pusta znaczy, że adres trasy nie
+ * niesie albo niesie nazwę spoza wykazu tras. Adres nieznany nie zatrzymuje
+ * uruchomienia routera.
+ */
 function odczytajAdres(): Trasa | null {
   const nazwa = window.location.hash.replace(/^#/u, '');
   return czyTrasa(nazwa) ? nazwa : null;

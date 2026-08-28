@@ -13,23 +13,9 @@ import type { StanAssistant } from './stan-assistant';
 import type { ZrodloPamieci } from './zrodlo-pamieci';
 
 /**
- * Zakładka kontekstów Memory & Context Manager — poziomy pamięci karty sesji.
- *
- * Kontrakt niesie jeden mechanizm przełączania pamięci w trakcie pracy:
- * `memory.toggle` ustala, które poziomy zasięgu karta sesji widzi i czy zapis
- * pamięci jest czynny. To jest kontekst, który rzeczywiście da się przełączyć —
- * i tak też okno go nazywa.
- *
- * Nazwanych zestawów pamięci („praca", „dom", „projekt X") okno nie udaje.
- * Kontrakt nie ma bytu, w którym taki zestaw miałby zamieszkać: `memory.*`
- * zna wpis i poziom zasięgu, a nie nazwany profil pamięci. Brak nazywa przycisk
- * obok, zamiast pola, którego rdzeń nie zapisze.
- *
- * Przestawienie idzie jednym wywołaniem obejmującym oba pola naraz. Rdzeń
- * odczytuje `levels` jako stan po przestawieniu (pusta lista zostawia poziomy
- * bez zmian), więc wysyłanie samego jednego przełącznika zamieniałoby resztę
- * wykazu w „bez zmian" przy każdym kliknięciu — a Operator odznaczający
- * ostatni poziom nie miałby jak wyłączyć wszystkich.
+ * Zakładka kontekstów zarządcy pamięci przestawia poziomy pamięci karty sesji
+ * komendą `memory.toggle`, która ustala widziane poziomy zasięgu oraz czynność
+ * zapisu. Przestawienie idzie jednym wywołaniem obejmującym oba pola naraz.
  */
 export interface PanelKontekstow {
   element: HTMLElement;
@@ -101,9 +87,7 @@ export function utworzPanelKontekstow(
       );
       return;
     }
-    // Stan pokazany po przestawieniu bierze się z odpowiedzi rdzenia: pusta
-    // lista poziomów zostawia je bez zmian, więc kontrolki odbijające samo
-    // zamówienie kłamałyby przy każdym takim wywołaniu.
+    // Stan pokazany po przestawieniu bierze się z odpowiedzi rdzenia.
     const po = wynik.wynik;
     for (const [poziom, kontrolka] of poziomy) {
       kontrolka.checked = po.levels.includes(poziom);
@@ -119,13 +103,21 @@ export function utworzPanelKontekstow(
   return { element };
 }
 
-/** Wykaz poziomów po nazwach; pusty wykaz nazywamy słowem, nie pustką. */
+/**
+ * Składa wykaz poziomów z ich nazw w języku Operatora, a wykaz pusty nazywa
+ * słowem zamiast zostawiać puste miejsce. Puste miejsce w zdaniu o stanie
+ * pamięci nie odróżnia braku poziomów od braku odpowiedzi rdzenia.
+ */
 function nazwijPoziomy(poziomy: readonly ConfigScope[]): string {
   if (poziomy.length === 0) return 'żaden';
   return poziomy.map((poziom) => NAZWY_ZASIEGOW[poziom]).join(', ');
 }
 
-/** Zdanie o tym, czym poziomy pamięci są dla bieżącej rozmowy. */
+/**
+ * Zdanie pod grupą przełączników podaje, którą pamięć asystent widzi w rozmowie
+ * przy włączonych poziomach, oraz nazywa wykaz stanem po zmianie, a nie różnicą
+ * wobec stanu poprzedniego.
+ */
 function opisPoziomow(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';

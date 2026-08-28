@@ -6,16 +6,9 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Panel akcji okna operacyjnego.
- *
- * Panel nie jest zaszytym wykazem: pozycje przychodzą z katalogu rdzenia
- * (`action.list`, zasięg modułu) i każda niesie własny kod, którym wykonuje ją
- * `window.action`. Zaszycie ich po stronie klienta byłoby drugą kopią katalogu.
- *
- * Czynności, którym kontrakt nie przypisał komendy (eksport, archiwizacja, kosz,
- * wykrywanie duplikatów, udostępnienie odnośnikiem, porównanie), stoją obok jako
- * przyciski klikalne: naciśnięcie nie wysyła nic i nazywa brak — zamiast kontrolki
- * wygaszonej albo milczącej.
+ * Panel akcji okna operacyjnego bierze pozycje z katalogu rdzenia komendą
+ * `action.list` i wykonuje je komendą `window.action`. Czynności, którym
+ * kontrakt komendy nie przypisał, stoją obok jako przyciski nazywające brak.
  */
 export interface PozycjaBezKomendy {
   etykieta: string;
@@ -72,9 +65,7 @@ export function utworzPanelAkcji(
     }
     odpowiedz.pokaz(`Zgłaszanie akcji „${akcja.name}" do rdzenia…`, true);
     const wynik = await otoczenie.wykonajAkcje(idOkna, akcja.id);
-    // Powodzenie znaczy tu wynik akcji, nie samo przyjęcie zgłoszenia: akcję,
-    // której rdzeń nie wykonuje, rdzeń odrzuca wprost (`conflict`, z kodem
-    // komendy do wywołania), a panel pokazuje tę odmowę.
+    // Powodzenie znaczy wynik akcji, a nie samo przyjęcie zgłoszenia.
     odpowiedz.pokaz(
       wynik.udany
         ? `Rdzeń oddał wynik akcji „${akcja.name}".`
@@ -117,7 +108,11 @@ export function utworzPanelAkcji(
   };
 }
 
-/** Przycisk czynności, której kontrakt nie niesie: klikalny, odpowiada powodem. */
+/**
+ * Przycisk czynności, której kontrakt nie niesie, pozostaje klikalny i po
+ * naciśnięciu nazywa powód braku. Kontrolka wygaszona albo milcząca zostawiłaby
+ * Operatora bez odpowiedzi na pytanie, dlaczego czynność się nie odbywa.
+ */
 function przyciskBezKomendy(
   pozycja: PozycjaBezKomendy,
   pokaz: (tresc: string, powodzenie: boolean) => void,
@@ -130,7 +125,11 @@ function przyciskBezKomendy(
   return element;
 }
 
-/** Zdanie wyjaśniające w miejscu wykazu pozycji. */
+/**
+ * Zdanie wyjaśniające zajmuje miejsce wykazu pozycji wtedy, gdy katalog rdzenia
+ * jest pusty albo jego odczyt się nie powiódł. Puste miejsce bez zdania nie
+ * odróżnia katalogu pustego od katalogu nieodczytanego.
+ */
 function zdanie(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';

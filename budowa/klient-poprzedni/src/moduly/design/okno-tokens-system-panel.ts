@@ -38,32 +38,10 @@ import {
 } from './zetony-systemu';
 
 /**
- * Tokens & System Panel — piąte okno operacyjne modułu Design.
- *
- * Okno definiuje i wydaje system projektowy: żetony, motywy, reguły
- * dostępności i przewodnik stylu. Stoi jako rozwinięcie warstwy trzeciej, bo
- * opracowanie wywołuje je menu kebab obszaru roboczego, a nie stawia na widoku
- * spoczynkowym.
- *
- * Skąd bierze prawdę. Wartości żetonów czyta z motywu obowiązującego w tej
- * chwili (`zetony-systemu.ts`), pary i progi kontrastu z wykazu progów produktu
- * (`kontrast-wcag.ts`), a powiązania żetonu z komponentami z arkuszy wczytanych
- * do dokumentu. Nic z tego nie jest przepisane do modułu — okno mierzy produkt,
- * zamiast go opisywać, więc poprawka w motywie jest tu widoczna od razu,
- * a rozjazd nazw wychodzi na wierzch zamiast zniknąć.
- *
- * Czego okno NIE robi i mówi to wprost:
- *   · nie zapisuje zestawu żetonów — kontrakt nie zna takiego bytu, więc nie ma
- *     go gdzie odłożyć; wydanie wychodzi plikiem do przeglądarki Operatora,
- *   · nie nadpisuje motywu wczytanym zestawem — motyw jest własnością powłoki,
- *     a import kończy się zestawieniem różnicy,
- *   · nie wydaje przewodnika do modułów Library i Studio — przekazania kontrakt
- *     dla tego bytu nie zna.
- *
- * Przełącznik motywu podglądu nie jest kopią przełącznika powłoki: woła tę samą
- * czynność motywu produktu, więc drugiego stanu tu nie ma. Okno nasłuchuje
- * zmiany motywu i przelicza wszystkie pomiary, bo oba motywy są równoprawne
- * i każdy wymaga własnego pomiaru.
+ * Tokens & System Panel jest piątym oknem operacyjnym modułu Design: definiuje
+ * i wydaje system projektowy — żetony, motywy, reguły dostępności i przewodnik
+ * stylu — mierząc wartości bezpośrednio na uruchomionym produkcie, zamiast je
+ * opisywać.
  */
 export interface OknoTokensSystemPanel {
   element: HTMLElement;
@@ -191,9 +169,7 @@ export function utworzOknoTokensSystemPanel(stan: StanDesignu): OknoTokensSystem
   roznica.className = 'md-zetony__roznica';
   roznica.hidden = true;
 
-  // Panel zestawów trwałych: żetony motywu odczytujemy w chwili naciśnięcia,
-  // nie z kopii zrobionej przy otwarciu okna — między jednym a drugim Operator
-  // mógł przełączyć motyw, a zestaw ma opisywać to, co obowiązuje.
+  // Panel zestawów trwałych czyta żetony motywu w chwili naciśnięcia, nie z kopii sprzed otwarcia okna.
   const zestawy: ZestawyZetonow = utworzZestawyZetonow(stan, {
     zetonyMotywu: () => zetonyKontraktu(odczytajZetony()),
   });
@@ -248,12 +224,7 @@ export function utworzOknoTokensSystemPanel(stan: StanDesignu): OknoTokensSystem
   element.dataset['okno'] = OKNO_TOKENS_SYSTEM_PANEL.kod;
   element.append(rozwiniecie.element);
 
-  /**
-   * Przełączenie motywu podglądu.
-   *
-   * Woła czynność motywu produktu, a nie własną: motyw ma jeden nośnik stanu
-   * i drugi tutaj rozjechałby się z paskiem górnym przy pierwszym użyciu.
-   */
+  // Przełączenie motywu podglądu woła czynność motywu produktu, nie własną — jeden nośnik stanu.
   function przelaczPodglad(wybor: Motyw): void {
     ustawMotyw(wybor);
     odswiez();
@@ -293,14 +264,7 @@ export function utworzOknoTokensSystemPanel(stan: StanDesignu): OknoTokensSystem
     );
   }
 
-  /**
-   * Zestawienie wczytanego zestawu z żetonami motywu.
-   *
-   * Porównanie idzie po NAZWACH ról, nie po strukturze pliku: zestaw obcy bywa
-   * zagnieżdżony dowolnie, a jedyne, co da się z nim zrobić uczciwie, to
-   * powiedzieć, które role produktu w nim są, które mają inną wartość i których
-   * produkt nie zna.
-   */
+  // Zestawienie wczytanego zestawu z żetonami motywu, porównane po nazwach ról, nie po strukturze pliku.
   async function porownajWczytany(): Promise<void> {
     const plik = wczytaj.files?.[0];
     if (plik === undefined) {
@@ -514,13 +478,9 @@ export function utworzOknoTokensSystemPanel(stan: StanDesignu): OknoTokensSystem
 }
 
 /**
- * Spłaszczenie wczytanego zestawu do par „nazwa roli → wartość".
- *
- * Zestawy żetonów bywają zagnieżdżone dowolnie głęboko, a zapis wedle wzorca
- * W3C trzyma wartość pod kluczem `$value`. Spłaszczenie obsługuje oba: klucz
- * `$value` kończy gałąź i nadaje jej nazwę złożoną ze ścieżki, a zapis płaski
- * przechodzi bez zmiany. Wartość, która nie jest napisem ani liczbą, jest
- * pomijana — porównanie obiektu z barwą nie znaczyłoby nic.
+ * Spłaszczenie wczytanego zestawu żetonów do par nazwa roli i wartość,
+ * obsługujące zarówno zapis płaski, jak i zapis wedle wzorca W3C z wartością
+ * pod kluczem $value.
  */
 function splaszcz(zestaw: unknown, przedrostek = ''): Record<string, string> {
   const wynik: Record<string, string> = {};
@@ -543,7 +503,7 @@ function splaszcz(zestaw: unknown, przedrostek = ''): Record<string, string> {
   return wynik;
 }
 
-/** Akapit objaśnienia — jedno brzmienie oprawy w całym oknie. */
+/** Akapit objaśnienia stosowany dla jednego, spójnego brzmienia oprawy tekstowej w całym tym oknie panelu. */
 function zdanie(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis md-zetony__zdanie';
@@ -551,7 +511,7 @@ function zdanie(tresc: string): HTMLElement {
   return element;
 }
 
-/** Obszar zakładki — nośnik bez własnej wiedzy o treści. */
+/** Obszar zakładki panelu Tokens & System — nośnik elementów potomnych, bez własnej wiedzy o niesionej treści. */
 function sekcja(dzieci: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'md-zetony__obszar';
@@ -560,16 +520,9 @@ function sekcja(dzieci: readonly HTMLElement[]): HTMLElement {
 }
 
 /**
- * Przekłada żetony odczytane z motywu na kształt kontraktu (`DesignToken`).
- *
- * Rodzaje panelu i rodzaje kontraktu są dwoma różnymi wykazami i nie da się ich
- * zlać w jeden: panel nazywa je po polsku i po swojemu (`krój`, `liczba`),
- * kontrakt — po angielsku i wedle W3C Design Tokens. Przekład stoi więc tutaj,
- * w jednym miejscu, zamiast rozejść się po wywołaniach.
- *
- * Żeton, którego motyw nie definiuje, NIE wchodzi do zestawu. Wartość pusta
- * zapisana jako wartość roli byłaby rolą zdefiniowaną pustką — a to jest inny
- * stan niż rola niezdefiniowana i panel go rozróżnia (`zetony-systemu.ts`).
+ * Przekłada żetony odczytane z motywu na kształt kontraktu DesignToken, bo
+ * panel nazywa rodzaje po polsku, a kontrakt — po angielsku wedle W3C Design
+ * Tokens; żeton, którego motyw nie definiuje, nie wchodzi do zestawu.
  */
 function zetonyKontraktu(wykaz: readonly GrupaZetonow[]): readonly DesignToken[] {
   const zetony: DesignToken[] = [];
@@ -587,7 +540,7 @@ function zetonyKontraktu(wykaz: readonly GrupaZetonow[]): readonly DesignToken[]
   return zetony;
 }
 
-/** Przekład rodzaju żetonu panelu na rodzaj kontraktu. */
+/** Przekład rodzaju żetonu panelu żetonów systemu na odpowiadający mu rodzaj kontraktu DesignTokenKind. */
 function rodzajKontraktu(rodzaj: Zeton['rodzaj']): DesignTokenKind {
   switch (rodzaj) {
     case 'barwa':
@@ -599,8 +552,7 @@ function rodzajKontraktu(rodzaj: Zeton['rodzaj']): DesignTokenKind {
     case 'liczba':
       return DesignTokenKind.FontWeight;
     default:
-      // Miara jest tu rodzajem domyślnym, bo miarą są odstępy, promienie,
-      // stopnie pisma i wymiary — najliczniejsza grupa systemu.
+      // Miara jest domyślnym rodzajem: odstępy, promienie, stopnie pisma i wymiary to grupa najliczniejsza.
       return DesignTokenKind.Dimension;
   }
 }

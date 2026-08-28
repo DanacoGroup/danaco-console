@@ -4,17 +4,9 @@ import { poleTekstowe, przycisk, utworzWierszOdpowiedzi } from '../../modele/kon
 import type { ZrodloZakresuEksperta } from './zrodlo-zakresu-eksperta';
 
 /**
- * Panel zakresów narzędzi profilu asystenta (`tools.scope.*`).
- *
- * Stoi w Permissions Center, choć dotyczy profilu asystenta, a nie eksperta.
- * Powód jest jeden i praktyczny: to jedyne okno, w którym Operator ustala „jak
- * szeroko wykonawca działa w moim imieniu", więc rozstrzygnięcie o wywoływaniu
- * narzędzi ma stać tam, gdzie Operator go szuka.
- *
- * ZAKRES JEST NASTAWĄ ZASIĘGU, NIE BRAMKĄ WBUDOWANĄ. Pozycja bez wiersza jest
- * dostępna i nie ma granicy wywołań — platforma niczego nie zawęża z góry.
- * Zawężenie zapisane tutaj rdzeń czyta przed każdym wywołaniem ręki modelu
- * i odmawia; kolumna zużycia pokazuje, ile z granicy zostało.
+ * Panel zakresów narzędzi profilu asystenta w oknie Permissions Center ogranicza liczbę wywołań
+ * poszczególnych narzędzi, a rdzeń odczytuje ustawiony zakres przed każdym wywołaniem i stosuje
+ * odmowę po jego wyczerpaniu.
  */
 export interface PanelZakresowNarzedzi {
   element: HTMLElement;

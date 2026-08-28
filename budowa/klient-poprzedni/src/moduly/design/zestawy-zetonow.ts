@@ -17,26 +17,8 @@ import {
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Zestawy żetonów w Tokens & System Panel — `design.tokenset.save`,
- * `design.tokenset.list`, `design.tokenset.export`, `design.tokenset.import`
- * oraz `design.styleguide.publish`.
- *
- * ── Rdzeń nie nadpisuje motywu produktu ─────────────────────────────────────
- * Motyw jest własnością powłoki. Zestaw żetonów jest bytem OBOK niego: panel
- * odczytuje żetony motywu obowiązującego (`zetony-systemu.ts`), a Operator może
- * je odłożyć jako zestaw, wczytać cudzy system i wydać go do kodu. Zapis
- * zestawu nie zmienia wyglądu produktu ani o jeden piksel i panel mówi to
- * wprost, zamiast zostawiać Operatora z domysłem.
- *
- * ── Import wnosi role nieznane i JE WYMIENIA ────────────────────────────────
- * System projektowy klienta ma własne nazwy ról. Odrzucenie ich byłoby
- * zgubieniem pracy, przemilczenie — obietnicą, że wszystko pasuje. Rola wchodzi
- * do zestawu, a jej nazwa wraca w `unknownNames` i panel wypisuje ją w całości.
- *
- * ── Postacie wydania składa rdzeń ───────────────────────────────────────────
- * CSS, SCSS, Tailwind, moduł JavaScript, Swift i Kotlin powstają w rdzeniu przez
- * sklejenie napisów — bez jednego programu spoza instalki. Panel pokazuje treść
- * wydania, a nie samo „gotowe": plik bez treści jest kopertą udaną i pustą.
+ * Zestawy żetonów w Tokens & System Panel: zapis, wykaz, eksport i wczytanie zestawu żetonów
+ * motywu obowiązującego oraz wydanie przewodnika stylu.
  */
 export interface ZestawyZetonow {
   element: HTMLElement;
@@ -44,7 +26,7 @@ export interface ZestawyZetonow {
   wczytaj(): Promise<void>;
 }
 
-/** Czym panel steruje w oknie żetonów. */
+/** Czym panel steruje w oknie żetonów: dostarcza żetony motywu obowiązującego jako materiał do złożenia nowego zestawu. */
 export interface SterowanieZestawami {
   /** Żetony odczytane z motywu obowiązującego — materiał na zestaw. */
   zetonyMotywu(): readonly DesignToken[];
@@ -166,9 +148,7 @@ export function utworzZestawyZetonow(
 
   async function zapiszZestaw(): Promise<void> {
     if (bezOkna(Command.DesignTokensetSave)) return;
-    // Żetony biorą się z motywu obowiązującego, czytane w chwili naciśnięcia,
-    // a nie z kopii zrobionej przy otwarciu panelu: między jednym a drugim
-    // Operator mógł przełączyć motyw.
+    // Żetony biorą się z motywu obowiązującego, czytane w chwili naciśnięcia, nie z kopii przy otwarciu.
     const zetony = sterowanie.zetonyMotywu();
     if (zetony.length === 0) {
       odpowiedz.pokaz(
@@ -290,8 +270,7 @@ export function utworzZestawyZetonow(
         idOkna: stan.idOkna(),
         nazwa: nazwa.kontrolka.value === '' ? 'Zestaw wczytany' : nazwa.kontrolka.value,
         trescBase64: wBaza64(tresc),
-        // Postaci nie narzucamy: rdzeń rozpoznaje ją po treści, a wskazanie
-        // z okna byłoby zgadywaniem za Operatora.
+        // Postaci nie narzucana jest: rdzeń rozpoznaje ją po treści, wskazanie z okna byłoby zgadywaniem.
         postac: '',
       }),
       {
@@ -337,9 +316,7 @@ export function utworzZestawyZetonow(
     odpowiedz.pokaz('Wydanie przewodnika stylu…', true);
     const wynik = await stan.czuwanie.prowadz(
       'wydanie przewodnika stylu',
-      // Kolekcji docelowej okno nie narzuca: kolekcje zakłada się w Assets
-      // Panelu i tam się je wskazuje, a wymyślenie jej tutaj wydałoby
-      // przewodnik do zbioru, którego Operator nie wybrał.
+      // Kolekcji docelowej okno nie narzuca: kolekcje zakłada się i wskazuje się w Assets Panelu.
       stan.zrodlo.wydajPrzewodnik(wybor.kontrolka.value, modul.kontrolka.value.trim(), ''),
       {
         wToku: (zdanie) => odpowiedz.pokaz(zdanie, true),
@@ -365,12 +342,8 @@ export function utworzZestawyZetonow(
 }
 
 /**
- * Koduje treść w base64 z zachowaniem znaków spoza ASCII.
- *
- * `btoa` przyjmuje wyłącznie bajty do 255, a zapis żetonów bywa po polsku
- * (opisy ról) — kodowanie wprost urywałoby się na pierwszym „ż". Droga przez
- * `TextEncoder` daje bajty UTF-8, czyli to, co rdzeń rozkłada po drugiej
- * stronie.
+ * Koduje treść w base64 z zachowaniem znaków spoza ASCII: `btoa` przyjmuje wyłącznie bajty
+ * do 255, więc kodowanie idzie przez `TextEncoder`, dający bajty UTF-8 zgodne z odczytem rdzenia.
  */
 function wBaza64(tekst: string): string {
   const bajty = new TextEncoder().encode(tekst);
@@ -379,5 +352,5 @@ function wBaza64(tekst: string): string {
   return btoa(zapis);
 }
 
-/** Rodzaje żetonów kontraktu — pomocnik dla okna składającego materiał. */
+/** Rodzaje żetonów kontraktu — pomocnik dla okna składającego materiał zestawu bez własnej kopii wyliczenia. */
 export const RODZAJE_ZETONOW = DesignTokenKind;

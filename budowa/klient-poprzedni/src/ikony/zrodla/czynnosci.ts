@@ -1,5 +1,7 @@
 // Źródła SVG — grupa: czynnosci.
 // Nazwy i kolejność wprost z `ikony/manifest.json` (pozycje 14–29).
+// Każdy import wciąga treść pliku znacznikiem `?raw`, więc wykaz niesie
+// znaczniki SVG, a nie ścieżki do plików.
 
 import plus from '../svg/plus.svg?raw';
 import olowek from '../svg/olowek.svg?raw';
@@ -18,7 +20,11 @@ import oko from '../svg/oko.svg?raw';
 import gwiazdka from '../svg/gwiazdka.svg?raw';
 import kopiuj from '../svg/kopiuj.svg?raw';
 
-/** Czynności operatora — tworzenie, zmiana, przesył, sterowanie. */
+/**
+ * Czynności operatora — tworzenie, zmiana, przesył, sterowanie. Kluczem wykazu
+ * jest nazwa ikony, wartością treść pliku SVG. Zapis `as const` utrwala zbiór
+ * nazw w typie, więc odwołanie do nazwy spoza grupy nie przechodzi budowy.
+ */
 export const CZYNNOSCI = {
   'plus': plus,
   'olowek': olowek,

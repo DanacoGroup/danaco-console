@@ -21,25 +21,8 @@ import { widokWykazuPetli } from './wykaz-petli-widok';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Wykaz gotowych pętli — okno wiodące modułu Automations. Bierze pętlę zapisaną
- * wcześniej i puszcza ją w ruch jednym kliknięciem: przycisk „Uruchom” nie pyta
- * o potwierdzenie ani o wskazanie kolejki — zakłada kolejkę i posuwa ją
- * działaniem `start` (`uruchomienie-petli.ts`). Pętla wyłączona ma ten sam
- * przycisk co czynna; jej stan stoi w opisie pozycji.
- *
- * Zawężanie zamiast blokowania wierszy: napis szukania skraca wykaz po stronie
- * klienta (kontrakt nie ma pola zapytania), przełącznik „tylko czynne” zawęża
- * samo żądanie polem `enabledOnly`.
- *
- * Uruchomienie przestawia wspólny stan modułu (`stan-automatyki.ts`) na tę pętlę
- * i jej kolejkę, więc Execution Monitor pokazuje jej przebiegi, a Queue Manager
- * posuwa jej kolejkę bez przepisywania identyfikatorów.
- *
- * Nad wykazem stoi wykaz przekazań: scenariusze przeniesione tu z innych modułów
- * komendą `context.transfer` (`przyjecie-przekazania.ts`). Okno jest wejściem do
- * modułu, więc to tutaj widać, że ktoś coś oddał. Przekazanie zostaje propozycją
- * do chwili, w której Operator naciśnie zapis — nic nie wchodzi do magazynu
- * automatyk samo.
+ * Wykaz gotowych pętli jest oknem wiodącym modułu Automations: bierze pętlę zapisaną wcześniej
+ * i puszcza ją w ruch jednym kliknięciem, bez pytania o potwierdzenie.
  */
 export interface OknoWykazuPetli {
   element: HTMLElement;
@@ -68,14 +51,7 @@ export function utworzOknoWykazuPetli(
   /** Scenariusze przeniesione tu z innych modułów, czekające na decyzję. */
   let przekazania: readonly PrzekazanyScenariusz[] = [];
 
-  /**
-   * Rysuje oba wykazy w jednym miejscu treści.
-   *
-   * Miejsce treści czyści się przy każdym wskazaniu (`stan-tresci.ts`), więc
-   * dwa osobne rysunki wypchnęłyby się nawzajem. Pustkę ogłaszamy dopiero
-   * wtedy, gdy nie ma ani pętli, ani przekazań — samo przekazanie oczekujące
-   * jest już treścią.
-   */
+  /** Rysuje oba wykazy w jednym miejscu treści, ogłaszając pustkę dopiero, gdy nie ma pętli ni przekazań. */
   function rysuj(): void {
     const widok = widokWykazuPetli(petle, szukanie.value, uruchom);
     const wykazPrzekazan = listaPrzekazan(przekazania, zapiszPrzekazanie);
@@ -89,14 +65,7 @@ export function utworzOknoWykazuPetli(
     else miejsce.append(zdanieOBrakuPetli(widok.zdanie));
   }
 
-  /**
-   * Odczyt wykazu. Zdanie potwierdzenia podaje liczbę oddanych pozycji, żeby
-   * wykaz krótki dał się odróżnić od przyciętego granicą.
-   *
-   * Oddaje obietnicę, bo po odczycie wykazu idzie odczyt przekazań i oba piszą
-   * w to samo miejsce treści — bez ustawienia ich w kolejkę zdanie późniejszej
-   * odpowiedzi nadpisywałoby zdanie wcześniejszej w porządku przypadkowym.
-   */
+  /** Odczyt wykazu oddaje obietnicę, bo po nim idzie odczyt przekazań w to samo miejsce treści. */
   function odczytaj(): Promise<void> {
     tresc.ladowanie('Odczyt wykazu gotowych pętli…');
     return zrodlo.automatyki(zadanieWykazu(tylkoCzynne, granica.value)).then((wynik) => {
@@ -115,10 +84,7 @@ export function utworzOknoWykazuPetli(
     });
   }
 
-  /**
-   * Uruchomienie pozycji. Wykaz zostaje na ekranie — rysunek idzie ponownie
-   * z pamięci okna, więc druga pętla rusza bez powtórnego odczytu.
-   */
+  /** Uruchomienie pozycji: wykaz zostaje na ekranie, rysunek idzie z pamięci bez powtórnego odczytu. */
   function uruchom(petla: AutomationWorkflow): void {
     tresc.ladowanie(`Uruchamianie pętli „${petla.name}”…`);
     void uruchomPetle(zrodlo, petla).then((skutek) => {
@@ -134,13 +100,7 @@ export function utworzOknoWykazuPetli(
     });
   }
 
-  /**
-   * Odczyt przekazań oczekujących.
-   *
-   * Wykaz pętli zostaje na ekranie: odczyt przekazań dokłada sekcję, a nie
-   * zastępuje treści. Zdanie mówi, ile okien sprawdzono i ile z nich niesie
-   * scenariusz — pustka po sprawdzeniu jest odpowiedzią, nie usterką.
-   */
+  /** Odczyt przekazań oczekujących dokłada sekcję, a wykaz pętli zostaje na ekranie nietknięty. */
   function odczytajPrzekazaniaOkna(): Promise<void> {
     tresc.ladowanie('Odczyt przekazań z innych modułów…');
     return odczytajPrzekazania(zrodlo).then((skutek) => {
@@ -156,14 +116,7 @@ export function utworzOknoWykazuPetli(
     });
   }
 
-  /**
-   * Zapis przekazanego scenariusza do magazynu automatyk.
-   *
-   * To jedyne miejsce, w którym przekazanie staje się automatyką, i dzieje się
-   * to na jawne naciśnięcie. Po zapisie moduł przestawia się na tę automatykę,
-   * więc Workflow Builder pokazuje jej kroki od razu — Operator ogląda, co
-   * przyszło, dopiero gdy to przyjął.
-   */
+  /** Zapis przekazanego scenariusza do magazynu; po zapisie moduł przestawia się na tę automatykę. */
   function zapiszPrzekazanie(scenariusz: PrzekazanyScenariusz): void {
     tresc.ladowanie(`Zapis przekazanego scenariusza „${scenariusz.nazwa}”…`);
     const zadanie: Parameters<ZrodloAutomations['zapiszAutomatyke']>[0] = {
@@ -196,7 +149,7 @@ export function utworzOknoWykazuPetli(
     });
   }
 
-  /** Pełny odczyt okna: najpierw magazyn automatyk, potem to, co przekazano. */
+  /** Pełny odczyt okna: najpierw magazyn automatyk, potem przekazania. */
   function odswiez(): void {
     void odczytaj().then(() => odczytajPrzekazaniaOkna());
   }
@@ -204,22 +157,19 @@ export function utworzOknoWykazuPetli(
   odswiezPrzycisk.addEventListener('click', () => void odczytaj());
   przekazaniaPrzycisk.addEventListener('click', () => void odczytajPrzekazaniaOkna());
   szukanie.addEventListener('input', rysuj);
-  // Przełącznik zawęża żądanie, nie rysunek — `enabledOnly` rozstrzyga rdzeń,
-  // więc przestawienie musi pójść po wykaz jeszcze raz.
+  // Przełącznik zawęża żądanie, nie rysunek, więc przestawienie idzie po wykaz jeszcze raz.
   tylkoCzynne.addEventListener('click', () => {
     przestaw(tylkoCzynne);
     void odczytaj();
   });
 
-  // Powiązanie automatyki zmienia się także z pracy innego modułu — tak wraca
-  // scenariusz wpięty tu z Browsera czy z Assistanta. Wykaz w oknie jest wtedy
-  // nieaktualny, więc czyta się ponownie wraz z przekazaniami.
+  // Powiązanie automatyki zmienia się także z pracy innego modułu, więc wykaz czyta się ponownie.
   const odsubskrybuj = zrodlo.naZmianePowiazania(odswiez);
 
   return { element: rama.element, odswiez, zamknij: odsubskrybuj };
 }
 
-/** Zdanie o braku pętli osadzane obok wykazu przekazań, gdy ten nie jest pusty. */
+/** Zdanie o braku pętli osadzane obok wykazu przekazań, gdy ten nie jest pusty, a wykaz pętli już jest. */
 function zdanieOBrakuPetli(zdanie: string): HTMLElement {
   const akapit = document.createElement('p');
   akapit.className = 'dn-pole-opis';
@@ -227,7 +177,7 @@ function zdanieOBrakuPetli(zdanie: string): HTMLElement {
   return akapit;
 }
 
-/** Kontrolki okna: szukanie, granica wykazu, przełącznik zawężenia i odczyty. */
+/** Kontrolki okna: szukanie, granica wykazu, przełącznik zawężenia i przyciski odczytu wykazu oraz przekazań. */
 interface PowierzchniaWykazu {
   szukanie: HTMLInputElement;
   granica: HTMLInputElement;
@@ -237,8 +187,8 @@ interface PowierzchniaWykazu {
 }
 
 /**
- * Składa kontrolki, pasek akcji i ciało okna. Konstrukcja czysta — nie domyka
- * się ani na stanie okna, ani na źródle.
+ * Składa kontrolki, pasek akcji i ciało okna; konstrukcja czysta, nie domyka się ani na stanie
+ * okna, ani na źródle.
  */
 function zlozPowierzchnieWykazu(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -249,8 +199,7 @@ function zlozPowierzchnieWykazu(
   const granica = poleLiczbowe('Górna granica liczby pętli', 'domyślnie wszystkie');
   const tylkoCzynne = przelacznikWidoku('Tylko czynne', false);
   const odswiezPrzycisk = przycisk('Odśwież wykaz', 'dn-btn dn-btn--atrament');
-  // Przekazania idą dwiema komendami kontraktu: `window.list` po okna tego
-  // modułu i `config.effective.get` po przeniesiony komplet każdego z nich.
+  // Przekazania idą dwiema komendami kontraktu: okna modułu i przeniesiony komplet każdego z nich.
   const przekazaniaPrzycisk = przycisk('Odczytaj przekazania');
 
   rama.akcje.append(odswiezPrzycisk, przekazaniaPrzycisk);
@@ -272,9 +221,8 @@ function zlozPowierzchnieWykazu(
 }
 
 /**
- * Żądanie wykazu — czysta konstrukcja z wartości pól. Granica pusta albo
- * niepoprawna znaczy „wszystkie”, więc nie trafia do żądania wcale; tak samo
- * `enabledOnly` idzie tylko wtedy, gdy przełącznik jest wciśnięty.
+ * Żądanie wykazu jest czystą konstrukcją z wartości pól; granica pusta albo niepoprawna znaczy
+ * wszystkie.
  */
 function zadanieWykazu(
   tylkoCzynne: HTMLButtonElement,
@@ -287,7 +235,7 @@ function zadanieWykazu(
   return zadanie;
 }
 
-/** Zdanie po odczycie: liczba pozycji oddanych przez rdzeń i zakres żądania. */
+/** Zdanie po odczycie nazywa liczbę pozycji oddanych przez rdzeń i zakres żądania — czynne albo wszystkie. */
 function zdanieOdczytu(ile: number, tylkoCzynne: HTMLButtonElement): string {
   const zakres = tylkoCzynne.dataset['wlaczony'] === 'true' ? ' czynnych' : '';
   return ile === 0

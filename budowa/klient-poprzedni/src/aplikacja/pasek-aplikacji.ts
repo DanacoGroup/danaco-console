@@ -7,7 +7,11 @@ import { utworzPrzelacznikMotywu } from './przelacznik-motywu';
 import { utworzPrzelacznikTras, type PrzelacznikTras } from './przelacznik-tras';
 import type { Trasa } from './trasy';
 
-/** Pasek aplikacji nad widokiem trasy. */
+/**
+ * Pasek aplikacji stoi nad widokiem trasy i niesie tożsamość projektu,
+ * przełącznik tras oraz przełącznik motywu. Zamknięcie paska zdejmuje nasłuchy
+ * dokumentu założone przez menu i jest obowiązkowe przy zdjęciu widoku.
+ */
 export interface PasekAplikacji {
   /** Pasek montowany jako pierwszy wiersz widoku. */
   element: HTMLElement;
@@ -17,40 +21,24 @@ export interface PasekAplikacji {
   zamknij(): void;
 }
 
-/** Zależności paska: nazwa projektu i sposób przejścia na inną trasę. */
+/**
+ * Zależności paska obejmują nazwę projektu wyświetlaną obok godła oraz obsługę
+ * przejścia na wskazaną trasę i wyboru pozycji ustawień. Pasek nie zna skutku
+ * żadnej z tych czynności; wykonuje je warstwa, która pasek buduje.
+ */
 export interface OpcjePaskaAplikacji {
   /** Nazwa projektu obok godła; pochodzi z opisu okna. */
   projekt: string;
   /** Przejście na wskazaną trasę. */
   naTrase(trasa: Trasa): void;
-  /**
-   * Wybór pozycji ustawień z menu aplikacji albo z menu Operatora.
-   *
-   * Pasek nie wie, co pozycja otwiera — wykaz skutków mieszka w
-   * `akcje-ustawien.ts` i jest ten sam, którego używa listwa strony głównej.
-   */
+  /** Wybór pozycji ustawień z menu aplikacji albo z menu Operatora. */
   naUstawienie(pozycja: PozycjaUstawienia): void;
 }
 
 /**
- * Pasek aplikacji — tożsamość, przełącznik widoków, motyw.
- *
- * Jedna odpowiedzialność: złożenie trzech elementów paska. Pasek stoi nad
- * widokami, które własnego paska nie mają: Centrum dowodzenia i Mission
- * Control. Powłoka środowiska ma pasek własny (`powloka/pasek-gorny.ts`)
- * i drugiego nie dostaje — przełącznik tras oraz przełącznik motywu wchodzą
- * wtedy w jej grupę akcji.
- *
- * Motyw jest przełączalny z każdego widoku, bo pasek niesie ten sam
- * przełącznik, którego używa powłoka. Wartości motywu ani żadnej barwy pasek
- * nie zna — całą pracę wykonuje warstwa `motyw/`.
- *
- * Poza godłem, przełącznikiem tras i motywem pasek niesie menu aplikacji przy
- * godle, ikonę ustawień i menu Operatora w grupie akcji — te same wejścia,
- * które ma powłoka środowiska (`powloka/akcje-paska.ts`), żeby produkt
- * zachowywał się jednakowo na każdej trasie. Żadne z nich nie zakłada nowej
- * czynności ani nie woła komendy spoza wykazu: pozycje są te same, co w listwie
- * strony głównej, a skutek jeden i wspólny.
+ * Składa pasek z tożsamości projektu, przełącznika tras, przełącznika motywu,
+ * menu aplikacji, ikony ustawień oraz menu Operatora. Pasek stoi nad widokami,
+ * które własnego paska nie mają, a barw nie zna — wykonuje je warstwa `motyw/`.
  */
 export function utworzPasekAplikacji(opcje: OpcjePaskaAplikacji): PasekAplikacji {
   const element = document.createElement('header');
@@ -70,9 +58,7 @@ export function utworzPasekAplikacji(opcje: OpcjePaskaAplikacji): PasekAplikacji
   tozsamosc.className = 'dn-pasek-aplikacji__tozsamosc';
   tozsamosc.append(menu.element, utworzGodlo(opcje.projekt));
 
-  // Trasy stoją w grupie akcji, nie osobno pośrodku paska: znaki tras
-  // i kontrolki platformy tworzą jeden rząd ikon przy prawej krawędzi,
-  // rozdzielony kreską. Dzięki temu pasek ma dwie grupy, nie trzy.
+  // Trasy stoją w grupie akcji, więc pasek ma dwie grupy zamiast trzech.
   const rozdzielacz = document.createElement('span');
   rozdzielacz.className = 'dn-pasek-gorny__rozdzielacz';
 
@@ -93,12 +79,9 @@ export function utworzPasekAplikacji(opcje: OpcjePaskaAplikacji): PasekAplikacji
 }
 
 /**
- * Ikona ustawień — skrót do Okna konfiguracji.
- *
- * Skrót, a nie druga droga: otwiera dokładnie tę pozycję, którą niesie listwa
- * strony głównej pod kodem `konfiguracja`, przez ten sam wykaz skutków
- * (`akcje-ustawien.ts`). Stoi w pasku, bo ustawienia platformy wykonuje się
- * z każdego miejsca, a listwa widoczna jest tylko na stronie głównej.
+ * Ikona ustawień jest skrótem do Okna konfiguracji: otwiera tę samą pozycję,
+ * którą niesie listwa strony głównej, przez wspólny wykaz skutków. Stoi
+ * w pasku, ponieważ listwa widoczna jest wyłącznie na stronie głównej.
  */
 function przyciskUstawien(naPozycje: (pozycja: PozycjaUstawienia) => void): HTMLButtonElement {
   const pozycja = POZYCJA_KONFIGURACJI;

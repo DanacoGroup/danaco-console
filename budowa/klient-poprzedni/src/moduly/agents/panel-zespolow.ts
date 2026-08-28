@@ -15,15 +15,8 @@ import {
 } from './zrodlo-zespolow';
 
 /**
- * Panel „Zespoły ekspertów” Agent Buildera — dostęp do czterech komend obszaru
- * `team.*`.
- *
- * Panel stoi przy bibliotece ekspertów, bo zespół to nazwany skład tej właśnie
- * biblioteki; osobne okno musiałoby wykaz ekspertów powielić albo pokazywać
- * skład samymi identyfikatorami. Zapis bez wskazanego zespołu zakłada nowy —
- * to drugie znaczenie tego samego przycisku, wypisane przy nim wprost. Zespół
- * założony na innym urządzeniu konta dochodzi zdarzeniem `team.changed`, więc
- * panel nie odpytuje rdzenia w pętli.
+ * Panel „Zespoły ekspertów” w Agent Builderze udostępnia cztery komendy obszaru team, stojąc przy
+ * bibliotece, bo zespół jest nazwanym składem tej biblioteki.
  */
 export interface PanelZespolow {
   element: HTMLElement;
@@ -108,8 +101,7 @@ export function utworzPanelZespolow(kanal: Kanal): PanelZespolow {
 
   async function powiel(zespol: Team): Promise<void> {
     odpowiedz.pokaz(`Powielanie zespołu „${zespol.name}"…`, true);
-    // Nazwa kopii idzie pusta — wtedy rdzeń bierze nazwę źródła z przyrostkiem.
-    // Ułożenie nazwy w kliencie dałoby drugą konwencję nazewniczą obok rdzeniowej.
+    // Nazwa kopii idzie pusta, bo rdzeń bierze nazwę źródła z przyrostkiem sam.
     const wynik = await zrodlo.powiel(zespol.id, '');
     if (!wynik.udany || wynik.wynik === undefined) {
       odpowiedz.pokaz(opisOdmowyBledu('Powielenie zespołu', wynik.blad), false);
@@ -227,8 +219,7 @@ export function utworzPanelZespolow(kanal: Kanal): PanelZespolow {
     },
 
     async wczytaj() {
-      // Fraza pusta — panel pobiera cały wykaz. Komenda `team.list` przyjmuje
-      // `query`, ale ekran nie ma pola zawężającego.
+      // Fraza pusta pobiera cały wykaz; komenda team.list przyjmuje query, lecz ekran nie ma pola.
       const wynik = await zrodlo.wykaz('');
       if (!wynik.udany || wynik.wynik === undefined) {
         odpowiedz.pokaz(opisOdmowyBledu('Odczyt wykazu zespołów', wynik.blad), false);

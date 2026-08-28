@@ -17,23 +17,15 @@ import { utworzWierszZrodla } from './wiersz-zrodla';
 import { notacja, wypisz, NOTACJE_WYPISU } from './wypis-zrodel';
 
 /**
- * Sources Panel — okno **pomocnicze** modułu Browser. Narasta w miarę
- * przeglądania kolejnych stron i zasila Sources Manager modułu Research.
- *
- * Jedna odpowiedzialność: formularz źródła i wykaz źródeł. Rozmowa z rdzeniem
- * jest w `czynnosci-zrodel.ts`, jeden wiersz — w `wiersz-zrodla.ts`.
- *
- * Wykaz pochodzi z rdzenia: `browser.source.list` oddaje źródła okna od
- * najnowszego, więc panel pokazuje komplet zebrany w oknie, nie tylko pozycje
- * dodane w tej karcie. Gdy rdzeń odmówi albo nie zna jeszcze okna, panel
- * wypowiada powód zamiast pokazywać pusty wykaz bez wyjaśnienia.
+ * Sources Panel — okno pomocnicze modułu Browser, narastające w miarę
+ * przeglądania kolejnych stron, zasilające moduł Research.
  */
 export interface OknoSourcesPanel {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Zdanie okna o skutku czynności — wiersz odpowiedzi pod wykazem. */
+/** Zdanie okna o skutku wykonanej czynności — wiersz odpowiedzi wyświetlany zawsze pod wykazem źródeł panelu. */
 type Powiedz = (tresc: string, powodzenie: boolean) => void;
 
 export function utworzOknoSourcesPanel(stan: StanPrzegladania): OknoSourcesPanel {
@@ -75,14 +67,7 @@ export function utworzOknoSourcesPanel(stan: StanPrzegladania): OknoSourcesPanel
     if (wpis !== null) void dodaj(wpis.url, wpis.tytul, kluczowe.kontrolka.checked);
   }
 
-  /**
-   * Samoczynne dopisanie źródła po przejściu na nową stronę.
-   *
-   * Progiem jest identyfikator migawki: bez niego każde ogłoszenie stanu —
-   * także zmiana zaznaczenia — próbowałoby dopisać to samo źródło jeszcze raz.
-   * Ponownie odwiedzona strona nie zakłada drugiego wpisu, bo jej adres stoi
-   * już w wykazie okna; to jest reguła scalania duplikatów panelu.
-   */
+  // Samoczynne dopisanie źródła po przejściu na nową stronę, według progu identyfikatora migawki.
   function dopiszSamoczynnie(): void {
     if (!samoczynnie.kontrolka.checked) return;
     const migawka = stan.migawka();
@@ -169,7 +154,7 @@ function zrodloBiezacejStrony(
   return { url: migawka.url, tytul: migawka.title ?? '' };
 }
 
-/** Ponowny odczyt wykazów z rdzenia na żądanie — nie z pamięci karty. */
+/** Ponowny odczyt wykazów źródeł wprost z rdzenia na żądanie operatora, nie z pamięci przechowanej w karcie. */
 async function zaciagnijWykaz(stan: StanPrzegladania, powiedz: Powiedz): Promise<void> {
   powiedz('Odczyt wykazu źródeł z rdzenia…', true);
   await stan.zaciagnijZebrane();
@@ -181,11 +166,8 @@ async function zaciagnijWykaz(stan: StanPrzegladania, powiedz: Powiedz): Promise
 }
 
 /**
- * Uwaga panelu mówi o pochodzeniu wykazu, a gdy rdzeń miał coś do powiedzenia
- * o ostatnim odczycie — mówi to zamiast opisu ogólnego.
- *
- * Przy zawężonym wykazie mówi także, ile pozycji filtr ukrył: wykaz krótszy od
- * zebranego bez tego zdania wyglądałby jak wykaz niepełny.
+ * Uwaga panelu mówi o pochodzeniu wykazu i o ostatnim odczycie z rdzenia.
+ * Przy zawężonym wykazie mówi też, ile pozycji filtr ukrył przed operatorem.
  */
 function zdanieUwagi(stan: StanPrzegladania, wszystkich: number, widocznych: number): string {
   const uwagi = stan.powodZebranego();
@@ -194,7 +176,7 @@ function zdanieUwagi(stan: StanPrzegladania, wszystkich: number, widocznych: num
   return `${podstawa} Filtr pokazuje ${widocznych} z ${wszystkich} pozycji wykazu.`;
 }
 
-/** Zawężenie wykazu: fraza szukana w tytule, adresie i dacie oraz sama istotność. */
+/** Zawężenie wykazu źródeł: fraza szukana w tytule, adresie i dacie strony, wraz z samą istotnością źródła. */
 function przefiltruj(
   zrodla: readonly BrowserSource[],
   filtr: { fraza: string; tylkoKluczowe: boolean },
@@ -208,7 +190,7 @@ function przefiltruj(
   });
 }
 
-/** Wykaz źródeł okna wraz ze znacznikiem zaznaczenia do przekazania. */
+/** Wykaz źródeł okna wraz ze znacznikiem zaznaczenia, do przekazania wybranych źródeł do innego modułu. */
 function wierszeZrodel(
   zrodla: readonly BrowserSource[],
   wybrane: Set<string>,
@@ -229,7 +211,7 @@ function wierszeZrodel(
   );
 }
 
-/** Czynności panelu akcji wraz ze sterem notacji wypisu. */
+/** Czynności panelu akcji Sources Panel wraz ze sterem notacji wypisu bibliografii z wykazu źródeł okna. */
 interface AkcjePaska {
   dodaj(): void;
   zBiezacej(): void;
@@ -240,7 +222,7 @@ interface AkcjePaska {
   notacja: HTMLElement;
 }
 
-/** Panel akcji okna: pięć pozycji wykazu narzędzi Sources Panel. */
+/** Panel akcji okna: pięć pozycji wykazu narzędzi Sources Panel dostępnych bezpośrednio dla operatora sesji. */
 function utworzPasek(akcje: AkcjePaska): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mb-panel__pasek';
@@ -258,14 +240,9 @@ function utworzPasek(akcje: AkcjePaska): HTMLElement {
 }
 
 /**
- * Trzy stany obowiązkowe wykazu źródeł.
- *
- * Kolejność pytań ma znaczenie: czekanie, odmowa, pustka. Odwrotna kolejność
- * pokazywałaby pustkę w trakcie odczytu i po odmowie odczytu.
- *
- * Odmowa wykazu jest błędem okna tylko przy pustym wykazie. Z pozycjami na
- * ekranie wpisy zostają, a powód idzie zdaniem przy wykazie — jedno nieudane
- * odświeżenie ich nie unieważnia.
+ * Trzy stany obowiązkowe wykazu źródeł: czekanie, odmowa, pustka, w tej
+ * kolejności. Odmowa jest błędem okna tylko przy pustym wykazie, bo pozycje
+ * na ekranie zostają, a powód idzie zdaniem przy wykazie.
  */
 function nanieStan(okno: StanOkna, stan: StanPrzegladania, pozycji: number): void {
   if (stan.faza() === 'odczyt') {
@@ -292,7 +269,7 @@ function nanieStan(okno: StanOkna, stan: StanPrzegladania, pozycji: number): voi
   okno.gotowe();
 }
 
-/** Wypis wykazu — jedyne miejsce, gdzie okno oddaje źródła tekstem i plikiem. */
+/** Wypis wykazu źródeł — jedyne miejsce, gdzie okno oddaje zebrane źródła tekstem oraz plikiem na dysku. */
 interface WypisZrodel {
   element: HTMLElement;
   /** Odtwarza wypis z wykazu bieżącego, pobiera plik i mówi, ile pozycji poszło. */
@@ -300,10 +277,8 @@ interface WypisZrodel {
 }
 
 /**
- * Wypis staje na widoku i schodzi na dysk jednym naciśnięciem: bibliografia
- * wklejana ze schowka i bibliografia wczytywana do menedżera to dwa różne
- * zastosowania tej samej treści, a rozdzielenie ich na dwie czynności kazałoby
- * Operatorowi wybierać, zanim zobaczy wynik.
+ * Wypis staje na widoku i schodzi na dysk jednym naciśnięciem — dwa różne
+ * zastosowania tej samej treści bibliografii, złożone w jedną czynność.
  */
 function utworzWypisZrodel(
   stan: StanPrzegladania,

@@ -20,49 +20,11 @@ export { POKRYCIE_W_ODCZYCIE } from './wykaz-komend-rdzenia';
 export { zapomnijWykazKomend };
 export type { StanPokrycia };
 
-/**
- * Pokrycie komend — jedno źródło prawdy o tym, czego rdzeń nie obsługuje,
- * do użytku wszystkich modułów.
- *
- * Zdanie wpisane w moduł na sztywno („kontrakt nie ma komendy X") przestaje
- * być prawdą w dniu, w którym zmieni się rdzeń albo kontrakt, i nikt go nie
- * zdejmuje, bo nic go z rdzeniem nie łączy. Taki napis myli też stronę braku:
- * komenda bywa w kontrakcie, a nie ma uchwytu w złożonym rdzeniu. Pokrycie
- * bierze rozstrzygnięcie z odczytu, więc nazywa brak tam, gdzie jest.
- *
- * Byt stoi w korzeniu `moduly/`, a nie w module, bo tę samą potrzebę ma każdy
- * moduł; przepisywanie dałoby tyle samo rozjeżdżających się zdań o jednym
- * stanie produktu. Sam fakt i zdania o nim leżą warstwę niżej,
- * w `wykaz-komend-rdzenia.ts`.
- *
- * Kiedy tego nie używać: pozycja, dla której żadna komenda nie jest nawet
- * pomyślana (czynność wyłącznie okienna), zostaje przy `przyciskBezKomendy`
- * z `modele/kontrolki-formularza` — bez nazwy komendy nie ma czego sprawdzać
- * u rdzenia, a byt nie zgaduje.
- *
- * Użycie:
- *
- *   const pokrycie = utworzPokrycieKomend(kanal);          // raz na moduł
- *   panel.append(pokrycie.przycisk('Historia zatwierdzeń', 'developer.git.log',
- *     'Odczyt historii zatwierdzeń'));
- *   void pokrycie.odczytaj();                              // raz po montażu
- *   // w zamknij() okna:  pokrycie.zamknij();
- *
- * Powitanie idzie raz na połączenie, nie raz na moduł — wszystkie wywołania
- * `odczytaj()` czekają na jedną odpowiedź (`wykaz-komend-rdzenia.ts`).
- */
+// Pokrycie komend jest jednym źródłem prawdy o tym, czego rdzeń nie obsługuje.
 
-/** Pozycje bez czynności wraz z odczytem ich pokrycia w rdzeniu. */
+/** Pozycje bez czynności wraz z odczytem ich pokrycia w rdzeniu, gotowe do wstawienia w dowolne okno modułu. */
 export interface PokrycieKomend {
-  /**
-   * Przycisk pozycji, której okno nie wykonuje. Widoczny i w pełni klikalny,
-   * bez `disabled`: po naciśnięciu nazywa powód, zamiast milczeć.
-   *
-   * @param etykieta nazwa pozycji w panelu akcji
-   * @param komenda komenda, która tę pozycję by wykonała — nazwa z kontraktu
-   *   albo z wykazu okien operacyjnych, także taka, której kontrakt nie ma
-   * @param czynnosc czym ta pozycja jest dla czytającego — wchodzi w zdanie powodu
-   */
+  // Przycisk pozycji, której okno nie wykonuje; po naciśnięciu nazywa powód, zamiast milczeć.
   przycisk(etykieta: string, komenda: string, czynnosc: string): HTMLButtonElement;
   /** To samo dla pozycji, która potrzebuje kilku komend naraz. */
   przyciskWielu(etykieta: string, komendy: readonly string[], czynnosc: string): HTMLButtonElement;
@@ -116,7 +78,7 @@ export function utworzPokrycieKomend(kanal: Kanal): PokrycieKomend {
   };
 }
 
-/** Przycisk pozycji bez czynności; powód czytany z `title` w chwili kliknięcia. */
+/** Przycisk pozycji bez czynności; powód czytany z tytułu kontrolki w chwili kliknięcia przez czytelnika. */
 function zbudujPrzycisk(
   kanal: Kanal,
   podepnij: (przerysuj: () => void) => void,
@@ -126,8 +88,7 @@ function zbudujPrzycisk(
 ): HTMLButtonElement {
   const kontrolka = przyciskAkcji(etykieta, 'dn-btn dn-btn--zarys');
   kontrolka.dataset['brakKomendy'] = 'tak';
-  // Domknięcie na powodzie z chwili budowy mówiłoby „odczyt w toku” także długo
-  // po odpowiedzi rdzenia — dlatego dymek bierze `title` dopiero przy kliknięciu.
+  // Domknięcie na powodzie z chwili budowy mówiłoby o odczycie w toku długo po odpowiedzi rdzenia.
   kontrolka.addEventListener('click', () => {
     pokazKomunikat({
       tytul: `${etykieta} — pokrycie w rdzeniu`,
@@ -144,7 +105,7 @@ function zbudujPrzycisk(
   return kontrolka;
 }
 
-/** Wykaz pokrycia komend okna; klasa rodziny modułu przychodzi z zewnątrz. */
+/** Wykaz pokrycia komend okna; klasa rodziny modułu przychodzi z zewnątrz jako parametr tego wywołania. */
 function zbudujWykaz(
   kanal: Kanal,
   podepnij: (przerysuj: () => void) => void,
@@ -164,7 +125,7 @@ function zbudujWykaz(
   return element;
 }
 
-/** Wiersz wykazu: nazwa komendy w danych, powód wprost w treści. */
+/** Wiersz wykazu: nazwa komendy stoi w danych elementu, a powód wprost w treści widocznej dla czytelnika. */
 function wierszWykazu(kanal: Kanal, komenda: string): HTMLElement {
   const wiersz = document.createElement('li');
   wiersz.dataset['komenda'] = komenda;

@@ -1,26 +1,21 @@
 /**
- * Hierarchia decyzji MultitaskingAI i dwa tryby Always On Display.
- *
- * Poziomy decyzji są opisem po stronie klienta, nie stanem rdzenia: kontrakt
- * niesie role okien (`WindowRole`: coordinator, executor, standalone)
- * i podagentów (`subagent.*`), ale nie niesie wykazu poziomów ani ich
- * kolejności. Wykaz tłumaczy w sekcji Monitor, kto może przerwać kogo, i nie
- * jest bramą — hierarchię można konfigurować i pominąć, a interwencja jest
- * możliwa na dowolnym poziomie w dowolnej chwili.
- *
- * Tryby nakładki są dwa: obserwator patrzy i doradza, operator dodatkowo
- * zatwierdza i wstrzymuje kroki. Przełącznik stoi w sekcji Monitor procesu.
- *
- * Kontrakt nie zna trybu nakładki: `AodStatus` niesie urządzenie, sesję, okno,
- * procesy przypięte i licznik procesów w biegu, a komendy `aod.mode.set` nie ma
- * wcale. Tryb utrwala się więc ustawieniem na poziomie sesji (`config.set`),
- * a sekcja wypisuje tę lukę kontraktu w meldunku braków.
+ * Hierarchia decyzji MultitaskingAI i dwa tryby nakładki Always On Display.
+ * Poziomy decyzji są opisem po stronie klienta, a nie stanem rdzenia: kontrakt
+ * niesie role okien i podagentów, lecz nie niesie wykazu poziomów ani kolejności.
  */
 
-/** Klucz utrwalenia trybu nakładki na poziomie karty sesji. */
+/**
+ * Klucz utrwalenia trybu nakładki na poziomie karty sesji. Tryb zapisuje się
+ * ustawieniem `config.set`, bo kontrakt nie ma komendy przestawiającej tryb,
+ * a nakładka ma go pamiętać między otwarciami karty.
+ */
 export const KLUCZ_TRYBU_AOD = 'multitasking.tryb_aod';
 
-/** Kształt żądania, którego kontrakt nie ma — do wypisania w meldunku braków. */
+/**
+ * Kształt żądania, którego kontrakt nie ma — do wypisania w meldunku braków.
+ * Napis podaje nazwę komendy wraz z polami żądania i odpowiedzi, więc meldunek
+ * mówi wprost, czego brakuje, zamiast nazywać brak ogólnie.
+ */
 export const KSZTALT_TRYBU_AOD =
   'aod.mode.set { deviceId?: string, sessionId?: string, mode: "observer" | "operator" } → { status: AodStatus }';
 
@@ -32,7 +27,11 @@ export const TrybNakladki = {
 } as const;
 export type TrybNakladki = (typeof TrybNakladki)[keyof typeof TrybNakladki];
 
-/** Nazwy trybów w przełączniku sekcji Monitor. */
+/**
+ * Nazwy trybów w przełączniku sekcji Monitor. Każda pozycja niesie kod trybu wraz
+ * ze zdaniem o jego zakresie, żeby wybór mówił, co się zmieni, jeszcze przed
+ * przestawieniem przełącznika.
+ */
 export const NAZWY_TRYBOW_AOD: ReadonlyArray<[TrybNakladki, string]> = [
   [TrybNakladki.Obserwator, 'Obserwator — podgląd, sugestie, bez ingerencji'],
   [TrybNakladki.Operator, 'Operator — zatwierdzanie i wstrzymywanie kroków'],
@@ -50,14 +49,22 @@ export function trybNakladkiZWartosci(wartosc: unknown): TrybNakladki {
     : TrybNakladki.Obserwator;
 }
 
-/** Jeden poziom hierarchii decyzji: numer, nazwa i zakres rozstrzygnięć. */
+/**
+ * Jeden poziom hierarchii decyzji: numer, nazwa i zakres rozstrzygnięć. Zakres
+ * jest zdaniem, a nie zbiorem uprawnień, ponieważ hierarchia tłumaczy podział
+ * pracy, a nie steruje dostępem do czynności.
+ */
 export interface PoziomDecyzji {
   numer: number;
   nazwa: string;
   zakres: string;
 }
 
-/** Poziomy w kolejności od nadrzędnego do najwęższego. */
+/**
+ * Poziomy w kolejności od nadrzędnego do najwęższego. Wykaz tłumaczy, kto może
+ * przerwać kogo, i nie jest bramą — interwencja pozostaje możliwa na dowolnym
+ * poziomie i w dowolnej chwili.
+ */
 export const POZIOMY_DECYZJI: readonly PoziomDecyzji[] = [
   { numer: 1, nazwa: 'Użytkownik (Operator)', zakres: 'decyzja nadrzędna, bez ograniczeń, w dowolnym momencie' },
   { numer: 2, nazwa: 'Always On Display (operator)', zakres: 'interwencja z dowolnego miejsca; kanałem wykonania jest Mobile' },

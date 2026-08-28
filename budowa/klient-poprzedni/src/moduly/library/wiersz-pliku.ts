@@ -4,33 +4,16 @@ import { zdanieZnaczenia } from './kafel-pliku';
 import type { TrafienieZnaczenia } from './magazyn-biblioteki';
 
 /**
- * Jeden wiersz wykazu plików repozytorium.
- *
- * Wiersz niesie trzy rzeczy naraz: zaznaczenie do czynności zbiorczych,
- * wskazanie pliku czynnego dla pozostałych trzech okien i metrykę pliku.
- *
- * O braku treści wiersz mówi wyłącznie wtedy, gdy rdzeń sam ją orzekł
- * (`dostepnosc-tresci.ts`, werdykt `brak`), i powtarza jego powód. Plik, o który
- * nikt jeszcze nie pytał, nie dostaje żadnego znaku.
- *
- * Odmowa podglądu nie jest orzeczeniem o treści: rdzeń odmawia kodem
- * `not_found`, gdy pliku nie ma, i kodem `internal_error`, gdy nośnik nie oddał
- * treści spod odwołania. Oba są zdaniem o pliku i o nośniku, nie o zawartości
- * repozytorium, więc odmowa dostaje własne zdanie — powód rdzenia bez
- * dopisanego zarzutu.
- *
- * Metryka nie jest świadkiem treści: brak `versionId` czy `checksum` niczego
- * o niej nie orzeka i w drugą stronę tak samo. Świadkiem jest odpowiedź rdzenia.
+ * Jeden wiersz wykazu plików repozytorium. Wiersz niesie trzy rzeczy naraz:
+ * zaznaczenie do czynności zbiorczych, wskazanie pliku czynnego dla pozostałych
+ * trzech okien oraz metrykę pliku.
  */
 export interface OpisWiersza {
   zaznaczony: boolean;
   czynny: boolean;
   /** Odpowiedź rdzenia o treści tego pliku; nie domysł wiersza. */
   tresc: StanTresci;
-  /**
-   * Trafienie wskaźnika znaczenia wraz z fragmentem, na którym się oparło;
-   * `null`, gdy plik nie pochodzi z wyszukiwania po znaczeniu.
-   */
+  /** Trafienie wskaźnika znaczenia; `null` poza wyszukiwaniem po znaczeniu. */
   znaczenie: TrafienieZnaczenia | null;
   naZaznaczenie(): void;
   naWskazanie(): void;
@@ -69,8 +52,7 @@ export function utworzWierszPliku(plik: LibraryFile, opis: OpisWiersza): HTMLEle
     element.append(powod);
   }
 
-  // Fragment, na którym oparło się dopasowanie po znaczeniu, stoi przy wierszu,
-  // bo bez niego trafność jest liczbą bez podstawy do sprawdzenia.
+  // Fragment dopasowania stoi przy wierszu; bez niego trafność jest liczbą bez podstawy.
   const fragment = zdanieZnaczenia(opis.znaczenie);
   if (fragment !== '') {
     const cytat = document.createElement('span');
@@ -83,13 +65,9 @@ export function utworzWierszPliku(plik: LibraryFile, opis: OpisWiersza): HTMLEle
 }
 
 /**
- * Zdanie wiersza o treści pliku — jedno na werdykt, żadne bez werdyktu.
- *
- * `brak` jest jedynym werdyktem, po którym wolno powiedzieć „bez treści
- * w repozytorium": tylko wtedy rdzeń o treści orzekł. `odmowa` powtarza sam
- * powód i mówi, że treść pozostaje nieznana. `odwolanie` mówi, że rdzeń wskazał
- * miejsce treści, a jej samej nie podał. `nieznana` i `osiagalna` nie dają
- * zdania: pierwsza nie ma czego powiedzieć, druga niczego nie zarzuca.
+ * Zdanie wiersza o treści pliku — jedno na werdykt, żadne bez werdyktu. Werdykt
+ * `brak` jest jedynym, po którym wolno powiedzieć o braku treści w repozytorium,
+ * ponieważ tylko wtedy rdzeń o treści orzekł.
  */
 function zdanieOTresci(tresc: StanTresci): string {
   if (tresc.werdykt === 'brak') return `bez treści w repozytorium — ${tresc.powod}`;
@@ -98,7 +76,11 @@ function zdanieOTresci(tresc: StanTresci): string {
   return '';
 }
 
-/** Metryka wiersza: ścieżka, moduł wytwórcy, rozmiar i etykiety. */
+/**
+ * Metryka wiersza: ścieżka, moduł wytwórcy, rozmiar i etykiety. Metryka nie jest
+ * świadkiem treści — brak identyfikatora wersji albo sumy kontrolnej niczego o niej
+ * nie orzeka, a świadkiem pozostaje odpowiedź rdzenia.
+ */
 function opisMetryki(plik: LibraryFile): string {
   const czesci: string[] = [];
   if (plik.path !== undefined && plik.path !== '') czesci.push(plik.path);

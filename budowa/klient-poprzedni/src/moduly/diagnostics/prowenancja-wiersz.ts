@@ -10,22 +10,9 @@ import { czas, opisWywolania, RODZAJ_ODCINKA, tytulWywolania } from './prowenanc
 import type { ZrodloProwenancji } from './prowenancja-zrodlo';
 
 /**
- * Wiersz jednego wywołania kanału modelu w Provenance Explorer.
- *
- * Wiersz jest miejscem trzech czynności naraz, bo wszystkie trzy dotyczą tego
- * jednego wywołania i nigdzie indziej nie miałyby czego dotyczyć: odczytu śladu
- * (`provenance.call.get`), oceny odpowiedzi (`provenance.call.rate`) oraz
- * wskazania wywołania do wydania (`provenance.trace.export`, pole `callIds`).
- *
- * Żaden chwyt nie jest ukryty w kliknięciu wiersza. Opracowanie modułu chce
- * rozwinięcia wiersza, ale rozwinięcie, które JEDNOCZEŚNIE pyta rdzeń o treść
- * promptu, byłoby odczytem materiału wrażliwego zrobionym przez pomyłkę
- * w celowaniu — dlatego odczyt ma własny przycisk, a jego zdanie mówi, co
- * przyszło.
- *
- * Ocena zjawia się dopiero po naciśnięciu „Oceń odpowiedź modelu”: sąd
- * Operatora nad każdym wierszem wykazu z góry byłby formularzem zawsze, a przy
- * pięćdziesięciu wywołaniach — ścianą pól, w której nie widać wywołań.
+ * Wiersz jednego wywołania kanału modelu w przeglądarce prowenancji łączy odczyt
+ * śladu, ocenę odpowiedzi i wskazanie wywołania do wydania — trzy czynności
+ * dotyczące tego samego wywołania.
  */
 export interface WierszWywolania {
   element: HTMLElement;
@@ -99,7 +86,7 @@ export function utworzWierszWywolania(
   };
 }
 
-/** Akapit zdania w miejscu szczegółów wiersza. */
+/** Akapit zdania w miejscu szczegółów wiersza, zastępujący pojedynczym tekstem każdą kolejną treść odczytu. */
 function zdanie(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
@@ -108,11 +95,8 @@ function zdanie(tresc: string): HTMLElement {
 }
 
 /**
- * Ślad jednego wywołania: drzewo odcinków oraz treść promptu i odpowiedzi.
- *
- * Drzewo wychodzi z kontraktu w kolejności od korzenia, więc głębokość liczy się
- * z pola `parentSpanId`, a nie z kolejności — wywołanie z podagentem ma odcinki
- * zagnieżdżone i płaska lista zgubiłaby to, kto kogo wywołał.
+ * Ślad jednego wywołania: drzewo odcinków budowane z pola nadrzędnika w kolejności
+ * od korzenia, wraz z treścią promptu i odpowiedzi.
  */
 function slad(odczyt: ProvenanceCallGetResponse): readonly HTMLElement[] {
   const czesci: HTMLElement[] = [];
@@ -175,11 +159,8 @@ function wierszOdcinka(odcinek: ModelCallSpan, wszystkie: readonly ModelCallSpan
 }
 
 /**
- * Treść promptu albo odpowiedzi.
- *
- * Puste miejsce znaczy tu trzy różne rzeczy i okno je rozróżnia: zapis treści
- * był wyłączony ustawieniem rdzenia, rdzeń treści nie oddał, albo treść jest
- * pusta. Wspólne „(brak)” zlałoby wyłączony zapis z pustą odpowiedzią modelu.
+ * Treść promptu albo odpowiedzi, w której puste miejsce rozróżnia wyłączony zapis,
+ * brak treści od rdzenia i treść rzeczywiście pustą.
  */
 function tresc(nazwa: string, zawartosc: string | undefined, zapisana: boolean): HTMLElement {
   const element = document.createElement('pre');
@@ -199,7 +180,7 @@ function tresc(nazwa: string, zawartosc: string | undefined, zapisana: boolean):
   return element;
 }
 
-/** Zdanie potwierdzenia po odczycie śladu — liczności i granice wprost. */
+/** Zdanie potwierdzenia po odczycie śladu, podające liczbę odcinków i długość treści wprost, wraz ze stanem redakcji. */
 function zdanieSladu(odczyt: ProvenanceCallGetResponse): string {
   return (
     `Rdzeń oddał ślad wywołania: odcinków ${String(odczyt.spans.length)}, ` +

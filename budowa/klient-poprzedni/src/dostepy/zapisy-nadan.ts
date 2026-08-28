@@ -12,20 +12,9 @@ import type { ZrodloNadan } from './zrodlo-nadan';
 
 /**
  * Trzy komendy zmieniające zbiór nadań okna wraz z uzgodnieniem stanu widoku
- * z odpowiedzią rdzenia.
- *
- * Odczyt i zapis to dwie różne odpowiedzialności: stan sekcji pilnuje tego, co
- * widok wie o punktach i nadaniach, ten plik pilnuje tego, co dzieje się po
- * zapisie.
- *
- * Komplet zastępuje zbiór w całości. Trzy komendy zwracają nie tylko zmienione
- * nadanie, lecz komplet nadań okna po zmianie — przestawienie kolejności albo
- * oznaczenia głównego dotyka pozostałych wierszy, więc widok bierze komplet
- * zamiast składać go z domysłów.
- *
- * Nadanie bez okna rozmowy nie idzie do rdzenia: nadanie żyje per okno, więc
- * bez okna nie ma czego nadać. Odmowa ma kształt wyniku komendy, żeby widok nie
- * potrzebował drugiej ścieżki obsługi.
+ * z odpowiedzią rdzenia. Każda zwraca komplet nadań okna po zmianie, a nadanie
+ * bez okna rozmowy jest odmawiane przed wysyłką, wynikiem o kształcie
+ * odpowiedzi komendy.
  */
 export interface ZapisyNadan {
   /** `access.grant.add` — nadaje oknu dostęp do punktu. */
@@ -40,7 +29,11 @@ export interface ZapisyNadan {
   odbierz(nadanieID: string): Promise<Wynik<{ removed: boolean; grants: AccessGrant[] }>>;
 }
 
-/** Wejścia zapisów: źródło komend, okno czynne i przyjęcie kompletu nadań. */
+/**
+ * Wejścia zapisów: źródło komend rdzenia, odczyt identyfikatora okna czynnego
+ * oraz przyjęcie kompletu nadań, którym stan sekcji zastępuje dotychczasowy
+ * zbiór wierszy.
+ */
 export interface ZaleznosciZapisow {
   zrodlo: ZrodloNadan;
   /** Okno rozmowy, którego dotyczy zapis; puste znaczy brak wiązania. */
@@ -83,6 +76,10 @@ export function utworzZapisyNadan(zaleznosci: ZaleznosciZapisow): ZapisyNadan {
   };
 }
 
-/** Odmowa nadania bez okna: nadanie żyje per okno rozmowy. */
+/**
+ * Odmowa nadania bez okna: nadanie żyje przy oknie rozmowy, więc sekcja
+ * niezwiązana z oknem nie ma czego nadać i zatrzymuje komendę przed wysyłką
+ * do rdzenia.
+ */
 const ODMOWA_BEZ_OKNA =
   'Sekcja nie jest związana z oknem rozmowy — nadanie dostępu żyje per okno, nie per sesja.';

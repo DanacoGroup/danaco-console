@@ -1,45 +1,22 @@
 import { QueueStatus, type LoopState, type Message, type Queue, type Window } from '../../../../shared/contract';
 
-/**
- * Stany relacji koordynator–wykonawca — jedno miejsce na oba znaczniki.
- *
- * Oba znaczniki są czystymi funkcjami danych, więc dają się zestawić ze sobą
- * i sprawdzić bez montowania okna. Nazywają wyłącznie to, co rdzeń zlicza
- * i oddaje:
- *
- *   „kolejka wstrzymana"    ← `Queue.status === paused` kolejki etapu bieżącego;
- *   „koordynator wybudzony" ← `LoopState.loops > 0` przy `stopped === false`
- *                             i przy żadnej turze wykonawcy w biegu. Licznik
- *                             obiegów prowadzi pętla sesji w rdzeniu, nie klient.
- *
- * Wybudzenia nie zgadujemy z czasu: `LoopState.updatedAt` mówi, kiedy licznik
- * ruszył ostatnio, ale próg „ile sekund bez obiegu znaczy, że koordynator myśli"
- * byłby liczbą wymyśloną w kliencie.
- *
- * Rama okna ma jeden znacznik, a przesłanki potrafią zajść naraz (kolejka
- * wstrzymana przy biegu zatrzymanym), więc kolejność sprawdzeń niżej idzie od
- * stanu, który zatrzymuje pracę, do stanu, który ją opisuje; pełny obraz zostaje
- * w polu `powod`.
- */
+// Stany relacji koordynator–wykonawca stoją w jednym miejscu jako czyste funkcje danych.
 
-/** Waga znacznika ramy; podzbiór `WagaZnacznika` bez `blad`. */
+/** Waga znacznika ramy okna informacyjnego; podzbiór pełnej wagi znacznika, bez wartości oznaczającej błąd. */
 export type WagaStanu = 'neutralna' | 'sukces' | 'ostrzezenie';
 
-/** Jeden stan relacji: napis na plakietce, jego waga, kod i pełne zdanie. */
+/** Jeden stan relacji: napis na plakietce, jego waga, kod stały oraz pełne zdanie, które go dokładnie wyjaśnia. */
 export interface StanRelacji {
   /** Napis plakietki — krótki, bo rama daje mu jeden wiersz. */
   readonly tekst: string;
   readonly waga: WagaStanu;
-  /**
-   * Kod stanu dla `data-stan-relacji` — po nim odczyt automatyczny rozpoznaje
-   * stan bez czytania polszczyzny napisu.
-   */
+  // Kod stanu dla znacznika ramy — po nim odczyt automatyczny rozpoznaje stan bez czytania napisu.
   readonly kod: string;
   /** Pełne zdanie: skąd ten stan się wziął. Idzie w `aria-description` ramy. */
   readonly powod: string;
 }
 
-/** Przesłanki znacznika koordynatora — wszystkie odczytane, żadnej liczonej tutaj. */
+/** Przesłanki znacznika koordynatora — wszystkie odczytane wprost, żadna z nich nie jest liczona tutaj. */
 export interface PrzeslankiKoordynatora {
   /** Bieg z `window.state.get`; pusty, dopóki odczyt nie wrócił. */
   bieg: LoopState | null;
@@ -147,9 +124,7 @@ export function znacznikWykonawcy(
       powod: `Okno ${okno.id} prowadzi turę — fragmenty idą strumieniem, wynik jeszcze się nie domknął.`,
     };
   }
-  // Waga idzie za wynikiem, nie za istnieniem okna: okno bez ani jednej
-  // odpowiedzi dostaje wagę neutralną, bo barwa „sukces" przy napisie „bez
-  // wyniku" mówiłaby co innego niż napis, a barwę widać pierwszą.
+  // Waga idzie za wynikiem, nie za istnieniem okna, bo barwa sukcesu przy braku wyniku mówiłaby inaczej.
   if (wynik === null) {
     return {
       tekst: 'bez wyniku',
@@ -167,14 +142,9 @@ export function znacznikWykonawcy(
 }
 
 /**
- * Wiesza stan relacji na ramie okna — plakietka, kod stanu i pełne zdanie.
- *
- * `data-stan-relacji` niesie kod, bo odczyt automatyczny nie ma czytać
- * polszczyzny plakietki: kod jest kluczem stałym, a napis wolno poprawiać.
- *
- * Dwa słowa plakietki mówią, co się dzieje, ale nie mówią czym to odwrócić ani
- * skąd rdzeń to wie, więc pełne zdanie idzie w `aria-description` ramy, a gdy
- * wołający poda miejsce — także w widoczny wiersz okna.
+ * Wiesza stan relacji na ramie okna: plakietkę, kod stały do odczytu
+ * automatycznego i pełne zdanie w opisie dostępności, a gdy wołający poda
+ * miejsce — także w widocznym wierszu okna.
  */
 export function powiesStanRelacji(
   rama: { element: HTMLElement; ustawZnacznik(tekst: string, waga?: WagaStanu): void },

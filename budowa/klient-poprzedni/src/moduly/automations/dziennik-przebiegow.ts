@@ -1,34 +1,22 @@
+/**
+ * Dziennik przebiegów, czyli przeglądarka logu okna Execution Monitor. Wiersz
+ * logu przychodzi w zdarzeniu `automation.execution.status` i przychodzi raz,
+ * więc dziennik zbiera te wiersze w chwili, w której się pojawiają.
+ */
 import type { AutomationExecutionStatusEvent } from '../../../../shared/contract';
 
 /**
- * Dziennik przebiegów — przeglądarka logu okna Execution Monitor.
- *
- * Wiersz logu przychodzi w zdarzeniu `automation.execution.status` (pole
- * `logLine`), a zdarzenie przychodzi raz. Ten byt jest zbieraniem tych wierszy
- * w chwili, w której się pojawiają.
- *
- * Czego dziennik nie udaje: nie jest pełnym logiem przebiegu. Zbiera wyłącznie
- * to, co przyszło do okna otwartego, więc przebieg sprzed otwarcia okna nie ma
- * tu ani jednego wiersza. Pełny zapis oddaje osobna komenda logu przebiegu —
- * okno nazywa ją pozycją paska akcji i mówi wprost, czy rdzeń ma dla niej
- * uchwyt, zamiast przepisywać stan kontraktu do zdania w tym pliku.
- *
- * Poziomu wiersza samo zdarzenie nie niesie. Zamiast zgadywać go z treści,
- * dziennik zapamiętuje stan przebiegu z chwili wpisu — po nim idzie zawężanie
- * i po nim widać, czy wiersz powstał w przebiegu, który jeszcze trwał, czy
- * w takim, który już się załamał.
- */
-
-/**
- * Ile wierszy dziennik przechowuje.
- *
- * Granica istnieje, bo przebieg wieloetapowy potrafi nadawać wiersz na każdy
- * etap i na każdy obieg naprawczy, a okno bywa otwarte godzinami; bufor bez
- * granicy rósłby wtedy przez cały ten czas. Wiersze najstarsze odchodzą pierwsze.
+ * Ile wierszy dziennik przechowuje. Granica istnieje, ponieważ przebieg
+ * wieloetapowy nadaje wiersz na każdy etap i na każdy obieg naprawczy, a okno
+ * bywa otwarte godzinami. Wiersze najstarsze odchodzą pierwsze.
  */
 const GRANICA_WIERSZY = 500;
 
-/** Jeden wiersz dziennika wraz z tym, co o nim wiadomo z kontraktu. */
+/**
+ * Jeden wiersz dziennika wraz z tym, co o nim wiadomo z kontraktu: czas
+ * przyjęcia w oknie, identyfikator przebiegu, stan przebiegu z chwili wpisu,
+ * nazwa etapu oraz treść wiersza.
+ */
 export interface WpisDziennika {
   /** Czas przyjęcia wiersza w oknie, w milisekundach epoki. */
   czas: number;
@@ -86,14 +74,22 @@ export function utworzDziennikPrzebiegow(): DziennikPrzebiegow {
   };
 }
 
-/** Wiersz dziennika w zapisie tekstowym — treść pliku eksportu i pozycja wykazu. */
+/**
+ * Wiersz dziennika w zapisie tekstowym, będący zarazem treścią pliku wydania
+ * i pozycją wykazu w oknie. Zapis niesie czas przyjęcia, nazwę etapu, gdy
+ * zdarzenie ją niosło, oraz treść wiersza.
+ */
 export function zapisWpisu(wpis: WpisDziennika): string {
   const czas = new Date(wpis.czas).toLocaleString('pl-PL');
   const etap = wpis.etap === '' ? '' : ` [${wpis.etap}]`;
   return `${czas} ${wpis.idPrzebiegu} (${wpis.stan})${etap}: ${wpis.tresc}`;
 }
 
-/** Zdanie nad dziennikiem: skąd pochodzą wiersze i czego w nim nie ma. */
+/**
+ * Zdanie nad dziennikiem: mówi, skąd pochodzą wiersze i czego w dzienniku nie
+ * ma, żeby Operator nie wziął zbioru wierszy okna otwartego za pełny zapis
+ * przebiegu automatyki.
+ */
 export function zdanieODzienniku(wpisow: number, odrzuconych: number): string {
   if (wpisow === 0) {
     return (

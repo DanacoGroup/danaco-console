@@ -2,31 +2,10 @@ import { konieCzasuWyciszenia, WyciszenieCzasowe } from './progi-aod';
 import { PowodDecyzji } from './rozpoznanie-decyzji';
 
 /**
- * Pięć rodzajów wyciszenia Always On Display — rozdz. 3.5 opracowania
- * `docs/funkcje-globalne/always-on-display.md`.
- *
- * Tabela rozdz. 3.5 wymienia pięć wierszy i ten plik trzyma trzy z nich jako
- * stan (wyciszenie czasowe, kontekstowe, klasy zdarzeń); czwarty — tryb cichy —
- * jest trybem obecności i mieszka w `tryb-obecnosci.ts`; piąty — wyjątek wagi
- * krytycznej — nie jest wyciszeniem, tylko regułą przebijającą wszystkie
- * pozostałe, i stoi w regule ujawniania.
- *
- * Plik nie dotyka dokumentu i nie zna kanału. Trzyma wykaz wyciszeń czynnych
- * i rozstrzyga z niego jedno pytanie: KTÓRE wyciszenie obejmuje tę sugestię.
- * Odpowiedzią jest samo wyciszenie, nie „prawda/fałsz" — bo Operator ma
- * usłyszeć, co dokładnie milczy i do kiedy, a nie wyłącznie że milczy.
- *
- * GDZIE TEN STAN MIESZKA. Kontrakt nie niesie wyciszenia nakładki ani jednym
- * polem: `grep -i wycisz shared/contract.go` znajduje wyłącznie wyciszenie
- * uczestnika tury w module Roundtable i wyciszone wyzwolenia reguł alarmowych —
- * nic z rodziny `aod.*`. Stan wyciszenia jest więc dziś stanem okna. Magazyn
- * jest PODAWANY wołaczowi (`MagazynWyciszen`), a nie brany z globalnej
- * przestrzeni na sztywno — wzorem `moduly/studio/widok-nastawy-operatora.ts` —
- * żeby przełożenie zapisu na rdzeń nie ruszyło ani jednego wołacza. Braki
- * kontraktu nazywa wprost `wyciszenie-braki-kontraktu.ts`.
+ * Wyciszenie Always On Display: plik trzyma trzy rodzaje jako stan (czasowe, kontekstowe,
+ * klasy zdarzeń) i rozstrzyga, które obejmuje sugestię. Poniżej klasa zdarzeń wyzwalających
+ * nakładkę.
  */
-
-/** Klasa zdarzeń wyzwalających — rozdz. 3.2, kolumna „Klasa". */
 export const KlasaZdarzen = {
   /** Pętla wstrzymana, przerwana, zadanie ponawiane powyżej progu, zlecenie oczekujące. */
   StanPetliWykonawczej: 'stan-petli-wykonawczej',
@@ -43,7 +22,10 @@ export const KlasaZdarzen = {
 } as const;
 export type KlasaZdarzen = (typeof KlasaZdarzen)[keyof typeof KlasaZdarzen];
 
-/** Nazwa klasy widziana przez Operatora — brzmienie wiersza tabeli rozdz. 3.2. */
+/**
+ * Nazwa klasy zdarzeń widziana przez Operatora w menu wyciszeń — pełne brzmienie
+ * zamiast identyfikatora technicznego.
+ */
 export const NAZWY_KLAS: Readonly<Record<KlasaZdarzen, string>> = {
   [KlasaZdarzen.StanPetliWykonawczej]: 'stan pętli wykonawczej',
   [KlasaZdarzen.StanKolejkiZadan]: 'stan kolejki zadań',
@@ -53,7 +35,10 @@ export const NAZWY_KLAS: Readonly<Record<KlasaZdarzen, string>> = {
   [KlasaZdarzen.KontekstPracyOperatora]: 'kontekst pracy Operatora',
 };
 
-/** Zdarzenie wyzwalające klasy — rozdz. 3.2, kolumna „Zdarzenie wyzwalające". */
+/**
+ * Zdarzenie wyzwalające klasy — pełny opis, widoczny przy tej klasie w menu
+ * wyciszeń zdarzeń Operatora.
+ */
 export const ZDARZENIA_KLAS: Readonly<Record<KlasaZdarzen, string>> = {
   [KlasaZdarzen.StanPetliWykonawczej]:
     'Pętla wstrzymana, pętla przerwana, zadanie ponawiane powyżej progu, zlecenie oczekujące ' +
@@ -76,13 +61,8 @@ export const ZDARZENIA_KLAS: Readonly<Record<KlasaZdarzen, string>> = {
 };
 
 /**
- * Klasa zdarzeń każdego powodu rozpoznanego przez nakładkę.
- *
- * Rozdz. 3.2 przypisuje „pętlę wstrzymaną i przerwaną" klasie stanu pętli
- * wykonawczej, a „kolejkę zatrzymaną, zadanie w stanie błędu i zadanie
- * oczekujące dłużej niż próg" — klasie stanu kolejki zadań. Reguła rozpoznania
- * (`rozpoznanie-decyzji.ts`) daje pięć powodów i każdy z nich wpada w jedną
- * z tych dwóch klas.
+ * Klasa zdarzeń każdego powodu rozpoznanego przez nakładkę: reguła rozpoznania
+ * (`rozpoznanie-decyzji.ts`) daje pięć powodów, każdy wpada w jedną z dwóch klas zdarzeń.
  */
 export const KLASA_POWODU: Readonly<Record<PowodDecyzji, KlasaZdarzen>> = {
   [PowodDecyzji.BiegStanal]: KlasaZdarzen.StanPetliWykonawczej,
@@ -93,32 +73,36 @@ export const KLASA_POWODU: Readonly<Record<PowodDecyzji, KlasaZdarzen>> = {
 };
 
 /**
- * Klasy, których zdarzenia nakładka dziś rozpoznaje.
- *
- * Pozostałe cztery klasy rozdz. 3.2 nie mają dziś w kontrakcie nośnika sygnału
- * (nie ma zdarzenia kontroli jakości, harmonogramu ani powtarzalności czynności
- * Operatora), więc ich wyciszenie zapisze się i zadziała z chwilą, w której
- * sygnał wejdzie. Menu mówi to wprost, zamiast udawać, że wycisza coś, co i tak
- * milczy.
+ * Klasy, których zdarzenia nakładka dziś rozpoznaje: pozostałe klasy nie mają jeszcze
+ * nośnika sygnału w kontrakcie, więc ich wyciszenie zadziała, gdy sygnał wejdzie.
  */
 export const KLASY_ROZPOZNAWANE: ReadonlySet<KlasaZdarzen> = new Set(
   Object.values(KLASA_POWODU),
 );
 
-/** Zakres wyciszenia kontekstowego — rozdz. 3.5: bieżący moduł albo bieżąca karta sesji. */
+/**
+ * Zakres wyciszenia kontekstowego: bieżący moduł albo bieżąca karta sesji, do której
+ * sugestia dziś należy.
+ */
 export const ZakresKontekstu = {
   Modul: 'modul',
   KartaSesji: 'karta-sesji',
 } as const;
 export type ZakresKontekstu = (typeof ZakresKontekstu)[keyof typeof ZakresKontekstu];
 
-/** Nazwa zakresu widziana przez Operatora. */
+/**
+ * Nazwa zakresu widziana przez Operatora w menu wyciszeń — moduł albo karta sesji,
+ * zapisana pełnym słowem.
+ */
 export const NAZWY_ZAKRESOW: Readonly<Record<ZakresKontekstu, string>> = {
   [ZakresKontekstu.Modul]: 'moduł',
   [ZakresKontekstu.KartaSesji]: 'karta sesji',
 };
 
-/** Wyciszenie czasowe — rozdz. 3.5, wiersz pierwszy. */
+/**
+ * Wyciszenie czasowe: milczą wszystkie sugestie do wskazanej chwili, niezależnie od
+ * modułu i klasy zdarzenia.
+ */
 export interface WyciszenieCzasem {
   rodzaj: 'czasowe';
   /** Wartość czasu wybrana z menu: kwadrans, godzina, do końca dnia. */
@@ -127,7 +111,10 @@ export interface WyciszenieCzasem {
   doChwili: number;
 }
 
-/** Wyciszenie kontekstowe — rozdz. 3.5, wiersz drugi. */
+/**
+ * Wyciszenie kontekstowe: milczą sugestie jednego modułu albo jednej karty sesji,
+ * pozostałe działają bez zmian.
+ */
 export interface WyciszenieKontekstu {
   rodzaj: 'kontekstowe';
   zakres: ZakresKontekstu;
@@ -137,13 +124,16 @@ export interface WyciszenieKontekstu {
   nazwa: string;
 }
 
-/** Wyciszenie klasy zdarzeń — rozdz. 3.5, wiersz trzeci. */
+/**
+ * Wyciszenie klasy zdarzeń: milczą sugestie jednej klasy zdarzenia wyzwalającego,
+ * pozostałe klasy działają bez zmian.
+ */
 export interface WyciszenieKlasy {
   rodzaj: 'klasa-zdarzen';
   klasa: KlasaZdarzen;
 }
 
-/** Jedno wyciszenie czynne. */
+/** Jedno wyciszenie czynne — dokładnie jeden z trzech rodzajów: czasowe, kontekstowe albo klasy zdarzeń. */
 export type WyciszenieCzynne = WyciszenieCzasem | WyciszenieKontekstu | WyciszenieKlasy;
 
 /**
@@ -165,12 +155,8 @@ export function kluczWyciszenia(wyciszenie: WyciszenieCzynne): string {
 }
 
 /**
- * Zdanie mówiące, CO jest wyciszone i DO KIEDY.
- *
- * Zasada zlecenia: cisza, po której Operator nie wie, że coś jest wyłączone,
- * jest gorsza od braku wyciszenia. Dlatego każde wyciszenie ma tu swoje zdanie,
- * a wyciszenie bez końca czasowego mówi wprost, że trwa do zniesienia ręką
- * Operatora.
+ * Zdanie mówiące, co jest wyciszone i do kiedy: cisza bez tej informacji jest gorsza
+ * niż brak wyciszenia.
  */
 export function zdanieWyciszenia(wyciszenie: WyciszenieCzynne): string {
   switch (wyciszenie.rodzaj) {
@@ -194,13 +180,9 @@ export function zdanieWyciszenia(wyciszenie: WyciszenieCzynne): string {
 }
 
 /**
- * Sugestia opisana tym, co reguła wyciszenia musi o niej wiedzieć.
- *
- * Moduł i karta sesji są opcjonalne, bo nie każda sugestia je zna: telemetria
- * rdzenia niesie okno i sesję, modułu nie niesie wcale, a `AodSuggestion`
- * kontraktu niesie samo okno. Sugestia bez modułu NIE WPADA w wyciszenie
- * modułu — milczenie sugestii, o której nie wiemy, czy dotyczy wyciszonego
- * bytu, byłoby ciszą bez podstawy.
+ * Sugestia opisana tym, co reguła wyciszenia musi o niej wiedzieć: moduł i karta sesji
+ * są opcjonalne, bo nie każda sugestia je zna, a sugestia bez modułu nie wpada
+ * w wyciszenie modułu.
  */
 export interface OpisSugestiiWobecWyciszenia {
   /** Klasa zdarzenia wyzwalającego; pominięta znaczy „klasa nierozpoznana". */
@@ -212,12 +194,8 @@ export interface OpisSugestiiWobecWyciszenia {
 }
 
 /**
- * Które wyciszenie obejmuje tę sugestię; `null`, gdy żadne.
- *
- * Funkcja NIE zna wyjątku wagi krytycznej i nie ma go znać: wyjątek nie znosi
- * wyciszenia, tylko przepuszcza sugestię plakietką mimo niego. Rozstrzyga to
- * reguła ujawniania w `tryb-obecnosci.ts`, w jednym miejscu dla wszystkich
- * trzech rodzajów.
+ * Które wyciszenie obejmuje tę sugestię; `null`, gdy żadne. Funkcja nie zna wyjątku
+ * wagi krytycznej — rozstrzyga to reguła ujawniania w `tryb-obecnosci.ts`.
  */
 export function wyciszenieObejmujace(
   czynne: readonly WyciszenieCzynne[],
@@ -226,7 +204,7 @@ export function wyciszenieObejmujace(
   for (const wyciszenie of czynne) {
     switch (wyciszenie.rodzaj) {
       case 'czasowe':
-        // Wyciszenie czasowe obejmuje wszystko — rozdz. 3.5, kolumna „Zakres".
+        // Wyciszenie czasowe obejmuje wszystkie sugestie, niezależnie od modułu i klasy.
         return wyciszenie;
       case 'kontekstowe': {
         const bytSugestii =
@@ -242,23 +220,27 @@ export function wyciszenieObejmujace(
   return null;
 }
 
-/** Magazyn stanu wyciszeń — podawany wołaczowi, nie brany na sztywno. */
+/**
+ * Magazyn stanu wyciszeń — podawany wołaczowi, nie brany z globalnej przestrzeni
+ * na sztywno w kodzie klienta.
+ */
 export interface MagazynWyciszen {
   getItem(klucz: string): string | null;
   setItem(klucz: string, wartosc: string): void;
 }
 
-/** Klucz zapisu. Jeden na stanowisko — funkcja jest globalna. */
+/**
+ * Klucz zapisu w magazynie — jeden na stanowisko, bo funkcja wyciszeń jest globalna,
+ * nie zależna od konta.
+ */
 export const KLUCZ_ZAPISU_WYCISZEN = 'danaco.aod.wyciszenia';
 
-/** Wykaz wyciszeń czynnych wraz z czynnościami, które go zmieniają. */
+/**
+ * Wykaz wyciszeń czynnych wraz z czynnościami, które go zmieniają — jedyne miejsce
+ * dostępu do stanu wyciszeń.
+ */
 export interface StanWyciszen {
-  /**
-   * Wyciszenia czynne w tej chwili, w kolejności włączenia.
-   *
-   * Wyciszenie czasowe przeterminowane znosi się samo i nie wchodzi do wykazu —
-   * Operator nie ma go odklikiwać.
-   */
+  /** Wyciszenia czynne teraz — przeterminowane czasowe znosi się samo, bez odklikiwania. */
   czynne(teraz: number): readonly WyciszenieCzynne[];
   /** Wyciszenie czasowe albo `null`; wyłącznie ono ma koniec liczony zegarem. */
   czasowe(teraz: number): WyciszenieCzasem | null;
@@ -282,7 +264,10 @@ export interface StanWyciszen {
   obserwuj(sluchacz: () => void): () => void;
 }
 
-/** Magazyn domyślny: zapis miejscowy przeglądarki, gdy jest dostępny. */
+/**
+ * Magazyn domyślny: zapis miejscowy przeglądarki, gdy jest dostępny, inaczej brak
+ * trwałości między sesjami.
+ */
 export function magazynWyciszenDomyslny(): MagazynWyciszen | null {
   try {
     return globalThis.localStorage ?? null;
@@ -313,8 +298,7 @@ export function utworzStanWyciszen(
     try {
       magazyn.setItem(KLUCZ_ZAPISU_WYCISZEN, JSON.stringify(wykaz));
     } catch {
-      // Zapis miejscowy bywa wyłączony ustawieniem przeglądarki. Wyciszenie
-      // działa dalej, tracąc wyłącznie pamięć między przeładowaniami strony.
+      // Zapis miejscowy bywa wyłączony ustawieniem przeglądarki — wyciszenie działa dalej bez trwałości.
     }
   }
 
@@ -415,12 +399,8 @@ export function utworzStanWyciszen(
 }
 
 /**
- * Odczyt wykazu z magazynu.
- *
- * Każda pozycja jest sprawdzana osobno: zapis starszy, cudzy albo uszkodzony
- * ma dać wykaz uboższy, a nie wyjątek i nie ciszę bez podstawy. Pozycja
- * nieznanego kształtu wypada — wyciszenie, którego nie umiemy nazwać
- * Operatorowi, nie ma prawa wyciszać.
+ * Odczyt wykazu z magazynu: każda pozycja jest sprawdzana osobno, zapis starszy,
+ * cudzy albo uszkodzony daje wykaz uboższy, nie wyjątek.
  */
 function wczytajWyciszenia(magazyn: MagazynWyciszen | null): WyciszenieCzynne[] {
   if (magazyn === null) return [];
@@ -447,7 +427,10 @@ function wczytajWyciszenia(magazyn: MagazynWyciszen | null): WyciszenieCzynne[] 
   return wykaz;
 }
 
-/** Jedna pozycja zapisu sprowadzona do wyciszenia; `null` przy każdej niezgodności. */
+/**
+ * Jedna pozycja zapisu sprowadzona do wyciszenia; `null` przy każdej niezgodności
+ * kształtu albo wartości pola.
+ */
 function odczytajWyciszenie(pozycja: unknown, teraz: number): WyciszenieCzynne | null {
   if (typeof pozycja !== 'object' || pozycja === null) return null;
   const pola = pozycja as Record<string, unknown>;

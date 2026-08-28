@@ -5,21 +5,20 @@ import { utworzSekcje } from './naglowek-sekcji';
 import { utworzStanPusty } from './stan-pusty';
 
 /**
- * Sekcja operacji AI.
- *
- * Jedna odpowiedzialność: plakietki kanałów modelu z odczytu `channel.list`.
- * Każda plakietka niesie to, co kontrakt oddaje: nazwę, rodzaj, model i stan
+ * Sekcja operacji AI: plakietki kanałów modelu z odczytu `channel.list`. Każda
+ * plakietka niesie dokładnie to, co kontrakt oddaje — nazwę, rodzaj, model i stan
  * czynności kanału.
- *
- * Wysycenia, kolejki, limitu ani kosztu narastającego kontrakt nie niesie, więc
- * plakietka wypisuje przy nich etykietę braku źródła zamiast wymyślonych liczb.
  */
 export interface SekcjaOperacji {
   element: HTMLElement;
   odswiez(kanaly: KanalOperacyjny[]): void;
 }
 
-/** Buduje sekcję operacji z plakietkami kanałów. */
+/**
+ * Buduje sekcję operacji z plakietkami kanałów. Odświeżenie wymienia komplet
+ * plakietek, a wykaz pusty zastępuje stanem pustym, więc sekcja nigdy nie zostaje
+ * z plakietkami po poprzednim odczycie.
+ */
 export function utworzSekcjeOperacji(kanaly: KanalOperacyjny[]): SekcjaOperacji {
   const { element, cialo } = utworzSekcje(
     'mc-sekcja--operacje',
@@ -52,7 +51,11 @@ export function utworzSekcjeOperacji(kanaly: KanalOperacyjny[]): SekcjaOperacji 
   return { element, odswiez };
 }
 
-/** Plakietka jednego kanału: nazwa, stan, rodzaj, model i uwaga o miarach. */
+/**
+ * Plakietka jednego kanału: nazwa, stan, rodzaj, model i uwaga o miarach. Stan
+ * kanału niesie ikonę i słowo, nigdy samą barwę, żeby dało się go odczytać także
+ * bez rozróżniania kolorów.
+ */
 function plakietkaKanalu(kanal: KanalOperacyjny): HTMLElement {
   const karta = document.createElement('article');
   karta.className = 'dn-karta mc-kanal';
@@ -94,7 +97,11 @@ function plakietkaKanalu(kanal: KanalOperacyjny): HTMLElement {
   return karta;
 }
 
-/** Para „nazwa miary — wartość" z objaśnieniem w podpowiedzi. */
+/**
+ * Para „nazwa miary — wartość" z objaśnieniem podanym w podpowiedzi. Objaśnienie
+ * mówi, skąd wartość pochodzi albo dlaczego jej nie ma, więc miara bez źródła
+ * zostaje nazwana zamiast pominięta.
+ */
 function miara(etykieta: string, wartosc: string, objasnienie: string): DocumentFragment {
   const para = document.createDocumentFragment();
 

@@ -4,18 +4,10 @@ import { KLASYFIKACJE } from './etykiety-browser';
 import { KLASA_PRZYCISKU, przyciskCzynnosci } from './przyciski-browser';
 
 /**
- * Jedna pozycja wykazu Notes Panel wraz z jej panelem akcji.
- *
- * Jedna odpowiedzialność: jeden wiersz notatki. Formularz, wykaz i przekazanie
- * mieszkają w oknie.
- *
- * Powiązanie ze źródłem jest widoczne, nie domyślne: notatka bez `sourceId`
- * mówi o tym wprost, bo powiązanie zakłada się z wykazu okna i jego brak jest
- * informacją, nie pustką do przemilczenia.
- *
- * Klasyfikacja stoi przy wierszu jako lista wyboru, a nie jako ikona: rodzaj
- * notatki ma być czytelny bez najeżdżania na znak i bez rozróżniania barw,
- * a zmiana ma być jednym gestem.
+ * Jedna pozycja wykazu notatek wraz z panelem akcji: treść, powiązanie ze
+ * źródłem, lista wyboru klasyfikacji, cytat oraz przyciski edycji, otwarcia
+ * źródła i przypięcia. Formularz, wykaz i przekazanie do rdzenia mieszkają
+ * w oknie modułu.
  */
 export interface AkcjeNotatki {
   edytuj(notatka: BrowserNote): void;
@@ -43,8 +35,7 @@ export function utworzWierszNotatki(
       ? 'Notatka nie jest powiązana ze źródłem.'
       : `Źródło: ${(zrodlo.title ?? '').trim() === '' ? zrodlo.url : zrodlo.title ?? ''}`;
 
-  // Napis zależy od stanu przypięcia, więc jeden przycisk niesie oba warianty
-  // zamiast dwóch wywołań z literałami dublujących tę samą czynność.
+  // Napis zależy od stanu przypięcia, więc jeden przycisk niesie oba warianty.
   const przypnij = przycisk(przypieta ? 'Odepnij' : 'Przypnij', KLASA_PRZYCISKU.duch);
   przypnij.setAttribute('aria-pressed', String(przypieta));
   przypnij.addEventListener('click', () => akcje.przypnij(notatka));
@@ -71,7 +62,11 @@ export function utworzWierszNotatki(
   return element;
 }
 
-/** Cytowany fragment strony zapisany razem z notatką. */
+/**
+ * Cytowany fragment strony zapisany razem z notatką. Wiersz dokłada go tylko
+ * wtedy, gdy notatka niesie niepusty cytat, żeby pusty blok nie zajmował
+ * miejsca w wykazie.
+ */
 function cytat(tresc: string): HTMLElement {
   const element = document.createElement('blockquote');
   element.className = 'mb-notatki__cytat';

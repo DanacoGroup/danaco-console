@@ -17,28 +17,8 @@ import { utworzStanTresci, type StanTresci } from './stany-okna';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Queue Manager — okno zarządcy modułu Automations.
- *
- * Okno nie ma własnego silnika kolejek ani własnego cyklu życia zlecenia:
- * jeden silnik obsługuje pętlę sesyjną i MultitaskingAI, a okno posuwa kolejkę
- * komendami kontraktu i pokazuje to, co rdzeń o niej oddaje.
- *
- * Czego kontrakt nie oddaje, tego okno nie zmyśla. Byt `Queue` niesie stan,
- * licznik obiegów, okna, politykę, liczbę zleceń oczekujących i powiązaną
- * automatykę, lecz nie niesie samych zleceń — te oddaje osobna komenda wykazu
- * zleceń. Dopóki rdzeń nie ma jej uchwytu, przegląd pokazuje kolejkę jako
- * całość, a identyfikator zlecenia wpisuje Operator; okno mówi to wprost,
- * zamiast pokazywać pustą listę udającą przegląd.
- *
- * O tym, czy rdzeń ma uchwyt danej komendy, okno samo nie orzeka i nie
- * przepisuje stanu kontraktu do zdań: powód pozycji paska bierze się z wykazu
- * komend oddanego przez rdzeń (`pokrycie-komend.ts`), a wykaz działań silnika
- * z wyliczenia kontraktu. Oba przestają być prawdziwe same, bez edycji tego
- * pliku.
- *
- * Zdanie potwierdzenia powstaje z oddanej kolejki, nie z etykiety przycisku:
- * etykieta mówi o żądaniu, a rdzeń może oddać kolejkę w innym stanie, niż
- * żądanie zapowiadało.
+ * Queue Manager — okno zarządcy modułu Automations; posuwa kolejkę komendami kontraktu, bez
+ * własnego silnika ani cyklu życia zlecenia.
  */
 export interface OknoQueueManagera {
   element: HTMLElement;
@@ -46,12 +26,8 @@ export interface OknoQueueManagera {
 }
 
 /**
- * Nazwy działań silnika kolejek na ekranie.
- *
- * Zapis jest mapą zupełną po wyliczeniu, a nie wykazem przepisanym ręcznie:
- * gdy `QueueAction` urośnie, kompilacja zatrzyma się tutaj, zamiast zostawić
- * okno pokazujące mniej działań, niż silnik ma. Wykaz przepisany ręcznie
- * przestał raz odpowiadać kontraktowi i to jest zapora na powtórzenie.
+ * Nazwy działań silnika kolejek na ekranie — zapis jest mapą zupełną po wyliczeniu `QueueAction`,
+ * nie wykazem przepisanym ręcznie, więc kompilacja pilnuje zgodności z kontraktem.
  */
 const NAZWY_DZIALAN: Readonly<Record<QueueAction, string>> = {
   [QueueAction.Start]: 'Uruchom',
@@ -71,12 +47,8 @@ const NAZWY_DZIALAN: Readonly<Record<QueueAction, string>> = {
 };
 
 /**
- * Działania dotyczące pojedynczego zlecenia, nie kolejki jako całości.
- *
- * Rozdział wynika z kształtu żądania: `itemId` jest polem nieobowiązkowym, więc
- * kontrakt nie odmówi działania bez wskazania zlecenia, a rdzeń nie miałby
- * wtedy czego wstawić, zdjąć ani odłożyć. Okno pyta o zlecenie wcześniej,
- * zamiast wysyłać żądanie, które nie ma przedmiotu.
+ * Działania dotyczące pojedynczego zlecenia, nie kolejki jako całości; okno pyta o zlecenie
+ * wcześniej, zamiast wysyłać żądanie bez przedmiotu.
  */
 const DZIALANIA_ZLECENIA: ReadonlySet<QueueAction> = new Set([
   QueueAction.Enqueue,
@@ -89,12 +61,12 @@ const DZIALANIA_ZLECENIA: ReadonlySet<QueueAction> = new Set([
   QueueAction.Condition,
 ]);
 
-/** Wszystkie działania wyliczenia w kolejności kontraktu. */
+/** Wszystkie działania wyliczenia `QueueAction` w kolejności kontraktu, sparowane z nazwą ekranową każdego z nich. */
 export const DZIALANIA: ReadonlyArray<[QueueAction, string]> = Object.values(QueueAction).map(
   (dzialanie) => [dzialanie, NAZWY_DZIALAN[dzialanie]],
 );
 
-/** Nazwy stanów kolejki na ekranie — mapa zupełna po wyliczeniu. */
+/** Nazwy stanów kolejki na ekranie — mapa zupełna po wyliczeniu `QueueStatus`, po jednej nazwie polskiej na stan silnika. */
 const NAZWY_STANOW_KOLEJKI: Readonly<Record<QueueStatus, string>> = {
   [QueueStatus.Idle]: 'bezczynna',
   [QueueStatus.Running]: 'pracuje',
@@ -103,7 +75,7 @@ const NAZWY_STANOW_KOLEJKI: Readonly<Record<QueueStatus, string>> = {
   [QueueStatus.Done]: 'wyczerpana',
 };
 
-/** Stany kolejki w wykazie zawężenia; pusta wartość znaczy „wszystkie”. */
+/** Stany kolejki w wykazie zawężenia wyboru na pasku narzędzi; pusta wartość na początku wykazu znaczy „wszystkie stany”. */
 const STANY_KOLEJKI: ReadonlyArray<[string, string]> = [
   ['', 'wszystkie stany'],
   ...Object.values(QueueStatus).map((stan): [string, string] => [stan, NAZWY_STANOW_KOLEJKI[stan]]),
@@ -186,16 +158,7 @@ export function utworzOknoQueueManagera(
       odbierz(wynik, 'Rdzeń nie założył kolejki.', 'Rdzeń założył kolejkę.'));
   }
 
-  /**
-   * Zasilenie kolejki krokami automatyki.
-   *
-   * Okno nie twierdzi, że zasilenie się odbyło. Rdzeń zasila kolejkę tylko
-   * wtedy, gdy nie ma ona jeszcze ani jednej pozycji — powtórne uruchomienie
-   * jest biegiem naprawczym po zleceniach zastanych, nie ich podwojeniem.
-   * Odpowiedź niesie stan kolejki i liczbę zleceń oczekujących, lecz nie mówi,
-   * które zlecenia w niej stoją — zdanie mówi więc to, co odpowiedź naprawdę
-   * niesie, i nie orzeka, że kroki weszły.
-   */
+  // Okno nie twierdzi, że zasilenie się odbyło; rdzeń zasila kolejkę tylko bez zleceń istniejących.
   function zasilKrokami(): void {
     if (stan.automatyka() === '') {
       tresc.potwierdzenie('Wskaż automatykę w Workflow Builderze — to jej kroki zasilają kolejkę.', false);
@@ -209,14 +172,7 @@ export function utworzOknoQueueManagera(
     );
   }
 
-  /**
-   * Wykaz kolejek z rdzenia (`queue.list`).
-   *
-   * Zawężenie idzie w żądaniu, nie w rysunku: komenda przyjmuje sesję i stan
-   * kolejki, więc rdzeń oddaje od razu to, o co Operator pyta, i nie ma czego
-   * odsiewać po tej stronie. Zdanie mówi, ile kolejek rdzeń oddał i przy jakim
-   * zawężeniu — pusty wykaz przy zawężeniu znaczy co innego niż pusty wykaz bez.
-   */
+  // Zawężenie idzie w żądaniu, nie w rysunku; zdanie mówi, ile kolejek oddano i przy jakim zawężeniu.
   function pokazWykazKolejek(): void {
     const zadanie: Parameters<ZrodloAutomations['wykazKolejek']>[0] = {};
     if (sesja.value.trim() !== '') zadanie.sessionId = sesja.value.trim();
@@ -240,10 +196,7 @@ export function utworzOknoQueueManagera(
     });
   }
 
-  /**
-   * Powiązanie wskazanej kolejki z bieżącą automatyką (`queue.link`). Rdzeń
-   * oddaje kolejkę po powiązaniu — zdanie i wykaz biorą się z niej, nie z żądania.
-   */
+  // Rdzeń oddaje kolejkę po powiązaniu — zdanie i wykaz biorą się z niej, nie z żądania.
   function powiazKolejke(): void {
     const kolejka = wskazanaKolejka();
     if (kolejka === '') {
@@ -285,7 +238,7 @@ export function utworzOknoQueueManagera(
   return { element: rama.element, odswiez };
 }
 
-/** Kontrolki okna Queue Managera. */
+/** Kontrolki okna Queue Managera — pola formularza, przyciski działań silnika i wybór stanu do zawężenia wykazu kolejek. */
 interface PowierzchniaKolejki {
   idKolejki: HTMLInputElement;
   sesja: HTMLInputElement;
@@ -302,7 +255,7 @@ interface PowierzchniaKolejki {
   powiaz: HTMLButtonElement;
 }
 
-/** Zdanie o zawężeniu wykazu kolejek — dopowiedzenie do liczby oddanych pozycji. */
+/** Zdanie o zawężeniu wykazu kolejek — dopowiedzenie do liczby oddanych pozycji, mówiące, po jakim polu wykaz zawężono. */
 function opisZawezeniaKolejek(sesja: string, stanKolejki: string): string {
   const czesci: string[] = [];
   if (sesja !== '') czesci.push(`sesji ${sesja}`);
@@ -311,12 +264,8 @@ function opisZawezeniaKolejek(sesja: string, stanKolejki: string): string {
 }
 
 /**
- * Składa kontrolki, pasek akcji i ciało okna.
- *
- * Czysta konstrukcja: fragment nie domyka się na stanie okna ani na źródle.
- * Przyciski działań biorą wywołanie zwrotne — zdanie potwierdzenia powstaje
- * przy przycisku, a praca zostaje w oknie. Po kolejności dokładania idą
- * sprawdziany widoku, więc nie zmienia się jej bez potrzeby.
+ * Składa kontrolki, pasek akcji i ciało okna; czysta konstrukcja, nie domyka się na stanie okna
+ * ani na źródle.
  */
 function zlozPowierzchnieKolejki(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -339,23 +288,19 @@ function zlozPowierzchnieKolejki(
   rama.akcje.append(zaloz, zasil, priorytetPrzycisk, skieruj);
   for (const [dzialanie, etykieta] of DZIALANIA) {
     const kontrolka = przycisk(etykieta);
-    // Zdanie mówi, co okno wysłało; stan po działaniu dokłada `odbiorKolejki`
-    // z odpowiedzi rdzenia. Etykieta przycisku nie orzeka o skutku.
+    // Zdanie mówi, co okno wysłało; stan po działaniu dokłada odbiór z odpowiedzi rdzenia.
     kontrolka.addEventListener('click', () =>
       naDzialanie(dzialanie, `Rdzeń przyjął działanie „${etykieta.toLowerCase()}”.`));
     rama.akcje.append(kontrolka);
   }
-  // Wykaz kolejek i powiązanie kolejki wołają rdzeń wprost: `queue.list` oddaje
-  // `queues`, a `queue.link` oddaje `queue` po powiązaniu.
+  // Wykaz kolejek i powiązanie wołają rdzeń wprost: queue.list oddaje queues, queue.link oddaje queue.
   const wykazKolejek = przycisk('Wykaz kolejek');
   const powiaz = przycisk('Powiąż kolejkę z automatyką');
 
   rama.akcje.append(
     wykazKolejek,
     powiaz,
-    // Osiem z jedenastu akcji silnika kolejek opracowania nie ma dziś
-    // odpowiednika w wyliczeniu `QueueAction`; pozycje nazywają komendę,
-    // która by je wykonała, zamiast opisywać brak zdaniem wpisanym w moduł.
+    // Osiem z jedenastu akcji silnika nie ma dziś uchwytu; pozycje nazywają komendę, która by je wykonała.
     pokrycie.przycisk(
       'Dodaj zlecenie do kolejki',
       Command.QueueItemEnqueue,
@@ -463,7 +408,7 @@ function wykazStanuKolejki(kolejka: Queue): HTMLElement {
 /**
  * Zdanie o polityce kolejki. Brak polityki nie jest brakiem danych: kolejka
  * bez zapisanej polityki pracuje na wartościach domyślnych silnika i tak to
- * nazywamy, zamiast pokazywać puste pole.
+ * jest nazywane, zamiast pokazywać puste pole.
  */
 function opisPolityki(polityka: Queue['policy']): string {
   if (polityka === undefined) return 'bez zapisanej polityki — wartości domyślne silnika';
@@ -522,12 +467,8 @@ function zastrzezenieWykazuZlecen(pokrycie: PokrycieKomend): HTMLElement {
 }
 
 /**
- * Odbiór odpowiedzi kolejki wspólny dla czterech czynności okna: odmowa rdzenia
- * idzie w stan błędu wprost, a stan udany do rysunku. Fragment bierze wywołanie
- * zwrotne rysunku, więc nie musi znać ani pól okna, ani stanu modułu.
- *
- * Zdanie czynności dostaje dopowiedzenie z odpowiedzi: numer kolejki i jej stan
- * po działaniu. Bez tego potwierdzenie mówiłoby o żądaniu zamiast o skutku.
+ * Odbiór odpowiedzi kolejki wspólny dla czterech czynności okna: odmowa idzie w stan błędu, stan
+ * udany do rysunku i do zdania z numerem oraz stanem kolejki po działaniu.
  */
 function odbiorKolejki(
   tresc: StanTresci,
@@ -548,7 +489,7 @@ function odbiorKolejki(
   };
 }
 
-/** Zadanie działania na kolejce — czysta konstrukcja z wartości pól. */
+/** Zadanie działania na kolejce — czysta konstrukcja z wartości pól formularza, bez dostępu do stanu ani do rdzenia. */
 function zadanieDzialaniaKolejki(
   kolejka: string,
   dzialanie: QueueAction,
@@ -565,12 +506,8 @@ function zadanieDzialaniaKolejki(
 }
 
 /**
- * Zadanie ułożenia zlecenia — priorytet albo skierowanie.
- *
- * Skierowanie ma własne działanie silnika i tym działaniem idzie. Priorytet
- * własnego nie ma: jest polem żądania, nie działaniem, więc jedzie przy
- * wstrzymaniu — działaniu odwracalnym jednym naciśnięciem „Wznów”. Zdanie
- * potwierdzenia mówi o obu skutkach, nie tylko o tym, o który Operator prosił.
+ * Zadanie ułożenia zlecenia — priorytet albo skierowanie; priorytet jedzie przy wstrzymaniu, bo
+ * własnego działania silnika nie ma.
  */
 function zadanieUlozeniaZlecenia(
   kolejka: string,

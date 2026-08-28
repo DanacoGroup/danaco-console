@@ -23,20 +23,9 @@ import type { ZrodloNadzoru } from './zrodlo-nadzoru';
 import type { ZrodloOkien } from './zrodlo-okien';
 
 /**
- * Sekcja Monitor procesu — statusy przebiegów, hierarchia decyzji, nadzór AOD.
- *
- * Tu stoi przełącznik trybu Always On Display: obserwator patrzy i doradza,
- * operator dodatkowo zatwierdza i wstrzymuje kroki z dowolnego miejsca. Kontrakt
- * nie niesie trybu — `AodStatus` podaje urządzenie, sesję, okno, procesy
- * przypięte i licznik procesów w biegu, a komendy `aod.mode.set` nie ma wcale —
- * więc tryb utrwala się ustawieniem na poziomie karty sesji (`config.set`),
- * a nieudany zapis cofa przełącznik.
- *
- * Statusy idą na żywo: `monitor.subscribe` zapisuje okno na telemetrię i oddaje
- * stan bieżący jednym ruchem, a `progress.changed` donosi zmiany.
- *
- * Okna Results Analyzer i Execution Monitor należą do tej sekcji, ale są
- * osobnymi oknami produktu — panel nie buduje trzeciego monitora.
+ * Sekcja Monitor procesu pokazuje statusy przebiegów na żywo, hierarchię
+ * decyzji i nadzór nakładki Always On Display, której tryb utrwala się
+ * ustawieniem karty sesji, bo kontrakt nie niesie pola trybu.
  */
 export interface SekcjaMonitora {
   element: HTMLElement;
@@ -124,12 +113,7 @@ export function utworzSekcjeMonitora(opcje: OpcjeSekcjiMonitora): SekcjaMonitora
     void przestawTryb(trybNakladkiZWartosci(wyborTrybu.kontrolka.value));
   });
 
-  /**
-   * Przestawienie trybu nakładki wraz z utrwaleniem na poziomie karty sesji.
-   *
-   * Nieudany zapis cofa przełącznik: wartość „operator" przy rdzeniu, który nic
-   * nie zapisał, mówiłaby nieprawdę o tym, kto może wstrzymać krok.
-   */
+  // Przestawienie trybu wraz z utrwaleniem na poziomie sesji; nieudany zapis cofa przełącznik.
   async function przestawTryb(nowy: TrybNakladki): Promise<void> {
     const karta = sesja();
     const poprzedni = tryb;
@@ -300,12 +284,7 @@ export function utworzSekcjeMonitora(opcje: OpcjeSekcjiMonitora): SekcjaMonitora
 
   wiez.naZmiane(() => odczytaj());
 
-  /**
-   * Postęp na żywo. Odczyt stanu idzie `monitor.status`, a nie przebudową
-   * wiersza z samego zdarzenia: `progress.changed` niesie proces i procent,
-   * ale nie niesie etykiety ani sesji, więc widok złożony z samych zdarzeń
-   * gubiłby nazwy przebiegów po pierwszej zmianie.
-   */
+  // Postęp na żywo odczytuje stan monitora, nie przebudowuje wiersza z samego zdarzenia.
   const odsubskrybuj = nadzor.naPostep(() => {
     const karta = sesja();
     void bieg.stanMonitora(karta === '' ? {} : { sessionId: karta }).then((wynik) => {

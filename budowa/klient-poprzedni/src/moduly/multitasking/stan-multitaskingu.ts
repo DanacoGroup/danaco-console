@@ -14,22 +14,9 @@ import { Wcielenie, type Wcielenie as WcielenieRoli } from './wcielenia-analizy'
 import type { ZrodloBiegu } from './zrodlo-biegu';
 
 /**
- * Stan wspólny czterem oknom ról — jedna prawda zamiast czterech.
- *
- * Koordynator steruje kolejką, wykonawcy w niej pracują, a analityk czyta ich
- * wyniki. Własna obsada w każdym oknie sprawiłaby, że przepięcie wykonawcy pod
- * innego koordynatora zmieniłoby jedno okno i zostawiło trzy z obrazem
- * nieaktualnym.
- *
- * Okna żyją ze zdarzeń: `stream.chunk` niesie strumień wykonawcy do
- * koordynatora, `message.changed` domknięty wynik do analityka, `queue.changed`
- * stan etapu. Odczyty `window.list`, `window.state.get` i `message.list` służą
- * pierwszemu wypełnieniu i wznowieniu po rozłączeniu.
- *
- * Wewnątrz stoją trzy rejestry — obsada ról, tury wykonawców i kolejki etapów —
- * każdy z własnymi polami; na zewnątrz okna widzą je wyłącznie przez wspólny
- * `StanMultitaskingu`, bo koordynator musi widzieć ten sam przebieg co
- * wykonawca, którym steruje.
+ * Stan wspólny czterem oknom ról zastępuje cztery obrazy jedną prawdą:
+ * koordynator steruje kolejką, wykonawcy w niej pracują, a analityk czyta ich
+ * wyniki, wszystko przez wspólne trzy rejestry.
  */
 export interface StanMultitaskingu {
   /** Sesja, w której stoją okna ról. */
@@ -78,7 +65,7 @@ export interface StanMultitaskingu {
   zamknij(): void;
 }
 
-/** Zależności stanu. */
+/** Zależności stanu wymagane przy jego budowie: sesja obsady oraz opcjonalne wskazanie okna analityka roli. */
 export interface OpcjeStanu {
   /** Sesja, w której stoją okna ról. */
   sesja: string;
@@ -105,9 +92,7 @@ export function utworzStanMultitaskingu(
   const etapy = utworzRejestrKolejekEtapow(powiadom);
 
   const odsubskrybujFragment = zrodlo.naFragment((tresc) => {
-    // Strumień jest wspólny całej platformie. Do widoku koordynatora wchodzi
-    // wyłącznie fragment okna należącego do jego obsady — inaczej pokazywałby
-    // cudzą rozmowę jako pracę swojego wykonawcy.
+    // Strumień jest wspólny platformie; do widoku koordynatora wchodzi wyłącznie fragment jego obsady.
     if (!czyWykonawca(role.obsada(), tresc.windowId)) return;
     tury.otworz(tresc.windowId);
     if (strumien.dopisz(tresc, Date.now())) powiadom();
@@ -174,7 +159,7 @@ export function utworzStanMultitaskingu(
   };
 }
 
-/** Rejestr obsady: okna sesji, wskazanie analityka i przeliczona obsada ról. */
+/** Rejestr obsady: okna sesji, wskazanie analityka i przeliczona obsada czterech ról tej całej sceny pracy. */
 interface RejestrObsady {
   obsada(): Obsada;
   /** Okno wskazane jako analityk; puste, dopóki Operator nie wskaże. */
@@ -215,7 +200,7 @@ function utworzRejestrObsady(analitykPoczatkowy: string, powiadom: () => void): 
   };
 }
 
-/** Rejestr tur i wyników wykonawców wraz z adresatem ostatniego przekazania. */
+/** Rejestr tur i wyników wykonawców wraz z adresatem ostatniego przekazania zlecenia między dwoma oknami. */
 interface RejestrTurWykonawcow {
   /** Otwiera turę okna; sam nie rozgłasza — robi to nadawca fragmentu. */
   otworz(idOkna: string): void;
@@ -270,7 +255,7 @@ function utworzRejestrTurWykonawcow(powiadom: () => void): RejestrTurWykonawcow 
   };
 }
 
-/** Rejestr kolejek etapów wraz ze wskazaniem kolejki bieżącej. */
+/** Rejestr kolejek etapów wraz ze wskazaniem kolejki bieżącej, na której sterowanie właśnie działa naraz. */
 interface RejestrKolejekEtapow {
   wszystkie(): readonly Queue[];
   zapisz(kolejka: Queue): void;

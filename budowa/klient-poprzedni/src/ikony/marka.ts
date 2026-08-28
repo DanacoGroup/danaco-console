@@ -1,13 +1,7 @@
-// Znak marki Danaco Console — sygnet (godło), logotyp i zestawienia.
-// Znak czyta się »». : podwójny grot z kropką sygnału na linii bazowej.
-//
-// To jedyne znaki zestawu o barwach własnych — atrament i kropka sygnału są
-// wpisane w plik, nie dziedziczone przez `currentColor`. Dlatego odmianę
-// dobiera się do podłoża, nie do motywu: pasek kokpitu jest atramentowy
-// w obu motywach, więc leży na nim odmiana „na ciemnym".
-//
-// Odmiana uproszczona (jeden grot) obowiązuje od 16 px w dół — poniżej tego
-// boku drugi grot i prześwit między grotami przestają być czytelne.
+// Znak marki Danaco Console: godło, logotyp i zestawienia znaku z nazwą.
+// To jedyne znaki zestawu o barwach własnych: atrament i kropka sygnału są
+// wpisane w plik, nie dziedziczone przez `currentColor`, więc odmianę
+// dobiera się do podłoża, nie do motywu.
 
 import logoPionowyNaCiemnym from './zasoby-marki/logo-pionowy-na-ciemnym.svg?raw';
 import logoPionowy from './zasoby-marki/logo-pionowy.svg?raw';
@@ -22,13 +16,23 @@ import sygnetUproszczonyNaCiemnym from './zasoby-marki/sygnet-uproszczony-na-cie
 import sygnetUproszczony from './zasoby-marki/sygnet-uproszczony.svg?raw';
 import sygnet from './zasoby-marki/sygnet.svg?raw';
 
-/** Podłoże, na którym znak jest osadzany. */
+/**
+ * Podłoże, na którym znak jest osadzany. Rozstrzyga o wyborze pliku źródłowego,
+ * ponieważ barwy znaku są wpisane w plik i nie zmieniają się wraz z motywem.
+ */
 export type PodlozeZnaku = 'jasne' | 'ciemne';
 
-/** Odmiana znaku: samo godło albo godło zestawione z nazwą. */
+/**
+ * Odmiana znaku: samo godło albo godło zestawione z nazwą w układzie poziomym
+ * lub pionowym. Każda odmiana ma osobną parę plików, po jednym dla podłoża
+ * jasnego i ciemnego.
+ */
 export type OdmianaZnaku = 'sygnet' | 'logotyp' | 'poziomy' | 'pionowy';
 
-/** Bok, od którego w dół obowiązuje sygnet uproszczony (jeden grot). */
+/**
+ * Bok, od którego w dół obowiązuje godło uproszczone o jednym grocie. Poniżej
+ * tej wartości drugi grot i prześwit między grotami przestają być czytelne.
+ */
 export const PROG_SYGNETU_UPROSZCZONEGO = 16;
 
 const ZNAKI: Readonly<Record<OdmianaZnaku, Readonly<Record<PodlozeZnaku, string>>>> = {
@@ -48,7 +52,11 @@ const SYGNET_MONO: Readonly<Record<PodlozeZnaku, string>> = {
   ciemne: sygnetMonoBialy,
 };
 
-/** Zwraca źródło SVG wskazanej odmiany znaku dla danego podłoża. */
+/**
+ * Zwraca źródło SVG wskazanej odmiany znaku dla danego podłoża. Sięga do
+ * zestawienia czterech odmian, z których każda niesie wariant dla podłoża
+ * jasnego i ciemnego.
+ */
 export function zrodloZnaku(odmiana: OdmianaZnaku, podloze: PodlozeZnaku): string {
   return ZNAKI[odmiana][podloze];
 }

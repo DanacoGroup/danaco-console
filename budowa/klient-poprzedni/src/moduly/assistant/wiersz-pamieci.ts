@@ -1,3 +1,9 @@
+/**
+ * Jeden wpis pamięci w wykazie Memory & Context Manager wraz z czynnościami
+ * dostępnymi na nim. Plik odpowiada wyłącznie za zamianę wpisu w pozycję
+ * wykazu; wiersz niczego nie wywołuje, a zamiar oddaje oknu prowadzącemu
+ * wywołania `memory.*`.
+ */
 import {
   MemoryEntryOrigin,
   type ConfigScope,
@@ -7,21 +13,10 @@ import { pozycjaWykazu, przyciskAkcji } from '../../modele/kontrolki-formularza'
 import { chwila, NAZWY_POCHODZEN, NAZWY_ZASIEGOW } from './etykiety-assistant';
 
 /**
- * Jeden wpis pamięci w wykazie Memory & Context Manager wraz z czynnościami,
- * które można na nim wykonać.
- *
- * Plik odpowiada wyłącznie za zamianę wpisu w pozycję wykazu. Wiersz niczego
- * nie wywołuje — zamiar oddaje oknu, które prowadzi wywołania `memory.*`; ta
- * sama granica obowiązuje wiersz zlecenia (`wiersz-zlecenia.ts`).
- *
- * Wpis o pochodzeniu `model` jest propozycją czekającą na decyzję: przyjęcie
- * zapisuje tę samą treść z pochodzeniem `operator`, odrzucenie usuwa wpis.
- * Rozróżnienie należy do kontraktu (`MemoryEntryOrigin`), nie do okna — bez
- * niego pamięć zapisana przez model byłaby nie do odróżnienia od ustalenia
- * Operatora.
+ * Zapis wpisu zamówiony z wiersza: treść, zasięg, znacznik przypięcia,
+ * pochodzenie oraz identyfikator wpisu, który okno przekazuje do wywołania
+ * zapisu pamięci.
  */
-
-/** Zapis wpisu zamówiony z wiersza. */
 export interface ZamowienieWpisu {
   tresc: string;
   zasieg: ConfigScope;
@@ -30,7 +25,10 @@ export interface ZamowienieWpisu {
   wpis: string;
 }
 
-/** Czynności okna dostępne wierszowi. */
+/**
+ * Czynności okna dostępne wierszowi: zapis zamówionego wpisu, wczytanie wpisu
+ * do edytora oraz usunięcie wpisu z pamięci obszaru roboczego.
+ */
 export interface CzynnosciWpisu {
   zapisz(zamowienie: ZamowienieWpisu): void;
   wczytajDoEdytora(wpis: WorkspaceMemoryEntry): void;
@@ -65,8 +63,8 @@ export function wierszPamieci(
     ),
   );
 
-  // Propozycja modelu czeka na decyzję Operatora. Przyjęcie jest zapisem tej
-  // samej treści z pochodzeniem `operator`; odrzucenie — usunięciem wpisu.
+  // Propozycja modelu czeka na decyzję Operatora; przyjęcie zapisuje ją
+  // z pochodzeniem `operator`.
   if (wpis.origin === MemoryEntryOrigin.Model) {
     akcje.append(
       guzik('Przyjmij propozycję', () =>

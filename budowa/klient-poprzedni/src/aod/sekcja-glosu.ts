@@ -3,13 +3,9 @@ import { utworzAkapit, utworzPodtytul } from './pola-wykazu';
 import type { ZrodloAod } from './zrodlo-komend';
 
 /**
- * Sekcja wydająca polecenie głosowe do asystenta (`aod.voice.command`).
- *
- * Polecenie wydaje się samą transkrypcją — pola `audioRef` i `transcript`
- * kontraktu są opcjonalne, a nakładka nagrań nie tworzy, więc przycisku
- * mikrofonu tu nie ma. Sekcja rozmowy jest osobną drogą: `aod.chat.send` niesie
- * zdanie do okna rozmowy, `aod.voice.command` kieruje polecenie do asystenta
- * i ma własne pole `speak` na odpowiedź syntezą mowy.
+ * Sekcja wydająca polecenie głosowe do asystenta komendą `aod.voice.command`.
+ * Polecenie wydaje się samą transkrypcją, ponieważ nakładka nagrań nie tworzy,
+ * więc przycisku mikrofonu tu nie ma.
  */
 export interface SekcjaGlosu {
   element: HTMLElement;

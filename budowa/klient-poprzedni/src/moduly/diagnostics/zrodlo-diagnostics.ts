@@ -19,38 +19,15 @@ import { wywolaj } from '../../protokol/wywolanie';
 import type { PowodNiepowodzenia } from './niepowodzenie-odczytu';
 
 /**
- * Moduł Diagnostics widziany przez klienta — cztery komendy obszaru
- * `diagnostics.*` oraz zdarzenie zmiany analizy.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść, i nigdzie nie podstawia pustej
- * kolekcji za nieudany odczyt. Port `Diagnostyka` jest w rdzeniu odbiorcą odmów
- * wykonania komend (`server/internal/core/kompozycja.go`, pole `Diagnostyka`),
- * a Errors Panel pokazuje te odmowy; źródło, które połknęłoby odmowę odczytu
- * i oddało pusty wykaz, kłamałoby o własnym niepowodzeniu w oknie poświęconym
- * niepowodzeniom cudzym.
- *
- * Asymetria kontraktu jest zamierzona: `windowId` występuje wyłącznie
- * w `diagnostics.analyze.run` i jest tam nieobowiązkowy — analiza zapisuje,
- * z którego okna ją uruchomiono. Pozostałe trzy komendy czytają dziennik, błędy
- * i rekomendacje całej instalacji, więc pojęcia okna nie mają.
- *
- * Niepowodzenie niesie swoją drogę. `Wynik` warstwy protokołu nie odróżnia odmowy
- * rdzenia od odpowiedzi, której klient nie zrozumiał, ani od odpowiedzi bez treści
- * — a to trzy różne zdania dla Operatora i tylko jedno z nich brzmi „rdzeń odmówił"
- * (`niepowodzenie-odczytu.ts`). Rozstrzygnięcie zapada tutaj, bo tylko tutaj widać
- * surową odpowiedź przed sprawdzianem kształtu.
+ * Wynik komendy modułu Diagnostics wraz z drogą, którą przyszło niepowodzenie:
+ * żadna czynność nie podstawia pustej kolekcji za odczyt, który się nie udał.
  */
-/** Wynik komendy modułu wraz z drogą, którą przyszło niepowodzenie. */
 export type WynikDiagnostyki<T> = Wynik<T> & { powod?: PowodNiepowodzenia };
 
 export interface ZrodloDiagnostics {
   /** `diagnostics.analyze.run` — uruchomienie analizy zagregowanego stanu. */
   uruchomAnalize(zadanie: DiagnosticsAnalyzeRunRequest): Promise<WynikDiagnostyki<DiagnosticAnalysis>>;
-  /**
-   * `diagnostics.log.query` — przeszukanie dziennika. Oddaje wpisy wraz
-   * z licznikiem i znacznikiem przycięcia, bo Logs Viewer musi rozpoznać
-   * wynik przycięty granicą bufora i powiedzieć to Operatorowi.
-   */
+  /** Przeszukanie dziennika zwraca wpisy z licznikiem i znacznikiem przycięcia granicą bufora. */
   przeszukajDziennik(zadanie: DiagnosticsLogQueryRequest): Promise<
     WynikDiagnostyki<{ entries: LogEntry[]; total?: number; truncated?: boolean }>
   >;
@@ -67,15 +44,8 @@ export interface ZrodloDiagnostics {
 }
 
 /**
- * Rozstrzyga odpowiedź na komendę, zapamiętując, gdzie się potknęła.
- *
- * Kolejność sprawdzeń jest istotna: dopóki nie wiadomo, czy `surowy` był odmową,
- * nie wolno wołać `sprawdzKsztalt` i wziąć jego kodu za kod rdzenia.
- *
- * Wyjście poza plik ma jednego odbiorcę: `zrodlo-obserwowalnosci.ts` sięga po
- * rodziny `monitor.*`, a rozróżnienie odmowy od odpowiedzi nieczytelnej ma
- * w Observability Tools tę samą wagę co w Errors Panelu. Druga kopia tego
- * rozstrzygnięcia dałaby dwa zdania o jednej ciszy rdzenia.
+ * Rozstrzyga odpowiedź na komendę, zapamiętując krok, na którym się potknęła:
+ * odmowę rdzenia, nieczytelną odpowiedź albo brak treści.
  */
 export function rozstrzygnij<Z, W>(
   surowy: Wynik<Z>,

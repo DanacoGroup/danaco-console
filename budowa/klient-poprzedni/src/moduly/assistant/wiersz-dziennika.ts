@@ -1,25 +1,25 @@
+/**
+ * Zamiana wpisu dziennika w pozycję listy wraz z trzema czynnościami:
+ * odtworzeniem przebiegu zlecenia, odsłuchem nagrania i wyróżnieniem wpisu.
+ * Każda z nich ma drogę w kontrakcie i wykonuje pracę, a nie tylko wygląda.
+ */
+
 import type { AssistantActivityEntry } from '../../../../shared/contract';
 import { zglosBrak } from './braki-kontraktu';
 import { chwila, NAZWY_RODZAJOW } from './etykiety-assistant';
 
 /**
- * Zamiana wpisu dziennika w pozycję listy wraz z trzema czynnościami.
- *
- * Wszystkie trzy mają dziś drogę w kontrakcie i wszystkie trzy naprawdę coś
- * robią: „Odtwórz przebieg" oddaje zamiar oknu, „Odsłuchaj nagranie" pobiera
- * bajty spod odnośnika wpisu (`speech.audio.fetch`) i odtwarza je w karcie,
- * a „Oznacz jako ważne" zapisuje wyróżnienie w rdzeniu
- * (`assistant.activity.flag`) — znacznik przeżywa odświeżenie wykazu, bo ma
- * gdzie zamieszkać.
- *
- * Wpis bez odnośnika nagrania nie jest brakiem produktu, tylko wpisem
- * tekstowym: przycisk odsłuchu mówi to wprost, zamiast milczeć.
+ * Zamiar odtworzenia przebiegu zlecenia, do którego należy wpis. Wykonanie
+ * należy do okna dziennika, bo to ono wie, gdzie przebieg pokazać; wiersz
+ * wyłącznie zgłasza numer zlecenia.
  */
-
-/** Zamiar odtworzenia przebiegu zlecenia, do którego należy wpis. */
 export type NaPrzebieg = (idZlecenia: string) => void;
 
-/** Czynności wpisu wykonywane przez okno: odsłuch nagrania i wyróżnienie. */
+/**
+ * Czynności wpisu wykonywane przez okno: odsłuch nagrania i wyróżnienie.
+ * Wiersz nie woła rdzenia sam — oddaje czynność oknu, które trzyma kanał
+ * i odpowiada za odświeżenie wykazu po zapisie.
+ */
 export interface CzynnosciWpisu {
   /** `speech.audio.fetch` — pobranie bajtów nagrania spod odnośnika wpisu. */
   odsluch(odnosnik: string): void;
@@ -51,7 +51,11 @@ export function wierszDziennika(
   return element;
 }
 
-/** Trzy czynności wykazu: przebieg, odsłuch nagrania, wyróżnienie wpisu. */
+/**
+ * Trzy czynności wykazu: przebieg, odsłuch nagrania, wyróżnienie wpisu.
+ * Przycisk odsłuchu przy wpisie bez odnośnika nagrania mówi wprost, że wpis
+ * jest tekstowy, zamiast milczeć albo znikać.
+ */
 function czynnosci(
   wpis: AssistantActivityEntry,
   naPrzebieg: NaPrzebieg,

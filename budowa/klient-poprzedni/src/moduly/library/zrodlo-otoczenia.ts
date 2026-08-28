@@ -14,48 +14,17 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import type { StrazOdmow } from './straz-odmow';
 
 /**
- * Otoczenie modułu Library — komendy, z których moduł korzysta, a których nie
- * prowadzi.
- *
- *   `window.list`      — żywe okno komunikacji sesji. Przenoszenie kontekstu
- *                        żąda okna źródłowego, a moduł zna wyłącznie kody
- *                        okien operacyjnych katalogu rdzenia; to dwa różne
- *                        byty, więc okno bierze się z rejestru.
- *   `window.state.get` — kontekst okna wymagany przez wiersz każdego z czterech
- *                        okien wykazu; moduł pyta raz i dzieli odpowiedź.
- *   `action.list`      — katalog akcji panelu. Panel akcji nie jest zaszytym
- *                        wykazem po stronie klienta: pozycje przychodzą
- *                        z rdzenia albo panel zostaje pusty i mówi to wprost.
- *   `window.action`    — wykonanie pozycji panelu; rdzeń nie ma uchwytu, więc
- *                        odpowiada odmową `window.unknown`.
- *   `context.transfer` — otwarcie zasobu w module źródłowym.
- *   `module.list`      — katalog modułów platformy. Obsadza ster modułu
- *                        docelowego: rdzeń przyjmuje każdy kod i zakłada okno
- *                        z dokładnie tym kodem, więc kodu wpisanego z ręki nie
- *                        miałby kto sprawdzić.
- *   `aod.context.get`  — treść kompletu przeniesionego do okna. Jedyna komenda
- *                        kontraktu, która czyta magazyn zapisany przez
- *                        `context.transfer` (`adapterPrzenoszenia.KompletOkna`).
- *                        Prefiks `aod.*` należy do nakładki, ale komenda jest
- *                        odczytem kompletu okna — bez niej przybycie
- *                        przekazania jest dla modułu nieme.
- *   `window.changed`   — zdarzenie przybycia. `context.transfer` nie rozgłasza
- *                        `library.file.changed` i nie zakłada pliku
- *                        w repozytorium; rozgłasza wyłącznie `window.changed`
- *                        z oknem docelowym.
+ * Otoczenie modułu Library udostępnia komendy, z których moduł korzysta, a
+ * których nie prowadzi: okna komunikacji, kontekst okna, katalog i wykonanie
+ * akcji, przeniesienie kontekstu, katalog modułów oraz odczyt i zdarzenie
+ * przekazanego kompletu.
  */
 export interface ZrodloOtoczenia {
   okna(idSesji: string): Promise<Wynik<{ windows: Window[] }>>;
   stanOkna(idOkna: string): Promise<Wynik<{ window: Window; messageCount: number }>>;
   akcje(): Promise<Wynik<{ actions: Action[] }>>;
   wykonajAkcje(idOkna: string, idAkcji: string): Promise<Wynik<{ actionId: string }>>;
-  /**
-   * Przenosi komplet kontekstu i oddaje okno, które rdzeń wskazał jako docelowe.
-   *
-   * Rdzeń przyjmuje każdy kod modułu — także nieistniejący i pusty — i zakłada
-   * okno z dokładnie tym kodem, więc jedynym świadkiem tego, dokąd komplet
-   * trafił, jest okno z odpowiedzi, a nie kod wpisany w oknie.
-   */
+  // Przenosi komplet kontekstu; jedynym świadkiem, dokąd trafił, jest okno z odpowiedzi, nie wpisany.
   przeniesKontekst(
     idOkna: string,
     modulDocelowy: string,
@@ -69,7 +38,7 @@ export interface ZrodloOtoczenia {
   naZmianeOkna(sluchacz: (tresc: WindowChangedEvent) => void): Odsubskrybuj;
 }
 
-/** Kod modułu z kolumny `modul.kod` rdzenia — zasięg katalogu akcji. */
+/** Kod modułu z kolumny katalogu modułów rdzenia, wyznaczający zasięg katalogu akcji tego panelu okna, wprost. */
 export const KOD_MODULU = 'library';
 
 export function utworzZrodloOtoczenia(kanal: Kanal, straz: StrazOdmow): ZrodloOtoczenia {
@@ -134,9 +103,7 @@ export function utworzZrodloOtoczenia(kanal: Kanal, straz: StrazOdmow): ZrodloOt
       return sprawdzKsztalt(
         await straz.wywolaj(Command.AodContextGet, { windowId: idOkna }),
         Command.AodContextGet,
-        // Sprawdzany jest sam komplet, nie jego zawartość: rdzeń oddaje go
-        // także dla okna bez dokumentów. Pusty komplet jest odpowiedzią,
-        // nie usterką kształtu — rozstrzyga go wołający.
+        // Sprawdzany jest sam komplet, nie jego zawartość: pusty komplet jest odpowiedzią, nie usterką.
         (tresc) => czyObiekt(tresc.context),
       );
     },

@@ -3,31 +3,15 @@ import { opisOdmowy } from '../../komponenty/odmowa';
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Panel rodzin rdzenia modułu Browser — droga z okna do tych komend obszaru
- * `browser.*`, które nie mają własnej kontrolki w oknach opisanych
- * opracowaniem: kart i przestrzeni roboczych, monitorów, kanałów, kolejki
- * czytania, zakładek, pobrań, wytworów, zrzutów, narzędzi inspekcyjnych,
- * nagrywarki makr i granic Wykonawcy.
- *
- * Jedna odpowiedzialność: postawić czynność i pokazać to, co rdzeń naprawdę
- * oddał. Panel nie pamięta niczego między naciśnięciami — stan modułu stoi
- * w `stan-przegladania.ts`, a wykaz wyniku jest odczytem, nie kopią.
- *
- * Dlaczego jeden panel, a nie kontrolka przy każdej pozycji: rodzin jest
- * kilkanaście, a każda ma dwa–trzy pola. Rozsypane po oknach dałyby kilkadziesiąt
- * kontrolek w miejscach, w których Operator ich nie szuka; zebrane w sekcje
- * przy oknie, do którego opracowanie je przypisuje, zostają w zasięgu jednego
- * kliknięcia i nie zasłaniają pracy podstawowej.
- *
- * Panel mówi prawdę o odmowie: kod i treść odmowy rdzenia idą wprost do wiersza
- * odpowiedzi. Cisza po naciśnięciu — albo zdanie „gotowe" bez pokrycia — byłaby
- * tą samą szkodą, przed którą stoją sprawdziany skutku po stronie rdzenia.
+ * Panel rodzin rdzenia modułu Browser — droga z okna do komend przeglądania,
+ * które nie mają własnej kontrolki w innych oknach modułu. Jedna
+ * odpowiedzialność: postawić czynność i pokazać to, co rdzeń naprawdę oddał.
  */
 export interface PanelRodzin {
   element: HTMLElement;
 }
 
-/** Opis jednej czynności panelu: nazwa, pola i wywołanie rdzenia. */
+/** Opis jednej czynności panelu: nazwa, pola wypełniane przez operatora i wywołanie właściwego polecenia rdzenia. */
 interface Czynnosc {
   nazwa: string;
   /** Pola wypełniane przez Operatora; wartości idą do wywołania w kolejności. */
@@ -36,7 +20,7 @@ interface Czynnosc {
   wykonaj(wartosci: Record<string, string>): Promise<string>;
 }
 
-/** Sekcja panelu — rodzina komend wraz z jej czynnościami. */
+/** Sekcja panelu rodzin — jedna rodzina komend rdzenia wraz z wykazem jej czynności oraz tytułem tej sekcji. */
 export interface SekcjaRodzin {
   tytul: string;
   opis: string;
@@ -115,27 +99,27 @@ export function odrzuc(czynnosc: string, blad?: { code?: string; message?: strin
   throw new Error(opisOdmowy(czynnosc, blad?.code, blad?.message));
 }
 
-/** Okno przeglądarki albo odmowa nazywająca jego brak. */
+/** Okno przeglądarki bieżącej sesji przeglądania albo odmowa nazywająca wprost jego brak dla operatora. */
 export function oknoAlboOdmowa(stan: StanPrzegladania): string {
   const idOkna = stan.idOkna();
   if (idOkna === '') throw new Error(stan.powod());
   return idOkna;
 }
 
-/** Wartość pola albo odmowa nazywająca, czego brakuje. */
+/** Wartość pola formularza panelu albo odmowa nazywająca wprost, jakiego dokładnie pola brakuje operatorowi. */
 export function wymagane(wartosci: Record<string, string>, klucz: string, nazwa: string): string {
   const wartosc = wartosci[klucz] ?? '';
   if (wartosc === '') throw new Error(`Podaj ${nazwa} — bez tego rdzeń nie ma czego wykonać.`);
   return wartosc;
 }
 
-/** Wartość pola albo `undefined` dla pola pustego. */
+/** Wartość pola formularza albo wartość pusta dla pola pozostawionego całkiem bez wypełnienia przez operatora. */
 export function opcjonalne(wartosci: Record<string, string>, klucz: string): string | undefined {
   const wartosc = wartosci[klucz] ?? '';
   return wartosc === '' ? undefined : wartosc;
 }
 
-/** Liczba z pola albo `undefined`; wartość nieliczbowa jest odmową. */
+/** Liczba odczytana z pola formularza panelu albo wartość pusta; wartość nieliczbowa kończy się odmową. */
 export function liczbaPola(wartosci: Record<string, string>, klucz: string): number | undefined {
   const wartosc = wartosci[klucz] ?? '';
   if (wartosc === '') return undefined;

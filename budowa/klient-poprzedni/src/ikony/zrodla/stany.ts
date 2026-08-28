@@ -1,5 +1,6 @@
-// Źródła SVG — grupa: stany.
-// Nazwy i kolejność wprost z `ikony/manifest.json` (pozycje 30–40).
+// Źródła rysunków grupy stanów, wczytywane surowym importem `?raw`, z nazwami
+// i kolejnością wziętymi wprost z `ikony/manifest.json`. Plik nie przetwarza
+// treści rysunku, tylko wystawia ją w postaci, w jakiej leży na dysku.
 
 import ptaszek from '../svg/ptaszek.svg?raw';
 import ptaszekKolo from '../svg/ptaszek-kolo.svg?raw';
@@ -13,7 +14,11 @@ import historia from '../svg/historia.svg?raw';
 import dzwonek from '../svg/dzwonek.svg?raw';
 import aktywnosc from '../svg/aktywnosc.svg?raw';
 
-/** Stany i sygnalizacja — potwierdzenie, błąd, ochrona, czas. */
+/**
+ * Zbiór stanów i sygnalizacji, obejmujący potwierdzenie, błąd, ostrzeżenie,
+ * informację, ochronę oraz czas, wystawiony jako mapa nazwy ikony na treść
+ * rysunku, po którą sięga rejestr ikon przy składaniu pełnego zestawu.
+ */
 export const STANY = {
   'ptaszek': ptaszek,
   'ptaszek-kolo': ptaszekKolo,

@@ -2,12 +2,10 @@ import type { DesignBoardLayer } from '../../../../shared/contract';
 import type { StanKompozycji } from './stan-kompozycji';
 
 /**
- * Panel warstw Design Board — wykaz warstw, zaznaczenie, blokada, adnotacja.
- *
- * Kanwa pokazuje położenie, panel — porządek, blokadę i adnotację; adnotacja
- * jest polem `note` warstwy w kontrakcie, więc zostaje w kompozycji na trwałe.
- * Blokada dotyczy wyłącznie położenia na kanwie: wiersz warstwy zablokowanej
- * pozostaje klikalny i edytowalny, a stan niesie atrybut `zablokowana`.
+ * Panel warstw Design Board: wykaz warstw uporządkowany malejąco po polu
+ * porządku, z zaznaczeniem, adnotacją, plakietką pochodzenia, przestawieniem
+ * blokady i zdjęciem warstwy z kanwy. Pusty wykaz zastępuje zdanie o braku
+ * zasobów.
  */
 export interface PanelWarstw {
   element: HTMLElement;

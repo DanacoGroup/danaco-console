@@ -2,25 +2,14 @@ import type { AodStatus } from '../../../shared/contract';
 import { dodajPole, utworzAkapit, utworzPodtytul, utworzWykazPol } from './pola-wykazu';
 
 /**
- * Sekcja stanu nakładki (`aod.status.get`) — nadzorca sesji i telemetria.
- *
- * Wypisuje to, co rdzeń zmierzył: urządzenie, kartę sesji i okno ogniskowane,
- * liczbę procesów w biegu i chwilę pomiaru. Wykaz procesów przypiętych niesie
- * sekcja obecności, bo tam Operator przypina i odpina — wykaz stoi przy
- * czynności, która go zmienia.
- *
- * Pola puste zostają puste — `(brak)` zamiast wartości zmyślonej po stronie
- * widoku. Świeża nakładka bez ogniska jest stanem poprawnym.
+ * Sekcja stanu nakładki (`aod.status.get`), czyli nadzorca sesji i telemetria.
+ * Wypisuje to, co zmierzył rdzeń: urządzenie, kartę sesji i okno ogniskowane,
+ * liczbę procesów w biegu oraz chwilę pomiaru. Pola puste zostają puste.
  */
 export interface SekcjaStanu {
   element: HTMLElement;
   pokaz(status: AodStatus): void;
-  /**
-   * Nanosi odmowę rdzenia w tę jedną sekcję.
-   *
-   * Odmowa jednego odczytu jest faktem o jednym odczycie, nie o całej
-   * nakładce; pozostałe sekcje stoją na innych komendach i zostają widoczne.
-   */
+  /** Nanosi odmowę rdzenia w tę jedną sekcję, nie ruszając pozostałych. */
   odmowa(zdanie: string): void;
 }
 

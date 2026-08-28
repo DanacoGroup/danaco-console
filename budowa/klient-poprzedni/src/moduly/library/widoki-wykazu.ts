@@ -5,17 +5,9 @@ import type { TrafienieZnaczenia, WidokWykazu } from './magazyn-biblioteki';
 import { utworzWierszPliku } from './wiersz-pliku';
 
 /**
- * Pięć form prezentacji tego samego wykazu plików.
- *
- * Widok przelicza wyłącznie prezentację odpowiedzi, którą rdzeń już oddał —
- * żaden z nich nie wysyła komendy i żaden nie zawęża zbioru inaczej niż tym,
- * co niesie sam plik. Dlatego wybór widoku nie unieważnia zaznaczenia ani
- * wskazania pliku czynnego.
- *
- * Widok, który nie ma czego pokazać mimo niepustego wykazu, oddaje zdanie
- * w polu `brak` zamiast pustego prostokąta. Rozróżnienie jest tu istotne:
- * „galeria bez obrazów" i „repozytorium bez plików" to dwa różne stany, a widok
- * mapy nie ma dziś źródła współrzędnych w ogóle.
+ * Pięć form prezentacji tego samego wykazu plików przelicza wyłącznie
+ * odpowiedź, którą rdzeń już oddał, i żadna nie wysyła komendy ani nie
+ * unieważnia zaznaczenia.
  */
 export interface OpisWidoku {
   zaznaczone: readonly string[];
@@ -33,7 +25,7 @@ export interface WynikWidoku {
   brak: string;
 }
 
-/** Nazwy widoków w przełączniku — kolejność jak w dokumentacji modułu. */
+/** Nazwy widoków w przełączniku, w kolejności pokazywanej użytkownikowi, od siatki miniatur po mapę zasobów. */
 export const WIDOKI: ReadonlyArray<{ kod: WidokWykazu; nazwa: string }> = [
   { kod: 'siatka', nazwa: 'Siatka' },
   { kod: 'lista', nazwa: 'Lista' },
@@ -54,7 +46,7 @@ export function zbudujWidok(
   return mapa(pliki);
 }
 
-/** Widok listy szczegółowej — wiersz z metryką, ścieżką i etykietami. */
+/** Widok listy szczegółowej — wiersz z metryką, ścieżką i etykietami, czytelny przy pełnej szerokości okna. */
 function listaSzczegolowa(pliki: readonly LibraryFile[], opis: OpisWidoku): HTMLElement {
   const element = document.createElement('ul');
   element.className = 'ml-pliki';
@@ -62,7 +54,7 @@ function listaSzczegolowa(pliki: readonly LibraryFile[], opis: OpisWidoku): HTML
   return element;
 }
 
-/** Widok domyślny: siatka kafli, po jednym na plik. */
+/** Widok domyślny: siatka kafli, po jednym na każdy plik, każdy z miniaturą i skróconą nazwą własną zasobu. */
 function siatkaMiniatur(pliki: readonly LibraryFile[], opis: OpisWidoku): HTMLElement {
   const element = document.createElement('ul');
   element.className = 'ml-siatka';
@@ -71,11 +63,9 @@ function siatkaMiniatur(pliki: readonly LibraryFile[], opis: OpisWidoku): HTMLEl
 }
 
 /**
- * Widok galerii — wyłącznie materiał graficzny.
- *
- * Zawężenie idzie po `mimeType`, jedynym polu kontraktu mówiącym o rodzaju
- * treści. Plik bez tego pola do galerii nie wchodzi i jest to wypowiedziane:
- * wciągnięcie go „na wszelki wypadek" stawiałoby w galerii dokumenty.
+ * Widok galerii pokazuje wyłącznie materiał graficzny: zawężenie idzie po
+ * rodzaju treści, a plik bez tego pola do galerii nie wchodzi, co jest
+ * wypowiedziane wprost.
  */
 function galeria(pliki: readonly LibraryFile[], opis: OpisWidoku): WynikWidoku {
   const obrazy = pliki.filter((plik) => rodzinaTresci(plik.mimeType) === 'image');
@@ -96,12 +86,9 @@ function galeria(pliki: readonly LibraryFile[], opis: OpisWidoku): WynikWidoku {
 }
 
 /**
- * Widok osi czasu — chronologia dodania do repozytorium.
- *
- * Grupowanie idzie po dacie z `createdAt`, bo oś czasu opisuje napływ, a nie
- * ostatnią zmianę. Doba jest jednostką najmniejszą, którą da się nazwać bez
- * ustawienia strefy: znacznik kontraktu jest liczbą milisekund epoki, a
- * przeglądarka zna strefę Operatora.
+ * Widok osi czasu grupuje pliki po dacie dodania do repozytorium, bo opisuje
+ * napływ, a nie ostatnią zmianę, z dobą jako najmniejszą jednostką bez
+ * ustawienia strefy.
  */
 function osCzasu(pliki: readonly LibraryFile[], opis: OpisWidoku): WynikWidoku {
   const element = document.createElement('div');
@@ -133,13 +120,9 @@ function osCzasu(pliki: readonly LibraryFile[], opis: OpisWidoku): WynikWidoku {
 }
 
 /**
- * Widok mapy — dziś bez źródła współrzędnych.
- *
- * Dokumentacja modułu opiera mapę na geolokalizacji z metadanych EXIF. Kontrakt
- * nie niesie ani pola współrzędnych przy pliku (`LibraryFile`), ani komendy
- * oddającej metadane techniczne zasobu biblioteki, więc okno nie ma czego
- * nanieść. Widok zostaje w przełączniku i mówi to wprost — pozycja usunięta
- * z przełącznika wyglądałaby na widok, którego nigdy nie było.
+ * Widok mapy nie ma dziś źródła współrzędnych: kontrakt nie niesie pola
+ * współrzędnych ani komendy metadanych technicznych, więc widok zostaje
+ * w przełączniku i mówi to wprost.
  */
 function mapa(pliki: readonly LibraryFile[]): WynikWidoku {
   const element = document.createElement('div');
@@ -154,7 +137,7 @@ function mapa(pliki: readonly LibraryFile[]): WynikWidoku {
   };
 }
 
-/** Jeden wiersz wykazu wraz z jego czynnościami. */
+/** Jeden wiersz wykazu wraz z jego czynnościami zaznaczenia, wskazania i odczytanym stanem treści pliku. */
 function wiersz(plik: LibraryFile, opis: OpisWidoku): HTMLElement {
   return utworzWierszPliku(plik, {
     zaznaczony: opis.zaznaczone.includes(plik.id),
@@ -166,7 +149,7 @@ function wiersz(plik: LibraryFile, opis: OpisWidoku): HTMLElement {
   });
 }
 
-/** Jeden kafel siatki albo galerii wraz z jego czynnościami. */
+/** Jeden kafel siatki albo galerii wraz z jego czynnościami zaznaczenia i wskazania pliku jako czynnego. */
 function kafel(plik: LibraryFile, opis: OpisWidoku): HTMLElement {
   return utworzKafelPliku(plik, {
     zaznaczony: opis.zaznaczone.includes(plik.id),

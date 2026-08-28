@@ -1,22 +1,19 @@
+/**
+ * Wskazanie okna analityka na poziomie sesji — odczyt i zapis kluczem
+ * `multitasking.analityk`. Results Analyzer jest oknem roli `standalone`,
+ * a odróżnia go wyłącznie wskazanie zapisane w ustawieniach sesji.
+ */
 import { ConfigScope } from '../../../../shared/contract';
 import { powod } from './nadanie-rol';
 import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
-/**
- * Wskazanie okna analityka na poziomie sesji — odczyt i zapis.
- *
- * `WindowRole` nie ma czwartej wartości: Results Analyzer jest oknem roli
- * `standalone`, a odróżnia go wyłącznie wskazanie zapisane w ustawieniach sesji.
- * Dopisanie czwartej roli po stronie klienta rozjechałoby wykaz ról z bazą.
- *
- * Klucz `multitasking.analityk` nie stoi w katalogu ustawień rdzenia
- * (`definicja_ustawienia`), więc `config.set` odpowiada odmową
- * `validation_failed`, a wskazanie nie przeżywa odświeżenia. Zapis jest
- * sprawdzany i odmowa trafia do zdania oddawanego wołającemu.
- */
 
-/** Klucz wskazania okna analityka na poziomie sesji. */
+
+/**
+ * Klucz wskazania okna analityka na poziomie sesji, wysyłany do rdzenia
+ * w komendach `config.set` oraz `config.list` wraz z identyfikatorem sesji.
+ */
 export const KLUCZ_ANALITYKA = 'multitasking.analityk';
 
 /**
@@ -47,7 +44,10 @@ export async function utrwalWskazanieAnalityka(
   return `Wskazanie analityka utrwalone na poziomie sesji: ${idOkna}.`;
 }
 
-/** Wskazanie analityka odczytane z ustawień sesji; puste, gdy nie wskazano. */
+/**
+ * Wskazanie analityka odczytane z ustawień sesji; wartość pusta znaczy, że okna
+ * analityka nie wskazano albo że odczyt ustawień nie doszedł do skutku.
+ */
 export async function wskazanieAnalitykaZSesji(
   zrodlo: ZrodloOkien,
   sesja: string,

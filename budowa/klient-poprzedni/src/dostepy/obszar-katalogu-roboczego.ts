@@ -4,19 +4,10 @@ import { utworzPoleKatalogu, type PoleKatalogu } from './pole-katalogu';
 import { utworzStanKataloguRoboczego } from './stan-katalogu-roboczego';
 
 /**
- * Obszar katalogu roboczego — osobny od dostępów.
- *
- * Dostęp mówi, do czego model sięga; katalog roboczy mówi, gdzie model
- * zostawia swoje pliki. Model może mieć wgląd w cudzy katalog i nic w nim nie
- * zapisywać, a swoje katalogi sesyjne trzymać w miejscu instalacji aplikacji.
- * Zlanie tych dwóch ustawień w jedno kazałoby otworzyć zapis wszędzie tam,
- * gdzie model ma tylko czytać.
- *
- * Obszar nie jest kopią okna konfiguracji. Pokazuje dwa klucze, bo bez nich
- * sekcja dostępów byłaby niepełna: po nadaniu modelowi dostępu do katalogów
- * następne pytanie dotyczy miejsca, w którym model będzie pisał. Pełny wybór
- * poziomów zasięgu i osi zostaje w oknie konfiguracji, które prowadzi jedyny
- * rachunek dziedziczenia.
+ * Obszar katalogu roboczego — ustawienie osobne od dostępów. Dostęp mówi,
+ * do czego model sięga, a katalog roboczy mówi, gdzie model zostawia swoje
+ * katalogi sesyjne i pliki robocze. Obszar pokazuje dwa klucze i nie
+ * zastępuje okna konfiguracji.
  */
 export interface ObszarKataloguRoboczego {
   /** Element osadzany w sekcji dostępów. */
@@ -70,8 +61,8 @@ export function utworzObszarKataloguRoboczego(kanal: Kanal): ObszarKataloguRoboc
   return {
     element,
 
-    // Wczytanie nie czeka na rdzeń i nie blokuje osadzenia obszaru: pola stoją
-    // od razu z wartościami domyślnymi, a odpowiedź rdzenia je nanosi.
+    // Wczytanie nie blokuje osadzenia obszaru: pola stoją od razu
+    // z wartościami domyślnymi.
     wczytaj: () => void stan.odswiez().then(odswiez),
 
     rozlacz: stan.rozlacz,

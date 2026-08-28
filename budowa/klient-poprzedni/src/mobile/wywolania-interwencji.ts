@@ -14,57 +14,27 @@ import { wywolaj } from '../protokol/wywolanie';
 import { Droga, type KrokKwitu, type Kwit } from './kwit-decyzji';
 import type { PozycjaDecyzji } from './pozycje-decyzji';
 
-/**
- * Cztery drogi interwencji jako cztery wywołania — jedyne miejsce warstwy
- * mobilnej znające nazwy komend zmieniających stan.
- *
- * Każda droga stoi na komendach kontraktu:
- *
- *   1. Zatwierdź krok — `queue.action` resume / retry;
- *   2. Wstrzymaj — `queue.action` pause · `message.stop` · `session.stop`
- *      (ostatnia oddaje wykaz okien, w których turę zatrzymano);
- *   3. Nastaw koordynatora — `config.session.set` na zasięgu `window`
- *      z odczytem zwrotnym `config.effective.get`, który potwierdza źródło
- *      `override`;
- *   4. Przejmij sterowanie — złożenie trzech wywołań: `message.stop`
- *      + `config.session.set{permissions.mode=manual}` + `message.send`
- *      z poleceniem Operatora.
- *
- * Droga czwarta jest nazwana dokładnie tym, czym jest: „zatrzymuję turę,
- * przestawiam okno na pytanie o każdy krok, wpuszczam twoje polecenie”.
- * Dedykowanej komendy przejęcia kontrakt nie niesie; gdyby ją wniósł,
- * złożenie trzech wywołań zastąpi jedno, a ekran zostanie bez zmian.
- *
- * Droga pierwsza ma widoczną granicę. „Zatwierdź krok” jedzie przez kolejkę;
- * pozycja bez kolejki (sama zatrzymana pętla) nie ma czym zatwierdzić kroku,
- * bo komendy zatwierdzenia pojedynczego kroku kontrakt nie niesie.
- * `drogiDostepne` mówi to zdaniem, a ekran nie rysuje wtedy przycisku.
- *
- * Każde wywołanie oddaje kwit, nie `void` i nie `boolean`: nazwa komendy,
- * rozstrzygnięcie, stan po zmianie wyjęty z odpowiedzi rdzenia albo treść
- * odmowy. Kwit jest jedynym dowodem, jaki Operator zabiera z sobą, zamykając
- * telefon (`kwit-decyzji.ts`).
- */
+/** Moduł składa cztery drogi interwencji warstwy mobilnej w wywołania komend kontraktu rdzenia. */
 
-/** Który byt wstrzymujemy — wybór wynika z pozycji, nie z domysłu. */
+/** Typ nazywa byt, który droga wstrzymania zatrzymuje: kolejkę, bieżącą turę okna albo całą sesję; wybór wynika z pól obecnych w pozycji. */
 export type ZasiegWstrzymania = 'kolejka' | 'tura' | 'sesja';
 
-/** Trzy gotowe rozstrzygnięcia nastawy koordynatora dosięgalne w dwóch dotknięciach. */
+/** Typ wylicza trzy gotowe rozstrzygnięcia nastawy koordynatora, każde osiągalne dwoma dotknięciami ekranu. */
 export type NastawaKoordynatora =
   | 'pytaj-o-kazdy-krok'
   | 'stoj-przy-braku-postepu'
   | 'obniz-naklad';
 
-/** Co Operator robi z krokiem: puszcza dalej czy każe powtórzyć. */
+/** Typ nazywa dwa rozstrzygnięcia Operatora wobec zatrzymanego kroku kolejki: puszczenie dalej albo powtórzenie. */
 export type WyborKroku = 'pusc-dalej' | 'powtorz';
 
-/** Czy droga jest przejezdna dla tej pozycji; przy „nie” — powód zdaniem. */
+/** Interfejs opisuje przejezdność jednej drogi interwencji dla danej pozycji oraz, przy odmowie, powód wyrażony zdaniem. */
 export interface DostepnoscDrogi {
   dostepna: boolean;
   powod?: string;
 }
 
-/** Przejezdność czterech dróg dla jednej pozycji — podstawa rysowania przycisków. */
+/** Interfejs zestawia przejezdność wszystkich czterech dróg interwencji dla jednej pozycji i stanowi podstawę rysowania przycisków. */
 export interface DostepneDrogi {
   zatwierdz: DostepnoscDrogi;
   wstrzymaj: DostepnoscDrogi & { zasiegi: readonly ZasiegWstrzymania[] };
@@ -81,21 +51,21 @@ export interface WywolaniaInterwencji {
   przejmij(pozycja: PozycjaDecyzji, polecenie: string): Promise<Kwit>;
 }
 
-/** Etykiety nastaw — jedno źródło dla arkusza dróg i dla kwitu. */
+/** Stała zestawia etykiety trzech nastaw koordynatora i stanowi jedno źródło tekstu wspólne dla arkusza dróg oraz dla kwitu. */
 export const ETYKIETY_NASTAW: Readonly<Record<NastawaKoordynatora, string>> = {
   'pytaj-o-kazdy-krok': 'pytaj mnie o każdy krok',
   'stoj-przy-braku-postepu': 'zatrzymaj bieg przy braku postępu',
   'obniz-naklad': 'obniż nakład rozumowania',
 };
 
-/** Etykiety zasięgów wstrzymania — to samo źródło dla ekranu i kwitu. */
+/** Stała zestawia etykiety trzech zasięgów wstrzymania i stanowi jedno źródło tekstu wspólne dla ekranu oraz dla kwitu. */
 export const ETYKIETY_ZASIEGOW: Readonly<Record<ZasiegWstrzymania, string>> = {
   kolejka: 'wstrzymaj kolejkę',
   tura: 'zatrzymaj bieżącą turę',
   sesja: 'zatrzymaj tury całej sesji',
 };
 
-/** Zdanie granicy drogi pierwszej — jedno źródło dla ekranu i dla kwitu. */
+/** Stała niesie zdanie tłumaczące brak drogi zatwierdzenia kroku i stanowi jedno źródło tekstu wspólne dla ekranu oraz dla kwitu. */
 export const ZDANIE_BRAKU_ZATWIERDZENIA =
   'Krok zatwierdza się wyłącznie przez kolejkę (queue.action). Ta pozycja ' +
   'kolejki nie ma, a komendy zatwierdzenia pojedynczego kroku kontrakt nie niesie.';
@@ -104,7 +74,7 @@ export function utworzWywolaniaInterwencji(kanal: Kanal): WywolaniaInterwencji {
   /** Okno robocze pozycji: to, w którym biegnie tura. */
   const oknoPracy = (pozycja: PozycjaDecyzji): string | undefined => pozycja.windowId;
 
-  /** Okno, na którym zapisujemy nastawę: koordynator, a gdy go nie ma — okno pracy. */
+  /** Okno, na którym zapisywana jest nastawę: koordynator, a gdy go nie ma — okno pracy. */
   const oknoNastawy = (pozycja: PozycjaDecyzji): string | undefined =>
     pozycja.koordynatorWindowId ?? pozycja.windowId;
 
@@ -239,8 +209,7 @@ export function utworzWywolaniaInterwencji(kanal: Kanal): WywolaniaInterwencji {
         `zapisane obszary: ${t.storedAreas.join(', ')}`,
       );
 
-      // Odczyt zwrotny potwierdza, że zapis wygrał rozstrzygnięcie poziomów
-      // zasięgu, a nie tylko wylądował w bazie.
+      // Odczyt zwrotny potwierdza, że zapis wygrał rozstrzygnięcie zasięgu w bazie rdzenia.
       const odczyt = await wywolaj(kanal, Command.ConfigEffectiveGet, { windowId, areas });
       const krokOdczytu = zapiszKrok(Command.ConfigEffectiveGet, odczyt, (t) =>
         opiszPochodzenie(t.effective.origins, areas),
@@ -308,7 +277,7 @@ export function utworzWywolaniaInterwencji(kanal: Kanal): WywolaniaInterwencji {
   };
 }
 
-/** Obszary i treść zapisu dla trzech gotowych rozstrzygnięć nastawy. */
+/** Funkcja zwraca obszary konfiguracji oraz treść zapisu właściwe dla jednego z trzech gotowych rozstrzygnięć nastawy. */
 export function ksztaltNastawy(nastawa: NastawaKoordynatora): {
   areas: SessionConfigArea[];
   config: SessionConfig;
@@ -331,7 +300,7 @@ export function ksztaltNastawy(nastawa: NastawaKoordynatora): {
   };
 }
 
-/** Zdanie o pochodzeniu obszarów — dowód, że zapis wygrał rozstrzygnięcie zasięgów. */
+/** Funkcja składa zdanie o pochodzeniu każdego zapisanego obszaru i stanowi dowód, że zapis wygrał rozstrzygnięcie zasięgów. */
 function opiszPochodzenie(
   origins: readonly SessionConfigOrigin[],
   areas: readonly SessionConfigArea[],
@@ -343,7 +312,7 @@ function opiszPochodzenie(
     .join('; ');
 }
 
-/** Zapisuje jedno wywołanie jako krok kwitu — stan po zmianie albo odmowa. */
+/** Funkcja zapisuje wynik jednego wywołania jako krok kwitu: stan po zmianie przy powodzeniu albo treść odmowy przy niepowodzeniu. */
 function zapiszKrok<T>(
   komenda: string,
   wynik: Wynik<T>,
@@ -355,7 +324,7 @@ function zapiszKrok<T>(
   return { komenda, udany: true, stanPo: stanPo(wynik.wynik) };
 }
 
-/** Składa kwit z kroków; zdanie powstaje ze stanów oddanych przez rdzeń. */
+/** Funkcja składa kwit z wykazu kroków, a jego zdanie podsumowujące powstaje ze stanów oddanych przez rdzeń. */
 function zlozKwit(
   droga: Droga,
   pozycja: PozycjaDecyzji,
@@ -380,7 +349,7 @@ function zlozKwit(
   };
 }
 
-/** Kwit drogi, która nie ruszyła — bez ani jednego wywołania do rdzenia. */
+/** Funkcja tworzy kwit drogi, która nie ruszyła: żadne wywołanie do rdzenia nie zostało wykonane, a zdanie podaje powód odmowy. */
 function kwitOdmowy(droga: Droga, pozycja: PozycjaDecyzji, zdanie: string): Kwit {
   return {
     id: `${droga}:${pozycja.id}:${Date.now()}`,

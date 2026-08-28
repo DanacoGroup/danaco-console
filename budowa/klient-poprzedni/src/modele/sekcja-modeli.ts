@@ -13,20 +13,9 @@ import { utworzZakladkiSekcji } from './zakladki-sekcji';
 import { utworzZrodloModeli } from './zrodlo-modeli';
 
 /**
- * Sekcja modeli, kont i tożsamości — cztery obszary związane jedną osią.
- *
- * Oś jest wspólna dla całej sekcji. Ustawienia, tożsamość i podgląd promptu
- * mówią o tym samym bycie: wskazanym modelu albo wskazanym koncie. Trzy
- * osobne wybory osi w trzech panelach dałyby trzy rozbieżne wskazania,
- * dlatego pasek osi jest jeden, nad zakładkami.
- *
- * Wykaz kont zasila wybór osi: konta znane rdzeniowi stają się podpowiedziami
- * bytu osi `account`, a identyfikatory modeli składa osobne źródło z rejestru
- * kanałów i z modeli domyślnych kont. Podpowiedź nie zamyka pola — byt spoza
- * wykazu wolno wpisać wprost.
- *
- * Sekcja otwiera się przed odpowiedzią rdzenia. Każdy z czterech obszarów ma
- * własny komunikat na wypadek braku danych i żaden nie blokuje pozostałych.
+ * Sekcja modeli, kont i tożsamości spina cztery obszary jedną osią wskazania.
+ * Pasek osi stoi nad zakładkami, a rejestr kont i rejestr kanałów zasilają
+ * podpowiedzi bytu. Obszary otwierają się niezależnie od odpowiedzi rdzenia.
  */
 export interface SekcjaModeli {
   /** Sekcja osadzana w oknie albo w widoku gospodarza. */
@@ -76,12 +65,7 @@ export function utworzSekcjeModeli(kanal: Kanal): SekcjaModeli {
     void stanTozsamosci.ustawWskazanie(wskazanie);
   };
 
-  /**
-   * Identyfikatory modeli trzymamy między odczytami, bo pochodzą z rejestru
-   * kanałów, a ten czyta się osobną komendą. Zmiana rejestru kont odświeża
-   * podpowiedzi kont i zostawia modele takimi, jakie były — podanie pustej
-   * listy skasowałoby podpowiedź bez powodu.
-   */
+  /** Identyfikatory modeli trwają między odczytami, bo pochodzą z osobnej komendy. */
   let modele: readonly string[] = [];
 
   const podpowiedziKont = (): PodpowiedzKonta[] =>
@@ -89,7 +73,7 @@ export function utworzSekcjeModeli(kanal: Kanal): SekcjaModeli {
 
   const naniesPodpowiedzi = (): void => os.ustawPodpowiedzi(modele, podpowiedziKont());
 
-  /** Podpowiedzi modeli składamy z rejestru kanałów i z modeli domyślnych kont. */
+  /** Podpowiedzi modeli powstają z rejestru kanałów i z modeli domyślnych kont. */
   const odswiezPodpowiedzi = (): void => {
     void zrodloModeli.identyfikatory(stanKont.konta()).then((odczytane) => {
       modele = odczytane;
@@ -119,11 +103,7 @@ export function utworzSekcjeModeli(kanal: Kanal): SekcjaModeli {
   return {
     element,
 
-    /**
-     * Odczyt nie rozsyła osi ponownie. Oś zmienia wyłącznie pasek u góry,
-     * a jego zmiana już ją rozesłała; powtórzenie tutaj kazałoby rdzeniowi
-     * przeczytać te same zapisy i tę samą nakładkę drugi raz pod rząd.
-     */
+    /** Odczyt nie rozsyła osi ponownie — rozesłał ją już pasek przy zmianie. */
     odswiez() {
       void stanKont.odswiez().then(odswiezPodpowiedzi);
       void stanTozsamosci.odswiez();

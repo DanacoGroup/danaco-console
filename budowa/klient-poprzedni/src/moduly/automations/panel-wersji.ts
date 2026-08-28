@@ -1,16 +1,6 @@
 /**
- * Panel Workflow Buildera — trzynaście czynności paneli „Wersje ⋮”,
- * „Zmienne ▼”, menu kontekstowego węzła i menu kebab nagłówka.
- *
- * Panel stoi WEWNĄTRZ Workflow Buildera, bo cała ta praca dotyczy definicji
- * automatyki: przebieg próbny sprawdza ją przed wpięciem, wersje ją cofają
- * i porównują, zmienne i mapowania opisują przepływ danych między jej krokami,
- * notatka i położenie należą do jej węzłów, a szablon jest jej odbiciem
- * zapisanym do wielokrotnego użycia.
- *
- * Automatyka bierze się ze stanu modułu, nie z pola panelu. Pięć okien pracuje
- * nad jedną automatyką naraz — panel z własnym polem automatyki pozwalałby
- * zapisać wersję jednej, patrząc na kanwę drugiej.
+ * Panel Workflow Buildera obsługuje trzynaście czynności paneli wersji i zmiennych, stojąc
+ * wewnątrz budowniczego, bo cała ta praca dotyczy definicji automatyki.
  */
 import {
   pole,
@@ -27,7 +17,7 @@ import {
 import type { StanAutomatyki } from './stan-automatyki';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
-/** Panel dopełniający Workflow Buildera. */
+/** Panel dopełniający Workflow Buildera, osadzany wewnątrz kreatora wraz z jego szufladami wersji i zmiennych. */
 export interface PanelWersji {
   element: HTMLElement;
 }
@@ -240,10 +230,7 @@ export function utworzPanelWersji(
         : 'Rdzeń przyjął zdjęcie udostępnienia automatyki.');
   });
 
-  // Stan przełącznika trzymany w panelu, bo kontrakt nie ma komendy „przełącz”:
-  // `automation.workflow.share` przyjmuje wartość docelową, więc panel musi
-  // wiedzieć, o którą prosi. Odpowiedź rdzenia niesie automatykę po zmianie
-  // i to ona jest prawdą — panel pokazuje ją w całości pod przyciskiem.
+  // Stan przełącznika trzymany w panelu, bo zapis przyjmuje wartość docelową, nie sam przełącz.
   let udostepniona = false;
 
   return { element: panel.element };

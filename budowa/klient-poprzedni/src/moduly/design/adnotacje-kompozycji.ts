@@ -12,26 +12,9 @@ import type { StanKompozycji } from './stan-kompozycji';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Adnotacje i obecność na kompozycji Design Board —
- * `design.annotation.set`, `design.annotation.list`, `design.presence.report`.
- *
- * ── Adnotacja przeżywa zapis układu ─────────────────────────────────────────
- * Pole `note` warstwy niesie jedno zdanie bez autora i bez wątku, a przy każdym
- * `design.board.update` jedzie razem z całym układem i wraca przepisane od
- * nowa. Uwaga zostawiona przez jedną osobę znikała więc przy pierwszym
- * przesunięciu warstwy przez drugą. Adnotacja ma własny wiersz i własny czas.
- *
- * ── Autora ustala rdzeń, nie to okno ────────────────────────────────────────
- * Pola autora tu nie ma i nie będzie: rdzeń bierze go z kontekstu wywołania.
- * Pole, w które da się wpisać cudze nazwisko, odbierałoby oznaczeniom osób
- * w wątku całe ich znaczenie.
- *
- * ── Obecność jest ULOTNA ────────────────────────────────────────────────────
- * Zgłoszenie nie zapisuje się w bazie — położenie kursora sprzed godziny nie
- * jest wiedzą o niczym. Panel zgłasza obecność na żądanie Operatora, a nie
- * w pętli: odpytywanie dziesięć razy na sekundę byłoby ruchem, którego nikt nie
- * zamawiał, na łączu, o którym okno nic nie wie. Kursory pozostałych przychodzą
- * zdarzeniem `design.board.presence`.
+ * Adnotacje i obecność na kompozycji Design Board. Adnotacja ma własny wiersz
+ * i własny czas, przeżywa zapis układu i nie ginie przy przesunięciu warstwy.
+ * Obecność jest ulotna: zgłoszenie nie zapisuje się w bazie.
  */
 export interface AdnotacjeKompozycji {
   element: HTMLElement;
@@ -111,9 +94,7 @@ export function utworzAdnotacjeKompozycji(
   zglos.addEventListener('click', () => void zglosObecnosc(false));
   odejdz.addEventListener('click', () => void zglosObecnosc(true));
 
-  // Kursory pozostałych przychodzą zdarzeniem, nie odpytywaniem. Zdarzenie
-  // niesie komplet obecnych, więc panel je podmienia, zamiast doliczać stan
-  // z ciągu przyrostów, którego początku nie widział.
+  // Zdarzenie niesie komplet obecnych, więc panel je podmienia, zamiast doliczać stan przyrostów.
   const odsubskrybuj = stan.zrodlo.naObecnosc((zdarzenie) => {
     if (zdarzenie.boardId !== kompozycja.idKompozycji()) return;
     pokazObecnych(zdarzenie.participants);
@@ -151,8 +132,7 @@ export function utworzAdnotacjeKompozycji(
         const wiersz = document.createElement('li');
         wiersz.className = 'md-adnotacje__pozycja';
         wiersz.dataset['adnotacja'] = adnotacja.id;
-        // Odpowiedź w wątku dostaje wcięcie, żeby wątek dało się przeczytać
-        // jako wątek, a nie jako listę zdań bez porządku.
+        // Odpowiedź w wątku dostaje wcięcie, żeby wątek dało się przeczytać jako wątek, nie listę zdań.
         if (adnotacja.parentId !== undefined) wiersz.dataset['odpowiedz'] = 'tak';
         wiersz.textContent =
           `${adnotacja.text}` +
@@ -163,13 +143,7 @@ export function utworzAdnotacjeKompozycji(
     );
   }
 
-  /**
-   * Zapisuje adnotację.
-   *
-   * `wWatku` czyni ze wskazanej adnotacji nadrzędną, a nie cel nadpisania —
-   * to są dwie różne czynności na tym samym wskazaniu i mylenie ich
-   * podmieniałoby cudzą uwagę zamiast na nią odpowiadać.
-   */
+  // Zapis w wątku czyni wskazaną adnotację nadrzędną, a nie celem nadpisania — to dwie różne czynności.
   async function zapisz(wWatku: boolean, zamkniecie: boolean | null): Promise<void> {
     if (bezKompozycji(Command.DesignAnnotationSet)) return;
     if (zamkniecie === null && tresc.kontrolka.value.trim() === '') {
@@ -230,9 +204,7 @@ export function utworzAdnotacjeKompozycji(
       odpowiedz.pokaz('Wskazanej adnotacji nie ma w odczytanym wykazie — odczytaj go ponownie.', false);
       return;
     }
-    // Treść idzie ta sama, którą adnotacja niesie: kontrakt wymaga pola `text`
-    // przy każdym zapisie, a podstawienie treści z pola okna przepisałoby cudzą
-    // uwagę przy okazji zamykania wątku.
+    // Treść idzie ta sama, którą adnotacja niesie — podstawienie z pola okna przepisałoby cudzą uwagę.
     tresc.kontrolka.value = adnotacja.text;
     await zapisz(false, true);
   }
@@ -272,9 +244,7 @@ export function utworzAdnotacjeKompozycji(
       odchodzi ? 'zdjęcie obecności' : 'zgłoszenie obecności',
       stan.zrodlo.zglosObecnosc({
         idKompozycji: kompozycja.idKompozycji(),
-        // Położenie bierzemy z przesunięcia kanwy: kursor myszy śledzony
-        // w pętli byłby ruchem na łączu, którego nikt nie zamawiał, a widok
-        // mówi, na co Operator patrzy.
+        // Położenie bierzemy z przesunięcia kanwy, nie ze śledzenia kursora myszy w pętli.
         x: widok.przesuniecieX,
         y: widok.przesuniecieY,
         zaznaczone: kompozycja.zaznaczone(),

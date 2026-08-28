@@ -3,23 +3,10 @@ import { pole, wybor } from '../../modele/kontrolki-formularza';
 import { POZYCJE_FILTRA_DZIENNIKA, type KodFiltraDziennika } from './etykiety-assistant';
 
 /**
- * Wyszukiwanie i filtr rodzaju wpisu Activity Feed.
- *
- * Zawężenie liczy się w oknie. `assistant.activity.list` przyjmuje wyłącznie
- * `windowId`, `actionId` i `limit` (`adapter_modul_asystent_czynnosci.go`),
- * więc rdzeń nie ma czym zawęzić wykazu po treści ani po rodzaju wpisu —
- * odczyt na każde naciśnięcie klawisza byłby wywołaniem zwracającym za każdym
- * razem to samo.
- *
- * Wyszukiwanie jest pełnotekstowe i tylko takie. Wyszukiwania po znaczeniu
- * w dzienniku asystenta kontrakt nie ma: `knowledge.search` sięga biblioteki,
- * historii rozmów i plików przestrzeni roboczej (`KnowledgeScope`), a dziennik
- * asystenta nie jest żadnym z tych trzech zakresów. Brak nazywa okno wprost
- * (`braki-kontraktu.ts`), zamiast podstawiać dopasowanie po literach pod nazwę
- * „semantyczne".
- *
- * Porównanie idzie po zwinięciu wielkości liter właściwym dla polszczyzny
- * (`toLocaleLowerCase('pl')`), więc „Ł" znajduje „ł".
+ * Wyszukiwanie i filtr rodzaju wpisu Activity Feed. Zawężenie liczy się
+ * w oknie, ponieważ komenda `assistant.activity.list` nie przyjmuje ani frazy,
+ * ani rodzaju wpisu. Wyszukiwanie jest pełnotekstowe, a porównanie zwija
+ * wielkość liter po polsku.
  */
 export interface FiltrDziennika {
   /** Pasek osadzany w nagłówku okna: pole szukania i wybór rodzaju. */

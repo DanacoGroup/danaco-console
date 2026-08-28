@@ -1,29 +1,22 @@
 /**
- * Warstwy widoczności modułu Browser — stan stopniowego ujawniania funkcji.
- *
- * Opracowanie modułu (rozdz. 3.1) dzieli jego wyposażenie na cztery warstwy:
- * pierwsza jest widoczna bez interakcji, druga otwiera się znacznikiem
- * kontekstowym, trzecia menu operacji, a czwarta skrótem klawiszowym albo
- * trybem administracyjnym. Ten byt trzyma, co jest w tej chwili odsłonięte;
- * pasek kontekstu (`pasek-kontekstu.ts`) jest wyłącznie jego widokiem.
- *
- * Ujawnianie nie jest bramą. Element zwinięty nie jest zablokowany — jest
- * schowany, a każda jego czynność zostaje osiągalna wyzwalaczem albo skrótem.
- * Dlatego skrót warstwy czwartej działa również wtedy, gdy tryb administracyjny
- * jest wyłączony: tryb decyduje o obecności wyzwalacza w pasku, nie o dostępie
- * do funkcji.
- *
- * Skrót podpina się do elementu modułu, nie do dokumentu: w powłoce stoi obok
- * siebie kilka modułów, a nasłuch założony na dokumencie odpowiadałby także na
- * klawisze wciśnięte w cudzym oknie. Skrót działa więc wtedy, gdy fokus stoi
- * wewnątrz modułu. Powłoka gospodarza może przechwycić kombinację przed
- * stroną — wtedy pozostaje wyzwalacz w pasku.
+ * Warstwy widoczności modułu Browser trzymają stan stopniowego ujawniania jego
+ * wyposażenia: co jest w tej chwili odsłonięte i czy tryb administracyjny
+ * pokazuje wyzwalacze warstwy czwartej. Pasek kontekstu jest wyłącznie widokiem
+ * tego stanu.
  */
 
-/** Numer warstwy widoczności z rozdziału 3.1 opracowania modułu. */
+/**
+ * Numer warstwy widoczności: pierwsza jest widoczna bez interakcji, druga otwiera
+ * się znacznikiem kontekstowym, trzecia menu operacji, a czwarta skrótem
+ * klawiszowym albo trybem administracyjnym.
+ */
 export type NumerWarstwy = 1 | 2 | 3 | 4;
 
-/** Skrót klawiszowy z załącznika opracowania: klawisz przy Ctrl/Cmd i Shift. */
+/**
+ * Skrót klawiszowy odsłaniający rozszerzenie: litera wciśnięta przy klawiszu
+ * sterującym albo poleceniowym, opcjonalnie z klawiszem Shift. Klawisz sterujący
+ * jest wymagany zawsze, żeby skrót nie kolidował z pisaniem w polu.
+ */
 export interface SkrotWarstwy {
   /** Litera klawisza, tak jak podaje ją `KeyboardEvent.key`, bez rozróżnienia wielkości. */
   klawisz: string;
@@ -31,7 +24,11 @@ export interface SkrotWarstwy {
   zShift: boolean;
 }
 
-/** Okno albo panel modułu odsłaniany wyzwalaczem paska kontekstu. */
+/**
+ * Okno albo panel modułu odsłaniany wyzwalaczem paska kontekstu: niesie kod
+ * będący kluczem stanu, napis wyzwalacza, numer warstwy, chowany element oraz
+ * skrót klawiszowy i licznik zebranych pozycji, o ile je ma.
+ */
 export interface RozszerzenieModulu {
   /** Kod okna operacyjnego albo nazwa panelu — klucz stanu odsłonięcia. */
   kod: string;
@@ -42,11 +39,7 @@ export interface RozszerzenieModulu {
   element: HTMLElement;
   /** Skrót klawiszowy rozszerzenia; pominięty znaczy „rozszerzenie skrótu nie ma". */
   skrot?: SkrotWarstwy;
-  /**
-   * Liczba pozycji, które rozszerzenie zebrało — staje przy nazwie wyzwalacza.
-   * Pominięta znaczy, że rozszerzenie niczego nie zlicza; zero jest wtedy
-   * nieodróżnialne od braku licznika, więc pominięcie ma znaczenie.
-   */
+  /** Liczba pozycji zebranych przez rozszerzenie; staje przy nazwie wyzwalacza. */
   licznik?(): number;
 }
 

@@ -16,7 +16,11 @@ import {
   obsluzZamiarUtworzenia,
 } from './zamiary-pulpitu';
 
-/** Zależności widoku pulpitu. */
+/**
+ * Zależności widoku pulpitu: nazwa projektu na pasku aplikacji, kanał kontraktu
+ * niosący zamiary do rdzenia oraz dwa przejścia — na inną trasę i do środowiska
+ * wskazanego z matrycy sesji.
+ */
 export interface ZaleznosciPulpitu {
   /** Nazwa projektu na pasku aplikacji. */
   projekt: string;
@@ -29,18 +33,9 @@ export interface ZaleznosciPulpitu {
 }
 
 /**
- * Widok trasy Mission Control.
- *
- * Jedna odpowiedzialność: związanie pulpitu operacyjnego z kanałem rdzenia
- * i z routerem. Pulpit stoi obok strony głównej, a nie zamiast niej: Centrum
- * dowodzenia jest wejściem przy rozpoczynaniu pracy, pulpit — przy powrocie
- * do niej. Obydwa są dostępne z przełącznika widoków.
- *
- * Dane pulpitu pochodzą z rdzenia: źródło pulpitu odpytuje `session.list`,
- * `window.list` i `channel.list` oraz subskrybuje zdarzenia `session.changed`,
- * `window.changed`, `queue.changed` i `progress.changed`; do pierwszego odczytu
- * pulpit pokazuje stany puste. Zamiary idą do rdzenia tym samym kanałem —
- * `session.open` i `queue.action` przechodzą kanałem kontraktu.
+ * Widok trasy Mission Control wiąże pulpit operacyjny z kanałem rdzenia
+ * i z routerem: dane pulpitu pochodzą wyłącznie z odczytu rdzenia, a zamiary
+ * Operatora wracają do rdzenia tym samym kanałem kontraktu.
  */
 export function utworzWidokPulpitu(zaleznosci: ZaleznosciPulpitu): WidokTrasy {
   const { kanal, naSrodowisko } = zaleznosci;

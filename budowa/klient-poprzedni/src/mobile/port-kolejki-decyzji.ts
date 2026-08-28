@@ -1,26 +1,17 @@
+/**
+ * Port kolejki decyzji — miejsce wpięcia wykazu przepływów wstrzymanych z pytaniem
+ * do człowieka. Kontrakt nie niesie ani komendy odczytu takiej kolejki, ani zdarzenia,
+ * ani struktury, więc port stoi pusty i czeka na źródło.
+ */
+
 import { Droga, type Kwit } from './kwit-decyzji';
 import type { PozycjaDecyzji } from './pozycje-decyzji';
 
 /**
- * Port kolejki decyzji — miejsce wpięcia wykazu przepływów wstrzymanych
- * z pytaniem do człowieka.
- *
- * Kontrakt nie niesie ani komendy odczytu takiej kolejki, ani zdarzenia, ani
- * struktury, więc port stoi pusty i czeka na źródło.
- *
- * Implementacja domyślna nie udaje kolejki pustej. Pusty wykaz znaczy „nic nie
- * czeka” i jest zdaniem uspokajającym; bez źródła byłoby ono nieprawdziwe
- * dokładnie w tej sytuacji, dla której ekran powstał. Dlatego
- * `BRAK_ZRODLA_KOLEJKI` oddaje `dostepna: false` wraz z powodem, a ekran pisze
- * ten powód wprost — tak samo jak pulpit w `mission-control/pas-decyzji.ts`.
- *
- * Wpięcie źródła to jedno wywołanie `zainstalujKolejkeDecyzji` przy montażu
- * warstwy mobilnej. Ekran się przez nie nie zmienia: pozycje portu mają ten sam
- * kształt co pozycje własne (`PozycjaDecyzji`), więc wchodzą do tego samego
- * wykazu i tego samego arkusza dróg.
+ * Odpowiedź portu — wykaz albo nazwany brak źródła. Oba stany wracają tą samą drogą,
+ * więc ekran nie musi rozróżniać wywołania udanego od nieudanego, żeby wiedzieć,
+ * czy wolno mu pytać o pozycje.
  */
-
-/** Odpowiedź portu — wykaz albo nazwany brak źródła. */
 export interface WynikKolejkiDecyzji {
   /** Czy źródło w ogóle istnieje. `false` znaczy: nie pytaj o pozycje. */
   dostepna: boolean;
@@ -29,7 +20,11 @@ export interface WynikKolejkiDecyzji {
   powodBraku?: string;
 }
 
-/** Rozstrzygnięcie jednej pozycji eskalacji podjęte z telefonu. */
+/**
+ * Rozstrzygnięcie jednej pozycji eskalacji podjęte z telefonu. Niesie wskazanie
+ * pozycji, samą decyzję i nieobowiązkowe słowo, które idzie do rdzenia razem
+ * z rozstrzygnięciem.
+ */
 export interface RozstrzygniecieEskalacji {
   idPozycji: string;
   /** Co Operator postanowił: puścić dalej czy odrzucić. */
@@ -38,7 +33,11 @@ export interface RozstrzygniecieEskalacji {
   uwaga?: string;
 }
 
-/** Kontrakt portu widziany przez warstwę mobilną. */
+/**
+ * Kontrakt portu widziany przez warstwę mobilną. Źródło podaje własną nazwę, odczyt
+ * wykazu i drogę rozstrzygnięcia, więc ekran pracuje tak samo niezależnie od tego,
+ * co zostało wpięte.
+ */
 export interface KolejkaDecyzji {
   /** Nazwa źródła wypisywana na ekranie — Operator ma wiedzieć, kto to mówi. */
   nazwa: string;
@@ -46,7 +45,11 @@ export interface KolejkaDecyzji {
   rozstrzygnij(rozstrzygniecie: RozstrzygniecieEskalacji): Promise<Kwit>;
 }
 
-/** Zdanie o braku źródła — jedno, żeby ekran i sprawdzian mówiły tak samo. */
+/**
+ * Zdanie o braku źródła — jedno, żeby ekran i sprawdzian mówiły tak samo. Trzymanie
+ * go w jednym miejscu chroni przed rozejściem się treści widzianej przez człowieka
+ * i treści sprawdzanej w próbie.
+ */
 export const ZDANIE_BRAKU_KOLEJKI =
   'Kolejki eskalacji rdzeń dziś nie wystawia: kontrakt nie niesie ani komendy jej ' +
   'odczytu, ani zdarzenia. Wykaz poniżej pokazuje wyłącznie to, co rdzeń umie ' +
@@ -83,17 +86,28 @@ export const BRAK_ZRODLA_KOLEJKI: KolejkaDecyzji = {
 
 let zainstalowana: KolejkaDecyzji = BRAK_ZRODLA_KOLEJKI;
 
-/** Wpina źródło kolejki decyzji. Wołane raz, przy montażu. */
+/**
+ * Wpina źródło kolejki decyzji. Wołane raz, przy montażu warstwy mobilnej, bo ekran
+ * czyta port przy każdym odświeżeniu i podmiana źródła w trakcie pracy zmieniałaby
+ * wykaz bez wiedzy człowieka.
+ */
 export function zainstalujKolejkeDecyzji(kolejka: KolejkaDecyzji): void {
   zainstalowana = kolejka;
 }
 
-/** Zdejmuje wpięcie — istnieje dla sprawdzianów, nie dla widoku. */
+/**
+ * Zdejmuje wpięcie i przywraca brak źródła. Istnieje dla sprawdzianów, a nie dla
+ * widoku: ekran nie ma czynności, która odpinałaby kolejkę decyzji w trakcie pracy
+ * warstwy mobilnej.
+ */
 export function odepnijKolejkeDecyzji(): void {
   zainstalowana = BRAK_ZRODLA_KOLEJKI;
 }
 
-/** Źródło kolejki decyzji obowiązujące teraz. */
+/**
+ * Źródło kolejki decyzji obowiązujące teraz. Dopóki nikt nic nie wpiął, oddaje
+ * implementację domyślną, która nazywa brak źródła zamiast udawać kolejkę pustą.
+ */
 export function kolejkaDecyzji(): KolejkaDecyzji {
   return zainstalowana;
 }

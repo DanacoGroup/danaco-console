@@ -13,35 +13,21 @@ import {
   type ZrodloWarsztatuProbne,
 } from './zrodlo-warsztatu-probne';
 
-/**
- * Sprawdziany DRÓG z okna do rdzenia dla warsztatu modułu Developer.
- *
- * ── Czego pilnują ──────────────────────────────────────────────────────────
- * Przycisk, który niczego nie woła, wygląda dokładnie tak samo jak przycisk
- * działający — i to jest usterka, którą widać dopiero u Operatora. Sprawdziany
- * naciskają kontrolki okien i pytają, czy z każdej rodziny komend naprawdę
- * wyszło wywołanie: nie o to, czy okno się narysowało.
- *
- * ── Czego NIE sprawdzają ───────────────────────────────────────────────────
- * Nie sprawdzają treści rdzenia — od tego są sprawdziany skutku po stronie
- * serwera, które schodzą do bazy i na dysk. Tutaj mierzy się jedno: czy droga
- * istnieje i czy okno mówi prawdę, gdy rdzeń odpowiada brakiem narzędzia.
- */
+// Sprawdziany drogi z okna do rdzenia dla warsztatu modułu Developer; badają, czy wywołanie wyszło.
 
-/** Naciska przycisk o podanej etykiecie i oddaje obietnicę obiegu zdarzeń. */
+/** Funkcja naciska w oknie przycisk o podanej etykiecie i oddaje obietnicę, która rozstrzyga się po obiegu zdarzeń. */
 async function nacisnij(gospodarz: HTMLElement, etykieta: string): Promise<void> {
   const przyciski = [...gospodarz.querySelectorAll('button')];
   const znaleziony = przyciski.find((przycisk) => przycisk.textContent === etykieta);
   expect(znaleziony, `w oknie nie ma przycisku „${etykieta}”`).toBeDefined();
   znaleziony?.click();
-  // Czynności okien są asynchroniczne; dwa obiegi wystarczają, bo atrapa
-  // odpowiada natychmiast, a okna rysują wynik w kolejnym kroku.
+  // Czynności okien są asynchroniczne; trzy obiegi wystarczają, bo okna rysują wynik w kolejnym kroku.
   await Promise.resolve();
   await Promise.resolve();
   await Promise.resolve();
 }
 
-/** Wpisuje wartość do pola o podanej etykiecie dostępności. */
+/** Funkcja wpisuje wskazaną wartość do pola formularza rozpoznanego po etykiecie dostępności w danym oknie. */
 function wpisz(gospodarz: HTMLElement, etykieta: string, wartosc: string): void {
   const kontrolka = gospodarz.querySelector<HTMLInputElement | HTMLTextAreaElement>(
     `[aria-label="${etykieta}"]`,
@@ -50,7 +36,7 @@ function wpisz(gospodarz: HTMLElement, etykieta: string, wartosc: string): void 
   if (kontrolka !== null) kontrolka.value = wartosc;
 }
 
-/** Zdanie stanu treści okna — po nim poznajemy, co okno naprawdę powiedziało. */
+/** Funkcja zwraca zdanie stanu treści okna jako tekst, po którym sprawdzian poznaje, co okno naprawdę powiedziało. */
 function zdanieOkna(gospodarz: HTMLElement): string {
   return gospodarz.textContent ?? '';
 }
@@ -126,8 +112,7 @@ describe('warsztat modułu Developer — drogi z okien do rdzenia', () => {
     await nacisnij(panel.element, 'Wykonaj wyrażenie');
     await nacisnij(panel.element, 'Zakończ sesję');
 
-    // Krok pociąga za sobą odczyt stosu: stan po kroku bierze się z rdzenia,
-    // a nie z naciśniętego przycisku.
+    // Krok pociąga za sobą odczyt stosu: stan po kroku bierze się z rdzenia, nie z przycisku.
     expect(warsztat.wywolania).toEqual([
       'punktPrzerwania',
       'rozpocznijDebugowanie',
@@ -272,9 +257,7 @@ describe('warsztat modułu Developer — drogi z okien do rdzenia', () => {
   });
 
   it('każda komenda warsztatu z kontraktu ma nazwę używaną przez klienta', () => {
-    // Sprawdzian pilnuje, że klient woła komendy PO NAZWACH KONTRAKTU, a nie po
-    // napisach wpisanych w kod: literówka w nazwie komendy wraca odmową
-    // „nieznana komenda” dopiero u Operatora.
+    // Sprawdzian pilnuje, że klient woła komendy po nazwach kontraktu, a nie po napisach wpisanych w kod.
     const warsztatoweKomendy = [
       Command.DeveloperSymbolNavigate,
       Command.DeveloperFormatRun,

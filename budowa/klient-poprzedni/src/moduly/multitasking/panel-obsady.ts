@@ -17,21 +17,9 @@ import { utrwalWskazanieAnalityka, wskazanieAnalitykaZSesji } from './wskazanie-
 import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
-/**
- * Panel obsady ról — zakładanie i nadawanie ról czterem oknom sceny.
- *
- * Ten plik odpowiada za scenę; czym rola jest nadawana i skąd bierze się zdanie
- * o skutku, rozstrzyga `nadanie-rol.ts` (`role.assign` na rolę, `role.update`
- * na wcielenie).
- *
- * Okno powstaje na wzór okna istniejącego: `window.create` wymaga kanału modelu,
- * katalogów roboczych, zasięgu wykonania i trybu uprawnień, więc klient bierze te
- * pola z okna, które w sesji już stoi. Sesja bez ani jednego okna nie daje wzorca
- * i panel mówi to wprost, zamiast wysyłać żądanie skazane na odmowę.
- *
- * Panel ma własne miejsce stanu treści i nie oddaje meldunków wywołaniu
- * zwrotnemu sceny — inaczej odmowy rdzenia przepadałyby w ciszy.
- */
+// Panel obsady zakłada i nadaje role czterem oknom sceny na wzór okna już istniejącego w sesji.
+
+/** Interfejs opisuje panel obsady ról: element osadzany w scenie wraz z funkcją odświeżania okien i wskazania analityka. */
 export interface PanelObsady {
   element: HTMLElement;
   /** Odczytuje okna sesji i wskazanie analityka. */
@@ -45,14 +33,10 @@ export interface OpcjeObsady {
   sekcje: ZrodloSekcjiPaneli;
 }
 
-/** Klucz wskazania okna analityka na poziomie sesji. */
+/** Stała podaje klucz wskazania okna analityka na poziomie sesji, wspólny dla zapisu i odczytu tego wskazania. */
 export const KLUCZ_ANALITYKA = 'multitasking.analityk';
 
-/**
- * Identyfikator panelu w oknie koordynatora — adres dla `panel.sections.*`.
- * Napis stały, bo układ ma przeżyć zamknięcie karty: identyfikator składany
- * w czasie działania rozjechałby się przy pierwszej zmianie tytułu okna.
- */
+/** Identyfikator panelu w oknie koordynatora — adres dla komend sekcji. Napis stały, bo układ ma przeżyć zamknięcie karty. */
 const PANEL_OBSADY = 'obsada-rol';
 
 export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
@@ -65,13 +49,10 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
   const { element, opis, obce, zalozKoordynatora, zalozWykonawce, zalozAnalityka } =
     zlozPowierzchnieObsady();
 
-  // Wcielenie roli — jedyny wołacz `role.update` w kliencie. Stoi w panelu
-  // obsady, bo dotyczy okna, które ten panel wskazuje jako koordynatora.
+  // Wcielenie roli jest jedynym wołaczem tej komendy; dotyczy okna wskazanego jako koordynator.
   const wcielenie = utworzPasekWcielenia(zrodlo, stan, potwierdz);
 
-  // Wykaz nadań pyta rdzeń (`role.list`) i zdejmuje rolę (`role.remove`).
-  // Po skutecznym zdjęciu scena musi przeczytać okna od nowa — stąd wywołanie
-  // zwrotne, a nie sięganie tego wykazu po `window.list` na własną rękę.
+  // Wykaz nadań pyta rdzeń o role i je zdejmuje; po zdjęciu scena czyta okna od nowa zwrotnie.
   const nadania = utworzWykazNadanRol({
     zrodlo,
     stan,
@@ -80,9 +61,7 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
     },
   });
 
-  // Sekcje panelu idą przez wzorzec powłoki: kolejność, zwinięcie i zdjęcie
-  // z widoku trzyma rdzeń (`panel.sections.*`), a moduł podaje wyłącznie swoje
-  // sekcje. Adresem jest okno koordynatora — to jego panel, więc jego układ.
+  // Sekcje panelu idą przez wzorzec powłoki: kolejność trzyma rdzeń, moduł podaje własne sekcje.
   const uklad = utworzSekcjePanelu({
     zrodlo: sekcje,
     panelId: PANEL_OBSADY,
@@ -94,8 +73,7 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
       { id: 'obce', tytul: 'Okna wykonawcze spoza tej obsady', tresc: obce },
     ],
   });
-  // Stan treści stoi pod sekcjami, bo melduje o nich wszystkich naraz — także
-  // o odmowie zapisu układu, która przyszła z powłoki.
+  // Stan treści stoi pod sekcjami, bo melduje o nich wszystkich naraz, także o odmowie zapisu układu.
   element.append(uklad.element, tresci.element);
 
   zalozKoordynatora.addEventListener('click', () => {
@@ -129,18 +107,13 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
     }
     const zalozone = wynik.wynik;
     const nadana = czyRolaNadana(zalozone, rola, koordynator);
-    // Wskazanie analityka utrwala się tylko wtedy, gdy rola naprawdę powstała;
-    // wskazywanie na okno, któremu rdzeń nadał inną rolę, byłoby zapisem
-    // nieprawdy do konfiguracji sesji.
+    // Wskazanie analityka utrwala się tylko, gdy rola naprawdę powstała, nie przy innej roli.
     const oUtrwaleniu =
       nadana && rola === WindowRole.Standalone
         ? ` ${await utrwalWskazanieAnalityka(zrodlo, stan, zalozone.id)}`
         : '';
     await odczytaj();
-    // Wykonawca wymaga dwóch kroków zamiast jednego; powód i granica obejścia
-    // stoją przy `dopnijWiezWykonawcy` w `nadanie-rol.ts`. Przesłanką jest
-    // obsada odczytana po założeniu, nie odpowiedź na żądanie — gdy rdzeń więź
-    // jednak utrwalił, drugie żądanie nie idzie wcale.
+    // Wykonawca wymaga dwóch kroków; przesłanką jest obsada odczytana po założeniu, nie odpowiedź żądania.
     const oWiezi = await dopnijWiezJesliZginela(zalozone, rola, koordynator);
     potwierdz(
       `${zdanieOZalozeniu(zalozone, rola, koordynator)}${oUtrwaleniu}${oWiezi.zdanie}`,
@@ -148,12 +121,7 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
     );
   }
 
-  /**
-   * Dopina więź wykonawcy, jeżeli po odczycie okien nie ma go w obsadzie.
-   *
-   * Milczy przy każdej innej roli i wtedy, gdy więź stoi — obejście ma się
-   * odzywać wyłącznie tam, gdzie naprawdę czegoś naprawiło.
-   */
+  // Obejście dopina więź wykonawcy, gdy po odczycie okien nie ma go w obsadzie; milczy w innych rolach.
   async function dopnijWiezJesliZginela(
     zalozone: Window,
     rola: WindowRole,
@@ -186,19 +154,14 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
     wzorzec = okna.wynik[0] ?? null;
     stan.ustawOkna(okna.wynik);
     tresci.pusto('');
-    // Nadania czyta się z rdzenia osobno od okien: `window.list` nie niesie
-    // wcielenia, więc jeden odczyt nie zastąpi drugiego. To dwa pytania o dwie
-    // różne rzeczy, nie dwa rejestry tej samej.
+    // Nadania czyta się z rdzenia osobno od okien: to dwa pytania o dwie różne rzeczy, nie jeden rejestr.
     nadania.odswiez();
   }
 
   function odswiez(): void {
     const obsada = stan.obsada();
     opis.replaceChildren(...opisObsady(obsada));
-    // Blokady chronią przed skutkiem nieodwracalnym: naciśnięcie założyłoby
-    // w rdzeniu drugie okno roli — prawdziwy wiersz w sesji, którego panel nie
-    // ma czym zdjąć, a `zlozObsade` i tak pokaże tylko pierwsze. Każda blokada
-    // mówi powód wprost, zamiast gasnąć w milczeniu.
+    // Blokady chronią przed skutkiem nieodwracalnym: drugie okno tej roli powstałoby w rdzeniu naprawdę.
     wygasZPowodem(
       zalozKoordynatora,
       obsada.koordynator !== null,
@@ -215,9 +178,7 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
       `Analityk jest już wskazany (${obsada.analityk?.id ?? ''}). Drugie okno analityka powstałoby w rdzeniu naprawdę i zostało bez wskazania.`,
     );
     wcielenie.odswiez();
-    // Układ sekcji jest własnością okna koordynatora. Dopóki obsada go nie ma,
-    // adres jest pusty i sekcje stoją miejscowo — powłoka mówi to wprost przy
-    // pierwszej próbie zmiany, zamiast udawać utrwalenie.
+    // Układ sekcji jest własnością okna koordynatora; bez niego adres pusty, sekcje stoją miejscowo.
     uklad.ustawOkno(obsada.koordynator?.id ?? '');
     obce.replaceChildren(
       ...pozycjeOkienObcych(obsada.obce, (okno) => {
@@ -237,7 +198,7 @@ export function utworzPanelObsady(opcje: OpcjeObsady): PanelObsady {
   };
 }
 
-/** Kontrolki panelu obsady wraz z miejscami na opis i wykaz okien obcych. */
+/** Interfejs zestawia kontrolki panelu obsady wraz z miejscami na opis obsady i wykaz okien wykonawczych spoza niej. */
 interface PowierzchniaObsady {
   element: HTMLElement;
   opis: HTMLElement;
@@ -247,16 +208,7 @@ interface PowierzchniaObsady {
   zalozAnalityka: HTMLButtonElement;
 }
 
-/**
- * Składa pasek zakładania, opis obsady i wykaz okien obcych.
- *
- * Czysta konstrukcja: żaden element nie domyka się na stanie wspólnym ani na
- * źródle okien — nasłuchy przycisków zakłada wytwórnia.
- *
- * Wykaz okien obcych wychodzi nieosadzony: jest jedną z sekcji panelu, a o tym,
- * gdzie sekcja stoi i czy jest zwinięta, rozstrzyga układ z rdzenia. Osadzenie
- * go tutaj na sztywno byłoby drugą prawdą o kolejności.
- */
+/** Funkcja składa pasek zakładania, opis obsady i wykaz okien obcych jako czystą konstrukcję bez własnych nasłuchów. */
 function zlozPowierzchnieObsady(): PowierzchniaObsady {
   const zalozKoordynatora = przycisk('Załóż koordynatora', 'dn-btn dn-btn--sm');
   const zalozWykonawce = przycisk('Załóż wykonawcę', 'dn-btn dn-btn--sm');
@@ -279,13 +231,7 @@ function zlozPowierzchnieObsady(): PowierzchniaObsady {
   return { element, opis, obce, zalozKoordynatora, zalozWykonawce, zalozAnalityka };
 }
 
-/**
- * Wygaszenie kontrolki wraz z powodem blokady.
- *
- * Czysta zamiana stanu w atrybuty: powód idzie trzema drogami, tak jak przy
- * kontrolkach bez pokrycia (`title`, `aria-description`, `data-powod-blokady`),
- * żeby dotarł i do wskaźnika, i do czytnika ekranu, i do sprawdzianu.
- */
+/** Funkcja wygasza kontrolkę wraz z powodem blokady, zapisanym trzema drogami: dla wskaźnika, czytnika ekranu i sprawdzianu. */
 function wygasZPowodem(kontrolka: HTMLButtonElement, wygaszona: boolean, powod: string): void {
   kontrolka.disabled = wygaszona;
   if (!wygaszona) {
@@ -328,7 +274,7 @@ function zadanieZalozeniaOkna(
   };
 }
 
-/** Trzy wiersze stanu obsady — czysta zamiana obsady na wiersze opisu. */
+/** Funkcja zamienia obsadę na trzy wiersze opisu: koordynatora, komplet wykonawców i wskazanego analityka. */
 function opisObsady(obsada: Obsada): HTMLElement[] {
   return [
     wierszOpisu('Koordynator', obsada.koordynator?.id ?? 'nie założony'),

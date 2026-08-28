@@ -18,22 +18,8 @@ import type { StanAssistant } from './stan-assistant';
 import type { ZrodloPamieci } from './zrodlo-pamieci';
 
 /**
- * Pamięć semantyczna i baza wiedzy profilu — dwie zakładki nad jedną parą
- * komend, więc jeden plik.
- *
- * `knowledge.search` odnajduje fragmenty PO ZNACZENIU i oddaje je wraz ze
- * źródłem, żeby dało się je zacytować zamiast streszczać. `knowledge.index`
- * buduje wskaźnik, z którego to wyszukiwanie korzysta. Rozdzielenie ich na dwa
- * pliki dałoby dwa miejsca mówiące o jednym wskaźniku.
- *
- * Zakładka rozstrzyga wyłącznie o tym, co jest w panelu widoczne: pamięć
- * semantyczna pokazuje szukanie, baza wiedzy — budowę wskaźnika. Wspólny jest
- * zakres (`KnowledgeScope`), bo wskaźnik jest jeden i szuka się w tym, co się
- * zindeksowało.
- *
- * Wgrywania dokumentów tu nie ma i nie powinno być: pliki wchodzą do platformy
- * przez moduł Library, a `knowledge.index` obejmuje wskaźnikiem to, co
- * w bibliotece już leży. Drugie wejście dla plików znaczyłoby dwa repozytoria.
+ * Pamięć semantyczna i baza wiedzy profilu dzielą jedną parę komend wyszukiwania i budowy
+ * wskaźnika, więc stoją w jednym pliku jako dwie zakładki.
  */
 export interface PanelWiedzy {
   /** Obszar zakładki „Pamięć semantyczna" — szukanie po znaczeniu. */
@@ -140,8 +126,7 @@ export function utworzPanelWiedzy(stan: StanAssistant, zrodlo: ZrodloPamieci): P
       return;
     }
     const zbudowany = wynik.wynik;
-    // Liczby pochodzą z odpowiedzi rdzenia, nie z zamówienia okna: wskaźnik
-    // potrafi przyjąć mniej pozycji, niż zakres obejmuje.
+    // Liczby pochodzą z odpowiedzi rdzenia, nie z zamówienia okna, bo wskaźnik bywa mniejszy.
     okno.puste(
       `Wskaźnik przyjął ${String(zbudowany.indexed)} pozycji i liczy ich teraz ` +
         `${String(zbudowany.total)}` +
@@ -155,7 +140,7 @@ export function utworzPanelWiedzy(stan: StanAssistant, zrodlo: ZrodloPamieci): P
   return { szukanie, wskaznik };
 }
 
-/** Jeden odnaleziony fragment: treść, źródło i trafność podane przez rdzeń. */
+/** Jeden odnaleziony fragment niesie treść, źródło i trafność podane przez rdzeń w odpowiedzi wyszukiwania. */
 function pozycjaFragmentu(trafienie: KnowledgeHit): HTMLElement {
   const czesci = [`źródło: ${trafienie.source}`];
   if (trafienie.sourceId !== undefined && trafienie.sourceId !== '') {
@@ -169,7 +154,7 @@ function pozycjaFragmentu(trafienie: KnowledgeHit): HTMLElement {
   return element;
 }
 
-/** Zdanie o tym, czym baza wiedzy profilu jest i skąd bierze treść. */
+/** Zdanie o tym, czym baza wiedzy profilu jest i skąd bierze treść, złożone z dokumentów już leżących w bibliotece. */
 function opisBazy(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
@@ -180,7 +165,7 @@ function opisBazy(): HTMLElement {
   return element;
 }
 
-/** Rząd przycisków obszaru — ten sam odstęp w obu zakładkach. */
+/** Rząd przycisków obszaru zachowuje ten sam odstęp w obu zakładkach panelu wiedzy i pamięci semantycznej. */
 function rzad(...kontrolki: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'ma-formularz__przyciski';

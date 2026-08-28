@@ -8,26 +8,12 @@ import type { StanPrzegladania } from './stan-przegladania';
 /**
  * Nawigacja Browser Window — formularz przejścia do strony wraz z odczytem
  * migawki i przewijaniem podglądu.
- *
- * Jedna odpowiedzialność: formularz przejścia i dwie komendy, które z niego
- * wychodzą. Podgląd, pasek zaznaczenia i pasek dolny są osobno.
- *
- * Przewijanie przewija migawkę, nie stronę w rdzeniu: przewinięcie po stronie
- * rdzenia ma własną komendę (`browser.scroll`), której formularz jeszcze nie
- * wywołuje. Zdanie pod przyciskami bierze powód z odczytu wykazu komend rdzenia,
- * więc zmieni się samo w dniu dobudowy obsługi.
- *
- * Adres w zdaniu końcowym pochodzi z migawki, nie z pola. `trim()` przeglądarki
- * nie jest tą samą funkcją co `strings.TrimSpace` rdzenia (JavaScript zdejmuje
- * U+FEFF, Go nie; Go zdejmuje U+0085, JavaScript nie), więc zdanie zbudowane
- * z pola byłoby prawdziwe przypadkiem. `browser.navigate` oddaje migawkę
- * z adresem, pod którym strona została pobrana (`skutek-zapisu.ts`).
  */
 export interface FormularzNawigacji {
   element: HTMLElement;
 }
 
-/** Czego formularz potrzebuje od ramy okna. */
+/** Czego formularz nawigacji potrzebuje od ramy okna: przewinięcie podglądu, przejście do wiersza i zdanie skutku. */
 export interface UjsciaNawigacji {
   przewin(kierunek: -1 | 1): void;
   /** Przewija podgląd do wiersza z pierwszym trafieniem wyszukiwania. */
@@ -116,11 +102,7 @@ export function utworzFormularzNawigacji(
     ujscia.powiedz(skutek.zdanie, skutek.udany);
   }
 
-  /**
-   * Odświeżenie idzie tą samą drogą co odczyt przy wejściu do modułu — przez
-   * stan modułu, nie własnym wywołaniem `browser.snapshot.get`. Dzięki temu
-   * o odmowie dowiaduje się także okno wiodące, a nie sam wiersz odpowiedzi.
-   */
+  // Odświeżenie idzie drogą odczytu przy wejściu do modułu, więc o odmowie dowie się też okno wiodące.
   async function pobierzMigawke(): Promise<void> {
     const idOkna = idOknaAlboPowod();
     if (idOkna === '') return;
@@ -130,11 +112,7 @@ export function utworzFormularzNawigacji(
     ujscia.powiedz(uwagi === '' ? 'Migawka strony odczytana z rdzenia.' : uwagi, uwagi === '');
   }
 
-  /**
-   * Wyszukiwanie w treści bieżącej strony. Dzieje się w kliencie na migawce,
-   * bo migawka jest całą treścią, którą moduł od rdzenia dostał — komendy
-   * wyszukiwania w stronie kontrakt nie niesie.
-   */
+  // Wyszukiwanie działa na migawce w kliencie, bo kontrakt nie niesie komendy wyszukiwania w stronie.
   function znajdzWTresci(): void {
     const migawka = stan.migawka();
     if (migawka === null) {

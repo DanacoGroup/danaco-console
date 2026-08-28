@@ -5,16 +5,8 @@ import { wywolaj } from '../protokol/wywolanie';
 
 /**
  * Wykaz identyfikatorów modeli, dla których wolno adresować ustawienia
- * i tożsamość na osi `model`.
- *
- * Kontrakt nie ma komendy `model.list`: model nie jest bytem rejestrowanym,
- * tylko wartością danych, którą niesie kanał modelu (`Channel.model`) albo
- * konto (`Account.defaultModel`). Wykaz składa się z tych dwóch źródeł i służy
- * wyłącznie jako podpowiedź do pola tekstowego — model jeszcze nieużywany
- * wpisuje się identyfikatorem wprost, bo pole nie jest listą zamkniętą.
- *
- * Rejestr kanałów, który nie dotarł, daje podpowiedź pustą, a nie pusty
- * formularz: adresowanie osi modelu działa dalej.
+ * i tożsamość na osi `model`. Wykaz składa się z kanałów rdzenia oraz z kont
+ * i służy jako podpowiedź do pola tekstowego, które nie jest listą zamkniętą.
  */
 export interface ZrodloModeli {
   /** Identyfikatory modeli znane rdzeniowi, bez powtórzeń, w porządku nazw. */
@@ -41,7 +33,11 @@ export function utworzZrodloModeli(kanal: Kanal): ZrodloModeli {
   };
 }
 
-/** Wykaz bez powtórzeń i bez pozycji pustych, uporządkowany po polsku. */
+/**
+ * Wykaz bez powtórzeń i bez pozycji pustych, uporządkowany porównaniem napisów
+ * właściwym dla polszczyzny; pozycje puste oraz złożone z samych odstępów
+ * odpadają.
+ */
 export function bezPowtorzen(pozycje: readonly (string | undefined)[]): string[] {
   const zebrane = new Set<string>();
   for (const pozycja of pozycje) {

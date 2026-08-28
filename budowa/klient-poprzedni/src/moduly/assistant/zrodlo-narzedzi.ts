@@ -19,30 +19,10 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Narzędzia, dołożenia i rutyny widziane przez okno Command & Tools Hub.
- *
- * Plik odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem
- * kształtu odpowiedzi; wzorem jest `zrodlo-assistant.ts`. Żadne wywołanie nie
- * rzuca wyjątkiem — odmowa wraca polem `blad` wyniku.
- *
- * Rodziny są trzy i każda odpowiada za inne pytanie okna:
- *
- *   `tools.catalog.list`   co w ogóle da się wywołać po ukośniku — narzędzia,
- *                          umiejętności i komendy akcji w jednym wykazie;
- *   `session.tool.*`       co z tego jest dołożone do tej karty sesji. Dołożenie
- *                          żyje w stanie sesji i NIE rusza definicji eksperta
- *                          (rozstrzygnięcie Właściciela zapisane w opisie
- *                          komendy);
- *   `automation.*`         gdzie kończy makro i rutyna asystenta. Opracowanie
- *                          modułu prowadzi tę drogę wprost: „Przekazanie
- *                          powtarzalnego makra lub rutyny do modułu
- *                          Automations". Rdzeń nie ma innego magazynu sekwencji
- *                          kroków, więc jest to jedyne miejsce, w którym makro
- *                          przeżywa sesję.
- *
- * `schedule.get` stoi po stronie odczytu do pary z `automation.schedule.set` —
- * bez niego okno pokazywałoby harmonogram, który samo wysłało, zamiast tego,
- * który rdzeń trzyma.
+ * Narzędzia, dołożenia i rutyny widziane przez okno Command & Tools Hub. Plik
+ * odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem
+ * kształtu odpowiedzi; żadne wywołanie nie rzuca wyjątkiem, a odmowa wraca
+ * polem `blad` wyniku.
  */
 export interface ZrodloNarzedzi {
   /** `tools.catalog.list` — wykaz pozycji po ukośniku. */

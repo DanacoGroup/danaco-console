@@ -16,19 +16,9 @@ import { utworzWiezAutomations } from './wiez-automations';
 import type { ZrodloNadzoru } from './zrodlo-nadzoru';
 
 /**
- * Sekcja ORKIESTRACJA panelu orkiestracji — zależności między krokami.
- *
- * `AutomationDependencyKind` niesie `sequential`, `parallel` i `conditional`;
- * sekcja steruje dokładnie tymi trzema rodzajami.
- *
- * Okno robocze jest cudze — edytor układu prowadzi Orchestrator modułu
- * Automations. Sekcja buduje sterowanie zależnościami i wskazuje układ,
- * na którym pracuje.
- *
- * Ocenę układu wydaje rdzeń: `orchestration.dependency.set` oddaje pole `valid`
- * wraz z zastrzeżeniami, a `orchestration.validate` dokłada ścieżkę krytyczną.
- * Widok nie wylicza cyklu samodzielnie, tylko pokazuje odpowiedź rdzenia
- * łącznie z odmową.
+ * Sekcja Orkiestracja steruje trzema rodzajami zależności między krokami:
+ * sekwencyjną, równoległą i warunkową, na wskazanym układzie prowadzonym przez
+ * Orchestrator modułu Automations.
  */
 export interface SekcjaOrkiestracji {
   element: HTMLElement;
@@ -41,7 +31,7 @@ export interface OpcjeSekcjiOrkiestracji {
   sekcje: ZrodloSekcjiPaneli;
 }
 
-/** Trzy rodzaje zależności wraz z tym, co znaczą dla biegu pracy. */
+/** Trzy rodzaje zależności wraz z tym, co dokładnie znaczą dla biegu pracy w wykonywanym układzie automatyki. */
 const RODZAJE: ReadonlyArray<[AutomationDependencyKind, string, string]> = [
   [AutomationDependencyKind.Sequential, 'Sekwencyjna', 'Krok następny rusza dopiero po zakończeniu poprzednika.'],
   [AutomationDependencyKind.Parallel, 'Równoległa', 'Oba kroki biegną obok siebie; żaden nie czeka na drugi.'],
@@ -267,7 +257,7 @@ export function utworzSekcjeOrkiestracji(
   };
 }
 
-/** Treść odmowy wraz z kodem kontraktu. */
+/** Treść odmowy wraz z kodem kontraktu, złożona w jedno pełne zdanie gotowe do pokazania w meldunku sekcji. */
 function powod(zdanie: string | undefined, kod: string | undefined): string {
   return `Powód: ${zdanie ?? 'rdzeń nie podał przyczyny'} (kod ${kod ?? 'brak'}).`;
 }

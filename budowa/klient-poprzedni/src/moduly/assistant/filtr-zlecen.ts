@@ -3,17 +3,9 @@ import { wybor } from '../../modele/kontrolki-formularza';
 import { NAZWY_FILTRA, POZYCJE_FILTRA, type KodFiltraZlecen } from './etykiety-assistant';
 
 /**
- * Filtr statusu wykazu zleceń Actions Monitora.
- *
- * Zawężenie liczy się w oknie, a nie w rdzeniu: `assistant.action.status` nie
- * ma pola stanu w żądaniu (`adapter_modul_asystent_czynnosci.go` czyta po
- * `windowId` albo po `actionId`), więc wykaz i tak przychodzi w całości.
- * Odczyt na każdą zmianę pozycji listy byłby wywołaniem bez nowej treści.
- *
- * Grupy filtra są złożone ze stanów kontraktu, nie z własnych nazw stanów.
- * „Anulowane" stoi osobno od „nieudanych", bo anulowanie jest decyzją
- * Operatora, a nie niepowodzeniem zlecenia — zlanie obu w jedną pozycję
- * kazałoby czytać własną decyzję jako usterkę.
+ * Filtr statusu wykazu zleceń Actions Monitora. Zawężenie liczy się w oknie,
+ * ponieważ komenda `assistant.action.status` nie ma pola stanu w żądaniu
+ * i wykaz zleceń przychodzi z rdzenia w całości.
  */
 export interface FiltrZlecen {
   /** Kontrolka osadzana w nagłówku okna. */
@@ -26,7 +18,11 @@ export interface FiltrZlecen {
   nazwa(): string;
 }
 
-/** Stany kontraktu objęte każdą grupą filtra; puste znaczy „bez zawężenia". */
+/**
+ * Stany kontraktu objęte każdą grupą filtra; grupa pusta znaczy brak
+ * zawężenia. Anulowane stoją osobno od nieudanych, bo anulowanie jest decyzją
+ * Operatora, a nie niepowodzeniem zlecenia.
+ */
 const GRUPY: Readonly<Record<KodFiltraZlecen, readonly AssistantActionStatus[]>> = {
   wszystkie: [],
   wToku: [
@@ -41,9 +37,7 @@ const GRUPY: Readonly<Record<KodFiltraZlecen, readonly AssistantActionStatus[]>>
 
 export function utworzFiltrZlecen(naZmiane: () => void): FiltrZlecen {
   const kontrolka = wybor('Filtr statusu zleceń', POZYCJE_FILTRA);
-  // Wykaz otwiera się bez zawężenia. Zlecenie zakończone chwilę wcześniej jest
-  // dla Operatora wchodzącego do modułu tak samo istotne jak zlecenie w toku,
-  // a wykaz zawężony od razu wyglądałby na pusty rdzeń.
+  // Wykaz otwiera się bez zawężenia; zlecenie zakończone chwilę wcześniej jest tak samo istotne.
   kontrolka.value = 'wszystkie';
   kontrolka.addEventListener('change', naZmiane);
 

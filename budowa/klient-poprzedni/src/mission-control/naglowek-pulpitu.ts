@@ -2,13 +2,9 @@ import { elementIkony } from '../ikony/ikony';
 import { ZrodloDanych } from './model-danych';
 
 /**
- * Nagłówek pulpitu operacyjnego.
- *
- * Jedna odpowiedzialność: tytuł ekranu i jawne oznaczenie pochodzenia liczb.
- * Dopóki odczyt z rdzenia nie nadszedł (`ZrodloDanych.Oczekiwanie`), przy tytule
- * stoi plakietka „oczekiwanie na rdzeń" wraz ze zdaniem wyjaśniającym, żeby pusty
- * ekran nie został wzięty za pomiar. Po pierwszym odczycie plakietka mówi „dane
- * z rdzenia"; pulpit nie zna innych źródeł.
+ * Nagłówek pulpitu operacyjnego niesie tytuł ekranu oraz jawne oznaczenie
+ * pochodzenia liczb: do pierwszego odczytu z rdzenia stoi przy tytule plakietka
+ * oczekiwania, a po odczycie plakietka wskazująca rdzeń jako jedyne źródło.
  */
 export interface NaglowekPulpitu {
   element: HTMLElement;
@@ -16,7 +12,11 @@ export interface NaglowekPulpitu {
   oznacz(zrodlo: ZrodloDanych): void;
 }
 
-/** Buduje nagłówek pulpitu. */
+/**
+ * Buduje nagłówek pulpitu wraz z plakietką pochodzenia danych i zwraca funkcję
+ * przestawiającą ją później, ponieważ odczyt z rdzenia nadchodzi już po
+ * zbudowaniu ekranu.
+ */
 export function utworzNaglowekPulpitu(zrodlo: ZrodloDanych): NaglowekPulpitu {
   const element = document.createElement('header');
   element.className = 'mc-czolo';

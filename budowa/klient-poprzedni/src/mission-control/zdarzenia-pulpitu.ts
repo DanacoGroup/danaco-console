@@ -2,15 +2,10 @@ import { Command, QueueAction } from '../../../shared/contract';
 import type { IdSrodowiska, RodzajUtworzenia } from './model-danych';
 
 /**
- * Ładunki zdarzeń, które pulpit wystawia powłoce.
- *
- * Jedna odpowiedzialność: opis zamiaru operatora wyrażony nazwami kontraktu.
- * Pulpit nie wysyła komend samodzielnie — nadaje zamiar, a powłoka składa
- * z niego kopertę. Dzięki temu nazwa komendy pojawia się w jednym miejscu i jest
- * importowana z `shared/contract`, nie przepisana.
+ * Ładunki zdarzeń, które pulpit wystawia powłoce, opisują zamiar Operatora
+ * nazwami kontraktu. Wejście do sesji z matrycy niesie komendę `session.open`
+ * wraz z identyfikatorem sesji, środowiskiem kolumny oraz tytułem sesji.
  */
-
-/** Wejście do sesji z matrycy — powłoka wysyła `session.open`. */
 export interface WejscieDoSesji {
   /** Komenda kontraktu, którą zamiar realizuje. */
   komenda: typeof Command.SessionOpen;
@@ -23,17 +18,10 @@ export interface WejscieDoSesji {
 }
 
 /**
- * Zamiar wobec kolejki.
- *
- * Cztery przyciski transportu odpowiadają wprost `QueueAction` kontraktu,
- * piąty — przekazanie — komendzie `context.transfer`.
- *
- * Pole `rola` niesie nazwę kolejki widoczną dla operatora; kontrakt nie niesie
- * roli kolejki, więc zamiar jej nie podstawia.
- *
- * „Podnieś priorytet" nie ma odpowiednika ani w `QueueAction`, ani wśród komend,
- * dlatego zamiar niesie rodzaj `priorytet` z komendą `null` zamiast literału
- * wymyślonego po stronie klienta.
+ * Zamiar wobec kolejki: cztery przyciski transportu odpowiadają wprost
+ * wyliczeniu `QueueAction` kontraktu, piąty — przekazanie — komendzie
+ * `context.transfer`, a podniesienie priorytetu odpowiednika w kontrakcie
+ * nie ma.
  */
 export type ZamiarKolejki =
   | {
@@ -53,20 +41,28 @@ export type ZamiarKolejki =
     }
   | {
       rodzaj: 'priorytet';
-      /** Brak odpowiednika w kontrakcie — patrz uwaga wyżej. */
+      /** Brak odpowiednika w kontrakcie, więc komenda pozostaje pusta. */
       komenda: null;
       idKolejki: string;
       rola: string;
     };
 
-/** Zamiar utworzenia bytu z rzędu „Utwórz". */
+/**
+ * Zamiar utworzenia bytu z rzędu kafli „Utwórz" niesie rodzaj tworzonego bytu
+ * oraz nazwę kafla, którą nacisnął Operator; komendę dobiera z nich powłoka,
+ * ponieważ pulpit komendy tworzenia sam nie wysyła.
+ */
 export interface ZamiarUtworzenia {
   rodzaj: RodzajUtworzenia;
   /** Nazwa kafla, którą nacisnął operator. */
   etykieta: string;
 }
 
-/** Wezwanie do rozstrzygnięcia wstrzymanych przepływów. */
+/**
+ * Wezwanie do rozstrzygnięcia wstrzymanych przepływów niesie liczbę przepływów
+ * czekających w chwili naciśnięcia oraz przepływ czekający najdłużej, więc
+ * powłoka wie, ile spraw czeka i od której zacząć.
+ */
 export interface ZamiarDecyzji {
   /** Ile przepływów czeka w chwili naciśnięcia. */
   przeplywy: number;
@@ -74,7 +70,11 @@ export interface ZamiarDecyzji {
   najstarszy: string;
 }
 
-/** Wykaz działań transportu kolejki w kolejności widocznej na pasku. */
+/**
+ * Wykaz działań transportu kolejki w kolejności widocznej na pasku; kolejność
+ * stoi wyłącznie tutaj, więc pasek przycisków i zamiar wysyłany do powłoki
+ * nie mogą się co do niej rozminąć.
+ */
 export const DZIALANIA_TRANSPORTU: readonly QueueAction[] = [
   QueueAction.Start,
   QueueAction.Pause,

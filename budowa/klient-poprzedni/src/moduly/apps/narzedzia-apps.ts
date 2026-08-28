@@ -22,33 +22,14 @@ import {
 } from './przybornik-apps';
 import type { StanProduktu } from './stan-produktu';
 
-/**
- * Narzędzia przyborników modułu Apps — po jednym na każdą z trzydziestu pięciu
- * komend obszaru dobudowanych do sześciu, od których moduł zaczynał.
- *
- * Wykazy są pogrupowane wedle okna, w którym opracowanie umieszcza czynność:
- * Product Builder prowadzi produkt, etapy, kamienie milowe i oś czasu;
- * Architecture Designer — walidację, wersje, adnotacje i eksport; warsztaty —
- * podgląd, trasy, motyw, punkty końcowe i schemat; Deployment Panel —
- * środowiska, zmienne, domenę, skalowanie, kondycję, dzienniki i artefakty;
- * Publisher Panel — pakowanie, manifest, walidację, podpis i publikację.
- *
- * Zdanie o skutku jest w każdym narzędziu inne, bo skutek jest inny: liczba
- * pozycji, nazwa bytu, kod odpowiedzi, odwołanie do pliku, wynik weryfikacji
- * podpisu. Wspólne „gotowe" byłoby meldunkiem, z którego nic nie wynika — a to
- * jest dokładnie ten wzorzec, którego moduł ma nie powtórzyć.
- *
- * Wartości startowe pól są przykładami z domeny produktu, nie wartościami
- * wymuszonymi: Operator zmienia je przed naciśnięciem, a puste pole
- * nieobowiązkowe znaczy „bez zawężenia".
- */
+// Narzędzia przyborników modułu Apps: po jednym na każdą komendę obszaru.
 
-/** Skrót do okna modułu — każda komenda obszaru go wymaga. */
+/** Skrót do okna modułu — funkcja pobiera identyfikator z bieżącego stanu produktu; każda komenda obszaru go wymaga w żądaniu. */
 function okno(stan: StanProduktu): string {
   return wymagajOknaModulu(stan.idOkna());
 }
 
-/** Narzędzia Product Buildera: produkt, powiązania, etapy, kamienie, oś czasu. */
+/** Narzędzia Product Buildera modułu Apps: metadane produktu, powiązania między bytami, etapy realizacji, kamienie milowe i oś czasu. */
 export function narzedziaProductBuilder(stan: StanProduktu): readonly NarzedzieApps[] {
   return [
     {
@@ -135,9 +116,7 @@ export function narzedziaProductBuilder(stan: StanProduktu): readonly NarzedzieA
         { klucz: 'wykonawca', etykieta: 'Wykonawca' },
       ],
       async wykonaj(wartosci) {
-        // Pole wykonawcy rozróżnia trzy stany: pole nietknięte przez Operatora
-        // (wartość pusta i etap nowy) nie rusza przypisania, pusty łańcuch przy
-        // etapie zmienianym je zdejmuje, wartość przypisuje.
+        // Pole wykonawcy: puste przy etapie nowym nie zmienia przypisania; pusty ciąg przy zmianie usuwa.
         const idEtapu = (wartosci['idEtapu'] ?? '').trim();
         const wykonawca = wartosci['wykonawca'] ?? '';
         const wynik = await stan.zrodlo.zapiszEtap({
@@ -238,7 +217,7 @@ export function narzedziaProductBuilder(stan: StanProduktu): readonly NarzedzieA
   ];
 }
 
-/** Narzędzia Architecture Designera: walidacja, wersje, adnotacje, eksport. */
+/** Narzędzia Architecture Designera modułu Apps: walidacja układu, zapis i odczyt wersji, adnotacje oraz eksport do pliku. */
 export function narzedziaArchitectureDesigner(stan: StanProduktu): readonly NarzedzieApps[] {
   return [
     {
@@ -251,8 +230,7 @@ export function narzedziaArchitectureDesigner(stan: StanProduktu): readonly Narz
         }
         const zastrzezenia = wynik.wynik.issues;
         if (zastrzezenia.length === 0) return 'Układ bez zastrzeżeń.';
-        // Zastrzeżenie nie blokuje niczego — kontrakt mówi to wprost. Zdanie
-        // mówi więc, co znaleziono, a nie „nie można iść dalej".
+        // Zastrzeżenie nie blokuje niczego; zdanie podaje, co znaleziono, nie że nie można iść dalej.
         return `Zastrzeżeń: ${zastrzezenia.length} (ostrzeżenia, nie brama) — ${zastrzezenia
           .map((zastrzezenie) => `${zastrzezenie.severity}: ${zastrzezenie.message}`)
           .join('; ')}.`;
@@ -508,7 +486,7 @@ export function narzedziaWarsztatu(
   ];
 }
 
-/** Narzędzia Deployment Panelu: środowiska, zmienne, domena, skalowanie, kondycja. */
+/** Narzędzia Deployment Panelu modułu Apps: środowiska wdrożeniowe, zmienne konfiguracyjne, domena, skalowanie oraz kondycja usługi. */
 export function narzedziaDeploymentPanel(stan: StanProduktu): readonly NarzedzieApps[] {
   return [
     {
@@ -682,7 +660,7 @@ export function narzedziaDeploymentPanel(stan: StanProduktu): readonly Narzedzie
   ];
 }
 
-/** Narzędzia Publisher Panelu: pakiet, manifest, walidacja, podpis, publikacja. */
+/** Narzędzia Publisher Panelu modułu Apps: pakietowanie, manifest, walidacja pakietu, podpis cyfrowy oraz publikacja do kanału. */
 export function narzedziaPublisherPanel(stan: StanProduktu): readonly NarzedzieApps[] {
   return [
     {
@@ -765,8 +743,7 @@ export function narzedziaPublisherPanel(stan: StanProduktu): readonly NarzedzieA
         const wynik = await stan.zrodlo.podpiszPakiet(
           okno(stan),
           wymagajPola(wartosci['pakiet'] ?? '', 'Pakiet podpisywany'),
-          // Do rdzenia idzie odwołanie, nie treść klucza — klucz wydawcy leży
-          // w warstwie sekretów i przez kontrakt nie przechodzi.
+          // Do rdzenia idzie odwołanie, nie treść klucza; klucz leży w warstwie sekretów.
           wymagajPola(wartosci['klucz'] ?? '', 'Odwołanie do klucza wydawcy'),
         );
         if (!wynik.udany || wynik.wynik === undefined) {
@@ -806,12 +783,10 @@ export function narzedziaPublisherPanel(stan: StanProduktu): readonly NarzedzieA
 }
 
 // ── Przekłady wartości pól na wartości kontraktu ─────────────────────────────
-//
-// Każdy przekład odmawia przy wartości spoza kontraktu, zamiast przepuszczać ją
-// do rdzenia. Odmowa pada wtedy przy polu, które Operator właśnie wypełniał,
-// a nie w kopercie o niepoprawnym ładunku.
 
-/** Rozdziela wartości wpisane po przecinku, pomijając puste. */
+// Każdy przekład odmawia przy wartości spoza kontraktu; odmowa pada przy polu, które wypełniano.
+
+/** Rozdziela wartości pola wpisane po przecinku na wykaz pozycji, pomijając pozycje puste powstałe z odstępów wokół przecinków. */
 function rozdzielPrzecinkami(wartosc: string): readonly string[] {
   return wartosc
     .split(',')

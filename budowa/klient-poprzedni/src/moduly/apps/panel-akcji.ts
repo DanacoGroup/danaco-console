@@ -5,16 +5,10 @@ import type { Kanal } from '../../protokol/kanal';
 import { KOD_MODULU } from './zrodlo-okna-modulu';
 
 /**
- * Panel akcji modułu zbudowany z rejestru rdzenia, nie z listy w kliencie.
- *
- * Pozycje przychodzą komendą `action.list` o zasięgu `module` i kluczu równym
- * kodowi modułu. Nowa akcja modułu to nowy wiersz rejestru, nie zmiana kodu
- * klienta — dlatego panel nie ma ani jednej pozycji zapisanej tutaj.
- *
- * Wiersz rejestru niesie nazwę komendy, którą akcja wywołuje, ale generycznej
- * drogi wywołania (`window.action`) nie woła dziś żaden widok. Naciśnięcie
- * nazywa więc komendę wiersza i mówi, że droga generyczna czeka na konsumenta,
- * zamiast milczeć albo udawać wykonanie.
+ * Panel akcji modułu zbudowany z rejestru rdzenia, a nie z listy zapisanej
+ * w kliencie. Pozycje przychodzą komendą `action.list` o zasięgu `module`
+ * i kluczu równym kodowi modułu, więc panel nie ma ani jednej pozycji
+ * wpisanej w tym pliku.
  */
 export interface PanelAkcji {
   element: HTMLElement;
@@ -56,7 +50,11 @@ export function utworzPanelAkcji(kanal: Kanal): PanelAkcji {
   };
 }
 
-/** Jedna pozycja katalogu: przycisk nazywający komendę wiersza rejestru. */
+/**
+ * Jedna pozycja katalogu: przycisk nazywający komendę wiersza rejestru oraz
+ * opis pozycji, gdy rejestr go niesie. Naciśnięcie przycisku pokazuje
+ * komunikat z nazwą komendy.
+ */
 function wiersz(akcja: Action): HTMLElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';

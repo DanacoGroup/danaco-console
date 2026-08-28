@@ -8,23 +8,9 @@ import {
 } from './slady-adnotacji';
 
 /**
- * Płótno adnotacji — `<canvas>` położony nad sceną podglądu strony.
- *
+ * Płótno adnotacji — element rysunkowy położony nad sceną podglądu strony.
  * Jedna odpowiedzialność: element płótna, gesty wskaźnika i przerysowanie
- * wykazu śladów. Pasek narzędzi jest osobno (`pasek-adnotacji.ts`), a złożenie
- * jednego z drugim w warstwę nad podglądem — w `warstwa-adnotacji.ts`.
- *
- * DOM podglądu pozostaje nietknięty: płótno nie dopisuje ani jednego węzła do
- * `mb-podglad`, nie zmienia mu klas i niczego z niego nie czyta — leży nad nim.
- *
- * Tło jest przezroczyste, bo zrzutu strony nie ma: rdzeń pobiera stronę
- * biblioteką HTTP i zostawia `screenshotRef` pusty
- * (`przegladarka_pobieranie.go`). Rysunek powstaje więc po tym, co pokazuje
- * scena, i nie utrwala tła.
- *
- * `getContext('2d')` oddaje `null` w środowisku bez rasteryzacji — wtedy nie ma
- * czego wykreślić, ale wykaz śladów, wybór narzędzia i czyszczenie działają
- * nietknięte.
+ * wykazu śladów; DOM podglądu pozostaje przy tym całkiem nietknięty.
  */
 export interface PlotnoAdnotacji {
   /** Element `<canvas>` osadzany w warstwie nad sceną. */
@@ -40,10 +26,7 @@ export interface PlotnoAdnotacji {
   wyczysc(): void;
   /** Ile śladów niesie rysunek; zero znaczy „nie ma czego spłaszczać". */
   liczbaSladow(): number;
-  /**
-   * Spłaszcza płótno do PNG (`canvas.toDataURL`). Pusty napis znaczy, że
-   * przeglądarka nie oddała obrazu — okno ma o tym powiedzieć, nie wysłać pustkę.
-   */
+  /** Spłaszcza płótno do PNG; napis pusty znaczy, że przeglądarka nie oddała obrazu. */
   doPng(): string;
   /** Dopasowuje bufor do ramki i odtwarza rysunek z wykazu śladów. */
   dopasuj(): void;
@@ -62,18 +45,10 @@ export function utworzPlotnoAdnotacji(zetonPoczatkowy: string): PlotnoAdnotacji 
   let napis = '';
   let biezacy: Slad | null = null;
 
-  // Kontekst czytany raz: `getContext` przy każdym pociągnięciu kosztuje bez
-  // powodu, a jego brak jest stanem trwałym środowiska, nie chwilowym.
+  // Kontekst czytany raz — jego brak jest stanem trwałym środowiska, nie chwilowym.
   const pisak = element.getContext('2d') as PisakPlotna | null;
 
-  /**
-   * Barwa rozwiązana z żetonu motywu w chwili rysowania.
-   *
-   * Płótno 2D nie zna `var(--dn-…)`, więc żeton trzeba rozwiązać z wyliczonego
-   * stylu elementu. Gdy arkusz nie jest wczytany (sprawdzian bez stylów),
-   * wracamy do koloru tekstu elementu, a nie do barwy zapisanej wprost — żadna
-   * nie ma prawa paść w kodzie.
-   */
+  // Barwa rozwiązana z żetonu motywu w chwili rysowania, z wyliczonego stylu elementu płótna.
   function barwaZetonu(nazwa: string): string {
     const styl = getComputedStyle(element);
     const wartosc = styl.getPropertyValue(nazwa).trim();
@@ -94,8 +69,7 @@ export function utworzPlotnoAdnotacji(zetonPoczatkowy: string): PlotnoAdnotacji 
   /** Punkt zdarzenia przełożony na ułamek ramki płótna. */
   function punkt(zdarzenie: PointerEvent): Punkt {
     const ramka = element.getBoundingClientRect();
-    // Ramka o zerowym boku daje dzielenie przez zero; jedynka zostawia
-    // współrzędną nietkniętą zamiast wpisać do śladu `NaN`.
+    // Ramka o zerowym boku daje dzielenie przez zero; jedynka zostawia współrzędną nietkniętą.
     return {
       x: (zdarzenie.clientX - ramka.left) / (ramka.width === 0 ? 1 : ramka.width),
       y: (zdarzenie.clientY - ramka.top) / (ramka.height === 0 ? 1 : ramka.height),
@@ -105,8 +79,7 @@ export function utworzPlotnoAdnotacji(zetonPoczatkowy: string): PlotnoAdnotacji 
   function zacznij(zdarzenie: PointerEvent): void {
     const poczatek = punkt(zdarzenie);
     if (narzedzie === 'tekst') {
-      // Napis powstaje jednym naciśnięciem, bez ciągnięcia: treść bierze się
-      // z pola paska, więc pociągnięcie nie miałoby czego zbierać.
+      // Napis powstaje jednym naciśnięciem, bez ciągnięcia — treść bierze się z pola paska.
       if (napis !== '') {
         slady.push({ narzedzie, zeton, punkty: [poczatek], tekst: napis });
         odrysuj();
@@ -123,8 +96,7 @@ export function utworzPlotnoAdnotacji(zetonPoczatkowy: string): PlotnoAdnotacji 
   function prowadz(zdarzenie: PointerEvent): void {
     if (biezacy === null) return;
     const kolejny = punkt(zdarzenie);
-    // Ołówek zbiera całą trasę, figura tylko dwa naroża — dlatego kolejny
-    // punkt raz się dokłada, a raz podmienia drugi.
+    // Ołówek zbiera całą trasę, figura tylko dwa naroża — punkt raz się dokłada, a raz podmienia drugi.
     if (biezacy.narzedzie === 'olowek') biezacy.punkty.push(kolejny);
     else biezacy.punkty = [biezacy.punkty[0] ?? kolejny, kolejny];
     odrysuj();
@@ -143,9 +115,7 @@ export function utworzPlotnoAdnotacji(zetonPoczatkowy: string): PlotnoAdnotacji 
   element.addEventListener('pointercancel', skoncz);
   element.addEventListener('pointerleave', skoncz);
 
-  // Zmiana rozmiaru zeruje bufor płótna — obraz odtwarza się z wykazu śladów.
-  // Obserwator bywa nieobecny (środowisko sprawdzianu), a jego brak nie jest
-  // powodem, by tryb adnotacji nie działał.
+  // Zmiana rozmiaru zeruje bufor; brak obserwatora w środowisku sprawdzianu nie blokuje trybu adnotacji.
   const obserwator =
     typeof ResizeObserver === 'function' ? new ResizeObserver(() => dopasuj()) : null;
   obserwator?.observe(element);

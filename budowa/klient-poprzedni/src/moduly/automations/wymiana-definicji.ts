@@ -1,16 +1,16 @@
+/**
+ * Wymiana definicji automatyki z plikiem, czyli pozycja „Import/eksport
+ * definicji” panelu akcji Workflow Buildera. Wymiana obywa się bez komendy
+ * kontraktu: definicja jest już w oknie, a plik leży po stronie klienta.
+ */
 import type { EdytorKrokow } from './edytor-krokow';
 import type { StanTresci } from './stany-okna';
 
 /**
- * Wymiana definicji automatyki z plikiem — pozycja „Import/eksport definicji”
- * panelu akcji Workflow Buildera.
- *
- * Wymiana obywa się bez komendy kontraktu: definicja jest już w oknie, a plik
- * leży po stronie klienta. Import wypełnia edytor; do rdzenia trafia dopiero
- * zapis, tą samą komendą co każda inna zmiana.
+ * Wczytanie definicji z pliku po stronie klienta. Import wypełnia edytor kroków
+ * i nie pyta rdzenia; do rdzenia trafia dopiero zapis, tą samą komendą co każda
+ * inna zmiana definicji.
  */
-
-/** Wczytanie definicji z pliku — import bez pytania rdzenia, bo plik jest lokalny. */
 export function wczytajPlik(edytor: EdytorKrokow, tresc: StanTresci): void {
   const wybor = document.createElement('input');
   wybor.type = 'file';

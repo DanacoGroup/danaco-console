@@ -1,20 +1,21 @@
 /**
- * Podgląd kolejnych uruchomień z notacji cron — pozycja panelu akcji okna
- * Scheduler („podgląd kolejnych uruchomień”).
- *
- * Rachunek stoi po stronie klienta, bo dotyczy cykliczności jeszcze
- * niezapisanej: kontrakt nie ma ani pola z wykazem kolejnych terminów, ani
- * komendy próbnego wyliczenia. Wartością obowiązującą po zapisie pozostaje
- * `AutomationSchedule.nextRunAt` liczone przez rdzeń.
- *
- * Rachunek idzie w czasie UTC — tak samo jak w rdzeniu, żeby oba wyniki dawały
- * się porównać. Zapis nieczytelny daje wykaz pusty.
+ * Podgląd kolejnych uruchomień wyliczonych z notacji cron dla panelu akcji okna
+ * Scheduler. Rachunek biegnie w czasie UTC, tak samo jak w rdzeniu, a zapis
+ * nieczytelny daje wykaz pusty.
  */
 
-/** Ile terminów pokazuje podgląd. */
+/**
+ * Liczba terminów pokazywanych w podglądzie, gdy wywołanie nie podaje własnej
+ * liczby. Wartość obowiązuje wyłącznie po stronie klienta i nie ma wpływu na
+ * rachunek prowadzony przez rdzeń.
+ */
 const LICZBA_TERMINOW = 5;
 
-/** Ile dni wprzód wolno szukać terminu — tyle samo, co w rdzeniu. */
+/**
+ * Ile dni wprzód sięga poszukiwanie terminu; granica jest ta sama, co w rdzeniu.
+ * Horyzont ogranicza przegląd zapisów pozbawionych trafienia w danym roku
+ * i chroni pętlę przed biegiem bez końca.
+ */
 const HORYZONT_DNI = 366;
 
 export function nastepneUruchomienia(
@@ -39,7 +40,11 @@ export function nastepneUruchomienia(
   return terminy;
 }
 
-/** Zbiory wartości pięciu pól zapisu wraz z rozpoznaniem gwiazdek pól dnia. */
+/**
+ * Zbiory dopuszczalnych wartości pięciu pól zapisu wraz z rozpoznaniem gwiazdki
+ * w polu dnia miesiąca oraz w polu dnia tygodnia. Rozpoznanie gwiazdek
+ * rozstrzyga sposób łączenia obu pól dnia przy dopasowaniu daty.
+ */
 interface PolaCron {
   minuty: Set<number>;
   godziny: Set<number>;
@@ -50,7 +55,11 @@ interface PolaCron {
   tydzienDowolny: boolean;
 }
 
-/** Rozkłada zapis pięciopolowy; zapis niezrozumiały daje `null`. */
+/**
+ * Rozkłada zapis pięciopolowy na zbiory wartości poszczególnych pól. Zapis
+ * o innej liczbie pól albo zawierający pole nieczytelne oddaje wartość pustą,
+ * którą podgląd przedstawia jako wykaz pusty.
+ */
 export function polaCron(zapis: string): PolaCron | null {
   const czesci = zapis.trim().split(/\s+/);
   if (czesci.length !== 5) return null;
@@ -76,7 +85,11 @@ export function polaCron(zapis: string): PolaCron | null {
   };
 }
 
-/** Pierwsza chwila nie wcześniejsza niż `od`, pasująca do zapisu. */
+/**
+ * Wyszukuje pierwszą chwilę nie wcześniejszą niż podana, pasującą do zapisu.
+ * Przegląd biegnie dzień po dniu w granicach horyzontu, a wewnątrz dnia minuta
+ * po minucie, wyłącznie na składowych czasu UTC.
+ */
 function pierwszyTermin(pola: PolaCron, od: Date): Date | null {
   for (let dzien = 0; dzien < HORYZONT_DNI; dzien += 1) {
     const data = new Date(od.getTime() + dzien * 86_400_000);
@@ -93,7 +106,11 @@ function pierwszyTermin(pola: PolaCron, od: Date): Date | null {
   return null;
 }
 
-/** Reguła klasyczna: gdy oba pola dnia są wskazane, wystarczy trafienie jednego. */
+/**
+ * Rozstrzyga, czy dzień pasuje do zapisu. Zgodnie z regułą klasyczną notacji
+ * cron trafienie jednego ze wskazanych pól dnia wystarcza, a gwiazdka w polu
+ * znosi udział tego pola w rozstrzygnięciu.
+ */
 function dzienPasuje(pola: PolaCron, data: Date): boolean {
   if (!pola.miesiace.has(data.getUTCMonth() + 1)) return false;
   const dzien = pola.dniMiesiaca.has(data.getUTCDate());
@@ -104,7 +121,11 @@ function dzienPasuje(pola: PolaCron, data: Date): boolean {
   return dzien || tydzien;
 }
 
-/** Rozkłada jedno pole zapisu na zbiór wartości; pole błędne daje `null`. */
+/**
+ * Rozkłada jedno pole zapisu na zbiór wartości, dokładając kolejno człony
+ * rozdzielone przecinkiem. Pole błędne oraz pole dające zbiór pusty oddają
+ * wartość pustą, która unieważnia cały zapis.
+ */
 function zbiorPola(pole: string, dolna: number, gorna: number): Set<number> | null {
   const zbior = new Set<number>();
   for (const czlon of pole.split(',')) {
@@ -113,7 +134,11 @@ function zbiorPola(pole: string, dolna: number, gorna: number): Set<number> | nu
   return zbior.size === 0 ? null : zbior;
 }
 
-/** Dokłada do zbioru wartości jednego członu: gwiazdka, `a`, `a-b` oraz krok po ukośniku. */
+/**
+ * Dokłada do zbioru wartości jednego członu pola. Człon przyjmuje postać
+ * gwiazdki, liczby pojedynczej albo zakresu, a po ukośniku dopuszcza krok.
+ * Wartości spoza granic pola oraz krok niedodatni zostają odrzucone.
+ */
 function dopiszCzlon(zbior: Set<number>, czlon: string, dolna: number, gorna: number): boolean {
   const [zakres = '', krokTekst] = czlon.split('/');
   let krok = 1;

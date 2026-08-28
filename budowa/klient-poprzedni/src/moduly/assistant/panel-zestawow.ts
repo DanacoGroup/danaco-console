@@ -4,23 +4,8 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Zakładka „Zestawy i retencja" Memory & Context Managera — siedem komend:
- * nazwane konteksty pamięci, zasady retencji i miernik okna kontekstu.
- *
- * ── Kontekst jest zestawem wskazań ──────────────────────────────────────────
- * Usunięcie kontekstu kasuje wskazanie, a nie wpisy pamięci. Okno mówi to
- * wprost przy przycisku, żeby Operator nie bał się sprzątać zestawów
- * roboczych — a zarazem żeby nie sądził, że kasuje ustalenia.
- *
- * ── Zasada retencji obejmuje zapisy kolejne ─────────────────────────────────
- * Zapis zasady nie rusza wstecz wpisów zastanych. Odpowiedź niesie ich
- * policzoną liczbę i okno ją pokazuje — po to, żeby Operator wiedział, ilu
- * ustaleń zasada dotknie przy najbliższym wygaszaniu, zanim to nastąpi.
- *
- * ── Miernik okna kontekstu ──────────────────────────────────────────────────
- * Liczba żetonów pochodzi z tokenizatora rdzenia, a odpowiedź niesie nazwę
- * słownika, którym policzono. Pomiar bywa niewykonalny — wtedy okno pokazuje
- * powód zamiast paska wobec granicy, której nikt nie ustalił.
+ * Zakładka „Zestawy i retencja” w Memory & Context Managerze obejmuje siedem komend: nazwane
+ * konteksty pamięci, zasady retencji i miernik okna kontekstu.
  */
 export interface PanelZestawow {
   element: HTMLElement;
@@ -31,7 +16,7 @@ export interface PanelZestawow {
 export function utworzPanelZestawow(stan: StanAssistant): PanelZestawow {
   const okno: StanOkna = utworzStanOkna();
 
-  // ── Nazwane konteksty ─────────────────────────────────────────────────────
+  // Nazwane konteksty
   const nazwa = pole('Nazwa zestawu', 'np. projekt Atlas');
   const prompt = pole('Warstwa promptu systemowego', 'np. Mów zwięźle.');
   const zaloz = przyciskAkcji('Załóż zestaw', 'dn-btn dn-btn--sm dn-btn--zarys');
@@ -41,7 +26,7 @@ export function utworzPanelZestawow(stan: StanAssistant): PanelZestawow {
   wykazKontekstow.className = 'ma-wykaz';
   wykazKontekstow.dataset['wykaz'] = 'konteksty-nazwane';
 
-  // ── Zasady retencji ───────────────────────────────────────────────────────
+  // Zasady retencji
   const dni = pole('Wygaszanie po ilu dniach (0 = pamięć trwała)', '0');
   const wzorce = pole('Czego nigdy nie zapisywać (po przecinku)', 'numer karty, hasło');
   const zapiszZasade = przyciskAkcji('Zapisz zasadę retencji', 'dn-btn dn-btn--sm dn-btn--zarys');
@@ -50,7 +35,7 @@ export function utworzPanelZestawow(stan: StanAssistant): PanelZestawow {
   const opisZasady = document.createElement('p');
   opisZasady.className = 'dn-pole-opis';
 
-  // ── Miernik okna kontekstu ────────────────────────────────────────────────
+  // Miernik okna kontekstu
   const zmierz = przyciskAkcji('Zmierz zajętość okna kontekstu', 'dn-btn dn-btn--sm dn-btn--zarys');
   zmierz.addEventListener('click', () => void zmierzZajetosc());
 
@@ -207,8 +192,7 @@ export function utworzPanelZestawow(stan: StanAssistant): PanelZestawow {
       );
       return;
     }
-    // Liczba wpisów zastanych jest policzona po stronie rdzenia. Zdanie mówi
-    // wprost, że zasada ich TERAZ nie rusza — bo nie rusza.
+    // Liczba wpisów zastanych jest policzona po stronie rdzenia; zasada ich teraz nie rusza.
     opisZasady.textContent =
       `Zasada zapisana. Obejmuje zapisy kolejne; wpisów zastanych, których ` +
       `dotknie przy najbliższym wygaszaniu, jest ${String(wynik.wynik.affectedEntries)} ` +
@@ -248,7 +232,7 @@ export function utworzPanelZestawow(stan: StanAssistant): PanelZestawow {
   return { element, wczytaj };
 }
 
-/** Sekcja panelu: tytuł wraz z kontrolkami jednego obszaru. */
+/** Sekcja panelu niesie tytuł wraz z kontrolkami jednego obszaru, oddzielając wizualnie trzy grupy komend. */
 function sekcjaZestawow(tytul: string, dzieci: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ma-panel__tytul';

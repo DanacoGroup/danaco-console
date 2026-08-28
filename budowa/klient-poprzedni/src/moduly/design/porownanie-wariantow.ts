@@ -4,15 +4,9 @@ import { nazwaZasobu } from './karta-zasobu';
 import { czyRdzenZnaObraz, slowoModelu } from './slowo-modelu';
 
 /**
- * Porównanie „przed / po" dwóch zasobów jednej rodziny wariantów.
- *
- * Porównywane są pola opisowe, nie obrazy: `uri` zasobu wskazuje ścieżkę
- * w systemie plików rdzenia, a droga po bajty — choć opisana już w kontrakcie —
- * nie ma jeszcze uchwytu w rdzeniu, więc przeglądarka nie ma czym wczytać żadnej
- * ze stron. Suwak przed/po ma sens dopiero po dobudowie tej obsługi.
- *
- * Rodzinę wyznacza `DesignAsset.variantOfAssetId`: pierwowzór wraz ze wszystkim,
- * co go wskazuje.
+ * Porównanie „przed / po" dwóch zasobów jednej rodziny wariantów zestawia pola
+ * opisowe obu stron. Rodzinę wyznacza pole `DesignAsset.variantOfAssetId`:
+ * pierwowzór wraz ze wszystkimi zasobami, które go wskazują.
  */
 export interface PorownanieWariantow {
   element: HTMLElement;
@@ -92,7 +86,11 @@ export function utworzPorownanieWariantow(): PorownanieWariantow {
   };
 }
 
-/** Jedna strona porównania: nazwa zasobu, słowo modelu i stan treści obrazu. */
+/**
+ * Buduje jedną stronę porównania: tytuł strony, nazwę zasobu, słowo modelu oraz
+ * stan treści obrazu. Strona przechowuje własny zasób i oddaje go na żądanie,
+ * a wartość pusta gasi treść kolumny.
+ */
 function kolumna(strona: string): {
   element: HTMLElement;
   pokaz(zasob: DesignAsset | null): void;

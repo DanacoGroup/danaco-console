@@ -1,26 +1,21 @@
 /**
  * Cztery warstwy widoczności modułu Design — jedno miejsce na regułę, która
  * rozstrzyga, co stoi na ekranie bez interakcji, a co dopiero po wywołaniu.
- *
- * Reguła pochodzi z opracowania modułu: jeżeli funkcja nie jest potrzebna do
- * realizacji aktualnego zadania, nie jest widoczna. Warstwa pierwsza jest
- * rozwinięta i pozostaje taka — kanwa, wykaz zasobów i kreator stoją od
- * wejścia. Warstwy druga, trzecia i czwarta stoją zwinięte, a zapowiedź nad
- * nimi mówi, co jest pod spodem: zwinięte nie znaczy ukryte.
- *
- * Nośnikiem rozwinięcia jest `<details>`: postać trzyma przeglądarka, więc
- * element działa klawiaturą i ma poprawną semantykę bez ani jednego nasłuchu.
- * Druga kopia stanu w klasie CSS mogłaby się z atrybutem `open` wyłącznie
- * rozminąć.
- *
- * Znacznik wywołania (`⋮`, `☰`, `▼`) idzie z opracowania modułu i stoi przy
- * nazwie, żeby droga do elementu była widoczna, zanim się go otworzy.
+ * Funkcja niepotrzebna do bieżącego zadania nie jest widoczna.
  */
 
-/** Warstwa widoczności elementu — podział z rozdziału o warstwach modułu. */
+/**
+ * Warstwa widoczności elementu. Numer warstwy jest jedyną nastawą, jaką element
+ * dostaje w tej sprawie, a wszystko pozostałe — zwinięcie, znacznik i sposób
+ * otwarcia — wynika z wykazu warstw.
+ */
 export type WarstwaWidocznosci = 1 | 2 | 3 | 4;
 
-/** Nazwa warstwy i sposób dostępu do jej elementów. */
+/**
+ * Nazwa warstwy i sposób dostępu do jej elementów. Oba zdania są widoczne dla
+ * Operatora, ponieważ warstwa zwinięta ma zapowiadać nie tylko swoją zawartość,
+ * lecz także drogę, którą się ją otwiera.
+ */
 export interface OpisWarstwy {
   /** Nazwa warstwy widoczna dla Operatora. */
   readonly nazwa: string;
@@ -49,12 +44,20 @@ export const WARSTWY: Record<WarstwaWidocznosci, OpisWarstwy> = {
   },
 };
 
-/** Znakuje element warstwą — arkusz i sprawdzian pytają o `data-warstwa`. */
+/**
+ * Znakuje element numerem warstwy. Arkusz stylów i sprawdzian pytają o atrybut
+ * `data-warstwa`, więc jest on jedynym nośnikiem przynależności do warstwy i nie
+ * dubluje się w nazwie klasy.
+ */
 export function oznaczWarstwe(element: HTMLElement, warstwa: WarstwaWidocznosci): void {
   element.dataset['warstwa'] = String(warstwa);
 }
 
-/** Element warstwy 2–4: zapowiedź zawsze widoczna, treść na wywołanie. */
+/**
+ * Element warstwy zwiniętej: zapowiedź widoczna zawsze, treść dopiero na wywołanie.
+ * Nośnikiem rozwinięcia jest znacznik `details`, którego postać trzyma przeglądarka,
+ * więc element działa klawiaturą bez ani jednego nasłuchu.
+ */
 export interface Rozwiniecie {
   /** Element osadzany w oknie. */
   element: HTMLDetailsElement;
@@ -85,8 +88,7 @@ export function utworzRozwiniecie(opis: OpisRozwiniecia): Rozwiniecie {
   const znacznik = document.createElement('span');
   znacznik.className = 'md-rozwiniecie__znacznik';
   znacznik.textContent = opis.znacznik;
-  // Znacznik jest ozdobą uchwytu, nie jego nazwą: czytnik ekranu odczyta nazwę
-  // elementu, a nie pionowe trzy kropki.
+  // Znacznik jest ozdobą uchwytu, nie jego nazwą; czytnik ekranu odczyta nazwę.
   znacznik.setAttribute('aria-hidden', 'true');
 
   const nazwa = document.createElement('span');

@@ -1,30 +1,20 @@
 import { AutomationStepKind, type AutomationStep } from '../../../../shared/contract';
 
 /**
- * Walidacja definicji automatyki po stronie okna Workflow Builder.
- *
- * Rdzeń ocenia układ zależności (`orchestration.validate`), lecz ocenia go po
- * zapisie i wyłącznie na krawędziach grafu. Zastrzeżenia rozstrzygalne bez
- * pytania rdzenia — krok bez identyfikatora, identyfikator powtórzony, krok
- * odwołujący się do poprzednika, którego w definicji nie ma, krok bez treści
- * właściwej jego rodzajowi — okno wypowiada od razu, przy wpisywaniu, bo
- * czekanie z nimi na odpowiedź rdzenia oznaczałoby zapis definicji wadliwej.
- *
- * Zastrzeżenie nie jest bramą: zapis pozostaje możliwy, a wynik jest
- * ostrzeżeniem sygnalizowanym przy kroku, którego dotyczy. Tak samo postępuje
- * rdzeń z układem zależności zawierającym cykl.
- *
- * Plik jest czysty: nie dotyka dokumentu i nie woła rdzenia.
+ * Waga zastrzeżenia definicji automatyki wykrytego w oknie Workflow Builder:
+ * błąd sygnalizuje wadę uniemożliwiającą poprawne wykonanie, ostrzeżenie
+ * sygnalizuje wadę niekrytyczną.
  */
-
-/** Waga zastrzeżenia — po niej idzie sygnalizacja przy kroku. */
 export type WagaZastrzezenia = 'ostrzezenie' | 'blad';
 
-/** Jedno zastrzeżenie do definicji wraz z miejscem, którego dotyczy. */
+/**
+ * Jedno zastrzeżenie do definicji automatyki wraz z miejscem kroku, którego
+ * dotyczy, wagą oraz zdaniem opisującym wadę dla operatora.
+ */
 export interface ZastrzezenieDefinicji {
-  /** Miejsce kroku w kolejności wykonania, liczone od 1; zero dotyczy całości. */
+  /** Miejsce kroku w kolejności wykonania liczy się od 1; wartość zero oznacza całą definicję. */
   miejsce: number;
-  /** Identyfikator kroku; pusty przy kroku, który go nie ma. */
+  /** Identyfikator kroku jest pusty, gdy zastrzeżenie dotyczy całej definicji, a nie kroku. */
   idKroku: string;
   waga: WagaZastrzezenia;
   zdanie: string;
@@ -116,11 +106,9 @@ export function zastrzezeniaDefinicji(
 }
 
 /**
- * Zastrzeżenia dotyczące całości: cykl w zależnościach i krok bez połączenia.
- *
- * Krok bez połączenia zgłaszamy dopiero wtedy, gdy definicja w ogóle używa
- * zależności — definicja bez ani jednej zależności wykonuje kroki w kolejności
- * zapisu i jest poprawna, więc każdy jej krok byłby wtedy zgłoszony bez powodu.
+ * Zastrzeżenia dotyczące całości definicji: cykl w zależnościach oraz krok
+ * bez połączenia. Krok bez połączenia jest zgłaszany tylko wtedy, gdy
+ * definicja używa zależności.
  */
 function zastrzezeniaSpojnosci(
   kroki: readonly AutomationStep[],
@@ -172,12 +160,9 @@ function zastrzezeniaSpojnosci(
 }
 
 /**
- * Kroki leżące na cyklu zależności.
- *
- * Rachunek jest zwykłym przeglądem w głąb ze znacznikiem odwiedzin: krok
- * napotkany powtórnie na tej samej ścieżce zamyka cykl. Kroki cyklu wracają
- * kompletem, bo sygnalizacja stoi przy każdym z nich, a nie przy jednym
- * wybranym.
+ * Kroki leżące na cyklu zależności, wyznaczone przeglądem w głąb ze
+ * znacznikiem odwiedzin. Kroki cyklu wracają kompletem, bo sygnalizacja
+ * dotyczy każdego z nich.
  */
 function krokiWCyklu(poprzednicy: ReadonlyMap<string, readonly string[]>): Set<string> {
   const wCyklu = new Set<string>();
@@ -204,7 +189,10 @@ function krokiWCyklu(poprzednicy: ReadonlyMap<string, readonly string[]>): Set<s
   return wCyklu;
 }
 
-/** Zdanie podsumowania walidacji — nagłówek wykazu zastrzeżeń w oknie. */
+/**
+ * Zdanie podsumowania walidacji definicji, stanowiące nagłówek wykazu
+ * zastrzeżeń w oknie Workflow Builder dla operatora.
+ */
 export function zdanieWalidacji(zastrzezenia: readonly ZastrzezenieDefinicji[]): string {
   if (zastrzezenia.length === 0) {
     return 'Definicja bez zastrzeżeń okna: każdy krok ma identyfikator, treść właściwą rodzajowi i istniejących poprzedników.';

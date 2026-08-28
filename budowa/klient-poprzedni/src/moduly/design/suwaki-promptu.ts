@@ -3,16 +3,9 @@ import { utworzDymekObjasnienia } from '../../komponenty/dymek';
 import { KLASY_DYMKA } from './dymek-objasnienia';
 
 /**
- * Suwaki parametrów generowania: kreatywność, ziarno, liczba wariantów.
- *
- * Obejmuje trzy parametry liczbowe promptu wraz z ich wartością widoczną obok
- * suwaka.
- *
- * Suwak zamiast pola liczbowego, bo każdy z trzech parametrów ma w kontrakcie
- * zakres zamknięty albo naturalny: `creativity` od 0 do 1, `variants` jako
- * liczba wariantów jednego zlecenia, `seed` jako liczba całkowita powtarzająca
- * wynik. Odczyt wartości stoi obok suwaka, bo `seed` trzeba umieć przepisać,
- * żeby powtórzyć wynik.
+ * Suwaki parametrów generowania obejmują kreatywność, ziarno oraz liczbę
+ * wariantów. Każdy z parametrów ma w kontrakcie zakres zamknięty albo naturalny,
+ * a wartość bieżąca stoi w odczycie umieszczonym obok suwaka.
  */
 export interface SuwakiPromptu {
   element: HTMLElement;
@@ -22,7 +15,11 @@ export interface SuwakiPromptu {
   nanies(prompt: DesignPrompt): void;
 }
 
-/** Opis suwaka: klucz kontraktu, etykieta, zakres, krok, wartość wyjściowa. */
+/**
+ * Opis suwaka wiąże klucz pola kontraktu z etykietą, zakresem, krokiem, wartością
+ * wyjściową oraz treścią dymka objaśnienia. Wykaz opisów rozstrzyga skład
+ * i kolejność suwaków w interfejsie.
+ */
 interface OpisSuwaka {
   klucz: 'creativity' | 'seed' | 'variants';
   etykieta: string;
@@ -104,7 +101,11 @@ export function utworzSuwaki(): SuwakiPromptu {
   };
 }
 
-/** Jeden suwak wraz z etykietą, dymkiem i odczytem wartości. */
+/**
+ * Buduje wiersz suwaka wraz z etykietą, dymkiem objaśnienia, kontrolką zakresu
+ * oraz odczytem wartości bieżącej. Zwraca wiersz do osadzenia i samą kontrolkę,
+ * potrzebną przy odczycie oraz przy nanoszeniu wartości promptu.
+ */
 function zbudujSuwak(opis: OpisSuwaka): { wiersz: HTMLElement; kontrolka: HTMLInputElement } {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'range';
@@ -119,13 +120,7 @@ function zbudujSuwak(opis: OpisSuwaka): { wiersz: HTMLElement; kontrolka: HTMLIn
   odczyt.className = 'dn-plakietka';
   odczyt.textContent = String(opis.wyjsciowa);
 
-  /**
-   * Wypełnienie toru — żeton `--dn-suwak-pozycja` czytany przez `komponenty/suwak.css`.
-   *
-   * Żeton musi być ustawiany tutaj przy każdej zmianie wartości. Arkusz ma dla
-   * niego wartość zapasową 50%, więc bez tego ustawienia tor każdego suwaka
-   * pokazywałby połowę niezależnie od wartości kontrolki.
-   */
+  /** Wypełnienie toru: żeton `--dn-suwak-pozycja` czytany przez `komponenty/suwak.css`. */
   const ustawWypelnienie = (): void => {
     const zakres = opis.max - opis.min;
     const udzial = zakres === 0 ? 0 : (Number(kontrolka.value) - opis.min) / zakres;

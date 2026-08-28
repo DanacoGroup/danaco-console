@@ -1,24 +1,13 @@
 /**
- * Zdanie opisujące odmowę rdzenia — jedno dla całego interfejsu.
- *
- * Zdanie powstaje w jednym miejscu, bo kopie rozjeżdżają się po cichu: poprawka
- * w jednym module zostawiłaby pozostałe mówiące Operatorowi co innego o tej
- * samej odmowie.
- *
- * Kod błędu zostaje przy wiadomości z zamysłem: `validation_failed`
- * i `not_found` znaczą dla Operatora co innego, a treść wiadomości bywa dla obu
- * tym samym zdaniem. Brak wiadomości nie zostawia pustki — idzie wtedy sam kod,
- * a gdy nie ma i kodu, zdanie nazywa milczenie rdzenia wprost, żeby Operator
- * nie patrzył na pusty prostokąt.
+ * Zdanie opisujące odmowę rdzenia powstaje w jednym miejscu dla całego
+ * interfejsu, ponieważ kopie rozjeżdżają się po cichu: poprawka w jednym module
+ * zostawiłaby pozostałe mówiące Operatorowi co innego o tej samej odmowie.
  */
 
 /**
- * Kształt powodu odmowy przyjmowany bez rozbierania na części.
- *
- * Luźniejszy od `ErrorInfo` z kontraktu (tam `code` i `message` są wymagane):
- * moduły dostają powód z pola `blad?` wyniku komendy, które bywa puste, a
- * pojedyncze okna trzymają własne, częściowe zapisy odmowy. `ErrorInfo`
- * pasuje tu bez rzutowania.
+ * Kształt powodu odmowy przyjmowany bez rozbierania na części, luźniejszy
+ * od kształtu `ErrorInfo` z kontraktu, w którym pola `code` oraz `message`
+ * są wymagane; `ErrorInfo` pasuje tu bez rzutowania.
  */
 export interface PowodOdmowy {
   code?: string;
@@ -26,13 +15,9 @@ export interface PowodOdmowy {
 }
 
 /**
- * Zdanie opisujące odmowę rdzenia.
- *
- * `nieznanyTyp` obsługuje przypadek osobny, otwarty dla każdego modułu: rdzeń
- * odpowiedział zdarzeniem „nie znam tej komendy”.
- * To nie jest awaria wykonania i Operator musi widzieć różnicę — nazwa typu
- * idzie na początek zdania i wyprzedza kod oraz wiadomość, bo rozstrzyga,
- * czy patrzy na usterkę, czy na czynność, której rdzeń jeszcze nie umie.
+ * Zdanie opisujące odmowę rdzenia: nazwa nieznanej komendy wyprzedza kod oraz
+ * wiadomość, ponieważ rozstrzyga, czy Operator patrzy na usterkę wykonania,
+ * czy na czynność, której rdzeń jeszcze nie umie.
  */
 export function opisOdmowy(
   czynnosc: string,
@@ -53,12 +38,9 @@ export function opisOdmowy(
 }
 
 /**
- * To samo zdanie z powodu wziętego w całości, bez rozbierania na kod i treść.
- *
- * Istnieje, żeby wywołanie po odmowie komendy nie powtarzało w każdym miejscu
- * `wynik.blad?.code, wynik.blad?.message` — para pól rozjeżdża się przy
- * przepisywaniu (łatwo podać kod z jednego wyniku, a wiadomość z drugiego).
- * Zdanie wychodzi identyczne jak z `opisOdmowy`.
+ * To samo zdanie z powodu wziętego w całości, bez rozbierania na kod i treść;
+ * wywołanie po odmowie komendy nie powtarza wtedy pary pól `code` i `message`,
+ * a wynik wychodzi identyczny jak z funkcji `opisOdmowy`.
  */
 export function opisOdmowyBledu(
   czynnosc: string,

@@ -6,26 +6,9 @@ import type { StanAgentow } from './stan-agentow';
 import type { ZrodloZakresuEksperta } from './zrodlo-zakresu-eksperta';
 
 /**
- * Panel zakresu działania eksperta — trzy grupy Permissions Center, których
- * wiersz przełącznika unieść nie potrafi.
- *
- * Grupa „dostęp do rozszerzeń" i „dostęp do modułów" są wartościami wyliczenia
- * uprawnień i stoją wyżej jako zwykłe wiersze. Tutaj mieszkają trzy rzeczy,
- * które wartością logiczną nie są:
- *
- *   - moduły zastosowania — wykaz kodów, nie przełącznik; wykaz PUSTY znaczy
- *     brak ograniczenia i jest stanem wyjściowym;
- *   - izolacja techniczna — macierz ośmiu suwaków, identyczna z macierzą okna
- *     konfiguracji punktów izolacji, bo macierz jest jedna;
- *   - MultitaskingAI — para „Subagent Network plus górna liczba podagentów".
- *
- * Pod nimi stoi polityka efektywna: podgląd wynikowego zestawu ustawień po
- * uwzględnieniu wszystkich grup. Podgląd, nie bramka — komenda niczego nie
- * zapisuje i niczego nie rozstrzyga.
- *
- * KAŻDE ZAWĘŻENIE STĄD JEST ZAWĘŻENIEM EGZEKWOWANYM. Rdzeń czyta te zapisy
- * przy nakładaniu eksperta na okno i przy powołaniu podagentów, i odmawia.
- * Panel mówi o tym Operatorowi wprost, żeby nie wziął suwaka za ozdobę.
+ * Panel zakresu działania eksperta zbiera trzy grupy Permissions Center, których wiersz
+ * przełącznika unieść nie potrafi: moduły zastosowania, izolację techniczną i limit
+ * podagentów, wraz z podglądem polityki efektywnej.
  */
 export interface PanelZakresuEksperta {
   element: HTMLElement;
@@ -33,7 +16,7 @@ export interface PanelZakresuEksperta {
   odswiez(): void;
 }
 
-/** Osiem zakresów izolacji wraz z ich brzmieniem dla Operatora. */
+/** Osiem zakresów izolacji technicznej wraz z ich brzmieniem czytelnym dla Operatora w macierzy suwaków panelu. */
 const OPISY_ZAKRESOW: Record<IsolationTechnicalScope, string> = {
   [IsolationTechnicalScope.WorkingDirectory]: 'katalog roboczy sesji',
   [IsolationTechnicalScope.ProcessEnvironment]: 'środowisko procesu',
@@ -119,7 +102,7 @@ export function utworzPanelZakresuEksperta(
     odpowiedz.element,
   );
 
-  /** Ekspert, którego zakres stoi w panelu — po nim poznajemy zmianę wyboru. */
+  /** Ekspert, którego zakres stoi w panelu — po nim poznaje się zmianę wyboru. */
   let pokazany = '';
   let przelaczniki: IsolationTechnicalSwitch[] = [];
 
@@ -171,8 +154,7 @@ export function utworzPanelZakresuEksperta(
     odpowiedz.pokaz(`Zapis zakresu ${zakres}…`, true);
     const wynik = await zrodlo.zapiszIzolacje(ekspert.id, [{ scope: zakres, isolated: odciety }]);
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Suwak wraca do stanu rdzenia: przestawiony przez przeglądarkę nie ma
-      // prawa zostać świadectwem zapisu, którego nie było.
+      // Suwak wraca do stanu rdzenia: przestawiony przez przeglądarkę nie świadczy o zapisie.
       void wczytajIzolacje(ekspert.id);
       odpowiedz.pokaz(
         opisOdmowy('Zapis izolacji technicznej', wynik.blad?.code, wynik.blad?.message),

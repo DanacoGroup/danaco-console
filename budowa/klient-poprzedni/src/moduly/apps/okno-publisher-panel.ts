@@ -16,21 +16,8 @@ import { utworzPrzybornikApps } from './przybornik-apps';
 import type { StanProduktu } from './stan-produktu';
 
 /**
- * Publisher Panel — panel boczny pakowania, manifestu i publikacji.
- *
- * Jedna część okna stoi na kontrakcie i działa: dziennik wydań produktu składa
- * się z wdrożeń oddanych przez `apps.deployment.list` — wersja i notatki wydania
- * są polami wdrożenia, więc chronologia wydań produktu istnieje naprawdę. Nie
- * jest to jednak dziennik wydań ROZSZERZENIA, i okno tę różnicę nazywa.
- *
- * Reszta okna czeka na komendy. Formularz manifestu stoi i trzyma wpisane
- * wartości — nie jest zaślepką, bo pola manifestu są znane z opracowania
- * (tożsamość, wersja semantyczna, deklaracja narzędzi, wymagane uprawnienia,
- * zależności) — ale nie ma dokąd ich wysłać, i przycisk zapisu mówi to po
- * naciśnięciu, zamiast milczeć albo udawać zapis.
- *
- * Powody kontrolek biorą się z bytu pokrycia, więc przerysują się same, gdy
- * rdzeń dostanie uchwyty dla tych komend.
+ * Publisher Panel jest panelem bocznym pakowania, manifestu i publikacji, w którym dziennik
+ * wydań stoi na kontrakcie, a reszta okna czeka na komendy, których jeszcze nie ma.
  */
 export interface OknoPublisherPanel {
   element: HTMLElement;
@@ -175,7 +162,7 @@ export function utworzOknoPublisherPanel(
   return { element: rama.element, odswiez };
 }
 
-/** Jeden wpis dziennika wydań produktu, złożony wyłącznie z pól wdrożenia. */
+/** Jeden wpis dziennika wydań produktu złożony wyłącznie z pól wdrożenia, bez pól właściwych rozszerzeniu. */
 function wierszWydania(wdrozenie: AppDeployment): HTMLElement {
   const element = document.createElement('li');
   element.className = 'mp-wydania__wiersz';
@@ -188,7 +175,7 @@ function wierszWydania(wdrozenie: AppDeployment): HTMLElement {
   return element;
 }
 
-/** Nagłówek części okna. */
+/** Nagłówek części okna nazywa kolejny fragment panelu, oddzielając wizualnie grupy pól formularza od siebie. */
 function naglowekCzesci(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';

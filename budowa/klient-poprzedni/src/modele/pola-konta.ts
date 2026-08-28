@@ -8,14 +8,10 @@ import {
 import { NAZWY_RODZAJOW, RODZAJE_KONT } from './rodzaje-kont';
 
 /**
- * Pola formularza konta — komplet kontrolek wraz z ich opisami.
- *
- * Zestaw pól wynika wprost z kontraktu (`AccountAddRequest`,
- * `AccountUpdateRequest`), a nie z katalogu wierszy, więc stoi w kodzie jawnie.
- * Od formularza jest oddzielony, bo formularz odpowiada za rozgałęzienie zapisu
- * na dwie komendy i za to, co wolno nadpisać w wypełnianym polu.
- * Opis poświadczenia należy do pola: kontrakt nie zwraca poświadczenia żadną
- * komendą, więc pole konta, które je ma, i tak wygląda na puste.
+ * Pola formularza konta — komplet kontrolek wraz z ich opisami. Zestaw pól
+ * wynika wprost z kontraktu (`AccountAddRequest`, `AccountUpdateRequest`),
+ * a nie z katalogu wierszy, więc stoi w kodzie jawnie i jest oddzielony
+ * od samego formularza.
  */
 export interface PolaKonta {
   nazwa: PoleFormularza<HTMLInputElement>;
@@ -82,7 +78,11 @@ export function utworzPolaKonta(): PolaKonta {
   };
 }
 
-/** Kolejność pól w formularzu — jedno miejsce, w którym jest zapisana. */
+/**
+ * Kolejność pól w formularzu — jedno miejsce, w którym jest zapisana. Widok
+ * osadza zwrócone elementy w podanym porządku, więc zmiana układu formularza
+ * sprowadza się do zmiany kolejności w tej jednej tablicy.
+ */
 export function elementyPol(pola: PolaKonta): HTMLElement[] {
   return [
     pola.nazwa.element,

@@ -10,16 +10,9 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import { przypiszZaznaczenie } from './zapisy-zbiorcze';
 
 /**
- * Utworzenie kolekcji i przypisanie do niej zasobu — dwie z trzech funkcji
- * Operatora okna Tags & Collections.
- *
- * Kolekcja jest swobodna, nie regułowa: `library.collection.create` przyjmuje
- * nazwę i opis, a reguły składającej kolekcję samoczynnie kontrakt nie niesie.
- * Wariant „inteligentny" stoi więc w panelu akcji jako czynność nazwana wprost,
- * bez drogi.
- *
- * Przypisanie działa na zaznaczeniu Explorera: okno nie ma własnego wykazu
- * plików, bo wykaz jest jeden na moduł.
+ * Formularz zakłada kolekcję komendą `library.collection.create` i przypisuje
+ * do niej zasoby zaznaczone w wykazie modułu. Kolekcja jest swobodna, a nie
+ * regułowa: kontrakt przyjmuje nazwę oraz opis, bez reguły składającej.
  */
 export interface FormularzKolekcji {
   element: HTMLElement;
@@ -50,11 +43,7 @@ export function utworzFormularzKolekcji(stan: StanBiblioteki): FormularzKolekcji
     const wpisane = nazwa.kontrolka.value;
     const miano = wpisane.trim();
     if (miano === '') {
-      // Zdanie mówi o oknie, nie o rdzeniu. `library.collection.create` odmawia
-      // wyłącznie nazwy pustej; nazwę złożoną z samego U+FEFF, z samego U+00A0
-      // albo z samych spacji przyjmuje i oddaje co do znaku. Każdą z nich
-      // `trim()` przeglądarki zamienia w pustkę, więc okno jej nie wyśle — i może
-      // powiedzieć tylko tyle, że samo nic nie wysłało.
+      // Zdanie mówi o przycięciu po stronie okna, a nie o odmowie rdzenia.
       oznaczBlad(
         nazwa.element,
         'Nazwa jest pusta po przycięciu przez okno — nic nie zostało wysłane do rdzenia.',
@@ -72,10 +61,7 @@ export function utworzFormularzKolekcji(stan: StanBiblioteki): FormularzKolekcji
       return;
     }
     stan.dopiszKolekcje(wynik.wynik.collectionId);
-    // Nazwa idzie z odpowiedzi, a rozbieżność z zamówieniem jest wypowiedziana:
-    // rdzeń zapisuje nazwę dosłownie, więc różnica może wziąć się tylko
-    // z przycięcia po stronie okna — i Operator ma o niej wiedzieć, zanim
-    // zacznie tej kolekcji szukać po tym, co napisał.
+    // Nazwa idzie z odpowiedzi, a rozbieżność z wpisaną jest wypowiedziana.
     const oddana = wynik.wynik.name;
     const dopisek =
       oddana === wpisane ? '' : ` Rdzeń zapisał nazwę „${oddana}", wpisano „${wpisane}".`;
@@ -129,7 +115,11 @@ function oznaczBlad(pole: HTMLElement, tresc: string): void {
   opis.textContent = tresc;
 }
 
-/** Zdejmuje ostrzeżenie po poprawnym zatwierdzeniu. */
+/**
+ * Zdejmuje ostrzeżenie walidacji z pola po zatwierdzeniu, które przeszło:
+ * usuwa znacznik błędu oraz opis pod polem. Ostrzeżenie pozostawione przy polu
+ * poprawionym mówiłoby o stanie, którego formularz już nie ma.
+ */
 function zdejmijBlad(pole: HTMLElement): void {
   delete pole.dataset['blad'];
   pole.querySelector('.dn-pole-blad')?.remove();

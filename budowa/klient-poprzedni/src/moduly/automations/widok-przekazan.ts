@@ -1,17 +1,19 @@
-import { przyciskAkcji as przycisk, pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
-import type { PrzekazanyScenariusz } from './przyjecie-przekazania';
-
 /**
  * Wykaz przekazań oczekujących — czysta konstrukcja z bytów
  * `PrzekazanyScenariusz`. Plik nie zna ani źródła, ani stanu modułu: dostaje
- * wykaz i wywołanie zwrotne zapisu.
- *
- * Pozycja mówi, skąd przyszedł scenariusz i ile ma kroków, bo to jedyne, czym
- * Operator może się kierować przed zapisem — treści kroków nie pokazujemy tu
- * wcale, ta należy do Workflow Buildera po zapisie.
+ * wykaz i wywołanie zwrotne zapisu, a pozycja mówi, skąd przyszedł scenariusz
+ * i ile ma kroków.
  */
+import { przyciskAkcji as przycisk, pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
+import type { PrzekazanyScenariusz } from './przyjecie-przekazania';
 
-/** Zdanie przy pozycji: liczba kroków, stan po zapisie i polecenie wyjściowe. */
+
+
+/**
+ * Zdanie przy pozycji wykazu: liczba kroków w odmianie właściwej dla
+ * liczebnika, stan automatyki po zapisie, okno pochodzenia oraz polecenie
+ * wyjściowe scenariusza.
+ */
 export function opisPrzekazania(scenariusz: PrzekazanyScenariusz): string {
   const czesci = [
     `${scenariusz.kroki.length} ${odmianaKrokow(scenariusz.kroki.length)}`,
@@ -22,7 +24,11 @@ export function opisPrzekazania(scenariusz: PrzekazanyScenariusz): string {
   return dopowiedzenie === '' ? czesci.join(' · ') : `${czesci.join(' · ')} — ${dopowiedzenie}`;
 }
 
-/** Odmiana rzeczownika „krok" przez liczbę, według reguł polskiej liczebności. */
+/**
+ * Odmiana rzeczownika „krok" przez liczbę według reguł polskiej liczebności:
+ * forma pojedyncza dla jedności, mnoga dla końcówek od dwóch do czterech poza
+ * nastką, dopełniaczowa dla reszty.
+ */
 function odmianaKrokow(liczba: number): string {
   const reszta = liczba % 10;
   const setka = liczba % 100;

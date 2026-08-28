@@ -32,42 +32,9 @@ import { cialoZakladki, utworzZakladkiOkna } from './zakladki-okna';
 import type { ZrodloDeveloper } from './zrodlo-developer';
 
 /**
- * Build Output i Run & Debug — okno monitora modułu Developer.
- *
- * Opracowanie modułu opisuje monitor jako JEDNO okno o dwóch częściach
- * (rozdz. 2, pozycja 6; rozdz. 3.6): Build Output prowadzi budowanie, testy
- * i log, Run & Debug prowadzi konfiguracje uruchomień oraz debugger krokowy,
- * a obie części zajmują tę samą kolumnę i przełącza je pas zakładek w jej
- * nagłówku. Stąd jedna rama, dwie zakładki i jeden kod okna `build-output`
- * z katalogu rdzenia — Run & Debug nie jest osobnym oknem i osobnego wiersza
- * katalogu nie dostaje.
- *
- * Aktualizacja na żywo idzie ze zdarzenia. Okno subskrybuje
- * `developer.build.changed` bezpośrednio u źródła, mimo że `stan-developer.ts`
- * subskrybuje to samo zdarzenie i budzi okna przez `stan.naZmiane(...)`: stan
- * tylko rozgłasza „coś się zmieniło" po filtrze `windowId`, nie niesie
- * `logLine` ani przebiegu z treści zdarzenia, a kontrakt nie ma komendy, którą
- * dałoby się dogonić stan inaczej. Ta subskrypcja bierze więc co innego niż
- * subskrypcja stanu i nie jest powieleniem tej samej pracy.
- *
- * Zgłoszenie przebiegu prowadzi do pliku: zgłoszenia niosą `path` i `line`,
- * a każde ze ścieżką ma przejście „Otwórz w edytorze” — woła `stan.wskazPlik`,
- * a Code Editor otwiera plik sam.
- *
- * Log jest ucięty przy otwarciu okna w trakcie przebiegu. Rośnie wyłącznie
- * z `logLine` kolejnych zdarzeń, więc okno otwarte po starcie przebiegu (albo
- * przebiegu uruchomionego przez inne okno tego konta) widzi tylko ogon.
- * Ucięcie jest oznaczone wprost w treści okna, nie zamaskowane.
- *
- * Szukanie w logu i zawężanie zgłoszeń wagą są czynnościami wyłącznie
- * klienckimi nad materiałem już zebranym — kontrakt nie ma komendy, którą
- * dałoby się dopytać rdzeń o wiersze pominięte, i widok mówi to wprost.
- * Waga zgłoszenia pochodzi z pola `severity` oddanego przez rdzeń, nie
- * z rozpoznawania treści wiersza logu.
- *
- * Zdanie stanu pustego o tym, czym rozporządza rdzeń, składa `katalog-komend.ts`
- * z rejestru komend wziętego z `connection.hello` — z tego, co rdzeń
- * zarejestrował, a nie z napisu na stałe.
+ * Build Output i Run & Debug tworzą jedno okno monitora modułu Developer
+ * o dwóch zakładkach: Build Output prowadzi budowanie, testy i log,
+ * a Run & Debug — konfiguracje uruchomień i debugger krokowy.
  */
 export interface OknoBudowania {
   element: HTMLElement;
@@ -95,9 +62,7 @@ export function utworzOknoBudowania(
   const powierzchnia = zlozPowierzchnieBudowania(tresc.element);
   const kontekst = utworzKontekstBudowania();
 
-  // Trzy części kolumny monitora, bo trzy różne pytania: co się teraz dzieje
-  // (Build Output), jak sterować zatrzymanym programem (Run & Debug) i co
-  // zostało po przebiegach zakończonych (Historia i pomiary).
+  // Trzy części kolumny monitora: bieżący przebieg, sterowanie zatrzymanym programem i historia.
   const runDebug = utworzPanelRunDebug(warsztat, stan);
   const historia = utworzPanelHistoriiBudowan(warsztat, stan);
   const zakladki = utworzZakladkiOkna('Części kolumny monitora', [
@@ -123,8 +88,7 @@ export function utworzOknoBudowania(
     );
   }
 
-  // Zdanie o niewidocznej historii przychodzi Z RDZENIA, a nie z napisu — patrz
-  // `katalog-komend.ts`. Odczyt idzie raz, a jego wynik odświeża stan pusty.
+  // Zdanie o niewidocznej historii przychodzi z rdzenia, nie z napisu na stałe w kliencie.
   void odczytajKatalogKomend(zrodlo).then((katalog) => {
     kontekst.zdanieHistorii = zdanieHistoriiBudowania(katalog);
     if (kontekst.przebieg === null) rysuj();
@@ -137,24 +101,14 @@ export function utworzOknoBudowania(
       return;
     }
     tresc.ladowanie('Uruchamianie budowania…');
-    // Log czyścimy TERAZ, przed odpowiedzią — nie w `.then()`. Zdarzenie tego
-    // przebiegu mogące przyjść wcześniej niż odpowiedź trafia więc do logu już
-    // pustego, zamiast zostać skasowane późniejszym czyszczeniem po odpowiedzi.
+    // Log czyszczony jest teraz, przed odpowiedzią, żeby zdarzenie trafiło do logu już pustego.
     kontekst.logi.length = 0;
     kontekst.oczekujeWlasnegoStartu = true;
     kontekst.ostatnieZadanie = zadanie;
     void zrodlo.budowanie(zadanie).then((wynik) => obsluzOdpowiedzUruchomienia(kontekst, tresc, wynik, rysuj));
   }
 
-  /**
-   * Ponowne uruchomienie przez komendę `developer.build.run` z zadaniem, które
-   * okno już zna.
-   *
-   * Powtórzenie znaczy „to samo żądanie”, a nie „to, co teraz stoi w polach” —
-   * od tego jest przycisk uruchomienia. Gdy okno nie wysłało jeszcze niczego
-   * (przebieg zaczęło inne okno tego konta), powtarza samo zadanie z migawki
-   * rdzenia i mówi, że parametrów nie zna, bo `DeveloperBuild` ich nie niesie.
-   */
+  // Ponowne uruchomienie komendą developer.build.run z zadaniem, które okno już zna.
   function ponow(): void {
     const powtorzenie = zadaniePonowienia(stan.okno(), kontekst);
     if (powtorzenie === null) {
@@ -172,9 +126,7 @@ export function utworzOknoBudowania(
       );
   }
 
-  // Przycisk zatrzymania nie ma warunku. Czynny bez odczytu i po zakończeniu
-  // przebiegu; odmowa rdzenia (np. „nic nie trwa”) ląduje w stanie błędu okna,
-  // nie w wyszarzeniu przycisku.
+  // Przycisk zatrzymania nie ma warunku; odmowa rdzenia ląduje w stanie błędu, nie w wyszarzeniu.
   function przerwij(): void {
     const zadanie = zadanieZatrzymania(stan.okno(), powierzchnia.zadanie.value, kontekst.przebieg);
     tresc.ladowanie('Przerywanie budowania…');
@@ -188,10 +140,7 @@ export function utworzOknoBudowania(
     eksportujLog: () => eksportujLogBudowania(tresc, kontekst.przebieg, kontekst.logi, kontekst.uciety),
   });
 
-  // Zawężenie przelicza wyłącznie widok — nic nie jedzie do rdzenia, więc
-  // przerysowanie jest całą jego obsługą. Warunek na stan „treść” chroni
-  // komunikat ładowania i odmowy przed startem: zawężenie nie ma prawa
-  // zamienić błędu odczytu w pusty log.
+  // Zawężenie przelicza wyłącznie widok — przerysowanie jest całą jego obsługą.
   function przeliczZawezenie(): void {
     if (kontekst.przebieg !== null) rysuj();
   }
@@ -200,9 +149,7 @@ export function utworzOknoBudowania(
 
   rysuj();
 
-  // Druga subskrypcja tego samego zdarzenia co `stan-developer.ts` — celowo:
-  // bierze treść zdarzenia (przebieg + logLine), której `stan.naZmiane()` nie
-  // przekazuje. Filtr po `windowId` chroni przed wpisami cudzego okna modułu.
+  // Druga subskrypcja tego zdarzenia co stan-developer.ts — celowo, bierze pełną treść zdarzenia.
   const odsubskrybuj = zrodlo.naZmianeBudowania((zdarzenie) =>
     obsluzZdarzenieBudowania(kontekst, stan.okno(), zdarzenie, rysuj));
 
@@ -210,8 +157,7 @@ export function utworzOknoBudowania(
     element: rama.element,
     odswiez: rysuj,
     zamknij: () => {
-      // Panel debugowania zamyka się razem z oknem: sesja debugowania jest
-      // stanem żywym i uchwyt do niej nie ma prawa przeżyć zejścia ze sceny.
+      // Panel debugowania zamyka się razem z oknem, bo sesja debugowania jest stanem żywym.
       runDebug.zamknij();
       odsubskrybuj();
     },
@@ -226,22 +172,13 @@ export function utworzOknoBudowania(
 interface KontekstBudowania {
   przebieg: DeveloperBuild | null;
   idZnanyOdPoczatku: string | null;
-  /**
-   * Czynne od chwili wysłania `run` do chwili związania id — rdzeń NIE
-   * gwarantuje, że odpowiedź przyjdzie przed pierwszym zdarzeniem tego
-   * samego przebiegu, więc id wiąże cokolwiek przyjdzie pierwsze.
-   */
+  // Czynne od wysłania run do związania id, bo rdzeń nie gwarantuje kolejności odpowiedzi.
   oczekujeWlasnegoStartu: boolean;
   uciety: boolean;
   logi: string[];
   /** Zdanie stanu pustego złożone z rejestru komend rdzenia (`katalog-komend.ts`). */
   zdanieHistorii: string;
-  /**
-   * Ostatnie żądanie uruchomienia WYSŁANE PRZEZ TO OKNO — podstawa ponowienia.
-   *
-   * Rdzeń parametrów przebiegu nie oddaje (`DeveloperBuild` niesie `task`, nie
-   * `arguments`), więc wierne powtórzenie zna wyłącznie okno, które je wysłało.
-   */
+  // Ostatnie żądanie uruchomienia wysłane przez to okno — podstawa wiernego ponowienia zadania.
   ostatnieZadanie: DeveloperBuildRunRequest | null;
 }
 
@@ -257,7 +194,7 @@ function utworzKontekstBudowania(): KontekstBudowania {
   };
 }
 
-/** Powtórzenie wraz ze zdaniem o tym, czego rdzeń o powtarzanym przebiegu nie mówi. */
+/** Powtórzenie wraz ze zdaniem o tym, czego rdzeń o powtarzanym przebiegu nie mówi wprost Operatorowi tego okna. */
 interface Powtorzenie {
   zadanie: DeveloperBuildRunRequest;
   /** Pusty, gdy powtórzenie jest wierne; inaczej mówi, czego zabrakło. */
@@ -265,12 +202,9 @@ interface Powtorzenie {
 }
 
 /**
- * Składa żądanie ponowienia — wiernie z żądania wysłanego przez to okno, a gdy
- * takiego nie było, z migawki przebiegu, którą okno zna, i wtedy NIE UDAJE
- * wierności.
- *
- * `null` znaczy „nie ma czego powtórzyć” i jest odróżnione od powtórzenia
- * przybliżonego: pierwsze to odmowa, drugie to czynność z zastrzeżeniem.
+ * Składa żądanie ponowienia wiernie z żądania wysłanego przez to okno, a gdy
+ * takiego nie było, z migawki przebiegu, którą okno zna, i wtedy nie udaje
+ * wierności powtórzenia.
  */
 function zadaniePonowienia(idOkna: string, kontekst: KontekstBudowania): Powtorzenie | null {
   if (kontekst.ostatnieZadanie !== null) {
@@ -293,7 +227,7 @@ function powiazZWlasnymStartem(kontekst: KontekstBudowania, id: string): void {
   kontekst.oczekujeWlasnegoStartu = false;
 }
 
-/** Odpowiedź `developer.build.run` (uruchomienie) — poza wytwórnią, bierze kontekst wprost. */
+/** Odpowiedź developer.build.run w wariancie uruchomienia budowania — funkcja poza wytwórnią, bierze kontekst okna wprost. */
 function obsluzOdpowiedzUruchomienia(
   kontekst: KontekstBudowania,
   tresc: StanTresci,
@@ -308,15 +242,13 @@ function obsluzOdpowiedzUruchomienia(
   }
   powiazZWlasnymStartem(kontekst, wynik.wynik.id);
   kontekst.przebieg = scalPrzebieg(kontekst.przebieg, wynik.wynik);
-  // Zdanie z przebiegu SCALONEGO, nie z samej odpowiedzi: zdarzenie potrafi
-  // wyprzedzić odpowiedź i donieść stan końcowy, a wtedy „uruchomione” byłoby
-  // zdaniem o czymś, co już się skończyło.
+  // Zdanie budowane z przebiegu scalonego, nie z odpowiedzi — zdarzenie bywa szybsze niż odpowiedź.
   const potwierdzenie = zdanieUruchomienia(kontekst.przebieg);
   tresc.potwierdzenie(potwierdzenie.zdanie + dopisek, potwierdzenie.udane);
   rysuj();
 }
 
-/** Odpowiedź `developer.build.run` (przerwanie) — poza wytwórnią, bierze kontekst wprost. */
+/** Odpowiedź developer.build.run w wariancie przerwania budowania — funkcja poza wytwórnią, bierze kontekst okna wprost. */
 function obsluzOdpowiedzPrzerwania(
   kontekst: KontekstBudowania,
   tresc: StanTresci,
@@ -327,9 +259,7 @@ function obsluzOdpowiedzPrzerwania(
     tresc.blad('Rdzeń odmówił przerwania budowania.', wynik.blad);
     return;
   }
-  // Czy przerywać BYŁO CZEGO — rdzeń tego nie powie, bo na przebieg biegnący
-  // i na dawno domknięty odpowiada tą samą migawką. Wie to wyłącznie okno,
-  // z przebiegu, który trzymało przed naciśnięciem.
+  // Czy było co przerywać, wie tylko okno — rdzeń odpowiada tą samą migawką dla obu przypadków.
   const poprzedni = kontekst.przebieg;
   const bylZakonczony =
     poprzedni !== null && poprzedni.id === wynik.wynik.id && poprzedni.finishedAt !== undefined;
@@ -339,7 +269,7 @@ function obsluzOdpowiedzPrzerwania(
   rysuj();
 }
 
-/** Zdarzenie `developer.build.changed` filtrowane po oknie modułu — poza wytwórnią. */
+/** Zdarzenie developer.build.changed filtrowane po oknie modułu — funkcja stoi poza wytwórnią tego okna monitora. */
 function obsluzZdarzenieBudowania(
   kontekst: KontekstBudowania,
   idOkna: string,
@@ -355,10 +285,9 @@ function obsluzZdarzenieBudowania(
 }
 
 /**
- * Łączy migawkę przebiegu ze świeżo przyszłą — odpowiedź `run` bywa starszą
- * migawką niż zdarzenie, które zdążyło już donieść stan końcowy (wyścig).
- * Ten sam przebieg (to samo `id`) nie cofa się z zakończonego do trwającego:
- * migawka z `finishedAt` wygrywa z migawką bez niego.
+ * Łączy migawkę przebiegu ze świeżo przyszłą; ten sam przebieg nie cofa się
+ * z zakończonego do trwającego, bo migawka z polem finishedAt wygrywa
+ * z migawką bez niego.
  */
 function scalPrzebieg(biezacy: DeveloperBuild | null, przychodzacy: DeveloperBuild): DeveloperBuild {
   if (biezacy === null || biezacy.id !== przychodzacy.id) return przychodzacy;
@@ -366,7 +295,7 @@ function scalPrzebieg(biezacy: DeveloperBuild | null, przychodzacy: DeveloperBui
   return przychodzacy;
 }
 
-/** Eksport logu zebranego przez okno — czysta czynność, znacznik ucięcia w treści pliku. */
+/** Eksport logu zebranego przez to okno — czysta czynność, znacznik ucięcia zapisany wprost w treści pliku. */
 function eksportujLogBudowania(
   tresc: StanTresci,
   przebieg: DeveloperBuild | null,
@@ -385,13 +314,8 @@ function eksportujLogBudowania(
 }
 
 /**
- * Składa pasek akcji: uruchomienie, przerwanie (bez warunku), ponowienie
+ * Składa pasek akcji: uruchomienie, przerwanie bez warunku, ponowienie
  * i eksport logu zebranego w oknie, oraz trzy pozycje bez komendy w kontrakcie.
- *
- * Wydzielone z wytwórni okna dla progu długości funkcji. Przyciski podpinają się
- * tutaj, bo wytwórnia nie ma po nich żadnej innej potrzeby niż podpięcie —
- * oddawanie ich na zewnątrz wyłącznie po to, by je zaraz podpiąć, byłoby drogą
- * bez odbiorcy.
  */
 function zlozAkcjeBudowania(
   gospodarz: HTMLElement,
@@ -403,11 +327,9 @@ function zlozAkcjeBudowania(
   },
 ): void {
   const uruchomPrzycisk = przycisk('Uruchom budowanie', 'dn-btn dn-btn--atrament');
-  // Wariant biblioteczny dla czynności przerywającej pracę — jak w Execution
-  // Monitorze; wariant `--ostrzezenie` nie istnieje i jedno użycie go nie uzasadnia.
+  // Wariant biblioteczny dla czynności przerywającej pracę, jak w Execution Monitorze tego produktu.
   const przerwijPrzycisk = przycisk('Przerwij budowanie', 'dn-btn dn-btn--niebezpieczny');
-  // Bez warunku, tak jak przerwanie: brak czego powtarzać jest
-  // odpowiedzią okna w stanie błędu, nie wyszarzeniem przycisku.
+  // Bez warunku, jak przerwanie: brak czego powtarzać jest odpowiedzią okna w stanie błędu.
   const ponowPrzycisk = przycisk('Uruchom ponownie');
   const eksportujPrzycisk = przycisk('Eksportuj log zebrany');
 
@@ -451,7 +373,7 @@ function zlozAkcjeBudowania(
   );
 }
 
-/** Kontrolki zakładki Build Output wraz z jej obszarem. */
+/** Kontrolki zakładki Build Output wraz z jej obszarem, osadzane w pasie zakładek tego okna monitora modułu Developer. */
 interface PowierzchniaBudowania {
   /** Obszar zakładki osadzany w pasie zakładek okna. */
   obszar: HTMLElement;
@@ -461,7 +383,7 @@ interface PowierzchniaBudowania {
   waga: HTMLSelectElement;
 }
 
-/** Składa kontrolki zakładki Build Output: pola zadania, zawężenia i miejsce treści. */
+/** Składa kontrolki zakładki Build Output: pola zadania, zawężenia widoku logu oraz miejsce treści wynikowej. */
 function zlozPowierzchnieBudowania(stanTresci: HTMLElement): PowierzchniaBudowania {
   const zadanie = pole('Zadanie budowania', 'np. test albo build');
   const argumenty = pole('Parametry (rozdzielone spacją)', 'opcjonalne');
@@ -499,7 +421,7 @@ function zlozPowierzchnieBudowania(stanTresci: HTMLElement): PowierzchniaBudowan
   return { obszar, zadanie, argumenty, szukaj, waga };
 }
 
-/** Zawężenie widoku odczytane z pól okna. */
+/** Zawężenie widoku przebiegu odczytane z pól zakładki Build Output bieżącego okna monitora modułu Developer. */
 function zawezenieZPol(powierzchnia: PowierzchniaBudowania): ZawezeniePrzebiegu {
   return {
     szukaj: powierzchnia.szukaj.value,
@@ -507,12 +429,12 @@ function zawezenieZPol(powierzchnia: PowierzchniaBudowania): ZawezeniePrzebiegu 
   };
 }
 
-/** Rozstrzyga, czy wartość pola wyboru jest wagą kontraktu. */
+/** Rozstrzyga, czy wartość wybrana w polu wagi zgłoszenia jest wagą znaną kontraktowi tego produktu programistycznego. */
 function czyWaga(wartosc: string): wartosc is ProblemSeverity {
   return (Object.values(ProblemSeverity) as readonly string[]).includes(wartosc);
 }
 
-/** Zadanie uruchomienia budowania; zadanie puste znaczy „nie wiem co uruchomić”. */
+/** Zadanie uruchomienia budowania; zadanie o treści pustej znaczy „nie wiem, co uruchomić” zgłoszone Operatorowi. */
 function zadanieUruchomienia(
   idOkna: string,
   zadanieTekst: string,
@@ -527,10 +449,8 @@ function zadanieUruchomienia(
 }
 
 /**
- * Zadanie przerwania — `task` jest wymagane kontraktem nawet dla przerwania,
- * więc bierze pole zadania Operatora, a bez niego zadanie przebiegu znanego
- * oknu. Przycisk działa nawet, gdy oba są puste; odmowa rdzenia
- * zostaje wtedy widoczna w stanie błędu.
+ * Zadanie przerwania bierze pole zadania Operatora, a bez niego zadanie
+ * przebiegu znanego oknu; przycisk działa nawet, gdy oba są puste.
  */
 function zadanieZatrzymania(
   idOkna: string,

@@ -1,3 +1,9 @@
+/**
+ * Źródło komend kolejki decyzji — jedyne miejsce w katalogu `aod/`, które zna
+ * nazwy komend spoza rodziny `aod.*`. Wpisana jest tu wyłącznie komenda, którą
+ * rdzeń obsługuje, bo komenda nieobsługiwana produkuje przyciski donikąd.
+ */
+
 import {
   Command,
   ConfigScope,
@@ -18,15 +24,10 @@ import {
 import type { Kanal, Wynik } from '../protokol/kanal';
 
 /**
- * Źródło komend kolejki decyzji — jedyne miejsce w katalogu `aod/`, które zna
- * nazwy komend spoza rodziny `aod.*`. Stoi osobno od `zrodlo-komend.ts`, bo
- * tamto niesie wyłącznie rodzinę nakładki; sklejenie obu zatarłoby tę granicę.
- *
- * Wpisana tu jest tylko komenda, którą rdzeń obsługuje. Źródło komend
- * deklarujące komendę nieobsługiwaną produkuje przyciski donikąd.
+ * Opakowuje `kanal.wyslij` w obietnicę — tak samo jak `zrodlo-komend.ts`.
+ * Wynik wywołania wraca jednym rozstrzygnięciem, więc kolejka decyzji czyta
+ * odpowiedź rdzenia bez własnej obsługi wywołania zwrotnego.
  */
-
-/** Opakowuje `kanal.wyslij` w Promise — tak samo jak `zrodlo-komend.ts`. */
 function poslijKomende<K extends Command>(
   kanal: Kanal,
   komenda: K,
@@ -37,7 +38,11 @@ function poslijKomende<K extends Command>(
   });
 }
 
-/** Czynności, po które kolejka decyzji sięga poza rodzinę `aod.*`. */
+/**
+ * Czynności, po które kolejka decyzji sięga poza rodzinę `aod.*`. Każda pozycja
+ * odpowiada jednej komendzie kontraktu, więc wykaz mówi wprost, jaką część
+ * rdzenia nakładka porusza.
+ */
 export interface ZrodloDecyzji {
   /** `monitor.status` bez argumentów: stan wszystkich procesów, które rdzeń zna. */
   procesy(): Promise<Wynik<MonitorStatusResponse>>;
@@ -59,8 +64,8 @@ export interface ZrodloDecyzji {
 
 export function utworzZrodloDecyzji(kanal: Kanal): ZrodloDecyzji {
   return {
-    // Bez argumentów świadomie: nakładka pyta o wszystkie procesy, które rdzeń
-    // zna, bo proces czekający na decyzję nie musi należeć do sesji tego klienta.
+    // Bez argumentów: proces czekający na decyzję nie musi należeć do sesji
+    // tego klienta.
     procesy: () => poslijKomende(kanal, Command.MonitorStatus, {}),
 
     kolejki: () => poslijKomende(kanal, Command.QueueList, {}),
@@ -72,8 +77,8 @@ export function utworzZrodloDecyzji(kanal: Kanal): ZrodloDecyzji {
 
     zatrzymajTurySesji: (sessionId) => poslijKomende(kanal, Command.SessionStop, { sessionId }),
 
-    // Zasięg `window` jest poziomem najwęższym i wygrywa z każdym szerszym —
-    // konfiguracja Koordynatora dotyczy tego jednego okna.
+    // Zasięg `window` jest najwęższy i wygrywa z szerszymi — dotyczy tego
+    // jednego okna.
     otworzKonfiguracjeOkna: (windowId) =>
       poslijKomende(kanal, Command.ConfigWindowOpen, { windowId, scope: ConfigScope.Window }),
 

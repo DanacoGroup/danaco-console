@@ -12,24 +12,8 @@ import {
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Panel dopełnień układu zależności — cztery rzeczy, których krawędź nie
- * wyraża.
- *
- * Krawędź mówi, że kroki się schodzą, i to wszystko, co mówi. Zostają cztery
- * pytania, na które trzeba odpowiedzieć osobno:
- *
- *   - KIEDY tory scalają się w kroku wspólnym — bramka dołączenia;
- *   - CZY zbiór kroków biegnie razem, czy jeden po drugim — grupa;
- *   - CO wycofuje skutki kroku, gdy przebieg pękł w pół — kompensacja;
- *   - CZYIM silnikiem jadą kolejki tej automatyki — spięcie z MultitaskingAI.
- *
- * Panel stoi obok panelu zależności, w narzędziach kontekstowych okna
- * Orchestrator: gospodaruje tym samym układem, tylko innym jego wymiarem.
- *
- * Ocena bramki nie blokuje zapisu — tak samo jak przy krawędzi. Bramka na
- * kroku, którego jeszcze nie ma, zapisuje się, a zastrzeżenie wraca
- * w odpowiedzi: Workflow Builder buduje układ krok po kroku i odmowa kazałaby
- * Operatorowi układać go w jedynej dopuszczonej kolejności.
+ * Panel dopełnień układu zależności nazywa cztery rzeczy, których krawędź nie wyraża: bramkę
+ * dołączenia, grupę kroków, kompensację i spięcie z silnikiem kolejek.
  */
 export interface PanelDopelnienUkladu {
   element: HTMLElement;
@@ -41,7 +25,7 @@ export function utworzPanelDopelnienUkladu(
 ): PanelDopelnienUkladu {
   const odpowiedz = utworzWierszOdpowiedzi();
 
-  // ── Bramka dołączenia ──────────────────────────────────────────────────────
+  // Bramka dołączenia
   const krokBramki = poleTekstowe({
     etykieta: 'Krok scalający tory',
     podpowiedz: 'identyfikator kroku',
@@ -58,7 +42,7 @@ export function utworzPanelDopelnienUkladu(
   licznikTorow.value = '2';
   const zapiszBramke = przycisk('Zapisz bramkę', 'dn-btn dn-btn--sm dn-btn--zarys');
 
-  // ── Grupa kroków ───────────────────────────────────────────────────────────
+  // Grupa kroków
   const nazwaGrupy = poleTekstowe({ etykieta: 'Nazwa grupy kroków' });
   const krokiGrupy = poleTekstowe({
     etykieta: 'Kroki grupy',
@@ -71,7 +55,7 @@ export function utworzPanelDopelnienUkladu(
   ]);
   const zapiszGrupe = przycisk('Zapisz grupę', 'dn-btn dn-btn--sm dn-btn--zarys');
 
-  // ── Kompensacja ────────────────────────────────────────────────────────────
+  // Kompensacja
   const krokGlowny = poleTekstowe({ etykieta: 'Krok główny' });
   const krokWycofu = poleTekstowe({
     etykieta: 'Krok wycofujący',
@@ -79,7 +63,7 @@ export function utworzPanelDopelnienUkladu(
   });
   const zapiszKompensacje = przycisk('Zapisz kompensację', 'dn-btn dn-btn--sm dn-btn--zarys');
 
-  // ── Spięcie z MultitaskingAI ───────────────────────────────────────────────
+  // Spięcie z silnikiem kolejek
   const rolaSpiecia = poleTekstowe({
     etykieta: 'Okno roli środowiska MultitaskingAI',
     podpowiedz: 'puste spina bez wskazania roli',
@@ -146,8 +130,7 @@ export function utworzPanelDopelnienUkladu(
       odpowiedz.pokaz(opisOdmowy('Zapis bramki', wynik.blad?.code, wynik.blad?.message), false);
       return;
     }
-    // Zastrzeżenie nie jest odmową: bramka jest zapisana, a układ ma wadę,
-    // którą Operator dopiero domknie kolejnym krokiem.
+    // Zastrzeżenie nie jest odmową: bramka jest zapisana, a wadę Operator domknie kolejnym krokiem.
     odpowiedz.pokaz(
       wynik.wynik.valid
         ? `Bramka zapisana — układ ma teraz ${wynik.wynik.gates.length} bramek.`

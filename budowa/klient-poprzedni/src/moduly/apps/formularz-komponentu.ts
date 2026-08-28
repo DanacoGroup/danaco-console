@@ -4,16 +4,9 @@ import { opiszPole } from './dymek-objasnienia';
 import { utworzWyborZMenu, wierszWyboru, type PozycjaWyboruMenu } from './wybor-z-menu';
 
 /**
- * Formularz jednego komponentu architektury — definiowanie komponentów
- * rozwiązania i ustalanie zależności w oknie Architecture Designer.
- *
- * Formularz zbiera pola komponentu i wydaje je w kształcie `AppComponent`
- * z kontraktu. Nie zna kanału i niczego nie wysyła — wysyłką zajmuje się okno.
- *
- * Identyfikator składa się z nazwy, o czym mówi objaśnienie pola. Kontrakt
- * wymaga `id` w każdym komponencie żądania, a rdzeń nadaje własne dopiero
- * w odpowiedzi; identyfikator roboczy jest więc kluczem zależności wewnątrz
- * jednego zapisu, nie obietnicą trwałości.
+ * Formularz jednego komponentu architektury zbiera pola komponentu i wydaje je
+ * w kształcie `AppComponent` z kontraktu. Nie zna kanału i niczego nie wysyła —
+ * wysyłką zajmuje się okno Architecture Designer.
  */
 export interface FormularzKomponentu {
   element: HTMLElement;
@@ -38,8 +31,7 @@ export function utworzFormularzKomponentu(): FormularzKomponentu {
     etykieta: 'Nazwa komponentu',
     podpowiedz: 'np. Panel operatora',
   });
-  // Rozwijanie z biblioteki (`komponenty/menu-drzewo.ts` przez obsadę
-  // `wybor-z-menu.ts`), nie natywny `<select>`.
+  // Rozwijanie z biblioteki przez obsadę `wybor-z-menu.ts`, nie kontrolka natywna.
   const rodzaj = utworzWyborZMenu('Rodzaj komponentu', RODZAJE);
   const stos = poleTekstowe({
     etykieta: 'Stos technologiczny',
@@ -119,7 +111,11 @@ export function utworzFormularzKomponentu(): FormularzKomponentu {
   };
 }
 
-/** Identyfikator roboczy komponentu wyprowadzony z nazwy. */
+/**
+ * Wyprowadza identyfikator roboczy komponentu z jego nazwy: małe litery, cyfry
+ * i łączniki w miejscu pozostałych znaków. Nazwa nieskładająca się na żaden znak
+ * dopuszczalny daje wartość zastępczą.
+ */
 function identyfikatorRoboczy(nazwa: string): string {
   const rdzen = nazwa
     .toLowerCase()
@@ -128,7 +124,11 @@ function identyfikatorRoboczy(nazwa: string): string {
   return rdzen === '' ? 'komponent' : rdzen;
 }
 
-/** Rozdziela wpisane identyfikatory zależności, pomijając puste człony. */
+/**
+ * Rozdziela wpisane identyfikatory zależności po przecinku, przycina odstępy
+ * i pomija człony puste. Dzięki temu przecinek zbędny na końcu wpisu nie tworzy
+ * zależności od komponentu bez identyfikatora.
+ */
 function rozdziel(tekst: string): string[] {
   return tekst
     .split(',')

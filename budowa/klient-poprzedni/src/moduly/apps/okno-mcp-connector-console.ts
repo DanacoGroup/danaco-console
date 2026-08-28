@@ -14,28 +14,8 @@ import { utworzRameApps } from './rama-okna';
 import type { StanRozszerzen } from './stan-rozszerzen';
 
 /**
- * MCP & Connector Console — panel boczny inspektora narzędzi i diagnostyki
- * protokołu.
- *
- * Okno stoi w całości na czynnościach, których kontrakt nie prowadzi, i jest
- * zbudowane właśnie po to, żeby ten brak był widoczny i policzony. Kontrolki są
- * obecne, klikalne i nazywają brakującą komendę; żadna nie jest wygaszona
- * i żadna nie udaje wykonania.
- *
- * Powód każdej kontrolki bierze się z bytu pokrycia (`moduly/pokrycie-komend.ts`),
- * a nie z napisu wpisanego tutaj: byt pyta rdzeń o wykaz jego komend i sam
- * przerysowuje zdanie, więc w dniu, w którym rdzeń dostanie uchwyt dla którejś
- * z tych komend, kontrolka powie to sama, bez tknięcia tego pliku. To ważne, bo
- * brak jest stanem przejściowym — komendy są zaprojektowane do natychmiastowej
- * implementacji.
- *
- * Formularz argumentów jest jednym polem tekstowym, nie polami wyprowadzonymi
- * ze schematu: schemat przychodzi z odkrycia narzędzi, którego nie ma. Pola
- * zmyślone ze zgadniętego schematu wyglądałyby na wiedzę o serwerze, której
- * okno nie ma.
- *
- * Okno otwiera się na pozycji wskazanej w Integrations Hubie. Inspektor bez
- * wskazanej integracji nie ma czego inspekcjonować i mówi to wprost.
+ * MCP & Connector Console jest panelem bocznym inspektora narzędzi i diagnostyki protokołu,
+ * zbudowanym na czynnościach, których kontrakt jeszcze nie prowadzi.
  */
 export interface OknoMcpConnectorConsole {
   element: HTMLElement;
@@ -139,8 +119,7 @@ export function utworzOknoMcpConnectorConsole(
       );
       return;
     }
-    // Konsola dotyczy serwera MCP; dla pozostałych rodzajów mówi, czego dotyczy
-    // i czego nie — zamiast udawać, że wtyczka odpowiada na tools/list.
+    // Konsola dotyczy serwera MCP; dla pozostałych rodzajów mówi wprost, czego dotyczy i czego nie.
     const oRodzaju =
       pozycja.kind === ExtensionKind.Mcp
         ? 'Log JSON-RPC i odkrycie definicji dotyczą tego rodzaju pozycji wprost.'
@@ -150,8 +129,7 @@ export function utworzOknoMcpConnectorConsole(
       `Wskazana integracja: ${pozycja.name} (kod ${pozycja.code}, rodzaj ${pozycja.kind}, ` +
       `${pozycja.enabled ? 'włączona' : 'wyłączona'}). ${oRodzaju}`;
     if (rama.faza() === 'blad' || rama.faza() === 'ladowanie') return;
-    // Okno nie przechodzi w stan „gotowe”, bo niczego nie odczytało: stan pusty
-    // z nazwanym powodem jest tu stanem prawdziwym.
+    // Okno nie przechodzi w stan gotowe, bo niczego nie odczytało; pusty stan z powodem jest tu prawdziwy.
     rama.puste(
       'Konsola nie ma dziś ani jednej drogi do rdzenia. Cztery czynności — odkrycie ' +
         'definicji, próbne wywołanie, piaskownica i log protokołu — czekają na komendy; ' +
@@ -163,7 +141,7 @@ export function utworzOknoMcpConnectorConsole(
   return { element: rama.element, odswiez };
 }
 
-/** Nagłówek części okna. */
+/** Nagłówek części okna nazywa kolejny fragment konsoli, oddzielając wizualnie grupy kontrolek diagnostyki od siebie. */
 function naglowekCzesci(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';

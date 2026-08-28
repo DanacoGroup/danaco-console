@@ -13,30 +13,9 @@ import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
 /**
- * Wykaz nadań ról — jedyny czytelnik `role.list` i jedyny wołacz `role.remove`
- * w kliencie.
- *
- * Wykaz bierze się z rdzenia, a nie z okien sesji. Panel obsady składa scenę
- * z `window.list`: bierze okna i odczytuje z nich pole `windowRole`. To wystarcza
- * do pokazania sceny, ale nie jest rejestrem nadań. Rejestrem jest rdzeń, a jego
- * odpowiedź (`WindowRoleAssignment`) niesie wcielenie — pole, którego `Window`
- * nie ma w ogóle. Ten wykaz jest jedynym miejscem, gdzie widać, czy wcielenie
- * nadane przez `role.update` w rdzeniu stoi.
- *
- * Zawężenie jest czynnością, nie filtrem miejscowym: `role.list` przyjmuje
- * `coordinatorWindowId`, więc zawężenie do wykonawców tej obsady wykonuje rdzeń.
- * Przesiewanie odpowiedzi w kliencie dałoby ten sam obraz, ale kłamałoby przy
- * wykazie uciętym po stronie rdzenia — i byłoby drugą regułą przynależności
- * do pętli obok tej z kontraktu.
- *
- * „Zdejmij rolę" wykonuje się bez bramek: bez pytania „czy na pewno?", bez
- * wygaszania i bez uprawnienia per okno. Skutek nie jest utratą zapisu — okno
- * zostaje, traci wyłącznie rolę, a nadać ją z powrotem można paskiem obsady
- * stojącym wyżej w tym samym panelu.
- *
- * Zgoda nie jest dowodem: `role.remove` odpowiada polem `removed`, a odpowiedź
- * udana z `removed: false` znaczy „nie było czego zdjąć". Zdanie dla Operatora
- * powstaje z tego pola, nie z faktu, że wywołanie nie zwróciło błędu.
+ * Wykaz nadań ról jest jedynym czytelnikiem nadań i jedynym miejscem, gdzie
+ * widać wcielenie z rdzenia; zawężenie do wykonawców koordynatora wykonuje
+ * rdzeń, a zdjęcie roli działa bez bramek, bo skutek nie jest utratą zapisu.
  */
 export interface WykazNadanRol {
   element: HTMLElement;
@@ -76,17 +55,12 @@ export function utworzWykazNadanRol(opcje: OpcjeWykazuNadan): WykazNadanRol {
   element.className = `${PRZEDROSTEK}-nadania`;
   element.append(pasek, pozycje, tresci.element);
 
-  /**
-   * Odczyt nadań. Zawężenie idzie do rdzenia tylko wtedy, gdy obsada ma
-   * koordynatora — pole `coordinatorWindowId` z pustym napisem byłoby zawężeniem
-   * do okna, którego nie ma, i oddałoby wykaz pusty bez powodu.
-   */
+  // Odczyt nadań; zawężenie idzie do rdzenia tylko wtedy, gdy obsada ma koordynatora.
   async function odczytaj(): Promise<void> {
     const koordynator = stan.obsada().koordynator;
     const zadane = zawez.dataset['wlaczony'] === 'true';
     const zawezone = zadane && koordynator !== null;
-    // Zawężenie zadane, a niewykonane, nie ma prawa zniknąć w ciszy:
-    // wykaz byłby wtedy szerszy, niż Operator prosił, i nikt by tego nie wiedział.
+    // Zawężenie zadane, a niewykonane, nie ma prawa zniknąć w ciszy przed przeglądającym wykaz.
     const oZawezeniu =
       zadane && !zawezone
         ? ' Zawężenie do wykonawców koordynatora NIE poszło — obsada nie ma koordynatora, więc nie ma adresu zawężenia.'
@@ -138,11 +112,7 @@ export function utworzWykazNadanRol(opcje: OpcjeWykazuNadan): WykazNadanRol {
       return;
     }
     tresci.potwierdzenie(`Rdzeń zdjął rolę z okna ${oddane.windowId}.`, true);
-    // Scena stoi na `window.list`, więc po zdjęciu roli musi przeczytać okna
-    // od nowa — inaczej pokazywałaby obsadę, której w rdzeniu już nie ma.
-    // Ten odczyt zawraca też tutaj (panel odświeża wykaz nadań po odczycie
-    // okien), więc drugiego wywołania stąd nie ma: byłoby tym samym pytaniem
-    // zadanym dwa razy pod rząd.
+    // Scena stoi na wykazie okien, więc po zdjęciu roli musi przeczytać okna od nowa.
     poZdjeciuRoli();
   }
 

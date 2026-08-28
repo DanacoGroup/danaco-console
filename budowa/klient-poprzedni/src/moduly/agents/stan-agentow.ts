@@ -5,17 +5,9 @@ import { utworzZrodloAgentow, type ZrodloAgentow } from './zrodlo-agentow';
 import { testowanyAgent } from './testowany-agent';
 
 /**
- * Jeden zbiór ekspertów na cały moduł Agents.
- *
- * Pięć okien modułu — Agent Builder, Model Configuration, Skills Manager,
- * Connectors Manager, Permissions Center — pracuje na tym samym ekspercie
- * czynnym. Gdyby każde okno prowadziło własny wykaz i własny wybór, zmiana
- * modelu bazowego nie odświeżałaby biblioteki, a przypisanie umiejętności
- * dotyczyłoby innego eksperta niż ten pokazany w edytorze.
- *
- * Poza własnym działaniem odświeża wyłącznie zdarzenie: zmiana dokonana na innym
- * urządzeniu konta dociera zdarzeniem `agent.changed` i stan wciąga ją tak samo
- * jak własną. Nie ma tu odpytywania w pętli.
+ * Jeden zbiór ekspertów na cały moduł Agents: pięć okien modułu pracuje na tej
+ * samej bibliotece i na tym samym ekspercie czynnym. Zmiana z innego urządzenia
+ * konta dociera zdarzeniem `agent.changed` i wchłania się tak samo jak własna.
  */
 export type FazaStanu = 'ladowanie' | 'gotowe' | 'blad';
 
@@ -54,20 +46,7 @@ export function utworzStanAgentow(kanal: Kanal): StanAgentow {
   let stanPowodu = '';
   let szukana = '';
 
-  /**
-   * Ogłoszenie zmiany stanu — najpierw testowany ekspert, potem widok.
-   *
-   * Testowany ekspert sięga poza ten moduł. Czat modułu Agents jest czatem
-   * testowym i nie ma pamięci sesyjnej: rozmowa znika przy zamknięciu okna oraz
-   * przy zmianie testowanego agenta (`profil-modulu.ts` → `pamiecSesyjna: false`
-   * dla `agents`). Okno rozmowy stoi obok widoku modułu, na scenie sesji, więc
-   * bez tego wiersza nie miałoby jak się dowiedzieć o przełączeniu eksperta.
-   *
-   * Kolejność jest treścią: rozgłos idzie przed słuchaczami okien modułu, żeby
-   * rozmowa zdążyła się wyczyścić i nazwać powód, zanim okna modułu przerysują
-   * się na nowego eksperta. Odwrotna kolejność pokazywałaby przez moment czat
-   * poprzedniego eksperta w oknach już opisanych nazwiskiem następnego.
-   */
+  // Ogłasza zmianę stanu: najpierw testowany ekspert, potem słuchacze okien modułu.
   function oglos(): void {
     const wybrany = biblioteka.find((wpis) => wpis.id === wybor) ?? null;
     testowanyAgent.ustaw(wybrany?.id ?? '', wybrany?.name ?? '');

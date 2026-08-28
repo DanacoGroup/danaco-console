@@ -4,15 +4,8 @@ import type { StanKompozycji } from './stan-kompozycji';
 
 /**
  * Kanwa swobodna Design Board — warstwy, powiększenie, przesunięcie, siatka.
- *
- * Odpowiada wyłącznie za wyrysowanie kompozycji i przyjęcie wskazań myszą.
- *
- * Przeciąganie jest tu miejscowe: wskaźnik przechwycony na warstwie
- * (`setPointerCapture`), przesunięcie liczone w jednostkach kompozycji
- * (podzielone przez powiększenie), warstwa zablokowana nie rusza się wcale.
- *
- * Plansza nie zna rdzenia. Ruch warstwy zmienia zapis kompozycji; do rdzenia
- * jedzie dopiero zapis całości komendą `design.board.update` — z okna, nie stąd.
+ * Odpowiada wyłącznie za wyrysowanie kompozycji i przyjęcie wskazań myszą;
+ * rdzenia nie zna, bo zapis całości idzie z okna, a nie z planszy.
  */
 export interface PlanszaKompozycji {
   element: HTMLElement;
@@ -28,8 +21,7 @@ export function utworzPlansze(stan: StanKompozycji): PlanszaKompozycji {
   element.setAttribute('aria-label', 'Kanwa kompozycji Design Board');
   element.append(plotno);
 
-  // Kliknięcie w puste płótno zdejmuje zaznaczenie — inaczej nie da się wyjść
-  // z zaznaczenia wielokrotnego bez trafienia w warstwę.
+  // Kliknięcie w puste płótno zdejmuje zaznaczenie wielokrotne.
   element.addEventListener('pointerdown', (zdarzenie) => {
     if (zdarzenie.target === element || zdarzenie.target === plotno) stan.odznacz();
   });
@@ -49,7 +41,11 @@ export function utworzPlansze(stan: StanKompozycji): PlanszaKompozycji {
   return { element, odswiez };
 }
 
-/** Jedna warstwa na kanwie wraz z jej przeciąganiem. */
+/**
+ * Jedna warstwa na kanwie wraz z jej przeciąganiem. Położenie i rozmiar warstwy
+ * idą z zapisu kompozycji przeliczonego przez powiększenie, więc kanwa rysuje
+ * to samo w każdej skali podglądu.
+ */
 function elementWarstwy(
   warstwa: DesignBoardLayer,
   zaznaczona: boolean,
@@ -75,7 +71,11 @@ function elementWarstwy(
   return element;
 }
 
-/** Przeciąganie warstwy wskaźnikiem; warstwa zablokowana zostaje w miejscu. */
+/**
+ * Przeciąganie warstwy wskaźnikiem; warstwa zablokowana zostaje w miejscu.
+ * Wskaźnik jest przechwytywany na warstwie, a przesunięcie liczone w jednostkach
+ * kompozycji, żeby ruch nadążał za kursorem przy każdym powiększeniu.
+ */
 function dopnijPrzeciaganie(
   element: HTMLElement,
   warstwa: DesignBoardLayer,

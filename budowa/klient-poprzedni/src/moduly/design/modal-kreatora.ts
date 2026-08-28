@@ -1,17 +1,7 @@
 /**
- * Powłoka modala kreatora — cztery drogi zamknięcia i stopka z akcjami.
- *
- * Jedna odpowiedzialność: rama okna kreatora, bez wiedzy o jego treści.
- *
- * Zamknięcie ma cztery drogi, wszystkie obowiązkowe: kontrolka w nagłówku,
- * klawisz Escape, kliknięcie w nakładkę i akcja w stopce. Escape i nakładka są
- * własnością natywnego `<dialog>` — Escape daje przeglądarka, a nakładkę
- * rozpoznajemy po tym, że kliknięcie trafiło w sam element dialogu, a nie w jego
- * wnętrze. Wzorzec ten sam co w `konfiguracja/okno-konfiguracji.ts`.
- *
- * Przycisk główny zachowuje klikalność zawsze — także przy brakach w polach
- * i w czasie ładowania. Idempotencję ponownego naciśnięcia rozstrzyga
- * logika akcji, nie odebranie klikalności kontrolce.
+ * Powłoka modala kreatora: rama okna bez wiedzy o jego treści, z czterema
+ * równorzędnymi drogami zamknięcia — kontrolka nagłówka, klawisz Escape,
+ * kliknięcie w nakładkę oraz akcja stopki.
  */
 export interface ModalKreatora {
   element: HTMLDialogElement;
@@ -72,8 +62,8 @@ export function utworzModalKreatora(tytul: string, akcja: string): ModalKreatora
   for (const kontrolka of [zamkniecie, zamknij]) {
     kontrolka.addEventListener('click', () => element.close());
   }
-  // Kliknięcie w nakładkę: cel zdarzenia to sam dialog, bo wnętrze przykrywa
-  // go w całości. Wnętrze zatrzymuje kliknięcie na sobie.
+  // Nakładka to sam dialog: wnętrze przykrywa go w całości i zatrzymuje
+  // kliknięcie na sobie.
   element.addEventListener('click', (zdarzenie) => {
     if (zdarzenie.target === element) element.close();
   });
@@ -86,9 +76,8 @@ export function utworzModalKreatora(tytul: string, akcja: string): ModalKreatora
 
     otworz() {
       if (element.open) return;
-      // `showModal` daje nakładkę, stos okien i Escape; w środowiskach bez
-      // niego (sprawdziany) zostaje zwykłe otwarcie — okno ma się pokazać
-      // tak czy inaczej.
+      // `showModal` daje nakładkę, stos okien i klawisz Escape; bez niego
+      // zostaje zwykłe otwarcie.
       if (typeof element.showModal === 'function') element.showModal();
       else element.open = true;
     },

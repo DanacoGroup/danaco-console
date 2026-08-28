@@ -9,15 +9,9 @@ import type { ZrodloKont } from './zrodlo-kont';
 
 /**
  * Cztery komendy zmieniające rejestr kont wraz z uzgodnieniem stanu widoku
- * z odpowiedzią rdzenia.
- *
- * Odczyt i zapis są rozdzielone: stan rejestru pilnuje tego, co widok wie
- * o kontach, a ten plik — tego, co dzieje się po zapisie, czyli które wiersze
- * wolno nanieść z odpowiedzi, a kiedy trzeba przeczytać wykaz od nowa. Rozdział
- * pozwala zmienić regułę uzgodnienia bez dotykania odczytu.
- *
- * Żadna ścieżka nie odrzuca obietnicy: niepowodzenie wraca jako `Wynik` z błędem,
- * żeby formularz mógł podać treść odpowiedzi rdzenia.
+ * z odpowiedzią rdzenia. Żadna ścieżka nie odrzuca obietnicy: niepowodzenie
+ * wraca jako `Wynik` z błędem, aby formularz mógł podać treść odpowiedzi
+ * rdzenia.
  */
 export interface ZapisyKont {
   /** `account.add` — zakłada konto i czyni je czynnym. */
@@ -30,7 +24,11 @@ export interface ZapisyKont {
   ustawDomyslne(zadanie: AccountDefaultSetRequest): Promise<Wynik<unknown>>;
 }
 
-/** Wejścia zapisów: źródło komend i cztery czynności stanu rejestru. */
+/**
+ * Wejścia zapisów: źródło komend rdzenia oraz cztery czynności stanu rejestru
+ * — przyjęcie potwierdzonego konta, odłączenie konta, wybór konta czynnego
+ * i ponowny odczyt wykazu.
+ */
 export interface ZaleznosciZapisow {
   zrodlo: ZrodloKont;
   /** Nanosi konto potwierdzone przez rdzeń na wykaz. */
@@ -73,8 +71,7 @@ export function utworzZapisyKont(zaleznosci: ZaleznosciZapisow): ZapisyKont {
     async ustawDomyslne(zadanie) {
       const wynik = await zrodlo.ustawDomyslne(zadanie);
       // Oznaczenie domyślnego przestawia dwa wiersze naraz, a odpowiedź niesie
-      // tylko jeden. Wykaz czytamy ponownie, żeby konto tracące oznaczenie nie
-      // zostało w widoku jako drugie domyślne swojego rodzaju.
+      // tylko jeden.
       if (wynik.udany) await wczytaj();
       return wynik;
     },

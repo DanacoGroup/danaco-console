@@ -26,24 +26,14 @@ import {
   NASTAWY_WYJSCIOWE,
 } from './wzorce-cyklicznosci';
 
-/**
- * Sprawdziany warstwy klienckiej modułu Automations.
- *
- * Obejmują wyłącznie byty rozstrzygalne bez rdzenia: przekład wzorca
- * cykliczności na zapis cron i z powrotem, walidację definicji, miary i
- * zawężenie wykazu przebiegów, układ warstwowy grafu, zapisy eksportu,
- * kalendarz oraz wyjęcie scenariusza z przeniesionego kompletu.
- *
- * Dane przykładowe pochodzą ze świata produktu — kroki i przebiegi automatyki
- * raportowej — i są oznaczone jako przykładowe nazwą.
- */
+/** Sprawdziany warstwy klienckiej modułu Automations obejmują wyłącznie byty rozstrzygalne bez rdzenia. */
 
-/** Krok przykładowy w kształcie, w którym niesie go kontrakt. */
+/** Krok przykładowy w kształcie, w którym niesie go kontrakt, gotowy do nadpisania wybranych pól testu. */
 function krok(id: string, dodatki: Partial<AutomationStep> = {}): AutomationStep {
   return { id, kind: AutomationStepKind.Command, command: 'przyklad.krok', ...dodatki };
 }
 
-/** Przebieg przykładowy; czas podawany w milisekundach od punktu odniesienia. */
+/** Przebieg przykładowy, którego czas podawany jest w milisekundach liczonych od wspólnego punktu odniesienia. */
 const POCZATEK = Date.UTC(2026, 7, 17, 7, 0, 0);
 
 function przebieg(
@@ -63,13 +53,8 @@ function przebieg(
 }
 
 /**
- * Wykazy rozwijane modułu biorą się z wyliczeń kontraktu, nie z zapisu w oknie.
- *
- * Zapora na powtórzenie usterki: wykazy przepisane ręcznie przestały raz
- * odpowiadać kontraktowi po jego rozszerzeniu, a okno pokazywało wtedy mniej
- * rodzajów i działań, niż silnik naprawdę zna, nie mówiąc o tym ani słowem.
- * Kompletność wymusza już typ (mapa zupełna po wyliczeniu); sprawdzian pilnuje
- * drugiej połowy — że wykaz na ekranie powstaje z tej mapy, a nie obok niej.
+ * Wykazy rozwijane modułu biorą się z wyliczeń kontraktu, nie z zapisu w oknie, zaporą na
+ * powtórzenie usterki.
  */
 describe('wykazy modułu odpowiadają wyliczeniom kontraktu', () => {
   it('rodzaje kroku pokrywają wyliczenie rodzajów kroku', () => {

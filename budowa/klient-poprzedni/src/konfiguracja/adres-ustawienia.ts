@@ -3,18 +3,8 @@ import { nazwaOsi, nazwaZasiegu } from './zasiegi';
 
 /**
  * Adres ustawienia — jedyny sposób wskazania miejsca w przestrzeni
- * konfiguracji.
- *
- * Przestrzeń ma dwa prostopadłe wymiary, więc adres ma cztery człony: poziom
- * zasięgu wraz z bytem poziomu oraz oś wraz z bytem osi. Ten sam kształt służy
- * dwóm rolom, dlatego mieszka w jednym module:
- *
- *   • punkt widzenia — miejsce, z którego oglądana jest konfiguracja
- *     i względem którego liczone jest dziedziczenie;
- *   • adres zapisu — miejsce, w którym komenda `config.set` zapisze wartość.
- *
- * Byt pusty znaczy „poziom bez bytu": globalny na osi poziomów, platforma na
- * osi rozstrzygania.
+ * konfiguracji. Przestrzeń ma dwa prostopadłe wymiary, więc adres ma cztery
+ * człony: poziom zasięgu wraz z bytem poziomu oraz oś wraz z bytem osi.
  */
 export interface AdresUstawienia {
   /** Poziom zasięgu. */
@@ -27,7 +17,11 @@ export interface AdresUstawienia {
   bytOsi: string;
 }
 
-/** Adres otwierający okno: cała platforma na poziomie globalnym. */
+/**
+ * Adres otwierający okno: cała platforma na poziomie globalnym, czyli oba byty
+ * puste. Od tego miejsca liczy się dziedziczenie, dopóki punkt widzenia nie
+ * zostanie przestawiony.
+ */
 export function adresPoczatkowy(): AdresUstawienia {
   return {
     zasieg: ConfigScope.Global,
@@ -37,7 +31,10 @@ export function adresPoczatkowy(): AdresUstawienia {
   };
 }
 
-/** Adres, pod którym leży wpis konfiguracji. */
+/**
+ * Adres, pod którym leży wpis konfiguracji; pola `scopeId` i `axisId` nieobecne
+ * w odpowiedzi rdzenia dają byt pusty, a nieobecna oś znaczy oś platformy.
+ */
 export function adresWpisu(wpis: ConfigEntry): AdresUstawienia {
   return {
     zasieg: wpis.scope,
@@ -47,7 +44,10 @@ export function adresWpisu(wpis: ConfigEntry): AdresUstawienia {
   };
 }
 
-/** Czy dwa adresy wskazują to samo miejsce przestrzeni konfiguracji. */
+/**
+ * Czy dwa adresy wskazują to samo miejsce przestrzeni konfiguracji; przy pustym
+ * bycie osi sama nazwa osi nie różnicuje, ponieważ poziom bez bytu jest jeden.
+ */
 export function tenSamAdres(pierwszy: AdresUstawienia, drugi: AdresUstawienia): boolean {
   return (
     pierwszy.zasieg === drugi.zasieg &&
@@ -57,7 +57,10 @@ export function tenSamAdres(pierwszy: AdresUstawienia, drugi: AdresUstawienia): 
   );
 }
 
-/** Adres w jednym zdaniu: poziom, byt, oś, byt osi. */
+/**
+ * Adres w jednym zdaniu: poziom zasięgu, byt poziomu, oś oraz byt osi, złączone
+ * znakiem środkowej kropki. Człony puste do opisu nie wchodzą.
+ */
 export function opisAdresu(adres: AdresUstawienia): string {
   const czlony = [nazwaZasiegu(adres.zasieg)];
   if (adres.bytZasiegu !== '') czlony.push(adres.bytZasiegu);

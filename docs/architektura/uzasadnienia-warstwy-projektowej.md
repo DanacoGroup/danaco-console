@@ -812,3 +812,20 @@ Zawijanie jest konieczne, bo gniazdo sceny bywa wąskie (trzy okna obok
 siebie), a ster wychodzący poza krawędź przestaje być sterem. Źródłem
 wartości są wyłącznie żetony `motyw/`, ani jednej barwy szesnastkowej, ani
 jednego odstępu spoza skali.
+
+## budowa/klient-poprzedni/src/powloka/obszar-roboczy.css
+Kolumna, bo pasek uczciwości stoi nad widokiem; widok bierze całą resztę
+wysokości, stan pusty staje pośrodku. Okno operacyjne modułu stoi w wierszu
+górnym, pas komunikacji pod nim i bierze do 54% wysokości; okna równoległe
+stają obok siebie dopiero wewnątrz tego pasa. Moduł bez zbudowanego widoku
+oddaje rozmowie całą wysokość: strefa modułu jest wtedy ukryta, a pas
+komunikacji zostaje jedynym wierszem planszy. Próg 496 pikseli to
+najmniejsza wysokość, przy której wnętrze pasa mieści się bez ucinania:
+listwa przełącznika, wyściółka toru, pas relacji, nagłówek gniazda oraz
+sama rozmowa (z `rozmowa/rozmowa.css`: nagłówek modułu, historia minimum
+140 pikseli, pole wysyłki około 148 pikseli) sumują się do blisko 490
+pikseli, a przycięcie nadmiaru gniazda i powłoki obcina go, zamiast
+przewijać. Na ekranach wysokich, gdzie 54% przekracza próg, pas dalej
+bierze swoje 54%. Katalog okien operacyjnych, których jeszcze nie ma,
+niesie kody wprost z rdzenia, krojem maszynowym, bo to identyfikatory,
+nie nazwy własne.

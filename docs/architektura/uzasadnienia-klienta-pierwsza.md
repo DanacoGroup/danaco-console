@@ -8155,3 +8155,22 @@ Wykaz pól mówi także o tym, czego nie ma: wartość pusta to nie pustka w wie
 Dla pola prompt źródłowy zdanie mówi więcej niż „nie podał": klucza nie niesie żadna odpowiedź
 rdzenia, bo nie ma on przekładu klucza wiersza promptu na kod kontraktu i nie zgaduje go. Samo
 „rdzeń tego nie podał" kazałoby sądzić, że zasób prompt zgubił.
+
+## budowa/klient-poprzedni/src/aod/kolejka-decyzji.ts
+Kolejka decyzji czekających jest magazynem bez DOM i bez kanału. Trzyma, co czeka,
+od kiedy, czego dotyczy i skąd o tym wiadomo; drogi wyjścia zostają poza magazynem,
+bo zależą od stanu rdzenia w chwili czynności (`cztery-stery.ts`).
+
+Dosypują dwa źródła: odczyt nadrabiający `monitor.status` wnosi to, co stanęło przed
+otwarciem okna, a sygnały `progress.changed` i `window.state.changed` — to, co staje
+przy otwartym oknie.
+
+Powtórzenie tego samego powodu nie zeruje `czekaOd`; zegar rusza od nowa dopiero
+przy zmianie powodu. Kluczem jest identyfikator procesu, a gdy sygnał go nie niesie
+(`window.state.changed`) — okno z przedrostkiem `okno:`. Sygnał o biegnącym procesie
+zdejmuje wpis natychmiast. Wykaz idzie po `czekaOd` rosnąco, a przy równych chwilach
+rozstrzyga klucz, żeby nie migotał.
+
+Porównywane są pola rysowane, a nie całe struktury: `monitor.status` przychodzi
+co odczyt i przy identycznej treści nie ma powodu przerysowywać wykazu —
+przerysowanie gubiłoby ognisko klawiatury na sterach.

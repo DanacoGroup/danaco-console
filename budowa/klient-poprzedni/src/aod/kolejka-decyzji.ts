@@ -7,64 +7,26 @@ import {
   type ObserwacjaProcesu,
 } from './rozpoznanie-decyzji';
 
-/**
- * Kolejka decyzji czekających — magazyn bez DOM i bez kanału. Trzyma, co czeka,
- * od kiedy, czego dotyczy i skąd o tym wiadomo; drogi wyjścia zostają poza
- * magazynem, bo zależą od stanu rdzenia w chwili czynności (`cztery-stery.ts`).
- *
- * Dosypują dwa źródła: odczyt nadrabiający `monitor.status` wnosi to, co stanęło
- * przed otwarciem okna, a sygnały `progress.changed` i `window.state.changed` —
- * to, co staje przy otwartym oknie.
- *
- * Powtórzenie tego samego powodu nie zeruje `czekaOd`; zegar rusza od nowa
- * dopiero przy zmianie powodu. Kluczem jest identyfikator procesu, a gdy sygnał
- * go nie niesie (`window.state.changed`) — okno z przedrostkiem `okno:`. Sygnał
- * o biegnącym procesie zdejmuje wpis natychmiast. Wykaz idzie po `czekaOd`
- * rosnąco, a przy równych chwilach rozstrzyga klucz, żeby nie migotał.
- */
-
-/** Wpis kolejki widziany przez sekcję okna. */
+/** Wpis kolejki decyzji czekających, widziany przez sekcję okna, z czasem oczekiwania liczonym przy odczycie. */
 export interface WpisKolejkiDecyzji {
   decyzja: DecyzjaCzekajaca;
   /** Ile milisekund wpis czeka — liczone przy odczycie, nie przechowywane. */
   czekaMs: number;
 }
 
-/** Magazyn decyzji czekających. */
+/** Magazyn decyzji czekających, przyjmujący obserwacje procesów i odczyty oraz oddający uszeregowany wykaz. */
 export interface KolejkaDecyzji {
-  /**
-   * Wnosi jedną obserwację.
-   *
-   * @returns `true`, gdy wykaz się zmienił — sekcja przerysowuje się tylko wtedy.
-   */
+  /** Wnosi jedną obserwację; `true`, gdy wykaz się zmienił. */
   nanies(obserwacja: ObserwacjaProcesu, teraz: number): boolean;
-  /**
-   * Wnosi cały odczyt nadrabiający `monitor.status`.
-   *
-   * Odczyt jest ROZSTRZYGAJĄCY dla wpisów o procesach: wpis, którego proces
-   * w odczycie nie wystąpił, znika — rdzeń już tego procesu nie zna. Wpisy
-   * kluczowane oknem zostają, bo `monitor.status` o nich nie mówi.
-   */
+  // Odczyt jest rozstrzygający dla wpisów o procesach: wpis bez procesu w odczycie znika.
   nanieOdczyt(obserwacje: readonly ObserwacjaProcesu[], teraz: number): boolean;
   /** Zdejmuje wpis wskazany kluczem; `true`, gdy było co zdjąć. */
   zdejmij(klucz: string): boolean;
-  /**
-   * Odrzuca wpis — status `odrzucona` cyklu życia sugestii (rozdz. 9.4).
-   *
-   * Wpis znika z wykazu i NIE WRACA: analogiczne zdarzenie nie tworzy sugestii
-   * do końca życia okna nakładki (rozdz. 4.1: „do końca karty sesji").
-   * Odrzucenie idzie bez pytania „czy na pewno" — decyzja Operatora jest
-   * decyzją, nie propozycją.
-   */
+  // Wpis odrzucony znika z wykazu i nie wraca do końca życia okna nakładki.
   odrzuc(klucz: string): boolean;
   /** Czy wpis o tym kluczu został odrzucony i nie wróci. */
   czyOdrzucona(klucz: string): boolean;
-  /**
-   * Wykaz uszeregowany od najdłużej czekającego.
-   *
-   * Wpis czekający dłużej niż czas życia sugestii nieprzyjętej (rozdz. 3.4 —
-   * 24 godziny) znika z wykazu; opracowanie nadaje mu wtedy status odrzuconej.
-   */
+  // Wykaz uszeregowany od najdłużej czekającego; przeterminowany wpis znika i staje się odrzuconym.
   wykaz(teraz: number): WpisKolejkiDecyzji[];
   /** Liczba decyzji czekających. */
   liczba(): number;
@@ -76,7 +38,7 @@ export function utworzKolejkeDecyzji(progBezRuchuMs?: number): KolejkaDecyzji {
   /** Wpisy po kluczu; kolejność wynika z `czekaOd`, nie z kolejności wstawiania. */
   const wpisy = new Map<string, DecyzjaCzekajaca>();
 
-  /** Klucze odrzucone przez Operatora — sugestia nie wraca (rozdz. 4, „Odrzuć"). */
+  // Klucze odrzucone przez Operatora — analogiczna sugestia nie wraca.
   const odrzucone = new Set<string>();
 
   function nanies(obserwacja: ObserwacjaProcesu, teraz: number): boolean {
@@ -100,12 +62,7 @@ export function utworzKolejkeDecyzji(progBezRuchuMs?: number): KolejkaDecyzji {
     return true;
   }
 
-  /**
-   * Zdejmuje wpisy starsze niż czas życia sugestii nieprzyjętej (rozdz. 3.4).
-   *
-   * Wpis nie wraca po przeterminowaniu — opracowanie nadaje mu status
-   * odrzuconej — więc klucz idzie do zbioru odrzuconych, a nie tylko z mapy.
-   */
+  // Wpis przeterminowany nie wraca — klucz idzie do zbioru odrzuconych, a nie tylko z mapy.
   function przeterminuj(teraz: number): boolean {
     let zmiana = false;
     for (const [klucz, decyzja] of wpisy) {
@@ -161,13 +118,7 @@ export function utworzKolejkeDecyzji(progBezRuchuMs?: number): KolejkaDecyzji {
   };
 }
 
-/**
- * Czy dwie decyzje o tym samym kluczu i powodzie różnią się czymś widocznym.
- *
- * Porównujemy pola RYSOWANE, a nie całe struktury: `monitor.status` przychodzi
- * co odczyt i przy identycznej treści nie ma powodu przerysowywać wykazu —
- * przerysowanie gubiłoby ognisko klawiatury na sterach.
- */
+/** Rozstrzyga, czy dwie decyzje o tym samym kluczu i powodzie różnią się polem rysowanym, a nie całą strukturą. */
 function czyRozne(a: DecyzjaCzekajaca, b: DecyzjaCzekajaca): boolean {
   return (
     a.zdanie !== b.zdanie ||
@@ -181,12 +132,7 @@ function czyRozne(a: DecyzjaCzekajaca, b: DecyzjaCzekajaca): boolean {
   );
 }
 
-/**
- * Zdanie „skąd wiadomo" dla całej kolejki — jedna linia pod wykazem.
- *
- * Wymienia sygnały, którymi kolejka faktycznie coś złapała, a nie te, które
- * subskrybuje.
- */
+/** Zdanie „skąd wiadomo" dla całej kolejki, wymieniające tylko sygnały, którymi faktycznie coś złapano. */
 export function opiszZrodlaKolejki(wpisy: readonly WpisKolejkiDecyzji[]): string {
   const zrodla = new Set(wpisy.map((wpis) => wpis.decyzja.zrodlo));
   if (zrodla.size === 0) return '';

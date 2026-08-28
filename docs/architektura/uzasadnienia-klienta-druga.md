@@ -6648,3 +6648,8 @@ licznik obok.
 Stan błędu jest tu konieczny: debata odmawia z powodów zwyczajnych — kanał uczestnika nieczynny,
 tura zamknięta, stanowiska jeszcze nie ma — a okno pokazujące wtedy pustą listę wypowiedzi
 mówiłoby, że nikt nic nie powiedział, zamiast że nie udało się zapytać.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/pulpit-proby.ts
+Punkt wejścia aplikacji tego pliku nie importuje — w aplikacji te same
+wywołania pochodzą od modelu przez narzędzia kontraktu i od pętli kolejek,
+nie z ręcznego pulpitu prób.

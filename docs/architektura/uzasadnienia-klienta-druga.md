@@ -8002,3 +8002,16 @@ pozycji, bo wykazy karmią menu z biblioteki.
 
 Wartość pusta ma własną pozycję: „Wszystkie procesy” i „Każdy inicjator” to brak zawężenia,
 a nie brak wyboru. Bez niej filtr byłby drogą w jedną stronę.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przepelnienie-pasa.ts
+Zwężanie odbiera czytelność wszystkim pozycjom naraz — przy kilkunastu
+kartach każda ma tytuł ścięty do zera i żadnej nie da się rozpoznać, a wraz
+z tytułem znika plakietka stanu, czyli informacja o awarii. Przewijanie
+odbiera czytelność wyłącznie temu, co wyszło poza kadr; warunkiem jest
+podłoga szerokości pozycji w arkuszu pasa, bez której pozycje kurczą się,
+zanim przewijak w ogóle ruszy. Wiązanie dokłada to, czego arkusz nie umie:
+utrzymanie pozycji czynnej w kadrze i uchwyty krawędziowe, które nie są
+bramą, tylko skrótem do tego, co i tak zrobi kółko myszy albo klawiatura,
+i pokazują się wyłącznie wtedy, gdy jest dokąd przewijać. Element z
+przewijaniem poziomym w arkuszu jest pasem, który przewija swoją zawartość;
+wartość null przy elemencie w kadrze znaczy, że nic nie trzeba pilnować.

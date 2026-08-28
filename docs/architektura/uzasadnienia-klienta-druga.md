@@ -7607,3 +7607,6 @@ programy z dokładnie tymi argumentami. Wykaz zależności powłoki jest
 niepełny wobec słownika powłok kontraktu i taki ma być, bo dopisanie programu
 dla powłoki, której rdzeń nie uruchamia, byłoby zależnością zmierzoną
 podaną z wyobrażenia.
+
+## budowa/klient-poprzedni/src/sterowanie/srodowisko-wykonania.ts
+Wyliczenie zasięgu wykonania ma trzy rodzaje: urządzenie operatora, host rdzenia, host zdalny. Nazwa konkretnego serwera nie jest wartością wyliczenia — wskazuje ją sterowanie hostem, jako ustawienie poziomu okna. Dzięki temu dopisanie kolejnego serwera nie wymaga zmiany kontraktu ani schematu bazy. Zasięg wykonania jest parametrem okna, nie właściwością wdrożenia: dwa okna jednej sesji mogą pracować w dwóch różnych zasięgach równocześnie.

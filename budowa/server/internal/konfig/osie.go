@@ -2,32 +2,22 @@ package konfig
 
 import "danacoconsole/shared"
 
-// Os nazywa oś rozstrzygania ustawienia. Jest aliasem typu kontraktu, więc
-// pakiet nie tworzy drugiej definicji tego samego pojęcia.
-//
-// Oś jest PROSTOPADŁA do poziomu zasięgu: poziom mówi JAK WĄSKO obowiązuje
-// wartość (okno → … → globalny), oś mówi DLA CZEGO ona obowiązuje —
-// dla platformy, dla modelu albo dla konta. Klucz rozstrzygania jest więc
-// złożony: klucz + poziom + byt poziomu + oś + byt osi.
+// Os nazywa oś rozstrzygania ustawienia i jest aliasem typu kontraktu. Oś
+// jest prostopadła do poziomu zasięgu: poziom określa zasięg obowiązywania
+// wartości, a oś określa jej adresata — platformę, model albo konto.
 type Os = shared.ConfigAxis
 
-// Wartości osi. Pochodzą ze stałych kontraktu — literału nazwy osi tu nie ma.
+// Wartości osi pochodzą ze stałych kontraktu, obejmujące oś platformy, oś
+// modelu i oś konta; pakiet nie powtarza literału nazwy osi.
 const (
 	OsPlatformy Os = shared.ConfigAxisPlatform
 	OsModelu    Os = shared.ConfigAxisModel
 	OsKonta     Os = shared.ConfigAxisAccount
 )
 
-// osieOdNajwezszej wylicza osie w kolejności rozstrzygania W RAMACH jednego
+// osieOdNajwezszej wylicza osie w kolejności rozstrzygania w ramach jednego
 // poziomu zasięgu: konto jest bytem konkretnym, model klasą, platforma tłem.
-//
-// Rozstrzygnięcie pierwszeństwa. Poziom rozstrzyga PIERWSZY, oś dopiero
-// w ramach poziomu. Ustawienie zapisane per konto na poziomie globalnym NIE
-// bije ustawienia zapisanego na oknie komunikacji: zapis na oknie jest aktem
-// najwęższym i najbardziej celowym, a oś opisuje adresata wartości, nie jej
-// wagę. Odwrotna kolejność znaczyłaby, że wybór konta unieważnia decyzję
-// podjętą wprost w oknie — a to jest odebranie Operatorowi sterowania, nie
-// jego rozszerzenie.
+// Poziom rozstrzyga zawsze pierwszy, oś dopiero w jego ramach.
 var osieOdNajwezszej = []Os{OsKonta, OsModelu, OsPlatformy}
 
 // pierwszenstwaOsi odwzorowuje oś na kolumnę `os_zasiegu.pierwszenstwo`:
@@ -42,8 +32,8 @@ func zbudujPierwszenstwaOsi() map[Os]int {
 	return wynik
 }
 
-// ZnanaOs odpowiada, czy oś należy do trzech osi kontraktu. Oś pusta jest znana:
-// znaczy platformę.
+// ZnanaOs odpowiada, czy oś należy do trzech osi kontraktu; oś pusta jest
+// znana i oznacza oś platformy.
 func ZnanaOs(os Os) bool {
 	_, jest := pierwszenstwaOsi[OsLubPlatforma(os)]
 	return jest

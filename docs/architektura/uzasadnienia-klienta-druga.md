@@ -6524,3 +6524,17 @@ dokument przed pierwszym zapisem wersji nie ma i pasek mówi to wprost, zamiast 
 bo zero wyglądałoby na wersję o numerze zero. Format dokumentu stoi w pasku stanu od scalenia
 okien, bo nosił go wcześniej wskaźnik paska narzędzi edytora, a pasek narzędzi rozszedł się na
 wstążkę okna pracy — format jest cechą dokumentu, nie czynnością, więc jego miejsce jest tutaj.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/sklad-moderatora.ts
+Funkcje tego pliku nie domykają się ani na stanie okna, ani na źródle — biorą stan debaty i stan
+treści parametrem i oddają węzły interfejsu. Każdy stan uczestnika ma własne słowo, nie sam
+atrybut danych czy krój pisma: miejsce w kolejności głosu, wyciszenie, ostatni głos w turze,
+milczenie w turze, powtórzony kanał. Znacznik mówcy jest ten sam co w przebiegu debaty: liczy go
+z jednego wykazu uczestników, więc ten sam znacznik w składzie i nad wypowiedzią wskazuje tego
+samego uczestnika — nazwa tożsamości do zestawienia obu okien nie wystarcza, bo bywa pusta.
+Kontrakt nie niesie „kto mówi teraz": ani uczestnik, ani tura, ani wypowiedź nie mają pola
+o głosie trwającym, i scalenie kontraktu tego nie zmieniło. Mierzalne jest tylko to, kto odezwał
+się ostatni wśród wypowiedzi widzianych przez to okno, i tak też jest nazwane — brak sygnału
+opisuje zdanie składane z wykazu komend kontraktu. Nagłówek tury zostaje widoczny nawet przy
+pustym składzie: pusty skład przy otwartej turze nie czyści całego miejsca treści razem z numerem
+i stanem tury.

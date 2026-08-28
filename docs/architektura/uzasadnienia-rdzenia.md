@@ -6535,3 +6535,16 @@ strony pomiaru: odmowa braku ma zapaść przed startem procesu, więc dojście
 do uruchamiacza jest usterką mierzonej drogi, nie zdarzeniem.
 
 Adapter bez katalogu roboczego schodzi na katalog tymczasowy systemu.
+
+## budowa/server/internal/core/walidacja_klucza_ustawienia.go
+
+Rozstrzygacz pyta wyłącznie o klucze katalogu, więc bez tego sprawdzenia
+wywołujący komendę config.set z kluczem spoza katalogu dostałby
+potwierdzenie zapisu bez żadnego skutku — wiersz nigdy nie zostałby
+odczytany. Nieznany klucz kończy się błędem jednego wywołania o kodzie
+ErrorCodeValidationFailed: rdzeń pracuje dalej, a wywołujący dostaje
+nazwany powód.
+
+Pusty rejestr definicji (baza bez katalogu ustawień albo nieudany odczyt
+katalogu) znaczy „nie wiadomo, co jest znane", a nie „nic nie jest znane" —
+sprawdzenie oparte na takim rejestrze zablokowałoby całą konfigurację.

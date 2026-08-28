@@ -8,27 +8,7 @@ import {
   type WarstwaWidocznosci,
 } from './katalog-funkcji';
 
-/**
- * Warstwy widoczności modułu Roundtable — rysowanie tego, czego okno nie
- * pokazuje w stanie spoczynku.
- *
- * Opracowanie modułu (rozdz. 3.1) dzieli interfejs na cztery warstwy: pierwsza
- * jest widoczna bez interakcji, druga otwiera się przyciskiem albo znacznikiem
- * kontekstowym, trzecia mieszka w menu zestawu akcji okna, czwarta nie ma
- * w stanie spoczynku żadnej reprezentacji. Warstwy pierwszą i drugą rysują same
- * okna; ten plik daje nośniki dwóm pozostałym.
- *
- * Nośnikiem jest element rozwijany (`<details>`), a nie modal ani menu
- * znikające po najechaniu: warstwa zwinięta zajmuje jeden wiersz, rozwinięta
- * zostaje otwarta tak długo, jak Operator jej potrzebuje, i działa klawiaturą
- * bez ani jednej reguły własnej. Zwinięcie nie jest blokadą — treść jest
- * o jedno naciśnięcie dalej, zgodnie z zasadą zero blokad.
- *
- * Wygląd bierzemy z żetonów motywu i z arkusza modułu; plik nie zna ani jednej
- * barwy i ani jednego odstępu.
- */
-
-/** Nazwa warstwy w brzmieniu, w jakim czyta ją Operator. */
+/** Warstwy widoczności modułu Roundtable — rysowanie tego, czego okno nie pokazuje w spoczynku: nazwa warstwy, jak czyta ją Operator. */
 const NAZWY_WARSTW: Record<WarstwaWidocznosci, string> = {
   1: 'warstwa 1 — widoczne bez interakcji',
   2: 'warstwa 2 — przycisk, przełącznik albo znacznik kontekstowy',
@@ -36,16 +16,12 @@ const NAZWY_WARSTW: Record<WarstwaWidocznosci, string> = {
   4: 'warstwa 4 — nastawa poza stanem spoczynku okna',
 };
 
-/** Rodzaj warstwy zwiniętej — wartość atrybutu `data-warstwa` dla arkusza. */
+/** Rodzaj warstwy zwiniętej — wartość atrybutu danych dla arkusza, jedna z trzech nośników rozwijanych tego pliku. */
 export type RodzajWarstwy = 'zestaw-akcji' | 'wykaz-funkcji' | 'diagnostyka';
 
 /**
- * Element rozwijany warstwy — wspólna obudowa zestawu akcji, wykazu funkcji
- * i diagnostyki.
- *
- * Wnętrze oddawane jest wywołującemu, bo treść warstwy bywa przerysowywana po
- * każdej zmianie stanu debaty; obudowa zostaje ta sama, żeby warstwa otwarta
- * przez Operatora nie zwijała się przy każdym przyroście.
+ * Element rozwijany warstwy — wspólna obudowa zestawu akcji, wykazu funkcji i diagnostyki,
+ * z wnętrzem oddawanym wywołującemu.
  */
 export function utworzWarstweTresci(
   podpis: string,
@@ -74,11 +50,8 @@ function utworzRozwijane(podpis: string, waga: RodzajWarstwy): {
 }
 
 /**
- * Zestaw akcji okna — warstwa trzecia.
- *
- * Przyciski przychodzą gotowe od okna: warstwa nie zna ani jednej komendy
- * i niczego nie wywołuje. Zwinięty zestaw zajmuje jeden wiersz nad treścią,
- * przez co pas akcji okna zostaje przy czynnościach warstw pierwszej i drugiej.
+ * Zestaw akcji okna — warstwa trzecia, gotowe przyciski od okna, bo warstwa nie zna ani jednej
+ * komendy i niczego nie wywołuje.
  */
 export function utworzZestawAkcji(podpis: string, akcje: readonly HTMLElement[]): HTMLElement {
   const { element, wnetrze } = utworzRozwijane(podpis, 'zestaw-akcji');
@@ -88,12 +61,8 @@ export function utworzZestawAkcji(podpis: string, akcje: readonly HTMLElement[])
 }
 
 /**
- * Wykaz narzędzi okna wraz ze stanem ich wykonania — warstwa czwarta.
- *
- * Wykaz jest jedyną drogą, którą Operator poznaje granicę między tym, co moduł
- * robi, a tym, czego kontrakt nie niesie, bez naciskania każdego przycisku
- * z osobna. Zdanie nad wykazem podaje bilans liczbowy, bo sam wykaz przy
- * kilkunastu pozycjach nie odpowiada na pytanie „ile z tego działa”.
+ * Wykaz narzędzi okna wraz ze stanem ich wykonania — warstwa czwarta, jedyna droga poznania
+ * granicy działania modułu.
  */
 export function utworzWykazFunkcji(okno: OknoModulu): HTMLElement {
   const funkcje = funkcjeOkna(okno);
@@ -117,12 +86,8 @@ export function utworzWykazFunkcji(okno: OknoModulu): HTMLElement {
 }
 
 /**
- * Zdanie bilansu — liczby, nie ocena dojrzałości.
- *
- * Człon „bez zbudowanej obsługi” stoi osobno od „bez pokrycia w kontrakcie”,
- * bo po scaleniu kontraktu to dwie różne rzeczy: pierwsza mówi o pracy, której
- * jeszcze nie wykonano, druga o uzgodnieniu, którego nie ma. Zlanie ich w jedną
- * liczbę zacierałoby dokładnie tę różnicę, którą wykaz ma pokazać.
+ * Zdanie bilansu — liczby, nie ocena dojrzałości: obsługa niezbudowana i brak pokrycia
+ * w kontrakcie to dwie różne rzeczy.
  */
 function zdanieBilansu(bilans: BilansFunkcji): string {
   const czlony = [
@@ -138,7 +103,7 @@ function zdanieBilansu(bilans: BilansFunkcji): string {
   );
 }
 
-/** Jedna warstwa wykazu wraz z pozycjami. */
+/** Jedna warstwa wykazu wraz z pozycjami, podpisana nazwą warstwy i liczbą pozycji, które do niej należą. */
 function sekcjaWarstwy(
   warstwa: WarstwaWidocznosci,
   pozycje: readonly FunkcjaKatalogu[],
@@ -159,12 +124,11 @@ function sekcjaWarstwy(
   return sekcja;
 }
 
-/** Pozycja wykazu: nazwa narzędzia, stan słowem i zdanie o granicy wykonania. */
+/** Pozycja wykazu: nazwa narzędzia, stan słowem i zdanie o granicy wykonania, wraz z atrybutem stanu dla arkusza. */
 function pozycjaFunkcji(funkcja: FunkcjaKatalogu): HTMLElement {
   const pozycja = document.createElement('li');
   pozycja.className = 'dr-funkcja';
-  // Stan idzie atrybutem i słowem naraz: arkusz odróżnia po atrybucie, a czyta
-  // się słowo — sama barwa nie niesie stanu nikomu, kto barw nie rozróżnia.
+  // Stan idzie atrybutem i słowem naraz — sama barwa nie niesie stanu nikomu, kto barw nie rozróżnia.
   pozycja.dataset['stanFunkcji'] = funkcja.stan;
 
   const nazwa = document.createElement('strong');

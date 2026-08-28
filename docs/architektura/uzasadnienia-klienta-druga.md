@@ -6815,3 +6815,24 @@ okienkiem systemowym też nie ma, bo klient dysku nie czyta i nie zapisuje, tylk
 wskazanie widziane przez rdzeń. Brak pola w nastawach w kształcie kontraktu znaczy, że rdzeń ma
 wziąć wartość z katalogu ustawień, a to jego rozstrzygnięcie, nie okna — pusty napis w polu
 języków byłby wskazaniem zestawu pustego i zmieniłby znaczenie żądania.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/warstwy-modulu.ts
+Zamierzenie modułu dzieli interfejs na cztery warstwy: pierwsza jest widoczna bez interakcji,
+druga otwiera się przyciskiem albo znacznikiem kontekstowym, trzecia mieszka w menu zestawu akcji
+okna, czwarta nie ma w stanie spoczynku żadnej reprezentacji. Warstwy pierwszą i drugą rysują same
+okna; ten plik daje nośniki dwóm pozostałym. Nośnikiem jest element rozwijany, a nie modal ani
+menu znikające po najechaniu: warstwa zwinięta zajmuje jeden wiersz, rozwinięta zostaje otwarta
+tak długo, jak Operator jej potrzebuje, i działa klawiaturą bez ani jednej reguły własnej.
+Zwinięcie nie jest blokadą — treść jest o jedno naciśnięcie dalej, zgodnie z zasadą zera blokad.
+Wygląd bierzemy z żetonów motywu i z arkusza modułu; plik nie zna ani jednej barwy i ani jednego
+odstępu. Wnętrze elementu rozwijanego oddawane jest wywołującemu, bo treść warstwy bywa
+przerysowywana po każdej zmianie stanu debaty; obudowa zostaje ta sama, żeby warstwa otwarta przez
+Operatora nie zwijała się przy każdym przyroście. Zwinięty zestaw akcji zajmuje jeden wiersz nad
+treścią, przez co pas akcji okna zostaje przy czynnościach warstw pierwszej i drugiej. Wykaz
+narzędzi jest jedyną drogą, którą Operator poznaje granicę między tym, co moduł robi, a tym, czego
+kontrakt nie niesie, bez naciskania każdego przycisku z osobna; zdanie nad wykazem podaje bilans
+liczbowy, bo sam wykaz przy kilkunastu pozycjach nie odpowiada na pytanie, ile z tego działa.
+Człon „bez zbudowanej obsługi" stoi osobno od „bez pokrycia w kontrakcie", bo po scaleniu
+kontraktu to dwie różne rzeczy: pierwsza mówi o pracy, której jeszcze nie wykonano, druga
+o uzgodnieniu, którego nie ma. Zlanie ich w jedną liczbę zacierałoby dokładnie tę różnicę, którą
+wykaz ma pokazać.

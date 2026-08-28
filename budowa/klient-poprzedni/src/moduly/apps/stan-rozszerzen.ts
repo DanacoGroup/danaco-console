@@ -21,46 +21,17 @@ import {
   type ZrodloDobudowyRozszerzen,
 } from './zrodlo-rozszerzen-dobudowa';
 
-/** Który z dwóch odczytów strony dystrybucji — klucz powodu odmowy. */
+/** Który z dwóch odczytów strony dystrybucji — klucz, pod którym stoi powód odmowy tego odczytu w oknie. */
 export type RodzajOdczytuKatalogu = 'katalog' | 'punkty';
 
 /**
  * Jedno źródło prawdy strony dystrybucji i konsumpcji modułu Apps: katalog
- * rozszerzeń i katalog punktów dostępu.
- *
- * Sześć okien tej strony — App Catalog, Installed Apps Manager, Permissions &
- * Trust Center, Integrations Hub, MCP & Connector Console, Publisher Panel —
- * patrzy na ten sam rejestr. Dwa równoległe zbiory dałyby dwie prawdy o jednym
- * katalogu: włączenie pozycji w Installed Apps Managerze musi być natychmiast
- * widoczne na jej karcie w App Catalogu i w wierszu Integrations Hubu.
- *
- * Zbiór jest jeden i nieszukany rodzajem: odczyt idzie bez zawężenia, a każde
- * okno odsiewa z niego swoje rodzaje. Cztery odczyty po jednym na rodzaj
- * dawałyby cztery migawki z czterech różnych chwil, a zdarzenie `extension.changed`
- * i tak przychodzi jedno na cały katalog.
- *
- * Stan wyjściowy pozycji rozstrzyga rdzeń, nie okno: `origin` jest jedynym
- * miejscem, w którym pochodzenie zmienia zachowanie (`danaco` staje włączone,
- * `personal` wyłączone). Poza tym pochodzenie jest faktem do pokazania
- * Operatorowi i nie rozgałęzia niczego w tym pliku.
- *
- * Wybór pozycji mieszka tutaj, a nie w oknie, bo panele boczne otwierają się
- * na pozycji wskazanej w innym oknie: znacznik uprawnień karty App Catalogu
- * otwiera Permissions & Trust Center, a menu wiersza Integrations Hubu — MCP
- * & Connector Console.
+ * rozszerzeń i katalog punktów dostępu, wspólne dla sześciu okien tej
+ * strony, żeby zmiana w jednym oknie była natychmiast widoczna w pozostałych.
  */
 export interface StanRozszerzen {
   zrodlo: ZrodloRozszerzenApps;
-  /**
-   * Dobudowa obszaru `extension` — trzydzieści dwie komendy stojące obok
-   * pięciu, od których katalog zaczynał.
-   *
-   * Osobne źródło, nie rozrost pierwszego: tamto obsługuje cykl życia pozycji
-   * (wykaz, instalacja, konfiguracja, przełącznik, odinstalowanie), a to —
-   * wszystko, co robi się NA pozycji już stojącej. Rozdzielenie jest czytelne
-   * w oknach: App Catalog i Installed Apps Manager pracują na pierwszym,
-   * Integrations Hub, MCP Console i Permissions & Trust Center na drugim.
-   */
+  /** Dobudowa obszaru rozszerzeń; osobne źródło, bo obsługuje to, co robi się na pozycji już stojącej. */
   dobudowa: ZrodloDobudowyRozszerzen;
   punktyDostepu: ZrodloPunktowDostepu;
   /** Katalog w kolejności oddanej przez rdzeń. */
@@ -95,7 +66,7 @@ export interface StanRozszerzen {
   rozlacz(): void;
 }
 
-/** Zlecenie instalacji przekazywane oknom; kształt bierze źródło. */
+/** Zlecenie instalacji przekazywane oknom; kształt zlecenia bierze wprost ze źródła danych rozszerzeń modułu. */
 export type { ZlecenieInstalacji };
 
 export function utworzStanRozszerzen(kanal: Kanal): StanRozszerzen {
@@ -123,9 +94,7 @@ export function utworzStanRozszerzen(kanal: Kanal): StanRozszerzen {
   }
 
   const odsubskrybowania: Odsubskrybuj[] = [
-    // Zmiana katalogu przychodzi niezależnie od tego, gdzie zaszła — w drugim
-    // oknie tej sesji, w oknie konfiguracji czy na innym urządzeniu Operatora.
-    // Rejestr jest wspólny całej platformie, więc ramki nie zawężamy niczym.
+    // Zmiana katalogu przychodzi niezależnie od tego, gdzie zaszła; rejestr jest wspólny platformie.
     zrodlo.naZmianeKatalogu((tresc) => {
       if (tresc.change === ChangeKind.Deleted) {
         rozszerzenia = rozszerzenia.filter((inna) => inna.id !== tresc.extension.id);
@@ -164,9 +133,7 @@ export function utworzStanRozszerzen(kanal: Kanal): StanRozszerzen {
         oglos();
         return;
       }
-      // Zastępuje, nie dokłada: odpowiedź rdzenia jest pełnym stanem rejestru
-      // w chwili odczytu, więc scalanie zostawiłoby w katalogu pozycję, której
-      // rdzeń już nie zna.
+      // Zastępuje, nie dokłada: odpowiedź rdzenia jest pełnym stanem rejestru w chwili odczytu.
       rozszerzenia = [...wynik.wynik.extensions];
       katalogCzytany = true;
       oglos();

@@ -7141,3 +7141,29 @@ Odmowa merytoryczna niesie kod kontraktu i dotyczy jednego wywołania; awaria
 warstwy trwałości idzie dalej bez tłumaczenia, bo rdzeń nie zgaduje za bazę,
 czy zawiódł dysk, czy schemat. Wykaz i odczyt nigdy nie odmawiają z powodu
 pustki — pusto znaczy pusto.
+
+## budowa/server/internal/core/adapter_rozmowa_srodowisko.go
+Katalog roboczy mówi, gdzie model zostawia własne pliki, i pochodzi
+z rozstrzygnięcia dwóch kluczy katalogu ustawień. Nadania dostępu mówią,
+do czego model sięga, i pochodzą ze zbioru nadań tego jednego okna. Ani jedno
+nie wynika z drugiego, więc ani jedno nie jest liczone z drugiego. Brak
+ustalenia katalogu zostawia domyślne zachowanie kanału, a brak nadań zostawia
+proces bez przełącznika konfiguracji mostów. Rozmowa toczy się w obu
+przypadkach.
+
+Mosty do maszyn przysługują z nadania, narzędzia platformy każdemu oknu, które
+w ogóle rozmawia — inaczej model nie otworzyłby modułu bez wglądu w serwer,
+co popychałoby do rozdawania dostępu, którego nikt nie potrzebuje. Granica
+uprawnień siedzi wewnątrz wykazu narzędzi: zapisy zastrzeżone są poza nim
+strukturalnie.
+
+Zestaw narzędzi tury składa się przy budowaniu środowiska, nie przy starcie
+procesu. Wynik jedynego składacza konfiguracji przechodzi przez dopisanie
+zestawu w innym pliku rdzenia: podstawa z definicji eksperta plus doraźne
+dołożenia sesji. Drugiej konfiguracji nie ma; zestaw niezawężony nie dokłada
+nic i tura jedzie pełnym wykazem kontraktu.
+
+Wartość pusta ustawień wykonania nie nadpisuje tego, co przyszło z okna albo
+z wiersza rejestru: brak wskazania na żadnym poziomie znaczy zostawienie
+decyzji kanałowi, a nie jej wyczyszczenie. Dlatego przypisanie jest warunkowe,
+nie bezwarunkowe.

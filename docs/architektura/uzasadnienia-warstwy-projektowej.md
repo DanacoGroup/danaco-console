@@ -754,3 +754,16 @@ w tym pliku, bo klient nie ma wspólnej formy dropdownu, popoveru ani menu
 kontekstowego, więc powstaje pod nazwą własną `.dn-menu`, a nie na aliasie
 zgodności. Wszystkie wartości pochodzą z żetonów `motyw/`, zero barw,
 odstępów, promieni i rozmiarów pisma zaszytych wprost.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/relacje.css
+Siatka pasa ma te same kolumny co tor okien, więc więź trafia dokładnie
+pod swoją parę, także gdy koordynator i wykonawca nie sąsiadują ze sobą.
+Pas nie znika przy żadnym stanie: brak pary pokazuje stan pusty
+`.dn-pusty-stan`, praca trwająca pokazuje wskaźnik w plakietce stanu
+z `gniazdo.css`, a podgląd przekazania pokazuje komunikat blokowy
+`.dn-okna__uwaga`. Biblioteka stylów nie niesie klasy komunikatu, więc jego
+forma stoi w tym arkuszu pod nazwą własną widoku. Stan pusty mieści się
+w jednym wierszu, żeby pas nie zabierał strefie rozmowy wysokości planszy:
+znak i tytuł w linii, opis obok, bez pionowego oddechu. Kolumny pasa muszą
+odpowiadać kolumnom toru okien z `uklad.css`, inaczej więź traci
+dopasowanie. Czwarta kolumna odpowiada `LICZBA_MAX` z `identyfikatory.ts`.

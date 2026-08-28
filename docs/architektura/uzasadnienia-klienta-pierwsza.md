@@ -8198,3 +8198,16 @@ Wykaz liczył czternaście pozycji, dopóki rodzina komend agenta nie miała uch
 
 ## budowa/klient-poprzedni/src/moduly/agents/braki-modulu.ts (przerysowanie wykazu)
 Liczby nie ma przed odpowiedzią rdzenia i nie jest to niedopatrzenie: policzenie braków z ciszy byłoby orzeczeniem, którego nikt nie wydał. Dopiero powitanie mówi, ile z tych komend rdzeń faktycznie rejestruje.
+
+## budowa/klient-poprzedni/src/moduly/developer/panel-historii-budowan.ts
+Build Output prowadzi przebieg bieżący: log narasta zdarzeniem, a okno pokazuje
+go na żywo; historia mówi o przebiegach zakończonych i o tym, co po nich
+zostało, wyniku testów i pokryciu kodu — to dwa różne pytania i dwa różne
+czasy, jedno o tym, co się teraz dzieje, drugie o tym, co wyszło wtedy.
+W dzienniku przebiegu zostaje ogon logu, bo budowanie dużego projektu ma
+dziesiątki tysięcy wierszy; odpowiedź niesie znacznik przycięcia i okno go
+pokazuje, żeby odróżnić „ostatnie wiersze" od „tyle ich było", a operator
+szukający wiersza z początku budowania ma wiedzieć, że go tu nie ma. Przebieg,
+w którym nikt nie uruchamiał testów, nie ma wyników, i okno pisze to wprost,
+zamiast pokazać zero na zero — zero przy zerze wygląda jak powodzenie,
+a znaczy brak pomiaru.

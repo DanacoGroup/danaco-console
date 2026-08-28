@@ -6733,3 +6733,27 @@ przeciwną niż przy TLS.
 Wartość nieczytelna zmiennej wymogu logowania zatrzymuje start z tego
 samego powodu: literówka rozstrzyga o tym, czy rdzeń pyta wołającego
 o token, czy nie pyta nikogo o nic.
+
+## budowa/server/internal/dane/studio_praca_schowek.go
+Zlecenie stanowi wprost, że rodzina `clipboard.*` istnieje i drugiej się nie
+zakłada — schowek ma być jeden, wspólny Operatorowi i wykonawcom, bo sens
+historii schowka polega na tym, że wpis odłożony w jednym miejscu daje się
+wkleić w drugim. Osobna tabela schowka Studia rozdzieliłaby jedną historię na
+dwie, a wklejenie wpisu sprzed kilku ruchów przestałoby działać między oknem
+pracy z dokumentem a resztą platformy.
+
+Wiersze pisze się dokładnie tymi samymi poleceniami, co rodzina `clipboard.*`
+(stałe z `schowek.go`), i tym samym rachunkiem odcisku — inaczej ta sama treść
+odłożona dwiema drogami zrobiłaby dwa wpisy, a warunek UNIQUE na odcisku
+istnieje właśnie po to, żeby tego nie było.
+
+Nastawy pętli wykonawczej i pracy wielu agentów są w kontrakcie opisane jako
+wartości zasięgów rodziny `config.*`, z poziomem, z którego przyszły, oddanym
+w odpowiedzi. Odczyt idzie rozstrzygaczem dziewięciu poziomów, a zapis tym
+poleceniem: `ustawienie` jest jedyną tabelą nastaw platformy, więc osobny
+magazyn nastaw Studia byłby drugim miejscem, w którym trzeba szukać wartości
+obowiązującej.
+
+Odcisk wpisu schowka Studia liczy się z rodzaju i treści razem, tak samo jak
+w rodzinie `clipboard.*`; drugi rachunek odcisku rozjechałby warunek UNIQUE
+i ta sama treść stałaby w historii dwa razy.

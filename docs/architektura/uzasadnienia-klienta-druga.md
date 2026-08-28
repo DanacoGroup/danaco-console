@@ -7610,3 +7610,24 @@ podaną z wyobrażenia.
 
 ## budowa/klient-poprzedni/src/sterowanie/srodowisko-wykonania.ts
 Wyliczenie zasięgu wykonania ma trzy rodzaje: urządzenie operatora, host rdzenia, host zdalny. Nazwa konkretnego serwera nie jest wartością wyliczenia — wskazuje ją sterowanie hostem, jako ustawienie poziomu okna. Dzięki temu dopisanie kolejnego serwera nie wymaga zmiany kontraktu ani schematu bazy. Zasięg wykonania jest parametrem okna, nie właściwością wdrożenia: dwa okna jednej sesji mogą pracować w dwóch różnych zasięgach równocześnie.
+## budowa/klient-poprzedni/src/moduly/studio/znaczniki-markdown.ts
+Narzędzia nie pytają rdzenia, bo markdown jest tekstem: nagłówek to znak krzyżyka na początku
+wiersza, pogrubienie to dwie gwiazdki wokół fragmentu. Przekształcenie zapisuje się w buforze
+edytora w całości, a treść bufora idzie do rdzenia dopiero komendą studio.document.save, tak
+samo jak każdy znak wpisany z klawiatury.
+
+Format PDF i DOCX to inna rzecz: tam przekształcenie jest konwersją do formatu binarnego, klient
+jej nie wykona i kontraktu na nią nie ma, więc przycisk odmawia z powodem.
+
+Plik nie zna DOM. Wejściem jest treść i zakres, wyjściem nowa treść i nowy zakres — dzięki temu
+przekształcenia sprawdza się bez stawiania okna, a pasek narzędzi nie zna reguł składni.
+
+Rodzaj znacznika określa sposób, w jaki narzędzie dotyka tekstu: rodzaj otoczenie obejmuje
+zaznaczenie parą znaczników (pogrubienie, kod); rodzaj wiersz stawia przedrostek na początku
+każdego zaznaczonego wiersza (nagłówek, lista, cytat); rodzaj numeracja działa jak wiersz, ale
+przedrostek rośnie z numerem wiersza; rodzaj blok dokłada gotowy blok w osobnych wierszach
+(tabela, linia).
+
+Zestaw narzędzi znacznikowych obejmuje szesnaście pozycji w czterech grupach. Stoją tu wyłącznie
+przekształcenia będące składnią tekstu; formaty binarne wiersza Studio Editor (PDF, DOCX)
+wymagają konwersji i klient ich nie wykona.

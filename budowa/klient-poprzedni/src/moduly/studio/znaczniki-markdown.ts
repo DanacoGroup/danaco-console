@@ -1,33 +1,10 @@
 /**
- * Narzędzia znacznikowe edytora Studio — przekształcenia tekstu, nie wywołania rdzenia.
- *
- * Narzędzia nie pytają rdzenia, bo markdown jest tekstem: nagłówek to `#` na
- * początku wiersza, pogrubienie to dwie gwiazdki wokół fragmentu.
- * Przekształcenie zapisuje się w buforze edytora w całości, a treść bufora
- * idzie do rdzenia dopiero komendą `studio.document.save`, tak samo jak każdy
- * znak wpisany z klawiatury.
- *
- * PDF i DOCX to inna rzecz: tam przekształcenie jest konwersją do formatu
- * binarnego, klient jej nie wykona i kontraktu na nią nie ma, więc przycisk
- * odmawia z powodem (`pasek-narzedzi-tekstu.ts`).
- *
- * Plik nie zna DOM. Wejściem jest treść i zakres, wyjściem nowa treść i nowy
- * zakres — dzięki temu przekształcenia sprawdza się bez stawiania okna, a pasek
- * narzędzi nie zna reguł składni.
- */
-
-/**
- * Sposób, w jaki narzędzie dotyka tekstu.
- *
- * - `otoczenie` — obejmuje zaznaczenie parą znaczników (pogrubienie, kod);
- * - `wiersz`    — stawia przedrostek na początku każdego zaznaczonego wiersza
- *                 (nagłówek, lista, cytat);
- * - `numeracja` — jak `wiersz`, ale przedrostek rośnie z numerem wiersza;
- * - `blok`      — dokłada gotowy blok w osobnych wierszach (tabela, linia).
+ * Narzędzia znacznikowe edytora Studio to przekształcenia tekstu markdown w buforze, nie
+ * wywołania rdzenia; sposób, w jaki narzędzie dotyka tekstu, jest jednym z czterech rodzajów.
  */
 export type RodzajZnacznika = 'otoczenie' | 'wiersz' | 'numeracja' | 'blok';
 
-/** Jedno narzędzie znacznikowe paska edytora. */
+/** Jedno narzędzie znacznikowe paska edytora tekstu, z kodem pozycji, etykietą, opisem i parą znaczników. */
 export interface NarzedzieTekstu {
   /** Kod pozycji; trafia do `data-narzedzie` przycisku. */
   kod: string;
@@ -44,7 +21,7 @@ export interface NarzedzieTekstu {
   zastepnik: string;
 }
 
-/** Treść wraz z zakresem zaznaczenia — wejście i wyjście przekształcenia. */
+/** Treść dokumentu wraz z zakresem zaznaczenia w niej — wejście i wyjście przekształcenia narzędziowego. */
 export interface ZakresTekstu {
   tresc: string;
   poczatek: number;
@@ -88,12 +65,10 @@ export const NARZEDZIA_TEKSTU: readonly NarzedzieTekstu[] = [
   narzedzieTekstu('linia', 'Linia', 'Linia pozioma — trzy myślniki w osobnym wierszu.', 'blok', '', '', '---'),
 ];
 
-/** Granice wierszy obejmujących zaznaczenie — narzędzia wierszowe pracują na całych wierszach. */
+/** Granice wierszy obejmujących zaznaczenie — narzędzia wierszowe pracują na całych wierszach, nie na fragmentach. */
 function graniceWierszy(zakres: ZakresTekstu): { od: number; do: number } {
   const { tresc, poczatek } = zakres;
-  // Zaznaczenie kończące się na złamaniu wiersza nie obejmuje wiersza
-  // następnego: bez tego cofnięcia przedrostek trafiałby do wiersza, którego
-  // Operator nie zaznaczył.
+  // Zaznaczenie kończące się na złamaniu wiersza nie obejmuje wiersza następnego bez tego cofnięcia.
   const koniec =
     zakres.koniec > zakres.poczatek && tresc[zakres.koniec - 1] === '\n'
       ? zakres.koniec - 1
@@ -103,7 +78,7 @@ function graniceWierszy(zakres: ZakresTekstu): { od: number; do: number } {
   return { od, do: nastepne === -1 ? tresc.length : nastepne };
 }
 
-/** Przedrostek wiersza o wskazanym numerze; numeracja liczy od 1. */
+/** Przedrostek wiersza o wskazanym numerze porządkowym; numeracja listy numerowanej liczy zawsze od jedynki. */
 function przedrostek(narzedzie: NarzedzieTekstu, numer: number): string {
   return narzedzie.rodzaj === 'numeracja' ? `${numer + 1}${narzedzie.przed}` : narzedzie.przed;
 }
@@ -133,7 +108,7 @@ function przestawWiersze(zakres: ZakresTekstu, narzedzie: NarzedzieTekstu): Zakr
   };
 }
 
-/** Narzędzie obejmujące: obejmuje zaznaczenie znacznikami albo je zdejmuje. */
+/** Narzędzie obejmujące: obejmuje zaznaczenie parą znaczników albo je zdejmuje, gdy znaczniki już tam stoją. */
 function przestawOtoczenie(zakres: ZakresTekstu, narzedzie: NarzedzieTekstu): ZakresTekstu {
   const { tresc, poczatek, koniec } = zakres;
   const wybrany = tresc.slice(poczatek, koniec);
@@ -154,14 +129,13 @@ function przestawOtoczenie(zakres: ZakresTekstu, narzedzie: NarzedzieTekstu): Za
   const zlozony = `${przed}${rdzen}${po}`;
   return {
     tresc: `${tresc.slice(0, poczatek)}${zlozony}${tresc.slice(koniec)}`,
-    // Ognisko wraca na treść, nie na znaczniki: po wstawieniu zastępnika
-    // Operator pisze od razu w miejsce, które ma nadpisać.
+    // Ognisko wraca na treść, nie na znaczniki: po wstawieniu zastępnika pisze się w jego miejsce.
     poczatek: poczatek + przed.length,
     koniec: poczatek + przed.length + rdzen.length,
   };
 }
 
-/** Narzędzie blokowe: dokłada blok w osobnych wierszach za zaznaczeniem. */
+/** Narzędzie blokowe: dokłada gotowy blok markdown w osobnych wierszach za zaznaczeniem, bez zmiany zaznaczenia. */
 function dolozBlok(zakres: ZakresTekstu, narzedzie: NarzedzieTekstu): ZakresTekstu {
   const { tresc } = zakres;
   const { do: az } = graniceWierszy(zakres);
@@ -173,7 +147,7 @@ function dolozBlok(zakres: ZakresTekstu, narzedzie: NarzedzieTekstu): ZakresTeks
   };
 }
 
-/** Wykonuje narzędzie na treści i oddaje treść nową wraz z zakresem do zaznaczenia. */
+/** Wykonuje wskazane narzędzie znacznikowe na treści dokumentu i oddaje treść nową wraz z nowym zakresem do zaznaczenia. */
 export function zastosujNarzedzie(
   zakres: ZakresTekstu,
   narzedzie: NarzedzieTekstu,

@@ -7128,3 +7128,12 @@ spoza obsady.
 
 ## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — pole pokrycia komend
 Pokrycie niesie pozycje, których okno jeszcze nie wykonuje, wspólne dla wszystkich takich pozycji modułu.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — zdanie o zaciągnięciu wykazów
+Zdanie jest osobne od powodu ustalenia okna, bo dotyczy czego innego niż samo ustalenie okna.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-przegladania.ts — stan zaciągnięcia wykazów
+Samo zdanie o odczycie tego nie niosło: powód bywa niepusty również wtedy, gdy rdzeń po prostu nie zna jeszcze okna.
+
+## budowa/klient-poprzedni/src/moduly/automations/graf-krokow.ts
+Opracowanie modułu opisuje graf zależności jako widok własny, oddzielny od wykazu: wykaz mówi, co z czym jest związane, rysunek mówi, jak długi jest łańcuch i gdzie tory się rozchodzą — a tego z wykazu wierszy nie widać. Rysunek nie jest edytorem: zapis układu idzie komendami kontraktu z panelu akcji i z wykazu, kanwa pokazuje stan po zapisie. Układ węzłów liczy się z samych zależności, więc jest powtarzalny, lecz nie jest układem, który Operator mógłby ułożyć myszą — przenoszenie węzłów wymaga zapisania ich położenia osobną komendą, a tej rdzeń jeszcze nie obsługuje, do tego czasu kanwa układa graf sama i nie obiecuje, że zapamięta cudze ułożenie. Barwy i grubości nie stoją tutaj: węzły i krawędzie noszą klasy rodziny modułu, a wygląd niesie osobny arkusz stylów na żetonach koloru. Warstwa mówi, ile zależności trzeba przejść, zanim krok może ruszyć, więc układ warstwowy pokazuje kolejność wykonania wprost; węzeł stojący w cyklu nie ma najdłuższej drogi, rachunek zatrzymuje się wtedy na węźle już odwiedzonym i węzeł zostaje na warstwie, do której doszedł — cykl jest zastrzeżeniem układu, nie powodem, żeby nie narysować niczego.

@@ -157,14 +157,13 @@
 
   /* siatki treści sekcji */
   .mt-kolumny { display: grid; gap: var(--dn-od-3); }
-  .mt-kolumny--2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .mt-kolumny--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .mt-kolumny--waga { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
   .mt-karta-sekcji {
     border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
     background: var(--dn-powierzchnia); overflow: hidden;
   }
-  .mt-karta-sekcji > h3, .mt-karta-sekcji > .mt-glowa {
+  .mt-karta-sekcji > h3 {
     display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
     margin: 0; padding: var(--dn-od-2) var(--dn-od-3);
     border-bottom: 1px solid var(--dn-obrys-subtelny);
@@ -172,9 +171,8 @@
     font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
     letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-2);
   }
-  .mt-karta-sekcji > h3 .mt-glowa-akcje, .mt-karta-sekcji > .mt-glowa .mt-glowa-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); text-transform: none; letter-spacing: normal; }
+  .mt-karta-sekcji > h3 .mt-glowa-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); text-transform: none; letter-spacing: normal; }
   .mt-tresc { padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
-  .mt-tresc--zwarta { padding: 0; }
 
   /* jedenaście akcji silnika kolejek */
   .mt-akcje { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--dn-od-2); }
@@ -301,7 +299,7 @@
   .mt-macierz { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--dn-od-2); padding: var(--dn-od-1) 0; border-bottom: 1px solid var(--dn-obrys-subtelny); }
 
   @media (max-width: 1280px) {
-    .mt-para, .mt-kolumny--2, .mt-kolumny--waga { grid-template-columns: minmax(0, 1fr); }
+    .mt-para, .mt-kolumny--waga { grid-template-columns: minmax(0, 1fr); }
     .mt-kolumny--3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .mt-cwo { grid-template-columns: minmax(0, 1fr); }
   }

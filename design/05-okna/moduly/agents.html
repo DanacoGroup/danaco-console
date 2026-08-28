@@ -18,9 +18,6 @@
   /* Agent Builder — kanwa */
   .ab { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,0.85fr); gap:var(--dn-od-2); padding:var(--dn-od-2); min-height:0; overflow:auto; }
   .ab-kol { min-width:0; display:flex; flex-direction:column; gap:var(--dn-od-2); }
-  .ab-pasek { display:flex; align-items:center; gap:var(--dn-od-2); flex-wrap:wrap; }
-  .ab-tytul { display:inline-flex; align-items:center; gap:var(--dn-od-1); font-family:var(--dn-ff-naglowek); font-weight:var(--dn-fw-polgruba); font-size:var(--dn-fs-lg); color:var(--dn-tekst); }
-  .ab-tytul svg { width:20px; height:20px; }
   .ab-filtry { display:flex; align-items:center; gap:var(--dn-od-1); flex-wrap:wrap; }
   .ab-siatka { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:var(--dn-od-2); }
   .ab-karta { display:flex; flex-direction:column; gap:4px; padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia-2); cursor:pointer; transition:border-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
@@ -74,7 +71,7 @@
   .ab-sum-w:hover { background:var(--dn-hover); }
   .ab-sum-w span:first-child { color:var(--dn-tekst-2); }
   .ab-sum-w b { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst); }
-  .ab-histria .panel-wiersz b { font-family:var(--dn-ff-mono); }
+  .ab-historia .dn-wykaz-modulu-poz b { font-family:var(--dn-ff-mono); }
 
   .ab-stopka { display:flex; align-items:center; gap:var(--dn-od-2); justify-content:flex-end; padding-top:var(--dn-od-2); border-top:1px solid var(--dn-obrys-subtelny); }
 
@@ -809,7 +806,7 @@
                     <div class="ab-sum-w" data-jump="panel-permissions"><span>Uprawnienia</span><b>pełny dostęp</b></div>
                     <div class="ab-sum-w" data-tab="tab-tozsamosc"><span>Pamięć</span><b>sesja</b></div>
                   </div>
-                  <div class="ab-sum ab-histria">
+                  <div class="ab-sum ab-historia">
                     <div class="ab-sum-tytul">Historia wersji <span style="color:var(--dn-tekst-3)">— Agent Redaktor</span></div>
                     <div class="dn-wykaz-modulu" style="padding:0">
                       <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> <b>w.3</b> Aktywna <span class="dn-meta">12:04</span></div>

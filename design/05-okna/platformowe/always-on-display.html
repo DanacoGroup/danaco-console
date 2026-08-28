@@ -20,21 +20,9 @@
      Gradient --dn-grad-sygnal użyty wyłącznie w rdzeniu AOD — zakres zgodny z kontraktem systemu projektowego (awatary bez zdjęcia, rdzeń AOD, grafiki brandowe).
      ══════════════════════════════════════════════════════════════════════════ */
 
-  .ao-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
   .ao-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
 
   /* ── tło: powłoka środowiska MultitaskingAI (kontekst warstwowości) ─────── */
-  .ao-tlo-znacznik {
-    position: absolute; inset-inline: 0; top: 0;
-    display: flex; align-items: center; justify-content: center; gap: var(--dn-od-2);
-    padding: var(--dn-od-1);
-    background: var(--dn-powierzchnia-2);
-    border-bottom: 1px dashed var(--dn-obrys-mocny);
-    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
-    color: var(--dn-tekst-3);
-    pointer-events: none;
-  }
 
   /* ── monitor procesu: siatka kart ról ───────────────────────────────────── */
   .ao-role { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: var(--dn-od-3); }
@@ -211,10 +199,6 @@
     font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny);
   }
   .ao-sugestia svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-sygnal); }
-  .ao-sugestia--ostrzezenie { border-left-color: var(--dn-ostrzezenie-tekst); background: var(--dn-ostrzezenie-tlo); }
-  .ao-sugestia--ostrzezenie svg { color: var(--dn-ostrzezenie-tekst); }
-  .ao-sugestia--sukces { border-left-color: var(--dn-sukces-tekst); background: var(--dn-sukces-tlo); }
-  .ao-sugestia--sukces svg { color: var(--dn-sukces-tekst); }
   .ao-sugestia-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
   .ao-sugestia-akcje { grid-column: 2; display: flex; gap: var(--dn-od-2); flex-wrap: wrap; margin-top: var(--dn-od-2); }
 

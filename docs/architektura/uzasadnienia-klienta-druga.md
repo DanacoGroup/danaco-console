@@ -8044,3 +8044,38 @@ Host wykonania, kanał zapasowy i nakład rozumowania mają konsumenta
 wskazanego w nagłówku pliku; pusty wykaz kluczy bez konsumenta zostaje,
 bo droga dopisania ma być ta sama co droga wycofania — następny klucz bez
 konsumenta wpisuje się tutaj, a nie w nowym mechanizmie.
+## budowa/klient-poprzedni/src/moduly/terminal/indeks.ts
+Układ wynika z ról okien. Terminal Tabs jest oknem wiodącym, więc stoi w obszarze głównym jako
+punkt wejścia. Output Console i Process Monitor są oknami monitora — stoją pod nim w pasie
+obserwacyjnym, bo obserwuje się to, co okno wiodące uruchomiło. Session Manager, Task & Schedule
+i Script Library są oknami zarządcy i kreatora: przygotowują pracę, którą okno wiodące wykonuje,
+więc stoją w pasie rozszerzeń pod pasem obserwacyjnym. Okno rozmowy modułu i okno pętli
+wykonawczej nie należą do tego złożenia: są bytami sesji i składa je warstwa rozmowy.
+
+Wszystkie sześć okien patrzy na jeden stan modułu, więc karta otwarta w Session Managerze jest
+od razu kartą bieżącą okna wiodącego, a proces uruchomiony w Task & Schedule stoi w Process
+Monitorze i w Output Console bez żadnego przekazywania między oknami.
+
+Nad oknami stoi pas modułu z dwiema nastawami wspólnymi: widocznością warstw i paletą poleceń.
+Warstwy zdejmują z ekranu kontrolki, których bieżące zadanie nie wymaga; paleta pilnuje, żeby
+zdjęcie z ekranu nie stało się schowaniem — każda czynność każdego okna jest w niej o jedno
+wskazanie.
+
+Sześć okien, pas nastaw, skróty klawiszowe i załącznik skrótów należą do pozycji samodzielnej.
+Złożenie wchodzące jako okno pomocnicze gospodarza niesie trzy okna rdzenne — dokładnie to, co
+obiecuje rama tamtego okna.
+
+Moduł widać wyłącznie w środowisku CodeStudio. Macierz widoczności jest własnością nawigacji,
+a nie modułu — złożenie nie sprawdza środowiska samo, bo drugi egzekutor widoczności rozjechałby
+się z pierwszym.
+
+Terminal nie jest samodzielnym modułem, tylko dodatkowym oknem pomocniczym sesji CodeStudio.
+Złożenie wchodzi dwiema drogami: jako okno pomocnicze gospodarza (wołane z modułów Developer,
+Diagnostics i Apps; karta powstaje w oknie gospodarza i dziedziczy jego tryb uprawnień oraz
+katalog roboczy), albo jako samodzielna pozycja nawigacji, która nie da się zdjąć z klienta —
+pochodzi z macierzy widoczności rdzenia, a klient bierze wykaz modułów wyłącznie z komend
+environment.enter i module.list. Dopóki rdzeń pozycję oddaje, moduł mówi wprost, czym jest —
+zniknięcie widoku dałoby pustkę czytającą się jak usterka.
+
+Nota pozycji samodzielnej mówi, że to samo złożenie stoi wewnątrz Developera, Diagnostics i Apps,
+i skąd bierze się ta pozycja w nawigacji.

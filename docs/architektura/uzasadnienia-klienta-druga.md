@@ -6130,3 +6130,25 @@ ustawień jest oknem poziomu aplikacji i nie ma w nim ani selektora środowiska,
 środowiskiem należy do okna konfiguracji, gdzie łańcuch zasięgów jest widoczny i wybieralny. Zapisu nie
 ma znaczy, że obowiązuje domyślna, nie fałsz — inaczej sekcja pokazywałaby wszystko wyłączone na świeżej
 bazie, choć katalog mówi aktywne.
+
+## budowa/klient-poprzedni/src/powloka/wykaz-wynikow.ts
+Plik składa wpisy w pozycje menu i podaje je do ustawienia menu drzewa. Rysowanie, przewijanie,
+wędrówka strzałkami, ocena trafności, wytłuszczenie trafień i grupowanie należą do mechanizmu
+biblioteki. Tryb bez uchwytu zostawia filtrowanie polu w pasku: uchwyt nie wchodzi do dokumentu,
+wewnętrzne pole szukania nie powstaje, a ognisko zostaje w polu paska, z wyróżnieniem wirtualnym.
+Dołożone tutaj są dwie rzeczy, których mechanizm nie robi. Pierwsza to historia: przy pustej frazie
+wykaz pokazuje grupę „Ostatnio wybrane" do pięciu pozycji, trzymaną w pamięci klienta, zamiast całego
+katalogu. Druga to wspólny wzorzec pustki — przy zerze trafień mechanizm się zwija, a na jego miejscu
+staje moduł braku wyników, żeby wykaz nie mówił o pustce dwoma zdaniami własnymi biblioteki. Zero
+trafień rozpoznaje się z policzenia pozycji, które mechanizm narysował, a nie z powtórzenia jego
+reguły dopasowania: druga implementacja predykatu rozjechałaby się z pierwszą przy zmianie oceny
+trafności. Wykaz kilkudziesięciu pozycji wysypany od razu po kliknięciu w pole nie jest podpowiedzią.
+Historia jest krótka i trafia w to, po co Operator sięga najczęściej.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-studio.ts
+Obudowa okna — nagłówek, plakietka roli, gniazda akcji i ciało — jest wspólna całemu drzewu
+komponentów ramy okna, która nie zna faz okna, bo nie pobiera danych, których cykl życia miałaby
+pokazywać. Studio potrzebuje jednego i drugiego naraz, więc tu zostaje samo zszycie: rama
+z biblioteki i pas stanu z modułu, jednym wywołaniem zamiast powtarzania go w pięciu oknach.
+Dymek objaśnienia jest wymagany, nie opcjonalny, bo każde okno modułu ma mówić, po co jest
+i którą komendą działa, zanim cokolwiek zostanie naciśnięte.

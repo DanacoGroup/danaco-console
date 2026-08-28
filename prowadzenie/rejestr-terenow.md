@@ -6,6 +6,37 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### rama-aplikacji-w-kliencie
+
+| | |
+|---|---|
+| **Galaz** | `teren/rama-aplikacji` z `main` |
+| **Drzewo** | `~/robocze/rama-aplikacji` |
+| **Wykaz plikow** | `budowa/klient/src/rama/` (nowy katalog) wraz ze sprawdzianami; `budowa/klient/src/aplikacja.ts` (nowy); `budowa/klient/index.html` i `budowa/klient/arkusze.css` wylacznie w zakresie wpiecia ramy |
+| **Poza terenem** | `budowa/klient/src/wejscie/`, `polaczenie/`, `protokol/`; caly `design/`; rdzen; `prowadzenie/` |
+
+**Przedmiot.** Droga wejscia konczy sie komenda `environment.enter` i okno zostaje
+na ekranie na zawsze, bo nie ma dokad prowadzic. Klient bierzacy liczy 51 plikow
+i wola piec komend z tysiaca osiemdziesieciu jeden. Teren stawia RAME APLIKACJI:
+powierzchnie, w ktora droga wejscia przekazuje sterowanie po wejsciu do srodowiska.
+
+Zrodlem ksztaltu jest przyjety prototyp `design/05-okna/przeplyw/centrum-dowodzenia.html`
+wraz z opisem `docs/interfejs-uzytkownika/pakiet-pieciu-okien.md`. Rama obejmuje
+trzy strefy prototypu: szyne nawigacji, belke tytulowa i pas stanu. Zawartosc okna
+roboczego NIE nalezy do tego terenu.
+
+**Kryteria odbioru.**
+1. Po `environment.enter` droga wejscia oddaje sterowanie ramie, a scena wejscia
+   schodzi. Sprawdzian mierzy przejscie, nie sama obecnosc funkcji.
+2. Rama bierze barwy, odstepy i pismo WYLACZNIE z zetonow warstwy projektowej.
+   Zero wartosci wpisanych liczbowo — wykazane przeszukaniem z sonda dodatnia.
+3. Zadnego lancucha widocznego dla Operatora poza katalogiem tresci — tak samo,
+   jak pilnuje tego droga wejscia swoim sprawdzianem.
+4. `npm run typy`, `npm run testy` i `npm run budowanie` w `budowa/klient` przechodza.
+5. Rama nie wola zadnej komendy kontraktu poza tymi, ktore juz sa w kliencie —
+   okna modulowe to osobny teren.
+
+
 ### silnik-twarzy
 
 | | |

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
 <link rel="stylesheet" href="../../zasoby/css/fundament.css">
 <link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/stany.css">
 <link rel="stylesheet" href="../../zasoby/prototyp.css">
 <link rel="stylesheet" href="../../zasoby/stanowisko.css">
 <link rel="stylesheet" href="../../zasoby/rama.css">
@@ -377,6 +378,11 @@
             <h1 class="pd-tytul">TalkIn</h1>
             <p class="pd-motto">Myśl. Analizuj. Rozumiej.</p>
             <p class="pd-opis">Wiedza, komunikacja i praca z treścią. Dziewięć modułów operuje na jednym przedmiocie — treści — i wymienia ją między sobą jako odwołanie, nie kopię.</p>
+            <div class="dn-metryka pd-odczyty">
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">3</span><span class="dn-mikroopis">Projekty</span></span>
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">7</span><span class="dn-mikroopis">Sesje</span></span>
+              <span class="dn-metryka-czlon"><span class="dn-metryka-wartosc">9</span><span class="dn-mikroopis">Moduły</span></span>
+            </div>
           </div>
         </div>
 
@@ -462,7 +468,119 @@
           </div>
         </section>
 
-        <!-- ── STREFA 2 · LISTWA DZIAŁAŃ ŚRODOWISKA ────────────────────── -->
+
+        <!-- ── STREFA 2 · PROJEKTY ŚRODOWISKA ──────────────────────────── -->
+        <section class="pd-strefa" aria-labelledby="pd-strefa-projekty">
+          <div class="pd-strefa-glowa">
+            <h2 class="pd-strefa-tytul" id="pd-strefa-projekty">Projekty środowiska<span class="dn-sekcja-licznik">3</span></h2>
+            <p class="pd-strefa-opis">Projekt zbiera sesje wokół jednego przedmiotu pracy. Wybór wiersza otwiera projekt w module, w którym ostatnio pracował.</p>
+          </div>
+          <div class="dn-rejestr">
+            <div class="dn-rejestr-glowa" aria-hidden="true"><span></span><span>Nazwa</span><span>Moduły</span><span>Sesje</span><span>Stan</span></div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Raport kwartalny — trzeci kwartał">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Raport kwartalny — trzeci kwartał</span>
+                <span class="dn-rejestr-meta">Studio · Research</span>
+                <span class="dn-rejestr-meta">3 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">pracuje</span>
+              </button>
+            </div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Rejestr umów serwisowych">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Rejestr umów serwisowych</span>
+                <span class="dn-rejestr-meta">Research · Studio</span>
+                <span class="dn-rejestr-meta">2 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">2 dni temu</span>
+              </button>
+            </div>
+            <div class="dn-rejestr-wiersz">
+              <button class="dn-kafel dn-kafel--wiersz pd-rejestr-poz" type="button" data-projekt="Materiały regulacyjne">
+                <span class="dn-kafel-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+                <span class="dn-rejestr-nazwa">Materiały regulacyjne</span>
+                <span class="dn-rejestr-meta">Browser · Translate</span>
+                <span class="dn-rejestr-meta">2 sesje</span>
+                <span class="dn-plakietka dn-plakietka--rodzaj">w zeszłym tygodniu</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── STREFA 3 · OSTATNIE SESJE ───────────────────────────────── -->
+        <section class="pd-strefa" aria-labelledby="pd-strefa-sesje">
+          <div class="pd-strefa-glowa">
+            <h2 class="pd-strefa-tytul" id="pd-strefa-sesje">Ostatnie sesje<span class="dn-sekcja-licznik">7</span></h2>
+            <p class="pd-strefa-opis">Praca wznawia się w miejscu, w którym została przerwana — razem z modułem, kontekstem i plikami sesji.</p>
+          </div>
+          <div class="dn-rejestr pd-tasma">
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Redakcja rozdziału o przychodach serwisowych" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="praca"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Redakcja rozdziału o przychodach serwisowych</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>pracuje<svg class="dn-przebieg" viewBox="0 0 56 12" fill="none" aria-hidden="true"><path d="M1 9 L8 5 L14 8 L21 2 L28 7 L35 4 L42 6 L49 3 L55 7"/></svg></span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Streszczenie zarządcze" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="praca"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Streszczenie zarządcze</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>12 min temu<svg class="dn-przebieg" viewBox="0 0 56 12" fill="none" aria-hidden="true"><path d="M1 9 L8 5 L14 8 L21 2 L28 7 L35 4 L42 6 L49 3 L55 7"/></svg></span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Weryfikacja tabeli przychodów" data-modul="Research">
+                <span class="dn-stan-znacznik" data-stan="reakcja"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Weryfikacja tabeli przychodów</span>
+                  <span class="dn-wiersz-meta">Research<i aria-hidden="true">·</i>wczoraj</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Klasyfikacja umów według rodzaju świadczenia" data-modul="Research">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Klasyfikacja umów według rodzaju świadczenia</span>
+                  <span class="dn-wiersz-meta">Research<i aria-hidden="true">·</i>2 dni temu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Kary umowne — przegląd zdarzeń" data-modul="Studio">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Kary umowne — przegląd zdarzeń</span>
+                  <span class="dn-wiersz-meta">Studio<i aria-hidden="true">·</i>2 dni temu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Przegląd zmian w prawie energetycznym" data-modul="Browser">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Przegląd zmian w prawie energetycznym</span>
+                  <span class="dn-wiersz-meta">Browser<i aria-hidden="true">·</i>w zeszłym tygodniu</span>
+                </span>
+              </button>
+            </div>
+            <div class="dn-panel-wiersz dn-panel-wiersz--przyrzadowy">
+              <button class="dn-obszar-pozycja pd-sesja-poz" type="button" data-sesja="Przekład noty technicznej DE → PL" data-modul="Translate">
+                <span class="dn-stan-znacznik" data-stan="zakonczone"></span>
+                <span class="dn-obszar-pozycja-tekst">
+                  <span class="dn-obszar-pozycja-nazwa">Przekład noty technicznej DE → PL</span>
+                  <span class="dn-wiersz-meta">Translate<i aria-hidden="true">·</i>w zeszłym tygodniu</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── STREFA 4 · LISTWA DZIAŁAŃ ŚRODOWISKA ────────────────────── -->
         <section class="pd-strefa pd-strefa--listwa" aria-labelledby="pd-strefa-listwa">
           <h2 class="pd-strefa-tytul dn-sr-only" id="pd-strefa-listwa">Działania środowiska</h2>
           <div class="pd-listwa">

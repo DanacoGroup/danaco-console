@@ -4364,3 +4364,21 @@ button.dn-link {
   border-radius: var(--dn-r-md);
   background: var(--dn-powierzchnia-2);
 }
+
+/* Rejestr projektow i tasma sesji w przedsionku — ten sam podzial kolumn
+   co w centrum, z kolumna modulow dolozona przed licznikiem. */
+[data-wnetrze='przyrzadowe'] .pd-odczyty { gap: var(--dn-od-8); margin-top: var(--dn-od-4); flex-wrap: wrap; }
+[data-wnetrze='przyrzadowe'] .dn-rejestr-glowa,
+[data-wnetrze='przyrzadowe'] .pd-rejestr-poz {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 2fr) minmax(0, 1.4fr) 90px 150px;
+  align-items: center;
+  gap: var(--dn-od-4);
+  padding: 10px 15px;
+  width: 100%;
+}
+[data-wnetrze='przyrzadowe'] .pd-tasma .dn-panel-wiersz { border-bottom: 1px solid var(--dn-obrys); }
+[data-wnetrze='przyrzadowe'] .pd-tasma .dn-panel-wiersz:last-child { border-bottom: 0; }
+[data-wnetrze='przyrzadowe'] .pd-sesja-poz { width: 100%; padding: 10px 15px; }
+[data-wnetrze='przyrzadowe'] .pd-sesja-poz .dn-obszar-pozycja-tekst { display: flex; flex-direction: column; }
+[data-wnetrze='przyrzadowe'] .pd-strefa-tytul > .dn-sekcja-licznik { margin-left: var(--dn-od-1); }

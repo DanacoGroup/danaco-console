@@ -8030,3 +8030,12 @@ Czytanie przy pierwszym odczycie zleciłoby odczyt zasobów dwa razy pod rząd.
 
 ## budowa/klient-poprzedni/src/moduly/agents/archiwum-ekspertow.ts
 Historia wersji ma własny panel i tu jej nie ma: archiwum odpowiada na pytanie, gdzie ekspert poszedł, a historia — co się z jego tożsamością działo. Dwa wykazy wersji w jednym oknie byłyby dwiema prawdami o tym samym. Kontrolka pyta rdzeń, a nie stałą: wywołanie dostaje wyłącznie czynność, którą rdzeń melduje przy powitaniu połączenia; pozostałe zostają kontrolką nazywającą brak. Dzięki temu panel mówi prawdę także przed rdzeniem starszym niż on sam — przy wdrożeniach on-premise to stan normalny. Archiwizacja nie jest wyłączeniem: wyłączony ekspert zostaje w bibliotece i da się go edytować, a wyłączenie znaczy „nie obsługuje okien”, nie „zeszedł z drogi”. Archiwum ma własne komendy — przywrócenie dotyczy pozycji, nie panelu, i stoi przy każdym wierszu wykazu, bez kontrolki zbiorczej, która musiałaby pytać, którego eksperta dotyczy.
+
+## budowa/klient-poprzedni/src/mobile/zrodlo-interwencji.ts
+Obraz interwencji stoi na pięciu komendach czytających stan pracy z różnych stron, bo z nich składa się rozstrzygnięcie: gdzie stoi pętla, kto jest koordynatorem i co czeka w kolejce. Rodzina `mobile.*` żadnego z tych pytań nie zastępuje.
+
+Rodzina `mobile.*` jest już wpięta i to zostało zmierzone, nie założone: `montaz_porty.go` wnosi do portu nawigacji ogniwo `ZWarstwaMobilna`, więc asercja w `handlers_mobile.go` przechodzi i trzy komendy mają obsługiwaczy. Rodzinę woła osobne źródło (`procesy-mobilne.ts`), bo niesie ona to, czego obraz nie ma — sterowanie procesem — a nie drugi odczyt tego samego.
+
+Ekran, któremu odmówiono ról, dalej pokazuje kolejki — odmowa jednej komendy nie unieważnia pozostałych.
+
+Bieg naprawczy pytany jest wyłącznie o okna koordynatorów, bo `loop` jest puste dla okna samodzielnego i wykonawczego — pozostałe pytania byłyby ruchem bez odbiorcy.

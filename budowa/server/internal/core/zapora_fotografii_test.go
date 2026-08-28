@@ -39,8 +39,17 @@ var plikiDesignuZOdczytemPisma = map[string]string{
 	"adapter_modul_design_makiety_zrzut.go": "tesseract",
 }
 
+// najmniejszaLiczbaPlikowDesign to podłoga liczby plików obszaru Design, jaką obie zapory tego pliku muszą przejrzeć; stan repozytorium niesie 41 takich plików. Samo zero nie łapie erozji, w której prefiks traci większość plików, a jeden pozostały jest czysty.
+const najmniejszaLiczbaPlikowDesign = 30
+
 // TestWarsztatFotografiiNieWolaProcesu pilnuje, żeby żaden plik rodzin design.photo.* i design.print.* nie uruchamiał procesu; wykaz przedrostków obejmuje cały obszar Design.
 func TestWarsztatFotografiiNieWolaProcesu(t *testing.T) {
+	if len(wolaniaProcesu) == 0 {
+		t.Fatal("wykaz wolaniaProcesu jest pusty; zapora bez wykazu wywołań nie sprawdza niczego")
+	}
+	if len(wolaniaWlasneProcesu) == 0 {
+		t.Fatal("wykaz wolaniaWlasneProcesu jest pusty; zapora bez wykazu wywołań własnych nie sprawdza niczego")
+	}
 	wpisy, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatalf("nie można przejrzeć rdzenia: %v", err)
@@ -87,19 +96,24 @@ func TestWarsztatFotografiiNieWolaProcesu(t *testing.T) {
 			}
 		}
 	}
-	// Zapora, która nie przejrzała ani jednego pliku, jest zaporą, która nie broni niczego.
-	if sprawdzonych == 0 {
-		t.Fatal("zapora nie znalazła ani jednego pliku obszaru Design; sprawdź, czy nazwy " +
-			"plików nie zmieniły przedrostka — inaczej ta zapora przestała czegokolwiek pilnować")
+	// Zapora, która przejrzała mniej plików niż podłoga obszaru, jest zaporą, która przestała bronić większości plików — także wtedy, gdy przejrzała więcej niż zero.
+	if sprawdzonych < najmniejszaLiczbaPlikowDesign {
+		t.Fatalf("zapora przejrzała tylko %d plików obszaru Design, podłoga to %d; sprawdź, czy "+
+			"nazwy plików nie zmieniły przedrostka albo czy pliki nie zniknęły z obszaru — inaczej "+
+			"ta zapora przestała pilnować większości plików", sprawdzonych, najmniejszaLiczbaPlikowDesign)
 	}
 }
 
 // TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki pilnuje, żeby nazwy silników obrazu i konturów nie pojawiły się w plikach obszaru Design żadną drogą, także przez komentarz.
 func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
+	if len(silnikiSpozaInstalki) == 0 {
+		t.Fatal("wykaz silnikiSpozaInstalki jest pusty; zapora bez wykazu silników nie sprawdza niczego")
+	}
 	wpisy, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatalf("nie można przejrzeć rdzenia: %v", err)
 	}
+	sprawdzonych := 0
 	for _, wpis := range wpisy {
 		nazwa := wpis.Name()
 		if wpis.IsDir() || !strings.HasSuffix(nazwa, ".go") ||
@@ -113,6 +127,8 @@ func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
 		if err != nil {
 			t.Fatalf("nie można odczytać %s: %v", nazwa, err)
 		}
+		sprawdzonych++
+
 		maly := strings.ToLower(string(tresc))
 		for _, silnik := range silnikiSpozaInstalki {
 			if strings.Contains(maly, silnik) {
@@ -121,5 +137,11 @@ func TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki(t *testing.T) {
 					"jest wskazówką ku tej szkodzie", nazwa, silnik)
 			}
 		}
+	}
+	// Zapora, która przejrzała mniej plików niż podłoga obszaru, jest zaporą, która przestała bronić większości plików — także wtedy, gdy przejrzała więcej niż zero.
+	if sprawdzonych < najmniejszaLiczbaPlikowDesign {
+		t.Fatalf("zapora przejrzała tylko %d plików obszaru Design, podłoga to %d; sprawdź, czy "+
+			"nazwy plików nie zmieniły przedrostka albo czy pliki nie zniknęły z obszaru — inaczej "+
+			"ta zapora przestała pilnować większości plików", sprawdzonych, najmniejszaLiczbaPlikowDesign)
 	}
 }

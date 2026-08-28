@@ -4,40 +4,7 @@ import type { PrzyciskMikrofonu } from './przybornik-mowa';
 import type { PlywakOperacji } from './przybornik-plywak';
 import type { TrybOperacji } from './przybornik-uzycie';
 
-/**
- * Wiersz polecenia przy kursorze — droga trzecia do czynności modelu.
- *
- * ── Cztery drogi do tej samej czynności ─────────────────────────────────────
- * Rozstrzygnięcie Właściciela o narzędziach ukrytych wymienia je wprost:
- * pływak przy zaznaczeniu, uchwyt pełnego katalogu, ten wiersz polecenia
- * i skrót „/" w oknie rozmowy sesji. Wykaz czynności jest przy tym JEDEN —
- * `kategorie-operacji.ts` — więc żadna droga nie zna czynności, których nie
- * znają pozostałe.
- *
- * ── Dlaczego przy kursorze, a nie w panelu ──────────────────────────────────
- * Model pracuje tam, gdzie stoi Operator. Pole polecenia otwiera się w miejscu
- * zaznaczenia, wynik wchodzi w to samo miejsce jako zmiana oznaczona autorem,
- * a Operator nie przenosi się do żadnego okna. Wiersz nosi przy tym cały pływak
- * narzędzi ukrytych: czynności najczęstsze, uchwyt katalogu i suwaki wielkości
- * ciągłych.
- *
- * ── Podpowiadanie nazw czynności ────────────────────────────────────────────
- * Operator pisze polecenie własnymi słowami, a wiersz podpowiada mu nazwy
- * czynności z katalogu — mechanizmem `komponenty/menu-drzewo.ts` w trybie bez
- * uchwytu, tym samym, którym obsadzony jest skrót „/" w oknie rozmowy. Strzałki
- * chodzą po podpowiedziach, Enter wybiera wyróżnioną, a gdy żadnej nie ma —
- * zleca polecenie własnymi słowami. Ognisko zostaje w polu, więc pisanie nie
- * jest przerywane.
- *
- * ── Czym jedzie polecenie ───────────────────────────────────────────────────
- * Polem `params` żądania `studio.contextual.op`, wraz z nastawami suwaków.
- * Rdzeń dokłada `params` do treści polecenia dla modelu, więc słowa Operatora
- * dojeżdżają tą samą drogą, którą jedzie zakres zaznaczenia. Identyfikator
- * akcji zostaje przy tym prawdziwy — pochodzi z wykazu, nie ze zdania Operatora,
- * bo `actionId` jest pozycją rejestru, nie polem na wypowiedź.
- */
-
-/** Czynności wiersza polecenia zlecane oknu. */
+/** Interfejs CzynnosciWiersza niesie czynności wiersza polecenia zlecane oknu: operację, komentarz, otwarcie panelu, przypięcie, suwak i tryb wykazu. */
 export interface CzynnosciWiersza {
   /** Zleca operację o wskazanym identyfikatorze wraz z poleceniem własnym. */
   naOperacje(idAkcji: string, polecenie: string): void;
@@ -53,15 +20,10 @@ export interface CzynnosciWiersza {
   naTryb(tryb: TrybOperacji): void;
 }
 
-/** Wiersz polecenia wraz z jego sterowaniem. */
+/** Interfejs WierszPolecenia niesie wiersz polecenia przy kursorze wraz z jego sterowaniem: pokazaniem, ukryciem, treścią pola i zdaniem stanu. */
 export interface WierszPolecenia {
   element: HTMLElement;
-  /**
-   * Pokazuje wiersz przy kursorze i mówi, czego dotyczy.
-   *
-   * `wysokoscWiersza` służy ustawieniu pływaka pod zaznaczeniem, gdy nad nim nie
-   * ma miejsca; jej brak bierze wysokość wiersza treści za odstęp domyślny.
-   */
+  /** Pokazuje wiersz przy kursorze i mówi, czego dotyczy; brak wysokości wiersza bierze odstęp domyślny. */
   pokaz(
     polozenie: { x: number; y: number },
     dlugoscZaznaczenia: number,
@@ -79,12 +41,7 @@ export interface WierszPolecenia {
 }
 
 /**
- * Operacja, którą jedzie polecenie własnymi słowami, gdy Operator nie wskazał
- * żadnej z wykazu.
- *
- * Nie jest to „operacja dowolna": `actionId` musi być pozycją wykazu, więc
- * polecenie własne jedzie przez przepisanie fragmentu, a treść polecenia
- * rozstrzyga, co model ma zrobić.
+ * Stała AKCJA_POLECENIA niesie identyfikator operacji, którą jedzie polecenie własnymi słowami, gdy Operator nie wskazał żadnej czynności z wykazu.
  */
 const AKCJA_POLECENIA = 'studio.styl.rejestr';
 
@@ -108,13 +65,7 @@ export function utworzWierszPolecenia(
   pole.setAttribute('aria-label', 'Polecenie dla modelu dotyczące tego fragmentu');
   pole.autocomplete = 'off';
 
-  /**
-   * Podpowiedzi nazw czynności.
-   *
-   * Wykaz jest płaski, bo Operator wpisuje nazwę, a nie wędruje po grupach —
-   * grupy są w katalogu pod uchwytem. Opis rysuje się przy pozycji wyróżnionej,
-   * żeby 28 opisów naraz nie zasłoniło samych nazw.
-   */
+  /** Podpowiedzi nazw czynności: wykaz płaski, bo Operator wpisuje nazwę, nie grupę katalogu. */
   const podpowiedzi = utworzMenuDrzewo({
     nastawa: 'Czynność z katalogu',
     bezUchwytu: true,
@@ -203,8 +154,7 @@ export function utworzWierszPolecenia(
       return;
     }
     if (zdarzenie.key === 'Enter') {
-      // Enter najpierw wybiera podpowiedź wyróżnioną; brak wyróżnienia znaczy,
-      // że Operator pisze polecenie własnymi słowami, i wtedy jedzie ono.
+      // Enter najpierw wybiera podpowiedź wyróżnioną; bez wyróżnienia jedzie polecenie własnymi słowami.
       if (!podpowiedzi.wybierzWyrozniona()) zlecPolecenie();
       return;
     }
@@ -227,9 +177,7 @@ export function utworzWierszPolecenia(
       element.hidden = false;
       element.style.left = `${Math.max(0, polozenie.x)}px`;
       element.style.top = `${polozenie.y + 8}px`;
-      // Pływak ustawia się dopiero po odsłonięciu wiersza: wysokość elementu
-      // ukrytego jest zerowa, więc rachunek „nad czy pod" liczony przed
-      // odsłonięciem postawiłby go na zaznaczeniu.
+      // Pływak ustawia się po odsłonięciu wiersza, bo wysokość elementu ukrytego jest zerowa.
       plywak.ustawPolozenie(polozenie, wysokoscWiersza ?? 20);
       zakres.textContent =
         dlugoscZaznaczenia > 0
@@ -258,7 +206,7 @@ export function utworzWierszPolecenia(
   };
 }
 
-/** Płaski wykaz podpowiedzi — wszystkie czynności katalogu wraz z ich grupą. */
+/** Funkcja drzewoPodpowiedzi zwraca płaski wykaz podpowiedzi ze wszystkimi czynnościami katalogu operacji wraz z nazwą ich grupy. */
 function drzewoPodpowiedzi(): PozycjaMenu[] {
   return WSZYSTKIE_OPERACJE.map((operacja) => ({
     rodzaj: 'wybor' as const,

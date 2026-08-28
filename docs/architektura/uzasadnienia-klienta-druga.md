@@ -7250,3 +7250,23 @@ na uchwycie wyboru stoi wybrana wartość, na przykład „Atrament", a nie
 nastawy. Inicjator „AI" zostaje klikalny mimo że w oknie o trybie manual
 wywołanie modelu wraca odmową permission_denied — odmowę wydaje rdzeń, a nie
 okno zgadujące z góry tryb uprawnień.
+
+## budowa/klient-poprzedni/src/moduly/studio/wiersz-polecenia.ts
+Narzędzia ukryte niosą czynność modelu czterema drogami wprost: pływak przy
+zaznaczeniu, uchwyt pełnego katalogu, ten wiersz polecenia i skrót ukośnika
+w oknie rozmowy sesji. Wykaz czynności jest przy tym jeden, więc żadna droga
+nie zna czynności, których nie znają pozostałe. Wiersz stoi przy kursorze,
+a nie w panelu, bo model pracuje tam, gdzie stoi Operator: pole polecenia
+otwiera się w miejscu zaznaczenia, wynik wchodzi w to samo miejsce jako
+zmiana oznaczona autorem, a Operator nie przenosi się do żadnego okna.
+Wiersz nosi przy tym cały pływak narzędzi ukrytych: czynności najczęstsze,
+uchwyt katalogu i suwaki wielkości ciągłych. Operator pisze polecenie
+własnymi słowami, a wiersz podpowiada mu nazwy czynności z katalogu tym
+samym mechanizmem, którym obsadzony jest skrót ukośnika w oknie rozmowy:
+strzałki chodzą po podpowiedziach, Enter wybiera wyróżnioną, a gdy żadnej
+nie ma, zleca polecenie własnymi słowami; ognisko zostaje w polu, więc
+pisanie nie jest przerywane. Polecenie jedzie polem params żądania operacji
+kontekstowej wraz z nastawami suwaków: rdzeń dokłada params do treści
+polecenia dla modelu, więc słowa Operatora dojeżdżają tą samą drogą, którą
+jedzie zakres zaznaczenia, a identyfikator akcji zostaje przy tym prawdziwy —
+pochodzi z wykazu, nie ze zdania Operatora.

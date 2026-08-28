@@ -2,29 +2,7 @@ import { StudioDocumentFormat } from '../../../../shared/contract';
 import { opiszLiczniki, policzTresc } from './liczniki-dokumentu';
 import type { StanStudio } from './stan-studio';
 
-/**
- * Pasek statusu dokumentu — element warstwy pierwszej Studio Editora.
- *
- * Opracowanie stawia go pod obszarem treści i żąda od niego trzech rzeczy:
- * stanu zapisu, liczby słów i numeru wersji. Wszystkie trzy da się powiedzieć
- * prawdziwie z tego, co moduł już ma, i żadna nie wymaga wywołania rdzenia.
- *
- * Stan zapisu poznaje się po różnicy między treścią roboczą a zaakceptowaną:
- * bufor edytora i treść ustalona to w tym module dwa osobne pola
- * (`pola-stanu.ts`), więc „niezapisane zmiany" jest tu faktem odczytanym,
- * a nie znacznikiem ustawianym ręcznie przy każdym naciśnięciu klawisza.
- *
- * Numer wersji bierze się z `StudioDocument.versionId`. Dokument przed
- * pierwszym zapisem wersji nie ma i pasek mówi to wprost, zamiast pokazywać
- * zero — zero wyglądałoby na wersję o numerze zero.
- *
- * Format dokumentu stoi tu od scalenia okien: nosił go wskaźnik paska narzędzi
- * edytora, a pasek narzędzi rozszedł się na wstążkę okna pracy. Format jest
- * cechą dokumentu, nie czynnością, więc jego miejsce jest w pasku stanu —
- * `StudioDocument.format` przychodzi w odpowiedzi `studio.document.open`.
- */
-
-/** Nazwa formatu dla Operatora; format spoza kontraktu zostaje w postaci surowej. */
+/** Zwraca nazwę formatu dokumentu widoczną dla operatora; format spoza kontraktu zostaje w postaci surowej. */
 function nazwaFormatu(format: string): string {
   const nazwy: Record<string, string> = {
     [StudioDocumentFormat.Pdf]: 'PDF',
@@ -77,8 +55,7 @@ export function utworzPasekStatusu(stan: StanStudio): PasekStatusu {
 
       liczniki.textContent = opiszLiczniki(policzTresc(robocza));
 
-      // Brak dokumentu i format nieznany to dwie różne rzeczy: pierwsza znaczy
-      // „nie ma czego formatować", druga — „rdzeń formatu nie podał".
+      // Brak dokumentu i format nieznany to dwie różne rzeczy: pierwsza to brak treści, druga brak danych.
       format.textContent =
         dokument === null
           ? 'format: brak dokumentu'

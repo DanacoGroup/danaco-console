@@ -5,18 +5,7 @@ import { Cel, czyPowlokaNatywna, wskazKatalog } from './dialog-katalogu';
 import { utworzKomunikatCzynnosci } from './komunikat-czynnosci';
 import type { StanKataloguRoboczego } from './stan-katalogu-roboczego';
 
-/**
- * Jedno pole obszaru katalogu roboczego.
- *
- * Wartość domyślna jest pokazana wprost, nie ukryta pod pustym polem: katalog
- * powstaje sam w miejscu instalacji aplikacji głównej i dopiero świadomy zapis
- * to nadpisuje. Puste pole bez zdania o wartości domyślnej wyglądałoby jak brak
- * ustawienia — a ustawienie jest, tylko pochodzi z wartości domyślnej rdzenia.
- *
- * Wskazanie katalogu oknem powłoki jest dostępne tam, gdzie ma sens: przy
- * podstawie. Wzorzec nazwy katalogu sesji nie jest ścieżką na dysku i okna
- * systemowego nie potrzebuje.
- */
+/** Jedno pole obszaru katalogu roboczego, pokazujące wartość dziś obowiązującą wraz z jej pochodzeniem. */
 export interface PoleKatalogu {
   /** Wiersz osadzany w obszarze katalogu roboczego. */
   element: HTMLElement;
@@ -147,7 +136,7 @@ export function utworzPoleKatalogu(zaleznosci: ZaleznosciPolaKatalogu): PoleKata
   };
 }
 
-/** Zdanie o pochodzeniu wartości: zapis użytkownika albo wartość domyślna. */
+/** Zdanie o pochodzeniu wartości pola: świadomy zapis użytkownika albo wartość domyślna dla całego rdzenia. */
 function zdaniePochodzenia(rozstrzygniecie: Rozstrzygniecie): string {
   const zrodlo = rozstrzygniecie.zrodlo;
   if (rozstrzygniecie.domyslna || zrodlo === null) {
@@ -156,7 +145,7 @@ function zdaniePochodzenia(rozstrzygniecie: Rozstrzygniecie): string {
   return `Wartość pochodzi z zapisu: ${opisAdresu(adresWpisu(zrodlo))}.`;
 }
 
-/** Napis z wartości nieznanego kształtu; brak wartości daje napis pusty. */
+/** Napis z wartości nieznanego kształtu odczytanej z ustawienia; brak wartości daje tutaj zawsze napis pusty. */
 function napis(wartosc: unknown): string {
   if (wartosc === null || wartosc === undefined) return '';
   return typeof wartosc === 'string' ? wartosc : String(wartosc);

@@ -742,3 +742,7 @@ ma reguł wygaszenia, ponieważ pozycja bez pokrycia w produkcie nie powstaje.
 Barwa ostrzegawcza idzie żetonem `--dn-blad-*`, nie wartością; rodzinę
 `--dn-ostrzezenie-*` pominięto, bo niosłaby inny kolor. Ten sam żeton nosi
 `.dn-btn--niebezpieczny`, jedna barwa dla jednego znaczenia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/gniazdo.css
+Rozkład sceny opisuje `uklad.css`, ten arkusz go nie dotyka. Wartości barw,
+odstępów i pisma pochodzą wyłącznie z żetonów `motyw/`.

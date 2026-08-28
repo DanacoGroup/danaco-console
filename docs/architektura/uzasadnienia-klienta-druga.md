@@ -7427,3 +7427,8 @@ Rodzaju nie da się zmienić po założeniu kanału. Pole nie jest wyłączane; 
 Parametry idą jako tekst JSON, bo kontrakt nie narzuca im żadnej struktury. Wpis nieczytelny kończy się odmową z komunikatem, a nie wysyłką pustych parametrów: ciche wysłanie pustego obiektu skasowałoby dotychczasowe parametry kanału.
 
 Wygląd formularza pochodzi w całości z biblioteki kontrolek i z arkusza stylu panelu.
+
+## budowa/klient-poprzedni/src/sterowanie/host-wykonania.ts
+Nazwa hosta jest ustawieniem okna, a nie wartością wyliczenia środowiska wykonania, dzięki czemu dopisanie kolejnego hosta nie wymaga zmiany kodu. Pole przyjmuje dowolną nazwę; lista hostów znanych skraca drogę do trzech używanych dziś.
+
+Wartość idzie ustawieniem poziomu okna, ponieważ treść żądania aktualizacji okna nie ma dla niej pola. Pole pozostaje czynne przy każdym zasięgu wykonania; przy zasięgu lokalnym i przy zasięgu rdzenia wpis nie ma zastosowania.

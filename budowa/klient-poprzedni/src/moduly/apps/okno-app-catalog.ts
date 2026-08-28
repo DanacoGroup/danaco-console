@@ -194,7 +194,7 @@ export function utworzOknoAppCatalog(stan: StanRozszerzen): OknoAppCatalog {
     stan.wchlonPozycje(oddana);
     rama.gotowe();
     odswiez();
-    // Stan bierzemy z odpowiedzi rdzenia, nie z zamówienia — rdzeń rozstrzyga przełączenie.
+    // Stan pochodzi z odpowiedzi rdzenia, nie z zamówienia — rdzeń rozstrzyga przełączenie.
     odpowiedz.pokaz(
       `${czynnosc} pozycji ${oddana.name}: rdzeń oddał stan ` +
         `${oddana.enabled ? 'włączona' : 'wyłączona'}.`,

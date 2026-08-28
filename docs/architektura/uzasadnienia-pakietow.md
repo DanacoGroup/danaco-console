@@ -6658,3 +6658,12 @@ samo pominięcie przełącznika w wywołaniu.
 Funkcja wykazPoPrzecinku odrzuca człony puste, ponieważ wzorzec pusty
 pasowałby do niczego, a w bibliotece gniazda do czegokolwiek, co byłoby
 zachowaniem sprzecznym z intencją filtra pochodzenia.
+
+## budowa/server/internal/dane/design_szablony.go
+Szablon i prompt wydany mają ten sam kształt kontraktu `DesignPrompt`, ale różne
+życie: szablon Operator nadpisuje, a prompt wydany jest zapisem tego, co się
+stało. Powód rozdziału tabel stoi w nagłówku migracji 231.
+
+Historia niesie prowenancję: prompt wydany wraca wraz z kodami zasobów, które
+z niego powstały. Bez tego pole `DesignAsset.PromptId` byłoby kodem bez drugiej
+strony — kontrakt komendy `design.prompt.history.list` ten przekład wnosi.

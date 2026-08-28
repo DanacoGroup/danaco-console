@@ -87,20 +87,22 @@ func TestSilnikKontenerowStoiWWarstwieDecyzyjnej(t *testing.T) {
 	}
 }
 
-// TestKazdaPozycjaMaZnanaWarstwe pilnuje, żeby nowe narzędzie dopisane do wykazu
-// nie wypadło z prowizjonowania. Skrypt stawia warstwami; warstwa nieznana
-// znaczy pozycję, której nikt nie postawi i nikt tego nie zauważy.
+// TestKazdaPozycjaMaZnanaWarstwe pilnuje umowy z jedynym odbiorcą wykazu:
+// arsenal-serwera.sh rozdziela pozycje po nazwach warstw wpisanych na sztywno.
+// Nazwy stoją tu literałem, nie stałą tego pliku, żeby nowa warstwa dodana
+// w rdzeniu bez gałęzi w skrypcie zepsuła ten sprawdzian, a nie zniknęła.
 func TestKazdaPozycjaMaZnanaWarstwe(t *testing.T) {
-	znane := map[string]bool{
-		WarstwaObowiazkowa:  true,
-		WarstwaWarsztatGo:   true,
-		WarstwaWarsztatNpm:  true,
-		WarstwaSnap:         true,
-		WarstwaModelRecznie: true,
-		WarstwaDecyzyjna:    true,
+	znaneOdbiorcy := map[string]bool{
+		"obowiazkowa-apt":     true,
+		"obowiazkowa-recznie": true,
+		"warsztat-go":         true,
+		"warsztat-npm":        true,
+		"snap":                true,
+		"model-recznie":       true,
+		"decyzyjna":           true,
 	}
 	for _, pozycja := range ZaleznosciZewnetrzne() {
-		if warstwa := WarstwaZaleznosci(pozycja); !znane[warstwa] {
+		if warstwa := WarstwaZaleznosci(pozycja); !znaneOdbiorcy[warstwa] {
 			t.Errorf("pozycja %q dostała warstwę %q, której skrypt prowizjonowania nie zna",
 				pozycja.Narzedzie.Nazwa, warstwa)
 		}
@@ -130,6 +132,20 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 		{"środowisko pythonowe", "rembg", "rembg[cli] w osobnym środowisku pythonowym", WarstwaModelRecznie},
 		{"silnik kontenerów", "docker", "docker.io albo podman", WarstwaDecyzyjna},
 		{"silnik kontenerów pod podmanem", "podman", "podman", WarstwaDecyzyjna},
+		// Podpowiedź zapisana zdaniem oraz polecenie menedżera spoza apt i pip idą do warstwy
+		// ręcznej: prowizjonowanie rozbija pole warstwy apt na spacjach, więc zdanie dałoby
+		// programowi apt słowa języka polskiego, a polecenie — człony `install` i nazwę narzędzia.
+		{"podpowiedź zdaniem — środowisko Javy", "java",
+			"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
+			WarstwaObowiazkowaRecznie},
+		{"podpowiedź zdaniem — plik z wydania projektu", "typst",
+			"typst (jeden plik wykonywalny z wydania projektu)", WarstwaObowiazkowaRecznie},
+		{"podpowiedź zdaniem — pakiet wraz ze słownikiem", "hunspell",
+			"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)", WarstwaObowiazkowaRecznie},
+		{"polecenie pip install", "ruff", "pip install ruff", WarstwaObowiazkowa},
+		// cargo install zawiera podnapis „go install" („cargo” kończy się na „go”),
+		// a mimo to nie jest poleceniem Go.
+		{"polecenie cargo install", "typos", "cargo install typos-cli", WarstwaObowiazkowaRecznie},
 	}
 	for _, przypadek := range przypadki {
 		t.Run(przypadek.nazwa, func(t *testing.T) {
@@ -140,6 +156,54 @@ func TestWarstwaRozpoznajePostaciPodpowiedzi(t *testing.T) {
 				t.Errorf("warstwa %q, oczekiwano %q", warstwa, przypadek.oczekuje)
 			}
 		})
+	}
+}
+
+// TestWarstwaPodpowiedziZdaniemIdzieDoRecznej pilnuje, że pozycja z podpowiedzią zapisaną zdaniem
+// albo poleceniem menedżera spoza apt i pip trafia do warstwy ręcznej, którą prowizjonowanie
+// wypisuje jako kroki do wykonania. Pozostawienie jej w warstwie apt przerywało przebieg, bo pole
+// rozbijane na spacjach dawało programowi apt nazwy, których dystrybucja nie zna.
+func TestWarstwaPodpowiedziZdaniemIdzieDoRecznej(t *testing.T) {
+	oczekiwane := map[string]bool{
+		"java": true, "hunspell": true, "vale": true, "typst": true, "typos": true,
+	}
+	znalezione := map[string]bool{}
+	for _, pozycja := range ZaleznosciZewnetrzne() {
+		program := pozycja.Narzedzie.Program
+		if !oczekiwane[program] {
+			continue
+		}
+		znalezione[program] = true
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+			t.Errorf("pozycja %q z podpowiedzią %q trafiła do warstwy %q zamiast ręcznej",
+				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet, warstwa)
+		}
+	}
+	for program := range oczekiwane {
+		if !znalezione[program] {
+			t.Errorf("w wykazie nie ma programu %q — sprawdzian nie ma czego pilnować", program)
+		}
+	}
+}
+
+// TestWarstwaCargoInstallNieTrafiaDoWarsztatuGo pilnuje usterki, w której reguła pytała o podnapis
+// „go install", a ten stoi wewnątrz „cargo install typos-cli" („cargo” kończy się na „go”, dalej
+// idzie spacja i „install”); pozycja wpadała do warstwy warsztatu Go i zostałaby wykonana
+// poleceniem go install zamiast cargo install.
+func TestWarstwaCargoInstallNieTrafiaDoWarsztatuGo(t *testing.T) {
+	policzone := 0
+	for _, pozycja := range ZaleznosciZewnetrzne() {
+		if !strings.HasPrefix(strings.TrimSpace(pozycja.Narzedzie.Pakiet), "cargo install ") {
+			continue
+		}
+		policzone++
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa == WarstwaWarsztatGo {
+			t.Errorf("pozycja %q z poleceniem %q trafiła do warsztatu Go — zostałaby wykonana go install",
+				pozycja.Narzedzie.Nazwa, pozycja.Narzedzie.Pakiet)
+		}
+	}
+	if policzone == 0 {
+		t.Fatal("w wykazie nie ma pozycji cargo install — sprawdzian nie ma czego pilnować")
 	}
 }
 
@@ -246,4 +310,50 @@ func wierszProgramu(wydruk, program string) string {
 		}
 	}
 	return ""
+}
+
+// TestPolecenieObcegoMenedzeraNieWchodziDoWarstwyApt odtwarza usterkę, przez którą
+// prowizjonowanie serwera przerywało się przed warstwami Go, npm, snap i mowy.
+// Pole `cargo install typos-cli` składa się z członów o kształcie nazwy pakietu,
+// więc sito kształtu przepuszczało je do warstwy apt, a rozbicie na spacjach dawało
+// programowi apt nazwy `install` i `typos-cli`, których dystrybucja nie zna.
+func TestPolecenieObcegoMenedzeraNieWchodziDoWarstwyApt(t *testing.T) {
+	pozycja := ZaleznoscZewnetrzna{}
+	pozycja.Narzedzie.Program = "typos"
+	pozycja.Narzedzie.Pakiet = "cargo install typos-cli"
+
+	if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+		t.Fatalf("polecenie obcego menedżera trafiło do warstwy %q zamiast %q",
+			warstwa, WarstwaObowiazkowaRecznie)
+	}
+}
+
+// TestPodpowiedzZdaniemNieWchodziDoWarstwyApt odtwarza drugą połowę tej samej usterki:
+// podpowiedź zapisana zdaniem rozbijała się na spacjach na słowa języka polskiego.
+func TestPodpowiedzZdaniemNieWchodziDoWarstwyApt(t *testing.T) {
+	for _, pole := range []string{
+		"środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika",
+		"hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)",
+		"typst (jeden plik wykonywalny z wydania projektu)",
+	} {
+		pozycja := ZaleznoscZewnetrzna{}
+		pozycja.Narzedzie.Pakiet = pole
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowaRecznie {
+			t.Errorf("podpowiedź zdaniem trafiła do warstwy %q zamiast %q: %s",
+				warstwa, WarstwaObowiazkowaRecznie, pole)
+		}
+	}
+}
+
+// TestWykazNazwPakietowZostajeWWarstwieApt pilnuje, że zawężenie nie zabrało warstwie apt
+// pozycji, które prowizjonowanie ma postawić samo, wraz z poleceniem pip mającym własną gałąź.
+func TestWykazNazwPakietowZostajeWWarstwieApt(t *testing.T) {
+	for _, pole := range []string{"ffmpeg", "tesseract-ocr tesseract-ocr-pol", "pip install ruff"} {
+		pozycja := ZaleznoscZewnetrzna{}
+		pozycja.Narzedzie.Pakiet = pole
+		if warstwa := WarstwaZaleznosci(pozycja); warstwa != WarstwaObowiazkowa {
+			t.Errorf("pozycja apt trafiła do warstwy %q zamiast %q: %s",
+				warstwa, WarstwaObowiazkowa, pole)
+		}
+	}
 }

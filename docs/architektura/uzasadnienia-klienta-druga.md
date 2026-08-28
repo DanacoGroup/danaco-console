@@ -6949,3 +6949,12 @@ i wylicza narzędzia promptu, które niesie profil Studia, bo bez tego nie wida�
 panelu narzędzi zleca się z okna komunikacji sesji. Liczby okien rozmowy pasek nie podaje, bo
 profil Studia stoi na granicy niepodanej, więc wypisanie stamtąd liczby podawałoby wartość
 zastępczą jako ustaloną.
+
+## budowa/klient-poprzedni/src/moduly/studio/pozycja-operacji.ts
+Operacja kontekstowa przyjmuje identyfikator akcji i nie sprawdza go względem rejestru akcji,
+więc identyfikator spoza rejestru wraca odpowiedzią pomyślną z propozycją zmiany. Rejestr
+zasięgu modułu Studio niesie także wiersze wskazujące komendy okna komunikacji, takie jak
+wysłanie, zatrzymanie i wykaz wiadomości; gdyby były wybieralne, uruchomienie operacji na
+pozycji wysłania wysłałoby jej identyfikator jako operację redakcyjną i wróciło wynikiem
+wyglądającym na udany. Wiersz zostaje więc widoczny, bo rejestr go niesie, ale nie zostaje
+wybieralny, a plakietka źródła mówi, z czego wiersz pochodzi i którą komendę wskazuje.

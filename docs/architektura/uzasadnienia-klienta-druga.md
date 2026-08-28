@@ -5883,3 +5883,26 @@ obszary studia i okna, więc obie drogi odmowy modułu są rozpoznawalne bez lit
 odmowy jest tu adekwatny, bo brakuje uchwytu, a nie treści żądania, a znacznik niepowtarzalności
 powstrzymuje widok przed ponawianiem czegoś, czego rdzeń nie nabędzie przed wdrożeniem nowej
 wersji.
+
+## budowa/klient-poprzedni/src/sterowanie/indeks.ts
+Punkt wejścia klienta montuje komplet sterowania dla każdego okna z osobna:
+tworzy rejestr kanałów, odświeża go, a następnie tworzy panel sterowania
+z kanałem, oknem i rejestrem, dołączając jego element do kontenera. Rejestr
+kanałów powstaje raz na klienta — jest katalogiem wyboru, nie ustawieniem
+okna. Panel powstaje raz na okno i nie ma z innym panelem żadnej wspólnej
+zmiennej.
+
+## budowa/klient-poprzedni/src/sterowanie/modul-okna.ts
+Wykaz modułów pochodzi z katalogu modułów rdzenia, nie ze stałej listy znanych
+identyfikatorów — tamta lista niesie środowiska, a nie moduły. Moduł spoza
+katalogu pozostaje widoczny i wybieralny — katalog jest listą informacyjną,
+nie bramą.
+
+## budowa/klient-poprzedni/src/sterowanie/komunikat-zmiany.ts
+Komunikat potwierdzenia i jego odbiorca istnieją osobno od reszty kompletu
+sterowania, bo wiele elementów sterujących zgłasza zmianę tą samą drogą,
+a miejsce pokazania komunikatu jest jedno.
+
+## budowa/klient-poprzedni/src/sterowanie/rola-okna.ts
+Wskazanie koordynatora, któremu podlega wykonawca, jest osobnym powiązaniem
+między oknami — komplet sterowania jednego okna go nie ustanawia.

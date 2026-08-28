@@ -17,32 +17,7 @@ import { niepowodzenie, potwierdzenie, type OdbiorcaKomunikatu } from './komunik
 import type { StanSterowania } from './stan-sterowania';
 import { utworzOdczytObowiazujacej } from './wartosc-obowiazujaca';
 
-/**
- * Wysyłka i odczyt ustawień z poziomu zasięgu okna komunikacji.
- *
- * Trzy sterowania — host wykonania, kanał zapasowy, nakład rozumowania — nie
- * mają pola w treści `window.update`, więc idą komendą `config.set` na poziomie
- * `window`, z identyfikatorem okna jako bytem poziomu. Odczyt przy otwarciu
- * kompletu (`config.get`) sprawia, że po przeładowaniu ustawienia wracają
- * z bazy, a nie z pamięci przeglądarki.
- *
- * Adres ustawienia ma cztery człony, nie dwa: przestrzeń konfiguracji ma dwa
- * prostopadłe wymiary — poziom zasięgu z bytem poziomu oraz oś rozstrzygania
- * z bytem osi. Sprawdzanie samego poziomu przyjmowałoby za swój zapis
- * adresowany do innego modelu albo innego konta, na przykład
- * `naklad_rozumowania` na osi `model/…`. Adres składa
- * `konfiguracja/adres-ustawienia.ts`, jedyny w kliencie przepis na adres tej
- * przestrzeni.
- *
- * Wpis konfiguracji innego okna, innego poziomu albo innej osi jest pomijany;
- * to adresowanie, a nie wstrzymanie zmiany.
- *
- * Zdarzenie `config.changed` niesie rodzaj zmiany: `created` i `updated`
- * nanoszą wartość, `deleted` ją zdejmuje. Rdzeń rozgłasza usunięcie z wpisem
- * o starej wartości (`server/internal/core/handlers_config.go`), więc czytanie
- * samego wpisu bez rodzaju nanosiłoby skasowaną wartość jak świeży zapis,
- * a powrót do wartości domyślnej nie docierałby do żadnej powierzchni.
- */
+/** Wysyłka i odczyt ustawień z poziomu zasięgu okna komunikacji, adresowanych poziomem, bytem poziomu, osią i bytem osi. */
 export interface ZmianaUstawienia {
   /** Wczytuje ustawienia poziomu okna z rdzenia wraz z wartością obowiązującą. */
   wczytaj(): void;
@@ -82,9 +57,7 @@ export function utworzZmianeUstawienia(
   const odsubskrybuj: Odsubskrybuj = kanal.naZdarzenie(
     EventType.ConfigChanged,
     (tresc) => {
-      // Zapis na poziomie szerszym niż okno nie dotyczy poziomu okna, ale
-      // zmienia wartość obowiązującą, dlatego rodzina kluczy kompletu odświeża
-      // politykę niezależnie od adresu wpisu.
+      // Zapis szerszy niż okno nie dotyczy okna, ale zmienia wartość obowiązującą, więc odświeża politykę.
       if (KLUCZE_KOMPLETU.includes(tresc.entry.key)) odswiezObowiazujaca();
       if (!dotyczyOkna(tresc.entry)) return;
       if (tresc.change === ChangeKind.Deleted) {

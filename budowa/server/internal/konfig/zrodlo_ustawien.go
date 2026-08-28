@@ -5,8 +5,7 @@ package konfig
 type Wpis struct {
 	Poziom       Poziom
 	KluczZasiegu string
-	// Os i KluczOsi wskazują oś rozstrzygania. Oś pusta znaczy platformę,
-	// więc wpis zbudowany bez wskazania osi obowiązuje na osi platformy.
+	// Os i KluczOsi wskazują oś rozstrzygania; oś pusta oznacza platformę.
 	Os       Os
 	KluczOsi string
 	Klucz    string
@@ -14,7 +13,8 @@ type Wpis struct {
 	Rodzaj   Rodzaj
 }
 
-// Adres zwraca miejsce zapisu wpisu.
+// Adres zwraca miejsce zapisu wpisu jako parę poziomu zasięgu i osi wraz
+// z ich bytami, gotową do porównań.
 func (w Wpis) Adres() Adres {
 	return Adres{
 		Poziom:       w.Poziom,
@@ -25,17 +25,9 @@ func (w Wpis) Adres() Adres {
 }
 
 // Zrodlo dostarcza zapisane ustawienia dla wskazanych adresów zasięgu.
-//
-// Pakiet konfig nie sięga do bazy danych samodzielnie — łączy się z warstwą
-// trwałości wyłącznie przez ten interfejs. Implementacja czytająca
-// tabelę `ustawienie` należy do warstwy repozytoriów; implementacja pamięciowa
-// z tego pakietu obsługuje pracę bez trwałości i sprawdzenia.
-//
-// Zwrócony błąd nie zatrzymuje rozstrzygania: wpisy zwrócone mimo błędu wchodzą
-// do rozstrzygnięcia, a ustawienia bez zapisu schodzą na wartości domyślne.
-// Błąd jest widoczny w polityce efektywnej jako informacja
-// diagnostyczna, nie jako odmowa. Implementacja może więc zwrócić wynik
-// częściowy razem z błędem.
+// Pakiet konfig nie sięga do bazy samodzielnie, tylko łączy się z warstwą
+// trwałości przez ten interfejs. Zwrócony błąd nie zatrzymuje
+// rozstrzygania.
 type Zrodlo interface {
 	Wpisy(adresy []Adres) ([]Wpis, error)
 }

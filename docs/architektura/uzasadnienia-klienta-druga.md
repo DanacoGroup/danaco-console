@@ -7923,3 +7923,18 @@ Fragment nie jest wierszem: rdzeń wysyła porcje bajtów, więc jeden fragment 
 połową wiersza, a inny trzema wierszami naraz. Bufor skleja ogon niedokończonego
 wiersza z początkiem następnego fragmentu; bez tego wyjście rozsypałoby się na
 przypadkowych granicach odczytu.
+
+## budowa/klient-poprzedni/src/moduly/terminal/odtwarzanie.ts
+
+Odtwarzanie jest czynnością w całości kliencką: wiersze wyjścia leżą już
+w buforze wraz ze znacznikami czasu, więc powtórzenie przebiegu jest
+przesuwaniem granicy widocznych wierszy, a nie ponownym pytaniem rdzenia.
+Kontrakt nie ma komendy odtwarzania i mieć jej nie musi. Suwak stoi
+w położeniu ostatniego wiersza, dopóki Operator go nie ruszy, ponieważ konsola
+ma domyślnie pokazywać teraźniejszość.
+
+Wartością oznaczającą „wszystko" nie może być zero, ponieważ zero jest także
+poprawnym położeniem suwaka: zsunięty na sam początek pokazywałby wtedy cały
+bufor, a opis pod nim mówiłby o wierszu zerowym. Rozróżnienie stanu nietkniętego
+od ustawionego na zero musi istnieć w wartości, a nie w domyśle — stąd liczba
+ujemna.

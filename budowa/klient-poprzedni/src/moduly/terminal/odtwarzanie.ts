@@ -1,23 +1,10 @@
 /**
- * Odtwarzanie sesji (playback) okna Output Console.
- *
- * Odtwarzanie jest czynnością w całości kliencką: wiersze wyjścia już leżą
- * w buforze wraz ze znacznikami czasu, więc powtórzenie przebiegu jest
- * przesuwaniem granicy widocznych wierszy, a nie ponownym pytaniem rdzenia.
- * Kontrakt nie ma komendy odtwarzania i mieć nie musi.
- *
- * Suwak stoi w położeniu ostatniego wiersza, dopóki Operator go nie ruszy —
- * konsola ma domyślnie pokazywać teraźniejszość, nie przeszłość.
+ * Odtwarzanie sesji okna Output Console: przesuwanie granicy widocznych wierszy
+ * bufora, w całości po stronie klienta, bez pytania rdzenia o cokolwiek.
  */
 export interface Odtwarzacz {
   /**
-   * Ostatni wiersz brany do rysowania; liczba ujemna znaczy „suwak nietknięty,
-   * pokaż wszystko”.
-   *
-   * Wartością „wszystko” nie może być zero, bo zero jest także poprawnym
-   * położeniem suwaka: zsunięty na sam początek pokazywałby wtedy cały bufor,
-   * a opis pod nim mówiłby „wiersz 0 z N”. Rozróżnienie „nietknięty” od
-   * „ustawiony na zero” musi więc istnieć w wartości, a nie w domyśle.
+   * Ostatni wiersz brany do rysowania; liczba ujemna znaczy suwak nietknięty.
    */
   polozenie(): number;
   element: HTMLElement;

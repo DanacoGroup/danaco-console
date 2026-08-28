@@ -6350,3 +6350,32 @@ treści jest jedynym, który przeżywa wydanie dokumentu do formatu nieniosąceg
 takiego jak tekst czysty albo markdown, i jest częścią treści, więc da się go usunąć jak każdy
 inny wiersz; wykaz pochodzeń sesji okna jest podręczny, wraz z czasem, długością i miejscem
 wstawienia, ginie z zamknięciem karty i nie jest źródłem prawdy, odkąd źródłem prawdy jest rdzeń.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/odmowy-auth.ts
+Pierwsze dwie części zdania odmowy składa wspólny komponent odmów i nie są tu przepisywane; ten plik
+dokłada wyłącznie część trzecią, radę, której wspólny komponent znać nie może, bo zależy od czynności
+bramki. Odmowy bramki są poprawnym zachowaniem, nie usterką, a bez zdania trzeciego czyta się je jak
+awarię: sekret niezgodny z zapisem daje radę wpisania hasła albo PIN-u ponownie; bramka nieustawiona
+przy wejściu to pierwsze uruchomienie, ekran przechodzi na ustawienie hasła sam, a rada to nazywa;
+powtórzona rejestracja znaczy, że kotwica już stoi, a od zmiany hasła jest osobna droga w ustawieniach;
+przedłużenie sesji wygasłej albo unieważnionej i sesji nieznanej prowadzą obie do wejścia hasłem na
+nowo; droga potwierdzenia nieznana, zużyta albo wydana do innej czynności kończy się prośbą o nowy list,
+a nie szukaniem usterki; rejestracja i odzyskanie na platformie bez konta nadawczego kończą się radą
+nazywającą ustawienie serwera poczty wychodzącej, bo listu nie ma czym nadać. Obszary rad odpowiadają
+czynnościom ekranu co do jednej: wejście, wejście PIN-em, założenie, potwierdzenie, odzyskanie, zmiana,
+przedłużenie, rozpoznanie. Obszar bez wpisu kończy radą ogólną, czyli odesłaniem do dziennika rdzenia —
+tam operator nie sięga. Bramka jest w produkcie jedyna, więc odmowa musi wystarczyć do wyjścia z każdego
+z tych stanów bez szukania pomocy poza ekranem. Każde użycie rady ogólnej jest usterką do zamknięcia, nie
+stanem dopuszczalnym; wykaz rad ma pokrywać wszystkie kody, jakimi rdzeń odmawia w rodzinie komend bramki.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/przekazanie-zlecenia.ts
+Zdarzenie jest widoczne w obu oknach: przekazanie odbywa się bez udziału
+Operatora, więc gdyby ślad został tylko u wykonawcy, koordynator
+pokazywałby rozmowę z dziurą, z której nie dałoby się odtworzyć, co i kiedy
+zostało zlecone. Na scenie dzieje się jednocześnie siedem rzeczy: wpis w
+historii koordynatora z czym i dokąd wraz z zastrzeżeniem, wpis w historii
+wykonawcy od kogo wraz z tym samym zastrzeżeniem, błysk obu nagłówków
+widoczny zanim wpisy zostaną przeczytane, żeton biegnący po pasie relacji
+wskazujący kierunek, dymek jako natychmiastowa odpowiedź na czynność
+Operatora, trwała uwaga na pasie relacji jako odpowiedź także kwadrans
+później, oraz przejście stanu z przekazania zlecenia do pracy wykonawcy.

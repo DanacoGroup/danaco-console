@@ -8056,3 +8056,30 @@ o woli operatora, którego operator nie wypowiedział. Żądanie w przelocie dru
 drogą jest puste, bo sprawdzian pyta o drogę, nie o kształt żądania — kształt
 sprawdza rdzeń osobno, a odmowa walidacji z nazwą pola jest odpowiedzią, którą
 kanał próbny i tak zwraca jako powodzenie.
+
+## budowa/klient-poprzedni/src/moduly/design/pasek-uczciwosci.ts
+Jedna odpowiedzialność: powiedzenie wprost tego, czego okna nie mówią same.
+
+Pas nie liczy już niczego napisem. Liczba komend obszaru, liczba okien katalogu i to, czy rdzeń ma
+uchwyt danej komendy, są tu mierzone odczytem z rdzenia — katalogiem okien i pokryciem komend.
+Powód jest w tym module policzalny: zdanie o liczbie komend obszaru stało tu, gdy komend było już
+osiem, i nic go z kontraktem nie łączyło. Napis o stanie produktu, który nie jest z produktem
+połączony, staje się fałszem w dniu, w którym produkt się zmienia — i nikt go nie zdejmuje, bo
+nikt nie wie, że skłamał.
+
+Zostają tu wyłącznie zdania, których żaden odczyt nie zastąpi, bo nie dotyczą liczby, tylko
+mechanizmu: bajty wygenerowanego obrazu nie mają drogi do przeglądarki — rdzeń generowanie
+wykonuje i zasób zakłada z prawdziwą treścią, ale pole odsyłacza jest ścieżką w jego systemie
+plików; pytanie o Preview Window pozostaje otwarte — katalog rdzenia niesie jedną definicję okna
+i dwa przypięcia do modułów, a to, czy Studio i Design mają kiedyś zejść się w jedno okno
+konfigurowalne, jeszcze nikt nie rozstrzygnął.
+
+Pozycja druga brakiem nie jest: pierwsza mówi, czego moduł nie umie, druga — czego nikt jeszcze
+nie rozstrzygnął.
+
+Wykaz idzie do pomiaru pokrycia, więc mówi nie o tym, co kontrakt niesie, ale o tym, czy rdzeń ma
+dla każdej z nich uchwyt.
+
+Zdanie przy każdej pozycji zmieniło się samo, bez dotykania tego wykazu: pomiar czyta wykaz komend
+rdzenia i mówi teraz o braku uchwytu, a nie o braku nazwy. To są dwa różne stany i pas ich nie
+zlewa — kontrakt komendę ma, rdzeń jej jeszcze nie obsługuje.

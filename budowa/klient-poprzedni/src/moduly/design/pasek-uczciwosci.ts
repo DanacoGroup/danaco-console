@@ -6,33 +6,8 @@ import { utworzPokrycieKomend, type PokrycieKomend } from '../pokrycie-komend';
 import { KOD_MODULU, KODY_OKIEN } from './etykiety-designu';
 
 /**
- * Pas uczciwości modułu Design — czego moduł nie umie, choć wygląda, jakby umiał.
- *
- * Jedna odpowiedzialność: powiedzenie wprost tego, czego okna nie mówią same.
- *
- * Pas nie LICZY już niczego napisem. Liczba komend obszaru, liczba okien
- * katalogu i to, czy rdzeń ma uchwyt danej komendy, są tu MIERZONE odczytem
- * z rdzenia — katalogiem okien (`moduly/katalog-okien.ts`) i pokryciem komend
- * (`moduly/pokrycie-komend.ts`). Powód jest w tym module policzalny: zdanie
- * „obszar design ma dokładnie cztery komendy" stało tu, gdy komend było już
- * osiem, i nic go z kontraktem nie łączyło. Napis o stanie produktu, który nie
- * jest z produktem połączony, staje się fałszem w dniu, w którym produkt się
- * zmienia — i nikt go nie zdejmuje, bo nikt nie wie, że skłamał.
- *
- * Zostają tu wyłącznie zdania, których żaden odczyt nie zastąpi, bo nie dotyczą
- * liczby, tylko mechanizmu:
- *   • bajty wygenerowanego obrazu nie mają drogi do przeglądarki — rdzeń
- *     generowanie wykonuje i zasób zakłada z prawdziwą treścią, ale pole
- *     odsyłacza jest ścieżką w JEGO systemie plików;
- *   • pytanie o Preview Window: katalog rdzenia niesie jedną definicję okna
- *     i dwa przypięcia do modułów, a to, czy Studio i Design mają kiedyś zejść
- *     się w jedno okno konfigurowalne, pozostaje otwarte.
- *
- * Pozycja druga brakiem nie jest: pierwsza mówi, czego moduł nie umie, druga —
- * czego nikt jeszcze nie rozstrzygnął.
- *
- * Pozycja pasa jest w pełni klikalna i odpowiada dymkiem — niegotowość opisowo,
- * nigdy odebraniem klikalności.
+ * Pas uczciwości modułu Design — czego moduł nie umie, choć wygląda, jakby umiał, mierzone
+ * odczytem z rdzenia, nie liczbą wpisaną w napis.
  */
 export interface PasekUczciwosci {
   element: HTMLElement;
@@ -43,11 +18,8 @@ export interface PasekUczciwosci {
 }
 
 /**
- * Komendy, którymi moduł żyje — osiem obszaru własnego i sześć obszaru obrazu.
- *
- * Wykaz idzie do pomiaru pokrycia, więc mówi nie o tym, co kontrakt niesie, ale
- * o tym, czy rdzeń ma dla każdej z nich uchwyt. Nazwy pochodzą z generatu
- * kontraktu — ani jedna nie jest tu wpisana wprost.
+ * Komendy, którymi moduł żyje — osiem obszaru własnego i sześć obszaru obrazu, wzięte z generatu
+ * kontraktu, nie wpisane wprost.
  */
 const KOMENDY_MODULU: readonly string[] = [
   Command.DesignAssetGenerate,
@@ -67,17 +39,8 @@ const KOMENDY_MODULU: readonly string[] = [
 ];
 
 /**
- * Czynności opracowania wraz z komendą, która je wykonuje.
- *
- * Nazwy pochodzą z generatu kontraktu, nie z napisów. Stały tu kiedyś jako
- * napisy, bo kontrakt tych komend nie miał i pomiar mówił wtedy „nazwy nie ma
- * w kontrakcie" — po scaleniu napis stałby się powieleniem literału, które
- * przy zmianie nazwy w kontrakcie zostawiłoby w oknie martwe zdanie.
- *
- * Zdanie przy każdej pozycji zmieniło się samo, bez dotykania tego wykazu:
- * pomiar czyta wykaz komend rdzenia i mówi teraz o BRAKU UCHWYTU, a nie
- * o braku nazwy. To są dwa różne stany i pas ich nie zlewa — kontrakt komendę
- * ma, rdzeń jej jeszcze nie obsługuje.
+ * Czynności opracowania wraz z komendą, która je wykonuje, wzięte z generatu kontraktu, nie
+ * z literałów wpisanych w oknie.
  */
 const CZYNNOSCI_MODULU: readonly (readonly [string, string, string])[] = [
   [
@@ -172,8 +135,7 @@ export function utworzPasekUczciwosci(kanal: Kanal): PasekUczciwosci {
   element.setAttribute('aria-label', 'Czego moduł Design nie umie');
   element.append(
     zdanie,
-    // Zdanie o katalogu okien liczy rozjazd z odczytu `module.list`: ile okien
-    // rdzeń modułowi przypisuje, ile moduł buduje i które buduje spoza katalogu.
+    // Zdanie o katalogu okien liczy rozjazd: ile okien rdzeń przypisuje, ile moduł buduje i skąd.
     katalog.zdanieElement('dn-pole-opis md-uczciwosc__opis'),
     // Wykaz pokrycia mówi, czy rdzeń ma uchwyt każdej komendy, którą moduł woła.
     pokrycie.wykaz(KOMENDY_MODULU, 'md-uczciwosc__wykaz'),
@@ -193,7 +155,7 @@ export function utworzPasekUczciwosci(kanal: Kanal): PasekUczciwosci {
   };
 }
 
-/** Pozycja pasa: klikalna zawsze, a jedyną jej reakcją jest powiedzenie prawdy. */
+/** Pozycja pasa: klikalna zawsze, a jedyną jej reakcją jest powiedzenie prawdy dymkiem, nigdy odebranie klikalności. */
 function pozycja(kod: string, napis: string, tytul: string, tresc: string): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';

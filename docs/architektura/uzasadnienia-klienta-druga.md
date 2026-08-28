@@ -6846,3 +6846,11 @@ podstawia sam — porównanie przeszukuje treść wskazanej strony, więc żąda
 wraca puste nawet wtedy, gdy dokument ten wzorzec zawiera, dlatego dokument niesie identyfikator
 wersji, a okno podstawia go za puste pole odniesienia, a podpowiedź przy kontrolce odpowiada
 temu, co się dzieje.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/plakietka-lacznosci.ts
+Numer próby i czas do następnej należą do transportu — plakietka odczytuje
+je w chwili rysowania i odświeża, dopóki trwa ponawianie, bo własny zegar
+odliczający rozjechałby się z transportem przy próbie podjętej wcześniej.
+Znaczenie stanu niesie i tak napis, nie sam ruch spinnera. Scena bez
+transportu, jak podgląd układu, nie zna łącza w ogóle, więc brak odczytu i
+brak łącza to dwie różne rzeczy nazwane osobno.

@@ -170,3 +170,10 @@
 
 /* Wiersz sesji: nazwa i opis jeden pod drugim. */
 .cd-strona .dn-obszar-pozycja-tekst { display: flex; flex-direction: column; }
+
+/* Oddech karty i wiersza rejestru wg koncepcji: 20 px w karcie, 10/15 px
+   w wierszu wykazu. Bez tego karta rosla o 24 px samego marginesu. */
+.cd-strona [data-wnetrze='przyrzadowe'] .cd-karta-akcent { padding: var(--dn-od-5); }
+.cd-strona [data-wnetrze='przyrzadowe'] .cd-wlasny-poz,
+.cd-strona [data-wnetrze='przyrzadowe'] .dn-rejestr-glowa { padding: 10px 15px; }
+.cd-strona [data-wnetrze='przyrzadowe'] .dn-rejestr-glowa { padding-right: 44px; }

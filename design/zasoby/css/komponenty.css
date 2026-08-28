@@ -3586,7 +3586,18 @@ button.dn-link {
   text-transform: uppercase;
   color: var(--dn-tekst-3);
 }
-.dn-sekcja-tytul--przyrzadowy::before { content: none; }
+/* Znak sekcji: mały kwadrat obrysowy zamiast belki sygnału. */
+.dn-sekcja-tytul--przyrzadowy::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: var(--dn-od-2);
+  border: 1px solid var(--dn-sygnal);
+  border-radius: 1px;
+  background: none;
+  vertical-align: 1px;
+}
 .dn-sekcja-licznik--przyrzadowy { color: var(--dn-sygnal); }
 
 /* Podpis maszynowy — wersaliki pismem o stałej szerokości. */
@@ -3643,7 +3654,6 @@ button.dn-link {
 /* Karta środowiska jako przyrząd: obudowa z siatką rysunkową w tle. */
 .dn-karta-srodowiska--przyrzadowa {
   min-height: var(--pz-karta-wys);
-  padding: var(--dn-od-5);
   background: var(--pz-karta-tlo);
   border-color: var(--dn-obrys);
 }
@@ -3662,6 +3672,21 @@ button.dn-link {
 }
 .dn-karta-srodowiska--przyrzadowa > *:not(.dn-karta-tlo):not(.dn-naroznik) { position: relative; z-index: 1; }
 .dn-karta-srodowiska--przyrzadowa:is(:hover, :focus-within) .dn-naroznik { border-color: var(--dn-sygnal); }
+/* Godło przyrządu ma rozmiar kontrolki, nie ilustracji: w koncepcji zajmuje
+   26 px, u nas rosło do 62 px i samo zabierało kartcie ponad jedną trzecią pionu. */
+.dn-karta-srodowiska--przyrzadowa .dn-karta-srodowiska-godlo {
+  width: 26px;
+  height: 26px;
+}
+.dn-karta-srodowiska--przyrzadowa .dn-karta-srodowiska-godlo > svg { width: 30px; height: 30px; }
+.dn-karta-srodowiska--przyrzadowa .dn-wejdz-grot .dn-grot-marki { width: 34px; height: 21px; }
+.dn-karta-srodowiska--przyrzadowa .dn-wejdz-grot { height: auto; }
+
+/* Wiersz sesji i wiersz rejestru na stopniu bazowym — koncepcja stawia oba
+   na 15 px, projekt trzymał je na 13. */
+[data-wnetrze='przyrzadowe'] .dn-obszar-pozycja-nazwa,
+[data-wnetrze='przyrzadowe'] .dn-rejestr-wiersz .dn-kafel { font-size: var(--dn-fs-base); }
+
 .dn-karta-srodowiska--przyrzadowa .dn-karta-srodowiska-tytul {
   font-family: var(--dn-ff-mono);
   font-weight: var(--dn-fw-srednia);
@@ -3674,6 +3699,24 @@ button.dn-link {
   text-transform: uppercase;
   color: var(--dn-tekst-3);
 }
+/* Opis przyrządu: stopień niżej od bazy i wąska kolumna — koncepcja łamie go
+   na dwa wiersze, żeby karta miała pion, nie pas. */
+.dn-karta-srodowiska--przyrzadowa .dn-karta-srodowiska-opis {
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 30ch;
+}
+/* Znak marki w stopce przyrządu schodzi do rozmiaru kontrolki: w koncepcji
+   wejście jest odsyłaczem, nie polem. Znak zostaje, rośnie tylko oddech karty. */
+.dn-wejdz-napis {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  transition: color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:is(:hover, :focus-within) .dn-wejdz-napis { color: var(--dn-sygnal); }
 .dn-karta-srodowiska--przyrzadowa .dn-karta-stopka {
   margin-top: auto;
   padding-top: var(--dn-od-3);
@@ -3704,14 +3747,16 @@ button.dn-link {
 }
 .dn-kafel--przyrzadowy:is(:hover, :focus-within)::before { transform: scaleY(1); }
 .dn-kafel--przyrzadowy:is(:hover, :focus-within) { border-color: var(--dn-sygnal); }
+.dn-kafel--przyrzadowy .dn-kafel-etykieta,
 .dn-kafel--przyrzadowy .dn-kafel-nazwa {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xl);
   font-weight: var(--dn-fw-srednia);
   color: var(--dn-tekst);
 }
+.dn-kafel--przyrzadowy .dn-kafel-opis,
 .dn-kafel--przyrzadowy .dn-kafel-rodzaj {
-  font-size: var(--dn-fs-base);
+  font-size: 14px;
   color: var(--dn-tekst-3);
   line-height: 1.35;
   max-width: 21ch;

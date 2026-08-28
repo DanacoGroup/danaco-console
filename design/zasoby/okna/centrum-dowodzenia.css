@@ -107,3 +107,15 @@
 .cd-strona .dn-metryka { gap: var(--dn-od-8); flex-wrap: wrap; }
 .cd-sekcja-glowa > .dn-sekcja-licznik { flex: none; margin-left: var(--dn-od-1); }
 .cd-plotno { position: relative; }
+
+/* Nadpis sekcji zajmuje cały wiersz, żeby licznik i menu sekcji stały przy
+   krawędziach, a nie zaraz za tytułem. */
+.cd-strona [data-wnetrze='przyrzadowe'] .cd-sekcja-glowa { width: 100%; }
+.cd-strona [data-wnetrze='przyrzadowe'] .cd-sekcja-glowa > .dn-sekcja-licznik { margin-right: auto; }
+
+/* Napis „Wejdź" stoi przed znakiem marki, oba w jednym rzędzie stopki. */
+.cd-strona [data-wnetrze='przyrzadowe'] .cd-wejdz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}

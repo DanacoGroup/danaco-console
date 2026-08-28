@@ -119,7 +119,9 @@
   --dn-fs-sm: 13px;        /* metadane, tekst pomocniczy */
   --dn-fs-base: 14px;      /* BAZOWY — tekst interfejsu */
   --dn-fs-md: 15px;        /* wyróżniona treść, wpisy rozmowy */
-  --dn-fs-lg: 17px;        /* nagłówki paneli */
+  --dn-fs-lg: 17px;
+  /* Baza 15 px — stopień po przeskalowaniu koncepcji, nie 14 px z projektu. */
+  --dn-fs-base: 15px;        /* nagłówki paneli */
   --dn-fs-xl: 21px;        /* nagłówki okien i modali */
   --dn-fs-2xl: 24px;       /* tytuły sekcji strony głównej */
   --dn-fs-3xl: 30px;       /* tytuły kart środowisk */
@@ -681,6 +683,8 @@
   --dn-fs-2xl: 19px;
   --dn-fs-xl: 19px;
   --dn-fs-lg: 17px;
+  /* Baza 15 px — stopień po przeskalowaniu koncepcji, nie 14 px z projektu. */
+  --dn-fs-base: 15px;
 
   /* Promienie ciaśniejsze — obudowa przyrządu, nie karta. */
   --dn-r-xs: 4px;

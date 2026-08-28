@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"danacoconsole/server/internal/mowa"
@@ -23,10 +24,13 @@ const (
 // Nazwy warstw prowizjonowania. Warstwa mówi, CZYM postawić program — a przy
 // silniku kontenerów: że nie stawiać go bez wyraźnego żądania.
 const (
-	// WarstwaObowiazkowa — pakiety dystrybucji, bez których moduły odmawiają działania na tej maszynie
-	// budującej. Niesie też podpowiedzi zdaniem albo poleceniem pip/cargo — arsenal-serwera.sh
-	// rozpoznaje ich postać i wyprowadza z nich krok apt, pip albo krok ręczny.
+	// WarstwaObowiazkowa — pakiety dystrybucji podawane programowi apt wprost oraz polecenia
+	// `pip install`, dla których prowizjonowanie ma osobną gałąź.
 	WarstwaObowiazkowa = "obowiazkowa-apt"
+	// WarstwaObowiazkowaRecznie — pozycje obowiązkowe, których prowizjonowanie nie postawi samo:
+	// podpowiedzi zapisane zdaniem oraz polecenia menedżerów spoza apt i pip. Rozbicie takiego
+	// pola na spacjach dałoby programowi apt nazwy, których nie zna, i przerwało przebieg.
+	WarstwaObowiazkowaRecznie = "obowiazkowa-recznie"
 	// WarstwaWarsztatGo — programy dokładane przez go install, osobno od pakietów dystrybucji tego systemu.
 	WarstwaWarsztatGo = "warsztat-go"
 	// WarstwaWarsztatNpm — programy dokładane przez npm i -g, osobno od pakietów dystrybucji tego systemu.
@@ -61,9 +65,13 @@ func zadanoZnacznik(argumenty []string, znacznik string) bool {
 }
 
 // WarstwaZaleznosci rozstrzyga warstwę pozycji wykazu: silnik kontenerów po programie, warsztaty
-// i kroki ręczne po przedrostku podpowiedzi, reszta do warstwy obowiązkowej. Dopasowanie warsztatu
-// Go bierze przedrostek, nie podnapis: „cargo install typos-cli" niesie „go install" wewnątrz
+// po przedrostku polecenia, a pozycje obowiązkowe po kształcie pola. Dopasowanie warsztatu Go
+// bierze przedrostek, nie podnapis: „cargo install typos-cli" niesie „go install" wewnątrz
 // „[car]go install", a mimo to nie jest poleceniem Go.
+//
+// Pole obowiązkowe idzie do warstwy podawanej programowi apt wyłącznie wtedy, gdy w całości
+// składa się z nazw pakietów dystrybucji. Zdanie i polecenie obcego menedżera trafiają do
+// warstwy ręcznej, ponieważ prowizjonowanie rozbija pole warstwy apt na spacjach.
 func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	program := strings.TrimSpace(pozycja.Narzedzie.Program)
 	pakiet := strings.TrimSpace(pozycja.Narzedzie.Pakiet)
@@ -81,9 +89,36 @@ func WarstwaZaleznosci(pozycja ZaleznoscZewnetrzna) string {
 	case strings.Contains(pakiet, "github.com"),
 		strings.Contains(pakiet, "środowisku pythonowym"):
 		return WarstwaModelRecznie
-	default:
+	case strings.HasPrefix(pakiet, "pip install "):
 		return WarstwaObowiazkowa
+	case wykazNazwPakietow(pakiet):
+		return WarstwaObowiazkowa
+	default:
+		return WarstwaObowiazkowaRecznie
 	}
+}
+
+// nazwaPakietuDystrybucji dopasowuje nazwę pakietu wedle polityki nazw Debiana: mała litera
+// albo cyfra na początku, dalej litery, cyfry, kropka, plus i minus.
+var nazwaPakietuDystrybucji = regexp.MustCompile(`^[a-z0-9][a-z0-9.+-]*$`)
+
+// wykazNazwPakietow mówi, czy pole składa się wyłącznie z nazw pakietów dystrybucji rozdzielonych
+// spacją. Polecenie obcego menedżera nazwy przypomina, więc rozstrzyga drugi człon: pole, którego
+// drugim członem jest „install", jest poleceniem, nie wykazem.
+func wykazNazwPakietow(pole string) bool {
+	czlony := strings.Fields(pole)
+	if len(czlony) == 0 {
+		return false
+	}
+	if len(czlony) > 1 && czlony[1] == "install" {
+		return false
+	}
+	for _, czlon := range czlony {
+		if !nazwaPakietuDystrybucji.MatchString(czlon) {
+			return false
+		}
+	}
+	return true
 }
 
 // WypiszWykazZaleznosci wypisuje komplet zależności zewnętrznych, po jednym wierszu na pozycję wykazu, w polach rozdzielonych znakiem tabulacji: warstwa, program, pakiet, stoi, nazwa, zakres.

@@ -17,6 +17,7 @@ var silnikiSpozaInstalki = []string{
 	"fontforge",
 	"fonttools",
 	"graphicsmagick",
+	"mermaid",
 }
 
 // wolaniaProcesu wylicza drogi uruchomienia procesu z pliku rdzenia, sprawdzane przez tę zaporę wprost.

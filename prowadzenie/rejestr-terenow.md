@@ -6,6 +6,39 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### miara-skutku-twarzy
+
+| | |
+|---|---|
+| **Galaz** | `teren/miara-skutku-twarzy` z `main` |
+| **Drzewo** | `~/robocze/miara-skutku-twarzy` |
+| **Wykaz plikow** | `budowa/server/internal/core/skutek_odtwarzania_twarzy_test.go` |
+| **Poza terenem** | pomocnik pythonowy, adaptery, kontrakt, migracje, `prowadzenie/` |
+
+**Przedmiot.** Teren `silnik-twarzy` przyjeto, ale jego kontroler nazwal trzy dziury
+w samej mierze — sprawdzian przechodzi, a nie dowodzi tego, co obiecuje:
+
+1. `skutek_odtwarzania_twarzy_test.go:56-65` — przy braku wag `t.Skipf` przepuszcza
+   sprawdzian milczkiem. Na maszynie bez `/opt/danaco-modele/twarze` cala drabina
+   swieci zielono, a kryterium nie jest zmierzone ANI RAZU. Bramka wydania, ktora
+   sama siebie wylacza przy braku materialu, nie jest bramka.
+2. `:114-141` — roznice liczy sie na CALYM obrazie. Pomocnik, ktory globalnie
+   przyciemnilby albo rozmyl obraz, przeszedlby oba progi. Miara jest skutkiem
+   NIEUMIEJSCOWIONYM: nie sprawdza, czy zmiana siedzi w wycinku twarzy.
+3. `:96` — liczba „twarze poprawione" pochodzi z licznika wypisanego przez sam
+   pomocnik (`adapter_narzedzia_obraz_pomocnik_twarzy.py:89`). Sprawdzian bada
+   SAMOOPIS pomocnika, nie wielkosc zmierzona po stronie rdzenia.
+
+**Kryteria odbioru.**
+1. Brak wag nie daje cichego pominiecia: sprawdzian albo mierzy, albo GLOSNO oblewa.
+   Rozstrzygniecie o drodze nalezy do wykonawcy i ma byc nazwane.
+2. Roznica jest mierzona W WYCINKU TWARZY, a nie na calym obrazie. Dowodem jest
+   przeciwsprawdzian: material zmieniony globalnie (przyciemniony albo rozmyty)
+   NIE przechodzi progu.
+3. Zadna liczba rozstrzygajaca o wyniku nie pochodzi z samoopisu pomocnika.
+4. `DANACO_MODELE=/opt/danaco-modele go test -run Twarz ./internal/core/` przechodzi.
+
+
 ### obrobka-wstepna-w-porcie-dokumentow
 
 | | |
@@ -79,7 +112,7 @@ roboczego NIE nalezy do tego terenu.
 |---|---|
 | **Galaz** | `teren/silnik-twarzy` z `main` |
 | **Drzewo** | `~/robocze/silnik-twarzy` |
-| **Wykaz plikow** | `budowa/server/internal/core/adapter_narzedzia_obraz_model_twarze.go` wraz ze sprawdzianami; `budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go`; `budowa/pomocniki/twarze/` |
+| **Wykaz plikow** | `budowa/server/internal/core/adapter_narzedzia_obraz_model_twarze.go` wraz ze sprawdzianami; `budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go`; pomocnik pythonowy `budowa/server/internal/core/adapter_narzedzia_obraz_pomocnik_twarzy.py` |
 | **Poza terenem** | kontrakt, migracje, `internal/wiedza/`, `prowadzenie/` |
 
 **Przedmiot.** Pole `faces` komendy `image.upscale` istnieje w kontrakcie, wagi
@@ -441,6 +474,52 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 
 ## Zgłoszenia oczekujące na teren
+
+### Wielojęzyczność rozpoznania rozsypuje się na dwóch językach
+
+Zgłoszenie dotyczy **gałęzi `teren/wpiecie-unpaper`, nie `main`** — na `main`
+uchwyt nie przekazuje języków wcale, więc usterka przyjdzie dopiero ze scaleniem.
+
+`adapter_modul_badania_lektura.go:99-101` skleja żądane języki w jeden łańcuch
+`strings.Join(jezyki, "+")`, a normalizator `jezykRozpoznaniaDokumentu`
+(`adapter_narzedzia_dokument_tekst.go:342-353`) rozpoznaje wyłącznie nazwy
+pojedyncze i łańcucha po `+` nie rozcina. `Languages: ["pl","en"]` daje więc
+`-l pl+en`. Maszyna niesie wyłącznie `eng`, `osd` i `pol` — zmierzone
+w `/usr/share/tesseract-ocr/*/tessdata/`. Skutek: żądanie **poprawne wobec
+kontraktu** kończy się cichą awarią rozpoznania.
+
+Usterka ujawnia się dopiero przy dwóch językach; jeden przechodzi. Sprawdzian
+wniesiony razem z polem używa wyłącznie form już poprawnych (`pol`, `eng`)
+i dlatego jej nie łapie.
+
+**Blokuje scalenie `teren/wpiecie-unpaper` do `main`.** Naprawa dotyka
+`adapter_narzedzia_dokument_tekst.go`, który należy dziś do terenu
+`obrobka-wstepna-w-porcie-dokumentow` — teren na tę usterkę otwiera się
+dopiero po jego zamknięciu. Dwa tereny na jednym pliku to ta sama szkoda,
+przed którą stoi ustrój.
+
+### Sprawdzian pola `preprocess` mierzy atrapę, nie skutek
+
+`adapter_modul_badania_lektura_test.go:29-32` (gałąź `teren/wpiecie-unpaper`)
+fabrykuje różnicę wyniku wewnątrz atrapy portu: `if z.Preprocess != nil &&
+*z.Preprocess { tekst = "tekst po obróbce wstępnej" }`. Sprawdzian mierzy
+zatem dojście pola do granicy portu, a nie skutek obróbki wstępnej na obrazie.
+Komentarz w wierszach 62-65 ogłasza, że „mierzy skutek" — wobec złożonego
+rdzenia jest to nieprawda.
+
+Miarę skutku na realnej drodze produkcyjnej wnosi teren
+`obrobka-wstepna-w-porcie-dokumentow`. Po jego zamknięciu ten sprawdzian
+albo znika, albo przestaje twierdzić o sobie rzecz nieprawdziwą.
+
+### Teren `mermaid-za-zapora` nie wytworzył ani jednej rewizji
+
+Przebieg z 28.08 zamknął się bez pracy: `git log main..teren/mermaid-za-zapora`
+pusty, drzewo bez zmian, schowek pusty. Kontroler orzekł zwrot na wszystkich
+trzech kryteriach. `design.diagram.render` nadal rysuje własnym płótnem
+(`adapter_modul_design_wykresy.go:812`), a mermaid-cli stoi nietknięty.
+
+Teren pozostaje otwarty i wraca do wykonania.
+
 
 ### Warstwa wspolna zmieniona bez wlasnego terenu
 

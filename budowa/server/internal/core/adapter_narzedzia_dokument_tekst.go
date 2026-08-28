@@ -300,6 +300,14 @@ func (a *adapterNarzedziDokumentu) warstwaTekstowaPdf(ctx context.Context, plik 
 func (a *adapterNarzedziDokumentu) rozpoznajPismoWPdf(ctx context.Context, katalogPracy, plik,
 	jezyk string, odStrony, doStrony *int, obrobkaWstepna bool) (string, int, error) {
 
+	if obrobkaWstepna {
+		// Odmowa braku unpapera zapada PRZED rasteryzacją stron, nie po niej —
+		// inaczej Operator płaci renderem całego dokumentu, zanim ją zobaczy.
+		if err := zagwarantujCzyszczenieSkanuDostepne(); err != nil {
+			return "", 0, err
+		}
+	}
+
 	przedrostek := filepath.Join(katalogPracy, "strona")
 	argumenty := append([]string{"-r", "300", "-png"}, zakresDlaPopplera(odStrony, doStrony)...)
 	argumenty = append(argumenty, plik, przedrostek)
@@ -356,14 +364,8 @@ func (a *adapterNarzedziDokumentu) obrazPoObrobceWstepnej(ctx context.Context, o
 	if !obrobkaWstepna {
 		return obraz, pusto, nil
 	}
-	if !zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
-		return "", pusto, odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
-			"żądanie zamówiło obróbkę wstępną obrazu (pole preprocess), a programu "+
-				narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
-				") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
-				narzedzieCzyszczeniaSkanu.Pakiet+
-				". Droga, która działa bez niego: wysłać żądanie bez pola preprocess — "+
-				"rozpoznanie pobiegnie na materiale bez obróbki")
+	if err := zagwarantujCzyszczenieSkanuDostepne(); err != nil {
+		return "", pusto, err
 	}
 
 	katalog, err := os.MkdirTemp("", "danaco-dokument-obrobka-")
@@ -392,6 +394,23 @@ func (a *adapterNarzedziDokumentu) obrazPoObrobceWstepnej(ctx context.Context, o
 				" — materiał do rozpoznania nie powstał")
 	}
 	return wyjscie, posprzataj, nil
+}
+
+// zagwarantujCzyszczenieSkanuDostepne odmawia nazwanie braku unpapera na tej
+// maszynie, gdy żądanie zamówiło obróbkę wstępną — wołane PRZED kosztowną
+// pracą (rasteryzacją stron PDF-u albo rozpoznaniem obrazu), żeby Operator
+// zobaczył odmowę, zanim rdzeń ją opłaci, tak jak w module Studio.
+func zagwarantujCzyszczenieSkanuDostepne() error {
+	if zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
+		return nil
+	}
+	return odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
+		"żądanie zamówiło obróbkę wstępną obrazu (pole preprocess), a programu "+
+			narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
+			") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+			narzedzieCzyszczeniaSkanu.Pakiet+
+			". Droga, która działa bez niego: wysłać żądanie bez pola preprocess — "+
+			"rozpoznanie pobiegnie na materiale bez obróbki")
 }
 
 // argumentyObrobkiWstepnejDokumentu składa wiersz wywołania unpapera dla pola

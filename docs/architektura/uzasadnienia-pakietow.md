@@ -7032,3 +7032,26 @@ prowenancji.
 Dwa znaczniki toru we Fragmencie mieszkają poza ładunkiem kontraktu, bo
 mieszkają w kopercie protokołu albo w pętli koordynator–wykonawca, nie
 w samym zdarzeniu strumienia.
+
+## budowa/server/internal/injection/kanal.go
+Rozmowa nigdy nie zwraca błędu obok strumienia: każda przeszkoda jedzie
+fragmentem rodzaju błąd i domyka strumień, przez co jedna droga obsługuje
+i powodzenie, i niepowodzenie. Strumień zaczyna się fragmentem prowenancji,
+potem idą fragmenty treści, a kończy fragment ze znacznikiem ostatniego
+i podsumowaniem tury — to ono wybudza koordynatora w pętli
+koordynator–wykonawca.
+
+Brak kont w puli oznacza, że Operator nie wskazał tożsamości, więc tura idzie
+z tożsamością otoczenia, bez zmiennej CLAUDE_CONFIG_DIR (plik `proces.go`
+pomija tę zmienną przy pustym katalogu); odmowa w tym miejscu zablokowałaby
+pierwszą turę na świeżej instalacji.
+
+Pułap kosztu sprawdza się przed wyczerpaniem i zatrzymuje rotację, ponieważ
+kolejne konto puli wydałoby dokładnie tę kwotę, której Operator wydać zabronił
+(zasady w pliku `pulap.go`).
+
+Rotacji w prowadzWskazanym nie ma: wskazanie konta ustala tożsamość okna,
+a cicha podmiana na inne konto po wyczerpaniu limitu wykonałaby turę
+tożsamością, której Operator nie wybrał. Wyczerpanie zostaje odnotowane
+w puli jako ślad i trwałość limitu, a tura kończy się tym, co konto oddało;
+konto spoza puli daje odmowę, nie inną tożsamość.

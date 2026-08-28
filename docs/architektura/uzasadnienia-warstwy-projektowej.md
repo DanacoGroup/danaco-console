@@ -834,3 +834,9 @@ nie nazwy własne.
 Kolejność wpięć jest znacząca: przeglądarka wspierająca SVG bierze
 pierwszy pasujący wpis i pomija ICO; starsza przeglądarka pobiera
 favicon.ico ze ścieżki domyślnej.
+
+## design/03-marka/zastosowania/html/sygnatura-poczty-jasna.html
+Pola w nawiasach kwadratowych uzupełnia się własnymi danymi. Zasady
+budowy: szerokość sto procent do 520 pikseli, znak 168 na 72 piksele
+w podwójnej rozdzielczości pliku, wiersz reguły grubości 1 piksela,
+kropka sygnału jako jedyny akcent barwny.

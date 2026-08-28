@@ -6907,3 +6907,14 @@ urządzenia są brakiem w żądaniu albo w stanie platformy, nie awarią trwało
 więc operator ma zobaczyć zdanie, a nie ciszę ani błąd wewnętrzny — każdy inny
 błąd idzie dalej nietknięty, bo rdzeń nie zgaduje za bazę, czy zawiódł dysk,
 czy schemat.
+
+## budowa/server/internal/core/adapter_okno_przekazanie_uchwyty.go
+Implementacja portu leży w dwóch plikach: jeden obsługuje przekazanie okna,
+drugi akcję panelu okna. Komenda listowania akcji nie jest tu dublowana,
+ponieważ rejestruje ją inna funkcja rejestrująca w pliku kompozycji rdzenia —
+podwójna rejestracja tej samej nazwy komendy nadpisałaby jeden obsługiwacz
+drugim bez ostrzeżenia.
+
+Emiter zdarzeń zostaje w sygnaturze funkcji rejestrującej dla zgodności
+z pozostałymi funkcjami rejestrującymi moduły, mimo że kontrakt nie ma
+zdarzenia rozgłaszającego wykonanie akcji okna ani nowe przekazanie.

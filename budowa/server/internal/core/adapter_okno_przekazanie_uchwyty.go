@@ -1,11 +1,6 @@
-// Wpięcie komend obszaru window.* — portu `PrzekazanieOkna`, którego jedyna
-// implementacja `adapterPrzekazaniaOkna` leży w dwóch plikach:
-// `adapter_okno_przekazanie.go` (`window.handoff`) i `adapter_okno_akcja.go`
-// (`window.action`).
-//
-// Komenda `action.list` nie jest tu dublowana — rejestruje ją `zarejestrujAkcje`
-// w `kompozycja.go`. Podwójna rejestracja tej samej nazwy komendy nadpisałaby
-// jeden obsługiwacz drugim bez ostrzeżenia.
+// Plik wpina komendy obszaru window.* portu PrzekazanieOkna, którego jedyna
+// implementacja leży w dwóch plikach obsługujących osobno przekazanie okna
+// i akcję panelu okna.
 package core
 
 import (
@@ -14,13 +9,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// PrzekazanieOkna jest portem obszaru window.*.
+// PrzekazanieOkna jest portem obszaru window.*, obsługującym przekazanie okna
+// i wykonanie akcji panelu okna.
 type PrzekazanieOkna interface {
 	Przekaz(ctx context.Context, z shared.WindowHandoffRequest) (shared.WindowHandoffResponse, error)
 	WykonajAkcje(ctx context.Context, z shared.WindowActionRequest) (shared.WindowActionResponse, error)
 }
 
-// zarejestrujPrzekazanieOkna wpina dwie komendy obszaru window.*.
+// zarejestrujPrzekazanieOkna wpina dwie komendy obszaru window.* w rejestr
+// obsługiwaczy komend rdzenia.
 func zarejestrujPrzekazanieOkna(r *Rejestr, m PrzekazanieOkna, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -29,7 +26,5 @@ func zarejestrujPrzekazanieOkna(r *Rejestr, m PrzekazanieOkna, e *emiter) {
 	r.Zarejestruj(shared.CommandWindowHandoff, obsluz(m.Przekaz))
 	r.Zarejestruj(shared.CommandWindowAction, obsluz(m.WykonajAkcje))
 
-	// Kontrakt nie ma zdarzenia rozgłaszającego wykonanie akcji okna ani nowe
-	// przekazanie — `e` zostaje w sygnaturze dla zgodności z pozostałymi
-	// funkcjami `zarejestruj<Modul>`.
+	// Kontrakt nie ma zdarzenia dla akcji ani przekazania okna, emiter zostaje niewykorzystany.
 }

@@ -5823,3 +5823,17 @@ stała.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/zrodlo-zlecenia.ts
 Cztery stery paska — model, nakład rozumowania, tryb zatwierdzania i katalog roboczy — czytają jedną migawkę i piszą jedną drogą; gdyby każdy zakładał własny stan sterowania, pasek miałby cztery kopie tej samej prawdy i cztery komplety subskrypcji na okno, a rozjazd między nimi byłby kwestią czasu, nie możliwości. Drogi zapisu są dwie, bo kontrakt ma dwie: model, tryb uprawnień i katalogi robocze mają pola w treści zmiany okna, a nakład rozumowania takiego pola nie ma i idzie ustawieniem poziomu okna — port oddaje obie drogi osobno, zamiast zlewać je w jedną, bo zlanie ukryłoby przed wołającym fakt, że to dwie różne komendy o dwóch różnych potwierdzeniach. Te same nastawy stoją w kolumnie sterowania, ale reguła protokołu nie jest pisana po raz drugi: odczyt i zapis idą tymi samymi bytami, tą samą komendą i tym samym identyfikatorem okna, więc oba widoki przyjmują wyłącznie stan potwierdzony przez rdzeń, rozgłaszany do wszystkich połączeń konta — zmiana dokonana w pasku dochodzi do kolumny sterowania tą samą drogą, którą dochodzi do drugiego urządzenia konta, i odwrotnie.
+
+## budowa/klient-poprzedni/src/ustawienia/zrodlo-nastaw.ts
+To osobne źródło obok źródła wartości okna konfiguracji: tamto czyta poziom w całości, skleja łańcuch
+ośmiu zasięgów i rozstrzyga oś, bo tamto okno rysuje każdą pozycję katalogu na każdym poziomie. Sekcja
+ustawień pyta o jeden klucz na jednym poziomie i potrzebuje przy tym definicji katalogu — opcje wyboru
+przychodzą z katalogu, nie z wykazu zaszytego w kliencie; komendy są te same i idą tym samym wywołaniem
+na tym samym kanale. Dwie właściwości rdzenia, na które ten plik jest przygotowany: zdarzenie zmiany
+konfiguracji o rodzaju usunięcia niesie w zapisie wartość zdjętą, nie nową, więc subskrypcja zmiany klucza
+oddaje przy usunięciu brak, a nie treść wpisu; rdzeń nie sprawdza poziomu zapisu wobec dozwolonych
+zasięgów definicji i przyjmuje zapis na poziomie węższym, niż katalog dopuszcza, a taki zapis wygrywa
+potem rozstrzyganie osi, więc poziom bierzemy zawsze z dozwolonych zasięgów definicji, nigdy z domysłu
+wołającego. Definicja niesie dozwolone zasięgi i to ona rozstrzyga; klient nie wybiera poziomu za katalog,
+bo rdzeń takiego zapisu nie odrzuci i pomyłka byłaby cicha. Odmowa nie wywraca odczytu: brak definicji
+albo brak wartości wraca jako pole puste wraz ze zdaniem odmowy, a nie jako wyjątek.

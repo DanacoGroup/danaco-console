@@ -8,14 +8,7 @@ import type { StanBadania } from './stan-badania';
 import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 
-/**
- * Czynności Operatora w Findings Panel.
- *
- * Jedna odpowiedzialność: zachowanie okna ustaleń. Trzy funkcje operatora —
- * zapis, powiązanie ze źródłem i edycja — mieszczą się w jednej komendzie
- * `research.finding.add`: powiązanie jedzie w `sourceIds`, edycja w `findingId`.
- * Rozdział na trzy komendy byłby wymyślaniem kontraktu.
- */
+/** Czynności operatora w Findings Panel: zapis, powiązanie ze źródłem i edycja ustalenia w jednej komendzie. */
 export interface KontekstUstalen {
   stan: StanBadania;
   okno: StanOknaBadania;
@@ -28,7 +21,7 @@ export interface KontekstUstalen {
   przejdz(kodOkna: string): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną, wspólną dla całej rodziny komend ustaleń. */
 export async function wykonajAkcjeUstalen(
   kontekst: KontekstUstalen,
   akcja: AkcjaBadania,
@@ -62,7 +55,7 @@ export async function wykonajAkcjeUstalen(
   await przezPanelAkcji(kontekst, akcja);
 }
 
-/** Droga generyczna: `window.action` z zaznaczonymi ustaleniami w parametrach. */
+/** Droga generyczna: `window.action` z zaznaczonymi ustaleniami w parametrach żądania tego okna panelu. */
 async function przezPanelAkcji(kontekst: KontekstUstalen, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -80,13 +73,11 @@ async function przezPanelAkcji(kontekst: KontekstUstalen, akcja: AkcjaBadania): 
     odpowiedz.pokaz(opisOdmowyBledu(`Akcja „${akcja.nazwa}"`, wynik.blad, wynik.nieznanyTyp), false);
     return;
   }
-  // Rdzeń oddaje sukces `window.action` tylko wtedy, gdy akcję wykonał, więc
-  // zdanie mówi o oddanym wyniku, a nie o wykonaniu akcji przez okno. Odmowę
-  // braku wykonawcy pokazuje gałąź wyżej, słowami rdzenia.
+  // Rdzeń oddaje sukces window.action tylko wtedy, gdy akcję wykonał, nie samo wywołanie okna.
   odpowiedz.pokaz(`Rdzeń oddał wynik akcji „${akcja.nazwa}".`, true);
 }
 
-/** Zapis ustalenia; obecność `findingId` zamienia zapis w zmianę istniejącego. */
+/** Zapis ustalenia; obecność `findingId` zamienia zapis w zmianę istniejącego ustalenia, nie zapis nowego. */
 export async function zapiszUstalenie(
   kontekst: KontekstUstalen,
   nowyStan: ResearchFindingStatus,
@@ -127,15 +118,7 @@ export async function zapiszUstalenie(
 
 /**
  * Skutek zapisu nazwany ustaleniem, które wróciło, a nie formularzem, który
- * poszedł.
- *
- * `research.finding.add` ze `sourceIds` wskazującym źródło, którego rdzeń nie
- * zna, wraca ze `status: "ok"` i ustaleniem bez pola `sourceIds` — powiązanie
- * przepada bez odmowy. Zdanie, które o tym milczy, potwierdzałoby czynność,
- * która się nie odbyła.
- *
- * Gdy Operator źródeł nie zaznaczył, nie ma czego brakować i okno o wiązaniu
- * nie mówi ani słowa.
+ * poszedł, bo powiązanie może przepaść.
  */
 function opisZapisu(
   ustalenie: ResearchFinding,
@@ -145,8 +128,7 @@ function opisZapisu(
   const czesci: string[] = [];
   let udany = true;
 
-  // Stan sprawdzony w ustaleniu, które wróciło — droga „Rozstrzygnij ustalenie"
-  // zamawia `resolved` i ma prawo dostać z rdzenia co innego.
+  // Stan w ustaleniu, które wróciło, ma prawo różnić się od stanu zamówionego rozstrzygnięciem.
   if (ustalenie.status !== zamowionyStan) {
     czesci.push(
       `Rdzeń NIE nadał ustaleniu stanu ${zamowionyStan} — oddał je w stanie ${ustalenie.status}.`,
@@ -155,8 +137,7 @@ function opisZapisu(
   }
 
   if (zamowioneZrodla.length > 0) {
-    // Rdzeń oddaje `sourceIds` w innej kolejności niż zamówiona, więc
-    // porównanie idzie po przynależności, a nie po porządku.
+    // Rdzeń oddaje sourceIds w innej kolejności niż zamówiona, więc porównanie idzie po przynależności.
     const zwiazane = new Set(ustalenie.sourceIds ?? []);
     const pominiete = zamowioneZrodla.filter((kod) => !zwiazane.has(kod));
     if (pominiete.length > 0) {
@@ -178,12 +159,8 @@ function opisZapisu(
 }
 
 /**
- * Trzy stany wykazu ustaleń: pytam, mam treść, nie mam czego pokazać.
- *
- * Treść pustki stoi w `pustka-okien.ts`, razem z czterema pozostałymi: samo
- * zameldowanie braku ustaleń nie mówi, czym Findings Panel jest i jak go
- * zapełnić, a przy niewskazanym oknie badania zapraszałoby do zapisu, który
- * wróciłby odmową.
+ * Trzy stany wykazu ustaleń: pytam, mam treść, nie mam czego pokazać, z
+ * treścią pustki w osobnym pliku.
  */
 export function ustawStanUstalen(kontekst: KontekstUstalen, liczba: number): void {
   const { stan, okno } = kontekst;
@@ -203,11 +180,8 @@ export function ustawStanUstalen(kontekst: KontekstUstalen, liczba: number): voi
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Tekst swobodny okna przekazywany komendom bez własnego formularza, bez
+ * wskazania nazywanego brakiem.
  */
 function tekstDlaKomendy(kontekst: KontekstUstalen): string {
   return kontekst.tresc.value.trim();

@@ -7213,3 +7213,22 @@ Kontrakt wymaga pola treści przy każdym zapisie, a podstawienie treści z pola
 
 ## budowa/klient-poprzedni/src/moduly/design/adnotacje-kompozycji.ts — położenie z przesunięcia kanwy
 Kursor myszy śledzony w pętli byłby ruchem na łączu, którego nikt nie zamawiał, a widok przesunięcia kanwy mówi, na co operator patrzy.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zadania-w-tle.ts
+Kontrakt nie zna bytu przepływu: zna podagenta z polami okna i zadania.
+Powołanie podagentów przyjmuje jedno zadanie i liczbę podagentów do
+piętnastu, więc podagenci jednego uruchomienia mają wspólne okno i wspólną
+treść zadania, a przepływ jest dokładnie tą parą; nie zgaduje się go z nazw
+podagentów, bo nazwa jest nieobowiązkowa, a rozbiór nazwy po dwukropku
+byłby umową, której kontrakt nie zawiera. Podagent nie ma liczby żetonów,
+liczby wywołań narzędzi ani nazwy etapu, więc model nie stawia dla nich pól
+z zerem; nazwę etapu i skalę postępu bierze osobno telemetria monitora,
+a żetony i narzędzia zostają brakiem zgłoszonym w widoku. Chwila odniesienia
+dla czasu trwania przychodzi z zewnątrz funkcji składającej przepływy, żeby
+wszystkie wiersze jednego przerysowania mierzyły się do tej samej sekundy.
+Dopóki choć jeden podagent pracuje, odcinek czasu biegnie do chwili
+odniesienia, bo przepływ trwa nadal i domknięcie go w zapisie byłoby
+nieprawdą.
+
+## budowa/klient-poprzedni/src/moduly/design/stan-designu.ts
+Trzy okna korzystają z tego samego zbioru zasobów. Prompt Builder oddaje wynik generowania do Assets Panel, Assets Panel oddaje zasób na kanwę Design Board. Gdyby każde okno prowadziło własny wykaz, zasób wygenerowany w kreatorze nie pojawiłby się w panelu, a kanwa układałaby warstwy z zasobów, których panel już nie ma. Zdarzenie zmiany zasobu jest drugim źródłem odświeżenia: wciąga zasób powstały gdziekolwiek, także po stronie rdzenia, dokładnie tak samo jak własny odczyt. Odpytywania w pętli tu nie ma.

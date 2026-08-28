@@ -283,7 +283,7 @@
 .dn-kreator-krok[data-stan='zrobiony'] .dn-kreator-krok-nr { font-size: 0; }
 
 .dn-kreator-krok[data-stan='zrobiony'] .dn-kreator-krok-nr::after {
-  content: '✓'; font-family: var(--dn-ff-bazowa); font-size: 12px; line-height: 1;
+  content: '✓'; font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); line-height: 1;
 }
 
 /* Dopowiedzenie przy wartości — jeden zapis dla wszystkich wierszy: pismo

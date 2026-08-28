@@ -283,7 +283,7 @@
   border: 1px solid var(--dn-obrys-mocny);
   border-radius: var(--dn-r-pill);
   font-family: var(--dn-ff-mono);
-  font-size: 11px;
+  font-size: var(--dn-fs-xs);
   color: var(--dn-tekst-2);
 }
 .we-krok-znak svg { width: 12px; height: 12px; }
@@ -463,7 +463,7 @@
 }
 .au-metoda:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); transform: translateY(-1px); }
 .au-metoda svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
-.au-metoda-stan { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-2); }
+.au-metoda-stan { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 
 /* ── Kod potwierdzający ─────────────────────────────────────────────────── */
 .au-kod { display: flex; gap: var(--dn-od-2); }
@@ -489,7 +489,7 @@
 .au-krok-nr {
   display: grid; place-content: center; width: 20px; height: 20px;
   border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
-  font-family: var(--dn-ff-mono); font-size: 11px;
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
 }
 .au-krok[data-biezacy='tak'] { color: var(--dn-tekst); }
 .au-krok[data-biezacy='tak'] .au-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
@@ -500,7 +500,7 @@
   font-size: 0;
 }
 .au-krok[data-zrobiony='tak'] .au-krok-nr::after {
-  content: '✓'; font-size: 11px; line-height: 1;
+  content: '✓'; font-size: var(--dn-fs-xs); line-height: 1;
 }
 .au-krok-strzalka { color: var(--dn-tekst-2); }
 
@@ -540,7 +540,7 @@
 .pg-znak .kropka { fill: var(--dn-kropka); }
 .pg-warstwa-etykieta {
   position: absolute; left: var(--dn-od-3); bottom: var(--dn-od-2);
-  font-family: var(--dn-ff-mono); font-size: 10px;
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
   letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
   color: var(--dn-rama-tekst-2);
 }

@@ -7367,3 +7367,16 @@ zostaje jako bufor podręczny o ograniczonej pojemności i ma dwa zadania:
 odpowiadać bez odpytywania bazy w trakcie trwającej tury oraz przejąć
 rozmowę, gdy zapis zawiedzie. Awaria trwałości nie przerywa rozmowy — okno
 schodzi na bufor, zdarzenie trafia do dziennika procesu, tura biegnie dalej.
+
+## budowa/server/internal/core/gotowosc_odsluchu_test.go
+Pomiar odsłuchu jest osobny od pomiaru dyktowania. Komenda
+speech.availability.get obiecuje modelowi sprawdzenie dyktowania albo
+odsłuchu, a przez długi czas mierzyła sam łańcuch transkrypcji: na maszynie
+z Pythonem i modelem, lecz bez pipera i espeaka, meldowała gotowość, a odsłuch
+odmawiał. Pole synthesisAvailable zamyka ten rozjazd. Sprawdzian pilnuje, że
+pomiar odsłuchu mówi prawdę, gdy żadnego syntezatora nie ma.
+
+Brak jest wymuszony zmiennymi środowiska i odcięciem PATH, nie stanem
+maszyny: na stanowisku deweloperskim piper i espeak bywają doinstalowane
+ręcznie, więc sprawdzian liczący na ich nieobecność kłamałby tam, gdzie
+się go uruchamia.

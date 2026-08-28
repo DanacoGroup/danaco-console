@@ -6978,3 +6978,9 @@ Moduł nie ma okna modułowego w żadnym środowisku: jest komponentem własnym 
 
 ## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts
 Plik stoi osobno od plików czynności, bo tamte prowadzą rozmowę z rdzeniem, a ten ocenia jego odpowiedź. Zdanie zbudowane z flagi żądania twierdziłoby o rzeczy, której w odpowiedzi może nie być. Rdzeń pobiera dziś stronę biblioteką sieciową i zostawia pole zrzutu puste; zdanie czyta to pole, więc mówi prawdę i dziś, i po dobudowie zrzutów. Tak samo z wartością pola tekstowego — funkcja przycinania białych znaków w przeglądarce i odpowiednik rdzenia to dwie różne funkcje o różnym zestawie usuwanych znaków. Adres, kod i nazwa jednoznaczna jadą do rdzenia jako identyfikator, a o tym, co się zapisało, rozstrzyga wyłącznie odpowiedź.
+
+## budowa/klient-poprzedni/src/moduly/browser/skutek-zapisu.ts — pozycja materiału sesji
+Przechwycenie zamawia i zrzut ekranu, i źródło strony, a wraca z tym, co rdzeń ma. Bez zdania o brakującym zrzucie operator zobaczyłby w wykazie „archiwum" i nie wiedziałby, czemu nie „zrzut".
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-dozoru.ts
+Trzynaście czynności szuflad i paneli popover okna przebiegów obejmuje przeglądarkę logów, drążenie do poziomu kroku, punkty wznowienia, wznowienie od punktu, podgląd i odtworzenie ładunku, reguły alarmowania, budżety czasu, skarbiec poświadczeń i dziennik audytu. Execution Monitor pokazuje historię wielu uruchomień naraz, a te czynności dotyczą jednego z nich — podstawienie przebiegu bieżącego kazałoby zgadywać, którego. Skarbiec i audyt stoją tu, bo obie rodziny przenikają okno przebiegów: poświadczenie jest tym, czego krok potrzebował, żeby przebieg się powiódł, a audyt odpowiada na pytanie, kto zmienił definicję między dwoma przebiegami; osobnego okna dla nich dokument projektowy nie zna, obie rodziny wprost nie mają odrębnych okien.

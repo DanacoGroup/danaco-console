@@ -1,18 +1,6 @@
 /**
- * Panel Execution Monitora — trzynaście czynności szuflad i paneli popover
- * okna przebiegów: przeglądarka logów, drążenie do poziomu kroku, punkty
- * wznowienia, wznowienie od punktu, podgląd i odtworzenie ładunku, reguły
- * alarmowania, budżety czasu, skarbiec poświadczeń i dziennik audytu.
- *
- * Przebieg wskazuje Operator, a nie stan modułu. Execution Monitor pokazuje
- * historię wielu uruchomień naraz, a te czynności dotyczą JEDNEGO z nich —
- * podstawienie „przebiegu bieżącego” kazałoby zgadywać, którego.
- *
- * Skarbiec i audyt stoją tu, bo obie rodziny przenikają okno przebiegów:
- * poświadczenie jest tym, czego krok potrzebował, żeby przebieg się powiódł,
- * a audyt odpowiada na pytanie, kto zmienił definicję między dwoma przebiegami.
- * Osobnego okna dla nich dokument projektowy nie zna — obie rodziny wprost
- * „nie mają odrębnych okien".
+ * Panel Execution Monitora obsługuje trzynaście czynności szuflad i paneli popover okna
+ * przebiegów, wskazywanych zawsze przez Operatora, nie przez stan modułu.
  */
 import { AutomationAlertTrigger, AutomationLogLevel } from '../../../../shared/contract';
 import { pole, poleLiczbowe, poleTajne, wybor } from '../../modele/kontrolki-formularza';
@@ -26,18 +14,18 @@ import {
 import type { StanAutomatyki } from './stan-automatyki';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
-/** Panel dopełniający Execution Monitora. */
+/** Panel dopełniający Execution Monitora, osadzany wewnątrz okna przebiegów wraz z jego szufladami i panelami popover. */
 export interface PanelDozoru {
   element: HTMLElement;
 }
 
-/** Poziomy logu w wykazie zawężenia; pusta wartość znaczy „wszystkie”. */
+/** Poziomy logu w wykazie zawężenia wprost z wyliczenia kontraktu; pusta wartość znaczy wszystkie poziomy naraz. */
 const POZIOMY: ReadonlyArray<readonly [string, string]> = [
   ['', 'wszystkie poziomy'],
   ...Object.values(AutomationLogLevel).map((poziom): readonly [string, string] => [poziom, poziom]),
 ];
 
-/** Wyzwalacze alarmu wprost z wyliczenia kontraktu — mapa zupełna. */
+/** Wyzwalacze alarmu wprost z wyliczenia kontraktu — mapa zupełna, złożona automatycznie z wartości wyliczenia. */
 const WYZWALACZE_ALARMU: ReadonlyArray<readonly [string, string]> = Object.values(
   AutomationAlertTrigger,
 ).map((wyzwalacz): readonly [string, string] => [wyzwalacz, wyzwalacz]);
@@ -211,8 +199,7 @@ export function utworzPanelDozoru(
     const zadanie: Parameters<ZrodloAutomations['zapiszPoswiadczenie']>[0] = {
       name: nazwaSekretu.value.trim(), value: wartoscSekretu.value,
     };
-    // Pole wartości czyścimy od razu po złożeniu żądania: wartość nie ma
-    // zostawać w polu formularza po tym, jak trafiła do skarbca.
+    // Pole wartości czyścimy od razu po złożeniu żądania, bo trafiła już do skarbca.
     wartoscSekretu.value = '';
     wykonajCzynnoscPanelu(panel, 'Zapis poświadczenia…', zrodlo.zapiszPoswiadczenie(zadanie),
       'Rdzeń nie zapisał poświadczenia.',

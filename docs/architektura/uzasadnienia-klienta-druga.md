@@ -7270,3 +7270,34 @@ kontekstowej wraz z nastawami suwaków: rdzeń dokłada params do treści
 polecenia dla modelu, więc słowa Operatora dojeżdżają tą samą drogą, którą
 jedzie zakres zaznaczenia, a identyfikator akcji zostaje przy tym prawdziwy —
 pochodzi z wykazu, nie ze zdania Operatora.
+## budowa/klient-poprzedni/src/moduly/studio/wykaz-operacji.ts
+Pozycje wykazu mają dwa pochodzenia i panel je rozróżnia. Rejestr akcji rdzenia jest źródłem
+właściwym: nowa operacja ma być wierszem tabeli akcja, nie zmianą w kodzie. Dopóki rejestr nie
+niesie operacji redakcyjnych Studia, brakujące pozycje daje wykaz dokumentacji, a przy każdej
+pozycji stoi jej pochodzenie.
+
+Wybór jest jeden na cały panel, bo komenda studio.contextual.op przyjmuje dokładnie jeden
+identyfikator akcji. Pozycja bez wiersza rejestru pozostaje wybieralna: uruchomienie wychodzi
+do rdzenia i wraca jego odpowiedzią.
+
+Mechanizm rozwijania pochodzi z komponentu menu-drzewo: gałąź to kategoria, liść to operacja,
+grupa to pochodzenie. Menu wnosi pole szukania po przekroczeniu progu liczby liści, znacznik
+wyboru widoczny na gałęzi bez wchodzenia w nią oraz wędrówkę strzałkami; ten plik żadnej z tych
+rzeczy nie odtwarza. Etykieta uchwytu niesie nazwę wybranej operacji, nie nazwę rodzajową.
+
+Wiersz rejestru zdejmuje pozycję z wykazu dokumentacji. Oba wykazy mówią o tych samych
+identyfikatorach postaci studio.kategoria.kod, więc bez tej zapory operacja pokazywałaby się
+dwa razy. Wykaz dokumentacji kurczy się sam, w miarę jak rejestr się zapełnia, i znika w całości,
+gdy rejestr obejmie komplet.
+
+Wiersze rejestru wskazujące inną komendę stoją poza menu. Menu z biblioteki nie zna pozycji
+niewybieralnych, a wybieralne te wiersze być nie mogą: rdzeń nie sprawdza identyfikatora akcji
+względem katalogu komendy, więc wysłanie takiego identyfikatora wraca odpowiedzią wyglądającą
+na udaną. Zostają widoczne obok menu jako wiersze rejestru o innej komendzie.
+
+## budowa/klient-poprzedni/src/sterowanie/atrapa-rdzenia.ts
+Plik jest przyrządem pomiarowym sprawdzianów, nieużywanym poza plikami testowymi klienta. Odwzorowuje rdzeń tak, żeby sprawdzian mierzył zachowanie klienta wobec zachowania rdzenia rzeczywistego; każda odwzorowana gałąź ma wskazane miejsce w kodzie rdzenia, które naśladuje.
+
+Odwzorowane zachowania: rozgłoszenie idzie także do nadawcy (`transport/rozgloszenie.go`, funkcja `Rozglos` woła `rozglosPoza` z pustym identyfikatorem pomijanym) — na tym stoi zbieżność równoległych egzemplarzy stanu okna. Komenda `config.set` daje odpowiedź z wpisem i zdarzenie `config.changed` rodzaju `updated` (`core/handlers_config.go`). Komenda `config.reset` daje odpowiedź z listą wpisów i zdarzenie `config.changed` rodzaju `deleted`, niosące wpis ze starą wartością (`core/handlers_config.go`, `core/adapter_ustawienia.go`, funkcja `Przywroc`, która usuwa wiersz i oddaje to, co usunęła). Komenda `config.get` z podanym poziomem zwraca surowe wpisy tego poziomu, niezależnie od osi (`core/adapter_ustawienia.go`, gałąź `ListaPoziomu`). Komenda `config.get` bez poziomu zwraca politykę efektywną: po jednym zwycięskim wpisie na klucz, z polem niosącym poziom, na którym wartość znaleziono (`core/adapter_ustawienia.go`, gałąź rozstrzygająca przez `PolitykaEfektywna` i `kontekstZasiegu`, dalej `konfig/odwzorowanie_kontraktu.go`, funkcja `WpisKontraktu`); kontekst tej gałęzi ma wypełnione wyłącznie okno, więc rozstrzyganie obejmuje poziom okna i poziom globalny osi platformy, a karty sesji ani osi modelu ta droga nie widzi. Komenda `window.update` daje odpowiedź z oknem i zdarzenie `window.changed`.
+
+Funkcja wewnętrzna wyznaczająca politykę efektywną zwycięża poziomem najwęższym; kontekst gałęzi bez poziomu zna wyłącznie okno, więc wykaz adresów, po których szuka wpisu, obejmuje okno i poziom globalny.

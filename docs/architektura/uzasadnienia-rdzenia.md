@@ -7424,3 +7424,12 @@ komendy jest parametrem, a nie literałem w tym pliku: podaje ją punkt
 składania stałą pakietu shared, dokładnie jak przy pozostałych domenach.
 Pusta nazwa albo brak portu nie rejestruje niczego. Komenda odpowie wtedy
 kodem unknown, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/handlers_alerty.go
+Rodzina alert.* jest przekrojowa: reguły czyta panel alertów modułu
+Diagnostics, ale wyzwolenie dociera też do wyświetlacza stale widocznego
+i do poczty, a rdzeń nie ma prawa wiedzieć, że moduł Diagnostics istnieje.
+Bez zdarzenia alert.triggered użytkownik dowiadywałby się o wyzwoleniu
+dopiero przy następnym otwarciu wykazu, czyli wtedy, kiedy i tak już patrzy.
+Port niewypełniony nie rejestruje niczego: pięć komend odpowie wtedy kodem
+unknown, a pozostałe domeny pracują bez zmian.

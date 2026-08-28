@@ -7898,3 +7898,25 @@ Funkcja jest nakładką na `pobierzWykazWydan()` gubiącą rozróżnienie stanó
 pyta o jedno — „czy jest co zakładać”. Brak sieci, 404 i pusty wykaz odpowiadają
 na to tak samo, a baner ma się wtedy nie pokazać. Kto potrzebuje zdania o świecie,
 woła `pobierzWykazWydan()` wprost.
+## budowa/klient-poprzedni/src/moduly/design/okno-warsztatu-designu.ts
+Pięć warsztatów (fotografia, wektor, druk, bazy zdjęciowe, publikacja) dzieli ten sam budowniczy,
+bo dzielą to samo zadanie: wybór czynności przestawia pola, pola pochodzą z katalogu, żądanie
+składa katalog, a odpowiedź jest opisana skutkiem. Pięć osobnych budowniczych byłoby pięcioma
+miejscami, w których pomyłka w składaniu żądania mieszka osobno.
+
+Kontrolki bierze wspólny budowniczy pól z warsztatu dokumentu Studio — ten sam przełącznik
+rodzajów pól, bo katalogi opisują pola tymi samymi typami. Druga kopia tego przełącznika
+rozjechałaby się z pierwszą przy pierwszym nowym rodzaju pola.
+
+Materiał wchodzi z magazynu okna i wynik do niego wraca. Żadna czynność nie zmienia materiału
+w miejscu — okno mówi to przy polu materiału, bo Operator ma wiedzieć, że pomyłka nie kosztuje go
+zdjęcia źródłowego.
+
+Odpowiedź jest opisana liczbą, nie słowem „gotowe": nowy zasób, liczba stron, udział punktów
+przezroczystych, liczba kafli, dostawcy, którzy nie odpowiedzieli. Meldunek bez liczby nie
+odróżnia czynności wykonanej od czynności przyjętej — a to jest wzorzec szkody, który ten moduł
+ma w historii.
+
+Bilans zamiast ciszy także w oknie: pole, które rdzeń wypełnił powodem niepowodzenia, ma być
+widoczne w meldunku. Meldunek „gotowe" nad odpowiedzią z trzema nieudanymi rozmiarami byłby tym
+samym kłamstwem, przed którym broni się rdzeń.

@@ -4177,3 +4177,82 @@ button.dn-link {
   color: var(--dn-tekst-3);
   font-variant-numeric: tabular-nums;
 }
+
+/* ══ Okno robocze — obudowy paneli ═══════════════════════════════════════
+   TalkIn i pozostale okna srodowisk stoja na tych samych skladnikach co
+   centrum; tu dostaja te sama obudowe przyrzadowa: gradient, naroznik,
+   nadpis maszynowy i wloskowa linia pod belka panelu. */
+
+[data-wnetrze='przyrzadowe'] .sta-okno {
+  background: var(--pz-karta-tlo);
+  border-color: var(--dn-obrys);
+}
+[data-wnetrze='przyrzadowe'] .sta-okno:focus-within { border-color: var(--dn-sygnal-obrys); }
+
+/* Belka panelu: nadpis wersalikami maszynowymi, tlo obrzeza. */
+[data-wnetrze='przyrzadowe'] .sta-okno-belka,
+[data-wnetrze='przyrzadowe'] .sta-kom-naglowek {
+  background: var(--dn-powierzchnia-2);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+[data-wnetrze='przyrzadowe'] .sta-okno-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+
+/* Nadpis grupy w szynie modulu i w wykazie sesji — znak kwadratowy
+   i kreska dobiegajaca do krawedzi, jak w tasmie centrum. */
+[data-wnetrze='przyrzadowe'] .dn-etyk-mono,
+[data-wnetrze='przyrzadowe'] .dn-boczna-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+[data-wnetrze='przyrzadowe'] .dn-etyk-mono::before,
+[data-wnetrze='przyrzadowe'] .dn-boczna-naglowek::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--dn-sygnal);
+  border-radius: 1px;
+}
+[data-wnetrze='przyrzadowe'] .dn-etyk-mono::after,
+[data-wnetrze='przyrzadowe'] .dn-boczna-naglowek::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--dn-obrys);
+}
+
+/* Pas polecenia u dolu okna roboczego — ta sama obudowa co panel. */
+[data-wnetrze='przyrzadowe'] .sta-prompt {
+  background: var(--dn-powierzchnia-2);
+  border-color: var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+}
+[data-wnetrze='przyrzadowe'] .sta-prompt:focus-within { border-color: var(--dn-sygnal); }
+
+/* Znacznik panelu i plakietki modelu — pismo maszynowe, cyfra tabelaryczna. */
+[data-wnetrze='przyrzadowe'] .sta-okno-znacznik,
+[data-wnetrze='przyrzadowe'] .sta-kom-stan,
+[data-wnetrze='przyrzadowe'] .sta-chip {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Naroznik obudowy panelu — po jednym w kazdym rogu, warstwa dekoracyjna. */
+[data-wnetrze='przyrzadowe'] .sta-okno > .dn-naroznik { z-index: 3; opacity: 0.6; }
+
+/* Plakietka sygnalu na jasnym tle: stopien sygnalu daje na niej 3,9-4,3:1,
+   wiec tekst schodzi o stopien nizej, osobno na kazdy motyw. */
+[data-wnetrze='przyrzadowe'] .dn-plakietka--sygnal { color: var(--pz-plakietka-tekst); }

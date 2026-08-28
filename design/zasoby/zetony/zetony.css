@@ -731,6 +731,7 @@
   --dn-tekst-2: #41505F;
   --dn-tekst-3: #52657A;
   --dn-sygnal: #1A5FD0;
+  --pz-plakietka-tekst: #12448F;
   --dn-sygnal-mocny: #1A5FD0;
   --dn-sygnal-wypelnienie: #1A5FD0;
   --dn-sygnal-tlo: rgba(26, 95, 208, .12);
@@ -770,6 +771,7 @@
   --dn-tekst-2: #A9B7C8;
   --dn-tekst-3: #7F94AB;
   --dn-sygnal: #6AA6FF;
+  --pz-plakietka-tekst: #8FBEFF;
   --dn-sygnal-mocny: #8FBEFF;
   --dn-sygnal-wypelnienie: #2F81F7;
   --dn-sygnal-tlo: rgba(47, 129, 247, .15);
@@ -811,6 +813,7 @@
     --dn-tekst-2: #41505F;
     --dn-tekst-3: #52657A;
     --dn-sygnal: #1A5FD0;
+  --pz-plakietka-tekst: #12448F;
     --dn-sygnal-mocny: #1A5FD0;
     --dn-sygnal-wypelnienie: #1A5FD0;
     --dn-sygnal-tlo: rgba(26, 95, 208, .12);

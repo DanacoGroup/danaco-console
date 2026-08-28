@@ -6930,3 +6930,12 @@ podagentów w tempie strumienia.
 
 ## budowa/klient-poprzedni/src/moduly/automations/droga-komend.test.ts
 Wykaz oczekiwany bierze się z kontraktu, nie z tego pliku: komenda dołożona do którejkolwiek z trzech rodzin i pominięta w źródle wypadnie tu jako brak, bez dopisywania czegokolwiek w sprawdzianie — sprawdzian nie mierzy więc tego, co ktoś pamiętał, tylko to, czego rodzina naprawdę wymaga. Przelot woła każdą czynność źródła raz i nie sprawdza jej wyniku, od tego są sprawdziany skutku po stronie rdzenia, tylko to, że okno ma czym daną komendę wysłać; moduł, który wygląda na kompletny, a nie umie wysłać jednej komendy z czterdziestu dziewięciu, jest modułem niekompletnym w miejscu, którego nie widać.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-dolny.ts — nazwa nastawy sterownika
+Nazwa nastawy idzie do etykiety dostępności sterownika, bo w pasku narzędzi nazwy rodzajowe zabierają miejsce i nic nie mówią same z siebie.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-dolny.ts — bez dublowania czynności
+Zakładka, nagrywarka makr i menedżer pobrań mają w rdzeniu uchwyty, a okno je wywołuje: czynności stoją w panelu rodzin przy oknie, do którego są przypisane.
+
+## budowa/klient-poprzedni/src/moduly/automations/edytor-krokow.ts
+Kolejność zmieniają przyciski w górę i w dół, a nie przeciąganie myszą: kontrakt niesie ją liczbą pola porządkowego kroku, a przyciski są dostępne z klawiatury. Mapa nazw rodzajów jest zupełna po wyliczeniu, nie wykazem przepisanym ręcznie: gdy rodzaj kroku urośnie w kontrakcie, kompilacja zatrzyma się tutaj i nowy rodzaj dostanie nazwę, zamiast zniknąć z pola wyboru bez śladu.

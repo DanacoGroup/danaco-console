@@ -6757,3 +6757,36 @@ obowiązującej.
 Odcisk wpisu schowka Studia liczy się z rodzaju i treści razem, tak samo jak
 w rodzinie `clipboard.*`; drugi rachunek odcisku rozjechałby warunek UNIQUE
 i ta sama treść stałaby w historii dwa razy.
+
+## budowa/server/internal/konfiguracja/ustawienia.go
+Ustawienia brzegu transportu, czyli adres nasłuchu, TLS i wykaz pochodzeń,
+stoją razem z resztą ustawień startu, ponieważ tylko stąd sięgają po nie
+warstwy wartości domyślnych, zmiennych środowiska i argumentów wywołania.
+
+Konto nadawcze platformy niesie dwa listy systemowe: potwierdzenie adresu
+przy rejestracji i drogę odzyskania konta. Nie jest to skrzynka operatora,
+ponieważ gdyby platforma pisała jego kontem, utrata dostępu do tej
+skrzynki odcinałaby drogę odzyskania dokładnie wtedy, gdy jest potrzebna.
+Brak tych wartości nie wstrzymuje startu rdzenia, tylko rejestrację, i to
+odmową nazywającą brak wprost; rdzeń bez konta nadawczego pracuje dla
+operatora już zalogowanego.
+
+Pole WszystkieInterfejsy jest osobnym polem, nie pustym adresem, ponieważ
+brak wskazania i chęć wystawienia wszędzie to dwa różne stany, które mają
+wyglądać różnie w miejscu wywołania.
+
+Pola CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS. Wskazanie
+obu przełącza nasłuch na wss; wskazanie jednego zatrzymuje start, ponieważ
+cicha praca otwartym tekstem po wskazaniu certyfikatu byłaby zejściem
+poniżej wskazanego poziomu. Rozstrzyga to warstwa transportu, w tym polu
+wartość tylko przechodzi dalej.
+
+Pole WymogLogowania jest wskaźnikiem z trzema stanami: nil pozostawia
+rozstrzygnięcie adresowi nasłuchu, ponieważ poza pętlą zwrotną wymóg
+obowiązuje sam z siebie; true wymusza logowanie także na pętli zwrotnej;
+false znosi wymóg, a dziennik nazywa to wprost. Rozstrzyga warstwa
+transportu, tu wartość tylko przechodzi dalej. Nastawa obowiązuje od
+startu procesu: warstwa nasłuchu nie przyjmuje zmiany wymogu na żywo.
+
+Pole PochodzeniaDozwolone dopisuje wzorce nagłówka Origin przyjmowane przy
+nawiązaniu gniazda i nie zastępuje pochodzeń własnych produktu.

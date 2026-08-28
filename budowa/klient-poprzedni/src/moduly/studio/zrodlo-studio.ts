@@ -21,25 +21,8 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
 /**
- * Sześć komend obszaru `studio.*` widzianych przez okna modułu.
- *
- * Źródło nie ma własnego stanu i nie buduje ani jednego elementu — jest
- * warstwą wywołań i sprawdzianu kształtu odpowiedzi. Dokument czynny mieszka
- * w `stan-studio.ts`, żeby pięć okien patrzyło na jeden dokument, a nie na
- * pięć jego kopii.
- *
- * Wszystkie sześć komend ma uchwyt w rdzeniu, który wpina port Studia
- * (`core/kompozycja.go` → `zarejestrujStudio`). `document.open` zakłada albo
- * wczytuje dokument, `document.save` zapisuje treść i zakłada wersję,
- * `repository.list` oddaje wykaz wersji, `repository.restore` przestawia treść
- * dokumentu na wskazaną wersję i zostawia wersje nowsze, `diff.compare` liczy
- * fragmenty różnicy i trafienia wzorca, `contextual.op` wychodzi do kanału
- * modelu okna. Zapis i przywrócenie rozgłaszają `studio.document.changed`.
- *
- * Osłona odmowy zostaje mimo to: `wywolajUczciwie` broni przed kopertą
- * `studio.unknown`, która nie niesie pola `status` i nigdy by się nie
- * skorelowała, przez co okno stałoby w ładowaniu bez końca. Kosztuje jedną
- * subskrypcję.
+ * Sześć komend obszaru `studio.*` widzianych przez okna modułu; źródło nie ma własnego stanu
+ * i nie buduje elementu, jest warstwą wywołań i sprawdzianu kształtu odpowiedzi.
  */
 export interface ZrodloStudio {
   otworz(zadanie: StudioDocumentOpenRequest): Promise<Wynik<StudioDocumentOpenResponse>>;
@@ -81,9 +64,7 @@ export function utworzZrodloStudio(kanal: Kanal): ZrodloStudio {
     },
 
     async porownaj(zadanie) {
-      // Kontrakt dopuszcza odpowiedź bez fragmentów i bez trafień — jedna
-      // komenda obsługuje i porównanie wersji, i wyszukiwanie wzorca, więc
-      // brak jednej z tablic jest wynikiem poprawnym, nie usterką kształtu.
+      // Kontrakt dopuszcza odpowiedź bez fragmentów i bez trafień jako wynik poprawny, nie usterkę.
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioDiffCompare, zadanie),
         Command.StudioDiffCompare,

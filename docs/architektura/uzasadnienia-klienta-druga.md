@@ -7838,3 +7838,15 @@ granica jest stanem zastanym, a nie liczbą podaną przez rdzeń.
 ## budowa/klient-poprzedni/src/moduly/studio/zrodlo-przekazania.ts
 Przekazanie do Library nie ma własnej komendy w kontrakcie, ma za to odpowiednik ogólny:
 komenda context.transfer przenosi komplet kontekstu między modułami i ma uchwyt w rdzeniu.
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-studio.ts
+Dokument czynny mieszka w stan-studio.ts, żeby pięć okien patrzyło na jeden dokument, a nie na
+pięć jego kopii. Wszystkie sześć komend ma uchwyt w rdzeniu, który wpina port Studia przez
+funkcję zarejestrujStudio w core/kompozycja.go. Komenda document.open zakłada albo wczytuje
+dokument, document.save zapisuje treść i zakłada wersję, repository.list oddaje wykaz wersji,
+repository.restore przestawia treść dokumentu na wskazaną wersję i zostawia wersje nowsze,
+diff.compare liczy fragmenty różnicy i trafienia wzorca, contextual.op wychodzi do kanału modelu
+okna. Zapis i przywrócenie rozgłaszają zdarzenie studio.document.changed.
+
+Osłona odmowy zostaje mimo to: funkcja wywolajUczciwie broni przed kopertą studio.unknown, która
+nie niesie pola status i nigdy by się nie skorelowała, przez co okno stałoby w ładowaniu bez
+końca. Kosztuje jedną subskrypcję.

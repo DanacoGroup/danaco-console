@@ -6471,3 +6471,39 @@ zdarzeniem wykonawczym opisującym przebieg działania zaczepu, nie treść
 wypowiedzi modelu. Warstwa składania odpowiedzi otrzymuje zdarzenie haczykiem
 NaZdarzenieZaczepu i prowadzi na jego podstawie dziennik zdarzeń oraz
 diagnostykę; brak podpiętego haczyka nie zmienia przebiegu tury.
+
+## budowa/server/internal/injection/zestaw_narzedzi.go
+Rdzeń nie zna nazw narzędzi eksperta. Podzbiór wskazany definicją eksperta
+rozstrzyga serwer narzędzi zapisany w pliku narzedzia/ekspert_wykaz.go,
+ponieważ tylko on trzyma wykaz kontraktu i umie przełożyć kod eksperta na
+pozycję albo na całą grupę. Gdyby rdzeń wyliczał tę listę samodzielnie,
+powstałby drugi wykaz obok kontraktowego, dlatego stąd wychodzi wyłącznie
+opis podstawy i dołożeń, a rozwinięcie opisu w listę należy do strony
+przeciwnej. Pakiet składa wiersze uruchomienia procesów tury i nie zna ani
+rdzenia, ani bazy, ani kontraktu, podobnie jak plik nakladka.go składa
+warstwy promptu bez znajomości jego treści.
+
+Nazwa przełącznika PrzelacznikDolozen jest umową dwóch pakietów: odczyt po
+drugiej stronie w module cmd/danaco-narzedzia oraz w funkcji
+narzedzia.RozbijDolozenia bierze tę nazwę stąd, zamiast zapisywać ją
+osobno. Wiersz uruchomienia serwera narzędzi czyta flag.Parse na domyślnym
+flag.CommandLine z trybem ExitOnError, więc nieznany przełącznik nie zostaje
+pominięty, tylko kończy proces serwera narzędzi i pozbawia turę całego
+wykazu narzędzi. Rozjazd dwóch zapisów tej samej nazwy jest więc awarią,
+nie usterką kosmetyczną.
+
+Pole ZestawTury niesie dwa źródła różnej natury: podstawa jest zawężeniem
+wykazu przez definicję eksperta, a dołożenia są dokładaniem pozycji przez
+operatora na czas sesji. Jedno pole nie wyraziłoby obu stanów, ponieważ
+lista pusta znaczyłaby jednocześnie brak zawężenia i brak narzędzi, a te
+dwa stany prowadzą do odmiennych skutków dla dostępności wykazu w turze.
+
+Kolejność dołożeń w ZlozZestawTury zostaje kolejnością dokładania, zgodnie
+z regułą stosowaną w pliku narzedzia/wykaz.go przy rozszerzeniu roli okna:
+dołożenie dokłada pozycję, nie przestawia kolejności istniejących. Nazwa
+powtórzona zostaje na pierwszej pozycji, na której się pojawiła; dołożenie
+powtórzone jest czynnością pustą, nie błędem.
+
+Kształt wyniku ArgumentyDolozen odpowiada funkcjom
+narzedzia.ArgumentyZasiegu i ArgumentyEksperta, ponieważ wszystkie trzy
+zasilają ten sam wpis danaco tą samą drogą argumentów uruchomienia.

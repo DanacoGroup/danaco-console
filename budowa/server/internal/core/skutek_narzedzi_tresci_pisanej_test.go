@@ -351,6 +351,50 @@ func TestWyciagnijTekstProstujeSkosPrzedRozpoznaniem(t *testing.T) {
 	}
 }
 
+// TestWyciagnijTekstRozpoznajeDwaJezykiZlozoneZnakiemPlus wykazuje drogę
+// produkcyjną wielojęzycznego rozpoznania: dwa języki skrótami ISO 639-1
+// („pl", „en") mają dać Tesseractowi wykaz, który ten rozumie („pol+eng"),
+// nie surowy człon, którego dane językowe tej maszyny nie niosą.
+func TestWyciagnijTekstRozpoznajeDwaJezykiZlozoneZnakiemPlus(t *testing.T) {
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	var odczyt shared.DocumentTextExtractResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{SourcePath: wskaznik(sciezka), Language: wskaznik("pl+en")},
+		&odczyt)
+
+	odczytane := strings.ToUpper(bezZlamanWiersza(odczyt.Text))
+	if !strings.Contains(odczytane, "PROTOKOL") {
+		t.Fatalf("rozpoznanie dwoma językami (pl+en) nie oddało słowa z materiału\n odczytano: %q",
+			odczyt.Text)
+	}
+}
+
+// TestWyciagnijTekstOdmawiaJezykaNieniesionegoPrzezTesseracta wykazuje
+// odmowę nazwaną, gdy żądanie wskaże język, którego danych tej maszyny nie
+// niosą — cichej próby rozpoznania w innym języku niż zamówiony rdzeń nie
+// dopuszcza.
+func TestWyciagnijTekstOdmawiaJezykaNieniesionegoPrzezTesseracta(t *testing.T) {
+	pomijBezProgramu(t, narzedzieTesseract.Nazwa, narzedzieTesseract.Program)
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	const jezykNieniesiony = "xx-jezyk-ktorego-nie-ma"
+	sciezka := kartkaTekstu(t, "PROTOKOL ODBIORU")
+	blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandDocumentTextExtract,
+		shared.DocumentTextExtractRequest{
+			SourcePath: wskaznik(sciezka), Language: wskaznik(jezykNieniesiony),
+		})
+	if blad.Code != shared.ErrorCodeValidationFailed {
+		t.Fatalf("odmowa języka nieniesionego niesie kod %q, oczekiwano %q",
+			blad.Code, shared.ErrorCodeValidationFailed)
+	}
+	if !strings.Contains(blad.Message, jezykNieniesiony) {
+		t.Fatalf("odmowa nie nazywa języka, którego maszyna nie niesie: %q", blad.Message)
+	}
+}
+
 // TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera pilnuje, żeby brak
 // programu na maszynie dał odmowę nazwaną, nie cichy odczyt bez obróbki.
 func TestWyciagnijTekstOdmawiaObrobkiWstepnejBezUnpapera(t *testing.T) {
@@ -502,6 +546,28 @@ func skanPochylony(t *testing.T, tresc string) string {
 		"-background", "white", "-fill", "black", "-pointsize", "72", "-density", "300",
 		"label:"+tresc, "-bordercolor", "white", "-border", "80",
 		"-rotate", "2", "-background", "white", "-flatten", sciezka)
+	if wyjscie, err := polecenie.CombinedOutput(); err != nil {
+		t.Skipf("pomiar niewykonany: nie udało się narysować materiału: %v (%s)", err, wyjscie)
+	}
+	if opis, err := os.Stat(sciezka); err != nil || opis.Size() == 0 {
+		t.Skip("pomiar niewykonany: materiał sprawdzianu nie powstał albo jest pusty")
+	}
+	return sciezka
+}
+
+// kartkaTekstu rysuje kartkę WPROST, bez pochylenia — materiał do sprawdzianów,
+// którym chodzi o samo rozpoznanie, nie o obróbkę wstępną skosu.
+func kartkaTekstu(t *testing.T, tresc string) string {
+	t.Helper()
+
+	rysownik, err := exec.LookPath("magick")
+	if err != nil {
+		t.Skipf("pomiar niewykonany: brak programu magick — nie ma czym narysować materiału: %v", err)
+	}
+	sciezka := filepath.Join(t.TempDir(), "kartka.png")
+	polecenie := exec.Command(rysownik,
+		"-background", "white", "-fill", "black", "-pointsize", "72", "-density", "300",
+		"label:"+tresc, "-bordercolor", "white", "-border", "80", sciezka)
 	if wyjscie, err := polecenie.CombinedOutput(); err != nil {
 		t.Skipf("pomiar niewykonany: nie udało się narysować materiału: %v (%s)", err, wyjscie)
 	}

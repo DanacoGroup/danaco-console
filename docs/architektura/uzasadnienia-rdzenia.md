@@ -7131,3 +7131,13 @@ otwarciu okna konfiguracji — drugie zapytanie na każdy filtr kupiłoby tu
 wyłącznie czterokrotnie większą powierzchnię błędu w warstwie trwałości.
 Filtr niepasujący do żadnego wiersza daje wykaz pusty, nie błąd: okno
 konfiguracji ma się otworzyć także wtedy, gdy kategoria jest jeszcze pusta.
+
+## budowa/server/internal/core/handlers_konfiguracja_odmowy.go
+Cztery rodziny komend, katalog ustawień, dostępy, konta i tożsamość modelu,
+są jednym oknem konfiguracji i muszą odmawiać tak samo — bez tego jedna
+rodzina zwracałaby wskazanie nieznanego wiersza, druga błąd wewnętrzny,
+a trzecia pustą odpowiedź na ten sam przypadek nieznanego identyfikatora.
+Odmowa merytoryczna niesie kod kontraktu i dotyczy jednego wywołania; awaria
+warstwy trwałości idzie dalej bez tłumaczenia, bo rdzeń nie zgaduje za bazę,
+czy zawiódł dysk, czy schemat. Wykaz i odczyt nigdy nie odmawiają z powodu
+pustki — pusto znaczy pusto.

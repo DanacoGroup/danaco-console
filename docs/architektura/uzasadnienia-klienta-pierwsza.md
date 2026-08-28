@@ -7053,3 +7053,16 @@ i wyrażenie, a żadna komenda nie oddaje wykazu wyzwalaczy osobno.
 
 ## budowa/klient-poprzedni/src/moduly/automations/panel-dobudowy.ts
 Cztery panele — wersje, nadzór harmonogramu, zlecenia kolejki, dozór przebiegu — mają tę samą budowę, a pod nimi jeden nośnik stanu treści, zamiast czterech razy tego samego rusztowania. Panel nie jest oknem operacyjnym i nie udaje nim być: okien modułu jest pięć, a panel osadza się wewnątrz okna, do którego należy jego praca — wersje w Workflow Builderze, zlecenia w Queue Managerze; szósty kafel na siatce byłby szóstym oknem, którego dokument projektowy nie zna. Odpowiedź rdzenia pokazuje się w całości, zapisem strukturalnym: panel jest powierzchnią roboczą Operatora nad czynnościami, których kontrakt oddaje bardzo różne kształty — wykaz wersji, różnicę pól, ładunek kroku, punkty wznowienia; rysunek zmyślony osobno dla każdej z nich pokazywałby mniej, niż rdzeń oddał, a to jest gorsze niż surowy zapis, Operator ma widzieć odpowiedź, a nie jej streszczenie napisane przez okno. Jedno miejsce wykonania czynności wystarcza, bo wszystkie czterdzieści trzy czynności kończą się tak samo i różnią się wyłącznie zdaniem. Pole nieobecne w żądaniu znaczy co innego niż pole o wartości pustej, a zapis nieczytelny sprawia, że wołający odmawia wysłania — żądanie z uszkodzonym ładunkiem odbiłoby się od rdzenia komunikatem o kopercie, a Operator ma zobaczyć, że to on pomylił nawias.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/sekcja-kolejki.ts
+Komendy tworzenia, sterowania i wykazu kolejki obsługują pętlę sesyjną,
+moduł Automations i to środowisko; sekcja nimi steruje, zamiast budować
+własnego wykonawcę zleceń, a po skonfigurowaniu powiązania kolejkę prowadzi
+Queue Manager modułu Automations. Przycisk łączący dwie akcje w jedną
+robiłby co innego, niż mówi jego napis, dlatego brakujące czynności sekcja
+tylko wypisuje. Kolejka niesie sesję, okna, stan i licznik obiegów, ale pola
+zasięgu nie ma, więc zasięg jest wykazem opisowym wraz z kształtem
+brakującego pola, a nie kontrolką bez skutku.
+
+## budowa/klient-poprzedni/src/moduly/automations/kalendarz-uruchomien.ts
+Wykaz pięciu najbliższych terminów mówi kiedy najbliżej; kalendarz mówi jak gęsto i pokazuje to razem z historią, dzięki czemu widać dzień, w którym uruchomienie wypadało, a przebiegu nie było. Terminy zaplanowane liczy okno z wpisanej cykliczności, bo dotyczą reguły jeszcze niezapisanej; terminem obowiązującym pozostaje najbliższe uruchomienie liczone przez rdzeń — kalendarz jest podglądem i mówi to wprost w swoim podpisie. Dni układają się według czasu miejscowego przeglądarki, bo tak Operator czyta kalendarz; rachunek terminu idzie w UTC, tak samo jak w rdzeniu.

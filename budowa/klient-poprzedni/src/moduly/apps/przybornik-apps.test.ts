@@ -161,7 +161,7 @@ describe('przybornik trzyma zasadę zero blokad', () => {
     );
     expect(zapis).toBeDefined();
 
-    // Okno modułu jest sprawdzane pierwsze; sprawdzamy narzędzie, które okna nie wymaga wcale.
+    // Okno modułu jest sprawdzane pierwsze; test sprawdza narzędzie, które okna nie wymaga wcale.
     await expect(zapis?.wykonaj({ nazwa: '' })).rejects.toThrow();
   });
 });
@@ -181,7 +181,7 @@ describe('przybornik pokazuje skutek, a nie samo powodzenie', () => {
     expect(przycisk).not.toBeNull();
 
     przycisk?.click();
-    // Czynność narzędzia jest obietnicą — oddajemy pętli zdarzeń jeden obrót.
+    // Czynność narzędzia jest obietnicą — pętla zdarzeń dostaje jeden obrót.
     await Promise.resolve();
     await Promise.resolve();
 

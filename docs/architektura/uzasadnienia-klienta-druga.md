@@ -6566,3 +6566,21 @@ Ikona dzwonka należy do powiadomień, nie do Always On Display: dzwonek nosi pl
 ## budowa/klient-poprzedni/src/rozmowa/blok-narzedzi.ts
 Wynik narzędzia jest w kontrakcie osobną rolą wiadomości, ale w historii należy do tury, w której
 padł. Dlatego wywołanie i jego wynik stoją w jednej pozycji, bez przeskakiwania między wpisami.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/postac-bramki.ts
+Ten plik jest oddzielony od ekranu logowania, który prowadzi rozmowę z rdzeniem: rozpoznaje stan bramki,
+wysyła hasło, czyta odmowę, wpuszcza — podział idzie po szwie między tym, co widać, a tym, co się dzieje.
+Nazwy wewnętrzne — bramka, rdzeń, rejestracja — zostają w kodzie i w komentarzach; na ekran idzie zdanie
+do przeczytania raz. Sprawdzian minimalnej długości hasła pada po naciśnięciu, nigdy jako blokada
+przycisku — tak samo jak zgodność hasła z powtórzeniem; gdyby rdzeń dostał własną regułę długości, ta
+stała ma zejść, bo dwie reguły w dwóch miejscach rozjadą się przy pierwszej zmianie. Napis załóż konto
+nie obiecuje wejścia, bo rejestracja go nie daje: konto powstaje niepotwierdzone, a token dostępu wydaje
+dopiero potwierdzenie adresu. Droga potwierdzenia jest długa i przepisuje się ją z listu — zasłonięta
+byłaby nie do zweryfikowania okiem. Skutek pola nie wyloguj mnie jest dwustronny — magazyn w kliencie
+i trwanie w rdzeniu. O tym, który formularz pokazać, rozstrzyga rdzeń polem powitania; segmenty niosą
+wybór, który w rdzeniu naprawdę istnieje — hasło i PIN — a pas znika przy jednej metodzie, bo przełącznik
+z jedną pozycją jest napisem, nie sterem, i segment wyszarzony byłby bramą. Metoda systemowa nie jest tu
+segmentem, ani czynnym, ani wyszarzonym: odmawia z powodu pochodzenia dokumentu, więc wróci wdrożeniem
+pod domeną po szyfrowanym połączeniu, nie dopisaniem kodu; zdanie o przyczynie stoi w sekcji
+uwierzytelniania okna ustawień, gdzie metoda się zakłada. Znak marki bierze się z osobnego elementu
+godła, a nie z gołego nagłówka tekstowego.

@@ -6299,3 +6299,17 @@ jest nieaktualna. Wygaszanie idzie także wtedy, gdy nadajnika nie ma, ponieważ
 nieaktualna niezależnie od tego, czy było komu ją zanieść.
 
 Brak nadajnika ma być widoczny w dzienniku, a nie odgadywany z tego, że nic nie dolatuje.
+
+## budowa/server/internal/zdalne/hosty.go
+
+Dwa odczyty bazy prowadzą do decyzji toru: nazwa hosta z ustawienia wykonania i wiersz hosta ze zgodą
+w tabeli hostów zdalnych, a każda brakująca część drogi kończy się odmową trójczęściową.
+
+Funkcja hostOkna odczytuje nazwę hosta wykonania po dwóch poziomach zasięgu, które pakiet zna
+z tożsamości okna: zapis na samym oknie oraz poziom globalny, przy czym węższy poziom wygrywa. Poziomy
+pośrednie, takie jak sesja, projekt czy moduł, zna wyłącznie rozstrzygacz rdzenia — pełne rozstrzyganie
+wszystkich poziomów wymaga osobnego wpięcia, a do tego czasu odczyt węższego i najszerszego poziomu jest
+uczciwym podzbiorem, nie atrapą całości.
+
+Brak wiersza hosta i brak zgody na jego użycie są odmowami trójczęściowymi — każda nazywa dokładnie ten
+ruch operatora maszyny, który ją zdejmuje.

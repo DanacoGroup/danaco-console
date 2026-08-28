@@ -7748,3 +7748,12 @@ wskazanie i oddaje wynik odpowiedzi rdzenia.
 Zamiana formatu: treść jedzie polem content, a nie ścieżką, bo dokument Studia mieszka
 w rdzeniu pod studio.document.save, a nie na dysku, więc wskazanie ścieżki oddawałoby do
 zamiany plik, którego treść mogła się już rozejść z treścią zaakceptowaną w module.
+
+## budowa/klient-poprzedni/src/moduly/translate/indeks.ts
+Powłoka zna stąd jedną rzecz: opis modułu. Kod translate pochodzi z kolumny
+kodu modułu w rdzeniu, nie z literału wymyślonego w kliencie, więc rozjazd
+między nazwą w mapie a rzeczywistością staje się niemożliwy. Kod stoi razem
+z kodami okien, bo obie rzeczy są tym samym — oznaczeniami, którymi moduł
+zgłasza się rdzeniowi. Moduł nie zna powłoki: warstwa składająca decyduje,
+gdzie postawić oddany element, dzięki czemu te same okna dają się osadzić
+w różnych układach.

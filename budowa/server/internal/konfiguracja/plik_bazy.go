@@ -2,7 +2,8 @@ package konfiguracja
 
 import "path/filepath"
 
-// nazwaPlikuBazy to nazwa jedynego pliku trwałości rdzenia.
+// nazwaPlikuBazy to nazwa jedynego pliku trwałości rdzenia, zapisywanego
+// wewnątrz katalogu danych produktu.
 const nazwaPlikuBazy = "danaco-console.db"
 
 // SciezkaBazy wskazuje plik bazy wewnątrz katalogu danych.

@@ -1,16 +1,6 @@
-// Obszar grafu prototypu modułu Design (tabela `polaczenie_prototypu_design`,
-// migracja 319) — część `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Ramki wskazuje się identyfikatorem zewnętrznym, nie kluczem obcym: tymi
-// samymi wartościami mówi o nich kontrakt i tymi samymi wraca
-// `design.prototype.get`, a graf czyta się w całości — przekład klucza w obie
-// strony byłby robotą bez odbiorcy. Spójności pilnuje adapter: obie ramki muszą
-// leżeć w tej samej kompozycji, co połączenie.
-//
-// Ramek nieosiągalnych repozytorium nie liczy. To wniosek z odczytu, a nie
-// fakt do przechowania — ramka osierocona dziś bywa jutro ramką początkową,
-// więc utrwalenie tej cechy w kolumnie znaczyłoby trzymanie wniosku, który
-// starzeje się bez czyjegokolwiek zapisu.
+// Repozytorium obsługuje tabelę `polaczenie_prototypu_design` z migracji 319,
+// przechowującą połączenia między ramkami prototypu modułu Design, adresowane
+// identyfikatorem zewnętrznym.
 package dane
 
 import (
@@ -98,8 +88,8 @@ func (r *repozytoriumDesignu) ZapiszPolaczeniePrototypuDesignu(ctx context.Conte
 	return r.PolaczeniePrototypuDesignuPoKodzie(ctx, polaczenie.Kod)
 }
 
-// PolaczeniePrototypuDesignuPoKodzie zwraca połączenie o wskazanym
-// identyfikatorze zewnętrznym.
+// PolaczeniePrototypuDesignuPoKodzie zwraca połączenie z tabeli
+// `polaczenie_prototypu_design` wskazane identyfikatorem zewnętrznym.
 func (r *repozytoriumDesignu) PolaczeniePrototypuDesignuPoKodzie(ctx context.Context,
 	kod string) (PolaczeniePrototypuDesignu, error) {
 
@@ -118,7 +108,8 @@ func (r *repozytoriumDesignu) PolaczeniePrototypuDesignuPoKodzie(ctx context.Con
 	return polaczenie, nil
 }
 
-// PolaczeniaPrototypuDesignu zwraca komplet połączeń kompozycji.
+// PolaczeniaPrototypuDesignu zwraca komplet połączeń przypisanych do wskazanej
+// kompozycji, uporządkowany rosnąco według identyfikatora.
 func (r *repozytoriumDesignu) PolaczeniaPrototypuDesignu(ctx context.Context,
 	kompozycjaID int64) ([]PolaczeniePrototypuDesignu, error) {
 
@@ -150,7 +141,8 @@ func (r *repozytoriumDesignu) PolaczeniaPrototypuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// UsunPolaczeniePrototypuDesignu usuwa połączenie i mówi, czy wiersz istniał.
+// UsunPolaczeniePrototypuDesignu usuwa połączenie z tabeli
+// `polaczenie_prototypu_design` i zwraca informację, czy wiersz istniał przed usunięciem.
 func (r *repozytoriumDesignu) UsunPolaczeniePrototypuDesignu(ctx context.Context,
 	kod string) (bool, error) {
 
@@ -170,7 +162,8 @@ func (r *repozytoriumDesignu) UsunPolaczeniePrototypuDesignu(ctx context.Context
 	return zmienione > 0, nil
 }
 
-// odczytajPolaczeniePrototypuDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajPolaczeniePrototypuDesignu składa strukturę PolaczeniePrototypuDesignu
+// z jednego wiersza wyniku zapytania SQL.
 func odczytajPolaczeniePrototypuDesignu(wiersz skaner) (PolaczeniePrototypuDesignu, error) {
 	var polaczenie PolaczeniePrototypuDesignu
 	var czas sql.NullInt64

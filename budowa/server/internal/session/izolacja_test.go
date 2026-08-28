@@ -1,3 +1,5 @@
+// Plik sprawdza, czy funkcja SciezkaWewnatrz poprawnie ogranicza dostęp
+// rdzenia do plików w obszarze okna, spójnie na systemach Linux i Windows.
 package session
 
 import (
@@ -10,20 +12,8 @@ import (
 	"danacoconsole/server/internal/konfig"
 )
 
-// Przynależność ścieżki do obszaru okna.
-//
-// SciezkaWewnatrz jest zaporą, przez którą przechodzi każde sięgnięcie rdzenia
-// po plik w imieniu okna, oraz każdy korzeń podawany procesowi modelu przy
-// uruchomieniu. Jej pomyłka nie zgłasza się błędem — otwiera katalog, którego
-// Operator nie dał.
-//
-// Sprawdzian pisany jest tak, by mierzył to samo na obu systemach, bo produkt
-// jedzie i na Linuksa, i na Windowsa. Jedyna różnica jest zamierzona i dotyczy
-// wielkości liter: system plików Windowsa jej nie rozróżnia, więc porównanie
-// też nie może — inaczej ta sama ścieżka zapisana inną wielkością omijałaby
-// obszar. Ta różnica ma tu własny sprawdzian, a nie założenie milczące.
-
-// TestSciezkaWewnatrzPrzepuszczaKorzenIJegoWnetrze mierzy drogę zwykłą.
+// TestSciezkaWewnatrzPrzepuszczaKorzenIJegoWnetrze mierzy drogę zwykłą:
+// korzeń obszaru i ścieżki w jego wnętrzu.
 func TestSciezkaWewnatrzPrzepuszczaKorzenIJegoWnetrze(t *testing.T) {
 	korzen := t.TempDir()
 
@@ -105,7 +95,7 @@ func TestOdstepyWokolSciezkiNieZmieniajaRozstrzygniecia(t *testing.T) {
 // TestSciezkaWzgledaJestRozstrzyganaWzgledemKataloguBiezacego utrwala
 // zachowanie normalizacji: ścieżka względna staje się bezwzględna, zanim
 // cokolwiek zostanie porównane. Bez tego ta sama ścieżka raz mieściłaby się
-// w obszarze, a raz nie — zależnie od tego, skąd wołano.
+// w obszarze, a raz nie.
 func TestSciezkaWzgledaJestRozstrzyganaWzgledemKataloguBiezacego(t *testing.T) {
 	katalog := t.TempDir()
 	t.Chdir(katalog)
@@ -121,18 +111,10 @@ func TestSciezkaWzgledaJestRozstrzyganaWzgledemKataloguBiezacego(t *testing.T) {
 	}
 }
 
-// TestWielkoscLiterRozstrzygaSystemPlikow jest jedynym sprawdzianem w tym pliku,
-// który daje różne wyniki na różnych systemach — i taka jest reguła produktu.
-//
-// Windows nie rozróżnia wielkości liter w nazwach ścieżek, więc porównanie też
-// nie może: `C:\Dane` i `c:\dane` to ten sam katalog i ścieżka zapisana inną
-// wielkością nie może omijać obszaru. Systemy plików Linuksa rozróżniają, więc
-// `dane` i `Dane` są dwoma różnymi katalogami i sklejenie ich otwierałoby
-// obszar, którego Operator nie wskazał.
-//
-// Gałąź windowsowa normalizacji nie wykonuje się nigdy na maszynie budującej —
-// dopiero zadanie Windows w bramce sprawdzianów ją uruchamia. Ten sprawdzian
-// jest po to, żeby miała co uruchomić.
+// TestWielkoscLiterRozstrzygaSystemPlikow jest jedynym sprawdzianem dającym
+// różne wyniki na różnych systemach. Windows nie rozróżnia wielkości liter
+// w ścieżkach, więc porównanie też nie może; Linux rozróżnia je jako różne
+// katalogi.
 func TestWielkoscLiterRozstrzygaSystemPlikow(t *testing.T) {
 	nadrzedny := t.TempDir()
 	korzen := filepath.Join(nadrzedny, "obszar")
@@ -171,7 +153,8 @@ func TestNaruszenieWiazeSieZeWspolnymKorzeniem(t *testing.T) {
 	}
 }
 
-// politykaZWartosciami składa politykę efektywną z par klucz → wartość.
+// politykaZWartosciami składa politykę efektywną z par klucz → wartość,
+// gotową do użycia w sprawdzianach.
 func politykaZWartosciami(wartosci map[string]string) konfig.Polityka {
 	pozycje := make([]konfig.Wynik, 0, len(wartosci))
 	for klucz, wartosc := range wartosci {
@@ -185,8 +168,7 @@ func politykaZWartosciami(wartosci map[string]string) konfig.Polityka {
 
 // TestPolitykaPustaDajeStanWyjsciowyPlatformy pilnuje wartości domyślnej
 // jedenastu punktów izolacji. Klucz nierozstrzygnięty ma dawać kontekst
-// odrębny i żaden zakres techniczny niewłączony — czyli pełną swobodę
-// operacyjną przy odrębnych wymiarach kontekstu.
+// odrębny i żaden zakres techniczny niewłączony.
 func TestPolitykaPustaDajeStanWyjsciowyPlatformy(t *testing.T) {
 	zasady := ZasadyZPolityki(konfig.Polityka{})
 
@@ -230,10 +212,9 @@ func TestWartoscSpozaSlownikaNieWlaczaZakresu(t *testing.T) {
 	}
 }
 
-// TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost sprawdza regułę odwrotną
-// dla trzech wymiarów kontekstu: odrębność jest stanem wyjściowym, a zejście
-// z niej wymaga wartości wskazanej wprost. Każda inna wartość zostawia wymiar
-// odrębny — pomyłka w zapisie nie może rozszczelnić kontekstu.
+// TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost sprawdza regułę
+// odwrotną dla trzech wymiarów kontekstu: odrębność jest stanem wyjściowym,
+// a zejście z niej wymaga wartości wskazanej wprost.
 func TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost(t *testing.T) {
 	wspoldzielona := ZasadyZPolityki(politykaZWartosciami(map[string]string{
 		konfig.KluczIzolacjaHistoria: konfig.IzolacjaWspoldzielona,

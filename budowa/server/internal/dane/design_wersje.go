@@ -1,15 +1,5 @@
-// Obszar nazwanych wersji kompozycji Design Board (tabele
-// `wersja_kompozycji_design`, `warstwa_wersji_kompozycji_design`, migracja 233)
-// — część `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Wersja jest migawką układu, nie odwołaniem do warstw żywych. Warstwy zapisuje
-// się kolumna w kolumnę, bo `design.board.update` usuwa je i wstawia od nowa
-// przy każdym zapisie — odwołanie wskazywałoby wtedy wiersze, których już nie ma,
-// a wersja przestałaby opisywać cokolwiek dokładnie wtedy, gdy jest potrzebna.
-//
-// Wykaz wersji warstw NIE czyta (kontrakt: `versions` bez `layers`), stąd
-// `liczba_warstw` utrwalona w wierszu wersji. Warstwy wchodzą wyłącznie przy
-// przywróceniu, osobnym odczytem (`WarstwyWersjiKompozycjiDesignu`).
+// Repozytorium obsługuje nazwane wersje kompozycji Design Board w tabelach
+// `wersja_kompozycji_design` i `warstwa_wersji_kompozycji_design` z migracji 233.
 package dane
 
 import (
@@ -66,13 +56,8 @@ const (
 		` FROM kompozycja_design WHERE id = ?`
 )
 
-// ZapiszWersjeKompozycjiDesignu utrwala migawkę układu wraz z warstwami
-// w jednej transakcji — wersja bez warstw, które miała opisać, nie jest wersją
-// niczego, więc niepowodzenie zapisu warstwy cofa również wiersz wersji.
-//
-// Wersja jest zawsze nowa. Nadpisania nie ma i nie ma być: wersja to zapis
-// stanu z konkretnej chwili, a nadpisanie oznaczałoby, że stan sprzed godziny
-// właśnie się zmienił.
+// ZapiszWersjeKompozycjiDesignu utrwala migawkę układu wraz z warstwami w jednej
+// transakcji, więc niepowodzenie zapisu warstwy cofa również wiersz wersji.
 func (r *repozytoriumDesignu) ZapiszWersjeKompozycjiDesignu(ctx context.Context,
 	wersja WersjaKompozycjiDesignu, warstwy []WarstwaKompozycji) (WersjaKompozycjiDesignu, error) {
 
@@ -252,7 +237,8 @@ func (r *repozytoriumDesignu) KompozycjaDesignuPoKluczu(ctx context.Context,
 	return kompozycja, nil
 }
 
-// odczytajWersjeKompozycjiDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajWersjeKompozycjiDesignu składa strukturę WersjaKompozycjiDesignu z jednego
+// wiersza wyniku zapytania SQL.
 func odczytajWersjeKompozycjiDesignu(wiersz skaner) (WersjaKompozycjiDesignu, error) {
 	var wersja WersjaKompozycjiDesignu
 	var nazwa, uzasadnienie sql.NullString

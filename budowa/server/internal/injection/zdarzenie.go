@@ -33,9 +33,8 @@ type zdarzenieCLI struct {
 	Content   []blokCLI       `json:"content"`
 	Usage     json.RawMessage `json:"usage"`
 
-	// Pola zdarzeń zaczepów — linie system/hook_started i system/hook_response;
-	// ich przekład na zdarzenie kontraktu leży w zaczepy.go. Pole `stdout`
-	// strumienia powiela `output` i nie jest odczytywane.
+	// Pola zdarzeń zaczepów z linii system hook_started i hook_response;
+	// przekład prowadzi zaczepy.go.
 	HookID    string `json:"hook_id"`
 	HookName  string `json:"hook_name"`
 	HookEvent string `json:"hook_event"`
@@ -53,7 +52,8 @@ type wiadomoscCLI struct {
 	Content json.RawMessage `json:"content"`
 }
 
-// blokCLI jest pojedynczym blokiem treści wiadomości.
+// blokCLI jest pojedynczym blokiem treści wiadomości, niosącym tekst, treść
+// rozumowania albo dane wywołania narzędzia.
 type blokCLI struct {
 	Type      string          `json:"type"`
 	Text      string          `json:"text"`
@@ -76,7 +76,7 @@ type limitTempaCLI struct {
 }
 
 // bloki odczytuje treść wiadomości niezależnie od tego, czy przyszła napisem,
-// czy tablicą bloków.
+// czy tablicą bloków, i zwraca ją jako jednolitą listę.
 func (w *wiadomoscCLI) bloki() []blokCLI {
 	if w == nil || len(w.Content) == 0 {
 		return nil

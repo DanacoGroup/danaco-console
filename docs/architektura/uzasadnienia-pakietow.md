@@ -6461,3 +6461,800 @@ Przywrócenie wersji jest zapisem dwutabelowym: metoda PrzywrocWersje czyta
 wersję docelową i nadpisuje treść dokumentu w jednej transakcji — bez niej
 odczyt wersji i zapis dokumentu mogłyby rozjechać się przy równoległym zapisie
 tego samego dokumentu z innego okna.
+
+## budowa/server/internal/injection/zaczepy.go
+Plik odbiera zdarzenia zaczepów z linii typu system strumienia programu claude
+uruchomionego z przełącznikiem --include-hook-events. Koperta startu zaczepu
+niesie pola subtype, hook_id, hook_name i hook_event; koperta odpowiedzi niesie
+dodatkowo output, stdout, stderr, exit_code i outcome. Zdarzenie zaczepu jest
+zdarzeniem wykonawczym opisującym przebieg działania zaczepu, nie treść
+wypowiedzi modelu. Warstwa składania odpowiedzi otrzymuje zdarzenie haczykiem
+NaZdarzenieZaczepu i prowadzi na jego podstawie dziennik zdarzeń oraz
+diagnostykę; brak podpiętego haczyka nie zmienia przebiegu tury.
+
+## budowa/server/internal/injection/zestaw_narzedzi.go
+Rdzeń nie zna nazw narzędzi eksperta. Podzbiór wskazany definicją eksperta
+rozstrzyga serwer narzędzi zapisany w pliku narzedzia/ekspert_wykaz.go,
+ponieważ tylko on trzyma wykaz kontraktu i umie przełożyć kod eksperta na
+pozycję albo na całą grupę. Gdyby rdzeń wyliczał tę listę samodzielnie,
+powstałby drugi wykaz obok kontraktowego, dlatego stąd wychodzi wyłącznie
+opis podstawy i dołożeń, a rozwinięcie opisu w listę należy do strony
+przeciwnej. Pakiet składa wiersze uruchomienia procesów tury i nie zna ani
+rdzenia, ani bazy, ani kontraktu, podobnie jak plik nakladka.go składa
+warstwy promptu bez znajomości jego treści.
+
+Nazwa przełącznika PrzelacznikDolozen jest umową dwóch pakietów: odczyt po
+drugiej stronie w module cmd/danaco-narzedzia oraz w funkcji
+narzedzia.RozbijDolozenia bierze tę nazwę stąd, zamiast zapisywać ją
+osobno. Wiersz uruchomienia serwera narzędzi czyta flag.Parse na domyślnym
+flag.CommandLine z trybem ExitOnError, więc nieznany przełącznik nie zostaje
+pominięty, tylko kończy proces serwera narzędzi i pozbawia turę całego
+wykazu narzędzi. Rozjazd dwóch zapisów tej samej nazwy jest więc awarią,
+nie usterką kosmetyczną.
+
+Pole ZestawTury niesie dwa źródła różnej natury: podstawa jest zawężeniem
+wykazu przez definicję eksperta, a dołożenia są dokładaniem pozycji przez
+operatora na czas sesji. Jedno pole nie wyraziłoby obu stanów, ponieważ
+lista pusta znaczyłaby jednocześnie brak zawężenia i brak narzędzi, a te
+dwa stany prowadzą do odmiennych skutków dla dostępności wykazu w turze.
+
+Kolejność dołożeń w ZlozZestawTury zostaje kolejnością dokładania, zgodnie
+z regułą stosowaną w pliku narzedzia/wykaz.go przy rozszerzeniu roli okna:
+dołożenie dokłada pozycję, nie przestawia kolejności istniejących. Nazwa
+powtórzona zostaje na pierwszej pozycji, na której się pojawiła; dołożenie
+powtórzone jest czynnością pustą, nie błędem.
+
+Kształt wyniku ArgumentyDolozen odpowiada funkcjom
+narzedzia.ArgumentyZasiegu i ArgumentyEksperta, ponieważ wszystkie trzy
+zasilają ten sam wpis danaco tą samą drogą argumentów uruchomienia.
+
+## budowa/server/internal/konfig/definicje_aplikacji.go
+Nastawy wykonania oraz izolacji rozstrzygają, jak platforma prowadzi
+rozmowę; nastawy tego pliku rozstrzygają, jak stoi sam rdzeń, na przykład
+czy nasłuch wymaga logowania. Poziom zasięgu, na którym mieszkają, jest
+najszerszy i nie ma bytu nadrzędnego, ponieważ programu nie ma czym zawęzić.
+
+Nastawy konta nadawczego wchodzą także zmiennymi środowiska przy starcie,
+zapisanymi w pliku konfiguracja/srodowisko.go; zapis w tabeli ustawienie
+przesłania środowisko, ponieważ pomyłki w adresie serwera poczty nie da się
+naprawić bez zatrzymania rdzenia, gdyby jedyną drogą poprawki było
+środowisko.
+
+Wartość domyślna wymogu logowania jest pusta, nie fałsz, ponieważ nastawa
+ma trzy stany: brak wskazania rozstrzyga adres nasłuchu, a wskazania „tak”
+i „nie” ustalają wymóg wprost. Wartość domyślna fałsz skasowałaby stan
+pierwszy i zniosłaby wymóg logowania na nasłuchu wystawionym poza pętlę
+zwrotną.
+
+## budowa/server/internal/konfig/katalog_definicji.go
+Pakiet nie sięga do bazy samodzielnie: bierze pozycje katalogu przez
+interfejs zrodloKatalogu, więc połączenie z bazą powstaje w punkcie
+kompozycji rdzenia. Pozycje mają postać struktury SettingDefinition
+kontraktu, dzięki czemu ta sama treść zasila zarówno rejestr rozstrzygania,
+jak i okno konfiguracji, bez drugiego opisu tego samego ustawienia.
+
+Katalog pusty albo niedostępny daje rejestr wbudowany rdzenia, ponieważ
+brak katalogu jest brakiem pozycji do pokazania, a nie brakiem możliwości
+rozstrzygnięcia nastawy.
+
+## budowa/server/internal/konfig/kontekst_zasiegu.go
+Porządek adresów zwracanych dla kontekstu jest dwupoziomowy: najpierw
+poziom zasięgu, a w ramach poziomu oś, w kolejności konto, model,
+platforma.
+
+## budowa/server/internal/konfig/odwzorowanie_kontraktu.go
+Poziom pusty w polu scope wpisu kontraktu nie jest błędem ani stanem
+wyjątkowym; jest informacją, że wartość pochodzi z warstwy definicji, nie
+z zapisanego ustawienia.
+
+## budowa/server/internal/konfig/osie.go
+Klucz rozstrzygania ustawienia jest złożony: klucz, poziom, byt poziomu, oś
+i byt osi. Poziom rozstrzyga pierwszeństwo zawsze przed osią, więc
+ustawienie zapisane per konto na poziomie globalnym nie bije ustawienia
+zapisanego na oknie komunikacji. Zapis na oknie jest aktem najwęższym
+i najbardziej celowym, a oś opisuje adresata wartości, nie jej wagę.
+Odwrotna kolejność oznaczałaby, że wybór konta unieważnia decyzję podjętą
+wprost w oknie, co odbierałoby operatorowi sterowanie zamiast je
+rozszerzać.
+
+## budowa/server/internal/konfig/poziomy.go
+Żadna ścieżka pakietu nie odmawia rozstrzygnięcia; także błąd źródła danych
+kończy się polityką domyślną.
+
+Kolejność poziomów wyliczana przez poziomyOdNajwezszego jest odwrotnością
+kolumny poziom_zasiegu.pierwszenstwo. Ta kolumna mieszka w bazie i niesie
+własną numerację poziomów, od aplikacji przez wartość 0, globalnego przez
+wartość 1, aż po okno przez wartość 8; powielanie tej numeracji w kodzie
+byłoby drugą prawdą o tej samej kolejności.
+
+## budowa/server/internal/konfig/rejestr_definicji.go
+Objaśnienie jest częścią definicji, nie dodatkiem: odpowiada kolumnie
+objasnienie ustawionej jako NOT NULL w modelu danych. Pusty zbiór
+dopuszczalnych adresów przy definicji zbudowanej w kodzie nie jest bramą
+zamykającą dostęp, tylko brakiem wskazania miejsca w oknie konfiguracji.
+
+## budowa/server/internal/konfig/rozgloszenie.go
+Rozgłośnia nie jest drugim mechanizmem nastaw ani drugą tabelą: nie
+przechowuje ani jednej wartości ustawienia z własnej woli, tylko przy
+każdym ogłoszeniu pyta ten sam rozstrzygacz o rozstrzygnięcie w kontekście
+nasłuchującego i podaje dalej wynik. Jedynym stanem, jaki trzyma, jest
+zapis tego, co już powiedziała, po to, by nie budzić nasłuchującego zmianą,
+której nie było; ten zapis nie jest źródłem wartości, jest pamięcią
+rozmowy.
+
+Rozgłośnia nie jest też własną usługą ani własnym wątkiem: nie odpala
+gorutyny, nie odpytuje niczego w pętli i nie ma zegara. Doręczenie dzieje
+się w wątku tego, kto ogłosił zapis, czyli w torze komendy config.set.
+Droga zapisu woła Oglos z kluczem, który się zmienił, dopiero po udanym
+utrwaleniu wiersza tabeli ustawienie, ponieważ nastawa, która nie usiadła
+w bazie, nie jest zmianą nastawy. Punkty wywołania leżą poza tym pakietem.
+
+Pierwsze doręczenie w funkcji Sledz jest częścią umowy, nie uprzejmością.
+Nasłuchujący, który nie ma się przeładowywać, musi skądś wziąć punkt
+wyjścia; gdyby brał go osobnym pytaniem, miałby dwie drogi do jednej
+wartości i wyścig między nimi, w którym zapis mieszczący się pomiędzy
+pytaniem a zapisaniem się zginąłby. Jedna droga niesie jedno źródło.
+
+Funkcja Oglos mówi, że wskazane klucze mogły się zmienić, a nie że się
+zmieniły, ponieważ ogłaszający zna adres zapisu, a nie skutek dla każdego
+nasłuchującego z osobna. Skutek liczy rozstrzygacz osobno dla kontekstu
+każdego nasłuchu, dzięki czemu zapis na poziomie okna nie budzi nasłuchu
+poziomu aplikacji, a zapis na poziomie aplikacji nie budzi nikogo, kto ma
+wartość z węższego poziomu.
+
+Uchwyt Nastawa istnieje obok funkcji Rozstrzygnij, ponieważ korzystający
+z niego siedzi na drodze gorącej, gdzie straż bramki rozstrzyga przy
+każdym pakiecie z gniazda, a Rozstrzygnij za każdym razem schodzi po
+wartość do warstwy trwałości. Uchwyt zdejmuje ten koszt bez zdejmowania
+prawdy: nie jest drugą wartością mogącą rozjechać się ze źródłem, ponieważ
+jedyną drogą jego zmiany jest ogłoszenie ze źródła, a własnego zapisu
+uchwyt nie przyjmuje.
+
+## budowa/server/internal/konfig/rozstrzyganie.go
+Rozstrzygnij i rozgłośnia liczą wartość tym samym rozstrzyganiem z tego
+samego źródła, więc drugiej prawdy o nastawie nie ma. Wartość zerowa pola
+rozgloszenia jest zdatna do pracy, więc rozstrzygacz zbudowany bez
+nasłuchów niczego nie kosztuje.
+
+Błąd zwracany przez funkcję zapisy wraca obok wyniku rozstrzygnięcia
+i służy wyłącznie diagnostyce; nie zatrzymuje samego rozstrzygania.
+
+## budowa/server/internal/konfig/wartosc.go
+Funkcja KodujJSON nigdy nie zawodzi: wartość uszkodzona trafia do koperty
+kontraktu jako napis, nie jako błąd.
+
+## budowa/server/internal/konfig/zrodlo_pamieciowe.go
+Rozstrzygacz zbudowany bez źródła sięga po puste źródło pamięciowe, dzięki
+czemu brak warstwy trwałości nie blokuje startu rdzenia, tylko daje
+politykę domyślną.
+
+## budowa/server/internal/konfig/zrodlo_ustawien.go
+Implementacja interfejsu Zrodlo czytająca tabelę ustawienie należy do
+warstwy repozytoriów; implementacja pamięciowa z tego pakietu obsługuje
+pracę bez trwałości i bez sprawdzenia.
+
+Wpisy zwrócone mimo błędu źródła wchodzą do rozstrzygnięcia, a ustawienia
+bez zapisu schodzą na wartości domyślne. Błąd jest widoczny w polityce
+efektywnej jako informacja diagnostyczna, nie jako odmowa, więc
+implementacja może zwrócić wynik częściowy razem z błędem.
+
+## budowa/server/internal/dane/design_prototyp.go
+Ramki wiąże się identyfikatorem zewnętrznym, a nie kluczem obcym: tymi samymi
+wartościami operuje kontrakt i tymi samymi wraca `design.prototype.get`, więc
+przekład klucza w obie strony nie miałby odbiorcy. Spójność pilnuje adapter —
+obie ramki połączenia muszą leżeć w tej samej kompozycji.
+
+Ramek nieosiągalnych repozytorium nie liczy, ponieważ osierocenie ramki jest
+wnioskiem chwilowym z odczytu grafu, a nie trwałą cechą wiersza — ramka
+osierocona dziś bywa jutro ramką początkową, więc utrwalanie tej cechy
+w kolumnie oznaczałoby przechowywanie wniosku, który starzeje się bez zapisu.
+
+## budowa/server/internal/konfiguracja/argumenty.go
+Przełącznik wymogu logowania nie mógł powstać jako flaga logiczna, ponieważ
+flag.Bool umiałby wyrazić tylko dwa stany i zamieniłby brak wskazania we
+wskazanie „nie", zdejmując wymóg logowania wystawionemu rdzeniowi przez
+samo pominięcie przełącznika w wywołaniu.
+
+Funkcja wykazPoPrzecinku odrzuca człony puste, ponieważ wzorzec pusty
+pasowałby do niczego, a w bibliotece gniazda do czegokolwiek, co byłoby
+zachowaniem sprzecznym z intencją filtra pochodzenia.
+
+## budowa/server/internal/dane/design_szablony.go
+Szablon i prompt wydany mają ten sam kształt kontraktu `DesignPrompt`, ale różne
+życie: szablon Operator nadpisuje, a prompt wydany jest zapisem tego, co się
+stało. Powód rozdziału tabel stoi w nagłówku migracji 231.
+
+Historia niesie prowenancję: prompt wydany wraca wraz z kodami zasobów, które
+z niego powstały. Bez tego pole `DesignAsset.PromptId` byłoby kodem bez drugiej
+strony — kontrakt komendy `design.prompt.history.list` ten przekład wnosi.
+
+## budowa/server/internal/dane/design_wersje.go
+Wersja jest migawką układu, nie odwołaniem do warstw żywych. Warstwy zapisuje
+się kolumna w kolumnę, bo `design.board.update` usuwa je i wstawia od nowa przy
+każdym zapisie — odwołanie wskazywałoby wtedy wiersze, których już nie ma,
+a wersja przestałaby opisywać cokolwiek dokładnie wtedy, gdy jest potrzebna.
+
+Wykaz wersji warstw nie czyta (kontrakt: `versions` bez `layers`), stąd
+`liczba_warstw` utrwalona w wierszu wersji. Warstwy wchodzą wyłącznie przy
+przywróceniu, osobnym odczytem `WarstwyWersjiKompozycjiDesignu`.
+
+Wersja jest zawsze nowa. Nadpisania nie ma i nie ma być: wersja to zapis stanu
+z konkretnej chwili, a nadpisanie oznaczałoby, że stan sprzed godziny właśnie
+się zmienił.
+
+## budowa/server/internal/konfiguracja/katalog_klienta.go
+Nazwa katalogu klient jest nazwą katalogu projektu interfejsu w drzewie
+budowy, więc rdzeń uruchomiony z korzenia tego drzewa znajduje pakiet bez
+przełącznika. Ta sama nazwa wiąże wdrożenie: pakowanie wydania kładzie
+pakiet obok binarium pod tą nazwą, nie pod własną, ponieważ dwie różne
+nazwy tego samego katalogu wracałyby odmową pakietu przy pierwszym
+uruchomieniu. Katalog nieistniejący nie wstrzymuje startu, ponieważ gniazdo
+pracuje wtedy bez plików statycznych.
+
+## budowa/server/internal/dane/studio_postac_malarz.go
+Migracja 368 zapisała powód wprost, a ten plik go wykonuje: malarz kopiuje
+postać, nie treść, i nanosi ją w innym miejscu, więc między pobraniem
+a naniesieniem stoją dwie osobne komendy, `studio.format.painter.copy`
+i `studio.format.painter.apply`. Postać trzymana w pamięci procesu przepadała
+przy przeładowaniu rdzenia — Operator pobierał postać, rdzeń wstawał od nowa,
+a naniesienie odmawiało, nie znajdując takiej postaci. Przy pracy modelu
+przepadała jeszcze łatwiej: model pobiera postać jednym narzędziem i nanosi
+drugim, być może po kilku innych czynnościach.
+
+Malarz jest narzędziem jednej czynności. Postać pobrana wczoraj i naniesiona
+dziś byłaby zaskoczeniem, nie pomocą — stąd kolumna `wygasa` i odczyt, który
+wpisu wygasłego nie oddaje. Wygasły wiersz nie jest przy tym kasowany
+w odczycie: sprzątanie idzie osobnym wywołaniem, bo odczyt, który po cichu
+usuwa wiersze, jest odczytem zmieniającym stan.
+
+Malarz przenosi postać między dokumentami — to jego zwykłe użycie w pakiecie
+biurowym. Kluczem jest więc okno, w którym Operator pracuje; dokument,
+z którego postać zabrano, stoi obok jako wiedza, a nie jako warunek.
+
+Nazwy pomocnicze tego pliku niosą przedrostek `malarz`, ponieważ przestrzeń
+nazw pakietu `dane` jest dzielona z innymi wykonawcami.
+
+## budowa/server/internal/konfiguracja/srodowisko.go
+Odczyt zmiennej środowiska z pominięciem wykazu zwracanego przez
+ZmienneSrodowiska rozjeżdża wzorzec .env.example z implementacją. Pilnuje
+tego granica pakietu: nazwy zmiennych są nieeksportowane, więc odczyt po
+nazwie dosłownej spoza tego pakietu jest widoczny w przeglądzie zmian.
+
+Wartość nieczytelna zmiennej startTLS zatrzymuje start rdzenia zamiast po
+cichu znaczyć „nie”, ponieważ ciche zejście do rozmowy otwartym tekstem
+oddałoby poświadczenie nadawcy każdemu po drodze.
+
+Wartość nieczytelna zmiennej wystawienia na wszystkie interfejsy zatrzymuje
+start z tego samego powodu: pomyłka w zapisie tej jednej zmiennej
+rozstrzyga o tym, czy rdzeń stanie w sieci, czy na pętli zwrotnej, a
+milczące „nie” byłoby tu najgorszym z możliwych wyników, w stronę
+przeciwną niż przy TLS.
+
+Wartość nieczytelna zmiennej wymogu logowania zatrzymuje start z tego
+samego powodu: literówka rozstrzyga o tym, czy rdzeń pyta wołającego
+o token, czy nie pyta nikogo o nic.
+
+## budowa/server/internal/dane/studio_praca_schowek.go
+Zlecenie stanowi wprost, że rodzina `clipboard.*` istnieje i drugiej się nie
+zakłada — schowek ma być jeden, wspólny Operatorowi i wykonawcom, bo sens
+historii schowka polega na tym, że wpis odłożony w jednym miejscu daje się
+wkleić w drugim. Osobna tabela schowka Studia rozdzieliłaby jedną historię na
+dwie, a wklejenie wpisu sprzed kilku ruchów przestałoby działać między oknem
+pracy z dokumentem a resztą platformy.
+
+Wiersze pisze się dokładnie tymi samymi poleceniami, co rodzina `clipboard.*`
+(stałe z `schowek.go`), i tym samym rachunkiem odcisku — inaczej ta sama treść
+odłożona dwiema drogami zrobiłaby dwa wpisy, a warunek UNIQUE na odcisku
+istnieje właśnie po to, żeby tego nie było.
+
+Nastawy pętli wykonawczej i pracy wielu agentów są w kontrakcie opisane jako
+wartości zasięgów rodziny `config.*`, z poziomem, z którego przyszły, oddanym
+w odpowiedzi. Odczyt idzie rozstrzygaczem dziewięciu poziomów, a zapis tym
+poleceniem: `ustawienie` jest jedyną tabelą nastaw platformy, więc osobny
+magazyn nastaw Studia byłby drugim miejscem, w którym trzeba szukać wartości
+obowiązującej.
+
+Odcisk wpisu schowka Studia liczy się z rodzaju i treści razem, tak samo jak
+w rodzinie `clipboard.*`; drugi rachunek odcisku rozjechałby warunek UNIQUE
+i ta sama treść stałaby w historii dwa razy.
+
+## budowa/server/internal/konfiguracja/ustawienia.go
+Ustawienia brzegu transportu, czyli adres nasłuchu, TLS i wykaz pochodzeń,
+stoją razem z resztą ustawień startu, ponieważ tylko stąd sięgają po nie
+warstwy wartości domyślnych, zmiennych środowiska i argumentów wywołania.
+
+Konto nadawcze platformy niesie dwa listy systemowe: potwierdzenie adresu
+przy rejestracji i drogę odzyskania konta. Nie jest to skrzynka operatora,
+ponieważ gdyby platforma pisała jego kontem, utrata dostępu do tej
+skrzynki odcinałaby drogę odzyskania dokładnie wtedy, gdy jest potrzebna.
+Brak tych wartości nie wstrzymuje startu rdzenia, tylko rejestrację, i to
+odmową nazywającą brak wprost; rdzeń bez konta nadawczego pracuje dla
+operatora już zalogowanego.
+
+Pole WszystkieInterfejsy jest osobnym polem, nie pustym adresem, ponieważ
+brak wskazania i chęć wystawienia wszędzie to dwa różne stany, które mają
+wyglądać różnie w miejscu wywołania.
+
+Pola CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS. Wskazanie
+obu przełącza nasłuch na wss; wskazanie jednego zatrzymuje start, ponieważ
+cicha praca otwartym tekstem po wskazaniu certyfikatu byłaby zejściem
+poniżej wskazanego poziomu. Rozstrzyga to warstwa transportu, w tym polu
+wartość tylko przechodzi dalej.
+
+Pole WymogLogowania jest wskaźnikiem z trzema stanami: nil pozostawia
+rozstrzygnięcie adresowi nasłuchu, ponieważ poza pętlą zwrotną wymóg
+obowiązuje sam z siebie; true wymusza logowanie także na pętli zwrotnej;
+false znosi wymóg, a dziennik nazywa to wprost. Rozstrzyga warstwa
+transportu, tu wartość tylko przechodzi dalej. Nastawa obowiązuje od
+startu procesu: warstwa nasłuchu nie przyjmuje zmiany wymogu na żywo.
+
+Pole PochodzeniaDozwolone dopisuje wzorce nagłówka Origin przyjmowane przy
+nawiązaniu gniazda i nie zastępuje pochodzeń własnych produktu.
+
+## budowa/server/internal/konfiguracja/wczytanie.go
+Odczyt środowiska w funkcji Wczytaj jest parametrem, dzięki czemu wczytanie
+konfiguracji daje się sprawdzić bez zmiany zmiennych środowiska procesu.
+
+## budowa/server/internal/dane/studio_wejscie_szablony.go
+`SzablonStudia` i jego trzy metody stoją w `studio_katalogi.go` — pliku innego
+odcinka, w który wchodzić nie wolno. Kolumny z migracji 367 tamten odczyt
+pomija, więc szablon czytany tamtą drogą nie niesie postaci wzorcowej: ani
+arkusza stylów, ani nastaw strony, ani nagłówka i stopki, mimo że szablon ma
+nieść te rzeczy naraz.
+
+Ten plik ogłasza więc `SzablonWarsztatuStudia`: ten sam wiersz tej samej
+tabeli, widziany w pełni. Druga tabela szablonów byłaby drugim wykazem
+i drugą prawdą; drugi odczyt jednej tabeli nią nie jest, bo zapis idzie
+upsertem po tym samym kluczu i kolumny nie zachodzą na siebie — tamten zapis
+przepisuje nazwę, opis, format, treść i pola, ten dokłada resztę.
+
+Powód trzymania pól w kolumnie `pola_json` stoi w migracji 367: wykaz pól
+czyta się cały przy wypełnianiu i nikt nie pyta o jedno pole osobno. Kształt
+zapisu rośnie (rodzaj, opis, wartości do wyboru, miejsce w treści), a miejsce
+przechowania zostaje jedno.
+
+Usunięcie obejmuje wyłącznie szablon własny. Warunek stoi w zapytaniu, nie
+tylko w kodzie wywołującym: szablon fabryczny usunięty inną drogą zabrałby
+odcinkowi możliwość odróżnienia go od szablonu własnego przy kolejnym odczycie.
+
+Kolumna `fabryczny` przy nadpisaniu zapisem warsztatu zostaje nietknięta:
+szablon fabryczny ma zostać fabryczny, bo od tego zależy, czy da się go
+usunąć, a zapis warsztatu nie jest miejscem na przestawienie tego
+rozstrzygnięcia.
+
+## budowa/server/internal/models/adapter_api.go
+Parametry wiersza rejestru w kolumnie parametry_json, którymi steruje
+KanalAPI: base_url jest pełnym adresem punktu końcowego i jest wymagany;
+strumien mówi, czy żądać strumienia, domyślnie prawda; sciezka_tekstu
+wskazuje ścieżkę do porcji tekstu w zdarzeniu strumienia; sciezka_odpowiedzi
+wskazuje ścieżkę do treści w odpowiedzi bez strumienia; sciezka_bledu
+wskazuje ścieżkę do komunikatu błędu w odpowiedzi; naglowek_klucza podaje
+nazwę nagłówka niosącego dane dostępowe; przedrostek_klucza podaje
+przedrostek wartości tego nagłówka; naglowki jest obiektem dodatkowych
+nagłówków; cialo_dodatkowe jest obiektem scalanym z ciałem żądania;
+limit_sekund podaje czas oczekiwania na odpowiedź.
+
+Błąd zwracany przez funkcję bladOdpowiedzi ma brzmieć tak samo niezależnie
+od tego, co kanał oddaje, dlatego jest wolną funkcją, a nie metodą.
+
+## budowa/server/internal/dane/terminal_wyposazenie.go
+Odczyt leży w `terminal_wyposazenie_odczyt.go`, zapis w
+`terminal_wyposazenie_zapis.go`. Wszystkie te byty należą do jednego modułu
+i jednego adaptera rdzenia; rozbicie ich na pięć interfejsów dałoby pięć pól
+w zestawie repozytoriów i pięć podpięć w montażu, a ani jednej nowej granicy —
+granica jest tu modułowa, Terminal, i tak ją prowadzimy.
+
+Byty wyposażenia nie niosą materiału tajnego. Wpis hosta niesie adres
+i wskazanie klucza, wpis klucza niesie ścieżkę i odcisk. Hasło i klucz prywatny
+zostają na dysku maszyny rdzenia; baza nie jest sejfem.
+
+Odepnięcie klucza zwraca wpisy do klucza domyślnego konfiguracji maszyny
+rdzenia — kontrakt `terminal.key.remove` wymaga ich wymienienia.
+
+Numeru wersji skryptu zapis nie przyjmuje od wołającego: nadaje go rdzeń
+w jednej transakcji z zapisem, żeby dwa równoległe zapisy nie dostały tego
+samego numeru.
+
+Po osieroceniu tunele przestawione na `inactive` nie przenoszą już ani
+jednego bajtu.
+
+## budowa/server/internal/session/izolacja_przydzial.go
+Każdy z trzech punktów izolacji ma tę samą treść: włączony znaczy zasób
+dedykowany oknu, wyłączony znaczy zasób wspólny platformy. Egzekucja jest
+więc jedna dla trzech zakresów. Właściciela zasobu wskazuje ten, kto go
+przydziela: rejestr procesów kluczowany oknem, pula kont oddająca kod
+profilu, przydział serwera wykonania.
+
+Puste pole Wlasciciel oznacza zasób wspólny platformy: pulę kont, wspólną
+pulę procesów albo współdzielony serwer wykonania, zależnie od typu
+zasobu.
+
+## budowa/server/internal/dane/terminal_wyposazenie_odczyt.go
+Zawężenia idą parametrem, nie sklejaniem tekstu SQL, tak samo jak w dzienniku
+procesów `terminal_odczyt.go`: pusty parametr znaczy brak zawężenia, więc jedno
+przygotowane zapytanie obsługuje cały filtr, a wartości Operatora nigdy nie
+wchodzą do treści polecenia.
+
+Fraza szuka w nazwie, adresie celu i notatce. LIKE w SQLite nie rozróżnia
+wielkości liter dla znaków ASCII; dla pozostałych schodzi do porównania
+binarnego, co jest przyjętym ograniczeniem wyszukiwania.
+
+Znacznik dopasowuje się do jednej pozycji wykazu rozdzielanego przecinkiem.
+Otoczenie obu stron przecinkami sprawia, że wyszukiwana fraza „test” nie łapie
+przypadkowo znacznika „testowy”.
+
+## budowa/server/internal/session/izolacja_test.go
+SciezkaWewnatrz jest zaporą, przez którą przechodzi każde sięgnięcie
+rdzenia po plik w imieniu okna, oraz każdy korzeń podawany procesowi
+modelu przy uruchomieniu. Jej pomyłka nie zgłasza się błędem, tylko
+otwiera katalog, którego operator nie dał. Sprawdzian mierzy to samo na
+obu systemach, ponieważ produkt jedzie na Linuksa i na Windowsa; jedyna
+zamierzona różnica dotyczy wielkości liter, ponieważ system plików
+Windowsa jej nie rozróżnia, więc porównanie też nie może.
+
+TestWielkoscLiterRozstrzygaSystemPlikow jest jedynym sprawdzianem w pliku
+dającym różne wyniki na różnych systemach, zgodnie z regułą produktu:
+ścieżki C:\Dane i c:\dane wskazują na Windowsie ten sam katalog, więc
+ścieżka zapisana inną wielkością liter nie może omijać obszaru, podczas
+gdy na Linuksie dane i Dane są dwoma różnymi katalogami, a ich sklejenie
+otwierałoby obszar, którego operator nie wskazał. Gałąź windowsowa
+normalizacji nie wykonuje się nigdy na maszynie budującej; dopiero zadanie
+Windows w bramce sprawdzianów ją uruchamia, więc ten sprawdzian istnieje
+po to, żeby miała co uruchomić.
+
+W teście TestWspoldzielenieWymiaruJestDecyzjaZapisanaWprost każda wartość
+inna niż wartość wskazująca współdzielenie wprost zostawia wymiar odrębny,
+więc pomyłka w zapisie nie może rozszczelnić kontekstu.
+
+## budowa/server/internal/dane/tlumaczenie.go
+Panel tłumaczenia leży w `tlumaczenie_panele.go`, zmiany treści panelu
+w `tlumaczenie_tresc.go`, słownik w plikach `slownik*.go`, jakość i mowa
+w plikach `jakosc*.go` — jedno repozytorium, dziewięć plików wedle
+odpowiedzialności. Interfejs deklaruje wyłącznie ten plik, w całości, wraz
+z metodami implementowanymi w pozostałych plikach; interfejs rozdzielony na
+dziewięć plików byłby dziewięcioma prawdami o jednym kontrakcie.
+
+Rdzeń nie rozpoznaje języka i nie tłumaczy: `jezyk_zrodlowy` bywa pusty, dopóki
+Operator albo polecenie `source.set` go nie poda — repozytorium nie dorabia
+wartości domyślnej udającej rozpoznanie. Treść panelu bywa pusta z tego samego
+powodu. Czas jest liczbą milisekund epoki, wzorem `dane/asystent.go`, nie
+tekstem.
+
+Treść źródłowa okna tłumaczenia bywa obszerna, więc trafia do pliku na dysku,
+a baza trzyma odwołanie, wzorem `dane/wiadomosci.go`: `TekstZrodlowy` niesie
+treść wprost, gdy jest krótka, `TekstZrodlowyOdwolanie` niesie odwołanie do
+pliku, gdy jest obszerna. Repozytorium nie rozstrzyga, które pole wypełnić,
+i zapisuje to, co przyszło z wyższej warstwy.
+
+Zapis okna nie ustala języka źródłowego, gdy przyszedł pusty, ponieważ rdzeń
+nie rozpoznaje języka — wartość pusta zostaje pusta.
+
+## budowa/server/internal/dane/tlumaczenie_pamiec.go
+Plik `slownik_pamiec.go` obsługuje jedną, wąską drogę tej samej tabeli: zapis
+pary zdjętej z zatwierdzonego panelu i dopasowanie przybliżone dla polecenia
+`memory.suggest`. Ten plik odpowiada za pamięć jako byt Operatora — wykaz,
+zapis wprost, usunięcie, utrzymanie i wymianę z plikiem. Dwa pliki, jedna
+tabela, dwie różne odpowiedzialności.
+
+Zapytania składane są tu wprost na `*sql.DB`, nie przez pamięć przygotowanych
+poleceń: wykaz pamięci ma cztery nieobowiązkowe zawężenia i limit, więc treść
+zapytania zależy od żądania, a pamięć przygotowanych poleceń trzymałaby
+kilkanaście wariantów jednego odczytu.
+
+## budowa/server/internal/dane/tlumaczenie_panele.go
+Niezgodności nie są polem tego typu. Kontraktowe pole `TranslationPanel.Issues`
+warstwa wyższa składa z osobnego odczytu niezgodności w pliku `jakosc.go`, po
+identyfikatorze panelu. Panel i jego niezgodności to dwa byty w dwóch tabelach;
+trzymanie ich razem w jednej strukturze Go byłoby fałszywym obrazem schematu.
+
+Pole `Ton` ustawia polecenie `translate.panel.tone.set`, a pole `TrescZwrotna`
+polecenie `backtranslation.run`; obie kolumny mieszkają w wierszu panelu, bo to
+jego pola, ale ten plik ich nie modyfikuje.
+
+Kolumna `OknoKod` jest doczytywana złączeniem, nie zapisywana drugi raz —
+prawda o kodzie okna zostaje w tabeli `okno_tlumaczenia`.
+
+Trzy pola migawki obiegu zatwierdzeń, z migracji 162, są wyłącznie stanem
+bieżącym, żeby odczyt panelu nie musiał dociągać ostatniego wiersza obiegu
+przy każdym wykazie paneli okna; pełną historię niesie tabela
+`zatwierdzenie_panelu` z pliku `tlumaczenie_kontrola.go`.
+
+ZapiszPanel nie nadpisuje panelu po kodzie zewnętrznym, ponieważ panel jest
+dodawany raz przez polecenie `translate.target.add`; nadpisanie treści, tonu
+i stanu idzie osobnymi poleceniami, więc zapis nie używa klauzuli ON CONFLICT.
+
+WszystkiePanele służy dwóm poleceniom obejmującym cały słownik. Polecenie
+`glossary.apply` traktuje puste `panelId` jako wskazanie wszystkich paneli,
+a polecenie `glossary.occurrences` niesie sam termin, bez wskazania okna —
+zakres bez zawężenia jest tu poprawny, bo słownik jest jeden na instalację.
+
+## budowa/server/internal/dane/workspace_dziennik.go
+Trzy tabele leżą w jednym pliku, bo wszystkie trzy są zapisem tego, co się
+wydarzyło, a nie stanem bieżącym. Stan bieżący instrukcji leży w tabeli
+`ustawienie`, stan bieżący zadania w tabeli `zadanie_projektu` — tutaj leży
+wyłącznie ślad zdarzeń, komentarzy i wersji instrukcji.
+
+## budowa/server/internal/dane/workspace_notatki.go
+Odnośniki strony zapisują się kompletem: zapis notatki najpierw kasuje
+odnośniki wychodzące z tej strony, potem zakłada je na nowo. Dopisywanie
+zostawiałoby w bazie odnośniki z akapitów, których w treści już nie ma,
+a graf wiedzy pokazywałby wtedy powiązania nieistniejące.
+
+## budowa/server/internal/dane/workspace_pamiec.go
+Zasięg węższy albo równy projektowi widzi wyłącznie ten projekt; zasięg
+szerszy (globalny, środowisko, moduł, para modułów) jest ustaleniem wspólnym
+i wchodzi do pamięci innych projektów na żądanie `includeShared`. Kolejność
+rozstrzygania poziomów należy do pakietu `internal/konfig` — tu leży wyłącznie
+zapis i odczyt.
+
+Osobny wynik logiczny WpisPamieciPoIdentyfikatorze jest potrzebny, bo brak
+wiersza nie jest awarią odczytu, lecz stanem, który warstwa wyższa zamienia na
+odmowę z kodem `not_found` — funkcja `wpisPamieci` zawija `sql.ErrNoRows`
+we własny błąd.
+
+## budowa/server/internal/dane/workspace_zaleznosci.go
+Baza pilnuje jednoznaczności krawędzi; cyklu nie pilnuje, bo cykl rozpoznaje
+się przejściem grafu, a nie warunkiem kolumny. Przejście grafu wykonuje rdzeń
+przed zapisem — tutaj leży wyłącznie odczyt i zapis.
+
+## budowa/server/internal/dane/zdarzenia_wykonawcze.go
+Zdarzenia zaczepów i zamknięcia tur są śladem po tym, co zaszło — zapis
+następuje po zdarzeniu i nie wpływa na przebieg wykonania.
+
+Zapis zamknięcia tury idzie poleceniem INSERT OR REPLACE, bo kolumna
+`wiadomosc_kod` jest UNIQUE: gdyby tura z jakiegoś powodu domknęła się dwa
+razy, prawdą zostaje zamknięcie ostatnie.
+
+## budowa/server/internal/injection/argumenty.go
+Przełącznik --verbose jest częścią szkieletu argumentów, ponieważ bez niego
+program nie wypuszcza zdarzeń pośrednich i strumień przestałby być
+strumieniem. Przełącznik --include-hook-events stoi tu z tego samego powodu:
+stan zmieniają zdarzenia wykonawcze, nie słowo modelu, a bez tego przełącznika
+zdarzenia zaczepów nie wchodzą na strumień i rdzeń nie ma czym odróżnić zaczep
+skonfigurowany od zaczepu, który zadziałał.
+
+Brak ustawienia nie jest błędem, tylko brakiem przełącznika w wierszu
+argumentów. Katalogi robocze są listą, więc przełącznik --add-dir powtarza się
+tyle razy, ile jest katalogów okna; tak samo przełącznik --mcp-config.
+
+Pułap kosztu niedodatni daje napis pusty, a napis pusty nie dokłada
+przełącznika --max-budget-usd, bo brak nastawy jest brakiem ograniczenia,
+nie ograniczeniem zerowym — wartość --max-budget-usd 0 kazałaby programowi
+przerwać turę, zanim ta cokolwiek zrobi. Notacja wykładnicza, którą dałby zapis
+ogólny dla kwot bardzo małych albo bardzo dużych, nie jest wartością liczbową
+dla programu, tylko napisem, którego może nie przyjąć.
+
+## budowa/server/internal/injection/fragment.go
+Kanał niczego nie decyduje o treści: model, nakładka, katalogi i tryb
+uprawnień przychodzą z konfiguracji, a każde wywołanie poprzedza fragment
+prowenancji.
+
+Dwa znaczniki toru we Fragmencie mieszkają poza ładunkiem kontraktu, bo
+mieszkają w kopercie protokołu albo w pętli koordynator–wykonawca, nie
+w samym zdarzeniu strumienia.
+
+## budowa/server/internal/injection/kanal.go
+Rozmowa nigdy nie zwraca błędu obok strumienia: każda przeszkoda jedzie
+fragmentem rodzaju błąd i domyka strumień, przez co jedna droga obsługuje
+i powodzenie, i niepowodzenie. Strumień zaczyna się fragmentem prowenancji,
+potem idą fragmenty treści, a kończy fragment ze znacznikiem ostatniego
+i podsumowaniem tury — to ono wybudza koordynatora w pętli
+koordynator–wykonawca.
+
+Brak kont w puli oznacza, że Operator nie wskazał tożsamości, więc tura idzie
+z tożsamością otoczenia, bez zmiennej CLAUDE_CONFIG_DIR (plik `proces.go`
+pomija tę zmienną przy pustym katalogu); odmowa w tym miejscu zablokowałaby
+pierwszą turę na świeżej instalacji.
+
+Pułap kosztu sprawdza się przed wyczerpaniem i zatrzymuje rotację, ponieważ
+kolejne konto puli wydałoby dokładnie tę kwotę, której Operator wydać zabronił
+(zasady w pliku `pulap.go`).
+
+Rotacji w prowadzWskazanym nie ma: wskazanie konta ustala tożsamość okna,
+a cicha podmiana na inne konto po wyczerpaniu limitu wykonałaby turę
+tożsamością, której Operator nie wybrał. Wyczerpanie zostaje odnotowane
+w puli jako ślad i trwałość limitu, a tura kończy się tym, co konto oddało;
+konto spoza puli daje odmowę, nie inną tożsamość.
+
+## budowa/server/internal/injection/materializacja.go
+Przełączniki --settings i --mcp-config programu `claude` wskazują plik na
+dysku. Warstwa sesji składa jednak wartości tych pól z obszarów konfiguracji
+(tools, permissions, mcp) i przekazuje je jako napis JSON, czyli treść, nie
+ścieżkę. Gdyby taki napis trafił wprost do argv, program szukałby pliku o tej
+nazwie, nie znalazłby go i całe przekierowanie byłoby bezczynne.
+
+Przed uruchomieniem procesu treść zapisuje się do pliku tymczasowego,
+a wartość podmienia się na jego ścieżkę. Plik żyje tylko przez jeden przebieg
+tury — sprząta go porządek zwrócony domknięciem, uruchamiany funkcją defer
+w `wykonajPrzebieg`.
+
+Rozpoznanie treści od ścieżki jest jednoznaczne: konfiguracja JSON zaczyna się
+od znaku `{` albo `[` po odcięciu białych znaków, a ścieżka pliku nigdy tak nie
+zaczyna. Wartość rozpoznaną jako ścieżkę materializacja zostawia nietkniętą,
+bo plik zapisała już inna warstwa i wystarczy wskazać go procesowi.
+
+Kopia ustawień nie narusza oryginału: prowenancja nadal pokazuje pierwotną
+treść JSON, a argumenty procesu realną ścieżkę pliku tymczasowego.
+
+Katalog tymczasowy systemu daje ścieżkę widoczną dla procesu niezależnie od
+jego katalogu roboczego. Przy każdym potknięciu zapisu plik tymczasowy zostaje
+usunięty, żeby nie zostawić pliku bez właściciela.
+
+## budowa/server/internal/injection/proces.go
+Ubijanie drzewa procesów nie należy do tego pakietu — robi to warstwa sesji,
+dlatego Proces udostępnia identyfikator procesu i honoruje odwołanie kontekstu,
+zamiast samodzielnie zarządzać cyklem życia drzewa procesów. Sam start procesu
+leży w pliku `rozruch.go` i jest jedyny w drzewie; tutaj zostaje wyłącznie to,
+co swoiste dla tury: kształt wejścia JSON-lines.
+
+## budowa/server/internal/injection/przebieg.go
+Kolejność w wykonajPrzebieg jest zamierzona — prowenancja idzie przed
+uruchomieniem procesu, więc odbiorca zna warunki wywołania nawet wtedy, gdy
+proces w ogóle nie wystartuje.
+
+Program `claude` oczekuje w polach --settings i --mcp-config ścieżek plików,
+nie napisów JSON, dlatego treść tych pól trzeba najpierw zapisać na dysk.
+Pliki tymczasowe żyją tylko przez ten przebieg i są sprzątane po zakończeniu
+tury.
+
+Pole prowenancji „settings” ma pokazywać treść przekazaną kanałowi przed
+materializacją, a wiersz argv realną komendę ze ścieżką pliku tymczasowego —
+stąd argv składa się z ustawień materializowanych, a prowenancja
+z pierwotnych.
+
+Zawiadomienie o starcie procesu idzie zaraz po starcie, przed podaniem
+wejścia: gdyby tura padła w połowie, proces i tak jest już objęty uchwytem
+sesji.
+
+## budowa/server/internal/injection/pula_kont.go
+Wartość zerowa pola WyczerpaneDo oznacza, że konto nie było wyczerpane;
+kolumny `konto.stan` i `konto.wyczerpane_do` niosą ten sam stan trwale, dzięki
+czemu wyczerpanie przeżywa restart rdzenia — pula odtwarza pamięć limitu
+z bazy, zamiast zaczynać od czystej mapy.
+
+Pole utrwal, wartość nil, znaczy pulę bez trwałości, na przykład złożoną
+z katalogu profili na dysku; funkcja jest wołana poza zamkiem, bo zapis do
+bazy nie może blokować rotacji.
+
+Pole zrodlo, wartość nil, znaczy pulę nieodświeżalną. Pula sięga po źródło na
+progu tury, dzięki czemu konto dodane komendą account.* wchodzi do rotacji bez
+restartu, analogicznie do odświeżania rejestru kanałów.
+
+Wyczerpanie rozpoznane w bieżącej turze zapisało się już do bazy, ale odczyt
+z katalogu mógł je wyprzedzić, więc pula zachowuje późniejszą z dwóch chwil.
+
+PoKodzie jest drogą dla wskazania konta per okno: tura wskazana jedzie
+dokładnie tą tożsamością, a wskaźnik bieżącej rotacji pozostaje nietknięty —
+dwa okna na dwóch kontach nie przestawiają sobie nawzajem puli.
+
+Pula pusta oznacza, że Operator nie wskazał żadnej tożsamości, a wtedy program
+`claude` ma użyć tożsamości otoczenia, czyli własnego logowania na maszynie,
+bo zmienna CLAUDE_CONFIG_DIR jest wyłącznie nośnikiem tożsamości, nie
+warunkiem uruchomienia; odmowa w takiej sytuacji łamałaby zasadę bezpiecznego
+działania domyślnego.
+
+Brak utrwalacza znaczy pulę bez trwałości — pamięć limitu żyje wtedy tylko do
+restartu.
+
+## budowa/server/internal/injection/pulap.go
+Pułap i awaria wymagają od Operatora innego działania. Pułap oznacza, że tura
+zatrzymała się na kwocie ustawionej w oknie: konto jest sprawne, limit
+dostawcy nietknięty, kanał czynny, a naprawą jest podniesienie pułapu albo
+zawężenie zadania. Awaria oznacza, że tura padła — kanał odmówił, proces
+zginął albo strumień się urwał — i powtórzenie bez zmiany warunków zwykle daje
+ten sam skutek.
+
+Rozpoznanie pułapu stoi obok pliku `wyczerpanie.go`, a nie w nim. Wyczerpanie
+jest granicą dostawcy (limit konta, kod HTTP 429, zdarzenie
+`rate_limit_event`) i uruchamia rotację kont. Pułap jest granicą nastawy okna
+i rotacji uruchamiać nie może: kolejne konto wydałoby tę samą kwotę, której
+nastawa zabrania.
+
+Wzorce rozpoznania są zachowawcze. Rozpoznanie nietrafione zostawia turę
+w drodze awarii, a zgłoszenie trafia do wykazu nierozstrzygniętych meldunków
+pakietu.
+
+Nastawa zmieniana odmową to `pulap_kosztu_usd`, dostępna w oknie Ustawienia,
+w sekcji Modele, jako Pułap kosztu okna. Kod odmowy to `permission_denied`,
+nie `rate_limited`: kod `rate_limited` niesie w kontrakcie ponawialność,
+a ponowienie tury na tym samym pułapie dałoby ten sam wynik. Kanał, konto
+i sesja zostają czynne — wstrzymana jest jedna tura.
+
+Wzorce pułapu są angielskie, bo pochodzą z komunikatów programu zewnętrznego.
+Każdy zawiera słowo „budget”, które odróżnia tę granicę od granicy dostawcy
+(„usage limit”, „rate limit”, rozpoznawanych w pliku `wyczerpanie.go`) — sam
+wzorzec „limit” złapałby wyczerpanie i zawrócił turę z rotacji kont.
+
+Źródła sprawdzane w rozpoznajPulap idą w kolejności wiarygodności, tej samej
+co w rozpoznajWyczerpanie: podtyp zdarzenia kończącego turę, potem jego tekst,
+na końcu wyjście diagnostyczne procesu. Tura bez zdarzenia `result` nie jest
+pułapem, ponieważ pułap przerywa turę wewnątrz programu, więc program zdąża
+zgłosić przerwanie — strumień urwany bez zdarzenia kończącego jest awarią.
+
+## budowa/server/internal/injection/rozruch.go
+Sięgają tu obie drogi kanału głównego: `Uruchom` dla jednego wywołania tury
+w trybie stream-json, z pliku `proces.go`, i `UruchamiaczOkien` dla procesu
+okna komunikacji prowadzonego przez sesję, z pliku `uruchamiacz_okna.go`.
+Pakiet session nie buduje własnego `exec.Cmd`, tylko bierze stąd gotowy
+uchwyt.
+
+Proces, który ma zostać objęty drzewem przez warstwę sesji, dostaje atrybuty
+systemowe uruchomienia z `session.AtrybutyDrzewa()`.
+
+Pole WyjscieBledowOsobno potrzebne jest strumieniowi okna, który czyta oba
+wyjścia procesu naraz.
+
+## budowa/server/internal/injection/uruchamiacz_okna.go
+Pakiet session nie startuje procesów — zna wyłącznie port
+session.Uruchamiacz, który wypełnia ten plik. Dzięki temu w drzewie jest jedna
+droga uruchomienia procesu modelu (`rozruch.go`) i jedna droga ubijania jego
+drzewa potomstwa (`session.PrzejmijDrzewo`). Kierunek zależności jest ten sam,
+który zapowiada `session/przejecie.go`: warstwa kanału sięga po część
+sesyjną, nigdy odwrotnie.
+
+Zasięg wykonania jest czytany i ma skutek. Okno niesie wybór Operatora w polu
+SrodowiskoWykonania, a w jedynym spawnerze platformy ten wybór rozstrzyga,
+gdzie proces rusza:
+
+- core — host rdzenia; proces rusza tutaj i to jest wykonanie zgodne
+  z wyborem;
+- remote — host zdalny; proces jedzie torem SSH pakietu internal/zdalne: host
+  wskazuje ustawienie `host_wykonania`, zgodę per host trzyma tabela
+  `host_zdalny`, a każde brakujące ogniwo drogi jest osobną, nazwaną odmową,
+  nie cichym startem na maszynie rdzenia, bo to byłaby praca w innym
+  miejscu, niż wskazał Operator;
+- local — urządzenie Operatora; toru zwrotnego do urządzenia w drzewie nie ma
+  i nie domknie go ta warstwa: powłoka natywna wystawia interfejsowi trzy
+  polecenia bez uruchamiania procesów (desktop/src-tauri, invoke_handler),
+  a kontrakt nie ma kanału, którym rdzeń prowadziłby strumienie procesu na
+  kliencie — tor zwrotny wymaga nowych poleceń powłoki i nowych komend
+  kontraktu poza tym pakietem. Zasięg obsługuje więc host rdzenia i idzie
+  o tym wpis do dziennika; wybór jest honorowany dosłownie dopóty, dopóki
+  rdzeń stoi na urządzeniu Operatora, a tak stoi dziś każda instalacja
+  lokalna.
+
+Wartość pusta i wartość spoza wyliczenia nie zatrzymują pracy — schodzą na
+zachowanie dotychczasowe (host rdzenia), ale zostawiają ślad w dzienniku, bo
+brak wskazania ma dawać pracę, nie odmowę.
+
+Proces okna rusza jako korzeń własnego drzewa, bo zaraz po starcie obejmie go
+uchwyt systemowy warstwy sesji; bez tego wnuki procesu przeżyłyby zamknięcie
+okna. Przed startem rozstrzygany jest zasięg wykonania okna: proces, którego
+nie da się uruchomić tam, gdzie wskazał Operator, nie rusza po cichu na
+hoście rdzenia.
+
+Dla zasięgu core i dróg schodzących na niego rozruchWedlugZasiegu uruchamia
+sam proces okna; dla zasięgu remote uruchamia proces transportu SSH, którego
+strumienie są strumieniami procesu na hoście zdalnym.
+
+Katalog i środowisko rozruchu zdalnego jadą w komendzie zdalnej; proces
+transportu dziedziczy środowisko rdzenia, bo SSH potrzebuje własnej
+konfiguracji (klucze, agent). Odmowa toru wraca do wołającego z powodem —
+uruchomienie na hoście rdzenia byłoby pracą w innym miejscu, niż wskazał
+Operator.
+
+Moduł Terminal startuje proces przy każdym poleceniu, więc wpis w dzienniku
+przy każdym starcie utopiłby dziennik w powtórzeniach i wyszłoby z tego to
+samo, co z ciszy: nikt by tego nie czytał. Zmiana zasięgu okna, a przy torze
+zdalnym także zmiana wyniku (odmowa kontra tor), daje nowy klucz, więc kolejny
+obrót sprawy znów zostawia ślad.
+
+## budowa/server/internal/injection/ustawienia.go
+Pole CLAUDE_CONFIG_DIR w zmiennych środowiskowych ustawia pula kont, więc pole
+Srodowisko go nie podaje.
+
+Wskazanie konta jest rozkazem tożsamości: tura nie pojedzie innym kontem niż
+wskazane, bez cichej podmiany.
+
+Pułap kosztu jest zapobiegawczy, a nie sprawozdawczy: pole Koszt fragmentu
+zamknięcia tury mówi, ile wydano, a pole PulapKosztuUSD mówi, ile wydać wolno.
+Wartość zerowa, tak samo jak ujemna, której Operator wpisać nie powinien, ale
+wpisać może, znaczy że przełącznika --max-budget-usd nie podajemy i wywołanie
+idzie bez ograniczenia.
+
+Haczyk NaStartProcesu pusty nie zmienia przebiegu tury — znika wyłącznie
+sprzątanie po niej, bo warstwa sesji obejmuje proces uchwytem systemowym,
+dzięki czemu zamknięcie okna kończy także jego potomstwo.
+
+Haczyk NaZdarzenieZaczepu pusty nie zmienia przebiegu tury — znika wyłącznie
+ślad zaczepów; kanał treści zdarzenia zaczepu nie interpretuje.

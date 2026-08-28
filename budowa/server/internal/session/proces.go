@@ -1,3 +1,4 @@
+// Plik prowadzi typ Proces — uchwyt jednego procesu okna komunikacji w pakiecie session, z ubiciem procesu, doglądaniem jego stanu i sprawdzeniem, czy nadal żyje.
 package session
 
 import (
@@ -33,7 +34,7 @@ func (p *Proces) Ubij() error {
 	p.mu.Unlock()
 
 	err := p.drzewo.Ubij()
-	// Uchwyt zadania i uchwyt procesu oddajemy zaraz po ubiciu, aby nie zalegał w rdzeniu do końca pracy.
+	// Uchwyt zadania i uchwyt procesu zwalniają się zaraz po ubiciu, by nie zalegały w rdzeniu.
 	p.drzewo.Zwolnij()
 	return err
 }

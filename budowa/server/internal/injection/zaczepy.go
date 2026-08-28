@@ -1,24 +1,9 @@
+// Plik odczytuje zdarzenia zaczepów cyklu życia kanału przesyłane przez
+// program claude i składa je w strukturę ZdarzenieZaczepu dla warstwy
+// składania odpowiedzi.
 package injection
 
 import "encoding/json"
-
-// Zaczepy cyklu życia kanału. Konfiguracja zaczepów jedzie do programu `claude`
-// sekcją `hooks` pliku ustawień; ten plik domyka drugą połowę drogi — odbiór
-// ich zdarzeń ze strumienia.
-//
-// Kształt kopert linii `system` z przełącznikiem --include-hook-events:
-//
-//	{"type":"system","subtype":"hook_started","hook_id":"…","hook_name":"…",
-//	 "hook_event":"UserPromptSubmit","uuid":"…","session_id":"…"}
-//	{"type":"system","subtype":"hook_response","hook_id":"…","hook_name":"…",
-//	 "hook_event":"…","output":"…","stdout":"…","stderr":"","exit_code":0,
-//	 "outcome":"success","uuid":"…","session_id":"…"}
-//
-// Zdarzenie zaczepu jest zdarzeniem wykonawczym: mówi, co się stało, nie co
-// model powiedział. Kanał go nie interpretuje i nie zamienia na fragment
-// kontraktu — oddaje je haczykiem Zapytania (NaZdarzenieZaczepu) warstwie
-// składania, która prowadzi dziennik zdarzeń i diagnostykę. Brak haczyka nie
-// zmienia przebiegu tury.
 
 // Podtypy linii `system` niosących zdarzenia zaczepów. Wartości są dosłowne
 // wartości pola `subtype` strumienia CLI (nazw nie przepisujemy).
@@ -27,7 +12,8 @@ const (
 	podtypZaczepOdpowiedz = "hook_response"
 )
 
-// ZdarzenieZaczepu jest jednym zdarzeniem zaczepu odczytanym ze strumienia.
+// ZdarzenieZaczepu jest jednym zdarzeniem zaczepu odczytanym ze strumienia,
+// niosącym podtyp, identyfikator wywołania oraz treść odpowiedzi lub błędu.
 type ZdarzenieZaczepu struct {
 	// Podtyp to podtypZaczepStart albo podtypZaczepOdpowiedz.
 	Podtyp string
@@ -35,24 +21,24 @@ type ZdarzenieZaczepu struct {
 	IdZaczepu string
 	// Nazwa jest nazwą zaczepu z konfiguracji (hook_name).
 	Nazwa string
-	// Zdarzenie jest punktem cyklu życia, w którym zaczep zadziałał
-	// (hook_event), np. UserPromptSubmit, PreToolUse.
+	// Zdarzenie jest punktem cyklu życia, w którym zaczep zadziałał, na
+	// przykład UserPromptSubmit.
 	Zdarzenie string
-	// Wyjscie jest treścią oddaną przez polecenie zaczepu (output). Pole
-	// stdout strumienia powiela output — nie niesiemy go drugi raz.
+	// Wyjscie jest treścią oddaną przez polecenie zaczepu. Pole stdout ją
+	// powiela i zostaje pominięte.
 	Wyjscie string
 	// BladWyjscia jest treścią stderr polecenia zaczepu.
 	BladWyjscia string
 	// KodWyjscia jest kodem wyjścia polecenia; nil dla zdarzenia startu,
 	// które kodu jeszcze nie ma.
 	KodWyjscia *int
-	// Wynik jest dosłowną wartością pola outcome (np. success); pusty dla
-	// zdarzenia startu.
+	// Wynik jest dosłowną wartością pola outcome, na przykład success; pusty
+	// dla zdarzenia startu.
 	Wynik string
 	// IdSesjiCLI jest identyfikatorem rozmowy po stronie programu.
 	IdSesjiCLI string
-	// Surowe jest całą linią strumienia — dowodem pierwotnym zdarzenia.
-	// Dziennik zdarzeń zapisuje ją bez przekładu.
+	// Surowe jest całą linią strumienia, dowodem zdarzenia zapisanym
+	// w dzienniku bez przekładu.
 	Surowe json.RawMessage
 }
 
@@ -91,7 +77,8 @@ func zaczepZeZdarzenia(zdarzenie zdarzenieCLI, linia string) ZdarzenieZaczepu {
 	}
 }
 
-// zdarzenieZaczepu mówi, czy linia systemowa niesie zdarzenie zaczepu.
+// zdarzenieZaczepu mówi, czy linia systemowa strumienia niesie zdarzenie
+// zaczepu, sprawdzając podtyp względem stałych zdefiniowanych w pliku.
 func zdarzenieZaczepu(zdarzenie zdarzenieCLI) bool {
 	return zdarzenie.Type == TypSystem &&
 		(zdarzenie.Subtype == podtypZaczepStart || zdarzenie.Subtype == podtypZaczepOdpowiedz)

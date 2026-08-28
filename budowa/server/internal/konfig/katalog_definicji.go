@@ -1,27 +1,21 @@
-// Odpowiedzialność pliku: zbudowanie rejestru definicji z katalogu ustawień
-// zapisanego w bazie, zamiast z listy zaszytej w kodzie.
-//
-// Pakiet nie sięga do bazy sam — bierze pozycje katalogu przez interfejs
-// zrodloKatalogu, więc połączenie powstaje w punkcie kompozycji rdzenia. Pozycje
-// mają postać struktury SettingDefinition kontraktu, dzięki czemu ta sama treść
-// zasila i rejestr rozstrzygania, i okno konfiguracji — drugiego opisu
-// ustawienia nie ma.
-//
-// Fail-open: katalog pusty, niedostępny albo uszkodzony nie zatrzymuje
-// rozstrzygania. Rejestr schodzi wtedy na wbudowany zestaw definicji rdzenia.
+// Plik buduje rejestr definicji z katalogu ustawień zapisanego w bazie,
+// zamiast z listy zaszytej w kodzie. Katalog pusty, niedostępny albo
+// uszkodzony nie zatrzymuje rozstrzygania; rejestr schodzi wtedy na
+// wbudowany zestaw definicji rdzenia.
 package konfig
 
 import "danacoconsole/shared"
 
-// zrodloKatalogu dostarcza pozycje katalogu ustawień.
+// zrodloKatalogu dostarcza pozycje katalogu ustawień zapisanego w bazie,
+// oddzielając rejestr definicji od bezpośredniego dostępu do połączenia.
 type zrodloKatalogu interface {
 	Definicje() ([]shared.SettingDefinition, error)
 }
 
-// rodzajeKontraktu odwzorowują rodzaj pozycji katalogu (SettingValueType) na
-// postać wartości zapisywanej w kolumnie `ustawienie.rodzaj_wartosci`. Rodzaje
-// prezentacyjne — ścieżka, tajemnica, wybór z listy — są napisami; listy
-// i struktury idą JSON-em; liczby i wartości logiczne własnymi rodzajami.
+// rodzajeKontraktu odwzorowują rodzaj pozycji katalogu na postać wartości
+// zapisywanej w kolumnie ustawienie.rodzaj_wartosci; rodzaje prezentacyjne
+// są napisami, listy i struktury idą jako JSON, liczby i wartości logiczne
+// mają własne rodzaje.
 var rodzajeKontraktu = map[shared.SettingValueType]Rodzaj{
 	shared.SettingValueTypeString:   RodzajTekst,
 	shared.SettingValueTypeText:     RodzajTekst,
@@ -47,8 +41,8 @@ func rodzajZKontraktu(rodzaj shared.SettingValueType) Rodzaj {
 
 // definicjaZKontraktu zamienia pozycję katalogu na definicję rejestru.
 // Wartość domyślna wraca do postaci przechowywanej w kolumnie
-// `ustawienie.wartosc`, więc porównanie z wartością zapisaną jest porównaniem
-// dwóch napisów tej samej postaci, nie dwóch kodowań.
+// ustawienie.wartosc, więc porównanie z wartością zapisaną jest porównaniem
+// dwóch napisów tej samej postaci.
 func definicjaZKontraktu(pozycja shared.SettingDefinition) Definicja {
 	domyslna, _ := DekodujJSON(pozycja.DefaultValue)
 	return Definicja{
@@ -65,10 +59,9 @@ func definicjaZKontraktu(pozycja shared.SettingDefinition) Definicja {
 	}
 }
 
-// RejestrZKatalogu buduje rejestr definicji z katalogu ustawień. Katalog pusty
-// albo niedostępny daje rejestr wbudowany rdzenia — brak katalogu jest brakiem
-// pozycji do pokazania, nie brakiem możliwości rozstrzygnięcia.
-// Drugi wynik mówi, czy rejestr pochodzi z katalogu; służy diagnostyce startu.
+// RejestrZKatalogu buduje rejestr definicji z katalogu ustawień. Katalog
+// pusty albo niedostępny daje rejestr wbudowany rdzenia. Drugi wynik mówi,
+// czy rejestr pochodzi z katalogu, i służy diagnostyce startu.
 func RejestrZKatalogu(zrodlo zrodloKatalogu) (*Rejestr, bool) {
 	if zrodlo == nil {
 		return RejestrWbudowany(), false
@@ -90,7 +83,8 @@ func RejestrZKatalogu(zrodlo zrodloKatalogu) (*Rejestr, bool) {
 	return NowyRejestr(definicje...), true
 }
 
-// tekstLubPusty odczytuje pole opcjonalne kontraktu.
+// tekstLubPusty odczytuje pole opcjonalne kontraktu i zwraca napis pusty
+// zamiast wskaźnika pustego, upraszczając dalsze porównania wartości.
 func tekstLubPusty(wartosc *string) string {
 	if wartosc == nil {
 		return ""

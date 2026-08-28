@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: podstawa modułu Translate — okno tłumaczenia (tekst
-// źródłowy, tabela `okno_tlumaczenia`) wraz z deklaracją całego kontraktu
-// modułu. Panel tłumaczenia leży w `tlumaczenie_panele.go`, zmiany treści panelu
-// w `tlumaczenie_tresc.go`, słownik w `slownik*.go`, jakość i mowa
-// w `jakosc*.go` — jedno repozytorium, dziewięć plików wedle odpowiedzialności.
-//
-// Interfejs deklaruje wyłącznie ten plik, w całości — wraz z metodami
-// implementowanymi w pozostałych plikach. Interfejs rozdzielony na dziewięć
-// plików byłby dziewięcioma prawdami o jednym kontrakcie.
-//
-// Rdzeń nie rozpoznaje języka i nie tłumaczy: `jezyk_zrodlowy` bywa NULL, dopóki
-// Operator albo `source.set` go nie poda — nie dorabiamy tu wartości domyślnej
-// udającej rozpoznanie. Treść panelu bywa pusta z tego samego powodu.
-//
-// Czas jest liczbą (ms epoki), wzorem `dane/asystent.go`, nie tekstem.
+// Repozytorium deklaruje kontrakt modułu Translate i przechowuje okno
+// tłumaczenia z tekstem źródłowym w tabeli `okno_tlumaczenia`.
 package dane
 
 import (
@@ -23,12 +10,8 @@ import (
 	"time"
 )
 
-// OknoTlumaczenia to wiersz tabeli `okno_tlumaczenia` — tekst źródłowy i jego
-// rozpoznany (albo nie) język. Treść źródłowa bywa obszerna → plik na dysku,
-// baza trzyma odwołanie, wzór `dane/wiadomosci.go`: `TekstZrodlowy`
-// niesie treść wprost, gdy jest krótka, `TekstZrodlowyOdwolanie` — odwołanie
-// do pliku, gdy jest obszerna. Rdzeń nie rozstrzyga, które pole wypełnić;
-// zapisuje to, co przyszło z wyższej warstwy.
+// OknoTlumaczenia to wiersz tabeli `okno_tlumaczenia`, niosący tekst źródłowy
+// i jego rozpoznany albo nierozpoznany język.
 type OknoTlumaczenia struct {
 	ID                     int64
 	Kod                    string
@@ -51,8 +34,8 @@ type RepozytoriumTlumaczen interface {
 	ZapiszPanel(ctx context.Context, oknoID int64, panel PanelTlumaczenia) (PanelTlumaczenia, error)
 	Panel(ctx context.Context, kod string) (PanelTlumaczenia, error)
 	Panele(ctx context.Context, oknoID int64) ([]PanelTlumaczenia, error)
-	// WszystkiePanele daje zakres komendom, które go nie dostają w żądaniu:
-	// `glossary.apply` z pustym panelem i `glossary.occurrences`.
+	// WszystkiePanele daje zakres poleceniom bez panelu w żądaniu, na przykład
+	// `glossary.apply`.
 	WszystkiePanele(ctx context.Context) ([]PanelTlumaczenia, error)
 
 	// --- zmiany treści panelu ---
@@ -173,10 +156,7 @@ func noweRepozytoriumTlumaczen(z *zapytania, db *sql.DB) *repozytoriumTlumaczen 
 }
 
 // ZapiszOkno zakłada wiersz okna tłumaczenia albo nadpisuje zastany po kodzie
-// zewnętrznym. `Utworzono` nie wchodzi do klauzuli UPDATE — zapis powtórny nie
-// ma prawa przesunąć chwili założenia okna, tylko chwilę ostatniej zmiany.
-// Nie ustalamy tu języka źródłowego, gdy przyszedł pusty — rdzeń nie rozpoznaje
-// języka; NULL zostaje NULL.
+// zewnętrznym, nie przesuwając chwili założenia okna.
 func (r *repozytoriumTlumaczen) ZapiszOkno(ctx context.Context, okno OknoTlumaczenia) (OknoTlumaczenia, error) {
 	if okno.Kod == "" {
 		return OknoTlumaczenia{}, fmt.Errorf("dane: okno tłumaczenia bez identyfikatora")
@@ -216,7 +196,8 @@ func (r *repozytoriumTlumaczen) Okno(ctx context.Context, kod string) (OknoTluma
 	return okno, nil
 }
 
-// odczytajOknoTlumaczenia składa strukturę z jednego wiersza wyniku.
+// odczytajOknoTlumaczenia składa strukturę OknoTlumaczenia z jednego wiersza
+// wyniku zapytania do bazy.
 func odczytajOknoTlumaczenia(wiersz skaner) (OknoTlumaczenia, error) {
 	var okno OknoTlumaczenia
 	var tekstZrodlowy, tekstZrodlowyOdwolanie, jezykZrodlowy sql.NullString

@@ -10,23 +10,10 @@ import (
 	"time"
 )
 
-// KanalAPI jest generycznym kanałem sieciowym. Nie zna żadnego dostawcy:
-// adres, model, odwołanie do klucza, nagłówki, kształt ciała żądania i ścieżka
-// do treści w odpowiedzi pochodzą z wiersza rejestru. Nowy dostawca to nowy
+// KanalAPI jest generycznym kanałem sieciowym, nieznającym żadnego
+// dostawcy: adres, model, klucz, nagłówki i kształt żądania pochodzą
+// z wiersza rejestru w kolumnie parametry_json. Nowy dostawca to nowy
 // wiersz danych, nie nowy typ w kodzie.
-//
-// Parametry wiersza (kolumna parametry_json):
-//
-//	base_url            — pełny adres punktu końcowego (wymagany)
-//	strumien            — czy żądać strumienia; domyślnie prawda
-//	sciezka_tekstu      — ścieżka do porcji tekstu w zdarzeniu strumienia
-//	sciezka_odpowiedzi  — ścieżka do treści w odpowiedzi bez strumienia
-//	sciezka_bledu       — ścieżka do komunikatu błędu w odpowiedzi
-//	naglowek_klucza     — nazwa nagłówka z danymi dostępowymi
-//	przedrostek_klucza  — przedrostek wartości tego nagłówka
-//	naglowki            — obiekt dodatkowych nagłówków
-//	cialo_dodatkowe     — obiekt scalany z ciałem żądania
-//	limit_sekund        — czas oczekiwania na odpowiedź
 type KanalAPI struct {
 	def    Definicja
 	klient *http.Client
@@ -54,12 +41,14 @@ func limitCzasu(d Definicja) time.Duration {
 	return time.Duration(sekundy) * time.Second
 }
 
-// Kod zwraca kod kanału z wiersza rejestru.
+// Kod zwraca kod kanału z wiersza rejestru, identyfikujący ten kanał wśród
+// innych zarejestrowanych kanałów.
 func (k *KanalAPI) Kod() string {
 	return k.def.Kod
 }
 
-// Definicja zwraca wiersz rejestru, z którego kanał powstał.
+// Definicja zwraca wiersz rejestru, z którego kanał powstał, wraz z jego
+// pełną konfiguracją parametrów.
 func (k *KanalAPI) Definicja() Definicja {
 	return k.def
 }
@@ -99,12 +88,14 @@ func (k *KanalAPI) Wyslij(ctx context.Context, z Zapytanie, u Ujscie) error {
 	return k.nadajStrumien(ctx, z, u, odpowiedz.Body)
 }
 
-// strumieniowy odpowiada, czy kanał żąda odpowiedzi strumieniem.
+// strumieniowy odpowiada, czy kanał żąda odpowiedzi strumieniem zamiast
+// pojedynczej odpowiedzi całościowej.
 func (k *KanalAPI) strumieniowy() bool {
 	return k.def.ParametrLub("strumien", "true") != "false"
 }
 
-// nadajStrumien przenosi zdarzenia strumienia na fragmenty tekstu.
+// nadajStrumien przenosi zdarzenia strumienia na fragmenty tekstu,
+// oddawane kolejno wołającemu kanału.
 func (k *KanalAPI) nadajStrumien(ctx context.Context, z Zapytanie, u Ujscie, tresc io.Reader) error {
 	sciezka := k.def.ParametrLub("sciezka_tekstu", "choices.0.delta.content")
 	return CzytajZdarzenia(tresc, func(zdarzenie []byte) error {
@@ -119,7 +110,8 @@ func (k *KanalAPI) nadajStrumien(ctx context.Context, z Zapytanie, u Ujscie, tre
 	})
 }
 
-// nadajCalosc przenosi odpowiedź bez strumienia na jeden fragment tekstu.
+// nadajCalosc przenosi odpowiedź bez strumienia na jeden fragment tekstu,
+// oddany wołającemu kanału od razu.
 func (k *KanalAPI) nadajCalosc(ctx context.Context, z Zapytanie, u Ujscie, tresc io.Reader) error {
 	surowe, err := io.ReadAll(tresc)
 	if err != nil {
@@ -134,9 +126,8 @@ func (k *KanalAPI) nadajCalosc(ctx context.Context, z Zapytanie, u Ujscie, tresc
 }
 
 // bladOdpowiedzi składa błąd z kodu stanu i komunikatu dostawcy. Komunikat
-// czyta ścieżką z wiersza rejestru, a gdy go tam nie ma — surową treścią.
-// Wolna funkcja, nie metoda: tej samej drogi używa kanał obrazowy, a błąd
-// dostawcy ma brzmieć tak samo niezależnie od tego, co kanał oddaje.
+// czyta ścieżką z wiersza rejestru, a gdy go tam nie ma, surową treścią.
+// Wolna funkcja, nie metoda: tej samej drogi używa kanał obrazowy.
 func bladOdpowiedzi(d Definicja, odpowiedz *http.Response) error {
 	surowe, _ := io.ReadAll(io.LimitReader(odpowiedz.Body, 8<<10))
 	komunikat := strings.TrimSpace(string(surowe))

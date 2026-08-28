@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: notatki i strony wiki projektu (tabela
-// `notatka_projektu`) wraz z odnośnikami treści (tabela
-// `odnosnik_notatki_projektu`).
-//
-// Odnośniki strony zapisują się kompletem: zapis notatki najpierw kasuje
-// odnośniki wychodzące z tej strony, potem zakłada je na nowo. Dopisywanie
-// zostawiałoby w bazie odnośniki z akapitów, których w treści już nie ma, a graf
-// wiedzy pokazywałby wtedy powiązania nieistniejące.
+// Repozytorium przechowuje notatki i strony wiki projektu w tabeli
+// `notatka_projektu`, wraz z odnośnikami treści w tabeli
+// `odnosnik_notatki_projektu`.
 package dane
 
 import (
@@ -18,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// NotatkaWorkspace to wiersz notatki albo strony wiki projektu.
+// NotatkaWorkspace to wiersz tabeli `notatka_projektu`, reprezentujący
+// notatkę albo stronę wiki projektu.
 type NotatkaWorkspace struct {
 	ID               int64
 	ProjektID        int64
@@ -141,7 +137,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszNotatkeWorkspace(ctx context.Con
 	return r.NotatkaWorkspace(ctx, notatka.Identyfikator)
 }
 
-// NotatkaWorkspace zwraca jedną notatkę wraz z jej treścią.
+// NotatkaWorkspace zwraca z tabeli `notatka_projektu` jedną notatkę projektu
+// wraz z jej pełną treścią wpisu.
 func (r *repozytoriumPrzestrzeniRoboczej) NotatkaWorkspace(ctx context.Context,
 	identyfikator string) (NotatkaWorkspace, error) {
 
@@ -159,7 +156,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) NotatkaWorkspace(ctx context.Context,
 	return notatka, nil
 }
 
-// NotatkiWorkspace zwraca komplet notatek projektu.
+// NotatkiWorkspace zwraca z tabeli `notatka_projektu` komplet notatek i stron
+// wiki całego projektu, bez zawężenia.
 func (r *repozytoriumPrzestrzeniRoboczej) NotatkiWorkspace(ctx context.Context,
 	projektID int64) ([]NotatkaWorkspace, error) {
 
@@ -261,7 +259,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) OdnosnikiWorkspace(ctx context.Context
 	return lista, nil
 }
 
-// odczytajNotatkeWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajNotatkeWorkspace składa strukturę NotatkaWorkspace z jednego
+// wiersza wyniku zapytania do bazy.
 func odczytajNotatkeWorkspace(wiersz skaner) (NotatkaWorkspace, error) {
 	var notatka NotatkaWorkspace
 	var etykiety, naglowki, rodzajAutora string

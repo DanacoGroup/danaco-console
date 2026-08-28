@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 )
 
-// nazwaKatalogu to nazwa katalogu danych produktu w profilu użytkownika.
+// nazwaKatalogu to nazwa katalogu danych produktu w profilu użytkownika,
+// wspólna dla wszystkich platform.
 const nazwaKatalogu = "DanacoConsole"
 
 // KatalogDanychDomyslny wskazuje %LOCALAPPDATA%\DanacoConsole.

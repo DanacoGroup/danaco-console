@@ -139,3 +139,34 @@
 .cd-karta-anim { width: 40%; }
 
 .cd-karta-anim .d3-anim { --d3-size: 82cqw; }
+
+/* ── Układ przyrządowy — samo rozmieszczenie ───────────────────────────── */
+
+.cd-strona .cd-kafel { position: relative; }
+.cd-strona .cd-kafel-tresc { position: relative; z-index: 2; }
+.cd-strona .cd-kafel-grot { position: relative; z-index: 2; }
+
+/* Rejestr: podział kolumn wspólny dla nagłówka i wierszy — znak, nazwa,
+   ustawienie, rodzaj, czynności. */
+.cd-siatka-wlasnych { grid-template-columns: 1fr; gap: 0; }
+.cd-strona .dn-rejestr-glowa,
+.cd-strona .cd-wlasny-poz {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 2fr) minmax(0, 1.4fr) 120px;
+  align-items: center;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-2) var(--dn-od-4);
+}
+.cd-strona .dn-rejestr-glowa { padding-right: 44px; }
+.cd-strona .cd-wlasny { display: block; }
+.cd-strona .cd-wlasny-poz { width: 100%; }
+.cd-strona .dn-rejestr-nazwa,
+.cd-strona .dn-rejestr-meta { min-width: 0; }
+
+@container plotno (max-width: 820px) {
+  .cd-strona .dn-rejestr-glowa { display: none; }
+  .cd-strona .cd-wlasny-poz { grid-template-columns: 30px 1fr; }
+}
+
+/* Wiersz sesji: nazwa i opis jeden pod drugim. */
+.cd-strona .dn-obszar-pozycja-tekst { display: flex; flex-direction: column; }

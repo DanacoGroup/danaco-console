@@ -659,3 +659,118 @@
 /* ==========================================================================
  *  14 · OGRANICZONY RUCH — globalnie, bez konfiguracji per komponent
  * ========================================================================== */
+
+
+/* ══ WNĘTRZE PRZYRZĄDOWE — układ z koncepcji ═══════════════════════════════
+   Wartości przepisane z `~/robocze/koncepcja-centrum/styl.css`. Blok działa
+   wyłącznie tam, gdzie okno samo się na niego zgłosi atrybutem
+   `data-wnetrze="przyrzadowe"`, więc pozostałe okna warstwy projektowej nie
+   widzą ani jednej z tych wartości. Pasy sterowania leżą poza płótnem, więc
+   też ich to nie dotyczy. */
+[data-wnetrze='przyrzadowe'] {
+  /* Pismo: krój nagłówkowy schodzi z wnętrza. Koncepcja nie zna Space Grotesk
+     — nazwy i tytuły niesie pismo maszynowe, tekst ciągły pismo szeryfowe
+     bezszeryfowe Plex Sans. */
+  --dn-ff-naglowek: var(--dn-ff-bazowa);
+
+  /* Skala ucięta: koncepcja kończy się na 30 px w tytule okna i 23 px w nazwie
+     przyrządu. Cały widok stoi wtedy na jednym poziomie głosu. */
+  --dn-fs-display: 30px;
+  --dn-fs-4xl: 23px;
+  --dn-fs-3xl: 23px;
+  --dn-fs-2xl: 19px;
+  --dn-fs-xl: 19px;
+  --dn-fs-lg: 17px;
+
+  /* Promienie ciaśniejsze — obudowa przyrządu, nie karta. */
+  --dn-r-xs: 4px;
+  --dn-r-sm: 6px;
+  --dn-r-md: 10px;
+  --dn-r-lg: 10px;
+  --dn-r-xl: 10px;
+
+  --dn-ls-mono-wersaliki: 0.14em;
+
+  /* Wymiary z koncepcji. */
+  --pz-karta-wys: 214px;
+  --pz-kafel-wys: 88px;
+  --pz-siatka: 28px;
+  --pz-naroznik: 9px;
+  --pz-grawer: 128px;
+}
+
+/* Barwy chłodne — koncepcja odchodzi od szarości neutralnej ku niebieskiej. */
+[data-wnetrze='przyrzadowe'] {
+  --dn-powierzchnia: #F4F7FA;
+  --dn-powierzchnia-2: #EAEEF3;
+  --dn-panel: #FFFFFF;
+  --dn-obrys: #DBE2EA;
+  --dn-obrys-subtelny: #E7ECF2;
+  --dn-obrys-mocny: #C4CFDB;
+  --dn-obrys-wyrazny: #A3B1C1;
+  --dn-tekst: #0D141C;
+  --dn-tekst-wiodacy: #2A3746;
+  --dn-tekst-2: #41505F;
+  --dn-tekst-3: #65788B;
+  --dn-sygnal: #1A5FD0;
+  --dn-sygnal-mocny: #1A5FD0;
+  --dn-sygnal-wypelnienie: #1A5FD0;
+  --dn-sygnal-tlo: rgba(26, 95, 208, .12);
+  --dn-sygnal-obrys: rgba(26, 95, 208, .40);
+  --pz-karta-tlo: linear-gradient(168deg, #FFFFFF, #F4F7FA);
+  --pz-kafel-tlo: linear-gradient(160deg, #FFFFFF, #F4F7FA);
+  --pz-grawer: rgba(26, 95, 208, .16);
+  --pz-punkt: rgba(26, 95, 208, .18);
+  --pz-akcent-2: #2F81F7;
+}
+
+:root[data-theme='dark'] [data-wnetrze='przyrzadowe'],
+:root:not([data-theme]) [data-wnetrze='przyrzadowe'] {
+  --dn-powierzchnia: #0E141C;
+  --dn-powierzchnia-2: #0A0F15;
+  --dn-panel: #131B25;
+  --dn-obrys: #1A2430;
+  --dn-obrys-subtelny: #16202B;
+  --dn-obrys-mocny: #25313F;
+  --dn-obrys-wyrazny: #354453;
+  --dn-tekst: #E6EDF5;
+  --dn-tekst-wiodacy: #C9D6E4;
+  --dn-tekst-2: #A9B7C8;
+  --dn-tekst-3: #74889E;
+  --dn-sygnal: #6AA6FF;
+  --dn-sygnal-mocny: #8FBEFF;
+  --dn-sygnal-wypelnienie: #2F81F7;
+  --dn-sygnal-tlo: rgba(47, 129, 247, .15);
+  --dn-sygnal-obrys: rgba(47, 129, 247, .40);
+  --pz-karta-tlo: linear-gradient(168deg, #131B25, #0E141C);
+  --pz-kafel-tlo: linear-gradient(160deg, #131B25, #0E141C);
+  --pz-grawer: rgba(140, 176, 224, .16);
+  --pz-punkt: rgba(120, 165, 225, .20);
+  --pz-akcent-2: #6AA6FF;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) [data-wnetrze='przyrzadowe'] {
+    --dn-powierzchnia: #F4F7FA;
+    --dn-powierzchnia-2: #EAEEF3;
+    --dn-panel: #FFFFFF;
+    --dn-obrys: #DBE2EA;
+    --dn-obrys-subtelny: #E7ECF2;
+    --dn-obrys-mocny: #C4CFDB;
+    --dn-obrys-wyrazny: #A3B1C1;
+    --dn-tekst: #0D141C;
+    --dn-tekst-wiodacy: #2A3746;
+    --dn-tekst-2: #41505F;
+    --dn-tekst-3: #65788B;
+    --dn-sygnal: #1A5FD0;
+    --dn-sygnal-mocny: #1A5FD0;
+    --dn-sygnal-wypelnienie: #1A5FD0;
+    --dn-sygnal-tlo: rgba(26, 95, 208, .12);
+    --dn-sygnal-obrys: rgba(26, 95, 208, .40);
+    --pz-karta-tlo: linear-gradient(168deg, #FFFFFF, #F4F7FA);
+    --pz-kafel-tlo: linear-gradient(160deg, #FFFFFF, #F4F7FA);
+    --pz-grawer: rgba(26, 95, 208, .16);
+    --pz-punkt: rgba(26, 95, 208, .18);
+    --pz-akcent-2: #2F81F7;
+  }
+}

@@ -94,3 +94,16 @@
 
 .cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
 
+
+/* ── Układ przyrządowy — samo rozmieszczenie ───────────────────────────── */
+
+/* Blat wg koncepcji: 1760 px, z dwoma progami poszerzenia, żeby na bardzo
+   szerokim ekranie treść nie stała w wąskiej kolumnie. */
+.cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 1760px; }
+@media (min-width: 2300px) { .cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2040px; } }
+@media (min-width: 3000px) { .cd-strona .dn-obszar[data-wnetrze='przyrzadowe'] { --cd-maks-tresc: 2360px; } }
+
+.cd-strona .dn-sciezka { margin-bottom: var(--dn-od-3); }
+.cd-strona .dn-metryka { gap: var(--dn-od-8); flex-wrap: wrap; }
+.cd-sekcja-glowa > .dn-sekcja-licznik { flex: none; margin-left: var(--dn-od-1); }
+.cd-plotno { position: relative; }

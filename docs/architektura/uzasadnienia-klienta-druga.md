@@ -6309,3 +6309,31 @@ panelu ani menu rozwijanego i nie przyjmuje drugiego rzędu. Czynność,
 której nie ma czym wykonać, nie wchodzi do wykazu — rząd ikon jest wtedy
 krótszy, a nie wyszarzony. Rama okna daje trzy pasy pod tytułem i należy
 do okien operacyjnych; panel w stosie jej nie używa.
+
+## budowa/klient-poprzedni/src/powloka/wyszukiwanie-globalne.ts
+Plik zbiera to, co da się w tej chwili przeszukać, i oddaje jako płaskie wpisy. Nie rysuje ani jednego
+wiersza, nie zna menu i nie zna rdzenia; rysowanie należy do mechanizmu z biblioteki, obsadzonego
+w module wykazu wyników. Wpisy powstają wyłącznie z tego, co powłoka już ma u siebie: z wykazu
+środowiska pobranego do bocznej nawigacji, z pasa kart sesji i z klientowych pozycji ustawień — ani
+jednej nowej komendy, ani jednego nowego odczytu. Drugi odczyt wykazu modułów obok tego, który
+zrobiła nawigacja, byłby drugą prawdą o tym samym wykazie, a wykazy rozjeżdżają się, gdy rdzeń zmieni
+jeden z nich. Czego wyszukiwanie nie obejmuje, nazwane wprost, żeby nikt nie odczytał granicy jako
+usterki: nie przeszukuje treści — ani wiadomości, ani transkryptów, ani plików, ani dokumentów;
+kontrakt nie ma osobnej rodziny komend wyszukiwania treści, są wyłącznie dwie komendy modułowe
+o innym zakresie. Tylko środowisko otwarte — moduły spoza macierzy widoczności bieżącego środowiska
+i moduły innych środowisk nie wchodzą, bo powłoka ich nie ma; pełny wykaz modułów platformy robi się
+poza powłoką. Okna operacyjne wychodzą kodem, nie nazwą polską, bo rdzeń nazw okien nie oddaje. Sesje
+to karty otwarte w tym oknie, a nie pełny wykaz sesji rdzenia; sesje zamknięte i sesje innych
+klientów nie wchodzą. Bez składni zapytań, bez operatorów logicznych i bez tolerancji literówek —
+fraza jest podciągiem, tak działa mechanizm biblioteki, który ten wykaz przycina. Bez paginacji: przy
+kilkunastu modułach, kilkudziesięciu oknach i kilku kartach wykaz jest kompletem; przy tysiącach
+pozycji potrzebna będzie komenda rdzenia, a nie ten plik. Mechanizm biblioteki umie nieść dwie nazwy
+— pełną ze źródłem i skróconą bez niego — i rysuje obie w jednym wierszu, co ma sens w wykazie
+płaskim na setki pozycji, gdzie bez źródła dwie pozycje o tej samej nazwie są nie do rozróżnienia;
+tutaj źródło niesie już nagłówek grupy, więc druga nazwa dałaby zbędnie złożony wiersz. Rozróżnienie
+czynności paska od okna niezbudowanego jest istotne: powierzchnie Always On Display i Mobile istnieją
+i są osiągalne z listwy strony głównej, więc zdanie „nie jest zbudowane" kłamałoby o bycie, który
+jest. Okno rozmowy odpada z wykazu okien operacyjnych: montuje je scena sesji przy każdym module
+i nie jest oknem operacyjnym. Rdzeń niesie je dziś w dwóch postaciach — odsiewamy obie, tak samo jak
+robi to katalog okien modułów. Warunek jest przepisany, a nie zaimportowany, bo ten katalog należy do
+innej grupy roboczej.

@@ -7609,3 +7609,6 @@ Moduł nie osadza się sam — oddaje element; gdzie stanie, rozstrzyga warstwa 
 
 Okno modułu musi być znane przed odczytem zasobów: odczyt zasobów przyjmuje identyfikator okna,
 a bez niego dotyczyłby czegoś innego niż to okno. Zaplecze idzie równolegle — jest niezależne.
+
+## budowa/klient-poprzedni/src/modele/podglad-promptu.ts
+Treść nakładki bierze się z komendy odczytu tożsamości skutecznej, a nie ze sklejenia warstw w kliencie: własny porządek składania rozjechałby się z rdzeniem przy pierwszej zmianie reguł. Kategoria wymagana bez treści nie wstrzymuje uruchomienia, więc podgląd wylicza ją imiennie.

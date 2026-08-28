@@ -6643,3 +6643,8 @@ fabryczną, czy po swoją. Warsztat nie jest drugą maszynerią przebiegu: skła
 go, a przebieg prowadzi ta sama kolejka zadań, którą prowadzi rozkład zlecenia — kontrakt mówi
 wprost, że przebieg łańcucha prowadzi pętla wykonawcza okna, więc prowadzi go pętla, nie osobny
 licznik obok.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/stany-okna.ts
+Stan błędu jest tu konieczny: debata odmawia z powodów zwyczajnych — kanał uczestnika nieczynny,
+tura zamknięta, stanowiska jeszcze nie ma — a okno pokazujące wtedy pustą listę wypowiedzi
+mówiłoby, że nikt nic nie powiedział, zamiast że nie udało się zapytać.

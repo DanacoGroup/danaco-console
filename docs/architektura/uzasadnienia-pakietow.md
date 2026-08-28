@@ -6525,3 +6525,14 @@ ma trzy stany: brak wskazania rozstrzyga adres nasłuchu, a wskazania „tak”
 i „nie” ustalają wymóg wprost. Wartość domyślna fałsz skasowałaby stan
 pierwszy i zniosłaby wymóg logowania na nasłuchu wystawionym poza pętlę
 zwrotną.
+
+## budowa/server/internal/konfig/katalog_definicji.go
+Pakiet nie sięga do bazy samodzielnie: bierze pozycje katalogu przez
+interfejs zrodloKatalogu, więc połączenie z bazą powstaje w punkcie
+kompozycji rdzenia. Pozycje mają postać struktury SettingDefinition
+kontraktu, dzięki czemu ta sama treść zasila zarówno rejestr rozstrzygania,
+jak i okno konfiguracji, bez drugiego opisu tego samego ustawienia.
+
+Katalog pusty albo niedostępny daje rejestr wbudowany rdzenia, ponieważ
+brak katalogu jest brakiem pozycji do pokazania, a nie brakiem możliwości
+rozstrzygnięcia nastawy.

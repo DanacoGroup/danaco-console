@@ -7325,3 +7325,10 @@ Punkt dostępu określa, do czego model ma wgląd: do maszyny przez most MCP alb
 Element `<svg>` bez atrybutu `width` bierze całą szerokość rodzica, a `preserveAspectRatio` wyśrodkowuje znak w pustym polu — logotyp wygląda wtedy na wielokrotnie mniejszy, niż wynika z podanej wysokości; stąd `szerokoscZnaku` wylicza szerokość jawnie.
 
 Funkcja `elementGodla` daje wyłącznie sygnet i dobiera przy tym odmianę uproszczoną poniżej 16 pikseli. Odmiany złożone, dostępne w `marka.ts`, mają inne proporcje niż kwadrat, więc `elementZnaku` idzie osobną drogą: `zbudujElement` nadaje bok kwadratowy z parametru `rozmiar` przy sygnecie, a przy odmianach złożonych `rozmiar` rozstrzyga wyłącznie wysokość, a szerokość zostaje wyliczona osobno.
+
+## budowa/klient-poprzedni/src/komponenty/rama-okna.ts
+Rola okna stoi w nagłówku, bo rozstrzyga układ: okna dzielą się na wiodące, pomocnicze, monitory, kreatory i zarządców, moduł ustawia je w pasach według roli, a Operator ma widzieć, dlaczego okno stoi tam, gdzie stoi.
+
+Fazy okna (puste, ładowanie, błąd, gotowe) nie należą do ramy. Rama daje `cialo`; przesłonę stanu buduje osobny byt modułu (`stany-okna`) i moduł osadza ją w ciele. Inaczej obudowa znałaby cykl życia danych, których nie pobiera.
+
+Klasy modułu w `OpisRamyOkna.przedrostek` nie wnoszą wyglądu — wygląd jest w bibliotece — ale bywają uchwytem reguł własnych arkusza: `.dt-okno` niesie rozmiar pisma terminala i selektor `[data-zawijanie]`. Moduł bez takiej reguły nie podaje nic i dostaje wygląd biblioteczny.

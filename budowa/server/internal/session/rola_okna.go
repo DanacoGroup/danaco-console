@@ -2,11 +2,9 @@ package session
 
 import "danacoconsole/shared"
 
-// Rola okna rozstrzyga miejsce okna w pętli koordynator–wykonawca.
-// Katalog wartości należy w całości do kontraktu — pakiet session żadnej nie
-// dopisuje.
+// Rola okna rozstrzyga miejsce okna w pętli koordynator-wykonawca; wartości należą do kontraktu.
 
-// roleDopuszczalne — zbiór ról znanych kontraktowi.
+// roleDopuszczalne to zbiór ról znanych kontraktowi, wykorzystywany do sprawdzania poprawności wartości.
 var roleDopuszczalne = map[shared.WindowRole]bool{
 	shared.WindowRoleStandalone:  true,
 	shared.WindowRoleExecutor:    true,
@@ -31,17 +29,17 @@ func normalizujRole(u Ustawienia) Ustawienia {
 	return u
 }
 
-// CzyWykonawca mówi, czy zakończenie tury tego okna wybudza koordynatora.
+// Metoda CzyWykonawca mówi, czy zakończenie tury tego okna wybudza koordynatora nadrzędnego wobec niego.
 func (o Okno) CzyWykonawca() bool {
 	return o.RolaOkna == shared.WindowRoleExecutor
 }
 
-// CzyKoordynator mówi, czy okno przyjmuje wybudzenia od swoich wykonawców.
+// Metoda CzyKoordynator mówi, czy okno przyjmuje wybudzenia zgłaszane przez swoich wykonawców podległych.
 func (o Okno) CzyKoordynator() bool {
 	return o.RolaOkna == shared.WindowRoleCoordinator
 }
 
-// CzySamodzielne mówi, czy okno stoi poza pętlą koordynator–wykonawca.
+// Metoda CzySamodzielne mówi, czy okno stoi poza pętlą koordynator-wykonawca i pracuje całkiem niezależnie.
 func (o Okno) CzySamodzielne() bool {
 	return o.RolaOkna == shared.WindowRoleStandalone
 }

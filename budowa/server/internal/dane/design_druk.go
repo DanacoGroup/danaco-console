@@ -1,11 +1,5 @@
-// Obszar profili wydania do druku (tabela `profil_druku_design`,
-// migracja 337) oraz licencji zasobów wciągniętych z katalogów zewnętrznych
-// (tabela `licencja_zasobu_design`, migracja 338) — część
-// `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// Profil czytają dwie czynności naraz: kontrola przeddrukowa i wydanie do
-// druku. Dlatego jest bytem trwałym, a nie parametrem wywołania — inaczej
-// mierzyłoby się wobec jednych nastaw, a wydawało wedle drugich.
+// Plik prowadzi obszar profili wydania do druku oraz licencji zasobów wciągniętych z katalogów zewnętrznych, część
+// RepozytoriumDesignu; profil jest bytem trwałym, bo czytają go naraz kontrola przeddrukowa i wydanie do druku.
 package dane
 
 import (
@@ -150,7 +144,7 @@ func (r *repozytoriumDesignu) ProfilDrukuDesignuPoKodzie(ctx context.Context,
 	return profil, nil
 }
 
-// ProfileDrukuDesignu zwraca profile okna, od ostatnio zmienianego.
+// ProfileDrukuDesignu zwraca profile druku okna, od ostatnio zmienianego, wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) ProfileDrukuDesignu(ctx context.Context,
 	okno string) ([]ProfilDrukuDesignu, error) {
 
@@ -229,7 +223,7 @@ func (r *repozytoriumDesignu) LicencjaZasobuDesignuPoZasobie(ctx context.Context
 	return licencja, nil
 }
 
-// odczytajProfilDrukuDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajProfilDrukuDesignu składa strukturę profilu wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajProfilDrukuDesignu(wiersz skaner) (ProfilDrukuDesignu, error) {
 	var profil ProfilDrukuDesignu
 	var nazwa, norma, profilICC, nosnik sql.NullString

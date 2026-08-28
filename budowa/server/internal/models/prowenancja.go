@@ -7,14 +7,11 @@ import (
 	"time"
 )
 
-// Tryby podania nakładki — te same napisy, którymi posługuje się kanał główny
-// (injection.TrybDopisz / injection.TrybZastap). Pakiet models trzyma własne
-// stałe, żeby nie wiązać się z pakietem injection, ale wartości muszą się
-// zgadzać, bo klient czyta jeden wspólny kształt prowenancji.
+// Tryby podania nakładki — te same napisy, którymi posługuje się kanał główny przy budowie wywołania modelu.
 const (
-	// trybNakladkiDopisz dokłada nakładkę do promptu programu.
+	// trybNakladkiDopisz dokłada nakładkę do promptu programu, zamiast go zastępować treścią nowej warstwy.
 	trybNakladkiDopisz = "dopisz"
-	// trybNakladkiZastap podmienia prompt w całości.
+	// trybNakladkiZastap zastępuje prompt programu treścią nakładki w całości, bez dopisywania jakichkolwiek warstw wcześniejszych.
 	trybNakladkiZastap = "zastap"
 )
 
@@ -27,19 +24,11 @@ const (
 	warstwaEkspertyza  = "ekspertyza"
 )
 
-// Prowenancja opisuje, co dokładnie poszło do modelu: wiersz wywołania, prompt
-// systemowy złożony z warstw nakładki, ustawienia przekazane kanałowi oraz skrót
-// nakładki. Jest przejrzystością wywołania, nie bramką — skrót służy wyłącznie
-// diagnostyce i nigdy nie dopuszcza ani nie blokuje wywołania.
-//
-// Nazwy pól JSON szkieletu są wspólne z injection.Prowenancja (kanał główny
-// CLI). Klient rozmowy (client/src/rozmowa/prowenancja.ts) parsuje wyłącznie
-// ten jeden kształt, więc kanały sieciowe i echo emitują prowenancję o tych
-// samych nazwach pól co kanał główny. Pola specyficzne kanałów bez procesu
-// (kanał, adapter, adres, ustawienia wywołania, środowisko) jadą jako
-// dodatkowe, poza wspólnym szkieletem, i nie kolidują z jego nazwami.
+// Prowenancja opisuje, co dokładnie poszło do modelu: wiersz wywołania, prompt systemowy złożony z warstw
+// nakładki, ustawienia przekazane kanałowi oraz skrót nakładki, wyłącznie do diagnostyki.
 type Prowenancja struct {
-	// ── Szkielet wspólny z injection.Prowenancja ─────────────────────────────
+	// Pola do końca sekcji stanowią szkielet wspólny z injection.Prowenancja.
+
 	// Program — plik wykonywalny albo klucz adaptera kanału bez procesu.
 	Program string `json:"program"`
 	// Argv — wiersz wywołania procesu; puste dla kanałów bez procesu.
@@ -64,8 +53,7 @@ type Prowenancja struct {
 	Katalogi []string `json:"directories"`
 	// KatalogRoboczy — katalog, w którym model zostawia własne pliki.
 	KatalogRoboczy string `json:"workingDirectory"`
-	// PlikUstawien — napis JSON pliku ustawień sesji przekazany kanałowi. Nazwa
-	// pola JSON to „settings" — tak samo jak w kanale głównym.
+	// PlikUstawien — napis JSON pliku ustawień sesji przekazany kanałowi.
 	PlikUstawien string `json:"settings"`
 	// KonfiguracjaMCP — wskazane konfiguracje mostów MCP.
 	KonfiguracjaMCP []string `json:"mcpConfig"`
@@ -82,26 +70,23 @@ type Prowenancja struct {
 	// Chwila — chwila złożenia prowenancji, zapis ISO 8601.
 	Chwila time.Time `json:"at"`
 
-	// ── Pola specyficzne kanałów sieciowych/echo (dodatkowe) ─────────────────
+	// Pola do końca struktury są specyficzne dla kanałów sieciowych i echo.
+
 	// Kanal — kod kanału z rejestru, który wykonuje wywołanie.
 	Kanal string `json:"channel,omitempty"`
 	// Adapter — klucz adaptera obsługującego kanał (echo, cli, api, …).
 	Adapter string `json:"adapter,omitempty"`
 	// Adres — punkt końcowy wywołania sieciowego; puste dla kanałów bez sieci.
 	Adres string `json:"endpoint,omitempty"`
-	// Ustawienia — parametry wywołania kanału; nigdy nie zawierają sekretu,
-	// wyłącznie odwołania do danych dostępowych. Osobna nazwa pola
-	// („callSettings"), by nie kolidować ze szkieletowym „settings".
+	// Ustawienia — parametry wywołania kanału; nigdy nie zawierają sekretu, wyłącznie odwołania.
 	Ustawienia map[string]string `json:"callSettings,omitempty"`
 	// SrodowiskoWykonania — gdzie model pracuje; niezależne od umiejscowienia
 	// rdzenia.
 	SrodowiskoWykonania string `json:"executionEnv,omitempty"`
 }
 
-// ProwenancjaZapytania składa prowenancję z tego, co niesie zapytanie i definicja
-// kanału. Wypełnia wspólny szkielet nazwami pól kanału głównego, żeby klient
-// odczytał prowenancję z każdego kanału jednakowo. Wywołujący dokłada jedynie to,
-// co zna sam adapter: argv albo adres.
+// ProwenancjaZapytania składa prowenancję z tego, co niesie zapytanie i definicja kanału, wypełniając
+// wspólny szkielet nazwami pól kanału głównego.
 func ProwenancjaZapytania(z Zapytanie, d Definicja) Prowenancja {
 	return Prowenancja{
 		Program:             d.KluczAdaptera(),

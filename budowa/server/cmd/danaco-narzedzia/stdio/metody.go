@@ -7,7 +7,8 @@ import (
 	"danacoconsole/server/internal/narzedzia"
 )
 
-// Nazwy metod protokołu MCP obsługiwanych przez serwer.
+// Nazwy metod protokołu MCP obsługiwanych przez serwer narzędzi w wywołaniach
+// JSON-RPC przychodzących od procesu modelu.
 const (
 	metodaPowitania = "initialize"
 	metodaPingu     = "ping"
@@ -15,7 +16,8 @@ const (
 	metodaWywolania = "tools/call"
 )
 
-// wywolanieNarzedzia jest treścią żądania `tools/call`.
+// wywolanieNarzedzia jest treścią żądania tools/call niosącą nazwę narzędzia
+// i jego argumenty wywołania.
 type wywolanieNarzedzia struct {
 	Nazwa     string         `json:"name"`
 	Argumenty map[string]any `json:"arguments"`
@@ -52,22 +54,14 @@ func powitanie() map[string]any {
 	}
 }
 
-// wykazNarzedzi przekłada wykaz rozdzielni na kształt `tools/list`.
-//
-// Kształt pozycji składa `narzedzia.PozycjeWykazu`, a nie ta funkcja: licznik
-// wykazu (`narzedzia/licznik.go`) mierzy wagę tej samej odpowiedzi w bajtach,
-// a dwa miejsca składające ją osobno dałyby pomiar czegoś innego, niż dostaje
-// model. Tutaj zostaje wyłącznie zamówienie wykazu.
+// wykazNarzedzi przekłada wykaz rozdzielni na kształt odpowiedzi tools/list,
+// zamawiając go u katalogu narzędzi.
 func wykazNarzedzi(kontekst context.Context, katalog Katalog) []map[string]any {
 	return narzedzia.PozycjeWykazu(katalog.Narzedzia(kontekst))
 }
 
-// wywolaj wykonuje `tools/call`.
-//
-// Odmowa narzędzia i błąd rdzenia wracają wynikiem oznaczonym jako błędny, a nie
-// błędem protokołu: model ma je przeczytać i poprawić wywołanie, zamiast dostać
-// usterkę połączenia. Błędem protokołu zostaje wyłącznie treść żądania, której
-// nie da się odczytać.
+// wywolaj wykonuje tools/call; odmowa narzędzia i błąd rdzenia wracają
+// wynikiem oznaczonym jako błędny, nie błędem protokołu.
 func wywolaj(kontekst context.Context, katalog Katalog, z zadanie) odpowiedz {
 	var wywolanie wywolanieNarzedzia
 	if err := json.Unmarshal(z.Params, &wywolanie); err != nil {
@@ -83,7 +77,8 @@ func wywolaj(kontekst context.Context, katalog Katalog, z zadanie) odpowiedz {
 	return wynikiem(z.Id, trescWyniku(tresc, false))
 }
 
-// trescWyniku składa wynik `tools/call` w kształcie protokołu.
+// trescWyniku składa wynik wywołania tools/call w kształcie odpowiedzi
+// wymaganym przez protokół MCP serwera.
 func trescWyniku(tekst string, blad bool) map[string]any {
 	return map[string]any{
 		"content": []map[string]any{{"type": "text", "text": tekst}},

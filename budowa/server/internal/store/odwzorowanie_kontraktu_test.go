@@ -8,25 +8,9 @@ import (
 	"testing"
 )
 
-// Odwzorowanie kontraktu na schemat bazy.
-//
-// Kontrakt deklaruje, że wyliczenie mające odpowiednik w schemacie niesie pole
-// `kolumnaBazy` (tabela.kolumna), a każda jego wartość — pole `baza`.
-// Odwzorowanie ma być jeden do jednego i żyć wyłącznie w kontrakcie.
-//
-// Deklaracja ta jest dziś obietnicą w pliku JSON: nic jej nie egzekwuje.
-// Kolumna może zostać przemianowana kolejną migracją, wartość może zostać
-// dodana do kontraktu i pominięta w warunku CHECK — obie zmiany przechodzą
-// kompilację po obu stronach i wychodzą dopiero zapisem odrzuconym przez bazę
-// u Operatora.
-//
-// Źródłem prawdy jest tu schemat wygenerowany przejazdem migracji, nie treść
-// plików .sql. Ta sama nazwa kolumny występuje w kilkunastu tabelach naraz
-// (`stan`, `rodzaj`, `kod`), więc odczyt z plików nie rozstrzygnąłby, o którą
-// tabelę chodzi; odczyt z `sqlite_master` rozstrzyga.
+// Kontrakt deklaruje, że wyliczenie z odpowiednikiem w schemacie niesie pole kolumnaBazy i pole baza.
 
-// sciezkaKontraktu wskazuje jedyne źródło prawdy nazw, licząc od katalogu
-// pakietu store.
+// sciezkaKontraktu wskazuje jedyne źródło prawdy nazw kontraktu, liczone od katalogu tego pakietu store.
 const sciezkaKontraktu = "../../../shared/contract.json"
 
 // wyliczenieKontraktu jest wycinkiem kontraktu potrzebnym temu sprawdzianowi.
@@ -38,44 +22,18 @@ type wyliczenieKontraktu struct {
 	Wartosci    []struct {
 		Wartosc string `json:"wartosc"`
 		Baza    string `json:"baza"`
-		// Przelotowa oznacza wartość, która przechodzi przez strumień i nigdy
-		// nie trafia do kolumny — kontrakt wskazuje ją wprost, więc brak
-		// odpowiednika w bazie jest tu stanem zamierzonym, nie brakiem.
+		// Przelotowa oznacza wartość, która przechodzi przez strumień i nigdy nie trafia do kolumny bazy.
 		Przelotowa bool `json:"przelotowa"`
 	} `json:"wartosci"`
 }
 
-// odwzorowaniaRozeszlyeSieZeSchematem wylicza wyliczenia, których pole
-// `kolumnaBazy` wskazuje dziś na nieistniejącą tabelę albo kolumnę. Wykaz jest
-// zaporą, nie zgodą — sprawdzian wypada niepomyślnie także wtedy, gdy rozjazd
-// zostanie usunięty, a wiersz zostanie.
-//
-// ProgressStatus wskazuje na `proces_sesji.stan`. Tabela `proces_sesji`
-// powstała w kroku zakładającym okna, a odeszła w kroku zdejmującym sieroty
-// transportu — rejestr procesów żyje w pamięci rdzenia i tam jest jego jedyne
-// miejsce. Odwzorowanie w kontrakcie zostało po tabeli, której nie ma.
-// Rozstrzygnięcie należy do kontraktu, nie do sprawdzianu: to `contract.json`
-// jest źródłem prawdy nazw, a nie schemat.
-// Dwadzieścia trzy pozycje niżej to inny rodzaj rozjazdu niż ProgressStatus:
-// nie ślad po tabeli zdjętej, lecz odwzorowanie wniesione PRZED migracją, która
-// tabelę założy. Wykonawcy modułów oddali definicje komend wraz z miejscem
-// danych, a scalanie kontraktu poszło jednym przebiegiem — migracje tabel
-// powstają moduł po module w kroku dobudowy rdzenia.
-//
-// Wykaz jest zaporą także tutaj i sam się sprząta: gdy migracja modułu założy
-// tabelę, sprawdzian wypadnie niepomyślnie z powodu wiersza, który został.
-// Wpis znika wtedy razem z powodem, dla którego powstał.
+// odwzorowaniaRozeszlyeSieZeSchematem wylicza wyliczenia, których pole kolumnaBazy wskazuje dziś na nieistniejącą tabelę albo kolumnę.
 var odwzorowaniaRozeszlyeSieZeSchematem = map[string]string{
 	"ProgressStatus": "tabela proces_sesji zdjęta krokiem sieroty_transportu; rejestr procesów żyje w pamięci",
 
-	// Automations — schemat modułu wszedł migracjami 260-275 (wersje definicji,
-	// etykiety, zmienne i mapowania, notatki i układ kanwy, szablony, publikacja
-	// i budżety, zlecenia kolejki, polityka kolejki, dziennik i kroki przebiegu,
-	// punkty wznowienia, reguły alarmowania, skarbiec i audyt, okna wykonania
-	// i historia wyzwoleń), więc wierszy rozjazdu tu nie ma.
+	// Automations — schemat modułu wszedł migracjami 260-275, więc wierszy rozjazdu tu nie ma.
 
-	// Diagnostics — alerty i sondy kondycji. Prowenancja wywołań ma już swoje
-	// tabele (migracja 129), więc jej wiersze zeszły stąd razem z powodem.
+	// Diagnostics — prowenancja wywołań ma już swoje tabele, więc jej wiersze zeszły stąd razem z powodem.
 	"AlertRuleKind":      "tabela alert_regula powstaje z migracją modułu Diagnostics",
 	"AlertMetric":        "tabela alert_regula powstaje z migracją modułu Diagnostics",
 	"AlertComparison":    "tabela alert_regula powstaje z migracją modułu Diagnostics",
@@ -84,9 +42,7 @@ var odwzorowaniaRozeszlyeSieZeSchematem = map[string]string{
 	"HealthProbeKind":    "tabela kondycja_sonda powstaje z migracją modułu Diagnostics",
 	"HealthProbeStatus":  "tabela kondycja_wynik powstaje z migracją modułu Diagnostics",
 
-	// Library — schemat modułu wszedł migracjami 180-186 (cykl życia zasobu,
-	// słownik i tezaurus, reguły, audyt, retencja i utrwalenie, udostępnienia
-	// i nasłuchy, sugestie), więc wierszy rozjazdu tu nie ma.
+	// Library — schemat modułu wszedł migracjami 180-186, więc wierszy rozjazdu tu nie ma.
 }
 
 // TestKazdaKolumnaOdwzorowaniaIstniejeWSchemacie sprawdza pierwszą połowę
@@ -123,10 +79,7 @@ func TestKazdaKolumnaOdwzorowaniaIstniejeWSchemacie(t *testing.T) {
 	}
 }
 
-// TestKazdaWartoscOdwzorowaniaPrzechodziPrzezWarunek sprawdza drugą połowę:
-// wartość zapisana w kontrakcie jako `baza` jest wartością, którą kolumna
-// przyjmuje. Kolumna bez warunku CHECK przyjmuje wszystko, więc sprawdzian
-// pomija ją, zamiast zgłaszać brak — warunek jest środkiem, nie wymogiem.
+// TestKazdaWartoscOdwzorowaniaPrzechodziPrzezWarunek sprawdza, że wartość zapisana w kontrakcie jako baza jest wartością, którą kolumna przyjmuje.
 func TestKazdaWartoscOdwzorowaniaPrzechodziPrzezWarunek(t *testing.T) {
 	baza := swiezaBaza(t)
 	wyliczenia := wyliczeniaOdwzorowane(t)
@@ -143,8 +96,7 @@ func TestKazdaWartoscOdwzorowaniaPrzechodziPrzezWarunek(t *testing.T) {
 				t.Skipf("kolumna %s.%s nie ma warunku CHECK — nie ma czego porównać", tabela, kolumna)
 			}
 			for _, wartosc := range wyliczenie.Wartosci {
-				// Wartość przelotowa nigdy nie trafia do kolumny — kontrakt
-				// mówi to wprost, więc jej brak w warunku jest zgodnością.
+				// Wartość przelotowa nigdy nie trafia do kolumny; kontrakt mówi to wprost, więc jej brak jest zgodny.
 				if wartosc.Przelotowa {
 					continue
 				}
@@ -164,7 +116,7 @@ func TestKazdaWartoscOdwzorowaniaPrzechodziPrzezWarunek(t *testing.T) {
 	}
 }
 
-// wyliczeniaOdwzorowane czyta z kontraktu wyliczenia niosące odwzorowanie bazy.
+// Funkcja wyliczeniaOdwzorowane czyta z kontraktu wyliczenia niosące odwzorowanie na schemat bazy danych.
 func wyliczeniaOdwzorowane(t *testing.T) []wyliczenieKontraktu {
 	t.Helper()
 
@@ -192,7 +144,7 @@ func wyliczeniaOdwzorowane(t *testing.T) []wyliczenieKontraktu {
 	return odwzorowane
 }
 
-// rozlozOdwolanie rozdziela zapis `tabela.kolumna`.
+// Funkcja rozlozOdwolanie rozdziela zapis odwołania w postaci tabela.kolumna na dwie osobne jego części.
 func rozlozOdwolanie(t *testing.T, odwolanie string) (string, string) {
 	t.Helper()
 	tabela, kolumna, rozdzielone := strings.Cut(odwolanie, ".")
@@ -202,7 +154,7 @@ func rozlozOdwolanie(t *testing.T, odwolanie string) (string, string) {
 	return tabela, kolumna
 }
 
-// tabelaIstnieje pyta schemat o tabelę.
+// Funkcja tabelaIstnieje pyta schemat bazy o istnienie tabeli o podanej nazwie po przejeździe migracji.
 func tabelaIstnieje(t *testing.T, baza *Baza, tabela string) bool {
 	t.Helper()
 	var liczba int
@@ -214,7 +166,7 @@ func tabelaIstnieje(t *testing.T, baza *Baza, tabela string) bool {
 	return liczba > 0
 }
 
-// kolumnaIstnieje pyta schemat o kolumnę tabeli.
+// Funkcja kolumnaIstnieje pyta schemat bazy o istnienie kolumny wskazanej tabeli po przejeździe migracji.
 func kolumnaIstnieje(t *testing.T, baza *Baza, tabela, kolumna string) bool {
 	t.Helper()
 	wiersze, err := baza.DB.Query("SELECT name FROM pragma_table_info(?)", tabela)

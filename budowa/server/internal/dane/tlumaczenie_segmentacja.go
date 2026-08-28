@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: segmentacja modułu Translate — zestawy reguł podziału
-// (`zestaw_regul_segmentacji`, `regula_segmentacji`) i trwałe segmenty okna
-// (`segment_okna_tlumaczenia`), migracja 161.
-//
-// Segmenty okna zapisywane są zawsze kompletem: `UstawSegmenty` wymienia cały
-// wykaz okna w jednej transakcji. Scalenie dwóch segmentów przesuwa numery
-// wszystkich następnych, więc zapis punktowy musiałby i tak dotknąć całego
-// wykazu — tylko w kilku osobnych transakcjach, z oknem, w którym numeracja
-// jest podwójna albo dziurawa.
+// Plik obsługuje segmentację modułu Translate: zestawy reguł podziału w tabelach
+// zestaw_regul_segmentacji i regula_segmentacji oraz trwałe segmenty okna w
+// tabeli segment_okna_tlumaczenia, wprowadzone migracją 161.
 package dane
 
 import (
@@ -84,7 +78,8 @@ func (r *repozytoriumTlumaczen) ZestawyRegulSegmentacji(ctx context.Context,
 	return zestawy, nil
 }
 
-// regulySegmentacji doczytuje reguły jednego zestawu w kolejności zapisanej.
+// regulySegmentacji doczytuje reguły jednego zestawu z bazy danych w kolejności
+// zapisanej, porządkując wynik według pola kolejnosc.
 func (r *repozytoriumTlumaczen) regulySegmentacji(ctx context.Context,
 	zestawID int64) ([]RegulaSegmentacji, error) {
 
@@ -155,7 +150,8 @@ func (r *repozytoriumTlumaczen) ZapiszZestawRegulSegmentacji(ctx context.Context
 	return r.ZestawRegulSegmentacji(ctx, zestaw.Kod)
 }
 
-// ZestawRegulSegmentacji oddaje jeden zestaw wraz z regułami.
+// ZestawRegulSegmentacji oddaje jeden zestaw reguł segmentacji wraz z jego
+// regułami, odnaleziony po identyfikatorze zewnętrznym zestawu.
 func (r *repozytoriumTlumaczen) ZestawRegulSegmentacji(ctx context.Context,
 	kod string) (ZestawRegulSegmentacji, error) {
 
@@ -202,8 +198,8 @@ func (r *repozytoriumTlumaczen) SegmentyOkna(ctx context.Context, oknoID int64) 
 	return segmenty, wiersze.Err()
 }
 
-// UstawSegmentyOkna wymienia cały trwały podział okna. Powód kompletu stoi
-// w nagłówku pliku.
+// UstawSegmentyOkna wymienia cały trwały podział okna jedną transakcją,
+// ponieważ scalenie segmentów przesuwa numerację kolejnych wpisów.
 func (r *repozytoriumTlumaczen) UstawSegmentyOkna(ctx context.Context,
 	oknoID int64, segmenty []string) error {
 

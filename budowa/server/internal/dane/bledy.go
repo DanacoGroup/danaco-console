@@ -19,11 +19,9 @@ var ErrBrakWiersza = errors.New("dane: brak wiersza")
 // z nazwami tabel i kolumn.
 var ErrKolizjaWiersza = errors.New("dane: kolizja z istniejącym wierszem")
 
-// czyKolizja rozpoznaje naruszenie jednoznaczności po komunikacie sterownika.
-// Sterownik SQLite nie wystawia typowanego błędu, do którego dałoby się dojść
-// przez errors.As bez wciągania go do tego pakietu, więc rozpoznanie idzie po
-// treści — i jest zamknięte w tym miejscu, żeby nie rozlało się po warstwach
-// wyżej.
+// czyKolizja rozpoznaje naruszenie jednoznaczności po treści komunikatu
+// sterownika SQLite, ponieważ sterownik nie udostępnia typowanego błędu
+// dostępnego przez errors.As bez zależności od niego w tym pakiecie.
 func czyKolizja(err error) bool {
 	if err == nil {
 		return false

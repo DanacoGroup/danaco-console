@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: ślad syntezy mowy panelu tłumaczenia (odsłuch),
-// tabela `panel_tlumaczenia_synteza_mowy` (`store/migracja_055_jakosc_i_mowa.sql`).
-// Zasila komendę `translate.speech.synthesize`; plik osobny od `jakosc.go`
-// i `jakosc_eksport.go`.
-//
-// RDZEŃ NIE SYNTEZUJE MOWY — TEN SAM BRAK CO W MODULE ASSISTANT
-// (`wpis_dziennika_asystenta.nagranie_odnosnik`). `NagranieOdnosnik` niesie
-// odwołanie do pliku dostarczonego z zewnątrz, jeśli kiedykolwiek powstanie;
-// metoda zapisu nie dorabia mu wartości domyślnej — brak zostaje NULL, bo
-// rdzeń nie syntezuje i zmyślona ścieżka byłaby obietnicą bez pokrycia.
+// Odpowiedzialność pliku: ślad syntezy mowy panelu tłumaczenia, tabela `panel_tlumaczenia_synteza_mowy`
+// (`store/migracja_055_jakosc_i_mowa.sql`).
 package dane
 
 import (
@@ -92,7 +84,7 @@ func (r *repozytoriumTlumaczen) Syntezy(ctx context.Context, panelID int64) ([]S
 	return syntezy, wiersze.Err()
 }
 
-// odczytajSyntezeMowy przenosi jeden wiersz zapytania do bytu obszaru.
+// odczytajSyntezeMowy przenosi jeden wiersz wyniku zapytania do struktury bytu syntezy mowy w obszarze danych.
 func odczytajSyntezeMowy(s skaner) (SyntezaMowy, error) {
 	var synteza SyntezaMowy
 	var nagranieOdnosnik sql.NullString

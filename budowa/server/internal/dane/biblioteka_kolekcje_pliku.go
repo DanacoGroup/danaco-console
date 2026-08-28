@@ -1,16 +1,5 @@
-// Przynależność pliku do kolekcji widziana od strony pliku (tabela
-// `przypisanie_kolekcji_biblioteki`): odczyt kolekcji danego pliku oraz
-// ustawienie kompletu kolekcji pliku, czyli zapis, który potrafi z kolekcji
-// zdjąć. Kolekcja jako byt (`kolekcja_biblioteki`) i przypisanie widziane od
-// strony kolekcji (`PrzypiszDoKolekcji`) leżą w `library_kolekcje.go`.
-//
-// `UstawKolekcjePliku` ma semantykę „ustaw": stan po zapisie jest wykazem
-// z żądania, więc `library.tag.set` zdejmuje plik z kolekcji pominiętych
-// w wykazie, zamiast tylko dokładać nowe.
-//
-// Ustawienie jest wymianą w jednej transakcji, tak samo jak `UstawEtykiety`
-// (`library_kolekcje.go`). Zapis przerwany w połowie nie zostawia pliku
-// w stanie przejściowym, widocznym dla wykazu filtrowanego po kolekcji.
+// Plik prowadzi przynależność pliku do kolekcji widzianą od strony pliku: odczyt kolekcji danego pliku oraz
+// ustawienie kompletu kolekcji pliku; kolekcja jako byt i przypisanie widziane od strony kolekcji leżą w library_kolekcje.go.
 package dane
 
 import (
@@ -63,15 +52,8 @@ func (r *repozytoriumBiblioteki) KolekcjePliku(ctx context.Context, plikID int64
 	return lista, nil
 }
 
-// UstawKolekcjePliku czyni wykaz kolekcji pliku dokładnie takim, jaki podano:
-// kolekcje spoza wykazu zostają zdjęte, kolekcje z wykazu dopięte. Zwraca stan
-// po zapisie odczytany z bazy, a nie powtórzone żądanie.
-//
-// Kolekcja nieznana jest odmową całości, tak samo jak przy `PrzypiszDoKolekcji`:
-// wykaz z kodem, którego nie ma, wskazuje przynależność nieosiągalną,
-// a wykonanie reszty zdjęłoby plik z kolekcji zastanych na podstawie żądania
-// zrozumianego tylko częściowo. Sprawdzenie idzie przed usunięciem, wewnątrz
-// tej samej transakcji, więc odmowa nie zostawia pliku bez przypisań.
+// UstawKolekcjePliku czyni wykaz kolekcji pliku dokładnie takim, jaki podano: kolekcje spoza wykazu zostają zdjęte,
+// kolekcje z wykazu dopięte; kolekcja nieznana jest odmową całości, sprawdzoną przed usunięciem w tej samej transakcji.
 func (r *repozytoriumBiblioteki) UstawKolekcjePliku(ctx context.Context,
 	kodPliku string, kodyKolekcji []string) ([]string, error) {
 
@@ -110,11 +92,7 @@ func (r *repozytoriumBiblioteki) UstawKolekcjePliku(ctx context.Context,
 	return r.KolekcjePliku(ctx, plik.ID)
 }
 
-// kluczeKolekcji przekłada kody kolekcji na klucze wierszy i odmawia przy
-// pierwszym kodzie bez wiersza (ErrBrakWiersza — adapter odróżni „nie ma
-// takiej kolekcji" od awarii odczytu). Kod pusty jest pominięciem, nie
-// odmową: puste pole w wykazie żądania nie wskazuje żadnej kolekcji, więc nie
-// ma czego nie znaleźć.
+// kluczeKolekcji przekłada kody kolekcji na klucze wierszy i odmawia przy pierwszym kodzie bez wiersza; kod pusty jest pominięciem, nie odmową.
 func (r *repozytoriumBiblioteki) kluczeKolekcji(ctx context.Context, transakcja *sql.Tx,
 	kody []string) ([]int64, error) {
 

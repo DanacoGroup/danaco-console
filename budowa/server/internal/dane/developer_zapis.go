@@ -57,7 +57,8 @@ func (r *repozytoriumDevelopera) ZapiszWersje(ctx context.Context, wersja Wersja
 	return nil
 }
 
-// ZapiszPrzebieg wpisuje przebieg budowania albo odświeża jego stan.
+// ZapiszPrzebieg wpisuje nowy przebieg budowania albo odświeża stan
+// przebiegu istniejącego pod tym samym kodem.
 func (r *repozytoriumDevelopera) ZapiszPrzebieg(ctx context.Context, przebieg PrzebiegBudowania) error {
 	if przebieg.Kod == "" || przebieg.OknoKod == "" {
 		return fmt.Errorf("dane: przebieg budowania bez identyfikatora przebiegu albo okna")
@@ -78,8 +79,8 @@ func (r *repozytoriumDevelopera) ZapiszPrzebieg(ctx context.Context, przebieg Pr
 	return nil
 }
 
-// ZakonczPrzebieg domyka wiersz przebiegu stanem końcowym, kodem wyjścia
-// i ogonem logu.
+// ZakonczPrzebieg domyka wiersz przebiegu budowania stanem końcowym, kodem
+// wyjścia i ogonem dziennika zdarzeń.
 func (r *repozytoriumDevelopera) ZakonczPrzebieg(ctx context.Context, kod string,
 	stan shared.BuildStatus, kodWyjscia *int64, log string) error {
 
@@ -96,7 +97,8 @@ func (r *repozytoriumDevelopera) ZakonczPrzebieg(ctx context.Context, kod string
 	return nil
 }
 
-// OsierocPrzebiegi przestawia przebiegi poprzedniego biegu rdzenia na `stopped`.
+// OsierocPrzebiegi przestawia przebiegi zostawione przez poprzedni bieg
+// rdzenia w stanie running na stopped.
 func (r *repozytoriumDevelopera) OsierocPrzebiegi(ctx context.Context) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, osierocPrzebiegiBudowania)
 	if err != nil {
@@ -106,8 +108,7 @@ func (r *repozytoriumDevelopera) OsierocPrzebiegi(ctx context.Context) (int64, e
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można osierocić przebiegów budowania: %w", err)
 	}
-	// Osierocenie już się wykonało; nieudany odczyt liczby wierszy znaczy, że
-	// nie wiadomo ilu — a nie że zeru.
+	// Osierocenie już się wykonało; nieudany odczyt liczby wierszy znaczy niewiadomą, nie zero.
 	zmienione, err := wynik.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("dane: nie można odczytać liczby osieroconych przebiegów budowania: %w", err)

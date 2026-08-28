@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: reguły alarmowania (tabela
-// `regula_alarmowania_automatyki`, migracja 273), skarbiec referencji
-// poświadczeń (tabela `poswiadczenie_automatyki`, migracja 274) i dziennik
-// audytu (tabela `wpis_audytu_automatyki`, ta sama migracja).
-//
-// Skarbiec nie zna wartości poświadczeń i nigdy jej nie pozna. Baza trzyma
-// wyłącznie nazwę, zasięg i odwołanie; wartość leży w sejfie plikowym katalogu
-// danych (`sejf_poswiadczen.go`) — tym samym, którym jadą sekrety kont
-// i punktów dostępu. Odczyt bazy nie może więc wynieść sekretu, bo kolumny na
-// niego nie ma, a nie dlatego, że ktoś pamiętał o filtrze przy odczycie.
+// Plik prowadzi reguły alarmowania, skarbiec referencji poświadczeń i dziennik audytu automatyki; skarbiec nie zna
+// wartości poświadczeń i nigdy jej nie pozna, bo baza trzyma wyłącznie nazwę, zasięg i odwołanie do sejfu plikowego.
 package dane
 
 import (
@@ -17,7 +9,7 @@ import (
 	"fmt"
 )
 
-// RegulaAlarmowania to wiersz tabeli `regula_alarmowania_automatyki`.
+// RegulaAlarmowania to wiersz tabeli `regula_alarmowania_automatyki` niosący warunek oraz próg alarmu.
 type RegulaAlarmowania struct {
 	Kod            string
 	AutomatykaID   int64
@@ -39,7 +31,7 @@ type PoswiadczenieAutomatyki struct {
 	Zaktualizowano string
 }
 
-// WpisAudytuAutomatyki to wiersz tabeli `wpis_audytu_automatyki`.
+// WpisAudytuAutomatyki to wiersz tabeli `wpis_audytu_automatyki` niosący jeden zapis dziennika audytu.
 type WpisAudytuAutomatyki struct {
 	Kod           string
 	AutomatykaID  *int64
@@ -113,7 +105,7 @@ const (
 	                         ORDER BY w.chwila DESC, w.id DESC LIMIT ?`
 )
 
-// ZapiszRegulealarmowania zakłada regułę albo nadpisuje zastaną.
+// ZapiszRegulealarmowania zakłada regułę alarmowania albo nadpisuje zastaną regułę tego samego zasięgu.
 func (r *repozytoriumAutomatyk) ZapiszRegulealarmowania(ctx context.Context,
 	regula RegulaAlarmowania) (RegulaAlarmowania, error) {
 
@@ -139,7 +131,7 @@ func (r *repozytoriumAutomatyk) ZapiszRegulealarmowania(ctx context.Context,
 	return zapisana, nil
 }
 
-// RegulyAlarmowania zwraca reguły automatyki albo komplet reguł Operatora.
+// RegulyAlarmowania zwraca reguły alarmowania jednej automatyki, albo pełny komplet reguł Operatora z bazy.
 func (r *repozytoriumAutomatyk) RegulyAlarmowania(ctx context.Context,
 	automatykaID int64) ([]RegulaAlarmowania, error) {
 
@@ -182,7 +174,7 @@ func (r *repozytoriumAutomatyk) ZapiszPoswiadczenieAutomatyki(ctx context.Contex
 	return nil
 }
 
-// PoswiadczeniaAutomatyki zwraca referencje w kolejności nazw.
+// PoswiadczeniaAutomatyki zwraca referencje poświadczeń w kolejności nazw wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) PoswiadczeniaAutomatyki(ctx context.Context,
 	zasieg, zasiegID string) ([]PoswiadczenieAutomatyki, error) {
 
@@ -207,7 +199,7 @@ func (r *repozytoriumAutomatyk) PoswiadczeniaAutomatyki(ctx context.Context,
 	return lista, wiersze.Err()
 }
 
-// PoswiadczenieAutomatykiPoOdwolaniu zwraca jedną referencję.
+// PoswiadczenieAutomatykiPoOdwolaniu zwraca jedną referencję poświadczenia po jej odwołaniu w skarbcu.
 func (r *repozytoriumAutomatyk) PoswiadczenieAutomatykiPoOdwolaniu(ctx context.Context,
 	odwolanie string) (PoswiadczenieAutomatyki, error) {
 
@@ -262,7 +254,7 @@ func (r *repozytoriumAutomatyk) DopiszAudytAutomatyki(ctx context.Context,
 	return nil
 }
 
-// AudytAutomatyki zwraca dziennik od najnowszego wpisu.
+// AudytAutomatyki zwraca dziennik audytu automatyki od najnowszego wpisu wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) AudytAutomatyki(ctx context.Context, automatykaID int64,
 	od, do string, limit int) ([]WpisAudytuAutomatyki, error) {
 
@@ -295,7 +287,7 @@ func (r *repozytoriumAutomatyk) AudytAutomatyki(ctx context.Context, automatykaI
 	return lista, wiersze.Err()
 }
 
-// odczytajRegule składa regułę alarmowania z jednego wiersza wyniku.
+// odczytajRegule składa regułę alarmowania automatyki wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajRegule(wiersz skaner) (RegulaAlarmowania, error) {
 	var regula RegulaAlarmowania
 	var warunek sql.NullString
@@ -310,7 +302,7 @@ func odczytajRegule(wiersz skaner) (RegulaAlarmowania, error) {
 	return regula, nil
 }
 
-// odczytajPoswiadczenieAutomatyki składa referencję z jednego wiersza wyniku.
+// odczytajPoswiadczenieAutomatyki składa referencję wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajPoswiadczenieAutomatyki(wiersz skaner) (PoswiadczenieAutomatyki, error) {
 	var poswiadczenie PoswiadczenieAutomatyki
 	var zasieg, zasiegID sql.NullString

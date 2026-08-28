@@ -1,7 +1,5 @@
 // Odpowiedzialność pliku: dostęp do zasobów pamięci wielopoziomowej (tabela
-// `zasob_pamieci`). Pamięć zostaje na poziomie sesji — okno komunikacji nie jest
-// jej poziomem. Treść obszerna trafia do pliku, baza trzyma odwołanie
-// . Konfigurację pamięci sesji obsługuje `pamiec_sesji.go`.
+// `zasob_pamieci`). Pamięć zostaje na poziomie sesji — okno komunikacji nie jest jej poziomem.
 package dane
 
 import (
@@ -15,10 +13,9 @@ import (
 // niego wyliczenia — pamięć nie ma jeszcze komend.
 type PoziomPamieci string
 
-// Katalog poziomów pamięci niesie kolumna `zasob_pamieci.poziom`; wartość składa
-// się z napisu odczytanego z bazy — zob. rozlozPoziomy w pamiec_sesji.go.
+// Katalog poziomów pamięci niesie kolumna `zasob_pamieci.poziom`, złożona z napisu odczytanego z bazy.
 
-// Zasob to wiersz tabeli `zasob_pamieci`.
+// Zasob to wiersz tabeli `zasob_pamieci`, niosący jedną pozycję pamięci wielopoziomowej tej samej sesji.
 type Zasob struct {
 	ID             int64
 	Poziom         PoziomPamieci
@@ -31,7 +28,7 @@ type Zasob struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumPamieci jest kontraktem obszaru pamięci.
+// RepozytoriumPamieci jest kontraktem obszaru pamięci, określającym operacje dostępne na jej zasobach.
 type RepozytoriumPamieci interface {
 	Zapisz(ctx context.Context, zasob Zasob) error
 	Pobierz(ctx context.Context, poziom PoziomPamieci, kluczZasiegu, klucz string) (Zasob, bool, error)
@@ -73,7 +70,7 @@ func noweRepozytoriumPamieci(z *zapytania) *repozytoriumPamieci {
 	return &repozytoriumPamieci{zapytania: z}
 }
 
-// Zapisz utrwala zasób pamięci; zasób o tym samym kluczu nadpisuje.
+// Zapisz utrwala zasób pamięci w bazie danych rdzenia; zasób o tym samym kluczu zostaje wtedy nadpisany.
 func (r *repozytoriumPamieci) Zapisz(ctx context.Context, zasob Zasob) error {
 	if zasob.Klucz == "" {
 		return fmt.Errorf("dane: zasób pamięci bez klucza")
@@ -91,8 +88,7 @@ func (r *repozytoriumPamieci) Zapisz(ctx context.Context, zasob Zasob) error {
 	return nil
 }
 
-// Pobierz zwraca zasób pamięci. Drugi wynik mówi, czy zasób istnieje — brak
-// wpisu nie jest błędem.
+// Pobierz zwraca zasób pamięci wraz ze znacznikiem jego istnienia; brak wpisu nie jest błędem odczytu.
 func (r *repozytoriumPamieci) Pobierz(ctx context.Context, poziom PoziomPamieci,
 	kluczZasiegu, klucz string) (Zasob, bool, error) {
 
@@ -110,7 +106,7 @@ func (r *repozytoriumPamieci) Pobierz(ctx context.Context, poziom PoziomPamieci,
 	return zasob, true, nil
 }
 
-// ListaPoziomu zwraca zasoby jednego bytu poziomu, od najwyższej wagi.
+// ListaPoziomu zwraca zasoby jednego bytu danego poziomu pamięci, uporządkowane od jej najwyższej wagi.
 func (r *repozytoriumPamieci) ListaPoziomu(ctx context.Context, poziom PoziomPamieci,
 	kluczZasiegu string) ([]Zasob, error) {
 
@@ -138,7 +134,7 @@ func (r *repozytoriumPamieci) ListaPoziomu(ctx context.Context, poziom PoziomPam
 	return lista, nil
 }
 
-// Usun kasuje zasób pamięci.
+// Usun kasuje zasób pamięci wskazany poziomem, zasięgiem i kluczem, zapisany w bazie danych tego rdzenia.
 func (r *repozytoriumPamieci) Usun(ctx context.Context, poziom PoziomPamieci,
 	kluczZasiegu, klucz string) error {
 
@@ -152,7 +148,7 @@ func (r *repozytoriumPamieci) Usun(ctx context.Context, poziom PoziomPamieci,
 	return nil
 }
 
-// odczytajZasob składa strukturę z jednego wiersza wyniku.
+// odczytajZasob składa pełną strukturę zasobu pamięci z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajZasob(wiersz skaner) (Zasob, error) {
 	var zasob Zasob
 	var poziom string

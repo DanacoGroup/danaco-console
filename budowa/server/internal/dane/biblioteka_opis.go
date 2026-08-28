@@ -1,16 +1,5 @@
-// Odpowiedzialność pliku: opis zasobu w schemacie Dublin Core (tabela
-// `opis_zasobu_biblioteki`) oraz definicje pól niestandardowych schematu
-// metadanych (`pole_schematu_biblioteki`) — migracja 180.
-//
-// Dwa byty, jeden plik, bo są dwiema stronami tego samego pytania „co wiadomo
-// o zasobie": definicja mówi, jakie pole wolno wypełnić, opis niesie wartość.
-// Rozdzielenie ich na dwa pliki rozdzieliłoby też czytanie: pole bez wartości
-// jest deklaracją bez skutku, wartość bez pola — łańcuchem bez znaczenia.
-//
-// Brak opisu nie jest brakiem wiersza w rozumieniu odmowy: zasób bez ani jednego
-// wypełnionego pola oddaje opis pusty, nie `ErrBrakWiersza`. Odmowa należy się
-// wskazaniu zasobu, którego nie ma — a to rozstrzyga `Plik`, zanim opis w ogóle
-// zostanie odczytany.
+// Plik prowadzi opis zasobu w schemacie Dublin Core oraz definicje pól niestandardowych schematu metadanych; dwa
+// byty w jednym pliku, bo definicja mówi, jakie pole wolno wypełnić, a opis niesie wartość — dwie strony jednego pytania.
 package dane
 
 import (
@@ -43,7 +32,7 @@ type OpisZasobuBiblioteki struct {
 	Zaktualizowano     string
 }
 
-// PoleSchematuBiblioteki to wiersz tabeli `pole_schematu_biblioteki`.
+// PoleSchematuBiblioteki to wiersz tabeli `pole_schematu_biblioteki` niosący definicję jednego pola metadanych.
 type PoleSchematuBiblioteki struct {
 	Kod         string
 	Etykieta    string
@@ -51,8 +40,7 @@ type PoleSchematuBiblioteki struct {
 	Wymagane    bool
 	MimeType    *string
 	KolekcjaKod *string
-	// Opcje niesie słownik dopuszczalnych wartości w zapisie JSON — wypełniony
-	// wyłącznie dla rodzaju `lista`.
+	// Opcje niesie słownik dopuszczalnych wartości w zapisie JSON, wypełniony wyłącznie dla rodzaju lista.
 	Opcje     *string
 	Utworzono string
 }
@@ -149,11 +137,7 @@ func (r *repozytoriumBiblioteki) ZapiszOpis(ctx context.Context, plikID int64,
 	return nil
 }
 
-// PolaSchematu zwraca definicje pól, zawężone do rodzaju treści albo kolekcji.
-//
-// Zawężenie jest miękkie: pole bez wskazania rodzaju treści stosuje się do
-// wszystkich, więc trafia do wyniku każdego zawężenia. Twarde porównanie
-// zdejmowałoby z formularza pola ogólne przy pierwszym zawężeniu.
+// PolaSchematu zwraca definicje pól, zawężone do rodzaju treści albo kolekcji; zawężenie jest miękkie.
 func (r *repozytoriumBiblioteki) PolaSchematu(ctx context.Context,
 	mimeType, kolekcjaKod *string) ([]PoleSchematuBiblioteki, error) {
 
@@ -239,7 +223,7 @@ func (r *repozytoriumBiblioteki) UsunPoleSchematu(ctx context.Context, kod strin
 	return zdjete > 0, nil
 }
 
-// ZasobyZPolem liczy zasoby, przy których pole niestandardowe ma już wartość.
+// ZasobyZPolem liczy zasoby, przy których pole niestandardowe ma już wypełnioną wartość w bazie danych.
 func (r *repozytoriumBiblioteki) ZasobyZPolem(ctx context.Context, kodPola string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, policzZasobyZPolemBiblioteki)
 	if err != nil {
@@ -252,7 +236,7 @@ func (r *repozytoriumBiblioteki) ZasobyZPolem(ctx context.Context, kodPola strin
 	return liczba, nil
 }
 
-// odczytajOpisZasobuBiblioteki składa opis z jednego wiersza wyniku.
+// odczytajOpisZasobuBiblioteki składa opis wprost z jednego wiersza wyniku zapytania SQL do bazy danych.
 func odczytajOpisZasobuBiblioteki(wiersz skaner) (OpisZasobuBiblioteki, error) {
 	var opis OpisZasobuBiblioteki
 	var tytul, tworca, temat, tresc, wydawca, wspoltworca, data sql.NullString
@@ -274,7 +258,7 @@ func odczytajOpisZasobuBiblioteki(wiersz skaner) (OpisZasobuBiblioteki, error) {
 	return opis, nil
 }
 
-// odczytajPoleSchematuBiblioteki składa definicję pola z jednego wiersza wyniku.
+// odczytajPoleSchematuBiblioteki składa definicję pola wprost z jednego wiersza wyniku zapytania SQL do bazy.
 func odczytajPoleSchematuBiblioteki(wiersz skaner) (PoleSchematuBiblioteki, error) {
 	var pole PoleSchematuBiblioteki
 	var wymagane int

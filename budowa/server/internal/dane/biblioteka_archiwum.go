@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: polityki przechowywania (`polityka_retencji_biblioteki`)
-// i zapis utrwalenia archiwalnego (`zadanie_utrwalenia_biblioteki`) — migracja 184.
-//
-// Polityka opisuje regułę, nie zdarzenie: mówi, ile dni zasób ma być
-// przechowywany i co ma się z nim stać po upływie okresu. Sam upływ liczy się
-// przy odczycie raportu retencji, bo data graniczna wynika z chwili pytania —
-// wartość zapisana starzałaby się w bazie.
-//
-// Zapis utrwalenia jest śladem po pracy, nie zleceniem do wykonania: powstaje po
-// utrwaleniu i niesie wynik walidacji wraz z jej zapisem.
+// Plik prowadzi polityki przechowywania i zapis utrwalenia archiwalnego; polityka opisuje regułę, nie zdarzenie,
+// a upływ terminu liczy się przy odczycie raportu retencji, bo data graniczna wynika z chwili pytania.
 package dane
 
 import (
@@ -17,7 +9,7 @@ import (
 	"strings"
 )
 
-// PolitykaRetencjiBiblioteki to wiersz tabeli `polityka_retencji_biblioteki`.
+// PolitykaRetencjiBiblioteki to wiersz tabeli `polityka_retencji_biblioteki` niosący regułę przechowywania zasobu.
 type PolitykaRetencjiBiblioteki struct {
 	ID                int64
 	Kod               string
@@ -28,7 +20,7 @@ type PolitykaRetencjiBiblioteki struct {
 	Utworzono         string
 }
 
-// ZadanieUtrwaleniaBiblioteki to wiersz tabeli `zadanie_utrwalenia_biblioteki`.
+// ZadanieUtrwaleniaBiblioteki to wiersz tabeli `zadanie_utrwalenia_biblioteki` niosący ślad wykonanego utrwalenia.
 type ZadanieUtrwaleniaBiblioteki struct {
 	ID              int64
 	Kod             string
@@ -75,7 +67,7 @@ const (
 	                               WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszPolitykeRetencji zakłada politykę albo zmienia zastaną.
+// ZapiszPolitykeRetencji zakłada politykę retencji albo zmienia zastaną politykę tego samego zasięgu w bazie.
 func (r *repozytoriumBiblioteki) ZapiszPolitykeRetencji(ctx context.Context,
 	polityka PolitykaRetencjiBiblioteki) (PolitykaRetencjiBiblioteki, error) {
 
@@ -104,7 +96,7 @@ func (r *repozytoriumBiblioteki) ZapiszPolitykeRetencji(ctx context.Context,
 	return zapisana, nil
 }
 
-// PolitykiRetencji zwraca polityki, zawężone poziomem zasięgu.
+// PolitykiRetencji zwraca wszystkie polityki retencji, zawężone poziomem zasięgu, wprost z bazy danych.
 func (r *repozytoriumBiblioteki) PolitykiRetencji(ctx context.Context,
 	zasieg *string) ([]PolitykaRetencjiBiblioteki, error) {
 
@@ -138,7 +130,7 @@ func (r *repozytoriumBiblioteki) PolitykiRetencji(ctx context.Context,
 	return lista, nil
 }
 
-// UsunPolitykeRetencji zdejmuje politykę.
+// UsunPolitykeRetencji zdejmuje politykę retencji po jej identyfikatorze trwałym z bazy danych repozytorium.
 func (r *repozytoriumBiblioteki) UsunPolitykeRetencji(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunPolitykeRetencjiBiblioteki)
 	if err != nil {
@@ -155,8 +147,7 @@ func (r *repozytoriumBiblioteki) UsunPolitykeRetencji(ctx context.Context, kod s
 	return zdjete > 0, nil
 }
 
-// ZapiszUtrwalenie odkłada ślad po utrwaleniu archiwalnym wraz z wynikiem
-// walidacji.
+// ZapiszUtrwalenie odkłada ślad po utrwaleniu archiwalnym wraz z wynikiem walidacji i jej pełnym zapisem.
 func (r *repozytoriumBiblioteki) ZapiszUtrwalenie(ctx context.Context,
 	zadanie ZadanieUtrwaleniaBiblioteki) (ZadanieUtrwaleniaBiblioteki, error) {
 
@@ -186,7 +177,7 @@ func (r *repozytoriumBiblioteki) ZapiszUtrwalenie(ctx context.Context,
 	return zapisane, nil
 }
 
-// odczytajPolitykeRetencjiBiblioteki składa politykę z jednego wiersza wyniku.
+// odczytajPolitykeRetencjiBiblioteki składa politykę wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajPolitykeRetencjiBiblioteki(wiersz skaner) (PolitykaRetencjiBiblioteki, error) {
 	var polityka PolitykaRetencjiBiblioteki
 	var zasiegID sql.NullString
@@ -199,7 +190,7 @@ func odczytajPolitykeRetencjiBiblioteki(wiersz skaner) (PolitykaRetencjiBibliote
 	return polityka, nil
 }
 
-// odczytajUtrwalenieBiblioteki składa zapis utrwalenia z jednego wiersza wyniku.
+// odczytajUtrwalenieBiblioteki składa zapis utrwalenia wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajUtrwalenieBiblioteki(wiersz skaner) (ZadanieUtrwaleniaBiblioteki, error) {
 	var zadanie ZadanieUtrwaleniaBiblioteki
 	var wynikowy, profil sql.NullString

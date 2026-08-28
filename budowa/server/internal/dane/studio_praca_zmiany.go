@@ -1,19 +1,4 @@
-// Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio,
-// część piąta — TOŻSAMOŚĆ WYKONAWCY przy zmianie śledzonej, czyli kolumny
-// dołożone tabeli `zmiana_sledzona_studio` migracją 369.
-//
-// ── Dlaczego to nie stoi w `studio_adnotacje.go` ────────────────────────────
-// Tamten plik zna zmianę śledzoną sprzed dobudowy: rodzaj, autora grubym
-// rozróżnieniem człowiek-model, zakres, brzmienie przed i po, decyzję. Kolumny
-// `autor_agent_kod`, `autor_agent_nazwa`, `autor_agent_wersja`,
-// `autor_podagent_kod` oraz `postac_przed_json`, `postac_po_json` i
-// `czynnosc_kod` dołożyła migracja 369 i pyta o nie WYŁĄCZNIE ten odcinek —
-// przełącznik „pokaż wszystko, co zrobił model" musi rozdzielić DWÓCH agentów
-// pracujących naraz, a nie pokazać obu jako jednego. Dopisanie ich do tamtego
-// pliku byłoby wejściem w plik cudzego odcinka; osobny odczyt tych samych
-// wierszy nie zakłada drugiego pojęcia zmiany śledzonej, bo tabela jest jedna,
-// wiersz zakłada `ZapiszZmianeSledzona`, a te kolumny stempluje się na wierszu
-// już istniejącym.
+// Odpowiedzialność pliku: tożsamość wykonawcy przy zmianie śledzonej modułu Studio, czyli kolumny dołożone tabeli zmiana_sledzona_studio.
 package dane
 
 import (
@@ -102,12 +87,7 @@ func (r *repozytoriumStudia) ZmianyWykonawcow(ctx context.Context,
 	return lista, nil
 }
 
-// StemplujTozsamoscZmiany dopisuje do zmiany śledzonej to, KTÓRY wykonawca ją
-// wniósł, oraz powiązanie z wpisem dziennika.
-//
-// Wartości puste NIE zerują kolumn niosących postać i wpis dziennika (`COALESCE`):
-// tożsamość i postać stempluje się niekiedy dwoma wywołaniami, a drugie nie ma
-// zabierać tego, co odłożyło pierwsze.
+// StemplujTozsamoscZmiany dopisuje do zmiany śledzonej, który wykonawca ją wniósł, wartościami niezerującymi kolumn już wypełnionych.
 func (r *repozytoriumStudia) StemplujTozsamoscZmiany(ctx context.Context, kod string,
 	agentKod, agentNazwa, agentWersja, podagentKod *string,
 	postacPrzed, postacPo, czynnoscKod *string) error {

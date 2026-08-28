@@ -1,15 +1,7 @@
 // Odpowiedzialność pliku: trwałość powiadomień — rejestracja urządzenia do
-// wołania, kolejka powiadomień i ślad doręczenia.
-//
-// Tabele `urzadzenie_powiadomien`, `powiadomienie` i `powiadomienie_dostarczenie`
-// obsługuje jedno repozytorium, bo opisują trzy strony jednej sprawy: kogo
-// wołać, czym i czy doszło. Rozbicie ich na trzy repozytoria zmusiłoby silnik
-// do składania transakcji z kawałków trzech właścicieli, a najważniejsza droga
-// tego pliku (Takt) jest właśnie transakcją obejmującą wszystkie trzy tabele.
-//
-// Konstruktor jest eksportowany i bierze uchwyt puli, żeby pakiet silnika
-// powiadomień mógł złożyć repozytorium z uchwytu, który już dostał w kompozycji.
-// Dzięki temu wpięcie nie wymaga pola w `dane/zestaw.go`.
+// wołania, kolejka powiadomień i ślad doręczenia. Trzy tabele obsługuje jedno
+// repozytorium, bo opisują trzy strony jednej sprawy: kogo wołać, czym i czy
+// doszło.
 package dane
 
 import (
@@ -24,7 +16,9 @@ import (
 // zewnętrznej bez kodu, który go obsłuży, przepuści rejestrację, której żaden
 // takt nie doręczy.
 const (
-	// KanalPolaczenie doręcza po gnieździe, które Operator już otworzył.
+	// KanalPolaczenie doręcza po gnieździe, które Operator już otworzył; to
+	// jedyny kanał ujęty w słowniku, więc rejestracja bez wskazania kanału
+	// przyjmuje go jako wartość domyślną.
 	KanalPolaczenie = "polaczenie"
 )
 
@@ -38,18 +32,17 @@ const (
 	StanPowiadomieniaPorzucone   = "porzucone"
 )
 
-// Priorytety powiadomienia.
+// Priorytety powiadomienia. Kolejność doręczeń w zapytaniu należnych stawia
+// powiadomienia pilne przed zwykłymi, niezależnie od kolejności wpisu do
+// kolejki.
 const (
 	PriorytetZwykly = "zwykly"
 	PriorytetPilny  = "pilny"
 )
 
 // RejestracjaPowiadomien to wiersz tabeli `urzadzenie_powiadomien`: zgoda
-// jednego urządzenia na wołanie jedną drogą.
-//
-// `KluczKanalu` dla kanału `polaczenie` jest identyfikatorem klienta —
-// tym samym napisem, który transport niesie jako `Tozsamosc.IdKlienta`.
-// Nie jest to nowa tożsamość urządzenia, tylko adres jego gniazda.
+// jednego urządzenia na wołanie jedną drogą. `KluczKanalu` dla kanału
+// `polaczenie` jest adresem gniazda, a nie odrębną tożsamością urządzenia.
 type RejestracjaPowiadomien struct {
 	ID                  int64
 	UrzadzenieID        int64
@@ -88,25 +81,22 @@ type Powiadomienie struct {
 // PlanTaktu jest tym, co silnik podaje repozytorium na jeden takt jednego
 // powiadomienia. Wysyłka jest domknięciem, a nie wynikiem, żeby sprawdzenie
 // stanu wiersza i sama wysyłka zmieściły się w jednej transakcji zapisu.
-// Sprawdzenie przy pobraniu należnych nie wystarcza: między pobraniem
-// a wysłaniem decyzja może zapaść i Operator dostanie budzik po fakcie.
 type PlanTaktu struct {
 	// Teraz jest chwilą taktu w formacie znacznika bazy.
 	Teraz string
-	// Wyslij dostaje wiersz odczytany pod zamkiem i oddaje klucze wierszy
-	// `urzadzenie_powiadomien`, które kopertę przyjęły. Pusta lista znaczy
-	// „nie było komu" i jest powodem ponowienia, a nie błędem.
+	// Wyslij dostaje wiersz pod zamkiem i zwraca klucze rejestracji, które
+	// kopertę przyjęły.
 	Wyslij func(ctx context.Context, p Powiadomienie) ([]int64, error)
 	// NastepnaProba wylicza termin kolejnego podejścia z liczby prób już
-	// odbytych. Odstęp jest polityką silnika, nie schematu.
+	// odbytych.
 	NastepnaProba func(probIle int) string
 }
 
-// WynikTaktu opisuje, co takt naprawdę zrobił z jednym powiadomieniem.
+// WynikTaktu opisuje, co takt naprawdę zrobił z jednym powiadomieniem: czy je
+// pominięto, w jakim stanie zostawił wiersz i ilu odbiorcom go doręczono.
 type WynikTaktu struct {
-	// Pominieto znaczy, że wiersz nie był już `oczekuje` w chwili zamknięcia
-	// zamka: decyzja zapadła, termin minął albo doręczenie już nastąpiło.
-	// Jest to poprawny wynik taktu, a nie oznaka usterki.
+	// Pominieto znaczy, że wiersz nie był już oczekuje w chwili zamknięcia
+	// zamka; to poprawny wynik.
 	Pominieto bool
 	// Stan wiersza po takcie.
 	Stan string
@@ -114,15 +104,14 @@ type WynikTaktu struct {
 	Odbiorcow int
 }
 
-// RepozytoriumPowiadomien jest kontraktem trwałości powiadomień.
+// RepozytoriumPowiadomien jest kontraktem trwałości powiadomień: obejmuje
+// rejestrację urządzeń do wołania, kolejkę powiadomień i ślad ich doręczenia.
 type RepozytoriumPowiadomien interface {
-	// Zarejestruj zapisuje zgodę urządzenia na wołanie wskazaną drogą.
-	// Rejestracja powtórzona odświeża wiersz, a nie zakłada drugiego —
-	// inaczej jedno urządzenie dostawałoby to samo powiadomienie tyle razy,
-	// ile razy się przedstawiło.
+	// Zarejestruj zapisuje zgodę urządzenia na wołanie wskazaną drogą;
+	// powtórzona odświeża wiersz.
 	Zarejestruj(ctx context.Context, r RejestracjaPowiadomien) (int64, error)
-	// Wyrejestruj cofa zgodę, zostawiając wiersz. Ślad po tym, że urządzenie
-	// kiedyś było wołane, ma pozostać czytelny.
+	// Wyrejestruj cofa zgodę, zostawiając wiersz, żeby ślad wołania pozostał
+	// czytelny.
 	Wyrejestruj(ctx context.Context, kanal, kluczKanalu string, teraz string) error
 	// AktywneRejestracje zwraca komplet czynnych zgód.
 	AktywneRejestracje(ctx context.Context) ([]RejestracjaPowiadomien, error)
@@ -137,12 +126,11 @@ type RepozytoriumPowiadomien interface {
 	Takt(ctx context.Context, id int64, plan PlanTaktu) (WynikTaktu, error)
 	// Wygas zamyka powiadomienia, którym minął termin ważności.
 	Wygas(ctx context.Context, teraz string) (int, error)
-	// Odwolaj gasi wszystkie oczekujące powiadomienia o wskazanym bycie,
-	// gdy decyzja w jego sprawie już zapadła.
+	// Odwolaj gasi oczekujące powiadomienia o wskazanym bycie, gdy decyzja w
+	// jego sprawie już zapadła.
 	Odwolaj(ctx context.Context, bytRodzaj, bytID, powod, teraz string) (int, error)
 	// Potwierdz zapisuje, że Operator widział powiadomienie na wskazanym
-	// urządzeniu. Doręczenie i potwierdzenie to dwa różne fakty i mają osobne
-	// kolumny.
+	// urządzeniu.
 	Potwierdz(ctx context.Context, powiadomienieID int64, kanal, kluczKanalu, teraz string) error
 	// Dostarczenia zwraca klucze rejestracji, którym powiadomienie doręczono.
 	Dostarczenia(ctx context.Context, powiadomienieID int64) ([]int64, error)
@@ -161,14 +149,14 @@ type repozytoriumPowiadomien struct {
 	db        *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji.
+// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji:
+// przypisanie repozytoriumPowiadomien do zmiennej typu RepozytoriumPowiadomien
+// nie skompiluje się, gdy metody przestaną się pokrywać.
 var _ RepozytoriumPowiadomien = (*repozytoriumPowiadomien)(nil)
 
 // NowePowiadomienia zakłada repozytorium powiadomień nad otwartą pulą połączeń.
-//
-// Konstruktor bierze `*sql.DB`, a nie `*Zestaw`, żeby silnik powiadomień mógł
-// złożyć repozytorium z uchwytu, który jego pakiet już ma. Pula jest jedna na
-// proces; to repozytorium jej nie otwiera i nie zamyka.
+// Konstruktor bierze uchwyt puli, a nie zestaw repozytoriów, żeby silnik
+// powiadomień mógł złożyć repozytorium z uchwytu, który jego pakiet już ma.
 func NowePowiadomienia(db *sql.DB) RepozytoriumPowiadomien {
 	if db == nil {
 		return nil
@@ -315,8 +303,7 @@ func (r *repozytoriumPowiadomien) Pobierz(ctx context.Context, id int64) (Powiad
 
 // Nalezne czyta powiadomienia, którym termin podejścia już minął. Porządek jest
 // rozmyślny: pilne przed zwykłymi, a w obrębie stopnia — te, które czekają
-// najdłużej. Bez tego kolejka pilna stałaby za zwykłą, która akurat weszła
-// pierwsza, i „pilny" nie znaczyłoby nic.
+// najdłużej.
 const nalezniePowiadomienia = `SELECT ` + kolumnyPowiadomienia + `
 	  FROM powiadomienie
 	 WHERE stan = 'oczekuje' AND nastepna_proba <= ?
@@ -376,22 +363,8 @@ const odnotujDostarczenieUrzadzeniu = `
 	UPDATE urzadzenie_powiadomien SET ostatnio_dostarczono = ? WHERE id = ?`
 
 // Takt wykonuje jedno podejście do jednego powiadomienia pod zamkiem zapisu.
-//
-// Kolejności kroków nie wolno przestawić:
-//
-//  1. `zajmijPowiadomienie` bierze zamek zapisu i w tym samym poleceniu
-//     sprawdza, że wiersz nadal jest `oczekuje`. Zero zmienionych wierszy
-//     znaczy, że decyzja zapadła, termin minął albo doręczenie już było —
-//     i wtedy nic nie wychodzi.
-//  2. Dopiero pod tym zamkiem czytamy wiersz i sprawdzamy termin ważności.
-//  3. Wysyłka idzie wewnątrz transakcji, więc koperta wychodzi przy trzymanym
-//     zamku zapisu. Jest to cena możliwa do przyjęcia, bo doręczenie kanałem
-//     `polaczenie` jest zapisem do gniazda w pamięci procesu. Odwrotna
-//     kolejność — zwolnić zamek, potem wysłać — przywraca szczelinę, w której
-//     powiadomienie o zapadłej już decyzji zdąży wyjść.
-//
-// Wołający, który nie odda `Wyslij` albo `NastepnaProba`, dostaje błąd zamiast
-// cichego pominięcia: takt bez nadajnika niczego nie doręcza.
+// Kolejność zajęcia wiersza, sprawdzenia terminu ważności i wysyłki wewnątrz
+// jednej transakcji jest rozstrzygająca i nie wolno jej przestawić.
 func (r *repozytoriumPowiadomien) Takt(ctx context.Context, id int64, plan PlanTaktu) (WynikTaktu, error) {
 	if plan.Wyslij == nil || plan.NastepnaProba == nil {
 		return WynikTaktu{}, fmt.Errorf("dane: takt powiadomienia %d bez nadajnika albo bez "+
@@ -410,8 +383,8 @@ func (r *repozytoriumPowiadomien) Takt(ctx context.Context, id int64, plan PlanT
 			return fmt.Errorf("dane: nieczytelny wynik zajęcia powiadomienia %d: %w", id, err)
 		}
 		if zajete == 0 {
-			// Wiersz nie czeka już na wysyłkę. Odczyt stanu służy wyłącznie
-			// temu, żeby silnik miał w dzienniku nazwany powód pominięcia.
+			// Wiersz nie czeka już na wysyłkę; odczyt stanu służy dziennikowi
+			// nazwanym powodem pominięcia.
 			wynik.Pominieto = true
 			biezacy, err := odczytajPowiadomienie(tx.QueryRowContext(ctx, stanPowiadomieniaPodZamkiem, id))
 			if errors.Is(err, sql.ErrNoRows) {
@@ -430,8 +403,8 @@ func (r *repozytoriumPowiadomien) Takt(ctx context.Context, id int64, plan PlanT
 			return err
 		}
 
-		// Termin ważności rozstrzyga przed wysyłką. Powiadomienie przeterminowane
-		// nie ma dolecieć — po to jest kolumna `wygasa`.
+		// Termin ważności rozstrzyga przed wysyłką — powiadomienie
+		// przeterminowane nie ma dolecieć.
 		if p.Wygasa <= plan.Teraz {
 			if _, err := tx.ExecContext(ctx, zamknijWygasnieciem, id); err != nil {
 				return fmt.Errorf("dane: nie można zamknąć wygasłego powiadomienia %d: %w", id, err)
@@ -446,8 +419,8 @@ func (r *repozytoriumPowiadomien) Takt(ctx context.Context, id int64, plan PlanT
 		}
 
 		if len(przyjeli) == 0 {
-			// Nie było komu. Wiersz zostaje w kolejce z podbitym licznikiem
-			// i nowym terminem — brak odbiorcy jest stanem, nie ciszą.
+			// Nie było komu: wiersz zostaje w kolejce z podbitym licznikiem
+			// prób i nowym terminem.
 			if _, err := tx.ExecContext(ctx, przelozProbe, plan.NastepnaProba(p.ProbIle+1), id); err != nil {
 				return fmt.Errorf("dane: nie można przełożyć próby powiadomienia %d: %w", id, err)
 			}
@@ -531,8 +504,7 @@ const potwierdzDostarczenie = `
 
 // Potwierdz zapisuje, że Operator widział powiadomienie na tym urządzeniu.
 // Brak wiersza doręczenia nie jest błędem: potwierdzenie z urządzenia, któremu
-// nic nie doręczono, jest pomyłką wołającego, a nie awarią rdzenia — kolumna
-// zostaje pusta i mówi prawdę.
+// nic nie doręczono, jest pomyłką wołającego, a nie awarią rdzenia.
 func (r *repozytoriumPowiadomien) Potwierdz(ctx context.Context, powiadomienieID int64,
 	kanal, kluczKanalu, teraz string) error {
 

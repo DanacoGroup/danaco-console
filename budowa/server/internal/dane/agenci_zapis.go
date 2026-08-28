@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: zapis biblioteki ekspertów — założenie, zmiana
-// tożsamości i usunięcie.
-//
-// Stan wyjściowy to pełny dostęp operacyjny: ekspert powstaje razem
-// z czterema wierszami uprawnień `przyznane = 1`, po jednym na grupę zakresu.
-// Uprawnienie jest konfiguracją możliwości, nie bramą — nowo założony ekspert
-// pracuje od razu, a Permissions Center pokazuje mu stan wyjściowy zamiast
-// pustego formularza.
-//
-// Kolumna `wersja` rośnie przy każdej zmianie. Jest licznikiem tożsamości
-// eksperta i wraca polem `Agent.version`. Zapis i podniesienie licznika idą
-// jednym poleceniem, więc nie ma stanu, w którym treść jest nowa, a wersja stara.
+// Plik zapisuje bibliotekę ekspertów: założenie, zmianę tożsamości i usunięcie; nowo założony ekspert otrzymuje od razu
+// pełny komplet czterech uprawnień przyznanych, a kolumna wersji rośnie z każdą zmianą tożsamości w tym samym poleceniu zapisu.
 package dane
 
 import (
@@ -133,7 +123,7 @@ func (r *repozytoriumAgentow) Usun(ctx context.Context, kod string) (bool, error
 	return liczba > 0, nil
 }
 
-// zasiejUprawnienia wpisuje wyjściowy komplet czterech grup zakresu.
+// zasiejUprawnienia wpisuje wyjściowy komplet czterech grup zakresu uprawnień dla nowo założonego eksperta.
 func (r *repozytoriumAgentow) zasiejUprawnienia(ctx context.Context, transakcja *sql.Tx, agentID int64) error {
 	polecenie, err := r.zapytania.wTransakcji(ctx, transakcja, zapiszUprawnienieAgenta)
 	if err != nil {
@@ -147,13 +137,7 @@ func (r *repozytoriumAgentow) zasiejUprawnienia(ctx context.Context, transakcja 
 	return nil
 }
 
-// UstawPoziomyPamieci zastępuje komplet poziomów pamięci eksperta. Wycinek
-// pusty zapisuje pamięć wyłączoną — brak wiersza jest tu treścią, nie brakiem
-// treści, więc pustka nie jest odmawiana.
-//
-// Licznika wersji tożsamości ta czynność nie podnosi: robi to `Aktualizuj`,
-// którym idzie zmiana tożsamości. Poziomy pamięci wchodzą tą samą drogą co
-// umiejętności i uprawnienia — jako powiązanie, nie jako pole tożsamości.
+// UstawPoziomyPamieci zastępuje komplet poziomów pamięci eksperta; wycinek pusty zapisuje pamięć wyłączoną, licznika wersji tożsamości nie podnosi.
 func (r *repozytoriumAgentow) UstawPoziomyPamieci(ctx context.Context,
 	kodAgenta string, poziomy []string) (Agent, error) {
 
@@ -203,10 +187,7 @@ func (r *repozytoriumAgentow) zapiszPoziomy(ctx context.Context, transakcja *sql
 	return nil
 }
 
-// widocznoscKolumny pilnuje, żeby kolumna nigdy nie dostała pustki. Wartość
-// nieustawiona czyta się jako `global` — stan wyjściowy platformy jest pełny,
-// a nie zawężony. Wartość spoza katalogu odbija się o warunek CHECK kolumny
-// `agent.widocznosc`; drugi katalog wartości tu nie powstaje.
+// widocznoscKolumny pilnuje, żeby kolumna widoczności nigdy nie dostała pustki: wartość nieustawiona czyta się jako global.
 func widocznoscKolumny(widocznosc string) string {
 	if strings.TrimSpace(widocznosc) == "" {
 		return shared.AgentVisibilityGlobal

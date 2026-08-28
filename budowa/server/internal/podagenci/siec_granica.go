@@ -1,15 +1,6 @@
-// Granica sieci podagentów: ilu podagentów pracuje jednocześnie pod jednym oknem
-// wykonawcy. Granica dotyczy stanu sieci, nie kształtu pojedynczego żądania —
-// przycinanie samego wywołania przepuszcza dwa wywołania po piętnaście.
-//
-// Miejsce w sieci zajmują wyłącznie podagenci czynni, czyli ci, którzy pracę mają
-// przed sobą albo w toku. Podagent zakończony, błędny i zatrzymany miejsca nie
-// trzyma — inaczej okno zużyłoby piętnaście miejsc raz na całą swoją historię.
-//
-// Żądanie większe niż liczba wolnych miejsc wykonuje się na tylu, ile jest wolnych.
-// Odmowa zostaje na jeden przypadek: sieć pełna, gdzie przyciąć można wyłącznie do
-// zera, a powołanie zerowe udawałoby wykonanie. Odmowa niesie wtedy zdanie mówiące,
-// co zrobić — zebrać wyniki albo zatrzymać któregoś.
+// Granica sieci podagentów: ilu podagentów pracuje jednocześnie pod jednym
+// oknem wykonawcy; granica dotyczy stanu sieci, nie kształtu pojedynczego
+// żądania.
 package podagenci
 
 import (
@@ -20,14 +11,11 @@ import (
 )
 
 // GranicaSieci to liczba podagentów, którzy mogą jednocześnie pracować pod
-// jednym oknem wykonawcy.
+// jednym oknem wykonawcy platformy.
 const GranicaSieci = 15
 
-// StanKoncowy mówi, czy podagent w tym stanie nie wróci już do pracy sam.
-//
-// Orzeczenie jest wspólne dla granicy sieci (kto zajmuje miejsce), zbierania
-// wyników (czy komplet gotowy) i domknięcia zatrzymania (czy wiersz wciąż kłamie).
-// Trzy osobne odpowiedzi rozjechałyby się przy pierwszej zmianie słownika stanów.
+// StanKoncowy mówi, czy podagent w tym stanie nie wróci już do pracy sam;
+// orzeczenie jest wspólne dla granicy, zbierania wyników i domknięcia.
 func StanKoncowy(stan string) bool {
 	switch stan {
 	case dane.StanPodagentaUkonczony, dane.StanPodagentaBledny, dane.StanPodagentaZatrzymany:
@@ -37,7 +25,8 @@ func StanKoncowy(stan string) bool {
 	}
 }
 
-// Czynni liczy podagentów zajmujących miejsce w sieci.
+// Czynni liczy podagentów zajmujących miejsce w sieci danego okna wykonawcy,
+// pomijając podagentów w stanie końcowym.
 func Czynni(wiersze []dane.Podagent) int {
 	ile := 0
 	for _, podagent := range wiersze {
@@ -48,7 +37,8 @@ func Czynni(wiersze []dane.Podagent) int {
 	return ile
 }
 
-// Przydzial jest odpowiedzią granicy na żądanie powołania.
+// Przydzial jest odpowiedzią granicy sieci podagentów na żądanie powołania
+// kolejnych podagentów pod danym oknem wykonawcy.
 type Przydzial struct {
 	// Ile podagentów wolno powołać teraz. Zero znaczy sieć pełną.
 	Ile int
@@ -56,9 +46,8 @@ type Przydzial struct {
 	Zajete int
 	// Zadane to liczba wyprowadzona z żądania, po odczytaniu pustego wskazania.
 	Zadane int
-	// Powod jest niepusty wtedy, gdy przydział jest mniejszy niż liczba wskazana
-	// w żądaniu — zdanie do dziennika albo do odmowy. Pusty powód znaczy żądanie
-	// spełnione w całości.
+	// Powod jest niepusty, gdy przydział jest mniejszy niż żądanie; pusty
+	// znaczy żądanie spełnione.
 	Powod string
 }
 
@@ -83,10 +72,6 @@ func LiczbaZadana(wskazanie *int) int {
 
 // MiejscaWSieci rozstrzyga, ilu podagentów wolno powołać pod oknem, którego
 // zastanych podagentów podano.
-//
-// Wiersze muszą pochodzić z jednego okna: granica jest granicą sieci wykonawcy,
-// a nie granicą platformy — liczenie kompletu bazy zamknęłoby powołanie
-// u wszystkich, gdy jedno okno zapełni swoją sieć.
 func MiejscaWSieci(zastani []dane.Podagent, wskazanie *int) Przydzial {
 	zadane := LiczbaZadana(wskazanie)
 	zajete := Czynni(zastani)
@@ -126,11 +111,8 @@ type WykazSieci interface {
 	Podagenci(ctx context.Context, filtr dane.FiltrPodagentow) ([]dane.Podagent, error)
 }
 
-// PrzydzialOkna pyta trwałość o zastaną sieć okna i rozstrzyga przydział.
-//
-// Bez repozytorium albo bez kodu okna granica nie ma czego liczyć i oddaje
-// przydział samego wywołania. Błąd odczytu wraca do wołającego — przydział
-// wyliczony z nieudanego odczytu byłby granicą zmyśloną.
+// PrzydzialOkna pyta trwałość o zastaną sieć okna i rozstrzyga przydział;
+// błąd odczytu wraca do wołającego.
 func PrzydzialOkna(ctx context.Context, wykaz WykazSieci, oknoKod string,
 	wskazanie *int) (Przydzial, error) {
 

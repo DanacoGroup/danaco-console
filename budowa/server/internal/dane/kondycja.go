@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: magazyn sond kondycji i serii ich wyników (tabele
-// `sonda_kondycji`, `wynik_sondy_kondycji`, migracja 290) — rodzina `health.*`.
-//
-// Repozytorium NIE wykonuje pomiaru i nie zna żadnego rodzaju sondy. Zapisuje
-// definicję i zapisuje wynik, który ktoś zmierzył. Rozdział jest tu istotny:
-// gdyby warstwa danych umiała „ustawić stan sondy", istniałaby droga do
-// odłożenia stanu bez pomiaru, a właśnie tego rodzina zabrania.
-//
-// Zapis wyniku podnosi jednocześnie odbicie w definicji (`ostatni_stan`,
-// `ostatni_przebieg`) — w jednej transakcji, żeby wykaz sond nie pokazywał
-// stanu innego niż ostatni wiersz serii.
+// Plik jest magazynem sond kondycji i serii ich wyników w tabelach sonda_kondycji oraz
+// wynik_sondy_kondycji, na potrzeby rodziny poleceń health. Uzasadnienie granic
+// repozytorium niesie rozdział kondycja.go dokumentacji architektury.
 package dane
 
 import (
@@ -53,7 +45,8 @@ type WynikSondyKondycji struct {
 	BladKod          *string
 }
 
-// SitoWynikowKondycji zawęża odczyt serii pomiarów.
+// SitoWynikowKondycji zawęża odczyt serii pomiarów: sondą, stanem, przedziałem czasu
+// oraz granicą liczby zwracanych wierszy.
 type SitoWynikowKondycji struct {
 	SondaKod string
 	Stan     string
@@ -62,7 +55,8 @@ type SitoWynikowKondycji struct {
 	Granica  int
 }
 
-// RepozytoriumKondycji jest kontraktem magazynu sond i ich wyników.
+// RepozytoriumKondycji jest kontraktem magazynu sond kondycji i serii ich wyników, wraz
+// z pulsem mierzącym czas obiegu bazy rdzenia.
 type RepozytoriumKondycji interface {
 	ZapiszSonde(ctx context.Context, sonda SondaKondycji) (SondaKondycji, bool, error)
 	Sonda(ctx context.Context, kod string) (SondaKondycji, error)
@@ -70,9 +64,7 @@ type RepozytoriumKondycji interface {
 	UsunSonde(ctx context.Context, kod string) (int, error)
 	ZapiszWynik(ctx context.Context, wynik WynikSondyKondycji) (WynikSondyKondycji, error)
 	Wyniki(ctx context.Context, sito SitoWynikowKondycji) ([]WynikSondyKondycji, int, error)
-	// Puls wykonuje najprostsze możliwe zapytanie do bazy rdzenia. Sonda
-	// wewnętrzna mierzy nim czas obiegu magazynu stanu — czyli mierzy naprawdę,
-	// zamiast oddawać „w porządku" bez dotknięcia czegokolwiek.
+	// Puls wykonuje najprostsze możliwe zapytanie do bazy rdzenia, żeby zmierzyć czas jej obiegu naprawdę.
 	Puls(ctx context.Context) error
 }
 
@@ -117,15 +109,14 @@ type repozytoriumKondycji struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumKondycji zakłada magazyn sond nad bazą zestawu.
+// noweRepozytoriumKondycji zakłada magazyn sond kondycji nad bazą zestawu, gotowy
+// do zapisu definicji i wyników.
 func noweRepozytoriumKondycji(z *zapytania, db *sql.DB) *repozytoriumKondycji {
 	return &repozytoriumKondycji{zapytania: z, db: db}
 }
 
-// ZapiszSonde zakłada definicję albo nadpisuje zastaną po kodzie. Drugi zwracany
-// wynik mówi, czy sonda powstała teraz — kontrakt `health.probe.save` niesie to
-// wprost, a odczyt-przed-zapisem po stronie adaptera byłby drugim rozstrzygnięciem
-// tej samej rzeczy.
+// ZapiszSonde zakłada definicję albo nadpisuje zastaną po kodzie. Drugi zwracany wynik
+// mówi, czy sonda powstała teraz, ponieważ kontrakt health.probe.save niesie to wprost.
 func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 	sonda SondaKondycji) (SondaKondycji, bool, error) {
 
@@ -181,7 +172,8 @@ func (r *repozytoriumKondycji) ZapiszSonde(ctx context.Context,
 	return zapisana, powstala, err
 }
 
-// Sonda zwraca jedną definicję. Brak wiersza jest sygnałem ErrBrakWiersza.
+// Sonda zwraca jedną definicję sondy kondycji wskazaną kodem. Brak wiersza jest
+// sygnałem błędu ErrBrakWiersza.
 func (r *repozytoriumKondycji) Sonda(ctx context.Context, kod string) (SondaKondycji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSondeKondycji)
 	if err != nil {
@@ -194,7 +186,8 @@ func (r *repozytoriumKondycji) Sonda(ctx context.Context, kod string) (SondaKond
 	return sonda, err
 }
 
-// Sondy zwraca definicje spełniające zawężenie, od najstarszej.
+// Sondy zwraca definicje spełniające zawężenie rodzajem, komponentem i stanem
+// czynności, uporządkowane od najstarszej.
 func (r *repozytoriumKondycji) Sondy(ctx context.Context, rodzaj, komponent string,
 	tylkoCzynne bool, granica int) ([]SondaKondycji, error) {
 
@@ -238,7 +231,7 @@ func (r *repozytoriumKondycji) Sondy(ctx context.Context, rodzaj, komponent stri
 }
 
 // UsunSonde wykreśla definicję wraz z serią jej wyników i oddaje liczbę
-// usuniętych pomiarów. Serię liczymy przed skasowaniem, bo po kaskadzie nie ma
+// usuniętych pomiarów. Serię liczy się przed skasowaniem, bo po kaskadzie nie ma
 // już czego policzyć, a kontrakt tę liczbę oddaje.
 func (r *repozytoriumKondycji) UsunSonde(ctx context.Context, kod string) (int, error) {
 	usunietych := 0
@@ -360,7 +353,8 @@ func (r *repozytoriumKondycji) Wyniki(ctx context.Context,
 	return lista, wszystkich, nil
 }
 
-// odczytajSondeKondycji przekłada wiersz na definicję sondy.
+// odczytajSondeKondycji przekłada wiersz wyniku zapytania na strukturę SondaKondycji
+// wraz z jej odbiciem ostatniego przebiegu.
 func odczytajSondeKondycji(s skaner) (SondaKondycji, error) {
 	var sonda SondaKondycji
 	var komponent, ostatniStan, tresc sql.NullString
@@ -385,7 +379,8 @@ func odczytajSondeKondycji(s skaner) (SondaKondycji, error) {
 	return sonda, nil
 }
 
-// odczytajWynikKondycji przekłada wiersz na jeden pomiar.
+// odczytajWynikKondycji przekłada wiersz wyniku zapytania na strukturę WynikSondyKondycji
+// jednego pomiaru.
 func odczytajWynikKondycji(s skaner) (WynikSondyKondycji, error) {
 	var wynik WynikSondyKondycji
 	var czas, status sql.NullInt64
@@ -402,11 +397,9 @@ func odczytajWynikKondycji(s skaner) (WynikSondyKondycji, error) {
 	return wynik, nil
 }
 
-// Puls wykonuje jedno zapytanie do bazy i nic poza tym.
-//
-// Zapytanie jest celowo najtańsze z możliwych: sonda wewnętrzna ma zmierzyć
-// czas obiegu magazynu, a nie obciążyć go przy okazji. Wynik zapytania nie ma
-// znaczenia — znaczenie ma to, że baza odpowiedziała.
+// Puls wykonuje jedno, celowo najtańsze możliwe zapytanie do bazy, żeby zmierzyć czas
+// jej obiegu, a nie obciążyć ją przy okazji. Wynik zapytania nie ma znaczenia —
+// znaczenie ma to, że baza w ogóle odpowiedziała.
 func (r *repozytoriumKondycji) Puls(ctx context.Context) error {
 	var jeden int
 	if err := r.db.QueryRowContext(ctx, "SELECT 1").Scan(&jeden); err != nil {

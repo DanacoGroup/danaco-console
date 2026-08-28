@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: rodzina `extension.*` — warstwa protokołu. Narzędzia
-// odkryte u integracji, dziennik ramek JSON-RPC, wywołania wraz z ich czasem
-// oraz wyniki sprawdzeń kondycji
-// (`store/migracja_208_rozszerzenia_protokol.sql`).
-//
-// Wszystkie cztery byty powstają z PRACY, nie z żądania odczytu: wpis narzędzia
-// z powitania serwera, ramka z każdego wywołania, wiersz wywołania z jego
-// przebiegu, wynik kondycji ze sprawdzenia. Odczyt niczego tu nie dopisuje.
+// Rodzina extension.*: warstwa protokołu. Narzędzia odkryte u integracji,
+// dziennik ramek JSON-RPC, wywołania wraz z ich czasem oraz wyniki sprawdzeń
+// kondycji; wszystkie cztery byty powstają z pracy, nie z żądania odczytu.
 package dane
 
 import (
@@ -28,7 +23,8 @@ type NarzedzieRozszerzenia struct {
 	WersjaProtokolu *string
 }
 
-// RamkaProtokolu to wiersz tabeli `ramka_protokolu_rozszerzenia`.
+// RamkaProtokolu to wiersz tabeli `ramka_protokolu_rozszerzenia`: jedna
+// ramka JSON-RPC odnotowana w dzienniku wywołania.
 type RamkaProtokolu struct {
 	ID              int64
 	Kod             string
@@ -41,7 +37,8 @@ type RamkaProtokolu struct {
 	Zaszlo          int64
 }
 
-// WywolanieRozszerzenia to wiersz tabeli `wywolanie_rozszerzenia`.
+// WywolanieRozszerzenia to wiersz tabeli `wywolanie_rozszerzenia`: jedno
+// wywołanie narzędzia integracji wraz z jego czasem i wynikiem.
 type WywolanieRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -53,7 +50,8 @@ type WywolanieRozszerzenia struct {
 	Zaszlo          int64
 }
 
-// KondycjaRozszerzenia to wiersz tabeli `kondycja_rozszerzenia`.
+// KondycjaRozszerzenia to wiersz tabeli `kondycja_rozszerzenia`: wynik
+// jednego sprawdzenia kondycji integracji.
 type KondycjaRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -169,7 +167,8 @@ func (r *repozytoriumRozszerzen) ZapiszNarzedziaRozszerzenia(ctx context.Context
 	})
 }
 
-// NarzedziaRozszerzenia zwraca wpisy pozycji, opcjonalnie jednego rodzaju.
+// NarzedziaRozszerzenia zwraca wpisy pozycji katalogu, opcjonalnie zawężone
+// do jednego rodzaju narzędzia.
 func (r *repozytoriumRozszerzen) NarzedziaRozszerzenia(ctx context.Context,
 	rozszerzenie, rodzaj string) ([]NarzedzieRozszerzenia, error) {
 
@@ -204,7 +203,8 @@ func (r *repozytoriumRozszerzen) NarzedziaRozszerzenia(ctx context.Context,
 	return lista, nil
 }
 
-// DopiszRamkeProtokolu odnotowuje jedną ramkę JSON-RPC.
+// DopiszRamkeProtokolu odnotowuje jedną ramkę JSON-RPC w dzienniku
+// protokołu wskazanej pozycji katalogu.
 func (r *repozytoriumRozszerzen) DopiszRamkeProtokolu(ctx context.Context, ramka RamkaProtokolu) error {
 	if ramka.Kod == "" || ramka.RozszerzenieKod == "" {
 		return fmt.Errorf("dane: ramka protokołu bez identyfikatora albo pozycji")
@@ -222,7 +222,8 @@ func (r *repozytoriumRozszerzen) DopiszRamkeProtokolu(ctx context.Context, ramka
 	return nil
 }
 
-// RamkiProtokolu zwraca stronę dziennika ramek wraz z liczbą wszystkich.
+// RamkiProtokolu zwraca stronę dziennika ramek protokołu wraz z liczbą
+// wszystkich pasujących wierszy dziennika.
 func (r *repozytoriumRozszerzen) RamkiProtokolu(ctx context.Context, rozszerzenie string,
 	od int64, granica int) ([]RamkaProtokolu, int, error) {
 
@@ -269,7 +270,8 @@ func (r *repozytoriumRozszerzen) RamkiProtokolu(ctx context.Context, rozszerzeni
 	return lista, razem, nil
 }
 
-// DopiszWywolanieRozszerzenia odnotowuje jedno wywołanie narzędzia integracji.
+// DopiszWywolanieRozszerzenia odnotowuje jedno wywołanie narzędzia
+// integracji wraz z jego wynikiem i czasem.
 func (r *repozytoriumRozszerzen) DopiszWywolanieRozszerzenia(ctx context.Context,
 	wywolanie WywolanieRozszerzenia) error {
 
@@ -291,7 +293,8 @@ func (r *repozytoriumRozszerzen) DopiszWywolanieRozszerzenia(ctx context.Context
 	return nil
 }
 
-// MetrykaUzyciaRozszerzenia to policzony wynik jednego okna czasu.
+// MetrykaUzyciaRozszerzenia to policzony wynik jednego okna czasu: liczba
+// wywołań, niepowodzeń i średni czas.
 type MetrykaUzyciaRozszerzenia struct {
 	RozszerzenieKod string
 	Wywolan         int
@@ -299,7 +302,8 @@ type MetrykaUzyciaRozszerzenia struct {
 	SredniCzasMs    *int64
 }
 
-// MetrykiUzyciaRozszerzen liczy metryki użycia w oknie czasu.
+// MetrykiUzyciaRozszerzen liczy metryki użycia integracji w zadanym oknie
+// czasu, zgrupowane po pozycji katalogu.
 func (r *repozytoriumRozszerzen) MetrykiUzyciaRozszerzen(ctx context.Context, rozszerzenie string,
 	od, do int64) ([]MetrykaUzyciaRozszerzenia, error) {
 
@@ -380,7 +384,8 @@ func (r *repozytoriumRozszerzen) AudytRozszerzen(ctx context.Context, rozszerzen
 	return lista, razem, nil
 }
 
-// DopiszKondycjeRozszerzenia odnotowuje wynik jednego sprawdzenia integracji.
+// DopiszKondycjeRozszerzenia odnotowuje wynik jednego sprawdzenia kondycji
+// integracji w dzienniku kondycji.
 func (r *repozytoriumRozszerzen) DopiszKondycjeRozszerzenia(ctx context.Context,
 	kondycja KondycjaRozszerzenia) error {
 
@@ -401,7 +406,8 @@ func (r *repozytoriumRozszerzen) DopiszKondycjeRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// OstatniaKondycjaRozszerzenia zwraca najnowszy wynik sprawdzenia pozycji.
+// OstatniaKondycjaRozszerzenia zwraca najnowszy wynik sprawdzenia kondycji
+// wskazanej pozycji katalogu.
 func (r *repozytoriumRozszerzen) OstatniaKondycjaRozszerzenia(ctx context.Context,
 	rozszerzenie string) (KondycjaRozszerzenia, error) {
 

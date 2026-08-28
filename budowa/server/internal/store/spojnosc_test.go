@@ -7,20 +7,9 @@ import (
 	"testing"
 )
 
-// Kontrola spójności jest jedynym przyrządem, którym rdzeń mówi Operatorowi, że
-// jego plik bazy przestał trzymać się kupy. Sprawdzian musi więc dowieść nie
-// tylko tego, że kontrola przechodzi na bazie zdrowej — to pokazuje sprawdzian
-// przejazdu migracji — lecz przede wszystkim tego, że na bazie chorej
-// n i e  przechodzi. Kontrola, która nigdy nie odmawia, jest gorsza niż jej brak:
-// daje spokój, którego nie ma czym pokryć.
+// Kontrola spójności to jedyny przyrząd, którym rdzeń mówi, że plik bazy przestał trzymać się kupy.
 
-// TestNaruszonyKluczObcyJestWykrywany zakłada wiersz-sierotę i sprawdza, czy
-// kontrola go widzi.
-//
-// Sierota powstaje z połączenia obocznego z wyłączoną pragmą kluczy obcych.
-// Inaczej się nie da: pula rdzenia trzyma pragmę włączoną w DSN, więc każdy
-// zapis tą drogą zostałby odrzucony przy wstawianiu — czyli sprawdzian mierzyłby
-// pragmę, a nie kontrolę.
+// TestNaruszonyKluczObcyJestWykrywany zakłada wiersz-sierotę i sprawdza, czy kontrola spójności go widzi.
 func TestNaruszonyKluczObcyJestWykrywany(t *testing.T) {
 	sciezka := filepath.Join(t.TempDir(), "dane.sqlite")
 	baza, err := Otworz(sciezka)
@@ -44,12 +33,11 @@ func TestNaruszonyKluczObcyJestWykrywany(t *testing.T) {
 	}
 }
 
-// zalozSierote wstawia wiersz sesji wskazujący na nieistniejącą kartę sesji.
+// Funkcja zalozSierote wstawia w tej bazie wiersz sesji wskazujący na nieistniejącą kartę tej samej sesji.
 func zalozSierote(t *testing.T, sciezka string) {
 	t.Helper()
 
-	// DSN bez pragmy kluczy obcych — połączenie oboczne, wyłącznie do złożenia
-	// stanu, którego droga zwykła nie dopuszcza.
+	// DSN bez pragmy kluczy obcych to połączenie oboczne, wyłącznie do złożenia stanu spoza drogi zwykłej.
 	oboczne, err := sql.Open(nazwaSterownika, filepath.ToSlash(sciezka)+"?_pragma=busy_timeout(5000)")
 	if err != nil {
 		t.Fatalf("nie można otworzyć połączenia obocznego: %v", err)

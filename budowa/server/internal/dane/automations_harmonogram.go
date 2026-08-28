@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: harmonogram automatyki i jego wyzwalacze (tabele
-// `harmonogram_automatyki`, `wyzwalacz_automatyki`) — trwałość okna Scheduler.
-//
-// Harmonogram i wyzwalacze zapisują się razem. Wyzwalacz bez harmonogramu nie
-// ma czego wyzwalać, a harmonogram zapisany bez wyzwalaczy zostawiłby w bazie
-// wyzwalacze poprzedniej wersji. Jedna transakcja zamyka obie możliwości.
+// Plik prowadzi harmonogram automatyki i jego wyzwalacze: trwałość okna Scheduler; harmonogram i wyzwalacze
+// zapisują się razem w jednej transakcji, bo osobno zostawiłyby w bazie sprzeczny stan.
 package dane
 
 import (
@@ -13,7 +9,7 @@ import (
 	"fmt"
 )
 
-// Harmonogram to wiersz tabeli `harmonogram_automatyki`.
+// Harmonogram to wiersz tabeli `harmonogram_automatyki` niosący termin i cykliczność uruchomień automatyki.
 type Harmonogram struct {
 	ID                   int64
 	Kod                  string
@@ -24,17 +20,14 @@ type Harmonogram struct {
 	NastepneUruchomienie *string
 	Utworzono            string
 	Zaktualizowano       string
-	// Cztery pola nadzoru i wejścia zdalnego (migracja 275). Trzymane w bazie,
-	// bo mają obowiązywać po ponownym złożeniu rdzenia: okno tolerancji
-	// w pamięci procesu przestałoby nadzorować cokolwiek po pierwszym restarcie.
-	// OdwolaniePodpisu niesie REFERENCJĘ klucza HMAC w sejfie, nigdy wartość.
+	// Cztery pola nadzoru i wejścia zdalnego, trzymane w bazie, bo mają obowiązywać po restarcie rdzenia.
 	TolerancjaSekundy   int
 	RegulaNadzoru       *string
 	OdwolaniePodpisu    *string
 	OknoDeduplikacjiSek int
 }
 
-// WyzwalaczAutomatyki to wiersz tabeli `wyzwalacz_automatyki`.
+// WyzwalaczAutomatyki to wiersz tabeli `wyzwalacz_automatyki` niosący jeden warunek uruchomienia harmonogramu.
 type WyzwalaczAutomatyki struct {
 	ID        int64
 	Kod       string
@@ -88,8 +81,7 @@ const (
 	                             WHERE automatyka_id = ?`
 )
 
-// ZapiszHarmonogram zapisuje harmonogram wraz z kompletem wyzwalaczy i zwraca
-// stan po zapisie.
+// ZapiszHarmonogram zapisuje harmonogram wraz z kompletem wyzwalaczy i zwraca stan po zapisie z bazy danych.
 func (r *repozytoriumAutomatyk) ZapiszHarmonogram(ctx context.Context, harmonogram Harmonogram,
 	wyzwalacze []WyzwalaczAutomatyki) (Harmonogram, error) {
 
@@ -138,7 +130,7 @@ func (r *repozytoriumAutomatyk) Harmonogram(ctx context.Context, automatykaID in
 	return harmonogram, nil
 }
 
-// Wyzwalacze zwraca wyzwalacze harmonogramu w zapisanej kolejności.
+// Wyzwalacze zwraca wszystkie wyzwalacze harmonogramu w zapisanej kolejności prosto z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) Wyzwalacze(ctx context.Context,
 	harmonogramID int64) ([]WyzwalaczAutomatyki, error) {
 
@@ -198,10 +190,7 @@ func (r *repozytoriumAutomatyk) HarmonogramyNalezne(ctx context.Context, teraz s
 	return lista, nil
 }
 
-// UstawNastepneUruchomienie przesuwa termin najbliższego uruchomienia. Budzik
-// robi to przed odpaleniem, żeby ten sam harmonogram nie ruszył ponownie, gdyby
-// odpalenie trwało dłużej niż takt zegara. Termin `nil` znaczy brak następnego
-// terminu (harmonogram wyłączony albo cykliczność niezrozumiała).
+// UstawNastepneUruchomienie przesuwa termin najbliższego uruchomienia; termin pusty znaczy brak następnego terminu.
 func (r *repozytoriumAutomatyk) UstawNastepneUruchomienie(ctx context.Context,
 	automatykaID int64, nastepne *string) error {
 
@@ -216,7 +205,7 @@ func (r *repozytoriumAutomatyk) UstawNastepneUruchomienie(ctx context.Context,
 	return nil
 }
 
-// zapiszWyzwalacze podmienia komplet wyzwalaczy harmonogramu w transakcji.
+// zapiszWyzwalacze podmienia komplet wyzwalaczy harmonogramu w jednej transakcji bazy danych repozytorium.
 func zapiszWyzwalacze(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	harmonogramID int64, wyzwalacze []WyzwalaczAutomatyki) error {
 
@@ -262,7 +251,7 @@ func harmonogramWTransakcji(ctx context.Context, z *zapytania, transakcja *sql.T
 	return harmonogram, nil
 }
 
-// odczytajHarmonogram składa strukturę z jednego wiersza wyniku.
+// odczytajHarmonogram składa strukturę harmonogramu wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajHarmonogram(wiersz skaner) (Harmonogram, error) {
 	var harmonogram Harmonogram
 	var cron, strefa, nastepne, regula, podpis sql.NullString

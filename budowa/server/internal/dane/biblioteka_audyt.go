@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: dziennik audytu repozytorium
-// (`wpis_audytu_biblioteki`, migracja 183).
-//
-// Dziennik jest przyrostowy — pakiet nie ma i nie dostanie metody zmiany ani
-// usunięcia wpisu. Wpis powstaje po czynności, która już zaszła, więc jedyne
-// operacje to dopisanie i odczyt.
-//
-// Zasób wskazywany jest kodem zewnętrznym, nie kluczem obcym: wpis o trwałym
-// usunięciu zasobu ma przeżyć ten zasób, a klucz obcy z kaskadą zabrałby go
-// razem z nim.
+// Plik prowadzi dziennik audytu biblioteki: dziennik jest przyrostowy, więc jedyne operacje to dopisanie i odczyt,
+// a zasób wskazywany jest kodem zewnętrznym, nie kluczem obcym, żeby wpis przeżył trwałe usunięcie zasobu.
 package dane
 
 import (
@@ -17,7 +9,7 @@ import (
 	"strings"
 )
 
-// WpisAudytuBiblioteki to wiersz dziennika audytu.
+// WpisAudytuBiblioteki to wiersz dziennika audytu biblioteki niosący jedno zdarzenie już zaszłe wcześniej.
 type WpisAudytuBiblioteki struct {
 	ID       int64
 	Kod      string
@@ -28,7 +20,7 @@ type WpisAudytuBiblioteki struct {
 	Chwila   string
 }
 
-// FiltrAudytuBiblioteki niesie zawężenia `library.audit.list`.
+// FiltrAudytuBiblioteki niesie zawężenia wykazu wpisów dziennika audytu biblioteki po polach zdarzenia.
 type FiltrAudytuBiblioteki struct {
 	PlikKod   *string
 	Czynnosci []string
@@ -50,7 +42,7 @@ const (
 	                               FROM wpis_audytu_biblioteki WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszWpisAudytu dopisuje zdarzenie do dziennika.
+// ZapiszWpisAudytu dopisuje zdarzenie do dziennika audytu biblioteki wraz z jego pełną treścią zapisu.
 func (r *repozytoriumBiblioteki) ZapiszWpisAudytu(ctx context.Context,
 	wpis WpisAudytuBiblioteki) (WpisAudytuBiblioteki, error) {
 
@@ -81,7 +73,7 @@ func (r *repozytoriumBiblioteki) ZapiszWpisAudytu(ctx context.Context,
 	return zapisany, nil
 }
 
-// WpisyAudytu zwraca wpisy od najnowszego wraz z liczbą spełniających warunki.
+// WpisyAudytu zwraca wpisy dziennika audytu od najnowszego wraz z liczbą wpisów spełniających warunki.
 func (r *repozytoriumBiblioteki) WpisyAudytu(ctx context.Context,
 	filtr FiltrAudytuBiblioteki) ([]WpisAudytuBiblioteki, int, error) {
 
@@ -143,7 +135,7 @@ func (r *repozytoriumBiblioteki) WpisyAudytu(ctx context.Context,
 	return lista, lacznie, nil
 }
 
-// odczytajWpisAudytuBiblioteki składa wpis z jednego wiersza wyniku.
+// odczytajWpisAudytuBiblioteki składa wpis wprost z jednego wiersza wyniku zapytania SQL do bazy danych.
 func odczytajWpisAudytuBiblioteki(wiersz skaner) (WpisAudytuBiblioteki, error) {
 	var wpis WpisAudytuBiblioteki
 	var plikKod, opis sql.NullString

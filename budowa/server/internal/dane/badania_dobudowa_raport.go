@@ -1,7 +1,7 @@
-// Odpowiedzialność pliku: dobudowa obszaru Research po stronie danych — raport
-// i jego otoczenie: szablony struktury, wersje z migawką sekcji, komentarze
-// recenzji, bloki wstawek, ustawienia przypisów oraz eksport (ślad, szablony,
-// udostępnienia). Kontrakt obszaru deklaruje `badania_dobudowa.go`.
+// Plik dobudowuje obszar badań po stronie danych: raport i jego otoczenie —
+// szablony struktury, wersje z migawką sekcji, komentarze recenzji, bloki
+// wstawek, ustawienia przypisów oraz eksport. Kontrakt obszaru deklaruje plik
+// badania_dobudowa.go.
 package dane
 
 import (
@@ -12,7 +12,8 @@ import (
 	"strings"
 )
 
-// SzablonRaportuBadania to wiersz `szablon_raportu_badania`.
+// SzablonRaportuBadania odwzorowuje wiersz tabeli szablon_raportu_badania: nazwany zestaw
+// tytułów sekcji, który operator może zastosować przy zakładaniu nowego raportu badania.
 type SzablonRaportuBadania struct {
 	Kod          string
 	Nazwa        string
@@ -20,8 +21,9 @@ type SzablonRaportuBadania struct {
 	Wlasny       bool
 }
 
-// WersjaRaportuBadania to wiersz `wersja_raportu_badania`. `Migawka` niesie
-// pełny stan sekcji w chwili zapisu — patrz nagłówek migracji 150.
+// WersjaRaportuBadania odwzorowuje wiersz tabeli wersja_raportu_badania. Pole Migawka niesie
+// pełny stan sekcji raportu zapisany w chwili utworzenia wersji, niezależnie od
+// późniejszych zmian samego raportu.
 type WersjaRaportuBadania struct {
 	Kod          string
 	RaportKod    string
@@ -31,7 +33,8 @@ type WersjaRaportuBadania struct {
 	Utworzono    string
 }
 
-// KomentarzRaportuBadania to wiersz `komentarz_raportu_badania`.
+// KomentarzRaportuBadania odwzorowuje wiersz tabeli komentarz_raportu_badania: wpis recenzji
+// przypisany do sekcji albo wątku raportu, z opcjonalnym cytatem fragmentu tekstu i stanem rozstrzygnięcia.
 type KomentarzRaportuBadania struct {
 	Kod            string
 	RaportKod      string
@@ -56,7 +59,8 @@ type BlokRaportuBadania struct {
 	UstalenieKody []string
 }
 
-// SzablonEksportuBadania to wiersz `szablon_eksportu_badania`.
+// SzablonEksportuBadania odwzorowuje wiersz tabeli szablon_eksportu_badania: zapisaną
+// kombinację formatu i zawartości, którą operator może ponownie zastosować przy kolejnym eksporcie raportu.
 type SzablonEksportuBadania struct {
 	Kod       string
 	Nazwa     string
@@ -92,7 +96,8 @@ func (r *repozytoriumBadan) Raporty(ctx context.Context, okno string) ([]RaportB
 
 // ── Szablony struktury raportu ─────────────────────────────────────────────
 
-// ZapiszSzablonRaportu utrwala szablon własny Operatora.
+// ZapiszSzablonRaportu utrwala szablon własny operatora w tabeli szablon_raportu_badania,
+// nadpisując nazwę i tytuły sekcji istniejącego wiersza o tym samym identyfikatorze zewnętrznym.
 func (r *repozytoriumBadan) ZapiszSzablonRaportu(ctx context.Context, s SzablonRaportuBadania) error {
 	return r.wykonajBadania(ctx, `INSERT INTO szablon_raportu_badania
 	    (identyfikator_zewnetrzny, nazwa, tytuly_sekcji, wlasny) VALUES (?, ?, ?, ?)
@@ -129,7 +134,8 @@ func (r *repozytoriumBadan) SzablonyRaportu(ctx context.Context) ([]SzablonRapor
 
 // ── Wersje raportu ─────────────────────────────────────────────────────────
 
-// ZapiszWersjeRaportu utrwala migawkę raportu jako kolejną wersję.
+// ZapiszWersjeRaportu utrwala migawkę aktualnego stanu sekcji raportu jako kolejną,
+// niemodyfikowalną wersję powiązaną z raportem wskazanym kodem.
 func (r *repozytoriumBadan) ZapiszWersjeRaportu(ctx context.Context,
 	w WersjaRaportuBadania) (WersjaRaportuBadania, error) {
 
@@ -147,12 +153,14 @@ func (r *repozytoriumBadan) ZapiszWersjeRaportu(ctx context.Context,
 	return r.WersjaRaportuBadania(ctx, w.Kod)
 }
 
-// zapytanieWersjiBadania jest wspólnym odczytem wersji raportu.
+// zapytanieWersjiBadania jest wspólnym tekstem zapytania SQL, z którego korzystają wszystkie
+// funkcje odczytujące pojedynczą albo wiele wersji raportu.
 const zapytanieWersjiBadania = `SELECT w.identyfikator_zewnetrzny, r.identyfikator_zewnetrzny,
 	        w.etykieta, w.migawka, w.liczba_sekcji, w.utworzono
 	   FROM wersja_raportu_badania w JOIN raport_badania r ON r.id = w.raport_id `
 
-// WersjaRaportuBadania oddaje jedną wersję po kodzie.
+// WersjaRaportuBadania oddaje jedną wersję raportu wskazaną kodem zewnętrznym albo błąd
+// ErrBrakWiersza, gdy taka wersja nie istnieje w bazie.
 func (r *repozytoriumBadan) WersjaRaportuBadania(ctx context.Context, kod string) (WersjaRaportuBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanieWersjiBadania+`WHERE w.identyfikator_zewnetrzny = ?`)
 	if err != nil {
@@ -168,7 +176,8 @@ func (r *repozytoriumBadan) WersjaRaportuBadania(ctx context.Context, kod string
 	return w, nil
 }
 
-// WersjeRaportu oddaje wersje raportu od najświeższej.
+// WersjeRaportu oddaje wersje wskazanego raportu od najświeższej, ograniczone parametrem
+// limit; wartość niedodatnia ustala limit domyślny.
 func (r *repozytoriumBadan) WersjeRaportu(ctx context.Context, kodRaportu string,
 	limit int) ([]WersjaRaportuBadania, error) {
 
@@ -194,7 +203,8 @@ func (r *repozytoriumBadan) WersjeRaportu(ctx context.Context, kodRaportu string
 	return lista, wiersze.Err()
 }
 
-// odczytajWersjeRaportuBadania składa strukturę z jednego wiersza wyniku.
+// odczytajWersjeRaportuBadania składa strukturę WersjaRaportuBadania z jednego wiersza wyniku
+// zapytania, niezależnie od tego, czy wiersz pochodzi z pojedynczego odczytu, czy z iteracji po wielu wierszach.
 func odczytajWersjeRaportuBadania(wiersz skaner) (WersjaRaportuBadania, error) {
 	var w WersjaRaportuBadania
 	var etykieta sql.NullString
@@ -208,7 +218,8 @@ func odczytajWersjeRaportuBadania(wiersz skaner) (WersjaRaportuBadania, error) {
 
 // ── Komentarze recenzji ────────────────────────────────────────────────────
 
-// ZapiszKomentarzRaportu zakłada komentarz albo nadpisuje zastany.
+// ZapiszKomentarzRaportu zakłada nowy komentarz recenzji albo nadpisuje zastany wiersz o tym
+// samym identyfikatorze zewnętrznym, zachowując datę jego utworzenia.
 func (r *repozytoriumBadan) ZapiszKomentarzRaportu(ctx context.Context,
 	k KomentarzRaportuBadania) (KomentarzRaportuBadania, error) {
 
@@ -280,7 +291,8 @@ func (r *repozytoriumBadan) KomentarzeRaportu(ctx context.Context, kodRaportu st
 
 // ── Bloki wstawek ──────────────────────────────────────────────────────────
 
-// ZapiszBlokRaportu utrwala wstawkę osadzoną w sekcji raportu.
+// ZapiszBlokRaportu utrwala wstawkę osadzoną w sekcji raportu — macierz, oś czasu, wykres
+// albo tabelę dowodów — nadpisując zastany wiersz o tym samym kodzie.
 func (r *repozytoriumBadan) ZapiszBlokRaportu(ctx context.Context,
 	b BlokRaportuBadania) (BlokRaportuBadania, error) {
 
@@ -303,7 +315,8 @@ func (r *repozytoriumBadan) ZapiszBlokRaportu(ctx context.Context,
 	return b, nil
 }
 
-// UstawPrzypisyRaportu zapisuje ustawienia menedżera przypisów raportu.
+// UstawPrzypisyRaportu zapisuje ustawienia menedżera przypisów raportu — umiejscowienie oraz
+// tryb skrócony — i odświeża znacznik czasu aktualizacji raportu.
 func (r *repozytoriumBadan) UstawPrzypisyRaportu(ctx context.Context, kodRaportu,
 	umiejscowienie string, skrocone bool) error {
 
@@ -319,7 +332,8 @@ func (r *repozytoriumBadan) UstawPrzypisyRaportu(ctx context.Context, kodRaportu
 
 // ── Eksport ────────────────────────────────────────────────────────────────
 
-// Eksporty oddaje ślad eksportów raportu albo całego okna badania.
+// Eksporty oddaje ślad eksportów raportu wskazanego kodem albo, gdy kod raportu jest pusty,
+// wszystkich eksportów całego okna badania wskazanego nazwą.
 func (r *repozytoriumBadan) Eksporty(ctx context.Context, kodRaportu, okno string,
 	limit int) ([]EksportRaportu, error) {
 
@@ -369,7 +383,8 @@ func (r *repozytoriumBadan) Eksporty(ctx context.Context, kodRaportu, okno strin
 	return lista, wiersze.Err()
 }
 
-// ZapiszSzablonEksportu utrwala kombinację formatu i zawartości eksportu.
+// ZapiszSzablonEksportu utrwala kombinację formatu i zawartości eksportu jako szablon
+// wielokrotnego użytku, nadpisując zastany wiersz o tym samym kodzie.
 func (r *repozytoriumBadan) ZapiszSzablonEksportu(ctx context.Context,
 	s SzablonEksportuBadania) (SzablonEksportuBadania, error) {
 
@@ -385,7 +400,8 @@ func (r *repozytoriumBadan) ZapiszSzablonEksportu(ctx context.Context,
 	return s, nil
 }
 
-// SzablonyEksportu oddaje zapisane szablony eksportu.
+// SzablonyEksportu oddaje wszystkie szablony eksportu zapisane w instalacji, uporządkowane
+// alfabetycznie według nazwy szablonu.
 func (r *repozytoriumBadan) SzablonyEksportu(ctx context.Context) ([]SzablonEksportuBadania, error) {
 	wiersze, err := r.pytajBadania(ctx,
 		`SELECT identyfikator_zewnetrzny, nazwa, format, cel, zawartosc
@@ -409,7 +425,8 @@ func (r *repozytoriumBadan) SzablonyEksportu(ctx context.Context) ([]SzablonEksp
 	return lista, wiersze.Err()
 }
 
-// ZapiszUdostepnienie utrwala odnośnik udostępnienia raportu.
+// ZapiszUdostepnienie utrwala odnośnik udostępnienia raportu wraz z adresem oraz opcjonalnym
+// czasem wygaśnięcia, nadpisując zastany wiersz o tym samym kodzie.
 func (r *repozytoriumBadan) ZapiszUdostepnienie(ctx context.Context, kodRaportu, kod,
 	adres string, wygasaO *string) error {
 

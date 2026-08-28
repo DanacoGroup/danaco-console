@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: słownik etykiet repozytorium
-// (`etykieta_slownika_biblioteki`) i tezaurus relacji między etykietami
-// (`relacja_tezaurusa_biblioteki`) — migracja 181.
-//
-// Etykieta żyje w dwóch miejscach naraz i to nie jest powielenie prawdy:
-// `etykieta_pliku_biblioteki` mówi, KTO ją nosi, słownik — że ISTNIEJE, jaką ma
-// barwę i od kiedy. Etykieta nieużywana ma wiersz wyłącznie w słowniku; etykieta
-// nadana `library.tag.set` przy zasobie, a w słowniku jeszcze nie założona, jest
-// tu widoczna mimo to — wykaz składa się z sumy obu źródeł, bo słownik pokazujący
-// mniej niż zasoby byłby słownikiem mylącym.
+// Plik prowadzi słownik etykiet biblioteki i tezaurus relacji między etykietami; etykieta żyje w dwóch miejscach
+// naraz — jedna tabela mówi, kto ją nosi, słownik mówi, że istnieje, jaką ma barwę i od kiedy, a wykaz składa się z sumy obu źródeł.
 package dane
 
 import (
@@ -27,7 +19,7 @@ type EtykietaSlownikaBiblioteki struct {
 	Utworzono    string
 }
 
-// RelacjaTezaurusaBiblioteki to jedna krawędź tezaurusa.
+// RelacjaTezaurusaBiblioteki to jedna krawędź tezaurusa łącząca dwie etykiety w słowniku tej biblioteki.
 type RelacjaTezaurusaBiblioteki struct {
 	Zrodlo    string
 	Cel       string
@@ -86,7 +78,7 @@ const (
 	                         ORDER BY etykieta_zrodlowa, rodzaj, etykieta_docelowa`
 )
 
-// EtykietySlownika zwraca słownik etykiet wraz z licznikiem użycia.
+// EtykietySlownika zwraca cały słownik etykiet wraz z licznikiem ich użycia z bazy danych repozytorium.
 func (r *repozytoriumBiblioteki) EtykietySlownika(ctx context.Context, fraza *string,
 	tylkoNieuzywane bool, limit int) ([]EtykietaSlownikaBiblioteki, int, error) {
 
@@ -161,7 +153,7 @@ func (r *repozytoriumBiblioteki) EtykietaSlownika(ctx context.Context,
 	return etykieta, nil
 }
 
-// ZapiszEtykieteSlownika zakłada wpis słownika albo zmienia barwę zastanego.
+// ZapiszEtykieteSlownika zakłada wpis słownika etykiet albo zmienia barwę zastanego wpisu w bazie danych.
 func (r *repozytoriumBiblioteki) ZapiszEtykieteSlownika(ctx context.Context, nazwa string,
 	barwa *string) (EtykietaSlownikaBiblioteki, error) {
 
@@ -179,12 +171,7 @@ func (r *repozytoriumBiblioteki) ZapiszEtykieteSlownika(ctx context.Context, naz
 	return r.EtykietaSlownika(ctx, nazwa)
 }
 
-// PrzemianujEtykiete zmienia nazwę etykiety w całym repozytorium: przy zasobach
-// i w słowniku. Zwraca liczbę zasobów, których zmiana dotknęła.
-//
-// `UPDATE OR REPLACE` zamiast zwykłego UPDATE, bo zasób noszący obie nazwy naraz
-// złamałby klucz główny pary (plik, etykieta): wiersz stary ustępuje wtedy
-// nowemu zamiast wywracać całą zmianę.
+// PrzemianujEtykiete zmienia nazwę etykiety w całym repozytorium, przy zasobach i w słowniku, i zwraca liczbę zasobów, których zmiana dotknęła.
 func (r *repozytoriumBiblioteki) PrzemianujEtykiete(ctx context.Context, stara, nowa string) (int, error) {
 	if strings.TrimSpace(stara) == "" || strings.TrimSpace(nowa) == "" {
 		return 0, fmt.Errorf("dane: zmiana nazwy etykiety bez wskazania nazw")
@@ -274,7 +261,7 @@ func (r *repozytoriumBiblioteki) UstawRelacjeTezaurusa(ctx context.Context,
 	return !zdejmij, nil
 }
 
-// RelacjeTezaurusa zwraca wszystkie krawędzie tezaurusa.
+// RelacjeTezaurusa zwraca wszystkie krawędzie tezaurusa etykiet wprost z bazy danych repozytorium biblioteki.
 func (r *repozytoriumBiblioteki) RelacjeTezaurusa(ctx context.Context) ([]RelacjaTezaurusaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, wykazRelacjiTezaurusa)
 	if err != nil {
@@ -301,7 +288,7 @@ func (r *repozytoriumBiblioteki) RelacjeTezaurusa(ctx context.Context) ([]Relacj
 	return lista, nil
 }
 
-// uzycieEtykiety liczy zasoby noszące etykietę.
+// uzycieEtykiety liczy zasoby noszące etykietę wprost z tabeli etykiet przypisanych plikom biblioteki.
 func (r *repozytoriumBiblioteki) uzycieEtykiety(ctx context.Context, nazwa string) (int, error) {
 	var liczba int
 	err := r.db.QueryRowContext(ctx,
@@ -312,7 +299,7 @@ func (r *repozytoriumBiblioteki) uzycieEtykiety(ctx context.Context, nazwa strin
 	return liczba, nil
 }
 
-// odczytajEtykieteSlownika składa pozycję słownika z jednego wiersza wyniku.
+// odczytajEtykieteSlownika składa pozycję słownika etykiet wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajEtykieteSlownika(wiersz skaner) (EtykietaSlownikaBiblioteki, error) {
 	var etykieta EtykietaSlownikaBiblioteki
 	var barwa sql.NullString

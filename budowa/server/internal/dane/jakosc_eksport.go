@@ -1,14 +1,5 @@
 // Odpowiedzialność pliku: ślady eksportu panelu tłumaczenia (tabela
-// `panel_tlumaczenia_eksport`) — część `RepozytoriumTlumaczen`, deklarowanego
-// w całości w `tlumaczenie.go`. Tu wyłącznie zapis i odczyt śladu eksportu; typ,
-// interfejs i konstruktor leżą tam.
-//
-// Rdzeń nie ma magazynu plików binarnych, więc `translate.panel.export` nie
-// wytwarza pliku i `plik_odnosnik` zostaje NULL, dopóki plik realnie nie powstał
-// poza rdzeniem. Zapisywany jest wyłącznie ślad zlecenia eksportu: w jakim
-// formacie i kiedy.
-//
-// Czas jest liczbą milisekund epoki, wzorem `dane/asystent.go`.
+// `panel_tlumaczenia_eksport`) — część `RepozytoriumTlumaczen`, deklarowanego w całości w `tlumaczenie.go`.
 package dane
 
 import (
@@ -19,11 +10,8 @@ import (
 	"time"
 )
 
-// EksportPanelu to wiersz `panel_tlumaczenia_eksport` — ślad zlecenia
-// eksportu panelu. `Format` niesie wartości ExportFormat kontraktu wprost
-// (pdf/docx/markdown/html/txt), bez przekładu na polski. `PlikOdnosnik` jest
-// odwołaniem do pliku wyniku, jeśli realnie powstał — rdzeń go nie wytwarza,
-// więc zwykle zostaje NULL.
+// EksportPanelu to wiersz `panel_tlumaczenia_eksport` — ślad zlecenia eksportu panelu, niosący format eksportu
+// i odnośnik do pliku wyniku.
 type EksportPanelu struct {
 	ID           int64
 	PanelID      int64
@@ -49,12 +37,8 @@ const (
 	istniejePanelDlaEksportu = `SELECT id FROM panel_tlumaczenia WHERE id = ?`
 )
 
-// ZapiszEksportPanelu dokłada ślad zlecenia eksportu panelu: każde
-// wywołanie `translate.panel.export` dopisuje nowy wiersz historii, nic nie
-// nadpisuje — ślad ma pokazywać wszystkie dotychczasowe eksporty panelu, nie
-// tylko ostatni. Panel, którego nie ma, wraca jako ErrBrakWiersza — cicha
-// zgoda na eksport bytu, którego nie ma, byłaby potwierdzeniem czynności,
-// która się nie odbyła.
+// ZapiszEksportPanelu dokłada ślad zlecenia eksportu panelu; każde wywołanie zapisuje nowy wiersz historii,
+// nic nie nadpisuje.
 func (r *repozytoriumTlumaczen) ZapiszEksportPanelu(ctx context.Context, eksport EksportPanelu) (EksportPanelu, error) {
 	if eksport.PanelID == 0 {
 		return EksportPanelu{}, fmt.Errorf("dane: eksport panelu bez identyfikatora panelu")
@@ -131,7 +115,7 @@ func (r *repozytoriumTlumaczen) EksportyPanelu(ctx context.Context, panelID int6
 	return lista, nil
 }
 
-// odczytajEksportPanelu składa strukturę z jednego wiersza.
+// odczytajEksportPanelu składa strukturę śladu eksportu panelu z jednego wiersza wyniku zapytania do bazy.
 func odczytajEksportPanelu(wiersz skaner) (EksportPanelu, error) {
 	var eksport EksportPanelu
 	var plikOdnosnik sql.NullString

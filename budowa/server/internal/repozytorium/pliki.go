@@ -1,3 +1,6 @@
+// Czynności plikowe drzewa projektu sprowadzają każde wskazanie Operatora do
+// ścieżki wewnątrz katalogu roboczego okna i odmawiają, gdy wskazanie z niego
+// wychodzi.
 package repozytorium
 
 import (
@@ -9,22 +12,12 @@ import (
 	"strings"
 )
 
-// Czynności plikowe drzewa projektu.
-//
-// ── Ścieżka nie wychodzi poza katalog roboczy ───────────────────────────────
-// Każda czynność sprowadza wskazanie Operatora do ścieżki wewnątrz katalogu
-// roboczego okna i odmawia, gdy wskazanie z niego wychodzi. Bez tego `../../`
-// w nazwie pliku byłoby drogą do dowolnego miejsca na dysku serwera — a okno
-// modułu Developer stoi po to, żeby pracować w JEDNYM repozytorium.
-//
-// Sprawdzenie idzie po ścieżce rozwiniętej z dowiązań, nie po samym napisie:
-// dowiązanie symboliczne wskazujące poza katalog jest tym samym wyjściem, tylko
-// zapisanym inaczej.
-
-// ErrPozaObszarem mówi, że wskazanie wychodzi poza katalog roboczy okna.
+// ErrPozaObszarem mówi, że dane wskazanie ścieżki wychodzi poza katalog
+// roboczy tego okna projektu programistycznego.
 var ErrPozaObszarem = errors.New("ścieżka wychodzi poza katalog roboczy okna")
 
-// ErrJuzIstnieje mówi, że w miejscu docelowym coś już leży.
+// ErrJuzIstnieje mówi, że w miejscu docelowym tej czynności plikowej coś już
+// wcześniej leży na dysku serwera.
 var ErrJuzIstnieje = errors.New("w miejscu docelowym już coś leży")
 
 // wObszarze sprowadza wskazanie względne do ścieżki bezwzględnej w katalogu
@@ -47,9 +40,7 @@ func wObszarze(korzen, wskazanie string) (string, error) {
 	}
 	pelna := filepath.Join(korzenPelny, oczyszczone)
 
-	// Ścieżka rozwija się z dowiązań tylko wtedy, gdy istnieje. Przy zakładaniu
-	// pliku sprawdza się katalog nadrzędny — on istnieje, a to on rozstrzyga,
-	// gdzie plik naprawdę powstanie.
+	// Ścieżka rozwija się z dowiązań tylko wtedy, gdy istnieje.
 	doSprawdzenia := pelna
 	if _, err := os.Lstat(pelna); err != nil {
 		doSprawdzenia = filepath.Dir(pelna)
@@ -67,12 +58,8 @@ func wObszarze(korzen, wskazanie string) (string, error) {
 	return pelna, nil
 }
 
-// Zaloz zakłada plik albo katalog w katalogu roboczym okna.
-//
-// Katalogi pośrednie powstają same: Operator, który podaje `pkg/nowy/plik.go`,
-// prosi o plik pod tą ścieżką, a nie o komunikat, że `pkg/nowy` nie istnieje.
-// Plik istniejący NIE jest nadpisywany — zakładanie nie jest zapisem i nie ma
-// prawa skasować cudzej treści.
+// Zaloz zakłada plik albo katalog w katalogu roboczym okna; katalogi pośrednie
+// powstają same, plik istniejący nie jest nadpisywany.
 func Zaloz(korzen, sciezka string, katalog bool) error {
 	pelna, err := wObszarze(korzen, sciezka)
 	if err != nil {
@@ -129,12 +116,8 @@ func ZmienNazwe(korzen, sciezka, nowaNazwa string) (string, error) {
 	return filepath.ToSlash(wzgledna), nil
 }
 
-// Usun usuwa wskazane węzły drzewa i oddaje te, które naprawdę usunięto.
-//
-// Wykaz usuniętych jest wykazem skutku, nie zamiaru: węzeł, którego nie było,
-// nie zatrzymuje czynności — Operator zaznaczający kilkanaście plików nie ma
-// dostawać odmowy przez jeden, który zniknął wcześniej. Ale nie ma go też
-// w wykazie, bo tego pliku ta czynność nie usunęła.
+// Usun usuwa wskazane węzły drzewa i oddaje te, które naprawdę usunięto;
+// wykaz usuniętych jest wykazem skutku, nie zamiaru.
 func Usun(korzen string, sciezki []string) ([]string, error) {
 	usuniete := make([]string, 0, len(sciezki))
 	for _, sciezka := range sciezki {
@@ -199,11 +182,8 @@ func Przenies(korzen string, sciezki []string, katalogDocelowy string) ([]string
 	return przeniesione, nil
 }
 
-// KorzenRoboczy oddaje katalog, w którym pracują czynności plikowe okna.
-//
-// Repozytorium wskazuje swój katalog główny; katalog bez repozytorium jest
-// swoim własnym korzeniem. Dzięki temu czynności plikowe działają także tam,
-// gdzie Operator jeszcze nie założył repozytorium.
+// KorzenRoboczy oddaje katalog, w którym pracują czynności plikowe okna:
+// korzeń repozytorium, a bez niego sam katalog.
 func KorzenRoboczy(katalog string) (string, error) {
 	if strings.TrimSpace(katalog) == "" {
 		return "", fmt.Errorf("katalog roboczy okna nie jest wskazany")

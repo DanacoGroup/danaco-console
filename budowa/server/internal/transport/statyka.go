@@ -13,13 +13,7 @@ import (
 // widoku nie ma odpowiednika w pakiecie klienta.
 const plikWejsciowy = "index.html"
 
-// uchwytStatyki serwuje pakiet interfejsu z katalogu (klient/dist).
-//
-// Fail-open: katalog niewskazany albo jeszcze niezbudowany nie
-// wstrzymuje nasłuchu ani kanału WebSocket — żądanie pliku dostaje wtedy
-// odpowiedź 404 z wyjaśnieniem, a rdzeń pracuje dalej. Katalog sprawdzany jest
-// przy każdym żądaniu, więc zbudowanie klienta po starcie rdzenia wystarcza,
-// by pliki zaczęły się serwować bez ponownego uruchomienia.
+// Funkcja uchwytStatyki serwuje pakiet interfejsu klienta z katalogu wskazanego jako parametr wywołania.
 func uchwytStatyki(katalog string, dziennik *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !katalogIstnieje(katalog) {
@@ -48,7 +42,7 @@ func sciezkaWKatalogu(katalog, sciezkaZadania string) string {
 	return filepath.Join(katalog, filepath.FromSlash(oczyszczona))
 }
 
-// katalogIstnieje sprawdza, czy pakiet klienta jest na miejscu.
+// Funkcja katalogIstnieje sprawdza, czy pakiet klienta jest fizycznie na miejscu w systemie plików dysku.
 func katalogIstnieje(katalog string) bool {
 	if katalog == "" {
 		return false
@@ -57,7 +51,7 @@ func katalogIstnieje(katalog string) bool {
 	return err == nil && info.IsDir()
 }
 
-// plikIstnieje sprawdza, czy ścieżka wskazuje zwykły plik.
+// Funkcja plikIstnieje sprawdza, czy podana ścieżka wskazuje istniejący zwykły plik na tym dysku serwera.
 func plikIstnieje(sciezka string) bool {
 	info, err := os.Stat(sciezka)
 	return err == nil && !info.IsDir()
@@ -72,7 +66,7 @@ func odmowaPakietu(w http.ResponseWriter, katalog string) {
 		"Rdzeń pracuje; kanał WebSocket jest czynny.\n"))
 }
 
-// opisKatalogu nazywa stan katalogu klienta na potrzeby dziennika i odpowiedzi.
+// Funkcja opisKatalogu nazywa stan katalogu klienta na potrzeby dziennika oraz treści tej odpowiedzi HTTP.
 func opisKatalogu(katalog string) string {
 	if katalog == "" {
 		return "katalog niewskazany"

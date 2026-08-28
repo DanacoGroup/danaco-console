@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: rodzina `extension.*` — warstwa integracji
-// zewnętrznych. Transport i poświadczenie (`integracja_rozszerzenia`), webhooki
-// (`webhook_rozszerzenia`) oraz odwzorowania danych (`mapowanie_rozszerzenia`)
-// — `store/migracja_209_rozszerzenia_integracje.sql`.
-//
-// Poświadczenie jest tu WYŁĄCZNIE odwołaniem — kluczem jawnym warstwy sekretów.
-// Hasła, tokenu ani klucza API ta warstwa nie widzi i nie ma jak zobaczyć.
+// Odpowiedzialność pliku: rodzina `extension.*` — warstwa integracji zewnętrznych: transport i poświadczenie
+// (`integracja_rozszerzenia`), webhooki (`webhook_rozszerzenia`) oraz odwzorowania danych (`mapowanie_rozszerzenia`).
 package dane
 
 import (
@@ -13,7 +8,7 @@ import (
 	"fmt"
 )
 
-// IntegracjaRozszerzenia to wiersz tabeli `integracja_rozszerzenia`.
+// IntegracjaRozszerzenia to wiersz tabeli `integracja_rozszerzenia`, niosący transport i poświadczenie integracji.
 type IntegracjaRozszerzenia struct {
 	RozszerzenieKod  string
 	Transport        *string
@@ -25,7 +20,7 @@ type IntegracjaRozszerzenia struct {
 	Zaktualizowano   int64
 }
 
-// WebhookRozszerzenia to wiersz tabeli `webhook_rozszerzenia`.
+// WebhookRozszerzenia to wiersz tabeli `webhook_rozszerzenia`, niosący adres i kierunek jednego webhooka.
 type WebhookRozszerzenia struct {
 	ID               int64
 	Kod              string
@@ -39,7 +34,7 @@ type WebhookRozszerzenia struct {
 	Zaktualizowano   int64
 }
 
-// MapowanieRozszerzenia to wiersz tabeli `mapowanie_rozszerzenia`.
+// MapowanieRozszerzenia to wiersz tabeli `mapowanie_rozszerzenia`, niosący odwzorowanie danych integracji.
 type MapowanieRozszerzenia struct {
 	ID              int64
 	Kod             string
@@ -117,7 +112,7 @@ const (
 	                                FROM mapowanie_rozszerzenia WHERE identyfikator_zewnetrzny = ?`
 )
 
-// ZapiszIntegracjeRozszerzenia zapisuje transport albo poświadczenie integracji.
+// ZapiszIntegracjeRozszerzenia zapisuje transport albo poświadczenie integracji rozszerzenia w jednym wierszu tabeli.
 func (r *repozytoriumRozszerzen) ZapiszIntegracjeRozszerzenia(ctx context.Context,
 	integracja IntegracjaRozszerzenia) (IntegracjaRozszerzenia, error) {
 
@@ -140,7 +135,7 @@ func (r *repozytoriumRozszerzen) ZapiszIntegracjeRozszerzenia(ctx context.Contex
 	return r.IntegracjaRozszerzenia(ctx, integracja.RozszerzenieKod)
 }
 
-// IntegracjaRozszerzenia zwraca transport i poświadczenie pozycji.
+// IntegracjaRozszerzenia zwraca transport i poświadczenie integracji zapisane dla wskazanego rozszerzenia.
 func (r *repozytoriumRozszerzen) IntegracjaRozszerzenia(ctx context.Context,
 	rozszerzenie string) (IntegracjaRozszerzenia, error) {
 
@@ -168,7 +163,7 @@ func (r *repozytoriumRozszerzen) IntegracjaRozszerzenia(ctx context.Context,
 	return integracja, nil
 }
 
-// ZapiszWebhookRozszerzenia zapisuje webhook (UPSERT po identyfikatorze).
+// ZapiszWebhookRozszerzenia zapisuje webhook rozszerzenia, nadpisując wiersz istniejący pod tym samym identyfikatorem.
 func (r *repozytoriumRozszerzen) ZapiszWebhookRozszerzenia(ctx context.Context,
 	webhook WebhookRozszerzenia) (WebhookRozszerzenia, error) {
 
@@ -191,7 +186,7 @@ func (r *repozytoriumRozszerzen) ZapiszWebhookRozszerzenia(ctx context.Context,
 	return r.WebhookRozszerzenia(ctx, webhook.Kod)
 }
 
-// WebhookRozszerzenia zwraca jeden webhook po jego identyfikatorze.
+// WebhookRozszerzenia zwraca jeden webhook rozszerzenia wskazany jego identyfikatorem tekstowym w tabeli.
 func (r *repozytoriumRozszerzen) WebhookRozszerzenia(ctx context.Context, kod string) (WebhookRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWebhookRozszerzenia)
 	if err != nil {
@@ -207,7 +202,7 @@ func (r *repozytoriumRozszerzen) WebhookRozszerzenia(ctx context.Context, kod st
 	return webhook, nil
 }
 
-// WebhookiRozszerzen zwraca webhooki, opcjonalnie zawężone pozycją i kierunkiem.
+// WebhookiRozszerzen zwraca wykaz webhooków rozszerzenia, opcjonalnie zawężony pozycją i kierunkiem zdarzenia.
 func (r *repozytoriumRozszerzen) WebhookiRozszerzen(ctx context.Context,
 	rozszerzenie, kierunek string) ([]WebhookRozszerzenia, error) {
 
@@ -235,7 +230,7 @@ func (r *repozytoriumRozszerzen) WebhookiRozszerzen(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszMapowanieRozszerzenia zapisuje odwzorowanie danych integracji.
+// ZapiszMapowanieRozszerzenia zapisuje odwzorowanie danych integracji rozszerzenia w jednym wierszu tabeli.
 func (r *repozytoriumRozszerzen) ZapiszMapowanieRozszerzenia(ctx context.Context,
 	mapowanie MapowanieRozszerzenia) (MapowanieRozszerzenia, error) {
 
@@ -259,7 +254,7 @@ func (r *repozytoriumRozszerzen) ZapiszMapowanieRozszerzenia(ctx context.Context
 	return r.MapowanieRozszerzenia(ctx, mapowanie.Kod)
 }
 
-// MapowanieRozszerzenia zwraca jedno odwzorowanie po identyfikatorze.
+// MapowanieRozszerzenia zwraca jedno odwzorowanie danych integracji wskazane jego identyfikatorem tekstowym.
 func (r *repozytoriumRozszerzen) MapowanieRozszerzenia(ctx context.Context, kod string) (MapowanieRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzMapowanieRozszerzenia)
 	if err != nil {
@@ -277,7 +272,7 @@ func (r *repozytoriumRozszerzen) MapowanieRozszerzenia(ctx context.Context, kod 
 	return mapowanie, nil
 }
 
-// odczytajWebhookRozszerzenia składa webhook z jednego wiersza wyniku.
+// odczytajWebhookRozszerzenia składa strukturę webhooka rozszerzenia z jednego wiersza wyniku zapytania.
 func odczytajWebhookRozszerzenia(wiersz skaner) (WebhookRozszerzenia, error) {
 	var webhook WebhookRozszerzenia
 	var adres, nasluch, zdarzenia, sekret sql.NullString

@@ -1,18 +1,6 @@
-// Odpowiedzialność pakietu: czynności modułu Developer na repozytorium
-// katalogu roboczego okna — stan, różnica, historia, gałęzie i konflikty.
-//
-// ── Biblioteka wkompilowana, nie program `git` ──────────────────────────────
-// Cały pakiet stoi na `go-git` wkompilowanym w binarium rdzenia. Nie ma tu ani
-// jednego uruchomienia procesu i mieć nie będzie: funkcja zależna od programu,
-// którego instalka nie niesie, jest u odbiorcy odmową, a nie funkcją. Odczyt
-// stanu repozytorium ma działać zawsze, bo od niego zaczyna się każda inna
-// czynność okna Git Panel.
-//
-// ── Pakiet nie zna kontraktu komend, zna wyłącznie kształt danych ───────────
-// Stąd nie wychodzi ani jedna odmowa protokołu: pakiet oddaje wynik albo błąd
-// Go, a nazwanie go Operatorowi należy do adaptera. Dzięki temu ten sam silnik
-// obsługuje Git Panel, margines zmian w edytorze i przegląd różnicy przed
-// scaleniem, nie ucząc się o żadnym z nich.
+// Pakiet obsługuje czynności modułu Developer na repozytorium katalogu roboczego okna:
+// stan, różnicę, historię, gałęzie i konflikty. Uzasadnienie wyboru biblioteki i granicy
+// wobec kontraktu komend niesie rozdział stan.go dokumentacji architektury.
 package repozytorium
 
 import (
@@ -29,21 +17,17 @@ import (
 	"danacoconsole/shared"
 )
 
-// ErrBrakRepozytorium mówi, że katalog roboczy nie jest repozytorium.
-//
-// Błąd jest osobny, bo odpowiedź kontraktu rozróżnia katalog czysty od katalogu
-// bez repozytorium polem `isRepository`: bez tego rozróżnienia Git Panel
-// pokazywałby „brak zmian" tam, gdzie repozytorium nigdy nie założono.
+// ErrBrakRepozytorium mówi, że katalog roboczy nie jest repozytorium. Błąd jest osobny,
+// ponieważ odpowiedź kontraktu rozróżnia katalog czysty od katalogu bez repozytorium
+// polem isRepository.
 var ErrBrakRepozytorium = errors.New("katalog roboczy nie jest repozytorium")
 
-// ErrBrakKonfliktu mówi, że wskazany plik nie jest skonfliktowany.
+// ErrBrakKonfliktu mówi, że wskazany plik nie jest skonfliktowany i nie ma treści
+// do rozstrzygnięcia widokiem trójstronnym.
 var ErrBrakKonfliktu = errors.New("plik nie ma konfliktu do rozstrzygnięcia")
 
-// Otworz otwiera repozytorium katalogu roboczego.
-//
-// Szukanie idzie w górę drzewa, bo katalogiem roboczym okna bywa podkatalog
-// repozytorium — a Operator, który otworzył `server/internal`, oczekuje stanu
-// swojego repozytorium, nie komunikatu o jego braku.
+// Otworz otwiera repozytorium katalogu roboczego, szukając w górę drzewa, ponieważ
+// katalogiem roboczym okna bywa podkatalog repozytorium, nie jego korzeń.
 func Otworz(katalog string) (*git.Repository, error) {
 	if strings.TrimSpace(katalog) == "" {
 		return nil, ErrBrakRepozytorium
@@ -60,7 +44,8 @@ func Otworz(katalog string) (*git.Repository, error) {
 	return repo, nil
 }
 
-// Korzen oddaje katalog główny repozytorium.
+// Korzen oddaje katalog główny repozytorium, wyznaczony przez katalog roboczy
+// odnaleziony przy jego otwarciu.
 func Korzen(repo *git.Repository) (string, error) {
 	drzewo, err := repo.Worktree()
 	if err != nil {
@@ -69,11 +54,8 @@ func Korzen(repo *git.Repository) (string, error) {
 	return drzewo.Filesystem.Root(), nil
 }
 
-// stanPliku odwzorowuje kod stanu `go-git` na wartość kontraktu.
-//
-// Odwzorowanie jest jawne i pełne: wartość nieznana idzie na „bez zmian", bo
-// stan zmyślony byłby gorszy od stanu nieokreślonego — Operator zobaczyłby
-// plakietkę zmiany na pliku, którego nikt nie ruszał.
+// stanPliku odwzorowuje kod stanu go-git na wartość kontraktu. Wartość nieznana idzie
+// na stan bez zmian, ponieważ stan zmyślony byłby gorszy niż nieokreślony.
 func stanPliku(kod git.StatusCode) shared.GitFileState {
 	switch kod {
 	case git.Unmodified:
@@ -97,12 +79,9 @@ func stanPliku(kod git.StatusCode) shared.GitFileState {
 	}
 }
 
-// Stan oddaje stan repozytorium katalogu roboczego.
-//
-// Rozbieżność wobec gałęzi zdalnej liczy się z lokalnych referencji, bez
-// sięgania do sieci: odczyt stanu ma być natychmiastowy i ma działać bez
-// łączności. Liczba mówi więc o rozbieżności wobec tego, co rdzeń ostatnio
-// pobrał — i tak samo działa `git status`.
+// Stan oddaje stan repozytorium katalogu roboczego. Rozbieżność wobec gałęzi zdalnej
+// liczy się z lokalnych referencji, bez sięgania do sieci, żeby odczyt był natychmiastowy
+// — tak samo działa polecenie git status.
 func Stan(katalog string) (shared.DeveloperGitStatus, error) {
 	repo, err := Otworz(katalog)
 	if err != nil {
@@ -144,8 +123,7 @@ func Stan(katalog string) (shared.DeveloperGitStatus, error) {
 		}
 		wpisy = append(wpisy, pozycja)
 	}
-	// Kolejność mapy w Go jest losowa, a wykaz zmian pokazywany Operatorowi ma
-	// stać w miejscu między jednym odczytem a drugim.
+	// Kolejność mapy w Go jest losowa, a wykaz zmian ma stać w miejscu między odczytami.
 	sort.Slice(wpisy, func(i, j int) bool { return wpisy[i].Path < wpisy[j].Path })
 
 	stan := shared.DeveloperGitStatus{
@@ -165,12 +143,9 @@ func Stan(katalog string) (shared.DeveloperGitStatus, error) {
 	return stan, nil
 }
 
-// rozbieznosc liczy, o ile zatwierdzeń gałąź wyprzedza gałąź zdalną i o ile za
-// nią zostaje.
-//
-// Brak gałęzi śledzonej nie jest błędem: gałąź lokalna bez odpowiednika zdalnego
-// jest zwykłym stanem pracy, więc czynność oddaje „nie znaleziono" zamiast
-// zatrzymywać odczyt stanu.
+// rozbieznosc liczy, o ile zatwierdzeń gałąź wyprzedza gałąź zdalną i o ile za nią
+// zostaje. Brak gałęzi śledzonej nie jest błędem, tylko zwykłym stanem pracy, więc
+// czynność oddaje informację nie znaleziono.
 func rozbieznosc(repo *git.Repository, galaz string) (string, int, int, bool) {
 	nastawy, err := repo.Config()
 	if err != nil {
@@ -202,7 +177,8 @@ func rozbieznosc(repo *git.Repository, galaz string) (string, int, int, bool) {
 	return nazwaZdalnej, przed, za, true
 }
 
-// policzDoPrzodkow liczy zatwierdzenia osiągalne z `od`, a nieosiągalne z `do`.
+// policzDoPrzodkow liczy zatwierdzenia osiągalne z punktu od, a nieosiągalne z punktu
+// do, przechodząc wykaz przodków obu.
 func policzDoPrzodkow(repo *git.Repository, od, doPunktu plumbing.Hash) (int, error) {
 	osiagalne := map[plumbing.Hash]bool{}
 	if err := przejdzPrzodkow(repo, doPunktu, osiagalne); err != nil {
@@ -221,7 +197,8 @@ func policzDoPrzodkow(repo *git.Repository, od, doPunktu plumbing.Hash) (int, er
 	return liczba, nil
 }
 
-// przejdzPrzodkow zbiera zatwierdzenia osiągalne ze wskazanego punktu.
+// przejdzPrzodkow zbiera zatwierdzenia osiągalne ze wskazanego punktu, przechodząc
+// drzewo przodków w głąb.
 func przejdzPrzodkow(repo *git.Repository, punkt plumbing.Hash,
 	zebrane map[plumbing.Hash]bool) error {
 
@@ -238,9 +215,7 @@ func przejdzPrzodkow(repo *git.Repository, punkt plumbing.Hash,
 		zebrane[biezacy] = true
 		zatwierdzenie, err := repo.CommitObject(biezacy)
 		if err != nil {
-			// Zatwierdzenie nieobecne w magazynie obiektów kończy tę gałąź
-			// przejścia zamiast całego liczenia: repozytorium pobrane płytko
-			// (`shallow`) nie ma przodków i to jest jego zwykły stan.
+			// Zatwierdzenie nieobecne w magazynie kończy gałąź przejścia — repozytorium płytkie nie ma przodków.
 			continue
 		}
 		doOdwiedzenia = append(doOdwiedzenia, zatwierdzenie.ParentHashes...)
@@ -248,7 +223,8 @@ func przejdzPrzodkow(repo *git.Repository, punkt plumbing.Hash,
 	return nil
 }
 
-// Galezie oddaje gałęzie repozytorium wraz z rozbieżnością wobec gałęzi zdalnej.
+// Galezie oddaje gałęzie repozytorium wraz z rozbieżnością wobec gałęzi zdalnej,
+// opcjonalnie dokładając gałęzie zdalne.
 func Galezie(katalog string, zeZdalnymi bool) ([]shared.GitBranch, *string, error) {
 	repo, err := Otworz(katalog)
 	if err != nil {
@@ -323,12 +299,9 @@ const (
 	znacznikPrzychodzacej = ">>>>>>>"
 )
 
-// Konflikt rozkłada plik skonfliktowany na trzy wersje.
-//
-// Rozbiór idzie po znacznikach w pliku katalogu roboczego, a nie po indeksie
-// repozytorium: to plik na dysku widzi Operator i to jego treść ma pokazać widok
-// trójstronny. Wersja bazowa bywa nieobecna, bo znacznik przodka wypisuje
-// wyłącznie scalanie w stylu `diff3`.
+// Konflikt rozkłada plik skonfliktowany na trzy wersje, czytając znaczniki w pliku
+// katalogu roboczego, a nie indeks repozytorium, bo to plik na dysku ma pokazać widok
+// trójstronny.
 func Konflikt(katalog, sciezka string) (shared.GitConflict, error) {
 	repo, err := Otworz(katalog)
 	if err != nil {
@@ -362,8 +335,7 @@ func Konflikt(katalog, sciezka string) (shared.GitConflict, error) {
 		default:
 			switch gdzie {
 			case 0:
-				// Treść wspólna wchodzi do obu stron, bo widok trójstronny
-				// pokazuje całe pliki, nie same fragmenty sporne.
+				// Treść wspólna wchodzi do obu stron, bo widok trójstronny pokazuje całe pliki, nie fragmenty.
 				biezaca = append(biezaca, wiersz)
 				przychodzaca = append(przychodzaca, wiersz)
 				przodek = append(przodek, wiersz)
@@ -389,13 +361,8 @@ func Konflikt(katalog, sciezka string) (shared.GitConflict, error) {
 	return konflikt, nil
 }
 
-// RozstrzygnijKonflikt zapisuje wybraną treść i przygotowuje plik do
-// zatwierdzenia.
-//
-// Zapis idzie razem z przygotowaniem zmiany (`add`), bo scalanie uznaje konflikt
-// za rozstrzygnięty dopiero po wpisaniu pliku do indeksu. Sam zapis na dysk
-// zostawiłby Operatora z plikiem poprawionym i repozytorium nadal
-// skonfliktowanym.
+// RozstrzygnijKonflikt zapisuje wybraną treść i przygotowuje plik do zatwierdzenia, bo
+// scalanie uznaje konflikt za rozstrzygnięty dopiero po wpisaniu pliku do indeksu.
 func RozstrzygnijKonflikt(katalog, sciezka string,
 	sposob shared.ConflictResolutionKind, tresc string) ([]string, error) {
 
@@ -425,8 +392,7 @@ func RozstrzygnijKonflikt(katalog, sciezka string,
 		case shared.ConflictResolutionKindTakeIncoming:
 			wynik = konflikt.Incoming
 		default:
-			// Obie wersje idą jedna po drugiej w kolejności scalania: bieżąca
-			// jest tą, na której Operator stoi, więc stoi wyżej.
+			// Obie wersje idą jedna po drugiej: bieżąca jest tą, na której stoi operator, więc jest wyżej.
 			wynik = konflikt.Current + "\n" + konflikt.Incoming
 		}
 	default:

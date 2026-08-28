@@ -10,7 +10,7 @@ import (
 	"fmt"
 )
 
-// WpisDziennika to wiersz tabeli `log_akcji_kolejki`.
+// WpisDziennika to wiersz tabeli `log_akcji_kolejki`, niosący jedną odnotowaną zmianę stanu danej kolejki.
 type WpisDziennika struct {
 	ID          int64
 	KolejkaID   int64
@@ -80,8 +80,7 @@ func polozeniePozycji(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	return kolejkaID, obieg, nil
 }
 
-// Dziennik zwraca wpisy kolejki w porządku chronologicznym. Limit 0 oznacza
-// cały dziennik.
+// Dziennik zwraca wpisy kolejki w porządku chronologicznym malejącym; limit zero oznacza cały dziennik zdarzeń.
 func (r *repozytoriumKolejek) Dziennik(ctx context.Context, kolejkaID int64,
 	limit int) ([]WpisDziennika, error) {
 

@@ -7,19 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rozstrzygacz zasięgu.
-//
-// To jest najgęstsza logika w drzewie i jedyna, w której błąd nie wywraca
-// niczego. Ustawienie rozstrzygnięte o jeden poziom za szeroko przecieka między
-// sesjami Operatora, a widać to dopiero po fakcie — po zachowaniu modelu, nie po
-// komunikacie. Dlatego mierzone jest tu nie „czy zwraca wartość", lecz reguła
-// pierwszeństwa w całości: dziewięć poziomów zasięgu razy trzy osie, w jednej,
-// wiążącej kolejności.
-//
-// Reguła ma dwa piętra i drugie z nich jest rozstrzygnięciem, nie szczegółem:
-// POZIOM rozstrzyga pierwszy, OŚ dopiero w ramach poziomu. Odwrócenie tego
-// znaczyłoby, że wybór konta unieważnia decyzję podjętą wprost w oknie
-// komunikacji — czyli odbiera Operatorowi sterowanie zamiast je rozszerzać.
+// Rozstrzygacz zasięgu jest najgęstszą logiką pakietu: mierzy regułę pierwszeństwa w całości.
 
 // kontekstPelny wypełnia byt każdego poziomu i obu osi. Kontekst uboższy pomija
 // poziomy bez bytu, więc pełny jest jedynym, na którym widać całą kolejność.
@@ -38,9 +26,8 @@ func kontekstPelny() Kontekst {
 }
 
 // TestPoziomyIdaOdNajwezszegoDoNajszerszego utrwala kolejność, na której stoi
-// cała reguła. Wykaz jest wiążący: przestawienie dwóch pozycji zmienia
-// zachowanie każdego ustawienia w produkcie i nie zmienia ani jednego podpisu,
-// więc kompilacja tego nie zauważy.
+// cała reguła. Wykaz jest wiążący: przestawienie dwóch pozycji zmienia zachowanie
+// każdego ustawienia, a kompilacja tego nie zauważy.
 func TestPoziomyIdaOdNajwezszegoDoNajszerszego(t *testing.T) {
 	oczekiwane := []Poziom{
 		shared.ConfigScopeWindow,
@@ -72,7 +59,7 @@ func TestPoziomyIdaOdNajwezszegoDoNajszerszego(t *testing.T) {
 	}
 }
 
-// TestOsieIdaOdKontaDoPlatformy utrwala kolejność osi w ramach poziomu.
+// TestOsieIdaOdKontaDoPlatformy utrwala kolejność osi w ramach poziomu: konto, potem model, potem platforma.
 func TestOsieIdaOdKontaDoPlatformy(t *testing.T) {
 	oczekiwane := []Os{OsKonta, OsModelu, OsPlatformy}
 	if len(osieOdNajwezszej) != len(oczekiwane) {
@@ -104,7 +91,7 @@ func TestOsPustaZnaczyPlatforme(t *testing.T) {
 	}
 }
 
-// TestZnanyPoziomObejmujeKomplet sprawdza zbiór poziomów znanych.
+// TestZnanyPoziomObejmujeKomplet sprawdza, że zbiór poziomów znanych obejmuje cały wykaz kontraktu wprost.
 func TestZnanyPoziomObejmujeKomplet(t *testing.T) {
 	for _, poziom := range poziomyOdNajwezszego {
 		if !Znany(poziom) {
@@ -178,8 +165,7 @@ func TestAdresyIdaPoziomamiAWRamachPoziomuOsiami(t *testing.T) {
 		t.Fatalf("kontekst pełny dał %d adresów, oczekiwane %d", len(adresy), oczekiwane)
 	}
 
-	// Poziom zmienia się co trzy pozycje, oś — co jedną. Sprawdzian idzie po
-	// obu wykazach naraz, więc pilnuje jednego i drugiego piętra reguły.
+	// Poziom zmienia się co trzy pozycje, oś co jedną: sprawdzian idzie po obu wykazach naraz.
 	pozycja := 0
 	for _, poziom := range poziomyOdNajwezszego {
 		for _, os := range osieOdNajwezszej {
@@ -217,13 +203,7 @@ func TestOsBezBytuJestPomijana(t *testing.T) {
 }
 
 // TestNajwezszyZapisWygrywa przechodzi całą drabinę: ustawienie zapisane na
-// każdym poziomie naraz, a potem zdejmowane po jednym. Po każdym zdjęciu
-// wygrywa poziom kolejny, aż do wartości domyślnej.
-//
-// To jest sprawdzian, dla którego ten plik powstał. Reguła schodzenia w górę
-// jest jedyną drogą, którą Operator odzyskuje ustawienie szersze po skasowaniu
-// węższego — a pomyłka na którymkolwiek szczeblu zostawia go z wartością, której
-// nigdzie nie zapisał.
+// każdym poziomie naraz, a potem zdejmowane po jednym, aż do wartości domyślnej.
 func TestNajwezszyZapisWygrywa(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 
@@ -267,13 +247,9 @@ func TestNajwezszyZapisWygrywa(t *testing.T) {
 	}
 }
 
-// TestPoziomBijeOsNiezaleznieOdSzerokosci jest sprawdzianem rozstrzygnięcia
-// opisanego w osiach wprost: ustawienie zapisane per konto na poziomie globalnym
-// NIE bije ustawienia zapisanego na osi platformy w oknie komunikacji.
-//
-// Odwrotny wynik znaczyłby, że wybór konta unieważnia decyzję podjętą wprost
-// w oknie — czyli odbiera Operatorowi sterowanie. Kompilacja tego nie widzi,
-// bo obie drogi zwracają wartość tego samego typu.
+// TestPoziomBijeOsNiezaleznieOdSzerokosci sprawdza, że ustawienie zapisane per
+// konto na poziomie globalnym NIE bije ustawienia zapisanego na osi platformy
+// w oknie komunikacji.
 func TestPoziomBijeOsNiezaleznieOdSzerokosci(t *testing.T) {
 	const klucz = kluczTrybUprawnien
 
@@ -400,8 +376,7 @@ func TestKluczSpozaRejestruZZapisemWraca(t *testing.T) {
 	}
 }
 
-// zrodloWadliwe zwraca wpisy razem z błędem — tak wygląda odczyt częściowy
-// z warstwy trwałości.
+// zrodloWadliwe zwraca wpisy razem z błędem naraz: tak wygląda odczyt częściowy z warstwy trwałości bazy.
 type zrodloWadliwe struct {
 	wpisy []Wpis
 	blad  error
@@ -437,7 +412,7 @@ func TestBladZrodlaNieZatrzymujeRozstrzygania(t *testing.T) {
 	}
 }
 
-// TestWpisBezKluczaJestPomijany sprawdza odporność na wiersz uszkodzony.
+// TestWpisBezKluczaJestPomijany sprawdza odporność rozstrzygania na wiersz uszkodzony brakiem klucza wpisu.
 func TestWpisBezKluczaJestPomijany(t *testing.T) {
 	zrodlo := zrodloWadliwe{wpisy: []Wpis{
 		{Poziom: shared.ConfigScopeGlobal, Os: OsPlatformy, Klucz: "", Wartosc: "bez klucza"},

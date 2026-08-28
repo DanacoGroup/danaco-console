@@ -1,22 +1,6 @@
-// Obszar makiet modułu Design: ramki, przynależność warstw do ramek, więzy
-// responsywne i siatki układu (tabele `ramka_design`, `warstwa_ramki_design`,
-// `wiez_ramki_design`, `siatka_kompozycji_design`, migracja 317) — część
-// `RepozytoriumDesignu` zadeklarowanego w `design.go`.
-//
-// ── Dlaczego warstwa wchodzi tu pojedynczo, a nie kompletem ─────────────────
-// Obszar kompozycji (`design_kompozycje.go`) zna wyłącznie zapis pełny: usuń
-// wszystko i wstaw komplet, bo `design.board.update` nadsyła komplet. Makieta
-// pracuje inaczej — układ automatyczny przestawia położenia warstw już
-// leżących, a instancja komponentu dokłada jedną warstwę do planszy, na której
-// stoją inne. Przepisywanie całej planszy przy każdym takim ruchu kasowałoby
-// warstwy, o których wołający w tym żądaniu nic nie mówił. Stąd dwie osobne
-// czynności tutaj: `PrzestawWarstweKompozycjiDesignu` i
-// `DolozWarstweKompozycjiDesignu`.
-//
-// ── Dlaczego przynależność i więzy wiszą na KODZIE warstwy ──────────────────
-// Powód stoi w nagłówku migracji 317: zapis planszy przepisuje wiersze warstw
-// od nowa, więc klucz wiersza warstwy nie przeżywa zwykłego zapisu kompozycji,
-// a identyfikator zewnętrzny przeżywa, bo klient nadsyła go z powrotem.
+// Plik definiuje obszar makiet modułu Design: ramki, przynależność warstw do
+// ramek, więzy responsywne i siatki układu, jako część kontraktu
+// RepozytoriumDesignu zadeklarowanego w design.go.
 package dane
 
 import (
@@ -101,10 +85,8 @@ const (
 	                              poziomo = excluded.poziomo,
 	                              pionowo = excluded.pionowo`
 
-	// Zapis więzu oddaje liczbę wierszy naprawdę zmienionych. SQLite liczy
-	// wiersz nadpisany wartością identyczną jako zmieniony, więc rozstrzyga
-	// porównanie ze stanem zastanym — robi je adapter, który zna kontrakt
-	// (`DesignConstraintSetResponse.Changed` pyta o zmianę, nie o zapis).
+	// Zapis więzu oddaje liczbę wierszy naprawdę zmienionych, ustaloną
+	// porównaniem ze stanem zastanym.
 
 	pobierzSiatkeKompozycjiDesignu = `SELECT siatka_json FROM siatka_kompozycji_design
 	                                  WHERE kompozycja_id = ?`
@@ -136,7 +118,7 @@ const (
 )
 
 // ZapiszRamkeDesignu zakłada ramkę albo nadpisuje zastaną po identyfikatorze
-// zewnętrznym.
+// zewnętrznym, zwracając stan ramki po zapisie.
 func (r *repozytoriumDesignu) ZapiszRamkeDesignu(ctx context.Context,
 	ramka RamkaDesignu) (RamkaDesignu, error) {
 
@@ -164,7 +146,8 @@ func (r *repozytoriumDesignu) ZapiszRamkeDesignu(ctx context.Context,
 	return r.RamkaDesignuPoKodzie(ctx, ramka.Kod)
 }
 
-// RamkaDesignuPoKodzie zwraca ramkę o wskazanym identyfikatorze zewnętrznym.
+// RamkaDesignuPoKodzie zwraca ramkę o wskazanym identyfikatorze zewnętrznym,
+// zwracając błąd ErrBrakWiersza, gdy ramka nie istnieje.
 func (r *repozytoriumDesignu) RamkaDesignuPoKodzie(ctx context.Context,
 	kod string) (RamkaDesignu, error) {
 
@@ -182,7 +165,8 @@ func (r *repozytoriumDesignu) RamkaDesignuPoKodzie(ctx context.Context,
 	return ramka, nil
 }
 
-// RamkiDesignu zwraca ramki kompozycji w kolejności założenia.
+// RamkiDesignu zwraca ramki wskazanej kompozycji w kolejności założenia, od
+// pierwszej dodanej do ostatniej.
 func (r *repozytoriumDesignu) RamkiDesignu(ctx context.Context,
 	kompozycjaID int64) ([]RamkaDesignu, error) {
 
@@ -233,7 +217,8 @@ func (r *repozytoriumDesignu) UsunRamkeDesignu(ctx context.Context, kod string) 
 	return zmienione > 0, nil
 }
 
-// WarstwyRamkiDesignu zwraca kody warstw należących do ramki.
+// WarstwyRamkiDesignu zwraca kody warstw należących do ramki, uporządkowane
+// według kolejności ich przypisania.
 func (r *repozytoriumDesignu) WarstwyRamkiDesignu(ctx context.Context, ramkaID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWarstwRamkiDesignu)
 	if err != nil {
@@ -305,7 +290,8 @@ func (r *repozytoriumDesignu) ZwolnijWarstwyRamkiDesignu(ctx context.Context,
 	return zwolnione, nil
 }
 
-// WiezyRamkiDesignu zwraca więzy responsywne ramki.
+// WiezyRamkiDesignu zwraca więzy responsywne ramki, opisujące zachowanie
+// każdej warstwy przy zmianie rozmiaru.
 func (r *repozytoriumDesignu) WiezyRamkiDesignu(ctx context.Context,
 	ramkaID int64) ([]WiezRamkiDesignu, error) {
 
@@ -333,7 +319,8 @@ func (r *repozytoriumDesignu) WiezyRamkiDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszWiezyRamkiDesignu utrwala więzy ramki w jednej transakcji.
+// ZapiszWiezyRamkiDesignu utrwala więzy ramki w jednej transakcji, nadpisując
+// więzy zastane dla tych samych warstw.
 func (r *repozytoriumDesignu) ZapiszWiezyRamkiDesignu(ctx context.Context, ramkaID int64,
 	wiezy []WiezRamkiDesignu) error {
 
@@ -380,7 +367,8 @@ func (r *repozytoriumDesignu) SiatkaKompozycjiDesignu(ctx context.Context,
 	return zapis, nil
 }
 
-// ZapiszSiatkeKompozycjiDesignu utrwala siatkę obowiązującą całą kompozycję.
+// ZapiszSiatkeKompozycjiDesignu utrwala siatkę obowiązującą całą kompozycję,
+// nadpisując zapis zastany dla tej kompozycji.
 func (r *repozytoriumDesignu) ZapiszSiatkeKompozycjiDesignu(ctx context.Context,
 	kompozycjaID int64, siatkaJSON string) error {
 
@@ -480,7 +468,8 @@ func (r *repozytoriumDesignu) DolozWarstweKompozycjiDesignu(ctx context.Context,
 	return r.WarstwaKompozycjiDesignuPoKodzie(ctx, warstwa.Kod)
 }
 
-// odczytajRamkeDesignu składa strukturę ramki z jednego wiersza wyniku.
+// odczytajRamkeDesignu składa strukturę ramki z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func odczytajRamkeDesignu(wiersz skaner) (RamkaDesignu, error) {
 	var ramka RamkaDesignu
 	var x, y sql.NullFloat64
@@ -499,7 +488,8 @@ func odczytajRamkeDesignu(wiersz skaner) (RamkaDesignu, error) {
 	return ramka, nil
 }
 
-// odczytajWarstweKompozycjiDesignu składa warstwę z jednego wiersza wyniku.
+// odczytajWarstweKompozycjiDesignu składa warstwę z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func odczytajWarstweKompozycjiDesignu(wiersz skaner) (WarstwaKompozycji, error) {
 	var warstwa WarstwaKompozycji
 	var zasob, adnotacja sql.NullString
@@ -528,7 +518,8 @@ func ulamekDoKolumnyDesignu(wartosc *float64) any {
 	return *wartosc
 }
 
-// ulamekZKolumnyDesignu przekłada kolumnę dopuszczającą NULL na wskaźnik.
+// ulamekZKolumnyDesignu przekłada kolumnę dopuszczającą NULL na wskaźnik
+// ułamka, zwracając nil dla wartości nieustawionej.
 func ulamekZKolumnyDesignu(kolumna sql.NullFloat64) *float64 {
 	if !kolumna.Valid {
 		return nil

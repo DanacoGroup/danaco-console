@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: warstwa danych pochodzenia fragmentów dokumentu
-// Studia — tabela `pochodzenie_fragmentu_studio` z migracji 368.
-//
-// ── Dlaczego pochodzenie zapisuje odcinek wejścia ───────────────────────────
-// Wiersz pochodzenia zakłada ten, kto fragment WNOSI: wniesienie pliku, obrazu,
-// fragmentu z Biblioteki albo ze strony sieci. Wykaz pochodzenia (`studio.
-// provenance.list`) czyta go inny odcinek — dlatego odczyt jest tu równie pełny
-// jak zapis, żeby tamten odcinek nie musiał zakładać drugiego.
-//
-// Zakres jest liczony w ZNAKACH, tak samo jak zakres blokady. Fragment usunięty
-// zostawia wiersz o zerowej długości — świadomie, wedle migracji 368: to, że
-// Operator wniósł kiedyś fragment z danego źródła, jest faktem, którego
-// usunięcie tekstu nie unieważnia.
+// Odpowiedzialność pliku: pochodzenie fragmentów dokumentu Studia, zapisywane przez ten, kto fragment wnosi do dokumentu.
 package dane
 
 import (
@@ -19,13 +7,12 @@ import (
 	"fmt"
 )
 
-// PochodzenieFragmentuStudia to wiersz tabeli `pochodzenie_fragmentu_studio`.
+// PochodzenieFragmentuStudia to wiersz tabeli pochodzenie_fragmentu_studio, niosący rodzaj i zakres fragmentu.
 type PochodzenieFragmentuStudia struct {
 	ID         int64
 	Kod        string
 	DokumentID int64
-	// Rodzaj jest słownikiem tabeli: `web`, `libraryFile`, `research`,
-	// `clipboard`, `template`, `importedFile`.
+	// Rodzaj jest słownikiem tabeli: strona, plik biblioteki, badanie, schowek, szablon, plik importowany.
 	Rodzaj            string
 	ZakresOd          int64
 	ZakresDo          int64
@@ -40,7 +27,7 @@ type PochodzenieFragmentuStudia struct {
 	Utworzono         string
 }
 
-// PochodzenieWejsciaStudia jest kontraktem tej warstwy.
+// PochodzenieWejsciaStudia jest kontraktem tej warstwy, obejmującym zapis i odczyt pochodzenia fragmentów.
 type PochodzenieWejsciaStudia interface {
 	ZapiszPochodzenieFragmentu(ctx context.Context,
 		pochodzenie PochodzenieFragmentuStudia) (PochodzenieFragmentuStudia, error)
@@ -76,7 +63,7 @@ const (
 	                           ORDER BY zakres_od, id`
 )
 
-// ZapiszPochodzenieFragmentu utrwala zapis, skąd fragment dokumentu pochodzi.
+// ZapiszPochodzenieFragmentu utrwala zapis, skąd fragment dokumentu pochodzi, wraz z jego pełnym zakresem.
 func (r *repozytoriumStudia) ZapiszPochodzenieFragmentu(ctx context.Context,
 	pochodzenie PochodzenieFragmentuStudia) (PochodzenieFragmentuStudia, error) {
 
@@ -113,7 +100,7 @@ func (r *repozytoriumStudia) ZapiszPochodzenieFragmentu(ctx context.Context,
 	return zapisane, nil
 }
 
-// PochodzenieFragmentow oddaje wykaz pochodzenia fragmentów dokumentu.
+// PochodzenieFragmentow oddaje cały wykaz pochodzenia fragmentów wskazanego dokumentu tego modułu Studia.
 func (r *repozytoriumStudia) PochodzenieFragmentow(ctx context.Context,
 	dokumentID int64) ([]PochodzenieFragmentuStudia, error) {
 

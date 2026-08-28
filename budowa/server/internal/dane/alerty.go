@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: magazyn reguł wyzwalania i rejestru wyzwoleń (tabele
-// `regula_alertu`, `wyzwolenie_alertu`, migracja 291) — rodzina `alert.*`.
-//
-// Repozytorium nie ewaluuje reguł i nie zna ani jednej miary. Trzyma definicję
-// oraz zapis wyzwolenia wraz z wartością, którą ktoś zmierzył w chwili
-// wyzwolenia. Ewaluacja należy do adaptera, bo miary pochodzą z magazynów, o
-// których warstwa danych alertu nie ma prawa wiedzieć (ślad wywołań, dziennik
-// błędów, seria sond).
+// Plik definiuje magazyn reguł wyzwalania i rejestru wyzwoleń rodziny alert.
+// Repozytorium nie ewaluuje reguł; ewaluacja należy do adaptera.
 package dane
 
 import (
@@ -16,7 +10,8 @@ import (
 	"strings"
 )
 
-// RegulaAlertu to wiersz tabeli `regula_alertu`.
+// RegulaAlertu to wiersz tabeli regula_alertu: definicja progu, miary i
+// kanałów powiadomień, wraz z licznikiem dotychczasowych wyzwoleń.
 type RegulaAlertu struct {
 	ID                 int64
 	Kod                string
@@ -63,7 +58,8 @@ type WyzwolenieAlertu struct {
 	KanalyDostarczoneJSON string
 }
 
-// SitoWyzwolenAlertu zawęża odczyt rejestru wyzwoleń.
+// SitoWyzwolenAlertu zawęża odczyt rejestru wyzwoleń po regule, stanie,
+// wadze i przedziale czasu, z granicą liczby wierszy.
 type SitoWyzwolenAlertu struct {
 	RegulaKod string
 	Stan      string
@@ -73,7 +69,8 @@ type SitoWyzwolenAlertu struct {
 	Granica   int
 }
 
-// RepozytoriumAlertow jest kontraktem magazynu reguł i wyzwoleń.
+// RepozytoriumAlertow jest kontraktem magazynu reguł i wyzwoleń: zapis,
+// odczyt, potwierdzenie oraz pomiary potrzebne ewaluacji reguł.
 type RepozytoriumAlertow interface {
 	ZapiszRegule(ctx context.Context, regula RegulaAlertu) (RegulaAlertu, bool, error)
 	Regula(ctx context.Context, kod string) (RegulaAlertu, error)
@@ -83,11 +80,8 @@ type RepozytoriumAlertow interface {
 	Wyzwolenie(ctx context.Context, kod string) (WyzwolenieAlertu, error)
 	Wyzwolenia(ctx context.Context, sito SitoWyzwolenAlertu) ([]WyzwolenieAlertu, int, error)
 	PotwierdzWyzwolenie(ctx context.Context, kod string, chwila int64, notatka *string) (WyzwolenieAlertu, error)
-	// LiczbaNieudanychPomiarowSond i LiczbaNieudanychPozycjiKolejki są dwoma
-	// pomiarami, których nie da się wziąć z magazynu śladu wywołań ani
-	// z dziennika błędów — a bez nich miary `probeFailure` i `processFailure`
-	// byłyby regułami, które nigdy się nie wyzwolą. Zapytania stoją tutaj, bo
-	// to ewaluacja reguły ich potrzebuje; żadne inne repozytorium ich nie woła.
+	// Dwie miary, których nie da się wziąć z magazynu śladu wywołań ani z
+	// dziennika błędów.
 	LiczbaNieudanychPomiarowSond(ctx context.Context, od, do int64) (int, error)
 	LiczbaNieudanychPozycjiKolejki(ctx context.Context, od, do int64) (int, error)
 }
@@ -151,12 +145,14 @@ type repozytoriumAlertow struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumAlertow zakłada magazyn reguł nad bazą zestawu.
+// noweRepozytoriumAlertow zakłada magazyn reguł i wyzwoleń nad bazą
+// wskazanego zestawu repozytoriów danych.
 func noweRepozytoriumAlertow(z *zapytania, db *sql.DB) *repozytoriumAlertow {
 	return &repozytoriumAlertow{zapytania: z, db: db}
 }
 
-// ZapiszRegule zakłada regułę albo nadpisuje zastaną po kodzie.
+// ZapiszRegule zakłada regułę albo nadpisuje zastaną po kodzie zewnętrznym,
+// zwracając stan reguły i informację, czy powstała.
 func (r *repozytoriumAlertow) ZapiszRegule(ctx context.Context,
 	regula RegulaAlertu) (RegulaAlertu, bool, error) {
 
@@ -213,7 +209,8 @@ func (r *repozytoriumAlertow) ZapiszRegule(ctx context.Context,
 	return zapisana, powstala, err
 }
 
-// Regula zwraca jedną regułę wraz z licznikiem jej wyzwoleń.
+// Regula zwraca jedną regułę wraz z licznikiem jej dotychczasowych
+// wyzwoleń, liczonym osobnym zapytaniem.
 func (r *repozytoriumAlertow) Regula(ctx context.Context, kod string) (RegulaAlertu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzReguleAlertu)
 	if err != nil {
@@ -226,7 +223,8 @@ func (r *repozytoriumAlertow) Regula(ctx context.Context, kod string) (RegulaAle
 	return regula, err
 }
 
-// Reguly zwraca reguły spełniające zawężenie wraz z licznikiem wyzwoleń.
+// Reguly zwraca reguły spełniające zawężenie rodzaju i miary wraz z
+// licznikiem wyzwoleń każdej z nich.
 func (r *repozytoriumAlertow) Reguly(ctx context.Context, rodzaj, miara string,
 	tylkoCzynne bool, granica int) ([]RegulaAlertu, error) {
 
@@ -268,7 +266,8 @@ func (r *repozytoriumAlertow) Reguly(ctx context.Context, rodzaj, miara string,
 	return lista, nil
 }
 
-// UsunRegule wykreśla regułę wraz z jej rejestrem wyzwoleń.
+// UsunRegule wykreśla regułę wraz z jej rejestrem wyzwoleń, oddając liczbę
+// usuniętych wpisów rejestru.
 func (r *repozytoriumAlertow) UsunRegule(ctx context.Context, kod string) (int, error) {
 	usunietych := 0
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
@@ -299,7 +298,8 @@ func (r *repozytoriumAlertow) UsunRegule(ctx context.Context, kod string) (int, 
 	return usunietych, nil
 }
 
-// ZapiszWyzwolenie dopisuje wyzwolenie i odnotowuje jego chwilę w regule.
+// ZapiszWyzwolenie dopisuje wyzwolenie i odnotowuje jego chwilę w regule, w
+// jednej transakcji bazy danych.
 func (r *repozytoriumAlertow) ZapiszWyzwolenie(ctx context.Context,
 	w WyzwolenieAlertu) (WyzwolenieAlertu, error) {
 
@@ -330,7 +330,8 @@ func (r *repozytoriumAlertow) ZapiszWyzwolenie(ctx context.Context,
 	return r.Wyzwolenie(ctx, w.Kod)
 }
 
-// Wyzwolenie zwraca jeden wpis rejestru wyzwoleń.
+// Wyzwolenie zwraca jeden wpis rejestru wyzwoleń o wskazanym kodzie,
+// zwracając błąd, gdy nie istnieje.
 func (r *repozytoriumAlertow) Wyzwolenie(ctx context.Context, kod string) (WyzwolenieAlertu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWyzwolenieAlertu)
 	if err != nil {
@@ -345,7 +346,7 @@ func (r *repozytoriumAlertow) Wyzwolenie(ctx context.Context, kod string) (Wyzwo
 }
 
 // Wyzwolenia zwraca rejestr spełniający zawężenie, od najnowszego, wraz
-// z liczbą wierszy bez granicy.
+// z liczbą wierszy bez granicy limitu.
 func (r *repozytoriumAlertow) Wyzwolenia(ctx context.Context,
 	sito SitoWyzwolenAlertu) ([]WyzwolenieAlertu, int, error) {
 
@@ -426,7 +427,8 @@ func (r *repozytoriumAlertow) PotwierdzWyzwolenie(ctx context.Context, kod strin
 	return r.Wyzwolenie(ctx, kod)
 }
 
-// odczytajReguleAlertu przekłada wiersz na regułę.
+// odczytajReguleAlertu przekłada wiersz zapytania na regułę, zamieniając
+// kolumny nullowalne na wskaźniki.
 func odczytajReguleAlertu(s skaner) (RegulaAlertu, error) {
 	var regula RegulaAlertu
 	var opis, porownanie, zasieg, zasiegKod, adres sql.NullString
@@ -454,7 +456,8 @@ func odczytajReguleAlertu(s skaner) (RegulaAlertu, error) {
 	return regula, nil
 }
 
-// odczytajWyzwolenieAlertu przekłada wiersz na wyzwolenie.
+// odczytajWyzwolenieAlertu przekłada wiersz zapytania na wyzwolenie,
+// zamieniając kolumny nullowalne na wskaźniki.
 func odczytajWyzwolenieAlertu(s skaner) (WyzwolenieAlertu, error) {
 	var w WyzwolenieAlertu
 	var nazwa, notatka, blad, sonda, wywolanie sql.NullString
@@ -494,12 +497,8 @@ func (r *repozytoriumAlertow) LiczbaNieudanychPomiarowSond(ctx context.Context,
 }
 
 // LiczbaNieudanychPozycjiKolejki liczy pozycje kolejek zakończone stanem
-// błędnym w zadanym oknie czasu. To materiał miary `processFailure`.
-//
-// Kolumna `zaktualizowano` tabeli `pozycja_kolejki` jest znacznikiem ISO-8601
-// w UTC (migracja 003), a granice przychodzą w milisekundach epoki — stąd
-// przeliczenie po stronie zapytania. Porównanie napisów jest tu poprawne, bo
-// ten zapis rośnie leksykalnie razem z czasem.
+// błędnym w zadanym oknie czasu. Porównanie napisów jest tu poprawne, bo
+// znacznik ISO-8601 rośnie leksykalnie razem z czasem.
 func (r *repozytoriumAlertow) LiczbaNieudanychPozycjiKolejki(ctx context.Context,
 	od, do int64) (int, error) {
 

@@ -1,11 +1,5 @@
 // Odpowiedzialność pliku: katalog punktów dostępu (tabela `punkt_dostepu`) —
 // struktura, kontrakt repozytorium i odczyt. Zapis leży w `dostep_punkty_zapis.go`.
-//
-// Punkt dostępu mówi, do czego model ma wgląd: maszyna udostępniona mostem MCP
-// albo katalog lokalny wskazanego urządzenia. Nie jest środowiskiem —
-// środowisko pozostaje profilem widoczności modułów w bocznej nawigacji. Nie jest
-// też katalogiem roboczym modelu: ten jest osobnym ustawieniem (`katalog.roboczy.*`)
-// i mówi, gdzie model zostawia własne pliki.
 package dane
 
 import (
@@ -40,14 +34,13 @@ type PunktDostepu struct {
 	Aktywny                bool
 	Kolejnosc              int
 	Korzenie               []string
-	// ArgumentyTrybu niosą słowo, jakim dany most nazywa tryb kontraktu przy
-	// uruchomieniu. Dla mostu `mcp-danaco-pulpit-console` są to `odczyt` i `zapis`.
+	// ArgumentyTrybu niosą słowo, jakim dany most nazywa tryb kontraktu przy uruchomieniu.
 	ArgumentyTrybu map[shared.AccessMode]string
 	Utworzono      string
 	Zaktualizowano string
 }
 
-// RepozytoriumPunktowDostepu jest kontraktem katalogu punktów dostępu.
+// RepozytoriumPunktowDostepu jest kontraktem katalogu punktów dostępu, określającym operacje dostępne na wykazie.
 type RepozytoriumPunktowDostepu interface {
 	Lista(ctx context.Context, tylkoAktywne bool) ([]PunktDostepu, error)
 	Pobierz(ctx context.Context, id int64) (PunktDostepu, error)
@@ -82,7 +75,7 @@ type repozytoriumPunktowDostepu struct {
 // dopiero przy złożeniu zestawu repozytoriów.
 var _ RepozytoriumPunktowDostepu = (*repozytoriumPunktowDostepu)(nil)
 
-// noweRepozytoriumPunktowDostepu zakłada repozytorium katalogu punktów dostępu.
+// noweRepozytoriumPunktowDostepu zakłada repozytorium katalogu punktów dostępu na przekazanym połączeniu z bazą.
 func noweRepozytoriumPunktowDostepu(z *zapytania, db *sql.DB) *repozytoriumPunktowDostepu {
 	return &repozytoriumPunktowDostepu{zapytania: z, db: db}
 }
@@ -114,7 +107,7 @@ func (r *repozytoriumPunktowDostepu) Lista(ctx context.Context, tylkoAktywne boo
 	return r.uzupelnijListy(ctx, lista)
 }
 
-// Pobierz zwraca punkt wskazany kluczem wiersza.
+// Pobierz zwraca punkt dostępu wskazany kluczem głównym wiersza tabeli katalogu punktów dostępu w bazie.
 func (r *repozytoriumPunktowDostepu) Pobierz(ctx context.Context, id int64) (PunktDostepu, error) {
 	return r.jeden(ctx, pobierzPunktDostepu, fmt.Sprintf("%d", id), id)
 }
@@ -125,7 +118,7 @@ func (r *repozytoriumPunktowDostepu) PoKodzie(ctx context.Context, kod string) (
 	return r.jeden(ctx, punktDostepuPoKodzie, fmt.Sprintf("%q", kod), kod)
 }
 
-// jeden odczytuje pojedynczy punkt wraz z jego listami podrzędnymi.
+// jeden odczytuje pojedynczy punkt dostępu wraz z jego listami podrzędnymi — korzeniami i słownictwem trybu.
 func (r *repozytoriumPunktowDostepu) jeden(ctx context.Context, zapytanie, opis string,
 	argument any) (PunktDostepu, error) {
 
@@ -144,7 +137,7 @@ func (r *repozytoriumPunktowDostepu) jeden(ctx context.Context, zapytanie, opis 
 	return r.uzupelnijPunkt(ctx, punkt)
 }
 
-// uzupelnijPunkt dokłada listy podrzędne — korzenie i słownictwo trybu mostu.
+// uzupelnijPunkt dokłada listy podrzędne punktu dostępu — korzenie oraz słownictwo trybu używane przez most.
 func (r *repozytoriumPunktowDostepu) uzupelnijPunkt(ctx context.Context,
 	punkt PunktDostepu) (PunktDostepu, error) {
 
@@ -161,7 +154,7 @@ func (r *repozytoriumPunktowDostepu) uzupelnijPunkt(ctx context.Context,
 	return punkt, nil
 }
 
-// uzupelnijListy dokłada listy podrzędne całemu wykazowi.
+// uzupelnijListy dokłada listy podrzędne każdemu punktowi dostępu z przekazanego wykazu wyników zapytania.
 func (r *repozytoriumPunktowDostepu) uzupelnijListy(ctx context.Context,
 	lista []PunktDostepu) ([]PunktDostepu, error) {
 

@@ -1,14 +1,6 @@
 // Odpowiedzialność pliku: dostęp do katalogu ustawień (tabele
 // `kategoria_ustawien`, `definicja_ustawienia`, `opcja_ustawienia`,
 // `definicja_ustawienia_zasieg`, `definicja_ustawienia_os`) — część kategorii.
-//
-// Katalog jest sterowany danymi: nowa pozycja okna konfiguracji to nowy wiersz,
-// nie nowa gałąź w kodzie. Wzorcem jest rejestr kanałów
-// modelu i katalog akcji — repozytorium wyłącznie czyta wiersze, a rozstrzyganie
-// wartości należy do pakietu `internal/konfig`.
-//
-// Brak wiersza w katalogu nie jest awarią: rezolwer schodzi wtedy na rejestr
-// wbudowany rdzenia i pracuje dalej.
 package dane
 
 import (
@@ -44,7 +36,7 @@ func noweRepozytoriumKatalogUstawien(z *zapytania) *repozytoriumKatalogUstawien 
 	return &repozytoriumKatalogUstawien{zapytania: z}
 }
 
-// Kategorie zwraca kategorie okna konfiguracji uporządkowane kolejnością wiersza.
+// Kategorie zwraca kategorie okna konfiguracji uporządkowane kolejnością wiersza zapisaną w tabeli bazy.
 func (r *repozytoriumKatalogUstawien) Kategorie(ctx context.Context,
 	tylkoAktywne bool) ([]shared.SettingCategory, error) {
 
@@ -72,7 +64,7 @@ func (r *repozytoriumKatalogUstawien) Kategorie(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajKategorieUstawien składa kategorię kontraktu z jednego wiersza.
+// odczytajKategorieUstawien składa kategorię kontraktu okna konfiguracji z jednego wiersza wyniku zapytania.
 func odczytajKategorieUstawien(wiersz skaner) (shared.SettingCategory, error) {
 	var kategoria shared.SettingCategory
 	var opis, ikona string
@@ -100,10 +92,8 @@ func tekstNiepusty(wartosc string) *string {
 	return &kopia
 }
 
-// wartoscDomyslnaJSON koduje wartość domyślną katalogu na pole `defaultValue`
-// koperty kontraktu. Rodzaje liczbowe, logiczne i złożone idą surowo, jeżeli są
-// poprawnym JSON-em; wszystko pozostałe idzie napisem. Funkcja nigdy nie
-// zawodzi — wartość nieczytelna trafia do kontraktu jako napis, nie jako błąd.
+// wartoscDomyslnaJSON koduje wartość domyślną katalogu na pole `defaultValue` koperty kontraktu, dobierając
+// kodowanie do rodzaju wartości.
 func wartoscDomyslnaJSON(wartosc string, rodzaj shared.SettingValueType) json.RawMessage {
 	switch rodzaj {
 	case shared.SettingValueTypeInt, shared.SettingValueTypeFloat, shared.SettingValueTypeBool,
@@ -132,7 +122,7 @@ func zasiegiKontraktu(kody []string) []shared.ConfigScope {
 	return poziomy
 }
 
-// osieKontraktu przekłada kody osi na wartości wyliczenia kontraktu.
+// osieKontraktu przekłada kody osi katalogu ustawień na wartości wyliczenia osi kontraktu współdzielonego.
 func osieKontraktu(kody []string) []shared.ConfigAxis {
 	osie := make([]shared.ConfigAxis, 0, len(kody))
 	for _, kod := range kody {

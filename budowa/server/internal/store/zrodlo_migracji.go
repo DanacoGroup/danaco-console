@@ -11,28 +11,7 @@ import (
 	"strings"
 )
 
-// Numeracja migracji — luki są z zamysłu, nie z ubytku.
-//
-// Wykaz `migracja_*.sql` w tym katalogu niesie mniej plików, niż wskazuje
-// najwyższy numer. Wolne numery nie oznaczają kroku usuniętego ani zgubionego:
-// powstają przy pracy równoległej, gdy numer rezerwowany z góry dla kroku, który
-// ostatecznie nie wszedł, zostaje pusty. Numeru zwolnionego nie wolno użyć
-// powtórnie: bazy założone wcześniej mają już wyższą wersję schematu i krok
-// wstawiony w lukę nigdy by się na nich nie wykonał.
-//
-// Co jest naprawdę wymagane od numeracji — i czego pilnuje kod poniżej:
-//   - Jednoznaczność. Dwa pliki o tym samym numerze to awaria startu, bo
-//     rejestr `migracja` ma na kolumnie `wersja` warunek UNIQUE: drugi krok
-//     wykonałby swój schemat, ale nie zostałby odnotowany.
-//   - Porządek rosnący. Kroki stosuje się po numerze rosnąco (sortowanie
-//     w wczytajMigracje), więc kolejność w katalogu nie ma znaczenia.
-//   - Niezmienność treści. Suma kontrolna kroku już zastosowanego musi się
-//     zgadzać (Migruj w migracje.go).
-//
-// Ciągłość numeracji nie jest wymagana.
-//
-// plikiMigracji — schemat wkompilowany w binarium, żeby wdrożenie nie zależało
-// od obecności plików obok programu.
+// plikiMigracji zawiera schemat wkompilowany w binarium, żeby wdrożenie nie zależało od obecności plików obok programu; numeracja migracji może mieć luki z zamysłu.
 //
 //go:embed migracja_*.sql
 var plikiMigracji embed.FS
@@ -42,7 +21,7 @@ const (
 	rozszerzenieMigracji = ".sql"
 )
 
-// migracja to pojedynczy krok schematu odczytany z zasobów pakietu.
+// migracja to pojedynczy krok schematu bazy danych odczytany z osadzonych zasobów tego pakietu aplikacji.
 type migracja struct {
 	Wersja        int
 	Nazwa         string
@@ -50,8 +29,7 @@ type migracja struct {
 	SumaKontrolna string
 }
 
-// wczytajMigracje odczytuje wszystkie kroki schematu i porządkuje je rosnąco
-// po numerze wersji.
+// Funkcja wczytajMigracje odczytuje wszystkie kroki schematu i porządkuje je rosnąco po numerze ich wersji.
 func wczytajMigracje() ([]migracja, error) {
 	wpisy, err := fs.ReadDir(plikiMigracji, ".")
 	if err != nil {

@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: przekład wartości wyliczeniowych tożsamości modelu
-// między kontraktem a kolumnami `kategoria_tozsamosci` i `dokument_tozsamosci`.
-//
-// Kontrakt daje słownik przekładu bazy wyłącznie dla AccountKind (kolumna
-// `konto.rodzaj`). Dla IdentityLayer, IdentityMode i ConfigAxis takiego słownika
-// nie ma, bo kolumny trzymają wartości kontraktu wprost — drugie nazewnictwo
-// byłoby drugim źródłem prawdy. Ten plik nie tłumaczy więc nazw:
-// sprawdza, czy wartość kolumny należy do zbioru kontraktu, i uzupełnia wartość
-// domyślną tam, gdzie wartości nie podano.
+// Plik przekłada wartości wyliczeniowe tożsamości modelu między kontraktem
+// a kolumnami tabel kategoria_tozsamosci i dokument_tozsamosci, sprawdzając
+// przynależność do zbioru kontraktu i uzupełniając wartość domyślną.
 package dane
 
 import (
@@ -15,21 +9,23 @@ import (
 	"danacoconsole/shared"
 )
 
-// warstwyTozsamosci — trzy warstwy nakładki wg krytyczności.
+// warstwyTozsamosci zestawia trzy warstwy nakładki tożsamości modelu w
+// kolejności według krytyczności: konstytucja, profil, kompetencja.
 var warstwyTozsamosci = map[string]shared.IdentityLayer{
 	shared.IdentityLayerConstitution: shared.IdentityLayerConstitution,
 	shared.IdentityLayerProfile:      shared.IdentityLayerProfile,
 	shared.IdentityLayerExpertise:    shared.IdentityLayerExpertise,
 }
 
-// trybyTozsamosci — dwa tryby podania tożsamości. ZASTAP zastępuje prompt
-// fabryczny w całości.
+// trybyTozsamosci zestawia dwa tryby podania tożsamości modelu. Tryb ZASTAP
+// zastępuje prompt fabryczny w całości, tryb DOLACZ dokłada treść do niego.
 var trybyTozsamosci = map[string]shared.IdentityMode{
 	shared.IdentityModeZASTAP: shared.IdentityModeZASTAP,
 	shared.IdentityModeDOLACZ: shared.IdentityModeDOLACZ,
 }
 
-// osieTozsamosci — trzy osie rozstrzygania treści: platforma, model, konto.
+// osieTozsamosci zestawia trzy osie rozstrzygania treści tożsamości modelu:
+// platforma, wskazany model i wskazane konto.
 var osieTozsamosci = map[string]shared.ConfigAxis{
 	shared.ConfigAxisPlatform: shared.ConfigAxisPlatform,
 	shared.ConfigAxisModel:    shared.ConfigAxisModel,

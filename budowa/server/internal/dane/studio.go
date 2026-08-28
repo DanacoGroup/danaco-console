@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: obszar dokumentu modułu Studio (tabela
-// `dokument_studio`) wraz z kontraktem całego obszaru. Wersje dokumentu
-// (repozytorium sesji, Repository Panel) leżą w `studio_wersje.go`, propozycje
-// zmiany (Tools Panel) w `studio_propozycje.go` — jedno repozytorium, trzy pliki
-// wedle odpowiedzialności. Interfejs deklaruje wyłącznie ten plik, w całości —
-// także metody obszarów wersji i propozycji — żeby cały kontrakt obszaru stał
-// w jednym miejscu.
-//
-// Treść dokumentu: `Tresc` niesie treść krótką wprost, `TrescOdwolanie` —
-// odwołanie do pliku dla treści obszernej (PDF/DOCX odczytany do tekstu), tym
-// samym sposobem co `dane/wiadomosci.go`.
+// Odpowiedzialność pliku: obszar dokumentu modułu Studio wraz z kontraktem całego obszaru, w tym wersji, propozycji i postaci dokumentu.
 package dane
 
 import (
@@ -20,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// DokumentStudia to wiersz tabeli `dokument_studio`.
+// DokumentStudia to wiersz tabeli dokument_studio, niosący treść, tytuł i kod dokumentu w module Studio.
 type DokumentStudia struct {
 	ID                 int64
 	Kod                string
@@ -35,15 +25,7 @@ type DokumentStudia struct {
 	Zaktualizowano     string
 }
 
-// RepozytoriumStudia jest kontraktem obszaru Studio.
-//
-// Postać dokumentu — drzewo postaci, arkusz stylów, sekcje, obiekty osadzone,
-// aparat i pola — wchodzi tu ZAGNIEŻDŻONYM interfejsem
-// `RepozytoriumPostaciStudia` (`studio_postac_dokumentu.go`). Zagnieżdżenie,
-// a nie przepisanie: obszar postaci ma kilkadziesiąt metod i wypisanie ich tu po
-// raz drugi znaczyłoby dwa wykazy jednego kontraktu, z których jeden prędzej czy
-// później zostałby w tyle. Studio ma jedno repozytorium, nie dwa, więc adapter
-// modułu dostaje postać tą samą zależnością, którą dostaje dokument.
+// RepozytoriumStudia jest kontraktem obszaru Studio; postać dokumentu wchodzi tu zagnieżdżonym interfejsem osobnego repozytorium postaci.
 type RepozytoriumStudia interface {
 	RepozytoriumPostaciStudia
 
@@ -149,8 +131,7 @@ func noweRepozytoriumStudia(z *zapytania, db *sql.DB) *repozytoriumStudia {
 	return &repozytoriumStudia{zapytania: z, db: db}
 }
 
-// ZapiszDokument zakłada dokument Studio albo nadpisuje zastany i zwraca stan
-// po zapisie.
+// ZapiszDokument zakłada dokument Studio albo nadpisuje zastany i zwraca jego pełny stan po samym zapisie.
 func (r *repozytoriumStudia) ZapiszDokument(ctx context.Context,
 	dokument DokumentStudia) (DokumentStudia, error) {
 
@@ -175,8 +156,7 @@ func (r *repozytoriumStudia) ZapiszDokument(ctx context.Context,
 	return r.Dokument(ctx, dokument.Kod)
 }
 
-// Dokument zwraca dokument Studio o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza.
+// Dokument zwraca dokument Studio o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumStudia) Dokument(ctx context.Context, kod string) (DokumentStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzDokumentStudia)
 	if err != nil {
@@ -192,7 +172,7 @@ func (r *repozytoriumStudia) Dokument(ctx context.Context, kod string) (Dokument
 	return dokument, nil
 }
 
-// Dokumenty zwraca dokumenty otwarte w danym oknie, od najświeżej zmienionego.
+// Dokumenty zwraca dokumenty otwarte w danym oknie operacyjnym, od najświeżej zmienionego z nich dokumentu.
 func (r *repozytoriumStudia) Dokumenty(ctx context.Context, okno string) ([]DokumentStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaDokumentowStudia)
 	if err != nil {
@@ -218,7 +198,7 @@ func (r *repozytoriumStudia) Dokumenty(ctx context.Context, okno string) ([]Doku
 	return lista, nil
 }
 
-// odczytajDokumentStudia składa strukturę z jednego wiersza wyniku.
+// odczytajDokumentStudia składa strukturę dokumentu z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajDokumentStudia(wiersz skaner) (DokumentStudia, error) {
 	var dokument DokumentStudia
 	var tytul, tresc, odwolanie, plikRepo, wersjaBiezaca sql.NullString

@@ -1,9 +1,5 @@
 // Odpowiedzialność pliku: przekład wiersza tabeli `punkt_dostepu` na strukturę
 // PunktDostepu i z powrotem oraz słownictwo trybu mostu (`argument_trybu_mostu`).
-//
-// Adres mostu nie ma własnej kolumny — składa się go z użytkownika, hosta i portu.
-// Gdyby był osobnym polem, wiersz mógłby mieć adres sprzeczny z własnymi danymi
-// połączenia, a taki rozjazd nie ujawniłby się aż do nieudanego uruchomienia.
 package dane
 
 import (
@@ -25,14 +21,14 @@ const (
 	                      VALUES (?, ?, ?)`
 )
 
-// wartosciPunktuBazy to komplet wartości kolumn słownikowych punktu dostępu.
+// wartosciPunktuBazy to komplet wartości kolumn słownikowych punktu dostępu, gotowy do zapisu w bazie danych.
 type wartosciPunktuBazy struct {
 	rodzaj string
 	tryb   string
 	stan   string
 }
 
-// wartosciPunktu przekłada pola wyliczeniowe struktury na wartości kolumn.
+// wartosciPunktu przekłada pola wyliczeniowe struktury punktu dostępu na wartości odpowiadających im kolumn bazy.
 func wartosciPunktu(punkt PunktDostepu) (wartosciPunktuBazy, error) {
 	var wartosci wartosciPunktuBazy
 	var err error
@@ -72,7 +68,7 @@ func odczytajPunktDostepu(wiersz skaner) (PunktDostepu, error) {
 	return uzupelnijSlownikiPunktu(punkt, rodzaj, tryb, stan)
 }
 
-// uzupelnijSlownikiPunktu przekłada wartości kolumn słownikowych na kontrakt.
+// uzupelnijSlownikiPunktu przekłada wartości kolumn słownikowych odczytane z bazy na wartości kontraktu.
 func uzupelnijSlownikiPunktu(punkt PunktDostepu, rodzaj, tryb, stan string) (PunktDostepu, error) {
 	var err error
 	if punkt.Rodzaj, err = rodzajPunktuZBazy(rodzaj); err != nil {
@@ -119,7 +115,7 @@ func argumentyTrybuMostu(ctx context.Context, z *zapytania, punktID int64) (map[
 	return slownik, nil
 }
 
-// zapiszArgumentyTrybu wymienia słownictwo trybu punktu w transakcji jego zapisu.
+// zapiszArgumentyTrybu wymienia słownictwo trybu punktu dostępu w ramach transakcji jego zapisu do bazy.
 func zapiszArgumentyTrybu(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	punktID int64, slownik map[shared.AccessMode]string) error {
 

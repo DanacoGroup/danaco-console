@@ -1,3 +1,6 @@
+// Strumień jest jedyną drogą, którą odpowiedź modelu dociera do okna; trzy
+// rzeczy muszą się w nim zgadzać: identyfikator żądania, numer rosnący od
+// jedynki i jedno domknięcie na końcu.
 package protocol
 
 import (
@@ -7,13 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Strumień jest jedyną drogą, którą odpowiedź modelu dociera do okna, i jedyną,
-// w której klient składa treść z kawałków. Trzy rzeczy muszą się w nim zgadzać
-// zawsze: identyfikator równy identyfikatorowi żądania, numer rosnący od
-// jedynki oraz jedno domknięcie na końcu. Rozjazd któregokolwiek zostawia okno
-// w ładowaniu albo składa treść z dwóch tur naraz.
-
-// TestFragmentWracaZKopertyBezZmiany sprawdza obieg zamknięty fragmentu.
+// TestFragmentWracaZKopertyBezZmiany sprawdza obieg zamknięty fragmentu przez
+// kopertę i z powrotem, bez zmiany treści.
 func TestFragmentWracaZKopertyBezZmiany(t *testing.T) {
 	zrodlowy := ChunkTekstu("okno-pierwsze", "wiadomosc-pierwsza", "Zaczynam pracę")
 
@@ -53,9 +51,7 @@ func TestKopertaFragmentuNiesieTypZdarzeniaKontraktu(t *testing.T) {
 }
 
 // TestNumerIDomkniecieStojaWKopercie sprawdza rozkład pól wskazany przez
-// kontrakt: numer i znacznik końca należą do koperty, nie do ładunku. Fragment
-// niedomykający nie ma pola `done` wcale — klient odróżnia w ten sposób
-// „jeszcze nie koniec" od „koniec równy fałsz".
+// kontrakt: numer i znacznik końca należą do koperty, nie do ładunku.
 func TestNumerIDomkniecieStojaWKopercie(t *testing.T) {
 	fragment := ChunkTekstu("okno-pierwsze", "wiadomosc-pierwsza", "treść")
 
@@ -81,8 +77,7 @@ func TestNumerIDomkniecieStojaWKopercie(t *testing.T) {
 
 // TestStrumienNiesieJedenIdentyfikatorPrzezCalyBieg sprawdza obietnicę
 // z kontraktu wprost: odpowiedź i wszystkie fragmenty powtarzają identyfikator
-// żądania. Sprawdzian przechodzi całą turę — żądanie, trzy fragmenty,
-// domknięcie — i porównuje identyfikatory oraz kolejność numerów.
+// żądania.
 func TestStrumienNiesieJedenIdentyfikatorPrzezCalyBieg(t *testing.T) {
 	const idZadania = "jeden"
 	zadanie := Koperta{Type: shared.CommandMessageSend, Id: idZadania}

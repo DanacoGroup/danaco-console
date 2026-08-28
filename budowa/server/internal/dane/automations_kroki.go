@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: kroki automatyki (tabela `krok_automatyki`) i układ
-// zależności między nimi (tabela `zaleznosc_kroku_automatyki`) — trwałość okien
-// Workflow Builder i Orchestrator.
-//
-// Zapis jest wymianą, nie dokładaniem. Workflow Builder oddaje całą definicję
-// automatyki po zmianie, a nie różnicę. Gdyby zapis dokładał kroki, usunięcie
-// kroku w oknie nie usunęłoby go w bazie i definicja rozeszłaby się z tym, co
-// widzi Operator. Dlatego zapis kroków i zapis zależności podmieniają zestaw
-// w jednej transakcji.
+// Plik prowadzi kroki automatyki i układ zależności między nimi: trwałość okien Workflow Builder i Orchestrator;
+// zapis jest wymianą, nie dokładaniem, więc kroki i zależności podmieniają zestaw w jednej transakcji.
 package dane
 
 import (
@@ -26,10 +19,7 @@ type KrokAutomatyki struct {
 	Parametry *string
 	Warunek   *string
 	Kolejnosc int
-	// OdwolaniaSekretow to zapis strukturalny wykazu referencji skarbca
-	// (`AutomationStep.secretRefs`). Kolumna kroku, nie adnotacja kanwy:
-	// krok, który przestał wołać interfejs zewnętrzny, przestaje potrzebować
-	// klucza, więc odwołanie ma zniknąć razem z krokiem.
+	// OdwolaniaSekretow to wykaz referencji skarbca; znika razem z krokiem, który przestał go wołać.
 	OdwolaniaSekretow *string
 }
 
@@ -104,7 +94,7 @@ func (r *repozytoriumAutomatyk) ZapiszKroki(ctx context.Context,
 	})
 }
 
-// Kroki zwraca kroki automatyki w zapisanej kolejności wykonania.
+// Kroki zwraca wszystkie kroki automatyki w zapisanej kolejności ich wykonania z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) Kroki(ctx context.Context, automatykaID int64) ([]KrokAutomatyki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKrokowAutomatyki)
 	if err != nil {
@@ -166,7 +156,7 @@ func (r *repozytoriumAutomatyk) ZapiszZaleznosci(ctx context.Context,
 	})
 }
 
-// Zaleznosci zwraca układ zależności automatyki.
+// Zaleznosci zwraca cały układ zależności między krokami automatyki wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) Zaleznosci(ctx context.Context, automatykaID int64) ([]ZaleznoscKroku, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZaleznosciAutomatyki)
 	if err != nil {

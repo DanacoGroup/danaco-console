@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: karty przeglądania, grupy kart i przestrzenie robocze
-// (tabele `karta_przegladania`, `grupa_kart_przegladania`,
-// `przestrzen_przegladania`, migracja 170) — trwałość rzędu kart Browser Window
-// i przełącznika przestrzeni.
-//
-// Karta zamknięta zostaje w tabeli, a odsiewa ją kolumna `zamknieta`. Skasowanie
-// wiersza zabrałoby przestrzeni roboczej to, co zapamiętała: przestrzeń wskazuje
-// karty, więc karta usunięta z bazy zamieniłaby zapisany zestaw w zestaw
-// dziurawy, o którym nikt by się nie dowiedział aż do jego otwarcia.
-//
-// Przynależność do grupy i do przestrzeni stoi po stronie karty. Karta należy do
-// jednej grupy i jednej przestrzeni naraz, więc skład jednej i drugiej jest
-// zapytaniem po kolumnie — a nie drugą listą, którą trzeba by prostować przy
-// każdym zamknięciu karty.
+// — trwałość rzędu kart okna przeglądarki i przełącznika przestrzeni. Karta
+// zamknięta zostaje w tabeli, odsiewa ją kolumna `zamknieta`.
 package dane
 
 import (
@@ -22,7 +11,7 @@ import (
 )
 
 // KartaPrzegladania to wiersz tabeli `karta_przegladania` — jedna karta rzędu
-// kart okna przeglądarki.
+// kart okna przeglądarki, powiązana z grupą i przestrzenią roboczą.
 type KartaPrzegladania struct {
 	ID               int64
 	Kod              string
@@ -65,21 +54,18 @@ type PrzestrzenPrzegladania struct {
 }
 
 // FiltrKartPrzegladania zawęża wykaz kart okna — obsługuje pola żądania
-// `browser.tab.list`.
+// `browser.tab.list`: okno, przestrzeń, uśpione i zamknięte.
 type FiltrKartPrzegladania struct {
 	// Okno operacyjne, którego rząd kart jest odczytywany.
 	Okno string
-	// Przestrzen zawęża wykaz do kart jednej przestrzeni roboczej; pusta
-	// wartość znaczy „wszystkie karty okna", nie „karty bez przestrzeni".
+	// Przestrzen zawęża wykaz do kart jednej przestrzeni; pusta wartość znaczy
+	// wszystkie karty okna.
 	Przestrzen string
-	// ZZawieszonymi dopuszcza karty uśpione. Karta zawieszona nadal jest
-	// otwarta, więc domyślnie wchodzi do wykazu; pole zostawione tu po to,
-	// żeby żądanie mogło wykaz zawęzić do kart żywych.
+	// ZZawieszonymi dopuszcza karty uśpione, które domyślnie już wchodzą do
+	// wykazu jako otwarte.
 	ZZawieszonymi bool
-	// ZZamknietymi dopuszcza karty zamknięte. Rząd kart ich nie pokazuje, ale
-	// przestrzeń robocza pamięta także te, które Operator zamknął — bez tego
-	// przywrócenie zapisanego zestawu oddawałoby zestaw okrojony i nikt by się
-	// o tym nie dowiedział.
+	// ZZamknietymi dopuszcza karty zamknięte, których rząd kart nie pokazuje,
+	// a przestrzeń pamięta.
 	ZZamknietymi bool
 }
 
@@ -210,7 +196,8 @@ func (r *repozytoriumPrzegladania) ZapiszKarte(ctx context.Context,
 	return r.Karta(ctx, karta.Kod)
 }
 
-// Karta oddaje kartę o wskazanym kodzie; brak wiersza wraca jako ErrBrakWiersza.
+// Karta oddaje kartę przeglądania o wskazanym kodzie zewnętrznym; brak wiersza
+// wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) Karta(ctx context.Context, kod string) (KartaPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKartePrzegladania)
 	if err != nil {
@@ -226,7 +213,8 @@ func (r *repozytoriumPrzegladania) Karta(ctx context.Context, kod string) (Karta
 	return karta, nil
 }
 
-// Karty oddaje otwarte karty okna w kolejności rzędu kart.
+// Karty oddaje otwarte karty okna w kolejności rzędu kart, zawężone filtrem
+// przestrzeni, stanu i uśpienia.
 func (r *repozytoriumPrzegladania) Karty(ctx context.Context,
 	filtr FiltrKartPrzegladania) ([]KartaPrzegladania, error) {
 
@@ -303,7 +291,8 @@ func (r *repozytoriumPrzegladania) OdznaczPozostaleKarty(ctx context.Context, ok
 	return nil
 }
 
-// PrzypiszKarteDoGrupy wiąże kartę z grupą albo zdejmuje wiązanie (kod pusty).
+// PrzypiszKarteDoGrupy wiąże kartę z grupą kart albo zdejmuje wiązanie, gdy
+// podany kod grupy jest pusty.
 func (r *repozytoriumPrzegladania) PrzypiszKarteDoGrupy(ctx context.Context, okno, karta, grupa string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszKarteDoGrupy)
 	if err != nil {
@@ -319,7 +308,8 @@ func (r *repozytoriumPrzegladania) PrzypiszKarteDoGrupy(ctx context.Context, okn
 	return nil
 }
 
-// PrzypiszKarteDoPrzestrzeni wiąże kartę z przestrzenią roboczą.
+// PrzypiszKarteDoPrzestrzeni wiąże kartę z przestrzenią roboczą albo zdejmuje
+// wiązanie, gdy podany kod jest pusty.
 func (r *repozytoriumPrzegladania) PrzypiszKarteDoPrzestrzeni(ctx context.Context, okno, karta, przestrzen string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, przypiszKarteDoPrzestrzeni)
 	if err != nil {
@@ -335,7 +325,8 @@ func (r *repozytoriumPrzegladania) PrzypiszKarteDoPrzestrzeni(ctx context.Contex
 	return nil
 }
 
-// ZapiszGrupeKart zakłada grupę albo nadpisuje zastaną.
+// ZapiszGrupeKart zakłada grupę kart okna albo nadpisuje zastaną, dopasowaną po
+// kodzie zewnętrznym grupy.
 func (r *repozytoriumPrzegladania) ZapiszGrupeKart(ctx context.Context, grupa GrupaKart) (GrupaKart, error) {
 	if grupa.Kod == "" || grupa.Okno == "" || grupa.Nazwa == "" {
 		return GrupaKart{}, fmt.Errorf("dane: grupa kart bez identyfikatora, okna albo nazwy")
@@ -352,7 +343,8 @@ func (r *repozytoriumPrzegladania) ZapiszGrupeKart(ctx context.Context, grupa Gr
 	return r.GrupaKart(ctx, grupa.Kod)
 }
 
-// GrupaKart oddaje grupę o wskazanym kodzie.
+// GrupaKart oddaje grupę kart okna o wskazanym kodzie zewnętrznym; brak
+// wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) GrupaKart(ctx context.Context, kod string) (GrupaKart, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzGrupeKart)
 	if err != nil {
@@ -368,7 +360,8 @@ func (r *repozytoriumPrzegladania) GrupaKart(ctx context.Context, kod string) (G
 	return grupa, nil
 }
 
-// GrupyKart oddaje grupy okna od najnowszej.
+// GrupyKart oddaje grupy kart okna od najnowszej do najstarszej, ograniczone
+// podanym limitem wyniku wykazu.
 func (r *repozytoriumPrzegladania) GrupyKart(ctx context.Context, okno string, limit int) ([]GrupaKart, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaGrupKart)
 	if err != nil {
@@ -419,7 +412,8 @@ func (r *repozytoriumPrzegladania) UsunGrupeKart(ctx context.Context, kod string
 	return zmienione > 0, nil
 }
 
-// ZapiszPrzestrzen zakłada przestrzeń roboczą albo nadpisuje zastaną.
+// ZapiszPrzestrzen zakłada przestrzeń roboczą albo nadpisuje zastaną,
+// dopasowaną po kodzie zewnętrznym.
 func (r *repozytoriumPrzegladania) ZapiszPrzestrzen(ctx context.Context,
 	przestrzen PrzestrzenPrzegladania) (PrzestrzenPrzegladania, error) {
 
@@ -438,7 +432,8 @@ func (r *repozytoriumPrzegladania) ZapiszPrzestrzen(ctx context.Context,
 	return r.Przestrzen(ctx, przestrzen.Kod)
 }
 
-// Przestrzen oddaje przestrzeń roboczą o wskazanym kodzie.
+// Przestrzen oddaje przestrzeń roboczą o wskazanym kodzie zewnętrznym; brak
+// wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzegladania) Przestrzen(ctx context.Context, kod string) (PrzestrzenPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPrzestrzen)
 	if err != nil {
@@ -454,7 +449,8 @@ func (r *repozytoriumPrzegladania) Przestrzen(ctx context.Context, kod string) (
 	return przestrzen, nil
 }
 
-// Przestrzenie oddaje przestrzenie robocze, opcjonalnie zawężone do okna.
+// Przestrzenie oddaje przestrzenie robocze okna, opcjonalnie zawężone do okna
+// i ograniczone limitem wyniku.
 func (r *repozytoriumPrzegladania) Przestrzenie(ctx context.Context, okno string, limit int) ([]PrzestrzenPrzegladania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPrzestrzeni)
 	if err != nil {
@@ -514,7 +510,8 @@ func (r *repozytoriumPrzegladania) LiczbaKartPrzestrzeni(ctx context.Context, ko
 	return liczba, nil
 }
 
-// odczytajKartePrzegladania składa kartę z jednego wiersza wyniku.
+// odczytajKartePrzegladania składa kartę przeglądania z jednego wiersza wyniku
+// zapytania o rząd kart okna.
 func odczytajKartePrzegladania(wiersz skaner) (KartaPrzegladania, error) {
 	var karta KartaPrzegladania
 	var url, tytul, grupa, przestrzen, otwierajaca, czynna sql.NullString
@@ -536,7 +533,8 @@ func odczytajKartePrzegladania(wiersz skaner) (KartaPrzegladania, error) {
 	return karta, nil
 }
 
-// odczytajGrupeKart składa grupę z jednego wiersza wyniku.
+// odczytajGrupeKart składa grupę kart przeglądania z jednego wiersza wyniku
+// zapytania o wykaz grup okna.
 func odczytajGrupeKart(wiersz skaner) (GrupaKart, error) {
 	var grupa GrupaKart
 	var barwa sql.NullString
@@ -550,7 +548,8 @@ func odczytajGrupeKart(wiersz skaner) (GrupaKart, error) {
 	return grupa, nil
 }
 
-// odczytajPrzestrzen składa przestrzeń roboczą z jednego wiersza wyniku.
+// odczytajPrzestrzen składa przestrzeń roboczą przeglądania z jednego wiersza
+// wyniku tego samego zapytania.
 func odczytajPrzestrzen(wiersz skaner) (PrzestrzenPrzegladania, error) {
 	var przestrzen PrzestrzenPrzegladania
 	var okno, profil sql.NullString

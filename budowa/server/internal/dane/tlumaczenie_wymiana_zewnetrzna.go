@@ -1,7 +1,6 @@
-// Odpowiedzialność pliku: nastawy silników i wymiana zewnętrzna modułu
-// Translate (migracja 166): profile silników wraz z kanałami, polityka
-// tłumaczenia pivotowego wraz z parami języków, pakiety przekazania wykonawcy,
-// przebieg pakietowy i most do dokumentu.
+// Plik utrzymuje nastawy silników i wymianę zewnętrzną modułu Translate:
+// profile silników wraz z kanałami, politykę tłumaczenia pivotowego wraz
+// z parami języków, pakiety przekazania wykonawcy, przebieg pakietowy i most do dokumentu.
 package dane
 
 import (
@@ -13,7 +12,7 @@ import (
 	"time"
 )
 
-// ProfilSilnika to wiersz `profil_silnika_tlumaczenia` wraz z kanałami.
+// ProfilSilnika to wiersz tabeli profil_silnika_tlumaczenia wraz z kanałami przypisanymi mu w osobnej tabeli.
 type ProfilSilnika struct {
 	ID             int64
 	Kod            string
@@ -28,7 +27,7 @@ type ProfilSilnika struct {
 	Zaktualizowano int64
 }
 
-// ProfileSilnikow oddaje profile zawężone zasięgiem.
+// ProfileSilnikow oddaje profile silników zawężone zasięgiem i identyfikatorem zasięgu, w kolejności nazwy.
 func (r *repozytoriumTlumaczen) ProfileSilnikow(ctx context.Context,
 	zasieg, zasiegID string) ([]ProfilSilnika, error) {
 
@@ -77,7 +76,7 @@ func (r *repozytoriumTlumaczen) ProfileSilnikow(ctx context.Context,
 	return profile, nil
 }
 
-// odczytajProfilSilnika składa strukturę z jednego wiersza wyniku.
+// odczytajProfilSilnika składa strukturę profilu silnika tłumaczenia z jednego wiersza wyniku zapytania.
 func odczytajProfilSilnika(wiersz skaner) (ProfilSilnika, error) {
 	var profil ProfilSilnika
 	var dziedzina, zasiegID, zasiegPamieci sql.NullString
@@ -99,7 +98,7 @@ func odczytajProfilSilnika(wiersz skaner) (ProfilSilnika, error) {
 	return profil, nil
 }
 
-// kanalyProfiluSilnika doczytuje kanały profilu w kolejności wskazania.
+// kanalyProfiluSilnika doczytuje kanały danego profilu silnika w kolejności wskazania przy jego zapisie.
 func (r *repozytoriumTlumaczen) kanalyProfiluSilnika(ctx context.Context,
 	profilID int64) ([]string, error) {
 
@@ -121,7 +120,7 @@ func (r *repozytoriumTlumaczen) kanalyProfiluSilnika(ctx context.Context,
 	return kanaly, wiersze.Err()
 }
 
-// ProfilSilnikaPoKodzie oddaje jeden profil wraz z kanałami.
+// ProfilSilnikaPoKodzie oddaje jeden profil silnika wraz z jego kanałami po kodzie zewnętrznym profilu.
 func (r *repozytoriumTlumaczen) ProfilSilnikaPoKodzie(ctx context.Context,
 	kod string) (ProfilSilnika, error) {
 
@@ -144,8 +143,7 @@ func (r *repozytoriumTlumaczen) ProfilSilnikaPoKodzie(ctx context.Context,
 	return profil, nil
 }
 
-// ZapiszProfilSilnika zakłada profil albo nadpisuje zastany i wymienia jego
-// kanały w całości.
+// ZapiszProfilSilnika zakłada profil silnika tłumaczenia albo nadpisuje zastany i wymienia jego kanały.
 func (r *repozytoriumTlumaczen) ZapiszProfilSilnika(ctx context.Context,
 	profil ProfilSilnika) (ProfilSilnika, error) {
 
@@ -197,7 +195,7 @@ func (r *repozytoriumTlumaczen) ZapiszProfilSilnika(ctx context.Context,
 	return r.ProfilSilnikaPoKodzie(ctx, profil.Kod)
 }
 
-// PolitykaPivota to wiersz `polityka_pivota` wraz z parami języków.
+// PolitykaPivota to wiersz tabeli polityka_pivota wraz z parami języków, przez które idzie tłumaczenie pośrednie.
 type PolitykaPivota struct {
 	ID             int64
 	Zasieg         string
@@ -207,7 +205,7 @@ type PolitykaPivota struct {
 	Zaktualizowano int64
 }
 
-// ParaPivota to wiersz `para_pivota` — przez jaki język idzie dana para.
+// ParaPivota to wiersz tabeli para_pivota: wskazuje, przez jaki język pośredni idzie dana para źródło-cel.
 type ParaPivota struct {
 	JezykZrodla string
 	JezykCelu   string
@@ -215,7 +213,7 @@ type ParaPivota struct {
 }
 
 // PolitykaPivotaZasiegu oddaje politykę zasięgu wraz z parami. Brak wiersza
-// wraca jako ErrBrakWiersza — polityki nieustawionej nie udajemy pustą.
+// wraca jako ErrBrakWiersza — polityki nieustawionej nie udaje się pustą.
 func (r *repozytoriumTlumaczen) PolitykaPivotaZasiegu(ctx context.Context,
 	zasieg, zasiegID string) (PolitykaPivota, error) {
 
@@ -251,8 +249,7 @@ func (r *repozytoriumTlumaczen) PolitykaPivotaZasiegu(ctx context.Context,
 	return polityka, wiersze.Err()
 }
 
-// ZapiszPolitykePivota zakłada politykę zasięgu albo nadpisuje zastaną
-// i wymienia jej pary w całości.
+// ZapiszPolitykePivota zakłada politykę pivota zasięgu albo nadpisuje zastaną i wymienia jej pary w całości.
 func (r *repozytoriumTlumaczen) ZapiszPolitykePivota(ctx context.Context,
 	polityka PolitykaPivota) (PolitykaPivota, error) {
 
@@ -292,7 +289,7 @@ func (r *repozytoriumTlumaczen) ZapiszPolitykePivota(ctx context.Context,
 	return r.PolitykaPivotaZasiegu(ctx, polityka.Zasieg, polityka.ZasiegID)
 }
 
-// PakietPrzekazania to wiersz `pakiet_przekazania`.
+// PakietPrzekazania to wiersz tabeli pakiet_przekazania, jednego pakietu materiału przekazanego wykonawcy.
 type PakietPrzekazania struct {
 	Kod            string
 	OknoID         int64
@@ -338,7 +335,7 @@ func (r *repozytoriumTlumaczen) ZapiszPakietPrzekazania(ctx context.Context,
 	return r.PakietPrzekazania(ctx, pakiet.Kod)
 }
 
-// PakietPrzekazania oddaje pakiet po kodzie zewnętrznym.
+// PakietPrzekazania oddaje pakiet przekazania po jego kodzie zewnętrznym wraz z kodem okna źródłowego.
 func (r *repozytoriumTlumaczen) PakietPrzekazania(ctx context.Context,
 	kod string) (PakietPrzekazania, error) {
 
@@ -369,7 +366,7 @@ func (r *repozytoriumTlumaczen) PakietPrzekazania(ctx context.Context,
 	return pakiet, nil
 }
 
-// PozycjaPakietuTlumaczenia to wiersz `pozycja_pakietu_tlumaczenia`.
+// PozycjaPakietuTlumaczenia to wiersz tabeli pozycja_pakietu_tlumaczenia, jednego panelu w przebiegu pakietowym.
 type PozycjaPakietuTlumaczenia struct {
 	PanelKod string
 	Operacja string
@@ -406,7 +403,7 @@ func (r *repozytoriumTlumaczen) ZalozZleceniePakietu(ctx context.Context,
 	})
 }
 
-// PozycjePakietu oddaje pozycje przebiegu pakietowego po kodzie zlecenia.
+// PozycjePakietu oddaje pozycje przebiegu pakietowego po kodzie zlecenia, w kolejności ich zapisu do tabeli.
 func (r *repozytoriumTlumaczen) PozycjePakietu(ctx context.Context,
 	kod string) ([]PozycjaPakietuTlumaczenia, error) {
 
@@ -441,7 +438,7 @@ type MostTlumaczenia struct {
 	Zakotwiczenie *string
 }
 
-// ZapiszMost zakłada wiązanie okna z dokumentem albo je przestawia.
+// ZapiszMost zakłada wiązanie okna tłumaczenia z dokumentem albo przestawia zastane wiązanie na nowy dokument.
 func (r *repozytoriumTlumaczen) ZapiszMost(ctx context.Context, most MostTlumaczenia) error {
 	_, err := r.db.ExecContext(ctx, `INSERT INTO most_tlumaczenia
 		(okno_id, dokument_kod, zakotwiczenie, zaktualizowano) VALUES (?, ?, ?, ?)
@@ -456,7 +453,7 @@ func (r *repozytoriumTlumaczen) ZapiszMost(ctx context.Context, most MostTlumacz
 	return nil
 }
 
-// Most oddaje wiązanie okna. Brak wiersza wraca jako ErrBrakWiersza.
+// Most oddaje wiązanie okna z dokumentem tłumaczenia po identyfikatorze okna. Brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumTlumaczen) Most(ctx context.Context, oknoID int64) (MostTlumaczenia, error) {
 	var most MostTlumaczenia
 	var zakotwiczenie sql.NullString

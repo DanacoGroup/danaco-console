@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: zadania projektu (tabela `zadanie_projektu`) oraz
-// kolumny tablicy kanban (tabela `kolumna_tablicy_projektu`) — hub planowania
-// modułu Workspace.
-//
-// Wykaz schodzi z bazy w całości dla jednego projektu, a zawężenia (stan,
-// wykonawca, etykieta, fraza, termin) rozstrzyga rdzeń. Powód jest jeden:
-// zawężeń jest siedem i wchodzą w dowolnym połączeniu, więc zapytanie składane
-// z kawałków byłoby napisem budowanym w locie, a projekt liczy zadania
-// w setkach, nie w milionach.
+// Odpowiedzialność pliku: zadania projektu (tabela `zadanie_projektu`) oraz kolumny tablicy
+// kanban (tabela `kolumna_tablicy_projektu`) — hub planowania modułu Workspace.
 package dane
 
 import (
@@ -19,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZadanieWorkspace to wiersz zadania projektu.
+// ZadanieWorkspace to wiersz zadania projektu w tabeli `zadanie_projektu` modułu Workspace, złączony z projektem.
 type ZadanieWorkspace struct {
 	ID                   int64
 	ProjektID            int64
@@ -48,7 +41,7 @@ type ZadanieWorkspace struct {
 	Zaktualizowano       string
 }
 
-// KolumnaTablicyWorkspace to wiersz kolumny tablicy kanban projektu.
+// KolumnaTablicyWorkspace to wiersz kolumny tablicy kanban projektu w tabeli `kolumna_tablicy_projektu`.
 type KolumnaTablicyWorkspace struct {
 	ProjektID     int64
 	Identyfikator string
@@ -136,7 +129,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszZadanieWorkspace(ctx context.Con
 	return r.ZadanieWorkspace(ctx, zadanie.Identyfikator)
 }
 
-// ZadanieWorkspace zwraca jedno zadanie po jego identyfikatorze.
+// ZadanieWorkspace zwraca jedno zadanie po jego identyfikatorze zewnętrznym; brak wraca jako ErrBrakWiersza.
 func (r *repozytoriumPrzestrzeniRoboczej) ZadanieWorkspace(ctx context.Context,
 	identyfikator string) (ZadanieWorkspace, error) {
 
@@ -155,8 +148,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZadanieWorkspace(ctx context.Context,
 	return zadanie, nil
 }
 
-// ZadaniaWorkspace zwraca wszystkie zadania projektu. Zawężenia wykazu należą
-// do rdzenia — powód stoi w nagłówku pliku.
+// ZadaniaWorkspace zwraca wszystkie zadania projektu w całości, uporządkowane według kamienia milowego i terminu.
 func (r *repozytoriumPrzestrzeniRoboczej) ZadaniaWorkspace(ctx context.Context,
 	projektID int64) ([]ZadanieWorkspace, error) {
 
@@ -217,7 +209,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) UsunZadaniaWorkspace(ctx context.Conte
 	return usuniete, nil
 }
 
-// ZapiszKolumneTablicyWorkspace zakłada albo zmienia kolumnę tablicy projektu.
+// ZapiszKolumneTablicyWorkspace zakłada albo zmienia kolumnę tablicy kanban projektu w bazie danych aplikacji.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszKolumneTablicyWorkspace(ctx context.Context,
 	kolumna KolumnaTablicyWorkspace) error {
 
@@ -234,7 +226,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszKolumneTablicyWorkspace(ctx cont
 	return nil
 }
 
-// KolumnyTablicyWorkspace zwraca kolumny tablicy projektu w kolejności nastawy.
+// KolumnyTablicyWorkspace zwraca kolumny tablicy kanban projektu w kolejności nastawionej pola `Kolejnosc`.
 func (r *repozytoriumPrzestrzeniRoboczej) KolumnyTablicyWorkspace(ctx context.Context,
 	projektID int64) ([]KolumnaTablicyWorkspace, error) {
 
@@ -268,7 +260,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) KolumnyTablicyWorkspace(ctx context.Co
 	return lista, nil
 }
 
-// odczytajZadanieWorkspace składa strukturę zadania z jednego wiersza wyniku.
+// odczytajZadanieWorkspace składa strukturę zadania z jednego wiersza wyniku zapytania SQL bazy danych.
 func odczytajZadanieWorkspace(wiersz skaner) (ZadanieWorkspace, error) {
 	var zadanie ZadanieWorkspace
 	var stan, waga, etykiety string

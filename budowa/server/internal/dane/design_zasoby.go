@@ -1,28 +1,6 @@
-// Zasoby wizualne i ich etykiety (tabele `zasob_design`,
-// `etykieta_zasobu_design`) — obszar Assets Panel modułu Design. Prompt
-// strukturalny leży w `design.go` (tam też interfejs całego obszaru),
-// kompozycje w `design_kompozycje.go`.
-//
-// Zasoby oddają `Total` oddzielnie od strony: `design.asset.list` niesie
-// `Total` obok `Assets` przyciętych limitem (`DesignAssetListResponse`), żeby
-// panel pokazał „X z Y” bez drugiego zapytania po stronie klienta. `Zasoby`
-// stosuje więc te same warunki dwa razy — raz do stronicowanej listy
-// (z LIMIT), raz do liczby całkowitej (bez LIMIT).
-//
-// Filtr po etykietach jest koniunkcją. `DesignAssetListRequest.Tags` nie
-// rozstrzyga, czy zasób ma nieść wszystkie wskazane etykiety, czy choć jedną,
-// a panel filtrujący po wielu etykietach naraz zawęża wynik, więc `Zasoby`
-// wymaga zestawu pełnego: `HAVING COUNT(DISTINCT etykieta) = len(etykiety)`.
-//
-// Etykiety są wymianą, nie dokładaniem — ten sam wzorzec co `UstawEtykiety`
-// w `library_kolekcje.go`: `UstawEtykietyZasobu` usuwa zastane etykiety
-// zasobu i wstawia nadesłane w jednej transakcji (`transakcja.go`).
-//
-// Zasób odczytany po kodzie jest osobnym wejściem (`Zasob`). Komenda
-// `design.asset.tag.set` dostaje z zewnątrz identyfikator kontraktu, a
-// `etykieta_zasobu_design.zasob_id` wskazuje klucz wiersza; bez tego przekładu
-// uchwyt nie odróżni zasobu nieznanego (odmowa) od zasobu bez etykiet
-// (droga udana).
+// Warstwa danych obsługuje zasoby wizualne obszaru Assets Panel modułu
+// Design: tabele zasob_design i etykieta_zasobu_design, stronicowanie
+// wyników, filtrowanie po etykietach i zarządzanie etykietami zasobu.
 package dane
 
 import (
@@ -45,11 +23,7 @@ type ZasobDesignu struct {
 	Format   *string
 	URI      *string
 	PromptID *int64
-	// PromptKod jest identyfikatorem ZEWNĘTRZNYM promptu, z którego zasób
-	// powstał — tym, którego chce kontrakt (`DesignAsset.PromptId`). PromptID
-	// jest kluczem wiersza i na zewnątrz nie wychodzi. Odczyt bierze go
-	// podzapytaniem obok wiersza zasobu, więc każdy czytelnik zasobu dostaje
-	// prowenancję bez drugiego wywołania i bez zgadywania.
+	// PromptKod niesie identyfikator zewnętrzny promptu, PromptID jest kluczem wiersza.
 	PromptKod       *string
 	WariantZasobuID *string
 	Ulubiony        bool
@@ -109,17 +83,12 @@ const (
 	listaEtykietZasobuDesign = `SELECT etykieta FROM etykieta_zasobu_design
 	                            WHERE zasob_id = ? ORDER BY etykieta`
 
-	// Oznaczenie ulubionego jest zapisem jednej kolumny — reszta wiersza
-	// zostaje nietknięta (patrz `UstawUlubionyZasobu` w interfejsie,
-	// `design.go`).
+	// Oznaczenie ulubionego w zasobie jest zapisem jednej kolumny bazy; reszta
+	// wiersza zostaje przy tej operacji nietknięta.
 	ustawUlubionyZasobuDesign = `UPDATE zasob_design SET ulubiony = ? WHERE id = ?`
 
-	// Usunięcie idzie po identyfikatorze zewnętrznym, bo tym wskazuje komenda.
-	// Etykiety zasobu znikają same — `etykieta_zasobu_design.zasob_id` niesie
-	// ON DELETE CASCADE, więc drugiego polecenia tu nie ma. Warstwy kompozycji
-	// wskazujące ten zasób zostają: `warstwa_kompozycji_design.zasob_id` jest
-	// kolumną TEXT bez klucza obcego, a kompozycja przeżywa usunięcie zasobu,
-	// który się w niej znalazł.
+	// Zapytanie usuwa zasób po identyfikatorze zewnętrznym; powiązane etykiety
+	// usuwają się kaskadowo przez ON DELETE CASCADE kolumny zasob_id.
 	usunZasobDesign = `DELETE FROM zasob_design WHERE identyfikator_zewnetrzny = ?`
 )
 
@@ -140,8 +109,7 @@ func (r *repozytoriumDesignu) ZapiszZasob(ctx context.Context, zasob ZasobDesign
 	if err != nil {
 		return ZasobDesignu{}, err
 	}
-	// Szerokosc i Wysokosc niesie kontrakt jako *int, a liczbaDoKolumny
-	// przyjmuje *int64, stąd przekład wprost na wartość kolumny.
+	// Szerokosc i Wysokosc niesie kontrakt jako *int, kolumna wymaga *int64.
 	var szerokosc, wysokosc any
 	if zasob.Szerokosc != nil {
 		szerokosc = int64(*zasob.Szerokosc)
@@ -225,8 +193,7 @@ func warunkiFiltruZasobow(filtr FiltrZasobow) (string, []any) {
 		warunki = append(warunki, "z.ulubiony = 1")
 	}
 	if len(filtr.Etykiety) > 0 {
-		// Zasób musi nieść wszystkie wskazane etykiety (koniunkcja) — patrz
-		// komentarz nagłówkowy pliku.
+		// Zasób musi nieść wszystkie wskazane etykiety — filtr jest koniunkcją, nie sumą zbiorów.
 		zaslepki := strings.TrimSuffix(strings.Repeat("?,", len(filtr.Etykiety)), ",")
 		warunki = append(warunki, fmt.Sprintf(
 			`z.id IN (SELECT zasob_id FROM etykieta_zasobu_design
@@ -245,11 +212,8 @@ func warunkiFiltruZasobow(filtr FiltrZasobow) (string, []any) {
 	return " WHERE " + strings.Join(warunki, " AND "), argumenty
 }
 
-// UstawEtykietyZasobu podmienia komplet etykiet zasobu, bo Assets Panel
-// nadsyła zawsze pełny zestaw, nie różnicę (kontrakt: `DesignAsset.Tags`
-// niesie stan docelowy). Usunięcie i wstawienie zachodzi w jednej
-// transakcji — zasób nie zostaje przejściowo bez etykiet przy błędzie
-// w trakcie.
+// UstawEtykietyZasobu zastępuje komplet etykiet zasobu nadesłanym zestawem
+// w jednej transakcji, usuwając zastane i wstawiając nowe etykiety.
 func (r *repozytoriumDesignu) UstawEtykietyZasobu(ctx context.Context,
 	zasobID int64, etykiety []string) error {
 
@@ -278,7 +242,8 @@ func (r *repozytoriumDesignu) UstawEtykietyZasobu(ctx context.Context,
 	})
 }
 
-// EtykietyZasobu zwraca etykiety zasobu w porządku alfabetycznym.
+// EtykietyZasobu zwraca etykiety zasobu wskazanego kluczem wiersza w porządku
+// alfabetycznym, odczytane z tabeli etykieta_zasobu_design.
 func (r *repozytoriumDesignu) EtykietyZasobu(ctx context.Context, zasobID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtykietZasobuDesign)
 	if err != nil {
@@ -323,7 +288,8 @@ func (r *repozytoriumDesignu) Zasob(ctx context.Context, kod string) (ZasobDesig
 	return zasob, nil
 }
 
-// odczytajZasobDesign składa strukturę z jednego wiersza wyniku.
+// odczytajZasobDesign składa strukturę ZasobDesignu z jednego wiersza wyniku
+// zapytania, w tym pola dopuszczające wartość pustą.
 func odczytajZasobDesign(wiersz skaner) (ZasobDesignu, error) {
 	var zasob ZasobDesignu
 	var nazwa, format, uri, promptKod, wariantZasobuID sql.NullString

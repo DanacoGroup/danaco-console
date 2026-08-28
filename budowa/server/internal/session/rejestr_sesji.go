@@ -8,19 +8,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rejestr trzyma sesje i ich okna komunikacji. Jest bezpieczny dla wielu
-// gorutyn, bo okna jednej sesji pracują równolegle i sięgają po
-// rejestr z różnych wątków obsługi połączeń.
-//
-// Rejestr wydaje wyłącznie odpisy bytów. Dzięki temu wywołujący nie zmieni
-// stanu rejestru przez wskaźnik trzymany po stronie warstwy wyżej.
+// Rejestr trzyma sesje i ich okna komunikacji i jest bezpieczny dla wielu gorutyn pracujących równolegle.
 type Rejestr struct {
 	mu    sync.RWMutex
 	sesje map[string]*Sesja
 	okna  map[string]*Okno
 }
 
-// NowyRejestr zakłada pusty rejestr.
+// Funkcja NowyRejestr zakłada pusty rejestr sesji i okien, gotowy od razu do przyjmowania kolejnych wpisów.
 func NowyRejestr() *Rejestr {
 	return &Rejestr{
 		sesje: make(map[string]*Sesja),
@@ -28,7 +23,7 @@ func NowyRejestr() *Rejestr {
 	}
 }
 
-// ZalozSesje zakłada sesję czynną i zwraca jej odpis.
+// Metoda ZalozSesje zakłada nową sesję czynną z podanym tytułem i identyfikatorem projektu i zwraca jej odpis.
 func (r *Rejestr) ZalozSesje(tytul, idProjektu string) Sesja {
 	s := nowaSesja(tytul, idProjektu)
 	r.mu.Lock()
@@ -37,7 +32,7 @@ func (r *Rejestr) ZalozSesje(tytul, idProjektu string) Sesja {
 	return s.Kopia()
 }
 
-// Sesja zwraca odpis sesji o podanym identyfikatorze.
+// Metoda Sesja zwraca odpis sesji o podanym identyfikatorze, bez modyfikacji jej bieżącego stanu w rejestrze.
 func (r *Rejestr) Sesja(id string) (Sesja, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -48,7 +43,7 @@ func (r *Rejestr) Sesja(id string) (Sesja, error) {
 	return s.Kopia(), nil
 }
 
-// Sesje zwraca odpisy wszystkich sesji rejestru.
+// Metoda Sesje zwraca odpisy wszystkich sesji przechowywanych obecnie w tym rejestrze sesji rdzenia aplikacji.
 func (r *Rejestr) Sesje() []Sesja {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -110,7 +105,7 @@ func (r *Rejestr) WznowSesje(id string) (Sesja, []Okno, error) {
 	return s.Kopia(), otwarte, nil
 }
 
-// UsunSesje wykreśla sesję wraz z jej oknami. Zwraca odpisy usuniętych okien.
+// Metoda UsunSesje wykreśla z rejestru sesję wraz z jej oknami i zwraca odpisy trwale usuniętych okien.
 func (r *Rejestr) UsunSesje(id string) ([]Okno, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

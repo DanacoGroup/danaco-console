@@ -1,15 +1,6 @@
 // Pakiet narzedzia jest rozdzielnią sterowania platformą przez model:
-// narzędzie → komenda kontraktu → rdzeń → wynik.
-//
-// Wykaz pochodzi z kontraktu, nie z tego pakietu. Ani jedna nazwa narzędzia,
-// ani jeden opis i ani jedno pole schematu nie są tu zapisane: wszystko czyta
-// się z `shared.NarzedziaModelu()` i `shared.KomendyNarzedzi`, wytworzonych
-// z `shared/contract.json`. Dopisanie komendy do sekcji `narzedzia`
-// kontraktu powiększa ten serwer bez zmiany choćby jednej linii kodu — i tak
-// samo działa w drugą stronę: wykreślenie komendy odbiera modelowi narzędzie.
-//
-// Drugiego wykazu nie ma z zamysłem: wykaz własny rozjechałby się
-// z kontraktem, gdy tylko kontrakt urośnie.
+// narzędzie, komenda kontraktu, rdzeń, wynik; wykaz pochodzi z kontraktu, nie
+// z tego pakietu.
 package narzedzia
 
 import "danacoconsole/shared"
@@ -25,28 +16,19 @@ type Narzedzie struct {
 	// Schemat jest schematem wejścia (JSON Schema) wyprowadzonym z pól treści
 	// żądania komendy.
 	Schemat map[string]any
-	// Grupa mówi, do czego narzędzie służy — obszar nazwy jego komendy
-	// (`grupa.go`). Pole DANYCH, nie ozdoba wykazu: te same grupy są potem
-	// gałęziami drzewa wyboru u Operatora i jednostką doboru narzędzi eksperta
-	// (`ekspert_wykaz.go`).
+	// Grupa mówi, do czego narzędzie służy — obszar nazwy jego komendy, pole
+	// danych, nie ozdoba wykazu.
 	Grupa string
 }
 
-// Wykaz zwraca komplet narzędzi zadeklarowanych przez kontrakt.
-//
-// Liczba pozycji nie jest tu zapisana ani sprawdzana: wykaz ma tyle pozycji,
-// ile ich niesie kontrakt w chwili budowy. Kolejność zachowuje kolejność
-// kontraktu, więc ten sam kontrakt zawsze daje ten sam wykaz.
+// Wykaz zwraca komplet narzędzi zadeklarowanych przez kontrakt, w kolejności
+// kontraktu, bez zapisanej liczby pozycji.
 func Wykaz() []Narzedzie {
 	return WykazZasiegu(ZasiegOkna)
 }
 
-// WykazZasiegu zwraca wykaz kontraktu POWIĘKSZONY o pozycje, które dokłada rola
-// okna (`zasieg_roli.go`). Zasięg okna roboczego oddaje sam wykaz kontraktu,
-// bez dokładania pozycji roli.
-//
-// Powiększenie idzie NA KOŃCU listy, żeby kolejność kontraktu została kolejnością
-// kontraktu: ten sam kontrakt daje ten sam wykaz, a rola dokłada, nie przestawia.
+// WykazZasiegu zwraca wykaz kontraktu powiększony na końcu o pozycje, które
+// dokłada rola okna, zachowując kolejność kontraktu.
 func WykazZasiegu(zasieg Zasieg) []Narzedzie {
 	deklaracje := shared.NarzedziaModelu()
 	wykaz := make([]Narzedzie, 0, len(deklaracje))

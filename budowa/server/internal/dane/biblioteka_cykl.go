@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: cykl życia zasobu (stan, miejsce w strukturze, nazwa,
-// usunięcie trwałe) oraz pulpit stanu repozytorium — kolumny dołożone migracją
-// 180 i agregaty liczone po całym zbiorze.
-//
-// Archiwizacja i przywrócenie są jedną czynnością o dwóch kierunkach, więc mają
-// jedną metodę z parametrem stanu. Rozdzielenie ich dałoby dwa zapytania
-// różniące się jednym łańcuchem.
-//
-// Usunięcie trwałe zdejmuje wiersz zasobu; wersje, etykiety i przypisania
-// znikają kaskadą schematu (migracja 045). Bajty w magazynie treści zostają —
-// sprząta je obchód magazynu przy starcie rdzenia
-// (`core/adapter_modul_library_sprzatanie.go`), bo ta sama treść bywa
-// współdzielona przez inny zasób pod tą samą sumą kontrolną.
+// Plik niesie cykl życia zasobu — stan, miejsce w strukturze, nazwę, usunięcie
+// trwałe — oraz pulpit stanu repozytorium liczony po całym zbiorze. Usunięcie
+// trwałe zdejmuje wiersz zasobu wraz z wersjami, etykietami i przypisaniami.
 package dane
 
 import (
@@ -20,13 +10,15 @@ import (
 	"strings"
 )
 
-// LiczbaWedlugKlucza to jedna pozycja rozkładu pulpitu stanu.
+// LiczbaWedlugKlucza to jedna pozycja rozkładu pulpitu stanu: klucz grupowania
+// razem z liczbą zasobów, które pod ten klucz trafiły.
 type LiczbaWedlugKlucza struct {
 	Klucz  string
 	Liczba int
 }
 
-// StatystykiBiblioteki to pulpit stanu repozytorium liczony po całym zbiorze.
+// StatystykiBiblioteki to pulpit stanu repozytorium liczony po całym zbiorze:
+// liczba zasobów, rozmiar, osierocone, duplikaty i rozkłady według klucza.
 type StatystykiBiblioteki struct {
 	LiczbaZasobow       int
 	LiczbaArchiwalnych  int
@@ -83,7 +75,8 @@ func (r *repozytoriumBiblioteki) UstawSciezkeRepozytorium(ctx context.Context, k
 		"nie można przenieść pliku")
 }
 
-// PrzemianujPlik zmienia nazwę jednego zasobu — droga normalizacji nazw.
+// PrzemianujPlik zmienia nazwę jednego zasobu i oddaje jego stan po zmianie.
+// Nazwa pusta jest odrzucana jako błąd.
 func (r *repozytoriumBiblioteki) PrzemianujPlik(ctx context.Context, kod,
 	nazwa string) (PlikBiblioteki, error) {
 
@@ -124,17 +117,14 @@ func (r *repozytoriumBiblioteki) UsunPliki(ctx context.Context, kody []string) (
 		for _, kod := range kody {
 			var plikID int64
 			if err := poszukiwanie.QueryRowContext(ctx, kod).Scan(&plikID); err != nil {
-				// Zasób nieznany nie wywraca usunięcia pozostałych: odpowiedź
-				// mówi, ile naprawdę ubyło.
+				// Zasób nieznany nie wywraca usunięcia pozostałych.
 				continue
 			}
 			var wersje int
 			if err := liczenieWersji.QueryRowContext(ctx, plikID).Scan(&wersje); err != nil {
 				return fmt.Errorf("dane: nie można policzyć wersji pliku %q: %w", kod, err)
 			}
-			// Indeks treści FTS5 nie ma kluczy obcych, więc kaskada go nie
-			// obejmuje — wiersz zdejmuje się wprost, inaczej po usuniętym
-			// zasobie zostawałoby trafienie wyszukiwania.
+			// Indeks treści nie ma kluczy obcych, więc kaskada go nie obejmuje.
 			if _, err := czyszczenieIndeksu.ExecContext(ctx, plikID); err != nil {
 				return fmt.Errorf("dane: nie można zdjąć indeksu treści pliku %q: %w", kod, err)
 			}
@@ -171,13 +161,9 @@ func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, pr
 	}
 	var stat StatystykiBiblioteki
 
-	// Nazwa tabeli stoi przy kolumnie stanu jawnie, bo część agregatów łączy
-	// tabele i sama „stan" byłaby wtedy dwuznaczna.
+	// Nazwa tabeli stoi przy kolumnie stanu jawnie, bo złączenie czyni ją dwuznaczną.
 	czynne := zawezenie + ` AND plik_biblioteki.stan = 'aktywny'`
-	// Każdy agregat sumujący idzie przez COALESCE: SUM po zbiorze pustym daje
-	// w SQLite NULL, a docelowe pola pulpitu są liczbami całkowitymi bez stanu
-	// pustego. Bez tej osłony repozytorium puste — czyli rdzeń świeżo założony —
-	// wywracało odczyt pulpitu zamiast oddać zera.
+	// COALESCE osłania przed NULL, który SUM zwraca dla zbioru pustego.
 	wiersz := r.db.QueryRowContext(ctx, `SELECT COUNT(*), COALESCE(SUM(rozmiar_bajtow), 0),
 	                                            COALESCE(SUM(CASE WHEN suma_kontrolna IS NULL
 	                                                       OR suma_kontrolna = '' THEN 1 ELSE 0 END), 0)
@@ -193,8 +179,7 @@ func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, pr
 		return StatystykiBiblioteki{}, fmt.Errorf("dane: nie można policzyć archiwum: %w", err)
 	}
 
-	// Zasób osierocony: bez etykiety i bez kolekcji — reguła audytu z opracowania
-	// modułu, przeniesiona wprost do zapytania.
+	// Zasób osierocony jest bez etykiety i bez kolekcji zarazem.
 	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM plik_biblioteki
 	                                 WHERE `+czynne+`
 	                                   AND NOT EXISTS (SELECT 1 FROM etykieta_pliku_biblioteki e
@@ -206,8 +191,7 @@ func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, pr
 		return StatystykiBiblioteki{}, fmt.Errorf("dane: nie można policzyć zasobów osieroconych: %w", err)
 	}
 
-	// Duplikat dokładny: zasób dzielący sumę kontrolną z innym. Liczy się
-	// zasoby należące do grup, nie same grupy — kontrakt pyta o zasoby.
+	// Liczy się zasoby należące do grup duplikatów, nie same grupy.
 	err = r.db.QueryRowContext(ctx, `SELECT COALESCE(SUM(ile), 0) FROM (
 	                                     SELECT COUNT(*) AS ile FROM plik_biblioteki
 	                                     WHERE `+czynne+` AND suma_kontrolna IS NOT NULL
@@ -274,7 +258,8 @@ func zawezenieStatystykBiblioteki(kolekcjaKod, projektID *string) (string, []any
 	return strings.Join(warunki, " AND "), argumenty
 }
 
-// rozkladBiblioteki wykonuje zapytanie „klucz, liczba" i składa z niego rozkład.
+// rozkladBiblioteki wykonuje zapytanie zwracające parę „klucz, liczba" i składa
+// z wierszy wyniku rozkład używany w pulpicie stanu repozytorium.
 func (r *repozytoriumBiblioteki) rozkladBiblioteki(ctx context.Context, zapytanie string,
 	argumenty []any) ([]LiczbaWedlugKlucza, error) {
 

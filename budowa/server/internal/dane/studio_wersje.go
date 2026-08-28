@@ -1,16 +1,7 @@
-// Odpowiedzialność pliku: wersje dokumentu modułu Studio (tabela
-// `wersja_dokumentu_studio`) — repozytorium sesji pokazywane w Repository Panel.
-// Typ i interfejs deklaruje `dane/studio.go`; ten plik implementuje wyłącznie
-// metody obszaru wersji na tym samym `*repozytoriumStudia`, jak w module
-// Automations (`automations_przebiegi.go`).
-//
-// Treść wersji: `Tresc` niesie treść krótką wprost, `TrescOdwolanie` — odwołanie
-// do pliku dla treści obszernej, tym samym sposobem co `dane/wiadomosci.go`.
-//
-// Przywrócenie jest zapisem dwutabelowym: `PrzywrocWersje` czyta wersję docelową
-// i nadpisuje treść dokumentu w jednej transakcji (`dane/transakcja.go`) — bez
-// niej odczyt wersji i zapis dokumentu mogłyby rozjechać się przy równoległym
-// zapisie tego samego dokumentu z innego okna.
+// Odpowiedzialność pliku: wersje dokumentu modułu Studio — tabela
+// wersja_dokumentu_studio — jako repozytorium sesji dokumentu pokazywane
+// w panelu repozytorium, z metodami obszaru wersji na współdzielonym uchwycie
+// repozytorium studia.
 package dane
 
 import (
@@ -20,10 +11,9 @@ import (
 	"fmt"
 )
 
-// WersjaDokumentu to wiersz tabeli `wersja_dokumentu_studio` wraz z kodem
-// dokumentu nadrzędnego, doczytanym złączeniem — Repository Panel pokazuje
-// wersję zawsze w kontekście jednego dokumentu, więc kod towarzyszy każdemu
-// odczytowi tak samo jak `AutomatykaKod` w `Przebieg`.
+// WersjaDokumentu to wiersz tabeli wersja_dokumentu_studio wraz z kodem dokumentu
+// nadrzędnego, doczytanym złączeniem, bo panel repozytorium sesji pokazuje
+// wersję zawsze w kontekście jednego dokumentu.
 type WersjaDokumentu struct {
 	ID             int64
 	Kod            string
@@ -34,10 +24,8 @@ type WersjaDokumentu struct {
 	SkrotTresci    *string
 	Tresc          *string
 	TrescOdwolanie *string
-	// Autor rozróżnia zmianę Operatora od zmiany modelu (rozdz. 3.6
-	// opracowania). Wskaźnik, nie napis: wersje założone przed dobudową autora
-	// nie niosą i mają czytać się jako autor NIEZNANY, a nie jako Operator,
-	// którym mogły nie być.
+	// Autor rozróżnia zmianę operatora od zmiany modelu; brak wskaźnika znaczy
+	// autor nieznany.
 	Autor         *string
 	KamienMilowy  bool
 	GalazKod      *string
@@ -95,9 +83,8 @@ const (
 )
 
 // ZapiszWersje zakłada wersję dokumentu w repozytorium sesji albo nadpisuje
-// zastaną i zwraca stan po zapisie. Nie przestawia `wersja_biezaca_id`
-// dokumentu — o tym decyduje wywołujący `document.save`, wołając osobno
-// `ZapiszDokument`, bo dokument istnieje i bez żadnej wersji.
+// zastaną wersję i zwraca stan po zapisie, nie przestawiając bieżącej wersji
+// dokumentu.
 func (r *repozytoriumStudia) ZapiszWersje(ctx context.Context, dokumentID int64,
 	wersja WersjaDokumentu) (WersjaDokumentu, error) {
 
@@ -147,8 +134,8 @@ func (r *repozytoriumStudia) Wersje(ctx context.Context, dokumentID int64) ([]We
 	return lista, nil
 }
 
-// Wersja zwraca wersję dokumentu o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza.
+// Wersja zwraca wersję dokumentu o wskazanym kodzie wraz z kodem dokumentu
+// nadrzędnego; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumStudia) Wersja(ctx context.Context, kodWersji string) (WersjaDokumentu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWersjeDokumentu)
 	if err != nil {
@@ -164,10 +151,8 @@ func (r *repozytoriumStudia) Wersja(ctx context.Context, kodWersji string) (Wers
 	return wersja, nil
 }
 
-// PrzywrocWersje nadpisuje treść dokumentu treścią wskazanej wersji i
-// przestawia `wersja_biezaca_id` na nią, bez usuwania wersji nowszych —
-// przywrócenie samo staje się bieżącym stanem, a historia repozytorium sesji
-// zostaje nietknięta (Operator może wrócić do dowolnej wersji ponownie).
+// PrzywrocWersje nadpisuje treść dokumentu treścią wskazanej wersji i ustawia
+// ją jako bieżącą, bez usuwania wersji nowszych z historii repozytorium sesji.
 func (r *repozytoriumStudia) PrzywrocWersje(ctx context.Context, kodDokumentu,
 	kodWersji string) (DokumentStudia, error) {
 
@@ -218,7 +203,8 @@ func (r *repozytoriumStudia) PrzywrocWersje(ctx context.Context, kodDokumentu,
 	return r.Dokument(ctx, kodDokumentu)
 }
 
-// odczytajWersjeDokumentu składa strukturę z jednego wiersza wyniku.
+// odczytajWersjeDokumentu składa wartość wersji dokumentu z jednego wiersza
+// wyniku zapytania, przypisując odczytane kolumny do pól struktury.
 func odczytajWersjeDokumentu(wiersz skaner) (WersjaDokumentu, error) {
 	var wersja WersjaDokumentu
 	var etykieta, podsumowanie, skrot, tresc, odwolanie sql.NullString

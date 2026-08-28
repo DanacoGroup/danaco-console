@@ -6979,3 +6979,15 @@ Odnośniki strony zapisują się kompletem: zapis notatki najpierw kasuje
 odnośniki wychodzące z tej strony, potem zakłada je na nowo. Dopisywanie
 zostawiałoby w bazie odnośniki z akapitów, których w treści już nie ma,
 a graf wiedzy pokazywałby wtedy powiązania nieistniejące.
+
+## budowa/server/internal/dane/workspace_pamiec.go
+Zasięg węższy albo równy projektowi widzi wyłącznie ten projekt; zasięg
+szerszy (globalny, środowisko, moduł, para modułów) jest ustaleniem wspólnym
+i wchodzi do pamięci innych projektów na żądanie `includeShared`. Kolejność
+rozstrzygania poziomów należy do pakietu `internal/konfig` — tu leży wyłącznie
+zapis i odczyt.
+
+Osobny wynik logiczny WpisPamieciPoIdentyfikatorze jest potrzebny, bo brak
+wiersza nie jest awarią odczytu, lecz stanem, który warstwa wyższa zamienia na
+odmowę z kodem `not_found` — funkcja `wpisPamieci` zawija `sql.ErrNoRows`
+we własny błąd.

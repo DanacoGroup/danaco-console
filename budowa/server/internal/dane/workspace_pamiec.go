@@ -1,11 +1,5 @@
-// Odpowiedzialność pliku: pamięć projektu okna Context Memory (tabela
-// `wpis_pamieci_projektu`).
-//
-// Wpis niesie poziom zasięgu współdzielenia. Zasięg węższy albo równy projektowi
-// widzi wyłącznie ten projekt; zasięg szerszy (globalny, środowisko, moduł, para
-// modułów) jest ustaleniem wspólnym i wchodzi do pamięci innych projektów na
-// żądanie `includeShared`. Kolejność rozstrzygania poziomów należy do pakietu
-// `internal/konfig` — tu leży wyłącznie zapis i odczyt.
+// Repozytorium przechowuje pamięć projektu okna Context Memory w tabeli
+// `wpis_pamieci_projektu`, wraz z poziomem zasięgu współdzielenia wpisu.
 package dane
 
 import (
@@ -17,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// WpisPamieciProjektu to wiersz pamięci projektu.
+// WpisPamieciProjektu to wiersz tabeli `wpis_pamieci_projektu`, reprezentujący
+// jeden wpis pamięci projektu.
 type WpisPamieciProjektu struct {
 	ID             int64
 	ProjektID      int64
@@ -56,8 +51,8 @@ const (
 	pobierzWpisPamieci = `SELECT ` + kolumnyWpisuPamieci + zrodloWpisuPamieci +
 		` WHERE w.identyfikator_zewnetrzny = ?`
 
-	// Wpisy przypięte idą na początek wykazu; w obrębie grupy decyduje czas
-	// ostatniej zmiany.
+	// Wpisy przypięte idą na początek wykazu pamięci; w obrębie grupy decyduje
+	// czas ostatniej zmiany wpisu.
 	listaWpisowPamieci = `SELECT ` + kolumnyWpisuPamieci + zrodloWpisuPamieci +
 		` WHERE w.projekt_id = ?
 		  ORDER BY w.przypiety DESC, w.zaktualizowano DESC
@@ -107,7 +102,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszWpisPamieci(ctx context.Context,
 	return r.wpisPamieci(ctx, wpis.Identyfikator)
 }
 
-// WpisyPamieci zwraca wpisy jednego projektu, przypięte na początku.
+// WpisyPamieci zwraca wszystkie wpisy jednego projektu z tabeli
+// `wpis_pamieci_projektu`, przypięte na początku.
 func (r *repozytoriumPrzestrzeniRoboczej) WpisyPamieci(ctx context.Context,
 	projektID int64, limit int) ([]WpisPamieciProjektu, error) {
 
@@ -123,10 +119,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) WpisyPamieciWspoldzielone(ctx context.
 		projektID, granicaWykazu(limit))
 }
 
-// WpisPamieciPoIdentyfikatorze zwraca jeden wpis pamięci. Drugi wynik mówi, czy
-// wpis istnieje: brak wiersza nie jest awarią odczytu, lecz stanem, który warstwa
-// wyższa zamienia na odmowę z kodem `not_found`. Osobny wynik logiczny jest
-// potrzebny, bo `wpisPamieci` zawija `sql.ErrNoRows` we własny błąd.
+// WpisPamieciPoIdentyfikatorze zwraca jeden wpis pamięci; drugi wynik
+// logiczny mówi, czy wpis istnieje w tabeli.
 func (r *repozytoriumPrzestrzeniRoboczej) WpisPamieciPoIdentyfikatorze(ctx context.Context,
 	identyfikator string) (WpisPamieciProjektu, bool, error) {
 
@@ -194,7 +188,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) PrzestawZasiegWpisuPamieci(ctx context
 	return r.wpisPamieci(ctx, identyfikator)
 }
 
-// wpisPamieci zwraca jeden wpis po identyfikatorze kontraktu.
+// wpisPamieci zwraca z tabeli `wpis_pamieci_projektu` jeden wpis po
+// identyfikatorze kontraktu wywołania.
 func (r *repozytoriumPrzestrzeniRoboczej) wpisPamieci(ctx context.Context,
 	identyfikator string) (WpisPamieciProjektu, error) {
 
@@ -210,7 +205,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) wpisPamieci(ctx context.Context,
 	return wpis, nil
 }
 
-// wpisy wykonuje zapytanie zwracające wiele wierszy pamięci.
+// wpisy wykonuje przekazane zapytanie SQL, zwracające wiele wierszy tabeli
+// `wpis_pamieci_projektu` naraz.
 func (r *repozytoriumPrzestrzeniRoboczej) wpisy(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) ([]WpisPamieciProjektu, error) {
 
@@ -247,7 +243,8 @@ func granicaWykazu(limit int) int {
 	return limit
 }
 
-// odczytajWpisPamieci składa strukturę z jednego wiersza wyniku.
+// odczytajWpisPamieci składa strukturę WpisPamieciProjektu z jednego
+// wiersza wyniku zapytania do bazy.
 func odczytajWpisPamieci(wiersz skaner) (WpisPamieciProjektu, error) {
 	var wpis WpisPamieciProjektu
 	var przypiety int

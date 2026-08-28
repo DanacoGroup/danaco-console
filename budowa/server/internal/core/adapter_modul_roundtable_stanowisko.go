@@ -1,15 +1,6 @@
 // Odpowiedzialność pliku: stanowisko końcowe debaty — komenda
-// `roundtable.consensus.get` (okno Consensus Panel).
-//
-// Stanowisko jest złożeniem zapisu, nie streszczeniem wytworzonym przez rdzeń.
-// Rdzeń nie streszcza cudzych słów i nie dopisuje wniosku, którego nikt nie
-// wypowiedział: treść stanowiska to uporządkowany zapis tur — zagadnienie,
-// pytanie i wypowiedzi każdego uczestnika. Skrócenie i redakcja należą do
-// Operatora, który ma na to model w pasku promptu.
-//
-// Kontrakt nie ma `roundtable.consensus.set`, czyli komendy zapisującej treść
-// nadaną ręcznie przez Operatora. Dlatego wersja rośnie wyłącznie wtedy, gdy
-// zmienił się zapis debaty.
+// `roundtable.consensus.get` (okno Consensus Panel). Stanowisko jest
+// złożeniem zapisu, nie streszczeniem wytworzonym przez rdzeń.
 package core
 
 import (
@@ -20,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Stanowisko zwraca stanowisko końcowe okna albo wskazanej tury.
+// Stanowisko zwraca stanowisko końcowe okna albo wskazanej tury, utrwalone
+// przy pierwszym odczycie danych.
 func (a *adapterDebaty) Stanowisko(ctx context.Context,
 	z shared.RoundtableConsensusGetRequest) (shared.RoundtableConsensusGetResponse, error) {
 
@@ -43,10 +35,7 @@ func (a *adapterDebaty) zloz(ctx context.Context, okno, turaKod string) {
 }
 
 // zlozStanowisko buduje treść stanowiska z zapisu tur i utrwala je.
-//
-// Stanowisko powstaje przy pierwszym odczycie, tak jak pulpit projektu modułu
-// Workspace: bez utrwalenia nie byłoby ani stabilnego identyfikatora, ani
-// licznika wersji, którego żąda panel akcji okna.
+// Stanowisko powstaje przy pierwszym odczycie.
 func (a *adapterDebaty) zlozStanowisko(ctx context.Context,
 	okno, turaKod string) (dane.StanowiskoDebaty, []string, error) {
 
@@ -109,7 +98,8 @@ func (a *adapterDebaty) turyStanowiska(ctx context.Context,
 	return odwrocone, nil
 }
 
-// zapisTury składa jedną turę stanowiska: nagłówek, pytanie i wypowiedzi.
+// zapisTury składa jedną turę stanowiska: nagłówek, pytanie i wypowiedzi
+// każdego uczestnika w tej turze.
 func zapisTury(tura dane.TuraDebaty, wypowiedzi []dane.WypowiedzDebaty,
 	podpisy map[string]string) string {
 
@@ -135,7 +125,7 @@ func zapisTury(tura dane.TuraDebaty, wypowiedzi []dane.WypowiedzDebaty,
 }
 
 // podpisyUczestnikow buduje odwzorowanie kodu uczestnika na jego podpis
-// w zapisie tury.
+// w zapisie tury, do odczytu stanowiska.
 func podpisyUczestnikow(uczestnicy []dane.UczestnikDebaty) map[string]string {
 	podpisy := make(map[string]string, len(uczestnicy)+1)
 	for _, uczestnik := range uczestnicy {

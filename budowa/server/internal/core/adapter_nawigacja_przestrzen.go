@@ -11,8 +11,7 @@ import (
 
 // Moduly zwraca moduły wraz z katalogiem ich okien operacyjnych. Wskazanie
 // środowiska zawęża wykaz do bocznej nawigacji tego środowiska; suma pozostaje
-// liczbą wszystkich modułów platformy, bo klient pyta nią o skalę katalogu,
-// nie o długość zwróconego wykazu.
+// liczbą wszystkich modułów platformy, nie długością zwróconego wykazu.
 func (a *adapterNawigacji) Moduly(ctx context.Context, z shared.ModuleListRequest) (shared.ModuleListResponse, error) {
 	wszystkie, err := a.zestaw.Moduly.Lista(ctx)
 	if err != nil {
@@ -32,12 +31,8 @@ func (a *adapterNawigacji) Moduly(ctx context.Context, z shared.ModuleListReques
 }
 
 // WejdzDoPrzestrzeni przeładowuje przestrzeń roboczą karty sesji na wskazany
-// moduł.
-//
-// Okno rozmowy nie znika przy zmianie modułu — wskazane przestawia moduł
-// i zachowuje historię, a dopiero jego brak zakłada okno nowe. Okna operacyjne
-// otwierane obok wynikają z katalogu modułu, więc wracają kodami:
-// który z nich narysować, rozstrzyga interfejs.
+// moduł, przestawiając wskazane okno rozmowy albo zakładając okno nowe, gdy
+// takiego okna brak, i zwraca kody okien operacyjnych z katalogu modułu.
 func (a *adapterNawigacji) WejdzDoPrzestrzeni(ctx context.Context, z shared.WorkspaceEnterRequest) (shared.WorkspaceEnterResponse, error) {
 	wynik := shared.WorkspaceEnterResponse{OperationalWindowCodes: []string{}}
 	modul, jest, err := a.modulPoWskazaniu(ctx, z.ModuleId)
@@ -51,8 +46,7 @@ func (a *adapterNawigacji) WejdzDoPrzestrzeni(ctx context.Context, z shared.Work
 		if err != nil {
 			return shared.WorkspaceEnterResponse{}, err
 		}
-		// Kolejność pozycji jest własnością nawigacji jednego środowiska; poza
-		// jej wykazem zostaje zerem, bo nie ma czego liczyć.
+		// Kolejność pozycji dotyczy nawigacji jednego środowiska.
 		moduly[0].Order = 0
 		wynik.Module = moduly[0]
 		wynik.OperationalWindowCodes = moduly[0].OperationalWindowCodes
@@ -98,9 +92,8 @@ func (a *adapterNawigacji) sesjaPrzestrzeni(ctx context.Context, idSesji string)
 }
 
 // oknoPrzestrzeni zwraca okno komunikacji przestrzeni roboczej: wskazane
-// przestawia na nowy moduł, brak wskazania zakłada okno nowe. Okno jest bytem
-// pakietu sesji, więc zakłada je nadzorca — rdzeń nie prowadzi
-// drugiego cyklu życia okna obok jego właściciela.
+// przestawia na nowy moduł, brak wskazania zakłada okno nowe zakładane przez
+// nadzorcę, właściciela cyklu życia okna.
 func (a *adapterNawigacji) oknoPrzestrzeni(ctx context.Context, z shared.WorkspaceEnterRequest,
 	kodModulu string) (shared.Window, error) {
 	if a.nadzorca == nil {
@@ -115,8 +108,7 @@ func (a *adapterNawigacji) oknoPrzestrzeni(ctx context.Context, z shared.Workspa
 			return shared.Window{}, bladSesji(err)
 		}
 	}
-	// Okno nowe dostaje komplet parametrów wykonania, nie sam moduł: bez kanału
-	// modelu rodziłoby się niezdolne do rozmowy (zob. parametryOknaModulu).
+	// Okno nowe dostaje komplet parametrów wykonania, nie sam moduł.
 	okno, err := a.nadzorca.OtworzOkno(z.SessionId, a.parametryOknaModulu(ctx, z.SessionId, kodModulu))
 	if errors.Is(err, session.ErrBrakSesji) {
 		return shared.Window{}, nil

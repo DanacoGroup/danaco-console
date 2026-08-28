@@ -1,29 +1,7 @@
 import type { SettingDefinition, SettingOption } from '../../../shared/contract';
 import { utworzMenuDrzewo, type PozycjaMenu } from '../komponenty/menu-drzewo';
 
-/**
- * Wiersz nastawy — jedna nastawa produktu jako ster, nie jako wyświetlacz.
- *
- * Etykieta uchwytu niesie wartość bieżącą, a nie napis rodzajowy: stoi na niej
- * „Ciemny", nie „Motyw" ani „Wybierz…". Nazwa rodzajowa idzie do etykiety
- * wiersza po lewej i do `aria-label` uchwytu, żeby czytnik ekranu wiedział,
- * czego dotyczy wartość, której nazwa sama tego nie mówi.
- *
- * Wybór nie stoi rozwinięty: sekcja pokazuje po jednym wierszu na nastawę,
- * a opcje rozwijają się dopiero pod kliknięciem. Sześć sekcji rozwiniętych
- * naraz byłoby sześcioma płachtami, a nie oknem ustawień.
- *
- * Uchwyt, wykaz, opisy pozycji, haczyk przy wybranej, zwijanie kliknięciem obok
- * i obsługa klawiatury należą do `komponenty/menu-drzewo.ts`; ten plik obsadza
- * ten mechanizm danymi i nie odtwarza go u siebie. Bliźniaczą obsadę ma pasek
- * zlecenia (`okno-komunikacji/ster-nastawy.ts`) — nie da się jej zaimportować,
- * bo niesie klasy arkusza tamtego okna (`dc-ster-zlecenia`,
- * `pasek-zlecenia.css`), którego to okno nie wczytuje.
- *
- * Wykaz wyboru buduje się z `SettingDefinition.options`, wraz z etykietami
- * i opisami. Klient nie zna ani jednej wartości dopuszczalnej z góry — gdy
- * katalog dołoży czwarty motyw, wiersz pokaże go bez zmiany tego pliku.
- */
+/** Wiersz nastawy przedstawia jedną nastawę produktu jako ster, nie jako wyświetlacz: etykieta uchwytu niesie wartość bieżącą, a wykaz wyboru buduje się z definicji katalogu rdzenia. */
 export interface WierszNastawy {
   /** Element montowany w sekcji. */
   element: HTMLElement;
@@ -83,14 +61,7 @@ export function utworzWierszNastawy(opcje: OpcjeWiersza): WierszNastawy {
     zdanieOdmowy.hidden = tresc === '';
   }
 
-  /**
-   * Klucz pozycji menu nie może być wartością pustą.
-   *
-   * Katalog rdzenia ma opcję o wartości pustej — dla motywu jest nią
-   * „Preferencja systemu" i to trzeci pełnoprawny stan nastawy, nie brak
-   * wyboru. Mechanizm menu rozdaje pozycje po kluczu, więc pusty klucz byłby
-   * pozycją bez tożsamości. Stąd przedrostek zdejmowany przy wyborze.
-   */
+  // Klucz pozycji menu nie może być pusty, bo pusty klucz byłby pozycją bez tożsamości w menu.
   const PRZEDROSTEK = 'wartosc:';
 
   function drzewo(): PozycjaMenu[] {
@@ -105,13 +76,7 @@ export function utworzWierszNastawy(opcje: OpcjeWiersza): WierszNastawy {
     }));
   }
 
-  /**
-   * Napis na uchwycie: etykieta opcji z katalogu, nie wartość surowa.
-   *
-   * Wartość spoza katalogu wychodzi dosłownie, zamiast podmiany na pierwszą
-   * opcję z brzegu — Operator ma zobaczyć, że w bazie stoi coś, czego katalog
-   * nie zna.
-   */
+  // Napis na uchwycie bierze etykietę opcji z katalogu; wartość spoza katalogu wychodzi dosłownie.
   function napisUchwytu(): string {
     const opcja = (definicja.options ?? []).find((wybor) => wybor.value === biezaca);
     if (opcja !== undefined) return opcja.label;
@@ -123,8 +88,7 @@ export function utworzWierszNastawy(opcje: OpcjeWiersza): WierszNastawy {
   async function wybierz(klucz: string): Promise<void> {
     const wartosc = klucz.startsWith(PRZEDROSTEK) ? klucz.slice(PRZEDROSTEK.length) : klucz;
     powiedz('');
-    // Uchwyt nie traci klikalności na czas wysyłki: `aria-busy` mówi o pracy,
-    // niczego nie odbierając.
+    // Uchwyt nie traci klikalności na czas wysyłki: znacznik zajętości mówi o pracy, nic nie odbierając.
     element.setAttribute('aria-busy', 'true');
     menu.zwin();
     try {

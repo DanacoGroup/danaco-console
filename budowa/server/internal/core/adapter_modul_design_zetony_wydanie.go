@@ -1,23 +1,6 @@
 // Odpowiedzialność pliku: wydanie zestawu żetonów w postaci przyjmowanej przez
 // kod (`design.tokenset.export`) i wydanie przewodnika systemu projektowego do
-// modułu docelowego (`design.styleguide.publish`). Zapis i odczyt zestawów leży
-// w `adapter_modul_design_zetony.go`.
-//
-// ── Wszystkie postacie składa Go napisami ───────────────────────────────────
-// CSS, SCSS, konfiguracja Tailwind, moduł JavaScript, zasoby Swift i Kotlin
-// powstają tu, w rdzeniu, przez sklejenie napisów. Nie ma tu ani jednego
-// uruchomienia programu z zewnątrz i mieć nie będzie — postać, której nie da
-// się złożyć bez cudzego programu, byłaby u Operatora odmową, a nie funkcją.
-//
-// ── Wydanie do modułu jest ZASOBEM, nie obietnicą ───────────────────────────
-// Wskazanie modułu docelowego nie kończy się polem `delivered: true` postawionym
-// z góry. Treść ląduje w magazynie rdzenia pod sumą swojej zawartości i dostaje
-// wiersz zasobu — ten sam magazyn obsługuje rodziny `design.*`, `document.*`,
-// `media.*` i `archive.*`, więc moduł docelowy sięga po nią identyfikatorem
-// zasobu (`design.asset.content.get`). `delivered` mówi wtedy prawdę: bajty
-// leżą i mają adres. Niepowodzenie zapisu jest odmową całej komendy, nie polem
-// `delivered: false` postawionym obok treści oddanej wołającemu — bo Operator
-// zamawiał wydanie DO MODUŁU.
+// modułu docelowego (`design.styleguide.publish`).
 package core
 
 import (
@@ -67,15 +50,6 @@ func (a *adapterDesignu) WydajZestawZetonow(ctx context.Context,
 
 // WydajPrzewodnikStylu wydaje przewodnik systemu projektowego do modułu
 // docelowego — obsługuje `design.styleguide.publish`.
-//
-// Przewodnik jest dokumentem samowystarczalnym: barwy, kroje, miary i cienie
-// pokazane na próbkach, bez jednego odsyłacza na zewnątrz. Dokument wskazujący
-// arkusz z tej maszyny byłby u odbiorcy pustą stroną.
-//
-// Kolekcja modułu docelowego (`collectionId`) obejmuje zasób przewodnika, gdy
-// wołający ją wskaże. Kolekcja nieznana jest odmową, nie cichym pominięciem:
-// Operator, który wydał przewodnik do kolekcji i go tam nie znajduje, szuka
-// usterki w module docelowym, a nie literówki we własnym żądaniu.
 func (a *adapterDesignu) WydajPrzewodnikStylu(ctx context.Context,
 	z shared.DesignStyleguidePublishRequest) (shared.DesignStyleguidePublishResponse, error) {
 
@@ -122,8 +96,7 @@ func (a *adapterDesignu) WydajPrzewodnikStylu(ctx context.Context,
 }
 
 // zestawZZetonamiDesignu czyta zestaw wraz z jego żetonami i odmawia zestawu
-// pustego. Zestaw bez żetonów wydałby plik z samym nagłówkiem, który wygląda
-// jak wydanie udane i nie niesie ani jednej roli.
+// pustego, bo taki wygląda jak wydanie udane bez ani jednej roli.
 func (a *adapterDesignu) zestawZZetonamiDesignu(ctx context.Context,
 	kod string) (dane.ZestawZetonowDesignu, []dane.ZetonDesignu, error) {
 
@@ -144,10 +117,6 @@ func (a *adapterDesignu) zestawZZetonamiDesignu(ctx context.Context,
 
 // odlozWydanieDesignu utrwala bajty wydania w magazynie rdzenia i zakłada
 // wiersz zasobu, przez który moduł docelowy po nie sięgnie.
-//
-// Kolejność jest ta sama, co przy wniesieniu i generowaniu: najpierw bajty,
-// potem wiersz. Wiersz wskazujący blob, którego nie ma, byłby dokładnie tą
-// szkodą, którą ten moduł ma w swojej historii.
 func (a *adapterDesignu) odlozWydanieDesignu(ctx context.Context, okno, nazwa string,
 	bajty []byte, rodzaj shared.DesignAssetKind, format string) (dane.ZasobDesignu, error) {
 
@@ -196,7 +165,7 @@ func sprawdzPostacWydaniaZetonowDesignu(postac shared.DesignTokenTarget) error {
 }
 
 // rozszerzenieWydaniaZetonowDesignu oddaje rozszerzenie pliku dla postaci
-// wydania.
+// wydania, zgodne z formatem, jaki narzędzie odbierające go rozpozna.
 func rozszerzenieWydaniaZetonowDesignu(postac shared.DesignTokenTarget) string {
 	switch postac {
 	case shared.DesignTokenTargetCssVariables:
@@ -213,7 +182,8 @@ func rozszerzenieWydaniaZetonowDesignu(postac shared.DesignTokenTarget) string {
 	return "txt"
 }
 
-// zlozWydanieZetonowDesignu składa treść wydania w żądanej postaci.
+// zlozWydanieZetonowDesignu składa treść wydania w żądanej postaci, rozdzielając
+// pracę do funkcji właściwej dla każdej z sześciu postaci kontraktu.
 func zlozWydanieZetonowDesignu(zestaw dane.ZestawZetonowDesignu,
 	zetony []dane.ZetonDesignu, postac shared.DesignTokenTarget) string {
 
@@ -265,7 +235,8 @@ func zlozZetonyCssDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.ZetonD
 	return b.String()
 }
 
-// zlozZetonyScssDesignu składa zmienne SCSS.
+// zlozZetonyScssDesignu składa zmienne SCSS, jedną na żeton, poprzedzone
+// nagłówkiem wydania w postaci komentarza SCSS.
 func zlozZetonyScssDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.ZetonDesignu) string {
 	var b strings.Builder
 	b.WriteString(naglowekWydaniaZetonowDesignu(zestaw, "//"))
@@ -277,8 +248,7 @@ func zlozZetonyScssDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.Zeton
 
 // zlozZetonyTailwindDesignu składa konfigurację Tailwind. Żetony wchodzą
 // rozdzielone po rodzaju, bo Tailwind ma osobne gałęzie dla barw, odstępów,
-// krojów i cieni — wrzucenie wszystkiego do jednej gałęzi dałoby konfigurację
-// przyjętą przez narzędzie i bezużyteczną w pracy.
+// krojów i cieni.
 func zlozZetonyTailwindDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.ZetonDesignu) string {
 	galezie := map[string][]dane.ZetonDesignu{}
 	for _, zeton := range zetony {
@@ -304,7 +274,8 @@ func zlozZetonyTailwindDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.Z
 	return b.String()
 }
 
-// galazTailwindDesignu przekłada rodzaj żetonu na gałąź konfiguracji Tailwind.
+// galazTailwindDesignu przekłada rodzaj żetonu na gałąź konfiguracji Tailwind,
+// zgodną z podziałem, jakiego oczekuje narzędzie po drugiej stronie.
 func galazTailwindDesignu(rodzaj string) string {
 	switch shared.DesignTokenKind(rodzaj) {
 	case shared.DesignTokenKindColor:
@@ -322,9 +293,7 @@ func galazTailwindDesignu(rodzaj string) string {
 }
 
 // zlozZetonyJavascriptDesignu składa moduł JavaScript. Nazwy ról zostają
-// dosłowne, w kluczach napisowych: rola `fs-2xl` nie jest poprawnym
-// identyfikatorem, a przemianowanie jej na `fs2xl` rozjechałoby wydanie
-// z arkuszem CSS tego samego zestawu.
+// dosłowne, w kluczach napisowych.
 func zlozZetonyJavascriptDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.ZetonDesignu) string {
 	var b strings.Builder
 	b.WriteString(naglowekWydaniaZetonowDesignu(zestaw, "//"))
@@ -336,13 +305,8 @@ func zlozZetonyJavascriptDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane
 	return b.String()
 }
 
-// zlozZetonySwiftDesignu składa zasoby dla systemu iOS.
-//
-// Wartości zostają napisami, także dla barw: przełożenie zapisu `#rrggbb` na
-// `UIColor` wymagałoby wyliczenia składowych tu, w rdzeniu, a wtedy wydanie
-// niosłoby LICZBY, których nie da się porównać z wartością w module. Napis jest
-// prawdą o żetonie; zamiana na typ platformy należy do projektu, który go
-// wczytuje, i tam ma zostać.
+// zlozZetonySwiftDesignu składa zasoby dla systemu iOS. Wartości zostają
+// napisami, także dla barw zapisanych jako `#rrggbb`.
 func zlozZetonySwiftDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.ZetonDesignu) string {
 	var b strings.Builder
 	b.WriteString(naglowekWydaniaZetonowDesignu(zestaw, "//"))
@@ -370,9 +334,7 @@ func zlozZetonyKotlinDesignu(zestaw dane.ZestawZetonowDesignu, zetony []dane.Zet
 }
 
 // identyfikatorKoduDesignu przekłada nazwę roli na identyfikator przyjmowany
-// przez języki programowania: myślnik znika, kolejne słowo idzie wielką literą,
-// a nazwa zaczynająca się cyfrą dostaje przedrostek — inaczej plik by się nie
-// skompilował po drugiej stronie.
+// przez języki programowania.
 func identyfikatorKoduDesignu(nazwa string) string {
 	czesci := strings.FieldsFunc(nazwa, func(znak rune) bool {
 		return znak == '-' || znak == '.' || znak == '_' || znak == ' '
@@ -400,9 +362,7 @@ func identyfikatorKoduDesignu(nazwa string) string {
 }
 
 // wartoscZetonuWydaniaDesignu oddaje wartość żetonu do wydania. Żeton będący
-// odsyłaczem wydaje się jako odwołanie do roli, na którą wskazuje — tak, żeby
-// wydanie zachowało strukturę systemu, a nie spłaszczyło ją do powtórzonych
-// wartości, których nikt już nie zmieni w jednym miejscu.
+// odsyłaczem wydaje się jako odwołanie do roli, na którą wskazuje.
 func wartoscZetonuWydaniaDesignu(zeton dane.ZetonDesignu) string {
 	if zeton.OdsylaczDo != nil && strings.TrimSpace(*zeton.OdsylaczDo) != "" {
 		return fmt.Sprintf("var(%s%s)", rolePrzedrostekDesignu, strings.TrimSpace(*zeton.OdsylaczDo))

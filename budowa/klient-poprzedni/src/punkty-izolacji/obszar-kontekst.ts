@@ -12,45 +12,7 @@ import type { Kanal, Wynik } from '../protokol/kanal';
 import type { ObszarIzolacji, ZaleznosciObszaru } from './obszary';
 import { NAZWY_WARSTW } from './stan-warstwy';
 
-/**
- * Obszar „Kontekst” — trzy punkty izolacji kontekstu rozstrzygane niezależnie
- * od siebie (`server/internal/konfig/definicje_izolacji.go`,
- * `definicjeIzolacjiKontekstu`, `IsolationContextKind.History/Memory/Context`):
- * historia wymiany, pamięć długoterminowa i bieżący stan roboczy. Każdy
- * przyjmuje jedną z dwóch wartości — `odrebna` albo `wspoldzielona` — z
- * domyślną `odrebna` (rdzeń startuje z pełną izolacją; współdzielenie jest
- * zawsze decyzją Operatora, nigdy stanem narzuconym).
- *
- * Treść wyjaśnień „odrębna”/„współdzielona” przy każdym kluczu jest przepisana
- * z `Definicja.Objasnienie` tego samego pliku rdzenia — jedno źródło prawdy,
- * żeby zdanie widziane przez Operatora nie rozjechało się z tym, co egzekwuje
- * maszyneria.
- *
- * Obszar woła `isolation.context.get` i `isolation.context.set` wprost;
- * `kanal.wyslij` jest opakowany w obietnicę, a odmowa rozstrzygana przez
- * `opisOdmowyBledu`.
- *
- * Poziom zasięgu i warstwa nie są tu zaszyte: oba przychodzą ze stanu wspólnego
- * okna (`stan-zasiegu.ts`, `stan-warstwy.ts`). Zaszycie ich znaczyłoby, że
- * selektor zasięgu w lewym panelu i wybór warstwy w pasie narzędzi pokazują
- * jedno, a odczyt idzie po drugie.
- *
- * „Wartość obecna” ma trzy stany, celowo nierysowane identycznie:
- *   - zapisana — odczyt na warstwie czynnej powiódł się: Operator świadomie
- *     rozstrzygnął tę wartość na tym zasięgu i tej warstwie;
- *   - domyślna — odczyt warstwy czynnej zwrócił `not_found`: zapisu Operatora
- *     nie ma, więc widok pokazuje wartość domyślną platformy jawnie oznaczoną
- *     jako domyślna, a nie jako świadomy zapis;
- *   - nieodczytana — odczyt zwrócił inną odmowę niż `not_found` (usterka
- *     rdzenia, brak uprawnienia, kanał niedostępny): to nie jest informacja
- *     o stanie maszyny, tylko brak informacji, i tak też jest nazwana.
- *
- * Żaden z tych stanów nie jest rysowany jako sukces i nie ma tu zapisu
- * optymistycznego: widok zmienia się dopiero po odpowiedzi
- * `isolation.context.set`, nigdy przed nią. Selekt wyboru nowej wartości
- * i przycisk zapisu zostają zawsze czynne; odmowa rdzenia jest meldowana
- * zdaniem, nie blokadą kontrolki.
- */
+// Obszar Kontekst — trzy punkty izolacji, rozstrzygane niezależnie: historia, pamięć, stan roboczy.
 
 const WARTOSC_ODREBNA = 'odrebna';
 const WARTOSC_WSPOLDZIELONA = 'wspoldzielona';
@@ -99,13 +61,13 @@ const PUNKTY: readonly PunktKontekstu[] = [
   },
 ];
 
-/** Rozstrzygnięcie „wartości obecnej” jednego punktu po odczycie warstwy sesji. */
+/** Rozstrzygnięcie wartości obecnej jednego punktu kontekstu po odczycie warstwy bieżącej sesji klienta. */
 type StanObecny =
   | { rodzaj: 'zapisane'; isolated: boolean }
   | { rodzaj: 'domyslne' }
   | { rodzaj: 'blad'; opis: string };
 
-/** Opakowuje `kanal.wyslij` w Promise — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
+/** Opakowuje wysłanie komendy kanału w obietnicę — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
 function posijKomende<T>(
   kanal: Kanal,
   komenda: Command,
@@ -153,9 +115,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     if (obecne.udany && obecne.wynik !== undefined) {
       for (const p of obecne.wynik.switches) stanyObecne.set(p.kind, { rodzaj: 'zapisane', isolated: p.isolated });
     } else if (obecne.blad?.code === 'not_found') {
-      // Nikt nie zapisał na warstwie karty sesji — to nie jest usterka odczytu,
-      // to brak decyzji Operatora. Pozostaje bez wpisu w `stanyObecne`, każdy
-      // punkt dostaje domyślnie rozdzielczość „domyslne” niżej.
+      // Nikt nie zapisał na warstwie karty sesji — to nie usterka odczytu, to brak decyzji Operatora.
     } else {
       const opis = opisOdmowyBledu('Odczyt wartości obecnej', obecne.blad);
       for (const punkt of PUNKTY) stanyObecne.set(punkt.kind, { rodzaj: 'blad', opis });
@@ -286,11 +246,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     return isolated ? WARTOSC_ODREBNA : WARTOSC_WSPOLDZIELONA;
   }
 
-  /**
-   * Wiersz zmiany wartości: wybór nowej wartości (w pełni czynny) obok
-   * przycisku zapisu, który woła naprawdę `isolation.context.set` i nanosi
-   * odpowiedź albo odmowę — nigdy sukces przed odpowiedzią.
-   */
+  // Wiersz zmiany wartości: wybór nowej wartości obok przycisku zapisu, wołającego komendę zapisu.
   function zbudujWierszZmiany(punkt: PunktKontekstu, wartoscPoczatkowa: string): HTMLElement {
     const wybierz = wybor(`Nowa wartość — ${punkt.nazwa}`, OPCJE_WARTOSCI);
     wybierz.value = wartoscPoczatkowa;
@@ -345,12 +301,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
     void wczytaj();
   }
 
-  /**
-   * Objaśnienie kontekstowe [?] przełącznika — co ustawienie robi i jaki ma
-   * wpływ na działanie aplikacji (rozdz. 3.3 Modelu konfiguracji). Zdanie
-   * o skutku stoi obok opisu klucza, bo sama nazwa wartości („odrębna”)
-   * nie mówi Operatorowi, co się po jej wybraniu zmieni w pracy.
-   */
+  // Objaśnienie kontekstowe przełącznika — co robi i jaki ma wpływ na działanie aplikacji.
   function objasnienieKontekstowe(punkt: PunktKontekstu): string {
     return (
       `${punkt.objasnienie} Zapis obejmuje ${zasieg.opis()} i warstwę ` +

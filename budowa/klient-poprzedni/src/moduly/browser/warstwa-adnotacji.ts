@@ -7,24 +7,8 @@ import type { StanPrzegladania } from './stan-przegladania';
 
 /**
  * Tryb adnotacji — płótno nad sceną podglądu wraz z pływającym paskiem
- * i drogą „Dodaj do rozmowy".
- *
- * Plik składa warstwę i prowadzi jej rozmowę z rdzeniem. Rysowanie mieszka
- * w `plotno-adnotacji.ts`, kontrolki w `pasek-adnotacji.ts`, a ocena
- * odpowiedzi rdzenia w `skutek-zapisu.ts`.
- *
- * Warstwa leży nad sceną i nie dotyka podglądu: rama okna stawia ją jako
- * rodzeństwo podglądu w tym samym kontenerze pozycjonującym. Wyłączony tryb
- * chowa warstwę atrybutem `hidden` — schowana nie łapie wskaźnika, więc
- * zaznaczanie tekstu w podglądzie pozostaje możliwe.
- *
- * Rdzeń zostawia `screenshotRef` pusty, więc pod rysunkiem nie ma zrzutu
- * strony. Zdanie `ADNOTACJA.bezTla` stoi w warstwie na stałe, aby Operator
- * wiedział przed wysłaniem, że w załączniku pójdzie sam rysunek.
- *
- * Wysyłka idzie `message.send`, a nie `context.transfer` — uzasadnienie stoi
- * w `zapisy-przekazania.ts`: adresatem jest rozmowa tego okna, a przeniesienie
- * międzymodułowe zaniosłoby rysunek gdzie indziej.
+ * i drogą „Dodaj do rozmowy". Plik składa warstwę i prowadzi jej rozmowę
+ * z rdzeniem; warstwa leży nad sceną i nie dotyka podglądu.
  */
 export interface WarstwaAdnotacji {
   /** Warstwa osadzana nad sceną podglądu strony. */
@@ -38,7 +22,7 @@ export interface WarstwaAdnotacji {
   rozlacz(): void;
 }
 
-/** Czego warstwa potrzebuje od ramy okna. */
+/** Czego warstwa adnotacji potrzebuje od ramy okna: ujścia zdarzeń trybu, wysyłki oraz zamknięcia pracy. */
 export interface UjsciaWarstwy {
   /** Odpowiedź pokazywana Operatorowi po każdym naciśnięciu. */
   powiedz(tresc: string, powodzenie: boolean): void;
@@ -50,19 +34,14 @@ export function utworzWarstweAdnotacji(
   stan: StanPrzegladania,
   ujscia: UjsciaWarstwy,
 ): WarstwaAdnotacji {
-  // Barwa początkowa bierze się z pierwszej pozycji wykazu, a nie z osobnego
-  // literału: dwa zapisy tej samej domyślności rozjechałyby się przy zmianie
-  // palety.
+  // Barwa początkowa bierze się z pierwszej pozycji wykazu, a nie z osobnego literału.
   const plotno = utworzPlotnoAdnotacji(BARWY_ADNOTACJI[0]?.zeton ?? '');
 
   const bezTla = document.createElement('p');
   bezTla.className = 'mb-adnotacja__bez-tla';
-  // Najpierw stoi to, czym model dysponuje (ścieżką, nie obrazem w wiadomości),
-  // bo od tego zależy, czy Operator dopisze zdanie wyjaśniające; dopiero potem
-  // brak tła i brak wpisu w wytworach.
-  // Zdanie o wpisie w wytworach przerysowuje się po każdej zmianie wykazu komend
-  // rdzenia: `browser.artifact.add` kontrakt niesie, więc powód zmieni się sam
-  // w dniu, w którym rdzeń dostanie jej uchwyt.
+  // Najpierw stoi to, czym model dysponuje, bo od tego zależy dopisane zdanie; potem brak tła i wpisu.
+
+  // Zdanie o wpisie w wytworach przerysowuje się po każdej zmianie wykazu komend rdzenia.
   stan.pokrycie.naOdczyt(() => {
     const oWytworze = stan.pokrycie.zdanie(
       POZYCJE_BEZ_OBSLUGI.wytworAdnotacji.komenda,
@@ -80,8 +59,7 @@ export function utworzWarstweAdnotacji(
     wyczysc() {
       const bylo = plotno.liczbaSladow();
       plotno.wyczysc();
-      // Zdanie podaje liczbę zdjętych śladów — „wyczyszczono" nad pustym
-      // płótnem byłoby potwierdzeniem czynności, która się nie odbyła.
+      // Zdanie podaje liczbę zdjętych śladów, żeby nie potwierdzać czynności, która się nie odbyła.
       ujscia.powiedz(
         bylo === 0
           ? 'Płótno adnotacji było już puste — nie było czego czyścić.'
@@ -101,23 +79,13 @@ export function utworzWarstweAdnotacji(
 
   function ustaw(wlaczona: boolean): boolean {
     element.hidden = !wlaczona;
-    // Bufor płótna ma rozmiar dopiero wtedy, gdy warstwa jest widoczna:
-    // element schowany mierzy zero i dałby płótno o boku jednego piksela.
+    // Bufor płótna ma rozmiar dopiero, gdy warstwa jest widoczna — schowany element mierzy zero.
     if (wlaczona) plotno.dopasuj();
     ujscia.naZmianeTrybu(wlaczona);
     return wlaczona;
   }
 
-  /**
-   * Treść wiadomości: co Operator oglądał, co narysował i czego w PNG nie ma.
-   *
-   * Treść opisuje rysunek słowami, bo model dostaje ścieżkę, nie obraz: rdzeń
-   * materializuje URI danych do pliku i wplata jego ścieżkę w zapytanie
-   * (`core/adapter_rozmowa_zalaczniki.go`), więc model zobaczy rysunek dopiero,
-   * gdy sięgnie po plik narzędziem odczytu. Adres strony i liczba śladów
-   * docierają do niego bez otwierania pliku i dlatego stoją w treści, a nie
-   * tylko w podpisie załącznika.
-   */
+  // Treść opisuje rysunek słowami, bo model dostaje ścieżkę do pliku, nie sam obraz.
   function trescWiadomosci(): string {
     const migawka = stan.migawka();
     const skad = migawka === null ? 'strony bez odczytanej migawki' : migawka.url;
@@ -138,8 +106,7 @@ export function utworzWarstweAdnotacji(
       ujscia.powiedz(ADNOTACJA.pusteBezWysylki, false);
       return;
     }
-    // Spłaszczenie sprawdzane przed wysyłką: płótno bez rasteryzacji oddaje
-    // pusty napis, a pusty załącznik byłby obietnicą obrazu, którego nie ma.
+    // Spłaszczenie sprawdzane przed wysyłką — pusty załącznik byłby obietnicą obrazu, którego nie ma.
     const obraz = plotno.doPng();
     if (!obraz.startsWith('data:image/png')) {
       ujscia.powiedz(ADNOTACJA.brakSplaszczenia, false);

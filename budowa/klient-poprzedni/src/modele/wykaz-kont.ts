@@ -4,19 +4,9 @@ import type { StanKont } from './stan-kont';
 import { znakWykazu } from './znak-wykazu';
 
 /**
- * Wykaz kont — lewa kolumna sekcji kont.
- *
- * Wiersz mówi cztery rzeczy naraz: nazwę, rodzaj, dostawcę oraz stan konta
- * wyrażony plakietkami. Plakietka poświadczenia jest jedyną informacją o nim,
- * jaką klient ma prawo pokazać — kontrakt nie zwraca treści poświadczenia
- * żadną komendą.
- *
- * Wiersz konta nieczynnego nie jest wygaszony ani nieklikalny. Nieczynność
- * jest stanem danych, nie blokadą interfejsu — w takie konto trzeba móc wejść,
- * żeby je z powrotem uruchomić.
- *
- * Rejestr pusty nie daje pustego prostokąta — mówi wprost, że rdzeń nie oddał
- * ani jednego konta, i zostawia widok czynny.
+ * Wykaz kont tworzy lewą kolumnę sekcji kont. Każdy wiersz podaje nazwę konta, jego
+ * rodzaj, dostawcę oraz stan wyrażony plakietkami, a pusty rejestr zastępuje wiersze
+ * zdaniem dobranym do fazy odczytu.
  */
 export interface WykazKont {
   /** Kolumna osadzana w panelu kont. */
@@ -51,7 +41,10 @@ export function utworzWykazKont(stan: StanKont): WykazKont {
   return { element, odswiez };
 }
 
-/** Jeden wiersz wykazu: nazwa, plakietki stanu, dostawca i model domyślny. */
+/**
+ * Buduje jeden wiersz wykazu: nazwę konta, plakietki stanu oraz drugą linię z dostawcą
+ * i modelem domyślnym. Kliknięcie wiersza czyni konto wyborem czynnym stanu sekcji.
+ */
 function wiersz(konto: Account, czynne: boolean, stan: StanKont): HTMLElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -76,7 +69,10 @@ function wiersz(konto: Account, czynne: boolean, stan: StanKont): HTMLElement {
   return przycisk;
 }
 
-/** Druga linia wiersza: dostawca oraz model domyślny, gdy konto go wskazuje. */
+/**
+ * Składa drugą linię wiersza z krótkiej nazwy rodzaju konta, nazwy dostawcy oraz modelu
+ * domyślnego, gdy konto go wskazuje; człony puste zostają pominięte.
+ */
 function podpis(konto: Account): string {
   const czlony = [nazwaKrotka(konto.kind), konto.provider];
   if (konto.defaultModel !== undefined && konto.defaultModel !== '') {
@@ -85,12 +81,18 @@ function podpis(konto: Account): string {
   return czlony.filter((czlon) => czlon !== '').join(' · ');
 }
 
-/** Znak wiersza wykazu kont — plakietka biblioteki w miejscu znaków wiersza. */
+/**
+ * Tworzy pojedynczy znak wiersza wykazu kont, opierając go na plakietce biblioteki
+ * komponentów osadzonej w miejscu przeznaczonym na znaki wiersza.
+ */
 function znak(tresc: string, klasa: string): HTMLElement {
   return znakWykazu(tresc, klasa, 'dm-wykaz__znak');
 }
 
-/** Plakietki stanu konta: domyślność, poświadczenie, czynność. */
+/**
+ * Składa plakietki stanu konta: oznaczenie konta domyślnego, obecność albo brak
+ * zapisanego poświadczenia oraz oznaczenie konta nieczynnego.
+ */
 function plakietki(konto: Account): HTMLElement[] {
   const znaki: HTMLElement[] = [];
 
@@ -110,12 +112,8 @@ function plakietki(konto: Account): HTMLElement[] {
 }
 
 /**
- * Stan pusty wykazu, oparty na klasie `.dn-pusty-stan` biblioteki komponentów.
- *
- * Zdanie dobiera się do fazy odczytu: ten sam pusty wykaz znaczy co innego
- * w trakcie pytania rdzenia, co innego po jego odmowie, a co innego, gdy rdzeń
- * odpowiedział i rejestr naprawdę nie ma konta. Jedno zdanie na trzy przypadki
- * nie rozstrzygałoby, czy czekać, czy działać.
+ * Buduje stan pusty wykazu na klasie pustego stanu z biblioteki komponentów, dobierając
+ * zdanie opisu do fazy odczytu rejestru kont.
  */
 function stanPusty(stan: StanKont): HTMLElement {
   const element = document.createElement('div');

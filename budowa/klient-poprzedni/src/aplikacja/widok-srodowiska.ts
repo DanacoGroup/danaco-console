@@ -16,7 +16,7 @@ import { utworzSceneSesji, type ScenaSesji } from './scena-sesji';
 import { Trasa } from './trasy';
 import { utworzZrodloPosuniec } from './zrodlo-posuniec';
 
-/** Zależności widoku środowiska. */
+/** Zależności widoku środowiska: droga do rdzenia, opis okna sceny sesji oraz przejście na inną trasę powłoki. */
 export interface ZaleznosciSrodowiska {
   /** Droga do rdzenia. */
   rdzen: PolaczenieZRdzeniem;
@@ -26,7 +26,7 @@ export interface ZaleznosciSrodowiska {
   naTrase(trasa: Trasa): void;
 }
 
-/** Widok trasy „Środowisko". */
+/** Widok trasy „Środowisko" — powłoka środowiska, scena sesji i ich wzajemne przestawianie nawigacją boczną. */
 export interface WidokSrodowiska extends WidokTrasy {
   /** Przestawia powłokę na wskazane środowisko i pozycję jego nawigacji. */
   ustawSrodowisko(klucz: KluczSrodowiska, modul?: string): void;
@@ -36,35 +36,7 @@ export interface WidokSrodowiska extends WidokTrasy {
   scena: ScenaSesji;
 }
 
-/**
- * Widok trasy środowiska: powłoka środowiska ze sceną pracy w środku.
- *
- * Jedna odpowiedzialność — związanie powłoki środowiska ze sceną sesji i z
- * routerem. Ten plik nie buduje ani pasa kart, ani nawigacji, ani okna;
- * wszystko przychodzi gotowe z `powloka/` i ze sceny.
- *
- * Treść obszaru roboczego rozstrzyga `przestrzen-modulu.ts` przy każdym wyborze
- * pozycji bocznej nawigacji. Scena raz osadzona nie jest niszczona — przełączenie
- * modułu wyłącznie ją odsłania albo chowa, bo w środku żyje okno rozmowy
- * z otwartym strumieniem do rdzenia.
- *
- * Powłoka powstaje bez połączenia, więc źródło wykazu nawigacji
- * (`environment.enter`, `module.list`) dokłada się tutaj — w jedynym miejscu,
- * które zna naraz powłokę i drogę do rdzenia.
- *
- * Karta sesji i okno komunikacji idą w parze: pas kart zgłasza założenie karty,
- * scena odpowiada oknem zamówionym w rdzeniu komendą `window.create`, a
- * zamknięcie karty zdejmuje okno ze sceny.
- *
- * Grupa akcji paska górnego dostaje wskaźnik łączności z rdzeniem oraz
- * przełącznik widoków. Przełącznik motywu jest już w pasku powłoki
- * (`powloka/akcje-paska`), więc drugiego się nie dokłada.
- *
- * Asystent pływający wisi w korzeniu powłoki, nie w obszarze roboczym: moduł
- * podmienia wyłącznie zawartość `powloka.obszar`, więc favikon w korzeniu
- * przetrwa każdą zmianę modułu. Asystent nie wchodzi na scenę sesji — nie jest
- * oknem równoległym i nie liczy się do sufitu liczby okien.
- */
+/** Widok trasy środowiska: powłoka środowiska ze sceną pracy w środku, złączone razem z routerem aplikacji. */
 export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSrodowiska {
   const { rdzen, opis, naTrase } = zaleznosci;
 
@@ -89,18 +61,7 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
     utworzZrodloNawigacji(rdzen.platforma, rdzen.uzgodnienie.klient.id),
   );
 
-  /**
-   * Moduł spoza wykazu środowiska — droga bezpośrednia.
-   *
-   * Boczna nawigacja pokazuje wyłącznie moduły widoczne w macierzy
-   * `srodowisko_modul`; widoczność rozstrzyga, czy pozycja stoi na liście, nie
-   * czy wolno moduł otworzyć. Moduł bez wiersza macierzy dobiera się tutaj
-   * z katalogu `module.list`, który zwraca komplet modułów platformy niezależnie
-   * od macierzy.
-   *
-   * Moduł nieodnaleziony w katalogu nie daje odmowy ani komunikatu: kolumna
-   * została już ustawiona na pierwszą pozycję wykazu, więc praca trwa dalej.
-   */
+  // Moduł spoza wykazu środowiska — droga bezpośrednia, dobierana z katalogu `module.list`.
   async function otworzPozaWykazem(kodModulu: string): Promise<void> {
     const wynik = await zadajWykazModulow(rdzen.kanal, {});
     const moduly = wynik.wynik?.modules;
@@ -112,8 +73,7 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
 
   powloka.nawigacja.naBrakPozycji((kodModulu) => void otworzPozaWykazem(kodModulu));
 
-  // Wejście do przestrzeni odłożone na czas uzgodnienia rusza, gdy rdzeń odda
-  // sesję i okno rozmowy — wybór modułu sprzed uzgodnienia nie przepada.
+  // Wejście do przestrzeni odłożone rusza, gdy rdzeń odda sesję i okno rozmowy.
   rdzen.uzgodnienie.naOtwarcieOkna((okno) => {
     oknoRozmowy = okno.id;
     przestrzen.ponow();
@@ -122,15 +82,11 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
   const akcjeTras = utworzAkcjeTras(rdzen.transport, naTrase);
   akcje.prepend(akcjeTras.element);
 
-  // Centrum powiadomień — kolumna boczna obok obszaru roboczego, wyzwalana
-  // plakietką dzwonka w pasku górnym (katalog komponentów, rozdz. 11.6).
-  //
-  // Kolumna siada w korzeniu powłoki, poza obszarem podmienianym przez moduł:
-  // centrum obowiązuje w każdym środowisku i w każdym module w tej samej formie,
-  // więc zejście razem z modułem gubiłoby rejestr przy każdym przełączeniu.
-  //
-  // Licznik plakietki nadąża zdarzeniami także wtedy, gdy kolumna stoi
-  // zamknięta — po to jest plakietka.
+  // Centrum powiadomień — kolumna boczna wyzwalana plakietką dzwonka w pasku górnym.
+
+  // Kolumna siada w korzeniu powłoki, poza obszarem modułu — centrum obowiązuje w każdym środowisku.
+
+  // Licznik plakietki nadąża zdarzeniami także wtedy, gdy kolumna stoi zamknięta.
   const centrum = utworzKolumnePowiadomien(rdzen.kanal, (nowe) =>
     powloka.pasek.ustawPowiadomienia(nowe),
   );
@@ -140,18 +96,12 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
   // Pomocnik aplikacji, nie moduł obok innych — stąd korzeń powłoki.
   powloka.element.append(zaczepAsystenta(rdzen.kanal).element);
 
-  // Always On Display jest funkcją globalną, a nie modułem: awatar ma być
-  // widoczny bez interakcji i nie znikać przy przełączeniu środowiska ani
-  // modułu (opracowanie funkcji globalnej, rozdz. 2.4). Warstwa siada więc
-  // w korzeniu powłoki, poza obszarem podmienianym przez moduł — tak samo jak
-  // asystent, i z tego samego powodu.
+  // Always On Display jest funkcją globalną, nie modułem — warstwa siada w korzeniu powłoki.
   powloka.element.append(
     zaczepAod(rdzen.kanal, { klient: { id: rdzen.uzgodnienie.klient.id } }).element,
   );
 
-  // Widoczność posunięć asystenta. To jedyne miejsce, które widzi naraz drogę do
-  // rdzenia, nawigację modułów i scenę okien — trzy rzeczy, którymi asystent
-  // rusza — więc źródło posunięć i pas montują się tutaj.
+  // Widoczność posunięć asystenta — jedyne miejsce widzące naraz rdzeń, nawigację modułów i scenę okien.
   const posuniecia = utworzZrodloPosuniec(rdzen.kanal, rdzen.uzgodnienie.klient.id);
   const pas = utworzPasPosuniec(posuniecia);
   powloka.element.append(pas.element);
@@ -159,13 +109,7 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
   // Okno otwarte gdziekolwiek w tej sesji wchodzi na scenę od razu.
   posuniecia.naNoweOkno((okno) => scena.przyjmijOknoZRdzenia(okno));
 
-  /**
-   * Czy użytkownik jest w środku pisania.
-   *
-   * Wymagane są oba warunki naraz: ognisko stoi w polu tekstowym i pole ma już
-   * treść. Samo ognisko nie wystarcza — pole wypowiedzi dostaje je przy otwarciu
-   * okna i trzyma bezterminowo, więc podążanie nie ruszyłoby nigdy.
-   */
+  // Czy użytkownik jest w środku pisania — wymaga ogniska w polu tekstowym oraz niepustej treści.
   function operatorPisze(): boolean {
     const czynny = document.activeElement;
     if (!(czynny instanceof HTMLTextAreaElement) && !(czynny instanceof HTMLInputElement)) {
@@ -174,22 +118,10 @@ export function utworzWidokSrodowiska(zaleznosci: ZaleznosciSrodowiska): WidokSr
     return czynny.value.trim().length > 0;
   }
 
-  /**
-   * Podążanie ekranu za modułem, na który przeszedł asystent.
-   *
-   * Przejście przestawia boczną nawigację i obszar roboczy, tak jakby wybór padł
-   * ręcznie; inaczej okno i kolumna nawigacji pokazywałyby dwa różne moduły.
-   *
-   * Gdy pole wypowiedzi jest w trakcie pisania, wstrzymane zostaje wyłącznie
-   * przesunięcie ekranu — posunięcie asystenta już się wykonało w rdzeniu.
-   * Przejście nie przepada: ląduje na pasie jako jedno kliknięcie.
-   */
+  // Podążanie ekranu za modułem asystenta — przestawia nawigację, tak jakby wybór padł ręcznie.
   function podazajZaModulem(kodModulu: string): void {
     if (kodModulu === '') return;
-    // Porównanie po kluczu pozycji, nie po polu `modul`: klucz jest kodem
-    // modułu z rdzenia (`pozycjaModulu`), a `Window.moduleId` niesie ten sam
-    // kod. Pole `modul` jest identyfikatorem wiersza i nigdy się z nim nie
-    // zrówna — porównanie po nim dawałoby przejście przy każdym zdarzeniu.
+    // Porównanie po kluczu pozycji, nie po polu `modul` — pole `modul` jest identyfikatorem wiersza.
     if (powloka.nawigacja.wybrana()?.klucz === kodModulu) return;
     const przejdz = (): void => powloka.nawigacja.wybierz(kodModulu);
     if (operatorPisze()) {

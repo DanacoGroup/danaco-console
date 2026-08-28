@@ -1,20 +1,6 @@
-// Doprowadzenie obowiązującej konfiguracji sesji do zbudowanego wywołania modelu.
-// Jednolity model konfiguracji `shared.SessionConfig` zapisuje komenda
-// `config.session.set`; ten plik jest jego czytelnikiem na drodze tury.
-//
-// Obszary tłumaczą się na te same pola `models.Zapytanie`, którymi jedzie reszta
-// wywołania, a stamtąd — przez `adapter_kanal_cli.go` — na wejście warstwy
-// injection (`argumenty.go`, `proces.go`): model i konto na wybór wywołania,
-// tools i permissions na napis `--settings`, environment i provider na zmienne
-// środowiska, mcp na osobne `--mcp-config`. Zmiana obszaru w oknie konfiguracji
-// zmienia więc zbudowane wywołanie modelu.
-//
-// Brak czytelnika albo błąd odczytu zostawia turę na wartościach okna i wiersza
-// rejestru: konfiguracja sesji dokłada rozstrzygnięcia, nie odbiera dawnych.
-//
-// Przełożone są obszary: model, account, permissions, tools, hooks, skills
-// (samo wyłączenie obszaru), environment, provider (fragment) oraz mcp. Obszary
-// i fragmenty obszarów nieprzełożone wymienia blok na końcu tego pliku.
+// Plik doprowadza obowiązującą konfigurację sesji do zbudowanego wywołania
+// modelu, przekładając obszary konfiguracji na pola zapytania modelu, konta,
+// narzędzi, uprawnień, środowiska i dostawcy.
 package core
 
 import (
@@ -25,10 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// CzytelnikKonfiguracjiSesji odczytuje konfigurację obowiązującą okna. Wypełnia
-// go adapterUstawienOsi (KonfiguracjaSesjiOkna); port pozwala adapterowi rozmowy
-// nie znać składania obszarów. Osobny od portu KonfiguracjaSesji rodziny
-// config.session.* — tamten mówi typami kontraktu, ten oddaje złożony model.
+// CzytelnikKonfiguracjiSesji odczytuje konfigurację obowiązującą okna, złożoną
+// z jej obszarów, tak aby adapter rozmowy nie musiał znać ich składania.
 type CzytelnikKonfiguracjiSesji interface {
 	KonfiguracjaSesjiOkna(ctx context.Context, idOkna, idSesji string) (shared.SessionConfig, error)
 }
@@ -87,10 +71,9 @@ func przelozKonto(k shared.SessionConfig, z *models.Zapytanie) {
 	}
 }
 
-// kontoKonfiguracji rozstrzyga konto z obszaru account wg sposobu wyboru:
-// fixed i kindDefault biorą wskazane accountId, pool bierze pierwsze konto puli
-// jako punkt wejścia rotacji. Rotacja po wyczerpaniu limitu należy do puli kont
-// warstwy injection — tu zapada tylko wejściowe wskazanie.
+// kontoKonfiguracji rozstrzyga konto z obszaru account: sposoby fixed
+// i kindDefault biorą wskazane konto, sposób pool bierze pierwsze konto puli
+// jako wejście rotacji.
 func kontoKonfiguracji(a *shared.SessionConfigAccount) string {
 	if a == nil {
 		return ""
@@ -113,27 +96,4 @@ func przelozUprawnienia(k shared.SessionConfig, z *models.Zapytanie) {
 	z.TrybUprawnien = *k.Permissions.Mode
 }
 
-// Obszary (i fragmenty obszarów) nieprzełożone na powierzchnię procesu.
-// Wymienione tu jawnie, żeby obszar wypełniony, a nieprzełożony, nie uchodził za
-// wpięty:
-//
-//   - memory — cały obszar pozostaje poza powierzchnią. Treść pamięci
-//     (InlineMemory) wymaga zapisania pliku pamięci (CLAUDE.md) w katalogu
-//     roboczym, a warstwa injection nie zapisuje dziś plików sesji ani nie ma na
-//     to pola w Ustawieniach/Zapytaniu. Przełączniki pamięci projektu i
-//     użytkownika (ProjectMemoryEnabled, UserMemoryEnabled) oraz ścieżki
-//     dodatkowe (AdditionalMemoryPaths) nie mają odpowiednika w pliku ustawień
-//     bieżącej powierzchni. Wpięcie wymaga nowego mechanizmu (zapis plików sesji
-//     plus pole je niosące) — leży poza tym plikiem.
-//   - skills (poza wyłączeniem) — wyłączenie obszaru odmawia narzędzia Skill
-//     (dodajRegulyUmiejetnosci). Dopuszczanie imienne (AllowedSkillIds), katalogi
-//     wyszukiwania (Directories) i samowykrywanie (AutoDiscovery) nie mają pola
-//     ani przełącznika na bieżącej powierzchni — imienny słownik reguł narzędzia
-//     Skill nie jest tu potwierdzony, więc jego wpisanie byłoby atrapą.
-//   - systemPrompt — tożsamość jedzie osobną drogą nakładki
-//     (ZTozsamoscia + injection.Nakladka), nie tym przekładem.
-//   - projectContext, conversationContext, workingDirectory, additionalDirectories,
-//     inputOutput, runtime, sessionLifecycle — wpina je warstwa okna
-//     (KatalogRoboczy, mosty, parametry wykonania) albo nie są wpięte wcale.
-//   - provider (poza endpointUrl), model.samplingTemperature, model.betaFeatures —
-//     brak odpowiednika na powierzchni CLI albo osobny przełącznik niewpięty.
+// Część obszarów i ich fragmentów nie ma dziś odpowiednika na powierzchni procesu.

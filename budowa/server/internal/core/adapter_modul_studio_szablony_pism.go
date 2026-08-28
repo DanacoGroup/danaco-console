@@ -1,30 +1,6 @@
-// Odpowiedzialność pliku: WARSZTAT SZABLONÓW PISM modułu Studio — założenie
-// szablonu z bieżącego dokumentu, pola do wypełnienia, zmiana i usunięcie
-// szablonu własnego, wniesienie szablonu z pliku Operatora (`.dotx`, `.ott`),
-// oddanie szablonu do pliku oraz wypełnienie pól i oddanie dokumentu gotowego.
-//
-// ── Szablon niesie NARAZ cztery rzeczy ──────────────────────────────────────
-// To jest wprost wymaganie Właściciela i podstawa całego tego pliku: szablon
-// niesie arkusz stylów, nastawy strony, nagłówek i stopkę ORAZ pola do
-// wypełnienia — nie samą treść. Dlatego:
-//
-//   - zapis szablonu z dokumentu bierze CAŁĄ postać dokumentu, nie jego treść;
-//   - wniesienie szablonu z pliku Operatora przejmuje wszystkie te rzeczy,
-//     bo czyta plik tym samym rachunkiem, którym czyta się dokument;
-//   - dokument zakładany z szablonu dostaje tę postać podstawioną, a nie
-//     domyślną platformy;
-//   - blokady wzorcowe idą razem, bo fragment wzorcowy pisma ma zostać wzorcowy.
-//
-// ── Szablon fabryczny nie jest do usunięcia ─────────────────────────────────
-// Odmowa NAZYWA powód — wzorem `studio.operation.delete`, który robi to samo dla
-// operacji fabrycznych. Cicha bezczynność albo `deleted: false` bez zdania
-// byłyby tu odpowiedzią, po której Operator myślałby, że szablon zszedł.
-//
-// ── Gdzie leżą pola ─────────────────────────────────────────────────────────
-// W `szablon_studio.pola_json`, jednym miejscem — tak stanowi migracja 367
-// i tak je czyta `studio.template.apply`. Własna tabela pól dałaby dwa miejsca
-// prawdy: `apply` czytałby jedno, warsztat drugie, a rozjazd wyszedłby przy
-// pierwszym szablonie założonym starą drogą.
+// Plik obsługuje warsztat szablonów pism modułu studio: założenie szablonu
+// z dokumentu, pola do wypełnienia, zmianę i usunięcie szablonu własnego,
+// wniesienie z pliku (`.dotx`, `.ott`), wydanie do pliku oraz wypełnienie pól.
 package core
 
 import (
@@ -51,7 +27,7 @@ const (
 // ── Odczyt szablonu ─────────────────────────────────────────────────────────
 
 // szablonPismaSzczegol wczytuje szablon wraz z postacią wzorcową, polami
-// i blokadami wzorcowymi.
+// i blokadami wzorcowymi, łącząc wiersz szablonu z blokadami z osobnej warstwy.
 func (a *adapterStudia) szablonPismaSzczegol(ctx context.Context,
 	kod string) (shared.StudioTemplateDetail, error) {
 
@@ -75,7 +51,8 @@ func (a *adapterStudia) szablonPismaSzczegol(ctx context.Context,
 	return a.szablonZlozKontrakt(ctx, wiersz)
 }
 
-// szablonZlozKontrakt składa szablon kontraktu z wiersza warstwy danych.
+// szablonZlozKontrakt składa szablon kontraktu z wiersza warstwy danych,
+// łącząc pola i postać wzorcową odczytane z jego zapisu.
 func (a *adapterStudia) szablonZlozKontrakt(ctx context.Context,
 	wiersz dane.SzablonWarsztatuStudia) (shared.StudioTemplateDetail, error) {
 
@@ -106,9 +83,7 @@ func (a *adapterStudia) szablonZlozKontrakt(ctx context.Context,
 	}
 	szablon.Form = postac
 
-	// Blokady wzorcowe leżą w tabeli obszaru kontroli pracy — czytamy je tam,
-	// bo drugie miejsce prawdy o blokadzie szablonu rozjechałoby się przy
-	// pierwszym dokumencie z niego założonym.
+	// Blokady wzorcowe leżą w tabeli obszaru kontroli pracy, drugiej niż tabela szablonu.
 	if skladnica, err := a.kontrolaSkladnica(); err == nil {
 		wzorce, err := skladnica.BlokadySzablonu(ctx, wiersz.Kod)
 		if err != nil {
@@ -134,13 +109,9 @@ func (a *adapterStudia) szablonZlozKontrakt(ctx context.Context,
 	return szablon, nil
 }
 
-// szablonPolaZZapisu czyta pola szablonu z ładunku JSON.
-//
-// Zapis starszy niósł mapę „nazwa pola na wartość domyślną"; zapis nowy niesie
-// kształt `StudioTemplateFieldSpec[]`. Czytane są OBA, bo szablony fabryczne
-// z migracji 131 mają zapis starszy — odmowa przy nich byłaby karą za wiek
-// wiersza. Ładunek nieczytelny NIE schodzi na pusty wykaz: pusty wykaz pól
-// znaczy „szablon nie ma pól", a to jest twierdzenie, nie brak wiedzy.
+// szablonPolaZZapisu czyta pola szablonu z ładunku JSON: zapis starszy niesie
+// mapę nazwa-wartość, zapis nowy — kształt `StudioTemplateFieldSpec[]`, czytane
+// są oba. Ładunek nieczytelny nie schodzi na pusty wykaz pól.
 func szablonPolaZZapisu(zapis *string, tresc string) ([]shared.StudioTemplateFieldSpec, error) {
 	if zapis == nil || strings.TrimSpace(*zapis) == "" {
 		// Pól nie zapisano — wykaz składa się ze znaczników stojących w treści.
@@ -192,13 +163,8 @@ func szablonPolaZZapisu(zapis *string, tresc string) ([]shared.StudioTemplateFie
 		"wykaz pól szablonu jest nieczytelny — ani wykazem pól, ani mapą wartości: " + surowy)
 }
 
-// szablonPolaZTresci dokłada do wykazu pola, które STOJĄ W TREŚCI szablonu,
-// a w wykazie ich nie ma.
-//
-// Powód jest praktyczny: szablon wniesiony z pliku Operatora niesie znaczniki
-// w treści, a wykazu pól nie niesie wcale. Pole widoczne w piśmie, którego
-// warsztat nie pokazuje, byłoby polem niemożliwym do wypełnienia — a wtedy
-// dokument wychodziłby ze znacznikiem w środku.
+// szablonPolaZTresci dokłada do wykazu pola, które stoją w treści szablonu,
+// a w wykazie ich nie ma — inaczej byłyby niemożliwe do wypełnienia.
 func szablonPolaZTresci(tresc string,
 	wykaz []shared.StudioTemplateFieldSpec) []shared.StudioTemplateFieldSpec {
 
@@ -220,8 +186,7 @@ func szablonPolaZTresci(tresc string,
 			Kind:  shared.StudioTemplateFieldKind(shared.StudioTemplateFieldKindText),
 		})
 	}
-	// Miejsce pola w treści liczone znakami — okno stawia po nim kursor przy
-	// wypełnianiu, więc brak tego pola znaczyłby przewijanie pisma z ręki.
+	// Miejsce pola w treści liczone znakami — okno stawia po nim kursor przy wypełnianiu.
 	for i := range wykaz {
 		if wykaz[i].AnchorOffset != nil {
 			continue
@@ -235,7 +200,8 @@ func szablonPolaZTresci(tresc string,
 	return wykaz
 }
 
-// szablonNazwyZeTresci wymienia nazwy pól stojących w treści szablonu.
+// szablonNazwyZeTresci wymienia nazwy pól stojących w treści szablonu,
+// odczytane ze znaczników postaci wzorcowej.
 func szablonNazwyZeTresci(tresc string) []string {
 	nazwy := []string{}
 	reszta := tresc
@@ -258,13 +224,11 @@ func szablonNazwyZeTresci(tresc string) []string {
 	}
 }
 
-// szablonPostacZZapisu czyta postać wzorcową szablonu.
+// szablonPostacZZapisu czyta postać wzorcową szablonu z zapisu; brakujący zapis
+// buduje postać wprost z treści szablonu.
 func szablonPostacZZapisu(wiersz dane.SzablonWarsztatuStudia) (*shared.StudioDocumentForm, error) {
 	if wiersz.PostacJSON == nil || strings.TrimSpace(*wiersz.PostacJSON) == "" {
-		// Szablon bez zapisanej postaci — na przykład fabryczny z migracji 131.
-		// Postać składa się z treści, żeby dokument z niego założony miał na
-		// czym pisać; arkusz stylów jest wtedy domyślny platformy i tak też
-		// wychodzi w bilansie wniesienia.
+		// Szablon bez zapisanej postaci, na przykład fabryczny — postać składa się z treści szablonu.
 		if strings.TrimSpace(wiersz.Tresc) == "" {
 			return nil, nil
 		}
@@ -325,8 +289,7 @@ func (a *adapterStudia) ZapiszSzablonPisma(ctx context.Context,
 		Opis:      z.Description,
 		Kategoria: z.Category,
 		Format:    string(shared.StudioDocumentFormatMarkdown),
-		// Szablon zakładany bez dokumentu jest szablonem samych pól i nastaw —
-		// treść dostaje pustą, a nie wymyśloną.
+		// Szablon zakładany bez dokumentu jest szablonem samych pól i nastaw — treść dostaje pustą.
 		Tresc:             "",
 		MiniaturaZasobKod: z.ThumbnailAssetId,
 	}
@@ -343,9 +306,7 @@ func (a *adapterStudia) ZapiszSzablonPisma(ctx context.Context,
 		wiersz.DokumentZrodlowyKod = wejscieWskaznikTekstu(stan.dokument.Kod)
 
 		postac := stan.forma
-		// Postać wzorcowa idzie BEZ identyfikatorów dokumentu źródłowego:
-		// dokument z szablonu dostanie własne (`wejsciePrzepiszIdentyfikatory`),
-		// a wiersz szablonu nie ma udawać, że należy do tamtego dokumentu.
+		// Postać wzorcowa idzie bez identyfikatorów dokumentu źródłowego — szablon dostanie własne.
 		postac.DocumentId = ""
 		postac.Locks = nil
 		postac.Revision = nil
@@ -376,9 +337,7 @@ func (a *adapterStudia) ZapiszSzablonPisma(ctx context.Context,
 		return shared.StudioTemplateSaveResponse{}, bladStudio(err)
 	}
 
-	// Blokady dokumentu wzorcowego stają się blokadami WZORCOWYMI szablonu —
-	// domyślnie, bo fragment, którego model nie tknie w piśmie wzorcowym, ma
-	// zostać nietykalny w każdym piśmie z tego wzoru.
+	// Blokady dokumentu wzorcowego stają się blokadami wzorcowymi szablonu domyślnie.
 	if stan != nil && (z.IncludeLocks == nil || *z.IncludeLocks) {
 		if err := a.szablonPrzeniesBlokady(ctx, stan, zapisany.Kod); err != nil {
 			return shared.StudioTemplateSaveResponse{}, err
@@ -446,7 +405,8 @@ func szablonSprawdzRodzajPola(pole shared.StudioTemplateFieldSpec) error {
 	return nil
 }
 
-// szablonPrzeniesBlokady przenosi blokady dokumentu wzorcowego do szablonu.
+// szablonPrzeniesBlokady przenosi blokady dokumentu wzorcowego do szablonu,
+// jako blokady wzorcowe tego szablonu.
 func (a *adapterStudia) szablonPrzeniesBlokady(ctx context.Context, stan *stanPostaci,
 	kodSzablonu string) error {
 
@@ -657,12 +617,9 @@ func (a *adapterStudia) PolaSzablonu(ctx context.Context,
 // ── Wniesienie szablonu z pliku Operatora ───────────────────────────────────
 
 // WniesSzablonZPliku obsługuje `studio.template.import` — wnosi szablon z pliku
-// Operatora (`.dotx`, `.ott`) wraz z arkuszem stylów, nastawami strony,
-// nagłówkiem, stopką i polami do wypełnienia.
-//
-// Plik dokumentu (`.docx`, `.odt`) też wchodzi, ale bilans mówi wprost, że
-// szablon powstał z dokumentu: to jest normalna droga Operatora, który wzór
-// pisma trzyma jako zwykły dokument.
+// (`.dotx`, `.ott`) wraz z postacią i polami do wypełnienia. Plik dokumentu
+// (`.docx`, `.odt`) też wchodzi, a bilans mówi wprost, że szablon powstał
+// z dokumentu.
 func (a *adapterStudia) WniesSzablonZPliku(ctx context.Context,
 	z shared.StudioTemplateImportRequest) (shared.StudioTemplateImportResponse, error) {
 
@@ -718,9 +675,7 @@ func (a *adapterStudia) WniesSzablonZPliku(ctx context.Context,
 	}
 	zapis := string(zapisPostaci)
 
-	// Pola do wypełnienia wychodzą ze ZNACZNIKÓW stojących w treści szablonu.
-	// Bez tego szablon Operatora wniósłby się z polami niewidocznymi w warsztacie,
-	// a dokument z niego wychodziłby ze znacznikami w środku.
+	// Pola do wypełnienia wychodzą ze znaczników stojących w treści szablonu.
 	pola := szablonPolaZTresci(tresc, nil)
 	zapisPol, err := json.Marshal(pola)
 	if err != nil {
@@ -759,12 +714,8 @@ func (a *adapterStudia) WniesSzablonZPliku(ctx context.Context,
 // ── Oddanie szablonu do pliku ───────────────────────────────────────────────
 
 // OddajSzablonDoPliku obsługuje `studio.template.export` — oddaje szablon do
-// pliku wraz z arkuszem stylów, nastawami strony i polami.
-//
-// Format domyślny to `docx` — plik szablonu Worda składa `wejscieZlozOoxml`
-// z rodzajem szablonu, a plik OpenDocument `wejscieZlozOdf`. Formaty tekstowe
-// też są dopuszczone, ale wtedy wykaz cech pominiętych mówi wprost, że postać
-// wzorcowa nie przeszła — bo szablon bez postaci nie jest szablonem.
+// pliku wraz z arkuszem stylów, nastawami strony i polami. Format domyślny to
+// `docx`; formaty tekstowe też są dopuszczone, z wykazem cech pominiętych.
 func (a *adapterStudia) OddajSzablonDoPliku(ctx context.Context,
 	z shared.StudioTemplateExportRequest) (shared.StudioTemplateExportResponse, error) {
 
@@ -854,10 +805,7 @@ func (a *adapterStudia) OddajSzablonDoPliku(ctx context.Context,
 		Note: wejscieWskaznikTekstu("szablon „" + szablon.Name + "” oddany plikiem " +
 			rozszerzenie + "; " + wydanieZdanieBilansu(format, pominiete)),
 	}
-	// Okno bierze się z dokumentu wzorcowego, z którego szablon powstał.
-	// Zasób odłożony bez okna nie dostaje wiersza w magazynie (patrz
-	// `odlozWynikArsenalu`), więc Operator dostałby kod zasobu, po którym nie da
-	// się sięgnąć po plik — czyli wynik nieprawdziwy.
+	// Okno bierze się z dokumentu wzorcowego — zasób bez okna dałby kod bez dostępu do pliku.
 	zasob, err := a.odlozTrescStudia(ctx, bajty, szablon.Name+"."+rozszerzenie,
 		rozszerzenie, a.szablonOknoWzorca(ctx, szablon.Id))
 	if err != nil {
@@ -895,15 +843,9 @@ func (a *adapterStudia) szablonOknoWzorca(ctx context.Context, kodSzablonu strin
 // ── Wypełnienie pól ─────────────────────────────────────────────────────────
 
 // WypelnijSzablon obsługuje `studio.template.fill` — wypełnia pola szablonu
-// wartościami i oddaje dokument gotowy.
-//
-// Czynność jest dostępna także modelowi: „zrób z tego wzór pisma i wypełnij dla
-// tej sprawy" jest jednym z naturalnych poleceń Właściciela. Dlatego autor
-// czynności wchodzi do dziennika, a czynność modelu odkłada się jako jego.
-//
-// Pole WYMAGANE bez wartości nie znika z treści: dokument z pustym miejscem po
-// polu wygląda na kompletny, a nie jest. Znacznik zostaje widoczny, a odpowiedź
-// wymienia pola brakujące w `missingRequired`.
+// wartościami i oddaje dokument gotowy. Pole wymagane bez wartości nie znika
+// z treści: znacznik zostaje widoczny, a odpowiedź wymienia pola brakujące
+// w `missingRequired`.
 func (a *adapterStudia) WypelnijSzablon(ctx context.Context,
 	z shared.StudioTemplateFillRequest) (shared.StudioTemplateFillResponse, error) {
 
@@ -940,9 +882,7 @@ func (a *adapterStudia) WypelnijSzablon(ctx context.Context,
 			continue
 		}
 		if pole.Kind == shared.StudioTemplateFieldKindDate {
-			// Data bez wartości i bez domyślnej jest datą dzisiejszą — tak
-			// zachowuje się każde pismo urzędowe i o to prosi Właściciel
-			// wprost, wymieniając datę wśród pól podstawianych.
+			// Data bez wartości i bez domyślnej jest datą dzisiejszą — tak zachowuje się każde pismo urzędowe.
 			wartosci[pole.Name] = time.Now().Format("2006-01-02")
 			continue
 		}
@@ -974,9 +914,7 @@ func (a *adapterStudia) WypelnijSzablon(ctx context.Context,
 
 	stan := &stanPostaci{dokument: dokument}
 	if strings.TrimSpace(wartoscTekstu(z.DocumentId)) != "" {
-		// Wypełnienie dokumentu ISTNIEJĄCEGO: postać zostaje jego, podstawia
-		// się tylko wartości pól. Podmiana arkusza stylów w dokumencie, nad
-		// którym Operator pracuje, nie była tym, o co prosił.
+		// Wypełnienie dokumentu istniejącego zachowuje jego postać — podstawiają się tylko wartości pól.
 		wczytany, err := a.postacWczytaj(ctx, dokument.Kod)
 		if err != nil {
 			return shared.StudioTemplateFillResponse{}, err
@@ -1001,8 +939,7 @@ func (a *adapterStudia) WypelnijSzablon(ctx context.Context,
 				szablonZamkniecePola),
 		})
 	}
-	// Wypełnienie szablonu jest czynnością, więc bilans nie może wyjść zerowy
-	// w każdym polu: dokument powstał i to jest skutek policzony.
+	// Wypełnienie szablonu jest czynnością, więc bilans nie może wyjść zerowy — dokument powstał.
 	if bilans.Applied == 0 {
 		bilans.Applied = 1
 	}
@@ -1035,7 +972,8 @@ func (a *adapterStudia) WypelnijSzablon(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// szablonTytulDokumentu rozstrzyga tytuł dokumentu zakładanego z szablonu.
+// szablonTytulDokumentu rozstrzyga tytuł dokumentu zakładanego z szablonu: tytuł
+// z żądania, a bez niego — nazwa szablonu.
 func szablonTytulDokumentu(z shared.StudioTemplateFillRequest,
 	szablon shared.StudioTemplateDetail) *string {
 
@@ -1077,11 +1015,8 @@ func szablonWartoscNapisem(wartosc any) string {
 }
 
 // szablonPodstawWPostaci podstawia wartości pól w postaci dokumentu i oddaje
-// liczbę miejsc, w których podstawienie weszło.
-//
-// Podstawienie idzie po FRAGMENTACH postaci, nie po napisie treści: zamiana
-// w napisie zgubiłaby kroje, wcięcia i granice akapitów, czyli całą postać
-// wzorcową pisma — a to jest właśnie to, co szablon miał przenieść.
+// liczbę podstawień. Podstawienie idzie po fragmentach postaci, nie po napisie
+// treści — zamiana w napisie zgubiłaby kroje, wcięcia i granice akapitów.
 func szablonPodstawWPostaci(forma *shared.StudioDocumentForm, wartosci map[string]string,
 	brakujace []string) int {
 

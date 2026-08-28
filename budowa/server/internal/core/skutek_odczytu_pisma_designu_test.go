@@ -11,44 +11,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek odczytu pisma ze zrzutu — `design.mockup.import` z polem
-// `recognizeText`.
-//
-// ── Co ten plik mierzy ──────────────────────────────────────────────────────
-// Do tej tury rdzeń rozpoznawał, KTÓRE obszary zrzutu są liniami tekstu, ale
-// treści napisów nie czytał. Sprawdzian kompilacji przechodził nad tym zielono,
-// bo komenda oddawała ramkę i warstwy — brakowało jedynie tego, po co Operator
-// wciąga zrzut: żeby zobaczyć, co na nim NAPISANO.
-//
-// Odczyt idzie programem pakietu serwera, więc sprawdzian rozgałęzia się wedle
-// tego, czy program na maszynie stoi — i ŻADNA z gałęzi nie jest pominięciem:
-//
-//   - program STOI — mierzony jest odczyt: adnotacja warstwy ma nieść treść
-//     napisu, który sprawdzian sam wpisał w zrzut;
-//   - programu NIE MA — mierzone są dwie odmowy: żądanie z odczytem wskazanym
-//     WPROST dostaje odmowę nazwaną wraz z naprawą, a żądanie bez wskazania
-//     dostaje układ obszarów, w którym każda linia tekstu mówi w adnotacji, że
-//     treści nie odczytano i dlaczego.
-//
-// Dzięki temu ten plik świeci zielono na serwerze z pakietem i na maszynie bez
-// niego, a w obu przypadkach mierzy zachowanie, nie samą kompilację.
+// Sprawdzian mierzy odczyt treści napisów zrzutu w design.mockup.import z polem recognizeText.
 
-// czyStoiCzytnikPismaSprawdzianu mówi, czy program rozpoznający pismo jest na
-// maszynie. Sprawdzian wolno o to zapytać wprost — zapora obszaru Design pilnuje
-// plików rdzenia, nie sprawdzianów, a rozgałęzienie bez tego pomiaru musiałoby
-// zgadywać, którą odpowiedź uznać za poprawną.
+// czyStoiCzytnikPismaSprawdzianu mówi, czy program rozpoznający pismo jest na maszynie, żeby sprawdzian mógł rozgałęzić się na mierzony odczyt albo mierzoną odmowę.
 func czyStoiCzytnikPismaSprawdzianu() bool {
 	_, err := exec.LookPath("tesseract")
 	return err == nil
 }
 
-// zrzutZNapisemPNG składa zrzut ekranu z JEDNYM napisem na białym tle.
-//
-// Napis jest rysowany krojem WKOMPILOWANYM, tym samym, którym rdzeń podpisuje
-// wykresy — więc sprawdzian nie zależy od krojów zainstalowanych na maszynie.
-// Wysokość napisu i szerokość paska są dobrane tak, żeby obszar spełnił warunek
-// linii tekstu rdzenia (wysokość do sześciu kratek, szerokość co najmniej
-// trzykrotność wysokości).
+// zrzutZNapisemPNG składa zrzut ekranu z jednym napisem na białym tle, krojem wkompilowanym, w rozmiarze spełniającym warunek linii tekstu rdzenia.
 func zrzutZNapisemPNG(t *testing.T, napis string) []byte {
 	t.Helper()
 
@@ -57,11 +28,7 @@ func zrzutZNapisemPNG(t *testing.T, napis string) []byte {
 	kontekst := canvas.NewContext(plotno)
 	kontekst.RenderPath(canvas.Rectangle(szerokosc, wysokosc),
 		stylWypelnieniaDanychDesignu("#ffffff"), canvas.Identity)
-	// Rozmiar pisma 20 jest zmierzony, nie dobrany na oko: przy nim wyraz schodzi
-	// na obszar o wysokości 32 punktów — wewnątrz granicy linii tekstu (do sześciu
-	// kratek) i o szerokości grubo ponad trzykrotność wysokości. Pismo większe
-	// rozsypuje się na kratce po jednej literze na obszar i żadna nie jest już
-	// linią tekstu.
+	// Rozmiar pisma 20 mieści się w granicy linii tekstu rdzenia; pismo większe się rozsypuje.
 	if err := napisWyrysuDanychDesignu(kontekst, napis, 24, 56, 20, "#101010"); err != nil {
 		t.Fatalf("nie można narysować napisu sprawdzianu: %v", err)
 	}
@@ -72,8 +39,7 @@ func zrzutZNapisemPNG(t *testing.T, napis string) []byte {
 	return bajty
 }
 
-// wciagnijZrzutSprawdzianu wnosi zrzut do magazynu i zakłada kompozycję, w której
-// makieta ma stanąć.
+// wciagnijZrzutSprawdzianu wnosi zrzut do magazynu i zakłada kompozycję, w której makieta ma stanąć, zwracając identyfikatory zasobu i planszy.
 func wciagnijZrzutSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno, napis string) (string, string) {
 
@@ -87,8 +53,7 @@ func wciagnijZrzutSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie contex
 	return zasob.Id, plansza.Board.Id
 }
 
-// adnotacjeLiniiTekstuSprawdzianu zbiera adnotacje warstw, które rdzeń uznał za
-// linie tekstu.
+// adnotacjeLiniiTekstuSprawdzianu zbiera adnotacje warstw, które rdzeń uznał za linie tekstu, pomijając warstwy pozostałych rodzajów.
 func adnotacjeLiniiTekstuSprawdzianu(warstwy []shared.DesignBoardLayer) []string {
 	adnotacje := []string{}
 	for _, warstwa := range warstwy {
@@ -108,8 +73,7 @@ func adnotacjeLiniiTekstuSprawdzianu(warstwy []shared.DesignBoardLayer) []string
 func TestWciagnietyZrzutCzytaTrescNapisow(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
-	// Napis wielkimi literami i bez znaków spoza alfabetu łacińskiego: sprawdzian
-	// mierzy DROGĘ odczytu, nie skuteczność czytnika na piśmie ozdobnym.
+	// Napis wielkimi literami bez znaków spoza łacińskiego mierzy drogę odczytu, nie skuteczność czytnika.
 	const napis = "DANACO KONSOLA"
 	zasob, plansza := wciagnijZrzutSprawdzianu(t, zmontowany, zycie, "okno-zrzutu", napis)
 
@@ -160,9 +124,7 @@ func TestWciagnietyZrzutCzytaTrescNapisow(t *testing.T) {
 		t.Fatalf("ze zrzutu z napisem %q nie wyszła ani jedna linia tekstu (warstw: %d)",
 			napis, len(wynik.Layers))
 	}
-	// Odczyt ma stać W ADNOTACJI, bo tam Operator go widzi. Miarą jest SŁOWO ze
-	// zrzutu, nie sama obecność dwukropka: adnotacja „linia tekstu 1: " byłaby
-	// odczytem pustym udającym odczyt.
+	// Odczyt ma stać w adnotacji: miarą jest słowo ze zrzutu, nie sama obecność dwukropka.
 	odczytane := false
 	for _, adnotacja := range adnotacje {
 		if strings.Contains(strings.ToUpper(adnotacja), "DANACO") {
@@ -178,8 +140,7 @@ func TestWciagnietyZrzutCzytaTrescNapisow(t *testing.T) {
 			napis, adnotacje)
 	}
 
-	// Odczyt WYŁĄCZONY wprost nie ma prawa czytać: pole `recognizeText=false`
-	// znaczy „nie czytaj", a nie „czytaj i nie mów".
+	// Odczyt wyłączony wprost nie czyta: recognizeText=false znaczy nie czytaj, nie milcz i czytaj.
 	var bezOdczytu shared.DesignMockupImportResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignMockupImport,
 		shared.DesignMockupImportRequest{

@@ -1,20 +1,6 @@
 // Odpowiedzialność pliku: odsłuch debaty syntezą mowy —
-// `roundtable.speech.synthesize` (panel akcji Debate Panel).
-//
-// ── Skąd bierze się mowa ─────────────────────────────────────────────────────
-// Z programu serwerowego `espeak-ng`, wołanego przez `zewnetrzne.Wolaj`. To jest
-// zgodne z zasadą produktu: cała aplikacja z arsenałem stoi na serwerze,
-// a u Operatora jest samo okno. Program jest zadeklarowany w sondzie zależności
-// (`zaleznosci_zewnetrzne.go`), więc jego brak Operator widzi przy starcie
-// rdzenia, a nie dopiero po naciśnięciu przycisku.
-//
-// Głos per uczestnik jest wartością `voiceByParticipant`: nazwą głosu silnika
-// (na przykład „pl", „pl+f3"). Uczestnik bez wskazanego głosu dostaje głos
-// domyślny — mowa ma zabrzmieć, a nie odmówić z powodu nieuzupełnionego
-// ustawienia.
-//
-// Nagranie jest jedno, nie po jednym na wypowiedź: odsłuch debaty ma się
-// odtwarzać ciągiem, tak jak debata przebiegła.
+// `roundtable.speech.synthesize` (panel akcji Debate Panel). Mowa idzie
+// z programu serwerowego `espeak-ng`.
 package core
 
 import (
@@ -30,23 +16,26 @@ import (
 	"danacoconsole/shared"
 )
 
-// narzedzieSyntezyMowy — silnik mowy arsenału serwera.
+// narzedzieSyntezyMowy — silnik mowy arsenału serwera, deklarowany w
+// sondzie zależności `zaleznosci_zewnetrzne.go`.
 var narzedzieSyntezyMowy = zewnetrzne.Narzedzie{
 	Nazwa: "eSpeak NG", Program: "espeak-ng", Pakiet: "espeak-ng",
 }
 
 const (
-	// granicaSyntezyMowy — odczyt całej debaty bywa długi, ale nie godzinny.
-	// Przekroczenie granicy znaczy proces, który utknął.
+	// granicaSyntezyMowy — odczyt całej debaty bywa długi, ale nie godzinny;
+	// przekroczenie granicy znaczy proces, który utknął.
 	granicaSyntezyMowy = 10 * time.Minute
-	// glosDomyslnyOdsluchu — głos silnika użyty tam, gdzie Operator nie
-	// wskazał własnego.
+	// glosDomyslnyOdsluchu — głos silnika eSpeak NG użyty tam, gdzie Operator
+	// nie wskazał głosu własnego dla uczestnika.
 	glosDomyslnyOdsluchu = "pl"
-	// czestotliwoscOdsluchu — próbkowanie, w którym silnik zapisuje nagranie.
+	// czestotliwoscOdsluchu — próbkowanie, w którym silnik eSpeak NG zapisuje
+	// nagranie wyjściowe formatu WAV.
 	czestotliwoscOdsluchu = 22050
 )
 
-// Odsluch składa nagranie z przebiegu debaty i wydaje je jako artefakt.
+// Odsluch składa nagranie z przebiegu debaty i wydaje je jako artefakt
+// odsłuchu wskazanej debaty Roundtable.
 func (a *adapterDebaty) Odsluch(ctx context.Context,
 	z shared.RoundtableSpeechSynthesizeRequest) (shared.RoundtableSpeechSynthesizeResponse, error) {
 
@@ -98,8 +87,8 @@ func (a *adapterDebaty) Odsluch(ctx context.Context,
 		if wskazany := strings.TrimSpace(glosy[wypowiedz.Uczestnik]); wskazany != "" {
 			glos = wskazany
 		}
-		// Podpis mówcy wchodzi do odczytu: odsłuch bez wskazania, kto mówi, jest
-		// ciągiem zdań bez autora — a debata jest wymianą między osobami.
+		// Podpis mówcy wchodzi do odczytu: odsłuch bez wskazania, kto mówi,
+		// jest ciągiem zdań bez autora.
 		tresc := podpis(podpisy, wypowiedz.Uczestnik) + ". " + strings.TrimSpace(wypowiedz.Tresc)
 
 		plik := filepath.Join(katalog, "glos-"+itoa(numer)+".wav")
@@ -131,14 +120,12 @@ func (a *adapterDebaty) Odsluch(ctx context.Context,
 	}, nil
 }
 
-// naglowekWav — długość nagłówka RIFF/WAVE dla zapisu bez dodatkowych bloków.
+// naglowekWav — długość nagłówka RIFF/WAVE dla zapisu bez dodatkowych
+// bloków, w bajtach jednego nagłówka.
 const naglowekWav = 44
 
-// probkiZPliku wyjmuje z pliku WAV same próbki dźwięku.
-//
-// Sklejanie plików WAV bajt po bajcie dałoby nagranie, w którym po pierwszej
-// wypowiedzi stoi nagłówek drugiej — czyli trzask i zerwany odczyt. Nagłówek
-// zdejmuje się z każdej części, a jeden nowy zakłada na całość.
+// probkiZPliku wyjmuje z pliku WAV same próbki dźwięku, zdejmując nagłówek
+// RIFF/WAVE z każdej jego części.
 func probkiZPliku(bajty []byte) []byte {
 	if len(bajty) <= naglowekWav {
 		return nil
@@ -171,7 +158,8 @@ func nagranieZProbek(probki []byte) []byte {
 	return nagranie
 }
 
-// dlugoscNagraniaMs przelicza liczbę bajtów próbek na czas odsłuchu.
+// dlugoscNagraniaMs przelicza liczbę bajtów próbek na czas odsłuchu
+// w milisekundach, wedle formatu WAV.
 func dlugoscNagraniaMs(bajtowProbek int) int {
 	const bajtowNaProbke = 2 // szesnaście bitów, jeden kanał
 	if bajtowProbek <= 0 {

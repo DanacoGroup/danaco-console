@@ -1,9 +1,5 @@
 // Odpowiedzialność pliku: analiza modułu Diagnostics wraz z rekomendacjami
 // z niej wyprowadzonymi — zapis migawki, odczyt migawki i wykaz rekomendacji.
-//
-// Analiza i jej rekomendacje zapisują się razem albo wcale. Rekomendacja bez
-// analizy nie ma faktu, z którego wynika, a analiza z połową rekomendacji
-// kłamie o tym, co z niej wypadło. Jedna transakcja zamyka obie możliwości.
 package dane
 
 import (
@@ -40,7 +36,7 @@ const (
 	                       LIMIT CASE WHEN ? > 0 THEN ? ELSE -1 END`
 )
 
-// ZapiszAnalize utrwala migawkę wraz z rekomendacjami w jednej transakcji.
+// ZapiszAnalize utrwala migawkę diagnostyczną wraz z jej rekomendacjami w jednej transakcji zapisu do bazy danych.
 func (r *repozytoriumDiagnostyki) ZapiszAnalize(ctx context.Context,
 	analiza AnalizaDiagnostyczna, rekomendacje []RekomendacjaDiagnostyczna) error {
 
@@ -92,7 +88,7 @@ func (r *repozytoriumDiagnostyki) Analiza(ctx context.Context, kod string) (Anal
 	return analiza, nil
 }
 
-// Rekomendacje zwraca wykaz zawężony filtrem, od najświeższej.
+// Rekomendacje zwraca wykaz rekomendacji diagnostycznych zawężony filtrem wyszukiwania, uporządkowany od najświeższej.
 func (r *repozytoriumDiagnostyki) Rekomendacje(ctx context.Context,
 	filtr FiltrRekomendacji) ([]RekomendacjaDiagnostyczna, error) {
 
@@ -123,7 +119,7 @@ func (r *repozytoriumDiagnostyki) Rekomendacje(ctx context.Context,
 	return rekomendacje, wiersze.Err()
 }
 
-// odczytajAnalize składa migawkę z jednego wiersza wyniku.
+// odczytajAnalize składa migawkę diagnostyczną ze struktury opartej na jednym wierszu wyniku zapytania do bazy danych.
 func odczytajAnalize(s skaner) (AnalizaDiagnostyczna, error) {
 	var analiza AnalizaDiagnostyczna
 	err := s.Scan(&analiza.Kod, &analiza.OknoKod, &analiza.ZakresOd, &analiza.ZakresDo,
@@ -131,7 +127,7 @@ func odczytajAnalize(s skaner) (AnalizaDiagnostyczna, error) {
 	return analiza, err
 }
 
-// odczytajRekomendacje składa rekomendację z jednego wiersza wyniku.
+// odczytajRekomendacje składa rekomendację diagnostyczną ze struktury opartej na jednym wierszu wyniku zapytania.
 func odczytajRekomendacje(s skaner) (RekomendacjaDiagnostyczna, error) {
 	var rekomendacja RekomendacjaDiagnostyczna
 	err := s.Scan(&rekomendacja.Kod, &rekomendacja.AnalizaKod, &rekomendacja.BladKod,

@@ -1,11 +1,10 @@
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 
 /**
- * Kafel jednej liczby telemetrycznej — para „liczba + co ona mierzy".
- *
- * Liczba idzie krojem technicznym (`--dn-ff-mono`), bo jest daną techniczną,
- * a nie nagłówkiem; krój szeryfowy zostaje przy tytułach sekcji. Etykieta
- * nazywa miarę wprost i nie bywa zastępowana samym kolorem.
+ * Kafel jednej liczby telemetrycznej, czyli para liczby i miary, którą ta
+ * liczba nazywa. Liczba idzie krojem technicznym `--dn-ff-mono`, bo jest daną
+ * techniczną, a nie nagłówkiem. Etykieta nazywa miarę wprost i nie bywa
+ * zastępowana samym kolorem.
  */
 export interface OpisKafla {
   /** Wartość widoczna w kaflu. */
@@ -20,7 +19,11 @@ export interface OpisKafla {
   wyrozniony?: boolean;
 }
 
-/** Buduje kafel liczby telemetrycznej. */
+/**
+ * Buduje kafel liczby telemetrycznej: składa ikonę wiodącą, wartość
+ * i etykietę, a objaśnienie stawia równocześnie w podpowiedzi kafla
+ * i w osobnym wierszu pod etykietą.
+ */
 export function utworzKafelLiczby(opis: OpisKafla): HTMLElement {
   const kafel = document.createElement('div');
   kafel.className = 'mc-kafel';

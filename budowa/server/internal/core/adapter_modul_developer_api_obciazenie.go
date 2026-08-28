@@ -1,48 +1,6 @@
-// Odpowiedzialność pliku: przebieg obciążeniowy punktu końcowego —
-// `developer.api.load.run`.
-//
-// ── Jedno żądanie a kształt wyniku ───────────────────────────────────────────
-// `developer.api.request` strzela JEDNYM żądaniem i oddaje jego status, czas
-// i rozmiar. To wystarcza, żeby sprawdzić, czy punkt końcowy odpowiada i co
-// odpowiada; nie wystarcza, żeby powiedzieć o nim cokolwiek pod obciążeniem.
-// Jeden pomiar nie ma percentyla ani przepustowości — a właśnie ogon rozkładu,
-// nie średnia, rozstrzyga o tym, czy usługa jest do użycia.
-//
-// ── Dlaczego program, a nie pętla po `net/http` ──────────────────────────────
-// Rzetelny przebieg obciążeniowy to nie pętla wywołań: trzeba utrzymać zadaną
-// liczbę połączeń równolegle, zbierać histogram czasów bez wpływu na pomiar
-// i policzyć percentyle z pełnego rozkładu, nie z próbki. Napisane od nowa
-// mierzyłoby w dużej mierze samo siebie.
-//
-// ── Wybór: autocannon, nie k6 ────────────────────────────────────────────────
-// Oba programy stoją na maszynie i oba umieją percentyle. Rozstrzygnęły trzy
-// rzeczy:
-//
-//  1. K6 opisuje przebieg SKRYPTEM w JavaScripcie, a nie parametrami. Wpięcie
-//     go tutaj znaczyłoby albo kontrakt niosący program do wykonania — inna
-//     i znacznie szersza powierzchnia niż adres z parametrami — albo skrypt
-//     składany przez rdzeń, czyli generowanie cudzego języka.
-//  2. Jedyna droga rdzenia do procesu (`zewnetrzne.Wolaj`) zbiera WYJŚCIE
-//     programu. Autocannon oddaje cały wynik na wyjście (`-j`); k6 pisze
-//     podsumowanie maszynowe do PLIKU, więc wymagałby pisania i odczytu plików
-//     pośrednich, których ta droga nie obsługuje.
-//  3. Kształt, o który pyta kontrakt — percentyle czasu, żądania na sekundę,
-//     bajty na sekundę, rozbicie po kodach stanu — autocannon oddaje wprost.
-//
-// Siłą k6 są przebiegi narastające, progi i scenariusze. Są nieosiągalne bez
-// skryptu, a skryptu nikt tu nie zamawiał.
-//
-// ── Zero żądań nie jest wynikiem zerowym ─────────────────────────────────────
-// Program kończy się powodzeniem także wtedy, gdy ani jedno żądanie nie doszło
-// do skutku: punkt końcowy milczy, a wynik niesie same zera obok licznika
-// błędów. Podanie takiego wyniku jako pomiaru byłoby brakiem pomiaru w przebraniu
-// — „zero żądań na sekundę" czyta się jak usługa skrajnie wolna, a nie jak
-// usługa, której nie ma. Dlatego przebieg bez ani jednej odpowiedzi wraca
-// odmową nazywającą liczbę błędów.
-//
-// Odpowiedzi spoza klasy 2xx to co innego: punkt końcowy odpowiedział, więc
-// pomiar SIĘ ODBYŁ. Wynik wychodzi wraz z licznikiem `non2xx` i rozbiciem po
-// kodach — wołający ma zobaczyć, że mierzył ścieżkę błędu, a nie zgadywać.
+// Plik obsługuje przebieg obciążeniowy punktu końcowego developer.api.load.run:
+// uruchamia zewnętrzny program autocannon i zwraca percentyle czasu odpowiedzi,
+// przepustowość oraz rozbicie kodów stanu.
 package core
 
 import (
@@ -75,7 +33,9 @@ const (
 	// Powyżej niej wąskim gardłem przestaje być mierzona usługa, a staje się
 	// maszyna rdzenia — i pomiar zaczyna mierzyć siebie.
 	najwiecejPolaczenPrzebiegu = 1000
-	// czasPrzebieguDomyslny jest czasem trwania przy braku wskazania.
+	// czasPrzebieguDomyslny jest czasem trwania przebiegu w sekundach przy braku
+	// wskazania w żądaniu — dziesięć sekund starcza, by rozkład opóźnień się
+	// ustabilizował.
 	czasPrzebieguDomyslny = 10
 	// najdluzszyPrzebieg jest granicą czasu trwania w sekundach. Przebieg
 	// półgodzinny trzyma połączenie klienta i obciąża cudzą usługę dłużej,
@@ -87,7 +47,9 @@ const (
 	granicaZapasuPrzebiegu = 60 * time.Second
 )
 
-// WykonajPrzebiegObciazeniowy obsługuje `developer.api.load.run`.
+// WykonajPrzebiegObciazeniowy obsługuje komendę developer.api.load.run: składa
+// wywołanie programu obciążeniowego z parametrów żądania i zwraca zmierzony
+// rozkład czasu odpowiedzi wraz z przepustowością.
 func (a *adapterDevelopera) WykonajPrzebiegObciazeniowy(ctx context.Context,
 	z shared.DeveloperApiLoadRunRequest) (shared.DeveloperApiLoadRunResponse, error) {
 
@@ -95,9 +57,8 @@ func (a *adapterDevelopera) WykonajPrzebiegObciazeniowy(ctx context.Context,
 	if err != nil {
 		return shared.DeveloperApiLoadRunResponse{}, err
 	}
-	// Przebieg obciążeniowy wysyła tysiące żądań zmieniających stan po drugiej
-	// stronie sieci — jest tym samym, czym pojedyncze zapytanie, tylko wielokrotnie.
-	// Tryb planistyczny wyklucza zmiany w systemie, więc wyklucza i te.
+	// Przebieg obciążeniowy zmienia stan usługi wielokrotnym żądaniem, więc tryb
+	// planistyczny go wyklucza.
 	if err := sprawdzZmianeSystemu(okno.TrybUprawnien, "przebieg obciążeniowy punktu końcowego"); err != nil {
 		return shared.DeveloperApiLoadRunResponse{}, err
 	}
@@ -136,8 +97,8 @@ func (a *adapterDevelopera) WykonajPrzebiegObciazeniowy(ctx context.Context,
 		"--connections", strconv.Itoa(polaczenia),
 		"--duration", strconv.Itoa(sekundy),
 		"--method", metoda,
-		// Bez tego wiersza program rysuje pasek postępu na diagnostyce przez cały
-		// przebieg — nikt go tu nie ogląda, a bufor potoku ma swoją pojemność.
+		// Pasek postępu programu zaśmiecałby diagnostykę przez cały przebieg, więc
+		// jest wyłączony.
 		"--no-progress",
 		// Wynik maszynowy na wyjście — jedyny kształt, który ta droga zbiera.
 		"--json",
@@ -179,9 +140,8 @@ func (a *adapterDevelopera) WykonajPrzebiegObciazeniowy(ctx context.Context,
 	}
 
 	przebieg := odczyt.jakoPrzebieg(adres, metoda, polaczenia, poczatek)
-	// Wersja programu wchodzi do wyniku, bo rozkład czasów jest orzeczeniem
-	// konkretnego wydania generatora ruchu — wynik bez wersji nie daje się
-	// porównać z wynikiem sprzed miesiąca.
+	// Wersja programu wchodzi do wyniku, bo rozkład czasów zależy od konkretnego
+	// wydania generatora.
 	if sciezka, jest := zewnetrzne.Odnajdz(narzedzieAutocannon); jest {
 		przebieg.ToolVersion = wersjaProgramuWarsztatu(sciezka)
 	}
@@ -212,9 +172,9 @@ func naglowkiPrzebiegu(surowe json.RawMessage, podstawienia map[string]string) [
 }
 
 // wynikPrzebieguObciazeniowego jest tą częścią odpowiedzi programu, którą moduł
-// czyta. Program oddaje też rozkłady żądań i przepustowości po percentylach;
-// kontrakt niesie z nich wartość średnią, bo percentyl liczby żądań na sekundę
-// mówi o próbkowaniu sekundowym, a nie o usłudze.
+// czyta. Kontrakt niesie z rozkładów percentylowych wartość średnią, bo
+// percentyl liczby żądań na sekundę mówi o próbkowaniu sekundowym, a nie
+// o usłudze.
 type wynikPrzebieguObciazeniowego struct {
 	CzasTrwania   float64 `json:"duration"`
 	Bledy         int64   `json:"errors"`
@@ -241,7 +201,9 @@ type wynikPrzebieguObciazeniowego struct {
 	} `json:"statusCodeStats"`
 }
 
-// jakoPrzebieg składa wynik kontraktu z odpowiedzi programu.
+// jakoPrzebieg składa wynik kontraktu ApiLoadRun z pól odpowiedzi programu
+// obciążeniowego, dodając adres, metodę, liczbę połączeń oraz znaczniki czasu
+// początku i końca przebiegu.
 func (w wynikPrzebieguObciazeniowego) jakoPrzebieg(adres, metoda string, polaczenia int,
 	poczatek time.Time) shared.ApiLoadRun {
 
@@ -282,8 +244,8 @@ func rozbicieStanow(stany map[string]struct {
 	for zapis, wpis := range stany {
 		kod, err := strconv.Atoi(strings.TrimSpace(zapis))
 		if err != nil {
-			// Klucz, który nie jest kodem stanu, pomijamy zamiast wpisywać zero:
-			// zero nie jest kodem stanu i wykaz kłamałby o odpowiedzi.
+			// Klucz spoza kodów stanu jest pomijany, nie liczony jako zero, by wykaz
+			// nie kłamał o odpowiedzi.
 			continue
 		}
 		wykaz = append(wykaz, shared.ApiLoadStatusCount{Status: kod, Count: wpis.Ile})
@@ -292,7 +254,9 @@ func rozbicieStanow(stany map[string]struct {
 	return wykaz
 }
 
-// wGranicach sprowadza wartość do przedziału dopuszczalnego.
+// wGranicach sprowadza wartość liczbową do przedziału domkniętego między
+// podaną granicą dolną a górną, przycinając ją do najbliższego krańca zamiast
+// odrzucać żądanie.
 func wGranicach(wartosc, najmniej, najwiecej int) int {
 	if wartosc < najmniej {
 		return najmniej
@@ -303,12 +267,10 @@ func wGranicach(wartosc, najmniej, najwiecej int) int {
 	return wartosc
 }
 
-// bladProgramuDevelopera odróżnia brak programu i przekroczenie granicy czasu od
-// usterki rdzenia — tak samo jak robi to moduł Apps przy audycie wydajności.
-//
-// Przekroczenie rozstrzyga się ZMIERZONYM czasem, nie treścią komunikatu:
-// zdanie, którym arsenał opisuje przerwanie, jest napisem i przy następnej
-// zmianie brzmiałoby inaczej.
+// bladProgramuDevelopera odróżnia brak programu i przekroczenie granicy czasu
+// od usterki rdzenia, rozstrzygając to zmierzonym czasem trwania, a nie
+// treścią komunikatu, która przy kolejnej zmianie arsenału mogłaby brzmieć
+// inaczej.
 func bladProgramuDevelopera(komenda string, err error, trwanie, granica time.Duration) error {
 	if err == nil {
 		return nil

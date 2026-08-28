@@ -5,13 +5,9 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Zestaw pól zależnych od kanału — wykaz budowany z deklaracji zdolności
- * adaptera dostawcy (`config.capabilities.get`), nie z listy wpisanej w kodzie.
- *
- * Adapter deklaruje dla każdego pola obszaru `model`, czy obsłuży je w całości,
- * częściowo, czy wcale, i dlaczego. Okno pokazuje tę deklarację wprost, więc
- * widać, że kanał CLI zignoruje `samplingTemperature`, zanim wartość zostanie
- * wpisana; nowa wersja programu dostawcy zmienia wykaz bez zmiany klienta.
+ * Zestaw pól zależnych od kanału — wykaz budowany z deklaracji zdolności adaptera
+ * dostawcy (`config.capabilities.get`), a nie z listy wpisanej w kodzie. Nowa
+ * wersja programu dostawcy zmienia wykaz bez zmiany klienta.
  */
 export interface PolaZalezne {
   element: HTMLElement;

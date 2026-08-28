@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: dwie zmiany stanu zasobu wniesionego do Assets Panel —
-// oznaczenie ulubionego (`design.asset.favorite.set`) i usunięcie
-// (`design.asset.remove`). Metody stoją na `*adapterDesignu`
-// (`adapter_modul_design.go`); wniesienie leży w `adapter_modul_design_wgranie.go`,
-// etykiety w `adapter_modul_design_etykiety.go` — podział wedle
-// odpowiedzialności.
-//
-// Usunięcie zasobu nie kasuje bajtów z magazynu. Blob leży pod sumą swojej
-// zawartości, więc dwa zasoby o identycznej treści (to samo tło wniesione
-// w dwóch oknach) dzielą jeden plik; skasowanie go przy usunięciu jednego
-// zasobu odebrałoby treść drugiemu, który o niczym nie wie. Zliczania odwołań
-// rdzeń nie prowadzi i ten moduł go nie zakłada, więc bajty usuniętego zasobu
-// zostają w katalogu danych do czasu, aż magazyn dostanie sprzątanie.
+// Odpowiedzialność pliku: dwie zmiany stanu zasobu wniesionego do panelu
+// zasobów — oznaczenie ulubionego i usunięcie. Usunięcie zasobu nie kasuje
+// bajtów z magazynu.
 package core
 
 import (
@@ -20,20 +10,8 @@ import (
 )
 
 // UstawUlubionyZasob przestawia oznaczenie ulubionego i oddaje zasób odczytany
-// po zmianie — obsługuje `design.asset.favorite.set`.
-//
-// Zasób czytamy przed zapisem, bo komenda niesie identyfikator kontraktu,
-// a oznaczenie wisi na kluczu wiersza; przy okazji ten sam odczyt odróżnia
-// zasób nieznany (odmowa `not_found`, panel ma po czym poznać, że jego wykaz
-// jest nieaktualny) od usterki bazy.
-//
-// Odpowiedź niesie stan z bazy, nie echo żądania — wzorem `UstawEtykietyZasobu`.
-// Podstawienie `z.Favorite` do zasobu odczytanego przed zapisem opisywałoby
-// stan, którego w bazie może nie być; stąd drugi odczyt.
-//
-// Ustawienie stanu, który już obowiązuje, jest drogą udaną. Kontrakt nie pyta
-// „czy się zmieniło", tylko żąda stanu docelowego — odmowa za powtórzenie
-// zabrałaby oknu prawo do wysłania tego, co Operator widzi na przełączniku.
+// po zmianie — obsługuje `design.asset.favorite.set`. Zasób czyta się przed
+// zapisem, a odpowiedź niesie stan z bazy, nie echo żądania.
 func (a *adapterDesignu) UstawUlubionyZasob(ctx context.Context,
 	z shared.DesignAssetFavoriteSetRequest) (shared.DesignAssetFavoriteSetResponse, error) {
 
@@ -60,19 +38,10 @@ func (a *adapterDesignu) UstawUlubionyZasob(ctx context.Context,
 	return shared.DesignAssetFavoriteSetResponse{Asset: zasobKontraktu(poZmianie, etykiety)}, nil
 }
 
-// UsunZasob usuwa zasób z Assets Panel — obsługuje `design.asset.remove`.
-//
-// Zasób czytamy przed usunięciem, żeby było co rozgłosić: `design.asset.changed`
-// niesie cały zasób obok rodzaju zmiany (`DesignAssetChangedEvent.Asset`), więc
-// po usunięciu wiersza nie ma już z czego złożyć zdarzenia — a zdarzenie
-// `deleted` z pustym zasobem powiedziałoby panelowi „coś zniknęło" bez wskazania
-// czego. Odczytany zasób wraca wołającemu osobnym wyjściem, bo odpowiedź
-// kontraktu niesie samo `removed` (patrz `zarejestrujDesign`).
-//
-// Zasób nieznany nie jest odmową. Kontrakt pyta wprost, czy zasób istniał i
-// został usunięty — `removed: false` odpowiada na to pytanie prawdziwie, a
-// odmowa kazałaby oknu obsługiwać błąd tam, gdzie stan docelowy (zasobu nie ma)
-// już obowiązuje. Powtórzone usunięcie tego samego kodu też oddaje `false`.
+// UsunZasob usuwa zasób z panelu zasobów — obsługuje `design.asset.remove`.
+// Zasób czyta się przed usunięciem, żeby było co rozgłosić, a wraca wołającemu
+// osobnym wyjściem, bo odpowiedź kontraktu niesie samo `removed`. Zasób
+// nieznany nie jest odmową.
 func (a *adapterDesignu) UsunZasob(ctx context.Context,
 	z shared.DesignAssetRemoveRequest) (shared.DesignAssetRemoveResponse, shared.DesignAsset, error) {
 
@@ -83,17 +52,13 @@ func (a *adapterDesignu) UsunZasob(ctx context.Context,
 
 	zasob, err := a.repozytorium.Zasob(ctx, z.AssetId)
 	if err != nil {
-		// Brak wiersza to `removed: false`, nie odmowa — stąd rozpoznanie po
-		// błędzie braku, a nie odesłanie go dalej.
+		// Brak wiersza to `removed: false`, nie odmowa.
 		if czyBrakZasobuDesignu(err) {
 			return shared.DesignAssetRemoveResponse{Removed: false}, shared.DesignAsset{}, nil
 		}
 		return shared.DesignAssetRemoveResponse{}, shared.DesignAsset{}, bladDesignu(err)
 	}
-	// Etykiety czytamy jeszcze przed usunięciem: `etykieta_zasobu_design`
-	// znika kaskadą razem z wierszem, więc po `UsunZasob`
-	// zdarzenie niosłoby zasób bez etykiet, których w chwili usunięcia miał
-	// pełny zestaw.
+	// Etykiety czyta się jeszcze przed usunięciem, bo znikają kaskadą.
 	etykiety, err := a.repozytorium.EtykietyZasobu(ctx, zasob.ID)
 	if err != nil {
 		return shared.DesignAssetRemoveResponse{}, shared.DesignAsset{}, bladDesignu(err)

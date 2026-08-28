@@ -1,13 +1,6 @@
-// Wpięcie komend modułu Studio: port i funkcja rejestrująca. Metody
-// portu leżą w plikach `adapter_modul_studio.go`,
-// `adapter_modul_studio_wersje.go` i `adapter_modul_studio_roznice.go`; ten
-// plik jest jedynym miejscem, które je razem nazywa.
-//
-// Zdarzenie `studio.document.changed` dotyczy stanu dokumentu, nie samej
-// komendy, więc rozgłasza się po `document.save`, po `repository.restore` i po
-// `contextual.op` — wszystkie trzy zmieniają treść widoczną w oknie pracy
-// z dokumentem. `document.open`, `repository.list` i `diff.compare` treści nie
-// zmieniają i zdarzenia nie mają.
+// Wpięcie komend modułu Studio: port, interfejs metod i funkcja rejestrująca,
+// wraz z podpisem wykonawcy oraz rozgłoszeniem zdarzenia zmiany dokumentu tam,
+// gdzie komenda treść dokumentu rzeczywiście zmienia.
 package core
 
 import (
@@ -19,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Studio jest portem modułu Studio.
+// Studio jest portem modułu Studio: interfejs metod, które wpięcie komend
+// woła, a implementację niesie rdzeń poza tym plikiem.
 type Studio interface {
 	OtworzDokument(ctx context.Context, z shared.StudioDocumentOpenRequest) (shared.StudioDocumentOpenResponse, error)
 	ZapiszDokument(ctx context.Context, z shared.StudioDocumentSaveRequest) (shared.StudioDocumentSaveResponse, error)
@@ -37,8 +31,7 @@ type Studio interface {
 	PrzyjmijPozycje(ctx context.Context, z shared.StudioIngestItemAcceptRequest) (shared.StudioIngestItemAcceptResponse, error)
 	UrzadzeniaWejsciowe(ctx context.Context, z shared.StudioIngestDeviceListRequest) (shared.StudioIngestDeviceListResponse, error)
 
-	// Komentarze redakcyjne, adnotacje różnic, śledzenie zmian i decyzja
-	// o propozycji (`adapter_modul_studio_adnotacje.go`).
+	// Komentarze, adnotacje, śledzenie zmian i decyzja o propozycji.
 	DodajKomentarz(ctx context.Context, z shared.StudioCommentAddRequest) (shared.StudioCommentAddResponse, error)
 	Komentarze(ctx context.Context, z shared.StudioCommentListRequest) (shared.StudioCommentListResponse, error)
 	RozstrzygnijKomentarz(ctx context.Context, z shared.StudioCommentResolveRequest) (shared.StudioCommentResolveResponse, error)
@@ -79,8 +72,7 @@ type Studio interface {
 	WyrenderujPodglad(ctx context.Context, z shared.StudioPreviewRenderRequest) (shared.StudioPreviewRenderResponse, error)
 	PorownajWizualnie(ctx context.Context, z shared.StudioDiffVisualRequest) (shared.StudioDiffVisualResponse, error)
 
-	// Praca na treści: wsad, osadzenie zasobu, wyszukiwanie znaczeniowe
-	// i zestawienie ze źródłem (`adapter_modul_studio_wsad.go`).
+	// Wsad, osadzenie zasobu, wyszukiwanie znaczeniowe i zestawienie ze źródłem.
 	UruchomWsad(ctx context.Context, z shared.StudioBatchRunRequest) (shared.StudioBatchRunResponse, error)
 	OsadzZasob(ctx context.Context, z shared.StudioAssetEmbedRequest) (shared.StudioAssetEmbedResponse, error)
 	WyszukajZnaczeniowo(ctx context.Context, z shared.StudioSearchSemanticRequest) (shared.StudioSearchSemanticResponse, error)
@@ -121,8 +113,7 @@ type Studio interface {
 	Blokady(ctx context.Context, z shared.StudioLockListRequest) (shared.StudioLockListResponse, error)
 	ZdejmijBlokade(ctx context.Context, z shared.StudioLockRemoveRequest) (shared.StudioLockRemoveResponse, error)
 
-	// Nastawy strony, sekcje, nagłówki i stopki, numeracja, znak wodny,
-	// koperta, podział i tabulatory linijki (`adapter_modul_studio_strona.go`).
+	// Strona: sekcje, nagłówki, stopki, numeracja, znak wodny, koperta, tabulatory.
 	WstawPodzial(ctx context.Context, z shared.StudioPageBreakInsertRequest) (shared.StudioPageBreakInsertResponse, error)
 	UstawNadrukKoperty(ctx context.Context, z shared.StudioPageEnvelopeSetRequest) (shared.StudioPageEnvelopeSetResponse, error)
 	NaglowkiIStopki(ctx context.Context, z shared.StudioPageHeaderfooterGetRequest) (shared.StudioPageHeaderfooterGetResponse, error)
@@ -177,8 +168,7 @@ type Studio interface {
 	WykazPol(ctx context.Context, z shared.StudioFieldListRequest) (shared.StudioFieldListResponse, error)
 	OdswiezPola(ctx context.Context, z shared.StudioFieldRefreshRequest) (shared.StudioFieldRefreshResponse, error)
 
-	// Wejście do edytora, zapis pod nazwą, kopia i wydanie do formatów
-	// (`adapter_modul_studio_wejscie_czynnosci.go`, `_wydanie_formatu.go`).
+	// Wejście do edytora, zapis pod nazwą, kopia dokumentu i wydanie do formatów.
 	SkopiujDokument(ctx context.Context, z shared.StudioDocumentCopyRequest) (shared.StudioDocumentCopyResponse, error)
 	ZalozDokument(ctx context.Context, z shared.StudioDocumentCreateRequest) (shared.StudioDocumentCreateResponse, error)
 	WniesObraz(ctx context.Context, z shared.StudioDocumentImageImportRequest) (shared.StudioDocumentImageImportResponse, error)
@@ -225,8 +215,7 @@ type Studio interface {
 	PrzywrocWersjeZalozycielska(ctx context.Context, z shared.StudioVersionRestoreInitialRequest) (shared.StudioVersionRestoreInitialResponse, error)
 	WersjeWSzeregach(ctx context.Context, z shared.StudioVersionSeriesListRequest) (shared.StudioVersionSeriesListResponse, error)
 
-	// Znakowanie: komentarze, propozycje, wyróżnienia i rodzaje znaczników
-	// (`adapter_modul_studio_znakowanie.go`).
+	// Znakowanie: komentarze, propozycje, wyróżnienia i rodzaje znaczników.
 	DodajZnakowanie(ctx context.Context, z shared.StudioMarkupAddRequest) (shared.StudioMarkupAddResponse, error)
 	RozstrzygnijZnakowanie(ctx context.Context, z shared.StudioMarkupDecideRequest) (shared.StudioMarkupDecideResponse, error)
 	Znakowania(ctx context.Context, z shared.StudioMarkupListRequest) (shared.StudioMarkupListResponse, error)
@@ -253,7 +242,8 @@ type Studio interface {
 	UstawWidok(ctx context.Context, z shared.StudioViewSetRequest) (shared.StudioViewSetResponse, error)
 }
 
-// zarejestrujStudio wpina komendy modułu Studio.
+// zarejestrujStudio wpina komendy modułu Studio do rejestru, wraz z podpisem
+// wykonawcy i rozgłoszeniem zdarzeń zmiany dokumentu, gdzie kontrakt tego wymaga.
 func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -262,12 +252,8 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioDocumentOpen, obsluz(m.OtworzDokument))
 	r.Zarejestruj(shared.CommandStudioDiffCompare, obsluz(m.Porownaj))
 
-	// Operacja kontekstowa zmienia od teraz TREŚĆ dokumentu — wpisuje wynik
-	// modelu jako zmianę śledzoną — więc rozgłasza zmianę tak samo jak zapis.
-	// Odpowiedź komendy dokumentu nie niesie (kontrakt oddaje wynik i propozycję),
-	// więc dokument po zmianie czytamy tą samą drogą, którą czyta go okno:
-	// `document.open`. Odczyt bez powodzenia gasi samo rozgłoszenie, a nie
-	// operację — wynik jest już zapisany i odmowa tutaj byłaby nieprawdą.
+	// Operacja kontekstowa zmienia treść dokumentu; czyta się przez document.open
+	// i rozgłasza się zmianę.
 	r.Zarejestruj(shared.CommandStudioContextualOp,
 		obsluz(func(ctx context.Context, z shared.StudioContextualOpRequest) (shared.StudioContextualOpResponse, error) {
 			odpowiedz, err := m.OperacjaKontekstowa(ctx, z)
@@ -293,11 +279,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Ingest/OCR Panel ──────────────────────────────────────────────────────
-	// Kolejka i jej odczyt zdarzenia nie mają: pozycja czeka, a nie zmienia
-	// dokumentu. Rozpoznanie i korekta zmieniają wyłącznie pozycję kolejki,
-	// więc rozgłaszają zmianę kolejki, nie zmianę dokumentu. Dopiero przyjęcie
-	// pozycji zakłada dokument i to ono rozgłasza `studio.document.changed`.
+	// Kolejka, rozpoznanie i korekta rozgłaszają zmianę pozycji, nie dokumentu.
 	r.Zarejestruj(shared.CommandStudioIngestQueueAdd, obsluz(m.DolozDoKolejki))
 	r.Zarejestruj(shared.CommandStudioIngestQueueList, obsluz(m.KolejkaWczytywania))
 	r.Zarejestruj(shared.CommandStudioIngestDeviceList, obsluz(m.UrzadzeniaWejsciowe))
@@ -329,10 +311,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Komentarze, adnotacje, śledzenie zmian ────────────────────────────────
-	// Odczyty i zapisy komentarzy nie ruszają treści dokumentu, więc zdarzenia
-	// nie mają. Obie decyzje — o zmianach śledzonych i o propozycji — treść
-	// zmieniają i dlatego rozgłaszają zmianę dokumentu.
+	// Decyzje o zmianach śledzonych i o propozycji zmieniają treść i rozgłaszają.
 	r.Zarejestruj(shared.CommandStudioCommentAdd, obsluz(m.DodajKomentarz))
 	r.Zarejestruj(shared.CommandStudioCommentList, obsluz(m.Komentarze))
 	r.Zarejestruj(shared.CommandStudioCommentResolve, obsluz(m.RozstrzygnijKomentarz))
@@ -359,10 +338,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Katalogi zasięgu i cechy dokumentu ────────────────────────────────────
-	// Zapisy katalogowe nie ruszają dokumentu i zdarzenia nie mają. Zastosowanie
-	// szablonu zakłada dokument, a przestawienie formatu zmienia jego cechę —
-	// obie rozgłaszają zmianę dokumentu.
+	// Zastosowanie szablonu i przestawienie formatu zmieniają dokument, rozgłaszają.
 	r.Zarejestruj(shared.CommandStudioOperationSave, obsluz(m.ZapiszOperacje))
 	r.Zarejestruj(shared.CommandStudioOperationList, obsluz(m.Operacje))
 	r.Zarejestruj(shared.CommandStudioOperationDelete, obsluz(m.UsunOperacje))
@@ -401,12 +377,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Gałęzie, wydanie, podgląd, wsad i wczytywanie ─────────────────────────
-	// Zdarzenie dokumentu rozgłaszają wyłącznie te czynności, które zmieniają
-	// treść widoczną w edytorze: założenie gałęzi (otwiera ją jako treść
-	// bieżącą), scalenie (gdy doszło do skutku) i osadzenie zasobu. Wydania,
-	// wyrysy, wyszukiwanie i wsad treści dokumentu nie ruszają — wsad zakłada
-	// propozycje, a propozycja staje się treścią dopiero decyzją Operatora.
+	// Założenie gałęzi, scalenie udane i osadzenie zasobu zmieniają treść, rozgłaszają.
 	r.Zarejestruj(shared.CommandStudioBranchList, obsluz(m.Galezie))
 	r.Zarejestruj(shared.CommandStudioVersionReferenceCreate, obsluz(m.UtworzOdwolanieWersji))
 	r.Zarejestruj(shared.CommandStudioRepositoryExport, obsluz(m.WydajRepozytorium))
@@ -440,9 +411,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioBranchMerge,
 		obsluz(func(ctx context.Context, z shared.StudioBranchMergeRequest) (shared.StudioBranchMergeResponse, error) {
 			odpowiedz, err := m.ScalGalezie(ctx, z)
-			// Scalenie zatrzymane konfliktem NIE rozgłasza zmiany dokumentu:
-			// dokument został taki, jaki był, a zdarzenie kazałoby oknu
-			// przeładować treść, która się nie zmieniła.
+			// Scalenie zatrzymane konfliktem nie rozgłasza — treść się nie zmieniła.
 			if err == nil && odpowiedz.Merged && odpowiedz.Document != nil {
 				e.dokumentStudio(shared.ChangeKindUpdated, *odpowiedz.Document)
 			}
@@ -458,16 +427,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Postać dokumentu, formatowanie, style i blokady ───────────────────────
-	// Zdarzenia `studio.document.changed` te czynności NIE rozgłaszają, choć
-	// zmieniają dokument: każda oddaje postać po zmianie wprost w odpowiedzi
-	// (`Form`), a okno pracy z dokumentem tę odpowiedź już ma. Zdarzenie kazałoby
-	// mu przeładować to samo drugą drogą i przy pisaniu litera po literze byłoby
-	// przeładowaniem na każde naciśnięcie klawisza.
-	//
-	// Wyjątek jest jeden: `document.form.save` oddaje także DOKUMENT wraz
-	// z wersją, więc rozgłasza zmianę tak samo jak `document.save` — po nim
-	// odświeżają się wykazy dokumentów i historia wersji, a nie tylko powierzchnia.
+	// Postać wraca wprost w odpowiedzi; zapis postaci oddaje też dokument i rozgłasza.
 	r.Zarejestruj(shared.CommandStudioDocumentFormGet, obsluz(m.PostacDokumentu))
 	r.Zarejestruj(shared.CommandStudioTextGet, obsluz(m.TrescFragmentu))
 	r.Zarejestruj(shared.CommandStudioTextEdit, obsluz(m.ZmienTresc))
@@ -489,11 +449,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioLockList, obsluz(m.Blokady))
 	r.Zarejestruj(shared.CommandStudioLockRemove, obsluz(m.ZdejmijBlokade))
 
-	// ── Postać dokumentu: strona, listy, symbole, tabele, obiekty, aparat ─────
-	// Te czynności oddają postać po zmianie wprost w odpowiedzi, więc zdarzenia
-	// dokumentu nie rozgłaszają — z jednym wyjątkiem: czynność, która ZAKŁADA
-	// dokument albo podmienia dokument zastany, oddaje go w odpowiedzi i wtedy
-	// zdarzenie jedzie, bo odświeżają się wykazy dokumentów, nie sama powierzchnia.
+	// Postać wraca w odpowiedzi; czynność, która zakłada dokument, rozgłasza.
 	r.Zarejestruj(shared.CommandStudioPageBreakInsert, obsluz(m.WstawPodzial))
 	r.Zarejestruj(shared.CommandStudioPageEnvelopeSet, obsluz(m.UstawNadrukKoperty))
 	r.Zarejestruj(shared.CommandStudioPageHeaderfooterGet, obsluz(m.NaglowkiIStopki))
@@ -594,13 +550,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// ── Kontrola pracy: dziennik, zmiany modelu, różnica, autozapis, znakowanie,
-	// zajęcia wykonawców, schowek, widok ─────────────────────────────────────
-	// Zdarzenie dokumentu rozgłaszają tylko te czynności, które PODMIENIAJĄ treść
-	// widoczną w oknie i oddają dokument w odpowiedzi: cofnięcie i ponowienie
-	// czynności, cofnięcie zmian modelu, przyjęcie propozycji, przeniesienie
-	// fragmentu różnicy, przywrócenie kopii i powrót do wersji założycielskiej.
-	// Odczyty, nastawy i wykazy treści nie ruszają.
+	// Rozgłaszają tylko czynności, które podmieniają treść i oddają dokument.
 	r.Zarejestruj(shared.CommandStudioJournalList, obsluz(m.DziennikCzynnosci))
 	r.Zarejestruj(shared.CommandStudioModelChangesList, obsluz(m.ZmianyModelu))
 	r.Zarejestruj(shared.CommandStudioModelChangesNavigate, obsluz(m.PrzeskocDoZmianyModelu))
@@ -684,10 +634,7 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Schowek dokumentu zdarzenia NIE rozgłasza, choć wycięcie i wklejenie zmieniają
-	// treść: kontrakt tych dwóch odpowiedzi dokumentu nie niesie, a doczytanie go
-	// drugą drogą tylko po to, żeby rozgłosić zmianę, kosztowałoby dwa odczyty na
-	// każde wklejenie. Okno pracy dostaje w odpowiedzi postać i tym się odświeża.
+	// Schowek zdarzenia nie rozgłasza — okno odświeża się postacią z odpowiedzi.
 	r.Zarejestruj(shared.CommandStudioClipboardCopy, obsluz(m.SkopiujDoSchowka))
 	r.Zarejestruj(shared.CommandStudioClipboardPaste, obsluz(m.WklejZeSchowka))
 
@@ -700,29 +647,13 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Podpis wykonawcy wchodzi na drogę WSZYSTKICH wpisanych wyżej komend — na
-	// końcu, bo owija to, co w rejestrze już stoi.
+	// Podpis wykonawcy owija wszystkie wpisane wyżej komendy, na końcu.
 	podpisWykonawcyStudia(r)
 }
 
 // podpisWykonawcyStudia owija w rejestrze każdą komendę rodziny `studio.*`
-// czytaniem podpisu wykonawcy z ładunku i wstawieniem go do kontekstu.
-//
-// ── Dlaczego w rejestrze, a nie w obsługiwaczach ─────────────────────────────
-// To ten sam rachunek, którym zapora blokad stanęła w drzwiach, a nie przy
-// każdym stoliku. Tożsamość wykonawcy niesie żądanie, a odkłada ją jedna droga
-// wyjścia czynności postaci (`postacZakoncz`) — tej drogi żądanie nie widzi.
-// Przełożenie podpisu przez trzydzieści osiem sygnatur czynności postaci
-// znaczyłoby trzydzieści osiem miejsc do pominięcia przez pomyłkę, a pominięcie
-// nie jest tu widoczne: zmiana zapisuje się dalej, tylko podpisana
-// „nienazwanym". Owinięcie rejestru obejmuje wszystkie te komendy jednym
-// warunkiem i obejmuje też te, których jeszcze nikt nie napisał.
-//
-// ── Dlaczego wpięcie nie odmawia i nie zmienia ładunku ──────────────────────
-// Ładunek innego kształtu nie jest usterką — nie każda komenda Studia niesie
-// podpis, a ta, która go nie niesie, jedzie dalej jako czynność Operatora.
-// Wpięcie NIE dotyka ładunku ani odpowiedzi: dokłada wyłącznie wiedzę o tym, kto
-// woła, więc nie ma jak zmienić skutku komendy.
+// czytaniem podpisu wykonawcy z ładunku i wstawieniem go do kontekstu, zamiast
+// przez każdy obsługiwacz z osobna; wpięcie nie dotyka ładunku ani odpowiedzi.
 func podpisWykonawcyStudia(r *Rejestr) {
 	if r == nil || r.wpisy == nil {
 		return
@@ -735,27 +666,9 @@ func podpisWykonawcyStudia(r *Rejestr) {
 	}
 }
 
-// podpisemWykonawcy składa obsługiwacza, który zna wykonawcę z żądania.
-//
-// ── Dlaczego wpięcie STEMPLUJE pole `author` w ładunku ──────────────────────
-// Rozpoznanie wykonawcy jedzie dalej kontekstem, ale czynności postaci
-// dokumentu rozstrzygają autora z POLA ŻĄDANIA (`postacAutor`), bo tak stanowi
-// kontrakt: „narzędzie modelu podaje autora wprost". Wykonawca, który tego pola
-// nie poda, byłby wtedy zapisany jako Operator — a wówczas jego zmiana nie
-// odkłada się jako zmiana śledzona i NIE DA SIĘ JEJ PODŚWIETLIĆ przełącznikiem
-// „pokaż wszystko, co zrobił model". Właściciel nazwał to wprost USTERKĄ do
-// naprawy, nie ograniczeniem do zgłoszenia.
-//
-// Naprawa stoi tutaj, a nie w trzydziestu ośmiu czynnościach postaci: gdy fakt
-// gniazda mówi „to wykonawca", wpięcie dopisuje `author: model` do ładunku,
-// zanim ładunek zobaczy obsługiwacz. Dzięki temu każda droga — także te, których
-// jeszcze nikt nie napisał — czyta autora prawdziwego, a nie zatajonego.
-//
-// Stempel idzie WYŁĄCZNIE w jedną stronę: podnosi Operatora do wykonawcy, nigdy
-// odwrotnie. Żądanie podpisane `author: uzytkownik` przyszłe z gniazda serwera
-// narzędzi jest twierdzeniem modelu o sobie, nie faktem — i dlatego przegrywa
-// z gniazdem. Tożsamość agenta stempluje się tylko wtedy, gdy żądanie jej nie
-// podało: podpis wie, KTÓRY wykonawca woła, a gniazdo tego nie wie.
+// podpisemWykonawcy składa obsługiwacza, który stempluje pole `author` ładunku
+// autorem model, gdy woła wykonawca, a żądanie samo tego pola nie podało —
+// nigdy odwrotnie, bo podpis własny żądania jest twierdzeniem, nie faktem gniazda.
 func podpisemWykonawcy(obsluga Obsluga) Obsluga {
 	return func(ctx context.Context, z protocol.Request) protocol.Odpowiedz {
 		var podpis kontrolaPodpisZadania
@@ -768,9 +681,7 @@ func podpisemWykonawcy(obsluga Obsluga) Obsluga {
 
 			ostemplowany, err := podpisStempelAutora(z.Ladunek)
 			if err != nil {
-				// Ładunku nie da się ostemplować — a bez stempla zmiana wykonawcy
-				// zapisałaby się jako zmiana Operatora i zniknęłaby z
-				// podświetlenia. Cisza byłaby tu gorsza niż odmowa.
+				// Bez stempla zmiana zapisałaby się jako zmiana Operatora, po cichu.
 				return porazka(kontrolaBladZaplecza(
 					"żądania wykonawcy nie da się podpisać autorem: " + err.Error()))
 			}
@@ -798,20 +709,17 @@ func podpisStempelAutora(ladunek json.RawMessage) (json.RawMessage, error) {
 	return json.Marshal(pola)
 }
 
-// dokumentStudio rozgłasza zmianę dokumentu Studio. Rodzaj zmiany podaje
-// wołający: zapis i przywrócenie wersji zmieniają dokument zastany („updated"),
-// a przyjęcie pozycji cyfryzacji zakłada dokument nowy („created") — i to jest
-// jedyne miejsce, w którym Studio zakłada dokument z treścią od razu.
-// pozycjaWczytywania rozgłasza zmianę stanu pozycji kolejki cyfryzacji.
-// Ingest/OCR Panel odświeża się nim zamiast odpytywać rdzeń w pętli — a przy
-// wsadzie wielostronicowym pytanie w pętli byłoby pytaniem o kilkadziesiąt
-// pozycji naraz.
+// pozycjaWczytywania rozgłasza zmianę stanu pozycji kolejki cyfryzacji, żeby
+// panel wczytywania odświeżał się zdarzeniem zamiast odpytywać rdzeń w pętli.
 func (e *emiter) pozycjaWczytywania(pozycja shared.StudioIngestItem) {
 	e.wyslij(shared.EventStudioIngestChanged, "", shared.StudioIngestChangedEvent{
 		WindowId: pozycja.WindowId, Item: pozycja,
 	})
 }
 
+// dokumentStudio rozgłasza zmianę dokumentu Studio. Rodzaj zmiany podaje
+// wołający: zapis i przywrócenie wersji zmieniają dokument zastany, a przyjęcie
+// pozycji cyfryzacji zakłada dokument nowy z treścią od razu.
 func (e *emiter) dokumentStudio(zmiana shared.ChangeKind, dokument shared.StudioDocument) {
 	e.wyslij(shared.EventStudioDocumentChanged, "", shared.StudioDocumentChangedEvent{
 		Change: zmiana, Document: dokument,

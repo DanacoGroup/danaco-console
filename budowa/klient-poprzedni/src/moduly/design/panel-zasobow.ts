@@ -17,44 +17,8 @@ import {
 import { utworzZrodloDesignu, type ZrodloDesignu } from './zrodlo-designu';
 
 /**
- * Zasoby Designu — panel do stosu paneli pomocniczych obcego modułu.
- *
- * Ma kształt `PanelPomocniczy`, więc staje w pasie paneli dowolnego modułu
- * i w kolumnie paneli sceny okien równoległych. Poza nim zasoby Designu są
- * osiągalne wyłącznie wewnątrz złożenia `modul-design.ts`.
- *
- * Panel jest osobnym, gęstszym widokiem tych samych danych, a nie opakowaniem
- * `okno-assets-panel.ts`. Tamto okno nie ma `zamknij()` — subskrypcję
- * `design.asset.changed` trzyma `stan-designu.ts`, a zdejmuje ją `rozlacz()`
- * wołane przez `modul-design.ts` — i żąda całego `StanDesignu` wraz z komendami
- * `window.list`, `window.state.get`, `channel.list`, `module.list` oraz kanwy
- * Design Board, której poza modułem Design nie ma. Tu mieści się jeden wiersz
- * nagłówka, nie trzy pasy kontrolek okna operacyjnego.
- *
- * Własnych reguł o zasobie panel nie pisze — pożycza komplet od modułu:
- *   `zrodlo-designu.ts`  — jedyna warstwa wywołań `design.asset.list`
- *                          i subskrypcji `design.asset.changed`;
- *   `zapis-designu.ts`   — `pustyZapisDesignu`, `przyjmijOdczytZasobow`,
- *                          `wchlonZasob`, `usunZasob`, czyli całe wciąganie
- *                          zmian wraz z gałęzią `deleted`;
- *   `karta-zasobu.ts`    — karta i predykat frazy (jedna kopia na moduł);
- *   `stan-okna.ts`       — trzy stany obowiązkowe;
- *   `tor-komendy.ts`     — zdanie o torze doklejane do odmowy.
- * Oba widoki zbiegają się na tym samym zdarzeniu rdzenia.
- *
- * Panel czyta zasoby wszystkich okien Designu i nazywa to w stanie pustym.
- * `OpcjePanelu.okno` niesie okno gospodarza (Apps, Developer, Diagnostics), a nie
- * okno modułu Design; pole `windowId` żądania jest opcjonalne
- * (`shared/contract.ts`), a `warunkiFiltruZasobow` dokłada warunek `z.okno = ?`
- * tylko wtedy, gdy pole przyszło (`dane/design_zasoby.go`). Podstawienie okna
- * gospodarza zawęziłoby wykaz do zasobów obcego okna, czyli najczęściej do
- * pustki, więc panel pola nie podstawia.
- *
- * Panel nie oddaje zasobu gospodarzowi: komendy wstawiającej zasób Designu
- * w rozmowę obcego modułu kontrakt nie ma, a `context.transfer` biegnie
- * przeciwnie — z okna źródłowego do modułu docelowego, otwierając tam okno.
- * Nie generuje, nie nadaje etykiet i nie zapisuje kompozycji; te czynności
- * zostają w oknach modułu Design.
+ * Zasoby Designu — panel do stosu paneli pomocniczych obcego modułu, osobny gęstszy widok tych
+ * samych danych, który pożycza komplet reguł od modułu Design.
  */
 export const KOD_PANELU_ZASOBOW = 'zasoby-designu';
 
@@ -63,8 +27,7 @@ export function utworzPanelZasobow(opcje: OpcjePanelu): PanelPomocniczy {
   const zapis: ZapisDesignu = pustyZapisDesignu();
   const okno: StanOkna = utworzStanOkna();
 
-  // Widok listowy, nie siatkowy: `md-zasoby[data-widok='lista']` to jedna
-  // kolumna, a siatka po 180px w wąskim pasie dałaby karty urwane w połowie.
+  // Widok listowy, nie siatkowy: jedna kolumna, bo siatka w wąskim pasie dałaby karty urwane w połowie.
   const wykaz = document.createElement('div');
   wykaz.className = 'md-zasoby';
   wykaz.dataset['widok'] = 'lista';
@@ -94,9 +57,7 @@ export function utworzPanelZasobow(opcje: OpcjePanelu): PanelPomocniczy {
   const element = document.createElement('section');
   element.className = 'md-panel';
   element.dataset['panel'] = KOD_PANELU_ZASOBOW;
-  // Przedrostek i okno gospodarza idą atrybutami danych, a nie do nazw klas:
-  // klasy składanej w locie nie widzi kontrola pokrycia arkuszy, a wygląd
-  // panelu należy do arkusza Designu, który wędruje z nim przez oba importy.
+  // Przedrostek i okno gospodarza idą atrybutami danych, bo wygląd panelu należy do arkusza Designu.
   element.dataset['gospodarz'] = opcje.przedrostek;
   element.dataset['oknoGospodarza'] = opcje.okno;
   element.setAttribute('aria-label', `Zasoby modułu Design w module ${opcje.modul}`);
@@ -152,13 +113,7 @@ export function utworzPanelZasobow(opcje: OpcjePanelu): PanelPomocniczy {
     okno.gotowe();
   }
 
-  /**
-   * Ponowny odczyt z rdzenia — czynność `PanelPomocniczy.odswiez()`.
-   *
-   * `zapis.warunki.idOkna` zostaje pusty, więc `zrodlo-designu` pomija pole
-   * `windowId` i rdzeń nie zawęża wykazu do żadnego okna (uzasadnienie
-   * w nagłówku pliku).
-   */
+  /** Ponowny odczyt z rdzenia — pole okna zostaje puste, więc rdzeń nie zawęża wykazu do żadnego okna. */
   function odswiez(): void {
     zapis.faza = 'odczyt';
     zapis.powod = '';
@@ -170,20 +125,14 @@ export function utworzPanelZasobow(opcje: OpcjePanelu): PanelPomocniczy {
     });
   }
 
-  // Zdarzenie jest drugą drogą odświeżenia: zasób powstały gdziekolwiek —
-  // w oknach Designu, w rozmowie, po stronie rdzenia — wchodzi tu bez pytania.
-  // Rozdział po rodzaju zmiany idzie z modułu wraz z gałęzią `deleted`, żeby
-  // panel nie pokazał jako obecnego zasobu, o którym rdzeń właśnie powiedział,
-  // że go nie ma.
+  // Zdarzenie jest drugą drogą odświeżenia: zasób powstały gdziekolwiek wchodzi tu bez pytania.
   const odsubskrybuj = zrodlo.naZmianeZasobu((tresc) => {
     if (tresc.change === ChangeKind.Deleted) usunZasob(zapis, tresc.asset.id);
     else wchlonZasob(zapis, tresc.asset);
     rysuj();
   });
 
-  // Pierwszego odczytu panel nie robi sam — pas paneli woła `odswiez()` na
-  // wszystkich zbudowanych panelach (`pas-pomocniczych.ts`), więc czytanie
-  // tutaj zleciłoby `design.asset.list` dwa razy pod rząd.
+  // Pierwszego odczytu panel nie robi sam — pas paneli woła odświeżenie na wszystkich panelach.
   rysuj();
 
   return { element, odswiez, zamknij: odsubskrybuj };

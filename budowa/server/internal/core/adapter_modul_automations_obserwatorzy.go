@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: pamięć okien obserwujących przebiegi automatyk —
 // zaplecze pola `subscribed` komendy `automation.execution.subscribe`.
-//
-// Rejestr nie służy rozsyłaniu zdarzeń: `automation.execution.status` dociera
-// do wszystkich połączeń konta i rejestr niczego w tym nie zmienia. Rozwiązuje
-// inną rzecz — telemetrię postępu. Proces kolejki przypina się do okna
-// (`opisProcesu.IdOkna`), a kolejka wykonująca automatykę powstaje ze strony
-// głównej, więc nie ma okna rozmowy, pod którym miałaby się zgłaszać. Oknem,
-// które tę pracę obserwuje, jest Execution Monitor; rejestr jest jedynym
-// miejscem, z którego rdzeń może się tego dowiedzieć.
-//
-// Dlatego `subscribed` mówi prawdę: zapisanie okna jest czynnością o skutku,
-// a komenda wywołana bez `windowId` jest zwykłym odczytem i oddaje `false`.
+// Rejestr nie służy rozsyłaniu zdarzeń, rozwiązuje telemetrię postępu.
 package core
 
 import "sync"
@@ -22,7 +12,8 @@ type pamiecObserwatorowPrzebiegow struct {
 	zakresy map[string]string
 }
 
-// nowaPamiecObserwatorowPrzebiegow zakłada pusty rejestr obserwacji.
+// nowaPamiecObserwatorowPrzebiegow zakłada pusty rejestr obserwacji, gotowy
+// do zapisów `Zapamietaj` i odczytów `Okna`.
 func nowaPamiecObserwatorowPrzebiegow() *pamiecObserwatorowPrzebiegow {
 	return &pamiecObserwatorowPrzebiegow{zakresy: map[string]string{}}
 }
@@ -40,7 +31,7 @@ func (p *pamiecObserwatorowPrzebiegow) Zapamietaj(idOkna, kodAutomatyki string) 
 }
 
 // Okna zwraca okna obserwujące wskazaną automatykę wraz z oknami obserwującymi
-// wszystkie przebiegi.
+// wszystkie przebiegi naraz, bez rozróżnienia automatyki.
 func (p *pamiecObserwatorowPrzebiegow) Okna(kodAutomatyki string) []string {
 	if p == nil {
 		return nil
@@ -57,10 +48,8 @@ func (p *pamiecObserwatorowPrzebiegow) Okna(kodAutomatyki string) []string {
 }
 
 // przypniOknaObserwatorow wpisuje okna Execution Monitora do pamięci powiązań
-// kolejki. Dzięki temu telemetria postępu kolejki wykonującej automatykę
-// zgłasza się pod oknem, które ją obserwuje, a `Queue.windowIds` nazywa je
-// wprost. Kolejka bez obserwatora zostaje jak była — powiązanie jest dodatkiem,
-// nie warunkiem.
+// kolejki. Dzięki temu telemetria postępu zgłasza się pod oknem, które ją
+// obserwuje. Kolejka bez obserwatora zostaje jak była.
 func (a *adapterAutomatyk) przypniOknaObserwatorow(kolejkaID int64, kodAutomatyki string) {
 	if a.kolejki == nil {
 		return

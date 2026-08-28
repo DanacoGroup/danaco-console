@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: rejestr nagrań mowy (tabela `nagranie_mowy`,
-// migracja 295) — para `speech.audio.upload` / `speech.audio.fetch`.
-//
-// Bajty leżą na dysku, w katalogu danych rdzenia; tutaj mieszka wyłącznie
-// wiersz opisujący jedno nagranie. Rozdział jest zamierzony: odnośnikiem
-// nagrania w całym produkcie jest ŚCIEŻKA PLIKU, bo taką przyjmuje
-// `speech.transcribe` i taką oddaje `translate.speech.synthesize`. Drugi rodzaj
-// odnośnika oznaczałby przekład w każdym miejscu styku.
-//
-// Rejestr jest też wykazem tego, co rdzeń sam wystawił — a więc granicą
-// odsłuchu: `speech.audio.fetch` oddaje bajty nagrania z tego wykazu, a nie
-// dowolnego pliku, którego ścieżkę ktoś przyśle.
+// Odpowiedzialność pliku: rejestr nagrań mowy (tabela `nagranie_mowy`, migracja 295) — obsługa przesyłania
+// i pobierania nagrania mowy.
 package dane
 
 import (
@@ -20,7 +10,7 @@ import (
 	"strings"
 )
 
-// NagranieMowy to wiersz tabeli `nagranie_mowy`.
+// NagranieMowy to wiersz tabeli `nagranie_mowy`, niosący opis nagrania mowy zapisanego na dysku rdzenia.
 type NagranieMowy struct {
 	Kod           string
 	Sciezka       string
@@ -34,7 +24,7 @@ type NagranieMowy struct {
 	Wygasa        *int64
 }
 
-// RepozytoriumNagranMowy jest kontraktem rejestru nagrań.
+// RepozytoriumNagranMowy jest kontraktem rejestru nagrań mowy, określającym dostępne operacje tego wykazu.
 type RepozytoriumNagranMowy interface {
 	ZapiszNagranieMowy(ctx context.Context, nagranie NagranieMowy) (NagranieMowy, error)
 	NagranieMowyPoSciezce(ctx context.Context, sciezka string) (NagranieMowy, error)
@@ -68,12 +58,12 @@ type repozytoriumNagranMowy struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumNagranMowy zakłada rejestr nagrań nad bazą zestawu.
+// noweRepozytoriumNagranMowy zakłada rejestr nagrań mowy nad wspólną bazą danych całego tego zestawu repozytoriów.
 func noweRepozytoriumNagranMowy(z *zapytania, db *sql.DB) *repozytoriumNagranMowy {
 	return &repozytoriumNagranMowy{zapytania: z, db: db}
 }
 
-// ZapiszNagranieMowy dopisuje wiersz opisujący nagranie leżące już na dysku.
+// ZapiszNagranieMowy dopisuje wiersz opisujący nagranie mowy, które już leży zapisane na dysku danych rdzenia.
 func (r *repozytoriumNagranMowy) ZapiszNagranieMowy(ctx context.Context,
 	nagranie NagranieMowy) (NagranieMowy, error) {
 
@@ -141,8 +131,7 @@ func (r *repozytoriumNagranMowy) NagraniaMowyWygasle(ctx context.Context,
 	return lista, nil
 }
 
-// UsunNagranieMowy wykreśla wiersz rejestru. Pliku nie kasuje — kasuje go ten,
-// kto go zapisał.
+// UsunNagranieMowy wykreśla wiersz rejestru nagrań mowy; pliku nie kasuje — kasuje go ten, kto go zapisał.
 func (r *repozytoriumNagranMowy) UsunNagranieMowy(ctx context.Context, sciezka string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunNagranieMowy)
 	if err != nil {
@@ -154,7 +143,7 @@ func (r *repozytoriumNagranMowy) UsunNagranieMowy(ctx context.Context, sciezka s
 	return nil
 }
 
-// odczytajNagranieMowy przekłada wiersz na opis nagrania.
+// odczytajNagranieMowy przekłada wiersz wyniku zapytania na pełną strukturę opisu nagrania mowy w bazie.
 func odczytajNagranieMowy(s skaner) (NagranieMowy, error) {
 	var nagranie NagranieMowy
 	var sesja, okno sql.NullString

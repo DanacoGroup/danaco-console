@@ -20,12 +20,8 @@ func (a *adapterSesji) ZProjektami(p dane.RepozytoriumPrzestrzeniRoboczej) *adap
 	return a
 }
 
-// PrzypiszProjekt przenosi sesje do projektu — wskazanego albo zakładanego.
-//
-// Jedna komenda obsługuje oba warianty żądania („przenieś do utworzonego już
-// projektu" i „przenieś, tworząc nowy"), bo z punktu widzenia historii jest to
-// ten sam gest: wskazanie, gdzie sesja ma odtąd należeć. Rozróżnia je wyłącznie
-// to, czy Operator podał istniejący kod, czy nazwę nowego.
+// PrzypiszProjekt przenosi sesję do wskazanego projektu, a przy podaniu samej nazwy zamiast
+// istniejącego kodu zakłada nowy projekt i przenosi sesję do niego.
 func (a *adapterSesji) PrzypiszProjekt(ctx context.Context,
 	z shared.SessionProjectSetRequest) (shared.SessionProjectSetResponse, error) {
 

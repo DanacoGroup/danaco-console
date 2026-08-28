@@ -15,18 +15,9 @@ import {
 } from './wiersze-obszarow-sesji';
 
 /**
- * Panel konfiguracji obowiązującej — okno komend `config.effective.get`
- * i `config.session.set`.
- *
- * Zasięg jest widoczny w dwóch miejscach, bo mówi o dwóch rzeczach. Nagłówek
- * mówi, dla kogo liczona jest konfiguracja i pod jaki adres pójdzie zapis —
- * oba biorą się z punktu widzenia ustawionego paskiem u góry okna, więc panel
- * nie stawia drugiego selektora zasięgu. Plakietka przy obszarze mówi, skąd
- * wartość przyszła: z którego rejestru, z którego poziomu i z której osi.
- *
- * Ładowanie i odmowa idą pasem `stany-odczytu` — tym samym, którym idą stany
- * katalogu; pustka idzie stanem pustym panelu kategorii. Żadnego z tych trzech
- * stanów panel nie buduje sam.
+ * Panel konfiguracji obowiązującej: okno komend `config.effective.get`
+ * i `config.session.set`. Zasięg bierze z punktu widzenia ustawionego paskiem
+ * okna, a ładowanie, odmowę i pustkę zaciąga z pasa `stany-odczytu`.
  */
 export interface PanelObszarowSesji {
   /** Sekcja osadzana w ciele okna konfiguracji. */
@@ -91,7 +82,10 @@ function akapit(klasa: string): HTMLElement {
   return element;
 }
 
-/** Nagłówek sekcji wraz ze zdaniem o punkcie widzenia. */
+/**
+ * Składa nagłówek sekcji: tytuł, zdanie o ośmiu poziomach zasięgu i trzech
+ * osiach rozstrzygania oraz akapit adresu przekazany przez wywołującego.
+ */
 function zlozNaglowek(adres: HTMLElement): HTMLElement {
   const tytul = document.createElement('h3');
   tytul.className = 'dk-obszary__tytul';
@@ -115,7 +109,10 @@ function zlozStopke(utrwal: HTMLElement, odpowiedz: HTMLElement): HTMLElement {
   return element;
 }
 
-/** Zdanie o adresie: ten sam punkt widzenia czyta i przyjmuje zapis. */
+/**
+ * Składa zdanie o adresie z opisu punktu widzenia stanu: ten sam adres służy
+ * odczytowi konfiguracji obowiązującej i przyjmuje utrwalenie wybranych obszarów.
+ */
 function zdanieAdresu(stan: StanObszarowSesji): string {
   return (
     `Liczone dla: ${opisAdresu(stan.punkt())}. ` +
@@ -124,11 +121,8 @@ function zdanieAdresu(stan: StanObszarowSesji): string {
 }
 
 /**
- * Zapis wybranych obszarów.
- *
- * Naciśnięcie zawsze daje odpowiedź. Wybór pusty nie idzie do rdzenia:
- * `config.session.set` z pustym wykazem obszarów nie zapisałby niczego, a milczący
- * przycisk wyglądałby jak awaria.
+ * Zapisuje wybrane obszary komendą `config.session.set` i zawsze zwraca zdanie
+ * odpowiedzi. Wybór pusty nie idzie do rdzenia, bo nie zapisałby niczego.
  */
 async function wykonajZapis(
   stan: StanObszarowSesji,

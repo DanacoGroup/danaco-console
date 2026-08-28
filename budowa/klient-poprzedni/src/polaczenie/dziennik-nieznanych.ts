@@ -7,7 +7,7 @@ import {
 import { utworzMagistrale, type Odsubskrybuj } from './magistrala-zdarzen';
 import type { ZrodloZdarzen } from './zrodlo-zdarzen';
 
-/** Pojedynczy komunikat, którego nie rozpoznał rdzeń albo klient. */
+/** Pojedynczy komunikat, którego nie rozpoznał rdzeń albo klient, zapisany w dzienniku nierozpoznanych zdarzeń. */
 export interface WpisNieznanego {
   /** Typ koperty, która przyszła: zdarzenie `*.unknown` albo typ spoza kontraktu. */
   typZdarzenia: string;
@@ -20,20 +20,7 @@ export interface WpisNieznanego {
 }
 
 /**
- * Dziennik komunikatów nierozpoznanych — brama fail-open łączności.
- *
- * Rdzeń odpowiada na nieznaną komendę zdarzeniem `*.unknown` właściwym dla
- * obszaru nazwy — strona główna, środowisko, moduł i przestrzeń robocza mają
- * własne zdarzenia zapasowe. Dziennik obejmuje je wszystkie, sięgając po
- * komplet z mapy kontraktu `ZDARZENIA_NIEZNANEJ`,
- * nigdy po literał nazwy: dopisanie obszaru w `contract.json`
- * rozszerza dziennik samo, bez zmiany tego pliku.
- *
- * Osobno przechwytujemy koperty o typie spoza kontraktu — takie, których nie
- * zna ani wykaz komend, ani wykaz zdarzeń. Powstają, gdy rdzeń wyprzedził
- * klienta wersją albo gdy ramka była nieczytelna. Żaden z tych przypadków nie
- * zrywa połączenia i nie blokuje sesji: wpis idzie do dziennika, klient
- * pracuje dalej.
+ * Dziennik komunikatów nierozpoznanych jest bramą fail-open łączności: obejmuje wszystkie zdarzenia zapasowe kontraktu oraz koperty o typie spoza kontraktu, nie zrywając połączenia ani nie blokując sesji.
  */
 export interface DziennikNieznanych {
   /** Liczba komunikatów nierozpoznanych od chwili założenia dziennika. */
@@ -68,8 +55,7 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
 
   odsubskrybowania.push(
     zrodlo.naDowolny((koperta) => {
-      // Odpowiedź rozstrzyga korelacja żądania, a typ znany kontraktowi ma
-      // swojego odbiorcę — dziennik zbiera wyłącznie resztę.
+      // Odpowiedź rozstrzyga korelacja żądania, a znany typ ma odbiorcę — dziennik zbiera resztę.
       if (koperta.status !== undefined) return;
       const typ: string = koperta.type;
       if (czyZdarzenie(typ) || czyKomenda(typ)) return;
@@ -90,12 +76,12 @@ export function zalozDziennikNieznanych(zrodlo: ZrodloZdarzen): DziennikNieznany
   };
 }
 
-/** Komplet zdarzeń `*.unknown` kontraktu, bez powtórzeń. */
+/** Komplet zdarzeń *.unknown kontraktu, bez powtórzeń, wykorzystywany przy subskrypcji dziennika nierozpoznanych. */
 function rodzajeNieznanych(): EventType[] {
   return [...new Set<EventType>(Object.values(ZDARZENIA_NIEZNANEJ))];
 }
 
-/** Odczyt ładunku `UnknownCommandPayload` odporny na jego brak i na inny kształt. */
+/** Odczyt ładunku UnknownCommandPayload odporny na jego brak i na inny kształt niż oczekiwany przez dziennik. */
 function odczytajLadunek(ladunek: unknown): Omit<WpisNieznanego, 'typZdarzenia'> {
   if (typeof ladunek !== 'object' || ladunek === null) {
     return { zadanyTyp: '', idZadania: '', powod: '' };
@@ -108,7 +94,7 @@ function odczytajLadunek(ladunek: unknown): Omit<WpisNieznanego, 'typZdarzenia'>
   };
 }
 
-/** Napis albo pusty łańcuch — pole opcjonalne kontraktu bywa nieobecne. */
+/** Napis albo pusty łańcuch — pole opcjonalne kontraktu bywa całkiem nieobecne w treści komunikatu od rdzenia. */
 function tekst(wartosc: unknown): string {
   return typeof wartosc === 'string' ? wartosc : '';
 }

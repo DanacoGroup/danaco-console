@@ -1,30 +1,6 @@
 // Odpowiedzialność pliku: rozróżnienie, czym jest wypowiedź Operatora —
-// poleceniem dla modelu czy akcją platformy (komendą kontraktu wykonywaną przez
-// rdzeń). Plik rozstrzyga i nazywa podstawę rozstrzygnięcia; nie wykonuje ani
-// jednego, ani drugiego.
-//
-// Dlaczego to nie jest zgadywanie po treści.
-// Rdzeń nie ma prawa domyślać się z wolnego tekstu, że Operator chciał wykonać
-// komendę platformy. Ten plik tego nie łamie, bo rozstrzyga wyłącznie na
-// deklaracjach, nigdy na podobieństwie:
-//
-//  1. Wskazanie Operatora — pole żądania kontraktu (`intent`). Deklaracja
-//     wprost; nie ma czego zgadywać.
-//  2. Leksykon akcji — zamknięty wykaz fraz, z których każda jest przypisana
-//     jednej komendzie kontraktu. Dopasowanie idzie po całej wypowiedzi, znak
-//     w znak po normalizacji, a nie po fragmencie (patrz `dopasujAkcje`).
-//  3. Domyślnie — model. Wolny tekst bez deklaracji jedzie do modelu, więc to
-//     rozstrzygnięcie niczego nie zmienia za plecami Operatora.
-//
-// Gdzie deklaracji brak, a domyślnej drogi wziąć nie wolno (Operator zadeklarował
-// akcję platformy, lecz nie nazwał żadnej), wynikiem jest zamiar nierozstrzygnięty
-// z nazwanym powodem. Nierozstrzygnięcie jest tu wynikiem pełnoprawnym: lepsze
-// od wybrania komendy za Operatora.
-//
-// Czego ten plik nie robi.
-// Nie woła komend, nie zna rdzenia i — tak jak reszta pakietu — nie zna
-// kontraktu: mówi własnymi typami, żeby dało się go wpiąć niezależnie od tego,
-// kiedy pole `intent` wejdzie do `shared/contract.json`.
+// poleceniem dla modelu czy akcją platformy; plik rozstrzyga i nazywa
+// podstawę rozstrzygnięcia, nie wykonuje ani jednego, ani drugiego.
 package mowa
 
 import (
@@ -34,13 +10,9 @@ import (
 	"unicode"
 )
 
-// Zamiar mówi, czym wypowiedź jest dla rdzenia.
-//
-// Wartość zerowa jest nierozstrzygnięciem i to jest wybór rozmyślny: struktura
-// wynikowa, która powstała przez pomyłkę zamiast przez rozstrzygnięcie, ma
-// znaczyć „nikt niczego nie zlecił", a nie „jedź do modelu" ani tym bardziej
-// „wykonaj komendę". Najbezpieczniejszy wynik ma być najtańszy do przypadkowego
-// wytworzenia.
+// Zamiar mówi, czym wypowiedź jest dla rdzenia. Wartość zerowa jest
+// nierozstrzygnięciem: struktura powstała przez pomyłkę ma znaczyć
+// „nikt niczego nie zlecił", a nie „jedź do modelu".
 type Zamiar string
 
 const (
@@ -56,17 +28,20 @@ const (
 )
 
 // Trzy wartości pola wskazania — dokładnie te, o które prosi zgłoszenie
-// kontraktu (`intent` w `assistant.voice.command`).
-//
-// Napisy są te same co wartości `Zamiar` i to nie jest przypadek: pole kontraktu
-// ma nieść rozstrzygnięcie Operatora w tym samym słowniku, w którym rdzeń o nim
-// mówi. Drugi słownik na to samo byłby drugą prawdą.
+// kontraktu w polu `intent`. Napisy są te same co wartości `Zamiar`, bo pole
+// kontraktu ma nieść rozstrzygnięcie Operatora w tym samym słowniku, co rdzeń.
 const (
-	// WskazanieBrak — żądanie pola nie niesie (albo kontrakt jeszcze go nie ma).
+	// WskazanieBrak — żądanie pola "intent" nie niesie wartości, bo pole nie
+	// istnieje w kontrakcie albo wołający go nie wypełnił; rozstrzygnięcie
+	// traktuje to tak samo jak wskazanie akcji platformy.
 	WskazanieBrak = ""
-	// WskazanieModelu — Operator zadeklarował polecenie dla modelu.
+	// WskazanieModelu — Operator zadeklarował wprost w polu żądania, że
+	// wypowiedź jest poleceniem dla modelu; rozstrzygnięcie bierze tę deklarację
+	// jako rozstrzygającą, choćby treść wypowiedzi brzmiała jak fraza akcji.
 	WskazanieModelu = "model"
-	// WskazaniePlatformy — Operator zadeklarował akcję platformy.
+	// WskazaniePlatformy — Operator zadeklarował wprost w polu żądania, że
+	// wypowiedź jest akcją platformy; rozstrzygnięcie szuka wtedy dopasowania
+	// frazy w leksykonie akcji i przy jego braku zwraca wynik nierozstrzygnięty.
 	WskazaniePlatformy = "platform"
 )
 
@@ -76,39 +51,43 @@ const (
 type Podstawa string
 
 const (
-	// PodstawaBrak — nie rozstrzygnięto.
+	// PodstawaBrak — nie rozstrzygnięto; wartość zerowa pola Podstawa towarzyszy
+	// zamiarowi nierozstrzygniętemu i nie ma innego znaczenia w wyniku funkcji
+	// Rozstrzygnij.
 	PodstawaBrak Podstawa = ""
-	// PodstawaWskazania — rozstrzygnęło pole żądania.
+	// PodstawaWskazania — rozstrzygnęło pole żądania "intent"; Operator
+	// zadeklarował wprost, czy wypowiedź jest poleceniem dla modelu, i ta
+	// deklaracja przesądziła wynik.
 	PodstawaWskazania Podstawa = "wskazanie"
-	// PodstawaFrazy — rozstrzygnęła cała wypowiedź równa frazie leksykonu.
+	// PodstawaFrazy — rozstrzygnęła cała wypowiedź równa frazie leksykonu akcji
+	// platformy; dopasowanie poszło po całym tekście, znak w znak po
+	// normalizacji, a nie po fragmencie.
 	PodstawaFrazy Podstawa = "fraza"
-	// PodstawaDomyslna — nic nie wskazało akcji platformy, więc jedzie model.
+	// PodstawaDomyslna — nic nie wskazało akcji platformy, więc jedzie model; to
+	// droga dotychczasowa, brana wtedy, gdy brak deklaracji Operatora i brak
+	// dopasowanej frazy.
 	PodstawaDomyslna Podstawa = "domyslnie"
 )
 
-// AkcjaPlatformy wiąże frazy Operatora z jedną komendą kontraktu.
-//
-// Nastawy są dosłowne, nie wyliczane. Fraza „anuluj zlecenie" niesie
-// `control=cancel` dlatego, że tak zapisano w leksykonie — nie dlatego, że coś
-// przeczytało słowo „anuluj". Dzięki temu leksykon da się przeczytać jak umowę
-// i wskazać palcem, co która wypowiedź robi.
+// AkcjaPlatformy wiąże frazy Operatora z jedną komendą kontraktu. Nastawy są
+// dosłowne, nie wyliczane: fraza niesie wartość dlatego, że tak zapisano
+// w leksykonie, a nie dlatego, że coś przeczytało słowo z wypowiedzi.
 type AkcjaPlatformy struct {
 	// Frazy — całe wypowiedzi (nie fragmenty) uruchamiające tę akcję.
 	Frazy []string
-	// Komenda — nazwa komendy kontraktu, np. `assistant.action.status`.
+	// Komenda — nazwa komendy kontraktu, na przykład `assistant.action.status`.
 	Komenda string
 	// Nastawy — pola żądania o wartościach dosłownych, wpisanych w leksykonie.
 	Nastawy map[string]string
-	// Wymaga — pola żądania, których leksykon nie zna i których wołający musi
-	// dołożyć z kontekstu wywołania (np. `windowId` z `assistant.voice.command`).
-	// Wykaz stoi tu po to, żeby wołający miał czym sprawdzić, czy ma komplet —
-	// zamiast wysyłać żądanie niepełne i dowiadywać się tego z odmowy rdzenia.
+	// Wymaga — pola żądania spoza leksykonu; wołający dokłada je z kontekstu.
 	Wymaga []string
 	// Opis — zdanie dla Operatora, czym ta akcja jest.
 	Opis string
 }
 
-// Wypowiedz jest wejściem rozstrzygnięcia: to, co przyszło komendą głosową.
+// Wypowiedz jest wejściem rozstrzygnięcia: to, co przyszło komendą głosową —
+// sama treść wypowiedzi razem z deklaracją Operatora z pola żądania, jeśli
+// taka deklaracja została przysłana.
 type Wypowiedz struct {
 	// Tekst — transkrypcja (własna albo poprawiona przez Operatora).
 	Tekst string
@@ -116,17 +95,17 @@ type Wypowiedz struct {
 	Wskazanie string
 }
 
-// Rozstrzygniecie jest wynikiem rozróżnienia.
+// Rozstrzygniecie jest wynikiem rozróżnienia: niesie zamiar, akcję platformy
+// przy zamiarze platformowym, podstawę rozstrzygnięcia oraz powód przy
+// zamiarze nierozstrzygniętym.
 type Rozstrzygniecie struct {
 	// Zamiar — model, platforma albo nierozstrzygnięty (wartość zerowa).
 	Zamiar Zamiar
-	// Akcja — wypełniona wyłącznie przy `ZamiarPlatformy`; dla modelu pusta,
-	// bo model nie dostaje komendy, tylko treść.
+	// Akcja — wypełniona wyłącznie przy `ZamiarPlatformy`; dla modelu pusta.
 	Akcja AkcjaPlatformy
 	// Podstawa — czym rozstrzygnięto.
 	Podstawa Podstawa
-	// Powod — wypełniony wyłącznie przy zamiarze nierozstrzygniętym; trzy
-	// części, tak jak każda odmowa tego pakietu: co · dlaczego · czym naprawić.
+	// Powod — wypełniony wyłącznie przy zamiarze nierozstrzygniętym.
 	Powod string
 }
 
@@ -140,29 +119,10 @@ func (r Rozstrzygniecie) DoPlatformy() bool { return r.Zamiar == ZamiarPlatformy
 // wykonuj, oddaj Operatorowi `Powod`.
 func (r Rozstrzygniecie) Rozstrzygniete() bool { return r.Zamiar != ZamiarNierozstrzygniety }
 
-// Rozstrzygnij rozróżnia polecenie dla modelu od akcji platformy.
-//
-// Kolejność reguł nie jest dowolna i wygląda tak:
-//
-//	tekst pusty                      → nierozstrzygnięty (nie ma czego rozstrzygać)
-//	wskazanie nieznane               → nierozstrzygnięty (napis spoza słownika)
-//	wskazanie = model                → MODEL, choćby fraza pasowała do akcji
-//	wskazanie = platform + fraza     → PLATFORMA (komenda z leksykonu)
-//	wskazanie = platform, brak frazy → nierozstrzygnięty (której komendy?)
-//	brak wskazania + fraza           → PLATFORMA
-//	brak wskazania, brak frazy       → MODEL (droga dotychczasowa)
-//
-// Deklaracja Operatora bije leksykon. Gdy Operator napisał `intent=model`, a
-// wypowiedź brzmi jak fraza akcji, wygrywa `intent`: Operator mógł chcieć, żeby
-// model pochylił się nad tym zdaniem (na przykład wyjaśnił je albo przetłumaczył).
-// Odwrotne pierwszeństwo znaczyłoby, że pole kontraktu można przegłosować
-// leksykonem, czyli że deklaracja nie jest deklaracją.
-//
-// Leksykon pusty (`akcje == nil`) jest poprawnym wejściem, nie brakiem: rdzeń
-// bez wpiętego leksykonu rozstrzyga wtedy wszystko na model — dokładnie tak, jak
-// zachowuje się dziś. Podstawienie tu leksykonu domyślnego z własnej głowy
-// dałoby zachowanie, którego wołający nie zamówił; kto chce domyślnego, woła
-// `AkcjeDomyslne()` u siebie i widzi to w swoim kodzie.
+// Rozstrzygnij rozróżnia polecenie dla modelu od akcji platformy. Deklaracja
+// Operatora bije leksykon: gdy wypowiedź brzmi jak fraza akcji, a Operator
+// napisał `intent=model`, wygrywa `intent`, bo mógł zlecić modelowi wyjaśnienie
+// zdania.
 func Rozstrzygnij(w Wypowiedz, akcje []AkcjaPlatformy) Rozstrzygniecie {
 	tresc := znormalizuj(w.Tekst)
 	if tresc == "" {
@@ -192,10 +152,7 @@ func Rozstrzygnij(w Wypowiedz, akcje []AkcjaPlatformy) Rozstrzygniecie {
 			Podstawa: PodstawaFrazy,
 		}
 	case len(dopasowane) > 1:
-		// Dwie komendy na jedną frazę to usterka leksykonu, nie wybór. Wzięcie
-		// pierwszej z brzegu byłoby zgadywaniem przebranym za rozstrzygnięcie —
-		// i to zgadywaniem cichym, bo nikt by się o drugim dopasowaniu nie
-		// dowiedział.
+		// Dwie komendy na jedną frazę to usterka leksykonu, nie wybór między nimi.
 		return nierozstrzygniety("wypowiedź „" + tresc + "” pasuje do " +
 			strconv.Itoa(len(dopasowane)) + " akcji platformy naraz (" +
 			strings.Join(nazwyKomend(dopasowane), ", ") +
@@ -214,18 +171,17 @@ func Rozstrzygnij(w Wypowiedz, akcje []AkcjaPlatformy) Rozstrzygniecie {
 	return Rozstrzygniecie{Zamiar: ZamiarModelu, Podstawa: PodstawaDomyslna}
 }
 
-// nierozstrzygniety składa wynik bez zamiaru z nazwanym powodem.
+// nierozstrzygniety składa wynik bez zamiaru z nazwanym powodem; korzystają
+// z niej wszystkie gałęzie funkcji Rozstrzygnij, które nie potrafią wskazać
+// ani modelu, ani akcji platformy.
 func nierozstrzygniety(powod string) Rozstrzygniecie {
 	return Rozstrzygniecie{Zamiar: ZamiarNierozstrzygniety, Podstawa: PodstawaBrak, Powod: powod}
 }
 
 // Wywolanie jest gotowym żądaniem akcji platformy: nazwa komendy kontraktu
-// i komplet pól, z jakimi ma pojechać.
-//
-// Typ jest opisem, nie wykonaniem. Pakiet mowy nie ma i nie będzie miał drogi
-// do rdzenia — składa wywołanie i oddaje je temu, kto komendy wykonuje. Pola są
-// napisami, bo napisami przychodzą i z leksykonu, i z żądania głosowego;
-// przełożenie ich na typ kontraktu należy do wołającego, który kontrakt zna.
+// i komplet pól, z jakimi ma pojechać. Typ jest opisem, nie wykonaniem: pakiet
+// mowy nie zna rdzenia i tylko składa wywołanie, które oddaje temu, kto
+// komendy wykonuje.
 type Wywolanie struct {
 	// Komenda — nazwa komendy kontraktu.
 	Komenda string
@@ -235,11 +191,6 @@ type Wywolanie struct {
 
 // BrakDanychAkcji jest odmową: akcja jest rozpoznana, lecz nie ma z czym
 // pojechać, bo wołający nie dołożył pola, którego leksykon nie zna.
-//
-// Osobny typ z tego samego powodu, dla którego pakiet ma trzy odmowy w bledy.go:
-// wołający musi ODRÓŻNIĆ ten przypadek od nierozstrzygnięcia. Tam Operator ma
-// powiedzieć co innego; tutaj Operator powiedział wszystko, a brakuje danych
-// po stronie rdzenia. Komunikat trójczęściowy jak każdy w tym pakiecie.
 type BrakDanychAkcji struct {
 	// Komenda — akcja, której nie da się złożyć.
 	Komenda string
@@ -258,11 +209,8 @@ func (b *BrakDanychAkcji) Error() string {
 func (b *BrakDanychAkcji) Unwrap() error { return nil }
 
 // NieAkcjaPlatformy jest odmową: ktoś prosi o złożenie wywołania komendy dla
-// wypowiedzi, która akcją platformy nie jest.
-//
-// Odmowa istnieje po to, żeby pomyłka wołającego kończyła się BŁĘDEM, a nie
-// pustym wywołaniem, które dałoby się wysłać. Puste `Wywolanie{}` bez błędu
-// byłoby atrapą wyglądającą na wynik.
+// wypowiedzi, która akcją platformy nie jest, żeby pomyłka wołającego
+// kończyła się błędem, a nie pustym wywołaniem, które dałoby się wysłać.
 type NieAkcjaPlatformy struct {
 	// Zamiar — co rozstrzygnięcie naprawdę mówi.
 	Zamiar Zamiar
@@ -283,23 +231,14 @@ func (b *NieAkcjaPlatformy) Error() string {
 	return "wypowiedzi nie rozstrzygnięto jako akcji platformy: " + powod
 }
 
-// Unwrap kończy łańcuch — jak w pozostałych odmowach pakietu.
+// Unwrap kończy łańcuch — jak w pozostałych odmowach pakietu, NieAkcjaPlatformy
+// nie opakowuje cudzego błędu, więc rozwijanie łańcucha błędów zatrzymuje się
+// na niej.
 func (b *NieAkcjaPlatformy) Unwrap() error { return nil }
 
-// ZlozWywolanie składa żądanie akcji platformy z nastaw leksykonu i pól, które
-// wołający bierze z kontekstu komendy głosowej (przede wszystkim `windowId`).
-//
-// Trzy odmowy, każda inna:
-//
-//   - rozstrzygnięcie nie jest akcją platformy → odmowa; wołający, który mimo
-//     tego złożyłby wywołanie, wykonałby czynność niezleconą;
-//   - brak pola z wykazu `Wymaga` → `BrakDanychAkcji` z nazwą pola;
-//   - pole puste liczy się jak brak — „windowId: ”" pojechałoby do rdzenia jako
-//     żądanie bez okna i wróciło odmową gorzej opisaną niż ta tutaj.
-//
-// Kontekst nie nadpisuje leksykonu. Wołający dokłada tożsamości (okno, sesja),
-// a nie sterowanie: gdyby kontekst mógł podmienić `control`, akcja „wstrzymaj"
-// dałaby się w locie zamienić w „anuluj" i leksykon przestałby być umową.
+// ZlozWywolanie składa żądanie akcji platformy z nastaw leksykonu i pól,
+// które wołający bierze z kontekstu komendy głosowej. Kontekst nie
+// nadpisuje leksykonu: wołający dokłada tożsamości, a nie sterowanie.
 func (r Rozstrzygniecie) ZlozWywolanie(kontekst map[string]string) (Wywolanie, error) {
 	if !r.DoPlatformy() {
 		return Wywolanie{}, &NieAkcjaPlatformy{Zamiar: r.Zamiar, Powod: r.Powod}
@@ -319,16 +258,9 @@ func (r Rozstrzygniecie) ZlozWywolanie(kontekst map[string]string) (Wywolanie, e
 	return Wywolanie{Komenda: r.Akcja.Komenda, Pola: pola}, nil
 }
 
-// dopasujAkcje szuka akcji, których fraza jest równa całej wypowiedzi.
-//
-// Równa, a nie zawarta — i to jest sedno tego, czym rozróżnienie różni się od
-// zgadywania. Dopasowanie po fragmencie zamieniłoby wzmiankę w wykonanie:
-// „przypomnij mi, co robi anuluj zlecenie" anulowałoby zlecenie, choć Operator
-// prosił o wyjaśnienie. Wypowiedź równa frazie jest natomiast deklaracją samą
-// w sobie — nie da się jej powiedzieć przypadkiem.
-//
-// Zwracane są wszystkie dopasowania, także sprzeczne: rozstrzyganie sprzeczności
-// należy do `Rozstrzygnij`, a nie do wyszukiwania (jedna funkcja, jedna robota).
+// dopasujAkcje szuka akcji, których fraza jest równa całej wypowiedzi, nie
+// zawarta w niej, bo dopasowanie po fragmencie zamieniłoby wzmiankę w
+// wykonanie. Zwracane są wszystkie dopasowania, także sprzeczne.
 func dopasujAkcje(tresc string, akcje []AkcjaPlatformy) []AkcjaPlatformy {
 	var trafienia []AkcjaPlatformy
 	for _, akcja := range akcje {
@@ -354,12 +286,9 @@ func nazwyKomend(akcje []AkcjaPlatformy) []string {
 	return nazwy
 }
 
-// bezOgonkow zdejmuje polskie znaki diakrytyczne.
-//
-// Potrzebne, bo wejście jest z mowy, a nie z klawiatury. Pomocnik transkrypcji
-// oddaje raz „wznów", raz „wznow" — zależnie od modelu i od tego, jak wyraźnie
-// Operator mówił. Fraza leksykonu, która rozpoznaje tylko jeden z tych zapisów,
-// nie działałaby losowo, a Operator nie miałby jak się dowiedzieć dlaczego.
+// bezOgonkow zdejmuje polskie znaki diakrytyczne. Potrzebne, bo wejście jest
+// z mowy, a nie z klawiatury: pomocnik transkrypcji oddaje raz „wznów", raz
+// „wznow", zależnie od modelu i od tego, jak wyraźnie Operator mówił.
 var bezOgonkow = map[rune]rune{
 	'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n',
 	'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
@@ -367,10 +296,8 @@ var bezOgonkow = map[rune]rune{
 
 // znormalizuj sprowadza wypowiedź do postaci porównywalnej: małe litery, bez
 // ogonków, bez znaków przestankowych, pojedyncze odstępy, bez brzegów.
-//
-// Normalizacja nie jest domyślaniem się treści: nie usuwa słów, nie zmienia ich
-// kolejności i nie skraca. Zdejmuje wyłącznie to, czego mowa nie niesie —
-// wielkość liter i interpunkcję, które dokłada pomocnik transkrypcji.
+// Normalizacja nie jest domyślaniem się treści: nie usuwa słów i nie zmienia
+// ich kolejności.
 func znormalizuj(tekst string) string {
 	var wynik strings.Builder
 	odstep := false
@@ -391,32 +318,15 @@ func znormalizuj(tekst string) string {
 	return wynik.String()
 }
 
-// Nazwy komend leksykonu domyślnego. Napisy, a nie stałe z `shared`, bo pakiet
-// mowy kontraktu nie zna (patrz nagłówek pliku).
+// Nazwy komend leksykonu domyślnego. Napisy, a nie stałe z pakietu `shared`,
+// bo pakiet mowy kontraktu nie zna, tak jak opisuje to nagłówek pliku
+// na początku pakietu.
 const komendaStanZlecenia = "assistant.action.status"
 
-// AkcjeDomyslne oddaje leksykon startowy akcji platformy.
-//
-// Dlaczego taki wąski.
-// Wszystkie pięć fraz prowadzi do jednej komendy — `assistant.action.status` —
-// i nie jest to niedoróbka, tylko granica postawiona z dwóch własności kontraktu:
-//
-//  1. Komenda ta ma wszystkie pola żądania nieobowiązkowe poza żadnym: wystarcza
-//     `windowId`, a to jedyny identyfikator, który `assistant.voice.command`
-//     naprawdę niesie. Akcje w rodzaju `window.create` (wymaga `sessionId`,
-//     `moduleId`, `modelChannelId`, `workingDirs`, `executionEnv`,
-//     `permissionMode`, `windowRole`) albo `session.stop` (wymaga `sessionId`)
-//     musiałyby te pola skądś wziąć — a „skądś" znaczyłoby „z głowy rdzenia".
-//  2. Sterowanie własnym zleceniem jest tą czynnością, której droga przez model
-//     jest wprost szkodliwa: „anuluj zlecenie" powiedziane do modelu ląduje jako
-//     treść tury tego właśnie zlecenia, więc zamiast je przerwać — przedłuża.
-//
-// Wykaz jest startowy i wołający ma prawo podać własny. To, które frazy platforma
-// rozumie, nie należy do tego pliku; wnosi on mechanizm i pięć fraz, przy
-// których mechanizm daje się sprawdzić na żywym rdzeniu.
-//
-// Wynik składany jest przy każdym wywołaniu, bo niesie mapy — wspólna kopia
-// pozwoliłaby wołającemu zmienić leksykon wszystkim naraz, nie chcąc tego.
+// AkcjeDomyslne oddaje leksykon startowy akcji platformy: pięć fraz prowadzi
+// do jednej komendy assistant.action.status, bo sterowanie zleceniem drogą
+// przez model jest wprost szkodliwe. Wynik jest składany przy każdym
+// wywołaniu, bo niesie mapy.
 func AkcjeDomyslne() []AkcjaPlatformy {
 	return []AkcjaPlatformy{
 		{

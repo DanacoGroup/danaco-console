@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: wpięcie utrwalania rozmowy — przełożenie okna żywego
-// z rejestru nadzorcy na opis warstwy danych.
-//
-// Warstwa danych nie zna pakietu sesji, a pakiet sesji nie zna bazy.
-// Ten plik jest jedynym miejscem, w którym oba się spotykają, i nie robi nic
-// poza tym spotkaniem.
+// Plik wpina utrwalanie rozmowy: przełożenie okna żywego z rejestru nadzorcy na opis warstwy
+// danych, będąc jedynym miejscem, w którym warstwa danych i pakiet sesji się spotykają.
 package core
 
 import (
@@ -11,13 +7,8 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// utrwalaczRozmow wpina repozytoria sesji, okien i wiadomości w dziennik rozmów.
-// Utrwalacz domyka łańcuch
-// `srodowisko → modul → karta_sesji → sesja → okno_komunikacji → wiadomosc`.
-//
-// Warstwa danych nie zna pakietu sesji, więc opis okna podaje tutejsza
-// funkcja czytająca rejestr nadzorcy. Okno nieznane rejestrowi daje fałsz —
-// wtedy wiadomość zostaje w buforze pamięci, a rozmowa toczy się dalej.
+// utrwalaczRozmow wpina repozytoria sesji, okien i wiadomości w dziennik rozmów, domykając łańcuch
+// środowisko, moduł, karta sesji, sesja, okno komunikacji, wiadomość.
 func utrwalaczRozmow(repozytoria *dane.Zestaw, nadzorca *session.Nadzorca) *dane.UtrwalaczRozmowy {
 	return dane.NowyUtrwalaczRozmowy(repozytoria, func(idOkna string) (dane.OpisOkna, bool) {
 		okno, err := nadzorca.Rejestr().Okno(idOkna)

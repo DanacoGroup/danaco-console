@@ -6,24 +6,9 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Kolejka zadań rozkładu — wykaz, w którym widać stan każdego zadania i tego,
- * kto je robi.
- *
- * ── Jedna kolejka, nie trzy ─────────────────────────────────────────────────
- * Ten sam wykaz prowadzi zadania rozkładu zlecenia (`studio.plan.*`), kroki
- * łańcucha operacji i pozycje wsadu. Rozstrzygnięcie jest wyraźne: krok łańcucha
- * i dokument wsadu wchodzą do kolejki jako ZADANIA tego samego rozkładu, a nie
- * do drugiej maszynerii obok. Operator ma jedno miejsce, w którym widzi, co się
- * dzieje z jego zleceniem.
- *
- * ── Stan mówi prawdę, także niewygodną ──────────────────────────────────────
- * Zadanie nieudane pokazuje POWÓD przy sobie, nie w dzienniku obok. Zadanie
- * przerwane zatrzymaniem pętli wraca do czekania i niesie zdanie o przerwaniu —
- * nie znika i nie udaje domkniętego. Zadanie wstrzymane mówi, na czym stoi.
- * Pusty wiersz z ikoną bez wyjaśnienia byłby tu tym samym co cisza.
+ * Kolejka zadań rozkładu to jeden wspólny wykaz zleceń, kroków łańcucha operacji i pozycji wsadu;
+ * niesie czynności, którymi wykaz sięga do rdzenia — pominięcie, ponowienie, pokazanie wyniku.
  */
-
-/** Czynności, którymi wykaz sięga do rdzenia. */
 export interface CzynnosciWykazuZadan {
   /** Pomija zadanie decyzją Operatora. */
   pomin(idZadania: string): void;
@@ -39,7 +24,7 @@ export interface WykazZadan {
   odswiez(rozklad: StudioTaskPlan | null): void;
 }
 
-/** Nazwa stanu zadania dla Operatora — słowami, nie kodem wyliczenia. */
+/** Nazwa stanu zadania czytelna dla Operatora kolejki — słowna, nie kod wyliczenia stanu zadania rozkładu. */
 const NAZWA_STANU: Record<string, string> = {
   [StudioTaskState.Pending]: 'czeka',
   [StudioTaskState.Running]: 'w realizacji',
@@ -49,7 +34,7 @@ const NAZWA_STANU: Record<string, string> = {
   [StudioTaskState.Skipped]: 'pominięte',
 };
 
-/** Nazwa rodzaju zadania dla Operatora. */
+/** Nazwa rodzaju zadania rozkładu czytelna dla Operatora kolejki, zamiast wewnętrznego oznaczenia rodzaju zadania. */
 const NAZWA_RODZAJU: Record<string, string> = {
   research: 'źródła',
   draft: 'brzmienie',
@@ -87,8 +72,7 @@ export function utworzWykazZadan(czynnosci: CzynnosciWykazuZadan): WykazZadan {
     const znacznik = document.createElement('span');
     znacznik.className = 'dn-plakietka petla-zadanie__stan';
     znacznik.textContent = NAZWA_STANU[zadanie.state] ?? zadanie.state;
-    // Wskaźnik obrotu przy zadaniu W BIEGU — a nie przy każdym, bo obracający
-    // się znak przy zadaniu zakończonym mówiłby nieprawdę o pracy rdzenia.
+    // Wskaźnik obrotu widnieje tylko przy zadaniu w biegu, nie przy zadaniu zakończonym.
     if (zadanie.state === StudioTaskState.Running) {
       const obrot = document.createElement('span');
       obrot.className = 'dn-spinner';
@@ -126,8 +110,7 @@ export function utworzWykazZadan(czynnosci: CzynnosciWykazuZadan): WykazZadan {
       pozycja.append(zaleznosc);
     }
 
-    // Powód niepowodzenia stoi PRZY zadaniu, nie w dzienniku obok: Operator
-    // patrzący na kolejkę ma widzieć, dlaczego zadanie nie weszło, bez szukania.
+    // Powód niepowodzenia stoi przy zadaniu, nie w dzienniku obok, więc jest widoczny od razu.
     if (zadanie.failureReason !== undefined && zadanie.failureReason !== '') {
       const powod = document.createElement('p');
       powod.className = 'dn-tekst-3 petla-zadanie__powod';
@@ -185,11 +168,8 @@ export function utworzWykazZadan(czynnosci: CzynnosciWykazuZadan): WykazZadan {
 }
 
 /**
- * Opis wykonawcy zadania dla Operatora.
- *
- * Wykonawca nienazwany nie jest brakiem do przemilczenia: „wykonawca
- * nienazwany" mówi prawdę o tym, że rozkład powierzono komuś bez wskazania
- * eksperta, a puste miejsce sugerowałoby, że nikomu.
+ * Opis wykonawcy zadania dla Operatora: wykonawca nienazwany mówi prawdę o zadaniu powierzonym
+ * komuś bez wskazania eksperta, nie o pustym miejscu.
  */
 export function opisWykonawcy(wykonawca: StudioActor | undefined): string {
   if (wykonawca === undefined) return '';
@@ -210,7 +190,7 @@ export function opisWykonawcy(wykonawca: StudioActor | undefined): string {
   return czesci.join(' · ');
 }
 
-/** Mały przycisk zarysowany — postać czynności wiersza w tym module. */
+/** Mały przycisk zarysowany, bez wypełnienia tła, w kolorze obramowania — postać czynności wiersza tabeli. */
 export function przycisk(napis: string, naKlik: () => void): HTMLButtonElement {
   const guzik = document.createElement('button');
   guzik.type = 'button';

@@ -1,3 +1,5 @@
+// Sprawdziany pracy wielu wykonawców nad jednym dokumentem: zajęcie wygasłe pokazywane jako
+// czynne, odmowa zajęcia bez nazwanego wykonawcy oraz nastawa spięcia spoza słownika kontraktu.
 package core
 
 import (
@@ -8,17 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany pracy wielu wykonawców nad jednym dokumentem.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. zajęcie WYGASŁE pokazywane jako czynne — wykonawca ubity w pół pracy
-//     trzymałby wtedy akapit na zawsze, a drugi dostawałby odmowę bez powodu;
-//  2. odmowa mówiąca „zajęte" i nic więcej — wykonawca nie wie, czy czekać,
-//     czy odstąpić, a Operator nie wie, kto mu blokuje pismo;
-//  3. nastawa spięcia spoza słownika, przez którą bilans spięcia przestaje
-//     znaczyć to, co mówi.
-
-// TestAgenciZajecieWygasleNieJestCzynne mierzy pierwszą szkodę.
+// TestAgenciZajecieWygasleNieJestCzynne mierzy pierwszą szkodę: zajęcie wygasłe pokazywane
+// jako czynne.
 func TestAgenciZajecieWygasleNieJestCzynne(t *testing.T) {
 	kod := "agent-redaktor"
 	wygasle := dane.ZajecieFragmentuStudia{
@@ -46,7 +39,8 @@ func TestAgenciZajecieWygasleNieJestCzynne(t *testing.T) {
 	}
 }
 
-// TestAgenciOdmowaNazywaWykonawce mierzy drugą szkodę.
+// TestAgenciOdmowaNazywaWykonawce mierzy drugą szkodę: odmowa zajęcia mówiąca zajęte i nic
+// więcej, bez nazwanego wykonawcy.
 func TestAgenciOdmowaNazywaWykonawce(t *testing.T) {
 	kod, nazwa := "agent-redaktor", "Redaktor pisma"
 	zNazwa := dane.ZajecieFragmentuStudia{AgentKod: &kod, AgentNazwa: &nazwa}
@@ -85,7 +79,8 @@ func TestAgenciZajecieTejSamejRekiNieZderzaSieZSoba(t *testing.T) {
 	}
 }
 
-// TestAgenciNastawaSpieciaPozaSlownikiemOdmawia mierzy trzecią szkodę.
+// TestAgenciNastawaSpieciaPozaSlownikiemOdmawia mierzy trzecią szkodę: nastawę spięcia
+// spoza słownika kontraktu.
 func TestAgenciNastawaSpieciaPozaSlownikiemOdmawia(t *testing.T) {
 	if err := agenciSprawdzNastaweSpiecia("nadpisz"); err == nil {
 		t.Errorf("nastawa spoza wyliczenia kontraktu przeszła")

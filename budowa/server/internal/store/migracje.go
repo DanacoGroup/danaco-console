@@ -44,7 +44,7 @@ func (b *Baza) Migruj() error {
 	return nil
 }
 
-// zastosowaneMigracje zwraca mapę wersja → suma kontrolna dla kroków już wykonanych.
+// Metoda zastosowaneMigracje zwraca mapę wersja-suma kontrolna dla kroków migracji już wykonanych w tej bazie.
 func (b *Baza) zastosowaneMigracje() (map[int]string, error) {
 	wiersze, err := b.DB.Query("SELECT wersja, suma_kontrolna FROM migracja")
 	if err != nil {
@@ -67,7 +67,7 @@ func (b *Baza) zastosowaneMigracje() (map[int]string, error) {
 	return zastosowane, nil
 }
 
-// zastosujMigracje wykonuje treść kroku i odnotowuje go w rejestrze.
+// Metoda zastosujMigracje wykonuje treść pojedynczego kroku migracji i odnotowuje go w rejestrze kroków.
 func (b *Baza) zastosujMigracje(krok migracja) error {
 	transakcja, err := b.DB.Begin()
 	if err != nil {

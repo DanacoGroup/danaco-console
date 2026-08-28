@@ -2,16 +2,9 @@ import { ErrorCode, type ErrorInfo } from '../../../shared/contract.ts';
 import type { Wynik } from './kanal.ts';
 
 /**
- * Sprawdzian kształtu odpowiedzi w warstwie protokołu.
- *
- * Kanał nie waliduje ładunku: rzutuje go na typ zapowiedziany przez kontrakt
- * i oddaje wywołującemu. Rzutowanie jest obietnicą kompilatora, nie rdzenia —
- * rdzeń starszej wersji albo pośrednik może przysłać treść bez pola
- * obowiązkowego, a wołający dostałby `undefined` w miejscu, w którym typ
- * obiecuje wartość.
- *
- * Sprawdzian zamienia taką odpowiedź w zwykłe niepowodzenie wywołania: wpis do
- * dziennika i `Wynik` z błędem `validation_failed`.
+ * Sprawdzian kształtu odpowiedzi w warstwie protokołu. Kanał nie waliduje
+ * ładunku i rzutuje go na typ zapowiedziany przez kontrakt; sprawdzian
+ * zamienia niezgodny kształt w zwykłe niepowodzenie wywołania.
  */
 export function sprawdzKsztalt<T>(
   wynik: Wynik<T>,
@@ -25,12 +18,12 @@ export function sprawdzKsztalt<T>(
   return { udany: false, blad: bladKsztaltu(komenda) };
 }
 
-/** Czy wartość jest napisem. */
+/** Czy wartość jest napisem — proste rozpoznanie typu, używane przez sprawdziany kształtu odpowiedzi. */
 export function czyTekst(wartosc: unknown): wartosc is string {
   return typeof wartosc === 'string';
 }
 
-/** Wykonanie sprawdzianu odporne na jego własny błąd. */
+/** Wykonanie sprawdzianu odporne na jego własny błąd; wyjątek sprawdzianu zamienia się w wynik odmowny, a nie w awarię wywołania. */
 function bezpiecznieSprawdz<T>(tresc: T, sprawdzian: (tresc: T) => boolean): boolean {
   try {
     return sprawdzian(tresc);
@@ -40,7 +33,7 @@ function bezpiecznieSprawdz<T>(tresc: T, sprawdzian: (tresc: T) => boolean): boo
   }
 }
 
-/** Błąd zgłaszany wywołującemu, gdy odpowiedź nie ma kształtu z kontraktu. */
+/** Błąd zgłaszany wywołującemu, gdy odpowiedź nie ma kształtu zapowiedzianego w kontrakcie, z nazwą komendy i kodem odmowy walidacji. */
 function bladKsztaltu(komenda: string): ErrorInfo {
   return {
     code: ErrorCode.ValidationFailed,

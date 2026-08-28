@@ -1,18 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY WYMIARÓW I GĘSTOŚCI
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wymiary kontrolek i płaszczyzn kokpitu oraz
-   przełączenia gęstości (dotyk, gęstość przestronna).
-
-   Gęstość zwarta jest domyślna: kontrolki 32 px, wiersze tabel 36 px,
-   pasek górny 48 px.
-
-   Progi punktów łamania stoją tu jako wartości nazwane. Warunek zapytania
-   medialnego nie przyjmuje `var()`, więc arkusz i tak zapisuje próg wprost —
-   żeton jest tu po to, by liczba miała jedno miejsce do sprawdzenia i by
-   warstwa skryptów (matchMedia, układ okien równoległych) czytała ten sam próg
-   co arkusze, a nie własną kopię.
-   ============================================================================ */
+/* Żetony wymiarów i gęstości opisują rozmiary kontrolek i płaszczyzn kokpitu wraz z przełączeniami gęstości między wariantem dotykowym a przestronnym. */
 
 :root {
   /* ---------------------------------------------------------------- *

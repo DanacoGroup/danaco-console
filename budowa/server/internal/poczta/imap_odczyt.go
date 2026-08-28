@@ -1,19 +1,6 @@
 // Odpowiedzialność pliku: odczyt skrzynki — foldery, wykaz nagłówków
-// i pobranie jednego listu w całości wraz z załącznikami. Zapis (szkic,
-// oznaczenie) leży w `imap_zapis.go`, wysyłka w `smtp.go` — plik wedle
-// odpowiedzialności.
-//
-// Zawężanie robi serwer, nie rdzeń. `mail.message.list` niesie nadawcę, frazę,
-// datę i „tylko nieprzeczytane"; wszystkie cztery jadą do IMAP SEARCH, więc
-// serwer oddaje same pasujące UID-y. Odsianie tego po stronie rdzenia
-// oznaczałoby ściągnięcie całej skrzynki po to, żeby wyrzucić z niej 99%
-// — przy skrzynce Operatora z dziesięcioma tysiącami listów to nie jest
-// szczegół wykonania, tylko różnica między odpowiedzią a zawieszeniem.
-//
-// Zapowiedź bierzemy częściowym odczytem (`Partial`), nie całą treścią. IMAP
-// pozwala poprosić o pierwsze N bajtów wskazanej części, więc wykaz dwudziestu
-// listów kosztuje dwadzieścia razy pół kilobajta zamiast dwudziestu razy „ile
-// ważył załącznik". Której części — rozstrzyga `sekcjaZapowiedzi` niżej.
+// i pobranie jednego listu w całości wraz z załącznikami; zapis leży
+// osobno.
 package poczta
 
 import (
@@ -26,21 +13,12 @@ import (
 	"github.com/emersion/go-imap/v2"
 )
 
-// dlugoscZapowiedzi to ile bajtów treści wystarcza, żeby rozpoznać sprawę.
+// dlugoscZapowiedzi to ile bajtów treści wystarcza, żeby rozpoznać sprawę,
+// bez ściągania całej wiadomości z serwera.
 const dlugoscZapowiedzi = 512
 
-// sekcjaZapowiedzi opisuje część pierwszą listu, przyciętą do zapowiedzi.
-//
-// Część 1, a nie sekcja `TEXT`. Sekcja `TEXT` znaczy w IMAP-ie „wszystko po
-// nagłówkach", więc dla listu wieloczęściowego jej pierwsze pół kilobajta to
-// granica MIME i nagłówki części, a nie treść. Część `1` jest natomiast pierwszą
-// częścią listu, czyli tą, którą klienty poczty pokazują jako treść; dla listu
-// jednoczęściowego RFC 3501 każe rozumieć ją jako całe ciało, więc jedna droga
-// obsługuje oba przypadki.
-//
-// Peek: podgląd wykazu nie ma prawa oznaczyć listu jako przeczytanego. Bez
-// tego samo wyszukanie listu zmieniałoby stan skrzynki Operatora — czynność
-// uboczna, której nikt nie zlecił.
+// sekcjaZapowiedzi opisuje część pierwszą listu, przyciętą do zapowiedzi;
+// sekcja TEXT znaczy w IMAP wszystko po nagłówkach, nie treść.
 func sekcjaZapowiedzi() *imap.FetchItemBodySection {
 	return &imap.FetchItemBodySection{
 		Part:    []int{1},
@@ -49,7 +27,8 @@ func sekcjaZapowiedzi() *imap.FetchItemBodySection {
 	}
 }
 
-// Foldery oddaje wszystkie foldery skrzynki — obsługuje `mail.folder.list`.
+// Foldery oddaje wszystkie foldery skrzynki — obsługuje mail.folder.list,
+// bez zawężenia po przeznaczeniu ani po zawartości.
 func (k *Klient) Foldery() ([]string, error) {
 	wykaz, err := k.imap.List("", "*", nil).Collect()
 	if err != nil {
@@ -63,13 +42,8 @@ func (k *Klient) Foldery() ([]string, error) {
 	return nazwy, nil
 }
 
-// Wykaz oddaje nagłówki listów pasujących do zawężenia, od najnowszego, wraz
-// z liczbą wszystkich pasujących — obsługuje `mail.message.list`.
-//
-// Liczba całkowita jest inną liczbą niż długość wykazu i to jest zamierzone:
-// kontrakt niesie `total` obok `messages` przyciętych granicą, żeby okno
-// mogło powiedzieć „pokazuję 20 z 137" bez drugiego pytania. Mylenie tych
-// dwóch liczb jest usterką, nie szczegółem (wzór z `design.asset.list`).
+// Wykaz oddaje nagłówki listów pasujących do zawężenia, od najnowszego,
+// wraz z liczbą wszystkich pasujących — obsługuje mail.message.list.
 func (k *Klient) Wykaz(z Zawezenie) ([]Naglowek, int, error) {
 	folder := nazwaFolderu(z.Folder, FolderOdebranych)
 	if _, err := k.imap.Select(folder, &imap.SelectOptions{ReadOnly: true}).Wait(); err != nil {
@@ -79,18 +53,15 @@ func (k *Klient) Wykaz(z Zawezenie) ([]Naglowek, int, error) {
 	warunki := &imap.SearchCriteria{}
 	if fraza := strings.TrimSpace(z.Fraza); fraza != "" {
 		// TEXT przeszukuje nagłówki i treść — dokładnie to, co obiecuje pole
-		// `query` kontraktu („fraza szukana w nadawcy, temacie i treści").
+		// query kontraktu.
 		warunki.Text = append(warunki.Text, fraza)
 	}
 	if nadawca := strings.TrimSpace(z.Nadawca); nadawca != "" {
 		warunki.Header = append(warunki.Header, imap.SearchCriteriaHeaderField{Key: "From", Value: nadawca})
 	}
 	if !z.Od.IsZero() {
-		// SINCE porównuje samą datę wewnętrzną — tak stanowi RFC 3501 i tak
-		// samo zachowuje się każdy serwer. Godziny z żądania są tu tracone
-		// świadomie; dosianie ich po stronie rdzenia niżej byłoby dokładaniem
-		// warunku, którego serwer nie zna, do wyniku, którego i tak nie widzimy
-		// w całości.
+		// SINCE porównuje samą datę wewnętrzną, tak stanowi RFC 3501; godziny
+		// z żądania są tracone.
 		warunki.Since = z.Od
 	}
 	if z.TylkoNieprzeczytane {
@@ -107,8 +78,8 @@ func (k *Klient) Wykaz(z Zawezenie) ([]Naglowek, int, error) {
 	}
 	wszystkich := len(uidy)
 
-	// Od najnowszego: UID rośnie z czasem doręczenia, więc porządek malejący
-	// UID-ów jest porządkiem „od najnowszej", którego żąda kontrakt.
+	// Od najnowszego: UID rośnie z czasem doręczenia, porządek malejący jest
+	// porządkiem od najnowszej.
 	sort.Slice(uidy, func(i, j int) bool { return uidy[i] > uidy[j] })
 	if z.Granica > 0 && len(uidy) > z.Granica {
 		uidy = uidy[:z.Granica]
@@ -130,16 +101,16 @@ func (k *Klient) Wykaz(z Zawezenie) ([]Naglowek, int, error) {
 	for _, w := range wiadomosci {
 		naglowki = append(naglowki, zlozNaglowek(folder, w))
 	}
-	// FETCH oddaje wiadomości w porządku numerów kolejnych, a nie w porządku
-	// zamówionych UID-ów — porządkujemy więc jeszcze raz, po własnemu.
+	// FETCH oddaje wiadomości w porządku numerów, nie zamówionych UID-ów —
+	// porządek wraca ustawiony.
 	sort.SliceStable(naglowki, func(i, j int) bool {
 		return naglowki[i].Chwila.After(naglowki[j].Chwila)
 	})
 	return naglowki, wszystkich, nil
 }
 
-// Pobierz ściąga jeden list w całości — treść i bajty załączników. Obsługuje
-// `mail.message.get`, czyli krok „przeanalizuj ten list", nie „odnajdź go".
+// Pobierz ściąga jeden list w całości — treść i bajty załączników; obsługuje
+// mail.message.get, krok przeanalizuj ten list.
 func (k *Klient) Pobierz(identyfikator string, zZalacznikami bool) (List, error) {
 	folder, uid, err := rozbierzIdentyfikator(identyfikator)
 	if err != nil {
@@ -154,10 +125,8 @@ func (k *Klient) Pobierz(identyfikator string, zZalacznikami bool) (List, error)
 		Flags:        true,
 		Envelope:     true,
 		InternalDate: true,
-		// Cała wiadomość jednym kawałkiem. Rozbiór MIME robimy u siebie
-		// (`list.go`), bo składanie treści z osobno pobieranych sekcji byłoby
-		// odtwarzaniem drzewa, które i tak przyjdzie w BODYSTRUCTURE — jeden
-		// odczyt zamiast N, jedna prawda o treści listu.
+		// Cała wiadomość jednym kawałkiem; rozbiór MIME idzie w list.go, żeby
+		// nie dublować odczytu sekcji.
 		BodySection: []*imap.FetchItemBodySection{{Peek: true}},
 	}).Collect()
 	if err != nil {
@@ -185,15 +154,14 @@ func (k *Klient) Pobierz(identyfikator string, zZalacznikami bool) (List, error)
 	if zZalacznikami {
 		list.Zalaczniki = zalaczniki
 	}
-	// Nazwy załączników bierzemy z rozebranej treści, a nie z BODYSTRUCTURE:
-	// obie drogi zwykle mówią to samo, ale rozebrana treść jest tą, z której
-	// naprawdę wyszły bajty — a wykaz nazw musi opisywać to, co Operator
-	// dostanie.
+	// Nazwy załączników pochodzą z rozebranej treści, nie z BODYSTRUCTURE, bo
+	// niesie ona bajty Operatora.
 	list.NazwyZalacznikow = nazwyZalacznikow(zalaczniki)
 	return list, nil
 }
 
-// nazwyZalacznikow wyciąga same nazwy — do pola wykazu kontraktu.
+// nazwyZalacznikow wyciąga same nazwy — do pola wykazu kontraktu, bez
+// treści bajtów, które niesie osobne pole załączników.
 func nazwyZalacznikow(zalaczniki []Zalacznik) []string {
 	if len(zalaczniki) == 0 {
 		return nil
@@ -205,14 +173,14 @@ func nazwyZalacznikow(zalaczniki []Zalacznik) []string {
 	return nazwy
 }
 
-// zlozIdentyfikator skleja folder z UID-em — patrz komentarz przy polu
-// `Naglowek.Identyfikator`.
+// zlozIdentyfikator skleja folder z UID-em, w postaci używanej przez
+// Naglowek.Identyfikator wszędzie w tym pakiecie.
 func zlozIdentyfikator(folder string, uid imap.UID) string {
 	return folder + ":" + strconv.FormatUint(uint64(uid), 10)
 }
 
-// rozbierzIdentyfikator rozdziela parę „folder:UID". Rozdzielamy po ostatnim
-// dwukropku, bo nazwa folderu ma prawo go zawierać, a UID nigdy.
+// rozbierzIdentyfikator rozdziela parę folder:UID po ostatnim dwukropku,
+// bo nazwa folderu ma prawo go zawierać, a UID nigdy.
 func rozbierzIdentyfikator(identyfikator string) (string, imap.UID, error) {
 	identyfikator = strings.TrimSpace(identyfikator)
 	granica := strings.LastIndex(identyfikator, ":")
@@ -227,7 +195,8 @@ func rozbierzIdentyfikator(identyfikator string) (string, imap.UID, error) {
 	return identyfikator[:granica], imap.UID(numer), nil
 }
 
-// nazwaFolderu bierze folder wskazany, a przy jego braku — domyślny.
+// nazwaFolderu bierze folder wskazany, a przy jego braku — domyślny dla
+// tej rodziny czynności skrzynki pocztowej.
 func nazwaFolderu(wskazany, domyslny string) string {
 	if s := strings.TrimSpace(wskazany); s != "" {
 		return s
@@ -235,8 +204,8 @@ func nazwaFolderu(wskazany, domyslny string) string {
 	return domyslny
 }
 
-// adresy zamienia koperty IMAP na adresy tekstowe. Kopertę bez adresu (początek
-// grupy) pomijamy — pusty tekst w wykazie odbiorców wyglądałby na odbiorcę.
+// adresy zamienia koperty IMAP na adresy tekstowe; koperta bez adresu
+// (początek grupy) jest pomijana, żeby nie wyglądać jak odbiorca.
 func adresy(lista []imap.Address) []string {
 	wynik := make([]string, 0, len(lista))
 	for _, a := range lista {
@@ -250,8 +219,8 @@ func adresy(lista []imap.Address) []string {
 	return wynik
 }
 
-// pierwszyAdres oddaje pierwszy adres listy albo pustkę — nadawca jest jeden,
-// ale koperta niesie go listą.
+// pierwszyAdres oddaje pierwszy adres listy albo pustkę, gdy nadawca jest
+// jeden, ale koperta niesie go listą adresów.
 func pierwszyAdres(lista []imap.Address) string {
 	if a := adresy(lista); len(a) > 0 {
 		return a[0]
@@ -259,8 +228,8 @@ func pierwszyAdres(lista []imap.Address) string {
 	return ""
 }
 
-// czyNieprzeczytana czyta brak znacznika \Seen. Odwrotność jest tu zamierzona:
-// IMAP nie ma znacznika „nieprzeczytana", ma wyłącznie „przeczytana".
+// czyNieprzeczytana czyta brak znacznika Seen; odwrotność jest tu
+// zamierzona, bo IMAP nie ma znacznika nieprzeczytana.
 func czyNieprzeczytana(znaczniki []imap.Flag) bool {
 	for _, z := range znaczniki {
 		if z == imap.FlagSeen {
@@ -271,9 +240,7 @@ func czyNieprzeczytana(znaczniki []imap.Flag) bool {
 }
 
 // chwilaListu bierze datę z nagłówka listu, a gdy jej nie ma — chwilę
-// doręczenia. Kolejność jest zamierzona: kontrakt pyta o „czas nadania",
-// a data doręczenia jest przybliżeniem, po które sięgamy dopiero wtedy, gdy
-// nadawca daty nie podał.
+// doręczenia; kolejność wynika z pytania kontraktu o czas nadania.
 func chwilaListu(koperta *imap.Envelope, doreczono time.Time) time.Time {
 	if koperta != nil && !koperta.Date.IsZero() {
 		return koperta.Date

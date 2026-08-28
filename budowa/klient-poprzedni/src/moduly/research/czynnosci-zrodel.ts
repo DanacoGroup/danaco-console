@@ -9,15 +9,8 @@ import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 import type { StanOknaBadania } from './stan-okna-badania';
 
 /**
- * Czynności Operatora w Sources Manager.
- *
- * Jedna odpowiedzialność: co się dzieje po naciśnięciu. Wydzielone z pliku
- * okna, bo okno składa widok, a to jest jego zachowanie — dwie rzeczy, dwa
- * pliki, oba w rozmiarze do przeczytania naraz.
- *
- * Każde naciśnięcie daje odpowiedź. Akcja bez własnej komendy idzie
- * generycznym `window.action`; brak okna badania i brak treści pola wracają
- * zdaniem, nie ciszą i nie wygaszeniem kontrolki.
+ * Plik odpowiada na pytanie, co dzieje się po naciśnięciu kontrolki w oknie
+ * Sources Manager, podczas gdy samo składanie widoku należy do pliku okna.
  */
 export interface KontekstZrodel {
   stan: StanBadania;
@@ -27,7 +20,10 @@ export interface KontekstZrodel {
   przejdz(kodOkna: string): void;
 }
 
-/** Rozdziela akcję panelu na drogę własną okna i drogę generyczną. */
+/**
+ * Rozdziela akcję panelu źródeł na drogę własną okna, obsługiwaną komendą
+ * dedykowaną, oraz drogę generyczną przekazywaną rdzeniowi jako window.action.
+ */
 export async function wykonajAkcjeZrodel(
   kontekst: KontekstZrodel,
   akcja: AkcjaBadania,
@@ -64,12 +60,8 @@ export async function wykonajAkcjeZrodel(
 }
 
 /**
- * Otwarcie lektury z paska akcji — pierwsze z zaznaczonych źródeł.
- *
- * Przycisk „Czytaj" przy pozycji wskazuje źródło wprost; akcja paska działa na
- * zaznaczeniu, bo pasek nie zna wiersza, nad którym stoi kursor. Czytać można
- * jedno źródło naraz, więc przy wielu zaznaczonych okno mówi, które wzięło,
- * zamiast wybierać po cichu.
+ * Otwiera lekturę pierwszego z zaznaczonych źródeł, ponieważ pasek akcji działa
+ * na zaznaczeniu i nie zna wiersza, nad którym stoi kursor.
  */
 function otworzLekture(kontekst: KontekstZrodel): void {
   const { stan, odpowiedz } = kontekst;
@@ -93,7 +85,10 @@ function otworzLekture(kontekst: KontekstZrodel): void {
   );
 }
 
-/** Droga generyczna: `window.action` z kodem akcji i zaznaczeniem w parametrach. */
+/**
+ * Przekazuje kod akcji oraz zaznaczone źródła do rdzenia komendą window.action,
+ * bez własnej obsługi po stronie okna Sources Manager.
+ */
 async function przezPanelAkcji(kontekst: KontekstZrodel, akcja: AkcjaBadania): Promise<void> {
   const { stan, odpowiedz } = kontekst;
   if (stan.idOkna() === '') {
@@ -110,13 +105,14 @@ async function przezPanelAkcji(kontekst: KontekstZrodel, akcja: AkcjaBadania): P
     odpowiedz.pokaz(opisOdmowyBledu(`Akcja „${akcja.nazwa}"`, wynik.blad, wynik.nieznanyTyp), false);
     return;
   }
-  // Zdanie mówi o wyniku oddanym przez rdzeń, nie o wykonaniu akcji: rdzeń
-  // kwituje sukcesem samo przyjęcie zgłoszenia. Odmowę braku wykonawcy
-  // pokazuje gałąź wyżej, słowami rdzenia.
+  // Zdanie mówi o wyniku oddanym przez rdzeń, nie o wykonaniu samej akcji.
   odpowiedz.pokaz(`Rdzeń oddał wynik akcji „${akcja.nazwa}".`, true);
 }
 
-/** Katalogowanie źródła — komenda `research.source.add` wraz z metadanymi. */
+/**
+ * Kataloguje źródło komendą research.source.add wraz z metadanymi pobranymi
+ * z formularza, po sprawdzeniu, że pole tytułu zostało wypełnione.
+ */
 export async function skatalogujZrodlo(kontekst: KontekstZrodel): Promise<void> {
   const { stan, okno, odpowiedz, formularz } = kontekst;
   if (!formularz.czyKompletny()) {
@@ -145,12 +141,8 @@ export async function skatalogujZrodlo(kontekst: KontekstZrodel): Promise<void> 
 }
 
 /**
- * Trzy stany wykazu źródeł: pytam, mam treść, nie mam czego pokazać.
- *
- * Pustka wykazu to nie to samo, co brak miejsca na wykaz: przy niewskazanym
- * oknie badania `research.source.add` odmawia, bo `windowId` jest polem
- * obowiązkowym, więc zaproszenie do skatalogowania pierwszego źródła byłoby
- * wtedy mylące. Właściwe zdanie dobiera `pustka-okien.ts`.
+ * Ustawia jeden z trzech stanów wykazu źródeł: odczyt trwa, wykaz niesie treść,
+ * albo nie ma czego pokazać; pustkę odróżnia od braku wskazanego okna badania.
  */
 export function ustawStanZrodel(kontekst: KontekstZrodel, liczba: number): void {
   const { stan, okno } = kontekst;
@@ -170,14 +162,10 @@ export function ustawStanZrodel(kontekst: KontekstZrodel, liczba: number): void 
 }
 
 /**
- * Tekst swobodny okna przekazywany komendom bez własnego formularza.
- *
- * Żądanie składane bez wskazania Operatora wracałoby odmową walidacji, z której
- * nic dla niego nie wynika. Ten jeden krok mówi, skąd okno bierze treść — i gdy
- * jej nie ma, `wywolania-komend.ts` nazywa brak, zamiast wysyłać puste pole.
+ * Podaje tekst swobodny okna przekazywany komendom, które nie mają własnego
+ * formularza; brak treści nazywa plik wywolania-komend.ts.
  */
 function tekstDlaKomendy(kontekst: KontekstZrodel): string {
-  // Pole tytułu formularza źródła niesie tekst swobodny tej rodziny: adres do
-  // pozyskania, ścieżkę bibliografii albo etykiety po przecinku.
+  // Pole tytułu niesie adres, ścieżkę bibliografii albo etykiety po przecinku.
   return kontekst.formularz.zlecenie('').tytul.trim();
 }

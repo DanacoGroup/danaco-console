@@ -1,21 +1,8 @@
 import { pokazKomunikat } from '../aplikacja/komunikaty';
 
-/**
- * Odpowiedź kontrolek paska górnego, które nie mają jeszcze funkcji.
- *
- * Zasada zera blokad zabrania wygaszania kontrolki jako sposobu powiedzenia
- * „to jeszcze nie działa". Kontrolka zostaje klikalna, a z klikalności wynika
- * obowiązek odwrotny: każde naciśnięcie musi dać odpowiedź. Odpowiedź mówi, co
- * jest nieczynne i dlaczego, i niczego nie udaje.
- *
- * Każdy powód niżej jest sprawdzalny w `shared/contract.json`: jeżeli komendy
- * nie ma, tekst mówi wprost, że jej nie ma, i nie zmyśla nazwy. Zdanie
- * zaprzeczające funkcji, która istnieje, jest tak samo szkodliwe jak przycisk
- * udający funkcję, której nie ma — prowadzi Operatora od okna, które by mu
- * pomogło.
- */
+// Odpowiedź kontrolek paska bez gotowej funkcji: naciśnięcie zawsze musi dać wyjaśnienie.
 
-/** Powód nieczynności jednej kontrolki paska. */
+/** Powód nieczynności jednej kontrolki paska górnego, wypisywany razem z tytułem sterującym treścią komunikatu. */
 interface Powod {
   tytul: string;
   tresc: string;
@@ -47,7 +34,7 @@ const POWODY = {
   },
 } as const satisfies Record<string, Powod>;
 
-/** Nazwa kontrolki paska pozostającej bez funkcji. */
+/** Nazwa kontrolki paska pozostającej bez gotowej funkcji, używana jako klucz wykazu powodów jej niegotowości. */
 export type NieczynnaKontrolka = keyof typeof POWODY;
 
 /**

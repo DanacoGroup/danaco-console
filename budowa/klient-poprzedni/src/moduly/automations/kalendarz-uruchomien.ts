@@ -1,24 +1,9 @@
 import type { AutomationExecution } from '../../../../shared/contract';
 import { nastepneUruchomienia } from './nastepne-uruchomienia';
 
-/**
- * Kalendarz uruchomień okna Scheduler — miesięczny i tygodniowy podgląd
- * terminów zaplanowanych oraz przebiegów już odbytych.
- *
- * Wykaz pięciu najbliższych terminów mówi „kiedy najbliżej"; kalendarz mówi
- * „jak gęsto" i pokazuje to razem z historią, dzięki czemu widać dzień, w
- * którym uruchomienie wypadało, a przebiegu nie było.
- *
- * Terminy zaplanowane liczy okno z wpisanej cykliczności (`nastepne-uruchomienia.ts`),
- * bo dotyczą reguły jeszcze niezapisanej. Terminem obowiązującym pozostaje
- * `AutomationSchedule.nextRunAt` liczone przez rdzeń — kalendarz jest podglądem
- * i mówi to wprost w swoim podpisie.
- *
- * Dni układają się według czasu miejscowego przeglądarki, bo tak Operator czyta
- * kalendarz; rachunek terminu idzie w UTC, tak samo jak w rdzeniu.
- */
+/** Kalendarz uruchomień okna Scheduler pokazuje podgląd terminów zaplanowanych i przebiegów odbytych. */
 
-/** Zakres podglądu kalendarza. */
+/** Zakres podglądu kalendarza, tydzień albo miesiąc, wybierany przełącznikiem nad siatką dni kalendarza. */
 export const ZAKRESY_KALENDARZA = {
   tydzien: 'tydzien',
   miesiac: 'miesiac',
@@ -26,22 +11,22 @@ export const ZAKRESY_KALENDARZA = {
 
 export type ZakresKalendarza = (typeof ZAKRESY_KALENDARZA)[keyof typeof ZAKRESY_KALENDARZA];
 
-/** Zakresy w kolejności przełącznika wraz z ich nazwami na ekranie. */
+/** Zakresy w kolejności przełącznika wraz z ich nazwami widocznymi Operatorowi na ekranie tego kalendarza. */
 export const NAZWY_ZAKRESOW: ReadonlyArray<[ZakresKalendarza, string]> = [
   [ZAKRESY_KALENDARZA.tydzien, 'tydzień'],
   [ZAKRESY_KALENDARZA.miesiac, 'miesiąc'],
 ];
 
-/** Ile dni obejmuje każdy zakres; miesiąc liczymy czterema pełnymi tygodniami. */
+/** Ile dni obejmuje każdy zakres podglądu; miesiąc liczy się czterema pełnymi tygodniami, nie datami kalendarza. */
 const DNI_ZAKRESU: Readonly<Record<ZakresKalendarza, number>> = {
   [ZAKRESY_KALENDARZA.tydzien]: 7,
   [ZAKRESY_KALENDARZA.miesiac]: 28,
 };
 
-/** Ile terminów zaplanowanych wolno wyliczyć na potrzeby kalendarza. */
+/** Ile terminów zaplanowanych wolno wyliczyć na potrzeby kalendarza, zanim wyliczanie zostanie odcięte. */
 const GRANICA_TERMINOW = 60;
 
-/** Jeden dzień kalendarza wraz z tym, co na nim stoi. */
+/** Jeden dzień kalendarza wraz z tym, co na nim stoi: zapis daty, liczba terminów i liczba przebiegów dnia. */
 export interface DzienKalendarza {
   /** Dzień w zapisie ISO (RRRR-MM-DD), w czasie miejscowym. */
   dzien: string;
@@ -51,11 +36,7 @@ export interface DzienKalendarza {
   odbyte: number;
 }
 
-/**
- * Składa dni kalendarza od dnia bieżącego wprzód.
- *
- * Funkcja jest czysta — sprawdzian czyta ją wprost, bez montażu okna.
- */
+/** Składa dni kalendarza od dnia bieżącego wprzód; funkcja jest czysta, sprawdzian czyta ją wprost bez okna. */
 export function dniKalendarza(
   zapisCyklicznosci: string,
   przebiegi: readonly AutomationExecution[],
@@ -83,11 +64,7 @@ export function dniKalendarza(
   return dni;
 }
 
-/**
- * Buduje siatkę kalendarza. Dzień pusty zostaje w siatce — luka między
- * uruchomieniami jest informacją, a siatka z wyciętymi dniami przestałaby być
- * kalendarzem.
- */
+/** Buduje siatkę kalendarza; dzień pusty zostaje w siatce, bo luka między uruchomieniami jest informacją. */
 export function siatkaKalendarza(dni: readonly DzienKalendarza[]): HTMLElement {
   const siatka = document.createElement('div');
   siatka.className = 'da-kalendarz';
@@ -116,7 +93,7 @@ export function siatkaKalendarza(dni: readonly DzienKalendarza[]): HTMLElement {
   return siatka;
 }
 
-/** Zdanie pod kalendarzem: skąd biorą się terminy i co jest terminem wiążącym. */
+/** Zdanie pod kalendarzem nazywa, skąd biorą się terminy i co jest terminem wiążącym dla samego Operatora. */
 export function podpisKalendarza(dni: readonly DzienKalendarza[]): string {
   const zaplanowane = dni.reduce((suma, wpis) => suma + wpis.zaplanowane, 0);
   const odbyte = dni.reduce((suma, wpis) => suma + wpis.odbyte, 0);
@@ -127,7 +104,7 @@ export function podpisKalendarza(dni: readonly DzienKalendarza[]): string {
   );
 }
 
-/** Zdanie w kaflu dnia; dzień bez niczego mówi to wprost, a nie zostaje pusty. */
+/** Zdanie w kaflu dnia; dzień bez niczego mówi to wprost, a nie zostaje pusty bez żadnego zdania widocznego. */
 function opisDnia(wpis: DzienKalendarza): string {
   if (wpis.zaplanowane === 0 && wpis.odbyte === 0) return 'bez uruchomień';
   const czesci: string[] = [];
@@ -136,7 +113,7 @@ function opisDnia(wpis: DzienKalendarza): string {
   return czesci.join(' · ');
 }
 
-/** Dzień w zapisie ISO, w czasie miejscowym — kluczem siatki i podpisem kafla. */
+/** Dzień w zapisie ISO, w czasie miejscowym, jest kluczem siatki i podpisem kafla widocznym dla Operatora. */
 function zapisDnia(data: Date): string {
   const miesiac = String(data.getMonth() + 1).padStart(2, '0');
   const dzien = String(data.getDate()).padStart(2, '0');

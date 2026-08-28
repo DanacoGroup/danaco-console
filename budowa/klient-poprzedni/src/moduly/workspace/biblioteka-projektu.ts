@@ -15,28 +15,15 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Project Library — okno zarządcy modułu Workspace: dodanie pliku i przegląd
- * zasobów projektu. Odpowiednik Library Explorer ograniczony do zakresu
- * projektu, ale okno odrębne, nie ten sam byt. Stąd trzy czynności: przegląd
+ * Project Library to okno zarządcy modułu Workspace ograniczone do zakresu projektu: przegląd
  * z wyszukiwaniem, wgranie i praca zbiorowa na zaznaczeniu.
- *
- * Trzy komendy należą do modułu Library, nie do Workspace: wgranie
- * (`library.file.upload`), wersje (`library.version.list`) i etykieta zbiorcza
- * (`library.tag.set`) idą wprost do rdzenia, który ma dla nich uchwyty
- * (`adapter_modul_library_uchwyty.go`). Odmowa — merytoryczna albo awaryjna
- * koperta `library.unknown` — trafia do stanu błędu okna zamiast do przycisku,
- * który milczy.
- *
- * Udostępnienie do modułu zewnętrznego idzie przenoszeniem kontekstu
- * (`context.transfer`): zaznaczone pliki jadą wraz z projektem do modułu
- * docelowego jedną komendą.
  */
 export interface OknoBiblioteki {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Moduły docelowe udostępnienia — te, które pracują na materiale projektu. */
+/** Moduły docelowe udostępnienia to te, które pracują na materiale projektu, wymienione jako pary kodu i etykiety modułu. */
 const MODULY_DOCELOWE: ReadonlyArray<[string, string]> = [
   ['studio', 'Studio — edycja dokumentu'],
   ['research', 'Research — materiał badania'],
@@ -126,11 +113,7 @@ export function utworzOknoBiblioteki(
     });
   }
 
-  /**
-   * Odczyt wykazu zasobów. Oddaje to, co narysował, bo czynności zbiorcze
-   * sprawdzają po nim skutek swojej pracy; `null` znaczy „odczyt nieudany”
-   * i wolno po nim mówić wyłącznie o odmowie, nie o zawartości projektu.
-   */
+  /** Odczyt wykazu zasobów oddaje to, co narysował, bo czynności zbiorcze sprawdzają po nim skutek pracy. */
   async function odczytaj(): Promise<readonly LibraryFile[] | null> {
     const projekt = stan.projekt();
     if (projekt === '') {
@@ -141,14 +124,12 @@ export function utworzOknoBiblioteki(
     tresc.ladowanie('Odczyt zasobów projektu…');
     const wynik = await zrodlo.biblioteka({ projectId: projekt, query: szukaj.value });
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Licznik gaśnie razem z wykazem: liczba sprzed odmowy mówiłaby o zasobach,
-      // których to okno właśnie nie zdołało odczytać.
+      // Licznik gaśnie razem z wykazem: liczba sprzed odmowy mówiłaby o zasobach, których nie odczytano.
       rama.ustawZnacznik('');
       tresc.blad('Rdzeń nie oddał zasobów projektu.', wynik.blad);
       return null;
     }
-    // Licznik mówi, ile pozycji rdzeń oddał na zadane pytanie — przy niepustej
-    // frazie jest to liczba trafień, nie liczba plików projektu.
+    // Licznik mówi, ile pozycji rdzeń oddał na pytanie: przy frazie to liczba trafień, nie plików.
     rama.ustawZnacznik(`pliki: ${wynik.wynik.length}`);
     if (wynik.wynik.length === 0) {
       tresc.pusto(
@@ -176,8 +157,7 @@ export function utworzOknoBiblioteki(
 
   szukaj.addEventListener('change', () => void odczytaj());
   odswiez.addEventListener('click', () => void odczytaj());
-  // Zmiana projektu unieważnia zaznaczenie: identyfikatory plików są ścieżkami
-  // w obrębie projektu, więc w innym projekcie znaczyłyby co innego.
+  // Zmiana projektu unieważnia zaznaczenie: identyfikatory plików są ścieżkami w obrębie projektu.
   stan.naZmiane(() => {
     zaznaczone.clear();
     void odczytaj();

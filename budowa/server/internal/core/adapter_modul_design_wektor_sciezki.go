@@ -1,29 +1,6 @@
 // Odpowiedzialność pliku: rachunek na ścieżkach wektorowych modułu Design —
 // przekład węzłów kontraktu na ścieżkę biblioteki i z powrotem, serializacja
-// wypełnienia i obrysu do zapisu w bazie, złożenie dokumentu SVG oraz wydanie
-// PDF i EPS. Czynności kontraktu stoją w `adapter_modul_design_wektor.go`;
-// tutaj leży sam rachunek, żeby miał jedno miejsce i jedną prawdę.
-//
-// ── Rachunek jest wkompilowany, nie wołany ──────────────────────────────────
-// Operacje logiczne na ścieżkach, wydanie PDF i wydanie EPS idą przez
-// `tdewolff/canvas` — bibliotekę Go wkompilowaną w binarium serwera. Nie ma tu
-// ani jednego uruchomienia procesu i mieć nie będzie: programy do obrysowywania
-// konturów, rysowania wektorowego i rasteryzacji języka strony leżą poza
-// instalką Operatora, więc funkcja od nich zależna byłaby u niego odmową, nie
-// funkcją.
-//
-// ── Węzeł jest bytem produktu, ścieżka biblioteki tylko rachunkiem ──────────
-// Kontrakt niesie węzły z uchwytami (`DesignVectorNode`) i to one leżą w bazie.
-// Ścieżka biblioteki powstaje na czas rachunku i ginie po nim; wynik wraca
-// znowu jako węzły, żeby Operator mógł go dalej ciągnąć piórem. Zapisanie
-// wyniku jako gotowego napisu SVG odebrałoby mu edycję — kształt przestałby
-// mieć węzły, a zostałby obrazkiem.
-//
-// ── Uchwyt jest ODSUNIĘCIEM, nie punktem ────────────────────────────────────
-// `handleInX`/`handleOutX` kontraktu są odsunięciami od węzła (tak opisuje je
-// treść pola). Punkt sterujący krzywej to więc węzeł plus odsunięcie. Odczyt
-// odsunięcia jako współrzędnej bezwzględnej przesuwałby krzywe ku początkowi
-// układu przy każdym przejściu przez bazę.
+// wypełnienia i obrysu, złożenie dokumentu SVG oraz wydanie PDF i EPS.
 package core
 
 import (
@@ -54,7 +31,8 @@ const (
 	granicaPrecyzjiSciezkiDesignu = 12
 )
 
-// wezlyZeZapisuDesignu rozkłada zapis JSON węzłów z kolumny na węzły kontraktu.
+// wezlyZeZapisuDesignu rozkłada zapis JSON węzłów z kolumny na węzły kontraktu,
+// oddając usterkę zaplecza, gdy zapis nie jest wykazem węzłów.
 func wezlyZeZapisuDesignu(zapis string) ([]shared.DesignVectorNode, error) {
 	var wezly []shared.DesignVectorNode
 	if err := json.Unmarshal([]byte(zapis), &wezly); err != nil {
@@ -63,7 +41,8 @@ func wezlyZeZapisuDesignu(zapis string) ([]shared.DesignVectorNode, error) {
 	return wezly, nil
 }
 
-// zapisWezlowDesignu składa zapis JSON węzłów do kolumny.
+// zapisWezlowDesignu składa zapis JSON węzłów do kolumny bazy, odwrotnie do
+// wezlyZeZapisuDesignu, który go rozkłada.
 func zapisWezlowDesignu(wezly []shared.DesignVectorNode) (string, error) {
 	bajty, err := json.Marshal(wezly)
 	if err != nil {
@@ -125,13 +104,9 @@ func obrysZeZapisuDesignu(zapis *string) *shared.DesignStroke {
 	return &obrys
 }
 
-// sciezkaBibliotekiDesignu składa ścieżkę biblioteki z węzłów kontraktu.
-//
-// Odcinek między dwoma węzłami jest krzywą sześcienną, gdy którykolwiek z nich
-// niesie uchwyt po tej stronie odcinka; inaczej jest odcinkiem prostym. Brak
-// uchwytu z jednej strony bierze punkt sterujący na samym węźle — tak działa
-// pióro w każdym programie wektorowym: węzeł narożny z jednej strony
-// i wygładzony z drugiej daje krzywą, która z jednej strony wchodzi prosto.
+// sciezkaBibliotekiDesignu składa ścieżkę biblioteki z węzłów kontraktu: odcinek
+// między dwoma węzłami jest krzywą sześcienną, gdy którykolwiek z nich niesie
+// uchwyt po tej stronie odcinka, inaczej jest odcinkiem prostym.
 func sciezkaBibliotekiDesignu(wezly []shared.DesignVectorNode, zamknieta bool) *canvas.Path {
 	sciezka := &canvas.Path{}
 	if len(wezly) == 0 {
@@ -148,7 +123,8 @@ func sciezkaBibliotekiDesignu(wezly []shared.DesignVectorNode, zamknieta bool) *
 	return sciezka
 }
 
-// dopiszOdcinekSciezkiDesignu dokłada jeden odcinek między parą węzłów.
+// dopiszOdcinekSciezkiDesignu dokłada jeden odcinek między parą węzłów,
+// dobierając odcinek prosty albo krzywą sześcienną według uchwytów węzłów.
 func dopiszOdcinekSciezkiDesignu(sciezka *canvas.Path, od, do shared.DesignVectorNode) {
 	wyjscieX, wyjscieY, maWyjscie := uchwytWyjsciaDesignu(od)
 	wejscieX, wejscieY, maWejscie := uchwytWejsciaDesignu(do)
@@ -168,10 +144,8 @@ func dopiszOdcinekSciezkiDesignu(sciezka *canvas.Path, od, do shared.DesignVecto
 }
 
 // uchwytWyjsciaDesignu i uchwytWejsciaDesignu oddają odsunięcie uchwytu wraz
-// z rozstrzygnięciem, czy węzeł go w ogóle ma. Uchwyt zerowy jest uchwytem
-// wskazanym wprost i nie jest tym samym co uchwyt nieustawiony, ale dla
-// rachunku daje ten sam punkt sterujący — rozróżnienie ma znaczenie przy
-// odczycie, nie przy rysowaniu.
+// z rozstrzygnięciem, czy węzeł go w ogóle ma; uchwyt zerowy różni się od
+// uchwytu nieustawionego, choć dla rysowania dają ten sam punkt sterujący.
 func uchwytWyjsciaDesignu(w shared.DesignVectorNode) (float64, float64, bool) {
 	if w.HandleOutX == nil && w.HandleOutY == nil {
 		return 0, 0, false
@@ -201,13 +175,8 @@ func uchwytWejsciaDesignu(w shared.DesignVectorNode) (float64, float64, bool) {
 }
 
 // wezlyZeSciezkiBibliotekiDesignu rozkłada ścieżkę biblioteki na węzły
-// kontraktu wraz z rozstrzygnięciem, czy jest zamknięta.
-//
-// Łuki wchodzą jako krzywe (`ReplaceArcs`), bo kontrakt nie ma węzła
-// łukowego — a łuk zamilczany zgubiłby kawałek kształtu. Wielościeżkowy wynik
-// operacji logicznej daje jeden wykaz węzłów: kontrakt niesie jedną ścieżkę
-// wynikową (`DesignVectorBooleanResponse.Path`), więc rozdzielone kawałki idą
-// po sobie, a nie giną.
+// kontraktu wraz z rozstrzygnięciem, czy jest zamknięta; łuki wchodzą jako
+// krzywe (`ReplaceArcs`), bo kontrakt nie ma węzła łukowego.
 func wezlyZeSciezkiBibliotekiDesignu(sciezka *canvas.Path) ([]shared.DesignVectorNode, bool) {
 	if sciezka == nil || sciezka.Empty() {
 		return nil, false
@@ -228,9 +197,10 @@ func wezlyZeSciezkiBibliotekiDesignu(sciezka *canvas.Path) ([]shared.DesignVecto
 				X: koniec.X, Y: koniec.Y, Kind: shared.DesignVectorNodeKindCorner,
 			})
 		case canvas.QuadToCmd:
-			// Krzywa kwadratowa idzie do postaci sześciennej, bo węzeł kontraktu
-			// ma dwa uchwyty, nie jeden wspólny punkt sterujący. Przeliczenie
-			// jest dokładne: dwie trzecie drogi od każdego końca do punktu
+			// Krzywa kwadratowa idzie do postaci sześciennej: węzeł kontraktu ma
+			// dwa uchwyty, nie jeden punkt.
+
+			// Przeliczenie jest dokładne: dwie trzecie drogi do punktu
 			// sterującego dają tę samą krzywą.
 			poczatek, sterujacy, koniec := skaner.Start(), skaner.CP1(), skaner.End()
 			pierwszy := canvas.Point{
@@ -247,9 +217,8 @@ func wezlyZeSciezkiBibliotekiDesignu(sciezka *canvas.Path) ([]shared.DesignVecto
 				skaner.Start(), skaner.CP1(), skaner.CP2(), skaner.End())
 		case canvas.CloseCmd:
 			zamknieta = true
-			// Domknięcie wracające do punktu startowego nie dokłada węzła —
-			// węzeł w tym samym miejscu, co pierwszy, byłby drugim zapisem
-			// jednego narożnika.
+			// Domknięcie wracające do startu nie dokłada węzła — byłby to drugi
+			// zapis jednego narożnika.
 			koniec := skaner.End()
 			if len(wezly) > 0 && !bliskoDesignu(wezly[0].X, koniec.X) {
 				wezly = append(wezly, shared.DesignVectorNode{
@@ -261,9 +230,11 @@ func wezlyZeSciezkiBibliotekiDesignu(sciezka *canvas.Path) ([]shared.DesignVecto
 	if len(wezly) > 1 && zamknieta && bliskoDesignu(wezly[0].X, wezly[len(wezly)-1].X) &&
 		bliskoDesignu(wezly[0].Y, wezly[len(wezly)-1].Y) {
 
-		// Ostatni węzeł pokrywający się z pierwszym przy ścieżce zamkniętej jest
-		// zbędny: domknięcie samo prowadzi z ostatniego do pierwszego. Uchwyt
-		// wchodzący zostaje jednak przeniesiony, bo opisuje krzywiznę domknięcia.
+		// Ostatni węzeł zbieżny z pierwszym jest zbędny — domknięcie prowadzi do
+		// pierwszego.
+
+		// Uchwyt wchodzący zostaje jednak przeniesiony, bo opisuje krzywiznę
+		// domknięcia.
 		ostatni := wezly[len(wezly)-1]
 		wezly[0].HandleInX, wezly[0].HandleInY = ostatni.HandleInX, ostatni.HandleInY
 		wezly = wezly[:len(wezly)-1]
@@ -311,8 +282,8 @@ func rodzajWezlaDesignu(w shared.DesignVectorNode) shared.DesignVectorNodeKind {
 	if dlugoscWejscia == 0 || dlugoscWyjscia == 0 {
 		return shared.DesignVectorNodeKindCorner
 	}
-	// Iloczyn wektorowy bliski zeru znaczy uchwyty na jednej prostej; iloczyn
-	// skalarny ujemny — po przeciwnych stronach węzła.
+	// Iloczyn wektorowy bliski zeru znaczy uchwyty współliniowe; skalarny
+	// ujemny — strony przeciwne.
 	wektorowy := wejscieX*wyjscieY - wejscieY*wyjscieX
 	skalarny := wejscieX*wyjscieX + wejscieY*wyjscieY
 	wspolliniowe := math.Abs(wektorowy) <= tolerancjaSciezkiDesignu*dlugoscWejscia*dlugoscWyjscia
@@ -340,11 +311,9 @@ func zapisSvgSciezkiDesignu(wezly []shared.DesignVectorNode, zamknieta bool) str
 }
 
 // przytnijPrecyzjeWezlowDesignu zaokrągla współrzędne i uchwyty do zadanej
-// liczby miejsc po przecinku — rachunek czyszczenia `design.vector.optimize`.
-//
-// Czyszczenie nie usuwa węzłów. Węzeł, którego Operator postawił, jest jego
-// rozstrzygnięciem o kształcie; ubytek bajtów bierze się z krótszego zapisu
-// liczb, a nie z gubienia jego pracy.
+// liczby miejsc po przecinku — rachunek czyszczenia `design.vector.optimize`;
+// czyszczenie nie usuwa węzłów, ubytek bajtów bierze się z krótszego zapisu
+// liczb.
 func przytnijPrecyzjeWezlowDesignu(wezly []shared.DesignVectorNode,
 	miejsca int) []shared.DesignVectorNode {
 
@@ -373,12 +342,8 @@ func przytnijPrecyzjeWezlowDesignu(wezly []shared.DesignVectorNode,
 }
 
 // ksztaltWezlamiDesignu składa węzły kształtu podstawowego — obsługuje
-// `design.vector.shape.add`.
-//
-// Kształt powstaje OD RAZU jako węzły ścieżki, a nie jako osobny byt do
-// późniejszej zamiany: prostokąt dorysowany na kanwie ma dać się natychmiast
-// ciągnąć piórem za narożnik, bez komendy „zamień w ścieżkę", której kontrakt
-// nie ma i mieć nie będzie.
+// `design.vector.shape.add`; kształt powstaje od razu jako węzły ścieżki,
+// a nie jako osobny byt do późniejszej zamiany.
 func ksztaltWezlamiDesignu(z shared.DesignVectorShapeAddRequest) ([]shared.DesignVectorNode, bool) {
 	switch z.Kind {
 	case shared.DesignShapeKindRectangle:
@@ -399,8 +364,8 @@ func ksztaltWezlamiDesignu(z shared.DesignVectorShapeAddRequest) ([]shared.Desig
 		ramiona := liczbaWierzcholkowDesignu(z.Points, 5)
 		udzialWewnetrzny := 0.5
 		if z.InnerRadius != nil && *z.InnerRadius > 0 {
-			// Promień wewnętrzny podaje się w jednostkach kompozycji, a rachunek
-			// gwiazdy potrzebuje udziału względem promienia zewnętrznego.
+			// Promień wewnętrzny podaje się w jednostkach kompozycji; gwiazda
+			// liczy udział względem zewnętrznego.
 			zewnetrzny := mniejszaDesignu(z.Width, z.Height) / 2
 			if zewnetrzny > 0 {
 				udzialWewnetrzny = przytnijUlamekDesignu(*z.InnerRadius / zewnetrzny)
@@ -489,7 +454,9 @@ func prostokatZaokraglonyDesignu(z shared.DesignVectorShapeAddRequest,
 	}
 }
 
-// wielokatWezlamiDesignu składa wielokąt wpisany w prostokąt żądania.
+// wielokatWezlamiDesignu składa wielokąt wpisany w prostokąt żądania, z
+// pierwszym wierzchołkiem na górze i wierzchołkami rozłożonymi równomiernie
+// po okręgu.
 func wielokatWezlamiDesignu(z shared.DesignVectorShapeAddRequest, wierzcholkow int,
 	udzialWewnetrzny float64) []shared.DesignVectorNode {
 
@@ -497,8 +464,8 @@ func wielokatWezlamiDesignu(z shared.DesignVectorShapeAddRequest, wierzcholkow i
 	srodekX, srodekY := z.X+promienX, z.Y+promienY
 	wezly := make([]shared.DesignVectorNode, 0, wierzcholkow)
 	for numer := 0; numer < wierzcholkow; numer++ {
-		// Pierwszy wierzchołek na górze: wielokąt obrócony o pół kroku wygląda
-		// jak przekrzywiony, a nikt o obrót nie prosił.
+		// Pierwszy wierzchołek na górze: wielokąt obrócony o pół kroku
+		// wyglądałby przekrzywiony.
 		kat := -math.Pi/2 + 2*math.Pi*float64(numer)/float64(wierzcholkow)
 		wezly = append(wezly, shared.DesignVectorNode{
 			X:    srodekX + promienX*udzialWewnetrzny*math.Cos(kat),
@@ -510,7 +477,7 @@ func wielokatWezlamiDesignu(z shared.DesignVectorShapeAddRequest, wierzcholkow i
 }
 
 // gwiazdaWezlamiDesignu składa gwiazdę: wierzchołek zewnętrzny i wewnętrzny na
-// przemian.
+// przemian, z pierwszym wierzchołkiem zewnętrznym na górze.
 func gwiazdaWezlamiDesignu(z shared.DesignVectorShapeAddRequest, ramion int,
 	udzialWewnetrzny float64) []shared.DesignVectorNode {
 

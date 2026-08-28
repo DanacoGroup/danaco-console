@@ -15,18 +15,7 @@ import (
 // kontrakt nie przewiduje.
 const LimitOdczytu = 16 << 20
 
-// nawiaz przyjmuje żądanie uaktualnienia do WebSocket i prowadzi całe życie
-// połączenia: rejestrację, obie pętle i wykreślenie po rozłączeniu.
-//
-// Pochodzenie jest sprawdzane i nie jest to bramka kontrolna: wykaz pochodzeń
-// nie pyta, kim jest wołający i czego mu wolno — odcina wyłącznie stronę trzecią,
-// która namówiła przeglądarkę Operatora, żeby otworzyła gniazdo do jego rdzenia.
-// Operator nie widzi tego nigdy; widzi to wyłącznie cudza strona.
-//
-// Klientem bywa webview powłoki, który przedstawia się rozmaitym Origin —
-// pochodzenia własne obejmują `tauri://`, `http://localhost` i `http://127.0.0.1`
-// z dowolnym portem, więc powłoka wchodzi bez wskazywania czegokolwiek.
-// Wystawienie pod inną domenę dopisuje ją polem PochodzeniaDozwolone.
+// Metoda nawiaz przyjmuje żądanie uaktualnienia do WebSocket i prowadzi całe życie połączenia od rejestracji do wykreślenia.
 func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	gniazdo, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: s.pochodzeniaDozwolone(),
@@ -41,10 +30,7 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	polaczenie := nowePolaczenie(s.kontekst, id, kontoZadania(r), tozsamoscZadania(id, r), gniazdo, s.ustawienia.PojemnoscKolejki, s.ustawienia.Dziennik)
 	s.polaczenia.dodaj(polaczenie)
 	s.zawiadomPrzylaczono(polaczenie)
-	// Tożsamość jest w linii dziennika, bo od niej zależy sprawca zdarzeń
-	// (`core/sprawca.go`). Gdy Operator zobaczy w interfejsie rękę nie tę, co
-	// trzeba, pierwszym miejscem do sprawdzenia jest to, czym gniazdo się
-	// przedstawiło — a to widać tylko tutaj.
+	// Tożsamość jest w linii dziennika, bo od niej zależy sprawca zdarzeń widoczny w interfejsie.
 	tozsamosc := polaczenie.Tozsamosc()
 	s.ustawienia.Dziennik.Printf("transport: przyłączenie %s konto=%s klient=%q rodzaj=%q zasięg=%q okno=%q adres=%s (łącznie %d)",
 		polaczenie.Id(), polaczenie.Konto(), tozsamosc.IdKlienta, tozsamosc.Rodzaj,
@@ -57,14 +43,10 @@ func (s *Serwer) nawiaz(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go polaczenie.petlaWysylki()
-	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.straznik())
+	polaczenie.petlaOdbioru(s.kontekst, s.rdzenPodlaczony, s.rejestrKomend, &s.pracaRdzenia, s.ustawienia.dopuszczenie())
 }
 
-// pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs
-// produktu. Powłoka Tauri podaje `tauri://localhost` (Windows: `https://tauri.localhost`),
-// interfejs otwarty w przeglądarce — `http://127.0.0.1:<port>` albo
-// `http://localhost:<port>`, a port bywa dowolny (nasłuch potrafi wziąć port
-// wskazany przez system). Stąd gwiazdka w porcie, a nie w całym wzorcu.
+// pochodzeniaWlasne to wzorce Origin, którymi przedstawia się własny interfejs produktu w powłoce i przeglądarce.
 var pochodzeniaWlasne = []string{
 	"tauri://*",
 	"https://tauri.localhost",
@@ -74,27 +56,13 @@ var pochodzeniaWlasne = []string{
 	"https://127.0.0.1:*",
 	"localhost:*",
 	"127.0.0.1:*",
-	// Pętla zwrotna ma dwa adresy, nie jeden. Przeglądarka na maszynie
-	// z pierwszeństwem IPv6 rozwiązuje `localhost` na `::1` i podaje wtedy
-	// pochodzenie `http://[::1]:<port>` — ta sama pętla zwrotna, na której rdzeń
-	// nasłuchuje, a bez tych wzorców nawiązanie kończyłoby się odmową 403.
-	//
-	// Ukośniki odwrotne są tu konieczne, nie ozdobne. Dopasowanie idzie przez
-	// `path.Match`, gdzie nawias kwadratowy otwiera klasę znaków; wzorzec
-	// z nawiasem gołym jest wzorcem wadliwym, a biblioteka gniazda przerywa
-	// wtedy przegląd wykazu błędem — czyli jeden zły wzorzec potrafi odciąć
-	// pochodzenia sprawdzane po nim. Ukośnik zdejmuje znakowi znaczenie i nawias
-	// wraca do bycia nawiasem.
+	// Pętla zwrotna ma dwa adresy; ukośnik zdejmuje nawiasowi znaczenie klasy znaków we wzorcu.
 	`http://\[::1\]:*`,
 	`https://\[::1\]:*`,
 	`\[::1\]:*`,
 }
 
-// pochodzeniaDozwolone składa wykaz wzorców dla biblioteki gniazda.
-//
-// Wykaz wskazany dopisuje się do własnych, nie zastępuje ich. Wystawienie pod
-// domenę nie jest powodem, żeby produkt przestał wpuszczać własną powłokę —
-// a taki właśnie byłby skutek zastąpienia.
+// Metoda pochodzeniaDozwolone składa wykaz wzorców Origin dla biblioteki gniazda z wzorców własnych i wskazanych.
 func (s *Serwer) pochodzeniaDozwolone() []string {
 	wzorce := make([]string, 0, len(pochodzeniaWlasne)+len(s.ustawienia.PochodzeniaDozwolone))
 	wzorce = append(wzorce, pochodzeniaWlasne...)
@@ -106,18 +74,7 @@ func (s *Serwer) pochodzeniaDozwolone() []string {
 	return wzorce
 }
 
-// adresZdalny podaje adres urządzenia po drugiej stronie gniazda.
-//
-// Po co to w linii dziennika. Telemetria połączeń jedzie dziennikiem rdzenia
-// i przez rozgałęzienie trafia do `diagnostyka_wpis` — trwale i z czytelnikiem
-// (`diagnostics.log.query`). Adres urządzenia jest jednym z faktów, które ta
-// linia ma nieść.
-//
-// Adres bierzemy z pola żądania HTTP, nie z nagłówków przekazywania (X-Forwarded-For
-// i pokrewnych): te podaje strona trzecia i można je napisać dowolnie, a dziennik
-// ma nieść fakt gniazda, nie deklarację nadawcy. Brak adresu daje wpis „nieustalony"
-// zamiast pustego miejsca — czytający ma widzieć różnicę między „nie wiadomo"
-// a „pominięto".
+// Funkcja adresZdalny podaje adres urządzenia po drugiej stronie gniazda, niesiony dalej w linii dziennika rdzenia.
 func adresZdalny(r *http.Request) string {
 	if r == nil || r.RemoteAddr == "" {
 		return "nieustalony"
@@ -137,7 +94,7 @@ func kontoZadania(r *http.Request) string {
 	return KontoDomyslne
 }
 
-// nastepnyId nadaje identyfikator kolejnemu połączeniu.
+// Metoda nastepnyId nadaje unikalny identyfikator tekstowy kolejnemu nawiązywanemu połączeniu gniazda WebSocket.
 func (s *Serwer) nastepnyId() string {
 	return fmt.Sprintf("pol-%d", atomic.AddUint64(&s.licznikPolaczen, 1))
 }
@@ -150,7 +107,7 @@ func (s *Serwer) zawiadomPrzylaczono(ujscie Ujscie) {
 	}
 }
 
-// zawiadomOdlaczono powiadamia rdzeń o rozłączeniu urządzenia.
+// Metoda zawiadomOdlaczono powiadamia rdzeń o rozłączeniu urządzenia korzystającego uprzednio z tego połączenia.
 func (s *Serwer) zawiadomOdlaczono(ujscie Ujscie) {
 	if obserwator, zna := s.rdzenPodlaczony().(ObserwatorPolaczen); zna {
 		obserwator.Odlaczono(ujscie)

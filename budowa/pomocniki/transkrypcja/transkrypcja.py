@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Pomocnik działa jako osobny proces wołany przez rdzeń i rozpoznaje mowę
+# w nagraniu lokalnie, na procesorze, bez żadnego połączenia sieciowego.
 """Pomocnik transkrypcji Danaco Console — warstwa wiersza poleceń.
 
 Bierze plik dźwiękowy z dysku, rozpoznaje w nim mowę lokalnie i wypisuje na
@@ -45,9 +47,8 @@ STAN_BEZ_MOWY = "bez_mowy"
 
 def _wypisz(dane: dict) -> None:
     """Jedyne wyjście na stdout w całym pomocniku."""
-    # ensure_ascii=False zostawia polskie znaki w postaci czytelnej; domyślne
-    # escapowanie zamieniłoby je na sekwencje \uXXXX i odmowa w dzienniku
-    # wymagałaby odkodowania, zanim dałoby się ją przeczytać.
+    # ensure_ascii=False zostawia polskie znaki czytelne zamiast zamieniać je
+    # na sekwencje ucieczki.
     json.dump(dane, sys.stdout, ensure_ascii=False)
     sys.stdout.write("\n")
 
@@ -91,9 +92,8 @@ def _sprawdz_plik(sciezka: Path) -> str:
 
 def tryb_wersja(model: str, katalog_modeli: str) -> int:
     """Sprawdzenie gotowości. Zawsze kod 0 — brak jest odpowiedzią, nie awarią."""
-    # Kod 0 obowiązuje także przy `gotowy=false`: rdzeń nie odróżniłby
-    # zdiagnozowanego braku od pomocnika, który przerwał pracę bez odpowiedzi,
-    # gdyby oba przypadki kończyły się kodem niezerowym.
+    # Kod 0 obowiązuje też przy braku gotowości: rdzeń nie odróżniłby braku
+    # zdiagnozowanego od przerwania.
     odpowiedz = {
         "gotowy": False,
         "python": _silnik.opis_python(),
@@ -109,10 +109,8 @@ def tryb_wersja(model: str, katalog_modeli: str) -> int:
 
     odpowiedz["silnik"] = _silnik.wersja_silnika()
 
-    # Obecność modelu rozpoznaje się po pliku na dysku, bez ładowania wag:
-    # załadowanie modelu zajmuje kilkaset megabajtów pamięci i kilka sekund.
-    # Ładowanie zostaje jako droga zapasowa dla nietypowych układów katalogów,
-    # a jego wyjątek trafia do pola „powod”, nie na wyjście jako ślad stosu.
+    # Obecność modelu rozpoznaje się po pliku na dysku, bez ładowania wag —
+    # to kosztowałoby czas i pamięć.
     if _silnik.sciezka_modelu(model, katalog_modeli) is not None:
         odpowiedz["gotowy"] = True
         odpowiedz["model"] = model
@@ -150,9 +148,8 @@ def tryb_plik(plik: str, model: str, jezyk: str, katalog_modeli: str) -> int:
         _wypisz({"blad": odmowa})
         return 1
 
-    # Obecność silnika sprawdzana jest przed rozpoznaniem mowy, ale po walidacji
-    # ścieżki: gdy zawodzą obie rzeczy naraz, użyteczniejsza jest informacja
-    # o pliku, który użytkownik widzi, niż o bibliotece, której nie widzi.
+    # Obecność silnika sprawdzana jest po walidacji ścieżki, bo plik jest
+    # widoczny, biblioteka nie.
     if not _silnik.silnik_obecny():
         _wypisz({"blad": _silnik.powod_braku_silnika()})
         return 1
@@ -160,8 +157,7 @@ def tryb_plik(plik: str, model: str, jezyk: str, katalog_modeli: str) -> int:
     try:
         tekst, trwanie_s = _silnik.transkrybuj(sciezka, model, jezyk, katalog_modeli)
     except Exception as wyjatek:
-        # Ślad wyjątku idzie na stderr, na stdout trafia sama odmowa w JSON:
-        # szczegół techniczny służy zgłoszeniu, JSON — odczytowi przez rdzeń.
+        # Ślad wyjątku idzie na stderr, na stdout trafia sama odmowa w formacie JSON.
         print(f"[transkrypcja] wyjątek silnika: {wyjatek!r}", file=sys.stderr)
         _wypisz(
             {
@@ -177,10 +173,8 @@ def tryb_plik(plik: str, model: str, jezyk: str, katalog_modeli: str) -> int:
         )
         return 1
 
-    # Pusty tekst jest wynikiem, nie odmową: przetworzenie się odbyło i wykazało,
-    # że nagranie nie zawiera mowy. Dlatego pole `stan` rozróżnia „rozpoznano"
-    # od „przetworzono, mowy brak"; przypadek „nie przetworzono" nie pojawia się
-    # w tym miejscu, bo idzie osobnym polem `blad`.
+    # Pusty tekst jest wynikiem, nie odmową: przetworzenie się odbyło
+    # i wykazało brak mowy w nagraniu.
     _wypisz(
         {
             "tekst": tekst,
@@ -217,8 +211,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.plik:
         return tryb_plik(args.plik, args.model, args.jezyk, args.katalog_modeli)
 
-    # Brak trybu również kończy się odmową w JSON, a nie pomocą argparse na
-    # stdout: rdzeń woła ten skrypt maszynowo i musi przeczytać każdą odpowiedź.
+    # Brak trybu kończy się odmową w JSON, nie pomocą argparse na stdout,
+    # bo rdzeń woła skrypt maszynowo.
     _wypisz(
         {
             "blad": (

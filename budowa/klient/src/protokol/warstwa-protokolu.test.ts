@@ -18,24 +18,18 @@ import { sprawdzKsztalt, czyTekst } from './ksztalt-odpowiedzi.ts';
 import { odczytajRamke, zapiszRamke } from './ramka.ts';
 import { utworzSesje } from './sesja.ts';
 
-/**
- * Warstwa protokołu klienta.
- *
- * Mierzone są trzy rzeczy: koperta i ramka w obie strony, wiązanie odpowiedzi
- * z żądaniem oraz odbiór zdarzeń — wszystkich, jakie zna kontrakt, bo warstwa
- * nie wybiera spośród nich i żadnego nie wyróżnia nazwą wpisaną w kod.
- */
+// Warstwa protokołu klienta mierzy kopertę, ramkę, wiązanie odpowiedzi z żądaniem oraz odbiór zdarzeń.
 
-/** Wszystkie zdarzenia kontraktu poza zapasowymi `*.unknown`. */
+/** Wszystkie zdarzenia kontraktu poza zapasowymi zdarzeniami zastępczymi każdego obszaru nazwy kontraktu. */
 const ZDARZENIA_KONTRAKTU: EventType[] = (() => {
   const zapasowe = new Set<EventType>(Object.values(ZDARZENIA_NIEZNANEJ));
   return Object.values(EventType).filter((zdarzenie) => !zapasowe.has(zdarzenie));
 })();
 
-/** Zdarzenia zapasowe obszarów, bez powtórzeń. */
+/** Zdarzenia zapasowe wszystkich obszarów nazwy kontraktu, zebrane razem w jeden zbiór, bez żadnych powtórzeń. */
 const ZDARZENIA_ZAPASOWE: EventType[] = [...new Set<EventType>(Object.values(ZDARZENIA_NIEZNANEJ))];
 
-/** Transport w pamięci: ramki wychodzące odkłada, przychodzące podaje na żądanie. */
+/** Transport w pamięci: ramki wychodzące odkłada do odczytu, a przychodzące podaje na żądanie sprawdzianu. */
 interface TransportZastepczy extends Transport {
   /** Ramki, które warstwa protokołu oddała transportowi. */
   wyslane: string[];
@@ -70,18 +64,18 @@ function utworzTransportZastepczy(): TransportZastepczy {
   };
 }
 
-/** Kanał osadzony na transporcie w pamięci. */
+/** Kanał osadzony na transporcie w pamięci, gotowy do sprawdzianów bez udziału gniazda rzeczywistego i rdzenia. */
 function zalozKanal(): { kanal: ReturnType<typeof utworzKanal>; transport: TransportZastepczy } {
   const transport = utworzTransportZastepczy();
   return { kanal: utworzKanal(transport, utworzSesje()), transport };
 }
 
-/** Koperta zdarzenia w postaci ramki, tak jak nadaje ją rdzeń. */
+/** Koperta zdarzenia w postaci ramki tekstowej, dokładnie tak, jak nadaje ją rdzeń podczas rozgłaszania. */
 function ramkaZdarzenia(typ: EventType, ladunek: unknown, dodatkowe: Partial<Envelope> = {}): string {
   return JSON.stringify({ type: typ, id: '', payload: ladunek, timestamp: 1, ...dodatkowe });
 }
 
-/** Koperta odpowiedzi na żądanie o podanym identyfikatorze. */
+/** Koperta odpowiedzi na żądanie o podanym identyfikatorze, budowana w kształcie zgodnym z kontraktem współdzielonym. */
 function ramkaOdpowiedzi(typ: string, idZadania: string, ladunek: unknown): string {
   return JSON.stringify({
     type: typ,

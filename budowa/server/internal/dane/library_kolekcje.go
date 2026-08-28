@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: kolekcje zasobów, przypisania plików do kolekcji
-// i etykiety pliku (tabele `kolekcja_biblioteki`, `przypisanie_kolekcji_biblioteki`,
-// `etykieta_pliku_biblioteki`) — obszar Tags & Collections modułu Library.
-// Plik biblioteki leży w `library.go`, wersje w `library_wersje.go`.
-//
-// `PrzypiszDoKolekcji` pomija kod pliku, którego nie ma, zamiast przerywać całe
-// wywołanie — jedna literówka w wykazie nie blokuje przypisania reszty, a oddany
-// wykaz niesie wyłącznie kody plików faktycznie przypisanych.
-//
-// `library.tag.set` nadsyła komplet etykiet pliku, nie różnicę — tak samo jak
-// `ZapiszKroki` w `automations_kroki.go` podmienia komplet kroków. `UstawEtykiety`
-// usuwa więc zastane etykiety i wstawia nadesłane w jednej transakcji
-// (`dane/transakcja.go`).
+// Odpowiedzialność pliku: kolekcje zasobów, przypisania plików do kolekcji i etykiety pliku (tabele
+// `kolekcja_biblioteki`, `przypisanie_kolekcji_biblioteki`, `etykieta_pliku_biblioteki`) — obszar Tags
+// & Collections modułu Library.
 package dane
 
 import (
@@ -28,15 +18,10 @@ type KolekcjaBiblioteki struct {
 	Kod   string
 	Nazwa string
 	Opis  *string
-	// RodzicKod i RegulaKod wypełnia wyłącznie odczyt pełny
-	// (`KolekcjeWykaz`, `biblioteka_reguly.go`): hierarchia kolekcji i reguła
-	// kolekcji inteligentnej doszły migracją 181, a `UtworzKolekcje` ich nie
-	// rusza — kolekcja zakładana jest swobodna i korzeniowa, dopóki Operator nie
-	// powie inaczej.
+	// RodzicKod i RegulaKod wypełnia wyłącznie odczyt pełny kolekcji swobodnej i korzeniowej domyślnie.
 	RodzicKod *string
 	RegulaKod *string
-	// LiczbaPlikow jest wyliczeniem odczytu, nie kolumną: liczy przypisania
-	// w chwili pytania, więc nie rozjeżdża się z zawartością kolekcji.
+	// LiczbaPlikow jest wyliczeniem odczytu, nie kolumną; liczy przypisania w chwili pytania.
 	LiczbaPlikow   int
 	Utworzono      string
 	Zaktualizowano string
@@ -98,7 +83,7 @@ func (r *repozytoriumBiblioteki) UtworzKolekcje(ctx context.Context,
 	return r.kolekcjaPoKodzie(ctx, kolekcja.Kod)
 }
 
-// Kolekcje zwraca wszystkie kolekcje uporządkowane po nazwie.
+// Kolekcje zwraca wszystkie kolekcje biblioteki, uporządkowane alfabetycznie rosnąco po ich pełnej nazwie.
 func (r *repozytoriumBiblioteki) Kolekcje(ctx context.Context) ([]KolekcjaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKolekcjiBiblioteki)
 	if err != nil {
@@ -124,15 +109,8 @@ func (r *repozytoriumBiblioteki) Kolekcje(ctx context.Context) ([]KolekcjaBiblio
 	return lista, nil
 }
 
-// PrzypiszDoKolekcji przypisuje pliki do kolekcji i oddaje kody plików
-// faktycznie przypisanych — plik, którego nie ma, zostaje pominięty w wyniku
-// zamiast wywracać wywołanie.
-//
-// Kolekcja nieznana to co innego niż plik nieznany: nie ma dokąd przypisywać,
-// więc wywołanie wraca jako ErrBrakWiersza i adapter odmawia wprost
-// (`bladNieznanejKolekcji`). Pusta lista dawałaby `library.collection.assign`
-// powodzenie z zerem przypisań, czyli potwierdzenie czynności, która się nie
-// odbyła.
+// PrzypiszDoKolekcji przypisuje pliki do kolekcji i oddaje kody plików faktycznie przypisanych, pomijając
+// plik, którego nie ma.
 func (r *repozytoriumBiblioteki) PrzypiszDoKolekcji(ctx context.Context,
 	kodKolekcji string, kodyPlikow []string) ([]string, error) {
 
@@ -209,7 +187,7 @@ func (r *repozytoriumBiblioteki) UstawEtykiety(ctx context.Context,
 	return r.Etykiety(ctx, plik.ID)
 }
 
-// Etykiety zwraca etykiety pliku w porządku alfabetycznym.
+// Etykiety zwraca etykiety przypisane danemu plikowi biblioteki w porządku alfabetycznym rosnącym po treści.
 func (r *repozytoriumBiblioteki) Etykiety(ctx context.Context, plikID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaEtykietPliku)
 	if err != nil {
@@ -252,7 +230,7 @@ func (r *repozytoriumBiblioteki) kolekcjaPoKodzie(ctx context.Context, kod strin
 	return kolekcja, nil
 }
 
-// odczytajKolekcjeBiblioteki składa strukturę z jednego wiersza wyniku.
+// odczytajKolekcjeBiblioteki składa pełną strukturę kolekcji z jednego wiersza wyniku zapytania do bazy.
 func odczytajKolekcjeBiblioteki(wiersz skaner) (KolekcjaBiblioteki, error) {
 	var kolekcja KolekcjaBiblioteki
 	var opis sql.NullString

@@ -1,19 +1,6 @@
-// Odpowiedzialność pliku: profil asystenta (tabela `profil_asystenta`,
-// migracja 117) — odczyt profilu wskazanego kodem oraz profilu domyślnego.
-// Zlecenia leżą w `asystent.go`, dziennik w `asystent_dziennik.go`, przyjęcie
-// polecenia w `asystent_polecenia.go`: jedno repozytorium, cztery pliki wedle
-// odpowiedzialności.
-//
-// Profil niesie warstwę promptu zlecenia — zdanie, które mówi modelowi, że jest
-// klawiaturą Operatora, a nie autorem odpowiedzi. To ono rozstrzyga, czy model
-// sięgnie po narzędzia platformy, czy odpisze tekstem. Reszta kolumn to nastawy
-// tury (kanał, głos odczytu, zasięg urządzenia, zasięg pracy), które w innym
-// razie bierze wiersz okna.
-//
-// Plik ma sam odczyt, bez zapisu. Zakładanie profilu, wykaz profili i wskazanie
-// domyślnego to trzy czynności Operatora, a kontrakt nie ma dla nich ani jednej
-// komendy (`assistant.profile.*` nie istnieje). Metoda zapisu bez wołającego
-// byłaby drogą, której nikt nie przechodzi, więc jej tu nie ma.
+// Plik czyta profil asystenta: profil wskazany kodem oraz profil domyślny.
+// Zlecenia, dziennik i przyjęcie polecenia leżą w innych plikach tego samego
+// repozytorium.
 package dane
 
 import (
@@ -23,18 +10,8 @@ import (
 	"fmt"
 )
 
-// ProfilAsystenta to wiersz tabeli `profil_asystenta`.
-//
-// `SrodowiskoWykonania` i `TrybUprawnien` niosą wartości kontraktu wprost
-// (shared.ExecutionEnv, shared.PermissionMode) — kolumna ma na nich warunek
-// CHECK, a rdzeń wkłada je do zapytania kanału bez przekładu. Pakiet `dane` nie
-// zależy od `shared`, więc typem jest tu napis; jedynym miejscem, w którym te
-// napisy stają się typami kontraktu, jest adapter modułu.
-//
-// Wskaźniki przy `WarstwaPromptu`, `KanalModelu` i `GlosSyntezy` są rozmyślne:
-// NULL znaczy „profil nie ma w tej sprawie zdania" i wtedy obowiązuje nastawa
-// okna. Pusty napis znaczyłby „profil kasuje nastawę okna" — a profil ma zasięg
-// pracy poszerzać, nie zabierać.
+// ProfilAsystenta to wiersz profilu niosący warstwę promptu zlecenia oraz
+// nastawy tury: kanał, głos odczytu, zasięg urządzenia i zasięg pracy.
 type ProfilAsystenta struct {
 	ID                  int64
 	Kod                 string
@@ -100,7 +77,8 @@ func (r *repozytoriumAsystenta) ProfilDomyslny(ctx context.Context) (ProfilAsyst
 	return profil, nil
 }
 
-// odczytajProfilAsystenta składa strukturę z jednego wiersza wyniku.
+// odczytajProfilAsystenta składa strukturę profilu asystenta z jednego
+// zwróconego wiersza wyniku bazy.
 func odczytajProfilAsystenta(wiersz skaner) (ProfilAsystenta, error) {
 	var profil ProfilAsystenta
 	var warstwa, kanal, glos sql.NullString

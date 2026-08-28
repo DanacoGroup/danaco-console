@@ -1,26 +1,14 @@
+/**
+ * Budowa przycisków czynności modułu Browser: jeden kształt przycisku dla
+ * paneli pomocniczych i dla wierszy wykazu, wraz z nazwami trzech odmian
+ * niosących rangę czynności.
+ */
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Przycisk czynności modułu Browser — jeden kształt dla paneli i wierszy
- * wykazu.
- *
- * Panele pomocnicze i wiersze wykazu potrzebują tego samego: zbudować przycisk
- * i podpiąć nasłuch. Kopia tej czynności stoi tu jedna, żeby cztery pliki
- * modułu nie rozjechały się przy pierwszej poprawce.
- *
- * Nazwa funkcji niesie słowo „przycisk", bo po nim rozpoznają kontrolki
- * narzędzia zestawiające etykiety czynności okien; opakowanie nazwane inaczej
- * chowa etykietę przed takim zestawieniem.
- */
-
-/**
- * Trzy odmiany przycisku, których moduł używa — nazwa zamiast napisu klasy
- * powtarzanego przy każdym wywołaniu.
- *
- * Odmiana mówi o randze czynności, nie o barwie: `glowny` stoi tam, gdzie panel
- * ma jedną czynność wiodącą (zapis, dodanie), `zarys` przy pozostałych
- * czynnościach panelu, `duch` przy pozycjach wykazu, gdzie przycisków jest wiele
- * w jednym wierszu.
+ * Trzy odmiany przycisku używane w module. Odmiana mówi o randze czynności,
+ * nie o barwie: `glowny` stoi przy czynności wiodącej panelu, `zarys` przy
+ * pozostałych czynnościach panelu, `duch` przy pozycjach wykazu.
  */
 export const KLASA_PRZYCISKU = {
   glowny: 'dn-btn dn-btn--sm dn-btn--atrament',
@@ -28,7 +16,11 @@ export const KLASA_PRZYCISKU = {
   duch: 'dn-btn dn-btn--sm dn-btn--duch',
 } as const;
 
-/** Przycisk czynności wraz z podpiętym naciśnięciem. */
+/**
+ * Przycisk czynności wraz z podpiętym naciśnięciem. Nazwa funkcji niesie wyraz
+ * „przycisk", po którym rozpoznają go narzędzia zestawiające etykiety czynności
+ * okien.
+ */
 export function przyciskCzynnosci(
   nazwa: string,
   klasa: string,

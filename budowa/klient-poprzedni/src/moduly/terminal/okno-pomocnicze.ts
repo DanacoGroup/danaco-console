@@ -5,49 +5,14 @@ import type { Kanal } from '../../protokol/kanal';
 import { zamontujTerminal, type ZamontowanyTerminal } from './indeks';
 
 /**
- * Terminal jako okno pomocnicze modułu gospodarza.
- *
- * Terminal nie jest samodzielnym modułem ani niezależną sesją — stanowi
- * dodatkowe okno pomocnicze dostępne wewnątrz modułów Developer, Diagnostics
- * i Apps (patrz `okno-komunikacji/profile-inzynieria.ts`).
- *
- * Rdzeń wiąże kartę powłoki z oknem, a nie z modułem: `OtworzKarte`
- * w `server/internal/core/adapter_modul_terminal.go` żąda wyłącznie `windowId`
- * okna otwartego (`oknoWykonania` w `adapter_modul_terminal_okno.go`) i nie
- * sprawdza, czy okno należy do modułu `terminal`. Karta bierze z okna tryb
- * uprawnień i katalog roboczy, więc terminal w oknie Developera pracuje
- * w kontekście tego właśnie modułu.
- *
- * Plik nie powiela modułu: nie ma tu drugiego stanu terminala, drugiego źródła
- * komend ani drugiej konsoli. Okno woła `zamontujTerminal`
- * z `moduly/terminal/indeks.ts` — to samo złożenie, które stoi w module —
- * i podaje mu okno gospodarza.
- *
- * Gospodarz bywa zamontowany bez okna wykonania (moduł Diagnostics ma trzy
- * z czterech komend bez `windowId`). Okno pokazuje wtedy zdanie o braku okna
- * zamiast pustej konsoli, którą czytałoby się jako „nic nie biegnie".
- *
- * Plik nie zdejmuje Terminala z bocznej nawigacji: pozycja stoi w macierzy
- * widoczności rdzenia (`server/internal/store/migracja_007_zaczyn_slownikow.sql`),
- * a klient bierze wykaz modułów wyłącznie z `environment.enter` i `module.list`.
- *
- * Użycie:
- *
- *   const terminal = utworzOknoTerminalaPomocnicze({
- *     kanal, modul: 'Developer', przedrostek: 'mdev', okno: idOkna,
- *   });
- *   zlozenie.append(terminal.element);
- *   terminal.ustawOkno(idOkna);   // gdy okno przychodzi później, po odczycie
- *   // przy zamykaniu modułu: terminal.zamknij();
+ * Terminal jako okno pomocnicze modułu gospodarza: nie jest samodzielnym
+ * modułem ani niezależną sesją, tylko powierzchnią osadzoną w oknie gospodarza.
  */
 export interface OknoTerminalaPomocnicze {
   /** Sekcja osadzana w złożeniu modułu gospodarza albo w pasie okien pomocniczych. */
   element: HTMLElement;
   /**
-   * Podaje okno wykonania gospodarza. Pusty napis znaczy „rdzeń nie dał temu
-   * modułowi okna" i wypełnia ciało zdaniem o braku. Wolno wołać wielokrotnie:
-   * to samo okno nie przebudowuje niczego, inne przebudowuje złożenie wraz
-   * z zamknięciem poprzednich subskrypcji.
+   * Podaje okno wykonania gospodarza; napis pusty znaczy brak okna od rdzenia.
    */
   ustawOkno(okno: string): void;
   /** Odczytuje okna terminala z rdzenia; bez okna gospodarza nie robi nic. */
@@ -56,7 +21,10 @@ export interface OknoTerminalaPomocnicze {
   zamknij(): void;
 }
 
-/** Zależności okna pomocniczego. */
+/**
+ * Zależności okna pomocniczego terminala, podawane przy jego złożeniu przez
+ * moduł gospodarza, który to okno u siebie osadza.
+ */
 export interface OpcjeTerminalaPomocniczego {
   kanal: Kanal;
   /** Nazwa modułu gospodarza — wchodzi w etykiety i w zdania dla Operatora. */
@@ -103,8 +71,7 @@ export function utworzOknoTerminalaPomocnicze(
       pokazBrakOkna();
       return;
     }
-    // `zamontujTerminal` sam podmienia zawartość gospodarza, więc czyszczenie
-    // ciała byłoby drugą drogą do tego samego skutku.
+    // Montaż terminala sam podmienia zawartość gospodarza.
     zamontowany = zamontujTerminal(rama.cialo, opcje.kanal, { okno: nowe });
     rama.ustawZnacznik(`okno gospodarza: ${nowe}`, 'sukces');
   }
@@ -123,10 +90,8 @@ export function utworzOknoTerminalaPomocnicze(
 }
 
 /**
- * Zdanie stanu „gospodarz bez okna": nazywa brakujące okno i cytuje odmowę,
- * którą rdzeń odda przy próbie założenia karty — `bladZadaniaTerminala("karta
- * powłoki wymaga wskazania okna")` w `OtworzKarte`
- * (`server/internal/core/adapter_modul_terminal.go`).
+ * Zdanie stanu opisujące gospodarza bez okna: nazywa brakujące okno i cytuje
+ * odmowę, którą rdzeń odda przy próbie założenia karty powłoki bez wskazania.
  */
 function zdanieBezOkna(nazwaModulu: string): HTMLElement {
   const element = document.createElement('p');

@@ -6,30 +6,14 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// Odczyt tożsamości eksperta z warstwy danych.
-//
-// Tożsamość eksperta leży w kilku tabelach naraz: `agent` (model, kanał,
-// nastawy procesu), `agent_warstwa` (warstwy promptu) i `agent_konektor`
-// (mosty MCP). Składacz
-// wywołania nie ma prawa o tym wiedzieć, więc łączy je ten adapter.
-//
-// Każdy brak jest brakiem, nie błędem. Ekspert bez warstw, bez modelu, bez
-// nastaw i bez mostów jest poprawnym ekspertem — po prostu nakłada mniej.
-// Odmowa idzie wyłącznie wtedy, gdy eksperta o wskazanym kodzie nie ma
-// w katalogu, a i ona nie zatrzymuje tury: wywołujący zamienia ją na tożsamość
-// pustą.
-//
-// Pole `agent.instrukcje_systemowe` jest warstwą zerową: idzie pierwsze spośród
-// tego, co ekspert wnosi, w warstwie najbardziej krytycznej, i jedzie do
-// składacza tak samo jak warstwy.
+// Odczyt tożsamości eksperta z warstwy danych: agent, warstwy promptu i mosty MCP w jednym adapterze.
 
 var _ ZrodloTozsamosciAgenta = (*adapterTozsamosciAgenta)(nil)
 
 type adapterTozsamosciAgenta struct {
 	agenci  dane.RepozytoriumAgentow
 	warstwy dane.RepozytoriumWarstwAgenta
-	// mosty podaje konfiguracje MCP konektorów eksperta. Port opcjonalny —
-	// bez niego ekspert nakłada wszystko poza mostami.
+	// mosty podaje konfiguracje MCP konektorów eksperta. Port opcjonalny — bez niego brak mostów.
 	mosty zrodloMostowAgenta
 }
 
@@ -48,13 +32,13 @@ func nowyAdapterTozsamosciAgenta(agenci dane.RepozytoriumAgentow,
 	return &adapterTozsamosciAgenta{agenci: agenci, warstwy: warstwy}
 }
 
-// ZMostami dokłada źródło konfiguracji MCP konektorów eksperta.
+// ZMostami dokłada źródło konfiguracji MCP konektorów eksperta jako port opcjonalny wpinany do adaptera.
 func (a *adapterTozsamosciAgenta) ZMostami(m zrodloMostowAgenta) *adapterTozsamosciAgenta {
 	a.mosty = m
 	return a
 }
 
-// TozsamoscAgenta składa migawkę tożsamości eksperta o wskazanym kodzie.
+// TozsamoscAgenta składa migawkę tożsamości eksperta o wskazanym kodzie, łącząc dane z trzech tabel bazy.
 func (a *adapterTozsamosciAgenta) TozsamoscAgenta(ctx context.Context,
 	kod string) (TozsamoscAgenta, error) {
 
@@ -73,8 +57,7 @@ func (a *adapterTozsamosciAgenta) TozsamoscAgenta(ctx context.Context,
 		UstawieniaJSON:      agent.UstawieniaJSON,
 		InstrukcjeSystemowe: agent.InstrukcjeSystemowe,
 	}
-	// Warstwy i mosty są dokładkami: ich brak zostawia tożsamość uboższą,
-	// a nie unieważnia jej. Ekspert bez warstw nadal nakłada model i nastawy.
+	// Warstwy i mosty są dokładkami: ich brak zostawia tożsamość uboższą, nie unieważnia jej.
 	if a.warstwy != nil {
 		if warstwy, err := a.warstwy.Warstwy(ctx, kod); err == nil {
 			tozsamosc.Warstwy = warstwy

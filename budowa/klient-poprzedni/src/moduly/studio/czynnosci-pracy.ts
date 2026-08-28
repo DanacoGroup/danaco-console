@@ -6,18 +6,7 @@ import type { StanStudio } from './stan-studio';
 import { ladunekOperacji, zdanieDlaModelu, type NastawySuwakow } from './suwaki-koncepcyjne';
 import type { ZrodloPracyStudio } from './zrodlo-pracy-studio';
 
-/**
- * Czynności okna pracy z dokumentem, które rozmawiają z rdzeniem.
- *
- * Widok odpowiada za układ i stany, ten plik za skutek naciśnięcia. Podział ten
- * sam, co w `czynnosci-edytora.ts` — tam cztery czynności Studio Editora, tutaj
- * czynności, których poprzednie okna nie miały: operacja z poleceniem własnym
- * i nastawami suwaków, decyzja o zmianach śledzonych, śledzenie, komentarze,
- * szablony i profile wydania.
- *
- * Odmowa zostaje w pasie stanu, powodzenie w wierszu odpowiedzi — tak samo jak
- * w pozostałych czynnościach modułu.
- */
+/** Czynności okna pracy z dokumentem, które rozmawiają z rdzeniem: operacja z poleceniem własnym, decyzja o zmianach, śledzenie i komentarze. */
 export interface ZapleczePracy {
   stan: StanStudio;
   praca: ZrodloPracyStudio;
@@ -27,15 +16,7 @@ export interface ZapleczePracy {
   poZmianie(): void;
 }
 
-/**
- * Zleca operację kontekstową wraz z poleceniem Operatora i nastawami suwaków.
- *
- * Zakres bierze się ze stanu modułu — tej samej drogi, którą liczy go
- * `czynnosci-narzedzi.ts` — bo nastawa zakresu jest jedna na moduł. Polecenie
- * i nastawy jadą polem `params`, które rdzeń dokłada do treści polecenia dla
- * modelu. Wynik rdzeń wpisuje do dokumentu jako zmianę śledzoną autora `model`
- * i rozgłasza `studio.document.changed`, więc okno nie podmienia treści samo.
- */
+/** Zleca operację kontekstową wraz z poleceniem operatora i nastawami suwaków, biorąc zakres skuteczny ze stanu modułu. */
 export async function zlecOperacje(
   zaplecze: ZapleczePracy,
   idAkcji: string,
@@ -94,7 +75,7 @@ export async function zlecOperacje(
   zaplecze.poZmianie();
 }
 
-/** Odczytuje zmiany śledzone dokumentu czynnego; brak dokumentu oddaje wykaz pusty. */
+/** Odczytuje zmiany śledzone dokumentu czynnego z rdzenia; brak wczytanego dokumentu oddaje wykaz pusty zamiast odmowy. */
 export async function odczytajZmiany(
   zaplecze: ZapleczePracy,
 ): Promise<readonly StudioTrackedChange[]> {
@@ -105,7 +86,7 @@ export async function odczytajZmiany(
   return wynik.wynik.changes;
 }
 
-/** Rozstrzyga wskazane zmiany śledzone i wciąga dokument oddany przez rdzeń. */
+/** Rozstrzyga wskazane zmiany śledzone jako przyjęte albo odrzucone i wciąga do stanu dokument oddany przez rdzeń. */
 export async function rozstrzygnijZmiany(
   zaplecze: ZapleczePracy,
   kody: readonly string[],
@@ -137,7 +118,7 @@ export async function rozstrzygnijZmiany(
   zaplecze.poZmianie();
 }
 
-/** Przestawia śledzenie zmian dokumentu i oddaje stan odczytany z rdzenia. */
+/** Przestawia śledzenie zmian dokumentu w rdzeniu i oddaje wywołującemu stan śledzenia odczytany z odpowiedzi rdzenia. */
 export async function przestawSledzenie(
   zaplecze: ZapleczePracy,
   czynne: boolean,
@@ -168,7 +149,7 @@ export async function przestawSledzenie(
   return wynik.wynik.enabled;
 }
 
-/** Rozstrzyga propozycję w rdzeniu, w całości albo wskazanymi fragmentami. */
+/** Rozstrzyga propozycję zmiany w rdzeniu, przyjmując ją w całości albo tylko wskazanymi fragmentami treści. */
 export async function rozstrzygnijPropozycje(
   zaplecze: ZapleczePracy,
   przyjmij: boolean,
@@ -186,10 +167,7 @@ export async function rozstrzygnijPropozycje(
     return;
   }
   if (dokument === null || propozycja.idPropozycji === '') {
-    // Propozycja bez odwołania w rdzeniu istnieje wyłącznie w tym oknie, więc
-    // decyzja o niej też zapada tutaj — tak samo jak przed scaleniem okien
-    // (`decyzja-propozycji.ts` Studio Editora). Odmowa w tym miejscu odebrałaby
-    // Operatorowi decyzję, którą wolno mu podjąć.
+    // Propozycja bez odwołania w rdzeniu istnieje tylko w tym oknie, więc decyzja zapada tutaj.
     if (przyjmij) stan.przyjmijPropozycje();
     else stan.ustawPropozycje(null);
     odpowiedz.pokaz(
@@ -226,7 +204,7 @@ export async function rozstrzygnijPropozycje(
   zaplecze.poZmianie();
 }
 
-/** Zakłada komentarz przypięty do zaznaczenia albo odpowiedź w wątku. */
+/** Zakłada nowy komentarz przypięty do zaznaczenia w dokumencie albo odpowiedź w istniejącym wątku komentarzy. */
 export async function dodajKomentarz(
   zaplecze: ZapleczePracy,
   tresc: string,

@@ -9,19 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek WARSZTATU SZABLONÓW: czy szablon niesie NARAZ arkusz stylów, nastawy
-// strony, nagłówek, stopkę i pola do wypełnienia, czy szablonu fabrycznego nie
-// da się usunąć i czy pole wymagane bez wartości nie znika po cichu z pisma.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. szablon zapisujący samą treść — po nim dokument z wzoru pisma wychodzi bez
-//     papieru firmowego, czyli wzór nie jest wzorem;
-//  2. usunięcie szablonu fabrycznego, po którym wykazu nie da się odtworzyć bez
-//     ponownego wdrożenia;
-//  3. pole wymagane bez wartości usunięte z treści — pismo wygląda na kompletne,
-//     a nie jest;
-//  4. wypełnienie pól zamianą w napisie treści, po której postać wzorcowa pisma
-//     (kroje, wcięcia, granice akapitów) przepada.
+// Plik sprawdza, czy szablon niesie postać wzorcowa pisma naraz z polami do wypełnienia.
 
 // TestSzablonZDokumentuNiesiePostacIPola mierzy wymaganie Właściciela wprost:
 // szablon niesie arkusz stylów, nastawy strony, nagłówek, stopkę i pola NARAZ.
@@ -302,8 +290,8 @@ func TestSzablonWypelnieniePolNieUkrywaBrakow(t *testing.T) {
 			"wygląda na kompletny, a nie jest: %q", trescGotowa)
 	}
 
-	// Postać wzorcowa MA przejść do dokumentu wypełnionego — to jest sens
-	// szablonu. Zamiana w napisie treści by ją zgubiła.
+	// Postać wzorcowa ma przejść do dokumentu wypełnionego — zamiana w
+	// napisie treści by ją zgubiła.
 	postacGotowa, err := adapter.PostacDokumentu(zycie, shared.StudioDocumentFormGetRequest{
 		DocumentId: wypelniony.Document.Id,
 	})

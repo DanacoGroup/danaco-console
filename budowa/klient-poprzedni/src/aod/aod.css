@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Warstwa wizualna funkcji Always On Display — awatar pływający, dymek kontekstowy i kolumna boczna interakcji, bez własnego okna modalnego. ============================================================================
    Always On Display — funkcja globalna (awatar, dymek, kolumna boczna)
    ----------------------------------------------------------------------------
    Barwy i rozmiary pochodzą wyłącznie z żetonów motywu (`--dn-*`) i biblioteki
@@ -401,6 +401,7 @@
 }
 
 /* Trzon sekcji wstawiany w miejsce treści po każdym odczycie. */
+
 .ao-trzon {
   display: flex;
   flex-direction: column;
@@ -492,6 +493,7 @@
 }
 
 /* Czyja to ocena — waga pewna mówi głosem rdzenia, sporna głosem nakładki. */
+
 .ao-decyzja__waga {
   margin: 0;
   font-size: var(--dn-fs-xs);
@@ -647,6 +649,7 @@
 }
 
 /* Granica czynności — czego nakładka NIE robi i dlaczego. */
+
 .ao-granica {
   margin: 0;
   font-size: var(--dn-fs-sm);
@@ -654,6 +657,7 @@
 }
 
 /* Pokwitowanie — to, co oddał rdzeń, nie powtórzenie pola Operatora. */
+
 .ao-pokwitowanie {
   margin: 0;
   font-size: var(--dn-fs-sm);
@@ -682,6 +686,7 @@
 }
 
 /* Nagłówek grupy pozycji — wyciszenie czasowe, kontekstowe, klasy zdarzeń. */
+
 .ao-wyciszenie__naglowek {
   margin: var(--dn-od-1) 0 0;
   color: var(--dn-tekst-2);
@@ -691,6 +696,7 @@
 }
 
 /* Podgląd wyciszeń czynnych: zdanie „co i do kiedy" oraz zniesienie obok. */
+
 .ao-wyciszenie__czynne {
   display: flex;
   flex-direction: column;
@@ -707,10 +713,12 @@
 .ao-wyciszenie__znies { flex: 0 0 auto; }
 
 /* Pozycja wyciszona niesie znak `●` w treści; barwa jest dodatkiem, nie nośnikiem. */
+
 .ao-kebab__pozycja[data-wyciszone='true'] {
   color: var(--dn-ostrzezenie-tekst);
   font-weight: var(--dn-fw-polgruba);
 }
 
 /* Granica wobec kontraktu — czego dziś nie ma i po czyjej stronie. */
+
 .ao-wyciszenie__granica { color: var(--dn-tekst-3, var(--dn-tekst-2)); }

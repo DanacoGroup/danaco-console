@@ -5,11 +5,10 @@ import (
 	"fmt"
 )
 
-// Zdarzenia wykonawcze tury: dziennik zdarzeń zaczepów i zamknięcia tur.
-// Oba byty są śladem po tym, co zaszło — zapis następuje po zdarzeniu
-// i nie wpływa na przebieg wykonania.
+// Dziennik zdarzeń zaczepów i zamknięcia tur; zapis następuje po zdarzeniu.
 
-// ZdarzenieZaczepuWiersz jest jednym wierszem dziennika zdarzeń.
+// ZdarzenieZaczepuWiersz jest jednym wierszem dziennika zdarzeń zaczepów tury
+// wykonawczej, zapisanym po fakcie.
 type ZdarzenieZaczepuWiersz struct {
 	ID           int64
 	Chwila       int64
@@ -60,13 +59,12 @@ type PrzelaczenieKanaluWiersz struct {
 type RepozytoriumZdarzenWykonawczych interface {
 	// ZapiszZaczep dopisuje jedno zdarzenie zaczepu do dziennika.
 	ZapiszZaczep(ctx context.Context, z ZdarzenieZaczepuWiersz) error
-	// ZapiszZamkniecie utrwala zamknięcie tury. Powtórny zapis tej samej
-	// wiadomości nadpisuje wiersz — zamknięcie jest jedno na turę.
+	// ZapiszZamkniecie utrwala zamknięcie tury; powtórny zapis nadpisuje wiersz.
 	ZapiszZamkniecie(ctx context.Context, z ZamkniecieTuryWiersz) error
 	// ZapiszPrzelaczenie utrwala wykonane przełączenie kanału.
 	ZapiszPrzelaczenie(ctx context.Context, z PrzelaczenieKanaluWiersz) error
-	// ZaczepyOkna zwraca zdarzenia zaczepów okna od najnowszych, najwyżej
-	// `granica` wierszy. Granica niedodatnia znaczy granicę domyślną.
+	// ZaczepyOkna zwraca zdarzenia zaczepów okna od najnowszych, do wskazanej
+	// granicy.
 	ZaczepyOkna(ctx context.Context, oknoKod string, granica int) ([]ZdarzenieZaczepuWiersz, error)
 }
 
@@ -93,7 +91,8 @@ const (
 		ORDER BY chwila DESC, id DESC LIMIT ?`
 )
 
-// granicaZaczepowDomyslna ogranicza odczyt dziennika bez wskazania granicy.
+// granicaZaczepowDomyslna ogranicza odczyt dziennika zdarzeń, gdy wywołanie
+// nie wskazuje własnej granicy wierszy.
 const granicaZaczepowDomyslna = 100
 
 type repozytoriumZdarzenWykonawczych struct {

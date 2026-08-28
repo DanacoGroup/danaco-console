@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: egzekucja trzech wymiarów izolacji kontekstu —
-// historii wymiany wiadomości, pamięci długoterminowej i bieżącego stanu
-// roboczego.
-//
-// Wymiar odrębny znaczy, że treść należąca do innego okna nie wchodzi do tury
-// tego okna: nowa karta zaczyna z pustą historią, a pamięć jednego zasięgu
-// pozostaje niewidoczna w innym. Egzekucja polega więc na odrzuceniu źródła
-// cudzego, nie na cichym pominięciu go — Operator ma wiedzieć, że tura miała
-// zaciągnąć treść spoza okna.
-//
-// Wymiar współdzielony nie ogranicza niczego; jest jawną decyzją Operatora
-// o tym, że ta sama treść zasila kilka zasięgów.
+// Plik egzekwuje trzy wymiary izolacji kontekstu: historię wymiany wiadomości, pamięć
+// długoterminową i bieżący stan roboczy, odrzucając źródło cudze zamiast cicho je pominąć.
 package core
 
 import (
@@ -19,7 +9,7 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// zasiegKontekstu wskazuje odbiorcę treści: okno komunikacji i jego sesję.
+// zasiegKontekstu wskazuje odbiorcę treści: okno komunikacji i jego sesję w tym rdzeniu tej platformy.
 type zasiegKontekstu struct {
 	// IdOkna — okno, dla którego składana jest tura.
 	IdOkna string
@@ -32,8 +22,7 @@ type zasiegKontekstu struct {
 type zrodloKontekstu struct {
 	// Wymiar izolacji: historia, pamięć albo kontekst.
 	Wymiar string
-	// IdOkna — okno, do którego treść należy. Puste znaczy treść spoza okien:
-	// zasób zasięgu szerszego, wspólny dla kilku okien.
+	// IdOkna — okno, do którego treść należy; puste znaczy zasób wspólny dla kilku okien.
 	IdOkna string
 	// IdSesji — sesja, do której treść należy.
 	IdSesji string
@@ -88,7 +77,7 @@ func wymiarOdrebny(zasady session.Zasady, wymiar string) (string, bool) {
 	return "", false
 }
 
-// opisZrodla nazywa źródło w komunikacie o naruszeniu.
+// opisZrodla nazywa źródło w komunikacie o naruszeniu odrębności wymiaru izolacji tego kontekstu okna.
 func opisZrodla(zrodlo zrodloKontekstu) string {
 	if odwolanie := strings.TrimSpace(zrodlo.Odwolanie); odwolanie != "" {
 		return "źródło " + odwolanie

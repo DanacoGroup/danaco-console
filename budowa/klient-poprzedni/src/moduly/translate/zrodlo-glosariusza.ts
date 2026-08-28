@@ -13,12 +13,8 @@ import { czyLiczba, czyObiekt, czyTablica } from '../../protokol/ksztalt-odpowie
 import { zadaj, type WynikTranslate } from './wywolanie-translate';
 
 /**
- * Pięć komend Glossary Managera — okna zarządcy modułu Translate.
- *
- * Kontrakt nie ma komendy odczytu glosariusza — nie niesie ani
- * `translate.glossary.list`, ani `.get`, choć edycja glosariusza wymaga
- * wczytania. Źródło nie zmyśla wykazu: okno pokazuje wyłącznie terminy zapisane
- * w tej sesji i mówi wprost, czego brakuje.
+ * Pięć komend okna zarządcy glosariusza modułu, obejmujących zapis terminu,
+ * ujednolicenie panelu, wystąpienia, wczytanie oraz zapis do pliku.
  */
 export interface ZrodloGlosariusza {
   /** Definiuje odpowiednik terminu; brak `termId` zakłada termin nowy. */
@@ -52,8 +48,7 @@ export function utworzZrodloGlosariusza(kanal: Kanal): ZrodloGlosariusza {
     },
 
     async ujednolic(idPanelu) {
-      // Puste `panelId` obejmuje wszystkie panele — tak stanowi kontrakt,
-      // więc pola pustego nie wysyłamy zamiast wysyłać pusty napis.
+      // Puste pole panelu obejmuje wszystkie panele, więc puste pole nie jest wysyłane.
       const zadanie: TranslateGlossaryApplyRequest = {};
       if (idPanelu !== '') zadanie.panelId = idPanelu;
       return zadaj(kanal, Command.TranslateGlossaryApply, zadanie, (tresc) =>

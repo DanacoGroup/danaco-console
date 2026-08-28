@@ -1,3 +1,5 @@
+// Odnajdywanie ma dawać pierwszeństwo pakietowi produktu przed ścieżką
+// systemu, a sprawdziany tego pliku mierzą właśnie to rozstrzygnięcie.
 package zewnetrzne
 
 import (
@@ -6,16 +8,6 @@ import (
 	"runtime"
 	"testing"
 )
-
-// Odnajdywanie ma dawać pierwszeństwo pakietowi produktu.
-//
-// Instalka wnosi programy towarzyszące do katalogu `pomocniki` obok binarium
-// rdzenia. Dopóki szukanie szło wyłącznie ścieżką wyszukiwania systemu, taki
-// program był niewidoczny: Operator dostawał odmowę „nie ma na tej maszynie",
-// stojąc nad plikiem, który przyszedł razem z produktem.
-//
-// Sprawdziany mierzą rozstrzygnięcie, nie stan maszyny: czy pakiet idzie przed
-// ścieżką i czy katalog o nazwie programu nie udaje programu.
 
 // programPakietu zakłada w katalogu tymczasowym pozorny pakiet produktu
 // z jednym programem w środku i przestawia na niego katalog bieżący.
@@ -60,8 +52,7 @@ func TestOdnajdywanieWidziProgramZPakietu(t *testing.T) {
 // dołożona do pakietu jest tą, którą sprawdzono przed wydaniem; wersja zastana
 // na maszynie bywa starsza albo okrojona i nie jest niczyją obietnicą.
 func TestPakietMaPierwszenstwoPrzedSciezkaSystemu(t *testing.T) {
-	// `sh` stoi na ścieżce systemu każdej maszyny, na której ten sprawdzian się
-	// uruchomi, więc jest właściwym materiałem na spór o pierwszeństwo.
+	// `sh` stoi na ścieżce systemu każdej maszyny, na której się uruchomi.
 	oczekiwana := programPakietu(t, "sh")
 
 	sciezka, jest := Odnajdz(Narzedzie{Nazwa: "Powłoka", Program: "sh"})

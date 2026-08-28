@@ -1,28 +1,5 @@
-// Odpowiedzialność pliku: obiekty osadzone w dokumencie — obrazy, logo,
-// kształty, ikony i pola tekstowe. Cztery czynności kontraktu: wstawienie,
-// wykaz, postać obiektu i usunięcie.
-//
-// ── Pochodzenie obiektu jest obowiązkowe ────────────────────────────────────
-// Zlecenie mówi wprost: wstawienie obrazu bez zapisanego pochodzenia jest
-// brakiem, nie skrótem. Dlatego każdy obiekt niosący bajty ma zapisane, SKĄD
-// jest — zasób magazynu rdzenia, węzeł modułu Design, plik Biblioteki, baza
-// zdjęciowa albo adres w sieci. Obraz bez pochodzenia jest za tydzień obrazem,
-// o którym nikt nie wie, czy wolno go było użyć.
-//
-// ── Bajty biorą się z magazynu zasobów rdzenia ──────────────────────────────
-// Obiekt nie nosi bajtów w swoim wierszu: nosi wskazanie zasobu, a bajty leżą
-// w magazynie pod sumą kontrolną. Ta droga jest jedna dla całego modułu
-// (`odlozTrescStudia`, `bajtyZasobuStudia`) i tu się jej nie zakłada drugi raz.
-//
-// ── Kształty i ikony są rachunkiem modułu Design ─────────────────────────────
-// Ikona wchodzi z KATALOGU Designu (`ikonaKataloguDesignu`,
-// `svgIkonyKataloguDesignu`) — tego samego, którym jedzie
-// `design.icon.library.search`. Drugiego katalogu ikon w Studiu nie ma i mieć
-// nie będzie. Kształt rysowany na miejscu opisuje się rodzajem, rozmiarem
-// i wyglądem, a nie własnym rachunkiem ścieżek; kształt wymagający ścieżek
-// edytowalnych wskazuje się węzłem Designu (`designNodeId`), który powstaje
-// przez `design.vector.shape.add`. Do plików modułu Design ten odcinek nie
-// wchodzi.
+// Plik obsługuje obiekty osadzone w dokumencie: obrazy, logo, kształty, ikony
+// i pola tekstowe — wstawienie, wykaz, ustawienie postaci i usunięcie obiektu.
 package core
 
 import (
@@ -47,7 +24,8 @@ const (
 	obiektGranicaBajtow = 64 << 20
 )
 
-// WstawObiekt wstawia obiekt w miejsce kursora (`studio.object.insert`).
+// WstawObiekt wstawia obiekt w miejsce kursora dokumentu i zapisuje bilans
+// czynności wraz z pochodzeniem wstawionych bajtów.
 func (a *adapterStudia) WstawObiekt(ctx context.Context,
 	z shared.StudioObjectInsertRequest) (shared.StudioObjectInsertResponse, error) {
 
@@ -109,15 +87,14 @@ func (a *adapterStudia) WstawObiekt(ctx context.Context,
 		return shared.StudioObjectInsertResponse{}, bladStudio(err)
 	}
 
-	// Obiekt wchodzi do drzewa blokiem nietekstowym: nie zajmuje ani jednego
-	// znaku treści, więc nie przesuwa zaznaczeń, przypisów ani blokad.
+	// Obiekt wchodzi do drzewa blokiem nietekstowym i nie zajmuje ani jednego
+	// znaku treści.
 	tabelaWstawBlokWMiejscu(&stan.forma, shared.StudioDocumentBlock{
 		Id: nowyIdentyfikator(przedrostekBlokuPostaci), Kind: blokPostaciObiekt,
 		ObjectId: postacWskaznikTekstu(obiekt.Id),
 	}, miejsce)
 
-	// Obraz wstawiony unieważnia spis ilustracji — spis, który go nie zna,
-	// pokazuje stan sprzed wstawienia.
+	// Obraz wstawiony unieważnia spis ilustracji.
 	if err := a.aparatZnaczNieswiezoscRodzaju(ctx, stan,
 		shared.StudioApparatusKindFigureIndex); err != nil {
 
@@ -150,7 +127,8 @@ func (a *adapterStudia) WstawObiekt(ctx context.Context,
 	}, nil
 }
 
-// WykazObiektow oddaje obiekty osadzone w dokumencie (`studio.object.list`).
+// WykazObiektow oddaje obiekty osadzone w dokumencie, oznaczając bilans blokady
+// fragmentu przy obiekcie stojącym pod zablokowanym miejscem.
 func (a *adapterStudia) WykazObiektow(ctx context.Context,
 	z shared.StudioObjectListRequest) (shared.StudioObjectListResponse, error) {
 
@@ -168,8 +146,7 @@ func (a *adapterStudia) WykazObiektow(ctx context.Context,
 		if z.Kind != nil && obiekt.Kind != *z.Kind {
 			continue
 		}
-		// Obiekt stojący pod blokadą fragmentu mówi to o sobie wprost: okno ma
-		// pokazać, czego model nie tknie, PRZED próbą, a nie po odmowie.
+		// Obiekt stojący pod blokadą fragmentu mówi to o sobie wprost.
 		miejsce := aparatWartoscLiczby(obiekt.AnchorOffset)
 		if len(postacBlokadyZakresu(&stan.forma, miejsce, miejsce)) > 0 {
 			obiekt.Locked = postacWskaznikPrawdy(true)
@@ -231,9 +208,8 @@ func (a *adapterStudia) UstawPostacObiektu(ctx context.Context,
 		bilans.Applied++
 	}
 
-	// Zmiana rozmiaru z zachowaniem proporcji przelicza wymiar drugi z wymiarów
-	// zastanych: Operator, który podał samą szerokość, nie spodziewa się obrazu
-	// rozciągniętego w pionie.
+	// Zmiana rozmiaru z zachowaniem proporcji przelicza wymiar drugi
+	// z wymiarów zastanych.
 	staraSzerokosc, staraWysokosc := obiektWymiary(obiekt)
 	if z.WidthMm != nil {
 		obiekt.WidthMm = z.WidthMm
@@ -339,7 +315,8 @@ func (a *adapterStudia) UstawPostacObiektu(ctx context.Context,
 	}, nil
 }
 
-// UsunObiekt usuwa obiekt osadzony w dokumencie (`studio.object.remove`).
+// UsunObiekt usuwa obiekt osadzony w dokumencie i oznacza jako nieświeże
+// odwołania, które do niego prowadziły.
 func (a *adapterStudia) UsunObiekt(ctx context.Context,
 	z shared.StudioObjectRemoveRequest) (shared.StudioObjectRemoveResponse, error) {
 
@@ -395,9 +372,8 @@ func (a *adapterStudia) UsunObiekt(ctx context.Context,
 		return shared.StudioObjectRemoveResponse{}, err
 	}
 
-	// Bajty obiektu zostają w magazynie zasobów rdzenia: ten sam zasób bywa
-	// wstawiony w kilku dokumentach, więc usunięcie obiektu nie ma prawa kasować
-	// treści, na którą powołuje się ktoś inny. Bilans mówi to wprost.
+	// Bajty obiektu zostają w magazynie: ten sam zasób bywa wstawiony
+	// w kilku dokumentach.
 	if obiekt.AssetId != nil && *obiekt.AssetId != "" {
 		bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 			Reason: "zasób magazynu zostaje",
@@ -425,9 +401,7 @@ func (a *adapterStudia) UsunObiekt(ctx context.Context,
 
 // obiektUstalPochodzenie rozstrzyga, skąd obiekt jest, i odkłada jego bajty
 // w magazynie zasobów rdzenia, gdy przyszły plikiem albo wprost z klienta.
-//
-// Kolejność jest rozstrzygnięciem: wskazanie zasobu bije wszystko inne, bo
-// zasób już leży w magazynie i nie ma po co odkładać go drugi raz.
+// Wskazanie zasobu bije wszystko inne, bo zasób już leży w magazynie.
 func (a *adapterStudia) obiektUstalPochodzenie(ctx context.Context,
 	z shared.StudioObjectInsertRequest, obiekt *shared.StudioDocumentObject,
 	bilans *shared.StudioActionBalance) error {
@@ -445,9 +419,7 @@ func (a *adapterStudia) obiektUstalPochodzenie(ctx context.Context,
 		obiekt.Source = obiektWskaznikZrodla(shared.StudioObjectSourceDrawn)
 		return nil
 	case shared.StudioObjectKindChart:
-		// Odmowa nazwana, nie cicha: rdzeń nie ma rachunku wykresu i nie udaje,
-		// że ma. Wykres składa się w module Design i wstawia jako obraz albo
-		// węzeł Designu.
+		// Rdzeń nie ma rachunku wykresu; wykres składa się w module Design.
 		return bladWskazaniaStudio("wstawienie wykresu — rdzeń nie ma rachunku wykresu " +
 			"po stronie modułu Studio. Droga, która działa: złożyć wykres w module Design " +
 			"i wstawić go jako obiekt rodzaju image ze wskazaniem zasobu (assetId) albo " +
@@ -457,7 +429,8 @@ func (a *adapterStudia) obiektUstalPochodzenie(ctx context.Context,
 	return a.obiektPochodzenieObrazu(ctx, z, obiekt, bilans)
 }
 
-// obiektPochodzenieObrazu ustala pochodzenie obrazu i logo.
+// obiektPochodzenieObrazu ustala pochodzenie obrazu i logo spośród zasobu,
+// węzła Designu, pliku Biblioteki, bajtów, ścieżki pliku albo adresu w sieci.
 func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 	z shared.StudioObjectInsertRequest, obiekt *shared.StudioDocumentObject,
 	bilans *shared.StudioActionBalance) error {
@@ -471,8 +444,7 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		obiekt.AssetId = postacWskaznikTekstu(kod)
 		obiekt.Source = obiektWskaznikZrodla(shared.StudioObjectSourceCoreAsset)
 		if z.Source != nil && *z.Source == shared.StudioObjectSourcePhotoBank {
-			// Zdjęcie z bazy zdjęciowej leży w magazynie jak każdy inny zasób;
-			// pochodzenie „baza zdjęciowa" zostaje, bo mówi o prawach do obrazu.
+			// Pochodzenie „baza zdjęciowa” zostaje, bo mówi o prawach do obrazu.
 			obiekt.Source = obiektWskaznikZrodla(shared.StudioObjectSourcePhotoBank)
 		}
 		return nil
@@ -543,10 +515,7 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 			shared.StudioObjectSourceFile)
 
 	case obiektPodane(z.SourceUrl):
-		// Adres zapisuje się jako pochodzenie, ale bajtów rdzeń stąd nie
-		// pobiera: pobranie treści ze sieci ma w rdzeniu własną drogę
-		// (`studio.ingest.url`), a druga byłaby drugą prawdą o tym, co i skąd
-		// weszło do dokumentu.
+		// Adres zapisuje się jako pochodzenie, ale bajtów rdzeń stąd nie pobiera.
 		obiekt.SourceUrl = postacWskaznikTekstu(strings.TrimSpace(*z.SourceUrl))
 		obiekt.Source = obiektWskaznikZrodla(shared.StudioObjectSourceWeb)
 		bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
@@ -566,7 +535,8 @@ func (a *adapterStudia) obiektPochodzenieObrazu(ctx context.Context,
 		"na czym pismo się opiera")
 }
 
-// obiektPochodzenieKsztaltu ustala pochodzenie kształtu.
+// obiektPochodzenieKsztaltu ustala pochodzenie kształtu: węzeł modułu Design
+// dla kształtu o ścieżkach edytowalnych albo rodzaj kształtu rysowanego na miejscu.
 func (a *adapterStudia) obiektPochodzenieKsztaltu(ctx context.Context,
 	z shared.StudioObjectInsertRequest, obiekt *shared.StudioDocumentObject) error {
 
@@ -599,12 +569,8 @@ func (a *adapterStudia) obiektPochodzenieKsztaltu(ctx context.Context,
 	return nil
 }
 
-// obiektPochodzenieIkony bierze ikonę z KATALOGU modułu Design i odkłada jej
-// rysunek w magazynie zasobów rdzenia.
-//
-// Katalog jest jeden — ten sam, którym jedzie `design.icon.library.search`.
-// Drugi katalog ikon w Studiu rozjechałby się z Designem przy pierwszym
-// uzupełnieniu wykazu.
+// obiektPochodzenieIkony bierze ikonę z katalogu modułu Design i odkłada jej
+// rysunek w magazynie zasobów rdzenia; katalog ikon jest jeden dla obu modułów.
 func (a *adapterStudia) obiektPochodzenieIkony(ctx context.Context,
 	z shared.StudioObjectInsertRequest, obiekt *shared.StudioDocumentObject) error {
 
@@ -636,7 +602,7 @@ func (a *adapterStudia) obiektPochodzenieIkony(ctx context.Context,
 }
 
 // obiektOdlozBajty utrwala bajty obiektu w magazynie zasobów rdzenia i zapisuje
-// jego pochodzenie.
+// jego pochodzenie, odmawiając bajtom pustym albo przekraczającym granicę wielkości.
 func (a *adapterStudia) obiektOdlozBajty(ctx context.Context, bajty []byte, nazwa string,
 	obiekt *shared.StudioDocumentObject, zrodlo shared.StudioObjectSource) error {
 
@@ -660,18 +626,21 @@ func (a *adapterStudia) obiektOdlozBajty(ctx context.Context, bajty []byte, nazw
 
 // ── Drobne rachunki ─────────────────────────────────────────────────────────
 
-// obiektPodane mówi, czy pole nieobowiązkowe niesie wartość.
+// obiektPodane mówi, czy pole nieobowiązkowe niesie wartość niepustą po
+// obcięciu białych znaków z brzegów tekstu.
 func obiektPodane(pole *string) bool {
 	return pole != nil && strings.TrimSpace(*pole) != ""
 }
 
-// obiektWskaznikZrodla oddaje wskaźnik na pochodzenie obiektu.
+// obiektWskaznikZrodla oddaje wskaźnik na kopię wartości pochodzenia obiektu,
+// aby wywołujący nie dzielił się jedną zmienną z inną wartością.
 func obiektWskaznikZrodla(zrodlo shared.StudioObjectSource) *shared.StudioObjectSource {
 	kopia := zrodlo
 	return &kopia
 }
 
-// obiektZnajdz odnajduje obiekt w postaci dokumentu.
+// obiektZnajdz odnajduje obiekt w postaci dokumentu po jego identyfikatorze
+// i mówi, czy taki obiekt tam jest.
 func obiektZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioDocumentObject, bool) {
 	szukany := strings.TrimSpace(kod)
 	for _, obiekt := range forma.Objects {
@@ -682,7 +651,8 @@ func obiektZnajdz(forma *shared.StudioDocumentForm, kod string) (shared.StudioDo
 	return shared.StudioDocumentObject{}, false
 }
 
-// obiektUsunBlok zdejmuje z drzewa blok wskazujący obiekt.
+// obiektUsunBlok zdejmuje z drzewa postaci dokumentu blok wskazujący usuwany
+// obiekt, pozostawiając resztę drzewa bez zmian.
 func obiektUsunBlok(forma *shared.StudioDocumentForm, kod string) {
 	nowe := make([]shared.StudioDocumentBlock, 0, len(forma.Blocks))
 	for _, blok := range forma.Blocks {
@@ -706,7 +676,8 @@ func obiektNastepnaWarstwa(forma *shared.StudioDocumentForm) int {
 	return najwyzsza
 }
 
-// obiektWymiary oddaje wymiary obiektu w milimetrach.
+// obiektWymiary oddaje wymiary obiektu w milimetrach, zero gdy szerokość
+// albo wysokość nie są jeszcze ustawione.
 func obiektWymiary(obiekt shared.StudioDocumentObject) (float64, float64) {
 	szerokosc, wysokosc := 0.0, 0.0
 	if obiekt.WidthMm != nil {
@@ -731,7 +702,8 @@ func obiektDomyslneWymiary(obiekt *shared.StudioDocumentObject) {
 	}
 }
 
-// obiektSprawdzRodzaj odrzuca rodzaj obiektu, którego kontrakt nie zna.
+// obiektSprawdzRodzaj odrzuca rodzaj obiektu, którego kontrakt nie zna,
+// i odmawia nazwanym wykazem rodzajów znanych.
 func obiektSprawdzRodzaj(rodzaj shared.StudioObjectKind) error {
 	for _, znany := range shared.WartosciStudioObjectKind() {
 		if rodzaj == znany {
@@ -746,7 +718,8 @@ func obiektSprawdzRodzaj(rodzaj shared.StudioObjectKind) error {
 		"”, którego rdzeń nie zna; wykaz: " + strings.Join(nazwy, ", "))
 }
 
-// obiektNazwaRodzaju nazywa rodzaj obiektu pełnym słowem.
+// obiektNazwaRodzaju nazywa rodzaj obiektu pełnym słowem polskim, aby komunikat
+// bilansu czynności nie niósł nazwy technicznej kontraktu.
 func obiektNazwaRodzaju(rodzaj shared.StudioObjectKind) string {
 	switch rodzaj {
 	case shared.StudioObjectKindImage:
@@ -766,7 +739,8 @@ func obiektNazwaRodzaju(rodzaj shared.StudioObjectKind) string {
 	}
 }
 
-// obiektZapisPochodzenia opisuje pochodzenie obiektu zdaniem dla Operatora.
+// obiektZapisPochodzenia opisuje pochodzenie obiektu zdaniem czytelnym
+// w bilansie czynności, złożonym ze źródła i wskazania bajtów albo adresu.
 func obiektZapisPochodzenia(obiekt shared.StudioDocumentObject) string {
 	czesci := make([]string, 0, 3)
 	if obiekt.Source != nil {
@@ -788,7 +762,8 @@ func obiektZapisPochodzenia(obiekt shared.StudioDocumentObject) string {
 	return strings.Join(czesci, ", ")
 }
 
-// obiektNazwaZrodla nazywa pochodzenie obiektu pełnym słowem.
+// obiektNazwaZrodla nazywa pochodzenie obiektu pełnym słowem polskim zamiast
+// wartością technologiczną kontraktu.
 func obiektNazwaZrodla(zrodlo shared.StudioObjectSource) string {
 	switch zrodlo {
 	case shared.StudioObjectSourceFile:
@@ -810,7 +785,8 @@ func obiektNazwaZrodla(zrodlo shared.StudioObjectSource) string {
 	}
 }
 
-// obiektNazwaPliku składa nazwę, pod którą bajty obiektu wejdą do magazynu.
+// obiektNazwaPliku składa nazwę, pod którą bajty obiektu wejdą do magazynu
+// zasobów, biorąc ją ze ścieżki pliku albo z rodzaju obiektu.
 func obiektNazwaPliku(z shared.StudioObjectInsertRequest) string {
 	if obiektPodane(z.Path) {
 		sciezka := strings.TrimSpace(*z.Path)
@@ -833,11 +809,8 @@ func obiektFormatPliku(nazwa string) string {
 	return "bin"
 }
 
-// obiektDoWiersza przekłada obiekt na wiersz warstwy danych.
-//
-// Kolumny biorą to, po czym się pyta — rodzaj, pochodzenie, zakotwiczenie,
-// warstwę, tekst zastępczy, podpis. Reszta postaci idzie polem JSON. Zapis tego,
-// co ma kolumnę, także w JSON-ie dałby dwie prawdy o jednym wierszu.
+// obiektDoWiersza przekłada obiekt na wiersz warstwy danych: kolumny biorą to,
+// po czym się pyta, a reszta postaci idzie jednym polem zapisu JSON.
 func obiektDoWiersza(dokumentID int64,
 	obiekt shared.StudioDocumentObject) (dane.ObiektDokumentuStudia, error) {
 

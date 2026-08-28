@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: ocena i ranking — `roundtable.rating.set`,
-// `roundtable.rubric.set`, `roundtable.rubric.list`, `roundtable.judge.run`
-// i `roundtable.leaderboard.get` (okno Voting & Evaluation Center).
-//
-// ── Ocena Operatora zasila ranking od razu ───────────────────────────────────
-// Wskazanie wypowiedzi bardziej przekonującej jest pojedynkiem dwóch tożsamości
-// i tak jest liczone: punktacja obu przesuwa się natychmiast, a nie po
-// zamknięciu debaty. Ranking, który aktualizuje się dopiero na koniec, nie
-// pokazuje niczego w trakcie — a Operator ocenia właśnie w trakcie.
+// Moduł Voting & Evaluation Center obsługuje ocenę i ranking komendami
+// `roundtable.rating.set`, `roundtable.rubric.set`, `roundtable.rubric.list`,
+// `roundtable.judge.run` i `roundtable.leaderboard.get`.
 package core
 
 import (
@@ -18,7 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki bytów oceny.
+// Przedrostki identyfikatorów bytów oceny: oceny Operatora, rubryki,
+// kryterium rubryki i werdyktu sędziowskiego, nadawane przy zakładaniu
+// nowego wiersza.
 const (
 	przedrostekOceny     = "ocena-"
 	przedrostekRubryki   = "rubryka-"
@@ -31,15 +27,16 @@ const (
 	// pojedynkiem. Wartość jest umowna i taka sama dla wszystkich, więc niczego
 	// nie faworyzuje; liczy się różnica, nie poziom.
 	punktacjaPoczatkowaRankingu = 1500.0
-	// wspolczynnikElo — o ile najwyżej przesuwa się punktacja po jednym
-	// pojedynku.
+	// wspolczynnikElo — o ile najwyżej przesuwa się punktacja tożsamości po
+	// jednym rozstrzygniętym pojedynku w algorytmie Elo.
 	wspolczynnikElo = 32.0
 	// odchyleniePoczatkowe — niepewność oszacowania przy pierwszym pojedynku;
 	// używają jej Glicko i TrueSkill, Elo zostawia ją nietkniętą.
 	odchyleniePoczatkowe = 350.0
 )
 
-// Ocen zapisuje ocenę Operatora i przesuwa nią ranking.
+// Ocen zapisuje ocenę Operatora — gwiazdkową albo porównanie parami — i przy
+// porównaniu parami przesuwa nią ranking obu ocenianych tożsamości.
 func (a *adapterDebaty) Ocen(ctx context.Context,
 	z shared.RoundtableRatingSetRequest) (shared.RoundtableRatingSetResponse, error) {
 
@@ -124,7 +121,8 @@ func (a *adapterDebaty) odnotujPojedynek(ctx context.Context, okno, wygrana, prz
 	}
 }
 
-// tozsamoscRankingu wiąże klucz tożsamości z nazwą pokazywaną Operatorowi.
+// tozsamoscRankingu wiąże klucz tożsamości używany w rankingu z nazwą tej
+// tożsamości pokazywaną Operatorowi w interfejsie.
 type tozsamoscRankingu struct {
 	klucz string
 	nazwa string
@@ -154,12 +152,9 @@ func (a *adapterDebaty) tozsamoscWypowiedzi(ctx context.Context,
 	return tozsamoscRankingu{klucz: klucz, nazwa: nazwa}, nil
 }
 
-// przesunPunktacje przelicza punktację obu stron pojedynku wybranym algorytmem.
-//
-// Elo przesuwa obie punktacje o wartość zależną od różnicy między nimi.
-// Glicko i TrueSkill dokładają do tego niepewność oszacowania: im mniej
-// pojedynków ma tożsamość, tym większy krok, bo tym mniej wiadomo o jej sile.
-// Różnica między nimi jest w tempie zawężania niepewności.
+// przesunPunktacje przelicza punktację obu stron pojedynku wybranym
+// algorytmem rankingu — Elo, Glicko albo TrueSkill — i zapisuje obie nowe
+// pozycje rankingu.
 func (a *adapterDebaty) przesunPunktacje(ctx context.Context, zwyciezca, pokonany tozsamoscRankingu,
 	zakres, okno, algorytm string) {
 
@@ -181,8 +176,7 @@ func (a *adapterDebaty) przesunPunktacje(ctx context.Context, zwyciezca, pokonan
 	drugi.Punktacja -= krok * (1 - oczekiwanie)
 	drugi.Pojedynki++
 	if algorytm != shared.RoundtableLeaderboardAlgorithmElo {
-		// Niepewność maleje z każdym pojedynkiem, ale nie schodzi do zera:
-		// tożsamość, o której „wiadomo wszystko", przestałaby reagować na wyniki.
+		// Niepewność maleje z każdym pojedynkiem, ale nie schodzi do zera.
 		pierwszy.Odchylenie = maxZDwoch(pierwszy.Odchylenie*0.9, 30)
 		drugi.Odchylenie = maxZDwoch(drugi.Odchylenie*0.9, 30)
 	}
@@ -191,7 +185,8 @@ func (a *adapterDebaty) przesunPunktacje(ctx context.Context, zwyciezca, pokonan
 	_ = a.repozytorium.ZapiszPozycjeRankinguDebaty(ctx, drugi)
 }
 
-// pozycjaRankingu czyta punktację tożsamości albo zakłada pozycję początkową.
+// pozycjaRankingu czyta zapisaną punktację tożsamości w wybranym zakresie
+// i algorytmie albo zakłada dla niej pozycję początkową.
 func (a *adapterDebaty) pozycjaRankingu(ctx context.Context, tozsamosc tozsamoscRankingu,
 	zakres, okno, algorytm string) dane.PozycjaRankinguDebaty {
 
@@ -207,7 +202,8 @@ func (a *adapterDebaty) pozycjaRankingu(ctx context.Context, tozsamosc tozsamosc
 	}
 }
 
-// Ranking oddaje punktację tożsamości akumulowaną między sesjami.
+// Ranking obsługuje `roundtable.leaderboard.get` i oddaje punktację
+// tożsamości akumulowaną między sesjami debaty w wybranym zakresie.
 func (a *adapterDebaty) Ranking(ctx context.Context,
 	z shared.RoundtableLeaderboardGetRequest) (shared.RoundtableLeaderboardGetResponse, error) {
 
@@ -250,18 +246,16 @@ func (a *adapterDebaty) Ranking(ctx context.Context,
 	return shared.RoundtableLeaderboardGetResponse{Entries: wykaz}, nil
 }
 
-// kryteriumZadania to kształt, w jakim kryteria przychodzą polem `criteria`.
+// kryteriumZadania jest kształtem, w jakim pojedyncze kryterium rubryki
+// przychodzi w żądaniu polem `criteria`: nazwa, waga i opis.
 type kryteriumZadania struct {
 	Name        string  `json:"name"`
 	Weight      float64 `json:"weight"`
 	Description *string `json:"description,omitempty"`
 }
 
-// ZapiszRubryke zakłada albo zmienia rubrykę oceny wraz z kryteriami.
-//
-// Suma wag ma wynosić jedność — tak mówi kontrakt („suma wag równa jedności”).
-// Rubryka o sumie innej dawałaby wynik werdyktu, którego nie da się porównać
-// z wynikiem z innej rubryki, więc odmowa jest tu jedyną uczciwą odpowiedzią.
+// ZapiszRubryke obsługuje `roundtable.rubric.set` i zakłada albo zmienia
+// rubrykę oceny wraz z kryteriami; suma wag kryteriów ma wynosić jedność.
 func (a *adapterDebaty) ZapiszRubryke(ctx context.Context,
 	z shared.RoundtableRubricSetRequest) (shared.RoundtableRubricSetResponse, error) {
 
@@ -316,7 +310,8 @@ func (a *adapterDebaty) ZapiszRubryke(ctx context.Context,
 	return shared.RoundtableRubricSetResponse{Rubric: rubrykaKontraktu(rubryka)}, nil
 }
 
-// Rubryki oddaje rubryki wspólne oraz te należące do wskazanego okna.
+// Rubryki obsługuje `roundtable.rubric.list` i oddaje rubryki wspólne
+// środowiska oraz rubryki należące do wskazanego okna.
 func (a *adapterDebaty) Rubryki(ctx context.Context,
 	z shared.RoundtableRubricListRequest) (shared.RoundtableRubricListResponse, error) {
 
@@ -331,12 +326,8 @@ func (a *adapterDebaty) Rubryki(ctx context.Context,
 	return shared.RoundtableRubricListResponse{Rubrics: wykaz}, nil
 }
 
-// Osadz zleca ocenę wypowiedzi modelom-sędziom według rubryki.
-//
-// Sędzia jest uczestnikiem składu, więc ocenia własnym kanałem i własną
-// tożsamością. Punkty odczytuje się z jego odpowiedzi; odpowiedź bez liczb
-// zostawia punkty zerowe, a uzasadnieniem jest to, co sędzia naprawdę
-// powiedział — rdzeń nie wystawia oceny za niego.
+// Osadz obsługuje `roundtable.judge.run` i zleca ocenę wypowiedzi modelom
+// pełniącym rolę sędziów według rubryki, każdemu jego kanałem i tożsamością.
 func (a *adapterDebaty) Osadz(ctx context.Context,
 	z shared.RoundtableJudgeRunRequest) (shared.RoundtableJudgeRunResponse, error) {
 
@@ -423,7 +414,8 @@ func (a *adapterDebaty) Osadz(ctx context.Context,
 	return shared.RoundtableJudgeRunResponse{Judgements: werdykty}, nil
 }
 
-// wypowiedziDoOceny wybiera wypowiedzi objęte oceną sędziowską.
+// wypowiedziDoOceny wybiera wypowiedzi objęte oceną sędziowską — wskazane
+// w żądaniu albo wszystkie niepuste wypowiedzi zakresu.
 func (a *adapterDebaty) wypowiedziDoOceny(ctx context.Context, okno, turaKod string,
 	wskazane []string) ([]dane.WypowiedzDebaty, error) {
 
@@ -515,7 +507,8 @@ func liczbaPrzyNazwie(tekst, nazwa string) float64 {
 	return liczba
 }
 
-// ocenaDebatyKontraktu przekłada ocenę Operatora na byt kontraktu.
+// ocenaDebatyKontraktu przekłada ocenę Operatora z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func ocenaDebatyKontraktu(o dane.OcenaDebaty) shared.RoundtableRating {
 	ocena := shared.RoundtableRating{
 		Id: o.Kod, WindowId: o.Okno, Kind: shared.RoundtableRatingKind(o.Rodzaj),
@@ -540,7 +533,8 @@ func ocenaDebatyKontraktu(o dane.OcenaDebaty) shared.RoundtableRating {
 	return ocena
 }
 
-// rubrykaKontraktu przekłada rubrykę wraz z kryteriami.
+// rubrykaKontraktu przekłada rubrykę wraz z jej kryteriami z bazy danych na
+// kształt odpowiedzi zgodny z kontraktem.
 func rubrykaKontraktu(r dane.RubrykaDebaty) shared.RoundtableRubric {
 	kryteria := make([]shared.RoundtableRubricCriterion, 0, len(r.Kryteria))
 	for _, kryterium := range r.Kryteria {
@@ -554,7 +548,8 @@ func rubrykaKontraktu(r dane.RubrykaDebaty) shared.RoundtableRubric {
 	}
 }
 
-// werdyktKontraktu przekłada werdykt sędziego.
+// werdyktKontraktu przekłada werdykt sędziego z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func werdyktKontraktu(w dane.WerdyktDebaty) shared.RoundtableJudgement {
 	werdykt := shared.RoundtableJudgement{
 		Id: w.Kod, WindowId: w.Okno, RubricId: w.Rubryka, JudgeParticipantId: w.Sedzia,
@@ -573,11 +568,9 @@ func werdyktKontraktu(w dane.WerdyktDebaty) shared.RoundtableJudgement {
 }
 
 // potega10 liczy dziesięć do wskazanej potęgi — jedyna funkcja przestępna
-// potrzebna w rachunku Elo.
+// potrzebna w rachunku punktacji Elo, Glicko i TrueSkill.
 func potega10(wykladnik float64) float64 {
-	// 10^x = e^(x·ln10); szereg wykładniczy schodzi do wystarczającej
-	// dokładności po kilkunastu wyrazach, bo argument jest mały (różnica
-	// punktacji dzielona przez czterysta).
+	// Szereg wykładniczy 10^x = e^(x·ln10), zbieżny przy małym argumencie.
 	const ln10 = 2.302585092994046
 	x := wykladnik * ln10
 	wynik, wyraz := 1.0, 1.0
@@ -588,7 +581,8 @@ func potega10(wykladnik float64) float64 {
 	return wynik
 }
 
-// maxZDwoch oddaje większą z dwóch wartości.
+// maxZDwoch oddaje większą z dwóch podanych wartości zmiennoprzecinkowych,
+// używaną przy ograniczeniu niepewności rankingu odchylenia.
 func maxZDwoch(pierwsza, druga float64) float64 {
 	if pierwsza > druga {
 		return pierwsza
@@ -596,7 +590,8 @@ func maxZDwoch(pierwsza, druga float64) float64 {
 	return druga
 }
 
-// sformatujUlamek zapisuje wagę tak, jak czyta ją człowiek.
+// sformatujUlamek zapisuje wagę liczbową w postaci dziesiętnej z przecinkiem,
+// tak jak zapisuje ją człowiek w opisie kryterium rubryki.
 func sformatujUlamek(wartosc float64) string {
 	setne := int(wartosc*100 + 0.5)
 	return itoa(setne/100) + "," + itoa(setne%100/10) + itoa(setne%10)

@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: pamięć tłumaczeń modułu Translate w kształcie
-// kontraktu `TranslationMemoryEntry` (tabela `pamiec_tlumaczen`, migracja 160)
-// oraz polityka pamięci okna (`polityka_pamieci_okna`).
-//
-// Plik `slownik_pamiec.go` obsługuje jedną, wąską drogę tej samej tabeli: zapis
-// pary zdjętej z zatwierdzonego panelu i dopasowanie przybliżone dla
-// `memory.suggest`. Ten plik odpowiada za pamięć jako byt Operatora — wykaz,
-// zapis wprost, usunięcie, utrzymanie i wymianę z plikiem. Dwa pliki, jedna
-// tabela, dwie różne odpowiedzialności.
-//
-// Zapytania składane są tu wprost na `*sql.DB`, nie przez pamięć przygotowanych
-// poleceń: wykaz pamięci ma cztery nieobowiązkowe zawężenia i limit, więc treść
-// zapytania zależy od żądania. Pamięć przygotowanych poleceń trzymałaby
-// kilkanaście wariantów jednego odczytu.
+// Repozytorium przechowuje pamięć tłumaczeń modułu Translate w kształcie
+// kontraktu `TranslationMemoryEntry`, w tabeli `pamiec_tlumaczen` z migracji
+// 160, oraz politykę pamięci okna w tabeli `polityka_pamieci_okna`.
 package dane
 
 import (
@@ -74,7 +63,8 @@ const kolumnyWpisuPamieciTlumaczen = `w.id, w.identyfikator_zewnetrzny, w.panel_
 const zrodloWpisuPamieciTlumaczen = ` FROM pamiec_tlumaczen w
 	LEFT JOIN panel_tlumaczenia p ON p.id = w.panel_id`
 
-// warunkiPamieci składa część WHERE wraz z argumentami wedle zawężeń filtru.
+// warunkiPamieci składa część zapytania WHERE wraz z argumentami, wedle
+// zawężeń przekazanego filtru pamięci.
 func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 	warunki := []string{}
 	argumenty := []any{}
@@ -91,8 +81,8 @@ func warunkiPamieci(filtr FiltrPamieciTlumaczen) (string, []any) {
 		argumenty = append(argumenty, filtr.Zasieg)
 	}
 	if fraza := strings.TrimSpace(filtr.Fraza); fraza != "" {
-		// Dopasowanie w dowolnym miejscu obu segmentów — tak stanowi kontrakt
-		// (`query`: „dopasowanie w dowolnym miejscu").
+		// Dopasowanie w dowolnym miejscu obu segmentów, zgodnie z kontraktem
+		// pola `query`.
 		warunki = append(warunki, "(w.segment_zrodlowy LIKE ? OR w.segment_docelowy LIKE ?)")
 		wzorzec := "%" + fraza + "%"
 		argumenty = append(argumenty, wzorzec, wzorzec)
@@ -145,7 +135,8 @@ func (r *repozytoriumTlumaczen) WpisyPamieci(ctx context.Context,
 	return lista, razem, wiersze.Err()
 }
 
-// odczytajWpisPamieciPelny składa strukturę z jednego wiersza wyniku.
+// odczytajWpisPamieciPelny składa strukturę WpisPamieciTlumaczenPelny
+// z jednego wiersza wyniku zapytania.
 func odczytajWpisPamieciPelny(wiersz skaner) (WpisPamieciTlumaczenPelny, error) {
 	var wpis WpisPamieciTlumaczenPelny
 	var panelID sql.NullInt64
@@ -166,7 +157,8 @@ func odczytajWpisPamieciPelny(wiersz skaner) (WpisPamieciTlumaczenPelny, error) 
 	return wpis, nil
 }
 
-// WpisPamieci oddaje jedną parę po kodzie zewnętrznym.
+// WpisPamieci oddaje jedną parę pamięci tłumaczeń modułu Translate po jej
+// kodzie zewnętrznym, z tabeli `pamiec_tlumaczen`.
 func (r *repozytoriumTlumaczen) WpisPamieci(ctx context.Context,
 	kod string) (WpisPamieciTlumaczenPelny, error) {
 
@@ -295,7 +287,8 @@ func (r *repozytoriumTlumaczen) PolitykaPamieci(ctx context.Context,
 	return polityka, nil
 }
 
-// ZapiszPolitykePamieci zakłada politykę okna albo nadpisuje zastaną.
+// ZapiszPolitykePamieci zakłada politykę pamięci okna albo nadpisuje politykę
+// zastaną dla wskazanego okna tłumaczenia.
 func (r *repozytoriumTlumaczen) ZapiszPolitykePamieci(ctx context.Context,
 	polityka PolitykaPamieciOkna) (PolitykaPamieciOkna, error) {
 

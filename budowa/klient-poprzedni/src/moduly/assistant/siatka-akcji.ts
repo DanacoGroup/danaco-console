@@ -7,15 +7,9 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import { KOD_MODULU, type StanAssistant } from './stan-assistant';
 
 /**
- * Siatka szybkich akcji Voice Console.
- *
- * Plik odpowiada wyłącznie za widok katalogu akcji zasięgu modułu. Zestaw
- * pochodzi z `action.list`, a nie z listy zaszytej w kliencie — wykaz pozycji
- * należy do rdzenia, tak samo jak wykaz modułów w nawigacji.
- *
- * Zestawu nie da się zmienić z okna: kontrakt nie ma komendy zapisu biblioteki
- * poleceń szybkich. Okno nazywa ten brak wprost, zamiast stawiać przycisk
- * „Dostosuj", który niczego nie zapisze.
+ * Siatka szybkich akcji Voice Console. Plik odpowiada wyłącznie za widok katalogu
+ * akcji zasięgu modułu, a zestaw pochodzi z komendy `action.list`, nie z listy
+ * zaszytej w kliencie: wykaz pozycji należy do rdzenia.
  */
 export interface SiatkaAkcji {
   element: HTMLElement;
@@ -23,7 +17,11 @@ export interface SiatkaAkcji {
   wczytaj(): Promise<void>;
 }
 
-/** Wstawia treść akcji do pola polecenia — akcja jest zaczynem, nie wysyłką. */
+/**
+ * Wstawia treść akcji do pola polecenia. Akcja jest zaczynem polecenia, a nie jego
+ * wysyłką, więc naciśnięcie kafla niczego nie wykonuje; polecenie wychodzi dopiero
+ * z paska, po przeczytaniu przez Operatora.
+ */
 export type NaAkcje = (tresc: string) => void;
 
 export function utworzSiatkeAkcji(stan: StanAssistant, naAkcje: NaAkcje): SiatkaAkcji {
@@ -75,15 +73,9 @@ export function utworzSiatkeAkcji(stan: StanAssistant, naAkcje: NaAkcje): Siatka
 }
 
 /**
- * Jeden kafel katalogu; nazwa akcji jest zaczynem treści polecenia.
- *
- * Kafel wstawia do pola nazwę wiersza, nie jego opis: `action.list` zasięgu
- * modułu Assistant oddaje komendy platformy, więc opis jest zdaniem o komendzie,
- * a nie treścią polecenia dla asystenta. Czym wiersz jest, mówi opis kafla —
- * to katalog komend rdzenia, nie biblioteka gotowych promptów.
- *
- * Warunek z pola `requires` stoi w opisie kafla, nie w oknie modalnym po
- * naciśnięciu: kafel niczego nie wykonuje, sam wypełnia pole.
+ * Jeden kafel katalogu; nazwa akcji jest zaczynem treści polecenia. Kafel wstawia do
+ * pola nazwę wiersza, a nie jego opis, ponieważ opis jest zdaniem o komendzie rdzenia,
+ * nie treścią polecenia dla asystenta.
  */
 function kafel(akcja: Action, naAkcje: NaAkcje): HTMLElement {
   const przycisk = document.createElement('button');
@@ -101,9 +93,7 @@ function kafel(akcja: Action, naAkcje: NaAkcje): HTMLElement {
 
   przycisk.append(nazwa, opis);
   przycisk.addEventListener('click', () => {
-    // Wiersz katalogu wskazuje komendę kontraktu, a nie treść polecenia.
-    // Wysyłanie jej wprost byłoby zgadywaniem ładunku, więc akcja wstawia
-    // swoją nazwę do pola, a polecenie wychodzi dopiero z paska.
+    // Wiersz wskazuje komendę kontraktu; wysyłanie jej wprost byłoby zgadywaniem.
     naAkcje(akcja.name);
   });
 
@@ -112,7 +102,11 @@ function kafel(akcja: Action, naAkcje: NaAkcje): HTMLElement {
   return pozycja;
 }
 
-/** Opis wiersza katalogu: czym jest, jaką komendę wskazuje i czego wymaga. */
+/**
+ * Opis wiersza katalogu: czym wiersz jest, jaką komendę rdzenia wskazuje i jakiego bytu
+ * wymaga. Warunek z pola `requires` stoi w opisie kafla, a nie w oknie po naciśnięciu,
+ * ponieważ kafel niczego nie wykonuje i sam wypełnia pole.
+ */
 function opisWiersza(akcja: Action): string {
   const czesci = [akcja.description ?? '', `komenda rdzenia: ${akcja.command}`];
   if (akcja.requires !== undefined && akcja.requires !== '') {

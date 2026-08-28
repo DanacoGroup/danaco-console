@@ -7,8 +7,8 @@ import "sort"
 type Polityka struct {
 	Kontekst Kontekst
 	Pozycje  []Wynik
-	// BladZrodla niesie błąd odczytu warstwy trwałości. Polityka jest zwracana
-	// mimo błędu — wartości pochodzą wtedy z rejestru definicji.
+	// BladZrodla niesie błąd odczytu warstwy trwałości; polityka wraca mimo
+	// błędu z rejestru definicji.
 	BladZrodla error
 }
 
@@ -27,7 +27,7 @@ func (r *Rozstrzygacz) PolitykaEfektywna(kontekst Kontekst) Polityka {
 }
 
 // kluczeSpozaRejestru zwraca posortowane klucze obecne w zapisach, a nieznane
-// rejestrowi definicji.
+// rejestrowi definicji, wskazując wpisy osierocone w bazie.
 func kluczeSpozaRejestru(rejestr *Rejestr, zapisy map[kluczWpisu]Wpis) []string {
 	zebrane := make(map[string]struct{})
 	for _, wpis := range zapisy {
@@ -43,7 +43,8 @@ func kluczeSpozaRejestru(rejestr *Rejestr, zapisy map[kluczWpisu]Wpis) []string 
 	return klucze
 }
 
-// Pozycja zwraca rozstrzygnięcie jednego ustawienia z gotowej polityki.
+// Pozycja zwraca rozstrzygnięcie jednego ustawienia z gotowej polityki, wraz
+// z informacją, czy klucz w ogóle istnieje.
 func (p Polityka) Pozycja(klucz string) (Wynik, bool) {
 	for _, pozycja := range p.Pozycje {
 		if pozycja.Klucz == klucz {

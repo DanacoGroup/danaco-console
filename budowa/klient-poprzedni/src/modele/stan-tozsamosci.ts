@@ -12,18 +12,9 @@ import { wskazanieKompletne, type WskazanieOsi } from './wybor-osi';
 import { utworzZrodloTozsamosci, type ZrodloTozsamosci } from './zrodlo-tozsamosci';
 
 /**
- * Stan zasad i tożsamości modelu — katalog kategorii, treści zapisane dla
- * jednej osi oraz nakładka obowiązująca.
- *
- * Trzy rzeczy w jednym stanie, ponieważ edytor potrzebuje wszystkich naraz:
- * katalog mówi, jakie kategorie istnieją i który tryb proponują, zapisy mówią,
- * co w nich stoi, a nakładka — co z tego trafi do modelu.
- *
- * Oś wyznacza zakres odczytu: zapisy pobieramy dla osi wskazanej, a nie dla
- * wszystkich naraz, więc kategoria bez zapisu na tej osi ma treść pustą,
- * a obowiązuje dla niej treść z osi szerszej. Oś, która wymaga bytu, a bytu nie
- * ma, jest traktowana jak platforma — adresowanie osi bez bytu nie ma
- * w kontrakcie znaczenia.
+ * Stan zasad i tożsamości modelu przechowuje katalog kategorii, zapisy treści
+ * przypisane do wskazanej osi konfiguracji oraz nakładkę obowiązującą
+ * stosowaną przy odczycie modelu edytora.
  */
 export interface StanTozsamosci {
   /** Kategorie w kolejności warstw i porządku wewnątrz warstwy. */

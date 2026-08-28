@@ -1,23 +1,7 @@
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 
 /**
- * Zestaw paneli otwartych obok jednej rozmowy.
- *
- * Przełącznik paneli stoi w nagłówku okna rozmowy, więc każde okno ma własny
- * zestaw paneli: panel należy do rozmowy, nie do ekranu.
- *
- * Moduł nie ma żadnej zmiennej na poziomie modułu — jeden egzemplarz stanu na
- * moduł znaczyłby jeden zestaw paneli na całą aplikację. Cały stan siedzi
- * w domknięciu fabryki, tak jak w `sterowanie/stan-sterowania.ts`; cztery
- * gniazda tworzą cztery niezależne egzemplarze i żaden nie widzi pozostałych.
- *
- * Moduł nie buduje paneli, nie zna ich nazw i nie sprawdza, czy kod pozycji
- * jest otwieralny — trzyma wyłącznie zbiór kodów i dwie liczby układu.
- * Rozstrzyganie, co da się otworzyć, należy do spisu okien pomocniczych.
- *
- * Otwarcie panelu już otwartego nie jest błędem, a wartość spoza zakresu jest
- * przycinana zamiast wstrzymywać wykonanie: powtórne otwarcie nic nie zmienia
- * i nie budzi subskrybentów.
+ * Zestaw paneli otwartych obok jednej rozmowy stoi w domknięciu fabryki, jedno na gniazdo, trzymając wyłącznie zbiór kodów i dwie liczby układu, bez budowania paneli ani sprawdzania, co da się otworzyć.
  */
 export interface StanPaneli {
   /** Kody paneli otwartych, w kolejności otwierania. */
@@ -36,18 +20,12 @@ export interface StanPaneli {
 }
 
 /**
- * Tworzy stan paneli jednego gniazda.
- *
- * `naZmiane` woła się raz na zmianę, nie raz na pole: zamknięcie panelu
- * stojącego na pełnym ekranie zdejmuje też pełny ekran, a subskrybent dostaje
- * jedno powiadomienie, nie dwa. Inaczej odbiorca odrysowywałby układ w stanie
- * przejściowym, w którym pełny ekran wskazuje panel już zamknięty.
+ * Tworzy stan paneli jednego gniazda; zmiana woła się raz na zmianę, nie raz na pole, żeby subskrybent nie odrysowywał układu w stanie przejściowym.
  */
 export function utworzStanPaneli(szerokoscPoczatkowa: number): StanPaneli {
   const zmiany = utworzMagistrale<void>();
 
-  // Kolejność otwierania jest treścią, nie skutkiem ubocznym — kolumna paneli
-  // ustawia je w tej kolejności, więc trzyma to tablica, a nie zbiór.
+  // Kolejność otwierania jest treścią, nie skutkiem ubocznym, dlatego trzyma ją tablica, a nie zbiór.
   const otwarte: string[] = [];
   let pelnyEkran: string | null = null;
   let szerokosc = szerokoscPoczatkowa;
@@ -66,8 +44,7 @@ export function utworzStanPaneli(szerokoscPoczatkowa: number): StanPaneli {
     const miejsce = otwarte.indexOf(kod);
     if (miejsce < 0) return;
     otwarte.splice(miejsce, 1);
-    // Panel zamknięty nie może zostać pełnym ekranem — pełny ekran bez panelu
-    // byłby wskazaniem na nieistniejący byt.
+    // Panel zamknięty nie może zostać pełnym ekranem — to byłoby wskazaniem na nieistniejący byt.
     if (pelnyEkran === kod) pelnyEkran = null;
     oglos();
   }
@@ -89,8 +66,7 @@ export function utworzStanPaneli(szerokoscPoczatkowa: number): StanPaneli {
     pelnyEkran: () => pelnyEkran,
 
     ustawPelnyEkran(kod) {
-      // Na pełny ekran idzie wyłącznie panel, który stoi. Kod spoza zestawu
-      // jest przycinany do „nikt" — nie jest to błąd i nie wstrzymuje pracy.
+      // Na pełny ekran idzie wyłącznie panel, który stoi; kod spoza zestawu jest przycinany, to nie błąd.
       const nowy = kod !== null && otwarte.includes(kod) ? kod : null;
       if (nowy === pelnyEkran) return;
       pelnyEkran = nowy;

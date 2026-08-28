@@ -1,18 +1,4 @@
-// Odpowiedzialność pliku: wpięcie czterech komend obszaru `roundtable.*` —
-// modułu Roundtable wraz z jego czterema oknami operacyjnymi (Model Panels,
-// Debate Panel, Moderator Panel, Consensus Panel).
-//
-// Cały moduł ma jedno zdarzenie: kontrakt daje mu wyłącznie
-// `roundtable.debate.changed`, więc każda zmiana debaty — otwarcie tury,
-// wypowiedź uczestnika, interwencja moderatora, zamknięcie tury — rozgłasza się
-// turą po zmianie, a wypowiedź dołącza jako pole opcjonalne. Cztery okna
-// odświeżają się z jednej subskrypcji.
-//
-// Rozgłoszenie nie idzie z obsługiwacza: tura debaty trwa dłużej niż wykonanie
-// komendy `roundtable.debate.start`, bo uczestnicy odpowiadają równolegle, każdy
-// we własnym czasie. Zdarzenia nadaje adapter przez podpiętą drogę rozgłoszenia
-// (tak samo jak w `handlers_terminal.go`); obsługiwacz nadałby wyłącznie stan
-// sprzed odpowiedzi.
+// Plik wpina cztery komendy obszaru roundtable.* modułu Roundtable wraz z jego czterema oknami operacyjnymi: Model Panels, Debate Panel, Moderator Panel i Consensus Panel.
 package core
 
 import (
@@ -86,22 +72,18 @@ type Debata interface {
 	WydajTranskrypt(ctx context.Context, z shared.RoundtableTranscriptExportRequest) (shared.RoundtableTranscriptExportResponse, error)
 	Odsluch(ctx context.Context, z shared.RoundtableSpeechSynthesizeRequest) (shared.RoundtableSpeechSynthesizeResponse, error)
 
-	// PodepnijRozgloszenie oddaje adapterowi drogę do zdarzenia zmiany debaty.
-	// Wypowiedź uczestnika powstaje poza wykonaniem komendy, więc rozgłoszenie
-	// nie może iść wyłącznie z obsługiwacza żądania.
+	// PodepnijRozgloszenie oddaje drogę do zdarzenia zmiany debaty; wypowiedź powstaje poza komendą.
 	PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.RoundtableTurn, *shared.RoundtableStatement))
 }
 
-// zarejestrujDebate wpina komplet komend modułu Roundtable.
+// zarejestrujDebate wpina komplet komend modułu Roundtable w rejestr komend rdzenia, przy starcie modułu.
 func zarejestrujDebate(r *Rejestr, d Debata, e *emiter) {
 	if r == nil || d == nil {
 		return
 	}
 	d.PodepnijRozgloszenie(e.debata)
 
-	// `roundtable.model.add` i `roundtable.consensus.get` niczego nie rozgłaszają:
-	// pierwsze zmienia skład, nie turę, a kontrakt zdarzenia składu nie ma; drugie
-	// jest odczytem złożonym z tur już rozgłoszonych.
+	// roundtable.model.add i roundtable.consensus.get niczego nie rozgłaszają: skład i odczyt tur.
 	r.Zarejestruj(shared.CommandRoundtableModelAdd, obsluz(d.DodajModel))
 	r.Zarejestruj(shared.CommandRoundtableDebateStart, obsluz(d.Uruchom))
 	r.Zarejestruj(shared.CommandRoundtableModeratorDirect, obsluz(d.Moderuj))

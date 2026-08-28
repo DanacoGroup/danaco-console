@@ -1,21 +1,4 @@
-/* Wpis okna komunikacji.
-
-   Nadawców rozróżniają trzy klasy semantyczne, nie osobna barwa tła dla
-   każdego. Rozróżnienie niesie zawsze komplet: ikona w medalionie, etykieta
-   nadawcy i klasa semantyczna krawędzi.
-
-     --czlowiek      atrament   (użytkownik)
-     --inteligencja  sygnał     (model, agent, Coordinator, Executor, Validator)
-     --system        neutralna  (Automation, Always On Display, wynik narzędzia)
-
-   Mapowanie ról kontraktu:
-     user      → .dn-wpis--czlowiek
-     assistant → .dn-wpis--inteligencja
-     system    → .dn-wpis--system
-     tool      → .dn-wpis--system oraz plakietka roli (.dn-plakietka--rola)
-                 z nazwą narzędzia
-   Wpis w trakcie pracy: dodatkowo .dn-wpis--pracuje (kropka tętna
-   przy nadawcy; klatki `dn-tetno` definiuje `plakietka.css`). */
+/* Arkusz opisuje wpis okna komunikacji, w którym nadawców rozróżniają trzy klasy semantyczne, niesione zawsze kompletem ikony, etykiety i krawędzi. */
 
 .dn-wpis {
   position: relative;
@@ -67,24 +50,24 @@
   word-break: break-word;
 }
 
-/* klasa: człowiek — atrament */
+/* Klasa człowiek niesie krawędź w barwie atramentu, przypisaną nadawcy będącemu użytkownikiem, zgodnie z rolą user w kontrakcie. */
 .dn-wpis--czlowiek { border-left-color: var(--dn-atrament); }
 .dn-wpis--czlowiek .dn-wpis-medalion {
   background: var(--dn-atrament);
   border-color: var(--dn-atrament);
   color: var(--dn-atrament-tekst);
 }
-/* klasa: inteligencja — sygnał */
+/* Klasa inteligencja niesie krawędź w barwie sygnału, przypisaną nadawcy będącemu modelem albo agentem, zgodnie z rolą assistant w kontrakcie. */
 .dn-wpis--inteligencja { border-left-color: var(--dn-sygnal-wypelnienie); }
 .dn-wpis--inteligencja .dn-wpis-medalion {
   background: var(--dn-sygnal-tlo);
   border-color: var(--dn-sygnal-obrys);
   color: var(--dn-sygnal);
 }
-/* klasa: system — neutralna, tło wycofane */
+/* Klasa system niesie krawędź neutralną i tło wycofane, przypisaną komunikatom systemu, automatyzacji oraz wynikom narzędzi. */
 .dn-wpis--system { background: transparent; border-left-color: var(--dn-obrys-mocny); }
 
-/* wpis pracujący — kropka tętna przy nadawcy */
+/* Wpis pracujący dokłada przy nadawcy kropkę tętna, sygnalizującą trwającą pracę modelu albo narzędzia w tle rozmowy. */
 .dn-wpis--pracuje .dn-wpis-nadawca::after {
   content: '';
   display: inline-block;

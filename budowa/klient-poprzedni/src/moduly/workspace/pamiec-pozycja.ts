@@ -5,25 +5,9 @@ import {
 } from '../../../../shared/contract';
 import { pozycjaWykazu, przyciskAkcji as przycisk } from '../../modele/kontrolki-formularza';
 
-/**
- * Jedna pozycja wykazu pamięci projektu wraz z czynnościami, które można na
- * niej wykonać: edycja, przypięcie, przyjęcie propozycji modelu i scalenie
- * treści.
- *
- * Osobny plik od okna, bo to inna odpowiedzialność: okno prowadzi odczyt
- * i stany, pozycja rysuje jeden wpis. Czynności przychodzą wstrzyknięte
- * — pozycja nie zna ani kanału, ani stanu okna.
- *
- * Usunięcie wpisu idzie komendą `memory.delete`: kasuje ona wpis założony przez
- * `workspace.context.set` i oddaje `deleted`, a usunięcie wpisu nieistniejącego
- * kończy odmową. Odrzucenie propozycji modelu jest właśnie takim usunięciem
- * i woła tę samą komendę.
- *
- * `memory.detach` nie jest tu wołany: znaczenie odpięcia nie jest w kontrakcie
- * ustalone, więc okno nie nadaje mu własnego sensu.
- */
+/** Jedna pozycja wykazu pamięci niesie edycję, przypięcie, przyjęcie propozycji i scalenie treści. */
 
-/** Zapis wpisu widziany przez pozycję wykazu. */
+/** Zapis wpisu widziany przez pozycję wykazu niesie treść, zasięg, stan przypięcia, pochodzenie oraz identyfikator wpisu. */
 export interface ZapisWpisu {
   tresc: string;
   zasieg: ConfigScope;
@@ -32,7 +16,7 @@ export interface ZapisWpisu {
   wpis?: string;
 }
 
-/** Czynności okna dostępne pozycji. */
+/** Czynności okna dostępne pozycji obejmują zapis, wczytanie i dołączenie do edytora oraz usunięcie wpisu pamięci. */
 export interface CzynnosciPozycji {
   zapisz(zadanie: ZapisWpisu): void;
   wczytajDoEdytora(wpis: WorkspaceMemoryEntry): void;
@@ -68,9 +52,7 @@ export function pozycjaPamieci(
   );
   akcje.append(edytuj, przypnij);
 
-  // Propozycja modelu czeka na decyzję Operatora: przyjęcie jest zapisem tego
-  // samego wpisu z pochodzeniem `operator`, a odrzucenie — usunięciem wpisu
-  // komendą `memory.delete`.
+  // Propozycja modelu czeka na decyzję operatora: przyjęcie zapisuje wpis operatora, odrzucenie usuwa.
   if (wpis.origin === MemoryEntryOrigin.Model) {
     const przyjmij = przycisk('Akceptuj propozycję', 'dn-btn dn-btn--atrament');
     przyjmij.addEventListener('click', () =>
@@ -91,16 +73,14 @@ export function pozycjaPamieci(
   scal.addEventListener('click', () => czynnosci.dolaczDoEdytora(wpis));
   akcje.append(scal);
 
-  // Usunięcie wpisu — dostępne każdej pozycji, nie tylko propozycji modelu:
-  // `memory.delete` kasuje wpis wskazany identyfikatorem, a potwierdzenie mówi,
-  // co oddał rdzeń (`deleted`), nie co wysłało okno.
+  // Usunięcie wpisu jest dostępne każdej pozycji; potwierdzenie mówi, co oddał rdzeń, nie okno.
   const usun = przycisk('Usuń', 'dn-btn dn-btn--zarys');
   usun.addEventListener('click', () => czynnosci.usun(wpis));
   akcje.append(usun);
   return element;
 }
 
-/** Pamięć projektu w postaci Markdown — treść pliku eksportu. */
+/** Pamięć projektu w postaci Markdown stanowi treść pliku eksportu, budowaną z wykazu wpisów pamięci projektu. */
 export function eksportPamieci(wpisy: readonly WorkspaceMemoryEntry[]): string {
   const wiersze = wpisy.map(
     (wpis) =>

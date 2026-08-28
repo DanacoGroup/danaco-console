@@ -1,21 +1,15 @@
 /**
- * Trzy stany obowiązkowe okna operacyjnego: puste, ładowanie, błąd.
- *
- * Rdzeń odpowiada na każde wywołanie — także odmową — a odmowa jest pokazywana
- * w oknie, w którym Operator ją wywołał, nie wyłącznie w konsoli przeglądarki.
- *
- * Stan nie zastępuje treści, tylko ją przesłania: gdy okno wraca do stanu
- * `gotowe`, wcześniejsza treść jest nietknięta. Dzięki temu nieudane odświeżenie
- * nie kasuje tego, co Operator już widział.
- *
- * Zestaw faz i znakowanie powłoki są wspólne dla wszystkich modułów
- * (`komponenty/faza-okna`) — tu zostaje to, czym Agents się różni: własne klasy
- * `da-stan*` i chowanie treści na czas ładowania.
+ * Trzy stany obowiązkowe okna operacyjnego: puste, ładowanie i błąd. Zestaw faz
+ * oraz znakowanie powłoki są wspólne dla wszystkich modułów, a tutaj zostaje to,
+ * czym Agents się różni: własne klasy `da-stan*` i chowanie treści.
  */
 
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
 
-/** Powłoka okna wraz z komunikatem stanu. */
+/**
+ * Powłoka okna wraz z komunikatem stanu: element osadzany w oknie, miejsce na
+ * treść oraz czynności przestawiające fazę i odczytujące fazę bieżącą.
+ */
 export interface StanOkna {
   /** Element osadzany w oknie; niesie komunikat i treść. */
   element: HTMLElement;

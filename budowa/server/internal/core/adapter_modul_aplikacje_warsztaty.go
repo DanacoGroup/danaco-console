@@ -1,30 +1,6 @@
 // Moduł Apps — narzędzia obu warsztatów: mapa routingu, motyw produktu,
-// eksplorator punktów końcowych, zapytanie próbne i podgląd schematu bazy.
-//
-// Obsługiwane komendy: `apps.route.list`, `apps.theme.get`, `apps.theme.set`,
-// `apps.endpoint.list`, `apps.endpoint.probe`, `apps.schema.get`.
-//
-// TRASY, PUNKTY KOŃCOWE I SCHEMAT SĄ ODCZYTANE Z PRACY, NIE ZAPISANE OBOK NIEJ.
-// Kontrakt nie daje ani `apps.route.save`, ani `apps.endpoint.save`, ani
-// `apps.schema.set` — te trzy komendy odczytu stoją w rodzinie same. Nie jest to
-// przeoczenie kontraktu, tylko jego rozstrzygnięcie: trasa, punkt końcowy
-// i tabela produktu SĄ w tym, co Operator napisał, a osobna tabela byłaby drugą
-// prawdą, rozjeżdżającą się z kodem przy pierwszej edycji, która zapomni ją
-// odświeżyć. Dlatego:
-//   - trasy czyta się z plików warstwy frontendu (deklaracje `path:` oraz
-//     atrybut `path` znacznika trasy),
-//   - punkty końcowe — z kontraktów API komponentów architektury (pole
-//     `AppComponent.apiContract`, wypełniane w panelu kontraktu API),
-//   - schemat — z poleceń `CREATE TABLE` w plikach warstwy backendu.
-//
-// Każdy z tych trzech odczytów daje wynik pusty, gdy Operator jeszcze niczego
-// nie napisał — i to jest odpowiedź prawdziwa, nie brak.
-//
-// ZAPYTANIE PRÓBNE IDZIE PO SIECI NAPRAWDĘ. `apps.endpoint.probe` składa żądanie
-// `net/http` pod adres środowiska (domena nadana `apps.deployment.domain.set`)
-// albo — gdy domeny nie ma — pod adres stojącego podglądu, i mierzy czas oraz
-// kod odpowiedzi zegarem, nie zgadywaniem. Adresu nie ma i podglądu nie ma
-// znaczy odmowę z powodem, nie wynik `200` wzięty z powietrza.
+// eksplorator punktów końcowych, zapytanie próbne i podgląd schematu bazy,
+// odczytane bezpośrednio z pracy, nie zapisane osobno.
 package core
 
 import (
@@ -55,21 +31,27 @@ const granicaTresciProbnejApp = 64 * 1024
 // języka: warsztat przyjmuje dowolny stos technologiczny, więc parser jednego
 // z nich byłby wyborem zrobionym za Operatora.
 var (
-	// `path: '/zamowienia'` — deklaracja trasy w wykazie tras.
+	// wzorzecTrasyPolaApp rozpoznaje deklarację trasy w postaci pola ścieżki
+	// wykazu tras, niezależnie od frameworka warstwy interfejsu.
 	wzorzecTrasyPolaApp = regexp.MustCompile(`(?i)\bpath\s*:\s*['"]([^'"]+)['"]`)
-	// `<Route path="/zamowienia" element={<Lista/>}>` — trasa w znaczniku.
+	// wzorzecTrasyZnacznikaApp rozpoznaje trasę zapisaną znacznikiem
+	// komponentu routingu, z atrybutem ścieżki i elementem widoku.
 	wzorzecTrasyZnacznikaApp = regexp.MustCompile(`(?i)<\s*Route\b[^>]*\bpath\s*=\s*["']([^"']+)["']`)
-	// Widok obsługujący trasę, gdy stoi obok deklaracji.
+	// wzorzecWidokuTrasyApp rozpoznaje nazwę widoku obsługującego trasę, gdy
+	// stoi obok jej deklaracji w tej samej linii pliku.
 	wzorzecWidokuTrasyApp = regexp.MustCompile(`(?i)\b(?:component|element|view)\s*[:=]\s*["']?([A-Za-z0-9_.]+)`)
-	// `GET /zamowienia — opis` w kontrakcie API komponentu.
+	// wzorzecPunktuKoncowegoApp rozpoznaje wiersz punktu końcowego w kontrakcie
+	// API komponentu: metodę, ścieżkę i opcjonalny opis.
 	wzorzecPunktuKoncowegoApp = regexp.MustCompile(
 		`(?im)^\s*(GET|POST|PUT|PATCH|DELETE|GRAPHQL)\s+(\S+)\s*(?:[-—:]\s*(.*))?$`)
-	// `CREATE TABLE nazwa (...)` w plikach warstwy backendu.
+	// wzorzecTabeliApp rozpoznaje polecenie tworzenia tabeli w plikach
+	// warstwy backendu i wyodrębnia nazwę tabeli spod polecenia.
 	wzorzecTabeliApp = regexp.MustCompile(`(?is)CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?` +
 		"[`\"\\[]?([A-Za-z0-9_.]+)[`\"\\]]?\\s*\\(")
 )
 
-// WypiszTrasy obsługuje `apps.route.list` — mapę routingu warstwy interfejsu.
+// WypiszTrasy obsługuje komendę odczytu mapy routingu warstwy interfejsu,
+// złożonej z tras odnalezionych w plikach frontendu.
 func (a *adapterAplikacji) WypiszTrasy(ctx context.Context,
 	z shared.AppsRouteListRequest) (shared.AppsRouteListResponse, error) {
 
@@ -82,8 +64,8 @@ func (a *adapterAplikacji) WypiszTrasy(ctx context.Context,
 		return shared.AppsRouteListResponse{}, err
 	}
 
-	// Mapa po ścieżce trasy: ta sama trasa deklarowana w dwóch plikach jest
-	// jedną trasą produktu, nie dwiema pozycjami mapy routingu.
+	// Mapa po ścieżce trasy: ta sama trasa w dwóch plikach jest jedną trasą
+	// produktu.
 	znalezione := map[string]shared.AppRoute{}
 	for _, plik := range pliki {
 		for _, trafienie := range wzorzecTrasyZnacznikaApp.FindAllStringSubmatch(plik.Tresc, -1) {
@@ -104,7 +86,8 @@ func (a *adapterAplikacji) WypiszTrasy(ctx context.Context,
 	return shared.AppsRouteListResponse{Routes: trasy, Total: len(trasy)}, nil
 }
 
-// dodajTraseApp wpisuje trasę do mapy, nie gubiąc widoku znalezionego wcześniej.
+// dodajTraseApp wpisuje trasę do mapy tras, nie gubiąc widoku znalezionego
+// wcześniej dla tej samej ścieżki.
 func dodajTraseApp(mapa map[string]shared.AppRoute, sciezka, widok string, komponent *string) {
 	sciezka = strings.TrimSpace(sciezka)
 	if sciezka == "" || !strings.HasPrefix(sciezka, "/") {
@@ -158,10 +141,9 @@ func (a *adapterAplikacji) PobierzMotyw(ctx context.Context,
 	return shared.AppsThemeGetResponse{Theme: json.RawMessage(wiersz.Tresc)}, nil
 }
 
-// UstawMotyw obsługuje `apps.theme.set`. Treść jest surowym JSON-em kontraktu
-// i rdzeń jej nie rozkłada (czoło migracji 203) — sprawdza wyłącznie, czy to
-// w ogóle jest JSON, bo pole zapisane jako śmieć wróciłoby przy odczycie jako
-// uszkodzony kształt odpowiedzi.
+// UstawMotyw obsługuje komendę zapisu motywu produktu. Treść jest surowym
+// JSON-em kontraktu, którego rdzeń nie rozkłada — sprawdza wyłącznie, czy to
+// w ogóle jest poprawny JSON.
 func (a *adapterAplikacji) UstawMotyw(ctx context.Context,
 	z shared.AppsThemeSetRequest) (shared.AppsThemeSetResponse, error) {
 
@@ -169,9 +151,8 @@ func (a *adapterAplikacji) UstawMotyw(ctx context.Context,
 	if err != nil {
 		return shared.AppsThemeSetResponse{}, err
 	}
-	// Pustka ma tu dwie postacie i obie są brakiem: pole pominięte w żądaniu
-	// oraz pole niosące `null`. Zapis `null` skasowałby Operatorowi motyw bez
-	// jego żądania, a kontrakt ma to pole jako wymagane.
+	// Pustka ma tu dwie postacie: pole pominięte w żądaniu oraz pole niosące
+	// wartość pustą.
 	if len(z.Theme) == 0 || strings.TrimSpace(string(z.Theme)) == "null" {
 		return shared.AppsThemeSetResponse{}, bladWskazaniaAplikacji(
 			"apps.theme.set wymaga motywu")
@@ -224,9 +205,8 @@ func (a *adapterAplikacji) WypiszPunktyKoncowe(ctx context.Context,
 				Path:        sciezka,
 				Description: wskaznikNapisuApp(strings.TrimSpace(trafienie[3])),
 			}
-			// Stan punktu wynika z pracy, nie z deklaracji: punkt, którego
-			// ścieżka pada w plikach warstwy backendu, jest zaimplementowany;
-			// pozostałe są projektem.
+			// Stan punktu wynika z pracy: ścieżka odnaleziona w plikach
+			// backendu znaczy punkt zaimplementowany.
 			stan := shared.AppEndpointStatus(shared.AppEndpointStatusDraft)
 			punkt.Status = &stan
 			punkty = append(punkty, punkt)
@@ -285,9 +265,8 @@ func (a *adapterAplikacji) ZapytajPunktKoncowy(ctx context.Context,
 	}
 	adres := strings.TrimSuffix(podstawa, "/") + "/" + strings.TrimPrefix(z.Path, "/")
 
-	// GraphQL nie jest metodą HTTP — kontrakt trzyma go w tym samym wyliczeniu,
-	// bo eksplorator punktów końcowych wymienia trasy REST i GraphQL razem.
-	// Zapytanie GraphQL jedzie POST-em, tak jak każe protokół.
+	// GraphQL nie jest metodą HTTP: zapytanie zawsze jedzie żądaniem POST,
+	// zgodnie z protokołem.
 	metoda := strings.ToUpper(string(z.Method))
 	if z.Method == shared.AppEndpointMethodGraphql {
 		metoda = http.MethodPost
@@ -318,9 +297,7 @@ func (a *adapterAplikacji) ZapytajPunktKoncowy(ctx context.Context,
 	odpowiedz, err := klient.Do(zapytanie)
 	czas := int(time.Since(poczatek).Milliseconds())
 	if err != nil {
-		// Niepowodzenie sieci NIE jest odmową komendy: konstruktor zapytań
-		// testowych ma pokazać, że usługa nie odpowiada, wraz z powodem i czasem,
-		// który upłynął. Odmowa schowałaby tę informację w kopercie błędu.
+		// Niepowodzenie sieci nie jest odmową komendy, tylko wynikiem z powodem.
 		a.dopiszDziennikApp(ctx, okno, nil, nil,
 			"zapytanie próbne "+metoda+" "+adres+" nie doszło: "+err.Error())
 		szczegol := err.Error()
@@ -388,9 +365,8 @@ func (a *adapterAplikacji) PobierzSchemat(ctx context.Context,
 
 	tabele := []shared.AppSchemaTable{}
 	for _, plik := range pliki {
-		// Plik przypisany do innego komponentu nie opisuje tej bazy. Plik bez
-		// przypisania liczy się zawsze: warsztat nie wymaga wiązania pliku
-		// z komponentem, a schemat ma pokazać to, co Operator napisał.
+		// Plik przypisany do innego komponentu nie opisuje tej bazy; plik bez
+		// przypisania liczy się zawsze.
 		if komponent != "" && plik.KomponentID != nil && *plik.KomponentID != komponent {
 			continue
 		}
@@ -399,9 +375,8 @@ func (a *adapterAplikacji) PobierzSchemat(ctx context.Context,
 	sort.SliceStable(tabele, func(i, j int) bool { return tabele[i].Name < tabele[j].Name })
 
 	if len(tabele) == 0 {
-		// Brak schematu to puste pole, nie odmowa: backend bez ani jednego
-		// polecenia `CREATE TABLE` jest stanem normalnym produktu, który bazy
-		// nie ma albo jeszcze jej nie opisał.
+		// Brak schematu to puste pole, nie odmowa: backend bez tabeli jest
+		// stanem normalnym.
 		return shared.AppsSchemaGetResponse{}, nil
 	}
 	schemat := shared.AppSchema{
@@ -412,7 +387,8 @@ func (a *adapterAplikacji) PobierzSchemat(ctx context.Context,
 	return shared.AppsSchemaGetResponse{Schema: &schemat}, nil
 }
 
-// tabeleZeZrodlaApp wyciąga tabele wraz z kolumnami z treści pliku backendu.
+// tabeleZeZrodlaApp wyciąga tabele wraz z kolumnami z treści pliku backendu,
+// rozpoznając każde polecenie tworzenia tabeli.
 func tabeleZeZrodlaApp(zrodlo string) []shared.AppSchemaTable {
 	tabele := []shared.AppSchemaTable{}
 	for _, trafienie := range wzorzecTabeliApp.FindAllStringSubmatchIndex(zrodlo, -1) {
@@ -514,7 +490,8 @@ func rozdzielPrzecinkamiApp(cialo string) []string {
 	return append(czesci, cialo[poczatek:])
 }
 
-// odwolanieWiezuApp oddaje nazwę tabeli wskazanej słowem `REFERENCES`.
+// odwolanieWiezuApp oddaje nazwę tabeli wskazanej słowem kluczowym więzu
+// obcego, gdy definicja kolumny go niesie.
 var wzorzecOdwolaniaApp = regexp.MustCompile(
 	"(?i)REFERENCES\\s+[`\"\\[]?([A-Za-z0-9_.]+)[`\"\\]]?")
 
@@ -593,7 +570,8 @@ func zAdresemHttpApp(domena string) string {
 	return "http://" + domena
 }
 
-// sprawdzMetodePunktuApp dopuszcza wyłącznie metody kontraktu.
+// sprawdzMetodePunktuApp dopuszcza wyłącznie metody protokołu HTTP, które
+// kontrakt zna dla punktu końcowego.
 func sprawdzMetodePunktuApp(metoda shared.AppEndpointMethod) error {
 	switch metoda {
 	case shared.AppEndpointMethodGet, shared.AppEndpointMethodPost,

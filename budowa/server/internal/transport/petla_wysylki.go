@@ -4,12 +4,7 @@ import (
 	"github.com/coder/websocket"
 )
 
-// petlaWysylki zapisuje do gniazda ramki odłożone przez Wyslij. Jest jedynym
-// pisarzem tego gniazda, więc kolejność ramek odpowiada kolejności wysyłek,
-// a fragmenty strumienia nie mieszają się z odpowiedziami i zdarzeniami.
-//
-// Pętla kończy się wraz z kontekstem połączenia albo pierwszym błędem zapisu.
-// Zerwane urządzenie zamyka wyłącznie własny kanał.
+// petlaWysylki zapisuje do gniazda ramki odłożone przez Wyslij jako jedyny pisarz tego gniazda, dzięki czemu kolejność ramek odpowiada kolejności wysyłek, a pętla kończy się wraz z kontekstem połączenia albo pierwszym błędem zapisu.
 func (p *Polaczenie) petlaWysylki() {
 	for {
 		select {

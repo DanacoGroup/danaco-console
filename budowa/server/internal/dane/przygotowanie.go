@@ -18,7 +18,8 @@ type zapytania struct {
 	pamiec map[string]*sql.Stmt
 }
 
-// noweZapytania zakłada pamięć podręczną nad otwartą pulą połączeń.
+// noweZapytania zakłada pamięć podręczną przygotowanych poleceń nad otwartą
+// pulą połączeń bazy danych.
 func noweZapytania(db *sql.DB) *zapytania {
 	return &zapytania{db: db, pamiec: map[string]*sql.Stmt{}}
 }
@@ -39,8 +40,8 @@ func (z *zapytania) przygotuj(ctx context.Context, tekst string) (*sql.Stmt, err
 	z.mutex.Lock()
 	defer z.mutex.Unlock()
 	if istniejace, jest := z.pamiec[tekst]; jest {
-		// Inny wątek zdążył przygotować to samo zapytanie — zwracamy jego wersję,
-		// a własną zamykamy, żeby nie zostawiać osieroconego polecenia.
+		// Inny wątek zdążył przygotować zapytanie wcześniej — zwracana jest
+		// jego wersja, a własna zamykana.
 		polecenie.Close()
 		return istniejace, nil
 	}
@@ -48,7 +49,8 @@ func (z *zapytania) przygotuj(ctx context.Context, tekst string) (*sql.Stmt, err
 	return polecenie, nil
 }
 
-// wTransakcji zwraca to samo przygotowane polecenie związane z transakcją.
+// wTransakcji zwraca to samo przygotowane polecenie z pamięci podręcznej,
+// związane z podaną transakcją.
 func (z *zapytania) wTransakcji(ctx context.Context, transakcja *sql.Tx, tekst string) (*sql.Stmt, error) {
 	polecenie, err := z.przygotuj(ctx, tekst)
 	if err != nil {
@@ -72,7 +74,8 @@ func (z *zapytania) zamknij() error {
 	return pierwszy
 }
 
-// skrot skraca treść zapytania w komunikacie błędu do pierwszego wiersza.
+// skrot skraca treść zapytania umieszczaną w komunikacie błędu do jego
+// pierwszych sześćdziesięciu znaków.
 func skrot(tekst string) string {
 	const granica = 60
 	if len(tekst) <= granica {

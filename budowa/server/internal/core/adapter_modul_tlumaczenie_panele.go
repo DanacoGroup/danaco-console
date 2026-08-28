@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: moduł Translate — dodanie panelu docelowego
-// (`target.add`), zapis korekty Operatora w panelu (`translation.set`)
-// i tłumaczenie zwrotne do kontroli wierności (`backtranslation.run`). Typ
-// `adapterTlumaczenia`, konstruktor, przedrostki identyfikatorów i wspólne
-// pomocniki błędów (`bladTlumaczenia`, `bladWskazaniaTlumaczenia`,
-// `bladNieznanegoPanelu`) deklaruje adapter_modul_tlumaczenie.go — ten plik
-// dokłada wyłącznie własne metody na tym samym typie.
-//
-// Przekład wykonuje model. Gdy okno ma tekst źródłowy, `target.add` przekłada
-// go na język panelu, a wynik ląduje w kolumnie `tresc`. Korekta Operatora
-// (`translation.set`) jest drugą drogą treści — poprawką przekładu modelu.
-//
-// Przekład jest związany słownikiem i zasadami jakości: do polecenia dla modelu
-// wchodzą terminy Operatora, jego zakazy tłumaczenia, ton panelu i zasady
-// jakości wywiedzione z rodzajów niezgodności kontraktu
-// (adapter_modul_tlumaczenie_polecenia.go), a wynik przechodzi jeszcze
-// mechaniczną podmianę terminów i migawkę kontroli jakości.
+// Odpowiedzialność pliku: moduł Translate — dodanie panelu docelowego,
+// zapis korekty Operatora w panelu i tłumaczenie zwrotne do kontroli
+// wierności. Typ adapterTlumaczenia deklaruje adapter_modul_tlumaczenie.go.
 package core
 
 import (
@@ -25,13 +11,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// DodajPanel obsługuje `target.add`. Zakłada panel języka docelowego dla
-// wskazanego okna i — gdy okno ma tekst źródłowy — wypełnia go przekładem
-// modelu (`przetlumaczModelem`, adapter_modul_tlumaczenie_model.go). Przekład
-// idzie przed założeniem panelu: nieudane wywołanie modelu (brak czynnego
-// kanału, pusta odpowiedź) kończy się odmową i nie zostawia w bazie pustego
-// panelu. Okno bez tekstu źródłowego daje panel bez treści; treść dołoży
-// korekta Operatora przez `translation.set`.
+// DodajPanel obsługuje target.add. Zakłada panel języka docelowego dla
+// wskazanego okna i, gdy okno ma tekst źródłowy, wypełnia go przekładem
+// modelu przed założeniem panelu w bazie.
 func (a *adapterTlumaczenia) DodajPanel(ctx context.Context,
 	z shared.TranslateTargetAddRequest) (shared.TranslateTargetAddResponse, error) {
 
@@ -47,18 +29,14 @@ func (a *adapterTlumaczenia) DodajPanel(ctx context.Context,
 		return shared.TranslateTargetAddResponse{}, bladNieznanegoOkna(z.WindowId, err)
 	}
 
-	// Przekład liczy się przed zapisem panelu, żeby odmowa modelu nie zostawiła
-	// pustego wiersza w bazie. Panel wychodzi od razu z treścią (albo bez niej,
-	// gdy okno nie ma jeszcze tekstu źródłowego).
+	// Przekład liczy się przed zapisem panelu, żeby odmowa modelu nie zostawiła pustego wiersza.
 	var tresc *string
 	tekstZrodlowy := ""
 	if okno.TekstZrodlowy != nil {
 		tekstZrodlowy = strings.TrimSpace(*okno.TekstZrodlowy)
 	}
 	if tekstZrodlowy != "" {
-		// Kanał wskazuje pole `channelId`; jego brak bierze kanał domyślny
-		// czynny, a wskazanie niedobre — odmowę nazwaną, nie ciche zejście na
-		// domyślny (`kanalZadania`).
+		// Kanał wskazuje pole channelId; wskazanie niedobre daje odmowę nazwaną, nie zejście na domyślny.
 		przeklad, err := a.przetlumaczModelem(ctx, okno.Kod, z.Language, z.Tone, tekstZrodlowy, z.ChannelId)
 		if err != nil {
 			return shared.TranslateTargetAddResponse{}, err
@@ -79,36 +57,23 @@ func (a *adapterTlumaczenia) DodajPanel(ctx context.Context,
 
 	zlozony := zlozPanelTlumaczenia(panel)
 
-	// Panel z treścią przekładu jest zmianą, którą inne połączenia okna mają
-	// zobaczyć — rozgłoszona jednym zdarzeniem `translate.translation.changed`.
+	// Panel z treścią przekładu jest zmianą, rozgłoszoną zdarzeniem translate.translation.changed.
 	if tresc != nil {
 		a.rozglosZmianePanelu(shared.ChangeKindCreated, panel)
 
-		// Migawka jakości powstaje zaraz po przekładzie. Zasady jakości poszły
-		// do polecenia (`zasadyJakosci`), lecz model gubi znaczniki i liczby
-		// mimo zakazu, więc świeży panel wychodzi z wykazem zastrzeżeń już
-		// wypełnionym, bez czekania na `quality.check`.
-		//
-		// Nieudany zapis niezgodności nie przewraca całej komendy: przekład jest
-		// zapisany, a migawkę kontroli można powtórzyć komendą `quality.check`.
-		// Zastrzeżenia trafiają do odpowiedzi niezależnie od wyniku zapisu.
+		// Migawka jakości powstaje zaraz po przekładzie, bez czekania na quality.check.
 		niezgodnosci := zbadajPanel(panel, tekstZrodlowy)
 		_ = a.repozytorium.ZapiszNiezgodnosci(ctx, panel.ID, niezgodnosci)
 		zlozony.Issues = opisyNiezgodnosci(niezgodnosci)
 
-		// Para (segment źródłowy, segment przekładu) wchodzi do
-		// `pamiec_tlumaczen`, z której czyta `memory.suggest`. Sparowanie i jego
-		// granice: adapter_modul_tlumaczenie_pamiec.go.
+		// Para segmentów wchodzi do pamiec_tlumaczen, z której czyta memory.suggest.
 		a.zapamietajPary(ctx, panel, tekstZrodlowy, *tresc)
 	}
 	return shared.TranslateTargetAddResponse{Panel: zlozony}, nil
 }
 
-// UstawTlumaczenie obsługuje `translation.set` — zapisuje korektę Operatora
-// w panelu docelowym. Jest to droga treści niezależna od przekładu modelu
-// z `target.add`. Treść trafia wprost do kolumny `tresc`; kontrakt oddaje jeden
-// napis, nie odwołanie do pliku, więc ta warstwa nie rozstrzyga o pliku dla
-// treści obszernej.
+// UstawTlumaczenie obsługuje translation.set — zapisuje korektę Operatora
+// w panelu docelowym, drogą treści niezależną od przekładu modelu.
 func (a *adapterTlumaczenia) UstawTlumaczenie(ctx context.Context,
 	z shared.TranslateTranslationSetRequest) (shared.TranslateTranslationSetResponse, error) {
 
@@ -123,30 +88,16 @@ func (a *adapterTlumaczenia) UstawTlumaczenie(ctx context.Context,
 	}
 	a.rozglosZmianePanelu(shared.ChangeKindUpdated, panel)
 
-	// Korekta Operatora także idzie do pamięci tłumaczeń. Tekst źródłowy bierze
-	// się z okna panelu; okno nieosiągalne albo bez tekstu źródłowego znaczy
-	// „nie ma z czym parować" i pamięć zostaje bez wiersza, co nie unieważnia
-	// zapisanej już korekty.
+	// Korekta Operatora także idzie do pamięci tłumaczeń, jeśli okno panelu ma tekst źródłowy.
 	if okno, err := a.repozytorium.Okno(ctx, panel.OknoKod); err == nil && okno.TekstZrodlowy != nil {
 		a.zapamietajPary(ctx, panel, *okno.TekstZrodlowy, z.Text)
 	}
 	return shared.TranslateTranslationSetResponse{Panel: zlozPanelTlumaczenia(panel)}, nil
 }
 
-// TlumaczZwrotnie obsługuje `backtranslation.run` — przekład zwrotny wykonuje
-// model. Język źródłowy bierze się z okna wskazanego przez wiersz panelu
-// (`PanelTlumaczenia.OknoKod`).
-//
-// Cztery odmowy, każda o czym innym:
-//  1. panel bez treści — nie ma czego tłumaczyć z powrotem;
-//  2. okno bez rozpoznanego języka źródłowego — nie wiadomo, na jaki język
-//     przełożyć; języka źródłowego nie zgadujemy z panelu, od tego jest
-//     `source.detect` wołany osobno;
-//  3. brak czynnego kanału modelu — odmowa z `przetlumaczZwrotnieModelem`;
-//  4. kanał wskazany polem `channelId`, którego nie ma albo który jest
-//     nieczynny — odmowa nazwana z `kanalZadania`, nie ciche zejście na kanał
-//     domyślny; kontrola wierności wykonana innym modelem sprawdzałaby co
-//     innego, niż wskazano.
+// TlumaczZwrotnie obsługuje backtranslation.run — przekład zwrotny wykonuje
+// model. Cztery odmowy: panel bez treści, okno bez języka źródłowego, brak
+// czynnego kanału modelu, kanał wskazany polem channelId nieczynny.
 func (a *adapterTlumaczenia) TlumaczZwrotnie(ctx context.Context,
 	z shared.TranslateBacktranslationRunRequest) (shared.TranslateBacktranslationRunResponse, error) {
 

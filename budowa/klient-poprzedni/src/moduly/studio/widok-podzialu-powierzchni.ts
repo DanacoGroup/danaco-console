@@ -4,34 +4,10 @@ import {
   type TrybDwochDokumentow,
 } from './widok-nastawy-operatora';
 
-/**
- * Podział powierzchni — dwa dokumenty obok siebie, z przestawialną granicą.
- *
- * ── Dwa tryby, żaden zapasowy ───────────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: zakładki i podział powierzchni są RÓWNORZĘDNE,
- * a Operator przełącza się między nimi kiedy chce, bez utraty stanu. Dlatego
- * przełączenie na zakładki nie rozbiera drugiego pola i nie oddaje jego
- * zawartości — pole zostaje złożone, tylko schowane. „Niewidoczny" nie znaczy
- * „niedostępny": dokument w polu schowanym jest dalej otwarty, dalej ma swoje
- * zaznaczenie i dalej jest dostępny modelowi.
- *
- * ── Granica jest przestawialna i dostępna z klawiatury ──────────────────────
- * Granica jest `separator` z wartością w procentach, a nie samą kreską do
- * chwytania myszą: podział powierzchni bez klawiatury byłby czynnością dla
- * połowy Operatorów. Strzałki przesuwają ją o dwa punkty procentowe, `Home`
- * i `End` dosuwają do granic pola pracy, a `Enter` wraca na pół.
- *
- * ── Czego ten plik nie robi ─────────────────────────────────────────────────
- * Nie zna dokumentu ani stanu modułu. Bierze dwa elementy i rozkłada je na
- * powierzchni. Który dokument stoi w którym polu, rozstrzyga okno pracy — inaczej
- * podział trzymałby drugi stan dokumentu obok stanu modułu i oba rozjechałyby się
- * przy pierwszym zapisie.
- */
-
-/** Numer pola podziału. */
+/** Typ NumerPola nazywa numer pola podziału powierzchni dokumentu: pole pierwsze albo pole drugie roboczej powierzchni. */
 export type NumerPola = 1 | 2;
 
-/** Podział powierzchni wraz z jego sterowaniem. */
+/** Interfejs PodzialPowierzchni niesie podział powierzchni na dwa pola wraz z jego sterowaniem: trybem, kierunkiem, udziałem i polem czynnym. */
 export interface PodzialPowierzchni {
   element: HTMLElement;
   /** Wstawia zawartość obu pól; wołane raz, przy składaniu okna. */
@@ -55,7 +31,7 @@ export interface PodzialPowierzchni {
   opis(): string;
 }
 
-/** Czynności podziału zgłaszane oknu. */
+/** Interfejs CzynnosciPodzialu niesie czynności podziału powierzchni zgłaszane oknu: zmianę udziału granicy i zmianę pola czynnego. */
 export interface CzynnosciPodzialu {
   /** Granica przestawiona — okno zapamiętuje udział jako nastawę Operatora. */
   naUdzial(udzial: number): void;
@@ -63,7 +39,7 @@ export interface CzynnosciPodzialu {
   naCzynne(numer: NumerPola): void;
 }
 
-/** Skok granicy na jedno naciśnięcie strzałki, w częściach udziału. */
+/** Stała SKOK_GRANICY wyznacza skok granicy podziału na jedno naciśnięcie strzałki, wyrażony w częściach udziału. */
 const SKOK_GRANICY = 0.02;
 
 export function utworzPodzialPowierzchni(
@@ -101,8 +77,7 @@ export function utworzPodzialPowierzchni(
     pole.dataset['czynne'] = numer === 1 ? 'tak' : 'nie';
     pole.setAttribute('aria-label', numer === 1 ? 'Pole pierwsze podziału' : 'Pole drugie podziału');
     pole.append(plakietka, tresc, stopka);
-    // Ognisko w polu czyni je polem czynnym: Operator, który kliknął w drugie
-    // pismo, pracuje nad drugim pismem — bez osobnego przycisku „uczyń czynnym".
+    // Ognisko w polu czyni je czynnym: kliknięcie w drugie pismo przenosi pracę na drugie pismo.
     pole.addEventListener('focusin', () => ustawCzynne(numer));
     pole.addEventListener('mousedown', () => ustawCzynne(numer));
     pola.set(numer, { pole, tresc, stopka, plakietka });
@@ -146,8 +121,7 @@ export function utworzPodzialPowierzchni(
     granica.dataset['wleczenie'] = 'tak';
   });
 
-  // Nasłuch na dokumencie, nie na granicy: mysz wyprzedza kreskę o kilka punktów
-  // i wleczenie zerwane na pierwszym wyjściu poza nią byłoby nie do użycia.
+  // Nasłuch stoi na dokumencie, nie na granicy, bo mysz wyprzedza kreskę o kilka punktów.
   document.addEventListener('mousemove', (zdarzenie) => {
     if (!wleczenie) return;
     przestawUdzial(udzialZPolozenia(zdarzenie), true);
@@ -211,8 +185,7 @@ export function utworzPodzialPowierzchni(
   }
 
   przypnijUdzial();
-  // W trybie zakładek pole drugie jest schowane od początku: zakładki są nastawą
-  // domyślną, bo dają większe pole pracy nad jednym pismem.
+  // W trybie zakładek pole drugie jest schowane od początku, bo daje większe pole pracy.
   if (drugie !== undefined) drugie.pole.hidden = trybBiezacy === 'zakladki';
   granica.hidden = trybBiezacy === 'zakladki';
 
@@ -227,9 +200,7 @@ export function utworzPodzialPowierzchni(
     gniazdoStopki(numer) {
       const wpis = pola.get(numer);
       if (wpis !== undefined) return wpis.stopka;
-      // Numer poza zakresem nie zdarza się przy typie `NumerPola`; element
-      // zapasowy stoi tu zamiast wyjątku, bo brak gniazda nie jest powodem, żeby
-      // okno nie wstało.
+      // Numer poza zakresem nie zdarza się przy typie NumerPola; element zapasowy zastępuje wyjątek.
       return document.createElement('div');
     },
 

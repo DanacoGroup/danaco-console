@@ -1,7 +1,6 @@
-// Odpowiedzialność pliku: wpięcie komend wiedzy i współpracy modułu Workspace —
-// notatki i wiki, graf wiedzy, tablica wizualna, materiały biblioteki projektu,
-// wyszukiwanie, oś czasu i komentarze — oraz trzech czynności na samym
-// projekcie: stanu, odłączenia eksperta i historii instrukcji.
+// Plik wpina komendy wiedzy i współpracy modułu Workspace: notatki i wiki, graf wiedzy, tablicę
+// wizualną, materiały biblioteki, wyszukiwanie, oś czasu i komentarze, oraz trzy czynności na
+// projekcie: stan, odłączenie eksperta i historię instrukcji.
 package core
 
 import (
@@ -10,7 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WiedzaProjektu jest portem obszaru wiedzy i współpracy projektu.
+// WiedzaProjektu jest portem obszaru wiedzy i współpracy projektu: notatek, grafu i biblioteki materiałów.
 type WiedzaProjektu interface {
 	ZapiszNotatke(ctx context.Context, z shared.WorkspaceNoteSaveRequest) (shared.WorkspaceNoteSaveResponse, error)
 	Notatka(ctx context.Context, z shared.WorkspaceNoteGetRequest) (shared.WorkspaceNoteGetResponse, error)
@@ -36,7 +35,7 @@ type WiedzaProjektu interface {
 	Projekt(ctx context.Context, idProjektu string) (shared.WorkspaceProject, error)
 }
 
-// zarejestrujWiedzeProjektu wpina dwadzieścia jeden komend obszaru wiedzy.
+// zarejestrujWiedzeProjektu wpina dwadzieścia jeden komend obszaru wiedzy w rejestrze rdzenia platformy.
 func zarejestrujWiedzeProjektu(r *Rejestr, w WiedzaProjektu, e *emiter) {
 	if r == nil || w == nil {
 		return
@@ -125,7 +124,7 @@ func zarejestrujWiedzeProjektu(r *Rejestr, w WiedzaProjektu, e *emiter) {
 		}))
 }
 
-// rozglosProjektWiedzy dobiera projekt po zmianie i rozgłasza ją.
+// rozglosProjektWiedzy dobiera projekt po zmianie wiedzy i rozgłasza ją oknom biblioteki tego projektu.
 func rozglosProjektWiedzy(ctx context.Context, w WiedzaProjektu, e *emiter, idProjektu string) {
 	if idProjektu == "" {
 		return

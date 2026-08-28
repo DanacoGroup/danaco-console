@@ -22,50 +22,25 @@ import {
 } from './badanie-zdjecie-adnotacji';
 import type { StanBadania } from './stan-badania';
 
-/**
- * Droga z okna do komend obszaru `research.*`, które nie mają własnego
- * formularza.
- *
- * Jedna odpowiedzialność: złożyć żądanie z tego, co okno już wie — okna badania,
- * zaznaczenia źródeł i ustaleń, wskazania lektury, bieżącego raportu — wywołać
- * komendę i powiedzieć, co z niej wyszło. Zdanie odpowiedzi mówi o MIERZONYM
- * skutku (ile pozycji, jaki plik, ile luk), a nie o tym, że wywołanie się
- * powiodło: „rdzeń oddał wynik" jest zdaniem, po którym Operator nadal nie wie,
- * czy coś się stało.
- *
- * Akcje panelu niosą w polu `kod` dokładnie nazwę komendy (`Command.*`, patrz
- * `akcje-okien.ts`), więc rozdzielnik niżej jest odwzorowaniem jeden do jednego
- * i nie ma w nim ani jednej nazwy pisanej z ręki.
- *
- * Czego tu nie ma: żądań, których nie da się złożyć bez tekstu od Operatora
- * (zapytanie wyszukiwania, treść notatki, uzasadnienie odrzucenia). Takie
- * pozycje mówią wprost, czego brakuje, zamiast wysyłać żądanie z polem pustym
- * i wracać odmową walidacji, z której nic nie wynika.
- */
+/** Droga z okna do komend obszaru research, które nie mają własnego formularza: składa żądanie z tego, co okno już wie, wywołuje komendę i podaje zdanie o mierzonym skutku wywołania. */
 export interface KontekstKomendy {
   stan: StanBadania;
   /** Tekst z pola okna, gdy czynność go wymaga; pusty, gdy okno pola nie ma. */
   tekst?: string;
 }
 
-/** Wynik wywołania w postaci, którą okno wypisuje w wierszu odpowiedzi. */
+/** Wynik wywołania komendy badania w postaci, którą okno wypisuje jako zdanie w wierszu odpowiedzi Operatora. */
 export interface WynikKomendy {
   udany: boolean;
   opis: string;
 }
 
-/** Czy kod akcji jest nazwą komendy obszaru, którą ten plik potrafi wywołać. */
+/** Sprawdza kod akcji panelu badania wobec rozdzielnika komend obszaru, które ten plik potrafi wywołać. */
 export function czyKomendaBadania(kod: string): boolean {
   return ROZDZIELNIK.has(kod);
 }
 
-/**
- * Wykonuje komendę wskazaną kodem akcji.
- *
- * Wynik nieznanego kodu jest odmową nazwaną, nie ciszą: kod spoza rozdzielnika
- * znaczy, że akcja została opisana jako `komenda`, a wywołania jej nie dopisano
- * — i to jest usterka do naprawy tutaj, nie stan do przemilczenia.
- */
+/** Wykonuje komendę wskazaną kodem akcji; kod spoza rozdzielnika jest odmową nazwaną jako usterka do naprawy, nie ciszą. */
 export async function wykonajKomendeBadania(
   kontekst: KontekstKomendy,
   akcja: AkcjaBadania,
@@ -92,17 +67,17 @@ export async function wykonajKomendeBadania(
 
 type Wykonanie = (kontekst: KontekstKomendy, akcja: AkcjaBadania) => Promise<WynikKomendy>;
 
-/** Odmowa braku wskazania — mówi, czego okno nie ma, zamiast wysyłać puste pole. */
+/** Odmowa braku wskazania — zdanie o tym, czego okno nie ma, zamiast wysłania żądania z polem pustym do rdzenia. */
 function brak(czego: string): WynikKomendy {
   return { udany: false, opis: czego };
 }
 
-/** Zdanie o skutku udanym. */
+/** Zdanie o skutku udanym czynności badania: oddaje wynik z opisem skutku i znacznikiem powodzenia true. */
 function skutek(opis: string): WynikKomendy {
   return { udany: true, opis };
 }
 
-/** Przekłada odmowę rdzenia na zdanie okna. */
+/** Przekłada odmowę zwróconą przez rdzeń, wraz z jej typem błędu, na zdanie zrozumiałe dla okna badania. */
 function odmowa(nazwa: string, wynik: { blad?: unknown; nieznanyTyp?: string }): WynikKomendy {
   return {
     udany: false,
@@ -114,17 +89,17 @@ function odmowa(nazwa: string, wynik: { blad?: unknown; nieznanyTyp?: string }):
   };
 }
 
-/** Pierwsze zaznaczone źródło albo materiał wskazany do lektury. */
+/** Oddaje pierwsze zaznaczone źródło badania albo materiał wskazany do lektury, gdy zaznaczenia nie ma. */
 function wskazaneZrodlo(stan: StanBadania): string {
   return stan.wybraneZrodla.wybrane()[0] ?? stan.lektura.wskazane();
 }
 
-/** Pierwsze zaznaczone ustalenie. */
+/** Oddaje pierwsze zaznaczone ustalenie badania w oknie albo pusty napis, gdy zaznaczenia ustaleń nie ma. */
 function wskazaneUstalenie(stan: StanBadania): string {
   return stan.wybraneUstalenia.wybrane()[0] ?? '';
 }
 
-/** Identyfikator raportu bieżącego okna. */
+/** Oddaje identyfikator raportu bieżącego okna badania Operatora albo pusty napis, gdy raportu jeszcze nie ma. */
 function wskazanyRaport(stan: StanBadania): string {
   return stan.raport()?.id ?? '';
 }
@@ -249,9 +224,7 @@ const ROZDZIELNIK = new Map<string, Wykonanie>([
       if (zrodlo === '') return brak('Zaznacz źródło, do którego ma dojść załącznik.');
       const sciezka = (tekst ?? '').trim();
       const dokument = stan.zrodla().find((wpis) => wpis.id === zrodlo)?.libraryFileId ?? '';
-      // Dwie drogi materiału i żadnej trzeciej: plik z urządzenia Operatora albo
-      // dokument repozytorium, który źródło już wskazuje. Żądanie bez żadnej
-      // z nich wróciłoby odmową walidacji, z której nic nie wynika.
+      // Materiał ma dwie drogi: plik z urządzenia Operatora albo dokument repozytorium wskazany źródłem.
       if (sciezka === '' && dokument === '') {
         return brak(
           'Wskaż plik pełnego tekstu w polu tytułu formularza źródła albo skataloguj źródło ' +
@@ -519,8 +492,7 @@ const ROZDZIELNIK = new Map<string, Wykonanie>([
         rozbrojZdjecie();
         return brak('Przy tym materiale nie ma ani jednej adnotacji — nie ma czego zdjąć.');
       }
-      // Ostrzeżenie idzie PRZED wykonaniem: pierwsze naciśnięcie nazywa
-      // adnotacja i mówi, że zdjęcie jest nieodwracalne, dopiero drugie zdejmuje.
+      // Ostrzeżenie idzie przed wykonaniem — pierwsze naciśnięcie nazywa skutek, dopiero drugie go wykonuje.
       if (!czyUzbrojona(adnotacja.id)) {
         return { udany: false, opis: uzbrojZdjecie(adnotacja) };
       }
@@ -717,8 +689,7 @@ const ROZDZIELNIK = new Map<string, Wykonanie>([
             'książkę kodów badania, a tego nikt tu nie zamawia.',
         );
       }
-      // Zapis jest całościowy, więc najpierw odczyt: bez niego kody zastane
-      // zniknęłyby z książki kodów bez ani jednego zdania o tym.
+      // Zapis jest całościowy, więc najpierw odczyt — bez niego kody zastane zniknęłyby bez śladu.
       const zastane = await stan.zrodlo.wywolaj(Command.ResearchCodebookGet, {
         windowId: stan.idOkna(),
       });
@@ -830,9 +801,7 @@ const ROZDZIELNIK = new Map<string, Wykonanie>([
         return odmowa('Odczyt przestrzeni badania', wynik);
       }
       const przestrzen = wynik.wynik;
-      // Zakres i etapy wchodzą do pamięci badania, bo to ten sam materiał, który
-      // zapisuje research.workspace.set — dwa różne zbiory dałyby okno wiodące
-      // pokazujące inny zakres niż ten, który rdzeń trzyma.
+      // Zakres i etapy wchodzą do pamięci — to ten sam materiał, który zapisuje komenda ustawienia obszaru.
       stan.wchlonZakres(przestrzen.scope, przestrzen.stages);
       const bezPokrycia = (przestrzen.questions ?? []).filter(
         (pytanie) => (pytanie.sourceIds ?? []).length === 0,

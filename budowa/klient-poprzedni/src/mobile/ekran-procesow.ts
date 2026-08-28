@@ -17,26 +17,9 @@ import {
 } from './procesy-mobilne';
 
 /**
- * Przegląd zadań i procesów — ekran wykazu procesów wraz ze sterowaniem nimi
- * (`mobile.process.list`, `mobile.process.control`).
- *
- * Ekran nazywa się tak, jak nazywa go opracowanie funkcji globalnej Mobile
- * (rozdz. 4.6), i niesie dokładnie te dwa elementy, które ono wymienia: listę
- * procesów z filtrem stanu oraz zestaw czynności przy pozycji — uruchom
- * ponownie, zatrzymaj, wstrzymaj, wznów, zatwierdź, modyfikuj.
- *
- * Czynność nieodwracalna mówi to PRZED wykonaniem i wymaga drugiego dotknięcia.
- * Dwa dotknięcia to nie utrudnienie: telefon nosi się w kieszeni, a zatrzymanie
- * pracy, która biegnie bez Operatora, jest jedyną czynnością tego ekranu, której
- * nie da się cofnąć niczym. Uzbrojenie gaśnie po dotknięciu czegokolwiek
- * innego — inaczej przycisk zostałby uzbrojony na godziny.
- *
- * Filtr stanu zawęża po stronie RDZENIA, polem `status` żądania, a nie po
- * stronie widoku: wykaz przefiltrowany w oknie kłamałby o liczbie procesów,
- * których rdzeń nie przysłał.
- *
- * Urządzenie mobilne nazywa się kartą sesji kanału — tak samo jak w kafelku
- * stanu platformy, żeby rdzeń widział jedno urządzenie, a nie dwa.
+ * Przegląd zadań i procesów — ekran wykazu procesów wraz ze sterowaniem nimi.
+ * Czynność nieodwracalna mówi to przed wykonaniem i wymaga drugiego
+ * dotknięcia; uzbrojenie gaśnie po dotknięciu czegokolwiek innego.
  */
 export interface EkranProcesow {
   element: HTMLElement;
@@ -117,8 +100,7 @@ export function utworzEkranProcesow(opis: OpisEkranuProcesow): EkranProcesow {
     procesy = wynik.wynik;
     if (procesy.length === 0) {
       wykaz.replaceChildren();
-      // Pusty wykaz jest odpowiedzią, nie awarią, i zdanie rozróżnia dwa
-      // powody pustki: brak procesów wcale i brak procesów w wybranym stanie.
+      // Pusty wykaz jest odpowiedzią, nie awarią — rozróżnia brak procesów wcale od braku w wybranym stanie.
       ustawStan(
         filtr.value === ''
           ? 'Rdzeń nie prowadzi ani jednego procesu — nie ma czym sterować. To pusty wykaz, ' +
@@ -167,14 +149,7 @@ export function utworzEkranProcesow(opis: OpisEkranuProcesow): EkranProcesow {
     return element;
   }
 
-  /**
-   * Przycisk jednej czynności.
-   *
-   * Czynność odwracalna idzie od razu. Czynność nieodwracalna najpierw mówi, co
-   * Operator traci, a wykonuje się dopiero po drugim dotknięciu tego samego
-   * przycisku — i napis przycisku zmienia się na czas uzbrojenia, żeby nie dało
-   * się go pomylić z pierwszym dotknięciem.
-   */
+  /** Czynność odwracalna idzie od razu; nieodwracalna czeka na drugie dotknięcie po ostrzeżeniu. */
   function przyciskCzynnosci(
     proces: MobileProcess,
     czynnosc: CzynnoscSterowania,
@@ -242,9 +217,7 @@ export function utworzEkranProcesow(opis: OpisEkranuProcesow): EkranProcesow {
     const po = wynik.wynik;
     ostrzezenie.textContent =
       `Wykonane: „${czynnosc.nazwa}". Proces „${po.label}" po sterowaniu — ${opisProcesu(po)}.`;
-    // Wykaz czyta się na nowo, bo rodzina nie ma zdarzenia własnego, a jedno
-    // sterowanie bywa widoczne w kilku wierszach naraz (kolejka, tura).
-    // Odpowiedź opisuje jeden proces; o pozostałych rozstrzyga rdzeń.
+    // Wykaz czyta się na nowo, bo rodzina nie ma zdarzenia własnego; odpowiedź opisuje jeden proces.
     await odswiez();
   }
 
@@ -260,7 +233,7 @@ export function utworzEkranProcesow(opis: OpisEkranuProcesow): EkranProcesow {
   };
 }
 
-/** Czynności nieodwracalne — do sprawdzianu, że ostrzeżenie stoi przed wykonaniem. */
+/** Czynności nieodwracalne procesu mobilnego — do sprawdzianu, że ostrzeżenie stoi przed wykonaniem czynności. */
 export const CZYNNOSCI_NIEODWRACALNE: readonly MobileProcessControl[] = CZYNNOSCI_STEROWANIA.filter(
   (pozycja) => pozycja.nieodwracalna,
 ).map((pozycja) => pozycja.kod);

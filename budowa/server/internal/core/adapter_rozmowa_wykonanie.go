@@ -16,16 +16,14 @@ import (
 type wykonanie struct {
 	// Naklad trafia do --effort: low, medium, high, xhigh, max.
 	Naklad string
-	// ModelZapasowy trafia do --fallback-model i jest identyfikatorem modelu,
-	// nie kodem kanału — zob. modelKanalu.
+	// ModelZapasowy trafia do --fallback-model i jest identyfikatorem modelu, nie kodem kanału.
 	ModelZapasowy string
-	// PulapKosztuUSD trafia do --max-budget-usd. Zero znaczy „bez pułapu", tak
-	// samo jak napis pusty w polach wyżej — nastawa niewypełniona nie ogranicza
-	// niczego.
+	// PulapKosztuUSD trafia do --max-budget-usd, zero znaczy brak pułapu, jak napis pusty wyżej.
 	PulapKosztuUSD float64
 }
 
-// ParametryWykonania podaje parametry wywołania obowiązujące okno.
+// ParametryWykonania podaje parametry wywołania obowiązujące okno rozmowy
+// w danej chwili trwania sesji.
 type ParametryWykonania interface {
 	Ustal(kontekst context.Context, okno session.Okno) wykonanie
 }
@@ -83,18 +81,15 @@ func (p *wykonanieZKonfiguracji) kwota(zasieg konfig.Kontekst, klucz string) flo
 	return liczba
 }
 
-// wartosc zwraca rozstrzygniętą wartość klucza bez otoczki.
+// wartosc zwraca rozstrzygniętą wartość klucza bez otoczki niosącej poziom
+// zasięgu, z którego pochodzi.
 func (p *wykonanieZKonfiguracji) wartosc(zasieg konfig.Kontekst, klucz string) string {
 	return strings.TrimSpace(p.rozstrzygacz.Rozstrzygnij(zasieg, klucz).Wartosc)
 }
 
-// modelKanalu odwzorowuje kod kanału na identyfikator modelu u dostawcy.
-//
-// Konfiguracja przechowuje pod kluczem `kanal_modelu_zapasowy` kod wiersza
-// rejestru kanałów, a przełącznik --fallback-model oczekuje identyfikatora
-// modelu u dostawcy. Kanał nieznany albo bez identyfikatora modelu daje napis
-// pusty: brak modelu zapasowego jest stanem poprawnym, a nie powodem przerwania
-// tury.
+// modelKanalu odwzorowuje kod kanału na identyfikator modelu u dostawcy: kanał
+// nieznany albo bez identyfikatora modelu daje napis pusty, stan poprawny,
+// nie powód przerwania tury.
 func (p *wykonanieZKonfiguracji) modelKanalu(kontekst context.Context, kod string) string {
 	if kod == "" || p.kanaly == nil {
 		return ""

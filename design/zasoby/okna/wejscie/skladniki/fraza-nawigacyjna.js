@@ -1,9 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — FRAZA NAWIGACYJNA
-
-   Zdanie nad pasem działań: mówi, co będzie dalej, albo stawia pytanie
-   z wplecioną czynnością („Nie masz konta? Utwórz konto Operatora"). Stoi
-   w treści, nie w pasie — w pasie zostają same czynności, inaczej zdanie,
+/* Fraza nawigacyjna jest zdaniem nad pasem działań, zapowiadającym dalszy krok albo stawiającym pytanie z wplecioną czynnością, na przykład zachętą do założenia konta operatora.
+   Stoi w treści, nie w pasie — w pasie zostają same czynności, inaczej zdanie,
    czynność poboczna i główna nie mieszczą się w jednym wierszu.
 
    Właściwości:

@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: dwie komendy okna Process Monitor —
-// `terminal.process.list` i `terminal.process.kill`.
-//
-// Wykaz ma dwa źródła, bo proces żyje w dwóch miejscach: proces czynny prowadzi
-// rejestr w pamięci (tylko on ma uchwyt do drzewa potomstwa), a przebieg
-// zakończony zostaje w dzienniku bazy. Bez rejestru zniknęłyby procesy właśnie
-// uruchomione, bez dziennika — przebiegi sprzed restartu.
+// Odpowiedzialność pliku: dwie komendy okna Process Monitor — terminal.process.list i .kill, na wykazie procesów czynnego rejestru i dziennika bazy.
 package core
 
 import (
@@ -52,7 +46,7 @@ func (a *adapterTerminala) WykazProcesow(ctx context.Context,
 	return shared.TerminalProcessListResponse{Processes: wykaz}, nil
 }
 
-// ZakonczProces obsługuje `terminal.process.kill`.
+// ZakonczProces obsługuje terminal.process.kill, kończąc proces terminala i czekając krótko na stan końcowy.
 func (a *adapterTerminala) ZakonczProces(ctx context.Context,
 	z shared.TerminalProcessKillRequest) (shared.TerminalProcessKillResponse, error) {
 
@@ -74,9 +68,7 @@ func (a *adapterTerminala) ZakonczProces(ctx context.Context,
 		return shared.TerminalProcessKillResponse{}, protocol.JakoError(protocol.NowyBlad(
 			shared.ErrorCodeInternalError, "moduł Terminal: nie można zakończyć procesu "+kod+": "+err.Error()))
 	}
-	// Stan końcowy nadaje obserwator zakończenia z adapter_modul_terminal_wykonanie.go,
-	// bo dopiero on zna kod wyjścia. Krótkie oczekiwanie na niego sprawia, że wynik
-	// komendy nie mówi „running" o procesie właśnie zakończonym.
+	// Stan końcowy nadaje obserwator zakończenia; krótkie oczekiwanie zapobiega odpowiedzi running.
 	proces.CzekajNaKoniec(czasNaDomkniecie)
 	return shared.TerminalProcessKillResponse{Process: procesKontraktu(proces)}, nil
 }

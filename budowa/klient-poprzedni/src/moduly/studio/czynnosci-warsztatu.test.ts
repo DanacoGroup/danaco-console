@@ -3,17 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Command } from '../../../../shared/contract';
 import { CZYNNOSCI_WARSZTATU, opiszSkutek } from './czynnosci-warsztatu';
 
-/**
- * Składanie żądań warsztatu dokumentu.
- *
- * Sprawdzian pilnuje miejsca, w którym formularz zamienia się w treść kontraktu:
- * pole puste ma NIE trafiać do żądania, a nie trafiać jako pusty napis. Pusty
- * napis w polu nieobowiązkowym jest dla rdzenia wskazaniem, a nie jego brakiem —
- * i zmienia znaczenie czynności. W szyfrowaniu decyduje o tym, czy hasło
- * nakładamy, czy zdejmujemy.
- */
-
-/** Odnajduje czynność po komendzie kontraktu. */
+/** Odnajduje czynność warsztatu po komendzie kontraktu, rzucając błąd, gdy katalog czynności jej nie zawiera. */
 function czynnosc(komenda: Command) {
   const znaleziona = CZYNNOSCI_WARSZTATU.find((pozycja) => pozycja.komenda === komenda);
   if (znaleziona === undefined) throw new Error(`brak czynności ${komenda} w katalogu`);

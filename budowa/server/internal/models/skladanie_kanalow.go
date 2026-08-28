@@ -38,7 +38,8 @@ func kluczeKanalu(d Definicja) []string {
 	return klucze
 }
 
-// zamknijNieuzywane zwalnia zasoby kanałów, które wypadły z rejestru.
+// zamknijNieuzywane zwalnia zasoby kanałów obecnych w poprzedniej mapie, które
+// nie zostały zachowane w nowo zbudowanym zestawie kanałów rejestru.
 func zamknijNieuzywane(poprzednie map[string]Kanal, zachowane map[Kanal]bool) {
 	zamkniete := map[Kanal]bool{}
 	for _, kanal := range poprzednie {

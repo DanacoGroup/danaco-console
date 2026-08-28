@@ -1,47 +1,6 @@
-// Odpowiedzialność pliku: blokady fragmentów dokumentu — założenie, zdjęcie,
-// wykaz — oraz RACHUNEK UZGODNIENIA, którym rdzeń wykonuje zmianę POZA blokadą
-// i oddaje bilans tego, co pominął.
-//
-// ── Blokada obowiązuje w rdzeniu, nie w oknie ────────────────────────────────
-// Wymaganie rozstrzygające Właściciela. Model woła komendy rdzenia tak samo jak
-// klient, więc blokada pilnowana wyłącznie przez okno jest pozorna — ominąłby ją
-// bez wysiłku. Sprawdzenie stoi więc na drodze KAŻDEJ komendy zmieniającej
-// dokument (`adapter_modul_studio_blokady_zapora.go`), a nie w poszczególnych
-// obsługiwaczach: obsługiwaczy zmieniających dokument jest w Studiu ponad
-// setka i pisanych przez czterech wykonawców, a zapora wpięta w rejestr obejmuje
-// też te, których jeszcze nie ma.
-//
-// ── Trzy odpowiedzi, nie dwie ───────────────────────────────────────────────
-// Zderzenie zmiany z blokadą nie ma odpowiedzi „wolno / nie wolno", ma trzy:
-//
-//	CAŁOŚĆ W BLOKADZIE  → odmowa NAZWANA: który fragment i jaka blokada. Cicha
-//	                      bezczynność byłaby najgorszą możliwą odpowiedzią, bo
-//	                      Operator myślałby, że model wykonał polecenie.
-//	CZĘŚĆ W BLOKADZIE   → zmiana wchodzi POZA blokadą, a odpowiedź niesie BILANS:
-//	                      co zmienione, co pominięte i przez którą blokadę.
-//	                      Odmowa całości byłaby tu nieproporcjonalna (zamiana
-//	                      w całym dokumencie trafiająca w jeden cytat), a
-//	                      przemilczenie pominięcia — zakazane.
-//	POZA BLOKADĄ        → zmiana wchodzi bez słowa.
-//
-// ── Kogo blokada wiąże ──────────────────────────────────────────────────────
-// Blokada jest skierowana przeciw wykonawcom, nie przeciw właścicielowi
-// dokumentu: Operator zmienia fragment zablokowany BEZ przeszkód. Blokada
-// działająca także na Operatora jest osobnym, jawnym ustawieniem (`scope`
-// = `everyone`), a nie zachowaniem domyślnym.
-//
-// Zdejmuje blokadę WYŁĄCZNIE Operator. Wykonawca, który uzna, że fragment
-// wymaga zmiany, zakłada propozycję na marginesie (`studio.markup.add` o
-// rodzaju `suggestion`) — i tyle. Dlatego `studio.lock.remove` nie stoi też
-// w wykazie narzędzi modelu; sprawdzenie tutaj jest drugą stroną tej samej
-// zasady, bo wykaz narzędzi nie jest zaporą.
-//
-// ── Blokada przechodzi przez wersje i przez szablon ─────────────────────────
-// Blokada wisi przy DOKUMENCIE, nie przy wersji, więc przywrócenie wcześniejszej
-// wersji jej nie gubi — i to jest cały mechanizm, bez ani jednej linii kodu
-// w drodze przywracania. Zakresy nadążają za treścią przez
-// `PrzesunBlokadyFragmentow`. Szablon niesie swoje blokady wzorcowe do
-// dokumentów z niego zakładanych (`blokadaPrzenieSzablon`).
+// Odpowiedzialność pliku: blokady fragmentów dokumentu — założenie,
+// zdjęcie, wykaz — oraz RACHUNEK UZGODNIENIA, którym rdzeń wykonuje zmianę
+// POZA blokadą.
 package core
 
 import (
@@ -55,12 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZalozBlokade obsługuje `studio.lock.add`.
-//
-// Blokadę zakłada Operator; wykonawca, który po nią sięgnie, dostaje odmowę
-// nazywającą powód. Wykonawca zakładający blokadę mógłby unieruchomić fragment
-// przed Operatorem — a blokada jest narzędziem Operatora przeciw wykonawcom,
-// nie odwrotnie.
+// ZalozBlokade obsługuje studio.lock.add; blokadę zakłada Operator,
+// wykonawca sięgający po nią dostaje odmowę nazywającą powód.
 func (a *adapterStudia) ZalozBlokade(ctx context.Context,
 	z shared.StudioLockAddRequest) (shared.StudioLockAddResponse, error) {
 
@@ -115,7 +70,8 @@ func (a *adapterStudia) ZalozBlokade(ctx context.Context,
 	}, nil
 }
 
-// ZdejmijBlokade obsługuje `studio.lock.remove`.
+// ZdejmijBlokade obsługuje studio.lock.remove, zdejmowane wyłącznie przez
+// Operatora, nigdy przez wykonawcę pracującego na dokumencie.
 func (a *adapterStudia) ZdejmijBlokade(ctx context.Context,
 	z shared.StudioLockRemoveRequest) (shared.StudioLockRemoveResponse, error) {
 
@@ -152,9 +108,8 @@ func (a *adapterStudia) ZdejmijBlokade(ctx context.Context,
 		}
 		return shared.StudioLockRemoveResponse{}, bladStudio(err)
 	}
-	// Blokada cudzego dokumentu nie zdejmuje się przez wskazanie tego dokumentu:
-	// odpowiedź „zdjęto" na blokadę, która stała przy innym dokumencie, byłaby
-	// nieprawdą o obu.
+	// Blokada cudzego dokumentu nie zdejmuje się przez wskazanie dokumentu:
+	// odpowiedź byłaby nieprawdą.
 	if blokada.DokumentKod != dokument.Kod {
 		return shared.StudioLockRemoveResponse{},
 			bladWskazaniaStudio("blokada " + z.LockId + " stoi przy dokumencie " +
@@ -172,7 +127,8 @@ func (a *adapterStudia) ZdejmijBlokade(ctx context.Context,
 	return shared.StudioLockRemoveResponse{Removed: zdjeta, Locks: wszystkie}, nil
 }
 
-// Blokady obsługuje `studio.lock.list`.
+// Blokady obsługuje studio.lock.list, oddając wykaz blokad dokumentu
+// w kształcie kontraktu, zawężony do wskazanego fragmentu.
 func (a *adapterStudia) Blokady(ctx context.Context,
 	z shared.StudioLockListRequest) (shared.StudioLockListResponse, error) {
 
@@ -188,8 +144,7 @@ func (a *adapterStudia) Blokady(ctx context.Context,
 		return shared.StudioLockListResponse{Locks: wszystkie}, nil
 	}
 	// Zawężenie do fragmentu oddaje blokady STYKAJĄCE SIĘ z nim, nie tylko
-	// zawarte w nim w całości: Operator pytający „co stoi na tym zaznaczeniu"
-	// pyta o wszystko, co go dotyka, także o blokadę wychodzącą poza zaznaczenie.
+	// zawarte w nim w całości.
 	od := 0
 	if z.RangeStart != nil {
 		od = *z.RangeStart
@@ -207,7 +162,8 @@ func (a *adapterStudia) Blokady(ctx context.Context,
 	return shared.StudioLockListResponse{Locks: wybrane}, nil
 }
 
-// blokadyDokumentu składa wykaz blokad dokumentu w kształcie kontraktu.
+// blokadyDokumentu składa wykaz blokad dokumentu w kształcie kontraktu,
+// gotowy do wpisania w odpowiedź studio.lock.list.
 func (a *adapterStudia) blokadyDokumentu(ctx context.Context,
 	dokumentID int64) ([]shared.StudioFragmentLock, error) {
 
@@ -226,7 +182,8 @@ func (a *adapterStudia) blokadyDokumentu(ctx context.Context,
 	return blokady, nil
 }
 
-// blokadaZlozKontrakt składa blokadę kontraktu z wiersza warstwy danych.
+// blokadaZlozKontrakt składa blokadę kontraktu z wiersza warstwy danych,
+// w kształcie oczekiwanym przez odpowiedź komendy.
 func blokadaZlozKontrakt(wiersz dane.BlokadaFragmentuStudia) shared.StudioFragmentLock {
 	blokada := shared.StudioFragmentLock{
 		Id:         wiersz.Kod,
@@ -252,10 +209,8 @@ func blokadaZlozKontrakt(wiersz dane.BlokadaFragmentuStudia) shared.StudioFragme
 
 // ── Rachunek uzgodnienia ────────────────────────────────────────────────────
 
-// blokadaWiazaca mówi, czy blokada wiąże tę rękę.
-//
-// Zasięg `everyone` wiąże każdego, także Operatora — to jest to OSOBNE, JAWNE
-// ustawienie. Zasięg `model` (postać domyślna) wiąże wyłącznie wykonawców.
+// blokadaWiazaca mówi, czy blokada wiąże tę rękę; zasięg everyone wiąże
+// każdego, zasięg model wiąże wyłącznie wykonawców.
 func blokadaWiazaca(blokada dane.BlokadaFragmentuStudia, wykonawca kontrolaWykonawca) bool {
 	if blokada.Zasieg == string(shared.StudioLockScopeEveryone) {
 		return true
@@ -263,7 +218,8 @@ func blokadaWiazaca(blokada dane.BlokadaFragmentuStudia, wykonawca kontrolaWykon
 	return wykonawca.czyWykonawca()
 }
 
-// blokadaWiazaceDlaRak przesiewa blokady dokumentu do tych, które wiążą tę rękę.
+// blokadaWiazaceDlaRak przesiewa blokady dokumentu do tych, które wiążą
+// tę rękę, zgodnie z jej zasięgiem zapisanym w bazie.
 func blokadaWiazaceDlaRak(blokady []dane.BlokadaFragmentuStudia,
 	wykonawca kontrolaWykonawca) []dane.BlokadaFragmentuStudia {
 
@@ -276,10 +232,8 @@ func blokadaWiazaceDlaRak(blokady []dane.BlokadaFragmentuStudia,
 	return wiazace
 }
 
-// blokadaNaZakresie oddaje pierwszą blokadę wiążącą, która styka się z zakresem.
-// Pierwszą, nie wszystkie: odmowa ma nazwać JEDNĄ blokadę, tę najbliższą
-// początkowi fragmentu, bo wykaz trzech blokad w treści błędu nie pomaga
-// bardziej niż jedna, a wykaz pełny Operator ma w `studio.lock.list`.
+// blokadaNaZakresie oddaje pierwszą blokadę wiążącą, która styka się
+// z zakresem; pierwszą, nie wszystkie, dla treści odmowy.
 func blokadaNaZakresie(blokady []dane.BlokadaFragmentuStudia, od, do int,
 	wykonawca kontrolaWykonawca) (dane.BlokadaFragmentuStudia, bool) {
 
@@ -294,43 +248,24 @@ func blokadaNaZakresie(blokady []dane.BlokadaFragmentuStudia, od, do int,
 	return dane.BlokadaFragmentuStudia{}, false
 }
 
-// blokadaUzgodnienie jest wynikiem rachunku uzgodnienia treści z blokadami.
+// blokadaUzgodnienie jest wynikiem rachunku uzgodnienia treści
+// z blokadami, niosącym bilans zmian i pominięć wierszami.
 type blokadaUzgodnienie struct {
 	// Tresc jest treścią po uzgodnieniu: zmiana wniesiona poza blokadami,
-	// fragmenty zablokowane przywrócone do brzmienia zastanego.
+	// fragmenty zablokowane zastane.
 	Tresc string
 	// Zmienione i Pominiete liczą WIERSZE, bo wierszami idzie uzgodnienie.
 	Zmienione int
 	Pominiete []shared.StudioSkippedItem
-	// CalkiemWBlokadzie znaczy, że po uzgodnieniu nie zostało nic do zmiany —
-	// czyli zmiana leżała w blokadzie w CAŁOŚCI. Wtedy odpowiedzią jest odmowa
-	// nazwana, nie cicha zgoda na brak skutku.
+	// CalkiemWBlokadzie znaczy, że zmiana leżała w blokadzie w CAŁOŚCI;
+	// odpowiedzią jest odmowa nazwana.
 	CalkiemWBlokadzie bool
 	// PierwszaBlokada nazywa blokadę do treści odmowy.
 	PierwszaBlokada dane.BlokadaFragmentuStudia
 }
 
-// blokadaUzgodnijTresc wykonuje zmianę POZA blokadami i liczy bilans pominięć.
-//
-// ── Dlaczego wierszami ──────────────────────────────────────────────────────
-// Uzgodnienie musi rozdzielić „ten fragment zmiany wolno" od „tego nie wolno",
-// a do tego trzeba miejsc, w których zmianę da się PRZERWAĆ. Wiersz jest takim
-// miejscem i jest nim w tym module od początku: `policzFragmentyRoznicy` liczy
-// różnicę wierszami, a `studio.diff.hunk.apply` wierszami przenosi fragmenty.
-// Znak byłby miejscem gęstszym, ale uzgodnienie znakami wymagałoby dopasowania
-// klasy LCS, którego rdzeń nie ma i którego ten odcinek nie zakłada drugi raz.
-//
-// ── Dlaczego dwa tryby ──────────────────────────────────────────────────────
-// Gdy strony mają TYLE SAMO wierszy w środku (a tak wygląda zamiana w całym
-// dokumencie — sedno wymagania o bilansie), wiersze dają się sparować jeden do
-// jednego i uzgodnienie jest dokładne: wiersz trafiony blokadą zostaje zastany,
-// pozostałe wchodzą.
-//
-// Gdy liczba wierszy się różni, sparować ich nie sposób bez zgadywania, KTÓRY
-// wiersz odpowiada któremu. Wtedy środek jest jedną całością: styka się
-// z blokadą — nie wchodzi w ogóle i wraca pominięciem; nie styka — wchodzi
-// w całości. Zgadywanie parowania byłoby tu gorsze niż odmowa, bo wstawiłoby
-// treść w środek zablokowanego cytatu i nazwało to bilansem.
+// blokadaUzgodnijTresc wykonuje zmianę POZA blokadami i liczy bilans
+// pominięć; uzgodnienie idzie wierszami, nie znakami.
 func blokadaUzgodnijTresc(zastana, proponowana string,
 	blokady []dane.BlokadaFragmentuStudia, wykonawca kontrolaWykonawca) blokadaUzgodnienie {
 
@@ -357,8 +292,8 @@ func blokadaUzgodnijTresc(zastana, proponowana string,
 	srodekPrzed := przed[przedrostek : len(przed)-sufiks]
 	srodekPo := po[przedrostek : len(po)-sufiks]
 
-	// Początki wierszy liczone w ZNAKACH, bo w znakach liczy zakresy kontrakt
-	// i w znakach stoją zakresy blokad.
+	// Początki wierszy liczone w ZNAKACH, tak jak liczy zakresy kontrakt
+	// i zakresy blokad.
 	poczatki := blokadaPoczatkiWierszy(przed)
 
 	uzgodnienie := blokadaUzgodnienie{}
@@ -411,9 +346,8 @@ func blokadaUzgodnijTresc(zastana, proponowana string,
 	return uzgodnienie
 }
 
-// blokadaPoczatkiWierszy liczy początek każdego wiersza w ZNAKACH. Znak nowego
-// wiersza liczy się do długości wiersza poprzedniego, bo tak liczy je zakres
-// zaznaczenia w oknie.
+// blokadaPoczatkiWierszy liczy początek każdego wiersza w ZNAKACH, tak jak
+// liczy je zakres zaznaczenia w oknie.
 func blokadaPoczatkiWierszy(wiersze []string) []int {
 	poczatki := make([]int, len(wiersze)+1)
 	biezacy := 0
@@ -425,7 +359,8 @@ func blokadaPoczatkiWierszy(wiersze []string) []int {
 	return poczatki
 }
 
-// blokadaPominiecie składa pozycję bilansu: co pominięte i przez którą blokadę.
+// blokadaPominiecie składa pozycję bilansu: co pominięte i przez którą
+// blokadę, gotową do wpisania w odpowiedź odmowy.
 func blokadaPominiecie(blokada dane.BlokadaFragmentuStudia, od, do int) shared.StudioSkippedItem {
 	szczegol := "fragment od znaku " + strconv.Itoa(od) + " do " + strconv.Itoa(do) +
 		" został pominięty — stoi na nim blokada „" + blokada.Nazwa + "”"
@@ -444,7 +379,8 @@ func blokadaPominiecie(blokada dane.BlokadaFragmentuStudia, od, do int) shared.S
 	}
 }
 
-// blokadaBilans składa bilans czynności z uzgodnienia.
+// blokadaBilans składa bilans czynności z uzgodnienia, niosący wiersze
+// zmienione, pominięte i pierwszą blokadę wiążącą.
 func blokadaBilans(uzgodnienie blokadaUzgodnienie) shared.StudioActionBalance {
 	bilans := shared.StudioActionBalance{
 		Applied:      uzgodnienie.Zmienione,
@@ -461,11 +397,8 @@ func blokadaBilans(uzgodnienie blokadaUzgodnienie) shared.StudioActionBalance {
 
 // ── Blokady wzorcowe szablonu ───────────────────────────────────────────────
 
-// blokadaPrzenieSzablon kopiuje blokady wzorcowe szablonu do dokumentu z niego
-// zakładanego — fragmenty wzorcowe pisma mają zostać wzorcowe.
-//
-// Metoda stoi tutaj i jest wołana przez odcinek szablonów; wołanie jej z drogi
-// zakładania dokumentu należy do tamtego odcinka, bo tam stoi ta droga.
+// blokadaPrzenieSzablon kopiuje blokady wzorcowe szablonu do dokumentu
+// z niego zakładanego, wołana z odcinka szablonów.
 func (a *adapterStudia) blokadaPrzenieSzablon(ctx context.Context, dokumentID int64,
 	szablonKod string) (int, error) {
 

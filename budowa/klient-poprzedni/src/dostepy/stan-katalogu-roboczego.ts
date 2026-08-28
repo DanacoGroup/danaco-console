@@ -7,19 +7,9 @@ import type { Kanal, Wynik } from '../protokol/kanal';
 import { definicjaZastepcza, KLUCZE_KATALOGU } from './klucze-katalogu';
 
 /**
- * Stan obszaru katalogu roboczego.
- *
- * Obszar nie ma własnej drogi do rdzenia. Bierze definicje z katalogu ustawień
- * i wartości komendą `config.get`, a rachunek dziedziczenia oddaje modułowi
- * `konfiguracja/rozstrzygniecie` — temu samemu, z którego korzysta okno
- * konfiguracji. Druga implementacja tego rachunku byłaby drugą prawdą o tej
- * samej wartości.
- *
- * Katalog roboczy jest własnością instalacji, więc ta sekcja zapisuje go na
- * poziomie globalnym, na osi platformy. Zapis węższy — dla sesji, okna, modelu
- * albo konta — należy do okna konfiguracji, które ma pasek punktu widzenia
- * i pełny wybór poziomów. Zapis dokonany tam widać tutaj: łańcuch
- * rozstrzygnięcia mówi, skąd wartość pochodzi.
+ * Stan obszaru katalogu roboczego. Obszar nie ma własnej drogi do rdzenia:
+ * bierze definicje z katalogu ustawień i wartości komendą `config.get`,
+ * a rachunek dziedziczenia oddaje modułowi `konfiguracja/rozstrzygniecie`.
  */
 export interface StanKataloguRoboczego {
   /** Definicja pozycji katalogu; brak w katalogu daje definicję zastępczą. */
@@ -115,7 +105,10 @@ export function utworzStanKataloguRoboczego(kanal: Kanal): StanKataloguRoboczego
   };
 }
 
-/** Wpis z odpowiedzi `config.set`; kształt niespodziewany daje `null`. */
+/**
+ * Wpis z odpowiedzi `config.set`; kształt niespodziewany daje `null`, dzięki
+ * czemu stan nie przyjmuje wartości, której rdzeń nie potwierdził.
+ */
 function wpisOdpowiedzi(tresc: unknown): ConfigEntry | null {
   if (typeof tresc !== 'object' || tresc === null) return null;
   const wpis = (tresc as { entry?: unknown }).entry;

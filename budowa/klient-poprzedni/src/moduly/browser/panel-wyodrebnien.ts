@@ -2,16 +2,9 @@ import type { BrowserSnapshot } from '../../../../shared/contract';
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Panel wyodrębnionej treści Browser Window — wynik pozycji
- * „Wyodrębnij dane ▾" paska dolnego i przycisku „Wyodrębnij" paska zaznaczenia.
- *
- * Jedna odpowiedzialność: pokazanie tego, co Operator wyjął z migawki, wraz
- * z wykazem wyodrębnionych fragmentów.
- *
- * Wyodrębnienie dzieje się w kliencie z treści, którą klient ma. Kontrakt nie
- * ma komendy wyodrębniania danych ze strony; migawka jest jedyną treścią,
- * którą moduł dostał od rdzenia, i to z niej wyjmowane są trzy rodzaje danych.
- * Panel nie zmyśla żadnego pola — do przyjścia migawki stoi pusty.
+ * Panel wyodrębnionej treści Browser Window pokazuje to, co Operator wyjął
+ * z migawki, wraz z wykazem wyodrębnionych fragmentów. Do przyjścia migawki
+ * panel stoi pusty i żadnego pola nie podstawia.
  */
 export interface PanelWyodrebnien {
   element: HTMLElement;
@@ -63,7 +56,11 @@ export function utworzPanelWyodrebnien(stan: StanPrzegladania): PanelWyodrebnien
   };
 }
 
-/** Trzy rodzaje danych, które migawka naprawdę niesie. */
+/**
+ * Trzy rodzaje danych, które migawka naprawdę niesie: kod źródłowy strony,
+ * tytuł wraz z adresem oraz tekst strony. Rodzaj spoza tych trzech daje tekst
+ * strony, a pole nieobecne w migawce daje treść pustą.
+ */
 function wyjmij(migawka: BrowserSnapshot, rodzaj: string): string {
   if (rodzaj === 'zrodlo') return migawka.html ?? '';
   if (rodzaj === 'adres') return `${migawka.title ?? ''}\n${migawka.url}`.trim();

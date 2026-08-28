@@ -14,17 +14,9 @@ import { utworzStanDiagnostyki } from './stan-diagnostyki';
 import { utworzZakladkeProwenancji } from './zakladka-prowenancji';
 import { utworzZrodloDiagnostics } from './zrodlo-diagnostics';
 
-/**
- * Jawność pracy modeli w oknie — Provenance Explorer.
- *
- * Sprawdzian pilnuje czterech rzeczy, o które ta zakładka istnieje: że wykaz
- * wywołań ma drogę z okna, że odczyt śladu przynosi drzewo odcinków i treść,
- * że OCENA jest czynnością z własnym chwytem, i że WYDANIE śladu mówi, co
- * plik niesie. Piąta rzecz jest równie ważna: pustka rejestru ma zdanie, a nie
- * migające puste miejsce.
- */
+// Sprawdzian ujawnia pracę modeli w oknie: wykaz wywołań, odczyt śladu, ocenę i wydanie do pliku.
 
-/** Jedno wywołanie w postaci, w której rdzeń je oddaje. */
+/** Funkcja tworzy jedno wywołanie modelu w postaci, w której rdzeń je oddaje, gotowe do podmiany wybranych pól w pojedynczym sprawdzianie. */
 function wywolanie(zmiany: Partial<ModelCallTrace> = {}): ModelCallTrace {
   return {
     id: 'wywolanie-1',
@@ -39,7 +31,7 @@ function wywolanie(zmiany: Partial<ModelCallTrace> = {}): ModelCallTrace {
   };
 }
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Funkcja tworzy kanał próbny, który zapamiętuje wysłane żądania i oddaje odpowiedź wskazaną dla każdej komendy z osobna. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -64,7 +56,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
   return { kanal, wyslane };
 }
 
-/** Zakładka złożona wraz z jej pasem czynności. */
+/** Funkcja składa zakładkę prowenancji wraz ze stanem diagnostyki i kanałem próbnym, gotową do sprawdzenia jej zachowania. */
 function zakladka(odpowiedzi: Record<string, unknown>, zeZrodlem = true) {
   const { kanal, wyslane } = kanalProbny(odpowiedzi);
   const diagnostyka = utworzZrodloDiagnostics(kanal);
@@ -77,7 +69,7 @@ function zakladka(odpowiedzi: Record<string, unknown>, zeZrodlem = true) {
   return { widok, wyslane, stan };
 }
 
-/** Przycisk o dokładnie tej etykiecie; brak przycisku jest brakiem drogi. */
+/** Funkcja znajduje w oknie przycisk o dokładnie podanej etykiecie; brak takiego przycisku sprawdzian zgłasza jako brak drogi. */
 function przycisk(gdzie: HTMLElement, etykieta: string): HTMLButtonElement {
   const znaleziony = [...gdzie.querySelectorAll('button')].find(
     (kontrolka) => kontrolka.textContent === etykieta,
@@ -86,12 +78,12 @@ function przycisk(gdzie: HTMLElement, etykieta: string): HTMLButtonElement {
   return znaleziony as HTMLButtonElement;
 }
 
-/** Treść zakładki w jednym napisie — do sprawdzania zdań, nie układu. */
+/** Funkcja zwraca treść zakładki jako jeden napis tekstowy, przydatny do sprawdzania obecności zdań, a nie układu ekranu. */
 function napis(gdzie: HTMLElement): string {
   return gdzie.textContent ?? '';
 }
 
-/** Oddaje sterowanie kolejce mikrozadań: wywołania są obietnicami. */
+/** Funkcja oddaje sterowanie kolejce mikrozadań trzykrotnie, aby łańcuch obietnic wywołań zdążył się rozstrzygnąć przed sprawdzeniem wyniku. */
 async function przemiel(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -99,8 +91,7 @@ async function przemiel(): Promise<void> {
 }
 
 beforeEach(() => {
-  // Pobranie pliku sięga po URL obiektowy, którego jsdom nie ma; wydanie śladu
-  // musi być sprawdzalne, a nie wywracać sprawdzian na braku przeglądarki.
+  // Pobranie pliku sięga po URL obiektowy, którego jsdom nie ma; wydanie śladu musi być sprawdzalne.
   URL.createObjectURL = vi.fn(() => 'blob:slad');
   URL.revokeObjectURL = vi.fn();
 });

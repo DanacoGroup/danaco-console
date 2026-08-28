@@ -1,11 +1,5 @@
 // Odpowiedzialność pliku: listy korzeni obszaru dostępów — korzenie punktu
-// (`korzen_punktu_dostepu`) i korzenie nadania (`korzen_nadania`). Korzeń jest
-// listą, nie pojedynczym polem, tak samo jak katalog roboczy okna;
-// odpowiada zmiennej DANACO_MOST_KORZENIE mostu MCP, poza którą most nie wyjdzie.
-//
-// Nadanie może korzenie punktu wyłącznie ZAWĘZIĆ. Korzeń nadania spoza obszaru
-// punktu byłby obietnicą dostępu, którego most i tak nie da — sprawdzenie leży
-// tu, żeby nie powstał wiersz wprowadzający w błąd.
+// (`korzen_punktu_dostepu`) i korzenie nadania (`korzen_nadania`).
 package dane
 
 import (
@@ -67,7 +61,7 @@ func zapiszKorzenie(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	return nil
 }
 
-// wczytajKorzenie zwraca listę korzeni jednego właściciela w zapisanej kolejności.
+// wczytajKorzenie zwraca listę korzeni jednego właściciela w zapisanej kolejności wpisów w tabeli bazy danych.
 func wczytajKorzenie(ctx context.Context, z *zapytania, zapytanie string,
 	wlascicielID int64, opis string) ([]string, error) {
 
@@ -115,10 +109,7 @@ func uporzadkujKorzenie(korzenie []string) []string {
 	return wynik
 }
 
-// sprawdzZawezenieKorzeni pilnuje, żeby korzenie nadania mieściły się w obszarze
-// punktu. Lista pusta znaczy „komplet korzeni punktu" i jest poprawna zawsze.
-// Punkt bez własnych korzeni nie ogranicza niczego — tak samo jak
-// most z pustą zmienną DANACO_MOST_KORZENIE.
+// sprawdzZawezenieKorzeni pilnuje, żeby korzenie nadania mieściły się w obszarze wyznaczonym korzeniami punktu dostępu.
 func sprawdzZawezenieKorzeni(korzeniePunktu, korzenieNadania []string) error {
 	if len(korzeniePunktu) == 0 {
 		return nil
@@ -132,8 +123,7 @@ func sprawdzZawezenieKorzeni(korzeniePunktu, korzenieNadania []string) error {
 	return nil
 }
 
-// wKtorymkolwiekKorzeniu rozstrzyga, czy ścieżka mieści się w którymkolwiek
-// z korzeni punktu.
+// wKtorymkolwiekKorzeniu rozstrzyga, czy podana ścieżka mieści się w którymkolwiek z przekazanych korzeni punktu dostępu.
 func wKtorymkolwiekKorzeniu(korzenie []string, sciezka string) bool {
 	for _, korzen := range korzenie {
 		if wKorzeniu(korzen, sciezka) {

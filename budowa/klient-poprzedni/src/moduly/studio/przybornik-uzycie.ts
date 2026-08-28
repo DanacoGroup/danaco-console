@@ -4,39 +4,14 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 import { OPERACJE_PASKA } from './kategorie-operacji';
 
-/**
- * Użycie operacji — czym pływak wie, co postawić na wierzchu.
- *
- * ── „Z użycia, nie z domysłu" ───────────────────────────────────────────────
- * Rozstrzygnięcie Właściciela nie pozwala wpisać w kod czterech czynności
- * uznanych za najczęstsze. Liczba użyć i czas ostatniego użycia są tu
- * **policzone**: każde uruchomienie operacji podnosi licznik, a kolejność
- * pływaka bierze się z tych dwóch liczb. Wykaz z `kategorie-operacji.ts` jest
- * wyłącznie stanem początkowym — pierwsze użycie Operatora go zastępuje.
- *
- * ── Dlaczego to jedzie do rdzenia, a nie do pamięci karty ────────────────────
- * Wymaganie mówi „pamiętane ustawienie". Pamięć karty ginie z zamknięciem
- * przeglądarki, więc kolejność wracałaby do stanu początkowego co dzień.
- * Rodzina `config.*` daje zapis trwały o dowolnym kluczu i poziomie zasięgu,
- * z przywróceniem wartości domyślnej przez `config.reset` — czyli ustawienie
- * jawne i odwracalne, jak żąda zasada ogólna zlecenia. Nie zakładamy drugiej
- * drogi zapisu nastaw.
- *
- * Klucze są pełnymi nazwami, bez numeracji wymyślonej, i stoją na poziomie
- * globalnym, bo dotyczą Operatora, a nie jednej sesji:
- *   `studio_przybornik_uzycie_operacji`   — licznik i czas ostatniego użycia,
- *   `studio_przybornik_operacje_przypiete` — czynności przypięte przez Operatora,
- *   `studio_przybornik_tryb_operacji`      — pływak albo stały panel boczny.
- */
-
-/** Klucz nastawy liczników użycia. */
+/** Stała KLUCZ_UZYCIA jest kluczem nastawy liczników użycia operacji przybornika, zapisanym w rdzeniu na poziomie globalnym. */
 export const KLUCZ_UZYCIA = 'studio_przybornik_uzycie_operacji';
-/** Klucz nastawy czynności przypiętych. */
+/** Stała KLUCZ_PRZYPIETYCH jest kluczem nastawy czynności przypiętych przez Operatora, zapisanym w rdzeniu na poziomie globalnym. */
 export const KLUCZ_PRZYPIETYCH = 'studio_przybornik_operacje_przypiete';
-/** Klucz nastawy trybu wykazu operacji. */
+/** Stała KLUCZ_TRYBU jest kluczem nastawy trybu wykazu operacji przybornika, zapisanym w rdzeniu na poziomie globalnym. */
 export const KLUCZ_TRYBU = 'studio_przybornik_tryb_operacji';
 
-/** Dwa równorzędne tryby wykazu operacji; wybór należy do Operatora. */
+/** Stała TrybOperacji nazywa dwa równorzędne tryby wykazu operacji przybornika: narzędzia ukryte i stały panel; wybór należy do Operatora. */
 export const TrybOperacji = {
   /** Narzędzia ukryte: pływak przy zaznaczeniu i menu pod uchwytem. */
   Ukryte: 'ukryte',
@@ -45,21 +20,21 @@ export const TrybOperacji = {
 } as const;
 export type TrybOperacji = (typeof TrybOperacji)[keyof typeof TrybOperacji];
 
-/** Jedno użycie operacji: ile razy i kiedy ostatnio. */
+/** Interfejs UzycieOperacji niesie jedno użycie operacji: identyfikator akcji, ile razy uruchomiona i kiedy ostatnio. */
 export interface UzycieOperacji {
   idAkcji: string;
   razy: number;
   ostatnio: number;
 }
 
-/** Nastawy przybornika trzymane w rdzeniu. */
+/** Interfejs NastawyPrzybornika niesie nastawy przybornika trzymane w rdzeniu: użycie operacji, czynności przypięte i tryb wykazu. */
 export interface NastawyPrzybornika {
   uzycie: readonly UzycieOperacji[];
   przypiete: readonly string[];
   tryb: TrybOperacji;
 }
 
-/** Droga do nastaw przybornika. */
+/** Interfejs UzycieZrodlo opisuje drogę do nastaw przybornika: odczyt trzech nastaw i zapis jednej nastawy w rdzeniu. */
 export interface UzycieZrodlo {
   /** Odczytuje trzy nastawy przybornika z poziomu globalnego. */
   przybornikNastawy(): Promise<Wynik<NastawyPrzybornika>>;
@@ -106,12 +81,7 @@ export function utworzUzycieZrodlo(kanal: Kanal): UzycieZrodlo {
 }
 
 /**
- * Odczytuje liczniki użycia z wartości nastawy.
- *
- * Wartość nastawy jest w kontrakcie `unknown`, więc przychodzi tu bez gwarancji
- * kształtu — rdzeń przechowuje ją jako zapis JSON i oddaje odkodowaną. Wpis
- * o kształcie niezgodnym jest **pomijany**, a nie naprawiany: licznik zgadnięty
- * przestawiłby kolejność pływaka bez wiedzy Operatora.
+ * Funkcja przybornikOdczytajUzycie odczytuje liczniki użycia operacji z wartości nastawy o nieznanym kształcie; wpis niezgodny jest pomijany, a nie naprawiany.
  */
 export function przybornikOdczytajUzycie(wartosc: unknown): UzycieOperacji[] {
   const zrodlo = przybornikRozpakuj(wartosc);
@@ -130,7 +100,7 @@ export function przybornikOdczytajUzycie(wartosc: unknown): UzycieOperacji[] {
   return wynik;
 }
 
-/** Odczytuje czynności przypięte; wpis nietekstowy schodzi. */
+/** Funkcja przybornikOdczytajPrzypiete odczytuje czynności przypięte z wartości nastawy; wpis nietekstowy schodzi z wykazu. */
 export function przybornikOdczytajPrzypiete(wartosc: unknown): string[] {
   const zrodlo = przybornikRozpakuj(wartosc);
   if (!Array.isArray(zrodlo)) return [];
@@ -138,10 +108,7 @@ export function przybornikOdczytajPrzypiete(wartosc: unknown): string[] {
 }
 
 /**
- * Odczytuje tryb wykazu.
- *
- * Brak nastawy znaczy **narzędzia ukryte** — tak rozstrzygnął Właściciel: stały
- * panel jest trybem do wyboru, nie postacią domyślną.
+ * Funkcja przybornikOdczytajTryb odczytuje tryb wykazu operacji; brak nastawy znaczy narzędzia ukryte, bo stały panel jest trybem do wyboru, nie postacią domyślną.
  */
 export function przybornikOdczytajTryb(wartosc: unknown): TrybOperacji {
   const zrodlo = przybornikRozpakuj(wartosc);
@@ -164,7 +131,7 @@ function przybornikRozpakuj(wartosc: unknown): unknown {
   }
 }
 
-/** Zbiór użycia wraz z czynnościami na nim. */
+/** Interfejs UzyciePrzybornika niesie zbiór użycia operacji wraz z czynnościami na nim: liczeniem, przypinaniem i odczytem kolejności. */
 export interface UzyciePrzybornika {
   /** Podnosi licznik operacji i oddaje nowy stan wykazu do zapisu. */
   policz(idAkcji: string): readonly UzycieOperacji[];
@@ -241,11 +208,7 @@ export function utworzUzyciePrzybornika(): UzyciePrzybornika {
 }
 
 /**
- * Kolejność czynności na wierzchu pływaka.
- *
- * Trzy warstwy w tej kolejności: przypięte Operatora (bo są wyborem jawnym),
- * najczęściej używane (liczba użyć), a przy równej liczbie — użyte ostatnio.
- * Braki dopełnia wykaz początkowy, żeby pływak nigdy nie był pusty.
+ * Funkcja przybornikNaWierzchu zwraca kolejność czynności na wierzchu pływaka: przypięte Operatora, potem najczęściej używane, a przy remisie użyte ostatnio.
  */
 export function przybornikNaWierzchu(
   uzycie: readonly UzycieOperacji[],

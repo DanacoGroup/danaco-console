@@ -3,14 +3,10 @@ import { przycisk } from '../../modele/kontrolki-formularza';
 import { przyciskBezKomendy } from '../../modele/kontrolki-formularza-braki';
 
 /**
- * Kontrolki i zdania wykazu archiwum: wiersz pozycji oraz przekład odmowy
- * rdzenia na zdanie dla Operatora.
- *
- * Składanie panelu i jego czynności mieszka w `archiwum-ekspertow.ts`; tutaj
- * wyłącznie to, z czego panel jest zbudowany.
+ * Kontrolki i zdania wykazu archiwum ekspertów: wiersz pozycji oraz przekład
+ * odmowy rdzenia na zdanie dla Operatora. Imię eksperta bierze się z nazwy
+ * własnej, a wobec jej braku z nazwy technicznej.
  */
-
-/** Imię własne eksperta, a gdy go nie ma — jego nazwa. */
 export function imie(ekspert: Agent | null): string {
   if (ekspert === null) return 'bez wybranego eksperta';
   return ekspert.displayName ?? ekspert.name;

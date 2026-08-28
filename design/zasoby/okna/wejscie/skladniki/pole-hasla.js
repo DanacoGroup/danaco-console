@@ -1,10 +1,7 @@
-/* ============================================================================
-   SKŁADNIK — POLE HASŁA Z ODSŁONIĘCIEM
-
-   Kontrolka odsłonięcia zmienia typ pola i własną etykietę, więc czytnik
-   ekranu wie, w którym stanie stoi. Dwa znaki leżą w przycisku, a widoczność
-   rozstrzyga arkusz po `aria-pressed` — przełączanie znaków skryptem
-   rozjeżdżałoby się ze stanem kontrolki.
+/* Pole hasła z odsłonięciem zmienia po naciśnięciu kontrolki zarówno typ pola, jak i własną etykietę, dzięki czemu czytnik ekranu rozpoznaje bieżący stan widoczności.
+   Dwa znaki leżą w przycisku, a widoczność rozstrzyga arkusz po
+   `aria-pressed` — przełączanie znaków skryptem rozjeżdżałoby się ze stanem
+   kontrolki.
 
    Właściwości:
      etykieta   klucz katalogu

@@ -9,19 +9,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterPrzenoszenia wypełnia port Przenoszenie: przekazuje komplet kontekstu
-// między modułami jedną komendą.
-//
-// Przenoszony jest komplet, nie samo okno. Adapter składa go z żądania,
-// z kompletu zapisanego przy oknie źródłowym i z realnego stanu tego okna
-// (przenoszenie_komplet.go), a następnie: nakłada parametry wykonania na okno
-// docelowe i zapisuje komplet przy tym oknie (przenoszenie_magazyn.go).
-// Dzięki temu okno docelowe naprawdę ma polecenie, dokumenty, projekt, agentów,
-// historię, źródła wiedzy i parametry — a nie tylko zmieniony moduł.
-//
-// Okno docelowe wskazane w żądaniu zostaje przestawione; brak wskazania zakłada
-// nowe okno, z ustawieniami okna źródłowego i modułem docelowym. Ścieżka jest
-// jedna dla wszystkich modułów — rdzeń się tu nie rozgałęzia.
+// adapterPrzenoszenia wypełnia port Przenoszenie, przekazując jedną komendą
+// komplet kontekstu między modułami: polecenie, dokumenty, projekt, agentów,
+// historię, źródła wiedzy i parametry wykonania okna źródłowego na okno
+// docelowe.
 type adapterPrzenoszenia struct {
 	nadzorca *session.Nadzorca
 	magazyn  *magazynKontekstu
@@ -52,7 +43,8 @@ func (a *adapterPrzenoszenia) ZHistoria(zrodlo zrodloHistorii) *adapterPrzenosze
 	return a
 }
 
-// Przenies wykonuje przeniesienie kompletu kontekstu.
+// Przenies wykonuje przeniesienie kompletu kontekstu z okna źródłowego na
+// okno docelowe, wskazane w żądaniu albo świeżo założone.
 func (a *adapterPrzenoszenia) Przenies(_ context.Context, z shared.ContextTransferRequest) (shared.ContextTransferResponse, error) {
 	zrodlo, err := a.nadzorca.Rejestr().Okno(z.SourceWindowId)
 	if err != nil {
@@ -67,14 +59,15 @@ func (a *adapterPrzenoszenia) Przenies(_ context.Context, z shared.ContextTransf
 	return shared.ContextTransferResponse{Window: oknoKontraktu(cel), Transferred: true}, nil
 }
 
-// komplet składa przenoszony komplet kontekstu okna źródłowego.
+// komplet składa przenoszony komplet kontekstu okna źródłowego z żądania,
+// zapisanego kompletu i realnego stanu tego okna.
 func (a *adapterPrzenoszenia) komplet(zrodlo session.Okno, z shared.ContextTransferRequest) shared.ContextBundle {
 	komplet := polaczKomplety(z.Bundle, a.magazyn.Odczytaj(zrodlo.Id))
 	return uzupelnijZrodlem(komplet, zrodlo, a.projekt(zrodlo.IdSesji), a.historiaOkna(zrodlo.Id))
 }
 
 // oknoDocelowe wskazuje okno, do którego trafia komplet: wskazane w żądaniu
-// albo świeżo założone.
+// albo świeżo założone z ustawieniami okna źródłowego.
 func (a *adapterPrzenoszenia) oknoDocelowe(zrodlo session.Okno, z shared.ContextTransferRequest,
 	komplet shared.ContextBundle) (session.Okno, error) {
 
@@ -96,7 +89,8 @@ func (a *adapterPrzenoszenia) projekt(idSesji string) string {
 	return sesja.IdProjektu
 }
 
-// historiaOkna odczytuje identyfikatory wiadomości okna źródłowego.
+// historiaOkna odczytuje identyfikatory wiadomości okna źródłowego, przenoszone
+// razem z kompletem kontekstu.
 func (a *adapterPrzenoszenia) historiaOkna(idOkna string) []string {
 	if a.historia == nil {
 		return nil

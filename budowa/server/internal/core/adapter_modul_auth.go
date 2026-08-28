@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: bramka Operatora — założenie bramki (`auth.register`)
-// i wejście przez nią (`auth.login`). Cztery pozostałe czynności rodziny leżą
-// w `adapter_modul_auth_metody.go`, postać sekretu — w `adapter_modul_auth_sekret.go`.
-//
-// Bramka jest jedna, a Operator bezimienny: żądania rodziny nie niosą ani
-// nazwy, ani adresu e-mail, a `auth.register` nie zakłada konta — ustawia sekret
-// bramki przy pierwszym uruchomieniu i od razu wpuszcza. Konto
-// z `migracja_014_katalog_kont.sql` to poświadczenie do kanału modelu i z bramką
-// nie ma nic wspólnego.
-//
-// Metoda `hello` (Windows Hello przez WebAuthn) nie jest zbudowana, a miejsce po
-// niej nie jest ciszą: `auth.login` i `auth.method.add` odmawiają jej wprost
-// i z powodem. WebAuthn wywodzi `rp_id` z pochodzenia dokumentu, a powłoka
-// podaje interfejs z `http://127.0.0.1`.
-//
-// Sekret przechodzi wyłącznie przez sejf. Bez wpiętego sejfu bramka nie
-// powstaje — hasła nie ma gdzie odłożyć, więc odmowa niesie `internal_error`.
+// Adapter bramki dostępu Operatora: zakłada jedyne konto komendą auth.register
+// i otwiera je komendą auth.login; pozostałe czynności rodziny i postać
+// sekretu leżą w sąsiednich plikach pakietu.
 package core
 
 import (
@@ -28,22 +14,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// trwanieSesjiBramki — jak długo żyje wejście bez odnowienia.
-//
-// Wartość jest własna rdzenia: kontrakt mówi „wygasanie przesuwne", ale długości
-// nie podaje, a katalog ustawień (`migracja_012_katalog_ustawien.sql`) nie ma
-// pozycji na czas życia sesji bramki. Dwanaście godzin to jedna doba robocza —
-// Operator, który rano wszedł, nie loguje się w połowie dnia, a maszyna
-// zostawiona na noc bramkę zamyka.
+// Czas życia sesji bramki bez odnowienia; kontrakt wymaga wygasania
+// przesuwnego, lecz nie ustala długości, więc wartość przyjmuje rdzeń.
 const trwanieSesjiBramki = 12 * time.Hour
 
-// trwanieSesjiBramkiDlugie obowiązuje po zaznaczeniu „nie wyloguj mnie".
-//
-// Nie znosi to wygasania: sesja bez końca byłaby wpisem, którego nic nigdy nie
-// sprząta, a Operator nie miałby jak zobaczyć, że coś jeszcze trwa.
-// Rok to długość, po której zapomniane urządzenie przestaje wchodzić samo,
-// a Operator pracujący codziennie nie zobaczy logowania ani razu — bo wygasanie
-// jest przesuwne i każde wejście je odnawia.
+// Czas życia sesji bramki po zaznaczeniu opcji trwałego logowania; wygasanie
+// nadal obowiązuje, tylko z dłuższym oknem odnawianym każdym wejściem.
 const trwanieSesjiBramkiDlugie = 365 * 24 * time.Hour
 
 // przedrostekBytuSejfu znakuje wpisy bramki w sejfie poświadczeń, żeby nie
@@ -59,44 +35,35 @@ type adapterUwierzytelnienia struct {
 	repozytorium dane.RepozytoriumUwierzytelnienia
 	sejf         SejfPoswiadczen
 
-	// konto trzyma tożsamość właściciela — login, adres e-mail i stan
-	// potwierdzenia — oraz jednorazowe drogi potwierdzenia tożsamości. Bywa
-	// zerowe, gdy montaż go nie wpiął; rejestracja odmawia wtedy wprost, bo
-	// konta nie ma gdzie zapisać.
+	// konto trzyma tożsamość właściciela i drogi potwierdzenia; zerowe konto
+	// odmawia rejestracji wprost.
 	konto dane.RepozytoriumKontaWlasciciela
 
-	// nadajnik jest kontem nadawczym PLATFORMY, nie skrzynką Operatora. Pisze
-	// dwa listy: potwierdzenie adresu przy rejestracji i drogę odzyskania konta.
-	// To jest konto podane przy starcie; nastawy Operatora nakłada na nie
-	// `kontoNadawcze` (nastawy_nadajnika.go).
+	// nadajnik to konto nadawcze platformy podane przy starcie; nastawy
+	// nakładają na nie kontoNadawcze.
 	nadajnik nadajnik.Nastawy
 
-	// nastawy daje drogę odczytu konta nadawczego zapisanego w oknie
-	// Konfiguracji. Bywa zerowe — wtedy obowiązuje samo konto ze startu.
+	// nastawy daje odczyt konta nadawczego z okna Konfiguracji; zerowe —
+	// obowiązuje samo konto startowe.
 	nastawy NastawyPlatformy
 
-	// zamekZmiany szereguje czynności, które sprawdzają stan bramki i zaraz
-	// potem go zmieniają: założenie bramki, założenie metody wejścia i zmianę
-	// hasła. Bez niego sprawdzenie i zapis są dwiema czynnościami, a między nie
-	// wchodzi drugie żądanie z tego samego gniazda — dwie równoległe zmiany hasła
-	// odpowiadają wtedy obie `changed: true`, a bramkę otwiera tylko jedno
-	// z dwóch nowych haseł, bo drugi zapis do sejfu nadpisuje pierwszy. Sejf jest
-	// plikiem z wpisami i transakcji nie zna, więc niepodzielność musi stanąć
-	// tutaj. Zamek trzyma się całej czynności, nie samego zapisu.
+	// zamekZmiany szereguje sprawdzenie i zapis bramki, żeby równoległe zmiany
+	// hasła się nie nadpisały.
 	zamekZmiany sync.Mutex
 
-	// dlawik spowalnia zgadywanie sekretu bramki (adapter_modul_auth_dlawik.go).
-	// Nie odmawia ani jednej próby — nakłada na nią zwłokę rosnącą po
-	// niepowodzeniach i zerowaną pierwszym wejściem udanym.
+	// dlawik spowalnia zgadywanie sekretu zwłoką rosnącą po niepowodzeniach
+	// i zerowaną udanym wejściem.
 	dlawik *dlawikWejscia
 }
 
-// nowyAdapterUwierzytelnienia składa adapter bramki nad repozytorium.
+// nowyAdapterUwierzytelnienia składa adapter bramki nad repozytorium
+// uwierzytelnienia i zakłada dławik ograniczający tempo prób wejścia.
 func nowyAdapterUwierzytelnienia(repozytorium dane.RepozytoriumUwierzytelnienia) *adapterUwierzytelnienia {
 	return &adapterUwierzytelnienia{repozytorium: repozytorium, dlawik: nowyDlawikWejscia()}
 }
 
-// ZSejfem wpina magazyn sekretów. Bez niego bramki założyć się nie da.
+// ZSejfem wpina magazyn sekretów do adaptera; bez wpiętego sejfu żadna
+// czynność dotykająca hasła bramki się nie wykona.
 func (a *adapterUwierzytelnienia) ZSejfem(sejf SejfPoswiadczen) *adapterUwierzytelnienia {
 	a.sejf = sejf
 	return a
@@ -133,31 +100,9 @@ func (a *adapterUwierzytelnienia) kontoNadawcze(ctx context.Context) nadajnik.Na
 
 // ── auth.register ────────────────────────────────────────────────────────────
 
-// ZalozBramke zakłada jedyne konto właściciela: login, adres e-mail
-// uwierzytelniający i hasło.
-//
-// Poczty NIE wymaga. Na świeżej instalacji konta nadawczego platformy nie ma
-// jeszcze czym wskazać, a ustawia się je w oknie Konfiguracji — czyli za bramką.
-// Rejestracja idzie więc dwiema drogami: z pocztą nadaje list z drogą
-// potwierdzenia i zostawia konto niepotwierdzone, bez poczty zakłada konto
-// i zapamiętuje w sejfie, że adresu nikt nie potwierdził
-// (`adapter_modul_auth_pierwsze_uruchomienie.go`). W obu razach hasło jest
-// jedynym, co otwiera bramkę.
-//
-// Sesji NIE zakłada. Konto powstaje w stanie niepotwierdzonym i pozostaje w nim
-// do chwili potwierdzenia adresu komendą `auth.verify` — dopiero potwierdzenie
-// wydaje urządzeniu token dostępu. Rejestracja, która wpuszczałaby od razu,
-// czyniłaby weryfikację adresu ozdobą: konto działałoby bez niej, a adres
-// zostawał niesprawdzony aż do dnia, w którym trzeba nim odzyskać dostęp.
-//
-// Wykonalna tylko raz: istniejąca kotwica daje `conflict`, nie ciche
-// `registered: false`. Powtórzone żądanie jest próbą podmiany hasła bez
-// znajomości starego, a od tego jest odzyskanie konta.
-//
-// List wysyła się PRZED oddaniem odpowiedzi i jego niepowodzenie jest odmową
-// całej czynności. Konto założone bez wysłanego listu byłoby kontem, do którego
-// nikt nie ma jak wejść — a Operator zobaczyłby „zarejestrowano" i czekał na
-// wiadomość, która nigdy nie przyszła.
+// ZalozBramke zakłada jedyne konto właściciela: login, adres e-mail i hasło.
+// Bez skonfigurowanej poczty pomija wysyłkę listu potwierdzającego i zostawia
+// adres niepotwierdzony; z pocztą wysyła list i czeka na auth.verify.
 func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	z shared.AuthRegisterRequest) (shared.AuthRegisterResponse, error) {
 
@@ -175,19 +120,12 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		return shared.AuthRegisterResponse{}, bladBramki(shared.ErrorCodeValidationFailed,
 			"rejestracja bez hasła")
 	}
-	// Konto nadawcze NIE jest warunkiem postawienia bramki — jest warunkiem
-	// pisania listów. Świeża instalka poczty nie ma (`mailer.host`
-	// i `mailer.address` bez wartości domyślnej, powłoka nie podaje żadnego
-	// `DANACO_NADAWCA_*`), a jedyna droga do okna Konfiguracji prowadzi przez
-	// bramkę — więc wymóg poczty tutaj zamykał produkt na pierwszym ekranie:
-	// „Załóż konto" oddawało `internal_error`, a odmowa radziła naprawę
-	// nieosiągalną. Poczta zostaje wymogiem tam, gdzie list jest treścią
-	// czynności: przy potwierdzaniu adresu i przy odzyskiwaniu hasła.
+	// Konto nadawcze nie jest warunkiem założenia bramki, tylko warunkiem
+	// wysyłki listu.
 	pocztaJest := a.kontoNadawcze(ctx).Brak() == nil
 
-	// Sprawdzenie kotwicy i jej założenie są tu jedną czynnością — inaczej dwa
-	// równoległe `auth.register` obchodzą odmowę „konto już jest" i drugie
-	// rozbija się dopiero o warunek bazy, oddając surowy błąd SQLite.
+	// Sprawdzenie kotwicy i jej założenie są jedną czynnością — inaczej
+	// rejestracja ominie odmowę.
 	a.zamekZmiany.Lock()
 	defer a.zamekZmiany.Unlock()
 	if _, err := a.kotwica(ctx); err == nil {
@@ -219,16 +157,8 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		a.cofnijRejestracje(ctx, "")
 		return shared.AuthRegisterResponse{}, err
 	}
-	// Bez poczty rejestracja KOŃCZY SIĘ TUTAJ i kończy się prawdą: konto jest,
-	// hasło otwiera bramkę, a adres pozostaje niepotwierdzony, bo listu nie było
-	// czym nadać. Znacznik zapamiętuje to na trwałe — inaczej ustawienie poczty
-	// w oknie Konfiguracji zamykałoby bramkę przy następnym wejściu, przed
-	// listem, którego żadna komenda nie wysyła drugi raz.
-	//
-	// `pendingVerification` idzie fałszem, bo kontrakt wiąże prawdę z faktem
-	// nadania listu („Prawda oznacza, ze list z droga potwierdzenia zostal
-	// wyslany"), a tu żaden list nie wyszedł. Pola na trzeci stan — „konto jest,
-	// adres niepotwierdzony, listu nie wysłano" — kontrakt nie ma.
+	// Bez poczty rejestracja kończy się tutaj: konto jest, hasło otwiera
+	// bramkę, adres niepotwierdzony.
 	if !pocztaJest {
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod)
@@ -236,18 +166,8 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 		}
 		return shared.AuthRegisterResponse{Registered: true, PendingVerification: false}, nil
 	}
-	// Nadanie idzie ostatnie, a jego niepowodzenie NIE COFA rejestracji — schodzi
-	// na drogę bez poczty.
-	//
-	// Sprawdzenie nastaw wyżej mówi tylko tyle, że konto nadawcze jest wskazane —
-	// nie, że serwer odpowiada. Cofnięcie rejestracji było tu wcześniej ratunkiem
-	// przed platformą NIE DO OTWARCIA (rejestracja wykonuje się raz, a wejść nie
-	// było czym, bo bramkę zamykał brak potwierdzenia). Odkąd konto bez
-	// potwierdzonego adresu wchodzi hasłem, ratunek jest zbędny, a sam był
-	// pułapką: literówka w `DANACO_NADAWCA_HOST` po stronie powłoki zamykała
-	// pierwsze uruchomienie równie szczelnie jak brak poczty w ogóle. Zostaje więc
-	// konto, hasło otwiera bramkę, a adres czeka na potwierdzenie — dokładnie ten
-	// sam stan, co przy instalce bez poczty.
+	// Niepowodzenie wysyłki nie cofa rejestracji — czynność schodzi na drogę
+	// bez poczty.
 	if err := a.wyslijDrogePotwierdzenia(ctx, dane.CelWeryfikacja, email, login); err != nil {
 		if err := a.zapiszZnacznikBezPoczty(ctx, email); err != nil {
 			a.cofnijRejestracje(ctx, kotwica.Kod)
@@ -258,14 +178,9 @@ func (a *adapterUwierzytelnienia) ZalozBramke(ctx context.Context,
 	return shared.AuthRegisterResponse{Registered: true, PendingVerification: true}, nil
 }
 
-// cofnijRejestracje zdejmuje to, co rejestracja zdążyła zapisać.
-//
-// Niepowodzenie samego cofnięcia nie ma komu wrócić — czynność już odmawia
-// z powodu pierwotnego, a druga odmowa przykryłaby ten powód. Idzie więc do
-// dziennika, jeżeli jest gdzie, i nie zmienia odpowiedzi.
-//
-// Drogi potwierdzenia nie kasujemy: leży jako sam skrót, wygasa po godzinie,
-// a bez konta nie ma czego otworzyć.
+// cofnijRejestracje zdejmuje to, co rejestracja zdążyła zapisać: metodę,
+// poświadczenie w sejfie, konto i znacznik bramki bez poczty; niepowodzenie
+// cofnięcia trafia do dziennika, nie do odpowiedzi.
 func (a *adapterUwierzytelnienia) cofnijRejestracje(ctx context.Context, kodKotwicy string) {
 	if kodKotwicy != "" {
 		_, _ = a.repozytorium.UsunMetode(ctx, kodKotwicy)
@@ -274,21 +189,16 @@ func (a *adapterUwierzytelnienia) cofnijRejestracje(ctx context.Context, kodKotw
 	if a.konto != nil {
 		_ = a.konto.UsunKonto(ctx)
 	}
-	// Znacznik bramki bez poczty odchodzi razem z kontem: został po rejestracji,
-	// której już nie ma, a przeżyłby ją w sejfie i mówił o koncie nieistniejącym.
+	// Znacznik bramki bez poczty odchodzi z kontem, żeby nie przeżył w sejfie
+	// usuniętej rejestracji.
 	a.zdejmijZnacznikBezPoczty(ctx)
 }
 
 // ── auth.login ───────────────────────────────────────────────────────────────
 
-// WejdzPrzezBramke otwiera bramkę hasłem albo PIN-em i zakłada sesję.
-//
-// Konto niepotwierdzone bramki nie otwiera. Bez tego sprawdzenia weryfikacja
-// adresu byłaby ozdobą: rejestracja zakłada kotwicę, więc Operator wchodziłby
-// hasłem zaraz po niej, nie zaglądając do skrzynki — a literówka w adresie
-// wyszłaby na jaw dopiero w dniu, w którym trzeba nim odzyskać konto, czyli za
-// późno. Adres jest jedyną drogą odzyskania i musi być sprawdzony ZANIM stanie
-// się jedyną drogą.
+// WejdzPrzezBramke otwiera bramkę hasłem albo PIN-em i zakłada sesję; konto
+// niepotwierdzone bramki nie otwiera, bo adres jest jedyną drogą odzyskania
+// dostępu.
 func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	z shared.AuthLoginRequest) (shared.AuthLoginResponse, error) {
 
@@ -298,10 +208,8 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	if err := a.kontoPotwierdzone(ctx); err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
-	// Zwłoka idzie na wejściu czynności, przed sprawdzeniem sekretu. Nałożona
-	// dopiero po rozpoznaniu sekretu jako błędnego, dawałaby wołającemu czas
-	// odpowiedzi jako podpowiedź „ten sekret był dobry". Tu czeka każda próba
-	// jednakowo i każda przechodzi dalej, bo dławik nie odmawia.
+	// Zwłoka nakłada się przed sprawdzeniem sekretu, żeby czas odpowiedzi nie
+	// zdradzał wyniku.
 	droga := drogaWejscia(string(z.Method), wartoscTekstu(z.DeviceId))
 	a.dlawik.Zaczekaj(ctx, droga)
 
@@ -318,35 +226,22 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 		return shared.AuthLoginResponse{}, err
 	}
 	if !zgadza {
-		// Próba nieudana podnosi zwłokę próby następnej; ta odpowiada od razu,
-		// bo czekanie ma spowalniać zgadywanie, a nie przetrzymywać wołającego po
-		// tym, jak wynik jest już znany.
+		// Nieudana próba podnosi zwłokę następnej; ta odpowiada od razu, bo
+		// wynik już jest znany.
 		a.dlawik.Niepowodzenie(droga)
-		// Sekret niezgodny to nieudane wejście, nie wadliwe żądanie, więc kod jest
-		// `not_authenticated`. `validation_failed` zostaje przy brakach formularza
-		// (wejście bez sekretu, PIN bez urządzenia) — dzięki temu sonda stanu
-		// bramki po stronie klienta, która wysyła żądanie bez sekretu, dalej czyta
-		// `validation_failed` jako „bramka ustawiona", a Operator dostaje odmowę
-		// odróżnialną od literówki w kształcie żądania.
+		// Sekret niezgodny to nieudane wejście, nie wadliwe żądanie, więc kod
+		// jest not_authenticated.
 		return shared.AuthLoginResponse{}, bladBramki(shared.ErrorCodeNotAuthenticated,
 			"sekret metody "+string(z.Method)+" nie zgadza się z zapisem bramki")
 	}
-	// Wejście udane zeruje licznik — następne pomyłki liczą się od nowa, a
-	// Operator pracujący normalnie nie czeka nigdy.
+	// Wejście udane zeruje licznik zwłoki, więc kolejne pomyłki liczą się
+	// od nowa.
 	a.dlawik.Wyzeruj(droga)
 	if err := a.repozytorium.OdnotujUzycie(ctx, metoda.Kod, time.Now().UnixMilli()); err != nil {
 		return shared.AuthLoginResponse{}, err
 	}
-	// Urządzenie sesji bierze się z ŻĄDANIA, a wiersz metody uzupełnia je tylko
-	// wtedy, gdy żądanie milczy.
-	//
-	// Kotwica hasła urządzenia nie ma i mieć nie może — hasło nie jest materiałem
-	// jednej maszyny. Branie urządzenia wyłącznie z wiersza metody porzucało więc
-	// `deviceId` przy każdym wejściu hasłem, a maszyna nie pojawiała się w wykazie
-	// `device.list`. Operator nie widział, co ma dostęp do jego konta, a
-	// `device.revoke` z identyfikatorem tej maszyny wracał `revoked: false`
-	// i zostawiał token czynny — w oknie, które istnieje po to, żeby dostęp
-	// odbierać.
+	// Urządzenie sesji bierze się z żądania; wiersz metody uzupełnia je tylko,
+	// gdy żądanie go nie poda.
 	urzadzenie := niepustyTekst(z.DeviceId)
 	if urzadzenie == nil {
 		urzadzenie = metoda.UrzadzenieKod
@@ -362,7 +257,9 @@ func (a *adapterUwierzytelnienia) WejdzPrzezBramke(ctx context.Context,
 	return shared.AuthLoginResponse{Session: sesja, Methods: metody}, nil
 }
 
-// metodaWejscia odnajduje metodę, którą żądanie chce otworzyć bramkę.
+// metodaWejscia odnajduje metodę wejścia wskazaną przez żądanie — hasło, PIN
+// urządzenia albo odrzuconą metodę hello — i zwraca błąd kontraktu, gdy
+// metoda nie istnieje.
 func (a *adapterUwierzytelnienia) metodaWejscia(ctx context.Context,
 	z shared.AuthLoginRequest) (dane.MetodaUwierzytelnienia, error) {
 
@@ -440,10 +337,9 @@ func (a *adapterUwierzytelnienia) kotwica(ctx context.Context) (dane.MetodaUwier
 	return a.repozytorium.Kotwica(ctx)
 }
 
-// zalozMetode kładzie sekret w sejfie i dopiero potem wstawia wiersz metody.
-// Kolejność jest z zamysłu: wiersz bez odwołania byłby metodą, którą nie da się
-// wejść. Gdy wstawienie wiersza nie wyjdzie, wpis sejfu jest sprzątany —
-// inaczej zostałby sekret bez właściciela.
+// zalozMetode kładzie sekret w sejfie i dopiero potem wstawia wiersz metody,
+// żeby wiersz nie wskazywał na nieistniejący sekret; nieudane wstawienie
+// usuwa zapisany sekret.
 func (a *adapterUwierzytelnienia) zalozMetode(ctx context.Context,
 	metoda dane.MetodaUwierzytelnienia, sekret string) (dane.MetodaUwierzytelnienia, error) {
 
@@ -466,15 +362,9 @@ func (a *adapterUwierzytelnienia) zalozMetode(ctx context.Context,
 	return zapisana, nil
 }
 
-// kolizjaMetody przekłada odmowę bazy na odmowę kontraktu.
-//
-// Sprawdzenia w `wolnoZalozyc` i `ZalozBramke` biegną przed wstawieniem wiersza
-// i pod zamkiem, więc do naruszenia indeksu dochodzi już tylko wtedy, gdy stan
-// zmienił ktoś spoza tego procesu. Wołający dostaje wtedy to samo zdanie, co
-// przy odmowie sprawdzonej wcześniej: `conflict` i powód po ludzku. Przepuszczony
-// błąd SQLite mówiłby co innego — `internal_error` z `retryable: true`, czyli
-// „spróbuj jeszcze raz" tam, gdzie ponowienie nie wyjdzie, a w komunikacie szłyby
-// nazwy tabel i kolumn bazy.
+// kolizjaMetody przekłada odmowę bazy na odmowę kontraktu: naruszenie indeksu
+// unikalności zwraca conflict z powodem po ludzku zamiast surowego błędu
+// SQLite z nazwami tabel i kolumn.
 func kolizjaMetody(metoda dane.MetodaUwierzytelnienia, err error) error {
 	if !errors.Is(err, dane.ErrKolizjaWiersza) {
 		return err
@@ -494,9 +384,8 @@ func kolizjaMetody(metoda dane.MetodaUwierzytelnienia, err error) error {
 }
 
 // sekretZgadzaSieZWpisem porównuje przedstawiony sekret z zapisem w sejfie.
-// Brak wpisu w sejfie nie jest odmową wejścia, tylko awarią rdzenia: wiersz
-// metody istnieje, więc sekret gdzieś być powinien. Odpowiedź „nie zgadza się"
-// przemilczałaby zgubiony sejf.
+// Brak wpisu w sejfie nie jest odmową wejścia, lecz awarią rdzenia, bo wiersz
+// metody istnieje, więc sekret powinien tam być.
 func (a *adapterUwierzytelnienia) sekretZgadzaSieZWpisem(ctx context.Context,
 	metoda dane.MetodaUwierzytelnienia, sekret string) (bool, error) {
 
@@ -530,9 +419,8 @@ func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
 		UrzadzenieKod: urzadzenie,
 		Wygasa:        teraz.Add(trwanie).UnixMilli(),
 		Utworzono:     teraz.UnixMilli(),
-		// Trwanie idzie do wiersza, bo przełącznik „nie wyloguj mnie" ma
-		// obowiązywać także po odnowieniu, a sama chwila wygaśnięcia go nie
-		// niesie (`migracja_112_trwanie_sesji_bramki.sql`).
+		// Trwanie idzie do wiersza, żeby przełącznik „nie wyloguj mnie”
+		// obowiązywał też po odnowieniu sesji.
 		Trwanie: trwanie.Milliseconds(),
 	})
 	if err != nil {
@@ -541,11 +429,8 @@ func (a *adapterUwierzytelnienia) zalozSesje(ctx context.Context,
 	return sesjaBramkiKontraktu(token, zapisana), nil
 }
 
-// trwanieWejscia rozstrzyga długość sesji z przełącznika „nie wyloguj mnie".
-//
-// Przełącznik znosi powtarzanie logowania, a nie zakłada bramy: jedynym
-// miejscem kontroli jest okno rejestracji i logowania, a ten przełącznik służy
-// temu, żeby Operator widywał je jak najrzadziej.
+// trwanieWejscia rozstrzyga długość sesji z przełącznika „nie wyloguj mnie”,
+// który tylko rzadziej pokazuje okno logowania i nie znosi samego wygasania.
 func trwanieWejscia(niewylogowuj bool) time.Duration {
 	if niewylogowuj {
 		return trwanieSesjiBramkiDlugie

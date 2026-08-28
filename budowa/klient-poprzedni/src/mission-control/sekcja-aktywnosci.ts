@@ -4,14 +4,10 @@ import type { AktywnoscAI } from './model-danych';
 import { utworzSekcje } from './naglowek-sekcji';
 
 /**
- * Sekcja aktywności AI — cztery kafle otwierające pulpit, odpowiadające na
- * pytanie, co biegnie w tle.
- *
- * Dwie miary pochodzą z telemetrii rdzenia; dwie nie mają źródła w kontrakcie
- * i kafel mówi to wprost zamiast pokazać wartość zastępczą. Nazwy miar są
- * dosłowne, żeby nie mylić wysycenia kanałów z obciążeniem maszyny.
- *
- * Pas decyzji stoi pod kaflami i dokłada go `mission-control.ts`.
+ * Sekcja aktywności AI — cztery kafle otwierające pulpit i odpowiadające na
+ * pytanie, co biegnie w tle. Dwie miary pochodzą z telemetrii rdzenia, dwie
+ * nie mają źródła w kontrakcie i kafel mówi to wprost, zamiast pokazywać
+ * wartość zastępczą.
  */
 export interface SekcjaAktywnosci {
   element: HTMLElement;
@@ -21,7 +17,11 @@ export interface SekcjaAktywnosci {
   odswiez(aktywnosc: AktywnoscAI): void;
 }
 
-/** Buduje sekcję aktywności wraz z miejscem na pas decyzji. */
+/**
+ * Buduje sekcję aktywności wraz z miejscem montażu pasa decyzji pod rzędem
+ * kafli. Zwracany zestaw niesie element sekcji oraz odświeżanie podmieniające
+ * same liczby, bez przebudowy nagłówka.
+ */
 export function utworzSekcjeAktywnosci(aktywnosc: AktywnoscAI): SekcjaAktywnosci {
   const { element, cialo } = utworzSekcje(
     'mc-sekcja--aktywnosc',

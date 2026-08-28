@@ -8,7 +8,7 @@
     "kontrakt": "node ../shared/gen/generate.mjs",
     "budowanie": "vite build",
     "typy": "tsc --noEmit",
-    "testy": "node src/polaczenie/warstwa-polaczenia.test.ts && node src/protokol/warstwa-protokolu.test.ts && node src/wejscie/wejscie.test.ts && node src/wejscie/katalog-tresci.test.ts",
+    "testy": "node src/polaczenie/warstwa-polaczenia.test.ts && node src/protokol/warstwa-protokolu.test.ts && node src/wejscie/wejscie.test.ts && node src/wejscie/katalog-tresci.test.ts && node src/rama/przekazanie.test.ts && node src/rama/katalog-tresci.test.ts",
     "testy-z-rdzeniem": "node src/protokol/rozmowa-z-rdzeniem.test.ts"
   }
 }

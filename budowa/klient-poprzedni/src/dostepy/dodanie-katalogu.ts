@@ -5,20 +5,9 @@ import { utworzKomunikatCzynnosci } from './komunikat-czynnosci';
 import type { StanDostepow } from './stan-dostepow';
 
 /**
- * Dodanie punktu dostępu do katalogu na „Mój komputer".
- *
- * Droga pierwsza i właściwa: natywne okno wyboru powłoki. Ścieżka wraca
- * istniejąca i rozwinięta, więc punkt zakładany na niej nie wskazuje miejsca,
- * którego nie ma.
- *
- * Droga druga: pole ścieżki wpisanej z ręki. Nie jest atrapą ani zapasem na
- * gorsze czasy — interfejs bywa otwarty w przeglądarce, bez powłoki, a wtedy
- * natywnego okna po prostu nie ma. Pole zostaje czynne zawsze, także
- * w powłoce: Operator, który zna ścieżkę, nie musi jej odklikiwać.
- *
- * Przycisk natywnego wyboru nie jest wygaszany poza powłoką. Naciśnięcie daje
- * odpowiedź: zdanie o tym, że okno systemowe należy do powłoki, i przeniesienie
- * uwagi do pola ścieżki.
+ * Dodanie punktu dostępu do katalogu na „Mój komputer" prowadzi dwiema drogami:
+ * natywnym oknem wyboru powłoki oraz polem ścieżki wpisywanej z ręki, czynnym
+ * również wtedy, gdy interfejs stoi w przeglądarce i powłoki natywnej nie ma.
  */
 export interface DodanieKatalogu {
   /** Element osadzany pod wykazem punktów. */
@@ -77,16 +66,7 @@ export function utworzDodanieKatalogu(stan: StanDostepow): DodanieKatalogu {
     await zaloz(sciezka);
   }
 
-  /**
-   * Założenie punktu na wskazanej ścieżce.
-   *
-   * Katalog dodany tutaj leży na maszynie bieżącej — na tej, na której stoi
-   * powłoka. Schemat wymaga wskazania urządzenia
-   * (`migracja_013_punkty_dostepu.sql`), a jego identyfikator poda komenda
-   * `device.list`, gdy trafi do kontraktu. Do tego czasu drugi argument
-   * `zalozKatalogLokalny` zostaje pusty i rdzeń odmawia z powodem — bez atrapy
-   * identyfikatora.
-   */
+  /** Założenie punktu na wskazanej ścieżce; wskazanie urządzenia czeka na komendę `device.list`. */
   async function zaloz(sciezka: string): Promise<void> {
     if (sciezka === '') {
       komunikat.pokaz('Podaj ścieżkę katalogu albo wskaż go oknem powłoki.', false);
@@ -102,8 +82,7 @@ export function utworzDodanieKatalogu(stan: StanDostepow): DodanieKatalogu {
     if (wynik.udany) pole.value = '';
   }
 
-  // Zasobnik powłoki ma własną pozycję wyboru katalogu i rozgłasza wynik
-  // zdarzeniem. Bez tego nasłuchu wybór z zasobnika nie miałby konsumenta.
+  // Zasobnik powłoki rozgłasza wybór katalogu zdarzeniem; bez nasłuchu wybór nie ma konsumenta.
   const odsubskrybuj = naWskazanieZZasobnika((sciezka) => {
     pole.value = sciezka;
     void zaloz(sciezka);

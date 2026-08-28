@@ -1,9 +1,6 @@
 // Odpowiedzialność pliku: przekład między wierszem biblioteki ekspertów
 // a strukturami kontraktu oraz sprawdziany kształtu żądań obszaru `agent.*`.
-//
-// Identyfikatorem kontraktu jest kod wiersza: pole `Agent.id` niesie
-// `agent.kod`, nie numer wiersza. Numer żyje wyłącznie wewnątrz bazy i do
-// klienta nie wychodzi, bo przy przeniesieniu bazy przestałby się zgadzać.
+// Identyfikatorem kontraktu jest kod wiersza, nie numer wewnętrzny bazy.
 package core
 
 import (
@@ -15,10 +12,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekEksperta znakuje kod eksperta nadany przez rdzeń.
+// przedrostekEksperta znakuje kod eksperta nadany przez rdzeń przy założeniu
+// nowego wiersza biblioteki.
 const przedrostekEksperta = "ag-"
 
-// przedrostekKonektora znakuje kod konektora nadany przez rdzeń.
+// przedrostekKonektora znakuje kod konektora nadany przez rdzeń przy założeniu
+// nowego wiersza konektora.
 const przedrostekKonektora = "ak-"
 
 // transportyKanalu wylicza drogi wywołania dostawcy z kontraktu. Wartość spoza
@@ -31,19 +30,17 @@ var transportyKanalu = map[shared.ProviderTransport]struct{}{
 	shared.ProviderTransportLocal: {},
 }
 
-// rodzajeKonektora wylicza rodzaje konektora z kontraktu.
+// rodzajeKonektora wylicza rodzaje konektora z kontraktu, dopuszczalne przy
+// sprawdzianie kształtu żądania.
 var rodzajeKonektora = map[shared.AgentConnectorKind]struct{}{
 	shared.AgentConnectorKindMcp:    {},
 	shared.AgentConnectorKindPlugin: {},
 	shared.AgentConnectorKindApi:    {},
 }
 
-// poziomyPamieci wylicza cztery poziomy pamięci z kontraktu. Wartości spoza
-// zbioru są pomyłką klienta, nie nowym poziomem.
-//
-// „Pamięć wyłączona" nie ma tu wpisu: wyłączenie jest zbiorem pustym, a nie
-// piątą wartością. Piąta wartość pozwoliłaby przysłać `["session","disabled"]`,
-// czyli żądanie sprzeczne; zbiór pusty tego wyrazić nie umie.
+// poziomyPamieci wylicza cztery poziomy pamięci z kontraktu. Wyłączenie pamięci
+// jest zbiorem pustym, nie piątą wartością — inaczej dałoby się zgłosić żądanie
+// sprzeczne wobec pustego zbioru.
 var poziomyPamieci = map[shared.MemoryLevel]struct{}{
 	shared.MemoryLevelGlobal:      {},
 	shared.MemoryLevelProject:     {},
@@ -52,9 +49,7 @@ var poziomyPamieci = map[shared.MemoryLevel]struct{}{
 }
 
 // poziomyPamieciWyjsciowe to komplet czterech poziomów — wartość, z którą staje
-// ekspert świeżo założony. Stanem wyjściowym platformy jest pełny dostęp
-// operacyjny, więc pamięci nie trzeba włączać; wyłączenie jest osobną,
-// świadomą czynnością.
+// ekspert świeżo założony, bo stanem wyjściowym platformy jest pełny dostęp.
 var poziomyPamieciWyjsciowe = []string{
 	shared.MemoryLevelGlobal,
 	shared.MemoryLevelProject,
@@ -62,24 +57,26 @@ var poziomyPamieciWyjsciowe = []string{
 	shared.MemoryLevelEnvironment,
 }
 
-// widocznosciEksperta wylicza zasięgi widoczności z kontraktu.
+// widocznosciEksperta wylicza zasięgi widoczności z kontraktu, dopuszczalne
+// przy sprawdzianie kształtu żądania.
 var widocznosciEksperta = map[shared.AgentVisibility]struct{}{
 	shared.AgentVisibilityGlobal:  {},
 	shared.AgentVisibilityProject: {},
 }
 
-// grupyUprawnien wylicza cztery grupy zakresu z kontraktu.
+// grupyUprawnien wylicza cztery grupy zakresu uprawnień z kontraktu, poza
+// grupą modułów opisaną osobno.
 var grupyUprawnien = map[shared.AgentPermissionGroup]struct{}{
 	shared.AgentPermissionGroupFiles:        {},
 	shared.AgentPermissionGroupNetwork:      {},
 	shared.AgentPermissionGroupProcesses:    {},
 	shared.AgentPermissionGroupIntegrations: {},
-	// Piąta grupa zakresu: moduły i zasoby platformy. Zakres szczegółowy wpisu
-	// niesie kod modułu, więc wykaz modułów nie powtarza się w wyliczeniu.
+	// Piąta grupa zakresu: moduły i zasoby platformy, poza tym wyliczeniem.
 	shared.AgentPermissionGroupModules: {},
 }
 
-// ekspertKontraktu przekłada wiersz biblioteki na strukturę Agent.
+// ekspertKontraktu przekłada wiersz biblioteki ekspertów na strukturę Agent
+// kontraktu, wraz z polami zawsze obecnymi.
 func ekspertKontraktu(a dane.Agent) shared.Agent {
 	ekspert := shared.Agent{
 		Id:           a.Kod,
@@ -93,23 +90,17 @@ func ekspertKontraktu(a dane.Agent) shared.Agent {
 		Permissions:  uprawnieniaKontraktu(a.Uprawnienia),
 		DisplayName:  wskaznikTekstu(a.ImieWlasne),
 		Favicon:      wskaznikTekstu(a.Favikon),
-		// Tryb oddawany zawsze, także gdy jest domyślny: okno ma pokazać, że
-		// ekspert dopisuje się do promptu globalnego, a pominięcie pola
-		// zostawiłoby domysł zamiast odpowiedzi.
+		// Tryb oddawany zawsze, także gdy jest domyślny, by nie zostawiać domysłu.
 		Mode: trybKontraktu(a.TrybNakladki),
 		// Poziomy pamięci oddawane zawsze, także puste — pusty wycinek jest
-		// odpowiedzią „pamięć wyłączona", a nie brakiem odpowiedzi.
-		// Stąd `make` zamiast nil: kontrakt oznacza pole jako wymagane, więc
-		// `null` w kopercie byłby trzecim stanem obok „są poziomy" i „nie ma".
+		// odpowiedzią pamięć wyłączona.
 		MemoryLevels: poziomyKontraktu(a.PoziomyPamieci),
 		Visibility:   widocznoscKontraktu(a.Widocznosc),
 		Enabled:      a.Aktywny,
-		// Moduły zastosowania oddawane zawsze, także puste: LISTA PUSTA ZNACZY
-		// BRAK OGRANICZENIA i jest to stan wyjściowy. Ta sama zasada co przy
-		// poziomach pamięci — pominięcie zostawiłoby domysł zamiast odpowiedzi.
+		// Moduły zastosowania oddawane zawsze, także puste: lista pusta znaczy
+		// brak ograniczenia.
 		ModuleCodes: kodyModulowKontraktu(a.ModulyZastosowania),
-		// Granica podagentów oddawana zawsze: zero znaczy Subagent Network
-		// wyłączony i jest to jedyny zapis wyłączenia.
+		// Granica podagentów oddawana zawsze: zero znaczy Subagent Network wyłączony.
 		SubagentLimit: a.LimitPodagentow,
 	}
 	wersja := a.Wersja
@@ -123,16 +114,16 @@ func ekspertKontraktu(a dane.Agent) shared.Agent {
 	return ekspert
 }
 
-// kodyModulowKontraktu przekłada moduły zastosowania. Wycinek pusty wraca jako
-// tablica pusta, nie jako nil — patrz `ekspertKontraktu`.
+// kodyModulowKontraktu przekłada moduły zastosowania na wycinek kodów.
+// Wycinek pusty wraca jako tablica pusta, nie jako nil, tak jak inne pola wynikowe.
 func kodyModulowKontraktu(kody []string) []string {
 	wynik := make([]string, 0, len(kody))
 	wynik = append(wynik, kody...)
 	return wynik
 }
 
-// poziomyKontraktu przekłada poziomy pamięci z bazy. Wycinek pusty wraca jako
-// tablica pusta, nie jako nil — patrz `ekspertKontraktu`.
+// poziomyKontraktu przekłada poziomy pamięci z bazy na wycinek kontraktu.
+// Wycinek pusty wraca jako tablica pusta, nie jako nil, tak jak inne pola wynikowe.
 func poziomyKontraktu(poziomy []string) []shared.MemoryLevel {
 	wynik := make([]shared.MemoryLevel, 0, len(poziomy))
 	for _, poziom := range poziomy {
@@ -142,9 +133,7 @@ func poziomyKontraktu(poziomy []string) []shared.MemoryLevel {
 }
 
 // widocznoscKontraktu przekłada zasięg widoczności z bazy. Wartość nieznana
-// czyta się jako `global`: ekspert, którego widoczności nikt nie rozpoznaje, ma
-// się pokazać, a nie zniknąć z biblioteki. Katalogu tu nie ma — pilnuje go
-// warunek CHECK w bazie.
+// czyta się jako `global`: ekspert ma się pokazać, a nie zniknąć z biblioteki.
 func widocznoscKontraktu(widocznosc string) shared.AgentVisibility {
 	wartosc := shared.AgentVisibility(strings.TrimSpace(widocznosc))
 	if _, jest := widocznosciEksperta[wartosc]; !jest {
@@ -154,8 +143,7 @@ func widocznoscKontraktu(widocznosc string) shared.AgentVisibility {
 }
 
 // sprawdzPoziomyPamieci pilnuje, żeby każdy podany poziom należał do kontraktu.
-// Wycinek pusty jest żądaniem poprawnym — znaczy „wyłącz pamięć" — więc nie ma
-// tu sprawdzenia niepustości.
+// Wycinek pusty jest żądaniem poprawnym — znaczy wyłączenie pamięci.
 func sprawdzPoziomyPamieci(poziomy []shared.MemoryLevel) ([]string, error) {
 	wynik := make([]string, 0, len(poziomy))
 	for _, poziom := range poziomy {
@@ -168,7 +156,8 @@ func sprawdzPoziomyPamieci(poziomy []shared.MemoryLevel) ([]string, error) {
 	return wynik, nil
 }
 
-// sprawdzWidocznosc pilnuje, żeby zasięg widoczności należał do kontraktu.
+// sprawdzWidocznosc pilnuje, żeby zgłoszony zasięg widoczności należał
+// do zbioru rozpoznawanego przez kontrakt.
 func sprawdzWidocznosc(widocznosc *shared.AgentVisibility) error {
 	if widocznosc == nil {
 		return nil
@@ -180,8 +169,8 @@ func sprawdzWidocznosc(widocznosc *shared.AgentVisibility) error {
 	return nil
 }
 
-// uprawnieniaKontraktu przekłada wiersze uprawnień. Zakres pusty zostaje
-// pominięty — kontrakt opisuje „cała grupa” brakiem wartości, nie pustką.
+// uprawnieniaKontraktu przekłada wiersze uprawnień na strukturę kontraktu.
+// Zakres pusty zostaje pominięty — kontrakt opisuje cała grupa brakiem wartości.
 func uprawnieniaKontraktu(wiersze []dane.UprawnienieAgenta) []shared.AgentPermission {
 	if len(wiersze) == 0 {
 		return nil
@@ -198,8 +187,8 @@ func uprawnieniaKontraktu(wiersze []dane.UprawnienieAgenta) []shared.AgentPermis
 }
 
 // konektorKontraktu przekłada wiersz konektora na strukturę AgentConnector.
-// Punkt dostępu wychodzi kodem, a nie numerem wiersza — tym samym, którym
-// posługują się komendy `access.point.*` i nadania okna rozmowy.
+// Punkt dostępu wychodzi kodem, tym samym, którym posługują się komendy
+// `access.point.*`.
 func konektorKontraktu(k dane.KonektorAgenta, kodPunktu string) shared.AgentConnector {
 	konektor := shared.AgentConnector{
 		Id:            k.Kod,
@@ -219,9 +208,7 @@ func konektorKontraktu(k dane.KonektorAgenta, kodPunktu string) shared.AgentConn
 }
 
 // warstwyKontraktu przekłada warstwy promptu eksperta. Porządek przychodzi
-// z bazy ułożony wg krytyczności (konstytucja, profil, ekspertyza) i nie jest
-// tu układany po raz drugi. Tryb pusty zostaje pominięty — kontrakt opisuje
-// tryb domyślny brakiem wartości, nie napisem.
+// z bazy ułożony wg krytyczności i nie jest tu układany po raz drugi.
 func warstwyKontraktu(wiersze []dane.WarstwaAgenta) []shared.AgentLayer {
 	if len(wiersze) == 0 {
 		return nil
@@ -241,8 +228,8 @@ func warstwyKontraktu(wiersze []dane.WarstwaAgenta) []shared.AgentLayer {
 	return warstwy
 }
 
-// wtyczkaKontraktu przekłada wiersz wtyczki na strukturę AgentPlugin. Wtyczka
-// wychodzi kodem trwałym, nie numerem wiersza — tak samo jak konektor.
+// wtyczkaKontraktu przekłada wiersz wtyczki na strukturę AgentPlugin, kodem
+// trwałym, nie numerem wiersza — tak samo jak konektor.
 func wtyczkaKontraktu(w dane.WtyczkaAgenta) shared.AgentPlugin {
 	wtyczka := shared.AgentPlugin{
 		Id:      w.Kod,
@@ -259,8 +246,7 @@ func wtyczkaKontraktu(w dane.WtyczkaAgenta) shared.AgentPlugin {
 }
 
 // kodyWtyczek zbiera kody wtyczek do pola `Agent.pluginIds`. Ekspert niesie
-// wskazania, a nie ich treść — pełna struktura wtyczki wraca wynikiem
-// `agent.plugin.add`, dokładnie jak konektor przy `agent.connector.add`.
+// wskazania, a nie treść — pełna struktura wraca wynikiem `agent.plugin.add`.
 func kodyWtyczek(wiersze []dane.WtyczkaAgenta) []string {
 	if len(wiersze) == 0 {
 		return nil
@@ -272,12 +258,14 @@ func kodyWtyczek(wiersze []dane.WtyczkaAgenta) []string {
 	return kody
 }
 
-// bladZadaniaEksperta odmawia wykonania komendy o niepoprawnej treści.
+// bladZadaniaEksperta odmawia wykonania komendy o niepoprawnej treści
+// żądania obszaru `agent.*`, kodem błędu kontraktu.
 func bladZadaniaEksperta(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "moduł Agents: "+powod))
 }
 
-// sprawdzTransport pilnuje, żeby droga wywołania należała do kontraktu.
+// sprawdzTransport pilnuje, żeby zgłoszona droga wywołania dostawcy należała
+// do zbioru rozpoznawanego przez kontrakt.
 func sprawdzTransport(transport *shared.ProviderTransport) error {
 	if transport == nil {
 		return nil
@@ -288,7 +276,8 @@ func sprawdzTransport(transport *shared.ProviderTransport) error {
 	return nil
 }
 
-// sprawdzParametry pilnuje, żeby parametry wywołania były poprawnym JSON.
+// sprawdzParametry pilnuje, żeby parametry wywołania konektora były poprawnym
+// zapisem JSON, sprawdzanym przed przekazaniem do dostawcy.
 func sprawdzParametry(surowe json.RawMessage, nazwaPola string) (string, error) {
 	tresc := strings.TrimSpace(string(surowe))
 	if tresc == "" {
@@ -300,12 +289,8 @@ func sprawdzParametry(surowe json.RawMessage, nazwaPola string) (string, error) 
 	return tresc, nil
 }
 
-// trybKontraktu przekłada tryb nałożenia z bazy na wartość kontraktu.
-//
-// Wartość spoza katalogu czyta się jako dołączenie: zastąpienie promptu
-// globalnego nigdy nie wynika z wartości, której nikt nie rozpoznaje. Baza
-// pilnuje tego warunkiem CHECK, a ta funkcja jest drugą siatką, nie drugim
-// katalogiem.
+// trybKontraktu przekłada tryb nałożenia z bazy na wartość kontraktu. Wartość
+// spoza katalogu czyta się jako dołączenie, nigdy jako zastąpienie promptu.
 func trybKontraktu(tryb string) *shared.IdentityMode {
 	wartosc := shared.IdentityMode(shared.IdentityModeDOLACZ)
 	if shared.IdentityMode(strings.TrimSpace(tryb)) == shared.IdentityModeZASTAP {

@@ -1,51 +1,11 @@
-# Pomocnik osadzeń — jedyny kod tego pakietu liczący wektory.
-#
-# Rdzeń jest w Go, a modele osadzeń wydawane są jako wagi ONNX obsługiwane
-# bibliotekami Pythona. Przepisanie inferencji transformera do Go byłoby drugą
-# implementacją tej samej rzeczy i rozjeżdżałoby się z wagami przy każdym
-# kolejnym wydaniu modelu, więc liczenie wektorów jest procesem obok rdzenia —
-# tak samo jak rozpoznawanie mowy (`mowa/pomocnik.go`).
-#
-# Zlecenie przychodzi ścieżką pliku JSON w argumencie, a odpowiedź wraca jednym
-# obiektem JSON na standardowym wyjściu. Rdzeń woła procesy wyłącznie przez
-# `zewnetrzne/wolanie.go`, a ta droga nie podaje procesowi standardowego wejścia
-# i nie dziedziczy środowiska. Diagnostyka biblioteki idzie na strumień
-# diagnostyczny, bo ostrzeżenie wstawione w środek JSON-a uczyniłoby odpowiedź
-# nieczytelną.
-#
-# Bez dziedziczenia środowiska nie ma `HOME` ani `HF_HOME`, więc biblioteka nie
-# zna swojego katalogu pamięci podręcznej. Rdzeń podaje katalog modeli wprost
-# w zleceniu; katalog ten leży pod katalogiem danych rdzenia, tam gdzie baza
-# i magazyn biblioteki, więc model pobrany raz zostaje na dysku.
-#
-# Katalog modeli bywa dwiema różnymi rzeczami i pomocnik je rozróżnia. Pusty
-# jest MIEJSCEM, do którego biblioteka dopiero pobierze wagi — wtedy idzie do
-# niej jako pamięć podręczna i wszystko dzieje się jej własnym trybem. Katalog,
-# w którym model już leży, jest samym MODELEM — wtedy biblioteka dostaje go
-# wprost i nie pobiera niczego, bo pobranie byłoby drugą kopią tego, co stoi na
-# dysku. Rozstrzyga obecność pliku ONNX, bo tylko on jest tu wagami.
-#
-# Modelu stojącego biblioteka nie umie opisać sama: jej wykaz obejmuje wyłącznie
-# wydania, które sama publikuje, a dla każdego innego nie wie, jak złożyć tokeny
-# w jeden wektor ani czy wynik normalizować. Pomocnik te trzy rzeczy ODCZYTUJE
-# z deklaracji leżących przy wagach (`modules.json`, `config.json` warstwy
-# łączącej). Zgadnięcie ich dałoby wektory, które są liczbami i nie znaczą nic,
-# a rozpoznać to można dopiero po jakości wyszukiwania — czyli za późno. Brak
-# deklaracji jest więc brakiem nazywającym plik, którego zabrakło.
-#
-# Brak jest odpowiedzią, a nie wywróceniem: gdy biblioteki nie ma albo wag nie
-# da się pobrać, pomocnik oddaje `{"ok": false, "brak": …}` z nazwą braku i wagą
-# modelu do dociągnięcia, a kod wyjścia zostaje zerowy. Rdzeń zamienia to na
-# odmowę nazywającą brak; sam ślad stosu Pythona nie powiedziałby, ile waży to,
-# czego nie ma.
+# Pomocnik osadzeń jest jedynym kodem tego pakietu liczącym wektory: liczenie
+# stoi obok rdzenia Go, bo modele wydawane są jako wagi ONNX obsługiwane
+# bibliotekami Pythona. Pełne uzasadnienie stoi w dokumentacji architektury.
 import json
 import os
 import sys
 
-# Rozmieszczenie plików modelu stojącego. Jest to rozmieszczenie, które zapisuje
-# `sentence-transformers` przy eksporcie i które ma repozytorium, z którego
-# biblioteka pobiera własne wagi: model ONNX pod `onnx/model.onnx`, a opis obok
-# niego w korzeniu. Eksport pojedynczy zostawia sam plik ONNX w korzeniu.
+# Rozmieszczenie plików modelu stojącego, zgodne z eksportem biblioteki sentence-transformers przy zapisie.
 UKLADY_WAG = ("onnx/model.onnx", "model.onnx")
 # PLIK_MODULOW wylicza warstwy modelu po transformerze — stąd wiadomo, która
 # warstwa składa tokeny w wektor i czy wynik jest normalizowany.
@@ -172,10 +132,7 @@ def silnikNaWagachStojacych(model, katalog, ukladWag):
              for opis in TextEmbedding.list_supported_models()}
     if model.lower() not in znane:
         sposob, normalizacja, wymiar = ksztaltWag(katalog)
-        # Źródło pobrania jest wymagane przez bibliotekę, a nigdy nie zostanie
-        # użyte: wskazanie katalogu wag kończy jej drogę do wag zanim dojdzie do
-        # pobierania. Nazwa modelu jest tu jedynym, co można podać zgodnie
-        # z prawdą — to pod nią wagi wydano.
+        # Źródło pobrania jest wymagane przez bibliotekę, ale nigdy nie zostanie użyte.
         TextEmbedding.add_custom_model(
             model=model,
             pooling=PoolingType(sposob),
@@ -198,9 +155,7 @@ def zbudujSilnik(model, katalog):
 
     ukladWag = wagiWKatalogu(katalog)
     if ukladWag:
-        # Odmowa na tej gałęzi jest innym brakiem niż na gałęzi pobierania:
-        # wagi są na dysku, więc odesłanie Operatora po pobranie kierowałoby go
-        # po to, co już ma.
+        # Odmowa tutaj jest innym brakiem niż przy pobieraniu: wagi już są na dysku.
         try:
             return silnikNaWagachStojacych(model, katalog, ukladWag)
         except Brak:
@@ -211,8 +166,7 @@ def zbudujSilnik(model, katalog):
     try:
         return TextEmbedding(model_name=model, cache_dir=katalog)
     except Exception as blad:
-        # Tu ląduje najczęściej brak wag: pierwsze uruchomienie bez sieci albo
-        # nazwa modelu, której wydanie biblioteki nie zna.
+        # Tu ląduje najczęściej brak wag: brak sieci albo nazwa nieznana bibliotece.
         raise Brak("model", "modelu " + model + " nie da się przygotować: " + str(blad)) from blad
 
 
@@ -235,9 +189,7 @@ def main():
     except Brak as nazwany:
         brak(nazwany.rodzaj, nazwany.powod, wagaMb)
 
-    # Sprawdzenie gotowości bez liczenia. Wykaz tekstów pusty znaczy pytanie
-    # „czy silnik stoi", a nie „osadź nic": rdzeń pyta o to przed pierwszym
-    # wskaźnikiem, żeby odmówić wcześnie i nazwać brak.
+    # Wykaz tekstów pusty znaczy pytanie o gotowość silnika, nie żądanie osadzenia.
     if not teksty:
         odpowiedz({"ok": True, "model": model, "wymiar": 0, "wektory": []})
 

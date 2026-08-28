@@ -1,15 +1,10 @@
 import { ProgressStatus } from '../../../shared/contract';
 
 /**
- * Pasek postępu procesu: stopień ukończenia w postaci paska i napisu
- * „etap N/M". Napis jest obowiązkowy, bo stan nie bywa sygnalizowany samym
- * kolorem.
- *
- * Element niesie `role="progressbar"` wraz z `aria-valuenow`, więc czytnik ekranu
- * podaje tę samą wartość, którą widzi oko.
+ * Pasek postępu procesu podaje stopień ukończenia paskiem oraz napisem
+ * „etap N/M", ponieważ stanu nie wolno sygnalizować samym kolorem. Wykaz klas
+ * stanu wiąże status procesu z barwą paska.
  */
-
-/** Klasa modyfikująca barwę paska według stanu procesu. */
 const KLASA_STANU: Readonly<Record<ProgressStatus, string>> = {
   [ProgressStatus.Pending]: 'mc-postep--oczekuje',
   [ProgressStatus.Running]: 'mc-postep--biegnie',
@@ -27,7 +22,11 @@ export interface OpisPostepu {
   nazwa: string;
 }
 
-/** Oblicza stopień ukończenia w procentach; liczba etapów 0 znaczy „nieznana". */
+/**
+ * Oblicza stopień ukończenia w procentach i przycina wynik do przedziału
+ * od zera do stu; liczba etapów równa zero znaczy „liczba etapów nieznana",
+ * więc funkcja podaje wtedy zero.
+ */
 export function stopienUkonczenia(etapBiezacy: number, etapowRazem: number): number {
   if (etapowRazem <= 0) {
     return 0;
@@ -36,7 +35,10 @@ export function stopienUkonczenia(etapBiezacy: number, etapowRazem: number): num
   return Math.max(0, Math.min(100, Math.round(udzial)));
 }
 
-/** Buduje pasek postępu wraz z napisem „etap N/M". */
+/** Buduje pasek postępu wraz z napisem „etap N/M". Element niesie
+ * `role="progressbar"` oraz `aria-valuenow`, więc czytnik ekranu podaje
+ * tę samą wartość, którą widzi oko.
+ */
 export function utworzPasekPostepu(opis: OpisPostepu): HTMLElement {
   const procent = stopienUkonczenia(opis.etapBiezacy, opis.etapowRazem);
 

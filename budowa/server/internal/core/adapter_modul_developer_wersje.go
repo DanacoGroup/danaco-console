@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: dwie komendy historii pliku edytora —
-// `developer.file.version.list` (wykaz migawek) i `developer.file.version.restore`
-// (powrót do migawki).
-//
-// Wersja pliku nie jest commitem i go nie zastępuje. Historia repozytorium
-// należy do Gita i jedzie osobną drogą; wersja jest zapisem roboczym edytora —
-// powstaje przy zapisie z `createVersion`, często wielokrotnie w obrębie jednej
-// zmiany, i pozwala Operatorowi wrócić do stanu, który sam nadpisał, zanim
-// cokolwiek zatwierdził.
-//
-// Przywrócenie zakłada własną migawkę stanu bieżącego, zanim nadpisze plik.
-// Bez tego kroku powrót do wersji sprzed godziny kasowałby bezpowrotnie pracę
-// tej godziny — a Operator sięga po historię właśnie dlatego, że nie jest pewien,
-// który stan jest lepszy.
+// Odpowiedzialność pliku: dwie komendy historii pliku edytora — wykaz migawek roboczych
+// `developer.file.version.list` i powrót do migawki `developer.file.version.restore`.
 package core
 
 import (
@@ -24,10 +12,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// najwiecejWersjiWykazu jest domyślną głębokością historii pliku.
+// najwiecejWersjiWykazu jest domyślną głębokością historii pliku edytora Code Editor modułu Developer platformy.
 const najwiecejWersjiWykazu = 50
 
-// WykazWersjiPliku obsługuje `developer.file.version.list`.
+// WykazWersjiPliku obsługuje `developer.file.version.list` i zwraca migawki wskazanego pliku okna Developer.
 func (a *adapterDevelopera) WykazWersjiPliku(ctx context.Context,
 	z shared.DeveloperFileVersionListRequest) (shared.DeveloperFileVersionListResponse, error) {
 
@@ -64,11 +52,8 @@ func (a *adapterDevelopera) WykazWersjiPliku(ctx context.Context,
 	return shared.DeveloperFileVersionListResponse{Versions: wersje, Total: &razem}, nil
 }
 
-// PrzywrocWersjePliku obsługuje `developer.file.version.restore`.
-//
-// Zapis na dysk jest domyślny, lecz nie bezwarunkowy: `writeToDisk: false` daje
-// samą treść migawki, którą Code Editor wstawia do bufora bez ruszania pliku.
-// To jest droga „zobacz, jak było”, odróżniona od „wróć do tego stanu”.
+// PrzywrocWersjePliku obsługuje `developer.file.version.restore`; zapis na dysk jest domyślny,
+// lecz nie bezwarunkowy — pole zapisu na dysk może dać samą treść migawki bez ruszania pliku.
 func (a *adapterDevelopera) PrzywrocWersjePliku(ctx context.Context,
 	z shared.DeveloperFileVersionRestoreRequest) (shared.DeveloperFileVersionRestoreResponse, error) {
 
@@ -95,9 +80,7 @@ func (a *adapterDevelopera) PrzywrocWersjePliku(ctx context.Context,
 		return shared.DeveloperFileVersionRestoreResponse{}, bladWykonaniaDevelopera(
 			"nie można odczytać wersji " + kod + ": " + err.Error())
 	}
-	// Wersja niesie własne okno. Przywrócenie migawki założonej w cudzym oknie
-	// wyprowadziłoby zapis poza obszar tego okna — a obszar jest granicą, którą
-	// moduł sprawdza przy każdej ścieżce, nie tylko przy tych z żądania.
+	// Wersja niesie własne okno; przywrócenie migawki cudzego okna wyprowadziłoby zapis poza obszar.
 	if wersja.OknoKod != okno.Id {
 		return shared.DeveloperFileVersionRestoreResponse{}, bladDostepuDevelopera(
 			"wersja " + kod + " należy do innego okna niż " + okno.Id)
@@ -136,9 +119,8 @@ func (a *adapterDevelopera) PrzywrocWersjePliku(ctx context.Context,
 	return shared.DeveloperFileVersionRestoreResponse{File: plik}, nil
 }
 
-// odlozStanPrzedPrzywroceniem zakłada migawkę treści, którą przywrócenie
-// nadpisze. Plik, którego na dysku nie ma, nie ma czego odkładać i nie jest to
-// przeszkodą — przywrócenie odtworzy go z migawki.
+// odlozStanPrzedPrzywroceniem zakłada migawkę treści, którą przywrócenie nadpisze; plik
+// nieobecny na dysku nie ma czego odkładać, a to nie jest przeszkodą.
 func (a *adapterDevelopera) odlozStanPrzedPrzywroceniem(ctx context.Context,
 	oknoKod, sciezka string) error {
 

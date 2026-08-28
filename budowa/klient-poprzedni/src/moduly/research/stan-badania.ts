@@ -10,21 +10,8 @@ import { utworzZrodloOknaBadania, type ZrodloOknaBadania } from './zrodlo-okna-b
 import { utworzZrodloResearch, type ZrodloResearch } from './zrodlo-research';
 
 /**
- * Jedno badanie na cały moduł Research.
- *
- * Siedem okien — Research Workspace, Discovery Panel, Sources Manager,
- * Reading View, Findings Panel, Report Builder, Export Panel — pracuje na tym
- * samym oknie badania, tym samym kompletem źródeł i tych samych ustaleniach.
- * Gdyby każde okno prowadziło swój zbiór, powiązanie źródło↔ustalenie↔sekcja
- * raportu dotyczyłoby sześciu różnych bytów.
- *
- * Wykazy narastają z odpowiedzi. Komendy odczytu wykazu źródeł i ustaleń są już
- * w kontrakcie, ale rdzeń nie ma dla nich uchwytów, więc stan trzyma to, co rdzeń
- * potwierdził w tym połączeniu, i nie dopowiada reszty. Po dobudowie uchwytów
- * odczyt dołoży się tutaj, obok `odswiez` — kształt stanu tego nie wymaga.
- *
- * Plik jest złożeniem pamięci, odczytu i dwóch źródeł komend; sam nie trzyma
- * ani jednej wartości.
+ * Jedno badanie na cały moduł Research: siedem okien dzieli ten sam komplet źródeł, ustaleń
+ * i okno badania.
  */
 export type { FazaBadania } from './pamiec-badania';
 
@@ -57,23 +44,13 @@ export function utworzStanBadania(kanal: Kanal): StanBadania {
   const pamiec = utworzPamiecBadania();
   const odswiez = utworzOdczytBadania(okna, pamiec);
 
-  // Zaznaczenie jest nastawą wspólną oknom, więc ogłasza się tą samą drogą co
-  // treść. Pamięć go nie zna — nie pochodzi z rdzenia i nie jest treścią
-  // badania — więc ogłoszenie ma tu własny rejestr słuchaczy, a `obserwuj`
-  // niżej wpisuje słuchacza do obu. Wołający ma jedną subskrypcję na cały stan
-  // i nie musi wiedzieć, która zmiana skąd pochodzi.
+  // Zaznaczenie to nastawa wspólna oknom — ogłasza się własnym rejestrem słuchaczy, nie pamięcią.
   const sluchaczeNastawy = new Set<() => void>();
   const ogloszNastawe = (): void => {
     for (const sluchacz of [...sluchaczeNastawy]) sluchacz();
   };
 
-  // Zdarzenie rdzenia jest jedynym odświeżeniem poza własnym działaniem:
-  // raport zmieniony na innym urządzeniu konta dociera tą samą drogą.
-  //
-  // Rdzeń rozgłasza `research.report.changed` bez wskazania sesji, więc
-  // zdarzenie dochodzi na każde połączenie. Porównanie `report.windowId`
-  // z oknem badania odsiewa raporty cudzych okien; bez niego Export Panel
-  // wydałby dokument, którego to okno nie składało.
+  // Zdarzenie rdzenia odświeża raport zmieniony na innym urządzeniu; filtr windowId odsiewa cudze okna.
   const odsubskrybuj = zrodlo.naZmianeRaportu((tresc) => {
     if (pamiec.idOkna() === '' || tresc.report.windowId !== pamiec.idOkna()) return;
     pamiec.wchlonRaport(tresc.change === ChangeKind.Deleted ? null : tresc.report);

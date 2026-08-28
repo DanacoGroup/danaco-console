@@ -1,3 +1,5 @@
+// Rozruch jest jedynym w drzewie miejscem, w którym powstaje i startuje
+// proces modelu, wykorzystywanym z dwóch dróg kanału głównego.
 package injection
 
 import (
@@ -10,16 +12,8 @@ import (
 	"time"
 )
 
-// Rozruch jest jedynym w drzewie miejscem, w którym powstaje i startuje proces
-// modelu. Sięgają tu obie drogi kanału głównego:
-//
-//   - Uruchom — jedno wywołanie tury w trybie stream-json (proces.go);
-//   - UruchamiaczOkien — proces okna komunikacji prowadzony przez sesję
-//     (uruchamiacz_okna.go).
-//
-// Pakiet session nie buduje własnego `exec.Cmd`; bierze stąd gotowy uchwyt.
-
-// Rozruch opisuje jedno uruchomienie programu zewnętrznego.
+// Rozruch opisuje jedno uruchomienie programu zewnętrznego wraz z jego pełną
+// konfiguracją systemową uruchomienia.
 type Rozruch struct {
 	// Program — ścieżka albo nazwa pliku wykonywalnego.
 	Program string
@@ -29,14 +23,13 @@ type Rozruch struct {
 	Katalog string
 	// Srodowisko w postaci KLUCZ=wartość; puste oznacza środowisko odziedziczone.
 	Srodowisko []string
-	// Atrybuty systemowe uruchomienia. Proces, który ma zostać objęty drzewem
-	// przez warstwę sesji, dostaje tu session.AtrybutyDrzewa().
+	// Atrybuty systemowe uruchomienia, w tym atrybuty drzewa procesów sesji.
 	Atrybuty *syscall.SysProcAttr
-	// ZapasNaZamkniecie daje procesowi chwilę na domknięcie potoków po odwołaniu
-	// kontekstu; zero oznacza brak zapasu.
+	// ZapasNaZamkniecie daje procesowi chwilę na domknięcie potoków; zero
+	// oznacza brak zapasu.
 	ZapasNaZamkniecie time.Duration
 	// WyjscieBledowOsobno kieruje wyjście diagnostyczne do osobnego potoku
-	// zamiast do bufora. Potrzebuje tego strumień okna, który czyta oba wyjścia.
+	// zamiast do bufora.
 	WyjscieBledowOsobno bool
 }
 
@@ -51,7 +44,8 @@ type Start struct {
 	bledy       *buforBledow
 }
 
-// Wystartuj buduje i uruchamia proces według opisu rozruchu.
+// Wystartuj buduje i uruchamia proces systemowy według przekazanego opisu
+// rozruchu, zwracając jego uchwyt.
 func Wystartuj(kontekst context.Context, r Rozruch) (*Start, error) {
 	if strings.TrimSpace(r.Program) == "" {
 		return nil, fmt.Errorf("injection: brak ścieżki programu kanału")
@@ -82,7 +76,8 @@ func Wystartuj(kontekst context.Context, r Rozruch) (*Start, error) {
 	return start, nil
 }
 
-// podepnijBledy wybiera drogę wyjścia diagnostycznego: osobny potok albo bufor.
+// podepnijBledy wybiera drogę wyjścia diagnostycznego procesu: osobny potok
+// albo bufor pamięci procesu.
 func (s *Start) podepnijBledy(osobno bool) error {
 	if !osobno {
 		s.bledy = &buforBledow{}
@@ -97,7 +92,8 @@ func (s *Start) podepnijBledy(osobno bool) error {
 	return nil
 }
 
-// Pid zwraca identyfikator systemowy procesu.
+// Pid zwraca identyfikator systemowy uruchomionego procesu potomnego,
+// nadany przez system operacyjny hosta.
 func (s *Start) Pid() int {
 	if s.polecenie.Process == nil {
 		return 0
@@ -105,10 +101,12 @@ func (s *Start) Pid() int {
 	return s.polecenie.Process.Pid
 }
 
-// Wejscie zwraca strumień wejściowy procesu.
+// Wejscie zwraca strumień wejściowy uruchomionego procesu potomnego, do
+// zapisu jego wypowiedzi tekstowej.
 func (s *Start) Wejscie() io.WriteCloser { return s.wejscie }
 
-// Wyjscie zwraca strumień wyjściowy procesu.
+// Wyjscie zwraca strumień wyjściowy uruchomionego procesu potomnego, do
+// odczytu jego odpowiedzi tekstowej.
 func (s *Start) Wyjscie() io.Reader { return s.wyjscie }
 
 // Diagnostyka zwraca wyjście diagnostyczne procesu. Gdy błędy jadą do bufora,
@@ -120,7 +118,8 @@ func (s *Start) Diagnostyka() io.Reader {
 	return s.diagnostyka
 }
 
-// Bledy zwraca zapamiętane wyjście diagnostyczne procesu.
+// Bledy zwraca zapamiętane wyjście diagnostyczne uruchomionego procesu
+// potomnego, gotowe do wglądu wywołującego.
 func (s *Start) Bledy() string {
 	if s.bledy == nil {
 		return ""

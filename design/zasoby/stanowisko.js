@@ -1,9 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — WARSTWA STANOWISKA (zachowanie) · v2.1
-   ----------------------------------------------------------------------------
-   Steruje elastycznym układem wielookiennym: liczba okien czatu (1/2/4),
-   widoczność strefy roboczej, aktywne okno, popovery przybornika, panel
-   konfiguracji per okno, prompt i symulacja wysyłki.
+/* Warstwa zachowania stanowiska steruje elastycznym układem wielookiennym: liczbą okien czatu, widocznością strefy roboczej, aktywnym oknem i popoverami przybornika.
 
    Współpracuje z prototyp.js (toasty, motyw). Sterowanie atrybutami data-*.
    ============================================================================ */

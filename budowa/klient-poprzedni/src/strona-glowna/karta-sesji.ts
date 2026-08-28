@@ -4,42 +4,21 @@ import { utworzMenuSesji, type OdbiorcaMeldunku } from './menu-sesji';
 import type { WykazSrodowisk } from './wykaz-srodowisk';
 import type { WpisSesji } from './zrodlo-sesji';
 
-/**
- * Karta sesji w tle — jeden wiersz wykazu sekcji sesji.
- *
- * Jedna odpowiedzialność: zbudowanie wiersza jednej sesji i zgłoszenie
- * żądania powrotu do niej.
- *
- * Każdy napis pochodzi z rdzenia. Tytuł to `Session.title`, a gdy rdzeń go nie
- * nadał — identyfikator sesji, nie wymyślona nazwa. Środowisko, moduł i liczby
- * okien niesie żywy odpis (`SessionPresence`); przy odpisie nieobecnym cały
- * fragment znika, zamiast pokazywać zero udające odczyt.
- *
- * Przycisk „Wróć do sesji" pojawia się wyłącznie wtedy, gdy montaż podał
- * czynność powrotu (`session.bind` jest akcją powrotu z tej kontrolki). Bez
- * czynności wiersz jest czysto informacyjny — żadnego przycisku wyszarzonego
- * ani martwego.
- */
+/** Karta sesji w tle jest jednym wierszem wykazu sekcji sesji o jednej odpowiedzialności. */
 
-/** Czynność powrotu; obietnica trzyma przycisk w stanie zajętości do końca. */
+/** Czynność powrotu do sesji zwraca obietnicę, która trzyma przycisk w stanie zajętości aż do jej rozstrzygnięcia. */
 export type CzynnoscPowrotu = (wpis: WpisSesji) => Promise<void>;
 
 export interface KartaSesji {
   element: HTMLLIElement;
 }
 
-/** Otoczenie wiersza: co wolno z sesją zrobić i gdzie meldować wynik. */
+/** Otoczenie wiersza karty określa, co wolno zrobić z sesją i gdzie zgłaszać wynik czynności wykonanej. */
 export interface OtoczenieKarty {
   powrot: CzynnoscPowrotu | null;
   czynnosci: CzynnosciSesji;
   meldunek: OdbiorcaMeldunku;
-  /**
-   * Wykaz środowisk strony — jedyne źródło nazwy środowiska w tym wierszu.
-   *
-   * Ten sam byt, z którego rysuje się karta środowiska w strefie pierwszej —
-   * nazwa wzięta z klienckiej stałej rozjeżdżałaby się po cichu z nazwą
-   * zapisaną w bazie.
-   */
+  /** Wykaz środowisk strony jest jedynym źródłem nazwy środowiska wyświetlanej w tym wierszu karty sesji. */
   srodowiska: WykazSrodowisk;
 }
 
@@ -61,7 +40,7 @@ export function utworzKarteSesji(wpis: WpisSesji, otoczenie: OtoczenieKarty): Ka
   return { element };
 }
 
-/** Kropka sygnału: tętno przy strumieniu, pełna przy sesji żywej na rdzeniu. */
+/** Kropka sygnału pokazuje tętno przy sesji strumieniującej, a pełne wypełnienie przy sesji żywej na rdzeniu. */
 function zbudujSygnal(wpis: WpisSesji): HTMLElement {
   const kropka = document.createElement('span');
   const strumieniuje = (wpis.obecnosc?.streamingWindowCount ?? 0) > 0;
@@ -80,7 +59,7 @@ function zbudujTytul(wpis: WpisSesji): HTMLElement {
   return tytul;
 }
 
-/** Druga linia wiersza: środowisko, moduł, okna i chwila ostatniej czynności. */
+/** Druga linia wiersza karty niesie nazwę środowiska, moduł, liczbę okien i chwilę ostatniej czynności. */
 function zbudujMete(wpis: WpisSesji, wykaz: WykazSrodowisk): HTMLElement {
   const meta = document.createElement('span');
   meta.className = 'dn-strona__sesja-meta';
@@ -115,8 +94,7 @@ function zbudujPowrot(wpis: WpisSesji, powrot: CzynnoscPowrotu): HTMLButtonEleme
   przycisk.className = 'dn-btn dn-btn--zarys dn-btn--sm dn-strona__sesja-powrot';
   przycisk.textContent = 'Wróć do sesji';
   przycisk.addEventListener('click', () => {
-    // Zajętość zamiast wyszarzenia: przycisk pokazuje pracę w toku,
-    // a ponowne naciśnięcie w jej trakcie nie dubluje powiązania.
+    // Zajętość przycisku zamiast wyszarzenia pokazuje pracę w toku.
     if (przycisk.getAttribute('aria-busy') === 'true') return;
     przycisk.setAttribute('aria-busy', 'true');
     void powrot(wpis).finally(() => przycisk.removeAttribute('aria-busy'));

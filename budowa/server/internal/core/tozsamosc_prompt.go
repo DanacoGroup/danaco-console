@@ -1,18 +1,4 @@
-// Odpowiedzialność pliku: złożenie promptu systemowego z wybranych treści oraz
-// rozstrzygnięcie trybu podania nakładki.
-//
-// Składanie jest deterministyczne: ta sama konfiguracja daje bajtowo ten sam
-// prompt, bo porządek wyznaczają dane (warstwa → kolejność katalogu → kod
-// kategorii), treść jest przycinana z białych znaków brzegowych, a spoina jest
-// jedna i ta sama. Dzięki temu odcisk promptu zmienia się wtedy i tylko wtedy,
-// gdy zmieniła się treść — na tym opiera się pamięć podręczna promptu po
-// stronie kanału.
-//
-// Tryb ZASTAP wygrywa z DOLACZ: jeżeli choć jedna wnosząca treść kategoria żąda
-// zastąpienia, cała nakładka idzie przełącznikiem `--system-prompt`. Podanie jej
-// wtedy przez `--append-system-prompt` zostawiłoby prompt fabryczny nietknięty,
-// czyli wykonałoby odwrotność żądania tej kategorii. Nakładka złożona z samych
-// kategorii DOLACZ jedzie trybem dopisania.
+// Plik składa prompt systemowy z wybranych treści i rozstrzyga tryb podania nakładki. Składanie jest deterministyczne: ta sama konfiguracja daje bajtowo ten sam prompt. Tryb ZASTAP wygrywa z DOLACZ, jeżeli choć jedna kategoria żąda zastąpienia.
 package core
 
 import (
@@ -29,10 +15,7 @@ import (
 // być tym samym ciągiem bajtów, co potwierdza test składania.
 const spoinaWarstw = "\n\n"
 
-// porzadekWarstwy zwraca krytyczność warstwy: konstytucja → profil →
-// ekspertyza. Kolejność jest kolejnością wyliczenia kontraktu IdentityLayer,
-// które wprost wiąże swoje wartości ze stałymi silnika nakładki. Warstwa spoza
-// wyliczenia ląduje na końcu — nie wywraca składania.
+// porzadekWarstwy zwraca krytyczność warstwy: konstytucja, profil, ekspertyza — kolejność wyliczenia kontraktu IdentityLayer wiążącego swoje wartości ze stałymi silnika nakładki. Warstwa spoza wyliczenia ląduje na końcu.
 func porzadekWarstwy(warstwa shared.IdentityLayer) int {
 	switch warstwa {
 	case shared.IdentityLayerConstitution:
@@ -61,7 +44,7 @@ func warstwaSilnika(warstwa shared.IdentityLayer) string {
 	}
 }
 
-// zlozNakladke buduje odpowiedź kontraktu z katalogu kategorii i zebranych treści.
+// zlozNakladke buduje odpowiedź kontraktu z katalogu kategorii i zebranych treści, ustalając tryb i odcisk promptu.
 func zlozNakladke(kategorie []shared.IdentityCategory, dokumenty []shared.IdentityDocument,
 	trybDomyslny shared.IdentityMode) shared.IdentityEffectiveGetResponse {
 

@@ -1,36 +1,6 @@
-// Odpowiedzialność pliku: część drukarska modułu Design — profile wydania
-// (`design.print.profile.set`, `design.print.profile.list`), kontrola
-// przeddrukowa (`design.print.preflight`), wydanie do druku
-// (`design.print.export`) i podział materiału wielkoformatowego
-// (`design.largeformat.tile`). Wykaz nośników, profile ICC serwera i rachunek
-// milimetrów leżą w `adapter_modul_design_druk_wspolne.go`; wykresy i schematy
-// w `adapter_modul_design_wykresy.go`.
-//
-// ── Jednostka kompozycji przy druku to MILIMETR ─────────────────────────────
-// Kompozycja Design Board nie ma jednostki w kontrakcie — warstwa niesie liczby.
-// Część drukarska czyta je jako MILIMETRY i jest to rozstrzygnięcie tego pliku,
-// obowiązujące spójnie: kontrolę przeddrukową, wydanie i podział na kafle.
-// Dzięki temu kompozycja 210×297 jest arkuszem A4, a nie prostokątem, którego
-// rozmiaru nikt nie umie nazwać. Wyrys ekranowy (`design.board.export`) liczy te
-// same liczby jako piksele i to jest w porządku: tam nie ma nośnika, więc nie ma
-// czego mierzyć w milimetrach.
-//
-// ── `design.print.export` ODMAWIA przy wadzie o wadze błędu ─────────────────
-// Plik nie do druku wydany jako gotowy do druku jest gorszy niż odmowa: idzie do
-// drukarni, wraca po dniu i kosztuje nakład. Pominięcie kontroli jest jawnym
-// wyborem Operatora (`skipPreflight`) i WRACA w odpowiedzi polem
-// `preflightSkipped`, więc nikt nie powie potem, że nie wiedział.
-//
-// ── Zastrzeżenia w kolejności WAGI ──────────────────────────────────────────
-// Kontrakt tak opisuje pole `issues` i tak Operator pracuje: najpierw naprawia
-// to, co blokuje druk, potem to, co grozi jakością. Kolejność jest stabilna,
-// żeby dwie kontrole tego samego materiału nie różniły się porządkiem.
-//
-// ── Profil ICC: mówimy, czego serwer NIE MA ─────────────────────────────────
-// Rdzeń nie rozkłada profili ICC i nie przelicza barw przez nie. Wydanie w CMYK
-// idzie więc bez osadzonego profilu i kontrola przeddrukowa mówi to jako
-// zastrzeżenie — nie milczy. Powód stoi w nagłówku
-// `adapter_modul_design_druk_wspolne.go`.
+// Część drukarska modułu Design obsługuje profile wydania, kontrolę
+// przeddrukową, wydanie do druku i podział materiału wielkoformatowego na
+// kafle; jednostką kompozycji przy druku jest milimetr.
 package core
 
 import (
@@ -51,7 +21,9 @@ import (
 )
 
 const (
-	// przedrostekProfiluDrukuDesign znakuje identyfikatory zewnętrzne profili.
+	// przedrostekProfiluDrukuDesign znakuje identyfikatory zewnętrzne profili
+	// wydania, nadawane automatycznie, gdy żądanie nie wskazuje własnego
+	// identyfikatora profilu.
 	przedrostekProfiluDrukuDesign = "profil-druku-"
 
 	// udzialRozdzielczosciBledoweDesignu wyznacza granicę między ostrzeżeniem
@@ -65,8 +37,9 @@ const (
 	granicaKafliDesignu = 400
 )
 
-// UstawProfilDruku zapisuje profil wydania — obsługuje
-// `design.print.profile.set`.
+// UstawProfilDruku zapisuje profil wydania w oknie wskazanym żądaniem —
+// obsługuje komendę design.print.profile.set i sprawdza profil przed
+// zapisem.
 func (a *adapterDesignu) UstawProfilDruku(ctx context.Context,
 	z shared.DesignPrintProfileSetRequest) (shared.DesignPrintProfileSetResponse, error) {
 
@@ -121,8 +94,9 @@ func (a *adapterDesignu) UstawProfilDruku(ctx context.Context,
 	return shared.DesignPrintProfileSetResponse{Profile: profilDrukuKontraktu(zapisany)}, nil
 }
 
-// sprawdzProfilDrukuDesignu odrzuca nastawy spoza kontraktu i bezsensowne PRZED
-// zapisem.
+// sprawdzProfilDrukuDesignu odrzuca nastawy profilu spoza kontraktu
+// (przestrzeń barw, normę), spad ujemny, rozdzielczość poza zakresem
+// urządzeń drukarskich oraz nieznany nośnik — przed zapisem.
 func sprawdzProfilDrukuDesignu(komenda string, profil shared.DesignPrintProfile) error {
 	if err := sprawdzWyliczenieDesignu(komenda, "profile.colorSpace", profil.ColorSpace,
 		shared.WartosciDesignPrintColorSpace()); err != nil {
@@ -176,16 +150,16 @@ func (a *adapterDesignu) ProfileDruku(ctx context.Context,
 	for _, wiersz := range wiersze {
 		profile = append(profile, profilDrukuKontraktu(wiersz))
 	}
-	// `iccProfiles` jest POMIAREM tej maszyny: pusty wykaz znaczy, że wydanie
-	// w CMYK pójdzie bez osadzonego profilu, i to jest odpowiedź, nie brak
-	// odpowiedzi.
+	// Pole iccProfiles jest pomiarem tej maszyny: pusty wykaz to odpowiedź,
+	// nie jej brak.
 	return shared.DesignPrintProfileListResponse{
 		Profiles: profile, PaperSizes: nosnikiDruku(), IccProfiles: profileICCSerwera(),
 	}, nil
 }
 
-// KontrolaPrzeddrukowa mierzy materiał wobec profilu — obsługuje
-// `design.print.preflight`.
+// KontrolaPrzeddrukowa mierzy materiał wobec profilu — obsługuje komendę
+// design.print.preflight i zwraca wykaz zastrzeżeń wraz z liczbą błędów
+// i ostrzeżeń.
 func (a *adapterDesignu) KontrolaPrzeddrukowa(ctx context.Context,
 	z shared.DesignPrintPreflightRequest) (shared.DesignPrintPreflightResponse, error) {
 
@@ -204,13 +178,10 @@ func (a *adapterDesignu) KontrolaPrzeddrukowa(ctx context.Context,
 	}, nil
 }
 
-// profilWydaniaDesignu rozstrzyga profil, wobec którego mierzy kontrola i w którym
-// wychodzi wydanie.
-//
-// Wskazanie wprost (`profile`) bije profil z bazy: Operator, który podał nastawy
-// w żądaniu, chce tych nastaw. Brak jednego i drugiego bierze nastawy domyślne —
-// CMYK w rozdzielczości drukarskiej, bez spadu, bo spad dołożony po cichu
-// zmieniałby wymiar strony (powód przy `spadProfilu`).
+// profilWydaniaDesignu rozstrzyga profil, wobec którego mierzy kontrola i w
+// którym wychodzi wydanie: profil wskazany wprost w żądaniu bije profil
+// zapisany pod identyfikatorem, a przy braku obu obowiązuje profil domyślny
+// w przestrzeni CMYK bez spadu.
 func (a *adapterDesignu) profilWydaniaDesignu(ctx context.Context, komenda string,
 	kod *string, wskazany *shared.DesignPrintProfile) (shared.DesignPrintProfile, error) {
 
@@ -230,7 +201,9 @@ func (a *adapterDesignu) profilWydaniaDesignu(ctx context.Context, komenda strin
 	return shared.DesignPrintProfile{ColorSpace: shared.DesignPrintColorSpaceCmyk}, nil
 }
 
-// zastrzezeniaPrzeddrukoweDesignu składa wykaz zastrzeżeń w kolejności wagi.
+// zastrzezeniaPrzeddrukoweDesignu składa wykaz zastrzeżeń w kolejności wagi,
+// mierząc materiał wskazany jako zasób, kompozycja albo oba naraz, i
+// odmawia, gdy żądanie nie wskazuje żadnego z nich.
 func (a *adapterDesignu) zastrzezeniaPrzeddrukoweDesignu(ctx context.Context, komenda string,
 	kompozycja, zasob *string,
 	profil shared.DesignPrintProfile) ([]shared.DesignPreflightIssue, error) {
@@ -285,11 +258,10 @@ func (a *adapterDesignu) zastrzezeniaPrzeddrukoweDesignu(ctx context.Context, ko
 	return zastrzezenia, nil
 }
 
-// zastrzezeniaZasobuPrzeddrukoweDesignu mierzy jeden zasób wobec profilu.
-//
-// Rachunek jest prawdziwym pomiarem: rozdzielczość skuteczna to piksele zasobu
-// rozłożone na wymiar nośnika. Bez nośnika w profilu nie ma czego mierzyć
-// i rdzeń mówi to wprost, zamiast wystawić ocenę bez podstawy.
+// zastrzezeniaZasobuPrzeddrukoweDesignu mierzy jeden zasób wobec profilu:
+// rozdzielczość skuteczna to piksele zasobu rozłożone na wymiar nośnika, a
+// bez nośnika w profilu rdzeń zwraca to jako informację, nie ocenę bez
+// podstawy.
 func zastrzezeniaZasobuPrzeddrukoweDesignu(zasob dane.ZasobDesignu,
 	profil shared.DesignPrintProfile, rozdzielczosc int) []shared.DesignPreflightIssue {
 
@@ -348,19 +320,17 @@ func zastrzezeniaZasobuPrzeddrukoweDesignu(zasob dane.ZasobDesignu,
 	})
 }
 
-// zastrzezeniaWarstwyPrzeddrukoweDesignu mierzy jedną warstwę kompozycji.
-//
-// Rozdzielczość skuteczna warstwy liczy się z pikseli jej zasobu i z jej wymiaru
-// na kompozycji, czytanego w MILIMETRACH (nagłówek pliku). To jest ta liczba,
-// którą drukarnia mierzy jako pierwszą.
+// zastrzezeniaWarstwyPrzeddrukoweDesignu mierzy jedną warstwę kompozycji:
+// rozdzielczość skuteczna liczy się z pikseli zasobu warstwy i z jej wymiaru
+// na kompozycji, czytanego w milimetrach.
 func (a *adapterDesignu) zastrzezeniaWarstwyPrzeddrukoweDesignu(ctx context.Context,
 	warstwa dane.WarstwaKompozycji, profil shared.DesignPrintProfile,
 	rozdzielczosc int) []shared.DesignPreflightIssue {
 
 	kodWarstwy := warstwa.Kod
 	if warstwa.ZasobID == nil || strings.TrimSpace(*warstwa.ZasobID) == "" {
-		// Warstwa bez zasobu jest w kompozycji normalna (ramka, prowadnica), więc
-		// to informacja, nie ostrzeżenie.
+		// Warstwa bez zasobu bywa normalna (ramka, prowadnica) — to informacja,
+		// nie ostrzeżenie.
 		return []shared.DesignPreflightIssue{{
 			Severity: shared.DesignPreflightSeverityInformacja,
 			Code:     "warstwa-bez-zasobu",
@@ -414,11 +384,9 @@ func (a *adapterDesignu) zastrzezeniaWarstwyPrzeddrukoweDesignu(ctx context.Cont
 	}}
 }
 
-// zastrzezeniaSpaduDesignu sprawdza, czy materiał dochodzi do spadu.
-//
-// Rachunek jest prawdziwy: warstwa, która kończy się dokładnie na krawędzi
-// nośnika, po obcięciu zostawi biały pasek, bo maszyna cięcia ma tolerancję.
-// Spad wymaga, żeby treść WYCHODZIŁA poza krawędź.
+// zastrzezeniaSpaduDesignu sprawdza, czy materiał dochodzi do spadu:
+// warstwa kończąca się dokładnie na krawędzi nośnika zostawi po obcięciu
+// biały pasek, więc treść ma wychodzić poza krawędź.
 func zastrzezeniaSpaduDesignu(warstwy []dane.WarstwaKompozycji,
 	profil shared.DesignPrintProfile) []shared.DesignPreflightIssue {
 
@@ -510,9 +478,8 @@ func zastrzezeniaProfiluDesignu(profil shared.DesignPrintProfile) []shared.Desig
 				})
 			}
 		}
-		// Rdzeń nie rozdziela barw przez profil ICC. To jest granica produktu
-		// i mówi się ją WPROST, jako informacja przy każdym wydaniu w CMYK —
-		// drukarnia ma wiedzieć, że dostała przeliczenie naiwne.
+		// Rdzeń nie rozdziela barw przez profil ICC — wydanie CMYK niesie to
+		// jako informację wprost.
 		zastrzezenia = append(zastrzezenia, shared.DesignPreflightIssue{
 			Severity: shared.DesignPreflightSeverityInformacja,
 			Code:     "cmyk-bez-rozdzialu-icc",
@@ -561,7 +528,9 @@ func uporzadkujZastrzezeniaDesignu(zastrzezenia []shared.DesignPreflightIssue) {
 	})
 }
 
-// zlicZastrzezeniaDesignu liczy zastrzeżenia o wadze błędu i ostrzeżenia.
+// zlicZastrzezeniaDesignu liczy zastrzeżenia o wadze błędu i ostrzeżenia w
+// wykazie kontroli przeddrukowej, pomijając zastrzeżenia o wadze
+// informacji.
 func zlicZastrzezeniaDesignu(zastrzezenia []shared.DesignPreflightIssue) (int, int) {
 	bledow, ostrzezen := 0, 0
 	for _, zastrzezenie := range zastrzezenia {
@@ -575,7 +544,9 @@ func zlicZastrzezeniaDesignu(zastrzezenia []shared.DesignPreflightIssue) (int, i
 	return bledow, ostrzezen
 }
 
-// WydajDoDruku wydaje materiał do druku — obsługuje `design.print.export`.
+// WydajDoDruku wydaje materiał do druku — obsługuje komendę
+// design.print.export i odmawia wydania, gdy kontrola przeddrukowa znajdzie
+// wadę o wadze błędu, chyba że żądanie ją świadomie pomija.
 func (a *adapterDesignu) WydajDoDruku(ctx context.Context,
 	z shared.DesignPrintExportRequest) (shared.DesignPrintExportResponse, error) {
 
@@ -592,9 +563,8 @@ func (a *adapterDesignu) WydajDoDruku(ctx context.Context,
 		return shared.DesignPrintExportResponse{}, err
 	}
 
-	// Publikacja wielostronicowa: szablon materiału o wielu stronach wychodzi
-	// JEDNYM plikiem, tą samą drogą i przez tę samą kontrolę przeddrukową —
-	// z odmową przy wadzie o wadze błędu obowiązującą także tutaj.
+	// Publikacja wielostronicowa wychodzi jednym plikiem przez tę samą
+	// kontrolę przeddrukową.
 	if z.TemplateId != nil && strings.TrimSpace(*z.TemplateId) != "" {
 		return a.zlozWydaniePublikacjiDesignu(ctx, z, format, profil)
 	}
@@ -609,8 +579,8 @@ func (a *adapterDesignu) WydajDoDruku(ctx context.Context,
 		}
 		bledow, _ := zlicZastrzezeniaDesignu(zastrzezenia)
 		if bledow > 0 {
-			// ODMOWA, nie wydanie z ostrzeżeniem: plik nie do druku wydany jako
-			// gotowy do druku idzie do drukarni i kosztuje nakład (nagłówek pliku).
+			// Odmowa, nie wydanie z ostrzeżeniem: plik nie do druku nie wychodzi
+			// jako gotowy do druku.
 			return shared.DesignPrintExportResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 				"kontrola przeddrukowa znalazła %d wad o wadze błędu — rdzeń nie wyda pliku "+
 					"nie do druku jako gotowego do druku; pierwsza wada: %s; naprawa: usunąć wady "+
@@ -635,12 +605,10 @@ func (a *adapterDesignu) WydajDoDruku(ctx context.Context,
 	}, nil
 }
 
-// zlozWydaniePublikacjiDesignu wydaje publikację wielostronicową jednym plikiem.
-//
-// Kontrola przeddrukowa obowiązuje TAK SAMO: każda strona jest arkuszem i każda
-// przechodzi te same pomiary, a wada o wadze błędu na jednej stronie odmawia
-// całego wydania. Publikacja przepuszczona z jedną stroną nie do druku wraca
-// z drukarni tak samo jak pojedynczy arkusz — tylko drożej.
+// zlozWydaniePublikacjiDesignu wydaje publikację wielostronicową jednym
+// plikiem: każda strona przechodzi tę samą kontrolę przeddrukową co
+// pojedynczy arkusz, a wada o wadze błędu na jednej stronie odmawia całego
+// wydania.
 func (a *adapterDesignu) zlozWydaniePublikacjiDesignu(ctx context.Context,
 	z shared.DesignPrintExportRequest, format string,
 	profil shared.DesignPrintProfile) (shared.DesignPrintExportResponse, error) {
@@ -699,9 +667,8 @@ func (a *adapterDesignu) zlozWydaniePublikacjiDesignu(ctx context.Context,
 						"w pliku zostałaby po niej pusta kartka", strona.Numer),
 				})
 			}
-			// Numer strony wchodzi w zastrzeżenie: bez niego Operator dostawałby
-			// wykaz wad publikacji dwudziestostronicowej bez wskazania, której
-			// strony dotyczą.
+			// Numer strony wchodzi w zastrzeżenie, aby wykaz wad wielostronicowej
+			// publikacji je wskazywał.
 			for numerZastrzezenia := range zastrzezeniaStrony {
 				zastrzezeniaStrony[numerZastrzezenia].Page = &numerStrony
 			}
@@ -712,9 +679,8 @@ func (a *adapterDesignu) zlozWydaniePublikacjiDesignu(ctx context.Context,
 		if err != nil {
 			return shared.DesignPrintExportResponse{}, err
 		}
-		// Strona bez bajtów wychodzi jako CZYSTA kartka o wymiarach szablonu, a nie
-		// jako odmowa: publikacja ma strony celowo puste (wakat, strona redakcyjna),
-		// a kontrola przeddrukowa powiedziała już wyżej, że warstw tam nie ma.
+		// Strona bez bajtów wychodzi jako czysta kartka szablonu, nie jako
+		// odmowa: strony bywają celowo puste.
 		obszar := shared.DesignBoardRegion{Width: szablon.Szerokosc, Height: szablon.Wysokosc}
 		if len(kafle) > 0 {
 			obszar = obszarWyrysuDesignu(kafle, &obszar)
@@ -758,13 +724,10 @@ func (a *adapterDesignu) zlozWydaniePublikacjiDesignu(ctx context.Context,
 	}, nil
 }
 
-// uszeregujStronyPublikacjiDesignu ustawia strony w kolejności wydania.
-//
-// Kolejność wskazana wprost (`pageOrder`) bije wszystko: Operator, który podał
-// numery, chce tej kolejności. Brak wskazania bierze kolejność numerów strony.
-// Oprawa zeszytowa wymaga liczby stron podzielnej przez cztery — arkusz zgięty
-// na pół daje cztery strony, więc publikacja o dwudziestu dwóch stronach nie da
-// się w ten sposób zszyć i jest to ODMOWA, a nie ciche dołożenie dwóch wakatów.
+// uszeregujStronyPublikacjiDesignu ustawia strony w kolejności wydania:
+// kolejność wskazana wprost bije kolejność numerów strony, a oprawa
+// zeszytowa odmawia publikacji, której liczba stron nie dzieli się przez
+// cztery.
 func uszeregujStronyPublikacjiDesignu(strony []dane.StronaSzablonuMaterialuDesignu,
 	kolejnosc []int, oprawa shared.DesignPrintBinding) (
 	[]dane.StronaSzablonuMaterialuDesignu, error) {
@@ -800,9 +763,8 @@ func uszeregujStronyPublikacjiDesignu(strony []dane.StronaSzablonuMaterialuDesig
 		uzyte[numer] = true
 		uszeregowane = append(uszeregowane, strona)
 	}
-	// Strona pominięta w kolejności NIE wchodzi do wydania i to jest wybór
-	// Operatora — ale liczba stron w odpowiedzi (`pageCount`) mówi wtedy prawdę
-	// o pliku, więc pominięcie nie przechodzi w ciszy.
+	// Strona pominięta w kolejności nie wchodzi do wydania; liczba stron w
+	// odpowiedzi mówi prawdę o pliku.
 	return uszeregowane, nil
 }
 
@@ -869,12 +831,9 @@ func (a *adapterDesignu) zlozWydanieDrukarskieDesignu(ctx context.Context,
 	return bajty, typTresci, nazwa, kompozycja.Okno, len(strony), nil
 }
 
-// stronyWydaniaDrukarskiegoDesignu wyrysowuje strony wydania w rozdzielczości
-// profilu.
-//
-// Kompozycja daje jedną stronę. Wielostronicowość wchodzi przez szablon materiału
-// (`adapter_modul_design_szablony_materialu.go`) i tam ma swoją drogę — tutaj
-// kompozycja jest arkuszem.
+// stronyWydaniaDrukarskiegoDesignu wyrysowuje strony wydania w
+// rozdzielczości profilu: kompozycja daje zawsze jedną stronę, a
+// wielostronicowość obsługuje osobna droga przez szablon materiału.
 func (a *adapterDesignu) stronyWydaniaDrukarskiegoDesignu(ctx context.Context,
 	kompozycja dane.KompozycjaDesignu, ramka *string,
 	profil shared.DesignPrintProfile) ([]image.Image, error) {
@@ -914,8 +873,8 @@ func (a *adapterDesignu) stronyWydaniaDrukarskiegoDesignu(ctx context.Context,
 			X: x, Y: y, Width: wiersz.Szerokosc, Height: wiersz.Wysokosc,
 		}
 	}
-	// Spad rozszerza kadr: materiał ze spadem ma wychodzić poza krawędź, a
-	// wydanie musi ten nadmiar unieść.
+	// Spad rozszerza kadr, bo materiał ze spadem wychodzi poza krawędź i
+	// wydanie musi go unieść.
 	spad := spadProfilu(profil)
 	if spad > 0 {
 		obszar = shared.DesignBoardRegion{
@@ -924,8 +883,8 @@ func (a *adapterDesignu) stronyWydaniaDrukarskiegoDesignu(ctx context.Context,
 		}
 	}
 
-	// Jednostki kompozycji to milimetry (nagłówek pliku), więc skala z milimetrów
-	// na piksele jest rozdzielczością profilu.
+	// Jednostki kompozycji są milimetrami, więc skala z milimetrów na piksele
+	// to rozdzielczość profilu.
 	rozdzielczosc := rozdzielczoscProfilu(profil)
 	skala := float64(rozdzielczosc) / milimetryNaCal
 	if pikseli := obszar.Width * skala * obszar.Height * skala; pikseli > granicaPikseliWydaniaDesignu {
@@ -937,7 +896,9 @@ func (a *adapterDesignu) stronyWydaniaDrukarskiegoDesignu(ctx context.Context,
 	return []image.Image{zlozWyrysRastrowyDesignu(kafle, obszar, skala)}, nil
 }
 
-// zakodujWydanieDrukarskieDesignu składa bajty wydania z gotowych stron.
+// zakodujWydanieDrukarskieDesignu składa bajty wydania z gotowych stron w
+// formacie pdf, tiff albo eps, dobierając koder właściwy dla wskazanego
+// formatu wydania.
 func zakodujWydanieDrukarskieDesignu(strony []image.Image,
 	format string) ([]byte, string, error) {
 
@@ -948,9 +909,8 @@ func zakodujWydanieDrukarskieDesignu(strony []image.Image,
 	case "pdf":
 		return zakodujDokumentWielostronicowyDesignu(strony)
 	case "tiff":
-		// TIFF niesie jedną stronę: format wielostronicowy TIFF istnieje, ale
-		// koder biblioteki go nie zapisuje, a wydanie pierwszej strony pod nazwą
-		// całości byłoby cichą utratą reszty.
+		// Koder TIFF biblioteki zapisuje jedną stronę — wydanie
+		// wielostronicowe w TIFF jest odmową.
 		if len(strony) > 1 {
 			return nil, "", fmt.Errorf(
 				"wydanie ma %d stron, a koder tiff biblioteki wkompilowanej zapisuje jedną — "+
@@ -977,11 +937,9 @@ func zakodujWydanieDrukarskieDesignu(strony []image.Image,
 }
 
 // PodzielMaterialWielkoformatowy dzieli materiał na kafle — obsługuje
-// `design.largeformat.tile`.
-//
-// Kafle są ZASOBAMI w magazynie, nie zapowiedzią: każdy niesie własne bajty,
-// bo drukarnia wielkoformatowa dostaje pliki, nie wykaz prostokątów. Zakładka na
-// sklejenie wchodzi w wymiar kafla, więc sąsiednie kafle mają wspólny pas obrazu.
+// komendę design.largeformat.tile. Każdy kafel jest osobnym zasobem w
+// magazynie z własnymi bajtami, a zakładka na sklejenie wchodzi w jego
+// wymiar.
 func (a *adapterDesignu) PodzielMaterialWielkoformatowy(ctx context.Context,
 	z shared.DesignLargeformatTileRequest) (shared.DesignLargeformatTileResponse, error) {
 
@@ -1011,9 +969,8 @@ func (a *adapterDesignu) PodzielMaterialWielkoformatowy(ctx context.Context,
 	}
 	granice := obraz.Bounds()
 
-	// Rozmiar docelowy całości: wskazany żądaniem albo wzięty z pikseli materiału
-	// przy rozdzielczości drukarskiej. Bez jednego i drugiego nie da się
-	// powiedzieć, ile kafli wyjdzie.
+	// Rozmiar docelowy: wskazany żądaniem albo wzięty z pikseli materiału
+	// przy rozdzielczości drukarskiej.
 	docelowaSzerokosc := float64(granice.Dx()) / float64(rozdzielczoscDrukuDomyslna) * milimetryNaCal
 	docelowaWysokosc := float64(granice.Dy()) / float64(rozdzielczoscDrukuDomyslna) * milimetryNaCal
 	if z.TargetWidthMm != nil && *z.TargetWidthMm > 0 {
@@ -1042,9 +999,8 @@ func (a *adapterDesignu) PodzielMaterialWielkoformatowy(ctx context.Context,
 			kolumn*wierszy, granicaKafliDesignu))
 	}
 
-	// Rozdzielczość skuteczna: piksele materiału rozłożone na rozmiar docelowy.
-	// To POMIAR, a nie życzenie — baner z obrazka 800 px ma w sześciu metrach
-	// trzy dpi i Operator ma to wiedzieć.
+	// Rozdzielczość skuteczna to piksele materiału rozłożone na rozmiar
+	// docelowy — rzeczywisty pomiar.
 	skuteczna := int(float64(granice.Dx()) / docelowaSzerokosc * milimetryNaCal)
 	// Piksele na milimetr materiału źródłowego — tym przelicza się granice kafla
 	// na wycinek obrazu.
@@ -1106,12 +1062,9 @@ func (a *adapterDesignu) PodzielMaterialWielkoformatowy(ctx context.Context,
 	}, nil
 }
 
-// narysujZnacznikiSklejeniaDesignu nakłada na kafel linie pokazujące, którędy
-// biegnie zakładka.
-//
-// Znaczniki są rysowane na obrazie kafla, nie dokładane osobnym plikiem: kafel
-// idzie do drukarki jako jeden plik i to na nim monter musi widzieć, gdzie
-// nakłada sąsiada.
+// narysujZnacznikiSklejeniaDesignu nakłada na kafel linie pokazujące
+// przebieg zakładki: znaczniki są rysowane na obrazie kafla, nie dokładane
+// osobnym plikiem, bo kafel idzie do drukarki jako jeden plik.
 func narysujZnacznikiSklejeniaDesignu(plotno *image.RGBA, zakladkaX, zakladkaY float64,
 	lewa, gora, prawa, dol bool) {
 
@@ -1138,10 +1091,8 @@ func narysujZnacznikiSklejeniaDesignu(plotno *image.RGBA, zakladkaX, zakladkaY f
 }
 
 // zakodujDokumentWielostronicowyDesignu składa dokument PDF z wielu stron
-// biblioteką `pdfcpu` — tą samą, którą pracuje warsztat dokumentu modułu Studio.
-//
-// Strony jadą jako strumienie PNG w pamięci, w kolejności wykazu. Plik pośredni
-// byłby trzecim miejscem, w którym ta sama treść żyje.
+// biblioteką pdfcpu, tą samą, którą pracuje warsztat dokumentu modułu
+// Studio: strony jadą jako strumienie PNG w pamięci, bez pliku pośredniego.
 func zakodujDokumentWielostronicowyDesignu(strony []image.Image) ([]byte, string, error) {
 	zrodla := make([]bytes.Reader, 0, len(strony))
 	for _, strona := range strony {
@@ -1162,7 +1113,9 @@ func zakodujDokumentWielostronicowyDesignu(strony []image.Image) ([]byte, string
 	return dokument.Bytes(), "application/pdf", nil
 }
 
-// bladNieznanegoProfiluDrukuDesignu nazywa profil, którego rdzeń nie zna.
+// bladNieznanegoProfiluDrukuDesignu nazywa profil, którego rdzeń nie zna, w
+// odpowiedzi na wskazanie identyfikatora profilu nieobecnego w
+// repozytorium.
 func bladNieznanegoProfiluDrukuDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("profilu druku " + kod + " nie ma w tym rdzeniu")

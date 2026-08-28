@@ -15,12 +15,14 @@ const (
 	WarstwaEkspertyza  = "ekspertyza"
 )
 
-// Tryby podania nakładki programowi `claude`.
+// Tryby podania nakładki programowi `claude` — dopisanie do promptu własnego
+// programu albo jego pełne zastąpienie.
 const (
 	// TrybDopisz dokłada nakładkę do promptu własnego programu
 	// (--append-system-prompt). Narzędzia i zachowanie powłoki zostają.
 	TrybDopisz = "dopisz"
-	// TrybZastap podmienia prompt w całości (--system-prompt).
+	// TrybZastap podmienia prompt programu w całości, przełącznikiem
+	// --system-prompt, tracąc prompt oryginalny.
 	TrybZastap = "zastap"
 )
 
@@ -39,10 +41,10 @@ type Warstwa struct {
 	Tresc string
 }
 
-// Nakladka jest złożeniem warstw w jeden prompt systemowy.
+// Nakladka jest złożeniem warstw promptu systemowego w jeden gotowy do
+// podania programowi prompt tekstowy.
 type Nakladka struct {
-	// Tryb rozstrzyga, czy nakładka dopisuje się do promptu programu,
-	// czy go zastępuje. Pusty tryb znaczy TrybDopisz.
+	// Tryb rozstrzyga, czy nakładka dopisuje się do promptu, czy go zastępuje.
 	Tryb string
 	// Warstwy w dowolnej kolejności podania; Prompt układa je wg krytyczności.
 	Warstwy []Warstwa
@@ -90,7 +92,8 @@ func (n Nakladka) Prompt() string {
 	return strings.Join(czesci, "\n\n")
 }
 
-// NazwyWarstw zwraca wykaz nazw w kolejności złożenia — do prowenancji.
+// NazwyWarstw zwraca wykaz nazw warstw nakładki w kolejności ich złożenia,
+// przeznaczony do prowenancji.
 func (n Nakladka) NazwyWarstw() []string {
 	uporzadkowane := n.Uporzadkowane()
 	nazwy := make([]string, 0, len(uporzadkowane))

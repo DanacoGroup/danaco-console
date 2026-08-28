@@ -11,31 +11,10 @@ import type { StanDebaty } from './stan-debaty';
 import type { StanTresci } from './stany-okna';
 import type { GlosNaZywo, StrumienWypowiedzi } from './strumien-wypowiedzi';
 
-/**
- * Widok panelu debaty — głosy wielu modeli jeden pod drugim w wąskiej kolumnie.
- *
- * Panel stoi w stosie paneli pomocniczych, węższym niż okno operacyjne modułu.
- * Stąd nagłówek gęsty (wiersz o turze, wiersz o składzie), tożsamość przy każdym
- * głosie w całości oraz rozróżnienie sąsiadów wstęgą w wariancie motywu
- * (`data-rola-mowcy`), a nie własną paletą modułu.
- *
- * Tożsamość idzie po `participantId`, nie po `channelId`: kontrakt przy
- * `roundtable.model.add` dopuszcza dwa wystąpienia tego samego kanału pod
- * odrębnymi tożsamościami, a wykaz po kanale podpisałby zdania cudzą nazwą.
- *
- * Głos ma trzy stany i każdy dostaje inne zdanie: nie zabrany, rosnący na żywo,
- * domknięty. Wypowiedź utrwalona przez rdzeń (`RoundtableStatement`) i wypowiedź
- * rosnąca (`stream.chunk`) to ta sama treść w dwóch chwilach, więc panel pokazuje
- * świeższą z nich i mówi, którą pokazuje.
- *
- * Widok nie woła rdzenia, nie subskrybuje niczego i nie trzyma stanu — stan
- * debaty, gromadzenie strumienia i nośnik treści bierze parametrem.
- */
-
-/** Warianty wstęgi przypisywane po kolejności głosu; dalsi dostają wariant wspólny. */
+/** Widok panelu debaty — głosy wielu modeli jeden pod drugim: warianty wstęgi przypisywane po kolejności głosu, dalsi dostają wariant wspólny. */
 const ROLE_MOWCOW = ['pierwszy', 'drugi', 'trzeci'] as const;
 
-/** Rysuje cały panel: nagłówek tury, głosy uczestników, głosy nieprzypisane. */
+/** Rysuje cały panel: nagłówek tury, głosy uczestników, głosy nieprzypisane, albo stan pusty, gdy panel niczego nie widział. */
 export function rysujPanelDebaty(
   stan: StanDebaty,
   strumien: StrumienWypowiedzi,
@@ -97,7 +76,7 @@ function naglowekTury(stan: StanDebaty, ilu: number): HTMLElement {
   return element;
 }
 
-/** Głos jednego uczestnika składu — tożsamość, stan głosu, treść. */
+/** Głos jednego uczestnika składu — tożsamość, stan głosu, treść rosnąca albo utrwalona, ze zdaniem o braku słów. */
 function glosUczestnika(
   uczestnik: RoundtableParticipant,
   numer: number,
@@ -127,11 +106,8 @@ function glosUczestnika(
 }
 
 /**
- * Wypowiedź mówcy spoza składu — moderator albo uczestnik, o którym panel nie
- * wie. Stała moderatora i zdanie o mówcy nieznanym idą z `czytelnosc-glosow.ts`:
- * uczestnik nieznany nie może dostać podpisu moderatora, bo panel otwarty
- * w trakcie debaty nie zna wszystkich tożsamości — odczytu składu
- * (`roundtable.model.list`) jeszcze nie wywołuje.
+ * Wypowiedź mówcy spoza składu — moderator albo uczestnik, o którym panel jeszcze nie wie
+ * z odczytu składu.
  */
 function glosSpozaSkladu(wypowiedz: RoundtableStatement, stan: StanDebaty): HTMLElement {
   const moderator = wypowiedz.participantId === PARTICIPANT_ID_MODERATORA;
@@ -146,12 +122,8 @@ function glosSpozaSkladu(wypowiedz: RoundtableStatement, stan: StanDebaty): HTML
 }
 
 /**
- * Głos, którego nie dało się przypisać — pokazany, nie porzucony.
- *
- * `stream.chunk` niesie `messageId`, a nie `participantId`, więc fragment
- * o identyfikatorze nieznanym ani składowi, ani wykazowi wypowiedzi tury jest
- * treścią bez ustalonego mówcy. Panel mówi to wprost i pokazuje surowy
- * identyfikator strumienia.
+ * Głos, którego nie dało się przypisać — pokazany, nie porzucony, pod surowym identyfikatorem
+ * strumienia.
  */
 function glosNieprzypisany(identyfikator: string, glos: GlosNaZywo): HTMLElement {
   const element = pozycja('nieznany');
@@ -168,7 +140,7 @@ function glosNieprzypisany(identyfikator: string, glos: GlosNaZywo): HTMLElement
   return element;
 }
 
-/** Wypowiedzi, których mówca nie stoi w składzie znanym panelowi. */
+/** Wypowiedzi, których mówca nie stoi w składzie znanym panelowi — moderator albo uczestnik jeszcze nieznany. */
 function wypowiedziSpozaSkladu(
   wypowiedzi: readonly RoundtableStatement[],
   uczestnicy: readonly RoundtableParticipant[],
@@ -177,7 +149,7 @@ function wypowiedziSpozaSkladu(
   return wypowiedzi.filter((wypowiedz) => !znani.has(wypowiedz.participantId) && wypowiedz.content !== '');
 }
 
-/** Zdanie stanu pustego — rozdziela brak okna od braku debaty. */
+/** Zdanie stanu pustego — rozdziela brak okna od braku debaty, nazywając wprost, czego panelowi brakuje. */
 function zdaniePustego(stan: StanDebaty): string {
   if (stan.okno() === '') {
     return (
@@ -193,7 +165,7 @@ function zdaniePustego(stan: StanDebaty): string {
   );
 }
 
-/** Pozycja wykazu głosów wraz z wariantem wstęgi. */
+/** Pozycja wykazu głosów wraz z wariantem wstęgi, wspólnym elementem listy dla trzech rodzajów mówców debaty. */
 function pozycja(rola: string): HTMLElement {
   const element = document.createElement('li');
   element.className = 'dr-glos';

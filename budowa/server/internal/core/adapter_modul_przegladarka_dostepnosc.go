@@ -1,40 +1,6 @@
-// Odpowiedzialność pliku: audyt dostępności bieżącej strony okna —
-// `browser.accessibility.audit`.
-//
-// ── Czwarta sonda strony uruchomionej ────────────────────────────────────────
-// Moduł czyta stronę żywą trzema sondami: drzewem elementów
-// (`browser.dom.inspect`), rejestrem żądań (`browser.network.har`) i konsolą
-// (`browser.console.read`). Audyt dostępności jest czwartą i pyta o to samo, co
-// tamte trzy — o stronę PO zbudowaniu przez skrypty, nie o jej źródło. Reguła
-// dostępności orzeka o etykiecie kontrolki wstawionej skryptem tak samo jak
-// o etykiecie wpisanej w źródle; audyt czytający sam HTML odpowiedziałby
-// o dokumencie, którego Operator nigdy nie ogląda.
-//
-// Adres bierze się z ostatniej migawki okna — tak samo jak w trzech sondach
-// starszych. Kontrakt nie niesie w tym żądaniu pola adresu, bo pyta o bieżącą
-// stronę okna, a bieżącą stroną okna jest to, dokąd okno ostatnio przeszło.
-//
-// ── Czym jest badane, skoro rdzeń ma własny silnik ───────────────────────────
-// Reguły WCAG są cudzą wiedzą i rdzeń jej nie przepisuje: między normą a jej
-// sprawdzeniem stoją setki reguł, które ktoś utrzymuje wraz z kolejnymi
-// wydaniami normy. Dlatego audyt idzie programem (`pa11y`), a nie własnym
-// obchodem drzewa. Program dostaje TĘ SAMĄ przeglądarkę, którą rdzeń już
-// deklaruje dla sond starszych (`narzedzieChromium`) — nie własną kopię
-// pobieraną z sieci przy pierwszym uruchomieniu.
-//
-// ── Zero naruszeń jest wynikiem dopiero po potwierdzeniu pomiaru ─────────────
-// Program audytujący nie mówi, czy strona się wczytała: dokument błędu 404
-// bywa poprawny wobec normy i wychodzi z audytu jako pusty wykaz naruszeń.
-// Odpowiedź „zero naruszeń” dla strony, której pod tym adresem nie ma, byłaby
-// brakiem pomiaru podanym jako pomiar — i to najgorszą jego postacią, bo
-// wygląda dobrze i nie wzywa nikogo do sprawdzenia. Dlatego przed audytem
-// rdzeń sięga po stronę własną drogą modułu (`pobierzStrone`), która orzeka
-// o stanie odpowiedzi i o tym, czy zasób jest w ogóle stroną. Odmowa stąd
-// nazywa, czego nie zmierzono, zamiast podawać zero.
-//
-// Drugie potwierdzenie jest po stronie odpowiedzi programu: pusty wykaz jest
-// wynikiem tylko wtedy, gdy program oddał tablicę JSON. Wyjście, które tablicą
-// nie jest, znaczy audyt nieodbyty i wraca odmową.
+// Adapter obsługuje browser.accessibility.audit: potwierdza dostępność strony,
+// uruchamia program audytu na przeglądarce silnika i zwraca naruszenia z liczbami
+// wag oraz wersją programu.
 package core
 
 import (
@@ -52,9 +18,8 @@ import (
 )
 
 // narzedziePa11y opisuje program audytu dostępności. Deklaracja stoi przy
-// miejscu użycia, tak jak Pandoc przy dokumentach i ffmpeg przy nagraniach;
-// wykaz zależności (`zaleznosci_zewnetrzne.go`) odwołuje się do niej, zamiast
-// powtarzać nazwę po raz drugi.
+// miejscu użycia; wykaz zależności odwołuje się do niej, zamiast powtarzać
+// nazwę programu.
 var narzedziePa11y = zewnetrzne.Narzedzie{
 	Nazwa: "Pa11y", Program: "pa11y", Pakiet: "npm i -g pa11y"}
 
@@ -68,14 +33,14 @@ const (
 	// połączenie klienta i proces przeglądarki, a wynik, na który nikt już nie
 	// czeka, nie jest wynikiem.
 	najdluzszyAudytDostepnosci = 10 * time.Minute
-	// progZgloszenPa11y zdejmuje z programu prawo kończenia się kodem
-	// niezerowym z powodu ZNALEZIONYCH zgłoszeń. Program odróżnia „znalazłem
-	// naruszenia" (kod 2) od „nie dałem rady zbadać" (kod 1); rdzeń potrzebuje
-	// wyłącznie tego drugiego jako niepowodzenia, bo pierwsze JEST wynikiem.
+	// progZgloszenPa11y zdejmuje z programu prawo kończenia się kodem niezerowym
+	// z powodu znalezionych zgłoszeń; rdzeń traktuje jako niepowodzenie wyłącznie
+	// niepowodzenie badania.
 	progZgloszenPa11y = "1000000"
 )
 
-// ZbadajDostepnosc obsługuje `browser.accessibility.audit`.
+// ZbadajDostepnosc obsługuje browser.accessibility.audit: potwierdza dostępność
+// strony, uruchamia program audytu i zwraca wykaz zgłoszeń wraz z licznikami wag.
 func (a *adapterPrzegladarki) ZbadajDostepnosc(ctx context.Context,
 	z shared.BrowserAccessibilityAuditRequest) (shared.BrowserAccessibilityAuditResponse, error) {
 
@@ -95,8 +60,8 @@ func (a *adapterPrzegladarki) ZbadajDostepnosc(ctx context.Context,
 					"składaniu rdzenia"))
 	}
 
-	// Potwierdzenie pomiaru PRZED audytem: zero naruszeń na stronie, której pod
-	// tym adresem nie ma, jest brakiem pomiaru podanym jako pomiar.
+	// Potwierdzenie pomiaru: pusty wykaz strony nieosiągalnej byłby brakiem
+	// pomiaru podanym za pomiar.
 	if _, err := pobierzStrone(ctx, migawka.Url); err != nil {
 		kod, zdanie := kodOdmowyPobrania(err)
 		return shared.BrowserAccessibilityAuditResponse{}, protocol.JakoError(protocol.NowyBlad(kod,
@@ -167,14 +132,8 @@ func (a *adapterPrzegladarki) ZbadajDostepnosc(ctx context.Context,
 	}, nil
 }
 
-// wolajAudytDostepnosci uruchamia program audytu i oddaje jego surowy wynik.
-//
-// Program dostaje przeglądarkę WSKAZANĄ, nie szukaną: jego własna warstwa
-// sterowania przeglądarką pobiera wydanie Chrome do katalogu pamięci podręcznej
-// użytkownika, a rdzeń takiego pobrania nie robi i nie ma prawa go wymagać od
-// wdrożenia. Wskazanie idzie plikiem nastaw, bo jedyna droga do procesu
-// (`zewnetrzne.Wolaj`) nie przekazuje zmiennych środowiska — i ma nie
-// przekazywać, bo binarium arsenału nie ma powodu widzieć zmiennych rdzenia.
+// wolajAudytDostepnosci uruchamia program audytu na przeglądarce wskazanej
+// nastawami i oddaje jego surowy wynik wraz z ewentualnym błędem uruchomienia.
 func (a *adapterPrzegladarki) wolajAudytDostepnosci(ctx context.Context, adres, norma string,
 	z shared.BrowserAccessibilityAuditRequest) (zewnetrzne.Wynik, error) {
 
@@ -223,11 +182,11 @@ func (a *adapterPrzegladarki) wolajAudytDostepnosci(ctx context.Context, adres, 
 		"--config", plikNastaw,
 		"--reporter", "json",
 		"--standard", strings.ToUpper(norma),
-		// Próg zdejmuje kod niezerowy za ZNALEZIONE zgłoszenia; „nie dałem rady
-		// zbadać" nadal kończy program kodem błędu i dojdzie tu jako odmowa.
+		// Próg zdejmuje kod niezerowy za znalezione zgłoszenia; niepowodzenie
+		// badania kończy program błędem.
 		"--threshold", progZgloszenPa11y,
 		// Granica programu jest krótsza od granicy arsenału, żeby przekroczenie
-		// nazwał najpierw ten, kto wie, co robił — a nie zabicie drzewa procesów.
+		// nazwał najpierw program.
 		"--timeout", strconv.FormatInt(granica.Milliseconds(), 10),
 	}
 	if z.IncludeWarnings != nil && *z.IncludeWarnings {
@@ -248,17 +207,12 @@ func (a *adapterPrzegladarki) wolajAudytDostepnosci(ctx context.Context, adres, 
 }
 
 // granicaZapasuAudytu jest zapasem, o który granica arsenału przewyższa granicę
-// podaną programowi. Bez zapasu obie granice mijałyby w tej samej chwili
-// i przekroczenie nazywałoby się raz przekroczeniem programu, raz zabiciem
-// drzewa procesów — zależnie od tego, kto zdążył pierwszy.
+// podaną programowi, żeby przekroczenie nazywał zawsze program, a nie arsenał.
 const granicaZapasuAudytu = 30 * time.Second
 
-// normaAudytu rozstrzyga normę audytu i odmawia wartości spoza wyliczenia.
-//
-// Odmowa jest tu potrzebna mimo bramy kontraktu: brama sprawdza wartości
-// wyliczeń wyłącznie przy komendach wystawionych jako narzędzia modelu
-// (`brama_kontraktu.go`), a ta do nich nie należy. Wartość nierozpoznana
-// przekazana programowi wróciłaby jego własnym komunikatem o nieznanej normie.
+// normaAudytu rozstrzyga normę audytu i odmawia wartości spoza wyliczenia
+// kontraktu, ponieważ ta droga nie przechodzi przez bramę sprawdzającą
+// wyliczenia komend.
 func normaAudytu(wskazanie *shared.BrowserAccessibilityStandard) (string, error) {
 	if wskazanie == nil || strings.TrimSpace(string(*wskazanie)) == "" {
 		return shared.BrowserAccessibilityStandardWcag2aa, nil
@@ -288,9 +242,7 @@ func poziomDostepnosci(nazwa string) string {
 }
 
 // wersjaProgramuAudytu pyta program o jego własną wersję. Odpowiedź wchodzi do
-// wyniku, bo wykaz naruszeń jest orzeczeniem zestawu reguł konkretnego wydania —
-// dwa wydania programu potrafią policzyć tę samą stronę inaczej, a wynik bez
-// wersji nie daje się porównać z wynikiem sprzed miesiąca.
+// wyniku, bo wykaz naruszeń zależy od wydania reguł programu audytującego.
 func wersjaProgramuAudytu(ctx context.Context, silnik *silnikPrzegladarki) string {
 	if silnik == nil || silnik.uruchamiacz == nil {
 		return ""

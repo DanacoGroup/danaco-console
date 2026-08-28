@@ -1,17 +1,7 @@
 import { KnownModuleIds, type Environment } from '../../../shared/contract';
 import type { NazwaIkony } from '../ikony/ikony';
 
-/**
- * Cztery środowiska produktu jako pozycje strefy pierwszej strony głównej.
- * Wyłącznie treść kart — bez elementów i bez stylu.
- *
- * Kody pochodzą z kontraktu: `KnownModuleIds` w `shared/contract.ts` odpowiada
- * kolumnie `srodowisko.kod`. Opisy trzymane są w rekordzie kluczowanym tym
- * typem, więc zmiana kodu w `shared/contract.json` przerywa kompilację klienta
- * zamiast dawać cichą lukę.
- */
-
-/** Kod środowiska — typ wywiedziony z kontraktu, nie z literału. */
+/** Cztery środowiska produktu jako pozycje strefy pierwszej strony głównej niosą wyłącznie treść kart, a ich kody pochodzą z kontraktu, żeby zmiana w kontrakcie przerywała kompilację klienta. */
 export type KodSrodowiska = (typeof KnownModuleIds)[number];
 
 export interface PozycjaSrodowiska {
@@ -19,27 +9,18 @@ export interface PozycjaSrodowiska {
   kod: KodSrodowiska;
   /** Nazwa kanoniczna widoczna na karcie. */
   nazwa: string;
-  /**
-   * Motto środowiska — zasięg pracy karty: liczba modułów bocznej nawigacji
-   * i charakter środowiska, jak na makiecie Centrum dowodzenia.
-   */
+  /** Motto środowiska niesie zasięg pracy karty: liczbę modułów bocznej nawigacji i charakter środowiska. */
   motto: string;
-  /**
-   * Jednozdaniowy opis trybu pracy — zdanie z tabeli opracowania „Kolejność
-   * kart i opis trybu pracy na karcie" (rozdz. 3.2).
-   */
+  /** Jednozdaniowy opis trybu pracy widoczny na karcie środowiska. */
   opis: string;
   /** Godło środowiska z zestawu ikon. */
   godlo: NazwaIkony;
 }
 
-/** Opis pozycji bez kodu — kod dokłada wykaz z kontraktu. */
+/** Opis pozycji bez kodu; kod dokłada wykaz z kontraktu, żeby jeden słownik nie powielał dwóch źródeł prawdy. */
 type TrescSrodowiska = Omit<PozycjaSrodowiska, 'kod'>;
 
-/**
- * Rekord wymusza komplet: brak jednego środowiska albo kod spoza kontraktu
- * jest błędem kompilacji, nie brakiem karty na ekranie.
- */
+/** Rekord wymusza komplet: brak jednego środowiska albo kod spoza kontraktu jest błędem kompilacji, nie brakiem karty. */
 const TRESCI: Record<KodSrodowiska, TrescSrodowiska> = {
   talkin: {
     nazwa: 'TalkIn',
@@ -67,34 +48,20 @@ const TRESCI: Record<KodSrodowiska, TrescSrodowiska> = {
   },
 };
 
-/**
- * Treść kart widoczna, dopóki rdzeń nie odpowie.
- *
- * Wartość początkowa, nie źródło prawdy: środowiska mieszkają w bazie i oddaje
- * je komenda `environment.list`. Stała zostaje po to, by przed pierwszą
- * odpowiedzią zamiast pustego ekranu stały cztery karty.
- */
+/** Treść kart widoczna, dopóki rdzeń nie odpowie; wartość początkowa, nie źródło prawdy, bo środowiska mieszkają w bazie. */
 export const POZYCJE_SRODOWISK: readonly PozycjaSrodowiska[] = KnownModuleIds.map(
   (kod) => ({ kod, ...TRESCI[kod] }),
 );
 
-/** Czy kod środowiska należy do wykazu kontraktu. */
+/** Rozstrzyga, czy podany kod środowiska należy do zamkniętego wykazu kontraktu, zamiast wpaść w kod obcy. */
 export function kodZnany(kod: string): kod is KodSrodowiska {
   return (KnownModuleIds as readonly string[]).includes(kod);
 }
 
-/**
- * Środowisko rdzenia jako pozycja karty.
- *
- * Nazwa, motto i opis idą z rdzenia; godło pochodzi z tablicy miejscowej, bo
- * kolumna `srodowisko` go nie niesie. Środowisko o kodzie spoza kontraktu
- * zostaje na ekranie z godłem zastępczym — wykaz kontraktu jest informacyjny,
- * nie bramą.
- */
+/** Buduje pozycję karty ze środowiska rdzenia: nazwa, motto i opis idą z rdzenia, a godło pochodzi z tablicy miejscowej. */
 export function pozycjaZeSrodowiska(srodowisko: Environment): PozycjaSrodowiska {
   const tresc = kodZnany(srodowisko.code) ? TRESCI[srodowisko.code] : undefined;
-  // Kontrakt oznacza te pola jako nieobowiązkowe. Pusty napis i brak pola
-  // znaczą tu to samo, więc oba schodzą na treść z tablicy miejscowej.
+  // Kontrakt oznacza te pola jako nieobowiązkowe; pusty napis i brak pola znaczą tu to samo.
   const nazwa = srodowisko.name ?? '';
   const opis = srodowisko.description ?? '';
   const motto = srodowisko.motto ?? '';

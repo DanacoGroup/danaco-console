@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: dwie czynności Queue Managera na pozycji kolejki,
-// których nie ma repozytorium kolejek — zmiana priorytetu i skierowanie pozycji
-// do innej kolejki (pola `priority` i `targetQueueId` komendy
-// `automation.queue.action`).
-//
-// Nie jest to drugi silnik kolejek. Cykl życia zlecenia — stany, werdykt, bieg
-// naprawczy — prowadzi wyłącznie silnik z `core/kolejka_silnik.go` nad
-// repozytorium z `kolejki.go`. Tutaj leżą dwie operacje ułożenia pozycji: która
-// jest wcześniej i w której kolejce stoi. Żadna z nich nie zmienia stanu
-// pozycji ani nie posuwa jej naprzód.
-//
-// Zapis idzie przez ten sam dziennik akcji (`log_akcji_kolejki`), co reszta
-// ruchu pozycji, więc ślad zostaje w jednym miejscu.
+// Plik dokłada do modułu automatyk dwie czynności ułożenia pozycji kolejki:
+// zmianę priorytetu oraz skierowanie pozycji do innej kolejki, bez zmiany
+// stanu ani biegu naprawczego zlecenia.
 package dane
 
 import (

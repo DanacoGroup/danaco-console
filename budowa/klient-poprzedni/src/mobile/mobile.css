@@ -1,19 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — EKRAN INTERWENCJI Z TELEFONU (`mobile`, monitor)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy — wszystkie z żetonów motywu (`--dn-*`),
-   obudowa okna z `komponenty/rama-okna.ts`, przyciski z `komponenty/przycisk.css`.
-
-   Jeden wymiar jest tu własny: `--mb-cel-dotyku`. Motyw daje na
-   `(pointer: coarse)` 40 px (`motyw/wymiary.css`), a ten ekran potrzebuje
-   44 px. Próg podnosi się żetonem lokalnym o prefiksie modułu (jak `--dt-*`
-   Terminala), a nie wyjątkiem rozsypanym po regułach ani wpisem do słownika
-   `--dn-*`, bo podniesienie progu w całej powłoce należy do motywu.
-
-   Układ jednoręczny: jedna kolumna, karty pozycji u góry (czyta się je oczami),
-   arkusz dróg i pasek kwitu u dołu (dotyka się ich kciukiem). Nic nie zmniejsza
-   pisma poniżej `--dn-fs-sm` — treść ma być czytelna bez powiększania.
-   ============================================================================ */
+/* Arkusz opisuje ekran interwencji z telefonu, zbudowany jako jedna kolumna: kafelek stanu, karty pozycji, arkusz dróg i pasek kwitu. */
 
 .mb-okno {
   --mb-cel-dotyku: 44px;
@@ -24,15 +9,13 @@
   max-width: 100%;
 }
 
-/* Każdy cel dotknięcia mojego ekranu — przyciski ramy, arkusza i stopki. */
+/* Każdy cel dotknięcia tego ekranu obejmuje przyciski ramy okna, arkusza dróg i stopki, mierzone jednym wspólnym wymiarem. */
 .mb-cel {
   min-height: var(--mb-cel-dotyku, 44px);
   min-width: var(--mb-cel-dotyku, 44px);
 }
 
-/* ---------------------------------------------------------------------------
-   KAFELEK STANU PLATFORMY — jedyne miejsce okna wołające rodzinę `mobile.*`
-   --------------------------------------------------------------------------- */
+/* Kafelek stanu platformy jest jedynym miejscem okna wołającym rodzinę klas mobile, opisującą stan połączenia z telefonem. */
 .mb-platforma {
   margin: 0 0 var(--dn-od-3);
   padding: var(--dn-od-3);
@@ -56,9 +39,7 @@
   color: var(--dn-sukces-tekst);
 }
 
-/* ---------------------------------------------------------------------------
-   EKRAN — jedna kolumna, od stanu przez wykaz do kwitu
-   --------------------------------------------------------------------------- */
+/* Ekran interwencji układa jedną kolumnę: od kafelka stanu, przez wykaz kart pozycji, po pasek kwitu na samym dole. */
 .mb-ekran {
   display: flex;
   flex-direction: column;
@@ -102,9 +83,7 @@
   gap: var(--dn-od-2);
 }
 
-/* ---------------------------------------------------------------------------
-   KARTA POZYCJI — cała karta jest celem pierwszego dotknięcia
-   --------------------------------------------------------------------------- */
+/* Karta pozycji jest w całości celem pierwszego dotknięcia, prowadzącym od wykazu wprost do arkusza dróg tej pozycji. */
 .mb-karta {
   display: flex;
   flex-direction: column;
@@ -131,9 +110,7 @@
 .mb-karta[data-rodzaj='proces-bledny'] { border-color: var(--dn-blad-obrys); }
 .mb-karta[data-rodzaj='petla-zatrzymana'] { border-color: var(--dn-ostrzezenie-obrys); }
 
-/* ---------------------------------------------------------------------------
-   ARKUSZ DRÓG — drugie dotknięcie; kontekst u góry, drogi w zasięgu kciuka
-   --------------------------------------------------------------------------- */
+/* Arkusz dróg przyjmuje drugie dotknięcie: kontekst pozycji stoi u góry, a drogi działania leżą w zasięgu kciuka na dole. */
 .mb-arkusz {
   display: flex;
   flex-direction: column;
@@ -185,7 +162,7 @@
   justify-content: center;
 }
 
-/* Zdanie na miejscu przycisku, którego nie ma — droga bez wywołania. */
+/* Zdanie stoi na miejscu przycisku, którego nie ma, gdy droga dla danej pozycji nie niesie żadnego wywołania rdzenia. */
 .mb-arkusz__brak,
 .mb-arkusz__wyjasnienie {
   margin: 0;
@@ -200,9 +177,7 @@
   font-size: var(--dn-fs-md);
 }
 
-/* ---------------------------------------------------------------------------
-   PASEK KWITU — pierwsze, co widać po ponownym otwarciu telefonu
-   --------------------------------------------------------------------------- */
+/* Pasek kwitu jest pierwszym elementem widocznym po ponownym otwarciu telefonu, podsumowującym ostatnio wykonaną drogę. */
 .mb-kwity {
   display: flex;
   flex-direction: column;

@@ -9,24 +9,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek okna pracy z dokumentem: czy dwie zmiany rdzenia NAPRAWDĘ coś robią.
-//
-// Szkody, które ten plik ma wykluczyć:
-//   1. przyjęcie wskazanych fragmentów propozycji, które podmienia treść CAŁĄ —
-//      Operator wybiera fragment drugi, a dostaje wszystko;
-//   2. zakres zmiany śledzonej liczony w bajtach — dokument polski ma litery
-//      dwubajtowe i decyzja rozcinałaby je w środku;
-//   3. nastawy suwaków i polecenie Operatora, które nie dojeżdżają do modelu —
-//      suwak przestawiałby wtedy pole bez skutku.
-//
-// Operacja kontekstowa jest tu mierzona OD KOŃCA DO KOŃCA, jednym przebiegiem
-// (`TestOperacjaKontekstowaOdKoncaDoKonca`). Do 17.08.2026 stało w tym miejscu
-// zdanie, że zmierzyć jej nie sposób, bo wymaga kanału modelu, którego uprząż
-// nie stawia — i było nieprawdą: uprząż niesie kanał `echo`, adapter bez sieci
-// wkompilowany w rdzeń, tym samym wpięciem, którym mierzy się prowenancja
-// i zajętość okna kontekstu. Droga „operacja → zmiana śledzona w dokumencie" nie
-// jest więc mierzona po częściach; części zostają obok jako sprawdziany rachunku.
-
 // TestPrzyjecieWskazanychFragmentowZmieniaTylkoJe jest sednem pola hunkIndexes:
 // fragment wskazany bierze się ze strony propozycji, a fragment pominięty
 // zostaje taki, jaki stoi w dokumencie.
@@ -42,8 +24,7 @@ func TestPrzyjecieWskazanychFragmentowZmieniaTylkoJe(t *testing.T) {
 		"Zakończenie bez zmian.",
 	}, "\n")
 
-	// Rachunek fragmentów jest ten sam, który widzi Operator w oknie — z niego
-	// bierze się numer, który potem wskazuje.
+	// Rachunek fragmentów jest ten sam, który widzi Operator w oknie.
 	fragmenty := policzFragmentyRoznicy(bazowa, docelowa)
 	var numerZmiany int
 	for _, fragment := range fragmenty {
@@ -63,8 +44,7 @@ func TestPrzyjecieWskazanychFragmentowZmieniaTylkoJe(t *testing.T) {
 		t.Errorf("przyjęcie jedynego fragmentu zmiany nie dało treści docelowej:\n%q", zlozona)
 	}
 
-	// Wykaz bez tego fragmentu ma zostawić treść bazową w całości — to jest
-	// właściwa miara „zmieniło się tylko wskazane".
+	// Wykaz bez tego fragmentu ma zostawić treść bazową w całości.
 	bezZmiany, err := zlozTrescZFragmentow(bazowa, docelowa, []int{fragmenty[0].Index})
 	if err != nil {
 		t.Fatalf("złożenie treści z fragmentu kontekstowego odmówiło: %v", err)
@@ -88,8 +68,7 @@ func TestZakresZmianySledzonejLiczySieWZnakach(t *testing.T) {
 	tresc := "Zażółć gęślą jaźń."
 	przed := "gęślą"
 	po := "gęślą jaźń"
-	// „gęślą" zaczyna się na siódmym ZNAKU treści; w bajtach byłby to znak
-	// dziewiąty, bo „ż" i „ó" są dwubajtowe.
+	// „gęślą" zaczyna się na siódmym znaku treści, nie na dziewiątym bajcie.
 	od := int64(strings.Count(string([]rune(tresc)[:7]), "") - 1)
 
 	zmiana := dane.ZmianaSledzona{
@@ -180,32 +159,16 @@ func wskaznikZakresuPracy(wartosc int) *int {
 	return &wartosc
 }
 
-// TestOperacjaKontekstowaOdKoncaDoKonca mierzy CAŁĄ drogę operacji: żądanie
+// TestOperacjaKontekstowaOdKoncaDoKonca mierzy całą drogę operacji: żądanie
 // okna, wywołanie kanału modelu, wpisanie wyniku w treść dokumentu, zmianę
 // śledzoną i wersję.
-//
-// ── Dlaczego jednym przebiegiem, a nie po częściach ─────────────────────────
-// Części tej drogi były mierzone osobno: złożenie polecenia dla modelu i rachunek
-// zakresu. Obie mogą być poprawne, a droga nadal zerwana — wynik modelu może nie
-// dojść do treści, zmiana śledzona może się nie odłożyć, wersja może nie powstać.
-// Kontrakt obiecuje, że po operacji kontekstowej w dokumencie STOI zmiana
-// oznaczona autorstwem modelu, i to jest twierdzenie o skutku, nie o rachunku.
-//
-// ── Czym jest tu kanał próbny ───────────────────────────────────────────────
-// Kanał `echo` odsyła treść zapytania i nie sięga do sieci ani do żadnego
-// programu — jest wkompilowany w rdzeń. Wynik operacji jest więc znany z góry:
-// jest nim polecenie złożone przez `trescOperacjiStudia`, a w nim wiersz
-// „Czynnosc: <pozycja rejestru>". Sprawdzian szuka właśnie jego, bo to jedyny
-// znak, który mógł przyjść WYŁĄCZNIE od modelu — treści dokumentu nie było
-// w nim ani jednego takiego wiersza.
 func TestOperacjaKontekstowaOdKoncaDoKonca(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	kanal := kanalEchoSprawdzianu(t, zmontowany, zycie, 8192)
 	sesja := zalozSesjeSprawdzianu(t, zmontowany, zycie)
 	okno := zalozOknoSprawdzianu(t, zmontowany, zycie, sesja, kanal)
 
-	// Dokument zakłada się w TYM oknie, bo operacja kontekstowa czyta kanał
-	// modelu z okna, w którego imieniu przyszło żądanie.
+	// Dokument zakłada się w tym oknie, którego kanał modelu czyta operacja.
 	var otwarcie shared.StudioDocumentOpenResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentOpen,
 		shared.StudioDocumentOpenRequest{WindowId: okno}, &otwarcie)
@@ -273,8 +236,7 @@ func TestOperacjaKontekstowaOdKoncaDoKonca(t *testing.T) {
 			continue
 		}
 		odModelu++
-		// Zakres liczy się w ZNAKACH i musi wskazywać miejsce wyniku w treści
-		// NOWEJ — inaczej decyzja o zmianie odtworzyłaby nie ten fragment.
+		// Zakres liczy się w znakach i wskazuje miejsce wyniku w treści nowej.
 		if zmiana.RangeEnd <= zmiana.RangeStart {
 			t.Errorf("zmiana %s ma zakres pusty albo odwrócony: %d–%d",
 				zmiana.Id, zmiana.RangeStart, zmiana.RangeEnd)
@@ -305,14 +267,9 @@ func TestOperacjaKontekstowaOdKoncaDoKonca(t *testing.T) {
 	}
 }
 
-// TestPorownanieBezStronWracaOdmowa pilnuje granicy, na której `studio.diff.compare`
-// meldował powodzenie kopertą pustą.
-//
-// Koperta pusta ze stanem `ok` mówi oknu „porównałem i nie ma czego pokazać",
-// a rdzeń nie porównał niczego: fragmenty różnicy potrzebują dwóch stron,
-// a wzorzec potrzebuje strony, po której ma szukać. Odmowa nazywająca brakujące
-// pole jest tu jedyną odpowiedzią prawdziwą — po pustej kopercie okno nie ma jak
-// odróżnić „wersje są zgodne" od „nie podałeś, co z czym porównać".
+// TestPorownanieBezStronWracaOdmowa pilnuje granicy, na której
+// `studio.diff.compare` meldował powodzenie kopertą pustą, gdy fragmentom
+// różnicy brakowało obu stron do porównania.
 func TestPorownanieBezStronWracaOdmowa(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	sesja := zalozSesjeSprawdzianu(t, zmontowany, zycie)
@@ -359,8 +316,7 @@ func TestPorownanieBezStronWracaOdmowa(t *testing.T) {
 		odmowaNazywa(t, blad, shared.ErrorCodeValidationFailed, "targetVersionId")
 	})
 
-	// Odmowa nie ma prawa objąć żądania, z którego da się coś policzyć —
-	// dwie wersje mają dać różnicę, a wzorzec przy nich trafienia.
+	// Odmowa nie obejmuje żądania, z którego da się policzyć różnicę i trafienia.
 	t.Run("dwie strony dają różnicę", func(t *testing.T) {
 		var porownanie shared.StudioDiffCompareResponse
 		wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDiffCompare,

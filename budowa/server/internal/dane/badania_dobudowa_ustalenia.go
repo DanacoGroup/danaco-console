@@ -1,7 +1,7 @@
 // Odpowiedzialność pliku: dobudowa obszaru Research po stronie danych — byty
-// krążące wokół USTALENIA: adnotacje lektury, klasyfikacja i kotwica ustalenia,
-// książka kodów i macierz, sprzeczności, weryfikacje, wątki oraz ślad
-// prowenancji. Kontrakt obszaru deklaruje `badania_dobudowa.go`.
+// krążące wokół ustalenia: adnotacje lektury, klasyfikacja i kotwica
+// ustalenia, książka kodów i macierz, sprzeczności, weryfikacje, wątki oraz
+// ślad prowenancji.
 package dane
 
 import (
@@ -24,7 +24,8 @@ type KotwicaBadania struct {
 	CzasMs   *int64
 }
 
-// AdnotacjaBadania to wiersz `adnotacja_badania`.
+// AdnotacjaBadania to wiersz `adnotacja_badania`, niosący cytat, komentarz,
+// kolor, kotwicę w źródle i kod ustalenia, do którego adnotacja należy.
 type AdnotacjaBadania struct {
 	Kod          string
 	ZrodloKod    string
@@ -49,7 +50,8 @@ type SzczegolyUstaleniaBadania struct {
 	Kotwica            KotwicaBadania
 }
 
-// KodBadania to wiersz `kod_badania` — pozycja książki kodów.
+// KodBadania to wiersz `kod_badania` — pozycja książki kodów, niosąca nazwę,
+// opis, kod nadrzędny w hierarchii i liczbę wystąpień wśród ustaleń.
 type KodBadania struct {
 	Kod         string
 	Okno        string
@@ -59,7 +61,8 @@ type KodBadania struct {
 	Wystapienia int
 }
 
-// KomorkaMacierzyBadania to jedno pole macierzy kod × źródło.
+// KomorkaMacierzyBadania to jedno pole macierzy kod × źródło, niosące liczbę
+// ustaleń tego kodu w tym źródle wraz z ich kodami.
 type KomorkaMacierzyBadania struct {
 	KodKodu       string
 	ZrodloKod     string
@@ -67,7 +70,8 @@ type KomorkaMacierzyBadania struct {
 	UstalenieKody []string
 }
 
-// SprzecznoscBadania to wiersz `sprzecznosc_badania` wraz z ustaleniami.
+// SprzecznoscBadania to wiersz `sprzecznosc_badania` wraz z ustaleniami,
+// niosący streszczenie rozbieżności, jej rozstrzygnięcie i uzasadnienie.
 type SprzecznoscBadania struct {
 	Kod                 string
 	Okno                string
@@ -79,7 +83,8 @@ type SprzecznoscBadania struct {
 	UstalenieKody       []string
 }
 
-// WatekBadania to wiersz `watek_ustalen_badania` wraz z ustaleniami wątku.
+// WatekBadania to wiersz `watek_ustalen_badania` wraz z ustaleniami wątku,
+// niosący nazwę i znamię, czy wątek powstał klastrowaniem samoczynnym.
 type WatekBadania struct {
 	Kod           string
 	Nazwa         string
@@ -87,7 +92,8 @@ type WatekBadania struct {
 	UstalenieKody []string
 }
 
-// WpisProwenancjiBadania to wiersz `prowenancja_badania`.
+// WpisProwenancjiBadania to wiersz `prowenancja_badania`, niosący czynność,
+// aktora, chwilę zdarzenia i wskazanie źródła, którego czynność dotyczyła.
 type WpisProwenancjiBadania struct {
 	UstalenieKod string
 	OCzasie      string
@@ -99,7 +105,8 @@ type WpisProwenancjiBadania struct {
 
 // ── Adnotacje lektury ──────────────────────────────────────────────────────
 
-// ZapiszAdnotacje zakłada adnotację albo nadpisuje zastaną o tym samym kodzie.
+// ZapiszAdnotacje zakłada adnotację albo nadpisuje zastaną o tym samym
+// kodzie, przyjmując rodzaj kotwicy „page", gdy wołający go nie poda.
 func (r *repozytoriumBadan) ZapiszAdnotacje(ctx context.Context,
 	a AdnotacjaBadania) (AdnotacjaBadania, error) {
 
@@ -145,7 +152,8 @@ const zapytanieAdnotacjiBadania = `SELECT a.identyfikator_zewnetrzny, z.identyfi
 	        a.ustalenie_kod, a.utworzono
 	   FROM adnotacja_badania a JOIN zrodlo_badania z ON z.id = a.zrodlo_id `
 
-// odczytajAdnotacjeBadania składa strukturę z jednego wiersza wyniku.
+// odczytajAdnotacjeBadania składa strukturę adnotacji wraz z kotwicą
+// z jednego wiersza wyniku zapytania `zapytanieAdnotacjiBadania`.
 func odczytajAdnotacjeBadania(wiersz skaner) (AdnotacjaBadania, error) {
 	var a AdnotacjaBadania
 	var cytat, komentarz, kolor, selektor, ustalenie sql.NullString
@@ -167,7 +175,8 @@ func odczytajAdnotacjeBadania(wiersz skaner) (AdnotacjaBadania, error) {
 	return a, nil
 }
 
-// Adnotacja oddaje jedną adnotację po kodzie.
+// Adnotacja oddaje jedną adnotację po kodzie zewnętrznym albo błąd
+// ErrBrakWiersza, gdy adnotacja o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) Adnotacja(ctx context.Context, kod string) (AdnotacjaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
 		zapytanieAdnotacjiBadania+`WHERE a.identyfikator_zewnetrzny = ?`)
@@ -247,7 +256,8 @@ func (r *repozytoriumBadan) UsunAdnotacje(ctx context.Context, kod string) error
 
 // ── Szczegóły ustalenia ────────────────────────────────────────────────────
 
-// UstawSzczegolyUstalenia nadpisuje cechy dobudowane ustalenia.
+// UstawSzczegolyUstalenia nadpisuje cechy dobudowane ustalenia; pole puste
+// albo zerowe zostaje bez zmiany, poza wymogiem potwierdzenia.
 func (r *repozytoriumBadan) UstawSzczegolyUstalenia(ctx context.Context, kod string,
 	s SzczegolyUstaleniaBadania) error {
 
@@ -274,7 +284,8 @@ func (r *repozytoriumBadan) UstawSzczegolyUstalenia(ctx context.Context, kod str
 		tekstDoKolumny(s.Kotwica.Selektor), liczbaDoKolumny(s.Kotwica.CzasMs), kod)
 }
 
-// SzczegolyUstaleniaBadania oddaje cechy dobudowane ustalenia.
+// SzczegolyUstaleniaBadania oddaje cechy dobudowane ustalenia migracją 150:
+// klasyfikację, wagę, notatkę roboczą, wymóg potwierdzenia i kotwicę.
 func (r *repozytoriumBadan) SzczegolyUstaleniaBadania(ctx context.Context, kod string) (SzczegolyUstaleniaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT rodzaj, waga, notatka, wymaga_potwierdzenia,
 	        adnotacja_kod, kotwica_rodzaj, kotwica_strona, kotwica_od, kotwica_do,
@@ -308,7 +319,7 @@ func (r *repozytoriumBadan) SzczegolyUstaleniaBadania(ctx context.Context, kod s
 }
 
 // UsunUstalenie zdejmuje ustalenie i oddaje liczbę sekcji raportu, które przez
-// to straciły odwołanie.
+// to straciły odwołanie — odpowiedź kontraktu mówi o skutku, nie o zamiarze.
 func (r *repozytoriumBadan) UsunUstalenie(ctx context.Context, kod string) (int, error) {
 	id, err := r.idUstalenia(ctx, kod)
 	if err != nil {
@@ -392,7 +403,8 @@ func (r *repozytoriumBadan) PrzeniesZrodlaUstalen(ctx context.Context, kodyUstal
 
 // ── Książka kodów i macierz ────────────────────────────────────────────────
 
-// ZapiszKsiazkeKodow zakłada albo nadpisuje pozycje książki kodów okna.
+// ZapiszKsiazkeKodow zakłada albo nadpisuje pozycje książki kodów okna,
+// pomijając pozycje bez kodu zewnętrznego albo bez nazwy.
 func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 	kody []KodBadania) ([]KodBadania, error) {
 
@@ -414,7 +426,8 @@ func (r *repozytoriumBadan) ZapiszKsiazkeKodow(ctx context.Context, okno string,
 	return r.KsiazkaKodow(ctx, okno)
 }
 
-// KsiazkaKodow oddaje pozycje książki kodów okna wraz z liczbą wystąpień.
+// KsiazkaKodow oddaje pozycje książki kodów okna wraz z liczbą wystąpień
+// każdego kodu wśród ustaleń, uporządkowane według nazwy.
 func (r *repozytoriumBadan) KsiazkaKodow(ctx context.Context, okno string) ([]KodBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, k.nazwa, k.opis, k.nadrzedny_kod,
 	        (SELECT COUNT(*) FROM kod_ustalenia_badania ku WHERE ku.kod_id = k.id)
@@ -438,7 +451,8 @@ func (r *repozytoriumBadan) KsiazkaKodow(ctx context.Context, okno string) ([]Ko
 	return lista, wiersze.Err()
 }
 
-// UstawKodyUstalenia wymienia w całości kody przypisane ustaleniu.
+// UstawKodyUstalenia wymienia w całości kody przypisane ustaleniu, zdejmując
+// wiązania zastane i zakładając wiązania podane w jednej transakcji.
 func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia string,
 	kodyKodow []string) error {
 
@@ -470,7 +484,8 @@ func (r *repozytoriumBadan) UstawKodyUstalenia(ctx context.Context, kodUstalenia
 	})
 }
 
-// KodyUstalenia oddaje kody przypisane ustaleniu.
+// KodyUstalenia oddaje pozycje książki kodów przypisane wskazanemu ustaleniu,
+// uporządkowane według nazwy kodu.
 func (r *repozytoriumBadan) KodyUstalenia(ctx context.Context, kodUstalenia string) ([]KodBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT k.identyfikator_zewnetrzny, k.okno, k.nazwa, k.opis, k.nadrzedny_kod
 	   FROM kod_badania k
@@ -534,7 +549,8 @@ func (r *repozytoriumBadan) MacierzKodow(ctx context.Context, okno string) ([]Ko
 
 // ── Sprzeczności ───────────────────────────────────────────────────────────
 
-// ZapiszSprzecznosc zakłada sprzeczność albo nadpisuje zastaną.
+// ZapiszSprzecznosc zakłada sprzeczność albo nadpisuje zastaną, wymieniając
+// przy podanej liście przypisane ustalenia w jednej transakcji.
 func (r *repozytoriumBadan) ZapiszSprzecznosc(ctx context.Context,
 	s SprzecznoscBadania) (SprzecznoscBadania, error) {
 
@@ -596,7 +612,8 @@ func (r *repozytoriumBadan) ZapiszSprzecznosc(ctx context.Context,
 	return r.Sprzecznosc(ctx, s.Kod)
 }
 
-// Sprzecznosc oddaje jedną sprzeczność po kodzie.
+// Sprzecznosc oddaje jedną sprzeczność po kodzie zewnętrznym wraz z kodami
+// ustaleń, których dotyczy, albo błąd ErrBrakWiersza, gdy nie istnieje.
 func (r *repozytoriumBadan) Sprzecznosc(ctx context.Context, kod string) (SprzecznoscBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT identyfikator_zewnetrzny, okno, streszczenie,
 	        roznica_liczbowa, rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie
@@ -619,7 +636,8 @@ func (r *repozytoriumBadan) Sprzecznosc(ctx context.Context, kod string) (Sprzec
 	return s, nil
 }
 
-// Sprzecznosci oddaje sprzeczności okna badania.
+// Sprzecznosci oddaje sprzeczności okna badania od najświeższej, każdą wraz
+// z kodami ustaleń, których dotyczy.
 func (r *repozytoriumBadan) Sprzecznosci(ctx context.Context, okno string) ([]SprzecznoscBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT identyfikator_zewnetrzny, okno, streszczenie,
 	        roznica_liczbowa, rozstrzygnieta, ustalenie_rozstrzygajace, uzasadnienie
@@ -650,7 +668,8 @@ func (r *repozytoriumBadan) Sprzecznosci(ctx context.Context, okno string) ([]Sp
 	return lista, nil
 }
 
-// ustaleniaSprzecznosci oddaje kody ustaleń objętych sprzecznością.
+// ustaleniaSprzecznosci oddaje kody ustaleń objętych sprzecznością o wskazanym
+// kodzie, uporządkowane rosnąco.
 func (r *repozytoriumBadan) ustaleniaSprzecznosci(ctx context.Context, kod string) ([]string, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT us.ustalenie_kod
 	   FROM ustalenie_sprzecznosci_badania us
@@ -662,7 +681,8 @@ func (r *repozytoriumBadan) ustaleniaSprzecznosci(ctx context.Context, kod strin
 	return napisyZWierszyBadania(wiersze)
 }
 
-// odczytajSprzecznoscBadania składa strukturę z jednego wiersza wyniku.
+// odczytajSprzecznoscBadania składa strukturę sprzeczności z jednego wiersza
+// wyniku, zostawiając listę kodów ustaleń do wypełnienia osobnym zapytaniem.
 func odczytajSprzecznoscBadania(wiersz skaner) (SprzecznoscBadania, error) {
 	var s SprzecznoscBadania
 	var roznica, rozstrzygajace, uzasadnienie sql.NullString
@@ -682,7 +702,8 @@ func odczytajSprzecznoscBadania(wiersz skaner) (SprzecznoscBadania, error) {
 
 // ── Weryfikacja twierdzenia ────────────────────────────────────────────────
 
-// ZapiszWeryfikacje utrwala wynik sprawdzenia twierdzenia i oddaje chwilę zapisu.
+// ZapiszWeryfikacje utrwala wynik sprawdzenia twierdzenia i oddaje chwilę
+// zapisu znaczoną zegarem bazy, nadpisując weryfikację zastaną ustalenia.
 func (r *repozytoriumBadan) ZapiszWeryfikacje(ctx context.Context, kodUstalenia,
 	werdykt, uzasadnienie string) (string, error) {
 
@@ -777,7 +798,8 @@ func (r *repozytoriumBadan) ZapiszProwenancje(ctx context.Context, w WpisProwena
 		w.UstalenieKod, aktor, w.Czynnosc, tekstDoKolumny(w.ZrodloKod), liczbaDoKolumny(w.Strona))
 }
 
-// Prowenancja oddaje ślad ustalenia w kolejności zdarzeń.
+// Prowenancja oddaje ślad wskazanego ustalenia w kolejności zdarzeń, od
+// najstarszego do najświeższego.
 func (r *repozytoriumBadan) Prowenancja(ctx context.Context,
 	kodUstalenia string) ([]WpisProwenancjiBadania, error) {
 

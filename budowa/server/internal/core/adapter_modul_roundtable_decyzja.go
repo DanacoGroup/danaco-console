@@ -1,9 +1,4 @@
-// Odpowiedzialność pliku: macierz decyzyjna — `roundtable.decision.matrix.set`
-// i `roundtable.decision.matrix.get` (okno Voting & Evaluation Center).
-//
-// Wynik wariantu liczy się przy odczycie z ocen i wag. Kolumna z wynikiem
-// rozjechałaby się z ocenami przy pierwszej zmianie wagi, która nie
-// przeliczyłaby wszystkiego naraz.
+// Plik obsługuje macierz decyzyjną: `roundtable.decision.matrix.set` i `roundtable.decision.matrix.get` dla okna Voting & Evaluation Center. Wynik wariantu liczy się przy odczycie z ocen i wag.
 package core
 
 import (
@@ -15,24 +10,20 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki bytów macierzy decyzyjnej.
+// Przedrostki bytów macierzy decyzyjnej modułu Roundtable, nadawane przez rdzeń przy założeniu wiersza.
 const (
 	przedrostekMacierzy          = "macierz-"
 	przedrostekKryteriumMacierzy = "mkryt-"
 	przedrostekWariantuMacierzy  = "mwar-"
 )
 
-// wariantZadania to kształt, w jakim warianty przychodzą polem `options`.
+// wariantZadania to kształt, w jakim warianty przychodzą polem `options` w żądaniu zapisu macierzy decyzji.
 type wariantZadania struct {
 	Label  string             `json:"label"`
 	Scores map[string]float64 `json:"scores"`
 }
 
-// ZapiszMacierz zakłada albo zmienia macierz decyzyjną.
-//
-// Ocena w kryterium, którego macierz nie ma, jest odmową. Macierz przyjmująca
-// oceny w nieistniejących kryteriach dawałaby wynik ważony sumą wag mniejszą
-// niż suma ocen — czyli liczbę, której nie da się zestawić z żadną inną.
+// ZapiszMacierz zakłada albo zmienia macierz decyzyjną. Ocena w kryterium, którego macierz nie ma, jest odmową, bo dawałaby wynik ważony sumą wag mniejszą niż suma ocen.
 func (a *adapterDebaty) ZapiszMacierz(ctx context.Context,
 	z shared.RoundtableDecisionMatrixSetRequest) (shared.RoundtableDecisionMatrixSetResponse, error) {
 
@@ -120,7 +111,7 @@ func (a *adapterDebaty) ZapiszMacierz(ctx context.Context,
 	return shared.RoundtableDecisionMatrixSetResponse{Matrix: macierzKontraktu(macierz)}, nil
 }
 
-// Macierz oddaje macierz decyzyjną wraz z wynikiem po zważeniu kryteriów.
+// Macierz oddaje macierz decyzyjną wraz z wynikiem po zważeniu kryteriów, odczytaną z repozytorium Roundtable.
 func (a *adapterDebaty) Macierz(ctx context.Context,
 	z shared.RoundtableDecisionMatrixGetRequest) (shared.RoundtableDecisionMatrixGetResponse, error) {
 
@@ -148,7 +139,7 @@ func (a *adapterDebaty) Macierz(ctx context.Context,
 	return shared.RoundtableDecisionMatrixGetResponse{Matrix: macierzKontraktu(macierz)}, nil
 }
 
-// macierzKontraktu przekłada macierz wraz z wyliczonym wynikiem wariantów.
+// macierzKontraktu przekłada macierz wraz z wyliczonym wynikiem wariantów na kształt kontraktu odpowiedzi.
 func macierzKontraktu(m dane.MacierzDebaty) shared.RoundtableDecisionMatrix {
 	wagi := make(map[string]float64, len(m.Kryteria))
 	kryteria := make([]shared.RoundtableDecisionCriterion, 0, len(m.Kryteria))

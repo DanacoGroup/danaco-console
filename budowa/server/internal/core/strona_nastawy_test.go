@@ -7,22 +7,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany obszaru strony i sekcji. Mierzą SKUTEK na postaci dokumentu
-// i na rachunku, nie kopertę odpowiedzi.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. wykaz nośników bez kopert C4, C5 i C6 — Właściciel wymienia je wprost,
-//     a wykaz rdzenia ich nie niesie;
-//  2. zmiana orientacji, która nie zamienia wymiarów — wtedy „poziomo" jest
-//     samą nazwą, a wydruk wychodzi pionowy;
-//  3. nastawa strony podana jednym polem, która zdejmuje pozostałe — ta sama
-//     szkoda, którą w oknie widać jako „poprawiłem margines, a zniknęły kolumny";
-//  4. nagłówek pierwszej strony nadpisujący nagłówek stron zwykłych — to jest
-//     dokładnie ten brak, który zlecenie każe usunąć;
-//  5. tabela szersza niż nowy nośnik przemilczana — bilans musi ją nazwać;
-//  6. podział wstawiony w środek akapitu, który tego akapitu nie rozdziela.
+// Sprawdziany obszaru strony i sekcji mierzą skutek na postaci dokumentu.
 
-// TestStronaWykazNosnikowNiesieKoperty mierzy uzupełnienie wykazu rdzenia.
+// TestStronaWykazNosnikowNiesieKoperty mierzy uzupełnienie wykazu rdzenia
+// o koperty DL, C4, C5 i C6, każda oznaczona rodzajem i bez powtórzeń nazwy.
 func TestStronaWykazNosnikowNiesieKoperty(t *testing.T) {
 	wykaz := stronaNosniki()
 	wymagane := map[string]bool{
@@ -52,15 +40,13 @@ func TestStronaWykazNosnikowNiesieKoperty(t *testing.T) {
 		}
 	}
 
-	// Wymiary koperty C5 są normą ISO 269 i sprawdzian ma prawo ich pilnować:
-	// koperta o zmyślonych wymiarach nie zmieściłaby pisma.
+	// Wymiary koperty C5 są normą ISO 269, którą sprawdzian ma prawo pilnować.
 	c5, _ := stronaNosnik("c5")
 	if c5.WidthMm != 162 || c5.HeightMm != 229 {
 		t.Errorf("koperta C5 ma wymiary %v na %v mm, a normą jest 162 na 229",
 			c5.WidthMm, c5.HeightMm)
 	}
-	// Żadna nazwa nie powtarza się dwa razy — dwa C5 w wykazie znaczyłyby, że
-	// uzupełnienie i wykaz rdzenia się rozjechały.
+	// Żadna nazwa nie powtarza się dwa razy w wykazie nośników.
 	widziane := map[string]int{}
 	for _, nosnik := range wykaz {
 		widziane[strings.ToUpper(nosnik.Name)]++
@@ -72,8 +58,8 @@ func TestStronaWykazNosnikowNiesieKoperty(t *testing.T) {
 	}
 }
 
-// TestStronaOrientacjaZamieniaWymiary pilnuje, żeby „poziomo" nie było samą
-// nazwą.
+// TestStronaOrientacjaZamieniaWymiary pilnuje, żeby zmiana orientacji na
+// poziomą naprawdę zamieniała szerokość z wysokością strony.
 func TestStronaOrientacjaZamieniaWymiary(t *testing.T) {
 	pionowa := shared.StudioPageSetup{
 		PageSize:    postacWskaznikTekstu("A4"),
@@ -133,8 +119,7 @@ func TestStronaScalenieNastawNieZdejmujePozostalych(t *testing.T) {
 		t.Errorf("odmowa nie nazywa wykazu nośników: %v", err)
 	}
 
-	// Wymiar własny przebija nazwę i przestawia rodzaj na własny — inaczej
-	// dokument twierdziłby, że jest A4 o szerokości pół metra.
+	// Wymiar własny przebija nazwę i przestawia rodzaj nośnika na własny.
 	wlasny, _, err := stronaScalNastawy(nil, shared.StudioPageSetupSetRequest{
 		WidthMm:  postacWskaznikMiary(500),
 		HeightMm: postacWskaznikMiary(700),
@@ -252,11 +237,7 @@ func TestStronaNaglowkiSaOsobneWedleZasiegu(t *testing.T) {
 		t.Error("stopka stron zwykłych zginęła po ustawieniu nagłówka pierwszej strony")
 	}
 
-	// Napis pusty ZDEJMUJE nagłówek — Operator, który wyczyścił pole, chciał je
-	// wyczyścić.
-	// Napis pusty przychodzi z okna jako wskaźnik na napis pusty, a nie jako brak
-	// pola — dlatego sprawdzian bierze adres zmiennej, a nie pomocnika, który
-	// pusty napis zamienia na brak.
+	// Napis pusty zdejmuje nagłówek — sprawdzian bierze adres zmiennej wprost.
 	pusty := ""
 	wykaz, zmian = stronaScalNaglowek(wykaz, shared.StudioPageHeaderfooterSetRequest{
 		HeaderText: &pusty,
@@ -281,7 +262,7 @@ func TestStronaNaglowkiSaOsobneWedleZasiegu(t *testing.T) {
 }
 
 // stronaNaglowekZasiegu jest pomocnikiem sprawdzianu — wyszukuje nagłówek
-// zasięgu w wykazie.
+// wskazanego zasięgu w wykazie i oddaje wskaźnik na niego albo nil.
 func stronaNaglowekZasiegu(wykaz []shared.StudioHeaderFooter,
 	zasieg shared.StudioHeaderScope) *shared.StudioHeaderFooter {
 
@@ -382,10 +363,7 @@ func TestStronaPodzialRozdzielaAkapit(t *testing.T) {
 	postacPrzeliczZakresy(&forma)
 	trescPrzed := postacTekstFormy(&forma)
 
-	// Podział w środku pierwszego akapitu, po siódmym ZNAKU — w bajtach byłby to
-	// znak dziewiąty, bo „ż" i „ó" są dwubajtowe.
-	// Podział po szóstym ZNAKU pierwszego akapitu — w bajtach byłby to znak
-	// dziewiąty, bo „ż" i „ó" są dwubajtowe.
+	// Podział po szóstym znaku, dziewiątym bajcie — „ż" i „ó" są dwubajtowe.
 	wskazanie, roznica := stronaRozdzielAkapit(&forma, 6)
 	if roznica != 1 {
 		t.Errorf("rozdzielenie akapitu dało różnicę %d, a dokłada jeden znak podziału", roznica)
@@ -439,15 +417,13 @@ func TestStronaTabulatorNieMnozySieNaTymSamymPolozeniu(t *testing.T) {
 		t.Error("tabulator nie przyjął znaku wiodącego")
 	}
 
-	// Tabulatory stoją po położeniu rosnąco — inaczej linijka rysowałaby je
-	// w kolejności zakładania, a nie w kolejności na kartce.
+	// Tabulatory stoją po położeniu rosnąco, w kolejności na kartce.
 	wykaz, _ = stronaTabulatory(wykaz, 20, shared.StudioTabKindDecimal, nil, false)
 	if len(wykaz) != 2 || wykaz[0].PositionMm != 20 {
 		t.Errorf("tabulatory nie są uporządkowane po położeniu: %+v", wykaz)
 	}
 
-	// Zdjęcie tabulatora, którego nie ma, oddaje fałsz — na tym stoi odmowa
-	// „nie ma czego zdjąć", a nie cicha zgoda.
+	// Zdjęcie tabulatora, którego nie ma, oddaje fałsz, nie cichą zgodę.
 	if _, zmieniono := stronaTabulatory(wykaz, 99, shared.StudioTabKindLeft, nil, true); zmieniono {
 		t.Error("zdjęcie tabulatora nieistniejącego wróciło jako wykonane")
 	}

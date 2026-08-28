@@ -12,72 +12,23 @@ import type { StanStudio } from './stan-studio';
 import { utworzWykazOperacji } from './wykaz-operacji';
 import type { ZrodloAkcjiStudio } from './zrodlo-akcji-studio';
 
-/**
- * Tools Panel — stały panel operacji jako TRYB DO WYBORU, nie postać domyślna.
- *
- * ── Rozstrzygnięcie Właściciela ─────────────────────────────────────────────
- * Katalog operacji nie może zjadać stałej kolumny powierzchni. Drogą domyślną
- * są narzędzia ukryte: pływak przy zaznaczeniu i uchwyt katalogu
- * (`przybornik-plywak.ts`, `przybornik-katalog.ts`). Ten panel zostaje, bo dla
- * części pracy jest wygodniejszy — ale otwiera się wyborem Operatora, a nastawa
- * jest jawna, odwracalna i pamiętana w rdzeniu.
- *
- * Zwinięty panel nie zajmuje kolumny: niesie jeden wiersz z przełącznikiem
- * i znacznikiem `data-tryb-operacji`, po którym arkusz
- * `przybornik-znakowania.css` schodzi pas wiodący do jednej kolumny. Zwinięcie
- * do zera byłoby wygodniejsze wizualnie i błędne: Operator nie miałby czym
- * panelu wrócić.
- *
- * Poza tym: wywołanie operacji kontekstowej AI na zaznaczonym fragmencie albo
- * całym dokumencie. Sterowanie to przełącznik zakresu, wskaźnik zakresu
- * i przycisk uruchomienia.
- *
- * Zaznaczenie w edytorze przestawia przełącznik na „zaznaczenie", a wybór ręczny
- * ma pierwszeństwo do następnej zmiany zaznaczenia. Wybór „zaznaczenie" bez
- * zaznaczenia nie jest blokowany — wskaźnik mówi, czego brakuje.
- *
- * Nastawa zakresu mieszka w stanie modułu, a nie w polu `value` listy: lista
- * pokazuje `stan.zakresZadany()` i zgłasza wybór przez `stan.ustawZakresReczny()`,
- * dzięki czemu wskaźnik obok, pasek zaznaczenia w edytorze i żądanie
- * `studio.contextual.op` czytają jedną nastawę.
- *
- * Wszystkie operacje idą jedną komendą `studio.contextual.op`, rozróżnianą polem
- * `actionId` z rejestru akcji — stąd jedna ścieżka wywołania i wykaz
- * identyfikatorów zamiast osobnej ścieżki na operację.
- */
+/** Tools Panel, stały panel operacji jako tryb do wyboru operatora, nie postać domyślna: katalog operacji nie zajmuje stałej kolumny na stałe. */
 export interface OknoToolsPanel {
   element: HTMLElement;
   /** Wczytuje katalog akcji zasięgu modułu z rdzenia. */
   wczytaj(): Promise<void>;
   /** Uruchamia operację wskazaną z zewnątrz — z paska zaznaczenia edytora. */
   uruchom(idAkcji: string): Promise<void>;
-  /**
-   * Przenosi ognisko do panelu; panel zwinięty przy tym się rozwija.
-   *
-   * Bez rozwinięcia „Stały panel operacji" z pływaka przenosiłoby ognisko do
-   * wiersza, w którym nie ma czego wybrać — czyli w nic.
-   */
+  /** Przenosi ognisko do panelu operacji, rozwijając go, gdy panel jest w danej chwili zwinięty. */
   przenieOgnisko(): void;
   /** Przestawia tryb wykazu operacji: narzędzia ukryte albo stały panel. */
   ustawTryb(tryb: TrybOperacji): void;
   odswiez(): void;
-  /**
-   * Zwija wykaz operacji i zdejmuje jego nasłuchy dokumentu.
-   *
-   * Menu wykazu zakłada nasłuch na `document` (zamknięcie kliknięciem obok,
-   * obsługa klawiatury), więc moduł zdjęty z ekranu bez tego wywołania
-   * zostawiłby po sobie żywy nasłuch.
-   */
+  /** Zwija wykaz operacji panelu i zdejmuje jego nasłuchy dokumentu, żeby nie zostawić żywego nasłuchu. */
   zamknij(): void;
 }
 
-/**
- * Zdanie wskaźnika: jaki zakres pojedzie do rdzenia, a gdy nie jest to zakres
- * wybrany na liście — także z jakiego powodu.
- *
- * Rozróżnione są trzy stany: zakres wzięty z zaznaczenia, zaznaczenie pominięte
- * wyborem ręcznym oraz wybrane „zaznaczenie", którego w edytorze nie ma.
- */
+/** Zdanie wskaźnika mówiące, jaki zakres pojedzie do rdzenia, rozróżniające zakres z zaznaczenia, wybór ręczny i brak zaznaczenia. */
 function opiszZakres(stan: StanStudio): string {
   const wybrany = stan.zaznaczenie();
   if (stan.zakresSkuteczny() === StudioOperationScope.Selection && wybrany !== null) {
@@ -98,7 +49,7 @@ function opiszZakres(stan: StanStudio): string {
   return 'Zakres bieżący: cały dokument — w edytorze nic nie jest zaznaczone.';
 }
 
-/** Czym panel rozporządza poza rdzeniem: nastawą trybu wykazu operacji. */
+/** Czym panel rozporządza poza rdzeniem: nastawą trybu wykazu operacji, pamiętaną między sesjami tego okna. */
 export interface CzynnosciToolsPanelu {
   /** Zapisuje wybrany tryb wykazu operacji — nastawa pamiętana w rdzeniu. */
   naTryb(tryb: TrybOperacji): void;
@@ -163,8 +114,7 @@ export function utworzOknoToolsPanel(
   function ustawTryb(nowy: TrybOperacji): void {
     tryb = nowy;
     const otwarty = nowy === TrybOperacji.Panel;
-    // Znacznik siedzi na elemencie okna, bo to jego kolumnę rezerwuje pas
-    // wiodący modułu — arkusz odcinka schodzi pas do jednej kolumny po nim.
+    // Znacznik siedzi na elemencie okna, bo to jego kolumnę rezerwuje pas wiodący modułu.
     rama.element.dataset['trybOperacji'] = nowy;
     zwijane.hidden = !otwarty;
     uruchomienie.hidden = !otwarty;
@@ -188,9 +138,7 @@ export function utworzOknoToolsPanel(
   }
 
   uruchomienie.addEventListener('click', () => void uruchom(wykaz.wybrana()));
-  // Wybór ręczny idzie do stanu, a nie zostaje w kontrolce. Stan ogłasza zmianę,
-  // odświeżenie wraca tu z powrotem i przepisuje wartość listy — pętli nie ma,
-  // bo ustawienie `value` z kodu nie wywołuje zdarzenia `change`.
+  // Wybór ręczny idzie do stanu, bo ustawienie value z kodu nie wywołuje zdarzenia change.
   zakres.kontrolka.addEventListener('change', () => {
     stan.ustawZakresReczny(zakres.kontrolka.value as StudioOperationScope);
   });
@@ -211,8 +159,7 @@ export function utworzOknoToolsPanel(
     wskaznik.textContent = opiszZakres(stan);
     if (rama.stan.faza() === 'ladowanie' || rama.stan.faza() === 'blad') return;
     if (stan.dokument() === null) {
-      // Nazwa stanu mówi, czego brakuje operacji: wykaz jest czynny, brakuje
-      // wyłącznie przedmiotu, na którym operacja ma pracować.
+      // Nazwa stanu mówi, czego brakuje: wykaz jest czynny, brakuje wyłącznie przedmiotu operacji.
       rama.stan.puste(
         'Operacje bez przedmiotu',
         'Tools Panel zbiera operacje kontekstowe AI z rejestru akcji rdzenia i puszcza ' +

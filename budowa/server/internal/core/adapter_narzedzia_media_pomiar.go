@@ -1,18 +1,4 @@
-// Pomiar materiału: komenda `media.inspect` oraz przekład odpowiedzi `ffprobe`
-// na pola kontraktu. Trzon rodziny (źródło bajtów, zasięg, wołanie binarium,
-// magazyn wyniku) leży w `adapter_narzedzia_media.go`.
-//
-// Pomiar jest komendą osobną od przetworzenia, bo wycięcie fragmentu bez
-// znajomości czasu trwania daje pusty plik, a zmiana rozdzielczości bez
-// znajomości proporcji — rozciągnięty obraz.
-//
-// `ffprobe` pytamy w zapisie strukturalnym (`-print_format json`), bo kształt
-// tej odpowiedzi jest zobowiązaniem programu, a wydruk domyślny bywa zmieniany
-// między wydaniami. `-v quiet` ucisza banner i ostrzeżenia, żeby na wyjściu
-// stał sam JSON.
-//
-// Materiał bez zapisanego czasu trwania (strumień żywy, kontener bez nagłówka
-// czasu) daje `durationMs` zerowe — zero rozpoznawalnie znaczy brak wartości.
+// Plik pomiaru materiału obsługuje media.inspect i przekłada odpowiedź ffprobe w zapisie strukturalnym na pola kontraktu.
 package core
 
 import (
@@ -29,14 +15,13 @@ import (
 // trzeba utrzymywać przy zmianie wydania programu.
 type opisMediow struct {
 	Format kontenerMediow `json:"format"`
-	// Strumienie zostają surowe, bo kontrakt każe oddać ich opis w zapisie
-	// tekstowym w całości. Typowany rozbiór idzie osobno, na tych samych bajtach.
+	// Strumienie zostają surowe, bo kontrakt każe oddać ich opis w zapisie tekstowym w całości.
 	Strumienie json.RawMessage `json:"streams"`
 }
 
 // kontenerMediow niesie pola sekcji `format`. Czas trwania i rozmiar przychodzą
-// z `ffprobe` jako tekst (sekundy z ułamkiem, bajty) i tak je bierzemy, zamiast
-// wymuszać typ, którego program nie obiecuje.
+// z `ffprobe` jako tekst (sekundy z ułamkiem, bajty) i pole zachowuje ten zapis,
+// zamiast wymuszać typ, którego program nie obiecuje.
 type kontenerMediow struct {
 	Nazwa    string `json:"format_name"`
 	Trwanie  string `json:"duration"`
@@ -54,17 +39,11 @@ type strumienMediow struct {
 	Wysokosc  int    `json:"height"`
 }
 
-// Zbadaj obsługuje `media.inspect`.
-//
-// Źródło idzie tą samą drogą co przy przetwarzaniu (`zrodloMediow`), więc plik
-// wskazany ścieżką zostaje po drodze wciągnięty do magazynu. To warunek pomiaru,
-// nie efekt uboczny: opis ma dotyczyć treści, która po pomiarze nadal jest tą
-// samą treścią, a plik na dysku bywa nadpisany między wywołaniami.
+// Zbadaj obsługuje media.inspect: mierzy materiał tą samą drogą źródła co przy przetwarzaniu, żeby opis dotyczył treści zapisanej w magazynie.
 func (a *adapterNarzedziMediow) Zbadaj(ctx context.Context,
 	z shared.MediaInspectRequest) (shared.MediaInspectResponse, error) {
 
-	// `media.inspect` niczego nie wytwarza, więc okno źródła jest tu bez
-	// znaczenia i wprost je porzucamy.
+	// Komenda media.inspect niczego nie wytwarza, więc okno źródła zostaje tu porzucone.
 	sciezka, _, err := a.zrodloMediow(ctx, "media.inspect", z.AssetId, z.SourcePath)
 	if err != nil {
 		return shared.MediaInspectResponse{}, err
@@ -75,9 +54,7 @@ func (a *adapterNarzedziMediow) Zbadaj(ctx context.Context,
 		return shared.MediaInspectResponse{}, err
 	}
 
-	// Rozmiar bierzemy z pliku, a nie z odpowiedzi programu: `os.Stat` mówi
-	// o nim wprost, bez pośrednika. Pole `format.size` zostaje zapasem na
-	// wypadek nośnika, którego nie da się przepytać.
+	// Rozmiar bierze się z odczytu systemowego pliku; pole rozmiaru odpowiedzi jest zapasem awaryjnym.
 	rozmiar := rozmiarPlikuMediow(sciezka)
 	if rozmiar == 0 {
 		rozmiar = liczbaCalkowitaMediow(opis.Format.Rozmiar)
@@ -91,12 +68,7 @@ func (a *adapterNarzedziMediow) Zbadaj(ctx context.Context,
 	}, nil
 }
 
-// zmierzMediow woła `ffprobe` i rozbiera jego odpowiedź, oddając przy okazji
-// surowy opis strumieni gotowy do pola `streams` kontraktu.
-//
-// Odpowiedź nieczytelna daje odmowę, nie pusty wynik: `ffprobe` zakończony
-// powodzeniem, który nie oddał poprawnego JSON-a, znaczy plik nie będący
-// materiałem albo program w wydaniu, którego rdzeń nie rozumie.
+// zmierzMediow woła ffprobe i rozbiera jego odpowiedź, oddając przy okazji surowy opis strumieni gotowy do pola streams kontraktu.
 func (a *adapterNarzedziMediow) zmierzMediow(ctx context.Context,
 	sciezka string) (opisMediow, string, error) {
 
@@ -121,9 +93,7 @@ func (a *adapterNarzedziMediow) zmierzMediow(ctx context.Context,
 
 	surowe := strings.TrimSpace(string(opis.Strumienie))
 	if surowe == "" || surowe == "null" {
-		// Plik bez żadnego strumienia nie jest materiałem: `ffprobe` go
-		// otworzył, ale nie znalazł w nim nic do odtworzenia. Oddanie pustego
-		// opisu wyglądałoby jak udany pomiar.
+		// Plik bez strumienia nie jest materiałem: pusty opis wyglądałby jak udany pomiar.
 		return opisMediow{}, "", odmowaNarzedziMediow(shared.ErrorCodeValidationFailed,
 			"wskazany plik nie niesie żadnego strumienia dźwięku ani obrazu — "+
 				"nie ma czego zmierzyć")
@@ -131,10 +101,7 @@ func (a *adapterNarzedziMediow) zmierzMediow(ctx context.Context,
 	return opis, surowe, nil
 }
 
-// strumienieMediow rozbiera surowy opis strumieni na cechy, po których rodzina
-// rozstrzyga. Nieczytelny opis oddaje pustkę, a nie odmowę: wołający używa
-// tego wyłącznie do doprecyzowania (kontener dźwięku, wymiary zasobu) i sam
-// nazywa brak, gdy doprecyzowania zabrakło.
+// strumienieMediow rozbiera surowy opis strumieni na cechy, po których rodzina rozstrzyga rodzaj, kodek i wymiary materiału.
 func strumienieMediow(surowe string) []strumienMediow {
 	var strumienie []strumienMediow
 	if err := json.Unmarshal([]byte(surowe), &strumienie); err != nil {

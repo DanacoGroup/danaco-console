@@ -1,27 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — WIDOK STEROWANIA OKNA
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: oprawa kompletu sterowania — kolumna, nagłówek,
-   szuflada, podsumowanie ośmiu wartości.
-
-   Arkusz nie stylizuje kontrolek. Kontrolki mają własny arkusz
-   (`sterowanie/sterowanie.css`), którego ten plik nie dubluje i nie
-   przepisuje; sięga do jego selektorów wyłącznie po to, by komplet osadzony
-   w szufladzie nie niósł drugiego nagłówka i drugiej krawędzi.
-
-   Wartości pochodzą wyłącznie z żetonów `motyw/` — ani jednej wartości
-   szesnastkowej, ani jednego odstępu spoza skali 4 px. Sygnał występuje
-   w trzech miejscach: licznik ustawień, wstęga uchwytu w stanie rozwiniętym
-   i pierścień ogniska — nigdy jako wypełnienie. Krój szeryfowy wyłącznie
-   w tytule.
-
-   Podsumowanie ośmiu wartości mieszka we własnym arkuszu
-   `podsumowanie-ustawien.css`, razem ze swoim plikiem `.ts`.
-
-   W arkuszu nie ma reguły `:disabled` ani wygaszenia. Zwinięcie szuflady
-   zmienia to, która warstwa zajmuje miejsce — nie odbiera klikalności
-   niczemu.
-   ============================================================================ */
+/* Arkusz niesie oprawę kompletu sterowania: kolumnę, nagłówek i szufladę z podsumowaniem ośmiu wartości, złożoną wyłącznie z żetonów motywu. */
 
 /* ---------------------------------------------------------------------------
    KOLUMNA
@@ -133,6 +110,7 @@
 }
 
 /* Wstęga sygnału przy szufladzie rozwiniętej — wybór trwały */
+
 .dc-widok-ster__szuflada[data-otwarta='tak'] .dc-widok-ster__uchwyt {
   border-left-color: var(--dn-sygnal-wypelnienie);
 }
@@ -164,6 +142,7 @@
 }
 
 /* Dwie warstwy szuflady: podsumowanie i komplet kontrolek */
+
 .dc-widok-ster__warstwy {
   display: flex;
   flex-direction: column;

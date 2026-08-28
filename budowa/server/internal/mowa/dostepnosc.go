@@ -1,18 +1,6 @@
 // Odpowiedzialność pliku: sprawdzenie, czy silnik mowy ma czym pracować,
-// i odczyt odpowiedzi, którą pomocnik na to pytanie daje.
-//
-// Sprawdzenie poprzedza mikrofon: klient pyta o gotowość, zanim narysuje
-// przycisk nagrywania, zamiast tłumaczyć jego milczenie po nieudanej próbie.
-//
-// Brak silnika nie jest awarią i nie wraca błędem. Pomocnik pytany o gotowość
-// kończy się powodzeniem także wtedy, gdy silnika nie ma — oddaje wówczas
-// `gotowy` fałszywe i powód. Błędem jest dopiero brak odpowiedzi pomocnika:
-// nie dało się go uruchomić albo odpowiedział czymś, co nie jest jego
-// odpowiedzią. Pierwsze naprawia się instalacją, drugie — zgłoszeniem usterki.
-//
-// Dwa braki są rozróżniane osobno, bo mają dwie różne naprawy: nie ma czym
-// uruchomić skryptu (interpreter) kontra skrypt się uruchomił, lecz nie zastał
-// silnika rozpoznawania.
+// i odczyt odpowiedzi, którą pomocnik na to pytanie daje; brak silnika nie
+// jest awarią.
 package mowa
 
 import (
@@ -24,23 +12,18 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// granicaSprawdzenia to granica czasu pytania o gotowość.
-//
-// Pytanie o gotowość nie ładuje wag i nie dekoduje dźwięku, więc pomocnik
-// odpowiada w ułamku sekundy. Dłuższe milczenie oznacza interpreter, który
-// utknął; granica zamienia je na odmowę zamiast zawieszonego ekranu przed
-// pierwszym nagraniem.
+// granicaSprawdzenia to granica czasu pytania o gotowość; pytanie nie ładuje
+// wag ani nie dekoduje dźwięku, więc dłuższe milczenie oznacza interpreter,
+// który utknął.
 const granicaSprawdzenia = 20 * time.Second
 
-// przelacznikWersji to tryb pomocnika, w którym pyta się go o samą gotowość.
+// przelacznikWersji to tryb pomocnika transkrypcji, w którym pyta się go
+// wyłącznie o gotowość, bez ładowania modelu rozpoznawania.
 const przelacznikWersji = "--wersja"
 
-// Dostepnosc jest odpowiedzią pomocnika na pytanie, czy ma czym rozpoznać mowę.
-//
-// Pola przepisane co do znaku z odpowiedzi pomocnika
-// (pomocniki/transkrypcja/transkrypcja.py, tryb `--wersja`). Klucze są polskie,
-// bo pomocnik jest częścią tego produktu, a produkt jest polskojęzyczny — to nie
-// jest nazewnictwo kontraktu, którego stałe zostają angielskie.
+// Dostepnosc jest odpowiedzią pomocnika na pytanie, czy ma czym rozpoznać
+// mowę; pola przepisane co do znaku z odpowiedzi pomocnika transkrypcji,
+// tryb `--wersja`.
 type Dostepnosc struct {
 	// Gotowy — czy transkrypcja ruszy tu i teraz.
 	Gotowy bool `json:"gotowy"`
@@ -54,14 +37,9 @@ type Dostepnosc struct {
 	Powod string `json:"powod"`
 }
 
-// Dostepnosc pyta pomocnika o gotowość i oddaje jego odpowiedź.
-//
-// Odmowa uruchomienia pomocnika jest zamieniana na odpowiedź `Gotowy` fałszywe
-// z powodem, a nie na błąd. Brak interpretera to ten sam rodzaj wiadomości dla
-// Operatora, co brak biblioteki — jedno pytanie daje jedną odpowiedź,
-// niezależnie od tego, na którym ogniwie łańcuch się urwał. Błędem zostaje
-// wyłącznie odpowiedź nieczytelna: pomocnik odezwał się czymś, co nie jest jego
-// odpowiedzią.
+// Dostepnosc pyta pomocnika o gotowość i oddaje jego odpowiedź; odmowa
+// uruchomienia pomocnika jest zamieniana na odpowiedź `Gotowy` fałszywe
+// z powodem, a nie na błąd.
 func (s *Silnik) Dostepnosc(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar) (Dostepnosc, error) {
 
@@ -79,14 +57,9 @@ func (s *Silnik) Dostepnosc(ctx context.Context, okno session.Okno,
 	return odczytajDostepnosc(wynik)
 }
 
-// odczytajDostepnosc rozbiera odpowiedź pomocnika.
-//
-// Odpowiedź czytana jest z wyjścia, nigdy z diagnostyki: pomocnik pisze na
-// diagnostykę ostrzeżenia bibliotek, których nie kontroluje, a na wyjście
-// wyłącznie swój JSON. Wyjście puste znaczy, że pomocnik nie doszedł do
-// wypisania odpowiedzi — wtedy jedyną wiadomością jest diagnostyka i to ona
-// idzie w błędzie zamiast zdania o niepoprawnym JSON-ie, które niczego nie
-// tłumaczy.
+// odczytajDostepnosc rozbiera odpowiedź pomocnika; odpowiedź czytana jest
+// z wyjścia, nigdy z diagnostyki, na którą pomocnik pisze ostrzeżenia
+// bibliotek.
 func odczytajDostepnosc(wynik Wynik) (Dostepnosc, error) {
 	tresc := strings.TrimSpace(string(wynik.Wyjscie))
 	if tresc == "" {
@@ -102,8 +75,7 @@ func odczytajDostepnosc(wynik Wynik) (Dostepnosc, error) {
 			"; naprawa: zgłosić usterkę pomocnika — rdzeń oczekuje odpowiedzi w JSON"}
 	}
 
-	// Odmowa bez powodu zostawiłaby Operatora z „nie da się” bez zdania, co z tym
-	// zrobić. Powód zastępczy mówi wprost, że pomocnik go nie podał.
+	// Powód zastępczy mówi wprost, że pomocnik nie podał powodu odmowy.
 	if !odpowiedz.Gotowy && strings.TrimSpace(odpowiedz.Powod) == "" {
 		odpowiedz.Powod = "pomocnik transkrypcji zgłosił brak gotowości i nie podał powodu" +
 			ogonDiagnostyki(wynik.Diagnostyka)
@@ -111,16 +83,14 @@ func odczytajDostepnosc(wynik Wynik) (Dostepnosc, error) {
 	return odpowiedz, nil
 }
 
-// powodZUruchomienia składa powód odmowy z błędu uruchomienia i diagnostyki.
-//
-// Diagnostyka dokładana jest do treści błędu, bo w niej stoi zwykle jedyne
-// zdanie mówiące, co poszło nie tak po stronie interpretera — samo „nie można
-// uruchomić” nie wskazuje naprawy.
+// powodZUruchomienia składa powód odmowy z błędu uruchomienia i diagnostyki,
+// w której stoi zwykle jedyne zdanie mówiące, co poszło nie tak.
 func powodZUruchomienia(err error, wynik Wynik) string {
 	return err.Error() + ogonDiagnostyki(wynik.Diagnostyka)
 }
 
-// ogonDiagnostyki dokłada wyjście diagnostyczne, gdy jest czym dołożyć.
+// ogonDiagnostyki dokłada wyjście diagnostyczne pomocnika do treści powodu
+// odmowy, gdy jest czym dołożyć.
 func ogonDiagnostyki(diagnostyka string) string {
 	tresc := strings.TrimSpace(diagnostyka)
 	if tresc == "" {

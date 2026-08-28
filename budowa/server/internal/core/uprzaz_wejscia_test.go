@@ -1,3 +1,6 @@
+// Plik mierzy uprząż drogi wejścia: rejestrację, potwierdzenie adresu listem,
+// odzyskanie konta i wykaz urządzeń — jedyną drogę rdzenia, której skutek
+// wychodzi poza proces, do bazy i do prawdziwej skrzynki SMTP.
 package core
 
 import (
@@ -19,32 +22,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Uprząż drogi wejścia do aplikacji.
-//
-// Droga wejścia — rejestracja, potwierdzenie adresu, odzyskanie konta i wykaz
-// urządzeń — różni się od reszty rdzenia jedną rzeczą: jej skutek wychodzi poza
-// proces. Konto zapisuje się w bazie, a droga potwierdzenia idzie LISTEM i bez
-// tego listu Operator nie wejdzie nigdy. Sprawdzian, który mierzy wyłącznie
-// kopertę odpowiedzi, przepuściłby oba te braki: `registered: true` wygląda tak
-// samo, gdy list poszedł, i gdy przepadł.
-//
-// Stąd dwie rzeczy, których nie ma uprząż zgodności z kontraktem
-// (`uprzaz_test.go`):
-//
-//   - baza zwracana wołającemu, bo dowodem założenia konta jest wiersz
-//     w `konto_wlasciciela`, a nie zdanie w odpowiedzi;
-//   - odbiornik SMTP na `127.0.0.1`, bo dowodem wysłania listu jest list.
-//
-// Odbiornik jest prawdziwym gniazdem na porcie efemerycznym, nie zaślepką
-// podstawioną w miejsce `nadajnik.Wyslij`. Zaślepka sprawdzałaby, czy rdzeń woła
-// funkcję; gniazdo sprawdza, czy list DOSZEDŁ — i pozwala przeczytać jego treść,
-// czyli rozstrzygnąć, że niesie drogę i nie niesie hasła.
-//
-// Sieci sprawdzian nie dotyka: nasłuch stoi na pętli zwrotnej, a nastawy idą
-// z `SzyfrujStartTLS: false`, więc rozmowa nie próbuje ani podnieść TLS, ani
-// wyjść poza maszynę.
-
-// Tożsamość konta zakładanego przez sprawdziany. Jedna dla wszystkich, żeby
+// Tożsamość konta zakładanego przez sprawdziany, jedna dla wszystkich, żeby
 // niepowodzenie mówiło o zachowaniu rdzenia, a nie o tym, który sprawdzian
 // wpisał jaki adres.
 const (
@@ -55,38 +33,35 @@ const (
 )
 
 // uprzazWejscia trzyma wszystko, czym mierzy się skutek drogi wejścia: rdzeń,
-// jego kontekst życia, bazę pod nim i skrzynkę, do której idą listy.
-//
-// `poczta` jest zerowa w obu trybach bez działającego odbiornika — sprawdzian,
-// który po niej sięgnie, ma stanąć od razu, a nie mierzyć pustą skrzynkę.
+// jego kontekst życia, bazę pod nim i skrzynkę, do której idą listy. Poczta
+// jest zerowa bez działającego odbiornika, sprawdzian ma wtedy stanąć od razu.
 type uprzazWejscia struct {
 	rdzen  *Zmontowany
 	zycie  context.Context
 	baza   *store.Baza
 	poczta *odbiornikSMTP
-	// katalog jest katalogiem danych rdzenia. Stoi tu, bo część stanu drogi
-	// wejścia nie leży w bazie: znacznik bramki bez poczty mieszka w sejfie
-	// poświadczeń, a sejf jest plikiem w tym katalogu
-	// (`adapter_modul_auth_pierwsze_uruchomienie.go`).
+	// katalog jest katalogiem danych rdzenia, gdzie leży sejf ze znacznikiem bramki bez poczty.
 	katalog string
 }
 
-// trybPoczty opisuje stan konta nadawczego platformy. Trzy stany, bo trzy są
-// prawdziwe i różnią się skutkiem — a nie dlatego, że sprawdzianom tak wygodnie.
+// trybPoczty opisuje stan konta nadawczego platformy: trzy stany, bo trzy są
+// prawdziwe i różnią się skutkiem, a nie dlatego, że sprawdzianom tak wygodnie.
 type trybPoczty int
 
 const (
-	// pocztaBrak — Operator nie wpisał serwera poczty wychodzącej.
+	// pocztaBrak — nie wpisano serwera poczty wychodzącej, konto nadawcze
+	// platformy pozostaje puste i droga potwierdzenia nie ma jak wyjść z rdzenia.
 	pocztaBrak trybPoczty = iota
-	// pocztaDziala — odbiornik na pętli zwrotnej przyjmuje listy.
+	// pocztaDziala — odbiornik na pętli zwrotnej przyjmuje listy i droga
+	// potwierdzenia dociera do skrzynki tak, jak dotarłaby do adresata.
 	pocztaDziala
 	// pocztaNieosiagalna — serwer wskazany, ale nikt na nim nie słucha. Stan
 	// codzienny: przekaźnik zatrzymany, zapora, literówka w nazwie hosta.
-	// Nastawy wyglądają wtedy poprawnie i brak wychodzi dopiero przy nadawaniu.
 	pocztaNieosiagalna
 )
 
-// zmontujDrogeWejscia składa rdzeń nad świeżą bazą.
+// zmontujDrogeWejscia składa rdzeń nad świeżą bazą, z nastawami nadajnika
+// ustawianymi zawsze, także na pusto, żeby wynik nie zależał od środowiska.
 func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 	t.Helper()
 
@@ -106,9 +81,8 @@ func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 	ustawienia.KatalogProfili = ""
 	ustawienia.Port = 0
 
-	// Nastawy nadajnika ustawiane są zawsze — także na pusto. Poleganie na
-	// wartości domyślnej wiązałoby wynik sprawdzianu ze zmiennymi środowiska
-	// maszyny, na której biegnie.
+	// Nastawy nadajnika ustawiane są zawsze, także na pusto, by wynik nie
+	// zależał od środowiska maszyny.
 	var poczta *odbiornikSMTP
 	switch tryb {
 	case pocztaDziala:
@@ -128,9 +102,8 @@ func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 		ustawienia.NadawcaAdres = ""
 		ustawienia.NadawcaNazwa = ""
 	}
-	// Rozmowa idzie otwartym tekstem do przekaźnika na tej samej maszynie —
-	// dokładnie ten przypadek nastawa dopuszcza. Bez tego klient SMTP próbowałby
-	// podnieść połączenie do TLS.
+	// Rozmowa idzie otwartym tekstem do przekaźnika na tej samej maszynie,
+	// bez próby podniesienia TLS.
 	ustawienia.NadawcaStartTLS = wskaznik(false)
 
 	zmontowany, err := Zmontuj(zycie, Montaz{
@@ -150,19 +123,16 @@ func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 // ── odbiornik listów ─────────────────────────────────────────────────────────
 
 // listOdebrany to jeden list, który naprawdę przeszedł przez gniazdo: koperta
-// zwrotna, odbiorca i cały dokument z nagłówkami.
+// zwrotna, odbiorca i cały dokument z nagłówkami odebrany przez testowy serwer.
 type listOdebrany struct {
 	Nadawca  string
 	Odbiorca string
 	Dokument string
 }
 
-// odbiornikSMTP jest serwerem poczty na czas sprawdzianu.
-//
-// Rozmowę prowadzi w zakresie, którego używa nadajnik: powitanie, EHLO, koperta,
-// odbiorca, treść, koniec. Ani AUTH, ani STARTTLS nie są ogłaszane — nadajnik
-// pomija oba, gdy serwer o nich nie mówi, więc rozmowa nie wymaga poświadczenia
-// ani certyfikatu.
+// odbiornikSMTP jest serwerem poczty na czas sprawdzianu, prowadzącym rozmowę
+// w zakresie, którego używa nadajnik: powitanie, EHLO, koperta, odbiorca,
+// treść, koniec, bez AUTH i STARTTLS.
 type odbiornikSMTP struct {
 	nasluch net.Listener
 	zamek   sync.Mutex
@@ -170,7 +140,7 @@ type odbiornikSMTP struct {
 }
 
 // podnieOdbiornikSMTP otwiera gniazdo na porcie efemerycznym pętli zwrotnej
-// i zaczyna przyjmować rozmowy. Gniazdo zamyka się po sprawdzianie samo.
+// i zaczyna przyjmować rozmowy SMTP. Gniazdo zamyka się po sprawdzianie samo.
 func podnieOdbiornikSMTP(t *testing.T) *odbiornikSMTP {
 	t.Helper()
 
@@ -195,8 +165,7 @@ func podnieOdbiornikSMTP(t *testing.T) *odbiornikSMTP {
 
 // portBezNasluchu oddaje numer portu, na którym na pewno nikt nie słucha:
 // gniazdo podnosi się i od razu zamyka, więc system zdążył go przydzielić,
-// a nasłuchu już nie ma. Wpisanie liczby na sztywno wiązałoby sprawdzian
-// z maszyną, na której akurat biegnie.
+// a nasłuchu już nie ma.
 func portBezNasluchu(t *testing.T) int {
 	t.Helper()
 
@@ -211,17 +180,20 @@ func portBezNasluchu(t *testing.T) int {
 	return port
 }
 
-// Host oddaje adres, pod którym stoi odbiornik.
+// Host oddaje adres pętli zwrotnej, pod którym stoi odbiornik testowego
+// serwera SMTP podniesiony na czas sprawdzianu.
 func (o *odbiornikSMTP) Host() string {
 	return o.nasluch.Addr().(*net.TCPAddr).IP.String()
 }
 
-// Port oddaje port nadany przez system.
+// Port oddaje numer portu efemerycznego nadanego przez system operacyjny
+// odbiornikowi testowego serwera SMTP.
 func (o *odbiornikSMTP) Port() int {
 	return o.nasluch.Addr().(*net.TCPAddr).Port
 }
 
-// Listy oddaje kopię wykazu listów odebranych do tej chwili.
+// Listy oddaje kopię wykazu listów odebranych do tej chwili przez odbiornik
+// testowego serwera SMTP na maszynie.
 func (o *odbiornikSMTP) Listy() []listOdebrany {
 	o.zamek.Lock()
 	defer o.zamek.Unlock()
@@ -231,9 +203,7 @@ func (o *odbiornikSMTP) Listy() []listOdebrany {
 }
 
 // Ostatni oddaje list odebrany jako ostatni i przerywa sprawdzian, gdy nie
-// przyszedł żaden. Brak listu jest tu niepowodzeniem, nie pustym wynikiem:
-// czynność, która obiecała list, a go nie wysłała, zostawia Operatora przed
-// kontem bez drogi wejścia.
+// przyszedł żaden. Brak listu jest tu niepowodzeniem, nie pustym wynikiem.
 func (o *odbiornikSMTP) Ostatni(t *testing.T) listOdebrany {
 	t.Helper()
 
@@ -244,14 +214,16 @@ func (o *odbiornikSMTP) Ostatni(t *testing.T) listOdebrany {
 	return listy[len(listy)-1]
 }
 
-// Wyczysc opróżnia skrzynkę, żeby kolejny pomiar liczył listy od zera.
+// Wyczysc opróżnia skrzynkę odbiornika, żeby kolejny pomiar liczył listy od
+// zera, niezależnie od poprzednich rozmów SMTP.
 func (o *odbiornikSMTP) Wyczysc() {
 	o.zamek.Lock()
 	defer o.zamek.Unlock()
 	o.listy = nil
 }
 
-// rozmawiaj prowadzi jedną rozmowę SMTP i odkłada odebrany list.
+// rozmawiaj prowadzi jedną rozmowę SMTP i odkłada odebrany list do skrzynki
+// odbiornika testowego, bez AUTH i STARTTLS.
 func (o *odbiornikSMTP) rozmawiaj(polaczenie net.Conn) {
 	defer func() { _ = polaczenie.Close() }()
 	_ = polaczenie.SetDeadline(time.Now().Add(30 * time.Second))
@@ -326,7 +298,7 @@ func (o *odbiornikSMTP) rozmawiaj(polaczenie net.Conn) {
 }
 
 // czytajTrescListu zbiera dokument aż do samotnej kropki i zdejmuje wypełnienie
-// kropką z początku wiersza (`..` → `.`), które wkłada nadawca.
+// kropką z początku wiersza, które wkłada nadawca zgodnie z protokołem SMTP.
 func czytajTrescListu(czytnik *bufio.Reader) (string, error) {
 	var dokument strings.Builder
 	for {
@@ -346,7 +318,8 @@ func czytajTrescListu(czytnik *bufio.Reader) (string, error) {
 	}
 }
 
-// adresZPolecenia wyjmuje adres z `MAIL FROM:<adres>` i `RCPT TO:<adres>`.
+// adresZPolecenia wyjmuje adres z poleceń MAIL FROM i RCPT TO odebranej
+// rozmowy SMTP prowadzonej z nadajnikiem rdzenia.
 func adresZPolecenia(polecenie string) string {
 	poczatek := strings.Index(polecenie, "<")
 	koniec := strings.Index(polecenie, ">")
@@ -359,14 +332,12 @@ func adresZPolecenia(polecenie string) string {
 // ── odczyt drogi z listu ─────────────────────────────────────────────────────
 
 // naglowekDrogi jest wierszem, po którym w obu listach systemowych stoi droga
-// potwierdzenia. Jeden napis dla obu celów, bo oba listy składa jedna funkcja.
+// potwierdzenia — jeden napis dla obu celów, bo oba listy składa jedna funkcja.
 const naglowekDrogi = "Droga potwierdzenia:"
 
-// drogaZListu wyjmuje z listu materiał, który Operator ma wpisać w oknie.
-//
-// Wyjmowanie idzie po treści, a nie po wartości podpatrzonej w bazie — bo
-// sprawdzianem jest właśnie to, czy droga DOSZŁA do skrzynki. Skrót z bazy
-// przeszedłby także wtedy, gdyby list wyszedł pusty.
+// drogaZListu wyjmuje z listu materiał do wpisania w oknie. Wyjmowanie idzie
+// po treści, a nie po wartości z bazy — sprawdzianem jest właśnie to, czy
+// droga doszła do skrzynki.
 func drogaZListu(t *testing.T, list listOdebrany) string {
 	t.Helper()
 
@@ -388,7 +359,7 @@ func drogaZListu(t *testing.T, list listOdebrany) string {
 // ── pomiar stanu bazy ────────────────────────────────────────────────────────
 
 // liczbaWierszy odpowiada na pytanie, na które odpowiedź komendy odpowiedzieć
-// nie może: czy w bazie naprawdę coś zostało.
+// nie może: czy w bazie naprawdę coś zostało zapisane po wykonaniu drogi.
 func liczbaWierszy(t *testing.T, u uprzazWejscia, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -402,7 +373,7 @@ func liczbaWierszy(t *testing.T, u uprzazWejscia, zapytanie string, argumenty ..
 // ── czynności powtarzane ─────────────────────────────────────────────────────
 
 // zarejestrujWlasciciela wykonuje `auth.register` i zwraca drogę potwierdzenia
-// z listu, który po niej przyszedł.
+// z listu, który po niej przyszedł do skrzynki testowej.
 func zarejestrujWlasciciela(t *testing.T, u uprzazWejscia) string {
 	t.Helper()
 
@@ -420,24 +391,15 @@ func zarejestrujWlasciciela(t *testing.T, u uprzazWejscia) string {
 }
 
 // znacznikWSejfie odpowiada, czy bramka pamięta, że powstała bez poczty, i jaki
-// adres wtedy zapamiętała.
-//
-// Odczyt idzie do sejfu, nie do bazy, bo tam ten stan leży — trzeciego stanu
-// konta schemat nie ma i znacznik mieszka w sejfie poświadczeń obok sekretu
-// kotwicy (`adapter_modul_auth_pierwsze_uruchomienie.go`). Sejf otwierany jest
-// nad tym samym katalogiem danych, który dostał rdzeń, więc czytany jest ten sam
-// plik, do którego rdzeń pisze.
+// adres wtedy zapamiętała, czytając sejf poświadczeń, gdzie ten stan leży.
 func znacznikWSejfie(t *testing.T, u uprzazWejscia) (string, bool) {
 	t.Helper()
 
 	return dane.NowySejfPlikowy(u.katalog).Odczytaj(u.zycie, bytZnacznikaBezPoczty)
 }
 
-// ustawNadajnik zapisuje konto nadawcze platformy tak, jak robi to Operator
-// w oknie Konfiguracji — komendą `config.set` na zasięgu aplikacji.
-//
-// Droga jest ta sama co w produkcie, nie skrót przez nastawy montażu: badane
-// jest właśnie to, co się dzieje, gdy poczta pojawia się PO rejestracji.
+// ustawNadajnik zapisuje konto nadawcze platformy komendą `config.set` na
+// zasięgu aplikacji, tą samą drogą, którą idzie zmiana w oknie Konfiguracji.
 func ustawNadajnik(t *testing.T, u uprzazWejscia, odbiornik *odbiornikSMTP) {
 	t.Helper()
 

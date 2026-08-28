@@ -1,30 +1,11 @@
 import type { GrupaZetonow, Zeton } from './zetony-systemu';
 
-/**
- * Wydanie żetonów do kodu oraz przewodnik stylu.
- *
- * Wszystko tutaj składa przeglądarka z wartości odczytanych z motywu
- * obowiązującego — rdzeń nie bierze w tym udziału i nie musi. To jest ta część
- * grupy „Tokeny projektowe i system projektowy", która komendy nie potrzebuje,
- * więc nazwanie jej brakiem kontraktu byłoby zmyśleniem długu.
- *
- * Czego tu NIE ma i dlaczego. Opracowanie wymienia przy eksporcie także wydanie
- * dla systemów mobilnych oraz wydanie przewodnika do modułów Library i Studio.
- * Pierwszego nie ma, bo wymagałoby przekładu ról systemu wizualnego na pojęcia
- * dwóch obcych platform — a taki przekład jest rozstrzygnięciem projektowym,
- * nie zapisem pliku. Drugiego nie ma, bo wydanie czegokolwiek do innego modułu
- * wymaga komendy, której kontrakt nie zna; okno nazywa ten brak zamiast wysyłać
- * plik w próżnię.
- *
- * Postacie wydania nie są tu ozdobą: zmienne CSS to postać, w której ten produkt
- * żetony trzyma; pozostałe trzy są postaciami, w których przyjmuje je kod
- * korzystający z systemu.
- */
+// Wydanie żetonów systemu wizualnego do postaci kodu oraz przewodnika stylu.
 
-/** Postać, w której żetony wychodzą z modułu. */
+/** Postać, w której żetony wychodzą z modułu na zewnątrz, do kodu, który korzysta z systemu wizualnego. */
 export type PostacWydania = 'zmienne-css' | 'scss' | 'tailwind' | 'modul-js';
 
-/** Nazwy postaci wydania wraz z nazwą pliku, który powstaje. */
+/** Nazwy postaci wydania w formie czytelnej dla człowieka wraz z nazwą pliku wynikowego, który powstaje. */
 export const POSTACIE_WYDANIA: readonly (readonly [PostacWydania, string, string])[] = [
   ['zmienne-css', 'Zmienne CSS', 'zetony.css'],
   ['scss', 'SCSS', 'zetony.scss'],
@@ -32,7 +13,7 @@ export const POSTACIE_WYDANIA: readonly (readonly [PostacWydania, string, string
   ['modul-js', 'Moduł JavaScript', 'zetony.js'],
 ];
 
-/** Nagłówek wydania — mówi, skąd wartości pochodzą i czym NIE są. */
+/** Nagłówek dołączany do każdego wydania — mówi, skąd wartości pochodzą i wprost nazywa, czym te wartości nie są. */
 function naglowek(motyw: string): readonly string[] {
   return [
     'Żetony systemu wizualnego Danaco Console.',
@@ -42,7 +23,7 @@ function naglowek(motyw: string): readonly string[] {
   ];
 }
 
-/** Żetony wszystkich grup w jednym ciągu, bez tych, których motyw nie definiuje. */
+/** Żetony wszystkich grup zebrane w jednym ciągu, z pominięciem tych, których obowiązujący motyw nie definiuje. */
 function zdefiniowane(grupy: readonly GrupaZetonow[]): readonly Zeton[] {
   return grupy.flatMap((grupa) => grupa.zetony.filter((zeton) => zeton.wartosc !== ''));
 }
@@ -98,12 +79,9 @@ function zlozScss(grupy: readonly GrupaZetonow[], motyw: string): string {
 }
 
 /**
- * Konfiguracja Tailwind — wyłącznie żetony barwne w gałęzi barw i odstępy
- * w gałęzi odstępów.
- *
- * Wrzucenie wszystkiego do jednej gałęzi dałoby konfigurację, która się wczyta
- * i nic sensownego nie zrobi; podział wedle roli jest tym, co czyni wydanie
- * użytecznym.
+ * Konfiguracja Tailwind zawierająca wyłącznie żetony barwne w gałęzi barw oraz odstępy w gałęzi
+ * odstępów, bo wrzucenie wszystkiego do jednej gałęzi dałoby konfigurację bezużyteczną mimo
+ * poprawnej składni.
  */
 function zlozTailwind(grupy: readonly GrupaZetonow[], motyw: string): string {
   const barwy = zdefiniowane(grupy).filter((zeton) => zeton.rodzaj === 'barwa');
@@ -137,11 +115,8 @@ function zlozModulJs(grupy: readonly GrupaZetonow[], motyw: string): string {
 }
 
 /**
- * Przewodnik stylu — dokumentacja systemu projektowego jako jeden plik.
- *
- * Powstaje z tych samych wartości co wydania kodu, więc nie może się z nimi
- * rozejść. Jest dokumentem do czytania, nie stroną produktu: nie wciąga
- * arkuszy platformy i nie udaje jej interfejsu.
+ * Przewodnik stylu jako jeden plik dokumentacji systemu projektowego, złożony z tych samych
+ * wartości co wydania kodu, do czytania, nie do wciągania jako arkusz platformy.
  */
 export function zlozPrzewodnikStylu(grupy: readonly GrupaZetonow[], motyw: string): string {
   const sekcje = grupy

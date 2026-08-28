@@ -6,35 +6,10 @@ import {
 } from '../komponenty/menu-drzewo';
 
 /**
- * Ster nastawy — obudowa jednego komponentu paska zlecenia.
- *
- * Nie jest drugim mechanizmem menu: rozwijanie, haczyk, opisy, gałęzie, grupy,
- * pole szukania i stopka należą do `komponenty/menu-drzewo.ts`, a ten plik
- * bierze ten mechanizm gotowy.
- *
- * Istnieje, bo mechanizm drzewa nie wykonuje wyboru — oddaje klucz wołającemu
- * i na tym kończy. Każdy ster paska musi zaś zrobić z tym kluczem to samo:
- * pójść do rdzenia, poczekać na potwierdzenie i pokazać odmowę dosłownie.
- * Bez tej obudowy ten sam kawałek — czyszczenie zdania odmowy, `aria-busy` na
- * czas wysyłki, wyświetlenie błędu i powrót do stanu potwierdzonego — stałby
- * osobno w każdym sterze.
- *
- * Wyróżnienie idzie wyłącznie z migawki stanu: ster nie zapisuje wyboru
- * u siebie, tylko po wysyłce woła `odswiez` wołającego, a ten czyta stan
- * potwierdzony przez rdzeń. Nieudana zmiana nie zostawia więc mylącej etykiety
- * na uchwycie.
- *
- * Ster nie traci klikalności ani na czas wysyłki, ani po odmowie — `aria-busy`
- * mówi o pracy, nie odbiera możliwości działania.
+ * Ster nastawy jest obudową jednego komponentu paska zlecenia: bierze gotowy mechanizm menu i dodaje wysyłkę do rdzenia, potwierdzenie i pokazanie odmowy dosłownie, bez parafrazy.
  */
 export interface OpcjeSteru {
-  /**
-   * Nazwa rodzajowa nastawy — „Model", „Wysiłek", „Katalog roboczy".
-   *
-   * Nie trafia na ekran: na uchwycie stoi wartość. Idzie do `aria-label`
-   * uchwytu, bo czytnik ekranu musi wiedzieć, czego dotyczy wartość, której
-   * nazwa sama tego nie mówi.
-   */
+  /** Nazwa rodzajowa nastawy idzie do aria-label, bo czytnik ekranu musi wiedzieć, czego wartość dotyczy. */
   nastawa: string;
   /** Ikona na uchwycie przed wartością; pominięta znaczy „bez ikony". */
   ikona?: NazwaIkony;
@@ -52,10 +27,7 @@ export interface OpcjeSteru {
 }
 
 /**
- * Waga zdania stojącego pod uchwytem. `odmowa` znaczy „coś się nie udało"
- * i wygląda na błąd; `spokojne` znaczy „praca się odbyła, a wynik jest taki" —
- * nagranie bez mowy albo wykaz z nazwami zastępczymi. Jeden wspólny ton
- * zamieniłby poprawny wynik w fałszywy alarm.
+ * Waga zdania pod uchwytem: odmowa wygląda na błąd, a spokojne znaczy, że praca się odbyła i wynik jest taki, jak nagranie bez mowy albo wykaz z nazwami zastępczymi.
  */
 export type WagaZdania = 'odmowa' | 'spokojne';
 
@@ -64,16 +36,7 @@ export interface SterNastawy {
   element: HTMLElement;
   /** Podaje wartość na uchwyt i całe drzewo naraz. */
   ustaw(wartosc: string, drzewo: readonly PozycjaMenu[]): void;
-  /**
-   * Zdanie pod uchwytem, którego źródłem nie jest wybór w menu. Mikrofon
-   * melduje wynik nagrania, którego nikt z menu nie zamawiał, a katalog
-   * rozszerzeń bywa nieodczytany, zanim padnie pierwsze kliknięcie. Bez tej
-   * drogi obie sytuacje musiałyby zbudować własny wiersz zdania obok
-   * istniejącego.
-   *
-   * Treść pusta chowa zdanie; `hidden` zdejmuje je z układu, więc ster bez
-   * zdania nie zostawia pustego pasa w rzędzie.
-   */
+  /** Zdanie pod uchwytem bez źródła w menu: mikrofon melduje nagranie, katalog melduje odczyt rozszerzeń. */
   zdanie(tresc: string, waga?: WagaZdania): void;
 }
 
@@ -88,14 +51,7 @@ export interface SterPaska {
   element: HTMLElement;
   /** Przerysowuje uchwyt i drzewo ze stanu potwierdzonego przez rdzeń. */
   odswiez(): void;
-  /**
-   * Zdejmuje własne nasłuchy steru; pominięte znaczy „ten ster ich nie ma".
-   *
-   * Większość sterów paska nie subskrybuje niczego samodzielnie — czytają
-   * jedną migawkę, a jedyną subskrypcję trzyma pasek. Mikrofon i rozszerzenia
-   * mają własne: sprzęt dźwiękowy i `extension.changed` żyją poza oknem i bez
-   * zdjęcia przeżyłyby je, czyli wyciekły.
-   */
+  /** Większość sterów nie subskrybuje niczego samo — mikrofon i rozszerzenia mają subskrypcje do zdjęcia. */
   rozlacz?(): void;
 }
 

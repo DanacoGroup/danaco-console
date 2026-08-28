@@ -9,31 +9,9 @@ import { czyLiczba, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Wyszukiwanie po znaczeniu widziane przez klienta — dwie komendy `knowledge.*`.
- *
- * Stała `Command.*` pada wyłącznie w plikach `zrodlo-*.ts` modułu. Okno zna
- * czynność („poszukaj", „przebuduj wskaźnik"), a nie nazwę komendy, więc zmiana
- * nazwy w kontrakcie przerywa kompilację w jednym pliku, a nie w każdym widoku
- * z osobna.
- *
- * Obie komendy siedzą razem, choć robią co innego: `knowledge.search` jest
- * odczytem, a `knowledge.index` przebudową wskaźnika — ale bez wskaźnika odczyt
- * nie ma czego oddać, więc okno pokazujące wyniki potrzebuje pod ręką drogi do
- * przebudowy. Rozdzielenie ich dałoby oknu dwie zależności na jedną dziedzinę.
- *
- * Źródło oddaje `Wynik`, nie samą treść, i nie ma tu ani jednego `?? []`.
- * Wyszukiwanie, które po odmowie rdzenia oddaje pustą tablicę, mówi „nic nie
- * znalazłem" zamiast „nie udało się zapytać" — a to są dwa różne zdania i tylko
- * jedno z nich jest prawdziwe.
- *
- * Kontrakt nie niesie zdarzenia zmiany wskaźnika wiedzy — `ZDARZENIA` nie ma
- * pozycji `knowledge.*` — więc okno nie ma się na czym zawiesić i odświeża się
- * wyłącznie na czynność Operatora. Nasłuch stanąłby na zdarzeniu, które nigdy
- * nie przychodzi.
- */
+/** Wyszukiwanie po znaczeniu widziane przez klienta obejmuje dwie komendy: szukanie i przebudowę. */
 
-/** Owoc przeszukania: fragmenty od najtrafniejszego wraz z ich liczbą. */
+/** Owoc przeszukania niesie fragmenty od najtrafniejszego wraz z ich łączną liczbą spełniającą warunki zapytania. */
 export interface OwocSzukania {
   /** Fragmenty wraz ze wskazaniem źródła — bez źródła trafienie jest bezwartościowe. */
   wyniki: readonly KnowledgeHit[];
@@ -41,7 +19,7 @@ export interface OwocSzukania {
   wszystkich: number;
 }
 
-/** Owoc przebudowy wskaźnika: ile weszło i ile jest po przebiegu. */
+/** Owoc przebudowy wskaźnika niesie liczbę pozycji wniesionych w tym przebiegu oraz liczbę pozycji po przebiegu. */
 export interface OwocWskaznika {
   /** Liczba pozycji wprowadzonych do wskaźnika w tym przebiegu. */
   wniesione: number;
@@ -62,16 +40,13 @@ export function utworzZrodloWiedzy(kanal: Kanal): ZrodloWiedzy {
   return {
     async szukaj(zadanie) {
       const surowy = await wywolaj(kanal, Command.KnowledgeSearch, zadanie);
-      // Sprawdzamy `results`, bo to jedyne pole, po którym okno iteruje —
-      // rdzeń starszej wersji przysyłający treść bez niego wywróciłby pętlę
-      // na pierwszym kroku, zamiast oddać uczciwe niepowodzenie.
+      // Sprawdzenie obejmuje pole wyników, jedyne, po którym okno iteruje, inaczej pętla się wywróci.
       const sprawdzony = sprawdzKsztalt(surowy, Command.KnowledgeSearch, (tresc) =>
         czyTablica(tresc.results),
       );
       return przenies(sprawdzony, (tresc) => ({
         wyniki: tresc.results,
-        // `total` bywa większe niż wykaz (rdzeń przycina do `limit`) — okno ma
-        // to powiedzieć, więc licznik nie może zostać zastąpiony długością.
+        // Liczba całkowita bywa większa niż wykaz, bo rdzeń przycina do limitu; licznik jej nie zastępuje.
         wszystkich: czyLiczba(tresc.total) ? tresc.total : tresc.results.length,
       }));
     },

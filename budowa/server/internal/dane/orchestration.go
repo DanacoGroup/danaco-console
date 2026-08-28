@@ -1,11 +1,5 @@
 // Odpowiedzialność pliku: pojedynczy łuk układu zależności — zapis jednej
 // zależności i usunięcie jednej zależności w tabeli `zaleznosc_kroku_automatyki`.
-//
-// `automations_kroki.go` podmienia cały układ, bo Workflow Builder oddaje pełną
-// definicję automatyki. Tu operacja obejmuje jeden łuk: podmiana kompletu przy
-// dołożeniu pojedynczego łuku przepisywałaby pozostałe wiersze, gubiąc ich
-// `utworzono`, a dwa okna pracujące równocześnie kasowałyby sobie zmiany
-// nawzajem. Obie drogi sięgają tych samych wierszy tej samej tabeli.
 package dane
 
 import (
@@ -29,13 +23,8 @@ const (
 	                      WHERE automatyka_id = ? AND krok_z = ? AND krok_do = ?`
 )
 
-// ZapiszZaleznosc zapisuje jeden łuk układu zależności; łuk zastany zmienia,
-// nowego dokłada. Pozostałe łuki automatyki zostają nietknięte.
-//
-// Repozytorium nie ocenia układu: łuk do kroku nieistniejącego i łuk domykający
-// cykl zapisują się tak samo jak każdy inny — ocena należy do walidacji w rdzeniu.
-// Więzy pilnowane przez sam schemat, czyli pętla własna i rodzaj spoza wartości
-// kontraktu, wracają stąd jako błąd zapisu.
+// ZapiszZaleznosc zapisuje jeden łuk układu zależności; łuk zastany zmienia, nowego dokłada, a pozostałe
+// łuki automatyki zostają nietknięte.
 func (r *repozytoriumAutomatyk) ZapiszZaleznosc(ctx context.Context,
 	automatykaID int64, zaleznosc ZaleznoscKroku) error {
 
@@ -55,8 +44,7 @@ func (r *repozytoriumAutomatyk) ZapiszZaleznosc(ctx context.Context,
 	return nil
 }
 
-// UsunZaleznosc zdejmuje jeden łuk układu. Wynik `false` znaczy, że łuku
-// w układzie nie było.
+// UsunZaleznosc zdejmuje jeden łuk układu zależności; wynik fałszywy znaczy, że łuku w układzie nie było.
 func (r *repozytoriumAutomatyk) UsunZaleznosc(ctx context.Context,
 	automatykaID int64, krokZ, krokDo string) (bool, error) {
 

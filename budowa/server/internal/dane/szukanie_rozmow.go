@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: szukanie w treści rozmów — odczyt indeksu
-// pełnotekstowego `wiadomosc_szukanie` (FTS5).
-//
-// Szukanie jedzie przez MATCH, snippet i rank, nie przez LIKE. Tokenizator
-// indeksu sprowadza diakrytyki poza „ł" do liter podstawowych („zolta" trafi
-// „żółta"), ale „ł" pozostaje osobną literą — „lodz" nie trafi w „łódź".
-//
-// Fraza jedzie w cudzysłowie: zapytanie Operatora jest frazą, nie wyrażeniem
-// składni FTS5 — ujęcie w cudzysłów (z podwojeniem cudzysłowów wewnętrznych)
-// zdejmuje z niego operatory AND/OR/NOT/*, żeby fraza z myślnikiem albo
-// gwiazdką nie wywracała zapytania błędem składni.
+// Plik obsługuje szukanie w treści rozmów przez odczyt indeksu
+// pełnotekstowego wiadomosc_szukanie, z dopasowaniem, wycinkiem i porządkiem
+// trafień.
 package dane
 
 import (
@@ -20,9 +12,8 @@ import (
 // TrafienieRozmowy to jeden wiersz wyniku szukania: wskazanie sesji i okna
 // wraz z wycinkiem treści wokół trafienia.
 type TrafienieRozmowy struct {
-	// SesjaKod i OknoKod są identyfikatorami rdzenia (kontraktowymi); puste,
-	// gdy wiersz powstał poza rdzeniem — trafienie zostaje, wskazanie nie
-	// prowadzi wtedy do bytu rejestru.
+	// SesjaKod i OknoKod są identyfikatorami rdzenia, puste, gdy wiersz
+	// powstał poza rdzeniem.
 	SesjaKod     string
 	TytulSesji   string
 	OknoKod      string
@@ -33,7 +24,8 @@ type TrafienieRozmowy struct {
 	Utworzono string
 }
 
-// RepozytoriumSzukaniaRozmow jest kontraktem obszaru szukania.
+// RepozytoriumSzukaniaRozmow jest kontraktem obszaru szukania, deklarującym
+// pojedynczą metodę wyszukiwania wiadomości po frazie.
 type RepozytoriumSzukaniaRozmow interface {
 	SzukajWiadomosci(ctx context.Context, fraza string, granica int) ([]TrafienieRozmowy, error)
 }

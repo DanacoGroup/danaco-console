@@ -18,29 +18,8 @@ import type { StanAgentow } from './stan-agentow';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Model Configuration — okno pomocnicze modułu Agents.
- *
- * Lista kanałów pochodzi z komendy `channel.list` — tego samego rejestru,
- * z którego biorą kanał okna rozmowy. Okno nie ma własnej listy dostawców
- * i nie zna nazw programów CLI; kanały „Code CLI”, „Agent SDK” i „API” są
- * wierszami tego rejestru wraz z transportem, nie gałęziami w kodzie.
- *
- * Zmiana kanału przełącza zestaw pól zależnych. Zestaw bierze się z deklaracji
- * zdolności adaptera (`config.capabilities.get`, obszar `model` modelu
- * konfiguracji sesji), więc przełącza się sam, gdy zmieni się kanał albo
- * transport.
- *
- * Komendy okna: `agent.model.set` (zapis) oraz `channel.list`
- * i `config.capabilities.get` (odczyt). Komenda `model.channel.set` nadaje
- * kanał modelu oknu komunikacji albo karcie sesji, a Model Configuration
- * dotyczy jednego eksperta i żadnego okna komunikacji nie prowadzi — nie ma
- * czym wskazać `windowId`, więc okno jej nie woła.
- *
- * Wszystkie cztery pola są odczytywalne: `Agent` niesie `channelId`, `model`,
- * `transport` i `parameters`, a bazą trzyma je migracja agentów. Formularz
- * pokazuje więc stan rdzenia, a nie własną pamięć — przy zmianie eksperta pola
- * przyjmują wartości nowego, a nie zostają po poprzedniku. Puste pole znaczy
- * „ekspert tego nie ma”, i tak je opisuje.
+ * Model Configuration to okno pomocnicze modułu Agents — ustawia kanał, transport, model
+ * bazowy i parametry wywołania eksperta.
  */
 export interface OknoModelConfiguration {
   element: HTMLElement;
@@ -52,12 +31,8 @@ export interface OknoModelConfiguration {
 }
 
 /**
- * Zapis parametrów wywołania do pola tekstowego.
- *
- * Parametry są w kontrakcie wartością JSON dowolnego kształtu, więc do pola
- * idą tekstem sformatowanym — nie `String(obiekt)`, bo to dałoby napis
- * „[object Object]” zamiast treści, którą Operator ma poprawić. Brak wartości
- * daje pole puste, a nie napis „undefined”.
+ * Formatuje parametry wywołania eksperta do postaci tekstowej wpisywanej w polu
+ * formularza, z pustym wynikiem dla wartości nieustawionej.
  */
 function zapisParametrow(wartosc: unknown): string {
   if (wartosc === undefined || wartosc === null) return '';
@@ -100,18 +75,14 @@ export function utworzOknoModelConfiguration(
   const zapisz = przycisk('Zapisz model bazowy', 'dn-btn dn-btn--sm dn-btn--atrament');
   const odpowiedz = utworzWierszOdpowiedzi();
 
-  // Test połączenia nie ma dziś drogi do rdzenia: sprawdzenie punktu dostępu
-  // dotyczy mostu, nie kanału modelu, a rodzina kanałów sprawdzenia nie niesie.
-  // Kontrolka zostaje widoczna i klikalna — po naciśnięciu nazywa brak.
+  // Test połączenia sprawdza most, nie kanał modelu — kontrolka zostaje widoczna i nazywa brak.
   const test = pokrycie.przycisk(
     'Testuj połączenie',
     Command.ChannelCheck,
     'sprawdzenie osiągalności kanału modelu przed zapisem eksperta',
   );
 
-  // Poświadczenie kanału stoi poza modułem: zakłada je i zmienia rodzina
-  // kanałów w oknie konfiguracji platformy. Okno mówi, gdzie ta decyzja
-  // zapada, zamiast stawiać pole, które nie miałoby dokąd pojechać.
+  // Poświadczenie kanału zakłada się i zmienia w oknie konfiguracji platformy, nie tutaj.
   const poswiadczenie = pokrycie.przycisk(
     'Stan poświadczenia kanału',
     Command.ChannelCredentialStatus,
@@ -136,9 +107,7 @@ export function utworzOknoModelConfiguration(
     test,
     poswiadczenie,
   );
-  // Podgląd wywołania zamyka pytanie „co to okno naprawdę robi”: pokazuje
-  // wiersz polecenia i prompt systemowy po nałożeniu eksperta, liczone tą samą
-  // drogą, którą idzie tura (`config.explain.get`).
+  // Podgląd wywołania pokazuje wiersz polecenia i prompt systemowy po nałożeniu eksperta.
   const podglad = utworzPodgladWywolania(kanalRdzenia);
   okno.tresc.append(formularz, zdolnosci.element, odpowiedz.element, perRola, podglad.element);
 
@@ -194,15 +163,12 @@ export function utworzOknoModelConfiguration(
       );
       return;
     }
-    // Wysłane, ale nieodczytywalne: rdzeń nie oddaje tych dwóch pól w `Agent`,
-    // więc zdanie powodzenia wymienia, co poszło, i nie udaje odczytu.
+    // Transport i parametry nie wracają w polu Agent, więc zdanie powodzenia wymienia, co wysłano.
     const wyslane: string[] = [];
     if (wybranyTransport() !== '') wyslane.push(`transport ${wybranyTransport()}`);
     if (parametry.kontrolka.value.trim() !== '') wyslane.push('parametry wywołania');
 
-    // Zapisany ekspert wraca z rdzenia z kompletem czterech pól, więc formularz
-    // przyjmuje jego stan zamiast zostawać przy tym, co Operator wpisał —
-    // rozjazd między jednym a drugim jest odpowiedzią rdzenia, nie usterką okna.
+    // Formularz przyjmuje stan zapisanego eksperta z rdzenia, nie to, co wpisał operator.
     const zapisany = wynik.wynik.agent;
     stan.wchlon(zapisany);
     pokazany = zapisany.id;
@@ -219,17 +185,14 @@ export function utworzOknoModelConfiguration(
   function odswiez(): void {
     const ekspert = stan.wybrany();
     if (ekspert === null) {
-      // Odmowa odczytu rejestru zostaje na widoku. Podpowiedź „wybierz eksperta”
-      // nie ma prawa zająć miejsca powodu, który rdzeń podał.
+      // Odmowa odczytu rejestru zostaje na widoku zamiast podpowiedzi o wyborze eksperta.
       pokazany = '';
       if (odmowaRejestru !== '') okno.blad(odmowaRejestru);
       else okno.puste('Wybierz eksperta w Agent Builderze, aby ustalić jego model bazowy.');
       return;
     }
     if (ekspert.id !== pokazany) {
-      // Zmiana eksperta przestawia formularz na stan rdzenia dla nowo wybranego.
-      // Wszystkie cztery pola są odczytywalne z bytu eksperta, więc żadnego nie
-      // trzeba zerować „w ciemno” — po zmianie widać to, co rdzeń ma zapisane.
+      // Zmiana eksperta przestawia formularz na stan rdzenia, żadnego pola nie zeruje w ciemno.
       pokazany = ekspert.id;
       transport.kontrolka.value = ekspert.transport ?? '';
       parametry.kontrolka.value = zapisParametrow(ekspert.parameters);
@@ -253,8 +216,7 @@ export function utworzOknoModelConfiguration(
     zamknij: () => pokrycie.zamknij(),
 
     async wczytaj() {
-      // Powitanie idzie raz na połączenie, więc odczyt wykazu komend można
-      // zlecić swobodnie — od niego zależy zdanie kontrolek bez pokrycia.
+      // Odczyt wykazu komend jest zlecany swobodnie, niezależnie od powitania połączenia.
       void pokrycie.odczytaj();
       okno.ladowanie('Odczyt rejestru kanałów modelu w toku…');
       const wynik = await zaplecze.kanaly();

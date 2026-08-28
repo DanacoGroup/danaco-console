@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: model bazowy eksperta i parametry jego wywołania
-// (okno Model Configuration, komenda `agent.model.set`).
-//
-// Kanał wskazany przez okno jest sprawdzany w rejestrze kanałów rdzenia — tym
-// samym, który obsługuje `channel.list` i okna rozmowy. Adapter nie zna żadnego
-// dostawcy z nazwy; zna wyłącznie kod wiersza rejestru.
-//
-// Sprawdzenie jest możliwe, nie obowiązkowe. Rejestr pusty znaczy „rejestr
-// jeszcze nie wstał”, a nie „kanał nie istnieje”, więc odmowa zapisu w takim
-// stanie zablokowałaby konfigurację eksperta z powodu leżącego poza nią. Odmowa
-// zapada dopiero wtedy, gdy rejestr coś zna, a wskazania w nim nie ma.
+// Odpowiedzialność pliku: model bazowy eksperta i parametry jego wywołania, okno Model Configuration, komenda agent.model.set, z opcjonalnym sprawdzeniem kanału.
 package core
 
 import (
@@ -18,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// UstawModel ustala kanał, model bazowy, transport i parametry wywołania.
+// UstawModel ustala kanał, model bazowy, transport i parametry wywołania eksperta, sprawdzając kanał w rejestrze rdzenia, gdy jest gotowy.
 func (a *adapterAgentow) UstawModel(ctx context.Context,
 	z shared.AgentModelSetRequest) (shared.AgentModelSetResponse, error) {
 

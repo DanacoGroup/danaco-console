@@ -2,7 +2,7 @@ import { Command, EventType } from '../../../shared/contract';
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import type { Kanal } from '../protokol/kanal';
 
-/** Śledzenie modułu, w którym pracuje okno komunikacji. */
+/** Interfejs opisuje śledzenie modułu, w którym w danej chwili pracuje okno komunikacji z rdzeniem systemu. */
 export interface SledzenieModulu {
   /** Kod modułu znany w tej chwili; pusty do pierwszej odpowiedzi rdzenia. */
   biezacy(): string;
@@ -14,20 +14,7 @@ export interface SledzenieModulu {
   rozlacz(): void;
 }
 
-/**
- * Moduł okna czytany z rdzenia, nie zgadywany po stronie widoku.
- *
- * Dwie drogi, obie z kontraktu:
- *   1. `window.state.get` przy złożeniu — okno pyta, w czym pracuje, zamiast
- *      czekać na pierwszą zmianę. Bez tego okno wznowione po odświeżeniu
- *      klienta stałoby na module nieustalonym mimo znanego stanu w rdzeniu.
- *   2. `window.changed` w toku pracy — `workspace.enter` przestawia to samo
- *      okno na inny moduł zamiast je zamykać, a rdzeń rozgłasza zmianę
- *      zdarzeniem.
- *
- * Niepowodzenie zapytania nie jest błędem okna: moduł zostaje nieustalony,
- * a okno pracuje na arsenale wspólnym.
- */
+/** Funkcja śledzi moduł okna czytany wprost z rdzenia komendą window.state.get oraz zdarzeniem window.changed, zamiast go zgadywać po stronie widoku. */
 export function sledzModulOkna(kanal: Kanal, idOkna: string, poczatkowy = ''): SledzenieModulu {
   const zmiany = utworzMagistrale<string>();
   let biezacy = poczatkowy;

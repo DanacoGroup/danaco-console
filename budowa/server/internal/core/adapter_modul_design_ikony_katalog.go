@@ -1,29 +1,5 @@
 // Odpowiedzialność pliku: katalog ikon WKOMPILOWANY w binarium rdzenia —
-// wzory, których `design.icon.library.search` szuka, `design.icon.set` używa
-// jako punktu wyjścia, a `design.icon.generate` bierze, gdy pojęcie trafia
-// w któryś z nich. Ikony WŁASNE Operatora leżą w bazie
-// (`dane/design_ikony.go`); tutaj leży to, co produkt ma bez ani jednego zapisu
-// w bazie i bez ani jednego pobrania z sieci.
-//
-// ── Dlaczego katalog jest w kodzie, a nie w bazie ani w pliku ───────────────
-// Instalka Operatora jest cienka, a arsenał stoi na serwerze wkompilowany
-// w binarium. Katalog ikon w bazie musiałby być zasiany migracją i dałby się
-// skasować; katalog w plikach obok binarium wymagałby, żeby wdrożenie kopiowało
-// katalog danych. Katalog w kodzie jest zawsze i jest jeden.
-//
-// ── Jeden styl, jedna siatka ────────────────────────────────────────────────
-// Wszystkie wzory są na siatce 24 i rysowane KONTUREM (obrys, nie wypełnienie),
-// o grubości dwóch jednostek. Zestaw mieszający obrys z wypełnieniem wygląda
-// w oknie jak zestaw zebrany z dwóch źródeł — a to jest dokładnie to, czemu
-// zestaw ikon ma zapobiegać. Grubość obrysu jest cechą ikony
-// (`strokeWidth`), więc Operator zmienia ją i dostaje tę samą ikonę cieńszą,
-// a nie inną ikonę.
-//
-// ── Zapis jest ścieżką, nie gotowym dokumentem ──────────────────────────────
-// Wzór niesie samą treść `d` ścieżek. Dokument SVG składa się z niej na wyjściu
-// (`svgIkonyKataloguDesignu`) razem z grubością obrysu, którą Operator wskazał —
-// gdyby wzory były gotowymi dokumentami, zmiana grubości wymagałaby przepisania
-// czterdziestu napisów.
+// wzory, których szuka, których używa i które generuje moduł Design.
 package core
 
 import (
@@ -35,20 +11,21 @@ import (
 )
 
 const (
-	// siatkaIkonyKataloguDesignu jest siatką, na której powstały wszystkie wzory.
-	// Ikona żądana na innej siatce skaluje się z tej — jedno źródło kształtu.
+	// siatkaIkonyKataloguDesignu jest siatką, na której powstały wszystkie
+	// wzory; ikona żądana na innej siatce skaluje się z tej.
 	siatkaIkonyKataloguDesignu = 24
 
-	// gruboscObrysuIkonyDomyslna jest grubością obrysu wzorów katalogu.
+	// gruboscObrysuIkonyDomyslna jest grubością obrysu wzorów katalogu,
+	// stosowaną, gdy Operator nie wskazał własnej wartości.
 	gruboscObrysuIkonyDomyslna = 2.0
 
-	// zestawIkonKataloguDesignu jest nazwą zestawu wkompilowanego. Nazwa wchodzi
-	// do pola `set` każdej ikony katalogu, żeby Operator poznał, że ma przed sobą
-	// wzór rdzenia, a nie własną ikonę.
+	// zestawIkonKataloguDesignu jest nazwą zestawu wkompilowanego; nazwa
+	// wchodzi do pola set każdej ikony katalogu rdzenia.
 	zestawIkonKataloguDesignu = "rdzen-24"
 )
 
-// wzorIkonyDesignu to jeden wzór katalogu wkompilowanego.
+// wzorIkonyDesignu to jeden wzór katalogu wkompilowanego, niosący nazwę,
+// etykiety i treść ścieżek składających kontur.
 type wzorIkonyDesignu struct {
 	Nazwa    string
 	Etykiety []string
@@ -56,12 +33,8 @@ type wzorIkonyDesignu struct {
 	Sciezki []string
 }
 
-// katalogIkonDesignu to komplet wzorów wkompilowanych w binarium.
-//
-// Wykaz jest krótki z zamysłu i obejmuje pojęcia, które w narzędziu pracy
-// naprawdę występują: nawigacja, praca z plikami, stany, komunikacja, media,
-// dane. Wciągnięcie kilku tysięcy ikon dałoby nazwy, których nikt nie wpisze,
-// a każda musiałaby być tu utrzymywana.
+// katalogIkonDesignu to komplet wzorów wkompilowanych w binarium; wykaz
+// jest krótki z zamysłu i obejmuje pojęcia realnie używane.
 var katalogIkonDesignu = []wzorIkonyDesignu{
 	{"strzalka-w-gore", []string{"strzałka", "góra", "wyżej", "nawigacja"},
 		[]string{"M12 20 L12 4", "M5 11 L12 4 L19 11"}},
@@ -171,7 +144,8 @@ var katalogIkonDesignu = []wzorIkonyDesignu{
 			"M12 7.5 A0.8 0.8 0 1 0 12 7.6"}},
 }
 
-// ikonaKataloguDesignu odnajduje wzór po nazwie.
+// ikonaKataloguDesignu odnajduje wzór po nazwie, w wykazie wkompilowanym
+// w binarium rdzenia, bez odwołania do bazy.
 func ikonaKataloguDesignu(nazwa string) (wzorIkonyDesignu, bool) {
 	szukana := strings.ToLower(strings.TrimSpace(nazwa))
 	for _, wzor := range katalogIkonDesignu {
@@ -182,9 +156,8 @@ func ikonaKataloguDesignu(nazwa string) (wzorIkonyDesignu, bool) {
 	return wzorIkonyDesignu{}, false
 }
 
-// wzorDlaPojeciaDesignu szuka wzoru odpowiadającego pojęciu — po nazwie i po
-// etykietach. Dopasowanie jest po zawieraniu w obie strony, bo Operator pisze
-// „strzałka w prawo" i „prawo", mając na myśli to samo.
+// wzorDlaPojeciaDesignu szuka wzoru odpowiadającego pojęciu — po nazwie
+// i po etykietach, dopasowaniem po zawieraniu w obie strony.
 func wzorDlaPojeciaDesignu(pojecie string) (wzorIkonyDesignu, bool) {
 	szukane := strings.ToLower(strings.TrimSpace(pojecie))
 	if szukane == "" {
@@ -207,20 +180,14 @@ func wzorDlaPojeciaDesignu(pojecie string) (wzorIkonyDesignu, bool) {
 	return wzorIkonyDesignu{}, false
 }
 
-// zestawyIkonDesignu oddaje zestawy obecne w katalogu rdzenia. Wykaz jest
-// jednoelementowy i taki wchodzi do odpowiedzi — pusty byłby ciszą o tym, że
-// rdzeń w ogóle ma ikony.
+// zestawyIkonDesignu oddaje zestawy obecne w katalogu rdzenia; wykaz jest
+// jednoelementowy i taki wchodzi do odpowiedzi.
 func zestawyIkonDesignu() []string {
 	return []string{zestawIkonKataloguDesignu}
 }
 
 // svgIkonyKataloguDesignu składa dokument SVG wzoru na żądanej siatce
-// i z żądaną grubością obrysu.
-//
-// Skalowanie idzie polem `viewBox`, nie przeliczaniem współrzędnych: wzór ma
-// jedną prawdę o kształcie, a rozmiar dokumentu jest jego oprawą. Dzięki temu
-// ikona na siatce 16 i na siatce 48 to ten sam rysunek, a nie dwa zaokrąglone
-// inaczej.
+// i z żądaną grubością obrysu, gotowy do odpowiedzi.
 func svgIkonyKataloguDesignu(wzor wzorIkonyDesignu, siatka int, grubosc float64) string {
 	if siatka <= 0 {
 		siatka = siatkaIkonyKataloguDesignu
@@ -241,7 +208,8 @@ func svgIkonyKataloguDesignu(wzor wzorIkonyDesignu, siatka int, grubosc float64)
 	return dokument.String()
 }
 
-// ikonaKataloguKontraktuDesignu składa `DesignIcon` kontraktu ze wzoru.
+// ikonaKataloguKontraktuDesignu składa DesignIcon kontraktu ze wzoru,
+// w kształcie oczekiwanym przez odpowiedź komendy.
 func ikonaKataloguKontraktuDesignu(wzor wzorIkonyDesignu, siatka int,
 	grubosc float64) shared.DesignIcon {
 
@@ -262,12 +230,8 @@ func ikonaKataloguKontraktuDesignu(wzor wzorIkonyDesignu, siatka int,
 	}
 }
 
-// sciezkiZDokumentuSvgDesignu wyciąga treść atrybutów `d` z dokumentu SVG.
-//
-// Rozbiór jest celowo wąski: rdzeń czyta ŚCIEŻKI, bo tylko z nich składa się
-// kontur ikony w pakiecie i w kroju. Dokument z prostokątami i okręgami zamiast
-// ścieżek oddaje wykaz pusty, a wołający nazywa to wprost — cichy pakiet
-// z pustymi glifami byłby plikiem, w którym nie widać nic.
+// sciezkiZDokumentuSvgDesignu wyciąga treść atrybutów d z dokumentu SVG;
+// rozbiór jest celowo wąski, czyta wyłącznie ścieżki.
 func sciezkiZDokumentuSvgDesignu(dokument string) []string {
 	sciezki := []string{}
 	reszta := dokument

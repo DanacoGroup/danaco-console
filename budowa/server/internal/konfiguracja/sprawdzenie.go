@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// Sprawdz weryfikuje spójność ustawień po nałożeniu wszystkich warstw.
+// Sprawdz weryfikuje spójność ustawień po nałożeniu wszystkich warstw: roli,
+// portu i pozostałych pól konfiguracji.
 func (k Konfiguracja) Sprawdz() error {
 	if _, err := RolaZTekstu(string(k.Rola)); err != nil {
 		return err

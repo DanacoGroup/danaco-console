@@ -3,52 +3,22 @@ import type { GlosBiezacy } from './glos-biezacy';
 import { nazwaUczestnika, type StanDebaty } from './stan-debaty';
 
 /**
- * Czytelność kilku głosów obok siebie — jedna wypowiedź, jeden blok, jedna
- * widoczna tożsamość.
- *
- * Dwa głosy tego samego modelu to dwa głosy, nie jeden: schemat debaty nie ma
- * więzu `UNIQUE(okno, kanał)` (`store/migracja_044_roundtable.sql`), a kontrakt
- * powtarza to w opisie `roundtable.model.add`. Kluczem wypowiedzi jest więc
- * `participantId`, nigdy `channelId` — i dwie tożsamości jednego kanału muszą
- * różnić się na ekranie, bo inaczej dwa głosy czyta się jako jeden. Stąd
- * znacznik mówcy przy każdej wypowiedzi i zdanie o powtórzonym kanale.
- *
- * Rozróżnienie idzie układem i gęstością, nie samą barwą. Wstęga barwna
- * (`data-rola-mowcy`) zostaje, ale sama nic nie niesie temu, kto barw nie
- * rozróżnia. Nośnikiem jest znacznik mówcy w osobnej kolumnie (te same znaki
- * co w składzie), nagłówek z pełną tożsamością przy każdej wypowiedzi oraz
- * odstęp — nowy mówca dostaje przerwę, ciąg tego samego mówcy zostaje ciasny
- * (`data-ciag`).
- *
- * Moderator nie jest uczestnikiem: rdzeń zapisuje jego interwencję kodem
- * stałym, poza wykazem uczestników, bo więz obcy do `debata_uczestnik`
- * odciąłby ją od zapisu. Jego głos dostaje więc własny rodzaj, własny znacznik
- * i układ jednokolumnowy.
- */
-
-/**
- * Kod moderatora w zapisie tury — literał stały, nie domysł. Moderator nie ma
- * kanału ani persony, więc rdzeń podpisuje go stałą `kodModeratora`
- * (`core/adapter_modul_roundtable.go`); tę samą wartość niesie interwencja
- * moderatora (`core/adapter_modul_roundtable_moderator.go`). Uczestnicy
- * dostają kod z przedrostkiem `uczest-`, więc kolizja nie zachodzi.
+ * Kod moderatora w zapisie tury, literał stały, nie domysł — moderator nie jest uczestnikiem
+ * składu, więc dostaje własny rodzaj głosu i własny znacznik jednokolumnowy.
  */
 export const PARTICIPANT_ID_MODERATORA = 'moderator';
 
-/** Znacznik głosu moderatora — wersaliki, żeby nie mylił się z numerem uczestnika. */
+/** Znacznik głosu moderatora — wersaliki, żeby nie mylił się z numerem uczestnika w kolejności wystąpienia w turze debaty. */
 const ZNACZNIK_MODERATORA = 'MOD';
 
 const ROLE_MOWCOW = ['pierwszy', 'drugi', 'trzeci'] as const;
 
-/** Rodzaj głosu: uczestnik składu, moderator albo mówca składowi nieznany. */
+/** Rodzaj głosu: uczestnik znany składowi debaty, moderator rozpoznany stałym kodem, albo mówca składowi dziś nieznany. */
 export type RodzajGlosu = 'uczestnik' | 'moderator' | 'nieznany';
 
 /**
- * Chwila wypowiedzi — albo ta, którą podał rdzeń, albo jawne „nie wiadomo”.
- *
- * `roundtable.debate.changed` potrafi przynieść `statement.createdAt` równe
- * zeru. Brak wiedzy nie jest treścią, więc zero i wartość niebędąca liczbą
- * dostają zdanie o braku, a nie datę z początku epoki.
+ * Chwila wypowiedzi — albo ta, którą podał rdzeń, albo jawne zdanie o braku wiedzy, gdy rdzeń
+ * przyniósł znacznik czasu zerowy.
  */
 export function chwila(znacznik: number): string {
   if (!Number.isFinite(znacznik) || znacznik <= 0) return 'czas nieznany (rdzeń nie podał chwili)';
@@ -56,11 +26,8 @@ export function chwila(znacznik: number): string {
 }
 
 /**
- * Rodzaj głosu. Moderatora rozpoznaje stała, a nie nieudane odnalezienie
- * w składzie: okno otwarte w trakcie debaty nie zna jeszcze całego składu —
- * odczytu `roundtable.model.list` żadne okno modułu dziś nie wywołuje — więc
- * prawdziwy uczestnik, o którym okno jeszcze nie wie, nie może dostać podpisu
- * moderatora.
+ * Rodzaj głosu. Moderatora rozpoznaje stały kod, nie nieudane odnalezienie w składzie —
+ * uczestnik jeszcze nieznany oknu nie dostaje podpisu moderatora.
  */
 export function rodzajGlosu(idUczestnika: string, uczestnik: RoundtableParticipant | null): RodzajGlosu {
   if (idUczestnika === PARTICIPANT_ID_MODERATORA) return 'moderator';
@@ -89,18 +56,14 @@ export interface KontekstCzytelnosci {
   poprzedniMowca: string;
 }
 
-/** Zakłada pamięć jednego rysowania listy wypowiedzi. */
+/** Zakłada pamięć jednego rysowania listy wypowiedzi: role wstęgi, znaczniki mówców i mówcę poprzedniego, od zera. */
 export function utworzKontekstCzytelnosci(): KontekstCzytelnosci {
   return { role: new Map(), znaczniki: new Map(), poprzedniMowca: '' };
 }
 
 /**
- * Znacznik mówcy — te same znaki, którymi skład podpisuje uczestnika.
- *
- * Uczestnik znany składowi dostaje `U` i swoje miejsce w kolejności głosu, więc
- * znacznik w przebiegu debaty i znacznik w składzie to ta sama etykieta.
- * Uczestnik składowi nieznany dostaje `?` i numer wystąpienia w tej turze —
- * miejsca w składzie nie ma skąd wziąć, a zmyślenie go rozjechałoby obie listy.
+ * Znacznik mówcy — te same znaki, którymi skład podpisuje uczestnika, albo numer wystąpienia,
+ * gdy skład go nie zna.
  */
 export function znacznikMowcy(
   idUczestnika: string,
@@ -142,13 +105,8 @@ function notaPowtorzonegoKanalu(uczestnik: RoundtableParticipant, stan: StanDeba
 }
 
 /**
- * Buduje blok jednej wypowiedzi wraz z widoczną tożsamością mówcy.
- *
- * @param biezacy głos tego mówcy złożony z obu dróg rdzenia — zapisu i
- *   strumienia (`glos-biezacy.ts`). Podawany wyłącznie przy wypowiedzi otwartej
- *   ostatnio przez tego mówcę: treść rosnąca należy do niej i tylko do niej,
- *   bo doklejona do wcześniejszych powtórzyłaby te same słowa. Pominięty daje
- *   blok wypowiedzi utrwalonej.
+ * Buduje blok jednej wypowiedzi wraz z widoczną tożsamością mówcy, przyjmując opcjonalnie głos
+ * bieżący dla wypowiedzi otwartej.
  */
 export function utworzWypowiedz(
   wypowiedz: RoundtableStatement,
@@ -183,10 +141,7 @@ export function utworzWypowiedz(
 
   const tresc = document.createElement('p');
   tresc.className = 'dr-wypowiedz__tresc';
-  // Treść bierze się z głosu bieżącego, gdy jest podany: rdzeń rozgłasza
-  // wypowiedź `created` z treścią pustą i dopiero po domknięciu strumienia
-  // `updated` z pełną, więc `wypowiedz.content` jest przez cały czas mówienia
-  // modelu pustym napisem, a treść jedzie tymczasem drogą `stream.chunk`.
+  // Treść bierze się z głosu bieżącego, gdy podany — rdzeń inaczej niesie ją pustą do domknięcia.
   tresc.textContent = biezacy === undefined ? wypowiedz.content : biezacy.tekst;
 
   element.append(znacznik, glowa, tresc);
@@ -204,17 +159,8 @@ export function utworzWypowiedz(
 }
 
 /**
- * Dopiski wypowiedzi rosnącej — stan głosu, tok rozumowania, zerwanie.
- *
- * Stan głosu jest słowem, nie samą barwą: „Mówi teraz" odróżnione wyłącznie
- * odcieniem znacznika byłoby dla nierozróżniającego barw tym samym, czym
- * wypowiedź domknięta — napis stoi więc w treści węzła, a `data-stan-glosu`
- * jest dla arkusza, nie zamiast napisu.
- *
- * Tok rozumowania stoi osobno, bo rdzeń nie liczy go do treści wypowiedzi
- * (`core/adapter_modul_roundtable_glos.go` sumuje wyłącznie fragmenty `text`).
- * Doklejony do zdania dałby na żywo wypowiedź inną niż ta, którą za chwilę
- * utrwali rdzeń.
+ * Dopiski wypowiedzi rosnącej — stan głosu jako napis w treści węzła, tok rozumowania osobno
+ * oraz zdanie o zerwaniu strumienia.
  */
 function dopiskiGlosu(biezacy: GlosBiezacy): HTMLElement[] {
   const dopiski: HTMLElement[] = [];

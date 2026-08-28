@@ -9,23 +9,7 @@ import { utworzOknoPodgladuBash } from './okno-podglad-bash';
 import type { OpcjePanelu, PanelPomocniczy } from './panel-pomocniczy';
 
 /**
- * Mapowanie kod pozycji → wytwórnia panelu; jedno miejsce w całym kliencie.
- *
- * Odbiorcy paneli są dwaj — pas okien pomocniczych modułu i kolumna paneli
- * sceny okien równoległych. Gdyby każdy z nich rozstrzygał kod pozycji własnym
- * `if`, byłyby to dwa miejsca do rozjechania się; tutaj kod pozycji spotyka się
- * z kodem wykonawczym raz.
- *
- * Wytwórnie wpisuje się strukturalnie, bez przejściówek. Panel wystarczy, że
- * niesie `element`, `odswiez()` i `zamknij()` — nadmiarowe pola (jak
- * `ustawOkno` terminala) nie przeszkadzają, a pole wymagane przechodzi
- * w miejsce opcjonalnego. TypeScript wiąże strukturalnie, więc przejściówka
- * byłaby warstwą bez treści: gdy okno rozjedzie się z umową, kompilator
- * zatrzyma się na wpisie w mapie poniżej.
- *
- * Plik nie czyta rejestru i nie zna stanów pozycji. „Ma wytwórnię" i „rejestr
- * nazywa ją zbudowaną" to dwie różne prawdy; zestawia je
- * `panele-otwieralne.ts`, a rozjazd między nimi zgłasza pas.
+ * Mapowanie kodu pozycji na wytwórnię panelu istnieje w jednym miejscu klienta, bo dwaj odbiorcy paneli — pas okien pomocniczych i kolumna paneli sceny — dzielą ten sam kod wykonawczy zamiast rozstrzygać kod pozycji osobno.
  */
 export type WytworniaPanelu = (opcje: OpcjePanelu) => PanelPomocniczy;
 
@@ -36,15 +20,14 @@ export type WytworniaPanelu = (opcje: OpcjePanelu) => PanelPomocniczy;
  */
 const WYTWORNIE: ReadonlyMap<string, WytworniaPanelu> = new Map<string, WytworniaPanelu>([
   ['podglad-bash', (opcje) => utworzOknoPodgladuBash(opcje)],
-  // Historia rozmowy stoi na trzech komendach, nie na jednej: panel woła
-  // `history.load`, `history.delete` i `retention.set`.
+  // Historia rozmowy stoi na trzech komendach, nie jednej — odczyt, usunięcie i zapis zasady retencji.
   ['historia-rozmowy', (opcje) => utworzOknoHistoriiRozmowy(opcje)],
   ['terminal', (opcje) => utworzOknoTerminalaPomocnicze(opcje)],
   ['przebieg-debaty', (opcje) => utworzPanelDebaty(opcje)],
   [KOD_PANELU_ZASOBOW, (opcje) => utworzPanelZasobow(opcje)],
 ]);
 
-/** Wytwórnia panelu o danym kodzie; `null` = panelu nie ma czym zbudować. */
+/** Wytwórnia panelu o danym kodzie; wartość pusta znaczy, że panelu nie ma czym zbudować w tym kliencie. */
 export function wytworniaPanelu(kod: string): WytworniaPanelu | null {
   return WYTWORNIE.get(kod) ?? null;
 }

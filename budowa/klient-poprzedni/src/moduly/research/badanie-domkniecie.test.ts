@@ -19,18 +19,9 @@ import { rozbrojZdjecie } from './badanie-zdjecie-adnotacji';
 import { utworzStanBadania } from './stan-badania';
 import { czyKomendaBadania, wykonajKomendeBadania } from './wywolania-komend';
 
-/**
- * Cztery czynności badania, które miały obsługę w rdzeniu i nie miały ani jednej
- * drogi z okna: przestrzeń badania, załącznik pełnego tekstu, zdjęcie adnotacji
- * i zapis książki kodów.
- *
- * Sprawdzian pilnuje dwóch rzeczy naraz: że droga z okna do rdzenia istnieje
- * (chwyt w katalogu akcji ORAZ wywołanie w rozdzielniku — jedno bez drugiego
- * jest przyciskiem bez skutku albo wywołaniem bez przycisku) oraz że dwie
- * czynności o skutku nieodwracalnym mówią o nim, zanim go wywołają.
- */
+/** Cztery czynności badania, które miały obsługę w rdzeniu i nie miały drogi z okna. */
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda w tym sprawdzianie badania. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -40,10 +31,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
     wyslij(komenda: string, zadanie: unknown, przyWyniku?: (wynik: Wynik<unknown>) => void) {
       wyslane.push({ komenda, zadanie });
       const tresc = odpowiedzi[komenda];
-      // Odpowiedź wraca po oddaniu identyfikatora żądania, tak jak w kanale
-      // prawdziwym: nasłuch odmów modułu zdejmuje żądanie z rejestru po tym
-      // identyfikatorze, więc rozstrzygnięcie synchroniczne nie miałoby czego
-      // zdjąć.
+      // Odpowiedź wraca po oddaniu identyfikatora żądania, tak jak w kanale prawdziwym.
       queueMicrotask(() =>
         przyWyniku?.(
           tresc === undefined
@@ -61,7 +49,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
   return { kanal, wyslane };
 }
 
-/** Stan badania z oknem wskazanym przez rdzeń — bez niego komendy nie ruszą. */
+/** Stan badania z oknem wskazanym przez rdzeń — bez niego komendy badania w ogóle by nigdy nie ruszyły. */
 function stanZOknem(odpowiedzi: Record<string, unknown>) {
   const { kanal, wyslane } = kanalProbny(odpowiedzi);
   const stan = utworzStanBadania(kanal);
@@ -69,7 +57,7 @@ function stanZOknem(odpowiedzi: Record<string, unknown>) {
   return { stan, wyslane };
 }
 
-/** Źródło w postaci, w której rdzeń je oddaje. */
+/** Źródło w postaci, w której rdzeń je oddaje, gotowe do wywołania wszystkich komend badania w sprawdzianie. */
 function zrodlo(zmiany: Partial<ResearchSource> = {}): ResearchSource {
   return {
     id: 'zrodlo-1',
@@ -80,7 +68,7 @@ function zrodlo(zmiany: Partial<ResearchSource> = {}): ResearchSource {
   } as ResearchSource;
 }
 
-/** Akcja o tym kodzie w katalogu okna; jej brak jest brakiem chwytu. */
+/** Akcja o tym kodzie w katalogu okna; jej brak jest brakiem chwytu prowadzącego wprost do rdzenia aplikacji. */
 function chwyt(akcje: readonly AkcjaBadania[], kod: string): AkcjaBadania {
   const znaleziona = akcje.find((akcja) => akcja.kod === kod);
   expect(znaleziona, `okno musi mieć jawny chwyt dla ${kod}`).toBeDefined();

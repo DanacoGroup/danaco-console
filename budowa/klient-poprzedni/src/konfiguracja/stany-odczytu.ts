@@ -1,18 +1,10 @@
 import type { FazaOdczytu } from './stan-konfiguracji';
 
 /**
- * Stany odczytu okna konfiguracji: ładowanie i komunikat blokowy błędu.
- *
- * Modal niesie komunikat blokowy nad stopką z akcjami, a wskaźnik odczytu obok
- * niego — nigdy zamiast formularza, bo pola mają pozostać edytowalne przez
- * cały czas.
- *
- * Komunikat nie znika po naciśnięciu: „Spróbuj ponownie" wyzwala odczyt
- * i zostawia zdanie na miejscu, dopóki sytuacja nie ustanie — dopiero udany
- * odczyt je zdejmuje.
- *
- * Stan pusty katalogu należy do panelu kategorii, nie tutaj: mówi o katalogu,
- * a nie o odczycie.
+ * Pas stanów odczytu okna konfiguracji: wskaźnik ładowania oraz komunikat
+ * blokowy niepowodzenia z przyciskiem ponowienia. Pas leży nad stopką okna,
+ * obok formularza, nigdy zamiast niego, ponieważ pola pozostają edytowalne
+ * przez cały czas odczytu.
  */
 export interface StanyOdczytu {
   /** Pas stanów osadzany między ciałem okna a jego stopką. */
@@ -22,20 +14,21 @@ export interface StanyOdczytu {
 }
 
 /**
- * Tyle stanu, ile pas naprawdę czyta.
- *
- * Pas nie zna ani katalogu, ani obszarów sesji — pyta wyłącznie o fazę odczytu
- * i o powód niepowodzenia. Zawężenie zależności do tych dwóch czynności czyni
- * z pasa jeden byt dla obu odczytów okna konfiguracji: katalogu ustawień
- * (`config.get`) i konfiguracji obowiązującej (`config.effective.get`).
- * `StanKonfiguracji` spełnia ten kształt bez żadnej zmiany.
+ * Tyle stanu, ile pas naprawdę czyta: faza odczytu i powód niepowodzenia. Pas
+ * nie zna ani katalogu ustawień, ani obszarów sesji, dzięki czemu obsługuje oba
+ * odczyty okna konfiguracji, `config.get` oraz `config.effective.get`, bez
+ * rozgałęzienia.
  */
 export interface ZrodloFazyOdczytu {
   faza(): FazaOdczytu;
   powodNiepowodzenia(): string;
 }
 
-/** Zdania pasa; domyślne mówią o katalogu ustawień. */
+/**
+ * Zdania pasa, podstawiane przy tworzeniu; domyślne mówią o katalogu ustawień.
+ * Wywołanie dla konfiguracji obowiązującej podaje własną parę, ponieważ obraz
+ * jest ten sam, a nazwa czytanego zbioru inna.
+ */
 export interface ZdaniaOdczytu {
   /** Zdanie towarzyszące wskaźnikowi odczytu. */
   odczyt: string;

@@ -1,11 +1,5 @@
-// Obszar plików modułu Research: deklaracja całego interfejsu
-// `RepozytoriumBadan` oraz obsługa źródeł badania (tabela `zrodlo_badania`).
-// Ustalenia leżą w `badania_ustalenia.go`, raport, eksport i przestrzeń —
-// w `badania_raport.go`.
-//
-// Interfejs deklaruje wyłącznie ten plik, w całości, wraz z metodami
-// implementowanymi w pozostałych plikach obszaru; rozdzielony na trzy pliki
-// byłby trzema prawdami o jednym kontrakcie.
+// Plik prowadzi obszar Research: deklarację całego interfejsu RepozytoriumBadan oraz obsługę źródeł badania;
+// ustalenia leżą w badania_ustalenia.go, raport w badania_raport.go, a interfejs deklaruje wyłącznie ten plik, w całości.
 package dane
 
 import (
@@ -17,11 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZrodloBadania to wiersz tabeli `zrodlo_badania`. Kod jest identyfikatorem,
-// którym źródło wychodzi kontraktem (`ResearchSource.id`).
-//
-// PlikBibliotekiID jest tekstem bez więzu obcego: plik biblioteki należy do
-// modułu Library, a więz obcy wiązałby kolejność migracji.
+// ZrodloBadania to wiersz tabeli `zrodlo_badania`; kod jest identyfikatorem, którym źródło wychodzi kontraktem, a plik biblioteki nie niesie więzu obcego.
 type ZrodloBadania struct {
 	ID               int64
 	Kod              string
@@ -35,7 +25,7 @@ type ZrodloBadania struct {
 	PozyskanoO       string
 }
 
-// RepozytoriumBadan jest kontraktem obszaru Research.
+// RepozytoriumBadan jest kontraktem obszaru Research: źródła, ustalenia, raport, eksport i przestrzeń badania.
 type RepozytoriumBadan interface {
 	// źródła
 	ZapiszZrodlo(ctx context.Context, zrodlo ZrodloBadania) (ZrodloBadania, error)
@@ -58,10 +48,7 @@ type RepozytoriumBadan interface {
 	UstawPrzestrzen(ctx context.Context, zakres string, etapy []string) (string, []string, error)
 	Przestrzen(ctx context.Context) (string, []string, error)
 
-	// Dobudowa modułu — katalogowanie źródeł, lektura, adnotacje, kodowanie,
-	// sprzeczności, odkrywanie, wersje raportu i eksport. Sygnatury stoją
-	// w `badania_dobudowa.go`; osadzenie trzyma je w jednym kontrakcie obszaru,
-	// nie rozbija go na dwa niezależne porty.
+	// Dobudowa modułu: katalogowanie źródeł, lektura, adnotacje, kodowanie, sprzeczności i odkrywanie.
 	RepozytoriumBadanDobudowa
 }
 
@@ -149,7 +136,7 @@ func (r *repozytoriumBadan) Zrodlo(ctx context.Context, kod string) (ZrodloBadan
 	return zrodlo, nil
 }
 
-// Zrodla zwraca źródła okna, posortowane od najświeżej pozyskanych.
+// Zrodla zwraca źródła okna badania, posortowane od najświeżej pozyskanych, wprost z bazy danych repozytorium.
 func (r *repozytoriumBadan) Zrodla(ctx context.Context, okno string) ([]ZrodloBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZrodlaBadaniaOkna)
 	if err != nil {
@@ -175,7 +162,7 @@ func (r *repozytoriumBadan) Zrodla(ctx context.Context, okno string) ([]ZrodloBa
 	return lista, nil
 }
 
-// odczytajZrodloBadania składa strukturę z jednego wiersza wyniku.
+// odczytajZrodloBadania składa strukturę źródła badania wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajZrodloBadania(wiersz skaner) (ZrodloBadania, error) {
 	var zrodlo ZrodloBadania
 	var rodzaj, wiarygodnosc string

@@ -66,62 +66,25 @@ import {
 } from './zapis-formatowany';
 import { rozdzielNaOdcinki, opiszZmiane } from './zmiany-modelu';
 
-/**
- * Powierzchnia dokumentu — kartka, na której Operator i model piszą to samo
- * pismo.
- *
- * ── Jedna powierzchnia, cztery tryby widoku ─────────────────────────────────
- * Formatowany (domyślny), źródłowy ze znacznikami, podgląd wydania i różnica
- * nałożona na treść. Tryb zmienia to, CO widać, a nie to, na czym się pracuje:
- * treść jest jedna i mieszka w stanie modułu, a nie w kontrolce.
- *
- * ── Dwa różne rachunki położenia i po co dwa ────────────────────────────────
- * Zaznaczenie jedzie do rdzenia jako zakres ZNAKÓW TREŚCI (`selectionStart`,
- * `selectionEnd` komendy `studio.contextual.op`), więc liczy się je zapisem
- * markdown (`dlugoscDoPunktu`). Kursor po przerysowaniu wraca natomiast na
- * miejsce w TEKŚCIE WIDOCZNYM bloku, bo tam Operator go widział. Dwie miary,
- * dwa zastosowania — zlanie ich przesuwałoby kursor o długość znaczników.
- *
- * ── Paginacja ───────────────────────────────────────────────────────────────
- * Bloki mierzy przeglądarka, rozdziela je `rozdzielNaStrony`. Podział jest
- * prawdziwy: blok, który nie mieści się na kartce, schodzi na następną. Rdzeń
- * liczy własną paginację w `studio.preview.render` i oddaje ją obrazami stron —
- * podgląd wydania sięga po nią osobno, bo tylko rdzeń zna swój silnik składu.
- */
-
-/** Tryb widoku powierzchni. */
+/** Tryb widoku powierzchni: formatowany domyślny, źródłowy ze znacznikami markdown, podgląd wydania złożony przez rdzeń albo różnica nałożona na treść dokumentu. */
 export type TrybWidoku = 'formatowany' | 'zrodlowy' | 'wydanie' | 'roznica';
 
-/**
- * Tryb pokazywania adiustacji — trzy, wzorem pakietu biurowego.
- *
- * `cala` znaczy zmiany widoczne w miejscu wraz z decyzją; `po-zmianach` —
- * treść taka, jaka będzie po przyjęciu wszystkiego, bez znaczników;
- * `okienko` — znaczniki w treści zwięzłe, a wykaz zmian obok, w panelu okna.
- * To są tryby JEDNEGO okna, nie trzy okna.
- */
+/** Tryb pokazywania adiustacji: cala pokazuje zmianę w miejscu wraz z decyzją, po-zmianach pokazuje treść po przyjęciu wszystkiego bez znaczników, okienko trzyma znaczniki zwięzłe, a wykaz zmian osobno w panelu okna. */
 export type TrybAdiustacji = 'cala' | 'po-zmianach' | 'okienko';
 
-/** Zakres zaznaczenia w znakach treści. */
+/** Zakres zaznaczenia w znakach treści dokumentu, wyrażony parą liczb: znak początkowy i znak końcowy zaznaczenia. */
 export interface ZakresZaznaczenia {
   poczatek: number;
   koniec: number;
 }
 
-/**
- * Jedna kartka wyrysowana przez rdzeń — numer strony i obraz w zapisie `data:`.
- *
- * Zapis `data:` jest tu jedyną drogą: pole `uri` zasobu magazynu jest ścieżką
- * w systemie plików RDZENIA, więc przeglądarka nie wczyta spod niego niczego —
- * także wtedy, gdy zasób powstał bez zarzutu. Bajty przychodzą odpowiedzią
- * komendy `design.asset.content.get` i stąd `data:`.
- */
+/** Jedna kartka wyrysowana przez rdzeń: numer strony i jej obraz w zapisie data:, bo pole uri zasobu magazynu jest ścieżką w systemie plików rdzenia, niedostępną przeglądarce. */
 export interface KartkaRdzenia {
   numer: number;
   zrodlo: string;
 }
 
-/** Czynności, którymi powierzchnia rozmawia z oknem. */
+/** Czynności, którymi powierzchnia rozmawia z oknem: zmiana treści, zmiana zaznaczenia, decyzja o zmianie śledzonej oraz nastawy strony i akapitu przestawione chwytem linijki. */
 export interface CzynnosciPowierzchni {
   /** Treść zmieniona pisaniem w powierzchni. */
   naTresc(tresc: string): void;
@@ -129,15 +92,7 @@ export interface CzynnosciPowierzchni {
   naZaznaczenie(zakres: ZakresZaznaczenia | null): void;
   /** Decyzja o jednej zmianie śledzonej podjęta znacznikiem w treści. */
   naDecyzjeZmiany(kod: string, przyjmij: boolean): void;
-  /**
-   * Nastawy strony przestawione WEWNĄTRZ powierzchni — chwytem na linijce albo
-   * paskiem widoku.
-   *
-   * Pole nieobowiązkowe, bo powierzchnia umie te nastawy prowadzić sama: chwyt
-   * marginesu ma działać także wtedy, gdy okno o nim nie wie. Okno, które pole
-   * podaje, dostaje nastawy do swojego profilu wydania; okno, które go nie podaje,
-   * zachowuje się jak dotąd i niczego nie traci.
-   */
+  /** Nastawy strony przestawione wewnątrz powierzchni chwytem linijki albo paskiem widoku. */
   naStrone?(strona: StronaPracy): void;
   /** Wcięcia akapitu przestawione chwytem na linijce. */
   naWciecieAkapitu?(numerBloku: number, wciecie: WciecieAkapitu): void;
@@ -145,31 +100,16 @@ export interface CzynnosciPowierzchni {
   naTabulatoryAkapitu?(numerBloku: number, tabulatory: readonly TabulatorAkapitu[]): void;
 }
 
-/** Powierzchnia dokumentu wraz z jej sterowaniem. */
+/** Powierzchnia dokumentu wraz z jej sterowaniem: wyrys treści w kartkach, tryb widoku, nastawy strony i widoku, skala, linijki, zmiany śledzone i komentarze. */
 export interface PowierzchniaDokumentu {
   /** Element osadzany w oknie — obszar przewijany z kartkami. */
   element: HTMLElement;
-  /**
-   * Przerysowuje kartki z treści; kursor wraca na swoje miejsce.
-   *
-   * Treść ta sama co ostatnio wyrysowana NIE jest rysowana drugi raz. Powód jest
-   * praktyczny i wprost o pracę Operatora: stan modułu ogłasza zmianę przy każdym
-   * naciśnięciu klawisza, a przerysowanie zabiera kursor. `wymus` przełamuje ten
-   * warunek tam, gdzie zmieniło się coś INNEGO niż treść — zmiany śledzone,
-   * komentarze, nastawy strony, tryb widoku.
-   */
+  /** Przerysowuje kartki z treści; kursor wraca na miejsce. Treść niezmieniona nie rysuje się drugi raz. */
   pokaz(tresc: string, wymus?: boolean): void;
   /** Przestawia tryb widoku. */
   ustawTryb(tryb: TrybWidoku): void;
   tryb(): TrybWidoku;
-  /**
-   * Podaje kartki wyrysowane przez rdzeń — obrazy stron podglądu wydania.
-   *
-   * Wykaz pusty ZDEJMUJE wyrys rdzenia i wraca do kartek liczonych w oknie. Jest
-   * to droga potrzebna, a nie ozdobna: treść zmieniona po renderze czyni obrazy
-   * rdzenia nieaktualnymi, a pokazywanie starych kartek jako podglądu bieżącej
-   * treści byłoby kłamstwem o dokumencie.
-   */
+  /** Podaje kartki wyrysowane przez rdzeń; wykaz pusty wraca do kartek liczonych w oknie. */
   ustawKartkiRdzenia(kartki: readonly KartkaRdzenia[]): void;
   /** Liczba kartek oddanych przez rdzeń; zero znaczy „rdzeń stron nie oddał". */
   kartekZRdzenia(): number;
@@ -177,13 +117,7 @@ export interface PowierzchniaDokumentu {
   ustawStrone(strona: StronaPracy): void;
   /** Przestawia nastawy wizualne treści. */
   ustawNastawy(nastawy: NastawyWizualne): void;
-  /**
-   * Liczba kartek w rzędzie — widok jednej albo wielu stron obok siebie.
-   *
-   * Jeden znaczy „jedna kartka w rzędzie", więcej — układ „obok siebie". Wybór
-   * rozkładówki idzie osobno (`ustawUkladKartek`), bo rozkładówka nie jest liczbą
-   * kartek: jest książką, w której strona pierwsza stoi sama po prawej.
-   */
+  /** Liczba kartek w rzędzie: jeden znaczy jedna kartka, więcej — układ obok siebie. */
   ustawKolumny(kolumny: number): void;
   /** Nastawy widoku Operatora obowiązujące teraz. */
   nastawyWidoku(): NastawyOperatoraWidoku;
@@ -216,12 +150,7 @@ export interface PowierzchniaDokumentu {
   ustawKomentarze(komentarze: readonly StudioComment[]): void;
   /** Położenie kotwicy komentarza w punktach powierzchni; `null`, gdy jej nie ma. */
   polozenieKotwicy(idKomentarza: string): number | null;
-  /**
-   * Przenosi kursor do zmiany następnej albo poprzedniej i oddaje jej kod.
-   *
-   * Kolejność jest kolejnością w treści, nie kolejnością zapisu w bazie:
-   * „następna zmiana" znaczy następna od miejsca, w którym Operator stoi.
-   */
+  /** Przenosi kursor do zmiany następnej albo poprzedniej w kolejności treści i oddaje jej kod. */
   skoczDoZmiany(wPrzod: boolean): string | null;
   /** Fragmenty różnicy nakładane w trybie różnicy. */
   ustawFragmenty(fragmenty: readonly StudioDiffHunk[]): void;
@@ -241,7 +170,7 @@ export interface PowierzchniaDokumentu {
   opis(): string;
 }
 
-/** Ile bloków wolno przerysować bez podziału na strony. */
+/** Ile bloków wolno przerysować bez podziału na strony, zanim powierzchnia rozdzieli treść na kartki funkcją rozdzielNaStrony. */
 const GRANICA_PODZIALU = 400;
 
 export function utworzPowierzchnieDokumentu(
@@ -249,16 +178,7 @@ export function utworzPowierzchnieDokumentu(
   nastawy: NastawyWizualne,
   akapity: NastawyAkapitow,
   czynnosci: CzynnosciPowierzchni,
-  /**
-   * Magazyn nastaw widoku — pominięty znaczy magazyn tego urządzenia.
-   *
-   * Podanie magazynu opartego na `studio.view.get` i `.set`
-   * (`strona-magazyn-widoku.ts`) przenosi nastawy widoku do rdzenia BEZ zmiany
-   * ani jednego wołacza wewnątrz powierzchni — po to od początku brały magazyn
-   * podany, a nie sięgały po `localStorage` z globalnej przestrzeni. `null`
-   * znaczy „bez zapisu": nastawy działają przez sesję i nikt nie obiecuje, że
-   * przeżyją zamknięcie.
-   */
+  /** Magazyn nastaw widoku; pominięty daje magazyn urządzenia, null wyłącza zapis przez sesję. */
   magazynWidoku?: MagazynNastawWidoku | null,
 ): PowierzchniaDokumentu {
   let trybBiezacy: TrybWidoku = 'formatowany';
@@ -273,22 +193,11 @@ export function utworzPowierzchnieDokumentu(
   let komentarzeBiezace: readonly StudioComment[] = [];
   let kartkaWidoczna = 1;
 
-  /**
-   * Nastawy strony przestawione w powierzchni — chwytem linijki albo paskiem.
-   *
-   * Trzymane osobno od nastaw, które przyszły z okna, bo okno pcha CAŁE nastawy
-   * strony (`ustawStrone`) ze swojej kopii. Bez tego wykazu chwyt marginesu
-   * przeżyłby dokładnie do następnego naciśnięcia czegokolwiek na wstążce, a to
-   * wyglądałoby na usterkę linijki. Nastawa okna wygrywa wyłącznie z tym polem,
-   * które okno naprawdę zmieniło — porównanie z ostatnią kopią okna niżej.
-   */
+  /** Nastawy strony zmienione chwytem wewnątrz powierzchni, trzymane osobno od nastaw okna. */
   let nadpisaniaStrony: Partial<StronaPracy> = {};
   let stronaOkna = strona;
 
-  // Rozróżnienie „pominięto" od „podano null" jest tu istotne: `undefined` ma dać
-  // magazyn domyślny, a `null` ma znaczyć „bez zapisu". Wywołanie z jednym
-  // argumentem załatwia oba przypadki, bo `utworzPamiecNastawWidoku` ma własną
-  // wartość domyślną, a `null` przechodzi przez nią nietknięty.
+  // Undefined daje magazyn domyślny, null znaczy brak zapisu — rozróżnienie tu istotne.
   const pamiecWidoku: PamiecNastawWidoku =
     magazynWidoku === undefined
       ? utworzPamiecNastawWidoku()
@@ -345,8 +254,7 @@ export function utworzPowierzchnieDokumentu(
 
     naNosnik: (oznaczenie) => {
       const wybrany = nosnikPoOznaczeniu(oznaczenie);
-      // Nośnik nieznany nie zmienia kartki: rysowanie jej w rozmiarze zgadniętym
-      // byłoby kłamstwem o nośniku, na którym pismo wyjdzie z drukarki.
+      // Nośnik nieznany nie zmienia kartki — rozmiar zgadnięty byłby nieprawdą o nośniku pisma.
       if (wybrany === null) return;
       przestawStroneWewnatrz({ nosnik: wybrany });
     },
@@ -393,15 +301,7 @@ export function utworzPowierzchnieDokumentu(
   /** Zdanie o ostatnim wydruku — czyta je pasek stanu przez `opis`. */
   let zdanieDruku = '';
 
-  /**
-   * Drukuje kartki powierzchni.
-   *
-   * Wydruk bierze TE kartki, które Operator widzi w podglądzie — nie drugi wyrys
-   * i nie surowy tekst. Przygotowanie polega więc na trzech rzeczach: zejściu do
-   * trybu wydania (żeby wydruk zgadzał się z podglądem), oznaczeniu stron poza
-   * zakresem i zdjęciu adiustacji, gdy Operator drukuje pismo do wysłania. Wszystkie
-   * trzy są odwracane po zamknięciu okna drukarki.
-   */
+  /** Wydruk bierze kartki widoczne w podglądzie, nie drugi wyrys ani surowy tekst źródłowy. */
   function drukuj(nastawy: NastawyDruku): void {
     const wynik = wydrukuj(nastawy, {
       liczbaStron: () => liczbaStronBiezaca,
@@ -497,13 +397,7 @@ export function utworzPowierzchnieDokumentu(
 
   /* ── Nastawy strony i widoku przestawiane wewnątrz powierzchni ───────────── */
 
-  /**
-   * Przestawia nastawy strony chwytem linijki albo paskiem widoku.
-   *
-   * Zmiana idzie do nadpisań, a nie tylko do nastaw bieżących: okno pcha własną
-   * kopię nastaw strony przy każdej swojej zmianie i bez nadpisań zabierałoby
-   * Operatorowi to, co właśnie ustawił chwytem.
-   */
+  /** Zmiana idzie do nadpisań, nie tylko do nastaw bieżących — okno pcha kopię nastaw przy zmianie. */
   function przestawStroneWewnatrz(zmiana: Partial<StronaPracy>): void {
     nadpisaniaStrony = { ...nadpisaniaStrony, ...zmiana };
     stronaBiezaca = { ...stronaBiezaca, ...zmiana };
@@ -536,13 +430,7 @@ export function utworzPowierzchnieDokumentu(
     przestawStroneWewnatrz({ skala: przytnijSkale(procent) });
   }
 
-  /**
-   * Nakłada nastawę gotową skali.
-   *
-   * Pole widoku mierzy przeglądarka, więc rachunek dostaje wymiary zmierzone
-   * TERAZ. Nastawa nieznana albo pole jeszcze nieosadzone nie zmienia nic i oddaje
-   * `false` — skala zgadnięta byłaby gorsza od nastawy niewykonanej.
-   */
+  /** Nastawa nieznana albo pole nieosadzone nie zmienia nic — skala zgadnięta byłaby gorsza. */
   function ustawNastaweSkali(kod: string): boolean {
     const prostokat = element.getBoundingClientRect();
     const szerokoscLinijki = widok.linijkiWidoczne ? linijkaPionowa.element.offsetWidth : 0;
@@ -570,12 +458,7 @@ export function utworzPowierzchnieDokumentu(
     pokaz(trescBiezaca, true);
   }
 
-  /**
-   * Wcięcia akapitu, w którym stoi kursor.
-   *
-   * Bez kursora w treści nie ma akapitu, do którego wcięcie by należało — więc
-   * linijka pokazuje wcięcia zerowe, a nie wcięcia bloku poprzedniego.
-   */
+  /** Bez kursora w treści nie ma akapitu, więc linijka pokazuje wcięcia zerowe, nie poprzedniego. */
   function wciecieAkapituKursora(): WciecieAkapitu {
     const numer = numerBlokuKursora();
     return (numer < 0 ? undefined : wcieciaBlokow.get(numer)) ?? zerowaWciecieAkapitu();
@@ -602,14 +485,7 @@ export function utworzPowierzchnieDokumentu(
     czynnosci.naTabulatoryAkapitu?.(numer, tabulatory);
   }
 
-  /**
-   * Przestawia szerokość kolumn tabeli, w której stoi kursor.
-   *
-   * Krawędzie idą w milimetrach od lewej krawędzi pola pisania, więc szerokość
-   * kolumny jest różnicą krawędzi sąsiednich. Nastawa jest nastawą WIDOKU: składnia
-   * tabeli w treści szerokości kolumn nie niesie i kontrakt nie ma jej gdzie
-   * zapisać — okno mówi o tym w objaśnieniu chwytu, zamiast udawać zapis.
-   */
+  /** Krawędzie idą w milimetrach od lewej krawędzi pola; nastawa jest widoku, nie zapisem treści. */
   function ustawKrawedzKolumny(numer: number, milimetry: number): void {
     const blok = numerBlokuKursora();
     if (blok < 0) return;
@@ -620,15 +496,7 @@ export function utworzPowierzchnieDokumentu(
     pokaz(trescBiezaca, true);
   }
 
-  /**
-   * Panele okna jako nakładki albo jako stałe kolumny.
-   *
-   * Rozstrzygnięcie Właściciela: powierzchnia należy do dokumentu, więc nakładka
-   * jest postacią domyślną, a stałe kolumny zostają trybem do wyboru. Znacznik
-   * idzie na wspólnego przodka powierzchni i paneli, bo to on rozkłada kolumny —
-   * powierzchnia sięga po niego dopiero teraz, gdy Operator o to prosi, i nie
-   * zakłada, że okno w ogóle takiego przodka ma.
-   */
+  /** Powierzchnia należy do dokumentu: nakładka jest postacią domyślną, kolumny trybem do wyboru. */
   function ustawUkladPaneli(uklad: 'nakladka' | 'kolumny'): void {
     const przodek = element.closest<HTMLElement>('.ms-praca__kolumny');
     if (przodek === null) return;
@@ -639,9 +507,7 @@ export function utworzPowierzchnieDokumentu(
   function skoczDoKartki(numer: number): number {
     const docelowa = Math.min(Math.max(1, Math.round(numer)), Math.max(1, liczbaStronBiezaca));
     const kartka = pole.querySelector<HTMLElement>(`[data-strona='${docelowa}']`);
-    // Przewinięcie do elementu, gdy powłoka je zna; inaczej rachunkiem z wysokości
-    // kartki. Powłoka bez układu (środowisko sprawdzianu) nie ma
-    // `scrollIntoView` i wtedy skok liczy się sam, zamiast przerywać czynność.
+    // Przewinięcie idzie do elementu, gdy powłoka je zna; inaczej rachunkiem z wysokości kartki.
     if (kartka !== null && typeof kartka.scrollIntoView === 'function') {
       kartka.scrollIntoView({ block: 'start' });
     } else {
@@ -732,13 +598,7 @@ export function utworzPowierzchnieDokumentu(
 
   /* ── Wyrys ───────────────────────────────────────────────────────────────── */
 
-  /**
-   * Buduje jedną kartkę wraz z nagłówkiem, polem pisania i stopką.
-   *
-   * Marginesy liczy `marginesyKartki` z numeru strony, bo przy marginesach odbicia
-   * i przy oprawie kartka parzysta ma inne marginesy niż nieparzysta. Bez tego pas
-   * oprawy wypadałby raz w rowku, a raz na krawędzi.
-   */
+  /** Marginesy liczy marginesyKartki z numeru strony — kartka parzysta różni się od nieparzystej. */
   function utworzKartke(numer: number, ile: number): { kartka: HTMLElement; pole: HTMLElement } {
     const kartka = document.createElement('div');
     kartka.className = 'ms-strona';
@@ -777,9 +637,7 @@ export function utworzPowierzchnieDokumentu(
     element.style.setProperty('--ms-krotnosc', String(krotnoscStopnia(rodzaj)));
     if (nastawa.barwa !== '') element.style.color = nastawa.barwa;
 
-    // Wcięcia chwycone na linijce są nastawą TEGO akapitu, więc idą na jego
-    // element, a nie na kartkę: wcięcie ustawione dla jednego akapitu nie może
-    // przesuwać całego pisma.
+    // Wcięcia chwycone na linijce są nastawą tego akapitu, idą na jego element, nie na kartkę.
     const wciecie = wcieciaBlokow.get(numer);
     if (wciecie !== undefined) {
       element.style.marginLeft = `${naPunkty(wciecie.leweMm)}px`;
@@ -806,13 +664,7 @@ export function utworzPowierzchnieDokumentu(
     }
   }
 
-  /**
-   * Nakłada zmiany śledzone na treść bloku.
-   *
-   * Odcinek objęty zmianą dostaje własny element ze znakiem autora i dwoma
-   * przyciskami decyzji. Decyzja stoi w miejscu zmiany, a nie w osobnym oknie —
-   * to jest sedno rozstrzygnięcia: Operator rozstrzyga tam, gdzie patrzy.
-   */
+  /** Decyzja stoi w miejscu zmiany, nie w osobnym oknie — Operator rozstrzyga tam, gdzie patrzy. */
   function nalozZmiany(element: HTMLElement, blok: BlokTresci, poczatek: number): string[] {
     if (trybAdiustacji === 'po-zmianach') return [];
     const zapis = zapiszBlok(blok);
@@ -833,9 +685,7 @@ export function utworzPowierzchnieDokumentu(
       znacznik.dataset['autor'] = odcinek.zmiana.author;
       znacznik.title = opiszZmiane(odcinek.zmiana);
       znacznik.append(document.createTextNode(odcinek.tekst));
-      // Znaczniki decyzji stoją w treści tylko przy adiustacji całej; w okienku
-      // recenzowania decyzja jest w wykazie obok i dwa jej miejsca naraz kazałyby
-      // zgadywać, które jest właściwe.
+      // Znaczniki decyzji stoją w treści tylko przy adiustacji całej, w okienku decyzja jest w wykazie.
       if (trybAdiustacji === 'cala') {
         znacznik.append(
           przyciskDecyzji(odcinek.zmiana.id, true),
@@ -847,15 +697,7 @@ export function utworzPowierzchnieDokumentu(
     return objete;
   }
 
-  /**
-   * Pasek zatwierdzenia zmiany modelu — „Gotowe" i „Cofnij" pod zmianą.
-   *
-   * Stoi pod blokiem, w którym zmiana leży, i zamyka pracę modelu jednym
-   * naciśnięciem. „Gotowe" to przyjęcie zmian bloku (`studio.tracking.decide`
-   * z `accept`), „Cofnij" to ich odrzucenie — treść wraca do postaci sprzed
-   * operacji. Pasek nie jest trzecim miejscem decyzji: woła tę samą drogę, co
-   * znaczniki w treści i wykaz w okienku recenzowania.
-   */
+  /** Pasek nie jest trzecim miejscem decyzji — używa tej samej drogi co znaczniki i wykaz w okienku. */
   function pasekZatwierdzenia(kody: readonly string[]): HTMLElement {
     const zdanie = document.createElement('span');
     zdanie.className = 'ms-zatwierdzenie__zdanie';
@@ -892,13 +734,7 @@ export function utworzPowierzchnieDokumentu(
     return pasek;
   }
 
-  /**
-   * Kotwice komentarzy — miejsce, w które celuje dymek na marginesie.
-   *
-   * Kotwica jest znakiem w treści, a nie wpisem w wykazie: komentarz przypięty
-   * do fragmentu ma pokazywać, do którego. Komentarz bez zakresu kotwicy nie
-   * dostaje — dotyczy dokumentu, nie miejsca.
-   */
+  /** Kotwica jest znakiem w treści, nie wpisem w wykazie — komentarz bez zakresu jej nie dostaje. */
   function nalozKotwice(element: HTMLElement, numer: number, poczatek: number, dlugosc: number): void {
     for (const komentarz of komentarzeBiezace) {
       const od = komentarz.selectionStart;
@@ -970,24 +806,10 @@ export function utworzPowierzchnieDokumentu(
   /** Treść, z której powstał wyrys bieżący; puste znaczy „jeszcze nie rysowano". */
   let trescWyrysowana: string | null = null;
 
-  /**
-   * Kartki wyrysowane przez RDZEŃ — obrazy stron podglądu wydania.
-   *
-   * Wykaz pusty znaczy „rdzeń jeszcze nie oddał stron", nie „stron nie ma".
-   * Rozróżnienie jest ważne, bo od niego zależy, co pokazuje pasek stanu: liczbę
-   * kartek rdzenia albo liczbę kartek liczonych w oknie.
-   */
+  /** Wykaz pusty znaczy, że rdzeń jeszcze nie oddał stron, nie że stron nie ma. */
   let kartkiRdzenia: readonly KartkaRdzenia[] = [];
 
-  /**
-   * Rysuje kartki oddane przez rdzeń, w tym samym układzie rzędów, co kartki
-   * liczone w oknie.
-   *
-   * Obraz wchodzi jako `<img>` o źródle `data:` — bajty przyszły odpowiedzią
-   * komendy, więc nie ma tu ani jednego żądania do sieci. Szerokość kartki jest
-   * szerokością pola, żeby skala widoku i nastawy gotowe („do szerokości strony")
-   * działały na wyrysie rdzenia tak samo jak na kartce liczonej w oknie.
-   */
+  /** Obraz wchodzi jako img ze źródłem data: — bajty przyszły odpowiedzią komendy, bez żądania sieci. */
   function wyrysujKartkiRdzenia(): void {
     liczbaStronBiezaca = kartkiRdzenia.length;
     const rzedy = rozlozKartkiWRzedy(
@@ -1029,9 +851,7 @@ export function utworzPowierzchnieDokumentu(
 
   function pokaz(tresc: string, wymus = false): void {
     if (!wymus && trescWyrysowana === tresc) {
-      // Treść w oknie jest już tą treścią — przerysowanie zabrałoby kursor
-      // i nic nie zmieniło. To jest przypadek każdego naciśnięcia klawisza:
-      // powierzchnia oddała treść stanowi, a stan wraca z nią tutaj.
+      // Treść w oknie jest już tą treścią — przerysowanie zabrałoby kursor i nic by nie zmieniło.
       trescBiezaca = tresc;
       return;
     }
@@ -1045,12 +865,7 @@ export function utworzPowierzchnieDokumentu(
       return;
     }
 
-    // Podgląd wydania rysuje kartki RDZENIA, gdy je ma. Wyrys rdzenia jest
-    // wynikiem jego silnika składu, więc pokazuje typografię, paginację, nagłówek
-    // i stopkę tak, jak wyjdą w wydaniu — czego kartka złożona przez przeglądarkę
-    // nie umie obiecać. Brak obrazów nie jest usterką: wyrys rdzenia dojeżdża po
-    // wywołaniu `studio.preview.render`, a do tego czasu podgląd pokazuje kartki
-    // liczone tutaj i mówi to wprost paskiem stanu.
+    // Podgląd wydania rysuje kartki rdzenia, gdy je ma — pokazują skład tak, jak wyjdzie w wydaniu.
     if (trybBiezacy === 'wydanie' && kartkiRdzenia.length > 0) {
       wyrysujKartkiRdzenia();
       odswiezPasek();
@@ -1063,10 +878,7 @@ export function utworzPowierzchnieDokumentu(
     // Krok pierwszy: bloki na jednej kartce, żeby przeglądarka je zmierzyła.
     const pierwsza = utworzKartke(1, 1);
     pole.replaceChildren(pierwsza.kartka);
-    // Wpis układu, a nie sam element: pasek zatwierdzenia jest elementem bez
-    // bloku treści, więc podział na strony musi wiedzieć, który wpis niesie blok,
-    // a który stoi obok niego. Bez tego numer wpisu rozjechałby się z numerem
-    // bloku i podział jawny wypadałby w niewłaściwym miejscu.
+    // Wpis układu, nie sam element — pasek zatwierdzenia jest elementem bez bloku treści.
     const wpisy: { element: HTMLElement; blok: number }[] = [];
     let poczatek = 0;
     blokiBiezace.forEach((blok, numer) => {
@@ -1085,9 +897,7 @@ export function utworzPowierzchnieDokumentu(
       }
       wpisy.push({ element: wyrys, blok: numer });
       pierwsza.pole.append(wyrys);
-      // Pasek zatwierdzenia jest osobnym wpisem układu, więc wchodzi do podziału
-      // na strony jak każdy inny — inaczej stałby na kartce, z której zmiana
-      // właśnie zeszła.
+      // Pasek zatwierdzenia jest osobnym wpisem układu, wchodzi do podziału na strony jak każdy inny.
       if (zmianyBloku.length > 0 && trybAdiustacji === 'cala') {
         const pasek = pasekZatwierdzenia(zmianyBloku);
         wpisy.push({ element: pasek, blok: -1 });
@@ -1123,9 +933,7 @@ export function utworzPowierzchnieDokumentu(
       kartki.set(indeks + 1, kartka.kartka);
     });
 
-    // Kartki idą w rzędach wedle układu wybranego przez Operatora. Rozkładówka
-    // stawia w rzędzie pierwszym puste miejsce okładki — element bez kartki, żeby
-    // strona pierwsza stanęła po prawej, tak jak w oprawionym pismie.
+    // Rozkładówka stawia w rzędzie pierwszym puste miejsce, żeby strona pierwsza stanęła po prawej.
     const rzedy = rozlozKartkiWRzedy(strony.length, widok.ukladKartek, widok.kartekWRzedzie);
     const wyrys: HTMLElement[] = [];
     for (const rzad of rzedy) {
@@ -1151,14 +959,7 @@ export function utworzPowierzchnieDokumentu(
     odswiezLinijkiZKursora();
   }
 
-  /**
-   * Przestawia znaczniki linijek wedle miejsca kursora i zaznaczenia.
-   *
-   * Linijka pokazuje wcięcia akapitu, w którym stoi kursor, jego położenie
-   * i granice zaznaczenia — inaczej byłaby miarką bez związku z tym, co Operator
-   * właśnie pisze. Krawędzie kolumn pojawiają się wyłącznie w tabeli: chwyt
-   * kolumny nad akapitem nie miałby czego przestawiać.
-   */
+  /** Linijka pokazuje wcięcia i granice zaznaczenia akapitu, w którym stoi kursor Operatora. */
   function odswiezLinijkiZKursora(): void {
     if (!widok.linijkiWidoczne || trybBiezacy === 'zrodlowy') return;
     linijkaPozioma.ustawWciecie(wciecieAkapituKursora());
@@ -1196,13 +997,7 @@ export function utworzPowierzchnieDokumentu(
     );
   }
 
-  /**
-   * Krawędzie kolumn tabeli, w której stoi kursor.
-   *
-   * Zmierzone z wyrysu, a nie zgadnięte z liczby kolumn: tabela ustawia szerokości
-   * wedle treści, więc krawędź na linijce ma stać tam, gdzie naprawdę stoi krawędź
-   * komórki. Blok, który tabelą nie jest, oddaje wykaz pusty.
-   */
+  /** Krawędzie mierzone z wyrysu, nie zgadnięte z liczby kolumn — tabela ustawia je wedle treści. */
   function krawedzieTabeliKursora(numer: number): readonly number[] {
     if (numer < 0) return [];
     if (blokiBiezace[numer]?.rodzaj !== 'tabela') return [];
@@ -1215,9 +1010,7 @@ export function utworzPowierzchnieDokumentu(
     const lewa = tabela?.getBoundingClientRect().left ?? 0;
     const krawedzie: number[] = [];
     const komorki = Array.from(wiersz.children);
-    // Krawędź OSTATNIEJ komórki jest krawędzią tabeli, nie granicą między
-    // kolumnami — chwytanie jej zmieniałoby szerokość całej tabeli, a to jest
-    // czynność inna i nie ta, o którą prosi zlecenie.
+    // Krawędź ostatniej komórki jest krawędzią tabeli, nie granicą kolumn — nie podlega chwytowi.
     for (const komorka of komorki.slice(0, -1)) {
       const prostokat = komorka.getBoundingClientRect();
       krawedzie.push(zPunktow((prostokat.right - lewa) / krotnosc));
@@ -1271,14 +1064,7 @@ export function utworzPowierzchnieDokumentu(
     return { poczatek: Math.min(od, doZnaku), koniec: Math.max(od, doZnaku) };
   }
 
-  /**
-   * Położenie punktu w zapisie treści.
-   *
-   * Liczone jest sumą zapisów bloków poprzedzających i zapisem bloku bieżącego
-   * do punktu — bo tak samo liczy je `zapiszBloki`, którym treść jedzie do
-   * rdzenia. Punkt poza treścią oddaje `null`, a nie zero: zero jest położeniem
-   * prawdziwym i pomyłka tutaj wysłałaby operację na początek dokumentu.
-   */
+  /** Liczone sumą zapisów bloków poprzedzających i zapisem bloku bieżącego do punktu kliknięcia. */
   function pozycjaWTresci(wezel: Node, offset: number): number | null {
     const blok = blokWezla(wezel);
     if (blok === null) return null;
@@ -1313,8 +1099,7 @@ export function utworzPowierzchnieDokumentu(
     zrodlo.addEventListener(rodzaj, () => czynnosci.naZaznaczenie(zaznaczenie()));
   }
 
-  // Kartka widoczna liczy się z przewinięcia, bo licznik „kartka 3 z 12" ma mówić
-  // o tym, na co Operator patrzy, a nie o tym, gdzie ostatnio kliknął.
+  // Kartka widoczna liczy się z przewinięcia — licznik ma mówić, na co Operator patrzy teraz.
   element.addEventListener('scroll', () => {
     const nowa = kartkaPrzyPrzewinieciu(
       element.scrollTop,
@@ -1337,26 +1122,13 @@ export function utworzPowierzchnieDokumentu(
     ustawTryb: ustawTrybWidoku,
     kartekZRdzenia: () => kartkiRdzenia.length,
 
-    /**
-     * Kartki rdzenia pchnięte z okna po renderze podglądu.
-     *
-     * Przerysowanie idzie z wymuszeniem, bo zmieniła się rzecz INNA niż treść —
-     * bez wymuszenia warunek „treść ta sama" zatrzymałby wyrys i Operator
-     * zobaczyłby kartki okna, choć rdzeń już oddał swoje.
-     */
+    /** Przerysowanie idzie z wymuszeniem, bo zmieniła się rzecz inna niż treść dokumentu. */
     ustawKartkiRdzenia(kartki) {
       kartkiRdzenia = [...kartki];
       pokaz(trescBiezaca, true);
     },
 
-    /**
-     * Nastawy strony pchnięte z okna.
-     *
-     * Nadpisania Operatora zostają, ale wyłącznie te, których okno tym pchnięciem
-     * NIE zmieniło. Pole zmienione w oknie jest nastawą świeższą niż nadpisanie
-     * i wygrywa — inaczej wstążka przestałaby działać po pierwszym chwycie na
-     * linijce.
-     */
+    /** Nadpisania Operatora zostają, ale tylko te pola, których to pchnięcie okna nie zmieniło. */
     ustawStrone(nowa) {
       for (const klucz of Object.keys(nadpisaniaStrony) as (keyof StronaPracy)[]) {
         if (nowa[klucz] !== stronaOkna[klucz]) delete nadpisaniaStrony[klucz];
@@ -1385,12 +1157,7 @@ export function utworzPowierzchnieDokumentu(
     ustawSkale,
     ustawNastaweSkali,
 
-    /**
-     * Skala pamiętana przy dokumencie.
-     *
-     * Dokument bez zapamiętanej skali zostaje przy skali ostatniej Operatora —
-     * powrót do stu procent przy każdym nowym pismie byłby nastawą narzuconą.
-     */
+    /** Dokument bez zapamiętanej skali zostaje przy skali ostatniej Operatora, nie przy stu procentach. */
     wczytajSkaleDokumentu(idDokumentu) {
       dokumentSkali = idDokumentu;
       const zapamietana = skalaDokumentu(idDokumentu);

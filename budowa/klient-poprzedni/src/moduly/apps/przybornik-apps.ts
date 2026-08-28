@@ -1,47 +1,27 @@
 import { pokazKomunikat } from '../../aplikacja/komunikaty';
 import { opisOdmowyBledu } from '../../komponenty/odmowa';
 
-/**
- * Przybornik okna modułu Apps — droga z okna do komendy obszaru.
- *
- * Każde narzędzie jest przyciskiem, a przy narzędziach, które czegoś od
- * Operatora potrzebują, obok przycisku stoją pola wejściowe. Naciśnięcie WOŁA
- * rdzeń i pokazuje pod przyciskiem zdanie o skutku — nazwę bytu, liczbę
- * pozycji, kod odpowiedzi, odwołanie do pliku. Zdanie składa samo narzędzie,
- * bo tylko ono wie, co w jego odpowiedzi jest skutkiem.
- *
- * Przybornik jest czymś innym niż wykaz braków (`braki-kontraktu.ts`). Tamten
- * wymienia czynności, których kontrakt NIE niesie, i naciśnięcie mówi, czego
- * brakuje. Ten wymienia czynności, które kontrakt niesie I rdzeń obsługuje, więc
- * naciśnięcie robi robotę. Dwa wykazy obok siebie mówią Operatorowi wprost, co
- * w tym oknie działa, a co jest jeszcze zapowiedzią.
- *
- * ZERO BLOKAD. Ani jedna kontrolka nie dostaje atrybutu `disabled` — to zasada
- * platformy. Narzędzie, któremu brakuje okna modułu albo wypełnionego pola,
- * pozostaje klikalne i po naciśnięciu NAZYWA brak, zamiast milczeć pod
- * wyszarzonym przyciskiem.
- *
- * Odmowa rdzenia nie jest wyjątkiem widoku: wraca zwykłym `Wynik` z polem
- * `blad`, a przybornik pokazuje ją tym samym zdaniem, którym opisuje odmowy
- * reszta platformy (`komponenty/odmowa.ts`).
- */
+/** Przybornik okna modułu Apps prowadzi drogę z okna do komendy obszaru, bez blokowania kontrolek. */
 
-/** Jedno pole wejściowe narzędzia. */
+/**
+ * Jedno pole wejściowe narzędzia, opisane kluczem, etykietą, wartością startową i tym, czy jest
+ * wieloliniowe.
+ */
 export interface PoleNarzedzia {
   /** Klucz, pod którym wartość trafia do `wykonaj`. */
   klucz: string;
   /** Etykieta widoczna Operatorowi; jest też podpowiedzią pola. */
   etykieta: string;
-  /**
-   * Wartość, od której pole startuje. Pusta znaczy „Operator wpisze sam";
-   * wpisana jest przykładem z domeny produktu, nie wartością wymuszoną.
-   */
+  /** Wartość startowa pola; pusta znaczy, że Operator wpisze ją sam, a nie wartość wymuszona. */
   wartosc?: string;
   /** Czy pole jest wieloliniowe — manifest i reguły JSON nie mieszczą się w linii. */
   obszerne?: boolean;
 }
 
-/** Jedno narzędzie przybornika: przycisk, jego pola i to, co po naciśnięciu. */
+/**
+ * Jedno narzędzie przybornika: przycisk, jego pola wejściowe i czynność wywoływana po jego
+ * naciśnięciu przez Operatora.
+ */
 export interface NarzedzieApps {
   /** Nazwa czynności tak, jak wymienia ją opracowanie okna. */
   etykieta: string;
@@ -49,11 +29,7 @@ export interface NarzedzieApps {
   komenda: string;
   /** Pola, o które okno pyta przed wysłaniem żądania. */
   pola?: readonly PoleNarzedzia[];
-  /**
-   * Czynność narzędzia. Oddaje zdanie o skutku albo rzuca `Error` z powodem,
-   * którego rdzeń nie mógł podać — na przykład o polu, którego Operator nie
-   * wypełnił.
-   */
+  /** Czynność narzędzia oddaje zdanie o skutku albo rzuca błąd z powodem, którego rdzeń nie podał. */
   wykonaj(wartosci: Readonly<Record<string, string>>): Promise<string>;
 }
 
@@ -87,7 +63,10 @@ export function utworzPrzybornikApps(
   return { element };
 }
 
-/** Jedna pozycja przybornika wraz z polami i miejscem na zdanie o skutku. */
+/**
+ * Jedna pozycja przybornika wraz z polami wejściowymi i miejscem na zdanie o skutku naciśnięcia
+ * przycisku.
+ */
 function pozycjaNarzedzia(narzedzie: NarzedzieApps): HTMLElement {
   const element = document.createElement('li');
   element.className = 'mp-przybornik__wiersz';
@@ -134,8 +113,7 @@ function pozycjaNarzedzia(narzedzie: NarzedzieApps): HTMLElement {
       .catch((powod: unknown) => {
         const zdanie = powod instanceof Error ? powod.message : String(powod);
         skutek.textContent = zdanie;
-        // Komunikat obok zdania pod przyciskiem: Operator patrzy w tej chwili
-        // na kontrolkę, a nie na cały pas akcji, i niepowodzenie ma go dogonić.
+        // Komunikat obok zdania pod przyciskiem, bo Operator patrzy w tej chwili na kontrolkę.
         pokazKomunikat({ tytul: narzedzie.etykieta, tresc: zdanie, waga: 'ostrz' });
       });
   });
@@ -170,7 +148,7 @@ export function wymagajOknaModulu(idOkna: string): string {
   );
 }
 
-/** Sprawdzenie pola, którego kontrakt wymaga, a Operator zostawił puste. */
+/** Sprawdzenie pola, którego kontrakt wymaga, a Operator zostawił puste, rzucające błąd z nazwą tego pola. */
 export function wymagajPola(wartosc: string, etykieta: string): string {
   const przyciete = wartosc.trim();
   if (przyciete !== '') return przyciete;

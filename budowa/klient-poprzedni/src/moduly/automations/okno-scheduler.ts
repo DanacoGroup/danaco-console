@@ -42,27 +42,9 @@ import {
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Scheduler — okno zarządcy modułu Automations.
- *
- * Ustala cykliczność (częstotliwość, godziny, zdarzenia wyzwalające) i pozwala
- * edytować harmonogram; w panelu akcji stoją wstrzymanie i wznowienie
- * harmonogramu, dodanie wyzwalacza (webhook / plik / warunek), podgląd
- * kolejnych uruchomień, kalendarz uruchomień oraz odczyt harmonogramów.
- *
- * Cykliczność ustala się wzorcem, nie składnią: Operator wybiera „co tydzień,
- * poniedziałek, 07:00", a okno składa z tego zapis cron, który niesie kontrakt
- * (`wzorce-cyklicznosci.ts`). Pole zapisu zostaje widoczne i pozostaje
- * edytowalne — zapis wpisany wprost rozpoznaje się z powrotem jako wzorzec,
- * a zapis, którego żaden wzorzec nie obejmuje, jest wzorcem własnym i idzie do
- * rdzenia w całości.
- *
- * Harmonogram obowiązuje po powiązaniu z automatyką, więc okno wymaga
- * wskazania automatyki i mówi to wprost zamiast odmawiać bez wyjaśnienia.
- *
- * Potwierdzenie mówi, co oddał rdzeń: zdania „wstrzymany” i „wznowiony”
- * powstają z pól `enabled` i `nextRunAt` odpowiedzi, nie z tego, o co okno
- * prosiło — inaczej rdzeń, który zapisu nie przyjął po myśli Operatora,
- * dostawałby od okna potwierdzenie czynności, która się nie odbyła.
+ * Scheduler ustala cykliczność i wyzwalacze automatyki, pozwala ją wstrzymać
+ * oraz wznowić, a także pokazuje podgląd kolejnych uruchomień i kalendarz
+ * przebiegów. Harmonogram obowiązuje po powiązaniu z automatyką.
  */
 export interface OknoSchedulera {
   element: HTMLElement;
@@ -85,7 +67,10 @@ const NAZWY_WYZWALACZY: Readonly<Record<AutomationTriggerKind, string>> = {
   [AutomationTriggerKind.Chain]: 'zakończenie innej automatyki',
 };
 
-/** Rodzaje wyzwalacza w kolejności kontraktu. */
+/**
+ * Rodzaje wyzwalacza w kolejności kontraktu, złożone z wyliczenia
+ * AutomationTriggerKind i mapy nazw ekranowych, gotowe do wykazu wyboru w oknie.
+ */
 export const RODZAJE_WYZWALACZA: ReadonlyArray<[string, string]> = Object.values(
   AutomationTriggerKind,
 ).map((rodzaj) => [rodzaj, NAZWY_WYZWALACZY[rodzaj]]);
@@ -110,13 +95,7 @@ export function utworzOknoSchedulera(
   /** Nastawy kreatora; zmieniają się razem z polami wzorca i z zapisem cron. */
   let nastawy: NastawyWzorca = { ...NASTAWY_WYJSCIOWE };
 
-  /**
-   * Przepisuje nastawy z pól kreatora i składa z nich zapis cron.
-   *
-   * Wzorzec własny nie ma czego składać — zapis zostaje wtedy taki, jaki wpisał
-   * Operator, a kreator jedynie milknie. Zdanie opisowe idzie zawsze, bo mówi
-   * o zapisie widocznym w polu, nie o wzorcu wybranym w wykazie.
-   */
+  // Przepisuje nastawy z pól kreatora i składa z nich zapis cron; wzorzec własny zapis zostawia.
   function zlozZapis(): void {
     nastawy = {
       minuta: liczbaZPola(powierzchnia.minuta, nastawy.minuta),
@@ -132,10 +111,7 @@ export function utworzOknoSchedulera(
     opiszCyklicznosc();
   }
 
-  /**
-   * Rozpoznaje wzorzec w zapisie wpisanym wprost i przestawia na niego kreator.
-   * Bez tego pola kreatora pokazywałyby wzorzec sprzed zmiany zapisu.
-   */
+  // Rozpoznaje wzorzec w zapisie wpisanym wprost i przestawia na niego pola kreatora.
   function rozpoznajZapis(): void {
     const rozpoznany = rozpoznajWzorzec(cron.value);
     nastawy = rozpoznany.nastawy;
@@ -213,11 +189,7 @@ export function utworzOknoSchedulera(
   powierzchnia.wznow.addEventListener('click', () =>
     zapiszHarmonogram(true, 'Wysłano wznowienie harmonogramu.'));
 
-  /**
-   * Odczyt harmonogramów bieżącej automatyki (`schedule.get`) — bez zapisu.
-   * Zdanie i wykaz biorą się z tego, co oddał rdzeń: pusty wykaz znaczy „rdzeń
-   * nie ma jeszcze harmonogramu dla tej automatyki”, nie „odczyt się nie udał”.
-   */
+  // Odczyt harmonogramów automatyki komendą schedule.get; wykaz pochodzi z odpowiedzi rdzenia.
   powierzchnia.odczytaj.addEventListener('click', () => {
     const automatyka = stan.automatyka();
     if (automatyka === '') {
@@ -242,8 +214,7 @@ export function utworzOknoSchedulera(
       if (pierwszy !== undefined) {
         obowiazuje.checked = pierwszy.enabled;
         wyzwalacze.splice(0, wyzwalacze.length, ...(pierwszy.triggers ?? []));
-        // Kreator ma pokazywać cykliczność zastaną, a nie tę, którą Operator
-        // zdążył wpisać przed odczytem — stąd rozpoznanie wzorca po odczycie.
+        // Kreator pokazuje cykliczność zastaną, nie wpisaną przed odczytem, po rozpoznaniu wzorca.
         cron.value = pierwszy.cron ?? '';
         if (pierwszy.timeZone !== undefined) strefa.value = pierwszy.timeZone;
         rozpoznajZapis();
@@ -263,14 +234,7 @@ export function utworzOknoSchedulera(
     tresc.tresc().append(wykazUruchomien(terminy), zastrzezeniePodgladu());
   });
 
-  /**
-   * Kalendarz uruchomień: terminy zaplanowane z wpisanej cykliczności zestawione
-   * z przebiegami, które już się odbyły.
-   *
-   * Przebiegi czytamy bez wskazania okna, więc rdzeń nie zakłada na nas
-   * obserwacji telemetrii — kalendarz jest zdjęciem stanu, a obserwacja należy
-   * do Execution Monitora i to on ma pozostać jej jedynym odbiorcą w module.
-   */
+  // Kalendarz uruchomień zestawia terminy zaplanowane z przebiegami, które już się odbyły.
   powierzchnia.kalendarz.addEventListener('click', () => {
     const terminy = nastepneUruchomienia(cron.value, new Date(), 1);
     if (terminy.length === 0 && cron.value.trim() !== '') {
@@ -338,7 +302,10 @@ export function utworzOknoSchedulera(
   return { element: rama.element, odswiez };
 }
 
-/** Kontrolki okna Schedulera. */
+/**
+ * Kontrolki okna Schedulera: pola kreatora cykliczności, zapis cron, strefa
+ * czasowa, wyzwalacze oraz przyciski akcji panelu.
+ */
 interface PowierzchniaHarmonogramu {
   wzorzec: HTMLSelectElement;
   minuta: HTMLInputElement;
@@ -405,8 +372,7 @@ function zlozPowierzchnieHarmonogramu(
   const wznow = przycisk('Wznów harmonogram');
   const podglad = przycisk('Podgląd kolejnych uruchomień');
   const kalendarz = przycisk('Kalendarz uruchomień');
-  // „Odczytaj harmonogram” woła rdzeń wprost: komenda `schedule.get` ma w nim
-  // uchwyt i oddaje pole `schedules`.
+  // Odczytaj harmonogram woła komendę schedule.get rdzenia i oddaje pole schedules.
   const odczytaj = przycisk('Odczytaj harmonogram');
 
   rama.akcje.append(
@@ -481,10 +447,9 @@ function zlozPowierzchnieHarmonogramu(
 }
 
 /**
- * Pola kreatora w jednym rzędzie. Wszystkie stoją zawsze, bez chowania tych,
- * których wybrany wzorzec nie używa: pole schowane przy przełączeniu wzorca
- * przeskakiwałoby układ pod ręką Operatora, a pole nieużywane jest nieszkodliwe
- * — jego wartość po prostu nie wchodzi do zapisu.
+ * Pola kreatora cykliczności w jednym rzędzie, widoczne zawsze niezależnie od
+ * wybranego wzorca: pole nieużywane przez wzorzec jest nieszkodliwe, bo jego
+ * wartość nie wchodzi do zapisu.
  */
 function kreatorCyklicznosci(
   minuta: HTMLInputElement,
@@ -505,13 +470,19 @@ function kreatorCyklicznosci(
   return rzad;
 }
 
-/** Liczba z pola kreatora; pole puste albo nieliczbowe zostawia wartość zastaną. */
+/**
+ * Liczba odczytana z pola kreatora cykliczności; pole puste albo o treści
+ * nieliczbowej zostawia wartość zastaną sprzed odczytu.
+ */
 function liczbaZPola(kontrolka: HTMLInputElement, zastana: number): number {
   const wartosc = Number.parseInt(kontrolka.value, 10);
   return Number.isInteger(wartosc) ? wartosc : zastana;
 }
 
-/** Akapit opisowy pod treścią okna — podpis kalendarza i zastrzeżenia podglądu. */
+/**
+ * Akapit opisowy umieszczany pod treścią okna, wspólny dla podpisu kalendarza
+ * uruchomień oraz zastrzeżenia podglądu terminów.
+ */
 function akapitOpisowy(zdanie: string): HTMLElement {
   const akapit = document.createElement('p');
   akapit.className = 'dn-pole-opis';
@@ -549,7 +520,10 @@ function listaWyzwalaczy(
   return lista;
 }
 
-/** Wykaz kolejnych terminów — czysta konstrukcja z wyliczonych dat. */
+/**
+ * Wykaz kolejnych terminów uruchomienia — czysta konstrukcja złożona z dat
+ * wyliczonych przez nastepneUruchomienia.
+ */
 function wykazUruchomien(terminy: readonly Date[]): HTMLElement {
   const lista = wykaz('Kolejne uruchomienia', 'da-wykaz');
   for (const termin of terminy) {
@@ -592,12 +566,9 @@ function zadanieHarmonogramu(
 }
 
 /**
- * Zdanie potwierdzenia — stan wzięty z odpowiedzi, nie z tego, o co proszono.
- *
- * Zdanie wypowiadane na sztywno („Harmonogram wstrzymany") potwierdzałoby
- * czynność, która się nie odbyła, gdyby rdzeń oddał harmonogram nadal
- * obowiązujący albo z wyliczonym terminem. Zdanie nazywa więc stan oddany
- * i mówi wprost, gdy rozminął się on z żądaniem.
+ * Zdanie potwierdzenia harmonogramu opiera się na stanie oddanym przez rdzeń,
+ * nie na czynności, o którą prosiło okno, i nazywa wprost rozminięcie się
+ * stanu z żądaniem.
  */
 function zdanieOStanie(harmonogram: AutomationSchedule, zadany: boolean): string {
   const termin =
@@ -611,7 +582,10 @@ function zdanieOStanie(harmonogram: AutomationSchedule, zadany: boolean): string
   return `Rdzeń oddał harmonogram, który ${stan}, ${termin}.`;
 }
 
-/** Zdanie o harmonogramie po zapisie: termin i stan obowiązywania. */
+/**
+ * Zdanie o harmonogramie po zapisie: podaje jego identyfikator, stan
+ * obowiązywania oraz termin najbliższego uruchomienia.
+ */
 function opisHarmonogramu(harmonogram: AutomationSchedule): HTMLElement {
   const zdanie = document.createElement('p');
   zdanie.className = 'dn-pole-opis';

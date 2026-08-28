@@ -1,19 +1,5 @@
-// Katalog roboczy modelu — miejsce, w którym powstają katalogi sesyjne
-// i pliki robocze modelu.
-//
-// Katalog roboczy nie jest dostępem. Dostęp mówi,
-// do jakich maszyn i katalogów model ma wgląd; katalog roboczy mówi, gdzie
-// model zostawia własne pliki. To dwa niezależne ustawienia, więc ten moduł
-// nie zna punktów dostępu ani nadań i nigdy o nie nie pyta.
-//
-// Stan wyjściowy: katalog powstaje automatycznie w miejscu instalacji aplikacji
-// głównej, a katalogi sesyjne leżą wewnątrz — `<instalacja>/sesje/<identyfikator>/`.
-// Operator nadpisuje to z okna konfiguracji dwoma
-// ustawieniami rozstrzyganymi po ośmiu poziomach zasięgu.
-//
-// Ten plik trzyma wyłącznie regułę składania ścieżki — funkcje czyste, bez
-// dotknięcia dysku i bez rezolwera. Ustalenie z rezolwera i degradacja leżą
-// w katalog_roboczy_ustalenie.go.
+// Plik składa ścieżkę katalogu roboczego modelu — miejsca, w którym powstają katalogi sesyjne
+// i pliki robocze modelu, niezależnego od dostępu do maszyn i katalogów.
 package core
 
 import (
@@ -26,11 +12,10 @@ import (
 // oraz liście informacyjnej shared.KnownSettingKeys (lista informacyjna, nie
 // brama; katalog ustawień jest sterowany danymi).
 const (
-	// KluczKatalogRoboczyPodstawa wskazuje katalog, w którym powstają katalogi
-	// sesyjne. Brak wartości znaczy: miejsce instalacji aplikacji głównej.
+	// KluczKatalogRoboczyPodstawa wskazuje katalog, w którym powstają katalogi sesyjne; brak wartości
+	// znaczy miejsce instalacji aplikacji głównej.
 	KluczKatalogRoboczyPodstawa = "katalog.roboczy.podstawa"
-	// KluczKatalogRoboczyWzorzecSesji wskazuje wzorzec nazwy katalogu sesji
-	// liczony względem podstawy.
+	// KluczKatalogRoboczyWzorzecSesji wskazuje wzorzec nazwy katalogu sesji liczony względem podstawy katalogu.
 	KluczKatalogRoboczyWzorzecSesji = "katalog.roboczy.wzorzec_sesji"
 )
 
@@ -39,8 +24,7 @@ const (
 // a identyfikator dokłada się na jego końcu — brak znacznika nie jest błędem.
 const ZnacznikIdentyfikatoraSesji = "<identyfikator>"
 
-// WzorzecSesjiDomyslny obowiązuje przy braku ustawienia na każdym z ośmiu
-// poziomów zasięgu.
+// WzorzecSesjiDomyslny obowiązuje przy braku ustawienia na każdym z ośmiu poziomów zasięgu tej platformy konta.
 const WzorzecSesjiDomyslny = "sesje/" + ZnacznikIdentyfikatoraSesji
 
 // nazwaSesjiZastepcza jest nazwą katalogu sesji, gdy identyfikator po oczyszczeniu
@@ -48,11 +32,8 @@ const WzorzecSesjiDomyslny = "sesje/" + ZnacznikIdentyfikatoraSesji
 // dostaje katalog o nazwie zastępczej, zamiast nie dostać katalogu.
 const nazwaSesjiZastepcza = "sesja"
 
-// KatalogInstalacji zwraca miejsce instalacji aplikacji głównej: katalog pliku
-// wykonywalnego procesu. Gdy ścieżki pliku wykonywalnego nie da się ustalić,
-// wraca katalog bieżący, a gdy i tego nie ma — katalog bieżący w zapisie
-// względnym. Żadna z tych ścieżek nie kończy się błędem: brak rozpoznania
-// miejsca instalacji nie może zatrzymać startu sesji.
+// KatalogInstalacji zwraca miejsce instalacji aplikacji głównej: katalog pliku wykonywalnego
+// procesu, z degradacją do katalogu bieżącego, bez błędu przy braku rozpoznania.
 func KatalogInstalacji() string {
 	if plik, err := os.Executable(); err == nil && strings.TrimSpace(plik) != "" {
 		if rozwiazany, err := filepath.EvalSymlinks(plik); err == nil {
@@ -66,8 +47,8 @@ func KatalogInstalacji() string {
 	return "."
 }
 
-// PodstawaLubInstalacja zwraca podstawę wskazaną przez Operatora, a przy jej
-// braku — miejsce instalacji aplikacji głównej.
+// PodstawaLubInstalacja zwraca podstawę wskazaną przez Operatora, a przy jej braku miejsce
+// instalacji aplikacji głównej tej platformy.
 func PodstawaLubInstalacja(wskazana, instalacja string) string {
 	if przycieta := strings.TrimSpace(wskazana); przycieta != "" {
 		return filepath.Clean(przycieta)
@@ -78,8 +59,7 @@ func PodstawaLubInstalacja(wskazana, instalacja string) string {
 	return KatalogInstalacji()
 }
 
-// WzorzecLubDomyslny zwraca wzorzec wskazany przez Operatora, a przy jego braku
-// wzorzec domyślny.
+// WzorzecLubDomyslny zwraca wzorzec wskazany przez Operatora, a przy jego braku wzorzec domyślny tej platformy konta.
 func WzorzecLubDomyslny(wskazany string) string {
 	if przyciety := strings.TrimSpace(wskazany); przyciety != "" {
 		return przyciety
@@ -87,14 +67,8 @@ func WzorzecLubDomyslny(wskazany string) string {
 	return WzorzecSesjiDomyslny
 }
 
-// SciezkaSesji składa ścieżkę katalogu jednej sesji z podstawy, wzorca
-// i identyfikatora. Funkcja jest czysta — nie czyta ustawień i nie dotyka dysku.
-//
-// Wzorzec liczy się względem podstawy. Wzorzec bez znacznika identyfikatora
-// dostaje identyfikator na końcu, więc `pliki` daje `<podstawa>/pliki/<id>`.
-// Wzorzec, który wyprowadzałby poza podstawę (`..`, ścieżka bezwzględna),
-// jest odrzucany na rzecz wzorca domyślnego: ustawienie Operatora steruje
-// układem katalogów wewnątrz podstawy, nie omija samej podstawy.
+// SciezkaSesji składa ścieżkę katalogu jednej sesji z podstawy, wzorca i identyfikatora. Funkcja
+// jest czysta — nie czyta ustawień i nie dotyka dysku, licząc wzorzec względem podstawy.
 func SciezkaSesji(podstawa, wzorzec, identyfikator string) string {
 	korzen := PodstawaLubInstalacja(podstawa, "")
 	wzgledna := wzglednaSciezkaSesji(WzorzecLubDomyslny(wzorzec), identyfikator)
@@ -134,10 +108,8 @@ func wzglednaSciezkaSesji(wzorzec, identyfikator string) string {
 	return zlozona
 }
 
-// nazwaKataloguSesji zamienia identyfikator sesji na nazwę katalogu bezpieczną
-// dla systemu plików: litery, cyfry, kreska, podkreślenie i kropka zostają,
-// wszystko pozostałe staje się kreską. Identyfikator, z którego nie zostaje ani
-// jeden znak, dostaje nazwę zastępczą.
+// nazwaKataloguSesji zamienia identyfikator sesji na nazwę katalogu bezpieczną dla systemu plików:
+// litery, cyfry, kreska, podkreślenie i kropka zostają, reszta staje się kreską.
 func nazwaKataloguSesji(identyfikator string) string {
 	budowana := strings.Builder{}
 	for _, znak := range strings.TrimSpace(identyfikator) {

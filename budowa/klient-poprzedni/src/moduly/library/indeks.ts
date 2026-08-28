@@ -2,14 +2,9 @@ import type { OpisModulu } from '../../aplikacja/rejestr-modulow';
 import { utworzModulLibrary } from './modul-library';
 
 /**
- * Moduł Library — punkt zbiorczy katalogu.
- *
- * Powłoka zna stąd jeden byt: opis modułu wraz z kodem katalogu rdzenia
- * i wytwórnią widoku. Moduł nie osadza się sam w dokumencie i nie zna powłoki —
- * oddaje element, a warstwa składająca decyduje, gdzie go postawić.
- *
- * Kod `library` odpowiada kolumnie `modul.kod` w rdzeniu; wpis do rejestru
- * wiąże widok z modułem po tym kodzie.
+ * Punkt zbiorczy katalogu modułu Library. Powłoka zna stąd jeden byt: opis
+ * modułu wraz z kodem katalogu rdzenia i wytwórnią widoku. Kod `library`
+ * odpowiada kolumnie `modul.kod` w rdzeniu.
  */
 export const MODUL: OpisModulu = {
   kod: 'library',

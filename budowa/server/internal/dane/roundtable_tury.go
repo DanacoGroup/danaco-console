@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: tury debaty (tabela `debata_tura`) i wypowiedzi w nich
-// (tabela `debata_wypowiedz`) — `store/migracja_044_roundtable.sql`.
-//
-// NUMER TURY NADAJE BAZA, NIE RDZEŃ. Numer powstaje jako „największy dotychczas
-// w tym oknie plus jeden” WEWNĄTRZ transakcji zakładającej wiersz. Gdyby liczył
-// go rdzeń, dwie tury uruchomione w tej samej chwili z dwóch urządzeń tego
-// konta dostałyby ten sam numer, a więz UNIQUE(okno, numer) odrzuciłby drugą.
+// Odpowiedzialność pliku: tury debaty i wypowiedzi w nich; numer tury nadaje baza wewnątrz transakcji zakładającej wiersz, nie rdzeń.
 package dane
 
 import (
@@ -82,7 +76,7 @@ const (
 	                          ORDER BY t.numer ASC, w.id ASC`
 )
 
-// ZalozTure zakłada turę o kolejnym numerze w oknie i oddaje ją po zapisie.
+// ZalozTure zakłada turę o kolejnym numerze w danym oknie operacyjnym i oddaje ją odczytaną po zapisie.
 func (r *repozytoriumRoundtable) ZalozTure(ctx context.Context, tura TuraDebaty) (TuraDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zalozTureDebaty)
 	if err != nil {
@@ -96,7 +90,7 @@ func (r *repozytoriumRoundtable) ZalozTure(ctx context.Context, tura TuraDebaty)
 	return r.Tura(ctx, tura.Kod)
 }
 
-// ZmienTure zapisuje zagadnienie, stan i chwilę zamknięcia tury.
+// ZmienTure zapisuje zagadnienie, stan i chwilę zamknięcia wskazanej tury tej samej debaty operacyjnej.
 func (r *repozytoriumRoundtable) ZmienTure(ctx context.Context, tura TuraDebaty) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zmienTureDebaty)
 	if err != nil {
@@ -109,7 +103,7 @@ func (r *repozytoriumRoundtable) ZmienTure(ctx context.Context, tura TuraDebaty)
 	return trafienieDebaty(wynik)
 }
 
-// Tura zwraca turę po kodzie; brak wiersza wraca jako ErrBrakWiersza.
+// Tura zwraca turę po jej kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza tej samej debaty.
 func (r *repozytoriumRoundtable) Tura(ctx context.Context, kod string) (TuraDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzTure)
 	if err != nil {
@@ -125,7 +119,7 @@ func (r *repozytoriumRoundtable) Tura(ctx context.Context, kod string) (TuraDeba
 	return tura, nil
 }
 
-// Tury zwraca tury okna od najnowszej. Zero w granicy zwraca wszystkie.
+// Tury zwraca wszystkie tury okna od najnowszej; zero w granicy zwraca wszystkie tury bez ograniczenia.
 func (r *repozytoriumRoundtable) Tury(ctx context.Context, okno string, limit int) ([]TuraDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzTury)
 	if err != nil {
@@ -176,7 +170,7 @@ func (r *repozytoriumRoundtable) ZapiszWypowiedz(ctx context.Context,
 	return wypowiedz, nil
 }
 
-// UzupelnijWypowiedz zapisuje treść wypowiedzi po zamknięciu strumienia modelu.
+// UzupelnijWypowiedz zapisuje treść wypowiedzi po zamknięciu strumienia modelu generującego odpowiedź.
 func (r *repozytoriumRoundtable) UzupelnijWypowiedz(ctx context.Context, kod, tresc string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, uzupelnijWypowiedzDebaty)
 	if err != nil {
@@ -189,7 +183,7 @@ func (r *repozytoriumRoundtable) UzupelnijWypowiedz(ctx context.Context, kod, tr
 	return trafienieDebaty(wynik)
 }
 
-// Wypowiedzi zwraca zapis tury w kolejności powstania wypowiedzi.
+// Wypowiedzi zwraca cały zapis jednej wskazanej tury w kolejności powstania wypowiedzi w tej samej turze.
 func (r *repozytoriumRoundtable) Wypowiedzi(ctx context.Context, turaKod string) ([]WypowiedzDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWypowiedzi)
 	if err != nil {
@@ -223,7 +217,7 @@ func (r *repozytoriumRoundtable) WypowiedziOkna(ctx context.Context,
 	return zbierzWypowiedziDebaty(wiersze)
 }
 
-// Wypowiedz zwraca jedną wypowiedź po kodzie.
+// Wypowiedz zwraca jedną wypowiedź po jej kodzie zewnętrznym, wraz z całą jej zapisaną treścią wypowiedzi.
 func (r *repozytoriumRoundtable) Wypowiedz(ctx context.Context, kod string) (WypowiedzDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWypowiedzDebaty)
 	if err != nil {
@@ -239,7 +233,7 @@ func (r *repozytoriumRoundtable) Wypowiedz(ctx context.Context, kod string) (Wyp
 	return wypowiedz, nil
 }
 
-// ZastapWypowiedz podmienia treść wypowiedzi i podnosi numer redakcji.
+// ZastapWypowiedz podmienia treść wskazanej wypowiedzi i podnosi jej numer redakcji o kolejny numer wyżej.
 func (r *repozytoriumRoundtable) ZastapWypowiedz(ctx context.Context, kod, tresc string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zastapWypowiedzDebaty)
 	if err != nil {
@@ -252,7 +246,7 @@ func (r *repozytoriumRoundtable) ZastapWypowiedz(ctx context.Context, kod, tresc
 	return trafienieDebaty(wynik)
 }
 
-// OznaczWypowiedz zapisuje akt mowy i pewność rozpoznane analizą.
+// OznaczWypowiedz zapisuje akt mowy i pewność jego rozpoznania analizą treści tej samej wypowiedzi debaty.
 func (r *repozytoriumRoundtable) OznaczWypowiedz(ctx context.Context,
 	kod, aktMowy string, pewnosc float64) error {
 
@@ -267,7 +261,7 @@ func (r *repozytoriumRoundtable) OznaczWypowiedz(ctx context.Context,
 	return trafienieDebaty(wynik)
 }
 
-// zbierzWypowiedziDebaty czyta wiersze wypowiedzi jednym przebiegiem.
+// zbierzWypowiedziDebaty czyta wiersze wypowiedzi jednym przebiegiem zapytania po tej samej bazie danych.
 func zbierzWypowiedziDebaty(wiersze *sql.Rows) ([]WypowiedzDebaty, error) {
 	wypowiedzi := make([]WypowiedzDebaty, 0, 8)
 	for wiersze.Next() {
@@ -280,7 +274,7 @@ func zbierzWypowiedziDebaty(wiersze *sql.Rows) ([]WypowiedzDebaty, error) {
 	return wypowiedzi, wiersze.Err()
 }
 
-// odczytajWypowiedzDebaty składa wypowiedź z jednego wiersza wyniku.
+// odczytajWypowiedzDebaty składa wypowiedź z jednego wiersza wyniku zapytania SQL, kolumna po kolumnie.
 func odczytajWypowiedzDebaty(wiersz interface{ Scan(...any) error }) (WypowiedzDebaty, error) {
 	var wypowiedz WypowiedzDebaty
 	err := wiersz.Scan(&wypowiedz.Kod, &wypowiedz.TuraKod, &wypowiedz.Uczestnik,
@@ -289,7 +283,7 @@ func odczytajWypowiedzDebaty(wiersz interface{ Scan(...any) error }) (WypowiedzD
 	return wypowiedz, err
 }
 
-// odczytajTure składa turę z jednego wiersza wyniku.
+// odczytajTure składa turę tej samej debaty z jednego wiersza wyniku zapytania SQL, kolumna po kolumnie.
 func odczytajTure(wiersz interface{ Scan(...any) error }) (TuraDebaty, error) {
 	var tura TuraDebaty
 	err := wiersz.Scan(&tura.Kod, &tura.Okno, &tura.Numer, &tura.Zagadnienie, &tura.Pytanie,

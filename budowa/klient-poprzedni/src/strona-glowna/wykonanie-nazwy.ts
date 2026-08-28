@@ -5,19 +5,7 @@ import type { CzynnosciSesji, MeldunekCzynnosci } from './czynnosci-sesji';
 import { odmowa, nazwa } from './meldunki-sesji';
 import { zapytajONazwe } from './pytanie-o-nazwe';
 
-/**
- * Trzy czynności historii, które przed wysłaniem komendy pytają o napis.
- *
- * Jedna odpowiedzialność: zebranie nazwy od Operatora i dopiero z nią wyjście
- * na kontrakt. Stoją osobno od pozostałych czynności, bo mają wspólny kształt
- * — pytanie, odmowa, komenda, meldunek — i wspólny warunek zejścia: zamknięte
- * pytanie kończy rzecz bez żadnego żądania.
- *
- * Zamknięcie pytania zwraca `null`, nie napis pusty. Odmowa Operatora nie jest
- * odmową rdzenia i nie ma o niej czego meldować, a napis pusty bywa odpowiedzią
- * sensowną — przy kopii oddaje nadanie nazwy rdzeniowi — więc te dwa przypadki
- * nie mogą się zlać.
- */
+/** Trzy czynności historii sesji zbierają nazwę od operatora przed wysłaniem komendy i zwracają brak, gdy pytanie zostanie zamknięte bez zatwierdzenia. */
 export function czynnosciZNazwa(kanal: Kanal, odswiez: () => void): CzynnosciSesji {
   return {
     async zmienNazwe(wpis): Promise<MeldunekCzynnosci> {

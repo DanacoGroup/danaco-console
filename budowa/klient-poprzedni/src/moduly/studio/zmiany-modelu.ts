@@ -5,26 +5,16 @@ import {
 } from '../../../../shared/contract';
 
 /**
- * Zmiany śledzone naniesione na treść — wynik modelu widoczny w miejscu.
- *
- * Rdzeń rejestruje wynik operacji kontekstowej jako zmianę śledzoną autora
- * `model` o zakresie liczonym w znakach treści BIEŻĄCEJ. Treść ma więc już
- * w sobie tekst modelu, a zmiana mówi, który to fragment i co stało tam
- * wcześniej. Zadaniem tego pliku jest przełożyć to na odcinki treści, żeby
- * powierzchnia mogła oznaczyć fragment modelu w miejscu, a nie obok.
- *
- * Plik nie zna DOM ani rdzenia: wejściem jest napis i wykaz zmian, wyjściem
- * odcinki. Dzięki temu nakładanie sprawdza się bez stawiania okna.
+ * Zmiany śledzone naniesione na treść — wynik modelu widoczny w miejscu; odcinek treści niesie
+ * tekst wraz z autorem zmiany, o ile jakiejś dotyczy.
  */
-
-/** Jeden odcinek treści wraz z autorem zmiany, o ile jakiejś dotyczy. */
 export interface OdcinekTresci {
   tekst: string;
   /** Zmiana, do której odcinek należy; `null` dla treści bez zmiany. */
   zmiana: StudioTrackedChange | null;
 }
 
-/** Zmiany oczekujące decyzji, w kolejności położenia w treści. */
+/** Zmiany oczekujące decyzji Operatora, uporządkowane w kolejności ich położenia w treści bieżącego dokumentu. */
 export function zmianyOczekujace(
   zmiany: readonly StudioTrackedChange[],
 ): readonly StudioTrackedChange[] {
@@ -34,16 +24,8 @@ export function zmianyOczekujace(
 }
 
 /**
- * Rozdziela treść na odcinki wedle zakresów zmian oczekujących.
- *
- * Zakresy sięgające poza treść są pomijane, a nie przycinane: zakres spoza
- * treści znaczy, że dokument zmienił się od czasu zarejestrowania zmiany, więc
- * oznaczenie fragmentu wskazywałoby niewłaściwe miejsce. Tak samo rozstrzyga
- * rdzeń przy decyzji o zmianie — treść zostawia nietkniętą.
- *
- * Zakresy nachodzące na siebie liczą się pierwszy wygrywa: dwie zmiany na tym
- * samym fragmencie to stan, którego rdzeń nie zakłada, a oznaczenie fragmentu
- * dwoma autorami naraz nie miałoby czego znaczyć.
+ * Rozdziela treść na odcinki wedle zakresów zmian oczekujących: zakres spoza treści jest
+ * pomijany, a przy nakładających się zakresach wygrywa pierwszy.
  */
 export function rozdzielNaOdcinki(
   tresc: string,
@@ -68,17 +50,14 @@ export function rozdzielNaOdcinki(
   return odcinki;
 }
 
-/** Nazwa autora dla Operatora. */
+/** Nazwa autora zmiany czytelna dla Operatora: rozróżnia zmianę wprowadzoną przez model od zmiany Operatora. */
 export function nazwaAutora(autor: StudioAuthor): string {
   return autor === StudioAuthor.Model ? 'model' : 'Operator';
 }
 
 /**
- * Zdanie o zmianie — co model zrobił i co przyjęcie albo odrzucenie zrobi.
- *
- * Liczby są policzone z treści zmiany, nie oszacowane: tyle znaków stało przed,
- * tyle stoi po. Bez nich „zmiana modelu" nie mówi, czy chodzi o przecinek, czy
- * o przepisanie akapitu.
+ * Zdanie o zmianie — co model zrobił i co przyjęcie albo odrzucenie zrobi; liczby są policzone
+ * z treści zmiany, nie oszacowane.
  */
 export function opiszZmiane(zmiana: StudioTrackedChange): string {
   const przed = zmiana.before ?? '';
@@ -91,7 +70,7 @@ export function opiszZmiane(zmiana: StudioTrackedChange): string {
   );
 }
 
-/** Zdanie zbiorcze dla paska stanu; brak zmian ma własne zdanie, nie zero. */
+/** Zdanie zbiorcze dla paska stanu podające liczbę zmian oczekujących decyzji; brak zmian ma własne zdanie, nie zero. */
 export function opiszZmiany(zmiany: readonly StudioTrackedChange[]): string {
   const oczekujace = zmianyOczekujace(zmiany);
   if (oczekujace.length === 0) return 'zmian modelu do decyzji: brak';

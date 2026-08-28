@@ -1,25 +1,6 @@
 // Odpowiedzialność pliku: rachunek tabeli dokumentu — siatka komórek, wstawienie
 // i usunięcie wiersza oraz kolumny, scalenie i podział komórek, przeliczenie
 // szerokości kolumn, zamiana tabeli na tekst i tekstu na tabelę.
-//
-// ── Gdzie stoi prawda o tabeli ──────────────────────────────────────────────
-// Tabela siedzi w drzewie postaci (`stanPostaci.forma.Tables`), a jej miejsce
-// w kolejności czytania niesie blok rodzaju `tabela` ze wskazaniem tabeli.
-// Osobnego wiersza w bazie tabela nie ma i mieć nie powinna: nie pyta się „które
-// tabele są nieświeże", tak jak pyta się o przypisy — tabelę czyta się razem
-// z dokumentem, więc jedzie jego drzewem.
-//
-// ── Dlaczego siatka jest pełna, a scalenie znaczy się flagą ─────────────────
-// Komórki trzymane rzadko (tylko te wypełnione) wymagałyby przy każdym odczycie
-// zgadywania, czy komórki nie ma, bo jest pusta, czy bo została wchłonięta
-// scaleniem. Dlatego siatka jest PEŁNA: wiersze razy kolumny, a komórka
-// wchłonięta scaleniem niesie `merged` i zostaje na swoim miejscu. Wstawienie
-// wiersza w środek scalenia ma wtedy co przesunąć, a nie zgaduje.
-//
-// ── Szerokości nigdy zerowe ─────────────────────────────────────────────────
-// Wymaganie zlecenia mówi wprost: tabela po scaleniu komórek ma mieć POLICZONE
-// szerokości, nie zerowe. Dlatego każda czynność zmieniająca budowę woła
-// `tabelaPrzeliczSzerokosci`, a nie zostawia tablicy krótszej niż liczba kolumn.
 package core
 
 import (
@@ -34,16 +15,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// tabelaSzerokoscNosnikaDomyslna to szerokość arkusza A4 w milimetrach — miara
-// dokumentu, którego nastawy strony nie nazywają nośnika ani wymiaru.
-//
-// Nośnik NAZWANY bierze wymiary ze wspólnego wykazu rdzenia
-// (`nosniki_druku_wspolne.go`), a nie z drugiej tablicy w tym pliku: dwa wykazy
-// rozmiarów arkusza dałyby tabelę mierzoną szerokością innego nośnika, niż
-// Operator ustawił.
+// tabelaSzerokoscNosnikaDomyslna to szerokość arkusza A4 w milimetrach, miara
+// dokumentu, którego nastawy strony nie nazywają nośnika ani wymiaru. Nośnik
+// nazwany bierze wymiary ze wspólnego wykazu rdzenia, nie z tej stałej.
 const tabelaSzerokoscNosnikaDomyslna = 210.0
 
-// tabelaMarginesDomyslny to margines pisma urzędowego w milimetrach.
+// tabelaMarginesDomyslny to margines pisma urzędowego w milimetrach, przyjęty
+// za margines dokumentu bez własnej nastawy strony.
 const tabelaMarginesDomyslny = 25.0
 
 // tabelaSzerokoscKolumnyNajmniejsza chroni kolumnę przed szerokością, przy
@@ -57,12 +35,14 @@ const (
 	tabelaGranicaKolumn  = 128
 )
 
-// tabelaBladWskazania nazywa brak po stronie żądania.
+// tabelaBladWskazania nazywa brak po stronie żądania, kiedy wskazanie tabeli,
+// wiersza, kolumny albo komórki nie odpowiada budowie dokumentu.
 func tabelaBladWskazania(powod string) error {
 	return bladWskazaniaStudio(powod)
 }
 
-// tabelaBladNieznanej mówi wprost, której tabeli w dokumencie nie ma.
+// tabelaBladNieznanej mówi wprost, po jakim wskazaniu dokument nie ma tabeli,
+// zamiast oddawać ogólny błąd braku.
 func tabelaBladNieznanej(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Studio, tabele: dokument nie ma tabeli o wskazaniu "+kod))
@@ -81,9 +61,8 @@ func tabelaSzerokoscTekstu(forma *shared.StudioDocumentForm) float64 {
 		case nastawy.WidthMm != nil && *nastawy.WidthMm > 0:
 			szerokosc = *nastawy.WidthMm
 		case nastawy.PageSize != nil:
-			// Nośnik nazwany: wymiary z wykazu wspólnego. Orientacja pozioma
-			// zamienia wymiary arkusza — bez tego tabela w załączniku poziomym
-			// mierzyłaby się szerokością strony pionowej.
+			// Nośnik nazwany: wymiary z wykazu wspólnego, zamienione przy
+			// orientacji poziomej.
 			if nosnik, jest := nosnikDrukuONazwie(*nastawy.PageSize); jest {
 				szerokosc = nosnik.SzerokoscMm
 				if poziomo {
@@ -110,7 +89,8 @@ func tabelaSzerokoscTekstu(forma *shared.StudioDocumentForm) float64 {
 	return uzyteczna
 }
 
-// tabelaZnajdz odnajduje tabelę dokumentu po wskazaniu.
+// tabelaZnajdz odnajduje tabelę dokumentu po wskazaniu, zgłaszając odmową
+// nazwaną zarówno wskazanie puste, jak i wskazanie tabeli, której nie ma.
 func tabelaZnajdz(forma *shared.StudioDocumentForm, kod string) (*shared.StudioDocumentTable, error) {
 	szukany := strings.TrimSpace(kod)
 	if szukany == "" {
@@ -171,11 +151,8 @@ func tabelaKomorka(tabela *shared.StudioDocumentTable, wiersz, kolumna int) *sha
 }
 
 // tabelaPrzeliczSzerokosci doprowadza tablicę szerokości do liczby kolumn.
-//
 // Kolumna bez podanej szerokości bierze resztę miejsca rozdzieloną równo, a
-// suma nigdy nie schodzi do zera — zerowa szerokość znaczyłaby kolumnę
-// niewidzialną, a to jest ta sama cicha szkoda, przed którą stoi wymaganie
-// „szerokości policzone, nie zerowe".
+// suma nigdy nie schodzi do zera.
 func tabelaPrzeliczSzerokosci(tabela *shared.StudioDocumentTable, szerokoscTekstu float64) {
 	if tabela.Columns <= 0 {
 		tabela.ColumnWidthsMm = nil
@@ -226,7 +203,8 @@ func tabelaPrzeliczSzerokosci(tabela *shared.StudioDocumentTable, szerokoscTekst
 	tabela.WidthMm = postacWskaznikMiary(tabelaSumaMiar(nowe))
 }
 
-// tabelaSumaMiar sumuje szerokości kolumn.
+// tabelaSumaMiar sumuje szerokości kolumn do szerokości całej tabeli, po
+// zaokrągleniu tej sumy do dziesiątych części milimetra.
 func tabelaSumaMiar(miary []float64) float64 {
 	suma := 0.0
 	for _, miara := range miary {
@@ -247,7 +225,8 @@ func tabelaZaokraglenieMiary(miara float64) float64 {
 
 // ── Budowa tabeli ───────────────────────────────────────────────────────────
 
-// tabelaWstawWiersze wstawia wiersze przed albo za wskazanym.
+// tabelaWstawWiersze wstawia wiersze przed albo za wskazanym, rozcinając po
+// drodze scalenie pionowe, w które wstawiane miejsce trafia.
 func tabelaWstawWiersze(tabela *shared.StudioDocumentTable, wiersz int, przed bool, ile int) error {
 	if ile <= 0 {
 		ile = 1
@@ -267,9 +246,7 @@ func tabelaWstawWiersze(tabela *shared.StudioDocumentTable, wiersz int, przed bo
 	if miejsce > tabela.Rows {
 		miejsce = tabela.Rows
 	}
-	// Wiersz wstawiony w środek scalenia pionowego rozcina to scalenie: dwa
-	// wiersze pod jedną komórką, z których jeden nie należy do niczego, byłyby
-	// tabelą niespójną.
+	// Wiersz wstawiony w środek scalenia pionowego rozcina to scalenie.
 	tabelaRozetnijScaleniaPionowe(tabela, miejsce)
 
 	nowe := make([]shared.StudioTableCell, 0, len(tabela.Cells)+ile*tabela.Columns)
@@ -290,7 +267,8 @@ func tabelaWstawWiersze(tabela *shared.StudioDocumentTable, wiersz int, przed bo
 	return nil
 }
 
-// tabelaUsunWiersze usuwa wskazane wiersze.
+// tabelaUsunWiersze usuwa wskazane wiersze, odmawiając usunięcia wszystkich
+// wierszy tabeli naraz, bo tabelę bez wierszy usuwa się zamianą na tekst.
 func tabelaUsunWiersze(tabela *shared.StudioDocumentTable, wiersz, ile int) error {
 	if ile <= 0 {
 		ile = 1
@@ -328,7 +306,8 @@ func tabelaUsunWiersze(tabela *shared.StudioDocumentTable, wiersz, ile int) erro
 	return nil
 }
 
-// tabelaWstawKolumny wstawia kolumny przed albo za wskazaną.
+// tabelaWstawKolumny wstawia kolumny przed albo za wskazaną, rozcinając po
+// drodze scalenie poziome, w które wstawiane miejsce trafia.
 func tabelaWstawKolumny(tabela *shared.StudioDocumentTable, kolumna int, przed bool, ile int) error {
 	if ile <= 0 {
 		ile = 1
@@ -364,8 +343,7 @@ func tabelaWstawKolumny(tabela *shared.StudioDocumentTable, kolumna int, przed b
 	}
 	tabela.Columns += ile
 
-	// Szerokości idą za kolumnami: kolumna wstawiona bez szerokości byłaby
-	// kolumną zerowej szerokości, czyli niewidzialną.
+	// Szerokości idą za kolumnami, żeby kolumna nowa nie wypadła niewidzialna.
 	szerokosci := make([]float64, 0, tabela.Columns)
 	szerokosci = append(szerokosci, tabelaWytnijMiary(tabela.ColumnWidthsMm, 0, miejsce)...)
 	for i := 0; i < ile; i++ {
@@ -374,15 +352,14 @@ func tabelaWstawKolumny(tabela *shared.StudioDocumentTable, kolumna int, przed b
 	szerokosci = append(szerokosci, tabelaWytnijMiary(tabela.ColumnWidthsMm, miejsce,
 		len(tabela.ColumnWidthsMm))...)
 	tabela.ColumnWidthsMm = szerokosci
-	// Szerokości kolumn zastanych zostają, a kolumna nowa dostaje resztę
-	// miejsca przy przeliczeniu. Szerokość CAŁEJ tabeli idzie do przeliczenia od
-	// nowa, bo tabela rozszerzona poza kolumnę tekstu nie weszłaby na stronę.
+	// Szerokość całej tabeli idzie do przeliczenia od nowa wraz z kolumnami.
 	tabela.WidthMm = nil
 	tabelaSiatkaPelna(tabela)
 	return nil
 }
 
-// tabelaUsunKolumny usuwa wskazane kolumny.
+// tabelaUsunKolumny usuwa wskazane kolumny, odmawiając usunięcia wszystkich
+// kolumn tabeli naraz, bo tabelę bez kolumn usuwa się zamianą na tekst.
 func tabelaUsunKolumny(tabela *shared.StudioDocumentTable, kolumna, ile int) error {
 	if ile <= 0 {
 		ile = 1
@@ -418,15 +395,14 @@ func tabelaUsunKolumny(tabela *shared.StudioDocumentTable, kolumna, ile int) err
 	tabela.Columns -= ile
 	tabela.Cells = nowe
 	tabela.ColumnWidthsMm = szerokosci
-	// Szerokość całej tabeli maleje wraz z kolumnami — tabela po usunięciu
-	// kolumny nie ma prawa rosnąć w pozostałych.
+	// Szerokość całej tabeli maleje wraz z kolumnami.
 	tabela.WidthMm = nil
 	tabelaSiatkaPelna(tabela)
 	return nil
 }
 
 // tabelaWytnijMiary oddaje wycinek tablicy szerokości, znosząc wskazania poza
-// jej długością.
+// jej długością, żeby wywołujący nie musiał osobno pilnować granic wycinka.
 func tabelaWytnijMiary(miary []float64, od, do int) []float64 {
 	if od < 0 {
 		od = 0
@@ -440,11 +416,8 @@ func tabelaWytnijMiary(miary []float64, od, do int) []float64 {
 	return append([]float64(nil), miary[od:do]...)
 }
 
-// tabelaScalKomorki scala prostokąt komórek w jedną.
-//
-// Treść komórek wchłoniętych nie przepada: wchodzi do komórki wiodącej
-// oddzielona odstępem. Cicha utrata treści przy scaleniu byłaby dokładnie tą
-// szkodą, po której Operator nie wie, kiedy dokument się rozjechał.
+// tabelaScalKomorki scala prostokąt komórek w jedną. Treść komórek
+// wchłoniętych nie przepada: wchodzi do komórki wiodącej oddzielona odstępem.
 func tabelaScalKomorki(tabela *shared.StudioDocumentTable, wiersz, kolumna,
 	wierszy, kolumn int) error {
 
@@ -498,7 +471,8 @@ func tabelaScalKomorki(tabela *shared.StudioDocumentTable, wiersz, kolumna,
 	return nil
 }
 
-// tabelaPodzielKomorke znosi scalenie komórki.
+// tabelaPodzielKomorke znosi scalenie komórki na wskazaną liczbę wierszy
+// i kolumn, nie większą niż obejmuje scalenie.
 func tabelaPodzielKomorke(tabela *shared.StudioDocumentTable, wiersz, kolumna,
 	wierszy, kolumn int) error {
 
@@ -515,9 +489,7 @@ func tabelaPodzielKomorke(tabela *shared.StudioDocumentTable, wiersz, kolumna,
 		objeteKolumny = *wiodaca.ColumnSpan
 	}
 	if objeteWiersze == 1 && objeteKolumny == 1 {
-		// Podział komórki niescalonej znaczy w pakiecie biurowym wstawienie
-		// kolumn albo wierszy wewnątrz niej; rdzeń tego nie udaje i mówi wprost,
-		// którą czynnością się to robi.
+		// Podział komórki niescalonej to inna czynność: wstawienie kolumn.
 		return tabelaBladWskazania("komórka (" + strconv.Itoa(wiersz) + ", " +
 			strconv.Itoa(kolumna) + ") nie jest scalona, więc nie ma czego podzielić; " +
 			"tabelę rozdziela się wstawieniem wiersza albo kolumny " +
@@ -544,7 +516,8 @@ func tabelaPodzielKomorke(tabela *shared.StudioDocumentTable, wiersz, kolumna,
 	return nil
 }
 
-// tabelaRozetnijScaleniaPionowe znosi scalenia przekraczające granicę wiersza.
+// tabelaRozetnijScaleniaPionowe znosi scalenia przekraczające granicę wiersza,
+// dzieląc każdą taką komórkę na część przed granicą i po niej.
 func tabelaRozetnijScaleniaPionowe(tabela *shared.StudioDocumentTable, granica int) {
 	if granica <= 0 || granica >= tabela.Rows {
 		return
@@ -566,7 +539,8 @@ func tabelaRozetnijScaleniaPionowe(tabela *shared.StudioDocumentTable, granica i
 	}
 }
 
-// tabelaRozetnijScaleniaPoziome znosi scalenia przekraczające granicę kolumny.
+// tabelaRozetnijScaleniaPoziome znosi scalenia przekraczające granicę kolumny,
+// dzieląc każdą taką komórkę na część przed granicą i po niej.
 func tabelaRozetnijScaleniaPoziome(tabela *shared.StudioDocumentTable, granica int) {
 	if granica <= 0 || granica >= tabela.Columns {
 		return
@@ -612,8 +586,7 @@ func tabelaSortujWiersze(tabela *shared.StudioDocumentTable, kolumna int,
 		return 0, tabelaBladWskazania("sortowanie tabeli, w której poza wierszem " +
 			"nagłówkowym nie ma ani jednego wiersza zawartości")
 	}
-	// Wiersz objęty scaleniem pionowym nie da się przestawić bez rozerwania
-	// scalenia — sortowanie odmawia nazwanie, zamiast wywracać budowę tabeli.
+	// Wiersz objęty scaleniem pionowym sortowanie odmawia przestawić.
 	for wiersz := pierwszy; wiersz < tabela.Rows; wiersz++ {
 		for k := 0; k < tabela.Columns; k++ {
 			komorka := tabelaKomorka(tabela, wiersz, k)
@@ -655,8 +628,7 @@ func tabelaSortujWiersze(tabela *shared.StudioDocumentTable, kolumna int,
 			case lewaJest && prawaJest:
 				mniejszy = lewaLiczba < prawaLiczba
 			case lewaJest != prawaJest:
-				// Wartość nieliczbowa idzie na koniec — inaczej „bez danych"
-				// wypadałoby przed najmniejszą liczbą i wyglądało na zero.
+				// Wartość nieliczbowa idzie na koniec, nie przed najmniejszą liczbą.
 				mniejszy = lewaJest
 			default:
 				mniejszy = tabelaMniejszyTekst(zestawiacz, lewy, prawy)
@@ -685,7 +657,8 @@ func tabelaSortujWiersze(tabela *shared.StudioDocumentTable, kolumna int,
 	return len(wiersze), nil
 }
 
-// tabelaTrescKomorki oddaje treść komórki wiersza.
+// tabelaTrescKomorki oddaje treść komórki wiersza, albo pusty napis, gdy
+// kolumna wypada poza wierszem albo komórka nie niesie treści.
 func tabelaTrescKomorki(wiersz []shared.StudioTableCell, kolumna int) string {
 	if kolumna < 0 || kolumna >= len(wiersz) {
 		return ""
@@ -696,40 +669,20 @@ func tabelaTrescKomorki(wiersz []shared.StudioTableCell, kolumna int) string {
 	return *wiersz[kolumna].Text
 }
 
-// tabelaPorzadekPolski jest KOLACJĄ pisma polskiego — tablicą zestawiania,
-// którą sortowanie tabeli układa wyrazy.
-//
-// ── Dlaczego biblioteka, a nie własna tablica znaków ────────────────────────
-// Porównanie napisów bajt po bajcie stawia „ł" za „z", bo tak leżą one
-// w Unikodzie — wykaz nazwisk wychodził wtedy z Łukasiewiczem na końcu, za
-// Zawadzkim. Własna tablica znaków polskich rozwiązałaby to na dziesięć minut
-// i rozjechała się na pierwszym wyrazie z „ﬁ", z apostrofem albo z cyfrą.
-// `golang.org/x/text/collate` niesie tablice CLDR i stoi w drzewie od dawna —
-// funkcja jest więc wzięta z biblioteki, nie napisana od nowa.
-//
-// Zestawiacz nie jest bezpieczny dla wielu wątków (trzyma bufor rachunku), więc
-// nie stoi tu jako zmienna wspólna: każde sortowanie zakłada własny
-// (`tabelaZestawiaczPolski`). Koszt złożenia jest jednorazowy na sortowanie, a
-// nie na parę wyrazów.
-//
-// Siła porównania jest DRUGORZĘDNA (`collate.Loose` byłoby za mało, pełna za
-// wiele): różnica wielkości liter nie decyduje o kolejności — Operator sortujący
-// wykaz nazwisk nie spodziewa się, że „ćma" wyprzedzi „Dom" tylko dlatego, że
-// jedno zaczyna się małą literą — a różnica znaku diakrytycznego decyduje, bo
-// „laska" i „łaska" są dwoma różnymi wyrazami i mają stanąć osobno.
+// tabelaPorzadekPolski jest kolacją pisma polskiego, tablicą zestawiania,
+// którą sortowanie tabeli układa wyrazy, wziętą z biblioteki `golang.org/x/text`
+// zamiast z własnej tablicy znaków.
 var tabelaPorzadekPolski = language.Polish
 
-// tabelaZestawiaczPolski składa zestawiacz pisma polskiego do jednego sortowania.
+// tabelaZestawiaczPolski składa zestawiacz pisma polskiego do jednego
+// sortowania, bo zestawiacz nie jest bezpieczny dla wielu wątków naraz.
 func tabelaZestawiaczPolski() *collate.Collator {
 	return collate.New(tabelaPorzadekPolski, collate.IgnoreCase)
 }
 
 // tabelaMniejszyTekst porównuje treść komórek porządkiem alfabetycznym pisma
-// polskiego, bez względu na wielkość liter.
-//
-// Zestawiacz podaje się argumentem, bo jeden sort woła tę funkcję kilkadziesiąt
-// razy, a zakładanie zestawiacza przy każdym porównaniu byłoby rachunkiem
-// wykonanym od nowa dla każdej pary wyrazów.
+// polskiego, bez względu na wielkość liter. Zestawiacz podaje się argumentem,
+// żeby jeden sort nie zakładał go od nowa dla każdej pary wyrazów.
 func tabelaMniejszyTekst(zestawiacz *collate.Collator, lewy, prawy string) bool {
 	return zestawiacz.CompareString(strings.TrimSpace(lewy), strings.TrimSpace(prawy)) < 0
 }
@@ -772,7 +725,8 @@ func tabelaTekstZTabeli(tabela *shared.StudioDocumentTable, rozdzielnik string) 
 	return wiersze
 }
 
-// tabelaZTekstu składa tabelę z wierszy tekstu.
+// tabelaZTekstu składa tabelę z wierszy tekstu, dzieląc każdy wiersz na
+// kolumny znakiem rozdzielającym i odmawiając ponad granicę liczby kolumn.
 func tabelaZTekstu(wiersze []string, rozdzielnik string) (shared.StudioDocumentTable, error) {
 	if len(wiersze) == 0 {
 		return shared.StudioDocumentTable{}, tabelaBladWskazania(
@@ -815,11 +769,8 @@ func tabelaZTekstu(wiersze []string, rozdzielnik string) (shared.StudioDocumentT
 // ── Bloki drzewa ────────────────────────────────────────────────────────────
 
 // tabelaWstawBlokWMiejscu wstawia blok nietekstowy w miejsce wskazane znakiem
-// treści, a nie na koniec dokumentu.
-//
-// Rachunek stoi tutaj i woła go także obszar wstawień: dwa liczenia miejsca
-// bloku rozjechałyby tabelę wstawioną w akapicie trzecim z obrazem wstawionym
-// w tym samym miejscu.
+// treści, a nie na koniec dokumentu. Rachunek stoi tutaj i woła go także
+// obszar wstawień, żeby dwa liczenia miejsca bloku nie rozjechały się.
 func tabelaWstawBlokWMiejscu(forma *shared.StudioDocumentForm,
 	blok shared.StudioDocumentBlock, miejsce int) {
 
@@ -830,9 +781,7 @@ func tabelaWstawBlokWMiejscu(forma *shared.StudioDocumentForm,
 		if !wstawiony && postacBlokNiesieTekst(biezacy) && biezacy.RangeEnd != nil &&
 			*biezacy.RangeEnd >= miejsce {
 
-			// Blok wchodzi ZA akapitem, w którym stoi miejsce wstawienia:
-			// tabela wstawiona w środku akapitu rozcinałaby zdanie, a tego
-			// pakiet biurowy też nie robi.
+			// Blok wchodzi za akapitem, w którym stoi miejsce wstawienia.
 			nowe = append(nowe, biezacy, blok)
 			wstawiony = true
 			continue
@@ -846,7 +795,8 @@ func tabelaWstawBlokWMiejscu(forma *shared.StudioDocumentForm,
 	postacPrzeliczZakresy(forma)
 }
 
-// tabelaUsunBlokTabeli zdejmuje z drzewa blok wskazujący tabelę.
+// tabelaUsunBlokTabeli zdejmuje z drzewa blok wskazujący tabelę, przy zamianie
+// tabeli na tekst, gdy tabela przestaje istnieć jako osobny blok.
 func tabelaUsunBlokTabeli(forma *shared.StudioDocumentForm, kod string) {
 	nowe := make([]shared.StudioDocumentBlock, 0, len(forma.Blocks))
 	for _, blok := range forma.Blocks {

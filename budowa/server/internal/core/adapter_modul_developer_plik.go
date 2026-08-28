@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: `developer.file.open` i `developer.file.save` —
-// warstwa plikowa okna Code Editor.
-//
-// Plik binarny wraca bez treści, a nie jako błąd: `DeveloperFile.content` jest
-// w kontrakcie polem opcjonalnym, bo nie każdy plik repozytorium da się pokazać
-// w edytorze tekstu. Klient dostaje rozmiar i rodzaj treści zamiast bajtów,
-// których i tak nie mógłby zapisać z powrotem.
-//
-// Wersja zakładana przez `createVersion` powstaje z treści sprzed zapisu — to
-// ona jest punktem powrotu. Migawka po zapisie byłaby kopią tego, co leży
-// na dysku.
+// Odpowiedzialność pliku: developer.file.open i developer.file.save — warstwa
+// plikowa okna Code Editor. Plik binarny wraca bez treści, a nie jako błąd:
+// DeveloperFile.content jest w kontrakcie polem opcjonalnym.
 package core
 
 import (
@@ -27,7 +19,7 @@ import (
 // paczki danych przez gniazdo zdarzeń.
 const granicaTresciEdytora = 4 << 20
 
-// OtworzPlik obsługuje `developer.file.open` — wczytuje plik do Code Editor.
+// OtworzPlik obsługuje developer.file.open — wczytuje wskazany plik do Code Editor tego okna Operatora.
 func (a *adapterDevelopera) OtworzPlik(ctx context.Context,
 	z shared.DeveloperFileOpenRequest) (shared.DeveloperFileOpenResponse, error) {
 
@@ -71,7 +63,7 @@ func (a *adapterDevelopera) OtworzPlik(ctx context.Context,
 	return shared.DeveloperFileOpenResponse{File: plik}, nil
 }
 
-// ZapiszPlik obsługuje `developer.file.save` — zapisuje treść po edycji.
+// ZapiszPlik obsługuje developer.file.save — zapisuje treść pliku po edycji w Code Editor tego okna Operatora.
 func (a *adapterDevelopera) ZapiszPlik(ctx context.Context,
 	z shared.DeveloperFileSaveRequest) (shared.DeveloperFileSaveResponse, error) {
 
@@ -90,8 +82,7 @@ func (a *adapterDevelopera) ZapiszPlik(ctx context.Context,
 		return shared.DeveloperFileSaveResponse{}, bladZadaniaDevelopera(
 			sciezka + " jest katalogiem — zapis pliku pod tą ścieżką zniszczyłby jego zawartość")
 	}
-	// Katalog nadrzędny musi istnieć: zapis zakładający brakujące katalogi
-	// zamieniłby literówkę w ścieżce na nowy katalog repozytorium.
+	// Katalog nadrzędny musi istnieć, inaczej zapis zamieniłby literówkę w ścieżce na nowy katalog.
 	katalog := filepath.Dir(sciezka)
 	if opis, err := os.Stat(katalog); err != nil || !opis.IsDir() {
 		return shared.DeveloperFileSaveResponse{}, bladZasobuDevelopera(
@@ -124,8 +115,7 @@ func (a *adapterDevelopera) ZapiszPlik(ctx context.Context,
 }
 
 // zalozWersje odkłada migawkę treści sprzed zapisu i zwraca jej identyfikator.
-// Brak żądania wersji nie zakłada niczego; żądanie wersji przy braku dziennika
-// kończy się odmową, a nie cichym pominięciem punktu powrotu.
+// Żądanie wersji przy braku dziennika kończy się odmową, nie cichym pominięciem.
 func (a *adapterDevelopera) zalozWersje(ctx context.Context, oknoKod, sciezka string,
 	zadana *bool) (string, error) {
 
@@ -138,8 +128,7 @@ func (a *adapterDevelopera) zalozWersje(ctx context.Context, oknoKod, sciezka st
 	}
 	poprzednia, err := os.ReadFile(sciezka)
 	if errors.Is(err, os.ErrNotExist) {
-		// Plik zakładany od zera nie ma treści sprzed zapisu — wersji nie ma
-		// z czego zrobić i nie jest to niepowodzenie zapisu.
+		// Plik zakładany od zera nie ma treści sprzed zapisu — wersji nie ma z czego zrobić.
 		return "", nil
 	}
 	if err != nil {

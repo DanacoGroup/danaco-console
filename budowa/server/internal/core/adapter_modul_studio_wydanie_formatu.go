@@ -1,28 +1,6 @@
-// Odpowiedzialność pliku: WYDANIE dokumentu Studia do formatu docelowego —
-// `txt`, `md`, `docx`, `odt`, `pdf`, `html` i `rtf` — pojedynczo
-// (`studio.document.export.format`) i wsadowo (`studio.document.export.batch`),
-// wraz z WYKAZEM CECH POMINIĘTYCH.
-//
-// ── Bilans zamiast ciszy ────────────────────────────────────────────────────
-// Format uboższy niż dokument jest normalną sytuacją. Przemilczenie straty nie
-// jest. Zlecenie mówi wprost: „milczące zgubienie tabeli przy wydaniu do txt
-// jest dokładnie tą ciszą, której zlecenie zakazuje". Dlatego każde wydanie
-// oddaje `droppedFeatures` — pozycję po pozycji, z nazwą cechy i jej rozmiarem
-// („4 tabele", „12 przypisów"), a nie zdanie ogólne.
-//
-// ── Czym liczone ────────────────────────────────────────────────────────────
-// Wszystko rachunkiem wkompilowanym, bez ani jednego programu zewnętrznego:
-//
-//	txt, md, html, rtf   — rachunek własny tego pliku
-//	docx                 — `wejscieZlozOoxml` (archive/zip + encoding/xml)
-//	odt                  — `wejscieZlozOdf` (archive/zip + encoding/xml)
-//	pdf                  — `pdfcpu`, przez profil wydania
-//
-// ── Gdzie wynik leży ────────────────────────────────────────────────────────
-// Bajty idą do magazynu zasobów rdzenia (`odlozTrescStudia`) i wynik oddaje kod
-// zasobu. Ścieżka pliku — gdy Operator ją wskazał — jest ścieżką NA MASZYNIE
-// SERWERA i zapis do niej jest drogą dodatkową, nie zamiast: cienka instalka
-// u Operatora sięga po wynik zasobem, nie po ścieżce serwerowej.
+// Odpowiedzialność pliku: wydanie dokumentu Studia do formatu docelowego —
+// txt, md, docx, odt, pdf, html i rtf — pojedynczo i wsadowo, wraz z wykazem
+// cech pominiętych, które format docelowy z postaci dokumentu nie przenosi.
 package core
 
 import (
@@ -36,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// WydajDoFormatu obsługuje `studio.document.export.format`.
+// WydajDoFormatu obsługuje `studio.document.export.format`: wydanie jednego
+// dokumentu, z narzuceniem postaci szablonu, gdy żądanie szablon wskazało.
 func (a *adapterStudia) WydajDoFormatu(ctx context.Context,
 	z shared.StudioDocumentExportFormatRequest) (shared.StudioDocumentExportFormatResponse, error) {
 
@@ -52,8 +31,7 @@ func (a *adapterStudia) WydajDoFormatu(ctx context.Context,
 	if err != nil {
 		return shared.StudioDocumentExportFormatResponse{}, err
 	}
-	// Szablon narzucony wydaniu podmienia POSTAĆ, nie treść: pismo wydane na
-	// papierze firmowym ma być tym samym pismem.
+	// Szablon narzucony wydaniu podmienia postać, nie treść dokumentu.
 	if kod := strings.TrimSpace(wartoscTekstu(z.TemplateId)); kod != "" {
 		if err := a.wydaniePrzyjmijPostacSzablonu(ctx, stan, kod); err != nil {
 			return shared.StudioDocumentExportFormatResponse{}, err
@@ -67,13 +45,9 @@ func (a *adapterStudia) WydajDoFormatu(ctx context.Context,
 	return shared.StudioDocumentExportFormatResponse{Result: wynik}, nil
 }
 
-// WydajWsadowo obsługuje `studio.document.export.batch`.
-//
-// Odmowa jednego dokumentu NIE wstrzymuje pozostałych: wsad dwudziestu pism,
-// z których jedno jest uszkodzone, ma wydać dziewiętnaście i nazwać to jedno.
-// Wsad, który nie wydał ani jednego dokumentu, kończy się odmową — `status: ok`
-// z pustym wykazem wyników byłby twierdzeniem „wydałem", którego nie ma czym
-// poprzeć.
+// WydajWsadowo obsługuje `studio.document.export.batch`. Odmowa jednego
+// dokumentu nie wstrzymuje pozostałych; odmowa całego wsadu zapada dopiero,
+// gdy nie wydał się ani jeden dokument.
 func (a *adapterStudia) WydajWsadowo(ctx context.Context,
 	z shared.StudioDocumentExportBatchRequest) (shared.StudioDocumentExportBatchResponse, error) {
 
@@ -138,7 +112,8 @@ func (a *adapterStudia) WydajWsadowo(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// wydanieFormatDocelowy sprawdza format wydania wykazem kontraktu.
+// wydanieFormatDocelowy sprawdza format wydania wykazem wartości kontraktu
+// i oddaje go przycięty i znormalizowany do małych liter, albo odmowę.
 func wydanieFormatDocelowy(format shared.StudioExportFormat) (shared.StudioExportFormat, error) {
 	czysty := shared.StudioExportFormat(strings.TrimSpace(strings.ToLower(string(format))))
 	if czysty == "" {
@@ -155,12 +130,8 @@ func wydanieFormatDocelowy(format shared.StudioExportFormat) (shared.StudioExpor
 }
 
 // wydanieNastawyOdmowy zbiera pozycje pominięte, które wynikają z nastaw
-// żądania, a nie z formatu.
-//
-// Komentarze i zmiany śledzone nie wchodzą do wydania ŻADNEGO z tych formatów,
-// bo rachunek składa je z postaci dokumentu, a nie z adiustacji. Żądanie, które
-// o nie prosi, dostaje wprost powiedziane, że ich nie ma — zamiast pliku bez
-// nich i milczenia.
+// żądania, a nie z formatu: komentarze i zmiany śledzone nie wchodzą do
+// wydania żadnego formatu, bo rachunek składa plik z postaci, nie z adiustacji.
 func wydanieNastawyOdmowy(komentarze, zmiany *bool) []shared.StudioSkippedItem {
 	pominiete := []shared.StudioSkippedItem{}
 	if komentarze != nil && *komentarze {
@@ -180,26 +151,9 @@ func wydanieNastawyOdmowy(komentarze, zmiany *bool) []shared.StudioSkippedItem {
 	return pominiete
 }
 
-// wydanieZdejmijZnakowanie zdejmuje z postaci warstwę ZNAKOWANIA SESJI przed
-// złożeniem pliku i oddaje wykaz tego, co zdjęto.
-//
-// ── Rozstrzygnięcie Właściciela: znakowanie żyje w sesji, nie w pliku ───────
-// Wyróżnienie tła jest narzędziem pracy nad dokumentem — model znaczy nim
-// miejsca („to zdanie wymaga źródła", „tu powtórzenie"), a Operator swoje.
-// Pismo wysłane na zewnątrz nie ma wyjść w kolorowych plamach roboczych, tak
-// samo jak nie ma wynieść komentarzy z marginesu. Komentarze i propozycje do
-// pliku nie wchodzą, bo składacz bierze postać dokumentu, a nie warstwę
-// adnotacji; wyróżnienie jest CECHĄ POSTACI i dlatego trzeba je zdjąć jawnie —
-// samo z siebie by nie odpadło.
-//
-// Zdjęcie idzie na KOPII postaci wydania, nie w bazie: dokument Operatora ma
-// zostać taki, jaki jest, wraz z całym znakowaniem. Ta sama zasada, co przy
-// narzuceniu postaci szablonu niżej.
-//
-// Styl NAZWANY z wyróżnieniem zostaje nietknięty. Wyróżnienie wpisane do
-// arkusza stylów nie jest znakowaniem sesji, tylko postanowieniem o wyglądzie
-// dokumentu — a zdejmowanie Operatorowi jego własnego stylu byłoby zmianą,
-// o którą nie prosił.
+// wydanieZdejmijZnakowanie zdejmuje z postaci warstwę znakowania sesji —
+// wyróżnienia tła fragmentów — przed złożeniem pliku i oddaje wykaz tego,
+// co zdjęto; styl nazwany z wyróżnieniem zostaje nietknięty.
 func wydanieZdejmijZnakowanie(postac *shared.StudioDocumentForm) []shared.StudioSkippedItem {
 	zdjetych := 0
 	for i := range postac.Blocks {
@@ -238,11 +192,8 @@ func wydanieZdejmijWyroznienie(postac *shared.StudioCharacterFormat) int {
 }
 
 // wydaniePrzyjmijPostacSzablonu narzuca dokumentowi postać wzorcową szablonu na
-// czas wydania: arkusz stylów, nastawy strony, nagłówek i stopkę.
-//
-// Treść zostaje dokumentu — szablon narzuca POSTAĆ, nie brzmienie. Zmiana nie
-// jest zapisywana: wydanie na papierze firmowym nie ma przestawiać dokumentu
-// Operatora w bazie.
+// czas wydania: arkusz stylów, nastawy strony, nagłówek i stopkę. Zmiana idzie
+// na kopii postaci wydania i nie zapisuje się do dokumentu zastanego w bazie.
 func (a *adapterStudia) wydaniePrzyjmijPostacSzablonu(ctx context.Context, stan *stanPostaci,
 	kodSzablonu string) error {
 
@@ -261,15 +212,15 @@ func (a *adapterStudia) wydaniePrzyjmijPostacSzablonu(ctx context.Context, stan 
 		stan.forma.Styles = szablon.Form.Styles
 	}
 	if len(szablon.Form.Sections) > 0 && len(stan.forma.Sections) > 0 {
-		// Nagłówek i stopka wiszą na sekcji — przejmuje je sekcja pierwsza,
-		// bo tam stoją nastawy strony wzorcowej pisma.
+		// Nagłówek i stopka wiszą na sekcji — przejmuje je sekcja pierwsza.
 		stan.forma.Sections[0].HeadersFooters = szablon.Form.Sections[0].HeadersFooters
 		stan.forma.Sections[0].PageSetup = szablon.Form.Sections[0].PageSetup
 	}
 	return nil
 }
 
-// wydanieNazwaPliku składa nazwę pliku wydania z tytułu dokumentu.
+// wydanieNazwaPliku składa nazwę pliku wydania z tytułu dokumentu, oczyszczoną
+// ze znaków niedozwolonych w nazwach plików systemu, wraz z rozszerzeniem formatu.
 func wydanieNazwaPliku(stan *stanPostaci, format shared.StudioExportFormat) string {
 	nazwa := strings.TrimSpace(wartoscTekstu(stan.dokument.Tytul))
 	if nazwa == "" {
@@ -285,12 +236,9 @@ func wydanieNazwaPliku(stan *stanPostaci, format shared.StudioExportFormat) stri
 	return nazwa + "." + string(format)
 }
 
-// wydanieDokumentu składa plik wydania, odkłada bajty i oddaje wynik wraz
-// z wykazem cech pominiętych.
-//
-// Jedna droga dla wszystkich formatów i dla wszystkich wołających — wydania
-// pojedynczego, wsadowego i zapisu pod nową nazwą. Trzy drogi znaczyłyby trzy
-// różne wykazy cech pominiętych dla tego samego dokumentu.
+// wydanieDokumentu składa plik wydania, odkłada bajty do magazynu zasobów
+// i oddaje wynik wraz z wykazem cech pominiętych; jedna droga dla wydania
+// pojedynczego, wsadowego i zapisu pod nową nazwą.
 func (a *adapterStudia) wydanieDokumentu(ctx context.Context, stan *stanPostaci,
 	format shared.StudioExportFormat, sciezka, kodProfilu *string,
 	dodatkowePominiecia []shared.StudioSkippedItem) (shared.StudioExportResult, error) {
@@ -301,10 +249,7 @@ func (a *adapterStudia) wydanieDokumentu(ctx context.Context, stan *stanPostaci,
 		tytul = stan.dokument.Kod
 	}
 
-	// Warstwa znakowania sesji schodzi PRZED złożeniem pliku, dla każdego
-	// formatu jednakowo — plik czysty jest rozstrzygnięciem Właściciela, a nie
-	// cechą jednego formatu. Zdjęcie jest NAZWANE w bilansie, bo Operator ma
-	// wiedzieć, że jego wyróżnienia w dokumencie zostały, a w pliku ich nie ma.
+	// Warstwa znakowania sesji schodzi przed złożeniem pliku, dla każdego formatu.
 	dodatkowePominiecia = append(dodatkowePominiecia,
 		wydanieZdejmijZnakowanie(&stan.forma)...)
 
@@ -335,9 +280,7 @@ func (a *adapterStudia) wydanieDokumentu(ctx context.Context, stan *stanPostaci,
 		return shared.StudioExportResult{}, err
 	}
 	if len(bajty) == 0 {
-		// Dokument bez treści i bez postaci nie ma czego wydać. Odmowa NAZYWA
-		// stan dokumentu, a nie usterkę rachunku: plik zerowej długości oddany
-		// jako wydanie byłby twierdzeniem „tyle w nim jest".
+		// Dokument bez treści i bez postaci nie ma czego wydać — odmowa, nie plik pusty.
 		return shared.StudioExportResult{}, wejscieBladBraku("dokument " +
 			stan.dokument.Kod + " jest pusty — nie ma czego wydać do formatu " +
 			string(format))
@@ -384,7 +327,8 @@ func wydanieZapiszPlik(sciezka string, bajty []byte) error {
 	return nil
 }
 
-// wydanieZdanieBilansu składa zdanie o tym, co odpadło.
+// wydanieZdanieBilansu składa zdanie o tym, co odpadło przy wydaniu do formatu,
+// albo zdanie, że nic nie odpadło, gdy wykaz cech pominiętych jest pusty.
 func wydanieZdanieBilansu(format shared.StudioExportFormat,
 	pominiete []shared.StudioSkippedItem) string {
 
@@ -412,9 +356,7 @@ func wydanieTekstem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	for _, blok := range postac.Blocks {
 		switch blok.Kind {
 		case wejscieRodzajBlokuTabela:
-			// Tabela w tekście czystym wychodzi wierszami z komórkami
-			// rozdzielonymi tabulatorem: układ ginie, treść zostaje. Cisza
-			// w tym miejscu byłaby zgubieniem tabeli.
+			// Tabela wychodzi wierszami z komórkami rozdzielonymi tabulatorem.
 			budowa.WriteString(wydanieTabelaTekstem(postac, blok.TableId))
 		case wejscieRodzajBlokuObiekt:
 			if opis := wydanieOpisObiektu(postac, blok.ObjectId); opis != "" {
@@ -431,8 +373,7 @@ func wydanieTekstem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 		wynik = tresc
 	}
 	if len(postac.Apparatus) > 0 {
-		// Przypisy i podpisy wychodzą wykazem na końcu, a nie przepadają:
-		// przypis w tekście czystym nie ma gdzie stanąć w miejscu odsyłacza.
+		// Przypisy i podpisy wychodzą wykazem na końcu, nie w miejscu odsyłacza.
 		budowaAparatu := strings.Builder{}
 		budowaAparatu.WriteString("\n")
 		for _, element := range postac.Apparatus {
@@ -449,9 +390,8 @@ func wydanieTekstem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	return []byte(wynik), pominiete
 }
 
-// wydaniePostacSchodzi składa wykaz cech, które w formacie tekstowym odpadają.
-// Liczby są POLICZONE z postaci dokumentu, nie oszacowane: Operator ma wiedzieć,
-// ile dokładnie stracił.
+// wydaniePostacSchodzi składa wykaz cech, które w formacie tekstowym odpadają,
+// z liczbami policzonymi z postaci dokumentu, a nie oszacowanymi.
 func wydaniePostacSchodzi(postac *shared.StudioDocumentForm,
 	nazwaFormatu string) []shared.StudioSkippedItem {
 
@@ -471,10 +411,7 @@ func wydaniePostacSchodzi(postac *shared.StudioDocumentForm,
 		})
 	}
 	if len(postac.Tables) > 0 {
-		// Tabela jest tą cechą, którą zlecenie wymienia wprost: „milczące
-		// zgubienie tabeli przy wydaniu do txt jest dokładnie tą ciszą, której
-		// zlecenie zakazuje". Treść komórek wychodzi, siatka nie — i to jest
-		// powiedziane z liczbą.
+		// Treść komórek wychodzi, siatka tabeli nie — powiedziane z liczbą.
 		pominiete = append(pominiete, shared.StudioSkippedItem{
 			Reason: "siatka tabel nie weszła — komórki wyszły wierszami rozdzielonymi " +
 				"tabulatorem, bez obramowania, szerokości kolumn i scaleń",
@@ -497,16 +434,8 @@ func wydaniePostacSchodzi(postac *shared.StudioDocumentForm,
 	return pominiete
 }
 
-// wydanieAparatSchodzi nazywa stratę na aparacie dokumentu.
-//
-// ── Dlaczego to jest strata, choć treść wychodzi ────────────────────────────
-// Przypis dolny WYCHODZI do pliku — wykazem na końcu, bo w tekście czystym
-// i w markdown nie ma gdzie postawić odsyłacza w miejscu. Ale przypis, który
-// stał pod stroną przy swoim zdaniu, i przypis, który stoi na końcu pliku, to
-// nie to samo: znika powiązanie z miejscem i znika numeracja odświeżalna.
-// Zlecenie wymienia „przypisy w txt" wprost jako cechę, o której wydanie ma
-// powiedzieć. Milczenie tutaj byłoby przemilczeniem straty, a to jest zakazane —
-// i dlatego liczby są POLICZONE po rodzajach, a nie podane jednym workiem.
+// wydanieAparatSchodzi nazywa stratę na aparacie dokumentu, policzoną po
+// rodzaju elementu (przypisy, spisy, odsyłacze, podpisy), a nie jednym workiem.
 func wydanieAparatSchodzi(postac *shared.StudioDocumentForm,
 	nazwaFormatu string) []shared.StudioSkippedItem {
 
@@ -569,7 +498,8 @@ func wydanieAparatSchodzi(postac *shared.StudioDocumentForm,
 	return pominiete
 }
 
-// wydanieTabelaTekstem składa tabelę wierszami rozdzielonymi tabulatorem.
+// wydanieTabelaTekstem składa tabelę wierszami rozdzielonymi tabulatorem, wraz
+// z podpisem tabeli, gdy dokument go niesie.
 func wydanieTabelaTekstem(postac *shared.StudioDocumentForm, kodTabeli *string) string {
 	tabela := wydanieTabela(postac, kodTabeli)
 	if tabela == nil {
@@ -595,7 +525,8 @@ func wydanieTabelaTekstem(postac *shared.StudioDocumentForm, kodTabeli *string) 
 	return budowa.String()
 }
 
-// wydanieTabela wyszukuje tabelę postaci po jej identyfikatorze.
+// wydanieTabela wyszukuje tabelę postaci po jej identyfikatorze, albo oddaje
+// nic, gdy wskazanie jest puste albo tabeli o tym identyfikatorze nie ma.
 func wydanieTabela(postac *shared.StudioDocumentForm,
 	kodTabeli *string) *shared.StudioDocumentTable {
 
@@ -610,7 +541,8 @@ func wydanieTabela(postac *shared.StudioDocumentForm,
 	return nil
 }
 
-// wydanieOpisObiektu oddaje tekst zastępczy obiektu osadzonego.
+// wydanieOpisObiektu oddaje tekst zastępczy obiektu osadzonego, wraz z jego
+// podpisem, gdy dokument podpis niesie.
 func wydanieOpisObiektu(postac *shared.StudioDocumentForm, kodObiektu *string) string {
 	if kodObiektu == nil {
 		return ""
@@ -634,11 +566,7 @@ func wydanieOpisObiektu(postac *shared.StudioDocumentForm, kodObiektu *string) s
 // ── Wydanie markdownem ──────────────────────────────────────────────────────
 
 // wydanieMarkdownem składa plik markdown: style nazwane na znaczniki, tabele na
-// tabele markdown.
-//
-// Komórka SCALONA jest tu cechą, której markdown nie niesie — i to jest właśnie
-// przykład, który zlecenie wymienia wprost. Wychodzi w wykazie pominiętych wraz
-// z liczbą scaleń.
+// tabele markdown; komórka scalona wychodzi w wykazie pominiętych z liczbą scaleń.
 func wydanieMarkdownem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	[]shared.StudioSkippedItem) {
 
@@ -698,7 +626,8 @@ func wydanieMarkdownem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	return []byte(wynik), pominiete
 }
 
-// wydanieAkapitMarkdownem składa akapit wraz z postacią znaku.
+// wydanieAkapitMarkdownem składa akapit wraz z postacią znaku, rozstrzygając
+// znacznik nagłówka po poziomie konspektu i pozycję listy po jej identyfikatorze.
 func wydanieAkapitMarkdownem(blok shared.StudioDocumentBlock) string {
 	tekst := strings.Builder{}
 	for _, fragment := range blok.Runs {
@@ -742,7 +671,8 @@ func wydanieAkapitMarkdownem(blok shared.StudioDocumentBlock) string {
 	return tresc + "\n\n"
 }
 
-// wydanieFragmentMarkdownem otacza fragment znacznikami postaci znaku.
+// wydanieFragmentMarkdownem otacza fragment znacznikami postaci znaku: pogrubienie,
+// kursywę i przekreślenie, jedyne odmiany, które markdown niesie znacznikiem.
 func wydanieFragmentMarkdownem(fragment shared.StudioDocumentRun) string {
 	tekst := fragment.Text
 	if tekst == "" || fragment.Format == nil {
@@ -760,8 +690,8 @@ func wydanieFragmentMarkdownem(fragment shared.StudioDocumentRun) string {
 	return tekst
 }
 
-// wydanieTabelaMarkdownem składa tabelę markdown i oddaje liczbę scaleń, których
-// format nie niesie.
+// wydanieTabelaMarkdownem składa tabelę markdown wraz z podpisem i oddaje
+// liczbę scaleń, których format markdown nie niesie i rozpisuje na komórki osobne.
 func wydanieTabelaMarkdownem(postac *shared.StudioDocumentForm,
 	kodTabeli *string) (string, int) {
 
@@ -803,7 +733,8 @@ func wydanieTabelaMarkdownem(postac *shared.StudioDocumentForm,
 	return budowa.String(), scalen
 }
 
-// wydanieAparatMarkdownem składa aparat dokumentu wykazem na końcu pliku.
+// wydanieAparatMarkdownem składa aparat dokumentu wykazem na końcu pliku, wraz
+// z adresem docelowym elementów, które adres niosą.
 func wydanieAparatMarkdownem(postac *shared.StudioDocumentForm) string {
 	var budowa strings.Builder
 	budowa.WriteString("\n---\n\n")
@@ -890,7 +821,8 @@ func wydanieHtmlem(postac *shared.StudioDocumentForm, tresc, tytul string) ([]by
 	return []byte(wynik), pominiete
 }
 
-// wydanieArkuszHtml składa arkusz stylów pliku HTML z arkusza dokumentu.
+// wydanieArkuszHtml składa arkusz stylów pliku HTML z arkusza dokumentu, wraz
+// z regułą strony druku i klasą na każdy styl nazwany, który niesie cechę.
 func wydanieArkuszHtml(postac *shared.StudioDocumentForm) string {
 	var budowa strings.Builder
 	if postac.PageSetup != nil {
@@ -916,7 +848,8 @@ func wydanieArkuszHtml(postac *shared.StudioDocumentForm) string {
 	return budowa.String()
 }
 
-// wydanieRozmiarHtml składa rozmiar nośnika reguły druku.
+// wydanieRozmiarHtml składa rozmiar nośnika reguły druku, z A4 pionowym jako
+// nastawą domyślną, gdy dokument nastaw strony nie niesie.
 func wydanieRozmiarHtml(nastawy *shared.StudioPageSetup) string {
 	nazwa := strings.TrimSpace(wartoscTekstu(nastawy.PageSize))
 	if nazwa == "" {
@@ -929,7 +862,8 @@ func wydanieRozmiarHtml(nastawy *shared.StudioPageSetup) string {
 	return nazwa + " " + kierunek
 }
 
-// wydanieMarginesHtml składa margines reguły druku w milimetrach.
+// wydanieMarginesHtml składa margines reguły druku w milimetrach, oddając
+// dwadzieścia pięć milimetrów, gdy dokument tego marginesu nie ustawił.
 func wydanieMarginesHtml(wskazanie *int) string {
 	if wskazanie == nil {
 		return "25mm"
@@ -937,7 +871,8 @@ func wydanieMarginesHtml(wskazanie *int) string {
 	return strconv.Itoa(*wskazanie) + "mm"
 }
 
-// wydanieKlasaStyluHtml składa nazwę klasy arkusza z nazwy stylu.
+// wydanieKlasaStyluHtml składa nazwę klasy arkusza z nazwy stylu, sprowadzoną
+// do małych liter i cyfr, ze spacją zamienioną na łącznik.
 func wydanieKlasaStyluHtml(nazwa string) string {
 	return "styl-" + strings.Map(func(znak rune) rune {
 		switch {
@@ -952,7 +887,8 @@ func wydanieKlasaStyluHtml(nazwa string) string {
 	}, nazwa)
 }
 
-// wydanieZasadyStyluHtml składa zasady arkusza z postaci stylu nazwanego.
+// wydanieZasadyStyluHtml składa zasady arkusza z postaci stylu nazwanego: krój,
+// stopień, wagę, kursywę i barwę znaku, wyrównanie i odstępy akapitu.
 func wydanieZasadyStyluHtml(styl shared.StudioNamedStyle) string {
 	var budowa strings.Builder
 	if znak := styl.Character; znak != nil {
@@ -1002,7 +938,8 @@ func wydanieZasadyStyluHtml(styl shared.StudioNamedStyle) string {
 	return budowa.String()
 }
 
-// wydanieWyrownanieHtml przekłada wyrównanie kontraktu na zasadę arkusza.
+// wydanieWyrownanieHtml przekłada wyrównanie kontraktu na zasadę arkusza CSS,
+// oddając wyrównanie do lewej jako wartość domyślną.
 func wydanieWyrownanieHtml(wyrownanie shared.StudioTextAlign) string {
 	switch wyrownanie {
 	case shared.StudioTextAlignRight:
@@ -1016,7 +953,8 @@ func wydanieWyrownanieHtml(wyrownanie shared.StudioTextAlign) string {
 	}
 }
 
-// wydanieAkapitHtml składa akapit HTML wraz z klasą stylu nazwanego.
+// wydanieAkapitHtml składa akapit HTML wraz z klasą stylu nazwanego, wychodząc
+// znacznikiem nagłówka, gdy blok niesie poziom konspektu.
 func wydanieAkapitHtml(blok shared.StudioDocumentBlock) string {
 	tekst := strings.Builder{}
 	for _, fragment := range blok.Runs {
@@ -1046,7 +984,8 @@ func wydanieAkapitHtml(blok shared.StudioDocumentBlock) string {
 	return "<p" + klasa + ">" + tresc + "</p>\n"
 }
 
-// wydanieFragmentHtml składa fragment tekstu wraz z postacią znaku.
+// wydanieFragmentHtml składa fragment tekstu wraz z postacią znaku, otaczając
+// tekst znacznikami zagnieżdżonymi zgodnie z cechami, które fragment niesie.
 func wydanieFragmentHtml(fragment shared.StudioDocumentRun) string {
 	tekst := ooxmlZabezpiecz(fragment.Text)
 	if tekst == "" || fragment.Format == nil {
@@ -1148,12 +1087,8 @@ func wydanieTabelaHtml(postac *shared.StudioDocumentForm, kodTabeli *string) str
 
 // ── Wydanie RTF ─────────────────────────────────────────────────────────────
 
-// wydanieRtfem składa plik RTF.
-//
-// RTF wchodzi do wykazu formatów WYKONALNYCH: jest formatem tekstowym o prostej
-// gramaturze i rachunek własny niesie w nim postać znaku, akapit, wyrównanie
-// oraz tabelę. Czego nie niesie ten rachunek — obrazów osadzonych i aparatu
-// odświeżalnego — wychodzi w wykazie pominiętych, bo tak stanowi zasada bilansu.
+// wydanieRtfem składa plik RTF rachunkiem własnym: postać znaku, akapit,
+// wyrównanie i tabelę; obrazy osadzone i aparat odświeżalny idą do pominiętych.
 func wydanieRtfem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	[]shared.StudioSkippedItem) {
 
@@ -1206,8 +1141,8 @@ func wydanieRtfem(postac *shared.StudioDocumentForm, tresc string) ([]byte,
 	return []byte(budowa.String()), pominiete
 }
 
-// wydanieAkapitRtf składa akapit RTF wraz z wyrównaniem, wcięciami i postacią
-// znaku fragmentów.
+// wydanieAkapitRtf składa akapit RTF wraz z wyrównaniem, wcięciami, odstępami
+// akapitowymi oraz postacią znaku fragmentów, które akapit niesie.
 func wydanieAkapitRtf(blok shared.StudioDocumentBlock) string {
 	var budowa strings.Builder
 	budowa.WriteString(`\pard`)
@@ -1246,7 +1181,8 @@ func wydanieAkapitRtf(blok shared.StudioDocumentBlock) string {
 	return budowa.String()
 }
 
-// wydanieFragmentRtf składa fragment RTF wraz z postacią znaku.
+// wydanieFragmentRtf składa fragment RTF wraz z postacią znaku, sterowaniami
+// grubości, kursywy, podkreślenia, przekreślenia i stopnia pisma w półpunktach.
 func wydanieFragmentRtf(fragment shared.StudioDocumentRun) string {
 	if fragment.Text == "" {
 		return ""
@@ -1285,7 +1221,8 @@ func wydanieFragmentRtf(fragment shared.StudioDocumentRun) string {
 	return budowa.String()
 }
 
-// wydanieTabelaRtf składa tabelę RTF.
+// wydanieTabelaRtf składa tabelę RTF wraz z granicami komórek liczonymi
+// z szerokości kolumn postaci, w twipach, jednostce miary sterowań RTF.
 func wydanieTabelaRtf(postac *shared.StudioDocumentForm, kodTabeli *string) string {
 	tabela := wydanieTabela(postac, kodTabeli)
 	if tabela == nil {
@@ -1293,9 +1230,7 @@ func wydanieTabelaRtf(postac *shared.StudioDocumentForm, kodTabeli *string) stri
 	}
 	szerokosci := tabela.ColumnWidthsMm
 	if len(szerokosci) != tabela.Columns {
-		// Bez szerokości z postaci kolumny dzielą obszar pisania równo. Zero
-		// w tym miejscu dałoby tabelę o kolumnach zerowej szerokości, czyli
-		// tabelę niewidoczną.
+		// Bez szerokości z postaci kolumny dzielą obszar pisania równo.
 		szerokosci = make([]float64, tabela.Columns)
 		for i := range szerokosci {
 			szerokosci[i] = 160.0 / float64(wydanieWieksza(tabela.Columns, 1))
@@ -1323,7 +1258,8 @@ func wydanieTabelaRtf(postac *shared.StudioDocumentForm, kodTabeli *string) stri
 	return budowa.String()
 }
 
-// wydanieWieksza oddaje większą z dwóch liczb.
+// wydanieWieksza oddaje większą z dwóch liczb całkowitych, bez sięgania po
+// funkcję ogólną biblioteki wzorcowej dla tego jednego porównania.
 func wydanieWieksza(pierwsza, druga int) int {
 	if pierwsza > druga {
 		return pierwsza
@@ -1357,11 +1293,8 @@ func wydanieTekstRtf(tekst string) string {
 
 // ── Wydanie PDF ─────────────────────────────────────────────────────────────
 
-// wydaniePdfem składa dokument PDF biblioteką `pdfcpu`, przez profil wydania.
-//
-// Profil wydania niesie nastawy, o które prosi Właściciel: paginację i stopkę.
-// Profil niewskazany nie jest odmową — dokument wychodzi z paginacją i stopką
-// domyślną, a bilans mówi, że profilu nie było.
+// wydaniePdfem składa dokument PDF biblioteką `pdfcpu`, przez profil wydania,
+// który niesie nastawy paginacji i stopki; profil niewskazany nie jest odmową.
 func (a *adapterStudia) wydaniePdfem(ctx context.Context, stan *stanPostaci,
 	kodProfilu *string) ([]byte, []shared.StudioSkippedItem, error) {
 

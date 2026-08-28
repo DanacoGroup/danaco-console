@@ -1,21 +1,6 @@
-// Rodzina `extension.*` — klient protokołu Model Context Protocol.
-//
-// KLIENT JEST WKOMPILOWANY, NIE POŻYCZONY. Protokół MCP to JSON-RPC 2.0 nad
-// jednym z trzech transportów: procesem lokalnym (stdio), strumieniem zdarzeń
-// (SSE) i zwykłym HTTP. Wszystkie trzy obsługuje biblioteka standardowa Go —
-// `encoding/json`, `os/exec`, `net/http` — więc rdzeń rozmawia z serwerem MCP
-// sam, bez ani jednego programu obok instalki.
-//
-// PROGRAM SERWERA NALEŻY DO OPERATORA, NIE DO PLATFORMY. Transport `stdio`
-// uruchamia polecenie, które Operator sam wpisał w `extension.transport.set`.
-// To nie jest zależność rdzenia od cudzego programu — to jest cudzy program,
-// który Operator świadomie podłączył jako rozszerzenie, i którego brak wraca
-// nazwaną odmową, a nie awarią platformy.
-//
-// KAŻDA RAMKA IDZIE DO DZIENNIKA. Żądanie i odpowiedź zapisują się w
-// `ramka_protokolu_rozszerzenia` wraz z korelacją, więc
-// `extension.protocol.log.list` pokazuje rozmowę, która naprawdę się odbyła,
-// a diagnoza błędu integracji ma z czego wyjść.
+// Plik obsługuje rodzinę komend extension.*: klienta protokołu Model Context
+// Protocol wkompilowanego w rdzeń, nad transportem stdio, SSE albo HTTP,
+// z każdą ramką rozmowy zapisywaną do dziennika.
 package core
 
 import (
@@ -48,14 +33,17 @@ const (
 // specyfikacji protokołu, nie z kontraktu platformy — to jest cudza umowa.
 const wersjaProtokoluMcp = "2024-11-05"
 
-// polaczenieMcp opisuje, czym rdzeń woła serwer jednej pozycji katalogu.
+// polaczenieMcp opisuje, czym rdzeń woła serwer jednej pozycji katalogu
+// rozszerzeń: transportem, adresem sieciowym albo poleceniem procesu
+// lokalnego.
 type polaczenieMcp struct {
 	Transport shared.McpTransport
 	Adres     string
 	Polecenie string
 }
 
-// zadanieMcp to jedna ramka żądania JSON-RPC 2.0.
+// zadanieMcp to jedna ramka żądania JSON-RPC 2.0 wysyłana do serwera
+// rozszerzenia wraz z numerem korelującym ją z odpowiedzią.
 type zadanieMcp struct {
 	JsonRpc string          `json:"jsonrpc"`
 	Id      int             `json:"id"`
@@ -63,7 +51,8 @@ type zadanieMcp struct {
 	Params  json.RawMessage `json:"params,omitempty"`
 }
 
-// odpowiedzMcp to jedna ramka odpowiedzi JSON-RPC 2.0.
+// odpowiedzMcp to jedna ramka odpowiedzi JSON-RPC 2.0 odebrana od serwera
+// rozszerzenia, niosąca wynik wywołania albo odmowę.
 type odpowiedzMcp struct {
 	JsonRpc string          `json:"jsonrpc"`
 	Id      int             `json:"id"`
@@ -71,15 +60,16 @@ type odpowiedzMcp struct {
 	Error   *bladMcp        `json:"error,omitempty"`
 }
 
-// bladMcp to odmowa serwera wyrażona w protokole.
+// bladMcp to odmowa serwera wyrażona w protokole JSON-RPC 2.0: kod, komunikat
+// i opcjonalny ładunek danych dodatkowych.
 type bladMcp struct {
 	Code    int             `json:"code"`
 	Message string          `json:"message"`
 	Data    json.RawMessage `json:"data,omitempty"`
 }
 
-// wpisNarzedziaMcp to jeden wpis wykazu `tools/list`, `resources/list` albo
-// `prompts/list`. Trzy wykazy mają w protokole trzy nieco różne kształty; pola
+// wpisNarzedziaMcp to jeden wpis wykazu tools/list, resources/list albo
+// prompts/list. Trzy wykazy mają w protokole trzy nieco różne kształty; pola
 // niżej są ich sumą, a nieobecne zostają puste.
 type wpisNarzedziaMcp struct {
 	Name        string          `json:"name"`
@@ -89,7 +79,8 @@ type wpisNarzedziaMcp struct {
 	Uri         string          `json:"uri"`
 }
 
-// wykazNarzedziMcp to odpowiedź jednego z trzech wykazów.
+// wykazNarzedziMcp to odpowiedź jednego z trzech wykazów protokołu: narzędzi,
+// zasobów albo podpowiedzi serwera rozszerzenia.
 type wykazNarzedziMcp struct {
 	Tools     []wpisNarzedziaMcp `json:"tools"`
 	Resources []wpisNarzedziaMcp `json:"resources"`
@@ -97,9 +88,9 @@ type wykazNarzedziMcp struct {
 }
 
 // rozmowaMcp jest jedną sesją z serwerem: powitanie i tyle wywołań, ile trzeba.
-// Sesja żyje w granicach jednej komendy — protokół pozwala na połączenie trwałe,
-// ale rdzeń go nie utrzymuje: proces wiszący między komendami byłby zasobem,
-// którego nikt nie zamyka, a serwer HTTP i tak jest bezstanowy między żądaniami.
+// Sesja żyje w granicach jednej komendy, bo serwer HTTP jest bezstanowy między
+// żądaniami, a proces stdio wiszący między komendami byłby zasobem, którego
+// nikt nie zamyka.
 type rozmowaMcp struct {
 	polaczenie polaczenieMcp
 	klient     *http.Client
@@ -108,12 +99,13 @@ type rozmowaMcp struct {
 	wejscie io.WriteCloser
 	wyjscie *bufio.Reader
 	numer   int
-	// ramki zbiera przebieg rozmowy do dziennika; wołający odkłada je w bazie
-	// po jej zakończeniu, żeby zapis nie wchodził między żądanie a odpowiedź.
+	// ramki zbiera przebieg rozmowy do dziennika, odkładany w bazie po jej
+	// zakończeniu.
 	ramki []ramkaRozmowyMcp
 }
 
-// ramkaRozmowyMcp to jedna ramka zapisana do dziennika protokołu.
+// ramkaRozmowyMcp to jedna ramka zapisana do dziennika protokołu wraz
+// z kierunkiem, metodą, korelacją i chwilą zajścia.
 type ramkaRozmowyMcp struct {
 	Kierunek  shared.ProtocolFrameDirection
 	Metoda    string
@@ -123,7 +115,8 @@ type ramkaRozmowyMcp struct {
 	Zaszlo    int64
 }
 
-// otworzRozmoweMcp podnosi rozmowę wedle transportu pozycji.
+// otworzRozmoweMcp podnosi rozmowę wedle transportu pozycji: uruchamia proces
+// lokalny przy stdio albo zakłada klienta HTTP przy pozostałych transportach.
 func otworzRozmoweMcp(ctx context.Context, polaczenie polaczenieMcp) (*rozmowaMcp, error) {
 	rozmowa := &rozmowaMcp{polaczenie: polaczenie}
 
@@ -133,9 +126,8 @@ func otworzRozmoweMcp(ctx context.Context, polaczenie polaczenieMcp) (*rozmowaMc
 		if len(polecenie) == 0 {
 			return nil, fmt.Errorf("transport stdio wymaga polecenia procesu serwera")
 		}
-		// #nosec G204 — polecenie pochodzi wprost od Operatora, który świadomie
-		// podłączył ten serwer jako rozszerzenie. Rdzeń go nie zgaduje i nie
-		// składa z cudzych danych.
+		// #nosec G204 — polecenie pochodzi od operatora, który świadomie podłączył
+		// ten serwer.
 		proces := exec.CommandContext(ctx, polecenie[0], polecenie[1:]...)
 		wejscie, err := proces.StdinPipe()
 		if err != nil {
@@ -178,7 +170,8 @@ func (r *rozmowaMcp) Zamknij() {
 	}
 }
 
-// Powitaj wykonuje `initialize` i oddaje wersję protokołu podaną przez serwer.
+// Powitaj wykonuje metodę initialize i oddaje wersję protokołu podaną przez
+// serwer, a przy odpowiedzi nieczytelnej wersję zadeklarowaną przez rdzeń.
 func (r *rozmowaMcp) Powitaj(ctx context.Context) (string, error) {
 	parametry, err := json.Marshal(map[string]any{
 		"protocolVersion": wersjaProtokoluMcp,
@@ -199,8 +192,8 @@ func (r *rozmowaMcp) Powitaj(ctx context.Context) (string, error) {
 		ProtocolVersion string `json:"protocolVersion"`
 	}
 	if err := json.Unmarshal(wynik, &powitanie); err != nil {
-		// Serwer odpowiedział, ale nie tym kształtem. To nie jest awaria
-		// powitania — wersję protokołu podajemy wtedy swoją, bo rozmowa stoi.
+		// Serwer odpowiedział, ale nie tym kształtem — wersja protokołu jest podawana
+		// wtedy własna.
 		return wersjaProtokoluMcp, nil
 	}
 	if powitanie.ProtocolVersion == "" {
@@ -209,7 +202,8 @@ func (r *rozmowaMcp) Powitaj(ctx context.Context) (string, error) {
 	return powitanie.ProtocolVersion, nil
 }
 
-// Wywolaj wysyła jedną metodę i czeka na jej odpowiedź, odkładając obie ramki.
+// Wywolaj wysyła jedną metodę i czeka na jej odpowiedź, odkładając obie ramki
+// do dziennika rozmowy niezależnie od wyniku wywołania.
 func (r *rozmowaMcp) Wywolaj(ctx context.Context, metoda string, parametry json.RawMessage,
 	granica time.Duration) (json.RawMessage, error) {
 
@@ -280,8 +274,8 @@ func (r *rozmowaMcp) wymienStdio(bajty []byte) ([]byte, error) {
 		if len(przycieta) == 0 {
 			continue
 		}
-		// Nagłówek kadrowania długością nie jest ramką — pomijamy go i czytamy
-		// dalej, zamiast oddawać go jako odpowiedź.
+		// Nagłówek kadrowania długością nie jest ramką — jest pomijany, a odczyt trwa
+		// dalej.
 		if bytes.HasPrefix(przycieta, []byte("Content-Length:")) {
 			continue
 		}
@@ -324,7 +318,8 @@ func (r *rozmowaMcp) wymienHttp(ctx context.Context, bajty []byte) ([]byte, erro
 	return bytes.TrimSpace(tresc), nil
 }
 
-// ramkaZeStrumieniaMcp wyciąga pierwszą ramkę z odpowiedzi SSE.
+// ramkaZeStrumieniaMcp wyciąga pierwszą ramkę JSON-RPC z odpowiedzi SSE,
+// pomijając wiersze niebędące polem danych zdarzenia.
 func ramkaZeStrumieniaMcp(tresc []byte) ([]byte, error) {
 	for _, linia := range strings.Split(string(tresc), "\n") {
 		przycieta := strings.TrimSpace(linia)
@@ -355,9 +350,8 @@ func (r *rozmowaMcp) OdkryjWykazy(ctx context.Context) ([]wpisWykazuMcp, error) 
 	} {
 		wynik, err := r.Wywolaj(ctx, wykaz.metoda, json.RawMessage(`{}`), czasPowitaniaMcp)
 		if err != nil {
-			// Brak wykazu nie przewraca odkrycia — serwer ma prawo nie mieć
-			// zasobów ani promptów. Pierwszy wykaz jest jednak obowiązkowy:
-			// bez `tools/list` nie ma czego pokazać w inspektorze.
+			// Brak wykazu nie przewraca odkrycia — pierwszy wykaz jest jednak
+			// obowiązkowy.
 			if wykaz.rodzaj == shared.ExtensionToolKindTool {
 				return nil, err
 			}
@@ -391,7 +385,8 @@ func (r *rozmowaMcp) OdkryjWykazy(ctx context.Context) ([]wpisWykazuMcp, error) 
 	return wpisy, nil
 }
 
-// wpisWykazuMcp to jeden wpis odkryty u serwera, w kształcie własnym rdzenia.
+// wpisWykazuMcp to jeden wpis odkryty u serwera rozszerzenia, w kształcie
+// własnym rdzenia, wspólnym dla narzędzi, zasobów i podpowiedzi.
 type wpisWykazuMcp struct {
 	Rodzaj  shared.ExtensionToolKind
 	Nazwa   string
@@ -400,7 +395,8 @@ type wpisWykazuMcp struct {
 	Adres   string
 }
 
-// poczatekTekstuApp przycina cudzą odpowiedź do wielkości czytelnej w odmowie.
+// poczatekTekstuApp przycina cudzą odpowiedź do wielkości czytelnej
+// w odmowie, żeby długi ładunek serwera nie zalał komunikatu błędu.
 func poczatekTekstuApp(tekst string) string {
 	const granica = 400
 	if len(tekst) <= granica {

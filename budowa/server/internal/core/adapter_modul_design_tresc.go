@@ -1,24 +1,6 @@
-// Odpowiedzialność pliku: oddanie TREŚCI zasobu z magazynu rdzenia
-// (`design.asset.content.get`). Metody stoją na `*adapterDesignu`
-// (`adapter_modul_design.go`).
-//
-// Ta komenda domyka lukę, przez którą moduł miał precedens szkody. Pole `uri`
-// zasobu jest ścieżką w systemie plików rdzenia — przeglądarka nie wczyta spod
-// niego niczego, także wtedy, gdy zasób powstał bez zarzutu. Bez tej drogi
-// Assets Panel pokazywał kafelek z odwołaniem, którego nie da się otworzyć,
-// i wyglądało to identycznie jak zasób bez bajtów.
-//
-// Rdzeń nie oddaje bajtów zastępczych ŻADNĄ drogą. Zasób nieznany to odmowa
-// `not_found`. Zasób bez odwołania — odmowa nazywająca brak treści. Odwołanie
-// prowadzące donikąd — odmowa nazywająca odwołanie. Treść większa niż granica
-// wołającego — odmowa PODAJĄCA ZMIERZONĄ WIELKOŚĆ, nigdy treść ucięta: klient,
-// który dostałby połowę pliku ze stanem `ok`, zapisałby ją jako plik cały.
-//
-// Suma kontrolna liczy się z BAJTÓW ODCZYTANYCH, nie z nazwy bloba. Nazwą bloba
-// jest wprawdzie suma jego zawartości, więc obie wartości powinny być równe —
-// i właśnie dlatego liczymy je osobno: rozjazd znaczy, że plik pod odwołaniem
-// przestał być tym, za który się podaje, a przemilczenie tego byłoby oddaniem
-// cudzej treści pod nazwą zasobu.
+// Odpowiedzialność pliku: oddanie treści zasobu z magazynu rdzenia
+// (`design.asset.content.get`). Rdzeń nie oddaje bajtów zastępczych żadną
+// drogą, a treść większa niż granica wołającego jest odmową, nie ucięciem.
 package core
 
 import (
@@ -64,9 +46,7 @@ func (a *adapterDesignu) TrescZasobu(ctx context.Context,
 			z.AssetId))
 	}
 
-	// Granica wołającego sprawdza się PRZED złożeniem odpowiedzi, ale PO
-	// zmierzeniu treści: odmowa ma podać wielkość rzeczywistą, a nie samą
-	// wiadomość o przekroczeniu.
+	// Granica sprawdza się po zmierzeniu treści, żeby odmowa podała wielkość.
 	if z.MaxBytes != nil && *z.MaxBytes > 0 && len(bajty) > *z.MaxBytes {
 		return shared.DesignAssetContentGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"treść zasobu %s waży %d bajtów, a wołający przyjmuje najwyżej %d — "+
@@ -81,8 +61,7 @@ func (a *adapterDesignu) TrescZasobu(ctx context.Context,
 		SizeBytes: len(bajty),
 		Checksum:  hex.EncodeToString(suma[:]),
 	}
-	// Postać odsyłania oddaje miarę i sumę bez bajtów — kontrakt czyni
-	// `contentBase64` niewymaganym właśnie po to.
+	// Postać odsyłania oddaje miarę i sumę bez bajtów.
 	if z.Disposition != nil && *z.Disposition == shared.AssetContentDispositionReference {
 		return odpowiedz, nil
 	}
@@ -92,12 +71,8 @@ func (a *adapterDesignu) TrescZasobu(ctx context.Context,
 }
 
 // typTresciZasobuDesignu rozstrzyga typ treści wedle IANA. Pierwszeństwo ma
-// format zapisany w wierszu (zmierzony przy wniesieniu z nagłówka pliku);
-// dopiero gdy go nie ma, rozstrzyga sam wykrywacz biblioteki standardowej,
-// który czyta początkowe bajty.
-//
-// Zgadywania po nazwie pliku tu nie ma: nazwa jest wolnym tekstem Operatora
-// i mówi o pliku dokładnie tyle, ile Operator w nią wpisał.
+// format zapisany w wierszu; dopiero gdy go nie ma, rozstrzyga wykrywacz
+// biblioteki standardowej. Zgadywania po nazwie pliku tu nie ma.
 func typTresciZasobuDesignu(format *string, bajty []byte) string {
 	if format != nil {
 		switch normalizujFormatWydaniaDesignu(*format) {
@@ -125,8 +100,8 @@ func typTresciZasobuDesignu(format *string, bajty []byte) string {
 	if wykryty == "" {
 		return "application/octet-stream"
 	}
-	// DetectContentType dokleja parametr zestawu znaków do typów tekstowych;
-	// kontrakt chce samego typu.
+	// DetectContentType dokleja parametr zestawu znaków; kontrakt chce typu
+	// samego.
 	if numer := strings.Index(wykryty, ";"); numer > 0 {
 		return strings.TrimSpace(wykryty[:numer])
 	}

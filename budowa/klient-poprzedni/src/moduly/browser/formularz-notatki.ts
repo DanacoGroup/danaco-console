@@ -7,13 +7,8 @@ import type { TrescNotatki } from './czynnosci-notatek';
 
 /**
  * Formularz notatki Notes Panel — treść, cytat, powiązane źródło i moduł
- * docelowy przekazania.
- *
- * Jedna odpowiedzialność: pola notatki wraz z ich stanem błędu. Wykaz notatek
- * i rozmowa z rdzeniem są osobno.
- *
- * Błąd pola nie kasuje formularza: alert liniowy staje pod polem, pole pozostaje
- * edytowalne, a wpisana treść zostaje na miejscu.
+ * docelowy przekazania. Jedna odpowiedzialność: pola notatki wraz z ich stanem
+ * błędu; wykaz notatek i rozmowa z rdzeniem są osobno.
  */
 export interface FormularzNotatki {
   element: HTMLElement;
@@ -24,11 +19,8 @@ export interface FormularzNotatki {
   /** Pokazuje albo zdejmuje alert liniowy pola treści. */
   pokazBlad(zdanie: string): void;
   /**
-   * Wypełnia formularz treścią notatki (pozycja „Edytuj”).
-   *
-   * Oddaje `false`, gdy źródła notatki nie ma już w wykazie okna — ster wraca
-   * wtedy do „bez powiązania”, a okno ma o czym powiedzieć. Ciche przełknięcie
-   * tej różnicy zamieniłoby zapis w notatkę o innym powiązaniu niż pierwowzór.
+   * Wypełnia formularz treścią notatki; oddaje `false`, gdy źródła nie ma
+   * już w wykazie okna.
    */
   wypelnij(notatka: BrowserNote): boolean;
   /** Wstawia zaznaczony fragment strony jako cytat. */
@@ -37,7 +29,10 @@ export interface FormularzNotatki {
   ustawZrodla(zrodla: readonly BrowserSource[]): void;
 }
 
-/** Dwa moduły docelowe pozycji „→ Wyślij do Research/Library". */
+/**
+ * Dwa moduły docelowe pozycji „→ Wyślij do Research/Library", jedyne, do
+ * których formularz pozwala notatkę przekazać.
+ */
 const MODULY_DOCELOWE = [
   {
     wartosc: 'research',
@@ -51,16 +46,17 @@ const MODULY_DOCELOWE = [
   },
 ];
 
-/** Pozycja steru źródeł, gdy notatka nie ma być z niczym wiązana. */
+/**
+ * Pozycja steru źródeł, gdy notatka nie ma być z niczym wiązana; jest zarazem
+ * wartością wyjściową formularza.
+ */
 const BEZ_POWIAZANIA = { wartosc: '', etykieta: 'bez powiązania' };
 
 export function utworzFormularzNotatki(): FormularzNotatki {
   const tresc = poleWielowierszowe({ etykieta: 'Treść notatki' }, 4);
   const cytat = poleWielowierszowe({ etykieta: 'Cytowany fragment strony' }, 2);
-  // Dwa stery zamiast dwóch natywnych list wyboru: nastawa stoi na uchwycie,
-  // a mechanizm rozwijania jest jeden dla całego produktu
-  // (`komponenty/menu-drzewo.ts`). Podpis zostaje, bo oba stery stoją w rzędzie
-  // pól formularza, gdzie sama wartość nie mówi, czego dotyczy.
+  // Dwa stery zamiast natywnych list wyboru: mechanizm rozwijania jest jeden
+  // dla całego produktu.
   const zrodlo = utworzSterWyboru({
     nastawa: 'Powiązane źródło',
     pozycje: [BEZ_POWIAZANIA],
@@ -112,8 +108,8 @@ export function utworzFormularzNotatki(): FormularzNotatki {
       cytat.kontrolka.value = notatka.quote ?? '';
       blad.textContent = '';
       blad.hidden = true;
-      // Alert znika razem ze znacznikiem niepoprawności: pole zdjęte z alertu,
-      // a wciąż oznaczone `aria-invalid`, czyta się jako błędne bez powodu.
+      // Alert znika ze znacznikiem niepoprawności: samo `aria-invalid`
+      // czytałoby się jako błąd bez powodu.
       tresc.kontrolka.setAttribute('aria-invalid', 'false');
       return zrodlo.ustawWartosc(notatka.sourceId ?? '');
     },

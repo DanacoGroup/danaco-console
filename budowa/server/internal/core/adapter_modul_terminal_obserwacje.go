@@ -1,25 +1,6 @@
-// Komendy `terminal.watch.start`, `terminal.watch.stop` i `terminal.watch.list`
-// — obserwacje plików uruchamiające polecenie karty przy ich zmianie.
-//
-// ── Czego brakowało ─────────────────────────────────────────────────────────
-// Wyzwalacz plikowy istniał w kontrakcie wyłącznie dla automatyk, czyli poza
-// powłoką. Nie dało się powiedzieć „po każdej zmianie w tym katalogu zbuduj
-// projekt W TEJ karcie, w jej katalogu, jej powłoką i jej środowiskiem”.
-//
-// ── Dlaczego przegląd, a nie zdarzenia systemu plików ───────────────────────
-// Zdarzenia jądra (inotify, ReadDirectoryChangesW) wymagałyby nowej zależności
-// modułowej i osobnej implementacji na każdy system. Przegląd po czasach zmiany
-// jest wkompilowany w bibliotekę standardową, zachowuje się jednakowo wszędzie
-// i jest dokładnie tak dokładny, jak trzeba: obserwacja i tak TŁUMI powtórzenia
-// (`debounceMs`), więc rozdzielczość poniżej tłumienia byłaby wyrzucona przez
-// samo tłumienie. Cena — przegląd katalogu co odstęp — jest znikoma wobec
-// polecenia, które ten przegląd wyzwala.
-//
-// ── Skutkiem obserwacji jest PROCES, nie zapis ──────────────────────────────
-// Wyzwolenie idzie tą samą drogą co `terminal.command.exec`: brama trybu
-// uprawnień okna, egzekutor izolacji, port `session.Uruchamiacz`, wpis w Process
-// Monitorze i strumień do Output Console. Obserwacja nie jest drugą drogą
-// uruchamiania procesów — jest wyzwalaczem tej jedynej.
+// Plik obsługuje komendy terminal.watch.start, terminal.watch.stop
+// i terminal.watch.list: obserwacje plików uruchamiające polecenie karty
+// terminala przy wykrytej zmianie ścieżek.
 package core
 
 import (
@@ -35,10 +16,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekObserwacji znakuje identyfikator obserwacji plików.
+// przedrostekObserwacji znakuje identyfikator obserwacji plików, żeby kod
+// obserwacji dało się odróżnić od kodów innych bytów terminala na pierwszy
+// rzut oka.
 const przedrostekObserwacji = "twch-"
 
-// odstepPrzegladu jest rytmem przeglądania obserwowanych ścieżek.
+// odstepPrzegladu jest rytmem przeglądania obserwowanych ścieżek — co ten
+// odstęp pętla obserwacji porównuje bieżącą migawkę plików z poprzednią.
 const odstepPrzegladu = 500 * time.Millisecond
 
 // tlumienieDomyslne obowiązuje, gdy żądanie nie poda własnego. Pół sekundy
@@ -51,14 +35,16 @@ const tlumienieDomyslne = 500 * time.Millisecond
 // zająć maszynę chodzeniem po katalogach.
 const granicaPrzegladu = 20000
 
-// obserwacjaZywa jest jedną biegnącą obserwacją wraz z drogą jej zatrzymania.
+// obserwacjaZywa jest jedną biegnącą obserwacją wraz z drogą jej zatrzymania
+// i kanałem, którym pętla przeglądu zgłasza własne zakończenie.
 type obserwacjaZywa struct {
 	kod       string
 	zatrzymaj context.CancelFunc
 	koniec    chan struct{}
 }
 
-// rejestrObserwacji trzyma obserwacje czynne jednego biegu rdzenia.
+// rejestrObserwacji trzyma obserwacje czynne jednego biegu rdzenia pod ochroną
+// muteksu, bo pętle przeglądu i obsługa żądań sięgają do niego równolegle.
 type rejestrObserwacji struct {
 	mu    sync.Mutex
 	wpisy map[string]*obserwacjaZywa
@@ -87,7 +73,8 @@ func (r *rejestrObserwacji) zdejmij(kod string) {
 	delete(r.wpisy, kod)
 }
 
-// zatrzymajWszystkie kończy obserwacje przy zatrzymaniu rdzenia.
+// zatrzymajWszystkie kończy obserwacje przy zatrzymaniu rdzenia, żeby żadna
+// pętla przeglądu nie biegła dalej po zamknięciu procesu, który ją założył.
 func (r *rejestrObserwacji) zatrzymajWszystkie() {
 	r.mu.Lock()
 	wykaz := make([]*obserwacjaZywa, 0, len(r.wpisy))
@@ -100,7 +87,8 @@ func (r *rejestrObserwacji) zatrzymajWszystkie() {
 	}
 }
 
-// ZalozObserwacje obsługuje `terminal.watch.start`.
+// ZalozObserwacje obsługuje komendę terminal.watch.start: zapisuje obserwację
+// w dzienniku i uruchamia dla niej osobną pętlę przeglądu ścieżek w tle.
 func (a *adapterTerminala) ZalozObserwacje(ctx context.Context,
 	z shared.TerminalWatchStartRequest) (shared.TerminalWatchStartResponse, error) {
 
@@ -122,10 +110,8 @@ func (a *adapterTerminala) ZalozObserwacje(ctx context.Context,
 	if err != nil {
 		return shared.TerminalWatchStartResponse{}, err
 	}
-	// Bramę trybu uprawnień sprawdzamy TERAZ, a nie dopiero przy wyzwoleniu:
-	// obserwacja założona w oknie, które i tak nie może uruchomić procesu, byłaby
-	// obietnicą bez pokrycia, a odmowa przyszłaby po pierwszej zmianie pliku,
-	// czyli w chwili, w której nikt jej nie czyta.
+	// Uprawnienie sprawdza się przy zakładaniu, nie wyzwoleniu, by odmowa nie
+	// przyszła bez czytelnika.
 	if err := sprawdzUprawnienie(okno.TrybUprawnien, shared.ProcessInitiatorOperator); err != nil {
 		return shared.TerminalWatchStartResponse{}, err
 	}
@@ -151,8 +137,8 @@ func (a *adapterTerminala) ZalozObserwacje(ctx context.Context,
 		return shared.TerminalWatchStartResponse{}, err
 	}
 
-	// Pętla przeglądu żyje poza żądaniem: obserwacja przeżywa komendę, która ją
-	// założyła, i biegnie do zatrzymania albo do końca pracy rdzenia.
+	// Pętla przeglądu żyje poza żądaniem, aż do zatrzymania albo końca pracy
+	// rdzenia.
 	zycie, zatrzymaj := context.WithCancel(context.Background())
 	zywa := &obserwacjaZywa{kod: wiersz.Kod, zatrzymaj: zatrzymaj, koniec: make(chan struct{})}
 	a.obserwacje.zapisz(zywa)
@@ -199,7 +185,8 @@ func (a *adapterTerminala) ZatrzymajObserwacje(ctx context.Context,
 	return shared.TerminalWatchStopResponse{Watch: obserwacjaKontraktu(zatrzymana)}, nil
 }
 
-// WykazObserwacji obsługuje `terminal.watch.list`.
+// WykazObserwacji obsługuje komendę terminal.watch.list: zwraca obserwacje
+// zapisane w dzienniku, odfiltrowane po oknie i stanie ze wskazania żądania.
 func (a *adapterTerminala) WykazObserwacji(ctx context.Context,
 	z shared.TerminalWatchListRequest) (shared.TerminalWatchListResponse, error) {
 
@@ -222,11 +209,9 @@ func (a *adapterTerminala) WykazObserwacji(ctx context.Context,
 	return shared.TerminalWatchListResponse{Watches: wykaz, Total: len(wykaz)}, nil
 }
 
-// przegladajObserwacje prowadzi pętlę przeglądu jednej obserwacji.
-//
-// Pierwszy przegląd wyłącznie ZAPAMIĘTUJE stan i niczego nie wyzwala: gdyby
-// wyzwalał, założenie obserwacji uruchamiałoby polecenie natychmiast, na plikach
-// zastanych, a Operator prosił o reakcję na ZMIANĘ.
+// przegladajObserwacje prowadzi pętlę przeglądu jednej obserwacji. Pierwszy
+// przegląd wyłącznie zapamiętuje stan i niczego nie wyzwala, bo założenie
+// obserwacji ma reagować na zmianę, a nie na pliki zastane.
 func (a *adapterTerminala) przegladajObserwacje(zycie context.Context, zywa *obserwacjaZywa,
 	wiersz dane.ObserwacjaTerminala, karta *kartaTerminala, korzen string) {
 
@@ -261,11 +246,9 @@ func (a *adapterTerminala) przegladajObserwacje(zycie context.Context, zywa *obs
 	}
 }
 
-// wyzwolObserwacje uruchamia polecenie obserwacji w karcie.
-//
-// Niepowodzenie uruchomienia przestawia obserwację na `failed` wraz z powodem
-// i KOŃCZY pętlę. Obserwacja, która przy każdej zmianie próbuje uruchomić
-// polecenie odrzucone przez izolację, robiłaby to bez końca i bez skutku.
+// wyzwolObserwacje uruchamia polecenie obserwacji w karcie. Niepowodzenie
+// przestawia obserwację na stan failed wraz z powodem i kończy pętlę, żeby
+// odrzucone polecenie nie próbowało uruchamiać się bez końca.
 func (a *adapterTerminala) wyzwolObserwacje(zycie context.Context,
 	wiersz dane.ObserwacjaTerminala, karta *kartaTerminala) {
 
@@ -300,18 +283,15 @@ func (a *adapterTerminala) wyzwolObserwacje(zycie context.Context,
 }
 
 // migawkaSciezek zbiera czasy zmiany i rozmiary plików objętych obserwacją.
-//
-// Kluczem porównania jest para (czas zmiany, rozmiar), nie sama data: zapis,
-// który zmienia treść w tej samej sekundzie, zmienia zwykle rozmiar, a zapis
-// zmieniający ani jednego, ani drugiego nie zmienia też pliku w żaden sposób
-// widoczny dla polecenia, które ma się po nim wykonać.
+// Kluczem porównania jest para czasu zmiany i rozmiaru, bo to jedyna zmiana
+// pliku widoczna dla polecenia bez czytania jego treści.
 func (a *adapterTerminala) migawkaSciezek(wiersz dane.ObserwacjaTerminala, korzen string) map[string]string {
 	migawka := make(map[string]string, 64)
 	wzorzec := filepath.Base(wiersz.Wzorzec)
 	_ = filepath.WalkDir(korzen, func(sciezka string, wpis fs.DirEntry, err error) error {
 		if err != nil {
-			// Katalog, do którego nie ma dostępu, pomija się zamiast przerywać
-			// całą obserwację: drzewo projektu bywa niejednorodne.
+			// Katalog bez dostępu jest pomijany, nie przerywa obserwacji — drzewo
+			// projektu bywa niejednorodne.
 			if wpis != nil && wpis.IsDir() {
 				return fs.SkipDir
 			}
@@ -340,7 +320,8 @@ func (a *adapterTerminala) migawkaSciezek(wiersz dane.ObserwacjaTerminala, korze
 	return migawka
 }
 
-// migawkiRozne porównuje dwie migawki przeglądu.
+// migawkiRozne porównuje dwie migawki przeglądu i orzeka różnicę zarówno przy
+// zmianie liczby ścieżek, jak i przy zmianie znacznika którejkolwiek z nich.
 func migawkiRozne(przed, po map[string]string) bool {
 	if len(przed) != len(po) {
 		return true
@@ -361,8 +342,8 @@ func korzenWzorca(wzorzec string) string {
 	if katalog == "." || katalog == "" {
 		return "."
 	}
-	// Katalog z gwiazdką nie jest katalogiem, tylko wzorcem katalogów: przegląd
-	// zaczyna się wtedy od jego części stałej.
+	// Katalog z gwiazdką jest wzorcem, nie katalogiem: przegląd zaczyna się od
+	// jego części stałej.
 	for strings.ContainsAny(filepath.Base(katalog), "*?[") {
 		rodzic := filepath.Dir(katalog)
 		if rodzic == katalog {
@@ -380,12 +361,13 @@ func pasujeWzorzecObserwacji(wzorzec, nazwa string) bool {
 		return true
 	}
 	pasuje, err := filepath.Match(wzorzec, nazwa)
-	// Wzorzec niepoprawny przepuszcza wszystko zamiast nic: obserwacja ma
-	// wyzwalać, a nie milczeć o własnej wadzie przez brak wyzwoleń.
+	// Wzorzec niepoprawny przepuszcza wszystko zamiast nic, żeby milczał
+	// wyzwoleniami, a nie własną wadą.
 	return err != nil || pasuje
 }
 
-// obserwacjaKontraktu przekłada wiersz obserwacji na byt kontraktu.
+// obserwacjaKontraktu przekłada wiersz obserwacji z magazynu na byt kontraktu
+// TerminalWatch, pomijając pola puste zamiast wypełniać je wartością pozorną.
 func obserwacjaKontraktu(w dane.ObserwacjaTerminala) shared.TerminalWatch {
 	obserwacja := shared.TerminalWatch{
 		Id:        w.Kod,

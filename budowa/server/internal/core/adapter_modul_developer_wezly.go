@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: czynności na węzłach drzewa projektu — zakładanie,
-// zmiana nazwy, usuwanie i przenoszenie — oraz wyszukiwanie i zamiana w całym
-// repozytorium.
-//
-// ── Biblioteka wkompilowana, nie program zewnętrzny ─────────────────────────
-// Czynności plikowe idą przez `os` biblioteki standardowej, a wyszukiwanie przez
-// `regexp` — nie przez `ripgrep`. Opracowanie modułu wskazywało `ripgrep`, ale
-// wyszukiwanie w repozytorium jest czynnością, bez której Code Editor przestaje
-// być edytorem kodu: nie może zależeć od programu, którego instalka nie niesie.
-//
-// ── Granica obszaru jest sprawdzana zawsze ──────────────────────────────────
-// Każda ścieżka przechodzi przez `repozytorium`, który sprowadza ją do wnętrza
-// katalogu roboczego okna i odmawia, gdy z niego wychodzi — także wtedy, gdy
-// wyjściem jest dowiązanie symboliczne, a nie `..` w napisie.
+// Moduł obsługuje czynności na węzłach drzewa projektu — zakładanie, zmianę
+// nazwy, usuwanie i przenoszenie — oraz wyszukiwanie i zamianę w całym
+// repozytorium katalogu roboczego okna, przez bibliotekę standardową.
 package core
 
 import (
@@ -47,7 +36,8 @@ func (a *adapterDevelopera) korzenRoboczyOkna(oknoKod string) (session.Okno, str
 	return okno, korzen, nil
 }
 
-// wezelPoSciezce składa węzeł kontraktu dla istniejącej ścieżki względnej.
+// wezelPoSciezce składa węzeł kontraktu dla istniejącej ścieżki względnej,
+// czytając rodzaj i inne metadane bezpośrednio z systemu plików.
 func wezelPoSciezce(korzen, wzgledna string) (shared.DeveloperTreeNode, error) {
 	pelna := filepath.Join(korzen, filepath.FromSlash(wzgledna))
 	opis, err := os.Stat(pelna)
@@ -62,11 +52,9 @@ func wezelPoSciezce(korzen, wzgledna string) (shared.DeveloperTreeNode, error) {
 	return wezelDrzewa(wzgledna, rodzic, opis), nil
 }
 
-// ZalozWezel zakłada plik albo katalog w katalogu roboczym okna.
-//
-// Treść początkowa idzie osobnym zapisem po założeniu, a nie zamiast niego:
-// zakładanie odmawia, gdy w miejscu docelowym coś już leży, i to sprawdzenie ma
-// zadziałać także wtedy, gdy żądanie niesie treść.
+// ZalozWezel zakłada plik albo katalog w katalogu roboczym okna. Treść
+// początkowa idzie osobnym zapisem po założeniu, nie zamiast niego, żeby
+// sprawdzenie zajętości miejsca docelowego zadziałało też przy treści.
 func (a *adapterDevelopera) ZalozWezel(_ context.Context,
 	z shared.DeveloperFileCreateRequest) (shared.DeveloperFileCreateResponse, error) {
 
@@ -99,7 +87,8 @@ func (a *adapterDevelopera) ZalozWezel(_ context.Context,
 	return shared.DeveloperFileCreateResponse{Node: wezel}, nil
 }
 
-// ZmienNazweWezla zmienia nazwę węzła bez zmiany jego miejsca.
+// ZmienNazweWezla zmienia nazwę węzła w katalogu roboczym okna, zostawiając
+// jego miejsce w drzewie bez zmiany.
 func (a *adapterDevelopera) ZmienNazweWezla(_ context.Context,
 	z shared.DeveloperFileRenameRequest) (shared.DeveloperFileRenameResponse, error) {
 
@@ -121,16 +110,9 @@ func (a *adapterDevelopera) ZmienNazweWezla(_ context.Context,
 	return shared.DeveloperFileRenameResponse{Node: wezel}, nil
 }
 
-// UsunWezly usuwa wskazane węzły drzewa.
-//
-// Odpowiedź niesie ścieżki NAPRAWDĘ usunięte, a nie te, o które proszono:
-// węzeł, którego już nie było, nie zatrzymuje czynności, ale nie wchodzi też do
-// wykazu — bo tego węzła ta czynność nie usunęła.
-//
-// Znacznika cofnięcia odpowiedź nie niesie i to jest stan świadomy: cofnięcie
-// wymagałoby odłożenia treści usuniętych węzłów w magazynie rdzenia, a takiego
-// magazynu moduł nie ma. Znacznik wypełniony bez pokrycia obiecywałby Operatorowi
-// powrót, którego nikt nie wykona.
+// UsunWezly usuwa wskazane węzły drzewa i oddaje ścieżki naprawdę usunięte,
+// nie te, o które proszono — węzeł, którego już nie było, nie wchodzi do
+// wykazu, bo tego węzła ta czynność nie usunęła.
 func (a *adapterDevelopera) UsunWezly(_ context.Context,
 	z shared.DeveloperFileDeleteRequest) (shared.DeveloperFileDeleteResponse, error) {
 
@@ -145,9 +127,7 @@ func (a *adapterDevelopera) UsunWezly(_ context.Context,
 		return shared.DeveloperFileDeleteResponse{},
 			bladZadaniaDevelopera("czynność nie wskazuje ani jednego węzła do usunięcia")
 	}
-	// Katalog niepusty schodzi wyłącznie przy jawnym wskazaniu: usunięcie
-	// katalogu razem z zawartością na skutek pomyłki w zaznaczeniu byłoby
-	// stratą, po której nie ma powrotu.
+	// Katalog niepusty schodzi wyłącznie przy jawnym wskazaniu rekurencji.
 	if z.Recursive == nil || !*z.Recursive {
 		for _, sciezka := range z.Paths {
 			pelna := filepath.Join(korzen, filepath.FromSlash(sciezka))
@@ -171,7 +151,8 @@ func (a *adapterDevelopera) UsunWezly(_ context.Context,
 	return shared.DeveloperFileDeleteResponse{DeletedPaths: usuniete}, nil
 }
 
-// PrzeniesWezly przenosi węzły do wskazanego katalogu.
+// PrzeniesWezly przenosi wskazane węzły do wskazanego katalogu docelowego
+// w obrębie katalogu roboczego okna.
 func (a *adapterDevelopera) PrzeniesWezly(_ context.Context,
 	z shared.DeveloperFileMoveRequest) (shared.DeveloperFileMoveResponse, error) {
 
@@ -237,13 +218,8 @@ func (a *adapterDevelopera) SzukajWRepozytorium(ctx context.Context,
 	}, nil
 }
 
-// ZamienWRepozytorium zamienia trafienia wzorca w repozytorium.
-//
-// Zamiana masowa dotyka wielu plików naraz i nie ma po niej „Cofnij", więc
-// odpowiedź mówi wprost, czy zmiany zapisano, a wykaz zmian wraca także przy
-// podglądzie — Operator ma zobaczyć, co się stanie, zanim to się stanie.
-//
-// Wzorzec z metazmienną idzie drogą składni, tą samą, co wyszukanie.
+// ZamienWRepozytorium zamienia trafienia wzorca w repozytorium i oddaje
+// wykaz zmian także przy samym podglądzie, bez zapisu, oraz stan zapisu.
 func (a *adapterDevelopera) ZamienWRepozytorium(ctx context.Context,
 	z shared.DeveloperGrepReplaceRequest) (shared.DeveloperGrepReplaceResponse, error) {
 
@@ -287,18 +263,9 @@ const czasSzukaniaPoSkladni = 120 * time.Second
 // podkreślenia.
 var metazmiennaWzorca = regexp.MustCompile(`\$[A-Z_][A-Z0-9_]*`)
 
-// wzorzecPoSkladni orzeka, czy wzorzec ma iść drogą składni zamiast drogi napisu.
-//
-// ── Dlaczego rozstrzyga metazmienna, a nie osobne pole ──────────────────────
-// Kontrakt nie niesie pola „szukaj po składni" i niniejsza praca kontraktu nie
-// zmienia. Rozstrzyga więc sam wzorzec, i to jego własną, udokumentowaną cechą:
-// metazmienna `$NAZWA` jest zapisem należącym do `ast-grep` i nie znaczy nic
-// w wyszukiwaniu po napisie — napis `$ARG` jako napis szukany jest zapytaniem,
-// którego nikt nie zadaje.
-//
-// Wyrażenie regularne wyłącza tę drogę BEZWARUNKOWO: w wyrażeniu `$` jest kotwicą
-// końca wiersza, więc wzorzec `foo$` byłby wzięty za składniowy wbrew temu, co
-// wołający napisał wprost.
+// wzorzecPoSkladni orzeka, czy wzorzec ma iść drogą składni zamiast drogi
+// napisu, po obecności metazmiennej `$NAZWA`; wyrażenie regularne wyłącza tę
+// drogę bezwarunkowo.
 func wzorzecPoSkladni(wzorzec string, wyrazenie *bool) bool {
 	if wyrazenie != nil && *wyrazenie {
 		return false
@@ -327,11 +294,8 @@ type trafienieSkladni struct {
 }
 
 // argumentySkladni składa wspólną część wywołania: wzorzec oraz zawężenia
-// wskazane przez wołającego.
-//
-// `include` i `exclude` kontraktu są wzorcami glob i idą jednym parametrem
-// `--globs`, w którym wyłączenie znakuje się wykrzyknikiem — tak, jak robi to
-// `.gitignore`.
+// glob wskazane przez wołającego, każde parametrem `--globs`, z wyłączeniem
+// znakowanym wykrzyknikiem.
 func argumentySkladni(wzorzec string, wlacz, wylacz []string) []string {
 	argumenty := []string{"run", "--pattern", wzorzec, "--json=compact"}
 	for _, glob := range wlacz {
@@ -347,11 +311,8 @@ func argumentySkladni(wzorzec string, wlacz, wylacz []string) []string {
 	return argumenty
 }
 
-// odmowaBrakuSkladni nazywa brak programu wraz z drogą naprawy i obejściem.
-//
-// Odmowa, a nie cichy powrót do drogi napisu: wzorzec składniowy szukany jako
-// napis nie znajdzie niczego, a zero trafień wyglądałoby jak odpowiedź. Wynik
-// wyglądający dobrze jest groźniejszy od odmowy, bo nie wzywa do sprawdzenia.
+// odmowaBrakuSkladni nazywa brak programu składniowego wraz z drogą naprawy
+// i obejściem, zamiast cichego powrotu do drogi napisu bez trafień.
 func odmowaBrakuSkladni() error {
 	return bladZasobuDevelopera(
 		"serwer nie ma programu " + narzedzieAstGrep.Nazwa + " (" +
@@ -361,7 +322,8 @@ func odmowaBrakuSkladni() error {
 			"wzorzec bez metazmiennej albo wyrażenie regularne (`regex: true`)")
 }
 
-// szukajPoSkladni przeprowadza wyszukanie wzorca po składni.
+// szukajPoSkladni przeprowadza wyszukanie wzorca po składni programem
+// zewnętrznym i przekłada jego trafienia na wynik kontraktu.
 func (a *adapterDevelopera) szukajPoSkladni(ctx context.Context, okno session.Okno,
 	korzen string, z shared.DeveloperGrepSearchRequest) (shared.DeveloperGrepSearchResponse, error) {
 
@@ -391,12 +353,8 @@ func (a *adapterDevelopera) szukajPoSkladni(ctx context.Context, okno session.Ok
 	}, nil
 }
 
-// zamienPoSkladni przeprowadza zamianę wzorca po składni.
-//
-// Przejścia są dwa i jest to rozstrzygnięcie: pierwsze — bez zapisu — daje wykaz
-// zmian, który wraca w odpowiedzi także przy zapisie, bo Operator ma zobaczyć,
-// co się stało. Drugie zapisuje. Wyprowadzenie wykazu z samego zapisu nie da się
-// zrobić: przy `--update-all` program oddaje liczbę zmian, a nie ich treść.
+// zamienPoSkladni przeprowadza zamianę wzorca po składni w dwóch przejściach
+// programu zewnętrznego: pierwsze bez zapisu daje wykaz zmian, drugie zapisuje.
 func (a *adapterDevelopera) zamienPoSkladni(ctx context.Context, okno session.Okno,
 	korzen string, z shared.DeveloperGrepReplaceRequest,
 	podglad bool) (shared.DeveloperGrepReplaceResponse, error) {
@@ -435,8 +393,7 @@ func (a *adapterDevelopera) zamienPoSkladni(ctx context.Context, okno session.Ok
 		}, nil
 	}
 
-	// Zapis nie oddaje trafień, więc wykaz JSON schodzi z wywołania: program
-	// odmawia postawienia obu parametrów naraz.
+	// Zapis nie oddaje trafień, więc wykaz JSON schodzi z wywołania.
 	zapis := append(usunWykazJson(wspolne), "--update-all")
 	zapis = append(zapis, cele...)
 	if _, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieAstGrep, zapis,
@@ -452,7 +409,8 @@ func (a *adapterDevelopera) zamienPoSkladni(ctx context.Context, okno session.Ok
 	}, nil
 }
 
-// celeZamianySkladni składa wskazania plików; puste żądanie obejmuje całe drzewo.
+// celeZamianySkladni składa wskazania plików do zamiany; puste żądanie
+// obejmuje całe drzewo katalogu roboczego.
 func celeZamianySkladni(sciezki []string) []string {
 	cele := make([]string, 0, len(sciezki))
 	for _, sciezka := range sciezki {
@@ -466,7 +424,8 @@ func celeZamianySkladni(sciezki []string) []string {
 	return cele
 }
 
-// usunWykazJson zdejmuje z wywołania parametr wykazu JSON.
+// usunWykazJson zdejmuje z wywołania parametr wykazu JSON, niedopuszczalny
+// razem z parametrem zapisu masowego.
 func usunWykazJson(argumenty []string) []string {
 	bez := make([]string, 0, len(argumenty))
 	for _, argument := range argumenty {

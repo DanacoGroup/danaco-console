@@ -2,17 +2,7 @@ import { elementIkony } from '../ikony/ikony';
 import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import type { Szuflada } from './szuflada';
 
-/**
- * Uchwyt sterowania na pasku górnym powłoki.
- *
- * Drugie wejście do tej samej szuflady — z paska, obok przełącznika motywu.
- * Na pasku stoi wyłącznie przycisk ikonowy o wymiarze kontrolki paska; komplet
- * kontrolek mieszka w kolumnie obok sceny, bo w prawym rogu paska nie miałby
- * się gdzie zmieścić.
- *
- * Przycisk nie ma stanu wyłączonego. Naciśnięty przy zwiniętej szufladzie
- * rozwija ją, przy rozwiniętej — zwija.
- */
+/** Uchwyt sterowania na pasku górnym powłoki jest drugim wejściem do tej samej szuflady: przycisk ikonowy bez stanu wyłączonego, rozwijający albo zwijający komplet kontrolek w kolumnie. */
 export interface UchwytPaska {
   /** Przycisk montowany w miejscu akcji paska górnego. */
   element: HTMLElement;

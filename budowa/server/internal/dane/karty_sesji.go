@@ -1,8 +1,5 @@
 // Odpowiedzialność pliku: dostęp do kart sesji (tabela `karta_sesji`). Karta jest
-// kontenerem sesji w obrębie środowiska — sesja bez karty nie istnieje, bo więz
-// klucza obcego jest obowiązkowy. Dlatego repozytorium ma metodę `Zapewnij`:
-// warstwa wyższa zapisuje sesję, a karta ma powstać po drodze, nie zablokować
-// zapisu.
+// kontenerem sesji w obrębie środowiska — sesja bez karty nie istnieje, bo więz klucza obcego jest obowiązkowy.
 package dane
 
 import (
@@ -12,7 +9,7 @@ import (
 	"fmt"
 )
 
-// KartaSesji to wiersz tabeli `karta_sesji`.
+// KartaSesji to wiersz tabeli `karta_sesji`, pełniący rolę kontenera sesji w obrębie środowiska pracy.
 type KartaSesji struct {
 	ID             int64
 	SrodowiskoID   int64
@@ -24,7 +21,7 @@ type KartaSesji struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumKartSesji jest kontraktem obszaru kart sesji.
+// RepozytoriumKartSesji jest kontraktem obszaru kart sesji, określającym operacje dostępne na wykazie kart.
 type RepozytoriumKartSesji interface {
 	Zapewnij(ctx context.Context, srodowiskoID int64, nazwa string) (int64, error)
 	Lista(ctx context.Context, srodowiskoID int64) ([]KartaSesji, error)
@@ -77,7 +74,7 @@ func (r *repozytoriumKartSesji) Zapewnij(ctx context.Context, srodowiskoID int64
 	return wynik.LastInsertId()
 }
 
-// Lista zwraca karty środowiska w kolejności wyświetlania.
+// Lista zwraca karty sesji środowiska w kolejności ustalonej do wyświetlania w interfejsie użytkownika.
 func (r *repozytoriumKartSesji) Lista(ctx context.Context, srodowiskoID int64) ([]KartaSesji, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKartSesji)
 	if err != nil {
@@ -103,7 +100,7 @@ func (r *repozytoriumKartSesji) Lista(ctx context.Context, srodowiskoID int64) (
 	return lista, nil
 }
 
-// odczytajKarteSesji składa strukturę z jednego wiersza wyniku.
+// odczytajKarteSesji składa pełną strukturę karty sesji z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajKarteSesji(wiersz skaner) (KartaSesji, error) {
 	var karta KartaSesji
 	var opis sql.NullString

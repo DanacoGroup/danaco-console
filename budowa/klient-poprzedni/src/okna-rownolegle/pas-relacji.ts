@@ -11,7 +11,7 @@ import type { StanPary } from './stan-pary';
 import { utworzUwagePodgladu } from './uwaga-podgladu';
 import { krance, type Wiez } from './wiez-koordynacji';
 
-/** Pas relacji pod torem okien — powiązanie pary widoczne jednym spojrzeniem. */
+/** Pas relacji pod torem okien — powiązanie pary koordynator-wykonawca widoczne jednym spojrzeniem, bez sięgania po stan pary osobno. */
 export interface PasRelacji {
   element: HTMLElement;
   /** Rysuje więź nad kolumnami obu okien pary; `null` daje stan pusty. */
@@ -24,20 +24,11 @@ export interface PasRelacji {
   oznaczPodglad(): void;
 }
 
-/** Czas przebiegu żetonu po szynie, w milisekundach. */
+/** Czas przebiegu żetonu po szynie relacji, w milisekundach, licząc od jednego krańca więzi do drugiego. */
 const CZAS_ZETONU = 900;
 
 /**
- * Pas relacji układu okien równoległych.
- *
- * Powiązanie między oknami rysuje się pod nimi, na siatce o tych samych
- * kolumnach co tor okien. Więź trafia dokładnie nad kolumny swojej pary, więc
- * działa także wtedy, gdy koordynator i wykonawca nie sąsiadują ze sobą.
- *
- * Pas nie znika. Brak pary jest położeniem oczekiwanym, nie usterką, więc
- * zamiast ukrycia pasa wchodzi stan pusty (`pustka-relacji.ts`). Pas niesie
- * też dymek [?] z objaśnieniem, skąd bierze się figura, oraz miejsce na trwałą
- * uwagę o podglądzie przekazania (`uwaga-podgladu.ts`).
+ * Pas relacji układu okien równoległych rysuje powiązanie między oknami pod nimi, na siatce tych samych kolumn co tor okien, i nie znika przy braku pary — wtedy pokazuje stan pusty.
  */
 export function utworzPasRelacji(): PasRelacji {
   const element = document.createElement('section');
@@ -73,16 +64,14 @@ export function utworzPasRelacji(): PasRelacji {
     oznaczPodglad: () => uwaga.pokaz(),
 
     ustawWiez(wiez, liczba) {
-      // Stan pusty wchodzi w miejsce toru więzi; nagłówek, dymek i uwaga
-      // zostają — pas jest miejscem odpowiedzi także wtedy, gdy pary nie ma.
+      // Stan pusty wchodzi w miejsce toru więzi; nagłówek, dymek i uwaga zostają na swoim miejscu.
       pustka.hidden = wiez !== null;
       tor.hidden = wiez === null;
       if (wiez === null) return;
       tor.dataset.liczba = String(liczba);
 
       const konce = krance(wiez);
-      // Pozycja w siatce jest danymi układu, nie wartością wizualną — stąd
-      // jedyne miejsce w tym module, w którym styl powstaje w kodzie.
+      // Pozycja w siatce jest danymi układu, nie wartością wizualną — jedyny styl powstający w kodzie.
       wiezElement.style.gridColumn = `${numerGniazda(konce.lewy)} / ${numerGniazda(konce.prawy) + 1}`;
       wiezElement.dataset.kierunek = wiez.wPrawo ? 'w-prawo' : 'w-lewo';
 
@@ -112,12 +101,12 @@ export function utworzPasRelacji(): PasRelacji {
   };
 }
 
-/** Rola krańca więzi — wynika wprost z więzi, nie wymaga sięgania po stan układu. */
+/** Rola krańca więzi wynika wprost z samej więzi i nigdy nie wymaga sięgania po stan pary z układu okien. */
 function rolaKonca(wiez: Wiez, id: IdGniazda): WindowRole {
   return id === wiez.koordynator ? WindowRole.Coordinator : WindowRole.Executor;
 }
 
-/** Węzły więzi: dwa krańce, szyna z żetonem i grotem. Sam kształt, bez treści. */
+/** Węzły więzi: dwa krańce, szyna z żetonem i grot — sam kształt struktury danych, bez żadnej treści widoku. */
 function zlozWiez(): {
   wiezElement: HTMLElement;
   lewy: HTMLElement;

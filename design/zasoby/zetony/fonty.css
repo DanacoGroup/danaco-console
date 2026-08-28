@@ -1,17 +1,10 @@
-/* ============================================================================
-   DANACO CONSOLE — FONTY MARKI
-   ----------------------------------------------------------------------------
-   Trzy kroje, trzy role (kierunek systemu projektowego):
-     Space Grotesk   — nagłówki, tytuły środowisk, logotyp
-     IBM Plex Sans   — interfejs i treść
-     IBM Plex Mono   — dane techniczne, identyfikatory, terminal
+/* Fonty marki obejmują trzy kroje pisma o osobnych rolach: Space Grotesk dla nagłówków i logotypu, IBM Plex Sans dla interfejsu i treści, IBM Plex Mono dla danych technicznych.
+   Wszystkie kroje mają licencję OFL 1.1, z plikami licencji w katalogu
+   `./fonty/`, oraz podzbiory `latin` i `latin-ext` z pełnymi polskimi
+   diakrytykami. Ustawienie `font-display: swap` pokazuje tekst natychmiast
+   na kroju zapasowym. */
 
-   Wszystkie kroje na licencji OFL 1.1 (pliki licencji w ./fonty/).
-   Podzbiory latin + latin-ext (pełne polskie diakrytyki: ą ć ę ł ń ó ś ź ż).
-   `font-display: swap` — tekst widoczny natychmiast na kroju zapasowym.
-   ============================================================================ */
-
-/* --- Space Grotesk ------------------------------------------------------- */
+/* Sekcja definiuje krój Space Grotesk, stosowany w nagłówkach, tytułach środowisk i logotypie marki, na licencji OFL 1.1 z podzbiorem znaków polskich. */
 @font-face {
   font-family: 'Space Grotesk';
   font-style: normal;
@@ -61,7 +54,7 @@
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* --- IBM Plex Sans ------------------------------------------------------- */
+/* Sekcja definiuje krój IBM Plex Sans, stosowany w interfejsie i treści aplikacji, na licencji OFL 1.1 z podzbiorem znaków polskich. */
 @font-face {
   font-family: 'IBM Plex Sans';
   font-style: normal;
@@ -127,7 +120,7 @@
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* --- IBM Plex Mono ------------------------------------------------------- */
+/* Sekcja definiuje krój IBM Plex Mono, stosowany w danych technicznych, identyfikatorach i terminalu, na licencji OFL 1.1 z podzbiorem znaków polskich. */
 @font-face {
   font-family: 'IBM Plex Mono';
   font-style: normal;

@@ -1,20 +1,6 @@
 // Odpowiedzialność pliku: okno Queue Manager — działanie silnika kolejek na
-// kolejce automatyki wraz z zasileniem kolejki krokami definicji.
-//
-// Silnik jest jeden. Ten plik nie zmienia stanu żadnej pozycji: wszystko, co
-// dotyczy cyklu życia zlecenia, jedzie przez `adapterKolejek.Wykonaj`, a więc
-// przez ten sam silnik, którym pracuje pętla sesyjna i MultitaskingAI. Tutaj
-// leży wyłącznie to, czego kolejka nie wie:
-//
-//  1. skąd wziąć zlecenia — z kroków automatyki, gdy kolejka jest jeszcze pusta;
-//  2. jak ułożyć pozycję — priorytet i skierowanie do innej kolejki;
-//  3. co odnotować — przebieg automatyki realizowany przez tę kolejkę.
-//
-// Krok staje się zleceniem dopiero przy uruchomieniu: Workflow Builder buduje
-// strukturę, a silnik kolejek ją wykonuje. Zasilenie idzie w porządku
-// topologicznym układu zależności, nie w kolejności wpisywania kroków — kolejka
-// wykonuje pozycje po kolei, więc tylko porządkowanie grafu utrzymuje
-// zależności.
+// kolejce automatyki wraz z zasileniem kolejki krokami definicji, w porządku
+// topologicznym układu zależności, nie w kolejności ich wpisywania.
 package core
 
 import (
@@ -69,11 +55,7 @@ const rodzajKolejkiHarmonogramu = "harmonogram"
 
 // UruchomAutomatyke zakłada kolejkę automatyki, zasila ją krokami w porządku
 // układu zależności i rusza jej wykonanie — tą samą drogą, którą automatykę
-// odpala Operator z Queue Managera. Budzik harmonogramu wywołuje ją
-// o wyliczonej godzinie; zwraca założoną kolejkę wraz z jej stanem.
-//
-// Kolejka bez wpiętego silnika nie ma czym ruszyć — odmowa jest wprost, nie
-// cichym założeniem kolejki, która nigdy nie ruszy.
+// odpala Operator z Queue Managera, a budzik harmonogramu o wyliczonej godzinie.
 func (a *adapterAutomatyk) UruchomAutomatyke(ctx context.Context,
 	automatyka dane.Automatyka) (shared.Queue, error) {
 
@@ -146,9 +128,7 @@ func (a *adapterAutomatyk) zasilKolejke(ctx context.Context, kolejkaID int64,
 }
 
 // ulozoneKroki podaje kroki w kolejności wykonania: najpierw porządek
-// topologiczny układu zależności, a kroki uwikłane w cykl na końcu, w kolejności
-// zapisanej. Cykl nie może wstrzymać uruchomienia — Orchestrator pokazuje go
-// jako zastrzeżenie, a Operator decyduje.
+// topologiczny układu zależności, a kroki uwikłane w cykl na końcu.
 func ulozoneKroki(kroki []dane.KrokAutomatyki, zaleznosci []dane.ZaleznoscKroku) []dane.KrokAutomatyki {
 	kolejnosc, pozostale := porzadekTopologiczny(kroki, zaleznosci)
 	wedlugKodu := make(map[string]dane.KrokAutomatyki, len(kroki))

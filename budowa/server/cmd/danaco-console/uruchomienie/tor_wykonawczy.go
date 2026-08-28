@@ -13,19 +13,16 @@ import (
 // wykonawczego. Jeden wiersz to jedna koperta kontraktu.
 const zakonczenieWiersza = '\n'
 
-// odczyt niesie jeden wiersz wejścia albo przyczynę przerwania odczytu.
+// odczyt niesie jeden wiersz wejścia strumienia albo przyczynę, dla której
+// odczyt tego wiersza się przerwał.
 type odczyt struct {
 	dane []byte
 	err  error
 }
 
 // TorWykonawczy przyjmuje żądania kontraktu wierszami strumienia wejścia
-// i odsyła odpowiedzi wierszami strumienia wyjścia. Tą drogą pracuje agent
-// lokalny: wykonuje pracę na urządzeniu użytkownika, nie otwierając gniazda
-// ani nie zajmując portu.
-//
-// Wraca po wyczerpaniu wejścia albo po zamknięciu kontekstu. Żądanie nieczytelne
-// nie kończy toru — rdzeń odsyła na nie odpowiedź z kodem błędu kontraktu.
+// i odsyła odpowiedzi wierszami strumienia wyjścia; wraca po wyczerpaniu
+// wejścia albo po zamknięciu kontekstu.
 func TorWykonawczy(kontekst context.Context, rdzen Rdzen, o Otoczenie) error {
 	if rdzen == nil {
 		<-kontekst.Done()

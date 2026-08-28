@@ -7,19 +7,12 @@ fn main() {
     tauri_build::build();
 }
 
-/// Ogłasza cargo, że wynik budowy zależy od pakietu klienta.
-///
-/// `frontendDist` osadza `client/dist` w binarium w chwili budowy, ale cargo
-/// tego nie śledzi: pilnuje wyłącznie plików `.rs` i manifestu. Bez tego
-/// ogłoszenia przebudowa po samej zmianie w kliencie kończy się kodem zero,
-/// nie przebudowując niczego, a binarium zostaje z poprzednim pakietem.
+/// Ogłasza cargo, że wynik budowy zależy od pakietu klienta, ponieważ frontendDist osadza client/dist w chwili budowy, a cargo śledzi wyłącznie pliki źródłowe i manifest, nie katalog zasobów.
 fn oglos_zaleznosc_od_pakietu_klienta() {
     let pakiet = Path::new("../../client/dist");
     println!("cargo:rerun-if-changed={}", pakiet.display());
 
-    // Sam katalog wystarcza cargo tylko dla wpisów pierwszego poziomu, a pakiet
-    // trzyma treść w `assets/`. Bez zejścia głębiej zmiana w skrypcie albo
-    // arkuszu stylów nie ruszyłaby przebudowy.
+    // Katalog assets/ niesie treść pakietu — bez zejścia weń zmiana zasobów nie wznowi budowy.
     if let Ok(wpisy) = std::fs::read_dir(pakiet) {
         for wpis in wpisy.flatten() {
             println!("cargo:rerun-if-changed={}", wpis.path().display());

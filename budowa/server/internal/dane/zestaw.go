@@ -1,10 +1,6 @@
 // Pakiet dane zawiera repozytoria nad pakietem `internal/store`: jedno na
-// obszar, każde w osobnym pliku. Warstwy wyższe (rdzeń, sesje, modele,
-// konfiguracja warstwowa) sięgają po dane wyłącznie przez interfejsy tego
-// pakietu, nie przez SQL ani przez wnętrze `store`.
-//
-// Odpowiedzialność tego pliku: złożenie repozytoriów w jeden zestaw i zwolnienie
-// zasobów. Zero SQL, zero logiki obszarowej.
+// obszar. Warstwy wyższe sięgają po dane wyłącznie przez interfejsy tego
+// pakietu, nigdy przez SQL ani przez wnętrze `store`.
 package dane
 
 import (
@@ -15,7 +11,8 @@ import (
 	"danacoconsole/server/internal/store"
 )
 
-// Zestaw to komplet repozytoriów jednej otwartej bazy.
+// Zestaw to komplet repozytoriów jednej otwartej bazy: po jednym polu na
+// każdy obszar danych aplikacji.
 type Zestaw struct {
 	Sesje        RepozytoriumSesji
 	Okna         RepozytoriumOkien
@@ -23,18 +20,16 @@ type Zestaw struct {
 	Kanaly       RepozytoriumKanalow
 	Konta        RepozytoriumKont
 	Konfiguracja RepozytoriumKonfiguracji
-	// KonfiguracjaOsi to ten sam byt co Konfiguracja, widziany razem z osią
-	// rozstrzygania. Jedna implementacja, dwa widoki.
+	// KonfiguracjaOsi to Konfiguracja widziana z osią rozstrzygania: jedna
+	// implementacja, dwa widoki.
 	KonfiguracjaOsi RepozytoriumKonfiguracjiOsi
 	KatalogUstawien RepozytoriumKatalogUstawien
 	Kolejki         RepozytoriumKolejek
 	Pamiec          RepozytoriumPamieci
 	Srodowiska      RepozytoriumSrodowisk
 	Moduly          RepozytoriumModulow
-	// Macierz to ta sama tabela `srodowisko_modul`, ktora `Moduly` zna wylacznie
-	// jako filtr wykazu. Tu bytem jest wiersz macierzy — para kodow, kolejnosc
-	// i widocznosc — czytany w calosci jednym zapytaniem. Jedna tabela, dwa
-	// pytania; drugiej prawdy o module nie ma.
+	// Macierz czyta wiersz tabeli `srodowisko_modul` w całości; `Moduly` zna ją
+	// wyłącznie jako filtr.
 	Macierz        RepozytoriumMacierzy
 	KartySesji     RepozytoriumKartSesji
 	OknaOperacyjne RepozytoriumOkienOperacyjnych
@@ -42,171 +37,127 @@ type Zestaw struct {
 	PunktyDostepu  RepozytoriumPunktowDostepu
 	Nadania        RepozytoriumNadan
 	Tozsamosc      RepozytoriumTozsamosci
-	// Urzadzenia to katalog maszyn (tabela `urzadzenie`). Punkt dostępu rodzaju
-	// `localDirectory` wskazuje tu urządzenie przez `urzadzenie_id`,
-	// a rozpoznanie startowe zakłada wiersz maszyny bieżącej.
+	// Urzadzenia to katalog maszyn (tabela `urzadzenie`), wskazywany przez
+	// punkt dostępu `localDirectory`.
 	Urzadzenia RepozytoriumUrzadzen
-	// CentrumPowiadomien to trwały rejestr zdarzeń centrum powiadomień
-	// (tabela `powiadomienie_centrum`). To NIE jest kolejka doręczeń funkcji
-	// Mobile — tamta mieszka w tabeli `powiadomienie` i ma własny cykl życia.
+	// CentrumPowiadomien to rejestr zdarzeń centrum powiadomień; to nie jest
+	// kolejka doręczeń Mobile.
 	CentrumPowiadomien RepozytoriumCentrumPowiadomien
-	// Agenci to biblioteka ekspertów modułu Agents. Ekspert jest komponentem
-	// własnym, więc żyje obok sesji, nie w niej.
+	// Agenci to biblioteka ekspertów modułu Agents; ekspert jest komponentem
+	// własnym, żyje obok sesji.
 	Agenci RepozytoriumAgentow
-	// WarstwyAgenta to tożsamość własna eksperta: warstwy jego promptu i jego
-	// wtyczki. Ta sama biblioteka ekspertów, inny byt — warstwa
-	// jest stanem promptu, a wtyczka katalogiem rozszerzeń powłoki, odrębnym
-	// od konektora.
+	// WarstwyAgenta to tożsamość własna eksperta: warstwy promptu i wtyczki,
+	// katalog rozszerzeń powłoki.
 	WarstwyAgenta RepozytoriumWarstwAgenta
 	// WersjeAgenta i ArchiwumAgentow to jedna implementacja widziana dwoma
-	// widokami — historia tożsamości i archiwum eksperta.
+	// widokami.
 	WersjeAgenta    RepozytoriumWersjiAgenta
 	ArchiwumAgentow RepozytoriumArchiwumAgentow
-	// ZakresAgenta to zakres działania eksperta: moduły zastosowania, osiem
-	// zakresów izolacji technicznej, granica Subagent Network, zdjęcie wpisów
-	// uprawnień oraz odczyt konektorów i przypisań od strony eksperta.
-	// Repozytorium osobne od biblioteki: odpowiada nie na pytanie „jaki jest ten
-	// ekspert", lecz „co temu ekspertowi wolno zrobić w systemie".
+	// ZakresAgenta to zakres działania eksperta: moduły, izolacja,
+	// uprawnienia i konektory.
 	ZakresAgenta RepozytoriumZakresuAgenta
-	// ZakresyNarzedzi to zakresy uprawnień i limity wywołań pozycji katalogu
-	// narzędzi dla profilu asystenta.
+	// ZakresyNarzedzi to zakresy uprawnień i limity wywołań narzędzi dla
+	// profilu asystenta.
 	ZakresyNarzedzi RepozytoriumZakresowNarzedzi
-	// UkladOrkiestracji to trzy dopełnienia układu zależności — bramka
-	// dołączenia, grupa kroków i krok wycofujący — oraz spięcie kolejek
-	// automatyki z silnikiem kolejek środowiska MultitaskingAI.
+	// UkladOrkiestracji to bramka, grupa kroków, krok wycofujący i spięcie
+	// kolejek automatyki.
 	UkladOrkiestracji RepozytoriumUkladuOrkiestracji
-	// Zespoly to nazwane składy biblioteki ekspertów. Zespół wskazuje ekspertów
-	// kodem, nie numerem wiersza, i nie powiela ich tożsamości — prawdą
-	// o ekspercie zostaje tabela `agent`.
+	// Zespoly to nazwane składy biblioteki ekspertów; wskazują ekspertów
+	// kodem, nie numerem wiersza.
 	Zespoly RepozytoriumZespolow
 	// PrzestrzenRobocza to projekt, jego pamięć i przypisania ekspertów —
 	// trwałość modułu Workspace.
 	PrzestrzenRobocza RepozytoriumPrzestrzeniRoboczej
-	// Terminal to karty powłok i dziennik procesów modułu Terminal. Proces
-	// czynny prowadzi rdzeń; tu leży ślad po nim.
+	// Terminal to karty powłok i dziennik procesów; proces czynny prowadzi
+	// rdzeń.
 	Terminal RepozytoriumTerminala
-	// Developer to wersje plików edytora i dziennik przebiegów budowania.
-	// Treść pliku roboczego zostaje na dysku — tutaj leży wyłącznie migawka
-	// założona na żądanie i ślad po budowaniu.
+	// Developer to wersje plików edytora i dziennik budowania; treść pliku
+	// roboczego zostaje na dysku.
 	Developer RepozytoriumDevelopera
-	// Automatyki to definicje, harmonogramy i przebiegi modułu Automations.
-	// Wykonaniem kroków zajmuje się silnik kolejek — to repozytorium opisuje
-	// wyłącznie definicję i zapis przebiegu.
+	// Automatyki to definicje, harmonogramy i przebiegi Automations; wykonuje
+	// je silnik kolejek.
 	Automatyki RepozytoriumAutomatyk
-	// Biblioteka to pliki repozytorium wiedzy, ich wersje, etykiety i kolekcje
-	// modułu Library. Treść pliku zostaje na dysku — baza trzyma odwołanie.
+	// Biblioteka to pliki repozytorium wiedzy, ich wersje, etykiety i
+	// kolekcje; treść zostaje na dysku.
 	Biblioteka RepozytoriumBiblioteki
-	// Prowenancja to ślad wywołań kanału modelu wraz z drzewem odcinków. Jedno
-	// źródło dla Provenance Explorer i dla rozliczenia zużycia — obie
-	// odpowiedzi powstają z tych samych wierszy.
+	// Prowenancja to ślad wywołań kanału modelu wraz z drzewem odcinków,
+	// źródło dla Explorer i rozliczeń.
 	Prowenancja RepozytoriumProwenancji
-	// Studio to dokumenty edytora, ich wersje i propozycje zmian modułu Studio.
-	// Wykaz wersji jest repozytorium dokumentu — Repository Panel nie ma
-	// osobnej struktury.
+	// Studio to dokumenty edytora, ich wersje i propozycje zmian modułu
+	// Studio.
 	Studio RepozytoriumStudia
 	// Przegladanie to migawki stron, zebrane źródła i notatki modułu Browser.
-	// Historia nawigacji to kolejne migawki, nie osobna tabela.
 	Przegladanie RepozytoriumPrzegladania
-	// Design to prompty strukturalne, zasoby wizualne i kompozycje modułu
-	// Design. Rdzeń zasobów nie generuje — zapisuje to, co o nich wie.
+	// Design to prompty strukturalne, zasoby wizualne i kompozycje; rdzeń
+	// zapisuje, nie generuje zasobów.
 	Design RepozytoriumDesignu
-	// Badania to źródła, ustalenia, raporty i przestrzeń modułu Research.
-	// Rdzeń badań nie prowadzi — składa raport z tego, co Operator zebrał.
+	// Badania to źródła, ustalenia, raporty i przestrzeń modułu Research;
+	// rdzeń tylko składa raport.
 	Badania RepozytoriumBadan
-	// Asystent to zlecenia i dziennik czynności modułu Assistant. Zlecenie wisi
-	// na oknie i ma własny automat stanu — to inny byt niż pozycja kolejki
-	// sesyjnej i niż statyczny katalog akcji.
+	// Asystent to zlecenia i dziennik czynności modułu Assistant; zlecenie
+	// ma własny automat stanu.
 	Asystent RepozytoriumAsystenta
-	// Aplikacje to architektura, pliki warsztatu i przebiegi wdrożeń modułu
-	// Apps. Rdzeń niczego nie wdraża — trzyma ślad zlecenia i stan.
+	// Aplikacje to architektura, pliki warsztatu i przebiegi wdrożeń Apps;
+	// rdzeń niczego nie wdraża.
 	Aplikacje RepozytoriumAplikacji
-	// Przekazania to zlecenia przekazania między oknami i dziennik akcji okna.
-	// Sama więź koordynator–wykonawca mieszka w kolumnie
-	// `okno_komunikacji.okno_koordynatora_id` — tu jej nie ma drugi raz.
+	// Przekazania to zlecenia przekazania między oknami i dziennik akcji
+	// okna.
 	Przekazania RepozytoriumPrzekazan
-	// Tlumaczenia to cały moduł Translate: okno źródłowe, panele języków
-	// docelowych, słownik, pamięć tłumaczeń, kontrola jakości, ślady syntezy
-	// mowy i eksportów. Jedno repozytorium, nie trzy.
-	// Rdzeń nie tłumaczy i nie rozpoznaje języka; trzyma to, co dostał.
+	// Tlumaczenia to cały moduł Translate: okno źródłowe, panele, słownik,
+	// pamięć, kontrola jakości.
 	Tlumaczenia RepozytoriumTlumaczen
 	// Diagnostyka to dziennik, błędy, analizy i rekomendacje modułu
-	// Diagnostics. Przenosi wyłącznie fakty zgłoszone przez rdzeń — nie liczy
-	// stanu systemu i nie wytwarza rekomendacji.
+	// Diagnostics.
 	Diagnostyka RepozytoriumDiagnostyki
 	// Roundtable to skład debaty, jej tury, wypowiedzi i stanowisko końcowe.
-	// Wywołanie kanałów uczestników prowadzi rdzeń przez rejestr kanałów —
-	// tu leży wyłącznie zapis debaty.
 	Roundtable RepozytoriumRoundtable
-	// Komponenty to rejestr kafli strefy komponentów Strony głównej (rodzina
-	// `component.*`). Kafel wskazuje byt magazynu modułowego kolumną
-	// `byt_docelowy` i nie powiela go — prawdą o projekcie, ekspercie
-	// i automatyce pozostają ich własne tabele i własne komendy.
+	// Komponenty to rejestr kafli strefy komponentów Strony głównej,
+	// wskazujący byt kolumną byt_docelowy.
 	Komponenty RepozytoriumKomponentow
-	// ZdarzeniaWykonawcze to dziennik zdarzeń zaczepów i zamknięcia tur. Ślad
-	// po tym, co zaszło w turze — zapis następuje po zdarzeniu i niczego
-	// nie steruje.
+	// ZdarzeniaWykonawcze to dziennik zdarzeń zaczepów i zamknięcia tur.
 	ZdarzeniaWykonawcze RepozytoriumZdarzenWykonawczych
-	// Bloki to nietekstowe fragmenty strumienia odpowiedzi zapisane w trakcie
-	// tury: rozumowanie, narzędzia, prowenancja. Tekst wypowiedzi mieszka
-	// w `wiadomosc.tresc` i tu go nie ma.
+	// Bloki to nietekstowe fragmenty strumienia odpowiedzi z tury:
+	// rozumowanie, narzędzia, prowenancja.
 	Bloki RepozytoriumBlokow
-	// Historia to wykaz pozycji rozmowy okna (rodzina `history.*`) wraz z zasadą
-	// przechowywania. Osobnej tabeli historii nie ma: pozycją jest wiersz
-	// `wiadomosc`, a to repozytorium pyta o niego z drugiej
-	// strony niż `Wiadomosci` — po identyfikatorze kontraktowym okna, od
-	// najnowszej, kursorem czasu — i jako jedyne kasuje. Jedna tabela, dwa
-	// pytania, wzorem par Moduly/Macierz i Sesje/KoszSesji.
+	// Historia to wykaz pozycji rozmowy okna z zasadą przechowywania; pyta
+	// o wiadomosc inaczej niż inne.
 	Historia RepozytoriumHistorii
-	// SzukanieRozmow to odczyt indeksu pełnotekstowego nad `wiadomosc.tresc`
-	// (FTS5). Indeks jest zewnętrzny (content=) — treść ma jedną
-	// prawdę w tabeli wiadomości, repozytorium wyłącznie pyta.
+	// SzukanieRozmow to odczyt indeksu pełnotekstowego (FTS5) nad
+	// `wiadomosc.tresc`.
 	SzukanieRozmow RepozytoriumSzukaniaRozmow
-	// KoszSesji to odwrotna strona tabeli `sesja`: widzi
-	// wyłącznie wiersze ze znacznikiem `usunieto_o`, których wykaz sesji
-	// żywych nie widzi wcale. Jedna tabela, dwa pytania.
+	// KoszSesji to odwrotna strona tabeli `sesja`: widzi wyłącznie wiersze
+	// ze znacznikiem `usunieto_o`.
 	KoszSesji RepozytoriumKoszaSesji
-	// Uwierzytelnienie to bramka Operatora: metody wejścia i sesje bramki
-	// (rodzina `auth.*`). Mówi, CZYM otworzyć bramkę. Sekret nie leży tu
-	// w żadnej postaci: baza zna wyłącznie odwołanie do sejfu poświadczeń.
+	// Uwierzytelnienie to bramka Operatora: metody wejścia i sesje; sekret
+	// nie leży tu w żadnej postaci.
 	Uwierzytelnienie RepozytoriumUwierzytelnienia
-	// KontoWlasciciela mówi, CZYJA jest bramka: login i adres e-mail
-	// uwierzytelniający jedynego właściciela, jego stan potwierdzenia oraz
-	// jednorazowe drogi potwierdzenia tożsamości wysyłane listem przy
-	// rejestracji i przy odzyskiwaniu konta.
+	// KontoWlasciciela mówi, czyja jest bramka: login, e-mail, stan
+	// potwierdzenia i drogi odzyskiwania.
 	KontoWlasciciela RepozytoriumKontaWlasciciela
-	// Kondycja i Alerty to dwie rodziny przekrojowe opisujące STAN PRODUKTU:
-	// sondy wraz z serią pomiarów oraz reguły wyzwalania wraz z rejestrem
-	// wyzwoleń. Magazyny są osobne, bo osobne są pytania: „czy to działa"
-	// i „kiedy mam zawołać".
+	// Kondycja i Alerty opisują stan produktu: sondy z pomiarami oraz reguły
+	// wyzwalania z wyzwoleniami.
 	Kondycja RepozytoriumKondycji
 	Alerty   RepozytoriumAlertow
-	// Schowek i SkrotyTekstowe należą do rdzenia, choć obsługują pola tekstowe
-	// klienta: historia schowka ginęłaby razem z kartą, a skrót rozwijany
-	// w jednym oknie rozwijałby się inaczej w drugim.
+	// Schowek i SkrotyTekstowe należą do rdzenia, by historia schowka
+	// i skrót nie ginęły razem z kartą.
 	Schowek        RepozytoriumSchowka
 	SkrotyTekstowe RepozytoriumSkrotow
 	// KontekstyPamieci dopełnia rodzinę `memory.*`: nazwane zestawy wskazań
-	// i zasady retencji. Wpisy pamięci zostają tam, gdzie były
-	// (`PrzestrzenRobocza`) — kontekst jest wskazaniem, nie właścicielem treści.
+	// i zasady retencji.
 	KontekstyPamieci RepozytoriumKontekstowPamieci
-	// WylaczeniaPamieci trzyma wyłączenia pamięci w zasięgu: całkiem,
-	// w środowisku, w projekcie, w module, w parze modułów, w karcie sesji.
-	// Osobno od `Pamiec` i `PrzestrzenRobocza`, bo wyłączenie NIE JEST wpisem
-	// pamięci ani jego zmianą — nie dotyka treści i znosi się jednym ruchem.
+	// WylaczeniaPamieci trzyma wyłączenia pamięci w zasięgu; to nie jest
+	// wpis pamięci ani jego zmiana.
 	WylaczeniaPamieci RepozytoriumWylaczenPamieci
 	// WyciszeniaNakladki trzyma wyciszenia nakładki Always On Display wraz
-	// z sygnałami klas zdarzeń wyzwalających. Wyciszenie jest bytem rdzenia, nie
-	// stanem jednego okna: bez wiersza Operator wyciszał w jednej powłoce,
-	// a w drugiej sugestie wchodziły dalej.
+	// z sygnałami wyzwalającymi.
 	WyciszeniaNakladki RepozytoriumWyciszenNakladki
-	// NagraniaMowy jest rejestrem bajtów przyjętych od okna: mikrofon karty ma
-	// dokąd odłożyć nagranie, a silnik mowy dostaje ścieżkę, jakiej oczekuje.
+	// NagraniaMowy jest rejestrem bajtów przyjętych od okna, odkładanych
+	// przez mikrofon karty.
 	NagraniaMowy RepozytoriumNagranMowy
 
 	zapytania *zapytania
-	// baza jest połączeniem, którego potrzebują repozytoria składane na żądanie
-	// (`Rozszerzenia`, `NarzedziaSesji`) do transakcji — te, które powstają
-	// w `Otworz`, dostają je wprost w konstruktorze.
+	// baza jest połączeniem potrzebnym repozytoriom składanym na żądanie do
+	// transakcji.
 	baza *sql.DB
 }
 
@@ -217,9 +168,8 @@ func Otworz(ctx context.Context, baza *store.Baza) (*Zestaw, error) {
 		return nil, fmt.Errorf("dane: baza nie jest otwarta")
 	}
 	zapytania := noweZapytania(baza.DB)
-	// Jedna instancja, dwa widoki: historia tożsamości i archiwum eksperta stoją
-	// na tej samej tabeli, więc drugie repozytorium byłoby drugim źródłem
-	// prawdy o tym samym wierszu.
+	// Jedna instancja: historia tożsamości i archiwum eksperta stoją na tej
+	// samej tabeli.
 	wersjeAgenta := noweRepozytoriumWersjiAgenta(zapytania, baza.DB)
 	konfiguracja := noweRepozytoriumKonfiguracji(zapytania)
 	return &Zestaw{
@@ -289,8 +239,8 @@ func Otworz(ctx context.Context, baza *store.Baza) (*Zestaw, error) {
 	}, nil
 }
 
-// Zamknij zwalnia przygotowane zapytania. Bazy nie zamyka — zamyka ją ten, kto
-// ją otworzył.
+// Zamknij zwalnia przygotowane zapytania zestawu; bazy nie zamyka, bo zamyka
+// ją zawsze ten, kto ją otworzył.
 func (z *Zestaw) Zamknij() error {
 	if z == nil || z.zapytania == nil {
 		return nil

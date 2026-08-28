@@ -1,33 +1,6 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO KREATORA
-   ----------------------------------------------------------------------------
-   Bryła okna prowadzącego przez ponumerowane kroki: instalator, przepływ
-   wejścia, przygotowanie środowiska. Trzy pasma jeden pod drugim —
+/* Arkusz opisuje okno kreatora: belkę tytułową, korpus z szyną kroków i płótnem treści oraz pas działań na dole okna. */
 
-       belka tytułowa  ·  korpus (szyna kroków + płótno)  ·  pas działań
-
-   — a korpus dzieli się na dwie kolumny. Tym różni się od okna wejściowego
-   (`.dn-okno-wejsciowe` w komponenty.css), które ma dwie kolumny i nie ma pasa
-   działań na dnie: tam czynność stoi w panelu, tu biegnie pod obiema kolumnami.
-
-   Trzy strefy okna rozdziela sama powierzchnia, bez kreski: belka najciemniejsza,
-   szyna kroków to obrzeże, płótno treści najjaśniejsze. Patrz NORMA-OKNA.md.
-
-   Okno kreatora stoi PRZED uwierzytelnieniem, więc nie ma ramy aplikacji.
-   Belka tego okna nie jest `.dn-belka` z `rama.css` — tamta należy do ramy
-   aplikacji i niesie jej sterowanie.
-
-   Kolejne okno kreatora nie przepisuje stąd żadnej reguły: wpina ten arkusz
-   i używa klas. Co należy do jednego okna, a nie do rodziny, stoi
-   w `okna/<okno>.css`.
-
-   Wyłącznie żetony var(--dn-*). Oba motywy.
-   ============================================================================ */
-
-/* ── 10 · INSTALATOR ────────────────────────────────────────────────────── *//* Okno instalatora ma stałą wysokość i pokazuje JEDEN krok naraz. Gdyby
-   wszystkie kroki i cała lista składników stały pod sobą w jednej kolumnie,
-   okno rosłoby na kilka ekranów — instalator przestawałby przypominać
-   okno dialogowe, a stawał się długą stroną. */
+/* Okno instalatora ma stałą wysokość i pokazuje jeden krok naraz, ponieważ wszystkie kroki w jednej kolumnie rozciągałyby okno na kilka ekranów. */
 .dn-kreator {
   display: grid;
   grid-template-rows: var(--dn-wym-belka-instalatora) minmax(0, 1fr) var(--dn-wym-stopki-instalatora);
@@ -45,14 +18,14 @@
   overflow: hidden;
 }
 
-/* ── Pasek tytułu — instalator nie ma ramy aplikacji ─────────────────── */
+/* Pasek tytułu należy do okna kreatora — instalator nie ma ramy aplikacji, więc niesie własną belkę tytułową. */
 .dn-kreator-belka {
   display: flex; align-items: center; gap: var(--dn-od-3);
   /* Wysokość belki musi być tą samą wartością co wiersz siatki okna — przy 48 px
      w wierszu 44 px kontrolki wychodziły ku górze. */
   height: var(--dn-wym-belka-instalatora);
   padding: 0 0 0 var(--dn-od-3);
-  /* Strefa 1 z 3 — najciemniejsza. Patrz NORMA-OKNA.md. */
+  /* Strefa 1 z 3 jest najciemniejsza. */
   background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
@@ -67,12 +40,11 @@
 
 .dn-kreator-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
 
-/* ── Korpus: kolumna kroków po lewej, treść kroku po prawej ──────────── *//* Kolumna boczna ma stałą szerokość — przy równym podziale podświetlenie kroku
-   ciągnęło się przez pół okna, a wiersze tabeli rozjeżdżały się na całą szerokość. */
+/* Korpus dzieli kolumnę kroków po lewej od treści kroku po prawej; kolumna boczna ma stałą szerokość, bo równy podział rozjeżdżał wiersze tabeli. */
 .dn-kreator-korpus { display: grid; grid-template-columns: var(--dn-wym-szyna-krokow) minmax(0, 1fr); min-height: 0; }
 
 /* Lewa kolumna jako jeden pojemnik: kroki u góry, bryła zabiera resztę wysokości.
-   Strefa 2 z 3 — obrzeże, nigdy w barwie belki. Patrz NORMA-OKNA.md. */
+   Strefa 2 z 3 jest obrzeżem i nigdy nie stoi w barwie belki. */
 .dn-kreator-szyna {
   display: flex; flex-direction: column;
   min-height: 0;
@@ -99,7 +71,7 @@
 
 .dn-kreator-marka { display: flex; align-items: center; gap: var(--dn-od-2); margin-bottom: var(--dn-od-5); padding: 0 var(--dn-od-2); }
 
-/* Znak dziedziczy barwę pisma kolumny, więc czyta się w obu motywach. */
+/* Znak w kolumnie kroków dziedziczy barwę pisma kolumny, więc czyta się poprawnie w obu motywach interfejsu. */
 .dn-kreator-marka-znak { width: 32px; height: 32px; display: block; flex: none; color: var(--dn-tekst); }
 
 /* Kropka godła pulsuje jednym, ciągłym tętnem — jedyny ruch kolumny kroków.
@@ -115,7 +87,7 @@
 
 .dn-kreator-marka-nazwa { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); }
 
-/* Pozycja kroku — znak stanu, nazwa. Krok bieżący niesie tło i wstęgę. */
+/* Pozycja kroku niesie znak stanu oraz nazwę; krok bieżący dodatkowo otrzymuje tło i wstęgę wyróżnienia. */
 .dn-kreator-krok {
   display: flex; align-items: center; gap: var(--dn-od-2);
   min-height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-2);
@@ -159,8 +131,7 @@
 
 .dn-kreator-krok[data-stan='biezacy'] .dn-kreator-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
 
-/* ── Treść kroku ─────────────────────────────────────────────────────── *//* Strefa 3 z 3 — płótno treści. Sięga prawej krawędzi okna; granicę z kolumną
-   boczną niesie kreska z lewej, bo sama różnica powierzchni ginęła. */
+/* Treść kroku jest trzecią strefą, płótnem sięgającym prawej krawędzi okna; granicę z kolumną boczną niesie kreska z lewej strony płótna. */
 .dn-kreator-plotno {
   display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0;
   background: var(--dn-okno-plotno);
@@ -243,13 +214,7 @@
   color: var(--dn-tekst-wiodacy);
 }
 
-/* Składniki — lista przewijana wewnątrz kroku, nie rozpychająca okna. *//* Pola i wiersze ustawień kroku *//* `display` autora wygrywa z `[hidden]` przeglądarki — stąd warunek. *//* Wyjaśnienie pod polem — mówi, co się z tą ścieżką dzieje. Trzeci stopień
-   kontrastu, bo jest przypisem do pola, nie jego treścią. *//* Licencja — obszar przewijany o stałej wysokości *//* Pole warunków bierze całą wolną wysokość kroku — sztywne 190 px zostawiało
-   pod spodem prawie dwieście pikseli pustki, a treść i tak się nie mieściła.
-   Powierzchnia zagłębiona o jeden stopień, nie o cztery: `--dn-tlo` na ciemnym
-   panelu robiło studnię, w której tekst leżał na prawie czarnym. *//* Pole warunków licencji jest osadzonym tekstem ciągłym z biblioteki. Własne
-   zostaje wyłącznie to, czego biblioteka znać nie może: tło strefy tego okna
-   i obrys odcinający je od płótna kroku. */
+/* Blok dokumentu kroku obejmuje przewijaną listę składników, pola ustawień oraz obszar licencji o stałej wysokości, osadzony jako tekst biblioteczny. */
 .dn-kreator-dokument {
   border: 1px solid var(--dn-obrys);
   background: var(--dn-okno-obrzeze);
@@ -259,7 +224,7 @@
 
 .dn-kreator-dokument [data-licencja-stan='blad'] { color: var(--dn-blad-tekst); }
 
-/* Podsumowanie i postęp *//* ── Stopka działań ──────────────────────────────────────────────────── */
+/* Podsumowanie i postęp stoją razem w stopce działań, na samym dole okna kreatora, pod treścią bieżącego kroku. */
 .dn-kreator-pas-odstep { flex: 1 1 auto; }
 
 @media (max-width: 860px) {

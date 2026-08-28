@@ -1,15 +1,7 @@
 import type { StudioDiffHunk, StudioTextMatch } from '../../../../shared/contract';
 
 /**
- * Wyrys wyniku `studio.diff.compare` — fragmenty różnicy i trafienia wzorca.
- *
- * Kontrakt łączy porównanie wersji i wyszukiwanie wzorca w jednej komendzie:
- * odpowiedź niesie `hunks`, `matches` albo oba. Wyrys jest więc jeden i nie
- * zakłada, która tablica przyszła — brak obu jest poprawnym wynikiem, który
- * panel nazywa pustką merytoryczną.
- *
- * Rodzaj fragmentu jest daną, nie barwą w kodzie: `DiffHunkKind` trafia do
- * `data-rodzaj`, a barwę dobiera arkusz modułu z żetonów motywu.
+ * Funkcja opisuje wyrys wyniku komendy studio.diff.compare, zamieniając fragmenty różnicy oraz trafienia wzorca zwrócone przez rdzeń na listę elementów HTML wraz z etykietą rodzaju fragmentu.
  */
 export function wyrysFragmentow(fragmenty: readonly StudioDiffHunk[]): HTMLElement[] {
   return fragmenty.map((fragment) => {
@@ -49,14 +41,14 @@ export function wyrysTrafien(trafienia: readonly StudioTextMatch[]): HTMLElement
   });
 }
 
-/** Zakres wierszy fragmentu; pusty, gdy rdzeń go nie podał. */
+/** Funkcja zakresWierszy zwraca opis zakresu wierszy fragmentu w postaci ciągu znaków, a pusty ciąg, gdy rdzeń nie podał numeru wiersza początkowego. */
 function zakresWierszy(fragment: StudioDiffHunk): string {
   if (fragment.startLine === undefined) return '';
   const koniec = fragment.endLine ?? fragment.startLine;
   return ` · wiersze ${fragment.startLine}–${koniec}`;
 }
 
-/** Blok treści fragmentu wraz z etykietą strony porównania. */
+/** Funkcja blok tworzy element HTML z blokiem treści fragmentu różnicy wraz z etykietą strony porównania, przed albo po zmianie. */
 function blok(strona: string, tresc: string): HTMLElement {
   const etykieta = document.createElement('span');
   etykieta.className = 'ms-roznica__strona';

@@ -1,24 +1,7 @@
 // Rodzina `extension.*` — Permissions & Trust Center: uprawnienia deklarowane
-// i nadane, weryfikacja podpisu, skaner manifestu oraz rejestr referencji
-// sekretów wraz z zakresem współdzielenia.
-//
-// Obsługiwane komendy: `extension.permission.list`, `extension.permission.grant`,
-// `extension.signature.verify`, `extension.manifest.scan`,
-// `extension.secret.list`, `extension.secret.share`.
-//
-// NIC TUTAJ NIE JEST BRAMĄ. Opracowanie mówi wprost: „żadne ostrzeżenie ani
-// brak podpisu nie blokuje instalacji ani włączenia", a kontrola idzie przez
-// stan wyjściowy i zakres uprawnień. Skaner wystawia spostrzeżenia, weryfikacja
-// podpisu wystawia werdykt, nadanie uprawnień zapisuje decyzję Operatora —
-// i żadna z tych trzech dróg niczego nie wstrzymuje.
-//
-// UPRAWNIENIE NADMIAROWE LICZY SIĘ, NIE ZGADUJE. `extension.permission.list`
-// oddaje `excessive` — zakresy NADANE, których manifest wcale nie deklaruje.
-// To jest różnica dwóch zbiorów leżących w bazie, a nie heurystyka.
-//
-// WERYFIKACJA PODPISU LICZY PODPIS OD NOWA. Ed25519 ze standardowej biblioteki
-// sprawdza bajty podpisu kluczem publicznym odłożonym przy pozycji. Przepisanie
-// zapamiętanego „tak" nie byłoby weryfikacją, tylko powtórzeniem cudzego zdania.
+// i nadane, weryfikacja podpisu, skaner manifestu, rejestr referencji
+// sekretów. Ostrzeżenie ani brak podpisu nie blokują instalacji: kontrola
+// idzie przez stan i zakres.
 package core
 
 import (
@@ -34,7 +17,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Kody spostrzeżeń skanera manifestu.
+// Kody spostrzeżeń skanera manifestu, wystawiane jako sygnał w Permissions
+// & Trust Center, nigdy jako blokada.
 const (
 	kodSkaneraBezPodpisu     = "extensionWithoutSignature"
 	kodSkaneraPodpisNiepewny = "extensionSignatureUnverified"
@@ -44,7 +28,8 @@ const (
 	kodSkaneraProcesy        = "permissionProcessSpawn"
 )
 
-// WypiszUprawnienia obsługuje `extension.permission.list` — patrz czoło pliku.
+// WypiszUprawnienia obsługuje `extension.permission.list`: oddaje zakresy
+// nadane wraz z uprawnieniami nadmiarowymi.
 func (a *adapterRozszerzen) WypiszUprawnienia(ctx context.Context,
 	z shared.ExtensionPermissionListRequest) (shared.ExtensionPermissionListResponse, error) {
 
@@ -85,10 +70,9 @@ func (a *adapterRozszerzen) WypiszUprawnienia(ctx context.Context,
 	}, nil
 }
 
-// NadajUprawnienia obsługuje `extension.permission.grant`. Nadanie WYMIENIA
-// komplet uprawnień nadanych, nie dokłada do nich: żądanie niosące krótszy
-// wykaz jest cofnięciem tych, których w nim nie ma, i tak właśnie działa
-// przegląd zakresu w Permissions & Trust Center.
+// NadajUprawnienia obsługuje `extension.permission.grant`. Nadanie wymienia
+// komplet uprawnień nadanych, nie dokłada do nich: żądanie z krótszym
+// wykazem cofa te, których w nim nie ma.
 func (a *adapterRozszerzen) NadajUprawnienia(ctx context.Context,
 	z shared.ExtensionPermissionGrantRequest) (shared.ExtensionPermissionGrantResponse, error) {
 
@@ -135,7 +119,8 @@ func (a *adapterRozszerzen) NadajUprawnienia(ctx context.Context,
 	return shared.ExtensionPermissionGrantResponse{Granted: nadane}, nil
 }
 
-// ZweryfikujPodpis obsługuje `extension.signature.verify` — patrz czoło pliku.
+// ZweryfikujPodpis obsługuje `extension.signature.verify`: liczy podpis od
+// nowa kluczem publicznym pozycji.
 func (a *adapterRozszerzen) ZweryfikujPodpis(ctx context.Context,
 	z shared.ExtensionSignatureVerifyRequest) (shared.ExtensionSignatureVerifyResponse, error) {
 
@@ -150,8 +135,8 @@ func (a *adapterRozszerzen) ZweryfikujPodpis(ctx context.Context,
 		if !isBrakWierszaApp(err) {
 			return shared.ExtensionSignatureVerifyResponse{}, bladRozszerzenia(err)
 		}
-		// Pozycja bez podpisu nie jest odmową: brak podpisu jest faktem, który
-		// Permissions & Trust Center ma pokazać, a nie usterką odczytu.
+		// Pozycja bez podpisu nie jest odmową: brak podpisu jest faktem do
+		// pokazania, nie usterką odczytu.
 		sygnatura := shared.ExtensionSignature{
 			Signed: false, Verified: false,
 			TrustLevel: poziomZaufaniaBezPodpisu(wiersz),
@@ -187,8 +172,8 @@ func (a *adapterRozszerzen) ZweryfikujPodpis(ctx context.Context,
 		}
 	}
 
-	// Poziom zaufania wynika z weryfikacji, nie z deklaracji: wydawca
-	// niepotwierdzony podpisem zostaje pozycją niezweryfikowaną.
+	// Poziom zaufania wynika z weryfikacji: bez potwierdzenia podpisem
+	// wydawca jest niezweryfikowany.
 	if !sygnatura.Verified &&
 		sygnatura.TrustLevel == shared.ExtensionTrustLevelVerifiedPublisher {
 		sygnatura.TrustLevel = shared.ExtensionTrustLevel(shared.ExtensionTrustLevelUnverifiedPersonal)
@@ -202,7 +187,8 @@ func (a *adapterRozszerzen) ZweryfikujPodpis(ctx context.Context,
 	return shared.ExtensionSignatureVerifyResponse{Signature: sygnatura, CheckedAt: teraz}, nil
 }
 
-// poziomZaufaniaBezPodpisu nazywa zaufanie pozycji, której nikt nie podpisał.
+// poziomZaufaniaBezPodpisu nazywa zaufanie pozycji, której nikt nie podpisał
+// — nie ma czym go potwierdzić.
 func poziomZaufaniaBezPodpisu(wiersz dane.Rozszerzenie) shared.ExtensionTrustLevel {
 	if wiersz.ZrodloPochodzenia == shared.ExtensionOriginDanaco {
 		return shared.ExtensionTrustLevel(shared.ExtensionTrustLevelDanacoPlugin)
@@ -210,9 +196,9 @@ func poziomZaufaniaBezPodpisu(wiersz dane.Rozszerzenie) shared.ExtensionTrustLev
 	return shared.ExtensionTrustLevel(shared.ExtensionTrustLevelUnverifiedPersonal)
 }
 
-// SkanujManifest obsługuje `extension.manifest.scan` — SYGNAŁ, NIE BRAMA
-// (opracowanie, rozdz. 7.3). Spostrzeżenia liczą się z tego, co pozycja
-// naprawdę deklaruje i co ma nadane.
+// SkanujManifest obsługuje `extension.manifest.scan`: wystawia spostrzeżenia,
+// nigdy blokadę. Spostrzeżenia liczą się z tego, co pozycja naprawdę
+// deklaruje i co ma nadane.
 func (a *adapterRozszerzen) SkanujManifest(ctx context.Context,
 	z shared.ExtensionManifestScanRequest) (shared.ExtensionManifestScanResponse, error) {
 
@@ -235,8 +221,8 @@ func (a *adapterRozszerzen) SkanujManifest(ctx context.Context,
 
 	for _, uprawnienie := range uprawnienia {
 		zakres := shared.ExtensionPermissionScope(uprawnienie.Zakres)
-		// Uprawnienie bez wskazania bytu jest uprawnieniem na wszystko: „sieć"
-		// bez domeny, „zapis plików" bez korzenia katalogu.
+		// Uprawnienie bez wskazania bytu obejmuje wszystko: sieć bez domeny,
+		// zapis bez korzenia katalogu.
 		if uprawnienie.Byt == nil || strings.TrimSpace(*uprawnienie.Byt) == "" {
 			spostrzezenia = append(spostrzezenia, shared.ExtensionScanFinding{
 				Severity:        shared.AppValidationSeverityWarning,
@@ -245,8 +231,8 @@ func (a *adapterRozszerzen) SkanujManifest(ctx context.Context,
 				PermissionScope: &zakres,
 			})
 		}
-		// Uruchamianie procesów jest zakresem najszerszym z możliwych: pozycja,
-		// która je ma, może zrobić wszystko, co potrafi maszyna Operatora.
+		// Uruchamianie procesów jest zakresem najszerszym: pozycja z nim
+		// zrobi wszystko na maszynie Operatora.
 		if uprawnienie.Zakres == shared.ExtensionPermissionScopeProcessSpawn {
 			spostrzezenia = append(spostrzezenia, shared.ExtensionScanFinding{
 				Severity:        shared.AppValidationSeverityWarning,
@@ -315,9 +301,8 @@ func (a *adapterRozszerzen) WypiszSekrety(ctx context.Context,
 			return shared.ExtensionSecretListResponse{}, err
 		}
 	}
-	// Zawężenie po terminie: „wygasające w ciągu N dni" przekłada się na górną
-	// granicę czasu. Zero znaczy „bez zawężenia" — kontrakt ma to pole jako
-	// niewymagane, a rejestr rotacji pyta o komplet.
+	// Zawężenie po terminie: „wygasające w N dni” to górna granica czasu.
+	// Zero znaczy brak zawężenia.
 	granicaCzasu := int64(0)
 	if z.ExpiringWithinDays != nil && *z.ExpiringWithinDays > 0 {
 		granicaCzasu = a.teraz() + int64(*z.ExpiringWithinDays)*24*60*60*1000
@@ -329,8 +314,8 @@ func (a *adapterRozszerzen) WypiszSekrety(ctx context.Context,
 	}
 	sekrety := make([]shared.SecretRef, 0, len(wiersze))
 	for _, wiersz := range wiersze {
-		// Zawężenie po pozycji: referencja należy do tej pozycji, gdy jest z nią
-		// współdzielona albo gdy to ona ją powiązała.
+		// Zawężenie po pozycji: referencja należy do niej, gdy jest
+		// współdzielona albo to ona ją powiązała.
 		if kod != "" && !zawieraNapis(wiersz.KodyRozszerzen, kod) {
 			integracja, err := a.rejestr.IntegracjaRozszerzenia(ctx, kod)
 			if err != nil && !isBrakWierszaApp(err) {
@@ -359,8 +344,8 @@ func (a *adapterRozszerzen) UdostepnijSekret(ctx context.Context,
 		return shared.ExtensionSecretShareResponse{}, bladWskazaniaRozszerzenia(
 			"udostępnienie bez odwołania do sekretu")
 	}
-	// Pozycje, którym referencję się udostępnia, muszą istnieć: zakres
-	// wskazujący pozycję nieznaną byłby nadaniem dostępu nikomu.
+	// Pozycje, którym udostępnia się referencję, muszą istnieć: wskazanie
+	// nieznanej to dostęp nikomu.
 	for _, kod := range z.ExtensionIds {
 		if _, err := a.pozycjaRozszerzeniaZadania(ctx, kod); err != nil {
 			return shared.ExtensionSecretShareResponse{}, err
@@ -391,7 +376,8 @@ func sekretKontraktu(wiersz dane.SekretRozszerzenia) shared.SecretRef {
 	return odwolanie
 }
 
-// zawieraNapis rozstrzyga obecność napisu w wykazie.
+// zawieraNapis rozstrzyga obecność napisu w wykazie porównaniem dokładnym,
+// bez normalizacji wielkości liter.
 func zawieraNapis(wykaz []string, szukany string) bool {
 	for _, wpis := range wykaz {
 		if wpis == szukany {
@@ -401,7 +387,8 @@ func zawieraNapis(wykaz []string, szukany string) bool {
 	return false
 }
 
-// sprawdzZakresUprawnieniaRozszerzenia dopuszcza wyłącznie zakresy kontraktu.
+// sprawdzZakresUprawnieniaRozszerzenia dopuszcza wyłącznie zakresy uprawnień
+// znane kontraktowi rozszerzeń.
 func sprawdzZakresUprawnieniaRozszerzenia(zakres shared.ExtensionPermissionScope) error {
 	switch zakres {
 	case shared.ExtensionPermissionScopeNetwork, shared.ExtensionPermissionScopeFileRead,

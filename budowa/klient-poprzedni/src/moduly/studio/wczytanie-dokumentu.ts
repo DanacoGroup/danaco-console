@@ -21,22 +21,7 @@ import {
   type ZrodloWstawienStudio,
 } from './zrodlo-wstawien-studio';
 
-/**
- * Wskazanie dokumentu do wczytania — z Library, z sesji albo z urządzenia.
- *
- * `studio.document.open` przyjmuje trzy wzajemnie wykluczające się pola:
- * `documentId` (dokument otwarty wcześniej w tej sesji), `libraryFileId` (plik
- * repozytorium) i `path` (ścieżka na urządzeniu). Formularz pyta o źródło wprost,
- * zamiast zgadywać, bo pomyłka kończyłaby się odmową rdzenia o powodzie trudnym
- * do odczytania.
- *
- * Wybierak źródła nie jest wykazem plików: wykaz zasobów Library należy do okna
- * Library Explorer i przychodzi komendą `library.file.list`, a to pole przyjmuje
- * sam identyfikator.
- *
- * Wykaz formatów pochodzi z kontraktu (`StudioDocumentFormat`), nie z listy
- * zapisanej w widoku; format wybiera rdzeń przy wczytaniu, okno go tylko pokazuje.
- */
+/** Wskazanie dokumentu do wczytania — z Library, z sesji albo z urządzenia; formularz pyta o źródło wprost, zamiast zgadywać między trzema polami kontraktu. */
 export interface WczytanieDokumentu {
   element: HTMLElement;
   /** Przycisk „Wczytaj dokument" — okno wiodące podpina do niego swoją czynność. */
@@ -47,7 +32,7 @@ export interface WczytanieDokumentu {
   brak(): string;
 }
 
-/** Trzy źródła dokumentu odpowiadające trzem polom żądania kontraktu. */
+/** Trzy źródła dokumentu odpowiadające trzem polom żądania kontraktu: plik Biblioteki, dokument otwarty w sesji albo ścieżka na urządzeniu. */
 const ZRODLA = [
   { wartosc: 'library', etykieta: 'Plik z Library (libraryFileId)' },
   { wartosc: 'sesja', etykieta: 'Dokument otwarty w tej sesji (documentId)' },
@@ -104,34 +89,13 @@ export function utworzWczytanieDokumentu(): WczytanieDokumentu {
 
 /* ── Wniesienie pliku WPROST DO EDYTORA ─────────────────────────────────────── */
 
-/**
- * Wniesienie pliku, PDF-u i obrazu wprost do edytora — nakładka na żądanie.
- *
- * ── Czym to się różni od wczytania wyżej ────────────────────────────────────
- * `studio.document.open` otwiera dokument, który rdzeń już prowadzi — pozycję
- * repozytorium sesji albo pliku Library. Nie wnosi POSTACI pliku Operatora:
- * arkusza stylów, sekcji, tabel ani obrazów. Trzy komendy niżej to robią
- * i dlatego stoją osobno:
- *   — `document.import.file` wnosi docx, dotx, odt, ott, tekst czysty, markdown,
- *     RTF i HTML wraz z rozpoznaniem zapisu znaków (także stron kodowych innych
- *     niż UTF-8, bo pliki Operatora bywają starsze);
- *   — `document.import.pdf` odzyskuje z PDF-u tekst, akapity, tabele i obrazy —
- *     na tyle, na ile PDF je niesie;
- *   — `document.image.import` wnosi obraz wprost w miejsce kursora.
- *
- * ── Bilans jest obowiązkowy, nie ozdobny ────────────────────────────────────
- * Odzyskanie z PDF-u jest ODTWORZENIEM, nie odczytem: PDF nie niesie struktury
- * akapitu ani tabeli wprost. Panel wypisuje więc bilans za każdym razem — strony
- * z warstwą tekstową i bez niej, tabele rozpoznane i nierozpoznane, obrazy
- * osadzone i pominięte. PDF ze samych skanów kieruje na rozpoznanie tekstu
- * i panel mówi to wprost, zamiast oddać pustą kartkę jako gotowy dokument.
- */
+/** Wniesienie pliku, PDF-u i obrazu wprost do edytora — nakładka na żądanie, osobna droga od otwarcia dokumentu już prowadzonego przez rdzeń. */
 export interface WniesieniePliku {
   element: HTMLElement;
   przestawWidocznosc(): void;
 }
 
-/** Dziewięć formatów wnoszonych z kontraktu; PDF ma własną drogę niżej. */
+/** Dziewięć formatów wnoszonych z kontraktu, w tym rozpoznanie po zawartości jako pozycja domyślna; PDF ma własną drogę niżej w tym pliku. */
 const FORMATY_WNOSZONE: readonly (readonly [string, string])[] = [
   ['', 'rozpoznanie po zawartości'],
   [StudioImportFormat.Docx, 'dokument Word (docx)'],
@@ -144,7 +108,7 @@ const FORMATY_WNOSZONE: readonly (readonly [string, string])[] = [
   [StudioImportFormat.Html, 'HTML'],
 ];
 
-/** Skąd obraz pochodzi — pięć dróg, których obraz naprawdę używa. */
+/** Skąd obraz pochodzi — pięć dróg, których obraz naprawdę używa: plik Operatora, magazyn zasobów rdzenia, moduł Design, baza zdjęciowa albo plik Biblioteki. */
 const ZRODLA_OBRAZU: readonly (readonly [string, string])[] = [
   [StudioObjectSource.File, 'plik wskazany przez Operatora'],
   [StudioObjectSource.CoreAsset, 'magazyn zasobów rdzenia'],

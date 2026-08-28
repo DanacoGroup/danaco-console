@@ -1,8 +1,5 @@
-/* ============================================================================
-   EKRAN OKNA PRZYGOTOWANIA ŚRODOWISKA PRACY
-
-   Trzeci etap wejścia: konto jest już rozpoznane, program odtwarza stan pracy
-   sprzed zamknięcia. Okno nie pyta o nic — wykaz etapów mówi, co się dzieje,
+/* Ekran okna przygotowania środowiska pracy stanowi trzeci etap wejścia, w którym program po rozpoznaniu konta odtwarza stan pracy sprzed zamknięcia.
+   Okno nie pyta o nic — wykaz etapów mówi, co się dzieje,
    a pas działań daje dwa wyjścia: pominąć przywracanie albo przerwać i się
    wylogować.
 

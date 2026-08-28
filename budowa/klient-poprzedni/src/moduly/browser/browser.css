@@ -1,17 +1,4 @@
-/*
- * Warstwa wizualna modułu Browser — układ modułu, ramy okien, trzy stany
- * obowiązkowe i dymek objaśnienia. Prefiks lokalny `mb-`.
- *
- * Plik nie zna ani jednej barwy zapisanej wprost: wszystkie wartości pochodzą
- * z żetonów motywu. Klasy `dn-*` (przycisk, pole, plakietka, pusty
- * stan, spinner, dymek) wnosi biblioteka komponentów.
- *
- * Podział na cztery arkusze wynika z progu 300 wierszy na arkusz: podgląd
- * strony, paski narzędzi i wykazy mieszkają w `podglad-i-wykazy.css`, scena
- * z płótnem adnotacji — w `adnotacja.css`, a pasek kontekstu wraz z oknami
- * operacji i panelami warstwy czwartej — w `operacje.css`. Kontrolki formularzy
- * pochodzą z `modele/kontrolki-formularza`, stąd import `modele.css`.
- */
+/* Arkusz opisuje warstwę wizualną modułu Browser: układ modułu, ramy okien, trzy stany obowiązkowe i dymek objaśnienia, z przedrostkiem mb-. */
 
 @import '../../modele/modele.css';
 @import './podglad-i-wykazy.css';
@@ -26,11 +13,7 @@
   overflow: auto;
 }
 
-/*
- * Pas rozszerzeń bocznych. Kolumny układają się same, bo rozszerzeń widocznych
- * naraz bywa od zera do pięciu — siatka o stałej liczbie kolumn zostawiałaby
- * puste miejsca po zwiniętych panelach.
- */
+/* Pas rozszerzeń bocznych układa kolumny samoczynnie, bo rozszerzeń widocznych naraz bywa od zera do pięciu, więc stała liczba kolumn zostawiałaby puste miejsca. */
 .mb-modul__pas--rozszerzenia {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -51,12 +34,7 @@
   border-color: var(--dn-obrys-mocny);
 }
 
-/*
- * Pas nagłówka stoi na bibliotecznym `.dn-karta-naglowek` (układ, odstęp, krój
- * nazwy); moduł dokłada wyłącznie własne odstępstwo. Wcięcie zdejmowane, bo
- * niesie je już `.mb-okno`, a zawijanie jest konieczne: nagłówek Browser Window
- * mieści obok nazwy przycisk odczytu stanu i zdanie o stanie okna.
- */
+/* Pas nagłówka stoi na bibliotecznej karcie nagłówka, a moduł dokłada własne odstępstwo i zawijanie, bo nagłówek mieści przycisk odczytu stanu i zdanie o stanie okna. */
 .mb-okno__naglowek {
   padding: 0;
   flex-wrap: wrap;
@@ -70,8 +48,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ── Trzy stany obowiązkowe okna: pusty, ładowania, błędu ─────────────────── */
-
+/* Sekcja opisuje trzy stany obowiązkowe okna: pusty, ładowania i błędu, każdy z własnym wyglądem powłoki treści okna Browser. */
 .mb-stan__powloka {
   display: flex;
   flex-direction: column;
@@ -82,10 +59,7 @@
   padding: var(--dn-od-3);
 }
 
-/*
- * Komunikat blokowy stanu błędu: cienka kreska po lewej, bez tła i bez obwódki,
- * trwały w układzie — „Spróbuj ponownie" go nie zdejmuje.
- */
+/* Komunikat blokowy stanu błędu niesie cienką kreskę po lewej, bez tła i bez obwódki, trwałą w układzie niezależną od przycisku ponowienia. */
 .mb-stan__powloka[data-faza='blad'] .mb-stan {
   align-items: flex-start;
   padding-left: var(--dn-od-3);
@@ -107,16 +81,12 @@
   gap: var(--dn-od-2);
 }
 
-/* ── Dymek objaśnienia [?] przy elemencie konfiguracji ────────────────────── */
-
+/* Sekcja opisuje dymek objaśnienia przy elemencie konfiguracji, otwierany znakiem zapytania obok etykiety pola ustawienia. */
 .mb-dymek {
   align-items: center;
 }
 
-/*
- * Znak [?] jest przyciskiem, więc musi dać się trafić palcem: wymiar bierze
- * z żetonu pola wyboru (16 px, na dotyku 20 px), nie z żetonu kropki sygnału.
- */
+/* Znak zapytania jest przyciskiem, więc musi dać się trafić palcem: wymiar bierze z żetonu pola wyboru, nie z żetonu kropki sygnału. */
 .mb-dymek__znak {
   width: var(--dn-wym-check);
   height: var(--dn-wym-check);
@@ -135,8 +105,7 @@
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 
-/* ── Browser Window: nawigacja i rozkład ciała okna ───────────────────────── */
-
+/* Sekcja opisuje Browser Window: pasek nawigacji oraz rozkład ciała okna, wspólne dla wszystkich widoków modułu Browser. */
 .mb-nawigacja {
   display: flex;
   align-items: flex-end;
@@ -161,12 +130,7 @@
   grid-template-columns: minmax(320px, 2fr) minmax(240px, 1fr);
 }
 
-/* ── Panel rodzin rdzenia ─────────────────────────────────────────────────────
-   Sekcje czynności obszaru `browser.*` prowadzonych przez rdzeń: karty,
-   przestrzenie, monitory, kanały, kolejka czytania, pobrania, wytwory, makra
-   i granice Wykonawcy. Układ jest zwarty i płynny, bo panel stoi w kolumnie
-   bocznej albo pod obszarem renderowania — ma być w zasięgu jednego kliknięcia,
-   nie zabierać miejsca stronie. */
+/* Panel rodzin rdzenia niesie sekcje czynności obszaru browser prowadzonych przez rdzeń: karty, przestrzenie, monitory, kanały, pobrania i makra, w zwartym układzie kolumny bocznej. */
 .mb-rodziny {
   display: flex;
   flex-direction: column;

@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: wartości wyliczeniowe obszaru dostępów.
-//
-// Kolumny `punkt_dostepu.rodzaj`, `punkt_dostepu.tryb_domyslny`,
-// `punkt_dostepu.stan` i `nadanie_dostepu.tryb` niosą wartość kontraktu wprost.
-// Kontrakt nie deklaruje przy wyliczeniach AccessPointKind, AccessPointStatus
-// ani AccessMode pola `baza` — inaczej niż przy AccountKind, które ma słowniki
-// `WartosciBazyAccountKind` / `WartosciKontraktuAccountKind`. Własny przekład
-// w warstwie trwałości byłby drugim źródłem przekładu obok
-// `shared/contract.json`. Poniższe zbiory są więc sprawdzeniem przynależności,
-// nie przekładem: pilnują, żeby do kolumny nie trafiła wartość spoza kontraktu.
+// Odpowiedzialność pliku: wartości wyliczeniowe obszaru dostępów — zbiory sprawdzające przynależność kolumn
+// punktu dostępu i nadania do wartości kontraktu.
 package dane
 
 import (
@@ -17,15 +9,15 @@ import (
 )
 
 var (
-	// trybyDostepu — komplet wartości wyliczenia AccessMode.
+	// trybyDostepu zawiera komplet wartości wyliczenia AccessMode, dopuszczalnych w kolumnach trybu dostępu i nadania.
 	trybyDostepu = []shared.AccessMode{shared.AccessModeRead, shared.AccessModeWrite}
 
-	// rodzajePunktuDostepu — komplet wartości wyliczenia AccessPointKind.
+	// rodzajePunktuDostepu zawiera komplet wartości wyliczenia AccessPointKind, dopuszczalnych w kolumnie rodzaju punktu.
 	rodzajePunktuDostepu = []shared.AccessPointKind{
 		shared.AccessPointKindMcpBridge, shared.AccessPointKindLocalDirectory,
 	}
 
-	// stanyPunktuDostepu — komplet wartości wyliczenia AccessPointStatus.
+	// stanyPunktuDostepu zawiera komplet wartości wyliczenia AccessPointStatus, dopuszczalnych w kolumnie stanu punktu.
 	stanyPunktuDostepu = []shared.AccessPointStatus{
 		shared.AccessPointStatusUnknown,
 		shared.AccessPointStatusReachable,

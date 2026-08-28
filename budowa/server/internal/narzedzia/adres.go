@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: adres rdzenia dla serwera narzędzi.
-//
-// ADRES BIERZE SIĘ STAMTĄD, SKĄD BIERZE GO RDZEŃ. Port czyta pakiet
-// `konfiguracja` — ten sam, który ustala port nasłuchu procesu rdzenia — więc
-// zmiana portu przez Operatora przestawia obie strony naraz. Odczyt zmiennej
-// środowiska po nazwie dosłownej należy wyłącznie do tamtego pakietu, a serwer
-// narzędzi dziedziczy środowisko po procesie modelu, który
-// dziedziczy je po rdzeniu.
-//
-// PĘTLA ZWROTNA JEST WYBOREM, NIE SKRÓTEM. Serwer narzędzi stoi zawsze na tej
-// samej maszynie co proces modelu, który go uruchomił, a proces modelu stoi
-// przy rdzeniu, który go zrodził. Adres inny niż pętla zwrotna byłby wtedy
-// zgadywaniem — Operator wskazuje go przełącznikiem, gdy układ jest inny.
+// Adres rdzenia dla serwera narzędzi pochodzi z tego samego źródła
+// konfiguracji, co port nasłuchu procesu rdzenia, i domyślnie wskazuje pętlę
+// zwrotną, na której stoi proces modelu.
 package narzedzia
 
 import (
@@ -23,9 +13,11 @@ import (
 )
 
 const (
-	// schematGniazda jest schematem adresu gniazda rdzenia.
+	// schematGniazda jest schematem adresu gniazda WebSocket rdzenia,
+	// poprzedzającym host i port w zbudowanym adresie.
 	schematGniazda = "ws://"
-	// hostPetliZwrotnej jest domyślnym miejscem rdzenia widzianym z procesu modelu.
+	// hostPetliZwrotnej jest domyślnym miejscem rdzenia widzianym z procesu
+	// modelu, gdy oba stoją na tej samej maszynie.
 	hostPetliZwrotnej = "127.0.0.1"
 )
 

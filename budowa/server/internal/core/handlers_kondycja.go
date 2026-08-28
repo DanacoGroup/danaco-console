@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: port i wpięcie sześciu komend rodziny `health.*` —
-// definicje sond, ich przebiegi, seria wyników i dostępność.
-//
-// Rodzina jest przekrojowa, nie modułowa. Kondycję czyta Health & Uptime Panel
-// modułu Diagnostics, ale też Always On Display i pulpit Operatora; rdzeń nie
-// ma prawa wiedzieć, że istnieje moduł Diagnostics, więc port jest własny.
-//
-// Zdarzeń rodzina nie ma. Kontrakt nie zna `health.changed`, więc żadna z sześciu
-// komend niczego nie rozgłasza i port nie bierze nadajnika. O wyzwoleniu
-// alertu na nieudanej sondzie mówi `alert.triggered` — zdarzenie rodziny
-// alertów, nie kondycji.
-//
-// Port niewypełniony nie rejestruje niczego: sześć komend odpowie wtedy
-// `health.unknown`, a pozostałe domeny pracują bez zmian.
+// Plik wpina sześć komend rodziny `health.*`: definicje sond, ich przebiegi,
+// serię wyników i dostępność, bez rozgłaszania zdarzeń.
 package core
 
 import (
@@ -42,7 +30,8 @@ type Kondycja interface {
 // kompilacja stanie tutaj, a nie dopiero na martwej komendzie u Operatora.
 var _ Kondycja = (*adapterKondycji)(nil)
 
-// zarejestrujKondycje wpina sześć komend rodziny `health.*`.
+// zarejestrujKondycje wpina sześć komend rodziny `health.*`, obsługujących
+// sondy, ich przebiegi, serię wyników i dostępność.
 func zarejestrujKondycje(r *Rejestr, k Kondycja) {
 	if r == nil || k == nil {
 		return

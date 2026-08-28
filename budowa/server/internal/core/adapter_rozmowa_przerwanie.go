@@ -1,9 +1,6 @@
-// Odpowiedzialność pliku: przerwanie tury jest jawne. Wysłanie wiadomości do
-// okna, które właśnie odpowiada, odmawia zamiast anulować turę po cichu.
-// Kontrakt zna `message.stop` jako zatrzymanie odpowiedzi; klient, który chce
-// przerwać i wysłać od razu, wysyła parę: najpierw `message.stop`, potem
-// `message.send`. Tu też mieszka wykaz tur w biegu (`biegnace`) i wszystko,
-// co go dotyka.
+// Plik czyni przerwanie tury jawnym: wysłanie wiadomości do okna, które
+// właśnie odpowiada, odmawia zamiast anulować turę po cichu. Tu mieszka też
+// wykaz tur w biegu i wszystko, co go dotyka.
 package core
 
 import (
@@ -25,12 +22,9 @@ func odmowaTuryWBiegu(idOkna string) error {
 			"wiadomość ponownie."))
 }
 
-// zajmijBieg zajmuje okno pod nową turę i oddaje prawdę, gdy się to udało.
-// Sprawdzenie i zajęcie idą pod jednym zamkiem, nie dwoma wywołaniami: odczyt
-// osobny od zapisu zostawiłby szczelinę, w której dwie wiadomości nadane w tej
-// samej chwili obie zobaczyłyby okno wolne i obie ruszyłyby turę. Okno zajęte
-// nie jest przerywane — wywołujący dostaje fałsz i odmawia (odmowaTuryWBiegu
-// wyżej).
+// zajmijBieg zajmuje okno pod nową turę i oddaje prawdę, gdy się to udało;
+// sprawdzenie i zajęcie idą pod jednym zamkiem, nie dwoma wywołaniami, żeby
+// uniknąć szczeliny wyścigu.
 func (a *adapterRozmowy) zajmijBieg(idOkna string, anuluj context.CancelFunc) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -62,11 +56,8 @@ func (a *adapterRozmowy) Zatrzymaj(_ context.Context, z shared.MessageStopReques
 	return shared.MessageStopResponse{MessageId: idWiadomosci, Stopped: biegnie}, nil
 }
 
-// PrzerwijTure przerywa turę okna i mówi, czy jakaś biegła.
-//
-// Wydzielone z Zatrzymaj, bo zamykanie okna nie jest przyciskiem Operatora:
-// nie dotyczy pętli naprawczej i nie odpowiada kontraktem. Ma zrobić jedną
-// rzecz — dać biegnącemu procesowi sygnał, że ma się domknąć.
+// PrzerwijTure przerywa turę okna i mówi, czy jakaś biegła; ma dać biegnącemu
+// procesowi sygnał, że ma się domknąć.
 func (a *adapterRozmowy) PrzerwijTure(idOkna string) bool {
 	a.mu.Lock()
 	anuluj, biegnie := a.biegnace[idOkna]
@@ -78,7 +69,8 @@ func (a *adapterRozmowy) PrzerwijTure(idOkna string) bool {
 	return biegnie
 }
 
-// zapomnijBieg usuwa zakończoną turę z wykazu biegnących.
+// zapomnijBieg usuwa zakończoną turę z wykazu biegnących, aby wykaz niósł
+// wyłącznie tury nadal aktywne.
 func (a *adapterRozmowy) zapomnijBieg(idOkna string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()

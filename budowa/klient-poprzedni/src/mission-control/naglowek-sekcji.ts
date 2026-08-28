@@ -18,7 +18,11 @@ export interface OpisNaglowka {
   przyPrawej?: HTMLElement;
 }
 
-/** Buduje nagłówek sekcji wraz z identyfikatorem do powiązania `aria-labelledby`. */
+/**
+ * Buduje nagłówek sekcji wraz z identyfikatorem tytułu do powiązania
+ * `aria-labelledby`; nagłówek niesie ikonę wiodącą, tytuł, dopisek oraz element
+ * dostawiony przy prawej krawędzi.
+ */
 export function utworzNaglowekSekcji(opis: OpisNaglowka, idTytulu: string): HTMLElement {
   const naglowek = document.createElement('header');
   naglowek.className = 'mc-naglowek';
@@ -53,7 +57,11 @@ export function utworzNaglowekSekcji(opis: OpisNaglowka, idTytulu: string): HTML
   return naglowek;
 }
 
-/** Buduje ramę sekcji: element `section` z nagłówkiem i pustym ciałem. */
+/**
+ * Buduje ramę sekcji: element `section` z klasą własną sekcji, nagłówkiem
+ * powiązanym przez `aria-labelledby` oraz pustym ciałem, które wypełnia
+ * wywołujący.
+ */
 export function utworzSekcje(
   klasa: string,
   opis: OpisNaglowka,

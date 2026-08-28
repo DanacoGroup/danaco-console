@@ -11,23 +11,8 @@ import { nazwaZasobu } from './karta-zasobu';
 import type { StanDesignu } from './stan-designu';
 
 /**
- * Kolekcje zasobów w Assets Panel — `design.collection.create`,
- * `design.collection.assign`, `design.collection.list`.
- *
- * Kolekcja jest bytem osobnym od etykiety, choć obie grupują zasoby. Etykieta
- * jest słowem: nie ma nazwy własnej ani porządku, a przemianowanie jej wymaga
- * przepisania każdego zasobu z osobna. Kolekcja ma nazwę, opis i kolejność,
- * i przeżywa odświeżenie okna, bo leży w bazie stanowiska.
- *
- * Przypisanie jest DOKŁADKĄ albo ODJĘCIEM, nigdy zastąpieniem — inaczej niż
- * etykiety, które okno nadsyła kompletem. Panel nie wysyła więc nigdy „stanu
- * kolekcji", tylko zmianę jednego zasobu: kolekcja bywa duża, a przepisywanie
- * jej przy każdej zmianie jest drogą do zgubienia zawartości, gdy dwa okna
- * wyślą swój stan naraz.
- *
- * Liczba zasobów w podpisie pochodzi z odpowiedzi rdzenia (`assetCount`),
- * a nie z długości wykazu, który okno akurat trzyma. Prawdą o kolekcji jest
- * to, co w niej leży w bazie.
+ * Kolekcje zasobów w Assets Panel: byt osobny od etykiety, z własną nazwą, opisem i kolejnością,
+ * przypisywany dokładką albo odjęciem, nigdy zastąpieniem stanu.
  */
 export interface KolekcjeDesignu {
   element: HTMLElement;
@@ -112,8 +97,7 @@ export function utworzKolekcjeDesignu(stan: StanDesignu): KolekcjeDesignu {
     odpowiedz.pokaz('Odczyt kolekcji okna…', true);
     const wynik = await stan.czuwanie.prowadz(
       'odczyt kolekcji',
-      // Zawężenia do zasobu tu nie ma: panel pokazuje komplet kolekcji okna,
-      // a zawężenie ukryłoby te, do których Operator chce zasób dołożyć.
+      // Zawężenia do zasobu tu nie ma: panel pokazuje komplet kolekcji okna, do których można dołożyć.
       stan.zrodlo.kolekcje(stan.idOkna(), ''),
       {
         wToku: (zdanie) => odpowiedz.pokaz(zdanie, true),
@@ -208,10 +192,7 @@ export function utworzKolekcjeDesignu(stan: StanDesignu): KolekcjeDesignu {
     const kolekcja = wynik.wynik.collection;
     zbior = zbior.map((pozycja) => (pozycja.id === kolekcja.id ? kolekcja : pozycja));
     pokazWykaz();
-    // Zero zmian jest odpowiedzią udaną i osobną wiadomością: zasób, który
-    // w kolekcji już był (albo go w niej nie było), nie zmienił niczego,
-    // a potwierdzenie zmiany byłoby potwierdzeniem czynności, która się nie
-    // odbyła.
+    // Zero zmian jest odpowiedzią udaną: zasób, który w kolekcji już był, nie zmienił niczego.
     odpowiedz.pokaz(
       wynik.wynik.changed === 0
         ? `Nic się nie zmieniło — zasób „${nazwaZasobu(zasob)}" był już w tym stanie. ` +

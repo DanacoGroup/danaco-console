@@ -1,10 +1,6 @@
 /**
- * SKŁADNIK — FRAZA NAWIGACYJNA.
- *
- * Zdanie nad pasem działań: mówi, co będzie dalej, albo stawia pytanie
- * z wplecioną czynnością. Stoi w treści, nie w pasie — w pasie zostają same
- * czynności, inaczej zdanie, czynność poboczna i główna nie mieszczą się
- * w jednym wierszu.
+ * Składnik — fraza nawigacyjna. Zdanie nad pasem działań: mówi, co będzie
+ * dalej, albo stawia pytanie z wplecioną czynnością.
  */
 
 import { el, tekst } from '../narzedzia.ts';

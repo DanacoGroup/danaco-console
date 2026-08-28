@@ -13,16 +13,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Pięć komend historii tożsamości i archiwum eksperta — warstwa wywołań.
- *
- * Historia i archiwum stoją osobno od `zrodlo-agentow.ts`, bo odpowiadają na inne
- * pytanie: biblioteka mówi, jacy eksperci są, a to źródło — co się z danym
- * ekspertem działo i gdzie poszedł. Trzymanie obu w jednym pliku łączyłoby dwie
- * odpowiedzialności i przekraczało próg objętości pliku opisany w rozdziale
- * „Modularność” pliku README.
- *
- * Żadne wywołanie nie rzuca wyjątkiem ani nie odrzuca obietnicy: niepowodzenie
- * wraca polem `blad` wyniku.
+ * Pięć komend historii tożsamości i archiwum eksperta — warstwa wywołań. Żadne
+ * wywołanie nie rzuca wyjątkiem ani nie odrzuca obietnicy: niepowodzenie wraca
+ * polem `blad` wyniku, więc okno rozstrzyga o nim tak samo jak o powodzeniu.
  */
 export interface ZrodloWersjiEksperta {
   /** Historia tożsamości od wersji najnowszej. */
@@ -56,9 +49,7 @@ export function utworzZrodloWersjiEksperta(kanal: Kanal): ZrodloWersjiEksperta {
     },
 
     async przywrocWersje(idEksperta, idWersji) {
-      // Wersję wskazuje identyfikator, nie numer — tak przyjmuje ją komenda
-      // `agent.version.restore`. Numer jest porządkiem historii, nie tożsamością
-      // wersji: po przywróceniu numery rosną i ten sam numer znaczyłby co innego.
+      // Wersję wskazuje identyfikator, nie numer; numer jest porządkiem historii.
       const zadanie: AgentVersionRestoreRequest = { agentId: idEksperta, versionId: idWersji };
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.AgentVersionRestore, zadanie),

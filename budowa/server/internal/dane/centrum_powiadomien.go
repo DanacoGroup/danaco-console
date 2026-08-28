@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: dostęp do rejestru centrum powiadomień (tabela
-// `powiadomienie_centrum` z migracji 379).
-//
-// Rejestr jest trwały, nie ulotny: zdarzenie zapisane tu przeżywa zamknięcie
-// okna i restart rdzenia, bo centrum jest — jak mówi karta komponentu
-// (rozdz. 11.6) — „trwałym rejestrem tych samych zdarzeń", których ulotną
-// postacią jest Toast.
-//
-// Repozytorium nie zna kontraktu ani zdarzeń rozgłaszanych: czyta i zapisuje
-// wiersze. Rozgłoszenie i przekład na kształt kontraktu należą do rdzenia.
+// Plik prowadzi dostęp do rejestru centrum powiadomień: rejestr jest trwały, nie ulotny, zdarzenie zapisane tu
+// przeżywa zamknięcie okna i restart rdzenia; repozytorium nie zna kontraktu ani zdarzeń rozgłaszanych, czyta i zapisuje wyłącznie wiersze.
 package dane
 
 import (
@@ -19,7 +11,7 @@ import (
 	"time"
 )
 
-// ZdarzenieCentrum to wiersz rejestru centrum powiadomień.
+// ZdarzenieCentrum to wiersz rejestru centrum powiadomień niosący jedno zdarzenie wraz z jego bieżącym stanem.
 type ZdarzenieCentrum struct {
 	ID            int64
 	Klasa         string
@@ -36,7 +28,7 @@ type ZdarzenieCentrum struct {
 	ZnacznikCzasu time.Time
 }
 
-// FiltrCentrum zawęża odczyt rejestru. Wykaz pusty znaczy „bez zawężenia".
+// FiltrCentrum zawęża odczyt rejestru centrum powiadomień; wykaz pusty znaczy brak zawężenia po polach.
 type FiltrCentrum struct {
 	Klasy         []string
 	Wagi          []string
@@ -46,24 +38,21 @@ type FiltrCentrum struct {
 	Limit         int
 }
 
-// RepozytoriumCentrumPowiadomien jest kontraktem rejestru centrum.
+// RepozytoriumCentrumPowiadomien jest kontraktem rejestru centrum: zapis, odczyt i zmiana stanu zdarzeń.
 type RepozytoriumCentrumPowiadomien interface {
 	// Zapisz dopisuje zdarzenie i oddaje je z nadanym identyfikatorem.
 	Zapisz(ctx context.Context, zdarzenie ZdarzenieCentrum) (ZdarzenieCentrum, error)
 	// Wykaz oddaje zdarzenia od najnowszego, zawężone filtrem.
 	Wykaz(ctx context.Context, filtr FiltrCentrum) ([]ZdarzenieCentrum, error)
-	// Nowe liczy zdarzenia w stanie `nowe` w CAŁYM rejestrze, nie w widoku —
-	// plakietka paska kontekstu liczy rejestr, a nie przefiltrowaną kolumnę.
+	// Nowe liczy zdarzenia w stanie nowe w całym rejestrze, nie w widoku przefiltrowanym.
 	Nowe(ctx context.Context) (int, error)
-	// Odczytaj przenosi wskazane zdarzenia do stanu `odczytane`; wykaz pusty
-	// bierze wszystkie zdarzenia nowe (działanie zbiorcze centrum).
+	// Odczytaj przenosi wskazane zdarzenia do stanu odczytane; wykaz pusty bierze wszystkie zdarzenia.
 	Odczytaj(ctx context.Context, identyfikatory []int64) (int, error)
 	// Zamknij przenosi jedno zdarzenie do stanu `obsluzone`.
 	Zamknij(ctx context.Context, id int64) (bool, error)
 	// Odloz przenosi jedno zdarzenie do stanu `odlozone` wraz z chwilą powrotu.
 	Odloz(ctx context.Context, id int64, doKiedy time.Time) (bool, error)
-	// Przywroc oddaje do stanu `nowe` zdarzenia, których chwila powrotu minęła.
-	// Bez tego odłożenie byłoby cichym skasowaniem.
+	// Przywroc oddaje do stanu nowe zdarzenia, których chwila powrotu minęła.
 	Przywroc(ctx context.Context, teraz time.Time) (int, error)
 }
 
@@ -79,7 +68,7 @@ const (
 
 	policzNoweCentrum = `SELECT COUNT(*) FROM powiadomienie_centrum WHERE stan = 'nowe'`
 
-	// Zbiorcze oznaczenie odczytania: wykaz pusty bierze wszystkie nowe.
+	// Zbiorcze oznaczenie odczytania zdarzeń centrum powiadomień; wykaz pusty bierze wszystkie zdarzenia nowe.
 	odczytajWszystkieCentrum = `UPDATE powiadomienie_centrum
 	                               SET stan = 'odczytane', odlozone_do = NULL
 	                             WHERE stan = 'nowe'`
@@ -139,8 +128,7 @@ func (r *repozytoriumCentrumPowiadomien) Wykaz(ctx context.Context,
 	warunki := []string{}
 	parametry := []any{}
 
-	// Stan pominięty nie znaczy „wszystko": zdarzenia obsłużone są zamknięte
-	// i kolumna centrum ich nie pokazuje, dopóki Operator wprost o nie nie pyta.
+	// Stan pominięty nie znaczy wszystko: zdarzenia obsłużone są zamknięte i domyślnie niewidoczne.
 	stany := filtr.Stany
 	if len(stany) == 0 {
 		stany = []string{"nowe", "odczytane", "odlozone"}
@@ -282,7 +270,7 @@ func (r *repozytoriumCentrumPowiadomien) wykonajNaZdarzeniu(ctx context.Context,
 	return liczbaZmian(wynik)
 }
 
-// odczytajZdarzenieCentrum składa wiersz rejestru.
+// odczytajZdarzenieCentrum składa wiersz rejestru wprost z jednego wiersza wyniku zapytania SQL do bazy.
 func odczytajZdarzenieCentrum(wiersz skaner) (ZdarzenieCentrum, error) {
 	var zdarzenie ZdarzenieCentrum
 	var odlozone, znacznik string
@@ -297,7 +285,7 @@ func odczytajZdarzenieCentrum(wiersz skaner) (ZdarzenieCentrum, error) {
 	return zdarzenie, nil
 }
 
-// liczbaZmian oddaje liczbę wierszy zmienionych poleceniem.
+// liczbaZmian oddaje liczbę wierszy zmienionych poleceniem zapisu wykonanym na bazie danych repozytorium.
 func liczbaZmian(wynik sql.Result) (int, error) {
 	ile, err := wynik.RowsAffected()
 	if err != nil {
@@ -306,12 +294,12 @@ func liczbaZmian(wynik sql.Result) (int, error) {
 	return int(ile), nil
 }
 
-// wKolumnie składa warunek `kolumna IN (?, ?, …)` o zadanej liczbie miejsc.
+// wKolumnie składa warunek kolumna IN o zadanej liczbie miejsc dla zapytania SQL wykonywanego na bazie.
 func wKolumnie(kolumna string, ile int) string {
 	return kolumna + " IN (" + strings.TrimSuffix(strings.Repeat("?,", ile), ",") + ")"
 }
 
-// naArgumenty przenosi wykaz napisów do argumentów zapytania.
+// naArgumenty przenosi wykaz napisów do argumentów zapytania SQL wykonywanego na bazie danych repozytorium.
 func naArgumenty(wartosci []string) []any {
 	argumenty := make([]any, 0, len(wartosci))
 	for _, wartosc := range wartosci {
@@ -320,12 +308,12 @@ func naArgumenty(wartosci []string) []any {
 	return argumenty
 }
 
-// chwilaTekstem zapisuje chwilę w postaci używanej przez kolumny tej bazy.
+// chwilaTekstem zapisuje chwilę w postaci tekstowej używanej przez kolumny czasu tej bazy danych repozytorium.
 func chwilaTekstem(chwila time.Time) string {
 	return chwila.UTC().Format("2006-01-02T15:04:05.000Z")
 }
 
-// chwilaZTekstu odczytuje chwilę; zapis pusty albo nieczytelny daje chwilę zerową.
+// chwilaZTekstu odczytuje chwilę z postaci tekstowej; zapis pusty albo nieczytelny daje chwilę zerową.
 func chwilaZTekstu(zapis string) time.Time {
 	if strings.TrimSpace(zapis) == "" {
 		return time.Time{}

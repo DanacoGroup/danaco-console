@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: sugestie porządkujące (`sugestia_biblioteki`,
-// migracja 186).
-//
-// Sugestia jest bytem trwałym, nie wynikiem oddanym i zapomnianym: klasyfikacja
-// wsadowa ją wytwarza, a decyzja Operatora zapada osobnym żądaniem, często
-// znacznie później. Rozstrzygnięcie zostaje przy wierszu — sugestia odrzucona
-// ma nie wracać przy następnym przebiegu.
+// Plik prowadzi sugestie porządkujące biblioteki; sugestia jest bytem trwałym, nie wynikiem oddanym i zapomnianym
+// — klasyfikacja wsadowa ją wytwarza, a decyzja Operatora zapada osobnym żądaniem, często znacznie później.
 package dane
 
 import (
@@ -15,7 +10,7 @@ import (
 	"strings"
 )
 
-// SugestiaBiblioteki to wiersz tabeli `sugestia_biblioteki`.
+// SugestiaBiblioteki to wiersz tabeli `sugestia_biblioteki` niosący propozycję porządkującą wraz z jej stanem.
 type SugestiaBiblioteki struct {
 	ID             int64
 	Kod            string
@@ -29,7 +24,7 @@ type SugestiaBiblioteki struct {
 	Utworzono      string
 }
 
-// Stany sugestii porządkującej.
+// Stany sugestii porządkującej biblioteki: oczekująca na decyzję, przyjęta albo odrzucona przez Operatora.
 const (
 	StanSugestiiOczekujaca = "oczekujaca"
 	StanSugestiiPrzyjeta   = "przyjeta"
@@ -59,7 +54,7 @@ const (
 	                                  WHERE identyfikator_zewnetrzny = ? AND stan = 'oczekujaca'`
 )
 
-// ZapiszSugestie zakłada sugestię albo zmienia zastaną.
+// ZapiszSugestie zakłada sugestię porządkującą albo zmienia zastaną sugestię tego samego kodu w bazie.
 func (r *repozytoriumBiblioteki) ZapiszSugestie(ctx context.Context,
 	sugestia SugestiaBiblioteki) (SugestiaBiblioteki, error) {
 
@@ -87,7 +82,7 @@ func (r *repozytoriumBiblioteki) ZapiszSugestie(ctx context.Context,
 	return r.Sugestia(ctx, sugestia.Kod)
 }
 
-// Sugestia zwraca sugestię o wskazanym kodzie.
+// Sugestia zwraca sugestię porządkującą o wskazanym kodzie zewnętrznym wprost z bazy danych repozytorium.
 func (r *repozytoriumBiblioteki) Sugestia(ctx context.Context, kod string) (SugestiaBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSugestieBiblioteki)
 	if err != nil {
@@ -103,11 +98,7 @@ func (r *repozytoriumBiblioteki) Sugestia(ctx context.Context, kod string) (Suge
 	return sugestia, nil
 }
 
-// Sugestie zwraca sugestie oczekujące na decyzję, od najnowszej.
-//
-// Wykaz z założenia pokazuje wyłącznie oczekujące: `library.suggestion.list`
-// mówi o sugestiach „oczekujących na decyzję Operatora", a sugestia
-// rozstrzygnięta jest wpisem historii, nie propozycją.
+// Sugestie zwraca sugestie oczekujące na decyzję, od najnowszej; sugestia rozstrzygnięta jest wpisem historii.
 func (r *repozytoriumBiblioteki) Sugestie(ctx context.Context, plikKod *string,
 	rodzaje []string, limit int) ([]SugestiaBiblioteki, int, error) {
 
@@ -185,7 +176,7 @@ func (r *repozytoriumBiblioteki) RozstrzygnijSugestie(ctx context.Context, kody 
 	return rozstrzygniete, nil
 }
 
-// odczytajSugestieBiblioteki składa sugestię z jednego wiersza wyniku.
+// odczytajSugestieBiblioteki składa sugestię wprost z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajSugestieBiblioteki(wiersz skaner) (SugestiaBiblioteki, error) {
 	var sugestia SugestiaBiblioteki
 	var wartosc, rozstrzygnieto sql.NullString

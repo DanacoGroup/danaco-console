@@ -1,30 +1,5 @@
-// Odpowiedzialność pliku: moduł Translate — składanie poleceń dla modelu
-// i wiązanie słownika Operatora z przekładem. Własnego silnika tłumaczeń tu nie
-// ma; przekład idzie kanałem modelu, więc cała wiedza modułu o tym, jak ma
-// wyglądać dobry przekład, mieści się w treści polecenia.
-//
-// adapter_modul_tlumaczenie_model.go odpowiada za drogę do modelu (wybór
-// kanału, wywołanie, rozgłoszenie), ten plik — za treść polecenia. Nowy termin
-// słownika albo nowa zasada jakości rusza ten plik, a nie tamten.
-//
-// Słownik Operatora wiąże przekład dwiema drogami:
-//
-//  1. Przed wywołaniem terminy wchodzą do polecenia jako wykaz obowiązkowych
-//     odpowiedników i wykaz nazw nietykalnych (`wskazaniaSlownika`). Model,
-//     który zna słownik, użyje właściwego słowa w odmienionej formie i we
-//     właściwym miejscu zdania — czego podmiana napisu nie potrafi.
-//  2. Po wywołaniu wynik przechodzi tę samą mechaniczną podmianę, co
-//     w `glossary.apply` (`zastosujTerminySlownika`,
-//     adapter_modul_tlumaczenie_slownik.go). Podmiana wyłapuje termin
-//     zostawiony w brzmieniu źródłowym, lecz nie zastępuje punktu pierwszego —
-//     trafia wyłącznie w formę podstawową.
-//
-// Zasady jakości także wchodzą do polecenia. Kontrakt zna sześć rodzajów
-// niezgodności (`TranslationIssueKind`: number, date, currency, placeholder,
-// length, omission) i moduł szuka ich potem w wyniku (`quality.check`).
-// `zasadyJakosci` wyprowadza treść zasad wprost ze stałych kontraktu, żeby
-// jedna definicja wady przekładu nie rozjechała się na inną w poleceniu i inną
-// w kontroli.
+// Odpowiedzialność pliku: moduł Translate — składanie poleceń dla modelu i wiązanie
+// słownika Operatora z przekładem, bo cała wiedza o dobrym przekładzie mieści się w poleceniu.
 package core
 
 import (
@@ -35,35 +10,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// wiazaniaSlownika to słownik Operatora zawężony do jednego przekładu:
-// odpowiedniki obowiązujące w języku docelowym i nazwy nietykalne.
-//
-// Rozdział na dwa wykazy jest istotny, nie kosmetyczny. Odpowiednik dotyczy
-// jednego języka docelowego — „invoice → faktura" nie obowiązuje w przekładzie
-// na niemiecki. Nietykalność dotyczy terminu, nie języka: nazwa własna produktu
-// ma zostać nietknięta w każdym przekładzie, więc wykaz nietykalnych zbiera
-// terminy wszystkich języków słownika. Zawężenie ich do języka panelu byłoby
-// cichym rozluźnieniem zakazu Operatora.
+// wiazaniaSlownika to słownik Operatora zawężony do jednego przekładu: odpowiedniki
+// obowiązujące w języku docelowym i nazwy nietykalne obowiązujące we wszystkich językach.
 type wiazaniaSlownika struct {
 	odpowiedniki []dane.TerminSlownika
 	nietykalne   []dane.TerminSlownika
 }
 
-// puste mówi, czy słownik nie wniósł do tego przekładu niczego — wtedy
-// polecenie nie niesie bloku słownika w ogóle. Pusty nagłówek „SŁOWNIK
-// OPERATORA" bez ani jednej pozycji jest szumem, który tylko rozprasza model.
+// puste mówi, czy słownik nie wniósł do tego przekładu niczego — wtedy polecenie nie
+// niesie bloku słownika w ogóle, żeby nie rozpraszać modelu pustym nagłówkiem.
 func (w wiazaniaSlownika) puste() bool {
 	return len(w.odpowiedniki) == 0 && len(w.nietykalne) == 0
 }
 
-// wiazaniaSlownikaDlaJezyka czyta słownik Operatora i zawęża go do przekładu
-// na wskazany język wedle zasady opisanej przy `wiazaniaSlownika`.
-//
-// Błąd odczytu nie jest tu odmową całego przekładu — jest nią w wywołującym
-// (`przetlumaczModelem`). Przekład bez słownika, o który Operator prosił, jest
-// przekładem cudzym, a nie „prawie dobrym", więc lepiej odmówić wprost niż po
-// cichu oddać wynik ignorujący terminologię. Dlatego ta funkcja oddaje błąd,
-// zamiast go połykać.
+// wiazaniaSlownikaDlaJezyka czyta słownik Operatora i zawęża go do przekładu na wskazany
+// język; błąd odczytu oddaje wprost, zamiast po cichu ignorować terminologię.
 func (a *adapterTlumaczenia) wiazaniaSlownikaDlaJezyka(ctx context.Context,
 	jezykDocelowy string) (wiazaniaSlownika, error) {
 
@@ -86,8 +47,7 @@ func (a *adapterTlumaczenia) wiazaniaSlownikaDlaJezyka(ctx context.Context,
 			continue
 		}
 		if termin.Cel == nil || strings.TrimSpace(*termin.Cel) == "" {
-			// Termin bez odpowiednika nie niesie żadnego polecenia dla modelu:
-			// Operator zaznaczył słowo, ale nie powiedział, czym je zastąpić.
+			// Termin bez odpowiednika nie niesie żadnego polecenia dla modelu.
 			continue
 		}
 		wynik.odpowiedniki = append(wynik.odpowiedniki, termin)
@@ -95,10 +55,8 @@ func (a *adapterTlumaczenia) wiazaniaSlownikaDlaJezyka(ctx context.Context,
 	return wynik, nil
 }
 
-// wskazaniaSlownika przekłada zawężony słownik na blok polecenia. Uwaga
-// Operatora (`Uwaga`, kolumna `uwaga`) idzie do modelu razem z odpowiednikiem —
-// bywa, że to ona niesie właściwy powód wyboru słowa („w umowach, nie w
-// marketingu"), a bez niej model dostałby samą parę napisów.
+// wskazaniaSlownika przekłada zawężony słownik na blok polecenia; uwaga Operatora idzie
+// do modelu razem z odpowiednikiem, bo bywa, że niesie powód wyboru słowa.
 func wskazaniaSlownika(w wiazaniaSlownika) string {
 	if w.puste() {
 		return ""
@@ -129,12 +87,8 @@ func wskazaniaSlownika(w wiazaniaSlownika) string {
 	return b.String()
 }
 
-// zasadyJakosci składa blok zasad z rodzajów niezgodności kontraktu. Każda
-// zasada jest wprost sparowana ze stałą `TranslationIssueKind`, żeby widać
-// było, że polecenie i kontrola mówią o tym samym (nagłówek pliku). Rodzaj
-// `omission` jest tu obecny, choć `quality.check` go nie sprawdza (wymagałby
-// rozumienia treści) — polecenie może żądać rzeczy, której kontrola potem nie
-// zweryfikuje; odwrotnie byłoby nieuczciwie.
+// zasadyJakosci składa blok zasad z rodzajów niezgodności kontraktu; każda zasada jest
+// wprost sparowana ze stałą kontraktu, żeby polecenie i kontrola mówiły o tym samym.
 func zasadyJakosci() string {
 	zasady := []struct {
 		rodzaj shared.TranslationIssueKind
@@ -161,15 +115,8 @@ func zasadyJakosci() string {
 	return b.String()
 }
 
-// poleceniePrzekladu składa treść wywołania modelu dla przekładu jednego
-// panelu: żądany język, ton panelu (gdy Operator go ustawił), słownik
-// Operatora, zasady jakości i dopiero na końcu tekst źródłowy.
-//
-// Kolejność nie jest przypadkowa — polecenia idą przed tekstem, żeby model
-// czytał je jako instrukcję, a nie jako część materiału do przełożenia; sam
-// tekst źródłowy zamyka polecenie pod wyraźnym nagłówkiem z tego samego
-// powodu. Żądanie „oddaj wyłącznie przekład" zostaje, bo treść panelu ma być
-// tłumaczeniem, nie rozmową o tłumaczeniu.
+// poleceniePrzekladu składa treść wywołania modelu dla przekładu jednego panelu: żądany
+// język, ton, słownik Operatora, zasady jakości i dopiero na końcu tekst źródłowy.
 func poleceniePrzekladu(jezykDocelowy string, ton *string, w wiazaniaSlownika, tekstZrodlowy string) string {
 	var b strings.Builder
 	b.WriteString("Przetłumacz poniższy tekst na język: " + jezykDocelowy + ".\n")
@@ -185,13 +132,8 @@ func poleceniePrzekladu(jezykDocelowy string, ton *string, w wiazaniaSlownika, t
 	return b.String()
 }
 
-// polecenieTlumaczeniaZwrotnego składa treść wywołania dla `backtranslation.run`.
-// Tłumaczenie zwrotne służy kontroli wierności, więc polecenie jest odwrotnością
-// polecenia przekładu w jednym istotnym punkcie: słownik do niego nie wchodzi. Gdyby
-// wszedł, przekład zwrotny „naprawiałby” terminologię z powrotem na brzmienie
-// źródłowe i Operator zobaczyłby zgodność tam, gdzie jej nie ma — kontrola
-// przestałaby cokolwiek kontrolować. Z tego samego powodu żądamy przekładu
-// dosłownego, nie gładkiego.
+// polecenieTlumaczeniaZwrotnego składa treść wywołania dla `backtranslation.run`; słownik
+// do niego nie wchodzi, bo tłumaczenie zwrotne służy kontroli wierności przekładu.
 func polecenieTlumaczeniaZwrotnego(jezykZrodlowy, tekstPanelu string) string {
 	return "Przetłumacz poniższy tekst z powrotem na język: " + jezykZrodlowy + ".\n" +
 		"To jest KONTROLA WIERNOŚCI przekładu: tłumacz możliwie dosłownie, oddając to, " +

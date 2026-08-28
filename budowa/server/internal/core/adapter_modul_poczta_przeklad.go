@@ -1,13 +1,4 @@
-// Odpowiedzialność pliku: przekład między kształtem rdzenia a kształtem
-// kontraktu — wiersz skrzynki i nagłówek listu na typy `shared`, plus drobne
-// pomocniki wartości opcjonalnych. Osobno od czynności, bo przekład
-// czyta się inaczej niż logikę i zmienia z innego powodu: przy zmianie
-// kontraktu, a nie przy zmianie zachowania.
-//
-// Pusto znaczy „nie wiem", nigdy „zero". Kontrakt opisuje brak wartości brakiem
-// pola, więc pole wypełnione pustym tekstem albo zerem byłoby cechą, której
-// nikt nie wskazał. Pomocniki niżej pilnują tej granicy w jednym miejscu,
-// zamiast powtarzać ją przy każdym polu.
+// Odpowiedzialność pliku: przekład między kształtem rdzenia a kształtem kontraktu — wiersz skrzynki, nagłówek listu na typy shared, plus pomocniki wartości opcjonalnych.
 package core
 
 import (
@@ -18,21 +9,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// skrzynkaKontraktu przekłada wiersz skrzynki na `MailAccount`.
-//
-// Poświadczenia w tym przekładzie nie ma i nie ma jak być: `MailAccount` nie
-// niesie pola na sekret, a wiersz — kolumny z sekretem. Odwołanie sejfu
-// (`haslo_odwolanie`) też tu nie wchodzi: nazwa wpisu sejfu jest sprawą rdzenia,
-// nie klienta.
+// skrzynkaKontraktu przekłada wiersz skrzynki na MailAccount, bez poświadczenia ani odwołania sejfu, sprawy rdzenia, nie klienta.
 func skrzynkaKontraktu(w dane.SkrzynkaOperatora, lacznosc bool) shared.MailAccount {
 	zrodlo := shared.MailAccountSource(w.Zrodlo)
 	skrzynka := shared.MailAccount{
 		Id:      w.Kod,
 		Address: w.Adres,
-		// `Server` jest polem wymaganym kontraktu i mówi „serwer poczty
-		// przychodzącej" — tym samym, co `IncomingHost` obok. Powielenie jest
-		// w kontrakcie, nie tutaj; wypełniamy oba tą samą wartością, bo dwie
-		// różne byłyby dwiema prawdami o jednym serwerze.
+		// Server jest polem wymaganym kontraktu, tym samym co IncomingHost; powielenie jest w kontrakcie.
 		Server:       w.HostOdbioru,
 		Connected:    lacznosc,
 		Protocol:     shared.MailProtocol(w.Protokol),
@@ -47,14 +30,7 @@ func skrzynkaKontraktu(w dane.SkrzynkaOperatora, lacznosc bool) shared.MailAccou
 	return skrzynka
 }
 
-// rozpoznanaKontraktu przekłada skrzynkę odczytaną z urządzenia.
-//
-// `Id` jest puste i nie jest to przeoczenie: rozpoznana skrzynka nie jest
-// podpięta — nie ma wiersza, nie ma kodu i nie da się jej wskazać w żadnej
-// komendzie. Zmyślony identyfikator wyglądałby jak skrzynka gotowa do użycia,
-// a pierwsze wywołanie z nim odmówiłoby „platforma nie zna skrzynki".
-// `Connected` jest z tego samego powodu fałszem: rdzeń się z nią nie łączył,
-// bo haseł z urządzenia nie bierze.
+// rozpoznanaKontraktu przekłada skrzynkę odczytaną z urządzenia; Id i Connected zostają puste, bo skrzynka nie jest podpięta ani rdzeń się z nią nie łączył.
 func rozpoznanaKontraktu(r poczta.Rozpoznana) shared.MailAccount {
 	zrodlo := shared.MailAccountSource(shared.MailAccountSourceUrzadzenie)
 	return shared.MailAccount{
@@ -91,8 +67,7 @@ func wiadomoscKontraktu(n poczta.Naglowek) shared.MailMessage {
 	}
 }
 
-// Tekst opcjonalny bierze się z `tekstOpcjonalny` w `akcje.go`; drugi taki
-// pomocnik byłby drugą prawdą o tym, czym jest brak wartości.
+// Tekst opcjonalny bierze się z tekstOpcjonalny w akcje.go, jedynego pomocnika brakującej wartości.
 
 // liczbaOpcjonalna oddaje wskaźnik na liczbę dodatnią albo nic. Port zerowy
 // nie istnieje, więc zero jest tu brakiem wskazania, nie wartością.
@@ -103,7 +78,7 @@ func liczbaOpcjonalna(wartosc int) *int {
 	return &wartosc
 }
 
-// wartoscLubPustka rozpakowuje wskaźnik na tekst — brak znaczy pustkę.
+// wartoscLubPustka rozpakowuje wskaźnik na tekst — brak znaczy pustkę, wartość niewskazaną w żądaniu klienta.
 func wartoscLubPustka(wskaznik *string) string {
 	if wskaznik == nil {
 		return ""
@@ -120,7 +95,7 @@ func wartoscLubZero(wskaznik *int) int {
 	return *wskaznik
 }
 
-// pierwszyTekstNiepusty oddaje pierwszą niepustą wartość z podanych.
+// pierwszyTekstNiepusty oddaje pierwszą niepustą wartość z podanych, dla ustalenia wartości z priorytetem.
 func pierwszyTekstNiepusty(wartosci ...string) string {
 	for _, w := range wartosci {
 		if strings.TrimSpace(w) != "" {

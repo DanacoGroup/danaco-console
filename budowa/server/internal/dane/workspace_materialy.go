@@ -1,10 +1,6 @@
-// Odpowiedzialność pliku: byty projektu, które są MATERIAŁEM, a nie planem ani
-// śladem — tablica wizualna (tabela `tablica_wizualna_projektu`), wskaźnik
-// treści plików (tabela `wyciag_tekstu_projektu`) i pozycje kalendarza
-// wciągnięte z iCal (tabela `pozycja_kalendarza_projektu`).
-//
-// Tutaj leżą także dwie czynności na samym projekcie, które nie miały dotąd
-// pisarza: zmiana stanu projektu i odłączenie eksperta.
+// Plik niesie byty projektu będące materiałem: tablicę wizualną, wskaźnik
+// treści plików i pozycje kalendarza wciągnięte z iCal. Niesie też zmianę
+// stanu projektu i odłączenie eksperta.
 package dane
 
 import (
@@ -17,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// TablicaWorkspace to wiersz tablicy wizualnej projektu.
+// TablicaWorkspace to wiersz tablicy wizualnej projektu: karta ze sceną, nazwą
+// i znacznikami czasu, powiązana z projektem przez jego identyfikator.
 type TablicaWorkspace struct {
 	ProjektID      int64
 	ProjektKod     string
@@ -28,7 +25,8 @@ type TablicaWorkspace struct {
 	Zaktualizowano string
 }
 
-// WyciagWorkspace to wiersz wskaźnika treści jednego pliku projektu.
+// WyciagWorkspace to wiersz wskaźnika treści jednego pliku projektu: sposób
+// wydobycia, sama treść, liczba znaków oraz rozpoznane języki treści.
 type WyciagWorkspace struct {
 	ProjektID    int64
 	Plik         string
@@ -39,7 +37,8 @@ type WyciagWorkspace struct {
 	Utworzono    string
 }
 
-// PozycjaKalendarzaWorkspace to wiersz kalendarza projektu wciągnięty z iCal.
+// PozycjaKalendarzaWorkspace to wiersz kalendarza projektu wciągnięty z iCal:
+// tytuł, granice czasowe, znacznik kamienia milowego i reguła powtarzalności.
 type PozycjaKalendarzaWorkspace struct {
 	ProjektID            int64
 	Identyfikator        string
@@ -111,7 +110,8 @@ const (
 	                         WHERE projekt_id = ? AND agent_kod = ?`
 )
 
-// ZapiszTabliceWorkspace zakłada albo zmienia tablicę wizualną projektu.
+// ZapiszTabliceWorkspace zakłada albo zmienia tablicę wizualną projektu:
+// przy zgodnym identyfikatorze zewnętrznym nadpisuje nazwę i scenę tablicy.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszTabliceWorkspace(ctx context.Context,
 	tablica TablicaWorkspace) (TablicaWorkspace, error) {
 
@@ -131,7 +131,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszTabliceWorkspace(ctx context.Con
 	return r.TablicaWorkspace(ctx, tablica.Identyfikator)
 }
 
-// TablicaWorkspace zwraca jedną tablicę wizualną po identyfikatorze.
+// TablicaWorkspace zwraca jedną tablicę wizualną po identyfikatorze zewnętrznym.
+// Brak wiersza w bazie skutkuje błędem ErrBrakWiersza.
 func (r *repozytoriumPrzestrzeniRoboczej) TablicaWorkspace(ctx context.Context,
 	identyfikator string) (TablicaWorkspace, error) {
 
@@ -150,7 +151,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) TablicaWorkspace(ctx context.Context,
 	return tablica, nil
 }
 
-// TabliceWorkspace zwraca komplet tablic wizualnych projektu.
+// TabliceWorkspace zwraca komplet tablic wizualnych projektu, uporządkowany
+// według kolejności założenia wierszy w bazie.
 func (r *repozytoriumPrzestrzeniRoboczej) TabliceWorkspace(ctx context.Context,
 	projektID int64) ([]TablicaWorkspace, error) {
 
@@ -178,7 +180,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) TabliceWorkspace(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszWyciagWorkspace odkłada treść wydobytą z pliku projektu.
+// ZapiszWyciagWorkspace odkłada treść wydobytą z pliku projektu, sposób jej
+// wydobycia oraz rozpoznane języki; przy zgodnej ścieżce nadpisuje wcześniejszy wiersz.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszWyciagWorkspace(ctx context.Context,
 	wyciag WyciagWorkspace) error {
 
@@ -194,7 +197,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) ZapiszWyciagWorkspace(ctx context.Cont
 	return nil
 }
 
-// WyciagWorkspace zwraca wyciąg treści jednego pliku projektu.
+// WyciagWorkspace zwraca wyciąg treści jednego pliku projektu, wskazanego
+// identyfikatorem projektu i ścieżką pliku.
 func (r *repozytoriumPrzestrzeniRoboczej) WyciagWorkspace(ctx context.Context,
 	projektID int64, plik string) (WyciagWorkspace, error) {
 
@@ -256,7 +260,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) UsunWyciagWorkspace(ctx context.Contex
 	return nil
 }
 
-// ZapiszPozycjeKalendarzaWorkspace odkłada pozycję kalendarza wciągniętą z iCal.
+// ZapiszPozycjeKalendarzaWorkspace odkłada pozycję kalendarza wciągniętą z iCal;
+// przy zgodnym identyfikatorze zewnętrznym nadpisuje jej pola.
 func (r *repozytoriumPrzestrzeniRoboczej) ZapiszPozycjeKalendarzaWorkspace(ctx context.Context,
 	pozycja PozycjaKalendarzaWorkspace) error {
 
@@ -342,7 +347,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) OdlaczAgentaWorkspace(ctx context.Cont
 	return zmienione > 0, nil
 }
 
-// odczytajTabliceWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajTabliceWorkspace składa strukturę TablicaWorkspace z jednego wiersza
+// wyniku zapytania, w kolejności kolumn kolumnyTablicyWorkspace.
 func odczytajTabliceWorkspace(wiersz skaner) (TablicaWorkspace, error) {
 	var tablica TablicaWorkspace
 	err := wiersz.Scan(&tablica.ProjektID, &tablica.ProjektKod, &tablica.Identyfikator,
@@ -353,7 +359,8 @@ func odczytajTabliceWorkspace(wiersz skaner) (TablicaWorkspace, error) {
 	return tablica, nil
 }
 
-// odczytajWyciagWorkspace składa strukturę z jednego wiersza wyniku.
+// odczytajWyciagWorkspace składa strukturę WyciagWorkspace z jednego wiersza
+// wyniku, rozdzielając zapisane w bazie języki treści na listę.
 func odczytajWyciagWorkspace(wiersz skaner) (WyciagWorkspace, error) {
 	var wyciag WyciagWorkspace
 	var sposob, jezyki string

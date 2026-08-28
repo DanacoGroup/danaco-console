@@ -1,31 +1,6 @@
 // Odpowiedzialność pliku: złożenie silnika osadzeń w jeden byt i przeprowadzenie
-// jednego zlecenia — od tekstów do wektorów.
-//
-// Jeden silnik, nie dwa. Osadzenia liczy się w dwóch chwilach — przy budowaniu
-// wskaźnika (`knowledge.index`) i przy zapytaniu (`knowledge.search`) — i musi
-// je liczyć ten sam model tym samym sposobem. Wektor dokumentu policzony jednym
-// modelem, a wektor pytania drugim, dają iloczyn skalarny, który jest liczbą
-// i nawet wygląda sensownie, a nie znaczy nic. Dlatego model jest jednym polem
-// jednego bytu, a nie dwoma stałymi w dwóch miejscach.
-//
-// Proces startuje wyłącznie przez `zewnetrzne.Wolaj`: w całym produkcie stoi
-// dokładnie jedno `exec.Command`, a każde uruchomienie idzie tą samą bramą
-// izolacji okna i tym samym obejmowaniem potomstwa. Proces Pythona liczący na
-// wielu wątkach bez objęcia drzewem zostawiałby sieroty po każdym przekroczeniu
-// czasu.
-//
-// Każde wołanie wczytuje model od nowa: prawie cały czas zlecenia to start
-// procesu i wczytanie wag (rząd gigabajta) do pamięci, a nie samo porównanie
-// wektorów. Proces rezydentny skróciłby zapytanie, ale wymaga dwukierunkowej
-// rozmowy z procesem żyjącym między żądaniami, a `zewnetrzne.Wolaj` prowadzi
-// rozmowę jednorazową i jest jedyną dozwoloną drogą startu procesu — zmiana tego
-// jest zmianą w `zewnetrzne/**`, poza terytorium tego pliku.
-//
-// Granica czasu jest dwojaka. Pierwsze uruchomienie pobiera wagi modelu, więc
-// granica budowania wskaźnika jest liczona w minutach; zapytanie ma wagi już na
-// dysku i granica jest liczona w sekundach. Jedna wspólna granica byłaby albo za
-// krótka na pobranie, albo tak długa, że zawieszone zapytanie wyglądałoby na
-// pracujące.
+// jednego zlecenia — od tekstów do wektorów. Model jest jednym polem jednego
+// bytu, bo osadzenia wskaźnika i zapytania musi liczyć ten sam model.
 package wiedza
 
 import (
@@ -41,22 +16,19 @@ import (
 
 const (
 	// LimitBudowania — granica czasu jednej partii osadzeń przy budowaniu
-	// wskaźnika. Obejmuje pobranie wag przy pierwszym uruchomieniu.
+	// wskaźnika, obejmująca pobranie wag przy pierwszym uruchomieniu procesu.
 	LimitBudowania = 20 * time.Minute
-	// LimitZapytania — granica czasu osadzenia jednego pytania.
+	// LimitZapytania — granica czasu osadzenia jednego pytania, krótsza niż
+	// budowania, bo wagi leżą już na dysku po pierwszym uruchomieniu.
 	LimitZapytania = 2 * time.Minute
-	// wielkoscPartii — ile fragmentów idzie do pomocnika za jednym razem.
-	// Uruchomienie procesu kosztuje kilka sekund (wczytanie wag), więc partia
-	// ma być duża; wykaz w pliku JSON o kilkuset fragmentach to kilkaset
-	// kilobajtów, czyli nic.
+	// wielkoscPartii — ile fragmentów idzie do pomocnika za jednym razem,
+	// dobrane duże, bo start procesu i wczytanie wag kosztuje kilka sekund.
 	wielkoscPartii = 256
 )
 
-// Silnik liczy osadzenia pomocnikiem lokalnym.
-//
-// Ustawienia trzymane są w silniku, a nie odczytywane przy każdym zleceniu:
-// wołający składa je z konfiguracji zasięgu i podaje gotowe — dwie drogi do tej
-// samej wartości byłyby dwiema prawdami.
+// Silnik liczy osadzenia pomocnikiem lokalnym. Ustawienia trzymane są
+// w silniku, a nie odczytywane przy każdym zleceniu: wołający składa je
+// z konfiguracji zasięgu i podaje gotowe.
 type Silnik struct {
 	// uruchamiacz — jedyna droga startu procesu w drzewie.
 	uruchamiacz session.Uruchamiacz
@@ -66,7 +38,8 @@ type Silnik struct {
 	ustawienia Ustawienia
 }
 
-// NowySilnik zakłada silnik na uruchamiaczu procesów i katalogu danych.
+// NowySilnik zakłada silnik na uruchamiaczu procesów i katalogu danych,
+// z domyślnym modelem i domyślnymi limitami czasu, gotowy do użycia.
 func NowySilnik(uruchamiacz session.Uruchamiacz, katalogDanych string) *Silnik {
 	return &Silnik{
 		uruchamiacz:   uruchamiacz,
@@ -75,13 +48,15 @@ func NowySilnik(uruchamiacz session.Uruchamiacz, katalogDanych string) *Silnik {
 	}
 }
 
-// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji.
+// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji,
+// zastępując wartości domyślne modelu i limitów czasu.
 func (s *Silnik) ZUstawieniami(u Ustawienia) *Silnik {
 	s.ustawienia = u
 	return s
 }
 
-// Ustawienia oddaje nastawy, którymi silnik dziś pracuje.
+// Ustawienia oddaje nastawy, którymi silnik dziś pracuje: model i limity
+// czasu, tak jak zostały mu ustawione przy montażu albo domyślnie założone.
 func (s *Silnik) Ustawienia() Ustawienia {
 	return s.ustawienia
 }
@@ -113,12 +88,8 @@ type odpowiedz struct {
 	WagaMb  int         `json:"wagaMb"`
 }
 
-// Gotowy sprawdza, czy silnik ma czym liczyć, nie licząc niczego.
-//
-// Sprawdzenie idzie przed budowaniem wskaźnika i przed zapytaniem, bo odmowa
-// „nie ma czym" jest dla Operatora czymś innym niż „liczyło i się wywróciło".
-// Kosztuje jedno uruchomienie pomocnika z pustym wykazem tekstów — pomocnik
-// przygotowuje model i wraca, więc przy pierwszym razie pobierze też wagi.
+// Gotowy sprawdza, czy silnik ma czym liczyć, nie licząc niczego naprawdę.
+// Kosztuje jedno uruchomienie pomocnika z pustym wykazem tekstów.
 func (s *Silnik) Gotowy(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar, limit time.Duration) error {
 
@@ -126,16 +97,9 @@ func (s *Silnik) Gotowy(ctx context.Context, okno session.Okno,
 	return err
 }
 
-// Osadz zamienia teksty na wektory, zachowując ich kolejność.
-//
-// Partiami, nie wszystko naraz: wykaz kilkudziesięciu tysięcy fragmentów
-// w jednym pliku zlecenia zająłby pomocnikowi pamięć proporcjonalną do całej
-// biblioteki. Kolejność wektorów odpowiada kolejności tekstów i to jest
-// warunek — wołający wiąże je pozycją, nie treścią.
-//
-// Wykaz pusty oddaje wykaz pusty bez uruchamiania procesu: „osadź nic" nie jest
-// pytaniem o gotowość silnika, tylko pracą, której nie ma (od pytania jest
-// `Gotowy`).
+// Osadz zamienia teksty na wektory, zachowując ich kolejność. Idzie
+// partiami, nie wszystko naraz. Wykaz pusty oddaje wykaz pusty bez
+// uruchamiania procesu.
 func (s *Silnik) Osadz(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	teksty []string, limit time.Duration) ([][]float32, error) {
@@ -164,7 +128,8 @@ func (s *Silnik) Osadz(ctx context.Context, okno session.Okno,
 	return wektory, nil
 }
 
-// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź.
+// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź,
+// z granicą czasu wskazaną wołaniem, nigdy bez niej.
 func (s *Silnik) wolaj(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	teksty []string, limit time.Duration) ([][]float32, error) {
@@ -193,9 +158,7 @@ func (s *Silnik) wolaj(ctx context.Context, okno session.Okno,
 		Program: odnajdzInterpreter(s.ustawienia.Program),
 		Pakiet:  "python3 wraz z biblioteką fastembed",
 	}
-	// `-X utf8` idzie zawsze: pomocnik oddaje polski tekst w odpowiedzi, a Python
-	// bez tego przełącznika koduje wyjście według ustawień regionalnych systemu —
-	// na polskim Windowsie stroną 1250, w której JSON rozpada się na krzaki.
+	// `-X utf8` idzie zawsze, bo Python bez niego koduje wyjście regionalnie.
 	wynik, err := zewnetrzne.Wolaj(ctx, s.uruchamiacz, okno, zasady, obszar,
 		narzedzie, []string{"-X", "utf8", skrypt, sciezkaZlecenia}, "", limit)
 	if err != nil {

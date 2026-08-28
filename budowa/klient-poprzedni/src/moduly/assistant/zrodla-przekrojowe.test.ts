@@ -8,25 +8,9 @@ import { utworzZrodloMowy } from './zrodlo-mowy';
 import { utworzZrodloSchowka } from './zrodlo-schowka';
 import { utworzZrodloZaplecza } from './zrodlo-zaplecza';
 
-/**
- * Sprawdzian dróg klienckich rodzin przekrojowych obsługiwanych przez moduł
- * Assistant: `speech.*`, `memory.context.*`, `memory.retention.*`,
- * `context.usage.*`, `clipboard.*`, `snippet.*`, `launcher.*` oraz
- * `assistant.*`.
- *
- * Pyta o jedno: czy KAŻDA komenda tych rodzin ma drogę z okna do rdzenia.
- * Wykaz oczekiwany nie jest tu przepisany — bierze się ze stałych kontraktu,
- * a wykaz rzeczywisty z komend, które źródła naprawdę wysłały. Komenda
- * dołożona do kontraktu i pominięta w oknie wypadnie tu jako brak, bez
- * dopisywania czegokolwiek w tym pliku.
- *
- * Sprawdzian mierzy WARSTWĘ KLIENCKĄ, nie rdzeń: kanał jest próbny i tylko
- * zapamiętuje nazwy. To wystarcza, bo pytanie brzmi „czy okno ma czym zawołać",
- * a nie „czy rdzeń odpowie" — na to drugie odpowiadają sprawdziany skutku po
- * stronie Go.
- */
+/** Sprawdzian dróg klienckich rodzin przekrojowych obsługiwanych przez moduł Assistant. */
 
-/** Kanał próbny: zapamiętuje komendy i oddaje odpowiedź pustą. */
+/** Kanał próbny zapamiętuje komendy i oddaje odpowiedź pustą, mierząc warstwę kliencką, nie zachowanie rdzenia. */
 function kanalProbny(): { kanal: Kanal; wyslane: string[] } {
   const wyslane: string[] = [];
   const kanal = {
@@ -43,7 +27,7 @@ function kanalProbny(): { kanal: Kanal; wyslane: string[] } {
   return { kanal, wyslane };
 }
 
-/** Wywołuje każdą czynność czterech źródeł raz — pełny przelot rodzin. */
+/** Wywołuje każdą czynność czterech źródeł raz, dając pełny przelot rodzin komend przekrojowych tego modułu. */
 async function przelotZrodel(kanal: Kanal): Promise<void> {
   const asystent = utworzZrodloAssistant(kanal);
   await asystent.polecenie({
@@ -56,8 +40,7 @@ async function przelotZrodel(kanal: Kanal): Promise<void> {
   await asystent.dziennik('okno-1', '');
   await asystent.oznaczWpis('wpis-1', true, 'do przeglądu');
 
-  // Dwie komendy mowy zastane mieszkają w zapleczu modułu, bo tam stały, zanim
-  // rodzina urosła: sprawdzenie silnika i transkrypcja jednego nagrania.
+  // Dwie komendy mowy zastane mieszkają w zapleczu modułu, bo tam stały, zanim rodzina urosła.
   const zaplecze = utworzZrodloZaplecza(kanal);
   await zaplecze.silnikMowy();
   await zaplecze.transkrypcja({ audioRef: '/dane/nagrania-mowy/nagranie-1.wav' });
@@ -111,7 +94,7 @@ async function przelotZrodel(kanal: Kanal): Promise<void> {
   await schowek.zapiszSkrotGlobalny('Ctrl+Shift+Space');
 }
 
-/** Rodziny, których drogi pilnuje ten plik. */
+/** Rodziny, których drogi pilnuje ten plik, porównane z wykazem komend, które źródła naprawdę wysłały do rdzenia. */
 const RODZINY = [
   'speech.',
   'memory.context.',
@@ -154,19 +137,14 @@ describe('źródła rodzin przekrojowych modułu Assistant', () => {
     await schowek.dopisz({ tresc: 'ustalenia' });
     const zadanie = wyslane[Command.ClipboardPush] as Record<string, unknown>;
 
-    // Rodzaj wpisu, okno źródłowe i znacznik wrażliwości są rozstrzygnięciami
-    // Operatora. Wysłane „na wszelki wypadek" byłyby zdaniem o jego woli,
-    // którego nie wypowiedział — a `sensitive: false` wyłączyłoby ochronę,
-    // o której nikt nie mówił.
+    // Rodzaj wpisu, okno źródłowe i znacznik wrażliwości są rozstrzygnięciami Operatora.
     expect(Object.keys(zadanie).sort()).toEqual(['content']);
 
     const mowa = utworzZrodloMowy(kanal);
     await mowa.zapiszWybudzanie({ fraza: 'Danaco' });
     const nastawa = wyslane[Command.SpeechWakeSet] as Record<string, unknown>;
 
-    // `speech.wake.set` zostawia pola pominięte bez zmian. Wysłanie trybu ani
-    // progu, których Operator nie ruszył, nadpisałoby jego nastawę wartością
-    // domyślną okna.
+    // Zapis wybudzenia zostawia pola pominięte bez zmian, inaczej nadpisałby nastawę Operatora.
     expect(Object.keys(nastawa).sort()).toEqual(['phrase']);
   });
 });

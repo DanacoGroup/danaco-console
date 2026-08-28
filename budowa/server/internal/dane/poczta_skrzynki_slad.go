@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: ślad wysyłki — wiersz tabeli `list_wyslany`
-// zakładany po każdym wywołaniu `mail.send`, udanym i nieudanym.
-//
-// Ślad powstaje bezwarunkowo, bo `mail.send` jest jedyną komendą rdzenia, której
-// skutek wychodzi poza maszynę Operatora i której nie da się cofnąć. Zapis jest
-// jawny, trwały i niezależny od tego, czy okno rozmowy jeszcze istnieje —
-// odtwarza, co wyszło ze skrzynki i kiedy.
-//
-// Wysyłka nieudana także jest wierszem: `powodzenie = 0` i treść błędu. Reguła
-// CHECK schematu pilnuje zgodności obu kolumn — wysyłka udana nie może nieść
-// błędu, nieudana musi go nieść. Dziennik z samymi powodzeniami sugerowałby,
-// że wszystko doszło.
-//
-// Treść listu idzie do śladu w całości, bajty załączników nie: leżą w magazynie
-// rdzenia pod sumą sha256, a ślad wskazuje je nazwami w treści.
+// Plik utrwala ślad każdej wysyłki listu w tabeli list_wyslany, zapisywany
+// bezwarunkowo po każdym wywołaniu wysyłki, zarówno udanym, jak i nieudanym.
 package dane
 
 import (
@@ -33,13 +20,14 @@ type SladWysylki struct {
 	Blad          *string
 }
 
-// zapiszSladWysylkiSQL wstawia wiersz do `list_wyslany` — drugiej tabeli na
-// ślad wysyłki nie ma.
+// zapiszSladWysylkiSQL wstawia jeden wiersz do tabeli list_wyslany, jedynej
+// tabeli przechowującej ślad wysyłki listu w tym module.
 const zapiszSladWysylkiSQL = `INSERT INTO list_wyslany
     (skrzynka_id, adresat, temat, tresc, w_odpowiedzi_na, powodzenie, blad)
     VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-// ZapiszSladWysylki utrwala fakt nadania listu.
+// ZapiszSladWysylki utrwala fakt nadania listu, zapisując adresata, treść
+// i wynik wysyłki niezależnie od tego, czy okno rozmowy nadal istnieje.
 func (r *repozytoriumSkrzynek) ZapiszSladWysylki(ctx context.Context, s SladWysylki) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszSladWysylkiSQL)
 	if err != nil {

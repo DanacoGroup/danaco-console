@@ -3,19 +3,9 @@ import type { Kanal } from '../protokol/kanal';
 import { utworzSekcjeDostepow, type SekcjaDostepow } from './sekcja-dostepow';
 
 /**
- * Okno, w którym mieszka sekcja dostępów — rama, nie treść.
- *
- * Sekcja sama nie zakłada, gdzie zostanie osadzona: oddaje element. Rama
- * potrzebna jest jednak od razu, bo pierwszym gospodarzem sekcji jest listwa
- * ustawień Centrum dowodzenia, a ta otwiera widoki jako okna modalne — tak jak
- * okno konfiguracji.
- *
- * Okno stoi na natywnym `<dialog>`, więc warstwę tła, stos okien i zamknięcie
- * klawiszem Esc daje przeglądarka, a nie własna nakładka. Wygląd bierze
- * z biblioteki `komponenty/` (`dn-modal`) — plik nie zna ani jednej barwy.
- *
- * Okno otwiera się natychmiast, przed odpowiedzią rdzenia; wykazy dojeżdżają
- * do niego odpowiedzią.
+ * Okno dostępów i katalogu roboczego: rama na natywnym elemencie `dialog`,
+ * która osadza sekcję dostępów, dokłada nagłówek i stopkę z zamknięciem,
+ * a wykazy zleca sekcji dopiero przy otwarciu.
  */
 export interface OknoDostepow {
   /** Element `<dialog>` osadzany w dokumencie. */
@@ -72,7 +62,11 @@ export function utworzOknoDostepow(kanal: Kanal, oknoID = ''): OknoDostepow {
   };
 }
 
-/** Nagłówek okna: ikona, tytuł, przycisk zamknięcia. */
+/**
+ * Nagłówek okna składa ikonę kłódki, tytuł, rozpychacz i przycisk zamknięcia;
+ * przycisk niesie opis dostępnościowy oraz podpowiedź, a wskazanie go wywołuje
+ * przekazane domknięcie.
+ */
 function naglowek(naZamkniecie: () => void): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dn-modal-naglowek dd-okno__naglowek';

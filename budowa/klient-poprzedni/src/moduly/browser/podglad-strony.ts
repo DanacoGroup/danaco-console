@@ -1,18 +1,9 @@
 import type { BrowserSnapshot } from '../../../../shared/contract';
 
 /**
- * Podgląd współdzielony — treść strony widoczna jednocześnie Operatorowi
- * i modelowi w oknie Browser Window. Pokazuje migawkę oraz obsługuje
- * przewijanie treści i zaznaczenie fragmentu.
- *
- * Przewijanie i zaznaczenie dzieją się w kliencie, na odczytanej migawce — to
- * ona jest treścią widzianą przez model. Przewinięcie strony po stronie rdzenia
- * ma osobną komendę (`browser.scroll`), której podgląd jeszcze nie wywołuje;
- * powód stoi przy przyciskach nawigacji (`formularz-nawigacji.ts`).
- *
- * Treść idzie przez `textContent`, nigdy przez `innerHTML`: pole `html`
- * migawki jest treścią obcą, a wstrzyknięcie go do dokumentu powłoki
- * wpuściłoby cudzy znacznik do interfejsu Operatora.
+ * Podgląd współdzielony — treść strony widoczna jednocześnie Operatorowi i modelowi
+ * w oknie Browser Window. Pokazuje migawkę oraz obsługuje przewijanie treści
+ * i zaznaczenie fragmentu, obie czynności miejscowo, na odczytanej migawce.
  */
 export interface PodgladStrony {
   element: HTMLElement;
@@ -83,8 +74,7 @@ export function utworzPodgladStrony(naZaznaczenie: (fragment: string) => void): 
     ustawTrybCzytnika(wlaczony) {
       trybCzytnika = wlaczony;
       element.dataset['czytnik'] = wlaczony ? 'tak' : 'nie';
-      // W trybie czytnika źródło strony znika z widoku, ale nie z migawki —
-      // wyłączenie trybu pokazuje je z powrotem bez ponownego odczytu.
+      // Źródło strony znika z widoku, ale nie z migawki; powrót nie kosztuje odczytu.
       zrodlo.hidden = wlaczony || (zrodlo.textContent ?? '') === '';
       adres.hidden = wlaczony;
     },
@@ -93,10 +83,7 @@ export function utworzPodgladStrony(naZaznaczenie: (fragment: string) => void): 
       tekst.scrollBy({ top: kierunek * Math.max(tekst.clientHeight - 24, 120) });
     },
 
-    // Wiersz wskazuje się udziałem w treści, a nie pomiarem wysokości linii:
-    // treść jest jednym węzłem tekstowym, więc pozycji wiersza nie da się
-    // odczytać z układu bez rozbicia jej na elementy — a to zmieniłoby DOM
-    // podglądu, który ma pozostać tym samym, co widzi model.
+    // Wiersz wskazuje się udziałem w treści, a nie pomiarem wysokości linii.
     pokazWiersz(numer) {
       const wierszy = (tekst.textContent ?? '').split('\n').length;
       if (wierszy <= 1) return;
@@ -106,7 +93,11 @@ export function utworzPodgladStrony(naZaznaczenie: (fragment: string) => void): 
   };
 }
 
-/** Wiersz metadanych migawki: adres, chwila pobrania i to, co niesie. */
+/**
+ * Wiersz metadanych migawki: adres, chwila pobrania oraz to, co migawka niesie
+ * poza samym tekstem. Wiersz mówi wprost o obecności źródła strony i zrzutu, więc
+ * Operator wie, czego podgląd nie pokazuje, zamiast to wnioskować.
+ */
 function opisMigawki(migawka: BrowserSnapshot): string {
   const czesci = [migawka.url, new Date(migawka.capturedAt).toLocaleString('pl')];
   if ((migawka.html ?? '') !== '') czesci.push('ze źródłem strony');

@@ -1,27 +1,13 @@
 import { ConfigScope } from '../../../../shared/contract';
 
 /**
- * Poziomy zasięgu modułu Workspace — jedno źródło nazw i kolejności dla
- * wszystkich okien modułu, żeby ta sama nastawa nazywała się wszędzie tak samo.
- *
- * Poziom `application` stoi w wykazie, ale poza wyborem: kontrakt przypisuje mu
- * nastawy samego programu (wymóg logowania, adres nasłuchu), a nie treści w nim
- * prowadzonej, więc kontrolka oferująca ten poziom proponowałaby zapis, którego
- * rdzeń nie ma gdzie umieścić. Nazwę zachowuje, bo rdzeń może oddać ten poziom
- * w odpowiedzi (`workspace.instructions.set` niesie warstwę obowiązującą)
- * i okno ma go wtedy nazwać, a nie pokazać surowego kodu.
- *
- * Wykaz jest zapisany jako `Record<ConfigScope, …>`, więc poziom dołożony do
- * kontraktu nie przejdzie kompilacji, dopóki nie zostanie rozstrzygnięte, czy
- * moduł ma go pokazywać; tablica przyjęłaby nowy poziom bez śladu.
+ * Poziomy zasięgu modułu Workspace, jedno źródło nazw i kolejności dla wszystkich
+ * okien modułu, tak aby ta sama nastawa nazywała się wszędzie tak samo.
  */
 interface OpisPoziomu {
   /** Nazwa poziomu widoczna dla Operatora — ta sama we wszystkich oknach. */
   nazwa: string;
-  /**
-   * Miejsce w kolejności od najszerszego; `null` znaczy „poza
-   * wyborem” i wtedy `powodPominiecia` mówi, dlaczego.
-   */
+  /** Miejsce w kolejności od najszerszego; puste znaczy poza wyborem. */
   rzad: number | null;
   /** Powód pominięcia poziomu w kontrolkach modułu. */
   powodPominiecia?: string;
@@ -45,7 +31,7 @@ const WYKAZ: Record<ConfigScope, OpisPoziomu> = {
   [ConfigScope.Window]: { nazwa: 'okno komunikacji', rzad: 8 },
 };
 
-/** Poziom zasięgu wraz z jego nazwą — para gotowa dla listy wyboru. */
+/** Poziom zasięgu wraz z jego nazwą widoczną dla Operatora — para gotowa do wstawienia w liście wyboru. */
 export type ParaPoziomu = readonly [ConfigScope, string];
 
 /**
@@ -65,17 +51,14 @@ export function nazwaPoziomu(zasieg: ConfigScope): string {
   return WYKAZ[zasieg]?.nazwa ?? zasieg;
 }
 
-/** Powód, dla którego poziom nie stoi w wyborze; pusty dla poziomów w wyborze. */
+/** Podaje powód, dla którego dany poziom nie stoi w wyborze; wartość pusta dla poziomów obecnych w wyborze. */
 export function powodPominiecia(zasieg: ConfigScope): string {
   return WYKAZ[zasieg]?.powodPominiecia ?? '';
 }
 
 /**
- * Ten sam wykaz z jednym poziomem przesuniętym na czoło.
- *
- * Pamięć projektu otwiera się na poziomie `project`, bo taki jest jej domyślny
- * zasięg. Zmienia się wyłącznie kolejność prezentacji; nazwy zostają te same,
- * więc oba okna pokazują tę samą nastawę pod tą samą nazwą.
+ * Ten sam wykaz poziomów zasięgu z jednym wskazanym poziomem przesuniętym na
+ * czoło kolejności prezentacji, bez zmiany nazw poziomów.
  */
 export function poziomyZPierwszym(pierwszy: ConfigScope): readonly ParaPoziomu[] {
   const wybrany = POZIOMY_ZASIEGU.filter(([poziom]) => poziom === pierwszy);

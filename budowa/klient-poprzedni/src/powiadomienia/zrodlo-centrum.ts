@@ -9,19 +9,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import type { Kanal } from '../protokol/kanal';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Źródło centrum powiadomień — jedyna droga klienta do rodziny `notification.*`.
- *
- * Rejestr czyta się raz, przy otwarciu kolumny, a dalej nadąża zdarzeniami:
- * `notification.raised` dokłada pozycję i podnosi licznik, `notification.changed`
- * przerysowuje stany. Odpytywania w tle nie ma i nie jest potrzebne — obsługa na
- * drugim urządzeniu dolatuje tu sama, tą samą drogą, co przy urządzeniach
- * i uwierzytelnieniu.
- *
- * Licznik plakietki jest osobną wartością od długości wykazu i tak ma zostać:
- * rdzeń liczy CAŁY rejestr, a wykaz bywa zawężony filtrem. Plakietka pokazująca
- * długość widoku gasłaby przy zawężeniu, jakby zdarzenia zostały obsłużone.
- */
+// Źródło centrum powiadomień to jedyna droga klienta do rodziny notification, czytana raz i nadążana.
 
 export interface StanCentrum {
   zdarzenia: Notification[];
@@ -90,7 +78,7 @@ export function utworzZrodloCentrum(kanal: Kanal): ZrodloCentrum {
   };
 }
 
-/** Zdanie odmowy rdzenia albo nazwanie milczenia; nigdy pustka. */
+/** Zdanie odmowy rdzenia albo nazwanie milczenia rdzenia po nieudanej czynności; nigdy nie zwraca pustki. */
 function zdanieOdmowy(wiadomosc: string | undefined): string {
   return wiadomosc === undefined || wiadomosc === ''
     ? 'Rdzeń odmówił bez podania powodu.'

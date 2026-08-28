@@ -3,32 +3,14 @@ import { poleTekstowe, poleWielowierszowe, przycisk } from '../../modele/kontrol
 import { nowyIdentyfikator as identyfikatorKlienta } from '../../protokol/identyfikator';
 
 /**
- * Redakcja sekcji raportu Report Buildera: wykaz sekcji jako pola edycji wraz
- * z ich kolejnością.
- *
- * Sekcje jadą w polu `sections` komendy `research.report.build`, więc redakcja
- * nie potrzebuje osobnej komendy; kolejność bierze się z porządku wierszy
- * i wchodzi w pole `order`. Sekcja bez tytułu nie blokuje zapisu — kreator
- * wysyła to, co ma, a brak nazywa komunikatem przy polu.
- *
- * Wiersz pusty w obu polach nie jest sekcją i tu wypada. Podanie `sections`
- * przestawia rdzeń na gałąź zapisu wprost: nie woła modelu i nie zamienia
- * zaznaczonych ustaleń na sekcje. Pusta tablica też jest podanymi sekcjami,
- * więc warstwa żądania pomija pole `sections` w całości, gdy nie zostało nic —
- * inaczej kreator, który dokłada pusty wiersz przy otwarciu, składałby raport
- * z jednej sekcji bez tytułu i bez treści zamiast streszczenia ustaleń.
- *
- * Wiersz wczytany z raportu niesie dalej swoje `findingIds`, więc powtórne
- * złożenie nie zrywa wiązania ustalenie↔sekcja.
+ * Redakcja sekcji raportu Report Buildera wymienia sekcje jako pola edycji wraz z ich
+ * kolejnością, gotowe do żądania kontraktu.
  */
 export interface SekcjeRaportu {
   element: HTMLElement;
   /** Dokłada pustą sekcję i przenosi do niej ognisko. */
   dodaj(): void;
-  /**
-   * Sekcje wypełnione, w kolejności wierszy, gotowe do żądania kontraktu.
-   * Wiersz bez tytułu i bez treści nie wychodzi.
-   */
+  /** Sekcje wypełnione, w kolejności wierszy, gotowe do żądania; wiersz pusty w obu polach nie wychodzi. */
   zebrane(): ResearchReportSection[];
   /** Wymienia wykaz sekcji na sekcje raportu potwierdzonego przez rdzeń. */
   wczytaj(sekcje: readonly ResearchReportSection[]): void;
@@ -106,22 +88,14 @@ function wypelniony(wiersz: WierszSekcji): boolean {
 }
 
 /**
- * Identyfikator sekcji nadawany po stronie klienta, dopóki rdzeń nie odda
- * swojego.
- *
- * Musi być niepowtarzalny poza sesją okna, nie tylko w niej: kolumna
- * `sekcja_raportu_badania.identyfikator_zewnetrzny` jest unikalna globalnie,
- * a nie w obrębie raportu, więc kod powtórzony przy nowym raporcie kończy się
- * odmową rdzenia. Ten sam kod przy tym samym raporcie jest w porządku — rdzeń
- * poprawia sekcję zastaną. Człon losowy bierzemy ze wspólnego
- * `protokol/identyfikator`, żeby nie hodować drugiej reguły nadawania
- * identyfikatorów w kliencie.
+ * Identyfikator sekcji nadawany po stronie klienta, dopóki rdzeń nie odda swojego,
+ * niepowtarzalny poza sesją okna dzięki wspólnemu generatorowi.
  */
 function nowyIdentyfikator(): string {
   return identyfikatorKlienta('sekcja');
 }
 
-/** Jeden wiersz redakcji: tytuł, treść i zdjęcie sekcji z raportu. */
+/** Jeden wiersz redakcji sekcji raportu: pole tytułu, pole treści oraz zdjęcie sekcji, z jakiej wiersz powstał, wraz z jej ustaleniami. */
 function utworzWiersz(
   sekcja: ResearchReportSection,
   naUsuniecie: (identyfikator: string) => void,

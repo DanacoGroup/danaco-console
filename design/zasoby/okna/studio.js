@@ -1,13 +1,8 @@
-/* ══════════════════════════════════════════════════════════════════════════
-   DANACO CONSOLE — STUDIO: ZACHOWANIA OKNA
-   --------------------------------------------------------------------------
-   Kompetencja: karty okna roboczego tego jednego okna — przełączanie myszą
-   i klawiaturą wg wzorca ARIA „tabs”, zamykanie kart pomocniczych, wykaz kart
-   w menu „⋮ → Karty okna roboczego” oraz przełącznik trybów w pasie stanowiska.
-   Wygląd: `okna/studio.css`. Zachowania powłoki (menu, motyw, okna modalne)
-   pochodzą z `wspolne.js` / `prototyp.js` / `rama.js` / `stanowisko.js`.
-   Zasięg: wyłącznie `05-okna/moduly/studio.html`.
-   ══════════════════════════════════════════════════════════════════════════ */
+/* Zachowania okna Studio zarządzają kartami okna roboczego tego okna: przełączaniem myszą i klawiaturą według wzorca ARIA tabs oraz zamykaniem kart pomocniczych.
+   Wykaz kart stoi też w menu, obok przełącznika trybów w pasie stanowiska.
+   Wygląd niesie plik `okna/studio.css`. Zachowania powłoki — menu, motyw,
+   okna modalne — pochodzą z plików `wspolne.js`, `prototyp.js`, `rama.js`
+   i `stanowisko.js`. Zasięg obejmuje wyłącznie plik `studio.html`. */
 /* KARTY OKNA ROBOCZEGO — jedna karta robocza i po jednej karcie na każde okno
    pomocnicze. Wzorzec ARIA „tabs" z wędrującym tabindexem: Tab wchodzi w pasmo
    raz, strzałki przechodzą między kartami, Home/End skacze na koniec, Enter

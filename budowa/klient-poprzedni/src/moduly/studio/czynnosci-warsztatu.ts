@@ -1,20 +1,8 @@
 import { Command, StudioPdfPageOperationKind } from '../../../../shared/contract';
 
-/**
- * Katalog czynności warsztatu dokumentu — piętnaście komend rodzin
- * `studio.pdf.*` i `studio.security.*` opisanych danymi, a nie piętnastoma
- * formularzami.
- *
- * Okno buduje pola z tego wykazu i składa żądanie funkcją `zloz` czynności.
- * Piętnaście osobnych formularzy dawałoby piętnaście miejsc, w których nazwa
- * pola kontraktu bywa wpisana z pamięci; tutaj każde pole stoi raz.
- *
- * Nazwy pól są nazwami kontraktu, bo to one jadą do rdzenia. Etykiety są zdaniem
- * Operatora i z nazwami się nie pokrywają — Operator czyta „zakres stron",
- * a rdzeń dostaje `pages`.
- */
+/** Katalog czynności warsztatu dokumentu: piętnaście komend rdzenia opisanych danymi, nie formularzami. */
 
-/** Rodzaj kontrolki, którą pole zbiera od Operatora. */
+/** Rodzaj kontrolki, którą pole czynności zbiera od Operatora: tekst, hasło, liczba, przełącznik, wielowiersz, zasób, zasoby albo wybór z wykazu. */
 export type RodzajPola =
   | 'tekst'
   | 'tajne'
@@ -25,7 +13,7 @@ export type RodzajPola =
   | 'zasoby'
   | 'wybor';
 
-/** Jedno pole czynności. */
+/** Jedno pole czynności warsztatu: kod pola kontraktu, etykieta widoczna Operatorowi, rodzaj kontrolki oraz opis i podpowiedź pomocnicze. */
 export interface PoleCzynnosci {
   kod: string;
   etykieta: string;
@@ -35,21 +23,21 @@ export interface PoleCzynnosci {
   pozycje?: readonly { wartosc: string; etykieta: string }[];
 }
 
-/** Wartości zebrane z formularza; puste pole nie trafia do żądania. */
+/** Wartości zebrane z formularza czynności, kod pola na wartość tekstową; puste pole nie trafia do żądania złożonego do rdzenia. */
 export type WartosciCzynnosci = Readonly<Record<string, string>>;
 
-/** Otoczenie żądania: okno modułu i dokument wczytany w edytorze. */
+/** Otoczenie żądania czynności: identyfikator okna modułu oraz identyfikator dokumentu wczytanego w edytorze, gdy czynność go wymaga. */
 export interface OtoczenieCzynnosci {
   idOkna: string;
   idDokumentu: string | null;
 }
 
-/** Wynik składania: żądanie albo powód, dla którego nie da się go złożyć. */
+/** Wynik składania żądania czynności: gotowe żądanie do wysłania rdzeniowi albo powód, dla którego nie dało się go złożyć. */
 export type ZlozenieZadania =
   | { zadanie: Record<string, unknown> }
   | { odmowa: string };
 
-/** Czynność warsztatu: komenda, jej pola i sposób złożenia żądania. */
+/** Czynność warsztatu dokumentu: komenda rdzenia, wykaz pól formularza oraz funkcja składająca żądanie z wartości i otoczenia. */
 export interface CzynnoscWarsztatu {
   komenda: Command;
   nazwa: string;
@@ -58,13 +46,13 @@ export interface CzynnoscWarsztatu {
   zloz(wartosci: WartosciCzynnosci, otoczenie: OtoczenieCzynnosci): ZlozenieZadania;
 }
 
-/** Odczyt pola tekstowego; puste zwraca `undefined`, nie pusty napis. */
+/** Odczyt pola tekstowego formularza czynności; pole puste albo złożone z samych odstępów zwraca wartość pustą, nie pusty napis. */
 function tekst(wartosci: WartosciCzynnosci, kod: string): string | undefined {
   const wartosc = (wartosci[kod] ?? '').trim();
   return wartosc === '' ? undefined : wartosc;
 }
 
-/** Odczyt liczby; wartość spoza liczb zwraca `undefined`. */
+/** Odczyt pola liczbowego formularza czynności; wartość spoza liczb albo niedokończona zwraca wartość pustą zamiast liczby zgadniętej. */
 function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return undefined;
@@ -72,12 +60,12 @@ function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
   return Number.isFinite(odczytana) ? odczytana : undefined;
 }
 
-/** Odczyt przełącznika. */
+/** Odczyt pola przełącznika formularza czynności: wartość zgodna ze znacznikiem zaznaczenia oznacza przełącznik włączony. */
 function logiczne(wartosci: WartosciCzynnosci, kod: string): boolean {
   return wartosci[kod] === 'tak';
 }
 
-/** Rozbiór listy oddzielonej przecinkami na wykaz bez pozycji pustych. */
+/** Rozbiór listy oddzielonej przecinkami na wykaz pozycji przyciętych z odstępów, z pominięciem pozycji pustych. */
 function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return [];
@@ -87,7 +75,7 @@ function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
     .filter((pozycja) => pozycja !== '');
 }
 
-/** Wiersze pola wielowierszowego, bez wierszy pustych. */
+/** Wiersze pola wielowierszowego formularza czynności, przycięte z odstępów, z pominięciem wierszy pustych. */
 function wiersze(wartosci: WartosciCzynnosci, kod: string): string[] {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return [];
@@ -97,7 +85,7 @@ function wiersze(wartosci: WartosciCzynnosci, kod: string): string[] {
     .filter((wiersz) => wiersz !== '');
 }
 
-/** Dokłada do żądania wyłącznie pola o wartości podanej. */
+/** Dokłada do żądania wyłącznie pola o wartości podanej — pole nieustawione albo wykaz pusty nie trafia do żądania rdzenia. */
 function zPolami(
   podstawa: Record<string, unknown>,
   dodatki: Record<string, unknown>,
@@ -111,7 +99,7 @@ function zPolami(
   return zadanie;
 }
 
-/** Pole materiału powtarzające się w czternastu czynnościach z piętnastu. */
+/** Pole materiału powtarzające się w czternastu czynnościach z piętnastu — wspólny opis zasobu magazynu wejściowego. */
 const POLE_MATERIALU: PoleCzynnosci = {
   kod: 'assetId',
   etykieta: 'Materiał',
@@ -562,13 +550,7 @@ export const CZYNNOSCI_WARSZTATU: readonly CzynnoscWarsztatu[] = [
   },
 ];
 
-/**
- * Zdanie o skutku czynności złożone z odpowiedzi rdzenia.
- *
- * Odczyt idzie po polach, których odpowiedź może nie mieć, więc każde jest
- * sprawdzane osobno. Zdanie „gotowe" bez liczby byłoby meldunkiem, z którego
- * Operator nie wyczyta, czy cokolwiek powstało.
- */
+/** Zdanie o skutku czynności złożone z odpowiedzi rdzenia — każde pole odczytywane osobno, bo odpowiedź może go nie nieść. */
 export function opiszSkutek(odpowiedz: unknown): string {
   if (typeof odpowiedz !== 'object' || odpowiedz === null) return 'Rdzeń przyjął czynność.';
   const tresc = odpowiedz as Record<string, unknown>;

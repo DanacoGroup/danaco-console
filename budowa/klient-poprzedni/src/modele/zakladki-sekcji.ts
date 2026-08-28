@@ -1,13 +1,8 @@
 /**
- * Zakładki sekcji modeli — przełącznik czterech obszarów jednej sekcji.
- *
- * Obszary są cztery: konta (czym się łączymy), ustawienia osi (jak model ma
- * działać), tożsamość (kim ma być) oraz podgląd promptu (co z tego trafi do
- * modelu). Trzyma je jedna sekcja, bo wszystkie mówią względem tej samej osi.
- *
- * Zakładka nie porzuca obszaru, z którego wychodzi: element zostaje w drzewie
- * i tylko przestaje być widoczny, więc tekst wpisany w edytorze tożsamości
- * przeżywa zajrzenie do kont.
+ * Zakładki sekcji modeli, czyli przełącznik czterech obszarów jednej sekcji:
+ * kont, ustawień osi, tożsamości oraz podglądu promptu. Przełączenie ukrywa
+ * obszar opuszczany, pozostawiając go w drzewie dokumentu wraz z treścią
+ * wpisaną przez Operatora.
  */
 export interface PozycjaZakladki {
   /** Kod obszaru — nośnik wyboru, nie tekst do wydruku. */

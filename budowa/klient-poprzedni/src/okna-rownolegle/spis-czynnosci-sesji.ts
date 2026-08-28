@@ -11,34 +11,15 @@ import type { WpisSesji } from '../strona-glowna/zrodlo-sesji';
 import type { PozycjaCzynnosciMenu } from './wiersz-czynnosci';
 
 /**
- * Które czynności sesji stają w menu `⋮` okna rozmowy — i czym są.
- *
- * O tym, czy czynność ma sens dla danego stanu sesji, rozstrzyga
- * `strona-glowna/czynnosci-sesji.ts` (`czynnosciWiersza`), nie ten moduł.
- * Powtórzenie tamtych warunków tutaj dałoby dwie odpowiedzi na jedno pytanie.
- * Tak samo z wykonaniem: komendy `session.*` stoją złożone
- * w `wykonanie-czynnosci.ts`; ten moduł nie pisze ani jednej nowej.
- *
- * Moduł robi trzy rzeczy, których tamten wykaz nie zna, bo nie zna menu:
- * wybiera z niego pozycje należące do sekcji sesji, dokłada „Usuń" (usuwanie
- * żyje w `powloka/`) oraz nadaje ikonę i literę skrótu.
- *
- * Rozgałęzienia rozmowy menu nie oferuje: nie ma komendy ani bytu, który by je
- * wykonał. Wiersz wygaszony byłby bramką, a wiersz czynny — atrapą.
- *
- * Każda czynność oddaje zdanie (`MeldunekCzynnosci`) i to zdanie trafia do
- * komunikatu: menu zwija się w chwili naciśnięcia, więc bez komunikatu nie
- * byłoby widać ani powodzenia, ani odmowy rdzenia.
+ * Spis rozstrzyga, które czynności sesji stają w menu okna rozmowy i czym są, wybierając pozycje należące do sekcji sesji, dokładając usunięcie oraz nadając ikonę i literę skrótu, bez powtarzania warunków ani komend zapisanych gdzie indziej.
  */
-
-/** Zależności spisu: droga do rdzenia i ponowne odpytanie po zmianie. */
 export interface ZaleznosciSpisu {
   kanal: Kanal;
   /** Ponowne odpytanie rdzenia o wpis sesji po udanej zmianie. */
   odswiez(): void;
 }
 
-/** Ikona i litera skrótu pozycji menu; klucz jest kluczem `czynnosciWiersza`. */
+/** Ikona i litera skrótu każdej pozycji menu sesji, przypisane do tego samego klucza, którym woła się wiersz czynności. */
 interface ZnakiPozycji {
   ikona: NazwaIkony;
   skrot: string;
@@ -58,8 +39,8 @@ const ZNAKI_WZORCA: ReadonlyMap<string, ZnakiPozycji> = new Map([
 /**
  * Składa spis czynności dla wpisu sesji tego okna.
  *
- * Pusty wynik jest odpowiedzią poprawną: bez wpisu sesji nie wiemy, w jakim
- * ona stanie, a czynność nazwana na ślepo obiecywałaby skutek, którego nikt nie
+ * Pusty wynik jest odpowiedzią poprawną: bez wpisu sesji stan sesji pozostaje
+ * nieznany, a czynność nazwana na ślepo obiecywałaby skutek, którego nikt nie
  * sprawdził.
  */
 export function spisCzynnosciSesji(
@@ -91,14 +72,7 @@ export function spisCzynnosciSesji(
 }
 
 /**
- * „Usuń" — jedyna droga utraty zapisu sesji w produkcie.
- *
- * Potwierdzenie z wykazem tego, co zginie, stoi
- * w `powloka/potwierdzenie-usuniecia.ts`: kontrakt żąda pola `confirm`, a rdzeń
- * bez niego odmawia (`adapter_sesje_usuwanie.go`). Menu tego potwierdzenia nie
- * dubluje własnym pytaniem — wołanie idzie prosto w tamto okno.
- *
- * Wiersz jest wyróżniony barwą (`grozna`), ale klikalny jak każdy inny.
+ * Usunięcie jest jedyną drogą utraty zapisu sesji w produkcie; wiersz jest wyróżniony barwą ostrzegawczą, ale klikalny jak każdy inny, a potwierdzenie z wykazem strat pokazuje osobne okno.
  */
 function pozycjaUsuniecia(
   wpis: WpisSesji,
@@ -120,9 +94,7 @@ function pozycjaUsuniecia(
         (idSesji) => zadajUsuniecieSesji(zaleznosci.kanal, idSesji, true),
         nazwaPo,
       ).then((rozliczenie) => {
-        // `null` znaczy „brak potwierdzenia albo odmowa rdzenia" — powód został
-        // już nazwany w oknie potwierdzenia, więc drugi komunikat o tej samej
-        // odmowie byłby powtórzeniem.
+        // Wartość pusta znaczy brak potwierdzenia albo odmowę rdzenia, nazwaną już w oknie potwierdzenia.
         if (rozliczenie === null) return;
         zaleznosci.odswiez();
         pokazKomunikat({
@@ -135,7 +107,7 @@ function pozycjaUsuniecia(
   };
 }
 
-/** Pokazuje zdanie czynności jako komunikat; `null` znaczy „bez meldunku". */
+/** Pokazuje zdanie czynności jako komunikat dla Operatora; wartość pusta znaczy brak meldunku do pokazania. */
 function zamelduj(meldunek: string | null): void {
   if (meldunek === null) return;
   pokazKomunikat({ tytul: 'Sesja', tresc: meldunek, waga: 'info' });

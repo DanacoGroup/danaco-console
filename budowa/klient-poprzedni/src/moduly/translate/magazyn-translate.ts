@@ -1,16 +1,8 @@
 import type { TranslationPanel, Window } from '../../../../shared/contract';
 
 /**
- * Jedno źródło prawdy modułu Translate — sam zbiór danych, bez wywołań.
- *
- * Zbiór jest oddzielony od odczytu: `stan-translate.ts` wie, jak zapytać rdzeń,
- * ten plik wie wyłącznie, co moduł już wie. Dzięki temu okna można sprawdzić na
- * samym zbiorze, a odczyt nie miesza się z pamięcią.
- *
- * Trzy pustki są rozróżnialne: faza `spoczynek` znaczy „jeszcze nie pytałem",
- * `odczyt` — „pytam", `gotowe` z pustym oknem — „rdzeń nie zna ani jednego okna
- * tej sesji". Zlanie ich w jedno kazałoby zgadywać, czy czekać, czy działać
- * (wzór: `dostepy/stany-odczytu.ts`).
+ * Jedno źródło prawdy modułu Translate — zbiór danych bez wywołań, oddzielony od odczytu
+ * prowadzonego przez stan-translate.ts, z trzema rozróżnialnymi fazami wczytywania danych z rdzenia.
  */
 export type FazaKontekstu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
@@ -30,15 +22,7 @@ export interface MagazynTranslate {
   usunPanel(idPanelu: string): void;
   ustawPanele(panele: readonly TranslationPanel[]): void;
   obserwuj(sluchacz: () => void): () => void;
-  /**
-   * Ogłasza zmianę, której magazyn nie prowadzi u siebie.
-   *
-   * Cały moduł ma jeden nasłuch. Rejestr kanałów modelu leży poza magazynem
-   * (`zrodlo-kanalow-translate.ts`) i jego danych nie dotyka, ale jego powrót ma
-   * przerysować stery — a wszystkie widoki modułu przerysowuje jedno ogłoszenie
-   * stanu. Drugi, równoległy nasłuch w oknach trzeba by odpinać w każdej
-   * instancji panelu i pierwszy przeoczony byłby wyciekiem.
-   */
+  /** Ogłasza zmianę stanu wszystkim widokom modułu jednym wspólnym nasłuchem, bez duplikatu w oknach. */
   ogloszZmiane(): void;
   zapomnijSluchaczy(): void;
 }

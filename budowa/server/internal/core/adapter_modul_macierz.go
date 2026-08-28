@@ -8,28 +8,22 @@ import (
 )
 
 // adapterMacierzy wypełnia port Macierz odczytem tabeli `srodowisko_modul`.
-//
-// Odwzorowanie „moduł → środowiska, w których jest widoczny" składa się jednym
-// złączeniem, bez pętli po środowiskach: czytają je `home.enter`,
-// `environment.list`, `environment.enter` i `module.list`, czyli każde wejście
-// do pracy.
-//
-// Adapter zwraca błąd zwykły, nie protokolarny. Nie obsługuje żadnej komendy
-// (patrz `handlers_macierz.go`), a jego czytelnikiem jest nawigacja, która sama
-// zamienia błąd na odpowiedź protokołu.
-
+// Odwzorowanie „moduł → środowiska, w których jest widoczny” składa się
+// jednym złączeniem, bez pętli po środowiskach.
 type adapterMacierzy struct {
 	macierz dane.RepozytoriumMacierzy
 }
 
-// nowyAdapterMacierzy wiąże port z repozytorium macierzy.
+// nowyAdapterMacierzy wiąże port Macierz z repozytorium macierzy
+// widoczności modułów w środowiskach pracy.
 func nowyAdapterMacierzy(macierz dane.RepozytoriumMacierzy) *adapterMacierzy {
 	return &adapterMacierzy{macierz: macierz}
 }
 
 // ── macierz widoczności ─────────────────────────────────────────────────────
 
-// KodySrodowisk zwraca kody środowisk, w których widoczny jest każdy moduł.
+// KodySrodowisk zwraca kody środowisk, w których widoczny jest każdy moduł,
+// jednym złączeniem tabel bazy.
 func (a *adapterMacierzy) KodySrodowisk(ctx context.Context) (map[int64][]string, error) {
 	if err := a.sprawdzKatalog(); err != nil {
 		return nil, err
@@ -41,11 +35,8 @@ func (a *adapterMacierzy) KodySrodowisk(ctx context.Context) (map[int64][]string
 	return kody, nil
 }
 
-// sprawdzKatalog zwraca błąd, gdy repozytorium nie jest wpięte.
-//
-// Pusta macierz to nie to samo co macierz nieodczytana: pierwsza znaczy „żaden
-// moduł nie stoi w nawigacji", druga znaczy błąd złożenia rdzenia. Zwrócenie
-// pustki zamiast błędu skasowałoby całą boczną nawigację bez wyjaśnienia.
+// sprawdzKatalog zwraca błąd, gdy repozytorium nie jest wpięte. Pusta
+// macierz to nie to samo co macierz nieodczytana.
 func (a *adapterMacierzy) sprawdzKatalog() error {
 	if a.macierz == nil {
 		return fmt.Errorf("rdzeń: repozytorium macierzy widoczności nie jest wpięte")

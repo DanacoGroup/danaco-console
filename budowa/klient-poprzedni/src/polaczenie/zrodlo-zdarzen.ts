@@ -2,14 +2,7 @@ import type { Envelope, EventPayloadOf, EventType } from '../../../shared/contra
 import type { Odsubskrybuj } from './magistrala-zdarzen';
 
 /**
- * Źródło komunikatów przychodzących, na którym osadzają się obserwatory.
- *
- * Obserwatory żyją w warstwie łączności, a kanał kontraktu — w warstwie
- * protokołu. Gdyby obserwator importował `Kanal`, strzałka zależności
- * odwróciłaby się i powstałby cykl warstw. Zamiast tego obserwator opisuje
- * dokładnie to, czego potrzebuje: subskrypcję zdarzenia po nazwie z kontraktu
- * i podgląd całego ruchu. `Kanal` spełnia ten opis kształtem, bez ani jednej
- * dodatkowej deklaracji (jeden byt = jeden moduł).
+ * Źródło komunikatów przychodzących, na którym osadzają się obserwatory. Obserwatory żyją w warstwie łączności, a kanał kontraktu w warstwie protokołu; opisując dokładnie to, czego potrzebują, obserwatory unikają importu kanału wprost i cyklu warstw.
  */
 export interface ZrodloZdarzen {
   /** Subskrypcja zdarzeń jednego typu wraz z ich treścią. */

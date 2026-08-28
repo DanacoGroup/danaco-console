@@ -13,22 +13,16 @@ import (
 	"testing"
 )
 
-// Sprawdziany obrazu WEJŚCIOWEGO kanału obrazowego.
-//
-// Mierzone jest to, czego nie da się zobaczyć po stronie wołającego: kształt
-// żądania, które naprawdę wyszło na sieć. Kanał, który przyjmie materiał
-// Operatora i wyśle samo polecenie, oddaje obraz WYGENEROWANY od zera —
-// wygląda to na powodzenie, a jest podmianą materiału bez ani jednego słowa.
-// Dlatego sprawdziany stawiają zaślepkę punktu końcowego i czytają ciało.
+// Sprawdziany kanału obrazowego weryfikują treść żądania faktycznie wysłanego na sieć.
 
 // obrazPrzykladowy niesie bajty, które da się rozpoznać po drugiej stronie.
 // Treść jest dowolna — sprawdzian pyta o drogę bajtów, nie o obraz.
 var obrazPrzykladowy = base64.StdEncoding.EncodeToString([]byte("bajty materiału"))
 
-// odpowiedzZObrazem jest odpowiedzią w kształcie, który kanał umie odczytać.
+// odpowiedzZObrazem jest przykładową odpowiedzią serwera obrazowego w kształcie, jaki potrafi odczytać kanał obrazowy budowany w sprawdzianach.
 const odpowiedzZObrazem = `{"data":[{"b64_json":"d3luaWs="}]}`
 
-// wierszKanaluObrazow składa wiersz rejestru wskazujący zaślepkę.
+// wierszKanaluObrazow składa wiersz rejestru kanału obrazowego, wskazujący adres zaślepki oraz przyjmujący dodatkowe parametry testu.
 func wierszKanaluObrazow(t *testing.T, adres string, dodatki map[string]any) Definicja {
 	t.Helper()
 	parametry := map[string]any{"base_url": adres, "adapter": AdapterObrazy}
@@ -46,14 +40,14 @@ func wierszKanaluObrazow(t *testing.T, adres string, dodatki map[string]any) Def
 	}
 }
 
-// przyjeteZadanie niesie to, co zaświadczyła zaślepka.
+// przyjeteZadanie przechowuje ścieżkę, rodzaj treści oraz ciało żądania, które zaświadczyła zaślepka punktu końcowego.
 type przyjeteZadanie struct {
 	sciezka   string
 	typTresci string
 	cialo     []byte
 }
 
-// zaslepkaObrazow stawia punkt końcowy zapisujący przyjęte żądanie.
+// zaslepkaObrazow stawia punkt końcowy testowy, który zapisuje przyjęte żądanie i zwraca odpowiedź w kształcie dostawcy obrazów.
 func zaslepkaObrazow(t *testing.T, przyjete *przyjeteZadanie) *httptest.Server {
 	t.Helper()
 	serwer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +62,7 @@ func zaslepkaObrazow(t *testing.T, przyjete *przyjeteZadanie) *httptest.Server {
 	return serwer
 }
 
-// wyslijKanalem puszcza jedno wywołanie i zbiera fragmenty.
+// wyslijKanalem uruchamia jedno wywołanie kanału obrazowego i zbiera fragmenty zwrócone przez ujście wyniku.
 func wyslijKanalem(t *testing.T, d Definicja, z Zapytanie) []Fragment {
 	t.Helper()
 	kanal, err := NowyKanalObrazow(d)
@@ -242,7 +236,7 @@ func TestMaterialNieczytelnyJestOdmowa(t *testing.T) {
 	}
 }
 
-// rozbierzFormularz czyta przyjęte ciało jako multipart/form-data.
+// rozbierzFormularz rozbiera przyjęte ciało żądania jako formularz wieloczęściowy i zwraca pliki oraz pola tekstowe.
 func rozbierzFormularz(t *testing.T, przyjete *przyjeteZadanie) (map[string][]byte, map[string]string) {
 	t.Helper()
 	rodzaj, parametry, err := mime.ParseMediaType(przyjete.typTresci)

@@ -1,17 +1,7 @@
-// Odpowiedzialność pliku: narzędzia inspekcyjne i praca na stronie
-// uruchomionej — `browser.dom.inspect`, `browser.network.har`,
-// `browser.console.read`, `browser.device.emulate`, `browser.scroll`.
-//
-// Wszystkie pięć wymagają strony WYKONANEJ, nie jej źródła: drzewo elementów po
-// zbudowaniu przez skrypty, rejestr żądań, komunikaty konsoli, metryki
-// emulowanego urządzenia i stan po przewinięciu istnieją dopiero wtedy, gdy
-// stronę ktoś naprawdę uruchomił. Dlatego idą silnikiem (`przegladarka_silnik.go`),
-// a nie pobraniem HTTP — i dlatego odmawiają wprost, gdy silnika na maszynie nie
-// ma, zamiast oddawać puste wykazy udające inspekcję.
-//
-// Adres bierze się z ostatniej migawki okna. Kontrakt nie niesie w tych
-// żądaniach pola adresu — pyta o „bieżącą stronę okna", a bieżącą stroną okna
-// jest to, dokąd okno ostatnio przeszło. Okno bez migawki dostaje `not_found`.
+// Moduł narzędzi inspekcyjnych obsługuje pracę na uruchomionej stronie
+// komendami `browser.dom.inspect`, `browser.network.har`,
+// `browser.console.read`, `browser.device.emulate` i `browser.scroll`, na
+// adresie wziętym z ostatniej migawki okna.
 package core
 
 import (
@@ -24,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZbadajDrzewo obsługuje `browser.dom.inspect`.
+// ZbadajDrzewo obsługuje `browser.dom.inspect` i oddaje drzewo elementów
+// strony po zbudowaniu przez skrypty, z wybraną głębokością i stylami.
 func (a *adapterPrzegladarki) ZbadajDrzewo(ctx context.Context,
 	z shared.BrowserDomInspectRequest) (shared.BrowserDomInspectResponse, error) {
 
@@ -131,11 +122,8 @@ func (a *adapterPrzegladarki) ZbadajDrzewo(ctx context.Context,
 	return shared.BrowserDomInspectResponse{Nodes: wezly, CapturedAt: time.Now().UnixMilli()}, nil
 }
 
-// RejestrSieciowy obsługuje `browser.network.har`.
-//
-// Rejestr powstaje z powiadomień protokołu zebranych w czasie wczytywania
-// strony, a jego zapis w postaci HAR ląduje w magazynie modułu jako wytwór
-// sesji — `harRef` wskazuje plik, który naprawdę leży na dysku.
+// RejestrSieciowy obsługuje `browser.network.har` i zapisuje rejestr żądań
+// sieciowych strony w postaci pliku HAR jako wytwór sesji w magazynie modułu.
 func (a *adapterPrzegladarki) RejestrSieciowy(ctx context.Context,
 	z shared.BrowserNetworkHarRequest) (shared.BrowserNetworkHarResponse, error) {
 
@@ -188,7 +176,8 @@ func (a *adapterPrzegladarki) RejestrSieciowy(ctx context.Context,
 	return shared.BrowserNetworkHarResponse{Entries: wpisy, HarRef: &odwolanie}, nil
 }
 
-// OdczytajKonsole obsługuje `browser.console.read`.
+// OdczytajKonsole obsługuje `browser.console.read` i oddaje komunikaty
+// konsoli oraz błędy strony, zawężone do wybranych poziomów i granicy wpisów.
 func (a *adapterPrzegladarki) OdczytajKonsole(ctx context.Context,
 	z shared.BrowserConsoleReadRequest) (shared.BrowserConsoleReadResponse, error) {
 
@@ -242,13 +231,8 @@ func (a *adapterPrzegladarki) EmulujUrzadzenie(ctx context.Context,
 	return shared.BrowserDeviceEmulateResponse{Metrics: metryki, Snapshot: &oddana}, nil
 }
 
-// Przewin obsługuje `browser.scroll` — przewinięcie strony po stronie rdzenia
-// i migawka stanu PO przewinięciu.
-//
-// Przewinięcie jest czynnością na stronie żywej, więc idzie silnikiem, a jego
-// skutek widać w migawce: tekst po przewinięciu bywa inny niż przed nim (treść
-// dogrywana przy przewijaniu), a położenie przewinięcia jest mierzone, nie
-// zakładane.
+// Przewin obsługuje `browser.scroll`: przewija stronę po stronie rdzenia
+// i zapisuje migawkę stanu strony dopiero po przewinięciu.
 func (a *adapterPrzegladarki) Przewin(ctx context.Context,
 	z shared.BrowserScrollRequest) (shared.BrowserScrollResponse, error) {
 
@@ -277,8 +261,7 @@ func (a *adapterPrzegladarki) Przewin(ctx context.Context,
 	if _, err := sesja.ocenNaStronie(ctx, `(() => { `+polecenie+` return true; })()`); err != nil {
 		return shared.BrowserScrollResponse{}, bladSilnikaPrzegladarki("browser.scroll", err)
 	}
-	// Strona dogrywająca treść przy przewijaniu potrzebuje chwili — migawka
-	// pobrana natychmiast pokazywałaby stan sprzed dociągnięcia.
+	// Strona dogrywająca treść przy przewijaniu potrzebuje chwili na dociągnięcie.
 	time.Sleep(400 * time.Millisecond)
 
 	stan, err := sesja.ocenNaStronie(ctx, `({
@@ -310,7 +293,8 @@ func (a *adapterPrzegladarki) Przewin(ctx context.Context,
 	return shared.BrowserScrollResponse{Snapshot: migawkaKontraktu(zapisana, false, false)}, nil
 }
 
-// zapiszMigawkeZeStrony odkłada wynik wizyty jako kolejny wiersz historii okna.
+// zapiszMigawkeZeStrony odkłada wynik wizyty na stronie jako kolejny wiersz
+// historii migawek okna w bazie danych.
 func (a *adapterPrzegladarki) zapiszMigawkeZeStrony(ctx context.Context, okno string,
 	wynik wynikOtwarcia) (dane.MigawkaStrony, error) {
 
@@ -371,7 +355,8 @@ func metrykiUrzadzenia(z shared.BrowserDeviceEmulateRequest) shared.BrowserDevic
 	return metryki
 }
 
-// wpisySieciowe wybiera z powiadomień protokołu żądania i ich odpowiedzi.
+// wpisySieciowe wybiera z powiadomień protokołu żądania sieciowe strony wraz
+// z ich odpowiedziami, w kolejności, w jakiej żądania ruszyły.
 func wpisySieciowe(zdarzenia []zdarzenieCdp, limit int) []shared.BrowserNetworkEntry {
 	wpisy := map[string]*shared.BrowserNetworkEntry{}
 	kolejnosc := []string{}
@@ -459,7 +444,8 @@ func wpisySieciowe(zdarzenia []zdarzenieCdp, limit int) []shared.BrowserNetworkE
 	return wynik
 }
 
-// wpisyHar przekłada rejestr na kształt pliku HAR 1.2.
+// wpisyHar przekłada rejestr żądań sieciowych na kształt wpisów pliku HAR
+// w wersji 1.2, gotowy do zapisu jako pole `entries` dokumentu HAR.
 func wpisyHar(wpisy []shared.BrowserNetworkEntry) []map[string]any {
 	zapis := make([]map[string]any, 0, len(wpisy))
 	for _, wpis := range wpisy {
@@ -494,7 +480,8 @@ func wpisyHar(wpisy []shared.BrowserNetworkEntry) []map[string]any {
 	return zapis
 }
 
-// wpisyKonsoli wybiera z powiadomień protokołu komunikaty konsoli i błędy strony.
+// wpisyKonsoli wybiera z powiadomień protokołu komunikaty konsoli i błędy
+// strony, zawężone do poziomów wskazanych w żądaniu.
 func wpisyKonsoli(zdarzenia []zdarzenieCdp, poziomy []string, limit int) []shared.BrowserConsoleEntry {
 	dopuszczony := map[string]bool{}
 	for _, poziom := range poziomy {

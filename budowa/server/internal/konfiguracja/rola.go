@@ -10,20 +10,25 @@ import (
 type Rola string
 
 const (
-	// RolaHub oznacza rdzeń serwerowy — kontrakt, magazyn, kolejki.
+	// RolaHub oznacza rdzeń serwerowy prowadzący kontrakt, magazyn danych
+	// oraz kolejki dla podłączonych agentów lokalnych.
 	RolaHub Rola = "hub"
-	// RolaAgent oznacza agenta lokalnego urządzenia wykonującego pracę na plikach.
+	// RolaAgent oznacza agenta lokalnego urządzenia wykonującego pracę na
+	// plikach w imieniu podłączonego huba serwerowego.
 	RolaAgent Rola = "agent"
-	// RolaWszystko oznacza hub i agenta w jednym procesie.
+	// RolaWszystko oznacza hub i agenta uruchomione razem w jednym procesie,
+	// bez podziału na dwie osobne role.
 	RolaWszystko Rola = "all"
 )
 
-// Role zwraca dopuszczalne wartości przełącznika roli w kolejności prezentacji.
+// Role zwraca dopuszczalne wartości przełącznika roli w kolejności, w jakiej
+// są prezentowane operatorowi.
 func Role() []Rola {
 	return []Rola{RolaHub, RolaAgent, RolaWszystko}
 }
 
-// NazwyRol zwraca dopuszczalne wartości roli jako teksty.
+// NazwyRol zwraca dopuszczalne wartości roli jako teksty, w tej samej
+// kolejności, w jakiej zwraca je funkcja Role.
 func NazwyRol() []string {
 	nazwy := make([]string, 0, len(Role()))
 	for _, rola := range Role() {
@@ -32,7 +37,8 @@ func NazwyRol() []string {
 	return nazwy
 }
 
-// RolaZTekstu zamienia tekst na rolę i odrzuca wartość spoza katalogu ról.
+// RolaZTekstu zamienia tekst wskazany przełącznikiem na rolę i odrzuca
+// wartość spoza katalogu ról zwróconego przez Role.
 func RolaZTekstu(tekst string) (Rola, error) {
 	for _, rola := range Role() {
 		if string(rola) == tekst {

@@ -1,28 +1,5 @@
 /**
- * Rodzaje obszaru roboczego na scenie okien równoległych i ich szerokości
- * minimalne.
- *
- * Scena dzieli szerokość między trzy różne byty: kolumnę rozmowy, kolumnę
- * paneli pomocniczych i widok pełnoekranowy. Każdy z nich ma inne minimum,
- * a minimum wiąże: kolumna rozmowy nie schodzi poniżej 600 px, kolumny panelowe
- * trzymają swoje.
- *
- * Te same liczby czyta rachunek podziału gniazda (`szerokosci-gniazda.ts`),
- * uchwyt szerokości i arkusz toru (`uklad.css`). Trzy kopie tej samej liczby to
- * trzy różne progi czytelności po pierwszej poprawce; jedno źródło znaczy, że
- * podniesienie minimum jest jedną zmianą.
- *
- * Moduł nie zna DOM, nie zna paneli po nazwie i nie rozstrzyga, ile paneli
- * wolno otworzyć. Oddaje liczby — decyzję podejmuje ten, kto pyta. Gdy miejsca
- * zabraknie, szerokość zmienia się uchwytem; panel nie chowa się sam.
- */
-
-/**
- * Rodzaj obszaru roboczego wewnątrz gniazda albo na całej scenie.
- *
- * `kolumna-rozmowy` — wątek rozmowy; `kolumna-paneli` — stos paneli
- * pomocniczych obok rozmowy; `widok-pelnoekranowy` — obszar biorący całą scenę,
- * bez sąsiada, z którym miałby się dzielić.
+ * Rodzaje obszaru roboczego na scenie okien równoległych — kolumna rozmowy, kolumna paneli pomocniczych i widok pełnoekranowy — wraz z ich szerokościami minimalnymi wiązanymi w jednym źródle liczb.
  */
 export type RodzajObszaru = 'kolumna-rozmowy' | 'kolumna-paneli' | 'widok-pelnoekranowy';
 

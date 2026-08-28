@@ -12,49 +12,7 @@ import { czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Wykaz komend rdzenia — fakt i zdanie o fakcie, jeden na połączenie.
- *
- * Warstwa niższa bytu `pokrycie-komend.ts`: nie zna dokumentu ani kontrolki,
- * zna tylko odpowiedź rdzenia i zdania, które z niej wynikają.
- *
- * Prawda bierze się z powitania `connection.hello`: rdzeń oddaje w polu
- * `commands` wykaz komend, które naprawdę obsługuje, a nie wykaz z kontraktu
- * (`core/handlers_connection.go` → `Rejestr.Nazwy()`). Obsługiwacz powitania
- * nie czyta żądania i niczego nie zapisuje, więc powtórne powitanie jest
- * czystym odczytem — nie drugim uzgodnieniem połączenia i nie rejestracją
- * drugiego klienta. Samych komend nie pytamy: wywołanie
- * `orchestration.dependency.remove`, żeby zobaczyć odmowę, byłoby wykonaniem
- * czynności niszczącej dla samego sprawdzenia.
- *
- * Rozstrzygnięć jest pięć (`StanPokrycia` niżej) i każde znaczy co innego;
- * dwa pierwsze rozstrzyga sam kontrakt, bez pytania rdzenia, więc widać je
- * jeszcze przed odpowiedzią powitania.
- *
- * Jedno powitanie na połączenie, nie jedno na moduł: wykaz leży w pamięci
- * podręcznej przypisanej do kanału (`WeakMap`), więc pierwsze `zapewnijOdczyt`
- * pyta, a pozostałe czekają na tę samą odpowiedź. Odmowa w pamięci nie zostaje
- * — następne wywołanie ponawia pytanie, żeby jedna nieudana chwila nie zatruła
- * zdań do końca sesji.
- *
- * Unieważnienie: wykaz zmienia się z wersją rdzenia, nie w toku sesji, ale
- * transport ponawia połączenie pod tym samym kanałem, więc po zerwaniu można
- * trafić na rdzeń inny niż odczytany. Dlatego odpowiedzi `connection.hello`
- * nasłuchujemy na całym kanale: każde powitanie, także cudze — choćby
- * uzgodnienie powłoki po ponowieniu — odświeża wykaz bez ani jednego
- * zapytania. Powłoka może wymusić zapomnienie wprost przez
- * `zapomnijWykazKomend(kanal)`.
- */
-
-/**
- * Rozstrzygnięcie o jednej komendzie; ta sama wartość idzie w `data-pokrycie`.
- *
- * `nieustalone`           rdzeń nie odpowiedział albo odmówił — okno nie orzeka
- *                         wtedy o braku, bo cisza nie jest orzeczeniem,
- * `brak-w-kontrakcie`     nazwy nie ma w kontrakcie w ogóle (wykazy okien
- *                         obiecują więcej, niż kontrakt niesie),
- * `zdarzenie-nie-komenda` nazwa jest, ale jest zdarzeniem — tego się nie wywołuje,
- * `rdzen-nie-ma`          kontrakt komendę ma, rdzeń nie ma uchwytu,
- * `rdzen-ma`              rdzeń ma uchwyt, a to okno go jeszcze nie wywołuje.
+ * Wykaz komend rdzenia ustala dla każdego połączenia jeden fakt i jedno zdanie o nim: rozstrzygnięcie o pojedynczej komendzie ujmuje pięć stanów pokrycia, a wartość ta sama trafia do atrybutu pokrycia znacznika.
  */
 export type StanPokrycia =
   | 'nieustalone'
@@ -63,18 +21,18 @@ export type StanPokrycia =
   | 'rdzen-nie-ma'
   | 'rdzen-ma';
 
-/** Komendy i zdarzenia kontraktu — wykazy z `shared/contract.ts`. */
+/** Komendy i zdarzenia kontraktu — wykazy stałych pochodzące wprost z definicji kontraktu współdzielonego między rdzeniem a klientem. */
 const KOMENDY_KONTRAKTU: ReadonlySet<string> = new Set<string>(KOMENDY);
 const ZDARZENIA_KONTRAKTU: ReadonlySet<string> = new Set<string>(ZDARZENIA);
 
-/** Odczyt wykazu; `uchwyty === null` znaczy „rdzeń jeszcze nie orzekł”. */
+/** Odczyt wykazu komend wraz z ewentualną odmową rdzenia; wartość null uchwytów znaczy, że rdzeń jeszcze nie orzekł o żadnej komendzie. */
 interface Odczyt {
   uchwyty: ReadonlySet<string> | null;
   /** Zdanie odmowy powitania; puste, dopóki nic nie odmówiło. */
   odmowa: string;
 }
 
-/** Pamięć podręczna jednego kanału wraz z kontrolkami do przerysowania. */
+/** Pamięć podręczna jednego kanału łącząca odczyt wykazu komend z kontrolkami modułów, które trzeba przerysować po jego zmianie. */
 interface WpisPamieci {
   odczyt: Odczyt;
   /** Powitanie w drodze — wszystkie moduły czekają na jedną odpowiedź. */
@@ -84,14 +42,14 @@ interface WpisPamieci {
 
 const pamiec = new WeakMap<Kanal, WpisPamieci>();
 
-/** Podpięcie kontrolki pod wykaz kanału; oddaje odpięcie. */
+/** Podpięcie kontrolki modułu pod wykaz komend danego kanału; wywołanie zwrotne oddaje funkcję odpinającą ten nasłuch. */
 export function podepnijDoWykazu(kanal: Kanal, przerysuj: () => void): () => void {
   const wspolny = wpisPamieci(kanal);
   wspolny.zalezni.add(przerysuj);
   return () => wspolny.zalezni.delete(przerysuj);
 }
 
-/** Pyta rdzeń o wykaz komend, jeśli nikt jeszcze nie zapytał ani nie wie. */
+/** Pyta rdzeń o wykaz komend tylko wtedy, gdy dla tego kanału nikt jeszcze nie zapytał ani odpowiedź nie jest już znana. */
 export async function zapewnijOdczyt(kanal: Kanal): Promise<void> {
   const wspolny = wpisPamieci(kanal);
   if (wspolny.odczyt.uchwyty !== null) return;
@@ -112,7 +70,7 @@ export function zapomnijWykazKomend(kanal: Kanal): void {
   zapisz(wpisPamieci(kanal), { uchwyty: null, odmowa: '' });
 }
 
-/** Rozstrzygnięcie o komendzie. Dwa pierwsze stany nie wymagają rdzenia. */
+/** Rozstrzygnięcie o pojedynczej komendzie kanału; dwa pierwsze możliwe stany rozstrzyga sam kontrakt, bez pytania rdzenia. */
 export function stanKomendy(kanal: Kanal, komenda: string): StanPokrycia {
   if (!KOMENDY_KONTRAKTU.has(komenda)) {
     return ZDARZENIA_KONTRAKTU.has(komenda) ? 'zdarzenie-nie-komenda' : 'brak-w-kontrakcie';
@@ -122,7 +80,7 @@ export function stanKomendy(kanal: Kanal, komenda: string): StanPokrycia {
   return uchwyty.has(komenda) ? 'rdzen-ma' : 'rdzen-nie-ma';
 }
 
-/** Waga rozstrzygnięć od najcięższego — tak rozstrzyga pozycja o kilku komendach. */
+/** Waga poszczególnych rozstrzygnięć uporządkowana od najcięższego; tą kolejnością rozstrzyga się stan pozycji złożonej z kilku komend. */
 const WAGA_STANU: readonly StanPokrycia[] = [
   'brak-w-kontrakcie',
   'zdarzenie-nie-komenda',
@@ -131,7 +89,7 @@ const WAGA_STANU: readonly StanPokrycia[] = [
   'rdzen-ma',
 ];
 
-/** Rozstrzygnięcie zbiorcze pozycji: najcięższe z rozstrzygnięć jej komend. */
+/** Rozstrzygnięcie zbiorcze pozycji wykazu — najcięższe spośród rozstrzygnięć wszystkich komend, które ta pozycja obejmuje. */
 export function stanPozycji(kanal: Kanal, komendy: readonly string[]): StanPokrycia {
   // Pozycja bez ani jednej komendy nie ma czego rozstrzygać — i nie udaje, że ma.
   if (komendy.length === 0) return 'nieustalone';
@@ -143,12 +101,12 @@ export function stanPozycji(kanal: Kanal, komendy: readonly string[]): StanPokry
   return wybor;
 }
 
-/** Powód dotyczący jednej komendy, zdaniem samodzielnym. */
+/** Powód rozstrzygnięcia dotyczącego jednej komendy, zapisany zdaniem samodzielnym gotowym do pokazania osobno. */
 export function powodKomendy(kanal: Kanal, komenda: string): string {
   return zDuzej(powodMala(kanal, komenda));
 }
 
-/** Powód całej pozycji: zdania jej komend poprzedzone nazwą czynności. */
+/** Powód dotyczący całej pozycji wykazu — zdania poszczególnych jej komend, każde poprzedzone nazwą własnej czynności. */
 export function zdanieOPozycji(
   kanal: Kanal,
   komendy: readonly string[],
@@ -160,11 +118,11 @@ export function zdanieOPozycji(
   return nazwa === '' ? zDuzej(powody) : `${nazwa}: ${powody}`;
 }
 
-/** Zdanie stanu nieustalonego bez nazwy komendy — dla pozycji zbiorczych. */
+/** Zdanie opisujące stan nieustalony bez podawania nazwy komendy; używane przy rozstrzygnięciach pozycji zbiorczych. */
 export const POKRYCIE_W_ODCZYCIE =
   'Pokrycie tej pozycji w rdzeniu — odczyt w toku. Powód pojawi się po odpowiedzi rdzenia.';
 
-/** Nagłówek wykazu. Braków z ciszy nie liczy: liczba przed odpowiedzią byłaby orzeczeniem. */
+/** Nagłówek całego wykazu komend; braków wynikających z ciszy rdzenia nie liczy, bo liczba podana przed odpowiedzią byłaby przedwczesnym orzeczeniem. */
 export function naglowekWykazu(kanal: Kanal, komendy: readonly string[]): string {
   const { uchwyty, odmowa } = wpisPamieci(kanal).odczyt;
   if (odmowa !== '') return 'Pokrycie komend tego okna w rdzeniu — nieustalone';
@@ -173,14 +131,13 @@ export function naglowekWykazu(kanal: Kanal, komendy: readonly string[]): string
   return `Komendy tego okna bez drogi do rdzenia (${bezDrogi} z ${komendy.length})`;
 }
 
-/** Wpis kanału wraz z nasłuchem powitań — zakładany raz na kanał. */
+/** Wpis pamięci podręcznej jednego kanału wraz z nasłuchem powitań rdzenia, zakładany dokładnie raz na każdy kanał. */
 function wpisPamieci(kanal: Kanal): WpisPamieci {
   const znany = pamiec.get(kanal);
   if (znany !== undefined) return znany;
   const swiezy: WpisPamieci = { odczyt: { uchwyty: null, odmowa: '' }, wToku: null, zalezni: new Set() };
   pamiec.set(kanal, swiezy);
-  // Powitanie cudze jest tą samą odpowiedzią co własne: uzgodnienie powłoki wita
-  // rdzeń przy każdym nawiązaniu połączenia, więc wykaz odświeża się sam.
+  // Powitanie cudze liczy się jak własne — uzgodnienie wita rdzeń przy każdym połączeniu.
   kanal.naDowolny((koperta) => {
     if (koperta.type !== Command.ConnectionHello || koperta.status !== EnvelopeStatus.Ok) return;
     const komendy = (koperta.payload as ConnectionHelloResponse | undefined)?.commands;
@@ -190,14 +147,11 @@ function wpisPamieci(kanal: Kanal): WpisPamieci {
   return swiezy;
 }
 
-/** Jedno powitanie i zapis jego wyniku — udanego albo odmownego. */
+/** Obsługa jednego powitania rdzenia i zapis jego wyniku we wpisie kanału — zarówno wyniku udanego, jak i odmowy. */
 async function powitaj(kanal: Kanal, wspolny: WpisPamieci): Promise<void> {
   const wynik = sprawdzKsztalt(
     await wywolaj(kanal, Command.ConnectionHello, {
-      // Tożsamość stała, nie świeża: obsługiwacz powitania nie czyta żądania,
-      // a `tozsamoscKlienta()` nadaje przy każdym wywołaniu identyfikator nowy —
-      // drugi identyfikator rozdzieliłby ognisko od połączenia, które je zgłosiło
-      // (`protokol/uzgodnienie.ts`).
+      // Tożsamość jest stała, nie świeża, bo obsługiwacz powitania nie czyta żądania.
       clientId: 'pokrycie-komend',
       clientVersion: '1.0',
       protocolVersion: PROTOCOL_VERSION,
@@ -214,13 +168,13 @@ async function powitaj(kanal: Kanal, wspolny: WpisPamieci): Promise<void> {
   zapisz(wspolny, { uchwyty: new Set(wynik.wynik.commands ?? []), odmowa: '' });
 }
 
-/** Zapis odczytu i przerysowanie kontrolek wszystkich modułów tego kanału. */
+/** Zapis wyniku odczytu we wpisie kanału i przerysowanie kontrolek wszystkich modułów, które na ten kanał nasłuchują. */
 function zapisz(wspolny: WpisPamieci, odczyt: Odczyt): void {
   wspolny.odczyt = odczyt;
   for (const przerysuj of wspolny.zalezni) przerysuj();
 }
 
-/** Powód komendy zdaniem podrzędnym — małą literą, do złożenia z czynnością. */
+/** Powód dotyczący jednej komendy zapisany zdaniem podrzędnym z małej litery, gotowym do złożenia z nazwą czynności. */
 function powodMala(kanal: Kanal, komenda: string): string {
   switch (stanKomendy(kanal, komenda)) {
     case 'brak-w-kontrakcie':
@@ -238,7 +192,7 @@ function powodMala(kanal: Kanal, komenda: string): string {
   }
 }
 
-/** Zdanie zaczynające się z dużej litery — powody układa się małą. */
+/** Zamienia pierwszą literę zdania na wielką, bo powody poszczególnych komend układa się konsekwentnie z litery małej. */
 function zDuzej(zdanie: string): string {
   return zdanie.charAt(0).toUpperCase() + zdanie.slice(1);
 }

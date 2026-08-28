@@ -3,12 +3,9 @@ import { BRAKI_BACKEND, BRAKI_FRONTEND, KODY_OKIEN, NAZWY_OKIEN } from './etykie
 import type { OpisWarsztatu } from './okno-warsztatu';
 
 /**
- * Czym różnią się oba warsztaty modułu Apps.
- *
- * Opisy stoją osobno od ramy warsztatu, bo rama jest czynnością, a to jest
- * wykazem: dwie warstwy z wyliczenia kontraktu wraz z tym, co przypisano
- * każdej z nich. Dopisanie trzeciej warstwy byłoby zmianą kontraktu, nie
- * zmianą widoku.
+ * Opisy obu warsztatów modułu Apps: dwie warstwy z wyliczenia kontraktu wraz
+ * z tym, co przypisano każdej z nich. Dopisanie trzeciej warstwy jest zmianą
+ * kontraktu, nie zmianą widoku.
  */
 export const WARSZTAT_FRONTEND: OpisWarsztatu = {
   kodOkna: KODY_OKIEN.FrontendWorkspace,

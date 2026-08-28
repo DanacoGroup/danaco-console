@@ -3094,7 +3094,7 @@ button.dn-link {
   gap: var(--dn-od-3);
   padding: var(--dn-od-3) var(--dn-od-4);
   border-radius: var(--dn-r-md);
-  /* Ta sama miara rozdzielenia stref co w pasie działań — patrz .dn-pas-dzialan. */
+  /* Ta sama miara rozdzielenia stref, którą niesie pas działań. */
   background: var(--dn-powierzchnia-2);
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst);

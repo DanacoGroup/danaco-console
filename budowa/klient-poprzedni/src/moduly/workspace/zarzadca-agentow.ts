@@ -17,20 +17,7 @@ import { utworzStanTresci } from './stany-okna';
 import type { ZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Agent Manager — okno zarządca modułu Workspace: przypisanie agenta jako
- * wykonawcy zadania w projekcie.
- *
- * Stąd dwa wykazy obok siebie: biblioteka ekspertów z modułu Agents
- * (`agent.list`) i eksperci przypisani do projektu — ci drudzy z zestawienia
- * pulpitu, bo kontrakt nie ma komendy `workspace.agent.list`.
- *
- * Uprawnienia są konfiguracją możliwości, nie kontrolą dostępu. Cztery grupy
- * zakresu ustawia komenda modułu Agents, a stan każdej z nich przychodzi w polu
- * `Agent.permissions` — okno go nie zgaduje.
- *
- * O przypisaniu do projektu mówi rdzeń albo nikt. Dopóki pulpit nie został
- * odczytany, o przypisaniach nie wiadomo nic i okno tak właśnie mówi — zamiast
- * przedstawiać nieodczytany pulpit jako projekt bez ekspertów.
+ * Agent Manager to okno zarządcy modułu Workspace, które przypisuje agenta z biblioteki ekspertów modułu Agents jako wykonawcę zadania w projekcie, zgodnie z uprawnieniami nadanymi przez ten moduł.
  */
 export interface OknoAgentow {
   element: HTMLElement;
@@ -72,8 +59,7 @@ export function utworzOknoAgentow(
     ),
   );
 
-  // Zawężenie wykazu ekspertów jest czynnością wyłącznie kliencką — pracuje na
-  // bibliotece już odczytanej — więc stoi w pasku narzędzi kontekstowych okna.
+  // Zawężenie wykazu ekspertów jest czynnością kliencką, więc stoi w pasku narzędzi kontekstowych okna.
   const fraza = pole('Fraza w nazwie, umiejętności albo konektorze', 'fragment nazwy lub kodu');
   const tylkoPrzypisani = przelacznikWidoku('Tylko przypisani do projektu', false);
   rama.narzedzia.append(fraza, tylkoPrzypisani);
@@ -86,21 +72,14 @@ export function utworzOknoAgentow(
   );
 
   let biblioteka: Agent[] = [];
-  /**
-   * Eksperci, o których rdzeń powiedział, że pracują w projekcie.
-   * `null` znaczy „rdzeń nie był o to pytany” i nie jest tym samym co zero.
-   */
+  /** Eksperci przypisani do projektu wedle rdzenia; null znaczy, że rdzeń nie był o to pytany. */
   let przypisaniRdzenia: Set<string> | null = null;
   /** Stan przełącznika „Tylko przypisani” — nośnikiem jest przycisk, nie pole. */
   let filtrPrzypisani = false;
 
   const czynnosci = { zrodlo, tresc, odrysuj: () => pokaz() };
 
-  /**
-   * Czy ekspert przechodzi przez nastawę filtra. Fraza obejmuje nazwę,
-   * identyfikator, umiejętności i konektory — czyli to, po czym opracowanie każe
-   * eksperta odnajdywać, i wyłącznie te pola, które kontrakt w `agent.list` niesie.
-   */
+  /** Czy ekspert przechodzi filtr dopasowujący nazwę, identyfikator, umiejętności i konektory. */
   function przechodziFiltr(agent: Agent): boolean {
     const szukana = fraza.value.trim().toLocaleLowerCase('pl-PL');
     if (szukana !== '') {
@@ -131,9 +110,7 @@ export function utworzOknoAgentow(
       tresc.pusto('Biblioteka ekspertów jest pusta. Eksperta zakłada się w module Agents (Agent Builder).');
       return;
     }
-    // Zawężenie do przypisanych ma czym pracować dopiero wtedy, gdy rdzeń
-    // o przypisaniach powiedział. Przy niewiedzy wykaz nie udaje pustego —
-    // nazywa brakującą przesłankę i drogę do niej.
+    // Zawężenie do przypisanych działa dopiero po odpowiedzi rdzenia o przypisaniach.
     if (filtrPrzypisani && przypisaniRdzenia === null) {
       rama.ustawZnacznik('przypisania nieodczytane', 'ostrzezenie');
       tresc.pusto(
@@ -161,15 +138,13 @@ export function utworzOknoAgentow(
   }
 
   function odczytaj(): void {
-    // Wiedza o przypisaniach pochodzi z zestawienia pulpitu; bierzemy jego stan
-    // bieżący, żeby wykaz nie rysował się z niewiedzą, którą pulpit już rozwiał.
+    // Wiedza o przypisaniach pochodzi z bieżącego stanu zestawienia pulpitu.
     const zestawienie = stan.pulpit();
     przypisaniRdzenia = zestawienie === null ? null : new Set(zestawienie.assignedAgentIds ?? []);
     tresc.ladowanie('Odczyt biblioteki ekspertów…');
     void zrodlo.agenci().then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Plakietka gaśnie razem z wykazem: licznik sprzed odmowy mówiłby
-        // o bibliotece, której to okno właśnie nie zdołało odczytać.
+        // Plakietka gaśnie razem z wykazem, bo licznik sprzed odmowy dotyczyłby nieodczytanej biblioteki.
         biblioteka = [];
         rama.ustawZnacznik('');
         tresc.blad('Rdzeń nie oddał biblioteki ekspertów (agent.list).', wynik.blad);
@@ -211,9 +186,7 @@ export function utworzOknoAgentow(
           return;
         }
         const przypisanie = wynik.wynik.assignment;
-        // Wykaz przypisanych stoi na zestawieniu pulpitu, a to po zapisie jest
-        // już nieaktualne. Wchłaniamy to, co oddał rdzeń, żeby wykaz pod
-        // potwierdzeniem nie zaprzeczał potwierdzeniu.
+        // Wykaz przypisanych przyjmuje odpowiedź rdzenia, bo zestawienie pulpitu jest już nieaktualne.
         if (przypisaniRdzenia === null) przypisaniRdzenia = new Set<string>();
         przypisaniRdzenia.add(przypisanie.agentId);
         pokaz();
@@ -238,8 +211,7 @@ export function utworzOknoAgentow(
   doBudowniczego.addEventListener('click', () => {
     const okno = stan.oknoRozmowy();
     if (okno === '') {
-      // Powód z odpowiedzi rdzenia (`okno-rozmowy.ts`), nie z napisu na sztywno
-      // — tak samo jak w `biblioteka-czynnosci.ts`.
+      // Powód pochodzi z odpowiedzi rdzenia, nie z napisu wpisanego na stałe w kodzie.
       tresc.blad(`Skok do modułu Agents wymaga okna rozmowy modułu. ${stan.powodBrakuOkna()}`);
       return;
     }
@@ -249,8 +221,7 @@ export function utworzOknoAgentow(
         tresc.blad('Rdzeń nie przeniósł kontekstu do modułu Agents.', wynik.blad);
         return;
       }
-      // Zdanie mówi o oknie, które rdzeń otworzył, i o jego własnym znaczniku
-      // przeniesienia, nie o stałej wpisanej w wywołanie.
+      // Zdanie podaje okno otwarte przez rdzeń oraz jego znacznik przeniesienia, nie stałą z wywołania.
       const odpowiedz = wynik.wynik;
       if (odpowiedz.transferred !== true) {
         tresc.potwierdzenie(
@@ -268,11 +239,7 @@ export function utworzOknoAgentow(
     });
   });
 
-  // Zestawienie pulpitu niesie wykaz przypisanych — po jego zmianie wykaz
-  // ekspertów pokazuje inne przypisania, więc odrysowujemy go bez pytania rdzenia.
-  // Zestawienie skasowane (zmiana projektu, zdarzenie rdzenia) wraca do stanu
-  // „nie wiadomo”, a nie do zera: o przypisaniach nowego projektu nikt jeszcze
-  // nie pytał.
+  // Zestawienie pulpitu niesie wykaz przypisanych; skasowanie wraca do stanu „nie wiadomo”, nie do zera.
   stan.naZmiane(() => {
     const zestawienie = stan.pulpit();
     przypisaniRdzenia = zestawienie === null ? null : new Set(zestawienie.assignedAgentIds ?? []);

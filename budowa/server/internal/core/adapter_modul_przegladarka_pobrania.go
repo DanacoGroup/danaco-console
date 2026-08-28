@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: menedżer pobrań i nagrywarka makr oraz granice
-// działania Wykonawcy — `browser.download.list`, `.control`,
-// `browser.macro.record`, `browser.executor.limits.set`, `.get`.
-//
-// Pobranie naprawdę ściąga plik. Ponowienie (`retry`) idzie po treść spod adresu
-// pobrania i odkłada ją w magazynie modułu, a postęp w wierszu jest liczbą
-// bajtów, które na dysku leżą — nie deklaracją. Wstrzymanie i wznowienie
-// zmieniają stan kolejki, przerwanie ją kończy, zdjęcie usuwa wpis.
-//
-// Makro zapisuje kroki w kształcie kontraktu (`AutomationStep`), tym samym,
-// którym jedzie moduł Automations. Dzięki temu przekazanie scenariusza do
-// Automations jest przełożeniem wiersza, a nie tłumaczeniem jednego kształtu na
-// drugi.
-//
-// Granice Wykonawcy mają wartość domyślną w kodzie, nie w schemacie. Brak
-// wiersza znaczy „granice domyślne rdzenia" i tak też odpowiada odczyt —
-// zamiast odmawiać, że nikt jeszcze niczego nie ustawił.
+// Odpowiedzialność pliku: menedżer pobrań, nagrywarka makr i granice działania
+// Wykonawcy — obsługuje komendy browser.download, browser.macro oraz
+// browser.executor.limits.
 package core
 
 import (
@@ -27,14 +13,14 @@ import (
 )
 
 const (
-	// domyslneKrokiWykonawcy i domyslnyCzasWykonawcy są granicami obowiązującymi
-	// wtedy, gdy Operator nie ustawił własnych. Wartości skończone, bo pętla
-	// wykonawcza bez granicy chodziłaby po stronie bez końca.
+	// domyslneKrokiWykonawcy i domyslnyCzasWykonawcy są granicami obowiązującymi,
+	// gdy Operator nie ustawił własnych.
 	domyslneKrokiWykonawcy = 40
 	domyslnyCzasWykonawcy  = 600
 )
 
-// WykazPobran obsługuje `browser.download.list`.
+// WykazPobran obsługuje `browser.download.list` i oddaje wykaz pobrań okna
+// albo sesji, po zapisanym stanie i z uwzględnieniem podanego limitu wierszy.
 func (a *adapterPrzegladarki) WykazPobran(ctx context.Context,
 	z shared.BrowserDownloadListRequest) (shared.BrowserDownloadListResponse, error) {
 
@@ -53,7 +39,8 @@ func (a *adapterPrzegladarki) WykazPobran(ctx context.Context,
 	return shared.BrowserDownloadListResponse{Downloads: pobrania}, nil
 }
 
-// SterujPobraniem obsługuje `browser.download.control`.
+// SterujPobraniem obsługuje `browser.download.control` — wstrzymuje,
+// wznawia, przerywa albo zdejmuje wiersz pobrania wskazanego identyfikatorem.
 func (a *adapterPrzegladarki) SterujPobraniem(ctx context.Context,
 	z shared.BrowserDownloadControlRequest) (shared.BrowserDownloadControlResponse, error) {
 
@@ -82,8 +69,7 @@ func (a *adapterPrzegladarki) SterujPobraniem(ctx context.Context,
 		if !usuniete {
 			return shared.BrowserDownloadControlResponse{}, bladNieznanegoBytu("pobrania", z.DownloadId)
 		}
-		// Wiersza już nie ma, ale odpowiedź niesie to, co zdjęto: klient ma
-		// z czego zdjąć pozycję z wykazu, zamiast zgadywać, która zniknęła.
+		// Odpowiedź niesie to, co zdjęto, więc klient wie, którą pozycję usunąć.
 		return shared.BrowserDownloadControlResponse{Download: pobranieKontraktu(pobranie)}, nil
 	case shared.BrowserDownloadActionRetry:
 		pobrany, err := a.sciagnijPobranie(ctx, pobranie)
@@ -209,7 +195,8 @@ func (a *adapterPrzegladarki) NagrywajMakro(ctx context.Context,
 	}, nil
 }
 
-// UstawGraniceWykonawcy obsługuje `browser.executor.limits.set`.
+// UstawGraniceWykonawcy obsługuje `browser.executor.limits.set` i zapisuje
+// granice kroków, czasu oraz domen dla zasięgu okna albo sesji przeglądania.
 func (a *adapterPrzegladarki) UstawGraniceWykonawcy(ctx context.Context,
 	z shared.BrowserExecutorLimitsSetRequest) (shared.BrowserExecutorLimitsSetResponse, error) {
 
@@ -223,8 +210,7 @@ func (a *adapterPrzegladarki) UstawGraniceWykonawcy(ctx context.Context,
 		DomenyZablokowaneJson: wykazJson(z.BlockedDomains),
 		PotwierdzajWyslanie:   z.ConfirmBeforeSubmit == nil || *z.ConfirmBeforeSubmit,
 	}
-	// Zastane granice są punktem wyjścia: żądanie zmieniające sam limit kroków
-	// nie ma kasować wykazu domen ustawionego wcześniej.
+	// Zastane granice są punktem wyjścia — zmiana limitu kroków nie kasuje domen.
 	if zastane, err := a.repozytorium.Granice(ctx, granica.Zasieg, wskazanie); err == nil {
 		granica.MaxKrokow, granica.MaxCzasSekund = zastane.MaxKrokow, zastane.MaxCzasSekund
 		if z.AllowedDomains == nil {
@@ -253,7 +239,8 @@ func (a *adapterPrzegladarki) UstawGraniceWykonawcy(ctx context.Context,
 	return shared.BrowserExecutorLimitsSetResponse{Limits: graniceKontraktu(zapisana)}, nil
 }
 
-// OdczytajGraniceWykonawcy obsługuje `browser.executor.limits.get`.
+// OdczytajGraniceWykonawcy obsługuje `browser.executor.limits.get` i oddaje
+// zapisane granice Wykonawcy albo, gdy brak wiersza, granice domyślne rdzenia.
 func (a *adapterPrzegladarki) OdczytajGraniceWykonawcy(ctx context.Context,
 	z shared.BrowserExecutorLimitsGetRequest) (shared.BrowserExecutorLimitsGetResponse, error) {
 
@@ -263,8 +250,7 @@ func (a *adapterPrzegladarki) OdczytajGraniceWykonawcy(ctx context.Context,
 		if !isBrakWiersza(err) {
 			return shared.BrowserExecutorLimitsGetResponse{}, bladPrzegladarki(err)
 		}
-		// Brak wiersza nie jest brakiem odpowiedzi: obowiązują wtedy granice
-		// domyślne rdzenia i to je odczyt oddaje, wraz ze wskazaniem zasięgu.
+		// Brak wiersza nie jest brakiem odpowiedzi — odczyt oddaje granice domyślne.
 		return shared.BrowserExecutorLimitsGetResponse{Limits: shared.BrowserExecutorLimits{
 			Scope: zasieg, ScopeId: wskaznikNiepustyPrzegladania(wskazanie),
 			MaxSteps: domyslneKrokiWykonawcy, MaxDurationSeconds: domyslnyCzasWykonawcy,
@@ -284,12 +270,12 @@ func zasiegGranic(okno, sesja *string) (shared.ConfigScope, string) {
 	if wskazanie := wartoscTekstuLubPusta(sesja); wskazanie != "" {
 		return shared.ConfigScopeSession, wskazanie
 	}
-	// Żądanie bez wskazania dotyczy całej aplikacji — najszerszego z dziewięciu
-	// poziomów zasięgu, tego, który ustępuje każdemu węższemu.
+	// Żądanie bez wskazania dotyczy całej aplikacji — najszerszego z zasięgów.
 	return shared.ConfigScopeApplication, ""
 }
 
-// wskaznikNiepustyPrzegladania oddaje wskaźnik na tekst albo brak dla tekstu pustego.
+// wskaznikNiepustyPrzegladania oddaje wskaźnik na tekst albo brak dla tekstu
+// pustego — rozróżnia pole nieustawione od pola ustawionego na pusty ciąg.
 func wskaznikNiepustyPrzegladania(tekst string) *string {
 	if tekst == "" {
 		return nil
@@ -298,7 +284,8 @@ func wskaznikNiepustyPrzegladania(tekst string) *string {
 	return &kopia
 }
 
-// krokiMakra odczytuje kroki zapisane kolumną JSON.
+// krokiMakra odczytuje kroki zapisane kolumną JSON i oddaje je jako wycinek
+// kroków kontraktu AutomationStep, albo brak, gdy zapis jest pusty lub wadliwy.
 func krokiMakra(zapis *string) []shared.AutomationStep {
 	if zapis == nil || *zapis == "" {
 		return nil
@@ -310,7 +297,8 @@ func krokiMakra(zapis *string) []shared.AutomationStep {
 	return kroki
 }
 
-// pobranieKontraktu przekłada wiersz pobrania na byt kontraktu.
+// pobranieKontraktu przekłada wiersz pobrania warstwy danych na byt kontraktu
+// BrowserDownload, wraz ze znacznikami rozpoczęcia i zakończenia.
 func pobranieKontraktu(w dane.PobraniePrzegladania) shared.BrowserDownload {
 	return shared.BrowserDownload{
 		Id:            w.Kod,
@@ -328,7 +316,8 @@ func pobranieKontraktu(w dane.PobraniePrzegladania) shared.BrowserDownload {
 	}
 }
 
-// makroKontraktu przekłada wiersz makra na byt kontraktu.
+// makroKontraktu przekłada wiersz makra warstwy danych na byt kontraktu
+// BrowserMacro, dokładając kroki nagrania, gdy zapis kolumny je niesie.
 func makroKontraktu(w dane.MakroPrzegladania) shared.BrowserMacro {
 	makro := shared.BrowserMacro{
 		Id:         w.Kod,
@@ -345,7 +334,8 @@ func makroKontraktu(w dane.MakroPrzegladania) shared.BrowserMacro {
 	return makro
 }
 
-// graniceKontraktu przekładają wiersz granic na byt kontraktu.
+// graniceKontraktu przekładają wiersz granic warstwy danych na byt kontraktu
+// BrowserExecutorLimits, wraz z wykazami domen dozwolonych i zablokowanych.
 func graniceKontraktu(w dane.GranicaWykonawcy) shared.BrowserExecutorLimits {
 	granice := shared.BrowserExecutorLimits{
 		Scope:               shared.ConfigScope(w.Zasieg),
@@ -365,13 +355,8 @@ func graniceKontraktu(w dane.GranicaWykonawcy) shared.BrowserExecutorLimits {
 }
 
 // odlozPobranie ściąga zasób, którego nie da się pokazać jako strony, i zakłada
-// dla niego wiersz w menedżerze pobrań. Oddaje odmowę komendy `browser.navigate`
-// — bo migawki strony z tego nie ma — ale odmowa nazywa skutek, który naprawdę
-// zaszedł: pobranie o podanym identyfikatorze, z bajtami leżącymi w magazynie.
-//
-// To jest jedyna droga, którą pobrania powstają, i jest to droga naturalna:
-// w przeglądarce plik pobiera się przez wejście pod jego adres, a nie osobnym
-// poleceniem „dodaj pobranie" — takiego kontrakt zresztą nie niesie.
+// dla niego wiersz w menedżerze pobrań, oddając odmowę komendy `browser.navigate`
+// nazywającą skutek, który naprawdę zaszedł: pobranie z bajtami w magazynie.
 func (a *adapterPrzegladarki) odlozPobranie(ctx context.Context, okno, adres string, powod error) error {
 	plik, err := pobierzPlik(ctx, adres)
 	if err != nil {

@@ -18,32 +18,11 @@ import { utworzZapisyNadan } from './zapisy-nadan';
 import { uporzadkujNadania, utworzZrodloNadan } from './zrodlo-nadan';
 import { uporzadkujPunkty, utworzZrodloPunktow } from './zrodlo-punktow';
 
-/**
- * Stan sekcji dostępów — jedno źródło prawdy dla wykazu punktów i zbioru
- * nadań jednego okna rozmowy.
- *
- * Punkty i nadania trzymamy razem, ponieważ wiersz nadania nie da się
- * narysować bez punktu, na który się powołuje: z punktu pochodzą korzenie,
- * rodzaj i nazwa maszyny. Dwa równoległe stany dałyby dwie prawdy o tym samym
- * nadaniu.
- *
- * Nadanie żyje per okno. Zmiana okna nie przebudowuje sekcji — zmienia zbiór
- * nadań i ogłasza przeliczenie; wykaz punktów jest wspólny dla platformy
- * i zostaje.
- *
- * Żadna ścieżka nie zatrzymuje sekcji. Rdzeń, który nie odda wykazu, zostawia
- * go pustym; sekcja pozostaje czynna i pozwala spytać ponownie.
- */
+/** Stan sekcji dostępów — jedno źródło prawdy dla wykazu punktów i zbioru nadań jednego okna rozmowy operatora. */
 export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 export interface StanDostepow {
-  /**
-   * Faza odczytu wykazów z rdzenia.
-   *
-   * Bez niej pusty wykaz znaczy trzy rzeczy naraz: „jeszcze nie pytałem",
-   * „pytam" i „rdzeń nie zna ani jednego punktu". Widok musi je rozróżnić,
-   * bo każdej należy się inny stan: nic, wskaźnik odczytu, stan pusty.
-   */
+  // Faza odczytu wykazów z rdzenia — bez niej pusty wykaz znaczy trzy różne rzeczy naraz.
   faza(): FazaOdczytu;
   /** Powód ostatniego niepowodzenia odczytu; pusty, gdy odczyt się powiódł. */
   powodNiepowodzenia(): string;
@@ -61,15 +40,7 @@ export interface StanDostepow {
   odswiez(): Promise<void>;
   /** `access.point.check` wraz z naniesieniem wyniku na wykaz. */
   sprawdz(punktID: string): Promise<Wynik<AccessPointCheckResponse>>;
-  /**
-   * Zakłada punkt rodzaju `localDirectory` na wskazanej ścieżce.
-   *
-   * `urzadzenieID` wskazuje maszynę, na której katalog istnieje — schemat bazy
-   * wymaga go dla punktu rodzaju `localDirectory`. Katalog dodany z „Mój
-   * komputer" należy do maszyny bieżącej; jej identyfikator poda komenda
-   * `device.list`, gdy trafi do kontraktu. Do tego czasu wywołanie bez
-   * urządzenia wraca z odmową merytoryczną rdzenia, nie z fałszywym sukcesem.
-   */
+  // Zakłada punkt rodzaju `localDirectory` na wskazanej ścieżce, wymagającej wskazania urządzenia.
   zalozKatalogLokalny(
     sciezka: string,
     urzadzenieID?: string,
@@ -93,9 +64,7 @@ export interface StanDostepow {
 }
 
 export function utworzStanDostepow(kanal: Kanal, oknoPoczatkowe = ''): StanDostepow {
-  // Powód niepowodzenia zbiera się z obu odczytów jednego odświeżenia: wykaz
-  // punktów i nadania okna jadą równolegle, a Operatorowi należy się zdanie
-  // o każdym, który nie dojechał.
+  // Powód niepowodzenia zbiera się z obu odczytów jednego odświeżenia, jadących równolegle.
   let powody: string[] = [];
   const zapiszPowod = (powod: string): void => void powody.push(powod);
 
@@ -204,9 +173,7 @@ export function utworzStanDostepow(kanal: Kanal, oknoPoczatkowe = ''): StanDoste
         roots: [sciezka],
         defaultMode: AccessMode.Read,
         description: `Katalog wskazany oknem powłoki: ${sciezka}`,
-        // Pole opcjonalne kontraktu: wysyłamy je tylko, gdy znamy urządzenie.
-        // Puste `deviceId` nie przechodzi więzu schematu, więc pominięcie jest
-        // uczciwsze niż napis pusty — rdzeń odmówi z powodem, a nie z błędu bazy.
+        // Pole opcjonalne kontraktu — puste `deviceId` nie przechodzi więzu schematu, więc jest pomijane.
         ...(urzadzenieID !== undefined && urzadzenieID !== '' ? { deviceId: urzadzenieID } : {}),
       });
       const punkt = wynik.wynik?.point;

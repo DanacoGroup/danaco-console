@@ -11,31 +11,16 @@ import type { Kanal } from '../protokol/kanal';
 import { czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Źródło danych sekcji sesji w tle — jedyna prawda strony głównej o sesjach.
- *
- * Jedna odpowiedzialność: odpytanie `session.list` z żywym stanem i nasłuch
- * zdarzeń `session.changed` oraz `window.changed`, złożone w jedną migawkę.
- *
- * Rozłączenie klienta nie kończy sesji ani procesów, więc strona główna musi
- * wiedzieć, że sesja żyje i gdzie żyje. Odpis żywego stanu (`SessionPresence`)
- * niesie środowisko, moduł i liczbę okien — sekcja nie wymyśla ani jednej
- * liczby, pokazuje wyłącznie to, co oddał rdzeń.
- *
- * Fail-open: odmowa albo odpowiedź o złym kształcie daje stan `blad` z treścią
- * odmowy, a nie pusty widok udający brak sesji.
- */
-
-/** Sesja rdzenia wraz z żywym stanem, jeśli rdzeń go oddał. */
+/** Źródło danych sekcji sesji w tle jest jedyną prawdą strony głównej o sesjach: odpytuje wykaz sesji z żywym stanem i nasłuchuje zdarzeń rdzenia, składając je w jedną migawkę. */
 export interface WpisSesji {
   sesja: Session;
   obecnosc?: SessionPresence;
 }
 
-/** Stan źródła: przed pierwszą odpowiedzią rdzenia, po niej, albo po odmowie. */
+/** Stan źródła: przed pierwszą odpowiedzią rdzenia, po niej z gotowym wykazem, albo po odmowie rdzenia. */
 export type StanZrodlaSesji = 'oczekiwanie' | 'gotowe' | 'blad';
 
-/** Migawka sekcji — komplet danych do jednego przerysowania. */
+/** Migawka sekcji niesie komplet danych potrzebny do jednego pełnego przerysowania widoku sesji w tle strony. */
 export interface MigawkaSesji {
   stan: StanZrodlaSesji;
   /** Sesje w tle: czynne i wstrzymane, bez sesji bieżącego połączenia. */
@@ -51,7 +36,7 @@ export interface ZrodloSesji {
   naZmiane(sluchacz: (migawka: MigawkaSesji) => void): Odsubskrybuj;
 }
 
-/** Zwłoka scalania zdarzeń okien w jedno ponowne odpytanie (milisekundy). */
+/** Zwłoka scalania zdarzeń okien w jedno ponowne odpytanie rdzenia, liczona w milisekundach realnego czasu. */
 const ZWLOKA_ODSWIEZENIA = 300;
 
 export function utworzZrodloSesji(kanal: Kanal): ZrodloSesji {
@@ -125,8 +110,7 @@ export function utworzZrodloSesji(kanal: Kanal): ZrodloSesji {
 
   kanal.naZdarzenie(EventType.WindowChanged, () => zaplanujOdswiezenie());
 
-  // Pierwsze odpytanie od razu: ramka przy braku połączenia trafia do kolejki
-  // wychodzącej transportu i wychodzi z chwilą nawiązania łączności.
+  // Pierwsze odpytanie od razu: ramka czeka w kolejce transportu do chwili nawiązania łączności.
   odpytaj();
 
   return {
@@ -135,13 +119,13 @@ export function utworzZrodloSesji(kanal: Kanal): ZrodloSesji {
   };
 }
 
-/** Sesją w tle jest sesja czynna albo wstrzymana; żywy odpis przesądza sam. */
+/** Sesją w tle jest sesja czynna albo wstrzymana; żywy odpis rdzenia przesądza o tym samodzielnie zawsze. */
 function czyWTle(wpis: WpisSesji): boolean {
   if (wpis.obecnosc?.live === true) return true;
   return wpis.sesja.status === SessionStatus.Active || wpis.sesja.status === SessionStatus.Paused;
 }
 
-/** Porządek wykazu: od sesji o najświeższej czynności. */
+/** Porządek wykazu sesji w tle: od sesji o najświeższej czynności do sesji najdawniej używanej w historii. */
 function ostatniaCzynnosc(wpis: WpisSesji): number {
   return wpis.obecnosc?.lastActivityAt ?? wpis.sesja.updatedAt;
 }

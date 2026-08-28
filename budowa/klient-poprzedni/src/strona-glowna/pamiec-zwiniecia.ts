@@ -1,27 +1,7 @@
-/**
- * Pamięć zwinięcia stref i sekcji — jedna dla obu powierzchni wejściowych.
- *
- * Strefy rozwijają się na żądanie, a raz wykonane rozwinięcie ma się utrzymać
- * między wejściami na ekran.
- *
- * Nastawa siedzi w `localStorage`, nie w rdzeniu: dotyczy powierzchni na tym
- * urządzeniu i nie ma swojego bytu w kontrakcie. Ten sam wzorzec nosi
- * `motyw/motyw.ts` i `okna-rownolegle/kolejnosc-miejscowa.ts`.
- *
- * `localStorage` bywa niedostępny (tryb prywatny, osadzenie w ramce). Awaria
- * odczytu albo zapisu zostaje przy wartości domyślnej i nie jest zgłaszana jako
- * błąd — nastawa widoku nie jest powodem, żeby ekran nie wstał.
- */
-
-/** Przedrostek klucza — nastawy widoku nie mieszają się z danymi sesji. */
+/** Pamięć zwinięcia stref i sekcji trzyma jedną nastawę widoku w pamięci przeglądarki na tym urządzeniu, wspólną dla obu powierzchni wejściowych. */
 const PRZEDROSTEK = 'dn.zwiniecie.';
 
-/**
- * Czy strefa o podanym kluczu ma być rozwinięta.
- *
- * @param klucz Nazwa strefy, stała między wejściami.
- * @param domyslnie Postać przed pierwszym zapamiętanym zwinięciem.
- */
+/** Rozstrzyga, czy strefa o podanym kluczu pamięci ma być rozwinięta, na podstawie zapisanej postaci albo wartości domyślnej. */
 export function czyRozwiniete(klucz: string, domyslnie: boolean): boolean {
   try {
     const zapis = globalThis.localStorage?.getItem(PRZEDROSTEK + klucz);
@@ -32,7 +12,7 @@ export function czyRozwiniete(klucz: string, domyslnie: boolean): boolean {
   }
 }
 
-/** Zapamiętuje postać strefy na tym urządzeniu. */
+/** Zapamiętuje postać strefy na tym urządzeniu pod jej kluczem pamięci, bez zgłaszania błędu przy niedostępności pamięci przeglądarki. */
 export function zapamietajZwiniecie(klucz: string, rozwiniete: boolean): void {
   try {
     globalThis.localStorage?.setItem(PRZEDROSTEK + klucz, rozwiniete ? '1' : '0');

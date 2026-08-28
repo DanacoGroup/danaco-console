@@ -6,30 +6,7 @@ import {
 } from './widok-nastawy-operatora';
 import type { ZrodloWstawienStudio } from './zrodlo-wstawien-studio';
 
-/**
- * Zakładki dokumentów — jeden z DWÓCH równorzędnych trybów dwóch dokumentów.
- *
- * ── Dwa tryby, żaden zapasowy ───────────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: zakładki i podział powierzchni są równorzędne,
- * a wybór należy do Operatora i jest pamiętany. Zakładki dają większe pole pracy
- * nad jednym pismem — dwie kartki A4 obok siebie schodzą do rozmiaru, w którym
- * pisma się nie czyta — a podział pokazuje oba naraz. Przełączenie trybu niczego
- * nie gubi i nie zamyka: stan każdego dokumentu siedzi w jego migawce niezależnie
- * od trybu, a dokument niewidoczny zostaje OTWARTY i dostępny modelowi.
- *
- * Sam podział powierzchni buduje `widok-podzialu-powierzchni.ts`; ten plik
- * prowadzi zakładki i pamięta, który tryb obowiązuje. Widok wielu stron obok
- * siebie jest rzeczą trzecią i dotyczy stron JEDNEGO dokumentu.
- *
- * ── Skąd niezależność stanu ─────────────────────────────────────────────────
- * Z migawki pól stanu modułu (`pola-stanu.ts`). Zakładka czynna JEST dokumentem
- * czynnym modułu — więc Tools Panel, Session Repository i Ingest/OCR Panel
- * pracują na tym, co Operator widzi. Zakładka odłożona trzyma swoją migawkę:
- * treść, zaznaczenie, propozycję i parę porównania. Przełączenie to podmiana
- * migawek, a nie druga kopia stanu modułu.
- */
-
-/** Jedna zakładka: nazwa widoczna i odłożony stan dokumentu. */
+/** Zakładki dokumentów, jeden z dwóch równorzędnych trybów obok podziału powierzchni: jedna zakładka to nazwa widoczna i odłożony stan dokumentu wraz z migawką. */
 export interface KartaDokumentu {
   /** Kod zakładki — trafia do `data-karta`. */
   kod: string;
@@ -39,7 +16,7 @@ export interface KartaDokumentu {
   migawka: MigawkaDokumentu;
 }
 
-/** Zakładki wraz z ich sterowaniem. */
+/** Zakładki dokumentów wraz z ich pełnym sterowaniem: zakładaniem, zamykaniem, przełączaniem i trybem dwóch dokumentów. */
 export interface KartyDokumentow {
   element: HTMLElement;
   /** Zakłada zakładkę nową i czyni ją czynną. */
@@ -64,20 +41,10 @@ export interface KartyDokumentow {
   kody(): readonly string[];
 }
 
-/** Numer nadawany zakładkom kolejno w tej sesji okna. */
+/** Numer nadawany kolejnym zakładkom w tej sesji okna, rosnący od zera przy każdym nowym otwarciu okna. */
 let licznikKart = 0;
 
-/**
- * Zakładki wraz z drogą do PUSTEGO DOKUMENTU rdzenia.
- *
- * Źródło wstawień jest nieobowiązkowe, bo zakładki działają też bez niego —
- * i tak działały dotąd, zakładając zakładkę BEZ dokumentu. Gdy źródło jest,
- * przycisk „+ nowy dokument" woła `studio.document.create` i zakładka dostaje
- * pustą stronę gotową do pisania, z arkuszem stylów i nastawami strony
- * domyślnymi. To była jedyna rzecz, której rdzeń nie miał czym zrobić przed tą
- * turą: `document.open` wczytuje istniejący, `template.apply` zakłada z szablonu,
- * a pustego dokumentu nie zakładało nic.
- */
+/** Buduje zakładki dokumentów wraz z drogą do zakładania pustego dokumentu w rdzeniu, gdy źródło wstawień jest podane. */
 export function utworzKartyDokumentow(
   stan: StanStudio,
   poPrzelaczeniu: () => void,
@@ -113,12 +80,7 @@ export function utworzKartyDokumentow(
   const pamiec = utworzPamiecNastawWidoku();
   let trybBiezacy: TrybDwochDokumentow = pamiec.biezace().trybDokumentow;
 
-  /**
-   * Plakietka trybu — mówi, w którym z dwóch trybów Operator pracuje.
-   *
-   * Stoi w pasku zakładek, a nie jako drugi przełącznik: przestawia się go na
-   * pasku widoku powierzchni i dwa miejsca tej samej nastawy rozjechałyby się.
-   */
+  /** Plakietka trybu pokazuje, w którym z dwóch trybów pracuje operator, nie jako drugi przełącznik. */
   const plakietkaTrybu = document.createElement('span');
   plakietkaTrybu.className = 'dn-plakietka ms-karty__tryb';
 
@@ -185,12 +147,7 @@ export function utworzKartyDokumentow(
     return dodaj;
   }
 
-  /**
-   * Zdanie o skutku założenia — stoi w pasku, bo tu Operator naciska.
-   *
-   * Odmowa rdzenia nie może zniknąć w ciszy: zakładka powstałaby wtedy pusta
-   * i wyglądałaby jak dokument, którego nie ma.
-   */
+  /** Zdanie o skutku założenia zakładki, bo odmowa rdzenia nie może zniknąć w ciszy jako pusta zakładka. */
   const zdanieZalozenia = document.createElement('span');
   zdanieZalozenia.className = 'dn-pole-opis ms-karty__zdanie';
   zdanieZalozenia.hidden = true;
@@ -217,8 +174,7 @@ export function utworzKartyDokumentow(
       );
       return;
     }
-    // Zakładka powstaje PRZED wywołaniem, żeby dokument nowy nie wyparł dokumentu,
-    // nad którym Operator pracuje: nowa strona ma stanąć obok, a nie zamiast.
+    // Zakładka powstaje przed wywołaniem, żeby nowy dokument stanął obok, nie zamiast dokumentu.
     dodaj_karte();
     const wynik = await wstawienia.zalozDokument({ windowId: stan.idOkna() });
     if (!wynik.udany || wynik.wynik === undefined) {
@@ -303,8 +259,7 @@ export function utworzKartyDokumentow(
       if (tryb === trybBiezacy) return;
       trybBiezacy = tryb;
       pamiec.przestaw({ trybDokumentow: tryb });
-      // Odłożenie stanu zakładki czynnej przed przełączeniem trybu: w podziale
-      // pracują dwa pola naraz i pole drugie czyta migawkę, która musi być świeża.
+      // Odłożenie stanu zakładki czynnej przed zmianą trybu, żeby pole drugie czytało świeżą migawkę.
       odlozCzynna();
       odswiez();
     },

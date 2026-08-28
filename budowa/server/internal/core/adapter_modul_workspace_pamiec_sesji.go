@@ -1,16 +1,5 @@
-// Odpowiedzialność pliku: `memory.toggle` — poziomy pamięci włączone dla karty
-// sesji i zgoda na zapis pamięci, czyli tabela `konfiguracja_pamieci_sesji`.
-//
-// Komenda nie dotyka wpisów pamięci: przestawia widoczność poziomów i zgodę na
-// zapis dla jednej karty sesji, a wpisy leżą w innej tabeli i zmienia je
-// wyłącznie rodzina `memory.set` / `memory.detach` / `memory.delete`.
-//
-// Poziomów pamięci jest pięć, poziomów zasięgu osiem. Kontrakt niesie żądanie
-// jako `ConfigScope[]`, a obszar pamięci zna wyłącznie wartości dopuszczone
-// przez CHECK kolumny `zasob_pamieci.poziom`; para modułów, rola i okno
-// poziomami pamięci nie są. Poziom spoza tej piątki jest odmawiany kodem
-// `validation_failed`, a nie pomijany — wynik nie może zgłaszać jako włączony
-// poziomu, którego nie zapisano.
+// Odpowiedzialność pliku: memory.toggle — poziomy pamięci włączone dla karty
+// sesji i zgoda na zapis pamięci, czyli tabela konfiguracja_pamieci_sesji.
 package core
 
 import (
@@ -23,9 +12,8 @@ import (
 )
 
 // poziomyPamieciKontraktu przekłada wyliczenie kontraktu na wartości kolumny
-// `konfiguracja_pamieci_sesji.poziomy_wlaczone`. Tablica wiąże dwa istniejące
-// słowniki — wartości kolumny i wyliczenie `shared.ConfigScope` — zamiast
-// zakładać trzeci spis poziomów.
+// konfiguracja_pamieci_sesji.poziomy_wlaczone, wiążąc dwa istniejące słowniki
+// zamiast zakładać trzeci spis poziomów.
 var poziomyPamieciKontraktu = map[shared.ConfigScope]dane.PoziomPamieci{
 	shared.ConfigScopeGlobal:      "globalna",
 	shared.ConfigScopeEnvironment: "srodowisko",
@@ -34,10 +22,8 @@ var poziomyPamieciKontraktu = map[shared.ConfigScope]dane.PoziomPamieci{
 	shared.ConfigScopeSession:     "sesja",
 }
 
-// kolejnoscPoziomowPamieci trzyma poziomy od najszerszego do najwęższego, tak
-// jak stoją w wartości domyślnej kolumny. Wynik komendy wychodzi w tym
-// porządku niezależnie od kolejności żądania, żeby dwa przestawienia o tej
-// samej treści dawały tę samą odpowiedź.
+// kolejnoscPoziomowPamieci trzyma poziomy od najszerszego do najwęższego.
+// Wynik komendy wychodzi w tym porządku niezależnie od kolejności żądania.
 var kolejnoscPoziomowPamieci = []shared.ConfigScope{
 	shared.ConfigScopeGlobal,
 	shared.ConfigScopeEnvironment,
@@ -46,13 +32,8 @@ var kolejnoscPoziomowPamieci = []shared.ConfigScope{
 	shared.ConfigScopeSession,
 }
 
-// PrzestawPamiecSesji przestawia poziomy pamięci włączone dla karty sesji oraz
-// zgodę na zapis pamięci.
-//
-// Pole niewskazane zostawia stan bez zmian: pusta lista poziomów tak mówi
-// wprost kontrakt, a brak `writeEnabled` znaczy to samo dla zapisu. Karta bez
-// wiersza konfiguracji ma stan domyślny — wszystkie poziomy i zapis czynny —
-// bo brak wiersza jest ustawieniem domyślnym, nie odmową dostępu.
+// PrzestawPamiecSesji przestawia poziomy pamięci włączone dla karty sesji
+// oraz zgodę na zapis pamięci. Pole niewskazane zostawia stan bez zmian.
 func (a *adapterPamieciPrzestrzeni) PrzestawPamiecSesji(ctx context.Context,
 	z shared.MemoryToggleRequest) (shared.MemoryToggleResponse, error) {
 
@@ -108,8 +89,7 @@ func (a *adapterPamieciPrzestrzeni) konfiguracjaPamieciSesji(ctx context.Context
 	if jest {
 		return konfiguracja, nil
 	}
-	// Stan domyślny powtarza wartość domyślną kolumny: karta bez wiersza widzi
-	// wszystkie poziomy i wolno jej pamięć zapisywać.
+	// Stan domyślny powtarza wartość domyślną kolumny, wszystkie poziomy i zapis wolny.
 	domyslne := make([]dane.PoziomPamieci, 0, len(kolejnoscPoziomowPamieci))
 	for _, poziom := range kolejnoscPoziomowPamieci {
 		domyslne = append(domyslne, poziomyPamieciKontraktu[poziom])

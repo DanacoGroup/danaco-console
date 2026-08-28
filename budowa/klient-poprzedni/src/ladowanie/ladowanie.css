@@ -1,20 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — SCENA WEJŚCIA (ładowanie po przejściu bramki)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy — wszystko z żetonów motywu (`--dn-*`). Każdy
-   selektor zaczyna się od `.la-`, żeby żaden moduł nie odziedziczył wyglądu
-   sceny ani go nie nadpisał.
-
-   Bryła jest prawdziwą bryłą przestrzeni CSS (`transform-style: preserve-3d`),
-   nie obrazkiem udającym trójwymiar i nie płótnem WebGL. Powód jest ten sam,
-   dla którego w tym drzewie nie ma bibliotek zewnętrznych: sześć ścian i jeden
-   obrót to dwadzieścia wierszy arkusza, a WebGL to zależność, warstwa
-   sterowników i ekran, który u kogoś nie wstanie.
-
-   Scena stoi POD bramką (`--dn-z-brama`), a nad wszystkim innym: przesłona
-   logowania schodzi dopiero wtedy, gdy scena już stoi, więc żaden ekran nie
-   mignie pomiędzy nimi.
-   ============================================================================ */
+/* Arkusz opisuje scenę wejścia widoczną podczas ładowania po przejściu bramki logowania, zbudowaną w całości z żetonów motywu, bez barw własnych. */
 
 .la-scena {
   position: fixed;
@@ -65,7 +49,7 @@
   box-shadow: var(--dn-cien-lg);
 }
 
-/* Sześć ścian sześcianu o boku 9rem — połowa boku to 4.5rem. */
+/* Sześć ścian sześcianu ma bok długości 9rem, więc przesunięcie każdej ściany od środka wynosi połowę boku, czyli 4.5rem. */
 .la-sciana--przod { transform: translateZ(4.5rem); }
 .la-sciana--tyl { transform: rotateY(180deg) translateZ(4.5rem); }
 .la-sciana--prawo { transform: rotateY(90deg) translateZ(4.5rem); }

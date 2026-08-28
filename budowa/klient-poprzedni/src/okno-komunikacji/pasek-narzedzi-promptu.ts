@@ -1,6 +1,6 @@
 import type { NarzedziePromptu, ProfilModulu } from './profil-modulu';
 
-/** Pasek narzędzi promptu przestawiany przy każdej zmianie modułu. */
+/** Pasek narzędzi promptu przestawiany przy każdej zmianie modułu na komplet przycisków właściwy temu modułowi. */
 export interface PasekNarzedziPromptu {
   /** Element montowany nad polem wypowiedzi. */
   element: HTMLElement;
@@ -9,14 +9,7 @@ export interface PasekNarzedziPromptu {
 }
 
 /**
- * Pasek narzędzi promptu jednego modułu.
- *
- * Kliknięcie nie wysyła niczego samo z siebie: wstawia gotowe polecenie do pola
- * wypowiedzi, a wykonanie zleca operator — modelowi, który sięga po narzędzie
- * platformy. Dzięki temu nic nie dzieje się bez wiedzy operatora.
- *
- * Przestawienie buduje przyciski na nowo, ponieważ zestaw narzędzi jest inny
- * w każdym module; historii wątku ta operacja nie dotyka.
+ * Pasek narzędzi promptu jednego modułu wstawia gotowe polecenie do pola wypowiedzi po kliknięciu, a wykonanie zleca operator modelowi, który sięga po narzędzie platformy — nic nie dzieje się bez jego wiedzy.
  */
 export function utworzPasekNarzedzi(
   naWybor: (narzedzie: NarzedziePromptu) => void,
@@ -35,7 +28,7 @@ export function utworzPasekNarzedzi(
   };
 }
 
-/** Pojedyncza pozycja paska: etykieta widoczna, przeznaczenie w podpowiedzi. */
+/** Pojedyncza pozycja paska narzędzi: etykieta widoczna operatorowi oraz zdanie przeznaczenia w podpowiedzi. */
 function przycisk(
   narzedzie: NarzedziePromptu,
   naWybor: (narzedzie: NarzedziePromptu) => void,

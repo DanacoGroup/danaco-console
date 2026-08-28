@@ -113,7 +113,7 @@ i są do zdjęcia przy pracy nad tamtymi oknami.
 
 ## 0d · Rodzina okna kreatora — ZROBIONE
 
-Instalator nie miał w bibliotece swojej bryły. Zbieżność nazw w raporcie strażnika
+Instalator nie miał w bibliotece swojej bryły. Zbieżność nazw w raporcie sprawdzenia składników
 myliła: `.dn-belka` z `rama.css` to belka **ramy aplikacji**, której okna sprzed
 uwierzytelnienia celowo nie mają, a `.dn-okno-wejsciowe` ma dwie kolumny i nie ma
 pasa działań na dnie. Okno kreatora to trzy pasma, nie dwie kolumny.

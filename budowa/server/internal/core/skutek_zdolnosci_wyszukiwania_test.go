@@ -1,17 +1,5 @@
-// Sprawdziany skutku dwóch zdolności rodziny `knowledge.*`: przesiewu wyników
-// i osi obrazu.
-//
-// Część z nich żąda wag na dysku i te są pominięte tam, gdzie wag nie ma.
-// Pominięcie jest tu jedyną uczciwą odpowiedzią: wagi ważą łącznie blisko
-// cztery gigabajty, więc sprawdzian, który by je pobierał, zamieniałby bieg
-// sprawdzianów w pobieranie modeli — a sprawdzian, który by ich nie potrzebował,
-// mierzyłby atrapę i milczałby dokładnie wtedy, gdy zdolność przestanie działać.
-// Katalog wag wskazuje zmienna środowiska `DANACO_MODELE`; nazwy podkatalogów
-// są nazwami zdolności, nie wydawców modeli.
-//
-// Sprawdziany odmowy wag NIE żądają: brak silnika ma być odpowiedzią nazywającą
-// brak na każdej maszynie, więc mierzy się go tam, gdzie modelu nie ma z samego
-// założenia.
+// Plik niesie sprawdziany skutku dwóch zdolności rodziny `knowledge.*`:
+// przesiewu wyników i osi obrazu, w części żądające wag modeli na dysku.
 package core
 
 import (
@@ -25,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/store"
@@ -33,21 +20,33 @@ import (
 	"danacoconsole/shared"
 )
 
-// zmiennaKatalogModeli wskazuje katalog, w którym leżą wagi modeli tej rodziny.
+// zmiennaKatalogModeli nazywa zmienną środowiska wskazującą katalog, w
+// którym leżą wagi modeli tej rodziny sprawdzianów.
 const zmiennaKatalogModeli = "DANACO_MODELE"
+
+// katalogWdrozeniowyModeli jest katalogiem wag zakładanym przez prowizjonowanie
+// serwera i tym samym, który niesie obowiązująca postać biegu sprawdzianów.
+const katalogWdrozeniowyModeli = "/opt/danaco-modele"
 
 // katalogModeliSprawdzianu oddaje katalog wag albo pomija sprawdzian.
 //
-// Pominięcie nazywa, czego brakuje i jak to wskazać — pominięcie milczące
-// wyglądałoby w wyniku biegu tak samo jak sprawdzian zdany.
+// Gdy zmienna nie wskazuje niczego, a wagi leżą w katalogu wdrożeniowym, bierze
+// je stamtąd. Maszyna nosząca wagi nie może przejść biegu zielono, pomijając
+// jedyne sprawdziany dowodzące, że przesiew i oś obrazu liczą — pominięcie
+// wygląda w wyniku biegu tak samo jak sprawdzian zdany.
 func katalogModeliSprawdzianu(t *testing.T, podkatalog string) string {
 	t.Helper()
 
 	korzen := strings.TrimSpace(os.Getenv(zmiennaKatalogModeli))
 	if korzen == "" {
-		t.Skipf("zmienna %s nie wskazuje katalogu wag — bez wag nie ma czym liczyć; "+
-			"wskaż katalog niosący podkatalogi `embedder`, `%s` i `%s`",
-			zmiennaKatalogModeli, "reranker", "clip")
+		if _, err := os.Stat(katalogWdrozeniowyModeli); err == nil {
+			korzen = katalogWdrozeniowyModeli
+		}
+	}
+	if korzen == "" {
+		t.Skipf("zmienna %s nie wskazuje katalogu wag, a katalogu %s nie ma na tej maszynie — "+
+			"bez wag nie ma czym liczyć; wskaż katalog niosący podkatalogi `embedder`, `%s` i `%s`",
+			zmiennaKatalogModeli, katalogWdrozeniowyModeli, "reranker", "clip")
 	}
 	katalog := filepath.Join(korzen, podkatalog)
 	if _, err := os.Stat(filepath.Join(katalog, "model.safetensors")); err != nil {
@@ -58,16 +57,24 @@ func katalogModeliSprawdzianu(t *testing.T, podkatalog string) string {
 	return katalog
 }
 
-// ustawWiedzy zapisuje nastawę zasięgu globalnego wprost w tabeli ustawień.
-//
-// Drogą Operatora byłaby komenda `config.set`, ale ta sprawdza klucz wobec
-// katalogu ustawień, a wiersze katalogu zakłada migracja nastaw — plik
-// z pakietu, którego ten teren nie rusza. Rozstrzyganie nastawy wiersza katalogu
-// nie wymaga (`konfig/rozstrzyganie.go` czyta zapisy przed definicjami), więc
-// zdolność działa, a niedostępna jest wyłącznie droga jej ustawienia z okna
-// konfiguracji. Sprawdzian zapisuje więc to, co zapisałaby komenda, i mierzy to,
-// co mierzyć ma — zamiast milczeć o zdolności, dopóki nie powstanie wiersz
-// katalogu.
+// katalogWagUszkodzonych składa katalog niosący wyłącznie plik `model.safetensors`
+// bez treści czytelnej dla kodera. Sama obecność pliku wystarcza pomocnikom
+// przesiewu i osi obrazu, by uznać wagi za stojące i wyłączyć sieć — próba
+// postawienia na nich modelu odmawia od razu, bez pobrania niczego z sieci.
+func katalogWagUszkodzonych(t *testing.T) string {
+	t.Helper()
+
+	katalog := t.TempDir()
+	if err := os.WriteFile(filepath.Join(katalog, "model.safetensors"),
+		[]byte("nie wagi"), 0o600); err != nil {
+		t.Fatalf("nie można złożyć katalogu wag uszkodzonych: %v", err)
+	}
+	return katalog
+}
+
+// ustawWiedzy zapisuje nastawę zasięgu globalnego wprost w tabeli ustawień,
+// omijając komendę `config.set` i katalog ustawień, którego ten teren nie
+// zakłada.
 func ustawWiedzy(t *testing.T, katalogDanych, klucz, wartosc string) {
 	t.Helper()
 
@@ -94,7 +101,8 @@ func ustawWiedzy(t *testing.T, katalogDanych, klucz, wartosc string) {
 	}
 }
 
-// wgrajDokument wnosi do biblioteki jeden dokument tekstowy.
+// wgrajDokument wnosi do biblioteki jeden dokument tekstowy o podanej nazwie
+// i treści, wołaniem `library.file.upload`.
 func wgrajDokument(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa, tresc string) {
 
@@ -108,18 +116,8 @@ func wgrajDokument(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 		}, &wgrany)
 }
 
-// granicaKomendyZWagami — ile czasu wolno zająć komendzie, która wczytuje wagi.
-//
-// Uprząż sprawdzianów skutku daje komendzie piętnaście sekund i dla komend
-// odpowiadających z bazy jest to granica słuszna. Tu jest za krótka i nie z
-// powodu obciążenia maszyny: samo wczytanie wag rzędu dwóch gigabajtów do
-// pamięci trwa dłużej, a dzieje się na każde wołanie (patrz nagłówek
-// `wiedza/silnik.go`). Sprawdzian, który by tę granicę przyjął, mierzyłby czas
-// wczytania modelu zamiast wyniku, jaki model daje.
-const granicaKomendyZWagami = 10 * time.Minute
-
-// wykonajZWagami wykonuje komendę sięgającą po model i przerywa sprawdzian,
-// gdy rdzeń odmówił.
+// wykonajZWagami wykonuje komendę sięgającą po model wagą na dysku i
+// przerywa sprawdzian niepowodzeniem, gdy rdzeń odmówił jej wykonania.
 func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	komenda shared.MessageType, ladunek any, wynik any) {
 
@@ -128,7 +126,7 @@ func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(zycie, granicaKomendyZWagami)
+	ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
 	defer przerwij()
 
 	odpowiedz := zmontowany.Rdzen.Wykonaj(ctx, koperta)
@@ -144,10 +142,8 @@ func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	}
 }
 
-// TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg mierzy to, po co
-// przesiew istnieje: tę samą treść i to samo pytanie raz bez niego, raz z nim.
-// Odpowiedź identyczna w obu przebiegach znaczyłaby, że drugi model niczego nie
-// wnosi — i wtedy sprawdzian ma upaść, choć obie komendy odpowiedziały.
+// TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg mierzy tę samą treść
+// i to samo pytanie raz bez przesiewu, raz z nim, i wymaga różnej kolejności.
 func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	katalogOsadzarki := katalogModeliSprawdzianu(t, "embedder")
 	katalogPrzesiewu := katalogModeliSprawdzianu(t, "reranker")
@@ -156,11 +152,8 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogModeli, katalogOsadzarki)
 	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogPrzesiewu, katalogPrzesiewu)
 
-	// Cztery dokumenty o jednym temacie. Pierwszy przebieg widzi w nich podobne
-	// rozłożenie znaczeń i wynosi wysoko notatkę, która pytanie POWTARZA, oraz
-	// politykę, która o awarii mówi. Dopiero czytanie pytania razem z fragmentem
-	// rozstrzyga, że procedura — jedyna, która na pytanie ODPOWIADA, i to bez ani
-	// jednego wspólnego z nim wyrazu poza „usługą" — należy wyżej niż polityka.
+	// Cztery dokumenty o jednym temacie: procedura odpowiada na pytanie bez
+	// jego słownictwa.
 	wgrajDokument(t, zmontowany, zycie, "notatka-z-pytaniem.txt",
 		"Jak przywrócić usługę po awarii serwera? Pytanie wraca po każdej awarii "+
 			"serwera i wciąż nie mamy na nie spisanej odpowiedzi.")
@@ -212,10 +205,7 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	if bezPrzesiewu.Reranked != nil && *bezPrzesiewu.Reranked {
 		t.Fatal("odpowiedź bez przesiewu oznajmia przesiew, którego nie było")
 	}
-	// Porównanie idzie po samych źródłach, nie po trafnościach. Trafność zmienia
-	// się z definicji — po przesiewie jest oceną innego modelu — więc porównanie
-	// obejmujące ją orzekałoby „przesiew coś zmienił" nawet wtedy, gdyby oddał
-	// dokładnie tę samą kolejność.
+	// Porównanie idzie po samych źródłach, nie po trafnościach modelu.
 	if kolejnoscBez == kolejnoscZ {
 		t.Fatalf("obie odpowiedzi mają tę samą kolejność źródeł — przesiew niczego "+
 			"nie przestawił: %s", kolejnoscZ)
@@ -227,6 +217,46 @@ func TestPrzesiewUkladaOdpowiedzInaczejNizPierwszyPrzebieg(t *testing.T) {
 	if miejsce(kolejnoscBez, "procedura.txt") < miejsce(kolejnoscBez, "polityka.txt") {
 		t.Fatalf("pierwszy przebieg sam ustawił procedurę przed polityką, więc "+
 			"sprawdzian nie mierzy tego, co przesiew wnosi: %s", kolejnoscBez)
+	}
+}
+
+// TestNastawaKatalogPrzesiewuDochodziDoSilnika pilnuje, że katalog wag
+// przesiewu wskazany nastawą Operatora naprawdę trafia do silnika, a nie
+// zostaje przy katalogu wbudowanym w kod: katalog uszkodzony wskazany
+// nastawą ma odmówić przesiewu, a nie po cichu sięgnąć po wagi stojące gdzie
+// indziej.
+func TestNastawaKatalogPrzesiewuDochodziDoSilnika(t *testing.T) {
+	katalogOsadzarki := katalogModeliSprawdzianu(t, "embedder")
+
+	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogModeli, katalogOsadzarki)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogPrzesiewu, katalogWagUszkodzonych(t))
+
+	wgrajDokument(t, zmontowany, zycie, "notatka.txt",
+		"Jak przywrócić usługę po awarii serwera? Procedura opisuje kroki naprawy.")
+
+	var wskaznikWiedzy shared.KnowledgeIndexResponse
+	wykonajZWagami(t, zmontowany, zycie, shared.CommandKnowledgeIndex,
+		shared.KnowledgeIndexRequest{Scope: wskaznik(shared.KnowledgeScope(
+			shared.KnowledgeScopeLibrary))}, &wskaznikWiedzy)
+	if wskaznikWiedzy.Indexed == 0 {
+		t.Fatalf("wskaźnik nie objął ani jednej pozycji (model: %v)", wskaznikWiedzy.Model)
+	}
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandKnowledgeSearch,
+		shared.KnowledgeSearchRequest{
+			Query: "Jak przywrócić usługę po awarii serwera?", Limit: wskaznik(4),
+			Rerank: wskaznik(true), RerankCandidates: wskaznik(4),
+		})
+
+	t.Logf("odmowa: kod=%s treść=%s", odmowa.Code, odmowa.Message)
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("katalog uszkodzony dostał kod %s zamiast %s", odmowa.Code,
+			shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(odmowa.Message, wiedza.KluczKatalogPrzesiewu) {
+		t.Fatalf("odmowa nie nazywa ustawienia %s — silnik nie sięgnął po katalog "+
+			"z nastawy Operatora: %s", wiedza.KluczKatalogPrzesiewu, odmowa.Message)
 	}
 }
 
@@ -310,10 +340,31 @@ func TestOsObrazuOddajeObrazOpisanyZdaniem(t *testing.T) {
 	}
 }
 
-// TestOsObrazuBezSilnikaOdmawiaNazywajacBrak pilnuje, że brak zaplecza jest
-// odmową nazywającą brak i drogę naprawy, a nie usterką wewnętrzną. Wag nie
-// żąda: interpreter wskazany nastawą nie istnieje, więc pomocnik nie ruszy na
-// żadnej maszynie i odmowa jest ta sama wszędzie.
+// TestNastawaKatalogObrazuDochodziDoSilnika pilnuje, że katalog wag osi
+// obrazu z nastawy Operatora trafia do silnika, a nie zostaje przy katalogu
+// wbudowanym w kod: katalog uszkodzony ma odmówić osi obrazu, nie sięgnąć
+// po cichu po wagi gdzie indziej. `Gotowy` pyta o silnik przed odczytem
+// biblioteki, więc obraz wgrany nie jest potrzebny.
+func TestNastawaKatalogObrazuDochodziDoSilnika(t *testing.T) {
+	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
+	ustawWiedzy(t, katalogDanych, wiedza.KluczKatalogObrazu, katalogWagUszkodzonych(t))
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandKnowledgeImageSearch,
+		shared.KnowledgeImageSearchRequest{Query: "a red circle on a white background"})
+
+	t.Logf("odmowa: kod=%s treść=%s", odmowa.Code, odmowa.Message)
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("katalog uszkodzony dostał kod %s zamiast %s", odmowa.Code,
+			shared.ErrorCodeChannelUnavailable)
+	}
+	if !strings.Contains(odmowa.Message, wiedza.KluczKatalogObrazu) {
+		t.Fatalf("odmowa nie nazywa ustawienia %s — silnik nie sięgnął po katalog "+
+			"z nastawy Operatora: %s", wiedza.KluczKatalogObrazu, odmowa.Message)
+	}
+}
+
+// TestOsObrazuBezSilnikaOdmawiaNazywajacBrak sprawdza, czy brak zaplecza
+// wraca odmową nazywającą brak i drogę naprawy, a nie usterką wewnętrzną.
 func TestOsObrazuBezSilnikaOdmawiaNazywajacBrak(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	ustawWiedzy(t, katalog, wiedza.KluczProgram,
@@ -377,7 +428,8 @@ var (
 // wejścia modelu kształt pozostał rozpoznawalny.
 const bokObrazu = 320
 
-// kolo rysuje wypełnione koło na białym tle.
+// kolo rysuje wypełnione koło podanej barwy na białym tle obrazu sprawdzianu,
+// wypośrodkowane na płótnie o boku `bokObrazu`.
 func kolo(barwa color.RGBA) image.Image {
 	plotno := bialePlotno()
 	srodek, promien := bokObrazu/2, bokObrazu/3
@@ -392,7 +444,8 @@ func kolo(barwa color.RGBA) image.Image {
 	return plotno
 }
 
-// kwadrat rysuje wypełniony kwadrat na białym tle.
+// kwadrat rysuje wypełniony kwadrat podanej barwy na białym tle obrazu
+// sprawdzianu, wypośrodkowany na płótnie o boku `bokObrazu`.
 func kwadrat(barwa color.RGBA) image.Image {
 	plotno := bialePlotno()
 	odstep := bokObrazu / 5
@@ -417,7 +470,8 @@ func bialePlotno() *image.RGBA {
 	return plotno
 }
 
-// wgrajObraz wnosi do biblioteki jeden obraz zapisany w PNG.
+// wgrajObraz wnosi do biblioteki jeden obraz zapisany w formacie PNG, pod
+// podaną nazwą, wołaniem `library.file.upload`.
 func wgrajObraz(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa string, obraz image.Image) {
 

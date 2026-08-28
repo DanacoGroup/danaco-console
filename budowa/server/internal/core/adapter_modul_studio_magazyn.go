@@ -1,16 +1,5 @@
 // Odpowiedzialność pliku: jedna droga modułu Studio do bajtów — odczyt
 // materiału z magazynu zasobów rdzenia i odłożenie w nim wyniku.
-//
-// ── Dlaczego to stoi osobno ─────────────────────────────────────────────────
-// Po bajty sięga pięć rodzin naraz: wydanie archiwum, paczka redakcyjna,
-// raport różnicy, wyrys stron i osadzenie zasobu w treści. Gdyby każda składała
-// sobie sumę kontrolną i wiersz zasobu u siebie, wystarczyłaby jedna pomyłka
-// w kolejności „najpierw treść, potem wiersz", żeby w Assets Panel pojawił się
-// kafelek bez zawartości.
-//
-// Kolejność jest ta sama, co w całym rdzeniu (`design.asset.upload`): bajty
-// trafiają do magazynu pod swoją sumą sha256, dopiero potem powstaje wiersz,
-// który je wskazuje.
 package core
 
 import (
@@ -45,7 +34,8 @@ func bladMagazynuStudia(czynnosc string) error {
 			"przy składaniu rdzenia"))
 }
 
-// bajtyZasobuStudia oddaje treść zasobu magazynu rdzenia.
+// bajtyZasobuStudia oddaje treść zasobu magazynu rdzenia po jego kodzie,
+// czytając plik ze ścieżki znalezionej w wierszu zasobu.
 func (a *adapterStudia) bajtyZasobuStudia(ctx context.Context, kod string) ([]byte, error) {
 	sciezka, err := a.sciezkaZasobu(ctx, kod)
 	if err != nil {
@@ -59,12 +49,8 @@ func (a *adapterStudia) bajtyZasobuStudia(ctx context.Context, kod string) ([]by
 	return bajty, nil
 }
 
-// odlozTrescStudia utrwala bajty wyniku i zakłada wiersz zasobu.
-//
-// Okno puste znaczy „wynik do żadnego okna nie należy" — `odlozWynikArsenalu`
-// oddaje wtedy zasób złożony z ręki, z odwołaniem, którym plik da się odczytać.
-// To nie jest usterka: kontrakt trzech czynności wydania ma `windowId` jako
-// pole nieobowiązkowe, a Operator, który go nie podał, o kafelek nie prosił.
+// odlozTrescStudia utrwala bajty wyniku i zakłada wiersz zasobu. Okno puste
+// znaczy, że wynik do żadnego okna nie należy — to nie jest usterka.
 func (a *adapterStudia) odlozTrescStudia(ctx context.Context, bajty []byte,
 	nazwa, format, okno string) (shared.DesignAsset, error) {
 
@@ -112,12 +98,8 @@ func (a *adapterStudia) odlozObrazStudia(ctx context.Context, bajty []byte,
 	})
 }
 
-// trescWersjiStudia oddaje treść wskazanej wersji albo — gdy wersji nie
-// podano — treść bieżącą dokumentu.
-//
-// Treść obszerna, odłożona poza bazą przez `TrescOdwolanie`, doczytuje się
-// z magazynu, a nie odmawia: wydanie połowy dokumentu byłoby wydaniem
-// dokumentu innego niż ten, który Operator widzi w edytorze.
+// trescWersjiStudia oddaje treść wskazanej wersji albo, gdy wersji nie
+// podano, treść bieżącą dokumentu. Treść obszerna doczytuje się z magazynu.
 func (a *adapterStudia) trescWersjiStudia(ctx context.Context, kodWersji *string,
 	dokument dane.DokumentStudia) (string, error) {
 

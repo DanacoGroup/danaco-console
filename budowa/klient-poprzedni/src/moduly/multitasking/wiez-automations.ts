@@ -3,17 +3,9 @@ import { poleWyboru, ustawPozycje } from '../../modele/kontrolki-formularza';
 import { zdaniePuste, zObjasnieniem } from './powierzchnia-sekcji';
 
 /**
- * Więź sekcji panelu orkiestracji z oknem modułu Automations.
- *
- * Sekcje Kolejki, Orkiestracja, Harmonogram i Monitor nie mają własnych okien —
- * pracują na oknach modułu Automations (Queue Manager, Orchestrator, Scheduler,
- * Execution Monitor) po skonfigurowaniu powiązania. Panel orkiestracji buduje
- * samo sterowanie i nazywa okno, na którym ono pracuje.
- *
- * Powiązanie nie jest domyślne, więc sekcja bez wskazanej automatyki opisuje
- * jego brak i sposób założenia. Brak powiązania nie wyłącza kontrolek
- * pracujących na samej sesji (kolejki, monitor); zawęża tylko to, co adresuje
- * `workflowId` — zależności i harmonogram — bo bez niego żądanie nie ma adresu.
+ * Więź sekcji panelu orkiestracji z oknem modułu Automations. Sekcje Kolejki,
+ * Orkiestracja, Harmonogram i Monitor nie mają własnych okien — pracują na oknach
+ * modułu Automations po skonfigurowaniu powiązania.
  */
 export interface WiezAutomations {
   /** Element podsekcji „Powiązanie z modułem Automations". */

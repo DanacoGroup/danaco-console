@@ -16,17 +16,8 @@ import {
 } from './zrodlo-wstawien-studio';
 
 /**
- * Wydanie dokumentu w formacie docelowym — jedna czynność dwóch okien.
- *
- * Wydania żąda i pasek narzędzi Studio Editora („Zapisz jako …"), i Preview
- * Window („Eksportuj"). Czynność jest jedna, więc stoi w jednym miejscu: dwie
- * kopie rozjechałyby się przy pierwszej poprawce zdania o wyniku.
- *
- * Przedmiotem zamiany jest treść zaakceptowana modułu, nie plik na dysku.
- * Dokument Studia mieszka w rdzeniu (`studio.document.save`), a nie w systemie
- * plików Operatora, więc `document.convert` dostaje treść wprost polem
- * `content`. Wynik jest zasobem magazynu rdzenia — komenda oddaje jego
- * identyfikator i rozmiar, a nie bajty do pobrania.
+ * Wydanie dokumentu w formacie docelowym — jedna czynność dwóch okien, Editora
+ * i Preview Window.
  */
 
 /**
@@ -49,12 +40,8 @@ export const FORMATY_KONWERSJI: readonly string[] = [
 
 /**
  * Format źródłowy odczytany z dokumentu wskazanego przez rdzeń.
- *
  * `StudioDocument.format` niesie cztery wartości, a zamiana formatu przyjmuje
- * nazwy własnego słownika. Trzy z czterech mają w nim odpowiednik wprost; PDF
- * odpowiednika użytecznego nie ma, bo treść jedzie tu napisem, a nie plikiem —
- * napis nie jest PDF-em, choćby rdzeń tak nazywał dokument, z którego powstał.
- * Zwracamy wtedy tekst czysty i mówimy o tym Operatorowi zdaniem `POWOD_ZRODLA`.
+ * nazwy własnego słownika.
  */
 export function formatZrodlowy(format: StudioDocumentFormat): string {
   if (format === StudioDocumentFormat.Pdf) return 'txt';
@@ -63,18 +50,15 @@ export function formatZrodlowy(format: StudioDocumentFormat): string {
 }
 
 /**
- * Zdanie o formacie źródłowym — mówi, czym naprawdę jest treść idąca do zamiany.
- *
- * Bez niego Operator widziałby „format z rdzenia: DOCX" i wydanie zamawiane
- * z formatu, którego rdzeń w tej drodze nie czyta; zdanie nazywa różnicę między
- * formatem DOKUMENTU a formatem TREŚCI, która idzie do zamiany.
+ * Zdanie o formacie źródłowym — mówi, czym naprawdę jest treść idąca do
+ * zamiany, a nie jakim formatem dokumentu rdzeń go prowadzi.
  */
 export const POWOD_ZRODLA =
   'Zamiana formatu dostaje treść dokumentu napisem, a nie plikiem. Dla dokumentu, który rdzeń ' +
   'prowadzi jako PDF albo DOCX, treścią jest sam tekst — format źródłowy zamiany jest więc ' +
   'tekstem czystym, a układ, style i osadzenia pliku wejściowego nie mają czego przenieść.';
 
-/** Zaplecze wydania — okno podaje własne miejsca na komunikat. */
+/** Zaplecze wydania — okno podaje własne miejsca na komunikat, do których czynność wypisuje wynik zamiany. */
 export interface ZapleczeKonwersji {
   stan: StanStudio;
   dokumenty: ZrodloDokumentuStudio;
@@ -135,32 +119,15 @@ const BRAK_TRESCI =
 
 /**
  * Wydanie dokumentu — zapis pod nazwą, wydanie do formatu, wydanie wsadowe
- * i format dokumentu.
- *
- * ── Dlaczego to stoi obok drogi wyżej, a nie zamiast niej ───────────────────
- * Droga wyżej (`document.convert`) bierze treść NAPISEM i nie ma czym przenieść
- * postaci: dla dokumentu prowadzonego jako PDF albo DOCX treścią jest sam tekst.
- * Cztery komendy niżej pracują na DOKUMENCIE po stronie rdzenia, więc przenoszą
- * arkusz stylów, sekcje, tabele, obrazy i aparat:
- *   — `document.save.as` zapisuje pod nową nazwą albo do wskazanego pliku,
- *   — `document.export.format` wydaje do txt, md, docx, odt, pdf, html i rtf,
- *   — `document.export.batch` wydaje wiele dokumentów naraz,
- *   — `document.format.set` przestawia format dokumentu Studia.
- * Starsza droga zostaje dla treści, która nie jest dokumentem rdzenia.
- *
- * ── Bilans cech pominiętych jest widoczny zawsze ────────────────────────────
- * Format uboższy niż dokument jest normalną sytuacją; przemilczenie straty nie
- * jest. Wydanie do tekstu czystego, które zgubiło tabelę i przypisy, mówi to
- * wprost — i nie ma w tym panelu drogi, którą Operator zobaczyłby samo
- * „zapisano". Wydanie wsadowe wypisuje bilans dokument po dokumencie, a odmowa
- * jednego nie ukrywa się za liczbą wydanych.
+ * i zmiana formatu dokumentu; cztery komendy pracujące na dokumencie po
+ * stronie rdzenia, nie na jego treści napisem.
  */
 export interface WydaniePanel {
   element: HTMLElement;
   przestawWidocznosc(): void;
 }
 
-/** Siedem formatów wydania z kontraktu wraz z tym, co każdy niesie. */
+/** Siedem formatów wydania z kontraktu wraz z tym, co każdy niesie: zachowaną postać, przez profil wydania albo tekst czysty. */
 const FORMATY_WYDANIA: readonly (readonly [string, string])[] = [
   [StudioExportFormat.Txt, 'tekst czysty — postać schodzi'],
   [StudioExportFormat.Md, 'markdown — style nazwane na znaczniki, tabele na tabele markdown'],
@@ -385,8 +352,7 @@ export function utworzWydaniePanel(
     if (dokument === null) return;
     const format = formatWydania.value as StudioExportFormat;
     if (format === StudioExportFormat.Pdf && profil.kontrolka.value.trim() === '') {
-      // Odmowa nazwana PRZED próbą: profil wydania niesie paginację i stopkę, więc
-      // PDF bez niego nie jest wydaniem, tylko treścią wsypaną na stronę.
+      // Odmowa nazwana przed próbą: profil wydania niesie paginację i stopkę, bez niego PDF nią nie jest.
       odpowiedz.pokaz(BRAK_PROFILU, false);
       return;
     }
@@ -438,8 +404,7 @@ export function utworzWydaniePanel(
     const odmowy = wynik.wynik.failures ?? [];
     odpowiedz.pokaz(
       `Wsad wydany: dokumentów ${wynik.wynik.succeeded}, odmów ${wynik.wynik.failed}. ` +
-        // Bilans dokument po dokumencie, nie jedna liczba: format uboższy niż
-        // dokument gubi cechy w KAŻDYM z nich osobno.
+        // Bilans dokument po dokumencie, nie jedna liczba: format uboższy gubi cechy w każdym osobno.
         wynik.wynik.results.map((pozycja) => wstawieniaOpiszWydanie(pozycja)).join(' ') +
         (odmowy.length === 0
           ? ''

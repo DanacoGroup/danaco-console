@@ -47038,6 +47038,12 @@
           "typ": "bool",
           "wymagane": false,
           "opis": "Wymus rozpoznanie pisma, nawet gdy dokument ma warstwe tekstowa"
+        },
+        {
+          "nazwa": "preprocess",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy poddac obraz obrobce wstepnej przed rozpoznaniem"
         }
       ],
       "wynik": [
@@ -87206,6 +87212,226 @@
       {
         "komenda": "notification.list",
         "zastosowanie": "Uzyj, aby poznac stan platformy z rejestru centrum powiadomien: co sie zakonczylo, co czeka na decyzje i co zawiodlo"
+      },
+      {
+        "komenda": "mobile.status.get",
+        "zastosowanie": "Uzyj w sesji mobilnego centrum dowodzenia, gdy Operator pyta o biezacy stan platformy"
+      },
+      {
+        "komenda": "mobile.process.list",
+        "zastosowanie": "Uzyj, gdy z mobilnego centrum dowodzenia trzeba sprawdzic, jakie procesy platformy dzialaja teraz"
+      },
+      {
+        "komenda": "mobile.process.control",
+        "zastosowanie": "Uzyj, gdy Operator z mobilnego centrum dowodzenia poleca wstrzymac, wznowic albo zatrzymac dzialajacy proces platformy"
+      },
+      {
+        "komenda": "device.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, jakie urzadzenia maja dostep do platformy pod kontem wlasciciela"
+      },
+      {
+        "komenda": "retention.set",
+        "zastosowanie": "Uzyj, gdy Operator zmienia, jak dlugo platforma ma trzymac historie w danym zakresie"
+      },
+      {
+        "komenda": "clipboard.list",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc tresc wczesniej skopiowana do schowka Operatora, a nie zdefiniowany zawczasu skrot tekstowy — ten niesie snippet.list"
+      },
+      {
+        "komenda": "clipboard.push",
+        "zastosowanie": "Uzyj, gdy Operator kopiuje albo zapisuje tresc, ktora ma trafic do historii schowka"
+      },
+      {
+        "komenda": "clipboard.pin",
+        "zastosowanie": "Uzyj, gdy wpis schowka trzeba zabezpieczyc przed wygasnieciem z zasada retencji albo zdjac to zabezpieczenie"
+      },
+      {
+        "komenda": "clipboard.delete",
+        "zastosowanie": "Uzyj, aby usunac wpis schowka albo cala historie; includePinned wlaczone kasuje nieodwracalnie takze wpisy przypiete — bez niego przypiete pozostaja bezpieczne"
+      },
+      {
+        "komenda": "snippet.list",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic zdefiniowane skroty tekstowe, zanim wskazesz ktorys do zmiany; to nie skopiowana tresc ze schowka — ta niesie clipboard.list, a slownik jest wspolny dla calej platformy, nie jednego okna"
+      },
+      {
+        "komenda": "snippet.set",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowy skrot tekstowy albo zmienia tresc istniejacego"
+      },
+      {
+        "komenda": "snippet.delete",
+        "zastosowanie": "Uzyj, gdy skrot tekstowy przestal byc potrzebny i ma zniknac ze slownika"
+      },
+      {
+        "komenda": "launcher.hotkey.get",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic biezacy skrot globalny wywolywacza polecen i czy powloka w ogole potrafi go zarejestrowac, zanim Operator zmieni nastawe"
+      },
+      {
+        "komenda": "launcher.hotkey.set",
+        "zastosowanie": "Uzyj, gdy Operator zmienia skrot globalny wywolywacza polecen; zapis przechodzi nawet gdy skrot jest zajety przez inny program, co nie jest bledem zapisu"
+      },
+      {
+        "komenda": "provenance.call.list",
+        "zastosowanie": "Uzyj, aby odszukac wywolania kanalu modelu spelniajace okreslone kryteria, zanim przejdziesz do pojedynczego zapisu przez provenance.call.get"
+      },
+      {
+        "komenda": "provenance.call.get",
+        "zastosowanie": "Uzyj, gdy trzeba zbadac pojedyncze wywolanie szczegolowo wraz z drzewem odcinkow; tresc promptu i odpowiedzi wraca domyslnie, ale znika, gdy includeContent zostanie wylaczone"
+      },
+      {
+        "komenda": "provenance.call.replay",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic, czy wywolanie da dzis ten sam wynik; powtorzenie moze isc innym kanalem albo modelem niz pierwowzor"
+      },
+      {
+        "komenda": "provenance.call.rate",
+        "zastosowanie": "Uzyj, gdy Operator ocenia trafnosc odpowiedzi wywolania, aby zapisac ta ocene wraz z uzasadnieniem"
+      },
+      {
+        "komenda": "provenance.trace.export",
+        "zastosowanie": "Uzyj, gdy slady wywolan trzeba wyniesc poza platforme do dalszej analizy albo audytu"
+      },
+      {
+        "komenda": "usage.summary.get",
+        "zastosowanie": "Uzyj, gdy Operator pyta, ile platforma kosztuje albo zuzywa w danym okresie, i potrzebuje zestawienia w jednym przekroju"
+      },
+      {
+        "komenda": "usage.report.build",
+        "zastosowanie": "Uzyj, gdy zuzycie trzeba udokumentowac jako gotowy raport rozliczeniowy do przekazania dalej"
+      },
+      {
+        "komenda": "alert.rule.save",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowa regule wyzwalania alertu albo zmienia warunki juz istniejacej"
+      },
+      {
+        "komenda": "alert.rule.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec zdefiniowane reguly wyzwalania alertow, a nie ich historie zadzialan — ta niesie alert.trigger.list"
+      },
+      {
+        "komenda": "alert.rule.remove",
+        "zastosowanie": "Uzyj, gdy regula wyzwalania przestala byc potrzebna i ma zniknac wraz z historia swoich zadzialan"
+      },
+      {
+        "komenda": "alert.trigger.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec historie zadzialan alertow wraz z czasem reakcji, a nie same definicje regul — te niesie alert.rule.list"
+      },
+      {
+        "komenda": "alert.trigger.acknowledge",
+        "zastosowanie": "Uzyj, gdy Operator potwierdza obsluzenie wyzwolenia, aby wstrzymac jego eskalacje"
+      },
+      {
+        "komenda": "health.probe.save",
+        "zastosowanie": "Uzyj, gdy Operator zaklada nowa sonde kondycji albo zmienia parametry juz istniejacej"
+      },
+      {
+        "komenda": "health.probe.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec zdefiniowane sondy kondycji wraz z ich ostatnim wynikiem, a nie pelna serie pomiarow — ta niesie health.result.list"
+      },
+      {
+        "komenda": "health.probe.remove",
+        "zastosowanie": "Uzyj, gdy sonda kondycji przestala byc potrzebna i ma zniknac wraz z cala seria swoich wynikow"
+      },
+      {
+        "komenda": "health.probe.run",
+        "zastosowanie": "Uzyj, aby wykonac sonde kondycji od razu, poza jej odstepem, gdy trzeba potwierdzic stan natychmiast"
+      },
+      {
+        "komenda": "health.result.list",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec pelna serie pomiarow sondy, z ktorej liczy sie jej dostepnosc, a nie sama definicje sondy — ta niesie health.probe.list"
+      },
+      {
+        "komenda": "health.uptime.get",
+        "zastosowanie": "Uzyj, gdy trzeba podac Operatorowi wyliczona dostepnosc i budzet bledow, zamiast surowej serii pomiarow"
+      },
+      {
+        "komenda": "apps.performance.audit",
+        "zastosowanie": "Uzyj przed wydaniem zmiany frontendu albo gdy uzytkownik pyta o szybkosc dzialania strony, a nie o jej wyglad"
+      },
+      {
+        "komenda": "browser.accessibility.audit",
+        "zastosowanie": "Uzyj przed wydaniem strony albo gdy uzytkownik pyta, czy interfejs jest dostepny dla osob korzystajacych z czytnikow ekranu"
+      },
+      {
+        "komenda": "browser.console.read",
+        "zastosowanie": "Uzyj, gdy strona w przegladarce zachowuje sie niepoprawnie i trzeba sprawdzic bledy JavaScript albo zapisy logu, a nie budowe strony"
+      },
+      {
+        "komenda": "browser.device.emulate",
+        "zastosowanie": "Uzyj przed zrzutem albo inspekcja strony, gdy trzeba zobaczyc jej zachowanie na innym rozmiarze ekranu niz biezacy"
+      },
+      {
+        "komenda": "browser.dom.inspect",
+        "zastosowanie": "Uzyj, gdy trzeba zobaczyc budowe strony, atrybuty elementu albo zastosowane style, a nie bledy zglaszane w konsoli"
+      },
+      {
+        "komenda": "browser.network.har",
+        "zastosowanie": "Uzyj, gdy trzeba ustalic, jakie zadania wykonala strona w sieci i ile trwaly, na przyklad przy diagnozie wolnego ladowania"
+      },
+      {
+        "komenda": "browser.screenshot.capture",
+        "zastosowanie": "Uzyj, gdy widok strony ma zostac pokazany albo zapisany, na przyklad do porownania stanu przed zmiana i po niej"
+      },
+      {
+        "komenda": "browser.scroll",
+        "zastosowanie": "Uzyj, gdy potrzebna tresc strony lezy poza widocznym obszarem i trzeba do niej dotrzec przed inspekcja albo zrzutem"
+      },
+      {
+        "komenda": "developer.api.load.run",
+        "zastosowanie": "Uzyj, gdy trzeba sprawdzic zachowanie punktu koncowego pod powtarzanym obciazeniem, a nie przy pojedynczym zapytaniu"
+      },
+      {
+        "komenda": "developer.debug.session.start",
+        "zastosowanie": "Uzyj, gdy trzeba zatrzymac program w miejscu bledu i przejrzec stan zmiennych krok po kroku, a nie tylko przeczytac slad stosu"
+      },
+      {
+        "komenda": "developer.format.run",
+        "zastosowanie": "Uzyj po edycji pliku, zanim zmiana trafi do przegladu, gdy tresc ma zostac dopasowana automatycznie zamiast recznie"
+      },
+      {
+        "komenda": "developer.grep.replace",
+        "zastosowanie": "Uzyj, gdy wszystkie trafienia wzorca w repozytorium maja zostac zmienione naraz, nie tylko wskazane — dzialanie modyfikuje pliki"
+      },
+      {
+        "komenda": "developer.grep.search",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc wystapienia wzorca w repozytorium przed decyzja o zmianie, bez modyfikowania plikow"
+      },
+      {
+        "komenda": "developer.lint.get",
+        "zastosowanie": "Uzyj po edycji konkretnych plikow, gdy trzeba szybko sprawdzic w nich usterki stylu i skladni, a nie przeszukac cale repozytorium jak developer.scan.run"
+      },
+      {
+        "komenda": "developer.refactor.apply",
+        "zastosowanie": "Uzyj, gdy zmiana nazwy albo sygnatury ma zostac spojnie odbita we wszystkich miejscach jej uzycia, a nie tylko w jednym pliku"
+      },
+      {
+        "komenda": "developer.scan.run",
+        "zastosowanie": "Uzyj, gdy trzeba przejrzec cale repozytorium pod katem zaleznosci, sekretow, powielen kodu albo licencji — nie sprawdzic styl wskazanych plikow jak developer.lint.get"
+      },
+      {
+        "komenda": "developer.symbol.navigate",
+        "zastosowanie": "Uzyj, gdy trzeba odnalezc definicje albo wszystkie uzycia symbolu w kodzie, a nie wystapienia tekstu wzorca"
+      },
+      {
+        "komenda": "developer.toolchain.check",
+        "zastosowanie": "Uzyj przed poleganiem na programie zewnetrznym, gdy trzeba wpierw ustalic, czy jest on w ogole zainstalowany"
+      },
+      {
+        "komenda": "library.metadata.get",
+        "zastosowanie": "Uzyj, aby poznac opis zasobu; po metadane osadzone w pliku (EXIF, IPTC, XMP, ID3) siegaj tylko na wyrazne zadanie uzytkownika, bo ich odczyt jest kosztowny"
+      },
+      {
+        "komenda": "studio.ingest.device.list",
+        "zastosowanie": "Uzyj na poczatku obiegu skanowania, zanim padnie wybor konkretnego skanera albo kamery"
+      },
+      {
+        "komenda": "studio.ingest.recognize",
+        "zastosowanie": "Uzyj, gdy pozycja jest juz w kolejce studia, a waskie document.text.extract nie daje dosc kontroli nad wynikiem rozpoznania"
+      },
+      {
+        "komenda": "terminal.script.lint",
+        "zastosowanie": "Uzyj, gdy uzytkownik ma tresc skryptu powloki, PowerShell albo Pythona i chce ja sprawdzic przed uruchomieniem"
+      },
+      {
+        "komenda": "translate.proofread.run",
+        "zastosowanie": "Uzyj, gdy tekst panelu ma trafic do odbiorcy zewnetrznego, a jeszcze nie przeszedl korekty jezykowej"
       }
     ]
   },

@@ -1,16 +1,4 @@
-// Pakiet core jest rdzeniem dyspozycji Danaco Console: rozstrzyga komendę po
-// nazwie wziętej z kontraktu, kieruje ją do obsługiwacza właściwej domeny
-// i zwraca kopertę odpowiedzi.
-//
-// Rdzeń jest cienki z założenia. Nie zna bazy danych, nie zna procesu modelu,
-// nie zna gniazda WebSocket. Wszystkie zależności widzi wyłącznie przez
-// interfejsy tego pliku, a wypełnia je warstwa składania —
-// kompozycja.go. Dzięki temu zmiana wnętrza pakietu sesji, modeli czy danych
-// nie dotyka ani jednego obsługiwacza.
-//
-// Interfejsy mówią wyłącznie typami kontraktu z pakietu shared. Nie ma tu
-// własnego modelu żądania ani wyniku: kształt wyznacza shared/contract.json
-// jako jedyne źródło prawdy.
+// Pakiet core jest rdzeniem dyspozycji: rozstrzyga komendę po nazwie z kontraktu, kieruje ją do obsługiwacza właściwej domeny przez interfejsy tego pliku i zwraca kopertę odpowiedzi.
 package core
 
 import (
@@ -28,8 +16,7 @@ type Sesje interface {
 	Otworz(ctx context.Context, z shared.SessionOpenRequest) (shared.SessionOpenResponse, error)
 	Zamknij(ctx context.Context, z shared.SessionCloseRequest) (shared.SessionCloseResponse, error)
 	Usun(ctx context.Context, z shared.SessionDeleteRequest) (shared.SessionDeleteResponse, error)
-	// Czynności Operatora na wykazie sesji. Wszystkie są odwracalne — jedyną
-	// drogą utraty zapisu pozostaje Usun.
+	// Czynności Operatora na wykazie sesji; wszystkie są odwracalne poza usunięciem.
 	ZmienNazwe(ctx context.Context, z shared.SessionRenameRequest) (shared.SessionRenameResponse, error)
 	Archiwizuj(ctx context.Context, z shared.SessionArchiveRequest) (shared.SessionArchiveResponse, error)
 	Przywroc(ctx context.Context, z shared.SessionRestoreRequest) (shared.SessionRestoreResponse, error)
@@ -60,13 +47,7 @@ type Rozmowa interface {
 	Wykaz(ctx context.Context, z shared.MessageListRequest) (shared.MessageListResponse, error)
 }
 
-// Ustawienia obsługuje konfigurację warstwową ośmiu poziomów zasięgu.
-// Brak ustawienia jest wartością domyślną, nigdy blokadą.
-//
-// Jednolity model konfiguracji sesji wchodzi tutaj, a nie obok: obszary sesji leżą
-// w tym samym rejestrze ośmiu poziomów i trzech osi, więc drugiej bramy do
-// konfiguracji rdzeń nie ma. Wykaz czynności obszarowych opisuje port
-// KonfiguracjaSesji z handlers_sesja_konfiguracja.go.
+// Ustawienia obsługuje konfigurację warstwową ośmiu poziomów zasięgu, w tym samym rejestrze co konfiguracja obszarów sesji; brak ustawienia jest wartością domyślną, nigdy blokadą.
 type Ustawienia interface {
 	Odczytaj(ctx context.Context, z shared.ConfigGetRequest) (shared.ConfigGetResponse, error)
 	Zapisz(ctx context.Context, z shared.ConfigSetRequest) (shared.ConfigSetResponse, error)
@@ -103,12 +84,7 @@ type Przenoszenie interface {
 	Przenies(ctx context.Context, z shared.ContextTransferRequest) (shared.ContextTransferResponse, error)
 }
 
-// Nadajnik oddaje warstwie transportu komunikat wychodzący spoza pary
-// żądanie–odpowiedź: zdarzenie zmiany rozgłaszane do wszystkich połączeń konta
-// oraz fragment strumienia odpowiedzi modelu.
-//
-// Rdzeń nie wie, ile jest połączeń ani które urządzenie słucha — to wiedza
-// transportu.
+// Nadajnik oddaje warstwie transportu komunikat wychodzący spoza pary żądanie–odpowiedź: zdarzenie zmiany rozgłaszane do połączeń konta oraz fragment strumienia odpowiedzi modelu.
 type Nadajnik interface {
 	Rozglos(k protocol.Koperta)
 }

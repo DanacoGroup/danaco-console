@@ -7,7 +7,8 @@ import "errors"
 // metoda ListaOsi repozytorium konfiguracji.
 type odczytAdresu func(adres Adres) ([]Wpis, error)
 
-// zrodloZOdczytu składa źródło całej przestrzeni poziom × oś z funkcji odczytu.
+// zrodloZOdczytu składa źródło całej przestrzeni poziom × oś z funkcji
+// odczytu, wywoływanej osobno dla każdego adresu.
 type zrodloZOdczytu struct {
 	odczytOsi odczytAdresu
 }
@@ -45,7 +46,8 @@ func (z *zrodloZOdczytu) Wpisy(adresy []Adres) ([]Wpis, error) {
 	return zebrane, errors.Join(bledy...)
 }
 
-// wpisyAdresu czyta jeden adres złożony: poziom zasięgu razem z osią.
+// wpisyAdresu czyta jeden adres złożony: poziom zasięgu razem z osią,
+// wywołując funkcję odczytu przekazaną przy budowie źródła.
 func (z *zrodloZOdczytu) wpisyAdresu(adres Adres) ([]Wpis, error) {
 	return z.odczytOsi(adres)
 }

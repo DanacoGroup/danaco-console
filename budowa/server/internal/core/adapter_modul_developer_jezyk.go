@@ -1,30 +1,6 @@
-// Odpowiedzialność pliku: cztery komendy warstwy językowej Code Editora —
-// `developer.symbol.navigate` (przejdź do definicji, implementacji, wystąpień,
-// symbole dokumentu), `developer.format.run` (formatowanie), `developer.lint.get`
-// (analiza statyczna) i `developer.refactor.apply` (refaktoryzacje).
-//
-// ── Skąd bierze się wiedza o kodzie ──────────────────────────────────────────
-// Tu jako jedyne w module wołamy programy serwera, bo program JEST tą wiedzą.
-// `gopls` zna typy repozytorium i jego graf odwołań; napisanie tego od nowa w Go
-// znaczyłoby napisanie drugiego kompilatora. `gofmt` i `prettier` znają styl,
-// `golangci-lint` zna reguły. Wszystkie stoją na serwerze i wchodzą do sondy
-// zależności (`zaleznosci_zewnetrzne.go`).
-//
-// ── Czego brak programu NIE robi ─────────────────────────────────────────────
-// Nie zamienia odpowiedzi w odmowę. Kontrakt niesie `serverAvailable`
-// i `linterAvailable` właśnie po to: pusty wykaz symboli przy `serverAvailable:
-// false` znaczy „nie miałem czym sprawdzić”, a przy `true` — „sprawdziłem
-// i nie ma”. To są dwa różne zdania i okno ma je rozróżniać, bo pierwsze
-// naprawia się instalacją na serwerze, a drugie — poprawką w kodzie.
-//
-// ── Jeden serwer języka na wywołanie, a nie utrzymywana sesja ────────────────
-// `gopls` woła się tu w trybie jednorazowym (`gopls definition …`), a nie jako
-// utrzymywany proces mostkujący LSP na WebSocket. Powód: komenda kontraktu jest
-// pytaniem i odpowiedzią, bez stanu między nimi, a proces utrzymywany na okno
-// wymagałby własnego rejestru uchwytów, własnego sprzątania i własnego
-// przerywania — trzeciego takiego mechanizmu w module obok budowania
-// i debugowania. Most LSP z rozdz. 7.1 opracowania jest rozszerzeniem tej drogi,
-// a nie jej zaprzeczeniem: kontrakt pozostaje ten sam.
+// Plik obsługuje cztery komendy warstwy językowej Code Editora:
+// `developer.symbol.navigate`, `developer.format.run`, `developer.lint.get`
+// i `developer.refactor.apply`, wołając programy serwera języka na maszynie.
 package core
 
 import (
@@ -47,16 +23,19 @@ const (
 	// pytanie w nieznanym repozytorium ładuje jego graf odwołań, więc granica
 	// jest liczona w dziesiątkach sekund, nie w sekundach.
 	czasSerweraJezyka = 90 * time.Second
-	// czasFormatowania jest granicą formatowania jednego pliku.
+	// czasFormatowania jest granicą czasową formatowania jednego pliku
+	// pojedynczym wywołaniem programu formatującego.
 	czasFormatowania = 20 * time.Second
-	// czasAnalizyStatycznej jest granicą przebiegu lintera po repozytorium.
+	// czasAnalizyStatycznej jest granicą czasową jednego przebiegu programu
+	// analizy statycznej po całym repozytorium.
 	czasAnalizyStatycznej = 180 * time.Second
 	// najwiecejZgloszenAnalizy chroni Dev Tools przed wykazem, którego nikt nie
 	// przeczyta, gdy linter zgłosi tysiące uwag w nieuporządkowanym repozytorium.
 	najwiecejZgloszenAnalizy = 500
 )
 
-// NawigujDoSymbolu obsługuje `developer.symbol.navigate`.
+// NawigujDoSymbolu obsługuje komendę `developer.symbol.navigate`: przejście do
+// definicji, implementacji, wystąpień albo wykaz symboli dokumentu.
 func (a *adapterDevelopera) NawigujDoSymbolu(ctx context.Context,
 	z shared.DeveloperSymbolNavigateRequest) (shared.DeveloperSymbolNavigateResponse, error) {
 
@@ -90,10 +69,8 @@ func (a *adapterDevelopera) NawigujDoSymbolu(ctx context.Context,
 	}
 
 	if _, jednorazowy := serwerJezykaPliku(sciezka); !jednorazowy {
-		// Pusty wykaz przy `serverAvailable: false` mówi „nie miałem czym
-		// sprawdzić" — i to jest tu prawdą. Wołanie serwera Go po plik
-		// TypeScriptu oddawałoby pusty wykaz przy `true`, czyli zdanie
-		// „sprawdziłem i nie ma", którego rdzeń nie ma prawa powiedzieć.
+		// Pusty wykaz przy `serverAvailable: false` znaczy brak narzędzia, nie
+		// brak wyniku.
 		return shared.DeveloperSymbolNavigateResponse{
 			Symbols: []shared.DeveloperSymbol{}, ServerAvailable: false}, nil
 	}
@@ -105,9 +82,8 @@ func (a *adapterDevelopera) NawigujDoSymbolu(ctx context.Context,
 			return shared.DeveloperSymbolNavigateResponse{
 				Symbols: []shared.DeveloperSymbol{}, ServerAvailable: false}, nil
 		}
-		// Serwer języka odpowiada niezerowym kodem także wtedy, gdy pod
-		// kursorem nie ma symbolu. To nie jest awaria: pusty wykaz przy
-		// `serverAvailable: true` mówi dokładnie to, co zaszło.
+		// Niezerowy kod serwera języka bez symbolu pod kursorem nie jest
+		// awarią.
 		return shared.DeveloperSymbolNavigateResponse{
 			Symbols: []shared.DeveloperSymbol{}, ServerAvailable: true}, nil
 	}
@@ -116,7 +92,8 @@ func (a *adapterDevelopera) NawigujDoSymbolu(ctx context.Context,
 	return shared.DeveloperSymbolNavigateResponse{Symbols: symbole, ServerAvailable: true}, nil
 }
 
-// symbolGopls jest kształtem odpowiedzi `gopls definition -json`.
+// symbolGopls jest kształtem odpowiedzi `gopls definition -json`, z którego
+// rdzeń czyta położenie i opis znalezionego symbolu.
 type symbolGopls struct {
 	Span struct {
 		URI   string `json:"uri"`
@@ -128,11 +105,9 @@ type symbolGopls struct {
 	Description string `json:"description"`
 }
 
-// symboleZOdpowiedziSerwera przekłada wyjście serwera języka na kontrakt.
-//
-// Dwa kształty wyjścia, bo `gopls` mówi dwoma językami: `definition -json` daje
-// dokument JSON, a `references` i `symbols` — wiersze tekstu. Rozbiór idzie po
-// rodzaju pytania, a nie po zgadywaniu z treści.
+// symboleZOdpowiedziSerwera przekłada wyjście serwera języka na kontrakt:
+// dokument JSON dla definicji albo wiersze tekstu dla wystąpień i symboli
+// dokumentu.
 func symboleZOdpowiedziSerwera(rodzaj shared.SymbolNavigationKind, wyjscie,
 	sciezkaPliku string) []shared.DeveloperSymbol {
 
@@ -208,7 +183,8 @@ func symbolZWiersza(wiersz, sciezkaPliku string) (shared.DeveloperSymbol, bool) 
 	return symbol, true
 }
 
-// oberwijZakres zostawia z `12-15` samo `12`.
+// oberwijZakres zostawia z zapisu `12-15` samo `12`, czyli początek zakresu
+// zwróconego przez serwer języka.
 func oberwijZakres(wartosc string) string {
 	if myslnik := strings.IndexByte(wartosc, '-'); myslnik > 0 {
 		return wartosc[:myslnik]
@@ -216,7 +192,8 @@ func oberwijZakres(wartosc string) string {
 	return wartosc
 }
 
-// pierwszeSlowoOpisu bierze z opisu serwera nazwę symbolu.
+// pierwszeSlowoOpisu bierze z opisu zwróconego przez serwer języka pierwsze
+// albo drugie słowo jako nazwę odnalezionego symbolu.
 func pierwszeSlowoOpisu(opis string) string {
 	pola := strings.Fields(opis)
 	if len(pola) == 0 {
@@ -229,16 +206,14 @@ func pierwszeSlowoOpisu(opis string) string {
 	return pola[0]
 }
 
-// sciezkaZOdwolania zdejmuje przedrostek `file://` z odwołania serwera języka.
+// sciezkaZOdwolania zdejmuje przedrostek schematu `file://` z odwołania do
+// pliku zwróconego przez serwer języka w opisie symbolu.
 func sciezkaZOdwolania(odwolanie string) string {
 	return strings.TrimPrefix(odwolanie, "file://")
 }
 
-// Formatuj obsługuje `developer.format.run`.
-//
-// Formater dobiera się po rozszerzeniu pliku, bo styl należy do języka, nie do
-// Operatora. Treść w żądaniu wygrywa z treścią na dysku: Code Editor formatuje
-// bufor, którego jeszcze nie zapisano, i to on jest przedmiotem czynności.
+// Formatuj obsługuje komendę `developer.format.run`: formatuje treść
+// z żądania albo treść pliku programem właściwym dla rozszerzenia.
 func (a *adapterDevelopera) Formatuj(ctx context.Context,
 	z shared.DeveloperFormatRunRequest) (shared.DeveloperFormatRunResponse, error) {
 
@@ -272,11 +247,8 @@ func (a *adapterDevelopera) Formatuj(ctx context.Context,
 				"formatowane są pliki Go (gofmt, goimports) oraz obsługiwane przez Prettier")
 	}
 
-	// Treść idzie do formatera plikiem tymczasowym w katalogu roboczym okna,
-	// a nie strumieniem wejścia: port uruchamiacza podaje procesowi wyjście
-	// i diagnostykę, lecz nie wejście, a formatery czytające ze standardowego
-	// wejścia i tak nie znają wtedy ścieżki pliku, więc gubią reguły
-	// repozytorium zależne od położenia.
+	// Treść idzie do formatera plikiem tymczasowym — port uruchamiacza nie
+	// podaje wejścia procesowi.
 	roboczy, sprzataj, err := plikRoboczyFormatowania(sciezka, przed)
 	if err != nil {
 		return shared.DeveloperFormatRunResponse{}, err
@@ -323,12 +295,8 @@ func (a *adapterDevelopera) Formatuj(ctx context.Context,
 	}, nil
 }
 
-// formaterPliku dobiera program formatujący po rozszerzeniu pliku.
-//
-// Dla Go pierwszeństwo ma `goimports`: robi to samo co `gofmt`, a dodatkowo
-// porządkuje wykaz importów, którego ręczne pilnowanie jest najczęstszym
-// powodem niekompilującego się pliku po refaktoryzacji. Gdy go na serwerze nie
-// ma, zostaje `gofmt`.
+// formaterPliku dobiera program formatujący po rozszerzeniu pliku spośród
+// programów zainstalowanych na serwerze.
 func formaterPliku(sciezka string) (zewnetrzne.Narzedzie, []string, bool) {
 	switch strings.ToLower(filepath.Ext(sciezka)) {
 	case ".go":
@@ -344,12 +312,8 @@ func formaterPliku(sciezka string) (zewnetrzne.Narzedzie, []string, bool) {
 	}
 }
 
-// plikRoboczyFormatowania odkłada treść bufora obok pliku źródłowego.
-//
-// Obok, a nie w katalogu tymczasowym systemu: reguły formatowania zależą od
-// położenia w repozytorium (`.editorconfig`, `.prettierrc`, moduł Go), więc plik
-// przeniesiony gdzie indziej sformatowałby się wedle innych reguł niż ten,
-// którego dotyczy czynność.
+// plikRoboczyFormatowania odkłada treść bufora w pliku tymczasowym obok
+// pliku źródłowego, na czas jednego wywołania formatera.
 func plikRoboczyFormatowania(sciezka, tresc string) (string, func(), error) {
 	roboczy := filepath.Join(filepath.Dir(sciezka),
 		"."+filepath.Base(sciezka)+".danaco-format"+filepath.Ext(sciezka))
@@ -360,12 +324,8 @@ func plikRoboczyFormatowania(sciezka, tresc string) (string, func(), error) {
 	return roboczy, func() { _ = os.Remove(roboczy) }, nil
 }
 
-// zawezDoZakresu składa wynik formatowania zaznaczenia.
-//
-// Formatery pracują na całym pliku, a kontrakt dopuszcza zakres wierszy. Wynik
-// powstaje przez wzięcie z formatowanej treści wyłącznie zakresu wskazanego
-// przez Operatora — reszta pliku zostaje nietknięta, bo Operator prosił
-// o zaznaczenie, a nie o cały plik.
+// zawezDoZakresu składa wynik formatowania zaznaczenia z treści sprzed
+// formatowania i wyniku formatera dla wskazanego zakresu wierszy.
 func zawezDoZakresu(przed, po string, odWiersza, doWiersza *int) string {
 	if odWiersza == nil || doWiersza == nil {
 		return po
@@ -374,8 +334,8 @@ func zawezDoZakresu(przed, po string, odWiersza, doWiersza *int) string {
 	wierszePo := strings.Split(po, "\n")
 	od, do := *odWiersza, *doWiersza
 	if od < 1 || do < od || do > len(wierszePrzed) || len(wierszePo) < do {
-		// Formatowanie przesunęło wiersze tak, że zakres przestał się zgadzać —
-		// zawężenie dałoby wtedy plik posklejany z dwóch różnych stanów.
+		// Formatowanie przesunęło wiersze — zakres przestał się zgadzać, więc
+		// wraca pełny wynik formatera.
 		return po
 	}
 	zlozony := make([]string, 0, len(wierszePrzed))
@@ -385,19 +345,8 @@ func zawezDoZakresu(przed, po string, odWiersza, doWiersza *int) string {
 	return strings.Join(zlozony, "\n")
 }
 
-// AnalizaStatyczna obsługuje `developer.lint.get`.
-//
-// ── Dlaczego programów jest kilka, a pole `linterAvailable` jedno ────────────
-// Repozytorium bywa wielojęzyczne, a analizator zna jeden język: `golangci-lint`
-// czyta Go, `Ruff` Pythona, `Stylelint` arkusze CSS, a `typos` szuka literówek
-// niezależnie od języka. Zgłoszenia idą do jednego wykazu, bo kontrakt niesie
-// w każdym z nich pole `source` — czytelnik widzi, który program je wystawił.
-//
-// Pole `linterAvailable` jest jedno i pochodzi z czasu, gdy program też był
-// jeden. Znaczy tu: CHOĆ JEDEN program odpowiedział. Fałsz zostaje więc tym,
-// czym był — stanem, w którym pusty wykaz zgłoszeń kłamałby, bo nie sprawdzono
-// niczym. Które programy milczały, tej odpowiedzi powiedzieć nie da się bez
-// zmiany kontraktu.
+// AnalizaStatyczna obsługuje komendę `developer.lint.get`: uruchamia programy
+// analizy statycznej właściwe dla plików repozytorium i zwraca ich zgłoszenia.
 func (a *adapterDevelopera) AnalizaStatyczna(ctx context.Context,
 	z shared.DeveloperLintGetRequest) (shared.DeveloperLintGetResponse, error) {
 
@@ -449,7 +398,8 @@ func (a *adapterDevelopera) AnalizaStatyczna(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// wyjscieAnalizy jest kształtem odpowiedzi `golangci-lint run` w postaci JSON.
+// wyjscieAnalizy jest kształtem odpowiedzi `golangci-lint run` w postaci
+// dokumentu JSON z wykazem zgłoszeń.
 type wyjscieAnalizy struct {
 	Issues []struct {
 		FromLinter string `json:"FromLinter"`
@@ -465,7 +415,8 @@ type wyjscieAnalizy struct {
 	} `json:"Issues"`
 }
 
-// zgloszeniaAnalizy przekłada wyjście lintera na zgłoszenia kontraktu.
+// zgloszeniaAnalizy przekłada wyjście programu `golangci-lint` na wykaz
+// zgłoszeń kontraktu, uzupełniony ścieżkami bezwzględnymi.
 func zgloszeniaAnalizy(wyjscie, korzen string) []shared.DeveloperDiagnostic {
 	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 32)
 	var odpowiedz wyjscieAnalizy
@@ -516,22 +467,12 @@ func wagaAnalizy(waga string) shared.ProblemSeverity {
 }
 
 // serwerJezykaPliku dobiera serwer języka po rozszerzeniu pliku i mówi, czy
-// rdzeń ma czym go zapytać JEDNYM wywołaniem.
-//
-// ── Dlaczego TypeScript wraca z „nie ma czym" ────────────────────────────────
-// Warstwa językowa tego modułu pyta serwer pojedynczym wywołaniem
-// (`gopls definition …`) i odbiera odpowiedź z jego wyjścia; powód tego wyboru
-// stoi w nagłówku pliku. `gopls` taki tryb ma. Serwer języka TypeScriptu go NIE
-// ma: rozmawia wyłącznie sesją protokołu LSP na strumieniu wejścia — uzgodnienie,
-// otwarcie dokumentu, pytanie, zamknięcie — a jedyna droga rdzenia do procesu
-// (`zewnetrzne.Wolaj`) z zamysłu na wejście procesu nie pisze, bo pisanie
-// i czytanie naraz jest tą klasą zakleszczeń, której ten pakiet ma nie mieć.
-//
-// Dlatego pliki TypeScriptu dostają odpowiedź nazywającą brak zamiast wyniku
-// z serwera Go, który tego pliku nie rozumie. Sam program jest zadeklarowany
-// w wykazie zależności (`zaleznosci_zewnetrzne.go`), więc sonda startowa mówi
-// o nim Operatorowi — deklaracja opisuje zakres, który bez niego nie działa,
-// a nie obietnicę, że rdzeń już go woła.
+// rdzeń ma czym go zapytać pojedynczym wywołaniem. Rozstrzygnięcie trwałe:
+// `gopls` ma tryb wiersza poleceń obok trybu LSP, a
+// `typescript-language-server` mówi wyłącznie sesją protokołu LSP przez
+// stdin/stdout — warstwa językowa pyta serwery pojedynczym wywołaniem i tej
+// sesji nie ma czym otworzyć. Wywołujący nazywa odmowę: NawigujDoSymbolu
+// przez pole kontraktu `ServerAvailable: false`, Refaktoryzuj zdaniem błędu.
 func serwerJezykaPliku(sciezka string) (zewnetrzne.Narzedzie, bool) {
 	switch strings.ToLower(filepath.Ext(sciezka)) {
 	case ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs":
@@ -543,35 +484,27 @@ func serwerJezykaPliku(sciezka string) (zewnetrzne.Narzedzie, bool) {
 
 // ── Analizatory repozytorium ────────────────────────────────────────────────
 
-// analizaPozaGo opisuje jedno wywołanie programu analizy: co uruchomić, na czym
-// i jak odczytać wynik.
+// analizaPozaGo opisuje jedno wywołanie programu analizy: program, argumenty
+// i sposób odczytu wyniku z jego strumieni.
 type analizaPozaGo struct {
 	narzedzie zewnetrzne.Narzedzie
 	argumenty []string
-	// czytaj przekłada wyjście programu na zgłoszenia kontraktu. Dostaje oba
-	// strumienie, bo jedne programy piszą wynik na wyjście, inne na diagnostykę.
+	// czytaj przekłada wyjście programu na zgłoszenia kontraktu, czytając oba
+	// jego strumienie wyjściowe.
 	czytaj func(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic
 }
 
 // rozszerzeniaPythona i rozszerzeniaArkuszy nazywają pliki, które mają swój
 // analizator. Wykaz jest wzięty z tego, co program naprawdę czyta.
 var (
-	rozszerzeniaGo      = []string{".go"}
-	rozszerzeniaPythona = []string{".py", ".pyi"}
-	rozszerzeniaArkuszy = []string{".css", ".scss", ".less"}
+	rozszerzeniaGo          = []string{".go"}
+	rozszerzeniaPythona     = []string{".py", ".pyi"}
+	rozszerzeniaArkuszy     = []string{".css", ".scss", ".less"}
+	rozszerzeniaTypeScriptu = []string{".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"}
 )
 
-// analizyRepozytorium dobiera programy, które w tym żądaniu mają co sprawdzić.
-//
-// ── Dlaczego dobór idzie po rozszerzeniu, a nie po tym, co stoi na maszynie ──
-// Program uruchomiony tam, gdzie nie ma ani jednego pliku jego języka, nie
-// milczy — ODMAWIA. `golangci-lint` w repozytorium bez plików Go kończy się
-// błędem „no go files to analyze", a odmowa jednego programu nie ma prawa
-// zabrać analizy pozostałym: repozytorium samego Pythona albo samego frontendu
-// zostałoby wtedy bez analizy w ogóle.
-//
-// Żądanie bez wskazania plików obejmuje całe drzewo i wtedy każdy program
-// dostaje swój katalog.
+// analizyRepozytorium dobiera programy analizy, które w danym żądaniu mają
+// w repozytorium co sprawdzić, po rozszerzeniach wskazanych plików.
 func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 	wskazane := make([]string, 0, len(sciezki))
 	for _, sciezka := range sciezki {
@@ -589,9 +522,8 @@ func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 		if caleDrzewo {
 			cele = []string{"./..."}
 		}
-		// `--output.json.path stdout` jest zapisem wydania drugiego programu;
-		// zapis `--out-format=json` z wydania pierwszego został z niego zdjęty
-		// i program odmawia wtedy uruchomienia, nazywając nieznany parametr.
+		// `--output.json.path stdout` zastępuje usunięty w nowszym wydaniu
+		// zapis `--out-format=json`.
 		analizy = append(analizy, analizaPozaGo{
 			narzedzie: narzedzieGolangciLint,
 			argumenty: append([]string{"run", "--output.json.path", "stdout",
@@ -599,6 +531,25 @@ func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 			czytaj: func(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 				return zgloszeniaAnalizy(wyjscie, korzen)
 			},
+		})
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieStaticcheck,
+			argumenty: append([]string{"-f", "json"}, cele...),
+			czytaj:    zgloszeniaStaticcheck,
+		})
+	}
+
+	skrypty := sciezkiORozszerzeniu(wskazane, rozszerzeniaTypeScriptu)
+	if caleDrzewo || len(skrypty) > 0 {
+		cele := skrypty
+		if caleDrzewo {
+			cele = []string{"."}
+		}
+		analizy = append(analizy, analizaPozaGo{
+			narzedzie: narzedzieEslint,
+			argumenty: append([]string{"--format", "json",
+				"--no-error-on-unmatched-pattern"}, cele...),
+			czytaj: zgloszeniaEslint,
 		})
 	}
 
@@ -616,11 +567,8 @@ func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 		})
 	}
 
-	// Stylelint nie ma wbudowanego zestawu reguł: uruchomienie bez konfiguracji
-	// nie jest „analizą z ustawieniami domyślnymi", tylko brakiem analizy wraz
-	// z odmową programu. Zestaw reguł jest rozstrzygnięciem repozytorium, a nie
-	// rdzenia — więc arkusze analizuje się wyłącznie tam, gdzie repozytorium
-	// swój zestaw niesie.
+	// Stylelint bez zestawu reguł odmawia analizy — arkusze analizuje się
+	// z konfiguracją repozytorium.
 	arkusze := sciezkiORozszerzeniu(wskazane, rozszerzeniaArkuszy)
 	if (caleDrzewo || len(arkusze) > 0) && repozytoriumNiesieKonfiguracje(korzen,
 		konfiguracjeStylelinta) {
@@ -651,14 +599,8 @@ func analizyRepozytorium(korzen string, sciezki []string) []analizaPozaGo {
 	return analizy
 }
 
-// przeprowadzAnalize uruchamia jeden program analizy i mówi, czy ZMIERZYŁ.
-//
-// Kod wyjścia różny od zera jest tu WYNIKIEM, nie usterką: Ruff, Stylelint
-// i `typos` kończą się niezerowo dokładnie wtedy, gdy mają co zgłosić. Miarą
-// pomiaru jest więc ODCZYTANA ODPOWIEDŹ, a nie kod wyjścia ani strumień, na
-// który program ją napisał — program obecny, który przewrócił się, nie oddając
-// nic czytelnego, NIE zmierzył niczego i jego milczenie nie ma prawa wyglądać
-// jak brak zastrzeżeń.
+// przeprowadzAnalize uruchamia jeden program analizy dla repozytorium i mówi,
+// czy dostarczył odczytywalny wynik.
 func (a *adapterDevelopera) przeprowadzAnalize(ctx context.Context, okno session.Okno,
 	korzen string, analiza analizaPozaGo) ([]shared.DeveloperDiagnostic, bool) {
 
@@ -674,7 +616,8 @@ func (a *adapterDevelopera) przeprowadzAnalize(ctx context.Context, okno session
 	return uwagi, true
 }
 
-// sciezkiORozszerzeniu odsiewa wskazania o żądanych rozszerzeniach.
+// sciezkiORozszerzeniu odsiewa ze wskazanych ścieżek repozytorium wyłącznie
+// te, których rozszerzenie należy do żądanego zestawu.
 func sciezkiORozszerzeniu(sciezki, rozszerzenia []string) []string {
 	wybrane := make([]string, 0, len(sciezki))
 	for _, sciezka := range sciezki {
@@ -708,7 +651,8 @@ func repozytoriumNiesieKonfiguracje(korzen string, nazwy []string) bool {
 	return false
 }
 
-// wyjscieRuff jest kształtem odpowiedzi `ruff check --output-format json`.
+// wyjscieRuff jest kształtem pojedynczego zgłoszenia odpowiedzi programu
+// `ruff check --output-format json`.
 type wyjscieRuff struct {
 	Code     string `json:"code"`
 	Message  string `json:"message"`
@@ -723,7 +667,8 @@ type wyjscieRuff struct {
 	} `json:"fix"`
 }
 
-// zgloszeniaRuff przekłada wynik Ruffa na zgłoszenia kontraktu.
+// zgloszeniaRuff przekłada wynik programu `Ruff` na wykaz zgłoszeń kontraktu
+// wraz z kodem reguły i kolumną.
 func zgloszeniaRuff(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
 	var uwagi []wyjscieRuff
@@ -752,7 +697,122 @@ func zgloszeniaRuff(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 	return zgloszenia
 }
 
-// wyjscieStylelinta jest kształtem odpowiedzi `stylelint --formatter json`.
+// wyjscieStaticcheck jest kształtem pojedynczego wiersza wyjścia programu
+// `staticcheck -f json` — jeden dokument JSON na wiersz, nie tablica.
+type wyjscieStaticcheck struct {
+	Code     string `json:"code"`
+	Severity string `json:"severity"`
+	Message  string `json:"message"`
+	Location struct {
+		File   string `json:"file"`
+		Line   int    `json:"line"`
+		Column int    `json:"column"`
+	} `json:"location"`
+}
+
+// zgloszeniaStaticcheck przekłada wynik programu `staticcheck` na wykaz
+// zgłoszeń kontraktu wraz z kodem reguły i kolumną.
+func zgloszeniaStaticcheck(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	for _, wiersz := range strings.Split(wyjscie, "\n") {
+		tresc := strings.TrimSpace(wiersz)
+		if tresc == "" {
+			continue
+		}
+		var uwaga wyjscieStaticcheck
+		if err := json.Unmarshal([]byte(tresc), &uwaga); err != nil || uwaga.Location.File == "" {
+			continue
+		}
+		zgloszenie := shared.DeveloperDiagnostic{
+			Path:     sciezkaWzgledemKorzenia(uwaga.Location.File, korzen),
+			Line:     uwaga.Location.Line,
+			Severity: wagaAnalizy(uwaga.Severity),
+			Message:  uwaga.Message,
+			Source:   wskaznikTekstu(narzedzieStaticcheck.Program),
+		}
+		if uwaga.Code != "" {
+			zgloszenie.Code = wskaznikTekstu(uwaga.Code)
+		}
+		if uwaga.Location.Column > 0 {
+			zgloszenie.Column = wskaznikLiczby(uwaga.Location.Column)
+		}
+		zgloszenia = append(zgloszenia, zgloszenie)
+	}
+	return zgloszenia
+}
+
+// wyjscieEslint jest kształtem pojedynczego pliku odpowiedzi programu
+// `eslint --format json` wraz z jego zgłoszeniami.
+type wyjscieEslint struct {
+	FilePath string `json:"filePath"`
+	Messages []struct {
+		RuleId   *string         `json:"ruleId"`
+		Severity int             `json:"severity"`
+		Message  string          `json:"message"`
+		Line     int             `json:"line"`
+		Column   int             `json:"column"`
+		Fix      json.RawMessage `json:"fix"`
+	} `json:"messages"`
+}
+
+// zgloszeniaEslint przekłada wynik programu `ESLint` na wykaz zgłoszeń
+// kontraktu. Program bez pliku nastaw w repozytorium odmawia analizy przed
+// wypisaniem jakiegokolwiek JSON-u na wyjściu — odmowa wraca jednym
+// zgłoszeniem NAZYWAJĄCYM przyczynę, nie cichą pustą listą.
+func zgloszeniaEslint(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic {
+	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
+	var pliki []wyjscieEslint
+	if err := json.Unmarshal([]byte(strings.TrimSpace(wyjscie)), &pliki); err != nil {
+		if tresc := strings.TrimSpace(diagnostyka); tresc != "" {
+			zgloszenia = append(zgloszenia, shared.DeveloperDiagnostic{
+				Path:     korzen,
+				Line:     1,
+				Severity: shared.ProblemSeverityError,
+				Message:  "ESLint odmówił analizy: " + skrocDiagnostyke(tresc, nil),
+				Source:   wskaznikTekstu(narzedzieEslint.Program),
+			})
+		}
+		return zgloszenia
+	}
+	for _, plik := range pliki {
+		for _, uwaga := range plik.Messages {
+			wiersz := uwaga.Line
+			if wiersz <= 0 {
+				wiersz = 1
+			}
+			zgloszenie := shared.DeveloperDiagnostic{
+				Path:     sciezkaWzgledemKorzenia(plik.FilePath, korzen),
+				Line:     wiersz,
+				Severity: wagaEslint(uwaga.Severity),
+				Message:  uwaga.Message,
+				Source:   wskaznikTekstu(narzedzieEslint.Program),
+			}
+			if uwaga.RuleId != nil && *uwaga.RuleId != "" {
+				zgloszenie.Code = wskaznikTekstu(*uwaga.RuleId)
+			}
+			if uwaga.Column > 0 {
+				zgloszenie.Column = wskaznikLiczby(uwaga.Column)
+			}
+			if len(uwaga.Fix) > 0 {
+				zgloszenie.FixAvailable = wskaznikPrawdy(true)
+			}
+			zgloszenia = append(zgloszenia, zgloszenie)
+		}
+	}
+	return zgloszenia
+}
+
+// wagaEslint przekłada wagę zgłoszenia ESLint (1 ostrzeżenie, 2 błąd) na wagę
+// kontraktu.
+func wagaEslint(waga int) shared.ProblemSeverity {
+	if waga >= 2 {
+		return shared.ProblemSeverityError
+	}
+	return shared.ProblemSeverityWarning
+}
+
+// wyjscieStylelinta jest kształtem pojedynczego pliku odpowiedzi programu
+// `stylelint --formatter json` wraz z jego ostrzeżeniami.
 type wyjscieStylelinta struct {
 	Source   string `json:"source"`
 	Warnings []struct {
@@ -764,12 +824,8 @@ type wyjscieStylelinta struct {
 	} `json:"warnings"`
 }
 
-// zgloszeniaStylelinta przekłada wynik Stylelinta na zgłoszenia kontraktu.
-//
-// Wykaz czyta się z OBU strumieni, bo Stylelint pisze go na strumień
-// diagnostyczny, kiedy uwagi ma (kończy się wtedy kodem 2), a na wyjście — kiedy
-// ich nie ma. Zmierzone na tej maszynie; szukanie wykazu tam, gdzie jest, a nie
-// tam, gdzie wypadałoby, żeby był.
+// zgloszeniaStylelinta przekłada wynik programu `Stylelint` na wykaz zgłoszeń
+// kontraktu, czytany z obu strumieni wyjścia.
 func zgloszeniaStylelinta(wyjscie, diagnostyka, korzen string) []shared.DeveloperDiagnostic {
 	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
 	var pliki []wyjscieStylelinta
@@ -799,11 +855,8 @@ func zgloszeniaStylelinta(wyjscie, diagnostyka, korzen string) []shared.Develope
 	return zgloszenia
 }
 
-// wyjscieLiterowki jest kształtem jednego wiersza `typos --format json`.
-//
-// `typos` pisze po jednym zapisie JSON na wiersz, a nie jedną tablicę — i pisze
-// tam także wiersze innego rodzaju niż literówka (na przykład pominięty plik
-// binarny). Rodzaj jest więc czytany, a nie zakładany.
+// wyjscieLiterowki jest kształtem jednego wiersza wyjścia programu
+// `typos --format json`, zapisanego jako osobny dokument JSON.
 type wyjscieLiterowki struct {
 	Rodzaj       string   `json:"type"`
 	Sciezka      string   `json:"path"`
@@ -813,11 +866,8 @@ type wyjscieLiterowki struct {
 	Poprawki     []string `json:"corrections"`
 }
 
-// zgloszeniaLiterowek przekłada wynik `typos` na zgłoszenia kontraktu.
-//
-// Waga jest ostrzeżeniem, nie błędem: literówka w identyfikatorze bywa nazwą
-// celowo skróconą, a program nie ma jak tego rozstrzygnąć. Podniesienie wagi
-// kazałoby Operatorowi poprawiać rzeczy, których nikt tak nie oznaczył.
+// zgloszeniaLiterowek przekłada wynik programu `typos` na wykaz zgłoszeń
+// kontraktu, pomijając wiersze innego rodzaju niż literówka.
 func zgloszeniaLiterowek(wyjscie, _, korzen string) []shared.DeveloperDiagnostic {
 	zgloszenia := make([]shared.DeveloperDiagnostic, 0, 16)
 	for _, wiersz := range strings.Split(wyjscie, "\n") {
@@ -861,11 +911,8 @@ func sciezkaWzgledemKorzenia(sciezka, korzen string) string {
 	return filepath.Join(korzen, tresc)
 }
 
-// Refaktoryzuj obsługuje `developer.refactor.apply`.
-//
-// Podgląd jest domyślny. Refaktoryzacja semantyczna dotyka wielu plików naraz,
-// a Operator ma prawo zobaczyć różnicę, zanim ją przyjmie — dlatego zmiana
-// zapisuje się na dysk wyłącznie na wyraźne `preview: false`.
+// Refaktoryzuj obsługuje komendę `developer.refactor.apply`: przeprowadza
+// refaktoryzację semantyczną serwerem języka, domyślnie w trybie podglądu.
 func (a *adapterDevelopera) Refaktoryzuj(ctx context.Context,
 	z shared.DeveloperRefactorApplyRequest) (shared.DeveloperRefactorApplyResponse, error) {
 
@@ -914,7 +961,8 @@ func (a *adapterDevelopera) Refaktoryzuj(ctx context.Context,
 	}, nil
 }
 
-// argumentyRefaktoryzacji składa wywołanie serwera języka dla żądanego rodzaju.
+// argumentyRefaktoryzacji składa argumenty wywołania serwera języka dla
+// żądanego rodzaju refaktoryzacji.
 func argumentyRefaktoryzacji(z shared.DeveloperRefactorApplyRequest, sciezka string,
 	zastosuj bool) ([]string, error) {
 
@@ -965,7 +1013,8 @@ func argumentyRefaktoryzacji(z shared.DeveloperRefactorApplyRequest, sciezka str
 	}
 }
 
-// kodCzynnosciRefaktoryzacji przekłada rodzaj kontraktu na kod czynności LSP.
+// kodCzynnosciRefaktoryzacji przekłada rodzaj refaktoryzacji z kontraktu na
+// kod czynności protokołu LSP.
 func kodCzynnosciRefaktoryzacji(rodzaj shared.RefactorKind) string {
 	switch rodzaj {
 	case shared.RefactorKindExtractFunction:
@@ -979,11 +1028,8 @@ func kodCzynnosciRefaktoryzacji(rodzaj shared.RefactorKind) string {
 	}
 }
 
-// zmianyRefaktoryzacji rozbiera różnicę zunifikowaną oddaną przez serwer języka.
-//
-// Różnica jest jedynym kształtem, w którym serwer mówi o zmianie wielu plików
-// naraz; kontrakt niesie ją jako wykaz zmian tekstu, więc rozbiór idzie po
-// nagłówkach `--- / +++` i fragmentach `@@`.
+// zmianyRefaktoryzacji rozbiera różnicę zunifikowaną oddaną przez serwer
+// języka na wykaz zmian tekstu i ścieżek plików.
 func zmianyRefaktoryzacji(roznica, sciezkaDomyslna string) ([]shared.DeveloperTextEdit, []string) {
 	zmiany := make([]shared.DeveloperTextEdit, 0, 8)
 	sciezki := make([]string, 0, 4)
@@ -1007,7 +1053,8 @@ func zmianyRefaktoryzacji(roznica, sciezkaDomyslna string) ([]shared.DeveloperTe
 	return zmiany, sciezki
 }
 
-// sciezkaZNaglowkaRoznicy wyjmuje ścieżkę z wiersza `+++ b/plik.go\t…`.
+// sciezkaZNaglowkaRoznicy wyjmuje ścieżkę pliku z nagłówka różnicy postaci
+// `+++ b/plik.go`, zdejmując przedrostki katalogów.
 func sciezkaZNaglowkaRoznicy(wiersz string) string {
 	tresc := strings.TrimSpace(strings.TrimPrefix(wiersz, "+++ "))
 	if tabulator := strings.IndexByte(tresc, '\t'); tabulator > 0 {
@@ -1016,7 +1063,8 @@ func sciezkaZNaglowkaRoznicy(wiersz string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(tresc, "b/"), "a/")
 }
 
-// zmianaZFragmentu rozbiera nagłówek `@@ -12,3 +12,5 @@` na zakres zmiany.
+// zmianaZFragmentu rozbiera nagłówek fragmentu różnicy postaci
+// `@@ -12,3 +12,5 @@` na początek i długość zakresu zmiany.
 func zmianaZFragmentu(wiersz, sciezka string) (shared.DeveloperTextEdit, bool) {
 	pola := strings.Fields(wiersz)
 	if len(pola) < 3 || !strings.HasPrefix(pola[1], "-") {
@@ -1041,7 +1089,8 @@ func zmianaZFragmentu(wiersz, sciezka string) (shared.DeveloperTextEdit, bool) {
 	}, true
 }
 
-// plikOkna sprowadza wskazanie klienta do ścieżki bezwzględnej w obszarze okna.
+// plikOkna sprowadza wskazanie klienta do ścieżki bezwzględnej w obszarze
+// roboczym okna developera i sprawdza jej istnienie.
 func (a *adapterDevelopera) plikOkna(oknoKod, wskazanie string) (session.Okno, string, error) {
 	okno, err := a.oknoDevelopera(oknoKod)
 	if err != nil {
@@ -1054,7 +1103,8 @@ func (a *adapterDevelopera) plikOkna(oknoKod, wskazanie string) (session.Okno, s
 	return okno, sciezka, nil
 }
 
-// plikIstnieje mówi, czy pod ścieżką coś stoi.
+// plikIstnieje mówi, czy pod wskazaną ścieżką w systemie plików stoi
+// jakikolwiek plik, dostępny do odczytu.
 func plikIstnieje(sciezka string) bool {
 	_, err := os.Stat(sciezka)
 	return err == nil

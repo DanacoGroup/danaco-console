@@ -1,19 +1,9 @@
 import { AppDeployStatus, type AppDeployment } from '../../../../shared/contract';
 
 /**
- * Tabela wdrożeń — „Przegląd statusu publikacji” okna Deployment Panel.
- *
- * Nagłówek kolumn zostaje przy pustym wykazie: pusty stan wchodzi w miejsce
- * ciała tabeli, a nie zamiast całej tabeli — Operator ma widzieć, czego wykaz
- * dotyczy, zanim cokolwiek w nim będzie.
- *
- * Błąd wdrożenia znakuje plakietka w kolumnie stanu, bez zmiany struktury
- * wiersza. Stan nigdy nie opiera się na samej barwie — plakietka niesie słowo.
- *
- * Gdy silnik wdrożeń wpisze do pola `logRef` zdanie o tym, dlaczego przebieg
- * się nie powiódł, tabela pokazuje jego treść tak, jak przyszła, i mówi,
- * z którego pola pochodzi. Samo słowo `failed` zostawiałoby Operatora bez
- * wyjaśnienia, które przyszło w tej samej ramce.
+ * Tabela wdrożeń — „Przegląd statusu publikacji” okna Deployment Panel. Nagłówek
+ * kolumn zostaje przy pustym wykazie, a stan wdrożenia znakuje plakietka niosąca
+ * słowo, ponieważ sama barwa stanu Operatorowi nie oddaje.
  */
 export interface TabelaWdrozen {
   element: HTMLElement;
@@ -21,7 +11,10 @@ export interface TabelaWdrozen {
   nanies(wdrozenia: readonly AppDeployment[]): void;
 }
 
-/** Wariant plakietki dla stanu wdrożenia; nazwy z biblioteki `komponenty/`. */
+/**
+ * Wariant plakietki dla stanu wdrożenia; nazwy klas pochodzą z biblioteki
+ * `komponenty/`, więc stan czyta się słowem plakietki, a nie samą barwą pola.
+ */
 const PLAKIETKI: Readonly<Record<string, string>> = {
   [AppDeployStatus.Pending]: 'dn-plakietka',
   [AppDeployStatus.Running]: 'dn-plakietka dn-plakietka--informacja',
@@ -60,7 +53,11 @@ export function utworzTabeleWdrozen(cofnij: (idWdrozenia: string) => void): Tabe
   };
 }
 
-/** Jeden wiersz wykazu wdrożeń wraz z przyciskiem cofnięcia do tej wersji. */
+/**
+ * Jeden wiersz wykazu wdrożeń: wersja, środowisko, strategia, stan i przycisk
+ * cofnięcia do tej wersji. Identyfikator wdrożenia stoi w atrybucie wiersza,
+ * ponieważ czynność cofnięcia sięga po niego bez czytania treści komórek.
+ */
 function wiersz(wdrozenie: AppDeployment, cofnij: (idWdrozenia: string) => void): HTMLElement {
   const element = document.createElement('tr');
   element.dataset['wdrozenie'] = wdrozenie.id;

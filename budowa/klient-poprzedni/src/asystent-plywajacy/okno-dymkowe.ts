@@ -5,27 +5,7 @@ import { czyGlosDziala, odmowMowy, powodOdmowyGlosu } from './dostepnosc-mowy';
 import { zdanieOPracy } from './favikon-plywajacy';
 import { oknoGotowe, zdanieOStanieOkna, type StanDymka, type Wypowiedz } from './stan-dymka';
 
-/**
- * Okno dymkowe Asystenta — rozmowa prowadzona przy pływającym favikonie,
- * zamiast osobnego okna czatu.
- *
- * Postać bierze się z profilu, nie z tego pliku. `profilModulu('assistant')`
- * niesie `postacRozmowy: 'dymek-glosowy'`, `granicaOkien: 1` i
- * `pamiecSesyjna: true`. Dymek pyta o liczbę okien funkcją `liczbaOkienRozmowy`,
- * nie polem `granicaOkien`: pole niesie granicę, funkcja niesie prawo do
- * otwarcia. Profil przestawiony na `postacRozmowy: 'brak'` daje zdanie
- * o rozbieżności, a nie zniknięcie dymka.
- *
- * Pasek pod nagłówkiem mówi o braku kanału głosowego od chwili otwarcia, więc
- * Operator dowiaduje się o nim, zanim sięgnie po mikrofon. Przycisk mikrofonu
- * nie jest wygaszany i odmawia z powodem, który wymienia brakujące ogniwa
- * z nazwy. Nagrywania do pamięci tu nie ma: nagranie, którego nie ma dokąd
- * wysłać, byłoby atrapą mikrofonu.
- *
- * Wiersz nad polem wypowiedzi niesie zdanie o oknie modułu — osobne dla odmowy
- * `window.list`, osobne dla braku okna. Dopóki polecenie nie ma dokąd pojechać,
- * Operator widzi dlaczego.
- */
+/** Okno dymkowe Asystenta — rozmowa prowadzona przy pływającym favikonie, zamiast osobnego okna czatu. */
 
 /**
  * Etykieta wiersza rozmowy — czytnik ekranu ma wiedzieć, kto mówi.
@@ -84,15 +64,15 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
   glowa.append(tytul, zamknij);
 
   // ── Wskaźnik pracy asystenta ────────────────────────────────────────────
-  // Ta sama prawda, którą niesie favikon i pas dolny, rozwinięta w zdanie.
-  // Wiersz stoi zawsze: „nie prowadzi zlecenia" jest odpowiedzią, nie pustką,
-  // a wiersz pojawiający się i znikający przeskakiwałby treścią.
+
+  // Wiersz stoi zawsze — „nie prowadzi zlecenia" jest odpowiedzią, nie pustką.
   const wskaznikPracy = document.createElement('p');
   wskaznikPracy.className = 'ap-dymek__praca';
   wskaznikPracy.setAttribute('role', 'status');
 
   // ── Pas prawdy o głosie ─────────────────────────────────────────────────
-  // Pas stoi zawsze; gdy kanał głosowy jest dostępny, mówi o dostępności.
+
+  // Pas stoi zawsze — gdy kanał głosowy jest dostępny, mówi o dostępności.
   const pasGlosu = document.createElement('button');
   pasGlosu.type = 'button';
   pasGlosu.className = 'ap-dymek__glos';
@@ -103,8 +83,8 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
   pasGlosu.addEventListener('click', odmowMowy);
 
   // ── Postać rozmowy wzięta z profilu ─────────────────────────────────────
+
   // Zdanie powstaje tylko wtedy, gdy profil mówi co innego niż dymek głosowy.
-  // Milczące zbudowanie dymka wbrew profilowi byłoby drugą prawdą o module.
   const rozbieznosc = zdanieORozbieznosci(profil.postacRozmowy, ileOkien);
   const pasProfilu = document.createElement('p');
   pasProfilu.className = 'ap-dymek__profil';
@@ -152,9 +132,7 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
 
   // ── Zachowania ──────────────────────────────────────────────────────────
 
-  // Ślad w historii idzie przy pierwszym naciśnięciu. Powód jest długi i za
-  // każdym razem ten sam, więc powtórzony zasypałby rozmowę. Powiadomienie
-  // odpowiada na każde naciśnięcie.
+  // Ślad w historii idzie przy pierwszym naciśnięciu — powtórzony powód zasypałby rozmowę.
   let odnotowanoOdmoweGlosu = false;
   mikrofon.addEventListener('click', () => {
     odmowMowy();
@@ -184,8 +162,7 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
     historia.replaceChildren(...stan.wypowiedzi().map(wierszWypowiedzi));
     historia.scrollTop = historia.scrollHeight;
 
-    // Zdanie o pracy składa `favikon-plywajacy.ts` — jedno źródło napisu dla
-    // przycisku i dla dymka, żeby dwa miejsca nie nazwały tego samego inaczej.
+    // Zdanie o pracy składa `favikon-plywajacy.ts` — jedno źródło napisu dla przycisku i dymka.
     const praca = stan.praca();
     wskaznikPracy.textContent = zdanieOPracy(praca);
     wskaznikPracy.dataset.pracuje = praca === null ? 'nie' : 'tak';
@@ -197,8 +174,7 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
 
     const wToku = stan.wToku();
     wyslij.textContent = wToku ? 'Wysyłam…' : 'Wyślij';
-    // Przycisk nie jest wygaszany: powtórne naciśnięcie w trakcie wysyłki
-    // odpowie zdaniem w historii, a nie ciszą.
+    // Przycisk nie jest wygaszany — powtórne naciśnięcie w trakcie wysyłki odpowie zdaniem, nie ciszą.
     element.dataset.wToku = String(wToku);
   }
 
@@ -226,7 +202,7 @@ export function utworzOknoDymkowe(stan: StanDymka, naZamkniecie: () => void): Ok
   };
 }
 
-/** Jeden wiersz rozmowy. */
+/** Jeden wiersz rozmowy w historii: etykieta mówcy oraz treść wypowiedzi, posunięcia w aplikacji albo odmowy. */
 function wierszWypowiedzi(wypowiedz: Wypowiedz): HTMLElement {
   const wiersz = document.createElement('article');
   wiersz.className = 'ap-wypowiedz';

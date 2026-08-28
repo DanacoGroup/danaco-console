@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: szablony promptu strukturalnego
 // (`design.prompt.template.save`, `design.prompt.template.list`) oraz historia
-// promptów wydanych w oknie (`design.prompt.history.list`). Metody stoją na
-// `*adapterDesignu` (`adapter_modul_design.go`).
-//
-// Do tej pory historia promptów i szablony żyły w oknie do zamknięcia karty
-// przeglądarki i tyle o nich było wiadomo. Prompt Builder wypracowywał
-// polecenie, Operator zamykał kartę i praca znikała.
-//
-// Historia domyka też prowenancję. Zasób niesie pole `promptId`, którego rdzeń
-// dotąd NIE wypełniał, bo nie było przekładu klucza wiersza promptu na kod
-// kontraktu. Odczyt zasobu bierze teraz kod promptu podzapytaniem
-// (`dane/design_zasoby.go`), a ta komenda oddaje drugą stronę tego samego
-// powiązania: prompt wraz z kodami zasobów, które z niego powstały.
+// promptów wydanych w oknie (`design.prompt.history.list`).
 package core
 
 import (
@@ -22,17 +11,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekSzablonuPromptuDesign znakuje identyfikatory zewnętrzne szablonów.
+// przedrostekSzablonuPromptuDesign znakuje identyfikatory zewnętrzne
+// szablonów promptu strukturalnego.
 const przedrostekSzablonuPromptuDesign = "szablon-promptu-"
 
 // ZapiszSzablonPromptu utrwala prompt jako szablon do wielokrotnego użycia —
-// obsługuje `design.prompt.template.save`.
-//
-// Nadpisanie idzie po `templateId` z żądania; brak zakłada szablon nowy.
-// Szablon wskazany a nieznany jest ODMOWĄ, nie cichym założeniem nowego:
-// Operator, który nadpisuje szablon, oczekuje że nadpisał ten jeden, a nie że
-// dostał drugi obok — a wykaz z dwoma szablonami tej samej nazwy wygląda
-// dokładnie tak, jak wygląda zgubiona praca.
+// obsługuje `design.prompt.template.save`. Szablon wskazany a nieznany jest
+// odmową, nie cichym założeniem nowego.
 func (a *adapterDesignu) ZapiszSzablonPromptu(ctx context.Context,
 	z shared.DesignPromptTemplateSaveRequest) (shared.DesignPromptTemplateSaveResponse, error) {
 
@@ -83,7 +68,7 @@ func (a *adapterDesignu) ZapiszSzablonPromptu(ctx context.Context,
 }
 
 // SzablonyPromptu zwraca szablony promptów okna — obsługuje
-// `design.prompt.template.list`.
+// `design.prompt.template.list`, bez historii wydań.
 func (a *adapterDesignu) SzablonyPromptu(ctx context.Context,
 	z shared.DesignPromptTemplateListRequest) (shared.DesignPromptTemplateListResponse, error) {
 
@@ -103,11 +88,8 @@ func (a *adapterDesignu) SzablonyPromptu(ctx context.Context,
 }
 
 // HistoriaPromptow zwraca prompty wydane w oknie wraz z zasobami, które z nich
-// powstały — obsługuje `design.prompt.history.list`.
-//
-// Prompt bez ani jednego zasobu zostaje w historii. Kanał bywa odmawiał
-// i wtedy prompt jest zapisem próby — czyli dokładnie tego, po co Operator do
-// historii sięga, żeby poprawić polecenie i wydać je jeszcze raz.
+// powstały — obsługuje `design.prompt.history.list`. Prompt bez ani jednego
+// zasobu zostaje w historii.
 func (a *adapterDesignu) HistoriaPromptow(ctx context.Context,
 	z shared.DesignPromptHistoryListRequest) (shared.DesignPromptHistoryListResponse, error) {
 
@@ -138,9 +120,7 @@ func (a *adapterDesignu) HistoriaPromptow(ctx context.Context,
 }
 
 // sprawdzSzablonPromptuDesignu odmawia nadpisania szablonu, którego nie ma,
-// i szablonu należącego do innego okna. Drugi warunek nie jest formalnością:
-// szablony są bytem okna, a nadpisanie cudzego przez podanie jego kodu byłoby
-// zmianą stanu, którego wołający nawet nie widzi.
+// i szablonu należącego do innego okna, bo szablony są bytem okna.
 func (a *adapterDesignu) sprawdzSzablonPromptuDesignu(ctx context.Context, okno, kod string) error {
 	szablony, err := a.repozytorium.SzablonyPromptuDesignu(ctx, okno)
 	if err != nil {
@@ -155,7 +135,7 @@ func (a *adapterDesignu) sprawdzSzablonPromptuDesignu(ctx context.Context, okno,
 }
 
 // szablonPromptuKontraktuDesignu składa `DesignPromptTemplate` kontraktu
-// z wiersza repozytorium.
+// z wiersza repozytorium bazy danych.
 func szablonPromptuKontraktuDesignu(s dane.SzablonPromptuDesignu) shared.DesignPromptTemplate {
 	return shared.DesignPromptTemplate{
 		Id:       s.Kod,

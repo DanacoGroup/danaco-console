@@ -6,33 +6,8 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Rozpoznawanie mowy w Voice Console — jedyna droga głosu, którą kontrakt
- * naprawdę niesie.
- *
- * Kontrakt ma dwie komendy mowy i obie są tu wołane. `speech.availability.get`
- * mówi, czy silnik stoi na tej maszynie — brak silnika jest odpowiedzią, nie
- * awarią, więc okno nazywa powód zamiast milczeć. `speech.transcribe` zamienia
- * nagranie w tekst i wkłada go w pole polecenia, tam gdzie weszłaby treść
- * wpisana ręcznie.
- *
- * Granica jest w tym, czym jest `audioRef`: to ŚCIEŻKA PLIKU na maszynie
- * silnika, a nie bajty przesłane z karty. Nagranie z mikrofonu przeglądarki
- * istnieje wyłącznie jako `Blob` w pamięci i kontrakt nie ma komendy, która by
- * je przyjęła — ten sam brak nazywa `okno-komunikacji/dyktowanie/
- * dostarczenie-nagrania.ts` dla całej platformy. Panel obsługuje więc nagranie
- * już leżące na maszynie silnika, a mikrofon zostaje brakiem nazwanym wprost
- * (`pasek-polecenia.ts`).
- *
- * Pustą transkrypcję panel melduje jako wynik, nie jako niepowodzenie: pole
- * `processed` odróżnia „przetworzono, mowy nie było" od „nie przetworzono",
- * a cisza w nagraniu jest prawidłowym wynikiem pomiaru.
- *
- * Rozpoznany tekst wchodzi w pole polecenia, a nie jedzie do rdzenia sam.
- * `assistant.voice.command` przyjmuje wprawdzie `audioRef` i rozpoznałby
- * nagranie po swojemu, ale wtedy Operator zobaczyłby transkrypcję dopiero
- * w odpowiedzi — po wykonaniu polecenia. Przepływ modułu wymaga kolejności
- * odwrotnej: rozpoznanie, korekta niepewnej frazy, dopiero wysyłka. Droga do
- * rdzenia zostaje więc jedna, przez pole `transcript`.
+ * Rozpoznawanie mowy w Voice Console: `speech.availability.get` mówi, czy silnik
+ * stoi na maszynie, a `speech.transcribe` zamienia nagranie w tekst polecenia.
  */
 export interface PanelMowy {
   element: HTMLElement;
@@ -42,7 +17,10 @@ export interface PanelMowy {
   przelaczMikrofon(): void;
 }
 
-/** Języki wskazywane wprost; pusty znaczy rozpoznanie automatyczne. */
+/**
+ * Wykaz języków wskazywanych wprost przy rozpoznaniu nagrania; wartość pusta
+ * zleca silnikowi rozpoznanie języka samodzielnie.
+ */
 const JEZYKI: ReadonlyArray<readonly [string, string]> = [
   ['', 'Język nagrania: rozpoznaj automatycznie'],
   ['pl', 'Język nagrania: polski'],
@@ -64,10 +42,7 @@ export function utworzPanelMowy(
   const rozpoznaj = przyciskAkcji('Rozpoznaj nagranie', 'dn-btn dn-btn--sm dn-btn--zarys');
   rozpoznaj.addEventListener('click', () => void transkrybuj());
 
-  // Mikrofon karty: nagranie idzie do rdzenia komendą `speech.audio.upload`,
-  // która oddaje odnośnik przyjmowany przez `speech.transcribe`. To jest
-  // ogniwo, którego przez długi czas brakowało — bez niego nagranie z
-  // mikrofonu nie miało czym dojechać do silnika.
+  // Nagranie z mikrofonu wchodzi komendą `speech.audio.upload`, oddającą odnosnik.
   const mikrofon = przyciskAkcji('Nagraj z mikrofonu', 'dn-btn dn-btn--sm dn-btn--zarys');
   mikrofon.addEventListener('click', () => void przelaczNagrywanie());
 
@@ -75,11 +50,8 @@ export function utworzPanelMowy(
   kontrolki.className = 'ma-mowa__kontrolki';
   kontrolki.append(sciezka, jezyk, rozpoznaj, mikrofon);
 
-  // Wskaźnika pewności rozpoznania panel nie stawia: ani `speech.transcribe`,
-  // ani `assistant.voice.command` nie oddają miary pewności — odpowiedź niesie
-  // długość nagrania, liczbę znaków, model i język. Plakietka „niska pewność"
-  // byłaby tu wartością wziętą znikąd, więc zamiast niej stoi zdanie o tym, co
-  // rdzeń o rozpoznaniu naprawdę powiedział.
+  // Panel nie stawia wskaźnika pewności rozpoznania, ponieważ kontrakt
+  // miary pewności nie oddaje.
   const pewnosc = document.createElement('p');
   pewnosc.className = 'dn-pole-opis';
   pewnosc.textContent =
@@ -115,8 +87,7 @@ export function utworzPanelMowy(
     }
     const stanSilnika = wynik.wynik;
     if (!stanSilnika.available) {
-      // Niedostępność silnika nie jest odmową rdzenia — rdzeń odpowiedział.
-      // Stan pusty niesie powód, który rdzeń podał, wraz z tym, co go zmieni.
+      // Niedostępność silnika nie jest odmową: stan pusty niesie powód rdzenia.
       okno.puste(
         stanSilnika.reason !== undefined && stanSilnika.reason !== ''
           ? `Silnik mowy nie jest gotów: ${stanSilnika.reason}`
@@ -131,17 +102,7 @@ export function utworzPanelMowy(
   /** Nagrywanie w toku; pusty znaczy, że mikrofon stoi. */
   let nagrywanie: MediaRecorder | undefined;
 
-  /**
-   * Nagranie z mikrofonu karty i jego droga do rdzenia.
-   *
-   * Bajty idą do `speech.audio.upload`, a oddany odnośnik wchodzi w pole
-   * ścieżki i od razu jedzie do rozpoznania. Dźwięk nie opuszcza maszyny
-   * rdzenia: droga prowadzi tam i z powrotem, nigdzie indziej.
-   *
-   * Brak dostępu do mikrofonu nie jest awarią rdzenia i okno tak go nazywa —
-   * przeglądarka bywa bez zgody, bez urządzenia albo w kontekście bez
-   * `mediaDevices`, i każdy z tych powodów Operator naprawia u siebie.
-   */
+  /** Nagranie z mikrofonu karty i jego droga do rdzenia oraz z powrotem. */
   async function przelaczNagrywanie(): Promise<void> {
     if (nagrywanie !== undefined) {
       nagrywanie.stop();
@@ -228,9 +189,7 @@ export function utworzPanelMowy(
     }
     const rozpoznane = wynik.wynik;
     if (rozpoznane.transcript === '') {
-      // Cisza jest wynikiem, nie usterką: rdzeń przetworzył nagranie i nie
-      // znalazł w nim mowy. Podstawienie pustego napisu w pole polecenia
-      // skasowałoby treść, którą Operator zdążył tam wpisać.
+      // Cisza jest wynikiem, nie usterką, więc pole polecenia zostaje bez zmian.
       okno.puste(
         `Silnik przetworzył nagranie (${String(rozpoznane.durationMs)} ms, model ` +
           `${rozpoznane.model}) i nie rozpoznał w nim mowy. Pole polecenia zostaje bez zmian.`,

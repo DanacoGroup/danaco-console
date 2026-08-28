@@ -7,18 +7,7 @@ import (
 	"danacoconsole/server/internal/zewnetrzne"
 )
 
-// Sonda zależności ma mówić prawdę o maszynie, a nie o zamiarze.
-//
-// Wykaz zależności jest jedyną drogą, którą Operator dowiaduje się przed
-// czynnością, czego rdzeń nie wykona. Szkoda, której te sprawdziany pilnują, ma
-// dwie postacie: wykaz niekompletny (funkcja wymaga programu, którego nikt nie
-// zapowiedział) oraz wykaz kłamiący o obecności (pozycja meldowana jako obecna,
-// gdy programu nie ma). Pierwsza zostawia Operatora z niespodzianką po
-// naciśnięciu, druga jest gorsza — odbiera sens całej sondzie.
-//
-// Sprawdziany nie mierzą, ile programów stoi na tej maszynie: ta liczba zależy
-// od tego, co doinstalowano ręcznie, i na maszynie deweloperskiej jest zawyżona.
-// Mierzą mechanizm.
+// Sonda zależności mówi prawdę o maszynie, a nie o zamiarze; sprawdziany mierzą mechanizm, nie liczbę.
 
 // TestWykazZaleznosciNiesieKompletOpisu pilnuje, żeby każda pozycja mówiła
 // Operatorowi trzy rzeczy: co to za program, czym go dociągnąć i co bez niego
@@ -51,9 +40,7 @@ func TestSondaOdrozniaProgramObecnyOdNieobecnego(t *testing.T) {
 	if zewnetrzne.Stoi(zewnetrzne.Narzedzie{Program: "program-ktorego-nie-ma-na-zadnej-maszynie"}) {
 		t.Fatal("sonda zameldowała obecność programu, którego nie ma — wykaz byłby bezwartościowy")
 	}
-	// Powłoka jest na każdej maszynie, na której ten sprawdzian w ogóle się
-	// uruchomi, więc jej obecność jest miarą tego, że sonda potrafi też
-	// potwierdzić — a nie tylko zaprzeczyć.
+	// Powłoka jest na każdej maszynie, gdzie sprawdzian się uruchomi, więc jej obecność potwierdza sondę.
 	if !zewnetrzne.Stoi(zewnetrzne.Narzedzie{Program: "sh"}) {
 		t.Fatal("sonda nie widzi powłoki systemowej — mierzy coś innego niż ścieżkę wyszukiwania")
 	}

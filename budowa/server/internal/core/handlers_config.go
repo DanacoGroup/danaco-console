@@ -7,23 +7,15 @@ import (
 )
 
 // zarejestrujUstawienia wpina domenę konfiguracji warstwowej dziewięciu
-// poziomów zasięgu — od zasięgu aplikacji, najszerszego, po okno komunikacji,
-// najwęższe i wygrywające z pozostałymi.
-//
-// Rdzeń nie rozstrzyga tu pierwszeństwa poziomów ani nie zna katalogu ustawień —
-// to należy do warstwy konfiguracji. Rdzeń wyłącznie kieruje komendę i rozgłasza
+// poziomów zasięgu, od zasięgu aplikacji po okno komunikacji, i rozgłasza
 // zmianę.
-//
-// config.reset przywraca wartość domyślną. Skutkiem jest usunięcie ustawienia
-// z poziomu, więc zmiana idzie jako usunięcie wpisu; brak ustawienia znaczy
-// wartość domyślną, nigdy blokadę.
 func zarejestrujUstawienia(r *Rejestr, ustawienia Ustawienia, e *emiter) {
 	if r == nil || ustawienia == nil {
 		return
 	}
 
-	// Obszary jednolitego modelu konfiguracji sesji idą tym samym portem —
-	// jedna brama do konfiguracji, nie dwie.
+	// Obszary jednolitego modelu konfiguracji sesji idą tym samym portem,
+	// jedną bramą do konfiguracji.
 	zarejestrujKonfiguracjeSesji(r, ustawienia, e)
 
 	r.Zarejestruj(shared.CommandConfigGet, obsluz(ustawienia.Odczytaj))

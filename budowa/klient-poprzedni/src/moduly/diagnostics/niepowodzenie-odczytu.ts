@@ -1,38 +1,20 @@
 /**
- * Słownik niepowodzeń modułu — mówi, kto zawiódł, zamiast „coś poszło nie tak".
- *
- * `Wynik` z polem `udany === false` powstaje w warstwie protokołu na więcej niż
- * jeden sposób i tylko jeden z nich jest odmową rdzenia:
- *
- *  - odmowa rdzenia — koperta ze `status: "error"` i `ErrorInfo`;
- *  - odpowiedź nieczytelna — rdzeń odpowiedział powodzeniem, ale treść nie ma
- *    kształtu z kontraktu, więc `protokol/ksztalt-odpowiedzi.ts` zamienia ją
- *    na niepowodzenie z kodem `validation_failed`.
- *
- * Nazwanie odpowiedzi nieczytelnej odmową byłoby oskarżeniem rdzenia o czyn,
- * którego nie popełnił: rdzeń odpowiedział i odpowiedział powodzeniem, a nie
- * zrozumiał go klient. Okno nie ma prawa twierdzić o braku, którego rdzeń nie
- * orzekł — tak samo jak nie ma prawa zamienić odmowy w pustkę.
- *
- * Stan `odpowiedz-bez-tresci` jest strażą, nie drogą osiągalną dziś.
- * `protokol/wynik-czastkowy.ts` oddaje niepowodzenie bez pola `blad`, gdy
- * odpowiedź jest udana, lecz pusta; do `przenies` taka odpowiedź nie dochodzi,
- * bo `sprawdzKsztalt` przechwytuje ją wcześniej i okno mówi wtedy zdanie
- * o odpowiedzi nieczytelnej. Stan zostaje w słowniku na wypadek zmiany warstwy
- * protokołu.
- *
- * Zdania stoją tu, a nie w oknach, z tego samego powodu, dla którego stan treści
- * stoi w `komponenty/stan-tresci.ts`: cztery okna mówiące o tej samej ciszy
- * czterema zdaniami rozjeżdżają się przy pierwszej poprawce.
+ * Słownik niepowodzeń odczytu modułu Diagnostics, który nazywa stronę
+ * odpowiedzialną, zamiast podawać ogólnikowe zdanie o awarii. Rozróżnia odmowę
+ * rdzenia od odpowiedzi udanej, której klient nie potrafi odczytać.
  */
 
-/** Skąd wzięło się niepowodzenie odczytu — więcej niż jedna droga. */
+/**
+ * Powód niepowodzenia odczytu. Niepowodzenie powstaje w warstwie protokołu
+ * więcej niż jedną drogą, a tylko jedna z nich jest odmową rdzenia, dlatego
+ * każda droga nosi tutaj osobną nazwę.
+ */
 export type PowodNiepowodzenia =
   /** Rdzeń orzekł odmowę: koperta błędu wraz z kodem kontraktu. */
   | 'odmowa-rdzenia'
   /** Rdzeń odpowiedział powodzeniem, lecz treść nie ma kształtu z kontraktu. */
   | 'odpowiedz-nieczytelna'
-  /** Straż: odpowiedź udana bez treści. Dziś nieosiągalna — patrz opis pliku. */
+  /** Straż: odpowiedź udana bez treści, dziś nieosiągalna w warstwie protokołu. */
   | 'odpowiedz-bez-tresci';
 
 /**

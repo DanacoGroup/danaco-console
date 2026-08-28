@@ -1,9 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — KOLUMNA TOŻSAMOŚCI
-
-   Lewa strefa okna: sygnet z pulsującą kropką, nazwa, motto i trzy zdania
-   o tym, czym program jest. Kolumna nie jest planszą marki — jest strefą okna,
-   więc powierzchnia różni się od panelu treści odcieniem, nie kontrastem.
+/* Kolumna tożsamości zajmuje lewą strefę okna: niesie sygnet z pulsującą kropką, nazwę, motto i trzy zdania o tym, czym program jest, w odsłonie zależnej od etapu wejścia.
+   Kolumna nie jest planszą marki — jest strefą okna, więc powierzchnia różni
+   się od panelu treści odcieniem, nie kontrastem.
 
    Nota wydawcy NIE należy do tego składnika: stoi w wierszu pasa działań,
    niżej niż kolumna, i jest jedna dla całego okna.

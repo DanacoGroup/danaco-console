@@ -89,22 +89,7 @@ import type { Kanal, Wynik } from "../../protokol/kanal";
 import { czyObiekt, czyTablica, czyTekst, sprawdzKsztalt } from "../../protokol/ksztalt-odpowiedzi";
 import { wywolaj } from "../../protokol/wywolanie";
 
-/**
- * Arsenał modułu Roundtable widziany przez klienta — czterdzieści dwie komendy
- * obszaru poza czterema, które od początku wywołuje `zrodlo-roundtable.ts`.
- *
- * Rozdział na dwa pliki idzie po roli, nie po wielkości. Cztery komendy tamtego
- * pliku prowadzą debatę: dodają uczestnika, otwierają turę, moderują ją
- * i czytają stanowisko. Te tutaj pracują NAD zapisem debaty — czytają go,
- * analizują, oceniają, wydają. Okno rozmowy może stać wyłącznie na tamtych;
- * rozszerzenia boczne stoją na tych.
- *
- * Każda czynność oddaje `Wynik`, nie samą treść, i każda sprawdza kształt
- * odpowiedzi. Powód jest ten sam co w źródle debaty: obszar odmawia z powodów
- * zwyczajnych (kanał uczestnika bywa nieczynny, głosowanie bywa zamknięte),
- * a okno musi odróżnić „nic tam nie ma" od „nie udało się zapytać". Dlatego
- * nie ma tu ani jednego `?? []`.
- */
+/** Arsenał modułu Roundtable widziany przez klienta: komendy obszaru czytające, analizujące i oceniające zapis debaty, każda oddająca Wynik ze sprawdzonym kształtem odpowiedzi. */
 export interface ZrodloArsenaluRoundtable {
   /** `roundtable.debate.get` — pełny stan debaty okna po jego otwarciu. */
   stanDebaty(zadanie: RoundtableDebateGetRequest): Promise<Wynik<RoundtableDebateGetResponse>>;
@@ -370,8 +355,7 @@ export function utworzZrodloArsenaluRoundtable(kanal: Kanal): ZrodloArsenaluRoun
         Command.RoundtableClusterGet,
         (tresc) => czyTablica(tresc.clusters),
       ),
-    // Punkt sporny jest polem nieobowiązkowym: debata bez podważeń go nie ma,
-    // więc sprawdzian pilnuje wyłącznie tego, że odpowiedź jest obiektem.
+    // Punkt sporny jest nieobowiązkowy — sprawdzian pilnuje wyłącznie tego, że odpowiedź jest obiektem.
     punktSporny: async (zadanie) =>
       sprawdzKsztalt(
         await wywolaj(kanal, Command.RoundtableCruxGet, zadanie),

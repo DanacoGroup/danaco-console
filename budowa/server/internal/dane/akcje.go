@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: dostęp do katalogu akcji (tabela `akcja`). Katalog
-// jest sterowany danymi — nowa akcja to nowy wiersz, nie nowa gałąź w kodzie.
-// Wzorcem jest rejestr kanałów modelu z `kanaly.go`:
-// repozytorium wyłącznie czyta wiersze, a rozstrzyganie „co pokazać" należy
-// do rejestru warstwy wyższej.
-//
-// Akcja należy do jednego z ośmiu poziomów zasięgu. `KluczZasiegu`
-// wskazuje konkretny byt poziomu — kod modułu, kod środowiska, identyfikator
-// okna — a pusty klucz znaczy „każdy byt tego poziomu", tak samo jak w tabeli
-// ustawień. Katalog akcji per moduł jest więc jednym z ośmiu przypadków, nie
-// osobnym mechanizmem.
+// Plik odczytuje katalog akcji sterowany danymi: nowa akcja to nowy wiersz, nie nowa gałąź w kodzie, wzorem rejestru
+// kanałów modelu; akcja należy do jednego z ośmiu poziomów zasięgu, a pusty klucz zasięgu znaczy każdy byt tego poziomu.
 package dane
 
 import (
@@ -20,7 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Akcja to wiersz katalogu akcji.
+// Akcja to wiersz katalogu akcji wraz z poziomem zasięgu i kluczem wskazującym konkretny byt tego poziomu.
 type Akcja struct {
 	ID                 int64
 	Kod                string
@@ -35,15 +26,8 @@ type Akcja struct {
 	Aktywna            bool
 }
 
-// RepozytoriumAkcji jest kontraktem katalogu akcji. Zapisu tu nie ma:
-// wiersze wnosi zaczyn migracji, a zmiana katalogu jest zmianą danych, nie
-// czynnością kontraktu — komenda odczytu wystarcza rejestrowi i narzędziom
-// modelu.
-//
-// Zawężania do zasięgu tu nie ma. Wybór akcji jednego bytu poziomu rozstrzyga
-// `RejestrAkcji.Zasieg` w rdzeniu na wierszach już odczytanych — to jedyna
-// implementacja tej reguły; bliźniaczy filtr w SQL byłby drugą regułą tego
-// samego wyboru, gotową rozejść się z pierwszą po cichu.
+// RepozytoriumAkcji jest kontraktem katalogu akcji: zapisu tu nie ma, wiersze wnosi zaczyn migracji, a wybór akcji
+// jednego bytu poziomu rozstrzyga rejestr akcji w rdzeniu na wierszach już odczytanych.
 type RepozytoriumAkcji interface {
 	Lista(ctx context.Context, tylkoAktywne bool) ([]Akcja, error)
 	PoKodzie(ctx context.Context, kod string) (Akcja, error)
@@ -93,7 +77,7 @@ func (r *repozytoriumAkcji) PoKodzie(ctx context.Context, kod string) (Akcja, er
 	return akcja, err
 }
 
-// wykaz wykonuje zapytanie zwracające wiele wierszy katalogu.
+// wykaz wykonuje zapytanie zwracające wiele wierszy katalogu akcji dla wskazanego poziomu zasięgu i klucza.
 func (r *repozytoriumAkcji) wykaz(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) ([]Akcja, error) {
 
@@ -121,7 +105,7 @@ func (r *repozytoriumAkcji) wykaz(ctx context.Context, zapytanie, opis string,
 	return lista, nil
 }
 
-// odczytajAkcje składa strukturę z jednego wiersza wyniku.
+// odczytajAkcje składa strukturę pojedynczej akcji katalogu wprost z jednego wiersza wyniku zapytania.
 func odczytajAkcje(wiersz skaner) (Akcja, error) {
 	var akcja Akcja
 	var poziom string

@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: rachunek OOXML modułu Studio — odczyt `.docx`
-// i `.dotx` do postaci dokumentu oraz złożenie jednego i drugiego z powrotem.
-//
-// ── Czym to liczone i dlaczego bez biblioteki obcej ─────────────────────────
-// `.docx` jest archiwum ZIP z dokumentem XML w środku. Biblioteka wzorcowa Go
-// niesie oba składniki — `archive/zip` i `encoding/xml` — więc cały rachunek
-// stoi na nich. `unioffice` odpada na licencji handlowej, a LibreOffice
-// i `pandoc` byłyby procesem potomnym tam, gdzie proces potomny jest regresem:
-// jedno binarium serwera zamienia się w dwa, dochodzi koszt uruchomienia
-// i rozjazd wersji między maszynami. Biblioteki pomocniczej nie brałem żadnej.
-//
-// ── Drzewo XML zamiast automatu stanów ─────────────────────────────────────
-// Rozbiór idzie przez drzewo węzłów (`ooxmlWezel`), nie przez strumień tokenów
-// z ręcznym stanem. Powód jest praktyczny: postać akapitu OOXML leży w węźle
-// `w:pPr`, który stoi PRZED fragmentami tekstu, ale odnosi się do całego
-// akapitu, a postać znaku leży w `w:rPr` wewnątrz każdego fragmentu. Automat
-// stanów musiałby pamiętać oba konteksty naraz na każdej głębokości; drzewo
-// pozwala je po prostu odczytać tam, gdzie są. Ten sam rozbiór obsługuje ODF
-// (`adapter_modul_studio_odf.go`), bo i tam postać leży w węzłach obok treści.
-//
-// ── Miary ───────────────────────────────────────────────────────────────────
-// OOXML mierzy odległości w TWIPACH (1/1440 cala), stopień pisma w PÓŁPUNKTACH,
-// a odstępy akapitowe w twipach. Kontrakt mówi w milimetrach i punktach.
-// Przeliczenie stoi w jednym miejscu (`ooxmlTwipyNaMilimetry`,
-// `ooxmlPolpunktyNaPunkty`, `ooxmlTwipyNaPunkty`), bo przeliczenie rozsypane po
-// dwudziestu miejscach rozjeżdża się przy pierwszej poprawce.
+// Odpowiedzialność pliku: rachunek OOXML modułu Studio — odczyt dokumentów
+// `.docx` i `.dotx` do wspólnej postaci dokumentu oraz złożenie tej postaci
+// z powrotem do archiwum biurowego, bez biblioteki obcej ponad standardową.
 package core
 
 import (
@@ -45,10 +22,14 @@ import (
 // do gigabajtów bywa złośliwe.
 const granicaArchiwumStudia = 256 << 20
 
-// granicaSkladnikaArchiwum jest granicą jednego składnika archiwum.
+// granicaSkladnikaArchiwum jest granicą jednego składnika archiwum: plik
+// przekraczający ją odpada z rozbioru, mimo że całe archiwum mieści się
+// w granicy ogólnej.
 const granicaSkladnikaArchiwum = 64 << 20
 
-// Nazwy składników archiwum OOXML, których dotyka ten rachunek.
+// Nazwy składników archiwum OOXML, których dotyka ten rachunek: dokument
+// główny, arkusz stylów, numeracja list, powiązania dokumentu i katalog
+// nośników.
 const (
 	ooxmlSkladnikDokumentu    = "word/document.xml"
 	ooxmlSkladnikStylow       = "word/styles.xml"
@@ -71,11 +52,9 @@ type ooxmlWezel struct {
 	rodzicPtr *ooxmlWezel
 }
 
-// ooxmlRozbierz buduje drzewo z bajtów XML.
-//
-// Rozbiór idzie `xml.Decoder` ze wskazanym rozstrzygaczem znaków (`CharsetReader`)
-// — pliki starsze niż UTF-8 istnieją i w archiwum biurowym też się trafiają,
-// a domyślny rozbiór odmówiłby na nagłówku `encoding="windows-1250"`.
+// ooxmlRozbierz buduje drzewo z bajtów XML. Rozbiór idzie `xml.Decoder` ze
+// wskazanym rozstrzygaczem znaków, bo plik biurowy zapisany kodowaniem
+// starszym niż utf-8 inaczej odmówiłby odczytu na nagłówku.
 func ooxmlRozbierz(bajty []byte) (*ooxmlWezel, error) {
 	rozbierak := xml.NewDecoder(bytes.NewReader(bajty))
 	rozbierak.CharsetReader = wejscieRozstrzygaczZnakowXml
@@ -114,7 +93,8 @@ func ooxmlRozbierz(bajty []byte) (*ooxmlWezel, error) {
 	return korzen.Dzieci[0], nil
 }
 
-// dziecko oddaje pierwsze dziecko o wskazanej nazwie lokalnej albo nic.
+// dziecko oddaje pierwsze dziecko węzła o wskazanej nazwie lokalnej albo nic,
+// gdy węzeł go nie niesie lub gdy wskazany węzeł w ogóle nie istnieje.
 func (w *ooxmlWezel) dziecko(nazwa string) *ooxmlWezel {
 	if w == nil {
 		return nil
@@ -127,7 +107,8 @@ func (w *ooxmlWezel) dziecko(nazwa string) *ooxmlWezel {
 	return nil
 }
 
-// dzieci oddaje wszystkie dzieci o wskazanej nazwie lokalnej.
+// dzieci oddaje wszystkie dzieci węzła o wskazanej nazwie lokalnej; gdy
+// takiego dziecka nie ma, oddaje wykaz pusty, a nie wartość nieokreśloną.
 func (w *ooxmlWezel) dzieci(nazwa string) []*ooxmlWezel {
 	if w == nil {
 		return nil
@@ -154,7 +135,8 @@ func (w *ooxmlWezel) sciezka(nazwy ...string) *ooxmlWezel {
 	return biezacy
 }
 
-// atrybut oddaje wartość atrybutu o wskazanej nazwie lokalnej.
+// atrybut oddaje wartość atrybutu węzła o wskazanej nazwie lokalnej; gdy
+// atrybutu nie ma, oddaje napis pusty, nigdy wartość nieokreśloną.
 func (w *ooxmlWezel) atrybut(nazwa string) string {
 	if w == nil {
 		return ""
@@ -183,10 +165,9 @@ func (w *ooxmlWezel) atrybutCalkowity(nazwa string) (int, bool) {
 	return int(liczba), true
 }
 
-// wlaczonyPrzelacznik rozstrzyga przełącznik OOXML. W OOXML sam obecny węzeł
-// (`<w:b/>`) znaczy „włączone", a `w:val` równe `0`, `false` albo `off` znaczy
-// „wyłączone" — i to drugie jest częstsze, niż się wydaje, bo tak wyłącza się
-// pogrubienie odziedziczone po stylu.
+// wlaczonyPrzelacznik rozstrzyga przełącznik OOXML: sam obecny węzeł znaczy
+// „włączone", a `w:val` równe `0`, `false` albo `off` znaczy „wyłączone" —
+// tak wyłącza się formatowanie odziedziczone po stylu.
 func (w *ooxmlWezel) wlaczonyPrzelacznik() bool {
 	if w == nil {
 		return false
@@ -201,9 +182,8 @@ func (w *ooxmlWezel) wlaczonyPrzelacznik() bool {
 // ── Archiwum ────────────────────────────────────────────────────────────────
 
 // wejscieOtworzArchiwum rozkłada archiwum na składniki. Rozpakowanie idzie
-// `archive/zip` z biblioteki wzorcowej — 7-Zip z pakietu serwera jest do
-// archiwów Operatora (`.7z`, `.rar`), nie do pliku biurowego, który JEST ZIP-em
-// i którego biblioteka wzorcowa czyta bez pomocy.
+// `archive/zip` z biblioteki wzorcowej, bo plik biurowy JEST archiwum ZIP,
+// a osobne narzędzie archiwizujące serwera służy innym formatom.
 func wejscieOtworzArchiwum(bajty []byte) (map[string][]byte, error) {
 	if len(bajty) > granicaArchiwumStudia {
 		return nil, bladWskazaniaStudio("plik jest większy niż " +
@@ -219,9 +199,8 @@ func wejscieOtworzArchiwum(bajty []byte) (map[string][]byte, error) {
 		if wpis.FileInfo().IsDir() {
 			continue
 		}
-		// Nazwa składnika idzie z pliku i mogłaby wyprowadzać poza archiwum
-		// („../"). Do systemu plików nic tu nie trafia, ale nazwa z wyjściem
-		// w górę oznacza plik złośliwy i nie ma po co jej przyjmować.
+		// Nazwa składnika mogłaby wyprowadzać poza archiwum („../") — taki
+		// wpis jest odrzucany jako złośliwy.
 		nazwa := path.Clean(strings.ReplaceAll(wpis.Name, "\\", "/"))
 		if strings.HasPrefix(nazwa, "../") || nazwa == ".." {
 			continue
@@ -247,22 +226,26 @@ func wejscieOtworzArchiwum(bajty []byte) (map[string][]byte, error) {
 
 // ── Miary ───────────────────────────────────────────────────────────────────
 
-// ooxmlTwipyNaMilimetry przelicza twipy (1/1440 cala) na milimetry.
+// ooxmlTwipyNaMilimetry przelicza twipy, czyli 1/1440 cala, na milimetry —
+// jednostkę, w której kontrakt platformy wyraża odległości strony.
 func ooxmlTwipyNaMilimetry(twipy int) float64 {
 	return float64(twipy) / 1440 * 25.4
 }
 
-// ooxmlMilimetryNaTwipy przelicza milimetry na twipy.
+// ooxmlMilimetryNaTwipy przelicza milimetry kontraktu platformy z powrotem
+// na twipy, czyli 1/1440 cala — jednostkę odległości używaną przez OOXML.
 func ooxmlMilimetryNaTwipy(milimetry float64) int {
 	return int(milimetry / 25.4 * 1440)
 }
 
-// ooxmlPolpunktyNaPunkty przelicza stopień pisma z półpunktów na punkty.
+// ooxmlPolpunktyNaPunkty przelicza stopień pisma OOXML z półpunktów na
+// punkty — jednostkę, w której kontrakt platformy wyraża wielkość czcionki.
 func ooxmlPolpunktyNaPunkty(polpunkty int) float64 {
 	return float64(polpunkty) / 2
 }
 
-// ooxmlTwipyNaPunkty przelicza odstęp akapitowy z twipów na punkty.
+// ooxmlTwipyNaPunkty przelicza odstęp akapitowy OOXML z twipów na punkty —
+// jednostkę, w której kontrakt platformy wyraża odstępy akapitu.
 func ooxmlTwipyNaPunkty(twipy int) float64 {
 	return float64(twipy) / 20
 }
@@ -270,12 +253,8 @@ func ooxmlTwipyNaPunkty(twipy int) float64 {
 // ── Odczyt ──────────────────────────────────────────────────────────────────
 
 // wejscieCzytajOoxml rozbiera `.docx` albo `.dotx` na postać dokumentu, treść
-// płaską i bilans wniesienia.
-//
-// Bilans jest tu obowiązkowy, nie ozdobny: plik Operatora niesie rzeczy,
-// których ten rachunek nie odczytuje (pola obliczane, wykresy, kształty
-// rysowane, osadzone obiekty innych programów), a przemilczenie ich zamieniłoby
-// dokument okaleczony w dokument „wczytany bez uwag".
+// płaską i bilans wniesienia, który nazywa wprost to, czego rachunek nie
+// odczytuje, zamiast przemilczeć okaleczenie dokumentu.
 func wejscieCzytajOoxml(kodDokumentu string, bajty []byte,
 	format shared.StudioImportFormat) (shared.StudioDocumentForm, string, shared.StudioImportBalance, error) {
 
@@ -298,7 +277,7 @@ func wejscieCzytajOoxml(kodDokumentu string, bajty []byte,
 	postac := shared.StudioDocumentForm{DocumentId: kodDokumentu}
 
 	// Arkusz stylów wchodzi PIERWSZY: akapity odwołują się do stylów nazwą,
-	// więc nazwa stylu w bloku ma sens tylko wtedy, gdy styl już istnieje.
+	// którą styl musi już mieć.
 	postac.Styles = ooxmlCzytajStyle(skladniki[ooxmlSkladnikStylow])
 	if len(postac.Styles) == 0 {
 		postac.Styles = wejscieDomyslnyArkuszStylow()
@@ -323,9 +302,8 @@ func wejscieCzytajOoxml(kodDokumentu string, bajty []byte,
 	stan.zalozSekcje(cialo.dziecko("sectPr"))
 	stan.czytajCialo(cialo)
 
-	// Sekcja ostatnia bierze nastawy z `w:sectPr` ciała — w OOXML nastawy
-	// ostatniej sekcji stoją właśnie tam, a nie w akapicie, i pominięcie tego
-	// dałoby dokument bez marginesów.
+	// Sekcja ostatnia bierze nastawy z `w:sectPr` ciała, gdzie stoją nastawy
+	// ostatniej sekcji dokumentu.
 	if len(postac.Sections) > 0 && postac.PageSetup == nil {
 		postac.PageSetup = postac.Sections[len(postac.Sections)-1].PageSetup
 	}
@@ -353,7 +331,8 @@ type ooxmlStanOdczytu struct {
 	biezacaSekcja string
 }
 
-// zalozSekcje zakłada pierwszą sekcję dokumentu wraz z jej nastawami strony.
+// zalozSekcje zakłada kolejną sekcję dokumentu wraz z jej nastawami strony,
+// nagłówkami, stopkami i numeracją stron, i ustawia ją jako sekcję bieżącą.
 func (s *ooxmlStanOdczytu) zalozSekcje(wezelSekcji *ooxmlWezel) {
 	nastawy := ooxmlCzytajNastawyStrony(wezelSekcji)
 	sekcja := shared.StudioSection{
@@ -372,7 +351,8 @@ func (s *ooxmlStanOdczytu) zalozSekcje(wezelSekcji *ooxmlWezel) {
 	s.biezacaSekcja = sekcja.Id
 }
 
-// czytajCialo przechodzi ciało dokumentu blok po bloku w kolejności czytania.
+// czytajCialo przechodzi ciało dokumentu blok po bloku w kolejności czytania,
+// rozpoznając akapity, tabele i kontrolki treści opakowujące zwykłe akapity.
 func (s *ooxmlStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 	for _, wezel := range cialo.Dzieci {
 		switch wezel.Nazwa.Local {
@@ -381,9 +361,8 @@ func (s *ooxmlStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 		case "tbl":
 			s.czytajTabele(wezel)
 		case "sdt":
-			// Kontrolka treści (`w:sdt`) opakowuje zwykłą treść — schodzimy
-			// do jej wnętrza, zamiast ją pomijać. Pominięcie zgubiłoby akapity,
-			// które w Wordzie widać normalnie.
+			// Kontrolka treści (`w:sdt`) opakowuje zwykłą treść — schodzi się
+			// do jej wnętrza, zamiast ją pomijać.
 			if wnetrze := wezel.dziecko("sdtContent"); wnetrze != nil {
 				s.czytajCialo(wnetrze)
 			}
@@ -394,10 +373,8 @@ func (s *ooxmlStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 }
 
 // czytajAkapit składa blok akapitu wraz z postacią akapitu i fragmentami.
-//
-// Podział sekcji rozpoznaje się po `w:sectPr` WEWNĄTRZ akapitu: w OOXML akapit
-// z `w:pPr/w:sectPr` jest ostatnim akapitem sekcji, a nastawy w nim stojące
-// należą do sekcji, która się właśnie skończyła.
+// Podział sekcji rozpoznaje się po `w:sectPr` wewnątrz akapitu: taki akapit
+// jest ostatnim akapitem sekcji, która się właśnie skończyła.
 func (s *ooxmlStanOdczytu) czytajAkapit(wezel *ooxmlWezel) {
 	postacAkapitu := wezel.dziecko("pPr")
 	blok := shared.StudioDocumentBlock{
@@ -442,16 +419,14 @@ func (s *ooxmlStanOdczytu) czytajFragmenty(wezel *ooxmlWezel) []shared.StudioDoc
 				Text: tekst, Format: postacZnaku,
 			})
 		case "hyperlink":
-			// Odsyłacz niesie fragmenty w środku; adres wchodzi do aparatu
-			// dokumentu, a nie gubi się razem z węzłem.
+			// Odsyłacz niesie fragmenty w środku; adres wchodzi osobno do
+			// aparatu dokumentu.
 			wewnetrzne := s.czytajFragmenty(dziecko)
 			fragmenty = append(fragmenty, wewnetrzne...)
 			s.czytajOdsylacz(dziecko, wewnetrzne)
 		case "ins", "del", "smartTag":
 			// Zmiana śledzona i znacznik inteligentny opakowują zwykłe
-			// fragmenty. Treść wniesiona (`w:ins`) należy do dokumentu;
-			// treść usunięta (`w:del`) nie — jej fragmenty stoją w `w:delText`,
-			// którego `ooxmlTekstFragmentu` nie czyta, więc odpada sama.
+			// fragmenty; treść usunięta odpada sama.
 			fragmenty = append(fragmenty, s.czytajFragmenty(dziecko)...)
 		}
 	}
@@ -459,11 +434,8 @@ func (s *ooxmlStanOdczytu) czytajFragmenty(wezel *ooxmlWezel) []shared.StudioDoc
 }
 
 // czytajObraz dokłada obraz osadzony do wykazu obiektów i liczy go w bilansie.
-//
-// Bajty obrazu zostają w archiwum: odłożenie ich do magazynu zasobów wymaga
-// kontekstu żądania i magazynu, których ten rachunek nie ma. Wołający (komenda
-// wniesienia) odkłada je po odczycie — a tutaj powstaje obiekt wraz z nazwą
-// składnika, żeby wiadomo było, co odłożyć.
+// Bajty obrazu zostają w archiwum — tu powstaje obiekt wraz z nazwą składnika,
+// a wołający odkłada bajty do magazynu zasobów po odczycie.
 func (s *ooxmlStanOdczytu) czytajObraz(wezelRysunku *ooxmlWezel) {
 	odwolanie := ooxmlPierwszeOdwolanieObrazu(wezelRysunku)
 	if odwolanie == "" {
@@ -479,9 +451,8 @@ func (s *ooxmlStanOdczytu) czytajObraz(wezelRysunku *ooxmlWezel) {
 		Id:     nowyIdentyfikator(przedrostekObiektuStudia),
 		Kind:   shared.StudioObjectKindImage,
 		Source: wejscieWskaznikZrodlaObiektu(shared.StudioObjectSourceFile),
-		// Nazwa składnika archiwum jedzie w tekście zastępczym dopóty, dopóki
-		// wołający nie odłoży bajtów i nie wpisze tu kodu zasobu. To nie jest
-		// udawanie: pole niesie prawdę o tym, skąd obraz jest.
+		// Nazwa składnika archiwum jedzie w tekście zastępczym, dopóki
+		// wołający nie wpisze tu kodu zasobu.
 		AltText: wejscieWskaznikTekstu(ooxmlOpisObrazu(wezelRysunku, sciezka)),
 	}
 	if szerokosc, wysokosc, jest := ooxmlWymiaryRysunku(wezelRysunku); jest {
@@ -498,7 +469,8 @@ func (s *ooxmlStanOdczytu) czytajObraz(wezelRysunku *ooxmlWezel) {
 	s.bilans.ImagesEmbedded = wejscieWskaznikCalkowity(wartoscCalkowita(s.bilans.ImagesEmbedded) + 1)
 }
 
-// czytajOdsylacz dokłada odsyłacz do aparatu dokumentu.
+// czytajOdsylacz dokłada odsyłacz do aparatu dokumentu wraz z jego adresem
+// docelowym i etykietą złożoną z tekstu fragmentów, które opakowuje.
 func (s *ooxmlStanOdczytu) czytajOdsylacz(wezel *ooxmlWezel, fragmenty []shared.StudioDocumentRun) {
 	odwolanie := ""
 	for _, atrybut := range wezel.Atrybuty {
@@ -525,10 +497,12 @@ func (s *ooxmlStanOdczytu) czytajOdsylacz(wezel *ooxmlWezel, fragmenty []shared.
 	})
 }
 
-// przedrostekAparatuWejscia znakuje elementy aparatu odczytane z pliku.
+// przedrostekAparatuWejscia znakuje elementy aparatu odczytane z pliku,
+// odróżniając je od elementów, które powstają dopiero przy złożeniu dokumentu.
 const przedrostekAparatuWejscia = "studio-apar-"
 
-// pomin dokłada pozycję do wykazu tego, czego rachunek nie odzyskał.
+// pomin dokłada pozycję do wykazu tego, czego rachunek nie odzyskał, wraz
+// z powodem i szczegółem, które trafiają do bilansu wniesienia dokumentu.
 func (s *ooxmlStanOdczytu) pomin(powod, szczegol string) {
 	s.bilans.Skipped = append(s.bilans.Skipped, shared.StudioSkippedItem{
 		Reason: powod, Detail: wejscieWskaznikTekstu(szczegol),
@@ -536,12 +510,9 @@ func (s *ooxmlStanOdczytu) pomin(powod, szczegol string) {
 }
 
 // czytajTabele składa tabelę dokumentu wraz z komórkami, scaleniami,
-// szerokościami kolumn, obramowaniem i wierszem nagłówkowym.
-//
-// Scalenie poziome idzie `w:gridSpan`, pionowe `w:vMerge`. Komórka wchłonięta
-// scaleniem pionowym (`w:vMerge` bez `val="restart"`) wchodzi do wykazu jako
-// scalona, a nie znika: bez niej tabela miałaby mniej komórek niż kolumn i po
-// zapisie rozjechałaby się o jedną kolumnę.
+// szerokościami kolumn, obramowaniem i wierszem nagłówkowym. Komórka
+// wchłonięta scaleniem pionowym wchodzi do wykazu jako scalona, inaczej
+// tabela zgubiłaby kolumnę przy zapisie.
 func (s *ooxmlStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 	wiersze := wezel.dzieci("tr")
 	tabela := shared.StudioDocumentTable{
@@ -558,9 +529,8 @@ func (s *ooxmlStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 		tabela.WidthMm = wejscieWskaznikRzeczywisty(ooxmlTwipyNaMilimetry(szerokosc))
 	}
 
-	// Szerokości kolumn biorą się ze siatki tabeli (`w:tblGrid`), a nie
-	// z pierwszego wiersza: wiersz ze scaleniem poziomym ma mniej komórek niż
-	// kolumn i policzone z niego szerokości byłyby szerokościami scaleń.
+	// Szerokości kolumn biorą się ze siatki tabeli (`w:tblGrid`), nie
+	// z wiersza scalonego poziomo.
 	for _, kolumna := range wezel.sciezka("tblGrid").dzieci("gridCol") {
 		if twipy, jest := kolumna.atrybutCalkowity("w"); jest {
 			tabela.ColumnWidthsMm = append(tabela.ColumnWidthsMm,
@@ -583,7 +553,7 @@ func (s *ooxmlStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 				rozpietosc = *zlozona.ColumnSpan
 			}
 			// Kolumny wchłonięte scaleniem poziomym dostają własne komórki
-			// oznaczone jako scalone — inaczej tabela zgubiłaby kolumny.
+			// oznaczone jako scalone.
 			for przesuniecie := 1; przesuniecie < rozpietosc; przesuniecie++ {
 				tabela.Cells = append(tabela.Cells, shared.StudioTableCell{
 					Row: numerWiersza, Column: kolumna + przesuniecie,
@@ -601,9 +571,8 @@ func (s *ooxmlStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 		tabela.RepeatHeader = wejscieWskaznikLogiczny(true)
 	}
 	if len(tabela.ColumnWidthsMm) == 0 && tabela.Columns > 0 {
-		// Szerokości nieobecne w pliku liczy się z podziału obszaru pisania —
-		// zero byłoby liczbą nieprawdziwą, a brak zostawiłby tabelę bez
-		// szerokości po zapisie.
+		// Szerokości nieobecne w pliku liczy się z podziału obszaru pisania,
+		// nie z zera ani z braku.
 		szerokoscObszaru := ooxmlSzerokoscObszaruPisania(s.postac)
 		rowna := szerokoscObszaru / float64(tabela.Columns)
 		for i := 0; i < tabela.Columns; i++ {
@@ -655,7 +624,8 @@ func ooxmlSzerokoscObszaruPisania(postac *shared.StudioDocumentForm) float64 {
 	return obszar
 }
 
-// ooxmlCzytajKomorke składa komórkę tabeli wraz z jej postacią.
+// ooxmlCzytajKomorke składa komórkę tabeli wraz z jej postacią, obramowaniem,
+// scaleniem, cieniowaniem i treścią akapitów, które niesie.
 func ooxmlCzytajKomorke(wezel *ooxmlWezel, wiersz, kolumna int) shared.StudioTableCell {
 	komorka := shared.StudioTableCell{Row: wiersz, Column: kolumna}
 	postacKomorki := wezel.dziecko("tcPr")
@@ -681,9 +651,8 @@ func ooxmlCzytajKomorke(wezel *ooxmlWezel, wiersz, kolumna int) shared.StudioTab
 		komorka.Border = obramowanie
 	}
 
-	// Treść komórki to jej akapity złożone znakiem końca wiersza. Postać
-	// pierwszego akapitu staje się postacią komórki — komórka o dwóch różnych
-	// postaciach akapitu jest rzadka, a kontrakt niesie jedną.
+	// Treść komórki to akapity złożone końcem wiersza; postać pierwszego
+	// staje się postacią komórki.
 	akapity := wezel.dzieci("p")
 	czesci := make([]string, 0, len(akapity))
 	for i, akapit := range akapity {
@@ -699,7 +668,8 @@ func ooxmlCzytajKomorke(wezel *ooxmlWezel, wiersz, kolumna int) shared.StudioTab
 	return komorka
 }
 
-// ooxmlTekstAkapitu składa treść akapitu z jego fragmentów.
+// ooxmlTekstAkapitu składa treść akapitu z jego fragmentów, schodząc w głąb
+// odsyłacza, kontrolki treści i zmiany śledzonej, które fragmenty opakowują.
 func ooxmlTekstAkapitu(akapit *ooxmlWezel) string {
 	var budowa strings.Builder
 	for _, dziecko := range akapit.Dzieci {
@@ -742,7 +712,9 @@ func ooxmlTekstFragmentu(fragment *ooxmlWezel) string {
 
 // ── Odczyt postaci ─────────────────────────────────────────────────────────
 
-// ooxmlCzytajPostacZnaku składa postać znaku z `w:rPr`.
+// ooxmlCzytajPostacZnaku składa postać znaku z `w:rPr`: krój, stopień,
+// pogrubienie, kursywę, podkreślenie, barwę i pozostałe przełączniki
+// formatowania.
 func ooxmlCzytajPostacZnaku(wezel *ooxmlWezel) *shared.StudioCharacterFormat {
 	if wezel == nil {
 		return nil
@@ -751,8 +723,8 @@ func ooxmlCzytajPostacZnaku(wezel *ooxmlWezel) *shared.StudioCharacterFormat {
 	pelna := false
 
 	if kroje := wezel.dziecko("rFonts"); kroje != nil {
-		// Krój bierze się z `w:ascii`, a gdy go nie ma — z `w:hAnsi`. Oba
-		// opisują pismo łacińskie, a polski tekst jest pismem łacińskim.
+		// Krój bierze się z `w:ascii`, a gdy go nie ma — z `w:hAnsi`; oba
+		// opisują pismo łacińskie.
 		krój := kroje.atrybut("ascii")
 		if krój == "" {
 			krój = kroje.atrybut("hAnsi")
@@ -820,7 +792,8 @@ func ooxmlCzytajPostacZnaku(wezel *ooxmlWezel) *shared.StudioCharacterFormat {
 	return &postac
 }
 
-// ooxmlCzytajPostacAkapitu składa postać akapitu z `w:pPr`.
+// ooxmlCzytajPostacAkapitu składa postać akapitu z `w:pPr`: styl, wyrównanie,
+// wcięcia, odstępy, tabulatory, obramowanie i przynależność do listy.
 func ooxmlCzytajPostacAkapitu(wezel *ooxmlWezel) *shared.StudioParagraphFormat {
 	if wezel == nil {
 		return nil
@@ -843,7 +816,7 @@ func ooxmlCzytajPostacAkapitu(wezel *ooxmlWezel) *shared.StudioParagraphFormat {
 			postac.FirstLineIndentMm = wejscieWskaznikRzeczywisty(ooxmlTwipyNaMilimetry(wartosc))
 		}
 		// Wysunięcie (`w:hanging`) jest wcięciem pierwszego wiersza o wartości
-		// UJEMNEJ — tak stanowi kontrakt tego pola i tak liczy pakiet biurowy.
+		// UJEMNEJ w kontrakcie.
 		if wartosc, jest := wciecia.atrybutCalkowity("hanging"); jest {
 			postac.FirstLineIndentMm = wejscieWskaznikRzeczywisty(-ooxmlTwipyNaMilimetry(wartosc))
 		}
@@ -885,8 +858,8 @@ func ooxmlCzytajPostacAkapitu(wezel *ooxmlWezel) *shared.StudioParagraphFormat {
 		postac.RightToLeft = wejscieWskaznikLogiczny(wezel.wlaczonyPrzelacznik())
 	}
 	if poziom, jest := wezel.sciezka("outlineLvl").atrybutCalkowity("val"); jest {
-		// OOXML liczy poziomy konspektu od zera, kontrakt od jednego, a zero
-		// kontraktu znaczy „tekst zasadniczy". Przesunięcie jest tu konieczne.
+		// OOXML liczy poziomy konspektu od zera, kontrakt platformy od
+		// jednego, stąd przesunięcie.
 		postac.OutlineLevel = wejscieWskaznikCalkowity(poziom + 1)
 	}
 	if numeracja := wezel.dziecko("numPr"); numeracja != nil {
@@ -900,7 +873,8 @@ func ooxmlCzytajPostacAkapitu(wezel *ooxmlWezel) *shared.StudioParagraphFormat {
 	return &postac
 }
 
-// ooxmlCzytajTabulatory składa tabulatory akapitu.
+// ooxmlCzytajTabulatory składa tabulatory akapitu wraz z ich położeniem,
+// rodzajem wyrównania i znakiem wiodącym wypełniającym odstęp do tabulatora.
 func ooxmlCzytajTabulatory(wezel *ooxmlWezel) []shared.StudioTabStop {
 	if wezel == nil {
 		return nil
@@ -939,12 +913,9 @@ func ooxmlCzytajTabulatory(wezel *ooxmlWezel) []shared.StudioTabStop {
 	return tabulatory
 }
 
-// ooxmlCzytajObramowanie składa obramowanie z węzła krawędzi.
-//
-// Kontrakt niesie JEDNO obramowanie wraz z przełącznikami krawędzi, a OOXML
-// niesie osobny opis każdej krawędzi. Odmiana i grubość biorą się z pierwszej
-// krawędzi, która je ma — cztery krawędzie o różnej grubości to rzecz, której
-// kontrakt nie wyraża, i to jest strata nazwana tutaj, a nie przemilczana.
+// ooxmlCzytajObramowanie składa obramowanie z węzła krawędzi. Kontrakt niesie
+// JEDNO obramowanie, a OOXML osobny opis każdej krawędzi — odmiana i grubość
+// biorą się z pierwszej krawędzi, która je ma.
 func ooxmlCzytajObramowanie(wezel *ooxmlWezel) *shared.StudioBorder {
 	if wezel == nil {
 		return nil
@@ -989,7 +960,8 @@ func ooxmlCzytajObramowanie(wezel *ooxmlWezel) *shared.StudioBorder {
 	return &obramowanie
 }
 
-// ooxmlCzytajNastawyStrony składa nastawy strony z `w:sectPr`.
+// ooxmlCzytajNastawyStrony składa nastawy strony z `w:sectPr`: rozmiar
+// nośnika, orientację, marginesy, kolumny szpaltowe i odbicie marginesów.
 func ooxmlCzytajNastawyStrony(wezel *ooxmlWezel) shared.StudioPageSetup {
 	nastawy := wejscieDomyslneNastawyStrony("", nil)
 	if wezel == nil {
@@ -1003,9 +975,8 @@ func ooxmlCzytajNastawyStrony(wezel *ooxmlWezel) shared.StudioPageSetup {
 			wysokoscMm := ooxmlTwipyNaMilimetry(wysokosc)
 			nastawy.WidthMm = wejscieWskaznikRzeczywisty(szerokoscMm)
 			nastawy.HeightMm = wejscieWskaznikRzeczywisty(wysokoscMm)
-			// Nazwa nośnika bierze się z wymiarów, a nie z pliku — OOXML nazwy
-			// nośnika nie niesie wcale. Wymiary spoza wykazu zostają wymiarami
-			// własnymi i tak wychodzą kontraktem.
+			// Nazwa nośnika bierze się z wymiarów, bo OOXML nazwy nośnika nie
+			// niesie wcale.
 			if nazwa, jest := wejscieNazwaNosnikaZWymiarow(szerokoscMm, wysokoscMm); jest {
 				nastawy.PageSize = wejscieWskaznikTekstu(nazwa)
 			} else {
@@ -1053,7 +1024,8 @@ func ooxmlCzytajNastawyStrony(wezel *ooxmlWezel) shared.StudioPageSetup {
 	return nastawy
 }
 
-// ooxmlPoczatekSekcji rozstrzyga, jak sekcja się zaczyna.
+// ooxmlPoczatekSekcji rozstrzyga, jak sekcja się zaczyna: ciągiem, nową
+// stroną, stroną parzystą, nieparzystą albo nową szpaltą.
 func ooxmlPoczatekSekcji(wezel *ooxmlWezel) shared.StudioSectionStart {
 	if wezel == nil {
 		return shared.StudioSectionStartContinuous
@@ -1071,7 +1043,8 @@ func ooxmlPoczatekSekcji(wezel *ooxmlWezel) shared.StudioSectionStart {
 	return shared.StudioSectionStartContinuous
 }
 
-// ooxmlCzytajNumeracjeStron składa numerację stron sekcji.
+// ooxmlCzytajNumeracjeStron składa numerację stron sekcji: numer początkowy
+// i format zapisu, gdy `w:sectPr` niesie węzeł `w:pgNumType`.
 func ooxmlCzytajNumeracjeStron(wezel *ooxmlWezel) *shared.StudioPageNumbering {
 	if wezel == nil {
 		return nil
@@ -1093,11 +1066,9 @@ func ooxmlCzytajNumeracjeStron(wezel *ooxmlWezel) *shared.StudioPageNumbering {
 	return &numeracja
 }
 
-// ooxmlCzytajNaglowkiStopki wczytuje nagłówki i stopki sekcji wraz z zasięgiem.
-//
-// Zasięg jest tu treścią, nie ozdobą: nagłówek pierwszej strony i nagłówek stron
-// parzystych są w pismach urzędowych różne, a wczytanie wyłącznie domyślnego
-// zamieniłoby trzy nagłówki w jeden.
+// ooxmlCzytajNaglowkiStopki wczytuje nagłówki i stopki sekcji wraz
+// z zasięgiem: domyślnym, pierwszej strony i stron parzystych — w pismach
+// urzędowych te trzy bywają różne.
 func ooxmlCzytajNaglowkiStopki(wezelSekcji *ooxmlWezel, skladniki map[string][]byte,
 	powiazania map[string]string) []shared.StudioHeaderFooter {
 
@@ -1155,7 +1126,8 @@ func ooxmlCzytajNaglowkiStopki(wezelSekcji *ooxmlWezel, skladniki map[string][]b
 	return wynik
 }
 
-// ooxmlCzytajPowiazania czyta wykaz powiązań dokumentu: identyfikator na cel.
+// ooxmlCzytajPowiazania czyta wykaz powiązań dokumentu z
+// `word/_rels/document.xml.rels`: identyfikator powiązania na jego cel.
 func ooxmlCzytajPowiazania(surowe []byte) map[string]string {
 	powiazania := make(map[string]string)
 	if len(surowe) == 0 {
@@ -1176,7 +1148,8 @@ func ooxmlCzytajPowiazania(surowe []byte) map[string]string {
 	return powiazania
 }
 
-// ooxmlCzytajStyle składa arkusz stylów nazwanych z `word/styles.xml`.
+// ooxmlCzytajStyle składa arkusz stylów nazwanych z `word/styles.xml`: postać
+// akapitu i znaku, styl nadrzędny oraz styl następny.
 func ooxmlCzytajStyle(surowe []byte) []shared.StudioNamedStyle {
 	if len(surowe) == 0 {
 		return nil
@@ -1216,7 +1189,8 @@ func ooxmlCzytajStyle(surowe []byte) []shared.StudioNamedStyle {
 	return arkusz
 }
 
-// ooxmlCzytajNumeracje składa definicje list z `word/numbering.xml`.
+// ooxmlCzytajNumeracje składa definicje list z `word/numbering.xml`: poziomy,
+// format numeracji lub wypunktowania oraz wcięcia.
 func ooxmlCzytajNumeracje(surowe []byte) []shared.StudioListDefinition {
 	if len(surowe) == 0 {
 		return nil
@@ -1225,9 +1199,8 @@ func ooxmlCzytajNumeracje(surowe []byte) []shared.StudioListDefinition {
 	if err != nil {
 		return nil
 	}
-	// `w:num` wiąże numerację dokumentu z abstrakcyjną definicją poziomów;
-	// poziomy stoją w `w:abstractNum`. Bez tego wiązania definicja listy
-	// odnalazłaby się pod złym numerem.
+	// `w:num` wiąże numerację dokumentu z abstrakcyjną definicją poziomów
+	// w `w:abstractNum`.
 	abstrakcyjne := make(map[string]*ooxmlWezel)
 	for _, wpis := range drzewo.dzieci("abstractNum") {
 		abstrakcyjne[wpis.atrybut("abstractNumId")] = wpis
@@ -1315,12 +1288,14 @@ func ooxmlNazwaStyluDokumentu(kod string) string {
 	return oczyszczony
 }
 
-// ooxmlNazwaListy składa nazwę definicji listy z numeru OOXML.
+// ooxmlNazwaListy składa nazwę definicji listy z numeru OOXML, poprzedzając
+// go stałym przedrostkiem rozpoznawanym przy zapisie.
 func ooxmlNazwaListy(numer int) string {
 	return "lista-" + strconv.Itoa(numer)
 }
 
-// ooxmlLiczbaZNapisu czyta liczbę z napisu; napis nieliczbowy daje zero.
+// ooxmlLiczbaZNapisu czyta liczbę całkowitą z napisu identyfikatora OOXML;
+// napis nieliczbowy albo pusty daje zero.
 func ooxmlLiczbaZNapisu(tekst string) int {
 	liczba, err := strconv.Atoi(strings.TrimSpace(tekst))
 	if err != nil {
@@ -1329,7 +1304,8 @@ func ooxmlLiczbaZNapisu(tekst string) int {
 	return liczba
 }
 
-// ooxmlRodzajStylu przekłada rodzaj stylu OOXML.
+// ooxmlRodzajStylu przekłada rodzaj stylu OOXML na rodzaj kontraktu; wartość
+// spoza wykazu daje rodzaj akapitowy jako domyślny.
 func ooxmlRodzajStylu(rodzaj string) shared.StudioStyleKind {
 	switch strings.ToLower(strings.TrimSpace(rodzaj)) {
 	case "character":
@@ -1342,7 +1318,8 @@ func ooxmlRodzajStylu(rodzaj string) shared.StudioStyleKind {
 	return shared.StudioStyleKindParagraph
 }
 
-// ooxmlWyrownanie przekłada wyrównanie akapitu.
+// ooxmlWyrownanie przekłada wyrównanie akapitu OOXML na wyrównanie kontraktu;
+// wartość spoza wykazu daje wskaźnik pusty.
 func ooxmlWyrownanie(wartosc string) *shared.StudioTextAlign {
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
 	case "center":
@@ -1357,7 +1334,8 @@ func ooxmlWyrownanie(wartosc string) *shared.StudioTextAlign {
 	return nil
 }
 
-// ooxmlWyrownaniePionowe przekłada wyrównanie pionowe komórki.
+// ooxmlWyrownaniePionowe przekłada wyrównanie pionowe komórki tabeli; wartość
+// spoza wykazu i pusta dają wskaźnik pusty.
 func ooxmlWyrownaniePionowe(wartosc string) *shared.StudioVerticalAlign {
 	kopia := shared.StudioVerticalAlign(shared.StudioVerticalAlignTop)
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
@@ -1372,7 +1350,8 @@ func ooxmlWyrownaniePionowe(wartosc string) *shared.StudioVerticalAlign {
 	return &kopia
 }
 
-// ooxmlPodkreslenie przekłada odmianę podkreślenia.
+// ooxmlPodkreslenie przekłada odmianę podkreślenia OOXML na odmianę
+// kontraktu; wartość spoza wykazu daje podkreślenie pojedyncze.
 func ooxmlPodkreslenie(wartosc string) *shared.StudioUnderlineStyle {
 	odmiana := shared.StudioUnderlineStyle(shared.StudioUnderlineStyleSingle)
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
@@ -1394,7 +1373,8 @@ func ooxmlPodkreslenie(wartosc string) *shared.StudioUnderlineStyle {
 	return &odmiana
 }
 
-// ooxmlOdmianaObramowania przekłada odmianę obramowania.
+// ooxmlOdmianaObramowania przekłada odmianę obramowania OOXML na odmianę
+// kontraktu; wartość spoza wykazu daje obramowanie pojedyncze.
 func ooxmlOdmianaObramowania(wartosc string) shared.StudioBorderStyle {
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
 	case "", "none", "nil":
@@ -1411,7 +1391,8 @@ func ooxmlOdmianaObramowania(wartosc string) shared.StudioBorderStyle {
 	return shared.StudioBorderStyleSingle
 }
 
-// ooxmlZnakWiodacy przekłada znak wiodący tabulatora.
+// ooxmlZnakWiodacy przekłada znak wiodący tabulatora OOXML na znak
+// kontraktu; wartość spoza wykazu daje wskaźnik pusty.
 func ooxmlZnakWiodacy(wartosc string) *shared.StudioTabLeader {
 	znak := shared.StudioTabLeader(shared.StudioTabLeaderNone)
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
@@ -1428,10 +1409,9 @@ func ooxmlZnakWiodacy(wartosc string) *shared.StudioTabLeader {
 }
 
 // ooxmlInterlinia przekłada interlinię OOXML na zasadę i wartość kontraktu.
-//
-// `auto` liczy się w dwustu czterdziestych częściach wiersza: 240 znaczy jeden
-// wiersz, 360 — półtora, 480 — dwa. Wartości okrągłe schodzą na zasady nazwane,
-// bo tak Operator je widzi w oknie; pozostałe zostają mnożnikiem.
+// `auto` liczy się w dwustu czterdziestych częściach wiersza: 240 znaczy
+// jeden wiersz, 360 — półtora, 480 — dwa; pozostałe wartości zostają
+// mnożnikiem.
 func ooxmlInterlinia(zasada string, wartosc int) (*shared.StudioLineSpacingRule, float64) {
 	switch strings.ToLower(strings.TrimSpace(zasada)) {
 	case "atleast":
@@ -1469,7 +1449,8 @@ func ooxmlBarwa(wartosc string) string {
 	return "#" + strings.ToUpper(oczyszczona[:6])
 }
 
-// ooxmlBarwaNazwana przekłada barwę wyróżnienia, którą OOXML podaje nazwą.
+// ooxmlBarwaNazwana przekłada barwę wyróżnienia, którą OOXML podaje nazwą,
+// na zapis szesnastkowy; nazwa spoza wykazu wraca do ooxmlBarwa.
 func ooxmlBarwaNazwana(wartosc string) string {
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
 	case "yellow":
@@ -1510,13 +1491,15 @@ func ooxmlBarwaNazwana(wartosc string) string {
 	return ooxmlBarwa(wartosc)
 }
 
-// ooxmlWskaznikZrodlaWypunktowania oddaje wskaźnik na źródło znaku listy.
+// ooxmlWskaznikZrodlaWypunktowania oddaje wskaźnik na przekazaną wartość
+// źródła znaku listy, bo kontrakt platformy niesie to pole wskaźnikiem.
 func ooxmlWskaznikZrodlaWypunktowania(wartosc shared.StudioBulletSource) *shared.StudioBulletSource {
 	kopia := wartosc
 	return &kopia
 }
 
-// ooxmlFormatNumeracjiListy przekłada format numeracji poziomu listy.
+// ooxmlFormatNumeracjiListy przekłada format numeracji poziomu listy OOXML
+// na format kontraktu; wartość spoza wykazu daje format arabski.
 func ooxmlFormatNumeracjiListy(format string) *shared.StudioListNumberFormat {
 	wynik := shared.StudioListNumberFormat(shared.StudioListNumberFormatArabic)
 	switch strings.ToLower(strings.TrimSpace(format)) {
@@ -1532,7 +1515,8 @@ func ooxmlFormatNumeracjiListy(format string) *shared.StudioListNumberFormat {
 	return &wynik
 }
 
-// ooxmlFormatNumeracjiStron przekłada format numeru strony.
+// ooxmlFormatNumeracjiStron przekłada format numeru strony OOXML na format
+// kontraktu; napis pusty oddaje wskaźnik pusty, nie format domyślny.
 func ooxmlFormatNumeracjiStron(format string) *shared.StudioPageNumberFormat {
 	wynik := shared.StudioPageNumberFormat(shared.StudioPageNumberFormatArabic)
 	switch strings.ToLower(strings.TrimSpace(format)) {
@@ -1550,7 +1534,8 @@ func ooxmlFormatNumeracjiStron(format string) *shared.StudioPageNumberFormat {
 	return &wynik
 }
 
-// ooxmlZasiegNaglowka przekłada zasięg nagłówka albo stopki.
+// ooxmlZasiegNaglowka przekłada zasięg nagłówka albo stopki OOXML na zasięg
+// kontraktu; wartość spoza wykazu daje zasięg domyślny.
 func ooxmlZasiegNaglowka(rodzaj string) shared.StudioHeaderScope {
 	switch strings.ToLower(strings.TrimSpace(rodzaj)) {
 	case "first":
@@ -1595,8 +1580,8 @@ func ooxmlOpisObrazu(wezel *ooxmlWezel, sciezka string) string {
 	return path.Base(sciezka)
 }
 
-// ooxmlSzukajWglabAtrybut szuka wgłąb węzła o wskazanej nazwie i oddaje jego
-// atrybut.
+// ooxmlSzukajWglabAtrybut szuka wgłąb węzła o wskazanej nazwie i oddaje
+// wartość jego atrybutu, schodząc rekurencyjnie po całym poddrzewie.
 func ooxmlSzukajWglabAtrybut(wezel *ooxmlWezel, nazwaWezla, nazwaAtrybutu string) string {
 	if wezel == nil {
 		return ""
@@ -1629,7 +1614,8 @@ func ooxmlWymiaryRysunku(wezel *ooxmlWezel) (float64, float64, bool) {
 	return float64(szerokosc) / 36000, float64(wysokosc) / 36000, true
 }
 
-// ooxmlSzukajWglabWezel szuka wgłąb pierwszego węzła o wskazanej nazwie.
+// ooxmlSzukajWglabWezel szuka wgłąb pierwszego węzła o wskazanej nazwie,
+// schodząc rekurencyjnie po całym poddrzewie węzła wejściowego.
 func ooxmlSzukajWglabWezel(wezel *ooxmlWezel, nazwa string) *ooxmlWezel {
 	if wezel == nil {
 		return nil
@@ -1645,7 +1631,8 @@ func ooxmlSzukajWglabWezel(wezel *ooxmlWezel, nazwa string) *ooxmlWezel {
 	return nil
 }
 
-// ooxmlZdanieBilansu składa zdanie o uczciwym stanie odczytu.
+// ooxmlZdanieBilansu składa zdanie o uczciwym stanie odczytu: liczbę
+// odzyskanych akapitów, tabel, stylów, sekcji, obrazów i rzeczy pominiętych.
 func ooxmlZdanieBilansu(bilans *shared.StudioImportBalance) string {
 	czesci := []string{
 		"odczytano " + strconv.Itoa(wartoscCalkowita(bilans.ParagraphsRecovered)) + " akapitów",
@@ -1662,7 +1649,8 @@ func ooxmlZdanieBilansu(bilans *shared.StudioImportBalance) string {
 	return zdanie
 }
 
-// wartoscCalkowita oddaje wartość wskaźnika liczby albo zero.
+// wartoscCalkowita oddaje wartość wskaźnika liczby całkowitej albo zero,
+// gdy wskaźnik jest pusty, bez wyrzucania panik.
 func wartoscCalkowita(wskazanie *int) int {
 	if wskazanie == nil {
 		return 0
@@ -1672,20 +1660,18 @@ func wartoscCalkowita(wskazanie *int) int {
 
 // ── Złożenie ────────────────────────────────────────────────────────────────
 
-// wejscieZlozOoxml składa `.docx` albo `.dotx` z postaci dokumentu.
-//
-// Archiwum niesie pięć składników: wykaz typów treści, powiązania paczki,
-// dokument główny, arkusz stylów i powiązania dokumentu. Mniej nie wystarcza —
-// Word odmawia otwarcia archiwum bez wykazu typów treści, a arkusz stylów bez
-// powiązania z dokumentu jest arkuszem, którego dokument nie widzi.
+// wejscieZlozOoxml składa `.docx` albo `.dotx` z postaci dokumentu. Archiwum
+// niesie pięć składników: wykaz typów treści, powiązania paczki, dokument
+// główny, arkusz stylów i powiązania dokumentu — mniej nie wystarcza do
+// otwarcia w edytorze.
 func wejscieZlozOoxml(postac *shared.StudioDocumentForm, tresc, tytul string,
 	szablon bool) ([]byte, []shared.StudioSkippedItem, error) {
 
 	pominiete := make([]shared.StudioSkippedItem, 0, 4)
 	bloki := postac.Blocks
 	if len(bloki) == 0 {
-		// Postaci nie ma — treść płaska staje akapitami, żeby plik nie wyszedł
-		// pusty. To jest odtworzenie, nie odczyt, i tak wychodzi w bilansie.
+		// Postaci nie ma — treść płaska staje akapitami, żeby plik nie
+		// wyszedł pusty.
 		zastepcza := wejsciePostacZTekstu(postac.DocumentId, tresc)
 		bloki = zastepcza.Blocks
 		if postac.Styles == nil {
@@ -1702,10 +1688,8 @@ func wejscieZlozOoxml(postac *shared.StudioDocumentForm, tresc, tytul string,
 		case wejscieRodzajBlokuTabela:
 			cialo.WriteString(ooxmlZlozTabele(postac, blok.TableId, &pominiete))
 		case wejscieRodzajBlokuObiekt:
-			// Obraz osadzony wychodzi akapitem z jego tekstem zastępczym.
-			// Bajty obrazu leżą w magazynie zasobów rdzenia, a wpisanie ich do
-			// archiwum wymagałoby odczytu magazynu, którego składacz nie ma —
-			// dlatego strata jest NAZWANA, a nie przemilczana.
+			// Obraz osadzony wychodzi akapitem z jego tekstem zastępczym,
+			// bez bajtów obrazu z magazynu zasobów.
 			cialo.WriteString(ooxmlZlozAkapitObiektu(postac, blok.ObjectId, &pominiete))
 		case wejscieRodzajBlokuPodzial:
 			cialo.WriteString(`<w:p><w:r><w:br w:type="page"/></w:r></w:p>`)
@@ -1727,8 +1711,7 @@ func wejscieZlozOoxml(postac *shared.StudioDocumentForm, tresc, tytul string,
 		})
 	}
 	// Nagłówek i stopka są OSOBNYMI składnikami archiwum, na które sekcja
-	// wskazuje odwołaniem. Bez tych składników plik wyszedłby bez papieru
-	// firmowego, choć dokument go niesie — a strata w milczeniu jest zakazana.
+	// wskazuje odwołaniem.
 	naglowki := ooxmlZlozNaglowkiStopki(postac)
 	cialo.WriteString(ooxmlZlozNastawySekcji(postac, naglowki.odwolania))
 
@@ -1780,11 +1763,9 @@ func wejscieZlozOoxml(postac *shared.StudioDocumentForm, tresc, tytul string,
 	return bajty, pominiete, nil
 }
 
-// wejscieZlozArchiwum zapisuje składniki jako archiwum ZIP.
-//
-// Składnik `mimetype` — gdy wskazany — idzie PIERWSZY i BEZ KOMPRESJI. Tak
-// stanowi OpenDocument i tym rozpoznaje się jego pliki; ściśnięty albo drugi
-// w kolejności nie zostałby rozpoznany. OOXML tego składnika nie ma i wtedy
+// wejscieZlozArchiwum zapisuje składniki jako archiwum ZIP. Składnik
+// `mimetype` — gdy wskazany — idzie PIERWSZY i BEZ KOMPRESJI, bo tak
+// OpenDocument rozpoznaje swoje pliki; OOXML tego składnika nie ma, i wtedy
 // wskazanie jest puste.
 func wejscieZlozArchiwum(skladniki map[string]string, pierwszy string) ([]byte, error) {
 	var bufor bytes.Buffer
@@ -1804,9 +1785,8 @@ func wejscieZlozArchiwum(skladniki map[string]string, pierwszy string) ([]byte, 
 		}
 	}
 
-	// Kolejność pozostałych składników jest ustalona sortowaniem, a nie
-	// przebiegiem po mapie: ten sam dokument ma dawać ten sam plik, inaczej
-	// suma kontrolna wyniku zmieniałaby się bez zmiany treści.
+	// Kolejność pozostałych składników jest ustalona sortowaniem, nie
+	// przebiegiem po mapie.
 	nazwy := make([]string, 0, len(skladniki))
 	for nazwa := range skladniki {
 		if nazwa == pierwszy {
@@ -1830,7 +1810,8 @@ func wejscieZlozArchiwum(skladniki map[string]string, pierwszy string) ([]byte, 
 	return bufor.Bytes(), nil
 }
 
-// ooxmlZlozAkapit składa akapit wraz z postacią akapitu i fragmentami.
+// ooxmlZlozAkapit składa akapit wraz z postacią akapitu i fragmentami,
+// zwracając gotowy węzeł `w:p` w postaci tekstu XML.
 func ooxmlZlozAkapit(blok shared.StudioDocumentBlock) string {
 	var budowa strings.Builder
 	budowa.WriteString("<w:p>")
@@ -1867,7 +1848,8 @@ func ooxmlZlozFragment(fragment shared.StudioDocumentRun) string {
 	return budowa.String()
 }
 
-// ooxmlZlozPostacZnaku składa `w:rPr`.
+// ooxmlZlozPostacZnaku składa węzeł `w:rPr` z postaci znaku kontraktu: styl,
+// krój, przełączniki, indeks, stopień, barwę i język.
 func ooxmlZlozPostacZnaku(postac *shared.StudioCharacterFormat) string {
 	if postac == nil {
 		return ""
@@ -1916,10 +1898,8 @@ func ooxmlZlozPostacZnaku(postac *shared.StudioCharacterFormat) string {
 	}
 	if postac.HighlightColor != nil {
 		if barwa := ooxmlBezKrzyzyka(*postac.HighlightColor); barwa != "" {
-			// Wyróżnienie wychodzi cieniowaniem znaku, nie `w:highlight`:
-			// `w:highlight` przyjmuje wyłącznie kilkanaście barw nazwanych,
-			// a paleta wyróżnień tego produktu jest dowolna. Cieniowanie
-			// przyjmuje każdą barwę i Word pokazuje je tak samo.
+			// Wyróżnienie wychodzi cieniowaniem znaku, nie `w:highlight`,
+			// bo paleta wyróżnień jest dowolna.
 			budowa.WriteString(`<w:shd w:val="clear" w:color="auto" w:fill="` + barwa + `"/>`)
 		}
 	}
@@ -1934,7 +1914,8 @@ func ooxmlZlozPostacZnaku(postac *shared.StudioCharacterFormat) string {
 	return budowa.String()
 }
 
-// ooxmlZlozPostacAkapitu składa `w:pPr`.
+// ooxmlZlozPostacAkapitu składa węzeł `w:pPr` z postaci akapitu kontraktu:
+// styl, listę, odstępy, wcięcia, tabulatory i obramowanie.
 func ooxmlZlozPostacAkapitu(postac *shared.StudioParagraphFormat) string {
 	if postac == nil {
 		return ""
@@ -2004,7 +1985,8 @@ func ooxmlZlozPostacAkapitu(postac *shared.StudioParagraphFormat) string {
 	return budowa.String()
 }
 
-// ooxmlZlozOdstepy składa `w:spacing` akapitu.
+// ooxmlZlozOdstepy składa węzeł `w:spacing` akapitu z odstępów przed i po
+// oraz z zasady i wartości interlinii kontraktu.
 func ooxmlZlozOdstepy(postac *shared.StudioParagraphFormat) string {
 	czesci := make([]string, 0, 3)
 	if postac.SpaceBeforePt != nil {
@@ -2064,7 +2046,8 @@ func ooxmlZlozWciecia(postac *shared.StudioParagraphFormat) string {
 	return "<w:ind " + strings.Join(czesci, " ") + "/>"
 }
 
-// ooxmlZlozObramowanie składa obramowanie akapitu, tabeli albo komórki.
+// ooxmlZlozObramowanie składa obramowanie akapitu, tabeli albo komórki pod
+// wskazaną nazwą węzła, wspólną dla tych trzech miejsc OOXML.
 func ooxmlZlozObramowanie(nazwaWezla string, obramowanie *shared.StudioBorder) string {
 	if obramowanie == nil || obramowanie.Style == shared.StudioBorderStyleNone {
 		return ""
@@ -2080,9 +2063,7 @@ func ooxmlZlozObramowanie(nazwaWezla string, obramowanie *shared.StudioBorder) s
 			barwa = zapis
 		}
 	}
-	// Krawędź bez jawnego wskazania jest krawędzią OBECNĄ: obramowanie
-	// z odmianą inną niż „brak" i bez ani jednej krawędzi znaczyło „ramka
-	// wokół", a nie „ramka nigdzie".
+	// Krawędź bez jawnego wskazania jest krawędzią OBECNĄ, nie brakującą.
 	krawedzie := []struct {
 		nazwa       string
 		przelacznik *bool
@@ -2104,7 +2085,8 @@ func ooxmlZlozObramowanie(nazwaWezla string, obramowanie *shared.StudioBorder) s
 	return budowa.String()
 }
 
-// ooxmlZlozTabele składa tabelę wraz z siatką, scaleniami i postacią komórek.
+// ooxmlZlozTabele składa tabelę wraz z siatką kolumn, scaleniami poziomymi
+// i pionowymi oraz postacią i treścią każdej komórki.
 func ooxmlZlozTabele(postac *shared.StudioDocumentForm, kodTabeli *string,
 	pominiete *[]shared.StudioSkippedItem) string {
 
@@ -2174,10 +2156,8 @@ func ooxmlZlozTabele(postac *shared.StudioDocumentForm, kodTabeli *string,
 				continue
 			}
 			if komorka.Merged != nil && *komorka.Merged {
-				// Komórka wchłonięta scaleniem poziomym nie wychodzi wcale —
-				// jej miejsce zajmuje `w:gridSpan` komórki scalającej. Wychodzi
-				// natomiast, gdy scalenie było pionowe: wtedy jest komórką
-				// z `w:vMerge` bez wznowienia.
+				// Komórka wchłonięta scaleniem poziomym nie wychodzi wcale;
+				// scalenie pionowe wychodzi jako `w:vMerge`.
 				if ooxmlScalonaPoziomo(tabela, wiersz, kolumna) {
 					kolumna++
 					continue
@@ -2196,8 +2176,8 @@ func ooxmlZlozTabele(postac *shared.StudioDocumentForm, kodTabeli *string,
 		budowa.WriteString("</w:tr>")
 	}
 	budowa.WriteString("</w:tbl>")
-	// Word łączy dwie tabele stojące bezpośrednio po sobie w jedną. Akapit
-	// pusty między nimi jest tu koniecznością składu, nie ozdobą.
+	// Word łączy dwie tabele stojące bezpośrednio po sobie; akapit pusty
+	// między nimi jest koniecznością.
 	budowa.WriteString("<w:p/>")
 	return budowa.String()
 }
@@ -2221,7 +2201,8 @@ func ooxmlScalonaPoziomo(tabela *shared.StudioDocumentTable, wiersz, kolumna int
 	return false
 }
 
-// ooxmlSzukajKomorki oddaje komórkę o wskazanym położeniu albo nic.
+// ooxmlSzukajKomorki oddaje komórkę tabeli o wskazanym wierszu i kolumnie
+// albo nic, gdy takiej komórki tabela nie niesie.
 func ooxmlSzukajKomorki(tabela *shared.StudioDocumentTable, wiersz, kolumna int) *shared.StudioTableCell {
 	for i := range tabela.Cells {
 		if tabela.Cells[i].Row == wiersz && tabela.Cells[i].Column == kolumna {
@@ -2231,7 +2212,8 @@ func ooxmlSzukajKomorki(tabela *shared.StudioDocumentTable, wiersz, kolumna int)
 	return nil
 }
 
-// ooxmlZlozKomorke składa komórkę tabeli wraz z jej postacią i treścią.
+// ooxmlZlozKomorke składa komórkę tabeli wraz ze scaleniem, cieniowaniem,
+// obramowaniem, wyrównaniem pionowym i treścią akapitów.
 func ooxmlZlozKomorke(komorka *shared.StudioTableCell, rozpietosc int) string {
 	var budowa strings.Builder
 	budowa.WriteString("<w:tc><w:tcPr>")
@@ -2274,7 +2256,8 @@ func ooxmlZlozKomorke(komorka *shared.StudioTableCell, rozpietosc int) string {
 	return budowa.String()
 }
 
-// ooxmlZlozAkapitObiektu składa akapit zastępujący obiekt osadzony.
+// ooxmlZlozAkapitObiektu składa akapit zastępujący obiekt osadzony jego
+// opisem, bo bajtów obiektu składacz do archiwum nie wpisuje.
 func ooxmlZlozAkapitObiektu(postac *shared.StudioDocumentForm, kodObiektu *string,
 	pominiete *[]shared.StudioSkippedItem) string {
 
@@ -2306,7 +2289,8 @@ func ooxmlZlozAkapitObiektu(postac *shared.StudioDocumentForm, kodObiektu *strin
 	return ""
 }
 
-// ooxmlZlozNastawySekcji składa `w:sectPr` z nastaw strony dokumentu.
+// ooxmlZlozNastawySekcji składa węzeł `w:sectPr` z nastaw strony dokumentu:
+// rozmiar, orientację, marginesy i kolumny szpaltowe.
 func ooxmlZlozNastawySekcji(postac *shared.StudioDocumentForm, odwolania string) string {
 	nastawy := postac.PageSetup
 	if nastawy == nil && len(postac.Sections) > 0 {
@@ -2332,9 +2316,8 @@ func ooxmlZlozNastawySekcji(postac *shared.StudioDocumentForm, odwolania string)
 	orientacja := "portrait"
 	if nastawy.Orientation != nil && *nastawy.Orientation == shared.StudioPageOrientationPozioma {
 		orientacja = "landscape"
-		// Orientacja pozioma to nie tylko atrybut: Word bierze wymiary
-		// z `w:pgSz`, a nie z orientacji, więc bez zamiany wymiarów strona
-		// zostałaby pionowa z napisem „pozioma".
+		// Orientacja pozioma wymaga zamiany wymiarów w `w:pgSz`, nie tylko
+		// atrybutu orientacji.
 		if szerokosc < wysokosc {
 			szerokosc, wysokosc = wysokosc, szerokosc
 		}
@@ -2374,7 +2357,8 @@ func ooxmlMarginesTwipy(milimetry *int) string {
 	return strconv.Itoa(ooxmlMilimetryNaTwipy(float64(wartosc)))
 }
 
-// wartoscRzeczywista oddaje wartość wskaźnika liczby rzeczywistej albo zero.
+// wartoscRzeczywista oddaje wartość wskaźnika liczby rzeczywistej albo zero,
+// gdy wskaźnik jest pusty, bez wyrzucania panik.
 func wartoscRzeczywista(wskazanie *float64) float64 {
 	if wskazanie == nil {
 		return 0
@@ -2382,7 +2366,8 @@ func wartoscRzeczywista(wskazanie *float64) float64 {
 	return *wskazanie
 }
 
-// ooxmlZlozArkuszStylow składa `word/styles.xml`.
+// ooxmlZlozArkuszStylow składa składnik `word/styles.xml` z wykazu stylów
+// nazwanych kontraktu, a przy braku stylów — z arkusza domyślnego.
 func ooxmlZlozArkuszStylow(arkusz []shared.StudioNamedStyle) string {
 	if len(arkusz) == 0 {
 		arkusz = wejscieDomyslnyArkuszStylow()
@@ -2433,7 +2418,8 @@ func ooxmlPrzelacznik(nazwa string, wlaczony bool) string {
 	return "<" + nazwa + ` w:val="0"/>`
 }
 
-// ooxmlNazwaWyrownania przekłada wyrównanie na nazwę OOXML.
+// ooxmlNazwaWyrownania przekłada wyrównanie kontraktu na nazwę OOXML;
+// wartość spoza wykazu daje wyrównanie do lewej.
 func ooxmlNazwaWyrownania(wyrownanie shared.StudioTextAlign) string {
 	switch wyrownanie {
 	case shared.StudioTextAlignCenter:
@@ -2446,7 +2432,8 @@ func ooxmlNazwaWyrownania(wyrownanie shared.StudioTextAlign) string {
 	return "left"
 }
 
-// ooxmlNazwaPodkreslenia przekłada odmianę podkreślenia na nazwę OOXML.
+// ooxmlNazwaPodkreslenia przekłada odmianę podkreślenia kontraktu na nazwę
+// OOXML; wartość spoza wykazu daje podkreślenie pojedyncze.
 func ooxmlNazwaPodkreslenia(odmiana shared.StudioUnderlineStyle) string {
 	switch odmiana {
 	case shared.StudioUnderlineStyleNone:
@@ -2467,7 +2454,8 @@ func ooxmlNazwaPodkreslenia(odmiana shared.StudioUnderlineStyle) string {
 	return "single"
 }
 
-// ooxmlNazwaOdmianyObramowania przekłada odmianę obramowania na nazwę OOXML.
+// ooxmlNazwaOdmianyObramowania przekłada odmianę obramowania kontraktu na
+// nazwę OOXML; wartość spoza wykazu daje obramowanie pojedyncze.
 func ooxmlNazwaOdmianyObramowania(odmiana shared.StudioBorderStyle) string {
 	switch odmiana {
 	case shared.StudioBorderStyleDouble:
@@ -2482,7 +2470,8 @@ func ooxmlNazwaOdmianyObramowania(odmiana shared.StudioBorderStyle) string {
 	return "single"
 }
 
-// ooxmlNazwaTabulatora przekłada rodzaj tabulatora na nazwę OOXML.
+// ooxmlNazwaTabulatora przekłada rodzaj tabulatora kontraktu na nazwę OOXML;
+// wartość spoza wykazu daje tabulator lewy.
 func ooxmlNazwaTabulatora(rodzaj shared.StudioTabKind) string {
 	switch rodzaj {
 	case shared.StudioTabKindRight:
@@ -2497,7 +2486,8 @@ func ooxmlNazwaTabulatora(rodzaj shared.StudioTabKind) string {
 	return "left"
 }
 
-// ooxmlNazwaZnakuWiodacego przekłada znak wiodący na nazwę OOXML.
+// ooxmlNazwaZnakuWiodacego przekłada znak wiodący kontraktu na nazwę OOXML;
+// wartość spoza wykazu daje napis pusty, czyli brak znaku.
 func ooxmlNazwaZnakuWiodacego(znak shared.StudioTabLeader) string {
 	switch znak {
 	case shared.StudioTabLeaderDot:
@@ -2520,7 +2510,8 @@ func ooxmlNumerListy(nazwa string) int {
 	return 1
 }
 
-// ooxmlBezKrzyzyka sprowadza barwę kontraktu do zapisu OOXML (bez krzyżyka).
+// ooxmlBezKrzyzyka sprowadza barwę kontraktu do zapisu OOXML bez krzyżyka;
+// barwa nieprawidłowa daje napis pusty.
 func ooxmlBezKrzyzyka(barwa string) string {
 	oczyszczona := strings.TrimPrefix(strings.TrimSpace(barwa), "#")
 	if len(oczyszczona) < 6 {
@@ -2532,7 +2523,8 @@ func ooxmlBezKrzyzyka(barwa string) string {
 	return strings.ToUpper(oczyszczona[:6])
 }
 
-// ooxmlZabezpiecz zamienia znaki o znaczeniu składniowym XML na encje.
+// ooxmlZabezpiecz zamienia znaki o znaczeniu składniowym XML na encje, żeby
+// tekst dowolnej treści trafił do dokumentu bezpiecznie.
 func ooxmlZabezpiecz(tekst string) string {
 	var bufor bytes.Buffer
 	if err := xml.EscapeText(&bufor, []byte(tekst)); err != nil {
@@ -2543,14 +2535,9 @@ func ooxmlZabezpiecz(tekst string) string {
 
 // ── Nagłówek i stopka ───────────────────────────────────────────────────────
 
-// ooxmlNaglowkiArchiwum zbiera to, czego nagłówek i stopka wymagają w czterech
-// miejscach archiwum naraz: składniki z ich treścią, powiązania dokumentu, wykaz
-// typów treści i odwołania w nastawach sekcji.
-//
-// Cztery miejsca, a nie jedno, bo taki jest OOXML: składnik bez powiązania jest
-// plikiem, którego dokument nie widzi; powiązanie bez typu treści wywraca
-// otwarcie w Wordzie; a odwołanie w `w:sectPr` jest jedynym miejscem, które
-// mówi, KTÓRA sekcja którego nagłówka używa.
+// ooxmlNaglowkiArchiwum zbiera to, czego nagłówek i stopka wymagają w
+// czterech miejscach archiwum naraz: składniki z ich treścią, powiązania
+// dokumentu, wykaz typów treści i odwołania w nastawach sekcji.
 type ooxmlNaglowkiArchiwum struct {
 	skladniki  map[string]string
 	powiazania string
@@ -2558,12 +2545,10 @@ type ooxmlNaglowkiArchiwum struct {
 	odwolania  string
 }
 
-// ooxmlZlozNaglowkiStopki składa nagłówek i stopkę dokumentu.
-//
-// Zasięgi idą osobno — domyślny, pierwszej strony i stron parzystych — bo tego
-// wymaga Właściciel wprost: nagłówek osobny dla sekcji, pierwszej strony i stron
-// parzystych. Zasięg pierwszej strony dokłada do sekcji przełącznik
-// `w:titlePg`, bez którego Word nagłówka pierwszej strony nie pokaże.
+// ooxmlZlozNaglowkiStopki składa nagłówek i stopkę dokumentu. Zasięgi idą
+// osobno — domyślny, pierwszej strony i stron parzystych. Zasięg pierwszej
+// strony dokłada do sekcji przełącznik `w:titlePg`, bez którego nagłówek
+// pierwszej strony się nie pokaże.
 func ooxmlZlozNaglowkiStopki(postac *shared.StudioDocumentForm) ooxmlNaglowkiArchiwum {
 	wynik := ooxmlNaglowkiArchiwum{skladniki: map[string]string{}}
 
@@ -2572,8 +2557,8 @@ func ooxmlZlozNaglowkiStopki(postac *shared.StudioDocumentForm) ooxmlNaglowkiArc
 		wpisy = postac.Sections[0].HeadersFooters
 	}
 	if len(wpisy) == 0 && postac.PageSetup != nil {
-		// Starsza droga kontraktu: nagłówek i stopka jednym polem nastaw strony
-		// dla całego dokumentu. Klient wciąż nią jedzie, więc plik ma ją nieść.
+		// Starsza droga kontraktu: nagłówek i stopka jednym polem nastaw
+		// strony całego dokumentu.
 		wpis := shared.StudioHeaderFooter{Scope: shared.StudioHeaderScopeDefault}
 		if postac.PageSetup.Header != nil && *postac.PageSetup.Header != "" {
 			wpis.HeaderText = postac.PageSetup.Header

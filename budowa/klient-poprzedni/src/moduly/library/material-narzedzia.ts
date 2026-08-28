@@ -13,35 +13,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLiczba, czyObiekt, czyTekst, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Trzy komendy arsenału nad materiałem z dysku Operatora: `media.inspect`,
- * `media.transcode` i `archive.pack`.
- *
- * Dlaczego ścieżka na dysku, a nie zasób biblioteki. Wszystkie trzy komendy
- * rozwiązują `assetId` przez repozytorium zasobów modułu Design
- * (`server/internal/core/adapter_narzedzia_media.go`,
- * `adapter_narzedzia_archiwum.go`), a plik biblioteki leży w innym rejestrze —
- * jego identyfikator wraca stamtąd odmową `not_found`. Kontrakt niesie jednak
- * drugą drogę źródła, `sourcePath`, i mówi o niej wprost: „treść jest WCIĄGANA
- * do magazynu, nie dowiązywana". Tą drogą czynność wykonuje się naprawdę,
- * więc tą drogą idzie. Przycisk wysyłający identyfikator pliku biblioteki
- * zawodziłby zawsze i byłby przyciskiem pewnej odmowy.
- *
- * Gdzie ląduje wynik. Bajty idą do magazynu zasobów Designu — tego samego,
- * którym jedzie `design.asset.upload` (`adapter_narzedzia_wynik.go`). Pola
- * `windowId` źródło NIE podaje i to jest rozstrzygnięcie, nie przeoczenie:
- * kontrakt każe podać okno modułu Design, a moduł Library zna wyłącznie okno
- * komunikacji sesji. Okno zmyślone nie zapisałoby się w ogóle (kolumna
- * `zasob_design.okno` jest NOT NULL), a okno cudze pokazałoby wynik w wykazie,
- * do którego on nie należy. Cena jest jedna i jawna, dokładnie ta z kontraktu:
- * „bajty i tak trafiają do magazynu pod sumą kontrolną, ale zasób nie pojawi
- * się w wykazie okna". Widok mówi to Operatorowi zdaniem.
- *
- * Rodzina `media.*` nie ma w kontrakcie ani jednego zdarzenia, więc nic tu nie
- * nasłuchuje — czynność kończy się swoją odpowiedzią i niczym więcej.
- */
+// Trzy komendy arsenału nad materiałem idą ścieżką źródła, nie identyfikatorem zasobu biblioteki.
 
-/** Rodzaje przetworzenia materiału wraz z nazwą dla Operatora. */
+/** Rodzaje przetworzenia materiału wraz z nazwą widoczną dla użytkownika na liście wyboru rodzaju operacji. */
 export const RODZAJE_PRZETWORZENIA: readonly { kod: MediaOperationKind; nazwa: string }[] = [
   { kod: MediaOperationKind.Convert, nazwa: 'Zmiana formatu' },
   { kod: MediaOperationKind.Trim, nazwa: 'Wycięcie fragmentu' },
@@ -50,7 +24,7 @@ export const RODZAJE_PRZETWORZENIA: readonly { kod: MediaOperationKind; nazwa: s
   { kod: MediaOperationKind.Frame, nazwa: 'Zrzut klatki' },
 ];
 
-/** Nastawy przetworzenia zbierane z formularza. */
+/** Nastawy przetworzenia zbierane z formularza, przekazywane dalej jako pojedyncze żądanie transkodowania. */
 export interface NastawaPrzetworzenia {
   sciezka: string;
   operacja: MediaOperationKind;
@@ -61,7 +35,7 @@ export interface NastawaPrzetworzenia {
   wysokosc?: number;
 }
 
-/** Nastawy pakowania archiwum zbierane z formularza. */
+/** Nastawy pakowania archiwum zbierane z formularza, przekazywane dalej jako pojedyncze żądanie spakowania. */
 export interface NastawaPakowania {
   sciezka: string;
   format: string;
@@ -89,9 +63,7 @@ export function utworzNarzedziaMaterialu(kanal: Kanal): NarzedziaMaterialu {
     },
 
     async przetworz(nastawa) {
-      // Pola nieobowiązkowe idą wyłącznie wtedy, gdy Operator je wypełnił:
-      // zero w `startMs` jest wartością znaczącą (początek materiału), a nie
-      // brakiem, więc pusta wartość nie może jechać jako zero.
+      // Pola nieobowiązkowe idą wyłącznie po wypełnieniu: zero w polu startu jest wartością znaczącą.
       const zadanie: MediaTranscodeRequest = {
         sourcePath: nastawa.sciezka,
         operation: nastawa.operacja,
@@ -124,12 +96,8 @@ export function utworzNarzedziaMaterialu(kanal: Kanal): NarzedziaMaterialu {
 }
 
 /**
- * Nazwa wyniku dla Operatora.
- *
- * Zasób bez nazwy własnej nie jest zasobem bez tożsamości: identyfikator
- * niesie ją zawsze, a nazwa bywa pusta, gdy rdzeń jej nie nadał. Zdanie
- * „wynik: (bez nazwy)" mówiłoby o braku, którego nie ma — mówimy więc
- * identyfikatorem, bo po nim wynik da się otworzyć.
+ * Nazwa wyniku dla przeglądającego: zasób bez nazwy własnej nie jest zasobem
+ * bez tożsamości, więc puste imię zastępuje identyfikator.
  */
 export function nazwaWyniku(zasob: DesignAsset): string {
   const nazwa = (zasob.name ?? '').trim();
@@ -138,7 +106,7 @@ export function nazwaWyniku(zasob: DesignAsset): string {
   return nazwa === '' ? `${zasob.id}${ogon}` : `${nazwa}${ogon}, zasób ${zasob.id}`;
 }
 
-/** Liczba wpisana w pole; pusty napis i wartość niebędąca liczbą znaczą brak. */
+/** Liczba wpisana w pole formularza; pusty napis i wartość niebędąca liczbą oznaczają wspólnie brak wartości. */
 export function liczbaZPola(wartosc: string): number | undefined {
   const wpisana = wartosc.trim();
   if (wpisana === '') return undefined;

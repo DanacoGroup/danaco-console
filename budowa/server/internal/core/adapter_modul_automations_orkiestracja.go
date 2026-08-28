@@ -1,10 +1,6 @@
 // Odpowiedzialność pliku: okno Orchestrator — ustalenie zależności między
-// krokami, sprawdzenie układu i wskazanie ścieżki krytycznej.
-//
-// Sprawdzenie układu nie odmawia zapisu: układ zapisuje się także wtedy, gdy ma
-// cykl, a odpowiedź niesie `valid=false` wraz z zastrzeżeniami. Odmowa zapisu
-// kasowałaby pracę wykonaną do chwili wykrycia usterki, zamiast pokazać, co
-// wymaga poprawki.
+// krokami, sprawdzenie układu i wskazanie ścieżki krytycznej. Sprawdzenie
+// nie odmawia zapisu, nawet gdy układ ma cykl.
 package core
 
 import (
@@ -55,7 +51,7 @@ func wierszeZaleznosci(zaleznosci []shared.AutomationDependency) []dane.Zaleznos
 		if zaleznosc.FromStepId == "" || zaleznosc.ToStepId == "" ||
 			zaleznosc.FromStepId == zaleznosc.ToStepId {
 			// Łuk pusty i pętla własna nie przechodzą przez więzy schematu;
-			// zastrzeżenie zgłosi walidacja układu, a zapis nie ma się wywrócić.
+			// zastrzeżenie zgłosi walidacja układu.
 			continue
 		}
 		rodzaj := string(zaleznosc.Kind)
@@ -70,7 +66,8 @@ func wierszeZaleznosci(zaleznosci []shared.AutomationDependency) []dane.Zaleznos
 	return wiersze
 }
 
-// zaleznosciKontraktu przekłada wiersze układu na zależności kontraktu.
+// zaleznosciKontraktu przekłada wiersze układu z bazy danych na zależności
+// kontraktu, zwracane wołającemu.
 func zaleznosciKontraktu(wiersze []dane.ZaleznoscKroku) []shared.AutomationDependency {
 	zaleznosci := make([]shared.AutomationDependency, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -174,10 +171,8 @@ func porzadekTopologiczny(kroki []dane.KrokAutomatyki,
 	return kolejnosc, pozostale
 }
 
-// sciezkaKrytyczna wskazuje najdłuższy łańcuch kroków układu — pozycję
-// „podświetlenie ścieżki krytycznej” panelu akcji Orchestratora. Układ z cyklem
-// nie ma najdłuższej ścieżki, więc wskazanie jest wtedy puste; okno pokazuje
-// wówczas zastrzeżenia, a nie zmyśloną kolejność.
+// sciezkaKrytyczna wskazuje najdłuższy łańcuch kroków układu. Układ z
+// cyklem nie ma najdłuższej ścieżki, więc wskazanie jest wtedy puste.
 func sciezkaKrytyczna(kroki []dane.KrokAutomatyki, zaleznosci []dane.ZaleznoscKroku) []string {
 	kolejnosc, pozostale := porzadekTopologiczny(kroki, zaleznosci)
 	if len(pozostale) > 0 || len(kolejnosc) == 0 {

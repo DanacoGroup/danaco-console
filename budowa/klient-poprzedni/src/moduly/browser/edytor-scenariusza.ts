@@ -1,27 +1,15 @@
+/**
+ * Widok tekstowy scenariusza — warstwa czwarta Automation Studio, dla treści,
+ * których nie da się wyklikać kartami kroków.
+ */
+
 import { AutomationStepKind, type AutomationStep } from '../../../../shared/contract';
 import { utworzDymekObjasnienia } from '../../komponenty/dymek';
 import { poleWielowierszowe } from '../../modele/kontrolki-formularza';
 import { KLASY_DYMKA, OBJASNIENIA } from './etykiety-browser';
 import { KLASA_PRZYCISKU, przyciskCzynnosci } from './przyciski-browser';
 
-/**
- * Widok tekstowy scenariusza — warstwa czwarta Automation Studio.
- *
- * Kroki mają dwie postacie: karty w oknie i tekst tutaj. Tekst jest potrzebny
- * tam, gdzie kart nie starcza — przy warunkach, zależnościach i treści żądania
- * kroku, których nie da się wyklikać, bo są dowolnym obiektem JSON.
- *
- * Zapis przyjmuje **wyłącznie JSON**. Widok YAML jest odczytem: klient nie
- * niesie czytnika YAML, a napisanie własnego na potrzeby jednego pola byłoby
- * budowaniem parsera języka, nie okna. Notacja jest więc przełącznikiem
- * prezentacji, a nie dwiema drogami zapisu — i okno mówi to wprost, zamiast
- * przyjąć YAML i po cichu go zgubić.
- *
- * Sprawdzian treści jest surowy i wskazuje pozycję: definicja z krokiem bez
- * rodzaju przeszłaby do rdzenia i wróciła jako scenariusz, który nic nie robi.
- */
-
-/** Kroki odczytane z widoku wraz z powodem odrzucenia; pusty powód znaczy „przyjęte". */
+/** Kroki odczytane z widoku edytora wraz z powodem odrzucenia; pusty powód znaczy „przyjęte bez zastrzeżeń”. */
 export interface OdczytKrokow {
   kroki: AutomationStep[];
   blad: string;
@@ -35,7 +23,7 @@ export interface EdytorScenariusza {
   odczytaj(): OdczytKrokow;
 }
 
-/** Rodzaje kroku, które niesie kontrakt — sprawdzian przyjmuje wyłącznie te. */
+/** Rodzaje kroku scenariusza, które niesie kontrakt — sprawdzian treści przyjmuje wyłącznie te wartości. */
 const RODZAJE_KROKU: readonly string[] = Object.values(AutomationStepKind);
 
 export function utworzEdytorScenariusza(): EdytorScenariusza {
@@ -85,16 +73,14 @@ export function utworzEdytorScenariusza(): EdytorScenariusza {
       const tresc = zapis.kontrolka.value.trim();
       if (tresc === '') return { kroki: [], blad: '' };
       const wynik = rozbierz(tresc);
-      // Widok YAML nadąża za treścią przyjętą, a nie za każdą literą wpisaną:
-      // odrzucona treść zostawia poprzedni podgląd, żeby nie pokazywać kroków,
-      // których w scenariuszu nie ma.
+      // Widok YAML nadąża za treścią przyjętą, nie za każdą wpisaną literą.
       if (wynik.blad === '') podglad.textContent = naYaml(wynik.kroki);
       return wynik;
     },
   };
 }
 
-/** Treść pola JSON przełożona na kroki wraz ze sprawdzianem każdej pozycji. */
+/** Treść pola JSON przełożona na kroki scenariusza wraz ze sprawdzianem poprawności każdej jego pozycji. */
 function rozbierz(tresc: string): OdczytKrokow {
   let odczytane: unknown;
   try {
@@ -131,13 +117,8 @@ function rozbierz(tresc: string): OdczytKrokow {
 }
 
 /**
- * Kroki w notacji YAML — blok sekwencji z odwzorowaniami.
- *
- * Wartości napisowe idą w cudzysłowie zapisanym regułą JSON, bo napis JSON
- * jest zarazem poprawnym skalarem YAML w cudzysłowie podwójnym. Treść żądania
- * kroku (`params`) zostaje zapisem JSON w jednym wierszu: notacja przepływowa
- * YAML przyjmuje go bez zmiany, a rozbieranie dowolnego obiektu na wiersze
- * niczego tu nie wyjaśnia.
+ * Kroki w notacji YAML — blok sekwencji z odwzorowaniami, gdzie treść żądania
+ * kroku zostaje zapisem JSON w jednym wierszu notacji przepływowej YAML.
  */
 function naYaml(kroki: readonly AutomationStep[]): string {
   if (kroki.length === 0) return '# scenariusz nie ma ani jednego kroku';

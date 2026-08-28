@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: sprawdzenie klucza żądania `config.set` wobec
-// katalogu ustawień, zanim wiersz trafi do bazy. Klucz spoza katalogu trafiłby
-// do tabeli `ustawienie` i nigdy nie został odczytany — rozstrzygacz pyta
-// wyłącznie o klucze katalogu — więc wywołujący dostałby potwierdzenie zapisu
-// bez skutku.
-//
-// Nieznany klucz kończy się błędem jednego wywołania o kodzie
-// ErrorCodeValidationFailed: rdzeń pracuje dalej, a wywołujący dostaje nazwany
-// powód.
-//
-// Gdy rejestr definicji jest pusty — baza bez katalogu ustawień albo nieudany
-// odczyt katalogu — sprawdzenia nie ma. Pusty rejestr znaczy „nie wiadomo, co
-// jest znane", a nie „nic nie jest znane"; sprawdzenie oparte na takim rejestrze
-// zablokowałoby całą konfigurację.
+// Plik sprawdza klucz żądania config.set wobec katalogu ustawień, zanim wiersz trafi do bazy. Klucz spoza katalogu trafiłby do tabeli ustawienie i nigdy nie zostałby odczytany. Pusty rejestr definicji oznacza, że sprawdzenia nie ma.
 package core
 
 import (

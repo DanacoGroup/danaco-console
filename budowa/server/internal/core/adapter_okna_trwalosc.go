@@ -1,10 +1,6 @@
-// Odpowiedzialność pliku: utrwalenie okna komunikacji w chwili jego założenia.
-//
-// Baza jest źródłem prawdy o oknie; rejestr nadzorcy to jej widok na czas jednego
-// uruchomienia (odtworzenie_stanu.go odbudowuje sesje i okna z wierszy). Bez zapisu
-// tutaj wszystko, co pyta o okno bazę — powołanie podagentów, przekazanie okna,
-// nadania dostępu, odtworzenie stanu po restarcie — nie znajduje okna świeżo
-// otwartego. Sesję utrwala adapter_sesje.go od razu; okno utrwala ten plik.
+// Plik utrwala okno komunikacji w chwili jego założenia w bazie, będącej
+// źródłem prawdy o oknie, ponieważ rejestr nadzorcy jest jedynie jej widokiem
+// na czas jednego uruchomienia rdzenia.
 package core
 
 import (
@@ -16,11 +12,9 @@ import (
 	"danacoconsole/server/internal/session"
 )
 
-// utrwalZalozone zapisuje wiersz okna zaraz po jego założeniu w rejestrze.
-//
-// Niepowodzenie nie przerywa zakładania — tak samo jak przy sesji
-// (`adapter_sesje_usuwanie.go`): okno żyje w rejestrze i pracuje, tylko nie
-// przetrwa restartu. Rdzeń bez bazy znosi tę czynność w całości.
+// utrwalZalozone zapisuje wiersz okna zaraz po jego założeniu w rejestrze;
+// niepowodzenie zapisu nie przerywa zakładania okna, które wtedy nie przetrwa
+// restartu rdzenia.
 func (a *adapterOkien) utrwalZalozone(ctx context.Context, okno session.Okno) {
 	if a.trwalosc == nil || a.trwalosc.okna == nil || a.trwalosc.sesje == nil {
 		return
@@ -41,12 +35,9 @@ func (a *adapterOkien) utrwalZalozone(ctx context.Context, okno session.Okno) {
 	}
 }
 
-// wierszZalozonegoOkna składa wiersz okna z bytu rejestru.
-//
-// Wiersz niesie klucze obce, a rejestr — kody, więc trzy więzy trzeba
-// rozstrzygnąć: sesję, moduł i kanał modelu. Sesji się tu nie zakłada: jej
-// wiersz powstaje przy `session.create`, a okno bez sesji nie jest oknem
-// (drugie miejsce zakładania sesji byłoby drugą prawdą).
+// wierszZalozonegoOkna składa wiersz okna z bytu rejestru, rozstrzygając więzy
+// obce sesji, modułu i kanału modelu, nie zakładając przy tym wiersza samej
+// sesji.
 func (a *adapterOkien) wierszZalozonegoOkna(ctx context.Context,
 	okno session.Okno) (dane.Okno, error) {
 
@@ -87,13 +78,12 @@ func (a *adapterOkien) wierszZalozonegoOkna(ctx context.Context,
 		agent := u.Agent
 		wiersz.AgentKod = &agent
 	}
-	// Więzi koordynatora nie ustawiamy: rejestr niesie identyfikator rdzenia,
-	// a kolumna — klucz wiersza. Ustanawia ją `window.handoff`, który utrwala ją
-	// własną drogą (adapter_okno_przekazanie.go) — tak samo postępuje kopia sesji.
+	// Więzi koordynatora nie ustawia się tutaj: ustanawia ją przekazanie okna.
 	return wiersz, nil
 }
 
-// wierszModuluOkna przekłada kod modułu na wiersz katalogu.
+// wierszModuluOkna przekłada kod modułu na wiersz katalogu modułów zapisany
+// w bazie, potrzebny do ustalenia więzu obcego wiersza okna.
 func (a *adapterOkien) wierszModuluOkna(ctx context.Context, kod string) (int64, error) {
 	moduly, err := a.modulyKatalogu(ctx)
 	if err != nil {
@@ -107,7 +97,8 @@ func (a *adapterOkien) wierszModuluOkna(ctx context.Context, kod string) (int64,
 	return moduly[0].ID, nil
 }
 
-// modulyKatalogu oddaje katalog modułów albo błąd, gdy nie ma z czego wybierać.
+// modulyKatalogu oddaje katalog modułów platformy zapisanych w bazie albo błąd,
+// gdy w bazie nie ma z czego wybierać.
 func (a *adapterOkien) modulyKatalogu(ctx context.Context) ([]dane.Modul, error) {
 	if a.moduly == nil {
 		return nil, errors.New("core: katalog modułów niewpięty")

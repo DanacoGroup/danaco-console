@@ -1,13 +1,22 @@
 import { Command, KnownChannelKinds } from '../../../shared/contract';
 import type { Kanal } from '../protokol/kanal';
 
-/** Rodzaj kanału głównego — pierwsza pozycja katalogu kontraktu. */
+/**
+ * Rodzaj kanału głównego — pierwsza pozycja katalogu kontraktu, wykorzystywana przy
+ * zakładaniu rejestru kanałów.
+ */
 const RODZAJ_GLOWNY = KnownChannelKinds[0];
 
-/** Nazwa wiersza zakładanego przy braku kanału głównego w rejestrze. */
+/**
+ * Nazwa wiersza zakładanego w rejestrze kanałów przy braku kanału głównego, widoczna dla
+ * Operatora w interfejsie.
+ */
 const NAZWA_GLOWNEGO = 'Kanał główny — Claude Code CLI';
 
-/** Wynik zapewnienia kanału: identyfikator wiersza albo opis przeszkody. */
+/**
+ * Wynik zapewnienia kanału głównego: identyfikator założonego wiersza rejestru albo opis
+ * napotkanej przeszkody.
+ */
 export interface WynikZapewnienia {
   /** Identyfikator kanału z rejestru; pusty, gdy zapewnienie się nie udało. */
   idKanalu: string;
@@ -18,16 +27,8 @@ export interface WynikZapewnienia {
 }
 
 /**
- * Zapewnia w rejestrze kanałów wiersz kanału głównego.
- *
- * Rejestr kanałów jest sterowany danymi: kanał istnieje wtedy, gdy istnieje
- * jego wiersz, a nie wtedy, gdy typ dopisano w kodzie. Świeża baza rdzenia nie
- * ma ani jednego wiersza, więc okno komunikacji nie miałoby czym rozmawiać —
- * warstwa dokłada wiersz komendą `channel.add`, tak samo jak zrobiłby to
- * Operator w panelu sterowania okna.
- *
- * Niepowodzenie nie przerywa niczego poza tym wywołaniem: wynik niesie opis
- * przeszkody, a okno pozostaje czynne.
+ * Zapewnia w rejestrze kanałów wiersz kanału głównego, dokładając go komendą channel.add,
+ * gdy rejestr go nie ma.
  */
 export function zapewnijKanalGlowny(
   kanal: Kanal,
@@ -48,8 +49,14 @@ export function zapewnijKanalGlowny(
     zaloz(kanal, gotowe);
   });
 }
-
-/** Dokłada wiersz kanału głównego do rejestru. */
+/**
+ * Dokłada nowy wiersz kanału głównego do rejestru kanałów, dokładnie tak samo, jak
+ * zrobiłby to sam Operator ręcznie w panelu.
+ */
+/**
+ * Dokłada nowy wiersz kanału głównego do rejestru kanałów prowadzonego przez rdzeń tej
+ * aplikacji.
+ */
 function zaloz(kanal: Kanal, gotowe: (wynik: WynikZapewnienia) => void): void {
   kanal.wyslij(
     Command.ChannelAdd,
@@ -65,7 +72,10 @@ function zaloz(kanal: Kanal, gotowe: (wynik: WynikZapewnienia) => void): void {
   );
 }
 
-/** Opis przeszkody dla Operatora; pusty komunikat rdzenia zastępuje zdanie zastępcze. */
+/**
+ * Opis przeszkody przeznaczony dla Operatora; pusty komunikat zwrócony przez rdzeń
+ * zastępuje zdanie zastępcze.
+ */
 function opis(komunikat: string | undefined): string {
   return komunikat === undefined || komunikat.length === 0
     ? 'rdzeń nie podał przyczyny'

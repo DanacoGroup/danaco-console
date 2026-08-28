@@ -1,17 +1,8 @@
+// Plik niesie słownik cyklu życia zlecenia kolejki: wartości kolumn stanu i werdyktu weryfikacji
+// oraz tabelę przejść jednego kroku pętli koordynator–wykonawca.
 package core
 
 import "danacoconsole/server/internal/dane"
-
-// Słownik cyklu życia zlecenia kolejki: wartości kolumn `pozycja_kolejki.stan`
-// i `pozycja_kolejki.werdykt_weryfikacji` oraz tabela przejść jednego kroku
-// pętli koordynator–wykonawca.
-//
-// `shared/contract.json` opisuje kolejkę (Queue, QueueStatus, QueueAction), ale
-// nie opisuje pozycji kolejki: nie ma ani struktury pozycji, ani wyliczenia jej
-// stanów, ani werdyktu weryfikacji. Słownik poniżej odwzorowuje więc więzy
-// CHECK schematu (`migracja_003_kolejki.sql`) i stoi w jednym miejscu, żeby
-// drugiego odwzorowania nie było. Po dopisaniu wyliczenia do kontraktu ten plik
-// ustępuje stałym z `shared`.
 
 const (
 	stanPozycjiOczekuje      = "oczekuje"
@@ -38,12 +29,8 @@ var stanyKoncowePozycji = map[string]struct{}{
 	stanPozycjiUkonczona: {}, stanPozycjiBledna: {}, stanPozycjiAnulowana: {},
 }
 
-// krokNaprzod to tabela przejść pozycji o jeden krok pętli. Stan bez wpisu jest
-// stanem końcowym — krok naprzód nic wtedy nie zmienia.
-//
-// Stan 'przydzielona' ma wpis, choć rdzeń go nie wystawia: pozycja przydzielona
-// oknu wykonawcy powstaje poza tą drogą (kolumna `okno_wykonawcy_id`), a silnik
-// ma umieć ją podjąć zamiast się na niej zatrzymać.
+// krokNaprzod to tabela przejść pozycji o jeden krok pętli. Stan bez wpisu jest stanem końcowym —
+// krok naprzód nic wtedy nie zmienia.
 var krokNaprzod = map[string]string{
 	stanPozycjiOczekuje:      stanPozycjiWykonywana,
 	stanPozycjiPrzydzielona:  stanPozycjiWykonywana,
@@ -62,7 +49,7 @@ func werdyktKroku(stan string) *string {
 	return &werdykt
 }
 
-// czyStanKoncowyPozycji mówi, czy pozycja w tym stanie nie wróci już do pracy.
+// czyStanKoncowyPozycji mówi, czy pozycja w tym stanie nie wróci już do pracy silnika kolejki rdzenia.
 func czyStanKoncowyPozycji(stan string) bool {
 	_, koncowy := stanyKoncowePozycji[stan]
 	return koncowy

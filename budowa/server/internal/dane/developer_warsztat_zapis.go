@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: zapis warsztatu modułu Developer — punkty przerwania,
-// kolekcje zapytań API, połączenia bazodanowe, przebiegi skanowania wraz ze
-// znaleziskami oraz wyniki testów i pokrycie przebiegu budowania.
-//
-// Zapisy zbiorcze (znaleziska skanu, wyniki testów, pokrycie) idą jedną
-// transakcją i zaczynają się od usunięcia poprzedniego pomiaru. Pomiar jest
-// stanem z jednej chwili, nie przyrostem: dopisanie drugiego przebiegu do
-// pierwszego dałoby wykaz, w którym ten sam test stoi dwa razy z dwoma różnymi
-// wynikami i nie da się rozstrzygnąć, który jest dzisiejszy.
+// Warstwa danych obsługuje zapis warsztatu modułu Developer: punkty
+// przerwania, kolekcje zapytań, połączenia bazodanowe, skanowania ze
+// znaleziskami oraz wyniki testów i pokrycie budowania.
 package dane
 
 import (
@@ -83,7 +77,8 @@ const (
 	                           VALUES (?, ?, ?, ?, ?, ?)`
 )
 
-// ZapiszPunktPrzerwania zakłada albo odświeża punkt przerwania.
+// ZapiszPunktPrzerwania zakłada albo odświeża punkt przerwania w pliku okna
+// po kluczu okna, ścieżki i wiersza.
 func (r *repozytoriumDevelopera) ZapiszPunktPrzerwania(ctx context.Context,
 	punkt PunktPrzerwania) error {
 
@@ -102,7 +97,8 @@ func (r *repozytoriumDevelopera) ZapiszPunktPrzerwania(ctx context.Context,
 	return nil
 }
 
-// UsunPunktPrzerwania zdejmuje punkt z wiersza pliku.
+// UsunPunktPrzerwania zdejmuje punkt przerwania z wiersza pliku wskazanego
+// okna i danej ścieżki na wierszu.
 func (r *repozytoriumDevelopera) UsunPunktPrzerwania(ctx context.Context,
 	oknoKod, sciezka string, wiersz int64) error {
 
@@ -116,7 +112,8 @@ func (r *repozytoriumDevelopera) UsunPunktPrzerwania(ctx context.Context,
 	return nil
 }
 
-// ZapiszKolekcjeApi zakłada albo nadpisuje kolekcję zapytań.
+// ZapiszKolekcjeApi zakłada albo nadpisuje kolekcję zapytań HTTP danego okna
+// po jej identyfikatorze wiersza.
 func (r *repozytoriumDevelopera) ZapiszKolekcjeApi(ctx context.Context, kolekcja KolekcjaApi) error {
 	if kolekcja.Kod == "" || kolekcja.OknoKod == "" || kolekcja.Nazwa == "" {
 		return fmt.Errorf("dane: kolekcja zapytań bez identyfikatora, okna albo nazwy")
@@ -136,7 +133,8 @@ func (r *repozytoriumDevelopera) ZapiszKolekcjeApi(ctx context.Context, kolekcja
 	return nil
 }
 
-// ZapiszPolaczenieDanych zakłada albo nadpisuje opis połączenia bazodanowego.
+// ZapiszPolaczenieDanych zakłada albo nadpisuje opis połączenia bazodanowego
+// wraz z jego ustawieniami.
 func (r *repozytoriumDevelopera) ZapiszPolaczenieDanych(ctx context.Context,
 	polaczenie PolaczenieDanych) error {
 
@@ -156,7 +154,8 @@ func (r *repozytoriumDevelopera) ZapiszPolaczenieDanych(ctx context.Context,
 	return nil
 }
 
-// ZapiszSkan zakłada albo domyka przebieg skanowania.
+// ZapiszSkan zakłada nowy albo domyka istniejący przebieg skanowania
+// bezpieczeństwa i jakości repozytorium.
 func (r *repozytoriumDevelopera) ZapiszSkan(ctx context.Context, skan PrzebiegSkanu) error {
 	if skan.Kod == "" || skan.OknoKod == "" {
 		return fmt.Errorf("dane: przebieg skanowania bez identyfikatora albo okna")
@@ -172,7 +171,8 @@ func (r *repozytoriumDevelopera) ZapiszSkan(ctx context.Context, skan PrzebiegSk
 	return nil
 }
 
-// ZapiszZnaleziska dopisuje spostrzeżenia przebiegu skanowania jedną transakcją.
+// ZapiszZnaleziska dopisuje spostrzeżenia przebiegu skanowania jedną
+// transakcją, wiersz po wierszu skanu.
 func (r *repozytoriumDevelopera) ZapiszZnaleziska(ctx context.Context,
 	znaleziska []ZnaleziskoSkanu) error {
 
@@ -195,7 +195,8 @@ func (r *repozytoriumDevelopera) ZapiszZnaleziska(ctx context.Context,
 	})
 }
 
-// ZapiszWynikiTestow zastępuje wyniki testów przebiegu budowania.
+// ZapiszWynikiTestow zastępuje wyniki testów przebiegu budowania nowym
+// zestawem w jednej transakcji bazy.
 func (r *repozytoriumDevelopera) ZapiszWynikiTestow(ctx context.Context, budowanieKod string,
 	wyniki []WynikTestu) error {
 
@@ -224,7 +225,8 @@ func (r *repozytoriumDevelopera) ZapiszWynikiTestow(ctx context.Context, budowan
 	})
 }
 
-// ZapiszPokrycie zastępuje pomiar pokrycia przebiegu budowania.
+// ZapiszPokrycie zastępuje pomiar pokrycia kodu przebiegu budowania nowym
+// zestawem w jednej transakcji.
 func (r *repozytoriumDevelopera) ZapiszPokrycie(ctx context.Context, budowanieKod string,
 	pokrycie []PokryciePliku) error {
 
@@ -253,8 +255,8 @@ func (r *repozytoriumDevelopera) ZapiszPokrycie(ctx context.Context, budowanieKo
 	})
 }
 
-// liczbaZPrawdy przekłada prawdę na liczbę, którą SQLite trzyma zamiast typu
-// logicznego.
+// liczbaZPrawdy przekłada wartość logiczną na liczbę, którą SQLite trzyma
+// zamiast osobnego typu logicznego.
 func liczbaZPrawdy(prawda bool) int64 {
 	if prawda {
 		return 1

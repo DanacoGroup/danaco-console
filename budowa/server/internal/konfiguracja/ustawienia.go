@@ -4,67 +4,51 @@ package konfiguracja
 
 import "fmt"
 
-// PortDomyslny to port nasłuchu rdzenia przyjmowany bez wskazania Operatora.
+// PortDomyslny to port nasłuchu rdzenia przyjmowany bez wskazania Operatora
+// w argumentach uruchomienia.
 const PortDomyslny = 17870
 
-// Konfiguracja to komplet ustawień rdzenia ustalony w chwili startu procesu.
+// Konfiguracja to komplet ustawień rdzenia ustalony w chwili startu procesu
+// i niezmienny do jego końca.
 type Konfiguracja struct {
 	Rola          Rola   // która część rdzenia pracuje w tym procesie
 	Port          int    // port nasłuchu rdzenia
 	KatalogDanych string // katalog danych rdzenia
-	// KatalogKlienta wskazuje pakiet interfejsu serwowany obok gniazda.
-	// Brak pakietu nie wstrzymuje startu — gniazdo działa bez plików.
+	// KatalogKlienta wskazuje pakiet interfejsu serwowany obok gniazda; brak
+	// nie wstrzymuje startu.
 	KatalogKlienta string
-	// KatalogProfili wskazuje katalog profili kanału głównego. Poświadczenia
-	// zostają w profilach na dysku; rdzeń zna wyłącznie odwołanie.
-	// Wartość pusta jest dopuszczalna: pula kont startuje wtedy pusta.
+	// KatalogProfili wskazuje katalog profili kanału głównego; wartość pusta
+	// jest dopuszczalna.
 	KatalogProfili string
 
-	// Ustawienia brzegu transportu — adres nasłuchu, TLS i wykaz pochodzeń —
-	// stoją tu razem z resztą ustawień startu, bo tylko stąd sięgają po nie
-	// warstwy wartości domyślnych, zmiennych środowiska i argumentów wywołania.
+	// Ustawienia brzegu transportu: adres nasłuchu, TLS i wykaz pochodzeń.
 
 	// Adres wskazuje interfejs nasłuchu. Puste = pętla zwrotna.
 	Adres string
 
-	// Konto nadawcze platformy — nim idą dwa listy systemowe: potwierdzenie
-	// adresu przy rejestracji i droga odzyskania konta. Nie jest to skrzynka
-	// Operatora: gdyby platforma pisała jego kontem, utrata dostępu do skrzynki
-	// odcinałaby drogę odzyskania dokładnie wtedy, gdy jest potrzebna.
-	//
-	// Brak tych wartości nie wstrzymuje startu rdzenia — wstrzymuje wyłącznie
-	// rejestrację, i to odmową nazywającą brak wprost. Rdzeń bez konta
-	// nadawczego pracuje dla Operatora już zalogowanego.
+	// Konto nadawcze platformy, nie skrzynka operatora; nim idą listy
+	// potwierdzenia i odzyskania konta.
 	NadawcaHost       string
 	NadawcaPort       int
 	NadawcaUzytkownik string
 	NadawcaSekret     string
 	NadawcaAdres      string
 	NadawcaNazwa      string
-	// NadawcaStartTLS ma trzy stany, stąd wskaźnik: nil = wartość domyślna
-	// (szyfrowanie włączone), false = jawne zejście do rozmowy otwartym tekstem
-	// dla przekaźnika na tej samej maszynie.
+	// NadawcaStartTLS ma trzy stany: nil oznacza szyfrowanie włączone, false
+	// zejście do tekstu otwartego.
 	NadawcaStartTLS *bool
-	// WszystkieInterfejsy wystawia nasłuch na wszystkich interfejsach maszyny.
-	// Osobne pole, a nie pusty adres: „nie wskazałem" i „chcę wszędzie" to dwa
-	// różne zdania i mają wyglądać różnie w miejscu wywołania.
+	// WszystkieInterfejsy wystawia nasłuch na wszystkich interfejsach, nie
+	// tylko na pętli zwrotnej.
 	WszystkieInterfejsy bool
-	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS. Wskazanie obu
-	// przełącza nasłuch na wss; wskazanie jednego zatrzymuje start, bo cicha
-	// praca otwartym tekstem po wskazaniu certyfikatu byłaby zejściem poniżej
-	// wskazania. Rozstrzyga to warstwa transportu, tu wartość tylko przechodzi.
+	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS
+	// przełączających nasłuch na wss.
 	CertyfikatTLS string
 	KluczTLS      string
-	// WymogLogowania jest dźwignią Operatora nad strażą bramki warstwy
-	// transportu. Trzy stany, stąd wskaźnik: nil = rozstrzyga adres nasłuchu
-	// (poza pętlą zwrotną wymóg obowiązuje sam z siebie), true = wymóg także na
-	// pętli zwrotnej, false = wymóg zniesiony, a dziennik mówi o tym wprost.
-	// Rozstrzyga warstwa transportu, tu wartość tylko przechodzi. Nastawa
-	// obowiązuje od startu procesu: warstwa nasłuchu nie przyjmuje zmiany
-	// wymogu na żywo.
+	// WymogLogowania jest dźwignią operatora nad strażą bramki warstwy
+	// transportu; ma trzy stany.
 	WymogLogowania *bool
 	// PochodzeniaDozwolone dopisuje wzorce nagłówka Origin przyjmowane przy
-	// nawiązaniu gniazda. Pochodzeń własnych produktu nie zastępuje.
+	// nawiązaniu gniazda.
 	PochodzeniaDozwolone []string
 }
 
@@ -80,7 +64,8 @@ func Domyslna() Konfiguracja {
 	}
 }
 
-// Opis zwraca jednowierszowy zapis konfiguracji przeznaczony do dziennika.
+// Opis zwraca jednowierszowy zapis konfiguracji przeznaczony do dziennika
+// startu i diagnostyki rdzenia.
 func (k Konfiguracja) Opis() string {
 	return fmt.Sprintf("rola=%s port=%d dane=%s", k.Rola, k.Port, k.KatalogDanych)
 }

@@ -12,8 +12,7 @@ import { utworzPulpitProby } from './pulpit-proby';
 import { zasiejTrescProbna } from './tresc-probna';
 import { utworzUkladOkien } from './uklad-okien';
 
-// Punkt wejścia strony podglądu układu okien równoległych. Wyłącznie
-// kompozycja: motyw, układ, treść przykładowa, pulpit prób, parametry adresu.
+// Punkt wejścia strony podglądu układu, łączący motyw, treść przykładową i parametry adresu.
 
 const gospodarz = document.querySelector<HTMLElement>('#danaco-podglad') ?? document.body;
 const parametry = odczytajParametry(window.location.href);
@@ -21,8 +20,7 @@ const parametry = odczytajParametry(window.location.href);
 uruchomMotyw();
 zastosujMotywPodgladu(parametry);
 
-// Stanowisko podglądu nie ma rdzenia i nie osadza rozmowy z zewnątrz —
-// bez tego ustawienia jego gniazda byłyby puste (patrz `OpcjeGniazda`).
+// Stanowisko podglądu nie ma rdzenia i nie osadza rozmowy prowadzonej w rzeczywistej aplikacji, dlatego układ okien otrzymuje puste gniazda w każdym uruchomieniu podglądu.
 const uklad = utworzUkladOkien({ wbudowanaRozmowa: true });
 
 gospodarz.append(uklad.element, utworzPulpitProby(uklad));

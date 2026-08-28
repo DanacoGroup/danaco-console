@@ -8,18 +8,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Źródło katalogu rozszerzeń — pięć komend rodziny `extension.*`.
- *
- * Katalog stoi osobno od `zrodlo-zaplecza`, bo obie warstwy odpowiadają za co
- * innego: zaplecze niesie rejestry, z których moduł Agents tylko korzysta —
- * kanały modelu, mosty MCP, okna sesji — a katalogiem rozszerzeń moduł zarządza,
- * instaluje i odinstalowuje pozycje.
- *
- * Katalog obejmuje rodzaje wymienione w `ExtensionKind`: serwer MCP, wtyczkę,
- * integrację API i skill.
- *
- * Źródło przekazuje pola kontraktu i oddaje odpowiedź rdzenia bez dopowiedzenia;
- * o tym, czym jest instalacja pozycji, rozstrzyga rdzeń, nie ta warstwa.
+ * Źródło katalogu rozszerzeń — pięć komend rodziny `extension.*`, obejmujących
+ * rodzaje wymienione w `ExtensionKind`. Źródło przekazuje pola kontraktu i oddaje
+ * odpowiedź rdzenia bez dopowiedzenia.
  */
 export interface ZrodloRozszerzen {
   /** `extension.list` — katalog w kolejności wyświetlania, opcjonalnie zawężony. */

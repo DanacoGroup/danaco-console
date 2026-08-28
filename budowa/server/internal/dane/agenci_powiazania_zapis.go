@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: zapis powiązań eksperta — przypisanie umiejętności,
-// podłączenie konektora i ustalenie uprawnienia.
-//
-// Każdy zapis oddaje eksperta po zmianie: kontrakt tak stanowi dla
-// `agent.skill.add` i `agent.permission.set` (wynik `Agent`), więc repozytorium
-// nie zostawia warstwie wyższej drugiego odczytu do wykonania.
+// Plik zapisuje powiązania eksperta: przypisanie umiejętności, podłączenie konektora oraz ustalenie uprawnienia; każdy
+// zapis oddaje ekspertowi zwrotnie zmieniony wiersz, więc warstwa wyższa nie wykonuje drugiego odczytu.
 package dane
 
 import (
@@ -53,7 +49,7 @@ func (r *repozytoriumAgentow) DodajUmiejetnosc(ctx context.Context, kodAgenta, k
 	return r.PoKodzie(ctx, kodAgenta)
 }
 
-// DodajKonektor podłącza ekspertowi konektor i oddaje zapisany wiersz.
+// DodajKonektor podłącza ekspertowi konektor i oddaje zapisany wiersz konektora wraz z nadanym numerem.
 func (r *repozytoriumAgentow) DodajKonektor(ctx context.Context, konektor KonektorAgenta) (KonektorAgenta, error) {
 	agent, err := r.PoKodzie(ctx, konektor.AgentKod)
 	if err != nil {
@@ -75,7 +71,7 @@ func (r *repozytoriumAgentow) DodajKonektor(ctx context.Context, konektor Konekt
 	return r.konektorPoKodzie(ctx, konektor.Kod)
 }
 
-// UstawUprawnienie przyznaje albo odbiera uprawnienie w jednej grupie zakresu.
+// UstawUprawnienie przyznaje albo odbiera uprawnienie eksperta w jednej grupie zakresu i oddaje zmieniony wiersz.
 func (r *repozytoriumAgentow) UstawUprawnienie(ctx context.Context, kodAgenta string,
 	uprawnienie UprawnienieAgenta) (Agent, error) {
 
@@ -96,7 +92,7 @@ func (r *repozytoriumAgentow) UstawUprawnienie(ctx context.Context, kodAgenta st
 	return r.PoKodzie(ctx, kodAgenta)
 }
 
-// konektorPoKodzie odczytuje jeden konektor wraz z kodem jego eksperta.
+// konektorPoKodzie odczytuje jeden konektor wraz z kodem jego eksperta na podstawie kodu konektora eksperta.
 func (r *repozytoriumAgentow) konektorPoKodzie(ctx context.Context, kod string) (KonektorAgenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, konektorPoKodzie)
 	if err != nil {

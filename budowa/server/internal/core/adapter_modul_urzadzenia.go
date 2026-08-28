@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: wykaz urządzeń powiązanych z kontem właściciela
-// (`device.list`) i unieważnienie tokenu wskazanego urządzenia (`device.revoke`).
-//
-// ── SKĄD BIERZE SIĘ WYKAZ ────────────────────────────────────────────────────
-// Urządzeniem konta jest to, które kiedykolwiek weszło przez bramkę — a to
-// wiedzą sesje bramki. Osobnej tabeli urządzeń nie ma z rozmysłem: wymagałaby
-// sprzątania wierszy, których nic już nie dotyczy, i rozjeżdżałaby się z prawdą
-// przy pierwszym unieważnieniu, o którym ktoś zapomniałby ją powiadomić.
-//
-// ── DLACZEGO „TO URZĄDZENIE" JEST POLEM DANYCH ──────────────────────────────
-// Wiersz własnego urządzenia wygląda w wykazie tak samo jak każdy inny, więc bez
-// oznaczenia Operator odbiera dostęp sobie i traci go w tej samej chwili.
-// Rozstrzygnięcie należy do rdzenia, nie do klienta: klient zna identyfikator,
-// który sam nadał, ale nie wie, którą sesją stoi połączenie.
+// Odpowiedzialność pliku: wykaz urządzeń powiązanych z kontem właściciela (`device.list`)
+// i unieważnienie tokenu wskazanego urządzenia (`device.revoke`), złożone z sesji bramki.
 package core
 
 import (
@@ -23,7 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterUrzadzen wypełnia port Urzadzenia.
+// adapterUrzadzen wypełnia port Urzadzenia, złożony z sesji bramki bez osobnej tabeli urządzeń tego konta.
 type adapterUrzadzen struct {
 	repozytorium dane.RepozytoriumUwierzytelnienia
 	wiez         *wiezBramki
@@ -33,9 +21,7 @@ func nowyAdapterUrzadzen(repozytorium dane.RepozytoriumUwierzytelnienia) *adapte
 	return &adapterUrzadzen{repozytorium: repozytorium}
 }
 
-// ── device.list ──────────────────────────────────────────────────────────────
-
-// WykazUrzadzen obsługuje `device.list`.
+// WykazUrzadzen obsługuje `device.list` i oddaje wykaz urządzeń wynikający wprost z sesji bramki tego konta.
 func (a *adapterUrzadzen) WykazUrzadzen(ctx context.Context,
 	_ shared.DeviceListRequest) (shared.DeviceListResponse, error) {
 
@@ -59,14 +45,8 @@ func (a *adapterUrzadzen) WykazUrzadzen(ctx context.Context,
 	return shared.DeviceListResponse{Devices: wykaz}, nil
 }
 
-// ── device.revoke ────────────────────────────────────────────────────────────
-
-// UniewaznijUrzadzenie obsługuje `device.revoke`.
-//
-// Unieważnienie własnego urządzenia jest dozwolone i nie jest pomyłką: Operator
-// bywa przy cudzej maszynie i zamyka na niej swój dostęp świadomie. Klient wie,
-// które urządzenie jest bieżące (pole `current` wykazu), więc ostrzeżenie należy
-// do ekranu, a nie do odmowy rdzenia — blokada tutaj byłaby bramkowaniem.
+// UniewaznijUrzadzenie obsługuje `device.revoke`; unieważnienie własnego urządzenia jest
+// dozwolone i nie jest pomyłką, bo klient sam ostrzega, gdy dotyczy urządzenia bieżącego.
 func (a *adapterUrzadzen) UniewaznijUrzadzenie(ctx context.Context,
 	z shared.DeviceRevokeRequest) (shared.DeviceRevokeResponse, error) {
 
@@ -79,17 +59,12 @@ func (a *adapterUrzadzen) UniewaznijUrzadzenie(ctx context.Context,
 	if err != nil {
 		return shared.DeviceRevokeResponse{}, err
 	}
-	// Zero zamkniętych sesji NIE jest odmową: urządzenie mogło już nie mieć
-	// ważnego tokenu, a skutek żądany przez Operatora — „to urządzenie nie ma
-	// dostępu" — i tak obowiązuje.
+	// Zero zamkniętych sesji nie jest odmową: skutek żądany przez Operatora i tak obowiązuje.
 	return shared.DeviceRevokeResponse{Revoked: zamkniete > 0}, nil
 }
 
-// urzadzenieBiezace odczytuje urządzenie sesji, którą stoi to połączenie.
-//
-// Pusty wynik znaczy „rdzeń nie wie" i wykaz nie oznacza wtedy żadnego wiersza
-// jako bieżącego. Zgadywanie po ostatnim wejściu byłoby gorsze niż milczenie:
-// wskazałoby cudzą maszynę jako własną.
+// urzadzenieBiezace odczytuje urządzenie sesji, którą stoi to połączenie; pusty wynik
+// znaczy, że rdzeń nie wie, zamiast zgadywać cudzą maszynę jako własną.
 func (a *adapterUrzadzen) urzadzenieBiezace(ctx context.Context) string {
 	if a.wiez == nil {
 		return ""

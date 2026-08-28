@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: odczyt biblioteki ekspertów modułu Agents (tabele
-// `agent`, `agent_umiejetnosc`, `agent_konektor`, `agent_uprawnienie` z migracji
-// 037–038). Zapis leży w `agenci_zapis.go`, powiązania w `agenci_powiazania.go`.
-//
-// Ekspert jest komponentem własnym. Nie jest sesją ani oknem: żyje dłużej niż
-// jedno i drugie, a okna modułu Agents wyłącznie go opisują.
-//
-// Odczyt wykazu nie mnoży zapytań: trzy tabele podrzędne czytamy w całości raz
-// na wywołanie i grupujemy po numerze eksperta, zamiast pytać o nie osobno dla
-// każdego wiersza wykazu. Biblioteka ekspertów jest zbiorem rzędu dziesiątek,
-// więc koszt jest stały i przewidywalny.
+// Plik odczytuje bibliotekę ekspertów modułu Agents z tabel agent, agent_umiejetnosc, agent_konektor
+// oraz agent_uprawnienie, grupując wyniki trzech tabel podrzędnych po numerze eksperta w jednym przebiegu zapytań.
 package dane
 
 import (
@@ -37,47 +28,20 @@ type Agent struct {
 	Aktywny             bool
 	Utworzono           string
 	Zaktualizowano      string
-	// ImieWlasne to imię, które widzi Operator; `Nazwa` zostaje napisem
-	// technicznym, po którym idzie porządek wykazu (migracja 073).
+	// ImieWlasne to imię widoczne dla Operatora; `Nazwa` pozostaje napisem technicznym porządku wykazu.
 	ImieWlasne string
-	// Favikon niesie odwołanie do znaku graficznego, nie jego bajty.
-	Favikon string
-	// UstawieniaJSON niesie treść pliku `--settings` nakładanego przez eksperta:
-	// zaczepy (hooks) i reguły narzędzi (migracja 085). Pusty znaczy „ekspert nie
-	// nakłada własnych ustawień" — okno rusza z ustawieniami sesji.
-	//
-	// Napis w całości, nie rozebrany na kolumny: kształt tego pliku należy do
-	// CLI, nie do platformy, więc rdzeń go przenosi, a nie wersjonuje.
+	Favikon    string
+	// UstawieniaJSON niesie treść pliku `--settings` eksperta; pusty znaczy brak ustawień własnych.
 	UstawieniaJSON string
-	// TrybNakladki rozstrzyga, czy instrukcja eksperta dopisuje się do globalnego
-	// promptu systemowego ('DOLACZ' — opcja domyślna), czy staje się nim
-	// ('ZASTAP' — odstępstwo od ustawień domyślnych, oznaczane przez Operatora
-	// świadomie). Wartości kontraktu wprost (`shared.IdentityMode`), bo katalog
-	// jest jeden i nie powtarzamy go tu drugi raz. Kolumna z migracji
-	// 081; pusty napis nie występuje, bo kolumna jest NOT NULL z wartością
-	// domyślną.
+	// TrybNakladki rozstrzyga, czy instrukcja eksperta dopisuje się do promptu, czy go zastępuje.
 	TrybNakladki string
-	// Widocznosc rozstrzyga, czy ekspert pokazuje się wszędzie ('global'), czy
-	// wyłącznie w projektach, do których jest przypisany ('project') — wartości
-	// kontraktu wprost (`shared.AgentVisibility`), kolumna z migracji 121.
-	// Przynależności do projektu to pole nie niesie: tę zapisuje tabela
-	// `przypisanie_agenta_projektu` (migracja 035) i tylko ona.
+	// Widocznosc rozstrzyga, czy ekspert jest widoczny wszędzie, czy tylko w przypisanych projektach.
 	Widocznosc string
-	// PoziomyPamieci niesie poziomy pamięci z definicji eksperta (tabela
-	// `agent_pamiec_poziom`, migracja 121) w porządku alfabetycznym.
-	//
-	// Wycinek pusty znaczy pamięć wyłączoną w całości — to jedyny zapis
-	// wyłączenia i dlatego wyłączenie nie ma własnej wartości poziomu. Wartość
-	// piąta obok czterech pozwoliłaby ułożyć stan sprzeczny („sesja" i „wyłączona"
-	// naraz), którego nikt nie umiałby rozstrzygnąć bez zgadywania.
+	// PoziomyPamieci niesie poziomy pamięci eksperta w porządku alfabetycznym; pusty wyłącza pamięć.
 	PoziomyPamieci []string
-	// LimitPodagentow to górna liczba jednoczesnych podagentów eksperta
-	// (kolumna z migracji 276). Zero znaczy Subagent Network wyłączony — jedyny
-	// zapis wyłączenia; wartość wyjściowa 15 jest maksimum technicznym platformy.
+	// LimitPodagentow to górna liczba jednoczesnych podagentów eksperta; zero wyłącza Subagent Network.
 	LimitPodagentow int
-	// ModulyZastosowania niesie kody modułów, w których ekspert pojawia się jako
-	// wykonawca doraźny (tabela `agent_modul_zastosowania`, migracja 276).
-	// Wycinek pusty znaczy BRAK OGRANICZENIA, a nie brak odpowiedzi.
+	// ModulyZastosowania niesie kody modułów, w których ekspert działa jako wykonawca doraźny.
 	ModulyZastosowania []string
 	// Umiejetnosci niesie kody umiejętności w porządku alfabetycznym.
 	Umiejetnosci []string
@@ -87,8 +51,7 @@ type Agent struct {
 	Uprawnienia []UprawnienieAgenta
 }
 
-// UprawnienieAgenta to wiersz `agent_uprawnienie`. Zakres pusty obejmuje całą
-// grupę.
+// UprawnienieAgenta to wiersz tabeli `agent_uprawnienie`, w którym zakres pusty obejmuje całą grupę uprawnień eksperta.
 type UprawnienieAgenta struct {
 	Grupa     string
 	Zakres    string
@@ -110,32 +73,24 @@ type KonektorAgenta struct {
 	Utworzono      string
 }
 
-// FiltrAgentow zawęża wykaz biblioteki. Pole puste znaczy „bez zawężenia”.
+// FiltrAgentow zawęża wykaz biblioteki ekspertów według projektu i limitu wierszy; pole puste oznacza brak zawężenia.
 type FiltrAgentow struct {
 	Fraza        string
 	TylkoAktywne bool
-	// KodProjektu zawęża wykaz do ekspertów WIDOCZNYCH w tym projekcie:
-	// wszystkich `global` oraz tych `project`, które zostały do niego przypisane
-	// (`przypisanie_agenta_projektu`, migracja 035). Pusty znaczy bibliotekę
-	// w całości — okno Agent Buildera musi widzieć także ekspertów projektowych,
-	// bo inaczej nie dałoby się ich poprawić.
+	// KodProjektu zawęża wykaz do ekspertów widocznych w tym projekcie; pusty zwraca całą bibliotekę.
 	KodProjektu string
-	// Granica ogranicza liczbę zwróconych wierszy; zero i wartości ujemne
-	// znaczą „bez granicy”. Liczba wszystkich spełniających warunki wraca
-	// osobno, żeby okno wiedziało, ile pozycji ucięto.
+	// Granica ogranicza liczbę zwróconych wierszy; zero i wartości ujemne oznaczają brak granicy.
 	Granica int
 }
 
-// RepozytoriumAgentow jest kontraktem biblioteki ekspertów.
+// RepozytoriumAgentow jest kontraktem biblioteki ekspertów, obejmującym odczyt wykazu, odczyt pojedynczego eksperta oraz zapis poziomów pamięci.
 type RepozytoriumAgentow interface {
 	Lista(ctx context.Context, filtr FiltrAgentow) ([]Agent, int, error)
 	PoKodzie(ctx context.Context, kod string) (Agent, error)
 	Dodaj(ctx context.Context, agent Agent) (Agent, error)
 	Aktualizuj(ctx context.Context, agent Agent) (Agent, error)
 	Usun(ctx context.Context, kod string) (bool, error)
-	// UstawPoziomyPamieci zastępuje komplet poziomów pamięci eksperta. Wycinek
-	// pusty jest żądaniem wyłączenia pamięci, nie brakiem żądania — rozróżnienie
-	// „pominięto pole" od „podano listę pustą" należy do warstwy wyższej.
+	// UstawPoziomyPamieci zastępuje komplet poziomów pamięci eksperta; wycinek pusty wyłącza pamięć.
 	UstawPoziomyPamieci(ctx context.Context, kodAgenta string, poziomy []string) (Agent, error)
 	DodajUmiejetnosc(ctx context.Context, kodAgenta, kodUmiejetnosci string) (Agent, error)
 	DodajKonektor(ctx context.Context, konektor KonektorAgenta) (KonektorAgenta, error)
@@ -185,8 +140,7 @@ func (r *repozytoriumAgentow) Lista(ctx context.Context, filtr FiltrAgentow) ([]
 	}
 	fraza := strings.ToLower(strings.TrimSpace(filtr.Fraza))
 	wzorzec := "%" + fraza + "%"
-	// Wartość `global` idzie parametrem, a nie literałem w zapytaniu: katalog
-	// widoczności ma jedno miejsce — kontrakt.
+	// Wartość `global` idzie parametrem, nie literałem: widoczność ma jedno miejsce w kontrakcie.
 	wiersze, err := polecenie.QueryContext(ctx, liczbaLogiczna(filtr.TylkoAktywne), fraza,
 		wzorzec, wzorzec, filtr.KodProjektu, shared.AgentVisibilityGlobal, filtr.KodProjektu)
 	if err != nil {
@@ -236,7 +190,7 @@ func (r *repozytoriumAgentow) PoKodzie(ctx context.Context, kod string) (Agent, 
 	return jeden[0], nil
 }
 
-// odczytajAgenta składa strukturę z jednego wiersza wyniku.
+// odczytajAgenta składa strukturę agenta z jednego wiersza wyniku zapytania, odczytując kolejno wszystkie jego kolumny.
 func odczytajAgenta(wiersz skaner) (Agent, error) {
 	var agent Agent
 	var kanal, model, transport sql.NullString

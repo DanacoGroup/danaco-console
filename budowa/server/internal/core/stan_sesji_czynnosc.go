@@ -7,22 +7,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// pamiecCzynnosci pamięta, co ostatnio działo się w oknach sesji.
-//
-// Telemetria postępu mówi o procesie i jego etapie, ale niczego nie
-// pamięta między zdarzeniami i nie wie, że okna składają się na sesję.
-// Kontrolka powrotu pyta odwrotnie: która sesja żyje, które jej okno pracowało
-// ostatnio i kiedy. Ta pamięć jest przejściem między jednym a drugim.
-//
-// Trzyma wyłącznie stan pracy i znacznik czasu. Sesji, okien ani procesów nie
-// przechowuje — mają własne rejestry.
+// pamiecCzynnosci pamięta, co ostatnio działo się w oknach sesji, jako przejście między telemetrią postępu a kontrolką powrotu. Trzyma wyłącznie stan pracy i znacznik czasu — sesji, okien ani procesów nie przechowuje, mają własne rejestry.
 type pamiecCzynnosci struct {
 	mu    sync.RWMutex
 	okna  map[string]czynnoscOkna
 	sesje map[string]czynnoscOkna
 }
 
-// czynnoscOkna jest ostatnim punktem pracy jednego okna.
+// czynnoscOkna jest ostatnim punktem pracy jednego okna, niosącym stan procesu i znacznik czasu zgłoszenia.
 type czynnoscOkna struct {
 	// IdOkna, którego dotyczy punkt pracy.
 	IdOkna string
@@ -34,7 +26,7 @@ type czynnoscOkna struct {
 	Chwila time.Time
 }
 
-// nowaPamiecCzynnosci zakłada pustą pamięć.
+// nowaPamiecCzynnosci zakłada pustą pamięć czynności, gotową do przyjmowania zapisów przez metodę Odnotuj.
 func nowaPamiecCzynnosci() *pamiecCzynnosci {
 	return &pamiecCzynnosci{
 		okna:  map[string]czynnoscOkna{},
@@ -42,13 +34,7 @@ func nowaPamiecCzynnosci() *pamiecCzynnosci {
 	}
 }
 
-// Odnotuj zapisuje punkt pracy okna i odpowiada, czy zmiana jest widoczna dla
-// Operatora.
-//
-// Prawdę zwraca wyłącznie zmiana stanu pracy — start tury, jej domknięcie,
-// zatrzymanie albo niepowodzenie. Kolejny etap tej samej tury przesuwa
-// wyłącznie znacznik czasu, bo inaczej każdy fragment odpowiedzi modelu
-// rozgłaszałby zdarzenie o sesji, w której nic się nie zmieniło.
+// Odnotuj zapisuje punkt pracy okna i odpowiada, czy zmiana jest widoczna. Prawdę zwraca wyłącznie zmiana stanu pracy: start tury, jej domknięcie, zatrzymanie albo niepowodzenie. Kolejny etap tej samej tury przesuwa wyłącznie znacznik czasu.
 func (p *pamiecCzynnosci) Odnotuj(idSesji, idOkna string, stan shared.ProgressStatus) bool {
 	if p == nil || idOkna == "" {
 		return false

@@ -38,22 +38,9 @@ import {
 } from './wykaz-automatyk';
 
 /**
- * Automation Studio — okno operacji i scenariuszy modułu Browser (warstwa
- * trzecia, otwierane z menu `Operacje ▼`).
- *
- * Jedna odpowiedzialność: złożenie okna i wykaz automatyk. Rozmowa z rdzeniem
- * stoi w `czynnosci-automatyk.ts`, widok tekstowy kroków w
- * `edytor-scenariusza.ts`, granice przebiegu w `limity-przebiegu.ts`.
- *
- * Kroki scenariusza mają jedno miejsce: treść widoku tekstowego. Wykaz kart
- * pod formularzem jest jego odczytem, a nie drugim zbiorem — dwa zbiory kroków
- * rozjechałyby się przy pierwszej ręcznej poprawce, a Operator nie wiedziałby,
- * który z nich pojechał do rdzenia.
- *
- * Nagrywarka makra ma w kontrakcie własną komendę (`browser.macro.record`),
- * której to okno jeszcze nie wywołuje — pozycja pyta więc rdzeń o jej pokrycie.
- * Krok powstaje tymczasem z bieżącej migawki: przejście pod adres, który
- * Operator właśnie otworzył.
+ * Automation Studio — okno operacji i scenariuszy modułu Browser, warstwa
+ * trzecia, otwierane z menu operacji. Jedna odpowiedzialność: złożenie okna
+ * i wykaz automatyk.
  */
 export interface OknoAutomationStudio {
   element: HTMLElement;
@@ -75,12 +62,7 @@ export function utworzOknoAutomationStudio(stan: StanPrzegladania): OknoAutomati
   let automatyki: readonly AutomationWorkflow[] = [];
   let odmowa = '';
   let wOdczycie = false;
-  /**
-   * Kroki ostatnio przyjęte z widoku tekstowego. Karty kroków rysują się z nich,
-   * a nie z każdej litery wpisywanej w pole: treść w połowie poprawiona jest
-   * niepoprawnym zapisem JSON i wyczyściłaby wykaz kroków, których Operator nie
-   * usuwał.
-   */
+  // Kroki ostatnio przyjęte z widoku tekstowego, nie z każdej litery wpisywanej w pole.
   let krokiPrzyjete: AutomationStep[] = [];
   /** Zdanie o ostatnio odczytanych przebiegach, po identyfikatorze automatyki. */
   const przebiegi = new Map<string, string>();
@@ -137,9 +119,7 @@ export function utworzOknoAutomationStudio(stan: StanPrzegladania): OknoAutomati
       id: nowyIdentyfikator('krok'),
       name: `Przejdź do ${migawka.url}`,
       kind: AutomationStepKind.Command,
-      // Nazwa komendy pochodzi z generatu kontraktu, nie z literału: krok
-      // z nazwą przepisaną ręcznie przeżyłby zmianę nazwy w kontrakcie i wracał
-      // z rdzenia zdarzeniem obszaru nieznanego.
+      // Nazwa komendy pochodzi z generatu kontraktu, nie z literału przepisanego ręcznie.
       command: Command.BrowserNavigate,
       params: { url: migawka.url },
       order: zastane.length + 1,
@@ -241,8 +221,7 @@ export function utworzOknoAutomationStudio(stan: StanPrzegladania): OknoAutomati
     utworzDymekObjasnienia(OBJASNIENIA.harmonogram, KLASY_DYMKA),
   );
 
-  // Nagrywarka makr i granice Wykonawcy idą do rdzenia — wcześniej żyły
-  // wyłącznie w tej karcie i ginęły wraz z nią.
+  // Nagrywarka makr i granice Wykonawcy idą teraz do rdzenia, nie giną już wraz z kartą.
   const rodziny = utworzPanelRodzin(sekcjeAutomatyzacji(stan));
 
   okno.tresc.append(lista, rodziny.element, odpowiedz.element);

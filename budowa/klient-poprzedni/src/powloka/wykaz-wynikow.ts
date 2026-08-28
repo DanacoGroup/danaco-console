@@ -11,36 +11,15 @@ import {
   type ZrodloWyszukiwania,
 } from './wyszukiwanie-globalne';
 
-/**
- * Wykaz wyników wyszukiwania globalnego — obsada `komponenty/menu-drzewo`.
- *
- * Plik składa wpisy w `PozycjaMenu[]` i podaje je do
- * `utworzMenuDrzewo(...).ustaw()`. Rysowanie, przewijanie, wędrówka strzałkami,
- * ocena trafności, wytłuszczenie trafień i grupowanie należą do mechanizmu.
- * Tryb `bezUchwytu` zostawia filtrowanie polu w pasku: uchwyt nie wchodzi do
- * dokumentu, wewnętrzne pole szukania nie powstaje, a ognisko zostaje w polu
- * paska (wyróżnienie wirtualne przez `aria-activedescendant`).
- *
- * Dołożone tutaj są dwie rzeczy, których mechanizm nie robi. Pierwsza to
- * historia: przy pustej frazie wykaz pokazuje grupę „Ostatnio wybrane" do
- * pięciu pozycji, trzymaną w pamięci klienta, zamiast całego katalogu. Druga to
- * wspólny wzorzec pustki — przy zerze trafień mechanizm się zwija, a na jego
- * miejscu staje `brak-wynikow.ts`, żeby wykaz nie mówił o pustce dwoma zdaniami
- * własnymi biblioteki.
- *
- * Zero trafień rozpoznaje się z policzenia pozycji, które mechanizm narysował
- * (`[role="menuitemradio"]`), a nie z powtórzenia jego reguły dopasowania:
- * druga implementacja predykatu rozjechałaby się z pierwszą przy zmianie oceny
- * trafności.
- */
+// Wykaz wyników wyszukiwania globalnego — obsada biblioteki menu drzewa.
 
-/** Nazwa nastawy dla czytnika ekranu; na ekranie nie staje (uchwytu nie ma). */
+/** Nazwa nastawy dla czytnika ekranu; na ekranie nie staje, bo uchwytu tego menu tutaj w ogóle wcale nie ma. */
 const NASTAWA = 'Wyszukiwanie globalne';
 
-/** Ile ostatnich wyborów pamięta wykaz. */
+/** Ile ostatnich wyborów pamięta ten wykaz w historii, trzymanej wyłącznie w pamięci tego samego klienta. */
 const ILE_OSTATNICH = 5;
 
-/** Nagłówek grupy historii. */
+/** Nagłówek grupy historii pokazywanej przy pustej frazie w polu wyszukiwania paska globalnego klienta. */
 const GRUPA_OSTATNICH = 'Ostatnio wybrane';
 
 export interface WykazWynikow {
@@ -115,13 +94,7 @@ export function utworzWykazWynikow(opcje: OpcjeWykazuWynikow): WykazWynikow {
     return [{ rodzaj: 'grupa', nazwa: NAZWY_GRUP[rodzaj], dzieci: swoje.map(lisc) }];
   }
 
-  /**
-   * Drzewo pokazywane przy pustej frazie — historia, nie cały katalog.
-   *
-   * Wykaz kilkudziesięciu pozycji wysypany od razu po kliknięciu w pole nie jest
-   * podpowiedzią. Historia jest krótka i trafia w to, po co Operator sięga
-   * najczęściej.
-   */
+  // Drzewo pokazywane przy pustej frazie — historia, nie cały katalog, krótka lista pozycji.
   function drzewoHistorii(wpisy: readonly WpisWyszukiwania[]): PozycjaMenu[] {
     const znalezione = ostatnie
       .map((klucz) => wpisy.find((wpis) => wpis.klucz === klucz))
@@ -146,8 +119,7 @@ export function utworzWykazWynikow(opcje: OpcjeWykazuWynikow): WykazWynikow {
     const wpisy = opcje.zrodlo.wpisy();
     const szukane = fraza.trim();
 
-    // Stan odczytu i odmowa idą przed dopasowaniem: wykaz modułów bywa jeszcze
-    // w drodze, a „brak trafień" orzekałoby wtedy o stanie, którego nikt nie zna.
+    // Stan odczytu i odmowa idą przed dopasowaniem: wykaz modułów bywa jeszcze w drodze z rdzenia.
     const stan = opcje.zrodlo.stan();
     if (stan === 'blad') {
       pustka.odmowa(opcje.zrodlo.odmowa());
@@ -192,8 +164,7 @@ export function utworzWykazWynikow(opcje: OpcjeWykazuWynikow): WykazWynikow {
   function wykonaj(klucz: string): void {
     const wpis = wpisPoKluczu(klucz);
     czynny = false;
-    // Fraza ginie razem z wyborem: pole paska jest po wyborze puste, więc
-    // zostawiona fraza przycinałaby wykaz filtrem, którego w polu już nie ma.
+    // Fraza ginie razem z wyborem: pole paska jest po wyborze puste, filtr by już nie miał treści.
     fraza = '';
     ustawPustke(false);
     menu.zwin();

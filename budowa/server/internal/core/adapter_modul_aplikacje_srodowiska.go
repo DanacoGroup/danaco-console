@@ -1,32 +1,6 @@
-// Moduł Apps — Deployment Panel poza samym przebiegiem wdrożenia: środowiska,
-// zmienne środowiskowe, domena i DNS, skalowanie oraz kondycja produktu.
-//
-// Obsługiwane komendy: `apps.environment.list`,
-// `apps.environment.variable.list`, `apps.environment.variable.set`,
-// `apps.deployment.domain.set`, `apps.deployment.scale.set`,
-// `apps.deployment.health.get`.
-//
-// TRZY ŚRODOWISKA WBUDOWANE ZAKŁADA PIERWSZY WYKAZ. Kontrakt nie ma komendy
-// zakładającej środowisko — `AppEnvironment` wychodzi wyłącznie z
-// `apps.environment.list` — a selektor środowiska Deployment Panelu musi mieć
-// co pokazać w oknie świeżo otwartym. Wykaz zakłada więc brakujące wiersze dla
-// trzech wartości `AppDeployEnvironment` i oddaje je wraz z tym, co Operator
-// zdążył im nadać. Zakładanie jest UPSERT-em nietykającym domeny (patrz
-// `ZapiszSrodowiskoApp`), więc drugi wykaz nie kasuje adresu nadanego między
-// jednym a drugim.
-//
-// DOMENA JEST SPRAWDZANA, NIE PRZYJMOWANA NA SŁOWO. `AppsDeploymentDomainSetResponse`
-// niesie pole `verified`; jedyną uczciwą jego treścią jest wynik rozwiązania
-// nazwy przez system (`net.Resolver`). Nazwa nierozwiązywalna nie jest odmową —
-// domena bywa nadawana, zanim wpisy DNS się rozejdą — ale `verified: false`
-// mówi Operatorowi wprost, że jeszcze nie działa.
-//
-// KONDYCJA JEST MIERZONA, NIE DEKLAROWANA. `apps.deployment.health.get` sprawdza
-// produkt naprawdę: gdy środowisko ma domenę albo w oknie stoi podgląd, idzie
-// tam zapytanie HTTP; gdy nie ma dokąd pójść, dostępność wynika ze stanu
-// ostatniego przebiegu wdrożenia. Każde sprawdzenie dopisuje wiersz do dziennika
-// kondycji, a udział dostępności liczy się z tych wierszy — inaczej „99,98%"
-// byłoby liczbą wziętą znikąd.
+// Moduł Apps obsługuje środowiska wdrożeniowe Deployment Panelu: wykaz i zmienne
+// środowisk, domenę wraz z wpisami DNS, skalowanie instancji oraz kondycję
+// produktu mierzoną zapytaniem HTTP albo stanem ostatniego wdrożenia.
 package core
 
 import (
@@ -42,10 +16,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekSrodowiskaApp znakuje identyfikatory środowisk wdrożeniowych.
+// przedrostekSrodowiskaApp znakuje identyfikatory środowisk wdrożeniowych, tak
+// jak każdy inny rodzaj rekordu w rdzeniu ma własny rozpoznawalny przedrostek.
 const przedrostekSrodowiskaApp = "srod-"
 
-// czasSprawdzeniaKondycjiApp jest granicą czekania na odpowiedź produktu.
+// czasSprawdzeniaKondycjiApp jest granicą czekania na odpowiedź produktu przy
+// sprawdzaniu kondycji oraz przy rozwiązywaniu nazwy domeny w systemie DNS.
 const czasSprawdzeniaKondycjiApp = 5 * time.Second
 
 // oknoPomiaruKondycjiApp mówi, z ilu ostatnich sprawdzeń liczy się udział
@@ -65,7 +41,8 @@ var nazwySrodowiskWbudowanychApp = []struct {
 	{shared.AppDeployEnvironmentProduction, "Produkcyjne"},
 }
 
-// WypiszSrodowiska obsługuje `apps.environment.list` — patrz czoło pliku.
+// WypiszSrodowiska obsługuje `apps.environment.list`, zakładając najpierw
+// brakujące wiersze trzech wbudowanych środowisk kontraktu i oddając wykaz.
 func (a *adapterAplikacji) WypiszSrodowiska(ctx context.Context,
 	z shared.AppsEnvironmentListRequest) (shared.AppsEnvironmentListResponse, error) {
 
@@ -133,7 +110,8 @@ func (a *adapterAplikacji) WypiszZmienneSrodowiska(ctx context.Context,
 	}, nil
 }
 
-// UstawZmiennaSrodowiska obsługuje `apps.environment.variable.set`.
+// UstawZmiennaSrodowiska obsługuje `apps.environment.variable.set`, zapisując
+// wartość jawną albo odwołanie do sekretu, wzajemnie się wykluczające.
 func (a *adapterAplikacji) UstawZmiennaSrodowiska(ctx context.Context,
 	z shared.AppsEnvironmentVariableSetRequest) (shared.AppsEnvironmentVariableSetResponse, error) {
 
@@ -168,7 +146,8 @@ func (a *adapterAplikacji) UstawZmiennaSrodowiska(ctx context.Context,
 	return shared.AppsEnvironmentVariableSetResponse{Variable: zmiennaKontraktuApp(zapisana)}, nil
 }
 
-// UstawDomene obsługuje `apps.deployment.domain.set` — patrz czoło pliku.
+// UstawDomene obsługuje `apps.deployment.domain.set`, zapisuje domenę wraz
+// z wpisami DNS i sprawdza rozwiązanie nazwy, zamiast przyjąć ją na słowo.
 func (a *adapterAplikacji) UstawDomene(ctx context.Context,
 	z shared.AppsDeploymentDomainSetRequest) (shared.AppsDeploymentDomainSetResponse, error) {
 
@@ -219,7 +198,8 @@ func (a *adapterAplikacji) UstawDomene(ctx context.Context,
 }
 
 // czyDomenaRozwiazujeApp sprawdza, czy nazwa domeny rozwiązuje się na tej
-// maszynie. Nierozwiązywalna nazwa nie jest odmową (czoło pliku).
+// maszynie. Nierozwiązywalna nazwa nie jest odmową, bo domena bywa nadawana,
+// zanim wpisy DNS zdążą się rozejść po sieci.
 func czyDomenaRozwiazujeApp(ctx context.Context, domena string) bool {
 	nazwa := domena
 	nazwa = strings.TrimPrefix(strings.TrimPrefix(nazwa, "https://"), "http://")
@@ -236,10 +216,9 @@ func czyDomenaRozwiazujeApp(ctx context.Context, domena string) bool {
 	return err == nil && len(adresy) > 0
 }
 
-// UstawSkalowanie obsługuje `apps.deployment.scale.set`. Rdzeń nie hostuje
-// produktu, więc nastawa jest zapisem konfiguracji, a nie rozkazem dla
-// orkiestratora; `effectiveInstances` oddaje liczbę, która z tej nastawy
-// obowiązuje — instancje stałe, a gdy ich nie podano, dolną granicę skalowania.
+// UstawSkalowanie obsługuje `apps.deployment.scale.set` zapisem konfiguracji,
+// a nie rozkazem dla orkiestratora. `effectiveInstances` oddaje instancje
+// stałe, a gdy ich nie podano, dolną granicę skalowania.
 func (a *adapterAplikacji) UstawSkalowanie(ctx context.Context,
 	z shared.AppsDeploymentScaleSetRequest) (shared.AppsDeploymentScaleSetResponse, error) {
 
@@ -301,7 +280,8 @@ func (a *adapterAplikacji) UstawSkalowanie(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// PobierzKondycje obsługuje `apps.deployment.health.get` — patrz czoło pliku.
+// PobierzKondycje obsługuje `apps.deployment.health.get`, mierzy dostępność
+// zapytaniem HTTP albo stanem ostatniego wdrożenia i dopisuje dziennik kondycji.
 func (a *adapterAplikacji) PobierzKondycje(ctx context.Context,
 	z shared.AppsDeploymentHealthGetRequest) (shared.AppsDeploymentHealthGetResponse, error) {
 
@@ -324,8 +304,7 @@ func (a *adapterAplikacji) PobierzKondycje(ctx context.Context,
 	case z.Environment != nil:
 		srodowisko = *z.Environment
 	case len(wdrozenia) > 0:
-		// „Puste bierze środowisko ostatniego wdrożenia" — kontrakt mówi to
-		// wprost; wykaz wraca posortowany od najnowszego.
+		// Puste środowisko bierze ostatnie wdrożenie — wykaz wraca posortowany od najnowszego.
 		srodowisko = wdrozenia[0].Srodowisko
 	}
 
@@ -358,9 +337,7 @@ func (a *adapterAplikacji) PobierzKondycje(ctx context.Context,
 		kondycja.AvailabilityPercent = &udzial
 	}
 
-	// Czas nieprzerwanego działania liczy się od zakończenia ostatniego udanego
-	// wdrożenia tego środowiska — to jest chwila, od której produkt stoi w tej
-	// wersji. Bez takiego wdrożenia pola nie ma, bo nie ma czego liczyć.
+	// Czas działania liczy się od zakończenia ostatniego udanego wdrożenia tego środowiska.
 	for _, wdrozenie := range wdrozenia {
 		if wdrozenie.Srodowisko != srodowisko || wdrozenie.Stan != shared.AppDeployStatusSucceeded {
 			continue
@@ -379,7 +356,8 @@ func (a *adapterAplikacji) PobierzKondycje(ctx context.Context,
 	return shared.AppsDeploymentHealthGetResponse{Health: kondycja}, nil
 }
 
-// zmierzDostepnoscApp rozstrzyga dostępność produktu i nazywa, skąd ją wie.
+// zmierzDostepnoscApp rozstrzyga dostępność produktu przez zapytanie do domeny
+// albo do podglądu w oknie i nazywa źródło rozstrzygnięcia w szczególe.
 func (a *adapterAplikacji) zmierzDostepnoscApp(ctx context.Context, okno string,
 	srodowisko shared.AppDeployEnvironment, wdrozenia []dane.WdrozenieApp) (bool, string) {
 
@@ -412,9 +390,7 @@ func (a *adapterAplikacji) zmierzDostepnoscApp(ctx context.Context, okno string,
 			" w " + strconv.FormatInt(czas, 10) + " ms"
 	}
 
-	// Nie ma dokąd zapukać. Jedyną prawdą, jaką rdzeń wtedy zna, jest stan
-	// ostatniego przebiegu wdrożenia tego środowiska — i to mówi wprost,
-	// zamiast udawać pomiar, którego nie zrobił.
+	// Bez adresu do zapytania dostępność wynika ze stanu ostatniego wdrożenia środowiska.
 	for _, wdrozenie := range wdrozenia {
 		if wdrozenie.Srodowisko != srodowisko {
 			continue
@@ -427,7 +403,8 @@ func (a *adapterAplikacji) zmierzDostepnoscApp(ctx context.Context, okno string,
 		"nadanej domeny ani stojącego podglądu — nie ma czego sprawdzić"
 }
 
-// zmiennaKontraktuApp przekłada wiersz zmiennej na kształt kontraktu.
+// zmiennaKontraktuApp przekłada wiersz zmiennej środowiskowej z bazy danych
+// na kształt zmiennej środowiskowej z kontraktu, wraz z chwilą aktualizacji.
 func zmiennaKontraktuApp(wiersz dane.ZmiennaSrodowiskaApp) shared.AppEnvironmentVariable {
 	return shared.AppEnvironmentVariable{
 		Name:        wiersz.Nazwa,
@@ -438,7 +415,8 @@ func zmiennaKontraktuApp(wiersz dane.ZmiennaSrodowiskaApp) shared.AppEnvironment
 	}
 }
 
-// liczbaDuzaApp przekłada wskaźnik kontraktu (int) na wskaźnik kolumny (int64).
+// liczbaDuzaApp przekłada wskaźnik do liczby całkowitej z kontraktu na
+// wskaźnik do liczby całkowitej o szerszym zakresie, jakiego wymaga baza.
 func liczbaDuzaApp(wartosc *int) *int64 {
 	if wartosc == nil {
 		return nil

@@ -12,18 +12,15 @@ import (
 type Status = shared.EnvelopeStatus
 
 // Odpowiedz jest wynikiem wykonania komendy przed zapakowaniem w kopertę:
-// wykonawca komendy zwraca ją warstwie transportu.
-//
-// Nie jest komunikatem i nigdy nie idzie na drut w tej postaci — kształt
-// odpowiedzi wyznacza koperta kontraktu (pola status, payload, error), dlatego
-// struktura nie nosi znaczników JSON.
+// wykonawca komendy zwraca ją warstwie transportu, bez znaczników JSON.
 type Odpowiedz struct {
 	Status Status
 	Wynik  json.RawMessage
 	Blad   *Blad
 }
 
-// Sukces buduje odpowiedź udaną. Wynik nil oznacza potwierdzenie bez treści.
+// Sukces buduje odpowiedź udaną z podanego wyniku wywołania; wynik nil
+// oznacza potwierdzenie bez treści.
 func Sukces(wynik any) (Odpowiedz, error) {
 	o := Odpowiedz{Status: shared.EnvelopeStatusOk}
 	if wynik == nil {
@@ -37,7 +34,8 @@ func Sukces(wynik any) (Odpowiedz, error) {
 	return o, nil
 }
 
-// Porazka buduje odpowiedź błędną z gotowego błędu protokołu.
+// Porazka buduje odpowiedź błędną wprost z gotowego błędu tego kontraktu
+// przekazanego przez wywołującego.
 func Porazka(b Blad) Odpowiedz {
 	return Odpowiedz{Status: shared.EnvelopeStatusError, Blad: &b}
 }
@@ -49,11 +47,7 @@ func PorazkaKodem(kod KodBledu, komunikat string) Odpowiedz {
 }
 
 // KopertaOdpowiedzi pakuje odpowiedź w kopertę zwrotną: status i błąd trafiają
-// do pól odpowiedzi koperty, wynik do ładunku. Typ, identyfikator i sesja
-// pochodzą z żądania, dzięki czemu klient wiąże odpowiedź z wywołaniem.
-//
-// Ścieżka nie może zawieść: wynik jest już zserializowany przy budowie
-// odpowiedzi.
+// do pól odpowiedzi, wynik do ładunku koperty.
 func KopertaOdpowiedzi(zadanie Koperta, o Odpowiedz) Koperta {
 	return Koperta{
 		Type:      zadanie.Type,
@@ -66,7 +60,8 @@ func KopertaOdpowiedzi(zadanie Koperta, o Odpowiedz) Koperta {
 	}
 }
 
-// KopertaBledu pakuje błąd w kopertę zwrotną.
+// KopertaBledu pakuje dany błąd w kopertę zwrotną, budując odpowiedź błędną
+// z tego samego błędu wprost.
 func KopertaBledu(zadanie Koperta, b Blad) Koperta {
 	return KopertaOdpowiedzi(zadanie, Porazka(b))
 }

@@ -10,33 +10,7 @@ import {
   type ZrodloPowiadomien,
 } from './zrodlo-powiadomien';
 
-/**
- * Sekcja „Powiadomienia" — przełącznik główny, siedem klas zdarzeń i kanały.
- *
- * Postać wprost z opracowania Ustawień, rozdz. 7: przełącznik główny nad tabelą,
- * w tabeli wiersz na klasę, w wierszu czynność klasy i kanały dostarczenia.
- *
- * ── czego tu nie ma i dlaczego ─────────────────────────────────────────────
- * Kolumny „centrum" nie ma jako przełącznika. Rozdz. 7.3 mówi, że centrum
- * powiadomień jest kanałem PODSTAWOWYM każdej klasy — „każde zdarzenie objęte
- * ustawieniem trafia do rejestru centrum niezależnie od pozostałych kanałów" —
- * więc przełącznik, który by go zdejmował, obiecywałby coś, czego platforma nie
- * robi. Centrum stoi w wierszu jako stan nazwany, nie jako ster.
- *
- * ── zapis natychmiastowy ───────────────────────────────────────────────────
- * Rozdz. 7.5: każda zmiana idzie do rdzenia od razu, bez przycisku zbiorczego.
- * Przełącznik główny wygasza klasy, ZACHOWUJĄC ich ustawienia — dlatego jest
- * osobnym kluczem, a nie zapisem „fałsz" do siedmiu kluczy klas: tamto
- * skasowałoby wybór Operatora, a ponowne włączenie przywróciło stan domyślny
- * zamiast poprzedniego. Wygaszenie jest więc widokiem, nie zapisem.
- *
- * ── czego ta sekcja NIE domyka ─────────────────────────────────────────────
- * Sekcja rozstrzyga, które zdarzenia mają powiadamiać. Samego doręczania nie
- * ma jeszcze czym wykonać: silnik kolejki (`server/internal/zdalne/powiadomienia.go`)
- * jest zbudowany, ale nie ma wołacza, a centrum powiadomień nie ma rodziny
- * kontraktu. Sekcja mówi o tym wprost zdaniem pod tabelą, zamiast udawać, że
- * przełączniki już czymś sterują.
- */
+/** Sekcja powiadomień pokazuje przełącznik główny, siedem klas zdarzeń w tabeli i kanały dostarczenia, zapisując każdą zmianę do rdzenia natychmiast, bez przycisku zbiorczego. */
 export function utworzSekcjePowiadomienia(kanal: Kanal): SekcjaUstawien {
   const zrodlo: ZrodloPowiadomien = utworzZrodloPowiadomien(kanal);
 
@@ -141,8 +115,7 @@ export function utworzSekcjePowiadomienia(kanal: Kanal): SekcjaUstawien {
     void zrodlo.odczytaj().then(nanies);
   }
 
-  // Zmiana z drugiego okna dolatuje zdarzeniem `config.changed`; sekcja nadąża
-  // nasłuchem, zamiast odpytywać rdzeń w tle.
+  // Zmiana z drugiego okna dolatuje zdarzeniem rdzenia; sekcja nadąża nasłuchem, nie odpytuje w tle.
   const odsubskrybuj = zrodlo.naZmiane(() => void zrodlo.odczytaj().then(nanies));
   odczytaj();
 
@@ -153,7 +126,7 @@ export function utworzSekcjePowiadomienia(kanal: Kanal): SekcjaUstawien {
   };
 }
 
-/** Wiersz jednej klasy zdarzenia. */
+/** Wiersz jednej klasy zdarzenia w tabeli, niosący nazwę, ster czynności i wybór kanałów dostarczenia rdzenia. */
 interface WierszKlasy {
   element: HTMLTableRowElement;
   ustaw(stan: StanKlasy, wlaczoneGlownie: boolean): void;
@@ -190,7 +163,7 @@ function utworzWierszKlasy(
 
   const komorkaKanalow = document.createElement('td');
   komorkaKanalow.className = 'du-powiadomienia__kanaly';
-  // Centrum stoi jako stan nazwany, nie jako ster — powód w nagłówku pliku.
+  // Centrum stoi jako stan nazwany, nie jako ster: platforma nie umie go wyłączyć z rejestru.
   const centrum = document.createElement('span');
   centrum.className = 'dn-pole-opis';
   centrum.textContent = 'centrum — zawsze';
@@ -229,8 +202,7 @@ function utworzWierszKlasy(
     },
 
     wygas(wygaszony) {
-      // Wygaszenie jest widokiem, nie zapisem: wartości zostają, sterowanie
-      // przestaje przyjmować, a `aria-disabled` mówi o tym czytnikowi ekranu.
+      // Wygaszenie jest widokiem, nie zapisem: wartości zostają, sterowanie przestaje przyjmować zmiany.
       element.dataset['wygaszony'] = String(wygaszony);
       czynna.kontrolka.disabled = wygaszony;
       for (const pole of wybory.values()) pole.disabled = wygaszony;
@@ -238,21 +210,14 @@ function utworzWierszKlasy(
   };
 }
 
-/** Przełącznik — kontrolka i element osadzany, bo nie zawsze są tym samym. */
+/** Przełącznik — kontrolka i element osadzany bezpośrednio w dokumencie, bo nie zawsze są tym samym elementem. */
 interface Przelacznik {
   /** Element wstawiany do dokumentu: etykieta z kontrolką albo sama kontrolka. */
   element: HTMLElement;
   kontrolka: HTMLInputElement;
 }
 
-/**
- * Przełącznik z etykietą — jedna postać na całą sekcję.
- *
- * W tabeli etykieta widoczna nie staje: nazwę klasy niesie nagłówek wiersza,
- * a powtórzona przy kontrolce byłaby tą samą treścią dwa razy w jednym wierszu.
- * Czytnik ekranu dostaje ją wtedy przez `aria-label`, więc kontrolka nie zostaje
- * bezimienna.
- */
+/** Przełącznik z etykietą jest jedną postacią na całą sekcję; w tabeli etykieta widoczna nie staje, bo nazwę klasy niesie nagłówek wiersza. */
 function utworzPrzelacznik(etykieta: string, bezWidocznejEtykiety = false): Przelacznik {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'checkbox';

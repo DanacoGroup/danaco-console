@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: model obszarów jednolitej konfiguracji sesji widziany
-// od strony trwałości — wykaz obszarów, klucz zapisu obszaru oraz rozbiór
-// i złożenie konfiguracji z obszarów.
-//
-// Obszar jest jednostką zapisu. Komendy `config.session.*` biorą wykaz obszarów,
-// nie wykaz pól, więc jeden obszar to dokładnie jeden wiersz tabeli `ustawienie`
-// spod adresu złożonego (poziom zasięgu i oś). Dzięki temu obszar zapisany na
-// poziomie węższym przykrywa obszar poziomu szerszego w całości, a obszar spoza
-// wykazu `areas` pozostaje nietknięty.
-//
-// Wykaz obszarów nie jest listą stałych w kodzie — powstaje z nazw pól
-// kontraktu (shared.SessionConfig). Dopisanie obszaru do kontraktu wystarcza:
-// rdzeń pozna go bez zmiany ani jednej gałęzi. Kolejność obszarów jest
-// kolejnością pól kontraktu, więc to samo wejście daje ten sam wynik przy
-// każdym wywołaniu.
-//
-// Rozbiór i złożenie idą przez kodowanie JSON kontraktu, a nie przez ręczne
-// przypisania pól. Drugiego opisu obszarów w rdzeniu nie ma.
+// Plik modeluje obszary jednolitej konfiguracji sesji od strony trwałości: wykaz obszarów, klucz zapisu obszaru oraz rozbiór i złożenie konfiguracji, wyprowadzone z nazw pól kontraktu shared.SessionConfig, a nie z listy stałych w kodzie.
 package core
 
 import (
@@ -33,10 +16,10 @@ import (
 // więc jeden odczyt poziomu wystarcza, by rozpoznać jedne i drugie.
 const przedrostekObszaru = "sesja.konfiguracja."
 
-// obszaryKontraktu wylicza obszary w kolejności pól shared.SessionConfig.
+// obszaryKontraktu wylicza obszary konfiguracji sesji w kolejności pól kontraktu shared.SessionConfig, ustalonej raz przy starcie procesu.
 var obszaryKontraktu = odczytajObszaryKontraktu()
 
-// znaneObszary rozpoznaje obszar podany w żądaniu.
+// znaneObszary rozpoznaje obszar podany w żądaniu, odrzucając każdą nazwę spoza wykazu obszarów kontraktu.
 var znaneObszary = zbudujZnaneObszary()
 
 // odczytajObszaryKontraktu bierze nazwy obszarów z etykiet JSON kontraktu.
@@ -54,7 +37,7 @@ func odczytajObszaryKontraktu() []shared.SessionConfigArea {
 	return obszary
 }
 
-// zbudujZnaneObszary składa zbiór rozpoznawanych nazw obszarów.
+// zbudujZnaneObszary składa zbiór rozpoznawanych nazw obszarów na podstawie wykazu obszarów kontraktu.
 func zbudujZnaneObszary() map[shared.SessionConfigArea]struct{} {
 	zbior := make(map[shared.SessionConfigArea]struct{}, len(obszaryKontraktu))
 	for _, obszar := range obszaryKontraktu {
@@ -63,7 +46,7 @@ func zbudujZnaneObszary() map[shared.SessionConfigArea]struct{} {
 	return zbior
 }
 
-// kluczObszaru buduje klucz zapisu obszaru w tabeli ustawień.
+// kluczObszaru buduje klucz zapisu obszaru w tabeli ustawień, poprzedzając nazwę obszaru wspólnym przedrostkiem.
 func kluczObszaru(obszar shared.SessionConfigArea) string {
 	return przedrostekObszaru + string(obszar)
 }
@@ -162,7 +145,7 @@ func wskaznikTekstu(napis string) *string {
 	return &napis
 }
 
-// bladNieznanegoObszaru odmawia obsługi obszaru spoza kontraktu.
+// bladNieznanegoObszaru odmawia obsługi obszaru spoza kontraktu kodem błędu walidacji, z nazwą obszaru w treści komunikatu.
 func bladNieznanegoObszaru(obszar shared.SessionConfigArea) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"konfiguracja sesji: obszar "+string(obszar)+" nie należy do kontraktu"))

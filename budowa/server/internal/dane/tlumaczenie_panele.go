@@ -1,13 +1,6 @@
-// Odpowiedzialność pliku: panel tłumaczenia (tabela `panel_tlumaczenia`) —
-// zapis, odczyt pojedynczego panelu i wykaz paneli okna. Zmiany treści
-// (tłumaczenie, tłumaczenie zwrotne, ton, stan) leżą w `tlumaczenie_tresc.go` —
-// ten plik trzyma wyłącznie założenie panelu i odczyty, żeby jedna droga zmiany
-// pola nie rozjechała się z drugą.
-//
-// Niezgodności nie są polem tego typu. Kontraktowe `TranslationPanel.Issues`
-// warstwa wyższa składa z osobnego odczytu `Niezgodnosci` (`jakosc.go`) po
-// `PanelID`. Panel i jego niezgodności to dwa byty w dwóch tabelach; trzymanie
-// ich razem w jednej strukturze Go byłoby fałszywym obrazem schematu.
+// Repozytorium panelu tłumaczenia obsługuje zapis, odczyt pojedynczego panelu
+// i wykaz paneli okna w tabeli `panel_tlumaczenia`; zmiany treści leżą
+// w pliku `tlumaczenie_tresc.go`.
 package dane
 
 import (
@@ -18,20 +11,14 @@ import (
 	"time"
 )
 
-// PanelTlumaczenia to wiersz tabeli `panel_tlumaczenia`. `Stan` bierze wartości
-// `TranslationStatus` z kontraktu wprost, bez przekładu. `Ton` ustawia komenda
-// `translate.panel.tone.set`, a `TrescZwrotna` — `backtranslation.run`; obie
-// kolumny mieszkają tu, bo to pola tego panelu, ale ten plik ich nie modyfikuje.
+// PanelTlumaczenia to wiersz tabeli `panel_tlumaczenia`, w którym pole Stan
+// bierze wartości TranslationStatus z kontraktu wprost, bez przekładu.
 type PanelTlumaczenia struct {
 	ID     int64
 	Kod    string
 	OknoID int64
-	// OknoKod to identyfikator zewnętrzny okna — ten, którym okno wychodzi
-	// kontraktem jako `TranslationPanel.windowId`. Bez niego z panelu nie da się
-	// dojść do jego okna, bo odczyt okna przyjmuje kod zewnętrzny, a wiersz
-	// panelu niesie sam klucz wewnętrzny. Kolumna jest doczytywana złączeniem,
-	// nie zapisywana drugi raz — prawda o kodzie okna zostaje
-	// w `okno_tlumaczenia`.
+	// OknoKod to identyfikator zewnętrzny okna, doczytywany złączeniem, nie
+	// zapisywany drugi raz.
 	OknoKod        string
 	Jezyk          string
 	Tresc          *string
@@ -39,10 +26,8 @@ type PanelTlumaczenia struct {
 	Stan           string
 	Ton            *string
 	TrescZwrotna   *string
-	// Migawka obiegu zatwierdzeń (migracja 162). Historię obiegu niesie tabela
-	// `zatwierdzenie_panelu` (`tlumaczenie_kontrola.go`); te trzy pola są
-	// wyłącznie stanem bieżącym, żeby odczyt panelu nie musiał dociągać
-	// ostatniego wiersza obiegu przy każdym wykazie paneli okna.
+	// Migawka obiegu zatwierdzeń z migracji 162; historię niesie tabela
+	// `zatwierdzenie_panelu`.
 	EtapZatwierdzenia *string
 	Zatwierdzil       *string
 	Zatwierdzono      *int64
@@ -56,9 +41,9 @@ const (
 	                            p.etap_zatwierdzenia, p.zatwierdzil, p.zatwierdzono,
 	                            p.zaktualizowano`
 
-	// Złączenie z oknem doczytuje kod zewnętrzny — patrz komentarz przy polu
-	// `OknoKod`. Panel bez okna nie istnieje (klucz obcy NOT NULL), więc
-	// złączenie wewnętrzne nie gubi wierszy.
+	// Złączenie z oknem doczytuje kod zewnętrzny okna, ponieważ panel nie
+	// zapisuje go drugi raz; panel bez okna nie istnieje, więc złączenie
+	// wewnętrzne nie gubi wierszy.
 	zrodloPaneluTlumaczenia = ` FROM panel_tlumaczenia p
 	                            JOIN okno_tlumaczenia o ON o.id = p.okno_id`
 
@@ -77,11 +62,8 @@ const (
 		` ORDER BY p.okno_id, p.jezyk`
 )
 
-// ZapiszPanel zakłada panel tłumaczenia dla wskazanego okna. Panel jest
-// dodawany raz przez `translate.target.add` — kontrakt nie przewiduje
-// nadpisania panelu po kodzie zewnętrznym (to robią osobne komendy zmiany
-// treści, tonu i stanu), więc tu nie ma `ON CONFLICT`, jak przy zleceniu
-// asystenta.
+// ZapiszPanel zakłada panel tłumaczenia dla wskazanego okna i nie nadpisuje
+// panelu istniejącego po kodzie zewnętrznym.
 func (r *repozytoriumTlumaczen) ZapiszPanel(ctx context.Context, oknoID int64, panel PanelTlumaczenia) (PanelTlumaczenia, error) {
 	if panel.Kod == "" {
 		return PanelTlumaczenia{}, fmt.Errorf("dane: panel tłumaczenia bez identyfikatora")
@@ -157,12 +139,7 @@ func (r *repozytoriumTlumaczen) Panele(ctx context.Context, oknoID int64) ([]Pan
 }
 
 // WszystkiePanele oddaje panele całej instalacji, uporządkowane po oknie
-// i języku.
-//
-// Służy dwóm komendom obejmującym cały słownik. Kontrakt `glossary.apply`
-// mówi, że puste `panelId` znaczy „wszystkie panele", a `glossary.occurrences`
-// niesie sam termin, bez wskazania okna. Zakres bez zawężenia jest tu
-// poprawny: słownik jest jeden na instalację, więc jego zastosowanie też.
+// i języku, bez zawężenia do jednego okna.
 func (r *repozytoriumTlumaczen) WszystkiePanele(ctx context.Context) ([]PanelTlumaczenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWszystkiePanele)
 	if err != nil {
@@ -188,7 +165,8 @@ func (r *repozytoriumTlumaczen) WszystkiePanele(ctx context.Context) ([]PanelTlu
 	return lista, nil
 }
 
-// odczytajPanelTlumaczenia składa strukturę z jednego wiersza wyniku.
+// odczytajPanelTlumaczenia składa strukturę PanelTlumaczenia z jednego
+// wiersza wyniku zapytania do bazy.
 func odczytajPanelTlumaczenia(wiersz skaner) (PanelTlumaczenia, error) {
 	var panel PanelTlumaczenia
 	var tresc, trescOdwolanie, ton, trescZwrotna, etap, zatwierdzil sql.NullString

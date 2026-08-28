@@ -17,7 +17,7 @@ import { utworzZbiorBudowy, type RachunekRamek, type ZbiorBudowy } from './zbior
 import { utworzZrodloApps, type ZrodloApps } from './zrodlo-apps';
 import { utworzZrodloOknaModulu, wybierzOknoModulu } from './zrodlo-okna-modulu';
 
-/** Faza odczytu okna modułu — trzy pustki rozróżnialne (`dostepy/stany-odczytu.ts`). */
+/** Faza odczytu okna modułu rozróżnia trzy stany pustki: spoczynek, odczyt w toku i odczyt zakończony błędem. */
 export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 /**
@@ -29,34 +29,14 @@ export type FazaOdczytu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
  */
 export type RodzajOdczytu = 'wdrozenia' | 'architektura';
 
-/** Zdanie o odczycie, który nie mógł ruszyć, bo sesja nie ma jeszcze okna modułu. */
+/** Zdanie o odczycie, który nie mógł ruszyć, bo sesja nie ma jeszcze okna modułu, więc żądanie nie poszło. */
 const BEZ_OKNA_DO_ODCZYTU =
   'Rdzeń nie wskazał jeszcze okna modułu Apps, a odczyt wymaga jego identyfikatora — ' +
   'żądanie nie zostało wysłane.';
 
 /**
- * Jedno źródło prawdy modułu Apps: okno rdzenia, architektura, etapy budowy
- * i wdrożenia.
- *
- * Dwa równoległe stany dałyby dwie prawdy o tym samym produkcie. Architecture
- * Designer definiuje komponenty, oba warsztaty przypisują do nich pliki,
- * Product Builder rysuje z nich oś etapów, a Deployment Panel wdraża —
- * wszystkie patrzą tutaj.
- *
- * Trzy komendy odczytu obszaru (`apps.deployment.list`, `apps.architecture.get`,
- * `apps.workspace.list`) wypełniają stan tym, co rdzeń trzyma w bazie, zamiast
- * tym, co przeleciało gniazdem w bieżącej sesji. Bez nich odświeżenie okna
- * przeglądarki zerowałoby moduł, choć historia wdrożeń, architektura i pliki
- * warsztatu leżą w rdzeniu.
- *
- * Etapy budowy zostają wyłącznie przy zdarzeniu: komendy ich odczytu kontrakt
- * nie niesie, więc pusty wykaz etapów na starcie jest stanem prawdziwym, a nie
- * brakiem odczytu — i okno mówi o nim inaczej niż o wdrożeniach.
- *
- * Odczyt nie gasi stanu, który już jest: każdy z trzech odczytów jest
- * niezależny, odmowa jednego zostawia dwa pozostałe nietknięte i nie kasuje
- * tego, co moduł już wie. Powód odmowy trafia do osobnego pola dla każdego
- * odczytu, bo okna czytają je w różnych miejscach ekranu.
+ * Stan produktu modułu Apps jest jednym źródłem prawdy: okno rdzenia, architektura, etapy budowy
+ * i wdrożenia, czytane przez wszystkie okna modułu z jednego miejsca.
  */
 export interface StanProduktu {
   zrodlo: ZrodloApps;
@@ -68,45 +48,21 @@ export interface StanProduktu {
   komponenty(): readonly AppComponent[];
   etapy(): readonly AppStage[];
   wdrozenia(): readonly AppDeployment[];
-  /**
-   * Rachunek ramek `apps.build.changed`, które przyszły do tego modułu.
-   *
-   * Okno pyta o niego, gdy wykaz etapów jest pusty: bez tych liczb nie da się
-   * odróżnić „jeszcze nic nie przyszło" od „przyszło, ale etapów w tym nie
-   * było", a różnica rozstrzyga, co wolno powiedzieć Operatorowi.
-   */
+  /** Rachunek ramek zdarzenia budowy przyszłych do modułu rozstrzyga, co wolno powiedzieć Operatorowi. */
   ramki(): RachunekRamek;
   /** Czy wykaz wdrożeń wrócił już z rdzenia — „pusto" to nie to samo, co „nie pytano". */
   czyWdrozeniaCzytane(): boolean;
   /** Pliki warsztatu jednej warstwy; puste, dopóki odczyt nie wrócił. */
   plikiWarsztatu(warstwa: AppWorkspaceLayer): readonly DeveloperFile[];
   czyWarsztatCzytany(warstwa: AppWorkspaceLayer): boolean;
-  /**
-   * Powód odmowy ostatniego odczytu danego rodzaju; pusty, gdy odczyt się udał
-   * albo nie był jeszcze zlecony. Kluczem jest nazwa własna modułu, nie nazwa
-   * komendy — zdanie o odmowie składa źródło, okno bierze je gotowe.
-   */
+  /** Powód odmowy ostatniego odczytu danego rodzaju; pusty, gdy odczyt się udał lub nie był zlecony. */
   powodOdczytu(co: RodzajOdczytu): string;
-  /**
-   * Powód odmowy odczytu warsztatu jednej warstwy.
-   *
-   * Osobno dla każdej warstwy, bo oba warsztaty czytają równolegle i mają dwa
-   * osobne okna. Jedno pole na oba znaczyłoby, że udany odczyt backendu kasuje
-   * odmowę frontendu, a Frontend Workspace milczałby o niepowodzeniu, które
-   * właśnie go spotkało.
-   */
+  /** Powód odmowy odczytu warsztatu jednej warstwy, osobno, bo oba warsztaty czytają równolegle. */
   powodOdczytuWarsztatu(warstwa: AppWorkspaceLayer): string;
   postep(): ProgressChangedEvent | null;
   /** Zleca `apps.deployment.list` dla okna modułu i wchłania wykaz. */
   odczytajWdrozenia(srodowisko: AppDeployEnvironment | '', granica: number): Promise<void>;
-  /**
-   * Zleca `apps.architecture.get` dla okna modułu i wchłania architekturę.
-   *
-   * Oddaje `true`, gdy rdzeń przysłał architekturę, a `false`, gdy odpowiedział
-   * udanie i bez niej albo gdy odczyt się nie odbył. Okno mówi o tych dwóch
-   * przypadkach różnymi zdaniami, więc rozróżnienie musi wyjść ze stanu, a nie
-   * być zgadywane z tego, co zostało na kanwie.
-   */
+  /** Zleca odczyt architektury dla okna modułu; oddaje true, gdy rdzeń przysłał architekturę. */
   odczytajArchitekture(): Promise<boolean>;
   /** Zleca `apps.workspace.list` dla jednej warstwy i wchłania jej pliki. */
   odczytajWarsztat(warstwa: AppWorkspaceLayer): Promise<void>;
@@ -117,14 +73,7 @@ export interface StanProduktu {
   usunKomponent(idKomponentu: string): void;
   /** Wchłania architekturę potwierdzoną przez rdzeń. */
   wchlonArchitekture(architektura: AppArchitecture): void;
-  /**
-   * Zasiewa wdrożenie migawką z odpowiedzi na `apps.deployment.run`.
-   *
-   * Nazwa mówi o źródle, bo źródło rozstrzyga: odpowiedź komendy niesie stan
-   * z chwili ruszenia przebiegu (`pending`), a postęp przychodzi wyłącznie
-   * zdarzeniem `apps.build.changed`. Zbiór budowy nie pozwala migawce cofnąć
-   * stanu, który zdarzenie już przyniosło (`zbior-budowy.ts`).
-   */
+  /** Zasiewa wdrożenie migawką z odpowiedzi na zlecenie wdrożenia, zanim nadejdzie zdarzenie postępu. */
   wchlonOdpowiedzWdrozenia(wdrozenie: AppDeployment): void;
   /** Odczytuje okno modułu z rdzenia; wolno wołać wielokrotnie. */
   odswiez(idSesji: string): Promise<void>;
@@ -154,14 +103,7 @@ export function utworzStanProduktu(kanal: Kanal): StanProduktu {
     for (const sluchacz of sluchacze) sluchacz();
   }
 
-  /**
-   * Wspólne wejście trzech odczytów: czyści powód poprzedni i sprawdza okno.
-   *
-   * Okno modułu jest warunkiem wszystkich trzech żądań, bo `windowId` jest
-   * w nich polem wymaganym. Bez niego żądanie poszłoby po dane niczyje, a odmowa
-   * rdzenia mówiłaby o brakującym polu zamiast o brakującym oknie sesji.
-   * Zwraca `false`, gdy odczytu nie wolno zlecić.
-   */
+  /** Wspólne wejście trzech odczytów czyści powód poprzedni i sprawdza okno; zwraca false bez niego. */
   function zacznijOdczyt(co: RodzajOdczytu): boolean {
     powodyOdczytu[co] = '';
     if (idOkna !== '') return true;
@@ -175,18 +117,13 @@ export function utworzStanProduktu(kanal: Kanal): StanProduktu {
       budowa.wchlonZdarzenie(tresc);
       oglos();
     }),
-    // Drugie zdarzenie obszaru. Zmiana pliku warsztatu wchodzi tu niezależnie
-    // od tego, gdzie zaszła — w drugim oknie tej sesji, w obcym połączeniu czy
-    // po stronie rdzenia. Zawężamy ją do okna modułu, bo zbiór plików jest
-    // zbiorem tego okna, a ramka o cudzym oknie opisuje inny warsztat.
+    // Drugie zdarzenie obszaru zawężamy do okna modułu, bo zbiór plików jest zbiorem tego okna.
     zrodlo.naZmianeWarsztatu((tresc) => {
       if (idOkna !== '' && tresc.windowId !== idOkna) return;
       warsztat.wchlonZdarzenie(tresc);
       oglos();
     }),
-    // Telemetria postępu jest wspólna całej platformie: Product
-    // Builder czyta z niej etap bieżący, bo obszar `apps` nie ma własnego
-    // zdarzenia postępu. Bierzemy wyłącznie proces okna modułu.
+    // Telemetria postępu jest wspólna całej platformie; filtr przyjmuje wyłącznie proces okna modułu.
     kanal.naZdarzenie(EventType.ProgressChanged, (tresc) => {
       if (idOkna !== '' && tresc.windowId !== undefined && tresc.windowId !== idOkna) return;
       postep = tresc;
@@ -231,10 +168,7 @@ export function utworzStanProduktu(kanal: Kanal): StanProduktu {
         oglos();
         return false;
       }
-      // Brak pola `architecture` jest odpowiedzią udaną i znaczy „okno nie ma
-      // jeszcze żadnej architektury". Nie wpisujemy wtedy niczego i nie kasujemy
-      // komponentów zestawionych na kanwie — Operator mógł je właśnie ułożyć,
-      // a odczyt nie jest poleceniem sprzątania.
+      // Brak pola architecture jest odpowiedzią udaną; nie kasujemy wtedy komponentów na kanwie.
       const oddana = wynik.wynik.architecture;
       if (oddana !== undefined) {
         architektura = oddana;

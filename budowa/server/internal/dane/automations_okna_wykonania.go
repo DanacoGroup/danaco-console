@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: to, co budzik harmonogramu musi zastać po ponownym
-// złożeniu rdzenia — okna wykonania (tabela `okno_wykonania_harmonogramu`),
-// nadzór obecności uruchomień i klucz podpisu webhooka (kolumny
-// `harmonogram_automatyki`) oraz historia rzeczywistych wyzwoleń (tabela
-// `wyzwolenie_automatyki`). Wszystko z migracji 275.
-//
-// Powód istnienia całego pliku jest jeden: wyzwalacz czasowy trzymany wyłącznie
-// w pamięci procesu jest wyzwalaczem, który po restarcie nigdy nie zadziała,
-// a okno Scheduler pokazywałoby go dalej jako obowiązujący. Okno wykonania,
-// tolerancja nadzoru i klucz podpisu idą więc do bazy, a rdzeń odtwarza je przy
-// starcie tą samą drogą, którą czyta cykliczność.
+// Plik prowadzi to, co budzik harmonogramu musi zastać po restarcie rdzenia: okna wykonania, nadzór obecności
+// uruchomień, klucz podpisu webhooka oraz historię rzeczywistych wyzwoleń; pamięć procesu nie przeżywa restartu, więc wszystko idzie do bazy.
 package dane
 
 import (
@@ -102,7 +93,7 @@ func (r *repozytoriumAutomatyk) ZapiszOknaWykonania(ctx context.Context, harmono
 	})
 }
 
-// OknaWykonania zwraca okna wykonania harmonogramu w kolejności zapisu.
+// OknaWykonania zwraca okna wykonania harmonogramu w kolejności ich zapisu prosto z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) OknaWykonania(ctx context.Context,
 	harmonogramID int64) ([]OknoWykonania, error) {
 
@@ -163,7 +154,7 @@ func (r *repozytoriumAutomatyk) UstawPodpisHarmonogramu(ctx context.Context, har
 	return nil
 }
 
-// DopiszWyzwolenie nanosi rzeczywisty moment wyzwolenia wraz z przyczyną.
+// DopiszWyzwolenie nanosi rzeczywisty moment wyzwolenia harmonogramu wraz z jego przyczyną w bazie danych.
 func (r *repozytoriumAutomatyk) DopiszWyzwolenie(ctx context.Context, automatykaID int64,
 	harmonogramID *int64, przyczyna string, przebiegID *int64) error {
 
@@ -179,7 +170,7 @@ func (r *repozytoriumAutomatyk) DopiszWyzwolenie(ctx context.Context, automatyka
 	return nil
 }
 
-// Wyzwolenia zwraca historię wyzwoleń od najnowszego.
+// Wyzwolenia zwraca całą historię wyzwoleń harmonogramu od najnowszego wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) Wyzwolenia(ctx context.Context, automatykaID, harmonogramID int64,
 	limit int) ([]WyzwolenieAutomatyki, error) {
 

@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: obsługa `browser.source.add` i `browser.note.add` —
-// dwie szuflady modułu Browser zasilane z toku przeglądania, każda swoim
-// wierszem w `dane.RepozytoriumPrzegladania`.
-//
-// Warstwa danych oddaje znacznik czasu jako surowy tekst bazy (ISO 8601 ze
-// strftime), a kontrakt chce milisekund epoki. Przekład robi `chwilaBazy`
-// z `przeklad_nawigacja.go` — jedno miejsce przekładu czasu bazy dla całego
-// rdzenia, nie własna kopia w każdym module.
-//
-// Notatka bez źródła jest dozwolona: `SourceId` w żądaniu jest opcjonalny, bo
-// notatka Operatora może dotyczyć całej strony, nie tylko zebranego źródła
-// (`migracja_047_przegladarka.sql`, `dane/przegladarka_notatki.go`). Adapter nie
-// dogląda istnienia źródła przy zapisie notatki — kolumna nie niesie więzu
-// obcego, więc i port go nie udaje.
+// Odpowiedzialność pliku: obsługa `browser.source.add` i `browser.note.add` — dwie
+// szuflady modułu Browser zasilane z toku przeglądania, każda swoim wierszem repozytorium.
 package core
 
 import (
@@ -23,17 +11,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów nadawanych przez rdzeń — źródło i notatka nie
-// przychodzą od klienta z własnym `Id` (kontrakt ich nie niesie w żądaniu),
-// więc rdzeń nadaje je tak samo jak zdarzeniom i wiadomościom (`identyfikator.go`).
+// Przedrostki identyfikatorów nadawanych przez rdzeń — źródło i notatka nie przychodzą od
+// klienta z własnym identyfikatorem, więc rdzeń nadaje je tak samo jak innym bytom.
 const (
 	przedrostekZrodlaPrzegladania  = "src-"
 	przedrostekNotatkiPrzegladania = "note-"
 )
 
-// DodajZrodlo zapisuje stronę w wykazie źródeł okna. Zapis jest idempotentny
-// wobec identyfikatora zewnętrznego: powtórne wywołanie z tym samym `Id`
-// nadpisuje wiersz, nie dubluje go (patrz `ZapiszZrodlo`).
+// DodajZrodlo zapisuje stronę w wykazie źródeł okna; zapis jest idempotentny wobec
+// identyfikatora zewnętrznego — powtórne wywołanie z tym samym kodem nadpisuje wiersz, nie dubluje go.
 func (a *adapterPrzegladarki) DodajZrodlo(ctx context.Context, z shared.BrowserSourceAddRequest) (shared.BrowserSourceAddResponse, error) {
 	if brak := brakiZrodlaPrzegladania(z); brak != "" {
 		return shared.BrowserSourceAddResponse{}, bladWskazaniaPrzegladarki(brak)
@@ -71,9 +57,7 @@ func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.Browser
 		Watek:     z.ThreadId,
 		Przypieta: wartoscLogiczna(z.Pinned),
 	}
-	// Klasyfikacja przychodzi wyliczeniem kontraktu, a kolumna trzyma tekst:
-	// przekład jest tu, a nie w warstwie danych, bo to kontrakt zna dopuszczalne
-	// wartości i on je rozstrzyga przy wejściu żądania.
+	// Klasyfikacja przychodzi wyliczeniem kontraktu, a kolumna trzyma tekst; przekład jest tu.
 	if z.Classification != nil {
 		klasyfikacja := string(*z.Classification)
 		notatka.Klasyfikacja = &klasyfikacja
@@ -85,11 +69,8 @@ func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.Browser
 	return shared.BrowserNoteAddResponse{Note: notatkaKontraktu(zapisana)}, nil
 }
 
-// brakiZrodlaPrzegladania i brakiNotatkiPrzegladania nazywają pole, które
-// przyszło puste, zamiast mówić „okna albo adresu": odmowa idzie do Operatora
-// i ma powiedzieć, co dopisać. Brak samego pola w treści żądania odsiewa brama
-// kontraktu (`brama_kontraktu.go`) — tutaj rozstrzyga się wyłącznie wartość
-// pusta, bo tylko dziedzina wie, że pusty adres źródłem nie jest.
+// brakiZrodlaPrzegladania i brakiNotatkiPrzegladania nazywają pole, które przyszło puste,
+// zamiast ogólnikowej odmowy — Operator ma się dowiedzieć, co dopisać do żądania.
 func brakiZrodlaPrzegladania(z shared.BrowserSourceAddRequest) string {
 	var puste []string
 	if strings.TrimSpace(z.WindowId) == "" {
@@ -118,7 +99,7 @@ func brakiNotatkiPrzegladania(z shared.BrowserNoteAddRequest) string {
 	return "notatka przeglądania z pustymi polami: " + strings.Join(puste, ", ")
 }
 
-// zrodloKontraktu przekłada wiersz źródła na byt kontraktu `BrowserSource`.
+// zrodloKontraktu przekłada wiersz źródła bazy danych na byt kontraktu `BrowserSource` odpowiedzi żądania.
 func zrodloKontraktu(z dane.ZrodloPrzegladania) shared.BrowserSource {
 	zrodlo := shared.BrowserSource{
 		Id:         z.Kod,
@@ -136,7 +117,7 @@ func zrodloKontraktu(z dane.ZrodloPrzegladania) shared.BrowserSource {
 	return zrodlo
 }
 
-// notatkaKontraktu przekłada wiersz notatki na byt kontraktu `BrowserNote`.
+// notatkaKontraktu przekłada wiersz notatki bazy danych na byt kontraktu `BrowserNote` odpowiedzi żądania.
 func notatkaKontraktu(n dane.NotatkaPrzegladania) shared.BrowserNote {
 	notatka := shared.BrowserNote{
 		Id:        n.Kod,

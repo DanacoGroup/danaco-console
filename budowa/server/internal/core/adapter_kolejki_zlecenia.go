@@ -1,22 +1,7 @@
-// Odpowiedzialność pliku: dwanaście czynności Queue Managera dotyczących
-// ZLECEŃ kolejki, jej polityki, zadań martwych i głębokości w czasie —
-// rodzina `queue.item.*`, `queue.policy.set`, `queue.dead.list`,
-// `queue.depth.get`.
-//
-// To nie jest drugi silnik kolejek. Cykl życia KOLEJKI prowadzi
-// `kolejka_silnik.go` przez `queue.action`, i tylko on. Tutaj żyje zlecenie —
-// byt, którego kolejka jako całość nie zna: ładunek strukturalny, priorytet,
-// termin wykonania, klucz idempotencji, warunek przetworzenia.
-//
-// Idempotencja jest sprawdzana PRZED założeniem zlecenia i pole `duplicate`
-// mówi o tym wprost. Zlecenie o kluczu już użytym nie zakłada drugiego wiersza
-// i nie jest odmową: wywołanie przychodzące powtórzone przez nadawcę ma dostać
-// odpowiedź „to już jest”, a nie błąd, na który nadawca odpowie kolejnym
-// powtórzeniem.
-//
-// Zlecenie zdjęte, scalone i podzielone nie znika z bazy — dostaje stan
-// końcowy. Historia kolejki ma pokazywać, co się z ładunkiem stało, a wiersz
-// skasowany nie pokazuje niczego.
+// Ten plik obsługuje dwanaście czynności Queue Managera dla zleceń kolejki,
+// polityki, zadań martwych i głębokości w czasie: `queue.item.*`,
+// `queue.policy.set`, `queue.dead.list`, `queue.depth.get`. Cykl życia
+// kolejki prowadzi `kolejka_silnik.go`.
 package core
 
 import (
@@ -34,7 +19,8 @@ import (
 // wykres głębokości Queue Managera pokazuje tydzień obciążenia.
 const odcinekGlebokosciDomyslny = 3600
 
-// DodajZlecenie dokłada zlecenie do kolejki poza harmonogramem.
+// DodajZlecenie dokłada zlecenie do kolejki poza harmonogramem, a klucz
+// idempotencji już użyty oddaje zlecenie zastane jako duplikat.
 func (a *adapterKolejek) DodajZlecenie(ctx context.Context,
 	z shared.QueueItemEnqueueRequest) (shared.QueueItemEnqueueResponse, error) {
 
@@ -92,7 +78,8 @@ func (a *adapterKolejek) ZdejmijZlecenie(ctx context.Context,
 	return shared.QueueItemDequeueResponse{Removed: zdjete, Queue: kolejka}, nil
 }
 
-// OdlozZlecenie odkłada wykonanie zlecenia o wskazany czas.
+// OdlozZlecenie odkłada wykonanie zlecenia o wskazany czas, przyjmując
+// wyłącznie dodatnią liczbę sekund odłożenia.
 func (a *adapterKolejek) OdlozZlecenie(ctx context.Context,
 	z shared.QueueItemDelayRequest) (shared.QueueItemDelayResponse, error) {
 
@@ -196,7 +183,8 @@ func (a *adapterKolejek) ScalZlecenia(ctx context.Context,
 	return shared.QueueItemMergeResponse{Item: zlecenieKontraktu(scalone)}, nil
 }
 
-// SkierujZlecenie kieruje zlecenie do innej kolejki albo do innego wykonawcy.
+// SkierujZlecenie kieruje zlecenie do innej kolejki albo do innego wykonawcy,
+// odmawiając, gdy skierowanie niczego nie zmienia.
 func (a *adapterKolejek) SkierujZlecenie(ctx context.Context,
 	z shared.QueueItemRouteRequest) (shared.QueueItemRouteResponse, error) {
 
@@ -226,7 +214,8 @@ func (a *adapterKolejek) SkierujZlecenie(ctx context.Context,
 	return shared.QueueItemRouteResponse{Item: zlecenieKontraktu(skierowane)}, nil
 }
 
-// RozgalezZlecenie rozgałęzia przetwarzanie zlecenia na tory równoległe.
+// RozgalezZlecenie rozgałęzia przetwarzanie zlecenia na tory równoległe,
+// z których każdy zakłada osobne zlecenie potomne.
 func (a *adapterKolejek) RozgalezZlecenie(ctx context.Context,
 	z shared.QueueItemBranchRequest) (shared.QueueItemBranchResponse, error) {
 
@@ -266,7 +255,8 @@ func (a *adapterKolejek) RozgalezZlecenie(ctx context.Context,
 	return shared.QueueItemBranchResponse{Items: tory}, nil
 }
 
-// UwarunkujZlecenie ustala warunek przetworzenia zlecenia; pusty go zdejmuje.
+// UwarunkujZlecenie ustala warunek przetworzenia zlecenia; warunek pusty
+// zdejmuje warunek już zapisany.
 func (a *adapterKolejek) UwarunkujZlecenie(ctx context.Context,
 	z shared.QueueItemConditionRequest) (shared.QueueItemConditionResponse, error) {
 
@@ -289,7 +279,8 @@ func (a *adapterKolejek) UwarunkujZlecenie(ctx context.Context,
 	return shared.QueueItemConditionResponse{Item: zlecenieKontraktu(zapisane)}, nil
 }
 
-// WykazZlecen oddaje zlecenia kolejki wraz z liczbą wszystkich.
+// WykazZlecen oddaje zlecenia kolejki wraz z liczbą wszystkich, z opcjonalnym
+// zawężeniem po stanie i limitem wierszy.
 func (a *adapterKolejek) WykazZlecen(ctx context.Context,
 	z shared.QueueItemListRequest) (shared.QueueItemListResponse, error) {
 
@@ -313,8 +304,8 @@ func (a *adapterKolejek) WykazZlecen(ctx context.Context,
 	return shared.QueueItemListResponse{Items: zlecenia, Total: wszystkich}, nil
 }
 
-// UstawPolitykeKolejki zapisuje zasięg, współbieżność, przepustowość i politykę
-// ponawiania.
+// UstawPolitykeKolejki zapisuje zasięg, współbieżność, przepustowość
+// i politykę ponawiania, nanosząc tylko pola obecne w żądaniu.
 func (a *adapterKolejek) UstawPolitykeKolejki(ctx context.Context,
 	z shared.QueuePolicySetRequest) (shared.QueuePolicySetResponse, error) {
 
@@ -375,8 +366,8 @@ func naniesPolityke(zastana dane.PolitykaKolejki, zadana shared.QueuePolicy) dan
 	return wynik
 }
 
-// WykazZadanMartwych oddaje zlecenia trwale nieudane — jednej kolejki albo
-// wszystkich.
+// WykazZadanMartwych oddaje zlecenia trwale nieudane — jednej kolejki, gdy
+// wskazana, albo wszystkich kolejek rdzenia.
 func (a *adapterKolejek) WykazZadanMartwych(ctx context.Context,
 	z shared.QueueDeadListRequest) (shared.QueueDeadListResponse, error) {
 
@@ -399,7 +390,8 @@ func (a *adapterKolejek) WykazZadanMartwych(ctx context.Context,
 	return shared.QueueDeadListResponse{Items: zlecenia}, nil
 }
 
-// GlebokoscKolejki oddaje liczbę zleceń oczekujących w kolejnych odcinkach czasu.
+// GlebokoscKolejki oddaje liczbę zleceń oczekujących w kolejnych odcinkach
+// czasu, domyślnie liczonych godziną.
 func (a *adapterKolejek) GlebokoscKolejki(ctx context.Context,
 	z shared.QueueDepthGetRequest) (shared.QueueDepthGetResponse, error) {
 
@@ -433,7 +425,8 @@ func (a *adapterKolejek) GlebokoscKolejki(ctx context.Context,
 	return shared.QueueDepthGetResponse{Points: punkty}, nil
 }
 
-// wierszKolejkiZlecen odnajduje kolejkę po jej identyfikatorze kontraktu.
+// wierszKolejkiZlecen odnajduje kolejkę po jej identyfikatorze kontraktu,
+// odmawiając, gdy identyfikator nie jest liczbą.
 func (a *adapterKolejek) wierszKolejkiZlecen(ctx context.Context, id string) (dane.Kolejka, error) {
 	numer, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -447,7 +440,8 @@ func (a *adapterKolejek) wierszKolejkiZlecen(ctx context.Context, id string) (da
 	return kolejka, nil
 }
 
-// zlecenieZadania dobiera kolejkę i jej zlecenie wskazane żądaniem.
+// zlecenieZadania dobiera kolejkę i jej zlecenie wskazane żądaniem,
+// sprawdzając, że zlecenie stoi w tej kolejce.
 func (a *adapterKolejek) zlecenieZadania(ctx context.Context, idKolejki,
 	idZlecenia string) (dane.Kolejka, dane.Zlecenie, error) {
 
@@ -499,7 +493,8 @@ func ladunkiPodzadan(zapis json.RawMessage) ([]json.RawMessage, error) {
 	return ladunki, nil
 }
 
-// zapisLadunku przekłada ładunek kontraktu na kolumnę; ładunek pusty daje brak.
+// zapisLadunku przekłada ładunek kontraktu na kolumnę bazy; ładunek pusty
+// w żądaniu daje w kolumnie brak, nie pusty ciąg.
 func zapisLadunku(ladunek json.RawMessage) *string {
 	if len(ladunek) == 0 {
 		return nil
@@ -508,7 +503,8 @@ func zapisLadunku(ladunek json.RawMessage) *string {
 	return &zapis
 }
 
-// zlecenieKontraktu przekłada wiersz zlecenia na byt kontraktu.
+// zlecenieKontraktu przekłada wiersz zlecenia zapisany w bazie na byt
+// kontraktu zwracany w odpowiedzi komendy.
 func zlecenieKontraktu(wiersz dane.Zlecenie) shared.QueueItem {
 	priorytet, proby := wiersz.Priorytet, wiersz.Proby
 	zlecenie := shared.QueueItem{
@@ -541,7 +537,8 @@ var stanyZlecenia = map[shared.QueueItemStatus]string{
 	shared.QueueItemStatusRemoved:   "zdjete",
 }
 
-// stanZleceniaBazy przekłada stan kontraktu na słownik bazy.
+// stanZleceniaBazy przekłada stan kontraktu na słownik bazy, a stan nieznany
+// zapisuje jako oczekujący.
 func stanZleceniaBazy(stan shared.QueueItemStatus) string {
 	if kolumna, jest := stanyZlecenia[stan]; jest {
 		return kolumna
@@ -549,7 +546,8 @@ func stanZleceniaBazy(stan shared.QueueItemStatus) string {
 	return "oczekuje"
 }
 
-// stanZleceniaKontraktu przekłada słownik bazy na stan kontraktu.
+// stanZleceniaKontraktu przekłada słownik bazy na stan kontraktu, a wartość
+// nieznaną zwraca jako oczekującą.
 func stanZleceniaKontraktu(kolumna string) shared.QueueItemStatus {
 	for stan, wartosc := range stanyZlecenia {
 		if wartosc == kolumna {
@@ -559,7 +557,8 @@ func stanZleceniaKontraktu(kolumna string) shared.QueueItemStatus {
 	return shared.QueueItemStatusPending
 }
 
-// czyStanKoncowyZlecenia mówi, czy ze zleceniem nic już się nie stanie.
+// czyStanKoncowyZlecenia mówi, czy ze zleceniem nic już się nie stanie — stan
+// końcowy nie przyjmuje kolejnej zmiany.
 func czyStanKoncowyZlecenia(kolumna string) bool {
 	switch kolumna {
 	case "zakonczone", "bledne", "martwe", "zdjete":
@@ -569,7 +568,8 @@ func czyStanKoncowyZlecenia(kolumna string) bool {
 	}
 }
 
-// zasiegiKolejki wiąże zasięg kontraktu ze słownikiem bazy.
+// zasiegiKolejki wiąże zasięg kontraktu ze słownikiem bazy, jedną mapą
+// czytaną w obie strony przekładu.
 var zasiegiKolejki = map[shared.QueueScope]string{
 	shared.QueueScopeGlobal:  "globalna",
 	shared.QueueScopeLocal:   "lokalna",
@@ -578,7 +578,8 @@ var zasiegiKolejki = map[shared.QueueScope]string{
 	shared.QueueScopeProject: "projektu",
 }
 
-// zasiegBazy przekłada zasięg kontraktu na słownik bazy.
+// zasiegBazy przekłada zasięg kontraktu na słownik bazy, a zasięg nieznany
+// zapisuje jako zasięg lokalny.
 func zasiegBazy(zasieg shared.QueueScope) string {
 	if kolumna, jest := zasiegiKolejki[zasieg]; jest {
 		return kolumna
@@ -586,7 +587,8 @@ func zasiegBazy(zasieg shared.QueueScope) string {
 	return "lokalna"
 }
 
-// zasiegKontraktu przekłada słownik bazy na zasięg kontraktu.
+// zasiegKontraktu przekłada słownik bazy na zasięg kontraktu, a wartość
+// nieznaną zwraca jako zasięg lokalny.
 func zasiegKontraktu(kolumna string) shared.QueueScope {
 	for zasieg, wartosc := range zasiegiKolejki {
 		if wartosc == kolumna {
@@ -596,7 +598,8 @@ func zasiegKontraktu(kolumna string) shared.QueueScope {
 	return shared.QueueScopeLocal
 }
 
-// politykaKontraktu przekłada politykę kolejki na byt kontraktu.
+// politykaKontraktu przekłada politykę kolejki zapisaną w bazie na byt
+// kontraktu zwracany w odpowiedzi.
 func politykaKontraktu(wiersz dane.PolitykaKolejki) shared.QueuePolicy {
 	zasieg := zasiegKontraktu(wiersz.Zasieg)
 	wycofanie := shared.QueueBackoffKind(wiersz.Wycofanie)
@@ -612,7 +615,8 @@ func politykaKontraktu(wiersz dane.PolitykaKolejki) shared.QueuePolicy {
 	}
 }
 
-// bladZlecenia znakuje usterkę zapisu zlecenia kodem kontraktu.
+// bladZlecenia znakuje usterkę zapisu zlecenia kodem błędu kontraktu, a błąd
+// pusty przepuszcza bez zmian.
 func bladZlecenia(err error) error {
 	if err == nil {
 		return nil
@@ -620,7 +624,8 @@ func bladZlecenia(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladWskazaniaZlecenia nazywa brak danych w żądaniu — błąd wołającego, nie rdzenia.
+// bladWskazaniaZlecenia nazywa brak danych wymaganych w żądaniu jako błąd
+// wołającego, nie odmowę rdzenia.
 func bladWskazaniaZlecenia(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "kolejki: "+powod))
 }

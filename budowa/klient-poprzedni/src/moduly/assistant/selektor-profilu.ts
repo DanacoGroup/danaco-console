@@ -4,24 +4,9 @@ import { poleWyboru, ustawPozycje, type PozycjaWyboru } from '../../modele/kontr
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Selektor Profilu asystenta — warstwa 2 nagłówka Voice Console.
- *
- * Profil jest komponentem własnym strefy 2 strony głównej, więc jego wykazem
- * jest `component.list` zawężony rodzajem `assistant`. Osobnej rodziny
- * `assistant.profile.*` kontrakt nie ma i mieć nie musi: rodzaj komponentu
- * nazywa się w kontrakcie wprost „Profil asystenta" (`ComponentKind`).
- *
- * Do rdzenia jedzie `Component.targetId`, nie `Component.id`. Rdzeń rozstrzyga
- * `profileId` po kolumnie `profil_asystenta.identyfikator_zewnetrzny`
- * (`adapter_modul_asystent_profil.go`, `profilZlecenia`), a bytem docelowym
- * komponentu jest właśnie ten kod. Wysłanie identyfikatora kafla byłoby
- * wskazaniem profilu, którego rdzeń nie zna — a wtedy zlecenie idzie bez
- * warstwy profilu i nikt się o tym nie dowie.
- *
- * Komponent bez bytu docelowego zostaje w wykazie i mówi o tym w swojej
- * nazwie. Wybranie go nie wstawia niczego do pola, bo nie ma czego wstawić;
- * ukrycie takiego wiersza zataiłoby fakt, że kafel profilu stoi w strefie 2
- * bez profilu pod spodem.
+ * Selektor Profilu asystenta — warstwa 2 nagłówka Voice Console. Profil jest
+ * komponentem własnym strefy 2 strony głównej, więc jego wykazem jest odczyt
+ * `component.list` zawężony rodzajem `assistant`.
  */
 export interface SelektorProfilu {
   /** Kontrolka osadzana w rzędzie kontrolek paska promptu. */
@@ -30,7 +15,11 @@ export interface SelektorProfilu {
   wczytaj(): Promise<void>;
 }
 
-/** Pozycja pusta — profil domyślny rdzenia; zawsze pierwsza w wykazie. */
+/**
+ * Pozycja pusta — profil domyślny rdzenia; zawsze pierwsza w wykazie. Wybranie jej
+ * zostawia pole puste, więc zlecenie idzie bez wskazania profilu, a rdzeń dobiera
+ * własny domyślny zamiast odmawiać.
+ */
 const DOMYSLNY: PozycjaWyboru = {
   wartosc: '',
   etykieta: 'Profil asystenta: domyślny rdzenia',
@@ -85,7 +74,11 @@ export function utworzSelektorProfilu(
   };
 }
 
-/** Jeden wiersz katalogu; nazwa mówi także to, czego wiersz nie ma. */
+/**
+ * Jeden wiersz katalogu; nazwa mówi także to, czego wiersz nie ma. Dopiski
+ * o wyłączeniu w strefie 2 i o braku bytu docelowego stoją w nazwie, bo wiersz
+ * czyta się w zwiniętej liście, gdzie nie ma miejsca na drugi wiersz opisu.
+ */
 function pozycja(komponent: Component): PozycjaWyboru {
   const byt = komponent.targetId ?? '';
   const dopiski: string[] = [];

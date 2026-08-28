@@ -1,3 +1,6 @@
+// Zgodność rdzenia z kontraktem: kontrakt jest jedynym źródłem prawdy nazw,
+// a jedynym pomiarem mówiącym prawdę o obsłudze komendy jest zmontowany
+// rejestr, nie grep źródeł.
 package core
 
 import (
@@ -11,57 +14,24 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność rdzenia z kontraktem.
-//
-// Kontrakt jest jedynym źródłem prawdy nazw, ale sam z siebie niczego nie
-// wymusza: nazwa może stać w `contract.json`, wygenerować się do `contract.go`
-// i nie mieć po stronie rdzenia ani jednego obsługiwacza. Kompilacja tego nie
-// wychwyci — stała jest użyta w kontrakcie, więc nie jest martwa.
-//
-// Grep tego też nie rozstrzygnie. Część rejestracji idzie przez zmienną
-// (`r.Zarejestruj(n.Przejecie, …)`, `r.Zarejestruj(nazwa, obsluga)`), więc
-// wyliczenie literałów w źródle zaniża wynik i nie wiadomo o ile. Jedynym
-// pomiarem, który mówi prawdę, jest zmontowany rejestr.
-
 // granicaKomendySprawdzianu jest granicą czasu JEDNEGO wywołania komendy przez
 // uprząż sprawdzianu. Wypada wyłącznie wtedy, gdy rdzeń zwisł — nigdy wtedy,
 // gdy komenda po prostu długo pracuje.
 //
-// Wartość wychodzi z granicy warstwy, nie z czasu pomiaru. Najdłuższa czynność
-// mierzona uprzężą jest czynnością skanera i sama stoi pod granicą
-// `granicaWykazuUrzadzen` (45 s, `urzadzenia_skaner.go`): komenda, której
-// urządzenie nie odpowiada, wraca odmową dopiero po tym czasie. Uprząż ciaśniejsza
-// od tej granicy urywa komendę przed jej własną odmową i melduje usterkę rdzenia
-// tam, gdzie zwisło urządzenie — tak chwiał się sprawdzian przy granicy 15 s,
-// podczas gdy czynność skanera dochodzi na tej maszynie do ~14,8 s.
-//
-// Zapas ponad granicę warstwy to 15 s: tyle trwa montaż rdzenia i droga koperty
-// wokół samej czynności, a jest to zarazem czterokrotność najdłuższego zmierzonego
-// wywołania. Granica pozostaje o rząd wielkości niższa od granicy pojedynczego
-// przebiegu skanera (5 min), więc zwis rdzenia nadal wychodzi w minutach, nie
-// w godzinach.
-const granicaKomendySprawdzianu = granicaWykazuUrzadzen + 15*time.Second
+// Granica jest ograniczeniem górnym, nie czasem oczekiwania: komenda szybka
+// wraca natychmiast, więc jej podniesienie nie wydłuża biegu sprawdzianów.
+// Wartość obejmuje najwolniejszą zmierzoną komendę liczącą modelem na procesorze,
+// czyli powiększenie obrazu z odtwarzaniem twarzy przy około stu dziewięćdziesięciu
+// sekundach, wraz z wczytaniem wag przesiewu wyszukiwania.
+const granicaKomendySprawdzianu = 10 * time.Minute
 
 // komendyBezObslugiwacza wylicza komendy kontraktu, których rdzeń dziś nie
-// obsługuje. Wykaz jest zaporą, nie zgodą: sprawdzian wypada niepomyślnie
-// zarówno wtedy, gdy pojawi się brak spoza wykazu, jak i wtedy, gdy brak
-// z wykazu zostanie uzupełniony, a wiersz zostanie. Dług nie rośnie po cichu
-// i nie znika po cichu.
-//
-// Klient nie zobaczy tych komend w powitaniu, bo powitanie oddaje wykaz
-// z rejestru rdzenia. Wołanie ich wraca zdarzeniem `*.unknown` z kodem
-// `not_found` — odmową nazwaną, nie zerwaniem połączenia.
-//
-// Wykaz jest dziś PUSTY: każda komenda kontraktu ma w rdzeniu obsługiwacza.
-// Pustego wykazu nie zwijamy do usunięcia zmiennej — obie zapory niżej stoją na
-// niej i mają działać dalej, a wiersz dopisany tu w przyszłości ma być decyzją
-// widoczną w przeglądzie, nie skutkiem ubocznym.
+// obsługuje. Wykaz jest zaporą, nie zgodą, i stoi dziś PUSTY: każda komenda
+// kontraktu ma w rdzeniu obsługiwacza.
 var komendyBezObslugiwacza = []shared.MessageType{}
 
 // TestRejestrPokrywaKomendyKontraktu sprawdza, że każda komenda kontraktu ma
-// w rdzeniu obsługiwacza — poza wyliczonymi wprost powyżej. Komenda bez
-// obsługiwacza nie jest błędem zrywającym, ale jest funkcją zapowiedzianą
-// i niedostarczoną, czyli dokładnie tym, czego wykaz braków nie widzi.
+// w rdzeniu obsługiwacza — poza wyliczonymi wprost powyżej.
 func TestRejestrPokrywaKomendyKontraktu(t *testing.T) {
 	zmontowany, _ := zmontujDoSprawdzenia(t)
 	obslugiwane := zbiorNazw(zmontowany.Rdzen.rejestr.Nazwy())
@@ -97,9 +67,7 @@ func TestRejestrPokrywaKomendyKontraktu(t *testing.T) {
 }
 
 // TestRejestrNieMaNazwSpozaKontraktu pilnuje drugiej strony tej samej zgodności:
-// rdzeń nie obsługuje nazwy, której kontrakt nie zna. Nazwa taka byłaby
-// funkcją nieudokumentowaną — klient nie miałby jak jej wywołać, bo bindingi
-// powstają wyłącznie z kontraktu.
+// rdzeń nie obsługuje nazwy, której kontrakt nie zna.
 func TestRejestrNieMaNazwSpozaKontraktu(t *testing.T) {
 	zmontowany, _ := zmontujDoSprawdzenia(t)
 	kontraktowe := zbiorNazw(shared.WszystkieKomendy())
@@ -120,8 +88,6 @@ func TestRejestrNieMaNazwSpozaKontraktu(t *testing.T) {
 
 // TestPowitanieOddajeWykazZRejestru sprawdza obietnicę z komentarza powitania:
 // klient dostaje wykaz komend rzeczywiście obsługiwanych, nie wykaz z kontraktu.
-// Rozjazd tych dwóch zbiorów oznacza, że klient odblokowuje okna funkcji,
-// których rdzeń nie ma — albo ukrywa te, które ma.
 func TestPowitanieOddajeWykazZRejestru(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 
@@ -151,8 +117,7 @@ func TestPowitanieOddajeWykazZRejestru(t *testing.T) {
 
 // TestKomendaSpozaKontraktuWracaJakoNieznana pilnuje ścieżki opisanej
 // w rejestrze rdzenia: typ spoza kontraktu dostaje zdarzenie `*.unknown`
-// swojego obszaru wraz ze stanem błędu i kodem `not_found`. Połączenie nie jest
-// zrywane — sprawdzian dowodzi tego wywołaniem kolejnej komendy po odmowie.
+// swojego obszaru wraz ze stanem błędu i kodem `not_found`.
 func TestKomendaSpozaKontraktuWracaJakoNieznana(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 
@@ -178,9 +143,7 @@ func TestKomendaSpozaKontraktuWracaJakoNieznana(t *testing.T) {
 }
 
 // powitanieSprawdzianu składa powitanie kompletne wobec kontraktu. Powitanie
-// jest tu narzędziem, nie przedmiotem pomiaru — oba sprawdziany powyżej pytają
-// o wykaz komend i o to, czy rdzeń pracuje po odmowie. Treść niepełna mierzyłaby
-// w tym miejscu bramę kontraktu zamiast tego, o co sprawdzianom idzie.
+// jest tu narzędziem, nie przedmiotem pomiaru.
 func powitanieSprawdzianu() shared.ConnectionHelloRequest {
 	return shared.ConnectionHelloRequest{
 		ClientId:        "sprawdzian",
@@ -219,13 +182,8 @@ func TestKomunikatNieczytelnyNieZrywaRdzenia(t *testing.T) {
 }
 
 // TestKazdaKomendaZnosiPustyLadunek wywołuje wszystkie zarejestrowane komendy
-// z ładunkiem pustym. Sprawdzian nie ocenia treści odpowiedzi — ocenia, że
-// obsługiwacz nie przerywa wykonania i że odmowa jest odmową nazwaną: koperta
-// ze stanem i kodem kontraktu.
-//
-// Ładunek pusty jest tu przypadkiem granicznym najtańszym do wywołania
-// i najczęstszym w praktyce: tak wygląda żądanie klienta z niewypełnionym
-// formularzem oraz wywołanie narzędzia przez model, który pominął parametr.
+// z ładunkiem pustym. Sprawdzian ocenia, że obsługiwacz nie przerywa wykonania
+// i że odmowa jest odmową nazwaną: koperta ze stanem i kodem kontraktu.
 func TestKazdaKomendaZnosiPustyLadunek(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 
@@ -261,7 +219,7 @@ func TestKazdaKomendaZnosiPustyLadunek(t *testing.T) {
 }
 
 // wykonajKomende składa kopertę i przepuszcza ją przez rdzeń tą samą drogą,
-// którą wchodzi transport.
+// którą wchodzi transport, wraz z drogą zwrotną odpowiedzi do wołającego.
 func wykonajKomende(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	komenda shared.MessageType, ladunek any) protocol.Koperta {
 	t.Helper()
@@ -275,7 +233,8 @@ func wykonajKomende(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return zmontowany.Rdzen.Wykonaj(ctx, koperta)
 }
 
-// zbiorNazw zamienia wykaz nazw na zbiór do sprawdzeń przynależności.
+// zbiorNazw zamienia wykaz nazw na zbiór do sprawdzeń przynależności, żeby
+// porównanie dwóch wykazów nie zależało od kolejności ich elementów.
 func zbiorNazw(nazwy []shared.MessageType) map[shared.MessageType]bool {
 	zbior := make(map[shared.MessageType]bool, len(nazwy))
 	for _, nazwa := range nazwy {

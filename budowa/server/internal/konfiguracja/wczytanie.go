@@ -1,9 +1,8 @@
 package konfiguracja
 
-// Wczytaj ustala konfigurację rdzenia w kolejności warstw:
-// wartości domyślne → zmienne środowiska → argumenty wywołania.
-// Odczyt środowiska jest parametrem, więc wczytanie daje się sprawdzić bez zmiany procesu.
-// Zwrócenie flag.ErrHelp oznacza żądanie pomocy, nie błąd konfiguracji.
+// Wczytaj ustala konfigurację rdzenia w kolejności warstw: wartości
+// domyślne, zmienne środowiska, argumenty wywołania. Zwrócenie
+// flag.ErrHelp oznacza żądanie pomocy, nie błąd konfiguracji.
 func Wczytaj(argumenty []string, odczytSrodowiska func(string) string) (Konfiguracja, error) {
 	kon := Domyslna()
 	if err := zastosujSrodowisko(&kon, odczytSrodowiska); err != nil {

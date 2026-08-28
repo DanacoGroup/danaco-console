@@ -1,20 +1,6 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY SEMANTYCZNE · MOTYW CIEMNY
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wartości żetonów semantycznych motywu ciemnego —
-   odcienie czerni.
+/* Żetony semantyczne motywu ciemnego niosą własny pełny komplet wartości: motyw ciemny nie jest przyciemnionym motywem jasnym, a skala kończy się na odcieniu tuż nad czernią. */
 
-   Motyw ciemny nie jest przyciemnionym motywem jasnym. Ma własny, pełny komplet
-   wartości — co do jednego żetonu tyle samo, ile motyw jasny.
-
-   Skala nie sięga czystej czerni: kończy się na #0A0A0A, tło motywu to #0F0F0F.
-
-   Budowa pliku identyczna jak w semantyczne-jasny.css:
-     1. wybór jawny data-theme="dark",
-     2. zapas: brak jawnego wyboru i preferencja systemu ustawiona na ciemny.
-   ============================================================================ */
-
-/* Wybór jawny: data-theme="dark" */
+/* Wybór jawny motywu ciemnego następuje przez atrybut data-theme ustawiony na wartość dark na elemencie głównym dokumentu. */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
@@ -61,7 +47,7 @@
   --dn-fokus-cien: rgba(92, 140, 236, 0.35);
 }
 
-/* Brak jawnego wyboru — rozstrzyga preferencja systemu. */
+/* Brak jawnego wyboru motywu pozostawia rozstrzygnięcie preferencji systemu operacyjnego przez zapytanie prefers-color-scheme. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;

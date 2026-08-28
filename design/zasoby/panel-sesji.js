@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Panel sesji i projektów porządkuje płaski wykaz sesji obok drzewa projektów, łącząc czynności wiersza i panelu w jednym spójnym widoku bocznym aplikacji. ================
    DANACO CONSOLE — PANEL SESJI I PROJEKTÓW
    ----------------------------------------------------------------------------
    Kompetencja: porządek i zakres płaskiego wykazu sesji, drzewo projektów,

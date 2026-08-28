@@ -8,12 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przekład wierszy słowników platformy i wierszy utrwalonych na byty kontraktu.
-//
-// przeklad.go przenosi byty pakietu sesji — te żyją w pamięci rdzenia i znają
-// czas jako time.Time. Tutaj przechodzą wiersze bazy: identyfikator jest liczbą,
-// czas napisem ISO 8601, a kolejność wyświetlania kolumną albo pozycją w wykazie
-// uporządkowanym zapytaniem. Drugiego miejsca tego przekładu nie ma.
+// Plik przekłada wiersze słowników platformy i wiersze utrwalone na byty kontraktu.
 
 // formatZnacznikaBazy odpowiada wyrażeniu strftime schematu: czas UTC w ISO 8601
 // z częścią ułamkową sekundy.
@@ -39,10 +34,7 @@ func identyfikatorWiersza(zewnetrzny *string, id int64) string {
 	return strconv.FormatInt(id, 10)
 }
 
-// srodowiskoKontraktu przekłada wiersz słownika środowisk na kartę wejścia.
-// Kody modułów wchodzą do wyniku wyłącznie na żądanie, ale rodzaj nawigacji
-// rozstrzyga macierz widoczności zawsze — bez niej środowisko z panelem
-// orkiestracji byłoby nieodróżnialne od środowiska z pustą listą modułów.
+// srodowiskoKontraktu przekłada wiersz słownika środowisk na kartę wejścia; kody modułów wchodzą na żądanie, a rodzaj nawigacji rozstrzyga zawsze macierz widoczności.
 func srodowiskoKontraktu(s dane.Srodowisko, pozycja int, kodyModulow []string, zModulami bool) shared.Environment {
 	srodowisko := shared.Environment{
 		Id:             strconv.FormatInt(s.ID, 10),
@@ -79,12 +71,7 @@ func kolejnoscWyswietlania(zKolumny, pozycja int) int {
 	return pozycja
 }
 
-// modulKontraktu przekłada wiersz słownika modułów wraz z macierzą widoczności
-// i katalogiem okien operacyjnych.
-//
-// Pozycja pochodzi z porządku zapytania, bo kolejność modułu jest własnością
-// macierzy `srodowisko_modul`, nie samego modułu. Poza wykazem jednego
-// środowiska kolejność nie ma treści — wtedy zostaje zerem.
+// modulKontraktu przekłada wiersz słownika modułów wraz z macierzą widoczności i katalogiem okien operacyjnych; pozycja pochodzi z porządku zapytania danego środowiska.
 func modulKontraktu(m dane.Modul, pozycja int, kodySrodowisk, kodyOkien []string) shared.Module {
 	return shared.Module{
 		Id:                     strconv.FormatInt(m.ID, 10),
@@ -94,22 +81,11 @@ func modulKontraktu(m dane.Modul, pozycja int, kodySrodowisk, kodyOkien []string
 		Order:                  pozycja,
 		EnvironmentCodes:       kodySrodowisk,
 		OperationalWindowCodes: kodyOkien,
-		// Rodzaj wychodzi napisem przepuszczonym bez sprawdzania wykazu.
-		// Kontrakt opisuje cztery wartości `kind` wyłącznie w treści opisu —
-		// pole jest zwykłym `string`, nie nazwanym wyliczeniem, więc nie ma
-		// tu typu, który mógłby czegokolwiek pilnować; kolumna też nie ma
-		// warunku CHECK. Wartość spoza wykazu przechodzi zatem taka, jaka
-		// jest: przekład nie jest miejscem na osąd danych, a podmiana
-		// nieznanego rodzaju na zastępczy zatarłaby ślad błędu w słowniku.
-		// NULL daje pusty napis — kontrakt wymaga wartości, a pusty napis
-		// czytelnie znaczy „rodzaju nie rozstrzygnięto".
+		// Rodzaj wychodzi napisem bez sprawdzania wykazu; NULL daje pusty napis rodzaju nierozstrzygniętego.
 		Kind: wartoscTekstu(m.Rodzaj),
-		// Ikona idzie wskaźnikiem wprost: pole kontraktu jest opcjonalne,
-		// więc brak w kolumnie zostaje brakiem w kopercie, bez zamiany na
-		// pusty napis.
+		// Ikona idzie wskaźnikiem: brak w kolumnie zostaje brakiem w kopercie, bez zamiany na pusty napis.
 		Icon: m.Ikona,
-		// Flaga jest w bazie NOT NULL DEFAULT 0, więc rdzeń zawsze ma
-		// wartość — stąd pole kontraktu wymagane i przypisanie bez osłony.
+		// Flaga jest w bazie zawsze wypełniona, więc pole kontraktu jest wymagane bez osłony.
 		ConfiguredOnHome: m.KonfigurowanyNaStronieGlownej,
 	}
 }
@@ -155,7 +131,7 @@ func oknoWierszaKontraktu(o dane.Okno, kodModulu, kodKanalu string) shared.Windo
 	return okno
 }
 
-// identyfikatoryOkien wylicza identyfikatory okien — relacja 1:N sesji.
+// identyfikatoryOkien wylicza identyfikatory okien z wykazu, zachowując relację jeden do wielu między sesją a oknami.
 func identyfikatoryOkien(okna []shared.Window) []string {
 	wykaz := make([]string, 0, len(okna))
 	for _, okno := range okna {

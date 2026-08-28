@@ -20,12 +20,7 @@ import { utworzStanOknaBadania } from './stan-okna-badania';
 import { utworzWyborNastawy, wierszNastawy } from './wybor-nastawy';
 
 /**
- * Export Panel — wydanie raportu w formacie dokumentowym.
- *
- * Dwie funkcje Operatora: eksport raportu oraz wybór formatu wyjściowego
- * i miejsca docelowego (`format`, `targetPath`, `toLibrary`).
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-eksportu`.
+ * Export Panel wydaje raport w formacie dokumentowym, udostępniając Operatorowi wybór formatu wyjściowego oraz miejsca docelowego zapisu.
  */
 export interface OknoExportPanel {
   element: HTMLElement;
@@ -41,9 +36,7 @@ const FORMATY = [
 ];
 
 export function utworzOknoExportPanel(stan: StanBadania): OknoExportPanel {
-  // Format wyjściowy idzie sterem nastawy: uchwyt niesie wartość bieżącą
-  // („PDF"), a nie nazwę rodzajową — natywna lista pokazuje ją dopiero po
-  // rozwinięciu.
+  // Format wyjściowy pochodzi ze steru nastawy pokazującego wartość bieżącą zamiast nazwy rodzajowej.
   const format = utworzWyborNastawy('Format wyjściowy', FORMATY);
   const sciezka = poleTekstowe({ etykieta: 'Miejsce docelowe', podpowiedz: 'ścieżka pliku wynikowego' });
   const doRepozytorium = poleLogiczne({ etykieta: 'Zapisz wynik w repozytorium Library' });
@@ -54,9 +47,7 @@ export function utworzOknoExportPanel(stan: StanBadania): OknoExportPanel {
   const podglad = document.createElement('p');
   podglad.className = 'mr-eksport__podglad';
 
-  // Historia eksportów bieżącej sesji. Wpis powstaje wyłącznie z odpowiedzi
-  // rdzenia — nie z zamówienia — więc wykaz mówi, co rdzeń NAPRAWDĘ oddał,
-  // razem z brakiem ścieżki tam, gdzie jej nie oddał.
+  // Wpis historii powstaje z odpowiedzi rdzenia, nie z zamówienia, więc oddaje stan naprawdę wydany.
   const historia = document.createElement('ol');
   historia.className = 'mr-historia';
   historia.setAttribute('aria-label', 'Historia eksportów bieżącej sesji');
@@ -142,7 +133,7 @@ export function utworzOknoExportPanel(stan: StanBadania): OknoExportPanel {
   return { element: rama.element, odswiez };
 }
 
-/** Podpis nad historią wydań bieżącej sesji. */
+/** Funkcja tworzy podpis nagłówkowy widoczny nad historią wydań eksportu przeprowadzonych w bieżącej sesji badania. */
 function naglowekHistorii(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-etykieta';
@@ -150,7 +141,7 @@ function naglowekHistorii(): HTMLElement {
   return element;
 }
 
-/** Zdanie podglądu: co dokładnie zostanie wydane. */
+/** Funkcja opisuje raport zdaniem podglądu wskazującym tytuł, liczbę sekcji oraz chwilę ostatniej zmiany raportu. */
 function opisRaportu(stan: StanBadania): string {
   const raport = stan.raport();
   if (raport === null) return '';

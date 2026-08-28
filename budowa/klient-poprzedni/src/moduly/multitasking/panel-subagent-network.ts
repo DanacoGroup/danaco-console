@@ -11,24 +11,9 @@ import { utworzTrescPodagentow, type TrescPodagentow } from './panel-podagentow'
 import type { ZrodloOkien } from './zrodlo-okien';
 import type { ZrodloPodagentow } from './zrodlo-podagentow';
 
-/**
- * Panel Subagent Network okna Executor Chat — do 15 podagentów na wykonawcę.
- *
- * Definicje podagentów dostępnych w sesji stoją w obszarze `tools`
- * konfiguracji sesji (`SessionConfigTools.subagentDefinitions`), odczytywanym
- * `config.session.get` na poziomie sesji. Panel pokazuje ten wykaz i zestawia
- * go z górnym limitem podagentów na wykonawcę.
- *
- * Powołanie (`subagent.spawn`), wykaz biegnących (`subagent.list`) i zebranie
- * wyników (`subagent.result.collect`) wymagają okna wykonawcy, a to panel
- * dostaje wyłącznie w polu `zywi`. Gdy wołający je podał, panel stawia
- * formularz powołania (`formularz-powolania.ts`) oraz żywy wykaz z odświeżeniem
- * i zbieraniem (`panel-podagentow.ts`). Gdy nie podał, nie ma windowId, więc
- * nie ma czego wołać: w to samo miejsce wchodzą kontrolki nieczynne z powodem
- * wziętym z wykazu komend oddanego przez rdzeń (`braki-kontraktu.ts`).
- */
+// Panel Subagent Network okna wykonawcy pokazuje definicje podagentów sesji i żywy wykaz do limitu.
 
-/** Górny limit podagentów jednego wykonawcy. */
+/** Górny limit podagentów jednego wykonawcy, ustalony wprost przez ten plik klienta, niezależnie od kontraktu. */
 export const LIMIT_PODAGENTOW = 15;
 
 export interface PanelPodagentow {
@@ -37,14 +22,7 @@ export interface PanelPodagentow {
   element: HTMLElement;
   /** Odczytuje definicje podagentów z konfiguracji sesji oraz żywy wykaz. */
   odswiez(): void;
-  /**
-   * Ponawia sam żywy wykaz (`subagent.list`), bez pytania o definicje sesji.
-   *
-   * Żywy wykaz zależy od okna wykonawcy, które bierze się z obsady i zmienia
-   * się w trakcie pracy. Definicje podagentów zależą od sesji i przy zmianie
-   * obsady się nie zmieniają, więc wołanie `config.session.get` przy każdej
-   * zmianie stanu wspólnego byłoby pytaniem o rzecz niepotrzebną.
-   */
+  // Żywy wykaz zależy od okna wykonawcy, definicje od sesji i przy zmianie obsady się nie zmieniają.
   odswiezZywych(): void;
 }
 
@@ -52,14 +30,10 @@ export interface OpcjePanelu {
   zrodlo: ZrodloOkien;
   /** Wykaz komend rdzenia — stąd bierze się powód nieczynnych kontrolek. */
   komendy: WykazKomendRdzenia;
-  /** Sesja, z której czytamy obszar `tools`. */
+  /** Sesja, z której pochodzi odczyt obszaru `tools`. */
   sesja(): string;
   potwierdz(zdanie: string, udane: boolean): void;
-  /**
-   * Żywy wykaz powołanych (`panel-podagentow.ts`) — sekcja domyślnie zamknięta
-   * pod wykazem definicji. Pola opcjonalne, bo wytwórnia bywa wołana bez
-   * źródeł żywego wykazu i wtedy panel stawia same definicje.
-   */
+  // Żywy wykaz powołanych jest sekcją zamkniętą; pola opcjonalne, bo wytwórnia bywa wołana bez źródeł.
   zywi?: {
     podagenci: ZrodloPodagentow;
     /** Okno tego wykonawcy; puste, dopóki obsada go nie założyła. */
@@ -88,8 +62,7 @@ export function utworzPanelPodagentow(opcje: OpcjePanelu): PanelPodagentow {
   // źródła.
   let zywi: TrescPodagentow | null = null;
   if (opcje.zywi === undefined) {
-    // Bez okna wykonawcy nie ma windowId, więc żadnej z trzech komend nie da
-    // się wywołać — kontrolki zostają widoczne i nieczynne z powodem.
+    // Bez okna wykonawcy nie ma windowId, więc żadnej z trzech komend nie da się wywołać.
     pasek.append(
       opcje.komendy.przyciskNieczynny('Uruchom Subagent Network', 'subagent.spawn', 'subagent.list'),
       opcje.komendy.przyciskNieczynny('Scal wyniki (merge)', 'subagent.result.collect'),
@@ -104,13 +77,7 @@ export function utworzPanelPodagentow(opcje: OpcjePanelu): PanelPodagentow {
     element.append(zywi.element, sekcjaPowolania(opcje.zywi, opcje, () => zywi?.odswiez()));
   }
 
-  /**
-   * Odczyt definicji podagentów z konfiguracji sesji.
-   *
-   * Odczyt udany też melduje: gdyby powodzenie milczało, po naciśnięciu
-   * „Odczytaj definicje" w miejscu odpowiedzi zostawałoby potwierdzenie
-   * poprzedniej, zupełnie innej czynności.
-   */
+  // Odczyt udany też melduje, inaczej po naciśnięciu zostawałoby potwierdzenie innej czynności.
   async function odswiez(): Promise<void> {
     const sesja = opcje.sesja();
     if (sesja === '') {
@@ -215,12 +182,9 @@ function sekcjaPowolania(
 }
 
 /**
- * Nazwy podagentów z pola o kształcie nieokreślonym w kontrakcie.
- *
- * `subagentDefinitions` jest polem `unknown`, bo kształt definicji należy do
- * dostawcy kanału, nie do kontraktu. Widok nie zgaduje struktury: bierze nazwę,
- * gdy pozycja ją ma, a w przeciwnym razie zapis pozycji — lepiej pokazać zapis
- * surowy niż udać, że definicji nie ma.
+ * Nazwy podagentów z pola o kształcie nieokreślonym w kontrakcie: widok nie
+ * zgaduje struktury, bierze nazwę, gdy pozycja ją ma, a w przeciwnym razie
+ * zapis pozycji surowej.
  */
 function nazwyPodagentow(tools?: SessionConfigTools): readonly string[] {
   const definicje = tools?.subagentDefinitions;

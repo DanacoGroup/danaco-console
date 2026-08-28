@@ -1,21 +1,4 @@
-// Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio,
-// część trzecia — nastawy WIDOKU okna pracy z dokumentem, czyli kolumny widoku
-// tabeli `nastawa_pracy_studio` z migracji 366.
-//
-// ── Dlaczego widok czyta ten plik, a nie `studio_kontrola_pracy.go` ─────────
-// Tamten plik zna ten sam wiersz od strony AUTOZAPISU: odstęp, zdarzenia okna,
-// wygasanie kopii, skutek ostatniego zapisu. Kolumny widoku (tryb powierzchni,
-// skala, linijki, układ stron, przewijanie, podświetlenie zmian wykonawcy,
-// przybornik) pytane są przez zupełnie inną parę komend — `studio.view.get`
-// i `studio.view.set` — i nigdy razem z nastawami autozapisu. Osobny odczyt
-// tych samych wierszy nie zakłada drugiego pojęcia nastawy: tabela jest jedna,
-// wiersz zakłada się jedną drogą (`NastawaPracy`), a każda z dwóch grup kolumn
-// ma własne polecenie zapisu. Jedno polecenie na obie grupy kazałoby widokowi
-// przepisywać nastawy autozapisu, których nie zmieniał.
-//
-// Pochodzenie fragmentów leży poza tym plikiem (`studio_wejscie_pochodzenie.go`,
-// odcinek wejścia): wiersz zakłada ten, kto fragment wnosi, a wykaz czyta ten
-// odcinek — tamten odczyt jest pełny i drugiego się nie zakłada.
+// Odpowiedzialność pliku: nastawy widoku okna pracy z dokumentem modułu Studio, czyli kolumny widoku wiersza nastaw pracy dokumentu.
 package dane
 
 import (
@@ -25,12 +8,7 @@ import (
 	"fmt"
 )
 
-// NastawaWidokuStudia to kolumny WIDOKU wiersza `nastawa_pracy_studio`.
-//
-// Wiersz jest ten sam, co dla autozapisu; struktura jest osobna, bo osobne są
-// pytania. Pola nie są wskaźnikami: każda kolumna ma w tabeli wartość domyślną
-// i nigdy nie jest pusta, więc „brak" tu nie występuje — a wskaźnik sugerowałby,
-// że występuje.
+// NastawaWidokuStudia to kolumny widoku wiersza nastawa_pracy_studio; pola nie są wskaźnikami, bo każda kolumna ma wartość domyślną.
 type NastawaWidokuStudia struct {
 	ID                       int64
 	Okno                     string
@@ -78,12 +56,7 @@ const (
 	                     WHERE id = ?`
 )
 
-// NastawaWidoku oddaje kolumny widoku wiersza nastaw pracy dla pary
-// (okno, dokument) albo dla samego okna.
-//
-// Wiersza NIE zakłada: zakłada go `NastawaPracy`, bo to jeden wiersz i dwie
-// drogi zakładania rozjechałyby się przy pierwszej zmianie wartości domyślnej.
-// Wołający sięga najpierw po `NastawaPracy`, potem po ten odczyt.
+// NastawaWidoku oddaje kolumny widoku wiersza nastaw pracy dla pary okna i dokumentu albo dla samego okna, nie zakładając wiersza.
 func (r *repozytoriumStudia) NastawaWidoku(ctx context.Context, okno string,
 	dokumentID *int64) (NastawaWidokuStudia, error) {
 
@@ -109,7 +82,7 @@ func (r *repozytoriumStudia) NastawaWidoku(ctx context.Context, okno string,
 	return nastawa, nil
 }
 
-// ZapiszNastaweWidoku zapisuje kolumny widoku wskazanego wiersza nastaw.
+// ZapiszNastaweWidoku zapisuje kolumny widoku wskazanego wiersza nastaw pracy okna oraz jego dokumentu.
 func (r *repozytoriumStudia) ZapiszNastaweWidoku(ctx context.Context,
 	nastawa NastawaWidokuStudia) error {
 

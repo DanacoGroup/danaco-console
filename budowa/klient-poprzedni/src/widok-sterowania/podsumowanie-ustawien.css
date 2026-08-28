@@ -1,15 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PODSUMOWANIE OŚMIU USTAWIEŃ OKNA
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: warstwa zwiniętej szuflady widoku sterowania —
-   lista opisowa ośmiu wartości z przejściem do kontrolki, dymkiem objaśnienia
-   [?] (komponent `.dn-tooltip`) i wskaźnikiem ładowania wykazu kanałów
-   (`.dn-spinner` obok pola, nigdy zamiast kontrolki).
-
-   Arkusz wydzielony z `widok-sterowania.css`; resztę oprawy (kolumna, nagłówek,
-   szuflada) niesie tamten plik. Wartości wyłącznie z żetonów `motyw/`.
-   Ani jednej reguły `:disabled`.
-   ============================================================================ */
+/* Arkusz niesie warstwę zwiniętej szuflady widoku sterowania: listę opisową ośmiu ustawień z przejściem do kontrolki, dymkiem objaśnienia i wskaźnikiem ładowania. */
 
 .dc-widok-ster__podsumowanie {
   display: grid;
@@ -29,6 +18,7 @@
 }
 
 /* Nazwa ustawienia: przejście do kontrolki po lewej, dymek [?] po prawej */
+
 .dc-widok-ster__nazwa {
   display: flex;
   align-items: center;
@@ -121,7 +111,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Katalogi robocze czytamy krojem technicznym — to ścieżki, nie treść */
+/* Katalogi robocze wyświetlają się krojem technicznym — to ścieżki, nie treść */
+
 .dc-widok-ster__wartosc[data-ustawienie='katalogi'] {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-sm);

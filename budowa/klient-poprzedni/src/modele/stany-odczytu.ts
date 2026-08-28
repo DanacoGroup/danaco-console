@@ -1,17 +1,9 @@
 import type { FazaOdczytu, StanKont } from './stan-kont';
 
 /**
- * Stany odczytu sekcji modeli: ładowanie i komunikat blokowy błędu.
- *
- * Pas stoi pod paskiem osi, nad zakładkami — czyli tam, gdzie widać go
- * niezależnie od wybranej zakładki. Zawartość zakładek zostaje na miejscu
- * i pozostaje czynna także przy niepowodzeniu odczytu; podmiana panelu na
- * komunikat zablokowałaby pracę w pozostałych obszarach.
- *
- * Komunikat nie znika po naciśnięciu: „Spróbuj ponownie" wyzwala odczyt
- * i zostawia zdanie na miejscu, dopóki sytuacja nie ustanie.
- *
- * Stan pusty rejestru niesie sam wykaz kont — mówi o rejestrze, nie o odczycie.
+ * Stany odczytu sekcji modeli: pas ładowania oraz komunikat blokowy błędu,
+ * osadzony pod paskiem osi i nad zakładkami. Zawartość zakładek zostaje na
+ * miejscu i pozostaje czynna także przy niepowodzeniu odczytu rejestru kont.
  */
 export interface StanyOdczytu {
   /** Pas stanów osadzany w sekcji modeli. */

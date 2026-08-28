@@ -1,16 +1,6 @@
 // Rachunek najbliższego uruchomienia automatyki z notacji cron: pole
-// `AutomationSchedule.nextRunAt` i pozycja „podgląd kolejnych uruchomień”
-// panelu akcji Scheduler.
-//
-// Obowiązuje klasyczny zapis pięciopolowy: minuta, godzina, dzień miesiąca,
-// miesiąc, dzień tygodnia. Każde pole dopuszcza `*`, listę `a,b`, zakres `a-b`
-// i krok `*/n` albo `a-b/n`. Zapis nieodczytany daje brak terminu, nie termin
-// zgadnięty — Operator widzi wtedy w oknie, że cykliczność nie została
-// zrozumiana.
-//
-// Rachunek idzie w czasie UTC. Kolumna `strefa_czasowa` harmonogramu jest
-// zapisana i wychodzi kontraktem, lecz nie przesuwa wyliczenia: przesunięcie
-// bez bazy stref dawałoby termin fałszywy w każdej strefie z czasem letnim.
+// AutomationSchedule.nextRunAt i pozycja podgląd kolejnych uruchomień panelu
+// akcji Scheduler. Rachunek idzie w czasie UTC.
 package core
 
 import (
@@ -69,7 +59,7 @@ func najblizszaChwila(zapisy []string, teraz time.Time) *time.Time {
 	return najblizsza
 }
 
-// nastepnaChwilaCron wylicza pierwszą chwilę po `teraz` pasującą do zapisu.
+// nastepnaChwilaCron wylicza pierwszą chwilę po teraz pasującą do zapisu cron harmonogramu automatyki.
 func nastepnaChwilaCron(zapis string, teraz time.Time) (time.Time, bool) {
 	pola, poprawny := polaCronZTekstu(zapis)
 	if !poprawny {
@@ -92,7 +82,7 @@ func nastepnaChwilaCron(zapis string, teraz time.Time) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-// polaCron to zbiory dopuszczalnych wartości pięciu pól zapisu.
+// polaCron to zbiory dopuszczalnych wartości pięciu pól zapisu cron harmonogramu automatyki cyklicznej.
 type polaCron struct {
 	minuty         map[int]bool
 	godziny        map[int]bool
@@ -123,8 +113,7 @@ func (p polaCron) dzienPasuje(data time.Time) bool {
 	return dzien || tydzien
 }
 
-// pierwszaChwilaDnia szuka najwcześniejszej godziny i minuty dnia nie
-// wcześniejszej niż `od`.
+// pierwszaChwilaDnia szuka najwcześniejszej godziny i minuty dnia nie wcześniejszej niż wskazana chwila.
 func (p polaCron) pierwszaChwilaDnia(od time.Time) (time.Time, bool) {
 	for godzina := od.Hour(); godzina < 24; godzina++ {
 		if !p.godziny[godzina] {

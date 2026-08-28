@@ -1,21 +1,7 @@
-// Odpowiedzialność pliku: wpięcie dziesięciu komend modułu Library — portu
-// `Biblioteka`, przez który rejestr komend rdzenia dociera do adaptera
-// złożonego z dwóch plików tego samego typu `adapterBiblioteki`:
-// `adapter_modul_library.go` (plik i wersje) oraz
-// `adapter_modul_library_kolekcje.go` (kolekcje i etykiety).
-//
-// Port wymienia wszystkie dziesięć komend niezależnie od tego, który plik
-// adaptera je implementuje: rejestr rdzenia potrzebuje jednego miejsca
-// wiążącego nazwę komendy z metodą portu — tak samo jak
-// `adapter_modul_automations_uchwyty.go` rejestruje w jednej funkcji komendy
-// swojego modułu.
-//
-// `LibraryTagSetRequest.collectionIds` ustawia komplet kolekcji pliku, ze
-// zdejmowaniem włącznie (`UstawKolekcjePliku`, `dane/biblioteka_kolekcje_pliku.go`);
-// `LibraryFile.collectionIds` i `LibraryFile.versionId` wychodzą wypełnione
-// (`a.zloz`), a `library.file.search` sięga treści przez indeks pełnotekstowy
-// FTS5. Nieosiągalne pozostaje dopasowanie semantyczne, o którym mówi kontrakt
-// wyszukiwania: rdzeń dopasowuje słowa, nie znaczenia.
+// Plik wpina dziesięć komend modułu Library na porcie `Biblioteka`, przez
+// który rejestr komend rdzenia dociera do adaptera złożonego z dwóch plików
+// tego samego typu `adapterBiblioteki`: pliku i wersji oraz kolekcji i
+// etykiet.
 package core
 
 import (
@@ -24,7 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Biblioteka jest portem modułu Library.
+// Biblioteka jest portem modułu Library, wymieniającym dziesięć komend
+// dostarczanych przez adapter złożony z kilku plików tego samego typu.
 type Biblioteka interface {
 	Wgraj(ctx context.Context, z shared.LibraryFileUploadRequest) (shared.LibraryFileUploadResponse, error)
 	Wykaz(ctx context.Context, z shared.LibraryFileListRequest) (shared.LibraryFileListResponse, error)
@@ -96,15 +83,9 @@ type Biblioteka interface {
 	PorownajTresci(ctx context.Context, z shared.LibraryDiffCompareRequest) (shared.LibraryDiffCompareResponse, error)
 }
 
-// zarejestrujBiblioteke wpina dziesięć komend modułu Library.
-//
-// Cztery komendy rozgłaszają `library.file.changed`. Kontrakt niesie to
-// zdarzenie (`shared.EventLibraryFileChanged`), a klient je subskrybuje, więc
-// każda komenda zmieniająca stan pliku repozytorium — wgranie (`created`),
-// dołożenie i przywrócenie wersji oraz ustawienie etykiet (`updated`) —
-// rozgłasza plik po zmianie zaraz po udanym wykonaniu. Rozgłoszenie jedzie tym
-// samym emiterem rdzenia, co pozostałe zmiany obszarów. Nieudana komenda nic
-// nie rozgłasza.
+// zarejestrujBiblioteke wpina dziesięć komend modułu Library. Cztery z nich
+// rozgłaszają zdarzenie `library.file.changed` po udanym wykonaniu: wgranie,
+// dołożenie i przywrócenie wersji oraz ustawienie etykiet.
 func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -192,9 +173,8 @@ func zarejestrujBiblioteke(r *Rejestr, m Biblioteka, e *emiter) {
 	r.Zarejestruj(shared.CommandLibraryAuditList, obsluz(m.DziennikAudytu))
 
 	// ── Cykl życia zasobu ───────────────────────────────────────────────────
-	// Cztery komendy niosące zasób po zmianie rozgłaszają `library.file.changed`
-	// dla każdego z nich osobno — Library Explorer odświeża pozycje, a nie cały
-	// wykaz.
+
+	// Rozgłaszają `library.file.changed` osobno dla każdego zasobu.
 	r.Zarejestruj(shared.CommandLibraryFileMove,
 		obsluz(func(ctx context.Context, z shared.LibraryFileMoveRequest) (shared.LibraryFileMoveResponse, error) {
 			odpowiedz, err := m.PrzeniesZasoby(ctx, z)
@@ -258,11 +238,9 @@ func rozglosPlikiBiblioteki(e *emiter, zmiana shared.ChangeKind, pliki []shared.
 	}
 }
 
-// plikBiblioteki rozgłasza `library.file.changed` — plik repozytorium po
-// zmianie. Metoda emitera per moduł (wzór: `przebiegAutomatyki`), zadeklarowana
-// tu, a nie w `zdarzenia.go`, bo to obszar Library nazywa własne zdarzenie.
-// Plik nie jest bytem karty sesji — zdarzenie idzie bez jej wskazania, a
-// Library Explorer odświeża się ze strony głównej.
+// plikBiblioteki rozgłasza `library.file.changed`, plik repozytorium po
+// zmianie. Plik nie jest bytem karty sesji, więc zdarzenie idzie bez jej
+// wskazania, a Library Explorer odświeża się ze strony głównej.
 func (e *emiter) plikBiblioteki(zmiana shared.ChangeKind, plik shared.LibraryFile) {
 	e.wyslij(shared.EventLibraryFileChanged, "",
 		shared.LibraryFileChangedEvent{Change: zmiana, File: plik})

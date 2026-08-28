@@ -1,19 +1,15 @@
+/**
+ * Wypis wykazu źródeł w czterech notacjach bibliograficznych: BibTeX, RIS, CSV
+ * oraz Markdown. Wypis powstaje w kliencie, ponieważ cała jego treść jest już
+ * w oknie, a notacja jest sposobem zapisania wykazu.
+ */
 import type { BrowserSource } from '../../../../shared/contract';
 
 /**
- * Wypis wykazu źródeł w czterech notacjach bibliograficznych, których żąda
- * opracowanie modułu: `BibTeX`, `RIS`, `CSV` i `Markdown`.
- *
- * Wypis powstaje w kliencie, bo cała jego treść jest już w oknie: wykaz przyszedł
- * komendą `browser.source.list`, a notacja jest wyłącznie sposobem jego zapisania.
- * Komendy eksportu bibliografii kontrakt nie niesie i nie musi.
- *
- * Rodzajem wpisu jest zasób elektroniczny — moduł zbiera strony internetowe
- * i tylko o nich może tak zaświadczyć. Datą jest czas dodania źródła do wykazu
- * okna: daty publikacji strony rdzeń nie oddaje, więc wypis jej nie zmyśla.
+ * Jedna notacja wypisu opisana wartością nastawy, nazwą pokazywaną Operatorowi,
+ * zdaniem objaśniającym, rozszerzeniem pliku oraz rodzajem treści nadawanym
+ * zapisywanemu plikowi.
  */
-
-/** Jedna notacja wypisu: wartość nastawy, nazwa, rozszerzenie i rodzaj treści. */
 export interface NotacjaWypisu {
   wartosc: string;
   etykieta: string;
@@ -53,12 +49,19 @@ export const NOTACJE_WYPISU: readonly NotacjaWypisu[] = [
   },
 ];
 
-/** Notacja po wartości nastawy; nieznana wartość wraca pierwszą z wykazu. */
+/**
+ * Notacja po wartości nastawy; wartość nieznana wraca pierwszą pozycją wykazu,
+ * żeby wypis powstał zawsze, a nastawa spoza wykazu nie zatrzymywała czynności
+ * zapisu.
+ */
 export function notacja(wartosc: string): NotacjaWypisu {
   return NOTACJE_WYPISU.find((pozycja) => pozycja.wartosc === wartosc) ?? NOTACJE_WYPISU[0];
 }
 
-/** Wykaz źródeł zapisany wskazaną notacją. */
+/**
+ * Wykaz źródeł zapisany wskazaną notacją. Wybór notacji rozstrzyga o sposobie
+ * złożenia wpisów oraz o znaku rozdzielającym je w wyniku.
+ */
 export function wypisz(zrodla: readonly BrowserSource[], wartosc: string): string {
   const wybrana = notacja(wartosc).wartosc;
   if (wybrana === 'csv') return wypiszCsv(zrodla);
@@ -67,13 +70,21 @@ export function wypisz(zrodla: readonly BrowserSource[], wartosc: string): strin
   return zrodla.map(wpisMarkdown).join('\n');
 }
 
-/** Tytuł źródła albo jego adres, gdy rdzeń tytułu nie oddał. */
+/**
+ * Tytuł źródła albo jego adres, gdy rdzeń tytułu nie oddał. Wypis bez tytułu
+ * byłby wpisem bez nazwy, a adres jest jedyną wartością zawsze obecną w opisie
+ * źródła.
+ */
 function tytul(zrodlo: BrowserSource): string {
   const nazwa = (zrodlo.title ?? '').trim();
   return nazwa === '' ? zrodlo.url : nazwa;
 }
 
-/** Data dodania źródła do wykazu okna w zapisie ISO 8601 (rok-miesiąc-dzień). */
+/**
+ * Data dodania źródła do wykazu okna w zapisie normy ISO 8601, skrócona do
+ * roku, miesiąca i dnia. Daty publikacji strony rdzeń nie oddaje, więc wypis
+ * jej nie zmyśla.
+ */
 function data(zrodlo: BrowserSource): string {
   return new Date(zrodlo.createdAt).toISOString().slice(0, 10);
 }
@@ -97,7 +108,10 @@ function wypiszCsv(zrodla: readonly BrowserSource[]): string {
   return [naglowek, ...wiersze].join('\n');
 }
 
-/** Pole CSV w cudzysłowie, z cudzysłowem podwojonym wewnątrz (RFC 4180). */
+/**
+ * Pole zapisu rozdzielanego przecinkiem ujęte w cudzysłów, z cudzysłowem
+ * podwojonym wewnątrz, zgodnie z regułą ucieczki normy RFC 4180.
+ */
 function polePola(wartosc: string): string {
   return `"${wartosc.replaceAll('"', '""')}"`;
 }

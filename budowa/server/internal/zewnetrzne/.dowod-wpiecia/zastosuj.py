@@ -1,3 +1,4 @@
+# Skrypt nakłada proponowane wpięcie na kopie dwóch plików pakietu models, dowodząc, że wpięcie się kompiluje, bez dotykania oryginalnych plików pakietu na dysku.
 """Nakłada proponowane wpięcie na kopie plików pakietu models.
 
 Oryginałów nie dotyka: kopie leżą w katalogu roboczym, a kompilator widzi je

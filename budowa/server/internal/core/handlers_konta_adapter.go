@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: wypełnienie portu Konta rejestrem kont z bazy.
-//
-// Treść poświadczenia nie ma drogi powrotnej: repozytorium oddaje wyłącznie
-// znacznik `MaPoswiadczenie`, a jedyna metoda wynosząca odwołanie
-// (`OdwolaniePoswiadczenia`) nie jest tu wywoływana ani razu. Struktura Account
-// kontraktu nie ma pola na sekret, więc nie da się go wynieść nawet przez
-// pomyłkę.
+// Plik wypełnia port Konta rejestrem kont z bazy; treść poświadczenia nie ma
+// drogi powrotnej, bo repozytorium oddaje wyłącznie znacznik jego obecności.
 package core
 
 import (
@@ -16,37 +11,34 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera adapterKont z portem Konta sprawdzana jest przy
+// kompilacji, przez przypisanie do zmiennej typu interfejsu.
 var _ Konta = (*adapterKont)(nil)
 
-// adapterKont wypełnia port Konta tabelą `konto`.
+// adapterKont wypełnia port Konta, opierając się na tabeli konto
+// repozytorium oraz na sejfie poświadczeń.
 type adapterKont struct {
 	repozytorium dane.RepozytoriumKont
 	sejf         SejfPoswiadczen
 }
 
-// nowyAdapterKont wiąże port z rejestrem kont i wpina sejf poświadczeń oparty
-// o plik katalogu danych. Bez sejfu poświadczenie z okna kont ginie po cichu,
-// a `hasCredential` zawsze mówi „brak".
-//
-// Katalog obowiązujący wchodzi montażem: `montaz_porty.go` buduje jeden sejf nad
-// `Montaz.Konfiguracja.KatalogDanych` — katalogiem, który Operator może
-// przestawić przełącznikiem `-dane` albo zmienną `DANACO_KATALOG_DANYCH` — i wpina
-// go tu przez `ZSejfem`, tą samą zmienną, którą dostaje magazyn treści biblioteki.
-// Sejf domyślny zostaje tu dla wywołania bez montażu, żeby konstruktor nigdy nie
-// oddał adaptera bez sejfu.
+// nowyAdapterKont wiąże port z rejestrem kont i wpina domyślny sejf
+// poświadczeń oparty na katalogu danych, żeby konstruktor nigdy nie oddał
+// adaptera bez sejfu.
 func nowyAdapterKont(repozytorium dane.RepozytoriumKont) *adapterKont {
 	adapter := &adapterKont{repozytorium: repozytorium}
 	return adapter.ZSejfem(dane.NowySejfPlikowy(konfiguracja.KatalogDanychDomyslny()))
 }
 
-// ZSejfem wpina magazyn sekretów.
+// ZSejfem wpina magazyn sekretów do adaptera, zastępując sejf domyślny
+// ustanowiony przy budowie konstruktora.
 func (a *adapterKont) ZSejfem(sejf SejfPoswiadczen) *adapterKont {
 	a.sejf = sejf
 	return a
 }
 
-// Dodaj zakłada konto i — na żądanie — czyni je domyślnym swojego rodzaju.
+// Dodaj zakłada konto, zapisuje odwołanie do poświadczenia w sejfie i — na
+// żądanie — czyni konto domyślnym swojego rodzaju.
 func (a *adapterKont) Dodaj(ctx context.Context, z shared.AccountAddRequest) (shared.AccountAddResponse, error) {
 	if a == nil || a.repozytorium == nil {
 		return shared.AccountAddResponse{}, bladBrakuKatalogu("kont")
@@ -77,7 +69,8 @@ func (a *adapterKont) Dodaj(ctx context.Context, z shared.AccountAddRequest) (sh
 	return shared.AccountAddResponse{Account: kontoKontraktu(zapisane)}, nil
 }
 
-// Wykaz zwraca rejestr kont zawężony rodzajem. Poświadczeń wykaz nie niesie.
+// Wykaz zwraca rejestr kont zawężony rodzajem oraz stanem aktywności;
+// poświadczeń wykaz nie niesie w żadnej postaci.
 func (a *adapterKont) Wykaz(ctx context.Context, z shared.AccountListRequest) (shared.AccountListResponse, error) {
 	if a == nil || a.repozytorium == nil {
 		return shared.AccountListResponse{Accounts: []shared.Account{}}, nil
@@ -181,7 +174,8 @@ func (a *adapterKont) konto(ctx context.Context, identyfikator string) (dane.Kon
 	return a.repozytorium.Pobierz(ctx, id)
 }
 
-// zapiszPoswiadczenie utrwala odwołanie do nowego sekretu, gdy żądanie je niosło.
+// zapiszPoswiadczenie utrwala w repozytorium odwołanie do nowego sekretu
+// konta, gdy żądanie zmiany je niosło.
 func (a *adapterKont) zapiszPoswiadczenie(ctx context.Context, konto dane.Konto, poswiadczenie *string) error {
 	odwolanie, err := odwolaniePoswiadczenia(ctx, a.sejf, konto.Nazwa, poswiadczenie)
 	if err != nil || odwolanie == nil {

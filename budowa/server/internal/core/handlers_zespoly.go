@@ -1,20 +1,5 @@
-// Odpowiedzialność pliku: wpięcie czterech komend obszaru `team.*` — zespołów
-// ekspertów, czyli nazwanych składów biblioteki modułu Agents.
-//
-// Jedno zdarzenie na cały obszar, tak samo jak `agent.changed` w
-// `handlers_agenci.go`. Kontrakt daje zespołom wyłącznie `team.changed`, więc
-// zapisanie nowego składu, zmiana istniejącego i skopiowanie rozgłaszają się
-// tą samą drogą, różniąc się wyłącznie rodzajem zmiany (ChangeKind). Okno
-// składu odświeża się z jednej subskrypcji.
-//
-// Rodzaj zmiany rozstrzyga żądanie, nie odpowiedź. `team.save` bez
-// identyfikatora zakłada zespół (`created`), z identyfikatorem zmienia
-// istniejący (`updated`). Odpowiedź w obu przypadkach niesie ten sam kształt
-// `Team`, więc po niej samej rozróżnić się tego nie da.
-//
-// Odczyt nie rozgłasza. `team.load` i `team.list` niczego nie zmieniają, więc
-// nie mają czego ogłaszać — zdarzenie po odczycie byłoby zawiadomieniem
-// o zmianie, której nie było.
+// Plik wpina cztery komendy obszaru team.* obsługujące zespoły ekspertów, czyli nazwane składy
+// biblioteki modułu Agents. Jedno zdarzenie na cały obszar, tak samo jak przy agentach.
 package core
 
 import (
@@ -23,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zespoly jest portem trwałości zespołów ekspertów.
+// Zespoly jest portem trwałości zespołów ekspertów: nazwanych składów biblioteki modułu Agents tego konta.
 type Zespoly interface {
 	Zapisz(ctx context.Context, z shared.TeamSaveRequest) (shared.TeamSaveResponse, error)
 	Wczytaj(ctx context.Context, z shared.TeamLoadRequest) (shared.TeamLoadResponse, error)
@@ -31,7 +16,7 @@ type Zespoly interface {
 	Skopiuj(ctx context.Context, z shared.TeamDuplicateRequest) (shared.TeamDuplicateResponse, error)
 }
 
-// zarejestrujZespoly wpina cztery komendy obszaru `team.*`.
+// zarejestrujZespoly wpina cztery komendy obszaru team.* w rejestrze rdzenia tej platformy dla konta użytkownika.
 func zarejestrujZespoly(r *Rejestr, zespoly Zespoly, e *emiter) {
 	if r == nil || zespoly == nil {
 		return
@@ -52,8 +37,7 @@ func zarejestrujZespoly(r *Rejestr, zespoly Zespoly, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.TeamDuplicateRequest) (shared.TeamDuplicateResponse, error) {
 			w, err := zespoly.Skopiuj(ctx, z)
 			if err == nil {
-				// Kopia jest założeniem, nie zmianą źródła. Zdarzenie niesie
-				// zespół nowy — źródło się nie zmieniło i nie ma o czym mówić.
+				// Kopia jest założeniem, nie zmianą źródła; zdarzenie niesie zespół nowy.
 				e.zespol(shared.ChangeKindCreated, w.Team)
 			}
 			return w, err

@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: wykaz żywych odwołań do treści modułu Library —
-// wszystkie ścieżki blobów, na które wskazuje jeszcze cokolwiek w bazie
-// (kolumna `tresc_odwolanie` pliku oraz każdej jego wersji). Jedyny odbiorca:
-// sprzątanie magazynu treści przy starcie rdzenia
-// (`core/adapter_modul_library_sprzatanie.go`).
-//
-// Plik i wersja idą w jednym wykazie, bo oba trzymają treść przy życiu: blob
-// porzucony przez plik bieżący może być nadal treścią wersji historycznej, do
-// której `library.version.restore` ma prawo wrócić. Dwa osobne odczyty
-// wymagałyby scalenia po stronie rdzenia, a pomyłka na scalaniu kasuje treść
-// nie do odzyskania. Stąd jedno zapytanie z UNION.
+// Plik zestawia żywe odwołania do treści biblioteki z tabel pliku i jego
+// wersji jednym zapytaniem UNION, ponieważ blob porzucony przez plik bieżący
+// bywa nadal treścią wersji historycznej dostępnej do przywrócenia.
 package dane
 
 import (

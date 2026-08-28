@@ -7,12 +7,8 @@ import (
 )
 
 // Wyslij kieruje zapytanie do kanału wskazanego przez okno komunikacji i nadaje
-// jego strumień do ujścia. Jest jedyną drogą, którą warstwy wyżej sięgają po
-// kanał — nie znają ani adapterów, ani dostawców.
-//
-// Kanał nierozpoznany kończy wyłącznie to wywołanie: użytkownik dostaje fragment
-// błędu, wywołujący błąd w wyniku, a sesja, okno i kolejne próby pozostają
-// czynne.
+// jego strumień do ujścia; jest jedyną drogą, którą warstwy wyższe sięgają po
+// kanał, nie znając ani adapterów, ani dostawców.
 func (r *Rejestr) Wyslij(ctx context.Context, z Zapytanie, u Ujscie) error {
 	klucz := strings.TrimSpace(z.Kanal)
 	if klucz == "" {

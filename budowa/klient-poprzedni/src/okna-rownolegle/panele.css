@@ -1,19 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PANELE POMOCNICZE NA SCENIE OKIEN RÓWNOLEGŁYCH
-   ----------------------------------------------------------------------------
-   Wygląd trzech rzeczy: kolumny paneli jednego gniazda, panelu w stosie wraz
-   z jego gęstym nagłówkiem oraz widoku pełnoekranowego. Rozkład sceny opisuje
-   `uklad.css`, wygląd gniazda `gniazdo.css`; ten arkusz nie sięga do żadnego
-   z nich.
-
-   Wartości wyłącznie z żetonów `motyw/` (`--dn-*`, skala odstępów `--dn-od-N`
-   co 4 px) — ani jednej barwy, ani jednego odstępu wpisanego wprost.
-
-   Gęstość jest wymaganiem, nie skutkiem ciasnoty. Nagłówek panelu ma wysokość
-   jednego wiersza i mieści tytuł oraz rząd ikon. Nie ma tu reguły dla drugiego
-   rzędu ani dla paska narzędzi, bo panel z drugim rzędem jest zbudowany źle,
-   nawet jeśli działa.
-   ============================================================================ */
+/* Panele pomocnicze na scenie okien równoległych opisują kolumnę paneli, panel w stosie z nagłówkiem i widok pełnoekranowy, wyłącznie żetonami motywu. */
 
 /* ── Kolumna paneli — pionowy stos jednego gniazda ────────────────────────── */
 

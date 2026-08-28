@@ -1,19 +1,7 @@
 import { ResearchCredibility, type ResearchSource } from '../../../../shared/contract';
 import { przycisk } from '../../modele/kontrolki-formularza';
 
-/**
- * Jedna pozycja wykazu źródeł Sources Manager: przełożenie bytu
- * `ResearchSource` na wiersz z metadanymi (typ, pochodzenie, data pozyskania)
- * i oceną wiarygodności. Pole wyboru niesie zaznaczenie wielokrotne, bo źródła
- * wybiera się grupami do eksportu.
- *
- * Przycisk „Czytaj" jest akcją podstawową pozycji (opracowanie, rozdz. 3.5)
- * i otwiera materiał w Reading View. Jest czynny przy KAŻDYM źródle, także przy
- * takim, które nie wskazuje dokumentu repozytorium: wtedy odpowiedzią jest
- * zdanie czytnika o braku drogi do treści, a nie wygaszona kontrolka.
- */
-
-/** Wariant plakietki dla oceny wiarygodności; stan nigdy nie zależy od samej barwy. */
+/** Jedna pozycja wykazu źródeł Sources Manager przekłada byt źródła na wiersz z oceną wiarygodności; wariant plakietki dla tej oceny nie zależy od samej barwy. */
 const PLAKIETKI: Readonly<Record<string, string>> = {
   [ResearchCredibility.High]: 'dn-plakietka--sukces',
   [ResearchCredibility.Medium]: 'dn-plakietka--informacja',
@@ -21,7 +9,7 @@ const PLAKIETKI: Readonly<Record<string, string>> = {
   [ResearchCredibility.Unverified]: 'dn-plakietka--blad',
 };
 
-/** Nazwa oceny wiarygodności pokazywana w wierszu. */
+/** Nazwa oceny wiarygodności źródła pokazywana w wierszu wykazu, dobrana do wartości oceny oddanej przez rdzeń. */
 const OCENY: Readonly<Record<string, string>> = {
   [ResearchCredibility.High]: 'wiarygodność wysoka',
   [ResearchCredibility.Medium]: 'wiarygodność średnia',
@@ -29,7 +17,7 @@ const OCENY: Readonly<Record<string, string>> = {
   [ResearchCredibility.Unverified]: 'źródło niezweryfikowane',
 };
 
-/** Dwie drogi działania na pozycji źródła: zaznaczenie i otwarcie w lekturze. */
+/** Dwie drogi działania na pozycji źródła: zaznaczenie wielokrotne do eksportu oraz otwarcie materiału w lekturze. */
 export interface UchwytyZrodla {
   /** Przestawia zaznaczenie źródła — wybór wielokrotny wspólny dwóm oknom. */
   naZaznaczenie(identyfikator: string): void;
@@ -70,7 +58,7 @@ export function utworzWierszZrodla(
   return element;
 }
 
-/** Metadane wykazu: rodzaj, pochodzenie, adres i data pozyskania. */
+/** Metadane wykazu źródła: rodzaj, pochodzenie, adres oraz data pozyskania, wypisane jednym wierszem opisowym. */
 function metadane(zrodlo: ResearchSource): HTMLElement {
   const element = document.createElement('span');
   element.className = 'mr-wykaz__meta';

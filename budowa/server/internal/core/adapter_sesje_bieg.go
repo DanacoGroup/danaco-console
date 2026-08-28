@@ -31,14 +31,8 @@ func (a *adapterSesji) Wznow(_ context.Context, z shared.SessionResumeRequest) (
 	}, nil
 }
 
-// Zatrzymaj przerywa tury biegnące we wszystkich oknach sesji.
-//
-// Zatrzymanie sesji nie zamyka jej ani okien: Operator chce wstrzymać pracę
-// modelu, a nie stracić miejsce, w którym pracuje. Okna zostają otwarte, zapis
-// zostaje w całości, wznowienie pracy jest kolejną wiadomością.
-//
-// Wykaz zwraca okna, w których faktycznie coś przerwano — okno bez tury w biegu
-// nie jest błędem i po prostu nie trafia do wykazu.
+// Zatrzymaj przerywa tury biegnące we wszystkich oknach sesji, nie zamykając
+// jej ani okien, i zwraca wykaz okien, w których faktycznie coś przerwano.
 func (a *adapterSesji) Zatrzymaj(_ context.Context, z shared.SessionStopRequest) (shared.SessionStopResponse, error) {
 	wynik := shared.SessionStopResponse{SessionId: z.SessionId, StoppedWindowIds: []string{}}
 	if a.przerwijTure == nil {

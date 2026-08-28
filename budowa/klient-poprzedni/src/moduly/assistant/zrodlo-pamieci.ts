@@ -17,24 +17,10 @@ import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Pamięć i wiedza asystenta widziane przez okno Memory & Context Manager —
- * cztery komendy rodziny `memory.*` i dwie rodziny `knowledge.*`.
- *
- * Plik odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem
- * kształtu odpowiedzi; stanu nie ma i nie buduje ani jednego elementu. Wzorem
- * jest `zrodlo-assistant.ts`: żadne wywołanie nie rzuca wyjątkiem, odmowa
- * wraca polem `blad` wyniku, a okno pokazuje ją w swoim stanie błędu.
- *
- * `memory.detach` nie jest tu wystawiony. Kontrakt oznacza znaczenie odpięcia
- * jako nierozstrzygnięte przez Właściciela („rdzeń czeka na decyzję"), więc
- * okno nie nadaje mu własnego sensu — tak samo postępuje moduł Workspace
- * (`moduly/workspace/pamiec-pozycja.ts`).
- *
- * Rodziny są dwie, bo mówią o dwóch różnych bytach. `memory.*` prowadzi
- * ustalenia — zdania, które Operator kazał zapamiętać. `knowledge.*` prowadzi
- * wskaźnik znaczenia zbudowany z treści już istniejących: biblioteki, historii
- * rozmów i plików przestrzeni roboczej. Zlanie ich w jedno źródło zatarłoby, co
- * jest ustaleniem, a co odnalezionym fragmentem.
+ * Pamięć i wiedza asystenta widziane przez okno Memory & Context Manager:
+ * cztery komendy rodziny `memory.*` oraz dwie rodziny `knowledge.*`. Plik
+ * prowadzi samą warstwę wywołań kontraktu wraz ze sprawdzianem kształtu
+ * odpowiedzi i stanu nie buduje.
  */
 export interface ZrodloPamieci {
   /** `memory.list` — wpisy pamięci widoczne w zasięgu. */

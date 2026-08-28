@@ -13,16 +13,8 @@ import type { StanTranslate } from './stan-translate';
 import { rozbieznoscOdpowiedzi } from './zgodnosc-odpowiedzi';
 
 /**
- * Jedna instancja Translation Panels — panel jednego języka docelowego.
- *
- * Okno jest instancją wielokrotną (N = liczba języków), więc panel jest tu tym,
- * czym wiersz w liście: jedną rzeczą na jeden plik. Okno zbiorcze nimi zarządza
- * i nie wie, jak są zbudowane.
- *
- * Błąd zostaje w panelu, którego dotyczy: każda instancja ma własny pas stanu
- * i własny wiersz odpowiedzi, więc odmowa kontroli jakości dla niemieckiego nie
- * gasi panelu francuskiego. Dlatego stan okna powstaje osobno dla każdego panelu,
- * a nie raz na okno zbiorcze.
+ * Jedna instancja Translation Panels stanowi panel jednego języka docelowego; błąd zostaje
+ * w panelu, którego dotyczy, więc odmowa jednego panelu nie gasi drugiego.
  */
 export interface PanelJezyka {
   element: HTMLElement;
@@ -34,25 +26,13 @@ export interface PanelJezyka {
   jezyk(): string;
   /** Przerysowuje panel z danych rdzenia. */
   odswiez(panel: TranslationPanel): void;
-  /**
-   * Prowadzi ognisko do pola tłumaczenia tej instancji.
-   *
-   * Drogą jest przejście skrótem między panelami wymagającymi uwagi: panel
-   * wskazany bez ogniska wymagałby jeszcze jednego kliknięcia, żeby zacząć
-   * poprawiać, a skrót ma prowadzić do pracy, nie do widoku.
-   */
+  /** Prowadzi ognisko do pola tłumaczenia tej instancji, drogą przejścia skrótem między panelami. */
   ogniskuj(): void;
-  /**
-   * Zdejmuje nasłuchy instancji przed jej usunięciem z dokumentu.
-   *
-   * Instancja znika, gdy rdzeń przestaje oddawać jej panel — a jej ster kanału
-   * bywa wtedy rozwinięty i trzyma nasłuch na dokumencie. Samo `element.remove()`
-   * takiego nasłuchu nie zdejmuje.
-   */
+  /** Zdejmuje nasłuchy instancji przed jej usunięciem z dokumentu, gdy rdzeń przestaje oddawać jej panel. */
   rozlacz(): void;
 }
 
-/** Elementy panelu przerysowywane danymi rdzenia. */
+/** Elementy panelu przerysowywane danymi rdzenia obejmują tytuł, plakietkę stanu, ton, pole tłumaczenia oraz wykaz zastrzeżeń kontroli jakości. */
 interface CzesciPanelu {
   element: HTMLElement;
   tytul: HTMLElement;
@@ -79,8 +59,7 @@ export function utworzPanelJezyka(
   const plakietka = document.createElement('span');
   plakietka.className = 'dn-plakietka dn-plakietka--rola mt-panel__stan';
 
-  // Ton stoi w nagłówku obok stanu, bo obie rzeczy opisują panel jako całość
-  // i obie przychodzą z rdzenia w tej samej odpowiedzi.
+  // Ton stoi w nagłówku obok stanu: obie rzeczy opisują panel jako całość i przychodzą z rdzenia razem.
   const ton = document.createElement('span');
   ton.className = 'mt-panel__ton';
 
@@ -109,11 +88,9 @@ export function utworzPanelJezyka(
     stan.panele,
     {
       idPanelu: () => biezacy.id,
-      // Pamięć tłumaczeń pyta o segment źródłowy; bierzemy pierwszy segment
-      // oddany przez rdzeń, a gdy podziału nie było — cały tekst źródłowy.
+      // Pamięć tłumaczeń pyta o segment źródłowy: pierwszy trafia do niej, a bez podziału cały tekst.
       segment: () => stan.segmenty()[0] ?? stan.tekstZrodlowy(),
-      // Treść widziana przez Operatora, nie treść ostatnio wchłonięta z rdzenia:
-      // tłumaczenie zwrotne ma porównać się z tym, co Operator ma przed oczami.
+      // Treść widziana przez operatora, nie ostatnio wchłonięta z rdzenia: zwrotne porównuje to, co widać.
       tresc: () => tresc.kontrolka.value,
       wchlon: (panel) => stan.wchlonPanel(panel),
       kanaly: stan.kanaly,
@@ -163,15 +140,8 @@ export function utworzPanelJezyka(
 }
 
 /**
- * Zapis korekty Operatora — `translate.translation.set`.
- *
- * Zdanie potwierdza treść, która wróciła, a nie sam fakt odpowiedzi:
- * `TranslateTranslationSetResponse` niesie cały panel po korekcie razem z jego
- * treścią, więc zgodność da się sprawdzić bez dodatkowego wywołania.
- *
- * Treść odczytujemy raz, przed wysyłką. Operator pisze dalej, gdy żądanie jest
- * w drodze, więc porównanie odpowiedzi z polem odczytanym po powrocie zgłaszałoby
- * rozbieżność za każdym dopisanym znakiem.
+ * Zapis korekty operatora potwierdza treść, która wróciła, odczytaną raz przed wysyłką, bo
+ * operator pisze dalej, gdy żądanie jest w drodze.
  */
 async function zapiszKorekte(
   stan: StanTranslate,
@@ -204,11 +174,8 @@ async function zapiszKorekte(
 }
 
 /**
- * Przerysowanie panelu danymi rdzenia wraz z doborem stanu obowiązkowego.
- *
- * Ton widać w dwóch miejscach i oba biorą z jednego źródła: nagłówek
- * (`mt-panel__ton`) oraz pole „Ton panelu" w pasku narzędzi dostają `panel.tone`
- * z tej samej odpowiedzi rdzenia, w tym samym przebiegu.
+ * Przerysowanie panelu danymi rdzenia dobiera stan obowiązkowy; ton widać w nagłówku oraz
+ * w pasku narzędzi, oba z tej samej odpowiedzi rdzenia.
  */
 function przerysuj(panel: TranslationPanel, czesci: CzesciPanelu): void {
   czesci.tytul.textContent = `Panel ${panel.language}`;
@@ -216,8 +183,7 @@ function przerysuj(panel: TranslationPanel, czesci: CzesciPanelu): void {
   czesci.ton.textContent = opisTonuPanelu(panel.tone);
   czesci.narzedzia.odswiez(panel);
   czesci.element.dataset['stan'] = panel.status;
-  // Treść z rdzenia nie nadpisuje wpisywanej korekty: pole pod ogniskiem
-  // należy do Operatora, dopóki go nie odda.
+  // Treść z rdzenia nie nadpisuje korekty: pole pod ogniskiem należy do operatora, dopóki go nie odda.
   if (document.activeElement !== czesci.pole) czesci.pole.value = panel.text ?? '';
   czesci.zastrzezenia.replaceChildren(...(panel.issues ?? []).map(wierszZastrzezenia));
 
@@ -237,11 +203,8 @@ function przerysuj(panel: TranslationPanel, czesci: CzesciPanelu): void {
 }
 
 /**
- * Pustka panelu języka — stan oczekiwany, nie usterka.
- *
- * Panel zakłada się przed przekładem i przez chwilę stoi bez treści; zdanie mówi
- * więc, czym ten panel jest i czym się go zapełnia, zamiast nazywać brak. Forma
- * stanu pustego jest w module jedna (tytuł nad opisem), różnicuje ją treść.
+ * Pustka panelu języka jest stanem oczekiwanym, nie usterką: panel zakłada się przed przekładem
+ * i przez chwilę stoi bez treści.
  */
 function pustyPanel(jezyk: string): ZdanieStanu {
   return {

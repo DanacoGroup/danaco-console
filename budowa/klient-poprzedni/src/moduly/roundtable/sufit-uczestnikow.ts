@@ -1,35 +1,9 @@
 import { LICZBA_MAX } from '../../okna-rownolegle/identyfikatory';
 
-/**
- * Sufit uczestnika debaty — opis stanu, nie zakaz.
- *
- * Liczby uczestników debaty nie ogranicza dziś nic:
- *  - `LICZBA_MAX` (`okna-rownolegle/identyfikatory.ts`) jest sufitem gniazd sceny
- *    okien równoległych, a nie liczby uczestników debaty;
- *  - `migracja_044_roundtable.sql` nie zakłada na tabelę `debata_uczestnik`
- *    żadnego więzu na liczbę wierszy, a `DodajModel`
- *    (`adapter_modul_roundtable.go`) sprawdza okno i kanał, po czym zapisuje
- *    `Kolejnosc: len(skladu) + 1` bez odmowy przy jakiejkolwiek liczbie;
- *  - `RoundtableModelAddRequest` niesie cztery pola (windowId, channelId,
- *    personaName, systemPrompt) i ani jednego licznika;
- *  - jedyną granicą obszaru jest `granica_tur` (`adapter_modul_roundtable_tura.go`)
- *    — granica liczby tur, nie liczby głosów przy stole.
- *
- * Dla okna znaczy to tyle, że piąty uczestnik przejdzie przez rdzeń bez odmowy
- * i okno go nie blokuje; próg blokujący pracę byłby wymyślonym prawem klienta.
- * Nie zmieściłby się natomiast w scenie okien równoległych, gdyby każdemu
- * uczestnikowi dawać własne gniazdo — gniazd jest tyle, ile mówi `LICZBA_MAX`.
- * To dwie różne rzeczy i nota pokazuje obie.
- *
- * Sufit sceny jest importowany, a nie przepisywany: liczba przepisana tutaj
- * rozminęłaby się ze sceną, gdy ta zyska piąte gniazdo. Tak samo wiąże się
- * z liczbą `okno-komunikacji/profil-modulu.ts`.
- */
-
-/** Liczba gniazd sceny okien równoległych — sufit sceny, nie składu debaty. */
+/** Sufit uczestnika debaty — opis stanu, nie zakaz: liczba gniazd sceny okien równoległych, sufit sceny, nie składu debaty. */
 export const GNIAZD_SCENY = LICZBA_MAX;
 
-/** Stan sufitu widziany z liczby uczestników, których okno dziś zna. */
+/** Stan sufitu widziany z liczby uczestników, których okno dziś zna, wraz z gotowymi zdaniami opisowymi. */
 export interface StanSufitu {
   /** Uczestnicy znani oknu w tej chwili. */
   uczestnicy: number;
@@ -69,14 +43,7 @@ export function stanSufitu(iluUczestnikow: number): StanSufitu {
   return { uczestnicy, ponadGniazda, zdania };
 }
 
-/**
- * Nota o suficie w miejscu, w którym Operator dokłada uczestników.
- *
- * Nota jest akapitem, nie ostrzeżeniem i nie bramką — nie odbiera żadnej
- * czynności i nie zmienia niczego poza tym, co Operator widzi. `data-ponad-gniazda`
- * daje arkuszowi odróżnić stan „skład szerszy niż scena" od zwykłego opisu,
- * ale i wtedy jest to opis stanu, nie sprzeciw.
- */
+/** Nota o suficie w miejscu, w którym Operator dokłada uczestników — akapit opisowy, nie ostrzeżenie i nie bramka. */
 export function utworzNoteSufitu(iluUczestnikow: number): HTMLElement {
   const stan = stanSufitu(iluUczestnikow);
 

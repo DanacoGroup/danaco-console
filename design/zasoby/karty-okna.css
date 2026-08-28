@@ -1,28 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PASMO KART OKNA ROBOCZEGO
-   ----------------------------------------------------------------------------
-   Kompetencja: pasmo kart (`.dn-karty-pasmo`, `.dn-karty-sesji`), anatomia
-   karty, karta przypięta, karta grupy oraz sterowanie pasma. Jedyny właściciel
-   wyglądu kart — `rama.css` odpowiada za obudowę okna, nie za karty.
-
-   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `stany.css`.
-   Mechanizm: `karty-okna.js` (menu powłok, grot, „+", ustawienia widoku).
-
-   Porządek pasma jest wiążący i idzie od lewej:
-     grot          — menu otwartych kart, pierwsza kontrolka pasma
-     powłoki       — okna robocze bieżącej sesji; licznik stoi WEWNĄTRZ ikony
-     zakładki      — `.dn-karty-lista[role=tablist]`, wyłącznie pozycje `tab`
-     „+"           — jedyna kontrolka za zakładkami
-     odstęp        — rozpycha pasmo
-     narzędzia     — maksymalizacja okna i ustawienia widoku, prawa krawędź
-
-   Pasmo nie jest listą zakładek: `role="tablist"` niesie wyłącznie
-   `.dn-karty-lista`, bo lista zakładek nie może mieć dzieci innych niż `tab`.
-
-   Geometria pochodzi ze zatwierdzonego wzorca pasa kart i jest zapisana raz,
-   w jednym bloku zmiennych komponentu. Reguły niżej wyłącznie się do niej
-   odwołują.
-   ============================================================================ */
+/* Arkusz opisuje pasmo kart okna roboczego: anatomię karty, kartę przypiętą, kartę grupy oraz sterowanie pasma. */
 
 .dn-karty-pasmo,
 .dn-karty-sesji {
@@ -52,7 +28,7 @@
   background: var(--dn-panel);
 }
 
-/* Gęstość widoku z menu ustawień pasma. */
+/* Gęstość widoku pasma zmienia się z poziomu menu ustawień widoku, dostępnego w sterowaniu prawej krawędzi pasma. */
 .dn-karty-pasmo[data-gestosc='swobodna'] { --kart-karta-szer: 240px; }
 .dn-karty-pasmo[data-gestosc='ciasna']   { --kart-karta-szer: 150px; }
 
@@ -122,7 +98,7 @@
   outline-offset: calc(-1 * var(--dn-wym-fokus));
 }
 
-/* Przegroda na styku kart odłożonych — kreska krótka, w połowie wysokości. */
+/* Przegroda na styku kart odłożonych to krótka kreska, umieszczona dokładnie w połowie wysokości pasma kart. */
 .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
 .dn-karta-sesji:not([aria-selected='true']) + .dn-karta-sesji:not([aria-selected='true'])::before {
   content: '';
@@ -160,7 +136,7 @@
 .dn-karta-widoku[aria-selected='true']::after,
 .dn-karta-sesji[aria-selected='true']::after { right: 0; }
 
-/* Karta bieżąca: płyta w barwie wnętrza okna, zrośnięta z treścią. */
+/* Karta bieżąca to płyta w barwie wnętrza okna, wizualnie zrośnięta z treścią rozmowy, która stoi pod nią. */
 .dn-karta-widoku[aria-selected='true'],
 .dn-karta-sesji[aria-selected='true'] {
   background: var(--dn-wstazka);
@@ -265,11 +241,11 @@
    znaczniki stanu na jednej karcie zabierają miejsce nazwie zadania. */
 .dn-karta-widoku--grupa > .dn-stan-znacznik { display: none; }
 
-/* Grupowanie wyłączone w ustawieniach widoku: pasmo staje się płaską listą. */
+/* Grupowanie wyłączone w ustawieniach widoku sprawia, że pasmo staje się jedną płaską listą kart bez podziału. */
 .dn-karty-pasmo[data-grupowanie='nie'] .dn-karta-widoku-licznik,
 .dn-karty-pasmo[data-grupowanie='nie'] .dn-karta-widoku-grot { display: none; }
 
-/* Karta przenoszona między grupami. */
+/* Karta przenoszona jest chwilowo między grupami w trakcie przeciągania jej wskaźnikiem przez Operatora. */
 .dn-karta-widoku[draggable='true']:active { cursor: grabbing; }
 .dn-karta-widoku[data-przenoszona='tak'] { opacity: var(--dn-przygasz-rodzenstwa); }
 .dn-karty-pasmo[data-cel-upuszczenia='tak'] { box-shadow: inset 0 -2px 0 0 var(--dn-kropka); }

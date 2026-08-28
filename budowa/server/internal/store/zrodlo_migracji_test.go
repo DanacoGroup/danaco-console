@@ -5,10 +5,7 @@ import (
 	"testing"
 )
 
-// TestNazwaMigracjiPozaWzorcemJestOdmowa sprawdza rozbiór nazwy pliku. Krok
-// o nazwie spoza wzorca nie ma jak dostać numeru wersji, więc przejazd musi
-// się o niego zatrzymać, a nie pominąć go po cichu — pominięty krok to schemat
-// niepełny bez jednego komunikatu.
+// TestNazwaMigracjiPozaWzorcemJestOdmowa sprawdza rozbiór nazwy pliku: krok o nazwie spoza wzorca nie ma jak dostać numeru wersji.
 func TestNazwaMigracjiPozaWzorcemJestOdmowa(t *testing.T) {
 	przypadki := []string{
 		"schemat.sql",
@@ -44,10 +41,7 @@ func TestDwaKrokiOTymSamymNumerzeSaOdmowa(t *testing.T) {
 	}
 }
 
-// TestNumeracjaMozeMiecLuki utrwala regułę odwrotną: ciągłość numeracji nie
-// jest wymagana. Luki powstają przy pracy równoległej i numeru zwolnionego nie
-// wolno użyć powtórnie, więc sprawdzian, który by ciągłości pilnował, wymuszałby
-// błąd zamiast go łapać.
+// TestNumeracjaMozeMiecLuki utrwala regułę odwrotną: ciągłość numeracji nie jest wymagana, a luki powstają przy pracy równoległej.
 func TestNumeracjaMozeMiecLuki(t *testing.T) {
 	kroki := []migracja{
 		{Wersja: 1, Nazwa: "fundament"},
@@ -60,7 +54,7 @@ func TestNumeracjaMozeMiecLuki(t *testing.T) {
 }
 
 // TestKrokZasobuNiesieSumeTresci sprawdza, że suma kontrolna liczy się z treści
-// kroku, a nie z jego nazwy — inaczej strażnik niezmienności nie zauważyłby
+// kroku, a nie z jego nazwy — inaczej sprawdzenie niezmienności nie zauważyłoby
 // podmienionej treści pod tą samą nazwą.
 func TestKrokZasobuNiesieSumeTresci(t *testing.T) {
 	kroki, err := wczytajMigracje()

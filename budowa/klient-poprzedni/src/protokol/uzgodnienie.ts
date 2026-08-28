@@ -9,28 +9,20 @@ import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zd
 import type { Kanal, Wynik } from './kanal';
 import type { TozsamoscKlienta } from './tozsamosc-klienta';
 
-/** Zamówienie okna komunikacji: treść `window.create` bez sesji, którą zna kanał. */
+/** Zamówienie okna komunikacji: treść żądania otwarcia okna, ale bez pola sesji, którą już zna ten kanał. */
 export type ZamowienieOkna = Omit<WindowCreateRequest, 'sessionId'>;
 
-/** Kolejne etapy uzgodnienia z rdzeniem. */
+/** Kolejne etapy uzgodnienia z rdzeniem: powitanie, założenie sesji, otwarcie okna, wreszcie stan gotowy. */
 export type EtapUzgodnienia = 'powitanie' | 'sesja' | 'okno' | 'gotowe';
 
-/** Wynik pojedynczego etapu — podstawa komunikatu dla operatora. */
+/** Wynik pojedynczego etapu uzgodnienia — podstawa komunikatu dla operatora o postępie tego połączenia. */
 export interface PostepUzgodnienia {
   etap: EtapUzgodnienia;
   udany: boolean;
   blad?: ErrorInfo;
 }
 
-/**
- * Uzgodnienie: powitanie → założenie sesji → otwarcie okna komunikacji.
- *
- * Kolejność wynika z kontraktu (`connection.hello`, `session.create`,
- * `window.create`): okno jest bytem pośrednim między sesją a wiadomością, więc
- * wiadomość można wysłać dopiero po jego otwarciu. Niepowodzenie etapu nie
- * blokuje połączenia ani kolejnych prób — dotyczy wyłącznie bieżącego
- * wywołania.
- */
+/** Uzgodnienie: powitanie, założenie sesji, otwarcie okna komunikacji, w kolejności wynikającej z kontraktu. */
 export interface Uzgodnienie {
   /** Rozpoczyna uzgodnienie od powitania połączenia. */
   rozpocznij(): void;
@@ -40,44 +32,13 @@ export interface Uzgodnienie {
   naPostep(sluchacz: (postep: PostepUzgodnienia) => void): Odsubskrybuj;
   /** Subskrypcja otwarcia okna komunikacji. */
   naOtwarcieOkna(sluchacz: (okno: Window) => void): Odsubskrybuj;
-  /**
-   * Wiąże żywe połączenie ze świeżo założoną sesją bramki.
-   *
-   * Uzgodnienie wita rdzeń w chwili nawiązania połączenia, czyli zanim podano
-   * hasło, więc niesie wtedy token sesji poprzedniej albo żaden. Po wejściu
-   * przez bramkę rdzeń musi dowiedzieć się, które gniazdo należy teraz do
-   * której sesji; inaczej `auth.password.reset` rozłączyłby tego, kto właśnie
-   * zmienił hasło.
-   *
-   * Powitanie jest odczytem — nie zakłada ani sesji pracy, ani okna — więc
-   * powtórzenie niczego nie dubluje. Ciągu dalszego uzgodnienia to wywołanie
-   * nie uruchamia; tamten idzie przy nawiązaniu połączenia.
-   */
+  // Wiąże żywe połączenie ze świeżo założoną sesją bramki, po wejściu przez bramkę logowania.
   zwiazSesjeBramki(token: string): void;
-  /**
-   * Tożsamość klienta przedstawiona rdzeniowi w powitaniu.
-   *
-   * Pole `id` jest tym samym `clientId`, którego żądają `home.enter`,
-   * `environment.enter`, `session.focus` i `session.bind`. Widok bierze je
-   * stąd, zamiast wołać `tozsamoscKlienta()` po raz drugi: każde wywołanie
-   * nadaje identyfikator nowy, a ognisko jest właściwością klienta — drugi
-   * identyfikator rozdzieliłby ognisko od połączenia, które je zgłosiło.
-   */
+  // Tożsamość klienta przedstawiona rdzeniowi w powitaniu, ten sam identyfikator co w innych żądaniach.
   klient: TozsamoscKlienta;
 }
 
-/**
- * Źródło tokenu sesji bramki dla powitania.
- *
- * Token dostarcza funkcja, nie wartość, ponieważ powitanie idzie przy każdym
- * nawiązaniu połączenia — także po zerwaniu i ponownym połączeniu — a sesja
- * bramki może się między nimi zmienić (wejście, wylogowanie, wygaśnięcie).
- * Wartość zamrożona przy składaniu warstwy niosłaby stan sprzed uruchomienia
- * i wiązałaby połączenie z sesją, której już nie ma.
- *
- * Warstwa protokołu nie zna pochodzenia tokenu: magazyn sesji należy do
- * `uwierzytelnienie/`, stąd wstrzyknięcie od składającego.
- */
+/** Źródło tokenu sesji bramki dla powitania, dostarczane funkcją, bo sesja bramki może się między nimi zmienić. */
 export type ZrodloTokenuBramki = () => string | undefined;
 
 export function utworzUzgodnienie(
@@ -103,9 +64,7 @@ export function utworzUzgodnienie(
         clientId: klient.id,
         clientVersion: klient.wersja,
         protocolVersion: PROTOCOL_VERSION,
-        // Token wiąże to połączenie z sesją bramki. Jego brak nie wstrzymuje
-        // powitania i nie jest błędem — rdzeń odpowiada `authenticated: false`,
-        // a ekran logowania i tak stoi nad aplikacją.
+        // Token wiąże to połączenie z sesją bramki; jego brak nie wstrzymuje powitania i nie jest błędem.
         token: tokenBramki?.(),
       },
       (wynik) => {

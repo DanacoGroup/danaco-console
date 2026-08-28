@@ -1,16 +1,5 @@
-// Ustalenia badania (tabela `ustalenie_badania`) i ich powiązania ze źródłami
-// (tabela złącznikowa `zrodlo_ustalenia_badania`). Źródła leżą w `badania.go`,
-// raport i przestrzeń — w `badania_raport.go`.
-//
-// Zapis powiązań ze źródłami jest wymianą kompletu: `research.finding.add`
-// oddaje całą listę `SourceIds` po zmianie, a nie różnicę, więc
-// `ZapiszUstalenie` usuwa zastane powiązania i wstawia je od nowa w jednej
-// transakcji, zamiast dokładać.
-//
-// Kod źródła bez odpowiadającego wiersza jest pomijany, a nie traktowany jako
-// błąd całego zapisu: źródło mogło zostać usunięte między odczytem panelu
-// a zapisem ustalenia, a wywrócenie zapisu zgubiłoby także treść ustalenia.
-// `ZrodlaUstalenia` po zapisie zwraca to, co faktycznie zostało powiązane.
+// Plik prowadzi ustalenia badania i ich powiązania ze źródłami; źródła leżą w badania.go, a zapis powiązań jest
+// wymianą kompletu — ZapiszUstalenie usuwa zastane powiązania i wstawia je od nowa w jednej transakcji.
 package dane
 
 import (
@@ -74,10 +63,8 @@ const (
 	                          ORDER BY pozyskano_o DESC, id DESC`
 )
 
-// ZapiszUstalenie zakłada wiersz ustalenia albo nadpisuje zastany, po czym
-// wymienia komplet powiązań ze źródłami w jednej transakcji. Kod źródła bez
-// odpowiadającego wiersza jest pomijany, nie wywraca zapisu — patrz
-// nagłówek pliku.
+// ZapiszUstalenie zakłada wiersz ustalenia albo nadpisuje zastany, po czym wymienia komplet powiązań ze źródłami
+// w jednej transakcji; kod źródła bez odpowiadającego wiersza jest pomijany, nie wywraca zapisu ustalenia.
 func (r *repozytoriumBadan) ZapiszUstalenie(ctx context.Context, ustalenie UstalenieBadania,
 	kodyZrodel []string) (UstalenieBadania, error) {
 
@@ -165,8 +152,7 @@ func (r *repozytoriumBadan) identyfikatorUstalenia(ctx context.Context, transakc
 	return id, nil
 }
 
-// Ustalenie zwraca ustalenie o wskazanym kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza.
+// Ustalenie zwraca ustalenie badania o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumBadan) Ustalenie(ctx context.Context, kod string) (UstalenieBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUstalenieBadania)
 	if err != nil {
@@ -182,7 +168,7 @@ func (r *repozytoriumBadan) Ustalenie(ctx context.Context, kod string) (Ustaleni
 	return ustalenie, nil
 }
 
-// Ustalenia zwraca ustalenia okna, posortowane od ostatnio zmienionych.
+// Ustalenia zwraca ustalenia badania okna, posortowane od ostatnio zmienionych, wprost z bazy danych repozytorium.
 func (r *repozytoriumBadan) Ustalenia(ctx context.Context, okno string) ([]UstalenieBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzUstaleniaBadaniaOkna)
 	if err != nil {
@@ -235,7 +221,7 @@ func (r *repozytoriumBadan) ZrodlaUstalenia(ctx context.Context, ustalenieID int
 	return lista, nil
 }
 
-// odczytajUstalenieBadania składa strukturę z jednego wiersza wyniku.
+// odczytajUstalenieBadania składa strukturę ustalenia wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajUstalenieBadania(wiersz skaner) (UstalenieBadania, error) {
 	var ustalenie UstalenieBadania
 	var tresc, trescOdwolanie sql.NullString

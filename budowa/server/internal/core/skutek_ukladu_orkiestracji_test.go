@@ -1,3 +1,4 @@
+// Skutek dopełnień układu: czy bramka, grupa, kompensacja i spięcie zostawiają po sobie wiersz w bazie danych.
 package core
 
 import (
@@ -6,13 +7,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek dopełnień układu zależności: czy bramka, grupa, kompensacja i spięcie
-// z MultitaskingAI zostawiają po sobie wiersz — i czy spięcie naprawdę
-// przestawia kolejki, zamiast być znacznikiem, na który nikt nie patrzy.
-//
-// Każdy sprawdzian schodzi do bazy własnym zapytaniem. Odpowiedź komendy
-// oddaje układ po zapisie i wyglądałaby tak samo, gdyby zapis nie doszedł.
 
 // automatykaUkladuSprawdzianu zakłada automatykę z trzema krokami i dwoma
 // torami schodzącymi się w kroku trzecim. Oddaje jej kod.
@@ -50,7 +44,7 @@ func automatykaUkladuSprawdzianu(t *testing.T, zmontowany *Zmontowany,
 	return zapis.Workflow.Id
 }
 
-// TestSkutekBramkiDolaczeniaWBazie mierzy `orchestration.gate.set`.
+// TestSkutekBramkiDolaczeniaWBazie mierzy orchestration.gate.set wraz z jej trwałym zapisem w tej bazie.
 func TestSkutekBramkiDolaczeniaWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -75,8 +69,7 @@ func TestSkutekBramkiDolaczeniaWBazie(t *testing.T) {
 		t.Fatalf("bramka nie doszła do bazy: wierszy %d", liczba)
 	}
 
-	// Bramka licznikowa wymagająca więcej torów, niż ich dochodzi, ZAPISUJE się,
-	// a zastrzeżenie wraca w odpowiedzi — tak samo jak przy łuku układu.
+	// Bramka licznikowa wymagająca więcej torów niż dochodzi zapisuje się, a zastrzeżenie wraca w wyniku.
 	piec := 5
 	var szeroka shared.OrchestrationGateSetResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandOrchestrationGateSet,
@@ -137,7 +130,7 @@ func TestSkutekGrupyKrokowWBazie(t *testing.T) {
 	}
 }
 
-// TestSkutekKompensacjiWBazie mierzy `orchestration.compensation.set`.
+// TestSkutekKompensacjiWBazie mierzy orchestration.compensation.set wraz z jej trwałym zapisem w bazie.
 func TestSkutekKompensacjiWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -181,8 +174,7 @@ func TestSkutekSpieciaZMultitaskingiem(t *testing.T) {
 	baza := bazaZakresuSprawdzianu(t, katalog)
 	uklad := automatykaUkladuSprawdzianu(t, zmontowany, zycie)
 
-	// Kolejkę automatyki zakładamy wprost: sprawdzian mierzy skutek spięcia,
-	// a nie drogę, którą kolejka powstaje w przebiegu.
+	// Kolejka automatyki jest zakładana wprost: sprawdzian mierzy skutek spięcia, nie jej powstanie.
 	if _, err := baza.Exec(
 		`INSERT INTO kolejka (nazwa, rodzaj, stan) VALUES (?, 'sesyjna', 'bezczynna')`,
 		uklad); err != nil {

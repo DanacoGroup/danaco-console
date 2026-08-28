@@ -3,29 +3,13 @@ import { listen } from '@tauri-apps/api/event';
 
 import { czyPowlokaNatywna } from './powloka-natywna';
 
-/**
- * Most do natywnego okna wyboru katalogu — jedyny konsument polecenia powłoki
- * `wybierz_katalog_roboczy` (`desktop/src-tauri/src/dialog_katalogu.rs`).
- *
- * Okno systemu operacyjnego zwraca ścieżkę istniejącą i rozwiniętą, czego pole
- * tekstowe nie zapewnia. Katalog wskazuje się w dwóch sprawach — katalog roboczy
- * modelu (`Cel.KatalogRoboczy`, ustawienie `katalog.roboczy.podstawa`) i zakres
- * wglądu modelu (`Cel.PunktDostepu`, punkt dostępu rodzaju `localDirectory`) —
- * ale czynność systemu jest w obu ta sama, więc okno jest jedno, a cel zmienia
- * wyłącznie napis w belce.
- *
- * Poza powłoką natywną wskazanie wraca wartością `null` tak samo jak rezygnacja
- * z wyboru, a widok zostawia drogę wpisania ścieżki ręcznie. Żadna ścieżka
- * wykonania nie rzuca wyjątkiem i nie odrzuca obietnicy.
- */
-
-/** Nazwa polecenia powłoki; odpowiednik `polecenia::wybierz_katalog_roboczy`. */
+/** Nazwa polecenia powłoki wywoływanego przy wskazywaniu katalogu; odpowiednik polecenia wybierz_katalog_roboczy w powłoce natywnej. */
 const POLECENIE_WYBORU = 'wybierz_katalog_roboczy';
 
-/** Zdarzenie powłoki niosące wybór z zasobnika; odpowiednik `ZDARZENIE_KATALOG`. */
+/** Zdarzenie powłoki niosące wybór katalogu dokonany z menu zasobnika systemowego; odpowiednik zdarzenia katalog roboczy. */
 const ZDARZENIE_WYBORU = 'powloka:katalog-roboczy';
 
-/** Sprawa, w której Operator wskazuje katalog. Zmienia napis, nie okno. */
+/** Sprawa, w której Operator wskazuje katalog za pomocą tego samego okna systemowego. Zmienia wyłącznie napis w belce, nie samo okno. */
 export const Cel = {
   /** Gdzie powstają katalogi sesyjne i pliki robocze modelu. */
   KatalogRoboczy: 'katalog-roboczy',
@@ -33,7 +17,7 @@ export const Cel = {
   PunktDostepu: 'punkt-dostepu',
 } as const;
 
-/** Jedna z wartości `Cel`. */
+/** Jedna z wartości sprawy wskazania katalogu: katalog roboczy modelu albo punkt dostępu do katalogu wglądu. */
 export type Cel = (typeof Cel)[keyof typeof Cel];
 
 /**
@@ -55,12 +39,8 @@ const TYTULY: Record<Cel, string> = {
 export { czyPowlokaNatywna };
 
 /**
- * Otwiera natywne okno wyboru katalogu i zwraca wskazaną ścieżkę.
- *
- * Zwraca `null` w trzech przypadkach: przy rezygnacji Operatora, przy braku
- * powłoki natywnej oraz przy niepowodzeniu polecenia. Rozróżnienie ich nie jest
- * tu potrzebne, bo brak wyboru niczego nie nadpisuje. Wywołujący sprawdza
- * `czyPowlokaNatywna`, jeżeli chce powiedzieć Operatorowi, dlaczego okna nie było.
+ * Otwiera natywne okno wyboru katalogu i zwraca wskazaną ścieżkę. Zwraca null przy rezygnacji
+ * Operatora, przy braku powłoki natywnej oraz przy niepowodzeniu polecenia.
  */
 export async function wskazKatalog(cel: Cel = Cel.KatalogRoboczy): Promise<string | null> {
   if (!czyPowlokaNatywna()) return null;
@@ -73,13 +53,7 @@ export async function wskazKatalog(cel: Cel = Cel.KatalogRoboczy): Promise<strin
   }
 }
 
-/**
- * Podejmuje wybór dokonany z menu zasobnika powłoki.
- *
- * Zwraca odsubskrybowanie działające natychmiast — także wtedy, gdy powłoka
- * nie zdążyła jeszcze potwierdzić nasłuchu: znacznik przerwania pilnuje, żeby
- * spóźniona odpowiedź nie ożywiła zdjętej subskrypcji.
- */
+/** Podejmuje wybór dokonany z menu zasobnika powłoki i zwraca odsubskrybowanie działające natychmiast, także przed potwierdzeniem nasłuchu. */
 export function naWskazanieZZasobnika(sluchacz: (sciezka: string) => void): () => void {
   if (!czyPowlokaNatywna()) return () => undefined;
 

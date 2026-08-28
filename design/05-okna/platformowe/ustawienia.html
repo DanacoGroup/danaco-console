@@ -35,7 +35,7 @@
     display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr);
   }
 
-  /* ── PASMO ROZGRANICZENIA „Ustawienia ↔ Konfiguracja" (rozdz. 1.1) ───────── */
+  /* ── PASMO ROZGRANICZENIA „Ustawienia ↔ Konfiguracja" ──────────────────────── */
   .us-rozgraniczenie {
     grid-column: 1 / -1;
     border-bottom: 1px solid var(--dn-obrys-subtelny);
@@ -133,7 +133,7 @@
   .us-pole-szer { width: 100%; max-width: 420px; }
   .us-wiersz { display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap; }
 
-  /* ── objaśnienie kontekstowe [?] (rozdz. 2.3) ───────────────────────────── */
+  /* ── objaśnienie kontekstowe [?] ─────────────────────────────────────────── */
   .us-pomoc {
     display: inline-grid; place-content: center; width: 20px; height: 20px; flex: none;
     padding: 0; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
@@ -465,8 +465,9 @@
     </span>
   </header>
 
-  <!-- ══ PASEK NARZĘDZI — stały pas czynności okna i aplikacji ═══════════ -->
-    <!-- ══ PASEK EDYCJI — belka nakładana, układ przeglądarkowy ═════════ -->
+  <!-- Pasek narzędzi: stały pas czynności okna i aplikacji -->
+
+    <!-- Pasek edycji: belka nakładana, układ przeglądarkowy -->
       <div class="dn-narzedzia-pas">
       <div class="dn-narzedzia">
 
@@ -549,7 +550,7 @@
   <!-- ══ PŁÓTNO USTAWIEŃ (bez .sta-obszar — okno globalne, nie warsztat) ════ -->
   <main class="us-plotno" id="us-plotno">
 
-    <!-- PASMO ROZGRANICZENIA: Ustawienia ↔ Konfiguracja (rozdz. 1.1) -->
+    <!-- Pasmo rozgraniczenia: Ustawienia ↔ Konfiguracja -->
     <details class="us-rozgraniczenie" id="us-rozgraniczenie">
       <summary>
         <svg class="us-ik us-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -1020,7 +1021,7 @@
     </div><!-- /us-zawartosc -->
   </main>
 
-  <!-- MODAL: Zmień hasło (rozdz. 3.4) -->
+  <!-- Modal: Zmień hasło -->
   <div class="dn-modal-tlo" id="us-modal-haslo" data-otwarte="nie" hidden>
     <div class="dn-modal" role="dialog" aria-modal="true" aria-labelledby="us-modal-haslo-tytul">
       <header class="dn-modal-naglowek">
@@ -1174,7 +1175,7 @@
     p.addEventListener('click', function () {
       var wl = p.getAttribute('aria-checked') === 'true';
       if (wl && liczbaAktywnych() === 1) {
-        /* nie blokujemy — sygnalizujemy ostrzeżeniem (zasada zerowych blokad) */
+        /* blokada nie działa — sygnalizuje się ostrzeżeniem (zasada zerowych blokad) */
         if (ostrz) { ostrz.hidden = false; }
         toast('Ostatnia aktywna metoda', 'Wyłączasz jedyną aktywną metodę logowania. To nie jest blokowane, lecz zalecane jest wcześniejsze włączenie innej metody.', 'ostrzezenie', 4200);
       }
@@ -1291,7 +1292,7 @@
 
 <script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
 
-<!-- ══ OKNO „DOSTOSUJ WSTĄŻKĘ" — konfiguracja paska edycji ═══════════ -->
+<!-- Okno modalne pozwala dostosować zawartość paska edycji: dobrać widoczne składniki, ułożyć kolejność kart sesji oraz zapisać wybrane ustawienie użytkownika. -->
 <dialog class="dn-modal dn-modal--szeroki" id="dostosuj-wstazke" aria-labelledby="dostosuj-tytul">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul" id="dostosuj-tytul">Dostosuj paski</h2>

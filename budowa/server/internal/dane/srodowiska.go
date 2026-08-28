@@ -1,7 +1,6 @@
-// Odpowiedzialność pliku: dostęp do słownika środowisk (tabela `srodowisko`).
-// Środowisko jest profilem widoczności modułów, nie pojemnikiem, do którego
-// moduł należy na wyłączność. Wiersze wnosi zaczyn schematu — repozytorium ich
-// nie zakłada, wyłącznie czyta.
+// Plik daje dostęp do słownika środowisk. Środowisko jest profilem
+// widoczności modułów, nie pojemnikiem, do którego moduł należy na
+// wyłączność, a repozytorium wyłącznie je czyta.
 package dane
 
 import (
@@ -11,12 +10,9 @@ import (
 	"fmt"
 )
 
-// Srodowisko to wiersz tabeli `srodowisko`.
-//
-// Opis i Motto to dwa różne zdania o środowisku, drukowane w dwóch różnych
-// miejscach: opis objaśnia tryb pracy na karcie wejścia, motto jest podtytułem
-// w nagłówku kolumny matrycy. Oba bywają puste — brak motta jest stanem
-// normalnym, nie usterką wiersza.
+// Srodowisko to wiersz tabeli srodowisko. Opis i Motto to dwa różne zdania
+// o środowisku, drukowane w dwóch różnych miejscach interfejsu: opis na
+// karcie wejścia, motto w nagłówku kolumny.
 type Srodowisko struct {
 	ID        int64
 	Kod       string
@@ -27,7 +23,8 @@ type Srodowisko struct {
 	Aktywne   bool
 }
 
-// RepozytoriumSrodowisk jest kontraktem słownika środowisk.
+// RepozytoriumSrodowisk jest kontraktem słownika środowisk, dającym odczyt
+// pełnej listy oraz odczyt pojedynczego środowiska.
 type RepozytoriumSrodowisk interface {
 	Lista(ctx context.Context) ([]Srodowisko, error)
 	PoKodzie(ctx context.Context, kod string) (Srodowisko, error)
@@ -53,7 +50,8 @@ func noweRepozytoriumSrodowisk(z *zapytania) *repozytoriumSrodowisk {
 	return &repozytoriumSrodowisk{zapytania: z}
 }
 
-// Lista zwraca wszystkie środowiska w kolejności nawigacji.
+// Lista zwraca wszystkie środowiska w kolejności nawigacji, ustalonej
+// kolumną porządkującą wiersze słownika.
 func (r *repozytoriumSrodowisk) Lista(ctx context.Context) ([]Srodowisko, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSrodowisk)
 	if err != nil {
@@ -79,7 +77,8 @@ func (r *repozytoriumSrodowisk) Lista(ctx context.Context) ([]Srodowisko, error)
 	return lista, nil
 }
 
-// PoKodzie zwraca środowisko o wskazanym kodzie.
+// PoKodzie zwraca środowisko o wskazanym kodzie, odmawiając błędem braku
+// wiersza, gdy kod nie występuje w słowniku.
 func (r *repozytoriumSrodowisk) PoKodzie(ctx context.Context, kod string) (Srodowisko, error) {
 	return r.jedno(ctx, srodowiskoPoKodzie, fmt.Sprintf("o kodzie %q", kod), kod)
 }
@@ -90,7 +89,8 @@ func (r *repozytoriumSrodowisk) Pierwsze(ctx context.Context) (Srodowisko, error
 	return r.jedno(ctx, pierwszeSrodowisko, "czynne")
 }
 
-// jedno wykonuje zapytanie zwracające najwyżej jeden wiersz środowiska.
+// jedno wykonuje zapytanie zwracające najwyżej jeden wiersz środowiska i opisuje
+// brak wiersza błędem czytelnym dla wywołującego.
 func (r *repozytoriumSrodowisk) jedno(ctx context.Context, zapytanie, opis string, argumenty ...any) (Srodowisko, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -103,7 +103,8 @@ func (r *repozytoriumSrodowisk) jedno(ctx context.Context, zapytanie, opis strin
 	return srodowisko, err
 }
 
-// odczytajSrodowisko składa strukturę z jednego wiersza wyniku.
+// odczytajSrodowisko składa strukturę środowiska z jednego wiersza wyniku
+// zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func odczytajSrodowisko(wiersz skaner) (Srodowisko, error) {
 	var srodowisko Srodowisko
 	var opis, motto sql.NullString

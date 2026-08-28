@@ -11,27 +11,20 @@ import { TRESC_NIEZNANA, type StanTresci } from './dostepnosc-tresci';
 export type FazaWykazu = 'spoczynek' | 'odczyt' | 'gotowe' | 'blad';
 
 /**
- * Forma prezentacji tego samego wykazu plików w oknie Library Explorer.
- *
- * Pięć postaci opisuje dokumentacja modułu: siatka miniatur jest domyślna
- * (warstwa 1), pozostałe otwiera przełącznik widoku (warstwa 2). Wybór nie
- * dotyka rdzenia — przelicza prezentację tej samej odpowiedzi, więc mieszka
- * w pamięci modułu, nie w żądaniu.
+ * Forma prezentacji tego samego wykazu plików w oknie Library Explorer: siatka
+ * miniatur jest domyślna, pozostałe cztery otwiera przełącznik widoku, bez
+ * udziału rdzenia.
  */
 export type WidokWykazu = 'siatka' | 'lista' | 'galeria' | 'os-czasu' | 'mapa';
 
 /**
- * Tryb wyszukiwania Library Explorera.
- *
- * `pelnotekstowy` idzie komendą `library.file.search` (dopasowanie słów
- * w indeksie repozytorium), `semantyczny` — komendą `knowledge.search`
- * w zakresie biblioteki (dopasowanie znaczenia we wskaźniku osadzeń).
- * `hybrydowy` nie jest komendą kontraktu: to złożenie obu odpowiedzi po stronie
- * okna, słowa przed znaczeniem.
+ * Tryb wyszukiwania Library Explorera: pełnotekstowy dopasowuje słowa w indeksie
+ * repozytorium, semantyczny dopasowuje znaczenie we wskaźniku osadzeń, a
+ * hybrydowy składa obie odpowiedzi po stronie okna.
  */
 export type TrybWyszukiwania = 'pelnotekstowy' | 'semantyczny' | 'hybrydowy';
 
-/** Trafienie wskaźnika znaczenia przypisane plikowi wykazu. */
+/** Trafienie wskaźnika znaczenia przypisane plikowi wykazu, wraz z fragmentem treści, na którym to trafienie się opiera. */
 export interface TrafienieZnaczenia {
   /** Trafność w setnych, tak jak oddaje ją rdzeń; brak, gdy jej nie podał. */
   trafnosc: number | null;
@@ -40,12 +33,9 @@ export interface TrafienieZnaczenia {
 }
 
 /**
- * Zawężenie wykazu do wskazanego zbioru plików.
- *
- * Powstaje z raportu higieny (duplikaty, pliki osierocone) i z trafień
- * wyszukiwania po znaczeniu, które nie zmieściły się w odczycie wykazu. Niesie
- * własne zdanie, bo wykaz zawężony wygląda jak wykaz krótki — a to dwie różne
- * rzeczy, i Operator ma widzieć, która zachodzi.
+ * Zawężenie wykazu do wskazanego zbioru plików powstaje z raportu higieny
+ * i z trafień wyszukiwania po znaczeniu; niesie własne zdanie, bo wykaz
+ * zawężony wygląda jak wykaz krótki.
  */
 export interface ZawezenieWykazu {
   kody: string[];
@@ -68,31 +58,13 @@ export interface MagazynBiblioteki {
   okno: string;
   /** Kolekcje założone w tej sesji; kontrakt nie ma komendy ich katalogu. */
   zalozone: string[];
-  /**
-   * Katalog modułów z `module.list` — pozycje stera modułu docelowego.
-   *
-   * Pusty wykaz znaczy „nieodczytany albo odmówiony"; powód stoi w polu obok.
-   */
+  /** Katalog modułów pochodzi z odczytu rdzenia; pusty wykaz znaczy nieodczytany albo odmówiony. */
   moduly: Module[];
   /** Powód, dla którego katalog modułów jest pusty; pusty napis = odczyt się udał. */
   powodModulow: string;
-  /**
-   * Jedna nastawa modułu docelowego na cały moduł.
-   *
-   * Ster stoi w dwóch oknach — Library Explorer (czynność zbiorcza „Otwórz
-   * w module źródłowym") i File Preview (ta sama czynność dla pojedynczego
-   * pliku). Wspólne pole trzyma oba okna zgodne; osobne pokazywałyby po zmianie
-   * dwie różne wartości. Pusty napis znaczy „moduł wytwórcy pliku"
-   * (`sourceModuleId`).
-   */
+  /** Ster stoi w dwóch oknach i trzyma je zgodne; pusty napis znaczy moduł wytwórcy pliku. */
   modulDocelowy: string;
-  /**
-   * Werdykty rdzenia o treści plików, po identyfikatorze pliku.
-   *
-   * Osobno od zbioru, bo to nie jest pole kontraktu: `LibraryFile` nie niesie
-   * żadnej wartości mówiącej, czy repozytorium ma treść (patrz
-   * `dostepnosc-tresci.ts`).
-   */
+  /** Werdykty rdzenia o treści plików, osobno od zbioru, bo to nie jest pole kontraktu. */
   tresci: Map<string, StanTresci>;
   /** Powiadamia widoki o zmianie pamięci. */
   oglos(): void;
@@ -140,14 +112,9 @@ export function utworzMagazyn(): MagazynBiblioteki {
 }
 
 /**
- * Wciąga plik po własnej zmianie albo po zdarzeniu rdzenia.
- *
- * Werdykt o treści znika wraz ze zmianą pliku: dołożenie wersji, przywrócenie
- * wcześniejszej i zdarzenie `library.file.changed` z innego modułu zmieniają
- * dokument, więc poprzednia odpowiedź rdzenia przestaje go opisywać. Stan
- * „nieznana" jest tu bezpieczniejszy niż nieaktualna pewność. Z tego samego
- * powodu znika trafienie wskaźnika znaczenia: fragment pochodzi z treści
- * sprzed zmiany.
+ * Wciąga plik po własnej zmianie albo po zdarzeniu rdzenia: werdykt o treści
+ * i trafienie wskaźnika znaczenia znikają, bo poprzednia odpowiedź rdzenia
+ * przestaje opisywać zmieniony dokument.
  */
 export function wchlonPlik(magazyn: MagazynBiblioteki, plik: LibraryFile): void {
   const pozycja = magazyn.zbior.findIndex((wpis) => wpis.id === plik.id);
@@ -162,14 +129,13 @@ export function wchlonPlik(magazyn: MagazynBiblioteki, plik: LibraryFile): void 
   magazyn.oglos();
 }
 
-/** Usuwa plik skasowany w rdzeniu wraz z jego zaznaczeniem i wskazaniem. */
+/** Usuwa plik skasowany w rdzeniu wraz z jego zaznaczeniem, wskazaniem i zawężeniem wykazu, jeśli go dotyczyły. */
 export function usunPlik(magazyn: MagazynBiblioteki, idPliku: string): void {
   magazyn.zbior = magazyn.zbior.filter((wpis) => wpis.id !== idPliku);
   magazyn.zaznaczenie = magazyn.zaznaczenie.filter((wpis) => wpis !== idPliku);
   magazyn.tresci.delete(idPliku);
   magazyn.znaczenia.delete(idPliku);
-  // Zawężenie wskazujące skasowany plik przestałoby zgadzać się z wykazem:
-  // licznik zbioru mówiłby o pozycji, której rdzeń już nie zna.
+  // Zawężenie wskazujące skasowany plik przestałoby zgadzać się z wykazem po jego usunięciu.
   if (magazyn.zawezenie !== null) {
     const kody = magazyn.zawezenie.kody.filter((wpis) => wpis !== idPliku);
     magazyn.zawezenie = kody.length === 0 ? null : { ...magazyn.zawezenie, kody };
@@ -178,7 +144,7 @@ export function usunPlik(magazyn: MagazynBiblioteki, idPliku: string): void {
   magazyn.oglos();
 }
 
-/** Odkłada odpowiedź rdzenia o treści pliku i pokazuje ją oknom. */
+/** Odkłada odpowiedź rdzenia o treści pliku w magazynie i ogłasza zmianę wszystkim obserwującym ją oknom modułu. */
 export function zapiszTresc(
   magazyn: MagazynBiblioteki,
   idPliku: string,
@@ -188,12 +154,12 @@ export function zapiszTresc(
   magazyn.oglos();
 }
 
-/** Werdykt o treści pliku; plik nieodpytany zwraca stan „nieznana". */
+/** Werdykt o treści pliku odczytany z magazynu stanu modułu; plik dotąd nieodpytany zwraca stan nieznana. */
 export function odczytajTresc(magazyn: MagazynBiblioteki, idPliku: string): StanTresci {
   return magazyn.tresci.get(idPliku) ?? TRESC_NIEZNANA;
 }
 
-/** Zbiór wartości pól wielokrotnych plików, uporządkowany po polsku. */
+/** Zbiór wartości pól wielokrotnych zestawu plików, uporządkowany alfabetycznie według reguł języka polskiego. */
 export function zbierz(
   pliki: readonly LibraryFile[],
   pole: (plik: LibraryFile) => readonly string[],

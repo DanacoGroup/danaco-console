@@ -1,16 +1,5 @@
-// Odpowiedzialność pliku: katalog metod wejścia przez bramkę (tabela
-// `metoda_uwierzytelnienia`) — trwałość rodziny `auth.*`. Sesje bramki leżą
-// obok, w `auth_sesje_bramki.go`.
-//
-// Wiersz `metoda_uwierzytelnienia` to sposób otwarcia bramki: hasło (kotwica),
-// PIN urządzenia albo klucz Windows Hello. Nie jest kontem — kont użytkownika
-// platforma nie prowadzi. Nie jest też poświadczeniem kanału modelu; tamto
-// mieszka w tabeli `konto` i z bramką nie ma związku.
-//
-// Kolumna `sekret_odwolanie` niesie odwołanie do wpisu w sejfie poświadczeń
-// i repozytorium traktuje je jak nieprzezroczysty napis: nie składa go, nie
-// rozbiera i nie odtwarza z niego hasła. Skrót hasła składa rdzeń i on kładzie
-// go w sejfie.
+// Plik prowadzi katalog metod wejścia przez bramkę: hasło, PIN urządzenia albo klucz Windows Hello; sesje bramki
+// leżą obok, w auth_sesje_bramki.go, a odwołanie do sejfu poświadczeń repozytorium traktuje jak nieprzezroczysty napis.
 package dane
 
 import (
@@ -20,11 +9,7 @@ import (
 	"fmt"
 )
 
-// MetodaUwierzytelnienia to wiersz tabeli `metoda_uwierzytelnienia`.
-//
-// `Kod` jest identyfikatorem trwałym i odpowiada polu `AuthMethod.id`
-// kontraktu. `UrzadzenieKod` niesie `deviceId` żądania — napis nadany przez
-// klienta, nie klucz obcy katalogu `urzadzenie`.
+// MetodaUwierzytelnienia to wiersz tabeli `metoda_uwierzytelnienia`; kod jest identyfikatorem trwałym, kod urządzenia niesie napis nadany przez klienta.
 type MetodaUwierzytelnienia struct {
 	ID               int64
 	Kod              string
@@ -44,48 +29,37 @@ type MetodaUwierzytelnienia struct {
 type RepozytoriumUwierzytelnienia interface {
 	// Metody zwraca komplet metod wejścia w kolejności wyświetlania.
 	Metody(ctx context.Context) ([]MetodaUwierzytelnienia, error)
-	// MetodaPoKodzie zwraca metodę wskazaną identyfikatorem trwałym. Brak wiersza
-	// daje ErrBrakWiersza — odróżnienie „nie ma" od awarii należy do warstwy wyżej.
+	// MetodaPoKodzie zwraca metodę wskazaną identyfikatorem trwałym; brak wiersza daje ErrBrakWiersza.
 	MetodaPoKodzie(ctx context.Context, kod string) (MetodaUwierzytelnienia, error)
-	// Kotwica zwraca hasło bramki. Brak wiersza znaczy bramkę nieustawioną —
-	// dokładnie ten stan otwiera jednorazową wykonalność `auth.register`.
+	// Kotwica zwraca hasło bramki; brak wiersza znaczy bramkę nieustawioną, stan otwierający rejestrację.
 	Kotwica(ctx context.Context) (MetodaUwierzytelnienia, error)
 	// MetodaUrzadzenia zwraca metodę danego rodzaju założoną na urządzeniu.
 	MetodaUrzadzenia(ctx context.Context, rodzaj, urzadzenieKod string) (MetodaUwierzytelnienia, error)
 	// ZalozMetode wstawia wiersz metody i oddaje go w postaci zapisanej.
 	ZalozMetode(ctx context.Context, metoda MetodaUwierzytelnienia) (MetodaUwierzytelnienia, error)
-	// ZapiszOdwolanieSekretu podmienia odwołanie do sejfu — tego używa zmiana
-	// hasła, która wiersza kotwicy nie zakłada drugi raz.
+	// ZapiszOdwolanieSekretu podmienia odwołanie do sejfu przy zmianie hasła, bez zakładania kotwicy.
 	ZapiszOdwolanieSekretu(ctx context.Context, kod, odwolanie string) error
 	// OdnotujUzycie zapisuje czas ostatniego wejścia tą metodą.
 	OdnotujUzycie(ctx context.Context, kod string, teraz int64) error
-	// UsunMetode kasuje metodę. Drugi wynik mówi, czy wiersz istniał — bez niego
-	// wołający nie odróżni skasowania od braku wiersza.
+	// UsunMetode kasuje metodę; drugi wynik mówi, czy wiersz istniał, dla odróżnienia od braku wiersza.
 	UsunMetode(ctx context.Context, kod string) (bool, error)
 
-	// ZalozSesjeBramki zakłada sesję wejścia. Token nie wchodzi — wchodzi jego
-	// skrót (patrz `auth_sesje_bramki.go`).
+	// ZalozSesjeBramki zakłada sesję wejścia; token nie wchodzi do bazy, wchodzi wyłącznie jego skrót.
 	ZalozSesjeBramki(ctx context.Context, sesja SesjaBramki) (SesjaBramki, error)
 	// SesjaBramkiPoSkrocie zwraca sesję rozpoznaną skrótem tokenu.
 	SesjaBramkiPoSkrocie(ctx context.Context, skrot string) (SesjaBramki, error)
 	// PrzedluzSesjeBramki przesuwa wygaśnięcie sesji i oddaje ją po zmianie.
 	PrzedluzSesjeBramki(ctx context.Context, skrot string, wygasa int64) (SesjaBramki, error)
-	// UniewaznijSesjeBramkiPoza unieważnia wszystkie sesje czynne poza wskazaną
-	// i zwraca ich liczbę. Pusty skrót znaczy „unieważnij wszystkie".
+	// UniewaznijSesjeBramkiPoza unieważnia wszystkie sesje czynne poza wskazaną i zwraca ich liczbę.
 	UniewaznijSesjeBramkiPoza(ctx context.Context, skrotZachowany string, teraz int64) (int, error)
-	// UrzadzeniaKonta zwraca urządzenia, które kiedykolwiek weszły przez bramkę,
-	// wraz z ostatnią chwilą wejścia i informacją, czy mają dziś ważny token.
+	// UrzadzeniaKonta zwraca urządzenia, które weszły przez bramkę, z ostatnią chwilą wejścia.
 	UrzadzeniaKonta(ctx context.Context, teraz int64) ([]UrzadzenieKonta, error)
 	// UniewaznijSesjeUrzadzenia zamyka sesje czynne wskazanego urządzenia
 	// i zwraca ich liczbę.
 	UniewaznijSesjeUrzadzenia(ctx context.Context, urzadzenie string, teraz int64) (int, error)
 }
 
-// UrzadzenieKonta to jeden wiersz wykazu urządzeń powiązanych z kontem.
-//
-// Bytu trwałego za tym nie ma i nie musi być: urządzeniem konta jest to, które
-// kiedykolwiek weszło, a to wiedzą sesje bramki. Osobna tabela urządzeń
-// wymagałaby sprzątania wierszy, których nic już nie dotyczy.
+// UrzadzenieKonta to jeden wiersz wykazu urządzeń powiązanych z kontem; urządzeniem konta jest to, które kiedykolwiek weszło przez bramkę.
 type UrzadzenieKonta struct {
 	Kod string
 	// OstatnioWidziane to chwila ostatniego wejścia w milisekundach epoki.
@@ -130,7 +104,7 @@ type repozytoriumUwierzytelnienia struct {
 	zapytania *zapytania
 }
 
-// Zgodność implementacji z kontraktem sprawdzana jest przy kompilacji.
+// Zgodność implementacji repozytorium z kontraktem interfejsu sprawdzana jest przy kompilacji pakietu.
 var _ RepozytoriumUwierzytelnienia = (*repozytoriumUwierzytelnienia)(nil)
 
 // noweRepozytoriumUwierzytelnienia zakłada repozytorium bramki. `*sql.DB` nie
@@ -168,14 +142,14 @@ func (r *repozytoriumUwierzytelnienia) Metody(ctx context.Context) ([]MetodaUwie
 	return lista, nil
 }
 
-// MetodaPoKodzie zwraca metodę wskazaną identyfikatorem trwałym.
+// MetodaPoKodzie zwraca jedną metodę wskazaną jej identyfikatorem trwałym wprost z bazy danych repozytorium.
 func (r *repozytoriumUwierzytelnienia) MetodaPoKodzie(ctx context.Context,
 	kod string) (MetodaUwierzytelnienia, error) {
 
 	return r.jedna(ctx, metodaUwierzytelnieniaPoKodzie, fmt.Sprintf("%q", kod), kod)
 }
 
-// Kotwica zwraca hasło bramki — jedyną metodę, której zdjąć się nie da.
+// Kotwica zwraca hasło bramki, czyli jedyną metodę uwierzytelnienia, której zdjąć się w bramce nie da.
 func (r *repozytoriumUwierzytelnienia) Kotwica(ctx context.Context) (MetodaUwierzytelnienia, error) {
 	return r.jedna(ctx, metodaUwierzytelnieniaKotwica, "kotwica bramki")
 }
@@ -203,9 +177,7 @@ func (r *repozytoriumUwierzytelnienia) ZalozMetode(ctx context.Context,
 		tekstDoKolumny(metoda.NazwaUrzadzenia), liczbaLogiczna(metoda.Kotwica),
 		metoda.OdwolanieSekretu, metoda.Utworzono)
 	if czyKolizja(err) {
-		// Kolizja z indeksem (kotwica albo para urządzenie+rodzaj) nie jest awarią
-		// zapisu — jest odpowiedzią „taki wiersz już jest". Komunikat sterownika
-		// zostaje tutaj, dalej idzie sygnał, z którego rdzeń złoży odmowę kontraktu.
+		// Kolizja z indeksem nie jest awarią zapisu: jest odpowiedzią, że taki wiersz już istnieje w bazie.
 		return MetodaUwierzytelnienia{}, fmt.Errorf(
 			"dane: metoda wejścia %q koliduje z istniejącą: %w", metoda.Kod, ErrKolizjaWiersza)
 	}
@@ -225,14 +197,14 @@ func (r *repozytoriumUwierzytelnienia) ZapiszOdwolanieSekretu(ctx context.Contex
 	return r.zmien(ctx, zapiszOdwolanieMetody, kod, odwolanie, kod)
 }
 
-// OdnotujUzycie zapisuje czas ostatniego wejścia tą metodą (`lastUsedAt`).
+// OdnotujUzycie zapisuje w bazie danych repozytorium czas ostatniego udanego wejścia tą metodą uwierzytelnienia.
 func (r *repozytoriumUwierzytelnienia) OdnotujUzycie(ctx context.Context,
 	kod string, teraz int64) error {
 
 	return r.zmien(ctx, odnotujUzycieMetody, kod, teraz, kod)
 }
 
-// UsunMetode kasuje metodę i mówi, czy wiersz istniał.
+// UsunMetode kasuje wskazaną metodę uwierzytelnienia i mówi wołającemu, czy jej wiersz istniał w bazie danych.
 func (r *repozytoriumUwierzytelnienia) UsunMetode(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunMetodeUwierzytelnienia)
 	if err != nil {
@@ -249,8 +221,7 @@ func (r *repozytoriumUwierzytelnienia) UsunMetode(ctx context.Context, kod strin
 	return zmienione > 0, nil
 }
 
-// zmien wykonuje polecenie zmieniające jeden wiersz metody i pilnuje, żeby
-// wiersz naprawdę istniał.
+// zmien wykonuje polecenie zmieniające jeden wiersz metody uwierzytelnienia i pilnuje, żeby wiersz naprawdę istniał.
 func (r *repozytoriumUwierzytelnienia) zmien(ctx context.Context, zapytanie, kod string,
 	argumenty ...any) error {
 
@@ -272,7 +243,7 @@ func (r *repozytoriumUwierzytelnienia) zmien(ctx context.Context, zapytanie, kod
 	return nil
 }
 
-// jedna wykonuje zapytanie zwracające najwyżej jeden wiersz metody.
+// jedna wykonuje zapytanie zwracające najwyżej jeden wiersz metody uwierzytelnienia z bazy danych repozytorium.
 func (r *repozytoriumUwierzytelnienia) jedna(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) (MetodaUwierzytelnienia, error) {
 
@@ -292,7 +263,7 @@ func (r *repozytoriumUwierzytelnienia) jedna(ctx context.Context, zapytanie, opi
 	return metoda, nil
 }
 
-// odczytajMetodeUwierzytelnienia składa strukturę z jednego wiersza wyniku.
+// odczytajMetodeUwierzytelnienia składa strukturę metody wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajMetodeUwierzytelnienia(wiersz skaner) (MetodaUwierzytelnienia, error) {
 	var metoda MetodaUwierzytelnienia
 	var etykieta, urzadzenie, nazwaUrzadzenia sql.NullString

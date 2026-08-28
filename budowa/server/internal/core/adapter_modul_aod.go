@@ -1,27 +1,6 @@
-// Rodzina `aod.*` — nakładka Always On Display, czyli tryb stałej obecności
-// asystenta. Siedem komend kontraktu: stan nakładki, wysłanie wiadomości,
-// polecenie głosowe, komplet kontekstu, podpowiedzi oraz przypięcie i odpięcie
-// procesu obserwowanego.
-//
-// Do czego przypina się `aod.observe.attach`. Żądanie niesie `processId` i nic
-// poza urządzeniem, a procesem platformy w tym rdzeniu jest proces telemetrii
-// postępu — ten, którego identyfikator oddaje `monitor.status` i który jedzie
-// w `progress.changed`. Nakładka przypina więc proces, nie okno i nie kartę
-// sesji: okno i karta wchodzą do stanu nakładki osobnymi polami
-// (`activeWindowId`, `activeSessionId`).
-//
-// Dlaczego przypięcia nie mają tabeli. Rejestr procesów telemetrii żyje
-// w pamięci rdzenia; proces ginie razem z rdzeniem, więc wiersz przypięcia,
-// który przeżyłby restart, wskazywałby proces nieistniejący. Przypięcia
-// mieszkają zatem tam, gdzie procesy — tak jak `pamiecObserwatorowProcesow`
-// monitora.
-//
-// Czego rdzeń o nakładce nie wie. Ognisko karty sesji i okna jest własnością
-// klienta (`session.focus`, `wiez_klienta.go`), a żądania `aod.*` niosą
-// urządzenie; wiązania urządzenie→klient nie ma ani w schemacie, ani
-// w kontrakcie. Rdzeń wskazuje więc fakt, który zna: ostatni punkt pracy
-// odnotowany przez telemetrię (`pamiecCzynnosci`) — to samo źródło, którym
-// strona główna rozstrzyga, dokąd prowadzi powrót do sesji.
+// Plik obsługuje siedem komend rodziny aod.* nakładki Always On Display: stan
+// nakładki, wysłanie wiadomości, polecenie głosowe, komplet kontekstu,
+// podpowiedzi oraz przypięcie i odpięcie obserwowanego procesu.
 package core
 
 import (
@@ -38,11 +17,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterNakladkiAod wypełnia port NakladkaAod. Nie posiada ani jednego bytu,
-// o którym mówi: procesy zna telemetria, okna i karty — nadzorca sesji,
-// wiadomości — port rozmowy, zlecenia — moduł Assistant, a podpowiedzi —
-// katalog akcji. Tutaj powstaje wyłącznie odpowiedź kontraktu złożona z tych
-// źródeł.
+// adapterNakladkiAod wypełnia port NakladkaAod, składając odpowiedź kontraktu
+// z bytów, które zna telemetria, nadzorca sesji, port rozmowy, moduł
+// Assistant i katalog akcji.
 type adapterNakladkiAod struct {
 	nadzorca   *session.Nadzorca
 	telemetria *telemetriaPostepu
@@ -53,10 +30,8 @@ type adapterNakladkiAod struct {
 	komplety   zrodloKompletuOkna
 	urzadzenia dane.RepozytoriumUrzadzen
 	przypiecia *pamiecPrzypiecAod
-	// wyciszenia jest magazynem wyciszeń nakładki i sygnałów klas zdarzeń.
-	// W przeciwieństwie do przypięć MA wiersze w bazie: wyciszenie wskazuje moduł,
-	// kartę sesji albo klasę zdarzeń — byty, które restart rdzenia przeżywają —
-	// i ma obowiązywać we wszystkich powłokach Operatora, nie w tej jednej.
+	// wyciszenia jest magazynem wyciszeń nakładki i sygnałów klas zdarzeń,
+	// trwałym w bazie danych.
 	wyciszenia dane.RepozytoriumWyciszenNakladki
 }
 
@@ -89,25 +64,29 @@ func nowyAdapterNakladkiAod(nadzorca *session.Nadzorca, telemetria *telemetriaPo
 	}
 }
 
-// ZRozmowa wpina port rozmowy — drogę, którą `aod.chat.send` zakłada wiadomość.
+// ZRozmowa wpina port rozmowy — drogę, którą `aod.chat.send` zakłada
+// wiadomość w rozmowie prowadzonej przez nakładkę.
 func (a *adapterNakladkiAod) ZRozmowa(r Rozmowa) *adapterNakladkiAod {
 	a.rozmowa = r
 	return a
 }
 
-// ZAsystentem wpina moduł Assistant — jedynego właściciela zleceń asystenta.
+// ZAsystentem wpina moduł Assistant — jedynego właściciela zleceń asystenta,
+// z którego nakładka odczytuje polecenie głosowe.
 func (a *adapterNakladkiAod) ZAsystentem(z zlecenieGlosoweAsystenta) *adapterNakladkiAod {
 	a.asystent = z
 	return a
 }
 
-// ZPodpowiedziami wpina katalog akcji — źródło pozycji `aod.suggestion`.
+// ZPodpowiedziami wpina katalog akcji — źródło pozycji `aod.suggestion`
+// pokazywanych w nakładce jako podpowiedzi.
 func (a *adapterNakladkiAod) ZPodpowiedziami(r *RejestrAkcji) *adapterNakladkiAod {
 	a.akcje = r
 	return a
 }
 
-// ZKontekstem wpina magazyn kompletu kontekstu okien.
+// ZKontekstem wpina magazyn kompletu kontekstu okien, z którego nakładka
+// odczytuje komplet dla okna żądania.
 func (a *adapterNakladkiAod) ZKontekstem(z zrodloKompletuOkna) *adapterNakladkiAod {
 	a.komplety = z
 	return a
@@ -124,12 +103,8 @@ func (a *adapterNakladkiAod) ZUrzadzeniami(r dane.RepozytoriumUrzadzen) *adapter
 // ── aod.status.get ──────────────────────────────────────────────────────────
 
 // StanNakladki obsługuje `aod.status.get`: oddaje stan nakładki Always On
-// Display — urządzenie, kartę i okno pokazywane w nakładce, procesy przypięte
-// do obserwacji i liczbę procesów w biegu.
-//
-// Niewpięty rejestr telemetrii odmawia kodem `internal_error`: zero procesów
-// w biegu byłoby wtedy ciszą udającą pomiar. Ta sama reguła, którą stoi
-// `monitor.status`.
+// Display — urządzenie, kartę i okno pokazywane w nakładce, procesy
+// przypięte do obserwacji i liczbę procesów w biegu.
 func (a *adapterNakladkiAod) StanNakladki(ctx context.Context,
 	z shared.AodStatusGetRequest) (shared.AodStatusGetResponse, error) {
 
@@ -147,16 +122,13 @@ func (a *adapterNakladkiAod) StanNakladki(ctx context.Context,
 		RunningProcessCount: a.procesyWBiegu(),
 		UpdatedAt:           time.Now().UTC().UnixMilli(),
 	}
-	// Okno i karta pokazywane w nakładce biorą się z ostatniego punktu pracy —
-	// patrz nagłówek pliku. Brak pracy w oknach zostawia oba pola puste: to
-	// stan prawdziwy, nie brak odpowiedzi.
+	// Okno i karta w nakładce biorą się z ostatniego punktu pracy; brak
+	// pracy zostawia pola puste.
 	if okno, jest := a.oknoOstatniejCzynnosci(); jest {
 		stan.ActiveWindowId = tekstOpcjonalny(okno.Id)
 		stan.ActiveSessionId = tekstOpcjonalny(okno.IdSesji)
-		// Moduł idzie tym samym oknem, co karta sesji. Nakładka dochodziła go
-		// dotąd okrężnie — osobnym wywołaniem `window.list` — więc wyciszenie
-		// bieżącego modułu opierało się na drugim odczycie i mogło rozminąć się
-		// z tym, co rdzeń uważa za punkt pracy.
+		// Moduł idzie tym samym oknem, co karta sesji, zgodnie z bieżącym
+		// punktem pracy.
 		stan.ModuleId = tekstOpcjonalny(okno.Modul)
 	}
 	return shared.AodStatusGetResponse{Status: stan}, nil
@@ -178,11 +150,8 @@ func (a *adapterNakladkiAod) procesyWBiegu() int {
 // ── aod.observe.attach ──────────────────────────────────────────────────────
 
 // PrzypnijObserwacje obsługuje `aod.observe.attach`: przypina proces do
-// obserwacji w nakładce wskazanego urządzenia.
-//
-// Proces, którego rejestr telemetrii nie zna, jest bytem nieistniejącym —
-// przypięcie oddałoby wtedy identyfikator, za którym nic nie stoi. Idzie
-// odmowa `not_found` z nazwą procesu, tą samą, którą składa monitor.
+// obserwacji w nakładce wskazanego urządzenia, odmawiając kodem `not_found`,
+// gdy rejestr telemetrii procesu nie zna.
 func (a *adapterNakladkiAod) PrzypnijObserwacje(ctx context.Context,
 	z shared.AodObserveAttachRequest) (shared.AodObserveAttachResponse, error) {
 
@@ -210,15 +179,8 @@ func (a *adapterNakladkiAod) PrzypnijObserwacje(ctx context.Context,
 // ── aod.observe.detach ──────────────────────────────────────────────────────
 
 // OdepnijObserwacje obsługuje `aod.observe.detach`: zdejmuje proces z
-// obserwacji w nakładce wskazanego urządzenia.
-//
-// Odpięcie procesu, którego nakładka nie obserwuje, jest odmową `not_found`,
-// nie ciszą: wykaz oddany bez zmiany wyglądałby na wykonaną czynność. Bytem,
-// którego brakuje, jest tu przypięcie — i tak brzmi treść odmowy.
-//
-// Istnienia procesu w rejestrze telemetrii odpięcie nie wymaga: po opróżnieniu
-// rejestru przypięcia nie dałoby się zdjąć, choć wtedy jest to najbardziej
-// potrzebne.
+// obserwacji w nakładce wskazanego urządzenia, odmawiając kodem `not_found`,
+// gdy przypięcia nie było.
 func (a *adapterNakladkiAod) OdepnijObserwacje(ctx context.Context,
 	z shared.AodObserveDetachRequest) (shared.AodObserveDetachResponse, error) {
 
@@ -240,7 +202,8 @@ func (a *adapterNakladkiAod) OdepnijObserwacje(ctx context.Context,
 	}, nil
 }
 
-// czyProcesZnany mówi, czy rejestr telemetrii zna proces o tym identyfikatorze.
+// czyProcesZnany mówi, czy rejestr telemetrii zna proces o tym
+// identyfikatorze, rozstrzygając, czy przypięcie wskazuje byt istniejący.
 func (a *adapterNakladkiAod) czyProcesZnany(idProcesu string) bool {
 	for _, odpis := range a.telemetria.Odpisy() {
 		if odpis.Id == idProcesu {
@@ -253,11 +216,7 @@ func (a *adapterNakladkiAod) czyProcesZnany(idProcesu string) bool {
 // ── ustalenia wspólne żądań ─────────────────────────────────────────────────
 
 // urzadzenieNakladki sprawdza urządzenie wskazane w żądaniu i oddaje klucz
-// nakładki. Żądanie bez urządzenia daje klucz pusty — nakładkę jednego,
-// bezimiennego Operatora — a nie odmowę.
-//
-// Identyfikatorem urządzenia w kontrakcie jest numer wiersza katalogu maszyn;
-// tak samo czyta go rodzina `accessPoint.*` (`urzadzenieWiersza`).
+// nakładki; żądanie bez urządzenia daje klucz pusty zamiast odmowy.
 func (a *adapterNakladkiAod) urzadzenieNakladki(ctx context.Context,
 	wskazane *string) (string, error) {
 
@@ -282,9 +241,9 @@ func (a *adapterNakladkiAod) urzadzenieNakladki(ctx context.Context,
 	return kod, nil
 }
 
-// oknoZadania ustala okno, którego dotyczy żądanie nakładki: wskazane wprost,
-// okno karty sesji albo — gdy żądanie nie wskazało niczego — okno ostatniego
-// punktu pracy (patrz nagłówek pliku).
+// oknoZadania ustala okno, którego dotyczy żądanie nakładki: wskazane
+// wprost, okno karty sesji albo — gdy żądanie nie wskazało niczego — okno
+// ostatniego punktu pracy odnotowanego przez telemetrię.
 func (a *adapterNakladkiAod) oknoZadania(idOkna, idSesji *string) (session.Okno, error) {
 	if a.nadzorca == nil {
 		return session.Okno{}, bladBrakuSkladnikaNakladki("nadzorca sesji i okien")
@@ -370,8 +329,8 @@ func (p *pamiecCzynnosci) Ostatnie() (czynnoscOkna, bool) {
 	defer p.mu.RUnlock()
 	var najswiezszy czynnoscOkna
 	for _, wpis := range p.okna {
-		// Remis rozstrzyga identyfikator okna, żeby dwa zgłoszenia z tej samej
-		// milisekundy nie przestawiały odpowiedzi przy każdym odczycie.
+		// Remis rozstrzyga identyfikator okna, żeby odpowiedź nie zmieniała
+		// się między odczytami.
 		if najswiezszy.IdOkna == "" || wpis.Chwila.After(najswiezszy.Chwila) ||
 			(wpis.Chwila.Equal(najswiezszy.Chwila) && wpis.IdOkna < najswiezszy.IdOkna) {
 			najswiezszy = wpis
@@ -390,7 +349,8 @@ type pamiecPrzypiecAod struct {
 	nakladki map[string]map[string]struct{}
 }
 
-// nowaPamiecPrzypiecAod zakłada pustą pamięć przypięć.
+// nowaPamiecPrzypiecAod zakłada pustą pamięć przypięć, gotową do przyjęcia
+// pierwszego przypięcia procesu.
 func nowaPamiecPrzypiecAod() *pamiecPrzypiecAod {
 	return &pamiecPrzypiecAod{nakladki: map[string]map[string]struct{}{}}
 }
@@ -409,7 +369,8 @@ func (p *pamiecPrzypiecAod) przypnij(nakladka, idProcesu string) {
 	p.nakladki[nakladka][idProcesu] = struct{}{}
 }
 
-// odepnij zdejmuje proces z obserwacji nakładki i mówi, czy było co zdejmować.
+// odepnij zdejmuje proces z obserwacji nakładki i mówi, czy było co
+// zdejmować, żeby wołający rozróżnił zmianę od braku zmiany.
 func (p *pamiecPrzypiecAod) odepnij(nakladka, idProcesu string) bool {
 	if p == nil {
 		return false
@@ -449,8 +410,8 @@ func (p *pamiecPrzypiecAod) Wykaz(nakladka string) []string {
 
 // ── odmowy ──────────────────────────────────────────────────────────────────
 
-// bladZadaniaNakladki nazywa żądanie niezgodne z kontraktem — błąd Operatora,
-// nie rdzenia.
+// bladZadaniaNakladki nazywa żądanie niezgodne z kontraktem — błąd
+// Operatora, nie rdzenia, i wraca kodem walidacji.
 func bladZadaniaNakladki(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"nakładka AOD: "+powod))

@@ -1,28 +1,5 @@
-// Odpowiedzialność pliku: programy warsztatu deweloperskiego, których rdzeń
-// używa w module Developer, jedna droga ich wywołania oraz komenda
-// `developer.toolchain.check`, którą Dev Tools pyta o ich obecność.
-//
-// ── Dlaczego te akurat programy, skoro instalka ich nie niesie ────────────────
-// Zasada produktu mówi: żadna funkcja nie może zależeć od programu, którego nie
-// ma. Nie mówi „nie wolno wołać programów” — cała aplikacja z arsenałem stoi na
-// SERWERZE, a u Operatora jest okno łączące się z serwerem. Program wywołany po
-// stronie serwera jest częścią serwera, tak samo jak Pandoc czy ffmpeg.
-//
-// Rozstrzygnięcie w każdej rodzinie brzmiało tak samo: gdy istnieje biblioteka
-// Go robiąca to samo — bierzemy bibliotekę. Dlatego repozytorium jedzie na
-// `go-git`, wyszukiwanie na `regexp`, klient API na `net/http`, konsola bazy na
-// `database/sql`, a wykaz zależności na własnych parserach manifestów. Programu
-// wołamy tylko tam, gdzie biblioteki Go nie ma i być nie może, bo program JEST
-// tą wiedzą: serwer języka zna typy repozytorium (gopls), formatery znają styl
-// (gofmt, goimports, prettier), analiza statyczna zna reguły (golangci-lint,
-// staticcheck), debugger zna wnętrze biegnącego procesu (dlv), a silnik
-// kontenerów zna kontenery.
-//
-// ── Po co osobna komenda pytająca o obecność ─────────────────────────────────
-// Bez niej Operator dowiadywałby się o braku dopiero po naciśnięciu przycisku,
-// osobno przy każdej funkcji. `developer.toolchain.check` odwraca kolejność:
-// Dev Tools pyta raz i wygasza to, czego serwer nie wykona, zanim ktokolwiek
-// spróbuje. To ta sama wiedza, podana przed czynnością, a nie po jej odmowie.
+// Odpowiedzialność pliku: programy warsztatu deweloperskiego używane w module
+// Developer, droga ich wywołania i komenda developer.toolchain.check.
 package core
 
 import (
@@ -78,9 +55,9 @@ var (
 		Nazwa: "typos", Program: "typos", Pakiet: "cargo install typos-cli"}
 	narzedzieStylelint = zewnetrzne.Narzedzie{
 		Nazwa: "Stylelint", Program: "stylelint", Pakiet: "npm i -g stylelint"}
-	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma dziś
-	// czym go zapytać — powód stoi przy `serwerJezykaPliku`, gdzie rozstrzyga
-	// się droga warstwy językowej dla plików TypeScriptu.
+	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma czym go
+	// zapytać pojedynczym wywołaniem — program mówi wyłącznie sesją LSP, nie
+	// wierszem poleceń; powód stoi przy serwerJezykaPliku.
 	narzedzieSerweraTypeScript = zewnetrzne.Narzedzie{
 		Nazwa: "serwer języka TypeScript", Program: "typescript-language-server",
 		Pakiet: "npm i -g typescript-language-server typescript"}
@@ -125,15 +102,13 @@ func narzedzieWarsztatuPoNazwie(wskazanie string) (zewnetrzne.Narzedzie, bool) {
 			return narzedzie, true
 		}
 	}
-	// Program spoza wykazu nie jest odmową: Operator ma prawo zapytać o dowolny
-	// program serwera, a odpowiedź „nie ma” jest odpowiedzią, nie usterką.
+	// Program spoza wykazu nie jest odmową — odpowiedź nie ma jest odpowiedzią, nie usterką.
 	return zewnetrzne.Narzedzie{Nazwa: wskazanie, Program: wskazanie}, true
 }
 
-// SprawdzWarsztat obsługuje `developer.toolchain.check`.
-//
-// Pusty wykaz w żądaniu znaczy „powiedz o wszystkim, co znasz” — Dev Tools
-// otwiera zakładkę bez wiedzy o tym, czego szukać, i to rdzeń ma ten wykaz.
+// SprawdzWarsztat obsługuje developer.toolchain.check. Pusty wykaz w żądaniu
+// znaczy powiedz o wszystkim, co znasz — Dev Tools otwiera zakładkę bez
+// wiedzy o tym, czego szukać, i to rdzeń ma ten wykaz.
 func (a *adapterDevelopera) SprawdzWarsztat(_ context.Context,
 	z shared.DeveloperToolchainCheckRequest) (shared.DeveloperToolchainCheckResponse, error) {
 
@@ -162,13 +137,9 @@ func (a *adapterDevelopera) SprawdzWarsztat(_ context.Context,
 	return shared.DeveloperToolchainCheckResponse{Programs: wykaz}, nil
 }
 
-// wersjaProgramuWarsztatu pyta program o jego wersję.
-//
-// To jedyne miejsce modułu, w którym wywołanie idzie poza port uruchamiacza:
-// pytanie o wersję nie należy do żadnego okna, więc nie ma okna, którego zasady
-// izolacji miałyby je objąć. Wywołanie jest odczytem bez skutków ubocznych,
-// z krótką granicą czasu i bez katalogu roboczego; program, który na `--version`
-// nie odpowiada, zostaje bez wersji, a nie bez wiersza.
+// wersjaProgramuWarsztatu pyta program o jego wersję. Jedyne miejsce modułu,
+// w którym wywołanie idzie poza port uruchamiacza, bo pytanie o wersję nie
+// należy do żadnego okna.
 func wersjaProgramuWarsztatu(sciezka string) string {
 	ctx, przerwij := context.WithTimeout(context.Background(), 3*time.Second)
 	defer przerwij()
@@ -185,7 +156,7 @@ func wersjaProgramuWarsztatu(sciezka string) string {
 	return ""
 }
 
-// pierwszyWierszWersji bierze pierwszy niepusty wiersz odpowiedzi programu.
+// pierwszyWierszWersji bierze pierwszy niepusty wiersz odpowiedzi programu, pomijając wiersze puste na wejściu.
 func pierwszyWierszWersji(wyjscie string) string {
 	for _, wiersz := range strings.Split(wyjscie, "\n") {
 		if tresc := strings.TrimSpace(wiersz); tresc != "" {
@@ -195,11 +166,8 @@ func pierwszyWierszWersji(wyjscie string) string {
 	return ""
 }
 
-// wolajNarzedzieWarsztatu uruchamia program warsztatu w obszarze okna.
-//
-// Wywołanie idzie portem `session.Uruchamiacz` przez `zewnetrzne.Wolaj`, więc
-// przechodzi tę samą bramę izolacji okna, co budowanie i git: rdzeń nie buduje
-// własnego `exec.Cmd` dla czynności należącej do okna.
+// wolajNarzedzieWarsztatu uruchamia program warsztatu w obszarze okna, portem
+// session.Uruchamiacz, tą samą bramą izolacji co budowanie i git.
 func (a *adapterDevelopera) wolajNarzedzieWarsztatu(ctx context.Context, okno session.Okno,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string, katalog string,
 	limit time.Duration) (zewnetrzne.Wynik, error) {
@@ -212,12 +180,9 @@ func (a *adapterDevelopera) wolajNarzedzieWarsztatu(ctx context.Context, okno se
 		narzedzie, argumenty, katalog, limit)
 }
 
-// brakNarzedziaWarsztatu rozpoznaje odmowę „nie ma czym”.
-//
-// Rodziny funkcji rozróżniają ją od awarii, bo kontrakt niesie dla nich osobne
-// pola — `serverAvailable`, `linterAvailable`, `engineAvailable`. Brak programu
-// nie jest wtedy odmową całej komendy: odpowiedź przychodzi pusta i JAWNIE
-// mówi, że narzędzia nie ma, zamiast udawać, że nie ma czego znaleźć.
+// brakNarzedziaWarsztatu rozpoznaje odmowę nie ma czym. Rodziny funkcji
+// rozróżniają ją od awarii osobnym polem kontraktu, bo brak programu nie
+// jest odmową całej komendy — odpowiedź wraca pusta i jawnie to mówi.
 func brakNarzedziaWarsztatu(err error) bool {
 	var brak *zewnetrzne.BrakNarzedzia
 	return err != nil && errors.As(err, &brak)

@@ -14,27 +14,13 @@ import type { StanTranslate } from './stan-translate';
 import { utworzRozwiniecie } from './warstwy-translate';
 import type { WynikTranslate } from './wywolanie-translate';
 
-/**
- * Warsztat modułu Translate — okno, przez które przechodzą wszystkie rodziny
- * komend spoza czterech okien pierwotnych.
- *
- * Dlaczego jedno okno, a nie dwanaście: rodziny te dzielą trzy rzeczy — okno
- * tłumaczenia, panel języka i ścieżkę pliku. Rozbicie ich na osobne okna
- * kazałoby Operatorowi wpisywać te same trzy wskazania po kilkanaście razy,
- * a każda rodzina prowadziłaby własną kopię wykazu paneli. Tutaj wskazania
- * stoją raz, na górze, i wchodzą do każdego żądania.
- *
- * Każda sekcja kończy się zdaniem o skutku, a nie słowem „gotowe”: liczba par
- * wniesionych do pamięci, ścieżka pliku, który powstał, liczba pozycji
- * przebiegu. Komunikat „udało się” bez liczby jest tym samym, czym jest pusty
- * wynik komendy — meldunkiem zamiast skutku.
- */
+/** Warsztat modułu Translate — okno, przez które przechodzą rodziny komend spoza czterech okien pierwotnych, ze wspólnymi wskazaniami na górze. */
 export interface OknoWarsztatTranslate {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Opis jednej czynności warsztatu: nazwa przycisku, pola i wykonanie. */
+/** Opis jednej czynności warsztatu: nazwa przycisku, pola żądania i funkcja jej wykonania w warsztacie. */
 interface Czynnosc {
   nazwa: string;
   wyjasnienie: string;
@@ -1118,13 +1104,7 @@ export function utworzOknoWarsztatTranslate(stan: StanTranslate): OknoWarsztatTr
   return { element, odswiez };
 }
 
-/**
- * Sekcja jednej czynności: rozwinięcie z polami i przyciskiem.
- *
- * Przycisk jest zawsze klikalny. Brak wskazania nie blokuje go, tylko kończy
- * się zdaniem, czego brakuje — kontrolka wyłączona nie mówi, dlaczego jest
- * wyłączona, a Operator ma prawo to wiedzieć bez zgadywania.
- */
+/** Sekcja jednej czynności: rozwinięcie z polami i przyciskiem, zawsze klikalnym — brak wskazania kończy się zdaniem, czego brakuje. */
 function sekcjaCzynnosci(
   czynnosc: Czynnosc,
   okno: StanOkna,

@@ -16,26 +16,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek dogniecenia zapisu przy `image.convert`
-// (`adapter_narzedzia_obraz_kompresja.go`).
-//
-// ── Dlaczego te sprawdziany pomijają się przy braku programu ────────────────
-// Dogniecenie jest ULEPSZENIEM, nie warunkiem: przy braku programu konwersja ma
-// oddać ten sam obraz zapisany dłuższym strumieniem. Sprawdzian mierzący zysk na
-// rozmiarze mierzy więc obecność programu tak samo jak jego pracę — i na maszynie
-// bez niego musi się pominąć z NAZWANYM powodem, zamiast zawieść albo, gorzej,
-// przejść na zielono nie zmierzywszy niczego.
-//
-// Osobny sprawdzian niżej idzie ZAWSZE i mierzy rzecz odwrotną: że konwersja
-// udaje się niezależnie od tego, czy program stoi. To jest ta połowa reguły,
-// która ma być prawdziwa na instalce Operatora.
+// Sprawdziany dogniecenia pomijają się bez programu zewnętrznego; sprawdzian niżej idzie zawsze.
 
-// obrazDoDogniecenia składa PNG, który da się skrócić: gradient o łagodnym
-// przebiegu ma silne predykcje międzywierszowe, a koder wkompilowany bierze
-// jeden filtr i jeden przebieg deflate, więc zostawia po sobie zapas.
-//
-// Obraz jednolity nie nadałby się do pomiaru: koder Go zapisuje go już blisko
-// granicy i zysk bywa zerowy, co czytałoby się jak brak dogniecenia.
+// obrazDoDogniecenia składa PNG z gradientem o łagodnym przebiegu, który koder wkompilowany zapisuje z zapasem miejsca do skrócenia przez dogniatanie.
 func obrazDoDogniecenia(t *testing.T, szerokosc, wysokosc int) []byte {
 	t.Helper()
 
@@ -71,13 +54,7 @@ func pominBezProgramu(t *testing.T, narzedzie zewnetrzne.Narzedzie) {
 	}
 }
 
-// TestKonwersjaDoPngDogniataZapisProgramem mierzy najtwardszy skutek tej pracy:
-// plik leżący za odwołaniem jest KRÓTSZY niż ten sam obraz zapisany samym
-// koderem wkompilowanym — i nadal jest tym samym obrazem.
-//
-// Porównanie idzie z zapisem kodera Go policzonym tu na miejscu, a nie ze stałą
-// liczbą bajtów: stała rozjechałaby się przy pierwszej zmianie biblioteki
-// i zaczęłaby mierzyć jej wydanie zamiast pracy programu.
+// TestKonwersjaDoPngDogniataZapisProgramem sprawdza, że plik zapisany po dognieceniu jest krótszy niż ten sam obraz zapisany samym koderem wkompilowanym i pozostaje tym samym obrazem.
 func TestKonwersjaDoPngDogniataZapisProgramem(t *testing.T) {
 	pominBezProgramu(t, narzedzieOptipng())
 
@@ -118,8 +95,7 @@ func TestKonwersjaDoPngDogniataZapisProgramem(t *testing.T) {
 	t.Logf("koder wkompilowany %d B, po %s %d B", samKoder.Len(),
 		narzedzieOptipng().Program, len(zapisany))
 
-	// Krótszy zapis, który przestał być tym obrazem, nie jest ulepszeniem.
-	// Dogniatanie bezstratne ma zostawić KAŻDY punkt taki, jaki był.
+	// Dogniatanie bezstratne ma zostawić każdy punkt obrazu bez zmian.
 	poDognieceniu, err := png.Decode(bytes.NewReader(zapisany))
 	if err != nil {
 		t.Fatalf("plik po dogniataniu nie jest czytelnym obrazem: %v", err)
@@ -164,8 +140,7 @@ func TestKonwersjaDoWebpDogniataZapisProgramem(t *testing.T) {
 	}
 	defer plik.Close()
 
-	// Wynik ma zostać czytelnym WEBP-em o wymiarach źródła — dogniecenie, po
-	// którym pliku nie da się odczytać, byłoby stratą, nie zyskiem.
+	// Wynik ma pozostać czytelnym plikiem WEBP o wymiarach źródła.
 	obraz, err := webp.Decode(plik)
 	if err != nil {
 		t.Fatalf("wynik nie jest czytelnym plikiem WEBP: %v", err)
@@ -226,13 +201,7 @@ func TestKonwersjaDoJpegDogniataZapisProgramem(t *testing.T) {
 		narzedzieJpegoptim().Program, len(zapisany))
 }
 
-// TestKonwersjaStratnaSprowadzaPngDoPalety mierzy pngquant — jedyny z czterech
-// programów, który PIKSELE ZMIENIA, i dlatego jedyny wołany wyłącznie na
-// wyraźne żądanie zapisu stratnego.
-//
-// Miarą jest model barw wyniku, a nie sama liczba bajtów: plik palety niesie
-// `color.Palette`, a zapis pełnobarwny — `NRGBA`. Model palety dowodzi, że wynik
-// programu został wzięty, bo koder wkompilowany palety nie zapisuje.
+// TestKonwersjaStratnaSprowadzaPngDoPalety sprawdza, że zapis stratny niesie model barw palety, którego koder wkompilowany sam nie tworzy.
 func TestKonwersjaStratnaSprowadzaPngDoPalety(t *testing.T) {
 	pominBezProgramu(t, narzedziePngquant())
 
@@ -271,13 +240,7 @@ func TestKonwersjaStratnaSprowadzaPngDoPalety(t *testing.T) {
 		narzedziePngquant().Program, stratny.SizeBytes)
 }
 
-// obrazRozsypanejPalety składa PNG z dwustu barw rozrzuconych bez ładu.
-//
-// Taki obraz jest materiałem WŁAŚCIWYM do mierzenia palety: zapis pełnobarwny
-// nie ma czego przewidzieć i płaci trzy bajty za punkt, a paleta mieści
-// wszystkie barwy co do jednej. Gradient nadałby się gorzej — pngquant odmawia
-// sprowadzenia płynnego przejścia do palety, bo nie zmieściłby się w progu
-// jakości, i wtedy sprawdzian mierzyłby odmowę zamiast pracy.
+// obrazRozsypanejPalety składa PNG z dwustu barw rozrzuconych bez ładu, materiał właściwy do mierzenia zapisu palety kolorów.
 func obrazRozsypanejPalety(t *testing.T, szerokosc, wysokosc int) []byte {
 	t.Helper()
 
@@ -302,15 +265,7 @@ func obrazRozsypanejPalety(t *testing.T, szerokosc, wysokosc int) []byte {
 	return bufor.Bytes()
 }
 
-// TestKonwersjaUdajeSieNiezaleznieOdProgramuDogniatajacego jest drugą połową
-// reguły i dlatego NIE POMIJA SIĘ nigdy: konwersja ma dać czytelny obraz także
-// wtedy, gdy żaden program dogniatający nie stoi.
-//
-// Sprawdzian mierzy to, co widzi Operator na cienkiej instalce — i wytwarza ją
-// tu na miejscu: pusta ścieżka wyszukiwania czyni z tej maszyny maszynę bez
-// programów, więc zdanie z nazwy sprawdzianu jest mierzone wszędzie, a nie
-// tylko tam, gdzie programów akurat nie doinstalowano. Gdyby dogniatanie
-// kiedykolwiek zaczęło odmawiać przy braku programu, ten sprawdzian zawiedzie.
+// TestKonwersjaUdajeSieNiezaleznieOdProgramuDogniatajacego sprawdza, że konwersja daje czytelny obraz nawet bez programu dogniatającego zewnętrznego.
 func TestKonwersjaUdajeSieNiezaleznieOdProgramuDogniatajacego(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 

@@ -17,20 +17,10 @@ import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../protokol/ks
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Punkty dostępu pobierane i zapisywane przez rdzeń.
- *
- * Punkt dostępu mówi, do czego model ma wgląd: do maszyny przez most MCP albo
- * do katalogu lokalnego. Nie jest środowiskiem — środowisko pozostaje profilem
- * widoczności modułów w bocznej nawigacji i tej sekcji nie dotyczy. Nie jest
- * też katalogiem roboczym: ten mieszka w ustawieniu `katalog.roboczy.podstawa`
- * i ma w tej sekcji własny obszar.
- *
- * Nazwy komend i zdarzeń pochodzą wyłącznie ze stałych kontraktu.
- *
- * Odczyt jest fail-open: gdy się nie powiedzie, daje wykaz pusty i wpis do
- * dziennika, a sekcja pozostaje czynna. Zapis wraca jako `Wynik` z błędem, żeby
- * widok mógł powiedzieć Operatorowi, co odpowiedział rdzeń; żadna ścieżka nie
- * odrzuca obietnicy.
+ * Interfejs obsługuje punkty dostępu pobierane i zapisywane przez rdzeń; nazwy
+ * komend i zdarzeń pochodzą wyłącznie ze stałych kontraktu. Odczyt jest
+ * fail-open i przy niepowodzeniu zwraca wykaz pusty, zapis zwraca `Wynik`
+ * niosący błąd.
  */
 export interface ZrodloPunktow {
   /** `access.point.list` — katalog punktów w kolejności nazw. */
@@ -48,12 +38,10 @@ export interface ZrodloPunktow {
 }
 
 /**
- * Powiadomienie o niepowodzeniu odczytu.
- *
- * Odczyt pozostaje fail-open — wykaz wraca pusty, a sekcja jest czynna — ale
- * o niepowodzeniu wie także widok, nie wyłącznie dziennik: pusty wykaz po
- * odmowie rdzenia i pusty wykaz na świeżej instalacji to dwa różne stany
- * i Operator ma prawo je rozróżnić.
+ * Powiadomienie o niepowodzeniu odczytu. Odczyt jest fail-open i wraca
+ * z wykazem pustym, ale o niepowodzeniu ma wiedzieć też widok, nie tylko
+ * dziennik, żeby Operator odróżnił pusty wykaz od odmowy rdzenia i od
+ * świeżej instalacji.
  */
 export type NaNiepowodzenie = (powod: string) => void;
 
@@ -111,7 +99,7 @@ export function utworzZrodloPunktow(
   };
 }
 
-/** Wspólny sprawdzian odpowiedzi niosącej jeden punkt. */
+/** Sprawdza kształt odpowiedzi niosącej jeden punkt dostępu; funkcja jest wspólna dla żądania założenia i żądania zmiany punktu. */
 async function sprawdzPunkt<T extends { point: AccessPoint }>(
   obietnica: Promise<Wynik<T>>,
   komenda: string,
@@ -134,7 +122,7 @@ export function uporzadkujPunkty(punkty: readonly AccessPoint[]): AccessPoint[] 
   );
 }
 
-/** Niepowodzenie odczytu zostaje w dzienniku — z pełną nazwą komendy. */
+/** Zapisuje w dzienniku niepowodzenie odczytu wykazu punktów dostępu, wraz z pełną nazwą komendy i podanym powodem. */
 function ostrzez(komenda: string, powod: string | undefined): void {
   console.warn('[dostępy] wykaz nie dotarł', komenda, powod ?? '');
 }

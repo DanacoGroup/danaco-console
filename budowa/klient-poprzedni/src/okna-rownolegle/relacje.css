@@ -1,18 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PAS RELACJI KOORDYNATOR–WYKONAWCA
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd powiązania między oknami pary — więź nad
-   kolumnami obu okien, grot kierunku i żeton przekazywanego zlecenia.
-
-   Siatka pasa ma te same kolumny co tor okien, więc więź trafia dokładnie pod
-   swoją parę, także gdy koordynator i wykonawca nie sąsiadują ze sobą.
-
-   Pas nie znika przy żadnym stanie: brak pary pokazuje stan pusty
-   `.dn-pusty-stan`, praca trwająca — wskaźnik w plakietce stanu (`gniazdo.css`),
-   a podgląd przekazania — komunikat blokowy `.dn-okna__uwaga`. Biblioteka stylów
-   nie niesie klasy komunikatu, więc jego forma stoi tutaj pod nazwą własną
-   widoku.
-   ============================================================================ */
+/* Arkusz opisuje wygląd pasa relacji koordynator–wykonawca: stan pusty, komunikat blokowy oraz kolumny toru okien. */
 
 .dn-okna__relacje {
   display: grid;
@@ -48,9 +34,7 @@
   display: none;
 }
 
-/* --- STAN PUSTY — brak pary koordynator–wykonawca ------------------------- */
-/* Biblioteczny `.dn-pusty-stan` niesie układ; pas zawęża jego oddech, bo stoi
-   w wierszu, nie na planszy. Stan pusty zajmuje kolumnę toru więzi. */
+/* Stan pusty pary koordynator–wykonawca korzysta z układu bibliotecznego .dn-pusty-stan, a pas jedynie zawęża jego oddech, bo stoi w wierszu, nie na planszy. */
 .dn-pusty-stan.dn-okna__pustka {
   gap: var(--dn-od-1);
   padding: var(--dn-od-2) var(--dn-od-4);
@@ -88,9 +72,7 @@
   display: none;
 }
 
-/* --- KOMUNIKAT BLOKOWY — podgląd przekazania ------------------------------ */
-/* Cienka kreska po lewej w barwie semantycznej; celowo bez tła i bez obwódki,
-   żeby nie powstała „druga karta" w pasie. */
+/* Komunikat blokowy podglądu przekazania niesie cienką kreskę po lewej w barwie semantycznej, celowo bez tła i bez obwódki, by nie powstała druga karta w pasie. */
 .dn-okna__uwaga {
   grid-column: 1 / -1;
   display: flex;
@@ -185,7 +167,7 @@
   left: 0;
 }
 
-/* Żeton zlecenia — biegnie po szynie w chwili przekazania */
+/* Żeton zlecenia biegnie po szynie w chwili przekazania pary koordynator–wykonawca, sygnalizując ruch sprawy. */
 .dn-okna__zeton {
   position: absolute;
   width: var(--dn-od-2);

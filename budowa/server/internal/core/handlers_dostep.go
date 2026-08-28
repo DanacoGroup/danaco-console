@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: wpięcie obszaru dostępów — punktów dostępu i nadań
-// dostępu okna rozmowy.
-//
-// Cztery byty, których nie wolno mieszać. Punkt dostępu mówi, do jakich maszyn
-// i katalogów model ma wgląd. Nadanie wiąże punkt z jednym oknem rozmowy, a
-// okno ma zbiór nadań, w którym kolejność i oznaczenie głównego niosą
-// znaczenie. Środowisko jest czymś trzecim — profilem widoczności modułów
-// w bocznej nawigacji — i tej rodziny komend nie dotyka. Katalog roboczy modelu
-// jest ustawieniem osobnym (`katalog.roboczy.*`) i mówi, gdzie model zostawia
-// własne pliki.
-//
-// Rdzeń rozgłasza zmianę obu bytów, bo okno konfiguracji bywa otwarte na kilku
-// urządzeniach konta naraz, a nośnikiem synchronizacji jest zdarzenie zmiany
-// właściwe obszarowi.
+// Plik wpina obszar dostępów, punktów dostępu i nadań dostępu okna rozmowy,
+// rozgłaszając zmianę obu bytów zdarzeniem właściwym obszarowi.
 package core
 
 import (
@@ -20,7 +8,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// PunktyDostepu jest portem katalogu punktów dostępu.
+// PunktyDostepu jest portem katalogu punktów dostępu, obsługującym dodanie,
+// wykaz, zmianę, usunięcie i sprawdzenie punktu.
 type PunktyDostepu interface {
 	Dodaj(ctx context.Context, z shared.AccessPointAddRequest) (shared.AccessPointAddResponse, error)
 	Wykaz(ctx context.Context, z shared.AccessPointListRequest) (shared.AccessPointListResponse, error)
@@ -29,7 +18,8 @@ type PunktyDostepu interface {
 	Sprawdz(ctx context.Context, z shared.AccessPointCheckRequest) (shared.AccessPointCheckResponse, error)
 }
 
-// NadaniaDostepu jest portem zbioru nadań okna rozmowy.
+// NadaniaDostepu jest portem zbioru nadań okna rozmowy, obsługującym dodanie,
+// wykaz, zmianę i usunięcie nadania.
 type NadaniaDostepu interface {
 	Dodaj(ctx context.Context, z shared.AccessGrantAddRequest) (shared.AccessGrantAddResponse, error)
 	Wykaz(ctx context.Context, z shared.AccessGrantListRequest) (shared.AccessGrantListResponse, error)
@@ -37,7 +27,8 @@ type NadaniaDostepu interface {
 	Usun(ctx context.Context, z shared.AccessGrantRemoveRequest) (shared.AccessGrantRemoveResponse, error)
 }
 
-// zarejestrujPunktyDostepu wpina pięć komend katalogu punktów.
+// zarejestrujPunktyDostepu wpina pięć komend katalogu punktów i rozgłasza
+// zmianę punktu po dodaniu, zmianie i usunięciu.
 func zarejestrujPunktyDostepu(r *Rejestr, punkty PunktyDostepu, e *emiter) {
 	if r == nil || punkty == nil {
 		return
@@ -73,7 +64,8 @@ func zarejestrujPunktyDostepu(r *Rejestr, punkty PunktyDostepu, e *emiter) {
 		}))
 }
 
-// zarejestrujNadaniaDostepu wpina cztery komendy zbioru nadań okna.
+// zarejestrujNadaniaDostepu wpina cztery komendy zbioru nadań okna i rozgłasza
+// zmianę nadania po dodaniu, zmianie i usunięciu.
 func zarejestrujNadaniaDostepu(r *Rejestr, nadania NadaniaDostepu, e *emiter) {
 	if r == nil || nadania == nil {
 		return
@@ -117,7 +109,8 @@ func (e *emiter) punktDostepu(zmiana shared.ChangeKind, p shared.AccessPoint) {
 		shared.AccessPointChangedEvent{Change: zmiana, Point: p})
 }
 
-// nadanieDostepu rozgłasza zmianę nadania wraz z oknem, którego zbioru dotyczy.
+// nadanieDostepu rozgłasza zmianę nadania wraz z oknem, którego zbioru
+// dotyczy, zdarzeniem dostępnym wszystkim połączeniom konta.
 func (e *emiter) nadanieDostepu(zmiana shared.ChangeKind, n shared.AccessGrant) {
 	e.wyslij(shared.EventAccessGrantChanged, "",
 		shared.AccessGrantChangedEvent{Change: zmiana, WindowId: n.WindowId, Grant: n})

@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: trzy typowane odmowy silnika mowy — brak pomocnika,
-// brak silnika w Pythonie, brak użytecznego nagrania.
-//
-// Odmowa jest osobnym typem, a nie napisem, bo obsługiwacz komendy kontraktu
-// rozróżnia te trzy przypadki przez errors.As: każdy dostaje inny kod błędu
-// i inną podpowiedź naprawy. Brak Pythona to niedokończona instalacja produktu,
-// brak silnika to niedoinstalowana zależność Pythona, a brak nagrania to zła
-// dana przysłana przez klienta.
-//
-// Każdy komunikat ma trzy części: co odmówiło, dlaczego i czym to naprawić.
-//
-// ŻADNA ODMOWA NIE NAZYWA BRAKU, KTÓREGO NIE ZMIERZONO. Łańcuch transkrypcji ma
-// trzy ogniwa dokładane osobno i naprawiane osobno: interpreter Pythona,
-// biblioteka `faster-whisper` w tym interpreterze, wagi modelu na dysku. Odmowa,
-// która przypisuje brak niewłaściwemu ogniwu, prowadzi Operatora do naprawy
-// bezskutecznej — instalacji biblioteki do interpretera, którego nie ma. Dlatego
-// rozpoznanie ma tu wartość „nie wiem" i przy niej odmowa oddaje sam zmierzony
-// powód, zamiast zgadywać rozpoznanie i naprawę.
+// Odpowiedzialność pliku: trzy typowane odmowy silnika mowy — brak
+// pomocnika, brak silnika w Pythonie, brak użytecznego nagrania; każda
+// niesie co, dlaczego i naprawę.
 package mowa
 
 import (
@@ -25,17 +10,17 @@ import (
 )
 
 // BrakPomocnika jest odmową: nie ma interpretera albo nie ma skryptu
-// transkrypcji. Bez pary interpreter+skrypt nie ma czego uruchomić.
+// transkrypcji; bez pary interpreter+skrypt nie ma czego uruchomić.
 type BrakPomocnika struct {
-	// Szukano wylicza ścieżki, pod którymi pomocnika nie było. Wykaz idzie do
-	// komunikatu dosłownie: bez niego meldunek nie prowadzi do naprawy, bo
-	// Operator nie wie, gdzie plik dołożyć.
+	// Szukano wylicza ścieżki, pod którymi pomocnika nie było — wykaz idzie
+	// do komunikatu.
 	Szukano []string
 	// Powod niesie błąd źródłowy ostatniego sprawdzenia (os.Stat, exec.LookPath).
 	Powod error
 }
 
-// Error mówi wprost, czego brakuje, gdzie tego szukano i czym to naprawić.
+// Error mówi wprost, czego brakuje, gdzie tego szukano i czym to naprawić,
+// w kolejności zrozumiałej dla Operatora czytającego zdanie.
 func (b *BrakPomocnika) Error() string {
 	komunikat := "Brak Pythona (python_helper) do transkrypcji." +
 		" Silnik mowy potrzebuje interpretera i skryptu pomocniczego transkrypcja.py"
@@ -50,20 +35,13 @@ func (b *BrakPomocnika) Error() string {
 	return komunikat
 }
 
-// Unwrap oddaje błąd źródłowy sprawdzenia ścieżki.
+// Unwrap oddaje błąd źródłowy sprawdzenia ścieżki, zgodnie z umową
+// errors.Unwrap obowiązującą pozostałe odmowy pakietu.
 func (b *BrakPomocnika) Unwrap() error { return b.Powod }
 
-// BrakInterpretera jest odmową: skrypt pomocnika leży na miejscu, ale nie ma
-// czym go uruchomić — interpretera Pythona nie ma na ścieżce wyszukiwania.
-//
-// Typ osobny od BrakSilnika, bo naprawa jest inna i pomylenie ich prowadzi
-// Operatora donikąd: instalowanie biblioteki do interpretera, którego nie ma,
-// kończy się drugim komunikatem o tym samym braku. Osobny też od BrakPomocnika,
-// bo tam brakuje CZĘŚCI PRODUKTU (katalogu ze skryptem), a tu brakuje programu,
-// który produkt zastaje na maszynie.
-//
-// Rozpoznanie idzie po błędzie źródłowym uruchomienia (exec.ErrNotFound), nie
-// po zgadywaniu z treści wyjścia — mierzone, nie domniemane.
+// BrakInterpretera jest odmową: skrypt pomocnika leży na miejscu, ale nie
+// ma czym go uruchomić — interpretera Pythona nie ma na ścieżce
+// wyszukiwania.
 type BrakInterpretera struct {
 	// Program to nazwa, pod którą interpretera szukano.
 	Program string
@@ -71,7 +49,8 @@ type BrakInterpretera struct {
 	Powod error
 }
 
-// Error nazywa brakujący interpreter i podaje naprawę właściwą temu brakowi.
+// Error nazywa brakujący interpreter i podaje naprawę właściwą temu
+// brakowi, odróżnioną od naprawy brakującego modułu.
 func (b *BrakInterpretera) Error() string {
 	nazwa := strings.TrimSpace(b.Program)
 	if nazwa == "" {
@@ -88,21 +67,12 @@ func (b *BrakInterpretera) Error() string {
 	return komunikat
 }
 
-// Unwrap oddaje błąd źródłowy uruchomienia.
+// Unwrap oddaje błąd źródłowy uruchomienia, zgodnie z umową errors.Unwrap
+// obowiązującą pozostałe odmowy pakietu.
 func (b *BrakInterpretera) Unwrap() error { return b.Powod }
 
 // odmowaUruchomienia rozstrzyga, KTÓREGO ogniwa zabrakło, gdy uruchomienie
-// pomocnika nie doszło do skutku.
-//
-// Bez tego rozstrzygnięcia każde niepowodzenie uruchomienia szło jako brak
-// silnika — a więc odmowa twierdziła „interpreter odnaleziony" także wtedy, gdy
-// w tym samym zdaniu, w nawiasie, stało `executable file not found`. Operator
-// czyta zdanie główne i instaluje bibliotekę do interpretera, którego nie ma.
-//
-// Rozpoznanie idzie po błędzie źródłowym, nie po treści wyjścia: `exec.ErrNotFound`
-// jest odpowiedzią systemu, a nie zgadywaniem z napisu. Dopasowanie po tekście
-// zostaje jako druga droga, bo błąd bywa owinięty przez warstwę uruchamiania
-// i wtedy nie niesie już sygnału typowanego.
+// pomocnika nie doszło do skutku, zamiast zgadywać z treści wyjścia.
 func odmowaUruchomienia(program string, err error, wynik Wynik) error {
 	if czyBrakInterpretera(err) {
 		return &BrakInterpretera{Program: program, Powod: err}
@@ -110,7 +80,8 @@ func odmowaUruchomienia(program string, err error, wynik Wynik) error {
 	return &BrakSilnika{Powod: powodZUruchomienia(err, wynik)}
 }
 
-// czyBrakInterpretera rozpoznaje brak programu na ścieżce wyszukiwania.
+// czyBrakInterpretera rozpoznaje brak programu na ścieżce wyszukiwania po
+// błędzie źródłowym, nie po treści wyjścia procesu.
 func czyBrakInterpretera(err error) bool {
 	if err == nil {
 		return false
@@ -121,24 +92,15 @@ func czyBrakInterpretera(err error) bool {
 	return strings.Contains(err.Error(), "executable file not found")
 }
 
-// BrakSilnika jest odmową: interpreter Pythona jest, ale nie ma w nim modułu
-// faster-whisper. To odrębny przypadek od BrakPomocnika, bo naprawa jest inna —
-// tu niczego nie brakuje w produkcie, brakuje pakietu w środowisku Pythona.
+// BrakSilnika jest odmową: interpreter Pythona jest, ale nie ma w nim
+// modułu faster-whisper; odrębny przypadek od BrakPomocnika.
 type BrakSilnika struct {
 	// Powod niesie to, co pomocnik powiedział na wyjściu diagnostycznym.
 	Powod string
 }
 
-// Error nazywa brakujący moduł i podaje polecenie, którym Operator go dołoży.
-//
-// Zdanie NIE twierdzi, że interpreter został odnaleziony. Twierdziło tak
-// wcześniej i było to twierdzenie niezmierzone: pomocnik bywa nieuruchomiony
-// z wielu powodów, a odmowa niosła wtedy w nawiasie prawdę przeciwną do zdania
-// głównego („executable file not found") i prowadziła Operatora do instalowania
-// biblioteki dla interpretera, którego nie ma. Brak interpretera rozpoznany
-// wprost ma własną odmowę (BrakInterpretera); tutaj zostaje przypadek, w którym
-// uruchomienie nie powiodło się z powodu nierozstrzygniętego — więc odmowa mówi
-// o najczęstszej przyczynie i o tym, czym ją sprawdzić, zamiast orzekać.
+// Error nazywa brakujący moduł i podaje polecenie, którym Operator go
+// dołoży, bez twierdzenia o interpreterze, którego nie sprawdzono.
 func (b *BrakSilnika) Error() string {
 	komunikat := "Silnik faster-whisper niedostępny w Pythonie." +
 		" Pomocnik transkrypcji nie doszedł do rozpoznania" +
@@ -152,25 +114,22 @@ func (b *BrakSilnika) Error() string {
 	return komunikat
 }
 
-// Unwrap nie ma czego oddać: powód przychodzi z wyjścia diagnostycznego cudzego
-// procesu jako tekst, nie jako błąd Go. Metoda istnieje, żeby wszystkie trzy
-// odmowy pakietu dały się obsłużyć jednakowo, i zwraca nil zgodnie z umową
-// `errors.Unwrap` — nil znaczy „łańcuch kończy się tutaj”, a nie usterkę.
+// Unwrap nie ma czego oddać: powód przychodzi z wyjścia diagnostycznego
+// cudzego procesu jako tekst, nie jako błąd Go.
 func (b *BrakSilnika) Unwrap() error { return nil }
 
 // BrakNagrania jest odmową: odnośnik nie wskazuje na plik, który da się
-// przepisać. Osobny typ, bo to jedyna z trzech odmów, którą wywołuje dana
-// przysłana przez klienta, a nie stan instalacji — kod błędu kontraktu jest
-// wtedy „zły argument”, nie „usterka rdzenia”.
+// przepisać; jedyna z trzech odmów wywołana daną przysłaną przez klienta.
 type BrakNagrania struct {
-	// Sciezka to odnośnik tak, jak przyszedł — bez niego Operator nie wie,
-	// który plik rdzeń próbował otworzyć.
+	// Sciezka to odnośnik tak, jak przyszedł, bez niego Operator nie wie,
+	// który plik rdzeń otwierał.
 	Sciezka string
 	// Powod nazywa konkretne niespełnione oczekiwanie.
 	Powod string
 }
 
-// Error nazywa ścieżkę, powód i wykaz przyjmowanych formatów.
+// Error nazywa ścieżkę, powód i wykaz przyjmowanych formatów, żeby
+// Operator wiedział, co poprawić w przysłanym odnośniku.
 func (b *BrakNagrania) Error() string {
 	sciezka := strings.TrimSpace(b.Sciezka)
 	if sciezka == "" {
@@ -181,6 +140,6 @@ func (b *BrakNagrania) Error() string {
 		strings.Join(FormatyNagran, ", ")
 }
 
-// Unwrap nie ma czego oddać: sprawdzenia nagrania rozstrzygają się na wyniku
-// os.Stat i na wykazie formatów, a nie na cudzym błędzie do przekazania dalej.
+// Unwrap nie ma czego oddać: sprawdzenia nagrania rozstrzygają się na
+// wyniku os.Stat i na wykazie formatów, nie na cudzym błędzie.
 func (b *BrakNagrania) Unwrap() error { return nil }

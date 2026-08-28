@@ -6,26 +6,8 @@ import { wywolaj } from '../../protokol/wywolanie';
 import { KOD_MODULU } from './wynik-czastkowy';
 
 /**
- * Okno rozmowy modułu Workspace odnalezione w karcie sesji — nośnik
- * przeniesienia kontekstu.
- *
- * Dwie kontrolki modułu wołają `context.transfer` i obie wymagają
- * `sourceWindowId`: „Udostępnij zaznaczone” w Project Library i „→ Agent
- * Builder” w Agent Manager. Rdzeń niesie kod modułu w `Window.moduleId`
- * (`core/przeklad_nawigacja.go`), więc okna karty sesji wystarczy zawęzić do
- * modułu. Wzór stoi w `moduly/rejestracja.ts` (`widokZOknaSesji`), ale tamten
- * odracza montaż modułu do chwili znalezienia okna, a Workspace montuje się od
- * razu: okno rozmowy jest mu potrzebne do dwóch czynności, nie do istnienia,
- * więc jego brak nie wygasza pięciu okien operacyjnych.
- *
- * Kolejność względem `workspace.enter` jest treścią. Odczyt idzie z
- * `WidokModulu.wczytaj`, a powłoka woła `wczytaj` dopiero po odpowiedzi na
- * `workspace.enter` (`aplikacja/przestrzen-modulu.ts`). Okno rozmowy jest wtedy
- * już przestawione na ten moduł; pytanie zadane wcześniej oddałoby okno modułu
- * poprzedniego.
- *
- * Funkcja nie zgaduje: gdy rdzeń odmówi albo nie odda okna tego modułu, wraca
- * pusty identyfikator wraz z powodem, który staje potem w odmowie obu kontrolek.
+ * Odnajduje okno rozmowy modułu Workspace w karcie sesji jako nośnik
+ * przeniesienia kontekstu, bez zgadywania w przypadku odmowy rdzenia.
  */
 export interface OknoRozmowyModulu {
   /** Identyfikator okna; pusty znaczy „nie odnaleziono” i wtedy `powod` mówi, czemu. */
@@ -34,7 +16,7 @@ export interface OknoRozmowyModulu {
   powod: string;
 }
 
-/** Powód sprzed pierwszego szukania — moduł jeszcze nie pytał rdzenia. */
+/** Powód sprzed pierwszego szukania okna — moduł jeszcze nie pytał rdzenia o okna należące do karty sesji. */
 export const POWOD_PRZED_WCZYTANIEM =
   'Moduł nie zna jeszcze okna rozmowy — powłoka nie wczytała go do żadnej karty sesji.';
 
@@ -60,8 +42,7 @@ export async function odnajdzOknoRozmowy(
 
   const okna = wynik.wynik.windows;
   const moje = okna.filter((okno: Window) => okno.moduleId === KOD_MODULU);
-  // Okno otwarte ma pierwszeństwo: przeniesienie kontekstu do okna zamkniętego
-  // nie ma dokąd dojść, a rdzeń oddaje w wykazie oba stany.
+  // Okno otwarte ma pierwszeństwo — przeniesienie do zamkniętego nie ma dokąd dojść.
   const otwarte = moje.find((okno: Window) => okno.status === WindowStatus.Open);
   if (otwarte !== undefined) return { okno: otwarte.id, powod: '' };
 

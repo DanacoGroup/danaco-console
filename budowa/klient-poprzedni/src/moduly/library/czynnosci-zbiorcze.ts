@@ -17,22 +17,10 @@ import {
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Czynności zbiorcze Library Explorera — te, dla których kontrakt niesie komendę.
- *
- * Panel Explorera wymienia osiem czynności zbiorczych i wszystkie mają dziś
- * drogę do rdzenia: etykieta (`library.tag.set`), przypisanie do kolekcji
- * (`library.collection.assign`), otwarcie w module źródłowym
- * (`context.transfer`), przeniesienie w strukturze (`library.file.move`),
- * archiwizacja i przywrócenie (`library.file.archive`,
- * `library.file.restore`), usunięcie trwałe (`library.file.delete`) oraz
- * udostępnienie odnośnikiem (`library.share.create`).
- *
- * Usunięcie trwałe pyta osobno. Jest jedyną czynnością nieodwracalną w tym
- * module, więc pierwsze naciśnięcie zapowiada skutek, a dopiero drugie go
- * wykonuje — potwierdzenie w tym samym kliknięciu byłoby zgodą pozorną.
- *
- * Plik buduje wyłącznie kontrolki i pokazuje odpowiedź; rozmowę z rdzeniem
- * prowadzi `zapisy-zbiorcze.ts` (jedna odpowiedzialność na plik).
+ * Czynności zbiorcze Library Explorera obejmują osiem operacji z drogą do
+ * rdzenia: etykietę, przypisanie do kolekcji, przeniesienie, archiwizację,
+ * usunięcie trwałe i udostępnienie odnośnikiem; usunięcie pyta osobno, bo jest
+ * jedyną nieodwracalną.
  */
 export interface CzynnosciZbiorcze {
   element: HTMLElement;
@@ -239,7 +227,7 @@ export function utworzCzynnosciZbiorcze(
   };
 }
 
-/** Przycisk czynności zbiorczej wraz ze znacznikiem do sprawdzianu. */
+/** Przycisk czynności zbiorczej wraz ze znacznikiem do sprawdzianu jednoznacznie wskazującym rodzaj czynności. */
 function przyciskCzynnosci(
   etykieta: string,
   kod: string,

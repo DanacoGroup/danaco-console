@@ -9,19 +9,9 @@ import { utworzStanyOdczytu } from './stany-odczytu';
 import { utworzWykazPunktow } from './wykaz-punktow';
 
 /**
- * Sekcja dostępów i katalogu roboczego — ekran, na którym Operator nadaje dostęp.
- *
- * Dotyczy dwóch bytów: punktu dostępu wraz z nadaniem (do jakich maszyn
- * i katalogów model sięga, per okno rozmowy) oraz katalogu roboczego (gdzie
- * model zostawia swoje pliki). Środowiska — profilu widoczności modułów
- * w bocznej nawigacji — sekcja nie dotyka i nie zapisuje do niego niczego.
- *
- * Układ jest dwuczęściowy: po lewej wykaz punktów wraz z dodawaniem katalogu
- * z „Mój komputer", po prawej zbiór nadań okna. Pod nimi obszar katalogu
- * roboczego, oddzielony, bo mówi o czym innym.
- *
- * Sekcja pojawia się natychmiast, przed odpowiedzią rdzenia; puste wykazy niosą
- * zdanie, nie pusty prostokąt.
+ * Sekcja dostępów i katalogu roboczego, czyli ekran, na którym Operator nadaje
+ * dostęp. Dotyczy punktu dostępu wraz z nadaniem oraz katalogu roboczego,
+ * w którym model zostawia swoje pliki.
  */
 export interface SekcjaDostepow {
   /** Element osadzany w widoku gospodarza. */
@@ -96,7 +86,11 @@ export function utworzSekcjeDostepow(zaleznosci: ZaleznosciSekcji): SekcjaDostep
   };
 }
 
-/** Nagłówek sekcji: tytuł, zdanie rozdzielające trzy byty, odczyt ponowny. */
+/**
+ * Nagłówek sekcji: tytuł, zdanie rozdzielające trzy byty, których sekcja
+ * dotyczy, oraz przycisk odczytu ponownego. Zdanie stoi w nagłówku, ponieważ
+ * rozróżnienie bytów jest warunkiem poprawnego nadania dostępu.
+ */
 function naglowek(odswiez: HTMLElement): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dd-sekcja__naglowek';

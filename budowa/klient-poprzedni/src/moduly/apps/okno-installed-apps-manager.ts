@@ -25,27 +25,9 @@ import type { StanRozszerzen } from './stan-rozszerzen';
 import { utworzWyborZMenu, wierszWyboru } from './wybor-z-menu';
 
 /**
- * Installed Apps Manager — okno zarządca rejestru rozszerzeń.
- *
- * Okno pokazuje wyłącznie pozycje zainstalowane, bo tym różni się od App
- * Catalogu: katalog jest widokiem oferty, rejestr — widokiem stanu maszyny.
- * Odsiew idzie po polu `installed` nad wspólnym zbiorem, a nie osobnym żądaniem
- * z `installedOnly`: dwa odczyty dałyby dwie migawki z dwóch chwil, a oba okna
- * mają pokazywać ten sam rejestr.
- *
- * Wyłączenie nie usuwa pozycji z rejestru, a odinstalowanie usuwa — to dwie
- * różne czynności i dwa różne przyciski. Znaczenie odinstalowania nie zostało
- * przez Właściciela rozstrzygnięte (kontrakt mówi to wprost przy komendzie),
- * więc okno nie dopowiada, co pozycja traci: pokazuje odpowiedź rdzenia.
- *
- * Instalacja przyjmuje kod, rodzaj, deklarowane źródło i pochodzenie. Wskazania
- * pliku z urządzenia tu nie ma i nie udajemy go polem wyboru pliku: kontrakt nie
- * prowadzi przesłania treści kanałem, więc pole otwierające okno wyboru pliku
- * kończyłoby się treścią, której nie ma czym wysłać.
- *
- * Eksport konfiguracji nie potrzebuje komendy: treść jest już w oknie, więc
- * zapis do pliku robi przeglądarka. Import idzie `extension.configure` — jedną
- * pozycją naraz, bo tyle niesie kontrakt.
+ * Okno zarządza rejestrem zainstalowanych rozszerzeń: pokazuje wyłącznie
+ * pozycje z polem installed, obsługuje instalację, konfigurację, przełączanie
+ * stanu, odinstalowanie pozycji i eksport rejestru do pliku.
  */
 export interface OknoInstalledAppsManager {
   element: HTMLElement;
@@ -203,9 +185,7 @@ export function utworzOknoInstalledAppsManager(stan: StanRozszerzen): OknoInstal
     stan.wchlonPozycje(oddana);
     rama.gotowe();
     odswiez();
-    // Rozbieżność pochodzenia jest odmową, nie drobiazgiem: to jedyne pole
-    // rozstrzygające stan wyjściowy, więc oddanie innego niż zamówione znaczy
-    // inny stan włączenia, niż Operator zamawiał.
+    // Rozbieżność pochodzenia jest odmową: rdzeń oddał inne pochodzenie, niż zamówiono.
     if (oddana.origin !== zamowionePochodzenie) {
       const zdanie =
         `Instalacja pozycji ${oddana.name}: rdzeń ODDAŁ CO INNEGO, NIŻ ZAMÓWIONO — ` +
@@ -235,8 +215,7 @@ export function utworzOknoInstalledAppsManager(stan: StanRozszerzen): OknoInstal
     try {
       tresc = JSON.parse(konfiguracja.kontrolka.value === '' ? '{}' : konfiguracja.kontrolka.value);
     } catch (blad) {
-      // Zapis niepoprawny zatrzymujemy w oknie i mówimy, gdzie leży usterka:
-      // rdzeń odrzuciłby go tak samo, ale bez wskazania miejsca w tekście.
+      // Zapis niepoprawny zatrzymuje się w oknie ze wskazaniem miejsca usterki w tekście.
       odpowiedz.pokaz(
         `Konfiguracja nie jest poprawnym zapisem JSON: ${(blad as Error).message}. ` +
           'Żądanie nie zostało wysłane.',
@@ -261,14 +240,7 @@ export function utworzOknoInstalledAppsManager(stan: StanRozszerzen): OknoInstal
     );
   }
 
-  /**
-   * Eksport konfiguracji rejestru do pliku.
-   *
-   * Bez komendy i bez potrzeby: treść jest już w oknie. Eksport niesie kod,
-   * rodzaj, pochodzenie, stan i konfigurację — czyli to, czym pozycję da się
-   * odtworzyć komendą instalacji i konfiguracji na innej instancji. Sekretów
-   * w nim nie ma, bo pozycja katalogu ich nie niesie.
-   */
+  // Eksport konfiguracji rejestru zapisuje pozycje instalowalne bez danych dostępowych.
   function eksportujRejestr(): void {
     const pozycje = zainstalowane();
     if (pozycje.length === 0) {
@@ -326,8 +298,7 @@ export function utworzOknoInstalledAppsManager(stan: StanRozszerzen): OknoInstal
       return;
     }
     rama.gotowe();
-    // Odpowiedź `false` jest odpowiedzią udaną i znaczy „rdzeń pozycji nie
-    // zdjął". Zbioru wtedy nie ruszamy, bo pozycja nadal w nim stoi.
+    // Odpowiedź false jest odpowiedzią udaną: rdzeń pozycji nie zdjął, wykaz bez zmian.
     if (!wynik.wynik.uninstalled) {
       odpowiedz.pokaz(
         `Odinstalowanie pozycji ${pozycja.name}: rdzeń odpowiedział, że pozycji NIE zdjął. ` +
@@ -434,7 +405,6 @@ function przyciskWiersza(etykieta: string, klasa: string, naNacisniecie: () => v
   return element;
 }
 
-/** Nagłówek części okna. */
 function naglowekCzesci(tresc: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'mp-czesc__tytul';

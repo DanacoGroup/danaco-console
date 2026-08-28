@@ -1,33 +1,16 @@
+/**
+ * Cztery stany okna modułu Library: puste, ładowanie, błąd oraz gotowe. Plik
+ * składa powłokę okna z miejscem na treść, komunikatem stanu i oznaczeniem
+ * fazy, a stan przesłania treść zamiast ją kasować.
+ */
 import { elementIkony } from '../../ikony/ikony';
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
 
 /**
- * Cztery stany okna modułu Library: puste, ładowanie, błąd, gotowe.
- *
- * Stany są rozdzielne z powodu: „jeszcze nie pytałem", „pytam" i „rdzeń nie ma
- * ani jednego pliku" to trzy różne rzeczy, a zlanie ich w jedno kazałoby
- * Operatorowi zgadywać, czy czekać, czy działać.
- *
- * Stan nie kasuje treści, tylko ją przesłania: nieudane odświeżenie zostawia to,
- * co Operator już widział, i dokłada powód. Stan pusty niesie dokładnie jeden
- * przycisk pierwszej akcji.
- *
- * Forma stanu pustego jest jedna: ikona · tytuł · opis, treść wyśrodkowana, bez
- * wariantów klasy — różnicuje ją sama treść. Stopnie pisma i szerokość łamania
- * niesie wspólny `komponenty/drobne.css` (`.dn-pusty-stan-tytul`,
- * `.dn-pusty-stan-opis`), nie arkusz modułu; nadpisanie ich u siebie dałoby dwie
- * formy tego samego stanu.
- *
- * Ikona należy wyłącznie do stanu pustego. Ładowanie ma własny nośnik
- * (`.dn-spinner`), a błąd — kreskę po lewej; trzeci rysunek nad nimi niczego by
- * nie dopowiedział. Widoczność rozstrzyga arkusz po `data-faza`, tak samo jak
- * kreskę błędu.
- *
- * Nazwy faz i znakowanie powłoki pochodzą ze wspólnego `komponenty/faza-okna`,
- * żeby ten sam stan nazywał się w całym drzewie tak samo.
+ * Powłoka okna wraz z komunikatem stanu. Stan nie kasuje treści, tylko ją przesłania,
+ * więc nieudane odświeżenie zostawia to, co Operator już widział, i dokłada powód
+ * odmowy nad zachowaną treścią.
  */
-
-/** Powłoka okna wraz z komunikatem stanu. */
 export interface StanOkna {
   /** Element osadzany w oknie; niesie komunikat i treść. */
   element: HTMLElement;
@@ -91,8 +74,6 @@ export function utworzStanOkna(): StanOkna {
   }
 
   // Zdanie początkowe mówi, co się zaraz stanie, zamiast nazywać brak danych.
-  // Okno stoi w tym stanie przez chwilę między zbudowaniem układu a pierwszą
-  // odpowiedzią rdzenia i jest to wtedy jedyne zdanie, które Operator czyta.
   ustaw(
     'puste',
     'Okno czeka na pierwszy odczyt',

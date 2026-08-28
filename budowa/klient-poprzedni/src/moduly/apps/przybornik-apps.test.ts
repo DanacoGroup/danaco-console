@@ -19,27 +19,11 @@ import { utworzPrzybornikApps, type NarzedzieApps } from './przybornik-apps';
 import { utworzStanProduktu } from './stan-produktu';
 import { utworzStanRozszerzen } from './stan-rozszerzen';
 
-/**
- * Sprawdziany przyborników modułu Apps.
- *
- * Pilnowane jest jedno, ale najważniejsze: czy z okna prowadzi droga do KAŻDEJ
- * komendy obszaru. Moduł ma czterdzieści jeden komend; sześć z nich prowadzą
- * kontrolki formularzy okien (architektura, warsztat, wdrożenie i trzy odczyty),
- * pozostałe trzydzieści pięć — narzędzia przyborników. Wykaz komend liczy się
- * z kontraktu w czasie działania, nie z listy wpisanej w sprawdzianie: nowa
- * komenda `apps.*` dołożona do kontraktu ma ten sprawdzian ZŁAMAĆ, bo znaczy,
- * że okno o niej nie wie.
- *
- * Drugi sprawdzian pilnuje zasady zero blokad: ani jedna kontrolka przybornika
- * nie ma atrybutu `disabled`. Narzędzie bez pokrycia (brak okna modułu, puste
- * pole wymagane) ma być klikalne i nazwać brak, a nie milczeć pod wyszarzonym
- * przyciskiem.
- */
+/** Sprawdziany przyborników modułu Apps pilnują drogi z okna do każdej komendy obszaru. */
 
 /**
- * Pięć komend rodziny `extension.*` prowadzonych przez kontrolki okien
- * (siatka katalogu, przycisk instalacji, przełącznik stanu, formularz
- * konfiguracji, menu odinstalowania), nie przez przybornik.
+ * Pięć komend rodziny extension prowadzonych przez kontrolki okien — siatkę katalogu, przycisk
+ * instalacji, przełącznik stanu, formularz konfiguracji, menu odinstalowania — nie przez przybornik.
  */
 const KOMENDY_ROZSZERZEN_POZA_PRZYBORNIKIEM: readonly string[] = [
   Command.ExtensionList,
@@ -49,7 +33,7 @@ const KOMENDY_ROZSZERZEN_POZA_PRZYBORNIKIEM: readonly string[] = [
   Command.ExtensionUninstall,
 ];
 
-/** Sześć komend prowadzonych przez formularze i odczyty okien, nie przybornik. */
+/** Sześć komend prowadzonych przez formularze i odczyty okien architektury, warsztatu i wdrożenia, nie przez przybornik. */
 const KOMENDY_POZA_PRZYBORNIKIEM: readonly string[] = [
   Command.AppsArchitectureDefine,
   Command.AppsArchitectureGet,
@@ -59,10 +43,7 @@ const KOMENDY_POZA_PRZYBORNIKIEM: readonly string[] = [
   Command.AppsDeploymentList,
 ];
 
-/**
- * Kanał-atrapa. Sprawdzian pyta o to, czy okno ZNA drogę do komendy, a nie
- * o to, co odpowiada rdzeń — więc kanał nic nie odsyła i niczego nie subskrybuje.
- */
+/** Kanał-atrapa odpowiada na pytanie, czy okno zna drogę do komendy, a nie co odpowiada rdzeń, więc niczego nie odsyła. */
 function kanalAtrapa(): Kanal {
   return {
     wyslij: () => 'zad-1',
@@ -71,7 +52,7 @@ function kanalAtrapa(): Kanal {
   } as unknown as Kanal;
 }
 
-/** Komplet narzędzi wszystkich pięciu przyborników modułu. */
+/** Komplet narzędzi wszystkich pięciu przyborników modułu Apps, złożonych do jednego sprawdzianu pokrycia komend. */
 function wszystkieNarzedzia(): readonly NarzedzieApps[] {
   const stan = utworzStanProduktu(kanalAtrapa());
   return [
@@ -84,7 +65,7 @@ function wszystkieNarzedzia(): readonly NarzedzieApps[] {
   ];
 }
 
-/** Komplet narzędzi czterech przyborników strony dystrybucji i konsumpcji. */
+/** Komplet narzędzi czterech przyborników strony dystrybucji i konsumpcji rozszerzeń, złożonych do sprawdzianu pokrycia. */
 function wszystkieNarzedziaRozszerzen(): readonly NarzedzieApps[] {
   const stan = utworzStanRozszerzen(kanalAtrapa());
   return [
@@ -112,9 +93,7 @@ describe('przybornik strony dystrybucji prowadzi do każdej komendy extension', 
   });
 
   it('nazywa brak wskazanej pozycji zamiast wysyłać żądanie bez niej', async () => {
-    // Świeży stan katalogu nie ma wskazanej pozycji. Narzędzie pracujące NA
-    // pozycji ma wtedy odmówić zdaniem o wskazaniu, a nie wysłać żądanie
-    // z pustym identyfikatorem.
+    // Świeży stan katalogu nie ma wskazanej pozycji; narzędzie ma wtedy odmówić, nie wysłać żądania.
     const stan = utworzStanRozszerzen(kanalAtrapa());
     const szczegol = narzedziaAppCatalog(stan).find(
       (narzedzie) => narzedzie.komenda === Command.ExtensionDetailGet,
@@ -167,8 +146,7 @@ describe('przybornik trzyma zasadę zero blokad', () => {
   });
 
   it('nazywa brak okna modułu zamiast milczeć', async () => {
-    // Stan świeży nie ma jeszcze okna modułu — rdzeń go nie wskazał. Narzędzie
-    // ma wtedy odmówić zdaniem o oknie, a nie wysłać żądanie bez `windowId`.
+    // Stan świeży nie ma jeszcze okna modułu; narzędzie ma wtedy odmówić, nie wysłać żądania.
     const stan = utworzStanProduktu(kanalAtrapa());
     const narzedzie = narzedziaProductBuilder(stan)[0];
     expect(narzedzie).toBeDefined();
@@ -183,9 +161,7 @@ describe('przybornik trzyma zasadę zero blokad', () => {
     );
     expect(zapis).toBeDefined();
 
-    // Okno modułu jest sprawdzane pierwsze, więc bez niego nie dojdziemy do
-    // pola — sprawdzamy więc narzędzie, które okna nie potrzebuje wcześniej niż
-    // pola: walidator wartości pola jest wołany przy składaniu żądania.
+    // Okno modułu jest sprawdzane pierwsze; test sprawdza narzędzie, które okna nie wymaga wcale.
     await expect(zapis?.wykonaj({ nazwa: '' })).rejects.toThrow();
   });
 });
@@ -205,7 +181,7 @@ describe('przybornik pokazuje skutek, a nie samo powodzenie', () => {
     expect(przycisk).not.toBeNull();
 
     przycisk?.click();
-    // Czynność narzędzia jest obietnicą — oddajemy pętli zdarzeń jeden obrót.
+    // Czynność narzędzia jest obietnicą — pętla zdarzeń dostaje jeden obrót.
     await Promise.resolve();
     await Promise.resolve();
 

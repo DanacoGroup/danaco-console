@@ -3,18 +3,7 @@ import type { PamiecBadania } from './pamiec-badania';
 import type { ZrodloOknaBadania } from './zrodlo-okna-badania';
 
 /**
- * Odczyt okna badania z rdzenia — jedyna droga modułu Research do treści.
- *
- * Jedna odpowiedzialność: dwa kroki odczytu i przełożenie ich niepowodzeń na
- * fazę pamięci. Wydzielone z pamięci, bo pamięć nie zna kontraktu, a odczyt zna
- * wyłącznie kontrakt — rozdzielenie trzyma obie rzeczy w rozmiarze, w którym
- * dają się przeczytać naraz.
- *
- * Kroki są dwa, bo mówią o dwóch różnych rzeczach: `window.list` mówi, które
- * okno sesji należy do modułu Research, a `window.state.get` — co w nim jest.
- * Klient nie zgaduje
- * identyfikatora okna — bez wskazania rdzenia zostaje uczciwy stan pusty
- * nazywający brak, nie zaszyta wartość.
+ * Funkcja odczytuje okno badania z rdzenia dwoma krokami, wskazując okno sesji modułu Research, a następnie pobierając jego stan.
  */
 export function utworzOdczytBadania(
   okna: ZrodloOknaBadania,

@@ -1,10 +1,6 @@
 // Odpowiedzialność pliku: przekład bytów modułu Developer na kształt kontraktu
-// — plik edytora, przebieg budowania (z pamięci i z dziennika) oraz rozpoznanie
-// zgłoszenia kompilatora w wierszu logu.
-//
-// Zgłoszenie kompilatora rozpoznaje wykaz wyrażeń regularnych, nie drabina
-// warunków: nowe narzędzie budowania to nowa pozycja wykazu. Bez rozpoznanego
-// pliku i wiersza Build Output nie ma jak przejść z błędu do Diagnostics Center.
+// — plik edytora, przebieg budowania (z pamięci i z dziennika) oraz
+// rozpoznanie zgłoszenia kompilatora w wierszu logu.
 package core
 
 import (
@@ -18,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// jezykBinarny znakuje treść, której Code Editor nie pokaże jako tekstu.
+// jezykBinarny znakuje treść binarną, której Code Editor nie pokaże jako
+// tekstu czytelnego dla człowieka.
 const jezykBinarny = "binarny"
 
 // jezykiPlikow wiąże rozszerzenie z nazwą języka podświetlania. Wykaz jest
@@ -40,7 +37,8 @@ var wzorceZgloszen = []*regexp.Regexp{
 	regexp.MustCompile(`^\s*(.+?)\((\d+),(\d+)\):\s*(.+)$`),
 }
 
-// opisPliku składa plik kontraktu z jego opisu na dysku.
+// opisPliku składa plik kontraktu z jego opisu na dysku, dobierając język
+// podświetlania po rozszerzeniu.
 func opisPliku(sciezka string, opis os.FileInfo) shared.DeveloperFile {
 	rozmiar := opis.Size()
 	return shared.DeveloperFile{
@@ -62,7 +60,8 @@ func jezykPliku(sciezka string) *string {
 	return &jezyk
 }
 
-// budowanieKontraktu składa przebieg z pamięci rdzenia.
+// budowanieKontraktu składa przebieg budowania z pamięci rdzenia na byt
+// kontraktu widoczny oknu Developer.
 func budowanieKontraktu(p *przebiegBudowania) shared.DeveloperBuild {
 	stan, kodWyjscia, zgloszenia, zakonczono := p.Migawka()
 	budowanie := shared.DeveloperBuild{
@@ -82,9 +81,9 @@ func budowanieKontraktu(p *przebiegBudowania) shared.DeveloperBuild {
 	return budowanie
 }
 
-// budowanieZDziennika składa przebieg z wiersza dziennika. Zgłoszenia
-// odtwarzamy z zachowanego ogona logu, bo dziennik trzyma log, a nie ich wykaz
-// — jedno źródło prawdy zamiast dwóch, które mogłyby się rozjechać.
+// budowanieZDziennika składa przebieg z wiersza dziennika. Zgłoszenia wracają
+// z zachowanego ogona logu, bo dziennik trzyma log, a nie ich wykaz — jedno
+// źródło prawdy zamiast dwóch.
 func budowanieZDziennika(wiersz dane.PrzebiegBudowania) shared.DeveloperBuild {
 	budowanie := shared.DeveloperBuild{
 		Id:        wiersz.Kod,
@@ -106,7 +105,8 @@ func budowanieZDziennika(wiersz dane.PrzebiegBudowania) shared.DeveloperBuild {
 	return budowanie
 }
 
-// zgloszeniaZLogu wyławia zgłoszenia z zachowanego ogona logu.
+// zgloszeniaZLogu wyławia zgłoszenia kompilatora z zachowanego ogona logu
+// budowania Developera rdzenia.
 func zgloszeniaZLogu(log string) []shared.BuildProblem {
 	if log == "" {
 		return nil
@@ -123,7 +123,8 @@ func zgloszeniaZLogu(log string) []shared.BuildProblem {
 	return zgloszenia
 }
 
-// rozpoznajZgloszenie czyta z wiersza logu miejsce w kodzie i wagę zgłoszenia.
+// rozpoznajZgloszenie czyta z wiersza logu budowania miejsce w kodzie i wagę
+// zgłoszenia kompilatora budowy.
 func rozpoznajZgloszenie(wiersz string) (shared.BuildProblem, bool) {
 	for _, wzorzec := range wzorceZgloszen {
 		czesci := wzorzec.FindStringSubmatch(wiersz)
@@ -165,7 +166,8 @@ func wagaZgloszenia(tresc string) shared.ProblemSeverity {
 	}
 }
 
-// podsumowaniePrzebiegu składa ostatni wiersz logu budowania.
+// podsumowaniePrzebiegu składa ostatni wiersz logu budowania jako podsumowanie
+// całego przebiegu budowy.
 func podsumowaniePrzebiegu(stan shared.BuildStatus, kodWyjscia *int) string {
 	tresc := "[budowanie " + string(stan)
 	if kodWyjscia != nil {
@@ -174,7 +176,8 @@ func podsumowaniePrzebiegu(stan shared.BuildStatus, kodWyjscia *int) string {
 	return tresc + "]"
 }
 
-// itoa skraca zapis liczby w komunikatach modułu.
+// itoa skraca zapis liczby całkowitej w komunikatach błędów modułu Developer
+// bez importu pakietu strconv.
 func itoa(wartosc int) string {
 	return strconv.Itoa(wartosc)
 }

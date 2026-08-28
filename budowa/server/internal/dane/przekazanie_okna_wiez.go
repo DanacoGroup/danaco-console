@@ -1,12 +1,4 @@
-// Odpowiedzialność pliku: więź koordynator–wykonawca w obszarze window.*. Więź nie
-// ma własnej tabeli — mieszka w kolumnie `okno_komunikacji.okno_koordynatora_id`,
-// do której kontrakt odwołuje się wprost jako `Window.coordinatorWindowId`. Ten
-// plik dokłada do repozytorium `RepozytoriumPrzekazan` (deklarowanego przez
-// `przekazanie_okna.go`) drogę zapisu i odczytu tej kolumny z poziomu
-// identyfikatora zewnętrznego okna: `dane/okna.go` czyta i pisze tę kolumnę
-// wyłącznie jako część pełnego wiersza okna (`Pobierz`/`Aktualizuj`, po
-// identyfikatorze wewnętrznym `int64`), a Mission Control operuje na
-// identyfikatorach zewnętrznych pojedynczej więzi, nie całego okna.
+// Odpowiedzialność pliku: więź koordynator-wykonawca w obszarze window.*, zapisywana i odczytywana po identyfikatorze zewnętrznym okna.
 package dane
 
 import (
@@ -60,13 +52,8 @@ func (r *repozytoriumPrzekazan) idOknaZewnetrzne(ctx context.Context, identyfika
 	return id, nil
 }
 
-// UstawKoordynatora zapisuje więź koordynator–wykonawca: oknoWykonawcy zaczyna
-// wskazywać oknoKoordynatora jako swojego koordynatora.
-//
-// Oba okna muszą istnieć — cicha zgoda na więź z oknem, którego nie ma, dałaby
-// potwierdzenie relacji, która w rzeczywistości nie powstała. Obie strony więzi
-// rozwiązujemy na identyfikatory wewnętrzne przed zapisem, a nie podzapytaniem
-// w UPDATE, które ciche niedopasowanie zamieniłoby w NULL.
+// UstawKoordynatora zapisuje więź koordynator-wykonawca: oknoWykonawcy zaczyna wskazywać oknoKoordynatora jako swojego koordynatora. Oba okna muszą
+// istnieć przed zapisem, rozwiązane na identyfikatory wewnętrzne.
 func (r *repozytoriumPrzekazan) UstawKoordynatora(ctx context.Context, oknoWykonawcy, oknoKoordynatora string) error {
 	idWykonawcy, err := r.idOknaZewnetrzne(ctx, oknoWykonawcy)
 	if err != nil {
@@ -106,10 +93,7 @@ func (r *repozytoriumPrzekazan) Koordynator(ctx context.Context, oknoWykonawcy s
 	return koordynator.String, nil
 }
 
-// Wykonawcy zwraca identyfikatory zewnętrzne okien podległych koordynatorowi —
-// zapytanie widoku Mission Control. Kolejność ustala `kolejnosc, id` okna
-// wykonawcy, tak jak każda inna lista okien w tym module (`dane/okna.go`),
-// żeby widok nie tasował wierszy między odświeżeniami.
+// Wykonawcy zwraca identyfikatory zewnętrzne okien podległych koordynatorowi, w kolejności zapisanej dla okien wykonawcy.
 func (r *repozytoriumPrzekazan) Wykonawcy(ctx context.Context, oknoKoordynatora string) ([]string, error) {
 	if _, err := r.idOknaZewnetrzne(ctx, oknoKoordynatora); err != nil {
 		return nil, err

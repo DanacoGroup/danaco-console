@@ -1,16 +1,5 @@
-// Odpowiedzialność pliku: port i wpięcie pięciu komend rodziny `alert.*` —
-// reguł wyzwalania, rejestru wyzwoleń i ich potwierdzania.
-//
-// Rodzina jest przekrojowa, jak kondycja: reguły czyta Alerts Panel modułu
-// Diagnostics, ale wyzwolenie dociera też do Always On Display i do poczty,
-// a rdzeń nie ma prawa wiedzieć, że istnieje moduł Diagnostics.
-//
-// Port bierze nadajnik, bo rodzina MA zdarzenie: `alert.triggered` jest drogą
-// alertu do okien. Bez niego Operator dowiadywałby się o wyzwoleniu dopiero
-// przy następnym otwarciu wykazu, czyli wtedy, kiedy i tak już patrzy.
-//
-// Port niewypełniony nie rejestruje niczego: pięć komend odpowie wtedy
-// `alert.unknown`, a pozostałe domeny pracują bez zmian.
+// Plik daje port i wpięcie pięciu komend rodziny alert.* — reguł wyzwalania, rejestru
+// wyzwoleń i ich potwierdzania. Port bierze nadajnik, bo rodzina ma zdarzenie alert.triggered.
 package core
 
 import (
@@ -19,7 +8,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Alerty jest portem rodziny `alert.*`.
+// Alerty jest portem rodziny alert.*, obsługującym reguły wyzwalania, wykaz wyzwoleń
+// i ich potwierdzanie.
 type Alerty interface {
 	// ZapiszRegule obsługuje `alert.rule.save`.
 	ZapiszRegule(ctx context.Context, z shared.AlertRuleSaveRequest) (shared.AlertRuleSaveResponse, error)
@@ -33,16 +23,13 @@ type Alerty interface {
 	PotwierdzWyzwolenie(ctx context.Context, z shared.AlertTriggerAcknowledgeRequest) (shared.AlertTriggerAcknowledgeResponse, error)
 }
 
-// Adapter wypełnia port w całości.
+// Adapter wypełnia port Alerty w całości, udostępniając komendom wszystkie jego pięć
+// metod rodziny alert.
 var _ Alerty = (*adapterAlertow)(nil)
 
-// zarejestrujAlerty wpina pięć komend rodziny `alert.*`.
-//
-// Zdarzenie `alert.triggered` rozgłasza sam adapter przy zapisie wyzwolenia,
-// nadajnikiem wpiętym metodą `ZWyjsciem` — nie obsługa komend. Powód jest
-// prosty: wyzwolenie powstaje w trakcie ewaluacji, a nie w odpowiedzi na
-// komendę, więc nadanie zdarzenia z obsługi komendy pominęłoby wyzwolenia,
-// których nikt akurat nie odczytywał.
+// zarejestrujAlerty wpina pięć komend rodziny alert.*. Zdarzenie alert.triggered rozgłasza
+// sam adapter przy zapisie wyzwolenia, nadajnikiem wpiętym metodą ZWyjsciem, nie obsługa
+// komend.
 func zarejestrujAlerty(r *Rejestr, a Alerty) {
 	if r == nil || a == nil {
 		return

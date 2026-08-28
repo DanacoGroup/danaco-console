@@ -2,24 +2,13 @@ import type { AssistantAction, AssistantActivityEntry } from '../../../../shared
 import type { FazaOkna } from '../../komponenty/faza-okna';
 import type { StanAssistant } from './stan-assistant';
 
-/**
- * Stanowisko sprawdzianów modułu Assistant: stan modułu podstawiony ręcznie
- * oraz trzy odczyty złożonego okna.
- *
- * Sprawdzianów modułu są dwa — stany okien i wykonywanie pracy — a atrapa
- * `StanAssistant` jest jedna. Skopiowana do obu plików rozjeżdżałaby się przy
- * każdym nowym polu interfejsu i jeden ze sprawdzianów badałby wtedy stan,
- * którego moduł już nie ma.
- *
- * Plik nie należy do produktu: sięgają po niego wyłącznie `*.test.ts`, więc
- * `main.ts` go nie wciąga.
- *
- * Atrapa nie sięga do rdzenia i nie udaje, że sięga: każda droga wywołania
- * rzuca wyjątkiem, dopóki sprawdzian jej nie obsadzi. Sprawdzian, który
- * przypadkiem wywoła komendę, dostaje przez to błąd, a nie ciszę.
- */
+// Stanowisko sprawdzianów Assistanta: stan podstawiony ręcznie i trzy odczyty okna.
 
-/** Nastawy stanu modułu, którymi sprawdzian steruje fazą okien. */
+/**
+ * Nastawy stanu modułu, którymi sprawdzian steruje fazą okien: wykazy zleceń
+ * własnych i obcych, wpisy dziennika, oznaczenia okna i sesji, zlecenie wybrane
+ * oraz znacznik zapytania o okno.
+ */
 export interface Nastawy {
   zlecenia: readonly AssistantAction[];
   zleceniaObce: readonly AssistantAction[];
@@ -73,9 +62,7 @@ export function stanZ(nastawy: Nastawy): StanAssistant {
       oznaczWpis: nieuzywane,
       naZmianeZlecenia: () => () => undefined,
     },
-    // Trzy źródła dobudowane obok rdzenia modułu. Sprawdzian nie sięga nimi do
-    // rdzenia, więc każde wywołanie od razu mówi, że tędy droga nie prowadzi —
-    // atrapa oddająca pustą odpowiedź udawałaby wynik, którego nie ma.
+    // Trzy źródła dobudowane obok rdzenia modułu; każde ich wywołanie rzuca wyjątkiem.
     mowa: {
       przeslijNagranie: nieuzywane,
       pobierzNagranie: nieuzywane,
@@ -136,18 +123,30 @@ export function stanZ(nastawy: Nastawy): StanAssistant {
   };
 }
 
-/** Faza odczytana z powłoki okna — tej samej, którą znakuje `oznaczFaze`. */
+/**
+ * Odczytuje fazę z powłoki okna, czyli z elementu, który znakuje `oznaczFaze`.
+ * Brak powłoki daje zdanie o jej braku zamiast wartości pustej, żeby sprawdzian
+ * odróżnił okno bez fazy od okna bez powłoki.
+ */
 export function faza(element: HTMLElement): string {
   const powloka = element.querySelector<HTMLElement>('.ma-stan__powloka');
   return powloka?.dataset['faza'] ?? '(brak powłoki stanu)';
 }
 
-/** Zdanie stanu widoczne obok wskaźnika odczytu. */
+/**
+ * Odczytuje zdanie stanu widoczne obok wskaźnika odczytu. Brak elementu opisu daje
+ * napis pusty, ponieważ sprawdzian porównuje treść zdania, a nie obecność samego
+ * elementu.
+ */
 export function zdanie(element: HTMLElement): string {
   return element.querySelector<HTMLElement>('.ma-stan__opis')?.textContent ?? '';
 }
 
-/** Przycisk o wskazanej treści; brak przycisku jest błędem sprawdzianu. */
+/**
+ * Odnajduje w oknie przycisk o wskazanej treści. Brak takiego przycisku rzuca
+ * wyjątkiem, ponieważ sprawdzian sięgający po nieistniejącą kontrolkę bada okno
+ * inne niż to, które zamierzał zbadać.
+ */
 export function przyciskOTresci(element: HTMLElement, tresc: string): HTMLButtonElement {
   const znaleziony = [...element.querySelectorAll('button')].find((kandydat) =>
     (kandydat.textContent ?? '').includes(tresc),

@@ -1,44 +1,20 @@
 import { defineConfig } from 'vitest/config';
 
-// Uruchamiacz sprawdzianów klienta.
-//
-// Osobny plik, a nie sekcja `test` dopisana do `vite.config.ts`: budowanie
-// pakietu i sprawdzanie kodu to dwa różne byty. Vitest czyta ten plik
-// z pierwszeństwem przed `vite.config.ts`, więc konfiguracja budowania zostaje
-// nietknięta.
-//
-// Środowisko domyślne `node`, ponieważ warstwy protokołu i łączności nie
-// dotykają dokumentu. Widoki dotykają go wprost (tworzą elementy, czytają
-// arkusze, przełączają `data-theme`), więc ich sprawdziany dostają `jsdom`
-// przez `environmentMatchGlobs`.
-//
-// `server.fs.allow` obejmuje katalog nadrzędny, bo warstwa protokołu importuje
-// kontrakt z `budowa/shared/` — jedynego źródła prawdy nazw. Ta sama zgoda co
-// w `vite.config.ts`.
+// Uruchamiacz sprawdzianów klienta, osobny od budowania: środowisko domyślne to node, a widoki dotykające dokumentu dostają jsdom przez dopasowanie ścieżek; katalog nadrzędny jest dostępny dla importu wspólnego kontraktu.
 export default defineConfig({
   test: {
     environment: 'node',
     environmentMatchGlobs: [
       ['src/{motyw,komponenty,mission-control,widok-sterowania,strona-glowna}/**/*.test.ts', 'jsdom'],
-      // Układ okien równoległych buduje przełącznik, gniazda i pas relacji
-      // wprost w dokumencie — bez `jsdom` jego sprawdziany nie miałyby czego
-      // zbudować.
+      // Układ okien równoległych buduje elementy wprost w dokumencie, więc jego sprawdziany wymagają jsdom.
       ['src/okna-rownolegle/**/*.test.ts', 'jsdom'],
-      // Okno Punktów Izolacji buduje trzy panele, macierz przełączników
-      // i selektor zasięgu wprost w dokumencie — jego sprawdziany pytają
-      // o zbudowane węzły, więc bez `jsdom` nie miałyby czego sprawdzić.
+      // Okno Punktów Izolacji buduje panele wprost w dokumencie, więc jego sprawdziany wymagają jsdom.
       ['src/punkty-izolacji/**/*.test.ts', 'jsdom'],
-      // Scena wejścia stawia przesłonę z bryłą wprost w dokumencie i sama się
-      // z niego zdejmuje — bez `jsdom` nie miałaby ani gdzie stanąć, ani skąd
-      // zejść.
+      // Scena wejścia osadza się w dokumencie i sama się z niego zdejmuje, więc wymaga jsdom.
       ['src/ladowanie/**/*.test.ts', 'jsdom'],
-      // Okna modułów budują swoje widoki wprost w dokumencie — ramy, paski
-      // kontekstu, wykazy i panele wysuwane. Bez tego wpisu sprawdzian
-      // któregokolwiek modułu nie miałby czego zbudować.
+      // Okna modułów budują widoki wprost w dokumencie, więc ich sprawdziany wymagają jsdom.
       ['src/moduly/**/*.test.ts', 'jsdom'],
-      // Powierzchnia mobilna buduje ekran przeglądu zadań i procesów wprost
-      // w dokumencie — kafle procesów wraz z przyciskami sterowania. Bez tego
-      // wpisu sprawdzian nie miałby czego dotknąć.
+      // Powierzchnia mobilna buduje ekran przeglądu wprost w dokumencie, więc wymaga jsdom.
       ['src/mobile/**/*.test.ts', 'jsdom'],
     ],
     include: ['src/**/*.test.ts'],
@@ -47,10 +23,7 @@ export default defineConfig({
     passWithNoTests: false,
     // Podglądy konsoli zakładane w sprawdzianach znikają po każdym z nich.
     restoreMocks: true,
-    // Domyślnie Vitest zaślepia importy `.css` pustą treścią. Sprawdziany
-    // widoków czytają arkusz przez import `?raw` i sprawdzają przełączenie
-    // żetonu przez `getComputedStyle` po wstrzyknięciu reguł — bez tego
-    // dostałyby pustkę zamiast arkusza produktu.
+    // Vitest domyślnie zaślepia importy arkuszy; sprawdziany widoków czytają je przez import surowy.
     css: true,
   },
   server: {

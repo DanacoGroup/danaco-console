@@ -1,18 +1,5 @@
-// Moduł Apps — dzienniki i artefakty: `apps.service.log.read`,
-// `apps.deployment.log.read`, `apps.artifact.list`.
-//
-// DZIENNIK ODDAJE TO, CO PRACA ZAPISAŁA. Wiersze bierze się z tabeli
-// `wiersz_dziennika_apps`, którą wypełniają: silnik wykonania wdrożenia (każdy
-// krok przebiegu), serwer podglądu (podniesienie i zatrzymanie), zapytanie
-// próbne oraz nadanie domeny i nastawy skalowania. Odczyt niczego nie dopisuje
-// i niczego nie wymyśla — dziennik pusty znaczy, że w tym oknie nic jeszcze nie
-// zaszło, a nie że rdzeń nie umie go pokazać.
-//
-// POLE `streaming` MÓWI PRAWDĘ, A NIE OBIETNICĘ. Kontrakt niesie je w obu
-// odczytach. Rdzeń nie utrzymuje strumienia dziennika po tej komendzie —
-// dziennik jedzie zdarzeniem `apps.build.changed` przy przejściach przebiegu —
-// więc pole wraca fałszem. Zwracanie prawdy kazałoby oknu czekać na strumień,
-// którego nikt nie nadaje, i pokazywać wieczne „łączenie".
+// Moduł Apps — dzienniki i artefakty oddające to, co praca naprawdę zapisała:
+// `apps.service.log.read`, `apps.deployment.log.read`, `apps.artifact.list`.
 package core
 
 import (
@@ -24,10 +11,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaDziennikaApp jest górną granicą strony dziennika przy braku wskazania.
+// granicaDziennikaApp jest górną granicą strony dziennika przy braku wskazania w treści żądania tego okna.
 const granicaDziennikaApp = 500
 
-// OdczytajDziennikUslugi obsługuje `apps.service.log.read`.
+// OdczytajDziennikUslugi obsługuje `apps.service.log.read` i zwraca wiersze dziennika usługi tego okna.
 func (a *adapterAplikacji) OdczytajDziennikUslugi(ctx context.Context,
 	z shared.AppsServiceLogReadRequest) (shared.AppsServiceLogReadResponse, error) {
 
@@ -54,9 +41,8 @@ func (a *adapterAplikacji) OdczytajDziennikUslugi(ctx context.Context,
 	}, nil
 }
 
-// OdczytajDziennikWdrozenia obsługuje `apps.deployment.log.read`. Wdrożenie
-// spoza okna żądania jest odmową: dziennik cudzego przebiegu nie należy do tego
-// panelu, a pusty wynik kazałby Operatorowi myśleć, że przebieg nic nie zapisał.
+// OdczytajDziennikWdrozenia obsługuje `apps.deployment.log.read`; wdrożenie spoza okna
+// żądania jest odmową, bo dziennik cudzego przebiegu nie należy do tego panelu.
 func (a *adapterAplikacji) OdczytajDziennikWdrozenia(ctx context.Context,
 	z shared.AppsDeploymentLogReadRequest) (shared.AppsDeploymentLogReadResponse, error) {
 
@@ -97,9 +83,8 @@ func (a *adapterAplikacji) OdczytajDziennikWdrozenia(ctx context.Context,
 	}, nil
 }
 
-// WypiszArtefakty obsługuje `apps.artifact.list`. Każdy wiersz wskazuje plik
-// leżący w magazynie treści rdzenia wraz z jego rozmiarem i sumą kontrolną
-// (czoło migracji 205).
+// WypiszArtefakty obsługuje `apps.artifact.list`; każdy wiersz wskazuje plik w magazynie
+// treści rdzenia wraz z jego rozmiarem i sumą kontrolną.
 func (a *adapterAplikacji) WypiszArtefakty(ctx context.Context,
 	z shared.AppsArtifactListRequest) (shared.AppsArtifactListResponse, error) {
 
@@ -124,9 +109,8 @@ func (a *adapterAplikacji) WypiszArtefakty(ctx context.Context,
 	return shared.AppsArtifactListResponse{Artifacts: artefakty, Total: len(artefakty)}, nil
 }
 
-// wierszeDziennikaApp składa wiersze dziennika w postać, którą niesie kontrakt:
-// wykaz napisów. Znacznik czasu wchodzi w treść wiersza, bo kontrakt nie ma
-// osobnego pola na chwilę, a wiersz bez niej nie mówi, kiedy coś zaszło.
+// wierszeDziennikaApp składa wiersze dziennika w postać, którą niesie kontrakt: wykaz napisów
+// ze znacznikiem czasu w treści, bo kontrakt nie ma osobnego pola na chwilę.
 func wierszeDziennikaApp(wiersze []dane.WierszDziennikaApp) []string {
 	linie := make([]string, 0, len(wiersze))
 	for _, wiersz := range wiersze {

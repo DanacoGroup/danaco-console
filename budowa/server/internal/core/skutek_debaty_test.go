@@ -12,20 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Roundtable: czy za odpowiedzią stoi zapis, a nie sama koperta.
-//
-// Wzorzec szkody, którego pilnuje ten plik, wystąpił w tym produkcie: komenda
-// meldowała `status: ok` z wykazem, za którym nie stał ani jeden bajt. Dlatego
-// żaden sprawdzian tutaj nie kończy się na tym, że odpowiedź jest udana. Każdy
-// schodzi do bazy DRUGIM połączeniem — otwartym niezależnie od rdzenia — i liczy
-// wiersze albo czyta bajty z magazynu.
-//
-// Kanałem uczestników jest kanał echo: odsyła treść zapytania porcjami, tak jak
-// zrobiłby to model, bez sieci, konta i klucza. Mierzona jest droga rdzenia —
-// rejestr, tura, zapis, analiza, głosowanie, wydanie — a nie to, co odpowiada
-// konkretny dostawca.
-
-// oknoSprawdzianuDebaty — okno, w którym stoją wszystkie sprawdziany tego pliku.
+// oknoSprawdzianuDebaty niesie identyfikator okna, w którym stoją wszystkie
+// sprawdziany tego pliku, wraz z prefiksem rodziny komend Roundtable.
 const oknoSprawdzianuDebaty = "roundtable.debate-panel/sprawdzian"
 
 // bazaSprawdzianu otwiera drugie połączenie z bazą rdzenia. To ono jest
@@ -42,7 +30,8 @@ func bazaSprawdzianu(t *testing.T, katalog string) *sql.DB {
 	return baza
 }
 
-// wierszy liczy wiersze spełniające warunek — jedna miara na wszystkie tabele.
+// wierszy liczy w bazie wiersze spełniające podany warunek SQL — jedna miara
+// pomiaru skutku, wspólna dla wszystkich tabel modułu.
 func wierszy(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -53,7 +42,8 @@ func wierszy(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int
 	return ile
 }
 
-// tekstZBazy odczytuje jedną wartość tekstową.
+// tekstZBazy odczytuje z bazy jedną wartość tekstową wskazaną zapytaniem,
+// na potrzeby porównania z odpowiedzią komendy.
 func tekstZBazy(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -64,7 +54,8 @@ func tekstZBazy(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) 
 	return wartosc
 }
 
-// wpiszKanalEcho zakłada kanał odsyłający treść zapytania i oddaje jego kod.
+// wpiszKanalEcho zakłada kanał odsyłający treść zapytania porcjami, bez
+// sieci ani klucza dostawcy, i oddaje jego kod.
 func wpiszKanalEcho(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	nazwa string) string {
 	t.Helper()
@@ -83,7 +74,8 @@ func wpiszKanalEcho(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return wynik.Channel.Id
 }
 
-// dodajUczestnika wpisuje uczestnika debaty i oddaje jego kod.
+// dodajUczestnika wpisuje do składu debaty uczestnika o podanej personie,
+// wywołując komendę dodania modelu, i oddaje jego kod.
 func dodajUczestnika(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	kanal, persona string) string {
 	t.Helper()
@@ -98,10 +90,8 @@ func dodajUczestnika(t *testing.T, zmontowany *Zmontowany, zycie context.Context
 }
 
 // przeprowadzTure uruchamia turę i czeka, aż wypowiedzi znajdą się w bazie.
-//
-// Czekanie idzie po bazie, nie po zegarze: tura biegnie w gorutynie rdzenia
-// (odpowiedź komendy wraca przed wypowiedziami), a uśpienie na stałą liczbę
-// milisekund byłoby sprawdzianem szybkości maszyny, nie skutku.
+// Czekanie idzie po bazie, nie po zegarze: tura biegnie w gorutynie rdzenia,
+// a stałe uśpienie byłoby sprawdzianem szybkości maszyny, nie skutku.
 func przeprowadzTure(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	baza *sql.DB, pytanie string, ilu int) string {
 	t.Helper()
@@ -126,7 +116,8 @@ func przeprowadzTure(t *testing.T, zmontowany *Zmontowany, zycie context.Context
 	return ""
 }
 
-// zlozDebateSprawdzianu składa rdzeń, kanał, dwóch uczestników i jedną turę.
+// zlozDebateSprawdzianu składa rdzeń, kanał echo, dwóch uczestników
+// i przeprowadzoną turę — komplet do pomiaru skutku debaty.
 func zlozDebateSprawdzianu(t *testing.T) (*Zmontowany, context.Context, string, *sql.DB, string) {
 	t.Helper()
 
@@ -340,8 +331,8 @@ func TestRegeneracjaPodnosiNumerRedakcji(t *testing.T) {
 	}
 }
 
-// TestWariantTuryWskazujeTureRozgaleziana wykazuje, że obie gałęzie zostają
-// w zapisie.
+// TestWariantTuryWskazujeTureRozgaleziana wykazuje, że obie gałęzie tury
+// rozgałęzionej zostają zapisane w bazie z osobnymi wierszami.
 func TestWariantTuryWskazujeTureRozgaleziana(t *testing.T) {
 	zmontowany, zycie, _, baza, tura := zlozDebateSprawdzianu(t)
 
@@ -535,8 +526,8 @@ func TestMetodaEliminacyjnaLiczyRundy(t *testing.T) {
 	b := otwarcie.Vote.Options[1].Id
 	c := otwarcie.Vote.Options[2].Id
 
-	// Dwa głosy na A, dwa na B, jeden na C z drugim wskazaniem na B.
-	// Po odpadnięciu C wygrywa B — mimo że w pierwszej rundzie był remis.
+	// Dwa głosy na A, dwa na B, jeden na C z drugim wskazaniem na B — po
+	// odpadnięciu C wygrywa B.
 	rankingi := map[string][]string{
 		"w1": {a, c, b}, "w2": {a, c, b},
 		"w3": {b, c, a}, "w4": {b, c, a},
@@ -1001,12 +992,9 @@ func TestPrzekazanieStanowiskaZakladaArtefakt(t *testing.T) {
 }
 
 // TestOdsluchDebatyDajeNagranieOMierzalnejDlugosci wykazuje skutek syntezy
-// mowy: pod odwołaniem leży plik WAV, którego długość zgadza się z liczbą
-// próbek zapisanych w jego własnym nagłówku.
-//
-// Sprawdzian pomija się, gdy na maszynie nie ma silnika mowy: mierzona jest
-// droga rdzenia, a nie obecność pakietu, a brak programu ma być widoczny
-// w sondzie zależności, nie jako czerwony sprawdzian.
+// mowy: pod odwołaniem leży plik WAV o długości zgodnej z liczbą próbek
+// w nagłówku. Pomija się, gdy brak silnika mowy widoczny w sondzie
+// zależności, nie jako czerwony sprawdzian.
 func TestOdsluchDebatyDajeNagranieOMierzalnejDlugosci(t *testing.T) {
 	if !czyStoiSilnikMowy() {
 		t.Skip("silnik mowy espeak-ng nie stoi na tej maszynie")
@@ -1027,8 +1015,8 @@ func TestOdsluchDebatyDajeNagranieOMierzalnejDlugosci(t *testing.T) {
 	if wynik.DurationMs == nil || *wynik.DurationMs <= 0 {
 		t.Fatalf("nagranie melduje długość %v", wynik.DurationMs)
 	}
-	// Długość liczona z bajtów pliku ma się zgadzać z meldowaną: nagłówek
-	// przepisany bez próbek dałby plik poprawny formalnie i pusty w odsłuchu.
+	// Długość liczona z bajtów ma zgadzać się z meldowaną — nagłówek bez
+	// próbek dałby plik pusty.
 	zNaglowka := dlugoscNagraniaMs(len(bajty) - naglowekWav)
 	if zNaglowka != *wynik.DurationMs {
 		t.Fatalf("z bajtów pliku wychodzi %d ms, a odpowiedź meldowała %d",
@@ -1036,7 +1024,8 @@ func TestOdsluchDebatyDajeNagranieOMierzalnejDlugosci(t *testing.T) {
 	}
 }
 
-// czyStoiSilnikMowy sprawdza obecność programu bez uruchamiania go.
+// czyStoiSilnikMowy sprawdza obecność programu syntezy mowy na maszynie
+// budującej, bez jego uruchamiania ani odczytu wersji.
 func czyStoiSilnikMowy() bool {
 	for _, pozycja := range ZaleznosciZewnetrzne() {
 		if pozycja.Narzedzie.Program == narzedzieSyntezyMowy.Program {

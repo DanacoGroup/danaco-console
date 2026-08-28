@@ -4,17 +4,8 @@ import { KOD_MODULU, OKNO_DESIGN_BOARD } from './etykiety-designu';
 
 /**
  * Tabliczka wejścia rozmowy — mówi, jak czat wiąże się z oknem roboczym, i liczy,
- * co tą drogą weszło.
- *
- * Postać rozmowy i okna obowiązkowe czyta z profilu modułu
- * (`okno-komunikacji/rejestr-profilow.ts`), więc zdanie o wiązaniu zmienia się
- * razem z profilem zamiast powtarzać go z pamięci.
- *
- * Liczby okien tabliczka nie podaje: profil Designu niesie `GRANICA_NIEPODANA`.
- * Pyta wyłącznie o prawo do rozmowy przez `liczbaOkienRozmowy`.
- *
- * Licznik obejmuje tylko wejścia rozmowy; zasoby z Prompt Buildera i Assets Panel
- * idą własną drogą.
+ * co tą drogą weszło. Licznik obejmuje wyłącznie wejścia rozmowy, ponieważ zasoby
+ * z Prompt Buildera i Assets Panel idą własną drogą.
  */
 export interface TabliczkaRozmowy {
   /** Element osadzany w treści okna roboczego. */
@@ -23,7 +14,11 @@ export interface TabliczkaRozmowy {
   zanotuj(zdanie: string): void;
 }
 
-/** Zdanie stanu do chwili pierwszego wejścia — brak drogi, nie brak zasobów. */
+/**
+ * Zdanie stanu do chwili pierwszego wejścia — brak drogi, a nie brak zasobów.
+ * Tabliczka pokazuje je od otwarcia okna, żeby pusty licznik nie czytał się jako
+ * twierdzenie o pustym module.
+ */
 const BEZ_WEJSCIA =
   'Od otwarcia okna nie weszło tędy nic. To nie znaczy „brak zasobów": zasoby z Prompt ' +
   'Buildera i te przeniesione z Assets Panel idą własną drogą i tego licznika nie ruszają.';

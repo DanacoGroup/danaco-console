@@ -11,13 +11,10 @@ import {
 } from './pola-wykazu';
 
 /**
- * Sekcja odczytu kontekstu okna ogniskowanego (`aod.context.get`).
- *
- * Każde pole kompletu dostaje własny wiersz z etykietą po polsku, pole puste
- * pisze się jako `(brak)`. Wszystkie pola `ContextBundle` są w kontrakcie
- * opcjonalne, więc komplet pusty jest stanem poprawnym, nie odmową — sekcja
- * mówi to osobnym zdaniem. `executionParams` ma w kontrakcie typ `unknown`,
- * więc sekcja go nie rozbiera i melduje jedynie obecność parametrów.
+ * Sekcja odczytu kontekstu okna ogniskowanego komendą `aod.context.get`. Każde
+ * pole kompletu dostaje własny wiersz z etykietą po polsku, pole puste pisze
+ * się jako `(brak)`, a komplet bez jednego choćby pola dostaje
+ * osobne zdanie zamiast wykazu.
  */
 export interface SekcjaKontekstu {
   element: HTMLElement;
@@ -50,7 +47,11 @@ export function utworzSekcjeKontekstu(): SekcjaKontekstu {
   };
 }
 
-/** Rozpoznaje komplet, w którym rdzeń nie wypełnił ani jednego pola. */
+/**
+ * Rozpoznaje komplet, w którym rdzeń nie wypełnił ani jednego pola. Wszystkie
+ * pola `ContextBundle` są w kontrakcie opcjonalne, więc taki komplet jest
+ * stanem poprawnym, a nie odmową odczytu.
+ */
 function kompletPusty(komplet: ContextBundle): boolean {
   return (
     (komplet.prompt ?? '') === '' &&

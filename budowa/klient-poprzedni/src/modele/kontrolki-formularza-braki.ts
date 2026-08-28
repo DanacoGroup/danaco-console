@@ -1,16 +1,7 @@
 /**
- * Dokładka kontrolek formularza — kontrolki „gołe”, bez wiersza z etykietą.
- *
- * Okno operacyjne modułu nie stawia formularza z etykietą nad polem: wkłada
- * samą kontrolkę do panelu akcji albo do paska narzędzi, a nazwę niesie przez
- * `aria-label`. Kontrolki z `kontrolki-formularza.ts` zwracają wiersz
- * `{ element, kontrolka }` i tego w pasek akcji włożyć się nie da — tu stoją
- * ich odpowiedniki bez wiersza. Wejście zostaje jedno: hub reeksportuje ten
- * plik w całości.
- *
- * Wygląd bierzemy z biblioteki `komponenty/` (`dn-*`), więc plik nie zna ani
- * jednej barwy i ani jednego odstępu. Klasa rodziny modułu (`da-`,
- * `dt-`, `dw-`, `dm-`) przychodzi parametrem: należy do modułu.
+ * Dokładka kontrolek formularza dostarcza kontrolki „gołe”, bez wiersza
+ * z etykietą, przeznaczone do panelu akcji oraz paska narzędzi modułu, gdzie
+ * nazwę elementu niesie atrybut opisujący.
  */
 
 import { pokazKomunikat } from '../aplikacja/komunikaty';
@@ -28,13 +19,9 @@ export function przyciskAkcji(etykieta: string, klasa = 'dn-btn'): HTMLButtonEle
 }
 
 /**
- * Przycisk bez pokrycia w kontrakcie: widoczny, w pełni klikalny, z powodem
- * wprost. Pozycja nie znika ze sceny, bo okno bez niej wyglądałoby na
- * kompletne, a brak przestałby być widoczny. Wygaszenie jest tu tak samo
- * niedopuszczalne jak milczenie: element nie dostaje `disabled`, nie zmienia
- * kursora, nie traci uchwytu — po naciśnięciu nazywa brakującą komendę dymkiem.
- * Powód idzie równolegle trzema drogami: `title`, `aria-description`
- * i `data-brak-komendy` dla bram i sprawdzianów.
+ * Przycisk bez pokrycia w kontrakcie pozostaje widoczny i w pełni klikalny,
+ * z powodem podanym wprost: po naciśnięciu nazywa brakującą komendę zamiast
+ * być wygaszony albo usunięty.
  */
 export function przyciskBezKomendy(etykieta: string, powod: string): HTMLButtonElement {
   const kontrolka = przyciskAkcji(etykieta, 'dn-btn dn-btn--zarys');
@@ -47,7 +34,7 @@ export function przyciskBezKomendy(etykieta: string, powod: string): HTMLButtonE
   return kontrolka;
 }
 
-/** Pole jednowierszowe; nazwę niesie `aria-label`, bo etykiety nad polem nie ma. */
+/** Pole jednowierszowe formularza, którego nazwę niesie atrybut opisujący, ponieważ etykiety nad polem nie ma w tym miejscu układu. */
 export function pole(etykieta: string, podpowiedz = ''): HTMLInputElement {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'text';
@@ -57,7 +44,7 @@ export function pole(etykieta: string, podpowiedz = ''): HTMLInputElement {
   return kontrolka;
 }
 
-/** Pole liczbowe — priorytet zlecenia, granica wykazu, próg obiegów. */
+/** Pole liczbowe kontrolki służy do wprowadzenia wartości takich jak priorytet zlecenia, granica wykazu albo próg obiegów. */
 export function poleLiczbowe(etykieta: string, podpowiedz = ''): HTMLInputElement {
   const kontrolka = pole(etykieta, podpowiedz);
   kontrolka.type = 'number';
@@ -85,7 +72,7 @@ export function poleTresci(
   return kontrolka;
 }
 
-/** Lista wyboru zbudowana z par wartość–etykieta. */
+/** Lista wyboru zbudowana z podanych par wartości i odpowiadającej im etykiety wyświetlanej w kontrolce. */
 export function wybor(
   etykieta: string,
   pozycje: ReadonlyArray<readonly [string, string]>,
@@ -102,7 +89,7 @@ export function wybor(
   return kontrolka;
 }
 
-/** Przełącznik dwustanowy zapisywany do rdzenia — „automatyka czynna”. */
+/** Przełącznik dwustanowy zapisywany do rdzenia, oznaczający stan „automatyka czynna” w bieżącej konfiguracji modułu. */
 export function przelacznik(etykieta: string): HTMLInputElement {
   const kontrolka = document.createElement('input');
   kontrolka.type = 'checkbox';
@@ -122,7 +109,7 @@ export function przelacznikWidoku(etykieta: string, wlaczony: boolean): HTMLButt
   return kontrolka;
 }
 
-/** Przestawia przełącznik widoku i zwraca jego nowy stan. */
+/** Przestawia przełącznik widoku na stan przeciwny do stanu bieżącego i zwraca jego nowy stan po dokonanej zmianie. */
 export function przestaw(kontrolka: HTMLButtonElement): boolean {
   const nowy = kontrolka.dataset['wlaczony'] !== 'true';
   kontrolka.dataset['wlaczony'] = String(nowy);
@@ -130,7 +117,7 @@ export function przestaw(kontrolka: HTMLButtonElement): boolean {
   return nowy;
 }
 
-/** Wykaz pozycji; klasa rodziny modułu (`da-wykaz`, `dt-wykaz`…) z zewnątrz. */
+/** Wykaz pozycji, którego klasa rodziny modułu przychodzi z zewnątrz i określa wygląd właściwy dla wywołującego modułu. */
 export function wykaz(etykieta: string, klasa: string): HTMLUListElement {
   const element = document.createElement('ul');
   element.className = klasa;

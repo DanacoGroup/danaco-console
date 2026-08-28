@@ -1,28 +1,6 @@
-/**
- * Treść dokumentu jako bloki formatowane — jedno miejsce, w którym zapis tekstu
- * spotyka się z jego wyglądem.
- *
- * Okno pracy z dokumentem pokazuje pismo, a nie jego zapis: nagłówek jest
- * większy, cytat wcięty, lista wypunktowana, tabela ma siatkę. Zapisem pod tym
- * wyglądem zostaje markdown, bo to jego niesie `StudioDocument.content` —
- * kontrakt nie ma ani pola stylów, ani pola układu, więc drugi zapis (własny,
- * bogatszy) nie miałby gdzie dojechać do rdzenia i ginąłby przy pierwszym
- * `studio.document.save`.
- *
- * Plik nie zna okna ani stanu modułu: wejściem jest napis, wyjściem bloki albo
- * element, i odwrotnie. Dzięki temu przekształcenia sprawdza się bez stawiania
- * powierzchni.
- *
- * Trzy drogi i wszystkie trzy muszą się zgadzać:
- *   1. `czytajBloki` — napis na bloki (czytanie dokumentu),
- *   2. `wyrysBloku` — blok na element widoczny (pokazanie dokumentu),
- *   3. `serializujPowierzchnie` — element z powrotem na napis (pisanie w oknie).
- * Trzecia jest odwrotnością drugiej i pierwszej razem: to, co Operator wpisze
- * w widoku formatowanym, wraca do markdown tą samą składnią, którą widok
- * odczytał.
- */
+/** Treść dokumentu jako bloki formatowane: napis markdown, bloki i element widoczny, z przejściem odwracalnym między wszystkimi trzema postaciami. */
 
-/** Styl nazwany bloku — to, co w pakiecie biurowym stoi na liście stylów. */
+/** Styl nazwany bloku — to, co w pakiecie biurowym stoi na liście stylów: nagłówek, tekst, cytat, lista, zadanie, kod, tabela, linia albo podział strony. */
 export type RodzajBloku =
   | 'naglowek-1'
   | 'naglowek-2'
@@ -37,30 +15,23 @@ export type RodzajBloku =
   | 'linia'
   | 'podzial-strony';
 
-/** Jeden blok treści: styl nazwany i jego wiersze. */
+/** Jeden blok treści: styl nazwany rodzaju bloku oraz jego wiersze zapisane bez znaczników składni markdown. */
 export interface BlokTresci {
   rodzaj: RodzajBloku;
   /** Wiersze bloku bez znaczników składni; blok pusty ma jeden wiersz pusty. */
   wiersze: string[];
 }
 
-/** Styl nazwany wraz z jego nazwą dla Operatora — wykaz listy stylów. */
+/** Styl nazwany wraz z jego nazwą widoczną Operatorowi — pozycja wykazu pokazywanego na liście stylów okna pracy. */
 export interface StylNazwany {
   rodzaj: RodzajBloku;
   nazwa: string;
 }
 
-/**
- * Znacznik podziału strony.
- *
- * Markdown podziału strony nie ma, a `StudioDocument.content` niesie markdown,
- * więc podział jedzie komentarzem HTML — składnią, którą markdown przepuszcza
- * nietkniętą i którą da się odczytać z powrotem. Nie jest to kod wymyślony:
- * to zdanie po polsku w komentarzu.
- */
+/** Znacznik podziału strony — komentarz HTML, bo markdown własnego znacznika podziału nie ma, a przepuszcza komentarz nietknięty. */
 export const ZNACZNIK_PODZIALU = '<!-- podział strony -->';
 
-/** Style nazwane oferowane na liście stylów okna pracy. */
+/** Style nazwane oferowane na liście stylów okna pracy, w kolejności, w jakiej Operator je tam widzi i wybiera. */
 export const STYLE_NAZWANE: readonly StylNazwany[] = [
   { rodzaj: 'tekst', nazwa: 'Tekst zasadniczy' },
   { rodzaj: 'naglowek-1', nazwa: 'Nagłówek pierwszego stopnia' },
@@ -73,7 +44,7 @@ export const STYLE_NAZWANE: readonly StylNazwany[] = [
   { rodzaj: 'kod', nazwa: 'Blok kodu' },
 ];
 
-/** Przedrostek wiersza dla stylów, które w markdown mają przedrostek. */
+/** Przedrostek wiersza dla stylów, które w składni markdown mają przedrostek: nagłówki, cytat, lista i zadanie. */
 const PRZEDROSTKI: Partial<Record<RodzajBloku, string>> = {
   'naglowek-1': '# ',
   'naglowek-2': '## ',
@@ -83,7 +54,7 @@ const PRZEDROSTKI: Partial<Record<RodzajBloku, string>> = {
   zadanie: '- [ ] ',
 };
 
-/** Czyta napis dokumentu na bloki. */
+/** Czyta napis dokumentu na bloki treści, rozpoznając składnię markdown wiersz po wierszu aż do końca napisu. */
 export function czytajBloki(tresc: string): BlokTresci[] {
   const wiersze = tresc.split('\n');
   const bloki: BlokTresci[] = [];
@@ -110,8 +81,7 @@ export function czytajBloki(tresc: string): BlokTresci[] {
         zebrane.push(wiersze[i] ?? '');
         i += 1;
       }
-      // Klamra zamykająca bywa nieodkryta w dokumencie urwanym — blok kończy się
-      // wtedy na końcu treści, a nie na odmowie odczytu.
+      // Klamra zamykająca bywa nieodkryta w dokumencie urwanym — blok kończy się na końcu treści.
       if (i < wiersze.length) i += 1;
       bloki.push({ rodzaj: 'kod', wiersze: zebrane.length === 0 ? [''] : zebrane });
       continue;
@@ -157,9 +127,7 @@ export function czytajBloki(tresc: string): BlokTresci[] {
       continue;
     }
 
-    // Akapit: wiersze do najbliższego wiersza pustego. Wiersz pusty sam z siebie
-    // akapitu nie zakłada — inaczej dokument z podwójnymi odstępami rósłby
-    // o akapity puste przy każdym odczycie.
+    // Akapit: wiersze do najbliższego wiersza pustego; wiersz pusty sam z siebie akapitu nie zakłada.
     if (przyciety === '') {
       i += 1;
       continue;
@@ -176,7 +144,7 @@ export function czytajBloki(tresc: string): BlokTresci[] {
   return bloki;
 }
 
-/** Czy wiersz zaczyna blok innego rodzaju niż akapit. */
+/** Czy wiersz zaczyna blok innego rodzaju niż akapit — nagłówek, cytat, tabelę, kod, wykaz, linię albo podział strony. */
 function zaczynaBlok(wiersz: string): boolean {
   const przyciety = wiersz.trim();
   if (przyciety.startsWith('#') || przyciety.startsWith('>') || przyciety.startsWith('|')) return true;
@@ -186,7 +154,7 @@ function zaczynaBlok(wiersz: string): boolean {
   return rodzajWykazu(wiersz) !== null;
 }
 
-/** Rodzaj wykazu, którym wiersz się zaczyna; `null` dla wiersza spoza wykazów. */
+/** Rodzaj wykazu, którym wiersz się zaczyna: lista, lista numerowana albo zadanie; wartość pusta dla wiersza spoza wykazów. */
 function rodzajWykazu(wiersz: string): RodzajBloku | null {
   if (/^\s*-\s\[[ xX]\]\s/u.test(wiersz)) return 'zadanie';
   if (/^\s*[-*+]\s/u.test(wiersz)) return 'lista';
@@ -194,14 +162,14 @@ function rodzajWykazu(wiersz: string): RodzajBloku | null {
   return null;
 }
 
-/** Zdejmuje przedrostek wykazu, zostawiając samą treść pozycji. */
+/** Zdejmuje przedrostek wykazu markdown, zostawiając samą treść pozycji wykazu bez znaku wypunktowania albo numeru. */
 function zdejmijPrzedrostek(wiersz: string, rodzaj: RodzajBloku): string {
   if (rodzaj === 'zadanie') return wiersz.replace(/^\s*-\s\[[ xX]\]\s/u, '');
   if (rodzaj === 'lista') return wiersz.replace(/^\s*[-*+]\s/u, '');
   return wiersz.replace(/^\s*\d+\.\s/u, '');
 }
 
-/** Zapisuje bloki z powrotem na napis dokumentu. */
+/** Zapisuje bloki z powrotem na napis dokumentu, łącząc zapis każdego bloku pustym wierszem oddzielającym. */
 export function zapiszBloki(bloki: readonly BlokTresci[]): string {
   const czesci: string[] = [];
   for (const blok of bloki) {
@@ -210,7 +178,7 @@ export function zapiszBloki(bloki: readonly BlokTresci[]): string {
   return czesci.join('\n\n');
 }
 
-/** Zapisuje jeden blok składnią markdown. */
+/** Zapisuje jeden blok składnią markdown właściwą jego rodzajowi: nagłówek, cytat, wykaz, kod, tabelę albo akapit. */
 export function zapiszBlok(blok: BlokTresci): string {
   if (blok.rodzaj === 'podzial-strony') return ZNACZNIK_PODZIALU;
   if (blok.rodzaj === 'linia') return '---';
@@ -226,7 +194,7 @@ export function zapiszBlok(blok: BlokTresci): string {
   return blok.wiersze.join('\n');
 }
 
-/** Nazwa stylu dla Operatora; styl bez wiersza wykazu zostaje pod swoim kodem. */
+/** Nazwa stylu widoczna Operatorowi; styl bez wiersza na liście stylów zostaje pokazany pod swoim kodem wewnętrznym. */
 export function nazwaStylu(rodzaj: RodzajBloku): string {
   const wiersz = STYLE_NAZWANE.find((styl) => styl.rodzaj === rodzaj);
   if (wiersz !== undefined) return wiersz.nazwa;
@@ -238,7 +206,7 @@ export function nazwaStylu(rodzaj: RodzajBloku): string {
 
 /* ── Wyrys bloku ───────────────────────────────────────────────────────────── */
 
-/** Nazwa elementu HTML nosząca styl nazwany bloku. */
+/** Nazwa elementu HTML noszącego styl nazwany bloku przy jego wyrysowaniu na powierzchni edycji dokumentu. */
 function elementBloku(rodzaj: RodzajBloku): string {
   if (rodzaj === 'naglowek-1') return 'h1';
   if (rodzaj === 'naglowek-2') return 'h2';
@@ -252,14 +220,7 @@ function elementBloku(rodzaj: RodzajBloku): string {
   return 'p';
 }
 
-/**
- * Buduje element widoczny bloku.
- *
- * Rodzaj bloku idzie do `data-blok`, bo z niego czyta go i arkusz, i odczyt
- * powierzchni z powrotem na napis. Wyprowadzanie rodzaju z nazwy elementu
- * (`h2` znaczy nagłówek drugiego stopnia) działałoby, dopóki przeglądarka nie
- * wstawi własnego `div` przy naciśnięciu Enter.
- */
+/** Buduje element widoczny bloku; rodzaj bloku idzie do atrybutu danych, żeby arkusz i odczyt powierzchni mogły go odczytać z powrotem. */
 export function wyrysBloku(blok: BlokTresci): HTMLElement {
   const element = document.createElement(elementBloku(blok.rodzaj));
   element.className = 'ms-blok';
@@ -292,9 +253,7 @@ export function wyrysBloku(blok: BlokTresci): HTMLElement {
     return element;
   }
 
-  // Akapit i cytat wielowierszowy: złamania wiersza zostają złamaniami, a nie
-  // nowymi akapitami — inaczej odczyt powierzchni rozbijałby jeden akapit na
-  // kilka przy każdym obiegu.
+  // Akapit i cytat wielowierszowy: złamania wiersza zostają złamaniami, nie nowymi akapitami.
   blok.wiersze.forEach((wiersz, numer) => {
     if (numer > 0) element.append(document.createElement('br'));
     element.append(wyrysInline(wiersz));
@@ -302,7 +261,7 @@ export function wyrysBloku(blok: BlokTresci): HTMLElement {
   return element;
 }
 
-/** Wypełnia tabelę wierszami składni markdown. */
+/** Wypełnia tabelę HTML wierszami zapisanymi składnią markdown, pomijając wiersz rozdzielający nagłówek od treści. */
 function wypelnijTabele(tabela: HTMLTableElement, wiersze: readonly string[]): void {
   const komorki = wiersze
     .filter((wiersz) => !/^\|[\s|:-]+\|$/u.test(wiersz))
@@ -326,7 +285,7 @@ function wypelnijTabele(tabela: HTMLTableElement, wiersze: readonly string[]): v
   });
 }
 
-/** Znacznik składni wraz z elementem, którym się pokazuje. */
+/** Znacznik składni znakowej wraz z elementem HTML, którym markdown pokazuje pogrubienie, kursywę i pozostałe wyróżnienia. */
 const ZNACZNIKI_INLINE: readonly { wzorzec: RegExp; element: string }[] = [
   { wzorzec: /\*\*([^*]+)\*\*/u, element: 'strong' },
   { wzorzec: /(?<!\*)\*([^*]+)\*(?!\*)/u, element: 'em' },
@@ -335,14 +294,7 @@ const ZNACZNIKI_INLINE: readonly { wzorzec: RegExp; element: string }[] = [
   { wzorzec: /`([^`]+)`/u, element: 'code' },
 ];
 
-/**
- * Buduje treść wiersza z formatowaniem znakowym.
- *
- * Pogrubienie, kursywa, przekreślenie, kod i odnośnik są składnią markdown, więc
- * przeżywają zapis do rdzenia. Podkreślenia markdown nie ma i dlatego jedzie
- * znacznikiem `<u>` — markdown przepuszcza go nietkniętym, a odczyt powierzchni
- * odkłada z powrotem tak samo.
- */
+/** Buduje treść wiersza z formatowaniem znakowym: pogrubieniem, kursywą, przekreśleniem, kodem, odnośnikiem i podkreśleniem znacznikiem HTML. */
 export function wyrysInline(tekst: string): DocumentFragment {
   const wynik = document.createDocumentFragment();
   if (tekst === '') return wynik;
@@ -371,7 +323,7 @@ export function wyrysInline(tekst: string): DocumentFragment {
   return wynik;
 }
 
-/** Pierwszy znacznik znakowy w wierszu; `null`, gdy wiersz jest czystym tekstem. */
+/** Pierwszy znacznik znakowy w wierszu spośród pogrubienia, kursywy, przekreślenia, kodu i podkreślenia; wartość pusta dla czystego tekstu. */
 function najblizszyZnacznik(
   tekst: string,
 ): { pozycja: number; dlugosc: number; tresc: string; element: string } | null {
@@ -393,15 +345,7 @@ function najblizszyZnacznik(
 
 /* ── Odczyt powierzchni z powrotem na napis ────────────────────────────────── */
 
-/**
- * Odczytuje powierzchnię edycji z powrotem na napis dokumentu.
- *
- * Odczyt jest odwrotnością wyrysu i musi znieść to, co dokłada przeglądarka:
- * naciśnięcie Enter w polu `contenteditable` zakłada `div`, wklejenie treści —
- * `span` ze stylami, pogrubienie z klawiatury — `b` zamiast `strong`. Rodzaj
- * bloku bierzemy z `data-blok`, a gdy go nie ma (element dołożony przez
- * przeglądarkę) — z nazwy elementu.
- */
+/** Odczytuje powierzchnię edycji z powrotem na napis dokumentu, znosząc elementy dokładane samodzielnie przez przeglądarkę. */
 export function serializujPowierzchnie(korzen: HTMLElement): string {
   const czesci: string[] = [];
   for (const dziecko of Array.from(korzen.children)) {
@@ -413,7 +357,7 @@ export function serializujPowierzchnie(korzen: HTMLElement): string {
   return czesci.join('\n\n');
 }
 
-/** Odczytuje jeden element powierzchni na blok treści. */
+/** Odczytuje jeden element powierzchni edycji na blok treści, rozpoznając jego rodzaj i wiersze składni markdown. */
 function odczytajBlok(element: HTMLElement): BlokTresci | null {
   const rodzaj = rodzajElementu(element);
   if (rodzaj === 'podzial-strony' || rodzaj === 'linia') return { rodzaj, wiersze: [''] };
@@ -429,7 +373,7 @@ function odczytajBlok(element: HTMLElement): BlokTresci | null {
   return { rodzaj, wiersze };
 }
 
-/** Rodzaj bloku: z `data-blok`, a bez niego z nazwy elementu. */
+/** Rodzaj bloku: odczytany ze znacznika danych elementu, a bez niego wyprowadzony z nazwy elementu HTML. */
 function rodzajElementu(element: HTMLElement): RodzajBloku {
   const opisany = element.dataset['blok'];
   if (opisany !== undefined && opisany !== '') return opisany as RodzajBloku;
@@ -446,7 +390,7 @@ function rodzajElementu(element: HTMLElement): RodzajBloku {
   return 'tekst';
 }
 
-/** Odczytuje tabelę na wiersze składni markdown wraz z wierszem rozdzielającym. */
+/** Odczytuje tabelę HTML na wiersze składni markdown wraz z wierszem rozdzielającym nagłówek od treści tabeli. */
 function odczytajTabele(element: HTMLElement): string[] {
   const rzedy = Array.from(element.querySelectorAll('tr'));
   if (rzedy.length === 0) return ['|  |  |', '| --- | --- |'];
@@ -461,7 +405,7 @@ function odczytajTabele(element: HTMLElement): string[] {
   return wiersze;
 }
 
-/** Znacznik markdown dla elementu znakowego; pusty dla elementu bez składni. */
+/** Znacznik markdown dla elementu znakowego: pogrubienia, kursywy, przekreślenia i kodu; wartość pusta dla elementu bez składni. */
 function znacznikElementu(nazwa: string): string {
   if (nazwa === 'strong' || nazwa === 'b') return '**';
   if (nazwa === 'em' || nazwa === 'i') return '*';
@@ -470,17 +414,7 @@ function znacznikElementu(nazwa: string): string {
   return '';
 }
 
-/**
- * Długość zapisu markdown treści elementu do wskazanego punktu.
- *
- * Potrzebne do jednej rzeczy: przełożenia zaznaczenia w widoku formatowanym na
- * zakres znaków w treści dokumentu — a to jest zakres, który jedzie do rdzenia
- * w `studio.contextual.op` jako `selectionStart` i `selectionEnd`. Liczenie go
- * po samym tekście widocznym dałoby wartość mniejszą od prawdziwej o długość
- * znaczników: „**waga**" ma sześć znaków widocznych i dziesięć zapisanych.
- *
- * `null` znaczy, że punkt nie leży w tym elemencie.
- */
+/** Długość zapisu markdown treści elementu do wskazanego punktu — służy przełożeniu zaznaczenia widoku na zakres znaków dokumentu. */
 export function dlugoscDoPunktu(element: HTMLElement, wezel: Node, offset: number): number | null {
   if (element === wezel) {
     // Punkt wskazany na samym elemencie znaczy „przed dzieckiem o tym numerze".
@@ -508,19 +442,19 @@ export function dlugoscDoPunktu(element: HTMLElement, wezel: Node, offset: numbe
   return dlugosc;
 }
 
-/** Długość zapisu markdown całego węzła. */
+/** Długość zapisu markdown całego węzła powierzchni, liczona łącznie ze znacznikami składni, nie tylko tekstem widocznym. */
 function dlugoscWezla(wezel: Node): number {
   return serializujWezel(wezel).length;
 }
 
-/** Długość znacznika otwierającego elementu znakowego. */
+/** Długość znacznika otwierającego elementu znakowego — podkreślenia, odnośnika albo znacznika pogrubienia i pozostałych wyróżnień. */
 function dlugoscOtwarcia(nazwa: string): number {
   if (nazwa === 'u') return 3;
   if (nazwa === 'a') return 1;
   return znacznikElementu(nazwa).length;
 }
 
-/** Zapis markdown jednego węzła powierzchni. */
+/** Zapis markdown jednego węzła powierzchni edycji: tekstu, złamania wiersza albo elementu znakowego ze znacznikiem właściwym. */
 function serializujWezel(wezel: Node): string {
   if (wezel.nodeType === Node.TEXT_NODE) return wezel.textContent ?? '';
   if (wezel.nodeType !== Node.ELEMENT_NODE) return '';
@@ -533,7 +467,7 @@ function serializujWezel(wezel: Node): string {
   return `${znacznik}${serializujInline(element)}${znacznik}`;
 }
 
-/** Odczytuje treść znakową elementu z powrotem na składnię markdown. */
+/** Odczytuje treść znakową elementu z powrotem na składnię markdown, przechodząc rekurencyjnie przez wszystkie węzły potomne. */
 export function serializujInline(element: HTMLElement): string {
   return Array.from(element.childNodes).map(serializujWezel).join('');
 }

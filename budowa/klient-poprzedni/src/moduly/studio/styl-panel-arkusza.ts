@@ -33,36 +33,19 @@ import {
 import { BEZ_ZMIANY, liczbaPola, poleLiczbowe, tekstPola, wyborPola } from './strona-pola-postaci';
 
 /**
- * Panel arkusza stylów i formatowania fragmentu.
- *
- * ── Co tu stoi ──────────────────────────────────────────────────────────────
- * Style nazwane (wykaz, założenie, zmiana, stosowanie, usunięcie), styl znaku,
- * styl akapitu, czyszczenie formatowania, wielkość liter, malarz formatów,
- * „zaznacz wedle podobnego formatowania", zamiana wraz z postacią oraz tabulator
- * zakładany liczbą. Trzynaście czynności, wszystkie na FRAGMENCIE — bo praca na
- * fragmentach jest osią całego zamówienia.
- *
- * ── Dlaczego zmiana stylu jest tu najważniejsza ─────────────────────────────
- * `studio.style.save` przestawia WSZYSTKIE miejsca dokumentu, które stylu używają
- * — to jest sens stylu nazwanego. Panel mówi to wprost przy przycisku i oddaje
- * liczbę przestawionych miejsc z bilansu, żeby Operator widział skutek, a nie
- * samo „zapisano".
- *
- * ── Dlaczego malarz formatów ma dwa przyciski ───────────────────────────────
- * Bo to dwie czynności rdzenia: `painter.copy` pobiera postać i oddaje uchwyt,
- * `painter.apply` nanosi ją gdzie indziej. Uchwyt pamięta warstwa wyżej; panel
- * pokazuje wyłącznie, czy coś jest pobrane.
- *
- * ── Czego panel nie robi ────────────────────────────────────────────────────
- * Nie woła rdzenia, nie zna dokumentu ani zaznaczenia. Składa treść żądania
- * z pól bez `documentId` i bez zakresu — zakres dokłada warstwa wyżej z bieżącego
- * zaznaczenia, bo ona jedna wie, co Operator zaznaczył.
+ * Panel arkusza stylów i formatowania fragmentu: style, znak, akapit, malarz formatów i zamiana.
  */
 
-/** Treść żądania bez dokumentu i bez zakresu — oba dokłada warstwa wyżej. */
+/**
+ * Treść żądania bez dokumentu i bez zakresu; oba pola dokłada warstwa wyżej, znająca zaznaczenie
+ * i dokument bieżący.
+ */
 type BezZakresu<T> = Omit<T, 'documentId' | 'rangeStart' | 'rangeEnd'>;
 
-/** Czynności panelu arkusza stylów. */
+/**
+ * Czynności panelu arkusza stylów: zapis, stosowanie i usunięcie stylu, formatowanie znaku
+ * i akapitu, malarz formatów, zamiana i tabulator.
+ */
 export interface CzynnosciStyluPanelu {
   naZapisStylu(zadanie: Omit<StudioStyleSaveRequest, 'documentId'>): void;
   naStosowanieStylu(zadanie: BezZakresu<StudioStyleApplyRequest>): void;
@@ -80,7 +63,10 @@ export interface CzynnosciStyluPanelu {
   naOdczyt(): void;
 }
 
-/** Panel arkusza stylów wraz z jego sterowaniem. */
+/**
+ * Panel arkusza stylów wraz z jego sterowaniem: pokazywanie stylów, postaci znaku i akapitu,
+ * stanu malarza formatów oraz odpowiedzi rdzenia.
+ */
 export interface StylPanelArkusza {
   element: HTMLElement;
   przestawWidocznosc(): void;
@@ -94,13 +80,7 @@ export interface StylPanelArkusza {
   /** Czy malarz formatów ma coś pobrane; zdanie widoczne przy jego przyciskach. */
   pokazMalarza(pobrane: boolean, opis: string): void;
   pokazOdpowiedz(tresc: string, powodzenie: boolean): void;
-  /**
-   * Czy zamiana ma objąć wyłącznie zaznaczenie.
-   *
-   * Czyta to warstwa wyżej, bo ona dokłada zakres do żądania: panel nie zna
-   * zaznaczenia, a wybór „tylko w zaznaczeniu" należy do Operatora i musi być
-   * jednym miejscem, nie zgadywaniem po tym, czy coś jest zaznaczone.
-   */
+  // Czy zamiana ma objąć wyłącznie zaznaczenie; wybór należy do Operatora, panel go nie zgaduje.
   zamianaTylkoWZaznaczeniu(): boolean;
 }
 
@@ -564,9 +544,7 @@ export function utworzStylPanelArkusza(czynnosci: CzynnosciStyluPanelu): StylPan
     const nadawanyNazwany = tekstPola(nadawanyStyl.kontrolka);
     if (nadawanyNazwany !== undefined) zadanie.replaceStyleName = nadawanyNazwany;
     const szukanaPostac = zlozPostacZnaku();
-    // Postać z pól służy DWÓM czynnościom naraz — naniesieniu i zamianie — więc
-    // przy zamianie jest postacią NADAWANĄ trafieniom, a szukana postać ma własne
-    // pole stylu. Inaczej Operator nie miałby jak nadać postaci temu, co znalazł.
+    // Postać z pól służy naniesieniu i zamianie: przy zamianie jest postacią nadawaną trafieniom.
     if (Object.keys(szukanaPostac).length > 0) zadanie.replaceFormat = szukanaPostac;
     if (
       zadanie.findText === undefined &&
@@ -795,11 +773,8 @@ export function utworzStylPanelArkusza(czynnosci: CzynnosciStyluPanelu): StylPan
 }
 
 /**
- * Trzy stany cechy logicznej: „bez zmiany", „włącz", „wyłącz".
- *
- * Przełącznik miałby dwa stany i nie umiałby powiedzieć „tej cechy nie ruszam".
- * Naniesienie pogrubienia na fragment nie może przy okazji zdejmować kursywy,
- * której Operator nie tknął — a właśnie to robiłby przełącznik odznaczony.
+ * Trzy stany cechy logicznej: bez zmiany, włącz, wyłącz; dwustanowy przełącznik nie umiałby
+ * nazwać stanu bez zmiany.
  */
 const TRZY_STANY = [
   BEZ_ZMIANY,
@@ -807,7 +782,7 @@ const TRZY_STANY = [
   { wartosc: 'nie', etykieta: 'Wyłącz' },
 ];
 
-/** Dopisuje cechę logiczną do postaci, o ile Operator ją wskazał. */
+/** Dopisuje cechę logiczną do postaci znaku albo akapitu, o ile Operator wskazał jej wartość w formularzu. */
 function dopiszLogiczna(
   postac: Record<string, unknown>,
   pole: string,
@@ -818,12 +793,12 @@ function dopiszLogiczna(
   postac[pole] = wartosc === 'tak';
 }
 
-/** Ustawia listę trzech stanów wedle wartości oddanej przez rdzeń. */
+/** Ustawia listę trzech stanów pola formularza wedle wartości logicznej otrzymanej z rdzenia dokumentu. */
 function ustawTrzyStany(kontrolka: HTMLSelectElement, wartosc: boolean | undefined): void {
   kontrolka.value = wartosc === undefined ? '' : wartosc ? 'tak' : 'nie';
 }
 
-/** Grupa pól panelu. */
+/** Grupa pól formularza wyświetlana pod wspólnym tytułem sekcji wewnątrz panelu arkusza stylów dokumentu. */
 function grupa(tytul: string, zawartosc: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ms-postac__tytul';

@@ -1,10 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — PAS DZIAŁAŃ
-
-   Domyka okno przez całą jego szerokość, pod kolumną tożsamości też. Pas
-   urwany na granicy kolumny czyta się jak niedokończony rysunek. Czynności
-   zbierają się przy prawej krawędzi — tam ręka szuka ich w każdym oknie tej
-   rodziny, a gdy zostaje jedna, nie zawisa samotnie po lewej.
+/* Pas działań domyka okno na całej jego szerokości, także pod kolumną tożsamości, a czynności zbiera przy prawej krawędzi okna zgodnie z resztą tej rodziny okien.
+   Pas urwany na granicy kolumny czyta się jak niedokończony rysunek, a gdy
+   zostaje jedna czynność, nie zawisa samotnie po lewej stronie.
 
    Właściwości:
      widok      nazwa widoku, z którym pas się przełącza

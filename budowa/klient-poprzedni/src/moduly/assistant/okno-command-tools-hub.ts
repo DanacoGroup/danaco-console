@@ -8,38 +8,19 @@ import { utworzSiatkeAkcji, type SiatkaAkcji } from './siatka-akcji';
 import type { StanAssistant } from './stan-assistant';
 import type { ZrodloNarzedzi } from './zrodlo-narzedzi';
 
-/** Kod okna operacyjnego modułu; rdzeń nie ma go dziś w katalogu okien. */
+/**
+ * Kod okna operacyjnego modułu. Rdzeń nie ma go dziś w katalogu okien, więc okno
+ * przedstawia się tym napisem samo, a wpis kontraktu zajmie jego miejsce bez
+ * zmiany składu okna.
+ */
 export const KOD_OKNA = 'command-tools-hub';
 
 /**
- * Command & Tools Hub — okno zarządcy szybkich akcji, narzędzi i rutyn modułu
- * Assistant.
- *
- * Okno zamyka obszary szybkich akcji, wywołań narzędzi oraz proaktywności
- * modułu. Zakładek jest cztery i każda stoi nad rzeczywistą komendą kontraktu:
- *
- *   Akcje            `action.list` — katalog akcji zasięgu modułu;
- *   Makra            `automation.workflow.save` — jedyne trwałe miejsce dla
- *                    sekwencji kroków, wskazane wprost przez opracowanie modułu
- *                    („→ Wyślij do Automations");
- *   Narzędzia i MCP  `tools.catalog.list` wraz z `session.tool.*`;
- *   Rutyny           `automation.workflow.list`, `schedule.get`
- *                    i `automation.schedule.set`.
- *
- * Zakładki „Umiejętności" osobno nie ma z rozstrzygnięcia, nie z przeoczenia:
- * kontrakt trzyma narzędzia i umiejętności w jednym katalogu i rozróżnia je
- * polem `kind` oraz przedrostkiem źródła. Druga zakładka nad tą samą komendą
- * udawałaby drugie źródło; rozróżnienie robi filtr rodzaju w zakładce narzędzi.
- *
+ * Command & Tools Hub — okno zarządcy szybkich akcji, narzędzi i rutyn
+ * modułu Assistant o pięciu zakładkach.
 Piąta zakładka — „Skróty i schowek" — stoi nad trzema rodzinami, które
- * kontrakt niesie w całości: `clipboard.*` (trwała historia schowka),
- * `snippet.*` (słownik skrótów rozwijanych we wszystkich polach platformy)
- * oraz `launcher.hotkey.*` (skrót globalny wywoływacza). Schowka maszyny
- * Operatora rdzeń nie czyta i zakładka tego nie udaje — podział ról jest
- * widoczny na ekranie (`panel-schowka.ts`).
- *
- * Plik odpowiada wyłącznie za skład okna; wywołania mieszkają
- * w `zrodlo-narzedzi.ts`, a każda zakładka ma własny plik obszaru.
+ * kontrakt niesie w całości — historią schowka, słownikiem skrótów
+ * rozwijanych w polach oraz skrótem wywoływacza.
  */
 export interface OknoCommandToolsHub {
   element: HTMLElement;
@@ -52,9 +33,7 @@ export function utworzOknoCommandToolsHub(
   zrodlo: ZrodloNarzedzi,
   naAkcje: (tresc: string) => void,
 ): OknoCommandToolsHub {
-  // Siatka akcji jest tym samym widokiem katalogu, który stoi w Voice Console.
-  // Drugi widok, a nie drugie źródło: obie sięgają `action.list` zasięgu modułu,
-  // a naciśnięcie kafla wypełnia to samo pole polecenia.
+  // Siatka akcji jest drugim widokiem katalogu `action.list`, a nie drugim źródłem.
   const akcje: SiatkaAkcji = utworzSiatkeAkcji(stan, naAkcje);
   const makra = utworzEdytorMakra(zrodlo);
   const narzedzia: PanelNarzedzi = utworzPanelNarzedzi(stan, zrodlo);
@@ -82,9 +61,7 @@ export function utworzOknoCommandToolsHub(
 
   return {
     element,
-    // Trzy odczyty idą równolegle: katalog akcji, katalog narzędzi i wykaz
-    // rutyn dotyczą trzech różnych rodzin komend i żaden nie warunkuje
-    // pozostałych. Każdy nazywa swoje niepowodzenie w swoim obszarze.
+    // Odczyty idą równolegle; żaden nie warunkuje pozostałych i każdy melduje osobno.
     wczytaj: async () => {
       await Promise.all([
         akcje.wczytaj(),

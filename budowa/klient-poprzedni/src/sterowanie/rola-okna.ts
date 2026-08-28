@@ -7,12 +7,8 @@ import type { ZmianaOkna } from './zmiana-okna';
 const NAZWA = 'Rola okna';
 
 /**
- * Sterowanie rolą okna w pętli koordynator–wykonawca.
- *
- * Rola należy do okna, nie do sesji: w jednej sesji jedno okno prowadzi jako
- * koordynator, a drugie pracuje jako wykonawca. Wskazanie koordynatora, któremu
- * podlega wykonawca (`coordinatorWindowId` kontraktu), jest osobnym powiązaniem
- * między oknami — komplet sterowania jednego okna go nie ustanawia.
+ * Sterowanie rolą okna w pętli koordynator-wykonawca; rola przypisana jest do okna, nie do
+ * całej sesji.
  */
 export function utworzSterowanieRoli(
   stan: StanSterowania,
@@ -28,7 +24,10 @@ export function utworzSterowanieRoli(
   return lista.element;
 }
 
-/** Katalog ról wprost z wyliczenia kontraktu. */
+/**
+ * Katalog ról okna wprost z wyliczenia typów zdefiniowanych w kontrakcie tej całej
+ * aplikacji klienckiej.
+ */
 function opcje(): OpcjaWyboru[] {
   return Object.values(WindowRole).map((wartosc) => ({
     wartosc,
@@ -36,7 +35,10 @@ function opcje(): OpcjaWyboru[] {
   }));
 }
 
-/** Wartość listy sprowadzona do roli kontraktu; nierozpoznana zostawia stan bez zmiany. */
+/**
+ * Wartość listy wyboru sprowadzona do roli z kontraktu aplikacji; nierozpoznana zostawia
+ * stan bez zmiany.
+ */
 function rola(wartosc: string, stan: StanSterowania): WindowRole {
   const znaleziona = Object.values(WindowRole).find((rola) => rola === wartosc);
   return znaleziona ?? stan.migawka().okno.windowRole;

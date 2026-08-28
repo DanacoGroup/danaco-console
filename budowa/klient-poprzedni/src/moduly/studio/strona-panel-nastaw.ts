@@ -29,37 +29,17 @@ import { NASTAWY_MARGINESOW } from './nastawy-strony';
 import { BEZ_ZMIANY, liczbaPola, poleLiczbowe, tekstPola, wyborPola } from './strona-pola-postaci';
 
 /**
- * Panel nastaw strony — numeracja i marginesy jako nastawy Operatora, nie
- * przełącznik tak/nie.
- *
- * ── Co ten panel domyka ─────────────────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: „numeracja stron ma być konfigurowana przez
- * użytkownika — styl, umiejscowienie, numeracja od jakiego numeru/strony;
- * marginesy również muszą być zmienialne". Do dziś okno miało numerację jako sam
- * przełącznik `pageNumbers` profilu wydania, a marginesy jako liczby żyjące przez
- * sesję. Tu obie rzeczy jadą własnymi komendami rdzenia i przeżywają zapis.
- *
- * ── Dlaczego wszystko na żądanie ────────────────────────────────────────────
- * Powierzchnia należy do dokumentu. Panel jest nakładką otwieraną przyciskiem
- * i domyślnie schowaną — stałej kolumny nie zajmuje.
- *
- * ── Dlaczego sekcja jest wszędzie ───────────────────────────────────────────
- * Każda nastawa strony da się ustawić OSOBNO dla sekcji: pismo z załącznikiem
- * w orientacji poziomej ma być jednym dokumentem, nie dwoma. Wybór sekcji stoi
- * więc raz, u góry panelu, i dotyczy wszystkich pól poniżej — inaczej Operator
- * wskazywałby ją sześć razy.
- *
- * ── Czego panel nie robi ────────────────────────────────────────────────────
- * Nie woła rdzenia i nie zna dokumentu. Składa treść żądania z pól i oddaje ją
- * temu, kto go zbudował. Identyfikator dokumentu, autor czynności i odczyt
- * odpowiedzi należą do warstwy wyżej — panel byłby inaczej drugim miejscem, które
- * wie, nad czym Operator pracuje.
+ * Treść żądania bez dokumentu — dokument dokłada warstwa wołająca rdzeń, ponieważ
+ * panel składa wyłącznie pola formularza i nie zna identyfikatora dokumentu, na
+ * którym pracuje Operator.
  */
-
-/** Treść żądania bez dokumentu — dokument dokłada warstwa wołająca rdzeń. */
 type BezDokumentu<T> = Omit<T, 'documentId'>;
 
-/** Czynności panelu nastaw strony. */
+/**
+ * Czynności panelu nastaw strony, które wywołujący przekłada na komendy rdzenia;
+ * panel nie woła rdzenia sam, tylko składa treść żądania z pól wypełnionych przez
+ * Operatora.
+ */
 export interface CzynnosciStronyPanelu {
   naNastawyStrony(zadanie: BezDokumentu<StudioPageSetupSetRequest>): void;
   naNumeracje(zadanie: BezDokumentu<StudioPageNumberingSetRequest>): void;
@@ -73,7 +53,11 @@ export interface CzynnosciStronyPanelu {
   naOdczyt(): void;
 }
 
-/** Panel nastaw strony wraz z jego sterowaniem. */
+/**
+ * Panel nastaw strony wraz z jego sterowaniem: przełączaniem widoczności,
+ * wpisywaniem nastaw odczytanych z rdzenia oraz wykazem sekcji, nagłówków
+ * i nośników do wyboru.
+ */
 export interface StronaPanelNastaw {
   element: HTMLElement;
   przestawWidocznosc(): void;
@@ -91,6 +75,11 @@ export interface StronaPanelNastaw {
   sekcjaWybrana(): string | undefined;
 }
 
+/**
+ * Panel nastaw strony udostępnia numerację, marginesy, nagłówki, znak wodny,
+ * kopertę i podziały jako osobne nastawy zapisywane komendami rdzenia, nie jako
+ * pojedynczy przełącznik profilu wydania.
+ */
 export function utworzStronePanelNastaw(
   czynnosci: CzynnosciStronyPanelu,
   /** Miejsce kursora w treści — podział wstawia się tam, gdzie stoi kursor. */
@@ -232,8 +221,8 @@ export function utworzStronePanelNastaw(
     if (wybranyNosnik !== undefined) zadanie.paperName = wybranyNosnik;
     const szerokoscMm = liczbaPola(szerokosc.kontrolka);
     const wysokoscMm = liczbaPola(wysokosc.kontrolka);
-    // Format własny idzie parą: sama szerokość bez wysokości nie jest nośnikiem,
-    // a rdzeń dostałby wymiar niepełny i musiałby drugi zgadnąć.
+    // Format własny podaje się dwiema liczbami naraz — sama szerokość albo
+    // wysokość nie jest nośnikiem.
     if ((szerokoscMm === undefined) !== (wysokoscMm === undefined)) {
       odpowiedz.pokaz(
         'Format własny podaje się DWIEMA liczbami — szerokością i wysokością. Jedna z nich bez ' +
@@ -398,8 +387,8 @@ export function utworzStronePanelNastaw(
       scope: zasieg.kontrolka.value as StudioHeaderScope,
       linkedToPrevious: przejecieNaglowka.kontrolka.checked,
     };
-    // Treść pusta jedzie JAWNIE, w odróżnieniu od liczb: opróżnienie nagłówka jest
-    // czynnością, którą Operator wykonuje świadomie, a nie brakiem wskazania.
+    // Treść pusta jedzie jawnie: opróżnienie nagłówka jest świadomą czynnością,
+    // nie brakiem wskazania.
     zadanie.headerText = trescNaglowka.kontrolka.value;
     zadanie.footerText = trescStopki.kontrolka.value;
     const odlegloscG = liczbaPola(odlegloscNaglowka.kontrolka);
@@ -692,9 +681,8 @@ export function utworzStronePanelNastaw(
       wpiszLiczbe(marginesPrawy.kontrolka, nastawy.marginRight);
       wpiszLiczbe(szerokosc.kontrolka, nastawy.widthMm);
       wpiszLiczbe(wysokosc.kontrolka, nastawy.heightMm);
-      // Nagłówek i stopka z nastaw strony wchodzą wyłącznie wtedy, gdy własnego
-      // wpisu o zasięgu nie było: `studio.page.headerfooter.get` jest tu źródłem
-      // bogatszym i nie wolno mu tego nadpisywać uboższym.
+      // Nagłówek i stopka wchodzą wyłącznie bez wpisu zasięgu — źródło bogatsze
+      // nie ustępuje uboższemu.
       if (naglowkiBiezace.length === 0) {
         trescNaglowka.kontrolka.value = nastawy.header ?? '';
         trescStopki.kontrolka.value = nastawy.footer ?? '';
@@ -736,12 +724,20 @@ export function utworzStronePanelNastaw(
   };
 }
 
-/** Wpisuje liczbę w pole; brak wartości zostawia pole puste, a nie zeruje go. */
+/**
+ * Wpisuje liczbę w pole tekstowe; wartość nieokreślona zostawia pole puste
+ * zamiast zera, ponieważ pole puste i margines zerowy niosą odrębne znaczenie
+ * w żądaniu do rdzenia.
+ */
 function wpiszLiczbe(kontrolka: HTMLInputElement, wartosc: number | undefined): void {
   kontrolka.value = wartosc === undefined ? '' : String(wartosc);
 }
 
-/** Grupa pól panelu — nagłówek wraz z zawartością, wzorem grup wstążki. */
+/**
+ * Buduje grupę pól panelu złożoną z nagłówka i przekazanej zawartości,
+ * zachowując ten sam układ wizualny, jaki stosują grupy przycisków wstążki
+ * narzędziowej.
+ */
 function grupa(tytul: string, zawartosc: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'ms-postac__tytul';

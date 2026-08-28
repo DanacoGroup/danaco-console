@@ -2,36 +2,23 @@ import type { Kanal } from '../protokol/kanal';
 import { utworzOknoKonfiguracji, type OknoKonfiguracji } from './okno-konfiguracji';
 
 /**
- * Okno konfiguracji — punkt zbiorczy katalogu.
- *
- * Reszta aplikacji zna stąd jedną czynność:
- *
- *   import { otworzOknoKonfiguracji } from '../konfiguracja/indeks';
- *   otworzOknoKonfiguracji(rdzen.kanal);
- *
- * Okno jest jedno na klienta i żyje między otwarciami. Powód jest ten sam,
- * dla którego router nie porzuca widoku opuszczonej trasy: powtórne otwarcie
- * wraca do kategorii, na której się skończyło, a nie zaczyna od początku.
- * Przy okazji nie gubi się subskrypcja zdarzenia `config.changed`,
- * więc zapis dokonany gdzie indziej dociera także wtedy, gdy okno jest
- * zamknięte.
- *
- * Kanał podajemy przy pierwszym otwarciu. Wywołanie z innym kanałem —
- * po ponownym połączeniu z rdzeniem — buduje okno na nowo, żeby komendy nie
- * szły przez transport, którego już nie ma.
+ * Punkt zbiorczy katalogu konfiguracji: reszta aplikacji otwiera stąd jedyne
+ * okno ustawień klienta. Okno powstaje przy pierwszym otwarciu i trwa między
+ * kolejnymi, a wartość `null` obowiązuje, dopóki żadne otwarcie nie nastąpiło.
  */
-
-/** Okno zbudowane przy pierwszym otwarciu; `null` przed nim. */
 let okno: OknoKonfiguracji | null = null;
 
-/** Kanał, na którym zbudowano okno — podstawa rozpoznania zmiany połączenia. */
+/**
+ * Kanał, na którym zbudowano okno. Porównanie z kanałem podanym przy otwarciu
+ * rozpoznaje ponowne połączenie z rdzeniem i nakazuje przebudowę okna, zanim
+ * pierwsza komenda pójdzie przez transport już nieczynny.
+ */
 let osadzonyKanal: Kanal | null = null;
 
 /**
- * Otwiera okno konfiguracji i zleca wczytanie katalogu.
- *
- * Otwarcie nie czeka na rdzeń: okno pojawia się od razu, a katalog dojeżdża
- * do niego odpowiedzią.
+ * Otwiera okno konfiguracji i zleca wczytanie katalogu ustawień. Otwarcie nie
+ * czeka na rdzeń: okno pojawia się od razu, a katalog dociera do niego osobną
+ * odpowiedzią na zlecony odczyt.
  */
 export function otworzOknoKonfiguracji(kanal: Kanal): OknoKonfiguracji {
   if (okno !== null && osadzonyKanal !== kanal) {

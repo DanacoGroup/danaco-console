@@ -6,32 +6,16 @@ import {
   etykietaTechniczna,
 } from './katalog-izolacji';
 
-/**
- * Rysowanie profili izolacji: wykaz zapisanych i podgląd wczytanego.
- *
- * Przy każdym wierszu stoją trzy czynności i dwie z nich łatwo pomylić.
- * „Wczytaj" pobiera profil do podglądu i do formularza — żaden poziom zasięgu
- * po nim nie działa inaczej. „Przypisz do poziomu" dopiero wiąże profil
- * z wybranym poziomem i warstwą, i to po niej izolacja faktycznie się zmienia.
- * Obie stoją obok siebie, więc różnica jest wypisana słowami przy każdym
- * wierszu, a nie domyślana z kolejności przycisków.
- *
- * „Usuń" usuwa od razu — bez pytania „czy na pewno", bez wygaszania, bez
- * uprawnień. Profil izolacji rozstrzyga, co model widzi z sąsiedniego okna,
- * i zmienia się na żądanie; skutek usunięcia stoi wprost przy przycisku.
- *
- * Ten plik nie woła rdzenia. Buduje węzły i oddaje naciśnięcia wywołującemu
- * (`obszar-profile.ts`); nie zna ani jednej komendy, ani jednej barwy.
- */
+// Rysowanie profili izolacji: wykaz zapisanych i podgląd wczytanego, bez wywołań rdzenia.
 
-/** Czynności podpięte pod przyciski wiersza; każdą wykonuje `obszar-profile.ts`. */
+/** Czynności podpięte pod przyciski każdego wiersza; każdą z nich wykonuje wywołujący ten obszar profili. */
 export interface CzynnosciProfilu {
   wczytaj(profil: IsolationProfile): void;
   przypisz(profil: IsolationProfile): void;
   usun(profil: IsolationProfile): void;
 }
 
-/** Wykaz zapisanych profili; jeden wiersz na profil, trzy czynności przy każdym. */
+/** Wykaz zapisanych profili izolacji; jeden wiersz na profil, trzy czynności stojące zawsze przy każdym. */
 export function zbudujListeProfili(
   profile: readonly IsolationProfile[],
   czynnosci: CzynnosciProfilu,
@@ -98,7 +82,7 @@ function przycisk(etykieta: string, klasa: string, wyjasnienie: string, naKlik: 
   return kontrolka;
 }
 
-/** Jednozdaniowe streszczenie zestawu: ile kluczy odciętych z trzech i z ośmiu. */
+/** Jednozdaniowe streszczenie zestawu: ile kluczy odciętych z trzech kluczy kontekstu i z ośmiu technicznych. */
 function streszczenieZestawu(profil: IsolationProfile): string {
   const odrebne = profil.contextSwitches.filter((p) => p.isolated).length;
   const wlaczone = profil.technicalSwitches.filter((p) => p.isolated).length;
@@ -108,11 +92,7 @@ function streszczenieZestawu(profil: IsolationProfile): string {
   );
 }
 
-/**
- * Podgląd profilu wczytanego (`isolation.profile.load`) — komplet jedenastu
- * kluczy z wartościami tego profilu i jawne zdanie, że to jest podgląd, a nie
- * stan obowiązujący.
- */
+/** Podgląd profilu wczytanego — komplet jedenastu kluczy z wartościami tego profilu i jawne zdanie o podglądzie. */
 export function zbudujPodgladProfilu(profil: IsolationProfile): HTMLElement {
   const naglowek = document.createElement('h4');
   naglowek.className = 'pi-profile__naglowek';
@@ -157,7 +137,7 @@ export function zbudujPodgladProfilu(profil: IsolationProfile): HTMLElement {
   return element;
 }
 
-/** Wiersz podglądu; brak klucza w profilu nazwany wprost, nie domalowany domyślną wartością. */
+/** Wiersz podglądu profilu; brak klucza w profilu nazwany wprost, nigdy nie domalowany wartością domyślną. */
 function zbudujWierszPodgladu(nazwa: string, wartosc: string | undefined): HTMLElement {
   const element = document.createElement('tr');
 

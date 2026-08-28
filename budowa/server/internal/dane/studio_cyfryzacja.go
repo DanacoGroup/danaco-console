@@ -1,15 +1,4 @@
-// Odpowiedzialność pliku: kolejka wczytywania i cyfryzacji modułu Studio
-// (tabela `pozycja_wczytywania_studio`) — Ingest/OCR Panel.
-//
-// Kolejka należy do OKNA, nie do dokumentu: pozycja istnieje, zanim jakikolwiek
-// dokument z niej powstanie, i bywa odrzucona, zanim powstanie jakikolwiek.
-// Wiązanie jej z dokumentem wymagałoby zakładania dokumentu pustego przy każdym
-// wskazaniu pliku — także tym, które skończy się odmową rozpoznania.
-//
-// Warstwa słów rozpoznanych i bloki układu stoją tekstem w formacie JSON. Nie są
-// bytem samodzielnym: nie mają cyklu życia, nikt się do nich nie odwołuje
-// z zewnątrz i giną razem z pozycją. Tabela podrzędna dałaby złączenie przy
-// każdym odczycie i nie dałaby w zamian niczego.
+// Odpowiedzialność pliku: kolejka wczytywania i cyfryzacji modułu Studio; kolejka należy do okna, nie do dokumentu, który z niej może powstać.
 package dane
 
 import (
@@ -19,7 +8,7 @@ import (
 	"fmt"
 )
 
-// PozycjaWczytywania to wiersz tabeli `pozycja_wczytywania_studio`.
+// PozycjaWczytywania to wiersz tabeli pozycja_wczytywania_studio, niosący stan i wynik rozpoznania jednej pozycji.
 type PozycjaWczytywania struct {
 	ID               int64
 	Kod              string
@@ -73,7 +62,7 @@ const (
 	                            ORDER BY id`
 )
 
-// ZapiszPozycjeWczytywania zakłada pozycję kolejki albo nadpisuje jej stan.
+// ZapiszPozycjeWczytywania zakłada pozycję kolejki albo nadpisuje jej stan, zwracając ją całą po zapisie.
 func (r *repozytoriumStudia) ZapiszPozycjeWczytywania(ctx context.Context,
 	pozycja PozycjaWczytywania) (PozycjaWczytywania, error) {
 
@@ -100,7 +89,7 @@ func (r *repozytoriumStudia) ZapiszPozycjeWczytywania(ctx context.Context,
 	return r.PozycjaWczytywania(ctx, pozycja.Kod)
 }
 
-// PozycjaWczytywania zwraca pozycję kolejki o wskazanym kodzie.
+// PozycjaWczytywania zwraca pozycję kolejki o wskazanym kodzie zewnętrznym, wraz z jej całą pełną treścią.
 func (r *repozytoriumStudia) PozycjaWczytywania(ctx context.Context,
 	kod string) (PozycjaWczytywania, error) {
 
@@ -118,7 +107,7 @@ func (r *repozytoriumStudia) PozycjaWczytywania(ctx context.Context,
 	return pozycja, nil
 }
 
-// PozycjeWczytywania zwraca kolejkę okna; `tylkoNieprzetworzone` zawęża wykaz.
+// PozycjeWczytywania zwraca kolejkę okna; parametr tylkoNieprzetworzone zawęża wykaz do pozycji jeszcze niegotowych.
 func (r *repozytoriumStudia) PozycjeWczytywania(ctx context.Context,
 	okno string, tylkoNieprzetworzone bool) ([]PozycjaWczytywania, error) {
 
@@ -150,7 +139,7 @@ func (r *repozytoriumStudia) PozycjeWczytywania(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajPozycjeWczytywania składa strukturę z jednego wiersza wyniku.
+// odczytajPozycjeWczytywania składa strukturę pozycji z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajPozycjeWczytywania(wiersz skaner) (PozycjaWczytywania, error) {
 	var pozycja PozycjaWczytywania
 	var sciezka, zasob, tekst, powod, slowa, uklad, nastawy sql.NullString

@@ -1,16 +1,4 @@
-/* ============================================================================
-   MODUŁ DESIGN — TOKENS & SYSTEM PANEL
-   ----------------------------------------------------------------------------
-   Arkusz piątego okna operacyjnego: drzewo żetonów, motywy, tabela kontrastu,
-   symulacja widzenia i wydanie. Pozostałe arkusze modułu to `design.css`
-   (rama i stany), `kompozycja.css` (kanwa), `zasoby.css` (wykaz i kreator),
-   `podglad.css` (podgląd).
-
-   Okno pokazuje barwy produktu, więc próbka MUSI nieść barwę wpisaną w locie —
-   to jedyne miejsce w module, w którym barwa trafia do stylu z kodu, i trafia
-   tam jako DANA odczytana z motywu, nie jako decyzja projektowa. Sam arkusz nie
-   zna ani jednej wartości szesnastkowej; wszystko poza próbkami idzie z żetonów.
-   ============================================================================ */
+/* Arkusz opisuje piąte okno operacyjne modułu Design: drzewo żetonów, motywy, tabelę kontrastu, symulację widzenia oraz panel wydania. */
 
 .md-okno--zetony { min-height: 0; }
 

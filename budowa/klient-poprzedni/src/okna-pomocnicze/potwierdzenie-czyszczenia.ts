@@ -1,7 +1,4 @@
-// Arkusz potwierdzenia usunięcia bierzemy wprost z toru sesji, zamiast pisać
-// drugi. Rodzina `.dn-usuwanie__*` jest biblioteczna (przedrostek `dn-`), a
-// jedyny jej arkusz stoi przy potwierdzeniu sesji; dwa arkusze o jednej
-// czynności rozjechałyby się przy pierwszej poprawce.
+// Arkusz potwierdzenia usunięcia jest wzięty wprost z toru sesji, bo rodzina klas biblioteczna ma jeden arkusz przy potwierdzeniu sesji, a drugi arkusz tej samej czynności rozjechałby się przy poprawce.
 import '../powloka/usuniecie-sesji.css';
 
 import type { HistoryDeleteResponse } from '../../../shared/contract';
@@ -11,35 +8,8 @@ import { opisOdmowyBledu } from '../komponenty/odmowa';
 import type { Wynik } from '../protokol/kanal';
 
 /**
- * Potwierdzenie wyczyszczenia całej historii rozmowy okna.
- *
- * Czyszczenie całej historii okna dostaje ten sam wyjątek, który ma kasowanie
- * sesji — i tylko ono. „Usuń wskazane" potwierdzenia nie ma: Operator wskazał
- * pozycje własną ręką, więc wskazanie jest zgodą.
- *
- * `powloka/potwierdzenie-usuniecia.ts` nie da się tu użyć wprost, bo jest
- * związany z sesją kształtem: przyjmuje `WskazanieUsuniecia[]` (identyfikator
- * i tytuł sesji), buduje wykaz „jedna pozycja na sesję", oddaje
- * `RozliczenieUsuniecia` po identyfikatorach i rozlicza je zdaniami
- * z `rozliczenie-usuniecia.ts`, które odmieniają słowo „sesja". Czyszczenie
- * historii nie ma ani wykazu bytów (okno jest jedno), ani rozliczenia po
- * identyfikatorach — rdzeń oddaje samą liczbę `deleted`.
- *
- * Wygląd jest za to powielony co do znaku: ten sam natywny `<dialog>`, ta sama
- * rama biblioteki (`.dn-modal*`), ta sama rodzina klas `.dn-usuwanie__*` z tego
- * samego arkusza, ten sam znak objaśnienia w nagłówku, ten sam pas stanów na
- * `oznaczFaze`, ta sama para przycisków i ta sama zasada „odmowa rdzenia nie
- * zamyka modalu".
- *
- * Potwierdzenie mówi, co zniknie, wraz z liczbą — pytanie „czy na pewno?" bez
- * liczby jest klikane odruchowo. Liczba pochodzi z `total` ostatniego
- * `history.load`, czyli z rdzenia, a nie z długości wykazu na ekranie. Gdy
- * odczytu jeszcze nie było, modal mówi to wprost i podaje liczbę widoczną jako
- * dolną — tą samą granicą, którą niesie zapowiedź retencji
- * (`nastawa-retencji.ts`).
+ * Potwierdzenie wyczyszczenia całej historii rozmowy okna dostaje ten sam wyjątek co kasowanie sesji i mówi wprost, ile pozycji zniknie, biorąc liczbę z ostatniego odczytu historii, a nie z wykazu widocznego na ekranie.
  */
-
-/** Co panel wie o rozmiarze straty w chwili otwarcia potwierdzenia. */
 export interface WskazanieCzyszczenia {
   /** Okno, którego historia ginie — pokazywane, bo to ono jest bytem czynności. */
   okno: string;
@@ -51,16 +21,13 @@ export interface WskazanieCzyszczenia {
   odczytany: boolean;
 }
 
-/** Wysyłka `history.delete` podana z zewnątrz; potwierdzenie już padło. */
+/** Wysyłka żądania usunięcia historii podana z zewnątrz panelu; potwierdzenie czynności już wcześniej padło. */
 export type WysylkaCzyszczenia = () => Promise<Wynik<HistoryDeleteResponse>>;
 
-/** Czynność nazwana w odmowie rdzenia — wzorem `CZYNNOSC_USUNIECIA` toru sesji. */
+/** Czynność nazwana w treści odmowy rdzenia — wzorem stałej czynności usunięcia używanej w torze sesji. */
 const CZYNNOSC_CZYSZCZENIA = 'Wyczyszczenie historii rozmowy okna';
 
-// Objaśnienie mówi prawdę o koszu, a raczej o jego braku. Sesja ma kosz na
-// trzydzieści dni i potwierdzenie sesji o tym mówi. Historia rozmowy kosza nie
-// ma: `dane/historia.go` kasuje wiersze wprost w transakcji i sprząta po nich
-// bloki, więc przepisanie tamtego zdania byłoby tu kłamstwem o skutku.
+// Objaśnienie mówi prawdę o braku kosza: historia rozmowy nie ma kosza, bo dane kasowane są wprost w transakcji, więc przepisanie zdania o koszu sesji byłoby tu kłamstwem o skutku czynności.
 const OBJASNIENIE =
   'Czyszczenie zabiera CAŁĄ historię rozmowy tego okna, także pozycje starsze niż widoczne ' +
   'w wykazie. Historia rozmowy nie ma kosza — kosz rdzenia (30 dni) dotyczy usuniętych SESJI, ' +
@@ -68,12 +35,7 @@ const OBJASNIENIE =
   'potwierdzenia nie wymaga.';
 
 /**
- * Otwiera potwierdzenie i prowadzi czyszczenie do końca.
- *
- * Oddaje odpowiedź rdzenia, gdy komenda przeszła — także odpowiedź „usunięto
- * 0", bo to też jest odpowiedź i panel ma ją powtórzyć. Oddaje `null`, gdy
- * Operator odmówił albo gdy rdzeń odmówił; treść odmowy została wtedy pokazana
- * w modalu.
+ * Otwiera potwierdzenie i prowadzi czyszczenie do końca, oddając odpowiedź rdzenia po udanej komendzie albo wartość pustą, gdy Operator lub rdzeń odmówił czynności.
  */
 export function otworzCzyszczenieHistorii(
   wskazanie: WskazanieCzyszczenia,
@@ -81,9 +43,7 @@ export function otworzCzyszczenieHistorii(
 ): Promise<HistoryDeleteResponse | null> {
   const rama = zlozRame(wskazanie);
   document.body.append(rama.modal);
-  // `showModal` daje nakładkę, stos okien, pułapkę ogniska i Escape. Środowisko
-  // sprawdzianów DOM go nie implementuje — stąd otwarcie zapasowe, wzorem
-  // `powloka/potwierdzenie-usuniecia.ts`.
+  // Natywne otwarcie modalu nie działa w sprawdzianach, więc plik ma otwarcie zapasowe wzorem sesji.
   if (typeof rama.modal.showModal === 'function') rama.modal.showModal();
   else rama.modal.open = true;
   rama.anuluj.focus();
@@ -138,12 +98,7 @@ const ODMOWA_ZAMKNIECIA =
   'Rdzeń już czyści historię tego okna. Zamknięcie okna niczego nie odwoła, a Operator zostałby bez odpowiedzi — czekamy na nią tutaj.';
 
 /**
- * Zdanie o stracie — treść właściwa całego potwierdzenia.
- *
- * Trzy różne prawdy, trzy różne zdania, bo mieszanie ich zamieniłoby liczbę
- * w ozdobę: rdzeń policzył całość, rdzeń policzył zero, rdzeń nie policzył
- * jeszcze nic. Zdanie ostatnie podaje liczbę widoczną i nazywa ją dolną —
- * tak samo jak zapowiedź retencji nazywa swoją.
+ * Zdanie o stracie niesie trzy różne prawdy osobnymi zdaniami, bo rdzeń mógł policzyć całość, policzyć zero albo nie policzyć jeszcze nic.
  */
 function zdanieStraty(wskazanie: WskazanieCzyszczenia): string {
   const koniec =
@@ -167,7 +122,7 @@ function zdanieStraty(wskazanie: WskazanieCzyszczenia): string {
   );
 }
 
-/** Części modalu, po które sięga przebieg czynności. */
+/** Części modalu, po które sięga przebieg czynności czyszczenia — od dialogu przez pas stanu po parę przycisków. */
 interface RamaCzyszczenia {
   modal: HTMLDialogElement;
   pas: HTMLElement;
@@ -193,9 +148,7 @@ function zlozRame(wskazanie: WskazanieCzyszczenia): RamaCzyszczenia {
   tytul.textContent = 'Wyczyścić całą historię tego okna?';
   naglowek.append(tytul, utworzDymekObjasnienia(OBJASNIENIE));
 
-  // Wykaz jednopozycyjny — bytem czynności jest okno i ma być nazwane, tak jak
-  // w torze sesji nazwane są tytuły sesji. Pusty wykaz zostawiłby stratę bez
-  // adresata.
+  // Wykaz jednopozycyjny nazywa okno jako byt czynności, jak tor sesji nazywa tytuły w wykazie.
   const wykaz = document.createElement('ul');
   wykaz.className = 'dn-usuwanie__wykaz';
   const pozycja = document.createElement('li');
@@ -242,9 +195,7 @@ function zlozRame(wskazanie: WskazanieCzyszczenia): RamaCzyszczenia {
 }
 
 /**
- * Stan `ladowanie`: czynność biegnie, a oba przyciski zostają klikalne. Przed
- * powtórzeniem broni strażnik `wToku`, a nie `disabled` — przycisk odpowiada
- * zdaniem, dlaczego nie ma czego zrobić.
+ * Stan ładowania: czynność biegnie, oba przyciski zostają klikalne, a przed powtórzeniem broni strażnik pracy w toku, nie blokada przycisku.
  */
 function zapowiedzWywolanie(rama: RamaCzyszczenia): void {
   zapowiedzPowod(rama.wyczysc, ODMOWA_POWTORZENIA);
@@ -253,19 +204,19 @@ function zapowiedzWywolanie(rama: RamaCzyszczenia): void {
   oznaczFaze(rama.modal, rama.pas, 'ladowanie');
 }
 
-/** Powód bezskuteczności zapowiedziany pod kursorem i czytnikowi, nie blokadą. */
+/** Powód bezskuteczności przycisku zapowiedziany pod kursorem myszy i czytnikowi ekranu, nigdy samą blokadą przycisku. */
 function zapowiedzPowod(kontrolka: HTMLButtonElement, powod: string): void {
   kontrolka.title = powod;
   kontrolka.setAttribute('aria-description', powod);
 }
 
-/** Zdjęcie zapowiedzi po odpowiedzi rdzenia — przyciski znów mają skutek. */
+/** Zdjęcie zapowiedzi bezskuteczności po odpowiedzi rdzenia — przyciski odzyskują wtedy realny skutek dla Operatora. */
 function zdejmijPowod(kontrolka: HTMLButtonElement): void {
   kontrolka.title = '';
   kontrolka.removeAttribute('aria-description');
 }
 
-/** Odpowiedź na kliknięcie, które w tej chwili nie ma czego wykonać. */
+/** Odpowiedź na kliknięcie przycisku, który w danej chwili nie ma czego wykonać, wyjaśniona wprost Operatorowi. */
 function powiedzDlaczegoNieTeraz(rama: RamaCzyszczenia, powod: string): void {
   rama.skutek.textContent = powod;
   rama.skutek.hidden = false;
@@ -298,8 +249,7 @@ function pokazOdpowiedz(
   rama.ostrzezenie.hidden = true;
   const zdanie = `Usunięto ${odpowiedz.deleted} pozycji historii tego okna.`;
 
-  // Nic nie zginęło — to stan pusty czynności i tak go nazywamy. Zapis, który
-  // się ostał, nie ma prawa wyglądać jak zapis skasowany.
+  // Nic nie zginęło — to stan pusty czynności, a ostały się zapis nie wygląda jak skasowany.
   if (odpowiedz.deleted === 0) {
     rama.pas.textContent = `${zdanie} Nie było czego usuwać — historia tego okna była już pusta.`;
     oznaczFaze(rama.modal, rama.pas, 'puste');

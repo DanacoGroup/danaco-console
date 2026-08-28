@@ -22,7 +22,8 @@ func naBaze[T ~string](slownik map[T]string, wartosc T, domyslna T, pole string)
 	return kolumna, nil
 }
 
-// zBazy przekłada wartość kolumny na wartość kontraktu.
+// zBazy przekłada wartość kolumny bazy danych na wartość kontraktu, wedle
+// przekazanego słownika przekładu.
 func zBazy[T ~string](slownik map[string]T, kolumna string, pole string) (T, error) {
 	wartosc, znana := slownik[kolumna]
 	if !znana {

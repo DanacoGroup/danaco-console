@@ -1,13 +1,7 @@
 import { narzedzie, profil, type ProfilModulu } from './profil-modulu';
 
 /**
- * Profile pięciu modułów pracy inżynierskiej: Terminal, Developer,
- * Diagnostics, Apps, Agents.
- *
- * Terminal zostaje bez własnej postaci rozmowy: nie jest samodzielnym modułem
- * i nie występuje jako niezależna sesja — jest oknem pomocniczym wewnątrz
- * Developera, Diagnostics i Apps. Wpis pozostaje więc na `POSTAC_DOMYSLNA`,
- * bo ustalenie mu postaci rozmowy utrwalałoby go jako moduł, którym nie jest.
+ * Profile pięciu modułów pracy inżynierskiej — Terminal, Developer, Diagnostics, Apps i Agents — gdzie Terminal zostaje bez własnej postaci rozmowy, będąc oknem pomocniczym wewnątrz pozostałych modułów.
  */
 export const PROFILE_INZYNIERII: readonly ProfilModulu[] = [
   profil(
@@ -74,10 +68,7 @@ export const PROFILE_INZYNIERII: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Nacisk modułu leży na oknach pomocniczych, nie na rozmowie, więc
-      // wszystkie cztery okna kontekstu (edytor kodu, eksplorator plików,
-      // repozytorium projektu, logi budowania) są obowiązkowe. Rozmowa może
-      // rozszerzyć się do czterech współpracujących okien.
+      // Nacisk modułu leży na oknach pomocniczych, więc cztery okna kontekstu są obowiązkowe, nie rozmowa.
       postacRozmowy: 'okno',
       granicaOkien: 4,
       pamiecSesyjna: true,
@@ -116,12 +107,7 @@ export const PROFILE_INZYNIERII: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Rozmowa jest częścią analizy problemów, ale główną rolę pełnią logi,
-      // błędy i raporty diagnostyczne — stąd trzy okna obowiązkowe. Czwarte,
-      // Diagnostics Center, jest agregatem widoku i zostaje oknem możliwym.
-      //
-      // Okna telemetrii tu nie ma: nie jest ustalone, co miałoby mierzyć,
-      // a tabel `polaczenie` i `proces_sesji` rdzeń nie prowadzi.
+      // Rozmowa jest częścią analizy, ale rolę główną pełnią logi — stąd trzy okna obowiązkowe.
       postacRozmowy: 'okno',
       granicaOkien: 4,
       pamiecSesyjna: true,
@@ -166,8 +152,7 @@ export const PROFILE_INZYNIERII: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Pełna sesja z multitaskingiem do czterech niezależnych okien; każde
-      // okno bierze frontend, backend, architekturę albo wdrożenie.
+      // Pełna sesja z multitaskingiem do czterech okien: frontend, backend, architektura albo wdrożenie.
       postacRozmowy: 'okno',
       granicaOkien: 4,
       pamiecSesyjna: true,
@@ -211,13 +196,7 @@ export const PROFILE_INZYNIERII: readonly ProfilModulu[] = [
       ),
     ],
     {
-      // Jedno okno pełniące wyłącznie funkcję testową: bez trwałej pamięci
-      // sesyjnej, historii projektu i kontynuacji po zamknięciu. Zmiana
-      // testowanego agenta rozpoczyna nowy kontekst roboczy.
-      //
-      // `pamiecSesyjna: false` znaczy dwa czyszczenia, nie jedno: przy
-      // zamknięciu okna i przy zmianie testowanego agenta. Operator jest
-      // o każdym uprzedzany, bo czat gubiący wątek po cichu wygląda jak awaria.
+      // Jedno okno pełni funkcję testową, bez trwałej pamięci — zmiana agenta rozpoczyna nowy kontekst.
       postacRozmowy: 'okno',
       granicaOkien: 1,
       pamiecSesyjna: false,

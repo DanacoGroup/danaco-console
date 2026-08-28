@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: instrukcje systemowe projektu — okno Instructions
-// Panel modułu Workspace.
-//
-// Instrukcje są ustawieniem ośmiu poziomów zasięgu, więc zapisują się do
-// tabeli `ustawienie` pod kluczem `workspace.instrukcje`, a warstwę
-// obowiązującą wskazuje pakiet `internal/konfig` — ten sam, który rozstrzyga
-// resztę konfiguracji. Drugiej tabeli instrukcji i drugiego porządku poziomów
-// nie ma.
-//
-// Kontrakt daje Instructions Panel wyłącznie komendę zapisu, dlatego jej wynik
-// niesie warstwę obowiązującą, a nie echo żądania: zapis na poziomie projektu
-// bywa przykryty zapisem karty sesji albo okna, a panel ma pokazać treść,
-// poziom i byt poziomu, które obowiązują po zapisie.
+// Plik obsługuje instrukcje systemowe projektu dla okna Instructions Panel modułu Workspace. Instrukcje są ustawieniem ośmiu poziomów zasięgu, zapisywanym pod kluczem `workspace.instrukcje`.
 package core
 
 import (
@@ -56,10 +44,7 @@ func (a *adapterPrzestrzeniRoboczej) ZapiszInstrukcje(ctx context.Context,
 	if err := a.repozytorium.OdnotujCzynnosc(ctx, projekt.ID); err != nil {
 		return shared.WorkspaceInstructionsSetResponse{}, err
 	}
-	// Historia instrukcji rośnie przy zapisie, a nie przy odczycie panelu
-	// „Wersje": wersja nieodłożona w chwili zmiany nie da się odtworzyć później
-	// z niczego. Niepowodzenie odłożenia nie unieważnia zapisu, który już
-	// osiadł — dlatego wynik nie wraca odmową.
+	// Historia instrukcji rośnie przy zapisie, nie przy odczycie panelu „Wersje".
 	_, _ = a.repozytorium.ZapiszWersjeInstrukcjiWorkspace(ctx, dane.WersjaInstrukcjiWorkspace{
 		ProjektID: projekt.ID, Identyfikator: nowyIdentyfikator("wsiv-"),
 		Tresc: tresc, Odcisk: odciskTresci(tresc), Poziom: poziom, KluczZasiegu: bytPoziomu,
@@ -89,15 +74,7 @@ func adresInstrukcji(z shared.WorkspaceInstructionsSetRequest, idProjektu string
 	return poziom, ""
 }
 
-// instrukcjeObowiazujace rozstrzyga warstwę instrukcji obowiązującą w projekcie.
-//
-// Kontekst rozstrzygania niesie poziom projektu, a gdy zapis poszedł na poziom
-// węższy (karta sesji, rola, okno) — także jego byt. Bez tego rozstrzyganie
-// przeszłoby obok warstwy właśnie zapisanej i panel pokazałby jako
-// obowiązującą warstwę szerszą.
-//
-// Brak rozstrzygacza nie jest błędem: wynik schodzi wtedy na treść zapisaną,
-// bo zapis już się powiódł.
+// instrukcjeObowiazujace rozstrzyga warstwę instrukcji obowiązującą w projekcie. Kontekst niesie poziom projektu, a gdy zapis poszedł na węższy — także jego byt. Brak rozstrzygacza nie jest błędem: wynik schodzi wtedy na treść zapisaną.
 func (a *adapterPrzestrzeniRoboczej) instrukcjeObowiazujace(idProjektu string,
 	poziom shared.ConfigScope, bytPoziomu, zapisana string) shared.WorkspaceInstructions {
 

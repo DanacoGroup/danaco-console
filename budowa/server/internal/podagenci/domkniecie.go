@@ -1,24 +1,6 @@
-// Domknięcie stanu podagenta — żeby wiersz nie został w stanie biegnącym,
-// którego nikt nie prowadzi.
-//
-// Praca podagenta biegnie goroutine, a jej odwołanie leży w wykazie prac pod
-// kodem podagenta. Kiedy praca się kończy — także gdy kończy błędem — wykaz
-// zwalnia się przez `defer`. Zapis stanu końcowego idzie po tym i sam też
-// potrafi paść, choćby na `database is locked`. Zostaje wtedy wiersz w stanie
-// niekońcowym bez uchwytu do pracy, a `subagent.stop` odwołuje wyłącznie po
-// uchwycie: uchwytu nie ma, więc melduje `notRunning` i wiersza nie rusza.
-// Podagent stoi w `pending`/`running` do końca życia bazy.
-//
-// Odpowiedzią jest domknięcie, a nie zapisywanie `stopped` zawsze, bo
-// `notRunning` niesie potrzebną wiedzę: Operator zatrzymujący wielu podagentów
-// ma wiedzieć, których zdążył zatrzymać, a którzy skończyli sami. Domknięcie
-// robi rzecz węższą — bierze wyłącznie wiersze niekońcowe, których pracy nikt
-// nie prowadzi, i przestawia je na stan końcowy. Wiersz zakończony zostaje
-// nietknięty, a jego kod nadal wraca w `notRunning`.
-//
-// Zapis jest uparty, nie jednokrotny: nieudany wraca tu jeszcze kilka razy
-// z rosnącym odstępem. Rywalizacja o zapis w SQLite jest chwilowa, a jedna
-// nieudana próba zamieniłaby ją w stan trwale nieprawdziwy.
+// Domknięcie stanu podagenta, żeby wiersz nie został w stanie biegnącym,
+// którego nikt nie prowadzi; zapis stanu końcowego jest uparty, ponawiany
+// kilka razy.
 package podagenci
 
 import (
@@ -29,10 +11,8 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// WyjasnienieDomkniecia trafia w pole `wynik` wiersza domkniętego, ale wyłącznie
-// gdy pole jest puste — warunek stawia `wyjasnienieGdyPusto`, nie zapytanie.
-// Praca oddana przed urwaniem jest ważniejsza niż wyjaśnienie, dlaczego się
-// urwała. Zdanie jest po polsku, bo czyta je Operator w panelu zadań w tle.
+// WyjasnienieDomkniecia trafia w pole wynik wiersza domkniętego, ale wyłącznie
+// gdy pole jest puste, po polsku, bo czyta je Operator.
 const WyjasnienieDomkniecia = "Praca nie jest prowadzona przez żaden proces, " +
 	"a wiersz stał w stanie biegnącym — stan domknięto, żeby nie kłamał. " +
 	"Powołaj podagenta na nowo, jeśli zadanie ma być dokończone."
@@ -42,7 +22,8 @@ const WyjasnienieDomkniecia = "Praca nie jest prowadzona przez żaden proces, " 
 // rywalizacja o zapis w bazie trwa milisekundy, więc jest to zapas z nawiązką.
 const ProbyZapisuStanu = 6
 
-// odstepPierwszejProby otwiera podwajanie odstępów.
+// odstepPierwszejProby otwiera stopniowe podwajanie odstępów między kolejnymi
+// próbami zapisu tego stanu.
 const odstepPierwszejProby = 20 * time.Millisecond
 
 // StanPodagenta jest wąskim kontraktem zapisu — tyle z repozytorium
@@ -52,15 +33,8 @@ type StanPodagenta interface {
 	UstawStan(ctx context.Context, kod, stan string, wynik *string) error
 }
 
-// ZapiszStan zapisuje stan podagenta, ponawiając podejście po niepowodzeniu.
-//
-// Kontekst zerwany kończy ponawianie od razu: zatrzymany rdzeń nie ma po co
-// czekać na bazę, a zapis pod kontekstem odwołanym i tak nie ma prawa się udać.
-// Dlatego wołający podaje kontekst żywy — życie rdzenia — a nie kontekst
-// odwołanej pracy.
-//
-// Trwałość pusta kończy się błędem nazywającym jej brak, a nie meldunkiem
-// udanego zapisu: nie ma gdzie zapisać, więc nie ma czego ponawiać.
+// ZapiszStan zapisuje stan podagenta, ponawiając podejście po niepowodzeniu;
+// kontekst zerwany kończy ponawianie od razu.
 func ZapiszStan(ctx context.Context, trwalosc StanPodagenta,
 	kod, stan string, wynik *string) error {
 
@@ -106,18 +80,9 @@ type Domkniecie struct {
 	JuzKoncowe []string
 }
 
-// DomknijNieczynnych przestawia na `stopped` każdy wiersz z wykazu, który stoi
-// w stanie niekońcowym — bo wołający właśnie stwierdził, że pracy tych
-// podagentów nikt nie prowadzi.
-//
-// Woła się po stwierdzeniu bezczynności, nie zamiast niego. Wykaz podaje
-// wołający i to on odpowiada za to, że praca tych podagentów naprawdę nie
-// biegnie: przy `subagent.stop` są to kody, dla których odwołanie pracy nie
-// miało czego odwołać. Sam przegląd żywotności nie mierzy.
-//
-// Błąd jednego wiersza nie przerywa pozostałych — domknięcie części wykazu jest
-// lepsze niż odmowa domknięcia całości. Pierwszy napotkany błąd wraca po
-// przejściu całego wykazu.
+// DomknijNieczynnych przestawia na stan zatrzymany każdy wiersz z wykazu,
+// który stoi w stanie niekońcowym, po stwierdzeniu bezczynności przez
+// wołającego.
 func DomknijNieczynnych(ctx context.Context, trwalosc StanPodagenta,
 	wiersze []dane.Podagent) (Domkniecie, error) {
 
@@ -141,14 +106,7 @@ func DomknijNieczynnych(ctx context.Context, trwalosc StanPodagenta,
 }
 
 // wyjasnienieGdyPusto oddaje wyjaśnienie wyłącznie dla wiersza, który wyniku
-// jeszcze nie ma.
-//
-// `ustawStanPodagenta` (`dane/orkiestracja_podagenci.go`) pisze
-// `wynik = COALESCE(?, wynik)`, a COALESCE bierze pierwszą wartość niepustą —
-// wyjaśnienie podane niepuste nadpisałoby więc pracę, którą podagent zdążył
-// oddać. Skoro zapytanie warunku nie stawia, stawia go wołający: pustkę
-// rozstrzyga wiersz, który już jest w ręku, więc nie kosztuje to ani jednego
-// odczytu więcej.
+// jeszcze nie ma, żeby nie nadpisać pracy już oddanej.
 func wyjasnienieGdyPusto(podagent dane.Podagent) *string {
 	if podagent.Wynik != nil && *podagent.Wynik != "" {
 		return nil

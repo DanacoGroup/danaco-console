@@ -1,10 +1,6 @@
 /**
- * SKŁADNIK — POLE HASŁA Z ODSŁONIĘCIEM.
- *
- * Kontrolka odsłonięcia zmienia typ pola i własną etykietę, więc czytnik
- * ekranu wie, w którym stanie stoi. Dwa znaki leżą w przycisku, a widoczność
- * rozstrzyga arkusz po `aria-pressed` — przełączanie znaków skryptem
- * rozjeżdżałoby się ze stanem kontrolki.
+ * Składnik — pole hasła z odsłonięciem. Kontrolka odsłonięcia zmienia typ
+ * pola i własną etykietę, więc czytnik ekranu wie, w którym stanie stoi.
  */
 
 import { ikony } from '../ikony.ts';
@@ -50,9 +46,7 @@ export function poleHasla(w: WlasciwosciHasla): HTMLElement {
           klasa: 'au-haslo-oko',
           type: 'button',
           'aria-pressed': 'false',
-          // Etykieta kontrolki jest tekstem dla użytkownika, więc stoi
-          // w katalogu treści, nie w tym pliku — tak samo jak jej odpowiednik
-          // po odsłonięciu hasła, który nakłada mechanika okna.
+          // Etykieta kontrolki jest tekstem dla użytkownika, więc stoi w katalogu treści, nie w tym pliku.
           'aria-label': tekst('dostep.haslo.pokaz'),
           dane: { odsloniecie: w.id },
         },

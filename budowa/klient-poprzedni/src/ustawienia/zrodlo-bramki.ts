@@ -12,63 +12,23 @@ import type { Kanal, Wynik } from '../protokol/kanal';
 import { czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Czynności bramki wykonywane po zalogowaniu — komendy `auth.*` należące do
- * Okna Ustawień, nie do ekranu logowania.
- *
- * Rozdział względem `uwierzytelnienie/zrodlo-auth.ts` przebiega po bramce, nie
- * po rodzinie komend: tamto źródło woła `auth.login`, `auth.register`
- * i `auth.token.refresh`, czyli tyle, ile trzeba, żeby wejść. Tych dwóch komend
- * tu nie ma, bo w Oknie Ustawień odmawiałyby zawsze: `auth.register` jest
- * wykonalna tylko raz, a bramka jest już założona w chwili, gdy okno da się
- * otworzyć; `auth.login` jest samą bramką i po jej przejściu nie ma czego
- * otwierać.
- *
- * Metody `hello` (Windows Hello przez WebAuthn) rdzeń nie ma zbudowanej
- * i odmawia jej założenia; przyjmuje hasło i PIN.
- *
- * Komendy odczytu wykazu metod kontrakt nie niesie. Wykaz dociera zdarzeniem
- * `auth.changed`, które rdzeń rozsyła do wszystkich gniazd — także po czynności
- * wykonanej w innym oknie.
- */
+/** Czynności bramki wykonywane po zalogowaniu obejmują komendy uwierzytelniania należące do okna ustawień, nie do ekranu logowania, i różnią się od źródła logowania właśnie tym momentem wywołania. */
 export interface ZrodloBramki {
-  /**
-   * `auth.method.add` — założenie metody szybkiego wejścia na urządzeniu.
-   *
-   * Hasła ta komenda nie zakłada: kotwica powstaje przy `auth.register`.
-   * Przyjmowana metoda to PIN.
-   */
+  /** Zakłada metodę szybkiego wejścia; hasła nie zakłada, bo kotwica powstaje przy rejestracji. */
   zalozMetode(zadanie: AuthMethodAddRequest): Promise<Wynik<{ methods: AuthMethod[] }>>;
-  /**
-   * `auth.method.remove` — zdjęcie metody szybkiego wejścia z urządzenia.
-   *
-   * Ani ostatniej metody, ani hasła zdjąć się nie da — hasło jest kotwicą
-   * bramki. Odmowę orzeka rdzeń; okno jej nie uprzedza.
-   */
+  /** Zdejmuje metodę szybkiego wejścia z urządzenia; ani ostatniej metody, ani hasła zdjąć się nie da. */
   zdejmijMetode(
     idMetody: string,
     idUrzadzenia?: string,
   ): Promise<Wynik<{ methods: AuthMethod[]; removed: boolean }>>;
-  /**
-   * `auth.password.reset` — zmiana hasła ze znanym hasłem bieżącym.
-   *
-   * Drogi odzyskania listem na adres e-mail nie ma — rdzeń poczty nie wysyła.
-   * Wynik niesie liczbę sesji unieważnionych zmianą, poza bieżącą.
-   */
+  /** Zmienia hasło ze znanym hasłem bieżącym; wynik niesie liczbę sesji unieważnionych zmianą. */
   zmienHaslo(
     biezace: string,
     nowe: string,
   ): Promise<Wynik<AuthPasswordResetResponse>>;
-  /** `auth.token.refresh` — jawne przedłużenie sesji bramki. */
+  /** Jawne przedłużenie sesji bramki. */
   przedluzSesje(token: string): Promise<Wynik<AuthTokenRefreshResponse>>;
-  /**
-   * Subskrypcja `auth.changed` — jedyna droga, którą wykaz metod dociera bez
-   * czynności wykonanej w tym oknie.
-   *
-   * Zdarzenie niesie powód zmiany i komplet metod po niej. Pole `methods` jest
-   * w kontrakcie opcjonalne; gdy go brak, słuchacz dostaje sam powód —
-   * podstawianie w to miejsce wykazu poprzedniego byłoby zgadywaniem za rdzeń.
-   */
+  /** Subskrypcja zmiany bramki: jedyna droga, którą wykaz metod dociera bez czynności w tym oknie. */
   naZmianeBramki(sluchacz: (zmiana: AuthChangedEvent) => void): Odsubskrybuj;
 }
 

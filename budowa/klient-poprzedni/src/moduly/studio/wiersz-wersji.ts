@@ -1,27 +1,6 @@
 import { StudioAuthor, type StudioVersion } from '../../../../shared/contract';
 
-/**
- * Wiersz historii wersji — czas, autor, kropka stanu, etykieta i czynności.
- *
- * ── Kropka stanu, nie sama nazwa ────────────────────────────────────────────
- * Wersja bieżąca jest wyróżniona kropką pełną, archiwalne mają kropkę pustą.
- * Stan nigdy samą barwą: kropce towarzyszy słowo, bo barwa bez słowa nie mówi
- * nic Operatorowi, który jej nie rozróżnia.
- *
- * ── Trzy czynności i menu pozycji ───────────────────────────────────────────
- * Podgląd, Przywróć, Porównaj stoją wprost, bo po nie sięga się najczęściej.
- * Etykieta, eksport, odwołanie i schowanie miejscowe siedzą w menu pozycji
- * rozwijanym `⋯` — wiersz z siedmioma przyciskami byłby nieczytelny, a te cztery
- * są czynnościami rzadkimi.
- *
- * ── Czego tu nie ma ─────────────────────────────────────────────────────────
- * Czynności „Rozgałęź" — decyzją Właściciela gałęzie są poza zakresem tej tury.
- * Komendy `studio.branch.*` pracują w rdzeniu dalej.
- *
- * Plik nie woła rdzenia: oddaje przyciski, a rozmowę prowadzi okno historii.
- */
-
-/** Wiersz wersji wraz z jego przyciskami. */
+/** Interfejs WierszWersji niesie wiersz historii wersji dokumentu wraz z przyciskami: podgląd, przywrócenie, porównanie oraz przyciski menu pozycji. */
 export interface WierszWersji {
   element: HTMLElement;
   podejrzyj: HTMLButtonElement;
@@ -36,7 +15,7 @@ export interface WierszWersji {
   oznaczNiedostepna(powod: string): void;
 }
 
-/** Postać wiersza znana oknu, a nie samej wersji. */
+/** Interfejs PostacWiersza niesie postać wiersza wersji znaną oknu historii, a nie samej wersji dokumentu: czy jest bieżąca i czy pochodzi z zapisu samoczynnego. */
 export interface PostacWiersza {
   /** Czy ta wersja jest wersją bieżącą dokumentu. */
   biezaca: boolean;
@@ -143,12 +122,7 @@ export function utworzWierszWersji(
     odwolanie,
     usun,
 
-    /**
-     * Oznacza wersję jako nieosiągalną wraz z powodem odmowy rdzenia.
-     *
-     * Przyciski schodzą, bo powtórzenie tej samej odmowy niczego nie zmieni;
-     * powód zostaje przy wierszu, żeby Operator wiedział, czego dotyczyła.
-     */
+    // Oznacza wersję jako nieosiągalną z powodem odmowy rdzenia i wyłącza przywrócenie oraz podgląd.
     oznaczNiedostepna(powod) {
       element.dataset['dostepnosc'] = 'niedostepna';
       plakietka.className = 'dn-plakietka dn-plakietka--blad';
@@ -172,7 +146,7 @@ function przyciskWiersza(nazwa: string, kod: string, objasnienie: string): HTMLB
   return element;
 }
 
-/** Nazwa autora wersji; brak pola oddaje kreskę, a nie Operatora. */
+/** Funkcja nazwaAutora zwraca nazwę autora wersji dokumentu; brak pola autora oddaje kreskę, a nie nazwę roli użytkownika. */
 function nazwaAutora(autor: StudioAuthor | undefined): string {
   if (autor === StudioAuthor.Model) return 'model';
   if (autor === StudioAuthor.Uzytkownik) return 'Operator';

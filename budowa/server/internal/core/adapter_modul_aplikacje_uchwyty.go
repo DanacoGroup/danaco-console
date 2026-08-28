@@ -1,22 +1,6 @@
-// Wpięcie czterdziestu jeden komend modułu Apps: port `Aplikacje`, przez który rejestr
-// komend rdzenia dociera do adaptera złożonego z `adapter_modul_aplikacje.go`
-// (architektura), `adapter_modul_aplikacje_wdrozenie.go` (warsztat, wdrożenia)
-// i `adapter_modul_aplikacje_odczyt.go` (trzy komendy odczytu) — jeden typ
-// `adapterAplikacji`, kilka plików.
-//
-// Port wymienia wszystkie komendy modułu: rejestr rdzenia potrzebuje jednego
-// miejsca wiążącego nazwę komendy z metodą portu (tak samo
-// `adapter_modul_library_uchwyty.go`).
-//
-// `apps.deployment.run` rozgłasza `apps.build.changed` przy każdym przejściu
-// stanu przebiegu (`pending` → `running` → `succeeded`/`failed`) — silnik
-// wykonania leży w `adapter_modul_aplikacje_wdrozenie_bieg.go`, a obsługiwacz
-// podpina adapterowi drogę do emitera przez `PodepnijPrzyrostWdrozenia`, tak
-// jak `zarejestrujDevelopera` robi to z `PodepnijPrzyrostBudowania`.
-//
-// `apps.workspace.changed` rozgłasza `warsztatApp` niżej, drogą podpiętą przez
-// `PodepnijPrzyrostWarsztatu`; bez niego drugie okno tej samej przestrzeni nie
-// dowiaduje się o zmianie pliku.
+// Plik wpina komendy portu Aplikacje modulu Apps do rejestru rdzenia; adapter laczy
+// adapter_modul_aplikacje.go, adapter_modul_aplikacje_wdrozenie.go i
+// adapter_modul_aplikacje_odczyt.go w jeden typ adapterAplikacji.
 package core
 
 import (
@@ -25,31 +9,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// Aplikacje jest portem modułu Apps.
+// Aplikacje jest portem modulu Apps: zbiorem metod, przez ktore rejestr komend
+// rdzenia dociera do adaptera obslugujacego produkt, architekture, warsztat i wdrozenia.
 type Aplikacje interface {
 	ZdefiniujArchitekture(ctx context.Context, z shared.AppsArchitectureDefineRequest) (shared.AppsArchitectureDefineResponse, error)
 	ZaktualizujPrzestrzen(ctx context.Context, z shared.AppsWorkspaceUpdateRequest) (shared.AppsWorkspaceUpdateResponse, error)
 	UruchomWdrozenie(ctx context.Context, z shared.AppsDeploymentRunRequest) (shared.AppsDeploymentRunResponse, error)
-	// Trzy komendy odczytu — droga powrotna do wierszy zapisanych trzema
-	// komendami wyżej. Bez nich okno po odświeżeniu nie ma kogo zapytać o
-	// własną historię wdrożeń, architekturę ani warsztat.
+	// Trzy komendy odczytu daja droge powrotna do wierszy zapisanych trzema komendami wyzej.
 	WypiszWdrozenia(ctx context.Context, z shared.AppsDeploymentListRequest) (shared.AppsDeploymentListResponse, error)
 	PobierzArchitekture(ctx context.Context, z shared.AppsArchitectureGetRequest) (shared.AppsArchitectureGetResponse, error)
 	WypiszPlikiWarsztatu(ctx context.Context, z shared.AppsWorkspaceListRequest) (shared.AppsWorkspaceListResponse, error)
-	// PodepnijPrzyrostWdrozenia oddaje adapterowi drogę do zdarzenia zmiany
-	// wdrożenia. Silnik wykonania przesuwa przebieg przez stany już po
-	// odesłaniu odpowiedzi komendy, więc rozgłoszenie tych przejść nie może
-	// wychodzić wyłącznie z obsługiwacza żądania (wzór modułu Developer).
+	// PodepnijPrzyrostWdrozenia oddaje adapterowi droge do zdarzenia zmiany wdrozenia.
 	PodepnijPrzyrostWdrozenia(rozglos func(shared.ChangeKind, shared.AppDeployment))
-	// PodepnijPrzyrostWarsztatu oddaje adapterowi drogę do
-	// `apps.workspace.changed`. Rozgłoszenie idzie wprawdzie z obsługiwacza
-	// komendy, ale drogą taką samą jak wdrożeniowa — emiter należy do rdzenia,
-	// nie do adaptera.
+	// PodepnijPrzyrostWarsztatu oddaje adapterowi droge do zdarzenia apps.workspace.changed.
 	PodepnijPrzyrostWarsztatu(rozglos func(shared.ChangeKind, string, shared.AppWorkspaceLayer, shared.DeveloperFile))
-	// PodepnijPrzyrostEtapu oddaje adapterowi drugą drogę do
-	// `apps.build.changed`: zmianę etapu budowy. Zdarzenie jest jedno, bo
-	// Product Builder czyta z niego i oś etapów, i stan wdrożenia — ale byty są
-	// dwa, więc drogi też są dwie.
+	// PodepnijPrzyrostEtapu oddaje adapterowi druga droge do zdarzenia apps.build.changed.
 	PodepnijPrzyrostEtapu(rozglos func(shared.ChangeKind, shared.AppStage))
 
 	// --- Product Builder: produkt, etapy, kamienie milowe, oś czasu ---
@@ -152,8 +126,7 @@ func zarejestrujAplikacje(r *Rejestr, m Aplikacje, e *emiter) {
 	r.Zarejestruj(shared.CommandAppsDeploymentDomainSet, obsluz(m.UstawDomene))
 	r.Zarejestruj(shared.CommandAppsDeploymentScaleSet, obsluz(m.UstawSkalowanie))
 	r.Zarejestruj(shared.CommandAppsDeploymentHealthGet, obsluz(m.PobierzKondycje))
-	// Audyt wydajności zdarzenia nie rozgłasza: mierzy stronę i niczego w niej
-	// nie zmienia, tak samo jak odczyt kondycji wdrożenia.
+	// Audyt wydajnosci zdarzenia nie rozglasza: mierzy strone i niczego w niej nie zmienia.
 	r.Zarejestruj(shared.CommandAppsPerformanceAudit, obsluz(m.ZmierzWydajnosc))
 
 	r.Zarejestruj(shared.CommandAppsServiceLogRead, obsluz(m.OdczytajDziennikUslugi))
@@ -177,11 +150,8 @@ func (e *emiter) etapApp(zmiana shared.ChangeKind, etap shared.AppStage) {
 	})
 }
 
-// warsztatApp rozgłasza `apps.workspace.changed` po zapisie pliku warsztatu.
-// Sesja komunikatu zostaje pusta, tak jak przy `apps.build.changed`: warsztat
-// należy do okna, a rdzeń nie sięga stąd do rejestru okien po jego sesję —
-// zdarzenie idzie do wszystkich połączeń konta i niesie `windowId`, po którym
-// klient je przypisuje.
+// warsztatApp rozglasza zdarzenie apps.workspace.changed po zapisie pliku warsztatu;
+// sesja komunikatu zostaje pusta, bo warsztat nalezy do okna, a nie do sesji rdzenia.
 func (e *emiter) warsztatApp(zmiana shared.ChangeKind, okno string,
 	warstwa shared.AppWorkspaceLayer, plik shared.DeveloperFile) {
 
@@ -193,15 +163,8 @@ func (e *emiter) warsztatApp(zmiana shared.ChangeKind, okno string,
 	})
 }
 
-// wdrozenieApp rozgłasza `apps.build.changed` przy zmianie stanu przebiegu
-// wdrożenia. Zdarzenie łączy etap budowy produktu z wdrożeniem (jego pole
-// `Stage` jest wspólne dla obu źródeł zmiany); przy zmianie samego wdrożenia
-// przebieg jedzie w polu `Deployment`, a `Stage` niesie tylko okno, którego
-// zmiana dotyczy — nie ma tu etapu Product Buildera do pokazania.
-//
-// Sesja komunikatu zostaje pusta: wdrożenie należy do okna, a rdzeń rozgłasza
-// jego koniec także wtedy, gdy okna nie ma już w rejestrze — przebieg przeżywa
-// zamknięcie okna, a klient ma prawo zobaczyć jego wynik.
+// wdrozenieApp rozglasza zdarzenie apps.build.changed przy zmianie stanu przebiegu
+// wdrozenia; pole Stage niesie okno zmiany, a pole Deployment sam przebieg.
 func (e *emiter) wdrozenieApp(zmiana shared.ChangeKind, wdrozenie shared.AppDeployment) {
 	e.wyslij(shared.EventAppsBuildChanged, "", shared.AppsBuildChangedEvent{
 		Change:     zmiana,

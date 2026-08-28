@@ -2,32 +2,10 @@ import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';
 import { elementIkony, type NazwaIkony } from '../../ikony/ikony';
 
 /**
- * Cztery stany okna operacyjnego Studio: pusty, ładowania, błędu, gotowy.
- *
- * Rozróżnienie jest treścią: „jeszcze nie pytałem", „pytam" i „rdzeń odmówił"
- * są osobnymi stanami, bo zlanie ich kazałoby Operatorowi zgadywać, czy czekać,
- * czy działać. W Studio różnica jest ostra, bo rdzeń oddaje tu i treść,
- * i pustkę, i odmowę: `document.open` ze ścieżką oddaje dokument pusty,
- * `repository.list` przed pierwszym zapisem — wykaz pusty, `diff.compare` bez
- * wskazanej strony — pustkę, a `document.open` z nieznanym dokumentem odmawia
- * kodem `not_found`. Pusty widok bez powodu byłby nie do odróżnienia od żadnego
- * z tych czterech.
- *
- * Komunikat nie kasuje treści, tylko ją przesłania; wyjątkiem jest ładowanie,
- * które treść ukrywa, bo pokazuje się w jej miejscu.
- *
- * Stan pusty ma jedną formę: znak, tytuł, opis. Znak dochodzi z zestawu
- * (`ikony/ikony`), a nie z własnego rysunku, i jest treścią, nie wariantem —
- * biblioteka `dn-pusty-stan` wariantów CSS nie ma. W fazie ładowania znaku nie
- * ma, bo jego miejsce zajmuje wskaźnik odczytu.
- *
- * Zestaw faz i ich znakowanie pochodzą z `komponenty/faza-okna`: ta sama nazwa
- * fazy trafia do `data-faza` w każdym module, więc wspólny selektor i wspólny
- * sprawdzian mają się o co oprzeć. Tutaj zostaje wyłącznie to, czym Studio
- * różni się świadomie: wskaźnik odczytu i chowanie treści.
+ * Powłoka okna operacyjnego Studio wraz z pasem stanu i miejscem na treść;
+ * pokrywa cztery fazy — pustą, ładowania, błędu i gotową — każdą osobnym
+ * komunikatem, znakiem i wskaźnikiem odczytu, zgodnie z fazami wspólnymi.
  */
-
-/** Powłoka okna wraz z pasem stanu i miejscem na treść. */
 export interface StanOknaStudio {
   /** Element osadzany w oknie; niesie komunikat i treść. */
   element: HTMLElement;
@@ -45,7 +23,10 @@ export interface StanOknaStudio {
   faza(): FazaOkna;
 }
 
-/** Znak formy stanu pustego dobrany do fazy; `null` znaczy „bez znaku". */
+/**
+ * Znak formy stanu pustego dobrany do bieżącej fazy okna; wartość `null`
+ * oznacza fazę bez znaku, w której jego miejsce zajmuje inny element.
+ */
 const ZNAK_FAZY: Record<FazaOkna, NazwaIkony | null> = {
   puste: 'info',
   ladowanie: null,
@@ -53,7 +34,10 @@ const ZNAK_FAZY: Record<FazaOkna, NazwaIkony | null> = {
   gotowe: null,
 };
 
-/** Bok znaku w pikselach — wartość arkusza `.dn-pusty-stan > svg`. */
+/**
+ * Bok znaku formy stanu pustego w pikselach; wartość zgodna z regułą arkusza
+ * stylów dla znaku osadzonego bezpośrednio w formie `.dn-pusty-stan`.
+ */
 const BOK_ZNAKU = 28;
 
 export function utworzStanOknaStudio(): StanOknaStudio {
@@ -65,8 +49,7 @@ export function utworzStanOknaStudio(): StanOknaStudio {
   const komunikat = document.createElement('p');
   komunikat.className = 'dn-pusty-stan-opis';
 
-  // Wskaźnik odczytu stoi obok zdania, nie zamiast niego: Operator ma wiedzieć,
-  // na co czeka, a nie patrzeć na sam obrót.
+  // Wskaźnik stoi obok zdania, nie zamiast niego — operator widzi, na co czeka.
   const wskaznik = document.createElement('span');
   wskaznik.className = 'dn-spinner';
   wskaznik.setAttribute('role', 'status');
@@ -88,8 +71,7 @@ export function utworzStanOknaStudio(): StanOknaStudio {
   element.className = 'ms-stan__powloka';
   element.append(powloka, tresc);
 
-  // Znak jest wymieniany, a nie chowany: `.dn-pusty-stan > svg` wymaga dziecka
-  // bezpośredniego, a `hidden` nie jest własnością elementu SVG.
+  // Znak jest wymieniany, nie chowany: reguła stylu wymaga dziecka bezpośredniego.
   let znak: SVGSVGElement | null = null;
   let nazwaZnaku: NazwaIkony | null = null;
 

@@ -1,6 +1,10 @@
 import type { Message, Window } from '../../../../shared/contract';
 
-/** Wynik jednego wykonawcy przygotowany do zestawienia. */
+/**
+ * Wynik jednego wykonawcy przygotowany do zestawienia. Numer wykonawcy jest
+ * jego miejscem na scenie, a nie identyfikatorem okna; okno oraz ostatnia
+ * domknięta odpowiedź pochodzą wprost z kontraktu.
+ */
 export interface WynikWykonawcy {
   /** Numer wykonawcy na scenie: 1 albo 2. */
   numer: number;
@@ -23,7 +27,11 @@ export function czyRozbiezne(wyniki: readonly WynikWykonawcy[]): boolean {
   return tresci.some((tresc) => tresc !== tresci[0]);
 }
 
-/** Kolumna wyniku jednego wykonawcy. */
+/**
+ * Kolumna wyniku jednego wykonawcy: tytuł z numerem wykonawcy, plakietka stanu
+ * wiadomości oraz treść odpowiedzi. Brak wyniku daje zdanie mówiące o tym
+ * wprost, zamiast pustej kolumny.
+ */
 export function kolumnaWyniku(wynik: WynikWykonawcy): HTMLElement {
   const element = document.createElement('article');
   element.className = 'dm-kolumna';

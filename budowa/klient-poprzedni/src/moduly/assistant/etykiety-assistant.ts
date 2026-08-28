@@ -8,31 +8,15 @@ import {
   SlashEntryKind,
 } from '../../../../shared/contract';
 
-/**
- * Teksty modułu Assistant widoczne dla Operatora.
- *
- * Jedna odpowiedzialność: nazwy i zdania. Pliki budujące elementy nie noszą
- * napisów, bo napis zmienia się z innego powodu niż układ — i zmieniany
- * w dziesięciu miejscach rozjeżdża się między oknami (wzór:
- * `sterowanie/etykiety-sterowania.ts`).
- *
- * Wartości słowników są kluczowane stałymi kontraktu, więc dopisanie stanu
- * w kontrakcie przerywa kompilację tutaj, zamiast wypuścić na ekran pusty
- * napis.
- */
+/** Teksty modułu Assistant widoczne dla Operatora — jedna odpowiedzialność: nazwy i zdania. */
 
 /**
- * Oprawa znaku [?] modułu: pierścień w rzędzie kontrolek, nie kwadratowy
- * przycisk ikonowy biblioteki (`komponenty/dymek.ts`, pole `KlasyDymka`).
- *
- * Stała stoi w tym pliku, bo sięgają po nią wszystkie widoki modułu, a jest
- * jedną nastawą jednego pojęcia — dokładnie jak słowniki poniżej. Kopia
- * w każdym widoku rozjechałaby oprawę dymków między oknami po pierwszej
- * poprawce arkusza.
+ * Oprawa znaku pomocy modułu: pierścień w rzędzie kontrolek, nie kwadratowy przycisk ikonowy
+ * biblioteki. Stała stoi w tym pliku, bo sięgają po nią wszystkie widoki modułu.
  */
 export const KLASY_DYMKA = { powloka: 'ma-dymek', znak: 'ma-dymek__znak' } as const;
 
-/** Nazwa stanu zlecenia w kolumnie „Stan" Actions Monitora. */
+/** Nazwa stanu zlecenia w kolumnie „Stan” Actions Monitora — jeden napis dla każdej wartości wyliczenia stanu. */
 export const NAZWY_STANOW: Readonly<Record<AssistantActionStatus, string>> = {
   [AssistantActionStatus.Queued]: 'W kolejce',
   [AssistantActionStatus.Running]: 'W toku',
@@ -55,19 +39,18 @@ export const PLAKIETKI_STANOW: Readonly<Record<AssistantActionStatus, string>> =
   [AssistantActionStatus.Paused]: 'dn-plakietka dn-plakietka--ostrzezenie',
   [AssistantActionStatus.Done]: 'dn-plakietka dn-plakietka--sukces',
   [AssistantActionStatus.Failed]: 'dn-plakietka dn-plakietka--blad',
-  // Anulowane nie ma własnego wariantu w bibliotece — plakietka bazowa niesie
-  // je bez barwy stanu, a znaczenie niesie napis, nie kolor.
+  // Anulowane nie ma własnego wariantu w bibliotece — plakietka bazowa niesie je bez barwy stanu.
   [AssistantActionStatus.Cancelled]: 'dn-plakietka',
 };
 
-/** Rodzaj wpisu dziennika w Activity Feed. */
+/** Rodzaj wpisu dziennika w Activity Feed — nazwa czytelna dla Operatora, jedna na każdą wartość wyliczenia rodzaju. */
 export const NAZWY_RODZAJOW: Readonly<Record<AssistantActivityKind, string>> = {
   [AssistantActivityKind.Command]: 'Polecenie',
   [AssistantActivityKind.Result]: 'Wynik',
   [AssistantActivityKind.Note]: 'Notatka',
 };
 
-/** Droga wydania polecenia — głosem albo tekstem; jeden zapis dla obu. */
+/** Droga wydania polecenia — głosem albo tekstem; jeden zapis dla obu, wspólny dziennikowi i konsoli poleceń. */
 export const NAZWY_DROG: Readonly<Record<AssistantOrigin, string>> = {
   [AssistantOrigin.Voice]: 'głosem',
   [AssistantOrigin.Text]: 'tekstem',
@@ -91,19 +74,15 @@ export const NAZWY_ZASIEGOW: Readonly<Record<ConfigScope, string>> = {
   [ConfigScope.Window]: 'okno komunikacji',
 };
 
-/** Pochodzenie wpisu pamięci — ręka Operatora albo propozycja modelu. */
+/** Pochodzenie wpisu pamięci — ręka Operatora albo propozycja modelu, nazwane osobno w wykazie pamięci. */
 export const NAZWY_POCHODZEN: Readonly<Record<MemoryEntryOrigin, string>> = {
   [MemoryEntryOrigin.Operator]: 'Operator',
   [MemoryEntryOrigin.Model]: 'model (propozycja)',
 };
 
 /**
- * Poziomy zasięgu pamięci przestawiane w zakładce kontekstów.
- *
- * Wykaz jest krótszy niż `ConfigScope`, bo `memory.toggle` przestawia poziomy
- * WIDOCZNOŚCI pamięci karty sesji, a nie wszystkie poziomy konfiguracji
- * platformy. Cztery poziomy niżej to te, na których pamięć asystenta ma treść:
- * globalny (ustalenia wspólne), projekt, karta sesji i okno komunikacji.
+ * Poziomy zasięgu pamięci przestawiane w zakładce kontekstów — węższy wykaz niż pełny zasięg
+ * konfiguracji, bo obejmuje tylko poziomy widoczności pamięci karty sesji z treścią.
  */
 export const POZIOMY_PAMIECI: readonly ConfigScope[] = [
   ConfigScope.Global,
@@ -112,10 +91,10 @@ export const POZIOMY_PAMIECI: readonly ConfigScope[] = [
   ConfigScope.Window,
 ];
 
-/** Grupy filtra statusu Actions Monitora — nośnik wyboru, nie napis. */
+/** Grupy filtra statusu Actions Monitora — nośnik wyboru, nie napis; nazwę każdej grupy niesie osobny słownik. */
 export type KodFiltraZlecen = 'wszystkie' | 'wToku' | 'zakonczone' | 'nieudane' | 'anulowane';
 
-/** Nazwa grupy filtra; wchodzi także w zdanie pustki po zawężeniu. */
+/** Nazwa grupy filtra widoczna w kontrolce wyboru statusu; wchodzi także w zdanie pustki po zawężeniu wykazu. */
 export const NAZWY_FILTRA: Readonly<Record<KodFiltraZlecen, string>> = {
   wszystkie: 'wszystkie',
   wToku: 'w toku',
@@ -124,7 +103,7 @@ export const NAZWY_FILTRA: Readonly<Record<KodFiltraZlecen, string>> = {
   anulowane: 'anulowane',
 };
 
-/** Pozycje listy wyboru filtra, w kolejności pokazywanej na ekranie. */
+/** Pozycje listy wyboru filtra statusu zleceń, ułożone w kolejności pokazywanej na ekranie kontrolki wyboru. */
 export const POZYCJE_FILTRA: ReadonlyArray<readonly [KodFiltraZlecen, string]> = [
   ['wszystkie', 'Filtr statusu: wszystkie'],
   ['wToku', 'Filtr statusu: w toku'],
@@ -133,7 +112,7 @@ export const POZYCJE_FILTRA: ReadonlyArray<readonly [KodFiltraZlecen, string]> =
   ['anulowane', 'Filtr statusu: anulowane'],
 ];
 
-/** Zakresy wskaźnika wiedzy w zakładkach pamięci semantycznej i bazy wiedzy. */
+/** Zakresy wskaźnika wiedzy w zakładkach pamięci semantycznej i bazy wiedzy — pozycje gotowe do kontrolki wyboru. */
 export const POZYCJE_ZAKRESU_WIEDZY: ReadonlyArray<readonly [KnowledgeScope, string]> = [
   [KnowledgeScope.All, 'Zakres wiedzy: wszystko'],
   [KnowledgeScope.Library, 'Zakres wiedzy: biblioteka'],
@@ -141,26 +120,26 @@ export const POZYCJE_ZAKRESU_WIEDZY: ReadonlyArray<readonly [KnowledgeScope, str
   [KnowledgeScope.Workspace, 'Zakres wiedzy: pliki przestrzeni roboczej'],
 ];
 
-/** Nazwa rodzaju pozycji katalogu w wierszu wykazu narzędzi. */
+/** Nazwa rodzaju pozycji katalogu w wierszu wykazu narzędzi — narzędzie albo umiejętność, albo komenda akcji. */
 export const NAZWY_RODZAJOW_KATALOGU: Readonly<Record<SlashEntryKind, string>> = {
   [SlashEntryKind.Tool]: 'narzędzie albo umiejętność',
   [SlashEntryKind.Action]: 'komenda akcji',
 };
 
-/** Rodzaj pozycji katalogu po ukośniku w filtrze Command & Tools Hub. */
+/** Rodzaj pozycji katalogu po ukośniku w filtrze Command & Tools Hub; wartość „wszystkie” znaczy brak zawężenia. */
 export type KodFiltraKatalogu = 'wszystkie' | SlashEntryKind;
 
-/** Pozycje listy wyboru rodzaju pozycji katalogu narzędzi. */
+/** Pozycje listy wyboru rodzaju pozycji katalogu narzędzi, gotowe do osadzenia wprost w kontrolce filtra. */
 export const POZYCJE_FILTRA_KATALOGU: ReadonlyArray<readonly [KodFiltraKatalogu, string]> = [
   ['wszystkie', 'Rodzaj pozycji: wszystkie'],
   [SlashEntryKind.Tool, 'Rodzaj pozycji: narzędzia i umiejętności'],
   [SlashEntryKind.Action, 'Rodzaj pozycji: komendy akcji'],
 ];
 
-/** Rodzaje wpisu dziennika w filtrze Activity Feed; `wszystkie` bez zawężenia. */
+/** Rodzaje wpisu dziennika w filtrze Activity Feed; wartość „wszystkie” znaczy brak zawężenia całego wykazu. */
 export type KodFiltraDziennika = 'wszystkie' | AssistantActivityKind;
 
-/** Pozycje listy wyboru filtra rodzaju wpisu dziennika. */
+/** Pozycje listy wyboru filtra rodzaju wpisu dziennika, gotowe do osadzenia wprost w kontrolce wyboru filtra. */
 export const POZYCJE_FILTRA_DZIENNIKA: ReadonlyArray<readonly [KodFiltraDziennika, string]> = [
   ['wszystkie', 'Rodzaj wpisu: wszystkie'],
   [AssistantActivityKind.Command, 'Rodzaj wpisu: polecenia'],
@@ -169,17 +148,9 @@ export const POZYCJE_FILTRA_DZIENNIKA: ReadonlyArray<readonly [KodFiltraDziennik
 ];
 
 /**
- * Zdania stanu pustego.
- *
- * Stan pusty tłumaczy, czym okno jest i czym się je zapełnia. Zdanie mówiące
- * wyłącznie, czego nie ma („Brak danych", „Brak działań w historii"), zostawia
- * Operatora przed oknem, o którym nie wie ani po co ono stoi, ani co miałby
- * zrobić, żeby coś w nim zobaczyć. Każde zdanie poniżej ma więc dwie części:
- * czym okno jest i co je zapełni.
- *
- * Każde okno ma swoje zdanie spoczynku, bo jedno wspólne nie nazywa okna,
- * przed którym Operator stoi. Rozróżnienie „przed pytaniem" i „po odpowiedzi"
- * zostaje: to dwa różne fakty i mają dwa różne zdania.
+ * Zdania stanu pustego, z których każde tłumaczy czym okno jest i czym się je zapełnia,
+ * a nie tylko czego w nim nie ma — każde okno ma swoje zdanie spoczynku osobne od zdania
+ * po odpowiedzi rdzenia.
  */
 export const PUSTE = {
   konsolaSpoczynek:
@@ -253,15 +224,8 @@ export const PUSTE = {
 } as const;
 
 /**
- * Zdania wykazu zleceń spoza okna modułu (Actions Monitor, druga tabela).
- *
- * Nie są to zdania stanu pustego i dlatego nie stoją w `PUSTE`: sekcja jest
- * ukryta, dopóki nie ma czego pokazać, więc pustki nie ma czym nazywać.
- *
- * Zdanie `zasieg` mówi wprost, czego w wykazie nie będzie — zleceń zamkniętych
- * przed otwarciem modułu. Wykaz podany bez tego zastrzeżenia wyglądałby na
- * komplet pracy asystenta w sesji, a nim nie jest: kontrakt nie ma odczytu
- * zleceń po sesji.
+ * Zdania wykazu zleceń spoza okna modułu w drugiej tabeli Actions Monitora — sekcja ukryta,
+ * dopóki nie ma czego pokazać, więc zdania stanu pustego jej nie dotyczą.
  */
 export const SPOZA_OKNA = {
   tytul: 'Zlecenia asystenta spoza tego okna',
@@ -273,7 +237,7 @@ export const SPOZA_OKNA = {
     'tak samo jak wyżej — rdzeń przyjmuje je po identyfikatorze zlecenia, nie po oknie.',
 } as const;
 
-/** Zdania stanu ładowania — nazywają wywołanie, nie samą czynność. */
+/** Zdania stanu ładowania — nazywają wywołanie skierowane do rdzenia, nie samą czynność wykonaną przez Operatora. */
 export const ODCZYTY = {
   zlecenia: 'Czytam stan zleceń asystenta…',
   dziennik: 'Czytam dziennik działań…',
@@ -294,17 +258,14 @@ export const ODCZYTY = {
   transkrypcja: 'Silnik rozpoznaje nagranie…',
 } as const;
 
-/** Chwila zapisana w dzienniku, w strefie Operatora. */
+/** Chwila zapisana w dzienniku, sformatowana w strefie czasowej Operatora, a nie w strefie czasowej serwera. */
 export function chwila(znacznik: number): string {
   return new Date(znacznik).toLocaleString('pl-PL');
 }
 
 /**
- * Dzień wpisu — nagłówek grupy chronologicznej Activity Feed.
- *
- * Napis jest jednocześnie kluczem grupowania, więc dwa wpisy z tej samej doby
- * dają dokładnie ten sam łańcuch. Data liczy się w strefie Operatora, bo to
- * jego doba rozdziela „dziś" od „wczoraj", a nie doba serwera.
+ * Dzień wpisu — nagłówek grupy chronologicznej Activity Feed, jednocześnie klucz grupowania
+ * liczony w strefie Operatora, nie w strefie serwera.
  */
 export function dzien(znacznik: number): string {
   return new Date(znacznik).toLocaleDateString('pl-PL', {

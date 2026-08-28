@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: Reading View i ekstrakcja — otwarcie źródła do
-// lektury, adnotacje i wypisy, streszczenie źródła, wydobycie tabel i twierdzeń,
-// rozpoznanie pisma oraz rozmowa oparta na korpusie (`research.corpus.ask`).
-//
-// ── Skąd bierze się treść do czytania ──────────────────────────────────────
-// Źródło niesie tekst w swoim wierszu, jeżeli został już wydobyty (przechwycenie
-// strony, transkrypcja, wcześniejsze rozpoznanie pisma). Gdy go nie ma, treść
-// powstaje z załącznika pełnotekstowego przez port arsenału dokumentowego —
-// ten sam Pandoc i poppler, którymi czyta Library, nie druga ich odmiana. Tekst
-// raz wydobyty zostaje przy źródle: druga lektura tej samej pozycji nie ma po co
-// uruchamiać arsenału po raz drugi.
-//
-// ── Grounding nie jest ozdobą ──────────────────────────────────────────────
-// `research.corpus.ask` odpowiada WYŁĄCZNIE z treści wskazanych źródeł i mówi
-// wprost, czy odpowiedź jest zakotwiczona (`grounded`). Żądanie z `requireGrounding`
-// przy pustym korpusie kończy się odmową, a nie odpowiedzią modelu z pamięci —
-// odpowiedź badawcza bez źródła jest w tym module gorsza niż brak odpowiedzi.
+// Pakiet obsługuje widok lektury badania: otwarcie źródła, adnotacje i wypisy,
+// wydobycie tabel i twierdzeń, rozpoznanie pisma oraz rozmowę opartą na
+// korpusie źródeł komendą `research.corpus.ask`, zakotwiczoną w ich treści.
 package core
 
 import (
@@ -29,17 +15,19 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaLekturyBadania jest domyślną liczbą znaków jednej strony lektury.
+// granicaLekturyBadania jest domyślną liczbą znaków jednej strony lektury,
+// gdy żądanie otwarcia źródła nie poda własnej granicy stronicowania.
 const granicaLekturyBadania = 20000
 
-// OtworzDoLektury obsługuje `research.reading.open`.
+// OtworzDoLektury obsługuje `research.reading.open`: oddaje tekst źródła
+// stronicowany, wydobywając go z załącznika, gdy jeszcze go nie ma.
 func (a *adapterBadan) OtworzDoLektury(ctx context.Context,
 	z shared.ResearchReadingOpenRequest) (shared.ResearchReadingOpenResponse, error) {
 
 	if z.SourceId == "" {
 		return shared.ResearchReadingOpenResponse{}, bladWskazaniaBadan("reading.open bez źródła")
 	}
-	tekst, warstwa, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, warstwa, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchReadingOpenResponse{}, err
 	}
@@ -79,9 +67,10 @@ func (a *adapterBadan) OtworzDoLektury(ctx context.Context,
 
 // trescDoLekturyBadania oddaje tekst źródła, wydobywając go z załącznika, gdy
 // jeszcze go nie ma. `wymusRozpoznanie` żąda rozpoznania pisma nawet wtedy, gdy
-// dokument ma warstwę tekstową — tego chce `research.source.ocr`.
+// dokument ma warstwę tekstową — tego chce `research.source.ocr`, które podaje
+// też `jezyki` i `obrobkaWstepna`; pozostali wywołujący przekazują je puste.
 func (a *adapterBadan) trescDoLekturyBadania(ctx context.Context, kodZrodla string,
-	wymusRozpoznanie bool) (string, bool, error) {
+	wymusRozpoznanie bool, jezyki []string, obrobkaWstepna *bool) (string, bool, error) {
 
 	tresc, err := a.repozytorium.TrescZrodlaBadania(ctx, kodZrodla)
 	if errors.Is(err, dane.ErrBrakWiersza) {
@@ -104,9 +93,13 @@ func (a *adapterBadan) trescDoLekturyBadania(ctx context.Context, kodZrodla stri
 				"przy składaniu rdzenia")
 	}
 	wymuszone := wymusRozpoznanie
-	wynik, err := a.dokumenty.WyciagnijTekst(ctx, shared.DocumentTextExtractRequest{
-		SourcePath: &sciezka, ForceOcr: &wymuszone,
-	})
+	zadanie := shared.DocumentTextExtractRequest{
+		SourcePath: &sciezka, ForceOcr: &wymuszone, Preprocess: obrobkaWstepna,
+	}
+	if jezyk := strings.Join(jezyki, "+"); jezyk != "" {
+		zadanie.Language = &jezyk
+	}
+	wynik, err := a.dokumenty.WyciagnijTekst(ctx, zadanie)
 	if err != nil {
 		return "", false, err
 	}
@@ -154,7 +147,8 @@ func (a *adapterBadan) sciezkaMaterialuBadania(ctx context.Context, kodZrodla st
 
 // ── Adnotacje i wypisy ─────────────────────────────────────────────────────
 
-// DodajAdnotacje obsługuje `research.annotation.add`.
+// DodajAdnotacje obsługuje `research.annotation.add`: zapisuje adnotację albo
+// wypis przy źródle, wraz z kotwicą wskazującą miejsce w tekście.
 func (a *adapterBadan) DodajAdnotacje(ctx context.Context,
 	z shared.ResearchAnnotationAddRequest) (shared.ResearchAnnotationAddResponse, error) {
 
@@ -182,7 +176,8 @@ func (a *adapterBadan) DodajAdnotacje(ctx context.Context,
 	return shared.ResearchAnnotationAddResponse{Annotation: zlozAdnotacjeBadania(zapisana)}, nil
 }
 
-// WypiszAdnotacje obsługuje `research.annotation.list`.
+// WypiszAdnotacje obsługuje `research.annotation.list`: wykaz adnotacji
+// i wypisów zapisanych przy źródle.
 func (a *adapterBadan) WypiszAdnotacje(ctx context.Context,
 	z shared.ResearchAnnotationListRequest) (shared.ResearchAnnotationListResponse, error) {
 
@@ -210,7 +205,8 @@ func (a *adapterBadan) WypiszAdnotacje(ctx context.Context,
 	return shared.ResearchAnnotationListResponse{Annotations: przelozone}, nil
 }
 
-// UsunAdnotacje obsługuje `research.annotation.remove`.
+// UsunAdnotacje obsługuje `research.annotation.remove`: usuwa adnotację albo
+// wypis wskazany identyfikatorem.
 func (a *adapterBadan) UsunAdnotacje(ctx context.Context,
 	z shared.ResearchAnnotationRemoveRequest) (shared.ResearchAnnotationRemoveResponse, error) {
 
@@ -284,7 +280,8 @@ func wypisZAdnotacjiBadania(ctx context.Context, a *adapterBadan,
 	}
 }
 
-// zlozAdnotacjeBadania przekłada wiersz repozytorium na byt kontraktu.
+// zlozAdnotacjeBadania przekłada wiersz repozytorium na byt adnotacji
+// zwracany kontraktem komunikacji, wraz z odczytaną kotwicą.
 func zlozAdnotacjeBadania(a dane.AdnotacjaBadania) shared.ResearchAnnotation {
 	return shared.ResearchAnnotation{
 		Id: a.Kod, SourceId: a.ZrodloKod, Kind: shared.ResearchAnnotationKind(a.Rodzaj),
@@ -294,7 +291,8 @@ func zlozAdnotacjeBadania(a dane.AdnotacjaBadania) shared.ResearchAnnotation {
 	}
 }
 
-// kotwicaDoBazyBadania przekłada kotwicę kontraktu na wiersz.
+// kotwicaDoBazyBadania przekłada kotwicę kontraktu na postać zapisywaną
+// w wierszu bazy danych, jako dokument JSON.
 func kotwicaDoBazyBadania(k shared.ResearchAnchor) dane.KotwicaBadania {
 	kotwica := dane.KotwicaBadania{Rodzaj: string(k.Kind), Selektor: k.Selector, CzasMs: k.TimestampMs}
 	if k.Page != nil {
@@ -312,7 +310,8 @@ func kotwicaDoBazyBadania(k shared.ResearchAnchor) dane.KotwicaBadania {
 	return kotwica
 }
 
-// kotwicaZBazyBadania przekłada wiersz kotwicy na byt kontraktu.
+// kotwicaZBazyBadania przekłada zapisany dokument JSON kotwicy z wiersza
+// bazy danych z powrotem na byt kotwicy kontraktu komunikacji.
 func kotwicaZBazyBadania(k dane.KotwicaBadania) shared.ResearchAnchor {
 	rodzaj := k.Rodzaj
 	if rodzaj == "" {
@@ -347,7 +346,7 @@ func (a *adapterBadan) StreszczZrodlo(ctx context.Context,
 	if z.SourceId == "" {
 		return shared.ResearchSourceSummarizeResponse{}, bladWskazaniaBadan("source.summarize bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceSummarizeResponse{}, err
 	}
@@ -417,11 +416,8 @@ func streszczenieZOdpowiedziBadania(odpowiedz string) dane.StreszczenieZrodlaBad
 	return streszczenie
 }
 
-// WyodrebnijTabele obsługuje `research.source.extractTable`.
-//
-// Wykrywanie idzie po siatce znaków w tekście źródła: wiersz tabeli ma ten sam
-// rozkład separatorów co jego sąsiedzi. To jest heurystyka i tak się nazywa —
-// tabela wykryta wchodzi do odpowiedzi, a Operator decyduje, czy ją utrwalić.
+// WyodrebnijTabele obsługuje `research.source.extractTable`: wykrywa tabele
+// w tekście źródła heurystyką siatki znaków, do decyzji o ich utrwaleniu.
 func (a *adapterBadan) WyodrebnijTabele(ctx context.Context,
 	z shared.ResearchSourceExtractTableRequest) (shared.ResearchSourceExtractTableResponse, error) {
 
@@ -429,7 +425,7 @@ func (a *adapterBadan) WyodrebnijTabele(ctx context.Context,
 		return shared.ResearchSourceExtractTableResponse{},
 			bladWskazaniaBadan("source.extractTable bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceExtractTableResponse{}, err
 	}
@@ -467,7 +463,8 @@ func (a *adapterBadan) WyodrebnijTabele(ctx context.Context,
 	return shared.ResearchSourceExtractTableResponse{Tables: przelozone}, nil
 }
 
-// tabelaTekstowaBadania jest jedną tabelą wykrytą w tekście.
+// tabelaTekstowaBadania jest jedną tabelą wykrytą w tekście źródła, wraz
+// z zakresem wierszy tekstu, z których ją wykryto.
 type tabelaTekstowaBadania struct {
 	naglowki []string
 	wiersze  [][]string
@@ -533,7 +530,8 @@ func komorkiWierszaBadania(wiersz string) []string {
 	return komorki
 }
 
-// WyodrebnijTwierdzenia obsługuje `research.source.extractClaims`.
+// WyodrebnijTwierdzenia obsługuje `research.source.extractClaims`: prosi
+// model o twierdzenia weryfikowalne wydobyte z treści źródła.
 func (a *adapterBadan) WyodrebnijTwierdzenia(ctx context.Context,
 	z shared.ResearchSourceExtractClaimsRequest) (shared.ResearchSourceExtractClaimsResponse, error) {
 
@@ -541,7 +539,7 @@ func (a *adapterBadan) WyodrebnijTwierdzenia(ctx context.Context,
 		return shared.ResearchSourceExtractClaimsResponse{},
 			bladWskazaniaBadan("source.extractClaims bez źródła")
 	}
-	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false)
+	tekst, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, false, nil, nil)
 	if err != nil {
 		return shared.ResearchSourceExtractClaimsResponse{}, err
 	}
@@ -592,7 +590,8 @@ func (a *adapterBadan) RozpoznajPismoZrodla(ctx context.Context,
 	if z.SourceId == "" {
 		return shared.ResearchSourceOcrResponse{}, bladWskazaniaBadan("source.ocr bez źródła")
 	}
-	if _, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, true); err != nil {
+	if _, _, err := a.trescDoLekturyBadania(ctx, z.SourceId, true,
+		z.Languages, z.Preprocess); err != nil {
 		return shared.ResearchSourceOcrResponse{}, err
 	}
 	tresc, err := a.repozytorium.TrescZrodlaBadania(ctx, z.SourceId)
@@ -609,7 +608,8 @@ func (a *adapterBadan) RozpoznajPismoZrodla(ctx context.Context,
 
 // ── Rozmowa oparta na korpusie ─────────────────────────────────────────────
 
-// ZapytajKorpus obsługuje `research.corpus.ask`.
+// ZapytajKorpus obsługuje `research.corpus.ask`: odpowiada modelem
+// wyłącznie z treści źródeł wskazanego korpusu, zakotwiczoną w nich.
 func (a *adapterBadan) ZapytajKorpus(ctx context.Context,
 	z shared.ResearchCorpusAskRequest) (shared.ResearchCorpusAskResponse, error) {
 
@@ -665,7 +665,8 @@ func (a *adapterBadan) ZapytajKorpus(ctx context.Context,
 	}}, nil
 }
 
-// trafienieKorpusuBadania jest jednym fragmentem korpusu dopasowanym do pytania.
+// trafienieKorpusuBadania jest jednym fragmentem korpusu dopasowanym do
+// pytania, wraz ze źródłem, z którego fragment pochodzi.
 type trafienieKorpusuBadania struct {
 	kodZrodla string
 	tytul     string
@@ -673,10 +674,8 @@ type trafienieKorpusuBadania struct {
 	punkty    int
 }
 
-// trafieniaKorpusuBadania wybiera fragmenty źródeł najbliższe pytaniu.
-// Dopasowanie idzie po pokryciu słów pytania: bez magazynu wektorów jest to
-// miara uboższa, ale prawdziwa — i mierzy treść, którą Operator ma u siebie,
-// a nie podobieństwo obiecane przez usługę, której instalka nie niesie.
+// trafieniaKorpusuBadania wybiera fragmenty źródeł najbliższe pytaniu miarą
+// pokrycia słów, bez magazynu wektorów podobieństwa semantycznego.
 func (a *adapterBadan) trafieniaKorpusuBadania(ctx context.Context, zrodla []dane.ZrodloBadania,
 	wskazane []string, pytanie string, limit int) []trafienieKorpusuBadania {
 
@@ -716,7 +715,8 @@ func (a *adapterBadan) trafieniaKorpusuBadania(ctx context.Context, zrodla []dan
 	return trafienia
 }
 
-// akapityBadania rozkłada treść na akapity nadające się na cytat.
+// akapityBadania rozkłada treść źródła na akapity nadające się na cytat
+// w odpowiedzi opartej na korpusie, pomijając akapity zbyt krótkie.
 func akapityBadania(tekst string) []string {
 	akapity := []string{}
 	for _, kawalek := range strings.Split(tekst, "\n") {
@@ -728,7 +728,8 @@ func akapityBadania(tekst string) []string {
 	return akapity
 }
 
-// polecenieKorpusuBadania wiąże model wyłącznie podanymi fragmentami.
+// polecenieKorpusuBadania wiąże model wyłącznie podanymi fragmentami korpusu,
+// zabraniając mu odpowiedzi z wiedzy spoza treści źródeł.
 func polecenieKorpusuBadania(pytanie string, trafienia []trafienieKorpusuBadania) string {
 	var polecenie strings.Builder
 	polecenie.WriteString("Odpowiedz na pytanie badawcze WYŁĄCZNIE na podstawie poniższych ")

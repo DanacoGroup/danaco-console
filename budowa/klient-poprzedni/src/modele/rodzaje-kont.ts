@@ -1,49 +1,62 @@
+/**
+ * Słownik rodzajów konta pokazywany operatorowi. Rodzaj jest wyliczeniem
+ * kontraktu, więc jego wartości pochodzą wyłącznie ze stałych `AccountKind`;
+ * rodzaj spoza kontraktu pokazuje własny kod zamiast gasnąć.
+ */
 import { AccountKind } from '../../../shared/contract';
 
-/**
- * Słownik rodzajów konta pokazywany Operatorowi.
- *
- * Rodzaj jest wyliczeniem kontraktu, więc jego wartości pochodzą wyłącznie ze
- * stałych `AccountKind.*`. Plik nie wymienia żadnego dostawcy: dostawca jest
- * w kontrakcie wartością danych, nie typem kodu, i wpisuje się go w polu
- * tekstowym formularza.
- *
- * Rodzaj spoza kontraktu nie gaśnie — pokazuje własny kod, żeby było widać,
- * co przyszło z rdzenia.
- */
 
-/** Trzy rodzaje konta w kolejności wyświetlania. */
+
+/**
+ * Trzy rodzaje konta w kolejności wyświetlania w wykazie i w kontrolce wyboru:
+ * konto API modelu, konto programu code CLI oraz konto SDK.
+ */
 export const RODZAJE_KONT: readonly AccountKind[] = [
   AccountKind.Api,
   AccountKind.Cli,
   AccountKind.Sdk,
 ];
 
-/** Nazwa rodzaju konta pokazywana Operatorowi. */
+/**
+ * Nazwa rodzaju konta pokazywana operatorowi w formularzu, pełna dla każdej
+ * z trzech wartości wyliczenia `AccountKind` niesionego przez kontrakt.
+ */
 export const NAZWY_RODZAJOW: Readonly<Record<AccountKind, string>> = {
   [AccountKind.Api]: 'konto API modelu',
   [AccountKind.Cli]: 'konto programu code CLI',
   [AccountKind.Sdk]: 'konto SDK',
 };
 
-/** Nazwa krótka, do plakietki w wykazie. */
+/**
+ * Nazwa krótka rodzaju konta, przeznaczona do plakietki w wykazie kont, gdzie
+ * nazwa pełna nie mieści się w szerokości wiersza.
+ */
 export const NAZWY_KROTKIE: Readonly<Record<AccountKind, string>> = {
   [AccountKind.Api]: 'API',
   [AccountKind.Cli]: 'code CLI',
   [AccountKind.Sdk]: 'SDK',
 };
 
-/** Nazwa rodzaju gotowa do wydruku; rodzaj spoza kontraktu pokazuje własny kod. */
+/**
+ * Nazwa rodzaju gotowa do wydruku; rodzaj spoza kontraktu pokazuje własny kod,
+ * żeby było widać, co przyszło z rdzenia, zamiast pustego miejsca.
+ */
 export function nazwaRodzaju(rodzaj: string): string {
   return NAZWY_RODZAJOW[rodzaj as AccountKind] ?? rodzaj;
 }
 
-/** Nazwa krótka gotowa do wydruku. */
+/**
+ * Nazwa krótka gotowa do wydruku; rodzaj spoza kontraktu pokazuje własny kod,
+ * ponieważ plakietka ma nazwać wartość oddaną przez rdzeń.
+ */
 export function nazwaKrotka(rodzaj: string): string {
   return NAZWY_KROTKIE[rodzaj as AccountKind] ?? rodzaj;
 }
 
-/** Czy napis jest rodzajem znanym kontraktowi. */
+/**
+ * Czy napis jest rodzajem znanym kontraktowi; sprawdzenie zawęża typ napisu do
+ * wyliczenia `AccountKind` i strzeże odczytu obu słowników nazw.
+ */
 export function czyRodzajKonta(tekst: string): tekst is AccountKind {
   return (RODZAJE_KONT as readonly string[]).includes(tekst);
 }

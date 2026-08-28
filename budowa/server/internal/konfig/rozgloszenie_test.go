@@ -8,13 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Droga na żywo od zapisu nastawy do tego, kto z niej korzysta.
-//
-// Bez niej Operator zmienia nastawę i nic się nie dzieje, dopóki czegoś nie
-// przeładuje. Z nią — dzieje się dokładnie tyle, ile trzeba, i ani doręczenia
-// więcej: zapis na poziomie szerszym nie budzi nikogo, kto ma wartość
-// z węższego. Ta druga połowa jest tu ważniejsza od pierwszej, bo doręczenie
-// nadmiarowe nie wygląda na błąd — wygląda na odświeżenie.
+// Droga na żywo od zapisu nastawy do tego, kto z niej korzysta, bez zbędnych doręczeń.
 
 // odbiorSprawdzianu zbiera doręczenia. Rozgłośnia doręcza w wątku ogłaszającego,
 // ale nasłuch może być zapisany z innego, więc zbieranie idzie pod zamkiem.
@@ -340,7 +334,7 @@ func TestWartoscUszkodzonaIdzieJakoNapis(t *testing.T) {
 	}
 }
 
-// TestRodzajNieznanyStajeSieTekstem sprawdza drogę wartości spoza schematu.
+// TestRodzajNieznanyStajeSieTekstem sprawdza drogę wartości nierozpoznanego rodzaju przez kodowanie kontraktu.
 func TestRodzajNieznanyStajeSieTekstem(t *testing.T) {
 	if RodzajLubTekst("rodzaj-wymyslony") != RodzajTekst {
 		t.Error("rodzaj spoza schematu nie zszedł na tekst")
@@ -355,7 +349,7 @@ func TestRodzajNieznanyStajeSieTekstem(t *testing.T) {
 	}
 }
 
-// TestPustaTrescKopertyDajeTekstPusty sprawdza dolny kraniec dekodowania.
+// TestPustaTrescKopertyDajeTekstPusty sprawdza dolny kraniec drogi: pustą treść koperty bez awarii dekodowania.
 func TestPustaTrescKopertyDajeTekstPusty(t *testing.T) {
 	wartosc, rodzaj := DekodujJSON(nil)
 	if wartosc != "" || rodzaj != RodzajTekst {
@@ -415,9 +409,8 @@ func TestWartoscDomyslnaJedzieBezPoziomu(t *testing.T) {
 	}
 }
 
-// TestZapisZKontraktuOdrzucaAdresSpozaKontraktu pilnuje jedynej bramy tego
-// pakietu na drodze zapisu. Poziom albo oś spoza kontraktu nie mogą wejść do
-// tabeli ustawień — kolumna ma warunek CHECK, więc zapis i tak by nie usiadł,
+// TestZapisZKontraktuOdrzucaAdresSpozaKontraktu pilnuje jedynej bramy pakietu na
+// drodze zapisu: poziom albo oś spoza kontraktu nie mogą wejść do tabeli ustawień,
 // a odmowa nazwana jest lepsza od błędu bazy.
 func TestZapisZKontraktuOdrzucaAdresSpozaKontraktu(t *testing.T) {
 	przypadki := []struct {

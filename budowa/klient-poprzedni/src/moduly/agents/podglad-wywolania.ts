@@ -2,19 +2,10 @@ import { Command } from '../../../../shared/contract';
 import type { Kanal } from '../../protokol/kanal';
 
 /**
- * Podgląd wywołania — wiersz polecenia i prompt systemowy, z jakimi ruszy
- * proces modelu, pokazane przed wysłaniem tury.
- *
- * Podgląd woła `config.explain.get`, a rdzeń liczy go tymi samymi funkcjami,
- * którymi jedzie `message.send`, łącznie z nałożeniem eksperta okna. Gdyby
- * podgląd składał wywołanie po swojemu, pokazywałby wiersz, którego tura nigdy
- * nie wykona.
- *
- * Wywołanie liczy się dla okna, a moduł Agents żadnego okna komunikacji nie zna
- * — okna modułu to nie są okna rozmowy. Dlatego identyfikator okna wpisuje się
- * ręcznie, a bez niego podgląd nie pyta rdzenia.
+ * Podgląd wywołania podaje wiersz polecenia oraz prompt systemowy, z jakimi
+ * ruszy proces modelu, zanim tura zostanie wysłana. Rdzeń liczy go tymi samymi
+ * funkcjami, którymi wykonuje wysłanie wiadomości, wraz z nałożeniem eksperta.
  */
-
 const ETYKIETA = 'Podgląd wywołania';
 const WYJASNIENIE =
   'Wiersz polecenia i prompt systemowy, z jakimi ruszy proces modelu w tym oknie. ' +
@@ -95,8 +86,8 @@ export function utworzPodgladWywolania(kanal: Kanal): PodgladWywolania {
     stan.textContent = 'Odczyt z rdzenia…';
     kanal.wyslij(Command.ConfigExplainGet, { windowId: idOkna }, (wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Treść odmowy rdzenia, a nie wartości zastępcze. Pokazanie pustego
-        // wiersza jako „wywołania" byłoby odpowiedzią nieprawdziwą.
+        // Okno podaje treść odmowy rdzenia; pusty wiersz podany jako wywołanie
+        // byłby odpowiedzią nieprawdziwą.
         stan.textContent = wynik.blad?.message ?? 'Rdzeń nie oddał wywołania dla tego okna.';
         return;
       }
@@ -110,9 +101,8 @@ export function utworzPodgladWywolania(kanal: Kanal): PodgladWywolania {
       wiersz.textContent = argv.join(' ');
       wiersz.hidden = argv.length === 0;
 
-      // Prompt pusty jest odpowiedzią, nie brakiem odpowiedzi: znaczy, że ani
-      // oś, ani ekspert nie wnoszą treści systemowej — dlatego pole zostaje
-      // widoczne z takim zdaniem zamiast się chować.
+      // Pusty prompt jest odpowiedzią, nie brakiem odpowiedzi, więc pole
+      // pozostaje widoczne.
       prompt.textContent =
         systemPrompt === '' ? 'Prompt systemowy pusty — żadna warstwa nie wniosła treści.' : systemPrompt;
       prompt.hidden = false;
@@ -122,7 +112,11 @@ export function utworzPodgladWywolania(kanal: Kanal): PodgladWywolania {
   return { element };
 }
 
-/** Odmiana rzeczownika po liczebniku: „1 pozycja", „3 pozycje", „9 pozycji". */
+/**
+ * Odmiana rzeczownika liczonego według reguł polskiej liczby mnogiej: liczebnik
+ * jeden bierze mianownik liczby pojedynczej, zakończenia od dwóch do czterech
+ * poza nastką biorą mianownik liczby mnogiej, a pozostałe biorą dopełniacz.
+ */
 function odmianaPozycji(ile: number): string {
   if (ile === 1) return 'pozycja';
   const setki = ile % 100;

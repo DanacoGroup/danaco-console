@@ -7,11 +7,8 @@ import (
 )
 
 // WartoscZeSciezki wyjmuje wartość tekstową z dokumentu JSON, idąc ścieżką
-// rozdzieloną kropkami. Człon liczbowy oznacza pozycję tablicy, na przykład
-// "choices.0.delta.content".
-//
-// Dzięki temu adapter sieciowy nie zna kształtu odpowiedzi żadnego dostawcy:
-// kształt jest parametrem wiersza rejestru, nie warunkiem w kodzie.
+// rozdzieloną kropkami; człon liczbowy ścieżki oznacza pozycję w tablicy, na
+// przykład choices.0.delta.content.
 func WartoscZeSciezki(dokument json.RawMessage, sciezka string) (string, bool) {
 	if len(dokument) == 0 || strings.TrimSpace(sciezka) == "" {
 		return "", false
@@ -30,7 +27,8 @@ func WartoscZeSciezki(dokument json.RawMessage, sciezka string) (string, bool) {
 	return jakoTekst(wezel)
 }
 
-// zejdz wykonuje jeden krok ścieżki: po kluczu obiektu albo pozycji tablicy.
+// zejdz wykonuje jeden krok ścieżki wartości: przechodzi po kluczu obiektu
+// JSON albo po pozycji elementu w tablicy, zależnie od typu bieżącego węzła.
 func zejdz(wezel any, czlon string) (any, bool) {
 	switch typowy := wezel.(type) {
 	case map[string]any:

@@ -1,15 +1,7 @@
 import type { ConfigScope, WorkspaceInstructions } from '../../../../shared/contract';
 import { nazwaPoziomu } from './poziomy-zasiegu';
 
-/**
- * Warstwy instrukcji projektu: szablony treści i opis warstwy obowiązującej.
- *
- * Osobny plik od okna, bo to inna odpowiedzialność: okno prowadzi zapis
- * i odczyt, tu leży przedstawienie warstwy. Wykaz poziomów i ich nazwy pochodzą
- * z `poziomy-zasiegu.ts`.
- */
-
-/** Szablony instrukcji wstawiane do edytora; treść jest materiałem Operatora. */
+/** Szablony instrukcji wstawiane do edytora, których treść stanowi materiał Operatora do dalszej redakcji. */
 export const SZABLONY: ReadonlyArray<[string, string]> = [
   ['—', ''],
   [
@@ -56,7 +48,7 @@ export function opisWarstwy(
   return element;
 }
 
-/** Zdanie opisu warstwy. */
+/** Buduje jedno zdanie opisu warstwy instrukcji, wyświetlane jako osobny akapit wewnątrz całego opisu warstwy. */
 function zdanie(tekst: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';

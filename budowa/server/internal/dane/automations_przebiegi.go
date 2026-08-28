@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: przebiegi automatyki (tabela `przebieg_automatyki`
-// z `migracja_040_harmonogramy_przebiegi.sql`) — trwałość okna Execution
-// Monitor.
-//
-// Przebieg nie jest drugą kolejką. Etapy wykonuje jeden silnik kolejek,
-// a przebieg zapamiętuje wyłącznie to, czego kolejka nie wie: którą automatykę
-// realizuje, ile etapów miała definicja i dlaczego wykonanie się nie powiodło.
-// Dzięki temu Execution Monitor po ponownym uruchomieniu rdzenia widzi historię,
-// a nie pustkę.
+// Plik prowadzi przebiegi automatyki: trwałość okna Execution Monitor; przebieg nie jest drugą kolejką, tylko
+// zapamiętuje to, czego kolejka nie wie — którą automatykę realizuje, ile etapów miała definicja i dlaczego wykonanie się nie powiodło.
 package dane
 
 import (
@@ -16,7 +9,7 @@ import (
 	"fmt"
 )
 
-// Przebieg to wiersz tabeli `przebieg_automatyki`.
+// Przebieg to wiersz tabeli `przebieg_automatyki` niosący stan uruchomienia jednej automatyki w bazie.
 type Przebieg struct {
 	ID             int64
 	Kod            string
@@ -65,8 +58,7 @@ const (
 		  ORDER BY p.id DESC LIMIT ?`
 )
 
-// ZapiszPrzebieg zakłada przebieg albo nadpisuje zastany i zwraca stan po
-// zapisie.
+// ZapiszPrzebieg zakłada przebieg albo nadpisuje zastany i zwraca jego pełny stan po zapisie z bazy danych.
 func (r *repozytoriumAutomatyk) ZapiszPrzebieg(ctx context.Context, przebieg Przebieg) (Przebieg, error) {
 	if przebieg.Kod == "" || przebieg.AutomatykaID == 0 {
 		return Przebieg{}, fmt.Errorf("dane: przebieg bez identyfikatora albo bez automatyki")
@@ -85,7 +77,7 @@ func (r *repozytoriumAutomatyk) ZapiszPrzebieg(ctx context.Context, przebieg Prz
 	return r.Przebieg(ctx, przebieg.Kod)
 }
 
-// Przebieg zwraca przebieg o wskazanym kodzie.
+// Przebieg zwraca przebieg automatyki o wskazanym kodzie zewnętrznym wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) Przebieg(ctx context.Context, kod string) (Przebieg, error) {
 	return r.jedenPrzebieg(ctx, pobierzPrzebieg, kod, "przebieg "+kod)
 }
@@ -98,7 +90,7 @@ func (r *repozytoriumAutomatyk) PrzebiegKolejki(ctx context.Context, kolejkaID i
 		fmt.Sprintf("przebieg kolejki %d", kolejkaID))
 }
 
-// jedenPrzebieg wykonuje odczyt pojedynczego wiersza wspólny obu doborom.
+// jedenPrzebieg wykonuje odczyt pojedynczego wiersza przebiegu, wspólny obu sposobom jego doboru z bazy.
 func (r *repozytoriumAutomatyk) jedenPrzebieg(ctx context.Context, zapytanie string,
 	klucz any, opis string) (Przebieg, error) {
 
@@ -145,7 +137,7 @@ func (r *repozytoriumAutomatyk) Przebiegi(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajPrzebieg składa strukturę z jednego wiersza wyniku.
+// odczytajPrzebieg składa strukturę przebiegu wprost z jednego wiersza wyniku zapytania SQL do bazy danych.
 func odczytajPrzebieg(wiersz skaner) (Przebieg, error) {
 	var przebieg Przebieg
 	var kolejka sql.NullInt64

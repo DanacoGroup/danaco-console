@@ -1,29 +1,6 @@
-// Odpowiedzialność pliku: dwie czynności barwy, które czytają PIKSELE —
-// wyciągnięcie palety z obrazu (`design.color.palette.extract`) i symulacja wady
-// widzenia barw (`design.color.vision.simulate`). Czynności liczone bez obrazu
-// leżą w `adapter_modul_design_kolor.go`, sam rachunek barwy
-// w `adapter_modul_design_barwy.go`.
-//
-// ── Paleta z obrazu jest POMIAREM, nie zgadywaniem ──────────────────────────
-// Barwy dominujące liczy skupianie metodą k-średnich w przestrzeni CIE Lab,
-// z zasiewem rozłożonym po histogramie. Lab, nie sRGB: w sRGB odległość między
-// dwiema barwami nie odpowiada temu, jak różne wydają się oku, więc skupianie
-// łączyłoby zieleń z żółcią i rozdzielało dwa odcienie granatu. Udział barwy
-// (`share`) jest ułamkiem punktów przypisanych do jej skupienia — liczbą
-// zmierzoną, nie oceną.
-//
-// ── Symulacja wady widzenia idzie przez macierze LMS ────────────────────────
-// Protanopia, deuteranopia i tritanopia to brak jednego z trzech rodzajów
-// czopków. Rachunek przechodzi sRGB → LMS (macierz Hunt-Pointer-Estevez), tam
-// zeruje brakujący kanał zastępując go kombinacją pozostałych (macierze
-// Brettela–Viénota–Mollona), i wraca do sRGB. Achromatopsja jest luminancją
-// wedle wag WCAG — tych samych, którymi liczy się kontrast.
-//
-// ── Wynik symulacji jest ZASOBEM, nie base64 w odpowiedzi ───────────────────
-// Kontrakt oddaje `DesignAsset`, więc bajty idą do magazynu pod sumą kontrolną,
-// a wiersz powstaje po nich — tą samą drogą, co przy wniesieniu i przy
-// generowaniu. Zasób wskazuje źródło polem `variantOfAssetId`: symulacja jest
-// wariantem obrazu, nie osobnym obrazem znikąd.
+// Odpowiedzialność pliku: dwie czynności barwy, które czytają piksele —
+// wyciągnięcie palety z obrazu i symulacja wady widzenia barw. Czynności
+// liczone bez obrazu leżą w `adapter_modul_design_kolor.go`.
 package core
 
 import (
@@ -41,20 +18,17 @@ import (
 )
 
 const (
-	// granicaPunktowPomiaruPaletyDesignu jest liczbą punktów, na której rdzeń
-	// liczy paletę. Obraz w 24 megapikselach nie potrzebuje wszystkich punktów,
-	// żeby oddać barwy dominujące: próbkowanie równomierne daje ten sam wynik za
-	// setną część rachunku.
+	// granicaPunktowPomiaruPaletyDesignu jest liczbą punktów próbki palety,
+	// powyżej której rachunek próbkuje obraz zamiast liczyć każdy piksel.
 	granicaPunktowPomiaruPaletyDesignu = 40000
 
-	// obrotowSkupianiaPaletyDesignu jest liczbą przebiegów k-średnich. Skupienia
-	// przestają się przesuwać po kilkunastu; dwadzieścia jest zapasem, a nie
-	// nadzieją.
+	// obrotowSkupianiaPaletyDesignu jest liczbą przebiegów k-średnich, zapasem
+	// ponad liczbę potrzebną do ustabilizowania skupień.
 	obrotowSkupianiaPaletyDesignu = 20
 )
 
-// WyciagnijPalete liczy barwy dominujące obrazu — obsługuje
-// `design.color.palette.extract`.
+// WyciagnijPalete liczy barwy dominujące obrazu skupianiem k-średnich —
+// obsługuje `design.color.palette.extract`.
 func (a *adapterDesignu) WyciagnijPalete(ctx context.Context,
 	z shared.DesignColorPaletteExtractRequest) (shared.DesignColorPaletteExtractResponse, error) {
 
@@ -99,8 +73,7 @@ func (a *adapterDesignu) WyciagnijPalete(ctx context.Context,
 		}
 		barwy = append(barwy, wpis)
 	}
-	// Barwy w kolejności udziału: kontrakt tak opisuje pole, a Operator patrzy
-	// najpierw na to, czego w obrazie jest najwięcej.
+	// Barwy w kolejności udziału, tak jak opisuje pole kontrakt.
 	sort.SliceStable(barwy, func(i, j int) bool {
 		return *barwy[i].Share > *barwy[j].Share
 	})
@@ -111,19 +84,14 @@ func (a *adapterDesignu) WyciagnijPalete(ctx context.Context,
 }
 
 // probkujPunktyObrazuDesignu bierze z obrazu równomierną próbę punktów
-// w przestrzeni Lab.
-//
-// Punkty całkowicie przezroczyste nie wchodzą: barwa piksela o zerowym kryciu
-// nie jest barwą obrazu, a w plikach PNG z przezroczystością bywa czernią, która
-// przeważyłaby całą paletę.
+// w przestrzeni Lab. Punkty całkowicie przezroczyste nie wchodzą do próby.
 func probkujPunktyObrazuDesignu(obraz image.Image, granica int) []colorful.Color {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()
 	if szerokosc <= 0 || wysokosc <= 0 {
 		return nil
 	}
-	// Krok próbkowania liczony z powierzchni: obraz mniejszy niż granica wchodzi
-	// w całości, większy — co n-ty punkt w obu osiach.
+	// Krok próbkowania liczony z powierzchni obrazu wobec granicy punktów.
 	krok := 1
 	for (szerokosc/krok)*(wysokosc/krok) > granica {
 		krok++
@@ -144,19 +112,15 @@ func probkujPunktyObrazuDesignu(obraz image.Image, granica int) []colorful.Color
 }
 
 // skupieniaBarwDesignu liczy k-średnich w przestrzeni Lab i oddaje środki
-// skupień wraz z udziałem punktów w każdym.
-//
-// Zasiew jest rozłożony po posortowanej próbie, nie losowy: dwa wywołania na tym
-// samym obrazie mają dać tę samą paletę, inaczej Operator dostawałby inne barwy
-// przy każdym kliknięciu i nie wiedziałby, która odpowiedź jest prawdziwa.
+// skupień wraz z udziałem punktów w każdym. Zasiew jest rozłożony po
+// posortowanej próbie, nie losowy, żeby wynik był powtarzalny.
 func skupieniaBarwDesignu(punkty []colorful.Color, ile int) ([]colorful.Color, []float64) {
 	if ile < 1 {
 		ile = 1
 	}
 	rodzaj := make([]colorful.Color, len(punkty))
 	copy(rodzaj, punkty)
-	// Porządek po jasności percepcyjnej: zasiew rozłożony po tej skali obejmuje
-	// zakres od najciemniejszych do najjaśniejszych barw obrazu.
+	// Porządek po jasności percepcyjnej: zasiew obejmuje pełny zakres barw.
 	sort.SliceStable(rodzaj, func(i, j int) bool {
 		pierwsza, _, _ := rodzaj[i].Lab()
 		druga, _, _ := rodzaj[j].Lab()
@@ -184,8 +148,7 @@ func skupieniaBarwDesignu(punkty []colorful.Color, ile int) ([]colorful.Color, [
 				zmienilo = true
 			}
 		}
-		// Nowe środki liczone jako średnia w Lab — średnia w sRGB dałaby barwę
-		// jaśniejszą od wszystkich składowych, bo sRGB niesie gamma.
+		// Nowe środki liczone jako średnia w Lab, nie w sRGB.
 		sumaL := make([]float64, len(srodki))
 		sumaA := make([]float64, len(srodki))
 		sumaB := make([]float64, len(srodki))
@@ -214,8 +177,7 @@ func skupieniaBarwDesignu(punkty []colorful.Color, ile int) ([]colorful.Color, [
 	for _, skupienie := range przypisania {
 		liczba[skupienie]++
 	}
-	// Skupienie puste nie wchodzi do palety: barwa, do której nie należy ani
-	// jeden punkt obrazu, nie jest barwą tego obrazu.
+	// Skupienie puste nie wchodzi do palety.
 	wynikSrodki := make([]colorful.Color, 0, len(srodki))
 	wynikUdzialy := make([]float64, 0, len(srodki))
 	for numer, srodek := range srodki {
@@ -258,8 +220,7 @@ func (a *adapterDesignu) SymulujWidzenie(ctx context.Context,
 	if err != nil {
 		return shared.DesignColorVisionSimulateResponse{}, err
 	}
-	// Wariant wskazuje źródło: symulacja jest tym samym obrazem widzianym inaczej,
-	// więc powiązanie jest tu prawdziwe i pozwala oknu pokazać parę przed/po.
+	// Wariant wskazuje źródło: obraz do porównania przed i po symulacji.
 	zapisany.WariantZasobuID = &zrodlo.Kod
 	zapisany, err = a.repozytorium.ZapiszZasob(ctx, zapisany)
 	if err != nil {
@@ -271,9 +232,7 @@ func (a *adapterDesignu) SymulujWidzenie(ctx context.Context,
 }
 
 // macierzeWadWidzeniaDesignu to macierze przejścia LMS dla trzech wad
-// dichromatycznych, wedle Brettela–Viénota–Mollona. Kanał brakujący zastępuje
-// kombinacja dwóch pozostałych — dlatego wiersz odpowiadający brakującemu
-// czopkowi nie jest zerowy, a wypełniony.
+// dichromatycznych, wedle Brettela-Vienota-Mollona.
 var macierzeWadWidzeniaDesignu = map[shared.DesignColorVision][9]float64{
 	// Protanopia — brak czopka długofalowego (L).
 	shared.DesignColorVisionProtanopia: {
@@ -310,11 +269,8 @@ var (
 	}
 )
 
-// przepuscObrazPrzezWadeDesignu liczy obraz widziany przez wadę widzenia barw.
-//
-// Rachunek idzie punkt po punkcie: obraz kilkumegapikselowy przechodzi w czasie
-// niezauważalnym dla Operatora, a próbkowanie oszczędzające rachunek dałoby
-// obraz o niższej rozdzielczości niż źródło — czyli mniej, niż Operator wniósł.
+// przepuscObrazPrzezWadeDesignu liczy obraz widziany przez wadę widzenia
+// barw, punkt po punkcie, bez próbkowania oszczędzającego rachunek.
 func przepuscObrazPrzezWadeDesignu(obraz image.Image,
 	wada shared.DesignColorVision) image.Image {
 
@@ -329,10 +285,7 @@ func przepuscObrazPrzezWadeDesignu(obraz image.Image,
 			}
 			var docelowa colorful.Color
 			if !dichromatyczna {
-				// Achromatopsja: całkowity brak widzenia barw. Wynikiem jest
-				// luminancja względna wedle wag WCAG — tych samych, którymi rdzeń
-				// liczy kontrast, żeby dwie czynności nie miały dwóch prawd o tym,
-				// co jest jasne.
+				// Achromatopsja: luminancja względna wedle wag WCAG.
 				luminancja := luminancjaWcagDesignu(zrodlowa)
 				szara := gammaSrgbDesignu(luminancja)
 				docelowa = colorful.Color{R: szara, G: szara, B: szara}
@@ -340,8 +293,6 @@ func przepuscObrazPrzezWadeDesignu(obraz image.Image,
 				docelowa = przepuscBarwePrzezMacierzDesignu(zrodlowa, macierz)
 			}
 			// Krycie źródła zostaje: symulacja zmienia barwę, nie przezroczystość.
-			// Składowe mnożymy przez krycie, bo `image/draw` liczy w formacie
-			// z krycim wmnożonym.
 			kanal := float64(alfa) / 65535
 			wynik.SetRGBA(x-granice.Min.X, y-granice.Min.Y, barwaRgbaDesignu(docelowa, &kanal))
 		}
@@ -361,7 +312,7 @@ func przepuscBarwePrzezMacierzDesignu(barwa colorful.Color, wada [9]float64) col
 }
 
 // pomnozMacierzaDesignu mnoży wektor trzech składowych przez macierz 3×3
-// zapisaną wierszami.
+// zapisaną wierszami, do przejść między przestrzeniami barwy.
 func pomnozMacierzaDesignu(macierz [9]float64, pierwsza, druga, trzecia float64) (float64, float64, float64) {
 	return macierz[0]*pierwsza + macierz[1]*druga + macierz[2]*trzecia,
 		macierz[3]*pierwsza + macierz[4]*druga + macierz[5]*trzecia,
@@ -380,10 +331,7 @@ func gammaSrgbDesignu(liniowa float64) float64 {
 
 // obrazZasobuPoKodzieDesignu odczytuje obraz zasobu wraz z jego wierszem —
 // droga wspólna dla wszystkich czynności modułu, które czytają piksele.
-//
-// Zasób bez treści w magazynie jest ODMOWĄ, nie pustym obrazem: wiersz bez
-// bajtów jest kafelkiem, za którym nic nie leży, i to jest szkoda, którą ten
-// moduł ma w swojej historii.
+// Zasób bez treści w magazynie jest odmową, nie pustym obrazem.
 func (a *adapterDesignu) obrazZasobuPoKodzieDesignu(ctx context.Context, komenda,
 	kod string) (image.Image, dane.ZasobDesignu, error) {
 

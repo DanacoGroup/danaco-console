@@ -32,18 +32,9 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Okna ról widziane przez klienta — ta połowa źródła, która ustala obsadę.
- *
- * Rola okna pochodzi z kontraktu, nie z oznaczenia własnego. `WindowRole`
- * (standalone | executor | coordinator) i pole `coordinatorWindowId` niosą całą
- * przynależność okna do pętli koordynator–wykonawca. Moduł nie zakłada
- * drugiego rejestru ról: nadanie roli to komenda rdzenia, a nie własna tablica
- * w kliencie.
- *
- * Nadanie roli idzie komendą przeznaczoną do nadawania roli (`role.assign`),
- * a wcielenie (`persona`) — komendą `role.update`, bo `window.update` pola
- * wcielenia nie niesie. `window.update` zostaje przy tym, co jest jego: tytuł,
- * katalogi, kanał modelu.
+ * Okna ról widziane przez klienta ustalają obsadę: rola pochodzi z kontraktu,
+ * nadanie idzie osobną komendą od wcielenia, a moduł nie zakłada drugiego
+ * rejestru ról poza rdzeniem.
  */
 export interface ZrodloOkien {
   /** `window.list` — okna sesji, z których powstaje obsada ról. */
@@ -56,13 +47,7 @@ export interface ZrodloOkien {
   nadajRole(zadanie: RoleAssignRequest): Promise<Wynik<RoleAssignResponse>>;
   /** `role.update` — zmiana roli albo jej wcielenia (`persona`). */
   zmienRole(zadanie: RoleUpdateRequest): Promise<Wynik<RoleUpdateResponse>>;
-  /**
-   * `role.list` — nadania ról widziane przez rdzeń, wraz z więzią koordynatora.
-   *
-   * To nie jest to samo co `window.list`. Okno niesie swoją rolę jako pole, ale
-   * rejestrem nadań jest rdzeń: `role.list` oddaje `WindowRoleAssignment`, więc
-   * mówi też o wcieleniu (`persona`), którego `Window` nie niesie w ogóle.
-   */
+  // Nadania ról widziane przez rdzeń różnią się od okien: niosą też wcielenie, którego okno nie ma.
   nadaniaRol(zadanie: RoleListRequest): Promise<Wynik<WindowRoleAssignment[]>>;
   /** `role.remove` — zdjęcie roli z okna wraz z więzią koordynatora. */
   zdejmijRole(zadanie: RoleRemoveRequest): Promise<Wynik<RoleRemoveResponse>>;
@@ -105,8 +90,7 @@ export function utworzZrodloOkien(kanal: Kanal): ZrodloOkien {
       return przenies(wynik, (tresc) => tresc.window);
     },
 
-    // Kształt odpowiedzi obu komend ról sprawdzamy tak samo jak każdej innej:
-    // rdzeń, który odpowie `ok` bez pola `role`, nie dowiódł, że rolę nadał.
+    // Kształt odpowiedzi ról podlega sprawdzeniu jak każdej innej: powodzenie nie dowodzi nadania roli.
     async nadajRole(zadanie) {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.RoleAssign, zadanie),
@@ -132,10 +116,7 @@ export function utworzZrodloOkien(kanal: Kanal): ZrodloOkien {
       return przenies(wynik, (tresc) => tresc.assignments);
     },
 
-    // `removed: false` to odpowiedź udana o skutku, którego nie było — rdzeń
-    // mówi „takiej roli nie miałem czego zdjąć". Kształt sprawdzamy więc na
-    // obecności pola logicznego, a jego wartość czyta widok i nazywa wprost:
-    // samo `status: ok` nie dowodzi, że rola została zdjęta.
+    // Odpowiedź udana bez usunięcia znaczy, że nie było czego zdjąć; widok czyta pole i nazywa to wprost.
     async zdejmijRole(zadanie) {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.RoleRemove, zadanie),

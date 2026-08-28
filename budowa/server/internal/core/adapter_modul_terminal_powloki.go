@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: przełożenie rodzaju powłoki karty terminala na
-// polecenie uruchomienia procesu oraz na zestaw zmiennych środowiska.
-//
-// Karta jest profilem powłoki, nie procesem. Nie ma powłoki interaktywnej
-// czekającej na wiersze: każde `terminal.command.exec` startuje własny proces
-// tej powłoki w katalogu i środowisku karty. Dzięki temu Process Monitor może
-// zakończyć pojedynczy proces sygnałem łagodnym albo wymuszonym; polecenia
-// podanego na wejście wspólnej powłoki nie da się zakończyć inaczej niż razem
-// z całą kartą. Proces polecenia ma więc własny PID, własny kod wyjścia
-// i własne drzewo potomstwa.
-//
-// Skutkiem tej decyzji jest to, że stan powłoki nie przechodzi między
-// poleceniami (`cd` nie przesuwa katalogu karty).
+// Plik obsługuje przełożenie rodzaju powłoki karty terminala na polecenie uruchomienia procesu oraz na zestaw zmiennych środowiska. Karta jest profilem powłoki, nie procesem: każde polecenie startuje własny proces.
 package core
 
 import (
@@ -23,26 +11,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// zmiennaCeluSSH niosła adres powłoki zdalnej karty rodzaju `ssh`, zanim
-// kontrakt dostał pole `remoteTarget`. Zostaje drogą ZASTĘPCZĄ — dla kart
-// założonych wcześniej i dla klienta, który jeszcze nie przestawił się na nowe
-// pola. Droga główna prowadzi przez `adapter_modul_terminal_cel.go`.
+// zmiennaCeluSSH niosła adres powłoki zdalnej karty rodzaju `ssh`, zanim kontrakt dostał pole `remoteTarget`. Zostaje drogą zastępczą dla kart założonych wcześniej. Droga główna prowadzi przez `adapter_modul_terminal_cel.go`.
 const zmiennaCeluSSH = "SSH_TARGET"
 
-// definicjaPowloki opisuje jedną powłokę: plik wykonywalny i argumenty
-// poprzedzające treść polecenia.
+// definicjaPowloki opisuje jedną powłokę: plik wykonywalny i argumenty poprzedzające treść polecenia uruchomienia procesu w karcie.
 type definicjaPowloki struct {
 	program   string
 	argumenty []string
 }
 
-// powloki jest wykazem sterowanym danymi: dołożenie powłoki to dołożenie
-// pozycji wykazu i wartości do wyliczenia kontraktu, nie zmiana przepływu
-// sterowania.
-//
-// Argumenty dobrane tak, żeby proces nie czytał profilu użytkownika systemu
-// i nie pytał o nic interaktywnie — inaczej wynik polecenia zależałby także od
-// zawartości tego profilu.
+// powloki jest wykazem sterowanym danymi: dołożenie powłoki to dołożenie pozycji wykazu, nie zmiana przepływu sterowania. Argumenty dobrane tak, żeby proces nie czytał profilu użytkownika systemu i nie pytał o nic interaktywnie.
 var powloki = map[shared.TerminalShell]definicjaPowloki{
 	shared.TerminalShellPowershell: {
 		program:   "powershell",
@@ -61,8 +39,7 @@ var powloki = map[shared.TerminalShell]definicjaPowloki{
 		argumenty: []string{"-e"},
 	},
 	shared.TerminalShellPython: {
-		// `-u` wyłącza buforowanie wyjścia. Bez tego Output Console dostaje
-		// wszystko dopiero na końcu procesu, a okno ma pokazywać strumień.
+		// `-u` wyłącza buforowanie wyjścia, żeby Output Console pokazywał strumień, nie zwał na końcu.
 		program:   "python",
 		argumenty: []string{"-u", "-c"},
 	},
@@ -72,12 +49,7 @@ var powloki = map[shared.TerminalShell]definicjaPowloki{
 	},
 }
 
-// CzyPowlokaZnana odpowiada, czy rodzaj powłoki należy do wykazu wykonawczego.
-//
-// Wykazy są dwa, bo dwa są rodzaje powłok: te uruchamiane wprost na maszynie
-// rdzenia (tutaj) i te sięgające do bytu poza nią — kontenera, poda, urządzenia,
-// maszyny sieciowej (`adapter_modul_terminal_powloki_urzadzen.go`). Razem
-// pokrywają komplet słownika kontraktu.
+// CzyPowlokaZnana odpowiada, czy rodzaj powłoki należy do wykazu wykonawczego. Wykazy są dwa: te uruchamiane wprost na maszynie rdzenia i te sięgające do bytu poza nią (`adapter_modul_terminal_powloki_urzadzen.go`).
 func CzyPowlokaZnana(powloka shared.TerminalShell) bool {
 	if _, jest := powloki[powloka]; jest {
 		return true
@@ -122,24 +94,12 @@ func polecenieKarty(karta *kartaTerminala, tresc string) (session.Polecenie, err
 		Argumenty:  argumenty,
 		Katalog:    karta.katalog,
 		Srodowisko: srodowiskoKarty(karta),
-		// Dziedziczenie środowiska rdzenia zostaje decyzją izolacji, nie karty:
-		// gdy punkt „środowisko procesu” jest włączony, egzekutor odrzuci
-		// polecenie dziedziczące. Karta prosi o dziedziczenie, bo powłoka bez
-		// PATH nie znajdzie ani jednego narzędzia.
+		// Dziedziczenie środowiska jest decyzją izolacji, nie karty; bez PATH powłoka nie działa.
 		DziedziczSrodowisko: true,
 	}, nil
 }
 
-// argumentyPowlokiZdalnej składa przełączniki `ssh` wynikające z celu karty:
-// port, wskazanie klucza i sam adres.
-//
-// Adres bierze się z pola karty, nie ze zmiennej środowiska — pole jest źródłem
-// głównym od chwili, gdy kontrakt dostał `remoteTarget`
-// (`adapter_modul_terminal_cel.go`). Karta bez adresu kończy się odmową
-// nazywającą oba sposoby jego podania, bo `ssh` bez celu nie ruszy i tak.
-//
-// Adres wchodzi jako POJEDYNCZY argument, nie jako fragment wiersza powłoki:
-// nie ma tu składania napisu, więc nie ma czego wstrzyknąć spacją ani średnikiem.
+// argumentyPowlokiZdalnej składa przełączniki `ssh` wynikające z celu karty: port, wskazanie klucza i sam adres. Adres bierze się z pola karty, nie ze zmiennej środowiska. Adres wchodzi jako pojedynczy argument, nie jako fragment wiersza powłoki.
 func argumentyPowlokiZdalnej(karta *kartaTerminala) ([]string, error) {
 	cel := strings.TrimSpace(karta.celZdalny)
 	if cel == "" {
@@ -179,11 +139,7 @@ func srodowiskoKarty(karta *kartaTerminala) []string {
 	return wpisy
 }
 
-// zmienneKarty czyta zmienne środowiska z żądania kontraktu.
-//
-// Zmienna wskazująca sejf, a nie wartość, kończy się odmową zamiast cichym
-// pominięciem: karta terminala nie ma czytnika sejfu, więc proces ruszyłby bez
-// oczekiwanego poświadczenia i nic by tego nie sygnalizowało.
+// zmienneKarty czyta zmienne środowiska z żądania kontraktu. Zmienna wskazująca sejf, a nie wartość, kończy się odmową zamiast cichym pominięciem: karta terminala nie ma czytnika sejfu.
 func zmienneKarty(zmienne []shared.EnvironmentVariable) (map[string]string, error) {
 	wynik := make(map[string]string, len(zmienne))
 	for _, zmienna := range zmienne {

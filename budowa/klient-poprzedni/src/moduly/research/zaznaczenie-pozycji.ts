@@ -1,24 +1,6 @@
 /**
- * Zaznaczenie wielokrotne pozycji wykazu.
- *
- * Jedna odpowiedzialność: zbiór zaznaczonych identyfikatorów wraz z jego
- * porządkowaniem po zmianie wykazu. Wydzielone, bo dotyczy dwóch okien naraz —
- * Sources Manager (wybór wielu źródeł do eksportu) i Findings Panel (wybór
- * ustaleń do raportu).
- *
- * Zaznaczenie nie warunkuje klikalności: przy pustym zbiorze akcja zostaje
- * czynna i odpowiada zdaniem opisowym, zamiast być wygaszona.
- *
- * Zbiór ogłasza swoją zmianę i dlatego konstruktor żąda wywołania zwrotnego.
- * Zbiór jest wspólny obu oknom, więc bez ogłoszenia drugie okno przerysowałoby
- * się dopiero przy najbliższej zmianie treści badania: ta sama nastawa
- * pokazywałaby w dwóch oknach dwie różne wartości, a powiązanie
- * źródło↔ustalenie brałoby to, czego w panelu ustaleń nie widać. Wywołanie
- * zwrotne jest więc obowiązkowe, nie domyślne.
- *
- * Ogłoszenie idzie wyłącznie po faktycznej zmianie. Odbiorcą jest przerysowanie
- * okien, a przerysowanie woła `ogranicz` — ogłoszenie bezwarunkowe zamknęłoby
- * pętlę bez końca.
+ * Zaznaczenie wielokrotne pozycji wykazu: zbiór zaznaczonych identyfikatorów wraz z jego
+ * porządkowaniem po zmianie wykazu, wspólny dla dwóch okien.
  */
 export interface ZaznaczeniePozycji {
   /** Zaznaczone identyfikatory w kolejności wykazu. */
@@ -35,7 +17,7 @@ export interface ZaznaczeniePozycji {
 
 /**
  * @param oglos wywoływane po każdej faktycznej zmianie zbioru; przez nie
- *              nastawa dochodzi do wszystkich okien patrzących na ten sam zbiór
+ *              nastawa dochodzi do wszystkich okien korzystających z tego samego zbioru
  */
 export function utworzZaznaczenie(oglos: () => void): ZaznaczeniePozycji {
   const zbior = new Set<string>();

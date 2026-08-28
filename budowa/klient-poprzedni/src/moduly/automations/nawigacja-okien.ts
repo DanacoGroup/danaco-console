@@ -1,44 +1,21 @@
+/** Przywołanie okna modułu jest jednym wskazaniem zamiast wędrówki po siatce sześciu okien; plik składa z pozycji okien drzewo menu nawigacji. */
+
 import type { NazwaIkony } from '../../ikony/ikony';
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 import { KODY_OKIEN, KOD_WYKAZU_PETLI } from './kody-okien';
 
-/**
- * Przywołanie okna modułu — jedno wskazanie zamiast wędrówki po siatce.
- *
- * Nawigacja skraca drogę już istniejącą, nie otwiera nowej: wszystkie sześć
- * okien modułu stoi w jednej przewijanej siatce (`indeks.ts`). Bez niej
- * Operator dochodzi do Execution Monitora przewijaniem, z nią — jednym
- * wskazaniem.
- *
- * Mechanizm jest z biblioteki: rozwijanie, wędrówkę strzałkami, ślad wyboru na
- * gałęzi, pole szukania po progu i zdanie o pustym wykazie niesie
- * `komponenty/menu-drzewo.ts`. Tutaj nie ma własnej listy rozwijanej, nakładki
- * wyboru ani `<select>`.
- *
- * Ujawnianie jest stopniowe: okno wiodące stoi na pierwszym poziomie, bo jest
- * wejściem do modułu, a dwie rodziny ról — kreatory i pas wykonania —
- * odsłaniają się dopiero po wskazaniu gałęzi. Siatka pod menu nie zmienia się:
- * żadne okno nie znika i żadne nie dochodzi, więc przywołanie jest skokiem,
- * nie otwarciem.
- *
- * Na uchwycie stoi bieżąca wartość nastawy, nie jej nazwa rodzajowa. Przed
- * pierwszym przywołaniem żadna wartość nie jest prawdziwa — Operator niczego
- * nie przywołał, a wszystkie okna są na ekranie — więc uchwyt mówi to wprost
- * (`ZDANIE_BEZ_PRZYWOLANIA`) i żaden liść nie niesie wtedy znacznika wyboru.
- */
-
-/** Jedno okno modułu widziane przez nawigację. */
+/** Jedno okno modułu widziane przez nawigację, niosące kod znacznika, nazwę i objaśnienie widoczne w pozycji menu. */
 export interface PozycjaOkna {
-  /** Kod znacznika `data-okno` w układzie modułu — po nim idzie skok. */
+  /** Kod znacznika data-okno w układzie modułu — po nim idzie skok. */
   kod: string;
-  /** Nazwa okna — ta sama, co w jego nagłówku (`utworzRameOkna`). */
+  /** Nazwa okna — ta sama, co w jego nagłówku. */
   nazwa: string;
-  /** Zdanie „po co to okno” — objaśnienie `[?]` w postaci pozycji menu. */
+  /** Zdanie „po co to okno” — objaśnienie w postaci pozycji menu. */
   opis: string;
   ikona: NazwaIkony;
 }
 
-/** Okno wiodące — wejście do modułu, więc stoi na pierwszym poziomie menu. */
+/** Okno wiodące jest wejściem do modułu, więc stoi na pierwszym poziomie menu, przed dwiema rodzinami gałęzi. */
 export const OKNO_WIODACE: PozycjaOkna = {
   kod: KOD_WYKAZU_PETLI,
   nazwa: 'Wykaz gotowych pętli',
@@ -46,7 +23,7 @@ export const OKNO_WIODACE: PozycjaOkna = {
   ikona: 'uruchom',
 };
 
-/** Dwa kreatory: budowa struktury automatyki i układ zależności jej kroków. */
+/** Dwa kreatory: budowa struktury automatyki i układ zależności jej kroków, odsłaniane po wskazaniu gałęzi kreatorów. */
 export const OKNA_KREATOROW: readonly PozycjaOkna[] = [
   {
     kod: KODY_OKIEN.workflowBuilder,
@@ -62,7 +39,7 @@ export const OKNA_KREATOROW: readonly PozycjaOkna[] = [
   },
 ];
 
-/** Pas wykonania: dwaj zarządcy i monitor — praca po zbudowaniu automatyki. */
+/** Pas wykonania: dwaj zarządcy i monitor, praca po zbudowaniu automatyki, odsłaniana po wskazaniu gałęzi wykonania. */
 export const OKNA_WYKONANIA: readonly PozycjaOkna[] = [
   {
     kod: KODY_OKIEN.scheduler,
@@ -84,56 +61,40 @@ export const OKNA_WYKONANIA: readonly PozycjaOkna[] = [
   },
 ];
 
-/**
- * Wszystkie okna modułu w kolejności układu — jedno źródło prawdy dla menu
- * i dla sprawdzianu, że menu nie zgubiło ani nie dorobiło pozycji.
- */
+/** Wszystkie okna modułu w kolejności układu są jednym źródłem prawdy dla menu i dla sprawdzianu pokrycia pozycji. */
 export const OKNA_MODULU: readonly PozycjaOkna[] = [
   OKNO_WIODACE,
   ...OKNA_KREATOROW,
   ...OKNA_WYKONANIA,
 ];
 
-/** Nazwa rodzajowa nastawy — idzie do `aria-label`, nie na ekran. */
+/** Nazwa rodzajowa nastawy idzie do atrybutu dostępności menu, nie pokazuje się nigdy na ekranie modułu. */
 export const NASTAWA_PRZYWOLANIA = 'Przywołane okno';
 
-/** Wartość uchwytu, dopóki Operator niczego nie przywołał. Mówi prawdę. */
+/** Wartość uchwytu, dopóki Operator niczego nie przywołał, mówi prawdę: cały układ modułu jest wtedy na ekranie. */
 export const ZDANIE_BEZ_PRZYWOLANIA = 'Bez przywołania — cały układ modułu';
 
-/** Klucze gałęzi; są kluczami menu, nie kodami okien rejestru rdzenia. */
+/** Klucze gałęzi kreatorów i wykonania są kluczami samego menu, nie kodami okien rejestru rdzenia platformy. */
 export const GALAZ_KREATORY = 'galaz-kreatory';
 export const GALAZ_WYKONANIE = 'galaz-wykonanie';
 
 export interface NawigacjaOkien {
   /** Pas nawigacji osadzany nad układem okien modułu. */
   element: HTMLElement;
-  /**
-   * Przestawia wskazanie bez skoku.
-   *
-   * Woła się nią po przywołaniu okna z innej drogi — na przykład skokiem
-   * z Workflow Buildera do Orchestratora — żeby uchwyt niósł okno, przy którym
-   * Operator naprawdę jest, a nie ostatnie wybrane w menu. Kod spoza wykazu
-   * okien modułu jest pomijany: menu nie zaczyna twierdzić, że przywołało coś,
-   * czego w module nie ma.
-   */
+  /** Przestawia wskazanie bez skoku; woła się po przywołaniu okna z innej drogi niż menu. */
   wskaz(kodOkna: string): void;
-  /** Kod okna wskazanego; pusty znaczy „nie przywołano żadnego”. */
+  /** Kod okna wskazanego; pusty znaczy, że nie przywołano żadnego. */
   wskazane(): string;
   /** Zwija menu wraz z gałęziami i zdejmuje nasłuchy dokumentu. */
   zwin(): void;
 }
 
 export interface OpcjeNawigacji {
-  /** Skok do okna wskazanego kodem — `pokaz` układu modułu. */
+  /** Skok do okna wskazanego kodem, w układzie modułu. */
   przywolaj(kodOkna: string): void;
 }
 
-/**
- * Drzewo pozycji dla mechanizmu biblioteki.
- *
- * Czysta funkcja danych: bierze kod okna wskazanego, oddaje wykaz pozycji.
- * Nie zna dokumentu, więc sprawdzian czyta ją wprost, bez montażu menu.
- */
+/** Drzewo pozycji dla mechanizmu biblioteki jest czystą funkcją danych, bierze kod okna, oddaje wykaz pozycji. */
 export function drzewoPrzywolania(wskazany: string): PozycjaMenu[] {
   return [
     lisc(OKNO_WIODACE, wskazany),
@@ -156,7 +117,7 @@ export function drzewoPrzywolania(wskazany: string): PozycjaMenu[] {
   ];
 }
 
-/** Liść wyboru jednokrotnego — jedno okno modułu. */
+/** Liść wyboru jednokrotnego reprezentuje jedno okno modułu w drzewie menu nawigacji przywołania okien. */
 function lisc(okno: PozycjaOkna, wskazany: string): PozycjaMenu {
   return {
     rodzaj: 'wybor',
@@ -168,7 +129,7 @@ function lisc(okno: PozycjaOkna, wskazany: string): PozycjaMenu {
   };
 }
 
-/** Nazwa okna o danym kodzie; pusty kod i kod nieznany dają zdanie o braku. */
+/** Nazwa okna o danym kodzie; pusty kod i kod nieznany dają wspólne zdanie o braku żadnego przywołania. */
 export function nazwaOkna(kod: string): string {
   return OKNA_MODULU.find((okno) => okno.kod === kod)?.nazwa ?? ZDANIE_BEZ_PRZYWOLANIA;
 }
@@ -183,14 +144,10 @@ export function utworzNawigacjeOkien(opcje: OpcjeNawigacji): NawigacjaOkien {
   const menu = utworzMenuDrzewo({
     nastawa: NASTAWA_PRZYWOLANIA,
     ikona: 'automatyzacja',
-    // Próg szukania niżej niż domyślne dwanaście: sześć okien mieści się na
-    // ekranie bez filtra, a pole nad wykazem sześciu zabrałoby wiersz i nie
-    // skróciło ani jednego ruchu.
+    // Próg szukania niżej niż domyślne dwanaście: sześć okien mieści się na ekranie bez filtra.
     progSzukania: 8,
     naWybor: (klucz) => {
-      // Mechanizm oddaje klucz pozycji; gałęzie kluczy nie oddają, bo nie są
-      // wyborem. Wskazanie idzie przed skokiem, żeby uchwyt niósł nową wartość
-      // także wtedy, gdy skok nie znajdzie kafla (układ przebudowany).
+      // Wskazanie idzie przed skokiem, żeby uchwyt niósł nową wartość nawet po przebudowie układu.
       przestaw(klucz);
       opcje.przywolaj(klucz);
     },

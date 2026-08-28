@@ -5,17 +5,7 @@ import type { Kanal, Wynik } from '../protokol/kanal';
 import { utworzPanelKomponentu } from './panel-komponentu';
 import { utworzZmianeKomponentu } from './zmiana-komponentu';
 
-/**
- * Komponent własny już założony — zmiana (`component.update`) i przypisanie
- * (`component.assign`).
- *
- * Sprawdzian pilnuje czterech rzeczy stanowiących o odbiorze: że obie komendy
- * mają drogę z okna, że zmiana wysyła WYŁĄCZNIE pola dotknięte (bo pominięte
- * zostają w rdzeniu bez zmian), że okno mówi, Z CZYM wiąże, ZANIM zwiąże, i że
- * powtórzone przypisanie nie udaje czynności, której rdzeń nie wykonał.
- */
-
-/** Komponent w postaci, w której rdzeń go oddaje. */
+/** Komponent własny już założony obsługuje zmianę pól i przypisanie do poziomu zasięgu, w postaci, w której rdzeń go oddaje, z domyślnymi wartościami nadpisywanymi zmianami wskazanymi w wywołaniu. */
 function komponent(zmiany: Partial<Component> = {}): Component {
   return {
     id: 'komponent-1',
@@ -28,7 +18,7 @@ function komponent(zmiany: Partial<Component> = {}): Component {
   };
 }
 
-/** Kanał próbny: zapamiętuje żądania i oddaje odpowiedź wskazaną per komenda. */
+/** Kanał próbny zapamiętuje żądania wysłane w sprawdzianie i oddaje odpowiedź wskazaną osobno dla każdej komendy. */
 function kanalProbny(odpowiedzi: Record<string, unknown>): {
   kanal: Kanal;
   wyslane: { komenda: string; zadanie: unknown }[];
@@ -53,7 +43,7 @@ function kanalProbny(odpowiedzi: Record<string, unknown>): {
   return { kanal, wyslane };
 }
 
-/** Panel rozwinięty wraz z odczytanym wykazem. */
+/** Panel rozwinięty wraz z odczytanym wykazem, gotowy do sprawdzania kontrolek i wysłanych żądań próby. */
 async function panel(odpowiedzi: Record<string, unknown>) {
   const { kanal, wyslane } = kanalProbny(odpowiedzi);
   let odswiezono = 0;
@@ -73,12 +63,12 @@ async function przemiel(): Promise<void> {
   for (let krok = 0; krok < 6; krok += 1) await Promise.resolve();
 }
 
-/** Kontrolka panelu o wskazanym znaczniku steru. */
+/** Kontrolka panelu o wskazanym znaczniku steru, znaleziona przez selektor atrybutu danych na elemencie. */
 function ster<T extends HTMLElement>(element: HTMLElement, nazwa: string): T | null {
   return element.querySelector<T>(`[data-ster="${nazwa}"]`);
 }
 
-/** Przycisk panelu o wskazanym napisie. */
+/** Przycisk panelu o wskazanym napisie, znaleziony przeszukaniem wszystkich przycisków danego elementu. */
 function przycisk(element: HTMLElement, napis: string): HTMLButtonElement | undefined {
   return [...element.querySelectorAll('button')].find((pozycja) => pozycja.textContent === napis);
 }
@@ -105,8 +95,7 @@ describe('zmiana komponentu własnego (component.update)', () => {
     await przemiel();
 
     const zmiana = wyslane.find((pozycja) => pozycja.komenda === Command.ComponentUpdate);
-    // Ani opisu, ani stanu czynności: pole nietknięte zostaje w rdzeniu bez
-    // zmian, a wysłanie go nadpisałoby wartość odczytaną dawno.
+    // Ani opisu, ani stanu czynności: pole nietknięte zostaje w rdzeniu bez zmian.
     expect(zmiana?.zadanie).toEqual({ componentId: 'komponent-1', name: 'Automatyka poranna' });
   });
 
@@ -163,7 +152,7 @@ describe('przypisanie komponentu (component.assign)', () => {
     await przemiel();
 
     const zdanie = element.textContent ?? '';
-    // Nazwa komponentu i nazwa bytu — nie identyfikatory — i przed czynnością.
+    // Nazwa komponentu i nazwa bytu, nie identyfikatory, i przed czynnością wiązania.
     expect(zdanie).toContain('Wiążesz komponent „Nocna automatyka" z: Praca (praca)');
     expect(przycisk(element, 'Przypisz komponent')?.disabled).toBe(false);
   });

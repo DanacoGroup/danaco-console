@@ -4,32 +4,9 @@ import { manifestRepozytorium, metadaneCsv } from './eksporty-biblioteki';
 import type { StanBiblioteki } from './stan-biblioteki';
 
 /**
- * Zakładka Archiwum panelu Metadata & Archive Panel — utrwalenie i przeniesienie
- * zasobów (warstwa czwarta modułu).
- *
- * Rozdział zdolności jest tu ostry i wynika z kontraktu, nie z wygody:
- *
- *   — opis zasobów okno ma i wywozi (manifest repozytorium, metadane w CSV),
- *   — bajtów zasobów okno nie ma i wywieźć nie może, bo kontrakt nie niesie
- *     komendy pobierającej treść pliku biblioteki na urządzenie.
- *
- * Dlatego migawka repozytorium i paczka migracyjna powstają tu w części
- * opisowej, a nie jako archiwum — i wytwór mówi to w swoim nagłówku
- * (`eksporty-biblioteki.ts`). Nazwanie manifestu „paczką migracyjną" byłoby
- * obietnicą archiwum, którego w pliku nie ma.
- *
- * Utrwalenie archiwalne idzie teraz do rdzenia własną komendą modułu
- * (`library.preservation.run`): PDF/A, pakiet BagIt i profil PREMIS/METS
- * pracują na zasobie BIBLIOTEKI, a nie na magazynie zasobów Designu, więc
- * identyfikator się zgadza i wynik wraca wraz z zapisem walidacji.
- *
- * Paczka migracyjna i migawka repozytorium (`library.package.export`) niosą
- * bajty: archiwum powstaje w rdzeniu i ląduje w repozytorium jako nowy zasób.
- * Wywóz opisowy (manifest, CSV) zostaje obok — to dwie różne rzeczy i okno ich
- * nie myli.
- *
- * Wskaźnik retencji czyta politykę z rdzenia (`library.retention.list`) wraz
- * z raportem zasobów zbliżających się do końca okresu.
+ * Zakładka Archiwum panelu metadanych utrwala i przenosi zasoby: wywozi opis
+ * zasobów jako manifest i metadane CSV, a samych bajtów zasobów bez komendy
+ * rdzenia wywieźć nie może.
  */
 export interface ArchiwumRepozytorium {
   element: HTMLElement;

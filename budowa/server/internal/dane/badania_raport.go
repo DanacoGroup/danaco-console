@@ -1,15 +1,5 @@
-// Odpowiedzialność pliku: raport badania (Report Builder), jego sekcje,
-// eksporty oraz jednowierszowa przestrzeń badania — trzecia część
-// `RepozytoriumBadan` z `badania.go`; źródła leżą tam, ustalenia
-// w `badania_ustalenia.go`.
-//
-// Zapis raportu jest zawsze pełny, po wzorze `ZapiszKompozycje`
-// (`design_kompozycje.go`): komplet sekcji jest usuwany i wstawiany od nowa
-// w jednej transakcji, bo `research.report.build` nie zna trybu częściowej
-// zmiany. Przestrzeń badania jest jednowierszowa, bo kontrakt
-// `research.workspace.set` nie niesie identyfikatora — `UstawPrzestrzen`
-// nadpisuje jedyny wiersz (`id = 1`). Tabela pusta w `Przestrzen` wraca jako
-// zakres i lista puste, nie jako błąd: to stan startowy.
+// Plik utrzymuje raport badania, jego sekcje, eksporty oraz jednowierszową
+// przestrzeń badania, jako trzecią część repozytorium badań.
 package dane
 
 import (
@@ -19,7 +9,7 @@ import (
 	"fmt"
 )
 
-// RaportBadania to wiersz `raport_badania` — raport bez sekcji, patrz `Sekcje`.
+// RaportBadania to wiersz tabeli raport_badania: raport bez sekcji, oddawanych osobno metodą Sekcje raportu.
 type RaportBadania struct {
 	ID             int64
 	Kod            string
@@ -54,9 +44,7 @@ type EksportRaportu struct {
 	PlikBibliotekiID *string
 	SciezkaWyniku    *string
 	RozmiarBajtow    *int64
-	// Cel jest miejscem docelowym eksportu (`ResearchExportTarget`): pobranie,
-	// Library, Studio albo Roundtable. Kolumna doszła migracją 150 — do niej
-	// eksport zawsze szedł do pobrania, bo innego celu kontrakt wtedy nie miał.
+	// Cel jest miejscem docelowym eksportu: pobranie, Library, Studio albo Roundtable.
 	Cel       string
 	Utworzono string
 }
@@ -142,7 +130,7 @@ func (r *repozytoriumBadan) ZapiszRaport(ctx context.Context, raport RaportBadan
 	return r.Raport(ctx, raport.Kod)
 }
 
-// zapiszSekcjeRaportu wstawia sekcje raportu i ich powiązania z ustaleniami.
+// zapiszSekcjeRaportu wstawia sekcje raportu i ich powiązania z ustaleniami badania w jednej transakcji.
 func zapiszSekcjeRaportu(ctx context.Context, z *zapytania, transakcja *sql.Tx, raportID int64, kodRaportu string, sekcje []SekcjaRaportu) error {
 	wstawienie, err := z.wTransakcji(ctx, transakcja, wstawSekcjeRaportuBadania)
 	if err != nil {
@@ -189,7 +177,7 @@ func zapiszSekcjeRaportu(ctx context.Context, z *zapytania, transakcja *sql.Tx, 
 	return nil
 }
 
-// Raport zwraca raport badania o wskazanym kodzie; brak wiersza wraca jako ErrBrakWiersza.
+// Raport zwraca raport badania o wskazanym kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumBadan) Raport(ctx context.Context, kod string) (RaportBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzRaportBadania)
 	if err != nil {
@@ -205,7 +193,7 @@ func (r *repozytoriumBadan) Raport(ctx context.Context, kod string) (RaportBadan
 	return raport, nil
 }
 
-// odczytajRaportBadania składa strukturę z wiersza.
+// odczytajRaportBadania składa całą strukturę raportu badania z jednego wiersza wyniku danego zapytania.
 func odczytajRaportBadania(wiersz skaner) (RaportBadania, error) {
 	var raport RaportBadania
 	err := wiersz.Scan(&raport.ID, &raport.Kod, &raport.Okno, &raport.Tytul,
@@ -216,7 +204,7 @@ func odczytajRaportBadania(wiersz skaner) (RaportBadania, error) {
 	return raport, nil
 }
 
-// Sekcje zwraca sekcje raportu w zapisanej kolejności wraz z kodami zasilających ustaleń.
+// Sekcje zwraca sekcje raportu w zapisanej kolejności wraz z kodami zasilających je ustaleń badania wprost.
 func (r *repozytoriumBadan) Sekcje(ctx context.Context, raportID int64) ([]SekcjaRaportu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSekcjiRaportuBadania)
 	if err != nil {
@@ -245,8 +233,7 @@ func (r *repozytoriumBadan) Sekcje(ctx context.Context, raportID int64) ([]Sekcj
 		return nil, fmt.Errorf("dane: przerwany odczyt sekcji raportu badania %d: %w", raportID, err)
 	}
 
-	// Kody ustaleń dociągane osobnym zapytaniem na sekcję — liczba sekcji
-	// raportu jest mała (redagowane ręcznie), N+1 nie waży tyle co prostota.
+	// Kody ustaleń dociągane osobnym zapytaniem na sekcję: liczba sekcji jest mała, N+1 nie waży wiele.
 	powiazania, err := r.zapytania.przygotuj(ctx, listaKodowUstalenSekcji)
 	if err != nil {
 		return nil, err
@@ -275,7 +262,7 @@ func (r *repozytoriumBadan) Sekcje(ctx context.Context, raportID int64) ([]Sekcj
 	return lista, nil
 }
 
-// ZapiszEksport zapisuje ślad eksportu raportu: dokłada wiersz historii, nic nie nadpisuje.
+// ZapiszEksport zapisuje ślad eksportu raportu badania: dokłada wiersz historii, nic nigdy nie nadpisuje.
 func (r *repozytoriumBadan) ZapiszEksport(ctx context.Context, eksport EksportRaportu) (EksportRaportu, error) {
 	if eksport.Kod == "" {
 		return EksportRaportu{}, fmt.Errorf("dane: eksport raportu badania bez identyfikatora")
@@ -320,7 +307,7 @@ func (r *repozytoriumBadan) ZapiszEksport(ctx context.Context, eksport EksportRa
 	return zapisany, nil
 }
 
-// odczytajEksportRaportu składa strukturę z jednego wiersza; `RaportKod` wywołujący uzupełnia sam.
+// odczytajEksportRaportu składa strukturę eksportu z jednego wiersza; RaportKod wywołujący uzupełnia sam.
 func odczytajEksportRaportu(wiersz skaner) (EksportRaportu, error) {
 	var eksport EksportRaportu
 	var raportID int64
@@ -338,7 +325,7 @@ func odczytajEksportRaportu(wiersz skaner) (EksportRaportu, error) {
 	return eksport, nil
 }
 
-// UstawPrzestrzen nadpisuje jedyny wiersz przestrzeni badania (`id = 1`) i wymienia etapy w całości.
+// UstawPrzestrzen nadpisuje jedyny wiersz przestrzeni badania i wymienia jej wszystkie etapy w całości.
 func (r *repozytoriumBadan) UstawPrzestrzen(ctx context.Context, zakres string, etapy []string) (string, []string, error) {
 	err := wTransakcji(ctx, r.db, func(transakcja *sql.Tx) error {
 		zapis, err := r.zapytania.wTransakcji(ctx, transakcja, ustawPrzestrzenBadania)

@@ -14,29 +14,11 @@ import { utworzPunktWidzenia } from './efektywna-punkt-widzenia';
 import type { ObszarIzolacji, ZaleznosciObszaru } from './obszary';
 
 /**
- * Obszar „Polityka efektywna" okna Punktów Izolacji: pokazuje, co obowiązuje
- * w tej chwili dla jedenastu punktów izolacji i skąd każda wartość pochodzi.
- *
- * Wartość zapisana świadomie i wartość domyślna muszą wyglądać inaczej,
- * ponieważ stan wyjściowy platformy to pełna swoboda operacyjna — egzekutor
- * odrzuca naruszenie tylko przy punkcie włączonym, a wartość wyłączona niczego
- * nie ogranicza. Pokazanie domyślnej tak samo jak zapisu Operatora
- * sugerowałoby ochronę, której nikt nie włączył.
- *
- * Pochodzenie czytamy z odpowiedzi rdzenia na `isolation.policy.preview`:
- * obecne `policy.origin` znaczy zapis na wskazanym poziomie, brak `origin`
- * znaczy wartość z rejestru definicji. Stan `nieznane` wchodzi wtedy, gdy
- * odpowiedź w ogóle nie niesie przełącznika danego punktu.
- *
- * Żądanie podglądu musi nieść punkt widzenia — sesję, warstwę, zasięg i okno.
- * Przy pustym żądaniu rdzeń schodzi kolejką do poziomu globalnego, więc okno
- * pokazałoby politykę całej platformy pod nazwą „efektywna".
- *
- * Czwarty stan `brak-odczytu` jest wyłącznie kliencki i nie wolno go zlewać
- * z wartością domyślną: oba prowadzą do przeciwnych wniosków o bezpieczeństwie.
+ * Obszar „Polityka efektywna" okna Punktów Izolacji: co obowiązuje dla
+ * jedenastu punktów izolacji.
  */
 
-/** Trzy wartości pochodzenia z rdzenia (`Pochodzenie`) i czwarta, wyłącznie kliencka: brak odczytu. */
+/** Trzy wartości pochodzenia z rdzenia (`Pochodzenie`) i czwarta, wyłącznie kliencka: brak odczytu, gdy odpowiedź w ogóle nie nadeszła. */
 type StanPochodzenia = 'zapis' | 'domyslna' | 'nieznane' | 'brak-odczytu';
 
 interface OpisPlakietki {
@@ -44,7 +26,7 @@ interface OpisPlakietki {
   klasa: string;
 }
 
-/** Wygląd plakietki dla każdego z czterech stanów — każdy ma własny. */
+/** Wygląd plakietki dla każdego z czterech stanów pochodzenia wartości — każdy stan ma własną etykietę i własny kolor. */
 const PLAKIETKI_POCHODZENIA: Readonly<Record<StanPochodzenia, OpisPlakietki>> = {
   zapis: { etykieta: 'Zapis Operatora', klasa: 'dn-plakietka--sukces' },
   domyslna: { etykieta: 'Wartość domyślna', klasa: 'dn-plakietka--informacja' },
@@ -65,7 +47,7 @@ interface PunktPolityki {
   grupa: GrupaPunktu;
   /** Objaśnienie statyczne z rejestru definicji — treść stabilna, niezależna od odczytu. */
   objasnienie: string;
-  /** Klucz przełącznika w odpowiedzi rdzenia (`IsolationSwitch.kind` albo `IsolationTechnicalSwitch.scope`). */
+  /** Klucz przełącznika w odpowiedzi rdzenia: `IsolationSwitch.kind` albo technicznego zasięgu. */
   przelacznikKlucz: IsolationContextKind | IsolationTechnicalScope;
   /** Etykiety wartości włączonej (`isolated: true`) i wyłączonej, właściwe grupie punktu. */
   etykietaWlaczony: string;
@@ -74,11 +56,8 @@ interface PunktPolityki {
 
 /**
  * Jedenaście punktów izolacji z etykietami i objaśnieniami odpowiadającymi
- * definicjom rdzenia (`server/internal/konfig/definicje_izolacji.go`:
- * `definicjeIzolacjiKontekstu`, `definicjeIzolacjiTechnicznej`). Objaśnienie
- * jest opisem klucza — co znaczy i jaki jest stan wyjściowy platformy — a nie
- * wynikiem odczytu, dlatego stoi w pliku: odpowiedź `policy.preview` niesie
- * wartości, nie objaśnienia.
+ * definicjom rdzenia; objaśnienie opisuje klucz i stan wyjściowy platformy, nie
+ * wynik odczytu.
  */
 const PUNKTY_POLITYKI: readonly PunktPolityki[] = [
   {
@@ -243,8 +222,7 @@ export function utworzObszar(zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
         punktWidzenia.element,
         zbudujWstep(null, wynik.powod),
         zbudujTabele(null),
-        // Granica asystenta stoi także przy nieudanym odczycie: wynika
-        // z kontraktu, nie z wyniku tego wywołania.
+        // Granica asystenta stoi także przy nieudanym odczycie: wynika z kontraktu, nie z tego wywołania.
         zbudujGraniceAsystenta(),
       );
       return;
@@ -281,7 +259,7 @@ interface OdczytPolityki {
 /**
  * Woła `isolation.policy.preview` z punktem widzenia wskazanym przez Operatora.
  * Żądania nie wolno wysłać pustego: rdzeń sprowadza je wtedy do poziomu
- * globalnego i okno pokazałoby politykę całej platformy pod nazwą „efektywna".
+ * globalnego.
  */
 function pobierzPolityke(
   zaleznosci: ZaleznosciObszaru,
@@ -298,7 +276,7 @@ function pobierzPolityke(
   });
 }
 
-/** Wstęp nad tabelą: co pokazuje, jak czytać plakietki i co znaczy nieudany odczyt. */
+/** Wstęp nad tabelą: co pokazuje tabela, jak czytać plakietki pochodzenia i co znaczy nieudany odczyt polityki. */
 function zbudujWstep(polityka: IsolationPolicy | null, powodBraku: string | undefined): HTMLElement {
   const sekcja = document.createElement('div');
 
@@ -332,10 +310,7 @@ function zbudujWstep(polityka: IsolationPolicy | null, powodBraku: string | unde
   sekcja.append(opis, ostrzezenie, legenda);
 
   if (!polityka) {
-    // Odmowa mówi trzy rzeczy: co się nie udało, dlaczego to nie jest wartość
-    // domyślna i czym Operator to zmieni. `isolation.policy.preview` stoi
-    // w kontrakcie i została wysłana, więc brak wyniku jest odmową odczytu,
-    // nie brakiem komendy.
+    // Odmowa mówi trzy rzeczy: co się nie udało, dlaczego to nie jest wartość domyślna i co z tym zrobić.
     const plakietka = document.createElement('span');
     plakietka.className = 'dn-plakietka dn-plakietka--blad';
     plakietka.textContent = 'Odczyt nieudany';
@@ -354,7 +329,7 @@ function zbudujWstep(polityka: IsolationPolicy | null, powodBraku: string | unde
   return sekcja;
 }
 
-/** Zdanie nad tabelą: czego dotyczy bieżący odczyt. */
+/** Zdanie nad tabelą: czego dotyczy bieżący odczyt, czyli którego punktu widzenia Operatora dotyczy podgląd. */
 function zdanieZakresu(opis: string): HTMLElement {
   const element = document.createElement('p');
   element.className = 'pi-widzenie__zakres';
@@ -406,7 +381,7 @@ function zbudujWierszGrupy(naglowek: string): HTMLElement {
   return wiersz;
 }
 
-/** Odnajduje przełącznik punktu w odpowiedzi rdzenia — `isolated: boolean` albo `undefined`, gdy klucz nie wrócił (traktowane jak „nieznane"). */
+/** Odnajduje przełącznik punktu w odpowiedzi rdzenia — `isolated: boolean` albo `undefined`, gdy klucz nie wrócił, co traktowane jest jak „nieznane". */
 function znajdzIsolated(punkt: PunktPolityki, polityka: IsolationPolicy): boolean | undefined {
   if (punkt.grupa === 'kontekst') {
     return polityka.contextSwitches.find((p) => p.kind === punkt.przelacznikKlucz)?.isolated;
@@ -415,12 +390,9 @@ function znajdzIsolated(punkt: PunktPolityki, polityka: IsolationPolicy): boolea
 }
 
 /**
- * Jeden wiersz tabeli punktów izolacji. Bez `polityka` — gdy rdzeń nie
- * odpowiedział — każda komórka niesie stan `brak-odczytu`, odróżniony od
- * `domyslna`, bo oba prowadzą do przeciwnych wniosków o bezpieczeństwie.
- * Z `polityka` wartość pochodzi z `isolated`, a pochodzenie z `policy.origin`:
- * obecny `origin` znaczy zapis na wskazanym poziomie, brak `origin` znaczy
- * wartość z rejestru definicji.
+ * Jeden wiersz tabeli punktów izolacji. Bez `polityka` każda komórka niesie
+ * stan `brak-odczytu`, odróżniony od `domyslna`, bo oba prowadzą do
+ * przeciwnych wniosków o bezpieczeństwie.
  */
 function zbudujWierszPunktu(punkt: PunktPolityki, polityka: IsolationPolicy | null): HTMLElement {
   const wiersz = document.createElement('tr');
@@ -483,17 +455,9 @@ function zbudujWierszPunktu(punkt: PunktPolityki, polityka: IsolationPolicy | nu
 }
 
 /**
- * Granica asystenta wobec izolacji: czy asystent, który obsługuje aplikację
- * za Operatora, może przestawić sobie te punkty.
- *
- * Odpowiedź powstaje z wykazu narzędzi modelu (`NARZEDZIA_MODELU`) przy każdym
- * odczycie, a nie z wpisu na stałe: dołożenie do narzędzi komendy zapisu
- * izolacji zmienia treść wiersza samo.
- *
- * Miejscem styku jest `config.session.set` z roli klawiatury: pisze przedmioty
- * tych samych punktów — katalog roboczy, katalogi dodatkowe, środowisko,
- * uruchomienie, narzędzia, uprawnienia i konto. Przełączników izolacji nie
- * rusza i egzekutor zostaje na miejscu, więc granicy nie przekracza.
+ * Granica asystenta wobec izolacji: czy asystent, który obsługuje aplikację,
+ * może przestawić te punkty; odpowiedź powstaje z wykazu narzędzi modelu przy
+ * każdym odczycie, nie z wpisu na stałe.
  */
 const ZAPIS_IZOLACJI: readonly Command[] = [
   Command.IsolationContextSet,
@@ -513,7 +477,7 @@ const ODCZYT_IZOLACJI: readonly Command[] = [
   Command.IsolationPolicyPreview,
 ];
 
-/** Które z podanych komend stoją w wykazie narzędzi modelu. */
+/** Które z podanych komend stoją w wykazie narzędzi modelu udostępnionych asystentowi w bieżącej sesji rozmowy. */
 function narzedziamiModelu(komendy: readonly Command[]): readonly Command[] {
   const wykaz = new Set(NARZEDZIA_MODELU.map((narzedzie) => String(narzedzie.command)));
   return komendy.filter((komenda) => wykaz.has(String(komenda)));

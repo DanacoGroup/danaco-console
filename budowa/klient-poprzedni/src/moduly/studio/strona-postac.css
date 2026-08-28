@@ -1,14 +1,4 @@
-/*
- * Postać dokumentu — pas otwarć i trzy panele nastaw.
- *
- * Powierzchnia należy do dokumentu: panele są NAKŁADKAMI otwieranymi z pasa,
- * domyślnie schowanymi atrybutem `hidden`. Stałej kolumny nie zajmują i zajmować
- * nie mogą — arkusz nie ma więc ani jednej reguły szerokości kolumny.
- *
- * Żetony barw i odstępów pochodzą z warstwy wspólnej produktu. Arkusz nie zakłada
- * własnej palety: panel nastaw strony ma wyglądać jak reszta modułu, a nie jak
- * wyspa.
- */
+/* Postać dokumentu łączy pas otwarć z trzema panelami nastaw, które są nakładkami otwieranymi z pasa, domyślnie ukrytymi, bez własnej kolumny ani osobnej palety barw. */
 
 .ms-postac__pas {
   display: flex;
@@ -17,7 +7,7 @@
   margin-block: var(--dn-odstep-xs, 0.375rem);
 }
 
-/* Panel jako nakładka nad treścią — przewijana, bo nastaw strony jest wiele. */
+/* Panel nastaw jest nakładką nad treścią dokumentu z własnym przewijaniem, ponieważ liczba dostępnych nastaw strony bywa duża. */
 .ms-postac {
   display: flex;
   flex-direction: column;
@@ -73,7 +63,7 @@
   font-size: 0.8125rem;
 }
 
-/* Tablica znaków — siatka gęsta, bo znaków bywa kilkaset. */
+/* Tablica znaków układa się w gęstą siatkę, ponieważ liczba dostępnych znaków do wstawienia bywa liczona w setkach pozycji. */
 .ms-postac__znaki {
   display: flex;
   flex-wrap: wrap;

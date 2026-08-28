@@ -14,51 +14,16 @@ import {
 } from './rama-usuniecia';
 import { CZYNNOSC_USUNIECIA, type RozliczenieUsuniecia } from './usuniecie-sesji';
 
-/** Wysyłka `session.delete` podana z zewnątrz; potwierdzenie już padło. */
+/** Wysyłka `session.delete` podana z zewnątrz, wywoływana dopiero po tym, jak Operator potwierdzi usunięcie. */
 export type WysylkaUsuniecia = (
   idSesji: readonly string[],
 ) => Promise<Wynik<RozliczenieUsuniecia>>;
 
 export type { WskazanieUsuniecia };
 
-/**
- * Potwierdzenie trwałego usunięcia sesji — jedna powierzchnia całej czynności.
- *
- * Jedna odpowiedzialność: pokazać, co zginie, przyjąć potwierdzenie i pokazać,
- * co rdzeń odpowiedział. Nazwy komendy ten plik nie zna — wysyłkę dostaje
- * z zewnątrz (`usun`), więc daje się poddać próbie bez rdzenia.
- *
- * Operator widzi stratę, zanim kliknie. Kontrakt żąda pola `confirm`, a rdzeń
- * bez niego odmawia wykonania (`adapter_sesje_usuwanie.go`). Potwierdzenie ma
- * więc treść, a nie samo pytanie „czy jesteś pewien": modal wypisuje tytuły
- * wskazanych sesji i mówi wprost, że zapis ginie razem z wiadomościami, oknami
- * i artefaktami.
- *
- * Okno stoi na natywnym `<dialog>` (wzorem `strona-glowna/pytanie-o-nazwe.ts`),
- * więc warstwa tła, pułapka ogniska i Escape należą do przeglądarki. Escape
- * w trakcie wywołania jest wstrzymany: rdzeń już usuwa sesje, więc zamknięcie
- * okna nie odwołałoby niczego, a Operator zostałby bez odpowiedzi.
- *
- * Trzy stany obowiązkowe stoją na jednym pasie `oznaczFaze` z biblioteki:
- * `ladowanie` w czasie wywołania, `puste` gdy rdzeń nie usunął niczego, `blad`
- * przy odmowie — z kodem i treścią rdzenia z `opisOdmowyBledu`. Odmowa nie
- * zamyka modalu: przycisk czynności znika, zostaje samo „Zamknij", więc nie da
- * się wziąć odmowy za skutek.
- */
+// Potwierdzenie trwałego usunięcia sesji: pokazuje, co zginie, i pokazuje, co odpowiedział rdzeń.
 
-/**
- * Otwiera potwierdzenie i prowadzi czynność do końca.
- *
- * Oddaje rozliczenie rdzenia, gdy komenda przeszła — także rozliczenie, w
- * którym nic nie zginęło, bo to też jest odpowiedź rdzenia i pas kart ma ją
- * powtórzyć. Oddaje `null`, gdy Operator odmówił potwierdzenia albo gdy rdzeń
- * odmówił wykonania; treść odmowy została wtedy pokazana w modalu.
- *
- * Obietnica rozstrzyga się z odpowiedzią rdzenia, nie z zamknięciem okna. Modal
- * zostaje otwarty do przeczytania skutku, ale pas kart ma odpowiedź
- * natychmiast — wiązanie rozstrzygnięcia z zamknięciem okna kazałoby pasowi
- * milczeć tak długo, jak długo Operator czyta.
- */
+/** Otwiera potwierdzenie i prowadzi czynność usunięcia sesji do końca, zwracając rozliczenie samego rdzenia. */
 export function otworzUsuniecieSesji(
   wskazania: readonly WskazanieUsuniecia[],
   wyslij: WysylkaUsuniecia,
@@ -67,9 +32,7 @@ export function otworzUsuniecieSesji(
   const rama = zlozRameUsuniecia(wskazania);
   const { modal, pas } = rama;
   document.body.append(modal);
-  // `showModal` daje nakładkę, stos okien, pułapkę ogniska i Escape. Środowisko
-  // sprawdzianów DOM go nie implementuje (wzorem `moduly/design/modal-kreatora.ts`),
-  // a treść potwierdzenia ma być mierzalna także tam — stąd otwarcie zapasowe.
+  // `showModal` daje nakładkę, stos okien i Escape; brak w sprawdzianach DOM ma otwarcie zapasowe.
   if (typeof modal.showModal === 'function') modal.showModal();
   else modal.open = true;
   rama.anuluj.focus();
@@ -99,9 +62,7 @@ export function otworzUsuniecieSesji(
         powiedzDlaczegoNieTeraz(rama, ODMOWA_ZAMKNIECIA);
         return;
       }
-      // „Zostaw sesje” przed komendą to odmowa Operatora; „Zamknij” po
-      // odpowiedzi rdzenia niczego już nie rozstrzyga — rozliczenie poszło
-      // do pasa w chwili, gdy przyszło.
+      // „Zostaw sesje” to odmowa Operatora; „Zamknij” po odpowiedzi rdzenia niczego już nie rozstrzyga.
       if (!bylOdpowiedzia) rozwiaz(null);
     });
 
@@ -126,17 +87,7 @@ const ODMOWA_POWTORZENIA =
 const ODMOWA_ZAMKNIECIA =
   'Rdzeń już usuwa wskazane sesje. Zamknięcie okna niczego nie odwoła, a Operator zostałby bez odpowiedzi — czekamy na nią tutaj.';
 
-/**
- * Stan `ladowanie`: czynność biegnie, oba przyciski zostają klikalne.
- *
- * Przed powtórzeniem czynności broni strażnik `wToku` w obsłudze kliknięcia,
- * a przed zamknięciem okna ten sam strażnik w `zdejmij`, więc `disabled` nie
- * dokładałby ochrony — dokładałby ciszę. Zamiast tego przycisk odpowiada
- * zdaniem, dlaczego w tej chwili nie ma czego zrobić.
- *
- * Powód idzie dwiema drogami, wzorem `przyciskBezKomendy`: `title` pod kursorem
- * i `aria-description` dla czytnika ekranu.
- */
+/** Stan `ladowanie`: czynność biegnie, oba przyciski zostają klikalne i odpowiadają zdaniem zamiast ciszą. */
 function zapowiedzWywolanie(rama: RamaUsuniecia): void {
   zapowiedzPowod(rama.usun, ODMOWA_POWTORZENIA);
   zapowiedzPowod(rama.anuluj, ODMOWA_ZAMKNIECIA);
@@ -144,25 +95,19 @@ function zapowiedzWywolanie(rama: RamaUsuniecia): void {
   oznaczFaze(rama.modal, rama.pas, 'ladowanie');
 }
 
-/** Powód bezskuteczności zapowiedziany pod kursorem i czytnikowi, nie blokadą. */
+/** Powód bezskuteczności przycisku, zapowiedziany pod kursorem i czytnikowi ekranu, a nie blokadą kontrolki. */
 function zapowiedzPowod(kontrolka: HTMLButtonElement, powod: string): void {
   kontrolka.title = powod;
   kontrolka.setAttribute('aria-description', powod);
 }
 
-/** Zdjęcie zapowiedzi po odpowiedzi rdzenia — przyciski znów mają skutek. */
+/** Zdjęcie zapowiedzi bezskuteczności po odpowiedzi rdzenia, gdy przyciski znów mają jakikolwiek skutek. */
 function zdejmijPowod(kontrolka: HTMLButtonElement): void {
   kontrolka.title = '';
   kontrolka.removeAttribute('aria-description');
 }
 
-/**
- * Odpowiedź na kliknięcie, które w tej chwili nie ma czego wykonać.
- *
- * Zdanie idzie do akapitu skutku (`role="status"`), więc czytnik ekranu
- * ogłasza je od razu, a pas stanu dalej trzyma fazę `ladowanie`. Milczenie
- * byłoby tu gorsze od blokady: Operator wziąłby brak reakcji za zawieszenie.
- */
+/** Odpowiedź na kliknięcie kontrolki, która w tej chwili nie ma czego wykonać — zdanie idzie do akapitu skutku. */
 function powiedzDlaczegoNieTeraz(rama: RamaUsuniecia, powod: string): void {
   rama.skutek.textContent = powod;
   rama.skutek.hidden = false;
@@ -179,8 +124,7 @@ function pokazOdpowiedz(
   tytul: TytulSesji,
 ): RozliczenieUsuniecia | null {
   rama.usun.hidden = true;
-  // Odpowiedź przyszła: zapowiedź bezskuteczności przestaje być prawdziwa,
-  // a zdanie o niej nie ma prawa zostać pod odpowiedzią rdzenia.
+  // Odpowiedź przyszła: zapowiedź bezskuteczności przestaje być prawdziwa i znika spod odpowiedzi.
   zdejmijPowod(rama.anuluj);
   zdejmijPowod(rama.usun);
   rama.skutek.hidden = true;
@@ -200,16 +144,14 @@ function pokazOdpowiedz(
   const zdanie = zdanieUsunietych(rozliczenie, tytul);
   const tresc = pominiete === null ? zdanie : `${zdanie} ${pominiete}`;
 
-  // Nic nie zginęło — to stan pusty czynności i tak jest nazwany. Zapis, który
-  // się ostał, nie ma wyglądać jak zapis skasowany.
+  // Nic nie zginęło — to stan pusty czynności, zapis, który się ostał, nie ma wyglądać jak skasowany.
   if (czyRozliczeniePuste(rozliczenie)) {
     rama.pas.textContent = tresc;
     oznaczFaze(rama.modal, rama.pas, 'puste');
     return rozliczenie;
   }
 
-  // Powodzenie zdejmuje pas stanów, a zdanie o stracie zostaje we własnym
-  // akapicie do chwili zamknięcia okna — Operator ma je przeczytać.
+  // Powodzenie zdejmuje pas stanów, zdanie o stracie zostaje we własnym akapicie do zamknięcia okna.
   rama.skutek.textContent = tresc;
   rama.skutek.hidden = false;
   oznaczFaze(rama.modal, rama.pas, 'gotowe');

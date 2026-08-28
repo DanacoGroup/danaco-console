@@ -4,41 +4,21 @@ import type { Dyktowanie } from './dyktowanie/dyktowanie';
 import type { UrzadzenieDzwieku } from './dyktowanie/urzadzenia-dzwieku';
 import { utworzSterNastawy, type SterPaska } from './ster-nastawy';
 
-/**
- * Mikrofon — ster paska zlecenia. Jest wyłącznie drogą do gotowej fasady
- * `Dyktowanie`: nie nagrywa, nie zna `MediaRecorder` ani komendy
- * `speech.transcribe` i nie składa wyniku.
- *
- * Komponent ma dwa uchwyty w jednym pudełku: przycisk nagrywania oraz uchwyt
- * drzewa. Nagrywanie jest czynnością, a wybór mikrofonu nastawą; gest
- * „przytrzymaj, aby nagrać" (`dyktowanie/przytrzymanie.ts`) zajmuje
- * `pointerdown` przycisku, a uchwyt menu otwiera się na `click` — jeden
- * przycisk pełniący obie role zaczynałby nagranie przy każdym otwarciu wykazu.
- * Menu jest jedno i biblioteczne (`komponenty/menu-drzewo.ts` przez wspólną
- * obudowę `ster-nastawy.ts`).
- *
- * Drzewo ma dwa poziomy: gałąź „Mikrofon" niesie wykaz urządzeń, a przełącznik
- * „Przytrzymaj, aby nagrać" stoi poziom wyżej, bo dotyczy gestu, nie sprzętu.
- *
- * Mikrofonu bez silnika nie stawiamy wcale — `dostepnosc()` jest pytaniem
- * zadanym zanim cokolwiek powstanie, stąd obietnica w wyniku i `null` zamiast
- * steru. Wyszarzona ikona albo ikona odmawiająca po naciśnięciu obiecywałaby
- * zdolność, której nie ma; krótszy pasek niczego nie obiecuje.
- */
+// Mikrofon to ster paska zlecenia, wyłącznie droga do gotowej fasady Dyktowanie.
 
-/** Nazwa rodzajowa nastawy — idzie do `aria-label`, nie na ekran. */
+/** Nazwa rodzajowa nastawy mikrofonu — idzie do etykiety dostępności `aria-label`, nigdy nie trafia na ekran. */
 const NASTAWA = 'Mikrofon';
 
-/** Klucz gałęzi z wykazem urządzeń; przedrostek oddziela je od przełączników. */
+/** Klucz gałęzi menu z wykazem urządzeń mikrofonu; przedrostek klucza oddziela urządzenia od przełączników trybu. */
 const GALAZ_URZADZEN = 'mikrofon:urzadzenia';
 const PRZEDROSTEK_URZADZENIA = 'mikrofon:urzadzenie:';
 const KLUCZ_PRZYTRZYMANIA = 'mikrofon:przytrzymanie';
 
-/** Pozycja „cokolwiek wybrał system" — pusty `deviceId` przyjmuje `getUserMedia`. */
+/** Pozycja „cokolwiek wybrał system” w menu wyboru mikrofonu — pusty identyfikator urządzenia przyjmuje przeglądarka. */
 const KLUCZ_DOMYSLNEGO = `${PRZEDROSTEK_URZADZENIA}`;
 export const NAZWA_DOMYSLNEGO = 'Wejście domyślne systemu';
 
-/** Wartości na uchwycie w trakcie pracy — sygnał, że mikrofon pracuje. */
+/** Wartości pokazywane na uchwycie w trakcie pracy mikrofonu — sygnał dla operatora, że trwa nagrywanie albo rozpoznawanie. */
 const WARTOSC_NAGRYWA = 'Nagrywa…';
 const WARTOSC_KONCZY = 'Rozpoznaje…';
 
@@ -53,20 +33,15 @@ export const ZDANIE_BEZ_MOWY =
   'słowa — bywa tak przy pustym pokoju albo wyciszonym wejściu. Nagraj jeszcze raz, ' +
   'mówiąc bliżej mikrofonu.';
 
-/** Zależności steru — wąskie i wstrzykiwane. */
+/** Zależności steru mikrofonu — wąskie i wstrzykiwane, obejmujące fasadę dyktowania oraz dokładanie tekstu do pola. */
 export interface ZaleznosciSteruMikrofonu {
   /** Gotowa fasada ogniwa mowa→tekst; ster jej nie zakłada. */
   dyktowanie: Dyktowanie;
-  /**
-   * Dokłada rozpoznany tekst do pola wypowiedzi. Wymagana, nie opcjonalna:
-   * dyktowanie, którego wynik nie ma dokąd trafić, jest przyciskiem
-   * meldującym pracę bez skutku. Kto nie ma pola wypowiedzi, ten nie stawia
-   * mikrofonu.
-   */
+  /** Dokłada tekst do pola; wymagana, bo dyktowanie bez odbiorcy byłoby przyciskiem bez skutku. */
   wstawTekst(tekst: string): void;
 }
 
-/** Ster paska ze zdejmowalnymi nasłuchami sprzętu i wyniku. */
+/** Ster paska mikrofonu ze zdejmowalnymi nasłuchami sprzętu dźwiękowego i wyniku rozpoznawania mowy operatora. */
 export type SterMikrofonu = SterPaska & { rozlacz(): void };
 
 /**
@@ -95,16 +70,13 @@ export async function utworzSterMikrofonu(
     ikona: 'mikrofon',
     wykonaj: (klucz) => {
       wybierz(klucz);
-      // Wybór urządzenia i gestu jest lokalny — nie ma komendy, nie ma odmowy
-      // rdzenia i nie ma na co czekać, więc obietnica jest spełniona
-      // natychmiast.
+      // Wybór urządzenia i gestu jest lokalny — bez komendy rdzenia obietnica spełnia się natychmiast.
       return Promise.resolve();
     },
     odswiez: () => odswiez(),
   });
 
-  // Przycisk nagrywania stoi przed uchwytem, w tym samym pudełku steru: jeden
-  // komponent paska, dwa sposoby użycia. Najpierw czynność, potem jej nastawy.
+  // Przycisk nagrywania stoi przed uchwytem w tym pudełku: najpierw czynność, potem jej nastawy.
   const nagraj = document.createElement('button');
   nagraj.type = 'button';
   nagraj.className = 'dn-btn-ikona dc-ster-mikrofonu__nagraj';
@@ -116,18 +88,10 @@ export async function utworzSterMikrofonu(
   function nacisniecie(): void {
     if (dyktowanie.stan() === 'nagrywa') dyktowanie.zakoncz();
     else if (dyktowanie.stan() === 'bezczynne') dyktowanie.rozpocznij();
-    // Stan `konczy` jest przelotny i już domyka nagranie — drugie polecenie
-    // w tej chwili nie ma czego zacząć ani czego skończyć.
+    // Stan konczy jest przelotny i domyka nagranie — drugie polecenie nie ma czego zacząć.
   }
 
-  /**
-   * Przestawia sposób obsługi przycisku.
-   *
-   * Dwa tryby wykluczają się w zdarzeniach, nie w umowie: gest zajmuje
-   * `pointerdown`, a przełączanie `click`, który po każdym puszczeniu i tak
-   * przychodzi. Trzymanie obu naraz zaczynałoby nagranie i kończyło je tym
-   * samym ruchem.
-   */
+  /** Dwa tryby wykluczają się w zdarzeniach: gest zajmuje naciśnięcie, przełączanie kliknięcie. */
   function podepnijObsluge(): void {
     odepnijGest?.();
     odepnijGest = null;
@@ -162,14 +126,7 @@ export async function utworzSterMikrofonu(
     return nazwaWybranego();
   }
 
-  /**
-   * Drzewo mikrofonu — dwa poziomy.
-   *
-   * Wejście domyślne systemu stoi na wykazie zawsze, także przy pustym odczycie
-   * sprzętu: `getUserMedia` bez wskazania działa również wtedy, gdy przeglądarka
-   * nie chce pokazać etykiet. Gałąź bez ani jednej pozycji byłaby ślepym
-   * zaułkiem, a wykaz bez wejścia domyślnego — kłamstwem o możliwościach.
-   */
+  /** Wejście domyślne stoi na wykazie zawsze, także przy pustym odczycie, by gałąź nie była ślepa. */
   function drzewo(): PozycjaMenu[] {
     const wybrane = dyktowanie.urzadzenie();
     const wejscia: PozycjaMenu[] = [
@@ -196,9 +153,7 @@ export async function utworzSterMikrofonu(
         rodzaj: 'galaz',
         klucz: GALAZ_URZADZEN,
         nazwa: NASTAWA,
-        // Powód niepełnego wykazu wypiera opis rodzajowy: zdanie o zastępczych
-        // nazwach albo o braku sprzętu jest tu jedyną rzeczą, której nie widać
-        // po samej liście.
+        // Powód niepełnego wykazu wypiera opis rodzajowy — jedyna rzecz niewidoczna po samej liście.
         opis: powodWykazu === '' ? `Nagrywa: ${nazwaWybranego()}` : powodWykazu,
         ikona: 'mikrofon',
         dzieci: wejscia,
@@ -221,8 +176,7 @@ export async function utworzSterMikrofonu(
       elementIkony(nagrywa ? 'zatrzymaj' : 'mikrofon', { rozmiar: 14 }),
     );
     nagraj.setAttribute('aria-pressed', String(nagrywa));
-    // Etykieta przycisku mówi o czynności, a nie o stanie: czytnik ekranu
-    // odczytuje ją jako to, co się stanie po naciśnięciu.
+    // Etykieta przycisku mówi o czynności, nie o stanie: czytnik odczytuje skutek naciśnięcia.
     const etykieta = nagrywa
       ? 'Zakończ nagrywanie i rozpoznaj mowę'
       : przytrzymanie
@@ -246,12 +200,10 @@ export async function utworzSterMikrofonu(
 
   const odsubskrybujWynik = dyktowanie.naWynik((wynik) => {
     if (wynik.stan === 'rozpoznano') {
-      // Tekst dokładany do pola, nie podmieniający jego treści: dyktowana jest
-      // dalsza część zdania zaczętego ręką.
+      // Tekst dokładany do pola nie podmienia treści — dyktowana jest dalsza część zdania z ręki.
       zaleznosci.wstawTekst(wynik.tekst);
       ster.zdanie('');
-      // Nazwy urządzeń odsłaniają się dopiero po pierwszej zgodzie na mikrofon,
-      // a ta właśnie padła. Bez tego odczytu zostałoby „Mikrofon 2" na stałe.
+      // Nazwy urządzeń odsłaniają się dopiero po pierwszej zgodzie na mikrofon, która właśnie padła.
       wczytajUrzadzenia();
       return;
     }

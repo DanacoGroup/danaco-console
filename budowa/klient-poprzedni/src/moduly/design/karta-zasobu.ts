@@ -1,25 +1,15 @@
 import { DesignAssetKind, type DesignAsset } from '../../../../shared/contract';
 
 /**
- * Jedna pozycja wykazu zasobów Assets Panel — zasób wraz z jego metadanymi.
- *
- * Karta jest przyciskiem, nie prostokątem: wybór zasobu przestawia naraz panel
- * metadanych, kanwę Design Board i pole obrazu referencyjnego Prompt Buildera,
- * więc musi być osiągalna klawiaturą.
- *
- * Zasób niesie `uri` tylko wtedy, gdy rdzeń go zna; bez niego karta pokazuje
- * pole zastępcze z rodzajem zasobu zamiast miniatury.
+ * Karta zasobu jest jedną pozycją wykazu zasobów Assets Panel i niesie zasób
+ * wraz z jego metadanymi. Moduł podaje także polskie nazwy rodzajów zasobu
+ * wzięte ze słownika kontraktu, a nie z wykazu własnego.
  */
-
-/** Polskie nazwy rodzajów zasobu — słownik kontraktu, nie wykaz własny. */
 const NAZWY_RODZAJOW: Readonly<Record<DesignAssetKind, string>> = {
   [DesignAssetKind.Image]: 'grafika rastrowa',
   [DesignAssetKind.Vector]: 'grafika wektorowa',
   [DesignAssetKind.Composition]: 'kompozycja tablicy',
-  // Wynik pracy modelu wchodzi do Assets Panel tą samą drogą, co zasób wniesiony
-  // ręcznie, więc wykaz musi znać także jego rodzaje — inaczej karta pokazałaby
-  // pustkę w miejscu nazwy. Słownik pokrywa cały typ kontraktu: brak wartości
-  // zatrzymuje kompilację.
+  // Wynik pracy modelu wchodzi do wykazu tą samą drogą, co zasób wniesiony ręcznie.
   [DesignAssetKind.Document]: 'dokument',
   [DesignAssetKind.Audio]: 'nagranie dźwiękowe',
   [DesignAssetKind.Video]: 'film',
@@ -30,23 +20,19 @@ export function nazwaRodzaju(rodzaj: DesignAssetKind): string {
   return NAZWY_RODZAJOW[rodzaj];
 }
 
-/** Nazwa zasobu widoczna w wykazie; brak nazwy zastępuje identyfikator. */
+/**
+ * Zwraca nazwę zasobu widoczną w wykazie. Gdy zasób nie ma nazwy albo nazwa
+ * składa się z samych odstępów, w jej miejsce wchodzi identyfikator zasobu.
+ */
 export function nazwaZasobu(zasob: DesignAsset): string {
   const nazwa = (zasob.name ?? '').trim();
   return nazwa === '' ? zasob.id : nazwa;
 }
 
 /**
- * Czy zasób pasuje do frazy zawężającej wykaz — po nazwie albo po etykiecie.
- *
- * Zawężenie jest miejscowe, nie polem żądania: `design.asset.list` zawęża
- * polami `windowId`, `kind`, `tags`, `favoriteOnly` i `limit` (`tor-komendy.ts`),
- * frazy wśród nich nie ma. Predykat stoi tu w jednej kopii, bo czytają go dwa
- * widoki tego samego zbioru — okno Assets Panel i panel `zasoby-designu` stosu
- * paneli pomocniczych; dwie kopie dawałyby na tę samą frazę różne wyniki.
- *
- * @param fraza fraza już przycięta i sprowadzona do małych liter; pustą
- *   („nie zawężaj") rozstrzyga wywołujący, nie ta funkcja.
+ * Rozstrzyga, czy zasób pasuje do frazy zawężającej wykaz, porównując frazę
+ * z nazwą zasobu oraz z jego etykietami. Fraza przychodzi przycięta i sprowadzona
+ * do małych liter, a znaczenie frazy pustej rozstrzyga wywołujący.
  */
 export function czyPasujeDoFrazy(zasob: DesignAsset, fraza: string): boolean {
   const etykiety = (zasob.tags ?? []).join(' ').toLowerCase();
@@ -86,7 +72,11 @@ export function utworzKarteZasobu(
   return element;
 }
 
-/** Zdanie metadanych: rodzaj, format, wymiary, chwila powstania. */
+/**
+ * Składa zdanie metadanych zasobu z rodzaju, formatu, wymiarów oraz chwili
+ * powstania. Człony rozdziela kropka środkowa, a człony nieznane wypadają
+ * ze zdania zamiast zostawiać puste miejsce.
+ */
 export function opisZasobu(zasob: DesignAsset): string {
   const czesci = [nazwaRodzaju(zasob.kind)];
   if (zasob.format !== undefined) czesci.push(zasob.format);
@@ -97,15 +87,18 @@ export function opisZasobu(zasob: DesignAsset): string {
   return czesci.join(' · ');
 }
 
-/** Plakietki zasobu: ulubiony, wariant, etykiety. */
+/**
+ * Składa plakietki zasobu w stałej kolejności: znacznik ulubionego, wskazanie
+ * zasobu źródłowego dla wariantu oraz etykiety nadane zasobowi. Kolejność jest
+ * stała, więc karty w wykazie czyta się tak samo.
+ */
 function plakietkiZasobu(zasob: DesignAsset): HTMLElement[] {
   const plakietki: HTMLElement[] = [];
   if (zasob.favorite === true) plakietki.push(plakietka('ulubiony', 'dn-plakietka--sygnal'));
   if (zasob.variantOfAssetId !== undefined) {
     plakietki.push(plakietka(`wariant ${zasob.variantOfAssetId}`, 'dn-plakietka--informacja'));
   }
-  // Etykieta zasobu nie niesie stanu, więc idzie plakietką bazową — barwna
-  // odmiana jest zarezerwowana dla plakietek znaczących stan.
+  // Etykieta zasobu nie niesie stanu, więc idzie plakietką bazową.
   for (const etykieta of zasob.tags ?? []) plakietki.push(plakietka(etykieta, ''));
   return plakietki;
 }

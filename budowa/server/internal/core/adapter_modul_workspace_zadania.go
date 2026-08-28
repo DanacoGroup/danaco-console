@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: zadania projektu — hub planowania modułu Workspace
-// w części „lista": założenie, zmiana, usunięcie i wykaz.
-//
-// Zadanie jest jednym bytem trzech widoków: pozycją listy, kartą tablicy
-// i słupkiem osi czasu. Tablica i oś czasu mają własne pliki adaptera, lecz
-// czytają ten sam wiersz — drugiego zapisu zadania w module nie ma.
-//
-// ── Zmiana jest łatą, nie podmianą ─────────────────────────────────────────
-// `workspace.task.update` zmienia wyłącznie pola podane w żądaniu. Pole
-// pominięte zostaje bez zmiany, bo okno wysyła jedno pole na jedną czynność
-// Operatora (zmiana stanu, przypisanie wykonawcy, przesunięcie terminu), a
-// podmiana całego zadania kasowałaby przy każdej z nich to, czego akurat nie
-// było na ekranie.
+// Odpowiedzialność pliku: zadania projektu w module Workspace — założenie,
+// zmiana, usunięcie i wykaz. Zadanie jest jednym bytem trzech widoków: pozycji
+// listy, karty tablicy i słupka osi czasu, czytających ten sam wiersz.
 package core
 
 import (
@@ -24,7 +14,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZalozZadanie obsługuje `workspace.task.create`.
+// ZalozZadanie obsługuje `workspace.task.create`: wymaga tytułu, nadaje stan i
+// wagę domyślną, gdy żądanie ich nie wskazuje, i dobiera kolumnę tablicy dla
+// stanu początkowego.
 func (a *adapterPrzestrzeniRoboczej) ZalozZadanie(ctx context.Context,
 	z shared.WorkspaceTaskCreateRequest) (shared.WorkspaceTaskCreateResponse, error) {
 
@@ -90,7 +82,8 @@ func (a *adapterPrzestrzeniRoboczej) ZalozZadanie(ctx context.Context,
 	return shared.WorkspaceTaskCreateResponse{Task: zadanieKontraktuWorkspace(zapisane)}, nil
 }
 
-// ZmienZadanie obsługuje `workspace.task.update`.
+// ZmienZadanie obsługuje `workspace.task.update`: nakłada na zadanie wyłącznie
+// pola podane w żądaniu, pozostawiając pola pominięte bez zmiany.
 func (a *adapterPrzestrzeniRoboczej) ZmienZadanie(ctx context.Context,
 	z shared.WorkspaceTaskUpdateRequest) (shared.WorkspaceTaskUpdateResponse, error) {
 
@@ -106,8 +99,8 @@ func (a *adapterPrzestrzeniRoboczej) ZmienZadanie(ctx context.Context,
 	}
 	if z.Status != nil && *z.Status != "" {
 		zadanie.Stan = *z.Status
-		// Stan końcowy niesie czas ukończenia — pasek postępu projektu liczy
-		// zamknięte zadania, a nie zadania z ustawioną plakietką.
+		// Stan końcowy niesie czas ukończenia: pasek postępu liczy zadania zamknięte,
+		// nie plakietkę.
 		if *z.Status == shared.WorkspaceTaskStatusDone && zadanie.UkonczonoMs == 0 {
 			zadanie.UkonczonoMs = terazWMilisekundachWorkspace()
 			zadanie.PostepProcent = 100
@@ -211,7 +204,8 @@ func (a *adapterPrzestrzeniRoboczej) UsunZadanie(ctx context.Context,
 	}, nil
 }
 
-// Zadania obsługuje `workspace.task.list`.
+// Zadania obsługuje `workspace.task.list`: pobiera zadania projektu wskazanego
+// żądaniem i zwraca je w postaci kontraktu widoku listy.
 func (a *adapterPrzestrzeniRoboczej) Zadania(ctx context.Context,
 	z shared.WorkspaceTaskListRequest) (shared.WorkspaceTaskListResponse, error) {
 
@@ -268,11 +262,8 @@ func (a *adapterPrzestrzeniRoboczej) zadanieDoZmianyWorkspace(ctx context.Contex
 }
 
 // przesunNastepnikiWorkspace przesuwa terminy zadań następujących po zadaniu
-// właśnie zmienionym. Bez tego zależność „koniec–początek" byłaby ozdobą
-// wykresu: przesunięcie poprzednika zostawiałoby następnik w przeszłości.
-//
-// Przejście idzie wszerz z licznikiem odwiedzin, żeby zależność zapętlona
-// (gdyby powstała inną drogą niż komenda) nie zawiesiła zapisu.
+// właśnie zmienionym, tak aby zależność „koniec-początek" nie zostawiała
+// następnika w przeszłości.
 func (a *adapterPrzestrzeniRoboczej) przesunNastepnikiWorkspace(ctx context.Context,
 	zmienione dane.ZadanieWorkspace) ([]string, error) {
 
@@ -337,7 +328,8 @@ func (a *adapterPrzestrzeniRoboczej) przesunNastepnikiWorkspace(ctx context.Cont
 	return przesuniete, nil
 }
 
-// podrzedneZadaniaWorkspace zbiera całe poddrzewo zadań podrzędnych.
+// podrzedneZadaniaWorkspace zbiera całe poddrzewo zadań podrzędnych,
+// przechodząc hierarchię wszerz od zadania korzenia aż do wyczerpania kolejki.
 func podrzedneZadaniaWorkspace(wszystkie []dane.ZadanieWorkspace, korzen string) []string {
 	podrzedne := []string{}
 	kolejka := []string{korzen}
@@ -356,7 +348,8 @@ func podrzedneZadaniaWorkspace(wszystkie []dane.ZadanieWorkspace, korzen string)
 	return podrzedne
 }
 
-// zadanieKontraktuWorkspace przekłada wiersz zadania na byt kontraktu.
+// zadanieKontraktuWorkspace przekłada wiersz zadania z bazy na byt kontraktu,
+// niosąc wagę i kamień milowy do postaci oczekiwanej przez okno.
 func zadanieKontraktuWorkspace(z dane.ZadanieWorkspace) shared.WorkspaceTask {
 	waga := z.Waga
 	kamien := z.KamienMilowy
@@ -428,12 +421,14 @@ func rodzajWykonawcyWorkspace(rodzaj *shared.WorkspaceAssigneeKind, ekspert *str
 	return ""
 }
 
-// stanZamknietyWorkspace odróżnia stany końcowe od stanów pracy.
+// stanZamknietyWorkspace odróżnia stany końcowe zadania — ukończony i
+// anulowany — od pozostałych stanów oznaczających pracę w toku.
 func stanZamknietyWorkspace(stan shared.WorkspaceTaskStatus) bool {
 	return stan == shared.WorkspaceTaskStatusDone || stan == shared.WorkspaceTaskStatusCancelled
 }
 
-// dolaczZamknieteWorkspace czyta pole `includeDone`; brak znaczy „nie”.
+// dolaczZamknieteWorkspace czyta pole `includeDone` z żądania; wartość
+// nieustawiona albo fałszywa znaczy pominięcie zadań zamkniętych w wykazie.
 func dolaczZamknieteWorkspace(pole *bool) bool {
 	return pole != nil && *pole
 }
@@ -449,7 +444,8 @@ func zawieraTekstWorkspace(wykaz []string, szukana string) bool {
 	return false
 }
 
-// wartoscTekstuWorkspace rozwija pole opcjonalne kontraktu do napisu.
+// wartoscTekstuWorkspace rozwija pole opcjonalne kontraktu do napisu,
+// zwracając ciąg pusty, gdy żądanie pola nie ustawiło.
 func wartoscTekstuWorkspace(pole *string) string {
 	if pole == nil {
 		return ""
@@ -457,7 +453,8 @@ func wartoscTekstuWorkspace(pole *string) string {
 	return *pole
 }
 
-// wartoscLiczbyWorkspace rozwija pole opcjonalne kontraktu do liczby.
+// wartoscLiczbyWorkspace rozwija pole opcjonalne kontraktu do liczby,
+// zwracając zero, gdy żądanie pola nie ustawiło.
 func wartoscLiczbyWorkspace(pole *int) int {
 	if pole == nil {
 		return 0
@@ -465,7 +462,8 @@ func wartoscLiczbyWorkspace(pole *int) int {
 	return *pole
 }
 
-// wartoscChwiliWorkspace rozwija chwilę opcjonalną; zero znaczy brak granicy.
+// wartoscChwiliWorkspace rozwija chwilę opcjonalną kontraktu; zero pola znaczy
+// brak granicy czasu, a nie datę początku epoki.
 func wartoscChwiliWorkspace(pole *int64) int64 {
 	if pole == nil {
 		return 0

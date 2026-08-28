@@ -20,7 +20,7 @@ const (
 	// jednego gniazda. Bufor chroni rdzeń przed zablokowaniem na wolnym
 	// urządzeniu; przepełnienie kończy pojedynczą wysyłkę, nie sesję.
 	pojemnoscKolejkiDomyslna = 256
-	// czasZamknieciaDomyslny ogranicza oczekiwanie na zamknięcie nasłuchu.
+	// czasZamknieciaDomyslny ogranicza czas oczekiwania na zamknięcie nasłuchu przy zatrzymaniu tego serwera.
 	czasZamknieciaDomyslny = 5 * time.Second
 	// KontoDomyslne obowiązuje, dopóki urządzenie nie wskaże konta.
 	// Uwierzytelnianie jest jedyną kontrolą dostępu i w fazie budowy nie działa,
@@ -32,62 +32,31 @@ const (
 	// NaglowekKonta jest nagłówkową postacią ParametrKonta — dla klientów, które
 	// nie mogą dopisać parametru do adresu.
 	NaglowekKonta = "X-Danaco-Konto"
-	// adresDomyslny wiąże nasłuch z pętlą zwrotną. Pusty adres znaczy dla
-	// net.Listen wszystkie interfejsy, więc domyślną wartością musi być pętla
-	// zwrotna: domyślna ma być bezpieczna, a szeroka ma być wyborem. Wyjście poza
-	// pętlę zwrotną jest osiągalne jednym polem (WszystkieInterfejsy albo Adres
-	// wprost) i nadal ostrzega. Stała jest wewnętrzna: wołający wskazują adres,
-	// nie sięgają po domyślny.
+	// adresDomyslny wiąże nasłuch z pętlą zwrotną, ponieważ domyślna wartość ma być bezpieczna, a szeroka ma być wyborem.
 	adresDomyslny = "127.0.0.1"
 )
 
 // Ustawienia to komplet nastaw warstwy transportu. Każde pole ma wartość
 // domyślną: brak nastawy nigdy nie wstrzymuje startu.
 type Ustawienia struct {
-	// Adres wskazuje interfejs nasłuchu. Pusty bierze adres domyślny, czyli pętlę
-	// zwrotną; wystawienie szersze wskazuje się wprost albo polem
-	// WszystkieInterfejsy. Rdzeń zmienia umiejscowienie w czasie, więc
-	// droga do wystawienia zostaje otwarta — zmienia się wyłącznie to, co dzieje
-	// się bez wskazania.
+	// Adres wskazuje interfejs nasłuchu; pusty bierze adres domyślny, czyli pętlę zwrotną maszyny.
 	Adres string
-	// WszystkieInterfejsy przywraca dawne zachowanie pustego adresu: nasłuch na
-	// wszystkich interfejsach maszyny. Osobne pole, a nie pusty napis, bo
-	// „nie wskazałem" i „chcę wszędzie" to dwa różne zdania i mają wyglądać
-	// różnie w miejscu wywołania.
+	// WszystkieInterfejsy przywraca dawne zachowanie pustego adresu: nasłuch na wszystkich interfejsach.
 	WszystkieInterfejsy bool
-	// PochodzeniaDozwolone to wykaz wzorców nagłówka Origin przyjmowanych przy
-	// nawiązaniu gniazda. Pusty wykaz bierze pochodzenia własne (patrz
-	// pochodzeniaWlasne w nawiazanie.go).
+	// PochodzeniaDozwolone to wykaz wzorców nagłówka Origin przyjmowanych przy nawiązaniu gniazda.
 	PochodzeniaDozwolone []string
-	// WymogLogowania jest dźwignią Operatora nad strażą bramki (`bramka.go`).
-	// Trzy stany, nie dwa, i dlatego wskaźnik:
-	//   - nil  — Operator nie wskazał nic, rozstrzyga adres nasłuchu (pętla
-	//            zwrotna: bez wymogu; szerzej: z wymogiem);
-	//   - true — wymóg obowiązuje także na pętli zwrotnej;
-	//   - false — wymóg zniesiony także przy nasłuchu szerszym; wolno, ale
-	//            dziennik mówi o tym wprost, bo wtedy maszyny Operatora
-	//            (tor zdalny) stoją otworem.
-	// Wartość logiczna zamiast wskaźnika kasowałaby różnicę między „nie
-	// wskazałem" a „wskazałem: nie" — a to jest tu cała różnica.
+	// WymogLogowania jest rozstrzygnięciem Operatora nad dopuszczeniem bramki; wskaźnik niesie trzy stany zamiast dwóch.
 	WymogLogowania *bool
-	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS. Wskazanie obu
-	// przełącza nasłuch na https/wss; brak obu zostawia otwarty tekst i — poza
-	// pętlą zwrotną — ostrzeżenie w dzienniku. Wskazanie jednego z dwóch jest
-	// błędem konfiguracji i zatrzymuje start, bo cicha praca otwartym tekstem
-	// przy wskazanym certyfikacie byłaby najgorszym z możliwych wyników.
+	// CertyfikatTLS i KluczTLS wskazują parę plików warstwy TLS; wskazanie obu włącza szyfrowany nasłuch.
 	CertyfikatTLS string
 	KluczTLS      string
-	// Port nasłuchu rdzenia. Zero oznacza port domyślny konfiguracji; wartość
-	// ujemna nie występuje, bo konfiguracja sprawdza zakres.
+	// Port nasłuchu rdzenia; zero oznacza port domyślny konfiguracji tego serwera transportu.
 	Port int
-	// PortDowolny każe systemowi wskazać wolny port (nasłuch na porcie 0).
-	// Rzeczywisty adres odczytuje się metodą Adres serwera.
+	// PortDowolny każe systemowi wskazać wolny port; rzeczywisty adres odczytuje metoda Adres serwera.
 	PortDowolny bool
 	// SciezkaGniazda to ścieżka HTTP kanału WebSocket.
 	SciezkaGniazda string
-	// KatalogKlienta wskazuje pakiet interfejsu (klient/dist). Pusty albo
-	// nieistniejący katalog nie wstrzymuje nasłuchu — gniazdo działa bez
-	// plików statycznych.
+	// KatalogKlienta wskazuje pakiet interfejsu; pusty albo zły katalog nie wstrzymuje nasłuchu.
 	KatalogKlienta string
 	// PojemnoscKolejki to bufor wyjściowy jednego połączenia.
 	PojemnoscKolejki int
@@ -97,7 +66,7 @@ type Ustawienia struct {
 	Dziennik *log.Logger
 }
 
-// Domyslne zwraca ustawienia obowiązujące bez wskazania Operatora.
+// Funkcja Domyslne zwraca ustawienia obowiązujące bez jawnego wskazania przez operatora tej samej maszyny.
 func Domyslne() Ustawienia {
 	return Ustawienia{
 		Port:             konfiguracja.PortDomyslny,
@@ -107,7 +76,7 @@ func Domyslne() Ustawienia {
 	}
 }
 
-// zNormalizowane uzupełnia pola puste wartościami domyślnymi.
+// Metoda zNormalizowane uzupełnia wszystkie pola puste tych ustawień wartościami domyślnymi tego transportu.
 func (u Ustawienia) zNormalizowane() Ustawienia {
 	d := Domyslne()
 	if u.Port <= 0 && !u.PortDowolny {
@@ -125,18 +94,11 @@ func (u Ustawienia) zNormalizowane() Ustawienia {
 	if u.Dziennik == nil {
 		u.Dziennik = log.New(io.Discard, "", 0)
 	}
-	// Adres pusty przestaje znaczyć „wszystkie interfejsy" i zaczyna znaczyć
-	// „nie wskazano" — a wtedy obowiązuje pętla zwrotna. Kto chce szerzej, mówi
-	// to wprost jednym z dwóch pól.
+	// Adres pusty przestaje znaczyć wszystkie interfejsy, zaczyna znaczyć brak wskazania, czyli pętlę.
 	if strings.TrimSpace(u.Adres) == "" && !u.WszystkieInterfejsy {
 		u.Adres = adresDomyslny
 	}
-	// Rozpoznanie wystawienia stoi tutaj, bo tędy przechodzi każdy serwer i
-	// przechodzi dokładnie raz: zNormalizowane woła wyłącznie Nowy, a Serwera
-	// nie da się zbudować inaczej (pola nieeksportowane). Wpięcie przy samym
-	// net.Listen byłoby bliżej faktu, ale adresNasluchu wołane jest kilka razy
-	// i ostrzeżenie by się dublowało. Ostrzeżenie idzie po ustaleniu dziennika,
-	// żeby brak dziennika kierował je do kosza, a nie gubił wywołania.
+	// Rozpoznanie wystawienia stoi tutaj, bo tędy przechodzi każdy serwer i przechodzi dokładnie raz.
 	ostrzezJezeliWystawiony(u)
 	return u
 }
@@ -148,7 +110,7 @@ func (u Ustawienia) zTLS() bool {
 	return strings.TrimSpace(u.CertyfikatTLS) != "" && strings.TrimSpace(u.KluczTLS) != ""
 }
 
-// sprawdzTLS odmawia startu przy wskazaniu połowicznym i nazywa brakującą połowę.
+// Metoda sprawdzTLS odmawia startu przy wskazaniu połowicznym pary TLS i nazywa brakującą jej połowę pary.
 func (u Ustawienia) sprawdzTLS() error {
 	certyfikat := strings.TrimSpace(u.CertyfikatTLS)
 	klucz := strings.TrimSpace(u.KluczTLS)
@@ -173,7 +135,7 @@ func (u Ustawienia) opisWarstwy() string {
 	return "otwarty tekst"
 }
 
-// adresNasluchu składa adres przekazywany funkcji net.Listen.
+// Metoda adresNasluchu składa adres nasłuchu przekazywany dalej funkcji sieciowej otwierającej gniazdo.
 func (u Ustawienia) adresNasluchu() string {
 	port := u.Port
 	if u.PortDowolny {

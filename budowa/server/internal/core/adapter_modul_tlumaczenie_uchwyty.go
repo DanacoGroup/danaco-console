@@ -1,42 +1,6 @@
-// Odpowiedzialność pliku: wpięcie komend modułu Translate — portu
-// `Tlumaczenie`, przez który rejestr komend rdzenia dociera do adaptera modułu.
-// Metody adaptera leżą w kilku plikach na wspólnym typie `*adapterTlumaczenia`
-// (deklarowanym w `adapter_modul_tlumaczenie.go`), ale port jest jeden: trzy
-// porty nad jednym repozytorium byłyby trzema prawdami o jednej powierzchni.
-//
-// Jak moduł sięga po model i czego kontrakt nie daje:
-//  1. Rdzeń tłumaczy modelem, związany słownikiem Operatora. `target.add`
-//     przekłada tekst źródłowy okna na język panelu czynnym kanałem modelu
-//     (`*_panele.go`, `*_model.go`); do polecenia wchodzą terminy słownika,
-//     zakazy tłumaczenia, ton panelu i zasady jakości (`*_polecenia.go`),
-//     a wynik przechodzi mechaniczną podmianę terminów i migawkę kontroli
-//     jakości. Bez czynnego kanału — odmowa wprost. `source.set` sam wyłącznie
-//     zapisuje tekst źródłowy i zakłada okno. `backtranslation.run` też woła
-//     model: przekłada treść panelu z powrotem na język źródłowy okna, bez
-//     słownika, żeby kontrola wierności miała co kontrolować; odmawia, gdy panel
-//     jest pusty albo okno nie ma języka źródłowego.
-//  2. Rdzeń rozpoznaje język modelem. `source.detect` pyta model o język tekstu;
-//     bez czynnego kanału — odmowa wprost, nie zgadywanie (`*_model.go`). Kanał
-//     wskazuje Operator: `target.add` i `backtranslation.run` niosą
-//     nieobowiązkowe pole `channelId`; jego brak bierze kanał domyślny czynny,
-//     a kanał wskazany, lecz nieznany albo nieczynny, kończy się nazwaną odmową
-//     zamiast cichego zejścia na domyślny (`kanalZadania` w `*_model.go`).
-//     `source.detect` tego pola nie ma i jedzie kanałem domyślnym.
-//  3. Rdzeń syntezuje mowę. `speech.synthesize` woła syntezator lokalny
-//     (`espeak-ng`) tym samym portem `session.Uruchamiacz` i przez tę samą bramę
-//     izolacji, co silnik rozpoznawania mowy, po czym oddaje ścieżkę nagrania,
-//     które powstało (`*_mowa.go`, `*_mowa_silnik.go`). Brak programu, brak
-//     głosu dla języka panelu albo brak treści panelu — odmowa nazywająca brak,
-//     nie pusta ścieżka udająca nagranie.
-//  4. Pamięć tłumaczeń ma pisarza. Pary segmentów, z których `memory.suggest`
-//     buduje podpowiedzi, zapisują `target.add` (po przekładzie modelu)
-//     i `translation.set` (po korekcie Operatora). Sparowanie zdanie-do-zdania
-//     idzie wyłącznie przy równej liczbie segmentów po obu stronach; przy
-//     nierównej zapisywana jest jedna para całościowa zamiast zmyślonego
-//     dopasowania (`*_pamiec.go`).
-//  5. Rdzeń nie ma magazynu blobów. `glossary.export` i `panel.export`
-//     zapisują ślad, ale nie wytwarzają pliku — ten sam brak co w Library
-//     i Research.
+// Plik wpina komendy modułu Translate w port `Tlumaczenie`, przez który
+// rejestr komend rdzenia dociera do adaptera modułu, wspólnego z pozostałymi
+// plikami metod.
 package core
 
 import (
@@ -45,7 +9,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Tlumaczenie jest portem całego modułu Translate.
+// Tlumaczenie jest portem całego modułu Translate, zbierającym wszystkie
+// komendy jego adaptera w jeden interfejs.
 type Tlumaczenie interface {
 	UstawZrodlo(ctx context.Context, z shared.TranslateSourceSetRequest) (shared.TranslateSourceSetResponse, error)
 	PodzielNaSegmenty(ctx context.Context, z shared.TranslateSourceSegmentRequest) (shared.TranslateSourceSegmentResponse, error)
@@ -133,17 +98,15 @@ type Tlumaczenie interface {
 	WykazKrokow(ctx context.Context, z shared.TranslateStepListRequest) (shared.TranslateStepListResponse, error)
 }
 
-// zarejestrujTlumaczenie wpina wszystkie komendy modułu Translate.
+// zarejestrujTlumaczenie wpina wszystkie komendy modułu Translate do
+// rejestru rdzenia i wiąże adapter z emiterem zdarzeń.
 func zarejestrujTlumaczenie(r *Rejestr, m Tlumaczenie, e *emiter) {
 	if r == nil || m == nil {
 		return
 	}
 
-	// Szyna zdarzeń trafia do adaptera tutaj, nie w montażu portów: emiter rdzenia
-	// powstaje dopiero w `kompozycja.go` (nie zna go `montaz_porty.go`), a jest
-	// nim ten sam `e`, którym pozostałe moduły rozgłaszają zmiany. Wpięcie przez
-	// zadeklarowany typ adaptera — port `Tlumaczenie` nie niesie `ZWyjsciem`,
-	// bo rozgłaszanie to sprawa implementacji, nie kontraktu komend.
+	// Szyna zdarzeń trafia do adaptera tutaj, nie w montażu portów — emiter
+	// powstaje w kompozycji.
 	if adapter, ok := m.(*adapterTlumaczenia); ok {
 		adapter.ZWyjsciem(e)
 	}
@@ -238,8 +201,6 @@ func zarejestrujTlumaczenie(r *Rejestr, m Tlumaczenie, e *emiter) {
 	r.Zarejestruj(shared.CommandTranslateArtifactPublish, obsluz(m.WydajWytwor))
 	r.Zarejestruj(shared.CommandTranslateStepList, obsluz(m.WykazKrokow))
 
-	// Zdarzenie `translate.translation.changed` (patrz
-	// `shared.TranslateTranslationChangedEvent`) rozgłasza `DodajPanel`
-	// po przekładzie modelu i `UstawTlumaczenie` po korekcie Operatora —
-	// emiterem `e` wpiętym wyżej przez `ZWyjsciem`.
+	// Zdarzenie translate.translation.changed rozgłasza się po przekładzie
+	// modelu i po korekcie operatora.
 }

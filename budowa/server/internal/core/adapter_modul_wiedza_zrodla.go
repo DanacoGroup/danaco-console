@@ -1,29 +1,6 @@
 // Odpowiedzialność pliku: zebranie treści, która ma wejść do wskaźnika
-// znaczenia — po jednym czytelniku na każdy z trzech zakresów kontraktu.
-//
-// Treść czyta się przez istniejące repozytoria i istniejące czytniki, nie
-// własnym SQL-em: druga droga do wierszy pliku biblioteki byłaby drugą prawdą
-// o tym, co Operator w niej ma, i rozjechałaby się przy pierwszej zmianie
-// schematu. Dlatego biblioteka idzie przez `dane.RepozytoriumBiblioteki`,
-// historia przez `dane.RepozytoriumHistorii`, a treść pliku spod odwołania
-// czyta ten sam `trescPodgladuBiblioteki`, którym czyta ją podgląd modułu
-// Library.
-//
-// Zakresy mają różne wymagania wobec `windowId`. `library` jest zbiorem całej
-// maszyny — repozytorium wiedzy Operatora nie należy do żadnego okna, więc
-// wskazanie okna nic tu nie znaczy i jest pomijane. `history` i `workspace` są
-// przeciwnie: historia jest historią konkretnego okna
-// (`dane.RepozytoriumHistorii.Pozycje` innego kształtu nie ma), a przestrzeń
-// robocza jest katalogiem ustalanym po zasięgu, którego najwęższym poziomem
-// jest okno. Dla tych dwóch brak `windowId` jest odmową nazywającą brak, a nie
-// cichym zaindeksowaniem zera pozycji: „zbudowano wskaźnik, 0 pozycji" wygląda
-// jak pusta historia i nie da się tego odróżnić od pomyłki wołającego.
-//
-// Każdy czytelnik ma sufit liczby dokumentów. Nie jest to ostrożność na zapas:
-// osadzenie liczy się na procesorze i katalog z pięćdziesięcioma tysiącami
-// plików zająłby maszynę Operatora na godziny bez żadnego śladu postępu.
-// Przekroczenie sufitu nie jest odmową — wskaźnik obejmuje tyle, ile obejmuje,
-// a powtórzony przebieg po sprzątnięciu katalogu obejmie resztę.
+// znaczenia — po jednym czytelniku na każdy z trzech zakresów kontraktu:
+// `library`, `history` i `workspace`. Każdy czytelnik ma sufit liczby dokumentów.
 package core
 
 import (
@@ -38,23 +15,22 @@ import (
 )
 
 const (
-	// granicaDokumentowBiblioteki — sufit liczby plików repozytorium wiedzy
-	// branych do jednego przebiegu.
+	// granicaDokumentowBiblioteki — sufit plików repozytorium wiedzy branych
+	// do jednego przebiegu czytania biblioteki.
 	granicaDokumentowBiblioteki = 2000
-	// granicaPozycjiHistorii — sufit liczby wypowiedzi jednego okna.
+	// granicaPozycjiHistorii — sufit liczby wypowiedzi jednego okna branych
+	// do jednego przebiegu czytania historii rozmowy.
 	granicaPozycjiHistorii = 5000
-	// granicaPlikowPrzestrzeni — sufit liczby plików katalogu roboczego. Ta sama
-	// liczba, którą stosuje przegląd katalogu projektu w module Workspace
-	// (`granicaPrzegladuKatalogu`) — dwie różne granice dla tego samego katalogu
-	// byłyby dwiema prawdami o tym, co Operator w nim widzi.
+	// granicaPlikowPrzestrzeni — sufit plików katalogu roboczego brany do
+	// jednego przebiegu czytania przestrzeni roboczej okna.
 	granicaPlikowPrzestrzeni = granicaPrzegladuKatalogu
 	// granicaTresciDokumentu — ile znaków jednego dokumentu wchodzi do
-	// wskaźnika. Sufit istnieje, bo plik dziennika o rozmiarze gigabajta dałby
-	// milion fragmentów i zjadłby wskaźnik reszty biblioteki.
+	// wskaźnika, żeby plik dziennika o rozmiarze gigabajta nie zjadł wskaźnika.
 	granicaTresciDokumentu = 256 << 10
 )
 
-// dokumentWiedzy to jedna jednostka treści przed podziałem na fragmenty.
+// dokumentWiedzy to jedna jednostka treści przed podziałem na fragmenty
+// wskaźnika znaczenia, niosąca zakres, źródło i pełną treść.
 type dokumentWiedzy struct {
 	// Zakres — kontraktowa nazwa zakresu, z którego dokument pochodzi.
 	Zakres string
@@ -62,11 +38,13 @@ type dokumentWiedzy struct {
 	Zrodlo string
 	// ZrodloKod — identyfikator, którym da się po dokument sięgnąć.
 	ZrodloKod string
-	// Tresc — cały tekst dokumentu.
+	// Tresc — cały tekst dokumentu, dzielony na fragmenty dopiero przy
+	// osadzeniu wskaźnika znaczenia.
 	Tresc string
 }
 
-// dokumenty rozdziela pytanie o treść na trzech czytelników.
+// dokumenty rozdziela pytanie o treść na trzech czytelników, po jednym na
+// każdy zakres kontraktu: bibliotekę, historię i przestrzeń roboczą.
 func (a *adapterWiedzy) dokumenty(ctx context.Context, zakres string,
 	idOkna *string) ([]dokumentWiedzy, error) {
 
@@ -83,14 +61,8 @@ func (a *adapterWiedzy) dokumenty(ctx context.Context, zakres string,
 }
 
 // dokumentyBiblioteki czyta pliki repozytorium wiedzy przez repozytorium modułu
-// Library, a ich treść — spod odwołania, tak jak czyta ją podgląd.
-//
-// Plik bez odwołania jest pomijany, nie odmawiany: wiersz bez bajtów w magazynie
-// treści niesie same metadane, a jeden taki plik nie ma prawa
-// odebrać Operatorowi wskaźnika dla pozostałych. Tak samo pomijany
-// jest plik, którego treści nie da się odczytać jako tekstu — obraz osadzony
-// jako ciąg bajtów dałby wektor, który do niczego nie pasuje i nigdy nie
-// wygrywa, czyli koszt bez pożytku.
+// Library, a ich treść spod odwołania, tak jak czyta ją podgląd. Plik bez
+// odwołania albo nieczytelny jako tekst jest pomijany, nie odmawiany.
 func (a *adapterWiedzy) dokumentyBiblioteki(ctx context.Context) ([]dokumentWiedzy, error) {
 	if a.biblioteka == nil {
 		return nil, bladWiedzyBezZrodla("biblioteka")
@@ -120,13 +92,8 @@ func (a *adapterWiedzy) dokumentyBiblioteki(ctx context.Context) ([]dokumentWied
 	return dokumenty, nil
 }
 
-// dokumentyHistorii czyta wypowiedzi jednego okna rozmowy.
-//
-// Jedna wypowiedź to jeden dokument, a nie cała rozmowa sklejona w jeden tekst.
-// Powód jest ten sam, dla którego dokument dzieli się na fragmenty: Operator
-// pyta o rzecz, którą kiedyś powiedział, i ma dostać tę wypowiedź wraz z jej
-// identyfikatorem, a nie całą rozmowę, w której gdzieś ona jest. Identyfikator
-// wypowiedzi wchodzi do `sourceId`, więc trafienie da się sprawdzić.
+// dokumentyHistorii czyta wypowiedzi jednego okna rozmowy. Jedna wypowiedź
+// to jeden dokument, a nie cała rozmowa sklejona w jeden tekst.
 func (a *adapterWiedzy) dokumentyHistorii(ctx context.Context,
 	idOkna *string) ([]dokumentWiedzy, error) {
 
@@ -151,9 +118,7 @@ func (a *adapterWiedzy) dokumentyHistorii(ctx context.Context,
 		}
 		dokumenty = append(dokumenty, dokumentWiedzy{
 			Zakres: shared.KnowledgeScopeHistory,
-			// Nazwa czytelna niesie rolę mówiącego i okno. Sam identyfikator
-			// wypowiedzi nic nie mówi człowiekowi, a model czytający trafienie
-			// ma od razu wiedzieć, czy cytuje Operatora, czy samego siebie.
+			// Nazwa czytelna niesie rolę mówiącego i okno, identyfikator nic nie mówi.
 			Zrodlo:    "rozmowa " + okno + ", " + string(pozycja.Rola),
 			ZrodloKod: pozycja.Identyfikator,
 			Tresc:     pozycja.Tresc,
@@ -162,11 +127,8 @@ func (a *adapterWiedzy) dokumentyHistorii(ctx context.Context,
 	return dokumenty, nil
 }
 
-// dokumentyPrzestrzeni czyta pliki katalogu roboczego okna.
-//
-// Katalog ustala ten sam `KatalogRoboczy`, którym jadą Terminal i Developer —
-// po poziomach zasięgu, z oknem jako poziomem najwęższym. Wpisanie tu własnej
-// ścieżki byłoby drugą prawdą o tym, gdzie pracuje okno.
+// dokumentyPrzestrzeni czyta pliki katalogu roboczego okna. Katalog ustala
+// ten sam `KatalogRoboczy`, którym jadą Terminal i Developer.
 func (a *adapterWiedzy) dokumentyPrzestrzeni(idOkna *string) ([]dokumentWiedzy, error) {
 	okno := wskazanieOkna(idOkna)
 	if okno == "" {
@@ -189,8 +151,7 @@ func (a *adapterWiedzy) dokumentyPrzestrzeni(idOkna *string) ([]dokumentWiedzy, 
 	przejrzane := 0
 	_ = filepath.WalkDir(korzen, func(sciezka string, wpis fs.DirEntry, err error) error {
 		if err != nil {
-			// Wpis nieczytelny pomijamy: jeden plik bez uprawnień nie ma prawa
-			// odebrać Operatorowi wskaźnika pozostałych.
+			// Wpis nieczytelny zostaje pominięty, nie odbiera wskaźnika pozostałych.
 			return nil
 		}
 		if przejrzane >= granicaPlikowPrzestrzeni {
@@ -214,9 +175,8 @@ func (a *adapterWiedzy) dokumentyPrzestrzeni(idOkna *string) ([]dokumentWiedzy, 
 		dokumenty = append(dokumenty, dokumentWiedzy{
 			Zakres: shared.KnowledgeScopeWorkspace,
 			Zrodlo: wzgledna,
-			// Kodem źródła jest ścieżka względna, a nie bezwzględna: bezwzględna
-			// wynosiłaby modelowi układ dysku Operatora, a względna wystarcza,
-			// żeby po plik sięgnąć modułem Developer.
+			// Kodem źródła jest ścieżka względna, nie bezwzględna: nie wynosi
+			// modelowi układu dysku Operatora.
 			ZrodloKod: wzgledna,
 			Tresc:     tresc,
 		})
@@ -225,7 +185,8 @@ func (a *adapterWiedzy) dokumentyPrzestrzeni(idOkna *string) ([]dokumentWiedzy, 
 	return dokumenty, nil
 }
 
-// wskazanieOkna oczyszcza wskaźnik okna z żądania.
+// wskazanieOkna oczyszcza wskaźnik okna z żądania, oddając pusty ciąg,
+// gdy pole nie zostało podane w żądaniu klienta.
 func wskazanieOkna(idOkna *string) string {
 	if idOkna == nil {
 		return ""

@@ -1,15 +1,6 @@
 /**
- * DROGA WEJŚCIA — zestaw znaków.
- *
- * Rysunki przeniesione z prototypu bez zmiany kształtu. Klasę i wymiar nakłada
- * miejsce użycia, nie sam znak — ten sam sygnet stoi w belce okna i w kolumnie
- * tożsamości, w dwóch różnych wielkościach.
- *
- * Kropka sygnału w godle niesie KLASĘ, nie wpisaną barwę: barwę rozstrzyga
- * arkusz, osobno dla belki i osobno dla kolumny tożsamości.
- *
- * Łańcuchy w tym pliku są rysunkami, nie tekstem — każdy zaczyna się od `<svg`
- * i sprawdzian katalogu treści tego wymaga.
+ * Zestaw znaków drogi wejścia — rysunki przeniesione z prototypu bez zmiany
+ * kształtu. Klasę i wymiar nakłada miejsce użycia, nie sam znak.
  */
 
 export const ikony = {
@@ -59,5 +50,5 @@ export const ikony = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
 } as const;
 
-/** Nazwa znaku z zestawu. */
+/** Nazwa znaku z zestawu, wskazująca jeden z gotowych rysunków dostępnych w tym pliku pod postacią klucza. */
 export type NazwaZnaku = keyof typeof ikony;

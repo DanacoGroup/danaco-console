@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: wpięcie katalogu okna konfiguracji — kategorii
-// i pozycji katalogu ustawień.
-//
-// Katalog jest sterowany danymi: nowa pozycja okna konfiguracji to nowy wiersz
-// migracji, nie nowa gałąź w rdzeniu. Rdzeń nie zna ani jednego klucza z osobna
-// — zna wyłącznie sposób odczytania katalogu, więc całe okno konfiguracji
-// obsługuje jeden port, a nie obsługiwacz na ustawienie.
-//
-// Odczyt katalogu niczego nie zmienia, więc zdarzenia zmiany tu nie ma — wartości
-// zmienia rodzina `config.*` i to ona rozgłasza `config.changed`.
+// Plik wpina katalog okna konfiguracji, kategorie i pozycje katalogu
+// ustawień, sterowany danymi bez zdarzenia zmiany.
 package core
 
 import (

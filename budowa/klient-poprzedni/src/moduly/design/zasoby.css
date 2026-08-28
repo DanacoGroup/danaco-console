@@ -1,11 +1,4 @@
-/* ============================================================================
-   MODUŁ DESIGN — WYKAZ ZASOBÓW I KREATOR PROMPTU
-   ----------------------------------------------------------------------------
-   Zasoby: filtr i wykaz Assets Panel oraz kreator, suwaki i pasek postępu
-   Prompt Buildera. Układ kompozycji ma własny arkusz `kompozycja.css`.
-
-   Ani jednej barwy zapisanej wprost; wszystko z żetonów motywu.
-   ============================================================================ */
+/* Arkusz obejmuje filtr i wykaz zasobów Assets Panel oraz kreator z suwakami i paskiem postępu Prompt Buildera, korzystając wyłącznie z żetonów barw motywu. */
 
 /* --- Filtr i wykaz zasobów ------------------------------------------------ */
 
@@ -211,7 +204,7 @@
   min-width: 0;
 }
 
-/* Treść panelu jest ważniejsza niż pełna nazwa panelu — tytuł ustępuje. */
+/* Treść panelu jest ważniejsza niż pełna nazwa panelu, więc tytuł ustępuje jej miejsca i skraca się pierwszy, gdy brakuje szerokości. */
 .md-panel__tytul {
   margin: 0;
   min-width: 0;

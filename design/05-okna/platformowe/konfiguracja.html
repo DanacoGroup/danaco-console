@@ -19,7 +19,7 @@
 
   /* Szyna (skrót do wzorca) */
 
-  /* ── NAKŁADKA MODALNA OKNA KONFIGURACJI na tle powłoki (rozdz. 6.1) ── */
+  /* ── NAKŁADKA MODALNA OKNA KONFIGURACJI na tle powłoki ─────────────── */
   .kf-nakladka {
     position:fixed; inset:0; z-index:800;
     display:grid; place-items:center;
@@ -246,11 +246,11 @@
       data-prototyp-okno="Okno Konfiguracji — okno nakładkowe na warstwie stanowiska (nasz wygląd)"
       data-prototyp-zrodlo="okna/konfiguracja.md (r.1.2)">
 
-<!-- ════════════════════════ POWŁOKA STANOWISKA (tło) ════════════════════════ -->
+<!-- Powłoka stanowiska stanowi nieaktywne tło widoczne za oknem konfiguracji, odtwarzające kontekst platformy pod nakładką modalną. -->
 <div class="sta-powloka" aria-hidden="true">
   <div class="dn-rama-korpus">
 
-  <!-- ══ SZYNA NAWIGACJI — środowiska i moduły ═══════════════════════════ -->
+  <!-- SZYNA NAWIGACJI — środowiska i moduły -->
     <nav class="dn-szyna-nawigacji" aria-label="Nawigacja środowisk i modułów">
       <div class="dn-nrz-menu sta-menu">
         <button class="dn-szyna-poz" type="button" data-menu="menu-aplikacji" aria-expanded="false" aria-label="Menu aplikacji">
@@ -476,8 +476,9 @@
     </span>
   </header>
 
-  <!-- ══ PASEK NARZĘDZI — stały pas czynności okna i aplikacji ═══════════ -->
-    <!-- ══ PASEK EDYCJI — belka nakładana, układ przeglądarkowy ═════════ -->
+  <!-- Pasek narzędzi: stały pas czynności okna i aplikacji -->
+
+    <!-- Pasek edycji: belka nakładana, układ przeglądarkowy -->
       <div class="dn-narzedzia-pas">
       <div class="dn-narzedzia">
 
@@ -728,7 +729,7 @@
     </div>
 </div>
 
-<!-- ════════════════ NAKŁADKA MODALNA — OKNO KONFIGURACJI ════════════════ -->
+<!-- Nakładka modalna prezentuje okno konfiguracji nad powłoką stanowiska, obejmujące belkę okna oraz właściwą treść ustawień. -->
 <div class="kf-nakladka" data-nakladka role="dialog" aria-modal="true" aria-label="Okno Konfiguracji">
   <div class="kf-okno">
 
@@ -1102,7 +1103,7 @@ pula kont          : „Konto 2" (Sprawa X)    (rola)</pre>
   </div>
 </div>
 
-<!-- ════════════════ MODAL „PULA KONT CODE CLI" (rozdz. 6.3) ════════════════ -->
+<!-- Okno modalne prezentuje pulę kont Code CLI dostępnych do przypisania w konfiguracji, wraz z ich bieżącym stanem wykorzystania. -->
 <dialog class="dn-modal kf-modal-pula" id="modal-pula" aria-label="Pula kont Code CLI">
   <div class="dn-modal-naglowek">
     <span class="dn-modal-tytul">Pula kont Code CLI</span>
@@ -1313,7 +1314,7 @@ pula kont          : „Konto 2" (Sprawa X)    (rola)</pre>
 
 <script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
 
-<!-- ══ OKNO „DOSTOSUJ WSTĄŻKĘ" — konfiguracja paska edycji ═══════════ -->
+<!-- Okno modalne pozwala dostosować zawartość paska edycji: dobrać widoczne składniki, ułożyć kolejność kart sesji oraz zapisać wybrane ustawienie użytkownika. -->
 <dialog class="dn-modal dn-modal--szeroki" id="dostosuj-wstazke" aria-labelledby="dostosuj-tytul">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul" id="dostosuj-tytul">Dostosuj paski</h2>

@@ -6,28 +6,14 @@ import { ID_GNIAZD } from './identyfikatory';
 import { utworzUkladOkien, type UkladOkien } from './uklad-okien';
 
 /**
- * Zamontowanie układu okien równoległych na scenie powłoki.
- *
- * Zastępuje montaż pojedynczego okna: scena dostaje układ, a układ trzyma
- * okna. Pierwsze gniazdo obejmuje okno uzgodnione z rdzeniem — to ono ma
- * identyfikator nadany komendą `window.create` i to na nim wisi przepływ
- * komunikatów. Pozostałe gniazda pracują z własnym opisem do czasu, aż rdzeń
- * otworzy dla nich osobne okna.
- *
- * Przepływ podpina się do **fasady** gniazda, nie do widoku okna. Fasada
- * przeżywa przebudowę widoku przy zmianie roli, więc zmiana roli nie zrywa
- * łączności ani nie wymaga ponownego podpięcia.
+ * Zamontowanie układu okien równoległych na scenie powłoki zastępuje montaż pojedynczego okna, a przepływ komunikatów podpina się do fasady gniazda, nie do widoku okna, więc zmiana roli nie zrywa łączności.
  */
 export function zamontujUkladOkien(
   korzen: KorzenAplikacji,
   rdzen: PolaczenieZRdzeniem,
   opis: OpisOkna,
 ): UkladOkien {
-  // Transport idzie do układu, bo łączność ma być widoczna w oknie. Wskaźnik
-  // w pasku górnym nie sięga okna na pełnym ekranie ani dalszej kolumny sceny,
-  // a polecenie wysłane po zerwanym łączu idzie w próżnię. Układ rozsyła odczyt
-  // do wszystkich gniazd naraz — łącze jest jedno, więc i odpowiedź w każdym
-  // nagłówku ma być ta sama.
+  // Transport idzie do układu, bo łączność ma być widoczna, a układ rozsyła odczyt do wszystkich gniazd.
   const uklad = utworzUkladOkien({
     podstawa: opis,
     kanal: rdzen.kanal,
@@ -45,11 +31,7 @@ export function zamontujUkladOkien(
     });
   }
 
-  // Kod okna wykonania idzie z uzgodnienia, nie z opisu. Panele pomocnicze
-  // wołają komendy żądające `windowId` okna otwartego, a opis okna takiego pola
-  // nie ma i mieć nie może: opis powstaje w kliencie, a kod nadaje rdzeń. Okno
-  // bywa już otwarte w chwili montażu (wtedy `okno()` je oddaje), a bywa, że
-  // dopiero powstanie — stąd oba wejścia, nie jedno.
+  // Kod okna wykonania idzie z uzgodnienia, nie z opisu — opis powstaje w kliencie, kod nadaje rdzeń.
   const zastane = rdzen.uzgodnienie.okno();
   if (zastane !== null) uklad.ustawOknoWykonania(ID_GNIAZD[0], zastane.id);
   rdzen.uzgodnienie.naOtwarcieOkna((okno) => {

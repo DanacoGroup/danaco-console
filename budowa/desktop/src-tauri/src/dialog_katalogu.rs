@@ -1,18 +1,5 @@
-//! Natywne okno wyboru katalogu — jedno na dwa zastosowania.
-//!
-//! Katalogi robocze są listą na oknie komunikacji, a ich wskazanie
-//! musi być czynnością systemu operacyjnego, nie polem tekstowym. Wybór jest
-//! dostępny dwiema drogami: poleceniem z interfejsu i pozycją w zasobniku.
-//! Rezygnacja z wyboru zwraca brak i niczego nie zmienia.
-//!
-//! Interfejs wskazuje katalog w dwóch sprawach: wskazania katalogu roboczego
-//! (ustawienie `katalog.roboczy.podstawa`) oraz dodania katalogu jako punktu
-//! dostępu. Dostęp mówi, do czego model sięga, katalog roboczy — gdzie zostawia
-//! swoje pliki, ale czynność systemu operacyjnego jest ta sama, więc okno jest
-//! jedno i różni je wyłącznie napis w belce. Napis podaje wywołujący, bo to on
-//! zna sprawę; jego brak daje wartość domyślną, a nie odmowę czynności.
-//!
-//! Konsument po stronie interfejsu: `client/src/powloka/most-katalogow.ts`.
+//! Moduł otwiera natywne okno wyboru katalogu, wspólne dla wskazania katalogu roboczego
+//! z interfejsu i dodania punktu dostępu z zasobnika, i różnicuje zastosowania napisem w belce.
 
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_dialog::DialogExt;
@@ -22,10 +9,10 @@ use tauri_plugin_dialog::DialogExt;
 /// i celowo nie powiela żadnej jego nazwy.
 pub const ZDARZENIE_KATALOG: &str = "powloka:katalog-roboczy";
 
-/// Napis w belce okna wyboru, gdy wywołujący żadnego nie podał.
+/// Napis w belce okna wyboru katalogu, używany wtedy, gdy wywołujący nie podał własnego tytułu okna wyboru.
 pub const TYTUL_DOMYSLNY: &str = "Wskaż katalog roboczy";
 
-/// Otwiera okno wyboru i zwraca wskazaną ścieżkę.
+/// Otwiera natywne okno wyboru katalogu i zwraca wskazaną ścieżkę, oddając brak przy rezygnacji z wyboru.
 pub async fn wybierz(aplikacja: &AppHandle, tytul: Option<&str>) -> Option<String> {
     let (nadaj, mut odbierz) = tauri::async_runtime::channel(1);
     aplikacja
@@ -38,7 +25,7 @@ pub async fn wybierz(aplikacja: &AppHandle, tytul: Option<&str>) -> Option<Strin
     odbierz.recv().await.flatten()
 }
 
-/// Otwiera okno wyboru z zasobnika i rozgłasza wybór do okna interfejsu.
+/// Otwiera natywne okno wyboru katalogu z pozycji zasobnika i rozgłasza wybór katalogu do okna interfejsu.
 pub fn wybierz_i_rozglos(aplikacja: &AppHandle) {
     let kopia = aplikacja.clone();
     aplikacja
@@ -52,7 +39,7 @@ pub fn wybierz_i_rozglos(aplikacja: &AppHandle) {
         });
 }
 
-/// Napis podany przez wywołującego, po odrzuceniu wartości pustej.
+/// Ustala napis w belce okna wyboru, podany przez wywołującego, po odrzuceniu wartości pustej lub białej.
 fn rozstrzygnij_tytul(tytul: Option<&str>) -> &str {
     match tytul.map(str::trim) {
         Some(napis) if !napis.is_empty() => napis,

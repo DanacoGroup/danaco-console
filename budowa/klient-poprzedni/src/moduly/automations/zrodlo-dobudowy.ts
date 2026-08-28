@@ -1,23 +1,7 @@
 /**
- * Moduł Automations widziany przez klienta — czterdzieści trzy czynności
- * dopełniające `zrodlo-automations.ts`.
- *
- * Rozdział idzie po roli, nie po objętości. Tamten plik niesie rdzeń modułu:
- * definicję, harmonogram, kolejkę, zależności i przebiegi — czyli to, czym
- * okna pracują bez otwierania jakiegokolwiek panelu. Tutaj stoją czynności
- * paneli i szuflad: wersje, szablony, zmienne, kanwa, logi, ładunki, punkty
- * wznowienia, alarmy, budżety, skarbiec, audyt, zlecenia kolejki i nadzór
- * harmonogramu.
- *
- * Każda czynność oddaje `Wynik` z CAŁĄ odpowiedzią, nie z wyciętym polem.
- * Powód jest w kontrakcie: większość tych odpowiedzi niesie więcej niż jedną
- * rzecz — wykaz i znacznik przycięcia, automatykę i numer wersji, zlecenie
- * i znacznik duplikatu, zmienne i zastrzeżenia. Wycięcie jednego pola gubiłoby
- * drugie, a okno musi pokazać oba.
- *
- * Sprawdzian kształtu pilnuje POLA OBOWIĄZKOWEGO odpowiedzi. Rdzeń, który
- * oddał kopertę powodzenia bez treści, jest dla okna odmową — inaczej widok
- * rysowałby pustkę i twierdził, że to wynik.
+ * Moduł Automations widziany przez klienta — czterdzieści trzy czynności dopełniające
+ * `zrodlo-automations.ts`: wersje, szablony, zmienne, kanwa, logi, ładunki, alarmy, budżety,
+ * skarbiec i audyt.
  */
 import {
   Command,
@@ -114,33 +98,25 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/** Czterdzieści cztery czynności dopełniające moduł Automations. */
+/** Czterdzieści cztery czynności dopełniające moduł Automations, zgrupowane pod jednym interfejsem klienta. */
 export interface ZrodloDobudowyAutomations {
-  /**
-   * `queue.action` — działanie silnika kolejek na kolejce BEZ automatyki.
-   *
-   * Odrębna od `automation.queue.action`, choć obie posuwają ten sam silnik.
-   * Tamta wskazuje automatykę i zasila kolejkę jej krokami; ta działa na
-   * kolejce samej — na przykład na kolejce przeglądu ręcznego, do której
-   * skierowano zlecenie po błędzie. Queue Manager musi umieć posunąć jedną
-   * i drugą, bo obie stoją w tym samym wykazie kolejek.
-   */
+  /** `queue.action` — działanie silnika kolejek bez automatyki, odrębne od `automation.queue.action`. */
   dzialanieNaKolejce(zadanie: QueueActionRequest): Promise<Wynik<QueueActionResponse>>;
-  /** `automation.workflow.simulate` — Uruchamia przebieg probny definicji bez wpiecia produkcyjnego; efekty uboczne krokow sa wstrzymane. */
+  /** `automation.workflow.simulate` — przebieg próbny bez wpięcia produkcyjnego, skutki wstrzymane. */
   symulujPrzeplyw(zadanie: AutomationWorkflowSimulateRequest): Promise<Wynik<AutomationWorkflowSimulateResponse>>;
   /** `automation.workflow.version.list` — Zwraca wersje definicji automatyki w kolejnosci od najnowszej. */
   wersjeAutomatyki(zadanie: AutomationWorkflowVersionListRequest): Promise<Wynik<AutomationWorkflowVersionListResponse>>;
-  /** `automation.workflow.version.restore` — Przywraca wczesniejsza wersje definicji jako wersje biezaca; wersja zastana zostaje w historii. */
+  /** `automation.workflow.version.restore` — przywraca wcześniejszą wersję jako bieżącą. */
   przywrocWersje(zadanie: AutomationWorkflowVersionRestoreRequest): Promise<Wynik<AutomationWorkflowVersionRestoreResponse>>;
-  /** `automation.workflow.version.diff` — Porownuje dwie wersje definicji strukturalnie: kroki dodane, usuniete i zmienione. */
+  /** `automation.workflow.version.diff` — porównuje wersje: kroki dodane, usunięte, zmienione. */
   porownajWersje(zadanie: AutomationWorkflowVersionDiffRequest): Promise<Wynik<AutomationWorkflowVersionDiffResponse>>;
   /** `automation.workflow.tag.set` — Ustala komplet etykiet automatyki; wykaz pusty zdejmuje wszystkie. */
   ustawEtykiety(zadanie: AutomationWorkflowTagSetRequest): Promise<Wynik<AutomationWorkflowTagSetResponse>>;
   /** `automation.workflow.variables.set` — Ustala zmienne przeplywu i mapowanie danych miedzy krokami. */
   ustawZmienne(zadanie: AutomationWorkflowVariablesSetRequest): Promise<Wynik<AutomationWorkflowVariablesSetResponse>>;
-  /** `automation.step.note.set` — Zapisuje notatke opisowa przy kroku automatyki; tresc pusta zdejmuje notatke. */
+  /** `automation.step.note.set` — zapisuje notatkę przy kroku automatyki; treść pusta zdejmuje notatkę. */
   ustawNotatkeKroku(zadanie: AutomationStepNoteSetRequest): Promise<Wynik<AutomationStepNoteSetResponse>>;
-  /** `automation.step.layout.set` — Zapisuje polozenie wezlow krokow na kanwie; bez niego uklad kanwy liczy sie z zaleznosci i nie przezywa odczytu. */
+  /** `automation.step.layout.set` — położenie węzłów na kanwie; bez niego układ liczy się z zależności. */
   ustawUkladKanwy(zadanie: AutomationStepLayoutSetRequest): Promise<Wynik<AutomationStepLayoutSetResponse>>;
   /** `automation.template.save` — Zapisuje definicje jako szablon przeplywu wraz z jego parametrami. */
   zapiszSzablon(zadanie: AutomationTemplateSaveRequest): Promise<Wynik<AutomationTemplateSaveResponse>>;
@@ -148,19 +124,19 @@ export interface ZrodloDobudowyAutomations {
   szablony(zadanie: AutomationTemplateListRequest): Promise<Wynik<AutomationTemplateListResponse>>;
   /** `automation.template.apply` — Zaklada automatyke z szablonu, podstawiajac wartosci jego parametrow. */
   zastosujSzablon(zadanie: AutomationTemplateApplyRequest): Promise<Wynik<AutomationTemplateApplyResponse>>;
-  /** `automation.workflow.publish` — Rozdziela wersje robocza od opublikowanej; wykonywana produkcyjnie jest wersja opublikowana. */
+  /** `automation.workflow.publish` — wersja robocza inna niż opublikowana; produkcyjnie działa druga. */
   opublikujAutomatyke(zadanie: AutomationWorkflowPublishRequest): Promise<Wynik<AutomationWorkflowPublishResponse>>;
   /** `automation.workflow.share` — Udostepnia automatyke jako komponent wlasny w obrebie organizacji. */
   udostepnijAutomatyke(zadanie: AutomationWorkflowShareRequest): Promise<Wynik<AutomationWorkflowShareResponse>>;
-  /** `schedule.window.set` — Ustala okna wykonania harmonogramu: przedzialy czasu, w ktorych uruchomienie nastepuje. */
+  /** `schedule.window.set` — okna wykonania harmonogramu, czyli przedziały czasu uruchomienia. */
   ustawOknaWykonania(zadanie: ScheduleWindowSetRequest): Promise<Wynik<ScheduleWindowSetResponse>>;
-  /** `schedule.backfill.run` — Wykonuje przebiegi dla przeszlych, pominietych terminow w zadanym zakresie dat. */
+  /** `schedule.backfill.run` — przebiegi dla pominiętych terminów w zadanym zakresie dat. */
   uruchomWstecznie(zadanie: ScheduleBackfillRunRequest): Promise<Wynik<ScheduleBackfillRunResponse>>;
-  /** `schedule.trigger.history` — Zwraca rzeczywiste momenty wyzwolenia wraz z przyczyna: harmonogram, zdarzenie albo uruchomienie reczne. */
+  /** `schedule.trigger.history` — momenty wyzwolenia: harmonogram, zdarzenie, uruchomienie ręczne. */
   historiaWyzwolen(zadanie: ScheduleTriggerHistoryRequest): Promise<Wynik<ScheduleTriggerHistoryResponse>>;
-  /** `schedule.heartbeat.set` — Ustala nadzor obecnosci uruchomien: alarm, gdy oczekiwane uruchomienie nie nastapilo w oknie tolerancji. */
+  /** `schedule.heartbeat.set` — alarm, gdy oczekiwane uruchomienie harmonogramu nie nastąpiło w porę. */
   ustawNadzorUruchomien(zadanie: ScheduleHeartbeatSetRequest): Promise<Wynik<ScheduleHeartbeatSetResponse>>;
-  /** `schedule.webhook.endpoint.get` — Zwraca unikatowy adres wejsciowy wyzwalacza webhook wraz z kluczem podpisu HMAC. */
+  /** `schedule.webhook.endpoint.get` — adres wejściowy webhooka wraz z kluczem podpisu HMAC. */
   adresWebhooka(zadanie: ScheduleWebhookEndpointGetRequest): Promise<Wynik<ScheduleWebhookEndpointGetResponse>>;
   /** `queue.item.enqueue` — Dokłada zlecenie do kolejki istniejacej, poza harmonogramem. */
   dodajZlecenie(zadanie: QueueItemEnqueueRequest): Promise<Wynik<QueueItemEnqueueResponse>>;
@@ -176,7 +152,7 @@ export interface ZrodloDobudowyAutomations {
   skierujZlecenie(zadanie: QueueItemRouteRequest): Promise<Wynik<QueueItemRouteResponse>>;
   /** `queue.item.branch` — Rozgalezia przetwarzanie zlecenia na tory rownolegle. */
   rozgalezZlecenie(zadanie: QueueItemBranchRequest): Promise<Wynik<QueueItemBranchResponse>>;
-  /** `queue.item.condition` — Ustala warunek przetworzenia zlecenia; zlecenie niespelniajace warunku zostaje pominiete. */
+  /** `queue.item.condition` — warunek przetworzenia; zlecenie niespełniające warunku zostaje pominięte. */
   uwarunkujZlecenie(zadanie: QueueItemConditionRequest): Promise<Wynik<QueueItemConditionResponse>>;
   /** `queue.item.list` — Zwraca zlecenia kolejki wraz z ich stanem, ladunkiem i dotychczasowymi probami. */
   zleceniaKolejki(zadanie: QueueItemListRequest): Promise<Wynik<QueueItemListResponse>>;
@@ -184,33 +160,33 @@ export interface ZrodloDobudowyAutomations {
   ustawPolitykeKolejki(zadanie: QueuePolicySetRequest): Promise<Wynik<QueuePolicySetResponse>>;
   /** `queue.dead.list` — Zwraca zlecenia trwale nieudane, przeniesione do kolejki zadan martwych. */
   zadaniaMartwe(zadanie: QueueDeadListRequest): Promise<Wynik<QueueDeadListResponse>>;
-  /** `queue.depth.get` — Zwraca glebokosc kolejki w czasie: liczbe zlecen oczekujacych w kolejnych odcinkach. */
+  /** `queue.depth.get` — głębokość kolejki w czasie: liczba zleceń oczekujących w odcinkach. */
   glebokoscKolejki(zadanie: QueueDepthGetRequest): Promise<Wynik<QueueDepthGetResponse>>;
-  /** `automation.execution.log` — Zwraca pelny zapis zdarzen pojedynczego uruchomienia, takze sprzed otwarcia okna. */
+  /** `automation.execution.log` — pełny zapis zdarzeń uruchomienia, także sprzed otwarcia okna. */
   dziennikPrzebiegu(zadanie: AutomationExecutionLogRequest): Promise<Wynik<AutomationExecutionLogResponse>>;
   /** `automation.execution.steps` — Zwraca stan kazdego kroku przebiegu osobno. */
   krokiPrzebiegu(zadanie: AutomationExecutionStepsRequest): Promise<Wynik<AutomationExecutionStepsResponse>>;
   /** `automation.execution.checkpoint.list` — Zwraca punkty wznowienia przebiegu. */
   punktyWznowienia(zadanie: AutomationExecutionCheckpointListRequest): Promise<Wynik<AutomationExecutionCheckpointListResponse>>;
-  /** `automation.execution.resume` — Wznawia przebieg od punktu wznowienia, bez powtarzania krokow ukonczonych. */
+  /** `automation.execution.resume` — wznawia przebieg od punktu wznowienia, bez powtarzania kroków. */
   wznowPrzebieg(zadanie: AutomationExecutionResumeRequest): Promise<Wynik<AutomationExecutionResumeResponse>>;
-  /** `automation.execution.payload.get` — Zwraca dane wejsciowe i wyjsciowe kroku przebiegu; wartosci wrazliwe sa zredagowane. */
+  /** `automation.execution.payload.get` — wejście i wyjście kroku; wartości wrażliwe zredagowane. */
   podgladLadunku(zadanie: AutomationExecutionPayloadGetRequest): Promise<Wynik<AutomationExecutionPayloadGetResponse>>;
-  /** `automation.execution.replay` — Odtwarza przebieg z ladunkiem kroku wskazanego; zaklada przebieg nowy, nie zmienia zrodlowego. */
+  /** `automation.execution.replay` — odtwarza przebieg z ładunkiem kroku; zakłada przebieg nowy. */
   odtworzPrzebieg(zadanie: AutomationExecutionReplayRequest): Promise<Wynik<AutomationExecutionReplayResponse>>;
   /** `automation.alert.rule.set` — Ustala regule alarmowania: warunek i kanaly powiadomien. */
   ustawReguleAlarmowania(zadanie: AutomationAlertRuleSetRequest): Promise<Wynik<AutomationAlertRuleSetResponse>>;
   /** `automation.alert.rule.list` — Zwraca reguly alarmowania automatyki. */
   regulyAlarmowania(zadanie: AutomationAlertRuleListRequest): Promise<Wynik<AutomationAlertRuleListResponse>>;
-  /** `automation.execution.budget.set` — Ustala budzet czasu przebiegu i kroku wraz z alarmem przy jego przekroczeniu. */
+  /** `automation.execution.budget.set` — budżet czasu przebiegu i kroku z alarmem przy przekroczeniu. */
   ustawBudzetyPrzebiegu(zadanie: AutomationExecutionBudgetSetRequest): Promise<Wynik<AutomationExecutionBudgetSetResponse>>;
-  /** `automation.secret.set` — Zapisuje poswiadczenie w skarbcu i zwraca jego referencje; wartosc nie wraca nigdy. */
+  /** `automation.secret.set` — zapisuje poświadczenie w skarbcu, zwraca referencję; wartość nie wraca. */
   zapiszPoswiadczenie(zadanie: AutomationSecretSetRequest): Promise<Wynik<AutomationSecretSetResponse>>;
   /** `automation.secret.list` — Zwraca referencje poswiadczen dostepnych krokom; wartosci nie wracaja. */
   poswiadczenia(zadanie: AutomationSecretListRequest): Promise<Wynik<AutomationSecretListResponse>>;
-  /** `automation.secret.remove` — Usuwa poswiadczenie ze skarbca; kroki przywolujace je przestaja miec pokrycie. */
+  /** `automation.secret.remove` — usuwa poświadczenie ze skarbca; kroki przywołujące je tracą pokrycie. */
   usunPoswiadczenie(zadanie: AutomationSecretRemoveRequest): Promise<Wynik<AutomationSecretRemoveResponse>>;
-  /** `automation.audit.list` — Zwraca dziennik audytu: kto i kiedy zmienil definicje, uruchomil przebieg, przerwal go albo zmienil harmonogram. */
+  /** `automation.audit.list` — kto i kiedy zmienił definicję, uruchomił albo przerwał przebieg. */
   odczytajAudyt(zadanie: AutomationAuditListRequest): Promise<Wynik<AutomationAuditListResponse>>;
 }
 
@@ -528,12 +504,8 @@ export function utworzZrodloDobudowy(kanal: Kanal): ZrodloDobudowyAutomations {
 }
 
 /**
- * Sprawdzian kształtu odpowiedzi oddawanej w całości.
- *
- * Osobny od `sprawdzKsztaltObietnicy` z `zrodlo-automations.ts`, choć robi to
- * samo: tamten jest prywatny w swoim pliku, a wyniesienie go do modułu
- * wspólnego związałoby oba pliki bez powodu — sprawdzian jest trzema wierszami,
- * a wspólny byt do utrzymania jest zawsze czymś więcej.
+ * Sprawdzian kształtu odpowiedzi oddawanej w całości; osobny od `sprawdzKsztaltObietnicy`
+ * w `zrodlo-automations.ts`, bo wyniesienie go do modułu wspólnego wiązałoby oba pliki bez powodu.
  */
 async function sprawdzOdpowiedz<T>(
   obietnica: Promise<Wynik<T>>,

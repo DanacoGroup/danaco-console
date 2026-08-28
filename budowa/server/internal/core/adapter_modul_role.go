@@ -1,33 +1,6 @@
-// Odpowiedzialność pliku: rodzina `role.*` — dwie komendy nadające i zmieniające
-// rolę okna w pętli koordynator–wykonawca.
-//
-// Rodzina jest fasadą, nie drugą prawdą o roli. Rola okna ma w rdzeniu jednego
-// właściciela: pakiet `session` (rejestr okien i `rola_okna.go`, który zna
-// słownik ról i normalizuje więź), a jej ślad trwały — kolumny
-// `okno_komunikacji.rola_okna` i `okno_komunikacji.okno_koordynatora_id`
-// z `migracja_002_okna.sql`. Rodzina `role.*` jedzie dokładnie na nich, tak samo
-// jak `window.update`. Gdyby założyła własny zapis roli, produkt miałby dwie
-// odpowiedzi na pytanie „jaką rolę ma to okno” — jedną z `window.list`, drugą
-// z `role.*`.
-//
-// Wobec `window.update` rodzina dokłada trzy rzeczy, i tylko trzy:
-//
-//  1. Wcielenie (`persona`) — `window.update` nie zna tego pola wcale.
-//  2. Odmowę zamiast cichego pominięcia. `window.update` ze wskazaniem
-//     koordynatora dla okna, które wykonawcą nie jest, cicho zdejmuje wskazanie
-//     (normalizujRole w `session/rola_okna.go`). Rodzina `role.*` odmawia
-//     z powodem, bo jej jedynym tematem jest właśnie rola i jej więź.
-//  3. Ślad trwały. `window.update` zmienia wyłącznie rejestr pamięciowy;
-//     `role.*` zapisuje rolę także do wiersza okna, gdy wiersz istnieje — bez
-//     tego `window.state.get` po restarcie rdzenia oddawałby rolę sprzed
-//     nadania (adapter_stan_okna.go czyta wiersz, gdy rejestr okna nie zna).
-//
-// Wcielenie mieszka tam, gdzie już mieszka. Klient utrwala wcielenie okna
-// komendą `config.set` na poziomie zasięgu `window` pod kluczem
-// `multitasking.wcielenie` (`client/src/moduly/multitasking/wcielenia-analizy.ts`,
-// `okno-results-analyzer.ts`). Rdzeń pisze i czyta ten sam adres, więc wcielenie
-// nadane komendą `role.update` widzi selektor analityka i odwrotnie. Własny
-// klucz albo własna tabela byłyby drugim wcieleniem tego samego okna.
+// Plik obsługuje rodzinę komend `role.*`: role.assign i role.update nadają
+// rolę okna w pętli koordynator–wykonawca, więź koordynatora oraz wcielenie,
+// opierając się na jedynym źródle prawdy roli w pakiecie session.
 package core
 
 import (
@@ -43,22 +16,20 @@ import (
 
 // kluczWcieleniaOkna to adres wcielenia roli w tabeli `ustawienie`, poziom
 // zasięgu `window`, byt zasięgu — identyfikator okna. Wartość jest napisem, bo
-// napisem jest w kontrakcie: katalogu wcieleń nikt nie rozstrzygnął, a rdzeń
-// katalogów sobie nie wymyśla.
+// napisem jest w kontrakcie.
 const kluczWcieleniaOkna = "multitasking.wcielenie"
 
 // adapterRolOkien wypełnia port RoleOkien: adapter okien komunikacji
 // rozszerzony o dwie komendy roli i o jej ślad trwały.
 type adapterRolOkien struct {
 	*adapterOkien
-	// zestaw daje trzy drogi, których adapter okien nie miał: zapis roli do
-	// wiersza (RoleOkien), zapis więzi koordynatora (Przekazania) i adres
-	// wcielenia (Konfiguracja). Zerowy znaczy pracę na samej pamięci rejestru.
+	// zestaw daje trzy drogi zapisu: rolę wiersza, więź koordynatora i adres wcielenia.
 	zestaw *dane.Zestaw
 	role   dane.RepozytoriumRolOkien
 }
 
-// ZRolami rozszerza adapter okien o rodzinę `role.*`.
+// ZRolami rozszerza adapter okien o rodzinę `role.*`, dołączając zestaw danych,
+// z którego wypełnia repozytorium ról okien, gdy zestaw został przekazany.
 func (a *adapterOkien) ZRolami(zestaw *dane.Zestaw) *adapterRolOkien {
 	rozszerzony := &adapterRolOkien{adapterOkien: a, zestaw: zestaw}
 	if zestaw != nil {
@@ -69,11 +40,8 @@ func (a *adapterOkien) ZRolami(zestaw *dane.Zestaw) *adapterRolOkien {
 
 // ── role.assign ──────────────────────────────────────────────────────────────
 
-// NadajRole nadaje oknu rolę w pętli koordynator–wykonawca.
-//
-// Rola jest w tym żądaniu wymagana, więc żądanie bez niej albo z wartością
-// spoza słownika kontraktu jest odmawiane. Sprawdza to `session.RolaZnana` —
-// właściciel słownika ról; drugiego wykazu ról ten plik nie trzyma.
+// NadajRole nadaje oknu rolę w pętli koordynator–wykonawca; rola jest wymagana,
+// a jej przynależność do słownika kontraktu sprawdza `session.RolaZnana`.
 func (a *adapterRolOkien) NadajRole(ctx context.Context,
 	z shared.RoleAssignRequest) (shared.RoleAssignResponse, error) {
 
@@ -99,10 +67,8 @@ func (a *adapterRolOkien) NadajRole(ctx context.Context,
 // ── role.update ──────────────────────────────────────────────────────────────
 
 // ZmienRole zmienia rolę okna albo jej wcielenie. Pole niewskazane zostaje bez
-// zmiany — tak mówi kontrakt tej komendy o roli i tak samo traktujemy wcielenie.
-//
-// Żądanie bez ani jednego pola zmiany nie jest błędem: oddaje rolę i wcielenie
-// obowiązujące. Odpowiedź niesie wtedy stan odczytany, a nie ciszę.
+// zmiany. Żądanie bez ani jednego pola zmiany nie jest błędem — oddaje rolę
+// i wcielenie obowiązujące.
 func (a *adapterRolOkien) ZmienRole(ctx context.Context,
 	z shared.RoleUpdateRequest) (shared.RoleUpdateResponse, error) {
 
@@ -131,16 +97,9 @@ func (a *adapterRolOkien) ZmienRole(ctx context.Context,
 
 // ── rola i więź ──────────────────────────────────────────────────────────────
 
-// nadajRole nanosi rolę i więź koordynatora na okno, gdziekolwiek okno żyje.
-//
-// Drogi są dwie, bo okno ma dwa życia. Okno otwarte w tym uruchomieniu rdzenia
-// stoi w rejestrze pamięciowym i to on jest jego prawdą bieżącą; okno sprzed
-// restartu zostało wyłącznie wierszem (adapter_stan_okna.go opisuje ten sam
-// podział przy `window.state.get`). Rodzina `role.*` obsługuje oba, zamiast
-// odmawiać oknu, o którym Operator wie z `window.state.get`, że istnieje.
-//
-// Wskazania niewypełnione (rola nil, koordynator nil) niczego nie zmieniają —
-// wtedy obie drogi sprowadzają się do odczytu stanu obowiązującego.
+// nadajRole nanosi rolę i więź koordynatora na okno, gdziekolwiek okno żyje:
+// w rejestrze pamięciowym uruchomienia bieżącego albo w wierszu okna sprzed
+// restartu rdzenia.
 func (a *adapterRolOkien) nadajRole(ctx context.Context, idOkna string,
 	rola *shared.WindowRole, koordynator *string) (dane.RolaOkna, error) {
 
@@ -204,8 +163,7 @@ func (a *adapterRolOkien) nadajRoleWWierszu(ctx context.Context, idOkna string,
 		return dane.RolaOkna{}, bladZapisuRoli(idOkna, err)
 	}
 	stan.Rola = docelowa
-	// Zapis roli spoza pętli zdjął więź w tej samej instrukcji UPDATE, więc
-	// odpowiedź musi to powiedzieć, a nie oddawać koordynatora sprzed zmiany.
+	// Zapis roli spoza pętli zdjął więź w tej samej instrukcji, więc odpowiedź musi to powiedzieć wprost.
 	if docelowa != shared.WindowRoleExecutor {
 		stan.Koordynator = ""
 		return stan, nil
@@ -214,9 +172,7 @@ func (a *adapterRolOkien) nadajRoleWWierszu(ctx context.Context, idOkna string,
 	if wskazany == "" {
 		return stan, nil
 	}
-	// Więź z oknem, którego nie ma, byłaby potwierdzeniem relacji, która nie
-	// powstała. Rejestr pamięciowy sprawdza to sam (ErrBrakKoordynatora); na
-	// drodze wiersza sprawdzamy to tutaj, bo tam nikt inny tego nie zrobi.
+	// Więź z oknem, którego nie ma, byłaby potwierdzeniem relacji, która nie powstała.
 	if _, err := a.role.RolaOkna(ctx, wskazany); err != nil {
 		if errors.Is(err, dane.ErrBrakWiersza) {
 			return dane.RolaOkna{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
@@ -231,14 +187,9 @@ func (a *adapterRolOkien) nadajRoleWWierszu(ctx context.Context, idOkna string,
 	return stan, nil
 }
 
-// utrwalRole odkłada rolę okna żywego do wiersza.
-//
-// Brak wiersza nie jest awarią. Okno komunikacji dostaje wiersz leniwie, przy
-// pierwszej wiadomości, więc okno świeżo otwarte nie ma go jeszcze wcale —
-// rola żyje wtedy w rejestrze i wykaz okien czyta ją stamtąd (dolozWiezi
-// w `adapter_okna.go` opisuje ten sam podział dla więzi). Każda inna usterka
-// zapisu kończy komendę: zapis, który się nie udał, a został przemilczany,
-// oddałby Operatorowi rolę, której po restarcie nie będzie.
+// utrwalRole odkłada rolę okna żywego do wiersza. Brak wiersza nie jest awarią
+// — okno świeżo otwarte dostaje wiersz leniwie, więc rola żyje wtedy wyłącznie
+// w rejestrze.
 func (a *adapterRolOkien) utrwalRole(ctx context.Context, idOkna string, stan dane.RolaOkna) error {
 	if a.role == nil {
 		return nil
@@ -257,11 +208,7 @@ func (a *adapterRolOkien) utrwalRole(ctx context.Context, idOkna string, stan da
 }
 
 // polaczZKoordynatorem zapisuje więź koordynator–wykonawca w kolumnie, którą
-// wypełnia także `window.handoff` — drugiej drogi do tej więzi nie ma.
-//
-// Okna bez wiersza pomija z tego samego powodu, co `utrwalRole`: więź żyje wtedy
-// w rejestrze pamięciowym, a wykaz okien zostawia wartość z pamięci dokładnie
-// wtedy, gdy wiersza nie ma.
+// wypełnia także `window.handoff`, pomijając okno bez wiersza w bazie danych.
 func (a *adapterRolOkien) polaczZKoordynatorem(ctx context.Context, idOkna, koordynator string) error {
 	if a.zestaw == nil || a.zestaw.Przekazania == nil {
 		return nil
@@ -276,12 +223,9 @@ func (a *adapterRolOkien) polaczZKoordynatorem(ctx context.Context, idOkna, koor
 	return nil
 }
 
-// sprawdzWiezRoli odmawia więzi roli, która więzi nie niesie.
-//
-// Koordynatora ma wyłącznie okno wykonawcy (`session/rola_okna.go`).
-// Pakiet sesji takie wskazanie po cichu zdejmuje, bo jego zadaniem jest otworzyć
-// okno mimo wszystko; komenda, której jedynym tematem jest rola, musi powiedzieć
-// wprost, że o wskazany skutek nie prosiła sama siebie.
+// sprawdzWiezRoli odmawia więzi roli, która więzi nie niesie: koordynatora ma
+// wyłącznie okno wykonawcy, więc wskazanie go przy innej roli jest odmawiane
+// wprost.
 func sprawdzWiezRoli(rola shared.WindowRole, koordynator *string) error {
 	if strings.TrimSpace(wartoscTekstu(koordynator)) == "" {
 		return nil
@@ -293,7 +237,8 @@ func sprawdzWiezRoli(rola shared.WindowRole, koordynator *string) error {
 		nazwaRoli(rola) + " go nie ma")
 }
 
-// rolaObowiazujaca zwraca rolę po zmianie: wskazaną, a bez wskazania — bieżącą.
+// rolaObowiazujaca zwraca rolę po zmianie: wskazaną, gdy komenda ją niesie,
+// a bez wskazania — rolę bieżącą, którą okno miało przed tym żądaniem.
 func rolaObowiazujaca(biezaca shared.WindowRole, wskazana *shared.WindowRole) shared.WindowRole {
 	if wskazana != nil {
 		return *wskazana
@@ -302,13 +247,8 @@ func rolaObowiazujaca(biezaca shared.WindowRole, wskazana *shared.WindowRole) sh
 }
 
 // wskaznikPolaRoli oddaje pole opcjonalne odpowiedzi: napis pusty wychodzi jako
-// brak pola, nie jako pole o pustej treści.
-//
-// Pomocnik jest własny, a nie wspólny, bo pakiet niesie dwa o nazwie
-// `wskaznikTekstu` i o różnym znaczeniu pustego napisu (`sesja_konfiguracja.go`
-// oddaje brak, `adapter_modul_auth.go` — wskaźnik na pustkę). Rodzina `role.*`
-// mówi wprost, której zasady trzyma się jej odpowiedź: koordynator pusty
-// i wcielenie puste są brakiem, a klient odróżnia brak od wartości.
+// brak pola, nie jako pole o pustej treści, zgodnie z zasadą przyjętą w rodzinie
+// `role.*`.
 func wskaznikPolaRoli(wartosc string) *string {
 	if wartosc == "" {
 		return nil
@@ -328,11 +268,8 @@ func nazwaRoli(rola shared.WindowRole) string {
 // ── wcielenie roli ───────────────────────────────────────────────────────────
 
 // zapiszWcielenie zapisuje wcielenie roli i oddaje wcielenie obowiązujące.
-//
-// Żądanie bez pola `persona` niczego nie zapisuje — oddaje wcielenie zastane.
-// Pole wypełnione napisem pustym zdejmuje wcielenie: to jedyny sposób, jaki
-// kontrakt daje na powrót do roli bez wcielenia, a zapis pustego napisu
-// zostawiałby wiersz ustawienia udający wcielenie o pustej nazwie.
+// Żądanie bez pola `persona` niczego nie zapisuje; napis pusty zdejmuje
+// wcielenie zapisane wcześniej.
 func (a *adapterRolOkien) zapiszWcielenie(ctx context.Context, idOkna string,
 	wcielenie *string) (string, error) {
 
@@ -401,13 +338,15 @@ func (a *adapterRolOkien) OknoRoli(ctx context.Context, idOkna string) (shared.W
 
 // ── odmowy ───────────────────────────────────────────────────────────────────
 
-// bladRoli składa odmowę żądania niezgodnego z kontraktem rodziny.
+// bladRoli składa odmowę żądania niezgodnego z kontraktem rodziny `role.*`,
+// niosąc podany powód w treści komunikatu błędu walidacji.
 func bladRoli(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"rola okna: "+powod))
 }
 
-// bladBrakuOknaRoli nazywa okno, którego nie ma — ani w rejestrze, ani w bazie.
+// bladBrakuOknaRoli nazywa okno, którego nie ma — ani w rejestrze pamięciowym,
+// ani wierszem w bazie danych — i składa z tej nazwy komunikat odmowy.
 func bladBrakuOknaRoli(idOkna string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"rola okna: okno komunikacji "+idOkna+" nie istnieje"))

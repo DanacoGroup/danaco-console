@@ -11,7 +11,7 @@ import type { GniazdoOkna } from './gniazdo-okna';
 import type { PasRelacji } from './pas-relacji';
 import type { StanPary } from './stan-pary';
 
-/** Elementy sceny biorące udział w przekazaniu zlecenia. */
+/** Elementy sceny biorące udział w przekazaniu zlecenia — gniazda źródłowe i docelowe, pas relacji oraz treść komunikatu. */
 export interface CzesciPrzekazania {
   /** Gniazdo, które zlecenie wydaje — w pętli koordynator. */
   od: GniazdoOkna;
@@ -25,32 +25,11 @@ export interface CzesciPrzekazania {
   tresc?: string;
 }
 
-/** Czas, po którym scena przechodzi z chwili przekazania do pracy wykonawcy. */
+/** Czas, po którym scena przechodzi z chwili przekazania zlecenia do stanu pracy wykonawcy, w milisekundach. */
 const CZAS_PRZEKAZANIA = 900;
 
 /**
- * Podgląd przekazania zlecenia z okna koordynatora do okna wykonawcy.
- *
- * To jest podgląd układu, nie wykonana praca. Kontrakt
- * (`shared/contract.json`) nie ma komendy przekazania zlecenia
- * koordynator→wykonawca: pole `coordinatorWindowId` istnieje po obu stronach,
- * ale samego przekazania nie wywołuje żadna komenda. Moduł nie wysyła więc ani
- * jednej ramki i niczego nie zapisuje — porusza wyłącznie tym, co widać na
- * scenie, i mówi o tym wprost, zamiast zostawiać Operatora z animacją do
- * zinterpretowania.
- *
- * Zdarzenie jest widoczne w obu oknach. Przekazanie odbywa się bez udziału
- * operatora, więc gdyby ślad został tylko u wykonawcy, koordynator pokazywałby
- * rozmowę z dziurą — nie dałoby się odtworzyć, co i kiedy zostało zlecone.
- *
- * Na scenie dzieje się jednocześnie siedem rzeczy:
- *   1. wpis w historii koordynatora — z czym i dokąd, wraz z zastrzeżeniem;
- *   2. wpis w historii wykonawcy — od kogo, wraz z tym samym zastrzeżeniem;
- *   3. błysk obu nagłówków — powiązanie widać, zanim wpisy zostaną przeczytane;
- *   4. żeton biegnący po pasie relacji — kierunek przekazania;
- *   5. dymek — natychmiastowa odpowiedź na czynność Operatora;
- *   6. trwała uwaga na pasie relacji — odpowiedź także kwadrans później;
- *   7. przejście stanu: „przekazanie zlecenia" → „wykonawca pracuje".
+ * Podgląd przekazania zlecenia z okna koordynatora do okna wykonawcy pokazuje na scenie siedem jednoczesnych sygnałów wizualnych, bo kontrakt nie ma osobnej komendy przekazania i moduł nie zapisuje niczego, tylko porusza tym, co widać.
  */
 export function pokazPrzekazanieZlecenia(czesci: CzesciPrzekazania): void {
   const { od, do_, pas, ustawStan } = czesci;
@@ -67,7 +46,6 @@ export function pokazPrzekazanieZlecenia(czesci: CzesciPrzekazania): void {
   pokazKomunikat({ tytul: PRZEKAZANIE_TYTUL, tresc: PRZEKAZANIE_OPIS, waga: 'ostrz' });
   ustawStan('przekazanie');
 
-  // Chwila przekazania jest zdarzeniem, nie stanem trwałym — po przebiegu
-  // żetonu scena wraca do stanu, który pokazuje kolejka rdzenia.
+  // Chwila przekazania jest zdarzeniem, nie stanem trwałym; scena wraca do stanu kolejki.
   window.setTimeout(() => ustawStan('wykonawca-pracuje'), CZAS_PRZEKAZANIA);
 }

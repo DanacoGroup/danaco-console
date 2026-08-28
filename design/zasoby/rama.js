@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Skrypt obsługuje kontrolki belki tytułowej, szyny nawigacji i pasa narzędzi ramy aplikacji Danaco Console, odpowiadając na każdą z nich czynnością albo komunikatem zgodnie z zasadą zero blokad.
    DANACO CONSOLE — RAMA OKNA APLIKACJI (zachowanie)
    ----------------------------------------------------------------------------
    Obsługuje kontrolki belki tytułowej i pasa narzędzi. Zgodnie z zasadą zero

@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: odczyt obszaru Developer — migawki pliku edytora
-// i ostatni przebieg budowania okna.
-//
-// Limit wchodzi parametrem, nie sklejaniem tekstu. Wartość niedodatnia znaczy
-// wykaz pełny, więc jedno przygotowane zapytanie obsługuje oba przypadki, a do
-// treści SQL nigdy nie wchodzi liczba z zewnątrz.
+// Warstwa danych obsługuje odczyt obszaru Developer: migawki pliku edytora
+// i ostatni przebieg budowania okna, ze wspólnym parametrem limitu wykazu.
 package dane
 
 import (
@@ -65,7 +61,8 @@ func (r *repozytoriumDevelopera) OstatniaWersja(ctx context.Context,
 	return wersja, nil
 }
 
-// Wersje zwraca migawki pliku od najnowszej.
+// Wersje zwraca migawki pliku wskazanej ścieżki okna od najnowszej; wartość
+// limitu niedodatnia zwraca wykaz pełny.
 func (r *repozytoriumDevelopera) Wersje(ctx context.Context,
 	oknoKod, sciezka string, limit int) ([]WersjaPliku, error) {
 
@@ -90,7 +87,8 @@ func (r *repozytoriumDevelopera) Wersje(ctx context.Context,
 	return wersje, wiersze.Err()
 }
 
-// OstatniPrzebieg zwraca najnowszy przebieg budowania okna.
+// OstatniPrzebieg zwraca najnowszy przebieg budowania wskazanego okna,
+// odczytany z tabeli developer_budowanie.
 func (r *repozytoriumDevelopera) OstatniPrzebieg(ctx context.Context,
 	oknoKod string) (PrzebiegBudowania, error) {
 
@@ -108,7 +106,8 @@ func (r *repozytoriumDevelopera) OstatniPrzebieg(ctx context.Context,
 	return przebieg, nil
 }
 
-// odczytajWersjePliku składa migawkę z jednego wiersza wyniku.
+// odczytajWersjePliku składa migawkę WersjaPliku z jednego wiersza wyniku
+// zapytania SQL o wersji pliku.
 func odczytajWersjePliku(wiersz interface{ Scan(...any) error }) (WersjaPliku, error) {
 	var wersja WersjaPliku
 	err := wiersz.Scan(&wersja.Kod, &wersja.OknoKod, &wersja.Sciezka, &wersja.Tresc,
@@ -116,7 +115,8 @@ func odczytajWersjePliku(wiersz interface{ Scan(...any) error }) (WersjaPliku, e
 	return wersja, err
 }
 
-// odczytajPrzebiegBudowania składa przebieg budowania z jednego wiersza wyniku.
+// odczytajPrzebiegBudowania składa przebieg budowania PrzebiegBudowania
+// z jednego wiersza wyniku zapytania.
 func odczytajPrzebiegBudowania(wiersz interface{ Scan(...any) error }) (PrzebiegBudowania, error) {
 	var przebieg PrzebiegBudowania
 	err := wiersz.Scan(&przebieg.Kod, &przebieg.OknoKod, &przebieg.Zadanie, &przebieg.Argumenty,

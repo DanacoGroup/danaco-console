@@ -9,19 +9,7 @@ import (
 	"strings"
 )
 
-// Przeloz przekłada polecenie procesu okna na wywołanie SSH do hosta wykonania
-// tego okna. Droga ma pięć ogniw i każde brakujące jest osobną, nazwaną odmową:
-//
-//  1. baza rdzenia zasilona (Zasil — wpięcie kompozycji);
-//  2. host wskazany ustawieniem `host_wykonania` (okno albo poziom globalny);
-//  3. host wpisany do wykazu `host_zdalny`;
-//  4. zgoda Operatora na tym wierszu wydana;
-//  5. program `ssh` obecny na maszynie rdzenia.
-//
-// Odmowa nie jest bramką wobec Operatora: każda mówi, co się nie stało,
-// dlaczego, i którym ruchem Operator to zmienia. Zgoda per host
-// chroni maszyny Operatora — rdzeń nie zainicjuje połączenia z maszyną,
-// której mu nie oddano.
+// Funkcja Przeloz przekłada polecenie procesu okna na gotowe wywołanie SSH do hosta wykonania tego okna.
 func Przeloz(idOkna string, p Polecenie) (Uruchomienie, error) {
 	if strings.TrimSpace(p.Program) == "" {
 		return Uruchomienie{}, fmt.Errorf("zdalne: polecenie okna %s nie niesie programu, "+

@@ -2,23 +2,9 @@ import type { StudioActionBalance, StudioSkippedItem } from '../../../../shared/
 import type { PoleFormularza } from '../../modele/kontrolki-formularza';
 
 /**
- * Drobne kontrolki i zdania wspólne panelom postaci dokumentu.
- *
- * ── Dlaczego pole liczbowe jest własne ──────────────────────────────────────
- * `kontrolki-formularza.ts` niesie pole tekstowe, listę wyboru i przełącznik.
- * Nastawy postaci są jednak w większości liczbami z granicami: margines
- * w milimetrach, stopień pisma w punktach, punkt startu numeracji, krycie znaku
- * wodnego. Pole tekstowe przyjęłoby „dwadzieścia" i wysłało to do rdzenia.
- *
- * ── Dlaczego pole puste znaczy „nie ruszaj" ─────────────────────────────────
- * To jest zasada CAŁEGO tego odcinka. Rodzina `studio.page.*` i `studio.format.*`
- * ma pola opcjonalne w znaczeniu „tej cechy nie zmieniam". Margines zerowy jest
- * nastawą, którą Operator może wybrać świadomie, więc „podano zero" i „nie
- * podano" nie mogą znaczyć tego samego — inaczej każde naciśnięcie przycisku
- * zerowałoby wszystko, czego Operator nie wpisał.
+ * Granice i krok pola liczbowego postaci dokumentu; wartość początkowa nieobecna
+ * zostawia pole puste, co w rodzinie komend postaci znaczy brak zmiany cechy.
  */
-
-/** Granice i krok pola liczbowego. */
 export interface GranicePola {
   dolna?: number;
   gorna?: number;
@@ -27,7 +13,7 @@ export interface GranicePola {
   wartosc?: number;
 }
 
-/** Pole liczbowe wraz z etykietą i zdaniem wyjaśniającym. */
+/** Pole liczbowe formularza postaci wraz z etykietą, granicami wartości, krokiem i zdaniem wyjaśniającym pod polem. */
 export function poleLiczbowe(
   opis: { etykieta: string; opis?: string; podpowiedz?: string },
   granice: GranicePola = {},
@@ -66,11 +52,8 @@ function licznik(): number {
 }
 
 /**
- * Liczba z pola albo `undefined`, gdy pole jest puste.
- *
- * `undefined` jedzie do rdzenia jako brak pola, czyli „tej cechy nie zmieniam".
- * Wartość nieliczbowa daje to samo — przeglądarka nie wpuści jej do pola typu
- * liczbowego, a gdyby wpuściła, cisza jest bezpieczniejsza niż `NaN` w żądaniu.
+ * Liczba z pola albo `undefined`, gdy pole jest puste albo jego treść nie jest
+ * liczbą; wartość nieokreślona jedzie do rdzenia jako brak zmiany tej cechy.
  */
 export function liczbaPola(kontrolka: HTMLInputElement): number | undefined {
   const surowa = kontrolka.value.trim();
@@ -79,33 +62,26 @@ export function liczbaPola(kontrolka: HTMLInputElement): number | undefined {
   return Number.isFinite(wartosc) ? wartosc : undefined;
 }
 
-/** Napis z pola albo `undefined`, gdy pole jest puste. */
+/** Napis z pola tekstowego albo obszaru wielowierszowego formularza postaci; `undefined`, gdy pole jest puste. */
 export function tekstPola(kontrolka: HTMLInputElement | HTMLTextAreaElement): string | undefined {
   const surowy = kontrolka.value;
   return surowy === '' ? undefined : surowy;
 }
 
 /**
- * Wartość listy wyboru albo `undefined` dla pozycji „bez zmiany".
- *
- * Pozycja o wartości pustej stoi w każdej liście tego odcinka jako pierwsza i
- * znaczy dosłownie „nie ruszaj tej cechy". Bez niej lista wyboru zawsze coś
- * narzucałaby, bo `select` nie ma stanu „nic nie wybrano".
+ * Wartość listy wyboru postaci albo `undefined` dla pozycji oznaczającej brak
+ * zmiany cechy; pozycja o wartości pustej stoi w każdej liście jako pierwsza.
  */
 export function wyborPola(kontrolka: HTMLSelectElement): string | undefined {
   return kontrolka.value === '' ? undefined : kontrolka.value;
 }
 
-/** Pozycja „bez zmiany" — pierwsza w każdej liście nastaw postaci. */
+/** Pozycja „bez zmiany" — pierwsza pozycja w każdej liście wyboru nastaw postaci tego edytowanego dokumentu. */
 export const BEZ_ZMIANY = { wartosc: '', etykieta: '— bez zmiany —' };
 
 /**
- * Zdanie o bilansie czynności — co zmienione, co pominięte i przez co.
- *
- * Bilans jest sedno uczciwości tego odcinka: zamiana w całym dokumencie, która
- * trafiła w blokadę, wykonuje się POZA blokadą i musi powiedzieć, którą.
- * Przemilczenie pominięcia jest tu zakazane, a `applied: 0` bez słowa byłoby
- * najgorszą możliwą odpowiedzią — Operator myślałby, że czynność się wykonała.
+ * Zdanie o bilansie czynności masowej: liczba miejsc zmienionych, pominiętych,
+ * odłożonych i spiętych, wraz z wykazem powodów każdego pominięcia z osobna.
  */
 export function opiszBilans(bilans: StudioActionBalance): string {
   const czesci: string[] = [`miejsc zmienionych ${bilans.applied}`];
@@ -122,7 +98,7 @@ export function opiszBilans(bilans: StudioActionBalance): string {
   return `${czesci.join(', ')}.${nota}${wykaz}`;
 }
 
-/** Jedno pominięcie nazwane wraz z blokadą, która je wywołała. */
+/** Jedno pominięcie czynności masowej nazwane wraz z zakresem znaków dokumentu i blokadą, która je wywołała. */
 function opiszPominiecie(pozycja: StudioSkippedItem): string {
   const zakres =
     pozycja.rangeStart === undefined || pozycja.rangeEnd === undefined

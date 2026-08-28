@@ -1,19 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PAS OKIEN POMOCNICZYCH (Developer, Diagnostics)
-   ----------------------------------------------------------------------------
-   Plik nie zna ani jednej barwy i ani jednego rozmiaru pisma: wszystko pochodzi
-   z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
-
-   Rodzina `dnp-` jest wspólna dwóm modułom. Ten sam pas stoi w Developerze
-   (przedrostek `mdev`) i w Diagnostics (`dg`), więc jego wygląd ma jedno
-   miejsce zamiast dwóch kopii do rozjechania się. Klasy modułowe zostają przy
-   stanach treści okna (`…-stany`, `…-stan`, `…-tresc`), bo tam pokrycie
-   w arkuszach obu modułów już jest.
-
-   Spis braków nie jest wygaszony. Pozycja, której jeszcze nie ma, ma być
-   czytelna, bo po niej poznaje się, czego platforma nie potrafi. Dlatego wiersz
-   braku nie dostaje ani `opacity`, ani przekreślenia.
-   ============================================================================ */
+/* Pas okien pomocniczych Developer i Diagnostics dzieli jedną rodzinę klas i żetony motywu; spis braków pozostaje w pełni czytelny, bez wygaszenia. */
 
 .dnp-pas {
   display: flex;

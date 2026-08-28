@@ -1,25 +1,6 @@
-// Odpowiedzialność pliku: postać dokumentu modułu Studio — drzewo postaci
-// (tabela `postac_dokumentu_studio`), arkusz stylów nazwanych
-// (`styl_nazwany_studio`) i sekcje o własnych nastawach
-// (`sekcja_dokumentu_studio`).
-//
-// Ten plik deklaruje kontrakt obszaru postaci — drzewa postaci, arkusza stylów,
-// sekcji oraz obiektów, aparatu i pól, które leżą w pliku sąsiednim
-// (`studio_postac_obiekty.go`). Jeden kontrakt w jednym miejscu, wzorem
-// `studio.go`.
-//
-// Interfejs `RepozytoriumPostaciStudia` wchodzi do `RepozytoriumStudia` przez
-// zagnieżdżenie — Studio ma jedno repozytorium, nie dwa, więc adapter modułu
-// dostaje postać tą samą zależnością, którą dostaje dokument.
-//
-// ── Dlaczego drzewo postaci idzie jednym zapisem, a style i sekcje nie ───────
-// Powód stoi w migracji 361 i nie powtarzam go tu w całości: po drzewie się nie
-// pyta, drzewo się czyta i zapisuje całe; po stylu i po sekcji się PYTA („ile
-// miejsc używa tego stylu", „która sekcja obejmuje ten znak"), więc mają wiersze.
-//
-// ── Przedrostek nazw pomocniczych ────────────────────────────────────────────
-// Wszystkie nazwy pomocnicze tego odcinka niosą przedrostek `postac` —
-// przestrzeń nazw pakietu `dane` jest dzielona z innymi wykonawcami.
+// Odpowiedzialność pliku: postać dokumentu modułu Studio — drzewo postaci,
+// arkusz stylów nazwanych i sekcje o własnych nastawach. Kontrakt obszaru
+// postaci; obiekty, aparat i pola deklaruje plik sąsiedni.
 package dane
 
 import (
@@ -29,12 +10,9 @@ import (
 	"fmt"
 )
 
-// PostacDokumentuStudia to wiersz tabeli `postac_dokumentu_studio`.
-//
-// `PostacJSON` niesie drzewo postaci w kształcie kontraktowego
-// `StudioDocumentForm` — bloki, fragmenty o jednolitej postaci znaku, tabele,
-// listy. Warstwa danych go NIE rozbiera: przekład na kontrakt należy do rdzenia,
-// a baza jest tu magazynem, nie rachunkiem.
+// PostacDokumentuStudia to wiersz tabeli `postac_dokumentu_studio`. `PostacJSON`
+// niesie drzewo postaci; warstwa danych go nie rozbiera — przekład na kontrakt
+// należy do rdzenia, a baza jest tu magazynem, nie rachunkiem.
 type PostacDokumentuStudia struct {
 	ID                int64
 	DokumentID        int64
@@ -62,7 +40,9 @@ type StylNazwanyStudia struct {
 	Zaktualizowano    string
 }
 
-// SekcjaDokumentuStudia to wiersz tabeli `sekcja_dokumentu_studio`.
+// SekcjaDokumentuStudia to wiersz tabeli `sekcja_dokumentu_studio`: fragment
+// dokumentu wyznaczony zakresem znaków, z własnymi nastawami strony,
+// nagłówkami, numeracją i znakiem wodnym.
 type SekcjaDokumentuStudia struct {
 	ID                int64
 	Kod               string
@@ -80,7 +60,9 @@ type SekcjaDokumentuStudia struct {
 	Zaktualizowano    string
 }
 
-// RepozytoriumPostaciStudia jest kontraktem obszaru postaci dokumentu.
+// RepozytoriumPostaciStudia jest kontraktem obszaru postaci dokumentu: obejmuje
+// drzewo postaci, arkusz stylów nazwanych i sekcje; obiekty, aparat i pola
+// deklaruje plik sąsiedni.
 type RepozytoriumPostaciStudia interface {
 	// --- drzewo postaci (ten plik) ---
 	ZapiszPostacDokumentu(ctx context.Context, postac PostacDokumentuStudia) (PostacDokumentuStudia, error)
@@ -112,15 +94,8 @@ type RepozytoriumPostaciStudia interface {
 	PolaDokumentu(ctx context.Context, dokumentID int64, rodzaj string) ([]PoleDokumentuStudia, error)
 	UsunPoleDokumentu(ctx context.Context, kod string) (bool, error)
 
-	// ── Czego w tym interfejsie NIE MA i dlaczego ────────────────────────────
-	// Blokady fragmentów, dziennik czynności, znakowanie, kopie zapasowe,
-	// nastawy pracy, zajęcia fragmentów i spięcia wykonawców stoją nad tymi
-	// samymi tabelami (migracje 363-370), ale ich metody napisał inny wykonawca
-	// w plikach `studio_kontrola_pracy.go` i `studio_znakowanie_wykonawcy.go`.
-	// Nie dopisuję ich tutaj i nie zakładam drugich: dwa zestawy metod nad jedną
-	// tabelą to dwie prawdy o tym samym wierszu. Kontrakt tamtego obszaru
-	// należy do tamtych plików — wymaga ogłoszenia interfejsem tak samo jak ten
-	// i jest to wypisane w sprawozdaniu jako rzecz do domknięcia.
+	// Czego tu nie ma: blokady, dziennik, znakowanie, kopie i nastawy pracy
+	// stoją w plikach sąsiednich.
 }
 
 const (
@@ -128,9 +103,7 @@ const (
 	                        wersja_postaci, utworzono, zaktualizowano`
 
 	// Zapis zakłada postać albo nadpisuje zastaną. Numer porządkowy postaci
-	// przy nadpisaniu ROŚNIE po stronie bazy, nie wywołującego: gdyby liczył go
-	// rdzeń, dwa zapisy z tym samym numerem byłyby możliwe i okno nie miałoby po
-	// czym poznać, że trzyma stan przestarzały.
+	// przy nadpisaniu rośnie po stronie bazy, nie wywołującego.
 	postacZapiszPostac = `INSERT INTO postac_dokumentu_studio
 	                      (dokument_id, postac_json, nastawy_strony_json)
 	                      VALUES (?, ?, ?)
@@ -238,10 +211,8 @@ func (r *repozytoriumStudia) ZapiszPostacDokumentu(ctx context.Context,
 }
 
 // PostacDokumentu zwraca postać dokumentu. Brak wiersza wraca jako
-// ErrBrakWiersza — dokument bez zapisanej postaci jest normalnym stanem
-// (dokumenty sprzed dobudowy postaci go mają), a rdzeń podstawia wtedy postać
-// domyślną. Zamiana braku na pustą postać tutaj odebrałaby rdzeniowi możliwość
-// odróżnienia „nie ma jeszcze” od „jest i jest puste”.
+// ErrBrakWiersza — dokument bez zapisanej postaci jest normalnym stanem,
+// a rdzeń podstawia wtedy postać domyślną.
 func (r *repozytoriumStudia) PostacDokumentu(ctx context.Context,
 	dokumentID int64) (PostacDokumentuStudia, error) {
 
@@ -260,7 +231,8 @@ func (r *repozytoriumStudia) PostacDokumentu(ctx context.Context,
 	return postac, nil
 }
 
-// ZapiszStylNazwany zakłada styl nazwany albo nadpisuje zastany.
+// ZapiszStylNazwany zakłada styl nazwany albo nadpisuje zastany; nazwa jest
+// tożsamością stylu w obrębie dokumentu.
 func (r *repozytoriumStudia) ZapiszStylNazwany(ctx context.Context,
 	styl StylNazwanyStudia) (StylNazwanyStudia, error) {
 
@@ -285,7 +257,8 @@ func (r *repozytoriumStudia) ZapiszStylNazwany(ctx context.Context,
 	return r.StylNazwany(ctx, styl.DokumentID, styl.Nazwa)
 }
 
-// StylNazwany zwraca styl o wskazanej nazwie.
+// StylNazwany zwraca styl o wskazanej nazwie w obrębie dokumentu; brak wiersza
+// wraca jako ErrBrakWiersza.
 func (r *repozytoriumStudia) StylNazwany(ctx context.Context, dokumentID int64,
 	nazwa string) (StylNazwanyStudia, error) {
 
@@ -303,7 +276,8 @@ func (r *repozytoriumStudia) StylNazwany(ctx context.Context, dokumentID int64,
 	return styl, nil
 }
 
-// StyleNazwane zwraca arkusz stylów dokumentu; puste `rodzaj` znaczy wszystkie.
+// StyleNazwane zwraca arkusz stylów dokumentu w kolejności rodzaju i nazwy;
+// puste `rodzaj` znaczy wszystkie.
 func (r *repozytoriumStudia) StyleNazwane(ctx context.Context, dokumentID int64,
 	rodzaj string) ([]StylNazwanyStudia, error) {
 
@@ -314,12 +288,9 @@ func (r *repozytoriumStudia) StyleNazwane(ctx context.Context, dokumentID int64,
 	return r.postacWykazStylow(ctx, zapytanie, argumenty)
 }
 
-// StyleDziedziczace zwraca style, które dziedziczą po wskazanym stylu.
-//
-// Służy jednej rzeczy, po której poznaje się styl nazwany: zmiana stylu
-// nadrzędnego ma przestawić WSZYSTKIE miejsca, które go używają — także te,
-// które używają go pośrednio, przez styl potomny. Bez tego zapytania rdzeń
-// musiałby czytać cały arkusz i składać drzewo dziedziczenia przy każdej zmianie.
+// StyleDziedziczace zwraca style, które dziedziczą po wskazanym stylu, także
+// pośrednio przez styl potomny — bez tego rdzeń musiałby składać drzewo
+// dziedziczenia przy każdej zmianie.
 func (r *repozytoriumStudia) StyleDziedziczace(ctx context.Context, dokumentID int64,
 	nazwaNadrzednego string) ([]StylNazwanyStudia, error) {
 
@@ -347,7 +318,8 @@ func (r *repozytoriumStudia) UsunStylNazwany(ctx context.Context, dokumentID int
 	return usuniete > 0, nil
 }
 
-// ZapiszSekcje zakłada sekcję albo nadpisuje zastaną.
+// ZapiszSekcje zakłada sekcję dokumentu albo nadpisuje zastaną, rozpoznaną po
+// identyfikatorze zewnętrznym.
 func (r *repozytoriumStudia) ZapiszSekcje(ctx context.Context,
 	sekcja SekcjaDokumentuStudia) (SekcjaDokumentuStudia, error) {
 
@@ -371,7 +343,8 @@ func (r *repozytoriumStudia) ZapiszSekcje(ctx context.Context,
 	return r.Sekcja(ctx, sekcja.Kod)
 }
 
-// Sekcja zwraca sekcję o wskazanym kodzie.
+// Sekcja zwraca sekcję dokumentu o wskazanym kodzie zewnętrznym; brak wiersza
+// wraca jako ErrBrakWiersza.
 func (r *repozytoriumStudia) Sekcja(ctx context.Context, kod string) (SekcjaDokumentuStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, postacPobierzSekcje)
 	if err != nil {
@@ -387,7 +360,8 @@ func (r *repozytoriumStudia) Sekcja(ctx context.Context, kod string) (SekcjaDoku
 	return sekcja, nil
 }
 
-// Sekcje zwraca sekcje dokumentu w kolejności czytania.
+// Sekcje zwraca sekcje dokumentu w kolejności czytania, uporządkowane według
+// kolejności i identyfikatora.
 func (r *repozytoriumStudia) Sekcje(ctx context.Context, dokumentID int64) ([]SekcjaDokumentuStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, postacListaSekcji)
 	if err != nil {
@@ -419,7 +393,8 @@ func (r *repozytoriumStudia) UsunSekcje(ctx context.Context, kod string) (bool, 
 	return r.postacUsunWiersz(ctx, postacUsunSekcje, kod, "sekcji")
 }
 
-// postacWykazStylow wykonuje zapytanie wykazu stylów i składa wynik.
+// postacWykazStylow wykonuje zapytanie wykazu stylów i składa wynik w listę
+// stylów nazwanych dokumentu.
 func (r *repozytoriumStudia) postacWykazStylow(ctx context.Context, zapytanie string,
 	argumenty []any) ([]StylNazwanyStudia, error) {
 
@@ -468,7 +443,8 @@ func (r *repozytoriumStudia) postacUsunWiersz(ctx context.Context, zapytanie, ko
 	return usuniete > 0, nil
 }
 
-// postacOdczytajPostac składa postać dokumentu z jednego wiersza wyniku.
+// postacOdczytajPostac składa postać dokumentu z jednego wiersza wyniku
+// zapytania o tabelę `postac_dokumentu_studio`.
 func postacOdczytajPostac(wiersz skaner) (PostacDokumentuStudia, error) {
 	var postac PostacDokumentuStudia
 	var nastawy sql.NullString
@@ -481,7 +457,8 @@ func postacOdczytajPostac(wiersz skaner) (PostacDokumentuStudia, error) {
 	return postac, nil
 }
 
-// postacOdczytajStyl składa styl nazwany z jednego wiersza wyniku.
+// postacOdczytajStyl składa styl nazwany z jednego wiersza wyniku zapytania
+// o tabelę `styl_nazwany_studio`.
 func postacOdczytajStyl(wiersz skaner) (StylNazwanyStudia, error) {
 	var styl StylNazwanyStudia
 	var widoczna, nadrzedny, nastepny, znak, akapit sql.NullString
@@ -501,7 +478,8 @@ func postacOdczytajStyl(wiersz skaner) (StylNazwanyStudia, error) {
 	return styl, nil
 }
 
-// postacOdczytajSekcje składa sekcję z jednego wiersza wyniku.
+// postacOdczytajSekcje składa sekcję dokumentu z jednego wiersza wyniku
+// zapytania o tabelę `sekcja_dokumentu_studio`.
 func postacOdczytajSekcje(wiersz skaner) (SekcjaDokumentuStudia, error) {
 	var sekcja SekcjaDokumentuStudia
 	var tytul, nastawy, naglowki, numeracja, znakWodny sql.NullString

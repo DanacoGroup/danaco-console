@@ -1,25 +1,6 @@
-// Dwie czynności stojące na sieciach neuronowych — `image.upscale`
-// (Real-ESRGAN) i `image.background.remove` (rembg / U²-Net) — wraz z opisem
-// obu silników i składaniem ich wiersza poleceń. Wspólne zaplecze (źródło,
-// pracownia, wołanie binarium, odmowy) stoi
-// w `adapter_narzedzia_obraz_model.go`; metody stoją na tym samym adapterze.
-//
-// Oba silniki liczą na procesorze. Real-ESRGAN w wydaniu `ncnn-vulkan` jest
-// jednym plikiem wykonywalnym bez Pythona i bez Torcha, a Vulkana dostaje od
-// sterownika programowego (lavapipe z Mesy); wydanie pythonowe (`basicsr` +
-// Torch) dałoby ten sam wynik za cenę kilku gigabajtów zależności. `rembg`
-// jest Pythonem, ale jego runtime (ONNX Runtime) ma tryb procesorowy jako
-// podstawowy, nie awaryjny.
-//
-// Czego tu celowo nie ma:
-//  1. Gałęzi „gdy silnika nie ma, przeskaluj ImageMagickiem" — rozciągnięcie
-//     oddane jako powiększenie jest atrapą, której nie widać do przybliżenia.
-//  2. Poprawiania twarzy w tym samym przebiegu. Pole `faces` niesie kontrakt,
-//     ale przebieg twarzowy robi osobna sieć (GFPGAN), której wydanie `ncnn`
-//     tego silnika nie zawiera. Idzie ona drugim przebiegiem nad wynikiem
-//     powiększenia — patrz `adapter_narzedzia_obraz_model_twarze.go`. Bez niej
-//     żądanie z `faces: true` kończy się odmową nazywającą brak, zamiast oddać
-//     obraz bez poprawki twarzy jako poprawiony.
+// Plik obsługuje dwie czynności na sieciach neuronowych: `image.upscale`
+// (Real-ESRGAN) i `image.background.remove` (rembg), wraz z opisem obu
+// silników i składaniem ich wiersza poleceń, licząc wyłącznie na procesorze.
 package core
 
 import (
@@ -32,10 +13,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// narzedziePowiekszenia opisuje binarium superrozdzielczości. Nazwa czytelna
-// i pakiet wchodzą do treści odmowy — Operator ma przeczytać, czego brakuje
-// i skąd to wziąć, a ten silnik nie stoi w repozytorium dystrybucji, więc
-// „pakietem" jest tu wydanie z sieci.
+// narzedziePowiekszenia opisuje binarium superrozdzielczości: nazwa czytelna
+// i pakiet wchodzą do treści odmowy, żeby Operator wiedział, czego brakuje
+// i skąd to wziąć.
 func narzedziePowiekszenia() zewnetrzne.Narzedzie {
 	return zewnetrzne.Narzedzie{
 		Nazwa:   "Real-ESRGAN (ncnn)",
@@ -46,10 +26,8 @@ func narzedziePowiekszenia() zewnetrzne.Narzedzie {
 	}
 }
 
-// narzedzieWycinaniaTla opisuje binarium wycinania tła. Wołamy opakowanie
-// `/usr/local/bin/rembg`, a nie plik z wnętrza środowiska pythonowego, bo
-// `zewnetrzne.Wolaj` nie dziedziczy środowiska rdzenia, a `rembg` potrzebuje
-// wskazania katalogu wag (`U2NET_HOME`). Opakowanie ustawia je samo, więc
+// narzedzieWycinaniaTla opisuje binarium wycinania tła: wołane jest
+// opakowanie `/usr/local/bin/rembg`, które samo ustawia katalog wag, więc
 // silnik jest samowystarczalny niezależnie od tego, kto go woła.
 func narzedzieWycinaniaTla() zewnetrzne.Narzedzie {
 	return zewnetrzne.Narzedzie{
@@ -61,28 +39,22 @@ func narzedzieWycinaniaTla() zewnetrzne.Narzedzie {
 }
 
 // modelPowiekszeniaZdjec to jedyna sieć powiększająca, którą ta komenda woła.
-//
-// Nazwa modelu wchodzi w argument programu i dlatego jest stałą — ta sama
-// reguła, co przy formatach `image.convert`. Sieć dobiera rdzeń, nie model
-// językowy: kontrakt `image.upscale` nie ma pola na jej nazwę.
-//
-// `realesrgan-x4plus` jest wyborem dla zdjęć. Sieci `-anime` i `animevideov3`
-// są uczone na rysunku i na fotografii zostawiają płaskie, plakatowe
-// płaszczyzny.
+// Nazwa modelu wchodzi w argument programu i dlatego jest stałą:
+// `realesrgan-x4plus` jest wyborem dla zdjęć, bo sieci uczone na rysunku
+// zostawiają płaskie płaszczyzny.
 const modelPowiekszeniaZdjec = "realesrgan-x4plus"
 
-// dopuszczalneKrotnosci to krotności, które silnik ncnn przyjmuje: `-s 2|3|4`
-// i nic więcej. Krotność spoza tego zbioru kończy się odmową wymieniającą
-// dopuszczalne, a nie cichym zaokrągleniem do najbliższej — model, który prosił
-// o ośmiokrotne, ma wiedzieć, że dostałby czterokrotne, zanim zobaczy wynik.
+// dopuszczalneKrotnosci to krotności, które silnik ncnn przyjmuje. Krotność
+// spoza tego zbioru kończy się odmową wymieniającą dopuszczalne, a nie cichym
+// zaokrągleniem do najbliższej.
 var dopuszczalneKrotnosci = map[int]struct{}{2: {}, 3: {}, 4: {}}
 
-// wagiModelu opisuje jeden plik wag: gdzie leży, ile waży i skąd się go bierze.
+// wagiModelu opisuje jeden plik wag: gdzie leży w katalogu wag wycinania,
+// ile waży i skąd się go pobiera, do treści odmowy.
 type wagiModelu struct {
-	// plik jest nazwą pliku wag w katalogu `katalogWagWycinania`.
+	// plik jest nazwą pliku wag w katalogu wag wycinania.
 	plik string
-	// waga wchodzi do treści odmowy, żeby czytelnik wiedział, na co się pisze,
-	// zanim ruszy pobieranie.
+	// waga wchodzi do treści odmowy, żeby czytelnik wiedział, na co się pisze.
 	waga string
 	// skad wskazuje źródło wag — odmowa ma mówić, gdzie ich szukać.
 	skad string
@@ -90,14 +62,7 @@ type wagiModelu struct {
 
 // modeleWycinaniaTla to zamknięty zbiór sieci wycinających tło wraz z wagą
 // pliku i miejscem, z którego się go bierze; wszystko troje wchodzi do treści
-// odmowy przy braku pliku.
-//
-// Kontrakt ma pole `model`, więc wybór należy do modelu językowego, ale jest to
-// wybór ze zbioru, a nie dowolny tekst wpisany w argument programu. Każda
-// pozycja ma powód: `u2net` jest domyślną siecią ogólną, `isnet-general-use`
-// bywa dokładniejsza na cienkim szczególe (włosy, gałęzie), `u2net_human_seg`
-// jest uczona na ludziach i na portrecie bije obie, `u2netp` jest wersją lekką
-// dla maszyn bez zapasu pamięci.
+// odmowy przy braku pliku, a wybór modelu jest zbiorem, nie dowolnym tekstem.
 var modeleWycinaniaTla = map[string]wagiModelu{
 	"u2net":             {plik: "u2net.onnx", waga: "176 MB", skad: "github.com/danielgatis/rembg/releases (u2net.onnx)"},
 	"u2netp":            {plik: "u2netp.onnx", waga: "4,7 MB", skad: "github.com/danielgatis/rembg/releases (u2netp.onnx)"},
@@ -106,17 +71,14 @@ var modeleWycinaniaTla = map[string]wagiModelu{
 	"silueta":           {plik: "silueta.onnx", waga: "44 MB", skad: "github.com/danielgatis/rembg/releases (silueta.onnx)"},
 }
 
-// domyslnyModelWycinania jest brany, gdy żądanie nie wskazuje modelu —
-// kontrakt obiecuje „brak bierze domyslny silnika", a domyślnym silnika
-// `rembg` jest właśnie `u2net`.
+// domyslnyModelWycinania jest brany, gdy żądanie nie wskazuje modelu,
+// kontrakt obiecuje brak bierze domyślny silnika, a domyślnym silnika rembg
+// jest właśnie u2net.
 const domyslnyModelWycinania = "u2net"
 
-// Powieksz obsługuje `image.upscale` — powiększenie z odtworzeniem szczegółu.
-//
-// Kolejność kroków jest zamierzona: najpierw rozstrzygamy żądanie (krotność,
-// twarze), potem źródło, potem obecność wag, a dopiero na końcu ruszamy silnik.
-// Każde z trzech pierwszych sprawdzeń kosztuje mikrosekundy, a przebieg silnika
-// kosztuje minuty; odmowa dopiero po nim byłaby czasem straconym.
+// Powieksz obsługuje `image.upscale`, powiększenie z odtworzeniem szczegółu.
+// Kolejność kroków jest zamierzona: najpierw żądanie, potem źródło, potem
+// wagi, a dopiero na końcu rusza silnik, bo przebieg silnika kosztuje minuty.
 func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 	z shared.ImageUpscaleRequest) (shared.ImageUpscaleResponse, error) {
 
@@ -139,9 +101,7 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 		"wydania realesrgan-ncnn-vulkan (katalog models)"); err != nil {
 		return shared.ImageUpscaleResponse{}, err
 	}
-	// Wagi przebiegu twarzowego sprawdzamy TERAZ, a nie po powiększeniu: sieć
-	// powiększająca liczy się minutami, a odmowa „nie ma wag GFPGAN" wydana po
-	// nich byłaby tą samą odmową za cenę całego przebiegu.
+	// Wagi przebiegu twarzowego są sprawdzane teraz, nie po powiększeniu liczonym minutami.
 	if twarze {
 		if err := sprawdzWagiTwarzy(katalogWagTwarzy()); err != nil {
 			return shared.ImageUpscaleResponse{}, err
@@ -154,9 +114,7 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 	}
 	defer pracownia.sprzatnij()
 
-	// `-f png` wymuszamy jawnie, bo format wyniku ma być bezstratny: sieć
-	// właśnie odtworzyła szczegół, a zapis stratny odjąłby część tego, za co
-	// zapłacono minutami liczenia.
+	// Format wyniku png jest wymuszany jawnie, bo zapis stratny odjąłby odtworzony szczegół.
 	argumenty := []string{
 		"-i", pracownia.wejscie,
 		"-o", pracownia.wyjscie,
@@ -174,10 +132,7 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 		return shared.ImageUpscaleResponse{}, err
 	}
 	opis := "upscale x" + strconv.Itoa(krotnosc)
-	// Odczyt wyżej idzie także wtedy, gdy zaraz nastąpi przebieg twarzowy,
-	// i nie jest pracą zbędną: rozstrzyga, czy powiększenie w ogóle zostawiło
-	// obraz. Pomocnik puszczony na plik pusty odmówiłby po starcie interpretera
-	// i wczytaniu wag, czyli o minutę później i mniej zrozumiale.
+	// Odczyt wyżej rozstrzyga, czy powiększenie zostawiło obraz, zanim ruszy kosztowny przebieg twarzowy.
 	if twarze {
 		poprawione, ile, err := a.poprawTwarze(ctx, pracownia)
 		if err != nil {
@@ -198,9 +153,7 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 }
 
 // rozstrzygnijKrotnosc przekłada nieobowiązkowe `scale` na krotność silnika.
-// Brak wskazania bierze krotność dwukrotną, tak jak obiecuje kontrakt. Wartość
-// spoza zbioru silnika kończy się odmową wymieniającą dopuszczalne — patrz
-// `dopuszczalneKrotnosci`.
+// Brak wskazania bierze krotność dwukrotną, tak jak obiecuje kontrakt.
 func rozstrzygnijKrotnosc(zadana *int) (int, error) {
 	if zadana == nil {
 		return 2, nil
@@ -212,11 +165,9 @@ func rozstrzygnijKrotnosc(zadana *int) (int, error) {
 	return *zadana, nil
 }
 
-// UsunTlo obsługuje `image.background.remove` — wycięcie obiektu z tła.
-//
-// Wynik jest zawsze w PNG, bo przezroczystość ma gdzie się zapisać wyłącznie
-// w formacie z kanałem alfa. Ten sam wynik w JPEG-u dałby biały prostokąt
-// w miejscu przezroczystości.
+// UsunTlo obsługuje `image.background.remove`, wycięcie obiektu z tła. Wynik
+// jest zawsze w PNG, bo przezroczystość ma gdzie się zapisać wyłącznie
+// w formacie z kanałem alfa.
 func (a *adapterNarzedziObrazuModelu) UsunTlo(ctx context.Context,
 	z shared.ImageBackgroundRemoveRequest) (shared.ImageBackgroundRemoveResponse, error) {
 
@@ -244,9 +195,7 @@ func (a *adapterNarzedziObrazuModelu) UsunTlo(ctx context.Context,
 	}
 	defer pracownia.sprzatnij()
 
-	// Podpolecenie `i` jest trybem „jeden plik na jeden plik". Tryby `p`
-	// (katalog) i `s` (serwer HTTP) są tu niepotrzebne i szersze, niż trzeba:
-	// drugi otwierałby gniazdo, o które nikt nie prosił.
+	// Podpolecenie i jest trybem jeden plik na jeden plik; tryby p i s są tu niepotrzebne.
 	argumenty := []string{"i", "-m", nazwaModelu, pracownia.wejscie, pracownia.wyjscie}
 	if err := a.wolajSilnik(ctx, narzedzieWycinaniaTla(), argumenty, granicaWycinaniaTla); err != nil {
 		return shared.ImageBackgroundRemoveResponse{}, err
@@ -265,8 +214,7 @@ func (a *adapterNarzedziObrazuModelu) UsunTlo(ctx context.Context,
 
 // rozstrzygnijModelWycinania przekłada nieobowiązkowe `model` na pozycję
 // zamkniętego zbioru sieci. Nazwa spoza zbioru kończy się odmową wymieniającą
-// znane — model językowy, który zgadł nazwę z pamięci, ma przeczytać listę,
-// a nie milczący błąd silnika o nieznanej sesji ONNX.
+// znane.
 func rozstrzygnijModelWycinania(zadany *string) (string, wagiModelu, error) {
 	nazwa := domyslnyModelWycinania
 	if !bezWartosci(zadany) {
@@ -281,8 +229,7 @@ func rozstrzygnijModelWycinania(zadany *string) (string, wagiModelu, error) {
 }
 
 // znaneModeleWycinania wypisuje zbiór modeli w kolejności stałej, żeby treść
-// odmowy nie zmieniała się między wywołaniami — mapa w Go chodzi losowo,
-// a odmowa czytana dwa razy ma brzmieć tak samo.
+// odmowy nie zmieniała się między wywołaniami.
 func znaneModeleWycinania() []string {
 	return []string{"u2net", "u2netp", "u2net_human_seg", "isnet-general-use", "silueta"}
 }

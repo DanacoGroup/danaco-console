@@ -1,16 +1,28 @@
 import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 
-/** Waga komunikatu — rozstrzyga o kresce i ikonie dymka. */
+/**
+ * Waga komunikatu rozstrzyga o barwie kreski, o ikonie dymka oraz o roli
+ * dostępnościowej elementu, dlatego jest jedynym pokrętłem odróżniającym
+ * powiadomienia od siebie.
+ */
 export type WagaKomunikatu = 'info' | 'sukces' | 'ostrz' | 'blad';
 
-/** Treść komunikatu pokazywanego Operatorowi. */
+/**
+ * Treść komunikatu pokazywanego Operatorowi: tytuł oraz zdanie objaśniające,
+ * przy czym waga pozostaje polem nieobowiązkowym, ponieważ jej brak znaczy
+ * komunikat informacyjny.
+ */
 export interface Komunikat {
   tytul: string;
   tresc: string;
   waga?: WagaKomunikatu;
 }
 
-/** Ikona wagi; stan nigdy nie opiera się na samej barwie. */
+/**
+ * Ikona przypisana wadze komunikatu; stan nigdy nie opiera się na samej barwie,
+ * więc dymek niesie obok kreski znak graficzny czytelny także wtedy, gdy różnicy
+ * barw czytający nie rozpoznaje.
+ */
 const ZNAKI: Readonly<Record<WagaKomunikatu, NazwaIkony>> = {
   info: 'info',
   sukces: 'ptaszek-kolo',
@@ -30,22 +42,24 @@ const WARIANTY: Readonly<Record<WagaKomunikatu, string>> = {
   blad: 'blad',
 };
 
-/** Ile czasu dymek zostaje na ekranie, w milisekundach. */
+/**
+ * Czas pozostawania dymka na ekranie, podany w milisekundach; po jego upływie
+ * dymek znika samoczynnie, ponieważ komunikat jest doniesieniem o zdarzeniu,
+ * a nie stanem wymagającym zamknięcia ręką.
+ */
 const CZAS_ZYCIA = 6000;
 
-/** Stos dymków; powstaje przy pierwszym komunikacie, nie przy uruchomieniu. */
+/**
+ * Stos dymków powstaje przy pierwszym komunikacie, nie przy uruchomieniu
+ * aplikacji, więc dokument bez komunikatu nie niesie pustego pojemnika
+ * ogłaszanego technologiom wspomagającym.
+ */
 let stos: HTMLElement | null = null;
 
 /**
- * Komunikaty aplikacji — jedno miejsce, w którym mówi się Operatorowi,
- * co się właśnie stało.
- *
- * Jedna odpowiedzialność: pokazanie dymka z biblioteki `komponenty/`.
- * Plik nie zna ani kontraktu, ani żadnego widoku.
- *
- * Żaden przycisk w aplikacji nie jest wyszarzany, więc każde naciśnięcie musi
- * dać odpowiedź. Gdy zamiar nie ma odpowiednika w komendzie kontraktu albo
- * rdzeń odmawia, dymek mówi to wprost — nie udaje wykonanej czynności.
+ * Komunikaty aplikacji są jedynym miejscem, w którym aplikacja mówi Operatorowi,
+ * co się właśnie stało; plik pokazuje dymek z biblioteki komponentów i nie zna
+ * ani kontraktu, ani żadnego widoku.
  */
 export function pokazKomunikat(komunikat: Komunikat): void {
   const waga = komunikat.waga ?? 'info';
@@ -72,7 +86,11 @@ export function pokazKomunikat(komunikat: Komunikat): void {
   window.setTimeout(() => element.remove(), CZAS_ZYCIA);
 }
 
-/** Stos dymków przypięty do ciała dokumentu; powstaje raz. */
+/**
+ * Stos dymków przypięty do ciała dokumentu powstaje raz i zostaje na resztę
+ * pracy aplikacji; kolejne komunikaty dokładają się do niego, zamiast tworzyć
+ * własne pojemniki.
+ */
 function gospodarzKomunikatow(): HTMLElement {
   if (stos !== null) return stos;
 

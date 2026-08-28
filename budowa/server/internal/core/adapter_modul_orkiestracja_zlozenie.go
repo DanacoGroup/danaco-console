@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: złożenie portu podagentów — zbudowanie adaptera
-// z kompletu wiązań i dołożenie każdej zależności osobno.
-//
-// Podział wobec `adapter_modul_orkiestracja.go` idzie wzdłuż odpowiedzialności:
-// tam mieszka powołanie podagentów (`subagent.spawn`) wraz z pracą w tle,
-// tutaj wyłącznie budowanie portu i jego wiązania.
-//
-// Wszystkie dokładki znoszą się same przy pustej zależności.
+// Odpowiedzialność pliku: złożenie portu podagentów — zbudowanie adaptera z kompletu wiązań, każdej zależności dołożonej osobno i znoszącej się przy pustej wartości.
 package core
 
 import (
@@ -17,45 +10,27 @@ import (
 	"danacoconsole/server/internal/podagenci"
 )
 
-// adapterPodagentow wypełnia port Podagenci.
-//
-// Zależności są cztery i każda ma powód: repozytorium podagentów (trwałość),
-// repozytorium okien (kontrakt niesie identyfikator zewnętrzny okna, schemat
-// klucz wiersza), repozytorium biegów (podagent powołany w biegu ma do niego
-// należeć) i adapter kolejek (jedyny wykonawca pracy).
+// adapterPodagentow wypełnia port Podagenci na czterech zależnościach: repozytorium podagentów, repozytorium okien, repozytorium biegów oraz adapter kolejek jako jedyny wykonawca pracy.
 type adapterPodagentow struct {
 	repozytorium dane.RepozytoriumPodagentow
 	okna         dane.RepozytoriumOkien
 	biegi        dane.RepozytoriumBiegow
 	kolejki      *adapterKolejek
-	// zycie jest kontekstem rdzenia, nie kontekstem żądania. Praca podagenta
-	// przeżywa odpowiedź na `subagent.spawn`, więc kontekst żądania zamknąłby ją
-	// natychmiast po odesłaniu wyniku.
+	// zycie jest kontekstem rdzenia: praca podagenta przeżywa odpowiedź na subagent.spawn.
 	zycie    context.Context
 	dziennik *log.Logger
-	// nadzor ocenia żywotność procesu okna z rejestru procesów sesji. Pusty znosi
-	// się sam: powołanie idzie wtedy bez zdania o procesie orkiestratora, a nie
-	// z żywotnością zgadywaną.
+	// nadzor ocenia żywotność procesu okna; pusty znosi się sam, bez zdania o procesie orkiestratora.
 	nadzor podagenci.OcenaProcesu
-	// uruchomienie to znacznik tego uruchomienia rdzenia. Puste znosi się samo:
-	// powołanie idzie bez oznaczenia prowadzenia, a sprzątanie po restarcie nie
-	// rusza niczego.
+	// uruchomienie znaczy to uruchomienie rdzenia; puste znosi się samo, bez oznaczenia prowadzenia.
 	uruchomienie string
-	// drogaNarzedzia pilnuje, żeby meldunek o drodze narzędzia modelu padł raz
-	// na proces, nie raz na powołanie — powołań bywa kilkanaście na turę.
+	// drogaNarzedzia pilnuje, żeby meldunek o narzędziu padł raz na proces, nie raz na powołanie.
 	drogaNarzedzia sync.Once
-	// prace trzyma odwołania pracy podagentów trwających, kluczowane kodem
-	// podagenta, nie oknem. Bez tego wykazu `subagent.stop` nie miałby czego
-	// zatrzymać i przepisywałby wyłącznie wiersz
-	// (adapter_modul_orkiestracja_zatrzymanie.go).
+	// prace trzyma odwołania pracy podagentów trwających, kluczowane kodem podagenta, nie oknem.
 	muPrace sync.Mutex
 	prace   map[string]context.CancelFunc
-	// rozgloszenie niesie `subagent.changed` do paneli. Puste znosi się samo:
-	// podagenci powstają i pracują tak samo, gdy nikt zdarzeń nie słucha.
-	// Treść rozgłoszeń — `adapter_modul_orkiestracja_rozgloszenie.go`.
+	// rozgloszenie niesie subagent.changed do paneli; puste znosi się samo, bez zdarzeń.
 	rozgloszenie *emiter
-	// straz czyta zakres eksperta okna wykonawcy przed powołaniem podagentów.
-	// Pusta znaczy „nie wpięto" — obowiązuje wtedy sama granica platformy.
+	// straz czyta zakres eksperta okna wykonawcy; pusta znaczy nie wpięto, obowiązuje granica.
 	straz StrazEksperta
 }
 
@@ -72,16 +47,7 @@ func nowyAdapterPodagentow(repozytorium dane.RepozytoriumPodagentow,
 	return &adapterPodagentow{repozytorium: repozytorium, okna: okna}
 }
 
-// zlozPodagentow wypełnia port Podagenci gotowymi bytami składu portów.
-//
-// Stoi tu, a nie w montaz_porty.go, z dwóch powodów: montaż przekłada byty na
-// porty jednym wierszem na port, a wiązań podagentów jest pięć; dzięki temu
-// montaż nie musi też znać pakietu `podagenci` — wiedzę o ocenie żywotności
-// trzyma adapter, który jako jedyny jej używa.
-//
-// Wszystkie dokładki znoszą się same przy pustej zależności:
-// bez silnika kolejek podagent zostaje `pending`, bez biegów powstaje poza
-// biegiem, bez nadzoru idzie bez zdania o procesie orkiestratora.
+// zlozPodagentow wypełnia port Podagenci gotowymi bytami składu portów, dokładając pięć wiązań osobno, każde znoszące się przy pustej zależności.
 func zlozPodagentow(s skladPortow) Podagenci {
 	return nowyAdapterPodagentow(s.repozytoria.Podagenci(), s.repozytoria.Okna).
 		zBiegami(s.repozytoria.BiegiOrkiestracji()).
@@ -93,13 +59,7 @@ func zlozPodagentow(s skladPortow) Podagenci {
 		zZywotnoscia(s.zycie)
 }
 
-// ZRozgloszeniem dokłada nadajnik zdarzeń `subagent.changed`.
-//
-// Nadajnik stoi przy adapterze, a nie przy uchwycie komendy, bo podagent
-// zmienia stan głównie poza żądaniem: powołanie oddaje go jako `pending`,
-// a wejście w `running`, zakończenie i niepowodzenie dzieją się w pracy
-// puszczonej w tle (`adapter_modul_orkiestracja.go`, `puscWTle`). Uchwyt
-// komendy widziałby wyłącznie pierwszy z tych czterech momentów.
+// ZRozgloszeniem dokłada nadajnik zdarzeń subagent.changed. Nadajnik stoi przy adapterze, bo podagent zmienia stan głównie poza żądaniem, w pracy puszczonej w tle.
 func (a *adapterPodagentow) ZRozgloszeniem(nadajnik Nadajnik) *adapterPodagentow {
 	a.rozgloszenie = nowyEmiter(nadajnik)
 	return a
@@ -113,15 +73,7 @@ func (a *adapterPodagentow) zBiegami(biegi dane.RepozytoriumBiegow) *adapterPoda
 	return a
 }
 
-// zWykonaniem wpina silnik kolejek i kontekst życia rdzenia — jedyną drogę,
-// którą praca podagenta naprawdę się wykonuje. Bez niego podagent zostaje
-// w stanie `pending` i to jest stan prawdziwy, nie udawane wykonanie.
-//
-// Tu domyka się powrót wyniku do rodzica: adapter wpina się jako ujście wyniku
-// silnika, więc zebrana treść tury pozycji trafia na wiersz podagenta wskazany
-// tą pozycją i `subagent.result.collect` oddaje treść, a nie puste pole.
-// Wpięcie idzie stąd, bo tylko ten adapter wie, że pozycja miewa podagenta —
-// silnik zna wyłącznie pozycje.
+// zWykonaniem wpina silnik kolejek i kontekst życia rdzenia, jedyną drogę wykonania podagenta, oraz ustawia adapter jako ujście wyniku silnika, przez które wraca treść tury.
 func (a *adapterPodagentow) zWykonaniem(kolejki *adapterKolejek, zycie context.Context) *adapterPodagentow {
 	a.kolejki, a.zycie = kolejki, zycie
 	if kolejki != nil {
@@ -139,12 +91,7 @@ func (a *adapterPodagentow) zNadzorem(nadzor podagenci.OcenaProcesu) *adapterPod
 	return a
 }
 
-// zZywotnoscia nadaje znacznik uruchomienia i zamyka podagentów porzuconych
-// przez rdzeń poprzedni. Woła się raz, przy montażu, zanim
-// ktokolwiek powoła podagenta: wywołanie późniejsze zamknęłoby pracę powołaną
-// przez ten sam rdzeń. Sierota to wiersz w stanie `pending`/`running` prowadzony
-// przez uruchomienie inne niż bieżące — jego proces zginął razem z rdzeniem,
-// więc stan `running` po restarcie kłamie.
+// zZywotnoscia nadaje znacznik uruchomienia i zamyka podagentów porzuconych przez rdzeń poprzedni; woła się raz, przy montażu, zanim ktokolwiek powoła podagenta.
 func (a *adapterPodagentow) zZywotnoscia(ctx context.Context) *adapterPodagentow {
 	a.uruchomienie = podagenci.ZnacznikUruchomienia()
 	osieroceni, err := podagenci.PosprzatajPoRestarcie(ctx, a.repozytorium, a.uruchomienie)
@@ -166,11 +113,7 @@ func kodyPodagentow(powolani []dane.Podagent) []string {
 	return kody
 }
 
-// przyjmijWynikPozycji jest ujściem wyniku silnika kolejek: utrwala zebraną
-// treść tury na wierszu podagenta związanym z pozycją. Kontekst bierze z życia
-// rdzenia, nie z tury — zapis wyniku ma przeżyć zamknięcie żądania, które turę
-// wywołało. Brak trafienia to pozycja spoza podagentów (jeden silnik);
-// błąd zapisu idzie do dziennika, bo cichej utraty wyniku nikt by nie zobaczył.
+// przyjmijWynikPozycji jest ujściem wyniku silnika kolejek: utrwala zebraną treść tury na wierszu podagenta związanym z pozycją, kontekstem życia rdzenia, nie tury.
 func (a *adapterPodagentow) przyjmijWynikPozycji(ctx context.Context, pozycjaID int64, tresc string) {
 	if a.zycie != nil {
 		ctx = a.zycie
@@ -180,13 +123,13 @@ func (a *adapterPodagentow) przyjmijWynikPozycji(ctx context.Context, pozycjaID 
 	}
 }
 
-// ZDziennikiem dokłada dziennik rdzenia. Znosi dziennik pusty sam.
+// ZDziennikiem dokłada dziennik rdzenia do adaptera podagentów, znosząc się sam przy dzienniku pustym.
 func (a *adapterPodagentow) ZDziennikiem(dziennik *log.Logger) *adapterPodagentow {
 	a.dziennik = dziennik
 	return a
 }
 
-// zapisz nanosi wiersz do dziennika rdzenia, znosząc dziennik pusty.
+// zapisz nanosi wiersz do dziennika rdzenia adaptera podagentów, nie robiąc niczego przy dzienniku pustym.
 func (a *adapterPodagentow) zapisz(wzorzec string, argumenty ...any) {
 	if a == nil || a.dziennik == nil {
 		return

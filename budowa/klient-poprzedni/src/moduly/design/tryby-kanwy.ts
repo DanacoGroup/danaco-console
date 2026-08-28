@@ -2,30 +2,10 @@ import { poleWyboru } from '../../modele/kontrolki-formularza';
 import { oznaczWarstwe } from './warstwy-designu';
 
 /**
- * Tryby narzędzia kanwy Design Board — znacznik `Tryb: … ▼` warstwy drugiej.
- *
- * Opracowanie wymienia siedem trybów: zaznaczanie, pióro, kształt, tekst,
- * pędzel-maska, retusz i ramka UI. Wykaz podaje wszystkie siedem, bo ukrycie
- * czterech, których ta budowa nie wykonuje, przedstawiłoby moduł jako mniejszy,
- * niż zaprojektowano.
- *
- * Żaden tryb nie jest wygaszony — wybór zawsze się udaje, a pod wykazem staje
- * zdanie mówiące, co tryb w tej budowie robi albo czego mu brakuje. To jest
- * różnica między „nie da się wybrać" a „wybrałeś i wiesz, co masz": pierwsze
- * niczego nie tłumaczy, drugie tłumaczy wszystko.
- *
- * Dwa tryby zmieniają zachowanie kanwy. Zaznaczanie jest stanem wyjściowym
- * i prowadzi wskazywanie oraz przeciąganie warstw. Ramka interfejsu kieruje
- * pracę do presetów ramek przybornika, bo ramka jest w tej budowie warstwą
- * o zadanych wymiarach, a nie osobnym bytem.
- *
- * Pięć pozostałych wymaga bytów, których kompozycja nie zna: ścieżki z węzłami,
- * kształtu innego niż prostokąt, tekstu, maski przezroczystości i pędzla
- * działającego na pikselach zasobu. Kompozycja niesie warstwę o położeniu,
- * rozmiarze, kolejności, blokadzie i adnotacji — i tyle jedzie do rdzenia.
+ * Tryb narzędzia kanwy Design Board, stojący za znacznikiem trybu warstwy
+ * drugiej. Wykaz obejmuje siedem trybów, żaden z nich nie jest wygaszony,
+ * a kod trybu wybranego kanwa nosi w atrybucie `data-tryb`.
  */
-
-/** Tryb narzędzia kanwy; ta sama wartość idzie w `data-tryb` kanwy. */
 export type TrybKanwy =
   | 'zaznaczanie'
   | 'pioro'
@@ -35,7 +15,10 @@ export type TrybKanwy =
   | 'retusz'
   | 'ramka-ui';
 
-/** Opis trybu: nazwa dla Operatora i zdanie o tym, co tryb w tej budowie robi. */
+/**
+ * Opis jednego trybu: kod idący w atrybut kanwy, nazwa dla czytającego,
+ * znacznik zmiany zachowania kanwy oraz zdanie stawiane pod wykazem wyboru.
+ */
 interface OpisTrybu {
   readonly kod: TrybKanwy;
   readonly nazwa: string;
@@ -112,9 +95,9 @@ export interface TrybyKanwy {
 }
 
 /**
- * Znacznik trybu kanwy.
- *
- * @param naZmiane wołane po każdym wyborze; okno przepisuje tryb na kanwę.
+ * Składa znacznik trybu kanwy: pole wyboru siedmiu trybów oraz zdanie opisu
+ * stawiane pod nim. Wskazana funkcja idzie po każdym wyborze i niesie kod
+ * trybu, który okno przepisuje na kanwę.
  */
 export function utworzTrybyKanwy(naZmiane: (tryb: TrybKanwy) => void): TrybyKanwy {
   const wybor = poleWyboru(
@@ -139,8 +122,7 @@ export function utworzTrybyKanwy(naZmiane: (tryb: TrybKanwy) => void): TrybyKanw
   element.append(wybor.element, zdanie);
 
   function biezacy(): OpisTrybu {
-    // Wartość pochodzi z wykazu złożonego z kodów trybów, więc pierwsza pozycja
-    // jako zapas opisuje stan faktyczny kontrolki, a nie założenie o niej.
+    // Wartosc pochodzi z wykazu trybow; pierwsza pozycja stoi jako zapas.
     return TRYBY.find((opis) => opis.kod === wybor.kontrolka.value) ?? (TRYBY[0] as OpisTrybu);
   }
 

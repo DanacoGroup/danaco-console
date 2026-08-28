@@ -9,33 +9,15 @@ import type { RejestrAgentow } from '../sterowanie/rejestr-agentow';
 import type { RejestrKanalow } from '../sterowanie/rejestr-kanalow';
 import { utworzSterNastawy, type SterPaska } from './ster-nastawy';
 
-/**
- * Model — ster paska zlecenia. Dwie grupy, jeden wybór, tak samo jak
- * w kolumnie sterowania: modele surowe w grupie „Modele", eksperci
- * w „Moi agenci". Grupa, a nie gałąź, bo obie rodziny mieszczą się na jednym
- * poziomie, a gałąź schowałaby wykaz o jeden ruch dalej.
- *
- * Znaczenie wyboru jest pisane raz: przedrostek eksperta, wartość zaznaczona
- * i przekład wyboru na treść `window.update` pochodzą z
- * `sterowanie/model-glowny.ts`. Gdyby pasek składał to zlecenie po swojemu,
- * wybór eksperta w pasku i w kolumnie znaczyłby dwie różne rzeczy.
- *
- * Etykieta uchwytu jest krótka: w kolumnie sterowania wiersz niesie
- * `nazwaKanalu` („nazwa (rodzaj) · model · nieczynny"), a w pasku stoi sama
- * nazwa własna i reszta schodzi do opisu pozycji, bo pasek ma zostać jednym
- * rzędem. Oba napisy składane są z tych samych pól `Channel`/`Agent`.
- *
- * Kanał nieczynny zostaje na wykazie i pozostaje wybieralny — wyszarzenie
- * byłoby blokadą, a o stanie kanału mówi opis pozycji.
- */
+// Model to ster paska zlecenia — dwie grupy, jeden wybór, tak samo jak w kolumnie sterowania.
 
-/** Nazwa zmiany w komunikacie — ta sama, którą wysyła lista w kolumnie. */
+/** Nazwa zmiany w komunikacie do rdzenia — ta sama, którą wysyła lista modeli w kolumnie sterowania oknem. */
 const NAZWA = 'Model';
 
-/** Etykieta uchwytu, gdy okno nie ma jeszcze ani kanału, ani eksperta. */
+/** Etykieta uchwytu pokazywana, gdy okno nie ma jeszcze przypisanego ani kanału modelu, ani eksperta wcale. */
 export const BRAK_MODELU = 'Model niewskazany';
 
-/** Zależności steru — wąskie i wstrzykiwane. */
+/** Zależności steru modelu — wąskie i wstrzykiwane, obejmujące migawkę stanu oraz wysyłkę zmiany do rdzenia. */
 export interface ZaleznosciSteruModelu {
   /** Kanał modelu i ekspert nałożony na okno, ze stanu potwierdzonego. */
   migawka(): { modelChannelId: string; agentId?: string };
@@ -108,12 +90,7 @@ export function utworzSterModelu(
 }
 
 /**
- * Wartość na uchwyt: nazwa własna eksperta albo kanału.
- *
- * Wartość spoza obu rejestrów nie znika — uchwyt pokazuje surowy identyfikator.
- * Okno pracuje wtedy na kanale, którego wykaz jeszcze nie zna (rdzeń nie
- * odpowiedział) albo już nie zna; napis „Model niewskazany" byłby w obu
- * przypadkach nieprawdą.
+ * Wartość na uchwyt niesie nazwę własną eksperta albo kanału; wartość spoza obu rejestrów nie znika, tylko pokazuje surowy identyfikator.
  */
 function etykieta(
   rejestrKanalow: RejestrKanalow,
@@ -130,7 +107,7 @@ function etykieta(
   return kanal?.name ?? wybrana;
 }
 
-/** Imię własne eksperta ze znakiem graficznym; puste `displayName` = `name`. */
+/** Imię własne eksperta ze znakiem graficznym; puste pole nazwy wyświetlanej zastępowane jest nazwą podstawową. */
 function imieAgenta(agent: Agent): string {
   const znak = agent.favicon !== undefined && agent.favicon.length > 0 ? `${agent.favicon} ` : '';
   const imie =
@@ -140,7 +117,7 @@ function imieAgenta(agent: Agent): string {
   return `${znak}${imie}`;
 }
 
-/** Zdanie przy kanale: rodzaj drogi, model i stan wpisu rejestru. */
+/** Zdanie przy kanale opisujące rodzaj drogi, użyty model oraz bieżący stan wpisu w rejestrze rdzenia platformy. */
 function opisKanalu(kanal: Channel): string {
   const model = kanal.model !== undefined && kanal.model.length > 0 ? ` · ${kanal.model}` : '';
   const czynny = kanal.enabled ? '' : ' · kanał oznaczony jako nieczynny';

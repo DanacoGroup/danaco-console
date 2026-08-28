@@ -1,22 +1,7 @@
-// Odpowiedzialność pliku: cztery powłoki, które nie są programem uruchamianym
-// wprost na maszynie rdzenia — kontener, pod, port szeregowy i sesja Telnet.
-//
-// ── Dlaczego osobny plik ────────────────────────────────────────────────────
-// Powłoki z `adapter_modul_terminal_powloki.go` są jednym wierszem wykazu:
-// program i argumenty poprzedzające treść. Te cztery wymagają czegoś więcej —
-// wskazania CELU, którym jest kontener, pod, urządzenie albo adres sieciowy —
-// więc ich argumenty składa się z pól karty, a nie z samej stałej.
-//
-// ── Skąd wiadomo, że pole karty jest wypełnione ─────────────────────────────
-// Odmowa idzie przy SKŁADANIU polecenia, a nie przy otwarciu karty. Karta jest
-// profilem powłoki i wolno ją otworzyć z pustym wskazaniem, tak samo jak kartę
-// zdalną bez adresu; dopiero polecenie musi wiedzieć, gdzie się wykonać.
-//
-// ── Czego te powłoki NIE robią ──────────────────────────────────────────────
-// Nie zarządzają kontenerem, podem ani urządzeniem: nie zakładają, nie usuwają
-// i nie zmieniają ich stanu. Wykonują polecenie w bycie, który już istnieje.
-// Kontenerami zarządza moduł Developer własną drogą (biblioteka Dockera), a nie
-// karta terminala.
+// Odpowiedzialność pliku: cztery powłoki, które nie są programem
+// uruchamianym wprost na maszynie rdzenia — kontener, pod, port szeregowy
+// i sesja Telnet. Wymagają wskazania CELU, składanego z pól karty, a nie
+// stałej.
 package core
 
 import (
@@ -68,7 +53,7 @@ var powlokiUrzadzen = map[shared.TerminalShell]struct {
 					"karta powłoki kontenera nie wskazuje kontenera — podaj pole containerRef.containerId")
 			}
 			// `-i` bez `-t`: proces rdzenia nie ma terminala znakowego, a `-t`
-			// zażądałoby go i uruchomienie odpadłoby na maszynie bez konsoli.
+			// zażądałoby go bez konsoli.
 			argumenty := []string{"exec", "-i"}
 			if katalog := strings.TrimSpace(karta.katalog); katalog != "" {
 				argumenty = append(argumenty, "--workdir", katalog)
@@ -92,8 +77,8 @@ var powlokiUrzadzen = map[shared.TerminalShell]struct {
 				argumenty = append(argumenty, "--namespace", przestrzen)
 			}
 			argumenty = append(argumenty, "exec", "-i", pod)
-			// Kontener wewnątrz poda wskazuje się wtedy, gdy pod ma ich więcej
-			// niż jeden; bez wskazania `kubectl` bierze pierwszy i mówi o tym sam.
+			// Kontener wewnątrz poda wskazuje się przy kilku kontenerach; bez
+			// wskazania `kubectl` bierze pierwszy.
 			if kontener := strings.TrimSpace(karta.kontener); kontener != "" {
 				argumenty = append(argumenty, "--container", kontener)
 			}
@@ -112,10 +97,8 @@ var powlokiUrzadzen = map[shared.TerminalShell]struct {
 			if predkosc <= 0 {
 				predkosc = domyslnaPredkoscPortu
 			}
-			// `--exit-after` domyka sesję po chwili ciszy na łączu. Bez tego
-			// picocom trzymałby port otwarty bez końca, a polecenie karty nigdy
-			// nie miałoby kodu wyjścia — proces bez końca to proces, którego
-			// Process Monitor nie ma jak domknąć.
+			// `--exit-after` domyka sesję po ciszy: bez tego picocom trzymałby
+			// port otwarty bez końca.
 			return []string{
 				"--baud", strconv.Itoa(predkosc),
 				"--exit-after", "2000",
@@ -136,10 +119,8 @@ var powlokiUrzadzen = map[shared.TerminalShell]struct {
 				return nil, fmt.Errorf(
 					"karta sesji Telnet nie ma adresu — podaj pole remoteTarget")
 			}
-			// Telnet nie przyjmuje polecenia argumentem: rozmawia strumieniem.
-			// Adres bierze się z pola karty, a nazwa użytkownika — jeśli wpisana
-			// w postaci `użytkownik@host` — odpada, bo Telnet pyta o nią sam,
-			// wewnątrz sesji.
+			// Telnet nie przyjmuje polecenia argumentem, rozmawia strumieniem;
+			// nazwa użytkownika w adresie odpada.
 			if miejsce := strings.LastIndex(cel, "@"); miejsce >= 0 {
 				cel = cel[miejsce+1:]
 			}
@@ -152,13 +133,8 @@ var powlokiUrzadzen = map[shared.TerminalShell]struct {
 	},
 }
 
-// polecenieUrzadzenia składa polecenie dla powłoki urządzeniowej.
-//
-// Program odnajduje się TERAZ, a nie przy uruchomieniu: `session.Polecenie`
-// niesie ścieżkę, a program dołożony do pakietu produktu leży poza ścieżką
-// wyszukiwania systemu i po samej nazwie by nie wystartował. Brak programu
-// kończy się odmową nazywającą go wraz z pakietem — tą samą, którą oddaje cały
-// arsenał (`zewnetrzne.BrakNarzedzia`).
+// polecenieUrzadzenia składa polecenie dla powłoki urządzeniowej; program
+// odnajduje się TERAZ, nie przy uruchomieniu.
 func polecenieUrzadzenia(karta *kartaTerminala, tresc string) (string, []string, error) {
 	definicja, jest := powlokiUrzadzen[karta.powloka]
 	if !jest {
@@ -175,12 +151,8 @@ func polecenieUrzadzenia(karta *kartaTerminala, tresc string) (string, []string,
 	return sciezka, argumenty, nil
 }
 
-// wskazanieUrzadzenia przepisuje do karty wskazanie kontenera, poda albo portu
-// szeregowego z żądania otwarcia karty.
-//
-// Sprawdzenie kompletności wskazania leży przy składaniu polecenia, nie tutaj:
-// karta jest profilem powłoki i wolno ją otworzyć z polem pustym, tak samo jak
-// kartę zdalną bez adresu.
+// wskazanieUrzadzenia przepisuje do karty wskazanie kontenera, poda albo
+// portu szeregowego z żądania otwarcia.
 func wskazanieUrzadzenia(karta *kartaTerminala, z shared.TerminalSessionOpenRequest) {
 	if z.ContainerRef != nil {
 		karta.kontener = strings.TrimSpace(wartoscTekstu(z.ContainerRef.ContainerId))

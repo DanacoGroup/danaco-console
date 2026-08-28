@@ -1,37 +1,42 @@
+/**
+ * Warstwy nakładki tożsamości i tryby jej podania: słownik porządku, nazw
+ * i ostrzeżeń. Warstwa mówi, jak krytyczna jest treść, a tryb rozstrzyga los
+ * promptu fabrycznego. Wszystkie wartości pochodzą wyłącznie ze stałych
+ * kontraktu.
+ */
 import { IdentityLayer, IdentityMode } from '../../../shared/contract';
 
 /**
- * Warstwy nakładki i tryby jej podania — słownik porządku i nazw.
- *
- * Warstwa mówi, jak krytyczna jest treść: konstytucja stoi wyżej niż profil roli,
- * profil wyżej niż ekspertyza. Ta kolejność rządzi zarówno układem wykazu
- * kategorii, jak i porządkiem złożonego promptu. Wartości pochodzą wyłącznie
- * ze stałych kontraktu.
- *
- * Tryb rozstrzyga los ustawień fabrycznych: `ZASTAP` podmienia prompt fabryczny
- * w całości, `DOLACZ` dokłada treść do niego. Wybór decyduje o tym, którym
- * argumentem uruchomienia pojedzie nakładka, więc każdy przełącznik trybu w tej
- * sekcji podaje go wprost.
+ * Trzy warstwy w kolejności krytyczności; konstytucja pierwsza, ekspertyza
+ * ostatnia. Kolejność wykazu rządzi układem kategorii w oknie i porządkiem
+ * złożonego promptu.
  */
-
-/** Trzy warstwy w kolejności krytyczności. Konstytucja pierwsza. */
 export const WARSTWY_OD_NAJWAZNIEJSZEJ: readonly IdentityLayer[] = [
   IdentityLayer.Constitution,
   IdentityLayer.Profile,
   IdentityLayer.Expertise,
 ];
 
-/** Nazwa warstwy pokazywana Operatorowi. */
+/**
+ * Nazwa warstwy pokazywana w oknie. Odwzorowanie pokrywa wszystkie trzy warstwy
+ * kontraktu, więc odczyt po kluczu warstwy kontraktowej nie ma przypadku pustego.
+ */
 export const NAZWY_WARSTW: Readonly<Record<IdentityLayer, string>> = {
   [IdentityLayer.Constitution]: 'konstytucja',
   [IdentityLayer.Profile]: 'profil roli',
   [IdentityLayer.Expertise]: 'ekspertyza',
 };
 
-/** Dwa tryby podania nakładki; ZASTĄP jest wartością domyślną. */
+/**
+ * Dwa tryby podania nakładki w kolejności wyboru; zastąpienie jest wartością
+ * domyślną, do której wraca odczyt wartości nierozpoznanej.
+ */
 export const TRYBY: readonly IdentityMode[] = [IdentityMode.ZASTAP, IdentityMode.DOLACZ];
 
-/** Nazwa trybu pokazywana Operatorowi. */
+/**
+ * Nazwa trybu pokazywana w oknie. Brzmienie niesie skutek wyboru wprost,
+ * ponieważ przełącznik trybu rozstrzyga o losie promptu fabrycznego.
+ */
 export const NAZWY_TRYBOW: Readonly<Record<IdentityMode, string>> = {
   [IdentityMode.ZASTAP]: 'ZASTĄP ustawienia fabryczne',
   [IdentityMode.DOLACZ]: 'DOŁĄCZ do ustawień fabrycznych',
@@ -48,23 +53,35 @@ export const OSTRZEZENIA_TRYBOW: Readonly<Record<IdentityMode, string>> = {
     'DOŁĄCZENIE ZOSTAWIA PROMPT FABRYCZNY. Treść kategorii zostanie dopisana do instrukcji fabrycznej producenta, a nie postawiona w jej miejsce.',
 };
 
-/** Pierwszeństwo warstwy; warstwa spoza kontraktu trafia na koniec. */
+/**
+ * Pierwszeństwo warstwy; warstwa spoza kontraktu trafia na koniec, bo brak
+ * w wykazie daje liczbę równą jego długości. Wynik służy porządkowaniu kategorii.
+ */
 export function pierwszenstwoWarstwy(warstwa: string): number {
   const miejsce = (WARSTWY_OD_NAJWAZNIEJSZEJ as readonly string[]).indexOf(warstwa);
   return miejsce === -1 ? WARSTWY_OD_NAJWAZNIEJSZEJ.length : miejsce;
 }
 
-/** Nazwa warstwy gotowa do wydruku; warstwa spoza kontraktu pokazuje własny kod. */
+/**
+ * Nazwa warstwy gotowa do wydruku; warstwa spoza kontraktu pokazuje własny kod,
+ * więc wykaz nie gubi wiersza o nieznanej warstwie.
+ */
 export function nazwaWarstwy(warstwa: string): string {
   return NAZWY_WARSTW[warstwa as IdentityLayer] ?? warstwa;
 }
 
-/** Nazwa trybu gotowa do wydruku. */
+/**
+ * Nazwa trybu gotowa do wydruku. Tryb spoza kontraktu pokazuje własny kod,
+ * ponieważ odczyt odwzorowania zastępuje brak wartością wejściową.
+ */
 export function nazwaTrybu(tryb: string): string {
   return NAZWY_TRYBOW[tryb as IdentityMode] ?? tryb;
 }
 
-/** Ostrzeżenie trybu gotowe do wydruku; tryb spoza kontraktu ostrzeżenia nie ma. */
+/**
+ * Ostrzeżenie trybu gotowe do wydruku; tryb spoza kontraktu ostrzeżenia nie ma,
+ * więc miejsce ostrzeżenia zostaje puste zamiast pokazywać kod trybu.
+ */
 export function ostrzezenieTrybu(tryb: string): string {
   return OSTRZEZENIA_TRYBOW[tryb as IdentityMode] ?? '';
 }

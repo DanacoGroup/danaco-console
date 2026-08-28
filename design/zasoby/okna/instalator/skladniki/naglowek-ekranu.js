@@ -1,20 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — NAGŁÓWEK EKRANU
-   ----------------------------------------------------------------------------
-   Trzy rangi otwierające krok: nadtytuł (miejsce w przepływie), tytuł (czym
-   jest krok) i podtytuł (jedno zdanie o kroku). Nadtytuł stoi poza skalą rang
-   — jest znacznikiem nawigacyjnym, nie stopniem treści.
-
-   Wariant ze znakiem wyniku dokłada ikonę przed tytułem; znak jest powtórzeniem
-   tego, co mówi tytuł, więc nie wchodzi do drzewa dostępności.
-
-   Właściwości:
-     nadtytul   klucz katalogu — nadtytuł kroku
-     tytul      klucz katalogu — tytuł kroku
-     podtytul   klucz katalogu — podtytuł (opcjonalny)
-     znak       'gotowe' | 'ostrzezenia' | null — znak wyniku przed tytułem
-     dane       atrybuty `data-*` do podpięcia stanu przez ekran
-   ============================================================================ */
+/* Składnik wyświetla nagłówek ekranu kreatora złożony z nadtytułu, tytułu i opcjonalnego podtytułu, przy czym wariant ze znakiem wyniku dokłada przed tytułem ikonę powtarzającą jego treść. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

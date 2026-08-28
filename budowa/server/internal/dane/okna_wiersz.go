@@ -9,10 +9,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// domyslnyTrybKomunikacji odpowiada wartości domyślnej kolumny w schemacie.
+// domyslnyTrybKomunikacji odpowiada wartości domyślnej kolumny trybu komunikacji ustawionej w schemacie.
 const domyslnyTrybKomunikacji = "tekst"
 
-// wartosciOknaBazy to komplet wartości kolumn słownikowych okna.
+// wartosciOknaBazy to komplet wartości kolumn słownikowych okna, gotowy do zapisu w bazie danych rdzenia.
 type wartosciOknaBazy struct {
 	srodowisko      string
 	tryb            string
@@ -21,7 +21,7 @@ type wartosciOknaBazy struct {
 	stan            string
 }
 
-// wartosciOkna przekłada pola wyliczeniowe struktury na wartości kolumn.
+// wartosciOkna przekłada pola wyliczeniowe struktury okna na wartości odpowiadających im kolumn bazy danych.
 func wartosciOkna(okno Okno) (wartosciOknaBazy, error) {
 	var wartosci wartosciOknaBazy
 	var err error
@@ -65,7 +65,7 @@ func odczytajOkno(wiersz skaner) (Okno, error) {
 	return uzupelnijSlownikiOkna(okno, srodowisko, tryb, rola, stan)
 }
 
-// uzupelnijSlownikiOkna przekłada wartości kolumn słownikowych na kontrakt.
+// uzupelnijSlownikiOkna przekłada wartości kolumn słownikowych odczytane z bazy na wartości kontraktu.
 func uzupelnijSlownikiOkna(okno Okno, srodowisko, tryb, rola, stan string) (Okno, error) {
 	var err error
 	if okno.SrodowiskoWykonania, err = srodowiskoWykonaniaZBazy(srodowisko); err != nil {

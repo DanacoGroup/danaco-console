@@ -1,34 +1,28 @@
+/**
+ * Ostrzeżenie przy nadaniu trybu zapisu na maszynie chronionej. Zakazu ten
+ * plik nie egzekwuje — nadanie pozostaje możliwe, ponieważ rozstrzyga o nim
+ * Operator. Egzekwuje go jawne zdanie widoczne przy przełączniku trybu.
+ */
 import { AccessMode, type AccessPoint } from '../../../shared/contract';
 
 /**
- * Ostrzeżenie przy nadaniu trybu zapisu na maszynie chronionej.
- *
- * Specyfikacja mostu `mcp-danaco-pulpit-console` zabrania nadawania zapisu na
- * `danaco-data` bez wyraźnej potrzeby: to host produkcyjnej platformy LEX,
- * a zapis modelu sięga tam zbiorów, z których korzysta cała kancelaria. Zakazu
- * nie egzekwuje ten plik — nadanie pozostaje możliwe, bo decyzja należy do
- * Operatora. Egzekwuje go jawne, widoczne zdanie przy przełączniku trybu, a nie
- * podpowiedź pod kursorem.
- *
- * Wykaz maszyn stoi tutaj, a nie w katalogu konfiguracji: to ostrzeżenie
- * bezpieczeństwa, więc nie może dać się wyłączyć zapisem w bazie. Rozszerzenie
- * wykazu to jeden wiersz w stałej poniżej.
+ * Przedrostek nazw mostów konsoli, odpowiednik stałej `core.PrefiksMostuKonsoli`
+ * po stronie rdzenia. Zdjęcie go z nazwy mostu zostawia samą nazwę maszyny.
  */
-
-/** Przedrostek nazw mostów konsoli; odpowiednik `core.PrefiksMostuKonsoli`. */
 const PRZEDROSTEK_MOSTU = 'mcp-danaco-pulpit-console-';
 
-/** Maszyny, na których zapis wymaga świadomej decyzji Operatora. */
+/**
+ * Maszyny, na których nadanie trybu zapisu wymaga świadomej decyzji Operatora.
+ * Wykaz stoi w kodzie, a nie w katalogu konfiguracji, więc nie daje się
+ * wyłączyć zapisem w bazie.
+ */
 export const MASZYNY_CHRONIONE: readonly string[] = ['danaco-data'];
 
 /**
- * Nazwa maszyny, do której odnosi się punkt dostępu.
- *
- * Kontrakt niesie ją w trzech polach zależnie od tego, jak punkt założono:
- * `host` przy moście MCP, `bridgeName` przy moście nazwanym po stronie
- * klienta, `deviceId` przy katalogu lokalnym. Bierzemy pierwsze wypełnione,
- * a z nazwy mostu zdejmujemy przedrostek konsoli — po nim zostaje sama nazwa
- * maszyny.
+ * Nazwa maszyny, do której odnosi się punkt dostępu. Kontrakt niesie ją
+ * w polach `host` przy moście MCP, `bridgeName` przy moście nazwanym po
+ * stronie klienta oraz `deviceId` przy katalogu lokalnym; wynikiem jest
+ * pierwsze wypełnione, bez przedrostka.
  */
 export function maszynaPunktu(punkt: AccessPoint): string {
   if (typeof punkt.host === 'string' && punkt.host !== '') return punkt.host;
@@ -41,7 +35,11 @@ export function maszynaPunktu(punkt: AccessPoint): string {
   return punkt.deviceId ?? '';
 }
 
-/** Czy punkt prowadzi na maszynę objętą ostrzeżeniem. */
+/**
+ * Czy punkt dostępu prowadzi na maszynę objętą ostrzeżeniem. Porównanie pomija
+ * wielkość liter i uznaje zgodność także wtedy, gdy nazwa maszyny zawiera
+ * nazwę chronioną jako część dłuższego napisu.
+ */
 export function czyMaszynaChroniona(punkt: AccessPoint): boolean {
   const maszyna = maszynaPunktu(punkt).toLowerCase();
   if (maszyna === '') return false;
@@ -61,7 +59,11 @@ export function ostrzezenieZapisu(punkt: AccessPoint, tryb: AccessMode): string 
   return zdanieOstrzezenia(maszynaPunktu(punkt));
 }
 
-/** Treść ostrzeżenia dla wskazanej maszyny. */
+/**
+ * Treść ostrzeżenia dla wskazanej maszyny: nazwa maszyny, rola hosta
+ * produkcyjnej platformy LEX, warunek wyraźnej potrzeby oraz zachęta do
+ * pozostawienia trybu odczytu.
+ */
 export function zdanieOstrzezenia(maszyna: string): string {
   return (
     `Tryb zapisu na maszynie ${maszyna} — to host produkcyjnej platformy LEX. ` +

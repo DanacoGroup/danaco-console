@@ -1,30 +1,10 @@
 import { utworzMenuDrzewo, type PozycjaMenu } from '../../komponenty/menu-drzewo';
 
 /**
- * Wybór jednokrotny modułu Terminal osadzony na `komponenty/menu-drzewo.ts`.
- *
- * Plik nie rysuje ani jednego wiersza menu — strzałki, rozwijanie i znacznik
- * wyboru niesie mechanizm biblioteki, który oddaje wołającemu klucz pozycji
- * zamiast wykonywać wybór. Zostają tu dwie rzeczy, których mechanizm nie robi:
- *   1. pamięć wybranej wartości — `menu-drzewo` dostaje drzewo z zewnątrz przy
- *      każdym `ustaw`, więc ktoś musi wiedzieć, co jest wybrane teraz;
- *   2. przełożenie wykazów modułu (`profil-karty.ts`, `grupowanie-procesow.ts`)
- *      na `PozycjaMenu` — wykazy zostają danymi, a nie łańcuchem warunków.
- *
- * Uchwyt niesie wartość, nie nazwę nastawy: stoi na nim „Bash", a nie „Powłoka".
- * Nazwa rodzajowa idzie do `aria-label` i do podpowiedzi, bo czytnik ekranu musi
- * wiedzieć, czego wartość dotyczy.
- *
- * Wartość pusta jest wartością: `''` znaczy „bez zawężenia" w wykazie procesów
- * i ma własną pozycję („Wszystkie procesy"), inaczej z filtra nie byłoby drogi
- * powrotnej.
+ * Wybór jednokrotny modułu Terminal osadzony na bibliotece menu drzewa.
  */
 
-/**
- * Jedna pozycja wykazu wyboru: wartość, nazwa widoczna, opcjonalne zdanie
- * o skutku. Trzeci człon to objaśnienie `[?]`; pominięty znaczy „ta pozycja
- * opisu nie ma".
- */
+/** Jedna pozycja wykazu wyboru: wartość, nazwa widoczna i opcjonalne zdanie o skutku, jaki wybór tej pozycji wywołuje w oknie. */
 export type PozycjaWyboru = readonly [wartosc: string, nazwa: string, opis?: string];
 
 export interface WyborDrzewem {
@@ -45,10 +25,7 @@ export interface OpcjeWyboru {
 
 export function utworzWyborDrzewem(opcje: OpcjeWyboru): WyborDrzewem {
   const sluchacze = new Set<(wartosc: string) => void>();
-  // Pierwsza pozycja jest wyborem początkowym — tak jak natywny `<select>` bez
-  // `selected` bierze pierwszą opcję. Wykazy modułu są stałymi i puste nie bywają,
-  // ale przy pustym uchwyt powie o pustce zdaniem mechanizmu zamiast przestać
-  // reagować.
+  // Pierwsza pozycja jest wyborem początkowym, jak natywny select bez atrybutu selected.
   let biezaca = opcje.pozycje[0]?.[0] ?? '';
 
   const menu = utworzMenuDrzewo({
@@ -64,9 +41,7 @@ export function utworzWyborDrzewem(opcje: OpcjeWyboru): WyborDrzewem {
   /** Nazwa wybranej pozycji — to ona stoi na uchwycie. */
   function nazwaBiezacej(): string {
     const trafiona = opcje.pozycje.find(([wartosc]) => wartosc === biezaca);
-    // Wybór idzie wyłącznie z pozycji drzewa, więc wartość spoza wykazu tu nie
-    // trafia; gdyby trafiła, uchwyt pokaże ją samą zamiast pierwszej z brzegu
-    // nazwy niezgodnej z nastawą.
+    // Wybór idzie wyłącznie z pozycji drzewa; wartość spoza wykazu tutaj nie trafia.
     return trafiona?.[1] ?? biezaca;
   }
 

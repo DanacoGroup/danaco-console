@@ -3,7 +3,10 @@ import { utworzPrzelacznikTras, type PrzelacznikTras } from './przelacznik-tras'
 import type { Trasa } from './trasy';
 import { utworzWskaznikLacznosci, type WskaznikLacznosci } from './wskaznik-lacznosci';
 
-/** Grupa dokładana do akcji paska górnego powłoki środowiska. */
+/**
+ * Grupa dokładana do akcji paska górnego powłoki środowiska. Niesie własny
+ * element montażowy, przełącznik tras oraz wskaźnik łączności z rdzeniem.
+ */
 export interface AkcjeTras {
   /** Grupa montowana przy prawej krawędzi paska, przed akcjami powłoki. */
   element: HTMLElement;
@@ -14,12 +17,9 @@ export interface AkcjeTras {
 }
 
 /**
- * Dwie rzeczy, których pasek powłoki środowiska sam nie niesie: stan łączności
- * z rdzeniem i przełącznik widoków najwyższego rzędu.
- *
- * Jedna odpowiedzialność: złożenie ich w jedną grupę. Powłoka środowiska ma
- * własny pasek górny wraz z przełącznikiem motywu, powiadomieniami i awatarem;
- * nie dokłada się więc drugiego paska, tylko uzupełnia grupę akcji istniejącego.
+ * Składa w jedną grupę dwie rzeczy, których pasek powłoki środowiska sam nie
+ * niesie: wskaźnik łączności z rdzeniem oraz przełącznik widoków najwyższego
+ * rzędu. Grupa uzupełnia pasek istniejący, zamiast zakładać drugi.
  */
 export function utworzAkcjeTras(
   transport: Transport,

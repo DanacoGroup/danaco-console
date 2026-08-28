@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: doprowadzenie łańcucha więzów do wiersza okna
-// komunikacji. Wiadomość nie ma gdzie się zapisać, dopóki nie istnieją: sesja,
-// karta sesji, moduł i kanał modelu — wszystkie są więzami obowiązkowymi.
-//
-// Reguła całego pliku: brakujące ogniwo zakładamy albo zastępujemy najbliższym
-// sensownym, zamiast odmawiać zapisu z powodu braku konfiguracji. Odmowa zostaje
-// wyłącznie tam, gdzie nie ma z czego zbudować wiersza.
+// Odpowiedzialność pliku: doprowadzenie łańcucha więzów do wiersza okna komunikacji, zakładając brakujące ogniwa zamiast odmawiać zapisu.
 package dane
 
 import (
@@ -22,10 +16,7 @@ const (
 	// przejdzie więzu klucza obcego.
 	nazwaKartyDomyslnej = "Karta domyślna"
 
-	// kodModuluZastepczego wskazuje moduł przypisywany oknu, którego moduł nie ma
-	// odpowiednika w słowniku. Workspace jest jedynym modułem widocznym we
-	// wszystkich trzech środowiskach udostępniających moduły, więc zastępstwo nie
-	// wprowadza okna do środowiska, w którym nie może się pojawić.
+	// kodModuluZastepczego wskazuje moduł przypisywany oknu, którego moduł nie ma odpowiednika w słowniku modułów.
 	kodModuluZastepczego = "workspace"
 )
 
@@ -58,7 +49,7 @@ func (u *UtrwalaczRozmowy) wierszOkna(ctx context.Context, idOkna string) (int64
 	return id, nil
 }
 
-// zalozOkno zapisuje wiersz okna wraz z całym łańcuchem, na którym stoi.
+// zalozOkno zapisuje wiersz okna wraz z całym łańcuchem więzów, na którym ten sam wiersz właśnie stoi.
 func (u *UtrwalaczRozmowy) zalozOkno(ctx context.Context, idOkna string) (int64, error) {
 	if u.zrodlo == nil {
 		return 0, fmt.Errorf("dane: okno %q nie ma opisu w rejestrze rdzenia", idOkna)
@@ -82,7 +73,7 @@ func (u *UtrwalaczRozmowy) zalozOkno(ctx context.Context, idOkna string) (int64,
 	return u.zestaw.Okna.Utworz(ctx, oknoZOpisu(opis, sesjaID, modulID, kanalID))
 }
 
-// oknoZOpisu składa wiersz okna z opisu rejestru rdzenia.
+// oknoZOpisu składa wiersz okna z opisu rejestru rdzenia, gotowy do zapisania w tej samej bazie danych.
 func oknoZOpisu(opis OpisOkna, sesjaID, modulID, kanalID int64) Okno {
 	okno := NoweOkno(sesjaID, modulID, kanalID)
 	identyfikator := opis.Id
@@ -197,14 +188,7 @@ func (u *UtrwalaczRozmowy) wierszKanalu(ctx context.Context, wskazanie string) (
 	return kanaly[0].ID, nil
 }
 
-// ZapewnijSesje utrwala sesję natychmiast po jej założeniu, nie czekając na
-// pierwszą wiadomość. Bez tego sesja utworzona i jeszcze nieużyta nie ma
-// wiersza, a czynności na historii — zmiana nazwy, przeniesienie do projektu,
-// archiwizacja, usunięcie — nie mają czego dotknąć.
-//
-// Sesja istniejąca wraca bez zmian — czynność jest idempotentna. Karta sesji
-// i środowisko powstają tą samą drogą co przy utrwalaniu rozmowy;
-// osobnego łańcucha tu nie ma.
+// ZapewnijSesje utrwala sesję natychmiast po jej założeniu, żeby czynności na historii miały czego dotknąć bez pierwszej wiadomości.
 func (u *UtrwalaczRozmowy) ZapewnijSesje(ctx context.Context, idSesji, tytul, projekt string) (int64, error) {
 	sesja, err := u.zestaw.Sesje.PoIdentyfikatorze(ctx, idSesji)
 	if err == nil {

@@ -1,7 +1,4 @@
-// Panel wciąga swoje arkusze sam, bo gospodarzem bywa moduł, którego arkusz
-// o Roundtable nic nie wie. `roundtable.css` daje trzy stany obowiązkowe
-// nośnika `stany-okna`, `panel-debaty.css` — wygląd głosów. Arkusza `debata.css`
-// panel nie wciąga: Debate Panel i Consensus Panel u gospodarza nie stoją.
+// Panel wciąga swoje arkusze sam, bo gospodarzem bywa moduł, którego arkusz o module Roundtable nic nie wie.
 import './roundtable.css';
 import './panel-debaty.css';
 
@@ -18,38 +15,7 @@ import { rysujPanelDebaty } from './widok-panelu-debaty';
 import { utworzZrodloRoundtable } from './zrodlo-roundtable';
 import { utworzZrodloStrumieniaDebaty } from './zrodlo-strumienia-debaty';
 
-/**
- * Panel debaty — przebieg debaty obok rozmowy, jako zwykły panel stosu.
- *
- * Kształt jest dokładnie ten, którego wymaga
- * `okna-pomocnicze/panel-pomocniczy.ts` — `element`, `odswiez()`, `zamknij()` —
- * i ani jedno pole ponad to. Gospodarzem bywa pas okien pomocniczych modułu
- * albo kolumna paneli sceny okien równoległych; panel żadnego z nich nie zna
- * i niczego o nich nie zakłada.
- *
- * Zamknięcie zdejmuje trzy rzeczy, nie jedną. Panel zakłada subskrypcję
- * `stream.chunk` (fragmenty wypowiedzi), subskrypcję zmian stanu debaty oraz —
- * przez `StanDebaty` — nasłuch `roundtable.debate.changed` i rejestru kanałów.
- * Wszystkie schodzą w `zamknij()`; panel bez tego zostawiłby je żywe po zejściu
- * ze sceny i rysowałby do elementu, którego nikt już nie ogląda.
- *
- * Własny stan debaty bierze się stąd, że `OpcjePanelu` daje wyłącznie `Kanal`,
- * `okno`, `modul` i `przedrostek` — egzemplarza `StanDebaty` tą drogą podać się
- * nie da, tak samo jak umowa `OpisModulu` nie przenosi rejestru kanałów. Drugi
- * stan nie jest drugą prawdą o debacie: czyta te same zdarzenia rdzenia i nie
- * ma ani jednej drogi zapisu — różni się od stanu złożenia wyłącznie chwilą
- * otwarcia nasłuchu.
- *
- * Panel nie odczytuje przebiegu na żądanie, choć kontrakt to przewiduje.
- * `roundtable.debate.get` oddaje skład, tury i wypowiedzi jednym wywołaniem,
- * ale obsługi tego odczytu jeszcze nie zbudowano — ani tutaj, ani w oknach
- * złożenia modułu — więc panel pokazuje wyłącznie to, co usłyszał od swojego
- * otwarcia. `odswiez()` odnawia zatem wykaz kanałów (nazwy uczestników)
- * i przerysowuje widok, a przycisk nazywający brakującą obsługę stoi widoczny
- * i klikalny zamiast zniknąć.
- */
-
-/** Kod pozycji panelu — ten sam, którym rejestr i wytwórnia paneli go zawołają. */
+/** Panel debaty — przebieg debaty obok rozmowy jako zwykły panel stosu; kod pozycji to ten sam, którym rejestr i wytwórnia paneli go zawołają. */
 export const KOD_PANELU_DEBATY = 'przebieg-debaty';
 
 export function utworzPanelDebaty(opcje: OpcjePanelu): PanelPomocniczy {
@@ -68,8 +34,7 @@ export function utworzPanelDebaty(opcje: OpcjePanelu): PanelPomocniczy {
     modul: opcje.modul,
     przedrostek: opcje.przedrostek,
   });
-  // Klasa modułu obok klas gospodarza: wygląd głosów niesie arkusz Roundtable
-  // (`panel-debaty.css`), a nie arkusz modułu, w którego stosie panel stanął.
+  // Klasa modułu obok klas gospodarza: wygląd głosów niesie arkusz Roundtable, nie moduł gospodarza.
   rama.element.classList.add('dr-panel');
 
   const tresc = utworzStanTresci();
@@ -80,12 +45,7 @@ export function utworzPanelDebaty(opcje: OpcjePanelu): PanelPomocniczy {
     rama.ustawZnacznik(...znacznikGlosow(stan, strumien));
   }
 
-  /**
-   * Zmiana stanu debaty. Zmiana tury czyści gromadzenie strumienia: fragmenty
-   * należą do wypowiedzi jednej tury, a `StanDebaty` też porzuca wtedy wykaz
-   * wypowiedzi. Zostawione dokleiłyby zdania tury poprzedniej do mówców tury
-   * nowej — czyli przypisałyby uczestnikowi słowa, których w niej nie powiedział.
-   */
+  // Zmiana tury czyści gromadzenie strumienia, żeby nie dokleić zdań tury poprzedniej do mówców nowej.
   function przyZmianieStanu(): void {
     if (stan.tura() !== turaWidziana) {
       turaWidziana = stan.tura();
@@ -127,10 +87,7 @@ export function utworzPanelDebaty(opcje: OpcjePanelu): PanelPomocniczy {
     rysuj();
   });
 
-  // Wykaz kanałów zamawia panel sam, bo bez nazw kanałów tożsamości uczestników
-  // czytałyby się identyfikatorami. Pierwszy rysunek idzie od razu: bez niego
-  // panel stałby pusty aż do pierwszego zdarzenia rdzenia, a stan pusty ma
-  // własne zdanie mówiące, dlaczego jest pusty.
+  // Wykaz kanałów zamawia panel sam, bo bez nazw tożsamości uczestników czytałyby się identyfikatorami.
   rejestr.odswiez();
   rysuj();
 
@@ -146,12 +103,8 @@ export function utworzPanelDebaty(opcje: OpcjePanelu): PanelPomocniczy {
 }
 
 /**
- * Plakietka nagłówka: ile głosów rośnie w tej chwili.
- *
- * Panel stoi w wąskiej kolumnie i bywa przewinięty, więc chwila „ktoś właśnie
- * mówi" musi być widoczna z samego nagłówka, bez zjeżdżania do wypowiedzi.
- * Zerowa liczba nie chowa plakietki na rzecz ciszy — mówi o niej wprost, dopóki
- * tura jest otwarta.
+ * Plakietka nagłówka: ile głosów rośnie w tej chwili, widoczna z samego nagłówka bez
+ * zjeżdżania do wypowiedzi.
  */
 function znacznikGlosow(
   stan: StanDebaty,

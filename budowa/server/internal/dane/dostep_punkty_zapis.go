@@ -1,10 +1,6 @@
 // Odpowiedzialność pliku: zapis katalogu punktów dostępu. Zapis dotyka trzech
 // tabel (`punkt_dostepu`, `korzen_punktu_dostepu`, `argument_trybu_mostu`), więc
-// idzie w jednej transakcji — punkt bez swoich korzeni byłby punktem, który
-// obiecuje dostęp do całego systemu plików maszyny.
-//
-// Kolumna `poswiadczenie_odwolanie` niesie wyłącznie nazwę wpisu w magazynie
-// sekretów. Repozytorium nie ma metody zapisującej treść klucza.
+// idzie w jednej transakcji.
 package dane
 
 import (
@@ -17,9 +13,7 @@ import (
 )
 
 // ErrBrakUrzadzeniaBiezacego oznacza, że katalog lokalny nie ma na czym stanąć:
-// żądanie nie wskazało urządzenia, a rdzeń nie ma w katalogu wiersza swojej
-// maszyny (rozpoznanie startowe nie przebiegło). Warstwa wyższa odróżnia ten
-// przypadek przez errors.Is i zamienia go na odmowę z powodem, nie na awarię.
+// żądanie nie wskazało urządzenia, a rdzeń nie ma w katalogu wiersza swojej maszyny.
 var ErrBrakUrzadzeniaBiezacego = errors.New("dane: brak urządzenia bieżącego")
 
 // ErrNieznaneUrzadzenie oznacza wskazanie urządzenia, którego w katalogu nie ma.
@@ -45,7 +39,7 @@ const (
 
 	usunPunktDostepu = `DELETE FROM punkt_dostepu WHERE id = ?`
 
-	// Wskazanie urządzenia sprawdzamy przed zapisem, bo więz klucza obcego
+	// Wskazanie urządzenia jest sprawdzane przed zapisem, bo więz klucza obcego
 	// zgłasza pomyłkę dopiero jako awarię INSERT-a.
 	istnieniUrzadzenia = `SELECT id FROM urzadzenie WHERE id = ?`
 
@@ -60,7 +54,7 @@ const (
 	                    WHERE id = ?`
 )
 
-// Dodaj wpisuje punkt do katalogu wraz z jego korzeniami i słownictwem trybu.
+// Dodaj wpisuje punkt dostępu do katalogu wraz z jego korzeniami i słownictwem trybu używanym przez most.
 func (r *repozytoriumPunktowDostepu) Dodaj(ctx context.Context, punkt PunktDostepu) (int64, error) {
 	wartosci, err := wartosciPunktu(punkt)
 	if err != nil {
@@ -164,19 +158,7 @@ func (r *repozytoriumPunktowDostepu) ZapiszWynikSprawdzenia(ctx context.Context,
 	return sprawdzTrafienie(wynik, "punkt_dostepu", id)
 }
 
-// urzadzeniePunktu rozstrzyga, na które urządzenie wskazuje zapisywany punkt.
-//
-// Schemat żąda urządzenia od katalogu lokalnego
-// (`CHECK(rodzaj <> 'localDirectory' OR urzadzenie_id IS NOT NULL)`), a klucz
-// obcy żąda, żeby wskazane urządzenie istniało. Oba więzy zgłaszają się dopiero
-// jako awaria zapisu, więc wybór zapada przed poleceniem — inaczej zamiast
-// powodu odmowy wraca błąd wewnętrzny.
-//
-// Wskazanie podane sprawdzamy istnieniem wiersza. Katalog lokalny bez wskazania
-// osadzamy na maszynie, na której działa rdzeń: katalog wybrany oknem powłoki
-// leży z definicji tam, a kolumna `biezace` tę maszynę wskazuje. Punkt mostowy
-// bez wskazania zostaje bez urządzenia — most jest wpisem platformy i urządzenia
-// nie wymaga.
+// urzadzeniePunktu rozstrzyga, na które urządzenie wskazuje zapisywany punkt dostępu, zanim polecenie zapisu trafi do bazy.
 func (r *repozytoriumPunktowDostepu) urzadzeniePunktu(ctx context.Context,
 	transakcja *sql.Tx, punkt PunktDostepu) (*int64, error) {
 
@@ -222,7 +204,7 @@ func (r *repozytoriumPunktowDostepu) jedenIdentyfikator(ctx context.Context, tra
 	return id, nil
 }
 
-// zapiszListy wymienia obie listy podrzędne punktu w transakcji jego zapisu.
+// zapiszListy wymienia obie listy podrzędne punktu dostępu w ramach jednej transakcji jego zapisu do bazy.
 func (r *repozytoriumPunktowDostepu) zapiszListy(ctx context.Context, transakcja *sql.Tx,
 	punktID int64, punkt PunktDostepu) error {
 
@@ -243,5 +225,5 @@ func portPunktu(punkt PunktDostepu) int {
 	return domyslnyPortMostu
 }
 
-// domyslnyPortMostu odpowiada wartości domyślnej kolumny w schemacie.
+// domyslnyPortMostu odpowiada wartości domyślnej kolumny portu mostu ustawionej w schemacie bazy danych.
 const domyslnyPortMostu = 22

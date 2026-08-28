@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: obszar Apps — dobudowa Architecture Designera.
-// Historia wersji układu (tabela `wersja_architektury_apps`) i adnotacje
-// projektowe kanwy (`adnotacja_architektury_apps`) —
-// `store/migracja_201_apps_architektura_dobudowa.sql`.
-//
-// Wiersz historii dopisuje `ZapiszArchitekture` (`aplikacje.go`) w tej samej
-// transakcji, w której wymienia komponenty — wersja bez wiersza historii albo
-// wiersz historii bez wersji byłyby dwoma stanami rozjechanymi po awarii
-// w połowie zapisu.
+// Plik prowadzi obszar Apps — dobudowę Architecture Designera: historię wersji układu oraz adnotacje projektowe kanwy;
+// wiersz historii dopisuje ZapiszArchitekture w tej samej transakcji, w której wymienia komponenty.
 package dane
 
 import (
@@ -15,7 +8,7 @@ import (
 	"fmt"
 )
 
-// WersjaArchitekturyApp to wiersz tabeli `wersja_architektury_apps`.
+// WersjaArchitekturyApp to wiersz tabeli `wersja_architektury_apps` niosący migawkę układu komponentów.
 type WersjaArchitekturyApp struct {
 	Wersja            int
 	KodArchitektury   string
@@ -24,7 +17,7 @@ type WersjaArchitekturyApp struct {
 	Utworzono         string
 }
 
-// AdnotacjaArchitekturyApp to wiersz tabeli `adnotacja_architektury_apps`.
+// AdnotacjaArchitekturyApp to wiersz tabeli `adnotacja_architektury_apps` niosący notatkę projektową kanwy.
 type AdnotacjaArchitekturyApp struct {
 	ID             int64
 	Kod            string
@@ -75,7 +68,7 @@ const (
 	                     WHERE architektura_id = ? ORDER BY id`
 )
 
-// WersjeArchitekturyApp zwraca historię wersji układu, od najnowszej.
+// WersjeArchitekturyApp zwraca całą historię wersji układu aplikacji, od wersji najnowszej do najstarszej.
 func (r *repozytoriumAplikacji) WersjeArchitekturyApp(ctx context.Context,
 	architekturaID int64) ([]WersjaArchitekturyApp, error) {
 
@@ -107,7 +100,7 @@ func (r *repozytoriumAplikacji) WersjeArchitekturyApp(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszAdnotacjeApp zapisuje notatkę projektową (UPSERT po identyfikatorze).
+// ZapiszAdnotacjeApp zapisuje notatkę projektową kanwy aplikacji metodą UPSERT po identyfikatorze notatki.
 func (r *repozytoriumAplikacji) ZapiszAdnotacjeApp(ctx context.Context,
 	adnotacja AdnotacjaArchitekturyApp) (AdnotacjaArchitekturyApp, error) {
 
@@ -131,7 +124,7 @@ func (r *repozytoriumAplikacji) ZapiszAdnotacjeApp(ctx context.Context,
 	return r.AdnotacjaApp(ctx, adnotacja.Kod)
 }
 
-// AdnotacjaApp zwraca jedną notatkę po kodzie zewnętrznym.
+// AdnotacjaApp zwraca jedną wybraną notatkę projektową kanwy aplikacji po jej kodzie zewnętrznym w bazie.
 func (r *repozytoriumAplikacji) AdnotacjaApp(ctx context.Context, kod string) (AdnotacjaArchitekturyApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzAdnotacjeApp)
 	if err != nil {
@@ -147,7 +140,7 @@ func (r *repozytoriumAplikacji) AdnotacjaApp(ctx context.Context, kod string) (A
 	return adnotacja, nil
 }
 
-// AdnotacjeApp zwraca notatki architektury w kolejności zapisu.
+// AdnotacjeApp zwraca wszystkie notatki architektury aplikacji w kolejności ich pierwotnego zapisu do bazy.
 func (r *repozytoriumAplikacji) AdnotacjeApp(ctx context.Context,
 	architekturaID int64) ([]AdnotacjaArchitekturyApp, error) {
 
@@ -175,7 +168,7 @@ func (r *repozytoriumAplikacji) AdnotacjeApp(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajAdnotacjeApp składa notatkę z jednego wiersza wyniku.
+// odczytajAdnotacjeApp składa notatkę projektową kanwy aplikacji wprost z jednego wiersza wyniku zapytania.
 func odczytajAdnotacjeApp(wiersz skaner) (AdnotacjaArchitekturyApp, error) {
 	var adnotacja AdnotacjaArchitekturyApp
 	var komponent, zaleznoscZ, zaleznoscDo sql.NullString

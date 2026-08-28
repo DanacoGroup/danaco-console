@@ -1,34 +1,12 @@
-/**
- * Teksty modułu Browser widoczne dla Operatora — kody katalogu, objaśnienia
- * dymków [?] i zdania nazywające braki kontraktu.
- *
- * Jedna odpowiedzialność: słowo mówione do Operatora. Pliki budujące elementy
- * nie trzymają ani jednego zdania, bo wtedy zmiana brzmienia wymagałaby wejścia
- * w widok, a te same zdania powtarzałyby się w trzech oknach naraz (wzór:
- * `sterowanie/etykiety-sterowania.ts`).
- *
- * Zdania o brakach stoją tu razem z resztą: brak drogi w kontrakcie jest treścią
- * widoku tak samo jak nazwa przycisku — okno ma go wypowiedzieć, nie przemilczeć.
- */
+/** Teksty modułu Browser widoczne dla operatora — kody katalogu, objaśnienia dymków i zdania nazywające braki kontraktu. */
 
 import { Command } from '../../../../shared/contract';
 import type { NarzedzieAdnotacji } from './slady-adnotacji';
 
-/** Kod modułu z kolumny `modul.kod` rdzenia (`migracja_007_zaczyn_slownikow.sql`). */
+/** Kod modułu z kolumny `modul.kod` rdzenia, nadany migracją zakładającą słowniki modułów przy starcie. */
 export const KOD_MODULU = 'browser';
 
-/**
- * Kody okien operacyjnych modułu. Kod jest bezmodułowy —
- * `migracja_030_rejestr_okien_operacyjnych.sql` nadaje definicjom okien kody bez
- * przedrostka modułu, więc kody przychodzące z `Module.operationalWindowCodes`
- * zestawiają się wprost z tymi wartościami.
- *
- * Rejestr rdzenia niesie dziś wiersze trzech pierwszych okien. Automation Studio
- * i Capture & Monitor Panel opracowanie modułu wymienia na równi z nimi, więc
- * moduł je buduje i podaje ich kody katalogowi — pasek uczciwości wypowiada
- * wtedy rozjazd („kody budowane, których rdzeń modułowi nie przypisuje")
- * zamiast go przemilczeć.
- */
+/** Kody okien operacyjnych modułu — bezmodułowe, zestawiane wprost z wartościami pola `Module.operationalWindowCodes`. */
 export const KODY_OKIEN = {
   przegladarka: 'browser-window',
   zrodla: 'sources-panel',
@@ -37,13 +15,7 @@ export const KODY_OKIEN = {
   materialy: 'capture-monitor-panel',
 } as const;
 
-/**
- * Kody paneli warstwy czwartej — kluczy stanu odsłonięcia i znaczników `data-panel`.
- *
- * Panele nie są oknami operacyjnymi: rejestr rdzenia ich nie zna i znać nie ma
- * powodu, bo są częścią okien, w których stoją. Kod jest tu wyłącznie nazwą
- * pozycji w stanie warstw widoczności.
- */
+/** Kody paneli warstwy czwartej — kluczy stanu odsłonięcia i znaczników `data-panel`; nie są kodami okien operacyjnych. */
 export const KODY_PANELI = {
   edytorScenariusza: 'edytor-scenariusza',
   limityPrzebiegu: 'limity-przebiegu',
@@ -51,17 +23,10 @@ export const KODY_PANELI = {
   macierzIzolacji: 'macierz-izolacji',
 } as const;
 
-/**
- * Klasy własne dymka [?] podawane bibliotecznej fabryce `utworzDymekObjasnienia`.
- *
- * Stoją w jednym miejscu, bo sięga po nie każdy dymek modułu: rozpisane
- * literałem rozjechałyby się przy pierwszej zmianie nazwy klasy w `browser.css`.
- * Fabryka jest wspólna, wygląd znaku pozostaje modułu — pierścień o wymiarze
- * pola wyboru zamiast bibliotecznego kwadratu ikony.
- */
+/** Klasy własne dymka podawane bibliotecznej fabryce `utworzDymekObjasnienia`, wspólne dla każdego dymka modułu. */
 export const KLASY_DYMKA = { powloka: 'mb-dymek', znak: 'mb-dymek__znak' } as const;
 
-/** Objaśnienia dymków [?] przy elementach konfiguracji okien modułu. */
+/** Objaśnienia dymków przy elementach konfiguracji okien modułu, wyświetlane po najechaniu na znak zapytania. */
 export const OBJASNIENIA = {
   adres:
     'Adres strony przekazywany rdzeniowi komendą browser.navigate. Rdzeń otwiera stronę ' +
@@ -176,18 +141,7 @@ export const NARZEDZIA_ADNOTACJI: readonly { kod: NarzedzieAdnotacji; nazwa: str
   { kod: 'tekst', nazwa: 'Tekst' },
 ];
 
-/**
- * Cztery barwy adnotacji — żeton motywu i klasa próbki na przycisku.
- *
- * Żeton i klasa stoją w jednym wierszu, bo opisują tę samą barwę dwiema drogami:
- * arkusz maluje próbkę na przycisku regułą `.mb-adnotacja__barwa--…`, a płótno 2D
- * nie zna `var()` i musi dostać żeton po nazwie, żeby rozwiązać go w chwili
- * rysowania. Rozdzielone na dwa wykazy rozjechałyby się przy zmianie palety.
- *
- * Żetony są prymitywne, nie semantyczne: barwa stanu (`--dn-blad-tekst`)
- * przełącza się wraz z motywem, a tusz adnotacji ma być ten sam w PNG wysłanym
- * z motywu jasnego i z ciemnego, bo załącznik ogląda się poza motywem.
- */
+/** Cztery barwy adnotacji — żeton motywu i klasa próbki na przycisku, opisujące tę samą barwę dwiema drogami użycia. */
 export const BARWY_ADNOTACJI: readonly {
   kod: string;
   nazwa: string;
@@ -200,23 +154,13 @@ export const BARWY_ADNOTACJI: readonly {
   { kod: 'sygnal', nazwa: 'Błękit sygnałowy', zeton: '--dn-sygnal-500', klasa: 'mb-adnotacja__barwa--sygnal' },
 ];
 
-/**
- * Zdania trybu adnotacji, w tym zdanie nazywające brak tła.
- *
- * `bezTla` stoi w widoku na stałe, nie w dymku: pod adnotacją miałby leżeć zrzut
- * strony, którego rdzeń nie oddaje. Operator ma to wiedzieć przed wysłaniem,
- * a nie domyślić się z pustego obrazka po fakcie.
- */
+/** Zdania trybu adnotacji, w tym zdanie nazywające brak tła — `bezTla` stoi w widoku na stałe, nie w dymku objaśnienia. */
 export const ADNOTACJA = {
   bezTla:
     'Płótno jest przezroczyste — rdzeń nie oddaje zrzutu strony (pole screenshotRef zostaje ' +
     'puste), więc w załączniku pójdzie sam rysunek, BEZ obrazu strony pod spodem.',
 
-  // Rysunek idzie jako URI danych, rdzeń materializuje go do pliku na własnym
-  // nośniku (`core/adapter_rozmowa_zalaczniki.go`) i podaje modelowi ścieżkę
-  // w treści zapytania, wraz z prośbą o sięgnięcie po nią narzędziem odczytu.
-  // Obrazu wklejonego w wiadomość model nie dostaje — kanał CLI nie ma na to
-  // pola — więc zobaczy rysunek dopiero po otwarciu pliku.
+  // Rysunek idzie jako URI danych, rdzeń zapisuje go do pliku i podaje modelowi samą ścieżkę.
   modelDostajeSciezke:
     'Rysunek trafi na nośnik rdzenia, a model dostanie ŚCIEŻKĘ do pliku — zobaczy go dopiero, ' +
     'gdy sięgnie po plik narzędziem odczytu. Obrazu wklejonego w wiadomość model nie dostaje.',
@@ -230,14 +174,7 @@ export const ADNOTACJA = {
   wysylkaWToku: 'Spłaszczona adnotacja idzie do okna rozmowy komendą message.send…',
 } as const;
 
-/**
- * Cztery klasyfikacje notatki z opracowania modułu wraz z pozycją „bez
- * klasyfikacji", od której zaczyna każda notatka.
- *
- * Kod jest kluczem pamięci widoku, nazwa — napisem dla Operatora. Kontrakt pola
- * klasyfikacji nie niesie, więc oznaczenie żyje w karcie (`zebrane-w-sesji.ts`)
- * i panel mówi o tym wprost.
- */
+/** Cztery klasyfikacje notatki z opracowania modułu wraz z pozycją „bez klasyfikacji”, od której zaczyna każda notatka. */
 export const KLASYFIKACJE: readonly { kod: string; nazwa: string }[] = [
   { kod: '', nazwa: 'bez klasyfikacji' },
   { kod: 'obserwacja', nazwa: 'obserwacja' },
@@ -246,29 +183,16 @@ export const KLASYFIKACJE: readonly { kod: string; nazwa: string }[] = [
   { kod: 'wniosek', nazwa: 'wniosek' },
 ];
 
-/** Nazwa klasyfikacji po kodzie; kod nieznany przedstawia się sam sobą. */
+/** Nazwa klasyfikacji przypisana kodowi; kod nieznany, spoza wykazu klasyfikacji, przedstawia się sam sobą jako nazwa. */
 export function nazwaKlasyfikacji(kod: string): string {
   return KLASYFIKACJE.find((pozycja) => pozycja.kod === kod)?.nazwa ?? kod;
 }
 
-/**
- * Pozycje, których okno jeszcze nie wykonuje: nazwa czynności i komenda, która
- * ją wykona.
- *
- * Zdania o powodzie nie ma tutaj ani jednego. Powód rozstrzyga się przy oknie,
- * z odczytu wykazu komend rdzenia (`moduly/pokrycie-komend.ts`): kontrakt
- * komendę niesie, a rdzeń może mieć albo nie mieć jej uchwytu — i to się zmienia
- * wraz z rdzeniem, nie wraz z tym plikiem. Zdanie wpisane tu na sztywno
- * przestałoby być prawdziwe w dniu dobudowy obsługi i nikt by go nie zdjął.
- *
- * Nazwa komendy pochodzi wyłącznie ze stałych kontraktu. Napis powielony
- * w module przeżyłby zmianę nazwy w `contract.json` i zostawiłby w oknie
- * zdanie o komendzie, której już nie ma.
- */
+/** Pozycje, których okno jeszcze nie wykonuje: nazwa czynności i komenda kontraktu, która ją docelowo wykona. */
 export interface PozycjaBezObslugi {
-  /** Czym pozycja jest dla czytającego — wchodzi w zdanie powodu. */
+  /** Czym pozycja jest dla czytającego — wchodzi wprost w treść zdania o powodzie braku obsługi. */
   czynnosc: string;
-  /** Komenda, która tę pozycję wykona. */
+  /** Komenda kontraktu, która wykona tę pozycję, gdy rdzeń zyska jej obsługę. */
   komenda: string;
 }
 
@@ -282,10 +206,7 @@ export const POZYCJE_BEZ_OBSLUGI = {
     czynnosc: 'Przewinięcie strony po stronie rdzenia',
     komenda: Command.BrowserScroll,
   },
-  // „Dodaj do rozmowy" ma dać dwie rzeczy naraz: załącznik rozmowy oraz wpis
-  // w wytworach sesji. Pierwszą niesie `message.send` polem `attachments`,
-  // drugą `browser.artifact.add` — obie komendy kontrakt ma, więc okno pyta
-  // o ich pokrycie w rdzeniu, zamiast orzekać o braku.
+  // Czynność daje dwie rzeczy naraz: załącznik rozmowy oraz wpis w wytworach sesji.
   wytworAdnotacji: {
     czynnosc: 'Wpis adnotacji w wytworach sesji',
     komenda: Command.BrowserArtifactAdd,
@@ -316,15 +237,7 @@ export const POZYCJE_BEZ_OBSLUGI = {
   zrzutStrony: { czynnosc: 'Zrzut ekranu strony', komenda: Command.BrowserScreenshotCapture },
 } as const satisfies Record<string, PozycjaBezObslugi>;
 
-/**
- * Stany puste trzech okien modułu — tytuł i zdanie mówiące, czym okno jest i jak
- * je zapełnić.
- *
- * Stan pusty opisuje sytuację oczekiwaną, czyli pierwsze użycie, a nie awarię
- * odczytu; napis „Brak danych" nie mówi ani czym okno jest, ani co Operator ma
- * zrobić. Dlatego opisu żąda już fabryka `utworzStanOkna` — okna bez zdania
- * o sobie nie da się zbudować.
- */
+/** Stany puste trzech okien modułu — tytuł i zdanie mówiące, czym okno jest i jak je zapełnić własną treścią. */
 export const STANY_PUSTE = {
   przegladarka: {
     tytul: 'Podgląd strony jest pusty',
@@ -361,13 +274,7 @@ export const STANY_PUSTE = {
   },
 } as const;
 
-/**
- * Zdania wypowiadane przy wykazach zaciąganych z rdzenia.
- *
- * Wykaz ma powiedzieć, skąd pochodzi. Panel pokazujący pozycje bez słowa
- * o pochodzeniu wygląda tak samo, gdy czyta rdzeń, i wtedy, gdy pokazuje własną
- * pamięć — a to dwie różne obietnice wobec Operatora.
- */
+/** Zdania wypowiadane przy wykazach zaciąganych z rdzenia, żeby panel powiedział wprost, skąd wykaz pochodzi. */
 export const WYKAZY = {
   zrodla:
     'Wykaz zaciągany z rdzenia komendą browser.source.list — pokazuje źródła okna, ' +
@@ -385,14 +292,7 @@ export const WYKAZY = {
     'migawki zostają w rdzeniu.',
 } as const;
 
-/**
- * Nazwy wyzwalaczy paska kontekstu wraz z warstwą, na której stoją.
- *
- * Brzmienie jest brzmieniem opracowania modułu (rozdz. 3.1): znaczniki `Źródła ▼`
- * i `Notatki ▼` należą do warstwy drugiej, menu `Operacje ▼` do trzeciej,
- * a narzędzia warstwy czwartej nie mają w pasku nazwy, dopóki Operator nie
- * włączy trybu administracyjnego.
- */
+/** Nazwy wyzwalaczy paska kontekstu wraz z warstwą interfejsu, na której poszczególne wyzwalacze stoją. */
 export const WYZWALACZE = {
   zrodla: 'Źródła',
   notatki: 'Notatki',

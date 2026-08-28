@@ -13,19 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek silnika repozytorium: czy odpowiedź opisuje stan, który naprawdę leży
-// na dysku.
-//
-// Materiał każdego sprawdzianu powstaje tutaj: repozytorium zakładane na czas
-// sprawdzianu, z zatwierdzeniami wytworzonymi tą samą biblioteką. Repozytorium
-// wniesione do drzewa zestarzałoby się razem z wersją biblioteki, a sprawdzian
-// oparty na repozytorium PRODUKTU mierzyłby przypadek — jego stan zmienia się
-// przy każdej pracy.
-//
-// Żaden sprawdzian nie pomija się przy braku programu `git`: pakiet nie
-// uruchamia ani jednego procesu.
-
-// repozytoriumProbne zakłada repozytorium wraz z pierwszym zatwierdzeniem.
+// repozytoriumProbne zakłada repozytorium wraz z pierwszym zatwierdzeniem, tworząc materiał
+// sprawdzianu niezależny od stanu repozytorium produktu.
 func repozytoriumProbne(t *testing.T, pliki map[string]string) (string, *git.Repository) {
 	t.Helper()
 
@@ -41,7 +30,8 @@ func repozytoriumProbne(t *testing.T, pliki map[string]string) (string, *git.Rep
 	return katalog, repo
 }
 
-// zapiszPlik odkłada treść pod wskazaną ścieżką wraz z katalogami pośrednimi.
+// zapiszPlik odkłada treść pod wskazaną ścieżką wraz z katalogami pośrednimi, zakładając
+// brakujące katalogi nadrzędne przed zapisem pliku.
 func zapiszPlik(t *testing.T, korzen, sciezka, tresc string) {
 	t.Helper()
 
@@ -54,7 +44,8 @@ func zapiszPlik(t *testing.T, korzen, sciezka, tresc string) {
 	}
 }
 
-// zatwierdz przygotowuje całość i zakłada zatwierdzenie.
+// zatwierdz przygotowuje całość zmian w katalogu roboczym i zakłada zatwierdzenie z podanym
+// opisem oraz stałym autorstwem sprawdzianu.
 func zatwierdz(t *testing.T, repo *git.Repository, opis string) {
 	t.Helper()
 
@@ -75,10 +66,9 @@ func zatwierdz(t *testing.T, repo *git.Repository, opis string) {
 	}
 }
 
-// TestStanOdrozniaKatalogBezRepozytoriumOdCzystego pilnuje rozróżnienia, które
-// niesie pole `isRepository`. Bez niego Git Panel pokazywałby „brak zmian" tam,
-// gdzie repozytorium nigdy nie założono — a to są dwa różne stany i dwie różne
-// czynności naprawcze.
+// TestStanOdrozniaKatalogBezRepozytoriumOdCzystego pilnuje rozróżnienia, które niesie pole
+// isRepository. Bez niego panel repozytorium pokazywałby brak zmian tam, gdzie repozytorium
+// nigdy nie założono.
 func TestStanOdrozniaKatalogBezRepozytoriumOdCzystego(t *testing.T) {
 	bezRepozytorium := t.TempDir()
 	stan, err := Stan(bezRepozytorium)

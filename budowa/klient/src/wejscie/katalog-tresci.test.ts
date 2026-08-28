@@ -1,38 +1,7 @@
 /**
- * DROGA WEJŚCIA — katalog treści jest jedynym miejscem z tekstem.
- *
- * Sprawdzian pilnuje właściwości, którą prototyp przyniósł i którą teren ma
- * przenieść: cały tekst widoczny dla użytkownika stoi w jednym pliku, a poza
- * nim nie ma ani jednego łańcucha, który dałoby się przeczytać jako zdanie.
- * Łańcuch dopisany poza `tresci.ts` jest usterką i ma tu upaść.
- *
- * Reguła obejmuje PLIKI OKNA — składniki, ekrany, montaż, przebieg, narzędzia
- * i zestaw znaków. Nie obejmuje sprawdzianów: opis sprawdzianu jest zdaniem dla
- * tego, kto czyta wynik uruchomienia, i do okna nie trafia nigdy. Wykaz plików
- * pominiętych jest wypisywany, więc pominięcie nie da się rozrosnąć po cichu.
- *
- * Reguła jest dwuczłonowa i cała maszynowa:
- *
- *   1. Poza katalogiem żaden łańcuch nie niesie polskiego znaku diakrytycznego.
- *   2. Poza katalogiem każdy łańcuch ma KSZTAŁT TECHNICZNY: jest nazwą bez
- *      odstępu, wykazem klas albo selektorem, wzorem z podstawieniem, samym
- *      odstępem rozdzielającym węzły tekstowe, rysunkiem `<svg` w zestawie
- *      znaków albo wpisem diagnostycznym. Zdanie żadnego z tych kształtów nie
- *      ma i tu upada.
- *
- * Odstępstwo jest jedno i wąskie: wpis diagnostyczny — łańcuch oddany do
- * dziennika wywołaniem `console.*` albo niesiony wyjątkiem `new Error`. To
- * zdanie dla wykonawcy, nie dla Operatora; okno go nie pokazuje. Wpisy są
- * liczone i wypisywane, więc odstępstwo nie rozrośnie się po cichu.
- *
- * Czego sprawdzian NIE wychwyci: pojedynczego słowa bez odstępu i bez polskiego
- * znaku, na przykład nazwy własnej wpisanej wprost w składnik. Granica jest
- * nazwana wprost, bo instrument, który udaje szczelność, jest gorszy od
- * instrumentu o znanym zasięgu.
- *
- * Pomiar odróżnia brak wyniku od wyniku pustego: sprawdzian upada, gdy nie
- * znalazł plików albo nie znalazł ani jednego łańcucha. Zero trafień
- * w katalogu, którego nie ma, nie jest wynikiem.
+ * Droga wejścia — katalog treści jest jedynym miejscem z tekstem. Sprawdzian
+ * pilnuje, że cały tekst widoczny dla użytkownika stoi w jednym pliku, a poza
+ * nim żaden łańcuch nie czyta się jak zdanie.
  */
 
 import { bieg, rowne, sprawdz } from '../sprawdzian.ts';
@@ -48,34 +17,32 @@ const pliki = (await import(nazwaModulu)) as unknown as {
   readFileSync(sciezka: string, kodowanie: string): string;
 };
 
-/** Katalog terenu; sprawdzian stoi w nim, więc idzie od własnego położenia. */
+/** Katalog terenu; sprawdzian stoi w nim, więc odczyt plików idzie od własnego położenia pliku sprawdzianu. */
 const KORZEN = new URL('.', import.meta.url).pathname;
 
-/** Plik, który tekst NOSI — jedyny. */
+/** Plik, który tekst niesie — jedyny plik w oknie, w którym wolno zapisać zdanie widoczne dla użytkownika. */
 const KATALOG_TRESCI = 'tresci.ts';
 
-/** Plik, który niesie rysunki; jego łańcuchy muszą być rysunkami. */
+/** Plik, który niesie rysunki; jego łańcuchy muszą być rysunkami, a nie zdaniami czytelnymi jak zwykły tekst. */
 const ZESTAW_ZNAKOW = 'ikony.ts';
 
-/** Przyrostek plików sprawdzianów — instrumentów, nie okna. */
+/** Przyrostek plików sprawdzianów — instrumentów mierzących okno, a nie samego okna, pomijanych przez tę regułę. */
 const SPRAWDZIAN = '.test.ts';
 
-/** Polskie znaki diakrytyczne — po nich poznaje się zdanie po polsku. */
+/** Polskie znaki diakrytyczne — po ich obecności w łańcuchu poznaje się zdanie napisane po polsku wprost. */
 const DIAKRYTYKI = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 
 /**
- * Znak właściwy nazwie klasy albo selektorowi. Wyraz zdania go nie niesie.
+ * Znak właściwy nazwie klasy albo selektorowi w arkuszu stylu; wyraz zdania
+ * po polsku nigdy go nie niesie.
  */
 const ZNAK_SELEKTORA = /[-.#[\]=,>+~*]/;
 
 /**
- * Czy łańcuch ma kształt techniczny, czyli nie da się go przeczytać jak zdania.
- *
- * Rozstrzyga próba na członach: w wykazie klas i w selektorze KAŻDY człon
- * rozdzielony odstępem niesie znak selektora albo jest nazwą elementu, czyli
- * ma najwyżej dwie litery. W zdaniu członów takich nie ma — wyraz polski
- * dłuższy niż dwie litery i bez znaku selektora przepada na tej próbie,
- * choćby całe zdanie składało się ze znaków, których używa arkusz.
+ * Czy łańcuch ma kształt techniczny, czyli nie da się go przeczytać jak
+ * zdania. Rozstrzyga próba na członach: w wykazie klas i w selektorze każdy
+ * człon niesie znak selektora albo jest nazwą elementu, czyli ma najwyżej
+ * dwie litery.
  */
 function ksztaltTechniczny(lancuch: Lancuch, wZestawieZnakow: boolean): boolean {
   const tresc = lancuch.tresc;
@@ -89,7 +56,7 @@ function ksztaltTechniczny(lancuch: Lancuch, wZestawieZnakow: boolean): boolean 
     .every((czlon) => ZNAK_SELEKTORA.test(czlon) || czlon.length <= 2);
 }
 
-/** Znalezisko: jeden łańcuch wraz z miejscem, w którym stoi. */
+/** Znalezisko: jeden łańcuch wraz z miejscem, w którym stoi — nazwą pliku i numerem jego wiersza w tym pliku. */
 interface Lancuch {
   plik: string;
   wiersz: number;
@@ -98,7 +65,7 @@ interface Lancuch {
   doDziennika: boolean;
 }
 
-/** Wykaz plików terenu, wraz z podkatalogami, w kolejności odczytu. */
+/** Wykaz plików terenu, wraz z podkatalogami, zebrany rekurencyjnie w kolejności odczytu katalogu na dysku. */
 function wykazPlikow(katalog: string, przedrostek = ''): string[] {
   const znalezione: string[] = [];
   for (const wpis of pliki.readdirSync(katalog, { withFileTypes: true })) {
@@ -110,11 +77,9 @@ function wykazPlikow(katalog: string, przedrostek = ''): string[] {
 }
 
 /**
- * Wydobywa łańcuchy z pliku, pomijając komentarze i wyrażenia regularne.
- *
- * Bez pomijania komentarzy pomiar mierzyłby polszczyznę komentarzy zamiast
- * łańcuchów, a bez pomijania wyrażeń regularnych ukośnik klasy znaków
- * wyglądałby jak początek komentarza i zjadał resztę pliku.
+ * Wydobywa łańcuchy z pliku, pomijając komentarze i wyrażenia regularne, aby
+ * pomiar mierzył wyłącznie tekst zdań, nie treść komentarzy ani znaki klas
+ * wyrażeń.
  */
 function lancuchyPliku(nazwa: string, tresc: string): Lancuch[] {
   const znalezione: Lancuch[] = [];
@@ -222,8 +187,7 @@ function wypisz(nazwa: string, wartosc: unknown): void {
 
 await bieg('droga wejścia — katalog treści', {
   'instrument zmierzył to, co miał zmierzyć'() {
-    // Zapora przed wynikiem pustym: zero trafień w katalogu, którego nie ma,
-    // wygląda tak samo jak zero naruszeń.
+    // Zapora przed wynikiem pustym: zero trafień w katalogu nieistniejącym wygląda jak zero naruszeń.
     sprawdz(wykaz.length > 0, `nie znaleziono ani jednego pliku w ${KORZEN}`);
     sprawdz(plikiOkna.includes(KATALOG_TRESCI), `nie znaleziono katalogu ${KATALOG_TRESCI}`);
     sprawdz(plikiOkna.includes(ZESTAW_ZNAKOW), `nie znaleziono zestawu znaków ${ZESTAW_ZNAKOW}`);
@@ -237,8 +201,7 @@ await bieg('droga wejścia — katalog treści', {
   },
 
   'instrument rozpoznaje zdanie po polsku, gdy je zobaczy'() {
-    // Kontrola dodatnia: bez niej sprawdzian milczałby także wtedy, gdyby
-    // wydobywanie łańcuchów przestało cokolwiek wydobywać.
+    // Kontrola dodatnia: bez niej sprawdzian milczałby, gdyby wydobywanie łańcuchów przestało działać.
     const probka = lancuchyPliku('probka.ts', "const a = 'Hasło nie spełnia wymagań.';\n");
     rowne(probka.length, 1, 'próbka dała jeden łańcuch');
     sprawdz(DIAKRYTYKI.test(probka[0]!.tresc), 'wzorzec nie rozpoznał polskiego zdania');
@@ -263,8 +226,7 @@ await bieg('droga wejścia — katalog treści', {
   },
 
   'instrument rozpoznaje zdanie, gdy stoi w składniku'() {
-    // Kontrola dodatnia dla reguły kształtu: bez niej reguła mogłaby przepuszczać
-    // wszystko i milczeć tak samo jak reguła spełniona.
+    // Kontrola dodatnia dla reguły kształtu: bez niej reguła mogłaby przepuszczać wszystko i milczeć.
     const zdanie: Lancuch = {
       plik: 'skladniki/probka.ts',
       wiersz: 1,
@@ -282,8 +244,7 @@ await bieg('droga wejścia — katalog treści', {
   },
 
   'wpis do dziennika nie przemyca treści dla użytkownika'() {
-    // Odstępstwo jest wąskie i policzone: wpis diagnostyczny wolno pisać po
-    // polsku, ale nie wolno nim zastąpić katalogu treści.
+    // Odstępstwo jest wąskie: wpis diagnostyczny wolno pisać po polsku, ale nie zastępuje katalogu treści.
     sprawdz(
       doDziennika.length <= 2,
       `wpisów do dziennika przybyło: ${doDziennika.map((l) => `${l.plik}:${l.wiersz}`).join(', ')}`,

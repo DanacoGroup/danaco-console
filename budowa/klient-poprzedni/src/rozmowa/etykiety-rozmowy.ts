@@ -1,22 +1,12 @@
 import type { StanWpisu } from './wpis-rozmowy';
 
-/**
- * Napisy warstwy rozmowy — jedno miejsce dla wszystkiego, co Operator czyta.
- *
- * Napis nigdy nie stoi obok samej barwy: każdy stan niesie słowo, bo stan
- * sygnalizowany wyłącznie kolorem jest niedopuszczalny.
- */
+/** Stała zawiera wszystkie napisy tekstowe warstwy rozmowy, czytane przez operatora w oknie komunikacji z modelem. */
 export const NAPISY = {
   /** Nagłówek listy historii. */
   historia: 'Historia okna komunikacji',
   /** Etykieta pola wpisywania. */
   polePodpowiedz: 'Napisz do modelu. Enter wysyła, Shift+Enter dodaje wiersz.',
-  /**
-   * Podpowiedź stojąca pod polem, gdy otwarty jest wykaz po ukośniku.
-   *
-   * Zdanie mówi wprost, że pole wpisywania jest zarazem filtrem wykazu, i
-   * wymienia klawisze, które przy otwartym wykazie znaczą co innego niż zwykle.
-   */
+  /** Podpowiedź pod polem wpisywania, widoczna gdy otwarty jest wykaz pozycji po ukośniku. */
   wykazPodpowiedz: 'Wpisz, by zawęzić wykaz · ↑↓ wybór · Enter zatwierdza · Esc zamyka',
   /** Przycisk wysyłki. */
   wyslij: 'Wyślij',
@@ -36,31 +26,17 @@ export const NAPISY = {
   podsumowanie: 'Tura zamknięta',
   /** Wykaz typów zdarzeń przechwyconych w turze — tryb „Pełny". */
   zdarzenia: 'Zdarzenia tury',
-  /**
-   * Wykaz wytworów tury — tryb „Streszczenie".
-   *
-   * Napis mówi „narzędzia", a nie „pliki": rdzeń nie nadaje spisu wytworzonych
-   * plików, więc wykaz wymienia nazwy wywołanych narzędzi.
-   */
+  /** Wykaz wytworów tury w trybie Streszczenie, nazwanych wedle wywołanych narzędzi. */
   wytwory: 'Wytwory tury — narzędzia',
   /** Stan pusty trybu „Streszczenie": tytuł. */
   streszczeniePustoTytul: 'Streszczenie powstaje z domkniętych tur',
-  /**
-   * Stan pusty trybu „Streszczenie": opis.
-   *
-   * Tłumaczy, czym streszczenie jest i skąd się bierze, zamiast meldować „brak
-   * danych".
-   */
+  /** Opis stanu pustego trybu Streszczenie, wyświetlany zanim żadna tura się domknie. */
   streszczeniePustoOpis:
     'Streszczenie tury składa rdzeń i dokłada je do ostatniego fragmentu strumienia: '
     + 'czas, liczba tur wewnętrznych, koszt i konto, a obok nich nazwy narzędzi, '
     + 'które tura wywołała. W tym wątku żadna tura jeszcze się nie domknęła, więc '
     + 'nie ma z czego go złożyć. Wypowiedzi wątku nie zniknęły — czekają w trybie Zwykły.',
-  /**
-   * Odpowiedź na kliknięcie „Zatrzymaj", kiedy rdzeń nie miał czego przerwać
-   * — rdzeń oddaje wtedy `stopped` równe fałsz, a kliknięcie i tak musi zostawić
-   * ślad na ekranie.
-   */
+  /** Odpowiedź na Zatrzymaj, gdy rdzeń nie miał żadnej tury do przerwania. */
   zatrzymanieBezTury:
     'Zatrzymanie: w tym oknie nie biegła żadna tura — rdzeń nie miał czego przerwać.',
   /** Zatrzymanie tury, o której historia okna nic nie wiedziała. */
@@ -72,7 +48,7 @@ export const NAPISY = {
   pustoOpis: 'Wypowiedź Operatora otwiera turę kanału głównego.',
 } as const;
 
-/** Nazwa stanu wpisu widoczna przy wypowiedzi. */
+/** Funkcja zwraca nazwę stanu wpisu w postaci prezentowanej operatorowi obok treści wypowiedzi w oknie rozmowy. */
 export function nazwaStanuWpisu(stan: StanWpisu): string {
   switch (stan) {
     case 'wysylanie':
@@ -90,7 +66,7 @@ export function nazwaStanuWpisu(stan: StanWpisu): string {
   }
 }
 
-/** Nazwa pola prowenancji w postaci prezentacyjnej. */
+/** Stała zawiera pary nazwy pola prowenancji oraz jego etykiety prezentacyjnej wyświetlanej w bloku prowenancji. */
 export const POLA_PROWENANCJI: ReadonlyArray<readonly [string, string]> = [
   ['model', 'Model'],
   ['modelZapasowy', 'Model zapasowy'],

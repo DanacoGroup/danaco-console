@@ -1,13 +1,7 @@
-// Odpowiedzialność pliku: rodzina `extension.*` — warstwa zaufania.
-// Uprawnienia deklarowane i nadane (`uprawnienie_rozszerzenia`), podpis pozycji
-// (`podpis_rozszerzenia`) oraz rejestr referencji sekretów wraz z zakresem
-// współdzielenia (`sekret_rozszerzenia`,
-// `udostepnienie_sekretu_rozszerzenia`) —
-// `store/migracja_210_rozszerzenia_zaufanie.sql`.
-//
-// Żaden wiersz tej warstwy niczego nie blokuje. Uprawnienie jest zapisem tego,
-// co manifest deklaruje i co Operator nadał; podpis — zapisem wyniku
-// weryfikacji; referencja sekretu — kluczem jawnym, nigdy treścią poświadczenia.
+// Warstwa zaufania rozszerzeń: uprawnienia w tabeli uprawnienie_rozszerzenia,
+// podpis pozycji w tabeli podpis_rozszerzenia oraz referencje sekretów ze
+// zakresem współdzielenia w tabelach sekret_rozszerzenia i
+// udostepnienie_sekretu_rozszerzenia.
 package dane
 
 import (
@@ -17,8 +11,8 @@ import (
 )
 
 // UprawnienieRozszerzenia to wiersz tabeli `uprawnienie_rozszerzenia`.
-// Kolumna `Nadane` rozstrzyga, czy wiersz opisuje deklarację manifestu, czy
-// nadanie Operatora — patrz czoło migracji 210.
+// Kolumna `Nadane` rozróżnia wiersz deklaracji manifestu od wiersza nadania
+// przez Operatora, zapisanych w tej samej tabeli.
 type UprawnienieRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -31,7 +25,9 @@ type UprawnienieRozszerzenia struct {
 	Nadano          *int64
 }
 
-// PodpisRozszerzenia to wiersz tabeli `podpis_rozszerzenia`.
+// PodpisRozszerzenia to wiersz tabeli `podpis_rozszerzenia`: przechowuje
+// algorytm, sumę kontrolną, wydawcę oraz podpis i klucz zakodowane w formacie
+// Base64 wraz z chwilą ostatniej aktualizacji.
 type PodpisRozszerzenia struct {
 	RozszerzenieKod string
 	Algorytm        *string
@@ -124,10 +120,9 @@ const (
 	                           ORDER BY u.byt_kod`
 )
 
-// ZapiszUprawnieniaRozszerzenia wymienia komplet uprawnień jednej strony —
-// deklarowanych albo nadanych. Wymiana, nie dokładanie: manifest, który
-// przestał deklarować uprawnienie, ma przestać je pokazywać, a nadanie zdjęte
-// przez Operatora ma zniknąć, nie zostać.
+// ZapiszUprawnieniaRozszerzenia wymienia komplet uprawnień jednej strony,
+// deklarowanych albo nadanych: usuwa poprzedni zestaw i zapisuje przekazany,
+// więc zdjęte uprawnienie znika zamiast pozostawać w tabeli.
 func (r *repozytoriumRozszerzen) ZapiszUprawnieniaRozszerzenia(ctx context.Context,
 	rozszerzenie string, nadane bool, uprawnienia []UprawnienieRozszerzenia) error {
 
@@ -200,8 +195,8 @@ func (r *repozytoriumRozszerzen) UprawnieniaRozszerzenia(ctx context.Context,
 	return lista, nil
 }
 
-// ZapiszPodpisRozszerzenia utrwala podpis pozycji wraz z materiałem do jego
-// ponownej weryfikacji.
+// ZapiszPodpisRozszerzenia utrwala podpis pozycji katalogu wraz z materiałem
+// źródłowym potrzebnym do jego ponownej weryfikacji w przyszłości.
 func (r *repozytoriumRozszerzen) ZapiszPodpisRozszerzenia(ctx context.Context,
 	podpis PodpisRozszerzenia) error {
 
@@ -223,7 +218,8 @@ func (r *repozytoriumRozszerzen) ZapiszPodpisRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// PodpisRozszerzenia zwraca podpis pozycji; brak wraca jako ErrBrakWiersza.
+// PodpisRozszerzenia zwraca podpis zapisany dla pozycji katalogu; gdy podpisu
+// brak, funkcja zwraca błąd ErrBrakWiersza.
 func (r *repozytoriumRozszerzen) PodpisRozszerzenia(ctx context.Context,
 	rozszerzenie string) (PodpisRozszerzenia, error) {
 
@@ -317,7 +313,8 @@ func (r *repozytoriumRozszerzen) ZapiszSekretRozszerzenia(ctx context.Context,
 	return r.SekretRozszerzenia(ctx, sekret.Odwolanie)
 }
 
-// SekretRozszerzenia zwraca jedną referencję wraz z zakresem współdzielenia.
+// SekretRozszerzenia zwraca jedną referencję sekretu wraz z pełnym zakresem
+// jej współdzielenia między rozszerzeniami i rolami.
 func (r *repozytoriumRozszerzen) SekretRozszerzenia(ctx context.Context, odwolanie string) (SekretRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSekretRozszerzenia)
 	if err != nil {
@@ -374,8 +371,9 @@ func (r *repozytoriumRozszerzen) SekretyRozszerzen(ctx context.Context, doCzasu 
 	return lista, nil
 }
 
-// zakresySekretowRozszerzen zwraca dwie mapy: odwołanie → pozycje i odwołanie →
-// role. Jedno zapytanie na cały rejestr — patrz wzorzec kolekcji.
+// zakresySekretowRozszerzen zwraca dwie mapy: odwołanie sekretu na listę
+// kodów pozycji oraz odwołanie na listę kodów ról, odczytane jednym
+// zapytaniem obejmującym cały rejestr.
 func (r *repozytoriumRozszerzen) zakresySekretowRozszerzen(ctx context.Context) (
 	map[string][]string, map[string][]string, error) {
 

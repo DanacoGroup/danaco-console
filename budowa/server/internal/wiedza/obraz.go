@@ -1,33 +1,15 @@
 // Odpowiedzialność pliku: silnik osi obrazu — porównanie zdania Operatora
-// z obrazami jego biblioteki.
-//
-// Osadzarka tekstu tu nie wystarczy i nie chodzi o jakość, tylko o przestrzeń.
-// Wektor zdania z modelu tekstowego leży w przestrzeni, w której obrazu nie ma;
-// model osi obrazu ma dwie wieże — jedną dla pikseli, drugą dla słów — uczone
-// tak, żeby kończyły w JEDNEJ przestrzeni. Dopiero tam iloczyn skalarny znaczy
-// „to zdanie opisuje ten obraz".
-//
-// Wektorów obrazów nie ma we wskaźniku i to jest rozstrzygnięcie, nie brak.
-// Tabela `fragment_wiedzy` trzyma przy każdym wektorze FRAGMENT TEKSTU, z którego
-// go policzono (`store/migracja_115_wskaznik_znaczenia.sql`), a obraz takiego
-// fragmentu nie ma; wpisanie tam nazwy pliku dałoby kolumnę, która dla jednych
-// wierszy jest cytatem, a dla innych etykietą. Kolumna `zakres` ma ponadto
-// warunek dopuszczający trzy wartości kontraktu i czwartej nie przyjmie bez
-// migracji, a migracje nastaw prowadzi inny teren. Dlatego oś obrazu liczy
-// wektory na każde zapytanie: koszt to jedno wczytanie wag i jeden przebieg
-// wieży obrazu na plik — sekundy przy bibliotece rzędu setek obrazów. Trwałość
-// tych wektorów jest pracą do zrobienia, nie założeniem tego pliku.
-//
-// Silnik nie zna kontraktu ani biblioteki: dostaje zdanie i ścieżki plików,
-// oddaje po jednej ocenie na ścieżkę. Wybór obrazów i przekład na trafienia
-// należą do adaptera rdzenia — tak samo jak przy osadzarce.
+// z obrazami jego biblioteki, przez model z dwiema wieżami, jedną dla pikseli
+// i drugą dla słów, uczonymi tak, żeby kończyły w jednej przestrzeni.
 package wiedza
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"sort"
+	"strconv"
 	"time"
 
 	"danacoconsole/server/internal/session"
@@ -45,14 +27,20 @@ const (
 	GranicaObrazow = 200
 )
 
-// SilnikObrazu porównuje zdanie z obrazami pomocnikiem lokalnym.
+// SilnikObrazu porównuje zdanie z obrazami pomocnikiem lokalnym; niesie
+// uruchamiacz procesów, katalog danych na maszynie rdzenia i nastawy modelu.
 type SilnikObrazu struct {
 	uruchamiacz   session.Uruchamiacz
 	katalogDanych string
 	ustawienia    Ustawienia
+	// skladnica trzyma wyniki policzone wcześniej, przy bazie rdzenia; pusta
+	// oznacza pracę bez trwałości — silnik liczy każdy wynik od nowa, tak jak
+	// przed dołożeniem trwałości.
+	skladnica *Skladnica
 }
 
-// NowySilnikObrazu zakłada silnik na uruchamiaczu procesów i katalogu danych.
+// NowySilnikObrazu zakłada silnik na uruchamiaczu procesów i katalogu danych,
+// z nastawami domyślnymi; do innych nastaw służy metoda ZUstawieniami.
 func NowySilnikObrazu(uruchamiacz session.Uruchamiacz, katalogDanych string) *SilnikObrazu {
 	return &SilnikObrazu{
 		uruchamiacz:   uruchamiacz,
@@ -61,14 +49,23 @@ func NowySilnikObrazu(uruchamiacz session.Uruchamiacz, katalogDanych string) *Si
 	}
 }
 
-// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji.
+// ZUstawieniami oddaje silnikowi komplet nastaw złożony z konfiguracji,
+// zamiast nastaw domyślnych założonych przy tworzeniu silnika.
 func (s *SilnikObrazu) ZUstawieniami(u Ustawienia) *SilnikObrazu {
 	s.ustawienia = u
 	return s
 }
 
+// ZeSkladnica podpina trwałość wyników osi obrazu nad bazą rdzenia
+// (`store/migracja_405_trwalosc_wektora_obrazu.sql`). Bez niej `Dopasuj`
+// woła pomocnika przy każdym wywołaniu, tak jak przed dołożeniem trwałości.
+func (s *SilnikObrazu) ZeSkladnica(skladnica *Skladnica) *SilnikObrazu {
+	s.skladnica = skladnica
+	return s
+}
+
 // Model oddaje nazwę modelu osi obrazu. Wchodzi do odpowiedzi komendy i do
-// treści odmowy.
+// treści odmowy, gdy silnik nie potrafi porównać zdania z obrazami.
 func (s *SilnikObrazu) Model() string {
 	return s.ustawienia.ModelObrazu
 }
@@ -94,17 +91,15 @@ type odpowiedzObrazu struct {
 }
 
 // PominietyObraz nazywa plik, którego pomocnik nie otworzył, wraz z powodem.
-//
 // Wykaz wraca do wołającego, bo obraz pominięty i obraz niepodobny do zdania
-// wyglądają w odpowiedzi tak samo — oba po prostu w niej nie stoją. Bez tego
-// wykazu Operator patrzący na wynik bez swojego zdjęcia nie ma jak odróżnić
-// „model go nie wybrał" od „plik jest uszkodzony".
+// wyglądają w odpowiedzi tak samo — oba po prostu w niej nie stoją.
 type PominietyObraz struct {
 	Obraz string `json:"obraz"`
 	Powod string `json:"powod"`
 }
 
-// Gotowy sprawdza, czy jest czym porównywać, nie porównując niczego.
+// Gotowy sprawdza, czy jest czym porównywać, nie porównując niczego; woła
+// pomocnika bez pytania i bez plików, tylko po to, żeby sprawdzić dostępność.
 func (s *SilnikObrazu) Gotowy(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar, limit time.Duration) error {
 
@@ -113,11 +108,10 @@ func (s *SilnikObrazu) Gotowy(ctx context.Context, okno session.Okno,
 }
 
 // Dopasuj oddaje po jednej ocenie na obraz, w kolejności ścieżek, wraz
-// z wykazem plików, których pomocnik nie otworzył.
-//
-// Kolejność jest warunkiem: wołający wiąże ocenę z plikiem pozycją. Obraz
-// pominięty ma ocenę zerową i zajmuje swoje miejsce w wykazie, żeby pozycje się
-// nie przesunęły.
+// z wykazem plików, których pomocnik nie otworzył. Kolejność jest warunkiem:
+// wołający wiąże ocenę z plikiem pozycją. Obraz, którego wynik dla tego
+// zdania i modelu leży w składnicy pod niezmienionym odciskiem pliku, nie
+// wraca do pomocnika.
 func (s *SilnikObrazu) Dopasuj(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	pytanie string, sciezki []string, limit time.Duration) ([]float32, []PominietyObraz, error) {
@@ -125,20 +119,68 @@ func (s *SilnikObrazu) Dopasuj(ctx context.Context, okno session.Okno,
 	if len(sciezki) == 0 {
 		return nil, nil, nil
 	}
-	oceny, pominiete, err := s.wolaj(ctx, okno, zasady, obszar, pytanie, sciezki, limit)
+
+	odciski := make([]string, len(sciezki))
+	for i, sciezka := range sciezki {
+		odciski[i] = odciskPliku(sciezka)
+	}
+
+	zSkladnicy, err := s.podobienstwaZeSkladnicy(ctx, sciezki, pytanie)
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(oceny) != len(sciezki) {
+
+	oceny := make([]float32, len(sciezki))
+	var brakujaceSciezki []string
+	var brakujaceIndeksy []int
+	for i, sciezka := range sciezki {
+		wpis, jest := zSkladnicy[sciezka]
+		if jest && odciski[i] != "" && wpis.odcisk == odciski[i] {
+			oceny[i] = wpis.podobienstwo
+			continue
+		}
+		brakujaceSciezki = append(brakujaceSciezki, sciezka)
+		brakujaceIndeksy = append(brakujaceIndeksy, i)
+	}
+
+	if len(brakujaceSciezki) == 0 {
+		return oceny, nil, nil
+	}
+
+	swiezeOceny, pominiete, err := s.wolaj(ctx, okno, zasady, obszar, pytanie, brakujaceSciezki, limit)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(swiezeOceny) != len(brakujaceSciezki) {
 		return nil, nil, errors.New("wskaźnik znaczenia: pomocnik osi obrazu oddał " +
-			liczba(len(oceny)) + " ocen na " + liczba(len(sciezki)) +
+			liczba(len(swiezeOceny)) + " ocen na " + liczba(len(brakujaceSciezki)) +
 			" obrazów — wiązanie po pozycji przestałoby cokolwiek znaczyć; " +
 			"naprawa: zgłosić usterkę pomocnika osi obrazu")
+	}
+
+	pominieteZbior := make(map[string]struct{}, len(pominiete))
+	for _, obraz := range pominiete {
+		pominieteZbior[obraz.Obraz] = struct{}{}
+	}
+	var doZapisu []wpisPodobienstwaObrazu
+	for j, sciezka := range brakujaceSciezki {
+		i := brakujaceIndeksy[j]
+		oceny[i] = swiezeOceny[j]
+		if _, pominietyObraz := pominieteZbior[sciezka]; pominietyObraz || odciski[i] == "" {
+			continue
+		}
+		doZapisu = append(doZapisu, wpisPodobienstwaObrazu{
+			sciezka: sciezka, odcisk: odciski[i], podobienstwo: swiezeOceny[j],
+		})
+	}
+	if err := s.zapiszPodobienstwaDoSkladnicy(ctx, doZapisu, pytanie); err != nil {
+		return nil, nil, err
 	}
 	return oceny, pominiete, nil
 }
 
-// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź.
+// wolaj przeprowadza jedno uruchomienie pomocnika i czyta jego odpowiedź;
+// wywołują ją metody Gotowy i Dopasuj, każda z inną treścią zlecenia.
 func (s *SilnikObrazu) wolaj(ctx context.Context, okno session.Okno,
 	zasady session.Zasady, obszar session.Obszar,
 	pytanie string, sciezki []string,
@@ -185,7 +227,7 @@ func (s *SilnikObrazu) wolaj(ctx context.Context, okno session.Okno,
 }
 
 // odczytaj rozbiera odpowiedź pomocnika i zamienia nazwany brak na typowaną
-// odmowę.
+// odmowę, którą wołający rozpozna po typie BrakSilnika.
 func (s *SilnikObrazu) odczytaj(wynik zewnetrzne.Wynik) ([]float32, []PominietyObraz, error) {
 	var wczytana odpowiedzObrazu
 	if err := json.Unmarshal(wynik.Wyjscie, &wczytana); err != nil {
@@ -206,7 +248,8 @@ func (s *SilnikObrazu) odczytaj(wynik zewnetrzne.Wynik) ([]float32, []PominietyO
 	return wczytana.Oceny, wczytana.Pominiete, nil
 }
 
-// Obraz wiąże obraz biblioteki z jego oceną wobec zdania.
+// Obraz wiąże obraz biblioteki z jego oceną wobec zdania, wraz ze ścieżką
+// na maszynie rdzenia i identyfikatorem, którym da się po obraz sięgnąć.
 type Obraz struct {
 	// Zrodlo — nazwa pliku czytelna dla człowieka.
 	Zrodlo string
@@ -214,19 +257,15 @@ type Obraz struct {
 	ZrodloKod string
 	// Rodzaj — zapisany przy pliku rodzaj treści; pusty jest stanem poprawnym.
 	Rodzaj string
-	// Sciezka — droga do bajtów obrazu na maszynie rdzenia. Nie wychodzi
-	// z rdzenia: odpowiedź niesie nazwę i identyfikator, a nie układ dysku
-	// Operatora.
+	// Sciezka — droga do bajtów obrazu na maszynie rdzenia; nie wychodzi poza rdzeń.
 	Sciezka string
 	// Podobienst — kosinus zdania z obrazem w przestrzeni wspólnej.
 	Podobienst float32
 }
 
 // NajblizszeObrazy układa obrazy według ocen i oddaje `ile` najbliższych.
-//
-// Ocena niedodatnia odpada, tak samo jak przy fragmentach: obraz, którego
-// pomocnik nie otworzył, ma ocenę zerową i nie ma prawa wrócić jako trafienie.
-// Sortowanie stabilne — powtarzalność odpowiedzi jest warunkiem, nie wygodą.
+// Ocena niedodatnia odpada: obraz, którego pomocnik nie otworzył, ma ocenę
+// zerową i nie ma prawa wrócić jako trafienie.
 func NajblizszeObrazy(obrazy []Obraz, oceny []float32, ile int) []Obraz {
 	if len(oceny) != len(obrazy) {
 		return nil
@@ -252,4 +291,103 @@ func sortujObrazy(obrazy []Obraz) {
 	sort.SliceStable(obrazy, func(i, j int) bool {
 		return obrazy[i].Podobienst > obrazy[j].Podobienst
 	})
+}
+
+// wpisPodobienstwaObrazu to jeden wiersz tabeli `podobienstwo_obrazu`: ścieżka
+// obrazu, odcisk pliku w chwili liczenia i sam wynik.
+type wpisPodobienstwaObrazu struct {
+	sciezka      string
+	odcisk       string
+	podobienstwo float32
+}
+
+// odciskPliku znaczy plik jego rozmiarem i czasem modyfikacji — zmiana
+// któregokolwiek daje inny odcisk. Plik nieodczytywalny oddaje napis pusty;
+// wołający traktuje to jako brak potwierdzenia składnicy, nie jako błąd.
+func odciskPliku(sciezka string) string {
+	info, err := os.Stat(sciezka)
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(info.Size(), 10) + ":" + strconv.FormatInt(info.ModTime().UnixNano(), 10)
+}
+
+// podobienstwaZeSkladnicy czyta wyniki już policzone dla tego zdania i tego
+// modelu, indeksowane po ścieżce. Składnica pusta oddaje wykaz pusty, nie
+// odmowę — silnik bez trwałości ma prawo liczyć wszystko od nowa.
+func (s *SilnikObrazu) podobienstwaZeSkladnicy(ctx context.Context, sciezki []string,
+	pytanie string) (map[string]wpisPodobienstwaObrazu, error) {
+
+	if s.skladnica == nil || len(sciezki) == 0 {
+		return nil, nil
+	}
+	zapytanie := `SELECT sciezka, odcisk, podobienstwo FROM podobienstwo_obrazu
+	                WHERE model = ? AND pytanie = ? AND sciezka IN (` +
+		znakiZapytania(len(sciezki)) + `)`
+	argumenty := make([]any, 0, len(sciezki)+2)
+	argumenty = append(argumenty, s.ustawienia.ModelObrazu, pytanie)
+	for _, sciezka := range sciezki {
+		argumenty = append(argumenty, sciezka)
+	}
+	wiersze, err := s.skladnica.baza.QueryContext(ctx, zapytanie, argumenty...)
+	if err != nil {
+		return nil, errors.New("wskaźnik znaczenia: odczyt wyników osi obrazu: " + err.Error())
+	}
+	defer wiersze.Close()
+
+	wyniki := make(map[string]wpisPodobienstwaObrazu, len(sciezki))
+	for wiersze.Next() {
+		var wpis wpisPodobienstwaObrazu
+		if err := wiersze.Scan(&wpis.sciezka, &wpis.odcisk, &wpis.podobienstwo); err != nil {
+			return nil, errors.New("wskaźnik znaczenia: odczyt wiersza wyniku osi obrazu: " +
+				err.Error())
+		}
+		wyniki[wpis.sciezka] = wpis
+	}
+	if err := wiersze.Err(); err != nil {
+		return nil, errors.New("wskaźnik znaczenia: przerwany odczyt wyników osi obrazu: " +
+			err.Error())
+	}
+	return wyniki, nil
+}
+
+// zapiszPodobienstwaDoSkladnicy wnosi świeżo policzone wyniki, nadpisując
+// wynik poprzedni tej samej trójki ścieżka-model-pytanie. Składnica pusta jest
+// przemilczana — bez trwałości nie ma czego zapisać.
+func (s *SilnikObrazu) zapiszPodobienstwaDoSkladnicy(ctx context.Context,
+	wpisy []wpisPodobienstwaObrazu, pytanie string) error {
+
+	if s.skladnica == nil || len(wpisy) == 0 {
+		return nil
+	}
+	transakcja, err := s.skladnica.baza.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.New("wskaźnik znaczenia: otwarcie transakcji osi obrazu: " + err.Error())
+	}
+	defer transakcja.Rollback()
+
+	polecenie, err := transakcja.PrepareContext(ctx, `
+		INSERT INTO podobienstwo_obrazu (sciezka, odcisk, model, pytanie, podobienstwo, utworzono)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(sciezka, model, pytanie) DO UPDATE SET
+		    odcisk       = excluded.odcisk,
+		    podobienstwo = excluded.podobienstwo,
+		    utworzono    = excluded.utworzono`)
+	if err != nil {
+		return errors.New("wskaźnik znaczenia: przygotowanie zapisu osi obrazu: " + err.Error())
+	}
+	defer polecenie.Close()
+
+	chwila := time.Now().UTC().UnixMilli()
+	for _, wpis := range wpisy {
+		if _, err := polecenie.ExecContext(ctx, wpis.sciezka, wpis.odcisk,
+			s.ustawienia.ModelObrazu, pytanie, wpis.podobienstwo, chwila); err != nil {
+			return errors.New("wskaźnik znaczenia: zapis wyniku osi obrazu dla " +
+				wpis.sciezka + ": " + err.Error())
+		}
+	}
+	if err := transakcja.Commit(); err != nil {
+		return errors.New("wskaźnik znaczenia: domknięcie zapisu osi obrazu: " + err.Error())
+	}
+	return nil
 }

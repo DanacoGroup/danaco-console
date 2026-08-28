@@ -20,23 +20,7 @@ import { czyLogiczna, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protok
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
 /**
- * Siedem komend warsztatu szablonów pism.
- *
- * Wykaz szablonów (`studio.template.list`) i założenie dokumentu z szablonu
- * (`studio.template.apply`) stały już w galerii, ale były wykazem FABRYCZNYM —
- * nie było czym szablonu założyć ani zmienić. Te siedem komend to domykają:
- * `template.save` zakłada szablon z bieżącego dokumentu wraz z arkuszem stylów,
- * nastawami strony, nagłówkiem, stopką, tabelami i blokadami wzorcowymi,
- * `template.field.set` i `.field.list` prowadzą pola do wypełnienia,
- * `template.fill` wypełnia je wartościami, `template.import` i `.export` wnoszą
- * i oddają plik Operatora (`dotx`, `ott`), a `template.delete` usuwa szablon
- * własny.
- *
- * ── Szablonu fabrycznego się nie usuwa ──────────────────────────────────────
- * `template.delete` odmawia usunięcia szablonu fabrycznego nazwanym powodem —
- * tak samo jak `studio.operation.delete` dla operacji fabrycznych. Okno czyta
- * pole `deleted` i przy odpowiedzi „nie usunąłem" nazywa powód, zamiast zdejmować
- * pozycję z galerii i pozwolić jej wrócić przy następnym odczycie.
+ * Interfejs SzablonZrodlo obejmuje siedem komend warsztatu szablonów pism: zapis, usunięcie, ustawienie i odczyt pól, wniesienie i eksport pliku szablonu oraz wypełnienie pól wartościami.
  */
 export interface SzablonZrodlo {
   zapisz(zadanie: StudioTemplateSaveRequest): Promise<Wynik<StudioTemplateSaveResponse>>;
@@ -88,9 +72,7 @@ export function utworzSzablonZrodlo(kanal: Kanal): SzablonZrodlo {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioTemplateImport, zadanie),
         Command.StudioTemplateImport,
-        // Bilans wniesienia jest obowiązkowy: szablon z pliku Operatora przejmuje
-        // arkusz stylów, nastawy strony i pola tylko na tyle, na ile plik je
-        // niesie, i okno ma powiedzieć, ile tego było.
+        // Bilans wniesienia jest obowiązkowy i pokazuje, ile arkusza stylów, nastaw strony i pól przejął plik.
         (tresc) => czyObiekt(tresc.template) && czyObiekt(tresc.balance),
       );
     },
@@ -107,9 +89,7 @@ export function utworzSzablonZrodlo(kanal: Kanal): SzablonZrodlo {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioTemplateFill, zadanie),
         Command.StudioTemplateFill,
-        // Pole `missingRequired` jest nieobowiązkowe, ale gdy przychodzi, jest
-        // odpowiedzią najważniejszą: dokument powstał z dziurami i Operator ma
-        // to zobaczyć, zamiast dostać „wypełniono".
+        // Pole missingRequired oznacza, gdy występuje, dokument z niewypełnionymi polami wymaganymi.
         (tresc) => czyObiekt(tresc.document) && czyObiekt(tresc.balance),
       );
     },

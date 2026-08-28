@@ -13,16 +13,17 @@ import (
 // bufor skanera jest za mały.
 const maksymalnaLiniaStrumienia = 4 << 20
 
-// przedrostekDanych — przedrostek linii z treścią w strumieniu zdarzeń SSE.
+// przedrostekDanych — przedrostek linii danych w strumieniu zdarzeń SSE,
+// poprzedzający treść JSON każdego zdarzenia przesyłanego przez dostawcę.
 const przedrostekDanych = "data:"
 
-// znacznikKonca — umowny znacznik zamknięcia strumienia zdarzeń.
+// znacznikKonca — umowny znacznik zamknięcia strumienia zdarzeń, wysyłany przez
+// dostawcę jako ostatnia linia treści przed zakończeniem połączenia.
 const znacznikKonca = "[DONE]"
 
 // CzytajZdarzenia czyta strumień zdarzeń linia po linii i podaje obsłudze samą
-// treść JSON zdarzenia. Rozpoznaje obie postacie, w których dostawcy nadają
-// strumień: linie SSE z przedrostkiem "data:" oraz gołe linie JSON. Linie puste,
-// komentarze SSE i znacznik końca pomija.
+// treść JSON zdarzenia. Rozpoznaje linie SSE z przedrostkiem data: oraz gołe
+// linie JSON, pomijając linie puste, komentarze SSE i znacznik końca.
 func CzytajZdarzenia(zrodlo io.Reader, obsluga func(zdarzenie []byte) error) error {
 	skaner := bufio.NewScanner(zrodlo)
 	skaner.Buffer(make([]byte, 0, 64<<10), maksymalnaLiniaStrumienia)

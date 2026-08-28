@@ -22,33 +22,14 @@ import {
 import type { ZrodloKontroliStudio } from './zrodlo-kontroli-studio';
 
 /**
- * Panel autozapisu, kopii zapasowych i szeregów wersji.
- *
- * ── Cztery wymagania Właściciela w jednym miejscu ───────────────────────────
- * 1. **Autozapis** — odstęp i zapis przy zdarzeniach okna jako jawne,
- *    odwracalne ustawienie; obejmuje treść I postać; idzie OSOBNYM szeregiem
- *    wersji, więc nie zaśmieca historii Operatora.
- * 2. **Kopia zapasowa** — zakładana PRZED zapisem i niezależnie od historii
- *    wersji, żeby przetrwała awarię procesu i awarię zapisu.
- * 3. **Przywrócenie po nagłym zamknięciu** — Studio zgłasza je SAMO, zdaniem
- *    „mam niezapisany dokument z godziny X, przywrócić?", a nie czeka, aż
- *    Operator się domyśli. Przywrócenie DO NOWEGO DOKUMENTU stoi obok
- *    przywrócenia na miejsce, żeby przywracanie samo nie kasowało tego, co jest.
- * 4. **Powrót do stanu pierwotnego** — jedno polecenie, bez szukania wersji
- *    założycielskiej w wykazie; wersje nowsze zostają, więc powrót jest
- *    odwracalny.
- *
- * ── Uczciwość zapisu ────────────────────────────────────────────────────────
- * Wskaźnik stanu ma cztery wartości i „nieudany" jest jedną z nich. Nieudany
- * zapis samoczynny wraca odpowiedzią UDANĄ z polem `saved: false` — panel
- * pokazuje go jako niepowodzenie wraz z powodem, bo pokazanie „zapisano" po
- * nieudanym zapisie kosztowałoby Operatora pracę.
- *
- * Panel woła rdzeń sam; treść i postać do odłożenia bierze z kontekstu, bo
- * powierzchnia dokumentu jest po stronie okna.
+ * Panel autozapisu, kopii zapasowych i szeregów wersji łączy wymagania
+ * trwałości dokumentu.
  */
 
-/** Czym panel pyta okno o dokument i co mu oddaje. */
+/**
+ * Czym panel pyta okno o dokument i co mu oddaje: identyfikator dokumentu
+ * i okna, treść, postać oraz stan zmian niezapisanych.
+ */
 export interface KontekstKopii {
   idDokumentu(): string;
   /** Okno osadzenia — kopie i nastawy bywają wiązane z oknem, nie z dokumentem. */
@@ -352,8 +333,7 @@ export function utworzKopiePanel(
     }
     const tresc = wynik.wynik;
     if (!tresc.saved) {
-      // Odpowiedź UDANA o zapisie NIEUDANYM. Nastawy niosą powód, więc wskaźnik
-      // pokaże „nieudany" — a nie „zapisano" po zapisie, którego nie było.
+      // Odpowiedź udana o zapisie nieudanym — nastawy niosą powód, wskaźnik pokaże „nieudany".
       nastawy = {
         ...(nastawy ?? { enabled: czynny.kontrolka.checked }),
         lastSaveFailed: true,
@@ -611,7 +591,10 @@ export function utworzKopiePanel(
   };
 }
 
-/** Przycisk panelu wraz z kodem czynności do sprawdzianu. */
+/**
+ * Przycisk panelu wraz z kodem czynności do sprawdzianu, po którym testy
+ * i obsługa zdarzeń rozpoznają naciśnięty przycisk.
+ */
 function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -621,7 +604,10 @@ function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   return przycisk;
 }
 
-/** Pas przycisków — jeden rząd czynności. */
+/**
+ * Pas przycisków — jeden rząd czynności ułożonych poziomo w jednej części
+ * panelu, bez podziału na kolumny.
+ */
 function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   const pas = document.createElement('div');
   pas.className = 'ms-kontrola__pas';
@@ -629,7 +615,10 @@ function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   return pas;
 }
 
-/** Część panelu wraz z jej tytułem. */
+/**
+ * Część panelu wraz z jej tytułem widocznym nad zebranymi w niej kontrolkami,
+ * jako osobna sekcja nakładki.
+ */
 function czescPanelu(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-kontrola__tytul';

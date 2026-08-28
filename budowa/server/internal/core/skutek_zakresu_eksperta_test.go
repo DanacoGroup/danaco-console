@@ -9,18 +9,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek zakresu działania eksperta: czy za odpowiedzią leży zapis w bazie
-// i — co ważniejsze — czy ten zapis KOGOKOLWIEK POWSTRZYMUJE.
-//
-// Sprawdzian koperty odpowiedziałby tu na złe pytanie. Permissions Center może
-// oddawać `status: ok` przy każdym zawężeniu i wyglądać na działający, podczas
-// gdy ekspert dalej robi wszystko, co robił. Zawężenie, którego nikt nie
-// egzekwuje, jest gorsze niż jego brak: Operator widzi ograniczenie i pracuje
-// w przekonaniu, że ono obowiązuje.
-//
-// Dlatego każdy sprawdzian poniżej schodzi do bazy własnym zapytaniem SQL albo
-// mierzy ODMOWĘ — nie sam zapis.
-
 // bazaZakresuSprawdzianu otwiera drugie połączenie do bazy rdzenia, żeby
 // zmierzyć skutek niezależnie od odpowiedzi komendy.
 func bazaZakresuSprawdzianu(t *testing.T, katalog string) *sql.DB {
@@ -34,7 +22,8 @@ func bazaZakresuSprawdzianu(t *testing.T, katalog string) *sql.DB {
 	return polaczenie
 }
 
-// ekspertZakresuSprawdzianu zakłada eksperta i oddaje jego kod.
+// ekspertZakresuSprawdzianu zakłada nowego eksperta o podanej nazwie w rdzeniu
+// i oddaje jego kod, wykorzystywany dalej do zapytań o zakres działania.
 func ekspertZakresuSprawdzianu(t *testing.T, zmontowany *Zmontowany,
 	zycie context.Context, nazwa string) string {
 	t.Helper()
@@ -45,7 +34,8 @@ func ekspertZakresuSprawdzianu(t *testing.T, zmontowany *Zmontowany,
 	return wynik.Agent.Id
 }
 
-// liczbaWierszyZakresu liczy wiersze jednym zapytaniem.
+// liczbaWierszyZakresu wykonuje jedno zapytanie SQL i oddaje liczbę wierszy
+// spełniających jego warunek.
 func liczbaWierszyZakresu(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -56,11 +46,9 @@ func liczbaWierszyZakresu(t *testing.T, baza *sql.DB, zapytanie string, argument
 	return liczba
 }
 
-// TestSkutekModulowEkspertaOdmawiaNalozenia mierzy dwie rzeczy naraz: czy
-// `agent.modules.set` naprawdę zapisuje moduły zastosowania, i czy ten zapis
-// POWSTRZYMUJE nałożenie eksperta na okno modułu spoza zakresu.
-//
-// Druga część jest sednem. Pierwsza mówi tylko, że wiersz jest w bazie.
+// TestSkutekModulowEkspertaOdmawiaNalozenia sprawdza, czy `agent.modules.set`
+// zapisuje moduły zastosowania w bazie i czy ten zapis powstrzymuje nałożenie
+// eksperta na okno modułu spoza jego zakresu.
 func TestSkutekModulowEkspertaOdmawiaNalozenia(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -100,7 +88,8 @@ func TestSkutekModulowEkspertaOdmawiaNalozenia(t *testing.T) {
 	}
 }
 
-// numerModuluSprawdzianu oddaje klucz wiersza modułu po jego kodzie.
+// numerModuluSprawdzianu odczytuje z katalogu modułów klucz wiersza
+// odpowiadający podanemu kodowi modułu i oddaje go wywołującemu.
 func numerModuluSprawdzianu(t *testing.T, baza *sql.DB, kod string) int64 {
 	t.Helper()
 
@@ -112,10 +101,8 @@ func numerModuluSprawdzianu(t *testing.T, baza *sql.DB, kod string) int64 {
 }
 
 // TestSkutekUprawnieniaModuluOdmawiaNalozenia mierzy drugą drogę zawężenia
-// modułowego: wpis uprawnienia grupy `modules` z odebranym dostępem.
-//
-// `agent.permission.set` z `granted: false` musi znaczyć odmowę, a nie wiersz
-// w tabeli, na który nikt nie patrzy.
+// modułowego: wpis uprawnienia grupy `modules` z odebranym dostępem, i sprawdza,
+// że ten wpis powstrzymuje nałożenie eksperta na moduł.
 func TestSkutekUprawnieniaModuluOdmawiaNalozenia(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -140,8 +127,8 @@ func TestSkutekUprawnieniaModuluOdmawiaNalozenia(t *testing.T) {
 		t.Fatal("straż wpuściła eksperta do modułu, który mu odebrano")
 	}
 
-	// `agent.permission.remove` przywraca stan „brak ustawienia = wartość
-	// domyślna" — i straż ma wtedy przestać odmawiać.
+	// agent.permission.remove przywraca stan bez ustawienia, więc straż
+	// przestaje odmawiać dostępu.
 	grupa := shared.AgentPermissionGroup(shared.AgentPermissionGroupModules)
 	var zdjecie shared.AgentPermissionRemoveResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAgentPermissionRemove,
@@ -290,7 +277,8 @@ func TestSkutekKonektorowEkspertaWBazie(t *testing.T) {
 	}
 }
 
-// TestSkutekUmiejetnosciEkspertaWBazie mierzy `agent.skill.remove`.
+// TestSkutekUmiejetnosciEkspertaWBazie mierzy zapis umiejętności w bazie po
+// `agent.skill.add` oraz jej usunięcie po `agent.skill.remove`.
 func TestSkutekUmiejetnosciEkspertaWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -312,8 +300,8 @@ func TestSkutekUmiejetnosciEkspertaWBazie(t *testing.T) {
 		  WHERE a.kod = ? AND u.kod = 'korekta'`, ekspert) != 0 {
 		t.Fatal("umiejętność została w bazie po zdjęciu")
 	}
-	// Powtórzone zdjęcie nie jest odmową: brak przypisania znaczy definicję bez
-	// niego, tak stanowi kontrakt.
+	// Powtórzone zdjęcie nie jest odmową, bo brak przypisania oznacza
+	// definicję bez niego.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAgentSkillRemove,
 		shared.AgentSkillRemoveRequest{AgentId: ekspert, SkillId: "korekta"}, nil)
 }
@@ -396,8 +384,8 @@ func TestSkutekPrzypisanEkspertaWBazie(t *testing.T) {
 	baza := bazaZakresuSprawdzianu(t, katalog)
 	ekspert := ekspertZakresuSprawdzianu(t, zmontowany, zycie, "Ekspert projektowy")
 
-	// Przypisanie zakładamy wprost w bazie: sprawdzian mierzy ODCZYT od strony
-	// eksperta, a nie drogę zapisu modułu Workspace.
+	// Przypisanie zaklada się wprost w bazie: sprawdzian mierzy tu odczyt po
+	// stronie eksperta.
 	if _, err := baza.Exec(
 		`INSERT INTO projekt (kod, nazwa) VALUES ('projekt-sprawdzianu', 'Projekt sprawdzianu')`); err != nil {
 		t.Fatalf("nie można założyć projektu sprawdzianu: %v", err)

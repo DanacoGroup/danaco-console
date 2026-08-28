@@ -1,26 +1,6 @@
-// Komenda `terminal.file.read` — odczyt treści pliku z katalogu roboczego karty.
-//
-// ── Po co osobna komenda, skoro jest powłoka ────────────────────────────────
-// Bez niej klient czytał manifest projektu POLECENIEM POWŁOKI, więc wykrycie
-// zadań zależało od tego, czy na maszynie stoi program wypisujący plik, i od
-// składni każdej z powłok osobno (`cat`, `Get-Content`, `type`). Odczyt pliku
-// nie jest czynnością powłoki — jest czynnością rdzenia — i tak go tu prowadzimy.
-//
-// ── Biblioteka wkompilowana, nie program ────────────────────────────────────
-// Karta lokalna czyta plik przez `os` biblioteki standardowej. Programu powłoki
-// nie ma tu wcale: `cat` na karcie lokalnej byłby uruchomieniem procesu po to,
-// żeby zrobić to, co pakiet `os` robi jednym wywołaniem, i wprowadzałby
-// zależność od zawartości maszyny w czynność, która jej nie potrzebuje.
-//
-// Karta ZDALNA czyta plik na swojej maszynie — tak mówi kontrakt — więc tam
-// program jest nieunikniony: plik leży po drugiej stronie łącza. Idzie tą samą
-// drogą co każdy proces rdzenia (`zewnetrzne.Wolaj` → `session.Uruchamiacz`),
-// z granicą czasu i objęciem drzewa potomstwa.
-//
-// ── Granica obszaru okna ────────────────────────────────────────────────────
-// Ścieżka bezwzględna jest w kontrakcie dopuszczona, ale punkt izolacji „pliki”
-// obowiązuje ją tak samo jak względną: przy włączonym punkcie odczyt spoza
-// obszaru okna kończy się odmową `permission_denied`, a nie treścią.
+// Komenda `terminal.file.read` — odczyt treści pliku z katalogu roboczego
+// karty. Odczyt pliku nie jest czynnością powłoki, tylko czynnością rdzenia,
+// niezależną od programów dostępnych na maszynie.
 package core
 
 import (
@@ -57,7 +37,8 @@ var narzedzieSSH = zewnetrzne.Narzedzie{
 	Pakiet:  "openssh-client",
 }
 
-// OdczytajPlik obsługuje `terminal.file.read`.
+// OdczytajPlik obsługuje `terminal.file.read`, wybierając odczyt lokalny
+// albo zdalny wedle powłoki karty.
 func (a *adapterTerminala) OdczytajPlik(ctx context.Context,
 	z shared.TerminalFileReadRequest) (shared.TerminalFileReadResponse, error) {
 
@@ -82,7 +63,8 @@ func (a *adapterTerminala) OdczytajPlik(ctx context.Context,
 	return a.odczytLokalny(karta, okno, wskazanie, granica, z.Tail)
 }
 
-// odczytLokalny czyta plik z dysku maszyny rdzenia.
+// odczytLokalny czyta plik z dysku maszyny rdzenia przez pakiet `os`, bez
+// uruchamiania programu powłoki.
 func (a *adapterTerminala) odczytLokalny(karta *kartaTerminala, okno session.Okno,
 	wskazanie string, granica int, ogon *int) (shared.TerminalFileReadResponse, error) {
 
@@ -194,12 +176,9 @@ func (a *adapterTerminala) zasadyOkna(okno session.Okno) session.Zasady {
 	return ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{Okno: okno.Id})
 }
 
-// zlozOdczytPliku przycina treść ogonem i granicą rozmiaru, w tej kolejności.
-//
-// Ogon idzie pierwszy, bo jest wskazaniem Operatora, a granica rozmiaru —
-// zabezpieczeniem rdzenia: dwadzieścia ostatnich wierszy pliku o wielkości
-// megabajta ma wrócić w całości, a nie zostać przycięte do 64 KiB liczonych od
-// początku tych wierszy.
+// zlozOdczytPliku przycina treść ogonem i granicą rozmiaru, w tej
+// kolejności: ogon idzie pierwszy, bo jest wskazaniem Operatora, a granica
+// rozmiaru zabezpieczeniem rdzenia.
 func zlozOdczytPliku(tresc, sciezka string, granica int, ogon *int) shared.TerminalFileReadResponse {
 	odciete := 0
 	if ogon != nil && *ogon >= 0 {

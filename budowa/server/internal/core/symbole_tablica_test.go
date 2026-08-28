@@ -7,23 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany tablicy znaków. Mierzą, czy znak wskazany trzema drogami jest tym
-// samym znakiem i czy tablica niesie to, co Właściciel wymienił po nazwie.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. tablica bez znaków, które Właściciel wymienia wprost (§, ¶, ©, ®, ™,
-//     półpauza, pauza, cudzysłowy drukarskie, twarda spacja, twardy dywiz,
-//     znak podziału wyrazu);
-//  2. punkt kodowy odczytywany tylko w jednym zapisie — Operator wkleja kod
-//     w takiej postaci, w jakiej go znalazł;
-//  3. nazwa niepełna, która wstawia pierwszy napotkany znak zamiast nazwać
-//     dwuznaczność;
-//
-// Wykazu zasad autozamiany ten plik nie mierzy z zamysłu: wykaz stoi w bazie
-// (migracje 368 i 371), nie w kodzie rdzenia, więc sprawdzianem na niego jest
-// sprawdzian migracji, a nie sprawdzian pakietu rdzenia.
+// Sprawdziany tablicy znaków mierzą, czy znak wskazany trzema drogami jest tym samym znakiem.
 
-// TestSymbolTablicaNiesieZnakiWymienione mierzy wprost wykaz Właściciela.
+// TestSymbolTablicaNiesieZnakiWymienione mierzy wprost wykaz znaków wymaganych w siedmiu grupach tablicy.
 func TestSymbolTablicaNiesieZnakiWymienione(t *testing.T) {
 	tablica := symbolTablica()
 	poZnaku := make(map[string]shared.StudioSymbol, len(tablica))
@@ -73,8 +59,7 @@ func TestSymbolTablicaNiesieZnakiWymienione(t *testing.T) {
 	if len(grupy) != 7 {
 		t.Errorf("grup znaków jest %d, a zlecenie wymienia siedem: %v", len(grupy), grupy)
 	}
-	// Żaden znak nie powtarza się dwa razy — powtórka w tablicy dawałaby dwie
-	// pozycje okna, które robią to samo.
+	// Żaden znak nie powtarza się dwa razy, bo powtórka dawałaby dwie pozycje robiące to samo.
 	widziane := map[string]int{}
 	for _, znak := range tablica {
 		widziane[znak.Character]++
@@ -86,7 +71,7 @@ func TestSymbolTablicaNiesieZnakiWymienione(t *testing.T) {
 	}
 }
 
-// TestSymbolKodIZnakSaOdwracalne mierzy rachunek punktu kodowego w obie strony.
+// TestSymbolKodIZnakSaOdwracalne mierzy rachunek punktu kodowego w obie strony: ze znaku na kod i z kodu na znak.
 func TestSymbolKodIZnakSaOdwracalne(t *testing.T) {
 	if kod := symbolKodZnaku("§"); kod != "U+00A7" {
 		t.Errorf("paragraf ma kod %q, a ma mieć U+00A7", kod)
@@ -98,8 +83,7 @@ func TestSymbolKodIZnakSaOdwracalne(t *testing.T) {
 			t.Errorf("zapis %q dał %q (odczytany: %v), a ma dać paragraf", zapis, znak, jest)
 		}
 	}
-	// Znak złożony z kilku punktów kodowych oddaje je rozdzielone spacją —
-	// inaczej kod byłby nieprawdą o znaku, który Operator widzi jako jeden.
+	// Znak złożony z kilku punktów kodowych oddaje je rozdzielone spacją, bo widoczny jest jeden znak.
 	zlozony := "á"
 	if kod := symbolKodZnaku(zlozony); kod != "U+0061 U+0301" {
 		t.Errorf("znak złożony ma kod %q", kod)
@@ -144,8 +128,7 @@ func TestSymbolRozstrzygnijTrzyDrogi(t *testing.T) {
 			poZnaku.Character, poKodzie.Character, poNazwie.Character)
 	}
 
-	// Znak spoza tablicy jest znakiem prawdziwym — Unicode ma ich więcej, niż
-	// zmieści się w wykazie okna. Odmowa byłaby tu odmową wobec znaku istniejącego.
+	// Znak spoza tablicy jest znakiem prawdziwym — Unicode ma ich więcej niż mieści wykaz okna.
 	spozaTablicy, err := symbolRozstrzygnij(shared.StudioSymbolInsertRequest{
 		Code: postacWskaznikTekstu("U+2603"),
 	})
@@ -193,8 +176,7 @@ func TestSymbolRozstrzygnijTrzyDrogi(t *testing.T) {
 	}
 }
 
-// TestSymbolPasujeSzukaPoNazwieIKodzie mierzy wyszukiwanie wymagane wprost:
-// po nazwie I po kodzie.
+// TestSymbolPasujeSzukaPoNazwieIKodzie mierzy wyszukiwanie wymagane wprost: po nazwie i po kodzie jednocześnie.
 func TestSymbolPasujeSzukaPoNazwieIKodzie(t *testing.T) {
 	paragraf := shared.StudioSymbol{
 		Code: "U+00A7", Character: "§", Name: "paragraf",

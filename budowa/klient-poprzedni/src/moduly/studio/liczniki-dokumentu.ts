@@ -1,25 +1,9 @@
-/**
- * Liczniki dokumentu — rachunek na treści, bez DOM i bez rdzenia.
- *
- * Opracowanie stawia liczniki w warstwie pierwszej modułu (pasek statusu:
- * „słów: 1 284"), a rdzeń żadnej komendy liczącej nie niesie i nie musi:
- * treść stoi w buforze edytora, więc liczenie jej po stronie klienta nie jest
- * obejściem braku, tylko właściwym miejscem tej czynności. Wywołanie rdzenia po
- * liczbę słów byłoby przesyłaniem dokumentu po odpowiedź, którą klient ma
- * natychmiast.
- *
- * Plik nie zna okna: wejściem jest napis, wyjściem liczby. Dzięki temu rachunek
- * sprawdza się bez stawiania widoku.
- *
- * Czas czytania liczony jest tempem **200 słów na minutę** — wartością przyjętą
- * w typografii użytkowej dla tekstu ciągłego. Stała jest nazwana, bo bez nazwy
- * byłaby liczbą magiczną, a przy zmianie wymagania trzeba by jej szukać.
- */
+/** Liczniki dokumentu, rachunek na treści bez elementów strony i bez rdzenia: wejściem jest napis, wyjściem liczby słów, znaków, zdań i akapitów. */
 
-/** Tempo czytania tekstu ciągłego przyjęte do szacunku czasu, w słowach na minutę. */
+/** Tempo czytania tekstu ciągłego przyjęte do szacunku czasu potrzebnego na przeczytanie treści, w słowach na minutę. */
 const SLOW_NA_MINUTE = 200;
 
-/** Komplet liczb opisujących treść dokumentu. */
+/** Komplet liczb opisujących treść dokumentu: znaki, znaki bez odstępów, słowa, zdania, akapity i szacowany czas czytania. */
 export interface LicznikiDokumentu {
   znaki: number;
   /** Znaki bez odstępów — miara objętości używana w rozliczeniach redakcyjnych. */
@@ -31,7 +15,7 @@ export interface LicznikiDokumentu {
   minutyCzytania: number;
 }
 
-/** Liczy komplet miar dla treści dokumentu. */
+/** Liczy komplet miar liczbowych opisujących treść dokumentu na podstawie samego napisu, bez odwołania do rdzenia. */
 export function policzTresc(tresc: string): LicznikiDokumentu {
   const slowa = tresc.split(/\s+/u).filter((slowo) => slowo !== '').length;
   return {
@@ -44,15 +28,7 @@ export function policzTresc(tresc: string): LicznikiDokumentu {
   };
 }
 
-/**
- * Zdania rozpoznawane po znaku kończącym, a nie po każdej kropce.
- *
- * Kropka rozdzielająca skrót („np.", „itd.") kończy zdanie tylko wtedy, gdy po
- * niej idzie odstęp i wielka litera albo koniec treści. Rachunek jest
- * przybliżony i takim ma pozostać: pełna segmentacja zdań wymaga słownika
- * skrótów, którego moduł nie ma i którego dla licznika w pasku statusu nie
- * warto zakładać.
- */
+/** Zdania rozpoznawane po znaku kończącym zdanie, a nie po każdej napotkanej kropce, licząc przybliżoną liczbę zdań treści. */
 function policzZdania(tresc: string): number {
   const dopasowania = tresc.match(/[.!?…]+(?=\s+\p{Lu}|\s*$)/gu);
   if (dopasowania !== null) return dopasowania.length;
@@ -60,14 +36,14 @@ function policzZdania(tresc: string): number {
   return tresc.trim() === '' ? 0 : 1;
 }
 
-/** Akapity rozdzielone pustym wierszem; treść bez pustych wierszy to jeden akapit. */
+/** Akapity rozdzielone co najmniej jednym pustym wierszem; treść bez pustych wierszy liczy się jako jeden akapit. */
 function policzAkapity(tresc: string): number {
   return tresc
     .split(/\n\s*\n/u)
     .filter((akapit) => akapit.trim() !== '').length;
 }
 
-/** Zdanie licznikowe paska statusu — jedno miejsce składania tych liczb w napis. */
+/** Zdanie licznikowe paska statusu, jedyne miejsce składania liczb dokumentu w czytelny napis dla operatora. */
 export function opiszLiczniki(liczniki: LicznikiDokumentu): string {
   if (liczniki.znaki === 0) return 'dokument pusty';
   return (

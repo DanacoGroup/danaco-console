@@ -1,20 +1,16 @@
+/**
+ * Eksport mapy zależności do dokumentacji procesu w zapisach DOT i Mermaid. Plik
+ * jest czysty: nie dotyka dokumentu i nie woła rdzenia, bo treść mapy jest już
+ * w oknie, a żadna z tych postaci nie potrzebuje komendy kontraktu.
+ */
+
 import type { KrawedzGrafu, OpisGrafu } from './graf-krokow';
 
 /**
- * Eksport mapy zależności do dokumentacji procesu.
- *
- * Opracowanie wymienia cztery postacie zapisu; trzy z nich powstają po stronie
- * okna, bo treść jest już tutaj: zapis wektorowy bierze się wprost z kanwy
- * (`graf-krokow.ts`), a zapisy DOT i Mermaid składa ten plik. Czwarta postać —
- * mapa rastrowa — wymagałaby przerysowania kanwy na płótno i zostaje poza
- * oknem; postać wektorowa niesie to samo, a otwiera się w każdej przeglądarce.
- *
- * Żadna z tych postaci nie potrzebuje komendy kontraktu i mieć jej nie musi.
- *
- * Plik jest czysty: nie dotyka dokumentu i nie woła rdzenia.
+ * Nazwa układu w zapisach eksportu; oba formaty wymagają nazwy grafu. Nazwa jest
+ * jedna dla obu zapisów, więc mapa wyeksportowana dwiema drogami zachowuje tę samą
+ * tożsamość w dokumentacji procesu.
  */
-
-/** Nazwa układu w zapisach eksportu; oba formaty wymagają nazwy grafu. */
 const NAZWA_UKLADU = 'zaleznosci_automatyki';
 
 /**
@@ -45,11 +41,9 @@ export function zapisDot(opis: OpisGrafu): string {
 }
 
 /**
- * Mapa w zapisie Mermaid.
- *
- * Identyfikatory kroków bywają w kontrakcie dowolnym napisem, a Mermaid czyta
- * identyfikator węzła jako nazwę bez cudzysłowu — dlatego identyfikator idzie
- * przez zastępnik złożony z liter i cyfr, a treść pierwotna zostaje w podpisie.
+ * Mapa w zapisie Mermaid. Identyfikatory kroków bywają w kontrakcie dowolnym napisem,
+ * a Mermaid czyta identyfikator węzła jako nazwę bez cudzysłowu, więc identyfikator
+ * idzie przez zastępnik, a treść pierwotna zostaje w podpisie.
  */
 export function zapisMermaid(opis: OpisGrafu): string {
   const zastepniki = new Map<string, string>();
@@ -82,17 +76,29 @@ export function zapisMermaid(opis: OpisGrafu): string {
   return wiersze.join('\n');
 }
 
-/** Podpis krawędzi: rodzaj zależności, a przy warunkowej także jej warunek. */
+/**
+ * Podpis krawędzi: rodzaj zależności, a przy warunkowej także jej warunek. Warunek
+ * pusty daje sam rodzaj, żeby krawędź bezwarunkowa nie nosiła dwukropka bez treści
+ * po nim.
+ */
 export function podpisKrawedzi(rodzaj: string, warunek?: string): KrawedzGrafu['podpis'] {
   return warunek === undefined || warunek.trim() === '' ? rodzaj : `${rodzaj}: ${warunek.trim()}`;
 }
 
-/** Napis w cudzysłowie zapisu DOT; cudzysłów i ukośnik w treści są chronione. */
+/**
+ * Napis w cudzysłowie zapisu DOT; cudzysłów i ukośnik w treści są chronione. Bez tej
+ * ochrony nazwa kroku z cudzysłowem zamykałaby napis w połowie i psuła cały zapis
+ * mapy, a nie tylko jeden wiersz.
+ */
 function cudzyslowDot(tresc: string): string {
   return `"${tresc.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
 
-/** Treść podpisu Mermaid; cudzysłów zamykałby podpis w połowie. */
+/**
+ * Treść podpisu Mermaid; cudzysłów zamykałby podpis w połowie, więc zostaje z niej
+ * zdjęty. Podpis niesie treść pierwotną kroku, dlatego to on, a nie identyfikator
+ * węzła, musi znieść dowolny napis z kontraktu.
+ */
 function cudzyslowMermaid(tresc: string): string {
   return tresc.replace(/"/g, "'");
 }

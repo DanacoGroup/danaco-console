@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: kosz sesji (kolumna `sesja.usunieto_o`) —
-// przeniesienie do kosza, przywrócenie i czyszczenie po terminie.
-//
-// Repozytorium jest osobne, bo `RepozytoriumSesji` obsługuje sesje żywe — jego
-// wykaz sesji z kosza nie widzi (dane/sesje.go, warunek `usunieto_o IS NULL`).
-// Kosz jest odwrotną stroną tej samej tabeli: widzi wyłącznie wiersze ze
-// znacznikiem. Jedna tabela, dwa pytania — tak samo jak para Moduly/Macierz
-// w dane/zestaw.go.
-//
-// Czyszczenie zabiera też bloki. Kaskada schematu od `sesja` sprząta okna
-// i wiadomości (a trigger schematu — indeks szukania), ale bloki wiadomości
-// wiszą na identyfikatorach kontraktowych bez klucza obcego, więc czyszczenie
-// usuwa je wprost, w tej samej transakcji.
+// Odpowiedzialność pliku: kosz sesji, przeniesienie do kosza, przywrócenie i czyszczenie po terminie, jako odwrotna strona tej samej tabeli.
 package dane
 
 import (
@@ -29,7 +17,7 @@ type SesjaWKoszu struct {
 	UsunietoO     string
 }
 
-// RepozytoriumKoszaSesji jest kontraktem obszaru kosza.
+// RepozytoriumKoszaSesji jest kontraktem całego obszaru kosza sesji dla wszystkich warstw wyższych produktu.
 type RepozytoriumKoszaSesji interface {
 	// PrzeniesDoKosza stawia znacznik na sesji żywej.
 	PrzeniesDoKosza(ctx context.Context, id int64) error
@@ -37,8 +25,7 @@ type RepozytoriumKoszaSesji interface {
 	Przywroc(ctx context.Context, id int64) (bool, error)
 	// Lista zwraca zawartość kosza, od najświeższego wrzucenia.
 	Lista(ctx context.Context) ([]SesjaWKoszu, error)
-	// UsunPrzeterminowane kasuje trwale sesje leżące w koszu dłużej niż do
-	// wskazanej chwili (znacznik starszy niż granica) i zwraca ich liczbę.
+	// UsunPrzeterminowane kasuje trwale sesje leżące w koszu dłużej niż do granicy i zwraca ich liczbę.
 	UsunPrzeterminowane(ctx context.Context, granica string) (int, error)
 }
 
@@ -113,7 +100,7 @@ func (r *repozytoriumKoszaSesji) Przywroc(ctx context.Context, id int64) (bool, 
 	return liczba > 0, nil
 }
 
-// Lista zwraca zawartość kosza. Kosz pusty daje pustą listę.
+// Lista zwraca całą zawartość kosza sesji dla tej warstwy wyższej; kosz pusty daje pustą listę bez błędu.
 func (r *repozytoriumKoszaSesji) Lista(ctx context.Context) ([]SesjaWKoszu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKosza)
 	if err != nil {

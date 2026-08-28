@@ -1,13 +1,6 @@
 // Odpowiedzialność pliku: wykaz i zdjęcie nadań ról (`role.list`,
-// `role.remove`) wraz z rozgłoszeniem zdarzenia `role.changed`.
-//
-// Rodzina `role.*` ma jedno repozytorium i jeden port: `role.list` i
-// `role.remove` stoją na tym samym adapterze `adapterRolOkien`, tym samym
-// rejestrze okien i tych samych dwóch kolumnach `okno_komunikacji`, co
-// `role.assign` i `role.update`. Port `RoleWykaz` osadza `RoleOkien` tak samo,
-// jak tamten osadza `Okna`.
-//
-// Układ sekcji panelu okna prowadzi osobny plik `handlers_panel_sekcje.go`.
+// `role.remove`) wraz z rozgłoszeniem zdarzenia `role.changed`. Port
+// `RoleWykaz` osadza `RoleOkien` tak samo, jak `role.assign` osadza `Okna`.
 package core
 
 import (
@@ -19,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// RoleWykaz jest portem rodziny `role.*` rozszerzonym o `role.list` i `role.remove`.
+// RoleWykaz jest portem rodziny `role.*` rozszerzonym o `role.list`
+// i `role.remove`, obok `role.assign` i `role.update` osadzonych w `Okna`.
 type RoleWykaz interface {
 	RoleOkien
 
@@ -27,12 +21,12 @@ type RoleWykaz interface {
 	ZdejmijRole(ctx context.Context, z shared.RoleRemoveRequest) (shared.RoleRemoveResponse, error)
 }
 
-// Rozjazd portu z adapterem zatrzymuje kompilację tutaj, nie na martwej komendzie.
+// Rozjazd portu z adapterem zatrzymuje kompilację tutaj, nie na martwej
+// komendzie odkrytej dopiero w czasie działania rdzenia.
 var _ RoleWykaz = (*adapterRolOkien)(nil)
 
-// ── wpięcie ──────────────────────────────────────────────────────────────────
-
-// zarejestrujWykazRol wpina `role.list` i `role.remove`.
+// zarejestrujWykazRol wpina `role.list` i `role.remove`, rozgłaszając
+// `role.changed` po każdym udanym zdjęciu roli oknu.
 func zarejestrujWykazRol(r *Rejestr, rw RoleWykaz, e *emiter) {
 	if r == nil || rw == nil {
 		return
@@ -46,8 +40,9 @@ func zarejestrujWykazRol(r *Rejestr, rw RoleWykaz, e *emiter) {
 	r.Zarejestruj(shared.CommandRoleRemove,
 		obsluz(func(ctx context.Context, z shared.RoleRemoveRequest) (shared.RoleRemoveResponse, error) {
 			odpowiedz, err := rw.ZdejmijRole(ctx, z)
-			// Rozgłasza się wyłącznie zdjęcie, które się odbyło: okno bez roli nie
-			// jest odmową, ale nie jest też zmianą.
+			// Rozgłasza się wyłącznie zdjęcie, które się odbyło.
+
+			// Okno bez roli nie jest odmową, ale nie jest też zmianą.
 			if err == nil && odpowiedz.Removed {
 				rozglosZmianeRoli(ctx, rw, e, shared.ChangeKindDeleted, odpowiedz.WindowId)
 			}
@@ -76,11 +71,7 @@ func rozglosZmianeRoli(ctx context.Context, rw RoleWykaz, e *emiter,
 }
 
 // WykazRol oddaje nadania ról oknom, z zawężeniem do wykonawców jednego
-// koordynatora. Wykaz jest widokiem na okna, nie na drugą tabelę: nadanie roli
-// to para pól okna (`windowRole`, `coordinatorWindowId`), więc wykaz składa się
-// z tego samego wykazu okien, co `window.list`, wraz z więzią doczytaną z bazy.
-// Własne zapytanie po rolach dałoby drugą odpowiedź na pytanie o rolę okna.
-// Rolę ma każde okno, także samodzielne — stąd komplet.
+// koordynatora, jako widok na wykaz okien, nie na drugą tabelę.
 func (a *adapterRolOkien) WykazRol(ctx context.Context,
 	z shared.RoleListRequest) (shared.RoleListResponse, error) {
 
@@ -101,8 +92,9 @@ func (a *adapterRolOkien) WykazRol(ctx context.Context,
 			Role:                okno.WindowRole,
 			CoordinatorWindowId: wskaznikPolaRoli(koordynator),
 		}
-		// Wcielenie leży tam, gdzie zapisuje je `role.update`. Odczyt nieudany nie
-		// kończy wykazu: wykaz bez wcieleń bije odmowę.
+		// Wcielenie leży tam, gdzie zapisuje je `role.update`.
+
+		// Odczyt nieudany nie kończy wykazu: wykaz bez wcieleń bije odmowę.
 		if wcielenie, err := a.wcielenieWykazu(ctx, okno.Id); err == nil {
 			nadanie.Persona = wskaznikPolaRoli(wcielenie)
 		}
@@ -120,14 +112,8 @@ func (a *adapterRolOkien) wcielenieWykazu(ctx context.Context, idOkna string) (s
 	return a.wcielenieObowiazujace(ctx, idOkna)
 }
 
-// ZdejmijRole zdejmuje z okna rolę wraz z więzią koordynatora. Zdjęcie roli to
-// powrót do roli samodzielnej, a nie skasowanie pola: katalog kontraktu nie ma
-// wartości „brak", a okno poza pętlą jest stanem wyjściowym pakietu sesji
-// (`session.RolaDomyslna`). Więź znika razem z rolą, w tej samej czynności:
-// koordynatora niesie wyłącznie okno wykonawcy.
-//
-// Okno bez roli nie jest odmową — wraca `removed=false`, bo stan docelowy już
-// obowiązuje.
+// ZdejmijRole zdejmuje z okna rolę wraz z więzią koordynatora, powrotem do
+// roli samodzielnej. Okno bez roli nie jest odmową — wraca `removed=false`.
 func (a *adapterRolOkien) ZdejmijRole(ctx context.Context,
 	z shared.RoleRemoveRequest) (shared.RoleRemoveResponse, error) {
 
@@ -150,11 +136,9 @@ func (a *adapterRolOkien) ZdejmijRole(ctx context.Context,
 	if _, err := a.nadajRole(ctx, idOkna, &samodzielna, &bezKoordynatora); err != nil {
 		return shared.RoleRemoveResponse{}, err
 	}
-	// Wcielenie odchodzi razem z rolą: `persona` opisuje rolę, a nie okno, więc
-	// zostawione przy oknie samodzielnym wychodziłoby w `role.list` i w wykazie
-	// nadań (`client/src/moduly/multitasking/wykaz-nadan-rol.ts`) jako wcielenie
-	// roli, której już nie ma. Niepowodzenie zapisu kończy komendę: pół zdjęcia
-	// roli zostawiłoby ten sam rozjazd, tyle że po odmowie.
+	// Wcielenie odchodzi razem z rolą: `persona` opisuje rolę, a nie okno.
+
+	// Niepowodzenie zapisu kończy komendę: pół zdjęcia roli byłoby rozjazdem.
 	if _, err := a.zdejmijWcielenieRoli(ctx, idOkna); err != nil {
 		return shared.RoleRemoveResponse{}, err
 	}
@@ -174,15 +158,7 @@ func (a *adapterRolOkien) zdejmijWcielenieRoli(ctx context.Context, idOkna strin
 }
 
 // rozwiazWiezWykonawcow zdejmuje więź z okien, które podlegały oknu tracącemu
-// rolę koordynatora.
-//
-// Więź ma dwa końce. Zdjęcie roli samemu koordynatorowi zostawiłoby wykonawców
-// z więzią do okna, które koordynatorem już nie jest. Zamiast odmawiać zdjęcia
-// roli, drugi koniec doprowadza się do stanu zgodnego: wykonawca zostaje
-// wykonawcą, ale bez koordynatora — stan dopuszczalny.
-//
-// Niepowodzenie nie cofa zdjęcia roli: rola została zdjęta, a więź jest
-// następstwem, nie warunkiem.
+// rolę koordynatora, doprowadzając drugi koniec więzi do stanu zgodnego.
 func (a *adapterRolOkien) rozwiazWiezWykonawcow(ctx context.Context, idKoordynatora string) {
 	okna, err := a.Wykaz(ctx, shared.WindowListRequest{})
 	if err != nil {

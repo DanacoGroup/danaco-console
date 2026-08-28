@@ -1,26 +1,6 @@
 package core
 
-// Odpowiedzialność pliku: jeden wykaz programów spoza instalki, których rdzeń
-// używa, wraz z sondą sprawdzającą ich obecność przy starcie.
-//
-// ── Po co sonda startowa, skoro każde wywołanie i tak sprawdza ────────────────
-// `zewnetrzne.Wolaj` sprawdza obecność programu przed uruchomieniem i odmawia
-// zdaniem nazywającym brak (`zewnetrzne.BrakNarzedzia`). To jest właściwe
-// zachowanie w chwili czynności, ale za późne jako informacja: Operator dowiaduje
-// się o braku dopiero po naciśnięciu przycisku, osobno dla każdej funkcji, i nie
-// ma skąd wiedzieć, ile jeszcze takich niespodzianek przed nim.
-//
-// Sonda startowa odwraca kolejność — rdzeń mówi na wejściu, czym dysponuje
-// i czego mu brak, jednym wykazem. To jest ta sama wiedza, ale podana zanim
-// zawiedzie czynność.
-//
-// ── Dlaczego wykaz odwołuje się do deklaracji, a nie powtarza ich ─────────────
-// Każde narzędzie jest zadeklarowane tam, gdzie jest używane — Pandoc przy
-// dokumentach, ffmpeg przy nagraniach, Tesseract przy rozpoznaniu pisma. Wykaz
-// bierze te deklaracje, zamiast wypisywać nazwy po raz drugi: druga lista
-// rozjechałaby się z pierwszą przy pierwszej zmianie pakietu i Operator
-// czytałby podpowiedź instalacyjną prowadzącą donikąd.
-
+// Plik niesie jeden wykaz programów spoza instalki, których rdzeń używa, wraz z sondą sprawdzającą ich obecność przy starcie; wykaz bierze deklaracje stamtąd, gdzie narzędzie jest używane, zamiast powtarzać nazwy.
 import (
 	"sort"
 
@@ -38,10 +18,7 @@ type ZaleznoscZewnetrzna struct {
 	Stoi bool
 }
 
-// zaleznosciZewnetrzne oddaje komplet deklaracji w kolejności alfabetycznej
-// nazwy czytelnej. Kolejność jest ustalona, żeby dwa kolejne uruchomienia dawały
-// ten sam wykaz — dziennik startu ma się różnić wtedy, gdy zmienił się stan
-// maszyny, a nie wtedy, gdy inaczej ułożyła się mapa.
+// zaleznosciZewnetrzne oddaje komplet deklaracji w kolejności alfabetycznej nazwy czytelnej, żeby dwa kolejne uruchomienia dawały ten sam wykaz w dzienniku startu.
 func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 	wykaz := []ZaleznoscZewnetrzna{
 		{Narzedzie: narzedziePandoc,
@@ -58,12 +35,7 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "skład dokumentu do PDF-u w komendzie document.convert dla materiału, " +
 				"którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta " +
 				"droga wraca do wersji zapasowej przez HTML i LibreOffice"},
-		// Tika i LanguageTool to programy Javy, więc obie pozycje wskazują ten sam
-		// plik wykonywalny (`java`) i stoją w wykazie OSOBNO. Nie jest to
-		// powtórzenie: pozycja wykazu odpowiada na pytanie „co przestaje działać
-		// i co z tym zrobić", a odpowiedzi są tu dwie różne — brak Javy zabiera
-		// naraz odczyt plików i korektę językową, czyli dwa zakresy w dwóch
-		// modułach. Wiersz na zakres jest tym, po co ten wykaz istnieje.
+		// Tika i LanguageTool to programy Javy: wskazują ten sam plik wykonywalny, ale stoją w wykazie osobno.
 		{Narzedzie: narzedzieTiki,
 			Zakres: "odczyt treści pliku w formacie spoza słownika rdzenia " +
 				"(document.text.extract) — arkusz, prezentacja, wiadomość poczty"},
@@ -237,12 +209,7 @@ func BrakujaceZaleznosci() []ZaleznoscZewnetrzna {
 	return brakujace
 }
 
-// zglosZaleznosci wpisuje wynik sondy do dziennika startu.
-//
-// Wiersz zbiorczy idzie zawsze — także wtedy, gdy nie brakuje niczego, bo
-// „wszystkie obecne" jest informacją, nie ciszą. Każdy brak dostaje własny
-// wiersz z zakresem, który przestaje działać, i podpowiedzią instalacyjną:
-// Operator ma po starcie wiedzieć, czego nie zrobi, zanim spróbuje.
+// zglosZaleznosci wpisuje wynik sondy do dziennika startu; wiersz zbiorczy idzie zawsze, a każdy brak dostaje własny wiersz z zakresem i podpowiedzią instalacyjną.
 func (r *Rdzen) zglosZaleznosci() {
 	wykaz := zaleznosciZewnetrzne()
 	brakujace := 0

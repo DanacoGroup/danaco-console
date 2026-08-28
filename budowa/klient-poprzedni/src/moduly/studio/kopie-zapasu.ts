@@ -6,34 +6,10 @@ import {
   type StudioVersion,
 } from '../../../../shared/contract';
 
-/**
- * Autozapis, kopie zapasowe i szeregi wersji — słowa, którymi okno mówi
- * Operatorowi, czy jego praca jest bezpieczna.
- *
- * ── Uczciwość zapisu jest tu obowiązkowa ────────────────────────────────────
- * Wskaźnik „zapisano" pokazany, gdy zapis się nie udał, jest najgorszym możliwym
- * błędem tego modułu: Operator zamknie okno i straci pracę. Dlatego stan zapisu
- * ma tu **cztery** wartości, nie dwie — i „nieudany" jest jedną z nich, wraz
- * z powodem podanym przez rdzeń i wskazaniem, że treść leży w kopii zapasowej.
- *
- * ── Autozapis idzie OSOBNYM szeregiem ──────────────────────────────────────
- * Rozróżnienie szeregów nie jest tu wymyślone przez okno: rdzeń oddaje je
- * w `studio.version.series.list` wraz z liczbą wersji w każdym z nich. Okno
- * czyta to pole, a nie odgaduje autozapisu po braku etykiety.
- *
- * ── Kopia zapasowa jest zakładana PRZED zapisem ────────────────────────────
- * Kopia po zapisie nie chroni od niczego: awaria zapisu zostawiłaby dokument
- * uszkodzony bez kopii sprzed. Zdanie o tym stoi przy czynności, bo jest to
- * powód, dla którego kopie zapasowe są czymś innym niż historia wersji.
- *
- * Plik nie zna DOM ani rdzenia: wejściem są byty kontraktu, wyjściem napisy
- * i rozstrzygnięcia.
- */
-
-/** Stan zapisu widoczny dla Operatora — cztery wartości, nie dwie. */
+/** Autozapis, kopie zapasowe i szeregi wersji to słowa, którymi okno mówi operatorowi, czy jego praca jest bezpieczna. */
 export type StanZapisu = 'zapisano' | 'zapisywanie' | 'niezapisane' | 'nieudany';
 
-/** Nazwa powodu założenia kopii — pełna, widoczna dla Operatora. */
+/** Nazwa powodu założenia kopii zapasowej, pełna i widoczna dla operatora, dla każdego z czterech powodów kontraktu. */
 export const NAZWY_POWODOW_KOPII: Readonly<Record<StudioBackupReason, string>> = {
   [StudioBackupReason.Interval]: 'odstęp autozapisu',
   [StudioBackupReason.Event]: 'zdarzenie okna — odejście, zamknięcie, przełączenie',
@@ -41,24 +17,18 @@ export const NAZWY_POWODOW_KOPII: Readonly<Record<StudioBackupReason, string>> =
   [StudioBackupReason.Manual]: 'polecenie Operatora',
 };
 
-/** Zdanie o tym, dlaczego kopia idzie przed zapisem, a nie po nim. */
+/** Zdanie wyjaśniające, dlaczego kopia zapasowa jest zakładana przed zapisem dokumentu, a nie po jego wykonaniu. */
 export const KOPIE_PRZED_ZAPISEM =
   'Kopia zapasowa zakładana jest PRZED zapisem, nie po nim: kopia po zapisie nie chroni od ' +
   'niczego, bo awaria zapisu zostawiłaby dokument uszkodzony bez stanu sprzed. Kopie idą też ' +
   'niezależnie od historii wersji, żeby przetrwały awarię procesu.';
 
-/** Nazwa powodu kopii; powód nieznany oddaje swoją wartość, nie pustkę. */
+/** Nazwa powodu założenia kopii odczytana ze słownika nazw; powód nieznany słownikowi oddaje swoją surową wartość. */
 export function kopieNazwaPowodu(powod: StudioBackupReason | string): string {
   return NAZWY_POWODOW_KOPII[powod as StudioBackupReason] ?? powod;
 }
 
-/**
- * Stan zapisu wyczytany z nastaw autozapisu.
- *
- * `zmianyNiezapisane` podaje okno, bo to ono wie, czy Operator pisał od
- * ostatniego zapisu — rdzeń tego nie widzi. Niepowodzenie ostatniego zapisu
- * wygrywa nad wszystkim: dopóki go nie naprawiono, „zapisano" jest fałszem.
- */
+/** Stan zapisu wyczytany z nastaw autozapisu; niepowodzenie ostatniego zapisu wygrywa nad wszystkim innym. */
 export function kopieStanZapisu(
   nastawy: StudioAutosaveSettings | null,
   zmianyNiezapisane: boolean,
@@ -70,7 +40,7 @@ export function kopieStanZapisu(
   return 'zapisano';
 }
 
-/** Zdanie o stanie zapisu wraz z czasem ostatniego udanego zapisu. */
+/** Zdanie opisujące bieżący stan zapisu dokumentu wraz z czasem ostatniego udanego zapisu odnotowanego przez rdzeń. */
 export function kopieOpiszStanZapisu(
   stan: StanZapisu,
   nastawy: StudioAutosaveSettings | null,
@@ -96,7 +66,7 @@ export function kopieOpiszStanZapisu(
   return `zapisano · ${czas}`;
 }
 
-/** Zdanie o nastawach autozapisu — co dokładnie stoi, a nie „włączony". */
+/** Zdanie opisujące nastawy autozapisu ze wszystkimi szczegółami zamiast ogólnikowego stwierdzenia, że jest włączony. */
 export function kopieOpiszNastawy(nastawy: StudioAutosaveSettings): string {
   if (!nastawy.enabled) {
     return (
@@ -121,7 +91,7 @@ export function kopieOpiszNastawy(nastawy: StudioAutosaveSettings): string {
   );
 }
 
-/** Zdanie o zasadzie wygasania kopii — jawnym ustawieniu, nie zaszytej liczbie. */
+/** Zdanie opisujące zasadę wygasania kopii zapasowych na podstawie jawnego ustawienia operatora, nie zaszytej liczby. */
 export function kopieOpiszWygasanie(nastawy: StudioAutosaveSettings): string {
   const ile =
     nastawy.backupRetentionCount === undefined || nastawy.backupRetentionCount <= 0
@@ -138,7 +108,7 @@ export function kopieOpiszWygasanie(nastawy: StudioAutosaveSettings): string {
   return `Wygasanie kopii: ${czesci.join(', ')}.`;
 }
 
-/** Zdanie o jednej kopii zapasowej wraz z czasem, rozmiarem i powodzeniem. */
+/** Zdanie opisujące jedną kopię zapasową wraz z czasem jej założenia, rozmiarem i powodzeniem samego zapisu kopii. */
 export function kopieOpiszKopie(kopia: StudioDocumentBackup): string {
   const rozmiar =
     kopia.bytes === undefined ? 'rozmiaru rdzeń nie podał' : `${kopia.bytes} bajtów`;
@@ -155,13 +125,7 @@ export function kopieOpiszKopie(kopia: StudioDocumentBackup): string {
   );
 }
 
-/**
- * Zgłoszenie po nagłym zamknięciu — Studio mówi pierwsze, nie czeka na domysł.
- *
- * `null` znaczy „nie ma czego zgłaszać". Zgłoszenie dotyczy kopii najświeższej
- * niosącej zmiany niezapisane: pytanie o pięć kopii naraz byłoby pytaniem,
- * na które Operator nie ma jak odpowiedzieć.
- */
+/** Zgłoszenie kopii zapasowej po nagłym zamknięciu dokumentu, dotyczące najświeższej kopii niosącej zmiany niezapisane. */
 export function kopieZgloszeniePoZamknieciu(
   kopie: readonly StudioDocumentBackup[],
 ): { kopia: StudioDocumentBackup; zdanie: string } | null {
@@ -182,7 +146,7 @@ export function kopieZgloszeniePoZamknieciu(
   };
 }
 
-/** Zdanie o szeregach wersji — dwa szeregi, nie jedna lista z domysłem. */
+/** Zdanie opisujące dwa osobne szeregi wersji dokumentu, operatora i autozapisu, zamiast jednej listy z domysłem. */
 export function kopieOpiszSzeregi(
   wersje: readonly StudioVersion[],
   liczbaOperatora: number,
@@ -201,15 +165,7 @@ export function kopieOpiszSzeregi(
   );
 }
 
-/**
- * Nazwa szeregu widoczna dla Operatora.
- *
- * Szereg jest tu szeregiem **zapytania**, nie cechą wiersza: `StudioVersion`
- * pola `series` NIE niesie, więc pojedyncza wersja nie mówi, z którego szeregu
- * pochodzi. Wykaz zawężony do jednego szeregu nazwać się daje, wykaz zbiorczy —
- * nie, i okno mówi to wprost, zamiast zgadywać po braku etykiety. Pozycja
- * kontraktu potrzebna do rozróżnienia wiersza stoi w sprawozdaniu.
- */
+/** Nazwa szeregu wersji widoczna dla operatora: wersji zapytania o zapis samoczynny, o wersję operatora albo wiersz zbiorczy. */
 export function kopieNazwaSzeregu(szereg: StudioVersionSeries | undefined): string {
   if (szereg === StudioVersionSeries.Autosave) return 'zapis samoczynny';
   if (szereg === StudioVersionSeries.Operator) return 'wersja Operatora';

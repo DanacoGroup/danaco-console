@@ -1,11 +1,5 @@
-// Odczytanie osi rozstrzygania okna rozmowy — modelu i konta, dla których
-// liczona jest nakładka tego okna.
-//
-// Okno wskazuje kanał modelu, a kanał — identyfikator modelu i konto
-// preferowane. Oś `model` bierze więc identyfikator modelu kanału, a oś
-// `account` — konto kanału. Okno bez kanału, kanał bez konta i okno nieznane
-// dają osie puste: nakładka schodzi wtedy na samą oś platformy zamiast nie
-// powstać wcale.
+// Plik odczytuje osie rozstrzygania okna rozmowy: modelu i konta, dla których liczona jest
+// nakładka tego okna, na podstawie kanału modelu wskazanego przez okno.
 package core
 
 import (
@@ -15,20 +9,20 @@ import (
 	"danacoconsole/server/internal/dane"
 )
 
-// wskazanieOsiOkna odczytuje osie rozstrzygania jednego okna.
+// wskazanieOsiOkna odczytuje osie rozstrzygania jednego okna rozmowy tej platformy dla konta użytkownika.
 type wskazanieOsiOkna struct {
 	okna   dane.RepozytoriumOkien
 	kanaly dane.RepozytoriumKanalow
 }
 
-// nowaWskazanieOsiOkna wiąże odczyt z repozytoriami okien i kanałów.
+// nowaWskazanieOsiOkna wiąże odczyt osi rozstrzygania z repozytoriami okien komunikacji i kanałów modelu.
 func nowaWskazanieOsiOkna(okna dane.RepozytoriumOkien,
 	kanaly dane.RepozytoriumKanalow) *wskazanieOsiOkna {
 
 	return &wskazanieOsiOkna{okna: okna, kanaly: kanaly}
 }
 
-// dlaOkna zwraca osie okna wskazanego identyfikatorem rdzenia.
+// dlaOkna zwraca osie rozstrzygania okna komunikacji wskazanego identyfikatorem rdzenia tej platformy.
 func (w *wskazanieOsiOkna) dlaOkna(ctx context.Context, idOkna string) (ZapytanieTozsamosci, error) {
 	if w == nil || w.okna == nil {
 		return ZapytanieTozsamosci{}, nil

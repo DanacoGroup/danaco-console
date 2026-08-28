@@ -3,29 +3,7 @@ import type { Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 import type { Kanal } from '../protokol/kanal';
 import { naZmianeKlucza, odczytajNastawe } from './zrodlo-nastaw';
 
-/**
- * Wiersz „Wymóg logowania" — pokazuje wartość bieżącą i jej nie zmienia.
- *
- * Nastawa ma jedno miejsce zmiany: Okno Konfiguracji rysuje kontrolkę dla
- * każdej pozycji katalogu, więc rysuje ją także dla tego klucza. Ster
- * postawiony tutaj byłby drugim miejscem zmiany tej samej wartości.
- *
- * Wiersz nie odsyła jednak wprost do Okna Konfiguracji, bo odesłanie byłoby
- * mylące: klucz dopuszcza wyłącznie poziom zasięgu `application`, a
- * `konfiguracja/zasiegi.ts` nie niesie go w `ZASIEGI_OD_NAJWEZSZEGO`, więc
- * przecięcie w `konfiguracja/wybor-adresu.ts` wychodzi puste i gałąź zapasowa
- * proponuje same poziomy niewłaściwe.
- *
- * Skutek nie kończy się na niewygodzie: `config.set` sprawdza klucz wobec
- * katalogu, ale nie sprawdza poziomu, a `application` jest poziomem
- * najszerszym, więc każdy poziom węższy go przesłania. Zapis na poziomie
- * niedozwolonym przechodzi i potrafi wyłączyć wymóg logowania mimo zapisu
- * `true` na poziomie właściwym.
- *
- * Dlatego nasłuch łapie każdy poziom, nie tylko właściwy: zapis pod
- * niedozwolonym adresem jest tym, co wiersz ma nazwać wprost, zamiast pominąć
- * jako „nie mój poziom".
- */
+/** Wiersz wymogu logowania pokazuje wartość bieżącą nastawy i jej nie zmienia, bo okno konfiguracji rysuje dla tego klucza własną kontrolkę na właściwym poziomie zasięgu. */
 export interface WierszWymogu {
   /** Element montowany w sekcji. */
   element: HTMLElement;
@@ -35,7 +13,7 @@ export interface WierszWymogu {
   rozlacz(): void;
 }
 
-/** Klucz nastawy w katalogu rdzenia — jedyne jego wystąpienie w kliencie. */
+/** Klucz nastawy w katalogu rdzenia — jedyne jego wystąpienie w kliencie, używane do odczytu i nasłuchu zmian. */
 export const KLUCZ_WYMOGU_LOGOWANIA = 'gateway.requireLogin';
 
 export function utworzWierszWymoguLogowania(kanal: Kanal): WierszWymogu {
@@ -61,11 +39,7 @@ export function utworzWierszWymoguLogowania(kanal: Kanal): WierszWymogu {
 
   element.append(nazwa, wartosc, opis, ostrzezenie);
 
-  /**
-   * Trzy stany, nie dwa. Brak wartości znaczy „bez wskazania — rozstrzyga adres
-   * nasłuchu" i nie jest tym samym co „niewymagane"; spłaszczenie do dwóch
-   * stanów zniosłoby po cichu wymóg na nasłuchu wystawionym poza pętlę zwrotną.
-   */
+  // Trzy stany, nie dwa: brak wartości znaczy bez wskazania, rozstrzyga adres nasłuchu.
   function napis(surowa: unknown): string {
     if (surowa === true || surowa === 'true') return 'wymagane';
     if (surowa === false || surowa === 'false') return 'niewymagane';
@@ -103,8 +77,7 @@ export function utworzWierszWymoguLogowania(kanal: Kanal): WierszWymogu {
     KLUCZ_WYMOGU_LOGOWANIA,
     (nowa, wpis: ConfigEntry) => {
       if (wpis.scope !== ConfigScope.Application) {
-        // Zapis pod adresem, którego katalog nie dopuszcza, a który mimo to
-        // wygrywa rozstrzyganie — wiersz nazywa go wprost (patrz nagłówek).
+        // Zapis pod adresem, którego katalog nie dopuszcza, a który mimo to wygrywa rozstrzyganie.
         ostrzez(
           `Ktoś zapisał tę nastawę na poziomie „${wpis.scope}", którego katalog ` +
             'nie dopuszcza (dozwolony jest wyłącznie „application"). Rdzeń takiego ' +

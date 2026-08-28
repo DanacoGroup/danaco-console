@@ -1,10 +1,5 @@
 /**
- * Gest „przytrzymaj, aby nagrać”.
- *
- * Jedna odpowiedzialność: zamienić trzymanie przycisku — palcem, myszą albo
- * klawiszem — na trzy wywołania: start, koniec, porzucenie. Plik nie nagrywa,
- * nie tworzy elementu i nie zna mikrofonu; dostaje cudzy element i oddaje
- * odpięcie.
+ * Gest przytrzymania łączy trzymanie przycisku — palcem, myszą albo klawiszem — z trzema wywołaniami: rozpoczęciem, zakończeniem i porzuceniem nagrania.
  */
 
 export interface OpcjePrzytrzymania {
@@ -21,15 +16,13 @@ export interface Przytrzymanie {
   podepnij(cel: HTMLElement): () => void;
 }
 
-/** Klawisze uznawane za naciśnięcie przycisku — umowa platformy, nie wybór. */
+/** Klawisze uznawane za naciśnięcie przycisku — umowa platformy interfejsu, a nie dowolny wybór implementacji tego gestu. */
 const KLAWISZE_TRZYMANIA: readonly string[] = [' ', 'Spacebar', 'Enter'];
 
 export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
   return {
     podepnij(cel) {
-      // Jeden znacznik trzymania na podpięcie. Źródło (palec albo klawisz)
-      // zapamiętujemy, żeby puszczenie klawisza nie kończyło gestu zaczętego
-      // myszą — Operator potrafi trzymać przycisk i pisać drugą ręką.
+      // Znacznik trzymania zapamiętuje źródło, by puszczenie klawisza nie kończyło gestu zaczętego myszą.
       let zrodlo: 'wskaznik' | 'klawiatura' | null = null;
       let idWskaznika: number | null = null;
 
@@ -48,18 +41,14 @@ export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
       }
 
       function naNacisniecie(zdarzenie: PointerEvent): void {
-        // Tylko przycisk główny. Prawy przycisk otwiera menu kontekstowe i nie
-        // zostawia po sobie `pointerup` na elemencie — gest zawisłby na zawsze.
+        // Reaguje tylko przycisk główny — prawy przycisk otwiera menu i nie zostawia zdarzenia `pointerup`.
         if (zdarzenie.button !== 0) return;
         idWskaznika = zdarzenie.pointerId;
-        // Przechwycenie wskaźnika: bez niego zjechanie palcem poza krawędź
-        // przycisku zabiera `pointerup` innemu elementowi, a nagrywanie zostaje
-        // włączone mimo puszczonego palca.
+        // Przechwycenie wskaźnika zapobiega przejęciu `pointerup` przez inny element przy zjechaniu palcem.
         try {
           cel.setPointerCapture(zdarzenie.pointerId);
         } catch {
-          // Przechwycenie bywa odmówione (wskaźnik już zwolniony). Gest działa
-          // dalej — traci tylko odporność na zjechanie poza przycisk.
+          // Odmowa przechwycenia nie przerywa gestu — traci tylko odporność na zjechanie poza przycisk.
         }
         zacznij('wskaznik');
       }
@@ -75,19 +64,11 @@ export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
 
       function naPrzerwanieWskaznika(zdarzenie: PointerEvent): void {
         if (zrodlo !== 'wskaznik' || zdarzenie.pointerId !== idWskaznika) return;
-        // `pointercancel` to systemowe wyrwanie gestu (przewijanie, telefon).
-        // Kończymy, a nie porzucamy: Operator zdążył coś powiedzieć i słowa
-        // wyrzucamy wyłącznie wtedy, gdy sam o to prosi (Escape).
+        // Zdarzenie `pointercancel` kończy nagranie, nie porzuca go — słowa odrzuca wyłącznie klawisz Escape.
         domknij(false);
       }
 
-      /**
-       * Escape stoi na dokumencie, nie na elemencie.
-       *
-       * Podczas trzymania myszą ognisko bywa gdzie indziej — przycisk wcale nie
-       * musi je mieć. Nasłuch przy elemencie przepuściłby wtedy Escape i nie
-       * byłoby czym cofnąć nagrania w połowie zdania.
-       */
+      /** Escape nasłuchiwany jest na dokumencie, bo ognisko podczas trzymania myszą bywa gdzie indziej. */
       function naEscape(zdarzenie: Event): void {
         if ((zdarzenie as KeyboardEvent).key !== 'Escape' || zrodlo === null) return;
         zdarzenie.preventDefault();
@@ -96,12 +77,9 @@ export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
 
       function naKlawiszWdol(zdarzenie: KeyboardEvent): void {
         if (!KLAWISZE_TRZYMANIA.includes(zdarzenie.key)) return;
-        // Auto-powtarzanie: przytrzymany klawisz sypie zdarzeniami kilkanaście
-        // razy na sekundę, a bez tego odcięcia każde z nich próbowałoby zacząć
-        // nagranie od nowa.
+        // Auto-powtarzanie klawisza jest odcinane, by seria zdarzeń nie zaczynała nagrania wielokrotnie.
         if (zdarzenie.repeat) return;
-        // Spacja przewija stronę, a Enter po puszczeniu wysyła `click` — oba
-        // zachowania kolidują z trzymaniem.
+        // Spacja i Enter są przechwytywane, bo ich domyślne działanie koliduje z trzymaniem przycisku.
         zdarzenie.preventDefault();
         zacznij('klawiatura');
       }
@@ -113,9 +91,7 @@ export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
       }
 
       function naUtrateOgniska(): void {
-        // Ognisko uciekło w trakcie trzymania klawiszem (przełączenie okna) —
-        // `keyup` już nie przyjdzie. Domykamy jak puszczenie, bo cisza w tym
-        // miejscu zostawiłaby zapalony mikrofon bez żadnego wyjścia.
+        // Ucieczka ogniska przy trzymaniu klawiszem domyka gest jak puszczenie, nie zostawia mikrofonu.
         if (zrodlo === 'klawiatura') domknij(false);
       }
 
@@ -135,8 +111,7 @@ export function utworzPrzytrzymanie(opcje: OpcjePrzytrzymania): Przytrzymanie {
         cel.removeEventListener('keyup', naKlawiszWgore);
         cel.removeEventListener('blur', naUtrateOgniska);
         cel.ownerDocument.removeEventListener('keydown', naEscape);
-        // Odpięcie w trakcie trzymania nie może zostawić nagrywania włączonego
-        // — nikt już nie doniesie o puszczeniu przycisku.
+        // Odpięcie w trakcie trzymania kończy nagrywanie, bo puszczenie przycisku nie zostanie już zgłoszone.
         if (zrodlo !== null) domknij(true);
       };
     },

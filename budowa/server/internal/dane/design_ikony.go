@@ -1,16 +1,5 @@
-// Obszar ikon własnych modułu Design (tabele `ikona_design`
-// i `etykieta_ikony_design`, migracja 326) — część `RepozytoriumDesignu`
-// zadeklarowanego w `design.go`.
-//
-// W bazie leżą wyłącznie ikony WŁASNE: te narysowane na siatce
-// (`design.icon.set`) i te wytworzone kanałem modelu (`design.icon.generate`).
-// Katalog ikon otwartoźródłowych bazy nie dotyka — jest wkompilowany w binarium
-// (`core/ikony_katalogu`), więc rdzeń zna go bez kroku zasiewu, a stanowisko
-// bez ani jednej ikony własnej i tak ma czego szukać.
-//
-// Etykiety podmieniają się kompletem, wzorem `UstawEtykietyZasobu`: kontrakt
-// (`DesignIconSetRequest.Tags`) nadsyła stan docelowy, więc etykieta zdjęta
-// w oknie musi zniknąć także w bazie.
+// Plik prowadzi obszar ikon własnych modułu Design, część RepozytoriumDesignu; w bazie leżą wyłącznie ikony
+// narysowane albo wytworzone kanałem modelu, katalog ikon otwartoźródłowych jest wkompilowany w binarium, a etykiety podmieniają się kompletem.
 package dane
 
 import (
@@ -67,13 +56,7 @@ const (
 	                            WHERE ikona_id = ? ORDER BY etykieta`
 )
 
-// ZapiszIkoneDesignu zakłada ikonę albo nadpisuje zastaną po identyfikatorze
-// zewnętrznym i podmienia komplet jej etykiet w jednej transakcji.
-//
-// Nazwa ikony jest jedyna w oknie (indeks UNIQUE migracji 326). Zderzenie
-// wychodzi stąd jako błąd bazy, nie jako cicha podmiana cudzej ikony: dwie
-// ikony o jednej nazwie w jednym oknie dałyby sprite z dwoma symbolami o tym
-// samym `id`, czyli plik, którego przeglądarka nie złoży.
+// ZapiszIkoneDesignu zakłada ikonę albo nadpisuje zastaną po identyfikatorze zewnętrznym i podmienia komplet jej etykiet w jednej transakcji; nazwa ikony jest jedyna w oknie.
 func (r *repozytoriumDesignu) ZapiszIkoneDesignu(ctx context.Context,
 	ikona IkonaDesignu) (IkonaDesignu, error) {
 
@@ -101,8 +84,7 @@ func (r *repozytoriumDesignu) ZapiszIkoneDesignu(ctx context.Context,
 			return fmt.Errorf("dane: nie można zapisać ikony design %q: %w", ikona.Kod, err)
 		}
 
-		// Klucz wiersza wchodzi dopiero po zapisie — ikona mogła powstać w tej
-		// transakcji, a `etykieta_ikony_design.ikona_id` wymaga klucza.
+		// Klucz wiersza wchodzi dopiero po zapisie, bo ikona mogła powstać dopiero w tej transakcji.
 		odczyt, err := r.zapytania.wTransakcji(ctx, transakcja, pobierzIkoneDesignu)
 		if err != nil {
 			return err
@@ -166,8 +148,7 @@ func (r *repozytoriumDesignu) IkonaDesignuPoKodzie(ctx context.Context,
 	return ikona, nil
 }
 
-// IkonyDesignuOkna zwraca ikony własne okna, od ostatnio zmienianej, wraz
-// z etykietami.
+// IkonyDesignuOkna zwraca ikony własne okna, od ostatnio zmienianej, wraz z etykietami, z bazy danych.
 func (r *repozytoriumDesignu) IkonyDesignuOkna(ctx context.Context,
 	okno string) ([]IkonaDesignu, error) {
 
@@ -203,7 +184,7 @@ func (r *repozytoriumDesignu) IkonyDesignuOkna(ctx context.Context,
 	return lista, nil
 }
 
-// etykietyIkonyDesignu czyta etykiety jednej ikony.
+// etykietyIkonyDesignu czyta wszystkie etykiety jednej ikony wprost z bazy danych repozytorium designu.
 func (r *repozytoriumDesignu) etykietyIkonyDesignu(ctx context.Context,
 	ikonaID int64) ([]string, error) {
 

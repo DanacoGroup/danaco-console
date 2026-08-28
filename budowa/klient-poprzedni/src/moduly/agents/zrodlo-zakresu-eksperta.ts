@@ -19,22 +19,8 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Komendy zakresu działania eksperta widziane przez okna modułu Agents.
- *
- * Źródło osobne od `zrodlo-agentow.ts`: tamto opisuje BIBLIOTEKĘ — założenie,
- * wykaz, zmianę tożsamości — a to opisuje ZAKRES, czyli co ekspertowi wolno
- * zrobić w systemie. Rozdział jest ten sam, który przebiega w rdzeniu między
- * portem Agenci a portem ZakresEksperta.
- *
- * Zakres narzędzi profilu asystenta (`tools.scope.*`) mieszka tutaj, choć
- * dotyczy profilu, a nie eksperta. Powód jest jeden i praktyczny: jedynym
- * oknem, w którym Operator ustala „jak szeroko działa wykonawca w moim
- * imieniu", jest Permissions Center, więc rozstrzygnięcie o wywoływaniu
- * narzędzi stoi tam, gdzie Operator go szuka — a nie w oknie, którego moduł
- * Agents nie ma.
- *
- * Żadne wywołanie nie rzuca wyjątkiem: niepowodzenie wraca polem `blad` wyniku,
- * a okno pokazuje je w swoim stanie odmowy.
+ * Komendy zakresu działania eksperta widziane przez okna modułu Agents opisują, co ekspertowi
+ * wolno zrobić w systemie, osobno od biblioteki założeń i tożsamości.
  */
 export interface ZrodloZakresuEksperta {
   /** Zdejmuje umiejętność z definicji eksperta (`agent.skill.remove`). */
@@ -85,7 +71,10 @@ export interface ZrodloZakresuEksperta {
   zapiszZakresNarzedzia(zlecenie: ZlecenieZakresuNarzedzia): Promise<Wynik<{ scope: ToolScope }>>;
 }
 
-/** Zlecenie konfiguracji instancji konektora; pole pominięte zostaje bez zmiany. */
+/**
+ * Zlecenie konfiguracji instancji konektora niesie pole pominięte jako brak zmiany
+ * dotychczasowej wartości zapisanej w rdzeniu dla tego eksperta.
+ */
 export interface ZlecenieKonfiguracjiKonektora {
   idEksperta: string;
   idKonektora: string;
@@ -94,14 +83,20 @@ export interface ZlecenieKonfiguracjiKonektora {
   czynny?: boolean;
 }
 
-/** Zlecenie zdjęcia wpisu uprawnienia. Grupa pominięta znaczy „wszystkie grupy”. */
+/**
+ * Zlecenie zdjęcia wpisu uprawnienia z pominiętą grupą zdejmuje wszystkie grupy zakresu tego
+ * eksperta naraz.
+ */
 export interface ZlecenieZdjeciaUprawnienia {
   idEksperta: string;
   grupa?: AgentPermissionGroup;
   zakres?: string;
 }
 
-/** Zlecenie zapisu zakresu narzędzia; pole pominięte zostaje bez zmiany. */
+/**
+ * Zlecenie zapisu zakresu narzędzia niesie pole pominięte jako brak zmiany dotychczasowej
+ * wartości zapisanej dla profilu.
+ */
 export interface ZlecenieZakresuNarzedzia {
   idProfilu: string;
   nazwaPozycji: string;
@@ -151,9 +146,7 @@ export function utworzZrodloZakresuEksperta(kanal: Kanal): ZrodloZakresuEksperta
       };
       if (zlecenie.punktDostepu !== undefined) zadanie.accessPointId = zlecenie.punktDostepu.trim();
       if (zlecenie.czynny !== undefined) zadanie.enabled = zlecenie.czynny;
-      // Konfiguracja jedzie jako treść JSON wpisana przez Operatora. Zapis
-      // niepoprawny jest ODMOWĄ WYWOŁANIA, nie wyjątkiem wywracającym widok:
-      // okno ma powiedzieć, co jest nie tak z treścią, a nie zniknąć.
+      // Konfiguracja jedzie jako treść JSON; zapis niepoprawny jest odmową wywołania, nie wyjątkiem.
       if (zlecenie.konfiguracja !== undefined && zlecenie.konfiguracja.trim() !== '') {
         try {
           zadanie.config = JSON.parse(zlecenie.konfiguracja) as unknown;
@@ -200,8 +193,7 @@ export function utworzZrodloZakresuEksperta(kanal: Kanal): ZrodloZakresuEksperta
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.AgentModulesSet, {
           agentId: idEksperta,
-          // Wykaz jedzie zawsze, także pusty: pusty znaczy BRAK OGRANICZENIA
-          // i jest to stan wyjściowy, a nie brak żądania.
+          // Wykaz jedzie zawsze, także pusty: pusty znaczy brak ograniczenia, nie brak żądania.
           moduleCodes: [...kodyModulow],
         }),
         Command.AgentModulesSet,

@@ -1,22 +1,16 @@
+/**
+ * Maszyna stanów przebiegu pokazywana w zakładce stanów okna Orchestratora.
+ * Stany są kompletem wyliczenia `AutomationExecutionStatus`, a plik nie woła
+ * rdzenia: stan bieżący przychodzi z zewnątrz.
+ */
 import { AutomationExecutionStatus } from '../../../../shared/contract';
 import { pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
 
 /**
- * Maszyna stanów przebiegu — zakładka „Stany" okna Orchestratora.
- *
- * Opracowanie modułu żąda formalnego modelu stanów przebiegu z przejściami.
- * Model nie jest tu wymyślony: stany są kompletem wyliczenia
- * `AutomationExecutionStatus`, a przejścia wynikają z działań, które kontrakt
- * na przebiegu dopuszcza — uruchomienia, wstrzymania, wznowienia, zatrzymania
- * i zamknięcia przebiegu powodzeniem albo błędem.
- *
- * Widok jest wykazem, nie rysunkiem: przejść jest siedem, a rysunek siedmiu
- * strzałek nie mówi więcej niż siedem zdań i kosztuje drugą kanwę w module.
- *
- * Plik nie woła rdzenia; stan bieżący przychodzi z zewnątrz.
+ * Jedno przejście maszyny stanów wraz z jego przyczyną: stan wyjściowy, stan
+ * docelowy oraz to, co przejście powoduje — działanie Operatora albo zamknięcie
+ * przebiegu przez rdzeń.
  */
-
-/** Jedno przejście maszyny stanów wraz z jego przyczyną. */
 export interface PrzejscieStanu {
   ze: string;
   na: string;
@@ -24,7 +18,11 @@ export interface PrzejscieStanu {
   przyczyna: string;
 }
 
-/** Komplet przejść przebiegu automatyki. */
+/**
+ * Komplet przejść przebiegu automatyki, wywiedziony z działań, które kontrakt na
+ * przebiegu dopuszcza: uruchomienia, wstrzymania, wznowienia, zatrzymania oraz
+ * zamknięcia przebiegu powodzeniem albo błędem.
+ */
 export const PRZEJSCIA_PRZEBIEGU: readonly PrzejscieStanu[] = [
   {
     ze: AutomationExecutionStatus.Pending,
@@ -63,7 +61,11 @@ export const PRZEJSCIA_PRZEBIEGU: readonly PrzejscieStanu[] = [
   },
 ];
 
-/** Nazwy stanów w mowie Operatora; klucze są wartościami kontraktu. */
+/**
+ * Nazwy stanów przebiegu w mowie Operatora, przy czym kluczami są wartości
+ * kontraktu. Dzięki temu zmiana nazwy pokazywanej na ekranie nie rusza wartości
+ * idącej do rdzenia ani z niego wracającej.
+ */
 const NAZWY_STANOW: Readonly<Record<string, string>> = {
   [AutomationExecutionStatus.Pending]: 'oczekuje',
   [AutomationExecutionStatus.Running]: 'w toku',
@@ -73,17 +75,19 @@ const NAZWY_STANOW: Readonly<Record<string, string>> = {
   [AutomationExecutionStatus.Stopped]: 'przerwany',
 };
 
-/** Nazwa stanu w mowie Operatora; stan nieznany zostaje przy swojej wartości. */
+/**
+ * Nazwa stanu w mowie Operatora; stan nieznany zostaje przy swojej wartości
+ * kontraktowej, ponieważ nazwa zmyślona po stronie okna byłaby słowem, za którym
+ * nie stoi żaden zapis rdzenia.
+ */
 export function nazwaStanu(stan: string): string {
   return NAZWY_STANOW[stan] ?? stan;
 }
 
 /**
  * Buduje wykaz przejść. Stan wskazany dostaje znacznik na przejściach, które
- * z niego wychodzą — Operator widzi wtedy, co przebiegowi wolno dalej.
- *
- * Pusty stan bieżący znaczy „żaden przebieg nie jest wskazany"; wykaz stoi
- * wtedy bez wyróżnienia i jest samym modelem.
+ * z niego wychodzą, dzięki czemu Operator widzi, co przebiegowi wolno dalej.
+ * Pusty stan bieżący zostawia wykaz bez wyróżnienia.
  */
 export function wykazPrzejsc(stanBiezacy: string): HTMLElement {
   const lista = wykaz('Przejścia stanów przebiegu automatyki', 'da-wykaz');
@@ -102,7 +106,11 @@ export function wykazPrzejsc(stanBiezacy: string): HTMLElement {
   return lista;
 }
 
-/** Zdanie nad wykazem przejść: skąd wzięty jest model i czego dotyczy. */
+/**
+ * Zdanie nad wykazem przejść: mówi, skąd wzięty jest model stanów i czego
+ * dotyczy, żeby Operator czytał wykaz jako odwzorowanie kontraktu, a nie jako
+ * propozycję okna.
+ */
 export function zdanieOMaszynieStanow(stanBiezacy: string): string {
   const model =
     `Model stanów przebiegu: ${Object.keys(NAZWY_STANOW).length} stanów, ` +

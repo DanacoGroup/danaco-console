@@ -2,30 +2,29 @@ package konfig
 
 import "sync"
 
-// zrodloPamieciowe trzyma ustawienia w pamięci procesu. Jest pełnoprawną
-// implementacją interfejsu Zrodlo — obsługuje rdzeń uruchomiony bez warstwy
-// trwałości oraz nakładkę ustawień ważnych do końca biegu procesu.
-//
-// Rozstrzygacz zbudowany bez źródła sięga po puste źródło pamięciowe, dzięki
-// czemu brak trwałości nie blokuje startu, tylko daje politykę domyślną.
+// zrodloPamieciowe trzyma ustawienia w pamięci procesu i jest pełnoprawną
+// implementacją interfejsu Zrodlo, obsługującą rdzeń uruchomiony bez
+// warstwy trwałości oraz nakładkę ustawień ważnych do końca biegu procesu.
 type zrodloPamieciowe struct {
 	zamek sync.RWMutex
 	wpisy map[kluczWpisu]Wpis
 }
 
-// NoweZrodloPamieciowe tworzy puste źródło.
+// NoweZrodloPamieciowe tworzy puste źródło pamięciowe gotowe do zapisu
+// i odczytu ustawień w pamięci procesu.
 func NoweZrodloPamieciowe() *zrodloPamieciowe {
 	return &zrodloPamieciowe{wpisy: make(map[kluczWpisu]Wpis)}
 }
 
 // Ustaw zapisuje wartość ustawienia pod wskazanym adresem zasięgu, na osi
-// platformy.
+// platformy, wywołując metodę ustawWOsi.
 func (z *zrodloPamieciowe) Ustaw(poziom Poziom, kluczZasiegu, klucz, wartosc string, rodzaj Rodzaj) {
 	z.ustawWOsi(Adres{Poziom: poziom, KluczZasiegu: kluczZasiegu, Os: OsPlatformy},
 		klucz, wartosc, rodzaj)
 }
 
-// ustawWOsi zapisuje wartość pod adresem złożonym: poziom zasięgu razem z osią.
+// ustawWOsi zapisuje wartość pod adresem złożonym: poziom zasięgu razem
+// z osią, zastępując wcześniejszy zapis pod tym samym adresem.
 func (z *zrodloPamieciowe) ustawWOsi(adres Adres, klucz, wartosc string, rodzaj Rodzaj) {
 	if z == nil || klucz == "" {
 		return
@@ -58,7 +57,8 @@ func (z *zrodloPamieciowe) Usun(poziom Poziom, kluczZasiegu, klucz string) {
 	delete(z.wpisy, kluczem(Adres{Poziom: poziom, KluczZasiegu: kluczZasiegu}, klucz))
 }
 
-// Wpisy zwraca zapisy spod wskazanych adresów.
+// Wpisy zwraca zapisy spod adresów wskazanych na liście, pomijając wpisy
+// zapisane pod adresami spoza niej.
 func (z *zrodloPamieciowe) Wpisy(adresy []Adres) ([]Wpis, error) {
 	if z == nil {
 		return nil, nil

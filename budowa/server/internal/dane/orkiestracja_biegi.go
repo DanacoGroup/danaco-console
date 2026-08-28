@@ -1,18 +1,5 @@
 // Odpowiedzialność pliku: bieg orkiestracji MultitaskingAI (tabela
 // `bieg_orkiestracji`) wraz z jego obsadą (tabela `obsada_biegu`).
-//
-// Obsada jest jednym bytem o dwóch nośnikach: wisi albo na automatyce, albo na
-// biegu orkiestracji (więz CHECK schematu). Zapytania pętli automatyki
-// (`automatyka_petla.go`) niosą `automatyka_id` i widzą wyłącznie obsadę
-// automatyk; zapytania tego pliku niosą `bieg_id` i widzą wyłącznie obsadę
-// biegów — stąd dwa pliki nad jedną tabelą.
-//
-// Bieg nie jest przebiegiem automatyki: `przebieg_automatyki` wisi na zapisanej
-// definicji (`automatyka_id NOT NULL`), a bieg orkiestracji zakłada się w oknie
-// i bywa jednorazowy — zestawienie dwóch modeli nie wymaga zapisanej automatyki.
-//
-// Kolumna `kolejka_id` jest wskazaniem, nie drugim silnikiem — pracę biegu
-// wykonuje silnik kolejek.
 package dane
 
 import (
@@ -129,7 +116,7 @@ type repozytoriumBiegow struct {
 	db        *sql.DB
 }
 
-// Zgodność implementacji z kontraktem sprawdza kompilator, a nie montaż.
+// Zgodność implementacji repozytorium biegów orkiestracji z kontraktem sprawdza kompilator, a nie montaż.
 var _ RepozytoriumBiegow = (*repozytoriumBiegow)(nil)
 
 // BiegiOrkiestracji oddaje repozytorium biegów nad pamięcią zapytań zestawu.
@@ -141,7 +128,7 @@ func (z *Zestaw) BiegiOrkiestracji() RepozytoriumBiegow {
 	return &repozytoriumBiegow{zapytania: z.zapytania, db: z.zapytania.db}
 }
 
-// ZapiszBieg zakłada bieg albo nadpisuje zastany i oddaje stan po zapisie.
+// ZapiszBieg zakłada bieg orkiestracji albo nadpisuje zastany wiersz i oddaje jego pełny stan po zapisie.
 func (r *repozytoriumBiegow) ZapiszBieg(ctx context.Context,
 	bieg BiegOrkiestracji) (BiegOrkiestracji, error) {
 
@@ -166,16 +153,12 @@ func (r *repozytoriumBiegow) ZapiszBieg(ctx context.Context,
 	return r.Bieg(ctx, bieg.Kod)
 }
 
-// Bieg zwraca bieg o wskazanym identyfikatorze zewnętrznym.
+// Bieg zwraca bieg orkiestracji o wskazanym identyfikatorze zewnętrznym nadanym przez rdzeń całego systemu.
 func (r *repozytoriumBiegow) Bieg(ctx context.Context, kod string) (BiegOrkiestracji, error) {
 	return r.jedenBieg(ctx, pobierzBieg, kod, "bieg "+kod)
 }
 
-// BiegOknaKoordynatora zwraca bieg prowadzony przez wskazane okno.
-//
-// Okno bez biegu wraca jako ErrBrakWiersza i jest to stan zwykły, nie usterka:
-// podagent bywa powołany poza biegiem orkiestracji, w zwykłej rozmowie —
-// kolumna `podagent.bieg_id` dopuszcza pustkę.
+// BiegOknaKoordynatora zwraca bieg orkiestracji prowadzony przez wskazane okno komunikacji tego rdzenia.
 func (r *repozytoriumBiegow) BiegOknaKoordynatora(ctx context.Context,
 	oknoID int64) (BiegOrkiestracji, error) {
 
@@ -186,10 +169,8 @@ func (r *repozytoriumBiegow) BiegOknaKoordynatora(ctx context.Context,
 		fmt.Sprintf("bieg okna %d", oknoID))
 }
 
-// ZapiszObsadeBiegu podmienia komplet obsady biegu. Podmiana, a nie dopisywanie:
-// obsada jest wykazem zamkniętym, a scalanie zostawiałoby stanowiska usunięte
-// z nadesłanego wykazu. Obsada pusta jest poprawna — bieg bez obsady rusza na
-// modelu wskazanym w oknie.
+// ZapiszObsadeBiegu podmienia komplet obsady biegu; podmiana, a nie dopisywanie, bo obsada jest wykazem
+// zamkniętym.
 func (r *repozytoriumBiegow) ZapiszObsadeBiegu(ctx context.Context,
 	biegID int64, obsada []MiejsceObsady) error {
 
@@ -230,7 +211,7 @@ func (r *repozytoriumBiegow) ZapiszObsadeBiegu(ctx context.Context,
 	})
 }
 
-// ObsadaBiegu zwraca stanowiska biegu w kolejności miejsc.
+// ObsadaBiegu zwraca stanowiska biegu orkiestracji w kolejności zajmowanych przez nie miejsc tej obsady.
 func (r *repozytoriumBiegow) ObsadaBiegu(ctx context.Context,
 	biegID int64) ([]MiejsceObsady, error) {
 
@@ -265,7 +246,7 @@ func (r *repozytoriumBiegow) ObsadaBiegu(ctx context.Context,
 	return lista, nil
 }
 
-// jedenBieg wykonuje odczyt pojedynczego wiersza wspólny obu doborom.
+// jedenBieg wykonuje odczyt pojedynczego wiersza biegu orkiestracji wspólny dla obu sposobów jego doboru.
 func (r *repozytoriumBiegow) jedenBieg(ctx context.Context, zapytanie string,
 	klucz any, opis string) (BiegOrkiestracji, error) {
 
@@ -283,7 +264,7 @@ func (r *repozytoriumBiegow) jedenBieg(ctx context.Context, zapytanie string,
 	return bieg, nil
 }
 
-// odczytajBieg składa strukturę z jednego wiersza wyniku.
+// odczytajBieg składa pełną strukturę biegu orkiestracji z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajBieg(wiersz skaner) (BiegOrkiestracji, error) {
 	var b BiegOrkiestracji
 	var sesjaKod, etap, zakonczono sql.NullString

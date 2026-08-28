@@ -2,32 +2,8 @@ import { oknaPomocnicze, type OpisPomocniczego } from './rejestr-pomocniczych';
 import { wytworniaPanelu } from './wytwornia-paneli';
 
 /**
- * Co z pozycji modułu da się naprawdę otworzyć obok rozmowy — i co nie.
- *
- * Menu `⋮` w nagłówku okna rozmowy potrzebuje wykazu pozycji, które po
- * kliknięciu się otworzą. Rejestr sam tego nie mówi: niesie stan opisowy, nie
- * zdolność wykonawczą.
- *
- * Kryterium jest istnienie wytwórni, a nie stan `zbudowane`. Stan `zbudowane`
- * jest zdaniem rejestru o produkcie, istnienie wytwórni faktem o kodzie; gdy
- * się rozjadą, menu jest krótsze (pozycja nie wchodzi), a rozjazd zgłasza
- * `pas-pomocniczych.ts` przez `console.warn`.
- *
- * Pozycja bez wytwórni nie wchodzi do `paneleOtwieralne` w ogóle — nie dostaje
- * wiersza wygaszonego ani „wkrótce", bo nieczynny wiersz jest bramką. Jej
- * miejsce jest w `paneleNieotwieralne`, gdzie stoi wraz z powodem wprost
- * z rejestru: czego brakuje i czyja to robota.
- *
- * Plik nie buduje paneli, oddaje opisy; nie zna DOM; nie rozstrzyga, ile paneli
- * wolno otworzyć naraz — panel jest bytem otwieranym i zamykanym pojedynczo,
- * a limitu nie ma.
- *
- * Dla modułu spoza rejestru `oknaPomocnicze` oddaje wykaz pusty i obie funkcje
- * oddają puste. Zdanie o braku spisu należy do gospodarza, który to pokazuje
- * (`zdanieBezSpisu` w `pas-pomocniczych.ts`).
+ * Plik rozstrzyga, które pozycje modułu naprawdę da się otworzyć obok rozmowy, bo rejestr sam niesie tylko stan opisowy, a kryterium otwieralności jest istnienie wytwórni, nie stan zbudowane w rejestrze.
  */
-
-/** Pozycja, którą menu ⋮ może otworzyć. */
 export interface PozycjaOtwieralna {
   /** Kod pozycji — ten sam, którym woła się `wytworniaPanelu`. */
   kod: string;
@@ -37,7 +13,7 @@ export interface PozycjaOtwieralna {
   przeznaczenie: string;
 }
 
-/** Pozycje modułu, które mają wytwórnię — czyli otworzą się naprawdę. */
+/** Pozycje modułu, które mają własną wytwórnię i dlatego naprawdę otworzą się po kliknięciu w menu okna rozmowy. */
 export function paneleOtwieralne(kodModulu: string): readonly PozycjaOtwieralna[] {
   return oknaPomocnicze(kodModulu)
     .filter((pozycja) => wytworniaPanelu(pozycja.kod) !== null)

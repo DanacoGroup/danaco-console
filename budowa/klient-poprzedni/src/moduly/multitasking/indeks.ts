@@ -1,3 +1,8 @@
+/**
+ * Moduł MultitaskingAI składa scenę czterech okien ról pętli koordynator–wykonawca:
+ * koordynator planuje bieg, dwa okna wykonawców pracują równolegle, analityk zestawia
+ * wyniki. Wszystkie stoją na jednym stanie i jednym źródle biegu.
+ */
 import type { Kanal } from '../../protokol/kanal';
 import { utworzZrodloSekcjiPaneli } from '../../powloka/zrodlo-sekcji-paneli';
 import { widokZSesji, type OpisModulu } from '../rejestracja';
@@ -13,17 +18,10 @@ import { utworzZrodloBiegu } from './zrodlo-biegu';
 import { utworzZrodloOkien } from './zrodlo-okien';
 
 /**
- * Moduł MultitaskingAI — okna ról pętli koordynator–wykonawca.
- *
- * Cztery wystąpienia, trzy typy: Coordinator Chat planuje i steruje, dwa
- * Executor Chat wykonują równolegle, Results Analyzer zestawia wyniki.
- * Koordynator nie tworzy produktu końcowego, a wykonawca nie zarządza procesem.
- *
- * Wszystkie cztery stoją na jednym stanie i jednym źródle biegu — inaczej
- * koordynator widziałby inny przebieg niż wykonawca, którym steruje.
+ * Liczba okien wykonawców obsadzanych na scenie. Wykaz środowiska w katalogu rdzenia
+ * wymienia dwa okna Executor Chat, więc scena tworzy dokładnie tyle wystąpień okna
+ * wykonawcy, a każde z nich otrzymuje własny numer porządkowy.
  */
-
-/** Ile okien wykonawców stoi na scenie; wykaz mówi o dwóch (Executor 1 i 2). */
 const LICZBA_WYKONAWCOW = 2;
 
 /**
@@ -39,37 +37,25 @@ export function zamontujMultitasking(gospodarz: HTMLElement, kanal: Kanal, sesja
   const okna = utworzZrodloOkien(kanal);
   const podagenci = utworzZrodloPodagentow(kanal);
   const stan = utworzStanMultitaskingu(bieg, { sesja });
-  // Wykaz komend rdzenia powstaje raz na scenę i jest wspólny czterem oknom:
-  // cztery osobne pytania o to samo dałyby cztery odpowiedzi do rozjechania.
+  // Wykaz komend rdzenia powstaje raz na scenę i jest wspólny czterem oknom.
   const komendy = utworzWykazKomendRdzenia(kanal);
 
   const scena = document.createElement('div');
   scena.className = 'dm-modul';
   scena.dataset['modul'] = 'multitasking';
 
-  // Panel obsady stoi przed oknami ról, bo bez przydziału ról nie ma czego
-  // otworzyć: koordynator i wykonawcy są rolami okien sesji, a nie osobnymi
-  // bytami. Panel jest jedynym miejscem, w którym te role się nadaje, a jego
-  // meldunki idą do jego własnego stanu treści — scena ich nie przechwytuje,
-  // więc odmowa rdzenia nie ma jak zniknąć po drodze.
-  // Układ sekcji paneli bierze się z powłoki, nie z modułu: `panel.sections.*`
-  // dotyczy okna, a nie dziedziny MultitaskingAI. Moduł tworzy źródło na swoim
-  // kanale i podaje je panelowi — mechanika sekcji zostaje jedna.
+  // Panel obsady stoi przed oknami ról i jest jedynym miejscem nadania tych ról.
   const sekcje = utworzZrodloSekcjiPaneli(kanal);
   const obsada = utworzPanelObsady({ zrodlo: okna, stan, sekcje });
 
   const koordynator = utworzOknoKoordynatora({ okna, bieg, stan, komendy });
-  // Wykonawcy dostają to samo źródło podagentów co panel zadań w tle —
-  // drugie wywołanie tych samych komend w drugim źródle byłoby kopią.
+  // Wykonawcy dostają to samo źródło podagentów co panel zadań w tle.
   const wykonawcy = Array.from({ length: LICZBA_WYKONAWCOW }, (_, i) =>
     utworzOknoWykonawcy({ okna, bieg, stan, podagenci, komendy, numer: i + 1 }),
   );
   const analityk = utworzOknoAnalityka({ okna, bieg, stan, komendy });
 
-  // Panel zadań w tle stoi pod oknami ról, bo mówi o pracy, którą one już
-  // zleciły: podagenci należą do okien wykonawców, a nie do osobnej sceny.
-  // Jest jeden na całą kartę sesji — `subagent.list` przyjmuje `sessionId`,
-  // więc dwa panele po jednym na wykonawcę pytałyby dwa razy o to samo.
+  // Panel zadań w tle jest jeden na kartę sesji i stoi pod oknami zlecającymi pracę.
   const zadaniaWTle = utworzPanelZadanWTle({ podagenci, bieg, stan });
 
   scena.append(
@@ -81,9 +67,7 @@ export function zamontujMultitasking(gospodarz: HTMLElement, kanal: Kanal, sesja
   );
   gospodarz.append(scena);
 
-  // Pytanie o wykaz komend idzie przed pierwszym odświeżeniem okien: dopóki
-  // odpowiedź nie wróci, kontrolki bez pokrycia mówią, że pytanie jest w drodze,
-  // a nie że rdzeń czegoś nie ma.
+  // Pytanie o wykaz komend wychodzi przed pierwszym odświeżeniem okien.
   void komendy.odczytaj();
   obsada.odswiez();
   koordynator.odswiez();
@@ -93,8 +77,7 @@ export function zamontujMultitasking(gospodarz: HTMLElement, kanal: Kanal, sesja
 
   return {
     zamknij() {
-      // Nasłuchy odpina się przed zdjęciem sceny: zdarzenie, które przyszłoby
-      // po `remove()`, odświeżałoby widok już nieistniejący.
+      // Nasłuchy odpina się przed zdjęciem sceny, aby nie odświeżały zdjętego widoku.
       for (const wykonawca of wykonawcy) wykonawca.rozlacz();
       scena.remove();
     },

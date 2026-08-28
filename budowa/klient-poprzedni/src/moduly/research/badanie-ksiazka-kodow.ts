@@ -1,32 +1,26 @@
+/**
+ * Książka kodów badania składana z tekstu okna komendą `research.codebook.set`.
+ * Plik rozkłada tekst wiersz po wierszu na nazwę i definicję, złącza kody
+ * z książką rdzenia i podaje liczniki kodów dopisanych, poprawionych oraz
+ * zachowanych bez zmiany.
+ */
 import type { ResearchCode } from '../../../../shared/contract';
 
 /**
- * Książka kodów badania składana z tekstu okna — `research.codebook.set`.
- *
- * Komenda zapisuje książkę kodów W CAŁOŚCI: pole `codes` to „kody po zmianie",
- * więc żądanie złożone z samych kodów wpisanych teraz WYMAZAŁOBY wszystkie
- * dotychczasowe. Dlatego zapis idzie po odczycie (`research.codebook.get`)
- * i jest złączeniem, nie podmianą — a zdanie odpowiedzi mówi osobno, ile kodów
- * zostało zachowanych i ile dołożonych, bo to jedyny sposób, żeby Operator
- * rozpoznał wymazanie, gdyby rdzeń zapisał co innego.
- *
- * Kod istniejący rozpoznaje się po nazwie bez względu na wielkość liter, bo
- * nazwa jest tym, co Operator wpisuje; identyfikator kodu nadaje rdzeń
- * i Operator go nie zna. Kod dopisany jedzie z pustym identyfikatorem — tak samo
- * jak nowe pytanie badawcze w `research.workspace.question.set`.
- *
- * Definicja jest w wierszu za znakiem `|`. Znak rozdzielający jest wyborem
- * okna i okno mówi o nim wprost przy chwycie; nazwa kodu bez definicji jest
- * poprawna, bo kontrakt ma pole `description` nieobowiązkowe.
+ * Kod wpisany przez Operatora: nazwa oraz nieobowiązkowa definicja. Definicja
+ * jest pusta, gdy wiersz nie niesie znaku rozdzielającego albo nie ma za nim
+ * treści.
  */
-
-/** Kod wpisany przez Operatora: nazwa i nieobowiązkowa definicja. */
 export interface KodZTekstu {
   nazwa: string;
   definicja: string;
 }
 
-/** Rozkłada tekst okna na kody; wiersz pusty jest pomijany, nie zgłaszany. */
+/**
+ * Rozkłada tekst okna na kody, wiersz po wierszu. Wiersz pusty oraz wiersz bez
+ * nazwy jest pomijany bez zgłoszenia, ponieważ pisanie w polu tekstowym
+ * przechodzi przez stany niepełne.
+ */
 export function kodyZTekstu(tekst: string): readonly KodZTekstu[] {
   const kody: KodZTekstu[] = [];
   for (const linia of tekst.split('\n')) {
@@ -41,7 +35,10 @@ export function kodyZTekstu(tekst: string): readonly KodZTekstu[] {
   return kody;
 }
 
-/** Skutek złączenia: co jedzie do rdzenia i co się w nim zmienia. */
+/**
+ * Skutek złączenia: pełna książka kodów jadąca do rdzenia wraz z licznikami
+ * kodów dopisanych, poprawionych oraz zachowanych bez zmiany.
+ */
 export interface ZlaczenieKodow {
   /** Pełna książka kodów po zmianie — treść pola `codes`. */
   kody: readonly ResearchCode[];
@@ -54,12 +51,9 @@ export interface ZlaczenieKodow {
 }
 
 /**
- * Łączy kody wpisane z książką kodów zastaną w rdzeniu.
- *
- * Kod zastany, którego Operator teraz nie wpisał, ZOSTAJE. Wpisanie trzech
- * kodów nie jest oświadczeniem, że badanie ma trzy kody — jest dopisaniem
- * trzech, a wymazanie reszty byłoby skutkiem, którego nikt nie zamówił. Zdjęcie
- * kodu z książki jest osobną czynnością i okno mówi, że jej dziś nie ma.
+ * Łączy kody wpisane z książką kodów zastaną w rdzeniu. Kod zastany, którego
+ * Operator teraz nie wpisał, zostaje: wpisanie trzech kodów jest dopisaniem
+ * trzech, a nie oświadczeniem, że badanie ma dokładnie tyle kodów.
  */
 export function zlaczKody(
   zastane: readonly ResearchCode[],

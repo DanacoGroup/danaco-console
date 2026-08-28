@@ -8,26 +8,17 @@ import type {
 } from './czynnosci-warsztatu';
 
 /**
- * Katalog czynności redakcyjnych — piętnaście komend, które prowadzą dokument
- * Studia poza sam edytor: gałęzie, wydanie, podgląd układu, wsad, wczytywanie.
- *
- * Katalog jest osobny od `czynnosci-warsztatu`, choć typy dzieli. Powód jest
- * w materiale, na którym te dwa zbiory pracują: warsztat bierze DOKUMENT PDF
- * z magazynu okna, redakcja bierze DOKUMENT STUDIA wczytany w edytorze. Jeden
- * wspólny wykaz kazałby Operatorowi wybierać czynność, która nie ma na czym
- * pracować, i dowiadywać się o tym dopiero z odmowy.
- *
- * Nazwy pól są nazwami kontraktu — one jadą do rdzenia. Etykiety są zdaniem
- * Operatora i z nazwami się nie pokrywają.
+ * Katalog czynności redakcyjnych — piętnaście komend prowadzących dokument
+ * Studia poza edytor.
  */
 
-/** Odczyt pola tekstowego; puste zwraca `undefined`, nie pusty napis. */
+/** Odczyt pola tekstowego; puste pole zwraca `undefined`, a nie pusty napis, żeby żądanie nie niosło pola bez treści. */
 function tekst(wartosci: WartosciCzynnosci, kod: string): string | undefined {
   const wartosc = (wartosci[kod] ?? '').trim();
   return wartosc === '' ? undefined : wartosc;
 }
 
-/** Odczyt liczby; wartość spoza liczb zwraca `undefined`. */
+/** Odczyt liczby z pola tekstowego; wartość spoza zbioru liczb zwraca `undefined` zamiast zera domyślnego. */
 function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return undefined;
@@ -36,11 +27,9 @@ function liczba(wartosci: WartosciCzynnosci, kod: string): number | undefined {
 }
 
 /**
- * Odczyt pola trójstanowego: „domyślnie", „tak", „nie".
- *
- * Przełącznik dwustanowy byłby tu pomyłką. Kontrakt paczki redakcyjnej mówi
- * o polach, których BRAK znaczy „tak" — przełącznik niezaznaczony wysyłałby
- * `false` i wyłączał człon, o którego wyłączenie Operator nie prosił.
+ * Odczyt pola trójstanowego: „domyślnie", „tak", „nie". Przełącznik dwustanowy
+ * byłby tu pomyłką, bo kontrakt paczki redakcyjnej mówi o polach, których brak
+ * znaczy „tak".
  */
 function trojstanowe(wartosci: WartosciCzynnosci, kod: string): boolean | undefined {
   const wartosc = wartosci[kod] ?? '';
@@ -49,7 +38,7 @@ function trojstanowe(wartosci: WartosciCzynnosci, kod: string): boolean | undefi
   return undefined;
 }
 
-/** Rozbiór listy oddzielonej przecinkami na wykaz bez pozycji pustych. */
+/** Rozbiór listy oddzielonej przecinkami na wykaz bez pozycji pustych, gotowy do wysłania w polu tablicowym żądania. */
 function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
   const wartosc = tekst(wartosci, kod);
   if (wartosc === undefined) return [];
@@ -59,7 +48,7 @@ function wykaz(wartosci: WartosciCzynnosci, kod: string): string[] {
     .filter((pozycja) => pozycja !== '');
 }
 
-/** Dokłada do żądania wyłącznie pola o wartości podanej. */
+/** Dokłada do żądania wyłącznie pola o wartości podanej, pomijając pola puste i tablice bez pozycji do wysłania. */
 function zPolami(
   podstawa: Record<string, unknown>,
   dodatki: Record<string, unknown>,
@@ -74,11 +63,8 @@ function zPolami(
 }
 
 /**
- * Wymaga dokumentu wczytanego w edytorze.
- *
- * Odmowa pada tutaj, a nie w rdzeniu, bo tutaj da się powiedzieć Operatorowi,
- * CO ma zrobić: wczytać dokument. Rdzeń odmówiłby brakiem pola `documentId`,
- * z czego Operator nie wyczyta ani przyczyny, ani drogi wyjścia.
+ * Wymaga dokumentu wczytanego w edytorze. Odmowa pada tutaj, a nie w rdzeniu,
+ * bo tutaj da się powiedzieć Operatorowi wprost, co ma zrobić.
  */
 function zDokumentem(
   otoczenie: OtoczenieCzynnosci,
@@ -90,14 +76,14 @@ function zDokumentem(
   return { zadanie: zloz(otoczenie.idDokumentu) };
 }
 
-/** Pozycje pola trójstanowego — jedne dla wszystkich członów paczki. */
+/** Pozycje pola trójstanowego — jedne dla wszystkich członów paczki, żeby etykiety nie rozjeżdżały się między czynnościami. */
 const POZYCJE_TROJSTANOWE = [
   { wartosc: '', etykieta: 'domyślnie (dołącz)' },
   { wartosc: 'tak', etykieta: 'dołącz' },
   { wartosc: 'nie', etykieta: 'pomiń' },
 ] as const;
 
-/** Pozycje formatu dokumentu — słownik zamiany formatu z kontraktu. */
+/** Pozycje formatu dokumentu — słownik zamiany formatu z kontraktu na etykietę czytelną dla Operatora w wyborze. */
 const POZYCJE_FORMATU = [
   { wartosc: StudioDocumentFormat.Pdf, etykieta: 'PDF' },
   { wartosc: StudioDocumentFormat.Docx, etykieta: 'DOCX' },
@@ -105,7 +91,7 @@ const POZYCJE_FORMATU = [
   { wartosc: StudioDocumentFormat.Txt, etykieta: 'Tekst' },
 ] as const;
 
-/** Pole wersji odniesienia — powtarza się w trzech czynnościach różnicy. */
+/** Pole wersji odniesienia — powtarza się w trzech czynnościach różnicy, więc jego kształt i opis stoją w jednym miejscu. */
 const POLE_WERSJI_ODNIESIENIA: PoleCzynnosci = {
   kod: 'baseVersionId',
   etykieta: 'Wersja odniesienia',
@@ -552,11 +538,8 @@ export const CZYNNOSCI_REDAKCJI: readonly CzynnoscWarsztatu[] = [
 ];
 
 /**
- * Zdanie o skutku czynności redakcyjnej złożone z odpowiedzi rdzenia.
- *
- * Każde pole jest sprawdzane osobno, bo każda z piętnastu odpowiedzi ma inny
- * kształt. Meldunek „gotowe" bez liczby nie odróżniałby scalenia, które doszło
- * do skutku, od scalenia zatrzymanego konfliktem.
+ * Zdanie o skutku czynności redakcyjnej złożone z odpowiedzi rdzenia; każde
+ * pole sprawdzane osobno, bo każda z piętnastu odpowiedzi ma inny kształt.
  */
 export function opiszSkutekRedakcji(odpowiedz: unknown): string {
   if (typeof odpowiedz !== 'object' || odpowiedz === null) return 'Rdzeń przyjął czynność.';

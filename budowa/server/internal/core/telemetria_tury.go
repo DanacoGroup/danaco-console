@@ -6,14 +6,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// rozmowaZTelemetria dokłada do portu rozmowy zgłoszenia telemetrii postępu
-// z punktów, których nie widać na szynie zdarzeń: przyjęcia wiadomości,
-// otwarcia tury i jej zatrzymania.
-//
-// Owinięcie, nie druga implementacja rozmowy: adapter rozmowy nadal
-// robi całą pracę, a telemetria wyłącznie odnotowuje, co się z nim stało.
-// Owinięcie jest też jedynym sposobem, żeby producent telemetrii nie musiał
-// być wpleciony w każdy obsługiwacz z osobna.
+// rozmowaZTelemetria dokłada do portu rozmowy zgłoszenia telemetrii postępu z punktów niewidocznych na szynie zdarzeń: przyjęcia wiadomości, otwarcia tury i zatrzymania. Adapter rozmowy robi całą pracę, telemetria tylko odnotowuje, co się stało.
 type rozmowaZTelemetria struct {
 	rozmowa    Rozmowa
 	telemetria *telemetriaPostepu
@@ -52,7 +45,7 @@ func (r rozmowaZTelemetria) Zatrzymaj(ctx context.Context, z shared.MessageStopR
 	return odpowiedz, err
 }
 
-// Wykaz przechodzi bez zmiany: odczyt historii nie jest punktem pracy tury.
+// Wykaz przechodzi bez zmiany: odczyt historii nie jest punktem pracy tury, więc telemetria go nie dotyczy.
 func (r rozmowaZTelemetria) Wykaz(ctx context.Context, z shared.MessageListRequest) (shared.MessageListResponse, error) {
 	return r.rozmowa.Wykaz(ctx, z)
 }

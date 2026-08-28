@@ -3,30 +3,12 @@ import { opisOdmowyAod } from './odmowy-aod';
 import { utworzAkapit, utworzPodtytul } from './pola-wykazu';
 import type { ZrodloAod } from './zrodlo-komend';
 
-/**
- * Rejestr obecności — procesy przypięte do nakładki
- * (`aod.observe.attach` / `aod.observe.detach`).
- *
- * Obie komendy zwracają `attachedProcessIds` po zmianie, więc wykaz rysuje
- * odpowiedź rdzenia, a nie przewidywanie klienta: po odmowie wykaz zostaje
- * niezmieniony i nie trzeba powtarzać odczytu stanu.
- *
- * Odpięcie idzie bez pytania o potwierdzenie, a puste pole identyfikatora
- * procesu wolno wysłać — pustą wartość ocenia rdzeń (`validation_failed`).
- * `detach` procesu nieprzypiętego kończy się `not_found`; to stan poprawny,
- * nie awaria, i zdanie odmowy z `odmowy-aod.ts` mówi to wprost.
- */
+/** Rejestr obecności procesów przypiętych do nakładki, rysujący odpowiedź rdzenia, a nie przewidywanie klienta. */
 export interface SekcjaObecnosci {
   element: HTMLElement;
   /** Nanosi wykaz przypięć i licznik procesów w biegu ze stanu nakładki. */
   pokaz(status: AodStatus): void;
-  /**
-   * Nanosi odmowę odczytu stanu.
-   *
-   * Rejestr pusty i rejestr nieznany to dwa różne stany: po odmowie
-   * `aod.status.get` sekcja nie pisze „nakładka nie obserwuje żadnego
-   * procesu", bo byłoby to zdanie o rdzeniu bez odpowiedzi rdzenia.
-   */
+  // Nanosi odmowę odczytu stanu; rejestr pusty i rejestr nieznany to dwa różne stany.
   odmowa(zdanie: string): void;
 }
 

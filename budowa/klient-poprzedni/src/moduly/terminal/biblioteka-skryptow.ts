@@ -1,43 +1,14 @@
 import { TerminalShell } from '../../../../shared/contract';
 
 /**
- * Biblioteka skryptów okna Script Library — skrypty, snippety, ich parametry
- * i kontrola treści przed uruchomieniem.
- *
- * Biblioteka jest WIDOKIEM na dziennik rdzenia: wykaz czyta `terminal.script.list`,
- * a zapis idzie przez `terminal.script.save`, który zakłada kolejną wersję
- * pozycji. Ten byt trzyma pozycje w pamięci wyłącznie po to, żeby je pokazać
- * i sprawdzić przed uruchomieniem — po odświeżeniu strony wykaz wraca z rdzenia.
- * Wywóz do pliku zostaje jako droga wyniesienia treści POZA rdzeń.
- *
- * Uruchomienie idzie tą samą drogą co każde polecenie karty: rdzeń podaje treść
- * jako pojedynczy argument programowi powłoki (`bash -c`, `powershell -Command`,
- * `python -u -c`, `node -e`), więc skrypt wieloliniowy wykonuje się bez
- * zapisywania go do pliku. Stąd wynika warunek, o którym okno przypomina:
- * powłoka karty musi być tą, w której skrypt napisano — treść Basha podana
- * programowi `python` nie jest skryptem, tylko błędem składni.
- *
- * Parametry deklaruje się nagłówkiem w komentarzu na początku treści:
- *
- *   # args:
- *   #   srodowisko: nazwa środowiska wdrożenia
- *   #   wersja: numer wydania
- *
- * a w treści stoją jako `{{srodowisko}}`. Podstawienie dzieje się w kliencie
- * przed wysłaniem, więc Operator widzi w potwierdzeniu polecenie, które
- * naprawdę poszło do rdzenia — nie szablon.
+ * Rodzaj pozycji biblioteki: skrypt wieloliniowy albo snippet jednego polecenia; biblioteka
+ * jest widokiem na dziennik rdzenia.
  */
-
-/** Rodzaj pozycji biblioteki: skrypt wieloliniowy albo snippet jednego polecenia. */
 export type RodzajPozycji = 'skrypt' | 'snippet';
 
-/** Jedna pozycja biblioteki. */
+/** Jedna pozycja biblioteki skryptów wraz z treścią, powłoką, znacznikami, wersją i czasem ostatniego uruchomienia. */
 export interface PozycjaBiblioteki {
-  /**
-   * Identyfikator pozycji nadany przez rdzeń. Pusty znaczy pozycję, która nie
-   * ma jeszcze wiersza w dzienniku — tak wchodzi pozycja wczytana z pliku
-   * wywozu, zanim zostanie zapisana.
-   */
+  /** Identyfikator pozycji nadany przez rdzeń; pusty przed pierwszym zapisem w dzienniku. */
   id?: string;
   nazwa: string;
   rodzaj: RodzajPozycji;
@@ -52,7 +23,7 @@ export interface PozycjaBiblioteki {
   ostatnieUruchomienie: number;
 }
 
-/** Jeden zadeklarowany parametr pozycji. */
+/** Jeden zadeklarowany parametr pozycji biblioteki skryptów, z nazwą odwołania w treści i opisem dla Operatora. */
 export interface ParametrSkryptu {
   nazwa: string;
   opis: string;
@@ -66,12 +37,7 @@ export interface Biblioteka {
   znajdz(nazwa: string): PozycjaBiblioteki | null;
   /** Odnotowuje uruchomienie pozycji — czas ostatniego biegu stoi w wykazie. */
   odnotujUruchomienie(nazwa: string, chwila: number): void;
-  /**
-   * Zastępuje całą zawartość wykazem z rdzenia.
-   *
-   * Zastąpienie, nie scalenie: prawdą o bibliotece jest dziennik rdzenia, więc
-   * pozycja, której rdzeń nie oddał, przestaje istnieć także na ekranie.
-   */
+  /** Zastępuje całą zawartość wykazem z rdzenia; prawdą o bibliotece jest dziennik rdzenia. */
   zastap(nowe: readonly PozycjaBiblioteki[]): void;
 }
 
@@ -115,16 +81,12 @@ export function utworzBiblioteke(): Biblioteka {
   };
 }
 
-/** Wzorzec odwołania do parametru w treści skryptu. */
+/** Wzorzec odwołania do parametru w treści skryptu, w postaci podwójnych nawiasów klamrowych wokół nazwy. */
 const ODWOLANIE_PARAMETRU = /\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g;
 
 /**
- * Czyta deklarację parametrów z nagłówka treści.
- *
- * Nagłówek stoi w komentarzu, bo skrypt ma pozostać uruchamialny także poza
- * platformą — plik z deklaracją w składni obcej powłoce nie wykonałby się
- * nigdzie indziej. Przyjmowane są oba znaki komentarza wykazu powłok: kratka
- * (Bash, PowerShell, Python) i podwójny ukośnik (Node.js).
+ * Czyta deklarację parametrów z nagłówka treści; nagłówek stoi w komentarzu, bo skrypt ma
+ * pozostać uruchamialny także poza platformą.
  */
 export function czytajParametry(tresc: string): ParametrSkryptu[] {
   const parametry: ParametrSkryptu[] = [];
@@ -132,8 +94,7 @@ export function czytajParametry(tresc: string): ParametrSkryptu[] {
   for (const wiersz of tresc.split('\n')) {
     const bezKomentarza = /^\s*(?:#|\/\/)\s?(.*)$/.exec(wiersz)?.[1];
     if (bezKomentarza === undefined) {
-      // Pierwszy wiersz spoza komentarza kończy nagłówek: deklaracja stoi
-      // wyłącznie na początku treści, żeby nie trzeba było czytać całości.
+      // Pierwszy wiersz spoza komentarza kończy nagłówek: deklaracja stoi tylko na początku treści.
       if (wNaglowku) break;
       if (wiersz.trim() !== '') break;
       continue;
@@ -150,7 +111,7 @@ export function czytajParametry(tresc: string): ParametrSkryptu[] {
   return parametry;
 }
 
-/** Wynik podstawienia parametrów w treści. */
+/** Wynik podstawienia parametrów w treści skryptu wraz z wykazem odwołań, dla których nie podano wartości. */
 export interface PodstawienieParametrow {
   tresc: string;
   /** Odwołania, dla których nie podano wartości — treść idzie z nimi nietknięta. */
@@ -158,11 +119,8 @@ export interface PodstawienieParametrow {
 }
 
 /**
- * Podstawia wartości parametrów w treści.
- *
- * Odwołanie bez wartości nie znika i nie zamienia się w pusty napis: skrypt
- * z pustą ścieżką w miejscu parametru wykonałby się na katalogu głównym zamiast
- * odmówić. Zostaje w treści widoczne, a jego nazwa wraca wołającemu.
+ * Podstawia wartości parametrów w treści; odwołanie bez wartości nie znika, zostaje widoczne,
+ * a jego nazwa wraca wołającemu.
  */
 export function podstawParametry(
   tresc: string,
@@ -181,16 +139,8 @@ export function podstawParametry(
 }
 
 /**
- * Kontrola wstępna treści — uwagi wykrywalne bez uruchomienia i bez programu
- * zewnętrznego.
- *
- * To nie jest linter i okno tak jej nie nazywa. Analizę statyczną prowadzą
- * osobne programy (`shellcheck`, `shfmt`, `PSScriptAnalyzer`, `ruff`), których
- * instalka Danaco Console nie niesie; komenda uruchamiająca je nad treścią stoi
- * w kontrakcie i okno ją wywołuje osobną czynnością. Kontrola wstępna działa
- * niezależnie od nich i wychwytuje to, co daje się rozstrzygnąć
- * pewnie: pustkę, znaki końca wiersza rodem z Windows, znacznik kolejności
- * bajtów i rozjazd między deklaracją parametrów a ich użyciem.
+ * Kontrola wstępna treści — uwagi wykrywalne bez uruchomienia i bez programu zewnętrznego; to
+ * nie jest linter.
  */
 export function kontrolaWstepna(tresc: string): string[] {
   const uwagi: string[] = [];
@@ -231,7 +181,7 @@ export function kontrolaWstepna(tresc: string): string[] {
   return uwagi;
 }
 
-/** Rozstrzygnięcie o sprawdzeniu składni: polecenie do wysłania albo powód, dla którego go nie ma. */
+/** Rozstrzygnięcie o sprawdzeniu składni: polecenie do wysłania albo powód, dla którego sprawdzenia nie da się wykonać. */
 export interface SprawdzenieSkladni {
   /** Polecenie sprawdzające; puste znaczy „tej powłoki nie da się sprawdzić bez uruchomienia”. */
   polecenie: string;
@@ -239,17 +189,12 @@ export interface SprawdzenieSkladni {
   powod: string;
 }
 
-/** Znacznik domykający treść przekazywaną powłoce do sprawdzenia. */
+/** Znacznik domykający treść skryptu przekazywaną powłoce do sprawdzenia składni bez jego wykonania w rdzeniu. */
 const GRANICA_TRESCI = 'DANACO_KONIEC_SKRYPTU';
 
 /**
- * Polecenie sprawdzające składnię skryptu bez jego wykonania.
- *
- * Bash ma na to własny przełącznik (`bash -n`), więc sprawdzenie nie wymaga
- * ani jednego programu spoza tego, który powłokę już uruchamia. Pozostałe
- * powłoki wykazu kontraktu takiego przełącznika nie mają albo jego użycie
- * wymagałoby przeniesienia treści przez plik, którego moduł nie ma czym
- * zapisać — okno mówi to wprost, zamiast pokazywać przycisk bez skutku.
+ * Polecenie sprawdzające składnię skryptu bez jego wykonania; bash ma na to własny przełącznik
+ * `bash -n`.
  */
 export function polecenieSprawdzeniaSkladni(
   powloka: TerminalShell,

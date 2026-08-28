@@ -12,19 +12,8 @@ import { nazwaRodzaju, utworzWierszRozszerzenia } from './wiersz-rozszerzenia';
 import type { ZrodloRozszerzen } from './zrodlo-rozszerzen';
 
 /**
- * Katalog rozszerzeń — wejście do rodziny `extension.*`: `extension.list`,
- * `.install`, `.configure`, `.toggle`, `.uninstall`.
- *
- * Skills Manager i Connectors Manager pracują na przypisaniach do jednego
- * eksperta; katalog jest bytem szerszym — wykazem pozycji platformy, z których
- * dopiero się wybiera. Dlatego stoi w module agents, w pasie zarządców.
- *
- * Kontrakt nie rozstrzyga, co znaczy instalacja pozycji, więc okno nazywa tę
- * granicę wprost pod formularzem, zamiast obiecywać pobranie paczki.
- *
- * Filtr rodzaju idzie do rdzenia jako pole `kind` komendy `extension.list`,
- * a nie ukrywa wierszy w przeglądarce — inaczej licznik pozycji mówiłby
- * o czymś innym niż wykaz pod nim.
+ * Katalog rozszerzeń to okno wejściowe do rodziny komend extension — wykaz, instalacja,
+ * konfiguracja, przełączenie i odinstalowanie pozycji platformy.
  */
 export interface OknoKatalogRozszerzen {
   element: HTMLElement;
@@ -32,7 +21,10 @@ export interface OknoKatalogRozszerzen {
   wczytaj(): Promise<void>;
 }
 
-/** Pozycje selektora rodzaju; pusty kod znaczy „bez zawężenia". */
+/**
+ * Pozycje selektora rodzaju rozszerzenia wraz z etykietami; pusty kod oznacza brak
+ * zawężenia wykazu do jednego rodzaju.
+ */
 const RODZAJE: readonly { wartosc: string; etykieta: string }[] = [
   { wartosc: '', etykieta: 'wszystkie rodzaje' },
   ...Object.values(ExtensionKind).map((rodzaj) => ({
@@ -141,11 +133,7 @@ export function utworzOknoKatalogRozszerzen(zrodlo: ZrodloRozszerzen): OknoKatal
     );
   }
 
-  /**
-   * Jedno wywołanie zmieniające katalog: odpowiedź rdzenia trafia do wiersza,
-   * po czym następuje ponowny odczyt wykazu. Wykaz przerysowany z odpowiedzi
-   * pojedynczej pozycji potrafiłby pokazać stan, którego rdzeń nie ma.
-   */
+  /** Odpowiedź rdzenia trafia do wiersza, po czym następuje ponowny odczyt całego wykazu. */
   async function wykonaj(czynnosc: string, bieg: Promise<{ udany: boolean; blad?: unknown }>): Promise<void> {
     odpowiedz.pokaz(`${czynnosc}…`, true);
     const wynik = (await bieg) as { udany: boolean; blad?: { code?: string; message?: string } };

@@ -72,30 +72,11 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Warsztat modułu Developer widziany przez klienta — trzydzieści trzy komendy
- * obszaru `developer.*` spoza pierwszej piątki okien.
- *
- * ── Dlaczego to jest osobne źródło ─────────────────────────────────────────
- * `ZrodloDeveloper` obsługuje okna wiodące: edytor, drzewo, repozytorium
- * i budowanie. Ten warsztat obsługuje rodziny, które w opracowaniu należą do
- * zakładek Dev Tools, panelu Run & Debug i paska operacji kontekstowych.
- * Rozdział jest po ODBIORCY, nie po wielkości pliku: Project Tree nie ma nic
- * wspólnego z kontenerami, a jedna umowa na wszystko kazałaby każdemu oknu
- * przyjmować zależność od czterdziestu metod, z których używa czterech.
- *
- * ── Każda czynność oddaje `Wynik`, nie samą treść ──────────────────────────
- * Okna mają obowiązkowy stan błędu, więc źródło nie połyka odmowy i nie zwraca
- * w jej miejsce pustego wykazu. Pusty wykaz kontenerów i odmowa odczytu to dwa
- * różne zdania, a Operator ma prawo wiedzieć, które obowiązuje — stąd brak
- * `?? []` w całym pliku.
- *
- * ── Sprawdzenie kształtu ───────────────────────────────────────────────────
- * Każda odpowiedź przechodzi przez `sprawdzKsztalt`. Rdzeń rozminięty
- * z kontraktem nie ma prawa dojść do okna jako `undefined` w środku rysowania:
- * to jest ta klasa usterki, która ujawnia się dopiero u Operatora.
+ * Warsztat modułu Developer widziany przez klienta niesie trzydzieści trzy
+ * komendy obszaru developer.* spoza pierwszej piątki okien; rozdział od
+ * ZrodloDeveloper idzie po odbiorcy, nie po wielkości pliku.
  */
 export interface ZrodloWarsztatu {
-  // ── Warstwa językowa Code Editora ─────────────────────────────────────────
   /** `developer.symbol.navigate` — przejście do definicji, wystąpień, symboli. */
   nawigujDoSymbolu(
     zadanie: DeveloperSymbolNavigateRequest,
@@ -109,7 +90,6 @@ export interface ZrodloWarsztatu {
     zadanie: DeveloperRefactorApplyRequest,
   ): Promise<Wynik<DeveloperRefactorApplyResponse>>;
 
-  // ── Historia pliku edytora ────────────────────────────────────────────────
   /** `developer.file.version.list` — migawki pliku od najnowszej. */
   wersjePliku(
     zadanie: DeveloperFileVersionListRequest,
@@ -117,7 +97,6 @@ export interface ZrodloWarsztatu {
   /** `developer.file.version.restore` — powrót do migawki. */
   przywrocWersje(zadanie: DeveloperFileVersionRestoreRequest): Promise<Wynik<DeveloperFile>>;
 
-  // ── Odczyt okna Build Output ──────────────────────────────────────────────
   /** `developer.build.list` — historia przebiegów budowania okna. */
   wykazBudowan(zadanie: DeveloperBuildListRequest): Promise<Wynik<DeveloperBuildListResponse>>;
   /** `developer.build.log.get` — log przebiegu wraz z informacją o przycięciu. */
@@ -131,7 +110,6 @@ export interface ZrodloWarsztatu {
   /** `developer.coverage.get` — pokrycie kodu przebiegu. */
   pokrycie(zadanie: DeveloperCoverageGetRequest): Promise<Wynik<DeveloperCoverageGetResponse>>;
 
-  // ── Run & Debug ───────────────────────────────────────────────────────────
   /** `developer.debug.session.start` — rozpoczęcie sesji debugowania. */
   rozpocznijDebugowanie(
     zadanie: DeveloperDebugSessionStartRequest,
@@ -153,7 +131,6 @@ export interface ZrodloWarsztatu {
     zadanie: DeveloperDebugEvaluateRequest,
   ): Promise<Wynik<DeveloperDebugEvaluateResponse>>;
 
-  // ── API Client ────────────────────────────────────────────────────────────
   /** `developer.api.request` — wykonanie zapytania HTTP w sieci serwera. */
   zapytanieApi(zadanie: DeveloperApiRequestRequest): Promise<Wynik<ApiResponse>>;
   /** `developer.api.collection.save` — zapis kolekcji zapytań. */
@@ -167,7 +144,6 @@ export interface ZrodloWarsztatu {
     zadanie: DeveloperApiOpenapiImportRequest,
   ): Promise<Wynik<DeveloperApiOpenapiImportResponse>>;
 
-  // ── Data Console ──────────────────────────────────────────────────────────
   /** `developer.data.connection.set` — opis połączenia bazodanowego. */
   ustawPolaczenie(zadanie: DeveloperDataConnectionSetRequest): Promise<Wynik<DataConnection>>;
   /** `developer.data.connection.list` — połączenia okna. */
@@ -183,7 +159,6 @@ export interface ZrodloWarsztatu {
     zadanie: DeveloperDataMigrationRunRequest,
   ): Promise<Wynik<DeveloperDataMigrationRunResponse>>;
 
-  // ── Containers ────────────────────────────────────────────────────────────
   /** `developer.container.list` — kontenery i obrazy silnika. */
   kontenery(
     zadanie: DeveloperContainerListRequest,
@@ -197,7 +172,6 @@ export interface ZrodloWarsztatu {
   /** `developer.compose.up` — podniesienie albo zatrzymanie stosu usług. */
   stosUslug(zadanie: DeveloperComposeUpRequest): Promise<Wynik<DeveloperComposeUpResponse>>;
 
-  // ── Zależności, bezpieczeństwo, jakość ────────────────────────────────────
   /** `developer.dependency.list` — drzewo zależności z manifestu. */
   zaleznosci(
     zadanie: DeveloperDependencyListRequest,
@@ -209,7 +183,6 @@ export interface ZrodloWarsztatu {
     zadanie: DeveloperScanResultListRequest,
   ): Promise<Wynik<DeveloperScanResultListResponse>>;
 
-  // ── Operacje kontekstowe i sonda warsztatu ────────────────────────────────
   /** `developer.contextual.op` — operacja paska pływającego Code Editora. */
   operacjaKontekstowa(
     zadanie: DeveloperContextualOpRequest,

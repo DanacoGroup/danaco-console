@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: trwały zapis tego, co działo się w przebiegu — log
-// przebiegu (tabela `log_przebiegu`, migracja 270), stan i ładunki kroków
-// (tabela `krok_przebiegu_automatyki`, migracja 271) oraz punkty wznowienia
-// (tabela `punkt_wznowienia_przebiegu`, migracja 272).
-//
-// Wszystkie trzy istnieją z jednego powodu: mają przeżyć restart rdzenia.
-// Log trzymany w pamięci procesu byłby logiem, którego po restarcie nie ma,
-// choć przebieg dalej widnieje w historii; punkt wznowienia trzymany w pamięci
-// byłby punktem wznowienia bezużytecznym dokładnie w chwili, do której jest
-// przeznaczony — po awarii.
+// Plik prowadzi trwały zapis tego, co działo się w przebiegu: log przebiegu, stan i ładunki kroków oraz punkty
+// wznowienia; wszystkie trzy istnieją z jednego powodu — mają przeżyć restart rdzenia.
 package dane
 
 import (
@@ -17,7 +9,7 @@ import (
 	"fmt"
 )
 
-// WpisLoguPrzebiegu to wiersz tabeli `log_przebiegu`.
+// WpisLoguPrzebiegu to wiersz tabeli `log_przebiegu` niosący jeden zapis dziennika przebiegu automatyki.
 type WpisLoguPrzebiegu struct {
 	PrzebiegID int64
 	KrokKod    *string
@@ -42,7 +34,7 @@ type KrokPrzebiegu struct {
 	Zakonczono     *string
 }
 
-// PunktWznowienia to wiersz tabeli `punkt_wznowienia_przebiegu`.
+// PunktWznowienia to wiersz tabeli `punkt_wznowienia_przebiegu` niosący stan pozwalający wznowić przebieg.
 type PunktWznowienia struct {
 	Kod            string
 	PrzebiegID     int64
@@ -108,7 +100,7 @@ const (
 	                          WHERE identyfikator_zewnetrzny = ?`
 )
 
-// DopiszLogPrzebiegu nanosi jeden wiersz dziennika przebiegu.
+// DopiszLogPrzebiegu nanosi jeden nowy wiersz dziennika przebiegu automatyki wraz z jego pełną treścią.
 func (r *repozytoriumAutomatyk) DopiszLogPrzebiegu(ctx context.Context, wpis WpisLoguPrzebiegu) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, dopiszLogPrzebiegu)
 	if err != nil {
@@ -170,7 +162,7 @@ func (r *repozytoriumAutomatyk) ZapiszKrokPrzebiegu(ctx context.Context, krok Kr
 	return nil
 }
 
-// KrokiPrzebiegu zwraca stan każdego kroku przebiegu w kolejności wykonania.
+// KrokiPrzebiegu zwraca bieżący stan każdego kroku danego przebiegu automatyki, w kolejności wykonania.
 func (r *repozytoriumAutomatyk) KrokiPrzebiegu(ctx context.Context,
 	przebiegID int64) ([]KrokPrzebiegu, error) {
 
@@ -195,7 +187,7 @@ func (r *repozytoriumAutomatyk) KrokiPrzebiegu(ctx context.Context,
 	return lista, wiersze.Err()
 }
 
-// KrokPrzebieguPoKodzie zwraca jeden krok przebiegu — źródło podglądu ładunku.
+// KrokPrzebieguPoKodzie zwraca jeden krok przebiegu — źródło podglądu jego ładunku wejścia i wyjścia z bazy.
 func (r *repozytoriumAutomatyk) KrokPrzebieguPoKodzie(ctx context.Context, przebiegID int64,
 	krokKod string) (KrokPrzebiegu, error) {
 
@@ -214,7 +206,7 @@ func (r *repozytoriumAutomatyk) KrokPrzebieguPoKodzie(ctx context.Context, przeb
 	return krok, nil
 }
 
-// ZapiszPunktWznowienia zapisuje punkt wznowienia przebiegu.
+// ZapiszPunktWznowienia zapisuje punkt wznowienia przebiegu automatyki wraz z jego pełnym stanem wykonania kroku.
 func (r *repozytoriumAutomatyk) ZapiszPunktWznowienia(ctx context.Context,
 	punkt PunktWznowienia) error {
 
@@ -231,7 +223,7 @@ func (r *repozytoriumAutomatyk) ZapiszPunktWznowienia(ctx context.Context,
 	return nil
 }
 
-// PunktyWznowienia zwraca punkty wznowienia przebiegu w kolejności czasu.
+// PunktyWznowienia zwraca wszystkie punkty wznowienia przebiegu automatyki, w kolejności czasu powstania.
 func (r *repozytoriumAutomatyk) PunktyWznowienia(ctx context.Context,
 	przebiegID int64) ([]PunktWznowienia, error) {
 
@@ -257,7 +249,7 @@ func (r *repozytoriumAutomatyk) PunktyWznowienia(ctx context.Context,
 	return lista, wiersze.Err()
 }
 
-// PunktWznowieniaPoKodzie zwraca jeden punkt wznowienia.
+// PunktWznowieniaPoKodzie zwraca jeden punkt wznowienia przebiegu po jego kodzie zewnętrznym z bazy danych.
 func (r *repozytoriumAutomatyk) PunktWznowieniaPoKodzie(ctx context.Context,
 	kod string) (PunktWznowienia, error) {
 
@@ -275,7 +267,7 @@ func (r *repozytoriumAutomatyk) PunktWznowieniaPoKodzie(ctx context.Context,
 	return punkt, nil
 }
 
-// odczytajKrokPrzebiegu składa krok przebiegu z jednego wiersza wyniku.
+// odczytajKrokPrzebiegu składa krok przebiegu automatyki wprost z jednego wiersza wyniku zapytania SQL.
 func odczytajKrokPrzebiegu(wiersz skaner) (KrokPrzebiegu, error) {
 	var krok KrokPrzebiegu
 	var blad, slad, wejscie, wyjscie, zakonczono sql.NullString
@@ -292,7 +284,7 @@ func odczytajKrokPrzebiegu(wiersz skaner) (KrokPrzebiegu, error) {
 	return krok, nil
 }
 
-// odczytajPunktWznowienia składa punkt wznowienia z jednego wiersza wyniku.
+// odczytajPunktWznowienia składa punkt wznowienia przebiegu wprost z jednego wiersza wyniku zapytania.
 func odczytajPunktWznowienia(wiersz skaner) (PunktWznowienia, error) {
 	var punkt PunktWznowienia
 	err := wiersz.Scan(&punkt.Kod, &punkt.PrzebiegID, &punkt.KrokKod,

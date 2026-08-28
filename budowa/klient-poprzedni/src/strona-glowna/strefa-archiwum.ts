@@ -5,28 +5,10 @@ import type { OdbiorcaMeldunku } from './menu-sesji';
 import type { WykazSrodowisk } from './wykaz-srodowisk';
 import type { WpisSesji } from './zrodlo-sesji';
 
-/**
- * Archiwum sesji — wgląd rozwijany pod wykazem sesji w tle.
- *
- * Pokazuje sesje odłożone do archiwum i oddaje je do przywrócenia. Wykaz idzie
- * z `session.archive.list`, a przywrócenie z `session.restore`; obie komendy
- * wykonuje wpięcie, ten plik zna wyłącznie ich wynik.
- *
- * Strefa startuje zwinięta i odpytuje rdzeń dopiero przy rozwinięciu, a potem
- * przy każdym kolejnym — archiwum bywa długie, nie dotyczy pracy bieżącej,
- * a sesja mogła w międzyczasie wrócić albo dojść.
- *
- * Liczba wszystkich sesji archiwum przychodzi obok strony wyników, więc
- * nagłówek pokazuje obie liczby, gdy się różnią; sama długość strony nie jest
- * liczbą sesji w archiwum.
- *
- * Odpytywanie, archiwum puste i odmowa rdzenia mają osobne napisy — wspólny
- * zacierałby różnicę między brakiem danych a brakiem odpowiedzi.
- */
-
+/** Archiwum sesji pokazuje sesje odłożone w tle i oddaje je do przywrócenia, odpytując rdzeń dopiero przy rozwinięciu strefy. */
 const ETYKIETA = 'Archiwum sesji';
 
-/** Odpytanie archiwum; wpięcie podaje wykonanie komendy kontraktu. */
+/** Typ funkcji odpytania archiwum, którą wpięcie tej strefy podaje jako wykonanie komendy kontraktu do rdzenia. */
 export type OdpytanieArchiwum = () => Promise<WynikArchiwum>;
 
 export interface WynikArchiwum {
@@ -67,8 +49,7 @@ export function utworzStrefeArchiwum(
 
   function pokaz(napis: string): void {
     const pustka = document.createElement('p');
-    // Ta sama klasa zawężająca, co pustka wykazu sesji: domyślne odstępy stanu
-    // pustego zajmują tu więcej pionu niż cała linia kafli ustawień.
+    // Ta sama klasa zawężająca, co pustka wykazu sesji; domyślny odstęp zajmuje tu więcej pionu.
     pustka.className = 'dn-pusty-stan dn-strona__archiwum-pustka';
     pustka.textContent = napis;
     tresc.replaceChildren(pustka);

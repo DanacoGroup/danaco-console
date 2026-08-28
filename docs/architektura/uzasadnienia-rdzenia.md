@@ -6473,3 +6473,23 @@ skutku nie da się zmierzyć — odwołania wychodzące z rdzenia (pola asset.ur
 preview.imageRef) są ścieżkami względnymi magazynu właśnie po to, żeby nie
 wynosić układu katalogów maszyny, więc bajty spod nich znajduje się dopiero
 po złożeniu ścieżki z katalogiem danych.
+
+## budowa/server/internal/core/uprzaz_test.go
+
+Rdzeń nie ma odbiornika, który dałoby się złożyć w pamięci: montaż otwiera
+repozytoria nad bazą, odtwarza stan sesji z wierszy i startuje budzik
+harmonogramu. Zaślepianie tego łańcucha dałoby sprawdzian zaślepki, nie
+sprawdzian produktu — dlatego uprząż montuje rdzeń prawdziwy, tylko nad
+bazą jednorazową.
+
+Baza jest plikiem w katalogu tymczasowym, nie bazą w pamięci procesu. Pula
+połączeń rdzenia trzyma cztery połączenia (stała store.maksPolaczen),
+a każde połączenie do bazy w pamięci dostaje w SQLite własną, osobną bazę
+— migracje wykonałyby się na jednej, a zapytania trafiłyby na trzy puste.
+Plik w katalogu t.TempDir() znosi ten problem bez kosztu: sterownik jest
+czystym Go, więc pełny przejazd migracji idzie w milisekundach, a katalog
+znika po sprawdzianie sam.
+
+Profili kanału głównego sprawdzian też nie ma i mieć nie musi, bo
+sprawdzian zgodności z kontraktem dotyczy rejestru komend, nie plików obok
+gniazda.

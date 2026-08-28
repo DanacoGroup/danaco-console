@@ -13,20 +13,7 @@ import (
 	"danacoconsole/server/internal/store"
 )
 
-// Uprząż sprawdzianów rdzenia.
-//
-// Rdzeń nie ma odbiornika, który dałoby się złożyć w pamięci: montaż otwiera
-// repozytoria nad bazą, odtwarza stan sesji z wierszy i startuje budzik
-// harmonogramu. Zaślepianie tego łańcucha dałoby sprawdzian zaślepki, nie
-// sprawdzian produktu — dlatego uprząż montuje rdzeń prawdziwy, tylko nad bazą
-// jednorazową.
-//
-// Baza jest plikiem w katalogu tymczasowym, nie `:memory:`. Pula połączeń
-// rdzenia trzyma cztery połączenia (store.maksPolaczen), a każde połączenie do
-// `:memory:` dostaje w SQLite własną, osobną bazę — migracje wykonałyby się na
-// jednej, a zapytania trafiły na trzy puste. Plik w `t.TempDir()` znosi ten
-// problem bez kosztu: sterownik jest czystym Go, więc pełny przejazd migracji
-// idzie w milisekundach, a katalog znika po sprawdzianie sam.
+// Uprząż sprawdzianów rdzenia montuje rdzeń prawdziwy nad bazą jednorazową w katalogu tymczasowym.
 
 // zmontujDoSprawdzenia składa rdzeń nad świeżą bazą i pilnuje zwolnienia
 // zasobów po zakończeniu sprawdzianu. Zwraca zmontowany rdzeń wraz z jego
@@ -37,10 +24,7 @@ func zmontujDoSprawdzenia(t *testing.T) (*Zmontowany, context.Context) {
 	return zmontujNadDziennikiem(t, io.Discard)
 }
 
-// zmontujZDziennikiem składa ten sam rdzeń, ale nad dziennikiem, który da się
-// przeczytać. Potrzebny tam, gdzie przedmiotem pomiaru jest sam zapis — rdzeń
-// odnotowuje w dzienniku rzeczy, których nie ma jak oddać w odpowiedzi, więc
-// dziennik niemy zamieniłby taki sprawdzian w sprawdzenie niczego.
+// zmontujZDziennikiem składa ten sam rdzeń, ale nad dziennikiem, który da się przeczytać. Potrzebny tam, gdzie przedmiotem pomiaru jest sam zapis — dziennik niemy zamieniłby taki sprawdzian w sprawdzenie niczego.
 func zmontujZDziennikiem(t *testing.T) (*Zmontowany, context.Context, *dziennikDoOdczytu) {
 	t.Helper()
 
@@ -61,20 +45,16 @@ func zmontujNadDziennikiem(t *testing.T, zapis io.Writer) (*Zmontowany, context.
 	}
 	t.Cleanup(func() { _ = baza.Zamknij() })
 
-	// Kontekst życia zamyka się przed zwolnieniem zasobów: budzik harmonogramu
-	// i pętle adapterów wiszą na nim, a nie na Zamknij.
+	// Kontekst życia zamyka się przed zwolnieniem zasobów: budzik harmonogramu i pętle wiszą na nim.
 	zycie, zakoncz := context.WithCancel(context.Background())
 	t.Cleanup(zakoncz)
 
 	ustawienia := konfiguracja.Domyslna()
 	ustawienia.KatalogDanych = katalog
-	// Pakietu klienta i profili kanału głównego sprawdzian nie ma i mieć nie
-	// musi: montaż opisuje ich brak jako dopuszczalny, a sprawdzian zgodności
-	// z kontraktem dotyczy rejestru komend, nie plików obok gniazda.
+	// Pakietu klienta sprawdzian nie ma i mieć nie musi: montaż opisuje ich brak jako dopuszczalny.
 	ustawienia.KatalogKlienta = ""
 	ustawienia.KatalogProfili = ""
-	// Port zerowy: uprząż nie wystawia nasłuchu, więc żaden port nie jest
-	// zajmowany. Sprawdziany transportu podnoszą własny serwer osobno.
+	// Port zerowy: uprząż nie wystawia nasłuchu, więc żaden port nie jest zajmowany.
 	ustawienia.Port = 0
 
 	zmontowany, err := Zmontuj(zycie, Montaz{
@@ -114,7 +94,7 @@ func (d *dziennikDoOdczytu) Write(bajty []byte) (int, error) {
 	return d.tresc.Write(bajty)
 }
 
-// Tresc oddaje wszystko, co dotąd trafiło do dziennika.
+// Tresc oddaje wszystko, co dotąd trafiło do dziennika rdzenia od początku sprawdzianu, jako ciąg znaków.
 func (d *dziennikDoOdczytu) Tresc() string {
 	d.zamek.Lock()
 	defer d.zamek.Unlock()

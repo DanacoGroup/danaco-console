@@ -8,33 +8,8 @@ import { KATEGORIE_OPERACJI } from './kategorie-operacji';
 import { utworzPozycjeSpozaOperacji } from './pozycja-operacji';
 
 /**
- * Wykaz operacji Tools Panel — rejestr rdzenia i wykaz dokumentacji obok siebie.
- *
- * Pozycje mają dwa pochodzenia i panel je rozróżnia. Rejestr akcji rdzenia jest
- * źródłem właściwym: nowa operacja ma być wierszem tabeli `akcja`, nie zmianą
- * w kodzie. Dopóki rejestr nie niesie operacji redakcyjnych Studia, brakujące
- * pozycje daje wykaz dokumentacji, a przy każdej pozycji stoi jej pochodzenie.
- *
- * Wybór jest jeden na cały panel, bo `studio.contextual.op` przyjmuje dokładnie
- * jeden `actionId`. Pozycja bez wiersza rejestru pozostaje wybieralna:
- * uruchomienie wychodzi do rdzenia i wraca jego odpowiedzią.
- *
- * Mechanizm rozwijania pochodzi z `komponenty/menu-drzewo.ts`: gałąź to
- * kategoria, liść to operacja, grupa to pochodzenie. Menu wnosi pole szukania
- * po przekroczeniu progu liczby liści, znacznik wyboru widoczny na gałęzi bez
- * wchodzenia w nią oraz wędrówkę strzałkami; ten plik żadnej z tych rzeczy nie
- * odtwarza. Etykieta uchwytu niesie nazwę wybranej operacji, nie nazwę rodzajową.
- *
- * Wiersz rejestru zdejmuje pozycję z wykazu dokumentacji. Oba wykazy mówią
- * o tych samych identyfikatorach `studio.<kategoria>.<kod>`, więc bez tej zapory
- * operacja pokazywałaby się dwa razy. Wykaz dokumentacji kurczy się sam, w miarę
- * jak rejestr się zapełnia, i znika w całości, gdy rejestr obejmie komplet.
- *
- * Wiersze rejestru wskazujące inną komendę stoją poza menu. Menu z biblioteki
- * nie zna pozycji niewybieralnych, a wybieralne te wiersze być nie mogą: rdzeń
- * nie sprawdza `actionId` względem katalogu komendy, więc wysłanie takiego
- * identyfikatora wraca odpowiedzią wyglądającą na udaną. Zostają widoczne obok
- * menu jako wiersze rejestru o innej komendzie.
+ * Wykaz operacji panelu narzędzi łączy rejestr komend rdzenia z wykazem dokumentacji
+ * redakcyjnej Studia i pozwala wskazać jedną operację kontekstową.
  */
 export interface WykazOperacji {
   element: HTMLElement;
@@ -52,7 +27,7 @@ const OPIS_DOKUMENTACJI =
   'Pozycje bez wiersza rejestru. Wybór jest czynny: uruchomienie wychodzi do rdzenia ' +
   'i wraca jego odpowiedzią.';
 
-/** Napis na uchwycie, dopóki operacja nie została wskazana. */
+/** Napis widoczny na uchwycie wykazu operacji, dopóki użytkownik nie wskaże żadnej operacji kontekstowej z rejestru rdzenia ani z wykazu dokumentacji. */
 const UCHWYT_BEZ_WYBORU = 'wskaż operację kontekstową';
 
 /**
@@ -120,8 +95,7 @@ export function utworzWykazOperacji(naWybor: () => void): WykazOperacji {
     const galezie: GalazMenu[] = [];
     for (const kategoria of KATEGORIE_OPERACJI) {
       const czekajace = kategoria.operacje.filter((operacja) => !wRejestrze.has(operacja.id));
-      // Kategoria w całości pokryta rejestrem znika razem z gałęzią: pusta
-      // gałąź mówiłaby, że coś tu czeka na wiersz, choć nie czeka nic.
+      // Kategoria w całości pokryta rejestrem znika z gałęzią: pusta gałąź sugerowałaby czekający wiersz.
       if (czekajace.length === 0) continue;
       galezie.push({
         rodzaj: 'galaz',
@@ -188,8 +162,7 @@ export function utworzWykazOperacji(naWybor: () => void): WykazOperacji {
 
     ustawRejestr(akcje) {
       zRejestru = akcje;
-      // Wybór wskazujący pozycję, której rejestr już nie niesie, znika razem
-      // z nią: uchwyt nie pokazuje operacji spoza wykazu.
+      // Wybór, który rejestr już nie niesie, znika z nią: uchwyt nie pokazuje operacji spoza wykazu.
       if (wybrana !== '' && nazwaWybranej() === undefined) wybrana = '';
       przerysuj();
     },

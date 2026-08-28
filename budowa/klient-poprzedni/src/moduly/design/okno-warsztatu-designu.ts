@@ -13,27 +13,8 @@ import type { StanDesignu } from './stan-designu';
 import type { ZrodloWarsztatowDesignu } from './zrodlo-warsztatow-designu';
 
 /**
- * Warsztat modułu Design — jedno okno na warsztat, jeden formularz na czynność.
- *
- * Pięć warsztatów (fotografia, wektor, druk, bazy zdjęciowe, publikacja) dzieli
- * ten sam budowniczy, bo dzielą to samo zadanie: wybór czynności przestawia pola,
- * pola pochodzą z katalogu, żądanie składa katalog, a odpowiedź jest opisana
- * SKUTKIEM. Pięć osobnych budowniczych byłoby pięcioma miejscami, w których
- * pomyłka w składaniu żądania mieszka osobno.
- *
- * Kontrolki bierze `utworzKontrolke` z warsztatu dokumentu Studio — ten sam
- * przełącznik rodzajów pól, bo katalogi opisują pola tymi samymi typami. Druga
- * kopia tego przełącznika rozjechałaby się z pierwszą przy pierwszym nowym
- * rodzaju pola.
- *
- * Materiał wchodzi z magazynu okna i wynik do niego wraca. Żadna czynność nie
- * zmienia materiału w miejscu — okno mówi to przy polu materiału, bo Operator ma
- * wiedzieć, że pomyłka nie kosztuje go zdjęcia źródłowego.
- *
- * Odpowiedź jest opisana liczbą, nie słowem „gotowe": nowy zasób, liczba stron,
- * udział punktów przezroczystych, liczba kafli, dostawcy, którzy nie
- * odpowiedzieli. Meldunek bez liczby nie odróżnia czynności wykonanej od
- * czynności przyjętej — a to jest wzorzec szkody, który ten moduł ma w historii.
+ * Warsztat modułu Design — jedno okno na warsztat, jeden formularz na czynność, wspólny dla pięciu
+ * warsztatów budowniczy pól i żądań.
  */
 export interface OknoWarsztatuDesignu {
   element: HTMLElement;
@@ -44,7 +25,7 @@ export interface OknoWarsztatuDesignu {
   odswiez(): void;
 }
 
-/** Nastawy jednego warsztatu: kod katalogu rdzenia, tytuł, rola i objaśnienie. */
+/** Nastawy jednego warsztatu: kod katalogu rdzenia, tytuł okna, rola operacyjna oraz zdanie objaśnienia. */
 export interface NastawyWarsztatuDesignu {
   kod: string;
   tytul: string;
@@ -115,9 +96,7 @@ export function utworzOknoWarsztatuDesignu(
       wiersze.push(kontrolka.element);
     }
     formularz.replaceChildren(...wiersze);
-    // Czynność bez ani jednego pola nie jest usterką — wykaz nastaw i wykaz
-    // nośników biorą wszystko z okna. Zdanie mówi to wprost, bo pusty formularz
-    // wygląda jak formularz, który się nie zbudował.
+    // Czynność bez ani jednego pola nie jest usterką — wykaz nastaw bierze wszystko wprost z okna.
     if (czynnosc.pola.length === 0) {
       const zdanie = document.createElement('p');
       zdanie.className = 'dn-pole-opis';
@@ -156,9 +135,7 @@ export function utworzOknoWarsztatuDesignu(
     }
     odpowiedz.pokaz(`${czynnosc.nazwa}: ${opiszSkutekDesignu(wynik.wynik)}`, true);
     okno.gotowe();
-    // Wynik bywa nowym zasobem magazynu, więc wykaz materiału zestarzał się
-    // dokładnie w tej chwili. Odczyt idzie od razu, żeby następna czynność
-    // widziała to, co przed chwilą powstało.
+    // Wynik bywa nowym zasobem magazynu, więc wykaz materiału zestarzał się teraz; odczyt idzie zaraz.
     await wczytaj();
   }
 
@@ -171,8 +148,7 @@ export function utworzOknoWarsztatuDesignu(
     okno.ladowanie('Odczyt materiału warsztatu…');
     const wynik = await zrodlo.zasoby(idOkna);
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Odmowa odczytu NIE gasi okna: czynności pracują na wskazaniach wpisanych
-      // wprost, a materiał z listy jest wygodą, nie warunkiem.
+      // Odmowa odczytu nie gasi okna: czynności pracują na wskazaniach wpisanych wprost, materiał to wygoda.
       okno.blad(opisOdmowy('Odczyt materiału', wynik.blad?.code, wynik.blad?.message));
       return;
     }
@@ -198,17 +174,9 @@ export function utworzOknoWarsztatuDesignu(
 }
 
 /**
- * Opis skutku czynności warsztatu Design.
- *
- * Bierze najpierw opis wspólny z warsztatu dokumentu (nowy zasób, liczba stron,
- * ubytek bajtów), a potem dokłada liczby, które mają znaczenie wyłącznie tutaj:
- * wymiary wyniku, drogę rachunku, udział punktów przezroczystych, liczbę kafli,
- * dostawców, którzy nie odpowiedzieli, bilanse pominięć.
- *
- * BILANS ZAMIAST CISZY także w oknie: pole, które rdzeń wypełnił powodem
- * niepowodzenia, ma być widoczne w meldunku. Meldunek „gotowe" nad odpowiedzią
- * z trzema nieudanymi rozmiarami byłby tym samym kłamstwem, przed którym broni
- * się rdzeń.
+ * Opis skutku czynności warsztatu Design. Bierze najpierw opis wspólny z warsztatu dokumentu,
+ * a potem dokłada liczby właściwe wyłącznie tutaj: wymiary wyniku, udział punktów przezroczystych,
+ * liczbę kafli, bilanse pominięć.
  */
 export function opiszSkutekDesignu(odpowiedz: unknown): string {
   const wspolny = opiszSkutek(odpowiedz);

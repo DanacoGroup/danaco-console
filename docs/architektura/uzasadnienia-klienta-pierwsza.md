@@ -9217,3 +9217,28 @@ jako niezweryfikowana, bo pozycja wyszukiwania nie niesie oceny, a wpisanie
 tu wartości innej niż ta byłoby oceną zmyśloną. Pustka wyniku to nie pustka
 badania: zapytanie bez trafień jest odpowiedzią rdzenia, a nie brakiem
 materiału, więc zdanie mówi o zapytaniu, nie o samym panelu.
+
+## budowa/klient-poprzedni/src/dostepy/stan-dostepow.ts
+Punkty i nadania trzymane są razem, ponieważ wiersz nadania nie da się narysować
+bez punktu, na który się powołuje: z punktu pochodzą korzenie, rodzaj i nazwa
+maszyny. Dwa równoległe stany dałyby dwie prawdy o tym samym nadaniu.
+
+Nadanie żyje per okno. Zmiana okna nie przebudowuje sekcji — zmienia zbiór nadań
+i ogłasza przeliczenie; wykaz punktów jest wspólny dla platformy i zostaje.
+
+Żadna ścieżka nie zatrzymuje sekcji. Rdzeń, który nie odda wykazu, zostawia go
+pustym; sekcja pozostaje czynna i pozwala spytać ponownie.
+
+Bez fazy odczytu pusty wykaz znaczy trzy rzeczy naraz: „jeszcze nie pytałem”,
+„pytam” i „rdzeń nie zna ani jednego punktu”. Widok musi je rozróżnić, bo każdej
+należy się inny stan: nic, wskaźnik odczytu, stan pusty.
+
+`urzadzenieID` wskazuje maszynę, na której katalog istnieje — schemat bazy
+wymaga go dla punktu rodzaju `localDirectory`. Katalog dodany z „Mój komputer”
+należy do maszyny bieżącej; jej identyfikator poda komenda `device.list`, gdy
+trafi do kontraktu. Do tego czasu wywołanie bez urządzenia wraca z odmową
+merytoryczną rdzenia, nie z fałszywym sukcesem.
+
+Pole opcjonalne kontraktu jest wysyłane tylko, gdy znane jest urządzenie. Puste
+`deviceId` nie przechodzi więzu schematu, więc pominięcie jest uczciwsze niż
+napis pusty — rdzeń odmówi z powodem, a nie z błędu bazy.

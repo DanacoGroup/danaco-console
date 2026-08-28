@@ -17,17 +17,8 @@ import type { StanProjektu } from './stan-projektu';
 import { utworzStanTresci } from './stany-okna';
 
 /**
- * Notatki i wiki projektu — zakładka „Notatki i wiki" oraz „Tablica" okna
- * Project Library, wydzielona w osobne okno modułu.
- *
- * Strona jest notatką: hierarchię daje wskazanie strony nadrzędnej, a odnośniki
- * zapisem `[[nazwa]]` w treści. Odnośnik do strony jeszcze niezałożonej jest
- * stanem poprawnym wiki — okno pokazuje takie nazwy wprost, zamiast milczeć
- * i zostawiać Operatora z martwym odnośnikiem do odkrycia po kliknięciu.
- *
- * Tablica wizualna stoi w tym samym oknie, bo niesie ten sam materiał w innej
- * formie: scena płótna jest zapisem JSON i okno oddaje ją Operatorowi wprost,
- * zamiast udawać, że rysuje płótno, którego nie rysuje.
+ * Notatki i wiki projektu wydzielają zakładki Notatki i wiki oraz Tablica z okna Project Library
+ * w osobne okno modułu; strona jest notatką, a hierarchię daje strona nadrzędna.
  */
 export interface OknoWikiProjektu {
   element: HTMLElement;

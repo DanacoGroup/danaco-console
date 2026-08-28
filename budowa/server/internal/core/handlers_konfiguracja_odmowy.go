@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: wspólne słownictwo odmów okna konfiguracji.
-//
-// Cztery rodziny komend — katalog ustawień, dostępy, konta i tożsamość modelu —
-// są jednym oknem konfiguracji i muszą odmawiać tak
-// samo. Bez tego jedna rodzina zwracałaby `not_found`, druga `internal_error`,
-// a trzecia pustą odpowiedź na ten sam przypadek nieznanego identyfikatora.
-//
-// Granica: odmowa merytoryczna niesie kod kontraktu i dotyczy jednego wywołania;
-// awaria warstwy trwałości idzie dalej bez tłumaczenia, bo rdzeń nie zgaduje
-// za bazę, czy zawiódł dysk, czy schemat. Wykaz i odczyt nigdy nie odmawiają
-// z powodu pustki — pusto znaczy pusto.
+// Plik ustala wspólne słownictwo odmów okna konfiguracji, jednakowe dla
+// czterech rodzin komend, które to okno składają.
 package core
 
 import (

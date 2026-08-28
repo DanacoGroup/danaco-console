@@ -9,17 +9,8 @@ import {
 } from './wyszukiwanie-tekstu';
 
 /**
- * Znajdź/Zamień w treści bieżącego dokumentu — panel warstwy trzeciej edytora.
- *
- * Panel pracuje na buforze edytora i rdzenia nie woła. Wyszukiwanie po treści
- * WERSJI stoi w Diff/Grep Panelu i jest inną czynnością — panel mówi to
- * w objaśnieniu, żeby dwa pola wyszukiwania w jednym module nie wyglądały na
- * powielenie.
- *
- * Zamiana ma podgląd przed zatwierdzeniem, bo tego żąda opracowanie („Zamień
- * wszystko" prezentuje podgląd zmian przed zatwierdzeniem). Podgląd nie jest
- * ozdobą: zamiana wyrażeniem regularnym potrafi przepisać dokument inaczej, niż
- * Operator zamierzał, a cofnięcia po zapisie już nie ma.
+ * Znajdź/Zamień w treści bieżącego dokumentu — panel warstwy trzeciej edytora, pracujący na
+ * buforze i niewołający rdzenia.
  */
 export interface ZnajdzZamien {
   element: HTMLElement;
@@ -33,7 +24,7 @@ const OBJASNIENIE =
   '(komenda studio.diff.compare). Zamiana pokazuje podgląd i zmienia treść dopiero po ' +
   'zatwierdzeniu; wersję zakłada dopiero zapis w Studio Editorze.';
 
-/** Górna granica wierszy podglądu — dłuższy wykaz przestaje być podglądem. */
+/** Górna granica liczby wierszy podglądu listy zmian — dłuższy wykaz przestaje pełnić funkcję podglądu. */
 const GRANICA_PODGLADU = 20;
 
 export function utworzZnajdzZamien(stan: StanStudio): ZnajdzZamien {
@@ -91,8 +82,7 @@ export function utworzZnajdzZamien(stan: StanStudio): ZnajdzZamien {
     }
     const wynik = znajdzTrafienia(tresc, nastawa);
     if (wynik.powod !== '') {
-      // Zła składnia wzorca jest powodem nazwanym, nie pustką: bez tego zdania
-      // literówka Operatora wyglądałaby jak „nic nie znaleziono".
+      // Zła składnia wzorca jest powodem nazwanym, żeby literówka nie wyglądała jak brak trafień.
       podsumowanie.textContent = wynik.powod;
       podglad.replaceChildren();
       element.dataset['stan'] = 'wzorzec-bledny';
@@ -141,8 +131,7 @@ export function utworzZnajdzZamien(stan: StanStudio): ZnajdzZamien {
       podsumowanie.textContent = 'Nie było czego zamienić — wzorca nie ma w treści dokumentu.';
       return;
     }
-    // Treść idzie przez stan, nie wprost do kontrolki: jeden dokument na cały
-    // moduł, więc pozostałe okna mają się dowiedzieć.
+    // Treść idzie przez stan, nie wprost do kontrolki: jeden dokument obchodzi cały moduł.
     stan.ustawTresc(wynik.tresc);
     podsumowanie.textContent =
       `Zamieniono trafień: ${wynik.liczba}. Zmiana stoi w buforze edytora — zapis w Studio ` +

@@ -7651,3 +7651,11 @@ czyta, wie tylko, że rdzeń ścieżkę podał.
 
 ## budowa/klient-poprzedni/src/sterowanie/tryb-uprawnien.ts
 Wartości trybu uprawnień odpowiadają dosłownie przełącznikowi trybu uprawnień kanału głównego i pochodzą z wyliczenia kontraktu. Żadna pozycja nie jest wyszarzona ani ukryta, w tym pominięcie kontroli uprawnień: kontrolą dostępu jest uwierzytelnianie, a nie ta lista. Tryb jest parametrem okna, więc okno planistyczne i okno wykonawcze mogą pracować obok siebie.
+## budowa/klient-poprzedni/src/moduly/studio/znajdz-zamien.ts
+Panel pracuje na buforze edytora i rdzenia nie woła. Wyszukiwanie po treści wersji zapisanej
+stoi w Diff/Grep Panelu i jest inną czynnością — panel mówi to w objaśnieniu, żeby dwa pola
+wyszukiwania w jednym module nie wyglądały na powielenie.
+
+Zamiana ma podgląd przed zatwierdzeniem: opcja Zamień wszystko prezentuje podgląd zmian przed
+zatwierdzeniem. Podgląd nie jest ozdobą — zamiana wyrażeniem regularnym potrafi przepisać
+dokument inaczej, niż zamierzano, a cofnięcia po zapisie już nie ma.

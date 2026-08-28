@@ -8612,3 +8612,15 @@ Karta zastępuje wiersz z samą nazwą, bo wybór eksperta jest decyzją podejmo
 
 ## budowa/klient-poprzedni/src/moduly/agents/karta-eksperta.ts (liczba przypisań)
 Liczba przypisań pochodzi z odczytu od strony eksperta, nie od strony projektu — bez tej komendy karta nie miałaby skąd wziąć liczby. Wartość nieznana nie daje plakietki: zero i brak odpowiedzi to dwie różne sytuacje i karta nie ma prawa ich mylić.
+
+## budowa/klient-poprzedni/src/moduly/developer/zrodlo-warsztatu-probne.ts
+Jedna atrapa służy całej rodzinie sprawdzianów zamiast atrapy przepisywanej
+w każdym sprawdzianie osobno: rozjazd z umową źródła warsztatu przerywa wtedy
+kompilację, zamiast rozjeżdżać sprawdziany po cichu. Plik służy wyłącznie
+sprawdzianom tego modułu i nie jest importowany przez żadne okno. Atrapa
+zapisuje nazwy wywołanych czynności w kolejności wywołania — to jej główny
+sens, bo sprawdzian pyta, czy z okna naprawdę prowadzi droga do danej komendy:
+przycisk, który nie woła niczego, jest atrapą po stronie interfejsu i wygląda
+tak samo jak przycisk działający. Rozdzielenie stanu atrapy od jej metod
+pozwala uniknąć wymieniania wielu czynności w jednym literale, co
+zmniejszałoby czytelność deklaracji.

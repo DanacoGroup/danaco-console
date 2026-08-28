@@ -6161,3 +6161,8 @@ Więź trafia dokładnie nad kolumny swojej pary, więc działa także wtedy, gd
 koordynator i wykonawca nie sąsiadują ze sobą. Brak pary jest położeniem
 oczekiwanym, nie usterką, dlatego pas niesie też dymek z objaśnieniem, skąd
 bierze się figura, oraz miejsce na trwałą uwagę o podglądzie przekazania.
+
+## budowa/klient-poprzedni/src/ustawienia/zrodlo-powiadomien.test.ts
+Każda z trzech mierzonych rzeczy ma cenę w oknie, gdyby zawiodła: baza świeża czytana błędnie jako
+wszystko wyłączone, zapis idący na poziom, którego katalog nie dopuszcza, i piętnaście par pytań tam,
+gdzie wystarczą dwa.

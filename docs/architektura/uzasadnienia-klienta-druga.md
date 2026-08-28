@@ -5929,3 +5929,14 @@ wskazanie nie było bez odpowiednika". Odmowy ta gałąź nie widzi i nie ma cze
 
 ## budowa/klient-poprzedni/src/polaczenie/adres-rdzenia.test.ts
 Ustalenie adresu gniazda jest miejscem, w którym klient albo trafia w rdzeń, albo szuka go tam, gdzie nikt nie nasłuchuje — a wtedy ponawianie milczy bez końca i wygląda jak awaria rdzenia, choć jest pomyłką adresu, dlatego sprawdzane są wszystkie drogi w jednym ustalonym pierwszeństwie. Adres z powłoki jest stanem modułu, dlatego każdy przypadek testowy wczytuje moduł na nowo, inaczej mierzyłby ślad po przypadku poprzednim.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/stan-paneli.ts
+Przełącznik paneli stoi w nagłówku okna rozmowy, więc każde okno ma własny
+zestaw paneli: panel należy do rozmowy, nie do ekranu. Moduł nie ma żadnej
+zmiennej na poziomie modułu, bo jeden egzemplarz stanu na moduł znaczyłby
+jeden zestaw paneli na całą aplikację — cały stan siedzi w domknięciu
+fabryki, a cztery gniazda tworzą cztery niezależne egzemplarze, z których
+żaden nie widzi pozostałych. Rozstrzyganie, co da się otworzyć, należy do
+spisu okien pomocniczych. Otwarcie panelu już otwartego nie jest błędem, a
+wartość spoza zakresu jest przycinana zamiast wstrzymywać wykonanie:
+powtórne otwarcie nic nie zmienia i nie budzi subskrybentów.

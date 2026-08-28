@@ -6870,3 +6870,13 @@ nieznany nie może dostać podpisu moderatora, bo panel otwarty w trakcie debaty
 tożsamości, odczytu składu jeszcze nie wywołuje. Fragment strumienia niesie identyfikator
 wiadomości, a nie identyfikator uczestnika, więc fragment o identyfikatorze nieznanym ani
 składowi, ani wykazowi wypowiedzi tury jest treścią bez ustalonego mówcy — panel mówi to wprost.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/sterowanie-panelami.ts
+Element zewnętrzny jest stały, a wnętrze wymienne: wykaz pozycji zależy od
+modułu gniazda, a moduł przestawia rdzeń w trakcie pracy. Gdyby wykaz był
+ustalany raz przy montażu, przestawienie modułu zostawiłoby w nagłówku
+menu poprzedniego modułu — nagłówek nie musi więc podmieniać elementu, bo
+wnętrze przebudowuje osobna funkcja. Moduł nie zna stanu paneli, nie
+otwiera i nie zamyka niczego: pyta o stan otwarcia i woła wybór, dzięki
+czemu rząd skrótów i wykaz w menu pokazują ten sam stan trzymany przez
+stan paneli.

@@ -7019,3 +7019,9 @@ wpięte wcale.
 Obszar dostawcy poza adresem punktu końcowego, temperatura próbkowania modelu
 i funkcje beta modelu nie mają odpowiednika na powierzchni wywołania albo mają
 osobny przełącznik, który nie jest dziś wpięty.
+
+## budowa/server/internal/core/handlers_dostep_zbior.go
+Kod punktu odczytywany jest raz na punkt, nie raz na nadanie: okno bywa
+związane z kilkoma nadaniami tego samego mostu, przy odczycie i zapisie
+osobno, więc bez pamięci podręcznej ten sam wiersz punktu szedłby z bazy
+wielokrotnie przy jednym odczycie zbioru.

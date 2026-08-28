@@ -8,18 +8,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterUstawien wypełnia port Ustawienia dwiema warstwami: repozytorium
-// konfiguracji zapisuje i czyta wiersze, a rozstrzygacz dziewięciu poziomów
-// zasięgu odpowiada na pytanie o wartość obowiązującą.
-//
-// Pierwszeństwo poziomów należy do pakietu konfig — właściciela pojęcia zasięgu.
-// Rdzeń nie zna kolejności poziomów i o nią nie pyta.
+// adapterUstawien wypełnia port Ustawienia dwiema warstwami: repozytorium konfiguracji
+// zapisuje i czyta wiersze, a rozstrzygacz dziewięciu poziomów zasięgu odpowiada na pytanie
+// o wartość obowiązującą.
 type adapterUstawien struct {
 	repozytorium dane.RepozytoriumKonfiguracji
 	rozstrzygacz *konfig.Rozstrzygacz
 }
 
-// nowyAdapterUstawien wiąże port z repozytorium i rozstrzygaczem.
+// nowyAdapterUstawien wiąże port z repozytorium konfiguracji i rozstrzygaczem poziomów
+// zasięgu, tworząc adapter gotowy do obsługi komend ustawień.
 func nowyAdapterUstawien(repozytorium dane.RepozytoriumKonfiguracji, rozstrzygacz *konfig.Rozstrzygacz) *adapterUstawien {
 	return &adapterUstawien{repozytorium: repozytorium, rozstrzygacz: rozstrzygacz}
 }
@@ -40,7 +38,8 @@ func (a *adapterUstawien) Odczytaj(ctx context.Context, z shared.ConfigGetReques
 	return shared.ConfigGetResponse{Entries: wpisyKontraktu(wpisy, z.Key)}, nil
 }
 
-// Zapisz ustawia wartość na wskazanym poziomie zasięgu.
+// Zapisz ustawia wartość na wskazanym poziomie zasięgu, zapisując nowy wiersz konfiguracji
+// w repozytorium.
 func (a *adapterUstawien) Zapisz(ctx context.Context, z shared.ConfigSetRequest) (shared.ConfigSetResponse, error) {
 	wartosc, rodzaj := konfig.DekodujJSON(z.Value)
 	tekst := wartosc
@@ -89,7 +88,8 @@ func wpisyKontraktu(ustawienia []dane.Ustawienie, klucz *string) []shared.Config
 	return wpisy
 }
 
-// wpisKontraktu przekłada jeden wiersz repozytorium na wpis kontraktu.
+// wpisKontraktu przekłada jeden wiersz repozytorium na wpis kontraktu, dołączając kod
+// zasięgu tylko dla wpisu, który go ma.
 func wpisKontraktu(u dane.Ustawienie) shared.ConfigEntry {
 	wpis := shared.ConfigEntry{
 		Key:   u.Klucz,
@@ -103,8 +103,8 @@ func wpisKontraktu(u dane.Ustawienie) shared.ConfigEntry {
 	return wpis
 }
 
-// wartoscTekstu odczytuje pole opcjonalne kontraktu, zwracając pusty napis dla
-// braku wartości.
+// wartoscTekstu odczytuje pole opcjonalne kontraktu, zwracając pusty napis, gdy pole nie
+// niesie wartości.
 func wartoscTekstu(p *string) string {
 	if p == nil {
 		return ""

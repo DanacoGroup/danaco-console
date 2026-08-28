@@ -24,18 +24,29 @@ import (
 // którym leżą wagi modeli tej rodziny sprawdzianów.
 const zmiennaKatalogModeli = "DANACO_MODELE"
 
+// katalogWdrozeniowyModeli jest katalogiem wag zakładanym przez prowizjonowanie
+// serwera i tym samym, który niesie obowiązująca postać biegu sprawdzianów.
+const katalogWdrozeniowyModeli = "/opt/danaco-modele"
+
 // katalogModeliSprawdzianu oddaje katalog wag albo pomija sprawdzian.
 //
-// Pominięcie nazywa, czego brakuje i jak to wskazać — pominięcie milczące
-// wyglądałoby w wyniku biegu tak samo jak sprawdzian zdany.
+// Gdy zmienna nie wskazuje niczego, a wagi leżą w katalogu wdrożeniowym, bierze
+// je stamtąd. Maszyna nosząca wagi nie może przejść biegu zielono, pomijając
+// jedyne sprawdziany dowodzące, że przesiew i oś obrazu liczą — pominięcie
+// wygląda w wyniku biegu tak samo jak sprawdzian zdany.
 func katalogModeliSprawdzianu(t *testing.T, podkatalog string) string {
 	t.Helper()
 
 	korzen := strings.TrimSpace(os.Getenv(zmiennaKatalogModeli))
 	if korzen == "" {
-		t.Skipf("zmienna %s nie wskazuje katalogu wag — bez wag nie ma czym liczyć; "+
-			"wskaż katalog niosący podkatalogi `embedder`, `%s` i `%s`",
-			zmiennaKatalogModeli, "reranker", "clip")
+		if _, err := os.Stat(katalogWdrozeniowyModeli); err == nil {
+			korzen = katalogWdrozeniowyModeli
+		}
+	}
+	if korzen == "" {
+		t.Skipf("zmienna %s nie wskazuje katalogu wag, a katalogu %s nie ma na tej maszynie — "+
+			"bez wag nie ma czym liczyć; wskaż katalog niosący podkatalogi `embedder`, `%s` i `%s`",
+			zmiennaKatalogModeli, katalogWdrozeniowyModeli, "reranker", "clip")
 	}
 	katalog := filepath.Join(korzen, podkatalog)
 	if _, err := os.Stat(filepath.Join(katalog, "model.safetensors")); err != nil {

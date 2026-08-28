@@ -1,7 +1,7 @@
 {
   "opis": "Chronologia wydań Danaco Console — JEDYNE źródło prawdy dla strony „Pobierz” i dla banera aktualizacji w aplikacji. Pusty wykaz znaczy: nie ma jeszcze żadnego wydania. Każda pozycja MUSI nieść pole `suma` (SHA-256 pliku) — powłoka odmawia założenia pliku, którego suma się nie zgadza, a wydania bez sumy nie zakłada w ogóle.",
   "produkt": "Danaco Console",
-  "katalog_plikow": "../wydania/1.0.0-2026-08-18",
+  "katalog_plikow": "../wydania/1.0.0-2026-08-28",
   "numer_wersji": "Wszystkie pozycje niosą 1.0.0 i to NIE jest przeoczenie. Wydania różni DATA, nie numer: żadna wersja nie stanęła jeszcze u klienta, więc nie ma czego podnosić. Rozstrzygnięcie Właściciela — nie zmieniać bez jego słowa. Katalog wydania nazywa się `1.0.0-2026-08-18`, więc data jest w ścieżce i dwa różne dni nie nadpisują się wzajemnie.",
   "kanal": {
     "wdrozony": true,
@@ -22,6 +22,39 @@
     "wciaz_odmawiane": "Wszystko poza https: — w szczególności `http:`, `javascript:`, `data:` i `file:`. Pozycja z takim adresem nie znika ze strony: traci odnośnik i dostaje zdanie, czego jej brakuje."
   },
   "wydania": [
+    {
+      "wersja": "1.0.0",
+      "data": "2026-08-28",
+      "system": "Windows",
+      "postac": "hybryda",
+      "architektura": "x64",
+      "nazwa": "Danaco Console_1.0.0_hybryda_x64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/Danaco%20Console_1.0.0_hybryda_x64-setup.exe",
+      "rozmiar_bajtow": 2400091,
+      "sha256": "bd50c2a945aeec97869fac898eb87d2e95f9cbc2955f6cf7848776721db3d54a"
+    },
+    {
+      "wersja": "1.0.0",
+      "data": "2026-08-28",
+      "system": "Windows",
+      "postac": "hybryda",
+      "architektura": "ARM64",
+      "nazwa": "Danaco Console_1.0.0_hybryda_arm64-setup.exe",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/Danaco%20Console_1.0.0_hybryda_arm64-setup.exe",
+      "rozmiar_bajtow": 2134570,
+      "sha256": "7b4bf9fde722d1829e5c1c3110528f4d088805ef473b5d78b53c2e2366462cd7"
+    },
+    {
+      "wersja": "1.0.0",
+      "data": "2026-08-28",
+      "system": "Linux",
+      "postac": "serwer",
+      "architektura": "amd64",
+      "nazwa": "danaco-console_1.0.0_amd64.deb",
+      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-28/danaco-console_1.0.0_amd64.deb",
+      "rozmiar_bajtow": 41816458,
+      "sha256": "5da8601e37846e6defc90b0899cdd5826aaaadb27fa8ca5e255c58fbbd69b84b"
+    },
     {
       "wersja": "1.0.0",
       "data": "2026-08-18",

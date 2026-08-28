@@ -17,7 +17,13 @@ import (
 // granicaKomendySprawdzianu jest granicą czasu JEDNEGO wywołania komendy przez
 // uprząż sprawdzianu. Wypada wyłącznie wtedy, gdy rdzeń zwisł — nigdy wtedy,
 // gdy komenda po prostu długo pracuje.
-const granicaKomendySprawdzianu = granicaWykazuUrzadzen + 15*time.Second
+//
+// Granica jest ograniczeniem górnym, nie czasem oczekiwania: komenda szybka
+// wraca natychmiast, więc jej podniesienie nie wydłuża biegu sprawdzianów.
+// Wartość obejmuje najwolniejszą zmierzoną komendę liczącą modelem na procesorze,
+// czyli powiększenie obrazu z odtwarzaniem twarzy przy około stu dziewięćdziesięciu
+// sekundach, wraz z wczytaniem wag przesiewu wyszukiwania.
+const granicaKomendySprawdzianu = 10 * time.Minute
 
 // komendyBezObslugiwacza wylicza komendy kontraktu, których rdzeń dziś nie
 // obsługuje. Wykaz jest zaporą, nie zgodą, i stoi dziś PUSTY: każda komenda

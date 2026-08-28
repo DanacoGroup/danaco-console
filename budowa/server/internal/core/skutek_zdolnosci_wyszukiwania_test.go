@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/store"
@@ -91,10 +90,6 @@ func wgrajDokument(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 		}, &wgrany)
 }
 
-// granicaKomendyZWagami nazywa czas, jaki wolno zająć komendzie wczytującej
-// wagi modelu do pamięci na każde wołanie, dłuższy niż granica bazowa uprzęży.
-const granicaKomendyZWagami = 10 * time.Minute
-
 // wykonajZWagami wykonuje komendę sięgającą po model wagą na dysku i
 // przerywa sprawdzian niepowodzeniem, gdy rdzeń odmówił jej wykonania.
 func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
@@ -105,7 +100,7 @@ func wykonajZWagami(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(zycie, granicaKomendyZWagami)
+	ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
 	defer przerwij()
 
 	odpowiedz := zmontowany.Rdzen.Wykonaj(ctx, koperta)

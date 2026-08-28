@@ -6975,3 +6975,15 @@ przyszła — brak obu jest poprawnym wynikiem, który panel przedstawia jako
 pustkę merytoryczną, nie błąd. Rodzaj fragmentu jest daną przenoszoną do
 atrybutu data-rodzaj elementu, nie barwą ustaloną w kodzie; barwę dobiera
 arkusz stylu modułu na podstawie żetonów motywu.
+
+## budowa/klient-poprzedni/src/moduly/studio/tabela-zrodlo.ts
+Rodzina komend tabeli jest zamknięta i pokrywa cały zamówiony zakres: wstawianie
+zakłada tabelę o wskazanym rozmiarze albo ze stylu gotowego, edycja struktury
+wstawia i usuwa wiersz oraz kolumnę, scala i dzieli komórki, formatowanie
+ustawia szerokości kolumn, obramowanie, cieniowanie, wyrównanie w komórce,
+styl i powtarzanie wiersza nagłówkowego, sortowanie porządkuje zawartość,
+zamiana zamienia tekst na tabelę i odwrotnie, a wykaz oddaje tabele wraz
+z komórkami i policzonymi szerokościami. Każda czynność zmieniająca oddaje
+bilans i identyfikator zapisu w dzienniku: bilans mówi, co pominęła blokada
+fragmentu, a zapis w dzienniku daje cofnięcie pojedyncze. Panel czyta oba —
+bez tego scalenie komórek w zablokowanym fragmencie wyglądałoby na wykonane.

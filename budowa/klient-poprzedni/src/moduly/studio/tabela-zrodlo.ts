@@ -18,20 +18,7 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolajUczciwie } from './odmowa-rdzenia';
 
 /**
- * Sześć komend tabeli dokumentu.
- *
- * Rodzina jest zamknięta i pokrywa cały zakres zamówiony: `table.insert` zakłada
- * tabelę o wskazanym rozmiarze albo ze stylu gotowego, `table.structure.edit`
- * wstawia i usuwa wiersz oraz kolumnę, scala i dzieli komórki,
- * `table.format.set` ustawia szerokości kolumn, obramowanie, cieniowanie,
- * wyrównanie w komórce, styl i powtarzanie wiersza nagłówkowego, `table.sort`
- * sortuje zawartość, `table.convert` zamienia tekst na tabelę i odwrotnie,
- * a `table.list` oddaje tabele wraz z komórkami i policzonymi szerokościami.
- *
- * Każda czynność zmieniająca oddaje `balance` i `actionId`: bilans mówi, co
- * pominęła blokada fragmentu, a wpis dziennika daje cofnięcie pojedyncze. Panel
- * czyta oba — bez tego scalenie komórek w zablokowanym fragmencie wyglądałoby
- * na wykonane.
+ * Interfejs TabelaZrodlo obejmuje sześć komend tabeli dokumentu: wstawianie, edycję struktury, formatowanie, sortowanie, zamianę tekstu na tabelę i odwrotnie oraz odczyt wykazu tabel.
  */
 export interface TabelaZrodlo {
   wstaw(zadanie: StudioTableInsertRequest): Promise<Wynik<StudioTableInsertResponse>>;
@@ -82,8 +69,7 @@ export function utworzTabeleZrodlo(kanal: Kanal): TabelaZrodlo {
       return sprawdzKsztalt(
         await wywolajUczciwie(kanal, Command.StudioTableConvert, zadanie),
         Command.StudioTableConvert,
-        // Tabela w odpowiedzi jest nieobowiązkowa: zamiana tabeli NA TEKST tabeli
-        // po sobie nie zostawia, więc jej brak jest wynikiem poprawnym.
+        // Tabela w odpowiedzi jest nieobowiązkowa, ponieważ zamiana tabeli na tekst nie zostawia tabeli.
         (tresc) => czyObiekt(tresc.balance) && czyObiekt(tresc.form),
       );
     },

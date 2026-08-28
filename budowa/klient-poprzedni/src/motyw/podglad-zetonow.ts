@@ -74,7 +74,7 @@ function pokazGradienty(): void {
 }
 
 /**
- * Żetony semantyczne aktywnego motywu. Wartości czytamy z dokumentu, a nie
+ * Żetony semantyczne aktywnego motywu. Wartości pochodzą z odczytu dokumentu, a nie
  * z pliku — dowodzi, że przełączenie motywu zmienia wartości, nie reguły.
  */
 function pokazSemantyczne(): void {

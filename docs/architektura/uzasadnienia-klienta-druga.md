@@ -6379,3 +6379,6 @@ widoczny zanim wpisy zostaną przeczytane, żeton biegnący po pasie relacji
 wskazujący kierunek, dymek jako natychmiastowa odpowiedź na czynność
 Operatora, trwała uwaga na pasie relacji jako odpowiedź także kwadrans
 później, oraz przejście stanu z przekazania zlecenia do pracy wykonawcy.
+
+## budowa/klient-poprzedni/src/powiadomienia/kolumna-powiadomien.ts
+Kolumna nie wykonuje działań zdarzenia: zatwierdzenie, ponowienie i wstrzymanie należą do rodziny, która je już niesie, więc pozycja pokazuje je jako drogę do tamtej rodziny, nie jako drugą jej implementację — kolumna zmienia wyłącznie stan zdarzenia w rejestrze, czyli odczytane, zamknięte albo odłożone. Zamknięcie kolumny nie jest obsłużeniem zdarzeń: chowa widok i nic nie zapisuje, a zdarzenia zostają w stanie, w jakim były, inaczej samo zajrzenie do centrum kasowałoby to, po co operator zaglądał.
